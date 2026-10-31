@@ -69,19 +69,19 @@ int main(void) {
     CHECK(!FUtf8Valid("A\0B", 3));
     fixture = one;
     memset(out, 9, sizeof(out));
-    CHECK(GetPrivateProfileStringA(NULL, NULL, "", out, 4, "x") == 2 && !memcmp(out, "AB\0\0", 4));
+    CHECK(win32::GetPrivateProfileStringA(NULL, NULL, "", out, 4, "x") == 2 && !memcmp(out, "AB\0\0", 4));
     CHECK(out[4] == 9);
     fixture = unicode;
     memset(out, 9, sizeof(out));
-    CHECK(GetPrivateProfileStringA(NULL, NULL, "", out, 3, "x") == 1 && out[0] == 0 && out[1] == 0 && out[2] == 0 && out[3] == 9);
+    CHECK(win32::GetPrivateProfileStringA(NULL, NULL, "", out, 3, "x") == 1 && out[0] == 0 && out[1] == 0 && out[2] == 0 && out[3] == 9);
     fixture = empty;
     memset(out, 9, sizeof(out));
-    CHECK(GetPrivateProfileStringA(NULL, NULL, "", out, 3, "x") == 0 && out[0] == 0 && out[1] == 0 && out[2] == 9);
+    CHECK(win32::GetPrivateProfileStringA(NULL, NULL, "", out, 3, "x") == 0 && out[0] == 0 && out[1] == 0 && out[2] == 9);
     fixture = quoted;
     memset(out, 9, sizeof(out));
-    CHECK(GetPrivateProfileStringA("A", "k", "", out, 3, "x") == 2 && !strcmp(out, " a"));
+    CHECK(win32::GetPrivateProfileStringA("A", "k", "", out, 3, "x") == 2 && !strcmp(out, " a"));
     fixture = duplicate;
-    CHECK(GetPrivateProfileStringA("A", "k", "fallback", out, sizeof(out), "x") == 8 && !strcmp(out, "fallback"));
+    CHECK(win32::GetPrivateProfileStringA("A", "k", "fallback", out, sizeof(out), "x") == 8 && !strcmp(out, "fallback"));
     CHECK(FIniValue("[A]\nx=first\n[A]\nk=second", static_cast<StringId>(1), static_cast<StringId>(2), out, sizeof(out)) && !strcmp(out, "second"));
     CHECK(!FIniValue(" [A]\nk=1", static_cast<StringId>(1), static_cast<StringId>(2), out, sizeof(out)));
     CHECK(!FIniValue("[ A ]\nk=1", static_cast<StringId>(1), static_cast<StringId>(2), out, sizeof(out)));
@@ -99,7 +99,7 @@ int main(void) {
     strcpy(longline + 276, "\nk=second");
     CHECK(FIniValue(longline, static_cast<StringId>(1), static_cast<StringId>(2), out, 4) && !strcmp(out, "aaa"));
     loadOK = 0;
-    CHECK(GetPrivateProfileStringA("A", "k", "fallback", out, sizeof(out), "x") == 8 && !strcmp(out, "fallback"));
+    CHECK(win32::GetPrivateProfileStringA("A", "k", "fallback", out, sizeof(out), "x") == 8 && !strcmp(out, "fallback"));
     printf("S02 profile I/O and host linked witnesses: %d passed\n", checks);
     if (IUnlinkNativePath(szFixture) != 0 || !FFilesystemRemove(szDirectory))
         return 1;

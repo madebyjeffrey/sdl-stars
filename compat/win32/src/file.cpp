@@ -29,7 +29,7 @@ static NATIVEFLAGLOCK fFileLock;
 static COMPATFILE *LpFile(HFILE hf) {
     COMPATFILE *lp;
     for (lp = lpFiles; lp; lp = lp->lpNext) if (lp->hf == hf) return lp;
-    SetLastError(ERROR_INVALID_HANDLE);
+    win32::SetLastError(ERROR_INVALID_HANDLE);
     return NULL;
 }
 static DWORD DwFileError(void) {
@@ -46,7 +46,7 @@ static DWORD DwFileError(void) {
     }
 }
 
-HFILE WINAPI OpenFile(LPCSTR pszFile, LPOFSTRUCT lpof, UINT flags) {
+HFILE WINAPI win32::OpenFile(LPCSTR pszFile, LPOFSTRUCT lpof, UINT flags) {
     char szPath[PATH_MAX], szCwd[PATH_MAX];
     COMPATFILE *lp, *lpNew = NULL;
     NATIVEFILEINFO st;
@@ -57,7 +57,7 @@ HFILE WINAPI OpenFile(LPCSTR pszFile, LPOFSTRUCT lpof, UINT flags) {
     uint64_t dev, ino;
     std::unique_lock lockFiles(fFileLock, std::defer_lock);
 
-    if (!lpof) { SetLastError(ERROR_INVALID_PARAMETER); return HFILE_ERROR; }
+    if (!lpof) { win32::SetLastError(ERROR_INVALID_PARAMETER); return HFILE_ERROR; }
     if (flags & OF_REOPEN) pszFile = lpof->szPathName;
     if (!pszFile || !*pszFile || !FUtf8Valid(pszFile, strlen(pszFile)) || (flags & 3) == 3 ||
         (share != OF_SHARE_COMPAT && share != OF_SHARE_EXCLUSIVE && share != OF_SHARE_DENY_WRITE &&
@@ -124,11 +124,11 @@ LUnlock:
     lockFiles.unlock();
 LReturn:
     lpof->nErrCode = (WORD)dwError;
-    if (dwError != NO_ERROR) SetLastError(dwError);
+    if (dwError != NO_ERROR) win32::SetLastError(dwError);
     return hf;
 }
 
-HFILE WINAPI _lclose(HFILE hf) {
+HFILE WINAPI win32::_lclose(HFILE hf) {
     COMPATFILE **lplp, *lp;
     HFILE ret = HFILE_ERROR;
     BOOL fFound = FALSE;
@@ -140,70 +140,70 @@ HFILE WINAPI _lclose(HFILE hf) {
         fFound = TRUE;
         *lplp = lp->lpNext;
         if (ICloseNativeFile(lp->pf) == 0) ret = 0;
-        else SetLastError(DwFileError());
+        else win32::SetLastError(DwFileError());
         free(lp); break;
     }
-    if (!fFound) SetLastError(ERROR_INVALID_HANDLE);
+    if (!fFound) win32::SetLastError(ERROR_INVALID_HANDLE);
     lockFiles.unlock();
     return ret;
 }
 
-LONG WINAPI _llseek(HFILE hf, LONG offset, int origin) {
+LONG WINAPI win32::_llseek(HFILE hf, LONG offset, int origin) {
     COMPATFILE *lp;
     int64_t pos = -1;
 
     std::unique_lock lockFiles(fFileLock); lp = LpFile(hf);
     if (lp) {
-        if (origin < 0 || origin > 2) SetLastError(ERROR_INVALID_PARAMETER);
+        if (origin < 0 || origin > 2) win32::SetLastError(ERROR_INVALID_PARAMETER);
         else {
             pos = LSeekNativeFile(lp->pf, offset, origin);
-            if (pos < 0) SetLastError(DwFileError());
+            if (pos < 0) win32::SetLastError(DwFileError());
         }
     }
     lockFiles.unlock();
     return (LONG)pos;
 }
 
-UINT WINAPI _lread(HFILE hf, LPVOID rgb, UINT cb) {
+UINT WINAPI win32::_lread(HFILE hf, LPVOID rgb, UINT cb) {
     COMPATFILE *lp;
     ssize_t cbRead = -1;
 
     std::unique_lock lockFiles(fFileLock); lp = LpFile(hf);
     if (lp) {
-        if (!(lp->grAccess & 1)) SetLastError(ERROR_ACCESS_DENIED);
-        else if (!rgb && cb != 0) SetLastError(ERROR_INVALID_PARAMETER);
+        if (!(lp->grAccess & 1)) win32::SetLastError(ERROR_ACCESS_DENIED);
+        else if (!rgb && cb != 0) win32::SetLastError(ERROR_INVALID_PARAMETER);
         else {
             do { cbRead = pfnReadFile(lp->pf, rgb, cb); } while (cbRead < 0 && errno == EINTR);
-            if (cbRead < 0) SetLastError(DwFileError());
+            if (cbRead < 0) win32::SetLastError(DwFileError());
         }
     }
     lockFiles.unlock();
     return (UINT)cbRead;
 }
 
-UINT WINAPI _lwrite(HFILE hf, LPCCH rgb, UINT cb) {
+UINT WINAPI win32::_lwrite(HFILE hf, LPCCH rgb, UINT cb) {
     COMPATFILE *lp;
     ssize_t cbWrite = -1;
     int64_t pos;
 
     std::unique_lock lockFiles(fFileLock); lp = LpFile(hf);
     if (lp) {
-        if (!(lp->grAccess & 2)) SetLastError(ERROR_ACCESS_DENIED);
-        else if (!rgb && cb != 0) SetLastError(ERROR_INVALID_PARAMETER);
+        if (!(lp->grAccess & 2)) win32::SetLastError(ERROR_ACCESS_DENIED);
+        else if (!rgb && cb != 0) win32::SetLastError(ERROR_INVALID_PARAMETER);
         else if (cb == 0) {
             pos = LNativePosition(lp->pf);
             if (pos >= 0 && ITruncateNativeFile(lp->pf, pos) == 0) cbWrite = 0;
-            else SetLastError(DwFileError());
+            else win32::SetLastError(DwFileError());
         } else {
             do { cbWrite = CbWriteNativeFile(lp->pf, rgb, cb); } while (cbWrite < 0 && errno == EINTR);
-            if (cbWrite < 0) SetLastError(DwFileError());
+            if (cbWrite < 0) win32::SetLastError(DwFileError());
         }
     }
     lockFiles.unlock();
     return (UINT)cbWrite;
 }
 
-DWORD WINAPI GetFileSize(HANDLE h, LPDWORD lpdwHigh) {
+DWORD WINAPI win32::GetFileSize(HANDLE h, LPDWORD lpdwHigh) {
     COMPATFILE *lp;
     int64_t cb;
     DWORD dw = INVALID_FILE_SIZE;
@@ -214,9 +214,9 @@ DWORD WINAPI GetFileSize(HANDLE h, LPDWORD lpdwHigh) {
     if (lp && (cb = CbNativeFile(lp->pf)) >= 0) {
         dw = (DWORD)(uint64_t)cb;
         if (lpdwHigh) *lpdwHigh = (DWORD)((uint64_t)cb >> 32);
-        SetLastError(NO_ERROR);
-    } else if (lp) SetLastError(DwFileError());
-    else SetLastError(ERROR_INVALID_HANDLE);
+        win32::SetLastError(NO_ERROR);
+    } else if (lp) win32::SetLastError(DwFileError());
+    else win32::SetLastError(ERROR_INVALID_HANDLE);
     lockFiles.unlock();
     return dw;
 }

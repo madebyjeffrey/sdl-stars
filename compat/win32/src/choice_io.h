@@ -5,8 +5,8 @@
 // Effects belong to this module. Defaults delegate to the original functions;
 // scoped bindings own a snapshot and restore the enclosing thread's binding.
 struct COMPATCHOICEIO {
-    decltype(&TrackPopupMenu) pfnTrackPopupMenu = TrackPopupMenu;
-    decltype(&MessageBoxA)    pfnMessageBoxA = MessageBoxA;
+    decltype(&win32::TrackPopupMenu) pfnTrackPopupMenu = win32::TrackPopupMenu;
+    decltype(&win32::MessageBoxA)    pfnMessageBoxA = win32::MessageBoxA;
 };
 const COMPATCHOICEIO &CompatChoiceIO() noexcept;
 class COMPATCHOICEIOSCOPE {

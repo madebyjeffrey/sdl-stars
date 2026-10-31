@@ -87,7 +87,7 @@ int WINAPI StarsTest_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, U
         if (!(type & MB_DEFBUTTON2)) return IDNO;
         return ++cReplaceChoices == 1 ? IDNO : IDYES;
     }
-    return MessageBoxA(hwnd, pszText, pszCaption, type);
+    return win32::MessageBoxA(hwnd, pszText, pszCaption, type);
 }
 int16_t StarsTest_PromptPassword(void) { return TRUE; }
 int16_t StarsTest_AlertSz(const char *sz, int16_t mbType) {
@@ -117,17 +117,17 @@ static void CALLBACK FileWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     int32_t lid;
     (void)hwnd; (void)msg; (void)dwTime;
     if (fRunning) {
-        for (hwndDialog = GetWindow(hwndTitle, GW_HWNDFIRST); hwndDialog; hwndDialog = GetWindow(hwndDialog, GW_HWNDNEXT)) {
-            if (hwndDialog->fDialog && hwndDialog->lpfnDlg == LibraryNameDlg && IsWindowVisible(hwndDialog)) {
-                LUiSendMessage(hwndDialog, WM_COMMAND, IDOK, 0);
+        for (hwndDialog = win32::GetWindow(hwndTitle, GW_HWNDFIRST); hwndDialog; hwndDialog = win32::GetWindow(hwndDialog, GW_HWNDNEXT)) {
+            if (hwndDialog->fDialog && hwndDialog->lpfnDlg == LibraryNameDlg && win32::IsWindowVisible(hwndDialog)) {
+                ui::SendMessage(hwndDialog, WM_COMMAND, IDOK, 0);
                 return;
             }
         }
         return;
     }
     fRunning = TRUE;
-    CHECK(pszRace && pszRaceRepeat && IsWindow(hwndTitle));
-    CHECK(FOpenGame(hwndTitle, FALSE) == 0 && IsWindowVisible(hwndTitle) && IsWindowEnabled(hwndTitle));
+    CHECK(pszRace && pszRaceRepeat && win32::IsWindow(hwndTitle));
+    CHECK(FOpenGame(hwndTitle, FALSE) == 0 && win32::IsWindowVisible(hwndTitle) && win32::IsWindowEnabled(hwndTitle));
     CHECK(!(SDL_GetWindowFlags(hwndTitle->lpWindow.get()) & (SDL_WINDOW_HIDDEN | SDL_WINDOW_MINIMIZED | SDL_WINDOW_NOT_FOCUSABLE)));
     CHECK(FOpenGame(hwndTitle, FALSE) > 0 && game.lid != 0 && lpPlanets && idPlayer != iplrNone);
     lid = game.lid; plrSav = rgplr[idPlayer]; memcpy(szRaceSav, szRaceFile, sizeof(szRaceSav));
@@ -190,12 +190,12 @@ static void CALLBACK FileWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     hwndRaceParent = hwndParentSav;
     fPassed = cAlerts == 1 && (!PszCompatEnvironment("STARS_TEST_FILE_WORKFLOW_COMPAT") || cFileChoices == 9);
 done:
-    KillTimer(NULL, id);
-    PostQuitMessage(fPassed ? 0 : 92);
+    win32::KillTimer(NULL, id);
+    win32::PostQuitMessage(fPassed ? 0 : 92);
 }
 int16_t StarsTest_InitInstance(int16_t nCmdShow) {
     int16_t fResult = InitInstance(nCmdShow);
-    if (fResult) idTimer = SetTimer(NULL, 0, 50, FileWorkflow);
+    if (fResult) idTimer = win32::SetTimer(NULL, 0, 50, FileWorkflow);
     return fResult && idTimer ? fResult : FALSE;
 }
 int main(void) {
@@ -216,8 +216,8 @@ int main(void) {
     io_compatchoiceio.pfnMessageBoxA = StarsTest_MessageBoxA;
     COMPATCHOICEIOSCOPE scope_compatchoiceio(io_compatchoiceio);
 
-    nResult = WinMain(GetModuleHandle(NULL), NULL, szCommand, SW_SHOWNORMAL);
-    if (idTimer) KillTimer(NULL, idTimer);
+    nResult = ui::WinMain(win32::GetModuleHandle(NULL), NULL, szCommand, SW_SHOWNORMAL);
+    if (idTimer) win32::KillTimer(NULL, idTimer);
     StarsCompatProcessExit(); SDL_Quit();
     return nResult == 0 && fPassed ? 0 : 1;
 }

@@ -18,16 +18,16 @@ static LRESULT CALLBACK CaptureProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         if (fDestroyOnChange) { fDestroyOnChange = FALSE; DestroyWindow((HWND)l); }
         return 0;
     }
-    return DefWindowProc(hwnd, msg, w, l);
+    return DefWindowProcA(hwnd, msg, w, l);
 }
 static void Drain(void) {
-    MSG msg;
-    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
+    APPMSG msg;
+    while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
 }
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
 static int TestRouting(HWND hwnd, HWND hwndChild, HWND hwndOther) {
     SDL_Event event = {0};
-    MSG msg;
+    APPMSG msg;
     POINT pt;
     SetFocus(hwndChild);
     Drain();
@@ -37,7 +37,7 @@ static int TestRouting(HWND hwnd, HWND hwndChild, HWND hwndOther) {
     event.motion.x = -12; event.motion.y = -14;
     event.motion.state = SDL_BUTTON_LMASK;
     CHECK(SDL_PushEvent(&event));
-    CHECK(PeekMessage(&msg, NULL, WM_MOUSEMOVE, WM_MOUSEMOVE, PM_REMOVE));
+    CHECK(PeekMessageA(&msg, NULL, WM_MOUSEMOVE, WM_MOUSEMOVE, PM_REMOVE));
     CHECK(msg.hwnd == hwndChild && (int16_t)LOWORD(msg.lParam) == -32 &&
           (int16_t)HIWORD(msg.lParam) == -44 && (msg.wParam & MK_LBUTTON));
     event.motion.windowID = hwndOther->id;
@@ -45,7 +45,7 @@ static int TestRouting(HWND hwnd, HWND hwndChild, HWND hwndOther) {
     pt.x = 5; pt.y = 6;
     CHECK(ClientToScreen(hwndOther, &pt) && ScreenToClient(hwndChild, &pt));
     CHECK(SDL_PushEvent(&event));
-    CHECK(PeekMessage(&msg, NULL, WM_MOUSEMOVE, WM_MOUSEMOVE, PM_REMOVE));
+    CHECK(PeekMessageA(&msg, NULL, WM_MOUSEMOVE, WM_MOUSEMOVE, PM_REMOVE));
     CHECK(msg.hwnd == hwndChild && (int16_t)LOWORD(msg.lParam) == pt.x &&
           (int16_t)HIWORD(msg.lParam) == pt.y);
     event = (SDL_Event){0};
@@ -53,25 +53,25 @@ static int TestRouting(HWND hwnd, HWND hwndChild, HWND hwndOther) {
     event.button.windowID = hwnd->id; event.button.button = SDL_BUTTON_LEFT;
     event.button.x = 150; event.button.y = 160;
     CHECK(SDL_PushEvent(&event));
-    CHECK(PeekMessage(&msg, NULL, WM_LBUTTONUP, WM_LBUTTONUP, PM_REMOVE));
+    CHECK(PeekMessageA(&msg, NULL, WM_LBUTTONUP, WM_LBUTTONUP, PM_REMOVE));
     CHECK(msg.hwnd == hwndChild && LOWORD(msg.lParam) == 130 && HIWORD(msg.lParam) == 130);
     CHECK(ReleaseCapture());
     event.type = SDL_EVENT_MOUSE_MOTION;
     event.motion.windowID = hwnd->id; event.motion.x = 150; event.motion.y = 160;
     CHECK(SDL_PushEvent(&event));
-    CHECK(PeekMessage(&msg, NULL, WM_MOUSEMOVE, WM_MOUSEMOVE, PM_REMOVE) && msg.hwnd == hwnd);
+    CHECK(PeekMessageA(&msg, NULL, WM_MOUSEMOVE, WM_MOUSEMOVE, PM_REMOVE) && msg.hwnd == hwnd);
     SetFocus(hwndOther);
     CHECK(SetCapture(hwndChild) == NULL);
     event.motion.x = 25; event.motion.y = 36;
     CHECK(SDL_PushEvent(&event));
-    CHECK(PeekMessage(&msg, NULL, WM_MOUSEMOVE, WM_MOUSEMOVE, PM_REMOVE));
+    CHECK(PeekMessageA(&msg, NULL, WM_MOUSEMOVE, WM_MOUSEMOVE, PM_REMOVE));
     CHECK(msg.hwnd == hwndChild && LOWORD(msg.lParam) == 5 && HIWORD(msg.lParam) == 6);
     event.motion.x = 150; event.motion.y = 160;
     CHECK(SDL_PushEvent(&event));
-    CHECK(PeekMessage(&msg, NULL, WM_MOUSEMOVE, WM_MOUSEMOVE, PM_REMOVE) && msg.hwnd == hwnd);
+    CHECK(PeekMessageA(&msg, NULL, WM_MOUSEMOVE, WM_MOUSEMOVE, PM_REMOVE) && msg.hwnd == hwnd);
     event.motion.windowID = hwndOther->id;
     CHECK(SDL_PushEvent(&event));
-    CHECK(PeekMessage(&msg, NULL, WM_MOUSEMOVE, WM_MOUSEMOVE, PM_REMOVE) && msg.hwnd == hwndOther);
+    CHECK(PeekMessageA(&msg, NULL, WM_MOUSEMOVE, WM_MOUSEMOVE, PM_REMOVE) && msg.hwnd == hwndOther);
     CHECK(ReleaseCapture());
     SetFocus(hwndChild);
     CHECK(SetCapture(hwndChild) == NULL);
@@ -114,7 +114,7 @@ int main(void) {
     CHECK(ReleaseCapture() && !GetCapture());
     CHECK(hwndLost == hwndOther && !hwndGained && !hwndObserved);
     CHECK(SetCapture(hwndChild) == NULL);
-    SendMessage(hwndChild, WM_CANCELMODE, 0, 0);
+    SendMessageA(hwndChild, WM_CANCELMODE, 0, 0);
     CHECK(!GetCapture() && hwndLost == hwndChild);
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
     CHECK(TestRouting(hwnd, hwndChild, hwndOther) == 0);

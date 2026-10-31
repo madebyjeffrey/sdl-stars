@@ -33,30 +33,30 @@ INT_PTR CALLBACK TutorDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     switch (message) {
     case WM_INITDIALOG:
         tutor.hwnd = hwnd;
-        ControlIO().pfnFUiSetWindowPos(hwnd, (HWND)-1, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
+        ControlIO().pfnSetWindowPos(hwnd, (HWND)-1, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
         ControlIO().pfnStickyDlgPos(hwnd, &ptStickyTutorDlg, TRUE);
         return 1;
     case WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        FillRect((HDC)wParam, &rc, hbrButtonFace);
+        win32::FillRect((HDC)wParam, &rc, hbrButtonFace);
         return 1;
     case WM_PAINT:
         DrawTutorText(hwnd);
         return 1;
     case WM_CHAR:
-        PostMessage(hwndFrame, WM_CHAR, wParam, lParam);
+        win32::PostMessage(hwndFrame, WM_CHAR, wParam, lParam);
         return 0;
     case WM_COMMAND:
         switch (LOWORD(wParam)) {
         case IDC_TUTOR_PANIC:
             lpProc = MakeProcInstance(PanicDlg, hInst);
-            fRet = ControlIO().pfnLUiDialogBox(hInst, MAKEINTRESOURCE(IDD_PANIC), hwnd, lpProc, 0);
+            fRet = ControlIO().pfnDialogBox(hInst, MAKEINTRESOURCE(IDD_PANIC), hwnd, lpProc, 0);
             FreeProcInstance(lpProc);
             if (!fRet) {
                 return 0;
             }
             tutor.fAutoComplete = fRet == 2506;
-            PostMessage(hwndFrame, WM_STARS_CONTINUE, fRet, 0);
+            win32::PostMessage(hwndFrame, WM_STARS_CONTINUE, fRet, 0);
             return 0;
         case IDCANCEL:
             ShowTutor(FALSE);
@@ -66,7 +66,7 @@ INT_PTR CALLBACK TutorDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
             return 1;
         case IDC_TUTOR_HINT:
-            WinHelp(hwnd, szHelpFile, HELP_CONTEXT, (int16_t)tutor.idh);
+            win32::WinHelp(hwnd, szHelpFile, HELP_CONTEXT, (int16_t)tutor.idh);
             return 1;
         default:
             return 0;
@@ -75,7 +75,7 @@ INT_PTR CALLBACK TutorDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
         ControlIO().pfnStickyDlgPos(hwnd, &ptStickyTutorDlg, FALSE);
         tutor.hwnd = 0;
         hmenu = GetASubMenu(hwndFrame, menuHelp);
-        CheckMenuItem(hmenu, IDM_HELP_TUTORIAL, MF_UNCHECKED);
+        win32::CheckMenuItem(hmenu, IDM_HELP_TUTORIAL, MF_UNCHECKED);
         ControlIO().pfnEndDialog(hwnd, 1);
         EndTutor(TRUE);
         return 1;
@@ -90,7 +90,7 @@ INT_PTR CALLBACK PanicDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     switch (message) {
     case WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        FillRect((HDC)wParam, &rc, hbrButtonFace);
+        win32::FillRect((HDC)wParam, &rc, hbrButtonFace);
         return 1;
     case WM_CTLCOLORMSGBOX:
     case WM_CTLCOLOREDIT:
@@ -100,7 +100,7 @@ INT_PTR CALLBACK PanicDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_CTLCOLORSCROLLBAR:
     case WM_CTLCOLORSTATIC:
         if (message == WM_CTLCOLORSTATIC) {
-            SetBkColor((HDC)wParam, crButtonFace);
+            win32::SetBkColor((HDC)wParam, crButtonFace);
             return (INT_PTR)hbrButtonFace;
         }
         break;
@@ -110,7 +110,7 @@ INT_PTR CALLBACK PanicDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
             ControlIO().pfnEndDialog(hwnd, 0);
             return 1;
         case IDC_HELP:
-            WinHelp(hwnd, szHelpFile, HELP_CONTEXT, (int16_t)tutor.idh);
+            win32::WinHelp(hwnd, szHelpFile, HELP_CONTEXT, (int16_t)tutor.idh);
             return 1;
         case IDC_PANIC_REDO_TURN:
         case IDC_PANIC_COMPLETE_TURN:
@@ -126,8 +126,8 @@ void ShowTutor(int16_t fShow) {
     if (tutor.hwnd) {
         // Instruction updates call this while the tutor is already visible;
         // activating it again takes focus from the control the player is using.
-        if (!fShow || !IsWindowVisible(tutor.hwnd))
-            FUiShowWindow(tutor.hwnd, !fShow ? SW_HIDE : SW_SHOW);
+        if (!fShow || !win32::IsWindowVisible(tutor.hwnd))
+            ui::ShowWindow(tutor.hwnd, !fShow ? SW_HIDE : SW_SHOW);
         tutor.fVisible = fShow;
     }
     return;
@@ -145,28 +145,28 @@ void DrawTutorText(HWND hwnd) {
     RECT        rcBtn;
     RECT        rc;
 
-    hdc = BeginPaint(hwnd, &ps);
-    SetBkColor(hdc, crButtonFace);
-    SelectObject(hdc, rghfontArial8[0]);
-    GetWindowRect(hwnd, &rc);
-    GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDCANCEL), &rcBtn);
+    hdc = win32::BeginPaint(hwnd, &ps);
+    win32::SetBkColor(hdc, crButtonFace);
+    win32::SelectObject(hdc, rghfontArial8[0]);
+    win32::GetWindowRect(hwnd, &rc);
+    win32::GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDCANCEL), &rcBtn);
     rc.bottom = rcBtn.top;
-    ScreenToClient(hwnd, (POINT *)&rc);
-    ScreenToClient(hwnd, (POINT *)&rc.right);
+    win32::ScreenToClient(hwnd, (POINT *)&rc);
+    win32::ScreenToClient(hwnd, (POINT *)&rc.right);
     rc.top += dyArial8 * 2;
     rc.bottom -= (int16_t)(dyArial8 * 2) / 3;
     rc.left += (int16_t)(dyArial8 * 2) / 3;
     rc.right -= (int16_t)(dyArial8 * 2) / 3;
-    SelectObject(hdc, hbrButtonShadow);
-    PatBlt(hdc, rc.left, rc.top, rc.right - rc.left, 1, PATCOPY);
-    PatBlt(hdc, rc.left, rc.top, 1, rc.bottom - rc.top, PATCOPY);
-    SelectObject(hdc, hbrButtonHilite);
-    PatBlt(hdc, rc.left, rc.bottom - 1, rc.right - rc.left, 1, PATCOPY);
-    PatBlt(hdc, rc.right - 1, rc.top, 1, rc.bottom - rc.top, PATCOPY);
+    win32::SelectObject(hdc, hbrButtonShadow);
+    win32::PatBlt(hdc, rc.left, rc.top, rc.right - rc.left, 1, PATCOPY);
+    win32::PatBlt(hdc, rc.left, rc.top, 1, rc.bottom - rc.top, PATCOPY);
+    win32::SelectObject(hdc, hbrButtonHilite);
+    win32::PatBlt(hdc, rc.left, rc.bottom - 1, rc.right - rc.left, 1, PATCOPY);
+    win32::PatBlt(hdc, rc.right - 1, rc.top, 1, rc.bottom - rc.top, PATCOPY);
     ExpandRc(&rc, -(dyArial8 / 2), -(dyArial8 / 2));
     yTop = rc.top;
-    FillRect(hdc, &rc, hbrButtonFace);
-    SetTextColor(hdc, crButtonText);
+    win32::FillRect(hdc, &rc, hbrButtonFace);
+    win32::SetTextColor(hdc, crButtonText);
     for (didt = 0; didt < 8; didt++) {
         cch = CchTutorString(rgch, static_cast<TutorId>(tutor.idt + didt));
         if (cch == 1)
@@ -179,16 +179,16 @@ void DrawTutorText(HWND hwnd) {
             }
         }
         if (tutor.idt + didt == tutor.idtBold) {
-            SetTextColor(hdc, crButtonFace);
-            SetBkColor(hdc, crButtonText);
+            win32::SetTextColor(hdc, crButtonFace);
+            win32::SetBkColor(hdc, crButtonText);
         }
         WrapTextOut(hdc, &xLeft, &yTop, rgch, cch, rc.left, rc.right - rc.left, NULL, didt != 0 && fPara != 0, TRUE);
         if (tutor.idt + didt == tutor.idtBold) {
-            SetTextColor(hdc, crButtonText);
-            SetBkColor(hdc, crButtonFace);
+            win32::SetTextColor(hdc, crButtonText);
+            win32::SetBkColor(hdc, crButtonFace);
         }
     }
-    EndPaint(hwnd, &ps);
+    win32::EndPaint(hwnd, &ps);
     return;
 }
 
@@ -209,12 +209,12 @@ void StartTutor(int16_t fRestart) {
         SaveGameState();
         if (!fFreeingTitle) {
             fFreeingTitle = TRUE;
-            ControlIO().pfnFUiDestroyWindow(hwndTitle);
+            ControlIO().pfnDestroyWindow(hwndTitle);
             hwndTitle = 0;
-            FUiShowWindow(hwndFrame, SW_SHOW);
+            ui::ShowWindow(hwndFrame, SW_SHOW);
         }
         grbitScan = static_cast<GrbitScan>(grbitScanCoverage | grbitScanMineFields | grbitScanFleetPaths | grbitScanPlanetNames);
-        cx = GetSystemMetrics(SM_CXSCREEN);
+        cx = win32::GetSystemMetrics(SM_CXSCREEN);
         if (cx >= 1280) {
             iScanZoom = zoom200;
         } else if (cx >= 1024) {
@@ -247,13 +247,13 @@ void StartTutor(int16_t fRestart) {
                 gd.fChgZipProd = TRUE;
             }
             InitializeMenu(NULL);
-            PostMessage(hwndFrame, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
+            win32::PostMessage(hwndFrame, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
             if (!fFreeingTitle) {
                 fFreeingTitle = TRUE;
-                ControlIO().pfnFUiDestroyWindow(hwndTitle);
+                ControlIO().pfnDestroyWindow(hwndTitle);
                 hwndTitle = 0;
             }
-            FUiShowWindow(hwndFrame, SW_SHOW);
+            ui::ShowWindow(hwndFrame, SW_SHOW);
         }
         tutor.idsError = -1;
         tutor.fShowHidMsg = TRUE;
@@ -268,7 +268,7 @@ void StartTutor(int16_t fRestart) {
             return;
         }
         if (!tutor.hwnd) {
-            HwndUiCreateDialog(hInst, MAKEINTRESOURCE(IDD_TUTOR), hwndFrame, lpfnTutorDlgProc);
+            ui::CreateDialog(hInst, MAKEINTRESOURCE(IDD_TUTOR), hwndFrame, lpfnTutorDlgProc);
         }
         if (tutor.idt != idtWelcomeStarsTutorialWillGuideThrough36) {
             if (!tutor.fTurnDone) {
@@ -325,12 +325,12 @@ void AdvanceTutor() {
         return;
     }
 LUpdatePage:
-    wsprintf(szTitle, TextIO().pfnCompressed(idsStarsTutorPageD80), (int16_t)tutor.idt / 8 + 1);
-    ControlIO().pfnFUiSetWindowText(tutor.hwnd, szTitle);
+    win32::wsprintf(szTitle, TextIO().pfnCompressed(idsStarsTutorPageD80), (int16_t)tutor.idt / 8 + 1);
+    ControlIO().pfnSetWindowText(tutor.hwnd, szTitle);
     ShowTutor(TRUE);
-    GetWindowRect(tutor.hwnd, &rc);
-    ScreenToClient(tutor.hwnd, (POINT *)&rc);
-    ScreenToClient(tutor.hwnd, (POINT *)&rc.right);
+    win32::GetWindowRect(tutor.hwnd, &rc);
+    win32::ScreenToClient(tutor.hwnd, (POINT *)&rc);
+    win32::ScreenToClient(tutor.hwnd, (POINT *)&rc.right);
     ExpandRc(&rc, -dyArial8, -2 * dyArial8);
     ControlIO().pfnInvalidateRect(tutor.hwnd, &rc, TRUE);
     return;
@@ -340,7 +340,7 @@ void EndTutor(int16_t fClose) {
     if (gd.fTutorial) {
         gd.fTutorial = FALSE;
         if (tutor.hwnd) {
-            ControlIO().pfnFUiDestroyWindow(tutor.hwnd);
+            ControlIO().pfnDestroyWindow(tutor.hwnd);
         }
         game.fTutorial = FALSE;
         if (fClose) {
@@ -349,7 +349,7 @@ void EndTutor(int16_t fClose) {
             tutor.fFreeing = TRUE;
         }
         memset(&tutor, 0, sizeof(TUTOR));
-        Randomize2(GetTickCount());
+        Randomize2(win32::GetTickCount());
     }
     return;
 }
@@ -368,7 +368,7 @@ void SaveGameState() {
     if (!gd.fToolbar) {
         hmenu = GetASubMenu(hwndFrame, menuView);
         gd.fToolbar = gd.fToolbar == 0;
-        CheckMenuItem(hmenu, IDM_VIEW_TOOLBAR, !gd.fToolbar ? MF_UNCHECKED : MF_CHECKED);
+        win32::CheckMenuItem(hmenu, IDM_VIEW_TOOLBAR, !gd.fToolbar ? MF_UNCHECKED : MF_CHECKED);
         ControlIO().pfnRefitFrameChildren();
     }
     tutor.icolFSort = vrptFleet.icolSort;
@@ -397,7 +397,7 @@ void RestoreGameState() {
     if (gd.fToolbar != tutor.fTBVis) {
         hmenu = GetASubMenu(hwndFrame, menuView);
         gd.fToolbar = gd.fToolbar == 0;
-        CheckMenuItem(hmenu, IDM_VIEW_TOOLBAR, !gd.fToolbar ? MF_UNCHECKED : MF_CHECKED);
+        win32::CheckMenuItem(hmenu, IDM_VIEW_TOOLBAR, !gd.fToolbar ? MF_UNCHECKED : MF_CHECKED);
         ControlIO().pfnRefitFrameChildren();
     }
     if (vrptFleet.icolSort != tutor.icolFSort) {
@@ -1075,7 +1075,7 @@ int16_t FTutorTaskDone() {
                         return TRUE;
                     }
                     if (FCheckSelection(grobjFleet, 11) && sel.fl.lpplord->rgord()[sel.iwpAct].grTask == grTaskXfer &&
-                        ControlIO().pfnLUiSendMessage(rghwndOrderDD[1], CB_GETCURSEL, 0, 0) == 4) {
+                        ControlIO().pfnSendMessage(rghwndOrderDD[1], CB_GETCURSEL, 0, 0) == 4) {
                         tutor.idtBold = idtThirdUnload;
                     } else {
                         tutor.idtBold = idtSetSecondDropdownWaypointTaskTileColonists;
@@ -2795,7 +2795,7 @@ int16_t FCheckShipBuilder(int16_t iCategory, int16_t iShip) {
     if (iCategory != iCategoryAny && iCategory != mdBuild) {
         return FALSE;
     }
-    iSel = LOWORD(ControlIO().pfnLUiSendMessage(ControlIO().pfnGetDlgItem(hwndSlotDlg, IDC_COMBOBOX), CB_GETCURSEL, 0, 0));
+    iSel = LOWORD(ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwndSlotDlg, IDC_COMBOBOX), CB_GETCURSEL, 0, 0));
     if (iShip == iShipAny || iShip == iSel) {
         tutor.idh = static_cast<HelpContextId>(idhSav);
         return TRUE;

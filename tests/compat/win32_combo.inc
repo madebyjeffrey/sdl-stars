@@ -25,17 +25,17 @@ static LRESULT CALLBACK ComboOwner(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     if (msg == WM_DRAWITEM) {
         lpds = (DRAWITEMSTRUCT *)l; cDraw++;
         if (lpds->CtlType != ODT_COMBOBOX) cErrors++;
-        if (lpds->itemID != (UINT)-1 && lpds->itemID >= (UINT)SendMessage(lpds->hwndItem, CB_GETCOUNT, 0, 0)) cErrors++;
+        if (lpds->itemID != (UINT)-1 && lpds->itemID >= (UINT)SendMessageA(lpds->hwndItem, CB_GETCOUNT, 0, 0)) cErrors++;
         if (lpds->itemID != (UINT)-1 &&
-            SendMessage(lpds->hwndItem, CB_GETLBTEXT, lpds->itemID, (LPARAM)szItem) < 0) cErrors++;
+            SendMessageA(lpds->hwndItem, CB_GETLBTEXT, lpds->itemID, (LPARAM)szItem) < 0) cErrors++;
         FillRect(lpds->hDC, &lpds->rcItem, (HBRUSH)GetStockObject(WHITE_BRUSH));
-        if (fResetDraw) { fResetDraw = FALSE; SendMessage(lpds->hwndItem, CB_RESETCONTENT, 0, 0); }
+        if (fResetDraw) { fResetDraw = FALSE; SendMessageA(lpds->hwndItem, CB_RESETCONTENT, 0, 0); }
         if (fDestroyDraw) { fDestroyDraw = FALSE; DestroyWindow(lpds->hwndItem); }
         return TRUE;
     }
-    return DefWindowProc(hwnd, msg, w, l);
+    return DefWindowProcA(hwnd, msg, w, l);
 }
-static void Drain(void) { MSG msg; while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) { TranslateMessage(&msg); DispatchMessage(&msg); } }
+static void Drain(void) { APPMSG msg; while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) { TranslateMessage(&msg); DispatchMessageA(&msg); } }
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
 static BOOL FComboButtonPainted(HWND hwnd, BOOL fDown) {
     RECT rc;
@@ -72,7 +72,7 @@ int main(void) {
     char sz[64], szBefore[64];
     int i, cBefore, cDialogs = 0;
     BYTE rgKeys[256] = {0};
-    MSG msg = {0};
+    APPMSG msg = {0};
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
     RECT rcField;
     SDL_Event event = {0};
@@ -96,52 +96,52 @@ int main(void) {
 #endif
     CHECK(GetWindowRect(hcb, &rc) && rc.bottom - rc.top < 100);
     cBefore = cSel;
-    CHECK(SendMessage(hcb, CB_GETCURSEL, 0, 0) == CB_ERR);
-    CHECK(SendMessage(hcb, CB_ADDSTRING, 0, (LPARAM)"Alpha") == 0);
-    CHECK(SendMessage(hcb, CB_ADDSTRING, 0, (LPARAM)"Beta") == 1);
-    CHECK(SendMessage(hcb, CB_INSERTSTRING, 1, (LPARAM)"Azure") == 1);
-    CHECK(SendMessage(hcb, CB_GETCOUNT, 0, 0) == 3 && SendMessage(hother, CB_GETCOUNT, 0, 0) == 0);
-    CHECK(SendMessage(hcb, CB_SETITEMDATA, 2, 123456) != CB_ERR && SendMessage(hcb, CB_GETITEMDATA, 2, 0) == 123456);
-    CHECK(SendMessage(hcb, CB_GETLBTEXTLEN, 1, 0) == 5 && SendMessage(hcb, CB_GETLBTEXT, 1, (LPARAM)sz) == 5 && strcmp(sz, "Azure") == 0);
-    CHECK(SendMessage(hcb, CB_FINDSTRING, -1, (LPARAM)"az") == 1);
-    CHECK(SendMessage(hcb, CB_FINDSTRINGEXACT, -1, (LPARAM)"beta") == 2);
-    CHECK(SendMessage(hcb, CB_SETCURSEL, 2, 0) == 2 && GetWindowText(hcb, sz, sizeof(sz)) == 4 && strcmp(sz, "Beta") == 0);
+    CHECK(SendMessageA(hcb, CB_GETCURSEL, 0, 0) == CB_ERR);
+    CHECK(SendMessageA(hcb, CB_ADDSTRING, 0, (LPARAM)"Alpha") == 0);
+    CHECK(SendMessageA(hcb, CB_ADDSTRING, 0, (LPARAM)"Beta") == 1);
+    CHECK(SendMessageA(hcb, CB_INSERTSTRING, 1, (LPARAM)"Azure") == 1);
+    CHECK(SendMessageA(hcb, CB_GETCOUNT, 0, 0) == 3 && SendMessageA(hother, CB_GETCOUNT, 0, 0) == 0);
+    CHECK(SendMessageA(hcb, CB_SETITEMDATA, 2, 123456) != CB_ERR && SendMessageA(hcb, CB_GETITEMDATA, 2, 0) == 123456);
+    CHECK(SendMessageA(hcb, CB_GETLBTEXTLEN, 1, 0) == 5 && SendMessageA(hcb, CB_GETLBTEXT, 1, (LPARAM)sz) == 5 && strcmp(sz, "Azure") == 0);
+    CHECK(SendMessageA(hcb, CB_FINDSTRING, -1, (LPARAM)"az") == 1);
+    CHECK(SendMessageA(hcb, CB_FINDSTRINGEXACT, -1, (LPARAM)"beta") == 2);
+    CHECK(SendMessageA(hcb, CB_SETCURSEL, 2, 0) == 2 && GetWindowText(hcb, sz, sizeof(sz)) == 4 && strcmp(sz, "Beta") == 0);
     CHECK(cSel == cBefore);
-    CHECK(SendMessage(hcb, CB_DELETESTRING, 0, 0) == 2 && SendMessage(hcb, CB_GETCURSEL, 0, 0) == 1);
-    CHECK(SendMessage(hcb, CB_SETCURSEL, -1, 0) == CB_ERR && GetWindowText(hcb, sz, sizeof(sz)) == 0);
-    CHECK(SendMessage(hcb, CB_SELECTSTRING, -1, (LPARAM)"Az") == 0);
-    SetFocus(hcb); SendMessage(hcb, WM_KEYDOWN, VK_DOWN, 0);
-    CHECK(SendMessage(hcb, CB_GETCURSEL, 0, 0) == 1 && cSel > cBefore);
-    CHECK(SendMessage(hedit, CB_ADDSTRING, 0, (LPARAM)"Ten") == 0 && SendMessage(hedit, CB_ADDSTRING, 0, (LPARAM)"Twenty") == 1);
-    CHECK(SendMessage(hedit, CB_SETCURSEL, 1, 0) == 1 && GetWindowText(hedit, sz, sizeof(sz)) == 6 && strcmp(sz, "Twenty") == 0);
-    CHECK(SetWindowText(hedit, "custom") && GetWindowText(hedit, sz, sizeof(sz)) == 6 && strcmp(sz, "custom") == 0);
+    CHECK(SendMessageA(hcb, CB_DELETESTRING, 0, 0) == 2 && SendMessageA(hcb, CB_GETCURSEL, 0, 0) == 1);
+    CHECK(SendMessageA(hcb, CB_SETCURSEL, -1, 0) == CB_ERR && GetWindowText(hcb, sz, sizeof(sz)) == 0);
+    CHECK(SendMessageA(hcb, CB_SELECTSTRING, -1, (LPARAM)"Az") == 0);
+    SetFocus(hcb); SendMessageA(hcb, WM_KEYDOWN, VK_DOWN, 0);
+    CHECK(SendMessageA(hcb, CB_GETCURSEL, 0, 0) == 1 && cSel > cBefore);
+    CHECK(SendMessageA(hedit, CB_ADDSTRING, 0, (LPARAM)"Ten") == 0 && SendMessageA(hedit, CB_ADDSTRING, 0, (LPARAM)"Twenty") == 1);
+    CHECK(SendMessageA(hedit, CB_SETCURSEL, 1, 0) == 1 && GetWindowText(hedit, sz, sizeof(sz)) == 6 && strcmp(sz, "Twenty") == 0);
+    CHECK(SetWindowTextA(hedit, "custom") && GetWindowText(hedit, sz, sizeof(sz)) == 6 && strcmp(sz, "custom") == 0);
     hchild = GetWindow(hedit, GW_CHILD); CHECK(hchild);
-    SetFocus(hchild); SendMessage(hchild, WM_CHAR, 'x', 0);
-    CHECK(SendMessage(hedit, CB_GETCURSEL, 0, 0) == CB_ERR);
+    SetFocus(hchild); SendMessageA(hchild, WM_CHAR, 'x', 0);
+    CHECK(SendMessageA(hedit, CB_GETCURSEL, 0, 0) == CB_ERR);
     CHECK(GetWindowText(hedit, szBefore, sizeof(szBefore)) > 0);
-    CHECK(SendMessage(hedit, CB_ADDSTRING, 0, (LPARAM)"Thirty") == 2);
+    CHECK(SendMessageA(hedit, CB_ADDSTRING, 0, (LPARAM)"Thirty") == 2);
     CHECK(GetWindowText(hedit, sz, sizeof(sz)) > 0 && strcmp(sz, szBefore) == 0);
-    SetFocus(hchild); SendMessage(hchild, WM_KEYDOWN, VK_UP, 0);
-    CHECK(SendMessage(hedit, CB_GETCURSEL, 0, 0) >= 0);
-    CHECK(SendMessage(howner, CB_GETITEMHEIGHT, 0, 0) == 18);
-    CHECK(SendMessage(howner, CB_ADDSTRING, 0, (LPARAM)"Ship") == 0 && SendMessage(howner, CB_SETCURSEL, 0, 0) == 0);
+    SetFocus(hchild); SendMessageA(hchild, WM_KEYDOWN, VK_UP, 0);
+    CHECK(SendMessageA(hedit, CB_GETCURSEL, 0, 0) >= 0);
+    CHECK(SendMessageA(howner, CB_GETITEMHEIGHT, 0, 0) == 18);
+    CHECK(SendMessageA(howner, CB_ADDSTRING, 0, (LPARAM)"Ship") == 0 && SendMessageA(howner, CB_SETCURSEL, 0, 0) == 0);
     InvalidateRect(howner, NULL, TRUE); UpdateWindow(howner); CHECK(cDraw > 0 && cErrors == 0);
     puts("Combo data, edit and owner-draw contracts passed");
     SetFocus(hcb); cBefore = cDrop;
-    SendMessage(hcb, CB_SHOWDROPDOWN, TRUE, 0); CHECK(SendMessage(hcb, CB_GETDROPPEDSTATE, 0, 0) && cDrop == cBefore + 1);
-    SendMessage(hcb, WM_KEYDOWN, VK_ESCAPE, 0); CHECK(!SendMessage(hcb, CB_GETDROPPEDSTATE, 0, 0) && cClose > 0);
-    CHECK(SendMessage(hcb, CB_SETEXTENDEDUI, TRUE, 0) == CB_OKAY && SendMessage(hcb, CB_GETEXTENDEDUI, 0, 0));
-    SendMessage(hcb, WM_KEYDOWN, VK_F4, 0); CHECK(!SendMessage(hcb, CB_GETDROPPEDSTATE, 0, 0));
-    SendMessage(hcb, WM_KEYDOWN, VK_DOWN, 0); CHECK(SendMessage(hcb, CB_GETDROPPEDSTATE, 0, 0));
-    SendMessage(hcb, WM_KEYDOWN, VK_ESCAPE, 0); CHECK(SendMessage(hcb, CB_SETEXTENDEDUI, FALSE, 0) == CB_OKAY);
+    SendMessageA(hcb, CB_SHOWDROPDOWN, TRUE, 0); CHECK(SendMessageA(hcb, CB_GETDROPPEDSTATE, 0, 0) && cDrop == cBefore + 1);
+    SendMessageA(hcb, WM_KEYDOWN, VK_ESCAPE, 0); CHECK(!SendMessageA(hcb, CB_GETDROPPEDSTATE, 0, 0) && cClose > 0);
+    CHECK(SendMessageA(hcb, CB_SETEXTENDEDUI, TRUE, 0) == CB_OKAY && SendMessageA(hcb, CB_GETEXTENDEDUI, 0, 0));
+    SendMessageA(hcb, WM_KEYDOWN, VK_F4, 0); CHECK(!SendMessageA(hcb, CB_GETDROPPEDSTATE, 0, 0));
+    SendMessageA(hcb, WM_KEYDOWN, VK_DOWN, 0); CHECK(SendMessageA(hcb, CB_GETDROPPEDSTATE, 0, 0));
+    SendMessageA(hcb, WM_KEYDOWN, VK_ESCAPE, 0); CHECK(SendMessageA(hcb, CB_SETEXTENDEDUI, FALSE, 0) == CB_OKAY);
     // Stars' selection handler returns focus to the frame during CBN_SELCHANGE.
-    CHECK(SendMessage(hcb, CB_SETCURSEL, 0, 0) == 0);
-    SetFocus(hcb); SendMessage(hcb, CB_SHOWDROPDOWN, TRUE, 0);
-    SendMessage(hcb, WM_KEYDOWN, VK_DOWN, 0);
+    CHECK(SendMessageA(hcb, CB_SETCURSEL, 0, 0) == 0);
+    SetFocus(hcb); SendMessageA(hcb, CB_SHOWDROPDOWN, TRUE, 0);
+    SendMessageA(hcb, WM_KEYDOWN, VK_DOWN, 0);
     fFocusOnSelect = TRUE;
-    SendMessage(hcb, WM_KEYDOWN, VK_RETURN, 0);
+    SendMessageA(hcb, WM_KEYDOWN, VK_RETURN, 0);
     fFocusOnSelect = FALSE;
-    CHECK(!SendMessage(hcb, CB_GETDROPPEDSTATE, 0, 0) && SendMessage(hcb, CB_GETCURSEL, 0, 0) == 1);
+    CHECK(!SendMessageA(hcb, CB_GETDROPPEDSTATE, 0, 0) && SendMessageA(hcb, CB_GETCURSEL, 0, 0) == 1);
     puts("Combo popup open/close contracts passed");
     for (i = 0; i < (int)(sizeof(rgUIManifest) / sizeof(rgUIManifest[0])); i++) {
         if ((UINT_PTR)rgUIManifest[i].pszType != 5) continue;
@@ -156,16 +156,16 @@ int main(void) {
     SetFocus(GetWindow(hchild, GW_CHILD));
     msg.hwnd = GetFocus(); msg.message = WM_KEYDOWN; msg.wParam = VK_TAB;
     rgKeys[VK_SHIFT] = 0x80; CHECK(SetKeyboardState(rgKeys));
-    CHECK(IsDialogMessage(hdlg, &msg) && GetFocus() == GetDlgItem(hdlg, IDC_HELP));
+    CHECK(IsDialogMessageA(hdlg, &msg) && GetFocus() == GetDlgItem(hdlg, IDC_HELP));
     rgKeys[VK_SHIFT] = 0; CHECK(SetKeyboardState(rgKeys)); CHECK(DestroyWindow(hdlg));
     Drain();
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
     // Real SDL events arriving on the popup route through capture to the combo.
     CHECK(FComboButtonPainted(hcb, FALSE));
-    SetFocus(hcb); SendMessage(hcb, CB_SHOWDROPDOWN, TRUE, 0);
+    SetFocus(hcb); SendMessageA(hcb, CB_SHOWDROPDOWN, TRUE, 0);
     CHECK(hcb->lpcombo->hwndPopup && GetCapture() == hcb);
     CHECK(FComboButtonPainted(hcb, TRUE));
-    CHECK(FPopupTextPainted(hcb->lpcombo->hwndPopup, (int)SendMessage(hcb, CB_GETITEMHEIGHT, 0, 0)));
+    CHECK(FPopupTextPainted(hcb->lpcombo->hwndPopup, (int)SendMessageA(hcb, CB_GETITEMHEIGHT, 0, 0)));
     if (strcmp(SDL_GetCurrentVideoDriver(), "dummy") != 0) {
         CHECK(SDL_GetWindowFlags(hcb->lpcombo->hwndPopup->lpWindow.get()) & SDL_WINDOW_POPUP_MENU);
         CHECK(SDL_GetWindowParent(hcb->lpcombo->hwndPopup->lpWindow.get()) == hwnd->lpWindow.get());
@@ -187,45 +187,45 @@ int main(void) {
     CHECK(hcb->lpcombo->hwndPopup && GetCapture() == hcb);
     CHECK(GetFocus() == hcb && hcb->lpcombo->hwndPopup->lpCanvas.get());
     cBefore = cSel;
-    CHECK(SendMessage(hcb, CB_GETCURSEL, 0, 0) == 1);
+    CHECK(SendMessageA(hcb, CB_GETCURSEL, 0, 0) == 1);
     event.type = SDL_EVENT_MOUSE_MOTION; event.motion.windowID = hcb->lpcombo->hwndPopup->id;
     event.motion.x = 4; event.motion.y = 4;
     CompatRouteEvent(&event); Drain();
-    CHECK(hcb->lpcombo->iHot == 0 && SendMessage(hcb, CB_GETCURSEL, 0, 0) == 1 && cSel == cBefore);
-    SendMessage(hcb, WM_KEYDOWN, VK_ESCAPE, 0);
-    CHECK(SendMessage(hcb, CB_GETCURSEL, 0, 0) == 1 && cSel == cBefore);
+    CHECK(hcb->lpcombo->iHot == 0 && SendMessageA(hcb, CB_GETCURSEL, 0, 0) == 1 && cSel == cBefore);
+    SendMessageA(hcb, WM_KEYDOWN, VK_ESCAPE, 0);
+    CHECK(SendMessageA(hcb, CB_GETCURSEL, 0, 0) == 1 && cSel == cBefore);
     CHECK(FComboButtonPainted(hcb, FALSE));
-    SendMessage(hcb, CB_SHOWDROPDOWN, TRUE, 0);
-    SendMessage(hcb, WM_KEYDOWN, VK_HOME, 0);
-    SendMessage(hcb, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(-1, -1));
-    CHECK(!SendMessage(hcb, CB_GETDROPPEDSTATE, 0, 0) && SendMessage(hcb, CB_GETCURSEL, 0, 0) == 1 && cSel == cBefore);
-    SendMessage(hcb, CB_SHOWDROPDOWN, TRUE, 0);
-    SendMessage(hcb, WM_KEYDOWN, VK_HOME, 0);
-    CHECK(SendMessage(hcb, CB_GETCURSEL, 0, 0) == 1 && cSel == cBefore);
-    SendMessage(hcb, WM_KEYDOWN, VK_RETURN, 0);
-    CHECK(SendMessage(hcb, CB_GETCURSEL, 0, 0) == 0 && cSel == cBefore + 1);
-    SendMessage(hcb, CB_SETCURSEL, 1, 0);
-    SendMessage(hcb, CB_SHOWDROPDOWN, TRUE, 0);
+    SendMessageA(hcb, CB_SHOWDROPDOWN, TRUE, 0);
+    SendMessageA(hcb, WM_KEYDOWN, VK_HOME, 0);
+    SendMessageA(hcb, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(-1, -1));
+    CHECK(!SendMessageA(hcb, CB_GETDROPPEDSTATE, 0, 0) && SendMessageA(hcb, CB_GETCURSEL, 0, 0) == 1 && cSel == cBefore);
+    SendMessageA(hcb, CB_SHOWDROPDOWN, TRUE, 0);
+    SendMessageA(hcb, WM_KEYDOWN, VK_HOME, 0);
+    CHECK(SendMessageA(hcb, CB_GETCURSEL, 0, 0) == 1 && cSel == cBefore);
+    SendMessageA(hcb, WM_KEYDOWN, VK_RETURN, 0);
+    CHECK(SendMessageA(hcb, CB_GETCURSEL, 0, 0) == 0 && cSel == cBefore + 1);
+    SendMessageA(hcb, CB_SETCURSEL, 1, 0);
+    SendMessageA(hcb, CB_SHOWDROPDOWN, TRUE, 0);
     cBefore = cSel;
     memset(&event, 0, sizeof(event));
     event.type = SDL_EVENT_MOUSE_BUTTON_UP; event.button.windowID = hcb->lpcombo->hwndPopup->id;
     event.button.button = SDL_BUTTON_LEFT; event.button.x = 4; event.button.y = 4;
-    CompatRouteEvent(&event); Drain(); CHECK(!SendMessage(hcb, CB_GETDROPPEDSTATE, 0, 0) && SendMessage(hcb, CB_GETCURSEL, 0, 0) == 0 && cSel == cBefore + 1);
-    SendMessage(howner, CB_ADDSTRING, 0, (LPARAM)"Scout");
-    SetFocus(howner); SendMessage(howner, CB_SHOWDROPDOWN, TRUE, 0); CHECK(howner->lpcombo->hwndPopup);
+    CompatRouteEvent(&event); Drain(); CHECK(!SendMessageA(hcb, CB_GETDROPPEDSTATE, 0, 0) && SendMessageA(hcb, CB_GETCURSEL, 0, 0) == 0 && cSel == cBefore + 1);
+    SendMessageA(howner, CB_ADDSTRING, 0, (LPARAM)"Scout");
+    SetFocus(howner); SendMessageA(howner, CB_SHOWDROPDOWN, TRUE, 0); CHECK(howner->lpcombo->hwndPopup);
     InvalidateRect(howner->lpcombo->hwndPopup, NULL, TRUE); UpdateWindow(howner->lpcombo->hwndPopup);
     CHECK(!GetUpdateRect(howner->lpcombo->hwndPopup, NULL, FALSE));
-    CHECK(SendMessage(howner, CB_GETCOUNT, 0, 0) > 0);
-    CHECK(SendMessage(howner, CB_GETLBTEXTLEN, 0, 0) >= 0);
-    CHECK(SendMessage(howner, CB_GETITEMDATA, 0, 0) != CB_ERR);
+    CHECK(SendMessageA(howner, CB_GETCOUNT, 0, 0) > 0);
+    CHECK(SendMessageA(howner, CB_GETLBTEXTLEN, 0, 0) >= 0);
+    CHECK(SendMessageA(howner, CB_GETITEMDATA, 0, 0) != CB_ERR);
     CHECK(!GetUpdateRect(howner->lpcombo->hwndPopup, NULL, FALSE));
     fResetDraw = TRUE; InvalidateRect(howner->lpcombo->hwndPopup, NULL, TRUE); UpdateWindow(howner->lpcombo->hwndPopup);
-    CHECK(SendMessage(howner, CB_GETCOUNT, 0, 0) == 0 && cErrors == 0); SendMessage(howner, CB_SHOWDROPDOWN, FALSE, 0);
-    SendMessage(howner, CB_ADDSTRING, 0, (LPARAM)"Scout"); SendMessage(howner, CB_SETCURSEL, 0, 0);
-    fDestroyDraw = TRUE; SendMessage(howner, CB_SHOWDROPDOWN, TRUE, 0);
+    CHECK(SendMessageA(howner, CB_GETCOUNT, 0, 0) == 0 && cErrors == 0); SendMessageA(howner, CB_SHOWDROPDOWN, FALSE, 0);
+    SendMessageA(howner, CB_ADDSTRING, 0, (LPARAM)"Scout"); SendMessageA(howner, CB_SETCURSEL, 0, 0);
+    fDestroyDraw = TRUE; SendMessageA(howner, CB_SHOWDROPDOWN, TRUE, 0);
     CHECK(!IsWindow(howner) && GetCapture() != howner);
 #endif
-    fDestroyDrop = TRUE; SendMessage(hother, CB_SHOWDROPDOWN, TRUE, 0); fDestroyDrop = FALSE;
+    fDestroyDrop = TRUE; SendMessageA(hother, CB_SHOWDROPDOWN, TRUE, 0); fDestroyDrop = FALSE;
     CHECK(!IsWindow(hother));
     CHECK(DestroyWindow(hwnd));
 #if !defined(_WIN32) || defined(STARS_UI_SDL)

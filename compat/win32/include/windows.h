@@ -24,8 +24,6 @@
 #define PALETTERGB(r, g, b) (RGB(r, g, b) | UINT32_C(0x02000000))
 #include "value.h"
 #define CreateWindow(c, t, s, x, y, w, h, p, m, i, d) CreateWindowExA(0, c, t, s, x, y, w, h, p, m, i, d)
-#define CreateDialog(i, t, p, f) CreateDialogParamA(i, t, p, f, 0)
-#define DialogBox(i, t, p, f) DialogBoxParamA(i, t, p, f, 0)
 #define CreateDialogParam CreateDialogParamA
 #define DialogBoxParam DialogBoxParamA
 #define MakeProcInstance(f, i) (f)

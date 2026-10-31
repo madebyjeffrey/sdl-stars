@@ -1,4 +1,6 @@
 #include "win.h"
+using namespace win32;
+using APPMSG = win32::MSG;
 // Type checking only: these APIs belong to the retired native Win32 backend.
 namespace HistoricalWin32 {
 [[noreturn]] void ExitProcess(UINT);

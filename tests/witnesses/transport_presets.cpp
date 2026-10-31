@@ -213,12 +213,12 @@ int main(void) {
     unsigned char header[8];
     CONTROLIO     ioControl;
     ioControl.pfnGetDlgItem = WITNESSADAPTER<&TestGetDlgItem, decltype(ioControl.pfnGetDlgItem)>::Call;
-    ioControl.pfnLUiSendMessage = WITNESSADAPTER<&TestLUiSendMessage, decltype(ioControl.pfnLUiSendMessage)>::Call;
+    ioControl.pfnSendMessage = WITNESSADAPTER<&TestLUiSendMessage, decltype(ioControl.pfnSendMessage)>::Call;
     ioControl.pfnInvalidateRect = WITNESSADAPTER<&TestInvalidateRect, decltype(ioControl.pfnInvalidateRect)>::Call;
-    ioControl.pfnFUiSetWindowText = WITNESSADAPTER<&TestFUiSetWindowText, decltype(ioControl.pfnFUiSetWindowText)>::Call;
-    ioControl.pfnHwndUiSetFocus = WITNESSADAPTER<&TestHwndUiSetFocus, decltype(ioControl.pfnHwndUiSetFocus)>::Call;
-    ioControl.pfnFUiEnableWindow = WITNESSADAPTER<&TestFUiEnableWindow, decltype(ioControl.pfnFUiEnableWindow)>::Call;
-    ioControl.pfnLUiDialogBox = WITNESSADAPTER<&TestLUiDialogBox, decltype(ioControl.pfnLUiDialogBox)>::Call;
+    ioControl.pfnSetWindowText = WITNESSADAPTER<&TestFUiSetWindowText, decltype(ioControl.pfnSetWindowText)>::Call;
+    ioControl.pfnSetFocus = WITNESSADAPTER<&TestHwndUiSetFocus, decltype(ioControl.pfnSetFocus)>::Call;
+    ioControl.pfnEnableWindow = WITNESSADAPTER<&TestFUiEnableWindow, decltype(ioControl.pfnEnableWindow)>::Call;
+    ioControl.pfnDialogBox = WITNESSADAPTER<&TestLUiDialogBox, decltype(ioControl.pfnDialogBox)>::Call;
     ioControl.pfnDrawPlanShip = WITNESSADAPTER<&TestDrawPlanShip, decltype(ioControl.pfnDrawPlanShip)>::Call;
     ioControl.pfnGetWindowText = WITNESSADAPTER<&TestGetWindowText, decltype(ioControl.pfnGetWindowText)>::Call;
     ioControl.pfnPopupMenu = WITNESSADAPTER<&TestPopupMenu, decltype(ioControl.pfnPopupMenu)>::Call;

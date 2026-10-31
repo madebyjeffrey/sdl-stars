@@ -175,14 +175,14 @@ static int IResponse(DBusMessage *lpMessage, const COMPATFILEFILTER *rgfilter, i
     return fUri ? 1 : -1;
 }
 static BOOL FPumpChooser(HWND hwndOwner) {
-    MSG msg;
-    while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) {
-        if (msg.message == WM_QUIT) { PostQuitMessage((int)msg.wParam); return FALSE; }
-        TranslateMessage(&msg); DispatchMessageA(&msg);
+    win32::MSG msg;
+    while (win32::PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) {
+        if (msg.message == WM_QUIT) { win32::PostQuitMessage((int)msg.wParam); return FALSE; }
+        win32::TranslateMessage(&msg); win32::DispatchMessageA(&msg);
         if (FStarsErrorPending()) return 0;
-        if (hwndOwner && !IsWindow(hwndOwner)) return FALSE;
+        if (hwndOwner && !win32::IsWindow(hwndOwner)) return FALSE;
     }
-    return !FStarsErrorPending() && (!hwndOwner || IsWindow(hwndOwner));
+    return !FStarsErrorPending() && (!hwndOwner || win32::IsWindow(hwndOwner));
 }
 int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFolder,
                      LPCSTR pszName, const COMPATFILEFILTER *rgfilter, int cFilter,

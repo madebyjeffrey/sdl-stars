@@ -74,7 +74,7 @@ int main(void) {
     CHECK(!wn.fInitalized && !wn.fMaximized);
     for (i = 0; i < sizeof(expected) / sizeof(expected[0]); i++) {
         input = strings[i];
-        CHECK(GetPrivateProfileIntA("a", "b", 7, "unused") == expected[i]);
+        CHECK(win32::GetPrivateProfileIntA("a", "b", 7, "unused") == expected[i]);
     }
     printf("S02 linked C witnesses: %d passed\n", checks);
     return 0;

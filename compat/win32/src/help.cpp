@@ -28,23 +28,23 @@ static BOOL FHelpAssets(const char *pszDirectory) {
     for (i = 0; i < sizeof(rgHelpFile) / sizeof(rgHelpFile[0]); i++) {
         cch = snprintf(szFile, sizeof(szFile), "%s/%s", pszDirectory, rgHelpFile[i]);
         if (cch < 0 || (size_t)cch >= sizeof(szFile)) {
-            SetLastError(ERROR_FILENAME_EXCED_RANGE);
+            win32::SetLastError(ERROR_FILENAME_EXCED_RANGE);
             return FALSE;
         }
         if (IGetNativeFileInfo(szFile, &st, TRUE) || !st.fRegular || st.cb <= 0) {
-            SetLastError(ERROR_FILE_NOT_FOUND);
+            win32::SetLastError(ERROR_FILE_NOT_FOUND);
             return FALSE;
         }
     }
     snprintf(szFile, sizeof(szFile), "%s/complete.stamp", pszDirectory);
     lpFile = PfNativeOpen(szFile, "rb");
     if (!lpFile) {
-        SetLastError(ERROR_ACCESS_DENIED);
+        win32::SetLastError(ERROR_ACCESS_DENIED);
         return FALSE;
     }
     fStamp = PszGetNativeLine(szStamp, sizeof(szStamp), lpFile) && !strcmp(szStamp, STARS_HELP_SHA "\n");
     ICloseNativeFile(lpFile);
-    if (!fStamp) SetLastError(ERROR_BAD_FORMAT);
+    if (!fStamp) win32::SetLastError(ERROR_BAD_FORMAT);
     return fStamp;
 }
 
@@ -66,12 +66,12 @@ static char *PszHelpDocument(const char *pszDirectory, const char *pszPage) {
     fOk = cbRead == STARS_HELP_BUNDLE_SIZE && !FNativeStreamError(lpSource) && ChGetNativeFile(lpSource) == EOF;
     ICloseNativeFile(lpSource); lpSource = NULL;
     if (!fOk || (uint32_t)crc32(0, (const BYTE *)pszBody, (uInt)cbRead) != STARS_HELP_BUNDLE_CRC) {
-        SetLastError(ERROR_BAD_FORMAT); goto done;
+        win32::SetLastError(ERROR_BAD_FORMAT); goto done;
     }
     pszBody[cbRead] = 0;
     pszMarker = strstr(pszBody, szMarker);
     if (!pszMarker || strstr(pszMarker + sizeof(szMarker) - 1, szMarker)) {
-        SetLastError(ERROR_BAD_FORMAT); goto done;
+        win32::SetLastError(ERROR_BAD_FORMAT); goto done;
     }
     // Put the requested context inside the exported file: OpenFile portals
     // receive a descriptor and cannot carry a browser URL fragment with it.
@@ -96,14 +96,14 @@ static char *PszHelpDocument(const char *pszDirectory, const char *pszPage) {
     if (!pszResult) goto fail;
     goto done;
 fail:
-    SetLastError(ERROR_ACCESS_DENIED);
+    win32::SetLastError(ERROR_ACCESS_DENIED);
 done:
     if (lpSource) ICloseNativeFile(lpSource);
     free(pszBody);
     return pszResult;
 }
 
-BOOL WINAPI WinHelpA(HWND hWndMain, LPCSTR pszHelp, UINT uCommand, ULONG_PTR dwData) {
+BOOL WINAPI win32::WinHelpA(HWND hWndMain, LPCSTR pszHelp, UINT uCommand, ULONG_PTR dwData) {
     const char *pszBase, *pszName, *pszPage = NULL;
     char szDirectory[PATH_MAX];
     char *pszDirectory, *pszDocument;
@@ -113,17 +113,17 @@ BOOL WINAPI WinHelpA(HWND hWndMain, LPCSTR pszHelp, UINT uCommand, ULONG_PTR dwD
 
     (void)hWndMain;
     if (uCommand != HELP_INDEX && uCommand != HELP_CONTEXT) {
-        SetLastError(ERROR_NOT_SUPPORTED);
+        win32::SetLastError(ERROR_NOT_SUPPORTED);
         return FALSE;
     }
     if (!pszHelp || !*pszHelp || strlen(pszHelp) >= PATH_MAX) {
-        SetLastError(ERROR_INVALID_PARAMETER);
+        win32::SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
     pszName = strrchr(pszHelp, '/');
     pszName = pszName ? pszName + 1 : pszHelp;
     if (strcasecmp(pszName, "stars-help.html") || strchr(pszHelp, '\\') || strchr(pszHelp, '/')) {
-        SetLastError(ERROR_NOT_SUPPORTED);
+        win32::SetLastError(ERROR_NOT_SUPPORTED);
         return FALSE;
     }
     if (uCommand == HELP_INDEX) {
@@ -137,30 +137,30 @@ BOOL WINAPI WinHelpA(HWND hWndMain, LPCSTR pszHelp, UINT uCommand, ULONG_PTR dwD
         }
     }
     if (!pszPage) {
-        SetLastError(ERROR_INVALID_PARAMETER);
+        win32::SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
     pszBase = CompatPathIO().pfnGetBasePath();
     if (!pszBase) {
-        SetLastError(ERROR_PATH_NOT_FOUND);
+        win32::SetLastError(ERROR_PATH_NOT_FOUND);
         return FALSE;
     }
     // The packaged UTF-8 guide is authoritative; the HLP archive is not loaded.
     cch = snprintf(szDirectory, sizeof(szDirectory), "%s../help", pszBase);
     if (cch < 0 || (size_t)cch >= sizeof(szDirectory)) {
-        SetLastError(ERROR_FILENAME_EXCED_RANGE);
+        win32::SetLastError(ERROR_FILENAME_EXCED_RANGE);
         return FALSE;
     }
     pszDirectory = PszCanonicalNativePath(szDirectory, NULL, 0);
     if (!pszDirectory) {
         cch = snprintf(szDirectory, sizeof(szDirectory), "%s%s/help", pszBase, STARS_INSTALLED_DATA);
         if (cch < 0 || (size_t)cch >= sizeof(szDirectory)) {
-            SetLastError(ERROR_FILENAME_EXCED_RANGE);
+            win32::SetLastError(ERROR_FILENAME_EXCED_RANGE);
             return FALSE;
         }
         pszDirectory = PszCanonicalNativePath(szDirectory, NULL, 0);
         if (!pszDirectory) {
-            SetLastError(ERROR_PATH_NOT_FOUND);
+            win32::SetLastError(ERROR_PATH_NOT_FOUND);
             return FALSE;
         }
     }
@@ -173,6 +173,6 @@ BOOL WINAPI WinHelpA(HWND hWndMain, LPCSTR pszHelp, UINT uCommand, ULONG_PTR dwD
     if (!pszDocument) return FALSE;
     fLaunched = FCompatOpenDocument(pszDocument);
     free(pszDocument);
-    SetLastError(fLaunched ? NO_ERROR : ERROR_GEN_FAILURE);
+    win32::SetLastError(fLaunched ? NO_ERROR : ERROR_GEN_FAILURE);
     return fLaunched;
 }

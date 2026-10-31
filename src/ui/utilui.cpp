@@ -46,8 +46,8 @@ void SelectOursAtObject(POINT16 *ppt) {
         lpThings[scan.ith].thp().iWarp() == 0) {
         ChangeScanSel(&scan, 1);
         FEnsurePointOnScreen(scan.pt, TRUE);
-        ControlIO().pfnFUiUpdateWindow(hwndScanner);
-        ControlIO().pfnLUiSendMessage(hwndScanner, WM_CHAR, 'v', 0);
+        ControlIO().pfnUpdateWindow(hwndScanner);
+        ControlIO().pfnSendMessage(hwndScanner, WM_CHAR, 'v', 0);
     } else if (id != idflNone) {
         PresentationIO().pfnSelectFleet(0, id);
     }
@@ -66,7 +66,7 @@ void DrawABunchOfStars(HDC hdc, RECT *prc) {
 
     rc = *prc;
     PushRandom(17, 11);
-    InflateRect(&rc, -3, -3);
+    win32::InflateRect(&rc, -3, -3);
     dx = rc.right - rc.left;
     dy = rc.bottom - rc.top;
     lPixTot = (uint32_t)(dx * (int16_t)(rc.bottom - rc.top));
@@ -77,8 +77,8 @@ void DrawABunchOfStars(HDC hdc, RECT *prc) {
             rcOut.top = RandomIO().pfnRandom(dy) + rc.top;
             rcOut.right = rcOut.left + 1;
             rcOut.bottom = rcOut.top + 1;
-            SetBkColor(hdc, rgcrDrawStars[iClr]);
-            ExtTextOut(hdc, 0, 0, ETO_OPAQUE, &rcOut, NULL, 0, NULL);
+            win32::SetBkColor(hdc, rgcrDrawStars[iClr]);
+            win32::ExtTextOut(hdc, 0, 0, ETO_OPAQUE, &rcOut, NULL, 0, NULL);
         }
     }
     for (iClr = 0; iClr < 4; iClr++) {
@@ -88,13 +88,13 @@ void DrawABunchOfStars(HDC hdc, RECT *prc) {
             rcOut.top = RandomIO().pfnRandom(dy) + rc.top;
             rcOut.right = rcOut.left + 3;
             rcOut.bottom = rcOut.top + 3;
-            SetBkColor(hdc, rgcrDrawStars2b[iClr]);
-            ExtTextOut(hdc, 0, 0, ETO_OPAQUE, &rcOut, NULL, 0, NULL);
-            SetBkColor(hdc, rgcrDrawStars2a[iClr]);
-            InflateRect(&rcOut, -1, 0);
-            ExtTextOut(hdc, 0, 0, ETO_OPAQUE, &rcOut, NULL, 0, NULL);
-            InflateRect(&rcOut, 1, -1);
-            ExtTextOut(hdc, 0, 0, ETO_OPAQUE, &rcOut, NULL, 0, NULL);
+            win32::SetBkColor(hdc, rgcrDrawStars2b[iClr]);
+            win32::ExtTextOut(hdc, 0, 0, ETO_OPAQUE, &rcOut, NULL, 0, NULL);
+            win32::SetBkColor(hdc, rgcrDrawStars2a[iClr]);
+            win32::InflateRect(&rcOut, -1, 0);
+            win32::ExtTextOut(hdc, 0, 0, ETO_OPAQUE, &rcOut, NULL, 0, NULL);
+            win32::InflateRect(&rcOut, 1, -1);
+            win32::ExtTextOut(hdc, 0, 0, ETO_OPAQUE, &rcOut, NULL, 0, NULL);
         }
     }
     PopRandom();
@@ -103,14 +103,14 @@ void DrawABunchOfStars(HDC hdc, RECT *prc) {
 
 void DrawPlanetPrintDot(HDC hdc, int16_t x, int16_t y, int16_t iSize) {
     if (iSize == 0) {
-        PatBlt(hdc, x - 3, y - 1, 7, 3, BLACKNESS);
-        PatBlt(hdc, x - 1, y - 3, 3, 7, BLACKNESS);
-        PatBlt(hdc, x - 2, y - 2, 5, 5, BLACKNESS);
+        win32::PatBlt(hdc, x - 3, y - 1, 7, 3, BLACKNESS);
+        win32::PatBlt(hdc, x - 1, y - 3, 3, 7, BLACKNESS);
+        win32::PatBlt(hdc, x - 2, y - 2, 5, 5, BLACKNESS);
     } else {
-        PatBlt(hdc, x - 5, y - 2, 11, 5, BLACKNESS);
-        PatBlt(hdc, x - 2, y - 5, 5, 11, BLACKNESS);
-        PatBlt(hdc, x - 4, y - 3, 9, 7, BLACKNESS);
-        PatBlt(hdc, x - 3, y - 4, 7, 9, BLACKNESS);
+        win32::PatBlt(hdc, x - 5, y - 2, 11, 5, BLACKNESS);
+        win32::PatBlt(hdc, x - 2, y - 5, 5, 11, BLACKNESS);
+        win32::PatBlt(hdc, x - 4, y - 3, 9, 7, BLACKNESS);
+        win32::PatBlt(hdc, x - 3, y - 4, 7, 9, BLACKNESS);
     }
     return;
 }

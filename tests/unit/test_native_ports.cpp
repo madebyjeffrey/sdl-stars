@@ -203,33 +203,33 @@ static void TestRawMessageEdit(void) {
     const char *psz = "\xe6\x9d\xb1\xe4\xba\xac";
 
     TEST_ASSERT(FStarsTestInit());
-    hwnd = HwndUiCreateWindowEx(0, "STATIC", "", WS_OVERLAPPEDWINDOW, 0, 0, 200, 100, NULL, NULL, hInst, NULL);
+    hwnd = ui::CreateWindowEx(0, "STATIC", "", WS_OVERLAPPEDWINDOW, 0, 0, 200, 100, NULL, NULL, hInst, NULL);
     TEST_ASSERT(hwnd != NULL);
-    hwndMsgEdit = HwndUiCreateWindowEx(0, "EDIT", "", WS_CHILD | ES_MULTILINE, 0, 0, 100, 30, hwnd, NULL, hInst, NULL);
-    hwndMsgDrop = HwndUiCreateWindowEx(0, "COMBOBOX", "", WS_CHILD | CBS_DROPDOWNLIST, 0, 40, 100, 30, hwnd, NULL, hInst, NULL);
+    hwndMsgEdit = ui::CreateWindowEx(0, "EDIT", "", WS_CHILD | ES_MULTILINE, 0, 0, 100, 30, hwnd, NULL, hInst, NULL);
+    hwndMsgDrop = ui::CreateWindowEx(0, "COMBOBOX", "", WS_CHILD | CBS_DROPDOWNLIST, 0, 40, 100, 30, hwnd, NULL, hInst, NULL);
     TEST_ASSERT(hwndMsgEdit != NULL && hwndMsgDrop != NULL);
-    LUiSendMessage(hwndMsgDrop, CB_ADDSTRING, 0, (LPARAM)"Everyone");
-    LUiSendMessage(hwndMsgDrop, CB_SETCURSEL, 0, 0);
+    ui::SendMessage(hwndMsgDrop, CB_ADDSTRING, 0, (LPARAM)"Everyone");
+    ui::SendMessage(hwndMsgDrop, CB_SETCURSEL, 0, 0);
     vlpmsgplrOut = NULL; vcmsgplrOut = 0; iMsgSendCur = 0;
-    TEST_ASSERT(FUiSetWindowText(hwndMsgEdit, psz));
+    TEST_ASSERT(ui::SetWindowText(hwndMsgEdit, psz));
     TEST_ASSERT(FFinishPlrMsgEntry(0));
     TEST_ASSERT(vlpmsgplrOut != NULL && vlpmsgplrOut->cLen == -7);
     cDirty = 0;
     TEST_ASSERT(FFinishPlrMsgEntry(0));
     TEST_CHECK(cDirty == 0 && vcmsgplrOut == 1);
     TEST_CHECK(!strcmp((char *)vlpmsgplrOut->rgbMsg(), psz));
-    TEST_ASSERT(FUiSetWindowText(hwndMsgEdit, "\xe4\xba\xac\xe6\x9d\xb1"));
+    TEST_ASSERT(ui::SetWindowText(hwndMsgEdit, "\xe4\xba\xac\xe6\x9d\xb1"));
     TEST_ASSERT(FFinishPlrMsgEntry(0));
     TEST_CHECK(cDirty == 1 && !strcmp((char *)vlpmsgplrOut->rgbMsg(), "\xe4\xba\xac\xe6\x9d\xb1"));
     iMsgSendCur = vcmsgplrOut;
-    TEST_ASSERT(FUiSetWindowText(hwndMsgEdit, "Second"));
+    TEST_ASSERT(ui::SetWindowText(hwndMsgEdit, "Second"));
     TEST_ASSERT(FFinishPlrMsgEntry(0));
     TEST_CHECK(vcmsgplrOut == 2 && vlpmsgplrOut->lpmsgplrNext != NULL);
     TEST_CHECK(!FFinishPlrMsgEntry(1000));
     TEST_CHECK(vcmsgplrOut == 1 && vlpmsgplrOut->lpmsgplrNext == NULL && iMsgSendCur == 0);
     TEST_CHECK(!FFinishPlrMsgEntry(1000));
     TEST_CHECK(vcmsgplrOut == 0 && vlpmsgplrOut == NULL);
-    FUiDestroyWindow(hwnd); hwndMsgEdit = hwndMsgDrop = NULL;
+    ui::DestroyWindow(hwnd); hwndMsgEdit = hwndMsgDrop = NULL;
 }
 
 static void TestStaticColor(void) {
@@ -413,10 +413,10 @@ static LRESULT CALLBACK SessionCleanupProc(HWND hwnd, UINT msg, WPARAM w, LPARAM
     if (msg == WM_APP + 77) {
         HB *lphb = rglphb[htPerm];
         FreeStuff();
-        fCleanupKeptState = IsWindow(hwnd) && lphb && rglphb[htPerm] == lphb;
+        fCleanupKeptState = win32::IsWindow(hwnd) && lphb && rglphb[htPerm] == lphb;
         return 0;
     }
-    return LUiDefWindowProc(hwnd,msg,w,l);
+    return ui::DefWindowProc(hwnd,msg,w,l);
 }
 static void TestApplicationUiSessionClose(void) {
     char szDir[MAX_PATH], szPath[MAX_PATH + 64];
@@ -433,17 +433,17 @@ static void TestApplicationUiSessionClose(void) {
     wc.lpfnWndProc = SessionCleanupProc;
     wc.hInstance = hInst;
     wc.lpszClassName = "StarsSessionCleanupTest";
-    TEST_ASSERT(RegisterClass(&wc));
-    HWND hwnd = HwndUiCreateWindowEx(0, wc.lpszClassName,"session",WS_OVERLAPPEDWINDOW,0,0,160,120,NULL,NULL,hInst,NULL);
+    TEST_ASSERT(win32::RegisterClass(&wc));
+    HWND hwnd = ui::CreateWindowEx(0, wc.lpszClassName,"session",WS_OVERLAPPEDWINDOW,0,0,160,120,NULL,NULL,hInst,NULL);
     TEST_ASSERT(hwnd);
     STARSCOMPATPAYLOAD payload(std::malloc(8), {[](void *pv) noexcept { ++cSessionPayloadReleased; std::free(pv); }});
     TEST_ASSERT(payload);
     const int cReleased = cSessionPayloadReleased;
     TEST_ASSERT(StarsCompatPostOwnedMessageAsync(StarsCompatWindowId(hwnd),WM_APP+78,std::move(payload),0));
-    LUiSendMessage(hwnd,WM_APP+77,0,0);
+    ui::SendMessage(hwnd,WM_APP+77,0,0);
     TEST_ASSERT(fCleanupKeptState && cSessionPayloadReleased == cReleased);
     FreeStuff();
-    TEST_CHECK(!IsWindow(hwnd) && !hwndFrame && !hwndPlanet && !hInst);
+    TEST_CHECK(!win32::IsWindow(hwnd) && !hwndFrame && !hwndPlanet && !hInst);
     TEST_CHECK(cSessionPayloadReleased == cReleased+1 && CCompatMemoryBlocks() == 0);
     for (auto *lphb : rglphb) TEST_CHECK(!lphb);
     TEST_CHECK(!lpLog && !lpMsg && !lpPlanets && lFileSeed1 == 0 && lFileSeed2 == 0);
@@ -461,31 +461,31 @@ static void TestApplicationUiSessionClose(void) {
 
 static void TestDibFromBitmapNativeQuery(void) {
     TEST_ASSERT(FStarsTestInit());
-    HDC hdc = GetDC(NULL);
+    HDC hdc = win32::GetDC(NULL);
     TEST_ASSERT(hdc);
-    HBITMAP hbm = CreateCompatibleBitmap(hdc, 2, 2);
+    HBITMAP hbm = win32::CreateCompatibleBitmap(hdc, 2, 2);
     TEST_ASSERT(hbm);
     HGLOBAL hdib = DibFromBitmap(hbm, BI_RGB, 32, NULL);
     TEST_ASSERT(hdib);
-    auto *lpbi = static_cast<BITMAPINFOHEADER *>(GlobalLock(hdib));
+    auto *lpbi = static_cast<BITMAPINFOHEADER *>(win32::GlobalLock(hdib));
     TEST_ASSERT(lpbi);
     TEST_CHECK(lpbi->biWidth == 2 && lpbi->biHeight == 2 && lpbi->biBitCount == 32 && lpbi->biSizeImage == 16);
-    GlobalUnlock(hdib);
-    GlobalFree(hdib);
-    DeleteObject(hbm);
-    ReleaseDC(NULL, hdc);
+    win32::GlobalUnlock(hdib);
+    win32::GlobalFree(hdib);
+    win32::DeleteObject(hbm);
+    win32::ReleaseDC(NULL, hdc);
 }
 static void TestDibFromBitmapFailureReleasesStorage(void) {
     TEST_ASSERT(FStarsTestInit());
-    HDC hdc = GetDC(NULL);
+    HDC hdc = win32::GetDC(NULL);
     TEST_ASSERT(hdc);
-    HBITMAP hbm = CreateCompatibleBitmap(hdc, 2, 2);
+    HBITMAP hbm = win32::CreateCompatibleBitmap(hdc, 2, 2);
     TEST_ASSERT(hbm);
     const size_t cMemory = CCompatMemoryBlocks();
     TEST_CHECK(DibFromBitmap(hbm, BI_RLE8, 8, NULL) == NULL);
     TEST_CHECK(CCompatMemoryBlocks() == cMemory);
-    DeleteObject(hbm);
-    ReleaseDC(NULL, hdc);
+    win32::DeleteObject(hbm);
+    win32::ReleaseDC(NULL, hdc);
 }
 #endif
 

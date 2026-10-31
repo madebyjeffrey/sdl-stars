@@ -62,16 +62,16 @@ static HWND HwndNameEdit(HWND hwnd) {
     return edit;
 }
 static void Choose(HWND hwnd, LPCSTR psz) {
-    EXPECT(SetWindowText(HwndNameEdit(hwnd), psz));
+    EXPECT(SetWindowTextA(HwndNameEdit(hwnd), psz));
     EXPECT(PostMessage(HwndNameEdit(hwnd), WM_KEYDOWN, VK_RETURN, 0));
 }
 #ifndef _WIN32
 static int FindEntry(HWND hwnd, LPCSTR psz) {
     HWND list = GetDlgItem(hwnd, 0x460);
-    int i, c = (int)SendMessage(list, LB_GETCOUNT, 0, 0);
+    int i, c = (int)SendMessageA(list, LB_GETCOUNT, 0, 0);
     char sz[4096];
     for (i = 0; i < c; i++) {
-        SendMessage(list, LB_GETTEXT, i, (LPARAM)sz);
+        SendMessageA(list, LB_GETTEXT, i, (LPARAM)sz);
         if (strcmp(sz, psz) == 0) return i;
     }
     return -1;
@@ -82,7 +82,7 @@ static LRESULT CALLBACK OwnerProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
 #ifndef _WIN32
     int i;
 #endif
-    if (msg != WM_TIMER) return DefWindowProc(hwnd, msg, w, l);
+    if (msg != WM_TIMER) return DefWindowProcA(hwnd, msg, w, l);
     if (++cTicks > 1000) { fprintf(stderr, "file-picker timer deadline mode %d phase %d\n", mode, phase); exit(2); }
     dlg = FindCaption("Stars File Contract");
 #ifdef _WIN32
@@ -97,7 +97,7 @@ static LRESULT CALLBACK OwnerProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         EXPECT(!IsWindowEnabled(dlg));
         if (phase == 1) { phase = 2; PostMessage(prompt, WM_COMMAND, IDCANCEL, 0); }
         else if (phase == 3) {
-            EXPECT(SetWindowText(GetDlgItem(prompt, 0x480), "created"));
+            EXPECT(SetWindowTextA(GetDlgItem(prompt, 0x480), "created"));
             phase = 4; PostMessage(prompt, WM_COMMAND, IDOK, 0);
         }
         return 0;
@@ -126,12 +126,12 @@ static LRESULT CALLBACK OwnerProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
             POINT pt;
             EXPECT(!IsWindowEnabled(GetDlgItem(dlg, 0x401)));
             EXPECT(FindEntry(dlg, ".hidden.M1") < 0);
-            SendDlgItemMessage(dlg, 0x403, BM_SETCHECK, BST_CHECKED, 0);
-            SendMessage(dlg, WM_COMMAND, MAKEWPARAM(0x403, BN_CLICKED), (LPARAM)GetDlgItem(dlg, 0x403));
+            SendDlgItemMessageA(dlg, 0x403, BM_SETCHECK, BST_CHECKED, 0);
+            SendMessageA(dlg, WM_COMMAND, MAKEWPARAM(0x403, BN_CLICKED), (LPARAM)GetDlgItem(dlg, 0x403));
             EXPECT(FindEntry(dlg, ".hidden.M1") >= 0);
-            SendMessage(dlg, WM_COMMAND, 0x402, 0);
+            SendMessageA(dlg, WM_COMMAND, 0x402, 0);
             EXPECT(IsWindowEnabled(GetDlgItem(dlg, 0x401)));
-            SendMessage(dlg, WM_COMMAND, 0x401, 0);
+            SendMessageA(dlg, WM_COMMAND, 0x401, 0);
             EXPECT(FindEntry(dlg, "sample.M1") >= 0 && !IsWindowEnabled(GetDlgItem(dlg, 0x401)));
             EXPECT(SetWindowPos(dlg, NULL, 0, 0, 800, 560, SWP_NOMOVE | SWP_NOZORDER));
             EXPECT(GetClientRect(dlg, &rc));
@@ -144,7 +144,7 @@ static LRESULT CALLBACK OwnerProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
                 EXPECT(UpdateWindow(dlg) && FCompatPresent(dlg));
                 EXPECT(SDL_SaveBMP(dlg->lpComposite.get(), getenv("STARS_FILE_DIALOG_CAPTURE")));
             }
-            EXPECT(SetWindowText(GetDlgItem(dlg, 0x440), "sub"));
+            EXPECT(SetWindowTextA(GetDlgItem(dlg, 0x440), "sub"));
             SetFocus(GetDlgItem(dlg, 0x440));
             EXPECT(PostMessage(GetDlgItem(dlg, 0x440), WM_KEYDOWN, VK_RETURN, 0));
             return 0;
@@ -153,12 +153,12 @@ static LRESULT CALLBACK OwnerProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
             EXPECT(FindEntry(dlg, "sample.M1") >= 0 && FindEntry(dlg, "race.r16") >= 0 && FindEntry(dlg, "host.HST") >= 0);
             EXPECT(FindEntry(dlg, "other.txt") < 0 && FindEntry(dlg, "[sub]") >= 0);
             i = FindEntry(dlg, "[sub]");
-            SendDlgItemMessage(dlg, 0x460, LB_SETCURSEL, i, 0);
+            SendDlgItemMessageA(dlg, 0x460, LB_SETCURSEL, i, 0);
             PostMessage(dlg, WM_COMMAND, MAKEWPARAM(0x460, LBN_DBLCLK), (LPARAM)GetDlgItem(dlg, 0x460)); return 0;
         }
         if (mode == 5) {
-            SendDlgItemMessage(dlg, 0x470, CB_SETCURSEL, 2, 0);
-            SendMessage(dlg, WM_COMMAND, MAKEWPARAM(0x470, CBN_SELCHANGE), (LPARAM)GetDlgItem(dlg, 0x470));
+            SendDlgItemMessageA(dlg, 0x470, CB_SETCURSEL, 2, 0);
+            SendMessageA(dlg, WM_COMMAND, MAKEWPARAM(0x470, CBN_SELCHANGE), (LPARAM)GetDlgItem(dlg, 0x470));
             EXPECT(FindEntry(dlg, "other.txt") >= 0 && FindEntry(dlg, "README") >= 0); Choose(dlg, "other.txt"); return 0;
         }
         if (mode == 6) { Choose(dlg, "missing.M2"); return 0; }
@@ -181,9 +181,9 @@ static LRESULT CALLBACK OwnerProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     }
     else if (mode == 11 && phase == 1 && FindEntry(dlg, "child.R2") >= 0) {
         EXPECT(IsWindowEnabled(GetDlgItem(dlg, 0x401)));
-        SendMessage(dlg, WM_COMMAND, 0x400, 0);
+        SendMessageA(dlg, WM_COMMAND, 0x400, 0);
         EXPECT(FindEntry(dlg, "sample.M1") >= 0);
-        SendMessage(dlg, WM_COMMAND, 0x401, 0);
+        SendMessageA(dlg, WM_COMMAND, 0x401, 0);
         EXPECT(FindEntry(dlg, "child.R2") >= 0);
         phase++; SetFocus(HwndNameEdit(dlg)); Choose(dlg, "child.R2");
     }
@@ -212,7 +212,7 @@ int main(void) {
     OPENFILENAME ofn;
     char szFile[4096] = "", szTitle[128] = "", sz[4096], szAfter[4096];
     HWND hwndFocus;
-    MSG msg;
+    APPMSG msg;
     WORD needed;
     int i;
     const char *rgFiles[] = {"sample.M1", "race.r16", "host.HST", "other.txt", "README", "sub/child.R2", "readonly.r1", ".hidden.M1"};
@@ -227,10 +227,10 @@ int main(void) {
     hwndOther = CreateWindow(wc.lpszClassName, "Other file owner", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 300, 0, 200, 150, NULL, NULL, wc.hInstance, NULL);
     CHECK(hwndOwner && hwndOther);
     hwndFocus = CreateWindow("Edit", "prior", WS_CHILD | WS_VISIBLE | WS_TABSTOP, 0, 0, 150, 30, hwndOwner, NULL, wc.hInstance, NULL); CHECK(hwndFocus);
-    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) { TranslateMessage(&msg); DispatchMessage(&msg); }
+    while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) { TranslateMessage(&msg); DispatchMessageA(&msg); }
     SetFocus(hwndFocus); CHECK(SetTimer(hwndOwner, 1, 20, NULL));
     InitOFN(&ofn, szFile, szTitle); ofn.Flags |= OFN_FILEMUSTEXIST;
-    CHECK(GetOpenFileName(&ofn)); CHECK(CommDlgExtendedError() == 0);
+    CHECK(GetOpenFileNameA(&ofn)); CHECK(CommDlgExtendedError() == 0);
     CHECK(strcmp(szFile + ofn.nFileOffset, "sample.M1") == 0 && strcmp(szTitle, "sample.M1") == 0);
     CHECK(strcmp(szFile + ofn.nFileExtension, "M1") == 0 && ofn.nFilterIndex == 1);
     CHECK(IsWindowEnabled(hwndOwner)); CHECK(getcwd(szAfter, sizeof(szAfter)) && strcmp(szCwd, szAfter) == 0);
@@ -238,40 +238,40 @@ int main(void) {
     CHECK(GetFocus() == hwndFocus);
 #endif
     InitOFN(&ofn, szFile, szTitle); strcpy(szFile, "unchanged"); mode = 1;
-    CHECK(!GetOpenFileName(&ofn) && CommDlgExtendedError() == 0); CHECK(strcmp(szFile, "unchanged") == 0);
+    CHECK(!GetOpenFileNameA(&ofn) && CommDlgExtendedError() == 0); CHECK(strcmp(szFile, "unchanged") == 0);
     InitOFN(&ofn, szFile, szTitle); szFile[0] = 0; mode = 2; ofn.lpstrDefExt = "r1";
-    CHECK(GetSaveFileName(&ofn)); CHECK(strcmp(szFile + ofn.nFileOffset, "newrace.r1") == 0);
+    CHECK(GetSaveFileNameA(&ofn)); CHECK(strcmp(szFile + ofn.nFileOffset, "newrace.r1") == 0);
     CHECK(strcmp(szFile + ofn.nFileExtension, "r1") == 0); CHECK(fopen(szFile, "rb") == NULL);
     InitOFN(&ofn, szFile, szTitle); szFile[0] = 0; ofn.nMaxFile = 8; mode = 7;
-    CHECK(!GetOpenFileName(&ofn)); CHECK(CommDlgExtendedError() == FNERR_BUFFERTOOSMALL);
+    CHECK(!GetOpenFileNameA(&ofn)); CHECK(CommDlgExtendedError() == FNERR_BUFFERTOOSMALL);
     memcpy(&needed, szFile, sizeof(needed)); CHECK(needed > ofn.nMaxFile);
 #ifndef _WIN32
     InitOFN(&ofn, szFile, szTitle); szFile[0] = 0; mode = 3; ofn.Flags |= OFN_OVERWRITEPROMPT;
-    CHECK(GetSaveFileName(&ofn)); CHECK(cPrompts == 2 && phase == 4); CHECK(strcmp(szFile + ofn.nFileOffset, "race.r16") == 0);
+    CHECK(GetSaveFileNameA(&ofn)); CHECK(cPrompts == 2 && phase == 4); CHECK(strcmp(szFile + ofn.nFileOffset, "race.r16") == 0);
     InitOFN(&ofn, szFile, szTitle); szFile[0] = 0; mode = 4;
-    CHECK(GetOpenFileName(&ofn)); CHECK(strcmp(szFile + ofn.nFileOffset, "child.R2") == 0);
+    CHECK(GetOpenFileNameA(&ofn)); CHECK(strcmp(szFile + ofn.nFileOffset, "child.R2") == 0);
     InitOFN(&ofn, szFile, szTitle); szFile[0] = 0; mode = 5;
-    CHECK(GetOpenFileName(&ofn)); CHECK(ofn.nFilterIndex == 3 && strcmp(szTitle, "other.txt") == 0);
+    CHECK(GetOpenFileNameA(&ofn)); CHECK(ofn.nFilterIndex == 3 && strcmp(szTitle, "other.txt") == 0);
     InitOFN(&ofn, szFile, szTitle); szFile[0] = 0; mode = 6; ofn.Flags |= OFN_FILEMUSTEXIST;
-    CHECK(GetOpenFileName(&ofn)); CHECK(cPrompts > 0 && strcmp(szTitle, "sample.M1") == 0);
+    CHECK(GetOpenFileNameA(&ofn)); CHECK(cPrompts > 0 && strcmp(szTitle, "sample.M1") == 0);
     snprintf(sz, sizeof(sz), "%s/readonly.r1", szDir); CHECK(chmod(sz, 0400) == 0);
     InitOFN(&ofn, szFile, szTitle); szFile[0] = 0; mode = 8; ofn.Flags |= OFN_NOREADONLYRETURN;
-    CHECK(GetSaveFileName(&ofn)); CHECK(cPrompts > 0 && strcmp(szTitle, "writable") == 0);
+    CHECK(GetSaveFileNameA(&ofn)); CHECK(cPrompts > 0 && strcmp(szTitle, "writable") == 0);
     CHECK(chmod(sz, 0600) == 0);
     InitOFN(&ofn, szFile, szTitle); szFile[0] = 0; ofn.Flags &= ~OFN_NOCHANGEDIR;
-    CHECK(GetOpenFileName(&ofn)); CHECK(getcwd(szAfter, sizeof(szAfter)) && strcmp(szDir, szAfter) == 0); CHECK(chdir(szCwd) == 0);
-    InitOFN(&ofn, szFile, szTitle); ofn.lStructSize--; CHECK(!GetOpenFileName(&ofn) && CommDlgExtendedError() == CDERR_STRUCTSIZE);
-    InitOFN(&ofn, szFile, szTitle); ofn.Flags |= 0x20; CHECK(!GetSaveFileName(&ofn) && CommDlgExtendedError() == CDERR_INITIALIZATION);
+    CHECK(GetOpenFileNameA(&ofn)); CHECK(getcwd(szAfter, sizeof(szAfter)) && strcmp(szDir, szAfter) == 0); CHECK(chdir(szCwd) == 0);
+    InitOFN(&ofn, szFile, szTitle); ofn.lStructSize--; CHECK(!GetOpenFileNameA(&ofn) && CommDlgExtendedError() == CDERR_STRUCTSIZE);
+    InitOFN(&ofn, szFile, szTitle); ofn.Flags |= 0x20; CHECK(!GetSaveFileNameA(&ofn) && CommDlgExtendedError() == CDERR_INITIALIZATION);
     InitOFN(&ofn, szFile, szTitle); szFile[0] = 0; mode = 11;
-    CHECK(GetOpenFileName(&ofn)); CHECK(strcmp(szTitle, "child.R2") == 0);
+    CHECK(GetOpenFileNameA(&ofn)); CHECK(strcmp(szTitle, "child.R2") == 0);
     InitOFN(&ofn, szFile, szTitle); szFile[0] = 0; mode = 12;
-    CHECK(GetOpenFileName(&ofn)); CHECK(phase == 5 && strcmp(szTitle, "sample.M1") == 0);
+    CHECK(GetOpenFileNameA(&ofn)); CHECK(phase == 5 && strcmp(szTitle, "sample.M1") == 0);
     snprintf(sz, sizeof(sz), "%s/created", szDir); CHECK(rmdir(sz) == 0);
     InitOFN(&ofn, szFile, szTitle); szFile[0] = 0; mode = 10;
-    CHECK(!GetOpenFileName(&ofn) && CommDlgExtendedError() == 0);
-    CHECK(PeekMessage(&msg, NULL, 0, 0, PM_REMOVE) && msg.message == WM_QUIT && msg.wParam == 73);
+    CHECK(!GetOpenFileNameA(&ofn) && CommDlgExtendedError() == 0);
+    CHECK(PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE) && msg.message == WM_QUIT && msg.wParam == 73);
     InitOFN(&ofn, szFile, szTitle); szFile[0] = 0; mode = 9;
-    CHECK(!GetOpenFileName(&ofn)); CHECK(!IsWindow(hwndOwner));
+    CHECK(!GetOpenFileNameA(&ofn)); CHECK(!IsWindow(hwndOwner));
 #else
     KillTimer(hwndOwner, 1); DestroyWindow(hwndOwner);
 #endif

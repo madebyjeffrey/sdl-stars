@@ -15,7 +15,7 @@
 
 
 typedef struct COMPATMESSAGE {
-    MSG msg;
+    win32::MSG msg;
     STARSCOMPATPAYLOAD payload;
     BOOL fTimer, fInput;
     BYTE rgbKey[256];
@@ -29,7 +29,7 @@ static void FreeMessage(COMPATMESSAGE *lp) noexcept {
 using COMPATMESSAGEOWNER = NATIVEOWNER<COMPATMESSAGE, FreeMessage>;
 static COMPATMESSAGE *lpPending, *lpDispatchPayload;
 
-static COMPATMESSAGEOWNER TakePayloadMessage(const MSG &msg) noexcept {
+static COMPATMESSAGEOWNER TakePayloadMessage(const win32::MSG &msg) noexcept {
     for (auto **first : {&lpPending, &lpFirst}) {
         for (auto **link = first; *link; link = &(*link)->lpNext) {
             auto *lp = *link;
@@ -64,7 +64,7 @@ public:
 
 int CCompatDispatch(void) { return cDispatch; }
 
-BOOL WINAPI PostMessageA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+BOOL WINAPI win32::PostMessageA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     COMPATMESSAGE *lpmsg;
 
     if (!SDL_IsMainThread() || (hwnd && !LpCompatWindow(hwnd)))
@@ -80,7 +80,7 @@ BOOL WINAPI PostMessageA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     lpmsg->msg.message = msg;
     lpmsg->msg.wParam = wParam;
     lpmsg->msg.lParam = lParam;
-    lpmsg->msg.time = GetTickCount();
+    lpmsg->msg.time = win32::GetTickCount();
     if (lpLast)
         lpLast->lpNext = lpmsg;
     else
@@ -157,7 +157,7 @@ static BOOL PostOwnedMessage(uint64_t idWindow, UINT msg, STARSCOMPATPAYLOAD pay
     HWND hwnd = StarsCompatResolveWindow(idWindow);
     if (!hwnd || !payload || idPayloadNext == 0) return FALSE;
     WPARAM id = idPayloadNext++;
-    if (!PostMessageA(hwnd, msg, id, lParam)) return FALSE;
+    if (!win32::PostMessageA(hwnd, msg, id, lParam)) return FALSE;
     lpLast->payload = std::move(payload);
     return TRUE;
 }
@@ -190,7 +190,7 @@ static BOOL PushAsyncPost(COMPATASYNCPOST *lp) noexcept {
 }
 
 BOOL StarsCompatPostMessageAsync(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-    if (SDL_IsMainThread()) return PostMessageA(hwnd, msg, wParam, lParam);
+    if (SDL_IsMainThread()) return win32::PostMessageA(hwnd, msg, wParam, lParam);
     void *pv = CompatMessageAllocIO().pfnAllocate(sizeof(COMPATASYNCPOST));
     if (!pv) return FALSE;
     auto *lp = ::new (pv) COMPATASYNCPOST;
@@ -214,7 +214,7 @@ void CompatConsumeAsyncMessage(const SDL_Event *event) {
     if (!post) return; // Canceled/stale SDL events never dereference their old data.
     auto *lp = post.get();
     if (lp->payload) PostOwnedMessage(lp->idWindow, lp->msg, std::move(lp->payload), lp->lParam);
-    else PostMessageA(lp->hwnd, lp->msg, lp->wParam, lp->lParam);
+    else win32::PostMessageA(lp->hwnd, lp->msg, lp->wParam, lp->lParam);
 }
 
 BOOL CompatPostInput(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
@@ -224,18 +224,18 @@ BOOL CompatPostInput(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     if (SDL_IsMainThread() && msg == WM_MOUSEMOVE && lpLast && lpLast->fInput &&
         lpLast->msg.hwnd == hwnd && lpLast->msg.message == msg && lpLast->msg.wParam == w) {
         lpLast->msg.lParam = l;
-        lpLast->msg.time = GetTickCount();
+        lpLast->msg.time = win32::GetTickCount();
         CompatCopyInput(lpLast->rgbKey, &lpLast->msg.pt);
         return TRUE;
     }
-    if (!PostMessageA(hwnd, msg, w, l)) return FALSE;
+    if (!win32::PostMessageA(hwnd, msg, w, l)) return FALSE;
     lpLast->fInput = TRUE;
     CompatCopyInput(lpLast->rgbKey, &lpLast->msg.pt);
     return TRUE;
 }
 
 BOOL CompatQueueTimer(HWND hwnd, UINT_PTR id, TIMERPROC lpfn) {
-    if (!PostMessageA(hwnd, WM_TIMER, id, (LPARAM)lpfn)) return FALSE;
+    if (!win32::PostMessageA(hwnd, WM_TIMER, id, (LPARAM)lpfn)) return FALSE;
     lpLast->fTimer = TRUE;
     return TRUE;
 }
@@ -264,13 +264,13 @@ void CompatClearMessages() {
     lpLast = nullptr;
 }
 
-static BOOL FMessageMatches(const MSG *lpmsg, HWND hwnd, UINT msgMin, UINT msgMax) {
+static BOOL FMessageMatches(const win32::MSG *lpmsg, HWND hwnd, UINT msgMin, UINT msgMax) {
     if (lpmsg->message == WM_QUIT)
         return TRUE;
     if ((INT_PTR)hwnd == -1) {
         if (lpmsg->hwnd)
             return FALSE;
-    } else if (hwnd && lpmsg->hwnd != hwnd && !IsChild(hwnd, lpmsg->hwnd))
+    } else if (hwnd && lpmsg->hwnd != hwnd && !win32::IsChild(hwnd, lpmsg->hwnd))
         return FALSE;
     return (msgMin == 0 && msgMax == 0) || (lpmsg->message >= msgMin && lpmsg->message <= msgMax);
 }
@@ -306,7 +306,7 @@ static BOOL FQueuedMessage(LPMSG lpOut, HWND hwnd, UINT msgMin, UINT msgMax, UIN
     return FALSE;
 }
 
-BOOL WINAPI PeekMessageA(LPMSG lpOut, HWND hwnd, UINT msgMin, UINT msgMax, UINT flags) {
+BOOL WINAPI win32::PeekMessageA(LPMSG lpOut, HWND hwnd, UINT msgMin, UINT msgMax, UINT flags) {
     SDL_Event event;
 
     if (!lpOut || !FValidFilter(hwnd, msgMin, msgMax)) return FALSE;
@@ -320,7 +320,7 @@ BOOL WINAPI PeekMessageA(LPMSG lpOut, HWND hwnd, UINT msgMin, UINT msgMax, UINT 
     return FQueuedMessage(lpOut, hwnd, msgMin, msgMax, flags, TRUE);
 }
 
-BOOL WINAPI GetMessageA(LPMSG lpmsg, HWND hwnd, UINT msgMin, UINT msgMax) {
+BOOL WINAPI win32::GetMessageA(LPMSG lpmsg, HWND hwnd, UINT msgMin, UINT msgMax) {
     SDL_Event event;
     int cMillis;
     BOOL fMessage;
@@ -331,7 +331,7 @@ BOOL WINAPI GetMessageA(LPMSG lpmsg, HWND hwnd, UINT msgMin, UINT msgMax) {
         // Thread timers have no enclosing HWND to abort. Let every modal
         // pump finish its C cleanup before the C++ caller receives the error.
         if (FStarsErrorPending()) return -1;
-        fMessage = PeekMessageA(lpmsg, hwnd, msgMin, msgMax, PM_REMOVE);
+        fMessage = win32::PeekMessageA(lpmsg, hwnd, msgMin, msgMax, PM_REMOVE);
         // Peeking also routes SDL events, which can invoke application code.
         if (FStarsErrorPending()) return -1;
         if (fMessage)
@@ -343,14 +343,14 @@ BOOL WINAPI GetMessageA(LPMSG lpmsg, HWND hwnd, UINT msgMin, UINT msgMax) {
     }
 }
 
-BOOL WINAPI WaitMessage(void) {
-    MSG msg;
+BOOL WINAPI win32::WaitMessage(void) {
+    win32::MSG msg;
     SDL_Event event;
     int cMillis;
 
     if (!SDL_IsMainThread())
         return FALSE;
-    while (!PeekMessageA(&msg, NULL, 0, 0, PM_NOREMOVE)) {
+    while (!win32::PeekMessageA(&msg, NULL, 0, 0, PM_NOREMOVE)) {
         cMillis = CMillisCompatTimerWait(NULL, 0, 0);
         if (!(SDL_WasInit(SDL_INIT_EVENTS) & SDL_INIT_EVENTS)) return FALSE;
         if (SDL_WaitEventTimeout(&event, cMillis)) CompatRouteEvent(&event);
@@ -359,28 +359,28 @@ BOOL WINAPI WaitMessage(void) {
     return TRUE;
 }
 
-VOID WINAPI PostQuitMessage(int code) {
-    PostMessageA(NULL, WM_QUIT, (WPARAM)code, 0);
+VOID WINAPI win32::PostQuitMessage(int code) {
+    win32::PostMessageA(NULL, WM_QUIT, (WPARAM)code, 0);
 }
 
-LRESULT WINAPI CallWindowProcA(WNDPROC lpfn, HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+LRESULT WINAPI win32::CallWindowProcA(WNDPROC lpfn, HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     if (!SDL_IsMainThread() || !lpfn)
         return 0;
     COMPATDISPATCHSCOPE dispatch;
     return CompatInvokeWindowProc(lpfn, hwnd, msg, wParam, lParam);
 }
 
-LRESULT WINAPI SendMessageA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+LRESULT WINAPI win32::SendMessageA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     HWND lpwin = LpCompatWindow(hwnd);
 
     if (!lpwin)
         return 0;
     if (msg == WM_SIZE) CompatLayoutScrollbars(hwnd);
-    if (!IsWindow(hwnd)) return 0;
-    return CallWindowProcA(lpwin->lpfnWndProc, hwnd, msg, wParam, lParam);
+    if (!win32::IsWindow(hwnd)) return 0;
+    return win32::CallWindowProcA(lpwin->lpfnWndProc, hwnd, msg, wParam, lParam);
 }
 
-LRESULT WINAPI DispatchMessageA(const MSG *lpmsg) {
+LRESULT WINAPI win32::DispatchMessageA(const win32::MSG *lpmsg) {
     if (!lpmsg || !SDL_IsMainThread() || lpmsg->message == WM_QUIT) return 0;
     auto payload = TakePayloadMessage(*lpmsg);
     StarsRestore restorePayload(lpDispatchPayload);
@@ -388,25 +388,25 @@ LRESULT WINAPI DispatchMessageA(const MSG *lpmsg) {
     if (lpmsg->message == WM_TIMER && lpmsg->lParam) {
         if (lpmsg->hwnd && !LpCompatWindow(lpmsg->hwnd)) return 0;
         COMPATDISPATCHSCOPE dispatch;
-        CompatInvokeTimerProc((TIMERPROC)lpmsg->lParam, lpmsg->hwnd, WM_TIMER, lpmsg->wParam, GetTickCount());
+        CompatInvokeTimerProc((TIMERPROC)lpmsg->lParam, lpmsg->hwnd, WM_TIMER, lpmsg->wParam, win32::GetTickCount());
         return 0;
     }
     if (!lpmsg->hwnd) return 0;
-    return SendMessageA(lpmsg->hwnd, lpmsg->message, lpmsg->wParam, lpmsg->lParam);
+    return win32::SendMessageA(lpmsg->hwnd, lpmsg->message, lpmsg->wParam, lpmsg->lParam);
 }
 
-BOOL WINAPI TranslateMessage(const MSG *lpmsg) {
+BOOL WINAPI win32::TranslateMessage(const win32::MSG *lpmsg) {
     // SDL text events supply printable characters, but omit control characters.
     if (lpmsg && (lpmsg->message == WM_KEYDOWN || lpmsg->message == WM_SYSKEYDOWN) &&
         (lpmsg->wParam == VK_BACK || lpmsg->wParam == VK_TAB ||
          lpmsg->wParam == VK_RETURN || lpmsg->wParam == VK_ESCAPE))
-        PostMessageA(lpmsg->hwnd, lpmsg->message == WM_KEYDOWN ? WM_CHAR : WM_SYSCHAR,
+        win32::PostMessageA(lpmsg->hwnd, lpmsg->message == WM_KEYDOWN ? WM_CHAR : WM_SYSCHAR,
                      lpmsg->wParam, lpmsg->lParam);
     return lpmsg && (lpmsg->message == WM_KEYDOWN || lpmsg->message == WM_KEYUP ||
                      lpmsg->message == WM_SYSKEYDOWN || lpmsg->message == WM_SYSKEYUP);
 }
 
-LRESULT WINAPI DefWindowProcA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+LRESULT WINAPI win32::DefWindowProcA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     HWND lpwin = LpCompatWindow(hwnd);
     size_t cch;
     const char *psz;
@@ -417,32 +417,32 @@ LRESULT WINAPI DefWindowProcA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     if (FCompatMenuMessage(hwnd, msg, wParam, lParam)) return 0;
     switch (msg) {
     case WM_SETCURSOR:
-        if (lpwin->hwndParent && SendMessageA(lpwin->hwndParent, msg, wParam, lParam)) return TRUE;
+        if (lpwin->hwndParent && win32::SendMessageA(lpwin->hwndParent, msg, wParam, lParam)) return TRUE;
         if (!LpCompatWindow(hwnd)) return FALSE;
-        if (LOWORD(lParam) != HTCLIENT) { SetCursor(LoadCursorA(NULL, MAKEINTRESOURCE(32512))); return TRUE; }
-        if (lpwin->lpclass->wc.hCursor) { SetCursor(lpwin->lpclass->wc.hCursor); return TRUE; }
+        if (LOWORD(lParam) != HTCLIENT) { win32::SetCursor(win32::LoadCursorA(NULL, MAKEINTRESOURCE(32512))); return TRUE; }
+        if (lpwin->lpclass->wc.hCursor) { win32::SetCursor(lpwin->lpclass->wc.hCursor); return TRUE; }
         return FALSE;
     case WM_NCACTIVATE:
         lpwin->fCaptionActive = !!wParam;
         return TRUE;
     case WM_MOUSEWHEEL:
     case WM_MOUSEHWHEEL:
-        if (lpwin->hwndParent) return SendMessageA(lpwin->hwndParent, msg, wParam, lParam);
+        if (lpwin->hwndParent) return win32::SendMessageA(lpwin->hwndParent, msg, wParam, lParam);
         return 0;
     case WM_CANCELMODE:
-        if (GetCapture() == hwnd) ReleaseCapture();
+        if (win32::GetCapture() == hwnd) win32::ReleaseCapture();
         return 0;
     case WM_PAINT: {
         PAINTSTRUCT ps;
-        if (BeginPaint(hwnd, &ps))
-            EndPaint(hwnd, &ps);
+        if (win32::BeginPaint(hwnd, &ps))
+            win32::EndPaint(hwnd, &ps);
         return 0;
     }
     case WM_ERASEBKGND:
         if (lpwin->lpclass->wc.hbrBackground) {
             RECT rc;
-            GetClientRect(hwnd, &rc);
-            return FillRect((HDC)wParam, &rc, lpwin->lpclass->wc.hbrBackground);
+            win32::GetClientRect(hwnd, &rc);
+            return win32::FillRect((HDC)wParam, &rc, lpwin->lpclass->wc.hbrBackground);
         }
         return 0;
     case WM_WINDOWPOSCHANGING: {
@@ -456,7 +456,7 @@ LRESULT WINAPI DefWindowProcA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             mmi.ptMaxSize.x = mmi.ptMaxTrackSize.x = lpMode->w;
             mmi.ptMaxSize.y = mmi.ptMaxTrackSize.y = lpMode->h;
         }
-        SendMessageA(hwnd, WM_GETMINMAXINFO, 0, (LPARAM)&mmi);
+        win32::SendMessageA(hwnd, WM_GETMINMAXINFO, 0, (LPARAM)&mmi);
         if (!LpCompatWindow(hwnd)) return 0;
         if (mmi.ptMinTrackSize.x > 0) lpwp->cx = StarsMax(lpwp->cx, mmi.ptMinTrackSize.x);
         if (mmi.ptMinTrackSize.y > 0) lpwp->cy = StarsMax(lpwp->cy, mmi.ptMinTrackSize.y);
@@ -471,21 +471,21 @@ LRESULT WINAPI DefWindowProcA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         UINT flags;
         if (!lpwp) return 0;
         flags = lpwp->flags;
-        if (!(flags & SWP_NOSIZE) && GetClientRect(hwnd, &rc))
-            SendMessageA(hwnd, WM_SIZE, IsIconic(hwnd) ? SIZE_MINIMIZED :
-                         IsZoomed(hwnd) ? SIZE_MAXIMIZED : SIZE_RESTORED, MAKELPARAM(rc.right, rc.bottom));
+        if (!(flags & SWP_NOSIZE) && win32::GetClientRect(hwnd, &rc))
+            win32::SendMessageA(hwnd, WM_SIZE, win32::IsIconic(hwnd) ? SIZE_MINIMIZED :
+                         win32::IsZoomed(hwnd) ? SIZE_MAXIMIZED : SIZE_RESTORED, MAKELPARAM(rc.right, rc.bottom));
         if (!(flags & SWP_NOMOVE) && LpCompatWindow(hwnd)) {
             if (lpwin->hwndParent) {
                 pt.x = lpwin->rcChild.left; pt.y = lpwin->rcChild.top;
-            } else ClientToScreen(hwnd, &pt);
-            SendMessageA(hwnd, WM_MOVE, 0, MAKELPARAM(pt.x, pt.y));
+            } else win32::ClientToScreen(hwnd, &pt);
+            win32::SendMessageA(hwnd, WM_MOVE, 0, MAKELPARAM(pt.x, pt.y));
         }
         return 0;
     }
     case WM_NCCREATE:
         return TRUE;
     case WM_CLOSE:
-        DestroyWindow(hwnd);
+        win32::DestroyWindow(hwnd);
         return 0;
     case WM_SETTEXT:
         if (!lParam || !FUtf8Valid((const char *)lParam, strlen((const char *)lParam)) ||

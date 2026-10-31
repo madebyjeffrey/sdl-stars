@@ -6,6 +6,8 @@
 
 #include "wincompat_types.h"
 #include "wincompat_structs.h"
+
+namespace win32 {
 WINBOOL WINAPI AppendMenuA(HMENU hMenu,UINT uFlags,UINT_PTR uIDNewItem,LPCSTR lpNewItem);
 HDC WINAPI BeginPaint(HWND hWnd,LPPAINTSTRUCT lpPaint);
 WINBOOL WINAPI BitBlt(HDC hdc,int x,int y,int cx,int cy,HDC hdcSrc,int x1,int y1,DWORD rop);
@@ -35,7 +37,7 @@ WINBOOL WINAPI DestroyIcon(HICON hIcon);
 WINBOOL WINAPI DestroyMenu(HMENU hMenu);
 WINBOOL WINAPI DestroyWindow(HWND hWnd);
 INT_PTR WINAPI DialogBoxParamA(HINSTANCE hInstance,LPCSTR lpTemplateName,HWND hWndParent,DLGPROC lpDialogFunc,LPARAM dwInitParam);
-LRESULT WINAPI DispatchMessageA(CONST MSG *lpMsg);
+LRESULT WINAPI DispatchMessageA(CONST win32::MSG *lpMsg);
 WINBOOL WINAPI DrawIcon(HDC hDC,int X,int Y,HICON hIcon);
 WINBOOL WINAPI DrawMenuBar(HWND hWnd);
 int WINAPI DrawTextA(HDC hdc,LPCSTR lpchText,int cchText,LPRECT lprc,UINT format);
@@ -190,7 +192,7 @@ WINBOOL WINAPI SystemParametersInfoA(UINT uiAction,UINT uiParam,PVOID pvParam,UI
 WINBOOL WINAPI TextOutA(HDC hdc,int x,int y,LPCSTR lpString,int c);
 WINBOOL WINAPI TrackPopupMenu(HMENU hMenu,UINT uFlags,int x,int y,int nReserved,HWND hWnd,CONST RECT *prcRect);
 int WINAPI TranslateAcceleratorA(HWND hWnd,HACCEL hAccTable,LPMSG lpMsg);
-WINBOOL WINAPI TranslateMessage(CONST MSG *lpMsg);
+WINBOOL WINAPI TranslateMessage(CONST win32::MSG *lpMsg);
 WINBOOL WINAPI WaitMessage(VOID);
 WINBOOL WINAPI UnrealizeObject(HGDIOBJ h);
 WINBOOL WINAPI UpdateWindow(HWND hWnd);
@@ -209,22 +211,16 @@ int WINAPI lstrlenA (LPCSTR lpString);
 int WINAPIV wsprintfA(LPSTR,LPCSTR,...);
 
 #define AppendMenu AppendMenuA
-#define CallWindowProc CallWindowProcA
 #define CreateFontIndirect CreateFontIndirectA
-#define DefWindowProc DefWindowProcA
-#define DispatchMessage DispatchMessageA
 #define DrawText DrawTextA
 #define ExtTextOut ExtTextOutA
 #define FindResource FindResourceA
 #define GetDlgItemText GetDlgItemTextA
-#define GetMessage GetMessageA
 #define GetClassName GetClassNameA
 #define GetModuleHandle GetModuleHandleA
 #define GetObject GetObjectA
-#define GetOpenFileName GetOpenFileNameA
 #define GetPrivateProfileInt GetPrivateProfileIntA
 #define GetPrivateProfileString GetPrivateProfileStringA
-#define GetSaveFileName GetSaveFileNameA
 #define GetTextExtentPoint32 GetTextExtentPoint32A
 #define GetTextMetrics GetTextMetricsA
 #define GetWindowLongPtr GetWindowLongPtrA
@@ -236,18 +232,13 @@ int WINAPIV wsprintfA(LPSTR,LPCSTR,...);
 #define LoadCursor LoadCursorA
 #define LoadIcon LoadIconA
 #define MessageBox MessageBoxA
-#define PeekMessage PeekMessageA
 #define PostMessage PostMessageA
 #define PrintDlg PrintDlgA
 #define RegisterClass RegisterClassA
-#define SendDlgItemMessage SendDlgItemMessageA
-#define SendMessage SendMessageA
 #define SetDlgItemText SetDlgItemTextA
 #define SetWindowLongPtr SetWindowLongPtrA
-#define SetWindowText SetWindowTextA
 #define SystemParametersInfo SystemParametersInfoA
 #define TextOut TextOutA
-#define TranslateAccelerator TranslateAcceleratorA
 #define WinHelp WinHelpA
 #define WritePrivateProfileString WritePrivateProfileStringA
 #define lstrcat lstrcatA
@@ -267,7 +258,6 @@ BOOL WINAPI GetIconInfo(HICON hicon, PICONINFO lpii);
 HCURSOR WINAPI GetCursor(void);
 BOOL WINAPI MapDialogRect(HWND hwnd, LPRECT lprc);
 BOOL WINAPI IsDialogMessageA(HWND hwnd, LPMSG lpmsg);
-#define IsDialogMessage IsDialogMessageA
 BOOL WINAPI SetMenu(HWND hwnd, HMENU hmenu);
 BOOL WINAPI EndMenu(void);
 HMENU WINAPI CreateMenu(void);
@@ -280,4 +270,5 @@ int WINAPI GetMenuStringA(HMENU hMenu, UINT id, LPSTR psz, int cch, UINT flags);
 int WINAPI SetScrollInfo(HWND hwnd, int sb, LPCSCROLLINFO lpsi, BOOL fRedraw);
 BOOL WINAPI GetScrollInfo(HWND hwnd, int sb, LPSCROLLINFO lpsi);
 BOOL WINAPI ShowScrollBar(HWND hwnd, int sb, BOOL fShow);
+} // namespace win32
 #endif

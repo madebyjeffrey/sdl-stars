@@ -197,7 +197,7 @@ int main(void) {
     HEAPIOSCOPE scopeHeap(ioHeap);
     CONTROLIO   ioControl;
     ioControl.pfnGetDlgItem = WITNESSADAPTER<&TestGetDlgItem, decltype(ioControl.pfnGetDlgItem)>::Call;
-    ioControl.pfnLUiSendMessage = WITNESSADAPTER<&TestLUiSendMessage, decltype(ioControl.pfnLUiSendMessage)>::Call;
+    ioControl.pfnSendMessage = WITNESSADAPTER<&TestLUiSendMessage, decltype(ioControl.pfnSendMessage)>::Call;
     ioControl.pfnGetClientRect = WITNESSADAPTER<&TestGetClientRect, decltype(ioControl.pfnGetClientRect)>::Call;
     ioControl.pfnInvalidateRect = WITNESSADAPTER<&TestInvalidateRect, decltype(ioControl.pfnInvalidateRect)>::Call;
     ioControl.pfnGetAsyncKeyState = WITNESSADAPTER<&TestGetAsyncKeyState, decltype(ioControl.pfnGetAsyncKeyState)>::Call;

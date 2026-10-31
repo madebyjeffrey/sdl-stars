@@ -141,7 +141,7 @@ static void CALLBACK StateTimer(HWND window, UINT message, UINT_PTR timer, DWORD
     if (popupWindow != NULL) {
         GetWindowThreadProcessId(popupWindow, &popupProcess);
         if (popupProcess == GetCurrentProcessId()) {
-            popupMenu = (HMENU)SendMessage(popupWindow, 0x01e1, 0, 0);
+            popupMenu = (HMENU)SendMessageA(popupWindow, 0x01e1, 0, 0);
             for (i = 0; i < GetMenuItemCount(popupMenu); i++) {
                 GetMenuStringA(popupMenu, i, menuText, sizeof(menuText), MF_BYPOSITION);
                 if (GetMenuItemRect(NULL, popupMenu, i, &rect)) {
@@ -279,7 +279,7 @@ int16_t __wrap_InitInstance(int16_t nCmdShow) {
         fputs("Cannot create tutorial test observer\n", stderr);
         ExitProcess(2);
     }
-    SendMessage(stateEdit, EM_SETLIMITTEXT, sizeof(stateText), 0);
+    SendMessageA(stateEdit, EM_SETLIMITTEXT, sizeof(stateText), 0);
     StateTimer(stateWindow, WM_TIMER, 1, GetTickCount());
     return result;
 }

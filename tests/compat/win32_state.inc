@@ -29,11 +29,11 @@ static LRESULT CALLBACK StateProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         sizeLast = (UINT)w;
         if (fDestroySize) { fDestroySize = FALSE; DestroyWindow(hwnd); }
     }
-    return DefWindowProc(hwnd, msg, w, l);
+    return DefWindowProcA(hwnd, msg, w, l);
 }
 static void Drain(void) {
-    MSG msg;
-    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
+    APPMSG msg;
+    while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
 }
 int main(void) {
     WNDCLASS wc = {0};

@@ -9,7 +9,7 @@
 #include <stars_compat.h>
 
 static int IStarsMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) try {
-    MSG      msg;
+    win32::MSG      msg;
     uint32_t lSeed;
     int16_t  fSeed;
 
@@ -39,23 +39,23 @@ static int IStarsMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdL
     if (!ParseCmdLine(lpCmdLine, &fSeed, &lSeed)) { FreeStuff(); return 2; }
     /* The original seeded before FCreateStuff; nothing in between draws a
        random number, so seeding after the command line is the same. */
-    Randomize2(fSeed ? lSeed : GetTickCount());
+    Randomize2(fSeed ? lSeed : win32::GetTickCount());
     StarsRethrowPendingError();
-    PostMessage(hwndFrame, WM_STARS_STARTUP, 0, 0);
-    while (FUiGetMessage(&msg, NULL, 0, 0)) {
+    win32::PostMessage(hwndFrame, WM_STARS_STARTUP, 0, 0);
+    while (ui::GetMessage(&msg, NULL, 0, 0)) {
         StarsRethrowPendingError();
         if ((msg.message == WM_MOUSEWHEEL || msg.message == WM_MOUSEHWHEEL) && !FRouteMouseWheel(&msg))
             continue;
         if (hwndTitle) {
-            if (IUiTranslateAccelerator(hwndFrame, hAccelTitle, &msg) == 0) {
-                TranslateMessage(&msg);
-                LUiDispatchMessage(&msg);
+            if (ui::TranslateAccelerator(hwndFrame, hAccelTitle, &msg) == 0) {
+                win32::TranslateMessage(&msg);
+                ui::DispatchMessage(&msg);
             }
-        } else if (IsIconic(hwndFrame) != 0 || IUiTranslateAccelerator(hwndFrame, hAccel, &msg) == 0) {
-            TranslateMessage(&msg);
+        } else if (win32::IsIconic(hwndFrame) != 0 || ui::TranslateAccelerator(hwndFrame, hAccel, &msg) == 0) {
+            win32::TranslateMessage(&msg);
             if (((msg.message != WM_KEYDOWN && msg.message != WM_KEYUP) || !FHandleKey(msg.hwnd, msg.message, msg.wParam, msg.lParam)) &&
                 (msg.message != WM_CHAR || !FHandleChar(msg.hwnd, msg.wParam, msg.lParam))) {
-                LUiDispatchMessage(&msg);
+                ui::DispatchMessage(&msg);
             }
         }
     }
@@ -110,40 +110,40 @@ int16_t FGetSystemColors() {
     if (hbrDesktop) {
         FreeHbr(hbrDesktop);
     }
-    crButtonFace = GetSysColor(COLOR_BTNFACE);
+    crButtonFace = win32::GetSysColor(COLOR_BTNFACE);
     hbrButtonFace = HbrGet(crButtonFace);
-    crButtonHilite = GetSysColor(COLOR_BTNHIGHLIGHT);
+    crButtonHilite = win32::GetSysColor(COLOR_BTNHIGHLIGHT);
     hbrButtonHilite = HbrGet(crButtonHilite);
-    crButtonShadow = GetSysColor(COLOR_BTNSHADOW);
+    crButtonShadow = win32::GetSysColor(COLOR_BTNSHADOW);
     hbrButtonShadow = HbrGet(crButtonShadow);
-    crButtonText = GetSysColor(COLOR_BTNTEXT);
+    crButtonText = win32::GetSysColor(COLOR_BTNTEXT);
     hbrButtonText = HbrGet(crButtonText);
-    hbrWindowFrame = HbrGet(GetSysColor(COLOR_WINDOWFRAME));
-    hbrDesktop = HbrGet(GetSysColor(COLOR_BACKGROUND));
-    crWindow = GetSysColor(COLOR_WINDOW);
+    hbrWindowFrame = HbrGet(win32::GetSysColor(COLOR_WINDOWFRAME));
+    hbrDesktop = HbrGet(win32::GetSysColor(COLOR_BACKGROUND));
+    crWindow = win32::GetSysColor(COLOR_WINDOW);
     hbrWindow = HbrGet(crWindow);
-    crWindowText = GetSysColor(COLOR_WINDOWTEXT);
+    crWindowText = win32::GetSysColor(COLOR_WINDOWTEXT);
     hbrWindowText = HbrGet(crWindowText);
-    dyTitleBar = GetSystemMetrics(SM_CYCAPTION);
-    dxWinFrame = GetSystemMetrics(SM_CXFRAME);
-    dyWinFrame = GetSystemMetrics(SM_CYFRAME);
+    dyTitleBar = win32::GetSystemMetrics(SM_CYCAPTION);
+    dxWinFrame = win32::GetSystemMetrics(SM_CXFRAME);
+    dyWinFrame = win32::GetSystemMetrics(SM_CYFRAME);
     if (hdibPlaque) {
-        lpbi = (BITMAPINFO *)GlobalLock(hdibPlaque);
+        lpbi = (BITMAPINFO *)win32::GlobalLock(hdibPlaque);
         lpbi->bmiColors[249].rgbRed = crButtonFace;
         lpbi->bmiColors[249].rgbGreen = LOWORD(crButtonFace) >> 8;
         lpbi->bmiColors[249].rgbBlue = HIWORD(crButtonFace);
-        GlobalUnlock(hdibPlaque);
+        win32::GlobalUnlock(hdibPlaque);
     }
     if (hdibToolbar) {
-        lpbi = (BITMAPINFO *)GlobalLock(hdibToolbar);
+        lpbi = (BITMAPINFO *)win32::GlobalLock(hdibToolbar);
         lpbi->bmiColors[253].rgbRed = crButtonFace;
         lpbi->bmiColors[253].rgbGreen = LOWORD(crButtonFace) >> 8;
         lpbi->bmiColors[253].rgbBlue = HIWORD(crButtonFace);
-        GlobalUnlock(hdibToolbar);
+        win32::GlobalUnlock(hdibToolbar);
     }
-    hdc = GetDC(NULL);
-    vcScreenColors = GetDeviceCaps(hdc, BITSPIXEL) * GetDeviceCaps(hdc, PLANES);
-    ReleaseDC(NULL, hdc);
+    hdc = win32::GetDC(NULL);
+    vcScreenColors = win32::GetDeviceCaps(hdc, BITSPIXEL) * win32::GetDeviceCaps(hdc, PLANES);
+    win32::ReleaseDC(NULL, hdc);
     return TRUE;
 }
 
@@ -168,7 +168,7 @@ void FreeStuff() noexcept {
     }
 }
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+int WINAPI ui::WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
     BeginAppUiSession();
     NATIVECLEANUPSCOPE close([]() noexcept { FreeStuff(); });
     int result = IStarsMain(hInstance, hPrevInstance, lpCmdLine, nCmdShow);
@@ -194,12 +194,12 @@ INT_PTR CALLBACK About(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     case WM_INITDIALOG:
         iAbout1st = -11;
         iAboutPartial = 0;
-        ControlIO().pfnFUiSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_ABOUT_DEMO_TEXT), SzVersion());
-        uTimerId = SetTimer(hwnd, 14, 50, NULL);
+        ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_ABOUT_DEMO_TEXT), SzVersion());
+        uTimerId = win32::SetTimer(hwnd, 14, 50, NULL);
         return 1;
     case WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        FillRect((HDC)wParam, &rc, hbrButtonFace);
+        win32::FillRect((HDC)wParam, &rc, hbrButtonFace);
         return 1;
     case WM_TIMER:
         hwndCtl = ControlIO().pfnGetDlgItem(hwnd, IDC_ABOUT_CREDITS_TEXT);
@@ -212,12 +212,12 @@ INT_PTR CALLBACK About(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             }
         }
         ControlIO().pfnGetClientRect(hwndCtl, &rc);
-        hdc = GetDC(hwndCtl);
-        SelectObject(hdc, rghfontArial8[1]);
-        SetBkMode(hdc, OPAQUE);
-        SetBkColor(hdc, crButtonFace);
-        SetTextColor(hdc, crButtonText);
-        IntersectClipRect(hdc, 0, 0, rc.right, rc.bottom);
+        hdc = win32::GetDC(hwndCtl);
+        win32::SelectObject(hdc, rghfontArial8[1]);
+        win32::SetBkMode(hdc, OPAQUE);
+        win32::SetBkColor(hdc, crButtonFace);
+        win32::SetTextColor(hdc, crButtonText);
+        win32::IntersectClipRect(hdc, 0, 0, rc.right, rc.bottom);
         rc.top -= iAboutPartial;
         rc.bottom = rc.top + dyArial8;
         for (i = iAbout1st; i < iAbout1st + 10; i++) {
@@ -226,12 +226,12 @@ INT_PTR CALLBACK About(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             } else if (i >= 77) {
                 break;
             }
-            OffsetRect(&rc, 0, dyArial8);
+            win32::OffsetRect(&rc, 0, dyArial8);
         }
         rc.bottom = 1000;
-        FillRect(hdc, &rc, hbrButtonFace);
-        SelectClipRgn(hdc, NULL);
-        ReleaseDC(hwnd, hdc);
+        win32::FillRect(hdc, &rc, hbrButtonFace);
+        win32::SelectClipRgn(hdc, NULL);
+        win32::ReleaseDC(hwnd, hdc);
         break;
     case WM_CTLCOLORMSGBOX:
     case WM_CTLCOLOREDIT:
@@ -241,7 +241,7 @@ INT_PTR CALLBACK About(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     case WM_CTLCOLORSCROLLBAR:
     case WM_CTLCOLORSTATIC:
         if (message == WM_CTLCOLORSTATIC) {
-            SetBkColor((HDC)wParam, crButtonFace);
+            win32::SetBkColor((HDC)wParam, crButtonFace);
             return (INT_PTR)hbrButtonFace;
         }
         break;
@@ -249,7 +249,7 @@ INT_PTR CALLBACK About(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         switch (LOWORD(wParam)) {
         case IDOK:
         case IDCANCEL:
-            KillTimer(hwnd, uTimerId);
+            win32::KillTimer(hwnd, uTimerId);
             uTimerId = 0;
             ControlIO().pfnEndDialog(hwnd, 1);
             return 1;
@@ -263,9 +263,9 @@ int16_t FHandleChar(HWND hwnd, uint16_t ch, int32_t lParam) {
     HWND hwndF;
 
     if ((hwndScanner && (ch == 43 || ch == 45)) || (ch == 118 || ch == 86)) {
-        hwndF = GetFocus();
+        hwndF = win32::GetFocus();
         if (!hwndMessage || hwndF != hwndMsgEdit) {
-            ControlIO().pfnLUiSendMessage(hwndScanner, WM_CHAR, ch, lParam);
+            ControlIO().pfnSendMessage(hwndScanner, WM_CHAR, ch, lParam);
             return TRUE;
         }
     }
@@ -283,29 +283,29 @@ int16_t FHandleKey(HWND hwnd, int16_t iMsg, int16_t iKey, uint32_t dw) {
     int16_t       iwp;
 
     if (iMsg == WM_KEYDOWN) {
-        if (iKey == VK_ESCAPE && hwndBrowser && GetActiveWindow() == hwndBrowser) {
-            ControlIO().pfnFUiDestroyWindow(hwndBrowser);
+        if (iKey == VK_ESCAPE && hwndBrowser && win32::GetActiveWindow() == hwndBrowser) {
+            ControlIO().pfnDestroyWindow(hwndBrowser);
             return TRUE;
         }
         if (iKey == VK_ESCAPE && hwndPopup) {
-            ControlIO().pfnLUiSendMessage(hwndPopup, WM_LBUTTONUP, 0, 0);
+            ControlIO().pfnSendMessage(hwndPopup, WM_LBUTTONUP, 0, 0);
             return TRUE;
         }
         if (iKey == VK_ESCAPE && hwndReportDlg) {
-            ControlIO().pfnFUiDestroyWindow(hwndReportDlg);
+            ControlIO().pfnDestroyWindow(hwndReportDlg);
             return TRUE;
         }
     } else if (iMsg == WM_KEYUP && hwndTb && (iKey == VK_ESCAPE || iKey == VK_RETURN)) {
-        hwndF = GetParent(GetFocus());
-        if (hwndF == hwndTb || GetParent(hwndF) == hwndTb) {
+        hwndF = win32::GetParent(win32::GetFocus());
+        if (hwndF == hwndTb || win32::GetParent(hwndF) == hwndTb) {
             TerminateToolbarFocus(iKey == VK_ESCAPE);
         }
     }
     if (iKey == VK_SHIFT && hwndScanner) {
         GetCursorPos16(&pt);
-        hwndOver = WindowFromPoint(PointFrom16(pt));
+        hwndOver = win32::WindowFromPoint(PointFrom16(pt));
         if (hwndOver == hwndScanner) {
-            ControlIO().pfnLUiSendMessage(hwndOver, WM_SETCURSOR, (WPARAM)hwndOver, 0);
+            ControlIO().pfnSendMessage(hwndOver, WM_SETCURSOR, (WPARAM)hwndOver, 0);
         }
     }
     if (iMsg != WM_KEYDOWN) {
@@ -331,9 +331,9 @@ int16_t FHandleKey(HWND hwnd, int16_t iMsg, int16_t iKey, uint32_t dw) {
     case VK_UP:
     case VK_HOME:
     case VK_END:
-        hwndF = GetFocus();
+        hwndF = win32::GetFocus();
         if (hwndMessage) {
-            if (hwndTb && (hwndTb == hwndF || GetParent(hwndF) == hwndTb || GetParent(GetParent(hwndF)) == hwndTb)) {
+            if (hwndTb && (hwndTb == hwndF || win32::GetParent(hwndF) == hwndTb || win32::GetParent(win32::GetParent(hwndF)) == hwndTb)) {
                 return FALSE;
             }
             for (i = 0; i < 3; i++) {
@@ -396,7 +396,7 @@ int16_t FHandleKey(HWND hwnd, int16_t iMsg, int16_t iKey, uint32_t dw) {
             if (hwndF == hwndShipLB) {
                 return FALSE;
             }
-            ControlIO().pfnLUiSendMessage(hwndMessage, WM_KEYDOWN, iKey, dw);
+            ControlIO().pfnSendMessage(hwndMessage, WM_KEYDOWN, iKey, dw);
             break;
         case VK_OEM_COMMA:
         case VK_OEM_PERIOD:

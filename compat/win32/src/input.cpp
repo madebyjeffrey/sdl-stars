@@ -21,7 +21,7 @@ void CompatCopyInput(BYTE *rgb, LPPOINT lppt) {
     if (fCursor) *lppt = ptCursor;
 }
 void CompatReadInput(const BYTE *rgb) { memcpy(rgbRead, rgb, sizeof(rgbRead)); }
-BOOL WINAPI SetKeyboardState(BYTE *rgb) {
+BOOL WINAPI win32::SetKeyboardState(BYTE *rgb) {
     if (!SDL_IsMainThread() || !rgb) return FALSE;
     CompatReadInput(rgb);
     return TRUE;
@@ -34,7 +34,7 @@ void CompatResetInput(void) {
     memset(rghwndClick, 0, sizeof(rghwndClick)); memset(rgcClick, 0, sizeof(rgcClick));
 }
 
-SHORT WINAPI GetKeyState(int vk) {
+SHORT WINAPI win32::GetKeyState(int vk) {
     BYTE b;
     if (!SDL_IsMainThread() || vk < 0 || vk > 255) return 0;
     b = rgbRead[vk];
@@ -79,7 +79,7 @@ static void InputMouse(HWND hwnd, int x, int y, WPARAM buttons) {
     SetKeyDown(VK_LBUTTON, buttons & MK_LBUTTON);
     SetKeyDown(VK_RBUTTON, buttons & MK_RBUTTON);
     SetKeyDown(VK_MBUTTON, buttons & MK_MBUTTON);
-    if (ClientToScreen(hwnd, &pt)) { ptCursor = pt; hwndCursor = hwnd; fCursor = TRUE; }
+    if (win32::ClientToScreen(hwnd, &pt)) { ptCursor = pt; hwndCursor = hwnd; fCursor = TRUE; }
     CompatCursorPoint(hwnd, x, y);
 }
 
@@ -89,19 +89,19 @@ HWND HwndCompatPointerRoot(void) {
     return HwndCompatRoot(hwnd ? hwnd : LpCompatWindow(hwndCursor));
 }
 
-BOOL WINAPI GetCursorPos(LPPOINT lppt) {
+BOOL WINAPI win32::GetCursorPos(LPPOINT lppt) {
     const char *pszDriver;
     float x, y;
     HWND hwnd;
     SDL_Window *lpWindow;
     POINT pt;
     if (!SDL_IsMainThread() || !lppt || !(SDL_WasInit(SDL_INIT_VIDEO) & SDL_INIT_VIDEO)) {
-        SetLastError(ERROR_INVALID_PARAMETER);
+        win32::SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
     pszDriver = CompatInputIO().pfnGetCurrentVideoDriver();
     if (pszDriver && strcmp(pszDriver, "dummy") == 0) {
-        if (!fCursor) { SetLastError(ERROR_NOT_SUPPORTED); return FALSE; }
+        if (!fCursor) { win32::SetLastError(ERROR_NOT_SUPPORTED); return FALSE; }
         *lppt = ptCursor;
         return TRUE;
     }
@@ -112,18 +112,18 @@ BOOL WINAPI GetCursorPos(LPPOINT lppt) {
             SDL_GetMouseState(&x, &y);
             if (!FInputPoint(x, y, &pt.x, &pt.y)) return FALSE;
             pt.y -= CyCompatMenuBar(hwnd);
-            if (!ClientToScreen(hwnd, &pt)) return FALSE;
+            if (!win32::ClientToScreen(hwnd, &pt)) return FALSE;
             *lppt = pt;
             return TRUE;
         }
         // Retain the last delivered point during captured or queued input;
         // no global position outside our surfaces exists on Wayland.
-        if (fCursor && IsWindow(hwndCursor)) { *lppt = ptCursor; return TRUE; }
-        SetLastError(ERROR_NOT_SUPPORTED);
+        if (fCursor && win32::IsWindow(hwndCursor)) { *lppt = ptCursor; return TRUE; }
+        win32::SetLastError(ERROR_NOT_SUPPORTED);
         return FALSE;
     }
     if (!pszDriver || (strcmp(pszDriver, "x11") != 0 && strcmp(pszDriver, "cocoa") != 0 &&
-                       strcmp(pszDriver, "windows") != 0)) { SetLastError(ERROR_NOT_SUPPORTED); return FALSE; }
+                       strcmp(pszDriver, "windows") != 0)) { win32::SetLastError(ERROR_NOT_SUPPORTED); return FALSE; }
     CompatInputIO().pfnGetGlobalMouseState(&x, &y);
     if (!isfinite(x) || !isfinite(y) || (double)x < INT32_MIN || (double)x > INT32_MAX ||
         (double)y < INT32_MIN || (double)y > INT32_MAX) return FALSE;
@@ -131,38 +131,38 @@ BOOL WINAPI GetCursorPos(LPPOINT lppt) {
     return TRUE;
 }
 
-HWND WINAPI GetCapture(void) { return LpCompatWindow(hwndCapture); }
+HWND WINAPI win32::GetCapture(void) { return LpCompatWindow(hwndCapture); }
 
 static BOOL FCaptureForeground(HWND hwnd) {
     HWND hwndRoot = HwndCompatRoot(hwnd);
-    HWND hwndFocusRoot = HwndCompatRoot(GetFocus());
+    HWND hwndFocusRoot = HwndCompatRoot(win32::GetFocus());
 
     // A nonactivating detail card captures on behalf of its focused owner.
     return hwndRoot && hwndFocusRoot && (hwndRoot == hwndFocusRoot ||
         ((hwndRoot->dwExStyle & WS_EX_NOACTIVATE) && hwndRoot->hwndOwner == hwndFocusRoot));
 }
 
-HWND WINAPI SetCapture(HWND hwnd) {
+HWND WINAPI win32::SetCapture(HWND hwnd) {
     HWND hwndOld, lpwin = LpCompatWindow(hwnd);
 
     if (!SDL_IsMainThread() || (hwnd && (!lpwin || lpwin->fDestroying)))
         return NULL;
-    hwndOld = GetCapture();
+    hwndOld = win32::GetCapture();
     hwndCapture = hwnd;
     // SDL capture is optional on headless backends; logical child routing still works.
     SDL_CaptureMouse(hwnd && FCaptureForeground(hwnd));
-    if (hwndOld) SendMessageA(hwndOld, WM_CAPTURECHANGED, 0, (LPARAM)hwnd);
+    if (hwndOld) win32::SendMessageA(hwndOld, WM_CAPTURECHANGED, 0, (LPARAM)hwnd);
     return hwndOld;
 }
 
-BOOL WINAPI ReleaseCapture(void) {
+BOOL WINAPI win32::ReleaseCapture(void) {
     if (!SDL_IsMainThread()) return FALSE;
-    SetCapture(NULL);
+    win32::SetCapture(NULL);
     return TRUE;
 }
 
 static HWND HwndMouseTarget(HWND hwndRoot, int *lpx, int *lpy) {
-    HWND hwnd = GetCapture(), hwndHit;
+    HWND hwnd = win32::GetCapture(), hwndHit;
     POINT pt;
     int x, y;
 
@@ -171,11 +171,11 @@ static HWND HwndMouseTarget(HWND hwndRoot, int *lpx, int *lpy) {
     if (!hwnd) return HwndCompatMouse(hwndRoot, lpx, lpy);
     if (!FCaptureForeground(hwnd)) {
         hwndHit = HwndCompatMouse(hwndRoot, &x, &y);
-        if (hwndHit != hwnd && !IsChild(hwnd, hwndHit))
+        if (hwndHit != hwnd && !win32::IsChild(hwnd, hwndHit))
             return HwndCompatMouse(hwndRoot, lpx, lpy);
     }
     pt.x = *lpx; pt.y = *lpy;
-    if (!ClientToScreen(hwndRoot, &pt) || !ScreenToClient(hwnd, &pt)) return NULL;
+    if (!win32::ClientToScreen(hwndRoot, &pt) || !win32::ScreenToClient(hwnd, &pt)) return NULL;
     *lpx = pt.x; *lpy = pt.y;
     return hwnd;
 }
@@ -183,7 +183,7 @@ static HWND HwndMouseTarget(HWND hwndRoot, int *lpx, int *lpy) {
 void CompatTextInput(HWND hwnd, const char *pszText) {
     const char *psz = pszText;
     DWORD ch;
-    if (!IsWindow(hwnd)) return;
+    if (!win32::IsWindow(hwnd)) return;
     if (!FUtf8Valid(pszText, strlen(pszText))) {
         hwnd->fEditInputRejected = TRUE;
         SDL_SetError("Text input is malformed UTF-8");
@@ -256,7 +256,7 @@ static UINT VkSideFromScancode(SDL_Scancode sc) {
     }
 }
 
-SHORT WINAPI GetAsyncKeyState(int vk) {
+SHORT WINAPI win32::GetAsyncKeyState(int vk) {
     const bool *rgf;
     BYTE rgb[256] = {};
     SDL_Keymod mod;
@@ -395,7 +395,7 @@ void CompatRouteEvent(const SDL_Event *lpevent) {
     float dx, dy;
 
     if (lpevent->type == SDL_EVENT_QUIT) {
-        PostQuitMessage(0);
+        win32::PostQuitMessage(0);
         return;
     }
     if (lpevent->type == SDL_EVENT_USER && lpevent->user.code == COMPAT_ASYNC_POST_CODE) {
@@ -434,52 +434,52 @@ void CompatRouteEvent(const SDL_Event *lpevent) {
             CompatWindowState(hwnd, lpevent->type == SDL_EVENT_WINDOW_MINIMIZED ? SW_SHOWMINIMIZED :
                               lpevent->type == SDL_EVENT_WINDOW_MAXIMIZED ? SW_SHOWMAXIMIZED : SW_SHOWNORMAL, TRUE);
         } else if (lpevent->type == SDL_EVENT_WINDOW_CLOSE_REQUESTED)
-            PostMessageA(hwnd, WM_CLOSE, 0, 0);
+            win32::PostMessageA(hwnd, WM_CLOSE, 0, 0);
         else if (lpevent->type == SDL_EVENT_WINDOW_MOVED) {
             CompatRememberNormal(hwnd);
-            PostMessageA(hwnd, WM_MOVE, 0, MAKELPARAM(lpevent->window.data1, lpevent->window.data2));
+            win32::PostMessageA(hwnd, WM_MOVE, 0, MAKELPARAM(lpevent->window.data1, lpevent->window.data2));
         } else if (lpevent->type == SDL_EVENT_WINDOW_RESIZED) {
             CompatRememberNormal(hwnd);
-            InvalidateRect(hwnd, NULL, TRUE);
+            win32::InvalidateRect(hwnd, NULL, TRUE);
             x = lpevent->window.data1; y = lpevent->window.data2;
             if (hwnd->fZeroX || hwnd->fZeroY) {
                 RECT rc;
                 // Older queued resize events must not cancel a newer zero-size request.
-                if (GetClientRect(hwnd, &rc)) {
+                if (win32::GetClientRect(hwnd, &rc)) {
                     if (hwnd->fZeroX) x = rc.right;
                     if (hwnd->fZeroY) y = rc.bottom;
                 }
             }
             if (!hwnd->fZeroY) y = (((0) > (y - CyCompatMenuBar(hwnd))) ? (0) : (y - CyCompatMenuBar(hwnd)));
-            if (!hwnd->fZeroX && (hwnd->dwStyle & WS_VSCROLL)) x = (((0) > (x - GetSystemMetrics(SM_CXVSCROLL))) ? (0) : (x - GetSystemMetrics(SM_CXVSCROLL)));
-            if (!hwnd->fZeroY && (hwnd->dwStyle & WS_HSCROLL)) y = (((0) > (y - GetSystemMetrics(SM_CYHSCROLL))) ? (0) : (y - GetSystemMetrics(SM_CYHSCROLL)));
-            if (IsIconic(hwnd)) x = y = 0;
-            PostMessageA(hwnd, WM_SIZE, IsIconic(hwnd) ? SIZE_MINIMIZED :
-                         IsZoomed(hwnd) ? SIZE_MAXIMIZED : SIZE_RESTORED, MAKELPARAM(x, y));
+            if (!hwnd->fZeroX && (hwnd->dwStyle & WS_VSCROLL)) x = (((0) > (x - win32::GetSystemMetrics(SM_CXVSCROLL))) ? (0) : (x - win32::GetSystemMetrics(SM_CXVSCROLL)));
+            if (!hwnd->fZeroY && (hwnd->dwStyle & WS_HSCROLL)) y = (((0) > (y - win32::GetSystemMetrics(SM_CYHSCROLL))) ? (0) : (y - win32::GetSystemMetrics(SM_CYHSCROLL)));
+            if (win32::IsIconic(hwnd)) x = y = 0;
+            win32::PostMessageA(hwnd, WM_SIZE, win32::IsIconic(hwnd) ? SIZE_MINIMIZED :
+                         win32::IsZoomed(hwnd) ? SIZE_MAXIMIZED : SIZE_RESTORED, MAKELPARAM(x, y));
         } else if (lpevent->type == SDL_EVENT_WINDOW_EXPOSED ||
                    lpevent->type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED)
-            InvalidateRect(hwnd, NULL, TRUE);
+            win32::InvalidateRect(hwnd, NULL, TRUE);
         else if (lpevent->type == SDL_EVENT_WINDOW_FOCUS_GAINED) {
-            if (HwndCompatRoot(GetFocus()) != hwnd || GetActiveWindow() != hwnd) CompatFocusWindow(hwnd);
+            if (HwndCompatRoot(win32::GetFocus()) != hwnd || win32::GetActiveWindow() != hwnd) CompatFocusWindow(hwnd);
         } else {
             for (i = 0; i < 256; i++) rgbInput[i] &= 1;
             fInputKeys = FALSE;
             hwnd->wMouseButtons = 0;
-            if (HwndCompatRoot(GetCapture()) == hwnd) ReleaseCapture();
-            if (HwndCompatRoot(GetFocus()) == hwnd || GetActiveWindow() == hwnd) CompatFocusWindow(NULL);
+            if (HwndCompatRoot(win32::GetCapture()) == hwnd) win32::ReleaseCapture();
+            if (HwndCompatRoot(win32::GetFocus()) == hwnd || win32::GetActiveWindow() == hwnd) CompatFocusWindow(NULL);
         }
         return;
     case SDL_EVENT_KEY_DOWN:
     case SDL_EVENT_KEY_UP:
         hwnd = LpCompatWindowFromId(lpevent->key.windowID);
-        hwndFocus = GetFocus();
+        hwndFocus = win32::GetFocus();
         if (hwndFocus && HwndCompatRoot(hwndFocus) == hwnd) hwnd = hwndFocus;
         if (hwnd && lpevent->key.scancode == SDL_SCANCODE_F12 &&
             (lpevent->key.mod & SDL_KMOD_CTRL) && (lpevent->key.mod & SDL_KMOD_SHIFT)) {
             if (lpevent->type == SDL_EVENT_KEY_DOWN && !lpevent->key.repeat) StarsCompatShowInspector();
             return;
         }
-        if (!IsWindowEnabled(hwnd)) return;
+        if (!win32::IsWindowEnabled(hwnd)) return;
         vk = VkFromScancode(lpevent->key.scancode);
         if (!hwnd || vk == 0)
             return;
@@ -513,15 +513,15 @@ void CompatRouteEvent(const SDL_Event *lpevent) {
         return;
     case SDL_EVENT_TEXT_EDITING:
         hwnd = LpCompatWindowFromId(lpevent->edit.windowID);
-        hwndFocus = GetFocus();
-        if (hwndFocus && HwndCompatRoot(hwndFocus) == hwnd && IsWindowEnabled(hwndFocus))
+        hwndFocus = win32::GetFocus();
+        if (hwndFocus && HwndCompatRoot(hwndFocus) == hwnd && win32::IsWindowEnabled(hwndFocus))
             CompatEditComposition(hwndFocus, lpevent->edit.text, lpevent->edit.start, lpevent->edit.length);
         return;
     case SDL_EVENT_TEXT_INPUT:
         hwnd = LpCompatWindowFromId(lpevent->text.windowID);
-        hwndFocus = GetFocus();
+        hwndFocus = win32::GetFocus();
         if (hwndFocus && HwndCompatRoot(hwndFocus) == hwnd) hwnd = hwndFocus;
-        if (!IsWindowEnabled(hwnd) || !lpevent->text.text)
+        if (!win32::IsWindowEnabled(hwnd) || !lpevent->text.text)
             return;
         if (!fInputKeys) InputModifiers(CompatInputIO().pfnGetModState());
         if (hwnd && hwnd->iControl == 3) CompatEditComposition(hwnd, "", 0, 0);
@@ -537,11 +537,11 @@ void CompatRouteEvent(const SDL_Event *lpevent) {
             return;
         hwndRoot = hwnd;
         if (!FInputPoint(lpevent->motion.x, lpevent->motion.y, &x, &y)) return;
-        if (!GetCapture() && y >= 0 && y < CyCompatMenuBar(hwnd)) {
+        if (!win32::GetCapture() && y >= 0 && y < CyCompatMenuBar(hwnd)) {
             POINT pt = {x, y - CyCompatMenuBar(hwnd)};
             InputMouse(hwndRoot, x, y, 0);
             CompatPostInput(hwnd, WM_SETCURSOR, (WPARAM)hwnd, MAKELPARAM(HTMENU, WM_NCMOUSEMOVE));
-            if (ClientToScreen(hwnd, &pt)) CompatPostInput(hwnd, WM_NCMOUSEMOVE, HTMENU, MAKELPARAM(pt.x, pt.y));
+            if (win32::ClientToScreen(hwnd, &pt)) CompatPostInput(hwnd, WM_NCMOUSEMOVE, HTMENU, MAKELPARAM(pt.x, pt.y));
             return;
         }
         hwnd = HwndMouseTarget(hwnd, &x, &y);
@@ -552,7 +552,7 @@ void CompatRouteEvent(const SDL_Event *lpevent) {
         if (lpevent->motion.state & SDL_BUTTON_MMASK) buttons |= MK_MBUTTON;
         InputMouse(hwndRoot, (int)lpevent->motion.x, (int)lpevent->motion.y, buttons);
         hwndRoot->wMouseButtons = buttons;
-        if (!GetCapture()) CompatPostInput(hwnd, WM_SETCURSOR, (WPARAM)hwnd, MAKELPARAM(HTCLIENT, WM_MOUSEMOVE));
+        if (!win32::GetCapture()) CompatPostInput(hwnd, WM_SETCURSOR, (WPARAM)hwnd, MAKELPARAM(HTCLIENT, WM_MOUSEMOVE));
         CompatPostInput(hwnd, WM_MOUSEMOVE, WMouseModifiers(buttons),
                      MAKELPARAM(x, y));
         return;
@@ -563,12 +563,12 @@ void CompatRouteEvent(const SDL_Event *lpevent) {
             return;
         hwndRoot = hwnd;
         if (!FInputPoint(lpevent->button.x, lpevent->button.y, &x, &y)) return;
-        if (!GetCapture() && y >= 0 && y < CyCompatMenuBar(hwnd)) {
+        if (!win32::GetCapture() && y >= 0 && y < CyCompatMenuBar(hwnd)) {
             POINT pt = {x, y - CyCompatMenuBar(hwnd)};
             if (lpevent->button.button == SDL_BUTTON_LEFT) {
                 hwndRoot->wMouseButtons = lpevent->type == SDL_EVENT_MOUSE_BUTTON_DOWN ? MK_LBUTTON : 0;
                 InputMouse(hwndRoot, x, y, hwndRoot->wMouseButtons);
-                if (ClientToScreen(hwnd, &pt)) CompatPostInput(hwnd, lpevent->type == SDL_EVENT_MOUSE_BUTTON_DOWN ? WM_NCLBUTTONDOWN : WM_NCLBUTTONUP,
+                if (win32::ClientToScreen(hwnd, &pt)) CompatPostInput(hwnd, lpevent->type == SDL_EVENT_MOUSE_BUTTON_DOWN ? WM_NCLBUTTONDOWN : WM_NCLBUTTONUP,
                                                             HTMENU, MAKELPARAM(pt.x, pt.y));
             }
             return;
@@ -607,9 +607,9 @@ void CompatRouteEvent(const SDL_Event *lpevent) {
     case SDL_EVENT_MOUSE_WHEEL:
         hwndRoot = LpCompatWindowFromId(lpevent->wheel.windowID);
         if (!hwndRoot) return;
-        hwnd = GetFocus();
-        if (!IsWindowEnabled(hwnd)) hwnd = hwndRoot;
-        if (!IsWindowEnabled(hwnd)) return;
+        hwnd = win32::GetFocus();
+        if (!win32::IsWindowEnabled(hwnd)) hwnd = hwndRoot;
+        if (!win32::IsWindowEnabled(hwnd)) return;
         if (!FInputPoint(lpevent->wheel.mouse_x, lpevent->wheel.mouse_y, &x, &y)) return;
         buttons = WInputButtons();
         InputMouse(hwndRoot, x, y, buttons);

@@ -28,7 +28,7 @@ static int16_t AddNewGameLibraryRace(void *lpData, const char *pszName) {
     }
     *pchLabel = 0;
     grf = pnrm->pszSelected && !strcmp(pszName, pnrm->pszSelected) ? MF_CHECKED : 0;
-    if (!AppendMenu(pnrm->hmenu, grf, 16000 + pnrm->cRace, szLabel)) return FALSE;
+    if (!win32::AppendMenu(pnrm->hmenu, grf, 16000 + pnrm->cRace, szLabel)) return FALSE;
     pnrm->cRace++;
     return TRUE;
 }
@@ -96,7 +96,7 @@ void NewGameWizard(HWND hwnd, int16_t fReadOnly) {
     }
 Step1:
     lpProc = MakeProcInstance(NewGameDlg, hInst);
-    mdRet = ControlIO().pfnLUiDialogBox(hInst, MAKEINTRESOURCE(IDD_NEW_GAME_1), hwnd, lpProc, (LPARAM)szFile);
+    mdRet = ControlIO().pfnDialogBox(hInst, MAKEINTRESOURCE(IDD_NEW_GAME_1), hwnd, lpProc, (LPARAM)szFile);
     FreeProcInstance(lpProc);
     if (mdRet <= 0) {
     Cancel:
@@ -111,7 +111,7 @@ Step1:
         goto Finish;
 Step2:
     lpProc = MakeProcInstance(NewGameDlg2, hInst);
-    mdRet = ControlIO().pfnLUiDialogBox(hInst, MAKEINTRESOURCE(IDD_NEW_GAME_2), hwnd, lpProc, (LPARAM)szFile);
+    mdRet = ControlIO().pfnDialogBox(hInst, MAKEINTRESOURCE(IDD_NEW_GAME_2), hwnd, lpProc, (LPARAM)szFile);
     FreeProcInstance(lpProc);
     if (mdRet <= 0)
         goto Cancel;
@@ -124,7 +124,7 @@ Step2:
     if (mdRet == 3)
         goto Finish;
     lpProc = MakeProcInstance(NewGameDlg3, hInst);
-    mdRet = ControlIO().pfnLUiDialogBox(hInst, MAKEINTRESOURCE(IDD_NEW_GAME_3), hwnd, lpProc, (LPARAM)szFile);
+    mdRet = ControlIO().pfnDialogBox(hInst, MAKEINTRESOURCE(IDD_NEW_GAME_3), hwnd, lpProc, (LPARAM)szFile);
     FreeProcInstance(lpProc);
     if (mdRet <= 0)
         goto Cancel;
@@ -159,7 +159,7 @@ Finish:
                 rgplr[i] = vrgplrDef[c];
             }
             TextIO().pfnCchGetString(static_cast<StringId>(idsHumanoid + c), rgplr[i].szName);
-            wsprintf(rgplr[i].szNames, "%ss", rgplr[i].szName);
+            win32::wsprintf(rgplr[i].szNames, "%ss", rgplr[i].szName);
             break;
         case 2:
             rgplr[i] = rgplrLocal[vrgplrTypeNew[i] >> 2];
@@ -189,7 +189,7 @@ Finish:
             TextIO().pfnCchGetString(static_cast<StringId>(idsBerserker + RandomIO().pfnRandom(24)), rgplr[i].szName);
         }
         if (rgplr[i].szNames[0] == 0) {
-            wsprintf(rgplr[i].szNames, "%ss", rgplr[i].szName);
+            win32::wsprintf(rgplr[i].szNames, "%ss", rgplr[i].szName);
         }
     }
     for (i = 1; i < game.cPlayer; i++) {
@@ -247,9 +247,9 @@ Finish:
     }
     if (!fFreeingTitle) {
         fFreeingTitle = TRUE;
-        ControlIO().pfnFUiDestroyWindow(hwndTitle);
+        ControlIO().pfnDestroyWindow(hwndTitle);
         hwndTitle = 0;
-        FUiShowWindow(hwndFrame, SW_SHOW);
+        ui::ShowWindow(hwndFrame, SW_SHOW);
     }
     if (!FFinishLibraryGame(hwnd, GenerateWorld(FALSE))) {
         DestroyCurGame();
@@ -269,7 +269,7 @@ int16_t FGetNewGameName(HWND hwnd, char *szFileSuggest) {
 }
 
 static int16_t FChooseNewGameName(HWND hwnd) {
-    char *pszFile = (char *)GetWindowLongPtr(hwnd, DWLP_USER);
+    char *pszFile = (char *)win32::GetWindowLongPtr(hwnd, DWLP_USER);
 
     // Reserve the library entry before closing the wizard so failures keep it open.
     return fRCWReadOnly || (pszFile && FGetNewGameName(hwnd, pszFile));
@@ -286,38 +286,38 @@ INT_PTR CALLBACK NewGameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 
     switch (message) {
     case WM_INITDIALOG:
-        SetWindowLongPtr(hwnd, DWLP_USER, lParam);
+        win32::SetWindowLongPtr(hwnd, DWLP_USER, lParam);
         SetNGWTitle(hwnd, 1);
-        CheckRadioButton(hwnd, IDC_NEW_GAME_TINY, IDC_NEW_GAME_HUGE, game.mdSize + 1000);
-        CheckRadioButton(hwnd, IDC_NEW_GAME_SPARSE, IDC_NEW_GAME_PACKED, game.mdDensity + 1005);
-        CheckRadioButton(hwnd, IDC_NEW_GAME_CLOSE, IDC_NEW_GAME_DISTANT, game.mdStartDist + 1009);
-        ControlIO().pfnFUiSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_NAME), game.szName);
-        LUiSendDlgItemMessage(hwnd, IDC_NEW_GAME_NAME, EM_LIMITTEXT, 0x1f, 0);
-        ControlIO().pfnLUiSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_MAX_MINERALS), BM_SETCHECK, game.fExtraFuel, 0);
-        ControlIO().pfnLUiSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_SLOWER_TECH), BM_SETCHECK, game.fSlowTech, 0);
-        ControlIO().pfnLUiSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_ACCELERATED_BBS), BM_SETCHECK, game.fBBSPlay, 0);
-        ControlIO().pfnLUiSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_NO_RANDOM_EVENTS), BM_SETCHECK, game.fNoRandom, 0);
-        ControlIO().pfnLUiSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_AI_ALLIANCES), BM_SETCHECK, game.fAisBand, 0);
-        ControlIO().pfnLUiSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_PUBLIC_SCORES), BM_SETCHECK, game.fVisScores, 0);
-        ControlIO().pfnLUiSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_GALAXY_CLUMPING), BM_SETCHECK, game.fClumping, 0);
+        win32::CheckRadioButton(hwnd, IDC_NEW_GAME_TINY, IDC_NEW_GAME_HUGE, game.mdSize + 1000);
+        win32::CheckRadioButton(hwnd, IDC_NEW_GAME_SPARSE, IDC_NEW_GAME_PACKED, game.mdDensity + 1005);
+        win32::CheckRadioButton(hwnd, IDC_NEW_GAME_CLOSE, IDC_NEW_GAME_DISTANT, game.mdStartDist + 1009);
+        ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_NAME), game.szName);
+        ui::SendDlgItemMessage(hwnd, IDC_NEW_GAME_NAME, EM_LIMITTEXT, 0x1f, 0);
+        ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_MAX_MINERALS), BM_SETCHECK, game.fExtraFuel, 0);
+        ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_SLOWER_TECH), BM_SETCHECK, game.fSlowTech, 0);
+        ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_ACCELERATED_BBS), BM_SETCHECK, game.fBBSPlay, 0);
+        ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_NO_RANDOM_EVENTS), BM_SETCHECK, game.fNoRandom, 0);
+        ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_AI_ALLIANCES), BM_SETCHECK, game.fAisBand, 0);
+        ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_PUBLIC_SCORES), BM_SETCHECK, game.fVisScores, 0);
+        ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_GALAXY_CLUMPING), BM_SETCHECK, game.fClumping, 0);
         if (fRCWReadOnly) {
             for (i = 1000; i <= 1004; i++) {
-                ControlIO().pfnFUiEnableWindow(ControlIO().pfnGetDlgItem(hwnd, i), FALSE);
+                ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, i), FALSE);
             }
             for (i = 1005; i <= 1008; i++) {
-                ControlIO().pfnFUiEnableWindow(ControlIO().pfnGetDlgItem(hwnd, i), FALSE);
+                ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, i), FALSE);
             }
             for (i = 1009; i <= 1012; i++) {
-                ControlIO().pfnFUiEnableWindow(ControlIO().pfnGetDlgItem(hwnd, i), FALSE);
+                ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, i), FALSE);
             }
-            ControlIO().pfnFUiEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_MAX_MINERALS), FALSE);
-            ControlIO().pfnFUiEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_SLOWER_TECH), FALSE);
-            ControlIO().pfnFUiEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_ACCELERATED_BBS), FALSE);
-            ControlIO().pfnFUiEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_NO_RANDOM_EVENTS), FALSE);
-            ControlIO().pfnFUiEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_GALAXY_CLUMPING), FALSE);
-            ControlIO().pfnFUiEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_AI_ALLIANCES), FALSE);
-            ControlIO().pfnFUiEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_NAME), FALSE);
-            ControlIO().pfnFUiEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_PUBLIC_SCORES), FALSE);
+            ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_MAX_MINERALS), FALSE);
+            ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_SLOWER_TECH), FALSE);
+            ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_ACCELERATED_BBS), FALSE);
+            ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_NO_RANDOM_EVENTS), FALSE);
+            ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_GALAXY_CLUMPING), FALSE);
+            ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_AI_ALLIANCES), FALSE);
+            ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_NAME), FALSE);
+            ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_PUBLIC_SCORES), FALSE);
         }
         ControlIO().pfnStickyDlgPos(hwnd, &ptStickyNewDlg, TRUE);
         return 1;
@@ -331,79 +331,79 @@ INT_PTR CALLBACK NewGameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
         for (i = 1000; i <= 1021 && (HWND)lParam != ControlIO().pfnGetDlgItem(hwnd, i); i++) {
         }
         if (i <= 1021 || message == WM_CTLCOLORSTATIC || (HWND)lParam == ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_GALAXY_CLUMPING)) {
-            SetBkColor((HDC)wParam, crButtonFace);
+            win32::SetBkColor((HDC)wParam, crButtonFace);
             return (INT_PTR)hbrButtonFace;
         }
         break;
     case WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        FillRect((HDC)wParam, &rc, hbrButtonFace);
+        win32::FillRect((HDC)wParam, &rc, hbrButtonFace);
         return 1;
     case WM_PAINT:
-        hdc = BeginPaint(hwnd, &ps);
-        GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_TINY), &rcGBox);
-        ScreenToClient(hwnd, (POINT *)&rcGBox);
-        GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_HUGE), &rc);
-        ScreenToClient(hwnd, (POINT *)&rc.right);
+        hdc = win32::BeginPaint(hwnd, &ps);
+        win32::GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_TINY), &rcGBox);
+        win32::ScreenToClient(hwnd, (POINT *)&rcGBox);
+        win32::GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_HUGE), &rc);
+        win32::ScreenToClient(hwnd, (POINT *)&rc.right);
         rcGBox.right = rc.right;
         rcGBox.bottom = rc.bottom;
         ExpandRc(&rcGBox, dyArial8, dyArial8 >> 1);
         _Draw3dFrame(hdc, &rcGBox, -1);
-        SelectObject(hdc, rghfontArial8[1]);
-        SetBkColor(hdc, crButtonFace);
+        win32::SelectObject(hdc, rghfontArial8[1]);
+        win32::SetBkColor(hdc, crButtonFace);
         c = TextIO().pfnCchGetString(idsUniverseSize, szWork);
-        TextOut(hdc, rcGBox.left + 8, rcGBox.top - (dyArial8 >> 1), szWork, c);
-        GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_SPARSE), &rcGBox);
-        ScreenToClient(hwnd, (POINT *)&rcGBox);
-        GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_PACKED), &rc);
-        ScreenToClient(hwnd, (POINT *)&rc.right);
+        win32::TextOut(hdc, rcGBox.left + 8, rcGBox.top - (dyArial8 >> 1), szWork, c);
+        win32::GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_SPARSE), &rcGBox);
+        win32::ScreenToClient(hwnd, (POINT *)&rcGBox);
+        win32::GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_PACKED), &rc);
+        win32::ScreenToClient(hwnd, (POINT *)&rc.right);
         rcGBox.right = rc.right;
         rcGBox.bottom = rc.bottom;
         ExpandRc(&rcGBox, dyArial8, dyArial8 >> 1);
         _Draw3dFrame(hdc, &rcGBox, -1);
-        SelectObject(hdc, rghfontArial8[1]);
-        SetBkColor(hdc, crButtonFace);
+        win32::SelectObject(hdc, rghfontArial8[1]);
+        win32::SetBkColor(hdc, crButtonFace);
         c = TextIO().pfnCchGetString(idsDensity, szWork);
-        TextOut(hdc, rcGBox.left + 8, rcGBox.top - (dyArial8 >> 1), szWork, c);
-        GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_CLOSE), &rcGBox);
-        ScreenToClient(hwnd, (POINT *)&rcGBox);
-        GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_DISTANT), &rc);
-        ScreenToClient(hwnd, (POINT *)&rc.right);
+        win32::TextOut(hdc, rcGBox.left + 8, rcGBox.top - (dyArial8 >> 1), szWork, c);
+        win32::GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_CLOSE), &rcGBox);
+        win32::ScreenToClient(hwnd, (POINT *)&rcGBox);
+        win32::GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_DISTANT), &rc);
+        win32::ScreenToClient(hwnd, (POINT *)&rc.right);
         rcGBox.right = rc.right;
         rcGBox.bottom = rc.bottom;
         ExpandRc(&rcGBox, dyArial8, dyArial8 >> 1);
         _Draw3dFrame(hdc, &rcGBox, -1);
-        SelectObject(hdc, rghfontArial8[1]);
-        SetBkColor(hdc, crButtonFace);
+        win32::SelectObject(hdc, rghfontArial8[1]);
+        win32::SetBkColor(hdc, crButtonFace);
         c = TextIO().pfnCchGetString(idsPlayerPositions, szWork);
-        TextOut(hdc, rcGBox.left + 8, rcGBox.top - (dyArial8 >> 1), szWork, c);
-        EndPaint(hwnd, &ps);
+        win32::TextOut(hdc, rcGBox.left + 8, rcGBox.top - (dyArial8 >> 1), szWork, c);
+        win32::EndPaint(hwnd, &ps);
         return 1;
     case WM_COMMAND:
         if (LOWORD(wParam) == IDC_HELP) {
-            WinHelp(hwnd, szHelpFile, HELP_CONTEXT, idhStep1SpecifyingTheUniverse);
+            win32::WinHelp(hwnd, szHelpFile, HELP_CONTEXT, idhStep1SpecifyingTheUniverse);
             return 1;
         }
         for (iRet = 0; iRet < 4 && LOWORD(wParam) != rgidRaceBtn[iRet]; iRet++) {
         }
         if (iRet < 4) {
             if (iRet != 0) {
-                for (i = 1000; i <= 1004 && IsDlgButtonChecked(hwnd, i) == 0; i++) {
+                for (i = 1000; i <= 1004 && win32::IsDlgButtonChecked(hwnd, i) == 0; i++) {
                 }
                 game.mdSize = static_cast<UniverseSize>(i - 1000);
-                for (i = 1005; i <= 1008 && IsDlgButtonChecked(hwnd, i) == 0; i++) {
+                for (i = 1005; i <= 1008 && win32::IsDlgButtonChecked(hwnd, i) == 0; i++) {
                 }
                 game.mdDensity = static_cast<UniverseDensity>(i - 1005);
-                for (i = 1009; i <= 1012 && IsDlgButtonChecked(hwnd, i) == 0; i++) {
+                for (i = 1009; i <= 1012 && win32::IsDlgButtonChecked(hwnd, i) == 0; i++) {
                 }
                 game.mdStartDist = static_cast<StartDistance>(i - 1009);
-                game.fExtraFuel = IsDlgButtonChecked(hwnd, IDC_NEW_GAME_MAX_MINERALS);
-                game.fSlowTech = IsDlgButtonChecked(hwnd, IDC_NEW_GAME_SLOWER_TECH);
-                game.fBBSPlay = IsDlgButtonChecked(hwnd, IDC_NEW_GAME_ACCELERATED_BBS);
-                game.fNoRandom = IsDlgButtonChecked(hwnd, IDC_NEW_GAME_NO_RANDOM_EVENTS);
-                game.fAisBand = IsDlgButtonChecked(hwnd, IDC_NEW_GAME_AI_ALLIANCES);
-                game.fVisScores = IsDlgButtonChecked(hwnd, IDC_NEW_GAME_PUBLIC_SCORES);
-                game.fClumping = IsDlgButtonChecked(hwnd, IDC_NEW_GAME_GALAXY_CLUMPING);
+                game.fExtraFuel = win32::IsDlgButtonChecked(hwnd, IDC_NEW_GAME_MAX_MINERALS);
+                game.fSlowTech = win32::IsDlgButtonChecked(hwnd, IDC_NEW_GAME_SLOWER_TECH);
+                game.fBBSPlay = win32::IsDlgButtonChecked(hwnd, IDC_NEW_GAME_ACCELERATED_BBS);
+                game.fNoRandom = win32::IsDlgButtonChecked(hwnd, IDC_NEW_GAME_NO_RANDOM_EVENTS);
+                game.fAisBand = win32::IsDlgButtonChecked(hwnd, IDC_NEW_GAME_AI_ALLIANCES);
+                game.fVisScores = win32::IsDlgButtonChecked(hwnd, IDC_NEW_GAME_PUBLIC_SCORES);
+                game.fClumping = win32::IsDlgButtonChecked(hwnd, IDC_NEW_GAME_GALAXY_CLUMPING);
                 i = ControlIO().pfnGetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_NAME), game.szName, 32);
                 if (i == 0) {
                     strcpy(game.szName, szBase);
@@ -436,7 +436,7 @@ INT_PTR CALLBACK NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
     int16_t     iChecked;
     HMENU       rghmenuSubPopup[14];
     HMENU       hmenuPopup;
-    MSG         msg;
+    win32::MSG         msg;
     int16_t     iCurVal;
     RECT       *prcSav;
     HDC         hdc;
@@ -448,32 +448,32 @@ INT_PTR CALLBACK NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
 
     switch (message) {
     case WM_INITDIALOG:
-        SetWindowLongPtr(hwnd, DWLP_USER, lParam);
+        win32::SetWindowLongPtr(hwnd, DWLP_USER, lParam);
         SetNGWTitle(hwnd, 2);
         dy = (dyArial8 + 4) * 16 + 8;
-        GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, rgidRaceBtn[0]), &rc);
+        win32::GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, rgidRaceBtn[0]), &rc);
         dyBut = rc.bottom - rc.top;
-        GetWindowRect(hwnd, &rcT);
+        win32::GetWindowRect(hwnd, &rcT);
         dyCur = rcT.bottom - rcT.top;
         if (dyCur < dy + dyBut + 6) {
             for (i = 0; i < 5; i++) {
                 hwndBtn = ControlIO().pfnGetDlgItem(hwnd, rgidRaceBtn[i]);
-                GetWindowRect(hwndBtn, &rc);
-                MapWindowPoints(NULL, hwnd, (POINT *)&rc, 2);
-                OffsetRect(&rc, 0, dy - rc.top);
-                ControlIO().pfnFUiSetWindowPos(hwndBtn, NULL, rc.left, rc.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+                win32::GetWindowRect(hwndBtn, &rc);
+                win32::MapWindowPoints(NULL, hwnd, (POINT *)&rc, 2);
+                win32::OffsetRect(&rc, 0, dy - rc.top);
+                ControlIO().pfnSetWindowPos(hwndBtn, NULL, rc.left, rc.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
             }
             dy = rc.bottom + 6;
             ControlIO().pfnGetClientRect(hwnd, &rc);
             if (dyCur < dy) {
-                ControlIO().pfnFUiSetWindowPos(hwnd, NULL, 0, 0, rcT.right - rcT.left, dy + rcT.bottom - rcT.top - rc.bottom, SWP_NOMOVE | SWP_NOZORDER);
+                ControlIO().pfnSetWindowPos(hwnd, NULL, 0, 0, rcT.right - rcT.left, dy + rcT.bottom - rcT.top - rc.bottom, SWP_NOMOVE | SWP_NOZORDER);
             }
         }
         ControlIO().pfnStickyDlgPos(hwnd, &ptStickyNewDlg, TRUE);
         return 1;
     case WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        FillRect((HDC)wParam, &rc, hbrButtonFace);
+        win32::FillRect((HDC)wParam, &rc, hbrButtonFace);
         return 1;
     case WM_CTLCOLORMSGBOX:
     case WM_CTLCOLOREDIT:
@@ -485,7 +485,7 @@ INT_PTR CALLBACK NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
         for (i = 401; i <= 448 && (HWND)lParam != ControlIO().pfnGetDlgItem(hwnd, i); i++) {
         }
         if (i <= 448 || message == WM_CTLCOLORSTATIC) {
-            SetBkColor((HDC)wParam, crButtonFace);
+            win32::SetBkColor((HDC)wParam, crButtonFace);
             return (INT_PTR)hbrButtonFace;
         }
         break;
@@ -499,7 +499,7 @@ INT_PTR CALLBACK NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
         iDiamond = (int16_t)(pt.y - 6) / (dyArial8 + 4);
         if (iDiamond >= 16 || (int16_t)(pt.y - 6) % (dyArial8 + 4) >= dyArial8 + 1)
             break;
-        SetCursor(hcurHand);
+        win32::SetCursor(hcurHand);
         return 1;
     case WM_LBUTTONDOWN:
     case WM_RBUTTONDOWN:
@@ -514,66 +514,66 @@ INT_PTR CALLBACK NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
             break;
         iCurVal = vrgplrTypeNew[iDiamond];
         ClientToScreen16(hwnd, &pt);
-        rghmenuSubPopup[0] = CreatePopupMenu();
+        rghmenuSubPopup[0] = win32::CreatePopupMenu();
         for (i = 0; i < 6; i++) {
             iChecked = iCurVal == i * 4 + 1 ? 8 : 0;
             psz = TextIO().pfnCompressed(static_cast<StringId>(idsHumanoid + i));
-            AppendMenu(rghmenuSubPopup[0], iChecked, i + 15016, psz);
+            win32::AppendMenu(rghmenuSubPopup[0], iChecked, i + 15016, psz);
         }
-        AppendMenu(rghmenuSubPopup[0], iCurVal == 25 ? MF_CHECKED : 0, 15022, TextIO().pfnCompressed(idsRandom));
-        AppendMenu(rghmenuSubPopup[0], iCurVal == 29 ? MF_CHECKED : 0, 15023, TextIO().pfnCompressed(idsExpansionPlayer));
-        rghmenuSubPopup[1] = CreatePopupMenu();
+        win32::AppendMenu(rghmenuSubPopup[0], iCurVal == 25 ? MF_CHECKED : 0, 15022, TextIO().pfnCompressed(idsRandom));
+        win32::AppendMenu(rghmenuSubPopup[0], iCurVal == 29 ? MF_CHECKED : 0, 15023, TextIO().pfnCompressed(idsExpansionPlayer));
+        rghmenuSubPopup[1] = win32::CreatePopupMenu();
         nrm.hmenu = rghmenuSubPopup[1];
         nrm.cRace = 0;
         nrm.pszSelected = (iCurVal & 3) == 2 ? rgszLibraryRaceNew[iCurVal >> 2] : NULL;
         FEnumerateLibraryRaces(AddNewGameLibraryRace, &nrm);
         if (nrm.cRace == 0)
-            AppendMenu(nrm.hmenu, MF_GRAYED, 0, TextIO().pfnCompressed(idsLibraryNoRaces));
-        rghmenuSubPopup[2] = CreatePopupMenu();
+            win32::AppendMenu(nrm.hmenu, MF_GRAYED, 0, TextIO().pfnCompressed(idsLibraryNoRaces));
+        rghmenuSubPopup[2] = win32::CreatePopupMenu();
         for (i = 0; i <= 6; i++) {
-            rghmenuSubPopup[i + 5] = CreatePopupMenu();
+            rghmenuSubPopup[i + 5] = win32::CreatePopupMenu();
             for (j = 0; j < 5; j++) {
                 iChecked = iCurVal == j * 32 + i * 4 + 3 ? 8 : 0;
-                AppendMenu(rghmenuSubPopup[i + 5], iChecked, i + 15048 + j * 8, vrgszComputerLevel[j]);
+                win32::AppendMenu(rghmenuSubPopup[i + 5], iChecked, i + 15048 + j * 8, vrgszComputerLevel[j]);
             }
             iChecked = (iCurVal & 0x1f) == i * 4 + 3 ? 8 : 0;
-            AppendMenu(rghmenuSubPopup[2], 0x10 | iChecked, (UINT_PTR)rghmenuSubPopup[i + 5], vrgszComputerPlayers[i]);
+            win32::AppendMenu(rghmenuSubPopup[2], 0x10 | iChecked, (UINT_PTR)rghmenuSubPopup[i + 5], vrgszComputerPlayers[i]);
         }
-        hmenuPopup = CreatePopupMenu();
+        hmenuPopup = win32::CreatePopupMenu();
         iPopMenuSel = -1;
         iChecked = (iCurVal & 3) == 1 ? 8 : 0;
-        AppendMenu(hmenuPopup, 0x10 | iChecked, (UINT_PTR)rghmenuSubPopup[0], TextIO().pfnCompressed(idsPredefinedRace));
+        win32::AppendMenu(hmenuPopup, 0x10 | iChecked, (UINT_PTR)rghmenuSubPopup[0], TextIO().pfnCompressed(idsPredefinedRace));
         iChecked = (iCurVal & 3) == 2 ? 8 : 0;
-        AppendMenu(hmenuPopup, 0x10 | iChecked, (UINT_PTR)rghmenuSubPopup[1], TextIO().pfnCompressed(idsLibraryRaceMenu));
+        win32::AppendMenu(hmenuPopup, 0x10 | iChecked, (UINT_PTR)rghmenuSubPopup[1], TextIO().pfnCompressed(idsLibraryRaceMenu));
         iChecked = (iCurVal & 3) == 3 ? 8 : 0;
-        AppendMenu(hmenuPopup, 0x10 | iChecked, (UINT_PTR)rghmenuSubPopup[2], TextIO().pfnCompressed(idsComputerPlayer));
-        AppendMenu(hmenuPopup, MF_SEPARATOR, 0, NULL);
-        AppendMenu(hmenuPopup, MF_BYCOMMAND, 15000, TextIO().pfnCompressed(idsLibraryNewRace));
+        win32::AppendMenu(hmenuPopup, 0x10 | iChecked, (UINT_PTR)rghmenuSubPopup[2], TextIO().pfnCompressed(idsComputerPlayer));
+        win32::AppendMenu(hmenuPopup, MF_SEPARATOR, 0, NULL);
+        win32::AppendMenu(hmenuPopup, MF_BYCOMMAND, 15000, TextIO().pfnCompressed(idsLibraryNewRace));
         if (((iCurVal & 3) == 1 && (iCurVal >> 2) < 7) || (iCurVal & 3) == 2)
-            AppendMenu(hmenuPopup, MF_BYCOMMAND, 15002, TextIO().pfnCompressed(idsEditRace));
+            win32::AppendMenu(hmenuPopup, MF_BYCOMMAND, 15002, TextIO().pfnCompressed(idsEditRace));
         iChecked = !(iCurVal & 3) ? 8 : 0;
-        AppendMenu(hmenuPopup, iChecked, 0x3a9b, TextIO().pfnCompressed(idsPlayer));
+        win32::AppendMenu(hmenuPopup, iChecked, 0x3a9b, TextIO().pfnCompressed(idsPlayer));
         tpm = message == WM_LBUTTONDOWN ? TPM_LEFTBUTTON : TPM_RIGHTBUTTON;
-        FUiTrackPopupMenu(hmenuPopup, TPM_CENTERALIGN | tpm, pt.x, pt.y, 0, hwnd, NULL);
-        if (FUiPeekMessage(&msg, hwnd, 273, 273, 2) && msg.wParam >= 15000 && msg.wParam < 15000 + INT16_MAX) {
+        ui::TrackPopupMenu(hmenuPopup, TPM_CENTERALIGN | tpm, pt.x, pt.y, 0, hwnd, NULL);
+        if (ui::PeekMessage(&msg, hwnd, 273, 273, 2) && msg.wParam >= 15000 && msg.wParam < 15000 + INT16_MAX) {
             iPopMenuSel = msg.wParam - 15000;
         }
         szLibraryRace[0] = 0;
         if (iPopMenuSel >= 1000 && iPopMenuSel < 1000 + nrm.cRace) {
-            GetMenuString(nrm.hmenu, 15000 + iPopMenuSel, szLibraryLabel, sizeof(szLibraryLabel), MF_BYCOMMAND);
+            win32::GetMenuString(nrm.hmenu, 15000 + iPopMenuSel, szLibraryLabel, sizeof(szLibraryLabel), MF_BYCOMMAND);
             for (pch = szLibraryLabel, pchName = szLibraryRace; *pch; pch++) {
                 *pchName++ = *pch;
                 if (*pch == '&' && pch[1] == '&') pch++;
             }
             *pchName = 0;
         }
-        DestroyMenu(hmenuPopup);
+        win32::DestroyMenu(hmenuPopup);
         iNewVal = -1;
         if (iPopMenuSel != -1) {
             if (iPopMenuSel == 0) {
                 vplr = vrgplrDef[0];
                 TextIO().pfnCchGetString(idsHumanoid, vplr.szName);
-                wsprintf(vplr.szNames, "%ss", vplr.szName);
+                win32::wsprintf(vplr.szNames, "%ss", vplr.szName);
                 szLibraryRace[0] = 0;
                 szRacePass[0] = 0;
                 prcSav = vrgrcRCW;
@@ -606,7 +606,7 @@ INT_PTR CALLBACK NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
                 if ((iCurVal & 3) == 1) {
                     vplr = vrgplrDef[iCurVal >> 2];
                     TextIO().pfnCchGetString(static_cast<StringId>((iCurVal >> 2) + 0x567), vplr.szName);
-                    wsprintf(vplr.szNames, "%ss", vplr.szName);
+                    win32::wsprintf(vplr.szNames, "%ss", vplr.szName);
                 } else {
                     vplr = vrgplrNew[iCurVal >> 2];
                     strcpy(szRaceFile, vrgszFileNew + (iCurVal >> 2) * 13);
@@ -656,16 +656,16 @@ INT_PTR CALLBACK NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
             ControlIO().pfnInvalidateRect(hwnd, NULL, TRUE);
         }
     FinishClick:
-        ControlIO().pfnHwndUiSetFocus(hwnd);
+        ControlIO().pfnSetFocus(hwnd);
         break;
     case WM_PAINT:
-        hdc = BeginPaint(hwnd, &ps);
+        hdc = win32::BeginPaint(hwnd, &ps);
         DrawNewGame2(hwnd, hdc, -1);
-        EndPaint(hwnd, &ps);
+        win32::EndPaint(hwnd, &ps);
         return 1;
     case WM_COMMAND:
         if (LOWORD(wParam) == IDC_HELP) {
-            WinHelp(hwnd, szHelpFile, HELP_CONTEXT, idhStep2SpecifyingThePlayers);
+            win32::WinHelp(hwnd, szHelpFile, HELP_CONTEXT, idhStep2SpecifyingThePlayers);
             return 1;
         }
         for (i = 0; i < 4 && LOWORD(wParam) != rgidRaceBtn[i]; i++) {
@@ -700,16 +700,16 @@ void DrawNewGame2(HWND hwnd, HDC hdc, int16_t iDraw) {
     fCreatedDC = FALSE;
     if (!hdc) {
         fCreatedDC = TRUE;
-        hdc = GetDC(hwnd);
+        hdc = win32::GetDC(hwnd);
     }
     ControlIO().pfnGetClientRect(hwnd, &rc);
-    bkMode = SetBkMode(hdc, TRANSPARENT);
-    SelectObject(hdc, rghfontArial8[1]);
+    bkMode = win32::SetBkMode(hdc, TRANSPARENT);
+    win32::SelectObject(hdc, rghfontArial8[1]);
     xNewGameDiamond = LOWORD(GetTextExtent(hdc, TextIO().pfnCompressed(idsPlayer16), 11)) + 12;
     yCur = 6;
-    SetRect(&rcDiamond, xNewGameDiamond, yCur, xNewGameDiamond + dyArial8 + 1, yCur + dyArial8 + 1);
+    win32::SetRect(&rcDiamond, xNewGameDiamond, yCur, xNewGameDiamond + dyArial8 + 1, yCur + dyArial8 + 1);
     for (i = 0; i < 16 && (!fRCWReadOnly || i < game.cPlayer); i++) {
-        cch = wsprintf(szWork, TextIO().pfnCompressed(idsPlayerD), i + 1);
+        cch = win32::wsprintf(szWork, TextIO().pfnCompressed(idsPlayerD), i + 1);
         szWork[cch++] = ':';
         szWork[cch] = 0;
         RightTextOut(hdc, xNewGameDiamond - 6, yCur, szWork, cch, 0);
@@ -720,8 +720,8 @@ void DrawNewGame2(HWND hwnd, HDC hdc, int16_t iDraw) {
                 TextIO().pfnPlayerName(i, TRUE, TRUE, TRUE, 0, NULL);
                 if (!rgplr[i].fDead)
                     goto DisplayName;
-                wsprintf(&szWork[strlen(szWork)], " (%s)", TextIO().pfnCompressed(idsDeceased));
-                SetTextColor(hdc, 127);
+                win32::wsprintf(&szWork[strlen(szWork)], " (%s)", TextIO().pfnCompressed(idsDeceased));
+                win32::SetTextColor(hdc, 127);
                 goto DisplayName;
             }
             TextIO().pfnCchGetString(idsUnknownPlayer, szWork);
@@ -738,32 +738,32 @@ void DrawNewGame2(HWND hwnd, HDC hdc, int16_t iDraw) {
                 break;
             }
             TextIO().pfnCchGetString(idsS, szT);
-            wsprintf(szWork, szT, TextIO().pfnCompressed(static_cast<StringId>(idsHumanoid + iPlr)));
+            win32::wsprintf(szWork, szT, TextIO().pfnCompressed(static_cast<StringId>(idsHumanoid + iPlr)));
             break;
         case 2:
             pszFile = rgszLibraryRaceNew[iPlr][0] ? rgszLibraryRaceNew[iPlr] : vrgszFileNew + iPlr * 13;
             if (!fRCWReadOnly && gd.fNoHostNames && pszFile[0] != 0) {
-                wsprintf(szWork, " %s", pszFile);
+                win32::wsprintf(szWork, " %s", pszFile);
                 break;
             }
             if (pszFile[0] != 0) {
-                wsprintf(szWork, TextIO().pfnCompressed(!fRCWReadOnly ? idsSS2 : idsS), vrgplrNew[iPlr].szNames, pszFile);
+                win32::wsprintf(szWork, TextIO().pfnCompressed(!fRCWReadOnly ? idsSS2 : idsS), vrgplrNew[iPlr].szNames, pszFile);
                 break;
             }
-            wsprintf(szWork, TextIO().pfnCompressed(idsS), vrgplrNew[iPlr].szNames);
+            win32::wsprintf(szWork, TextIO().pfnCompressed(idsS), vrgplrNew[iPlr].szNames);
             break;
         case 3:
-            wsprintf(szWork, TextIO().pfnCompressed(idsSSComputerPlayer), vrgszComputerPlayers[iPlr & 7], vrgszComputerLevel[vrgplrTypeNew[i] >> 5]);
+            win32::wsprintf(szWork, TextIO().pfnCompressed(idsSSComputerPlayer), vrgszComputerPlayers[iPlr & 7], vrgszComputerLevel[vrgplrTypeNew[i] >> 5]);
         }
     DisplayName:
-        TextOut(hdc, rcDiamond.right + 6, yCur, szWork, strlen(szWork));
-        SetTextColor(hdc, crButtonText);
-        OffsetRect(&rcDiamond, 0, dyArial8 + 4);
+        win32::TextOut(hdc, rcDiamond.right + 6, yCur, szWork, strlen(szWork));
+        win32::SetTextColor(hdc, crButtonText);
+        win32::OffsetRect(&rcDiamond, 0, dyArial8 + 4);
         yCur += dyArial8 + 4;
     }
-    SetBkMode(hdc, bkMode);
+    win32::SetBkMode(hdc, bkMode);
     if (fCreatedDC) {
-        ReleaseDC(hwnd, hdc);
+        win32::ReleaseDC(hwnd, hdc);
     }
     return;
 }
@@ -777,19 +777,19 @@ INT_PTR CALLBACK NewGameDlg3(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
 
     switch (message) {
     case WM_INITDIALOG:
-        SetWindowLongPtr(hwnd, DWLP_USER, lParam);
+        win32::SetWindowLongPtr(hwnd, DWLP_USER, lParam);
         SetNGWTitle(hwnd, 3);
         for (i = 0; i < 7; i++) {
-            ControlIO().pfnLUiSendMessage(ControlIO().pfnGetDlgItem(hwnd, i + 291), BM_SETCHECK, GetVCCheck(&game, static_cast<VictoryCondition>((i >= 2) + i)), 0);
+            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, i + 291), BM_SETCHECK, GetVCCheck(&game, static_cast<VictoryCondition>((i >= 2) + i)), 0);
             if (fRCWReadOnly) {
-                ControlIO().pfnFUiEnableWindow(ControlIO().pfnGetDlgItem(hwnd, i + 291), FALSE);
+                ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, i + 291), FALSE);
             }
         }
         ControlIO().pfnStickyDlgPos(hwnd, &ptStickyNewDlg, TRUE);
         return 1;
     case WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        FillRect((HDC)wParam, &rc, hbrButtonFace);
+        win32::FillRect((HDC)wParam, &rc, hbrButtonFace);
         return 1;
     case WM_CTLCOLORMSGBOX:
     case WM_CTLCOLOREDIT:
@@ -801,7 +801,7 @@ INT_PTR CALLBACK NewGameDlg3(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
         for (i = 291; i <= 297 && (HWND)lParam != ControlIO().pfnGetDlgItem(hwnd, i); i++) {
         }
         if (i <= 297 || message == WM_CTLCOLORSTATIC) {
-            SetBkColor((HDC)wParam, crButtonFace);
+            win32::SetBkColor((HDC)wParam, crButtonFace);
             return (INT_PTR)hbrButtonFace;
         }
         break;
@@ -810,7 +810,7 @@ INT_PTR CALLBACK NewGameDlg3(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
         ScreenToClient16(hwnd, &pt);
         if (IrcRaceDlgHitTest(pt) < 0)
             break;
-        SetCursor(hcurHand);
+        win32::SetCursor(hcurHand);
         return 1;
     case WM_LBUTTONDOWN:
     case WM_LBUTTONDBLCLK:
@@ -818,13 +818,13 @@ INT_PTR CALLBACK NewGameDlg3(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
         pt.y = HIWORD(lParam);
         return FTrackNewGameDlg3(hwnd, pt, wParam);
     case WM_PAINT:
-        hdc = BeginPaint(hwnd, &ps);
+        hdc = win32::BeginPaint(hwnd, &ps);
         DrawNewGame3(hwnd, hdc, -1);
-        EndPaint(hwnd, &ps);
+        win32::EndPaint(hwnd, &ps);
         return 1;
     case WM_COMMAND:
         if (LOWORD(wParam) == IDC_HELP) {
-            WinHelp(hwnd, szHelpFile, HELP_CONTEXT, idhStep3VictoryConditions);
+            win32::WinHelp(hwnd, szHelpFile, HELP_CONTEXT, idhStep3VictoryConditions);
             return 1;
         }
         for (i = 0; i < 4 && LOWORD(wParam) != rgidRaceBtn[i]; i++) {
@@ -836,7 +836,7 @@ INT_PTR CALLBACK NewGameDlg3(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
             return 1;
         }
         if (LOWORD(wParam) >= IDC_VC_OWNS_PLANETS && LOWORD(wParam) <= IDC_VC_HIGHEST_SCORE) {
-            i = LOWORD(ControlIO().pfnLUiSendMessage(ControlIO().pfnGetDlgItem(hwnd, LOWORD(wParam)), BM_GETCHECK, 0, 0));
+            i = LOWORD(ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, LOWORD(wParam)), BM_GETCHECK, 0, 0));
             SetVCCheck(&game, static_cast<VictoryCondition>(LOWORD(wParam) - 291 + ((uint16_t)(LOWORD(wParam) - 291) >= 2)), i);
             DrawNewGame3(hwnd, NULL, 8);
         }
@@ -866,12 +866,12 @@ void DrawNewGame3(HWND hwnd, HDC hdc, int16_t iDraw) {
     bt = !fRCWReadOnly ? 0 : 4;
     if (!hdc) {
         fCreatedDC = TRUE;
-        hdc = GetDC(hwnd);
+        hdc = win32::GetDC(hwnd);
     }
     ControlIO().pfnGetClientRect(hwnd, &rc);
-    bkMode = SetBkMode(hdc, OPAQUE);
-    crBkSav = SetBkColor(hdc, crButtonFace);
-    SelectObject(hdc, rghfontArial8[1]);
+    bkMode = win32::SetBkMode(hdc, OPAQUE);
+    crBkSav = win32::SetBkColor(hdc, crButtonFace);
+    win32::SelectObject(hdc, rghfontArial8[1]);
     yTop = 3 * dyArial8 + 6;
     dxDig = LOWORD(GetTextExtent(hdc, "9", 1));
     ids = idsOwns;
@@ -879,8 +879,8 @@ void DrawNewGame3(HWND hwnd, HDC hdc, int16_t iDraw) {
     vcCur = 0;
     for (i = 0; i < 9; i++) {
         if (i < 7) {
-            GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, i + 291), &rcCBox);
-            MapWindowPoints(NULL, hwnd, (POINT *)&rcCBox, 2);
+            win32::GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, i + 291), &rcCBox);
+            win32::MapWindowPoints(NULL, hwnd, (POINT *)&rcCBox, 2);
             xLeft = rcCBox.right + 2;
             yTop = (int16_t)(rcCBox.bottom - rcCBox.top) / 2 + rcCBox.top - (dyArial8 >> 1);
         } else if (i == 7) {
@@ -893,7 +893,7 @@ void DrawNewGame3(HWND hwnd, HDC hdc, int16_t iDraw) {
         cch = TextIO().pfnCchGetString(ids, szWork);
         ids = static_cast<StringId>(ids + 1);
         if (iDraw == -1) {
-            TextOut(hdc, xLeft, yTop, szWork, cch);
+            win32::TextOut(hdc, xLeft, yTop, szWork, cch);
         }
         xLeft += LOWORD(GetTextExtent(hdc, szWork, cch));
         for (j = 0; j < 2; j++) {
@@ -902,7 +902,7 @@ void DrawNewGame3(HWND hwnd, HDC hdc, int16_t iDraw) {
                 ids = static_cast<StringId>(ids + 1);
                 break;
             }
-            wsprintf(szWork, PCTD, GetVCVal(&game, static_cast<VictoryCondition>(vcCur), FALSE));
+            win32::wsprintf(szWork, PCTD, GetVCVal(&game, static_cast<VictoryCondition>(vcCur), FALSE));
             if (rgNG3Width[i][j] < 0) {
                 dxItem += (int16_t)(3 * dxDig) / 2;
                 strcat(szWork, "%");
@@ -917,7 +917,7 @@ void DrawNewGame3(HWND hwnd, HDC hdc, int16_t iDraw) {
             vrgrcRCW[irc].right = vrgrcRCW[irc].left + 15;
             vrgrcRCW[irc].bottom = (dyArial8 >> 1) + vrgrcRCW[irc].top + 3;
             vrgrcRCW[irc + 1] = vrgrcRCW[irc];
-            OffsetRect((RECT *)&vrgrcRCW[irc + 1].left, 0, vrgrcRCW[irc].bottom - vrgrcRCW[irc].top - 1);
+            win32::OffsetRect((RECT *)&vrgrcRCW[irc + 1].left, 0, vrgrcRCW[irc].bottom - vrgrcRCW[irc].top - 1);
             if (iDraw == -1) {
                 DrawBtn(hdc, vrgrcRCW + irc, 0xa0 | bt, FALSE, NULL);
                 DrawBtn(hdc, vrgrcRCW + (irc + 1), 0xa1 | bt, FALSE, NULL);
@@ -925,7 +925,7 @@ void DrawNewGame3(HWND hwnd, HDC hdc, int16_t iDraw) {
             xLeft = vrgrcRCW[irc].right + 4;
             cch = TextIO().pfnCchGetString(ids, szWork);
             if (iDraw == -1) {
-                TextOut(hdc, xLeft, yTop, szWork, cch);
+                win32::TextOut(hdc, xLeft, yTop, szWork, cch);
             }
             xLeft += LOWORD(GetTextExtent(hdc, szWork, cch));
             ids = static_cast<StringId>(ids + 1);
@@ -933,10 +933,10 @@ void DrawNewGame3(HWND hwnd, HDC hdc, int16_t iDraw) {
         }
     }
     crcRCW = irc;
-    SetBkColor(hdc, crBkSav);
-    SetBkMode(hdc, bkMode);
+    win32::SetBkColor(hdc, crBkSav);
+    win32::SetBkMode(hdc, bkMode);
     if (fCreatedDC) {
-        ReleaseDC(hwnd, hdc);
+        win32::ReleaseDC(hwnd, hdc);
     }
     return;
 }
@@ -981,7 +981,7 @@ void SetNGWTitle(HWND hwnd, int16_t iStep) {
     char    szBuf[50];
 
     cch = TextIO().pfnCchGetString(static_cast<StringId>(idsAdvancedNewGameWizardStepD3 + fRCWReadOnly), szBuf);
-    cch = wsprintf(szWork, szBuf, iStep);
-    ControlIO().pfnFUiSetWindowText(hwnd, szWork);
+    cch = win32::wsprintf(szWork, szBuf, iStep);
+    ControlIO().pfnSetWindowText(hwnd, szWork);
     return;
 }

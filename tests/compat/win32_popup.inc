@@ -36,7 +36,7 @@ static LRESULT CALLBACK OwnerProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     if (msg == WM_MENUSELECT && fDestroyOwner) { fDestroyOwner = FALSE; DestroyWindow(hwnd); }
     if (msg == WM_INITMENUPOPUP && fDestroyMenu) { fDestroyMenu = FALSE; DestroyMenu((HMENU)w); }
     if (msg == WM_COMMAND) { cCommand++; idCommand = LOWORD(w); if (fTracking) fCommandDuring = TRUE; }
-    return DefWindowProc(hwnd, msg, w, l);
+    return DefWindowProcA(hwnd, msg, w, l);
 }
 static void CALLBACK InputTimer(HWND hwnd, UINT msg, UINT_PTR id, DWORD ms) {
     UINT i;
@@ -90,7 +90,7 @@ static void CALLBACK InputTimer(HWND hwnd, UINT msg, UINT_PTR id, DWORD ms) {
         PostMessage(hwndOwner, WM_KEYUP, rgkey[i], (LPARAM)0xc0000001);
     }
 }
-static void Drain(void) { MSG msg; while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessage(&msg); }
+static void Drain(void) { APPMSG msg; while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessageA(&msg); }
 static BOOL Track(UINT flags, const UINT *rg, UINT c) {
     BOOL result;
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
@@ -172,8 +172,8 @@ int main(int argc, char **argv) {
         fEnd = TRUE; CHECK(Track(TPM_RETURNCMD, rgChoose, 0) == 0 && fEndWorked); fEnd = FALSE;
         fQuit = TRUE; CHECK(Track(TPM_RETURNCMD, rgChoose, 0) == 0); fQuit = FALSE;
         {
-            MSG msg;
-            CHECK(PeekMessage(&msg, NULL, WM_QUIT, WM_QUIT, PM_REMOVE) && msg.wParam == 17);
+            APPMSG msg;
+            CHECK(PeekMessageA(&msg, NULL, WM_QUIT, WM_QUIT, PM_REMOVE) && msg.wParam == 17);
         }
         SetCapture(hwndChild);
         CHECK(Track(TPM_RETURNCMD, rgChoose, 2) == 101 && GetCapture() == hwndChild);

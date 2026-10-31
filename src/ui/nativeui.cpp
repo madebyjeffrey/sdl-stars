@@ -5,7 +5,7 @@
 DWORD GetTextExtent(HDC hdc, LPCSTR str, int len) {
     SIZE size;
 
-    if (!GetTextExtentPoint32A(hdc, str, len, &size))
+    if (!win32::GetTextExtentPoint32A(hdc, str, len, &size))
         return 0;
 
     return MAKELONG((WORD)size.cx, (WORD)size.cy);
@@ -33,13 +33,13 @@ LRESULT CALLBACK FrameWndProcDeferred(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
     switch (msg) {
     case WM_SYSCOMMAND:
         if ((wParam & 0xfff0) == SC_RESTORE || (wParam & 0xfff0) == SC_MAXIMIZE) {
-            PostMessage(hwnd, WM_STARS_SYSCOMMAND, wParam, lParam);
+            win32::PostMessage(hwnd, WM_STARS_SYSCOMMAND, wParam, lParam);
             return 0;
         }
         break;
     case WM_STARS_SYSCOMMAND:
-        if (IsIconic(hwnd))
-            FUiShowWindow(hwnd, SW_RESTORE);
+        if (win32::IsIconic(hwnd))
+            ui::ShowWindow(hwnd, SW_RESTORE);
         return FrameWndProc(hwnd, WM_SYSCOMMAND, wParam, lParam);
     }
     return FrameWndProc(hwnd, msg, wParam, lParam);
@@ -59,25 +59,25 @@ LRESULT CALLBACK FrameWndProcDeferred(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 static int16_t FIsComboBox(HWND hwnd) {
     char szClass[16];
 
-    return hwnd && GetClassNameA(hwnd, szClass, sizeof(szClass)) && lstrcmpiA(szClass, "ComboBox") == 0;
+    return hwnd && win32::GetClassNameA(hwnd, szClass, sizeof(szClass)) && win32::lstrcmpiA(szClass, "ComboBox") == 0;
 }
 
 // FRouteMouseWheel points a wheel message at the window under the cursor.
 // It returns FALSE when the message should be dropped.
-int16_t FRouteMouseWheel(MSG *pmsg) {
+int16_t FRouteMouseWheel(win32::MSG *pmsg) {
     POINT pt;
     HWND  hwnd;
 
     // The message's own cursor position, not lParam: Wine sends the point
     // of WM_MOUSEHWHEEL in client coordinates rather than screen ones.
     pt = pmsg->pt;
-    hwnd = WindowFromPoint(pt);
-    if (!hwnd || hwnd == pmsg->hwnd || GetWindowThreadProcessId(hwnd, NULL) != GetCurrentThreadId())
+    hwnd = win32::WindowFromPoint(pt);
+    if (!hwnd || hwnd == pmsg->hwnd || win32::GetWindowThreadProcessId(hwnd, NULL) != win32::GetCurrentThreadId())
         return TRUE;
     // A closed drop-down list changes its selection on the wheel. One the
     // player only points at must not change an order or a battle plan; the
     // edit of a CBS_DROPDOWN box is a child of the box.
-    if (FIsComboBox(hwnd) || FIsComboBox(GetParent(hwnd)))
+    if (FIsComboBox(hwnd) || FIsComboBox(win32::GetParent(hwnd)))
         return FALSE;
     pmsg->hwnd = hwnd;
     return TRUE;
@@ -107,7 +107,7 @@ int16_t CWheelLines(int16_t cPage) {
     if (cPage < 1) {
         cPage = 1;
     }
-    if (!SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0, &cLines, 0))
+    if (!win32::SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0, &cLines, 0))
         cLines = 3;
     if (cLines == WHEEL_PAGESCROLL || cLines > (UINT)cPage)
         return cPage;
@@ -115,20 +115,20 @@ int16_t CWheelLines(int16_t cPage) {
 }
 
 
-BOOL FNativeOpenFileName(OPENFILENAMEA *lpof) { return FUiGetOpenFileName(lpof); }
-BOOL FNativeSaveFileName(OPENFILENAMEA *lpof) { return FUiGetSaveFileName(lpof); }
-DWORD DwNativeFileDialogError(void) { return CommDlgExtendedError(); }
+BOOL FNativeOpenFileName(OPENFILENAMEA *lpof) { return ui::GetOpenFileName(lpof); }
+BOOL FNativeSaveFileName(OPENFILENAMEA *lpof) { return ui::GetSaveFileName(lpof); }
+DWORD DwNativeFileDialogError(void) { return win32::CommDlgExtendedError(); }
 
 int CchGetUtf8WindowText(HWND hwnd, char *psz, int cchMax) {
     if (StarsCompatTextInputRejected(hwnd)) {
         if (cchMax > 0) psz[0] = 0;
         return -1;
     }
-    return GetWindowTextA(hwnd, psz, cchMax);
+    return win32::GetWindowTextA(hwnd, psz, cchMax);
 }
 
 BOOL FSetUtf8WindowText(HWND hwnd, const char *psz) {
-    return ControlIO().pfnFUiSetWindowText(hwnd, psz);
+    return ControlIO().pfnSetWindowText(hwnd, psz);
 }
 
 BOOL FSetNativeWindowTitle(HWND hwnd, const char *psz) {

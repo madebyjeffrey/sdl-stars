@@ -215,7 +215,7 @@ extern "C" bool SDLCALL StarsTest_SDL_RenderPresent(SDL_Renderer *lprenderer) {
              hwnd->lpfnDlg != RaceWizardDlg5 && hwnd->lpfnDlg != RaceWizardDlg6) ||
             !hwnd->lpComposite.get() || hwnd->cxDlgUnit == 0) continue;
         rc = (RECT){66, 218, 110, 232};
-        MapDialogRect(hwnd, &rc);
+        win32::MapDialogRect(hwnd, &rc);
         fButton = FALSE;
         for (y = rc.top * hwnd->iCanvasScale; y < rc.bottom * hwnd->iCanvasScale; y++)
             for (x = rc.left * hwnd->iCanvasScale; x < rc.right * hwnd->iCanvasScale; x++)
@@ -242,34 +242,34 @@ static BOOL FCheckScannerDrag(void) {
     BOOL fSinglePresent;
 
     /* Large test displays can fit the whole map at the saved zoom. */
-    if (!IsWindow(hwndBar) || !IsWindowVisible(hwndBar)) {
-        LUiSendMessage(hwndFrame, WM_COMMAND, zoom400 + 3905, 0);
+    if (!win32::IsWindow(hwndBar) || !win32::IsWindowVisible(hwndBar)) {
+        ui::SendMessage(hwndFrame, WM_COMMAND, zoom400 + 3905, 0);
         hwndBar = hwndScanner->rghwndScroll[SB_HORZ];
     }
-    if (!IsWindow(hwndBar) || !IsWindowVisible(hwndBar)) return FALSE;
-    if (!GetScrollInfo(hwndScanner, SB_HORZ, &si) || !GetClientRect(hwndBar, &rc)) return FALSE;
-    iPosSav = GetScrollPos(hwndScanner, SB_HORZ);
-    LUiSendMessage(hwndScanner, WM_HSCROLL, MAKEWPARAM(SB_THUMBPOSITION, si.nMin), 0);
-    FUiUpdateWindow(hwndScanner); FUiUpdateWindow(hwndBar);
+    if (!win32::IsWindow(hwndBar) || !win32::IsWindowVisible(hwndBar)) return FALSE;
+    if (!win32::GetScrollInfo(hwndScanner, SB_HORZ, &si) || !win32::GetClientRect(hwndBar, &rc)) return FALSE;
+    iPosSav = win32::GetScrollPos(hwndScanner, SB_HORZ);
+    ui::SendMessage(hwndScanner, WM_HSCROLL, MAKEWPARAM(SB_THUMBPOSITION, si.nMin), 0);
+    ui::UpdateWindow(hwndScanner); ui::UpdateWindow(hwndBar);
     dxThumb = (((8) > ((int)((int64_t)(rc.right - 34) * si.nPage / (si.nMax - si.nMin + 1)))) ? (8) : ((int)((int64_t)(rc.right - 34) * si.nPage / (si.nMax - si.nMin + 1))));
     xGrab = 17 + dxThumb / 2;
-    LUiSendMessage(hwndBar, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(xGrab, 8));
+    ui::SendMessage(hwndBar, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(xGrab, 8));
     // Each simulated drag tick includes the completed window-tree paint pass.
     if (!FCompatPaintTree(hwndFrame)) return FALSE;
     cPresentSav = cRenderPresent; nsStart = SDL_GetPerformanceCounter();
     for (i = 1; i <= 10; i++) {
-        LUiSendMessage(hwndBar, WM_MOUSEMOVE, MK_LBUTTON, MAKELPARAM(xGrab + i * 4, 8));
-        if (GetCapture() != hwndBar || !FCompatPaintTree(hwndFrame)) return FALSE;
+        ui::SendMessage(hwndBar, WM_MOUSEMOVE, MK_LBUTTON, MAKELPARAM(xGrab + i * 4, 8));
+        if (win32::GetCapture() != hwndBar || !FCompatPaintTree(hwndFrame)) return FALSE;
     }
     printf("Scanner drag: %u presentations for 10 updates, %.2f ms\n", cRenderPresent - cPresentSav,
            (double)(SDL_GetPerformanceCounter() - nsStart) * 1000 / SDL_GetPerformanceFrequency());
     fSinglePresent = cRenderPresent - cPresentSav == 10;
-    LUiSendMessage(hwndBar, WM_LBUTTONUP, 0, MAKELPARAM(xGrab + 40, 8));
-    LUiSendMessage(hwndScanner, WM_HSCROLL, MAKEWPARAM(SB_THUMBPOSITION, iPosSav), 0);
+    ui::SendMessage(hwndBar, WM_LBUTTONUP, 0, MAKELPARAM(xGrab + 40, 8));
+    ui::SendMessage(hwndScanner, WM_HSCROLL, MAKEWPARAM(SB_THUMBPOSITION, iPosSav), 0);
     if (iScanZoom != iZoomSav) {
-        LUiSendMessage(hwndFrame, WM_COMMAND, iZoomSav + 3905, 0);
-        LUiSendMessage(hwndScanner, WM_HSCROLL, MAKEWPARAM(SB_THUMBPOSITION, xSav), 0);
-        LUiSendMessage(hwndScanner, WM_VSCROLL, MAKEWPARAM(SB_THUMBPOSITION, ySav), 0);
+        ui::SendMessage(hwndFrame, WM_COMMAND, iZoomSav + 3905, 0);
+        ui::SendMessage(hwndScanner, WM_HSCROLL, MAKEWPARAM(SB_THUMBPOSITION, xSav), 0);
+        ui::SendMessage(hwndScanner, WM_VSCROLL, MAKEWPARAM(SB_THUMBPOSITION, ySav), 0);
     }
     return fSinglePresent;
 }
@@ -277,15 +277,15 @@ static BOOL FCheckScannerDrag(void) {
 static int iTransportPreset = -1, cTransportMenus;
 BOOL StarsTest_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND hwnd, const RECT *prc) {
     if (iRosterMenu >= 0) {
-        HMENU hmenuLibrary = GetSubMenu(hmenu, 1);
+        HMENU hmenuLibrary = win32::GetSubMenu(hmenu, 1);
         char szLabel[512];
         int i, cch;
         const char *pch;
         char *pchLabel;
 
-        if (!GetSubMenu(hmenu, 0) || !hmenuLibrary || !GetSubMenu(hmenu, 2) ||
-            GetMenuString(hmenuLibrary, 15001, szLabel, sizeof(szLabel), MF_BYCOMMAND) != 0) {
-            PostQuitMessage(93);
+        if (!win32::GetSubMenu(hmenu, 0) || !hmenuLibrary || !win32::GetSubMenu(hmenu, 2) ||
+            win32::GetMenuString(hmenuLibrary, 15001, szLabel, sizeof(szLabel), MF_BYCOMMAND) != 0) {
+            win32::PostQuitMessage(93);
             return FALSE;
         }
         iPopMenuSel = iRosterMenu;
@@ -296,14 +296,14 @@ BOOL StarsTest_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserve
                 if (*pch == '&') *pchLabel++ = '&';
             }
             *pchLabel = 0;
-            for (i = 0; i < GetMenuItemCount(hmenuLibrary); i++) {
+            for (i = 0; i < win32::GetMenuItemCount(hmenuLibrary); i++) {
                 char szItem[512];
 
-                cch = GetMenuString(hmenuLibrary, i, szItem, sizeof(szItem), MF_BYPOSITION);
+                cch = win32::GetMenuString(hmenuLibrary, i, szItem, sizeof(szItem), MF_BYPOSITION);
                 if (cch != 0 && !strcmp(szItem, szLabel)) break;
             }
-            if (i == GetMenuItemCount(hmenuLibrary)) { PostQuitMessage(93); return FALSE; }
-            iPopMenuSel = GetMenuItemID(hmenuLibrary, i) - 15000;
+            if (i == win32::GetMenuItemCount(hmenuLibrary)) { win32::PostQuitMessage(93); return FALSE; }
+            iPopMenuSel = win32::GetMenuItemID(hmenuLibrary, i) - 15000;
             pszRosterRace = NULL;
         }
         iRosterMenu = -1;
@@ -325,11 +325,11 @@ BOOL StarsTest_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserve
             event.type = SDL_EVENT_KEY_UP; event.key.down = false;
             if (!SDL_PushEvent(&event)) return FALSE;
         }
-        fResult = TrackPopupMenu(hmenu, flags, x, y, reserved, hwnd, prc);
+        fResult = win32::TrackPopupMenu(hmenu, flags, x, y, reserved, hwnd, prc);
         iTransportPreset = -1;
         return fResult;
     }
-    if (!fToolbarMenu) return TrackPopupMenu(hmenu, flags, x, y, reserved, hwnd, prc);
+    if (!fToolbarMenu) return win32::TrackPopupMenu(hmenu, flags, x, y, reserved, hwnd, prc);
     cToolbarMenu++;
     fToolbarAnchor = x == xToolbarMenu && y == yToolbarMenu && !(flags & TPM_CENTERALIGN);
     return FALSE;
@@ -356,7 +356,7 @@ static BOOL FCheckMapInspection(void) {
     for (i = 0; i < snap.cObject; i++) {
         if (!snap.rgobj[i].szName[0]) goto LDone;
         pt = PointTo16(snap.rgobj[i].ptUniverse); LogicalToScan(&pt);
-        screen = PointFrom16(pt); ClientToScreen(hwndScanner, &screen);
+        screen = PointFrom16(pt); win32::ClientToScreen(hwndScanner, &screen);
         if (pt.x != snap.rgobj[i].ptClient.x || pt.y != snap.rgobj[i].ptClient.y ||
             screen.x != snap.rgobj[i].ptScreen.x || screen.y != snap.rgobj[i].ptScreen.y) goto LDone;
         if (snap.rgobj[i].grType == grobjPlanet) cPlanetFound++;
@@ -385,25 +385,25 @@ static BOOL FCheckMapInspection(void) {
         if (ICloseNativeFile(lpfile) != 0) goto LDone;
     }
     hwndInspector = StarsCompatShowInspector();
-    if (!hwndInspector || !GetDlgItem(hwndInspector,4)) goto LDone;
-    LUiSendMessage(GetDlgItem(hwndInspector,4), BM_CLICK,0,0);
+    if (!hwndInspector || !win32::GetDlgItem(hwndInspector,4)) goto LDone;
+    ui::SendMessage(win32::GetDlgItem(hwndInspector,4), BM_CLICK,0,0);
     hwndMap = ShowScannerInspector();
-    if (!hwndMap || LUiSendMessage(GetDlgItem(hwndMap,1),LB_GETCOUNT,0,0) != (LRESULT)fresh.cObject ||
-        !FUiUpdateWindow(hwndMap) || !FCompatPresent(hwndMap)) goto LDone;
-    for (hwndChild = GetWindow(hwndMap, GW_CHILD); hwndChild; hwndChild = GetWindow(hwndChild, GW_HWNDNEXT)) {
-        FUiUpdateWindow(hwndChild);
-        for (hwndGrandchild = GetWindow(hwndChild, GW_CHILD); hwndGrandchild; hwndGrandchild = GetWindow(hwndGrandchild, GW_HWNDNEXT))
-            FUiUpdateWindow(hwndGrandchild);
+    if (!hwndMap || ui::SendMessage(win32::GetDlgItem(hwndMap,1),LB_GETCOUNT,0,0) != (LRESULT)fresh.cObject ||
+        !ui::UpdateWindow(hwndMap) || !FCompatPresent(hwndMap)) goto LDone;
+    for (hwndChild = win32::GetWindow(hwndMap, GW_CHILD); hwndChild; hwndChild = win32::GetWindow(hwndChild, GW_HWNDNEXT)) {
+        ui::UpdateWindow(hwndChild);
+        for (hwndGrandchild = win32::GetWindow(hwndChild, GW_CHILD); hwndGrandchild; hwndGrandchild = win32::GetWindow(hwndGrandchild, GW_HWNDNEXT))
+            ui::UpdateWindow(hwndGrandchild);
     }
     if (!FCompatPresent(hwndMap) || (pszViewerCapture && !SDL_SaveBMP(hwndMap->lpComposite.get(), pszViewerCapture))) goto LDone;
-    LUiSendMessage(GetDlgItem(hwndMap, 1), LB_SETCURSEL, 1, 0);
-    LUiSendMessage(GetDlgItem(hwndMap, 4), BM_CLICK, 0, 0);
+    ui::SendMessage(win32::GetDlgItem(hwndMap, 1), LB_SETCURSEL, 1, 0);
+    ui::SendMessage(win32::GetDlgItem(hwndMap, 4), BM_CLICK, 0, 0);
     if (sel.scan.grobj != grobjPlanet || sel.scan.idpl != 1 || game.fDirty != fDirty) goto LDone;
-    LUiSendMessage(hwndMap, WM_CLOSE,0,0);
-    if (IsWindow(hwndMap)) goto LDone;
+    ui::SendMessage(hwndMap, WM_CLOSE,0,0);
+    if (win32::IsWindow(hwndMap)) goto LDone;
     hwndMap = ShowScannerInspector();
     if (!hwndMap) goto LDone;
-    FUiDestroyWindow(hwndMap); FUiDestroyWindow(hwndInspector);
+    ui::DestroyWindow(hwndMap); ui::DestroyWindow(hwndInspector);
     ChangeScanSel(&scanSav,2);
     fPassed = TRUE;
 LDone:
@@ -415,20 +415,20 @@ static BOOL FCheckReportScrollbars(void) {
     SCROLLINFO si = {sizeof(si), SIF_ALL, 0, 0, 0, 0, 0};
     BOOL fPassed = TRUE;
 
-    LUiSendMessage(hwndFrame, WM_COMMAND, IDM_REPORT_PLANET, 0);
-    if (!IsWindow(hwndReportDlg) || !vprptCur) return FALSE;
-    FUiSetWindowPos(hwndReportDlg, NULL, 0, 0, 300, 220, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
-    if (IsWindowVisible(vprptCur->hwndVScroll)) {
-        fPassed = GetScrollInfo(vprptCur->hwndVScroll, SB_CTL, &si) &&
+    ui::SendMessage(hwndFrame, WM_COMMAND, IDM_REPORT_PLANET, 0);
+    if (!win32::IsWindow(hwndReportDlg) || !vprptCur) return FALSE;
+    ui::SetWindowPos(hwndReportDlg, NULL, 0, 0, 300, 220, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+    if (win32::IsWindowVisible(vprptCur->hwndVScroll)) {
+        fPassed = win32::GetScrollInfo(vprptCur->hwndVScroll, SB_CTL, &si) &&
             si.nPage == (UINT)(((1) > (vprptCur->cRowsVis)) ? (1) : (vprptCur->cRowsVis)) &&
             si.nMax - (int)si.nPage + 1 == vprptCur->cRows - vprptCur->cRowsVis;
     }
-    if (IsWindowVisible(vprptCur->hwndHScroll)) {
-        fPassed = fPassed && GetScrollInfo(vprptCur->hwndHScroll, SB_CTL, &si) &&
+    if (win32::IsWindowVisible(vprptCur->hwndHScroll)) {
+        fPassed = fPassed && win32::GetScrollInfo(vprptCur->hwndHScroll, SB_CTL, &si) &&
             si.nPage != 0 && si.nMax - (int)si.nPage + 1 == vprptCur->cColScroll;
     }
-    LUiSendMessage(hwndReportDlg, WM_CLOSE, 0, 0);
-    return fPassed && !IsWindow(hwndReportDlg);
+    ui::SendMessage(hwndReportDlg, WM_CLOSE, 0, 0);
+    return fPassed && !win32::IsWindow(hwndReportDlg);
 }
 
 static BOOL FCheckToolbarPlacement(void) {
@@ -437,65 +437,65 @@ static BOOL FCheckToolbarPlacement(void) {
     RECT rc, rcTip, rcDrop, rcClient;
     SCROLLINFO si = {sizeof(si), SIF_ALL, 0, 0, 0, 0, 0};
     int cPage, iMax;
-    HWND hwndFocus = GetFocus();
+    HWND hwndFocus = win32::GetFocus();
     HWND hwndRoot = HwndCompatRoot(hwndTb);
     HWND hwndButtons;
     char szClass[64];
     SDL_Event event = {};
     int i, x, iRange;
 
-    if (!GetClientRect(hwndScanner, &rcClient) || !GetScrollInfo(hwndScanner, SB_HORZ, &si)) return FALSE;
+    if (!win32::GetClientRect(hwndScanner, &rcClient) || !win32::GetScrollInfo(hwndScanner, SB_HORZ, &si)) return FALSE;
     cPage = (((1) > (ScanToPt(rcClient.right))) ? (1) : (ScanToPt(rcClient.right)));
     iMax = ((((1000) > (dGalInv - 1000 - cPage)) ? (1000) : (dGalInv - 1000 - cPage)) + 3) & ~3;
     if (si.nPage != (UINT)cPage || si.nMax - (int)si.nPage + 1 != iMax) return FALSE;
-    if (!GetScrollInfo(hwndScanner, SB_VERT, &si)) return FALSE;
+    if (!win32::GetScrollInfo(hwndScanner, SB_VERT, &si)) return FALSE;
     cPage = (((1) > (ScanToPt(rcClient.bottom - dySBar))) ? (1) : (ScanToPt(rcClient.bottom - dySBar)));
     iMax = ((((1000) > (dGalInv - 1000 - cPage)) ? (1000) : (dGalInv - 1000 - cPage)) + 3) & ~3;
     if (si.nPage != (UINT)cPage || si.nMax - (int)si.nPage + 1 != iMax) return FALSE;
-    if (!GetWindowRect(hwndTBRadar, &rc)) return FALSE;
-    if (!GetClientRect(hwndTBRadar, &rcClient) || rcClient.right != rc.right - rc.left ||
+    if (!win32::GetWindowRect(hwndTBRadar, &rc)) return FALSE;
+    if (!win32::GetClientRect(hwndTBRadar, &rcClient) || rcClient.right != rc.right - rc.left ||
         hwndTBRadar->rghwndScroll[SB_VERT] || hwndTBRadar->rghwndScroll[SB_HORZ]) return FALSE;
     pt = (POINT){(rc.left + rc.right) / 2, (rc.top + rc.bottom) / 2};
-    hwndButtons = WindowFromPoint(pt);
-    if (hwndButtons != hwndTBRadar && GetParent(hwndButtons) != hwndTBRadar) return FALSE;
-    iRange = (int)LUiSendMessage(hwndTBRadar, CB_GETCURSEL, 0, 0);
-    HwndUiSetFocus(hwndTBRadar);
-    LUiSendMessage(hwndTBRadar, CB_SHOWDROPDOWN, TRUE, 0);
+    hwndButtons = win32::WindowFromPoint(pt);
+    if (hwndButtons != hwndTBRadar && win32::GetParent(hwndButtons) != hwndTBRadar) return FALSE;
+    iRange = (int)ui::SendMessage(hwndTBRadar, CB_GETCURSEL, 0, 0);
+    ui::SetFocus(hwndTBRadar);
+    ui::SendMessage(hwndTBRadar, CB_SHOWDROPDOWN, TRUE, 0);
     if (!hwndTBRadar->lpcombo || !hwndTBRadar->lpcombo->hwndPopup ||
-        !GetWindowRect(hwndTBRadar->lpcombo->hwndPopup, &rcDrop) ||
+        !win32::GetWindowRect(hwndTBRadar->lpcombo->hwndPopup, &rcDrop) ||
         rcDrop.left != rc.left || rcDrop.top != rc.bottom ||
         !hwndTBRadar->lpcombo->hwndPopup->lpCanvas.get() ||
-        LUiSendMessage(hwndTBRadar, CB_GETCOUNT, 0, 0) < 2) return FALSE;
+        ui::SendMessage(hwndTBRadar, CB_GETCOUNT, 0, 0) < 2) return FALSE;
     if (strcmp(SDL_GetCurrentVideoDriver(), "dummy") != 0 &&
         (!(SDL_GetWindowFlags(hwndTBRadar->lpcombo->hwndPopup->lpWindow.get()) & SDL_WINDOW_POPUP_MENU) ||
          SDL_GetWindowParent(hwndTBRadar->lpcombo->hwndPopup->lpWindow.get()) != hwndRoot->lpWindow.get())) return FALSE;
-    LUiSendMessage(hwndTBRadar, WM_KEYDOWN, VK_DOWN, 0);
-    LUiSendMessage(hwndTBRadar, WM_KEYDOWN, VK_RETURN, 0);
-    if (LUiSendMessage(hwndTBRadar, CB_GETDROPPEDSTATE, 0, 0) || GetCapture() == hwndTBRadar) return FALSE;
-    LUiSendMessage(hwndTBRadar, CB_SETCURSEL, iRange, 0);
-    HwndUiSetFocus(hwndFocus);
+    ui::SendMessage(hwndTBRadar, WM_KEYDOWN, VK_DOWN, 0);
+    ui::SendMessage(hwndTBRadar, WM_KEYDOWN, VK_RETURN, 0);
+    if (ui::SendMessage(hwndTBRadar, CB_GETDROPPEDSTATE, 0, 0) || win32::GetCapture() == hwndTBRadar) return FALSE;
+    ui::SendMessage(hwndTBRadar, CB_SETCURSEL, iRange, 0);
+    ui::SetFocus(hwndFocus);
     for (i = 0; i < 4; i++) {
         x = rgitb[i];
         if (x == tbShipDesignFilterMenu) x = tbShipDesignFilter;
         else if (x == tbEnemyClassFilterMenu) x = tbEnemyClassFilter;
-        hwndButtons = GetDlgItem(hwndTb, IDC_STARS_TOOLBAR);
-        if (!LUiSendMessage(hwndButtons, TB_GETRECT, IDC_STARS_TOOLBUTTON_FIRST + x, (LPARAM)&rc)) return FALSE;
+        hwndButtons = win32::GetDlgItem(hwndTb, IDC_STARS_TOOLBAR);
+        if (!ui::SendMessage(hwndButtons, TB_GETRECT, IDC_STARS_TOOLBUTTON_FIRST + x, (LPARAM)&rc)) return FALSE;
         pt = (POINT){rc.left, rc.bottom};
-        if (!ClientToScreen(hwndButtons, &pt)) return FALSE;
+        if (!win32::ClientToScreen(hwndButtons, &pt)) return FALSE;
         xToolbarMenu = pt.x; yToolbarMenu = pt.y;
         cToolbarMenu = 0; fToolbarAnchor = FALSE; fToolbarMenu = TRUE;
-        if (!GetClassName(hwndButtons, szClass, sizeof(szClass)) || strcmp(szClass, TOOLBARCLASSNAME)) return FALSE;
-        LUiSendMessage(hwndButtons, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(rc.right - 3, (rc.top + rc.bottom) / 2));
-        LUiSendMessage(hwndButtons, WM_LBUTTONUP, 0, MAKELPARAM(rc.right - 3, (rc.top + rc.bottom) / 2));
+        if (!win32::GetClassName(hwndButtons, szClass, sizeof(szClass)) || strcmp(szClass, TOOLBARCLASSNAME)) return FALSE;
+        ui::SendMessage(hwndButtons, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(rc.right - 3, (rc.top + rc.bottom) / 2));
+        ui::SendMessage(hwndButtons, WM_LBUTTONUP, 0, MAKELPARAM(rc.right - 3, (rc.top + rc.bottom) / 2));
         fToolbarMenu = FALSE;
         if (cToolbarMenu != 1 || !fToolbarAnchor) return FALSE;
     }
-    SetRect(&rc, 4, 4, 33, 32);
-    MapWindowPoints(hwndTb, NULL, (POINT *)&rc, 2);
+    win32::SetRect(&rc, 4, 4, 33, 32);
+    win32::MapWindowPoints(hwndTb, NULL, (POINT *)&rc, 2);
     for (i = 0; i < 2; i++) {
         pt = (POINT){rc.left + 2 + i * 10, rc.top + 2 + i * 10};
         if (!strcmp(SDL_GetCurrentVideoDriver(), "dummy") || !strcmp(SDL_GetCurrentVideoDriver(), "wayland")) {
-            if (!ScreenToClient(hwndRoot, &pt)) return FALSE;
+            if (!win32::ScreenToClient(hwndRoot, &pt)) return FALSE;
             event.type = SDL_EVENT_MOUSE_MOTION;
             event.motion.windowID = hwndRoot->id;
             event.motion.x = (float)pt.x;
@@ -505,8 +505,8 @@ static BOOL FCheckToolbarPlacement(void) {
         ShowTooltip(idsNormalView, &rc);
         if (!hwndTooltip) return FALSE;
         TooltipWndProc(hwndTooltip, 1523, TRUE, 0);
-        if (!IsWindowVisible(hwndTooltip) || !GetWindowRect(hwndTooltip, &rcTip) ||
-            rcTip.left != rc.left || rcTip.top != rc.bottom + 2 || GetFocus() != hwndFocus) return FALSE;
+        if (!win32::IsWindowVisible(hwndTooltip) || !win32::GetWindowRect(hwndTooltip, &rcTip) ||
+            rcTip.left != rc.left || rcTip.top != rc.bottom + 2 || win32::GetFocus() != hwndFocus) return FALSE;
         if (strcmp(SDL_GetCurrentVideoDriver(), "dummy") != 0 &&
             (!(SDL_GetWindowFlags(hwndTooltip->lpWindow.get()) & SDL_WINDOW_TOOLTIP) ||
              SDL_GetWindowParent(hwndTooltip->lpWindow.get()) != hwndRoot->lpWindow.get())) return FALSE;
@@ -542,12 +542,12 @@ BOOL StarsTest_FNativeOpenFileName(OPENFILENAMEA *lpof) {
     if (PszCompatEnvironment("STARS_CLIENT_STARTUP_SOURCE")) {
         fPassed = FALSE;
         fprintf(stderr, "Startup unexpectedly reopened the file chooser\n");
-        PostQuitMessage(92);
+        win32::PostQuitMessage(92);
         return FALSE;
     }
     if (PszCompatEnvironment("STARS_CLIENT_RACE_ROSTER_TEST")) {
         fprintf(stderr, "New-game roster opened a file picker\n");
-        PostQuitMessage(93);
+        win32::PostQuitMessage(93);
         return FALSE;
     }
     if (pszExternalGame) {
@@ -608,10 +608,10 @@ extern "C" bool SDLCALL StarsTest_SDL_ShowWindow(SDL_Window *lpWindow) {
         }
     }
 
-    for (hwnd = GetWindow(hwndTitle, GW_HWNDFIRST); hwnd; hwnd = GetWindow(hwnd, GW_HWNDNEXT)) {
+    for (hwnd = win32::GetWindow(hwndTitle, GW_HWNDFIRST); hwnd; hwnd = win32::GetWindow(hwnd, GW_HWNDNEXT)) {
         if (hwnd->lpWindow.get() != lpWindow || hwnd->lpfnDlg != RaceWizardDlg2) continue;
         if (cHabShow++ == 0) {
-            cr = GetSysColor(COLOR_BTNFACE);
+            cr = win32::GetSysColor(COLOR_BTNFACE);
             fHabPainted = hwnd->lpCanvas.get() && hwnd->lpComposite.get() &&
                 SDL_ReadSurfacePixel(hwnd->lpCanvas.get(), 0, 0, &r, &g, &b, &a) &&
                 RGB(r, g, b) == cr;
@@ -619,11 +619,11 @@ extern "C" bool SDLCALL StarsTest_SDL_ShowWindow(SDL_Window *lpWindow) {
     }
     if (PszCompatEnvironment("STARS_DEBUG_LIBRARY_STARTUP") && hwnd && hwnd->lpfnWndProc == TitleWndProc)
         fprintf(stderr, "[DEBUG-library-startup] SDL_ShowWindow title before visible=%d id=%u\n",
-                IsWindowVisible(hwnd), SDL_GetWindowID(lpWindow));
+                win32::IsWindowVisible(hwnd), SDL_GetWindowID(lpWindow));
     fResult = SDL_ShowWindow(lpWindow);
     if (PszCompatEnvironment("STARS_DEBUG_LIBRARY_STARTUP") && hwnd && hwnd->lpfnWndProc == TitleWndProc)
         fprintf(stderr, "[DEBUG-library-startup] SDL_ShowWindow title result=%d visible=%d\n",
-                fResult, IsWindowVisible(hwnd));
+                fResult, win32::IsWindowVisible(hwnd));
     return fResult;
 }
 
@@ -634,24 +634,24 @@ static BOOL FPushClick(HWND hwnd) {
     int i, iPosition;
     HWND lpTitle = HwndCompatRoot(hwnd);
     SDL_Event event = {};
-    for (hwndAncestor = hwnd; hwndAncestor; hwndAncestor = GetParent(hwndAncestor)) {
+    for (hwndAncestor = hwnd; hwndAncestor; hwndAncestor = win32::GetParent(hwndAncestor)) {
         if (hwndAncestor != hwndPlanet) continue;
-        hwndPane = GetParent(hwndPlanet);
+        hwndPane = win32::GetParent(hwndPlanet);
         for (i = 0; i < 2; i++) {
-            GetWindowRect(hwnd, &rc); GetClientRect(hwndPane, &rcPane);
+            win32::GetWindowRect(hwnd, &rc); win32::GetClientRect(hwndPane, &rcPane);
             pt = (POINT){rc.left, rc.top}; ptEnd = (POINT){rc.right, rc.bottom};
-            ScreenToClient(hwndPane, &pt); ScreenToClient(hwndPane, &ptEnd);
-            iPosition = GetScrollPos(hwndPane, i == 0 ? SB_VERT : SB_HORZ);
+            win32::ScreenToClient(hwndPane, &pt); win32::ScreenToClient(hwndPane, &ptEnd);
+            iPosition = win32::GetScrollPos(hwndPane, i == 0 ? SB_VERT : SB_HORZ);
             if ((i == 0 ? pt.y : pt.x) < 0) iPosition += i == 0 ? pt.y : pt.x;
             else if ((i == 0 ? ptEnd.y : ptEnd.x) > (i == 0 ? rcPane.bottom : rcPane.right))
                 iPosition += i == 0 ? ptEnd.y - rcPane.bottom : ptEnd.x - rcPane.right;
-            LUiSendMessage(hwndPane, i == 0 ? WM_VSCROLL : WM_HSCROLL, MAKEWPARAM(SB_THUMBPOSITION, (((0) > (iPosition)) ? (0) : (iPosition))), 0);
+            ui::SendMessage(hwndPane, i == 0 ? WM_VSCROLL : WM_HSCROLL, MAKEWPARAM(SB_THUMBPOSITION, (((0) > (iPosition)) ? (0) : (iPosition))), 0);
         }
         break;
     }
-    if (!lpTitle || !GetWindowRect(hwnd, &rc)) return FALSE;
+    if (!lpTitle || !win32::GetWindowRect(hwnd, &rc)) return FALSE;
     pt = (POINT){(rc.left + rc.right) / 2, (rc.top + rc.bottom) / 2};
-    if (!ScreenToClient(lpTitle, &pt)) return FALSE;
+    if (!win32::ScreenToClient(lpTitle, &pt)) return FALSE;
     event.type = SDL_EVENT_MOUSE_BUTTON_DOWN;
     event.button.windowID = lpTitle->id;
     event.button.button = SDL_BUTTON_LEFT;
@@ -665,45 +665,45 @@ static BOOL FPushClick(HWND hwnd) {
 }
 
 static BOOL FSelectClientRaceName(HWND hwndTitle, const char *pszName) {
-    HWND hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_RACES);
+    HWND hwndList = win32::GetDlgItem(hwndTitle, IDC_LIBRARY_RACES);
     char szName[256];
     LRESULT i, c;
-    c = LUiSendMessage(hwndList, LB_GETCOUNT, 0, 0);
+    c = ui::SendMessage(hwndList, LB_GETCOUNT, 0, 0);
     for (i = 0; i < c; i++) {
-        if (LUiSendMessage(hwndList, LB_GETTEXT, i, (LPARAM)szName) >= 0 && !strcmp(szName, pszName))
-            return LUiSendMessage(hwndList, LB_SETCURSEL, i, 0) != LB_ERR;
+        if (ui::SendMessage(hwndList, LB_GETTEXT, i, (LPARAM)szName) >= 0 && !strcmp(szName, pszName))
+            return ui::SendMessage(hwndList, LB_SETCURSEL, i, 0) != LB_ERR;
     }
     return FALSE;
 }
 
 static BOOL FSelectClientGameName(HWND hwndTitle, const char *pszName) {
-    HWND hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
-    LRESULT i = LUiSendMessage(hwndList, LB_FINDSTRINGEXACT, (WPARAM)-1, (LPARAM)pszName);
-    if (i == LB_ERR || LUiSendMessage(hwndList, LB_SETCURSEL, i, 0) == LB_ERR) return FALSE;
-    LUiSendMessage(hwndTitle, WM_COMMAND, MAKEWPARAM(IDC_LIBRARY_GAMES, LBN_SELCHANGE), (LPARAM)hwndList);
+    HWND hwndList = win32::GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
+    LRESULT i = ui::SendMessage(hwndList, LB_FINDSTRINGEXACT, (WPARAM)-1, (LPARAM)pszName);
+    if (i == LB_ERR || ui::SendMessage(hwndList, LB_SETCURSEL, i, 0) == LB_ERR) return FALSE;
+    ui::SendMessage(hwndTitle, WM_COMMAND, MAKEWPARAM(IDC_LIBRARY_GAMES, LBN_SELCHANGE), (LPARAM)hwndList);
     return TRUE;
 }
 
 static BOOL FSelectClientLibraryPlayer(HWND hwndTitle, int iplr) {
-    HWND hwndPlayers = GetDlgItem(hwndTitle, IDC_LIBRARY_PLAYERS);
-    LRESULT i, c = LUiSendMessage(hwndPlayers, CB_GETCOUNT, 0, 0);
+    HWND hwndPlayers = win32::GetDlgItem(hwndTitle, IDC_LIBRARY_PLAYERS);
+    LRESULT i, c = ui::SendMessage(hwndPlayers, CB_GETCOUNT, 0, 0);
     for (i = 0; i < c; i++) {
-        if (LUiSendMessage(hwndPlayers, CB_GETITEMDATA, i, 0) != iplr) continue;
-        if (LUiSendMessage(hwndPlayers, CB_SETCURSEL, i, 0) == CB_ERR) return FALSE;
-        LUiSendMessage(hwndTitle, WM_COMMAND, MAKEWPARAM(IDC_LIBRARY_PLAYERS, CBN_SELCHANGE), (LPARAM)hwndPlayers);
+        if (ui::SendMessage(hwndPlayers, CB_GETITEMDATA, i, 0) != iplr) continue;
+        if (ui::SendMessage(hwndPlayers, CB_SETCURSEL, i, 0) == CB_ERR) return FALSE;
+        ui::SendMessage(hwndTitle, WM_COMMAND, MAKEWPARAM(IDC_LIBRARY_PLAYERS, CBN_SELCHANGE), (LPARAM)hwndPlayers);
         return TRUE;
     }
     return FALSE;
 }
 
 static BOOL FClientLibraryPlayerYear(HWND hwndTitle, int iplr, int year) {
-    HWND hwndPlayers = GetDlgItem(hwndTitle, IDC_LIBRARY_PLAYERS);
-    LRESULT i, c = LUiSendMessage(hwndPlayers, CB_GETCOUNT, 0, 0);
+    HWND hwndPlayers = win32::GetDlgItem(hwndTitle, IDC_LIBRARY_PLAYERS);
+    LRESULT i, c = ui::SendMessage(hwndPlayers, CB_GETCOUNT, 0, 0);
     char szPlayer[64], szExpected[64];
     CchSnprintf(szExpected, sizeof(szExpected), "Player %d (%d)", iplr + 1, year);
     for (i = 0; i < c; i++) {
-        if (LUiSendMessage(hwndPlayers, CB_GETITEMDATA, i, 0) == iplr &&
-            LUiSendMessage(hwndPlayers, CB_GETLBTEXT, i, (LPARAM)szPlayer) != CB_ERR && !strcmp(szPlayer, szExpected)) return TRUE;
+        if (ui::SendMessage(hwndPlayers, CB_GETITEMDATA, i, 0) == iplr &&
+            ui::SendMessage(hwndPlayers, CB_GETLBTEXT, i, (LPARAM)szPlayer) != CB_ERR && !strcmp(szPlayer, szExpected)) return TRUE;
     }
     return FALSE;
 }
@@ -715,12 +715,12 @@ static BOOL FPushComboRow(HWND hwnd, int iRow) {
     RECT rc;
     SDL_Event event = {};
     int cy, iTop;
-    if (!hwndPopup || !hwndRoot || !GetClientRect(hwndPopup, &rc)) return FALSE;
+    if (!hwndPopup || !hwndRoot || !win32::GetClientRect(hwndPopup, &rc)) return FALSE;
     cy = (int)CompatListProc(hwnd, LB_GETITEMHEIGHT, 0, 0);
     iTop = (int)CompatListProc(hwnd, LB_GETTOPINDEX, 0, 0);
     pt = (POINT){rc.right / 2, 1 + (iRow - iTop) * cy + cy / 2};
-    if (cy <= 0 || pt.y < 1 || pt.y >= rc.bottom - 1 || !ClientToScreen(hwndPopup, &pt) ||
-        !ScreenToClient(hwndRoot, &pt)) return FALSE;
+    if (cy <= 0 || pt.y < 1 || pt.y >= rc.bottom - 1 || !win32::ClientToScreen(hwndPopup, &pt) ||
+        !win32::ScreenToClient(hwndRoot, &pt)) return FALSE;
     event.type = SDL_EVENT_MOUSE_BUTTON_DOWN; event.button.windowID = hwndRoot->id;
     event.button.button = SDL_BUTTON_LEFT; event.button.down = true;
     event.button.x = (float)pt.x; event.button.y = (float)(pt.y + CyCompatMenuBar(hwndRoot));
@@ -734,9 +734,9 @@ static BOOL FPushListRow(HWND hwnd, int iRow) {
     RECT rc;
     POINT pt;
     SDL_Event event = {};
-    if (!hwndRoot || LUiSendMessage(hwnd, LB_GETITEMRECT, iRow, (LPARAM)&rc) == LB_ERR) return FALSE;
+    if (!hwndRoot || ui::SendMessage(hwnd, LB_GETITEMRECT, iRow, (LPARAM)&rc) == LB_ERR) return FALSE;
     pt = (POINT){(rc.left + rc.right) / 2, (rc.top + rc.bottom) / 2};
-    if (!ClientToScreen(hwnd, &pt) || !ScreenToClient(hwndRoot, &pt)) return FALSE;
+    if (!win32::ClientToScreen(hwnd, &pt) || !win32::ScreenToClient(hwndRoot, &pt)) return FALSE;
     event.type = SDL_EVENT_MOUSE_BUTTON_DOWN; event.button.windowID = hwndRoot->id;
     event.button.button = SDL_BUTTON_LEFT; event.button.down = true;
     event.button.x = (float)pt.x; event.button.y = (float)(pt.y + CyCompatMenuBar(hwndRoot));
@@ -752,7 +752,7 @@ static BOOL FPushClientRect(HWND hwnd, const RECT *lprc, Uint8 button) {
     SDL_Event event = {};
     memcpy(&rc, lprc, sizeof(rc));
     pt = (POINT){(rc.left + rc.right) / 2, (rc.top + rc.bottom) / 2};
-    if (!hwndRoot || !ClientToScreen(hwnd, &pt) || !ScreenToClient(hwndRoot, &pt)) return FALSE;
+    if (!hwndRoot || !win32::ClientToScreen(hwnd, &pt) || !win32::ScreenToClient(hwndRoot, &pt)) return FALSE;
     event.type = SDL_EVENT_MOUSE_BUTTON_DOWN; event.button.windowID = hwndRoot->id;
     event.button.button = button; event.button.down = true;
     event.button.x = (float)pt.x; event.button.y = (float)(pt.y + CyCompatMenuBar(hwndRoot));
@@ -807,14 +807,14 @@ static BOOL FCheckShipWorkflow(HWND hwndDialog) {
         if (!hwndControl || mdBuild != mdBuildShdef) return FALSE;
         if (iStep == 0) return FPushClick(hwndControl);
         if (iStep == 1) {
-            iRow = (int)LUiSendMessage(hwndControl, CB_FINDSTRINGEXACT, (WPARAM)-1, (LPARAM)rgshdef[ishdefWorkflow].hul.szClass);
-            if (iRow < 0 || !LUiSendMessage(hwndControl, CB_GETDROPPEDSTATE, 0, 0)) return FALSE;
+            iRow = (int)ui::SendMessage(hwndControl, CB_FINDSTRINGEXACT, (WPARAM)-1, (LPARAM)rgshdef[ishdefWorkflow].hul.szClass);
+            if (iRow < 0 || !ui::SendMessage(hwndControl, CB_GETDROPPEDSTATE, 0, 0)) return FALSE;
             CompatListProc(hwndControl, LB_SETTOPINDEX, iRow, 0);
             return FPushComboRow(hwndControl, iRow);
         }
         if (!lpshdefBuild || lpshdefBuild != &rgshdef[ishdefWorkflow]) return FALSE;
         hwndControl = HwndWorkflowControl(hwndDialog, iWorkflow == 12 ? IDC_DELETE : IDC_EDIT, "Button");
-        return hwndControl && IsWindowEnabled(hwndControl) && FPushClick(hwndControl);
+        return hwndControl && win32::IsWindowEnabled(hwndControl) && FPushClick(hwndControl);
     }
     if (!fCopy) iStep -= 2;
     if (iWorkflow == 12) {
@@ -826,25 +826,25 @@ static BOOL FCheckShipWorkflow(HWND hwndDialog) {
     if (iStep == 0) {
         if (mdBuild != mdBuildShdef || rgplr[idPlayer].cShDef != cShdefWorkflow) return FALSE;
         hwndControl = HwndWorkflowControl(hwndDialog, IDC_IMPORT, "Button");
-        return hwndControl && IsWindowEnabled(hwndControl) && FPushClick(hwndControl);
+        return hwndControl && win32::IsWindowEnabled(hwndControl) && FPushClick(hwndControl);
     }
     if (iStep <= 3) {
         if (mdBuild != mdBuildEdit || ishdefBuild != ishdefWorkflow || lpshdefBuild != &shdefBuild) return FALSE;
         hwndControl = HwndWorkflowControl(hwndDialog, IDC_EDITNAME, "Edit");
-        if (!hwndControl || !IsWindowVisible(hwndControl)) return FALSE;
+        if (!hwndControl || !win32::IsWindowVisible(hwndControl)) return FALSE;
         if (iStep == 1) return FPushClick(hwndControl);
         if (iStep == 2) {
-            if (GetFocus() != hwndControl) return FALSE;
-            LUiSendMessage(hwndControl, EM_SETSEL, 0, -1);
+            if (win32::GetFocus() != hwndControl) return FALSE;
+            ui::SendMessage(hwndControl, EM_SETSEL, 0, -1);
             event.type = SDL_EVENT_TEXT_INPUT;
             event.text.windowID = HwndCompatRoot(hwndControl)->id;
             event.text.text = pszName;
             return SDL_PushEvent(&event);
         }
-        GetWindowText(hwndControl, sz, sizeof(sz));
+        win32::GetWindowText(hwndControl, sz, sizeof(sz));
         if (strcmp(sz, pszName) || strcmp(shdefBuild.hul.szClass, pszName)) return FALSE;
         hwndControl = HwndWorkflowControl(hwndDialog, iWorkflow == 8 || iWorkflow == 10 ? IDCANCEL : IDOK, "Button");
-        return hwndControl && IsWindowVisible(hwndControl) && FPushClick(hwndControl);
+        return hwndControl && win32::IsWindowVisible(hwndControl) && FPushClick(hwndControl);
     }
     if (mdBuild != mdBuildShdef) return FALSE;
     if (iWorkflow == 8) {
@@ -862,8 +862,8 @@ static BOOL FCheckMergeWorkflow(HWND hwndDialog) {
     HWND hwndList = HwndWorkflowControl(hwndDialog, IDC_MERGE_FLEETS_LIST, "ListBox"), hwndControl;
     int cSel;
     if (hwndDialog->lpfnDlg != MergeFleetsDlg || !hwndList || vcflMerge < 2 ||
-        LUiSendMessage(hwndList, LB_GETCOUNT, 0, 0) != vcflMerge) return FALSE;
-    cSel = (int)LUiSendMessage(hwndList, LB_GETSELCOUNT, 0, 0);
+        ui::SendMessage(hwndList, LB_GETCOUNT, 0, 0) != vcflMerge) return FALSE;
+    cSel = (int)ui::SendMessage(hwndList, LB_GETSELCOUNT, 0, 0);
     if (iWorkflowStep == 0 || iWorkflowStep == 1) {
         if (iWorkflowStep == 1 && cSel != vcflMerge) return FALSE;
         hwndControl = HwndWorkflowControl(hwndDialog, iWorkflowStep == 0 ? IDC_MERGE_FLEETS_SELECT_ALL : IDC_MERGE_FLEETS_UNSELECT_ALL, "Button");
@@ -871,9 +871,9 @@ static BOOL FCheckMergeWorkflow(HWND hwndDialog) {
     }
     if (iWorkflowStep == 2) return cSel == 0 && FPushListRow(hwndList, 0);
     if (iWorkflowStep == 3) {
-        if (cSel != 1 || !LUiSendMessage(hwndList, LB_GETSEL, 0, 0) || LUiSendMessage(hwndList, LB_GETSEL, 1, 0)) return FALSE;
+        if (cSel != 1 || !ui::SendMessage(hwndList, LB_GETSEL, 0, 0) || ui::SendMessage(hwndList, LB_GETSEL, 1, 0)) return FALSE;
         if (iWorkflow == 14) return FPushListRow(hwndList, 1);
-    } else if (cSel != 2 || !LUiSendMessage(hwndList, LB_GETSEL, 0, 0) || !LUiSendMessage(hwndList, LB_GETSEL, 1, 0)) return FALSE;
+    } else if (cSel != 2 || !ui::SendMessage(hwndList, LB_GETSEL, 0, 0) || !ui::SendMessage(hwndList, LB_GETSEL, 1, 0)) return FALSE;
     hwndControl = HwndWorkflowControl(hwndDialog, iWorkflow == 13 ? IDCANCEL : IDOK, "Button");
     fWorkflowPassed = hwndControl && FPushClick(hwndControl);
     return fWorkflowPassed;
@@ -944,7 +944,7 @@ static void CALLBACK CheckWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTim
     hwndDialog = HwndWorkflowDialog();
     if (++cWorkflowWait > 120) goto LFail;
     if (!hwndDialog && !idWorkflowDialog && !fWorkflowPassed) { fWorkflowBusy = FALSE; return; }
-    if (!hwndDialog || IsWindowEnabled(hwndFrame)) goto LFail;
+    if (!hwndDialog || win32::IsWindowEnabled(hwndFrame)) goto LFail;
     idWorkflowDialog = StarsCompatWindowId(hwndDialog);
     if (fWorkflowPassed) { fWorkflowBusy = FALSE; return; }
     fprintf(stderr, "Gameplay workflow %d step %d\n", iWorkflow, iWorkflowStep);
@@ -952,14 +952,14 @@ static void CALLBACK CheckWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTim
         if (hwndDialog->lpfnDlg != ResearchDlg) goto LFail;
         if (iWorkflowStep == 0) {
             hwndControl = HwndWorkflowControl(hwndDialog, IDC_RESEARCH_ENERGY + rgplr[idPlayer].iTechNow(), "Button");
-            if (!hwndControl || LUiSendMessage(hwndControl, BM_GETCHECK, 0, 0) != BST_CHECKED) goto LFail;
+            if (!hwndControl || ui::SendMessage(hwndControl, BM_GETCHECK, 0, 0) != BST_CHECKED) goto LFail;
             hwndControl = HwndWorkflowControl(hwndDialog, IDC_RESEARCH_NEXT_FIELD, "ComboBox");
-            if (!hwndControl || LUiSendMessage(hwndControl, CB_GETCOUNT, 0, 0) != 8) goto LFail;
+            if (!hwndControl || ui::SendMessage(hwndControl, CB_GETCOUNT, 0, 0) != 8) goto LFail;
             hwndControl = HwndWorkflowControl(hwndDialog, IDC_RESEARCH_ENERGY + iResearchTarget, "Button");
-            if (!hwndControl || !IsWindowEnabled(hwndControl) || !FPushClick(hwndControl)) goto LFail;
+            if (!hwndControl || !win32::IsWindowEnabled(hwndControl) || !FPushClick(hwndControl)) goto LFail;
         } else {
             hwndControl = HwndWorkflowControl(hwndDialog, IDC_RESEARCH_ENERGY + iResearchTarget, "Button");
-            if (iResTechNow != iResearchTarget || LUiSendMessage(hwndControl, BM_GETCHECK, 0, 0) != BST_CHECKED) goto LFail;
+            if (iResTechNow != iResearchTarget || ui::SendMessage(hwndControl, BM_GETCHECK, 0, 0) != BST_CHECKED) goto LFail;
             hwndControl = HwndWorkflowControl(hwndDialog, IDCANCEL, "Button");
             if (!hwndControl || !FPushClick(hwndControl)) goto LFail;
             fWorkflowPassed = TRUE;
@@ -970,9 +970,9 @@ static void CALLBACK CheckWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTim
         if (!hwndControl) goto LFail;
         if (iWorkflowStep == 0) {
             if (btlplan.fDumpCargo != rglpbtlplan[idPlayer][0].fDumpCargo ||
-                LUiSendMessage(hwndControl, BM_GETCHECK, 0, 0) != btlplan.fDumpCargo || !FPushClick(hwndControl)) goto LFail;
+                ui::SendMessage(hwndControl, BM_GETCHECK, 0, 0) != btlplan.fDumpCargo || !FPushClick(hwndControl)) goto LFail;
         } else {
-            if (btlplan.fDumpCargo != iResearchTarget || !fDirtyPlan) { fprintf(stderr, "Dump cargo: value %d target %d check %ld dirty %d style %lx\n", btlplan.fDumpCargo, iResearchTarget, (long)LUiSendMessage(hwndControl, BM_GETCHECK, 0, 0), fDirtyPlan, (unsigned long)GetWindowLongPtr(hwndControl, GWL_STYLE)); goto LFail; }
+            if (btlplan.fDumpCargo != iResearchTarget || !fDirtyPlan) { fprintf(stderr, "Dump cargo: value %d target %d check %ld dirty %d style %lx\n", btlplan.fDumpCargo, iResearchTarget, (long)ui::SendMessage(hwndControl, BM_GETCHECK, 0, 0), fDirtyPlan, (unsigned long)win32::GetWindowLongPtr(hwndControl, GWL_STYLE)); goto LFail; }
             hwndControl = HwndWorkflowControl(hwndDialog, IDOK, "Button");
             if (!hwndControl || !FPushClick(hwndControl)) goto LFail;
             fWorkflowPassed = TRUE;
@@ -981,15 +981,15 @@ static void CALLBACK CheckWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTim
         if (hwndDialog->lpfnDlg != RelationsDlg) goto LFail;
         if (iWorkflowStep == 0) {
             hwndControl = HwndWorkflowControl(hwndDialog, IDC_RELATIONS_PLAYER_LIST, "ListBox");
-            if (!hwndControl || LUiSendMessage(hwndControl, LB_GETCOUNT, 0, 0) != game.cPlayer - 1 ||
-                LUiSendMessage(hwndControl, LB_GETCURSEL, 0, 0) != 0) goto LFail;
+            if (!hwndControl || ui::SendMessage(hwndControl, LB_GETCOUNT, 0, 0) != game.cPlayer - 1 ||
+                ui::SendMessage(hwndControl, LB_GETCURSEL, 0, 0) != 0) goto LFail;
             hwndControl = HwndWorkflowControl(hwndDialog, IDC_RELATIONS_NEUTRAL + rgplr[idPlayer].rgmdRelation[idPlayer == 0], "Button");
-            if (!hwndControl || LUiSendMessage(hwndControl, BM_GETCHECK, 0, 0) != BST_CHECKED) goto LFail;
+            if (!hwndControl || ui::SendMessage(hwndControl, BM_GETCHECK, 0, 0) != BST_CHECKED) goto LFail;
             hwndControl = HwndWorkflowControl(hwndDialog, IDC_RELATIONS_NEUTRAL + iResearchTarget, "Button");
             if (!hwndControl || !FPushClick(hwndControl)) goto LFail;
         } else {
             hwndControl = HwndWorkflowControl(hwndDialog, IDC_RELATIONS_NEUTRAL + iResearchTarget, "Button");
-            if (!hwndControl || LUiSendMessage(hwndControl, BM_GETCHECK, 0, 0) != BST_CHECKED ||
+            if (!hwndControl || ui::SendMessage(hwndControl, BM_GETCHECK, 0, 0) != BST_CHECKED ||
                 rgplr[idPlayer].rgmdRelation[idPlayer == 0] != iResearchTarget || !fDirtyPlan) goto LFail;
             hwndControl = HwndWorkflowControl(hwndDialog, IDCANCEL, "Button");
             if (!hwndControl || !FPushClick(hwndControl)) goto LFail;
@@ -1000,13 +1000,13 @@ static void CALLBACK CheckWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTim
         hwndControl = HwndWorkflowControl(hwndDialog, IDC_BATTLE_PLAN_TACTIC, "ComboBox");
         if (!hwndControl) goto LFail;
         if (iWorkflowStep == 0) {
-            if (LUiSendMessage(hwndControl, CB_GETCURSEL, 0, 0) != rglpbtlplan[idPlayer][0].mdTactic ||
-                LUiSendMessage(hwndControl, CB_GETCOUNT, 0, 0) <= iResearchTarget || !FPushClick(hwndControl)) goto LFail;
+            if (ui::SendMessage(hwndControl, CB_GETCURSEL, 0, 0) != rglpbtlplan[idPlayer][0].mdTactic ||
+                ui::SendMessage(hwndControl, CB_GETCOUNT, 0, 0) <= iResearchTarget || !FPushClick(hwndControl)) goto LFail;
         } else if (iWorkflowStep == 1) {
-            if (!LUiSendMessage(hwndControl, CB_GETDROPPEDSTATE, 0, 0) ||
+            if (!ui::SendMessage(hwndControl, CB_GETDROPPEDSTATE, 0, 0) ||
                 btlplan.mdTactic != rglpbtlplan[idPlayer][0].mdTactic || !FPushComboRow(hwndControl, iResearchTarget)) goto LFail;
         } else {
-            if (LUiSendMessage(hwndControl, CB_GETDROPPEDSTATE, 0, 0) || btlplan.mdTactic != iResearchTarget || !fDirtyPlan) goto LFail;
+            if (ui::SendMessage(hwndControl, CB_GETDROPPEDSTATE, 0, 0) || btlplan.mdTactic != iResearchTarget || !fDirtyPlan) goto LFail;
             hwndControl = HwndWorkflowControl(hwndDialog, IDOK, "Button");
             if (!hwndControl || !FPushClick(hwndControl)) goto LFail;
             fWorkflowPassed = TRUE;
@@ -1025,8 +1025,8 @@ static void CALLBACK CheckWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTim
         if (hwndDialog->lpfnDlg != ProductionDlg || !lpplProdGlob) goto LFail;
         if (iWorkflowStep == 0) {
             hwndControl = HwndWorkflowControl(hwndDialog, IDC_PRODUCTION_AVAILABLE_ITEMS, "ListBox");
-            if (!hwndControl || LUiSendMessage(hwndControl, LB_GETCOUNT, 0, 0) <= 0 ||
-                LUiSendMessage(hwndControl, LB_GETCURSEL, 0, 0) != 0) goto LFail;
+            if (!hwndControl || ui::SendMessage(hwndControl, LB_GETCOUNT, 0, 0) <= 0 ||
+                ui::SendMessage(hwndControl, LB_GETCURSEL, 0, 0) != 0) goto LFail;
             cProductionBefore = CProductionItems();
             if (iWorkflow == 4) {
                 if (cProductionBefore != iResearchTarget) goto LFail;
@@ -1036,7 +1036,7 @@ static void CALLBACK CheckWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTim
                 iWorkflowStep++; fWorkflowBusy = FALSE; return;
             }
             hwndControl = HwndWorkflowControl(hwndDialog, IDC_PRODUCTION_ADD, "Button");
-            if (!hwndControl || !IsWindowEnabled(hwndControl) || !FPushClick(hwndControl)) goto LFail;
+            if (!hwndControl || !win32::IsWindowEnabled(hwndControl) || !FPushClick(hwndControl)) goto LFail;
         } else {
             if (CProductionItems() != cProductionBefore + 1) goto LFail;
             hwndControl = HwndWorkflowControl(hwndDialog, iWorkflow == 3 ? IDOK : IDCANCEL, "Button");
@@ -1048,42 +1048,42 @@ static void CALLBACK CheckWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTim
     return;
 LFail:
     fprintf(stderr, "Gameplay workflow %d step %d failed\n", iWorkflow, iWorkflowStep);
-    KillTimer(NULL, id); fWorkflowBusy = fWorkflowPassed = FALSE;
-    if (hwndDialog) EndDialog(hwndDialog, 0);
-    else PostQuitMessage(93);
+    win32::KillTimer(NULL, id); fWorkflowBusy = fWorkflowPassed = FALSE;
+    if (hwndDialog) win32::EndDialog(hwndDialog, 0);
+    else win32::PostQuitMessage(93);
 }
 
 static BOOL FRunWorkflow(int iKind, int iTarget) {
     UINT_PTR id;
     BOOL fPassed;
-    MSG msg;
+    win32::MSG msg;
     HWND hwndTrigger;
     fprintf(stderr, "Starting gameplay workflow %d\n", iKind);
     iWorkflow = iKind; iResearchTarget = iTarget; iWorkflowStep = cWorkflowWait = 0;
     fWorkflowPassed = fWorkflowBusy = FALSE; idWorkflowDialog = 0;
-    id = SetTimer(NULL, 0, 50, CheckWorkflow);
+    id = win32::SetTimer(NULL, 0, 50, CheckWorkflow);
     if (!id) return FALSE;
     if (iKind >= 13 && iKind <= 19) {
         hwndTrigger = rghwndBtn[iKind <= 14 ? 10 : iKind <= 16 ? 8 : 7];
-        FUiUpdateWindow(GetParent(hwndTrigger));
-        if (!IsWindowVisible(hwndTrigger) || !IsWindowEnabled(hwndTrigger) || !FPushClick(hwndTrigger)) {
-            fprintf(stderr, "Fleet trigger: visible %d enabled %d fleet %d point %d,%d\n", IsWindowVisible(hwndTrigger), IsWindowEnabled(hwndTrigger), sel.fl.id, sel.fl.pt.x, sel.fl.pt.y);
-            KillTimer(NULL, id); iWorkflow = 0; return FALSE;
+        ui::UpdateWindow(win32::GetParent(hwndTrigger));
+        if (!win32::IsWindowVisible(hwndTrigger) || !win32::IsWindowEnabled(hwndTrigger) || !FPushClick(hwndTrigger)) {
+            fprintf(stderr, "Fleet trigger: visible %d enabled %d fleet %d point %d,%d\n", win32::IsWindowVisible(hwndTrigger), win32::IsWindowEnabled(hwndTrigger), sel.fl.id, sel.fl.pt.x, sel.fl.pt.y);
+            win32::KillTimer(NULL, id); iWorkflow = 0; return FALSE;
         }
-        while (!fWorkflowPassed || HwndWorkflowDialog() || !IsWindowEnabled(hwndFrame)) {
-            if (FUiGetMessage(&msg, NULL, 0, 0) <= 0) break;
-            TranslateMessage(&msg); LUiDispatchMessage(&msg);
+        while (!fWorkflowPassed || HwndWorkflowDialog() || !win32::IsWindowEnabled(hwndFrame)) {
+            if (ui::GetMessage(&msg, NULL, 0, 0) <= 0) break;
+            win32::TranslateMessage(&msg); ui::DispatchMessage(&msg);
         }
     }
-    else if (iKind == 1) LUiSendMessage(hwndFrame, WM_COMMAND, IDM_GAME_RESEARCH, 0);
-    else if (iKind == 5 || iKind == 7) LUiSendMessage(hwndFrame, WM_COMMAND, IDM_GAME_BATTLE_PLANS1, 0);
-    else if (iKind == 6) LUiSendMessage(hwndFrame, WM_COMMAND, IDM_GAME_RELATIONS, 0);
-    else if (iKind >= 8) LUiSendMessage(hwndFrame, WM_COMMAND, IDM_GAME_SHIP_BUILDER, 0);
-    else LUiSendMessage(hwndFrame, WM_CHAR, 'q', 1);
-    KillTimer(NULL, id);
-    fPassed = fWorkflowPassed && IsWindowEnabled(hwndFrame) && !HwndWorkflowDialog() &&
+    else if (iKind == 1) ui::SendMessage(hwndFrame, WM_COMMAND, IDM_GAME_RESEARCH, 0);
+    else if (iKind == 5 || iKind == 7) ui::SendMessage(hwndFrame, WM_COMMAND, IDM_GAME_BATTLE_PLANS1, 0);
+    else if (iKind == 6) ui::SendMessage(hwndFrame, WM_COMMAND, IDM_GAME_RELATIONS, 0);
+    else if (iKind >= 8) ui::SendMessage(hwndFrame, WM_COMMAND, IDM_GAME_SHIP_BUILDER, 0);
+    else ui::SendMessage(hwndFrame, WM_CHAR, 'q', 1);
+    win32::KillTimer(NULL, id);
+    fPassed = fWorkflowPassed && win32::IsWindowEnabled(hwndFrame) && !HwndWorkflowDialog() &&
               idWorkflowDialog && !StarsCompatResolveWindow(idWorkflowDialog);
-    if (!fPassed) fprintf(stderr, "Workflow %d returned: passed %d enabled %d dialog %p\n", iKind, fWorkflowPassed, IsWindowEnabled(hwndFrame), (void *)HwndWorkflowDialog());
+    if (!fPassed) fprintf(stderr, "Workflow %d returned: passed %d enabled %d dialog %p\n", iKind, fWorkflowPassed, win32::IsWindowEnabled(hwndFrame), (void *)HwndWorkflowDialog());
     iWorkflow = 0;
     return fPassed;
 }
@@ -1103,87 +1103,87 @@ static int CFleetTotals(int64_t *rgShip, int64_t *rgCargo) {
 }
 
 static BOOL FCheckRepeatOrders(int idFleet) {
-    MSG msg;
+    win32::MSG msg;
     UINT_PTR id;
     Uint64 ullStart;
     BOOL fRepeat = sel.fl.fRepOrders, fPassed = FALSE;
     FLEET *lpfl;
     int i;
-    FUiUpdateWindow(GetParent(hwndRepCB));
-    if (!IsWindowVisible(hwndRepCB) || !IsWindowEnabled(hwndRepCB) ||
-        LUiSendMessage(hwndRepCB, BM_GETCHECK, 0, 0) != fRepeat) {
-        fprintf(stderr, "Repeat initial visible %d enabled %d check %ld expected %d\n", IsWindowVisible(hwndRepCB), IsWindowEnabled(hwndRepCB), (long)LUiSendMessage(hwndRepCB, BM_GETCHECK, 0, 0), fRepeat);
+    ui::UpdateWindow(win32::GetParent(hwndRepCB));
+    if (!win32::IsWindowVisible(hwndRepCB) || !win32::IsWindowEnabled(hwndRepCB) ||
+        ui::SendMessage(hwndRepCB, BM_GETCHECK, 0, 0) != fRepeat) {
+        fprintf(stderr, "Repeat initial visible %d enabled %d check %ld expected %d\n", win32::IsWindowVisible(hwndRepCB), win32::IsWindowEnabled(hwndRepCB), (long)ui::SendMessage(hwndRepCB, BM_GETCHECK, 0, 0), fRepeat);
         return FALSE;
     }
-    id = SetTimer(NULL, 0, 25, NULL);
+    id = win32::SetTimer(NULL, 0, 25, NULL);
     if (!id) return FALSE;
     for (i = 0; i < 2; i++) {
         if (!FPushClick(hwndRepCB)) goto LDone;
         ullStart = SDL_GetTicks();
         while (sel.fl.fRepOrders != (i == 0 ? !fRepeat : fRepeat) && SDL_GetTicks() - ullStart < 3000) {
-            if (FUiGetMessage(&msg, NULL, 0, 0) <= 0) goto LDone;
-            TranslateMessage(&msg); LUiDispatchMessage(&msg);
+            if (ui::GetMessage(&msg, NULL, 0, 0) <= 0) goto LDone;
+            win32::TranslateMessage(&msg); ui::DispatchMessage(&msg);
         }
         lpfl = LpflFromId((int16_t)idFleet);
         if (!lpfl || lpfl->fRepOrders != (i == 0 ? !fRepeat : fRepeat) ||
-            sel.fl.fRepOrders != lpfl->fRepOrders || LUiSendMessage(hwndRepCB, BM_GETCHECK, 0, 0) != lpfl->fRepOrders) goto LDone;
+            sel.fl.fRepOrders != lpfl->fRepOrders || ui::SendMessage(hwndRepCB, BM_GETCHECK, 0, 0) != lpfl->fRepOrders) goto LDone;
         SelectAdjFleet(0, (int16_t)idFleet);
-        FUiUpdateWindow(GetParent(hwndRepCB));
-        if (LUiSendMessage(hwndRepCB, BM_GETCHECK, 0, 0) != lpfl->fRepOrders) goto LDone;
+        ui::UpdateWindow(win32::GetParent(hwndRepCB));
+        if (ui::SendMessage(hwndRepCB, BM_GETCHECK, 0, 0) != lpfl->fRepOrders) goto LDone;
     }
     fPassed = TRUE;
 LDone:
-    if (!fPassed) fprintf(stderr, "Repeat step %d check %ld selected %d expected %d\n", i, (long)LUiSendMessage(hwndRepCB, BM_GETCHECK, 0, 0), sel.fl.fRepOrders, i == 0 ? !fRepeat : fRepeat);
-    KillTimer(NULL, id);
+    if (!fPassed) fprintf(stderr, "Repeat step %d check %ld selected %d expected %d\n", i, (long)ui::SendMessage(hwndRepCB, BM_GETCHECK, 0, 0), sel.fl.fRepOrders, i == 0 ? !fRepeat : fRepeat);
+    win32::KillTimer(NULL, id);
     return fPassed;
 }
 
 static BOOL FChooseWorkflowCombo(HWND hwnd, int iRow) {
-    MSG msg;
+    win32::MSG msg;
     UINT_PTR id;
     Uint64 ullStart;
     BOOL fPassed = FALSE;
-    if (!IsWindowVisible(hwnd) || !IsWindowEnabled(hwnd) || LUiSendMessage(hwnd, CB_GETCOUNT, 0, 0) <= iRow) return FALSE;
-    id = SetTimer(NULL, 0, 25, NULL);
+    if (!win32::IsWindowVisible(hwnd) || !win32::IsWindowEnabled(hwnd) || ui::SendMessage(hwnd, CB_GETCOUNT, 0, 0) <= iRow) return FALSE;
+    id = win32::SetTimer(NULL, 0, 25, NULL);
     if (!id) return FALSE;
     if (!FPushClick(hwnd)) goto LDone;
     ullStart = SDL_GetTicks();
-    while (!LUiSendMessage(hwnd, CB_GETDROPPEDSTATE, 0, 0) && SDL_GetTicks() - ullStart < 3000) {
-        if (FUiGetMessage(&msg, NULL, 0, 0) <= 0) goto LDone;
-        TranslateMessage(&msg); LUiDispatchMessage(&msg);
+    while (!ui::SendMessage(hwnd, CB_GETDROPPEDSTATE, 0, 0) && SDL_GetTicks() - ullStart < 3000) {
+        if (ui::GetMessage(&msg, NULL, 0, 0) <= 0) goto LDone;
+        win32::TranslateMessage(&msg); ui::DispatchMessage(&msg);
     }
-    if (!LUiSendMessage(hwnd, CB_GETDROPPEDSTATE, 0, 0) || !FPushComboRow(hwnd, iRow)) goto LDone;
+    if (!ui::SendMessage(hwnd, CB_GETDROPPEDSTATE, 0, 0) || !FPushComboRow(hwnd, iRow)) goto LDone;
     ullStart = SDL_GetTicks();
-    while (LUiSendMessage(hwnd, CB_GETDROPPEDSTATE, 0, 0) && SDL_GetTicks() - ullStart < 3000) {
-        if (FUiGetMessage(&msg, NULL, 0, 0) <= 0) goto LDone;
-        TranslateMessage(&msg); LUiDispatchMessage(&msg);
+    while (ui::SendMessage(hwnd, CB_GETDROPPEDSTATE, 0, 0) && SDL_GetTicks() - ullStart < 3000) {
+        if (ui::GetMessage(&msg, NULL, 0, 0) <= 0) goto LDone;
+        win32::TranslateMessage(&msg); ui::DispatchMessage(&msg);
     }
-    fPassed = !LUiSendMessage(hwnd, CB_GETDROPPEDSTATE, 0, 0) && LUiSendMessage(hwnd, CB_GETCURSEL, 0, 0) == iRow && !HwndWorkflowDialog();
+    fPassed = !ui::SendMessage(hwnd, CB_GETDROPPEDSTATE, 0, 0) && ui::SendMessage(hwnd, CB_GETCURSEL, 0, 0) == iRow && !HwndWorkflowDialog();
 LDone:
-    KillTimer(NULL, id);
+    win32::KillTimer(NULL, id);
     return fPassed;
 }
 
 static BOOL FCheckTransportPreset(int iPreset) {
-    MSG msg;
+    win32::MSG msg;
     UINT_PTR id;
     Uint64 ullStart;
     BOOL fPassed = FALSE;
     int cBefore = cTransportMenus;
     if (rgrcRef[5].bottom <= rgrcRef[5].top) return FALSE;
-    id = SetTimer(NULL, 0, 25, NULL);
+    id = win32::SetTimer(NULL, 0, 25, NULL);
     if (!id) return FALSE;
     iTransportPreset = iPreset;
     if (!FPushClientRect(hwndPlanet, &rgrcRef[5], SDL_BUTTON_RIGHT)) goto LDone;
     ullStart = SDL_GetTicks();
     while ((cTransportMenus == cBefore || iTransportPreset >= 0) && SDL_GetTicks() - ullStart < 3000) {
-        if (FUiGetMessage(&msg, NULL, 0, 0) <= 0) goto LDone;
-        TranslateMessage(&msg); LUiDispatchMessage(&msg);
+        if (ui::GetMessage(&msg, NULL, 0, 0) <= 0) goto LDone;
+        win32::TranslateMessage(&msg); ui::DispatchMessage(&msg);
     }
     fPassed = cTransportMenus == cBefore + 1 && iTransportPreset == -1 && !HwndWorkflowDialog();
 LDone:
     iTransportPreset = -1;
-    KillTimer(NULL, id);
+    win32::KillTimer(NULL, id);
     return fPassed;
 }
 
@@ -1195,7 +1195,7 @@ static BOOL FCheckWaypointTask(int idFleet) {
     if (sel.grobj != grobjFleet || sel.fl.id != idFleet || iwp != 0 || sel.fl.cord == 0) return FALSE;
     ordSav = sel.fl.lpplord->rgord()[iwp];
     if (ordSav.grTask != grTaskNone) return FALSE;
-    FUiUpdateWindow(GetParent(rghwndOrderDD[0]));
+    ui::UpdateWindow(win32::GetParent(rghwndOrderDD[0]));
     if (!FChooseWorkflowCombo(rghwndOrderDD[0], grTaskXfer)) return FALSE;
     lpfl = LpflFromId((int16_t)idFleet);
     if (!lpfl || lpfl->lpplord->rgord()[iwp].grTask != grTaskXfer || sel.fl.lpplord->rgord()[iwp].grTask != grTaskXfer) return FALSE;
@@ -1214,12 +1214,12 @@ static BOOL FCheckWaypointTask(int idFleet) {
     for (i = 0; i < 5; i++)
         if (lpfl->lpplord->rgord()[iwp].txp.rgia[i].iAction() != iActionNone || lpfl->lpplord->rgord()[iwp].txp.rgia[i].cQuan() != 0) return FALSE;
     SelectAdjFleet(0, (int16_t)idFleet);
-    FUiUpdateWindow(GetParent(rghwndOrderDD[0]));
-    if (LUiSendMessage(rghwndOrderDD[0], CB_GETCURSEL, 0, 0) != grTaskXfer ||
+    ui::UpdateWindow(win32::GetParent(rghwndOrderDD[0]));
+    if (ui::SendMessage(rghwndOrderDD[0], CB_GETCURSEL, 0, 0) != grTaskXfer ||
         !FChooseWorkflowCombo(rghwndOrderDD[0], grTaskNone)) return FALSE;
     SelectAdjFleet(0, (int16_t)idFleet);
-    FUiUpdateWindow(GetParent(rghwndOrderDD[0]));
-    if (LUiSendMessage(rghwndOrderDD[0], CB_GETCURSEL, 0, 0) != grTaskNone ||
+    ui::UpdateWindow(win32::GetParent(rghwndOrderDD[0]));
+    if (ui::SendMessage(rghwndOrderDD[0], CB_GETCURSEL, 0, 0) != grTaskNone ||
         memcmp(&ordSav, &lpfl->lpplord->rgord()[iwp], sizeof(ordSav))) return FALSE;
     puts("Waypoint task commit, reselection and restoration passed");
     return TRUE;
@@ -1238,8 +1238,8 @@ static BOOL FPushWorkflowKey(HWND hwnd, SDL_Scancode sc, BOOL fDown) {
 static BOOL FPushWorkflowDrag(HWND hwnd, POINT ptFrom, POINT ptTo) {
     HWND hwndRoot = HwndCompatRoot(hwnd);
     SDL_Event event = {};
-    if (!hwndRoot || !ClientToScreen(hwnd, &ptFrom) || !ScreenToClient(hwndRoot, &ptFrom) ||
-        !ClientToScreen(hwnd, &ptTo) || !ScreenToClient(hwndRoot, &ptTo)) return FALSE;
+    if (!hwndRoot || !win32::ClientToScreen(hwnd, &ptFrom) || !win32::ScreenToClient(hwndRoot, &ptFrom) ||
+        !win32::ClientToScreen(hwnd, &ptTo) || !win32::ScreenToClient(hwndRoot, &ptTo)) return FALSE;
     ptFrom.y += CyCompatMenuBar(hwndRoot); ptTo.y += CyCompatMenuBar(hwndRoot);
     event.type = SDL_EVENT_MOUSE_BUTTON_DOWN; event.button.windowID = hwndRoot->id;
     event.button.button = SDL_BUTTON_LEFT; event.button.down = true;
@@ -1255,11 +1255,11 @@ static BOOL FPushWorkflowDrag(HWND hwnd, POINT ptFrom, POINT ptTo) {
     return SDL_PushEvent(&event);
 }
 
-static void DispatchWorkflowInput(MSG *lpmsg) {
-    TranslateMessage(lpmsg);
+static void DispatchWorkflowInput(win32::MSG *lpmsg) {
+    win32::TranslateMessage(lpmsg);
     if (((lpmsg->message != WM_KEYDOWN && lpmsg->message != WM_KEYUP) ||
         !FHandleKey(lpmsg->hwnd, lpmsg->message, lpmsg->wParam, lpmsg->lParam)) &&
-        (lpmsg->message != WM_CHAR || !FHandleChar(lpmsg->hwnd, lpmsg->wParam, lpmsg->lParam))) LUiDispatchMessage(lpmsg);
+        (lpmsg->message != WM_CHAR || !FHandleChar(lpmsg->hwnd, lpmsg->wParam, lpmsg->lParam))) ui::DispatchMessage(lpmsg);
 }
 
 static BOOL FCheckRouteAppendDelete(int idFleet) {
@@ -1269,7 +1269,7 @@ static BOOL FCheckRouteAppendDelete(int idFleet) {
     FLEET *lpfl = LpflFromId((int16_t)idFleet);
     ORDER ordSav;
     RECT rc;
-    MSG msg;
+    win32::MSG msg;
     UINT_PTR id;
     Uint64 ullStart;
     size_t i;
@@ -1288,13 +1288,13 @@ static BOOL FCheckRouteAppendDelete(int idFleet) {
     if (!fPassed) return FALSE;
     fPassed = FALSE;
     rc = (RECT){obj.ptClient.x - 1, obj.ptClient.y - 1, obj.ptClient.x + 1, obj.ptClient.y + 1};
-    id = SetTimer(NULL, 0, 25, NULL);
+    id = win32::SetTimer(NULL, 0, 25, NULL);
     if (!id) return FALSE;
     if (!FPushWorkflowKey(hwndFrame, SDL_SCANCODE_LSHIFT, TRUE) || !FPushClientRect(hwndScanner, &rc, SDL_BUTTON_LEFT) ||
         !FPushWorkflowKey(hwndFrame, SDL_SCANCODE_LSHIFT, FALSE)) goto LDone;
     ullStart = SDL_GetTicks();
     while (lpfl->cord != 2 && SDL_GetTicks() - ullStart < 3000) {
-        if (FUiGetMessage(&msg, NULL, 0, 0) <= 0) goto LDone;
+        if (ui::GetMessage(&msg, NULL, 0, 0) <= 0) goto LDone;
         DispatchWorkflowInput(&msg);
     }
     if (lpfl->cord != 2 || lpfl->lpplord->rgord()[1].grobj != grobjPlanet || lpfl->lpplord->rgord()[1].id != obj.id ||
@@ -1317,22 +1317,22 @@ static BOOL FCheckRouteAppendDelete(int idFleet) {
     if (!FPushWorkflowDrag(hwndScanner, ptFrom, objDrag.ptClient)) goto LDone;
     ullStart = SDL_GetTicks();
     while (lpfl->lpplord->rgord()[1].id != objDrag.id && SDL_GetTicks() - ullStart < 3000) {
-        if (FUiGetMessage(&msg, NULL, 0, 0) <= 0) goto LDone;
+        if (ui::GetMessage(&msg, NULL, 0, 0) <= 0) goto LDone;
         DispatchWorkflowInput(&msg);
     }
     if (lpfl->cord != 2 || lpfl->lpplord->rgord()[1].grobj != grobjPlanet || lpfl->lpplord->rgord()[1].id != objDrag.id ||
         lpfl->lpplord->rgord()[1].pt.x != objDrag.ptUniverse.x || lpfl->lpplord->rgord()[1].pt.y != objDrag.ptUniverse.y) goto LDone;
-    FUiUpdateWindow(hwndPlanet);
+    ui::UpdateWindow(hwndPlanet);
     if (!FPushListRow(hwndShipLB, 1) || !FPushWorkflowKey(hwndFrame, SDL_SCANCODE_DELETE, TRUE) ||
         !FPushWorkflowKey(hwndFrame, SDL_SCANCODE_DELETE, FALSE)) goto LDone;
     ullStart = SDL_GetTicks();
     while (lpfl->cord != 1 && SDL_GetTicks() - ullStart < 3000) {
-        if (FUiGetMessage(&msg, NULL, 0, 0) <= 0) goto LDone;
+        if (ui::GetMessage(&msg, NULL, 0, 0) <= 0) goto LDone;
         DispatchWorkflowInput(&msg);
     }
     fPassed = lpfl->cord == 1 && sel.fl.cord == 1 && !memcmp(&ordSav, &lpfl->lpplord->rgord()[0], sizeof(ordSav));
 LDone:
-    KillTimer(NULL, id);
+    win32::KillTimer(NULL, id);
     if (!fPassed) fprintf(stderr, "Route append/delete failed: count %d selected %d waypoint %d\n", lpfl->cord, sel.fl.cord, sel.iwpAct);
     else puts("Scanner Shift-click append, destination drag and waypoint-list Delete passed");
     return fPassed;
@@ -1392,7 +1392,7 @@ static BOOL FCheckFleetWorkflows(void) {
         if (idFleet == idflNone && lpfl->iPlayer == idPlayer && !lpfl->fDead) idFleet = lpfl->id;
     }
     // The small startup frame clips the lower orders controls; use a normal gameplay size.
-    FUiSetWindowPos(hwndFrame, NULL, 0, 0, 900, 700, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+    ui::SetWindowPos(hwndFrame, NULL, 0, 0, 900, 700, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
     if (!FCheckCargoWorkflows()) goto LDone;
     // Select through the game's normal fleet UI entry; only copied fixtures are edited.
     SelectAdjFleet(0, (int16_t)idFleet);
@@ -1467,8 +1467,8 @@ static BOOL FCheckGameplayWorkflows(void) {
     if (game.cPlayer < 2) return FALSE;
     fSinglePlrSav = game.fSinglePlr;
     if (fSinglePlrSav) {
-        LUiSendMessage(hwndFrame, WM_COMMAND, IDM_GAME_RELATIONS, 0);
-        if (HwndWorkflowDialog() || !IsWindowEnabled(hwndFrame)) return FALSE;
+        ui::SendMessage(hwndFrame, WM_COMMAND, IDM_GAME_RELATIONS, 0);
+        if (HwndWorkflowDialog() || !win32::IsWindowEnabled(hwndFrame)) return FALSE;
     }
     // The copied human/AI fixture disables diplomacy in single-player mode.
     // Exercise its multiplayer UI in memory, then restore the game-mode flag.
@@ -1499,26 +1499,26 @@ static BOOL FCheckGameplayWorkflows(void) {
 INT_PTR StarsTest_AskSaveDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     const char *pszChoice = PszCompatEnvironment("STARS_CLIENT_SWITCH_CHOICE");
     if (pszChoice && message == WM_INITDIALOG) {
-        if (!strcmp(pszChoice, "save")) EndDialog(hwnd, 1);
-        else if (!strcmp(pszChoice, "discard")) EndDialog(hwnd, 2);
-        else if (!strcmp(pszChoice, "submit")) EndDialog(hwnd, -1);
-        else if (!strcmp(pszChoice, "cancel")) EndDialog(hwnd, -2);
+        if (!strcmp(pszChoice, "save")) win32::EndDialog(hwnd, 1);
+        else if (!strcmp(pszChoice, "discard")) win32::EndDialog(hwnd, 2);
+        else if (!strcmp(pszChoice, "submit")) win32::EndDialog(hwnd, -1);
+        else if (!strcmp(pszChoice, "cancel")) win32::EndDialog(hwnd, -2);
         else return 0;
         return 1;
     }
     if (PszCompatEnvironment("STARS_CLIENT_SWITCH_CANCEL_TEST") && message == WM_INITDIALOG) {
         fSwitchCancelSent = TRUE;
-        EndDialog(hwnd, -2);
+        win32::EndDialog(hwnd, -2);
         return 1;
     }
     INT_PTR fRet = AskSaveDialog(hwnd, message, wParam, lParam);
     if (message == WM_INITDIALOG && PszCompatEnvironment("STARS_CLIENT_HOST_LIBRARY_TEST")) {
-        HWND hwndSave = GetDlgItem(hwnd, IDC_SAVE);
-        HWND hwndSubmit = GetDlgItem(hwnd, IDC_SAVESUBMIT);
-        HWND hwndDontSave = GetDlgItem(hwnd, IDC_NO_DON_T_SAVE);
+        HWND hwndSave = win32::GetDlgItem(hwnd, IDC_SAVE);
+        HWND hwndSubmit = win32::GetDlgItem(hwnd, IDC_SAVESUBMIT);
+        HWND hwndDontSave = win32::GetDlgItem(hwnd, IDC_NO_DON_T_SAVE);
         if (hwndSave && hwndDontSave && (game.fSinglePlr ? !hwndSubmit : hwndSubmit != NULL)) {
             fHostSavePromptSeen = TRUE;
-            PostMessage(hwnd, WM_COMMAND, IDC_NO_DON_T_SAVE, (LPARAM)hwndDontSave);
+            win32::PostMessage(hwnd, WM_COMMAND, IDC_NO_DON_T_SAVE, (LPARAM)hwndDontSave);
         }
     }
     return fRet;
@@ -1556,7 +1556,7 @@ int16_t StarsTest_AlertSz(const char *sz, int16_t mbType) {
     if (PszCompatEnvironment("STARS_CLIENT_IMPORT_INVALID_EXPECTED")) {
         fChecked = TRUE;
         fPassed = TRUE;
-        PostQuitMessage(0);
+        win32::PostQuitMessage(0);
         return IDOK;
     }
     if (PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_EXPECTED")) {
@@ -1564,7 +1564,7 @@ int16_t StarsTest_AlertSz(const char *sz, int16_t mbType) {
             strstr(sz, "the managed game and its orders were preserved")) fConflictRestoreAlert = TRUE;
         return IDOK;
     }
-    PostQuitMessage(91);
+    win32::PostQuitMessage(91);
     return IDOK;
 }
 
@@ -1573,7 +1573,7 @@ int WINAPI StarsTest_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, U
     if (pszText && strstr(pszText, "Import games from your recent files")) {
         cRecentMigrationPrompts++;
         fPassed = FALSE;
-        PostQuitMessage(92);
+        win32::PostQuitMessage(92);
         return IDNO;
     }
     if (fExpectGameRenameFailure) { fExpectGameRenameFailure = FALSE; return IDOK; }
@@ -1592,7 +1592,7 @@ int WINAPI StarsTest_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, U
     }
     if (pszText && strstr(pszText, "The selected managed game could not be completely deleted."))
         fLibraryGameDeleteFailureAlert = TRUE;
-    return MessageBoxA(hwnd, pszText, pszCaption, type);
+    return win32::MessageBoxA(hwnd, pszText, pszCaption, type);
 }
 
 static const NATIVEPUBLISHIO publishNative;
@@ -1828,11 +1828,11 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     (void)hwnd; (void)msg; (void)dwTime;
 #ifdef __APPLE__
     if (PszCompatEnvironment("STARS_CLIENT_MAC_SHORTCUTS_TEST")) {
-        KillTimer(NULL, id);
+        win32::KillTimer(NULL, id);
         if (!FCheckMacShortcuts()) goto LDone;
         fTitlePainted = fChecked = fPassed = TRUE;
         puts("Mac Command shortcuts, menu hints and text editing passed");
-        PostQuitMessage(0);
+        win32::PostQuitMessage(0);
         return;
     }
 #endif
@@ -1850,22 +1850,22 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             CchSnprintf(szHostPickerOrder, sizeof(szHostPickerOrder), "%s.x1", pszHostPickerBase) <= 0 ||
             CchSnprintf(szHostManagedOrders, sizeof(szHostManagedOrders), "%s.x1", szHostManagedBase) <= 0) goto LDone;
         if (iHostLibraryTestStage == 0) {
-            if (!IsWindowVisible(hwndTitle) || !GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES) ||
-                !GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES) ||
-                !GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES_VIEW) ||
-                !GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_VIEW) ||
-                !GetDlgItem(hwndTitle, IDC_LIBRARY_IMPORT_ORDERS) ||
-                (GetWindowLongPtr(GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES), GWL_STYLE) & WS_VISIBLE) ||
-                (GetWindowLongPtr(GetDlgItem(hwndTitle, IDC_LIBRARY_IMPORT_ORDERS), GWL_STYLE) & WS_VISIBLE) ||
+            if (!win32::IsWindowVisible(hwndTitle) || !win32::GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES) ||
+                !win32::GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES) ||
+                !win32::GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES_VIEW) ||
+                !win32::GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_VIEW) ||
+                !win32::GetDlgItem(hwndTitle, IDC_LIBRARY_IMPORT_ORDERS) ||
+                (win32::GetWindowLongPtr(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES), GWL_STYLE) & WS_VISIBLE) ||
+                (win32::GetWindowLongPtr(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_IMPORT_ORDERS), GWL_STYLE) & WS_VISIBLE) ||
                 !pszHostSource) goto LDone;
-            if (!FPushClick(GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_VIEW))) goto LDone;
+            if (!FPushClick(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_VIEW))) goto LDone;
             iHostLibraryTestStage = 20;
             return;
         }
         if (iHostLibraryTestStage == 20) {
-            if (!(GetWindowLongPtr(GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES), GWL_STYLE) & WS_VISIBLE) ||
-                (GetWindowLongPtr(GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES), GWL_STYLE) & WS_VISIBLE) ||
-                !(GetWindowLongPtr(GetDlgItem(hwndTitle, IDC_LIBRARY_IMPORT_ORDERS), GWL_STYLE) & WS_VISIBLE)) {
+            if (!(win32::GetWindowLongPtr(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES), GWL_STYLE) & WS_VISIBLE) ||
+                (win32::GetWindowLongPtr(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES), GWL_STYLE) & WS_VISIBLE) ||
+                !(win32::GetWindowLongPtr(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_IMPORT_ORDERS), GWL_STYLE) & WS_VISIBLE)) {
                 goto LDone;
             }
             if (!FPostOwnedTestFolder(hwndTitle,SDL_strdup(pszHostSource))) goto LDone;
@@ -1873,11 +1873,11 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             return;
         }
         if (iHostLibraryTestStage == 21) {
-            for (hwndHostDialog = GetWindow(hwndTitle, GW_HWNDFIRST); hwndHostDialog;
-                 hwndHostDialog = GetWindow(hwndHostDialog, GW_HWNDNEXT)) {
+            for (hwndHostDialog = win32::GetWindow(hwndTitle, GW_HWNDFIRST); hwndHostDialog;
+                 hwndHostDialog = win32::GetWindow(hwndHostDialog, GW_HWNDNEXT)) {
                 if (!hwndHostDialog->fDialog || hwndHostDialog->lpfnDlg != LibraryNameDlg) continue;
-                if (!FUiSetWindowText(GetDlgItem(hwndHostDialog, IDC_EDIT1), "Hosted") ||
-                    !FPushClick(GetDlgItem(hwndHostDialog, IDOK))) goto LDone;
+                if (!ui::SetWindowText(win32::GetDlgItem(hwndHostDialog, IDC_EDIT1), "Hosted") ||
+                    !FPushClick(win32::GetDlgItem(hwndHostDialog, IDOK))) goto LDone;
                 iHostLibraryTestStage = 22;
                 return;
             }
@@ -1886,9 +1886,9 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         if (iHostLibraryTestStage == 22) {
             RefreshLibraryGames(hwndTitle);
             RefreshLibraryHostGames(hwndTitle);
-            if (LUiSendMessage(GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES), LB_GETCOUNT, 0, 0) != 0 ||
-                LUiSendMessage(GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES), LB_GETCOUNT, 0, 0) != 1 ||
-                !(GetWindowLongPtr(GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES), GWL_STYLE) & WS_VISIBLE) ||
+            if (ui::SendMessage(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES), LB_GETCOUNT, 0, 0) != 0 ||
+                ui::SendMessage(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES), LB_GETCOUNT, 0, 0) != 1 ||
+                !(win32::GetWindowLongPtr(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES), GWL_STYLE) & WS_VISIBLE) ||
                 CchSnprintf(szHostSourceHost, sizeof(szHostSourceHost), "%s%sgame.hst", pszHostSource, szDirSep) <= 0 ||
                 CchSnprintf(szHostSourceUniverse, sizeof(szHostSourceUniverse), "%s%sgame.xy", pszHostSource, szDirSep) <= 0 ||
                 CchSnprintf(szHostManagedHost, sizeof(szHostManagedHost), "%s%sGames%sHosted%sHosted.hst", pszSettings, szDirSep, szDirSep, szDirSep) <= 0 ||
@@ -1896,9 +1896,9 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
                 !FTestFilesEqual(szHostSourceHost, szHostManagedHost) ||
                 !FTestFilesEqual(szHostSourceUniverse, szHostManagedUniverse) ||
                 !pszHostPlayerSource) goto LDone;
-            if (!IsWindowEnabled(GetDlgItem(hwndTitle, IDC_LIBRARY_GAME_EXPORT)) ||
-                !IsWindowEnabled(GetDlgItem(hwndTitle, IDC_LIBRARY_DUPLICATE)) ||
-                !IsWindowEnabled(GetDlgItem(hwndTitle, IDC_LIBRARY_RENAME))) {
+            if (!win32::IsWindowEnabled(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_GAME_EXPORT)) ||
+                !win32::IsWindowEnabled(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_DUPLICATE)) ||
+                !win32::IsWindowEnabled(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_RENAME))) {
                 fprintf(stderr, "Host-only game actions are disabled\n");
                 goto LDone;
             }
@@ -1907,11 +1907,11 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             return;
         }
         if (iHostLibraryTestStage == 25) {
-            for (hwndHostDialog = GetWindow(hwndTitle, GW_HWNDFIRST); hwndHostDialog;
-                 hwndHostDialog = GetWindow(hwndHostDialog, GW_HWNDNEXT)) {
+            for (hwndHostDialog = win32::GetWindow(hwndTitle, GW_HWNDFIRST); hwndHostDialog;
+                 hwndHostDialog = win32::GetWindow(hwndHostDialog, GW_HWNDNEXT)) {
                 if (!hwndHostDialog->fDialog || hwndHostDialog->lpfnDlg != LibraryNameDlg) continue;
-                if (!FUiSetWindowText(GetDlgItem(hwndHostDialog, IDC_EDIT1), "PlayerCopy") ||
-                    !FPushClick(GetDlgItem(hwndHostDialog, IDOK))) goto LDone;
+                if (!ui::SetWindowText(win32::GetDlgItem(hwndHostDialog, IDC_EDIT1), "PlayerCopy") ||
+                    !FPushClick(win32::GetDlgItem(hwndHostDialog, IDOK))) goto LDone;
                 iHostLibraryTestStage = 26;
                 return;
             }
@@ -1920,11 +1920,11 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         if (iHostLibraryTestStage == 26) {
             RefreshLibraryGames(hwndTitle);
             RefreshLibraryHostGames(hwndTitle);
-            if (LUiSendMessage(GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES), LB_GETCOUNT, 0, 0) != 1 ||
-                LUiSendMessage(GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES), LB_GETCOUNT, 0, 0) != 2 ||
-                !(GetWindowLongPtr(GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES), GWL_STYLE) & WS_VISIBLE)) goto LDone;
-            hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES);
-            if (LUiSendMessage(hwndList, LB_SELECTSTRING, (WPARAM)-1, (LPARAM)"Hosted") == LB_ERR ||
+            if (ui::SendMessage(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES), LB_GETCOUNT, 0, 0) != 1 ||
+                ui::SendMessage(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES), LB_GETCOUNT, 0, 0) != 2 ||
+                !(win32::GetWindowLongPtr(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES), GWL_STYLE) & WS_VISIBLE)) goto LDone;
+            hwndList = win32::GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES);
+            if (ui::SendMessage(hwndList, LB_SELECTSTRING, (WPARAM)-1, (LPARAM)"Hosted") == LB_ERR ||
                 !FExportSelectedLibraryGame(hwndTitle, pszSettings) ||
                 CchSnprintf(szExport, sizeof(szExport), "%s%sHosted%sHosted.hst", pszSettings, szDirSep, szDirSep) <= 0 ||
                 CchSnprintf(szHostSourceHost, sizeof(szHostSourceHost), "%s%sgame.hst", pszHostSource, szDirSep) <= 0 ||
@@ -1933,49 +1933,49 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
                 goto LDone;
             }
             iHostLibraryTestStage = 31;
-            if (!FPushClick(GetDlgItem(hwndTitle, IDC_LIBRARY_DUPLICATE))) goto LDone;
+            if (!FPushClick(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_DUPLICATE))) goto LDone;
             return;
         }
         if (iHostLibraryTestStage == 31 || iHostLibraryTestStage == 33) {
-            for (hwndHostDialog = GetWindow(hwndTitle, GW_HWNDFIRST); hwndHostDialog;
-                 hwndHostDialog = GetWindow(hwndHostDialog, GW_HWNDNEXT)) {
+            for (hwndHostDialog = win32::GetWindow(hwndTitle, GW_HWNDFIRST); hwndHostDialog;
+                 hwndHostDialog = win32::GetWindow(hwndHostDialog, GW_HWNDNEXT)) {
                 if (!hwndHostDialog->fDialog || hwndHostDialog->lpfnDlg != LibraryNameDlg) continue;
-                if (!FUiSetWindowText(GetDlgItem(hwndHostDialog, IDC_EDIT1),
+                if (!ui::SetWindowText(win32::GetDlgItem(hwndHostDialog, IDC_EDIT1),
                                     iHostLibraryTestStage == 31 ? "HostCopy" : "HostRenamed") ||
-                    !FPushClick(GetDlgItem(hwndHostDialog, IDOK))) goto LDone;
+                    !FPushClick(win32::GetDlgItem(hwndHostDialog, IDOK))) goto LDone;
                 iHostLibraryTestStage++;
                 return;
             }
             return;
         }
         if (iHostLibraryTestStage == 32) {
-            hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES);
-            if (LUiSendMessage(hwndList, LB_GETCOUNT, 0, 0) != 3 ||
-                LUiSendMessage(hwndList, LB_SELECTSTRING, (WPARAM)-1, (LPARAM)"HostCopy") == LB_ERR) goto LDone;
+            hwndList = win32::GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES);
+            if (ui::SendMessage(hwndList, LB_GETCOUNT, 0, 0) != 3 ||
+                ui::SendMessage(hwndList, LB_SELECTSTRING, (WPARAM)-1, (LPARAM)"HostCopy") == LB_ERR) goto LDone;
             iHostLibraryTestStage = 33;
-            if (!FPushClick(GetDlgItem(hwndTitle, IDC_LIBRARY_RENAME))) goto LDone;
+            if (!FPushClick(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_RENAME))) goto LDone;
             return;
         }
         if (iHostLibraryTestStage == 34) {
-            hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES);
-            if (LUiSendMessage(hwndList, LB_GETCOUNT, 0, 0) != 3 ||
-                LUiSendMessage(hwndList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)"HostCopy") != LB_ERR ||
-                LUiSendMessage(hwndList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)"HostRenamed") == LB_ERR ||
-                LUiSendMessage(GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES), LB_GETCOUNT, 0, 0) != 1) goto LDone;
-            if (!FPushClick(GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES_VIEW))) goto LDone;
+            hwndList = win32::GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES);
+            if (ui::SendMessage(hwndList, LB_GETCOUNT, 0, 0) != 3 ||
+                ui::SendMessage(hwndList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)"HostCopy") != LB_ERR ||
+                ui::SendMessage(hwndList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)"HostRenamed") == LB_ERR ||
+                ui::SendMessage(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES), LB_GETCOUNT, 0, 0) != 1) goto LDone;
+            if (!FPushClick(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES_VIEW))) goto LDone;
             iHostLibraryTestStage = 23;
             return;
         }
         if (iHostLibraryTestStage == 23) {
-            hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
-            if (!(GetWindowLongPtr(hwndList, GWL_STYLE) & WS_VISIBLE) ||
-                LUiSendMessage(hwndList, LB_SELECTSTRING, (WPARAM)-1,
+            hwndList = win32::GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
+            if (!(win32::GetWindowLongPtr(hwndList, GWL_STYLE) & WS_VISIBLE) ||
+                ui::SendMessage(hwndList, LB_SELECTSTRING, (WPARAM)-1,
                             (LPARAM)"PlayerCopy") == LB_ERR) goto LDone;
             for (iButton = 0; iButton < (int)(sizeof(rgidLibraryButton) / sizeof(rgidLibraryButton[0])); iButton++) {
-                hwndListTarget = GetDlgItem(hwndTitle, rgidLibraryButton[iButton]);
-                if (!GetWindowRect(hwndListTarget, &rcFrame)) goto LDone;
+                hwndListTarget = win32::GetDlgItem(hwndTitle, rgidLibraryButton[iButton]);
+                if (!win32::GetWindowRect(hwndListTarget, &rcFrame)) goto LDone;
                 ptLibraryButton = (POINT){(rcFrame.left + rcFrame.right) / 2, (rcFrame.top + rcFrame.bottom) / 2};
-                if (WindowFromPoint(ptLibraryButton) != hwndListTarget) {
+                if (win32::WindowFromPoint(ptLibraryButton) != hwndListTarget) {
                     fprintf(stderr, "Library button %d is covered by another control\n", rgidLibraryButton[iButton]);
                     goto LDone;
                 }
@@ -1986,10 +1986,10 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             return;
         }
         if (iHostLibraryTestStage == 27) {
-            if (IsWindow(hwndTitle)) return;
+            if (win32::IsWindow(hwndTitle)) return;
             if (!lpPlanets || idPlayer == iplrNone) goto LDone;
             if (!hwndReportDlg) {
-                LUiSendMessage(hwndFrame, WM_COMMAND, IDM_REPORT_FLEET, 0);
+                ui::SendMessage(hwndFrame, WM_COMMAND, IDM_REPORT_FLEET, 0);
                 return;
             }
             if (vprptCur != &vrptFleet || vprptCur->cRows == 0) goto LDone;
@@ -2003,33 +2003,33 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             return;
         }
         if (iHostLibraryTestStage == 28) {
-            for (hwndHostDialog = GetWindow(hwndFrame, GW_HWNDFIRST); hwndHostDialog;
-                 hwndHostDialog = GetWindow(hwndHostDialog, GW_HWNDNEXT)) {
+            for (hwndHostDialog = win32::GetWindow(hwndFrame, GW_HWNDFIRST); hwndHostDialog;
+                 hwndHostDialog = win32::GetWindow(hwndHostDialog, GW_HWNDNEXT)) {
                 if (!hwndHostDialog->fDialog || hwndHostDialog->lpfnDlg != RenameDlg) continue;
-                if (!FUiSetWindowText(GetDlgItem(hwndHostDialog, IDC_EDIT1), "Prompt save order") ||
-                    !FPushClick(GetDlgItem(hwndHostDialog, IDOK))) goto LDone;
+                if (!ui::SetWindowText(win32::GetDlgItem(hwndHostDialog, IDC_EDIT1), "Prompt save order") ||
+                    !FPushClick(win32::GetDlgItem(hwndHostDialog, IDOK))) goto LDone;
                 iHostLibraryTestStage = 29;
                 return;
             }
             return;
         }
         if (iHostLibraryTestStage == 29) {
-            if (hwndReportDlg) LUiSendMessage(hwndReportDlg, WM_CLOSE, 0, 0);
+            if (hwndReportDlg) ui::SendMessage(hwndReportDlg, WM_CLOSE, 0, 0);
             iHostLibraryTestStage = 30;
-            LUiSendMessage(hwndFrame, WM_COMMAND, IDM_FILE_RETURN_TO_TITLE, 0);
+            ui::SendMessage(hwndFrame, WM_COMMAND, IDM_FILE_RETURN_TO_TITLE, 0);
             return;
         }
         if (iHostLibraryTestStage == 30) {
-            if (!fHostSavePromptSeen || !IsWindowVisible(hwndTitle)) return;
-            if (!FPushClick(GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_VIEW))) goto LDone;
+            if (!fHostSavePromptSeen || !win32::IsWindowVisible(hwndTitle)) return;
+            if (!FPushClick(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_VIEW))) goto LDone;
             iHostLibraryTestStage = 24;
             return;
         }
         if (iHostLibraryTestStage == 24) {
-            if (!(GetWindowLongPtr(GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES), GWL_STYLE) & WS_VISIBLE) ||
-                !(GetWindowLongPtr(GetDlgItem(hwndTitle, IDC_LIBRARY_IMPORT_ORDERS), GWL_STYLE) & WS_VISIBLE)) goto LDone;
-            hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES);
-            if (LUiSendMessage(hwndList, LB_SELECTSTRING, (WPARAM)-1, (LPARAM)"Hosted") == LB_ERR) goto LDone;
+            if (!(win32::GetWindowLongPtr(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES), GWL_STYLE) & WS_VISIBLE) ||
+                !(win32::GetWindowLongPtr(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_IMPORT_ORDERS), GWL_STYLE) & WS_VISIBLE)) goto LDone;
+            hwndList = win32::GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES);
+            if (ui::SendMessage(hwndList, LB_SELECTSTRING, (WPARAM)-1, (LPARAM)"Hosted") == LB_ERR) goto LDone;
             iHostLibraryTestStage = 7;
             fFreeingTitle = TRUE;
             if (!StarsCompatPostMessageAsync(hwndTitle, WM_COMMAND,
@@ -2039,8 +2039,8 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         }
         if (iHostLibraryTestStage == 7 || iHostLibraryTestStage == 8 || iHostLibraryTestStage == 9 ||
             iHostLibraryTestStage == 14) {
-            for (hwndHostDialog = GetWindow(hwndFrame, GW_HWNDFIRST); hwndHostDialog;
-                 hwndHostDialog = GetWindow(hwndHostDialog, GW_HWNDNEXT)) {
+            for (hwndHostDialog = win32::GetWindow(hwndFrame, GW_HWNDFIRST); hwndHostDialog;
+                 hwndHostDialog = win32::GetWindow(hwndHostDialog, GW_HWNDNEXT)) {
                 if (!hwndHostDialog->fDialog || hwndHostDialog->lpfnDlg != HostModeDialog) continue;
                 if (iHostLibraryTestStage == 7) {
                     if (
@@ -2103,7 +2103,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
                     if (!FImportLibraryOrders(hwndTitle, szHostOrderDifferent) || cHostOrderConflictPrompts != 2 ||
                         !FTestFilesEqual(szHostOrderDifferent, szHostManagedOrders)) goto LDone;
                     iHostLibraryTestStage = 8;
-                    if (!FPushClick(GetDlgItem(hwndHostDialog, IDC_HOST_GENERATE_NOW))) goto LDone;
+                    if (!FPushClick(win32::GetDlgItem(hwndHostDialog, IDC_HOST_GENERATE_NOW))) goto LDone;
                     return;
                 }
                 if (iHostLibraryTestStage == 8) {
@@ -2120,7 +2120,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
                     strcpy(szBase, szSavedBase);
                     iHostLibraryTestStage = 9;
                     gd.fClose = FALSE;
-                    if (!FPushClick(GetDlgItem(hwndHostDialog, IDCANCEL))) goto LDone;
+                    if (!FPushClick(win32::GetDlgItem(hwndHostDialog, IDCANCEL))) goto LDone;
                     return;
                 }
                 return;
@@ -2129,33 +2129,33 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             else return;
         }
         if (iHostLibraryTestStage == 10) {
-            if (!IsWindowVisible(hwndTitle) ||
-                !(GetWindowLongPtr(GetDlgItem(hwndTitle, IDC_LIBRARY_IMPORT_ORDERS), GWL_STYLE) & WS_VISIBLE)) goto LDone;
+            if (!win32::IsWindowVisible(hwndTitle) ||
+                !(win32::GetWindowLongPtr(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_IMPORT_ORDERS), GWL_STYLE) & WS_VISIBLE)) goto LDone;
             fHostOrderPickerCancel = TRUE;
-            LUiSendMessage(hwndTitle, WM_COMMAND, MAKEWPARAM(IDC_LIBRARY_IMPORT_ORDERS, BN_CLICKED),
-                        (LPARAM)GetDlgItem(hwndTitle, IDC_LIBRARY_IMPORT_ORDERS));
+            ui::SendMessage(hwndTitle, WM_COMMAND, MAKEWPARAM(IDC_LIBRARY_IMPORT_ORDERS, BN_CLICKED),
+                        (LPARAM)win32::GetDlgItem(hwndTitle, IDC_LIBRARY_IMPORT_ORDERS));
             if (cHostOrderPickerCalls != 1 || FNativeFileSize(szHostManagedOrders, &cbHostFile)) goto LDone;
             fHostOrderPickerCancel = FALSE;
             iHostLibraryTestStage = 11;
             return;
         }
         if (iHostLibraryTestStage == 11) {
-            LUiSendMessage(hwndTitle, WM_COMMAND, MAKEWPARAM(IDC_LIBRARY_IMPORT_ORDERS, BN_CLICKED),
-                        (LPARAM)GetDlgItem(hwndTitle, IDC_LIBRARY_IMPORT_ORDERS));
+            ui::SendMessage(hwndTitle, WM_COMMAND, MAKEWPARAM(IDC_LIBRARY_IMPORT_ORDERS, BN_CLICKED),
+                        (LPARAM)win32::GetDlgItem(hwndTitle, IDC_LIBRARY_IMPORT_ORDERS));
             if (cHostOrderPickerCalls != 2 || !FTestFilesEqual(szHostPickerOrder, szHostManagedOrders)) goto LDone;
             fFreeingTitle = FALSE;
             fChecked = TRUE;
             fPassed = TRUE;
             puts("Host Games visible selection, unsaved-work prompt, order picker, validation/conflicts and generation passed");
-            PostQuitMessage(0);
+            win32::PostQuitMessage(0);
             return;
         }
     }
     if (PszCompatEnvironment("STARS_CLIENT_STARTUP_SOURCE")) {
         HWND hwndDialog;
-        for (hwndDialog = GetWindow(hwndFrame, GW_HWNDFIRST); hwndDialog; hwndDialog = GetWindow(hwndDialog, GW_HWNDNEXT)) {
-            if (hwndDialog->fDialog && hwndDialog->lpfnDlg == LibraryNameDlg && IsWindowVisible(hwndDialog)) {
-                if (!SetDlgItemText(hwndDialog, IDC_EDIT1, "startup-import") || !FPushClick(GetDlgItem(hwndDialog, IDOK))) goto LDone;
+        for (hwndDialog = win32::GetWindow(hwndFrame, GW_HWNDFIRST); hwndDialog; hwndDialog = win32::GetWindow(hwndDialog, GW_HWNDNEXT)) {
+            if (hwndDialog->fDialog && hwndDialog->lpfnDlg == LibraryNameDlg && win32::IsWindowVisible(hwndDialog)) {
+                if (!win32::SetDlgItemText(hwndDialog, IDC_EDIT1, "startup-import") || !FPushClick(win32::GetDlgItem(hwndDialog, IDOK))) goto LDone;
                 return;
             }
         }
@@ -2166,20 +2166,20 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
                 goto LDone;
             }
         } else {
-            if (!IsWindowVisible(hwndTitle)) return;
-            FUiUpdateWindow(hwndTitle);
+            if (!win32::IsWindowVisible(hwndTitle)) return;
+            ui::UpdateWindow(hwndTitle);
             if (!FCompatPresent(hwndTitle) || game.lid != 0 || idPlayer != iplrNone ||
-                LUiSendMessage(GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES), LB_FINDSTRING, (WPARAM)-1, (LPARAM)"startup-import") == LB_ERR) goto LDone;
+                ui::SendMessage(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES), LB_FINDSTRING, (WPARAM)-1, (LPARAM)"startup-import") == LB_ERR) goto LDone;
         }
         fChecked = fPassed = fTitlePainted = TRUE;
         puts("Desktop startup uses the supplied game path without reopening the chooser");
-        PostQuitMessage(0);
+        win32::PostQuitMessage(0);
         return;
     }
     if (PszCompatEnvironment("STARS_CLIENT_RACE_ROSTER_TEST") || PszCompatEnvironment("STARS_CLIENT_RACE_LIBRARY_TEST")) {
         HWND hwndSave = HwndRosterDialog(LibraryRaceSaveDlg);
         if (hwndSave) {
-            if (!FPushClick(GetDlgItem(hwndSave, IDC_LIBRARY_RACE_UPDATE))) goto LDone;
+            if (!FPushClick(win32::GetDlgItem(hwndSave, IDC_LIBRARY_RACE_UPDATE))) goto LDone;
             return;
         }
     }
@@ -2195,16 +2195,16 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         HWND hwndTop;
         BOOL fWizard = !strcmp(PszCompatEnvironment("STARS_CLIENT_RACE_NAME_CANCEL"), "wizard");
         if (iStage == 0) {
-            if (!IsWindowVisible(hwndTitle)) return;
+            if (!win32::IsWindowVisible(hwndTitle)) return;
             fTitlePainted = fChecked = TRUE;
-            if (!FUiSetWindowPos(hwndTitle, NULL, 55, 95, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE)) goto LDone;
+            if (!ui::SetWindowPos(hwndTitle, NULL, 55, 95, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE)) goto LDone;
             iStage = 1;
-            if (!FPushClick(GetDlgItem(hwndTitle, IDC_LIBRARY_RACE_NEW))) goto LDone;
+            if (!FPushClick(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_RACE_NEW))) goto LDone;
             return;
         }
         if (iStage == 1 || (fWizard && iStage == 2)) {
-            for (hwndTop = HwndCompatFirstTop(); hwndTop; hwndTop = GetWindow(hwndTop, GW_HWNDNEXT)) {
-                if (!hwndTop->fDialog || !IsWindowVisible(hwndTop) ||
+            for (hwndTop = HwndCompatFirstTop(); hwndTop; hwndTop = win32::GetWindow(hwndTop, GW_HWNDNEXT)) {
+                if (!hwndTop->fDialog || !win32::IsWindowVisible(hwndTop) ||
                     hwndTop->lpfnDlg != (iStage == 1 ? RaceWizardDlg1 : RaceWizardDlg4)) {
                     if (hwndTop->fDialog && hwndTop->lpfnDlg == LibraryNameDlg) goto LDone;
                     continue;
@@ -2219,18 +2219,18 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
 
                     // Both horizontal focus edges must remain visible inside each radio.
                     for (idRadio = IDC_RACE_HYPER_EXPANSION; idRadio <= IDC_RACE_JACK_OF_ALL_TRADES; idRadio++) {
-                        hwndRadio = GetDlgItem(hwndTop, idRadio);
-                        HwndUiSetFocus(hwndRadio);
-                        if (!FUiUpdateWindow(hwndRadio) || !GetClientRect(hwndRadio, &rcRadio)) goto LDone;
-                        hdcRadio = GetDC(hwndRadio);
+                        hwndRadio = win32::GetDlgItem(hwndTop, idRadio);
+                        ui::SetFocus(hwndRadio);
+                        if (!ui::UpdateWindow(hwndRadio) || !win32::GetClientRect(hwndRadio, &rcRadio)) goto LDone;
+                        hdcRadio = win32::GetDC(hwndRadio);
                         if (!hdcRadio) goto LDone;
                         fFrameTop = fFrameBottom = FALSE;
                         for (y = 0; y < rcRadio.bottom; y++) {
-                            if (GetPixel(hdcRadio, 20, y) != GetSysColor(COLOR_GRAYTEXT)) continue;
+                            if (win32::GetPixel(hdcRadio, 20, y) != win32::GetSysColor(COLOR_GRAYTEXT)) continue;
                             if (y < rcRadio.bottom / 2) fFrameTop = TRUE;
                             else fFrameBottom = TRUE;
                         }
-                        ReleaseDC(hwndRadio, hdcRadio);
+                        win32::ReleaseDC(hwndRadio, hdcRadio);
                         if (!fFrameTop || !fFrameBottom) {
                             fprintf(stderr, "PRT radio %d clips its focus frame\n", idRadio);
                             goto LDone;
@@ -2239,68 +2239,68 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
                     if (pszWizardCapture && (!FCompatPaintTree(hwndTop) || !FCompatPresent(hwndTop) ||
                         !SDL_SaveBMP(hwndTop->lpComposite.get(), pszWizardCapture))) goto LDone;
                 }
-                if (!FPushClick(GetDlgItem(hwndTop, iStage == 1 && fWizard ? IDC_NEXT : IDCANCEL))) goto LDone;
+                if (!FPushClick(win32::GetDlgItem(hwndTop, iStage == 1 && fWizard ? IDC_NEXT : IDCANCEL))) goto LDone;
                 iStage = fWizard && iStage == 1 ? 2 : 4;
                 return;
             }
             return;
         }
-        if (!IsWindowEnabled(hwndTitle)) return;
+        if (!win32::IsWindowEnabled(hwndTitle)) return;
         // Let queued native activation/show events settle after the modal closes.
         if (iStage++ < 6) return;
-        for (hwndTop = HwndCompatFirstTop(); hwndTop; hwndTop = GetWindow(hwndTop, GW_HWNDNEXT)) {
+        for (hwndTop = HwndCompatFirstTop(); hwndTop; hwndTop = win32::GetWindow(hwndTop, GW_HWNDNEXT)) {
             if (!hwndTop->lpWindow.get() || (SDL_GetWindowFlags(hwndTop->lpWindow.get()) & SDL_WINDOW_HIDDEN)) continue;
             if (hwndTop != hwndTitle) {
                 fprintf(stderr, "Cancelling the race dialog exposed another native window (frame %d, visible %d)\n",
-                        hwndTop == hwndFrame, IsWindowVisible(hwndTop));
+                        hwndTop == hwndFrame, win32::IsWindowVisible(hwndTop));
                 goto LDone;
             }
         }
-        if (IsWindowVisible(hwndFrame) || !IsWindowVisible(hwndTitle) ||
+        if (win32::IsWindowVisible(hwndFrame) || !win32::IsWindowVisible(hwndTitle) ||
             (SDL_GetWindowFlags(hwndTitle->lpWindow.get()) & SDL_WINDOW_HIDDEN) ||
             game.lid != 0 || idPlayer != iplrNone) goto LDone;
         fPassed = TRUE;
         puts("Race dialog cancels back to the single library window");
-        PostQuitMessage(0);
+        win32::PostQuitMessage(0);
         return;
     }
     if (PszCompatEnvironment("STARS_CLIENT_RECENT_STARTUP")) {
         HWND hwndTop;
         int cVisible = 0;
-        if (!IsWindowVisible(hwndTitle)) return;
-        for (hwndTop = HwndCompatFirstTop(); hwndTop; hwndTop = GetWindow(hwndTop, GW_HWNDNEXT)) {
+        if (!win32::IsWindowVisible(hwndTitle)) return;
+        for (hwndTop = HwndCompatFirstTop(); hwndTop; hwndTop = win32::GetWindow(hwndTop, GW_HWNDNEXT)) {
             if (!hwndTop->lpWindow.get() || (SDL_GetWindowFlags(hwndTop->lpWindow.get()) & SDL_WINDOW_HIDDEN)) continue;
             if (hwndTop != hwndTitle) goto LDone;
             cVisible++;
         }
-        if (cVisible != 1 || IsWindowVisible(hwndFrame) || cRecentMigrationPrompts != 0 ||
-            game.lid != 0 || idPlayer != iplrNone || !GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES) ||
-            !GetDlgItem(hwndTitle, IDC_LIBRARY_RACES)) goto LDone;
-        FUiUpdateWindow(hwndTitle);
+        if (cVisible != 1 || win32::IsWindowVisible(hwndFrame) || cRecentMigrationPrompts != 0 ||
+            game.lid != 0 || idPlayer != iplrNone || !win32::GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES) ||
+            !win32::GetDlgItem(hwndTitle, IDC_LIBRARY_RACES)) goto LDone;
+        ui::UpdateWindow(hwndTitle);
         if (!FCompatPresent(hwndTitle)) goto LDone;
         fTitlePainted = fChecked = fPassed = TRUE;
         puts("Startup with recent files shows only the library, without an import prompt");
-        PostQuitMessage(0);
+        win32::PostQuitMessage(0);
         return;
     }
     if (PszCompatEnvironment("STARS_CLIENT_EXTERNAL_OPEN_GAME") || PszCompatEnvironment("STARS_CLIENT_EXTERNAL_OPEN_RACE")) {
         HWND hwndDialog;
         if (iStage == 0) {
-            if (!IsWindowVisible(hwndTitle)) return;
-            FUiUpdateWindow(hwndTitle);
+            if (!win32::IsWindowVisible(hwndTitle)) return;
+            ui::UpdateWindow(hwndTitle);
             if (!FCompatPresent(hwndTitle)) goto LDone;
             fTitlePainted = TRUE;
             fChecked = TRUE;
             iStage = 1;
-            LUiSendMessage(hwndFrame, WM_COMMAND, IDM_FILE_OPEN_GAME, 0);
+            ui::SendMessage(hwndFrame, WM_COMMAND, IDM_FILE_OPEN_GAME, 0);
             return;
         }
         if (iStage == 1) {
-            for (hwndDialog = GetWindow(hwndTitle, GW_HWNDFIRST); hwndDialog; hwndDialog = GetWindow(hwndDialog, GW_HWNDNEXT)) {
+            for (hwndDialog = win32::GetWindow(hwndTitle, GW_HWNDFIRST); hwndDialog; hwndDialog = win32::GetWindow(hwndDialog, GW_HWNDNEXT)) {
                 if (!hwndDialog->fDialog || hwndDialog->lpfnDlg != LibraryNameDlg) continue;
-                if (!FUiSetWindowText(GetDlgItem(hwndDialog, IDC_EDIT1),
+                if (!ui::SetWindowText(win32::GetDlgItem(hwndDialog, IDC_EDIT1),
                                     PszCompatEnvironment("STARS_CLIENT_IMPORT_NAME") ? PszCompatEnvironment("STARS_CLIENT_IMPORT_NAME") : "external-open-game") ||
-                    !FPushClick(GetDlgItem(hwndDialog, IDOK))) goto LDone;
+                    !FPushClick(win32::GetDlgItem(hwndDialog, IDOK))) goto LDone;
                 iStage = 2;
                 return;
             }
@@ -2308,28 +2308,28 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         }
         if (PszCompatEnvironment("STARS_CLIENT_EXTERNAL_OPEN_RACE")) {
             if (iStage == 2) {
-                for (hwndDialog = GetWindow(hwndTitle, GW_HWNDFIRST); hwndDialog; hwndDialog = GetWindow(hwndDialog, GW_HWNDNEXT)) {
-                    if (!hwndDialog->fDialog || hwndDialog->lpfnDlg != RaceWizardDlg1 || !IsWindowVisible(hwndDialog)) continue;
+                for (hwndDialog = win32::GetWindow(hwndTitle, GW_HWNDFIRST); hwndDialog; hwndDialog = win32::GetWindow(hwndDialog, GW_HWNDNEXT)) {
+                    if (!hwndDialog->fDialog || hwndDialog->lpfnDlg != RaceWizardDlg1 || !win32::IsWindowVisible(hwndDialog)) continue;
                     iStage = 3;
-                    if (!FPushClick(GetDlgItem(hwndDialog, IDCANCEL))) goto LDone;
+                    if (!FPushClick(win32::GetDlgItem(hwndDialog, IDCANCEL))) goto LDone;
                     return;
                 }
                 return;
             }
-            if (!IsWindowEnabled(hwndTitle)) return;
-            if (LUiSendMessage(GetDlgItem(hwndTitle, IDC_LIBRARY_RACES), LB_FINDSTRING, (WPARAM)-1,
+            if (!win32::IsWindowEnabled(hwndTitle)) return;
+            if (ui::SendMessage(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_RACES), LB_FINDSTRING, (WPARAM)-1,
                             (LPARAM)PszCompatEnvironment("STARS_CLIENT_IMPORT_NAME")) == LB_ERR || game.lid != 0 || idPlayer != iplrNone) goto LDone;
             fPassed = TRUE;
             puts("Desktop Open Game imports an external race and opens its managed edit wizard");
-            PostQuitMessage(0);
+            win32::PostQuitMessage(0);
             return;
         }
-        if (LUiSendMessage(GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES), LB_FINDSTRING, (WPARAM)-1,
+        if (ui::SendMessage(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES), LB_FINDSTRING, (WPARAM)-1,
                         (LPARAM)(PszCompatEnvironment("STARS_CLIENT_IMPORT_NAME") ? PszCompatEnvironment("STARS_CLIENT_IMPORT_NAME") : "external-open-game")) == LB_ERR ||
             game.lid != 0 || idPlayer != iplrNone) goto LDone;
         fPassed = TRUE;
         puts("Desktop Open Game imports the external file into the managed library");
-        PostQuitMessage(0);
+        win32::PostQuitMessage(0);
         return;
     }
     if (pszExportGame) {
@@ -2340,41 +2340,41 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         HWND hwndRace;
         static const DLGPROC rglpfnRaceLibrary[] = {RaceWizardDlg1, RaceWizardDlg4, RaceWizardDlg5, RaceWizardDlg2, RaceWizardDlg3, RaceWizardDlg6};
         if (iRaceLibraryTestStage == 0) {
-            if (!IsWindowVisible(hwndTitle) || !GetDlgItem(hwndTitle, IDC_LIBRARY_RACES) ||
-                !GetDlgItem(hwndTitle, IDC_LIBRARY_RACE_NEW) || !GetDlgItem(hwndTitle, IDC_LIBRARY_RACE_EDIT) ||
-                !GetDlgItem(hwndTitle, IDC_LIBRARY_RACE_IMPORT)) {
+            if (!win32::IsWindowVisible(hwndTitle) || !win32::GetDlgItem(hwndTitle, IDC_LIBRARY_RACES) ||
+                !win32::GetDlgItem(hwndTitle, IDC_LIBRARY_RACE_NEW) || !win32::GetDlgItem(hwndTitle, IDC_LIBRARY_RACE_EDIT) ||
+                !win32::GetDlgItem(hwndTitle, IDC_LIBRARY_RACE_IMPORT)) {
                 goto LDone;
             }
-            if (!FPushClick(GetDlgItem(hwndTitle, IDC_LIBRARY_RACE_NEW))) goto LDone;
+            if (!FPushClick(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_RACE_NEW))) goto LDone;
             iRaceLibraryTestStage = 1;
             return;
         }
         if (iRaceLibraryTestStage == 1) {
-            for (hwndRace = GetWindow(hwndTitle, GW_HWNDFIRST); hwndRace; hwndRace = GetWindow(hwndRace, GW_HWNDNEXT)) {
+            for (hwndRace = win32::GetWindow(hwndTitle, GW_HWNDFIRST); hwndRace; hwndRace = win32::GetWindow(hwndRace, GW_HWNDNEXT)) {
                 if (!hwndRace->fDialog) continue;
                 if (hwndRace->lpfnDlg != RaceWizardDlg1 ||
-                    !SetDlgItemText(hwndRace, IDC_RACE_NAME, "Managed") ||
-                    !SetDlgItemText(hwndRace, IDC_RACE_PLURAL_NAME, "Manageds")) goto LDone;
+                    !win32::SetDlgItemText(hwndRace, IDC_RACE_NAME, "Managed") ||
+                    !win32::SetDlgItemText(hwndRace, IDC_RACE_PLURAL_NAME, "Manageds")) goto LDone;
                 iRaceLibraryTestStage = 2;
                 return;
             }
             return;
         }
         if (iRaceLibraryTestStage == 2) {
-            for (hwndRace = GetWindow(hwndTitle, GW_HWNDFIRST); hwndRace; hwndRace = GetWindow(hwndRace, GW_HWNDNEXT)) {
+            for (hwndRace = win32::GetWindow(hwndTitle, GW_HWNDFIRST); hwndRace; hwndRace = win32::GetWindow(hwndRace, GW_HWNDNEXT)) {
                 if (!hwndRace->fDialog) continue;
-                if (!IsWindowVisible(hwndRace)) return;
+                if (!win32::IsWindowVisible(hwndRace)) return;
                 i = (size_t)iRaceLibraryWizardPage;
                 if (i >= sizeof(rglpfnRaceLibrary) / sizeof(rglpfnRaceLibrary[0])) goto LDone;
-                if (!FPushClick(GetDlgItem(hwndRace, i == 5 ? IDC_FINISH : IDC_NEXT))) goto LDone;
+                if (!FPushClick(win32::GetDlgItem(hwndRace, i == 5 ? IDC_FINISH : IDC_NEXT))) goto LDone;
                 iRaceLibraryWizardPage++;
                 return;
             }
-            if (iRaceLibraryWizardPage == 6 && IsWindowEnabled(hwndTitle)) iRaceLibraryTestStage = 3;
+            if (iRaceLibraryWizardPage == 6 && win32::IsWindowEnabled(hwndTitle)) iRaceLibraryTestStage = 3;
             return;
         }
         if (iRaceLibraryTestStage == 3) {
-            if (!IsWindowVisible(hwndTitle)) return;
+            if (!win32::IsWindowVisible(hwndTitle)) return;
             if (!FLoadLibraryRace(hwndTitle, "Managed.r1")) goto LDone;
             CchSnprintf(szManaged, sizeof(szManaged), "%s%sRace Designs%sManaged.r1", pszSettings, szDirSep, szDirSep);
             if (!FTestCopyFile(szManaged, pszRaceSource) || !FTestCopyFile(pszRaceSource, pszRaceSnapshot)) goto LDone;
@@ -2382,52 +2382,52 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             icksRaceSaveStage = IRaceChecksum(&vplr);
             if (!FLoadLibraryRace(hwndTitle, "Managed.r1") || IRaceChecksum(&vplr) != icksRaceSaveStage) goto LDone;
             RefreshLibraryRaces(hwndTitle);
-            if (LUiSendMessage(GetDlgItem(hwndTitle, IDC_LIBRARY_RACES), LB_GETCOUNT, 0, 0) != 2 ||
+            if (ui::SendMessage(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_RACES), LB_GETCOUNT, 0, 0) != 2 ||
                 !FSelectClientRaceName(hwndTitle, "Managed.r1")) goto LDone;
             icksRaceLibraryOriginal = IRaceChecksum(&vplr);
             icksumRaceLibrary = icksRaceLibraryOriginal;
             iRaceLibraryWizardPage = 0;
             iRaceLibraryTestStage = 4;
-            if (!FPushClick(GetDlgItem(hwndTitle, IDC_LIBRARY_RACE_EDIT))) goto LDone;
+            if (!FPushClick(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_RACE_EDIT))) goto LDone;
             return;
         }
         if (iRaceLibraryTestStage == 4) {
-            for (hwndRace = GetWindow(hwndTitle, GW_HWNDFIRST); hwndRace; hwndRace = GetWindow(hwndRace, GW_HWNDNEXT)) {
+            for (hwndRace = win32::GetWindow(hwndTitle, GW_HWNDFIRST); hwndRace; hwndRace = win32::GetWindow(hwndRace, GW_HWNDNEXT)) {
                 if (!hwndRace->fDialog) continue;
                 if (iRaceLibraryWizardPage < 6) {
                     i = (size_t)iRaceLibraryWizardPage;
-                    if (i == 0 && !FPushClick(GetDlgItem(hwndRace, IDC_RACE_HUMANOID + 1))) goto LDone;
-                    if (!FPushClick(GetDlgItem(hwndRace, i == 5 ? IDC_FINISH : IDC_NEXT))) goto LDone;
+                    if (i == 0 && !FPushClick(win32::GetDlgItem(hwndRace, IDC_RACE_HUMANOID + 1))) goto LDone;
+                    if (!FPushClick(win32::GetDlgItem(hwndRace, i == 5 ? IDC_FINISH : IDC_NEXT))) goto LDone;
                     iRaceLibraryWizardPage++;
                     return;
                 }
                 goto LDone;
             }
-            if (iRaceLibraryWizardPage == 6 && IsWindowEnabled(hwndTitle)) iRaceLibraryTestStage = 5;
+            if (iRaceLibraryWizardPage == 6 && win32::IsWindowEnabled(hwndTitle)) iRaceLibraryTestStage = 5;
             return;
         }
         if (iRaceLibraryTestStage == 5) {
-            if (!IsWindowEnabled(hwndTitle)) return;
+            if (!win32::IsWindowEnabled(hwndTitle)) return;
             if (!FLoadLibraryRace(hwndTitle, "Managed.r1") || IRaceChecksum(&vplr) == icksRaceLibraryOriginal) goto LDone;
             icksumRaceLibrary = IRaceChecksum(&vplr);
             RefreshLibraryRaces(hwndTitle);
             if (!FSelectClientRaceName(hwndTitle, "Managed.r1")) goto LDone;
             iRaceLibraryWizardPage = 0;
-            if (!FPushClick(GetDlgItem(hwndTitle, IDC_LIBRARY_RACE_EDIT))) goto LDone;
+            if (!FPushClick(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_RACE_EDIT))) goto LDone;
             iRaceLibraryTestStage = 6;
             return;
         }
         if (iRaceLibraryTestStage == 6) {
-            for (hwndRace = GetWindow(hwndTitle, GW_HWNDFIRST); hwndRace; hwndRace = GetWindow(hwndRace, GW_HWNDNEXT)) {
+            for (hwndRace = win32::GetWindow(hwndTitle, GW_HWNDFIRST); hwndRace; hwndRace = win32::GetWindow(hwndRace, GW_HWNDNEXT)) {
                 if (!hwndRace->fDialog) continue;
-                if (!FPushClick(GetDlgItem(hwndRace, IDCANCEL))) goto LDone;
+                if (!FPushClick(win32::GetDlgItem(hwndRace, IDCANCEL))) goto LDone;
                 iRaceLibraryTestStage = 7;
                 return;
             }
             return;
         }
         if (iRaceLibraryTestStage == 7) {
-            if (!IsWindowEnabled(hwndTitle)) return;
+            if (!win32::IsWindowEnabled(hwndTitle)) return;
             if (!FLoadLibraryRace(hwndTitle, "Managed.r1") || IRaceChecksum(&vplr) != icksumRaceLibrary) goto LDone;
             if (FImportLibraryRaceAs(hwndTitle, PszCompatEnvironment("STARS_CLIENT_RACE_IMPORT_SOURCE"), "CON.r1") ||
                 FImportLibraryRaceAs(hwndTitle, PszCompatEnvironment("STARS_CLIENT_RACE_IMPORT_SOURCE"), "COM1.r2") ||
@@ -2437,32 +2437,32 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             if (!FSaveLibraryRace(hwndTitle, "Imported.r2.pending.r1", &vplr)) goto LDone;
             icksRaceImportStage = IRaceChecksum(&vplr);
             if (!FLoadLibraryRace(hwndTitle, "Managed.r1") || IRaceChecksum(&vplr) != icksumRaceLibrary) goto LDone;
-            if (!FPushClick(GetDlgItem(hwndTitle, IDC_LIBRARY_RACE_IMPORT))) goto LDone;
+            if (!FPushClick(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_RACE_IMPORT))) goto LDone;
             iRaceLibraryTestStage = 8;
             return;
         }
         if (iRaceLibraryTestStage == 8) {
-            for (hwndRace = GetWindow(hwndTitle, GW_HWNDFIRST); hwndRace; hwndRace = GetWindow(hwndRace, GW_HWNDNEXT)) {
-                if (!hwndRace->fDialog || !GetDlgItem(hwndRace, IDC_EDIT1)) continue;
-                if (!FUiSetWindowText(GetDlgItem(hwndRace, IDC_EDIT1), "Imported.r2") || !FPushClick(GetDlgItem(hwndRace, IDOK))) goto LDone;
+            for (hwndRace = win32::GetWindow(hwndTitle, GW_HWNDFIRST); hwndRace; hwndRace = win32::GetWindow(hwndRace, GW_HWNDNEXT)) {
+                if (!hwndRace->fDialog || !win32::GetDlgItem(hwndRace, IDC_EDIT1)) continue;
+                if (!ui::SetWindowText(win32::GetDlgItem(hwndRace, IDC_EDIT1), "Imported.r2") || !FPushClick(win32::GetDlgItem(hwndRace, IDOK))) goto LDone;
                 iRaceLibraryTestStage = 9;
                 return;
             }
             return;
         }
         if (iRaceLibraryTestStage == 9) {
-            for (hwndRace = GetWindow(hwndTitle, GW_HWNDFIRST); hwndRace; hwndRace = GetWindow(hwndRace, GW_HWNDNEXT)) {
+            for (hwndRace = win32::GetWindow(hwndTitle, GW_HWNDFIRST); hwndRace; hwndRace = win32::GetWindow(hwndRace, GW_HWNDNEXT)) {
                 if (!hwndRace->fDialog) continue;
-                if (!FPushClick(GetDlgItem(hwndRace, IDCANCEL))) goto LDone;
+                if (!FPushClick(win32::GetDlgItem(hwndRace, IDCANCEL))) goto LDone;
                 iRaceLibraryTestStage = 10;
                 return;
             }
             return;
         }
         if (iRaceLibraryTestStage == 10) {
-            if (!IsWindowEnabled(hwndTitle)) return;
+            if (!win32::IsWindowEnabled(hwndTitle)) return;
             RefreshLibraryRaces(hwndTitle);
-            if (LUiSendMessage(GetDlgItem(hwndTitle, IDC_LIBRARY_RACES), LB_GETCOUNT, 0, 0) != 4 ||
+            if (ui::SendMessage(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_RACES), LB_GETCOUNT, 0, 0) != 4 ||
                 !FSelectClientRaceName(hwndTitle, "Imported.r2") || !FSelectLibraryRace(hwndTitle, szRaceName) ||
                 strcmp(szRaceName, "Imported.r2") || !FLoadLibraryRace(hwndTitle, szRaceName) || !IRaceChecksum(&vplr) ||
                 !FLoadLibraryRace(hwndTitle, "Imported.r2.pending.r1") || IRaceChecksum(&vplr) != icksRaceImportStage) goto LDone;
@@ -2510,36 +2510,36 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
                 goto LDone;
             }
             puts("Managed race created, edited, cancelled, imported, duplicated, exported, and reloaded");
-            PostQuitMessage(0);
+            win32::PostQuitMessage(0);
             return;
         }
         return;
     }
     if (PszCompatEnvironment("STARS_CLIENT_GAME_DELETE_MODE")) {
         pszDeleteMode = PszCompatEnvironment("STARS_CLIENT_GAME_DELETE_MODE");
-        hwndDeleteList = GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
-        iDeleteSelected = LUiSendMessage(hwndDeleteList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)"selected-game");
-        iDeleteOther = LUiSendMessage(hwndDeleteList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)"other-game");
-        if (!IsWindowVisible(hwndTitle) || !GetDlgItem(hwndTitle, IDC_LIBRARY_GAME_DELETE) || iDeleteOther == LB_ERR) goto LDone;
+        hwndDeleteList = win32::GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
+        iDeleteSelected = ui::SendMessage(hwndDeleteList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)"selected-game");
+        iDeleteOther = ui::SendMessage(hwndDeleteList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)"other-game");
+        if (!win32::IsWindowVisible(hwndTitle) || !win32::GetDlgItem(hwndTitle, IDC_LIBRARY_GAME_DELETE) || iDeleteOther == LB_ERR) goto LDone;
         if (iStage == 0) {
             if (iDeleteSelected == LB_ERR) goto LDone;
-            LUiSendMessage(hwndDeleteList, LB_SETCURSEL, iDeleteSelected, 0);
+            ui::SendMessage(hwndDeleteList, LB_SETCURSEL, iDeleteSelected, 0);
             iStage = 1;
-            if (!FPushClick(GetDlgItem(hwndTitle, IDC_LIBRARY_GAME_DELETE))) goto LDone;
+            if (!FPushClick(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_GAME_DELETE))) goto LDone;
             return;
         }
         if (!fLibraryGameDeletePrompt) goto LDone;
         RefreshLibraryGames(hwndTitle);
-        hwndDeleteList = GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
-        iDeleteSelected = LUiSendMessage(hwndDeleteList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)"selected-game");
-        iDeleteOther = LUiSendMessage(hwndDeleteList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)"other-game");
+        hwndDeleteList = win32::GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
+        iDeleteSelected = ui::SendMessage(hwndDeleteList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)"selected-game");
+        iDeleteOther = ui::SendMessage(hwndDeleteList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)"other-game");
         fPassed = pszDeleteMode && strcmp(pszDeleteMode, "confirm") == 0 ? iDeleteSelected == LB_ERR && iDeleteOther != LB_ERR :
                   iDeleteSelected != LB_ERR && iDeleteOther != LB_ERR &&
                   (strcmp(pszDeleteMode, "cancel") == 0 || fLibraryGameDeleteFailureAlert);
-        if (!fPassed || (!strcmp(pszDeleteMode, "confirm") && IsWindowEnabled(rghwndBtnSplash[2]))) goto LDone;
+        if (!fPassed || (!strcmp(pszDeleteMode, "confirm") && win32::IsWindowEnabled(rghwndBtnSplash[2]))) goto LDone;
         fChecked = TRUE;
         puts("Managed game deletion confirmed, cancelled, or failed through the Games view");
-        PostQuitMessage(0);
+        win32::PostQuitMessage(0);
         return;
     }
     if (PszCompatEnvironment("STARS_CLIENT_GAME_LIBRARY_TEST")) {
@@ -2560,9 +2560,9 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         long long lPlayed;
         memset(szLongName, 'x', sizeof(szLongName) - 1);
         szLongName[sizeof(szLongName) - 1] = 0;
-        if (!IsWindowVisible(hwndTitle) || !pszRoot || !pszSource || !pszCopy || !pszRename || !pszCollision || !pszBaseline ||
+        if (!win32::IsWindowVisible(hwndTitle) || !pszRoot || !pszSource || !pszCopy || !pszRename || !pszCollision || !pszBaseline ||
             (!fDuplicate && !fRename) ||
-            !GetDlgItem(hwndTitle, IDC_LIBRARY_DUPLICATE) || !GetDlgItem(hwndTitle, IDC_LIBRARY_RENAME) ||
+            !win32::GetDlgItem(hwndTitle, IDC_LIBRARY_DUPLICATE) || !win32::GetDlgItem(hwndTitle, IDC_LIBRARY_RENAME) ||
             CchSnprintf(szSource, sizeof(szSource), "%s%sGames%s%s", pszRoot, szDirSep, szDirSep, pszSource) <= 0 ||
             CchSnprintf(szCopy, sizeof(szCopy), "%s%sGames%s%s", pszRoot, szDirSep, szDirSep, pszCopy) <= 0 ||
             CchSnprintf(szRenamed, sizeof(szRenamed), "%s%sGames%s%s", pszRoot, szDirSep, szDirSep, pszRename) <= 0 ||
@@ -2579,7 +2579,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             fChecked = TRUE;
             fPassed = TRUE;
             puts("Unsafe managed-game action rejected");
-            PostQuitMessage(0);
+            win32::PostQuitMessage(0);
             return;
         }
         if (fDuplicate && !FDuplicateLibraryGame(hwndTitle, pszSource, pszCopy)) goto LDone;
@@ -2630,7 +2630,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             fChecked = TRUE;
             fPassed = TRUE;
             puts("Managed game duplicated with independent metadata");
-            PostQuitMessage(0);
+            win32::PostQuitMessage(0);
             return;
         }
         CchSnprintf(szGameRenameFailTarget, sizeof(szGameRenameFailTarget), "%s", szRenamed);
@@ -2676,12 +2676,12 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         fChecked = TRUE;
         fPassed = TRUE;
         puts("Managed game renamed with session metadata and backup contents");
-        PostQuitMessage(0);
+        win32::PostQuitMessage(0);
         return;
     }
     if (pszImportSource) {
         if (iImportStage == 0) {
-            if (!IsWindowVisible(hwndTitle)) return;
+            if (!win32::IsWindowVisible(hwndTitle)) return;
             iImportStage = 1;
             gameImportSav = game;
             idPlayerImportSav = idPlayer;
@@ -2694,22 +2694,22 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
                 int cExpected = PszCompatEnvironment("STARS_CLIENT_IMPORT_EXPECTED_PLAYERS") ?
                     atoi(PszCompatEnvironment("STARS_CLIENT_IMPORT_EXPECTED_PLAYERS")) : 2;
                 int iplrTest;
-                if (LUiSendDlgItemMessage(hwndTitle, IDC_LIBRARY_GAMES, LB_GETCOUNT, 0, 0) != (cExpected != 0) ||
-                    LUiSendDlgItemMessage(hwndTitle, IDC_LIBRARY_PLAYERS, CB_GETCOUNT, 0, 0) != cExpected) goto LDone;
+                if (ui::SendDlgItemMessage(hwndTitle, IDC_LIBRARY_GAMES, LB_GETCOUNT, 0, 0) != (cExpected != 0) ||
+                    ui::SendDlgItemMessage(hwndTitle, IDC_LIBRARY_PLAYERS, CB_GETCOUNT, 0, 0) != cExpected) goto LDone;
                 for (iplrTest = 0; iplrTest < cExpected; iplrTest++)
                     if (!FClientLibraryPlayerYear(hwndTitle, iplrTest, 2400)) goto LDone;
             }
             fChecked = TRUE;
             fPassed = TRUE;
             puts("Game family imported into the managed library");
-            PostQuitMessage(0);
+            win32::PostQuitMessage(0);
             return;
         }
         if (iImportStage == 1) {
-            for (hwnd = GetWindow(hwndTitle, GW_HWNDFIRST); hwnd; hwnd = GetWindow(hwnd, GW_HWNDNEXT)) {
+            for (hwnd = win32::GetWindow(hwndTitle, GW_HWNDFIRST); hwnd; hwnd = win32::GetWindow(hwnd, GW_HWNDNEXT)) {
                 if (!hwnd->fDialog || hwnd->lpfnDlg != LibraryNameDlg) continue;
-                if (!FUiSetWindowText(GetDlgItem(hwnd, IDC_EDIT1), PszCompatEnvironment("STARS_CLIENT_IMPORT_NAME") ? PszCompatEnvironment("STARS_CLIENT_IMPORT_NAME") : "imported-game")) goto LDone;
-                FPushClick(GetDlgItem(hwnd, IDOK));
+                if (!ui::SetWindowText(win32::GetDlgItem(hwnd, IDC_EDIT1), PszCompatEnvironment("STARS_CLIENT_IMPORT_NAME") ? PszCompatEnvironment("STARS_CLIENT_IMPORT_NAME") : "imported-game")) goto LDone;
+                FPushClick(win32::GetDlgItem(hwnd, IDOK));
                 return;
             }
         }
@@ -2718,7 +2718,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     if (PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_SOURCE")) {
         pszExpected = PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_EXPECTED");
         if (iImportUpdateStage == 0) {
-            if (!IsWindowVisible(hwndTitle)) return;
+            if (!win32::IsWindowVisible(hwndTitle)) return;
             iImportUpdateStage = 1;
             cAlerts = 0;
             fImported = FImportLibraryGame(hwndTitle, PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_SOURCE"));
@@ -2732,7 +2732,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
                 ((!strcmp(pszExpected, "cancel") || !strcmp(pszExpected, "cancel-conflict")) && !fImported && cAlerts == 0));
             if (fPassed && (!strcmp(pszExpected, "later") || !strcmp(pszExpected, "adjacent"))) {
                 pszYear = !strcmp(pszExpected, "adjacent") ? "2408" : "2425";
-                hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
+                hwndList = win32::GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
                 pszTarget = PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_TARGET");
                 RefreshLibraryGames(hwndTitle);
                 fPassed = pszTarget && FSelectClientGameName(hwndTitle, pszTarget) &&
@@ -2746,50 +2746,50 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
                 RefreshLibraryGames(hwndTitle);
                 pszTarget = PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_TARGET");
                 fPassed = pszTarget && FSelectClientGameName(hwndTitle, pszTarget) &&
-                    LUiSendDlgItemMessage(hwndTitle, IDC_LIBRARY_PLAYERS, CB_GETCOUNT, 0, 0) == 3 &&
+                    ui::SendDlgItemMessage(hwndTitle, IDC_LIBRARY_PLAYERS, CB_GETCOUNT, 0, 0) == 3 &&
                     FClientLibraryPlayerYear(hwndTitle, 15, 2401);
             }
             fChecked = TRUE;
-            PostQuitMessage(fPassed ? 0 : 93);
+            win32::PostQuitMessage(fPassed ? 0 : 93);
             return;
         }
         if (iImportUpdateStage == 1) {
-            for (hwnd = GetWindow(hwndTitle, GW_HWNDFIRST); hwnd; hwnd = GetWindow(hwnd, GW_HWNDNEXT)) {
+            for (hwnd = win32::GetWindow(hwndTitle, GW_HWNDFIRST); hwnd; hwnd = win32::GetWindow(hwnd, GW_HWNDNEXT)) {
                 if (!hwnd->fDialog || hwnd->lpfnDlg != LibraryTurnTargetDlg) continue;
-                hwndListTarget = GetDlgItem(hwnd, IDC_LIBRARY_TURN_TARGET_LIST);
-                if (IsWindowEnabled(GetDlgItem(hwnd, IDOK))) goto LDone;
+                hwndListTarget = win32::GetDlgItem(hwnd, IDC_LIBRARY_TURN_TARGET_LIST);
+                if (win32::IsWindowEnabled(win32::GetDlgItem(hwnd, IDOK))) goto LDone;
                 pszTarget = PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_TARGET");
-                c = (int)LUiSendMessage(hwndListTarget, LB_GETCOUNT, 0, 0);
+                c = (int)ui::SendMessage(hwndListTarget, LB_GETCOUNT, 0, 0);
                 for (iTarget = 0; iTarget < c; iTarget++) {
-                    LUiSendMessage(hwndListTarget, LB_GETTEXT, iTarget, (LPARAM)szName);
+                    ui::SendMessage(hwndListTarget, LB_GETTEXT, iTarget, (LPARAM)szName);
                     if (pszTarget && !strcmp(pszTarget, szName)) break;
                 }
-                if (iTarget == c) { FPushClick(GetDlgItem(hwnd, IDCANCEL)); return; }
-                LUiSendMessage(hwndListTarget, LB_SETCURSEL, iTarget, 0);
-                LUiSendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDC_LIBRARY_TURN_TARGET_LIST, LBN_SELCHANGE),
+                if (iTarget == c) { FPushClick(win32::GetDlgItem(hwnd, IDCANCEL)); return; }
+                ui::SendMessage(hwndListTarget, LB_SETCURSEL, iTarget, 0);
+                ui::SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDC_LIBRARY_TURN_TARGET_LIST, LBN_SELCHANGE),
                             (LPARAM)hwndListTarget);
-                FPushClick(GetDlgItem(hwnd, !strcmp(pszExpected, "cancel") ? IDCANCEL : IDOK));
+                FPushClick(win32::GetDlgItem(hwnd, !strcmp(pszExpected, "cancel") ? IDCANCEL : IDOK));
                 return;
             }
-            for (hwnd = GetWindow(hwndTitle, GW_HWNDFIRST); hwnd; hwnd = GetWindow(hwnd, GW_HWNDNEXT)) {
+            for (hwnd = win32::GetWindow(hwndTitle, GW_HWNDFIRST); hwnd; hwnd = win32::GetWindow(hwnd, GW_HWNDNEXT)) {
                 if (!hwnd->fDialog || hwnd->lpfnDlg != LibraryTurnConflictDlg) continue;
                 if (pszExpected && !strcmp(pszExpected, "cancel-conflict"))
-                    FPushClick(GetDlgItem(hwnd, IDCANCEL));
+                    FPushClick(win32::GetDlgItem(hwnd, IDCANCEL));
                 else if (pszExpected && !strcmp(pszExpected, "replace-conflict"))
-                    FPushClick(GetDlgItem(hwnd, IDC_LIBRARY_TURN_REPLACE));
+                    FPushClick(win32::GetDlgItem(hwnd, IDC_LIBRARY_TURN_REPLACE));
                 else if (pszExpected && !strcmp(pszExpected, "fail-conflict"))
-                    FPushClick(GetDlgItem(hwnd, IDC_LIBRARY_TURN_REPLACE));
+                    FPushClick(win32::GetDlgItem(hwnd, IDC_LIBRARY_TURN_REPLACE));
                 else if (pszExpected && !strcmp(pszExpected, "separate-conflict"))
-                    FPushClick(GetDlgItem(hwnd, IDC_LIBRARY_TURN_SEPARATE));
+                    FPushClick(win32::GetDlgItem(hwnd, IDC_LIBRARY_TURN_SEPARATE));
                 else goto LDone;
                 return;
             }
             if (pszExpected && !strcmp(pszExpected, "separate-conflict")) {
-                for (hwnd = GetWindow(hwndTitle, GW_HWNDFIRST); hwnd; hwnd = GetWindow(hwnd, GW_HWNDNEXT)) {
+                for (hwnd = win32::GetWindow(hwndTitle, GW_HWNDFIRST); hwnd; hwnd = win32::GetWindow(hwnd, GW_HWNDNEXT)) {
                     if (!hwnd->fDialog || hwnd->lpfnDlg != LibraryNameDlg) continue;
                     pszCopyName = PszCompatEnvironment("STARS_CLIENT_IMPORT_COPY_NAME");
-                    if (pszCopyName) FUiSetWindowText(GetDlgItem(hwnd, IDC_EDIT1), pszCopyName);
-                    FPushClick(GetDlgItem(hwnd, IDOK));
+                    if (pszCopyName) ui::SetWindowText(win32::GetDlgItem(hwnd, IDC_EDIT1), pszCopyName);
+                    FPushClick(win32::GetDlgItem(hwnd, IDOK));
                     return;
                 }
             }
@@ -2803,40 +2803,40 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         if (iStage == 0) {
             const char *pszPlayer = PszCompatEnvironment("STARS_CLIENT_LIBRARY_OPEN_PLAYER");
             int iWanted = pszPlayer ? atoi(pszPlayer) - 1 : -1;
-            if (!IsWindowVisible(hwndTitle) || !FSelectClientGameName(hwndTitle, pszName)) goto LDone;
-            hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
-            iGame = LUiSendMessage(hwndList, LB_GETCURSEL, 0, 0);
+            if (!win32::IsWindowVisible(hwndTitle) || !FSelectClientGameName(hwndTitle, pszName)) goto LDone;
+            hwndList = win32::GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
+            iGame = ui::SendMessage(hwndList, LB_GETCURSEL, 0, 0);
             if (iWanted >= 0 && !FSelectClientLibraryPlayer(hwndTitle, iWanted)) goto LDone;
             if (PszCompatEnvironment("STARS_DEBUG_LIBRARY_STARTUP"))
                 fprintf(stderr, "[DEBUG-library-startup] Opening library row %lld: %s\n", (long long)iGame, pszName);
             fChecked = TRUE;
             iStage = 1;
             if (PszCompatEnvironment("STARS_CLIENT_LIBRARY_DOUBLECLICK")) {
-                if (!PostMessage(hwndTitle, WM_COMMAND, MAKEWPARAM(IDC_LIBRARY_GAMES, LBN_DBLCLK),
+                if (!win32::PostMessage(hwndTitle, WM_COMMAND, MAKEWPARAM(IDC_LIBRARY_GAMES, LBN_DBLCLK),
                                   (LPARAM)hwndList)) goto LDone;
             } else if (!FPushClick(rghwndBtnSplash[1])) goto LDone;
             return;
         }
-        if (PszCompatEnvironment("STARS_CLIENT_SWITCH_CHOICE") && iStage == 20 && IsWindow(hwndTitle)) {
+        if (PszCompatEnvironment("STARS_CLIENT_SWITCH_CHOICE") && iStage == 20 && win32::IsWindow(hwndTitle)) {
             const char *pszName = PszCompatEnvironment("STARS_CLIENT_LIBRARY_OPEN");
             if (!FSelectClientGameName(hwndTitle, pszName) || !FSelectClientLibraryPlayer(hwndTitle, 0)) goto LDone;
             iStage = 21;
             if (!FPushClick(rghwndBtnSplash[1])) goto LDone;
             return;
         }
-        if (IsWindow(hwndTitle)) {
+        if (win32::IsWindow(hwndTitle)) {
             if (PszCompatEnvironment("STARS_CLIENT_LIBRARY_DOUBLECLICK")) {
-                for (hwndDialog = GetWindow(hwndTitle, GW_HWNDFIRST); hwndDialog;
-                     hwndDialog = GetWindow(hwndDialog, GW_HWNDNEXT)) {
+                for (hwndDialog = win32::GetWindow(hwndTitle, GW_HWNDFIRST); hwndDialog;
+                     hwndDialog = win32::GetWindow(hwndDialog, GW_HWNDNEXT)) {
                     if (!hwndDialog->fDialog) continue;
                     fprintf(stderr, "Game double-click unexpectedly opened a dialog\n");
-                    EndDialog(hwndDialog, FALSE);
+                    win32::EndDialog(hwndDialog, FALSE);
                     goto LDone;
                 }
             }
             return;
         }
-        if (!lpPlanets || game.lid == 0 || idPlayer == iplrNone || !IsWindowVisible(hwndFrame)) goto LDone;
+        if (!lpPlanets || game.lid == 0 || idPlayer == iplrNone || !win32::IsWindowVisible(hwndFrame)) goto LDone;
         if (PszCompatEnvironment("STARS_CLIENT_SWITCH_CHOICE") && iStage == 21) {
             const char *pszExpected = PszCompatEnvironment("STARS_CLIENT_EXPECT_SWITCHED_PLAYER");
             if (pszExpected && idPlayer != atoi(pszExpected) - 1) goto LDone;
@@ -2848,13 +2848,13 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             long long lPlayedBefore, lPlayedAfter;
             if (!FTestLibraryTimestamp(&lPlayedBefore)) goto LDone;
             game.fDirty = TRUE;
-            LUiSendMessage(hwndFrame, WM_COMMAND, IDM_FILE_RETURN_TO_TITLE, 0);
-            if (!fSwitchCancelSent || IsWindow(hwndTitle) || !lpPlanets || idPlayer != idPlayerBefore ||
+            ui::SendMessage(hwndFrame, WM_COMMAND, IDM_FILE_RETURN_TO_TITLE, 0);
+            if (!fSwitchCancelSent || win32::IsWindow(hwndTitle) || !lpPlanets || idPlayer != idPlayerBefore ||
                 game.turn != turnBefore || !game.fDirty || !FTestLibraryTimestamp(&lPlayedAfter) ||
                 lPlayedAfter != lPlayedBefore) goto LDone;
             fPassed = TRUE;
             puts("Canceling a player switch keeps the active player turn loaded");
-            PostQuitMessage(0);
+            win32::PostQuitMessage(0);
             return;
         }
         if (PszCompatEnvironment("STARS_CLIENT_SWITCH_CHOICE")) {
@@ -2874,8 +2874,8 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
                     if (!SDL_CreateDirectory(szBlocked)) goto LDone;
                     game.fDirty = TRUE;
                     gd.fSubmit = FALSE;
-                    LUiSendMessage(hwndFrame, WM_COMMAND, IDM_FILE_RETURN_TO_TITLE, 0);
-                    if (IsWindow(hwndTitle) || lpPlanets != lpPlanetsBefore || idPlayer != idPlayerBefore ||
+                    ui::SendMessage(hwndFrame, WM_COMMAND, IDM_FILE_RETURN_TO_TITLE, 0);
+                    if (win32::IsWindow(hwndTitle) || lpPlanets != lpPlanetsBefore || idPlayer != idPlayerBefore ||
                         !game.fDirty || gd.fSubmit || rgplr[idPlayer].iTechNow() != iResearch || cAlerts != 2)
                         goto LDone;
                     if (RemoveNativePath(szBlocked) != 0) goto LDone;
@@ -2885,8 +2885,8 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
                 cSwitchHistoryWrites = 0;
                 game.fDirty = TRUE;
                 gd.fSubmit = FALSE;
-                LUiSendMessage(hwndFrame, WM_COMMAND, IDM_FILE_RETURN_TO_TITLE, 0);
-                if (!IsWindow(hwndTitle) || idPlayer != iplrNone || game.fDirty ||
+                ui::SendMessage(hwndFrame, WM_COMMAND, IDM_FILE_RETURN_TO_TITLE, 0);
+                if (!win32::IsWindow(hwndTitle) || idPlayer != iplrNone || game.fDirty ||
                     cSwitchLogWrites != fSave || cSwitchHistoryWrites != fSave || gd.fSubmit != fSubmit)
                     goto LDone;
                 iStage = 20;
@@ -2896,12 +2896,12 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             fPassed = TRUE;
             printf("Switch prompt %s %s log and history; switched to Player 1\n", pszChoice,
                    fSave ? "saved" : "discarded");
-            PostQuitMessage(0);
+            win32::PostQuitMessage(0);
             return;
         }
         fPassed = TRUE;
         puts("Managed game: visible in library and reopened after restart");
-        PostQuitMessage(0);
+        win32::PostQuitMessage(0);
         return;
     }
     if (pszNewGame) {
@@ -2911,32 +2911,32 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     if (iStage == 10) return;
     lpFrame = LpCompatWindow(hwndFrame);
     lpTitle = LpCompatWindow(hwndTitle);
-    if (!GetClientRect(hwndFrame, &rcFrame) || rcFrame.right < 320 || rcFrame.bottom < 240) goto LDone;
+    if (!win32::GetClientRect(hwndFrame, &rcFrame) || rcFrame.right < 320 || rcFrame.bottom < 240) goto LDone;
     if (iStage == 5) {
         // File loading pumps messages while building the client; check only
         // after the title's Continue handler has finished replacing it.
-        if (IsWindow(hwndTitle)) return;
-        if (IsWindow(hwndTitle) || !IsWindowVisible(hwndFrame) || !IsWindow(hwndScanner) ||
+        if (win32::IsWindow(hwndTitle)) return;
+        if (win32::IsWindow(hwndTitle) || !win32::IsWindowVisible(hwndFrame) || !win32::IsWindow(hwndScanner) ||
             !lpPlanets || game.lid == 0 || idPlayer == iplrNone) goto LDone;
         if (vfs.dx != rcFrame.right || vfs.dy != rcFrame.bottom ||
-            !GetClientRect(hwndScanner, &rcScanner) || rcScanner.right < 100 || rcScanner.bottom < 100) goto LDone;
+            !win32::GetClientRect(hwndScanner, &rcScanner) || rcScanner.right < 100 || rcScanner.bottom < 100) goto LDone;
         for (i = 0; i < 6; i++) if (!rgtilePlanet[i].fPopped) goto LDone;
         for (i = 0; i < 7; i++) if (!rgtileShip[i].fPopped) goto LDone;
-        FUiUpdateWindow(hwndFrame);
-        for (hwnd = GetWindow(hwndFrame, GW_CHILD); hwnd; hwnd = GetWindow(hwnd, GW_HWNDNEXT)) FUiUpdateWindow(hwnd);
+        ui::UpdateWindow(hwndFrame);
+        for (hwnd = win32::GetWindow(hwndFrame, GW_CHILD); hwnd; hwnd = win32::GetWindow(hwnd, GW_HWNDNEXT)) ui::UpdateWindow(hwnd);
         if (!FCompatPresent(hwndFrame) || (pszGameCapture && !SDL_SaveBMP(lpFrame->lpComposite.get(), pszGameCapture))) goto LDone;
-        LUiSendMessage(hwndFrame, WM_COMMAND, IDM_VIEW_BROWSER_TOGGLE, 0);
+        ui::SendMessage(hwndFrame, WM_COMMAND, IDM_VIEW_BROWSER_TOGGLE, 0);
         iStage = 6;
         return;
     }
     if (iStage == 6 || iStage == 8) {
-        if (!IsWindowVisible(hwndBrowser) || !IsWindow(hwndBrowserChild)) goto LDone;
-        FUiUpdateWindow(hwndBrowser);
-        FUiUpdateWindow(hwndBrowserChild);
+        if (!win32::IsWindowVisible(hwndBrowser) || !win32::IsWindow(hwndBrowserChild)) goto LDone;
+        ui::UpdateWindow(hwndBrowser);
+        ui::UpdateWindow(hwndBrowserChild);
         if (!FCompatPresent(hwndBrowser)) goto LDone;
         hwndBrowserPrevious = hwndBrowser;
         if (iStage == 6) {
-            if (!FPushClick(GetDlgItem(hwndBrowser, IDCANCEL))) goto LDone;
+            if (!FPushClick(win32::GetDlgItem(hwndBrowser, IDCANCEL))) goto LDone;
         } else {
             event.type = SDL_EVENT_WINDOW_CLOSE_REQUESTED;
             event.window.windowID = hwndBrowser->id;
@@ -2946,14 +2946,14 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         return;
     }
     if (iStage == 7 || iStage == 9) {
-        if (IsWindow(hwndBrowserPrevious) || hwndBrowser || !IsWindowEnabled(hwndFrame)) goto LDone;
+        if (win32::IsWindow(hwndBrowserPrevious) || hwndBrowser || !win32::IsWindowEnabled(hwndFrame)) goto LDone;
         if (iStage == 7) {
-            LUiSendMessage(hwndFrame, WM_COMMAND, IDM_VIEW_BROWSER_TOGGLE, 0);
+            ui::SendMessage(hwndFrame, WM_COMMAND, IDM_VIEW_BROWSER_TOGGLE, 0);
             iStage = 8;
         } else {
             // These checks may pump an already queued timer message.
             iStage = 10;
-            KillTimer(NULL, id);
+            win32::KillTimer(NULL, id);
             fprintf(stderr, "Starting loaded-game inspection checks\n");
             if (!FCheckToolbarPlacement()) { fprintf(stderr, "Toolbar check failed\n"); goto LDone; }
             if (!FCheckScannerDrag()) { fprintf(stderr, "Scanner drag check failed\n"); goto LDone; }
@@ -2963,35 +2963,35 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             if (!FCheckReportScrollbars()) { fprintf(stderr, "Report scroll check failed\n"); goto LDone; }
             if (!FCheckGameplayWorkflows()) goto LDone;
             fPassed = TRUE;
-            PostQuitMessage(0);
+            win32::PostQuitMessage(0);
         }
         return;
     }
-    if (!lpFrame || !lpTitle || lpFrame == lpTitle || !IsWindowVisible(hwndTitle) ||
+    if (!lpFrame || !lpTitle || lpFrame == lpTitle || !win32::IsWindowVisible(hwndTitle) ||
         !lpFrame->lpWindow.get() || !lpTitle->lpWindow.get() || lpFrame->id == lpTitle->id ||
         !lpTitle->lpRenderer.get() || !lpTitle->lpCanvas.get() ||
         (SDL_GetWindowFlags(lpTitle->lpWindow.get()) & (SDL_WINDOW_FULLSCREEN | SDL_WINDOW_BORDERLESS)) ||
-        (GetWindowLongPtr(hwndTitle, GWL_STYLE) & WS_CAPTION) != WS_CAPTION ||
-        !GetClientRect(hwndTitle, &rcScanner) || rcScanner.right < 600 || rcScanner.bottom < 400 ||
+        (win32::GetWindowLongPtr(hwndTitle, GWL_STYLE) & WS_CAPTION) != WS_CAPTION ||
+        !win32::GetClientRect(hwndTitle, &rcScanner) || rcScanner.right < 600 || rcScanner.bottom < 400 ||
         rcScanner.right > 800 || rcScanner.bottom > 600) goto LDone;
     if (iStage == 1) {
-        for (hwndWizard = GetWindow(hwndTitle, GW_HWNDFIRST); hwndWizard; hwndWizard = GetWindow(hwndWizard, GW_HWNDNEXT)) {
+        for (hwndWizard = win32::GetWindow(hwndTitle, GW_HWNDFIRST); hwndWizard; hwndWizard = win32::GetWindow(hwndWizard, GW_HWNDNEXT)) {
             if (hwndWizard->fDialog && hwndWizard->fModal && hwndWizard->hwndOwner == hwndTitle) break;
         }
         if (!hwndWizard) {
             if (++cWait < 20) return;
             goto LDone;
         }
-        if (!IsWindowVisible(hwndWizard) || IsWindowEnabled(hwndTitle) ||
+        if (!win32::IsWindowVisible(hwndWizard) || win32::IsWindowEnabled(hwndTitle) ||
             (strcmp(SDL_GetCurrentVideoDriver(), "dummy") != 0 &&
              SDL_GetWindowParent(hwndWizard->lpWindow.get()) != lpTitle->lpWindow.get())) goto LDone;
-        FUiUpdateWindow(hwndWizard);
-        for (hwnd = GetWindow(hwndWizard, GW_CHILD); hwnd; hwnd = GetWindow(hwnd, GW_HWNDNEXT)) FUiUpdateWindow(hwnd);
+        ui::UpdateWindow(hwndWizard);
+        for (hwnd = win32::GetWindow(hwndWizard, GW_CHILD); hwnd; hwnd = win32::GetWindow(hwnd, GW_HWNDNEXT)) ui::UpdateWindow(hwnd);
         if (!FCompatPresent(hwndWizard) || (pszWizardCapture &&
             !SDL_SaveBMP(hwndWizard->lpComposite.get(), pszWizardCapture))) goto LDone;
         if (pszRaceCapture) {
             if (hwndWizard->lpfnDlg == NewGameDlg) {
-                if (!FPushClick(GetDlgItem(hwndWizard, IDC_NEXT))) goto LDone;
+                if (!FPushClick(win32::GetDlgItem(hwndWizard, IDC_NEXT))) goto LDone;
                 return;
             }
             if (hwndWizard->lpfnDlg != NewGameDlg2 || !FChooseRosterAction(hwndWizard, 0, 2)) goto LDone;
@@ -3013,7 +3013,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         return;
     }
     if (iStage == 3) {
-        for (hwndRace = GetWindow(hwndTitle, GW_HWNDFIRST); hwndRace; hwndRace = GetWindow(hwndRace, GW_HWNDNEXT)) {
+        for (hwndRace = win32::GetWindow(hwndTitle, GW_HWNDFIRST); hwndRace; hwndRace = win32::GetWindow(hwndRace, GW_HWNDNEXT)) {
             if (hwndRace->fDialog && hwndRace->fModal && hwndRace->hwndOwner == hwndWizard &&
                 hwndRace->lpfnDlg == rglpfnRace[iRacePage]) break;
         }
@@ -3021,49 +3021,49 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             if (++cWait < 20) return;
             goto LDone;
         }
-        FUiUpdateWindow(hwndRace);
-        for (hwnd = GetWindow(hwndRace, GW_CHILD); hwnd; hwnd = GetWindow(hwnd, GW_HWNDNEXT)) FUiUpdateWindow(hwnd);
-        if (!IsWindowVisible(hwndRace) || IsWindowEnabled(hwndWizard) || !fRacePresentation || !FCompatPresent(hwndRace)) goto LDone;
+        ui::UpdateWindow(hwndRace);
+        for (hwnd = win32::GetWindow(hwndRace, GW_CHILD); hwnd; hwnd = win32::GetWindow(hwnd, GW_HWNDNEXT)) ui::UpdateWindow(hwnd);
+        if (!win32::IsWindowVisible(hwndRace) || win32::IsWindowEnabled(hwndWizard) || !fRacePresentation || !FCompatPresent(hwndRace)) goto LDone;
         if (iRacePage == 0) idRaceWindow = hwndRace->id;
-        else if (hwndRace->id != idRaceWindow || hwndRace == hwndRacePrevious || IsWindow(hwndRacePrevious)) goto LDone;
+        else if (hwndRace->id != idRaceWindow || hwndRace == hwndRacePrevious || win32::IsWindow(hwndRacePrevious)) goto LDone;
         hwndRacePrevious = hwndRace;
         if (iRacePage == 3 && (!fHabPainted || !SDL_SaveBMP(hwndRace->lpComposite.get(), pszRaceCapture))) goto LDone;
         if (iRacePage == 5 && !fRaceBack) {
-            if (!FPushClick(GetDlgItem(hwndRace, IDC_BACK))) goto LDone;
+            if (!FPushClick(win32::GetDlgItem(hwndRace, IDC_BACK))) goto LDone;
             fRaceBack = TRUE;
             iRacePage--;
             cWait = 0;
             return;
         }
         if (iRacePage < 5) {
-            if (!FPushClick(GetDlgItem(hwndRace, IDC_NEXT))) goto LDone;
+            if (!FPushClick(win32::GetDlgItem(hwndRace, IDC_NEXT))) goto LDone;
             iRacePage++;
             cWait = 0;
             return;
         }
-        if (!FPushClick(GetDlgItem(hwndRace, IDCANCEL))) goto LDone;
+        if (!FPushClick(win32::GetDlgItem(hwndRace, IDCANCEL))) goto LDone;
         iStage = 4;
         cWait = 0;
         return;
     }
     if (iStage == 4) {
-        if (IsWindow(hwndRace)) {
+        if (win32::IsWindow(hwndRace)) {
             if (++cWait < 20) return;
             goto LDone;
         }
-        if (SDL_GetWindowFromID(idRaceWindow) || !IsWindowEnabled(hwndWizard) ||
-            !FPushClick(GetDlgItem(hwndWizard, IDCANCEL))) goto LDone;
+        if (SDL_GetWindowFromID(idRaceWindow) || !win32::IsWindowEnabled(hwndWizard) ||
+            !FPushClick(win32::GetDlgItem(hwndWizard, IDCANCEL))) goto LDone;
         iStage = 2;
         cWait = 0;
         return;
     }
     if (iStage == 2) {
-        if (IsWindow(hwndWizard)) {
+        if (win32::IsWindow(hwndWizard)) {
             if (++cWait < 20) return;
             goto LDone;
         }
-        if (!IsWindowEnabled(hwndTitle)) goto LDone;
-        KillTimer(NULL, id);
+        if (!win32::IsWindowEnabled(hwndTitle)) goto LDone;
+        win32::KillTimer(NULL, id);
         fPassed = TRUE;
         event.type = SDL_EVENT_WINDOW_CLOSE_REQUESTED;
         event.window.windowID = lpTitle->id;
@@ -3071,11 +3071,11 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         goto LDone;
     }
     fChecked = TRUE;
-    if (!IsWindowVisible(GetDlgItem(hwndTitle, IDC_LIBRARY_TUTORIAL))) goto LDone;
-    FUiUpdateWindow(hwndTitle);
+    if (!win32::IsWindowVisible(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_TUTORIAL))) goto LDone;
+    ui::UpdateWindow(hwndTitle);
     for (iButton = 0; iButton < 4; iButton++) {
-        if (!IsWindow(rghwndBtnSplash[iButton]) || !IsWindowVisible(rghwndBtnSplash[iButton])) goto LDone;
-        FUiUpdateWindow(rghwndBtnSplash[iButton]);
+        if (!win32::IsWindow(rghwndBtnSplash[iButton]) || !win32::IsWindowVisible(rghwndBtnSplash[iButton])) goto LDone;
+        ui::UpdateWindow(rghwndBtnSplash[iButton]);
     }
     rgb = (BYTE *)lpTitle->lpCanvas->pixels;
     cb = (size_t)lpTitle->lpCanvas->pitch * lpTitle->lpCanvas->h;
@@ -3091,9 +3091,9 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         const char *pszGame = PszCompatEnvironment("STARS_CLIENT_EXPECT_CONTINUE_GAME");
         const char *pszYear = PszCompatEnvironment("STARS_CLIENT_EXPECT_CONTINUE_YEAR");
         char szPlayer[32];
-        GetWindowTextA(rghwndBtnSplash[2], szContinue, sizeof(szContinue));
+        win32::GetWindowTextA(rghwndBtnSplash[2], szContinue, sizeof(szContinue));
         if (strcmp(szContinue, PszGetCompressedString(idsContinueGame))) goto LDone;
-        GetDlgItemText(hwndTitle, IDC_LIBRARY_CONTINUE_DETAILS, szContinue, sizeof(szContinue));
+        win32::GetDlgItemText(hwndTitle, IDC_LIBRARY_CONTINUE_DETAILS, szContinue, sizeof(szContinue));
         if (pszGame ? !strstr(szContinue, pszGame) : !strstr(szContinue, "Continue: managed-copy")) goto LDone;
         CchSnprintf(szPlayer, sizeof(szPlayer), "Player %s",
                     PszCompatEnvironment("STARS_CLIENT_EXPECT_PLAYER") ? PszCompatEnvironment("STARS_CLIENT_EXPECT_PLAYER") : "2");
@@ -3105,32 +3105,32 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         }
     }
     if (pszContinue && PszCompatEnvironment("STARS_CLIENT_EXPECT_CONTINUE_DISABLED")) {
-        if (IsWindowEnabled(rghwndBtnSplash[2])) goto LDone;
+        if (win32::IsWindowEnabled(rghwndBtnSplash[2])) goto LDone;
         fPassed = TRUE;
         puts("Continue is disabled when the managed game has no available player turns");
-        PostQuitMessage(0);
+        win32::PostQuitMessage(0);
         return;
     }
     if (pszContinue && PszCompatEnvironment("STARS_CLIENT_EXPECT_SELECTOR")) {
         char szLabel[256];
-        HWND hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
-        if (!IsWindowEnabled(rghwndBtnSplash[2])) goto LDone;
-        GetDlgItemText(hwndTitle, IDC_LIBRARY_CONTINUE_DETAILS, szLabel, sizeof(szLabel));
+        HWND hwndList = win32::GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
+        if (!win32::IsWindowEnabled(rghwndBtnSplash[2])) goto LDone;
+        win32::GetDlgItemText(hwndTitle, IDC_LIBRARY_CONTINUE_DETAILS, szLabel, sizeof(szLabel));
         if (!strstr(szLabel, "Choose Player")) goto LDone;
         if (iStage != 30) {
             iStage = 30;
             if (!FPushClick(rghwndBtnSplash[2])) goto LDone;
             return;
         }
-        if (!hwndList || LUiSendMessage(hwndList, LB_GETTEXT,
-            LUiSendMessage(hwndList, LB_GETCURSEL, 0, 0), (LPARAM)szLabel) == LB_ERR ||
-            strcmp(szLabel, "managed-copy") || !IsWindow(hwndTitle) ||
-            GetFocus() != GetDlgItem(hwndTitle, IDC_LIBRARY_PLAYERS) ||
-            LUiSendDlgItemMessage(hwndTitle, IDC_LIBRARY_PLAYERS, CB_GETCURSEL, 0, 0) != CB_ERR ||
-            IsWindowEnabled(rghwndBtnSplash[1])) goto LDone;
+        if (!hwndList || ui::SendMessage(hwndList, LB_GETTEXT,
+            ui::SendMessage(hwndList, LB_GETCURSEL, 0, 0), (LPARAM)szLabel) == LB_ERR ||
+            strcmp(szLabel, "managed-copy") || !win32::IsWindow(hwndTitle) ||
+            win32::GetFocus() != win32::GetDlgItem(hwndTitle, IDC_LIBRARY_PLAYERS) ||
+            ui::SendDlgItemMessage(hwndTitle, IDC_LIBRARY_PLAYERS, CB_GETCURSEL, 0, 0) != CB_ERR ||
+            win32::IsWindowEnabled(rghwndBtnSplash[1])) goto LDone;
         fPassed = TRUE;
         puts("Continue selects the managed game when its remembered player is unavailable");
-        PostQuitMessage(0);
+        win32::PostQuitMessage(0);
         return;
     }
     if (!FPushClick(rghwndBtnSplash[pszContinue ? 2 : 0])) goto LDone;
@@ -3142,15 +3142,15 @@ LDone:
             fprintf(stderr, "Host library workflow failed at stage %d\n", iHostLibraryTestStage);
         fprintf(stderr, "Client startup/wizard check failed at stage %d (new-game step %d, choices %d, creating %d): %s\n",
                 iStage, iNewGameStep, cNewGameChoices, fCreatingGame, SDL_GetError());
-        KillTimer(NULL, id);
-        PostQuitMessage(92);
+        win32::KillTimer(NULL, id);
+        win32::PostQuitMessage(92);
     }
 }
 
 int16_t StarsTest_InitInstance(int16_t nCmdShow) {
     int16_t fResult = InitInstance(nCmdShow);
     fInitComplete = TRUE;
-    if (fResult) idTimer = SetTimer(NULL, 0, 250, CheckStartup);
+    if (fResult) idTimer = win32::SetTimer(NULL, 0, 250, CheckStartup);
     return fResult && idTimer ? fResult : FALSE;
 }
 
@@ -3201,12 +3201,12 @@ int main(void) {
     pszNewGame = PszCompatEnvironment("STARS_CLIENT_NEW_GAME");
     pszContinue = PszCompatEnvironment("STARS_CLIENT_CONTINUE");
     pszImportSource = PszCompatEnvironment("STARS_CLIENT_IMPORT_SOURCE");
-    if (pszContinue && !WritePrivateProfileString("Files", "File1", pszContinue, "StarsUtf8.ini")) return 1;
-    if (pszContinue && (!WritePrivateProfileString("Windows", "PlanetTiles", "ABE*FGH", "StarsUtf8.ini") ||
-        !WritePrivateProfileString("Windows", "ShipTiles", "AFDE*BJI", "StarsUtf8.ini"))) return 1;
+    if (pszContinue && !win32::WritePrivateProfileString("Files", "File1", pszContinue, "StarsUtf8.ini")) return 1;
+    if (pszContinue && (!win32::WritePrivateProfileString("Windows", "PlanetTiles", "ABE*FGH", "StarsUtf8.ini") ||
+        !win32::WritePrivateProfileString("Windows", "ShipTiles", "AFDE*BJI", "StarsUtf8.ini"))) return 1;
     setvbuf(stdout, NULL, _IONBF, 0);
-    nResult = WinMain(GetModuleHandle(NULL), NULL, szCommand, SW_SHOWNORMAL);
-    if (IsWindow(hwndTitle) && !pszImportSource && !PszCompatEnvironment("STARS_CLIENT_RACE_LIBRARY_TEST") &&
+    nResult = ui::WinMain(win32::GetModuleHandle(NULL), NULL, szCommand, SW_SHOWNORMAL);
+    if (win32::IsWindow(hwndTitle) && !pszImportSource && !PszCompatEnvironment("STARS_CLIENT_RACE_LIBRARY_TEST") &&
         !PszCompatEnvironment("STARS_CLIENT_RECENT_STARTUP") && !PszCompatEnvironment("STARS_CLIENT_RACE_NAME_CANCEL") &&
         !PszCompatEnvironment("STARS_CLIENT_RACE_VERSION_TEST") &&
         !PszCompatEnvironment("STARS_CLIENT_EXTERNAL_OPEN_GAME") &&
@@ -3217,7 +3217,7 @@ int main(void) {
         !PszCompatEnvironment("STARS_CLIENT_HOST_LIBRARY_TEST") && !PszCompatEnvironment("STARS_CLIENT_MAC_SHORTCUTS_TEST") &&
         !PszCompatEnvironment("STARS_CLIENT_EXPECT_SELECTOR") && !PszCompatEnvironment("STARS_CLIENT_EXPECT_CONTINUE_DISABLED") &&
         !PszCompatEnvironment("STARS_CLIENT_SWITCH_CHOICE")) fPassed = FALSE;
-    if (idTimer) KillTimer(NULL, idTimer);
+    if (idTimer) win32::KillTimer(NULL, idTimer);
     StarsCompatProcessExit();
     SDL_Quit();
     return nResult == 0 && fChecked && fPassed && fTitlePainted &&

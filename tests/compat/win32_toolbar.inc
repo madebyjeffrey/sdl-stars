@@ -55,11 +55,11 @@ static LRESULT CALLBACK Parent(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
             return TBDDRET_NODEFAULT;
         }
     }
-    return DefWindowProc(hwnd, msg, w, l);
+    return DefWindowProcA(hwnd, msg, w, l);
 }
 static void Click(HWND hwnd, int x, int y) {
-    SendMessage(hwnd, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(x, y));
-    SendMessage(hwnd, WM_LBUTTONUP, 0, MAKELPARAM(x, y));
+    SendMessageA(hwnd, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(x, y));
+    SendMessageA(hwnd, WM_LBUTTONUP, 0, MAKELPARAM(x, y));
 }
 int main(void) {
     INITCOMMONCONTROLSEX icc = {sizeof(icc), ICC_BAR_CLASSES};
@@ -76,7 +76,7 @@ int main(void) {
     POINT pt;
     char sz[64];
     int i, c;
-    MSG msg;
+    APPMSG msg;
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
     HWND hwndTip, hwndFocus;
     RECT rcTip;
@@ -96,12 +96,12 @@ int main(void) {
     htb = CreateWindow(TOOLBARCLASSNAME, NULL, WS_CHILD | WS_VISIBLE | CCS_NORESIZE | CCS_NOPARENTALIGN | TBSTYLE_TOOLTIPS,
                        0, 0, 390, 40, hwnd, (HMENU)(INT_PTR)55, hinst, NULL);
     CHECK(htb && GetClassName(htb, sz, sizeof(sz)) && !strcmp(sz, TOOLBARCLASSNAME));
-    SendMessage(htb, TB_BUTTONSTRUCTSIZE, sizeof(TBBUTTON), 0);
-    CHECK(SendMessage(htb, TB_SETBITMAPSIZE, 0, MAKELPARAM(16, 15)));
-    CHECK(SendMessage(htb, TB_SETBUTTONSIZE, 0, MAKELPARAM(30, 28)));
-    SendMessage(htb, TB_SETMAXTEXTROWS, 0, 0);
-    SendMessage(htb, TB_SETEXTENDEDSTYLE, 0, TBSTYLE_EX_DRAWDDARROWS);
-    CHECK(SendMessage(htb, TB_GETEXTENDEDSTYLE, 0, 0) == TBSTYLE_EX_DRAWDDARROWS);
+    SendMessageA(htb, TB_BUTTONSTRUCTSIZE, sizeof(TBBUTTON), 0);
+    CHECK(SendMessageA(htb, TB_SETBITMAPSIZE, 0, MAKELPARAM(16, 15)));
+    CHECK(SendMessageA(htb, TB_SETBUTTONSIZE, 0, MAKELPARAM(30, 28)));
+    SendMessageA(htb, TB_SETMAXTEXTROWS, 0, 0);
+    SendMessageA(htb, TB_SETEXTENDEDSTYLE, 0, TBSTYLE_EX_DRAWDDARROWS);
+    CHECK(SendMessageA(htb, TB_GETEXTENDEDSTYLE, 0, 0) == TBSTYLE_EX_DRAWDDARROWS);
     for (i = 0; i < 6; i++) {
         rgbtn[i].idCommand = 100 + i; rgbtn[i].fsState = TBSTATE_ENABLED;
         rgbtn[i].iBitmap = 0; rgbtn[i].iString = (INT_PTR)"Toolbar tip";
@@ -110,35 +110,35 @@ int main(void) {
     rgbtn[2].fsStyle = BTNS_SEP; rgbtn[2].iBitmap = 20; rgbtn[2].iString = -1;
     rgbtn[3].fsStyle = BTNS_CHECK | BTNS_DROPDOWN;
     rgbtn[4].fsStyle = BTNS_WHOLEDROPDOWN;
-    CHECK(SendMessage(htb, TB_ADDBUTTONS, 6, (LPARAM)rgbtn));
-    CHECK(SendMessage(htb, TB_BUTTONCOUNT, 0, 0) == 6);
-    CHECK(SendMessage(htb, TB_COMMANDTOINDEX, 103, 0) == 3);
-    CHECK(SendMessage(htb, TB_GETBUTTON, 3, (LPARAM)&btn) && btn.idCommand == 103 && btn.fsStyle == rgbtn[3].fsStyle);
-    CHECK(SendMessage(htb, TB_GETBUTTONTEXT, 103, (LPARAM)sz) == 11 && !strcmp(sz, "Toolbar tip"));
-    CHECK(SendMessage(htb, TB_GETITEMRECT, 3, (LPARAM)&rcSplit));
-    CHECK(SendMessage(htb, TB_GETRECT, 103, (LPARAM)&rc) && EqualRect(&rc, &rcSplit));
-    CHECK(SendMessage(htb, TB_GETRECT, 104, (LPARAM)&rcWhole));
+    CHECK(SendMessageA(htb, TB_ADDBUTTONS, 6, (LPARAM)rgbtn));
+    CHECK(SendMessageA(htb, TB_BUTTONCOUNT, 0, 0) == 6);
+    CHECK(SendMessageA(htb, TB_COMMANDTOINDEX, 103, 0) == 3);
+    CHECK(SendMessageA(htb, TB_GETBUTTON, 3, (LPARAM)&btn) && btn.idCommand == 103 && btn.fsStyle == rgbtn[3].fsStyle);
+    CHECK(SendMessageA(htb, TB_GETBUTTONTEXT, 103, (LPARAM)sz) == 11 && !strcmp(sz, "Toolbar tip"));
+    CHECK(SendMessageA(htb, TB_GETITEMRECT, 3, (LPARAM)&rcSplit));
+    CHECK(SendMessageA(htb, TB_GETRECT, 103, (LPARAM)&rc) && EqualRect(&rc, &rcSplit));
+    CHECK(SendMessageA(htb, TB_GETRECT, 104, (LPARAM)&rcWhole));
     pt = (POINT){rc.left + 2, rc.top + 2};
-    CHECK(SendMessage(htb, TB_HITTEST, 0, (LPARAM)&pt) == 3);
-    CHECK(SendMessage(htb, TB_CHECKBUTTON, 100, TRUE));
-    CHECK(SendMessage(htb, TB_GETRECT, 101, (LPARAM)&rc));
+    CHECK(SendMessageA(htb, TB_HITTEST, 0, (LPARAM)&pt) == 3);
+    CHECK(SendMessageA(htb, TB_CHECKBUTTON, 100, TRUE));
+    CHECK(SendMessageA(htb, TB_GETRECT, 101, (LPARAM)&rc));
     Click(htb, rc.left + 5, rc.top + 5);
-    CHECK(cCommand == 1 && idCommand == 101 && SendMessage(htb, TB_ISBUTTONCHECKED, 101, 0));
-    CHECK(!SendMessage(htb, TB_ISBUTTONCHECKED, 100, 0));
+    CHECK(cCommand == 1 && idCommand == 101 && SendMessageA(htb, TB_ISBUTTONCHECKED, 101, 0));
+    CHECK(!SendMessageA(htb, TB_ISBUTTONCHECKED, 100, 0));
     Click(htb, rcSplit.left + 3, rcSplit.top + 3);
     CHECK(cCommand == 2 && idCommand == 103 && cDrop == 0);
     Click(htb, rcSplit.right - 3, rcSplit.top + 3);
     CHECK(cDrop == 1 && idDrop == 103 && EqualRect(&rcDrop, &rcSplit) && cCommand == 2);
     Click(htb, rcWhole.left + 3, rcWhole.top + 3);
     CHECK(cDrop == 2 && idDrop == 104 && cCommand == 2 && EqualRect(&rcDrop, &rcWhole));
-    CHECK(SendMessage(htb, TB_ENABLEBUTTON, 104, FALSE));
+    CHECK(SendMessageA(htb, TB_ENABLEBUTTON, 104, FALSE));
     Click(htb, rcWhole.left + 3, rcWhole.top + 3);
-    CHECK(cDrop == 2 && !SendMessage(htb, TB_ISBUTTONENABLED, 104, 0));
-    CHECK(SendMessage(htb, TB_ENABLEBUTTON, 104, TRUE));
+    CHECK(cDrop == 2 && !SendMessageA(htb, TB_ISBUTTONENABLED, 104, 0));
+    CHECK(SendMessageA(htb, TB_ENABLEBUTTON, 104, TRUE));
     c = cCommand;
-    SendMessage(htb, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(rcSplit.left + 3, rcSplit.top + 3));
-    SendMessage(htb, WM_MOUSEMOVE, MK_LBUTTON, MAKELPARAM(-2, -2));
-    SendMessage(htb, WM_LBUTTONUP, 0, MAKELPARAM(-2, -2));
+    SendMessageA(htb, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(rcSplit.left + 3, rcSplit.top + 3));
+    SendMessageA(htb, WM_MOUSEMOVE, MK_LBUTTON, MAKELPARAM(-2, -2));
+    SendMessageA(htb, WM_LBUTTONUP, 0, MAKELPARAM(-2, -2));
     CHECK(cCommand == c && !GetCapture());
     hdc = GetDC(hwnd); hmem = CreateCompatibleDC(hdc);
     hbmp = CreateCompatibleBitmap(hdc, 16, 15); CHECK(hdc && hmem && hbmp);
@@ -147,11 +147,11 @@ int main(void) {
     CHECK(hbr && FillRect(hmem, &rc, hbr)); DeleteObject(hbr); SelectObject(hmem, hOld);
     DeleteDC(hmem); ReleaseDC(hwnd, hdc);
     add.hInst = NULL; add.nID = (UINT_PTR)hbmp;
-    CHECK(SendMessage(htb, TB_ADDBITMAP, 1, (LPARAM)&add) == 0);
+    CHECK(SendMessageA(htb, TB_ADDBITMAP, 1, (LPARAM)&add) == 0);
     CHECK(UpdateWindow(htb));
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
     DeleteObject(hbmp); // Native adapter owns a copy, even for caller bitmaps.
-    CHECK(SendMessage(htb, TB_GETRECT, 101, (LPARAM)&rc));
+    CHECK(SendMessageA(htb, TB_GETRECT, 101, (LPARAM)&rc));
     hdc = GetDC(htb);
     CHECK(hdc && GetPixel(hdc, (rc.left + rc.right) / 2, (rc.top + rc.bottom) / 2) == RGB(47, 80, 123));
     CHECK(GetPixel(hdc, rcSplit.right - 11, rcSplit.top + 3) == GetSysColor(COLOR_BTNHIGHLIGHT));
@@ -160,7 +160,7 @@ int main(void) {
     CHECK(GetPixel(hdc, rcSplit.right - 5, rcSplit.bottom - 2) == GetSysColor(COLOR_BTNSHADOW));
     ReleaseDC(htb, hdc);
     for (i = 0; i < 2; i++) {
-        CHECK(SendMessage(htb, TB_CHECKBUTTON, 103, i));
+        CHECK(SendMessageA(htb, TB_CHECKBUTTON, 103, i));
         CHECK(UpdateWindow(htb) && FMenuPaint(htb, &rcSplit, TRUE));
         hdc = GetDC(htb);
         CHECK(hdc && GetPixel(hdc, rcSplit.right - 12, rcSplit.top + 3) ==
@@ -169,13 +169,13 @@ int main(void) {
         fCheckPaint = TRUE; fPaintPassed = FALSE;
         Click(htb, rcSplit.right - 3, rcSplit.top + 3);
         fCheckPaint = FALSE;
-        CHECK(fPaintPassed && SendMessage(htb, TB_ISBUTTONCHECKED, 103, 0) == i);
+        CHECK(fPaintPassed && SendMessageA(htb, TB_ISBUTTONCHECKED, 103, 0) == i);
         CHECK(UpdateWindow(htb) && FMenuPaint(htb, &rcSplit, TRUE));
         hdc = GetDC(htb);
         CHECK(hdc && GetPixel(hdc, rcSplit.right - 5, rcSplit.top) == GetSysColor(COLOR_BTNHIGHLIGHT));
         ReleaseDC(htb, hdc);
     }
-    hwndTip = (HWND)SendMessage(htb, TB_GETTOOLTIPS, 0, 0);
+    hwndTip = (HWND)SendMessageA(htb, TB_GETTOOLTIPS, 0, 0);
     CHECK(IsWindow(hwndTip));
     hwndFocus = GetFocus();
     ptScreen = (POINT){rcSplit.left + 3, rcSplit.top + 3};
@@ -186,8 +186,8 @@ int main(void) {
         event.motion.x = (float)pt.x; event.motion.y = (float)pt.y;
         CompatRouteEvent(&event);
     } else CHECK(SDL_WarpMouseGlobal((float)ptScreen.x, (float)ptScreen.y));
-    SendMessage(htb, WM_MOUSEMOVE, 0, MAKELPARAM(rcSplit.left + 3, rcSplit.top + 3));
-    SendMessage(htb, WM_TIMER, 1, 0);
+    SendMessageA(htb, WM_MOUSEMOVE, 0, MAKELPARAM(rcSplit.left + 3, rcSplit.top + 3));
+    SendMessageA(htb, WM_TIMER, 1, 0);
     CHECK(IsWindowVisible(hwndTip) && GetWindowRect(hwndTip, &rcTip));
     rc = rcSplit; MapWindowPoints(htb, NULL, (POINT *)&rc, 2);
     CHECK(rcTip.left == rc.left && rcTip.top == rc.bottom + 2 && GetFocus() == hwndFocus);
@@ -195,21 +195,21 @@ int main(void) {
         CHECK(SDL_GetWindowFlags(hwndTip->lpWindow.get()) & SDL_WINDOW_TOOLTIP);
         CHECK(SDL_GetWindowParent(hwndTip->lpWindow.get()) == hwnd->lpWindow.get());
     }
-    SendMessage(htb, TB_SETHOTITEM, 3, 0);
-    CHECK(SendMessage(htb, TB_GETHOTITEM, 0, 0) == 3);
+    SendMessageA(htb, TB_SETHOTITEM, 3, 0);
+    CHECK(SendMessageA(htb, TB_GETHOTITEM, 0, 0) == 3);
     c = cDrop;
-    SendMessage(htb, WM_KEYDOWN, VK_DOWN, 0);
+    SendMessageA(htb, WM_KEYDOWN, VK_DOWN, 0);
     CHECK(cDrop == c + 1 && idDrop == 103);
 #endif
-    CHECK(SendMessage(htb, TB_HIDEBUTTON, 105, TRUE) && SendMessage(htb, TB_ISBUTTONHIDDEN, 105, 0));
-    CHECK(SendMessage(htb, TB_DELETEBUTTON, 5, 0) && SendMessage(htb, TB_BUTTONCOUNT, 0, 0) == 5);
+    CHECK(SendMessageA(htb, TB_HIDEBUTTON, 105, TRUE) && SendMessageA(htb, TB_ISBUTTONHIDDEN, 105, 0));
+    CHECK(SendMessageA(htb, TB_DELETEBUTTON, 5, 0) && SendMessageA(htb, TB_BUTTONCOUNT, 0, 0) == 5);
     rgbtn[5].idCommand = 200;
-    CHECK(SendMessage(htb, TB_INSERTBUTTON, 5, (LPARAM)&rgbtn[5]));
-    CHECK(SendMessage(htb, TB_COMMANDTOINDEX, 200, 0) == 5);
+    CHECK(SendMessageA(htb, TB_INSERTBUTTON, 5, (LPARAM)&rgbtn[5]));
+    CHECK(SendMessageA(htb, TB_COMMANDTOINDEX, 200, 0) == 5);
     fDestroy = TRUE;
     Click(htb, rcWhole.left + 3, rcWhole.top + 3);
     CHECK(!IsWindow(htb));
-    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
+    while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
     CHECK(DestroyWindow(hwnd));
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
     StarsCompatShutdown();

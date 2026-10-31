@@ -10,7 +10,7 @@
 #include "native.h"
 #endif
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow);
+namespace ui { int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow); }
 
 static int ICompatMain(int argc, char **argv) {
     char szCmdLine[1024];
@@ -52,7 +52,7 @@ static int ICompatMain(int argc, char **argv) {
             return 1;
         }
     }
-    hInstance = GetModuleHandleA(NULL);
+    hInstance = win32::GetModuleHandleA(NULL);
     if (!hInstance) {
         fprintf(stderr, "stars-sdl: cannot initialize resource module: %s\n", SDL_GetError());
         return 1;
@@ -62,7 +62,7 @@ static int ICompatMain(int argc, char **argv) {
         StarsCompatProcessExit(); SDL_Quit();
         return 1;
     }
-    nResult = WinMain(hInstance, NULL, szCmdLine, SW_SHOWNORMAL);
+    nResult = ui::WinMain(hInstance, NULL, szCmdLine, SW_SHOWNORMAL);
     StarsCompatProcessExit();
     SDL_Quit();
     return nResult;

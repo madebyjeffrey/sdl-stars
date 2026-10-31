@@ -27,7 +27,7 @@ static LRESULT CALLBACK PositionProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         lp = (POSITIONTEST*)(lpcs->lpCreateParams);
         SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)lp);
     }
-    if (!lp) return DefWindowProc(hwnd, msg, w, l);
+    if (!lp) return DefWindowProcA(hwnd, msg, w, l);
     switch (msg) {
     case WM_WINDOWPOSCHANGING:
         lpwp = (WINDOWPOS *)l;
@@ -37,7 +37,7 @@ static LRESULT CALLBACK PositionProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
             lpwp->flags &= ~(SWP_NOMOVE | SWP_NOSIZE);
         }
         if (lp->fDestroyChanging) DestroyWindow(hwnd);
-        return lp->fMinmax ? DefWindowProc(hwnd, msg, w, l) : 0;
+        return lp->fMinmax ? DefWindowProcA(hwnd, msg, w, l) : 0;
     case WM_WINDOWPOSCHANGED:
         lp->cChanged++; lp->wpChanged = *(WINDOWPOS *)l;
         if (lp->fDestroyChanged) { DestroyWindow(hwnd); return 0; }
@@ -46,7 +46,7 @@ static LRESULT CALLBACK PositionProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
             SetWindowPos(hwnd, NULL, 80, 90, 0, 0, flagsQuiet | SWP_NOSIZE);
         }
         if (lp->fSuppress) return 0;
-        return DefWindowProc(hwnd, msg, w, l);
+        return DefWindowProcA(hwnd, msg, w, l);
     case WM_GETMINMAXINFO:
         if (lp->fMinmax) {
             MINMAXINFO *lpmmi = (MINMAXINFO *)l;
@@ -55,17 +55,17 @@ static LRESULT CALLBACK PositionProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
             lpmmi->ptMaxTrackSize = (POINT){240, 250};
             return 0;
         }
-        return DefWindowProc(hwnd, msg, w, l);
+        return DefWindowProcA(hwnd, msg, w, l);
     case WM_MOVE: lp->cMove++; return 0;
     case WM_SIZE: lp->cSize++; return 0;
     case WM_SHOWWINDOW: lp->cShow++; return 0;
-    default: return DefWindowProc(hwnd, msg, w, l);
+    default: return DefWindowProcA(hwnd, msg, w, l);
     }
 }
 
 static void Drain(void) {
-    MSG msg;
-    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
+    APPMSG msg;
+    while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
 }
 
 static int TestRect(HWND hwnd, HWND hwndParent, int x, int y, int dx, int dy) {
@@ -247,7 +247,7 @@ int main(void) {
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
     {
         SDL_Event event = {0};
-        MSG msg;
+        APPMSG msg;
         HDC hdc;
         CHECK(SetWindowPos(hwndOther, NULL, 90, 100, 0, 0, flagsQuiet));
         CHECK(GetClientRect(hwndOther, &rc) && rc.right == 0 && rc.bottom == 0);
@@ -255,17 +255,17 @@ int main(void) {
         event.type = SDL_EVENT_WINDOW_RESIZED;
         event.window.windowID = hwndOther->id; event.window.data1 = 1; event.window.data2 = 1;
         CompatRouteEvent(&event);
-        CHECK(PeekMessage(&msg, hwndOther, WM_SIZE, WM_SIZE, PM_REMOVE));
+        CHECK(PeekMessageA(&msg, hwndOther, WM_SIZE, WM_SIZE, PM_REMOVE));
         CHECK(LOWORD(msg.lParam) == 0 && HIWORD(msg.lParam) == 0);
         event.window.data1 = 70; event.window.data2 = 80; /* An older queued physical resize. */
         CompatRouteEvent(&event);
-        CHECK(PeekMessage(&msg, hwndOther, WM_SIZE, WM_SIZE, PM_REMOVE));
+        CHECK(PeekMessageA(&msg, hwndOther, WM_SIZE, WM_SIZE, PM_REMOVE));
         CHECK(LOWORD(msg.lParam) == 0 && HIWORD(msg.lParam) == 0);
         hdc = GetDC(hwndOther);
         CHECK(hdc && GetPixel(hdc, 0, 0) == CLR_INVALID && ReleaseDC(hwndOther, hdc));
         event.type = SDL_EVENT_WINDOW_MOVED; event.window.data1 = -12; event.window.data2 = -34;
         CompatRouteEvent(&event);
-        CHECK(PeekMessage(&msg, hwndOther, WM_MOVE, WM_MOVE, PM_REMOVE));
+        CHECK(PeekMessageA(&msg, hwndOther, WM_MOVE, WM_MOVE, PM_REMOVE));
         CHECK((int16_t)LOWORD(msg.lParam) == -12 && (int16_t)HIWORD(msg.lParam) == -34);
     }
 #endif

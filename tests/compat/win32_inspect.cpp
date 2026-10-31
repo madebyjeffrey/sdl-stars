@@ -25,13 +25,13 @@ static INT_PTR CALLBACK DialogProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     }
     if (!fFound) cDialogErrors++;
     StarsCompatFreeHierarchy(&snap); cDialogs++;
-    EndDialog(hwnd, 2);
+    win32::EndDialog(hwnd, 2);
     return TRUE;
 }
 static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     cMessages++;
     if (msg == WM_COMMAND && LOWORD(w) == 7 && HIWORD(w) == BN_CLICKED) cCommands++;
-    return DefWindowProc(hwnd, msg, w, l);
+    return win32::DefWindowProcA(hwnd, msg, w, l);
 }
 static const STARSCOMPATWINDOW *LpItem(const STARSCOMPATSNAPSHOT *lpsnap, uint64_t id) {
     size_t i;
@@ -90,21 +90,21 @@ int main(int argc, char **argv) {
 
     CHECK(TestStyles() == 0);
     wc.lpfnWndProc = WndProc; wc.lpszClassName = "InspectTest";
-    CHECK(RegisterClass(&wc));
-    hwnd = CreateWindow(wc.lpszClassName, "Frame \"quote\" \\ \342\202\254\r\n", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+    CHECK(win32::RegisterClass(&wc));
+    hwnd = win32::CreateWindow(wc.lpszClassName, "Frame \"quote\" \\ \342\202\254\r\n", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
                         10, 20, 320, 240, NULL, NULL, NULL, NULL);
-    hwndChild = CreateWindow("Button", "Action", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+    hwndChild = win32::CreateWindow("Button", "Action", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
                              4, 5, 90, 30, hwnd, (HMENU)(INT_PTR)7, NULL, NULL);
-    hwndNested = CreateWindow("Edit", "secret", WS_CHILD | WS_VISIBLE | ES_PASSWORD,
+    hwndNested = win32::CreateWindow("Edit", "secret", WS_CHILD | WS_VISIBLE | ES_PASSWORD,
                               1, 2, 50, 20, hwndChild, (HMENU)(INT_PTR)8, NULL, NULL);
-    hwndHidden = CreateWindow("Static", "Hidden", WS_CHILD | WS_DISABLED, 0, 0, 30, 20,
+    hwndHidden = win32::CreateWindow("Static", "Hidden", WS_CHILD | WS_DISABLED, 0, 0, 30, 20,
                               hwnd, (HMENU)(INT_PTR)9, NULL, NULL);
-    hwndOwned = CreateWindow(wc.lpszClassName, "Owned", WS_POPUP | WS_VISIBLE, 20, 20, 60, 50, hwnd, NULL, NULL, NULL);
+    hwndOwned = win32::CreateWindow(wc.lpszClassName, "Owned", WS_POPUP | WS_VISIBLE, 20, 20, 60, 50, hwnd, NULL, NULL, NULL);
     CHECK(hwnd && hwndChild && hwndNested && hwndHidden && hwndOwned);
     CHECK(!strcmp(SDL_GetWindowTitle(LpCompatWindow(hwnd)->lpWindow.get()), "Frame \"quote\" \\ \342\202\254\r\n"));
     id = StarsCompatWindowId(hwnd); idChild = StarsCompatWindowId(hwndChild); idNested = StarsCompatWindowId(hwndNested);
     CHECK(id != 0 && idChild > id && idNested > idChild);
-    SetFocus(hwndChild); SetCapture(hwndChild);
+    win32::SetFocus(hwndChild); win32::SetCapture(hwndChild);
     cBefore = cMessages;
     CHECK(StarsCompatCaptureHierarchy(&snap) && snap.cWindow == 5);
     CHECK(cMessages == cBefore);
@@ -125,10 +125,10 @@ int main(int argc, char **argv) {
     CHECK(lp && lp->idParent == 0 && lp->idOwner == id);
     lpthread = SDL_CreateThread(Worker, "inspection-thread-contract", &id);
     CHECK(lpthread); SDL_WaitThread(lpthread, &iStatus); CHECK(iStatus == 0);
-    hwndDuplicate = CreateWindow("Static", "Duplicate", WS_CHILD, 0, 0, 1, 1, hwnd, (HMENU)(INT_PTR)7, NULL, NULL);
+    hwndDuplicate = win32::CreateWindow("Static", "Duplicate", WS_CHILD, 0, 0, 1, 1, hwnd, (HMENU)(INT_PTR)7, NULL, NULL);
     CHECK(hwndDuplicate && StarsCompatFindControl(id, 7, NULL) == 0);
     CHECK(StarsCompatFindControl(id, 7, "Button") == idChild);
-    CHECK(DestroyWindow(hwndDuplicate));
+    CHECK(win32::DestroyWindow(hwndDuplicate));
     // A JSON consumer must preserve IDs above JavaScript's exact-integer range.
     for (i = 0; i < snap.cWindow; i++) if (snap.rgWindow[i].id == StarsCompatWindowId(hwndOwned))
         snap.rgWindow[i].id = UINT64_C(9007199254740993);
@@ -144,38 +144,38 @@ int main(int argc, char **argv) {
     CHECK(strstr(sz, "\\\"quote\\\"") && strstr(sz, "\\\\") && strstr(sz, "\\u000d\\u000a"));
     CHECK(strstr(sz, "\342\202\254") && strstr(sz, "[password]") && !strstr(sz, "secret"));
     if (argc == 2) { lpfile = PfNativeOpen(argv[1], "wb"); CHECK(lpfile && StarsCompatWriteHierarchy(&snap, lpfile)); CHECK(ICloseNativeFile(lpfile) == 0); }
-    ReleaseCapture();
-    hwndViewer = StarsCompatShowInspector(); CHECK(hwndViewer && IsWindowVisible(hwndViewer));
+    win32::ReleaseCapture();
+    hwndViewer = StarsCompatShowInspector(); CHECK(hwndViewer && win32::IsWindowVisible(hwndViewer));
     idViewer = StarsCompatWindowId(hwndViewer);
     CHECK(StarsCompatShowInspector() == hwndViewer);
-    CHECK(GetDlgItem(hwndViewer, 1) && GetDlgItem(hwndViewer, 2) && GetDlgItem(hwndViewer, 3));
-    CHECK(SendMessage(GetDlgItem(hwndViewer, 1), LB_GETCOUNT, 0, 0) == 10);
-    SendMessage(GetDlgItem(hwndViewer, 1), LB_SETCURSEL, 1, 0);
-    SendMessage(hwndViewer, WM_COMMAND, MAKEWPARAM(1, LBN_SELCHANGE), (LPARAM)GetDlgItem(hwndViewer, 1));
-    CHECK(GetWindowText(GetDlgItem(hwndViewer, 2), sz, sizeof(sz)) && strstr(sz, "Text:\r\nAction"));
+    CHECK(win32::GetDlgItem(hwndViewer, 1) && win32::GetDlgItem(hwndViewer, 2) && win32::GetDlgItem(hwndViewer, 3));
+    CHECK(win32::SendMessageA(win32::GetDlgItem(hwndViewer, 1), LB_GETCOUNT, 0, 0) == 10);
+    win32::SendMessageA(win32::GetDlgItem(hwndViewer, 1), LB_SETCURSEL, 1, 0);
+    win32::SendMessageA(hwndViewer, WM_COMMAND, MAKEWPARAM(1, LBN_SELCHANGE), (LPARAM)win32::GetDlgItem(hwndViewer, 1));
+    CHECK(win32::GetWindowText(win32::GetDlgItem(hwndViewer, 2), sz, sizeof(sz)) && strstr(sz, "Text:\r\nAction"));
     CHECK(strstr(sz, "WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON") && strstr(sz, "Control kind: 1 (button)"));
-    CHECK(SetWindowText(hwnd, "Caf\303\251"));
+    CHECK(win32::SetWindowTextA(hwnd, "Caf\303\251"));
     CHECK(!strcmp(SDL_GetWindowTitle(LpCompatWindow(hwnd)->lpWindow.get()), "Caf\303\251"));
-    CHECK(GetWindowText(hwnd, sz, sizeof(sz)) == 5 && !strcmp(sz, "Caf\303\251"));
-    SetWindowText(hwndChild, "Updated");
-    SendMessage(GetDlgItem(hwndViewer, 3), BM_CLICK, 0, 0);
-    SendMessage(GetDlgItem(hwndViewer, 1), LB_SETCURSEL, 1, 0);
-    SendMessage(hwndViewer, WM_COMMAND, MAKEWPARAM(1, LBN_SELCHANGE), (LPARAM)GetDlgItem(hwndViewer, 1));
-    CHECK(GetWindowText(GetDlgItem(hwndViewer, 2), sz, sizeof(sz)) && strstr(sz, "Text:\r\nUpdated"));
-    UpdateWindow(hwndViewer);
-    for (hwndPaint = GetWindow(hwndViewer, GW_CHILD); hwndPaint; hwndPaint = GetWindow(hwndPaint, GW_HWNDNEXT)) UpdateWindow(hwndPaint);
+    CHECK(win32::GetWindowText(hwnd, sz, sizeof(sz)) == 5 && !strcmp(sz, "Caf\303\251"));
+    win32::SetWindowTextA(hwndChild, "Updated");
+    win32::SendMessageA(win32::GetDlgItem(hwndViewer, 3), BM_CLICK, 0, 0);
+    win32::SendMessageA(win32::GetDlgItem(hwndViewer, 1), LB_SETCURSEL, 1, 0);
+    win32::SendMessageA(hwndViewer, WM_COMMAND, MAKEWPARAM(1, LBN_SELCHANGE), (LPARAM)win32::GetDlgItem(hwndViewer, 1));
+    CHECK(win32::GetWindowText(win32::GetDlgItem(hwndViewer, 2), sz, sizeof(sz)) && strstr(sz, "Text:\r\nUpdated"));
+    win32::UpdateWindow(hwndViewer);
+    for (hwndPaint = win32::GetWindow(hwndViewer, GW_CHILD); hwndPaint; hwndPaint = win32::GetWindow(hwndPaint, GW_HWNDNEXT)) win32::UpdateWindow(hwndPaint);
     CHECK(FCompatPresent(hwndViewer) && LpCompatWindow(hwndViewer)->lpComposite.get());
     CHECK(SDL_ReadSurfacePixel(LpCompatWindow(hwndViewer)->lpComposite.get(), 0, 0, &r, &g, &b, &a));
-    CHECK(RGB(r, g, b) == GetSysColor(COLOR_BTNFACE));
-    CHECK(DestroyWindow(hwndViewer) && !StarsCompatResolveWindow(idViewer));
+    CHECK(RGB(r, g, b) == win32::GetSysColor(COLOR_BTNFACE));
+    CHECK(win32::DestroyWindow(hwndViewer) && !StarsCompatResolveWindow(idViewer));
     // The diagnostic chord must not forward the game's F12 turn-generation shortcut.
     event.type = SDL_EVENT_KEY_DOWN; event.key.windowID = LpCompatWindow(hwnd)->id;
     event.key.scancode = SDL_SCANCODE_F12; event.key.mod = SDL_KMOD_CTRL | SDL_KMOD_SHIFT;
     CompatRouteEvent(&event);
     CHECK(StarsCompatShowInspector());
-    SendMessage(StarsCompatResolveWindow(StarsCompatFindControl(id, 7, "Button")), BM_CLICK, 0, 0);
+    win32::SendMessageA(StarsCompatResolveWindow(StarsCompatFindControl(id, 7, "Button")), BM_CLICK, 0, 0);
     CHECK(cCommands == 1);
-    CHECK(DestroyWindow(hwndChild));
+    CHECK(win32::DestroyWindow(hwndChild));
     CHECK(!StarsCompatResolveWindow(idChild) && !StarsCompatResolveWindow(idNested));
     CHECK(StarsCompatCaptureHierarchy(&snapAfter));
     CHECK(!LpItem(&snapAfter, idChild) && !LpItem(&snapAfter, idNested));
@@ -183,8 +183,8 @@ int main(int argc, char **argv) {
     CHECK(!strcmp(LpItem(&snap, idChild)->pszText, "Action"));
     StarsCompatProcessExit();
     CHECK(!StarsCompatResolveWindow(id));
-    CHECK(RegisterClass(&wc));
-    hwndNew = CreateWindow(wc.lpszClassName, "Restart", WS_OVERLAPPEDWINDOW, 0, 0, 100, 100, NULL, NULL, NULL, NULL);
+    CHECK(win32::RegisterClass(&wc));
+    hwndNew = win32::CreateWindow(wc.lpszClassName, "Restart", WS_OVERLAPPEDWINDOW, 0, 0, 100, 100, NULL, NULL, NULL, NULL);
     CHECK(hwndNew && StarsCompatWindowId(hwndNew) > idViewer && !StarsCompatResolveWindow(id));
     CHECK(StarsCompatShowInspector());
     StarsCompatShutdown();

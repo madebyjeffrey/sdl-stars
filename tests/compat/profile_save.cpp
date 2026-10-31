@@ -46,21 +46,21 @@ int main(void){
     io.pfnFlush=TestFlush;io.pfnSync=TestSync;io.pfnClose=TestClose;
     io.pfnRename=TestRename;io.pfnUnlink=TestUnlink;
     for(failure=Ok;failure<=Rename;failure++){
-        SetLastError(77);errno=EIO;published=unlinked=opened=closed=syncCalled=renameCalled=0;used=0;cleanupOK=1;
+        win32::SetLastError(77);errno=EIO;published=unlinked=opened=closed=syncCalled=renameCalled=0;used=0;cleanupOK=1;
         ret=FSaveProfile(&first,"unused",io);
         CHECK(ret==(failure==Ok) && published==(failure==Ok));
         CHECK(unlinked==(failure!=Ok && failure!=Allocate && failure!=Temporary));
-        CHECK(GetLastError()==((failure==Ok || failure==Bom)?77:failure==Allocate?8:29));
+        CHECK(win32::GetLastError()==((failure==Ok || failure==Bom)?77:failure==Allocate?8:29));
         if(failure==Ok)CHECK(used==7 && !memcmp(output,"\xef\xbb\xbf" "A\nB\n",7));
         if(failure==Flush)CHECK(!syncCalled && !renameCalled);
         if(failure==Sync || failure==Close)CHECK(!renameCalled);
         if(failure==Mode || failure==Bom || failure==Rows || failure==Newline)CHECK(closed);
     }
-    failure=Sync;cleanupOK=0;SetLastError(77);errno=EIO;unlinked=published=used=0;
+    failure=Sync;cleanupOK=0;win32::SetLastError(77);errno=EIO;unlinked=published=used=0;
     CHECK(!FSaveProfile(&first,"unused",io) && unlinked==1 && !published);
     printf("S02 linked save-control witnesses: %d passed\n",checks);
 
-    CHECK(GetLastError() == ERROR_WRITE_FAULT);
+    CHECK(win32::GetLastError() == ERROR_WRITE_FAULT);
     CHECK(ProfileIO().pfnWrite == CWriteNative);
     {
         PROFILEIOSCOPE outer(io);
@@ -73,13 +73,13 @@ int main(void){
             CHECK(ProfileIO().pfnWrite == CWriteNative);
         }
         CHECK(ProfileIO().pfnWrite == TestWrite);
-        SetLastError(77);
+        win32::SetLastError(77);
         std::thread worker([&] {
-            fThreadDefault = ProfileIO().pfnWrite == CWriteNative && GetLastError() == 0;
-            SetLastError(91);
+            fThreadDefault = ProfileIO().pfnWrite == CWriteNative && win32::GetLastError() == 0;
+            win32::SetLastError(91);
         });
         worker.join();
-        CHECK(fThreadDefault && GetLastError() == 77);
+        CHECK(fThreadDefault && win32::GetLastError() == 77);
 
         failure=Ok;cleanupOK=1;published=unlinked=closed=0;used=0;
         fNestedFailure = true;

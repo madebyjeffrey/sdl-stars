@@ -71,21 +71,21 @@ static BOOL FLoadProfile(const char *pszPath, COMPATPROFILE **lplp) {
     *lplp = NULL;
     fp = io.pfnOpen(pszPath, "rb");
     if (!fp) {
-        SetLastError(DwProfileError());
+        win32::SetLastError(DwProfileError());
         return errno == ENOENT;
     }
     while ((cbLine = io.pfnReadLine(&sz, &cb, fp)) >= 0) {
         cbTotal += (size_t)cbLine;
         if (cbTotal > 8 * 1024 * 1024 || !FUtf8Valid(sz, (size_t)cbLine)) {
-            SetLastError(ERROR_BAD_FORMAT); goto LReturn;
+            win32::SetLastError(ERROR_BAD_FORMAT); goto LReturn;
         }
         if (cbTotal == (size_t)cbLine && cbLine >= 3 && !memcmp(sz, "\xef\xbb\xbf", 3))
             memmove(sz, sz + 3, (size_t)cbLine - 2);
         *lplpNext = LpProfileLine(sz);
-        if (!*lplpNext) { SetLastError(ERROR_NOT_ENOUGH_MEMORY); goto LReturn; }
+        if (!*lplpNext) { win32::SetLastError(ERROR_NOT_ENOUGH_MEMORY); goto LReturn; }
         lplpNext = &(*lplpNext)->lpNext;
     }
-    if (FNativeStreamError(fp)) { SetLastError(ERROR_READ_FAULT); goto LReturn; }
+    if (FNativeStreamError(fp)) { win32::SetLastError(ERROR_READ_FAULT); goto LReturn; }
     fRet = TRUE;
 LReturn:
     return fRet;
@@ -119,7 +119,7 @@ static char *SzProfilePath(LPCSTR pszFile) {
     char *sz;
     size_t cb;
 
-    if (!pszFile || !*pszFile) { SetLastError(ERROR_INVALID_PARAMETER); return NULL; }
+    if (!pszFile || !*pszFile) { win32::SetLastError(ERROR_INVALID_PARAMETER); return NULL; }
     // Explicit paths remain literal. Bare settings names use the user config directory.
     if (strchr(pszFile, '/')
 #ifdef _WIN32
@@ -158,8 +158,8 @@ static char *SzProfilePath(LPCSTR pszFile) {
     }
 #endif
 LReturn:
-    if (!sz) SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-    else if (!FUtf8Valid(sz, strlen(sz))) { free(sz); sz = NULL; SetLastError(ERROR_INVALID_PARAMETER); }
+    if (!sz) win32::SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+    else if (!FUtf8Valid(sz, strlen(sz))) { free(sz); sz = NULL; win32::SetLastError(ERROR_INVALID_PARAMETER); }
     return sz;
 }
 
@@ -181,12 +181,12 @@ static BOOL FMakeProfileDir(char *szPath) {
         *psz = 0;
         err = ICreateNativeDirectory(szPath, 0700);
         *psz = ch;
-        if (err != 0 && errno != EEXIST) { SetLastError(DwProfileError()); return FALSE; }
+        if (err != 0 && errno != EEXIST) { win32::SetLastError(DwProfileError()); return FALSE; }
     }
     return TRUE;
 }
 
-DWORD WINAPI GetPrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR pszDefault,
+DWORD WINAPI win32::GetPrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR pszDefault,
                                     LPSTR szResult, DWORD cchMax, LPCSTR pszFile) {
     char *szPath = NULL;
     COMPATPROFILE *lpAll = NULL, *lp, *lpKey;
@@ -241,7 +241,7 @@ DWORD WINAPI GetPrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR p
     return (DWORD)cchOut;
 }
 
-UINT WINAPI GetPrivateProfileIntA(LPCSTR pszSection, LPCSTR pszKey, INT nDefault, LPCSTR pszFile) {
+UINT WINAPI win32::GetPrivateProfileIntA(LPCSTR pszSection, LPCSTR pszKey, INT nDefault, LPCSTR pszFile) {
     char sz[128], *psz = sz;
     UINT u = 0, digit, radix = 10;
     BOOL fNegative = FALSE;
@@ -262,7 +262,7 @@ UINT WINAPI GetPrivateProfileIntA(LPCSTR pszSection, LPCSTR pszKey, INT nDefault
     return fNegative ? 0u - u : u;
 }
 
-BOOL WINAPI WritePrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR pszValue, LPCSTR pszFile) {
+BOOL WINAPI win32::WritePrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR pszValue, LPCSTR pszFile) {
     char *szPath = NULL, *szLine = NULL;
     COMPATPROFILE *lpAll = NULL, *lpSection, *lpKey, *lpNew, *lp;
     COMPATPROFILE **lplp;
@@ -277,7 +277,7 @@ BOOL WINAPI WritePrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR 
         (pszValue && !FUtf8Valid(pszValue, strlen(pszValue))) || !*pszSection || strchr(pszSection, '\n') || strchr(pszSection, '\r') ||
         strchr(pszSection, ']') || (pszKey && (strchr(pszKey, '=') || strchr(pszKey, '\n') || strchr(pszKey, '\r'))) ||
         (pszValue && (strchr(pszValue, '\n') || strchr(pszValue, '\r')))) {
-        SetLastError(ERROR_INVALID_PARAMETER); return FALSE;
+        win32::SetLastError(ERROR_INVALID_PARAMETER); return FALSE;
     }
     szPath = SzProfilePath(pszFile);
     if (!szPath) return FALSE;
@@ -319,7 +319,7 @@ BOOL WINAPI WritePrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR 
     fRet = FSaveProfile(lpAll, szPath);
     goto LReturn;
 LMemory:
-    SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+    win32::SetLastError(ERROR_NOT_ENOUGH_MEMORY);
 LReturn:
     releaseProfile.Close();
     lockProfile.unlock();

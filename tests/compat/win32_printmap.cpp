@@ -36,17 +36,17 @@ static void CALLBACK ChoosePages(HWND hwnd, UINT msg, UINT_PTR id, DWORD ticks) 
     HWND hwndDialog, hwndEdit;
     char sz[2];
     (void)hwnd; (void)msg; (void)id; (void)ticks;
-    for (hwndDialog = GetWindow(hwndFrame, GW_HWNDFIRST); hwndDialog; hwndDialog = GetWindow(hwndDialog, GW_HWNDNEXT)) {
-        hwndEdit = GetDlgItem(hwndDialog, IDC_PRINT_MAP_PAGES_X);
-        if (!hwndEdit || !GetDlgItem(hwndDialog, IDC_PRINT_MAP_PAGES_Y)) continue;
-        sz[0] = '0' + cPageX; sz[1] = 0; FUiSetWindowText(hwndEdit, sz);
-        sz[0] = '0' + cPageY; FUiSetWindowText(GetDlgItem(hwndDialog, IDC_PRINT_MAP_PAGES_Y), sz);
-        PostMessage(hwndDialog, WM_COMMAND, fCancel ? IDCANCEL : IDOK, 0);
+    for (hwndDialog = win32::GetWindow(hwndFrame, GW_HWNDFIRST); hwndDialog; hwndDialog = win32::GetWindow(hwndDialog, GW_HWNDNEXT)) {
+        hwndEdit = win32::GetDlgItem(hwndDialog, IDC_PRINT_MAP_PAGES_X);
+        if (!hwndEdit || !win32::GetDlgItem(hwndDialog, IDC_PRINT_MAP_PAGES_Y)) continue;
+        sz[0] = '0' + cPageX; sz[1] = 0; ui::SetWindowText(hwndEdit, sz);
+        sz[0] = '0' + cPageY; ui::SetWindowText(win32::GetDlgItem(hwndDialog, IDC_PRINT_MAP_PAGES_Y), sz);
+        win32::PostMessage(hwndDialog, WM_COMMAND, fCancel ? IDCANCEL : IDOK, 0);
         return;
     }
 }
 static BOOL FTextViewContracts(void) {
-    NATIVEOWNER<std::remove_pointer_t<HDC>, DeleteDC> hdc(CreateCompatibleDC(NULL));
+    NATIVEOWNER<std::remove_pointer_t<HDC>, win32::DeleteDC> hdc(win32::CreateCompatibleDC(NULL));
     char sz[sizeof(szLastStrGet)], szExpected[sizeof(szLastStrGet)];
     const char *psz = sz;
 
@@ -70,8 +70,8 @@ static void CALLBACK PrintGame(HWND hwnd, UINT msg, UINT_PTR id, DWORD ticks) {
     FILE *lpFile;
     int i;
     (void)hwnd; (void)msg; (void)ticks;
-    if (fRunning || !IsWindow(hwndScanner) || idPlayer == iplrNone) return;
-    fRunning = TRUE; KillTimer(NULL, id);
+    if (fRunning || !win32::IsWindow(hwndScanner) || idPlayer == iplrNone) return;
+    fRunning = TRUE; win32::KillTimer(NULL, id);
     if (!pszOutput || !FTextViewContracts()) goto done;
     gameSav = game;
     snprintf(szManifest, sizeof(szManifest), "%s/map.json", pszOutput);
@@ -79,27 +79,27 @@ static void CALLBACK PrintGame(HWND hwnd, UINT msg, UINT_PTR id, DWORD ticks) {
     fprintf(lpFile, "{\"galaxy\":%d,\"inverse\":%d,\"planets\":[", dGal, dGalInv);
     for (i = 0; i < game.cPlanMax; i++) fprintf(lpFile, "%s[%d,%d]", i ? "," : "", rgptPlan[i].x, rgptPlan[i].y);
     fputs("]}\n", lpFile); fclose(lpFile);
-    idDialog = SetTimer(NULL, 0, 30, ChoosePages);
+    idDialog = win32::SetTimer(NULL, 0, 30, ChoosePages);
     if (!idDialog) goto done;
     grbitScan = static_cast<GrbitScan>(grbitScan | grbitScanPlanetNames);
     snprintf(szTarget, sizeof(szTarget), "%s/single.pdf", pszOutput); pszTarget = szTarget;
     SDL_setenv_unsafe("STARS_SDL_PRINT_FILE", szTarget, 1);
-    LUiSendMessage(hwndFrame, WM_COMMAND, IDM_FILE_PRINT_MAP, 0);
+    ui::SendMessage(hwndFrame, WM_COMMAND, IDM_FILE_PRINT_MAP, 0);
     if (cLaunch != 1 || cAlert != 0) goto done;
     cPageX = cPageY = 2;
     snprintf(szTarget, sizeof(szTarget), "%s/tiled.pdf", pszOutput);
     SDL_setenv_unsafe("STARS_SDL_PRINT_FILE", szTarget, 1);
-    LUiSendMessage(hwndFrame, WM_COMMAND, IDM_FILE_PRINT_MAP, 0);
+    ui::SendMessage(hwndFrame, WM_COMMAND, IDM_FILE_PRINT_MAP, 0);
     if (cLaunch != 2 || cAlert != 0) goto done;
     cPageX = cPageY = 1;
     SDL_setenv_unsafe("STARS_SDL_PRINT_PAPER", "a4", 1);
     SDL_setenv_unsafe("STARS_SDL_PRINT_ORIENTATION", "landscape", 1);
     snprintf(szTarget, sizeof(szTarget), "%s/a4.pdf", pszOutput);
     SDL_setenv_unsafe("STARS_SDL_PRINT_FILE", szTarget, 1);
-    LUiSendMessage(hwndFrame, WM_COMMAND, IDM_FILE_PRINT_MAP, 0);
+    ui::SendMessage(hwndFrame, WM_COMMAND, IDM_FILE_PRINT_MAP, 0);
     if (cLaunch != 3 || cAlert != 0) goto done;
     fCancel = TRUE;
-    LUiSendMessage(hwndFrame, WM_COMMAND, IDM_FILE_PRINT_MAP, 0);
+    ui::SendMessage(hwndFrame, WM_COMMAND, IDM_FILE_PRINT_MAP, 0);
     fPassed = cLaunch == 3 && cAlert == 0 && !memcmp(&game, &gameSav, sizeof(game));
     if (fPassed) {
         // Use the normal race serializer to prepare an unprotected predefined
@@ -112,13 +112,13 @@ static void CALLBACK PrintGame(HWND hwnd, UINT msg, UINT_PTR id, DWORD ticks) {
         }
     }
 done:
-    if (idDialog) KillTimer(NULL, idDialog);
+    if (idDialog) win32::KillTimer(NULL, idDialog);
     printf("Actual map printing: passed=%d launches=%d alerts=%d\n", fPassed, cLaunch, cAlert);
-    PostQuitMessage(fPassed ? 0 : 92);
+    win32::PostQuitMessage(fPassed ? 0 : 92);
 }
 int16_t StarsTest_InitInstance(int16_t nCmdShow) {
     int16_t fResult = InitInstance(nCmdShow);
-    if (fResult) idDriver = SetTimer(NULL, 0, 50, PrintGame);
+    if (fResult) idDriver = win32::SetTimer(NULL, 0, 50, PrintGame);
     return fResult && idDriver ? fResult : FALSE;
 }
 int main(int argc, char **argv) {
@@ -139,8 +139,8 @@ int main(int argc, char **argv) {
 
     if (argc != 2 || strlen(argv[1]) >= sizeof(szCommand)) return 2;
     strcpy(szCommand, argv[1]);
-    nResult = WinMain(GetModuleHandle(NULL), NULL, szCommand, SW_SHOWNORMAL);
-    if (idDriver) KillTimer(NULL, idDriver);
+    nResult = ui::WinMain(win32::GetModuleHandle(NULL), NULL, szCommand, SW_SHOWNORMAL);
+    if (idDriver) win32::KillTimer(NULL, idDriver);
     StarsCompatProcessExit(); SDL_Quit();
     return nResult == 0 && fPassed ? 0 : 1;
 }

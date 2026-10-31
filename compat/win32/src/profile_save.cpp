@@ -33,13 +33,13 @@ BOOL FSaveProfile(COMPATPROFILE *lp, const char *pszPath, const PROFILEIO &io) {
     });
 
     szTemp = (char *)io.pfnAllocate(strlen(pszPath) + 12);
-    if (!szTemp) { SetLastError(ERROR_NOT_ENOUGH_MEMORY); return FALSE; }
+    if (!szTemp) { win32::SetLastError(ERROR_NOT_ENOUGH_MEMORY); return FALSE; }
     snprintf(szTemp, strlen(pszPath) + 12, "%s.XXXXXX", pszPath);
     fp = io.pfnCreateTemp(szTemp);
-    if (!fp) { SetLastError(DwProfileError()); goto LReturn; }
+    if (!fp) { win32::SetLastError(DwProfileError()); goto LReturn; }
     fTemporary = TRUE;
     if (io.pfnCopyPermissions(fp, pszPath) != 0) {
-        SetLastError(DwProfileError()); io.pfnClose(std::exchange(fp, nullptr)); goto LReturn;
+        win32::SetLastError(DwProfileError()); io.pfnClose(std::exchange(fp, nullptr)); goto LReturn;
     }
     if (io.pfnWrite("\xef\xbb\xbf", 1, 3, fp) != 3) { io.pfnClose(std::exchange(fp, nullptr)); goto LReturn; }
     for (; lp; lp = lp->lpNext) {
@@ -48,9 +48,9 @@ BOOL FSaveProfile(COMPATPROFILE *lp, const char *pszPath, const PROFILEIO &io) {
             if (io.pfnPutChar('\n', fp) == EOF) break;
     }
     if (lp || io.pfnFlush(fp) != 0 || io.pfnSync(fp) != 0) {
-        SetLastError(DwProfileError()); io.pfnClose(std::exchange(fp, nullptr)); goto LReturn;
+        win32::SetLastError(DwProfileError()); io.pfnClose(std::exchange(fp, nullptr)); goto LReturn;
     }
-    if (io.pfnClose(std::exchange(fp, nullptr)) != 0 || io.pfnRename(szTemp, pszPath, TRUE, TRUE) != 0) { SetLastError(DwProfileError()); goto LReturn; }
+    if (io.pfnClose(std::exchange(fp, nullptr)) != 0 || io.pfnRename(szTemp, pszPath, TRUE, TRUE) != 0) { win32::SetLastError(DwProfileError()); goto LReturn; }
     fRet = TRUE;
 LReturn:
     return fRet;

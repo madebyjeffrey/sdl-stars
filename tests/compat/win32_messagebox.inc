@@ -46,7 +46,7 @@ static HWND HwndBox(void) {
 }
 static LRESULT CALLBACK OwnerProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     HWND hbox, hbutton, hbody, hscroll;
-    MSG message;
+    APPMSG message;
     char sz[64] = {0};
     int nested;
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
@@ -68,7 +68,7 @@ static LRESULT CALLBACK OwnerProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         stage++;
         hbutton = GetFocus();
         if (mode == 3 && stage == 1) { PostMessage(hbutton, WM_KEYDOWN, VK_ESCAPE, 0); return 0; }
-        if (mode == 4) { SendMessage(hbox, WM_CLOSE, 0, 0); EXPECT(IsWindow(hbox)); }
+        if (mode == 4) { SendMessageA(hbox, WM_CLOSE, 0, 0); EXPECT(IsWindow(hbox)); }
         if (mode == 6) {
             mode = 0; stage = 0; idChoose = IDOK; idDefault = IDOK; hwndExpectedOwner = hbox;
             nested = MessageBox(hbox, "Inner prompt", "Stars Message Contract", MB_OK);
@@ -81,10 +81,10 @@ static LRESULT CALLBACK OwnerProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         if (mode == 9) {
             hbody = GetDlgItem(hbox, 0xffff); hscroll = GetDlgItem(hbody, 1);
             EXPECT(hbody && hscroll);
-            SendMessage(hbody, WM_VSCROLL, SB_BOTTOM, (LPARAM)hscroll);
+            SendMessageA(hbody, WM_VSCROLL, SB_BOTTOM, (LPARAM)hscroll);
             EXPECT(GetScrollPos(hscroll, SB_CTL) > 0);
-            SendMessage(hbody, WM_KEYDOWN, VK_HOME, 0); EXPECT(GetScrollPos(hscroll, SB_CTL) == 0);
-            SendMessage(hbody, WM_KEYDOWN, VK_NEXT, 0); EXPECT(GetScrollPos(hscroll, SB_CTL) > 0);
+            SendMessageA(hbody, WM_KEYDOWN, VK_HOME, 0); EXPECT(GetScrollPos(hscroll, SB_CTL) == 0);
+            SendMessageA(hbody, WM_KEYDOWN, VK_NEXT, 0); EXPECT(GetScrollPos(hscroll, SB_CTL) > 0);
             UpdateWindow(hbody);
         }
 #else
@@ -94,15 +94,15 @@ static LRESULT CALLBACK OwnerProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
             if (mode == 5) PostMessage(hbutton, WM_KEYDOWN, VK_TAB, 0);
             PostMessage(hbutton, WM_KEYDOWN, mode == 2 ? VK_ESCAPE : VK_RETURN, 0);
         } else if (mode == 7) {
-            message = (MSG){0}; message.hwnd = GetFocus(); message.message = WM_KEYDOWN; message.wParam = VK_RETURN;
-            EXPECT(IsDialogMessage(hbox, &message));
+            message = (APPMSG){0}; message.hwnd = GetFocus(); message.message = WM_KEYDOWN; message.wParam = VK_RETURN;
+            EXPECT(IsDialogMessageA(hbox, &message));
         } else if (mode == 8) {
             GetWindowText(GetDlgItem(hbox, idChoose), sz, sizeof(sz));
             PostMessage(hbox, WM_SYSCHAR, 'n', 0);
-        } else SendMessage(hbox, WM_COMMAND, MAKEWPARAM(idChoose, BN_CLICKED), (LPARAM)GetDlgItem(hbox, idChoose));
+        } else SendMessageA(hbox, WM_COMMAND, MAKEWPARAM(idChoose, BN_CLICKED), (LPARAM)GetDlgItem(hbox, idChoose));
         return 0;
     }
-    return DefWindowProc(hwnd, msg, w, l);
+    return DefWindowProcA(hwnd, msg, w, l);
 }
 static int IdRun(UINT type, int id, int idDef, int md, BOOL task) {
     int result;
@@ -119,7 +119,7 @@ static int IdRun(UINT type, int id, int idDef, int md, BOOL task) {
 int main(int argc, char **argv) {
     WNDCLASS wc = {0};
     HWND hwndEdit;
-    MSG msg;
+    APPMSG msg;
     int before;
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
     char szLong[8192];
@@ -154,7 +154,7 @@ int main(int argc, char **argv) {
     hwndDisabled = CreateWindow(wc.lpszClassName, "Disabled", WS_OVERLAPPEDWINDOW | WS_VISIBLE | WS_DISABLED, 120, 120, 250, 180, NULL, NULL, NULL, NULL);
     CHECK(hwndOwner && hwndOther && hwndDisabled);
     hwndEdit = CreateWindow("Edit", "", WS_CHILD | WS_VISIBLE | WS_TABSTOP, 4, 4, 100, 22, hwndOwner, (HMENU)20, NULL, NULL); CHECK(hwndEdit);
-    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) { TranslateMessage(&msg); DispatchMessage(&msg); }
+    while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) { TranslateMessage(&msg); DispatchMessageA(&msg); }
     SetFocus(hwndEdit);
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
     CHECK(StarsCompatSetWindowAlertSounds(hwndOwner, FALSE));
@@ -209,7 +209,7 @@ int main(int argc, char **argv) {
     CHECK(SDL_WasInit(SDL_INIT_AUDIO) & SDL_INIT_AUDIO);
     before = cSeen; CHECK(!MessageBox(hwndOwner, "Unsupported", "Stars Message Contract", 0x00200000)); CHECK(cSeen == before);
     PostQuitMessage(123); CHECK(!MessageBox(hwndOwner, "Quit pending", "Stars Message Contract", MB_OK));
-    CHECK(PeekMessage(&msg, NULL, WM_QUIT, WM_QUIT, PM_REMOVE) && msg.wParam == 123);
+    CHECK(PeekMessageA(&msg, NULL, WM_QUIT, WM_QUIT, PM_REMOVE) && msg.wParam == 123);
     CHECK(IsWindowEnabled(hwndOwner));
     for (i = 0; i < (int)sizeof(szLong) - 1; i++) szLong[i] = i % 40 == 39 ? '\n' : 'x';
     szLong[sizeof(szLong) - 1] = 0;

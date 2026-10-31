@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-static BOOL FCombo(HWND hwnd, COMPATCOMBO *lp) { return IsWindow(hwnd) && hwnd->lpcombo.get() == lp; }
+static BOOL FCombo(HWND hwnd, COMPATCOMBO *lp) { return win32::IsWindow(hwnd) && hwnd->lpcombo.get() == lp; }
 static void SelectCombo(HWND hwnd, int i, BOOL fUser);
 static void HighlightCombo(HWND hwnd, int i) {
     auto lpcomboKeep = hwnd->lpcombo;
@@ -18,12 +18,12 @@ static void HighlightCombo(HWND hwnd, int i) {
     iTop = (int)CompatListProc(hwnd, LB_GETTOPINDEX, 0, 0);
     if (i < iTop) CompatListProc(hwnd, LB_SETTOPINDEX, i, 0);
     else if (i >= iTop + cVisible) CompatListProc(hwnd, LB_SETTOPINDEX, i - cVisible + 1, 0);
-    if (lp->hwndPopup) InvalidateRect(lp->hwndPopup, NULL, TRUE);
+    if (lp->hwndPopup) win32::InvalidateRect(lp->hwndPopup, NULL, TRUE);
 }
 static BOOL FOwnerCombo(HWND hwnd) { return (hwnd->dwStyle & CBS_OWNERDRAWFIXED) != 0; }
 static void NotifyCombo(HWND hwnd, UINT code) {
-    if (IsWindow(hwnd) && IsWindow(hwnd->hwndParent))
-        SendMessageA(hwnd->hwndParent, WM_COMMAND, MAKEWPARAM(hwnd->idChild, code), (LPARAM)hwnd);
+    if (win32::IsWindow(hwnd) && win32::IsWindow(hwnd->hwndParent))
+        win32::SendMessageA(hwnd->hwndParent, WM_COMMAND, MAKEWPARAM(hwnd->idChild, code), (LPARAM)hwnd);
 }
 static char *PszComboItem(HWND hwnd, int i) {
     LRESULT cch = CompatListProc(hwnd, LB_GETTEXTLEN, i, 0);
@@ -40,13 +40,13 @@ static void SyncCombo(HWND hwnd) {
     if (lp->hwndEdit && !lp->fSync) {
         StarsRestore<BOOL> restoreSync(lp->fSync);
         psz = PszComboItem(hwnd, i); lp->fSync = TRUE;
-        SetWindowTextA(lp->hwndEdit, psz ? psz : ""); SDL_free(psz);
+        win32::SetWindowTextA(lp->hwndEdit, psz ? psz : ""); SDL_free(psz);
         if (!FCombo(hwnd, lp)) return;
-        if (i >= 0) SendMessageA(lp->hwndEdit, EM_SETSEL, 0, -1);
+        if (i >= 0) win32::SendMessageA(lp->hwndEdit, EM_SETSEL, 0, -1);
         if (!FCombo(hwnd, lp)) return;
     }
-    InvalidateRect(hwnd, NULL, TRUE);
-    if (lp->hwndPopup) InvalidateRect(lp->hwndPopup, NULL, TRUE);
+    win32::InvalidateRect(hwnd, NULL, TRUE);
+    if (lp->hwndPopup) win32::InvalidateRect(lp->hwndPopup, NULL, TRUE);
 }
 static void CloseCombo(HWND hwnd, BOOL fAccept, BOOL fNotify) {
     auto lpcomboKeep = hwnd->lpcombo;
@@ -67,10 +67,10 @@ static void CloseCombo(HWND hwnd, BOOL fAccept, BOOL fNotify) {
         if (!fAccept && !hwnd->fDestroying) {
             CompatListProc(hwnd, LB_SETCURSEL, lp->iSave, 0); SyncCombo(hwnd);
         }
-        if (GetCapture() == hwnd) { ReleaseCapture(); if (!GetCapture() && IsWindow(hwndCapture)) SetCapture(hwndCapture); }
-        if (IsWindow(hwndPopup)) DestroyWindow(hwndPopup);
+        if (win32::GetCapture() == hwnd) { win32::ReleaseCapture(); if (!win32::GetCapture() && win32::IsWindow(hwndCapture)) win32::SetCapture(hwndCapture); }
+        if (win32::IsWindow(hwndPopup)) win32::DestroyWindow(hwndPopup);
         if (!FCombo(hwnd, lp)) return;
-        InvalidateRect(hwnd, NULL, TRUE);
+        win32::InvalidateRect(hwnd, NULL, TRUE);
     }
     if (fNotify) {
         NotifyCombo(hwnd, fAccept ? CBN_SELENDOK : CBN_SELENDCANCEL);
@@ -82,12 +82,12 @@ static BOOL FComboDropRect(HWND hwnd, RECT *lprc) {
     COMPATCOMBO *lp = lpcomboKeep.get();
     RECT rc;
     int cyItem, c, cxScreen, cyScreen, cy;
-    if (!GetWindowRect(hwnd, &rc)) return FALSE;
+    if (!win32::GetWindowRect(hwnd, &rc)) return FALSE;
     c = (int)CompatListProc(hwnd, LB_GETCOUNT, 0, 0); cyItem = (int)CompatListProc(hwnd, LB_GETITEMHEIGHT, 0, 0);
     cy = (int)((((int64_t)lp->cyDrop) < ((int64_t)StarsMax(1, c) * cyItem + 2)) ? ((int64_t)lp->cyDrop) : ((int64_t)StarsMax(1, c) * cyItem + 2));
-    cxScreen = GetSystemMetrics(SM_CXSCREEN); cyScreen = GetSystemMetrics(SM_CYSCREEN);
+    cxScreen = win32::GetSystemMetrics(SM_CXSCREEN); cyScreen = win32::GetSystemMetrics(SM_CYSCREEN);
     lprc->left = rc.left; lprc->right = rc.left + StarsMax(rc.right - rc.left, lp->cxDrop);
-    if (cxScreen > 0 && lprc->right > cxScreen) OffsetRect(lprc, cxScreen - lprc->right, 0);
+    if (cxScreen > 0 && lprc->right > cxScreen) win32::OffsetRect(lprc, cxScreen - lprc->right, 0);
     lprc->top = cyScreen > 0 && (int64_t)rc.bottom + cy > cyScreen ? rc.top - cy : rc.bottom;
     lprc->bottom = lprc->top + cy;
     return TRUE;
@@ -97,7 +97,7 @@ static void OpenCombo(HWND hwnd) {
     COMPATCOMBO *lp = lpcomboKeep.get();
     RECT rc;
     HWND hwndPopup;
-    if (FStarsErrorPending() || !lp || lp->fDropped || lp->fOpening || lp->fClosing || hwnd->fDestroying || !IsWindowEnabled(hwnd)) return;
+    if (FStarsErrorPending() || !lp || lp->fDropped || lp->fOpening || lp->fClosing || hwnd->fDestroying || !win32::IsWindowEnabled(hwnd)) return;
     {
         StarsRestore<BOOL> restoreOpening(lp->fOpening);
         lp->fOpening = TRUE; NotifyCombo(hwnd, CBN_DROPDOWN);
@@ -106,22 +106,22 @@ static void OpenCombo(HWND hwnd) {
     if (!FComboDropRect(hwnd, &rc)) return;
     lp->iSave = (int)CompatListProc(hwnd, LB_GETCURSEL, 0, 0);
     lp->iHot = lp->iSave;
-    hwndPopup = CreateWindowExA(WS_EX_NOACTIVATE, "StarsComboPopup", "", WS_POPUP,
+    hwndPopup = win32::CreateWindowExA(WS_EX_NOACTIVATE, "StarsComboPopup", "", WS_POPUP,
                                rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top,
                                HwndCompatRoot(hwnd), NULL, hwnd->lpclass->wc.hInstance, hwnd);
-    if (!hwndPopup || !FCombo(hwnd, lp) || FStarsErrorPending()) { if (IsWindow(hwndPopup)) DestroyWindow(hwndPopup); return; }
-    lp->hwndPopup = hwndPopup; lp->fDropped = TRUE; lp->hwndCapture = GetCapture();
+    if (!hwndPopup || !FCombo(hwnd, lp) || FStarsErrorPending()) { if (win32::IsWindow(hwndPopup)) win32::DestroyWindow(hwndPopup); return; }
+    lp->hwndPopup = hwndPopup; lp->fDropped = TRUE; lp->hwndCapture = win32::GetCapture();
     COMPATCLEANUPSCOPE closeFailedPopup([&] {
         if (FCombo(hwnd, lp) && lp->hwndPopup == hwndPopup) CloseCombo(hwnd, FALSE, FALSE);
     }, hwnd);
-    InvalidateRect(hwnd, NULL, TRUE);
-    SetCapture(hwnd);
+    win32::InvalidateRect(hwnd, NULL, TRUE);
+    win32::SetCapture(hwnd);
     if (!FCombo(hwnd, lp) || !lp->fDropped || FStarsErrorPending()) return;
     // Populate the hidden surface before the compositor maps the list. Owner
     // drawing can destroy or close the combo, so revalidate after painting.
-    InvalidateRect(hwndPopup, NULL, TRUE); UpdateWindow(hwndPopup);
+    win32::InvalidateRect(hwndPopup, NULL, TRUE); win32::UpdateWindow(hwndPopup);
     if (!FCombo(hwnd, lp) || !lp->fDropped || lp->hwndPopup != hwndPopup || FStarsErrorPending()) return;
-    if (!SetWindowPos(hwndPopup, HWND_TOP, 0, 0, 0, 0,
+    if (!win32::SetWindowPos(hwndPopup, HWND_TOP, 0, 0, 0, 0,
                       SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW) || FStarsErrorPending()) return;
     closeFailedPopup.Release();
 }
@@ -140,33 +140,33 @@ static void LayoutCombo(HWND hwnd, BOOL fRequested) {
     RECT rc;
     POINT pt;
     int cy;
-    if (lp->fSizing || !GetWindowRect(hwnd, &rc)) return;
+    if (lp->fSizing || !win32::GetWindowRect(hwnd, &rc)) return;
     cy = lp->cyField + 6;
     if (fRequested && rc.bottom - rc.top > cy) lp->cyDrop = StarsMax(3 * cy, rc.bottom - rc.top - cy);
     pt = POINT{rc.left, rc.top};
-    if (hwnd->hwndParent) ScreenToClient(hwnd->hwndParent, &pt);
+    if (hwnd->hwndParent) win32::ScreenToClient(hwnd->hwndParent, &pt);
     {
         StarsRestore<BOOL> restoreSizing(lp->fSizing);
         lp->fSizing = TRUE;
-        if (rc.bottom - rc.top != cy) MoveWindow(hwnd, pt.x, pt.y, rc.right - rc.left, cy, TRUE);
+        if (rc.bottom - rc.top != cy) win32::MoveWindow(hwnd, pt.x, pt.y, rc.right - rc.left, cy, TRUE);
         if (!FCombo(hwnd, lp)) return;
     }
-    if (lp->hwndEdit) MoveWindow(lp->hwndEdit, 2, 2, StarsMax(0, rc.right - rc.left - 22), StarsMax(1, cy - 4), TRUE);
+    if (lp->hwndEdit) win32::MoveWindow(lp->hwndEdit, 2, 2, StarsMax(0, rc.right - rc.left - 22), StarsMax(1, cy - 4), TRUE);
 }
 static void ComboFont(HWND hwnd) {
     auto lpcomboKeep = hwnd->lpcombo;
     COMPATCOMBO *lp = lpcomboKeep.get();
-    HDC hdc = CreateCompatibleDC(NULL);
+    HDC hdc = win32::CreateCompatibleDC(NULL);
     HGDIOBJ hold;
     TEXTMETRICA tm;
     if (!hdc) return;
-    hold = hwnd->hfontControl ? SelectObject(hdc, hwnd->hfontControl) : NULL;
-    if (GetTextMetricsA(hdc, &tm) && !FOwnerCombo(hwnd)) {
+    hold = hwnd->hfontControl ? win32::SelectObject(hdc, hwnd->hfontControl) : NULL;
+    if (win32::GetTextMetricsA(hdc, &tm) && !FOwnerCombo(hwnd)) {
         lp->cyField = (((1) > (StarsMin(255, tm.tmHeight))) ? (1) : (StarsMin(255, tm.tmHeight))); CompatListProc(hwnd, LB_SETITEMHEIGHT, 0, lp->cyField);
     }
-    if (hold) SelectObject(hdc, hold);
-    DeleteDC(hdc);
-    if (lp->hwndEdit) SendMessageA(lp->hwndEdit, WM_SETFONT, (WPARAM)hwnd->hfontControl, 0);
+    if (hold) win32::SelectObject(hdc, hold);
+    win32::DeleteDC(hdc);
+    if (lp->hwndEdit) win32::SendMessageA(lp->hwndEdit, WM_SETFONT, (WPARAM)hwnd->hfontControl, 0);
     if (FCombo(hwnd, lp)) LayoutCombo(hwnd, FALSE);
 }
 static BOOL DrawComboItem(HWND hwnd, HDC hdc, const RECT *lprc, int i, BOOL fSelection, BOOL fSelected) {
@@ -180,34 +180,34 @@ static BOOL DrawComboItem(HWND hwnd, HDC hdc, const RECT *lprc, int i, BOOL fSel
         ds.CtlType = ODT_COMBOBOX; ds.CtlID = (UINT)hwnd->idChild; ds.itemID = (UINT)i;
         ds.itemAction = ODA_DRAWENTIRE; ds.hwndItem = hwnd; ds.hDC = hdc; ds.rcItem = rc;
         ds.itemState = (fSelected ? ODS_SELECTED : 0) | (fSelection ? ODS_COMBOBOXEDIT : 0) |
-                       (IsWindowEnabled(hwnd) ? 0 : ODS_DISABLED) | (GetFocus() == hwnd && fSelection ? ODS_FOCUS : 0);
+                       (win32::IsWindowEnabled(hwnd) ? 0 : ODS_DISABLED) | (win32::GetFocus() == hwnd && fSelection ? ODS_FOCUS : 0);
         ds.itemData = i >= 0 ? (ULONG_PTR)CompatListProc(hwnd, LB_GETITEMDATA, i, 0) : 0;
-        SendMessageA(hwnd->hwndParent, WM_DRAWITEM, (WPARAM)hwnd->idChild, (LPARAM)&ds);
+        win32::SendMessageA(hwnd->hwndParent, WM_DRAWITEM, (WPARAM)hwnd->idChild, (LPARAM)&ds);
         return FCombo(hwnd, lp);
     }
-    hbr = CreateSolidBrush(GetSysColor(fSelected ? COLOR_HIGHLIGHT : COLOR_WINDOW));
-    if (hbr) { FillRect(hdc, &rc, hbr); DeleteObject(hbr); }
-    SetTextColor(hdc, GetSysColor(!IsWindowEnabled(hwnd) ? COLOR_GRAYTEXT : fSelected ? COLOR_HIGHLIGHTTEXT : COLOR_WINDOWTEXT));
-    SetBkMode(hdc, TRANSPARENT); rc.left += 2;
+    hbr = win32::CreateSolidBrush(win32::GetSysColor(fSelected ? COLOR_HIGHLIGHT : COLOR_WINDOW));
+    if (hbr) { win32::FillRect(hdc, &rc, hbr); win32::DeleteObject(hbr); }
+    win32::SetTextColor(hdc, win32::GetSysColor(!win32::IsWindowEnabled(hwnd) ? COLOR_GRAYTEXT : fSelected ? COLOR_HIGHLIGHTTEXT : COLOR_WINDOWTEXT));
+    win32::SetBkMode(hdc, TRANSPARENT); rc.left += 2;
     psz = PszComboItem(hwnd, i);
-    if (psz) { DrawTextA(hdc, psz, -1, &rc, DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX); SDL_free(psz); }
+    if (psz) { win32::DrawTextA(hdc, psz, -1, &rc, DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX); SDL_free(psz); }
     return TRUE;
 }
 static void PaintCombo(HWND hwnd, HWND hwndPaint, BOOL fPopup) {
     auto lpcomboKeep = hwnd->lpcombo;
     COMPATCOMBO *lp = lpcomboKeep.get();
     PAINTSTRUCT ps;
-    HDC hdc = BeginPaint(hwndPaint, &ps);
+    HDC hdc = win32::BeginPaint(hwndPaint, &ps);
     HGDIOBJ hold = NULL;
     HBRUSH hbr;
     RECT rc, item, arrow;
     int i, iSel, iTop, cyItem, c, y, j;
     unsigned n;
     if (!hdc) return;
-    GetClientRect(hwndPaint, &rc);
-    if (hwnd->hfontControl) hold = SelectObject(hdc, hwnd->hfontControl);
-    hbr = CreateSolidBrush(GetSysColor(COLOR_WINDOW));
-    if (hbr) { FillRect(hdc, &rc, hbr); DeleteObject(hbr); }
+    win32::GetClientRect(hwndPaint, &rc);
+    if (hwnd->hfontControl) hold = win32::SelectObject(hdc, hwnd->hfontControl);
+    hbr = win32::CreateSolidBrush(win32::GetSysColor(COLOR_WINDOW));
+    if (hbr) { win32::FillRect(hdc, &rc, hbr); win32::DeleteObject(hbr); }
     iSel = fPopup ? lp->iHot : (int)CompatListProc(hwnd, LB_GETCURSEL, 0, 0);
     if (fPopup) {
         iTop = (int)CompatListProc(hwnd, LB_GETTOPINDEX, 0, 0);
@@ -215,49 +215,49 @@ static void PaintCombo(HWND hwnd, HWND hwndPaint, BOOL fPopup) {
         n = NCompatListMutation(hwnd);
         for (i = iTop, y = 1; i < c && y < rc.bottom - 1; i++, y += cyItem) {
             item = RECT{1, y, rc.right - 1, StarsMin(rc.bottom - 1, y + cyItem)};
-            if (!DrawComboItem(hwnd, hdc, &item, i, FALSE, i == iSel) || !IsWindow(hwndPaint)) return;
-            if (NCompatListMutation(hwnd) != n) { InvalidateRect(hwndPaint, NULL, TRUE); break; }
+            if (!DrawComboItem(hwnd, hdc, &item, i, FALSE, i == iSel) || !win32::IsWindow(hwndPaint)) return;
+            if (NCompatListMutation(hwnd) != n) { win32::InvalidateRect(hwndPaint, NULL, TRUE); break; }
         }
     } else {
         // Keep the complete raised button inside the field's two-pixel sunken
         // frame; painting on that frame would overwrite its top/right bevel.
         arrow = RECT{StarsMax(2, rc.right - 19), 2, rc.right - 2, rc.bottom - 2};
         item = RECT{2, 2, arrow.left, rc.bottom - 2};
-        if (!lp->hwndEdit && !DrawComboItem(hwnd, hdc, &item, iSel, TRUE, GetFocus() == hwnd)) return;
-        hbr = CreateSolidBrush(GetSysColor(COLOR_BTNFACE));
-        if (hbr) { FillRect(hdc, &arrow, hbr); DeleteObject(hbr); }
+        if (!lp->hwndEdit && !DrawComboItem(hwnd, hdc, &item, iSel, TRUE, win32::GetFocus() == hwnd)) return;
+        hbr = win32::CreateSolidBrush(win32::GetSysColor(COLOR_BTNFACE));
+        if (hbr) { win32::FillRect(hdc, &arrow, hbr); win32::DeleteObject(hbr); }
         CompatDrawClassicEdge(hdc, &arrow, lp->fDropped, TRUE);
         for (j = 0; j < 4; j++) {
             item = RECT{arrow.left + 5 + j, (rc.bottom - 4) / 2 + j, arrow.right - 5 - j, (rc.bottom - 4) / 2 + j + 1};
-            if (lp->fDropped) OffsetRect(&item, 1, 1);
-            FillRect(hdc, &item, (HBRUSH)GetStockObject(IsWindowEnabled(hwnd) ? BLACK_BRUSH : GRAY_BRUSH));
+            if (lp->fDropped) win32::OffsetRect(&item, 1, 1);
+            win32::FillRect(hdc, &item, (HBRUSH)win32::GetStockObject(win32::IsWindowEnabled(hwnd) ? BLACK_BRUSH : GRAY_BRUSH));
         }
     }
     CompatDrawClassicEdge(hdc, &rc, !fPopup, TRUE);
-    if (hold) SelectObject(hdc, hold);
-    EndPaint(hwndPaint, &ps);
+    if (hold) win32::SelectObject(hdc, hold);
+    win32::EndPaint(hwndPaint, &ps);
 }
 LRESULT CALLBACK CompatComboPopupProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
-    HWND hwndCombo = (HWND)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
-    if (msg == WM_NCCREATE) { SetWindowLongPtrA(hwnd, GWLP_USERDATA, (LONG_PTR)((CREATESTRUCTA *)l)->lpCreateParams); return TRUE; }
+    HWND hwndCombo = (HWND)win32::GetWindowLongPtrA(hwnd, GWLP_USERDATA);
+    if (msg == WM_NCCREATE) { win32::SetWindowLongPtrA(hwnd, GWLP_USERDATA, (LONG_PTR)((CREATESTRUCTA *)l)->lpCreateParams); return TRUE; }
     if (msg == WM_CREATE) return 0;
-    if (msg == WM_PAINT && IsWindow(hwndCombo) && hwndCombo->lpcombo) { PaintCombo(hwndCombo, hwnd, TRUE); return 0; }
+    if (msg == WM_PAINT && win32::IsWindow(hwndCombo) && hwndCombo->lpcombo) { PaintCombo(hwndCombo, hwnd, TRUE); return 0; }
     if (msg == WM_ERASEBKGND) return TRUE;
-    if (msg == WM_NCDESTROY && IsWindow(hwndCombo) && hwndCombo->lpcombo && hwndCombo->lpcombo->hwndPopup == hwnd) {
+    if (msg == WM_NCDESTROY && win32::IsWindow(hwndCombo) && hwndCombo->lpcombo && hwndCombo->lpcombo->hwndPopup == hwnd) {
         hwndCombo->lpcombo->hwndPopup = NULL; CloseCombo(hwndCombo, FALSE, !hwndCombo->fDestroying);
     }
-    return DefWindowProcA(hwnd, msg, w, l);
+    return win32::DefWindowProcA(hwnd, msg, w, l);
 }
 static LRESULT CALLBACK ComboEditProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
-    HWND hwndCombo = GetParent(hwnd);
-    auto lpcomboKeep = IsWindow(hwndCombo) ? hwndCombo->lpcombo : nullptr;
+    HWND hwndCombo = win32::GetParent(hwnd);
+    auto lpcomboKeep = win32::IsWindow(hwndCombo) ? hwndCombo->lpcombo : nullptr;
     COMPATCOMBO *lp = lpcomboKeep.get();
-    if (!lp) return DefWindowProcA(hwnd, msg, w, l);
+    if (!lp) return win32::DefWindowProcA(hwnd, msg, w, l);
     if (msg == WM_GETDLGCODE && lp->fDropped) return DLGC_WANTALLKEYS | DLGC_WANTCHARS;
     if (((msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN) && (w == VK_UP || w == VK_DOWN || w == VK_F4 ||
          (lp->fDropped && (w == VK_RETURN || w == VK_ESCAPE)))) || msg == WM_MOUSEWHEEL)
-        return SendMessageA(hwndCombo, msg, w, l);
-    return CallWindowProcA(lp->lpfnEdit, hwnd, msg, w, l);
+        return win32::SendMessageA(hwndCombo, msg, w, l);
+    return win32::CallWindowProcA(lp->lpfnEdit, hwnd, msg, w, l);
 }
 static UINT ListMessage(UINT msg) {
     switch (msg) {
@@ -302,7 +302,7 @@ LRESULT CALLBACK CompatComboProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         lp->cyField = 16; lp->cyDrop = 100; lp->iSave = -1;
         lpwin->lpcombo = lpcomboKeep; lpwin->iControl = 6; return TRUE;
     }
-    if (!lp) return DefWindowProcA(hwnd, msg, w, l);
+    if (!lp) return win32::DefWindowProcA(hwnd, msg, w, l);
     mapped = ListMessage(msg);
     if (mapped) {
         if (msg == CB_SETITEMDATA && (INT_PTR)w < 0) return CB_ERR;
@@ -316,7 +316,7 @@ LRESULT CALLBACK CompatComboProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         if (FCombo(hwnd, lp) && lp->hwndPopup &&
             (msg == CB_ADDSTRING || msg == CB_INSERTSTRING || msg == CB_DELETESTRING ||
              msg == CB_RESETCONTENT || msg == CB_SETCURSEL || msg == CB_SETITEMDATA))
-            InvalidateRect(lp->hwndPopup, NULL, TRUE);
+            win32::InvalidateRect(lp->hwndPopup, NULL, TRUE);
         return result;
     }
     switch (msg) {
@@ -326,33 +326,33 @@ LRESULT CALLBACK CompatComboProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         ComboFont(hwnd);
         if (FOwnerCombo(hwnd)) {
             ms.CtlType = ODT_COMBOBOX; ms.CtlID = (UINT)lpwin->idChild; ms.itemHeight = lp->cyField;
-            SendMessageA(lpwin->hwndParent, WM_MEASUREITEM, lpwin->idChild, (LPARAM)&ms);
+            win32::SendMessageA(lpwin->hwndParent, WM_MEASUREITEM, lpwin->idChild, (LPARAM)&ms);
             if (!FCombo(hwnd, lp)) return -1;
             if (ms.itemHeight > 0 && ms.itemHeight <= 255) { lp->cyField = (int)ms.itemHeight; CompatListProc(hwnd, LB_SETITEMHEIGHT, 0, ms.itemHeight); }
         }
         lp->cyDrop = (((3 * (lp->cyField + 6)) > (((CREATESTRUCTA *)l)->cy - lp->cyField - 6)) ? (3 * (lp->cyField + 6)) : (((CREATESTRUCTA *)l)->cy - lp->cyField - 6));
         LayoutCombo(hwnd, TRUE);
         if ((lpwin->dwStyle & 3) == CBS_DROPDOWN) {
-            GetClientRect(hwnd, &rc);
-            hwndEdit = CreateWindowExA(0, "Edit", "", WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL,
+            win32::GetClientRect(hwnd, &rc);
+            hwndEdit = win32::CreateWindowExA(0, "Edit", "", WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL,
                                           2, 2, StarsMax(0, rc.right - 22), StarsMax(1, rc.bottom - 4), hwnd, (HMENU)1, lpwin->lpclass->wc.hInstance, NULL);
             if (!hwndEdit || !FCombo(hwnd, lp)) return -1;
             lp->hwndEdit = hwndEdit;
-            fn = GetWindowLongPtrA(lp->hwndEdit, GWLP_WNDPROC); memcpy(&lp->lpfnEdit, &fn, sizeof(fn));
-            lpfn = ComboEditProc; memcpy(&fn, &lpfn, sizeof(fn)); SetWindowLongPtrA(lp->hwndEdit, GWLP_WNDPROC, fn);
+            fn = win32::GetWindowLongPtrA(lp->hwndEdit, GWLP_WNDPROC); memcpy(&lp->lpfnEdit, &fn, sizeof(fn));
+            lpfn = ComboEditProc; memcpy(&fn, &lpfn, sizeof(fn)); win32::SetWindowLongPtrA(lp->hwndEdit, GWLP_WNDPROC, fn);
         }
         return 0;
     case WM_DESTROY: CloseCombo(hwnd, FALSE, FALSE); return CompatListProc(hwnd, WM_DESTROY, w, l);
     case WM_NCDESTROY:
         CompatListProc(hwnd, WM_NCDESTROY, w, l); lpwin->lpcombo.reset(); return 0;
     case WM_GETFONT: return (LRESULT)lpwin->hfontControl;
-    case WM_SETFONT: lpwin->hfontControl = (HFONT)w; ComboFont(hwnd); if (l && IsWindow(hwnd)) InvalidateRect(hwnd, NULL, TRUE); return 0;
+    case WM_SETFONT: lpwin->hfontControl = (HFONT)w; ComboFont(hwnd); if (l && win32::IsWindow(hwnd)) win32::InvalidateRect(hwnd, NULL, TRUE); return 0;
     case WM_SIZE: LayoutCombo(hwnd, TRUE); return 0;
     case WM_PAINT: PaintCombo(hwnd, hwnd, FALSE); return 0;
     case WM_ERASEBKGND: return TRUE;
     case WM_GETDLGCODE: return DLGC_WANTARROWS | DLGC_WANTCHARS | (lp->fDropped ? DLGC_WANTALLKEYS : 0);
     case WM_GETTEXT: case WM_GETTEXTLENGTH:
-        if (lp->hwndEdit) return SendMessageA(lp->hwndEdit, msg, w, l);
+        if (lp->hwndEdit) return win32::SendMessageA(lp->hwndEdit, msg, w, l);
         psz = PszComboItem(hwnd, (int)CompatListProc(hwnd, LB_GETCURSEL, 0, 0));
         result = psz ? (LRESULT)SDL_strlen(psz) : 0;
         if (msg == WM_GETTEXT) { result = w && l && psz ? (LRESULT)CchUtf8Prefix(psz, (size_t)w - 1) : 0; if (w && l) { if (result) memcpy((char *)l, psz, (size_t)result); ((char *)l)[result] = 0; } }
@@ -360,7 +360,7 @@ LRESULT CALLBACK CompatComboProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     case WM_SETTEXT: {
         if (!lp->hwndEdit) return FALSE;
         StarsRestore<BOOL> restoreSync(lp->fSync);
-        lp->fSync = TRUE; result = SetWindowTextA(lp->hwndEdit, (LPCSTR)l);
+        lp->fSync = TRUE; result = win32::SetWindowTextA(lp->hwndEdit, (LPCSTR)l);
         return result;
     }
     case WM_COMMAND:
@@ -372,14 +372,14 @@ LRESULT CALLBACK CompatComboProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         }
         return 0;
     case WM_SETFOCUS:
-        if (lp->hwndEdit) SetFocus(lp->hwndEdit); else NotifyCombo(hwnd, CBN_SETFOCUS);
-        if (FCombo(hwnd, lp)) InvalidateRect(hwnd, NULL, TRUE);
+        if (lp->hwndEdit) win32::SetFocus(lp->hwndEdit); else NotifyCombo(hwnd, CBN_SETFOCUS);
+        if (FCombo(hwnd, lp)) win32::InvalidateRect(hwnd, NULL, TRUE);
         return 0;
     case WM_KILLFOCUS:
         if ((HWND)w != lp->hwndEdit) { CloseCombo(hwnd, FALSE, TRUE); if (FCombo(hwnd, lp)) NotifyCombo(hwnd, CBN_KILLFOCUS); }
-        if (FCombo(hwnd, lp)) InvalidateRect(hwnd, NULL, TRUE);
+        if (FCombo(hwnd, lp)) win32::InvalidateRect(hwnd, NULL, TRUE);
         return 0;
-    case WM_ENABLE: if (!w) CloseCombo(hwnd, FALSE, TRUE); if (FCombo(hwnd, lp)) InvalidateRect(hwnd, NULL, TRUE); return 0;
+    case WM_ENABLE: if (!w) CloseCombo(hwnd, FALSE, TRUE); if (FCombo(hwnd, lp)) win32::InvalidateRect(hwnd, NULL, TRUE); return 0;
     case CB_SELECTSTRING:
         i = (int)CompatListProc(hwnd, LB_FINDSTRING, w, l); if (i >= 0) SelectCombo(hwnd, i, FALSE); return i;
     case CB_GETITEMHEIGHT: return (INT_PTR)w == -1 ? lp->cyField : CompatListProc(hwnd, LB_GETITEMHEIGHT, 0, 0);
@@ -391,22 +391,22 @@ LRESULT CALLBACK CompatComboProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     case CB_GETEXTENDEDUI: return lp->fExtended;
     case CB_GETDROPPEDSTATE: return lp->fDropped;
     case CB_SHOWDROPDOWN: if (w) OpenCombo(hwnd); else CloseCombo(hwnd, FALSE, TRUE); return TRUE;
-    case CB_GETDROPPEDWIDTH: GetClientRect(hwnd, &rc); return StarsMax(rc.right, lp->cxDrop);
-    case CB_SETDROPPEDWIDTH: if ((INT_PTR)w < 0 || w > INT_MAX) return CB_ERR; lp->cxDrop = (int)w; return SendMessageA(hwnd, CB_GETDROPPEDWIDTH, 0, 0);
+    case CB_GETDROPPEDWIDTH: win32::GetClientRect(hwnd, &rc); return StarsMax(rc.right, lp->cxDrop);
+    case CB_SETDROPPEDWIDTH: if ((INT_PTR)w < 0 || w > INT_MAX) return CB_ERR; lp->cxDrop = (int)w; return win32::SendMessageA(hwnd, CB_GETDROPPEDWIDTH, 0, 0);
     case CB_GETDROPPEDCONTROLRECT:
         if (!l || !FComboDropRect(hwnd, &rc)) return FALSE;
-        GetWindowRect(hwnd, (LPRECT)l);
+        win32::GetWindowRect(hwnd, (LPRECT)l);
         ((LPRECT)l)->left = (((((LPRECT)l)->left) < (rc.left)) ? (((LPRECT)l)->left) : (rc.left)); ((LPRECT)l)->top = (((((LPRECT)l)->top) < (rc.top)) ? (((LPRECT)l)->top) : (rc.top));
         ((LPRECT)l)->right = (((((LPRECT)l)->right) > (rc.right)) ? (((LPRECT)l)->right) : (rc.right)); ((LPRECT)l)->bottom = (((((LPRECT)l)->bottom) > (rc.bottom)) ? (((LPRECT)l)->bottom) : (rc.bottom));
         return TRUE;
     case WM_LBUTTONDOWN: case WM_LBUTTONDBLCLK:
-        if (!IsWindowEnabled(hwnd)) return 0;
-        SetFocus(lp->hwndEdit ? lp->hwndEdit : hwnd);
+        if (!win32::IsWindowEnabled(hwnd)) return 0;
+        win32::SetFocus(lp->hwndEdit ? lp->hwndEdit : hwnd);
         if (!FCombo(hwnd, lp)) return 0;
         if (!lp->fDropped) OpenCombo(hwnd);
         else {
-            pt = POINT{(SHORT)LOWORD(l), (SHORT)HIWORD(l)}; ClientToScreen(hwnd, &pt);
-            if (GetWindowRect(lp->hwndPopup, &rc) && PtInRect(&rc, pt)) {
+            pt = POINT{(SHORT)LOWORD(l), (SHORT)HIWORD(l)}; win32::ClientToScreen(hwnd, &pt);
+            if (win32::GetWindowRect(lp->hwndPopup, &rc) && win32::PtInRect(&rc, pt)) {
                 cyItem = (int)CompatListProc(hwnd, LB_GETITEMHEIGHT, 0, 0);
                 i = (int)CompatListProc(hwnd, LB_GETTOPINDEX, 0, 0) + (pt.y - rc.top - 1) / cyItem;
                 c = (int)CompatListProc(hwnd, LB_GETCOUNT, 0, 0);
@@ -416,8 +416,8 @@ LRESULT CALLBACK CompatComboProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         return 0;
     case WM_LBUTTONUP:
         if (!lp->fDropped) return 0;
-        pt = POINT{(SHORT)LOWORD(l), (SHORT)HIWORD(l)}; ClientToScreen(hwnd, &pt);
-        if (GetWindowRect(lp->hwndPopup, &rc) && PtInRect(&rc, pt)) {
+        pt = POINT{(SHORT)LOWORD(l), (SHORT)HIWORD(l)}; win32::ClientToScreen(hwnd, &pt);
+        if (win32::GetWindowRect(lp->hwndPopup, &rc) && win32::PtInRect(&rc, pt)) {
             cyItem = (int)CompatListProc(hwnd, LB_GETITEMHEIGHT, 0, 0);
             i = (int)CompatListProc(hwnd, LB_GETTOPINDEX, 0, 0) + (pt.y - rc.top - 1) / cyItem;
             c = (int)CompatListProc(hwnd, LB_GETCOUNT, 0, 0);
@@ -427,8 +427,8 @@ LRESULT CALLBACK CompatComboProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         return 0;
     case WM_MOUSEMOVE:
         if (!lp->fDropped) return 0;
-        pt = POINT{(SHORT)LOWORD(l), (SHORT)HIWORD(l)}; ClientToScreen(hwnd, &pt);
-        if (GetWindowRect(lp->hwndPopup, &rc) && PtInRect(&rc, pt)) {
+        pt = POINT{(SHORT)LOWORD(l), (SHORT)HIWORD(l)}; win32::ClientToScreen(hwnd, &pt);
+        if (win32::GetWindowRect(lp->hwndPopup, &rc) && win32::PtInRect(&rc, pt)) {
             cyItem = (int)CompatListProc(hwnd, LB_GETITEMHEIGHT, 0, 0);
             iTop = (int)CompatListProc(hwnd, LB_GETTOPINDEX, 0, 0); i = iTop + (pt.y - rc.top - 1) / cyItem;
             if (i >= 0 && i < CompatListProc(hwnd, LB_GETCOUNT, 0, 0)) HighlightCombo(hwnd, i);
@@ -437,7 +437,7 @@ LRESULT CALLBACK CompatComboProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     case WM_KEYDOWN: case WM_SYSKEYDOWN:
         if (w == VK_F4 && lp->fExtended) return 0;
         if (w == VK_DOWN && lp->fExtended && !lp->fDropped) { OpenCombo(hwnd); return 0; }
-        if (w == VK_F4 || ((w == VK_UP || w == VK_DOWN) && (GetKeyState(VK_MENU) & 0x8000))) {
+        if (w == VK_F4 || ((w == VK_UP || w == VK_DOWN) && (win32::GetKeyState(VK_MENU) & 0x8000))) {
             if (lp->fDropped) CloseCombo(hwnd, TRUE, TRUE); else OpenCombo(hwnd); return 0;
         }
         if (lp->fDropped && (w == VK_RETURN || w == VK_ESCAPE)) { CloseCombo(hwnd, w == VK_RETURN, TRUE); return 0; }
@@ -458,12 +458,12 @@ LRESULT CALLBACK CompatComboProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     case WM_MOUSEWHEEL:
         if (lp->fExtended) return 0;
         y = (SHORT)HIWORD(w) / WHEEL_DELTA;
-        if (lp->fDropped) { i = (int)CompatListProc(hwnd, LB_GETTOPINDEX, 0, 0); CompatListProc(hwnd, LB_SETTOPINDEX, StarsMax(0, i - y * 3), 0); InvalidateRect(lp->hwndPopup, NULL, TRUE); }
+        if (lp->fDropped) { i = (int)CompatListProc(hwnd, LB_GETTOPINDEX, 0, 0); CompatListProc(hwnd, LB_SETTOPINDEX, StarsMax(0, i - y * 3), 0); win32::InvalidateRect(lp->hwndPopup, NULL, TRUE); }
         else { i = (int)CompatListProc(hwnd, LB_GETCURSEL, 0, 0); c = (int)CompatListProc(hwnd, LB_GETCOUNT, 0, 0); if (c > 0) SelectCombo(hwnd, (((c - 1) < (StarsMax(0, i - y))) ? (c - 1) : (StarsMax(0, i - y))), TRUE); }
         return 0;
     case WM_CAPTURECHANGED: case WM_CANCELMODE:
         if (lp->fDropped) CloseCombo(hwnd, FALSE, TRUE);
         return 0;
-    default: return DefWindowProcA(hwnd, msg, w, l);
+    default: return win32::DefWindowProcA(hwnd, msg, w, l);
     }
 }

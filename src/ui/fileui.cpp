@@ -20,7 +20,7 @@ INT_PTR CALLBACK AskSaveDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
             ControlIO().pfnEndDialog(hwnd, -2);
             return 1;
         case IDC_HELP:
-            WinHelp(hwnd, szHelpFile, HELP_CONTEXT, 1090);
+            win32::WinHelp(hwnd, szHelpFile, HELP_CONTEXT, 1090);
             return 1;
         }
         /* fallthrough */
@@ -35,7 +35,7 @@ void PromptSaveGame() {
     int16_t fRet;
 
     lpProc = MakeProcInstance(DesktopChoiceIO().pfnAskSaveDialog, hInst);
-    fRet = ControlIO().pfnLUiDialogBox(hInst, !game.fSinglePlr ? MAKEINTRESOURCE(IDD_SAVE_TURN1) : MAKEINTRESOURCE(IDD_SAVE_TURN2), hwndFrame, lpProc, 0);
+    fRet = ControlIO().pfnDialogBox(hInst, !game.fSinglePlr ? MAKEINTRESOURCE(IDD_SAVE_TURN1) : MAKEINTRESOURCE(IDD_SAVE_TURN2), hwndFrame, lpProc, 0);
     FreeProcInstance(lpProc);
     if (fRet == 1 || fRet == -1) {
         gd.fSubmit = fRet == -1;
@@ -52,7 +52,7 @@ int16_t FCanLeaveCurrentGame(void) {
 
     if (idPlayer == iplrNone || !game.fDirty) return TRUE;
     lpProc = MakeProcInstance(DesktopChoiceIO().pfnAskSaveDialog, hInst);
-    fRet = ControlIO().pfnLUiDialogBox(hInst, !game.fSinglePlr ? MAKEINTRESOURCE(IDD_SAVE_TURN1) : MAKEINTRESOURCE(IDD_SAVE_TURN2),
+    fRet = ControlIO().pfnDialogBox(hInst, !game.fSinglePlr ? MAKEINTRESOURCE(IDD_SAVE_TURN1) : MAKEINTRESOURCE(IDD_SAVE_TURN2),
                      hwndFrame, lpProc, 0);
     FreeProcInstance(lpProc);
     if (fRet == 0 || fRet == -2) return FALSE;
@@ -79,22 +79,22 @@ void ShowTitleScreen() {
 
     if (!hwndTitle) {
         dwStyle = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
-        if (!SystemParametersInfo(SPI_GETWORKAREA, 0, &rcWork, 0)) {
-            SetRect(&rcWork, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
+        if (!win32::SystemParametersInfo(SPI_GETWORKAREA, 0, &rcWork, 0)) {
+            win32::SetRect(&rcWork, 0, 0, win32::GetSystemMetrics(SM_CXSCREEN), win32::GetSystemMetrics(SM_CYSCREEN));
         }
-        SetRect(&rc, 0, 0, 800, 600);
-        dx = (((rc.right - rc.left) < (rcWork.right - rcWork.left - 2 * GetSystemMetrics(SM_CXDLGFRAME))) ? (rc.right - rc.left) : (rcWork.right - rcWork.left - 2 * GetSystemMetrics(SM_CXDLGFRAME)));
+        win32::SetRect(&rc, 0, 0, 800, 600);
+        dx = (((rc.right - rc.left) < (rcWork.right - rcWork.left - 2 * win32::GetSystemMetrics(SM_CXDLGFRAME))) ? (rc.right - rc.left) : (rcWork.right - rcWork.left - 2 * win32::GetSystemMetrics(SM_CXDLGFRAME)));
         dy = (((rc.bottom - rc.top) < (rcWork.bottom - rcWork.top -
-                 GetSystemMetrics(SM_CYCAPTION) - 2 * GetSystemMetrics(SM_CYDLGFRAME))) ? (rc.bottom - rc.top) : (rcWork.bottom - rcWork.top -
-                 GetSystemMetrics(SM_CYCAPTION) - 2 * GetSystemMetrics(SM_CYDLGFRAME)));
+                 win32::GetSystemMetrics(SM_CYCAPTION) - 2 * win32::GetSystemMetrics(SM_CYDLGFRAME))) ? (rc.bottom - rc.top) : (rcWork.bottom - rcWork.top -
+                 win32::GetSystemMetrics(SM_CYCAPTION) - 2 * win32::GetSystemMetrics(SM_CYDLGFRAME)));
         x = rcWork.left + (rcWork.right - rcWork.left - dx) / 2;
         y = rcWork.top + (rcWork.bottom - rcWork.top - dy) / 2;
-        hwndTitle = HwndUiCreateWindowEx(0, szTitle, "Stars!", dwStyle | WS_VISIBLE, x, y, dx, dy, hwndFrame, NULL, hInst, NULL);
+        hwndTitle = ui::CreateWindowEx(0, szTitle, "Stars!", dwStyle | WS_VISIBLE, x, y, dx, dy, hwndFrame, NULL, hInst, NULL);
         if (getenv("STARS_DEBUG_LIBRARY_STARTUP"))
             fprintf(stderr, "[DEBUG-library-startup] ShowTitleScreen CreateWindow returned title=%p valid=%d visible=%d\n",
-                    (void *)hwndTitle, IsWindow(hwndTitle), IsWindowVisible(hwndTitle));
+                    (void *)hwndTitle, win32::IsWindow(hwndTitle), win32::IsWindowVisible(hwndTitle));
         fFreeingTitle = FALSE;
-        FUiShowWindow(hwndFrame, SW_HIDE);
+        ui::ShowWindow(hwndFrame, SW_HIDE);
     }
     return;
 }
@@ -141,13 +141,13 @@ void CloseGameWindows() {
     int16_t i;
 
     if (hwndBrowser) {
-        ControlIO().pfnFUiDestroyWindow(hwndBrowser);
+        ControlIO().pfnDestroyWindow(hwndBrowser);
     }
     if (hwndReportDlg) {
-        ControlIO().pfnFUiDestroyWindow(hwndReportDlg);
+        ControlIO().pfnDestroyWindow(hwndReportDlg);
     }
     if (hwndPopup) {
-        ControlIO().pfnFUiDestroyWindow(hwndPopup);
+        ControlIO().pfnDestroyWindow(hwndPopup);
         hwndPopup = 0;
     }
     hwndActive = 0;

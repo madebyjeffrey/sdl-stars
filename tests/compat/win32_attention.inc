@@ -35,11 +35,11 @@ static LRESULT CALLBACK AttentionProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         lptest->fCaption = !!w; lptest->cCaption++;
         if (lptest->fDestroy) { lptest->fDestroy = FALSE; DestroyWindow(hwnd); return 0; }
     }
-    return DefWindowProc(hwnd, msg, w, l);
+    return DefWindowProcA(hwnd, msg, w, l);
 }
 static void Drain(void) {
-    MSG msg;
-    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
+    APPMSG msg;
+    while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
 }
 #if defined(STARS_TEST_ATTENTION_X11) && !defined(_WIN32)
 static int TestX11Focus(HWND hwndPeer) {
@@ -83,7 +83,7 @@ static int TestX11(HWND hwnd, HWND hwndPeer) {
     CHECK(window && windowPeer);
     XSetInputFocus(lpDisplay, windowPeer, RevertToParent, CurrentTime); XSync(lpDisplay, False);
     SDL_Delay(20); Drain(); SetFocus(hwndPeer);
-    SendMessage(hwnd, WM_NCACTIVATE, FALSE, 0);
+    SendMessageA(hwnd, WM_NCACTIVATE, FALSE, 0);
     fMock = FALSE;
     SetLastError(0);
     CHECK(!FlashWindow(hwnd, TRUE) && GetLastError() == 0);
@@ -137,7 +137,7 @@ int main(int argc, char **argv) {
     CHECK(SetForegroundWindow(hwndPeer));
 #endif
     SetFocus(hwndPeer); Drain();
-    SendMessage(hwnd, WM_NCACTIVATE, FALSE, 0);
+    SendMessageA(hwnd, WM_NCACTIVATE, FALSE, 0);
     cCaption = test.cCaption;
     fResult = FlashWindow(hwnd, TRUE);
     CHECK(test.fCaption && test.cCaption == cCaption + 1);
@@ -153,7 +153,7 @@ int main(int argc, char **argv) {
     CHECK(fResult && operationLast == SDL_FLASH_CANCEL);
 #endif
     FlashWindow(hwnd, FALSE); CHECK(!test.fCaption);
-    SendMessage(hwndPeer, WM_NCACTIVATE, TRUE, 0);
+    SendMessageA(hwndPeer, WM_NCACTIVATE, TRUE, 0);
     fResult = FlashWindow(hwndPeer, TRUE); CHECK(!peer.fCaption);
 #ifndef _WIN32
     CHECK(fResult && operationLast == SDL_FLASH_CANCEL);
@@ -161,7 +161,7 @@ int main(int argc, char **argv) {
     fResult = FlashWindow(hwndPeer, FALSE); CHECK(peer.fCaption);
 #ifndef _WIN32
     CHECK(!fResult);
-    SendMessage(hwnd, WM_NCACTIVATE, TRUE, 0);
+    SendMessageA(hwnd, WM_NCACTIVATE, TRUE, 0);
     cCaption = test.cCaption; fFail = TRUE;
     CHECK(!FlashWindow(hwnd, TRUE) && GetLastError() == ERROR_NOT_SUPPORTED);
     CHECK(test.fCaption && test.cCaption == cCaption);
@@ -182,7 +182,7 @@ int main(int argc, char **argv) {
 #else
     (void)hwndChild;
 #endif
-    SendMessage(hwnd, WM_NCACTIVATE, FALSE, 0);
+    SendMessageA(hwnd, WM_NCACTIVATE, FALSE, 0);
     test.fDestroy = TRUE;
     FlashWindow(hwnd, TRUE); CHECK(!IsWindow(hwnd));
 #ifndef _WIN32

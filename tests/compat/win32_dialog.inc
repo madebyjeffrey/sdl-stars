@@ -17,8 +17,8 @@ static INT_PTR CALLBACK DialogProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         cInit++; SetWindowLongPtr(hwnd, DWLP_USER, l);
         EXPECT(GetDlgItem(hwnd, IDC_EDIT1) && GetDlgItem(hwnd, IDOK) && GetDlgItem(hwnd, IDCANCEL));
         EXPECT((HWND)w == GetDlgItem(hwnd, IDC_EDIT1));
-        EXPECT(SendMessage(hwnd, WM_GETFONT, 0, 0) != 0);
-        EXPECT(SendDlgItemMessage(hwnd, IDC_EDIT1, WM_GETFONT, 0, 0) != 0);
+        EXPECT(SendMessageA(hwnd, WM_GETFONT, 0, 0) != 0);
+        EXPECT(SendDlgItemMessageA(hwnd, IDC_EDIT1, WM_GETFONT, 0, 0) != 0);
         EXPECT(GetParent(hwnd) == hwndOwner);
         if (l) EXPECT(!IsWindowEnabled(hwndOwner));
         if (l == 1) { EXPECT(EndDialog(hwnd, 1234)); EXPECT(IsWindow(hwnd)); }
@@ -58,14 +58,14 @@ static INT_PTR CALLBACK DialogProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     if (msg == WM_NCDESTROY) cNcDestroy++;
     return FALSE;
 }
-static LRESULT CALLBACK OwnerProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) { return DefWindowProc(hwnd, msg, w, l); }
+static LRESULT CALLBACK OwnerProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) { return DefWindowProcA(hwnd, msg, w, l); }
 int main(void) {
     WNDCLASS wc = {0};
     HINSTANCE hinst = GetModuleHandle(NULL);
     HWND hwnd, hwndOther, hwndEdit;
     RECT rc, mapped;
     POINT pt;
-    MSG msg = {0};
+    APPMSG msg = {0};
     char sz[64];
     int cBefore;
 #ifndef _WIN32
@@ -85,7 +85,7 @@ int main(void) {
     CHECK(GetWindowText(hwnd, sz, sizeof(sz)) && strcmp(sz, "Stars!") == 0);
     CHECK(SetDlgItemText(hwnd, IDC_EDIT1, "secret"));
 #ifndef _WIN32
-    hfont = (HFONT)SendMessage(hwnd, WM_GETFONT, 0, 0);
+    hfont = (HFONT)SendMessageA(hwnd, WM_GETFONT, 0, 0);
     CHECK(GetObject(hfont, sizeof(lf), &lf) == sizeof(lf));
 #endif
     CHECK(GetDlgItemText(hwndOther, IDC_EDIT1, sz, sizeof(sz)) == 0);
@@ -94,7 +94,7 @@ int main(void) {
     mapped = (RECT){6, 22, 73, 14}; CHECK(MapDialogRect(hwnd, &mapped));
     CHECK(pt.x == mapped.left && pt.y == mapped.top && rc.right - rc.left == mapped.right);
     SetFocus(hwndEdit); msg.hwnd = hwndEdit; msg.message = WM_KEYDOWN; msg.wParam = VK_TAB;
-    CHECK(IsDialogMessage(hwnd, &msg) && GetFocus() == GetDlgItem(hwnd, IDOK));
+    CHECK(IsDialogMessageA(hwnd, &msg) && GetFocus() == GetDlgItem(hwnd, IDOK));
     CHECK(DestroyWindow(hwndOther) && IsWindow(hwnd));
     CHECK(DestroyWindow(hwnd) && cDestroy == 2 && cNcDestroy == 2 && cErrors == 0);
 #ifndef _WIN32

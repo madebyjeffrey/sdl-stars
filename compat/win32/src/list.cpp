@@ -34,11 +34,11 @@ static BOOL FOwnerList(HWND hwnd) { return (hwnd->dwStyle & (hwnd->lpcombo ? CBS
 static void NotifyList(HWND hwnd, UINT code) {
     HWND lp = LpCompatWindow(hwnd);
     if (lp && lp->hwndParent && (lp->dwStyle & LBS_NOTIFY))
-        SendMessageA(lp->hwndParent, WM_COMMAND, MAKEWPARAM(lp->idChild, code), (LPARAM)hwnd);
+        win32::SendMessageA(lp->hwndParent, WM_COMMAND, MAKEWPARAM(lp->idChild, code), (LPARAM)hwnd);
 }
 static int CListPage(HWND hwnd) {
     RECT rc;
-    GetClientRect(hwnd, &rc);
+    win32::GetClientRect(hwnd, &rc);
     return (((1) > ((hwnd->lpcombo ? hwnd->lpcombo->cyDrop : rc.bottom) / hwnd->lplist->cyItem)) ? (1) : ((hwnd->lpcombo ? hwnd->lpcombo->cyDrop : rc.bottom) / hwnd->lplist->cyItem));
 }
 static void ClampList(HWND hwnd) {
@@ -53,18 +53,18 @@ static void ClampList(HWND hwnd) {
         lp->fScrollSync = TRUE;
         if (hwnd->dwStyle & LBS_DISABLENOSCROLL) si.fMask |= SIF_DISABLENOSCROLL;
         si.nMax = StarsMax(0, lp->cItem - 1); si.nPage = (UINT)CListPage(hwnd); si.nPos = lp->iTop;
-        if (lp->fScrollV) SetScrollInfo(hwnd, SB_VERT, &si, TRUE);
-        if (!IsWindow(hwnd)) return;
-        GetClientRect(hwnd, &rc);
+        if (lp->fScrollV) win32::SetScrollInfo(hwnd, SB_VERT, &si, TRUE);
+        if (!win32::IsWindow(hwnd)) return;
+        win32::GetClientRect(hwnd, &rc);
         if (lp->fScrollH) {
             si.nMax = StarsMax(0, lp->cxExtent - 1); si.nPage = (UINT)StarsMax(1, rc.right); si.nPos = lp->xOffset;
-            lp->xOffset = SetScrollInfo(hwnd, SB_HORZ, &si, TRUE);
-            if (!IsWindow(hwnd)) return;
+            lp->xOffset = win32::SetScrollInfo(hwnd, SB_HORZ, &si, TRUE);
+            if (!win32::IsWindow(hwnd)) return;
         }
         lp->iTop = (((lp->iTop) < ((((0) > (lp->cItem - CListPage(hwnd))) ? (0) : (lp->cItem - CListPage(hwnd))))) ? (lp->iTop) : ((((0) > (lp->cItem - CListPage(hwnd))) ? (0) : (lp->cItem - CListPage(hwnd)))));
-        if (lp->fScrollV) SetScrollPos(hwnd, SB_VERT, lp->iTop, TRUE);
+        if (lp->fScrollV) win32::SetScrollPos(hwnd, SB_VERT, lp->iTop, TRUE);
     }
-    InvalidateRect(hwnd, NULL, TRUE);
+    win32::InvalidateRect(hwnd, NULL, TRUE);
 }
 static void RevealList(HWND hwnd, int i) {
     auto lplistKeep = hwnd->lplist;
@@ -76,10 +76,10 @@ static void RevealList(HWND hwnd, int i) {
 }
 static void DeleteNotice(HWND hwnd, UINT i, LPARAM lData) {
     DELETEITEMSTRUCT ds;
-    if (!FOwnerList(hwnd) || !IsWindow(hwnd->hwndParent)) return;
+    if (!FOwnerList(hwnd) || !win32::IsWindow(hwnd->hwndParent)) return;
     memset(&ds, 0, sizeof(ds)); ds.CtlType = hwnd->lpcombo ? ODT_COMBOBOX : ODT_LISTBOX; ds.CtlID = (UINT)hwnd->idChild;
     ds.itemID = i; ds.hwndItem = hwnd; ds.itemData = (ULONG_PTR)lData;
-    SendMessageA(hwnd->hwndParent, WM_DELETEITEM, (WPARAM)hwnd->idChild, (LPARAM)&ds);
+    win32::SendMessageA(hwnd->hwndParent, WM_DELETEITEM, (WPARAM)hwnd->idChild, (LPARAM)&ds);
 }
 static void EndListDrag(HWND hwnd, BOOL fRelease);
 static void ResetList(HWND hwnd) {
@@ -95,10 +95,10 @@ static void ResetList(HWND hwnd) {
     lp->rgitem = NULL; lp->cItem = lp->cAlloc = lp->iTop = lp->iCaret = 0; lp->iSel = -1; lp->nMutation++;
     lp->iAnchor = -1; lp->szSearch[0] = 0;
     EndListDrag(hwnd, TRUE);
-    InvalidateRect(hwnd, NULL, TRUE);
+    win32::InvalidateRect(hwnd, NULL, TRUE);
     for (i = 0; i < c; i++) { SDL_free(rg[i].psz); rg[i].psz = NULL; DeleteNotice(hwnd, (UINT)i, rg[i].lData); }
     rgKeep.reset();
-    if (IsWindow(hwnd) && !hwnd->fDestroying) ClampList(hwnd);
+    if (win32::IsWindow(hwnd) && !hwnd->fDestroying) ClampList(hwnd);
 }
 static LRESULT AddList(HWND hwnd, int i, LPCSTR psz) {
     auto lplistKeep = hwnd->lplist;
@@ -138,8 +138,8 @@ static void UserSelectList(HWND hwnd, int i, BOOL fToggle, BOOL fNotify) {
         lp->rgitem[i].fSelected = fToggle ? !lp->rgitem[i].fSelected : TRUE;
     } else lp->iSel = i;
     RevealList(hwnd, i);
-    if (IsWindow(hwnd)) DrawListSelection(hwnd, iOld);
-    if (fNotify && IsWindow(hwnd)) NotifyList(hwnd, LBN_SELCHANGE);
+    if (win32::IsWindow(hwnd)) DrawListSelection(hwnd, iOld);
+    if (fNotify && win32::IsWindow(hwnd)) NotifyList(hwnd, LBN_SELCHANGE);
 }
 static void ExtendedSelectList(HWND hwnd, int i, BOOL fCtrl, BOOL fShift, BOOL fNotify) {
     auto lplistKeep = hwnd->lplist;
@@ -169,10 +169,10 @@ static void EndListDrag(HWND hwnd, BOOL fRelease) {
     auto lplistKeep = hwnd->lplist;
     COMPATLIST *lp = lplistKeep.get();
     hwnd->fTracking = FALSE;
-    if (lp->idDragTimer) KillTimer(hwnd, lp->idDragTimer);
+    if (lp->idDragTimer) win32::KillTimer(hwnd, lp->idDragTimer);
     lp->idDragTimer = 0;
     SDL_free(lp->rgSelectedDrag); lp->rgSelectedDrag = NULL; lp->cSelectedDrag = 0;
-    if (fRelease && GetCapture() == hwnd) ReleaseCapture();
+    if (fRelease && win32::GetCapture() == hwnd) win32::ReleaseCapture();
 }
 
 static void DragList(HWND hwnd, LPARAM l) {
@@ -180,7 +180,7 @@ static void DragList(HWND hwnd, LPARAM l) {
     COMPATLIST *lp = lplistKeep.get();
     RECT rc;
     int y = (int16_t)HIWORD(l), i, j, iFirst, iLast;
-    if (lp->cItem == 0 || !GetClientRect(hwnd, &rc)) return;
+    if (lp->cItem == 0 || !win32::GetClientRect(hwnd, &rc)) return;
     if (y < 0) lp->iTop = StarsMax(0, lp->iTop - 1);
     else if (y >= rc.bottom) lp->iTop++;
     ClampList(hwnd);
@@ -204,13 +204,13 @@ static BOOL FDrawOwnerList(HWND hwnd, HDC hdc, int i, UINT action, BOOL fFocus, 
     ds.CtlType = ODT_LISTBOX; ds.CtlID = (UINT)hwnd->idChild;
     ds.itemID = (UINT)i; ds.itemAction = action;
     ds.itemState = (fItem && (FMulti(hwnd) ? lp->rgitem[i].fSelected : i == lp->iSel) ? ODS_SELECTED : 0) |
-                   (fFocus ? ODS_FOCUS : 0) | (IsWindowEnabled(hwnd) ? 0 : ODS_DISABLED);
+                   (fFocus ? ODS_FOCUS : 0) | (win32::IsWindowEnabled(hwnd) ? 0 : ODS_DISABLED);
     ds.hwndItem = hwnd; ds.hDC = hdc; ds.rcItem = *lprcItem;
     ds.itemData = fItem ? (ULONG_PTR)lp->rgitem[i].lData : 0;
-    GetClientRect(hwnd, &rc); IntersectClipRect(hdc, rc.left, rc.top, rc.right, rc.bottom);
-    SendMessageA(hwnd->hwndParent, WM_DRAWITEM, (WPARAM)hwnd->idChild, (LPARAM)&ds);
-    SelectClipRgn(hdc, NULL);
-    return IsWindow(hwnd);
+    win32::GetClientRect(hwnd, &rc); win32::IntersectClipRect(hdc, rc.left, rc.top, rc.right, rc.bottom);
+    win32::SendMessageA(hwnd->hwndParent, WM_DRAWITEM, (WPARAM)hwnd->idChild, (LPARAM)&ds);
+    win32::SelectClipRgn(hdc, NULL);
+    return win32::IsWindow(hwnd);
 }
 static void DrawListSelection(HWND hwnd, int iOld) {
     auto lplistKeep = hwnd->lplist;
@@ -221,23 +221,23 @@ static void DrawListSelection(HWND hwnd, int iOld) {
     int64_t y;
     unsigned n = lp->nMutation;
     if (FMulti(hwnd) || !FOwnerList(hwnd) || hwnd->lpcombo || iOld == lp->iSel ||
-        !IsWindowVisible(hwnd) || !GetClientRect(hwnd, &rc)) return;
-    hdc = GetDC(hwnd); if (!hdc) return;
-    if (hwnd->hfontControl) SelectObject(hdc, hwnd->hfontControl);
-    SetBkMode(hdc, TRANSPARENT); SetTextColor(hdc, GetSysColor(COLOR_WINDOWTEXT));
-    SetBkColor(hdc, GetSysColor(COLOR_WINDOW));
+        !win32::IsWindowVisible(hwnd) || !win32::GetClientRect(hwnd, &rc)) return;
+    hdc = win32::GetDC(hwnd); if (!hdc) return;
+    if (hwnd->hfontControl) win32::SelectObject(hdc, hwnd->hfontControl);
+    win32::SetBkMode(hdc, TRANSPARENT); win32::SetTextColor(hdc, win32::GetSysColor(COLOR_WINDOWTEXT));
+    win32::SetBkColor(hdc, win32::GetSysColor(COLOR_WINDOW));
     for (j = 0; j < 2; j++) {
         i = rgi[j];
         if (i < 0 || i >= lp->cItem) continue;
         y = (int64_t)(i - lp->iTop) * lp->cyItem;
         if (y >= rc.bottom || y + lp->cyItem <= 0) continue;
-        SetRect(&rcItem, -lp->xOffset, (int)y, StarsMax(rc.right, lp->cxExtent) - lp->xOffset,
+        win32::SetRect(&rcItem, -lp->xOffset, (int)y, StarsMax(rc.right, lp->cxExtent) - lp->xOffset,
                 (int)StarsMin(y + lp->cyItem, INT_MAX));
-        if (!FDrawOwnerList(hwnd, hdc, i, ODA_SELECT, GetFocus() == hwnd && i == lp->iCaret, &rcItem)) break;
+        if (!FDrawOwnerList(hwnd, hdc, i, ODA_SELECT, win32::GetFocus() == hwnd && i == lp->iCaret, &rcItem)) break;
         // The owner may replace the items or select another row during drawing.
-        if (lp->nMutation != n || lp->iSel != rgi[1]) { InvalidateRect(hwnd, NULL, TRUE); break; }
+        if (lp->nMutation != n || lp->iSel != rgi[1]) { win32::InvalidateRect(hwnd, NULL, TRUE); break; }
     }
-    ReleaseDC(hwnd, hdc);
+    win32::ReleaseDC(hwnd, hdc);
 }
 static void DrawListFocus(HWND hwnd, BOOL fFocus) {
     auto lplistKeep = hwnd->lplist;
@@ -246,69 +246,69 @@ static void DrawListFocus(HWND hwnd, BOOL fFocus) {
     RECT rc, rcItem;
     int i = lp->cItem != 0 ? lp->iCaret : -1;
     int64_t y = i >= 0 ? (int64_t)(i - lp->iTop) * lp->cyItem : 0;
-    if (!FOwnerList(hwnd) || hwnd->lpcombo || !IsWindowVisible(hwnd) || !GetClientRect(hwnd, &rc) ||
+    if (!FOwnerList(hwnd) || hwnd->lpcombo || !win32::IsWindowVisible(hwnd) || !win32::GetClientRect(hwnd, &rc) ||
         y >= rc.bottom || y + lp->cyItem <= 0) return;
-    hdc = GetDC(hwnd); if (!hdc) return;
-    if (hwnd->hfontControl) SelectObject(hdc, hwnd->hfontControl);
-    SetBkMode(hdc, TRANSPARENT); SetTextColor(hdc, GetSysColor(COLOR_WINDOWTEXT));
-    SetBkColor(hdc, GetSysColor(COLOR_WINDOW));
-    SetRect(&rcItem, -lp->xOffset, (int)y, StarsMax(rc.right, lp->cxExtent) - lp->xOffset, (int)StarsMin(y + lp->cyItem, INT_MAX));
+    hdc = win32::GetDC(hwnd); if (!hdc) return;
+    if (hwnd->hfontControl) win32::SelectObject(hdc, hwnd->hfontControl);
+    win32::SetBkMode(hdc, TRANSPARENT); win32::SetTextColor(hdc, win32::GetSysColor(COLOR_WINDOWTEXT));
+    win32::SetBkColor(hdc, win32::GetSysColor(COLOR_WINDOW));
+    win32::SetRect(&rcItem, -lp->xOffset, (int)y, StarsMax(rc.right, lp->cxExtent) - lp->xOffset, (int)StarsMin(y + lp->cyItem, INT_MAX));
     FDrawOwnerList(hwnd, hdc, i, ODA_FOCUS, fFocus, &rcItem);
-    ReleaseDC(hwnd, hdc);
+    win32::ReleaseDC(hwnd, hdc);
 }
 static void PaintList(HWND hwnd) {
     auto lplistKeep = hwnd->lplist;
     COMPATLIST *lp = lplistKeep.get();
     PAINTSTRUCT ps;
-    HDC hdc = BeginPaint(hwnd, &ps);
+    HDC hdc = win32::BeginPaint(hwnd, &ps);
     HBRUSH hbr, hbrOwn = NULL, hbrSel;
     HFONT hfontOld = NULL;
     RECT rc, rcItem;
     int i, y;
     unsigned n;
-    BOOL fSel, fFocus = GetFocus() == hwnd;
+    BOOL fSel, fFocus = win32::GetFocus() == hwnd;
     if (!hdc) return;
-    GetClientRect(hwnd, &rc);
-    if (hwnd->hfontControl) hfontOld = (HFONT)SelectObject(hdc, hwnd->hfontControl);
-    SetBkMode(hdc, TRANSPARENT); SetTextColor(hdc, GetSysColor(COLOR_WINDOWTEXT));
-    SetBkColor(hdc, GetSysColor(COLOR_WINDOW));
-    hbr = (HBRUSH)SendMessageA(hwnd->hwndParent, WM_CTLCOLORLISTBOX, (WPARAM)hdc, (LPARAM)hwnd);
-    if (!IsWindow(hwnd)) return;
-    if (!hbr) hbr = hbrOwn = CreateSolidBrush(GetBkColor(hdc));
-    FillRect(hdc, &rc, hbr);
+    win32::GetClientRect(hwnd, &rc);
+    if (hwnd->hfontControl) hfontOld = (HFONT)win32::SelectObject(hdc, hwnd->hfontControl);
+    win32::SetBkMode(hdc, TRANSPARENT); win32::SetTextColor(hdc, win32::GetSysColor(COLOR_WINDOWTEXT));
+    win32::SetBkColor(hdc, win32::GetSysColor(COLOR_WINDOW));
+    hbr = (HBRUSH)win32::SendMessageA(hwnd->hwndParent, WM_CTLCOLORLISTBOX, (WPARAM)hdc, (LPARAM)hwnd);
+    if (!win32::IsWindow(hwnd)) return;
+    if (!hbr) hbr = hbrOwn = win32::CreateSolidBrush(win32::GetBkColor(hdc));
+    win32::FillRect(hdc, &rc, hbr);
     n = lp->nMutation;
     if (lp->cItem == 0 && FOwnerList(hwnd) && fFocus) {
-        SetRect(&rcItem, 0, 0, rc.right, lp->cyItem);
+        win32::SetRect(&rcItem, 0, 0, rc.right, lp->cyItem);
         // Stars handles itemID == -1 by drawing just the empty focus indicator.
         if (!FDrawOwnerList(hwnd, hdc, -1, ODA_FOCUS, TRUE, &rcItem)) {
-            if (hbrOwn) DeleteObject(hbrOwn);
+            if (hbrOwn) win32::DeleteObject(hbrOwn);
             return;
         }
-        if (lp->nMutation != n) InvalidateRect(hwnd, NULL, TRUE);
+        if (lp->nMutation != n) win32::InvalidateRect(hwnd, NULL, TRUE);
     }
     for (i = lp->iTop, y = 0; i < lp->cItem && y < rc.bottom; i++, y += lp->cyItem) {
-        SetRect(&rcItem, -lp->xOffset, y, StarsMax(rc.right, lp->cxExtent) - lp->xOffset, y + lp->cyItem);
+        win32::SetRect(&rcItem, -lp->xOffset, y, StarsMax(rc.right, lp->cxExtent) - lp->xOffset, y + lp->cyItem);
         fSel = FMulti(hwnd) ? lp->rgitem[i].fSelected : i == lp->iSel;
         if (hwnd->dwStyle & LBS_OWNERDRAWFIXED) {
             if (!FDrawOwnerList(hwnd, hdc, i, ODA_DRAWENTIRE, fFocus && i == lp->iCaret, &rcItem)) {
-                if (hbrOwn) DeleteObject(hbrOwn);
+                if (hbrOwn) win32::DeleteObject(hbrOwn);
                 return;
             }
-            if (lp->nMutation != n) { InvalidateRect(hwnd, NULL, TRUE); break; }
+            if (lp->nMutation != n) { win32::InvalidateRect(hwnd, NULL, TRUE); break; }
         } else {
             if (fSel) {
-                hbrSel = CreateSolidBrush(GetSysColor(COLOR_HIGHLIGHT)); FillRect(hdc, &rcItem, hbrSel); DeleteObject(hbrSel);
+                hbrSel = win32::CreateSolidBrush(win32::GetSysColor(COLOR_HIGHLIGHT)); win32::FillRect(hdc, &rcItem, hbrSel); win32::DeleteObject(hbrSel);
             }
-            SetTextColor(hdc, GetSysColor(fSel ? COLOR_HIGHLIGHTTEXT : IsWindowEnabled(hwnd) ? COLOR_WINDOWTEXT : COLOR_GRAYTEXT));
+            win32::SetTextColor(hdc, win32::GetSysColor(fSel ? COLOR_HIGHLIGHTTEXT : win32::IsWindowEnabled(hwnd) ? COLOR_WINDOWTEXT : COLOR_GRAYTEXT));
             rcItem.left += 2;
-            DrawTextA(hdc, lp->rgitem[i].psz, -1, &rcItem, DT_LEFT | DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX);
-            if (fFocus && i == lp->iCaret) FrameRect(hdc, &rcItem, (HBRUSH)GetStockObject(GRAY_BRUSH));
+            win32::DrawTextA(hdc, lp->rgitem[i].psz, -1, &rcItem, DT_LEFT | DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX);
+            if (fFocus && i == lp->iCaret) win32::FrameRect(hdc, &rcItem, (HBRUSH)win32::GetStockObject(GRAY_BRUSH));
         }
     }
     if ((hwnd->dwStyle & WS_BORDER) || (hwnd->dwExStyle & WS_EX_CLIENTEDGE)) CompatDrawClassicEdge(hdc, &rc, TRUE, TRUE);
-    if (hfontOld) SelectObject(hdc, hfontOld);
-    if (hbrOwn) DeleteObject(hbrOwn);
-    EndPaint(hwnd, &ps);
+    if (hfontOld) win32::SelectObject(hdc, hfontOld);
+    if (hbrOwn) win32::DeleteObject(hbrOwn);
+    win32::EndPaint(hwnd, &ps);
 }
 
 LRESULT CALLBACK CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
@@ -334,21 +334,21 @@ LRESULT CALLBACK CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         lp->fScrollV = (lpwin->dwStyle & WS_VSCROLL) != 0; lp->fScrollH = (lpwin->dwStyle & WS_HSCROLL) != 0;
         return TRUE;
     }
-    if (!lp) return DefWindowProcA(hwnd, msg, w, l);
+    if (!lp) return win32::DefWindowProcA(hwnd, msg, w, l);
     switch (msg) {
     case WM_CREATE:
         if ((lpwin->dwStyle & (LBS_OWNERDRAWVARIABLE | LBS_MULTICOLUMN | LBS_NODATA)) ||
             ((lpwin->dwStyle & LBS_OWNERDRAWFIXED) && !(lpwin->dwStyle & LBS_HASSTRINGS))) return -1;
-        hdc = GetDC(hwnd);
-        if (hdc) { if (GetTextMetricsA(hdc, &tm)) lp->cyItem = StarsMax(1, tm.tmHeight); ReleaseDC(hwnd, hdc); }
+        hdc = win32::GetDC(hwnd);
+        if (hdc) { if (win32::GetTextMetricsA(hdc, &tm)) lp->cyItem = StarsMax(1, tm.tmHeight); win32::ReleaseDC(hwnd, hdc); }
         if (lpwin->dwStyle & LBS_OWNERDRAWFIXED) {
             memset(&ms, 0, sizeof(ms)); ms.CtlType = ODT_LISTBOX; ms.CtlID = (UINT)lpwin->idChild; ms.itemHeight = (UINT)lp->cyItem;
-            SendMessageA(lpwin->hwndParent, WM_MEASUREITEM, (WPARAM)lpwin->idChild, (LPARAM)&ms);
-            if (!IsWindow(hwnd)) return -1;
+            win32::SendMessageA(lpwin->hwndParent, WM_MEASUREITEM, (WPARAM)lpwin->idChild, (LPARAM)&ms);
+            if (!win32::IsWindow(hwnd)) return -1;
             if (ms.itemHeight != 0 && ms.itemHeight <= INT_MAX) lp->cyItem = (int)ms.itemHeight;
         }
         if (!(lpwin->dwStyle & LBS_NOINTEGRALHEIGHT) && lpwin->hwndParent && !lpwin->lpcombo) {
-            cyBar = lpwin->dwStyle & WS_HSCROLL ? GetSystemMetrics(SM_CYHSCROLL) : 0;
+            cyBar = lpwin->dwStyle & WS_HSCROLL ? win32::GetSystemMetrics(SM_CYHSCROLL) : 0;
             cy = lpwin->rcChild.bottom - lpwin->rcChild.top;
             if (cy > cyBar) lpwin->rcChild.bottom = lpwin->rcChild.top + cyBar + (cy - cyBar) / lp->cyItem * lp->cyItem;
         }
@@ -356,7 +356,7 @@ LRESULT CALLBACK CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     case WM_WINDOWPOSCHANGING:
         if (l && !(lpwin->dwStyle & LBS_NOINTEGRALHEIGHT) && !lpwin->lpcombo) {
             lpwp = (WINDOWPOS *)l;
-            cyBar = lpwin->dwStyle & WS_HSCROLL ? GetSystemMetrics(SM_CYHSCROLL) : 0;
+            cyBar = lpwin->dwStyle & WS_HSCROLL ? win32::GetSystemMetrics(SM_CYHSCROLL) : 0;
             if (!(lpwp->flags & SWP_NOSIZE) && lpwp->cy > cyBar)
                 lpwp->cy = cyBar + (lpwp->cy - cyBar) / lp->cyItem * lp->cyItem;
         }
@@ -388,19 +388,19 @@ LRESULT CALLBACK CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     case LB_SETITEMDATA:
         if (i < -1 || i >= lp->cItem) return LB_ERR;
         for (j = 0; j < lp->cItem; j++) if (i == -1 || j == i) lp->rgitem[j].lData = l;
-        lp->nMutation++; InvalidateRect(hwnd, NULL, TRUE); return 1;
+        lp->nMutation++; win32::InvalidateRect(hwnd, NULL, TRUE); return 1;
     case LB_SETCURSEL:
         if (FMulti(hwnd)) return LB_ERR;
         j = lp->iSel;
         lp->iSel = i >= 0 && i < lp->cItem ? i : -1;
-        if (lp->iSel >= 0) { lp->iCaret = i; RevealList(hwnd, i); } else InvalidateRect(hwnd, NULL, TRUE);
-        if (IsWindow(hwnd)) DrawListSelection(hwnd, j);
-        return IsWindow(hwnd) ? lp->iSel : LB_ERR;
+        if (lp->iSel >= 0) { lp->iCaret = i; RevealList(hwnd, i); } else win32::InvalidateRect(hwnd, NULL, TRUE);
+        if (win32::IsWindow(hwnd)) DrawListSelection(hwnd, j);
+        return win32::IsWindow(hwnd) ? lp->iSel : LB_ERR;
     case LB_GETCURSEL: return FMulti(hwnd) ? (lp->cItem ? lp->iCaret : LB_ERR) : lp->iSel;
     case LB_SETSEL:
         if (!FMulti(hwnd) || l < -1 || l >= lp->cItem) return LB_ERR;
         for (j = 0; j < lp->cItem; j++) if (l == -1 || j == l) lp->rgitem[j].fSelected = w != 0;
-        InvalidateRect(hwnd, NULL, TRUE); return 0;
+        win32::InvalidateRect(hwnd, NULL, TRUE); return 0;
     case LB_GETSEL:
         if (i < 0 || i >= lp->cItem) return LB_ERR;
         return FMulti(hwnd) ? lp->rgitem[i].fSelected : i == lp->iSel;
@@ -423,10 +423,10 @@ LRESULT CALLBACK CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         lp->cyItem = (int)l; ClampList(hwnd); return 0;
     case LB_GETITEMRECT:
         if (i < 0 || i >= lp->cItem || !l) return LB_ERR;
-        GetClientRect(hwnd, &rc);
+        win32::GetClientRect(hwnd, &rc);
         yItem = (int64_t)(i - lp->iTop) * lp->cyItem;
         if (yItem < INT_MIN || yItem + lp->cyItem > INT_MAX) return LB_ERR;
-        SetRect((LPRECT)l, 0, (int)yItem, rc.right, (int)(yItem + lp->cyItem)); return 1;
+        win32::SetRect((LPRECT)l, 0, (int)yItem, rc.right, (int)(yItem + lp->cyItem)); return 1;
     case LB_SETCARETINDEX:
         if (i < 0 || i >= lp->cItem) return LB_ERR;
         lp->iCaret = i; RevealList(hwnd, i); return 0;
@@ -444,23 +444,23 @@ LRESULT CALLBACK CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     case WM_GETFONT: return (LRESULT)lpwin->hfontControl;
     case WM_SETFONT:
         lpwin->hfontControl = (HFONT)w;
-        if (!FOwnerList(hwnd) && (hdc = GetDC(hwnd))) {
-            if (lpwin->hfontControl) SelectObject(hdc, lpwin->hfontControl);
-            if (GetTextMetricsA(hdc, &tm)) lp->cyItem = StarsMax(1, tm.tmHeight);
-            ReleaseDC(hwnd, hdc);
+        if (!FOwnerList(hwnd) && (hdc = win32::GetDC(hwnd))) {
+            if (lpwin->hfontControl) win32::SelectObject(hdc, lpwin->hfontControl);
+            if (win32::GetTextMetricsA(hdc, &tm)) lp->cyItem = StarsMax(1, tm.tmHeight);
+            win32::ReleaseDC(hwnd, hdc);
         }
-        ClampList(hwnd); if (l) InvalidateRect(hwnd, NULL, TRUE); return 0;
+        ClampList(hwnd); if (l) win32::InvalidateRect(hwnd, NULL, TRUE); return 0;
     case WM_PAINT: PaintList(hwnd); return 0;
     case WM_ERASEBKGND: return 1;
     case WM_ENABLE: case WM_SIZE: ClampList(hwnd); return 0;
     case WM_SETFOCUS: case WM_KILLFOCUS:
         DrawListFocus(hwnd, msg == WM_SETFOCUS);
-        if (IsWindow(hwnd)) {
-            InvalidateRect(hwnd, NULL, TRUE); NotifyList(hwnd, msg == WM_SETFOCUS ? LBN_SETFOCUS : LBN_KILLFOCUS);
+        if (win32::IsWindow(hwnd)) {
+            win32::InvalidateRect(hwnd, NULL, TRUE); NotifyList(hwnd, msg == WM_SETFOCUS ? LBN_SETFOCUS : LBN_KILLFOCUS);
         }
         return 0;
     case WM_LBUTTONDOWN: case WM_LBUTTONDBLCLK:
-        SetFocus(hwnd); if (!IsWindow(hwnd)) return 0;
+        win32::SetFocus(hwnd); if (!win32::IsWindow(hwnd)) return 0;
         i = lp->iTop + (int16_t)HIWORD(l) / lp->cyItem;
         if ((int16_t)HIWORD(l) < 0) return 0;
         SDL_free(lp->rgSelectedDrag); lp->rgSelectedDrag = NULL; lp->cSelectedDrag = 0;
@@ -472,25 +472,25 @@ LRESULT CALLBACK CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
             }
         }
         ExtendedSelectList(hwnd, i, (w & MK_CONTROL) != 0, (w & MK_SHIFT) != 0, FALSE);
-        if (!IsWindow(hwnd)) return 0;
+        if (!win32::IsWindow(hwnd)) return 0;
         if (msg == WM_LBUTTONDBLCLK) NotifyList(hwnd, LBN_DBLCLK);
         else {
-            SetCapture(hwnd);
-            if (IsWindow(hwnd) && GetCapture() == hwnd) {
+            win32::SetCapture(hwnd);
+            if (win32::IsWindow(hwnd) && win32::GetCapture() == hwnd) {
                 lpwin->fTracking = TRUE; lp->iDrag = i; lp->grfDrag = (DWORD)w; lp->lDragPoint = l;
-                lp->idDragTimer = SetTimer(hwnd, UINTPTR_MAX, 100, NULL);
+                lp->idDragTimer = win32::SetTimer(hwnd, UINTPTR_MAX, 100, NULL);
             }
         }
         return 0;
     case WM_MOUSEMOVE:
-        if (lpwin->fTracking && GetCapture() == hwnd) { lp->lDragPoint = l; DragList(hwnd, l); }
+        if (lpwin->fTracking && win32::GetCapture() == hwnd) { lp->lDragPoint = l; DragList(hwnd, l); }
         return 0;
     case WM_TIMER:
-        if (w == lp->idDragTimer && lpwin->fTracking && GetCapture() == hwnd) DragList(hwnd, lp->lDragPoint);
+        if (w == lp->idDragTimer && lpwin->fTracking && win32::GetCapture() == hwnd) DragList(hwnd, lp->lDragPoint);
         return 0;
     case WM_LBUTTONUP:
         c = lpwin->fTracking; EndListDrag(hwnd, TRUE);
-        if (c != 0 && IsWindow(hwnd)) NotifyList(hwnd, LBN_SELCHANGE);
+        if (c != 0 && win32::IsWindow(hwnd)) NotifyList(hwnd, LBN_SELCHANGE);
         return 0;
     case WM_CAPTURECHANGED: case WM_CANCELMODE:
         EndListDrag(hwnd, msg == WM_CANCELMODE);
@@ -504,13 +504,13 @@ LRESULT CALLBACK CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         else if (w == VK_PRIOR) i -= CListPage(hwnd);
         else if (w == VK_NEXT) i += CListPage(hwnd);
         else if (w == VK_SPACE && FMulti(hwnd)) {
-            ExtendedSelectList(hwnd, i, (GetKeyState(VK_CONTROL) & 0x8000) != 0,
-                               (GetKeyState(VK_SHIFT) & 0x8000) != 0, TRUE); return 0;
+            ExtendedSelectList(hwnd, i, (win32::GetKeyState(VK_CONTROL) & 0x8000) != 0,
+                               (win32::GetKeyState(VK_SHIFT) & 0x8000) != 0, TRUE); return 0;
         }
         else return 0;
         i = (((StarsMax(0, i)) < (lp->cItem - 1)) ? (StarsMax(0, i)) : (lp->cItem - 1));
-        if ((lpwin->dwStyle & LBS_EXTENDEDSEL) && !(GetKeyState(VK_CONTROL) & 0x8000))
-            ExtendedSelectList(hwnd, i, FALSE, (GetKeyState(VK_SHIFT) & 0x8000) != 0, TRUE);
+        if ((lpwin->dwStyle & LBS_EXTENDEDSEL) && !(win32::GetKeyState(VK_CONTROL) & 0x8000))
+            ExtendedSelectList(hwnd, i, FALSE, (win32::GetKeyState(VK_SHIFT) & 0x8000) != 0, TRUE);
         else if (FMulti(hwnd)) { lp->iCaret = StarsMax(0, i); RevealList(hwnd, StarsMax(0, i)); }
         else UserSelectList(hwnd, i, FALSE, TRUE);
         return 0;
@@ -524,7 +524,7 @@ LRESULT CALLBACK CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         if (i != LB_ERR) ExtendedSelectList(hwnd, i, FALSE, FALSE, TRUE);
         return 0;
     case WM_HSCROLL:
-        GetClientRect(hwnd, &rc);
+        win32::GetClientRect(hwnd, &rc);
         if (LOWORD(w) == SB_LINELEFT) lp->xOffset -= 8;
         else if (LOWORD(w) == SB_LINERIGHT) lp->xOffset += 8;
         else if (LOWORD(w) == SB_PAGELEFT) lp->xOffset -= rc.right;
@@ -532,7 +532,7 @@ LRESULT CALLBACK CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         else if (LOWORD(w) == SB_LEFT) lp->xOffset = 0;
         else if (LOWORD(w) == SB_RIGHT) lp->xOffset = lp->cxExtent;
         else if (LOWORD(w) == SB_THUMBPOSITION || LOWORD(w) == SB_THUMBTRACK) {
-            if (l == 0 && IsWindow(lpwin->rghwndScroll[SB_HORZ]) && lpwin->rghwndScroll[SB_HORZ]->fTracking)
+            if (l == 0 && win32::IsWindow(lpwin->rghwndScroll[SB_HORZ]) && lpwin->rghwndScroll[SB_HORZ]->fTracking)
                 lp->xOffset = lpwin->rghwndScroll[SB_HORZ]->iScrollTrack;
             else lp->xOffset = HIWORD(w);
         }
@@ -546,7 +546,7 @@ LRESULT CALLBACK CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         else if (LOWORD(w) == SB_TOP) lp->iTop = 0;
         else if (LOWORD(w) == SB_BOTTOM) lp->iTop = lp->cItem;
         else if (LOWORD(w) == SB_THUMBPOSITION || LOWORD(w) == SB_THUMBTRACK) {
-            if (l == 0 && IsWindow(lpwin->rghwndScroll[SB_VERT]) && lpwin->rghwndScroll[SB_VERT]->fTracking)
+            if (l == 0 && win32::IsWindow(lpwin->rghwndScroll[SB_VERT]) && lpwin->rghwndScroll[SB_VERT]->fTracking)
                 lp->iTop = lpwin->rghwndScroll[SB_VERT]->iScrollTrack;
             else lp->iTop = HIWORD(w);
         }
@@ -554,6 +554,6 @@ LRESULT CALLBACK CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     case WM_MOUSEWHEEL:
         lp->iTop = (int)((((int64_t)INT_MAX) < (((((int64_t)0) > ((int64_t)lp->iTop - (int16_t)HIWORD(w) / WHEEL_DELTA * 3)) ? ((int64_t)0) : ((int64_t)lp->iTop - (int16_t)HIWORD(w) / WHEEL_DELTA * 3)))) ? ((int64_t)INT_MAX) : (((((int64_t)0) > ((int64_t)lp->iTop - (int16_t)HIWORD(w) / WHEEL_DELTA * 3)) ? ((int64_t)0) : ((int64_t)lp->iTop - (int16_t)HIWORD(w) / WHEEL_DELTA * 3))));
         ClampList(hwnd); return 0;
-    default: return DefWindowProcA(hwnd, msg, w, l);
+    default: return win32::DefWindowProcA(hwnd, msg, w, l);
     }
 }

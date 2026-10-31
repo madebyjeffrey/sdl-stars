@@ -32,49 +32,49 @@ LRESULT CALLBACK PlanetWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
     case WM_CREATE:
         SetPlanetTitleBar(hwnd);
         for (i = 0; i < 3; i++) {
-            rghwndOrderDD[i] = HwndUiCreateWindowEx(0, szCombobox, "OrdDD", (i == 1 ? 528 : 0) | (CBS_DROPDOWNLIST | WS_CHILD | WS_VSCROLL), 100, 100, 200,
+            rghwndOrderDD[i] = ui::CreateWindowEx(0, szCombobox, "OrdDD", (i == 1 ? 528 : 0) | (CBS_DROPDOWNLIST | WS_CHILD | WS_VSCROLL), 100, 100, 200,
                                             i == 2 ? 160 : 80, hwnd, NULL, hInst, NULL);
-            ControlIO().pfnLUiSendMessage(rghwndOrderDD[i], WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
+            ControlIO().pfnSendMessage(rghwndOrderDD[i], WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
         }
         for (i = idsTaskHere; i <= idsTransferFleet; i++) {
             psz = TextIO().pfnCompressed(static_cast<StringId>(i));
-            ControlIO().pfnLUiSendMessage(rghwndOrderDD[0], CB_ADDSTRING, 0, (LPARAM)psz);
+            ControlIO().pfnSendMessage(rghwndOrderDD[0], CB_ADDSTRING, 0, (LPARAM)psz);
         }
-        hwndOrderED = HwndUiCreateWindowEx(0, szEdit, NULL, ES_RIGHT | WS_CHILD | WS_BORDER, 100, 100, 200, 50, hwnd, NULL, hInst, NULL);
-        ControlIO().pfnLUiSendMessage(hwndOrderED, EM_LIMITTEXT, 4, 0);
-        ControlIO().pfnLUiSendMessage(hwndOrderED, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
-        lpfnRealEditProc = (WNDPROC)GetWindowLongPtr(hwndOrderED, GWLP_WNDPROC);
-        SetWindowLongPtr(hwndOrderED, GWLP_WNDPROC, (LONG_PTR)lpfnFakeEditProc);
-        hwndBattleDD = HwndUiCreateWindowEx(0, szCombobox, "BattleDD", CBS_DROPDOWNLIST | WS_CHILD | WS_VSCROLL, 100, 100, 200, 80, hwnd, NULL, hInst, NULL);
-        ControlIO().pfnLUiSendMessage(hwndBattleDD, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
-        hwndShipDD = HwndUiCreateWindowEx(0, szCombobox, "ShipDD", CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_HASSTRINGS | WS_CHILD | WS_VSCROLL, 100, 100, 200, 80, hwnd,
+        hwndOrderED = ui::CreateWindowEx(0, szEdit, NULL, ES_RIGHT | WS_CHILD | WS_BORDER, 100, 100, 200, 50, hwnd, NULL, hInst, NULL);
+        ControlIO().pfnSendMessage(hwndOrderED, EM_LIMITTEXT, 4, 0);
+        ControlIO().pfnSendMessage(hwndOrderED, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
+        lpfnRealEditProc = (WNDPROC)win32::GetWindowLongPtr(hwndOrderED, GWLP_WNDPROC);
+        win32::SetWindowLongPtr(hwndOrderED, GWLP_WNDPROC, (LONG_PTR)lpfnFakeEditProc);
+        hwndBattleDD = ui::CreateWindowEx(0, szCombobox, "BattleDD", CBS_DROPDOWNLIST | WS_CHILD | WS_VSCROLL, 100, 100, 200, 80, hwnd, NULL, hInst, NULL);
+        ControlIO().pfnSendMessage(hwndBattleDD, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
+        hwndShipDD = ui::CreateWindowEx(0, szCombobox, "ShipDD", CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_HASSTRINGS | WS_CHILD | WS_VSCROLL, 100, 100, 200, 80, hwnd,
                                   NULL, hInst, NULL);
-        ControlIO().pfnLUiSendMessage(hwndShipDD, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
+        ControlIO().pfnSendMessage(hwndShipDD, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
         ControlIO().pfnGetClientRect(hwndShipDD, &rc);
         dyShipDD = rc.bottom;
-        hwndShipLB = HwndUiCreateWindowEx(0, szListbox, "ShipLB", LBS_NOTIFY | LBS_NOINTEGRALHEIGHT | LBS_DISABLENOSCROLL | WS_CHILD | WS_BORDER | WS_VSCROLL, 100, 100,
+        hwndShipLB = ui::CreateWindowEx(0, szListbox, "ShipLB", LBS_NOTIFY | LBS_NOINTEGRALHEIGHT | LBS_DISABLENOSCROLL | WS_CHILD | WS_BORDER | WS_VSCROLL, 100, 100,
                                   200, 80, hwnd, NULL, hInst, NULL);
-        ControlIO().pfnLUiSendMessage(hwndShipLB, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
+        ControlIO().pfnSendMessage(hwndShipLB, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
         hwndFleetCompLB =
-            HwndUiCreateWindowEx(0, szListbox, "FleetCompLB", LBS_NOTIFY | LBS_OWNERDRAWFIXED | LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT | WS_CHILD | WS_BORDER | WS_VSCROLL,
+            ui::CreateWindowEx(0, szListbox, "FleetCompLB", LBS_NOTIFY | LBS_OWNERDRAWFIXED | LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT | WS_CHILD | WS_BORDER | WS_VSCROLL,
                          100, 100, 200, 80, hwnd, NULL, hInst, NULL);
-        ControlIO().pfnLUiSendMessage(hwndFleetCompLB, WM_SETFONT, (WPARAM)rghfontArial8[0], 0);
+        ControlIO().pfnSendMessage(hwndFleetCompLB, WM_SETFONT, (WPARAM)rghfontArial8[0], 0);
         hwndPlanetProdLB =
-            HwndUiCreateWindowEx(0, szListbox, "PlanetProdLB", LBS_NOTIFY | LBS_OWNERDRAWFIXED | LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT | WS_CHILD | WS_BORDER | WS_VSCROLL,
+            ui::CreateWindowEx(0, szListbox, "PlanetProdLB", LBS_NOTIFY | LBS_OWNERDRAWFIXED | LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT | WS_CHILD | WS_BORDER | WS_VSCROLL,
                          100, 100, 200, 80, hwnd, NULL, hInst, NULL);
-        ControlIO().pfnLUiSendMessage(hwndPlanetProdLB, WM_SETFONT, (WPARAM)rghfontArial8[0], 0);
+        ControlIO().pfnSendMessage(hwndPlanetProdLB, WM_SETFONT, (WPARAM)rghfontArial8[0], 0);
         for (i = 0; i < 13; i++) {
             psz = TextIO().pfnCompressed(static_cast<StringId>(idsCargo2 + i));
-            rghwndBtn[i] = HwndUiCreateWindowEx(0, szButton, psz, WS_CHILD, 100, 100, 100, dyArial8 * 2, hwnd, NULL, hInst, NULL);
-            ControlIO().pfnLUiSendMessage(rghwndBtn[i], WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
+            rghwndBtn[i] = ui::CreateWindowEx(0, szButton, psz, WS_CHILD, 100, 100, 100, dyArial8 * 2, hwnd, NULL, hInst, NULL);
+            ControlIO().pfnSendMessage(rghwndBtn[i], WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
         }
         hwndRepCB =
-            HwndUiCreateWindowEx(0, szButton, TextIO().pfnCompressed(idsRepeatOrders), BS_AUTOCHECKBOX | WS_CHILD, 100, 100, 150, dyArial8, hwnd, NULL, hInst, NULL);
-        ControlIO().pfnLUiSendMessage(hwndRepCB, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
+            ui::CreateWindowEx(0, szButton, TextIO().pfnCompressed(idsRepeatOrders), BS_AUTOCHECKBOX | WS_CHILD, 100, 100, 150, dyArial8, hwnd, NULL, hInst, NULL);
+        ControlIO().pfnSendMessage(hwndRepCB, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
         break;
     case WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        FillRect((HDC)wParam, &rc, hbrButtonFace);
+        win32::FillRect((HDC)wParam, &rc, hbrButtonFace);
         return 1;
     case WM_CTLCOLORMSGBOX:
     case WM_CTLCOLOREDIT:
@@ -84,8 +84,8 @@ LRESULT CALLBACK PlanetWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
     case WM_CTLCOLORSCROLLBAR:
     case WM_CTLCOLORSTATIC:
         if ((HWND)lParam == hwndRepCB) {
-            SetBkColor((HDC)wParam, crButtonFace);
-            SetTextColor((HDC)wParam, crButtonText);
+            win32::SetBkColor((HDC)wParam, crButtonFace);
+            win32::SetTextColor((HDC)wParam, crButtonText);
             return (LRESULT)hbrButtonFace;
         }
         goto Default;
@@ -96,20 +96,20 @@ LRESULT CALLBACK PlanetWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
     case WM_LBUTTONDOWN:
     case WM_LBUTTONDBLCLK:
     case WM_RBUTTONDOWN:
-        ControlIO().pfnHwndUiSetFocus(hwndFrame);
+        ControlIO().pfnSetFocus(hwndFrame);
         PlanetClick(LOWORD(lParam), HIWORD(lParam), wParam, message == WM_RBUTTONDOWN);
         return 0;
     case WM_PAINT:
-        hdc = BeginPaint(hwnd, &ps);
+        hdc = win32::BeginPaint(hwnd, &ps);
         ControlIO().pfnDrawPlanShip(hdc, tileAll);
-        EndPaint(hwnd, &ps);
+        win32::EndPaint(hwnd, &ps);
         break;
     case WM_SETCURSOR:
         hcs = 0;
         GetCursorPos16(&pt);
         ScreenToClient16(hwnd, &pt);
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        if (PtInRect(&rc, PointFrom16(pt)) == 0)
+        if (win32::PtInRect(&rc, PointFrom16(pt)) == 0)
             goto Default;
         hcs = ClickInShipOrders(pt, 0, TRUE, FALSE);
         if (!hcs) {
@@ -117,7 +117,7 @@ LRESULT CALLBACK PlanetWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
         }
         if (!hcs)
             goto Default;
-        SetCursor(hcs);
+        win32::SetCursor(hcs);
         return 1;
     case WM_DRAWITEM:
         lpdis = (DRAWITEMSTRUCT *)lParam;
@@ -183,7 +183,7 @@ LRESULT CALLBACK PlanetWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
                 }
                 PresentationIO().pfnSelectPlanet(-1, 0);
             LRefocus:
-                ControlIO().pfnHwndUiSetFocus(hwndFrame);
+                ControlIO().pfnSetFocus(hwndFrame);
                 return 0;
             } else if ((HWND)lParam == rghwndBtn[5] && HIWORD(wParam) == 0) {
                 if (ControlIO().pfnGetKeyState(VK_SHIFT) < 0) {
@@ -193,14 +193,14 @@ LRESULT CALLBACK PlanetWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
                 PresentationIO().pfnSelectPlanet(1, 0);
                 goto LRefocus;
             } else if ((HWND)lParam == rghwndBtn[0] && HIWORD(wParam) == 0) {
-                lSel = ControlIO().pfnLUiSendMessage(hwndShipDD, CB_GETCURSEL, 0, 0);
+                lSel = ControlIO().pfnSendMessage(hwndShipDD, CB_GETCURSEL, 0, 0);
                 if (lSel == -1 || !FLookupOrbitingXfer(sel.pl.id, LOWORD(lSel), &xf, idflNone)) {
                     return 0;
                 }
                 TransferStuff(sel.pl.id, grobjPlanet, xf.id, xf.grobj, mdXferCargo);
                 goto LRefocus;
             } else if ((HWND)lParam == rghwndBtn[1] && HIWORD(wParam) == 0) {
-                lSel = ControlIO().pfnLUiSendMessage(hwndShipDD, CB_GETCURSEL, 0, 0);
+                lSel = ControlIO().pfnSendMessage(hwndShipDD, CB_GETCURSEL, 0, 0);
                 if (lSel != -1 && FLookupOrbitingXfer(sel.pl.id, LOWORD(lSel), &xf, idflNone) && xf.grobj == grobjFleet) {
                     PresentationIO().pfnSelectFleet(0, xf.id);
                 }
@@ -232,7 +232,7 @@ LRESULT CALLBACK PlanetWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
         }
     default:
     Default:
-        return LUiDefWindowProc(hwnd, message, wParam, lParam);
+        return ui::DefWindowProc(hwnd, message, wParam, lParam);
     }
     return 0;
 }
@@ -255,22 +255,22 @@ int16_t FDrawTileNC(HDC hdc, TILE *ptile, RECT *prc, char *pszTitle) {
     rcT = *prc;
     ExpandRc(&rcT, -1, -1);
     rcT.bottom = rcT.top + dyArial8 + 2;
-    SelectObject(hdc, rghfontArial8[1]);
-    SetTextColor(hdc, crButtonText);
-    SetBkColor(hdc, crButtonFace);
+    win32::SelectObject(hdc, rghfontArial8[1]);
+    win32::SetTextColor(hdc, crButtonText);
+    win32::SetBkColor(hdc, crButtonFace);
     if (!ptile->fMinDraw) {
         _Draw3dFrame(hdc, &rcT, 0);
     }
     RcCtrTextOut(hdc, &rcT, pszTitle, -1);
-    SetRect(&rcT, prc->right - 17, prc->top + 1, prc->right, rcT.bottom + 1);
+    win32::SetRect(&rcT, prc->right - 17, prc->top + 1, prc->right, rcT.bottom + 1);
     if (ptile->fPopped) {
         bt = bt;
     } else {
         bt |= 1;
     }
     DrawBtn(hdc, &rcT, bt, FALSE, NULL);
-    SelectObject(hdc, hbrButtonShadow);
-    PatBlt(hdc, prc->right - 18, prc->top + 1, 1, rcT.bottom - prc->top - 1, PATCOPY);
+    win32::SelectObject(hdc, hbrButtonShadow);
+    win32::PatBlt(hdc, prc->right - 18, prc->top + 1, 1, rcT.bottom - prc->top - 1, PATCOPY);
 
 FinishUp:
     prc->top += dyArial8 + 4;
@@ -311,46 +311,46 @@ void DrawPlanetMinSum(HDC hdc, TILE *ptile, OBJ obj) {
         xRight = rc.right - 4;
         yTop = rc.top;
         dxRight = dxMaxMineralQuan;
-        SetRect(&rgrcRef[6], xLeft, yTop, xRight, 3 * dyArial8 + yTop);
+        win32::SetRect(&rgrcRef[6], xLeft, yTop, xRight, 3 * dyArial8 + yTop);
         for (i = 0; i <= 2; i++) {
             if (!ptile->fMinDraw) {
-                SelectObject(hdc, rghfontArial8[1]);
-                SetTextColor(hdc, rgcrMinerals[i]);
-                TextOut(hdc, xLeft, yTop, rgszMinerals[i], lstrlen(rgszMinerals[i]));
+                win32::SelectObject(hdc, rghfontArial8[1]);
+                win32::SetTextColor(hdc, rgcrMinerals[i]);
+                win32::TextOut(hdc, xLeft, yTop, rgszMinerals[i], win32::lstrlen(rgszMinerals[i]));
             }
-            SelectObject(hdc, rghfontArial8[0]);
-            SetTextColor(hdc, crButtonText);
-            c = wsprintf(szWork, TextIO().pfnCompressed(idsLdkt), ppl->rgwtMin[i]);
+            win32::SelectObject(hdc, rghfontArial8[0]);
+            win32::SetTextColor(hdc, crButtonText);
+            c = win32::wsprintf(szWork, TextIO().pfnCompressed(idsLdkt), ppl->rgwtMin[i]);
             RightTextOut(hdc, xRight, yTop, szWork, c, dxRight);
             yTop += dyArial8;
         }
-        hbrSav = (HBRUSH)SelectObject(hdc, hbrButtonHilite);
-        PatBlt(hdc, rc.left, yTop++, rc.right - rc.left, 1, PATCOPY);
-        SelectObject(hdc, hbrSav);
-        SetRect(&rgrcRef[7], xLeft, yTop, xRight, dyArial8 * 2 + yTop);
+        hbrSav = (HBRUSH)win32::SelectObject(hdc, hbrButtonHilite);
+        win32::PatBlt(hdc, rc.left, yTop++, rc.right - rc.left, 1, PATCOPY);
+        win32::SelectObject(hdc, hbrSav);
+        win32::SetRect(&rgrcRef[7], xLeft, yTop, xRight, dyArial8 * 2 + yTop);
         if (!ptile->fMinDraw) {
-            SelectObject(hdc, rghfontArial8[1]);
+            win32::SelectObject(hdc, rghfontArial8[1]);
             c = TextIO().pfnCchGetString(idsMines4, szWork);
-            TextOut(hdc, xLeft, yTop, szWork, c);
-            SelectObject(hdc, rghfontArial8[0]);
+            win32::TextOut(hdc, xLeft, yTop, szWork, c);
+            win32::SelectObject(hdc, rghfontArial8[0]);
         }
         if (RaceQueryIO().pfnStat(&rgplr[idPlayer], rsMajorAdv) == raMacintosh) {
-            c = wsprintf(szWork, TextIO().pfnCompressed(idsD), ColonyIO().pfnMinesOperating(ppl));
+            c = win32::wsprintf(szWork, TextIO().pfnCompressed(idsD), ColonyIO().pfnMinesOperating(ppl));
         } else {
-            c = wsprintf(szWork, TextIO().pfnCompressed(idsDD), ppl->cMines, ColonyIO().pfnOperableMines(ppl, idPlayer, FALSE));
+            c = win32::wsprintf(szWork, TextIO().pfnCompressed(idsDD), ppl->cMines, ColonyIO().pfnOperableMines(ppl, idPlayer, FALSE));
         }
         RightTextOut(hdc, xRight, yTop, szWork, c, dxRight * 2);
         yTop += dyArial8;
         if (!ptile->fMinDraw) {
-            SelectObject(hdc, rghfontArial8[1]);
+            win32::SelectObject(hdc, rghfontArial8[1]);
             c = TextIO().pfnCchGetString(idsFactories4, szWork);
-            TextOut(hdc, xLeft, yTop, szWork, c);
-            SelectObject(hdc, rghfontArial8[0]);
+            win32::TextOut(hdc, xLeft, yTop, szWork, c);
+            win32::SelectObject(hdc, rghfontArial8[0]);
         }
         if (RaceQueryIO().pfnStat(&rgplr[idPlayer], rsMajorAdv) == raMacintosh) {
             c = TextIO().pfnCchGetString(idsN, szWork);
         } else {
-            c = wsprintf(szWork, TextIO().pfnCompressed(idsDD), ppl->cFactories, ColonyIO().pfnOperableFactories(ppl, idPlayer, FALSE));
+            c = win32::wsprintf(szWork, TextIO().pfnCompressed(idsDD), ppl->cFactories, ColonyIO().pfnOperableFactories(ppl, idPlayer, FALSE));
         }
         RightTextOut(hdc, xRight, yTop, szWork, c, dxRight * 2);
         yTop += dyArial8;
@@ -380,7 +380,7 @@ void DrawPlanetStats(HDC hdc, TILE *ptile, OBJ obj) {
         xLeft = rc.left + 4;
         xRight = rc.right - 4;
         yTop = rc.top;
-        SelectObject(hdc, rghfontArial8[1]);
+        win32::SelectObject(hdc, rghfontArial8[1]);
         c = TextIO().pfnCchGetString(idsPopulation4, szWork);
         l = GetTextExtent(hdc, szWork, c);
         c = TextIO().pfnCchGetString(idsScannerType, szWork);
@@ -416,38 +416,38 @@ void DrawPlanetStats(HDC hdc, TILE *ptile, OBJ obj) {
         dxRight = xRight - xLeft - LOWORD(l);
         if (!ptile->fMinDraw) {
             c = TextIO().pfnCchGetString(idsPopulation4, szWork);
-            TextOut(hdc, xLeft, yTop, szWork, c);
+            win32::TextOut(hdc, xLeft, yTop, szWork, c);
         }
-        SelectObject(hdc, rghfontArial8[0]);
-        SetRect(&rgrcRef[9], xLeft, yTop, xRight, yTop + dyArial8);
+        win32::SelectObject(hdc, rghfontArial8[0]);
+        win32::SetRect(&rgrcRef[9], xLeft, yTop, xRight, yTop + dyArial8);
         c = CommaFormatLong(szWork, (uint32_t)(sel.pl.rgwtMin[3] * 100));
         RightTextOut(hdc, xRight, yTop, szWork, c, dxRight);
         yTop += dyArial8;
         if (!ptile->fMinDraw) {
-            SelectObject(hdc, rghfontArial8[1]);
+            win32::SelectObject(hdc, rghfontArial8[1]);
             c = TextIO().pfnCchGetString(idsResourcesYear, szWork);
-            TextOut(hdc, xLeft, yTop, szWork, c);
-            SelectObject(hdc, rghfontArial8[0]);
+            win32::TextOut(hdc, xLeft, yTop, szWork, c);
+            win32::SelectObject(hdc, rghfontArial8[0]);
         }
-        SetRect(&rgrcRef[8], xLeft, yTop, xRight, yTop + dyArial8);
+        win32::SetRect(&rgrcRef[8], xLeft, yTop, xRight, yTop + dyArial8);
         cResAvail = ResearchIO().pfnResources(&sel.pl, idPlayer);
         cRes = cResAvail;
         if (!sel.pl.fNoResearch) {
-            cResAvail -= MulDiv(cRes, rgplr[idPlayer].pctResearch, 100);
+            cResAvail -= win32::MulDiv(cRes, rgplr[idPlayer].pctResearch, 100);
         }
-        c = wsprintf(szWork, TextIO().pfnCompressed(idsDD), cResAvail, cRes);
+        c = win32::wsprintf(szWork, TextIO().pfnCompressed(idsDD), cResAvail, cRes);
         RightTextOut(hdc, xRight, yTop, szWork, c, dxRight);
         yTop += dyArial8;
-        hbrSav = (HBRUSH)SelectObject(hdc, hbrButtonHilite);
-        PatBlt(hdc, rc.left, yTop++, rc.right - rc.left, 1, PATCOPY);
-        SelectObject(hdc, hbrSav);
+        hbrSav = (HBRUSH)win32::SelectObject(hdc, hbrButtonHilite);
+        win32::PatBlt(hdc, rc.left, yTop++, rc.right - rc.left, 1, PATCOPY);
+        win32::SelectObject(hdc, hbrSav);
         if (!ptile->fMinDraw) {
-            SelectObject(hdc, rghfontArial8[1]);
+            win32::SelectObject(hdc, rghfontArial8[1]);
             c = TextIO().pfnCchGetString(idsScannerType, szWork);
-            TextOut(hdc, xLeft, yTop, szWork, c);
-            SelectObject(hdc, rghfontArial8[0]);
+            win32::TextOut(hdc, xLeft, yTop, szWork, c);
+            win32::SelectObject(hdc, rghfontArial8[0]);
         }
-        SetRect(&rgrcRef[11], xLeft, yTop, xRight, dyArial8 * 2 + yTop);
+        win32::SetRect(&rgrcRef[11], xLeft, yTop, xRight, dyArial8 * 2 + yTop);
         if (RaceQueryIO().pfnStat(&rgplr[idPlayer], rsMajorAdv) == raMacintosh) {
             TextIO().pfnCchGetString(idsOrganic, szWork);
             dRange = GetPlanetScannerRange(&sel.pl, &dRangeP);
@@ -462,18 +462,18 @@ void DrawPlanetStats(HDC hdc, TILE *ptile, OBJ obj) {
         RightTextOut(hdc, xRight, yTop, szWork, 0, dxRight);
         yTop += dyArial8;
         if (!ptile->fMinDraw) {
-            SelectObject(hdc, rghfontArial8[1]);
+            win32::SelectObject(hdc, rghfontArial8[1]);
             c = TextIO().pfnCchGetString(idsScannerRange, szWork);
-            TextOut(hdc, xLeft, yTop, szWork, c);
-            SelectObject(hdc, rghfontArial8[0]);
+            win32::TextOut(hdc, xLeft, yTop, szWork, c);
+            win32::SelectObject(hdc, rghfontArial8[0]);
         }
         if (dRange > 0) {
             if (dRangeP > 0) {
-                c = wsprintf(szWork, TextIO().pfnCompressed(idsDDLY), dRangeP, dRange);
+                c = win32::wsprintf(szWork, TextIO().pfnCompressed(idsDDLY), dRangeP, dRange);
             } else if (dRange < 100) {
-                c = wsprintf(szWork, TextIO().pfnCompressed(idsDLightYears), dRange);
+                c = win32::wsprintf(szWork, TextIO().pfnCompressed(idsDLightYears), dRange);
             } else {
-                c = wsprintf(szWork, TextIO().pfnCompressed(idsDLY), dRange);
+                c = win32::wsprintf(szWork, TextIO().pfnCompressed(idsDLY), dRange);
             }
         } else {
             TextIO().pfnCchGetString(idsNone4, szWork);
@@ -481,28 +481,28 @@ void DrawPlanetStats(HDC hdc, TILE *ptile, OBJ obj) {
         }
         RightTextOut(hdc, xRight, yTop, szWork, c, dxRight);
         yTop += dyArial8;
-        hbrSav = (HBRUSH)SelectObject(hdc, hbrButtonHilite);
-        PatBlt(hdc, rc.left, yTop++, rc.right - rc.left, 1, PATCOPY);
-        SelectObject(hdc, hbrSav);
+        hbrSav = (HBRUSH)win32::SelectObject(hdc, hbrButtonHilite);
+        win32::PatBlt(hdc, rc.left, yTop++, rc.right - rc.left, 1, PATCOPY);
+        win32::SelectObject(hdc, hbrSav);
         if (!ptile->fMinDraw) {
-            SelectObject(hdc, rghfontArial8[1]);
+            win32::SelectObject(hdc, rghfontArial8[1]);
             c = TextIO().pfnCchGetString(idsDefenses4, szWork);
-            TextOut(hdc, xLeft, yTop, szWork, c);
+            win32::TextOut(hdc, xLeft, yTop, szWork, c);
         }
-        SelectObject(hdc, rghfontArial8[0]);
-        SetRect(&rgrcRef[10], xLeft, yTop, xRight, 3 * dyArial8 + yTop);
+        win32::SelectObject(hdc, rghfontArial8[0]);
+        win32::SetRect(&rgrcRef[10], xLeft, yTop, xRight, 3 * dyArial8 + yTop);
         if (RaceQueryIO().pfnStat(&rgplr[idPlayer], rsMajorAdv) == raMacintosh) {
             c = TextIO().pfnCchGetString(idsN, szWork);
         } else {
-            c = wsprintf(szWork, TextIO().pfnCompressed(idsDD), sel.pl.cDefenses, ColonyIO().pfnOperableDefenses(&sel.pl, idPlayer, FALSE));
+            c = win32::wsprintf(szWork, TextIO().pfnCompressed(idsDD), sel.pl.cDefenses, ColonyIO().pfnOperableDefenses(&sel.pl, idPlayer, FALSE));
         }
         RightTextOut(hdc, xRight, yTop, szWork, c, dxRight);
         yTop += dyArial8;
         if (!ptile->fMinDraw) {
-            SelectObject(hdc, rghfontArial8[1]);
+            win32::SelectObject(hdc, rghfontArial8[1]);
             c = TextIO().pfnCchGetString(idsDefenseType, szWork);
-            TextOut(hdc, xLeft, yTop, szWork, c);
-            SelectObject(hdc, rghfontArial8[0]);
+            win32::TextOut(hdc, xLeft, yTop, szWork, c);
+            win32::SelectObject(hdc, rghfontArial8[0]);
         }
         if (sel.pl.cDefenses == 0) {
             TextIO().pfnCchGetString(RaceQueryIO().pfnStat(&rgplr[idPlayer], rsMajorAdv) == raMacintosh ? idsN : idsNone4, szWork);
@@ -515,15 +515,15 @@ void DrawPlanetStats(HDC hdc, TILE *ptile, OBJ obj) {
         RightTextOut(hdc, xRight, yTop, szWork, 0, dxRight);
         yTop += dyArial8;
         if (!ptile->fMinDraw) {
-            SelectObject(hdc, rghfontArial8[1]);
+            win32::SelectObject(hdc, rghfontArial8[1]);
             c = TextIO().pfnCchGetString(idsDefCoverage, szWork);
-            TextOut(hdc, xLeft, yTop, szWork, c);
-            SelectObject(hdc, rghfontArial8[0]);
+            win32::TextOut(hdc, xLeft, yTop, szWork, c);
+            win32::SelectObject(hdc, rghfontArial8[0]);
         }
         if (dRange != 0) {
             CalcPctSurvive(&sel.pl, &pct, NULL);
             pct = (float)((double)1.0 - pct);
-            c = wsprintf(szWork, PCTDXPCTDPCTPCT, LOWORD((int32_t)((double)pct * 100)),
+            c = win32::wsprintf(szWork, PCTDXPCTDPCTPCT, LOWORD((int32_t)((double)pct * 100)),
                          LOWORD((int32_t)((pct - (double)(int16_t)LOWORD((int32_t)((double)pct * 100)) / 100.0) * 10000)));
         } else {
             c = TextIO().pfnCchGetString(RaceQueryIO().pfnStat(&rgplr[idPlayer], rsMajorAdv) == raMacintosh ? idsN : idsNone4, szWork);
@@ -573,95 +573,95 @@ void DrawPlanetStarbase(HDC hdc, TILE *ptile, OBJ obj) {
         xLeft = rc.left + 4;
         xRight = rc.right - 4;
         yTop = rc.top;
-        SetRect(&rc, xLeft - 2, yTop, xRight + 2, rc.bottom - 2);
-        FillRect(hdc, &rc, hbrButtonFace);
+        win32::SetRect(&rc, xLeft - 2, yTop, xRight + 2, rc.bottom - 2);
+        win32::FillRect(hdc, &rc, hbrButtonFace);
         if (!sel.pl.fStarbase) {
-            SetRect(&rgrcRef[14], -5, -5, -6, -6);
+            win32::SetRect(&rgrcRef[14], -5, -5, -6, -6);
             rgrcRef[15] = rgrcRef[14];
             rgrcRef[16] = rgrcRef[14];
         } else {
-            SetRect(&rgrcRef[14], xLeft, yTop, xRight, dyArial8 * 4 + yTop);
-            SelectObject(hdc, rghfontArial8[1]);
+            win32::SetRect(&rgrcRef[14], xLeft, yTop, xRight, dyArial8 * 4 + yTop);
+            win32::SelectObject(hdc, rghfontArial8[1]);
             c = TextIO().pfnCchGetString(idsDockCapacity, szWork);
             l = GetTextExtent(hdc, szWork, c);
             dxRight = xRight - xLeft - LOWORD(l);
-            TextOut(hdc, xLeft, yTop, szWork, c);
-            SelectObject(hdc, rghfontArial8[0]);
+            win32::TextOut(hdc, xLeft, yTop, szWork, c);
+            win32::SelectObject(hdc, rghfontArial8[0]);
             w = PartQueryIO().pfnHull(lpshdef->hul.ihuldef)->hul.wtCargoMax;
             if (w == 0) {
                 c = TextIO().pfnCchGetString(idsNone4, szWork);
             } else if ((uint32_t)w == 0xffff) {
                 c = TextIO().pfnCchGetString(idsUnlimited, szWork);
             } else {
-                c = wsprintf(szWork, PCTDKT, w);
+                c = win32::wsprintf(szWork, PCTDKT, w);
             }
             RightTextOut(hdc, xRight, yTop, szWork, c, dxRight);
             yTop += dyArial8;
-            SelectObject(hdc, rghfontArial8[1]);
+            win32::SelectObject(hdc, rghfontArial8[1]);
             c = TextIO().pfnCchGetString(idsArmor2, szWork);
-            TextOut(hdc, xLeft, yTop, szWork, c);
+            win32::TextOut(hdc, xLeft, yTop, szWork, c);
             w = lpshdef->hul.dp;
             if (w == 0) {
                 c = TextIO().pfnCchGetString(idsNone4, szWork);
             } else {
-                c = wsprintf(szWork, TextIO().pfnCompressed(idsLddp), w, 0);
+                c = win32::wsprintf(szWork, TextIO().pfnCompressed(idsLddp), w, 0);
             }
-            SelectObject(hdc, rghfontArial8[0]);
+            win32::SelectObject(hdc, rghfontArial8[0]);
             RightTextOut(hdc, xRight, yTop, szWork, c, dxRight);
             yTop += dyArial8;
-            SelectObject(hdc, rghfontArial8[1]);
+            win32::SelectObject(hdc, rghfontArial8[1]);
             c = TextIO().pfnCchGetString(idsShields2, szWork);
-            TextOut(hdc, xLeft, yTop, szWork, c);
+            win32::TextOut(hdc, xLeft, yTop, szWork, c);
             l = DpShieldOfShdef(lpshdef, idPlayer);
             if (l == 0) {
                 c = TextIO().pfnCchGetString(idsNone4, szWork);
             } else {
-                c = wsprintf(szWork, TextIO().pfnCompressed(idsLddp), l);
+                c = win32::wsprintf(szWork, TextIO().pfnCompressed(idsLddp), l);
             }
-            SelectObject(hdc, rghfontArial8[0]);
+            win32::SelectObject(hdc, rghfontArial8[0]);
             RightTextOut(hdc, xRight, yTop, szWork, c, dxRight);
             yTop += dyArial8;
-            SelectObject(hdc, rghfontArial8[1]);
+            win32::SelectObject(hdc, rghfontArial8[1]);
             c = TextIO().pfnCchGetString(idsDamage2, szWork);
-            TextOut(hdc, xLeft, yTop, szWork, c);
-            SelectObject(hdc, rghfontArial8[0]);
+            win32::TextOut(hdc, xLeft, yTop, szWork, c);
+            win32::SelectObject(hdc, rghfontArial8[0]);
             w = sel.pl.pctDp;
             if (w != 0) {
                 if (w < 5) {
                     w = 5;
                 }
-                c = wsprintf(szWork, PCTDPCTPCT, (uint32_t)w / 5);
-                crForeSav = SetTextColor(hdc, 127);
+                c = win32::wsprintf(szWork, PCTDPCTPCT, (uint32_t)w / 5);
+                crForeSav = win32::SetTextColor(hdc, 127);
             } else {
                 c = TextIO().pfnCchGetString(idsNone4, szWork);
             }
             RightTextOut(hdc, xRight, yTop, szWork, c, dxRight);
             yTop += dyArial8;
             if (w != 0) {
-                SetTextColor(hdc, crForeSav);
+                win32::SetTextColor(hdc, crForeSav);
             }
-            hbrSav = (HBRUSH)SelectObject(hdc, hbrButtonHilite);
-            PatBlt(hdc, rc.left, yTop++, rc.right - rc.left, 1, PATCOPY);
-            SelectObject(hdc, hbrSav);
-            SelectObject(hdc, rghfontArial8[1]);
-            SetRect(&rgrcRef[16], xLeft, yTop, xRight, yTop + dyArial8);
+            hbrSav = (HBRUSH)win32::SelectObject(hdc, hbrButtonHilite);
+            win32::PatBlt(hdc, rc.left, yTop++, rc.right - rc.left, 1, PATCOPY);
+            win32::SelectObject(hdc, hbrSav);
+            win32::SelectObject(hdc, rghfontArial8[1]);
+            win32::SetRect(&rgrcRef[16], xLeft, yTop, xRight, yTop + dyArial8);
             c = TextIO().pfnCchGetString(idsMassDriver, szWork);
-            TextOut(hdc, xLeft, yTop, szWork, c);
+            win32::TextOut(hdc, xLeft, yTop, szWork, c);
             iWarp = ColonyIO().pfnWarp(&sel.pl, &fTwo);
             if (iWarp > 0) {
-                c = wsprintf(szWork, TextIO().pfnCompressed(idsWarpD), iWarp);
+                c = win32::wsprintf(szWork, TextIO().pfnCompressed(idsWarpD), iWarp);
                 if (fTwo) {
                     szWork[c++] = '+';
                 }
             } else {
-                c = wsprintf(szWork, TextIO().pfnCompressed(idsNone4));
+                c = win32::wsprintf(szWork, TextIO().pfnCompressed(idsNone4));
             }
-            SelectObject(hdc, rghfontArial8[0]);
+            win32::SelectObject(hdc, rghfontArial8[0]);
             RightTextOut(hdc, xRight, yTop, szWork, c, dxRight);
             yTop += dyArial8;
-            SelectObject(hdc, rghfontArial8[1]);
+            win32::SelectObject(hdc, rghfontArial8[1]);
             c = TextIO().pfnCchGetString(idsDestination3, szWork);
-            TextOut(hdc, xLeft, yTop, szWork, c);
+            win32::TextOut(hdc, xLeft, yTop, szWork, c);
             if (sel.pl.idFling == 0) {
                 c = TextIO().pfnCchGetString(idsNone4, szWork);
             } else {
@@ -669,21 +669,21 @@ void DrawPlanetStarbase(HDC hdc, TILE *ptile, OBJ obj) {
                 c = 0;
                 strcpy(szWork, psz);
             }
-            SelectObject(hdc, rghfontArial8[0]);
+            win32::SelectObject(hdc, rghfontArial8[0]);
             RightTextOut(hdc, xRight, yTop, szWork, c, dxRight);
             yTop += dyArial8;
             c = (int16_t)(xRight - xLeft) / 3;
-            SetRect(&rgrcRef[13], xLeft, yTop, xLeft + c, yTop + dyArial8 + 6);
+            win32::SetRect(&rgrcRef[13], xLeft, yTop, xLeft + c, yTop + dyArial8 + 6);
             bt = 8;
             if (iWarp == 0) {
                 bt |= 4;
             }
             DrawBtn(hdc, &rgrcRef[13], bt, gd.fSetMassMode, TextIO().pfnCompressed(idsSetDest));
             if (iWarp > 0) {
-                SetRect(&rgrcRef[15], xLeft + c + 4, yTop + 3, xRight, yTop + dyArial8 + 3);
+                win32::SetRect(&rgrcRef[15], xLeft + c + 4, yTop + 3, xRight, yTop + dyArial8 + 3);
                 DrawMassWarpGauge(hdc, &rgrcRef[15], !fTwo ? iWarp : -iWarp, sel.pl.iWarpFling + 4);
             } else {
-                SetRect(&rgrcRef[15], -5, -5, -6, -6);
+                win32::SetRect(&rgrcRef[15], -5, -5, -6, -6);
                 rgrcRef[16] = rgrcRef[15];
             }
         }
@@ -701,7 +701,7 @@ void DrawMassWarpGauge(HDC hdc, RECT *prc, int16_t iBest, int16_t iCur) {
     int32_t l;
 
     fTwoMAs = iBest < 0;
-    SelectObject(hdc, rghfontArial8[1]);
+    win32::SelectObject(hdc, rghfontArial8[1]);
     if (iCur < 5) {
         iCur = 5;
     }
@@ -718,11 +718,11 @@ void DrawMassWarpGauge(HDC hdc, RECT *prc, int16_t iBest, int16_t iCur) {
     }
     lCur = (int16_t)(iCur - 4);
     l = LDrawGauge(hdc, prc, 1, &lCur, &hbr, lMax);
-    iMode = SetBkMode(hdc, TRANSPARENT);
-    c = wsprintf(szWork, TextIO().pfnCompressed(idsWarpLd), l + 4);
+    iMode = win32::SetBkMode(hdc, TRANSPARENT);
+    c = win32::wsprintf(szWork, TextIO().pfnCompressed(idsWarpLd), l + 4);
     l = GetTextExtent(hdc, szWork, c);
     RcCtrTextOut(hdc, prc, szWork, c);
-    SetBkMode(hdc, iMode);
+    win32::SetBkMode(hdc, iMode);
     return;
 }
 
@@ -746,17 +746,17 @@ void DrawPlanetProduction(HDC hdc, TILE *ptile, OBJ obj) {
 
     ppl = obj.ppl();
     if (ptile->fFixCtls) {
-        FUiShowWindow(hwndPlanetProdLB, SW_HIDE);
-        FUiShowWindow(rghwndBtn[11], SW_HIDE);
-        FUiShowWindow(rghwndBtn[12], SW_HIDE);
+        ui::ShowWindow(hwndPlanetProdLB, SW_HIDE);
+        ui::ShowWindow(rghwndBtn[11], SW_HIDE);
+        ui::ShowWindow(rghwndBtn[12], SW_HIDE);
         rgrcRef[17].top = -5;
         rgrcRef[17].bottom = -6;
         ptile->fFixCtls = FALSE;
     }
     if (!FDrawTileNC(hdc, ptile, &rc, TextIO().pfnCompressed(idsProduction))) {
-        FUiShowWindow(hwndPlanetProdLB, SW_HIDE);
-        FUiShowWindow(rghwndBtn[11], SW_HIDE);
-        FUiShowWindow(rghwndBtn[12], SW_HIDE);
+        ui::ShowWindow(hwndPlanetProdLB, SW_HIDE);
+        ui::ShowWindow(rghwndBtn[11], SW_HIDE);
+        ui::ShowWindow(rghwndBtn[12], SW_HIDE);
     } else {
         xLeft = rc.left + 4;
         xRight = rc.right - 4;
@@ -771,12 +771,12 @@ void DrawPlanetProduction(HDC hdc, TILE *ptile, OBJ obj) {
         } else {
             dxPlanetProdLB = xRight - xLeft;
         }
-        ControlIO().pfnFUiSetWindowPos(hwndPlanetProdLB, NULL, xLeft, yTop, xRight - xLeft, dyPlanetProdLB, swp);
-        FUiShowWindow(hwndPlanetProdLB, SW_SHOW);
+        ControlIO().pfnSetWindowPos(hwndPlanetProdLB, NULL, xLeft, yTop, xRight - xLeft, dyPlanetProdLB, swp);
+        ui::ShowWindow(hwndPlanetProdLB, SW_SHOW);
         ControlIO().pfnGetClientRect(hwndPlanetProdLB, &rcT);
         dyPlanetProdLB = rcT.bottom - rcT.top;
         yTop += dyPlanetProdLB + 4;
-        iSel = LOWORD(ControlIO().pfnLUiSendMessage(hwndPlanetProdLB, LB_GETCURSEL, 0, 0));
+        iSel = LOWORD(ControlIO().pfnSendMessage(hwndPlanetProdLB, LB_GETCURSEL, 0, 0));
         if (iSel < 0) {
             iSel = 0;
         }
@@ -788,19 +788,19 @@ void DrawPlanetProduction(HDC hdc, TILE *ptile, OBJ obj) {
             c = strlen(psz);
         }
         if (c != 0) {
-            SelectObject(hdc, rghfontArial8[1]);
+            win32::SelectObject(hdc, rghfontArial8[1]);
             cch = TextIO().pfnCchGetString(idsCompletion, szT);
-            TextOut(hdc, xLeft, yTop, szT, cch);
+            win32::TextOut(hdc, xLeft, yTop, szT, cch);
             dxRight = xRight - xLeft - LOWORD(GetTextExtent(hdc, szT, cch));
-            SelectObject(hdc, rghfontArial8[0]);
+            win32::SelectObject(hdc, rghfontArial8[0]);
             RightTextOut(hdc, xRight, yTop, szWork, c, dxRight);
         } else {
             RightTextOut(hdc, xRight, yTop, szWork, 0, xRight - xLeft);
         }
         yTop += dyArial8;
-        SelectObject(hdc, rghfontArial8[1]);
+        win32::SelectObject(hdc, rghfontArial8[1]);
         cch = TextIO().pfnCchGetString(idsRoute3, szT);
-        TextOut(hdc, xLeft, yTop, szT, cch);
+        win32::TextOut(hdc, xLeft, yTop, szT, cch);
         dxRight = xRight - xLeft - LOWORD(GetTextExtent(hdc, szT, cch));
         if (sel.pl.idRoute == 0) {
             c = TextIO().pfnCchGetString(idsNone4, szWork);
@@ -809,20 +809,20 @@ void DrawPlanetProduction(HDC hdc, TILE *ptile, OBJ obj) {
             c = 0;
             strcpy(szWork, psz);
         }
-        SelectObject(hdc, rghfontArial8[0]);
+        win32::SelectObject(hdc, rghfontArial8[0]);
         RightTextOut(hdc, xRight, yTop, szWork, c, dxRight);
         yTop += dyArial8;
         c = (int16_t)(xRight - xLeft - 16) / 3;
         xStart = xLeft;
         i = 11;
         while (i <= 12) {
-            ControlIO().pfnFUiSetWindowPos(rghwndBtn[i], NULL, xStart, yTop, c, (dyArial8 >> 1) + dyArial8, SWP_NOZORDER | SWP_NOACTIVATE);
-            FUiShowWindow(rghwndBtn[i], SW_SHOW);
+            ControlIO().pfnSetWindowPos(rghwndBtn[i], NULL, xStart, yTop, c, (dyArial8 >> 1) + dyArial8, SWP_NOZORDER | SWP_NOACTIVATE);
+            ui::ShowWindow(rghwndBtn[i], SW_SHOW);
             i++;
             xStart += c + 8;
         }
-        ControlIO().pfnFUiEnableWindow(rghwndBtn[12], sel.pl.lpplprod && sel.pl.lpplprod->iprodMac != 0);
-        SetRect(&rgrcRef[17], xStart, yTop, xStart + c, yTop + dyArial8 + (dyArial8 >> 1));
+        ControlIO().pfnEnableWindow(rghwndBtn[12], sel.pl.lpplprod && sel.pl.lpplprod->iprodMac != 0);
+        win32::SetRect(&rgrcRef[17], xStart, yTop, xStart + c, yTop + dyArial8 + (dyArial8 >> 1));
         DrawBtn(hdc, &rgrcRef[17], 8, gd.fSetRouteMode, TextIO().pfnCompressed(idsRoute2));
     }
     return;
@@ -850,13 +850,13 @@ void DrawPlanShipBitmap(HDC hdc, TILE *ptile, OBJ obj) {
     }
     if (ptile->fFixCtls) {
         for (i = 4; i <= 6; i++) {
-            FUiShowWindow(rghwndBtn[i], SW_HIDE);
+            ui::ShowWindow(rghwndBtn[i], SW_HIDE);
         }
         ptile->fFixCtls = FALSE;
     }
     if (!FDrawTileNC(hdc, ptile, &rc, psz)) {
         for (i = 4; i <= 6; i++) {
-            FUiShowWindow(rghwndBtn[i], SW_HIDE);
+            ui::ShowWindow(rghwndBtn[i], SW_HIDE);
         }
     } else {
         xLeft = rc.left + 12;
@@ -866,21 +866,21 @@ void DrawPlanShipBitmap(HDC hdc, TILE *ptile, OBJ obj) {
             DrawFleetBitmap(&sel.fl, hdc, xLeft, yTop, TRUE, -1, 0, FALSE, -1, 0);
             goto DoBtns;
         }
-        hbrSav = (HBRUSH)SelectObject(hdc, hbrButtonShadow);
-        PatBlt(hdc, xLeft, yTop, 70, 2, PATCOPY);
-        PatBlt(hdc, xLeft, yTop + 2, 2, 68, PATCOPY);
-        SelectObject(hdc, hbrButtonHilite);
-        PatBlt(hdc, xLeft + 2, yTop + 68, 68, 2, PATCOPY);
-        PatBlt(hdc, xLeft + 68, yTop + 2, 2, 66, PATCOPY);
-        PatBlt(hdc, xLeft + 1, yTop + 69, 1, 1, PATCOPY);
-        PatBlt(hdc, xLeft + 69, yTop + 1, 1, 1, PATCOPY);
-        PatBlt(hdc, xLeft + 2, yTop + 2, 66, 1, BLACKNESS);
-        PatBlt(hdc, xLeft + 2, yTop + 3, 1, 65, BLACKNESS);
-        PatBlt(hdc, xLeft + 3, yTop + 67, 65, 1, BLACKNESS);
-        PatBlt(hdc, xLeft + 67, yTop + 3, 1, 64, BLACKNESS);
-        SelectObject(hdc, hbrSav);
-        SelectPalette(hdc, vhpal, FALSE);
-        RealizePalette(hdc);
+        hbrSav = (HBRUSH)win32::SelectObject(hdc, hbrButtonShadow);
+        win32::PatBlt(hdc, xLeft, yTop, 70, 2, PATCOPY);
+        win32::PatBlt(hdc, xLeft, yTop + 2, 2, 68, PATCOPY);
+        win32::SelectObject(hdc, hbrButtonHilite);
+        win32::PatBlt(hdc, xLeft + 2, yTop + 68, 68, 2, PATCOPY);
+        win32::PatBlt(hdc, xLeft + 68, yTop + 2, 2, 66, PATCOPY);
+        win32::PatBlt(hdc, xLeft + 1, yTop + 69, 1, 1, PATCOPY);
+        win32::PatBlt(hdc, xLeft + 69, yTop + 1, 1, 1, PATCOPY);
+        win32::PatBlt(hdc, xLeft + 2, yTop + 2, 66, 1, BLACKNESS);
+        win32::PatBlt(hdc, xLeft + 2, yTop + 3, 1, 65, BLACKNESS);
+        win32::PatBlt(hdc, xLeft + 3, yTop + 67, 65, 1, BLACKNESS);
+        win32::PatBlt(hdc, xLeft + 67, yTop + 3, 1, 64, BLACKNESS);
+        win32::SelectObject(hdc, hbrSav);
+        win32::SelectPalette(hdc, vhpal, FALSE);
+        win32::RealizePalette(hdc);
         DibBlt(hdc, xLeft + 3, yTop + 3, 64, 64, hdibPlanets, iOffset % 7 * 64, iOffset / 7 * 64, 64, 64, 13369376);
     DoBtns:
         dx = xRight - xLeft - 95;
@@ -896,8 +896,8 @@ void DrawPlanShipBitmap(HDC hdc, TILE *ptile, OBJ obj) {
             iOffset = sel.grobj == grobjFleet ? 6 : 5;
             i = 4;
             while (i <= iOffset) {
-                ControlIO().pfnFUiSetWindowPos(rghwndBtn[i], NULL, xLeft, yTop, dx, dy, SWP_NOZORDER | SWP_NOACTIVATE);
-                FUiShowWindow(rghwndBtn[i], SW_SHOW);
+                ControlIO().pfnSetWindowPos(rghwndBtn[i], NULL, xLeft, yTop, dx, dy, SWP_NOZORDER | SWP_NOACTIVATE);
+                ui::ShowWindow(rghwndBtn[i], SW_SHOW);
                 i++;
                 yTop += (!gd.fSmallTileMode ? 3 : 2) + dy;
             }
@@ -931,9 +931,9 @@ void DrawPlanetShipList(HDC hdc, TILE *ptile, OBJ obj) {
     fObjIsThing = FALSE;
     if (ptile->fFixCtls) {
         for (i = 0; i <= 2; i++) {
-            FUiShowWindow(rghwndBtn[i], SW_HIDE);
+            ui::ShowWindow(rghwndBtn[i], SW_HIDE);
         }
-        FUiShowWindow(hwndShipDD, SW_HIDE);
+        ui::ShowWindow(hwndShipDD, SW_HIDE);
         ptile->fFixCtls = FALSE;
         rgrcRef[1].top = -5;
         rgrcRef[1].bottom = -6;
@@ -942,9 +942,9 @@ void DrawPlanetShipList(HDC hdc, TILE *ptile, OBJ obj) {
     }
     if (!FDrawTileNC(hdc, ptile, &rc, TextIO().pfnCompressed(!pfl ? idsFleetsOrbit : idsOtherFleetsHere))) {
         for (i = 0; i <= 2; i++) {
-            FUiShowWindow(rghwndBtn[i], SW_HIDE);
+            ui::ShowWindow(rghwndBtn[i], SW_HIDE);
         }
-        FUiShowWindow(hwndShipDD, SW_HIDE);
+        ui::ShowWindow(hwndShipDD, SW_HIDE);
     } else {
         xLeft = rc.left + 4;
         xRight = rc.right - 4;
@@ -955,11 +955,11 @@ void DrawPlanetShipList(HDC hdc, TILE *ptile, OBJ obj) {
         } else {
             dxShipDD = xRight - xLeft;
         }
-        ControlIO().pfnFUiSetWindowPos(hwndShipDD, NULL, xLeft, yTop, xRight - xLeft, 5 * dyShipDD, swp);
-        FUiShowWindow(hwndShipDD, SW_SHOW);
+        ControlIO().pfnSetWindowPos(hwndShipDD, NULL, xLeft, yTop, xRight - xLeft, 5 * dyShipDD, swp);
+        ui::ShowWindow(hwndShipDD, SW_SHOW);
         yTop += dyShipDD + 3;
-        lSel = ControlIO().pfnLUiSendMessage(hwndShipDD, CB_GETCURSEL, 0, 0);
-        ControlIO().pfnFUiEnableWindow(rghwndBtn[0], lSel != -1);
+        lSel = ControlIO().pfnSendMessage(hwndShipDD, CB_GETCURSEL, 0, 0);
+        ControlIO().pfnEnableWindow(rghwndBtn[0], lSel != -1);
         if (lSel == -1) {
             fDoneDrawing = TRUE;
             fUnknown = TRUE;
@@ -973,10 +973,10 @@ void DrawPlanetShipList(HDC hdc, TILE *ptile, OBJ obj) {
             fDoneDrawing = TRUE;
         }
         if (fDoneDrawing) {
-            ControlIO().pfnFUiEnableWindow(rghwndBtn[1], FALSE);
+            ControlIO().pfnEnableWindow(rghwndBtn[1], FALSE);
         } else {
             fObjIsThing = xf.grobj == grobjThing;
-            ControlIO().pfnFUiEnableWindow(rghwndBtn[1], fObjIsThing == 0 && xf.iPlayerObj() == idPlayer);
+            ControlIO().pfnEnableWindow(rghwndBtn[1], fObjIsThing == 0 && xf.iPlayerObj() == idPlayer);
         }
         rgrcRef[1].top = -5;
         rgrcRef[1].bottom = -6;
@@ -985,7 +985,7 @@ void DrawPlanetShipList(HDC hdc, TILE *ptile, OBJ obj) {
         fUnknown = fObjIsThing == 0 && xf.detObj() != detAll;
         if (!gd.fSmallTileMode) {
             if (!fDoneDrawing && !fUnknown) {
-                SelectObject(hdc, rghfontArial8[1]);
+                win32::SelectObject(hdc, rghfontArial8[1]);
                 c = TextIO().pfnCchGetString(idsCargo3, szWork);
                 l = GetTextExtent(hdc, szWork, c);
             }
@@ -995,15 +995,15 @@ void DrawPlanetShipList(HDC hdc, TILE *ptile, OBJ obj) {
                 if (l2 > l) {
                     l = l2;
                 }
-                TextOut(hdc, xLeft, yTop, szWork, c);
-                SetRect(&rcGauge, xLeft + LOWORD(l), yTop, xRight, yTop + dyArial8);
+                win32::TextOut(hdc, xLeft, yTop, szWork, c);
+                win32::SetRect(&rcGauge, xLeft + LOWORD(l), yTop, xRight, yTop + dyArial8);
                 if (idSkip != idflNone) {
                     rgrcRef[1] = rcGauge;
                 }
                 DrawFleetGauge(hdc, &rcGauge, &xf.fl(), 4);
             } else if (ptile->fMinDraw || fUnknown != gd.fUnknownShip) {
-                SetRect(&rcGauge, xLeft, yTop, xRight, dyArial8 * 2 + yTop + 8);
-                FillRect(hdc, &rcGauge, hbrButtonFace);
+                win32::SetRect(&rcGauge, xLeft, yTop, xRight, dyArial8 * 2 + yTop + 8);
+                win32::FillRect(hdc, &rcGauge, hbrButtonFace);
             }
             gd.fUnknownShip = fUnknown;
             if (!fObjIsThing) {
@@ -1011,8 +1011,8 @@ void DrawPlanetShipList(HDC hdc, TILE *ptile, OBJ obj) {
             }
             if (!fDoneDrawing && !fUnknown) {
                 c = TextIO().pfnCchGetString(idsCargo3, szWork);
-                TextOut(hdc, xLeft, yTop, szWork, c);
-                SetRect(&rcGauge, xLeft + LOWORD(l), yTop, xRight, yTop + dyArial8);
+                win32::TextOut(hdc, xLeft, yTop, szWork, c);
+                win32::SetRect(&rcGauge, xLeft + LOWORD(l), yTop, xRight, yTop + dyArial8);
                 rgrcRef[4] = rcGauge;
                 if (fObjIsThing) {
                     DrawThingGauge(hdc, &rcGauge, &xf.th(), 5);
@@ -1020,8 +1020,8 @@ void DrawPlanetShipList(HDC hdc, TILE *ptile, OBJ obj) {
                     DrawFleetGauge(hdc, &rcGauge, &xf.fl(), 5);
                 }
                 if (fObjIsThing) {
-                    OffsetRect(&rcGauge, 0, dyArial8 + 4);
-                    FillRect(hdc, &rcGauge, hbrButtonFace);
+                    win32::OffsetRect(&rcGauge, 0, dyArial8 + 4);
+                    win32::FillRect(hdc, &rcGauge, hbrButtonFace);
                     yTop += dyArial8 + 4;
                 }
             }
@@ -1031,14 +1031,14 @@ void DrawPlanetShipList(HDC hdc, TILE *ptile, OBJ obj) {
         xStart = xLeft;
         i = 0;
         while (i <= 2) {
-            ControlIO().pfnFUiSetWindowPos(rghwndBtn[(int16_t)(i + 1) % 3], NULL, xStart, yTop, c, (dyArial8 >> 1) + dyArial8, SWP_NOZORDER | SWP_NOACTIVATE);
+            ControlIO().pfnSetWindowPos(rghwndBtn[(int16_t)(i + 1) % 3], NULL, xStart, yTop, c, (dyArial8 >> 1) + dyArial8, SWP_NOZORDER | SWP_NOACTIVATE);
             if (i != 2 || pfl) {
-                FUiShowWindow(rghwndBtn[i], SW_SHOW);
+                ui::ShowWindow(rghwndBtn[i], SW_SHOW);
             }
             i++;
             xStart += c + 6;
         }
-        ControlIO().pfnFUiEnableWindow(rghwndBtn[2], (idSkip == idflNone || !fUnknown) && !fObjIsThing);
+        ControlIO().pfnEnableWindow(rghwndBtn[2], (idSkip == idflNone || !fUnknown) && !fObjIsThing);
     }
     return;
 }
@@ -1090,11 +1090,11 @@ void PlanetClick(int16_t x, int16_t y, int16_t sks, int16_t fRightBtn) {
             rcTitle.bottom = dyArial8 + 3 + rcTitle.top + 1;
             rcTitle.left = iCol * 198 + 4;
             rcTitle.right = rcTitle.left + 191;
-            if (PtInRect(&rcTitle, PointFrom16(pt)) != 0 && !fRightBtn) {
+            if (win32::PtInRect(&rcTitle, PointFrom16(pt)) != 0 && !fRightBtn) {
                 rc = rcTitle;
                 rc.top++;
                 rc.left = rc.right - 17;
-                if (PtInRect(&rc, PointFrom16(pt)) != 0) {
+                if (win32::PtInRect(&rc, PointFrom16(pt)) != 0) {
                     OffsetRc(&rc, -1, 0);
                     if (prgtile[i].fPopped) {
                         bt = bt;
@@ -1112,9 +1112,9 @@ void PlanetClick(int16_t x, int16_t y, int16_t sks, int16_t fRightBtn) {
                     if (prgtile[i].fPopped) {
                         rcTitle.bottom = rcTitle.top + prgtile[i].dyFull + 1;
                     }
-                    hdc = GetDC(hwndPlanet);
+                    hdc = win32::GetDC(hwndPlanet);
                     DrawFuzzyBorder(hdc, &rcTitle);
-                    SetCapture(hwndPlanet);
+                    win32::SetCapture(hwndPlanet);
                     ptNew = pt;
                     while (FGetMouseMove(&ptNew)) {
                         if (pt.x != ptNew.x || pt.y != ptNew.y) {
@@ -1125,8 +1125,8 @@ void PlanetClick(int16_t x, int16_t y, int16_t sks, int16_t fRightBtn) {
                         }
                     }
                     DrawFuzzyBorder(hdc, &rcTitle);
-                    ReleaseCapture();
-                    ReleaseDC(hwndPlanet, hdc);
+                    win32::ReleaseCapture();
+                    win32::ReleaseDC(hwndPlanet, hdc);
                     pt.x = ((rcTitle.right - rcTitle.left) >> 1) + rcTitle.left;
                     pt.y = ((rcTitle.bottom - rcTitle.top) >> 1) + rcTitle.top;
                     iCol = 0 > (1 >= pt.x / 198 ? pt.x / 198 : 1) ? 0 : 1 < pt.x / 198 ? 1 : pt.x / 198;
@@ -1195,7 +1195,7 @@ HCURSOR ClickInPlanetOrders(POINT16 pt, int16_t sks, int16_t fCursor, int16_t fR
     if (fRightBtn) {
         return NULL;
     }
-    if (PtInRect(&rgrcRef[6], PointFrom16(pt)) != 0) {
+    if (win32::PtInRect(&rgrcRef[6], PointFrom16(pt)) != 0) {
         if (fCursor) {
             return hcurArrowHelp;
         }
@@ -1208,7 +1208,7 @@ HCURSOR ClickInPlanetOrders(POINT16 pt, int16_t sks, int16_t fCursor, int16_t fR
         GlobalPD.SetRgi(4, rglQuan[i]);
         GlobalPD.SetRgi(1, sel.pl.fHomeworld);
         Popup(hwndPlanet, pt.x, pt.y);
-    } else if (PtInRect(&rgrcRef[7], PointFrom16(pt)) != 0) {
+    } else if (win32::PtInRect(&rgrcRef[7], PointFrom16(pt)) != 0) {
         if (fCursor) {
             return hcurArrowHelp;
         }
@@ -1225,7 +1225,7 @@ HCURSOR ClickInPlanetOrders(POINT16 pt, int16_t sks, int16_t fCursor, int16_t fR
             GlobalPD.cOperate = ColonyIO().pfnOperableMines(&sel.pl, idPlayer, FALSE);
         }
         Popup(hwndPlanet, pt.x, pt.y);
-    } else if (PtInRect(&rgrcRef[8], PointFrom16(pt)) != 0) {
+    } else if (win32::PtInRect(&rgrcRef[8], PointFrom16(pt)) != 0) {
         if (fCursor) {
             return hcurArrowHelp;
         }
@@ -1233,17 +1233,17 @@ HCURSOR ClickInPlanetOrders(POINT16 pt, int16_t sks, int16_t fCursor, int16_t fR
         GlobalPD.idPlanet = sel.pl.id;
         GlobalPD.iPlanetVar = GlobalPD.iPlanVal = ResearchIO().pfnResources(&sel.pl, idPlayer);
         if (!sel.pl.fNoResearch) {
-            GlobalPD.iPlanVal -= MulDiv(GlobalPD.iPlanetVar, rgplr[idPlayer].pctResearch, 100);
+            GlobalPD.iPlanVal -= win32::MulDiv(GlobalPD.iPlanetVar, rgplr[idPlayer].pctResearch, 100);
         }
         Popup(hwndPlanet, pt.x, pt.y);
-    } else if (PtInRect(&rgrcRef[9], PointFrom16(pt)) != 0) {
+    } else if (win32::PtInRect(&rgrcRef[9], PointFrom16(pt)) != 0) {
         if (fCursor) {
             return hcurArrowHelp;
         }
         GlobalPD.grPopup = grPopupPlanet;
         GlobalPD.idPlanet = sel.pl.id;
         Popup(hwndPlanet, pt.x, pt.y);
-    } else if (PtInRect(&rgrcRef[10], PointFrom16(pt)) != 0) {
+    } else if (win32::PtInRect(&rgrcRef[10], PointFrom16(pt)) != 0) {
         if (sel.pl.cDefenses == 0) {
             return NULL;
         }
@@ -1253,7 +1253,7 @@ HCURSOR ClickInPlanetOrders(POINT16 pt, int16_t sks, int16_t fCursor, int16_t fR
         FGetBestDefensePart(&GlobalPD.part);
         GlobalPD.grPopup = grPopupComponent;
         Popup(hwndPlanet, pt.x, pt.y);
-    } else if (PtInRect(&rgrcRef[11], PointFrom16(pt)) != 0) {
+    } else if (win32::PtInRect(&rgrcRef[11], PointFrom16(pt)) != 0) {
         if (sel.pl.iScanner == 31 && RaceQueryIO().pfnStat(&rgplr[idPlayer], rsMajorAdv) != raMacintosh) {
             return NULL;
         }
@@ -1270,7 +1270,7 @@ HCURSOR ClickInPlanetOrders(POINT16 pt, int16_t sks, int16_t fCursor, int16_t fR
             GlobalPD.grPopup = grPopupComponent;
         }
         Popup(hwndPlanet, pt.x, pt.y);
-    } else if (PtInRect(&rgrcRef[13], PointFrom16(pt)) != 0) {
+    } else if (win32::PtInRect(&rgrcRef[13], PointFrom16(pt)) != 0) {
         iWarp = ColonyIO().pfnWarp(&sel.pl, NULL);
         if (iWarp == 0) {
             return NULL;
@@ -1282,7 +1282,7 @@ HCURSOR ClickInPlanetOrders(POINT16 pt, int16_t sks, int16_t fCursor, int16_t fR
         while (FTrackBtn(&btnt)) {
         }
         gd.fSetMassMode ^= btnt.fDown;
-    } else if (PtInRect(&rgrcRef[14], PointFrom16(pt)) != 0) {
+    } else if (win32::PtInRect(&rgrcRef[14], PointFrom16(pt)) != 0) {
         if (fCursor) {
             return hcurArrowHelp;
         }
@@ -1293,7 +1293,7 @@ HCURSOR ClickInPlanetOrders(POINT16 pt, int16_t sks, int16_t fCursor, int16_t fR
         GlobalPD.SetFToken(FALSE);
         GlobalPD.fSummary = FALSE;
         Popup(hwndPlanet, pt.x, pt.y);
-    } else if (PtInRect(&rgrcRef[16], PointFrom16(pt)) != 0) {
+    } else if (win32::PtInRect(&rgrcRef[16], PointFrom16(pt)) != 0) {
         iWarp = ColonyIO().pfnWarp(&sel.pl, NULL);
         if (iWarp == 0) {
             return NULL;
@@ -1306,9 +1306,9 @@ HCURSOR ClickInPlanetOrders(POINT16 pt, int16_t sks, int16_t fCursor, int16_t fR
         PartQueryIO().pfnLookup(&GlobalPD.part);
         GlobalPD.grPopup = grPopupComponent;
         Popup(hwndPlanet, pt.x, pt.y);
-    } else if (PtInRect(&rgrcRef[15], PointFrom16(pt)) != 0) {
+    } else if (win32::PtInRect(&rgrcRef[15], PointFrom16(pt)) != 0) {
         ClickInShipOrders(pt, sks, FALSE, fRightBtn);
-    } else if (PtInRect(&rgrcRef[17], PointFrom16(pt)) != 0) {
+    } else if (win32::PtInRect(&rgrcRef[17], PointFrom16(pt)) != 0) {
         if (fCursor) {
             return hcurHand;
         }
@@ -1413,8 +1413,8 @@ void ReflowColumn(int16_t iCol, int16_t iTile, int16_t fRedraw) {
         rc.top = yTop;
         rc.left = 198 * iCol + 4;
         rc.right = rc.left + 191;
-        hdc = GetDC(hwndPlanet);
-        FillRect(hdc, &rc, hbrButtonFace);
+        hdc = win32::GetDC(hwndPlanet);
+        win32::FillRect(hdc, &rc, hbrButtonFace);
     }
     for (; iTile < ctile && ptile[iTile].iCol == iCol; iTile++) {
         ptile[iTile].yTop = yTop;
@@ -1424,14 +1424,14 @@ void ReflowColumn(int16_t iCol, int16_t iTile, int16_t fRedraw) {
     }
     if (fRedraw) {
         ControlIO().pfnDrawPlanShip(hdc, static_cast<TileBits>(grbit));
-        ReleaseDC(hwndPlanet, hdc);
+        win32::ReleaseDC(hwndPlanet, hdc);
     }
     return;
 }
 
 void HandleFocusState(DRAWITEMSTRUCT *lpdis, int16_t inflate) {
     if (lpdis->itemState & ODS_FOCUS) {
-        FrameRect(lpdis->hDC, &lpdis->rcItem, hbr50Screen);
+        win32::FrameRect(lpdis->hDC, &lpdis->rcItem, hbr50Screen);
     }
     return;
 }
@@ -1447,7 +1447,7 @@ void DrawCBEntireItem(DRAWITEMSTRUCT *lpdis, int16_t inflate) {
     if (inflate > 0) {
         inflate = -inflate;
     }
-    ControlIO().pfnLUiSendMessage(lpdis->hwndItem, !fListbox ? CB_GETLBTEXT : LB_GETTEXT, lpdis->itemID, (LPARAM)szWork);
+    ControlIO().pfnSendMessage(lpdis->hwndItem, !fListbox ? CB_GETLBTEXT : LB_GETTEXT, lpdis->itemID, (LPARAM)szWork);
     DrawProductionItem(lpdis->hDC, &rc, szWork, inflate, fSelected, fListbox);
     HandleFocusState(lpdis, inflate + 2);
     return;
@@ -1523,10 +1523,10 @@ void DrawProductionItem(HDC hdc, RECT *prc, char *psz, int16_t inflate, int16_t 
         case ' ':
         LDefCaseSel:
             if (crWindow == 0) {
-                hbr = (HBRUSH)GetStockObject(WHITE_BRUSH);
+                hbr = (HBRUSH)win32::GetStockObject(WHITE_BRUSH);
                 break;
             }
-            hbr = (HBRUSH)GetStockObject(BLACK_BRUSH);
+            hbr = (HBRUSH)win32::GetStockObject(BLACK_BRUSH);
             break;
         case 'P':
             fDoubleDraw = TRUE;
@@ -1548,16 +1548,16 @@ void DrawProductionItem(HDC hdc, RECT *prc, char *psz, int16_t inflate, int16_t 
     if (fListbox == 2) {
         hbr = hbrButtonFace;
     }
-    FillRect(hdc, &rcIn, hbr);
+    win32::FillRect(hdc, &rcIn, hbr);
     if (fDoubleDraw) {
         rcDraw = rcIn;
         dx = rcIn.right - rcIn.left;
         dx = (int16_t)(dx * pctDmg) / 100;
         rcDraw.right = rcDraw.left + dx;
-        FillRect(hdc, &rcDraw, hbrRed);
+        win32::FillRect(hdc, &rcDraw, hbrRed);
     }
     if (inflate != 0) {
-        InflateRect(&rcIn, -2, -1);
+        win32::InflateRect(&rcIn, -2, -1);
     }
     if (!fListbox) {
         ich = 1;
@@ -1569,10 +1569,10 @@ void DrawProductionItem(HDC hdc, RECT *prc, char *psz, int16_t inflate, int16_t 
             fItalic = TRUE;
         }
     }
-    crForeSav = SetTextColor(hdc, cr);
-    bkSav = SetBkMode(hdc, TRANSPARENT);
+    crForeSav = win32::SetTextColor(hdc, cr);
+    bkSav = win32::SetBkMode(hdc, TRANSPARENT);
     if (fItalic) {
-        hfntSav = (HFONT)SelectObject(hdc, rghfontArial8[3]);
+        hfntSav = (HFONT)win32::SelectObject(hdc, rghfontArial8[3]);
     }
     pch = psz + ich;
     cch = strlen(pch);
@@ -1581,9 +1581,9 @@ void DrawProductionItem(HDC hdc, RECT *prc, char *psz, int16_t inflate, int16_t 
         cch = (int16_t)CchUtf8Prefix(pch, cch - 1);
         dx = LOWORD(GetTextExtent(hdc, pch, cch));
     }
-    TextOut(hdc, rcIn.left, rcIn.top, pch, cch);
+    win32::TextOut(hdc, rcIn.left, rcIn.top, pch, cch);
     if (fItalic) {
-        SelectObject(hdc, hfntSav);
+        win32::SelectObject(hdc, hfntSav);
     }
     if (ich >= 6) {
         if ((psz[ich - 5] - ' ') & 2) {
@@ -1606,8 +1606,8 @@ void DrawProductionItem(HDC hdc, RECT *prc, char *psz, int16_t inflate, int16_t 
     LRightOut:
         RightTextOut(hdc, rcIn.right, rcIn.top, szT, ich, 0);
     }
-    SetTextColor(hdc, crForeSav);
-    SetBkMode(hdc, bkSav);
+    win32::SetTextColor(hdc, crForeSav);
+    win32::SetBkMode(hdc, bkSav);
     return;
 }
 
@@ -1629,26 +1629,26 @@ void DrawPlanShip(HDC hdc, TileBits grbit) {
     objNull.SetPfl(0);
     if (sel.id == -1) {
         for (i = 0; i < 13; i++) {
-            FUiShowWindow(rghwndBtn[i], SW_HIDE);
+            ui::ShowWindow(rghwndBtn[i], SW_HIDE);
         }
         for (i = 0; i < 3; i++) {
-            FUiShowWindow(rghwndOrderDD[i], SW_HIDE);
+            ui::ShowWindow(rghwndOrderDD[i], SW_HIDE);
         }
-        FUiShowWindow(hwndOrderED, SW_HIDE);
-        FUiShowWindow(hwndShipDD, SW_HIDE);
-        FUiShowWindow(hwndBattleDD, SW_HIDE);
-        FUiShowWindow(hwndShipLB, SW_HIDE);
-        FUiShowWindow(hwndFleetCompLB, SW_HIDE);
-        FUiShowWindow(hwndPlanetProdLB, SW_HIDE);
-        FUiShowWindow(hwndRepCB, SW_HIDE);
+        ui::ShowWindow(hwndOrderED, SW_HIDE);
+        ui::ShowWindow(hwndShipDD, SW_HIDE);
+        ui::ShowWindow(hwndBattleDD, SW_HIDE);
+        ui::ShowWindow(hwndShipLB, SW_HIDE);
+        ui::ShowWindow(hwndFleetCompLB, SW_HIDE);
+        ui::ShowWindow(hwndPlanetProdLB, SW_HIDE);
+        ui::ShowWindow(hwndRepCB, SW_HIDE);
         for (i = 0; i < 19; i++) {
             rgrcRef[i].bottom = -6;
             rgrcRef[i].top = -5;
         }
         if (rgplr[idPlayer].fDead && hdc) {
             ControlIO().pfnGetClientRect(hwndPlanet, &rc);
-            SetBkColor(hdc, crButtonFace);
-            SetTextColor(hdc, crButtonText);
+            win32::SetBkColor(hdc, crButtonFace);
+            win32::SetTextColor(hdc, crButtonText);
             i = TextIO().pfnCchGetString(idsDeceased, szWork);
             DiaganolTextOut(hdc, &rc, szWork, i);
         }
@@ -1664,11 +1664,11 @@ void DrawPlanShip(HDC hdc, TileBits grbit) {
         }
         if (!hdc) {
             fDC = TRUE;
-            hdc = GetDC(hwndPlanet);
+            hdc = win32::GetDC(hwndPlanet);
         }
-        hfontSav = (HFONT)SelectObject(hdc, rghfontArial8[0]);
-        crBack = SetBkColor(hdc, crButtonFace);
-        crFore = SetTextColor(hdc, crButtonText);
+        hfontSav = (HFONT)win32::SelectObject(hdc, rghfontArial8[0]);
+        crBack = win32::SetBkColor(hdc, crButtonFace);
+        crFore = win32::SetTextColor(hdc, crButtonText);
         fErase = (grbit & tileErase) != 0;
         fMin = (grbit & tileMinimized) != 0;
         for (i = 0; i < ctile; i++) {
@@ -1678,11 +1678,11 @@ void DrawPlanShip(HDC hdc, TileBits grbit) {
                 ptile[i].pfn(hdc, ptile + i, !ptile[i].fNullPtr ? obj : objNull);
             }
         }
-        SetTextColor(hdc, crFore);
-        SetBkColor(hdc, crBack);
-        SelectObject(hdc, hfontSav);
+        win32::SetTextColor(hdc, crFore);
+        win32::SetBkColor(hdc, crBack);
+        win32::SelectObject(hdc, hfontSav);
         if (fDC) {
-            ReleaseDC(hwndPlanet, hdc);
+            win32::ReleaseDC(hwndPlanet, hdc);
         }
     }
     QueuePlanetPaneLayout();
@@ -1696,14 +1696,14 @@ void SetPlanetTitleBar(HWND hwnd) {
     if (sel.grobj == grobjPlanet) {
         psz = TextIO().pfnPlanetName(sel.pl.id);
         TextIO().pfnCchGetString(idsPlanet2, szTitle);
-        lstrcat(szTitle, psz);
+        win32::lstrcat(szTitle, psz);
         psz = szTitle;
     } else if (sel.grobj == grobjFleet) {
         psz = PszGetFleetName(sel.fl.id);
     } else {
         psz = TextIO().pfnCompressed(idsPlanetView);
     }
-    ControlIO().pfnFUiSetWindowText(hwnd, psz);
+    ControlIO().pfnSetWindowText(hwnd, psz);
     return;
 }
 
@@ -1714,7 +1714,7 @@ void FillShipDD(int16_t idSkip) {
     FLEET  *lpfl;
     POINT16 ptSel;
 
-    ControlIO().pfnLUiSendMessage(hwndShipDD, CB_RESETCONTENT, 0, 0);
+    ControlIO().pfnSendMessage(hwndShipDD, CB_RESETCONTENT, 0, 0);
     if (sel.grobj == grobjPlanet) {
         ptSel = rgptPlan[sel.id];
     } else {
@@ -1729,7 +1729,7 @@ void FillShipDD(int16_t idSkip) {
             PszGetFleetName(lpfl->id);
             memmove(&szWork[1], szWork, 50);
             szWork[0] = lpfl->iPlayer == idPlayer ? 32 : 120;
-            ControlIO().pfnLUiSendMessage(hwndShipDD, CB_ADDSTRING, 0, (LPARAM)szWork);
+            ControlIO().pfnSendMessage(hwndShipDD, CB_ADDSTRING, 0, (LPARAM)szWork);
         }
     }
     lpth = lpThings;
@@ -1739,10 +1739,10 @@ void FillShipDD(int16_t idSkip) {
             PszGetThingName(lpth->idFull());
             memmove(&szWork[1], szWork, 50);
             szWork[0] = lpth->iplr() == idPlayer ? 32 : 120;
-            ControlIO().pfnLUiSendMessage(hwndShipDD, CB_ADDSTRING, 0, (LPARAM)szWork);
+            ControlIO().pfnSendMessage(hwndShipDD, CB_ADDSTRING, 0, (LPARAM)szWork);
         }
     }
-    ControlIO().pfnLUiSendMessage(hwndShipDD, CB_SETCURSEL, 0, 0);
+    ControlIO().pfnSendMessage(hwndShipDD, CB_SETCURSEL, 0, 0);
     return;
 }
 
@@ -1763,7 +1763,7 @@ void FillPlanetProdLB(HWND hwnd, PLPROD *lpplprod, PLANET *lppl) {
     if (!hwnd) {
         hwnd = hwndPlanetProdLB;
     }
-    ControlIO().pfnLUiSendMessage(hwnd, LB_RESETCONTENT, 0, 0);
+    ControlIO().pfnSendMessage(hwnd, LB_RESETCONTENT, 0, 0);
     if (!lpplprod) {
         lpplprod = lppl->lpplprod;
     }
@@ -1774,7 +1774,7 @@ void FillPlanetProdLB(HWND hwnd, PLPROD *lpplprod, PLANET *lppl) {
             goto NoMsg;
         psz = TextIO().pfnCompressed(idsTopQueue);
     }
-    ControlIO().pfnLUiSendMessage(hwnd, LB_ADDSTRING, 0, (LPARAM)psz);
+    ControlIO().pfnSendMessage(hwnd, LB_ADDSTRING, 0, (LPARAM)psz);
 NoMsg:
     if (lpplprod) {
         resCost = 0;
@@ -1783,7 +1783,7 @@ NoMsg:
         }
         for (i = 0; i < lpplprod->iprodMac; i++) {
             FProdItemLine(lppl, lpplprod, i, TRUE, szTemp);
-            ControlIO().pfnLUiSendMessage(hwnd, LB_ADDSTRING, 0, (LPARAM)szTemp);
+            ControlIO().pfnSendMessage(hwnd, LB_ADDSTRING, 0, (LPARAM)szTemp);
         }
     }
     return;
@@ -1793,7 +1793,7 @@ NoMsg:
 // ChangeMainObjSel selects a planet.
 void ShowPlanetSel() {
     ControlIO().pfnFillPlanetProdLB(NULL, NULL, NULL);
-    ControlIO().pfnLUiSendMessage(hwndPlanetProdLB, LB_SETCURSEL, 0, 0);
+    ControlIO().pfnSendMessage(hwndPlanetProdLB, LB_SETCURSEL, 0, 0);
     return;
 }
 
@@ -1803,7 +1803,7 @@ void ShowFleetSel() {
     FillOrdersLB();
     FillFleetCompLB();
     FillBattleDD(sel.fl.iplan + 1);
-    ControlIO().pfnLUiSendMessage(rghwndOrderDD[0], CB_SETCURSEL, sel.fl.lpplord->rgord()[0].grTask, 0);
+    ControlIO().pfnSendMessage(rghwndOrderDD[0], CB_SETCURSEL, sel.fl.lpplord->rgord()[0].grTask, 0);
     return;
 }
 
@@ -1814,18 +1814,18 @@ void ShowMainObjSel(int16_t fSameType, int16_t idSkip) {
 
     if (!fSameType) {
         for (i = 0; i < 13; i++) {
-            FUiShowWindow(rghwndBtn[i], SW_HIDE);
+            ui::ShowWindow(rghwndBtn[i], SW_HIDE);
         }
         for (i = 0; i < 3; i++) {
-            FUiShowWindow(rghwndOrderDD[i], SW_HIDE);
+            ui::ShowWindow(rghwndOrderDD[i], SW_HIDE);
         }
-        FUiShowWindow(hwndOrderED, SW_HIDE);
-        FUiShowWindow(hwndShipDD, SW_HIDE);
-        FUiShowWindow(hwndBattleDD, SW_HIDE);
-        FUiShowWindow(hwndShipLB, SW_HIDE);
-        FUiShowWindow(hwndFleetCompLB, SW_HIDE);
-        FUiShowWindow(hwndPlanetProdLB, SW_HIDE);
-        FUiShowWindow(hwndRepCB, SW_HIDE);
+        ui::ShowWindow(hwndOrderED, SW_HIDE);
+        ui::ShowWindow(hwndShipDD, SW_HIDE);
+        ui::ShowWindow(hwndBattleDD, SW_HIDE);
+        ui::ShowWindow(hwndShipLB, SW_HIDE);
+        ui::ShowWindow(hwndFleetCompLB, SW_HIDE);
+        ui::ShowWindow(hwndPlanetProdLB, SW_HIDE);
+        ui::ShowWindow(hwndRepCB, SW_HIDE);
         for (i = 0; i < 19; i++) {
             rgrcRef[i].bottom = -6;
             rgrcRef[i].top = -5;

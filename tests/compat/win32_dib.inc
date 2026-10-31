@@ -196,7 +196,7 @@ static int TestMonoReadback(HDC hdc) {
 }
 
 static LRESULT CALLBACK DibProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-    return DefWindowProc(hwnd, msg, wParam, lParam);
+    return DefWindowProcA(hwnd, msg, wParam, lParam);
 }
 
 int main(void) {

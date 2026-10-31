@@ -39,7 +39,7 @@ typedef struct COMPATFILEDIALOG {
     DWORD dwError;
 } COMPATFILEDIALOG;
 static thread_local DWORD dwDialogError;
-DWORD WINAPI CommDlgExtendedError(void) { return dwDialogError; }
+DWORD WINAPI win32::CommDlgExtendedError(void) { return dwDialogError; }
 void CompatSetDialogError(DWORD dw) { dwDialogError = dw; }
 
 static BOOL FFilePattern(LPCSTR psz, LPCSTR pszPattern, size_t cpat) {
@@ -106,7 +106,7 @@ static BOOL FRefreshFiles(HWND hwnd, COMPATFILEDIALOG *lp) {
     COMPATFILEENTRY *rg;
     size_t i;
     LRESULT iEntry;
-    HWND hwndList = GetDlgItem(hwnd, ID_FILE_LIST);
+    HWND hwndList = win32::GetDlgItem(hwnd, ID_FILE_LIST);
     lpdir = PdirNativeOpen(lp->szDir);
     if (!lpdir) { FileError(hwnd, "This directory cannot be read."); return FALSE; }
     FreeFileEntries(lp);
@@ -129,17 +129,17 @@ static BOOL FRefreshFiles(HWND hwnd, COMPATFILEDIALOG *lp) {
         lp->cEntry++;
     }
     ICloseNativeDir(lpdir);
-    if (lp->dwError) { EndDialog(hwnd, 0); return FALSE; }
+    if (lp->dwError) { win32::EndDialog(hwnd, 0); return FALSE; }
     if (lp->cEntry > 1) qsort(lp->rgentry, lp->cEntry, sizeof(*lp->rgentry), CmpFileEntry);
-    SendMessageA(hwndList, LB_RESETCONTENT, 0, 0);
+    win32::SendMessageA(hwndList, LB_RESETCONTENT, 0, 0);
     for (i = 0; i < lp->cEntry; i++) {
         snprintf(szLabel, sizeof(szLabel), lp->rgentry[i].fDir ? "[%s]" : "%s", lp->rgentry[i].psz);
-        iEntry = SendMessageA(hwndList, LB_ADDSTRING, 0, (LPARAM)szLabel);
-        if (iEntry < 0 || SendMessageA(hwndList, LB_SETITEMDATA, (WPARAM)iEntry, (LPARAM)i) == LB_ERR) {
-            lp->dwError = CDERR_MEMALLOCFAILURE; EndDialog(hwnd, 0); return FALSE;
+        iEntry = win32::SendMessageA(hwndList, LB_ADDSTRING, 0, (LPARAM)szLabel);
+        if (iEntry < 0 || win32::SendMessageA(hwndList, LB_SETITEMDATA, (WPARAM)iEntry, (LPARAM)i) == LB_ERR) {
+            lp->dwError = CDERR_MEMALLOCFAILURE; win32::EndDialog(hwnd, 0); return FALSE;
         }
     }
-    SetWindowTextA(GetDlgItem(hwnd, ID_FILE_PATH), lp->szDir);
+    win32::SetWindowTextA(win32::GetDlgItem(hwnd, ID_FILE_PATH), lp->szDir);
     return TRUE;
 }
 static BOOL FChangeFileDirectory(HWND hwnd, COMPATFILEDIALOG *lp, LPCSTR psz, BOOL fHistory) {
@@ -153,7 +153,7 @@ static BOOL FChangeFileDirectory(HWND hwnd, COMPATFILEDIALOG *lp, LPCSTR psz, BO
         FileError(hwnd, "The directory cannot be represented losslessly in UTF-8."); return FALSE;
     }
     if (strcmp(szReal, lp->szDir) == 0) {
-        SetWindowTextA(GetDlgItem(hwnd, ID_FILE_PATH), lp->szDir); return TRUE;
+        win32::SetWindowTextA(win32::GetDlgItem(hwnd, ID_FILE_PATH), lp->szDir); return TRUE;
     }
     if (fHistory) {
         pszPrevious = strdup(lp->szDir);
@@ -162,7 +162,7 @@ static BOOL FChangeFileDirectory(HWND hwnd, COMPATFILEDIALOG *lp, LPCSTR psz, BO
     strcpy(szOld, lp->szDir); strcpy(lp->szDir, szReal);
     if (!FRefreshFiles(hwnd, lp)) {
         strcpy(lp->szDir, szOld); free(pszPrevious);
-        if (IsWindow(hwnd)) SetWindowTextA(GetDlgItem(hwnd, ID_FILE_PATH), lp->szDir);
+        if (win32::IsWindow(hwnd)) win32::SetWindowTextA(win32::GetDlgItem(hwnd, ID_FILE_PATH), lp->szDir);
         return FALSE;
     }
     if (pszPrevious) {
@@ -173,8 +173,8 @@ static BOOL FChangeFileDirectory(HWND hwnd, COMPATFILEDIALOG *lp, LPCSTR psz, BO
         }
         lp->rgpszHistory[lp->cHistory++] = pszPrevious;
     }
-    EnableWindow(GetDlgItem(hwnd, ID_FILE_BACK), lp->cHistory != 0);
-    SetWindowTextA(GetDlgItem(hwnd, ID_FILE_NAME), ""); return TRUE;
+    win32::EnableWindow(win32::GetDlgItem(hwnd, ID_FILE_BACK), lp->cHistory != 0);
+    win32::SetWindowTextA(win32::GetDlgItem(hwnd, ID_FILE_NAME), ""); return TRUE;
 }
 static int IAcceptFilePath(HWND hwnd, COMPATFILEDIALOG *lp, LPCSTR pszName) {
     char szPath[PATH_MAX], szParent[PATH_MAX], szReal[PATH_MAX];
@@ -221,7 +221,7 @@ static int IAcceptFilePath(HWND hwnd, COMPATFILEDIALOG *lp, LPCSTR pszName) {
     }
     if (lp->fSave && fExists && (lp->lpof->Flags & OFN_OVERWRITEPROMPT) &&
         CompatChoiceIO().pfnMessageBoxA(hwnd, "This file already exists. Replace it?", "Confirm save", MB_YESNO | MB_ICONEXCLAMATION | MB_DEFBUTTON2) != IDYES) return 0;
-    if (hwnd && !IsWindow(hwnd)) return 0;
+    if (hwnd && !win32::IsWindow(hwnd)) return 0;
     strcpy(lp->szResult, szParent);
     cch = strlen(lp->szResult) + 1;
     if (cch > lp->lpof->nMaxFile) {
@@ -234,38 +234,38 @@ static int IAcceptFilePath(HWND hwnd, COMPATFILEDIALOG *lp, LPCSTR pszName) {
 static void AcceptFile(HWND hwnd, COMPATFILEDIALOG *lp) {
     char szName[PATH_MAX];
     int iResult;
-    GetWindowTextA(GetDlgItem(hwnd, ID_FILE_NAME), szName, sizeof(szName));
+    win32::GetWindowTextA(win32::GetDlgItem(hwnd, ID_FILE_NAME), szName, sizeof(szName));
     iResult = IAcceptFilePath(hwnd, lp, szName);
     if (iResult == 2) FChangeFileDirectory(hwnd, lp, szName, TRUE);
-    else if (iResult != 0) EndDialog(hwnd, iResult > 0 ? IDOK : 0);
-    else if (IsWindow(hwnd)) SetFocus(GetDlgItem(hwnd, ID_FILE_NAME));
+    else if (iResult != 0) win32::EndDialog(hwnd, iResult > 0 ? IDOK : 0);
+    else if (win32::IsWindow(hwnd)) win32::SetFocus(win32::GetDlgItem(hwnd, ID_FILE_NAME));
 }
 static void LayoutFileDialog(HWND hwnd) {
     RECT rc;
     int cx, cy;
-    GetClientRect(hwnd, &rc); cx = rc.right; cy = rc.bottom;
-    SetWindowPos(GetDlgItem(hwnd, ID_FILE_PATH), NULL, 80, 12, cx - 92, 24, SWP_NOZORDER | SWP_NOACTIVATE);
-    SetWindowPos(GetDlgItem(hwnd, ID_FILE_LIST), NULL, 12, 108, cx - 24, cy - 252, SWP_NOZORDER | SWP_NOACTIVATE);
-    SetWindowPos(GetDlgItem(hwnd, 0x441), NULL, 12, cy - 128, 80, 24, SWP_NOZORDER | SWP_NOACTIVATE);
-    SetWindowPos(GetDlgItem(hwnd, ID_FILE_NAME), NULL, 96, cy - 132, cx - 108, 26, SWP_NOZORDER | SWP_NOACTIVATE);
-    SetWindowPos(GetDlgItem(hwnd, 0x442), NULL, 12, cy - 92, 80, 24, SWP_NOZORDER | SWP_NOACTIVATE);
-    SetWindowPos(GetDlgItem(hwnd, ID_FILE_FILTER), NULL, 96, cy - 96, cx - 108, 120, SWP_NOZORDER | SWP_NOACTIVATE);
-    SetWindowPos(GetDlgItem(hwnd, IDOK), NULL, cx - 188, cy - 52, 80, 28, SWP_NOZORDER | SWP_NOACTIVATE);
-    SetWindowPos(GetDlgItem(hwnd, IDCANCEL), NULL, cx - 96, cy - 52, 80, 28, SWP_NOZORDER | SWP_NOACTIVATE);
+    win32::GetClientRect(hwnd, &rc); cx = rc.right; cy = rc.bottom;
+    win32::SetWindowPos(win32::GetDlgItem(hwnd, ID_FILE_PATH), NULL, 80, 12, cx - 92, 24, SWP_NOZORDER | SWP_NOACTIVATE);
+    win32::SetWindowPos(win32::GetDlgItem(hwnd, ID_FILE_LIST), NULL, 12, 108, cx - 24, cy - 252, SWP_NOZORDER | SWP_NOACTIVATE);
+    win32::SetWindowPos(win32::GetDlgItem(hwnd, 0x441), NULL, 12, cy - 128, 80, 24, SWP_NOZORDER | SWP_NOACTIVATE);
+    win32::SetWindowPos(win32::GetDlgItem(hwnd, ID_FILE_NAME), NULL, 96, cy - 132, cx - 108, 26, SWP_NOZORDER | SWP_NOACTIVATE);
+    win32::SetWindowPos(win32::GetDlgItem(hwnd, 0x442), NULL, 12, cy - 92, 80, 24, SWP_NOZORDER | SWP_NOACTIVATE);
+    win32::SetWindowPos(win32::GetDlgItem(hwnd, ID_FILE_FILTER), NULL, 96, cy - 96, cx - 108, 120, SWP_NOZORDER | SWP_NOACTIVATE);
+    win32::SetWindowPos(win32::GetDlgItem(hwnd, IDOK), NULL, cx - 188, cy - 52, 80, 28, SWP_NOZORDER | SWP_NOACTIVATE);
+    win32::SetWindowPos(win32::GetDlgItem(hwnd, IDCANCEL), NULL, cx - 96, cy - 52, 80, 28, SWP_NOZORDER | SWP_NOACTIVATE);
 }
 static HWND HwndFileControl(HWND hwnd, LPCSTR pszClass, LPCSTR pszText, DWORD style, int x, int y, int cx, int cy, int id);
 static INT_PTR CALLBACK FolderDialogProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
-    char *pszName = (char *)GetWindowLongPtrA(hwnd, DWLP_USER);
-    if (msg == WM_INITDIALOG) { SetWindowLongPtrA(hwnd, DWLP_USER, l); return TRUE; }
+    char *pszName = (char *)win32::GetWindowLongPtrA(hwnd, DWLP_USER);
+    if (msg == WM_INITDIALOG) { win32::SetWindowLongPtrA(hwnd, DWLP_USER, l); return TRUE; }
     if (msg == WM_CLOSE || (msg == WM_COMMAND && LOWORD(w) == IDCANCEL)) {
-        EndDialog(hwnd, IDCANCEL); return TRUE;
+        win32::EndDialog(hwnd, IDCANCEL); return TRUE;
     }
     if (msg == WM_COMMAND && LOWORD(w) == IDOK && pszName) {
-        GetWindowTextA(GetDlgItem(hwnd, ID_FILE_NAME), pszName, PATH_MAX);
+        win32::GetWindowTextA(win32::GetDlgItem(hwnd, ID_FILE_NAME), pszName, PATH_MAX);
         if (!*pszName || strchr(pszName, '/') || strcmp(pszName, ".") == 0 || strcmp(pszName, "..") == 0) {
             FileError(hwnd, "Enter a folder name without a path."); return TRUE;
         }
-        EndDialog(hwnd, IDOK); return TRUE;
+        win32::EndDialog(hwnd, IDOK); return TRUE;
     }
     return FALSE;
 }
@@ -273,43 +273,43 @@ static void NewFileFolder(HWND hwnd, COMPATFILEDIALOG *lp) {
     char szName[PATH_MAX], szPath[PATH_MAX];
     RECT rc, work;
     HWND hwndFolder, hwndFocus = NULL;
-    MSG msg;
+    win32::MSG msg;
     int iRet;
     BOOL fAccepted = FALSE, fDisabled = FALSE;
 
-    if (!SystemParametersInfoA(SPI_GETWORKAREA, 0, &work, 0)) return;
+    if (!win32::SystemParametersInfoA(SPI_GETWORKAREA, 0, &work, 0)) return;
     rc.left = work.left + (work.right - work.left - 360) / 2;
     rc.top = work.top + (work.bottom - work.top - 156) / 2;
     rc.right = rc.left + 360; rc.bottom = rc.top + 156;
     hwndFolder = HwndCompatDynamicDialog("New folder", WS_POPUP | WS_CAPTION | WS_SYSMENU, 0, &rc, hwnd, FolderDialogProc);
     if (!hwndFolder) { FileError(hwnd, "The new folder dialog could not be opened."); return; }
     COMPATCLEANUPSCOPE restoreParent([&] {
-        if (!fDisabled || !IsWindow(hwnd)) return;
-        EnableWindow(hwnd, TRUE);
-        if (IsWindow(hwndFocus)) SetFocus(hwndFocus);
+        if (!fDisabled || !win32::IsWindow(hwnd)) return;
+        win32::EnableWindow(hwnd, TRUE);
+        if (win32::IsWindow(hwndFocus)) win32::SetFocus(hwndFocus);
     }, hwnd);
-    COMPATCLEANUPSCOPE destroyFolder([&] { if (IsWindow(hwndFolder)) DestroyWindow(hwndFolder); }, hwnd);
+    COMPATCLEANUPSCOPE destroyFolder([&] { if (win32::IsWindow(hwndFolder)) win32::DestroyWindow(hwndFolder); }, hwnd);
     if (!HwndFileControl(hwndFolder, "Static", "Folder &name:", 0, 12, 12, 320, 24, 0x441) ||
         !HwndFileControl(hwndFolder, "Edit", "New folder", WS_TABSTOP | WS_BORDER | ES_AUTOHSCROLL, 12, 40, 336, 26, ID_FILE_NAME) ||
         !HwndFileControl(hwndFolder, "Button", "&Create", WS_TABSTOP | BS_DEFPUSHBUTTON, 172, 96, 80, 28, IDOK) ||
         !HwndFileControl(hwndFolder, "Button", "Cancel", WS_TABSTOP, 268, 96, 80, 28, IDCANCEL)) {
         destroyFolder.Close(); FileError(hwnd, "The new folder dialog could not be initialized."); return;
     }
-    SendDlgItemMessageA(hwndFolder, ID_FILE_NAME, EM_LIMITTEXT, PATH_MAX - 1, 0);
-    SendMessageA(hwndFolder, WM_INITDIALOG, 0, (LPARAM)szName);
-    hwndFocus = GetFocus(); fDisabled = TRUE; EnableWindow(hwnd, FALSE);
-    ShowWindow(hwndFolder, SW_SHOW); SetFocus(GetDlgItem(hwndFolder, ID_FILE_NAME));
-    SendDlgItemMessageA(hwndFolder, ID_FILE_NAME, EM_SETSEL, 0, -1);
-    while (IsWindow(hwndFolder) && !hwndFolder->fEndDialog) {
-        iRet = GetMessageA(&msg, NULL, 0, 0);
-        if (iRet <= 0) { if (iRet == 0) PostQuitMessage((int)msg.wParam); break; }
-        if (!IsDialogMessageA(hwndFolder, &msg)) { TranslateMessage(&msg); DispatchMessageA(&msg); }
+    win32::SendDlgItemMessageA(hwndFolder, ID_FILE_NAME, EM_LIMITTEXT, PATH_MAX - 1, 0);
+    win32::SendMessageA(hwndFolder, WM_INITDIALOG, 0, (LPARAM)szName);
+    hwndFocus = win32::GetFocus(); fDisabled = TRUE; win32::EnableWindow(hwnd, FALSE);
+    win32::ShowWindow(hwndFolder, SW_SHOW); win32::SetFocus(win32::GetDlgItem(hwndFolder, ID_FILE_NAME));
+    win32::SendDlgItemMessageA(hwndFolder, ID_FILE_NAME, EM_SETSEL, 0, -1);
+    while (win32::IsWindow(hwndFolder) && !hwndFolder->fEndDialog) {
+        iRet = win32::GetMessageA(&msg, NULL, 0, 0);
+        if (iRet <= 0) { if (iRet == 0) win32::PostQuitMessage((int)msg.wParam); break; }
+        if (!win32::IsDialogMessageA(hwndFolder, &msg)) { win32::TranslateMessage(&msg); win32::DispatchMessageA(&msg); }
     }
-    if (IsWindow(hwndFolder)) {
+    if (win32::IsWindow(hwndFolder)) {
         fAccepted = hwndFolder->fEndDialog && hwndFolder->lDlgResult == IDOK;
     }
     destroyFolder.Close();
-    if (!IsWindow(hwnd)) return;
+    if (!win32::IsWindow(hwnd)) return;
     restoreParent.Close();
     if (!fAccepted) return;
     if (!FJoinFile(szPath, lp->szDir, szName)) { FileError(hwnd, "The folder name is too long."); return; }
@@ -319,23 +319,23 @@ static void NewFileFolder(HWND hwnd, COMPATFILEDIALOG *lp) {
     FChangeFileDirectory(hwnd, lp, szName, TRUE);
 }
 static INT_PTR CALLBACK FileDialogProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
-    COMPATFILEDIALOG *lp = (COMPATFILEDIALOG *)GetWindowLongPtrA(hwnd, DWLP_USER);
+    COMPATFILEDIALOG *lp = (COMPATFILEDIALOG *)win32::GetWindowLongPtrA(hwnd, DWLP_USER);
     LRESULT i, data;
     char szPath[PATH_MAX];
     const char *pszHome;
     if (msg == WM_GETMINMAXINFO) {
         ((MINMAXINFO *)l)->ptMinTrackSize = POINT{420, 320}; return TRUE;
     }
-    if (msg == WM_INITDIALOG) { SetWindowLongPtrA(hwnd, DWLP_USER, l); return TRUE; }
+    if (msg == WM_INITDIALOG) { win32::SetWindowLongPtrA(hwnd, DWLP_USER, l); return TRUE; }
     if (!lp) return FALSE;
     if (msg == WM_SIZE) { LayoutFileDialog(hwnd); return TRUE; }
-    if (msg == WM_CLOSE) { EndDialog(hwnd, IDCANCEL); return TRUE; }
+    if (msg == WM_CLOSE) { win32::EndDialog(hwnd, IDCANCEL); return TRUE; }
     if (msg != WM_COMMAND) return FALSE;
     switch (LOWORD(w)) {
-    case IDCANCEL: EndDialog(hwnd, IDCANCEL); return TRUE;
+    case IDCANCEL: win32::EndDialog(hwnd, IDCANCEL); return TRUE;
     case IDOK:
-        if (GetFocus() == GetDlgItem(hwnd, ID_FILE_PATH)) {
-            GetWindowTextA(GetDlgItem(hwnd, ID_FILE_PATH), szPath, sizeof(szPath));
+        if (win32::GetFocus() == win32::GetDlgItem(hwnd, ID_FILE_PATH)) {
+            win32::GetWindowTextA(win32::GetDlgItem(hwnd, ID_FILE_PATH), szPath, sizeof(szPath));
             FChangeFileDirectory(hwnd, lp, szPath, TRUE);
         } else AcceptFile(hwnd, lp);
         return TRUE;
@@ -343,7 +343,7 @@ static INT_PTR CALLBACK FileDialogProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) 
     case ID_FILE_BACK:
         if (lp->cHistory != 0 && FChangeFileDirectory(hwnd, lp, lp->rgpszHistory[lp->cHistory - 1], FALSE)) {
             free(lp->rgpszHistory[--lp->cHistory]);
-            EnableWindow(GetDlgItem(hwnd, ID_FILE_BACK), lp->cHistory != 0);
+            win32::EnableWindow(win32::GetDlgItem(hwnd, ID_FILE_BACK), lp->cHistory != 0);
         }
         return TRUE;
     case ID_FILE_HOME:
@@ -355,21 +355,21 @@ static INT_PTR CALLBACK FileDialogProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) 
         else FileError(hwnd, "The home directory is not available.");
         return TRUE;
     case ID_FILE_HIDDEN:
-        lp->fHidden = SendDlgItemMessageA(hwnd, ID_FILE_HIDDEN, BM_GETCHECK, 0, 0) == BST_CHECKED;
+        lp->fHidden = win32::SendDlgItemMessageA(hwnd, ID_FILE_HIDDEN, BM_GETCHECK, 0, 0) == BST_CHECKED;
         FRefreshFiles(hwnd, lp); return TRUE;
     case ID_FILE_UP: FChangeFileDirectory(hwnd, lp, "..", TRUE); return TRUE;
     case ID_FILE_FILTER:
         if (HIWORD(w) == CBN_SELCHANGE) {
-            i = SendDlgItemMessageA(hwnd, ID_FILE_FILTER, CB_GETCURSEL, 0, 0);
+            i = win32::SendDlgItemMessageA(hwnd, ID_FILE_FILTER, CB_GETCURSEL, 0, 0);
             if (i >= 0 && i < lp->cFilter) { lp->iFilter = (int)i; FRefreshFiles(hwnd, lp); }
         }
         return TRUE;
     case ID_FILE_LIST:
         if (HIWORD(w) != LBN_SELCHANGE && HIWORD(w) != LBN_DBLCLK) return TRUE;
-        i = SendDlgItemMessageA(hwnd, ID_FILE_LIST, LB_GETCURSEL, 0, 0);
-        data = i == LB_ERR ? LB_ERR : SendDlgItemMessageA(hwnd, ID_FILE_LIST, LB_GETITEMDATA, (WPARAM)i, 0);
+        i = win32::SendDlgItemMessageA(hwnd, ID_FILE_LIST, LB_GETCURSEL, 0, 0);
+        data = i == LB_ERR ? LB_ERR : win32::SendDlgItemMessageA(hwnd, ID_FILE_LIST, LB_GETITEMDATA, (WPARAM)i, 0);
         if (data < 0 || (size_t)data >= lp->cEntry) return TRUE;
-        if (!lp->rgentry[data].fDir) SetWindowTextA(GetDlgItem(hwnd, ID_FILE_NAME), lp->rgentry[data].psz);
+        if (!lp->rgentry[data].fDir) win32::SetWindowTextA(win32::GetDlgItem(hwnd, ID_FILE_NAME), lp->rgentry[data].psz);
         if (HIWORD(w) == LBN_DBLCLK) {
             if (lp->rgentry[data].fDir) FChangeFileDirectory(hwnd, lp, lp->rgentry[data].psz, TRUE);
             else AcceptFile(hwnd, lp);
@@ -379,9 +379,9 @@ static INT_PTR CALLBACK FileDialogProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) 
     }
 }
 static HWND HwndFileControl(HWND hwnd, LPCSTR pszClass, LPCSTR pszText, DWORD style, int x, int y, int cx, int cy, int id) {
-    HWND hwndControl = CreateWindowExA(0, pszClass, pszText, WS_CHILD | WS_VISIBLE | style, x, y, cx, cy, hwnd, (HMENU)(INT_PTR)id, GetModuleHandleA(NULL), NULL);
+    HWND hwndControl = win32::CreateWindowExA(0, pszClass, pszText, WS_CHILD | WS_VISIBLE | style, x, y, cx, cy, hwnd, (HMENU)(INT_PTR)id, win32::GetModuleHandleA(NULL), NULL);
     if (hwndControl) {
-        SendMessageA(hwndControl, WM_SETFONT, (WPARAM)hwnd->hfontDialog, FALSE);
+        win32::SendMessageA(hwndControl, WM_SETFONT, (WPARAM)hwnd->hfontDialog, FALSE);
     }
     return hwndControl;
 }
@@ -408,7 +408,7 @@ static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
     HWND hwnd = NULL, hwndRoot = NULL, hwndFocus = NULL;
     char szInitial[PATH_MAX], szCwd[PATH_MAX], szPath[PATH_MAX], *pch;
     RECT rc, work;
-    MSG msg;
+    win32::MSG msg;
     int i, iRet, cx, cy;
     BOOL fEnable = FALSE, fRet = FALSE, fNative = FALSE, fRestoreFocus = FALSE;
     DWORD grFlagsAllowed = OFN_HIDEREADONLY | OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_OVERWRITEPROMPT |
@@ -418,10 +418,10 @@ static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
         for (i = 0; i < dlg.cHistory; i++) free(dlg.rgpszHistory[i]);
         for (i = 0; i < dlg.cFilter; i++) { free(dlg.rgfilter[i].pszName); free(dlg.rgfilter[i].pszPattern); }
     });
-    COMPATCLEANUPSCOPE restoreFocus([&] { if (fRestoreFocus && IsWindow(hwndFocus) && IsWindowEnabled(hwndFocus)) SetFocus(hwndFocus); });
-    COMPATCLEANUPSCOPE nativeCounter([&] { if (fNative && IsWindow(hwndRoot)) hwndRoot->cNativeFileDialogs--; });
-    COMPATCLEANUPSCOPE restoreOwner([&] { if (fEnable && IsWindow(hwndRoot)) EnableWindow(hwndRoot, TRUE); });
-    COMPATCLEANUPSCOPE destroyPicker([&] { if (IsWindow(hwnd)) DestroyWindow(hwnd); });
+    COMPATCLEANUPSCOPE restoreFocus([&] { if (fRestoreFocus && win32::IsWindow(hwndFocus) && win32::IsWindowEnabled(hwndFocus)) win32::SetFocus(hwndFocus); });
+    COMPATCLEANUPSCOPE nativeCounter([&] { if (fNative && win32::IsWindow(hwndRoot)) hwndRoot->cNativeFileDialogs--; });
+    COMPATCLEANUPSCOPE restoreOwner([&] { if (fEnable && win32::IsWindow(hwndRoot)) win32::EnableWindow(hwndRoot, TRUE); });
+    COMPATCLEANUPSCOPE destroyPicker([&] { if (win32::IsWindow(hwnd)) win32::DestroyWindow(hwnd); });
     dwDialogError = 0;
     if (FStarsErrorPending()) return FALSE;
     if (!lpof || lpof->lStructSize != sizeof(*lpof)) { dwDialogError = CDERR_STRUCTSIZE; return FALSE; }
@@ -433,8 +433,8 @@ static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
         dwDialogError = FNERR_INVALIDFILENAME; return FALSE;
     }
     if ((lpof->Flags & ~grFlagsAllowed) || lpof->lpstrCustomFilter || lpof->lpfnHook || lpof->FlagsEx ||
-        !SDL_IsMainThread() || !FCompatVideo()) { dwDialogError = CDERR_INITIALIZATION; SetLastError(ERROR_NOT_SUPPORTED); return FALSE; }
-    if (lpof->hwndOwner && !IsWindow(lpof->hwndOwner)) { dwDialogError = CDERR_INITIALIZATION; SetLastError(ERROR_INVALID_WINDOW_HANDLE); return FALSE; }
+        !SDL_IsMainThread() || !FCompatVideo()) { dwDialogError = CDERR_INITIALIZATION; win32::SetLastError(ERROR_NOT_SUPPORTED); return FALSE; }
+    if (lpof->hwndOwner && !win32::IsWindow(lpof->hwndOwner)) { dwDialogError = CDERR_INITIALIZATION; win32::SetLastError(ERROR_INVALID_WINDOW_HANDLE); return FALSE; }
     dlg.lpof = lpof; dlg.fSave = fSave;
     for (psz = lpof->lpstrFilter; psz && *psz; psz = pszPattern + strlen(pszPattern) + 1) {
         if (dlg.cFilter == MAX_FILE_FILTERS || SDL_strnlen(psz, 4097) > 4096) { dlg.dwError = CDERR_INITIALIZATION; goto done; }
@@ -463,15 +463,15 @@ static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
         }
     }
     if (!FUtf8Valid(dlg.szDir, strlen(dlg.szDir))) { dlg.dwError = FNERR_INVALIDFILENAME; goto done; }
-    hwndFocus = GetFocus(); hwndRoot = lpof->hwndOwner ? HwndCompatRoot(lpof->hwndOwner) : NULL; fRestoreFocus = TRUE;
+    hwndFocus = win32::GetFocus(); hwndRoot = lpof->hwndOwner ? HwndCompatRoot(lpof->hwndOwner) : NULL; fRestoreFocus = TRUE;
 #if defined(STARS_FILE_DIALOG_PORTAL) || defined(STARS_FILE_DIALOG_COCOA) || defined(STARS_FILE_DIALOG_WINDOWS)
     fNative = !PszCompatEnvironment("STARS_FILE_DIALOG_BACKEND") || strcmp(PszCompatEnvironment("STARS_FILE_DIALOG_BACKEND"), "compat") != 0;
     if (fNative && hwndRoot) hwndRoot->cNativeFileDialogs++;
 #endif
-    fEnable = hwndRoot && IsWindowEnabled(hwndRoot);
-    if (fEnable) EnableWindow(hwndRoot, FALSE);
+    fEnable = hwndRoot && win32::IsWindowEnabled(hwndRoot);
+    if (fEnable) win32::EnableWindow(hwndRoot, FALSE);
     if (FStarsErrorPending()) goto restore;
-    if (hwndRoot && !IsWindow(hwndRoot)) { dlg.dwError = CDERR_INITIALIZATION; goto restore; }
+    if (hwndRoot && !win32::IsWindow(hwndRoot)) { dlg.dwError = CDERR_INITIALIZATION; goto restore; }
 #if defined(STARS_FILE_DIALOG_PORTAL) || defined(STARS_FILE_DIALOG_COCOA) || defined(STARS_FILE_DIALOG_WINDOWS)
     /* Headless control tests opt into the compatibility browser explicitly. */
     if (fNative) {
@@ -480,12 +480,12 @@ static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
                                     dlg.szDir, szInitial, dlg.rgfilter, dlg.cFilter, &dlg.iFilter, szPath, sizeof(szPath));
             if (iRet < 0) {
                 dlg.dwError = CDERR_INITIALIZATION;
-                if (!hwndRoot || IsWindow(hwndRoot)) FileError(hwndRoot, "Unable to complete file selection. Please try again.");
+                if (!hwndRoot || win32::IsWindow(hwndRoot)) FileError(hwndRoot, "Unable to complete file selection. Please try again.");
                 goto restore;
             }
             if (iRet == 0) goto restore;
             iRet = IAcceptFilePath(hwndRoot, &dlg, szPath);
-            if (hwndRoot && !IsWindow(hwndRoot)) goto restore;
+            if (hwndRoot && !win32::IsWindow(hwndRoot)) goto restore;
             if (dlg.dwError) {
                 if (dlg.dwError == FNERR_BUFFERTOOSMALL)
                     FileError(hwndRoot, "The selected path is too long for this application. Please choose a shorter path.");
@@ -493,12 +493,12 @@ static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
             }
             if (iRet == 1) goto selected;
             if (iRet == 2) FileError(hwndRoot, "Select a regular file.");
-            if (hwndRoot && !IsWindow(hwndRoot)) goto restore;
+            if (hwndRoot && !win32::IsWindow(hwndRoot)) goto restore;
             RememberFileSelection(&dlg, szPath, szInitial);
         }
     }
 #endif
-    if (!SystemParametersInfoA(SPI_GETWORKAREA, 0, &work, 0)) { dlg.dwError = CDERR_INITIALIZATION; goto restore; }
+    if (!win32::SystemParametersInfoA(SPI_GETWORKAREA, 0, &work, 0)) { dlg.dwError = CDERR_INITIALIZATION; goto restore; }
     cx = StarsMin(640, work.right - work.left - 32); cy = StarsMin(440, work.bottom - work.top - 64);
     if (cx < 420 || cy < 320) { dlg.dwError = CDERR_INITIALIZATION; goto restore; }
     rc = RECT{work.left + (work.right - work.left - cx) / 2, work.top + (work.bottom - work.top - cy) / 2, 0, 0};
@@ -521,21 +521,21 @@ static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
         !HwndFileControl(hwnd, "Button", "Cancel", WS_TABSTOP, cx - 96, cy - 58, 80, 28, IDCANCEL)) {
         dlg.dwError = CDERR_MEMALLOCFAILURE; goto restore;
     }
-    SendDlgItemMessageA(hwnd, ID_FILE_NAME, EM_LIMITTEXT, PATH_MAX - 1, 0);
-    for (i = 0; i < dlg.cFilter; i++) SendDlgItemMessageA(hwnd, ID_FILE_FILTER, CB_ADDSTRING, 0, (LPARAM)dlg.rgfilter[i].pszName);
-    if (dlg.cFilter) SendDlgItemMessageA(hwnd, ID_FILE_FILTER, CB_SETCURSEL, dlg.iFilter, 0);
-    SendMessageA(hwnd, WM_INITDIALOG, 0, (LPARAM)&dlg);
-    EnableWindow(GetDlgItem(hwnd, ID_FILE_BACK), FALSE);
-    SendDlgItemMessageA(hwnd, ID_FILE_PATH, EM_LIMITTEXT, PATH_MAX - 1, 0);
+    win32::SendDlgItemMessageA(hwnd, ID_FILE_NAME, EM_LIMITTEXT, PATH_MAX - 1, 0);
+    for (i = 0; i < dlg.cFilter; i++) win32::SendDlgItemMessageA(hwnd, ID_FILE_FILTER, CB_ADDSTRING, 0, (LPARAM)dlg.rgfilter[i].pszName);
+    if (dlg.cFilter) win32::SendDlgItemMessageA(hwnd, ID_FILE_FILTER, CB_SETCURSEL, dlg.iFilter, 0);
+    win32::SendMessageA(hwnd, WM_INITDIALOG, 0, (LPARAM)&dlg);
+    win32::EnableWindow(win32::GetDlgItem(hwnd, ID_FILE_BACK), FALSE);
+    win32::SendDlgItemMessageA(hwnd, ID_FILE_PATH, EM_LIMITTEXT, PATH_MAX - 1, 0);
     LayoutFileDialog(hwnd);
     if (!FRefreshFiles(hwnd, &dlg)) goto restore;
-    ShowWindow(hwnd, SW_SHOW); SetFocus(GetDlgItem(hwnd, ID_FILE_NAME));
-    while (IsWindow(hwnd) && !hwnd->fEndDialog) {
-        iRet = GetMessageA(&msg, NULL, 0, 0);
-        if (iRet <= 0) { if (iRet == 0) PostQuitMessage((int)msg.wParam); break; }
-        if (!IsDialogMessageA(hwnd, &msg)) { TranslateMessage(&msg); DispatchMessageA(&msg); }
+    win32::ShowWindow(hwnd, SW_SHOW); win32::SetFocus(win32::GetDlgItem(hwnd, ID_FILE_NAME));
+    while (win32::IsWindow(hwnd) && !hwnd->fEndDialog) {
+        iRet = win32::GetMessageA(&msg, NULL, 0, 0);
+        if (iRet <= 0) { if (iRet == 0) win32::PostQuitMessage((int)msg.wParam); break; }
+        if (!win32::IsDialogMessageA(hwnd, &msg)) { win32::TranslateMessage(&msg); win32::DispatchMessageA(&msg); }
     }
-    if (!IsWindow(hwnd) || !hwnd->fEndDialog || hwnd->lDlgResult != IDOK) goto restore;
+    if (!win32::IsWindow(hwnd) || !hwnd->fEndDialog || hwnd->lDlgResult != IDOK) goto restore;
 #if defined(STARS_FILE_DIALOG_PORTAL) || defined(STARS_FILE_DIALOG_COCOA) || defined(STARS_FILE_DIALOG_WINDOWS)
 selected:
 #endif
@@ -564,8 +564,8 @@ done:
     dwDialogError = dlg.dwError;
     return fRet;
 }
-BOOL WINAPI GetOpenFileNameA(LPOPENFILENAMEA lpof) { return FFileDialog(lpof, FALSE); }
-BOOL WINAPI GetSaveFileNameA(LPOPENFILENAMEA lpof) {
+BOOL WINAPI win32::GetOpenFileNameA(LPOPENFILENAMEA lpof) { return FFileDialog(lpof, FALSE); }
+BOOL WINAPI win32::GetSaveFileNameA(LPOPENFILENAMEA lpof) {
     BOOL fResult = FFileDialog(lpof, TRUE);
     if (!fResult && dwDialogError != 0)
         SDL_Log("Save dialog failed (common-dialog error %lu)", (unsigned long)dwDialogError);
