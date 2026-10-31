@@ -4,7 +4,7 @@ import tempfile
 import unittest
 import xml.etree.ElementTree as ET
 
-from configure_matrix import sdk_outcome
+from configure_matrix import sdk_outcome, assert_sdk_registry, assert_sdk_compilation
 
 
 class SdkProbePolicy(unittest.TestCase):
@@ -44,6 +44,25 @@ class SdkProbePolicy(unittest.TestCase):
         for report in (self.receipt(skipped=self.diagnostics), self.receipt(omitted=self.diagnostics)):
             with self.assertRaises(AssertionError):
                 sdk_outcome(report, self.diagnostics, self.names)
+
+    def test_registry_rejects_replacement_with_same_count(self):
+        with self.assertRaises(AssertionError):
+            assert_sdk_registry({'test_alpha_reference', 'test_gamma_reference'},
+                                {'test_alpha_reference', 'test_beta_reference'})
+
+    def test_sdk_entries_use_c_compiler_once_each(self):
+        with tempfile.TemporaryDirectory(prefix='stars-sdk-compile-') as directory:
+            root = Path(directory)
+            expected = {f'tests/reference/sdk/{name}.c' for name in ('alpha', 'beta')}
+            rows = [{'file': str(root / name), 'command': f'/tool/cc -c {root / name}'}
+                    for name in sorted(expected)]
+            assert_sdk_compilation(rows, root, expected, '/tool/cc')
+            for changed in (rows[:1], rows + [rows[0]],
+                            [dict(rows[0], command=rows[0]['command'].replace('/tool/cc', '/tool/c++')), rows[1]],
+                            [dict(rows[0], command=rows[0]['command'] + ' -x c++'), rows[1]],
+                            [dict(rows[0], command=rows[0]['command'] + ' /TP'), rows[1]]):
+                with self.subTest(changed=changed), self.assertRaises(AssertionError):
+                    assert_sdk_compilation(changed, root, expected, '/tool/cc')
 
 
 if __name__ == '__main__':
