@@ -13,19 +13,9 @@
 #include "platform.h"
 #include "encoding.h"
 
-typedef struct COMPATPROFILE {
-    char *szRaw, *szParsed, *pszSection, *pszKey, *pszValue;
-    struct COMPATPROFILE *lpNext;
-} COMPATPROFILE;
+#include "profile_io.h"
 
 static NATIVEFLAGLOCK fProfileLock;
-
-static DWORD DwProfileError(void) {
-    if (errno == ENOENT) return ERROR_FILE_NOT_FOUND;
-    if (errno == EACCES || errno == EPERM) return ERROR_ACCESS_DENIED;
-    if (errno == ENOMEM) return ERROR_NOT_ENOUGH_MEMORY;
-    return ERROR_WRITE_FAULT;
-}
 
 static void FreeProfile(COMPATPROFILE *lp) {
     COMPATPROFILE *lpNext;
@@ -64,6 +54,7 @@ static COMPATPROFILE *LpProfileLine(const char *pszRaw) {
 }
 
 static BOOL FLoadProfile(const char *pszPath, COMPATPROFILE **lplp) {
+    const PROFILEIO &io = ProfileIO();
     NATIVEFILE *fp = NULL;
     char *sz = NULL;
     size_t cb = 0, cbTotal = 0;
@@ -82,7 +73,7 @@ static BOOL FLoadProfile(const char *pszPath, COMPATPROFILE **lplp) {
         SetLastError(DwProfileError());
         return errno == ENOENT;
     }
-    while ((cbLine = CbGetNativeLine(&sz, &cb, fp)) >= 0) {
+    while ((cbLine = io.pfnReadLine(&sz, &cb, fp)) >= 0) {
         cbTotal += (size_t)cbLine;
         if (cbTotal > 8 * 1024 * 1024 || !FUtf8Valid(sz, (size_t)cbLine)) {
             SetLastError(ERROR_BAD_FORMAT); goto LReturn;
@@ -268,41 +259,6 @@ UINT WINAPI GetPrivateProfileIntA(LPCSTR pszSection, LPCSTR pszKey, INT nDefault
         u = u * radix + digit;
     }
     return fNegative ? 0u - u : u;
-}
-
-static BOOL FSaveProfile(COMPATPROFILE *lp, const char *pszPath) {
-    char *szTemp = NULL;
-    NATIVEFILE *fp = NULL;
-    BOOL fRet = FALSE;
-    BOOL fTemporary = FALSE;
-    NATIVECLEANUPSCOPE releaseProfile([&]() noexcept {
-        if (fp) ICloseNativeFile(std::exchange(fp, nullptr));
-        if (!fRet && fTemporary) IUnlinkNativePath(szTemp);
-        free(szTemp);
-    });
-
-    szTemp = (char *)malloc(strlen(pszPath) + 12);
-    if (!szTemp) { SetLastError(ERROR_NOT_ENOUGH_MEMORY); return FALSE; }
-    snprintf(szTemp, strlen(pszPath) + 12, "%s.XXXXXX", pszPath);
-    fp = PfNativeCreateTemp(szTemp);
-    if (!fp) { SetLastError(DwProfileError()); goto LReturn; }
-    fTemporary = TRUE;
-    if (ICopyNativePermissions(fp, pszPath) != 0) {
-        SetLastError(DwProfileError()); ICloseNativeFile(std::exchange(fp, nullptr)); goto LReturn;
-    }
-    if (CWriteNative("\xef\xbb\xbf", 1, 3, fp) != 3) { ICloseNativeFile(std::exchange(fp, nullptr)); goto LReturn; }
-    for (; lp; lp = lp->lpNext) {
-        if (IPutNativeString(lp->szRaw, fp) == EOF) break;
-        if (lp->lpNext && *lp->szRaw && lp->szRaw[strlen(lp->szRaw) - 1] != '\n')
-            if (ChPutNativeFile('\n', fp) == EOF) break;
-    }
-    if (lp || IFlushNativeFile(fp) != 0 || ISyncNativeFile(fp) != 0) {
-        SetLastError(DwProfileError()); ICloseNativeFile(std::exchange(fp, nullptr)); goto LReturn;
-    }
-    if (ICloseNativeFile(std::exchange(fp, nullptr)) != 0 || IRenameNativePath(szTemp, pszPath, TRUE, TRUE) != 0) { SetLastError(DwProfileError()); goto LReturn; }
-    fRet = TRUE;
-LReturn:
-    return fRet;
 }
 
 BOOL WINAPI WritePrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR pszValue, LPCSTR pszFile) {

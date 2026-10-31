@@ -1,4 +1,5 @@
 #include "locking.h"
+#include "file_read.h"
 /* Legacy HFILE adapters use owned C++ file tokens, never arbitrary integer fds. */
 #include "internal.h"
 #include <errno.h>
@@ -9,6 +10,10 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
+
+static thread_local decltype(&CbReadNativeFile) pfnReadFile = CbReadNativeFile;
+COMPATFILEREADSCOPE::COMPATFILEREADSCOPE(decltype(&CbReadNativeFile) pfnRead) noexcept : pfnPrev(pfnReadFile) { pfnReadFile = pfnRead; }
+COMPATFILEREADSCOPE::~COMPATFILEREADSCOPE() noexcept { pfnReadFile = pfnPrev; }
 
 typedef struct COMPATFILE {
     HFILE hf;
@@ -168,7 +173,7 @@ UINT WINAPI _lread(HFILE hf, LPVOID rgb, UINT cb) {
         if (!(lp->grAccess & 1)) SetLastError(ERROR_ACCESS_DENIED);
         else if (!rgb && cb != 0) SetLastError(ERROR_INVALID_PARAMETER);
         else {
-            do { cbRead = CbReadNativeFile(lp->pf, rgb, cb); } while (cbRead < 0 && errno == EINTR);
+            do { cbRead = pfnReadFile(lp->pf, rgb, cb); } while (cbRead < 0 && errno == EINTR);
             if (cbRead < 0) SetLastError(DwFileError());
         }
     }

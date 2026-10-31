@@ -36,6 +36,12 @@ internals and independent raw API contracts keep the raw calls. The 23 checked
 entry functions have compile-time signature checks against their underlying
 APIs; application call sites name them explicitly.
 
+Profile saving accepts the private `PROFILEIO` provider in `src/profile_io.h`.
+Defaults call the native file service; scoped overrides supply only I/O effects
+and restore through nesting and exceptions. The linked save-stage witness and
+file/profile guard tests use the product implementation, preserving serializer
+and cleanup order without compiling a private wrapper clone for those guards.
+
 The supported source interface is 64-bit, narrow-character C++20, with Win32 LLP64
 widths: `LONG`, `DWORD` and `BOOL` are 32 bits; handles and message parameters
 are pointer-sized. Structures use SDK packing, including packed bitmap file

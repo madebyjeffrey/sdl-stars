@@ -1,7 +1,8 @@
 # Milestone C: finish the C++ conversion
 
-Status: implementation active; C01–C02 complete under the current CI policy;
-C03 explicit callback boundaries locally qualified, enabled CI pending.
+Status: implementation active; C01–C03 merged under the current CI policy.
+C04 begins with profile/file effects and the first linked C05 witness;
+remaining effect and witness families are pending.
 Evidence: [CPP-C-IMPLEMENTATION.md](CPP-C-IMPLEMENTATION.md).
 Tracking: [#67](https://github.com/madebyjeffrey/sdl-stars/issues/67).
 Recorded: 2026-10-29; refreshed against merged B on 2026-10-31.

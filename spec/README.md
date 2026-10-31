@@ -1209,6 +1209,12 @@ Verification:
   `python3 tests/spec/check_s02_save_source.py`. The latter injects POSIX save
   failures into the actual source body with syscall doubles; it does not claim
   real OS-failure or crash qualification.
+- Later C04 continuation: the [save-control runner](../tests/spec/check_s02_save_source.py)
+  now links the [production serializer](../compat/win32/src/profile_save.cpp)
+  through typed I/O effects. The current C03 parent receipt's 42 save assertions
+  and original domains/exclusions are preserved in the [linked fixture](../tests/compat/profile_save.cpp).
+  See the [C04 migration receipt](../docs/CPP-C-IMPLEMENTATION.md#c04-first-effect-family-and-c05-integration).
+  This updates test integration, not the historical proof counts or canonical rules.
 - SDL Debug configure/build passed without new warnings. All **31/31** selected
   unit/compatibility/tutorial tests passed, including the host-library test that
   timed out in the previous batch. Logs: `dist/spec-s02-io-configure.log`,
