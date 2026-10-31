@@ -85,7 +85,7 @@ elseif(STARS_NATIVE_FILE_DIALOGS AND WIN32)
     target_compile_definitions(stars_win32 PRIVATE STARS_FILE_DIALOG_WINDOWS=1)
 endif()
 
-target_compile_options(stars_win32 PRIVATE -Wall -Wextra $<$<COMPILE_LANGUAGE:C>:-Wpedantic> -Werror)
+target_compile_options(stars_win32 PRIVATE -Wall -Wextra -Werror)
 
 if(WIN32)
     target_compile_definitions(stars_win32 PUBLIC _FILE_OFFSET_BITS=64)

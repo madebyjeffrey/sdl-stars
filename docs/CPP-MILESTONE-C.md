@@ -7,7 +7,9 @@ C06 replaces generated wrapper names and prefixed UI entries with actual
 namespaces; PR #73 passes all 14 enabled jobs and the manual Linux/Windows run.
 C07 PR #74 passes all 14 enabled jobs and the manual Linux/Windows run. C08
 removes all inventoried aliases, two earlier XOR-seed aliases and their accessors;
-full local qualification passes, with remote CI pending. C09–C10 remain work.
+full local qualification and all 14 enabled PR CI jobs pass in PR #75. C09
+finalizes the maintained build/reference policy; its updated platform matrix and
+C10 final audit are in progress.
 Evidence: [CPP-C-IMPLEMENTATION.md](CPP-C-IMPLEMENTATION.md).
 Tracking: [#67](https://github.com/madebyjeffrey/sdl-stars/issues/67).
 Recorded: 2026-10-29; refreshed against merged B on 2026-10-31.

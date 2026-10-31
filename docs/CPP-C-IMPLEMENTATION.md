@@ -2,8 +2,8 @@
 
 Tracking: [#67](https://github.com/madebyjeffrey/sdl-stars/issues/67).
 Started: 2026-10-31. Initial branch: `codex/cpp-milestone-c`, targeting `develop`.
-Current continuation: `codex/cpp-c08-explicit-state` from C07 PR #74
-(`bcdd77bf`); the dependent PR chain starts at C04/C05 PR #72 against `develop`.
+Current continuation: `codex/cpp-c09-build-policy` from C08 PR #75
+(`381d61a`); the dependent PR chain starts at C04/C05 PR #72 against `develop`.
 Plan: [CPP-MILESTONE-C.md](CPP-MILESTONE-C.md).
 
 ## Parent and scope
@@ -32,8 +32,8 @@ verification receipts below decide completion.
 | C05 | Complete under current CI policy | All 27 commands use normal linked production targets; every parent case/assertion/exclusion receipt matches. The 67 retained independent Python definitions have identical parent ASTs. See the [per-program inventory](CPP-C05-WITNESSES.md). |
 | C06 | Complete under current CI policy | All 23 C03 names use `ui::` directly; raw operations and actual type tags use `win32::`. Generated names are deleted; [boundary/vector receipts](CPP-C06-BOUNDARIES.md) account for every entry and all 38 shared SDK inputs. |
 | C07 | Complete under current CI policy | All 2,101 parent macros have individual dispositions; typed helpers/constants, direct calls and shim removal pass full desktop/host/regression/sanitizer checks. |
-| C08 | Locally qualified; CI pending | All 502 inventoried aliases plus two earlier XOR-seed aliases and their accessors are removed; owned calls receive explicit references, with target-bound foreign callbacks. See [state receipts](CPP-C08-STATE.md). |
-| C09 | Pending | Finalize compiler/reference policy and remove dead migration adapters. |
+| C08 | All enabled CI passes; manual platform run pending | All 502 inventoried aliases plus two earlier XOR-seed aliases and their accessors are removed; owned calls receive explicit references, with target-bound foreign callbacks. See [state receipts](CPP-C08-STATE.md). |
+| C09 | Local qualification active | Checked-in SDK C entries replace generated adapters; permanent strict/reference policy, negative cases and fresh configuration registries pass. |
 | C10 | Pending | Full final-tree audit and Linux/macOS/Windows qualification. |
 
 ## Removal and retention inventory
@@ -515,3 +515,30 @@ through turn 150 with 25 accepted warnings and zero differences/errors/skips.
 The 27 witness receipts and 67 Python ASTs match. The trace/chooser-off build
 matches 31 files and 773 normalized trace events. Compiler/header/docs checks
 pass; remote CI and C09/C10 remain pending.
+
+
+## C09: maintained build/reference policy
+
+The [permanent policy](CPP-POLICY.md) and [path/hash inventory](CPP-C09-REFERENCES.json)
+classify the precise independent C/SDK, AppKit, observer and preprocessing roles.
+All 38 SDK C entries are checked in; their shared vectors and expectations remain
+unchanged. No generated source-language wrapper remains. The manifest rejects
+owned C/Objective-C, GNU mode, language forcing, weakened diagnostics, test symbol
+substitution, private clones and generated/converted SDK entries. The native
+Objective-C++ driver spelling is recognized only for `.mm`. C is enabled for
+independent references/dependencies; dead C-only diagnostics are deleted, and the
+ordinary native-point poison probe now tests the actual C++ compiler.
+
+Fresh ordinary/neither macOS configurations have 151/0 tests, with no SDK entries;
+SDK-only and both correctly reject the unsupported toolchain. Both eligible
+Windows configurations will build and run all 38 SDK vectors plus type isolation
+in distinct caches; the manual job also runs the entire ordinary registry.
+Automatic job selection remains unchanged. Thirty-eight checked-in SDK C entries
+compile with MinGW. All six unchanged precision experiment tests pass, using
+matching headers/data/generators from the immutable revision; its two pinned host
+builds match 31 turn-10 smoke files. Native/host regressions each match 519 baseline
+files with 25 accepted warnings and zero differences/errors/skips. Exact merged-B
+comparisons also match 519 files for each backend. The fresh desktop suite passes 151/151, including 29 native leak checks and
+the available tutorial smoke checkpoint; the host passes 27/27. The final policy
+checks and native-point contract also pass after the compiler cleanup. The updated
+Windows matrix and C09 remote CI remain pending. Receipts: `dist/verification/c09/`.

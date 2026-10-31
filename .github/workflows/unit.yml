@@ -173,22 +173,26 @@ jobs:
       - name: Build and test the Windows SDL client
         shell: msys2 {0}
         run: |
-          # Use MSYS2 Python so CMake can create the build-local environment.
-          # Both suites share contract targets; configure their combined registry.
-          cmake --preset windows-sdl-debug -DSTARS_BUILD_TESTS=ON -DSTARS_BUILD_WIN32_REFERENCE_TESTS=ON -DPython3_EXECUTABLE="$(cygpath -m "$MINGW_PREFIX/bin/python.exe")"
-          cmake --build --preset windows-sdl-debug --target stars-sdk-reference-build --parallel 2 -- -k 0
-          ctest --test-dir dist/windows-sdl-debug -R '^(test_win32_abi_reference|test_nativeui_points_reference)$' --output-on-failure
-          cmake --preset windows-sdl-debug -DSTARS_BUILD_TESTS=OFF -DSTARS_BUILD_WIN32_REFERENCE_TESTS=ON -DPython3_EXECUTABLE="$(cygpath -m "$MINGW_PREFIX/bin/python.exe")"
-          cmake --preset windows-sdl-debug -DSTARS_BUILD_TESTS=OFF -DSTARS_BUILD_WIN32_REFERENCE_TESTS=OFF -DPython3_EXECUTABLE="$(cygpath -m "$MINGW_PREFIX/bin/python.exe")"
-          cmake --preset windows-sdl-debug -DSTARS_BUILD_TESTS=ON -DSTARS_BUILD_WIN32_REFERENCE_TESTS=OFF -DPython3_EXECUTABLE="$(cygpath -m "$MINGW_PREFIX/bin/python.exe")"
-          cmake --build --preset windows-sdl-debug --parallel 2 -- -k 0
-          ctest --test-dir dist/windows-sdl-debug -R '^test_' --output-on-failure
-          ctest --preset windows-sdl-headless
+          python tests/cmake/configure_matrix.py --preset windows-sdl-debug --work dist/windows-cpp-matrix --run-sdk
+          cmake --build dist/windows-cpp-matrix/ordinary --parallel 2 -- -k 0
+          SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy STARS_SDL_RENDERER=software STARS_FILE_DIALOG_BACKEND=compat \
+            ctest --test-dir dist/windows-cpp-matrix/ordinary --output-on-failure --no-tests=error -j 1
+      - name: Retain C++ configuration matrix
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cpp-matrix-windows-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            dist/windows-cpp-matrix/*.log
+            dist/windows-cpp-matrix/matrix.json
+            dist/windows-cpp-matrix/*/compile_commands.json
+          if-no-files-found: warn
+          retention-days: 30
       - name: Retain wire and storage inventory
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: wire-inventory-windows-${{ github.run_id }}-${{ github.run_attempt }}
-          path: dist/windows-sdl-debug/wire-inventory.json
+          path: dist/windows-cpp-matrix/ordinary/wire-inventory.json
           if-no-files-found: warn
           retention-days: 30
