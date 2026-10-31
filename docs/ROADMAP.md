@@ -35,6 +35,15 @@ call-scoped UTF-8/output/byte views, retaining mutable scratch buffers and the
 legacy text-drawing output mode. Its full local matrix and all 16 Linux/Windows
 checks pass for `b799348`.
 
+## C++ migration completion
+
+Milestone B is qualified and merged in [PR #66](https://github.com/madebyjeffrey/sdl-stars/pull/66).
+[Milestone C](CPP-MILESTONE-C.md) is active from merge `62bb854`, starting with
+the removal inventory and source filename migration. It then removes callback,
+test, namespace and state-access scaffolding while preserving game/file behavior.
+[Implementation evidence](CPP-C-IMPLEMENTATION.md) records actual checkpoint
+status and verification; later C checkpoints remain pending.
+
 ## C++ migration
 
 Milestone A of the [native C++ migration plan](CPP-MIGRATION.md) is implemented

@@ -1,5 +1,8 @@
 # Native C++ application migration
 
+Follow-on removal work: [Milestone C](CPP-MILESTONE-C.md), with actual progress in
+[the C implementation ledger](CPP-C-IMPLEMENTATION.md). A/B receipts below remain historical.
+
 Status: milestone A implemented in [PR #64](https://github.com/madebyjeffrey/sdl-stars/pull/64). Verification evidence is recorded below and in the PR. Milestone B is complete in [PR #66](https://github.com/madebyjeffrey/sdl-stars/pull/66); the [implementation ledger](CPP-B-IMPLEMENTATION.md#final-milestone-b-completion-receipt) records its final qualification (ticket #65).
 Recorded: 2026-10-28.
 Inspected: `develop` at `472c70ac7e2b4d2ceace3f06d838feea8a60aa9c`.
