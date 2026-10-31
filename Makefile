@@ -15,7 +15,7 @@ PYTHON_VENV = $(DIST_DIR)/$(HOST_PRESET)/python-venv/bin/python
 endif
 GO          ?= go
 SAVE_CLI    := $(abspath $(DIST_DIR))/stars-save$(if $(filter Windows_NT,$(OS)),.exe,)
-FORMAT_FILES ?= $(wildcard src/core/*.cpp src/core/*.h src/ui/*.cpp src/ui/*.h src/host/*.cpp src/platform/*.cpp src/platform/*.h res/*.h tests/scaffold/*.c tests/scaffold/*.h)
+FORMAT_FILES ?= $(wildcard src/core/*.cpp src/core/*.h src/ui/*.cpp src/ui/*.h src/host/*.cpp src/platform/*.cpp src/platform/*.h res/*.h tests/scaffold/*.cpp tests/scaffold/*.c tests/scaffold/*.h)
 SEED        ?= 12345
 # The native regression: a release build, its fixed-seed run, and the
 # checked-in baseline it is compared against (tests/scaffold/REGRESSION.md).

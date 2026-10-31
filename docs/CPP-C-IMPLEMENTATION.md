@@ -24,7 +24,7 @@ verification receipts below decide completion.
 | ID | Status | Evidence / remaining work |
 | --- | --- | --- |
 | C01 | Complete | Parent pinned; source/mechanism/consumer inventory and fresh local parent matrix pass. Cross-platform B receipts remain historical. |
-| C02 | Qualification active | Rename map and live consumers implemented; local builds/regressions/witnesses pass. Full desktop, formal and Linux/Windows results pending. |
+| C02 | Qualification active | Rename map and live consumers implemented; local builds/regressions/witnesses pass. Full local desktop/regression/witness gates pass; collection verification and Linux/Windows CI pending. |
 | C03 | Pending | Remove 23 API interceptions with equivalent pending-error delivery. |
 | C04 | Pending | Introduce typed effect providers and remove test implementation routing/library clones together. |
 | C05 | Pending | Migrate all 27 current-source witness programs without losing their independent domains/oracles. |
@@ -125,22 +125,39 @@ Local results so far:
 | --- | --- |
 | Fresh `macos-sdl-debug` at `dist/c02-debug` | Build passes without compiler diagnostics; 116 production sources / 1,358 variants; 112 headers in both orders |
 | Fresh SDL-free Release at `dist/c02-host` | Build and 26/26 tests pass |
-| Full desktop CTest | Running; final result pending |
-| Full desktop and host regressions | Each matches all 519 baseline files through turn 150; same 25 accepted unused-storage warnings and zero differences/errors/skipped references |
+| Full desktop CTest | 119/119 pass, including 29 native leaks checks, 17 game unit programs and available tutorial smoke coverage; 352.24 seconds |
+| Full desktop and host regressions | Each matches all 519 baseline files and the exact B parent outputs through turn 150; same 25 accepted unused-storage warnings and zero differences/errors/skipped references |
 | All source witnesses | 27/27 pass; complete output, assertion counts and exclusions are byte-identical to the parent receipts |
 | Specification links / requirements | 2,812 local links and 700 requirement IDs pass |
 | Handbook / traceability unit tests | 26/26 pass |
-| Historical precision discovery | Existing `SourceCoverage` test passes; immutable historical C source names retained |
+| Historical precision discovery | Existing `SourceCoverage` test passes; immutable historical C source names retained. The full extended-vs-double experiment is not rerun on arm64. |
 | Archived tutorial parser | 640 fragments / 80 pages; highlighted actions accounted for; compile-only observer also builds |
 | Flatpak source preparation | Staged export passes; untracked `.cpp`, `.mm` and `.inc` negative probes are rejected |
+| Windows SDK / GCC syntax | 38 shared bodies compile independently as C11 against MinGW SDK; all 30 core sources pass GCC 16.2.0 ISO C++20 with the actual production strict-diagnostic policy |
 | Wrapper API discovery | 178/178 local API definitions and 6/6 CRT helpers found; source positions regenerated |
 | Body / input integrity | All 201 bodies identical to B; frozen references, original/native baselines, data, text, resources and canonical Dafny files unchanged |
 
-Full Dafny verification at the existing 120-second limit has reported a timeout
-in unchanged `S02Profile.ParsingVectors` (`spec/dafny/S02-profile.dfy:122`). The
-collection run and a focused retry with 300 seconds are pending. No proof or
-formal input has been changed to make this check pass. Audit completion and
-Linux/Windows CI remain pending; C02 is not yet fully qualified.
+Full Dafny verification at the existing 120-second limit reports timeouts in
+unchanged `S02Profile.ParsingVectors` (`spec/dafny/S02-profile.dfy:122`) and
+`M08NativeHabitat.AxisRefines` (`spec/dafny/M08-native-habitat.dfy:105`). Focused
+300-second retries of their complete include closures pass: 346 verified / zero
+errors for S02 and 986 verified / zero errors for M08. Audit of all 111 formal
+files completes with zero findings. The original collection verification run is
+still pending; its timeouts are not reported as a passing collection run.
+Canonical formal files remain unchanged.
+
+The first hand-written MinGW core probe enabled `-Wall -Wextra`, which the core's
+production policy does not enable; it stopped on existing unused-variable and
+parameter warnings. Repeating the probe with the actual ISO C++20 / `-Wpedantic
+-Werror` production policy passes all 30 core files, without changing the code
+or its build flags. The failed extra-warning probe is retained separately.
+
+Remote publication was rejected by automatic approval review because pushing
+source/documentation and creating a GitHub PR lacked explicit publication
+permission. The requested destination is `madebyjeffrey/sdl-stars`, branch
+`codex/cpp-milestone-c`, draft PR targeting `develop`. User approval is pending;
+no push, PR or Linux/Windows C qualification is claimed. C02 remains in
+qualification until these remaining gates are resolved.
 
 Complete local receipts are kept in `dist/verification/c02/`. C03–C10 remain
 pending. This change removes filename/language machinery only; the inventoried
