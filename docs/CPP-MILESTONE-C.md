@@ -318,12 +318,14 @@ sources, symbol rewrites or accidental C interfaces cannot slip back in.
 
 ## Verification, exit gate and delivery
 
-Temporary execution policy, requested by the user on 2026-10-31: automatic
-Linux/Windows CI is deferred. Unit, regression and tutorial Actions are
-manual-only (`workflow_dispatch`); required local checks continue. Deferred
-platform evidence does not block moving to the next checkpoint during this
-pause and is not reported as passing. The final platform qualification below
-remains deferred work for when platform CI is prioritized again.
+Temporary execution policy, clarified by the user on 2026-10-31: only the slow
+full Linux desktop `unit` and `windows-sdl` jobs are deferred. They run through
+the unit workflow's `workflow_dispatch` with `run_slow_platform_jobs` selected.
+Host tests, source witnesses, sanitizers, regressions and tutorial checks remain
+automatic; required local checks continue. Evidence from the two deferred jobs
+does not block the next checkpoint during this pause and is not reported as
+passing. Final platform qualification remains deferred work for when those full
+desktop suites are prioritized again.
 
 Every implementation batch follows the repository verification rules. Build the
 platform SDL Debug preset with no new warnings; run `make regression`,

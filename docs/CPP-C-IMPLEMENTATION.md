@@ -24,7 +24,7 @@ verification receipts below decide completion.
 | ID | Status | Evidence / remaining work |
 | --- | --- | --- |
 | C01 | Complete | Parent pinned; source/mechanism/consumer inventory and fresh local parent matrix pass. Cross-platform B receipts remain historical. |
-| C02 | Local qualification complete | Rename map/live consumers and all local gates pass. Linux/Windows CI is deferred at the user's request; it does not block current checkpoint work. |
+| C02 | Local qualification complete | Rename map/live consumers and all local gates pass. Only the slow full Linux desktop and Windows SDL CI jobs are deferred; the remaining automatic checks stay enabled. |
 | C03 | Pending | Remove 23 API interceptions with equivalent pending-error delivery. |
 | C04 | Pending | Introduce typed effect providers and remove test implementation routing/library clones together. |
 | C05 | Pending | Migrate all 27 current-source witness programs without losing their independent domains/oracles. |
@@ -158,13 +158,25 @@ The user approved publication of `codex/cpp-milestone-c` to
 `madebyjeffrey/sdl-stars`; [draft PR #68](https://github.com/madebyjeffrey/sdl-stars/pull/68)
 targets `develop`. All local gates are complete.
 
-On 2026-10-31 the user deferred automatic Linux/Windows CI to prioritize current
-work. Unit, regression and tutorial Actions now use `workflow_dispatch` only;
-their existing jobs remain available for manual qualification. Documentation and
-release publishing retain their existing triggers. Local verification remains
-required. Linux/Windows evidence is deferred rather than claimed as passing,
-and it does not block the next C checkpoint during this pause. The planned final
-platform qualification remains recorded for when that work is prioritized.
+On 2026-10-31 the user clarified that only the longest CI jobs should be deferred.
+The initial broad workflow pause was corrected: only the full Linux desktop
+`unit` job and `windows-sdl` are opt-in. Select `run_slow_platform_jobs` on the
+unit workflow's manual dispatch to run them. Host unit tests, source witnesses,
+sanitizers, all regressions and tutorial checks retain automatic triggers;
+documentation and release publishing also retain their triggers.
+
+The two latest successful B runs measured Linux desktop at 19m11s–19m23s and
+Windows SDL at 25m54s–26m58s. Host units took 1m39s–2m01s, source witnesses
+1m58s–3m04s, regressions 1m25s–3m59s, sanitizers 4m57s–7m46s and tutorial
+12m26s–12m45s. Sources: unit runs
+[41154569047](https://github.com/madebyjeffrey/sdl-stars/actions/runs/41154569047),
+[41132249095](https://github.com/madebyjeffrey/sdl-stars/actions/runs/41132249095),
+plus matching regression/tutorial runs recorded in B's qualification receipts.
+
+Local verification remains required. Evidence from the two deferred jobs is not
+claimed as passing and does not block the next C checkpoint during this pause.
+The planned final platform qualification remains recorded for when those full
+desktop suites are prioritized again.
 
 Complete local receipts are kept in `dist/verification/c02/`. C03–C10 remain
 pending. This change removes filename/language machinery only; the inventoried
