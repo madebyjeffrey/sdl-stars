@@ -139,8 +139,8 @@ void CreateChildWindows(APPSESSION &app) {
     if (app.state.idPlayer != iplrNone) {
         psz = strrchr(app.state.szBase, chDirSep);
 #ifdef _WIN32
-        if (!psz) psz = strrchr(szBase, '/');
-        if (!psz) psz = strrchr(szBase, ':');
+        if (!psz) psz = strrchr(app.state.szBase, '/');
+        if (!psz) psz = strrchr(app.state.szBase, ':');
 #endif
         psz = psz ? psz + 1 : app.state.szBase;
         cch = CchUtf8Prefix(psz, 8);

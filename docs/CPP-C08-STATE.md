@@ -75,3 +75,9 @@ original names, instruction IDs and observation fields stay unchanged.
 - The first reviewed entry pattern is commit `006a7eb`; its receipts remain in
   `dist/verification/c08-entry/`. Current receipts are in `dist/verification/c08/`.
   Remote CI and the final C09/C10 configuration matrix are still pending.
+
+The first manual Windows build found two filename-fallback reads behind `_WIN32`
+that still used the removed `szBase` alias. Both now use the same passed owner's
+`app.state.szBase`; slash/drive fallback order and bytes are unchanged. The full
+`mdi.cpp` translation unit passes strict MinGW syntax compilation. Corrected
+platform qualification is pending; the first run is not reported as passing.
