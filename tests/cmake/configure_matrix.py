@@ -38,8 +38,9 @@ def main():
     failures = []
     inventory = json.loads((ROOT / 'tests/reference/sdk/diagnostics.json').read_text())
     diagnostics = {row['test'] for row in inventory['diagnostics']}
-    assert len(diagnostics) == 19
-    assert not diagnostics & {'test_sdk_type_isolation', 'test_win32_abi_reference', 'test_nativeui_points_reference'}
+    assert len(diagnostics) == len(inventory['diagnostics']), 'Duplicate SDK diagnostic name'
+    assert not diagnostics & {'test_sdk_type_isolation', 'test_win32_abi_reference', 'test_nativeui_points_reference',
+                              'test_win32_toolbar_reference'}
     for row in inventory['diagnostics']:
         assert hashlib.sha256((ROOT / row['input']).read_text(encoding='utf-8').encode('utf-8')).hexdigest() == row['sha256'], 'SDK diagnostic input changed; review its classification'
 

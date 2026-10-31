@@ -3,9 +3,10 @@
 Status: complete; all C01–C10 implementation and qualification obligations are
 recorded. C01–C03 are merged; C04/C05 through C10 are ready for review as draft
 PRs #72–#77, in that order. The agent has not merged them. Full local and manual
-Linux/Windows contract gates pass. Nineteen unchanged native SDK behavior probes
-remain explicitly reported diagnostics tracked in issue #78; their assertions
-are retained. See the [final qualification](CPP-C10-QUALIFICATION.md).
+Linux/Windows contract gates pass. Eighteen native SDK behavior probes remain
+explicit diagnostics tracked in issue #78 after toolbar requalification;
+post-migration corrections are recorded in the [SDK findings](CPP-C09-SDK-FINDINGS.md).
+See the [final qualification](CPP-C10-QUALIFICATION.md).
 Evidence: [CPP-C-IMPLEMENTATION.md](CPP-C-IMPLEMENTATION.md).
 Tracking: [#67](https://github.com/madebyjeffrey/sdl-stars/issues/67).
 Recorded: 2026-10-29; refreshed against merged B on 2026-10-31.

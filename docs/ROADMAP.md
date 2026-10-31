@@ -44,9 +44,11 @@ Owned implementations have honest C++20/Objective-C++20 extensions, actual
 namespaces/direct UI calls, typed effects and explicit state consumers. Temporary
 routing, source extraction, state aliases and SDK language adapters are removed.
 All local and final manual Linux/Windows contract gates pass; the two full
-platform jobs remain opt-in for automatic CI. Nineteen unchanged native SDK
-behavior/automation probes are explicit diagnostics tracked in issue #78, with
-original assertions retained. Game/file behavior and baselines are unchanged.
+platform jobs remain opt-in for automatic CI. Eighteen native SDK
+behavior/automation probes remain explicit diagnostics tracked in issue #78.
+The toolbar probe is requalified as a gate; documented post-migration fixes are
+recorded in the [SDK findings](CPP-C09-SDK-FINDINGS.md). Game/file behavior and
+baselines are unchanged.
 [Final qualification](CPP-C10-QUALIFICATION.md) and the
 [implementation ledger](CPP-C-IMPLEMENTATION.md) record the evidence and review order.
 
@@ -463,6 +465,11 @@ use control-relative placement with an owned native tooltip role; see
 `CheckDlgButton` now rejects missing child controls and invalid dialog handles;
 the shared SDL/SDK vector requires failure for both. Valid button updates keep
 their existing success result.
+`ClickToolbar` now follows the native dropdown return contract: handled menus
+return `TBDDRET_DEFAULT`; unhandled or `TREATPRESSED` mouse dropdowns retain
+capture and send the ordinary command on release. The game's handler reports
+its menus as handled. Shared vectors check all three results against native
+Windows and SDL, without reading undocumented notification fields.
 Basic narrow edit fields now support selection, limits,
 read-only/password behavior and input; see [edit fields](WIN32-EDIT.md). Complete
 edit conformance remains. Fixed-height string lists, multiple-selection messages

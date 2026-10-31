@@ -60,12 +60,14 @@ passes all five jobs. C08's corrected run also passes all five jobs and its 14
 enabled PR jobs. C09 passes all 15 enabled PR jobs; C10's preceding documentation
 head passes all 14. The automatic full Linux/Windows jobs remain opt-in.
 
-The 19 native SDK behavior/automation probes remain explicit diagnostics in
+At C10 qualification, 19 native SDK behavior/automation probes were diagnostics in
 [issue #78](https://github.com/madebyjeffrey/sdl-stars/issues/78), with every original
 assertion retained and raw results/JUnit published. The other 20 SDK checks,
 missing/skipped execution, changed diagnostic inputs and unexpected failures are
-gates. This is not a claim that all 39 native probes pass. The first full ordinary
-Windows run passed 128/131; binary stdin mode and native path-role recognition
+gates. Later corrections and the current classification are recorded in the
+[SDK findings](CPP-C09-SDK-FINDINGS.md). This is not a claim that all 39 native
+probes pass. The first full ordinary Windows run passed 128/131; binary stdin
+mode and native path-role recognition
 corrected the three fixture portability gaps without changing cases/expectations.
 
 The full 80-page SDL tutorial remains an existing coverage limit; this milestone

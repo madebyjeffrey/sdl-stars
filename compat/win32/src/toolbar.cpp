@@ -203,7 +203,7 @@ static void PaintToolbar(HWND hwnd) {
     win32::EndPaint(hwnd, &ps);
 }
 
-static void ClickToolbar(HWND hwnd, int i, BOOL fDrop) {
+static void ClickToolbar(HWND hwnd, int i, BOOL fDrop, BOOL fMouse) {
     auto lptoolbarKeep = hwnd->lptoolbar;
     COMPATTOOLBAR *lp = lptoolbarKeep.get();
     NMTOOLBARA nm = {};
@@ -229,7 +229,13 @@ static void ClickToolbar(HWND hwnd, int i, BOOL fDrop) {
         win32::InvalidateRect(hwnd, NULL, 1);
         i = IndexButton(lp, btn.idCommand);
         if (i < 0) return;
-        if (result != win32::TBDDRET_TREATPRESSED) return;
+        if (result != win32::TBDDRET_NODEFAULT && result != win32::TBDDRET_TREATPRESSED) return;
+        // An unhandled mouse dropdown becomes an ordinary button press;
+        // Windows sends its command on release, not during TBN_DROPDOWN.
+        if (fMouse) {
+            lp->iDown = i; lp->rgbtn[i].btn.fsState |= win32::TBSTATE_PRESSED;
+            win32::SetCapture(hwnd); win32::InvalidateRect(hwnd, NULL, 1); return;
+        }
     }
     if (btn.fsStyle & win32::BTNS_CHECK) {
         if (btn.fsStyle & win32::BTNS_GROUP) {
@@ -403,14 +409,14 @@ LRESULT  CompatToolbarProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         lpbtn = &lp->rgbtn[i].btn;
         fDrop = (lpbtn->fsStyle & win32::BTNS_WHOLEDROPDOWN) || ((lpbtn->fsStyle & win32::BTNS_DROPDOWN) &&
             (!(lp->dwExStyle & win32::TBSTYLE_EX_DRAWDDARROWS) || pt.x >= lp->rgbtn[i].rc.right - 11));
-        if (fDrop) { ClickToolbar(hwnd, i, 1); return 0; }
+        if (fDrop) { ClickToolbar(hwnd, i, 1, 1); return 0; }
         lp->iDown = i; lpbtn->fsState |= win32::TBSTATE_PRESSED; win32::SetCapture(hwnd); win32::InvalidateRect(hwnd, NULL, 1); return 0;
     case win32::WM_LBUTTONUP:
         i = lp->iDown; lp->iDown = -1;
         if (i >= 0 && i < lp->c) lp->rgbtn[i].btn.fsState &= ~win32::TBSTATE_PRESSED;
         win32::ReleaseCapture(); if (!win32::IsWindow(hwnd)) return 0;
         win32::InvalidateRect(hwnd, NULL, 1);
-        if (i >= 0 && HitToolbar(lp, pt) == i) ClickToolbar(hwnd, i, 0);
+        if (i >= 0 && HitToolbar(lp, pt) == i) ClickToolbar(hwnd, i, 0, 1);
         return 0;
     case win32::WM_CANCELMODE: case win32::WM_CAPTURECHANGED:
         if (lp->iDown >= 0 && lp->iDown < lp->c) lp->rgbtn[lp->iDown].btn.fsState &= ~win32::TBSTATE_PRESSED;
@@ -419,7 +425,7 @@ LRESULT  CompatToolbarProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         i = lp->iHot;
         if (w == win32::VK_RETURN || w == win32::VK_SPACE || (w == win32::VK_DOWN && i >= 0 &&
             (lp->rgbtn[i].btn.fsStyle & (win32::BTNS_DROPDOWN | win32::BTNS_WHOLEDROPDOWN)))) {
-            if (i >= 0) ClickToolbar(hwnd, i, (lp->rgbtn[i].btn.fsStyle & win32::BTNS_WHOLEDROPDOWN) || w == win32::VK_DOWN);
+            if (i >= 0) ClickToolbar(hwnd, i, (lp->rgbtn[i].btn.fsStyle & win32::BTNS_WHOLEDROPDOWN) || w == win32::VK_DOWN, 0);
         } else if (w == win32::VK_LEFT || w == win32::VK_RIGHT) {
             step = w == win32::VK_LEFT ? -1 : 1;
             for (j = 0; j < lp->c; j++) {

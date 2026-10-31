@@ -182,7 +182,7 @@ LRESULT  TbWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             else if (itb == tbEnemyClassFilter) itb = tbEnemyClassFilterMenu;
             ExecuteButton(app, itb, !FIsButtonDown(app, itb));
             SyncToolbar(app, hwnd);
-            return win32::TBDDRET_NODEFAULT;
+            return win32::TBDDRET_DEFAULT;
         }
         return 0;
     case 1524: TerminateToolbarFocus(app, 0); return 0;
