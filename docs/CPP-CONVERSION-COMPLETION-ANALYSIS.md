@@ -21,11 +21,11 @@ API macros or its own temporary state accessors. Those need a separate completio
 stage with explicit deletion conditions.
 
 The chat's checkout is `codex/traceability-views` at `e3222eb`, which predates
-the migration. The substantive inspection used the active worktree
-`/Users/jdrake/.codex/worktrees/cpp-file-handling/sdl-stars`, branch
-`codex/cpp-application-milestone-b`, at
-`5fd94fb81bb58840ecada0f9295d992f712f7466`. Links below are pinned to that inspected revision. Findings describe that revision, not
-the eventual result of B.
+the migration. The substantive inspection used branch
+`codex/cpp-application-milestone-b` at
+`5fd94fb81bb58840ecada0f9295d992f712f7466`. Links below are pinned to
+that inspected revision. Findings describe that revision, not the eventual result
+of B.
 
 At inspection, the B ledger has B01 active and B02–B14 pending. Existing passing
 checks in that ledger qualify particular ownership batches, not completion of B.
@@ -33,9 +33,9 @@ Milestone A has already converted owned production, generators and ordinary
 consumers to C++20/Objective-C++20 and removed owned C linkage/fallback branches.
 Repeating A is unnecessary.
 
-Sources: [migration plan](/Users/jdrake/.codex/worktrees/cpp-file-handling/sdl-stars/docs/CPP-MIGRATION.md),
-[B ledger](/Users/jdrake/.codex/worktrees/cpp-file-handling/sdl-stars/docs/CPP-B-IMPLEMENTATION.md),
-[consumer inventory](/Users/jdrake/.codex/worktrees/cpp-file-handling/sdl-stars/docs/CPP-CONSUMERS.md).
+Sources: [migration plan](https://github.com/madebyjeffrey/sdl-stars/blob/5fd94fb81bb58840ecada0f9295d992f712f7466/docs/CPP-MIGRATION.md),
+[B ledger](https://github.com/madebyjeffrey/sdl-stars/blob/5fd94fb81bb58840ecada0f9295d992f712f7466/docs/CPP-B-IMPLEMENTATION.md),
+[consumer inventory](https://github.com/madebyjeffrey/sdl-stars/blob/5fd94fb81bb58840ecada0f9295d992f712f7466/docs/CPP-CONSUMERS.md).
 
 ## What B already promises
 
@@ -152,8 +152,8 @@ delegate to the real implementation. Remove each corresponding macro, alternate
 declaration and clone variant as its last consumer moves. Avoid replacing the
 current machinery with a permanent global mock registry.
 
-Sources: [definition substitutions](/Users/jdrake/.codex/worktrees/cpp-file-handling/sdl-stars/src/platform/test_impl.h),
-[private clone/substitution mechanism](/Users/jdrake/.codex/worktrees/cpp-file-handling/sdl-stars/cmake/test-redirect.cmake),
+Sources: [definition substitutions](https://github.com/madebyjeffrey/sdl-stars/blob/5fd94fb81bb58840ecada0f9295d992f712f7466/src/platform/test_impl.h),
+[private clone/substitution mechanism](https://github.com/madebyjeffrey/sdl-stars/blob/5fd94fb81bb58840ecada0f9295d992f712f7466/cmake/test-redirect.cmake),
 [alternate declarations](https://github.com/madebyjeffrey/sdl-stars/blob/5fd94fb81bb58840ecada0f9295d992f712f7466/src/core/file.h#L30).
 
 ### 4. Retire source extraction and implementation rewriting
@@ -177,7 +177,7 @@ dependencies with reconstructed local types and globals.
 
 Sources: [extraction helper](https://github.com/madebyjeffrey/sdl-stars/blob/5fd94fb81bb58840ecada0f9295d992f712f7466/tests/spec/check_s02_source.py#L24),
 [file abstraction rewriting](https://github.com/madebyjeffrey/sdl-stars/blob/5fd94fb81bb58840ecada0f9295d992f712f7466/tests/spec/check_library_publication_source.py#L379),
-[representative reconstructed fixture](/Users/jdrake/.codex/worktrees/cpp-file-handling/sdl-stars/tests/spec/check_production_cost_source.py).
+[representative reconstructed fixture](https://github.com/madebyjeffrey/sdl-stars/blob/5fd94fb81bb58840ecada0f9295d992f712f7466/tests/spec/check_production_cost_source.py).
 
 ### 5. Replace wrapper macro namespaces and obsolete aliases
 
@@ -231,10 +231,10 @@ Sources: [generated API renames](https://github.com/madebyjeffrey/sdl-stars/blob
 | Python generators, build/test drivers, Go save-analysis tooling, Dafny models | Keep their languages unless there is a separate reason to rewrite them. They are not application C translation units or inherently transitional tools. |
 | C++ modules, broad enum-class migration, algorithm/container replacement, class hierarchies | Optional later design work. None is required to finish the language conversion, and some could change behavior or storage. |
 
-Sources: [frozen reference purpose](/Users/jdrake/.codex/worktrees/cpp-file-handling/sdl-stars/tests/reference/cpp-a/README.md),
-[header checks](/Users/jdrake/.codex/worktrees/cpp-file-handling/sdl-stars/cmake/cpp-interface-checks.cmake),
-[compiler audit](/Users/jdrake/.codex/worktrees/cpp-file-handling/sdl-stars/tests/cmake/check_cpp_manifest.py),
-[mixed-type value helpers](/Users/jdrake/.codex/worktrees/cpp-file-handling/sdl-stars/src/platform/value.h),
+Sources: [frozen reference purpose](https://github.com/madebyjeffrey/sdl-stars/blob/5fd94fb81bb58840ecada0f9295d992f712f7466/tests/reference/cpp-a/README.md),
+[header checks](https://github.com/madebyjeffrey/sdl-stars/blob/5fd94fb81bb58840ecada0f9295d992f712f7466/cmake/cpp-interface-checks.cmake),
+[compiler audit](https://github.com/madebyjeffrey/sdl-stars/blob/5fd94fb81bb58840ecada0f9295d992f712f7466/tests/cmake/check_cpp_manifest.py),
+[mixed-type value helpers](https://github.com/madebyjeffrey/sdl-stars/blob/5fd94fb81bb58840ecada0f9295d992f712f7466/src/platform/value.h),
 [C++ language linkage rules](https://eel.is/c++draft/dcl.link).
 
 ## Suggested delivery and completion evidence
