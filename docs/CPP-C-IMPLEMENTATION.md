@@ -24,7 +24,7 @@ verification receipts below decide completion.
 | ID | Status | Evidence / remaining work |
 | --- | --- | --- |
 | C01 | Complete | Parent pinned; source/mechanism/consumer inventory and fresh local parent matrix pass. Cross-platform B receipts remain historical. |
-| C02 | Qualification active | Rename map/live consumers implemented; full local desktop/host/regression/witness gates pass. Collection verification passes; Linux/Windows CI pending. |
+| C02 | Local qualification complete | Rename map/live consumers and all local gates pass. Linux/Windows CI is deferred at the user's request; it does not block current checkpoint work. |
 | C03 | Pending | Remove 23 API interceptions with equivalent pending-error delivery. |
 | C04 | Pending | Introduce typed effect providers and remove test implementation routing/library clones together. |
 | C05 | Pending | Migrate all 27 current-source witness programs without losing their independent domains/oracles. |
@@ -155,9 +155,16 @@ parameter warnings. Repeating the probe with the actual ISO C++20 / `-Wpedantic
 or its build flags. The failed extra-warning probe is retained separately.
 
 The user approved publication of `codex/cpp-milestone-c` to
-`madebyjeffrey/sdl-stars`, with a draft PR targeting `develop`. All local gates
-are complete. Linux/Windows CI remains pending; C02 stays in qualification until
-its platform results are recorded.
+`madebyjeffrey/sdl-stars`; [draft PR #68](https://github.com/madebyjeffrey/sdl-stars/pull/68)
+targets `develop`. All local gates are complete.
+
+On 2026-10-31 the user deferred automatic Linux/Windows CI to prioritize current
+work. Unit, regression and tutorial Actions now use `workflow_dispatch` only;
+their existing jobs remain available for manual qualification. Documentation and
+release publishing retain their existing triggers. Local verification remains
+required. Linux/Windows evidence is deferred rather than claimed as passing,
+and it does not block the next C checkpoint during this pause. The planned final
+platform qualification remains recorded for when that work is prioritized.
 
 Complete local receipts are kept in `dist/verification/c02/`. C03–C10 remain
 pending. This change removes filename/language machinery only; the inventoried

@@ -1,6 +1,6 @@
 # Milestone C: finish the C++ conversion
 
-Status: implementation active; C01 complete; C02 filenames migrated, qualification active.
+Status: implementation active; C01 complete; C02 filenames migrated and locally qualified.
 Evidence: [CPP-C-IMPLEMENTATION.md](CPP-C-IMPLEMENTATION.md).
 Tracking: [#67](https://github.com/madebyjeffrey/sdl-stars/issues/67).
 Recorded: 2026-10-29; refreshed against merged B on 2026-10-31.
@@ -317,6 +317,13 @@ Use a precise exception list and negative audit cases so new owned `.c`/`.m`
 sources, symbol rewrites or accidental C interfaces cannot slip back in.
 
 ## Verification, exit gate and delivery
+
+Temporary execution policy, requested by the user on 2026-10-31: automatic
+Linux/Windows CI is deferred. Unit, regression and tutorial Actions are
+manual-only (`workflow_dispatch`); required local checks continue. Deferred
+platform evidence does not block moving to the next checkpoint during this
+pause and is not reported as passing. The final platform qualification below
+remains deferred work for when platform CI is prioritized again.
 
 Every implementation batch follows the repository verification rules. Build the
 platform SDL Debug preset with no new warnings; run `make regression`,

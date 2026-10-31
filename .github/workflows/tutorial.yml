@@ -1,7 +1,7 @@
 name: Stars SDL tutorial (partial coverage)
 
 on:
-  pull_request:
+  # Platform CI is temporarily opt-in; run it manually when needed.
   workflow_dispatch:
 
 permissions:
