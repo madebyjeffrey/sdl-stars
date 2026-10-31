@@ -62,9 +62,15 @@ if any(path.is_relative_to(root / "compat/win32/src") for path in production):
 else:
     private_headers = []
 headers = [path for directory in header_directories for path in directory.glob("*.h")] + private_headers
+cache = manifest.parent / "CMakeCache.txt"
+ordinary = True
+if cache.exists():
+    match = re.search(r"^STARS_BUILD_TESTS:BOOL=(ON|OFF)$", cache.read_text(encoding="utf-8"), re.MULTILINE)
+    assert match, f"Missing STARS_BUILD_TESTS option in {cache}"
+    ordinary = match.group(1) == "ON"
 expected_headers = {str(manifest.parent / "header-checks" /
                         (path.relative_to(root).as_posix().replace("/", "_") + "_" + order + ".cpp"))
-                    for path in headers for order in ("before", "after")}
+                    for path in headers for order in ("before", "after")} if ordinary else set()
 actual_headers = {str(Path(row["file"]).resolve()) for row in rows
                   if Path(row["file"]).resolve().parent == manifest.parent / "header-checks"}
 assert actual_headers == expected_headers, f"Standalone header compile inventory differs: missing={sorted(expected_headers - actual_headers)}, unexpected={sorted(actual_headers - expected_headers)}"
@@ -81,4 +87,4 @@ for directory in ("src", "compat/win32/include", "compat/win32/src"):
         assert not re.search(r"#\s*define\s+(?:min|max)\s*\(", text), f"Owned min/max macro remains: {path}"
         assert not re.search(r'\(\s*(?:char\s*\*|LPSTR|PSTR)\s*\)\s*"', text), f"Mutable string-literal cast remains: {path}"
         assert not re.search(r'const_cast\s*<\s*char\s*\*\s*>\s*\(\s*"', text), f"Mutable string-literal cast remains: {path}"
-print(f"Owned C++20 sources: {len(production)}; compiled variants: {count}; independent C references: {len(references)}; standalone headers: {len(headers)} in both orders")
+print(f"Owned C++20 sources: {len(production)}; compiled variants: {count}; independent C references: {len(references)}; standalone headers: {len(headers) if ordinary else 0} in both orders")

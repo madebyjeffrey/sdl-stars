@@ -45,7 +45,8 @@ It checks ordinary-only, SDK-only, both and neither configurations with distinct
 CMake caches and verifies exact registry membership (38 SDK vector tests plus SDK
 type isolation). In SDK-only and combined builds it audits the compile manifest:
 each of the 38 C entry files must appear once, use CMake's C compiler and avoid
-C++ language overrides. Non-Windows toolchains must reject SDK configurations explicitly.
+C++ language overrides. Standalone-header inventory applies to ordinary builds;
+SDK-only builds do not create that target. Non-Windows toolchains must reject SDK configurations explicitly.
 On native Windows add `--run-sdk` to build and run all SDK vectors in both eligible
 configurations. The [native SDK findings](CPP-C09-SDK-FINDINGS.md) record 18
 remaining individually named, hash-pinned behavior/automation probes as
