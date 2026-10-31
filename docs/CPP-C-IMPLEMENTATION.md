@@ -29,7 +29,7 @@ verification receipts below decide completion.
 | C03 | Local qualification complete; enabled CI pending | 23 explicit typed entry functions replace macro interception; 1,329 references migrated. All 119 desktop / 26 host tests, callback ASan/UBSan faults, full regressions and 27 unchanged witness receipts pass. |
 | C04 | Pending | Introduce typed effect providers and remove test implementation routing/library clones together. |
 | C05 | Pending | Migrate all 27 current-source witness programs without losing their independent domains/oracles. |
-| C06 | Pending | Replace generated wrapper names with namespaces and qualify Windows SDK isolation. |
+| C06 | Pending | Replace generated wrapper names and all 23 C03 prefixed entry names with `ui::EnableWindow`-style calls; remove redundant forwarding functions while preserving cleanup-before-error-delivery and Windows SDK isolation. |
 | C07 | Pending | Audit all 2,101 parent macro definitions; replace compatibility helpers and record specific retained purposes. |
 | C08 | Pending | Remove 156 game-state and 346 UI-state aliases through explicit caller dependencies. |
 | C09 | Pending | Finalize compiler/reference policy and remove dead migration adapters. |
@@ -50,6 +50,7 @@ obsolete alias; C07 checks its definition and callers before retaining it.
 | Implementation/call substitution | `src/platform/test_impl.h`, annotated declarations/definitions, `cmake/test-redirect.cmake` and all hook targets | C04: scoped typed effects that can delegate to the real provider | Existing fault, allocation, RNG and workflow outcomes; override restoration |
 | Extracted current-source bodies | 27 `tests/spec/check_*_source.py`, their imports and `cpp_production_storage.py` | C05: link production, retain independent interpreters/vectors; delete slicing, surrogate storage and rewriting | Per-witness case/domain/exclusion/oracle/traceability receipt; all 27 accounted for |
 | Generated wrapper namespace | `compat/win32/CMakeLists.txt`, `wincompat_namespace.h`, special Windows hook names | C06: actual C++ namespace with explicit SDK qualification | Linux/macOS/Windows link and callback contracts |
+| C03 prefixed entry functions | `compat/win32/include/wincompat_calls.h`, `compat/win32/src/calls.cpp` and their consumers; introduced after the pinned parent inventory | C06: qualified `ui::` operation names, consolidated implementations and deletion of redundant forwarders; no old-name aliases | All 23 entries accounted for; no active old API consumers; exact signatures and cleanup-before-error-delivery preserved |
 | Legacy compatibility helpers | All owned macro definitions, including no-op thunk shims, scalar/message/color helpers and forwarding aliases | C07: typed helper/constants or deletion after checking argument effects | Evaluation count, conversion, numeric/resource contracts |
 | Temporary state borrowing | `globals.h`/`globals.c`, UI globals, owner getters, witness state doubles and archived observer | C05/C08: explicit state at owned call chains; narrow foreign entry binding | One owner, stable addresses, unchanged reset/close order and reentrancy outcomes |
 | Migration-only build/test tooling | Language flags, clone fixture, compiler audits and temporary SDK compilation adapters | C09: retained strict-policy audits, precise reference exceptions; remove dead adapters | Fresh configure combinations, strict manifests and negative audit cases |
@@ -219,6 +220,9 @@ include-dependent alternate-declaration guards are removed. There is no new
 source-call redirection. The new translation unit participates in the existing
 wrapper variants without adding hooks or clone kinds. C04 still owns removal
 of those test variants, and C06 still owns the generated Windows symbol aliases.
+The user-approved C06 plan also replaces all 23 prefixed names with `ui::`
+operation names and removes unnecessary forwarding functions. The names above
+describe C03's current implementation, not the final public API.
 
 Runtime internals retain their raw calls. Their guards can notify or retire
 windows while unwinding; delivering a captured error inside those frames would
