@@ -41,11 +41,6 @@ public:
 };
 static COMPATMEMORYOWNER memory(lpMemory, fMemoryLock);
 
-static thread_local DWORD dwError;
-
-DWORD WINAPI GetLastError(void) { return dwError; }
-void WINAPI SetLastError(DWORD dw) { dwError = dw; }
-
 static COMPATMEMORY *LpMemory(HANDLE h) {
     COMPATMEMORY *lp;
     for (lp = lpMemory; lp; lp = lp->lpNext)

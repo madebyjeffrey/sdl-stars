@@ -48,7 +48,8 @@ for row in rows:
 header_directories = [root / "src/core", root / "src/platform"]
 if any(path.is_relative_to(root / "compat/win32/src") for path in production):
     header_directories += [root / "src/ui", root / "compat/win32/include"]
-    private_headers = [root / "compat/win32/src/platform.h", root / "compat/win32/src/cleanup.h"]
+    private_headers = [root / "compat/win32/src" / name
+                       for name in ("platform.h", "cleanup.h", "profile_io.h", "file_read.h")]
 else:
     private_headers = []
 headers = [path for directory in header_directories for path in directory.glob("*.h")] + private_headers

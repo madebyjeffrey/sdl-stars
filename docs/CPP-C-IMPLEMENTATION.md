@@ -2,7 +2,7 @@
 
 Tracking: [#67](https://github.com/madebyjeffrey/sdl-stars/issues/67).
 Started: 2026-10-31. Initial branch: `codex/cpp-milestone-c`, targeting `develop`.
-Current continuation: `codex/cpp-c03-callback-boundaries` from merged C01–C02.
+Current continuation: `codex/cpp-c04-typed-effects` from merged C03.
 Plan: [CPP-MILESTONE-C.md](CPP-MILESTONE-C.md).
 
 ## Parent and scope
@@ -26,9 +26,9 @@ verification receipts below decide completion.
 | --- | --- | --- |
 | C01 | Complete | Parent pinned; source/mechanism/consumer inventory and fresh local parent matrix pass. Cross-platform B receipts remain historical. |
 | C02 | Complete under current CI policy | PR #68 merged at a65e653; all 15 enabled CI jobs pass. The full Linux desktop and Windows SDL jobs remain explicitly deferred. |
-| C03 | Local qualification complete; enabled CI pending | 23 explicit typed entry functions replace macro interception; 1,329 references migrated. All 119 desktop / 26 host tests, callback ASan/UBSan faults, full regressions and 27 unchanged witness receipts pass. |
-| C04 | Pending | Introduce typed effect providers and remove test implementation routing/library clones together. |
-| C05 | Pending | Migrate all 27 current-source witness programs without losing their independent domains/oracles. |
+| C03 | Complete under current CI policy | PR #69 merged at ab62fef; all enabled CI passed. Local 119 desktop / 26 host tests, callback ASan/UBSan faults, regressions and 27 unchanged witness receipts pass. |
+| C04 | In progress: first family locally qualified | Profile/file providers replace three guard-test hooks and their wrapper clone. All 120 desktop tests, focused ASan/UBSan checks and regression pass; enabled CI pending. Other effect families remain pending. |
+| C05 | In progress: integration witness locally qualified | Save-control witness links production code with the same 42 assertions; all 27 receipts retain their original counts/domains/exclusions. The other 26 programs remain extracted. |
 | C06 | Pending | Replace generated wrapper names and all 23 C03 prefixed entry names with `ui::EnableWindow`-style calls; remove redundant forwarding functions while preserving cleanup-before-error-delivery and Windows SDK isolation. |
 | C07 | Pending | Audit all 2,101 parent macro definitions; replace compatibility helpers and record specific retained purposes. |
 | C08 | Pending | Remove 156 game-state and 346 UI-state aliases through explicit caller dependencies. |
@@ -261,7 +261,85 @@ Local qualification:
   canonical formal files and frozen reference inputs are unchanged. No new
   gameplay behavior, proof or whole-program refinement is claimed.
 
-Complete local receipts are saved under `dist/verification/c03/`. Enabled CI
-qualification is pending publication; the two full platform jobs retain the
-user's opt-in policy. C04–C10 remain pending; no baseline is regenerated for this
-refactor.
+Complete local receipts are saved under `dist/verification/c03/`.
+[PR #69](https://github.com/madebyjeffrey/sdl-stars/pull/69) merged at
+`ab62fef99f86348f3f666443f518e47ad72dca45`; all enabled CI passed. The two full
+platform jobs retain the user's opt-in policy. C04–C10 remain subsequent work;
+no baseline was regenerated for this refactor.
+
+## C04: first effect family and C05 integration
+
+Parent: `ab62fef99f86348f3f666443f518e47ad72dca45`, the qualified C03 merge.
+Branch: `codex/cpp-c04-typed-effects`, targeting `develop`. This is the plan's
+first bounded family and linked-witness integration, not completion of C04/C05.
+
+`FSaveProfile` moves without algorithm changes to the private
+`compat/win32/src/profile_save.cpp` translation unit. Its explicit `PROFILEIO`
+argument supplies native allocation/publication effects and defaults to the
+profile module's current provider. `COMPATPROFILE` keeps its actual layout in
+the private `profile_io.h`; tests consume that type instead of reconstructing
+it. The unchanged error mapper and thread-local `GetLastError`/`SetLastError`
+storage are separately linkable production code, not fixture replacements.
+
+`PROFILEIOSCOPE` owns a provider snapshot and restores the previous provider on
+the same thread through nesting and exceptions. Profile loading binds its line reader
+at the operation boundary. `COMPATFILEREADSCOPE` changes only the native read
+effect used while the legacy file adapter holds its lock. These scopes are
+confined to their modules; they provide no symbol registry, key lookup or
+algorithm substitution. Real-service function pointers remain available for
+delegation. Cleanup effects must not throw and allocations remain `free`-compatible.
+
+The existing guard fixture now binds typed read/line/write providers and links
+the normal `stars_win32` library. Its `CbReadNativeFile`, `CbGetNativeLine` and
+`CWriteNative` CMake redirects and the associated private wrapper clone are
+gone. Its file-lock retry also checks restoration of an override nested inside
+a throwing provider. Other hook sets and clone machinery remain pending their
+own family migrations.
+
+| Witness accounting | C03 receipt | Replacement / preserved evidence |
+| --- | --- | --- |
+| Save control (`check_s02_save_source.py`) | 42 assertions over all 11 stages from success through rename, plus failed sync with failed cleanup | `tests/compat/profile_save.cpp`, CTest `win32_profile_save`; same literal bytes, counters, expected errors and assertions |
+| Source seam | Extracted `FSaveProfile`, reconstructed profile/file types, macro-rewritten I/O and a substitute error mapper | Linked production serializer, real private header, error mapper, error state and native file services; typed I/O effects only |
+| Canonical rules | `S02-profile-io.dfy`: `Serialized`, `Stages`, `Execute`, `FailedDoesNotPublish`; S02-CONTRACT-AC09 | Rule definitions and traceability unchanged; no new proof or whole-program refinement claimed |
+| Exclusions | Real syscall failure and crash durability | Unchanged; fixture tokens and stage receipts do not qualify OS failure/crash recovery |
+| Additional runtime evidence | Guard fault/retry and profile registry cleanup | Retained; new checks cover primary error preservation despite a different cleanup errno, owned snapshots, nested bindings, callback unwinding, successful retry and thread isolation |
+
+The Python entry remains an orchestration command for the existing witness job.
+It compiles and links unmodified production translation units with ISO C++20
+and strict diagnostics; it no longer slices source, reconstructs production
+types, substitutes an error algorithm or rewrites function bodies. The normal
+desktop target uses the same implementation from `stars_win32`. The new target
+also joins automatic sanitizer CI; the opt-in platform policy is unchanged.
+
+Local qualification:
+
+- Fresh SDL Debug/Release builds pass without compiler diagnostics. The actual
+  manifest has 119 production sources / 1,368 variants and 114 standalone
+  headers in both include orders. The removed guard redirects appear in zero
+  compile rows, down from 42 on C03.
+- Full desktop suite: 120/120 pass in 315.69 seconds, including all 29 native
+  leak checks, 17 game unit programs and the available tutorial smoke test.
+  The final profile/guard fixtures also pass targeted rebuilds.
+- Focused profile, guard and real callback tests pass ASan/UBSan; final added
+  error-preservation and outer-scope restoration checks also pass sanitizers.
+- Full native regression: 519 matches through turn 150, the same 25 accepted
+  unused-storage warnings, zero differences/errors/skipped inputs. Direct
+  comparison against C03's outputs also matches all 519 files.
+- All 27 witness programs pass. Complete receipts match C03 byte-for-byte after
+  removing runner labels, mapping the migrated save-test banner and excluding
+  the new provider-check banner. Original counts, domains and exclusions remain
+  unchanged; all 42 save-control assertions are retained.
+- MinGW/GCC strict C++20 syntax checks cover the serializer/provider types,
+  error state and fixture with generated wrapper aliases; native file services
+  compile separately against real SDK headers. Full Windows runtime remains
+  deferred under the existing policy.
+- Documentation: 26/26 tests and 2,818 links / 700 requirement IDs pass.
+  Canonical formal inputs are unchanged; no new proof run is claimed.
+
+The initial sandboxed desktop run timed out at macOS leak inspection with
+`Couldn't get task port` and was interrupted. Its separate receipt is retained;
+the complete rerun with process-inspection access passes all 120 tests.
+
+Receipts are retained in `dist/verification/c04/profile/`; enabled CI is pending.
+Remaining C04 work includes record streams, application/UI choices, publication,
+RNG observation and SDL/allocation effects; C05 retains 26 extracted programs.

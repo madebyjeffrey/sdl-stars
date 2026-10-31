@@ -1,25 +1,32 @@
 /* Fail inside a held production file lock, then retry through the same API. */
 #include "internal.h"
 #include "path_utf8.h"
+#include "file_read.h"
+#include "profile_io.h"
 #include <stars_compat.h>
 #include <cstdio>
 #include <cstring>
 #include <string>
 
 static bool fFailRead, fCleanupFailure, fMenuFailure;
-static int cNested, cDepthErrors, cProfileLines = -1;
+static int cNested, cDepthErrors, cProfileLines = -1, cReads;
 static bool fFailProfileWrite;
-int64_t StarsTest_CbReadNativeFile(NATIVEFILE *pf, void *rgb, size_t cb) {
-    if (fFailRead) { fFailRead = false; StarsThrowError(starsErrorFile, 417); }
+int64_t CbReadGuardFile(NATIVEFILE *pf, void *rgb, size_t cb) {
+    cReads++;
+    if (fFailRead) {
+        COMPATFILEREADSCOPE nested(CbReadNativeFile);
+        fFailRead = false;
+        StarsThrowError(starsErrorFile, 417);
+    }
     return CbReadNativeFile(pf, rgb, cb);
 }
-int64_t StarsTest_CbGetNativeLine(char **ppsz, size_t *pcb, NATIVEFILE *pf) {
+int64_t CbReadGuardLine(char **ppsz, size_t *pcb, NATIVEFILE *pf) {
     int64_t cb = CbGetNativeLine(ppsz, pcb, pf);
     if (cProfileLines == 0) { cProfileLines = -1; StarsThrowError(starsErrorFile, 417); }
     if (cProfileLines > 0) cProfileLines--;
     return cb;
 }
-size_t StarsTest_CWriteNative(const void *rgb, size_t cb, size_t c, NATIVEFILE *pf) {
+size_t CWriteGuardProfile(const void *rgb, size_t cb, size_t c, NATIVEFILE *pf) {
     if (fFailProfileWrite) { fFailProfileWrite = false; StarsThrowError(starsErrorFile, 417); }
     return CWriteNative(rgb, cb, c, pf);
 }
@@ -54,18 +61,26 @@ int main(int argc, char **argv) {
     std::string szPath = std::string(argv[1]) + "-Ω.dat";
     hf = OpenFile(szPath.c_str(), &of, OF_CREATE | OF_READWRITE | OF_SHARE_DENY_NONE);
     CHECK(hf != HFILE_ERROR && _lwrite(hf, "wire", 4) == 4 && _llseek(hf, 0, 0) == 0);
-    fFailRead = true;
-    try { (void)_lread(hf, rgb, sizeof(rgb)); }
-    catch (const StarsError &error) { fCaught = error.mdError == starsErrorFile && error.ids == 417; }
-    CHECK(fCaught && !fFailRead && !FStarsErrorPending());
-    // This retry hangs with the old manual lock/unlock pair after unwinding.
-    std::fputs("Injected exception caught; retrying the same file token\n", stderr);
-    CHECK(_lread(hf, rgb, sizeof(rgb)) == 4 && !std::memcmp(rgb, "wire", 4));
+    {
+        COMPATFILEREADSCOPE readScope(CbReadGuardFile);
+        fFailRead = true;
+        try { (void)_lread(hf, rgb, sizeof(rgb)); }
+        catch (const StarsError &error) { fCaught = error.mdError == starsErrorFile && error.ids == 417; }
+        CHECK(fCaught && !fFailRead && !FStarsErrorPending());
+        // This retry hangs with the old manual lock/unlock pair after unwinding.
+        std::fputs("Injected exception caught; retrying the same file token\n", stderr);
+        CHECK(_lread(hf, rgb, sizeof(rgb)) == 4 && !std::memcmp(rgb, "wire", 4) && cReads == 2);
+    }
+    CHECK(_llseek(hf, 0, 0) == 0);
+    CHECK(_lread(hf, rgb, sizeof(rgb)) == 4 && !std::memcmp(rgb, "wire", 4) && cReads == 2);
     CHECK(_lclose(hf) == 0 && IUnlinkNativePath(szPath.c_str()) == 0);
 
     std::string szProfile = std::string(argv[1]) + "-Ω.ini";
     auto pathProfile = PathFromUtf8(szProfile.c_str());
     std::string szPrefix = SzFromUtf8(pathProfile.filename().u8string()) + ".";
+    PROFILEIO io;
+    io.pfnReadLine = CbReadGuardLine; io.pfnWrite = CWriteGuardProfile;
+    PROFILEIOSCOPE profileScope(io);
     CHECK(WritePrivateProfileStringA("Game", "Name", "wire", szProfile.c_str()));
     for (i = 0; i < 3; i++) {
         cProfileLines = i < 2 ? 1 : -1; fFailProfileWrite = i == 2; fCaught = false;
