@@ -38,22 +38,17 @@ checks pass for `b799348`.
 ## C++ migration completion
 
 Milestone B is qualified and merged in [PR #66](https://github.com/madebyjeffrey/sdl-stars/pull/66).
-[Milestone C](CPP-MILESTONE-C.md) is active from merge `62bb854`. The removal
-inventory and source filename migration merged in PR #68. C03's explicit typed
-callback calls merged in PR #69 with all enabled CI passing. C04/C05 replace test
-redirects/clones and all 27 extraction programs with typed effects and linked
-production tests; PR #72 passes all 15 enabled jobs. C06 replaces generated wrapper
-names and the 23 prefixed UI entry names with actual namespaces; PR #73 passes
-all 14 enabled jobs and the manual Linux/Windows run. C07 replaces compatibility
-macros with typed values/direct calls; PR #74 passes all 14 enabled jobs and the
-manual Linux/Windows run. C08 removes the global state aliases/accessors through
-explicit callers and target-bound callbacks, with full local qualification.
-C09 removes generated SDK language adapters and fixes the independent historical
-reference inputs. C10 passes all local verification, including the whole formal
-collection; corrected Linux/Windows qualification is running. Game/file behavior
-and baselines remain unchanged.
-[Implementation evidence](CPP-C-IMPLEMENTATION.md) records actual checkpoint
-status and verification; later C checkpoints remain pending.
+[Milestone C](CPP-MILESTONE-C.md) is complete and qualified. C01–C03 are merged;
+C04/C05 through C10 are ready for review as the dependent draft stack #72–#77.
+Owned implementations have honest C++20/Objective-C++20 extensions, actual
+namespaces/direct UI calls, typed effects and explicit state consumers. Temporary
+routing, source extraction, state aliases and SDK language adapters are removed.
+All local and final manual Linux/Windows contract gates pass; the two full
+platform jobs remain opt-in for automatic CI. Nineteen unchanged native SDK
+behavior/automation probes are explicit diagnostics tracked in issue #78, with
+original assertions retained. Game/file behavior and baselines are unchanged.
+[Final qualification](CPP-C10-QUALIFICATION.md) and the
+[implementation ledger](CPP-C-IMPLEMENTATION.md) record the evidence and review order.
 
 ## C++ migration
 
@@ -123,10 +118,12 @@ and that the owner is re-enabled for both thread-timer and owner-window failures
 This does not change turn generation or the native regression baseline.
 
 The shared enum-ABI and file-service test targets are registered once when
-ordinary tests, SDK reference tests or both are enabled. Windows CI configures
-both suites together before running the SDL checks, covering the former
-duplicate-target configuration failure. Test selection and game results are
-unchanged.
+ordinary tests, SDK reference tests or both are enabled. The manual Windows job
+configures ordinary/SDK-only/both/neither in separate fresh directories, covering
+the former duplicate-target failure. It runs the full ordinary registry and all
+SDK probes, retaining the exact diagnostic classification in
+[maintained policy](CPP-POLICY.md). Game results and original vector assertions
+are unchanged.
 
 ## SDL desktop consolidation
 

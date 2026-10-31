@@ -3,7 +3,7 @@
 Tracking: [#67](https://github.com/madebyjeffrey/sdl-stars/issues/67).
 Started: 2026-10-31. Initial branch: `codex/cpp-milestone-c`, targeting `develop`.
 Current continuation: `codex/cpp-c10-final-qualification` from C09 PR #76
-(`6e547f05`); the dependent PR chain starts at C04/C05 PR #72 against `develop`.
+(`ee978a44`); the dependent PR chain starts at C04/C05 PR #72 against `develop`.
 Plan: [CPP-MILESTONE-C.md](CPP-MILESTONE-C.md).
 
 ## Parent and scope
@@ -26,15 +26,15 @@ verification receipts below decide completion.
 | ID | Status | Evidence / remaining work |
 | --- | --- | --- |
 | C01 | Complete | Parent pinned; source/mechanism/consumer inventory and fresh local parent matrix pass. Cross-platform B receipts remain historical. |
-| C02 | Complete under current CI policy | PR #68 merged at a65e653; all 15 enabled CI jobs pass. The full Linux desktop and Windows SDL jobs remain explicitly deferred. |
+| C02 | Complete under current CI policy | PR #68 merged at a65e653; all 15 enabled CI jobs pass. The full Linux desktop and Windows SDL jobs remain opt-in; final manual qualification passes below. |
 | C03 | Complete under current CI policy | PR #69 merged at ab62fef; all enabled CI passed. Local 119 desktop / 26 host tests, callback ASan/UBSan faults, regressions and 27 unchanged witness receipts pass. |
 | C04 | Complete under current CI policy | Every implementation/call redirect, allocator hook and private library clone is replaced by typed module effects. Desktop/host workflows, regressions and full formal verification/audit pass. |
 | C05 | Complete under current CI policy | All 27 commands use normal linked production targets; every parent case/assertion/exclusion receipt matches. The 67 retained independent Python definitions have identical parent ASTs. See the [per-program inventory](CPP-C05-WITNESSES.md). |
 | C06 | Complete under current CI policy | All 23 C03 names use `ui::` directly; raw operations and actual type tags use `win32::`. Generated names are deleted; [boundary/vector receipts](CPP-C06-BOUNDARIES.md) account for every entry and all 38 shared SDK inputs. |
 | C07 | Complete under current CI policy | All 2,101 parent macros have individual dispositions; typed helpers/constants, direct calls and shim removal pass full desktop/host/regression/sanitizer checks. |
-| C08 | All enabled CI passes; manual platform run pending | All 502 inventoried aliases plus two earlier XOR-seed aliases and their accessors are removed; owned calls receive explicit references, with target-bound foreign callbacks. See [state receipts](CPP-C08-STATE.md). |
-| C09 | Local qualification active | Checked-in SDK C entries replace generated adapters; permanent strict/reference policy, negative cases and fresh configuration registries pass. |
-| C10 | Final qualification active | Whole-tree audit and all local gates pass; corrected remote platform/matrix runs remain. See [final ledger](CPP-C10-QUALIFICATION.md). |
+| C08 | Complete | All 502 inventoried aliases plus two earlier XOR-seed aliases and their accessors are removed; owned calls receive explicit references, with target-bound foreign callbacks. See [state receipts](CPP-C08-STATE.md). |
+| C09 | Complete | Checked-in SDK C entries replace generated adapters; permanent strict/reference policy, negative cases and fresh configuration registries pass. |
+| C10 | Complete | Whole-tree audit and all local/platform gates pass; SDK diagnostics remain explicitly recorded outside the behavior-neutral cleanup. See [final ledger](CPP-C10-QUALIFICATION.md). |
 
 ## Removal and retention inventory
 
@@ -579,3 +579,30 @@ Both final backend runs match all 519 baseline files and exact B files, with 25
 accepted warnings and zero differences/errors/skips. The handbook builds 207
 pages and checks 38,601 local links/assets. Remote platform qualification remains
 pending; no checkpoint completion is inferred from historical platform receipts.
+
+
+## Final Milestone C completion receipt
+
+Milestone C is implemented and qualified in the unmerged draft stack #72 → #73 →
+#74 → #75 → #76 → #77. Source/build/test revision `ee978a44` passes all 15 enabled
+C09 PR jobs and all five [final manual platform jobs](https://github.com/madebyjeffrey/sdl-stars/actions/runs/41224660401).
+Linux desktop passes 154/154; Windows ordinary tests pass 131/131, including the
+three corrected witnesses. Fresh Windows registry counts are 131/41/170/0 for
+ordinary/SDK-only/both/neither. Both SDK configurations retain all original
+assertions: 20 checks pass and 19 exact hash-pinned behavior/automation probes
+report diagnostic failures, with no skipped checks or unexpected contract
+failures. These existing probe gaps are tracked in issue #78 and are not claimed
+as passing. Original SDL counterpart assertions remain gates.
+
+The final local source qualification passes 151 desktop / 27 host / 37 sanitizer
+checks, 519-file baseline and exact merged-B comparisons for each backend (25
+accepted warnings, zero differences/errors/skips), and full formal verification:
+12,000 verified, zero errors, auditor zero findings. All 27 witness receipts and
+67 independent Python definitions remain accounted for. The final audit justifies
+all 657 live macros and verifies 152 tracked production implementations, 160
+standalone headers, frozen inputs and identical C09/C10 source/build/test/data/model
+trees. C10 changes documentation only; live publication-head checks are visible
+in PR #77. No baseline, file format, record size, catalog ID or gameplay change is
+introduced. No PR is merged, and the two slow automatic job conditions are unchanged.
+Earlier pending/failure notes above are chronological checkpoint receipts, superseded
+by this final receipt and the [qualification ledger](CPP-C10-QUALIFICATION.md).

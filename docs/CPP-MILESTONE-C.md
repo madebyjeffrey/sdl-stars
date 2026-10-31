@@ -1,16 +1,11 @@
 # Milestone C: finish the C++ conversion
 
-Status: implementation active; C01–C03 merged under the current CI policy.
-C04/C05 replace all test redirects/clones and all 27 extracted witness programs
-with typed effects and normal linked targets; PR #72 passes all 15 enabled CI jobs.
-C06 replaces generated wrapper names and prefixed UI entries with actual
-namespaces; PR #73 passes all 14 enabled jobs and the manual Linux/Windows run.
-C07 PR #74 passes all 14 enabled jobs and the manual Linux/Windows run. C08
-removes all inventoried aliases, two earlier XOR-seed aliases and their accessors;
-full local qualification and all 14 enabled PR CI jobs pass in PR #75. C09
-finalizes the maintained build/reference policy in PR #76. C10
-[final audit and qualification](CPP-C10-QUALIFICATION.md) passes all local gates;
-corrected remote platform qualification is still running.
+Status: complete; all C01–C10 implementation and qualification obligations are
+recorded. C01–C03 are merged; C04/C05 through C10 are ready for review as draft
+PRs #72–#77, in that order. The agent has not merged them. Full local and manual
+Linux/Windows contract gates pass. Nineteen unchanged native SDK behavior probes
+remain explicitly reported diagnostics tracked in issue #78; their assertions
+are retained. See the [final qualification](CPP-C10-QUALIFICATION.md).
 Evidence: [CPP-C-IMPLEMENTATION.md](CPP-C-IMPLEMENTATION.md).
 Tracking: [#67](https://github.com/madebyjeffrey/sdl-stars/issues/67).
 Recorded: 2026-10-29; refreshed against merged B on 2026-10-31.

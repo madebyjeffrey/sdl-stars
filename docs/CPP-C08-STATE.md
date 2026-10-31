@@ -1,6 +1,6 @@
 # C08: explicit application state
 
-C08 is in local qualification. All 502 C01-inventoried aliases and the two older
+C08 is qualified in draft PR #75 at `14b4bc39`. All 502 C01-inventoried aliases and the two older
 file-XOR seed aliases are removed. No `GetAppSession`, `GetAppUiState` or
 `UiSession` accessor remains. The [per-alias ledger](CPP-C08-STATE.json) records
 all 158 game-state and 346 UI-state references and their replacements.
@@ -74,10 +74,13 @@ original names, instruction IDs and observation fields stay unchanged.
   2,819 links / 700 requirement IDs. No canonical model or baseline changes.
 - The first reviewed entry pattern is commit `006a7eb`; its receipts remain in
   `dist/verification/c08-entry/`. Current receipts are in `dist/verification/c08/`.
-  Remote CI and the final C09/C10 configuration matrix are still pending.
+  All 14 enabled PR jobs and all five corrected manual platform jobs pass.
+  The final C09/C10 matrix and precise SDK diagnostic policy are recorded in the
+  [final qualification ledger](CPP-C10-QUALIFICATION.md).
 
 The first manual Windows build found two filename-fallback reads behind `_WIN32`
 that still used the removed `szBase` alias. Both now use the same passed owner's
 `app.state.szBase`; slash/drive fallback order and bytes are unchanged. The full
 `mdi.cpp` translation unit passes strict MinGW syntax compilation. Corrected
-platform qualification is pending; the first run is not reported as passing.
+platform qualification passes at `14b4bc39`: Linux 154/154, Windows SDK probes 2/2,
+game units 13/13 and platform checks 88/88. The first run is not reported as passing.

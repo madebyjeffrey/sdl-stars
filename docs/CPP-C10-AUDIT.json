@@ -1,5 +1,5 @@
 {
-  "qualified_source": "6e547f05",
+  "qualified_source": "ee978a446ce543646e167c3854ea6599270eff2f",
   "parent": "62bb854d143a618419f645abdc4da37d53cb5837",
   "production": {
     "cpp": 151,
@@ -4966,7 +4966,7 @@
     "text",
     "spec"
   ],
-  "qualification": "CPP-C10-QUALIFICATION.md; all local gates pass, corrected remote platform runs pending.",
+  "qualification": "Complete; see CPP-C10-QUALIFICATION.md. All local/source and platform contract gates pass. Raw SDK diagnostic failures are preserved separately in issue #78.",
   "macro_changes_since_c07": {
     "removed": [
       {
@@ -4987,5 +4987,34 @@
         "purpose": "Expression stringification/source-line diagnostics for the owner binding contract."
       }
     ]
+  },
+  "qualification_policy_revision": "ee978a446ce543646e167c3854ea6599270eff2f",
+  "qualified_source_build_test_data_model_tree_hashes": {
+    "src": "132cdb6006b5da91c60c1e70dafa7ddc87644edb",
+    "compat": "2c68dbf24389c212fb20b29a6fda25f892ec9450",
+    "cmake": "f22b08958b43ca60fce6b0f1b2dca6db7099e464",
+    "CMakeLists.txt": "04cfe8c75f1cbfeae55144d818bde920d4f879c3",
+    "CMakePresets.json": "e54ce0deee6aa09e709cb29b7242b08106f708b2",
+    "Makefile": "a6548d0f7af2e1d4268d02a1e42fadb89970b0bd",
+    ".github": "b35b4a54cea11118a670d4e36ad6b3def10878b1",
+    "tests": "344f5d437346654be6e315ffb3b7656331c94c51",
+    "data": "a591c1e164d68b78ffb19dbadd9e728654e96496",
+    "text": "458f89f7adb4690673157e134de0bb7d5b07f0a9",
+    "res": "edb4132d94c6deda3e970ed4d7b4bc33ae14ab20",
+    "spec": "89d0fba69c0211b6a27a6defb88f6f1b63e06c51"
+  },
+  "qualification_reuse": "C10 changes documentation/audit files only. These source, build, test, data, resource and canonical-model trees are identical to the platform-qualified C09 tree; live PR CI checks the publication head.",
+  "final_platform_run": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41224660401",
+  "platform_results": {
+    "macos_desktop": 151,
+    "macos_host": 27,
+    "macos_sanitizers": 37,
+    "linux_desktop": 154,
+    "windows_ordinary": 131,
+    "windows_sdk_gates_per_configuration": 20,
+    "windows_reported_diagnostic_failures_per_configuration": 19,
+    "formal_verified": 12000,
+    "formal_errors": 0,
+    "audit_findings": 0
   }
 }
