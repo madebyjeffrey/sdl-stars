@@ -2,8 +2,8 @@
 
 Tracking: [#67](https://github.com/madebyjeffrey/sdl-stars/issues/67).
 Started: 2026-10-31. Initial branch: `codex/cpp-milestone-c`, targeting `develop`.
-Current continuation: `codex/cpp-c09-build-policy` from C08 PR #75
-(`381d61a`); the dependent PR chain starts at C04/C05 PR #72 against `develop`.
+Current continuation: `codex/cpp-c10-final-qualification` from C09 PR #76
+(`6e547f05`); the dependent PR chain starts at C04/C05 PR #72 against `develop`.
 Plan: [CPP-MILESTONE-C.md](CPP-MILESTONE-C.md).
 
 ## Parent and scope
@@ -34,7 +34,7 @@ verification receipts below decide completion.
 | C07 | Complete under current CI policy | All 2,101 parent macros have individual dispositions; typed helpers/constants, direct calls and shim removal pass full desktop/host/regression/sanitizer checks. |
 | C08 | All enabled CI passes; manual platform run pending | All 502 inventoried aliases plus two earlier XOR-seed aliases and their accessors are removed; owned calls receive explicit references, with target-bound foreign callbacks. See [state receipts](CPP-C08-STATE.md). |
 | C09 | Local qualification active | Checked-in SDK C entries replace generated adapters; permanent strict/reference policy, negative cases and fresh configuration registries pass. |
-| C10 | Pending | Full final-tree audit and Linux/macOS/Windows qualification. |
+| C10 | Final qualification active | Whole-tree audit and all local gates pass; corrected remote platform/matrix runs remain. See [final ledger](CPP-C10-QUALIFICATION.md). |
 
 ## Removal and retention inventory
 
@@ -562,3 +562,20 @@ corrected Windows execution remains pending. Both fresh SDK configurations alrea
 record 20 passing contract checks and the same 19 diagnostics, with zero skipped
 checks or unexpected contract failures; registries are ordinary 131, SDK 41, both
 170 and neither zero.
+
+## C10: final audit
+
+The [final qualification ledger](CPP-C10-QUALIFICATION.md) and per-definition
+inventory cover all 152 tracked production implementations and 657 live macros.
+Obsolete language/routing/state mechanisms are absent; the two C08 preprocessing
+additions have exact purposes, and the empty UI globals header/guard is deleted.
+Historical C++ inspection links are pinned to their original revisions rather
+than mutable or absent local checkouts. Current guidance points to maintained
+policy. Frozen references, catalog rows, original/native fixtures and canonical
+models match merged B. Full formal verification reports 12,000 verified with
+zero errors; the audit reports zero findings. Corrected local desktop/host/ASan
+collections pass 151/27/37; all 87 core/UI/host units pass strict Windows syntax.
+Both final backend runs match all 519 baseline files and exact B files, with 25
+accepted warnings and zero differences/errors/skips. The handbook builds 207
+pages and checks 38,601 local links/assets. Remote platform qualification remains
+pending; no checkpoint completion is inferred from historical platform receipts.

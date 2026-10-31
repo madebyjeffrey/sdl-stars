@@ -24,8 +24,7 @@ The chat's checkout is `codex/traceability-views` at `e3222eb`, which predates
 the migration. The substantive inspection used the active worktree
 `/Users/jdrake/.codex/worktrees/cpp-file-handling/sdl-stars`, branch
 `codex/cpp-application-milestone-b`, at
-`5fd94fb81bb58840ecada0f9295d992f712f7466`. Links below point to that worktree;
-it is active and will continue changing. Findings describe that revision, not
+`5fd94fb81bb58840ecada0f9295d992f712f7466`. Links below are pinned to that inspected revision. Findings describe that revision, not
 the eventual result of B.
 
 At inspection, the B ledger has B01 active and B02–B14 pending. Existing passing
@@ -61,8 +60,8 @@ budgets, format 2.85, stable IDs, fixed wire widths, RNG consumption, `qsort16`
 tie ordering and binary64 operation boundaries. Runtime types may change once
 their serialized representation is separated. Fixed wire contracts must remain.
 
-Sources: [B04–B14 and verification policy](/Users/jdrake/.codex/worktrees/cpp-file-handling/sdl-stars/docs/CPP-MIGRATION.md:212),
-[current storage declarations](/Users/jdrake/.codex/worktrees/cpp-file-handling/sdl-stars/src/core/structs.h:127).
+Sources: [B04–B14 and verification policy](https://github.com/madebyjeffrey/sdl-stars/blob/5fd94fb81bb58840ecada0f9295d992f712f7466/docs/CPP-MIGRATION.md#L212),
+[current storage declarations](https://github.com/madebyjeffrey/sdl-stars/blob/5fd94fb81bb58840ecada0f9295d992f712f7466/src/core/structs.h#L127).
 
 ## Additional work needed for a complete conversion
 
@@ -102,12 +101,12 @@ Do not mass-replace historical paths in frozen references: some tools deliberate
 read an old Git revision. Generated game/resource outputs already use C++ per A;
 verify them rather than assuming their old documentation describes current code.
 
-Sources: [root language overrides](/Users/jdrake/.codex/worktrees/cpp-file-handling/sdl-stars/CMakeLists.txt:55),
-[wrapper overrides](/Users/jdrake/.codex/worktrees/cpp-file-handling/sdl-stars/compat/win32/CMakeLists.txt:71),
-[precision scan](/Users/jdrake/.codex/worktrees/cpp-file-handling/sdl-stars/tests/scaffold/precision.py:212),
-[precision copies](/Users/jdrake/.codex/worktrees/cpp-file-handling/sdl-stars/tests/scaffold/precision_turns.py:33),
-[Flatpak guard](/Users/jdrake/.codex/worktrees/cpp-file-handling/sdl-stars/tools/build_flatpak.py:27),
-[tutorial parser](/Users/jdrake/.codex/worktrees/cpp-file-handling/sdl-stars/tests/reference/win32-tutorial/run.py:68),
+Sources: [root language overrides](https://github.com/madebyjeffrey/sdl-stars/blob/5fd94fb81bb58840ecada0f9295d992f712f7466/CMakeLists.txt#L55),
+[wrapper overrides](https://github.com/madebyjeffrey/sdl-stars/blob/5fd94fb81bb58840ecada0f9295d992f712f7466/compat/win32/CMakeLists.txt#L71),
+[precision scan](https://github.com/madebyjeffrey/sdl-stars/blob/5fd94fb81bb58840ecada0f9295d992f712f7466/tests/scaffold/precision.py#L212),
+[precision copies](https://github.com/madebyjeffrey/sdl-stars/blob/5fd94fb81bb58840ecada0f9295d992f712f7466/tests/scaffold/precision_turns.py#L33),
+[Flatpak guard](https://github.com/madebyjeffrey/sdl-stars/blob/5fd94fb81bb58840ecada0f9295d992f712f7466/tools/build_flatpak.py#L27),
+[tutorial parser](https://github.com/madebyjeffrey/sdl-stars/blob/5fd94fb81bb58840ecada0f9295d992f712f7466/tests/reference/win32-tutorial/run.py#L68),
 [CMake LANGUAGE documentation](https://cmake.org/cmake/help/latest/prop_sf/LANGUAGE.html).
 
 ### 2. Replace callback-call macros with explicit boundaries
@@ -128,9 +127,9 @@ deferred destruction, unowned timer/window failures, no commands after failure,
 and no second exception escaping a destructor. Merely deleting `win_calls.h`
 would remove error delivery, not just scaffolding.
 
-Sources: [macro routing](/Users/jdrake/.codex/worktrees/cpp-file-handling/sdl-stars/src/ui/win_calls.h:7),
-[callback containment](/Users/jdrake/.codex/worktrees/cpp-file-handling/sdl-stars/compat/win32/src/callback.cpp:13),
-[pending errors](/Users/jdrake/.codex/worktrees/cpp-file-handling/sdl-stars/src/platform/errors.cpp:14).
+Sources: [macro routing](https://github.com/madebyjeffrey/sdl-stars/blob/5fd94fb81bb58840ecada0f9295d992f712f7466/src/ui/win_calls.h#L7),
+[callback containment](https://github.com/madebyjeffrey/sdl-stars/blob/5fd94fb81bb58840ecada0f9295d992f712f7466/compat/win32/src/callback.cpp#L13),
+[pending errors](https://github.com/madebyjeffrey/sdl-stars/blob/5fd94fb81bb58840ecada0f9295d992f712f7466/src/platform/errors.cpp#L14).
 
 ### 3. Replace test symbol rewriting with typed test seams
 
@@ -155,7 +154,7 @@ current machinery with a permanent global mock registry.
 
 Sources: [definition substitutions](/Users/jdrake/.codex/worktrees/cpp-file-handling/sdl-stars/src/platform/test_impl.h),
 [private clone/substitution mechanism](/Users/jdrake/.codex/worktrees/cpp-file-handling/sdl-stars/cmake/test-redirect.cmake),
-[alternate declarations](/Users/jdrake/.codex/worktrees/cpp-file-handling/sdl-stars/src/core/file.h:30).
+[alternate declarations](https://github.com/madebyjeffrey/sdl-stars/blob/5fd94fb81bb58840ecada0f9295d992f712f7466/src/core/file.h#L30).
 
 ### 4. Retire source extraction and implementation rewriting
 
@@ -176,8 +175,8 @@ includes/`-x c++` flags, while retaining Python orchestration if useful. This
 is more work than updating extensions, because existing witnesses isolate many
 dependencies with reconstructed local types and globals.
 
-Sources: [extraction helper](/Users/jdrake/.codex/worktrees/cpp-file-handling/sdl-stars/tests/spec/check_s02_source.py:24),
-[file abstraction rewriting](/Users/jdrake/.codex/worktrees/cpp-file-handling/sdl-stars/tests/spec/check_library_publication_source.py:379),
+Sources: [extraction helper](https://github.com/madebyjeffrey/sdl-stars/blob/5fd94fb81bb58840ecada0f9295d992f712f7466/tests/spec/check_s02_source.py#L24),
+[file abstraction rewriting](https://github.com/madebyjeffrey/sdl-stars/blob/5fd94fb81bb58840ecada0f9295d992f712f7466/tests/spec/check_library_publication_source.py#L379),
 [representative reconstructed fixture](/Users/jdrake/.codex/worktrees/cpp-file-handling/sdl-stars/tests/spec/check_production_cost_source.py).
 
 ### 5. Replace wrapper macro namespaces and obsolete aliases
@@ -209,11 +208,11 @@ at a narrow boundary. One owning context with hundreds of permanent global-name
 macros would leave the dependency structure hidden. B13 permits temporary
 accessors, so this final removal must be tracked explicitly.
 
-Sources: [generated API renames](/Users/jdrake/.codex/worktrees/cpp-file-handling/sdl-stars/compat/win32/CMakeLists.txt:5),
-[wrapper aliases](/Users/jdrake/.codex/worktrees/cpp-file-handling/sdl-stars/compat/win32/include/windows.h:11),
-[type macros](/Users/jdrake/.codex/worktrees/cpp-file-handling/sdl-stars/compat/win32/include/wincompat_types.h:17),
-[resource parsing](/Users/jdrake/.codex/worktrees/cpp-file-handling/sdl-stars/compat/win32/uigen.py:15),
-[temporary state accessors in B13](/Users/jdrake/.codex/worktrees/cpp-file-handling/sdl-stars/docs/CPP-MIGRATION.md:234).
+Sources: [generated API renames](https://github.com/madebyjeffrey/sdl-stars/blob/5fd94fb81bb58840ecada0f9295d992f712f7466/compat/win32/CMakeLists.txt#L5),
+[wrapper aliases](https://github.com/madebyjeffrey/sdl-stars/blob/5fd94fb81bb58840ecada0f9295d992f712f7466/compat/win32/include/windows.h#L11),
+[type macros](https://github.com/madebyjeffrey/sdl-stars/blob/5fd94fb81bb58840ecada0f9295d992f712f7466/compat/win32/include/wincompat_types.h#L17),
+[resource parsing](https://github.com/madebyjeffrey/sdl-stars/blob/5fd94fb81bb58840ecada0f9295d992f712f7466/compat/win32/uigen.py#L15),
+[temporary state accessors in B13](https://github.com/madebyjeffrey/sdl-stars/blob/5fd94fb81bb58840ecada0f9295d992f712f7466/docs/CPP-MIGRATION.md#L234).
 
 ## What should remain, or be a separate project
 

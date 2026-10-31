@@ -8,8 +8,9 @@ namespaces; PR #73 passes all 14 enabled jobs and the manual Linux/Windows run.
 C07 PR #74 passes all 14 enabled jobs and the manual Linux/Windows run. C08
 removes all inventoried aliases, two earlier XOR-seed aliases and their accessors;
 full local qualification and all 14 enabled PR CI jobs pass in PR #75. C09
-finalizes the maintained build/reference policy; its updated platform matrix and
-C10 final audit are in progress.
+finalizes the maintained build/reference policy in PR #76. C10
+[final audit and qualification](CPP-C10-QUALIFICATION.md) passes all local gates;
+corrected remote platform qualification is still running.
 Evidence: [CPP-C-IMPLEMENTATION.md](CPP-C-IMPLEMENTATION.md).
 Tracking: [#67](https://github.com/madebyjeffrey/sdl-stars/issues/67).
 Recorded: 2026-10-29; refreshed against merged B on 2026-10-31.
@@ -354,8 +355,8 @@ the unit workflow's `workflow_dispatch` with `run_slow_platform_jobs` selected.
 Host tests, source witnesses, sanitizers, regressions and tutorial checks remain
 automatic; required local checks continue. Evidence from the two deferred jobs
 does not block the next checkpoint during this pause and is not reported as
-passing. Final platform qualification remains deferred work for when those full
-desktop suites are prioritized again.
+passing. Final qualification uses explicit manual runs while the automatic policy
+remains opt-in. The final ledger records their actual outcomes.
 
 Every implementation batch follows the repository verification rules. Build the
 platform SDL Debug preset with no new warnings; run `make regression`,
@@ -406,6 +407,6 @@ no irreversible file conversion is part of C. Open tracking issues when work is
 scheduled under `docs/agents/issue-tracker.md`; this plan does not publish tickets
 or begin implementation.
 
-This document records planned work and completion obligations only. No C code
-changes, new behavior, completed checkpoint, new proof or runtime qualification
-is claimed by publishing the plan.
+The checkpoint descriptions retain the approved plan and completion obligations.
+Current status and actual qualification are recorded above and in the linked
+implementation/final ledgers.

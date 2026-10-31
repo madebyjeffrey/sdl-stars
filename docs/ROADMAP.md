@@ -48,8 +48,10 @@ all 14 enabled jobs and the manual Linux/Windows run. C07 replaces compatibility
 macros with typed values/direct calls; PR #74 passes all 14 enabled jobs and the
 manual Linux/Windows run. C08 removes the global state aliases/accessors through
 explicit callers and target-bound callbacks, with full local qualification.
-Permanent policy and final qualification follow, preserving
-game/file behavior.
+C09 removes generated SDK language adapters and fixes the independent historical
+reference inputs. C10 passes all local verification, including the whole formal
+collection; corrected Linux/Windows qualification is running. Game/file behavior
+and baselines remain unchanged.
 [Implementation evidence](CPP-C-IMPLEMENTATION.md) records actual checkpoint
 status and verification; later C checkpoints remain pending.
 

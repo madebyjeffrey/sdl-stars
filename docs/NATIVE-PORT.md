@@ -27,9 +27,11 @@ previous metadata. The command-line host never resolves or requires this library
 
 The desktop client uses the SDL-backed Win32 wrapper on every supported platform.
 The shared game also builds as `stars-host`, independently of SDL. Owned production
-and ordinary test translation units compile as ISO C++20 under their original
-source filenames; AppKit glue compiles as Objective-C++20. Independent C storage
+and ordinary test translation units compile as ISO C++20 with `.cpp` extensions
+and their original basenames; AppKit glue compiles as Objective-C++20. Independent C storage
 fixtures, real SDK contract tests and third-party libraries remain separate.
+[Maintained C++ policy](CPP-POLICY.md) records the precise continuing exceptions;
+[Milestone C qualification](CPP-C10-QUALIFICATION.md) records the final audit.
 
 Application headers expose native C++ declarations. The platform file and
 filesystem interfaces retain their buffer/handle shapes and error contracts.

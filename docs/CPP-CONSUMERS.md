@@ -4,7 +4,9 @@ Follow-on removal work: [Milestone C](CPP-MILESTONE-C.md), with actual progress 
 [the C implementation ledger](CPP-C-IMPLEMENTATION.md). A/B receipts below remain historical.
 
 Implementation: [PR #64](https://github.com/madebyjeffrey/sdl-stars/pull/64), ticket #63. A01–A13 are checkpoints in one PR against `develop`.
-Original source filenames are retained; CMake source languages determine compilation.
+Historical A receipt: original source filenames and CMake language selection
+were retained at that checkpoint. Current sources use honest `.cpp`/`.mm`
+extensions under [maintained policy](CPP-POLICY.md).
 
 | Consumer at the start of A | Migration checkpoint | Final classification |
 | --- | --- | --- |
