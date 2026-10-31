@@ -1,4 +1,9 @@
 #include <cassert>
+#include "appstate.h"
+#ifdef STARS_UI_SDL
+#include "uistate.h"
+#endif
+#include "callbackcontext.h"
 #include <cinttypes>
 #include <cstdio>
 #include <cstdlib>
@@ -15,58 +20,60 @@
 static int     cheapFixture;
 static int32_t quote[4], limits[7];
 static int     calls, messages, messageArg, quoted;
-static void    TestGetProductionCosts(PLANET *p, PROD *r, uint32_t *out, int16_t player, int16_t one) {
+static void    TestGetProductionCosts(APPSESSION &, PLANET *p, PROD *r, uint32_t *out, int16_t player, int16_t one) {
     (void)r;
     assert(p && player == 0 && one && !quoted && calls == 0);
     quoted = 1;
     memcpy(out, quote, 16);
 }
-static int16_t TestCMaxOperableMines(PLANET *p, int16_t player, int16_t next) {
+static int16_t TestCMaxOperableMines(APPSESSION &, PLANET *p, int16_t player, int16_t next) {
     (void)p;
     assert(quoted && !player && next);
     calls = calls * 10 + 1;
     return (int16_t)limits[0];
 }
-static int16_t TestCMaxOperableFactories(PLANET *p, int16_t player, int16_t next) {
+static int16_t TestCMaxOperableFactories(APPSESSION &, PLANET *p, int16_t player, int16_t next) {
     (void)p;
     assert(quoted && !player && next);
     calls = calls * 10 + 2;
     return (int16_t)limits[0];
 }
-static int16_t TestCMaxOperableDefenses(PLANET *p, int16_t player, int16_t next) {
+static int16_t TestCMaxOperableDefenses(APPSESSION &, PLANET *p, int16_t player, int16_t next) {
     (void)p;
     assert(quoted && !player && next);
     calls = calls * 10 + 3;
     return (int16_t)limits[0];
 }
-static int16_t TestIpctCanTerraformLppl(PLANET *p) {
+static int16_t TestIpctCanTerraformLppl(APPSESSION &, PLANET *p) {
     (void)p;
     calls = calls * 10 + 4;
     return (int16_t)limits[2];
 }
-static int32_t TestChgPopFromPlanet(PLANET *p, int16_t update) {
+static int32_t TestChgPopFromPlanet(APPSESSION &, PLANET *p, int16_t update) {
     (void)p;
     assert(!update);
     calls = calls * 10 + 5;
     return limits[3];
 }
-static int16_t TestPctPlanetDesirability(PLANET *p, int16_t player) {
+static int16_t TestPctPlanetDesirability(APPSESSION &, PLANET *p, int16_t player) {
     (void)p;
     assert(!player);
     calls = calls * 10 + 6;
     return (int16_t)limits[4];
 }
-static int16_t TestIWarpMAFromLppl(PLANET *p, int16_t *flag) {
+static int16_t TestIWarpMAFromLppl(APPSESSION &, PLANET *p, int16_t *flag) {
     (void)p;
     assert(!flag);
     calls = calls * 10 + 7;
     return (int16_t)limits[5];
 }
 static int16_t TestGetRaceGrbit(PLAYER *p, RaceGrbit bit) {
-    assert(p == rgplr && bit == ibitRaceMineralAlchemy);
+    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+
+    assert(p == app.state.rgplr && bit == ibitRaceMineralAlchemy);
     return (int16_t)cheapFixture;
 }
-static int16_t TestFSendPlrMsg2(int16_t player, MessageId id, MsgGoto a, int16_t b, int16_t c) {
+static int16_t TestFSendPlrMsg2(APPSESSION &, int16_t player, MessageId id, MsgGoto a, int16_t b, int16_t c) {
     assert(!player && id == idmScientistsHaveTransmutedCommonMaterialsKtEach && a == 5 && b == 5);
     messages++;
     messageArg = c;
@@ -75,6 +82,13 @@ static int16_t TestFSendPlrMsg2(int16_t player, MessageId id, MsgGoto a, int16_t
 }
 
 int main(int argc, char **argv) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+
     TURNIO ioTurn;
     ioTurn.pfnMessage2 = TestFSendPlrMsg2;
     TURNIOSCOPE scopeTurn(ioTurn);
@@ -120,10 +134,10 @@ int main(int argc, char **argv) {
         p.cDefenses = (limits[1] + 29) % 4096;
         p.idFling = limits[6];
         cheapFixture = input[18];
-        gd.fGeneratingTurn = input[20];
+        app.state.gd.fGeneratingTurn = input[20];
         calls = messages = messageArg = quoted = 0;
         int16_t status = -123;
-        int16_t built = CBuildProdItem(&p, &row, input[21] ? &partial : NULL, resources, (int16_t)input[17], input[22] ? &status : NULL, (int16_t)input[19]);
+        int16_t built = CBuildProdItem(app, &p, &row, input[21] ? &partial : NULL, resources, (int16_t)input[17], input[22] ? &status : NULL, (int16_t)input[19]);
         assert(quoted);
         uint32_t rword, pword;
         memcpy(&rword, &row, 4);

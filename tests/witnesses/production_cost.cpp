@@ -1,4 +1,9 @@
 #include <cassert>
+#include "appstate.h"
+#ifdef STARS_UI_SDL
+#include "uistate.h"
+#endif
+#include "callbackcontext.h"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -13,7 +18,7 @@ static uint16_t  lookupKind[33], lookupItem[33], quoteKind[33], quoteItem[33];
 static int       quotePlayer[33];
 static PLANET    planet;
 static PROD      prod;
-static int16_t   LookupQuote(PART *p) {
+static int16_t   LookupQuote(APPSESSION &, PART *p) {
     assert(lookups < 33);
     lookupKind[lookups] = p->hs.grhst;
     lookupItem[lookups++] = p->hs.iItem;
@@ -24,7 +29,7 @@ static HULDEF *HullQuote(int16_t id) {
     lastHull = id;
     return &hull;
 }
-static void PartQuote(int16_t player, PART *part, uint16_t *out) {
+static void PartQuote(APPSESSION &, int16_t player, PART *part, uint16_t *out) {
     assert(cursor < 33);
     quoteKind[cursor] = part->hs.grhst;
     quoteItem[cursor] = (cursor == 0 && part->hs.grhst == hstNone) ? 0 : part->hs.iItem;
@@ -59,20 +64,20 @@ static unsigned credited(unsigned left, unsigned before, unsigned now, unsigned 
     unsigned credit = word16(b - signed16(retain));
     return left - (credit < left ? credit : left);
 }
-static uint32_t oracle(unsigned dimension, uint32_t prior, int player, int one) {
+static uint32_t oracle(APPSESSION &app, unsigned dimension, uint32_t prior, int player, int one) {
     unsigned item = prod.iItem, count = prod.cItem;
     uint32_t value = prior;
-    int      colony = rgplr[planet.iPlayer].rgAttr[rsMajorAdv], race = rgplr[player].rgAttr[rsMajorAdv];
-    uint32_t traits = rgplr[player].grbitAttr;
+    int      colony = app.state.rgplr[planet.iPlayer].rgAttr[rsMajorAdv], race = app.state.rgplr[player].rgAttr[rsMajorAdv];
+    uint32_t traits = app.state.rgplr[player].grbitAttr;
     if (prod.grobj == grobjFleet) {
         int    base = item >= 16;
-        SHDEF *target = base ? &rglpshdefSB[player][item - 16] : &rglpshdef[player][item];
+        SHDEF *target = base ? &app.state.rglpshdefSB[player][item - 16] : &app.state.rglpshdef[player][item];
         if (target->fFree)
             return 0;
         HUL     *h = &target->hul;
         unsigned cost = dimension == 3 ? h->resCost : h->rgwtOreCost[dimension];
         if (base && planet.fStarbase) {
-            HUL     *old = &rglpshdefSB[player][planet.isb].hul;
+            HUL     *old = &app.state.rglpshdefSB[player][planet.isb].hul;
             unsigned prev = dimension == 3 ? old->resCost : old->rgwtOreCost[dimension];
             if (old->ihuldef != h->ihuldef)
                 cost = upgrade(cost, prev);
@@ -95,9 +100,9 @@ static uint32_t oracle(unsigned dimension, uint32_t prior, int player, int one) 
         value = cost;
     } else if (item == iobjFactory || item == mdIdleFactory) {
         unsigned cheap = (traits >> ibitRaceCheapFact) & 1;
-        value = dimension == 3 ? word32(rgplr[player].rgAttr[rsFactBuild]) : gd.fTutorial ? 2 - cheap : dimension == 2 ? 4 - cheap : 0;
+        value = dimension == 3 ? word32(app.state.rgplr[player].rgAttr[rsFactBuild]) : app.state.gd.fTutorial ? 2 - cheap : dimension == 2 ? 4 - cheap : 0;
     } else if (item == iobjMine || item == mdIdleMine)
-        value = dimension == 3 ? word32(rgplr[player].rgAttr[rsMineBuild]) : 0;
+        value = dimension == 3 ? word32(app.state.rgplr[player].rgAttr[rsMineBuild]) : 0;
     else if (item == iobjDefense || item == mdIdleDefense) {
         value = dimension == 3 ? planetary.resCost : word32(planetary.rgwtOreCost[dimension]);
         if (race == raDefend)
@@ -120,18 +125,18 @@ static uint32_t oracle(unsigned dimension, uint32_t prior, int player, int one) 
         value = dimension == 3 ? (colony == raMassAccel ? 5 : 10) : (colony == raMassAccel ? 25 : colony == raStargate ? 48 : 44);
     return one ? value : word32((int64_t)value * count);
 }
-static int compare(int player, int one) {
+static int compare(APPSESSION &app, int player, int one) {
     uint32_t actual[4] = {UINT32_MAX, UINT32_C(0x80000000), 17, 29}, expected[4];
     cursor = lookups = 0;
     lastHull = -1;
     for (unsigned d = 0; d < 4; d++)
-        expected[d] = oracle(d, actual[d], player, one);
-    GetProductionCosts(&planet, &prod, actual, player, one);
+        expected[d] = oracle(app, d, actual[d], player, one);
+    GetProductionCosts(app, &planet, &prod, actual, player, one);
     if (prod.grobj == grobjFleet) {
         int    base = prod.iItem >= 16;
-        SHDEF *target = base ? &rglpshdefSB[player][prod.iItem - 16] : &rglpshdef[player][prod.iItem];
-        if (!target->fFree && base && planet.fStarbase && target->hul.ihuldef == rglpshdefSB[player][planet.isb].hul.ihuldef) {
-            HUL     *old = &rglpshdefSB[player][planet.isb].hul;
+        SHDEF *target = base ? &app.state.rglpshdefSB[player][prod.iItem - 16] : &app.state.rglpshdef[player][prod.iItem];
+        if (!target->fFree && base && planet.fStarbase && target->hul.ihuldef == app.state.rglpshdefSB[player][planet.isb].hul.ihuldef) {
+            HUL     *old = &app.state.rglpshdefSB[player][planet.isb].hul;
             unsigned q = 1, l = 0;
             if (quoteKind[0] != hstNone || lastHull != old->ihuldef)
                 return 0;
@@ -172,8 +177,8 @@ static int compare(int player, int one) {
         }
     return 1;
 }
-static void reset(void) {
-    memset(rgplr, 0, sizeof(rgplr));
+static void reset(APPSESSION &app) {
+    memset(app.state.rgplr, 0, sizeof(app.state.rgplr));
     memset(ships, 0, sizeof(ships));
     memset(bases, 0, sizeof(bases));
     memset(&planet, 0, sizeof(planet));
@@ -182,15 +187,15 @@ static void reset(void) {
     memset(quotes, 0, sizeof(quotes));
     memset(&prod, 0, sizeof(prod));
     memset(&planetary, 0, sizeof(planetary));
-    gd.fTutorial = 0;
+    app.state.gd.fTutorial = 0;
     for (int i = 0; i < 16; i++) {
-        rglpshdef[i] = ships;
-        rglpshdefSB[i] = bases;
+        app.state.rglpshdef[i] = ships;
+        app.state.rglpshdefSB[i] = bases;
     }
-    rgplr[0].rgAttr[rsFactBuild] = 10;
-    rgplr[1].rgAttr[rsFactBuild] = 12;
-    rgplr[0].rgAttr[rsMineBuild] = 3;
-    rgplr[1].rgAttr[rsMineBuild] = 5;
+    app.state.rgplr[0].rgAttr[rsFactBuild] = 10;
+    app.state.rgplr[1].rgAttr[rsFactBuild] = 12;
+    app.state.rgplr[0].rgAttr[rsMineBuild] = 3;
+    app.state.rgplr[1].rgAttr[rsMineBuild] = 5;
     planet.iPlayer = 0;
     planetary.rgwtOreCost[0] = 13;
     planetary.rgwtOreCost[1] = 17;
@@ -208,32 +213,39 @@ static unsigned randomWord(void) {
     return randomState;
 }
 int main(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+
     static_assert(sizeof(PROD) == 4 && sizeof(HS) == 4 && sizeof(HUL) == 123 && sizeof(SHDEF) == 147, "native cost layouts");
     PARTQUERYIO io;
     io.pfnLookup = LookupQuote;
     io.pfnHull = HullQuote;
     io.pfnTrueCost = PartQuote;
     PARTQUERYIOSCOPE quoteScope(io);
-    reset();
+    reset(app);
     for (unsigned owner = 0; owner < 10; owner++)
         for (unsigned pricing = 0; pricing < 10; pricing++)
             for (unsigned traits = 0; traits < 16; traits++) {
-                rgplr[0].rgAttr[rsMajorAdv] = owner;
-                rgplr[1].rgAttr[rsMajorAdv] = pricing;
-                rgplr[1].grbitAttr = static_cast<decltype(rgplr[1].grbitAttr)>(
+                app.state.rgplr[0].rgAttr[rsMajorAdv] = owner;
+                app.state.rgplr[1].rgAttr[rsMajorAdv] = pricing;
+                app.state.rgplr[1].grbitAttr = static_cast<decltype(app.state.rgplr[1].grbitAttr)>(
                     ((traits & 1) ? UINT32_C(1) << ibitRaceCheapFact : 0) | ((traits & 2) ? UINT32_C(1) << ibitRaceTT : 0) |
                     ((traits & 4) ? UINT32_C(1) << ibitRaceMineralAlchemy : 0) | ((traits & 8) ? UINT32_C(1) << ibitRaceISB : 0));
                 for (unsigned tutorial = 0; tutorial < 2; tutorial++)
                     for (unsigned item = 0; item < 128; item++)
                         for (unsigned one = 0; one < 2; one++) {
-                            gd.fTutorial = tutorial;
+                            app.state.gd.fTutorial = tutorial;
                             prod.grobj = 1;
                             prod.iItem = item;
                             prod.cItem = one ? 0 : 1023;
-                            CHECK(compare(1, one));
+                            CHECK(compare(app, 1, one));
                         }
             }
-    reset();
+    reset(app);
     prod.grobj = 2;
     prod.iItem = 17;
     prod.cItem = 3;
@@ -254,9 +266,9 @@ int main(void) {
                     bases[1].hul.rgwtOreCost[d % 3] = (uint16_t)(word + d * 7919);
                     bases[1].hul.resCost = word;
                 }
-                CHECK(compare(0, counts & 1));
+                CHECK(compare(app, 0, counts & 1));
             }
-    reset();
+    reset(app);
     prod.grobj = 2;
     prod.iItem = 17;
     prod.cItem = 1023;
@@ -268,12 +280,12 @@ int main(void) {
         bases[1].hul.rgwtOreCost[d] = 65535;
     }
     bases[0].hul.resCost = bases[1].hul.resCost = 65535;
-    rgplr[0].grbitAttr = static_cast<decltype(rgplr[0].grbitAttr)>(UINT32_C(1) << ibitRaceISB);
-    CHECK(compare(0, 1));
+    app.state.rgplr[0].grbitAttr = static_cast<decltype(app.state.rgplr[0].grbitAttr)>(UINT32_C(1) << ibitRaceISB);
+    CHECK(compare(app, 0, 1));
     uint32_t exact[4] = {};
-    GetProductionCosts(&planet, &prod, exact, 0, 1);
+    GetProductionCosts(app, &planet, &prod, exact, 0, 1);
     CHECK(exact[0] == 13107 && exact[1] == 13107 && exact[2] == 13107 && exact[3] == 13107);
-    rgplr[0].grbitAttr = static_cast<decltype(rgplr[0].grbitAttr)>(0);
+    app.state.rgplr[0].grbitAttr = static_cast<decltype(app.state.rgplr[0].grbitAttr)>(0);
     for (unsigned word = 0; word < 65536; word++) {
         for (unsigned d = 0; d < 3; d++) {
             bases[0].hul.rgwtOreCost[d] = 65535 - word;
@@ -281,10 +293,10 @@ int main(void) {
         }
         bases[0].hul.resCost = word;
         bases[1].hul.resCost = 65535 - word;
-        CHECK(compare(0, 0));
+        CHECK(compare(app, 0, 0));
     }
     for (unsigned trial = 0; trial < 20000; trial++) {
-        reset();
+        reset(app);
         prod.grobj = 2;
         prod.iItem = randomWord() % 26;
         prod.cItem = randomWord() % 1024;
@@ -304,11 +316,11 @@ int main(void) {
         for (unsigned q = 0; q < 33; q++)
             for (unsigned d = 0; d < 4; d++)
                 quotes[q][d] = randomWord();
-        rgplr[0].rgAttr[rsMajorAdv] = randomWord() % 10;
-        rgplr[0].grbitAttr = static_cast<decltype(rgplr[0].grbitAttr)>((randomWord() % 2) ? UINT32_C(1) << ibitRaceISB : 0);
-        CHECK(compare(0, randomWord() % 2));
+        app.state.rgplr[0].rgAttr[rsMajorAdv] = randomWord() % 10;
+        app.state.rgplr[0].grbitAttr = static_cast<decltype(app.state.rgplr[0].grbitAttr)>((randomWord() % 2) ? UINT32_C(1) << ibitRaceISB : 0);
+        CHECK(compare(app, 0, randomWord() % 2));
     }
-    reset();
+    reset(app);
     for (unsigned kind = 0; kind < 8; kind++)
         if (kind != 2)
             for (unsigned item = 0; item < 128; item++) {
@@ -317,14 +329,14 @@ int main(void) {
                 prod.cItem = 1023;
                 planetary.rgwtOreCost[0] = -32768;
                 planetary.rgwtOreCost[1] = -1;
-                rgplr[0].rgAttr[rsMajorAdv] = raDefend;
-                rgplr[0].rgAttr[rsFactBuild] = -128;
-                rgplr[0].rgAttr[rsMineBuild] = -1;
-                CHECK(compare(0, 0));
+                app.state.rgplr[0].rgAttr[rsMajorAdv] = raDefend;
+                app.state.rgplr[0].rgAttr[rsFactBuild] = -128;
+                app.state.rgplr[0].rgAttr[rsMineBuild] = -1;
+                CHECK(compare(app, 0, 0));
             }
-    reset();
-    rglpshdef[1] = otherShips;
-    rglpshdefSB[1] = otherBases;
+    reset(app);
+    app.state.rglpshdef[1] = otherShips;
+    app.state.rglpshdefSB[1] = otherBases;
     prod.grobj = 2;
     prod.cItem = 1;
     for (unsigned i = 0; i < 16; i++) {
@@ -343,18 +355,18 @@ int main(void) {
         for (unsigned existing = 0; existing < 2; existing++) {
             prod.iItem = item;
             planet.fStarbase = existing;
-            CHECK(compare(1, 1));
+            CHECK(compare(app, 1, 1));
         }
-    reset();
+    reset(app);
     prod.grobj = 2;
     prod.iItem = 16;
     prod.cItem = 1023;
     bases[0].fFree = 1;
-    CHECK(compare(0, 0) && cursor == 0 && lookups == 0);
-    reset();
+    CHECK(compare(app, 0, 0) && cursor == 0 && lookups == 0);
+    reset(app);
     prod.grobj = 1;
     prod.iItem = 27;
-    CHECK(compare(0, 1) && cursor == 1 && lookups == 1);
+    CHECK(compare(app, 0, 1) && cursor == 1 && lookups == 1);
     printf("M09 production cost linked witnesses: %d passed\n", checks);
     return 0;
 }

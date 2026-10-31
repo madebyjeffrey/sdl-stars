@@ -1,4 +1,9 @@
 #include <map>
+#include "appstate.h"
+#ifdef STARS_UI_SDL
+#include "uistate.h"
+#endif
+#include "callbackcontext.h"
 #include "ui_fixture.h"
 static int     primary, genesis, warp, maxFactories, maxMines, maxDefenses, terraform, tutorials;
 static SHDEF   baseDefs[10];
@@ -12,7 +17,7 @@ struct FIXTUREESCAPE {
     int stage;
 };
 static std::map<const void *, uint16_t> extents;
-static void                            *TestLpAlloc(uint16_t cb, HeapType ht) {
+static void                            *TestLpAlloc(APPSESSION &, uint16_t cb, HeapType ht) {
     (void)ht;
     allocations++;
     lastBytes = cb;
@@ -22,7 +27,7 @@ static void                            *TestLpAlloc(uint16_t cb, HeapType ht) {
     extents[p] = cb;
     return p;
 }
-static void *TestLpReAlloc(void *p, uint16_t cb, HeapType ht) {
+static void *TestLpReAlloc(APPSESSION &, void *p, uint16_t cb, HeapType ht) {
     (void)ht;
     reallocations++;
     lastBytes = cb;
@@ -35,7 +40,7 @@ static void *TestLpReAlloc(void *p, uint16_t cb, HeapType ht) {
     extents[p] = cb;
     return p;
 }
-static void TestFreeLp(void *p, HeapType ht) {
+static void TestFreeLp(APPSESSION &, void *p, HeapType ht) {
     (void)ht;
     extents.erase(p);
     free(p);
@@ -45,31 +50,31 @@ static HULDEF *TestLphuldefFromId(int id) {
         abort();
     return &hullDefs[id];
 }
-static int TestFLookupPart(PART *p) {
+static int TestFLookupPart(APPSESSION &, PART *p) {
     (void)p;
     return genesis ? mdPartAvailAvailable : 0;
 }
-static int16_t TestIWarpMAFromLppl(void *p, void *q) {
+static int16_t TestIWarpMAFromLppl(APPSESSION &, void *p, void *q) {
     (void)p;
     (void)q;
     return warp;
 }
-static int16_t TestCMaxFactories(void *p, int player) {
+static int16_t TestCMaxFactories(APPSESSION &, void *p, int player) {
     (void)p;
     (void)player;
     return maxFactories;
 }
-static int16_t TestCMaxMines(void *p, int player) {
+static int16_t TestCMaxMines(APPSESSION &, void *p, int player) {
     (void)p;
     (void)player;
     return maxMines;
 }
-static int16_t TestCMaxDefenses(void *p, int player) {
+static int16_t TestCMaxDefenses(APPSESSION &, void *p, int player) {
     (void)p;
     (void)player;
     return maxDefenses;
 }
-static int16_t TestIpctCanTerraformLppl(void *p) {
+static int16_t TestIpctCanTerraformLppl(APPSESSION &, void *p) {
     (void)p;
     return terraform;
 }
@@ -78,12 +83,14 @@ static int TestGetRaceStat(void *p, int stat) {
     (void)stat;
     return primary;
 }
-static void  TestAdvanceTutor(void) { tutorials++; }
+static void  TestAdvanceTutor(APPSESSION &) { tutorials++; }
 static void *TestguardedMemcpy(void *dst, const void *src, size_t n) {
+    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+
     uintptr_t d = (uintptr_t)dst, s = (uintptr_t)src;
     if (n && d < s + n && s < d + n) {
         overlapBytes = n;
-        overlapOffset = ((char *)dst - (char *)lpplProdGlob->rgprod()) / 4;
+        overlapOffset = ((char *)dst - (char *)app.state.lpplProdGlob->rgprod()) / 4;
         throw FIXTUREESCAPE{1};
     }
     return memcpy(dst, src, n);
@@ -104,13 +111,13 @@ static intptr_t TestLUiSendMessage(HWND hwnd, int message, int value, intptr_t p
     abort();
 }
 static int  TestGetAsyncKeyState(int key) { return (key == win32::VK_SHIFT ? shift : ctrl) ? 0x8000 : 0; }
-static void TestFillPlanetProdLB(HWND hwnd, PLPROD *p, void *q) {
+static void TestFillPlanetProdLB(APPSESSION &, HWND hwnd, PLPROD *p, void *q) {
     (void)hwnd;
     (void)p;
     (void)q;
     queueFill++;
 }
-static void TestFillProdSrcLB(HWND hwnd, int value) {
+static void TestFillProdSrcLB(APPSESSION &, HWND hwnd, int value) {
     (void)hwnd;
     (void)value;
     sourceFill++;
@@ -127,13 +134,13 @@ static void TestMessageBeep(int value) {
             return 1;                                                                                                                                          \
         }                                                                                                                                                      \
     } while (0)
-static uint16_t TestExtent(const void *p) { return extents.at(p); }
+static uint16_t TestExtent(APPSESSION &, const void *p) { return extents.at(p); }
 static void     TestGetClientRect(HWND, RECT *r) { *r = RECT{}; }
 static void     TestInvalidateRect(HWND, const RECT *, BOOL) {}
-static void     TestDrawProductionDlg(HWND, HDC, RECT *, int16_t) { redraw++; }
-static void     command(int cmd) {
+static void     TestDrawProductionDlg(APPSESSION &, HWND, HDC, RECT *, int16_t) { redraw++; }
+static void     command(APPSESSION &app, int cmd) {
     WPARAM value = cmd == 100 ? win32::MAKEWPARAM(IDC_PRODUCTION_AVAILABLE_ITEMS, 2) : cmd == 101 ? win32::MAKEWPARAM(IDC_PRODUCTION_QUEUE, 2) : static_cast<WPARAM>(cmd);
-    ProdCommandHandler(HwndWitness(1), value, 0);
+    ProdCommandHandler(app, HwndWitness(1), value, 0);
 }
 
 static PROD row(unsigned count, unsigned item, unsigned kind) {
@@ -143,33 +150,33 @@ static PROD row(unsigned count, unsigned item, unsigned kind) {
     p.grobj = kind;
     return p;
 }
-static void reset(unsigned n, int hasQueue) {
+static void reset(APPSESSION &app, unsigned n, int hasQueue) {
     int i;
-    if (lpplProdGlob)
-        FreePl(lpplProdGlob);
-    lpplProdGlob = NULL;
-    if (sel.pl.lpplprod)
-        FreePl(sel.pl.lpplprod);
-    memset(&sel, 0, sizeof(sel));
-    memset(&gd, 0, sizeof(gd));
+    if (app.state.lpplProdGlob)
+        FreePl(app, app.state.lpplProdGlob);
+    app.state.lpplProdGlob = NULL;
+    if (app.state.sel.pl.lpplprod)
+        FreePl(app, app.state.sel.pl.lpplprod);
+    memset(&app.state.sel, 0, sizeof(app.state.sel));
+    memset(&app.state.gd, 0, sizeof(app.state.gd));
     if (hasQueue) {
-        sel.pl.lpplprod = LpplAlloc<PLPROD>(4, n, htOrd);
-        sel.pl.lpplprod->iprodMac = n;
+        app.state.sel.pl.lpplprod = LpplAlloc<PLPROD>(app, 4, n, htOrd);
+        app.state.sel.pl.lpplprod->iprodMac = n;
     }
     memset(catalog, 0, sizeof(catalog));
-    pProdGlob = catalog;
-    cProdGlob = 0;
-    memset(rgshdef, 0, sizeof(rgshdef));
+    app.state.pProdGlob = catalog;
+    app.state.cProdGlob = 0;
+    memset(app.state.rgshdef, 0, sizeof(app.state.rgshdef));
     memset(baseDefs, 0, sizeof(baseDefs));
     memset(hullDefs, 0, sizeof(hullDefs));
     for (i = 0; i < 16; i++)
-        rgshdef[i].fFree = 1;
+        app.state.rgshdef[i].fFree = 1;
     for (i = 0; i < 10; i++) {
         baseDefs[i].fFree = 1;
         baseDefs[i].hul.ihuldef = static_cast<HulDef>(i);
     }
     primary = genesis = warp = maxFactories = maxMines = maxDefenses = terraform = tutorials = 0;
-    sel.pl.iScanner = 31;
+    app.state.sel.pl.iScanner = 31;
     shift = ctrl = queueFill = sourceFill = redraw = beeps = allocations = reallocations = failReallocation = 0;
     sourceSelection = 0;
     queueSelection = -1;
@@ -177,14 +184,21 @@ static void reset(unsigned n, int hasQueue) {
     overlapBytes = 0;
     overlapOffset = -1;
 }
-static void working(unsigned n) {
-    reset(0, 0);
-    lpplProdGlob = LpplAlloc<PLPROD>(4, n, htOrd);
-    lpplProdGlob->iprodMac = n;
+static void working(APPSESSION &app, unsigned n) {
+    reset(app, 0, 0);
+    app.state.lpplProdGlob = LpplAlloc<PLPROD>(app, 4, n, htOrd);
+    app.state.lpplProdGlob->iprodMac = n;
     allocations = 0;
 }
 
 int main(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+
     int    i, mode, available, request;
     PROD   a = row(10, 7, 1), b = row(1, 8, 1), c = row(1, 9, 1);
     PROD   bad = row(9, 0, 2); // Ship design 0 with no construction base is unavailable.
@@ -223,22 +237,22 @@ int main(void) {
     ioColony.pfnMaxDefenses = WITNESSADAPTER<&TestCMaxDefenses, decltype(ioColony.pfnMaxDefenses)>::Call;
     ioColony.pfnTerraformPercent = WITNESSADAPTER<&TestIpctCanTerraformLppl, decltype(ioColony.pfnTerraformPercent)>::Call;
     COLONYIOSCOPE scopeColony(ioColony);
-    idPlayer = 0;
-    rglpshdefSB[0] = baseDefs;
-    pProdGlob = catalog;
+    app.state.idPlayer = 0;
+    app.state.rglpshdefSB[0] = baseDefs;
+    app.state.pProdGlob = catalog;
     CHECK(sizeof(PROD) == 4 && sizeof(PLPROD) == 4);
-    reset(0, 0);
-    sel.pl.fNoResearch = 1;
-    gd.fTutorial = 1;
-    InitProduction(catalog);
-    CHECK(gd.fNoResearchSav && lpplProdGlob->iprodMac == 0 && lpplProdGlob->iprodMax == 2 && cProdGlob == 9 && tutorials == 1);
+    reset(app, 0, 0);
+    app.state.sel.pl.fNoResearch = 1;
+    app.state.gd.fTutorial = 1;
+    InitProduction(app, catalog);
+    CHECK(app.state.gd.fNoResearchSav && app.state.lpplProdGlob->iprodMac == 0 && app.state.lpplProdGlob->iprodMax == 2 && app.state.cProdGlob == 9 && tutorials == 1);
     CHECK(catalog[0].iItem == 11 && catalog[1].iItem == 27 && catalog[2].iItem == 0 && catalog[8].iItem == 6);
-    reset(0, 1);
-    sel.pl.isb = 15;
-    InitProduction(catalog);
-    CHECK(lpplProdGlob->iprodMax == 0 && lpplProdGlob->iprodMac == 0 && lastBytes == 4);
-    reset(0, 0);
-    sel.pl.fStarbase = 1;
+    reset(app, 0, 1);
+    app.state.sel.pl.isb = 15;
+    InitProduction(app, catalog);
+    CHECK(app.state.lpplProdGlob->iprodMax == 0 && app.state.lpplProdGlob->iprodMac == 0 && lastBytes == 4);
+    reset(app, 0, 0);
+    app.state.sel.pl.fStarbase = 1;
     genesis = 1;
     warp = 9;
     maxFactories = maxMines = 5000;
@@ -246,13 +260,13 @@ int main(void) {
     terraform = 1024;
     hullDefs[0].hul.wtCargoMax = 100;
     for (i = 0; i < 16; i++) {
-        rgshdef[i].fFree = 0;
-        rgshdef[i].hul.wtEmpty = 100;
+        app.state.rgshdef[i].fFree = 0;
+        app.state.rgshdef[i].hul.wtEmpty = 100;
     }
     for (i = 0; i < 10; i++)
         baseDefs[i].fFree = 0;
-    InitProduction(catalog);
-    CHECK(cProdGlob == 43);
+    InitProduction(app, catalog);
+    CHECK(app.state.cProdGlob == 43);
     for (i = 0; i < 16; i++)
         CHECK(catalog[i].grobj == 2 && catalog[i].iItem == (unsigned)i && catalog[i].cItem == 1023);
     for (i = 16; i < 25; i++)
@@ -262,228 +276,228 @@ int main(void) {
     CHECK(catalog[32].iItem == 9 && catalog[32].cItem == 0 && catalog[35].iItem == 12 && catalog[35].cItem == 0);
     for (i = 43; i < 64; i++)
         CHECK(catalog[i].cItem == 0 && catalog[i].grobj == 0 && catalog[i].pct == 0 && catalog[i].unused == 0);
-    reset(0, 0);
-    sel.pl.fStarbase = 1;
+    reset(app, 0, 0);
+    app.state.sel.pl.fStarbase = 1;
     hullDefs[0].hul.wtCargoMax = 100;
     for (i = 0; i < 4; i++) {
-        rgshdef[i].fFree = 0;
-        rgshdef[i].hul.wtEmpty = 100;
+        app.state.rgshdef[i].fFree = 0;
+        app.state.rgshdef[i].hul.wtEmpty = 100;
     }
-    rgshdef[0].fGift = 1;
-    rgshdef[1].hul.wtEmpty = 101;
-    rgshdef[2].fFree = 1;
-    InitProduction(catalog);
+    app.state.rgshdef[0].fGift = 1;
+    app.state.rgshdef[1].hul.wtEmpty = 101;
+    app.state.rgshdef[2].fFree = 1;
+    InitProduction(app, catalog);
     CHECK(catalog[0].grobj == 2 && catalog[0].iItem == 3 && catalog[1].grobj == 1);
-    reset(0, 0);
+    reset(app, 0, 0);
     primary = 8;
-    InitProduction(catalog);
-    CHECK(cProdGlob == 5 && catalog[0].iItem == 11 && catalog[1].iItem == 3 && catalog[4].iItem == 6);
-    reset(0, 0);
+    InitProduction(app, catalog);
+    CHECK(app.state.cProdGlob == 5 && catalog[0].iItem == 11 && catalog[1].iItem == 3 && catalog[4].iItem == 6);
+    reset(app, 0, 0);
     primary = 3;
-    InitProduction(catalog);
-    CHECK(cProdGlob == 7 && catalog[6].iItem == 6);
-    reset(0, 0);
+    InitProduction(app, catalog);
+    CHECK(app.state.cProdGlob == 7 && catalog[6].iItem == 6);
+    reset(app, 0, 0);
     maxFactories = -32768;
-    sel.pl.cFactories = 1;
-    InitProduction(catalog);
+    app.state.sel.pl.cFactories = 1;
+    InitProduction(app, catalog);
     CHECK(catalog[0].iItem == 7 && catalog[0].cItem == 1020);
     // One following row is a defined non-overlapping copy, but pointer and index diverge.
-    reset(2, 1);
+    reset(app, 2, 1);
     maxFactories = 1;
-    sel.pl.lpplprod->rgprod()[0] = bad;
-    sel.pl.lpplprod->rgprod()[1] = a;
-    sel.pl.lpplprod->rgprod()[1].pct = 66;
-    sel.pl.lpplprod->rgprod()[1].unused = 17;
-    InitProduction(catalog);
-    CHECK(lpplProdGlob->iprodMac == 1 && lpplProdGlob->rgprod()[0].cItem == 10 && lpplProdGlob->rgprod()[1].cItem == 1);
-    CHECK(lpplProdGlob->rgprod()[0].pct == 66 && lpplProdGlob->rgprod()[0].unused == 17 && catalog[0].cItem == 0 && sel.pl.lpplprod->rgprod()[1].cItem == 10);
-    reset(3, 1);
+    app.state.sel.pl.lpplprod->rgprod()[0] = bad;
+    app.state.sel.pl.lpplprod->rgprod()[1] = a;
+    app.state.sel.pl.lpplprod->rgprod()[1].pct = 66;
+    app.state.sel.pl.lpplprod->rgprod()[1].unused = 17;
+    InitProduction(app, catalog);
+    CHECK(app.state.lpplProdGlob->iprodMac == 1 && app.state.lpplProdGlob->rgprod()[0].cItem == 10 && app.state.lpplProdGlob->rgprod()[1].cItem == 1);
+    CHECK(app.state.lpplProdGlob->rgprod()[0].pct == 66 && app.state.lpplProdGlob->rgprod()[0].unused == 17 && catalog[0].cItem == 0 && app.state.sel.pl.lpplprod->rgprod()[1].cItem == 10);
+    reset(app, 3, 1);
     maxFactories = 2;
-    sel.pl.lpplprod->rgprod()[0] = bad;
-    sel.pl.lpplprod->rgprod()[1] = a;
-    sel.pl.lpplprod->rgprod()[2] = a;
+    app.state.sel.pl.lpplprod->rgprod()[0] = bad;
+    app.state.sel.pl.lpplprod->rgprod()[1] = a;
+    app.state.sel.pl.lpplprod->rgprod()[2] = a;
     try {
-        InitProduction(catalog);
+        InitProduction(app, catalog);
         CHECK(0);
     } catch (const FIXTUREESCAPE &) {
     }
-    CHECK(overlapBytes == 8 && overlapOffset == 0 && lpplProdGlob->iprodMac == 3 && catalog[0].cItem == 2);
-    reset(4, 1);
+    CHECK(overlapBytes == 8 && overlapOffset == 0 && app.state.lpplProdGlob->iprodMac == 3 && catalog[0].cItem == 2);
+    reset(app, 4, 1);
     maxFactories = 2;
-    sel.pl.lpplprod->rgprod()[0] = row(1, 7, 1);
-    sel.pl.lpplprod->rgprod()[1] = bad;
-    sel.pl.lpplprod->rgprod()[2] = a;
-    sel.pl.lpplprod->rgprod()[3] = a;
+    app.state.sel.pl.lpplprod->rgprod()[0] = row(1, 7, 1);
+    app.state.sel.pl.lpplprod->rgprod()[1] = bad;
+    app.state.sel.pl.lpplprod->rgprod()[2] = a;
+    app.state.sel.pl.lpplprod->rgprod()[3] = a;
     try {
-        InitProduction(catalog);
+        InitProduction(app, catalog);
         CHECK(0);
     } catch (const FIXTUREESCAPE &) {
     }
     CHECK(overlapBytes == 8 && overlapOffset == 1 && catalog[0].cItem == 1);
-    reset(2, 1);
+    reset(app, 2, 1);
     maxFactories = 5;
-    sel.pl.lpplprod->rgprod()[0] = row(3, 7, 1);
-    sel.pl.lpplprod->rgprod()[1] = row(4, 7, 1);
-    InitProduction(catalog);
-    CHECK(lpplProdGlob->rgprod()[0].cItem == 3 && lpplProdGlob->rgprod()[1].cItem == 2 && catalog[0].cItem == 0);
+    app.state.sel.pl.lpplprod->rgprod()[0] = row(3, 7, 1);
+    app.state.sel.pl.lpplprod->rgprod()[1] = row(4, 7, 1);
+    InitProduction(app, catalog);
+    CHECK(app.state.lpplProdGlob->rgprod()[0].cItem == 3 && app.state.lpplProdGlob->rgprod()[1].cItem == 2 && catalog[0].cItem == 0);
     // All finite/unlimited source amounts and modifier combinations for new rows.
     for (mode = 0; mode < 4; mode++)
         for (available = 1; available <= 1023; available++) {
-            working(0);
+            working(app, 0);
             ctrl = (mode & 2) != 0;
             shift = (mode & 1) != 0;
             catalog[0] = row(available, 7, 1);
-            cProdGlob = 1;
+            app.state.cProdGlob = 1;
             request = ctrl ? (shift ? 1020 : 100) : shift ? 10 : 1;
             if (request > available)
                 request = available;
-            command(IDC_PRODUCTION_ADD);
-            CHECK(lpplProdGlob->iprodMac == 1 && lpplProdGlob->rgprod()[0].cItem == (unsigned)request && lpplProdGlob->iprodMax == 4);
+            command(app, IDC_PRODUCTION_ADD);
+            CHECK(app.state.lpplProdGlob->iprodMac == 1 && app.state.lpplProdGlob->rgprod()[0].cItem == (unsigned)request && app.state.lpplProdGlob->iprodMax == 4);
             CHECK(catalog[0].cItem == (unsigned)(available == 1023 ? 1023 : available - request));
             CHECK(queueFill == 1 && sourceFill == (catalog[0].cItem == 0) && redraw == 1 && setSelection == 1 && reallocations == 1);
         }
-    working(2);
-    lpplProdGlob->rgprod()[0] = a;
-    lpplProdGlob->rgprod()[1] = b;
+    working(app, 2);
+    app.state.lpplProdGlob->rgprod()[0] = a;
+    app.state.lpplProdGlob->rgprod()[1] = b;
     catalog[0] = c;
-    cProdGlob = 1;
+    app.state.cProdGlob = 1;
     queueSelection = 1;
-    command(IDC_PRODUCTION_ADD);
-    CHECK(lpplProdGlob->iprodMac == 3 && lpplProdGlob->rgprod()[0].iItem == 7 && lpplProdGlob->rgprod()[1].iItem == 9 && lpplProdGlob->rgprod()[2].iItem == 8 &&
+    command(app, IDC_PRODUCTION_ADD);
+    CHECK(app.state.lpplProdGlob->iprodMac == 3 && app.state.lpplProdGlob->rgprod()[0].iItem == 7 && app.state.lpplProdGlob->rgprod()[1].iItem == 9 && app.state.lpplProdGlob->rgprod()[2].iItem == 8 &&
           setSelection == 2);
-    working(2);
-    lpplProdGlob->rgprod()[0] = a;
-    lpplProdGlob->rgprod()[1] = b;
+    working(app, 2);
+    app.state.lpplProdGlob->rgprod()[0] = a;
+    app.state.lpplProdGlob->rgprod()[1] = b;
     catalog[0] = b;
-    cProdGlob = 1;
+    app.state.cProdGlob = 1;
     queueSelection = 1;
-    command(100);
-    CHECK(lpplProdGlob->iprodMac == 2 && lpplProdGlob->rgprod()[1].cItem == 2 && reallocations == 0);
-    working(2);
-    lpplProdGlob->rgprod()[0] = a;
-    lpplProdGlob->rgprod()[1] = b;
+    command(app, 100);
+    CHECK(app.state.lpplProdGlob->iprodMac == 2 && app.state.lpplProdGlob->rgprod()[1].cItem == 2 && reallocations == 0);
+    working(app, 2);
+    app.state.lpplProdGlob->rgprod()[0] = a;
+    app.state.lpplProdGlob->rgprod()[1] = b;
     catalog[0] = c;
-    cProdGlob = 1;
+    app.state.cProdGlob = 1;
     queueSelection = 0;
-    command(IDC_PRODUCTION_ADD);
-    CHECK(lpplProdGlob->rgprod()[0].iItem == 9 && setSelection == 1);
-    working(2);
-    lpplProdGlob->rgprod()[0] = a;
-    lpplProdGlob->rgprod()[1] = b;
+    command(app, IDC_PRODUCTION_ADD);
+    CHECK(app.state.lpplProdGlob->rgprod()[0].iItem == 9 && setSelection == 1);
+    working(app, 2);
+    app.state.lpplProdGlob->rgprod()[0] = a;
+    app.state.lpplProdGlob->rgprod()[1] = b;
     catalog[0] = c;
-    cProdGlob = 1;
-    command(IDC_PRODUCTION_ADD);
-    CHECK(lpplProdGlob->rgprod()[2].iItem == 9 && setSelection == 3);
-    working(40);
+    app.state.cProdGlob = 1;
+    command(app, IDC_PRODUCTION_ADD);
+    CHECK(app.state.lpplProdGlob->rgprod()[2].iItem == 9 && setSelection == 3);
+    working(app, 40);
     for (i = 0; i < 40; i++)
-        lpplProdGlob->rgprod()[i] = a;
+        app.state.lpplProdGlob->rgprod()[i] = a;
     catalog[0] = c;
-    cProdGlob = 1;
+    app.state.cProdGlob = 1;
     queueSelection = 0;
-    command(IDC_PRODUCTION_ADD);
-    CHECK(lpplProdGlob->iprodMac == 40 && catalog[0].cItem == 0 && beeps == 1 && queueFill == 0 && sourceFill == 0 && redraw == 1);
+    command(app, IDC_PRODUCTION_ADD);
+    CHECK(app.state.lpplProdGlob->iprodMac == 40 && catalog[0].cItem == 0 && beeps == 1 && queueFill == 0 && sourceFill == 0 && redraw == 1);
     catalog[0] = a;
-    command(IDC_PRODUCTION_ADD);
-    CHECK(lpplProdGlob->iprodMac == 40 && lpplProdGlob->rgprod()[0].cItem == 11);
-    working(0);
+    command(app, IDC_PRODUCTION_ADD);
+    CHECK(app.state.lpplProdGlob->iprodMac == 40 && app.state.lpplProdGlob->rgprod()[0].cItem == 11);
+    working(app, 0);
     catalog[0] = row(0, 7, 1);
     catalog[1] = b;
-    cProdGlob = 2;
-    command(IDC_PRODUCTION_ADD);
-    CHECK(lpplProdGlob->rgprod()[0].iItem == 8 && catalog[0].cItem == 0 && catalog[1].cItem == 0 && sourceFill == 1);
-    working(0);
+    app.state.cProdGlob = 2;
+    command(app, IDC_PRODUCTION_ADD);
+    CHECK(app.state.lpplProdGlob->rgprod()[0].iItem == 8 && catalog[0].cItem == 0 && catalog[1].cItem == 0 && sourceFill == 1);
+    working(app, 0);
     sourceSelection = -1;
-    command(IDC_PRODUCTION_ADD);
-    CHECK(lpplProdGlob->iprodMac == 0 && redraw == 0 && queueFill == 0);
-    working(0);
-    cProdGlob = 0;
-    command(IDC_PRODUCTION_ADD);
-    CHECK(lpplProdGlob->rgprod()[0].cItem == 1 && catalog[0].cItem == 1023); // allocated inactive source slot
-    working(0);
+    command(app, IDC_PRODUCTION_ADD);
+    CHECK(app.state.lpplProdGlob->iprodMac == 0 && redraw == 0 && queueFill == 0);
+    working(app, 0);
+    app.state.cProdGlob = 0;
+    command(app, IDC_PRODUCTION_ADD);
+    CHECK(app.state.lpplProdGlob->rgprod()[0].cItem == 1 && catalog[0].cItem == 1023); // allocated inactive source slot
+    working(app, 0);
     catalog[0] = row(1023, 3, 1);
-    cProdGlob = 1;
+    app.state.cProdGlob = 1;
     shift = ctrl = 1;
-    command(IDC_PRODUCTION_ADD);
-    CHECK(lpplProdGlob->rgprod()[0].cItem == 1020);
-    command(IDC_PRODUCTION_ADD);
-    CHECK(lpplProdGlob->rgprod()[0].cItem == 1);
-    working(0);
+    command(app, IDC_PRODUCTION_ADD);
+    CHECK(app.state.lpplProdGlob->rgprod()[0].cItem == 1020);
+    command(app, IDC_PRODUCTION_ADD);
+    CHECK(app.state.lpplProdGlob->rgprod()[0].cItem == 1);
+    working(app, 0);
     catalog[0] = a;
-    cProdGlob = 1;
+    app.state.cProdGlob = 1;
     failReallocation = 1;
     try {
-        command(IDC_PRODUCTION_ADD);
+        command(app, IDC_PRODUCTION_ADD);
         CHECK(0);
     } catch (const FIXTUREESCAPE &) {
     }
-    CHECK(catalog[0].cItem == 9 && lpplProdGlob->iprodMac == 0 && queueFill == 0 && redraw == 0);
-    working(1);
-    lpplProdGlob->rgprod()[0] = row(1023, 7, 1);
-    lpplProdGlob->rgprod()[0].pct = 75;
+    CHECK(catalog[0].cItem == 9 && app.state.lpplProdGlob->iprodMac == 0 && queueFill == 0 && redraw == 0);
+    working(app, 1);
+    app.state.lpplProdGlob->rgprod()[0] = row(1023, 7, 1);
+    app.state.lpplProdGlob->rgprod()[0].pct = 75;
     catalog[0] = a;
-    cProdGlob = 1;
+    app.state.cProdGlob = 1;
     queueSelection = 1;
-    command(IDC_PRODUCTION_ADD);
-    CHECK(lpplProdGlob->rgprod()[0].cItem == 1020 && lpplProdGlob->rgprod()[0].pct == 75 && catalog[0].cItem == 9);
+    command(app, IDC_PRODUCTION_ADD);
+    CHECK(app.state.lpplProdGlob->rgprod()[0].cItem == 1020 && app.state.lpplProdGlob->rgprod()[0].pct == 75 && catalog[0].cItem == 9);
     // Remove uses native ten-bit return and preserves progress/unused on survivors.
     for (mode = 0; mode < 4; mode++)
         for (available = 0; available <= 1023; available++) {
-            working(1);
+            working(app, 1);
             ctrl = (mode & 2) != 0;
             shift = (mode & 1) != 0;
-            lpplProdGlob->rgprod()[0] = row(available, 7, 1);
+            app.state.lpplProdGlob->rgprod()[0] = row(available, 7, 1);
             catalog[0] = row(1020, 7, 1);
-            cProdGlob = 1;
+            app.state.cProdGlob = 1;
             queueSelection = 1;
             request = ctrl ? (shift ? 1020 : 100) : shift ? 10 : 1;
             if (request > available)
                 request = available;
-            command(IDC_PRODUCTION_REMOVE);
-            CHECK(lpplProdGlob->iprodMac == (available > request) && catalog[0].cItem == (unsigned)((1020 + request) % 1024));
+            command(app, IDC_PRODUCTION_REMOVE);
+            CHECK(app.state.lpplProdGlob->iprodMac == (available > request) && catalog[0].cItem == (unsigned)((1020 + request) % 1024));
             if (available > request)
-                CHECK(lpplProdGlob->rgprod()[0].cItem == (unsigned)(available - request));
+                CHECK(app.state.lpplProdGlob->rgprod()[0].cItem == (unsigned)(available - request));
         }
-    working(1);
-    lpplProdGlob->rgprod()[0] = row(4, 7, 1);
+    working(app, 1);
+    app.state.lpplProdGlob->rgprod()[0] = row(4, 7, 1);
     catalog[0] = row(1020, 7, 1);
-    cProdGlob = 1;
+    app.state.cProdGlob = 1;
     ctrl = 1;
     queueSelection = 1;
-    command(IDC_PRODUCTION_REMOVE);
-    CHECK(lpplProdGlob->iprodMac == 0 && catalog[0].cItem == 0 && setSelection == -99 && queueFill == 1 && sourceFill == 0);
-    working(1);
-    lpplProdGlob->rgprod()[0] = row(1023, 3, 1);
+    command(app, IDC_PRODUCTION_REMOVE);
+    CHECK(app.state.lpplProdGlob->iprodMac == 0 && catalog[0].cItem == 0 && setSelection == -99 && queueFill == 1 && sourceFill == 0);
+    working(app, 1);
+    app.state.lpplProdGlob->rgprod()[0] = row(1023, 3, 1);
     catalog[0] = row(1023, 3, 1);
-    cProdGlob = 1;
+    app.state.cProdGlob = 1;
     queueSelection = 1;
-    command(101);
-    CHECK(lpplProdGlob->iprodMac == 1 && lpplProdGlob->rgprod()[0].cItem == 3 && catalog[0].cItem == 1023);
-    working(2);
-    lpplProdGlob->rgprod()[0] = b;
-    lpplProdGlob->rgprod()[1] = c;
+    command(app, 101);
+    CHECK(app.state.lpplProdGlob->iprodMac == 1 && app.state.lpplProdGlob->rgprod()[0].cItem == 3 && catalog[0].cItem == 1023);
+    working(app, 2);
+    app.state.lpplProdGlob->rgprod()[0] = b;
+    app.state.lpplProdGlob->rgprod()[1] = c;
     catalog[0] = row(0, 8, 1);
-    cProdGlob = 1;
+    app.state.cProdGlob = 1;
     queueSelection = 1;
-    command(IDC_PRODUCTION_REMOVE);
-    CHECK(lpplProdGlob->iprodMac == 1 && lpplProdGlob->rgprod()[0].iItem == 9 && setSelection == 1 && sourceFill == 1);
-    working(1);
-    lpplProdGlob->rgprod()[0] = a;
-    lpplProdGlob->rgprod()[0].pct = 66;
-    lpplProdGlob->rgprod()[0].unused = 17;
+    command(app, IDC_PRODUCTION_REMOVE);
+    CHECK(app.state.lpplProdGlob->iprodMac == 1 && app.state.lpplProdGlob->rgprod()[0].iItem == 9 && setSelection == 1 && sourceFill == 1);
+    working(app, 1);
+    app.state.lpplProdGlob->rgprod()[0] = a;
+    app.state.lpplProdGlob->rgprod()[0].pct = 66;
+    app.state.lpplProdGlob->rgprod()[0].unused = 17;
     catalog[0] = a;
-    cProdGlob = 1;
+    app.state.cProdGlob = 1;
     queueSelection = 1;
-    command(IDC_PRODUCTION_REMOVE);
-    CHECK(lpplProdGlob->rgprod()[0].cItem == 9 && lpplProdGlob->rgprod()[0].pct == 66 && lpplProdGlob->rgprod()[0].unused == 17);
-    working(2);
-    lpplProdGlob->rgprod()[0] = a;
-    lpplProdGlob->rgprod()[1] = b;
+    command(app, IDC_PRODUCTION_REMOVE);
+    CHECK(app.state.lpplProdGlob->rgprod()[0].cItem == 9 && app.state.lpplProdGlob->rgprod()[0].pct == 66 && app.state.lpplProdGlob->rgprod()[0].unused == 17);
+    working(app, 2);
+    app.state.lpplProdGlob->rgprod()[0] = a;
+    app.state.lpplProdGlob->rgprod()[1] = b;
     queueSelection = 1;
-    command(IDC_PRODUCTION_ITEM_DOWN);
-    CHECK(lpplProdGlob->rgprod()[0].iItem == 8 && lpplProdGlob->rgprod()[1].iItem == 7 && setSelection == 2);
-    command(IDC_PRODUCTION_ITEM_UP);
-    CHECK(lpplProdGlob->rgprod()[0].iItem == 7 && setSelection == 1);
-    reset(0, 0);
+    command(app, IDC_PRODUCTION_ITEM_DOWN);
+    CHECK(app.state.lpplProdGlob->rgprod()[0].iItem == 8 && app.state.lpplProdGlob->rgprod()[1].iItem == 7 && setSelection == 2);
+    command(app, IDC_PRODUCTION_ITEM_UP);
+    CHECK(app.state.lpplProdGlob->rgprod()[0].iItem == 7 && setSelection == 1);
+    reset(app, 0, 0);
     printf("M09 linked editor witnesses: %d assertions passed\n", checks);
     return 0;
 }

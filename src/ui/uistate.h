@@ -364,14 +364,15 @@ enum class APPUISESSIONPHASE : uint8_t { ready, closing, closed };
 class APPUISESSION final : public APPSESSION {
 public:
     APPUISTATE ui;
+    APPUISESSION() noexcept : APPSESSION(&ui) {}
     APPUISESSIONPHASE phase = APPUISESSIONPHASE::ready;
 };
 
-APPUISTATE &GetAppUiState();
-void BeginAppUiSession() noexcept;
-bool FBeginAppUiClose() noexcept;
-void CancelAppUiClose() noexcept;
-void EndAppUiClose() noexcept;
+namespace ui { extern APPUISESSION app; }
+void BeginAppUiSession(APPSESSION &app) noexcept;
+bool FBeginAppUiClose(APPSESSION &app) noexcept;
+void CancelAppUiClose(APPSESSION &app) noexcept;
+void EndAppUiClose(APPSESSION &app) noexcept;
 void ResetScannerInspectorSession() noexcept;
 void CloseLibraryUiSession() noexcept;
 void ResetRaceUiSession() noexcept;

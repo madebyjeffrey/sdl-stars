@@ -1,5 +1,10 @@
 /* Application quit must unwind the real new-game modal loop. */
 #include "win.h"
+#include "appstate.h"
+#ifdef STARS_UI_SDL
+#include "uistate.h"
+#endif
+#include "callbackcontext.h"
 #include <stars_compat.h>
 #include "internal.h"
 #include <stdio.h>
@@ -17,6 +22,8 @@ static BOOL fNativeSaveOwner, fCheckIcon, fIconPassed;
 #endif
 
 static void  CheckQuit(HWND hwndTimer, UINT msg, UINT_PTR id, DWORD time) {
+    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+
     STARSCOMPATSNAPSHOT snap = {};
     HWND hwnd;
     SDL_Event event = {};
@@ -25,18 +32,18 @@ static void  CheckQuit(HWND hwndTimer, UINT msg, UINT_PTR id, DWORD time) {
     char szCollision[512];
 
     (void)hwndTimer; (void)msg; (void)id; (void)time;
-    if (iStage == 0 && win32::IsWindowVisible(hwndTitle)) {
+    if (iStage == 0 && win32::IsWindowVisible(app.lpui->hwndTitle)) {
         if (fLaunchFocus) {
-            hwnd = LpCompatWindow(hwndTitle);
+            hwnd = LpCompatWindow(app.lpui->hwndTitle);
             fLaunchFocusPassed = SDL_GetKeyboardFocus() == hwnd->lpWindow.get() &&
-                HwndCompatRoot(win32::GetFocus()) == hwndTitle;
+                HwndCompatRoot(win32::GetFocus()) == app.lpui->hwndTitle;
             if (!fLaunchFocusPassed && ++cFocusWait < 20) return;
         }
 #ifdef __APPLE__
         if (fCheckIcon) fIconPassed = FTestCocoaAppIcon();
 #endif
         iStage = 1;
-        win32::PostMessageA(hwndTitle, win32::WM_COMMAND, fRace ? IDC_LIBRARY_RACE_NEW : 0, 0);
+        win32::PostMessageA(app.lpui->hwndTitle, win32::WM_COMMAND, fRace ? IDC_LIBRARY_RACE_NEW : 0, 0);
         return;
     }
     if (iStage == 0 || fQuit || !StarsCompatCaptureHierarchy(&snap)) return;
@@ -46,7 +53,7 @@ static void  CheckQuit(HWND hwndTimer, UINT msg, UINT_PTR id, DWORD time) {
         if (FTestCocoaSaveOwner(SDL_GetPointerProperty(SDL_GetWindowProperties(hwnd->lpWindow.get()),
                 SDL_PROP_WINDOW_COCOA_WINDOW_POINTER, NULL))) {
             fOwnerPassed = win32::IsWindowVisible(hwndNewGame) && !win32::IsWindowEnabled(hwndNewGame) &&
-                !win32::IsWindowVisible(hwndFrame);
+                !win32::IsWindowVisible(app.lpui->hwndFrame);
             iStage = 3;
         }
     }
@@ -69,7 +76,7 @@ static void  CheckQuit(HWND hwndTimer, UINT msg, UINT_PTR id, DWORD time) {
                 break;
             } else if (iStage == 2 && win32::GetWindow(hwnd, win32::GW_OWNER) == hwndNewGame) {
                 fOwnerPassed = win32::IsWindowVisible(hwndNewGame) && !win32::IsWindowEnabled(hwndNewGame) &&
-                    !win32::IsWindowVisible(hwndFrame);
+                    !win32::IsWindowVisible(app.lpui->hwndFrame);
                 iStage = 3;
                 win32::PostMessageA(hwnd, win32::WM_COMMAND, IDCANCEL, 0);
                 break;
@@ -102,6 +109,13 @@ static void  CheckQuit(HWND hwndTimer, UINT msg, UINT_PTR id, DWORD time) {
 }
 
 int main(int argc, char **argv) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+
     char szCommand[] = "";
     UINT_PTR idTimer;
     int nResult;
@@ -122,7 +136,7 @@ int main(int argc, char **argv) {
     win32::KillTimer(NULL, idTimer);
     StarsCompatProcessExit();
     SDL_Quit();
-    if (nResult != 0 || !fQuit || gd.fNoIdleChecks) return 1;
+    if (nResult != 0 || !fQuit || app.state.gd.fNoIdleChecks) return 1;
     if (fCheckFocus && !fFocusPassed) {
         fprintf(stderr, "New-game dialog did not acquire native and control focus\n");
         return 1;

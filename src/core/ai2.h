@@ -8,11 +8,11 @@ extern uint8_t vrgISIshAip[];
 extern uint8_t vrgISAip[];
 extern uint8_t vrgAiISResOrder[];
 
-void    DoMaidAiTurn(PROD *rgprod);
-int16_t FPotentISWarFleet(FLEET *lpfl, int16_t iPotency);
-void    DoAutomitronAiTurn(PROD *rgprod);
-void    EnsureISShdefs(int16_t iroCur);
-void    DoRototillAiTurn(PROD *rgprod);
+void    DoMaidAiTurn(APPSESSION &app, PROD *rgprod);
+int16_t FPotentISWarFleet(APPSESSION &app, FLEET *lpfl, int16_t iPotency);
+void    DoAutomitronAiTurn(APPSESSION &app, PROD *rgprod);
+void    EnsureISShdefs(APPSESSION &app, int16_t iroCur);
+void    DoRototillAiTurn(APPSESSION &app, PROD *rgprod);
 void    EnsureCAShdefs(int16_t iroCur);
 
 #endif

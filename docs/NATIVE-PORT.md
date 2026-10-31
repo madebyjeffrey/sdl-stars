@@ -98,6 +98,13 @@ instances and `Yield` no-ops are removed after checking their argument effects.
 application-quit behavior. The [C07 macro ledger](CPP-C07-MACROS.md) records each
 retained preprocessing role and conversion contract.
 
+Owned game/UI calls receive `APPSESSION &` explicitly. The actual host and UI
+owners retain their pre-main lifetime; the former global reference aliases and
+owner getters are removed. Fixed-signature callbacks borrow their target's
+context, including queued thread timers, and restore the caller on nested/error
+paths. The core's UI borrow is an incomplete type, keeping the host SDL-free.
+See the [C08 state ledger](CPP-C08-STATE.md) for entry and lifetime contracts.
+
 Each native-port shim is marked `NATIVE` in the source and described in
 detail in [WIN16-PARITY.md](WIN16-PARITY.md).
 

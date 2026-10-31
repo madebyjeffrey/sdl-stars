@@ -21,7 +21,6 @@ inline constexpr auto WM_STARS_SCAN_RESIZE = (win32::WM_APP + 2);
 #include "buildui.h"
 #include "createui.h"
 #include "fileui.h"
-#include "globalsui.h"
 #include "init.h"
 #include "logui.h"
 #include "libraryui.h"

@@ -6,7 +6,7 @@
 #include <windows.h>
 
 INT_PTR  AskSaveDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
-int16_t FCanLeaveCurrentGame(void);
+int16_t FCanLeaveCurrentGame(APPSESSION &app);
 
 
 #endif

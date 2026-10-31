@@ -1,6 +1,8 @@
 #ifndef STARS_DECOMPILED_COMMON_H
 #define STARS_DECOMPILED_COMMON_H
 
+class APPSESSION;
+
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -32,6 +34,8 @@ static inline void RawStore32(void *p, uint32_t v) { memcpy(p, &v, sizeof v); }
 // Comparator for qsort and bsearch, which call it through the native int
 // return type.
 typedef int (*QSORTCOMPARE)(const void *, const void *);
+// Owned sorting passes its report/game owner; the foreign search ABI stays separate.
+typedef int (*APPQSORTCOMPARE)(APPSESSION &, const void *, const void *);
 
 #include "structs.h"
 #include "streamcodec.h"

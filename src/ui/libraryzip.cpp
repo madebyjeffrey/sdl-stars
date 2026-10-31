@@ -102,7 +102,7 @@ static int16_t FZipEnsureCapacity(ZIPFILES *pz) {
     return 1;
 }
 
-static int16_t FCollectZipFiles(void *lpData, const char *pszName) {
+static int16_t FCollectZipFiles(APPSESSION &app, void *lpData, const char *pszName) {
     ZIPFILES *pz = (ZIPFILES *)lpData;
     char szPath[512], *pszRelative;
     int16_t fDir, fLink;
@@ -119,7 +119,7 @@ static int16_t FCollectZipFiles(void *lpData, const char *pszName) {
     if (fDir) {
         /* Game export stages contain only regular files and backup directories. */
         zfChild.pszRoot = szPath;
-        if (!FNativeEnumerateDirectory(szPath, FCollectZipFiles, &zfChild) || zfChild.fBad) pz->fBad = 1;
+        if (!FNativeEnumerateDirectory(app, szPath, FCollectZipFiles, &zfChild) || zfChild.fBad) pz->fBad = 1;
         for (i = 0; i < zfChild.c; i++) {
             cbName = strlen(pszName) + strlen(zfChild.rgpsz[i]) + 2;
             NATIVEOWNER<char, SDL_free> relative(static_cast<char *>(SDL_malloc(cbName)));
@@ -172,7 +172,7 @@ static int16_t FWriteZipEntry(NATIVEFILE *pfZip, const char *pszRoot, ZIPENTRY *
     return !FNativeStreamError(pfZip);
 }
 
-int16_t FZipLibraryDirectory(const char *pszDirectory, const char *pszArchive) {
+int16_t FZipLibraryDirectory(APPSESSION &app, const char *pszDirectory, const char *pszArchive) {
     ZIPFILES zf = {0};
     ZIPENTRY *rgzentry = NULL;
     char szTemp[512] = "";
@@ -189,7 +189,7 @@ int16_t FZipLibraryDirectory(const char *pszDirectory, const char *pszArchive) {
         SDL_free(zf.rgpsz); SDL_free(rgzentry);
     });
     zf.pszRoot = pszDirectory;
-    if (!FNativeEnumerateDirectory(pszDirectory, FCollectZipFiles, &zf) || zf.fBad || zf.c > UINT16_MAX) goto done;
+    if (!FNativeEnumerateDirectory(app, pszDirectory, FCollectZipFiles, &zf) || zf.fBad || zf.c > UINT16_MAX) goto done;
     for (i = 0; i < 1000; i++) {
         cchTemp = CchSnprintf(szTemp, sizeof(szTemp), "%s.tmp.%u", pszArchive, idZipTemp++);
         if (cchTemp <= 0 || (size_t)cchTemp >= sizeof(szTemp)) goto done;

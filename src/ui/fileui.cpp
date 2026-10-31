@@ -1,4 +1,7 @@
 #include "win.h"
+#include "callbackcontext.h"
+#include "appstate.h"
+#include "uistate.h"
 #include "control_io.h"
 #include "profile_text_io.h"
 #include "text_io.h"
@@ -6,6 +9,7 @@
 #include "desktop_choice_io.h"
 
 INT_PTR  AskSaveDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
     switch (message) {
     case win32::WM_INITDIALOG:
         return 1;
@@ -20,7 +24,7 @@ INT_PTR  AskSaveDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             ControlIO().pfnEndDialog(hwnd, -2);
             return 1;
         case IDC_HELP:
-            win32::WinHelpA(hwnd, szHelpFile, win32::HELP_CONTEXT, 1090);
+            win32::WinHelpA(hwnd, app.lpui->szHelpFile, win32::HELP_CONTEXT, 1090);
             return 1;
         }
         /* fallthrough */
@@ -30,52 +34,52 @@ INT_PTR  AskSaveDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     }
 }
 
-void PromptSaveGame() {
+void PromptSaveGame(APPSESSION &app) {
     FARPROC lpProc;
     int16_t fRet;
 
     lpProc = (DesktopChoiceIO().pfnAskSaveDialog);
-    fRet = ControlIO().pfnDialogBox(hInst, !game.fSinglePlr ? win32::MAKEINTRESOURCE(IDD_SAVE_TURN1) : win32::MAKEINTRESOURCE(IDD_SAVE_TURN2), hwndFrame, lpProc, 0);
+    fRet = ControlIO().pfnDialogBox(app.lpui->hInst, !app.state.game.fSinglePlr ? win32::MAKEINTRESOURCE(IDD_SAVE_TURN1) : win32::MAKEINTRESOURCE(IDD_SAVE_TURN2), app.lpui->hwndFrame, lpProc, 0);
     if (fRet == 1 || fRet == -1) {
-        gd.fSubmit = fRet == -1;
-        FWriteLogFile(szBase, idPlayer);
-        FWriteHistFile(idPlayer);
+        app.state.gd.fSubmit = fRet == -1;
+        FWriteLogFile(app, app.state.szBase, app.state.idPlayer);
+        FWriteHistFile(app, app.state.idPlayer);
     }
     return;
 }
 
-int16_t FCanLeaveCurrentGame(void) {
+int16_t FCanLeaveCurrentGame(APPSESSION &app) {
     FARPROC lpProc;
     int16_t fRet;
     int16_t fSubmitSav;
 
-    if (idPlayer == iplrNone || !game.fDirty) return 1;
+    if (app.state.idPlayer == iplrNone || !app.state.game.fDirty) return 1;
     lpProc = (DesktopChoiceIO().pfnAskSaveDialog);
-    fRet = ControlIO().pfnDialogBox(hInst, !game.fSinglePlr ? win32::MAKEINTRESOURCE(IDD_SAVE_TURN1) : win32::MAKEINTRESOURCE(IDD_SAVE_TURN2),
-                     hwndFrame, lpProc, 0);
+    fRet = ControlIO().pfnDialogBox(app.lpui->hInst, !app.state.game.fSinglePlr ? win32::MAKEINTRESOURCE(IDD_SAVE_TURN1) : win32::MAKEINTRESOURCE(IDD_SAVE_TURN2),
+                     app.lpui->hwndFrame, lpProc, 0);
     if (fRet == 0 || fRet == -2) return 0;
     if (fRet == 1 || fRet == -1) {
-        fSubmitSav = gd.fSubmit;
-        gd.fSubmit = fRet == -1;
-        if (!FWriteLogFile(szBase, idPlayer) || !FWriteHistFile(idPlayer)) {
-            gd.fSubmit = fSubmitSav;
+        fSubmitSav = app.state.gd.fSubmit;
+        app.state.gd.fSubmit = fRet == -1;
+        if (!FWriteLogFile(app, app.state.szBase, app.state.idPlayer) || !FWriteHistFile(app, app.state.idPlayer)) {
+            app.state.gd.fSubmit = fSubmitSav;
             /* The orders writer clears dirty before the history save. */
-            RecordIO().pfnDirtyGame(1);
+            RecordIO().pfnDirtyGame(app, 1);
             return 0;
         }
     }
-    game.fDirty = 0;
+    app.state.game.fDirty = 0;
     return 1;
 }
 
 // ShowTitleScreen brings back the title screen when FLoadGame fails.
-void ShowTitleScreen() {
+void ShowTitleScreen(APPSESSION &app) {
     RECT rcWork;
     RECT rc;
     DWORD dwStyle;
     int dx, dy, x, y;
 
-    if (!hwndTitle) {
+    if (!app.lpui->hwndTitle) {
         dwStyle = win32::WS_OVERLAPPED | win32::WS_CAPTION | win32::WS_SYSMENU | win32::WS_MINIMIZEBOX;
         if (!win32::SystemParametersInfoA(win32::SPI_GETWORKAREA, 0, &rcWork, 0)) {
             win32::SetRect(&rcWork, 0, 0, win32::GetSystemMetrics(win32::SM_CXSCREEN), win32::GetSystemMetrics(win32::SM_CYSCREEN));
@@ -87,19 +91,19 @@ void ShowTitleScreen() {
                  win32::GetSystemMetrics(win32::SM_CYCAPTION) - 2 * win32::GetSystemMetrics(win32::SM_CYDLGFRAME)));
         x = rcWork.left + (rcWork.right - rcWork.left - dx) / 2;
         y = rcWork.top + (rcWork.bottom - rcWork.top - dy) / 2;
-        hwndTitle = ui::CreateWindowEx(0, szTitle, "Stars!", dwStyle | win32::WS_VISIBLE, x, y, dx, dy, hwndFrame, NULL, hInst, NULL);
+        app.lpui->hwndTitle = ui::CreateWindowEx(0, app.lpui->szTitle, "Stars!", dwStyle | win32::WS_VISIBLE, x, y, dx, dy, app.lpui->hwndFrame, NULL, app.lpui->hInst, NULL);
         if (getenv("STARS_DEBUG_LIBRARY_STARTUP"))
             fprintf(stderr, "[DEBUG-library-startup] ShowTitleScreen CreateWindow returned title=%p valid=%d visible=%d\n",
-                    (void *)hwndTitle, win32::IsWindow(hwndTitle), win32::IsWindowVisible(hwndTitle));
-        fFreeingTitle = 0;
-        ui::ShowWindow(hwndFrame, win32::SW_HIDE);
+                    (void *)app.lpui->hwndTitle, win32::IsWindow(app.lpui->hwndTitle), win32::IsWindowVisible(app.lpui->hwndTitle));
+        app.lpui->fFreeingTitle = 0;
+        ui::ShowWindow(app.lpui->hwndFrame, win32::SW_HIDE);
     }
     return;
 }
 
 // AddMRUFile puts a game the player opened at the top of the File menu's
 // recent files and saves the list to stars.ini.
-void AddMRUFile(const char *pszFileName, const char *pszExt) {
+void AddMRUFile(APPSESSION &app, const char *pszFileName, const char *pszExt) {
     int16_t i;
     char    szT[256];
     char    szIniFile[16];
@@ -107,26 +111,26 @@ void AddMRUFile(const char *pszFileName, const char *pszExt) {
     char   *psz;
     char    szEntry[16];
 
-    if (!vrgszMRU) {
+    if (!app.lpui->vrgszMRU) {
         return;
     }
     strcpy(szT, pszFileName);
     strcat(szT, ".");
     strcat(szT, pszExt);
-    if (_stricmp(szT, vrgszMRU) != 0) {
-        for (i = 1; i < 8 && _stricmp(szT, vrgszMRU + 256 * i) != 0; i++) {
+    if (_stricmp(szT, app.lpui->vrgszMRU) != 0) {
+        for (i = 1; i < 8 && _stricmp(szT, app.lpui->vrgszMRU + 256 * i) != 0; i++) {
         }
         for (; i >= 1; i--) {
-            strcpy(vrgszMRU + 256 * i, vrgszMRU + 256 * (i - 1));
+            strcpy(app.lpui->vrgszMRU + 256 * i, app.lpui->vrgszMRU + 256 * (i - 1));
         }
-        strcpy(vrgszMRU, szT);
-        TextIO().pfnCchGetString(idsStarsIni, szIniFile);
-        TextIO().pfnCchGetString(idsFiles, szSection);
-        TextIO().pfnCchGetString(idsFile1, szEntry);
+        strcpy(app.lpui->vrgszMRU, szT);
+        TextIO().pfnCchGetString(app, idsStarsIni, szIniFile);
+        TextIO().pfnCchGetString(app, idsFiles, szSection);
+        TextIO().pfnCchGetString(app, idsFile1, szEntry);
         psz = &szEntry[strlen(szEntry) - 1];
         for (i = 0; i < 9; i++) {
             *psz = i + '1';
-            strcpy(szT, vrgszMRU + 256 * i);
+            strcpy(szT, app.lpui->vrgszMRU + 256 * i);
             ProfileTextIO().pfnWriteString(szSection, szEntry, szT, szIniFile);
         }
     }
@@ -135,28 +139,28 @@ void AddMRUFile(const char *pszFileName, const char *pszExt) {
 
 // CloseGameWindows closes the windows that show the game DestroyCurGame
 // is unloading and resets the tile layout.
-void CloseGameWindows() {
+void CloseGameWindows(APPSESSION &app) {
     int16_t i;
 
-    if (hwndBrowser) {
-        ControlIO().pfnDestroyWindow(hwndBrowser);
+    if (app.lpui->hwndBrowser) {
+        ControlIO().pfnDestroyWindow(app.lpui->hwndBrowser);
     }
-    if (hwndReportDlg) {
-        ControlIO().pfnDestroyWindow(hwndReportDlg);
+    if (app.lpui->hwndReportDlg) {
+        ControlIO().pfnDestroyWindow(app.lpui->hwndReportDlg);
     }
-    if (hwndPopup) {
-        ControlIO().pfnDestroyWindow(hwndPopup);
-        hwndPopup = 0;
+    if (app.lpui->hwndPopup) {
+        ControlIO().pfnDestroyWindow(app.lpui->hwndPopup);
+        app.lpui->hwndPopup = 0;
     }
-    hwndActive = 0;
-    fOrdersVis = 0;
-    dxPlanetProdLB = 0;
-    dxOrderED = 0;
-    dxFleetCompLB = 0;
-    dxShipLB = 0;
-    dxShipDD = 0;
+    app.lpui->hwndActive = 0;
+    app.lpui->fOrdersVis = 0;
+    app.lpui->dxPlanetProdLB = 0;
+    app.lpui->dxOrderED = 0;
+    app.lpui->dxFleetCompLB = 0;
+    app.lpui->dxShipLB = 0;
+    app.lpui->dxShipDD = 0;
     for (i = 0; i < 3; i++) {
-        rgdxOrderDD[i] = 0;
+        app.lpui->rgdxOrderDD[i] = 0;
     }
     return;
 }

@@ -115,4 +115,7 @@ integer truth spellings only. Local receipts: `dist/verification/c07/`.
 The first Linux CI build finds one remaining string-literal concatenation in
 `filedialog_portal.cpp`. It now formats the typed `PORTAL_PATH` as `%s`, followed
 by the same request/sender/token bytes. No portal path, argument or truncation
-limit changes. Corrected Linux/platform reruns are pending.
+limit changes. Corrected commit `bcdd77bf` passes all 14 enabled PR jobs and all five jobs in
+the [manual platform run](https://github.com/madebyjeffrey/sdl-stars/actions/runs/41211202982):
+Linux 153/153; Windows probe 2/2, game units 13/13 and platform checks 88/88.
+The separate SDK configuration matrix remains C09/C10 work.

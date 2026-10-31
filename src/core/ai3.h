@@ -8,11 +8,11 @@ extern MacintiRecipe vrgMacIshAip[];
 extern uint8_t       vrgMacAip[];
 extern uint8_t       vrgAiMacintiResOrder[];
 
-void    DoMacintiAiTurn(PROD *rgprod);
-void    EnsureMacintiShdefs();
-int16_t FRetargetMiner(FLEET *lpfl);
-int16_t IdTargetMacFreighter(FLEET *lpfl);
-void    TargetMacArmada(FLEET *lpfl);
-int16_t FPotentMacWarFleet(FLEET *lpfl, int16_t *pcEquiv);
+void    DoMacintiAiTurn(APPSESSION &app, PROD *rgprod);
+void    EnsureMacintiShdefs(APPSESSION &app);
+int16_t FRetargetMiner(APPSESSION &app, FLEET *lpfl);
+int16_t IdTargetMacFreighter(APPSESSION &app, FLEET *lpfl);
+void    TargetMacArmada(APPSESSION &app, FLEET *lpfl);
+int16_t FPotentMacWarFleet(APPSESSION &app, FLEET *lpfl, int16_t *pcEquiv);
 
 #endif

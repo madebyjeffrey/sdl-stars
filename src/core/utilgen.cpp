@@ -1,4 +1,5 @@
 #include "common.h"
+#include "appstate.h"
 #include "text_io.h"
 #include "player_choice_io.h"
 #include "record_io.h"
@@ -9,23 +10,23 @@ int16_t rgPrimes[128] = {3,   5,   7,   11,  13,  17,  19,  23,  29,  31,  37,  
                          409, 419, 421, 431, 433, 439, 443, 449, 457, 461, 463, 467, 479, 487, 491, 499, 503, 509, 521, 523, 541, 547, 557, 563, 569, 571,
                          577, 587, 593, 599, 601, 607, 613, 617, 619, 631, 641, 643, 647, 653, 659, 661, 673, 677, 683, 691, 701, 709, 719, 727};
 
-void PushRandom(int32_t lNew1, int32_t lNew2) {
-    rglRandStack[cRandStack][0] = lRandSeed1;
-    rglRandStack[cRandStack][1] = lRandSeed2;
-    cRandStack++;
-    lRandSeed1 = lNew1;
-    lRandSeed2 = lNew2;
+void PushRandom(APPSESSION &app, int32_t lNew1, int32_t lNew2) {
+    app.state.rglRandStack[app.state.cRandStack][0] = app.state.lRandSeed1;
+    app.state.rglRandStack[app.state.cRandStack][1] = app.state.lRandSeed2;
+    app.state.cRandStack++;
+    app.state.lRandSeed1 = lNew1;
+    app.state.lRandSeed2 = lNew2;
     return;
 }
 
-void PopRandom() {
-    cRandStack--;
-    lRandSeed1 = rglRandStack[cRandStack][0];
-    lRandSeed2 = rglRandStack[cRandStack][1];
+void PopRandom(APPSESSION &app) {
+    app.state.cRandStack--;
+    app.state.lRandSeed1 = app.state.rglRandStack[app.state.cRandStack][0];
+    app.state.lRandSeed2 = app.state.rglRandStack[app.state.cRandStack][1];
     return;
 }
 
-void Randomize(uint32_t dw) {
+void Randomize(APPSESSION &app, uint32_t dw) {
     int16_t a;
     int16_t b;
 
@@ -34,12 +35,12 @@ void Randomize(uint32_t dw) {
     if (a == b) {
         b = (b + 1) & 0x3f;
     }
-    lRandSeed1 = rgPrimes[a];
-    lRandSeed2 = rgPrimes[b];
+    app.state.lRandSeed1 = rgPrimes[a];
+    app.state.lRandSeed2 = rgPrimes[b];
     return;
 }
 
-void Randomize2(uint32_t dw) {
+void Randomize2(APPSESSION &app, uint32_t dw) {
     int16_t a;
     int16_t b;
 
@@ -50,19 +51,19 @@ void Randomize2(uint32_t dw) {
     if (a == b) {
         b = (b + 1) & 0x7f;
     }
-    lRandSeed1 = rgPrimes[a];
-    lRandSeed2 = rgPrimes[b];
+    app.state.lRandSeed1 = rgPrimes[a];
+    app.state.lRandSeed2 = rgPrimes[b];
     return;
 }
 
-int16_t Random(int16_t c) {
+int16_t Random(APPSESSION &app, int16_t c) {
     int32_t z;
     int32_t s1;
     int32_t k;
     int32_t s2;
 
-    s1 = lRandSeed1;
-    s2 = lRandSeed2;
+    s1 = app.state.lRandSeed1;
+    s2 = app.state.lRandSeed2;
     k = (int32_t)(s1 / 53668);
     s1 = (uint32_t)((s1 - (uint32_t)(k * 53668)) * 0x9c4e) - (uint32_t)(k * 12211);
     if (s1 < 0) {
@@ -77,27 +78,27 @@ int16_t Random(int16_t c) {
     if (z < 1) {
         z += 2147483562;
     }
-    lRandSeed1 = s1;
-    lRandSeed2 = s2;
+    app.state.lRandSeed1 = s1;
+    app.state.lRandSeed2 = s2;
     if (c <= 0) {
         return 0;
     }
     return LOWORD((uint32_t)((uint32_t)z % c));
 }
 
-void GetFileSeeds(int32_t *pl1, int32_t *pl2) {
-    *pl1 = lFileSeed1;
-    *pl2 = lFileSeed2;
+void GetFileSeeds(APPSESSION &app, int32_t *pl1, int32_t *pl2) {
+    *pl1 = app.state.lFileSeed1;
+    *pl2 = app.state.lFileSeed2;
     return;
 }
 
-void SetFileSeeds(int32_t l1, int32_t l2) {
-    lFileSeed1 = l1;
-    lFileSeed2 = l2;
+void SetFileSeeds(APPSESSION &app, int32_t l1, int32_t l2) {
+    app.state.lFileSeed1 = l1;
+    app.state.lFileSeed2 = l2;
     return;
 }
 
-void SetFileXorStream(int32_t lid, int16_t lSalt, int16_t turn, int16_t iPlayer, int16_t fCrippled) {
+void SetFileXorStream(APPSESSION &app, int32_t lid, int16_t lSalt, int16_t turn, int16_t iPlayer, int16_t fCrippled) {
     int16_t a;
     int16_t b;
 
@@ -108,22 +109,22 @@ void SetFileXorStream(int32_t lid, int16_t lSalt, int16_t turn, int16_t iPlayer,
     } else {
         b += 32;
     }
-    lFileSeed1 = rgPrimes[a];
-    lFileSeed2 = rgPrimes[b];
+    app.state.lFileSeed1 = rgPrimes[a];
+    app.state.lFileSeed2 = rgPrimes[b];
     a = ((LOWORD(lid) & 3) + 1) * ((turn & 3) + 1) * ((iPlayer & 3) + 1) + fCrippled;
     while (a-- > 0) {
-        LGetNextFileXor();
+        LGetNextFileXor(app);
     }
     return;
 }
 
-int32_t LGetNextFileXor() {
+int32_t LGetNextFileXor(APPSESSION &app) {
     int32_t s1;
     int32_t k;
     int32_t s2;
 
-    s1 = lFileSeed1;
-    s2 = lFileSeed2;
+    s1 = app.state.lFileSeed1;
+    s2 = app.state.lFileSeed2;
     k = (int32_t)(s1 / 53668);
     s1 = (uint32_t)((s1 - (uint32_t)(k * 53668)) * 0x9c4e) - (uint32_t)(k * 12211);
     if (s1 < 0) {
@@ -134,12 +135,12 @@ int32_t LGetNextFileXor() {
     if (s2 < 0) {
         s2 += 2147483399;
     }
-    lFileSeed1 = s1;
-    lFileSeed2 = s2;
+    app.state.lFileSeed1 = s1;
+    app.state.lFileSeed2 = s2;
     return s1 - s2;
 }
 
-void XorFileBuf(char *rgb, int16_t cb) {
+void XorFileBuf(APPSESSION &app, char *rgb, int16_t cb) {
     char    *plMac;
     char    *pl;
     int32_t  lPrev;
@@ -150,7 +151,7 @@ void XorFileBuf(char *rgb, int16_t cb) {
     pl = rgb;
     plMac = pl + (cb >> 2) * 4;
     for (; pl < plMac; pl += 4) {
-        lPrev = LGetNextFileXor();
+        lPrev = LGetNextFileXor(app);
         NATIVEBYTEREADER(std::as_bytes(std::span(pl, 4))).FReadU32Le(ul);
         ul ^= static_cast<uint32_t>(lPrev);
         NATIVEBYTEWRITER(std::as_writable_bytes(std::span(pl, 4))).FWriteU32Le(ul);
@@ -158,7 +159,7 @@ void XorFileBuf(char *rgb, int16_t cb) {
     cb &= 3;
     if (cb > 0) {
         pch = (char *)pl;
-        lPrev = LGetNextFileXor();
+        lPrev = LGetNextFileXor(app);
         while (cb-- != 0) {
             *pch ^= (int16_t)(int8_t)LOBYTE(LOWORD(lPrev) & 0xff);
             lPrev = (int32_t)(lPrev >> 8);
@@ -168,9 +169,9 @@ void XorFileBuf(char *rgb, int16_t cb) {
     return;
 }
 
-int ICompLong(int32_t *pl1, int32_t *pl2) { return (int16_t)(*pl1 - *pl2); }
+int ICompLong(APPSESSION &, int32_t *pl1, int32_t *pl2) { return (int16_t)(*pl1 - *pl2); }
 
-char *PszGetCompressedPlanet(int16_t id) {
+char *PszGetCompressedPlanet(APPSESSION &app, int16_t id) {
     int16_t  fCap;
     int16_t  iOffset;
     int16_t  fHigh;
@@ -187,8 +188,8 @@ char *PszGetCompressedPlanet(int16_t id) {
     if (id >= cPlanetName) {
         id %= cPlanetName;
     }
-    if (id == iLastGet) {
-        return szLastGet;
+    if (id == app.state.iLastGet) {
+        return app.state.szLastGet;
     }
     iChunk = id >> 6;
     iOffset = id & 0x3f;
@@ -203,7 +204,7 @@ char *PszGetCompressedPlanet(int16_t id) {
     pch += iNibble >> 1;
     iLen = *pchLen;
     fHigh = (iNibble & 1) == 0;
-    pszOut = szLastGet;
+    pszOut = app.state.szLastGet;
     iBuild = 0;
     fCap = 1;
     while (iLen-- != 0) {
@@ -229,7 +230,7 @@ char *PszGetCompressedPlanet(int16_t id) {
         }
     }
     *pszOut = 0;
-    return szLastGet;
+    return app.state.szLastGet;
 }
 
 void OutputFileString(const char *szFile, const char *sz) {
@@ -250,55 +251,55 @@ void OutputFileString(const char *szFile, const char *sz) {
     return;
 }
 
-void StarsCopyFile(const char *szSrc, const char *szDst) {
+void StarsCopyFile(APPSESSION &app, const char *szSrc, const char *szDst) {
     char     rgb[2048];
     int16_t  fMissing;
     int16_t  hfDst;
     int32_t  cb;
 
     hfDst = -1;
-    StarsRestore<int16_t> restoreSilent(fFileErrSilent);
+    StarsRestore<int16_t> restoreSilent(app.state.fFileErrSilent);
     StarsFileGuard closeDestination(hfDst);
     StarsRecoveryScope scopeRecovery;
-    fFileErrSilent = 1;
+    app.state.fFileErrSilent = 1;
     try {
-        RecordIO().pfnStreamOpen(szSrc, mdRead);
+        RecordIO().pfnStreamOpen(app, szSrc, mdRead);
         hfDst = HfOpenFile(szDst, 4114, &fMissing);
         if (hfDst == -1)
             goto LStreamError;
-        for (cb = CbFileSize(hf); cb > 2048; cb -= 2048) {
-            RgFromStream(rgb, 0x800);
+        for (cb = CbFileSize(app.state.hf); cb > 2048; cb -= 2048) {
+            RgFromStream(app, rgb, 0x800);
             if (CbWriteFile(hfDst, rgb, 0x800) != 0x800)
                 goto LStreamError;
         }
         if (cb != 0) {
-            RgFromStream(rgb, LOWORD(cb));
+            RgFromStream(app, rgb, LOWORD(cb));
             CbWriteFile(hfDst, rgb, LOWORD(cb));
         }
     } catch (const StarsError &) {
     }
 LStreamError:
-    RecordIO().pfnStreamClose();
+    RecordIO().pfnStreamClose(app);
     return;
 }
 
-int16_t AlertSz(const char *sz, int16_t mbType) {
+int16_t AlertSz(APPSESSION &app, const char *sz, int16_t mbType) {
     char szT[256];
 
-    if (ini.fValidate || (ini.fLogging && ini.fGen)) {
+    if (app.state.ini.fValidate || (app.state.ini.fLogging && app.state.ini.fGen)) {
         CchSprintf(szT, "Error: %s", sz);
-        OutputSz(!ini.fValidate ? 6 : 7, szT);
+        OutputSz(app, !app.state.ini.fValidate ? 6 : 7, szT);
         return win32::IDYES;
     }
     return IdAlertBox(sz, mbType);
 }
 
-int16_t CchGetString(StringId ids, char *psz) {
+int16_t CchGetString(APPSESSION &app, StringId ids, char *psz) {
     char *pszT;
     char *pszTT;
 
     pszTT = psz;
-    pszT = TextIO().pfnCompressed(ids);
+    pszT = TextIO().pfnCompressed(app, ids);
     while (*pszT != 0) {
         *psz++ = *pszT++;
     }
@@ -306,28 +307,28 @@ int16_t CchGetString(StringId ids, char *psz) {
     return psz - pszTT;
 }
 
-char *PszFromInt(int16_t i, int16_t *pcch) {
+char *PszFromInt(APPSESSION &app, int16_t i, int16_t *pcch) {
     int16_t cch;
 
-    cch = CchSprintf(szFormatNumber, PCTD, i);
+    cch = CchSprintf(app.state.szFormatNumber, app.state.PCTD, i);
     if (pcch) {
         *pcch = cch;
     }
-    return szFormatNumber;
+    return app.state.szFormatNumber;
 }
 
-char *PszFromLong(int32_t l, int16_t *pcch) {
+char *PszFromLong(APPSESSION &app, int32_t l, int16_t *pcch) {
     int16_t cch;
 
-    cch = CchSprintf(szFormatNumber, PCTLD, l);
+    cch = CchSprintf(app.state.szFormatNumber, app.state.PCTLD, l);
     /* The original tested *pcch, reading through the report dumps' NULL. */
     if (pcch) {
         *pcch = cch;
     }
-    return szFormatNumber;
+    return app.state.szFormatNumber;
 }
 
-char *PszFromLongK(int32_t l, int16_t *pcch) {
+char *PszFromLongK(APPSESSION &app, int32_t l, int16_t *pcch) {
     int16_t fExtraLarge;
     int16_t fLarge;
     char   *psz;
@@ -345,7 +346,7 @@ char *PszFromLongK(int32_t l, int16_t *pcch) {
             l = 999;
         }
     }
-    psz = PszFromInt(LOWORD(l), pcch);
+    psz = PszFromInt(app, LOWORD(l), pcch);
     if (fExtraLarge) {
         psz[(*pcch)++] = 'M';
     } else if (fLarge) {
@@ -354,14 +355,14 @@ char *PszFromLongK(int32_t l, int16_t *pcch) {
     return psz;
 }
 
-int16_t CommaFormatLong(char *psz, int32_t l) {
+int16_t CommaFormatLong(APPSESSION &app, char *psz, int32_t l) {
     char    rgch[15];
     int16_t c;
     int16_t cSkip;
     char   *pchOut;
     char   *pch;
 
-    c = CchSprintf(rgch, PCTLD, l);
+    c = CchSprintf(rgch, app.state.PCTLD, l);
     pch = rgch;
     pchOut = psz;
     cSkip = c % 3;
@@ -408,7 +409,7 @@ void BoundPoints(RECT *prc, POINT16 *rgpt, int16_t cpt) {
     return;
 }
 
-int16_t FCompressUserString(const char *szIn, char *szOut, int16_t *pcOut) {
+int16_t FCompressUserString(APPSESSION &app, const char *szIn, char *szOut, int16_t *pcOut) {
     int16_t fHalf;
     char    szWork[1024];
     int16_t iNyb;
@@ -418,7 +419,7 @@ int16_t FCompressUserString(const char *szIn, char *szOut, int16_t *pcOut) {
     fHalf = 0;
     pchOut = szWork;
     for (; *szIn != 0; szIn++) {
-        iNyb = NybbleFromCh(*szIn);
+        iNyb = NybbleFromCh(app, *szIn);
         if (iNyb < 11) {
             cNyb = 1;
         } else if ((iNyb & 0xf) != 0xf) {
@@ -453,7 +454,7 @@ int16_t FCompressUserString(const char *szIn, char *szOut, int16_t *pcOut) {
     return 1;
 }
 
-static int16_t FDecompressUserStringInternal(const char *szIn, int16_t cIn, char *szOut, int16_t *pcOut, int16_t fUtf8) {
+static int16_t FDecompressUserStringInternal(APPSESSION &app, const char *szIn, int16_t cIn, char *szOut, int16_t *pcOut, int16_t fUtf8) {
     int16_t fHalf;
     char    szWork[1024];
     int16_t iNyb;
@@ -495,7 +496,7 @@ static int16_t FDecompressUserStringInternal(const char *szIn, int16_t cIn, char
                 fHalf = fHalf == 0;
             }
         }
-        *pchOut = ChFromNybble(iNyb);
+        *pchOut = ChFromNybble(app, iNyb);
         pchOut++;
         if (pchOut - szWork > *pcOut) {
             goto invalid;
@@ -511,19 +512,19 @@ invalid:
     return 0;
 }
 
-int16_t FDecompressUserString(const char *szIn, int16_t cIn, char *szOut, int16_t *pcOut) {
-    return FDecompressUserStringInternal(szIn, cIn, szOut, pcOut, 1);
+int16_t FDecompressUserString(APPSESSION &app, const char *szIn, int16_t cIn, char *szOut, int16_t *pcOut) {
+    return FDecompressUserStringInternal(app, szIn, cIn, szOut, pcOut, 1);
 }
 
-int16_t FDecompressUserStringBytes(const char *szIn, int16_t cIn, char *szOut, int16_t *pcOut) {
-    return FDecompressUserStringInternal(szIn, cIn, szOut, pcOut, 0);
+int16_t FDecompressUserStringBytes(APPSESSION &app, const char *szIn, int16_t cIn, char *szOut, int16_t *pcOut) {
+    return FDecompressUserStringInternal(app, szIn, cIn, szOut, pcOut, 0);
 }
 
-int16_t NybbleFromCh(uint8_t ch) {
+int16_t NybbleFromCh(APPSESSION &app, uint8_t ch) {
     char *pch;
 
     if (ch >= 97 && ch <= 122) {
-        return rgcompstrlower[ch - 97];
+        return app.state.rgcompstrlower[ch - 97];
     }
     if (ch == 32) {
         return 0;
@@ -540,19 +541,19 @@ int16_t NybbleFromCh(uint8_t ch) {
     if (ch >= 54 && ch <= 57) {
         return (ch - 0x36) << 4 | 0xd;
     }
-    pch = strchr(rgchcomp, ch);
+    pch = strchr(app.state.rgchcomp, ch);
     if (pch) {
-        return (pch - rgchcomp + 4) << 4 | 0xe;
+        return (pch - app.state.rgchcomp + 4) << 4 | 0xe;
     }
     return ch << 4 | 0xf;
 }
 
-char ChFromNybble(int16_t nyb) {
+char ChFromNybble(APPSESSION &app, int16_t nyb) {
     int16_t iPage;
     int16_t iVal;
 
     if (nyb < 11) {
-        return rgchcompstrlower[nyb];
+        return app.state.rgchcompstrlower[nyb];
     }
     iPage = nyb & 0xf;
     if (iPage == 15) {
@@ -566,9 +567,9 @@ char ChFromNybble(int16_t nyb) {
         return iVal + 22;
     }
     if (iVal >= 52) {
-        return rgchcomp[iVal - 52];
+        return app.state.rgchcomp[iVal - 52];
     }
-    return rgchcompstrlower[iVal - 25];
+    return app.state.rgchcompstrlower[iVal - 25];
 }
 
 int16_t FIntersectCircleLine(POINT16 ptL1, POINT16 ptL2, POINT16 ptC, int32_t r2, int16_t dMax, int16_t *pdStart, int16_t *pdEnd) {
@@ -671,22 +672,22 @@ void IntToRoman(int16_t i, char *pszOut) {
     return;
 }
 
-int16_t FCheckPassword() {
+int16_t FCheckPassword(APPSESSION &app) {
     int32_t lSaltDef;
 
-    if (lSaltCur == 0 || lSaltLast == lSaltCur || fAi) {
+    if (app.state.lSaltCur == 0 || app.state.lSaltLast == app.state.lSaltCur || app.state.fAi) {
         return 1;
     }
-    if (vszDefPass[0] != 0) {
-        lSaltDef = LSaltFromSz(vszDefPass);
-        if (lSaltDef == lSaltCur) {
+    if (app.state.vszDefPass[0] != 0) {
+        lSaltDef = LSaltFromSz(app.state.vszDefPass);
+        if (lSaltDef == app.state.lSaltCur) {
             return 1;
         }
     }
-    if (ini.fValidate) {
+    if (app.state.ini.fValidate) {
         return 0;
     }
-    return PlayerChoiceIO().pfnPromptPassword();
+    return PlayerChoiceIO().pfnPromptPassword(app);
 }
 
 int32_t LSaltFromSz(const char *psz) {

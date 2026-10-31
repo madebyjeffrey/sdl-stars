@@ -1,4 +1,9 @@
 #include "acutest.h"
+#include "appstate.h"
+#ifdef STARS_UI_SDL
+#include "uistate.h"
+#endif
+#include "callbackcontext.h"
 [[maybe_unused]] static char szTestLiteral1[] = "\x5cw \x5ci \x5cu";
 [[maybe_unused]] static char szTestLiteral2[] = "\x5ch";
 #include "stars_test.h"
@@ -34,78 +39,99 @@ static void TestEncoding(void) {
 }
 
 static void TestPasswords(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+
     char szCmd[] = "-p\xc3\xa9 game.hst";
     char szUtf8[] = "-p\xe6\x9d\xb1\xe4\xba\xac game.hst";
     char szBad[] = "-p\xed\xa0\x80 game.hst";
     char szTooLong[] = "-p\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9 game.hst";
-    char szPath[sizeof(szBase) + 4];
+    char szPath[sizeof(app.state.szBase) + 4];
     int16_t fSeed = 0;
     uint32_t lSeed = 0;
-    TEST_ASSERT(FStarsTestInit());
-    TEST_CHECK(ParseCmdLine(szCmd, &fSeed, &lSeed));
-    TEST_CHECK(strcmp(szPassLast, "\xc3\xa9") == 0);
-    TEST_CHECK(lSaltLast == 5307 && lSaltLast == LSaltFromSz(szPassLast) && strcmp(szBase, "game.hst") == 0);
-    TEST_CHECK(ParseCmdLine(szUtf8, &fSeed, &lSeed));
-    TEST_CHECK(strcmp(szPassLast, "\xe6\x9d\xb1\xe4\xba\xac") == 0 && lSaltLast == LSaltFromSz(szPassLast));
-    TEST_CHECK(!ParseCmdLine(szBad, &fSeed, &lSeed));
-    TEST_CHECK(szBase[0] == 0 && !ini.fCmdLine && cStarsTestAlert == 1);
-    TEST_CHECK(!ParseCmdLine(szTooLong, &fSeed, &lSeed));
-    TEST_CHECK(szBase[0] == 0 && !ini.fCmdLine && cStarsTestAlert == 2);
+    TEST_ASSERT(FStarsTestInit(app));
+    TEST_CHECK(ParseCmdLine(app, szCmd, &fSeed, &lSeed));
+    TEST_CHECK(strcmp(app.state.szPassLast, "\xc3\xa9") == 0);
+    TEST_CHECK(app.state.lSaltLast == 5307 && app.state.lSaltLast == LSaltFromSz(app.state.szPassLast) && strcmp(app.state.szBase, "game.hst") == 0);
+    TEST_CHECK(ParseCmdLine(app, szUtf8, &fSeed, &lSeed));
+    TEST_CHECK(strcmp(app.state.szPassLast, "\xe6\x9d\xb1\xe4\xba\xac") == 0 && app.state.lSaltLast == LSaltFromSz(app.state.szPassLast));
+    TEST_CHECK(!ParseCmdLine(app, szBad, &fSeed, &lSeed));
+    TEST_CHECK(app.state.szBase[0] == 0 && !app.state.ini.fCmdLine && cStarsTestAlert == 1);
+    TEST_CHECK(!ParseCmdLine(app, szTooLong, &fSeed, &lSeed));
+    TEST_CHECK(app.state.szBase[0] == 0 && !app.state.ini.fCmdLine && cStarsTestAlert == 2);
     memset(szPath, 'x', sizeof(szPath) - 1); szPath[sizeof(szPath) - 1] = 0;
-    TEST_CHECK(!ParseCmdLine(szPath, &fSeed, &lSeed));
-    TEST_CHECK(szBase[0] == 0 && !ini.fCmdLine && cStarsTestAlert == 3);
-    SetSzRaceFile("12345678901234\xce\xa9.r1");
-    TEST_CHECK(strcmp(szRaceFile, "12345678901234") == 0);
+    TEST_CHECK(!ParseCmdLine(app, szPath, &fSeed, &lSeed));
+    TEST_CHECK(app.state.szBase[0] == 0 && !app.state.ini.fCmdLine && cStarsTestAlert == 3);
+    SetSzRaceFile(app, "12345678901234\xce\xa9.r1");
+    TEST_CHECK(strcmp(app.state.szRaceFile, "12345678901234") == 0);
 }
 
 static void TestInvalidDefinition(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+
     char szDir[cbTestPath], szFile[cbTestPath + 64];
     char szPadding[1024];
     NATIVEFILE *pf;
     int i;
-    TEST_ASSERT(FStarsTestInit());
+    TEST_ASSERT(FStarsTestInit(app));
     TEST_ASSERT(FStarsTestDir("utf8_invalid_definition", szDir, sizeof(szDir)));
     snprintf(szFile, sizeof(szFile), "%s%sbad.def", szDir, szDirSep);
     pf = PfNativeOpen(szFile, "wb"); TEST_ASSERT(pf);
     IPutNativeString("\xe9\r\n", pf); ICloseNativeFile(pf);
-    TEST_CHECK(!GenNewGameFromFile(szFile));
-    TEST_CHECK(!FStarsRecoveryActive() && lpbDefUni == NULL);
+    TEST_CHECK(!GenNewGameFromFile(app, szFile));
+    TEST_CHECK(!FStarsRecoveryActive() && app.state.lpbDefUni == NULL);
     pf = PfNativeOpen(szFile, "wb"); TEST_ASSERT(pf);
     IPutNativeString("Title\r\n\xff\r\n", pf); ICloseNativeFile(pf);
-    TEST_CHECK(!GenNewGameFromFile(szFile));
-    TEST_CHECK(idsFileError == idsUniverseCreationFileAppearsInvalid);
-    TEST_CHECK(!FStarsRecoveryActive() && lpbDefUni == NULL);
+    TEST_CHECK(!GenNewGameFromFile(app, szFile));
+    TEST_CHECK(app.state.idsFileError == idsUniverseCreationFileAppearsInvalid);
+    TEST_CHECK(!FStarsRecoveryActive() && app.state.lpbDefUni == NULL);
     pf = PfNativeOpen(szFile, "wb"); TEST_ASSERT(pf);
     IPutNativeString("Title\r\n", pf);
     memset(szPadding, 'a', sizeof(szPadding));
     for (i = 0; i < 64; i++) TEST_CHECK(CWriteNative(szPadding, 1, sizeof(szPadding), pf) == sizeof(szPadding));
     ICloseNativeFile(pf);
-    TEST_CHECK(!GenNewGameFromFile(szFile));
-    TEST_CHECK(idsFileError == idsUniverseCreationFileAppearsInvalid);
-    TEST_CHECK(!FStarsRecoveryActive() && lpbDefUni == NULL);
+    TEST_CHECK(!GenNewGameFromFile(app, szFile));
+    TEST_CHECK(app.state.idsFileError == idsUniverseCreationFileAppearsInvalid);
+    TEST_CHECK(!FStarsRecoveryActive() && app.state.lpbDefUni == NULL);
     pf = PfNativeOpen(szFile, "wb"); TEST_ASSERT(pf);
     TEST_CHECK(CWriteNative("Title\0hidden\r\n", 1, 14, pf) == 14); ICloseNativeFile(pf);
-    TEST_CHECK(!GenNewGameFromFile(szFile));
-    TEST_CHECK(idsFileError == idsUniverseCreationFileAppearsInvalid);
-    TEST_CHECK(!FStarsRecoveryActive() && lpbDefUni == NULL);
+    TEST_CHECK(!GenNewGameFromFile(app, szFile));
+    TEST_CHECK(app.state.idsFileError == idsUniverseCreationFileAppearsInvalid);
+    TEST_CHECK(!FStarsRecoveryActive() && app.state.lpbDefUni == NULL);
 }
 
 static void TestFormattedTextBounds(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+
     char szFormat[1026];
     char sz[1024];
     char *psz;
     int16_t rgParams[2] = {-123, 55};
 
-    TEST_ASSERT(FStarsTestInit());
-    strcpy(szWork, "World");
-    TEST_CHECK(!strcmp(PszFormatString(szTestLiteral1, rgParams), "World -123 55"));
+    TEST_ASSERT(FStarsTestInit(app));
+    strcpy(app.state.szWork, "World");
+    TEST_CHECK(!strcmp(PszFormatString(app, szTestLiteral1, rgParams), "World -123 55"));
     memset(szFormat, 'a', 252);
     memcpy(szFormat + 252, "\xf0\x9f\x98\x80 suffix", 12);
-    psz = PszFormatString(szFormat, NULL);
+    psz = PszFormatString(app, szFormat, NULL);
     TEST_CHECK(strlen(psz) == 252 && FUtf8Valid(psz, strlen(psz)));
-    memset(szBase, 'a', sizeof(szBase) - 1); szBase[sizeof(szBase) - 1] = 0;
-    psz = PszFormatString(szTestLiteral2, NULL);
-    TEST_CHECK(strlen(psz) < sizeof(szMsgBuf) && FUtf8Valid(psz, strlen(psz)));
+    memset(app.state.szBase, 'a', sizeof(app.state.szBase) - 1); app.state.szBase[sizeof(app.state.szBase) - 1] = 0;
+    psz = PszFormatString(app, szTestLiteral2, NULL);
+    TEST_CHECK(strlen(psz) < sizeof(app.state.szMsgBuf) && FUtf8Valid(psz, strlen(psz)));
     memset(szFormat, 'a', 1022);
     memcpy(szFormat + 1022, "\xc3\xa9z", 4);
     TEST_CHECK(CchSprintf(sz, "%s", szFormat) == 1022);

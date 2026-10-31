@@ -5,6 +5,6 @@
 #include <stdint.h>
 #include <windows.h>
 
-void DrawThingGauge(HDC hdc, RECT *prc, THING *lpth, int16_t md);
+void DrawThingGauge(APPSESSION &app, HDC hdc, RECT *prc, THING *lpth, int16_t md);
 
 #endif

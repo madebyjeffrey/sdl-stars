@@ -11,51 +11,52 @@
 // Own the chains indexed by the legacy roots without moving any block. Reset
 // retains the storage; Close releases it. The root array is the single index.
 class NATIVEGAMEHEAPS {
+    APPSESSION &app;
     HB *(&rglphb)[12];
 public:
-    explicit NATIVEGAMEHEAPS(HB *(&roots)[12]) noexcept : rglphb(roots) {}
+    explicit NATIVEGAMEHEAPS(APPSESSION &app) noexcept;
     ~NATIVEGAMEHEAPS() noexcept;
     NATIVEGAMEHEAPS(const NATIVEGAMEHEAPS &) = delete;
     NATIVEGAMEHEAPS &operator=(const NATIVEGAMEHEAPS &) = delete;
     void Close() noexcept;
 };
 
-HB   *LphbAlloc(uint16_t cb, HeapType ht);
-HB   *LphbReAlloc(HB *lphb);
-void  FreeHb(HB *lphb) noexcept;
-void  ResetHb(HeapType ht);
-void *LpAlloc(uint16_t cb, HeapType ht);
-HB   *LphbFromLpHt(void *lp, HeapType ht);
-void *LpReAlloc(void *lp, uint16_t cb, HeapType ht);
-void  FreeLp(void *lp, HeapType ht);
-PL   *LpplReAlloc(PL *lppl, uint16_t cAlloc);
-PL   *LpplAlloc(uint16_t cbItem, uint16_t cAlloc, HeapType ht);
-void  FreePl(PL *lppl);
-uint16_t CbPlSlot(const void *lp);
+HB   *LphbAlloc(APPSESSION &app, uint16_t cb, HeapType ht);
+HB   *LphbReAlloc(APPSESSION &app, HB *lphb);
+void  FreeHb(APPSESSION &app, HB *lphb) noexcept;
+void  ResetHb(APPSESSION &app, HeapType ht);
+void *LpAlloc(APPSESSION &app, uint16_t cb, HeapType ht);
+HB   *LphbFromLpHt(APPSESSION &app, void *lp, HeapType ht);
+void *LpReAlloc(APPSESSION &app, void *lp, uint16_t cb, HeapType ht);
+void  FreeLp(APPSESSION &app, void *lp, HeapType ht);
+PL   *LpplReAlloc(APPSESSION &app, PL *lppl, uint16_t cAlloc);
+PL   *LpplAlloc(APPSESSION &app, uint16_t cbItem, uint16_t cAlloc, HeapType ht);
+void  FreePl(APPSESSION &app, PL *lppl);
+uint16_t CbPlSlot(APPSESSION &app, const void *lp);
 uint16_t CbHeapAlign(HeapType ht);
 uint16_t CbHbHeader(HeapType ht);
-uint16_t CbHeapItem(uint16_t cb, HeapType ht);
-template<class T> T *LpplAlloc(uint16_t cbItem, uint16_t cAlloc, HeapType ht);
-template<> PLPROD *LpplAlloc<PLPROD>(uint16_t cbItem, uint16_t cAlloc, HeapType ht);
-PLPROD *LpplReAlloc(PLPROD *lppl, uint16_t cAlloc);
-void FreePl(PLPROD *lppl);
-template<> PLORD *LpplAlloc<PLORD>(uint16_t cbItem, uint16_t cAlloc, HeapType ht);
-PLORD *LpplReAlloc(PLORD *lppl, uint16_t cAlloc);
-void FreePl(PLORD *lppl);
-bool FApplyOrderBytes(PLORD *lpplord, int16_t iord, const uint8_t *rgb, int16_t cb, bool fZero);
-bool FSetOrderTask(PLORD *lpplord, int16_t iord, int16_t grTask);
+uint16_t CbHeapItem(APPSESSION &app, uint16_t cb, HeapType ht);
+template<class T> T *LpplAlloc(APPSESSION &app, uint16_t cbItem, uint16_t cAlloc, HeapType ht);
+template<> PLPROD *LpplAlloc<PLPROD>(APPSESSION &app, uint16_t cbItem, uint16_t cAlloc, HeapType ht);
+PLPROD *LpplReAlloc(APPSESSION &app, PLPROD *lppl, uint16_t cAlloc);
+void FreePl(APPSESSION &app, PLPROD *lppl);
+template<> PLORD *LpplAlloc<PLORD>(APPSESSION &app, uint16_t cbItem, uint16_t cAlloc, HeapType ht);
+PLORD *LpplReAlloc(APPSESSION &app, PLORD *lppl, uint16_t cAlloc);
+void FreePl(APPSESSION &app, PLORD *lppl);
+bool FApplyOrderBytes(APPSESSION &app, PLORD *lpplord, int16_t iord, const uint8_t *rgb, int16_t cb, bool fZero);
+bool FSetOrderTask(APPSESSION &app, PLORD *lpplord, int16_t iord, int16_t grTask);
 
-void CopyThingBytes(THING *pth, const void *rgb, uint16_t cb) noexcept;
+void CopyThingBytes(APPSESSION &app, THING *pth, const void *rgb, uint16_t cb) noexcept;
 
-MSGPLR *LpmsgplrAlloc(uint16_t cb);
-MSGPLR *LpmsgplrReAlloc(MSGPLR *lpmp, uint16_t cb);
+MSGPLR *LpmsgplrAlloc(APPSESSION &app, uint16_t cb);
+MSGPLR *LpmsgplrReAlloc(APPSESSION &app, MSGPLR *lpmp, uint16_t cb);
 
 // Queue storage can supply an allocator while retaining the real lifetime helpers.
 struct HEAPIO {
     void *(*pfnCopy)(void *, const void *, std::size_t) = std::memcpy;
     void *(*pfnMove)(void *, const void *, std::size_t) = std::memmove;
-    void *(*pfnAllocate)(uint16_t, HeapType) = static_cast<void *(*)(uint16_t, HeapType)>(&LpAlloc);
-    void *(*pfnResize)(void *, uint16_t, HeapType) = static_cast<void *(*)(void *, uint16_t, HeapType)>(&LpReAlloc);
+    void *(*pfnAllocate)(APPSESSION &, uint16_t, HeapType) = static_cast<void *(*)(APPSESSION &, uint16_t, HeapType)>(&LpAlloc);
+    void *(*pfnResize)(APPSESSION &, void *, uint16_t, HeapType) = static_cast<void *(*)(APPSESSION &, void *, uint16_t, HeapType)>(&LpReAlloc);
     decltype(&FreeLp) pfnFree = FreeLp;
     decltype(&CbPlSlot) pfnExtent = CbPlSlot;
 };
@@ -78,13 +79,13 @@ template<class T> T *LpStartHeapArray(void *lp, std::size_t cb) noexcept {
     assert(reinterpret_cast<uintptr_t>(lp) % alignof(T) == 0);
     return std::launder(static_cast<T *>(std::memmove(lp, lp, cb)));
 }
-template<class T> T *LpAlloc(uint16_t cb, HeapType ht) {
-    void *lp = HeapIO().pfnAllocate(cb, ht);
-    return LpStartHeapArray<T>(lp, HeapIO().pfnExtent(lp));
+template<class T> T *LpAlloc(APPSESSION &app, uint16_t cb, HeapType ht) {
+    void *lp = HeapIO().pfnAllocate(app, cb, ht);
+    return LpStartHeapArray<T>(lp, HeapIO().pfnExtent(app, lp));
 }
-template<class T> T *LpReAlloc(T *lp, uint16_t cb, HeapType ht) {
-    void *lpNew = HeapIO().pfnResize(static_cast<void *>(lp), cb, ht);
-    return LpStartHeapArray<T>(lpNew, HeapIO().pfnExtent(lpNew));
+template<class T> T *LpReAlloc(APPSESSION &app, T *lp, uint16_t cb, HeapType ht) {
+    void *lpNew = HeapIO().pfnResize(app, static_cast<void *>(lp), cb, ht);
+    return LpStartHeapArray<T>(lpNew, HeapIO().pfnExtent(app, lpNew));
 }
 
 #endif

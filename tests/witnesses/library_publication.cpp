@@ -1,4 +1,9 @@
 #include <cstdarg>
+#include "appstate.h"
+#ifdef STARS_UI_SDL
+#include "uistate.h"
+#endif
+#include "callbackcontext.h"
 #include "library_publication_io.h"
 #include "librarypublication.h"
 #include "native_publish.h"
@@ -39,7 +44,7 @@ static void clear(void) {
         cleared = 1;
     }
 }
-static const char *TestPszGetCompressedString(int id) {
+static const char *TestPszGetCompressedString(APPSESSION &, int id) {
     switch (id) {
     case idsLibraryTurnStageFailed:
         return "1";
@@ -65,7 +70,7 @@ static const char *TestPszGetCompressedString(int id) {
         abort();
     }
 }
-static void TestAlertSz(const char *s, int flags) {
+static void TestAlertSz(APPSESSION &, const char *s, int flags) {
     (void)flags;
     clear();
     printf("[\"notice\",%d],", atoi(s));
@@ -144,13 +149,13 @@ static int removeObject(const char *path, int tree) {
 }
 static int TestRemoveNativeFile(const char *path) { return removeObject(path, 0) ? 0 : -1; }
 static int TestRemoveNativePath(const char *path) { return removeObject(path, 0) ? 0 : -1; }
-static int TestRemoveLibraryGameTree(const char *path) { return removeObject(path, 1); }
+static int TestRemoveLibraryGameTree(APPSESSION &, const char *path) { return removeObject(path, 1); }
 static int TestFNativeDirectoryExists(const char *path) {
     int p = role(path), ok = decision() && objects[p] >= 100;
     event("probe", 3, p, ok, 0);
     return ok;
 }
-static int TestFValidManagedLibraryGame(const char *name, const char *dir, int *remember, long long *played, char *exchange, size_t cap) {
+static int TestFValidManagedLibraryGame(APPSESSION &, const char *name, const char *dir, int *remember, long long *played, char *exchange, size_t cap) {
     assert(!strcmp(name, "Game"));
     int p = role(dir), ok = decision() && objects[p] >= 100;
     *remember = 4;
@@ -183,7 +188,7 @@ static int build(int tag) {
     event("build", tag, 3, ok, objects[3]);
     return ok;
 }
-static int TestFCreateLibraryGameStage(const char *source, const char *old, const char *name, const char *stage, int player, long long played,
+static int TestFCreateLibraryGameStage(APPSESSION &, const char *source, const char *old, const char *name, const char *stage, int player, long long played,
                                        const char *exchange) {
     assert(role(source) == 5 && role(stage) == 3 && !strcmp(old, "Game") && !strcmp(exchange, "external"));
     if (profile == 2) {
@@ -202,32 +207,34 @@ static int TestFStageConflictingTurn(const char *stage, const char *name, const 
     assert(role(stage) == 3 && !strcmp(name, profile == 2 ? "Game" : "Copy") && role(source) == 0 && player == 0 && id == 123 && turn == 11);
     return build(3);
 }
-static int TestFChooseSeparateCopyName(HWND hwnd, const char *name) {
+static int TestFChooseSeparateCopyName(APPSESSION &, HWND hwnd, const char *name) {
     (void)hwnd;
     assert(!strcmp(name, "Game"));
     int ok = decision();
     event("probe", 6, 1, ok, 0);
     return ok;
 }
-static int TestFLibraryNameAvailable(const char *root, const char *name) {
+static int TestFLibraryNameAvailable(APPSESSION &, const char *root, const char *name) {
     assert(root == szLibraryRoot && !strcmp(name, "Copy"));
     int ok = decision();
     event("probe", 7, 1, ok, 0);
     return ok;
 }
 static size_t TestNativeStrlen(const char *s) {
+    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+
     if (s == szLibraryRoot) {
         int ok = decision();
         event("probe", 8, 1, ok, 0);
         if (!ok)
-            return sizeof(szBase);
+            return sizeof(app.state.szBase);
     }
     return strlen(s);
 }
 // Family enumeration is a declared stage-only provider; cleanup aggregates the
 // source enumeration plus final TestRemoveNativePath, including possible remnants.
 
-static int TestFNativeEnumerateDirectory(const char *path, FNativeDirectoryEntryProc callback, void *context) {
+static int TestFNativeEnumerateDirectory(APPSESSION &, const char *path, FNativeDirectoryEntryProc callback, void *context) {
     (void)path;
     if (callback == &CopyImportEntry || callback == &CopyBackupDirectory) {
         int ok = build(callback == &CopyImportEntry ? 5 : 6);
@@ -255,16 +262,23 @@ static int TestCreateNativeDir(const char *path) {
 }
 static int     TestRemove(const char *path, int directory) { return directory ? TestRemoveNativePath(path) : TestRemoveNativeFile(path); }
 static int     TestRename(const char *source, const char *target, int, int) { return move(source, target); }
-static int16_t NativeLater(int16_t hasTurn) {
-    return FPublishSubsequentTurn({szLibraryRoot, szLibraryPending, szLibraryName}, nullptr, "source", "target", "Game", 0, 123, 11, hasTurn);
+static int16_t NativeLater(APPSESSION &app, int16_t hasTurn) {
+    return FPublishSubsequentTurn(app, {szLibraryRoot, szLibraryPending, szLibraryName}, nullptr, "source", "target", "Game", 0, 123, 11, hasTurn);
 }
-static int16_t NativeFamily() {
+static int16_t NativeFamily(APPSESSION &app) {
     LIBRARYIMPORT li{};
     li.grfPlayers = variant >= 5 && variant <= 20 ? 1u << (variant - 5) : variant == 21 ? 0 : 1;
-    return FPublishImportedLibraryGame({szLibraryRoot, szLibraryPending, szLibraryName}, li, "source");
+    return FPublishImportedLibraryGame(app, {szLibraryRoot, szLibraryPending, szLibraryName}, li, "source");
 }
 
 int main(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+
     unsigned             inputMask;
     int                  inputProfile, inputVariant;
     LIBRARYPUBLICATIONIO io;
@@ -320,11 +334,11 @@ int main(void) {
         if (variant == 3)
             objects[4] = 2;
         printf("{\"profile\":%d,\"mask\":%u,\"variant\":%d,\"events\":[", profile, mask, variant);
-        int result = profile <= 1 ? NativeLater(profile == 0)
+        int result = profile <= 1 ? NativeLater(app, profile == 0)
                      : profile == 2
-                         ? FReplaceConflictingLibraryTurn({szLibraryRoot, szLibraryPending, szLibraryName}, nullptr, "Game", "source", "target", 0, 123, 11)
-                     : profile == 3 ? FImportConflictingTurnAsCopy({szLibraryRoot, szLibraryPending, szLibraryName}, nullptr, "Game", "source", 0, 123, 11)
-                                    : NativeFamily();
+                         ? FReplaceConflictingLibraryTurn(app, {szLibraryRoot, szLibraryPending, szLibraryName}, nullptr, "Game", "source", "target", 0, 123, 11)
+                     : profile == 3 ? FImportConflictingTurnAsCopy(app, {szLibraryRoot, szLibraryPending, szLibraryName}, nullptr, "Game", "source", 0, 123, 11)
+                                    : NativeFamily(app);
         clear();
         printf("[\"end\"]],\"result\":%d,\"calls\":%d,\"store\":[", result, count);
         for (int i = 0; i < 8; i++)

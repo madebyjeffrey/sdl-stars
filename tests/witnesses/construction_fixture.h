@@ -1,4 +1,5 @@
 #include "colony_io.h"
+#include "appstate.h"
 #include "common.h"
 #include "heap_io.h"
 #include "part_query_io.h"
@@ -45,7 +46,7 @@ static int slot(void *p) {
             return i;
     abort();
 }
-void *TestLpAlloc(uint16_t size, HeapType type) {
+void *TestLpAlloc(APPSESSION &, uint16_t size, HeapType type) {
     (void)type;
     assert(heaps < 32 && size);
     void *p = calloc(1, size);
@@ -55,7 +56,7 @@ void *TestLpAlloc(uint16_t size, HeapType type) {
     heap[heaps++].live = 1;
     return p;
 }
-void *TestLpReAlloc(void *p, uint16_t size, HeapType type) {
+void *TestLpReAlloc(APPSESSION &, void *p, uint16_t size, HeapType type) {
     (void)type;
     int    at = slot(p);
     size_t old = heap[at].bytes;
@@ -70,13 +71,13 @@ void *TestLpReAlloc(void *p, uint16_t size, HeapType type) {
     heap[heaps++].live = 1;
     return next;
 }
-void TestFreeLp(void *p, HeapType type) {
+void TestFreeLp(APPSESSION &, void *p, HeapType type) {
     (void)type;
     int at = slot(p);
     heap[at].live = 0;
     free(p);
 }
-int16_t TestFSendPlrMsg(int16_t player, MessageId id, MsgGoto target, int16_t a, int16_t b, int16_t c, int16_t d, int16_t e, int16_t f, int16_t g) {
+int16_t TestFSendPlrMsg(APPSESSION &, int16_t player, MessageId id, MsgGoto target, int16_t a, int16_t b, int16_t c, int16_t d, int16_t e, int16_t f, int16_t g) {
     (void)target;
     assert(player >= 0 && player < 16 && messages < 64);
     messageIds[messages] = id;
@@ -86,52 +87,52 @@ int16_t TestFSendPlrMsg(int16_t player, MessageId id, MsgGoto target, int16_t a,
     messages++;
     return 1;
 }
-int16_t TestFSendPlrMsg2(int16_t player, MessageId id, MsgGoto target, int16_t a, int16_t b) {
-    return TestFSendPlrMsg(player, id, target, a, b, 0, 0, 0, 0, 0);
+int16_t TestFSendPlrMsg2(APPSESSION &app, int16_t player, MessageId id, MsgGoto target, int16_t a, int16_t b) {
+    return TestFSendPlrMsg(app, player, id, target, a, b, 0, 0, 0, 0, 0);
 }
-int16_t TestFRemovePlayerMessage(int16_t player, MessageId id, MsgGoto target) {
+int16_t TestFRemovePlayerMessage(APPSESSION &, int16_t player, MessageId id, MsgGoto target) {
     assert(player == 0 && target == planet.id);
     (void)id;
     return removed;
 }
-int16_t TestCMaxFactories(PLANET *p, int16_t player) {
+int16_t TestCMaxFactories(APPSESSION &, PLANET *p, int16_t player) {
     assert(p == &planet && !player);
     return cap;
 }
-int16_t TestCMaxMines(PLANET *p, int16_t player) { return TestCMaxFactories(p, player); }
-int16_t TestCMaxDefenses(PLANET *p, int16_t player) { return TestCMaxFactories(p, player); }
-int16_t TestCMaxOperableFactories(PLANET *p, int16_t player, int16_t next) {
+int16_t TestCMaxMines(APPSESSION &app, PLANET *p, int16_t player) { return TestCMaxFactories(app, p, player); }
+int16_t TestCMaxDefenses(APPSESSION &app, PLANET *p, int16_t player) { return TestCMaxFactories(app, p, player); }
+int16_t TestCMaxOperableFactories(APPSESSION &, PLANET *p, int16_t player, int16_t next) {
     assert(next && p == &planet && !player);
     return operableCap;
 }
-int16_t TestCMaxOperableMines(PLANET *p, int16_t player, int16_t next) { return TestCMaxOperableFactories(p, player, next); }
-int16_t TestCMaxOperableDefenses(PLANET *p, int16_t player, int16_t next) { return TestCMaxOperableFactories(p, player, next); }
-int16_t TestIpctCanTerraformLppl(PLANET *p) {
+int16_t TestCMaxOperableMines(APPSESSION &app, PLANET *p, int16_t player, int16_t next) { return TestCMaxOperableFactories(app, p, player, next); }
+int16_t TestCMaxOperableDefenses(APPSESSION &app, PLANET *p, int16_t player, int16_t next) { return TestCMaxOperableFactories(app, p, player, next); }
+int16_t TestIpctCanTerraformLppl(APPSESSION &, PLANET *p) {
     assert(p == &planet);
     return 10;
 }
-int32_t TestChgPopFromPlanet(PLANET *p, int16_t update) {
+int32_t TestChgPopFromPlanet(APPSESSION &, PLANET *p, int16_t update) {
     assert(p == &planet && !update);
     return -1;
 }
-int16_t TestPctPlanetDesirability(PLANET *p, int16_t player) {
+int16_t TestPctPlanetDesirability(APPSESSION &, PLANET *p, int16_t player) {
     assert(p == &planet && !player);
     return 100;
 }
-int16_t TestCResourcesAtPlanet(PLANET *p, int16_t player) {
+int16_t TestCResourcesAtPlanet(APPSESSION &, PLANET *p, int16_t player) {
     assert(p == &planet && !player);
     return gross;
 }
-void TestGetProductionCosts(PLANET *p, PROD *row, uint32_t *cost, int16_t player, int16_t one) {
+void TestGetProductionCosts(APPSESSION &, PLANET *p, PROD *row, uint32_t *cost, int16_t player, int16_t one) {
     assert(p == &planet && !player && one);
     (void)row;
     memcpy(cost, quote, sizeof(quote));
 }
-void    TestMineMinerals(void) {}
-void    TestUpdatePopulations(void) {}
-void    TestUpdateResearchStatus(int16_t generate) { assert(generate); }
-void    TestRandomEvents(void) {}
-int16_t TestFCanBuildShdef(SHDEF *design, int16_t player) {
+void    TestMineMinerals(APPSESSION &) {}
+void    TestUpdatePopulations(APPSESSION &) {}
+void    TestUpdateResearchStatus(APPSESSION &, int16_t generate) { assert(generate); }
+void    TestRandomEvents(APPSESSION &) {}
+int16_t TestFCanBuildShdef(APPSESSION &, SHDEF *design, int16_t player) {
     assert(player == 0 && design);
     canCalls++;
     return (int16_t)canBuild;
@@ -141,7 +142,7 @@ HULDEF *TestLphuldefFromId(int16_t hull) {
     catalogCalls++;
     return &catalogHull;
 }
-int16_t TestIWarpMAFromLppl(PLANET *p, int16_t *two) {
+int16_t TestIWarpMAFromLppl(APPSESSION &, PLANET *p, int16_t *two) {
     assert(p == &planet);
     int at = warpCalls < 2 ? warpCalls : 1;
     warpBase[at] = p->isb;
@@ -150,63 +151,63 @@ int16_t TestIWarpMAFromLppl(PLANET *p, int16_t *two) {
         *two = twoValues[at];
     return warpValues[at];
 }
-int16_t TestFLookupPlanet(int16_t id, PLANET *out) {
+int16_t TestFLookupPlanet(APPSESSION &, int16_t id, PLANET *out) {
     assert(id == planet.id);
     lookups++;
     *out = planet;
     return 1;
 }
-void   TestFillSelProdLB(void) { fills++; }
-FLEET *TestLpflNew(int16_t player, int16_t id) {
+void   TestFillSelProdLB(APPSESSION &) { fills++; }
+FLEET *TestLpflNew(APPSESSION &app, int16_t player, int16_t id) {
     assert(!player && id == planet.id);
     newFleets++;
     FLEET *f = &fleetBodies[3];
     f->iPlayer = player;
     f->idPlanet = id;
     f->lpplord = LpStartPl<PLORD, ORDER>(orderStorage[3].data, sizeof(orderStorage[3].data));
-    rgplr[player].cFleet++;
+    app.state.rgplr[player].cFleet++;
     return f;
 }
-int32_t TestLGetFleetStat(FLEET *f, int16_t stat) {
+int32_t TestLGetFleetStat(APPSESSION &, FLEET *f, int16_t stat) {
     assert(f && stat == 1);
     return 12345;
 }
-void TestAutoRouteFleet(FLEET *f, PLANET *p) {
+void TestAutoRouteFleet(APPSESSION &, FLEET *f, PLANET *p) {
     assert(f && p == &planet);
     routes++;
     f->lpplord->rgord()[1].iWarp = 1;
 }
-void TestAutoFleetOrder(FLEET *f, PLANET *p) {
+void TestAutoFleetOrder(APPSESSION &, FLEET *f, PLANET *p) {
     assert(f && p == &planet);
     defaults++;
 }
-int16_t TestIBestTerraform(PLANET *p, int16_t help) {
+int16_t TestIBestTerraform(APPSESSION &, PLANET *p, int16_t help) {
     assert(p == &planet && help);
     terraformCalls++;
     if (terraformChoice < -3 || terraformChoice > 3)
         throw CONSTRUCTIONESCAPE{};
     return terraformChoice;
 }
-void TestLookupBestPlanetaryScanner(PART *part) {
-    assert(idPlayer == planet.iPlayer);
+void TestLookupBestPlanetaryScanner(APPSESSION &app, PART *part) {
+    assert(app.state.idPlayer == planet.iPlayer);
     part->hs.iItem = (uint8_t)partIndex;
 }
 
-int16_t TestRandom(int16_t bound) {
+int16_t TestRandom(APPSESSION &app, int16_t bound) {
     assert(randomCalls < 16);
-    int16_t result = Random(bound);
+    int16_t result = Random(app, bound);
     randomBounds[randomCalls] = bound;
     randomValues[randomCalls++] = result;
     return result;
 }
 
-void TestKillQueuedShips(PLANET *p) {
+void TestKillQueuedShips(APPSESSION &app, PLANET *p) {
     shipKills++;
-    KillQueuedShips(p);
+    KillQueuedShips(app, p);
 }
-void TestKillQueuedMassPackets(PLANET *p) {
+void TestKillQueuedMassPackets(APPSESSION &app, PLANET *p) {
     packetKills++;
-    KillQueuedMassPackets(p);
+    KillQueuedMassPackets(app, p);
 }
 #define CHECK(x)                                                                                                                                               \
     do {                                                                                                                                                       \
@@ -216,7 +217,7 @@ void TestKillQueuedMassPackets(PLANET *p) {
             return 1;                                                                                                                                          \
         }                                                                                                                                                      \
     } while (0)
-static uint16_t TestExtent(const void *lp) { return (uint16_t)heap[slot(const_cast<void *>(lp))].bytes; }
+static uint16_t TestExtent(APPSESSION &, const void *lp) { return (uint16_t)heap[slot(const_cast<void *>(lp))].bytes; }
 struct CONSTRUCTIONFIXTURE {
     HEAPIOSCOPE        scopeHeap;
     TURNIOSCOPE        scopeTurn;
@@ -226,7 +227,7 @@ struct CONSTRUCTIONFIXTURE {
     PRODUCTIONIOSCOPE  scopeProduction;
     PARTQUERYIOSCOPE   scopePartQuery;
     RANDOMIOSCOPE      scopeRandom;
-    CONSTRUCTIONFIXTURE()
+    CONSTRUCTIONFIXTURE(APPSESSION &app)
         : scopeHeap([] {
               HEAPIO io;
               io.pfnAllocate = TestLpAlloc;
@@ -295,10 +296,10 @@ struct CONSTRUCTIONFIXTURE {
               io.pfnRandom = TestRandom;
               return io;
           }()) {
-        rglpfl = fleetSlots;
-        lpPlanets = &planet;
-        cPlanet = 1;
-        vrgPlanResExtra = extra;
+        app.state.rglpfl = fleetSlots;
+        app.state.lpPlanets = &planet;
+        app.state.cPlanet = 1;
+        app.state.vrgPlanResExtra = extra;
     }
 };
 
@@ -311,15 +312,15 @@ struct CONSTRUCTIONFIXTURE {
     r.unused = 31;
     return r;
 }
-static void reset(void) {
+static void reset(APPSESSION &app) {
     for (int i = 0; i < heaps; i++)
         if (heap[i].live)
             free(heap[i].p);
     heaps = 0;
-    memset(&game, 0, sizeof(game));
-    memset(&gd, 0, sizeof(gd));
-    memset(&sel, 0, sizeof(sel));
-    memset(rgplr, 0, sizeof(rgplr));
+    memset(&app.state.game, 0, sizeof(app.state.game));
+    memset(&app.state.gd, 0, sizeof(app.state.gd));
+    memset(&app.state.sel, 0, sizeof(app.state.sel));
+    memset(app.state.rgplr, 0, sizeof(app.state.rgplr));
     memset(ships, 0, sizeof(ships));
     memset(bases, 0, sizeof(bases));
     memset(&planet, 0, sizeof(planet));
@@ -329,10 +330,10 @@ static void reset(void) {
         fleetSlots[i] = &fleetBodies[i];
         fleetBodies[i].lpplord = LpStartPl<PLORD, ORDER>(orderStorage[i].data, sizeof(orderStorage[i].data));
     }
-    rglpshdef[0] = ships;
-    rglpshdefSB[0] = bases;
-    lpThings = NULL;
-    cThing = cThingAlloc = cFleet = 0;
+    app.state.rglpshdef[0] = ships;
+    app.state.rglpshdefSB[0] = bases;
+    app.state.lpThings = NULL;
+    app.state.cThing = app.state.cThingAlloc = app.state.cFleet = 0;
     canBuild = 1;
     catalogCalls = canCalls = lookups = fills = shipKills = packetKills = warpCalls = 0;
     cap = operableCap = 100;
@@ -343,12 +344,12 @@ static void reset(void) {
     terraformChoice = 1;
     terraformCalls = randomCalls = messages = newFleets = routes = defaults = 0;
     partIndex = 0;
-    idPlayer = 3;
-    lRandSeed1 = 7;
-    lRandSeed2 = 11;
-    game.cPlayer = 3;
-    game.fNoRandom = 1;
-    gd.fGeneratingTurn = 1;
+    app.state.idPlayer = 3;
+    app.state.lRandSeed1 = 7;
+    app.state.lRandSeed2 = 11;
+    app.state.game.cPlayer = 3;
+    app.state.game.fNoRandom = 1;
+    app.state.gd.fGeneratingTurn = 1;
     planet.id = 5;
     planet.iPlayer = 0;
     planet.iScanner = 31;
@@ -358,7 +359,7 @@ static void reset(void) {
     planet.rgwtMin[1] = 20;
     planet.rgwtMin[2] = 30;
     planet.rgwtMin[3] = 1000;
-    rgptPlan[5] = POINT16{10, 20};
+    app.state.rgptPlan[5] = POINT16{10, 20};
     catalogHull.hul.wtCargoMax = 123;
     quote[0] = quote[1] = quote[2] = 0;
     quote[3] = 10;
@@ -366,4 +367,4 @@ static void reset(void) {
     for (int i = 0; i < 4; i++)
         resources[i] = 10 * (i + 1);
 }
-static int16_t call(unsigned kind, int item, int built) { return FBuildObject(&planet, (GrobjClass)kind, (int16_t)item, (int16_t)built, (int32_t *)resources); }
+static int16_t call(APPSESSION &app, unsigned kind, int item, int built) { return FBuildObject(app, &planet, (GrobjClass)kind, (int16_t)item, (int16_t)built, (int32_t *)resources); }

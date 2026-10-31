@@ -1,18 +1,23 @@
 #include "construction_buildability_fixture.h"
-static int16_t DriverWarp(PLANET *p, int16_t *two) {
+#include "appstate.h"
+#ifdef STARS_UI_SDL
+#include "uistate.h"
+#endif
+#include "callbackcontext.h"
+static int16_t DriverWarp(APPSESSION &app, PLANET *p, int16_t *two) {
     assert(p == &planet);
     int at = warpCalls < 2 ? warpCalls : 1;
     warpBase[at] = p->isb;
     warpCalls++;
-    return IWarpMAFromLppl(p, two);
+    return IWarpMAFromLppl(app, p, two);
 }
 
-static void eligible(void) {
+static void eligible(APPSESSION &app) {
     fInCheck = cQueries = cGateLookups = mdCheckResult = 0;
-    rgplr[0].rgAttr[rsMajorAdv] = raMassAccel;
-    rgplr[0].grbitTrader = static_cast<GrbitTrader>(UINT16_MAX);
+    app.state.rgplr[0].rgAttr[rsMajorAdv] = raMassAccel;
+    app.state.rgplr[0].grbitTrader = static_cast<GrbitTrader>(UINT16_MAX);
     for (int i = 0; i < 6; i++)
-        rgplr[0].rgTech[i] = 26;
+        app.state.rgplr[0].rgTech[i] = 26;
 }
 static void drivers(SHDEF *d, int pattern) {
     memset(&d->hul, 0, sizeof(d->hul));
@@ -29,7 +34,14 @@ static void drivers(SHDEF *d, int pattern) {
     }
 }
 int main(int argc, char **argv) {
-    CONSTRUCTIONBUILDFIXTURE fixture;
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+
+    CONSTRUCTIONBUILDFIXTURE fixture(app);
     COLONYIO                 io = ColonyIO();
     io.pfnWarp = DriverWarp;
     COLONYIOSCOPE driverScope(io);
@@ -39,15 +51,15 @@ int main(int argc, char **argv) {
     int32_t       data[58];
     unsigned long cases = 0;
     while (fread(data, sizeof(data), 1, file) == 1) {
-        reset();
+        reset(app);
         for (int i = 0; i < 16; i++)
-            rglpshdefSB[i] = NULL;
+            app.state.rglpshdefSB[i] = NULL;
         planet.iPlayer = (int16_t)data[0];
         planet.fStarbase = data[1];
         planet.isb = data[2];
-        idPlayer = (int16_t)data[3];
+        app.state.idPlayer = (int16_t)data[3];
         if (data[0] >= 0 && data[0] < 16)
-            rglpshdefSB[data[0]] = data[4] ? bases : NULL;
+            app.state.rglpshdefSB[data[0]] = data[4] ? bases : NULL;
         if (data[2] < 10) {
             SHDEF *d = bases + data[2];
             d->det = data[5];
@@ -61,11 +73,11 @@ int main(int argc, char **argv) {
         PLANET expectedPlanet = planet;
         SHDEF  expectedBases[10];
         PLAYER expectedPlayers[16];
-        GAME   expectedGame = game;
+        GAME   expectedGame = app.state.game;
         memcpy(expectedBases, bases, sizeof(bases));
-        memcpy(expectedPlayers, rgplr, sizeof(rgplr));
+        memcpy(expectedPlayers, app.state.rgplr, sizeof(app.state.rgplr));
         int16_t two = 1234;
-        int     warp = IWarpMAFromLppl(&planet, data[7] ? &two : NULL);
+        int     warp = IWarpMAFromLppl(app, &planet, data[7] ? &two : NULL);
         if (warp != data[56] || two != data[57]) {
             fprintf(stderr, "mass driver case %lu got %d/%d expected %d/%d\n", cases, warp, two, data[56], data[57]);
             return 1;
@@ -73,9 +85,9 @@ int main(int argc, char **argv) {
         checks += 2;
         CHECK(memcmp(&expectedPlanet, &planet, sizeof(planet)) == 0);
         CHECK(memcmp(expectedBases, bases, sizeof(bases)) == 0);
-        CHECK(memcmp(expectedPlayers, rgplr, sizeof(rgplr)) == 0);
-        CHECK(memcmp(&expectedGame, &game, sizeof(game)) == 0);
-        CHECK(idPlayer == data[3]);
+        CHECK(memcmp(expectedPlayers, app.state.rgplr, sizeof(app.state.rgplr)) == 0);
+        CHECK(memcmp(&expectedGame, &app.state.game, sizeof(app.state.game)) == 0);
+        CHECK(app.state.idPlayer == data[3]);
         CHECK(!randomCalls);
         cases++;
     }
@@ -90,9 +102,9 @@ int main(int argc, char **argv) {
                     for (int current = -1; current < 2; current++)
                         for (int detail = 0; detail < 8; detail++)
                             for (int configured = 0; configured < 16; configured++) {
-                                reset();
-                                eligible();
-                                idPlayer = current;
+                                reset(app);
+                                eligible(app);
+                                app.state.idPlayer = current;
                                 planet.fStarbase = had;
                                 planet.isb = 0;
                                 planet.iWarpFling = configured;
@@ -103,7 +115,7 @@ int main(int argc, char **argv) {
                                 int selected = same ? 0 : 1, visible = current == -1 || current == 0 || detail == detAll;
                                 int before = had && visible ? warps[old] : 0, after = visible ? warps[same ? old : next] : 0, bonus = twos[same ? old : next];
                                 int expected = before ? configured : after ? after + bonus - 4 : 0;
-                                CHECK(call(grobjFleet, 16 + selected, 1));
+                                CHECK(call(app, grobjFleet, 16 + selected, 1));
                                 CHECK(warpCalls == (before ? 1 : 2));
                                 CHECK(warpBase[0] == 0);
                                 if (!before)
@@ -112,46 +124,46 @@ int main(int argc, char **argv) {
                                 CHECK(planet.iWarpFling == expected);
                                 CHECK(planet.idFling == (before || after ? 8 : 0));
                                 CHECK(packetKills == (!before && !after));
-                                CHECK(idPlayer == current);
+                                CHECK(app.state.idPlayer == current);
                                 integrations++;
                             }
     // Actual packet construction consumes the real slot maximum/duplicate bit.
     for (int pattern = 0; pattern < 6; pattern++)
         for (int configured = 0; configured < 16; configured++)
             for (int destination = 0; destination < 2; destination++) {
-                reset();
-                eligible();
-                idPlayer = 0;
+                reset(app);
+                eligible(app);
+                app.state.idPlayer = 0;
                 planet.fStarbase = 1;
                 drivers(bases, pattern);
                 planet.iWarpFling = configured;
                 planet.idFling = destination ? 8 : 0;
                 int accepted = warps[pattern] > 0 && destination;
-                CHECK(call(grobjPlanet, 14, 1) == accepted);
+                CHECK(call(app, grobjPlanet, 14, 1) == accepted);
                 if (accepted) {
                     int asked = configured + 4;
                     if (asked < 5 || asked > warps[pattern] + 3)
                         asked = warps[pattern] + twos[pattern];
                     int decay = asked <= warps[pattern] + twos[pattern] ? 0 : asked - warps[pattern] - twos[pattern];
-                    CHECK(cThing == 1 && lpThings[0].thp().iWarp() == asked - 4 && lpThings[0].thp().iDecayRate() == decay);
+                    CHECK(app.state.cThing == 1 && app.state.lpThings[0].thp().iWarp() == asked - 4 && app.state.lpThings[0].thp().iDecayRate() == decay);
                 } else
-                    CHECK(cThing == 0);
+                    CHECK(app.state.cThing == 0);
                 integrations++;
             }
     for (int pattern = 0; pattern < 6; pattern++) {
-        reset();
-        eligible();
+        reset(app);
+        eligible(app);
         drivers(bases, pattern);
-        planet.lpplprod = LpplAlloc<PLPROD>(4, 1, htOrd);
+        planet.lpplprod = LpplAlloc<PLPROD>(app, 4, 1, htOrd);
         planet.lpplprod->iprodMac = 1;
         planet.lpplprod->rgprod()[0] = row(1, 16, grobjFleet, 0);
-        Produce();
+        Produce(app);
         CHECK(planet.fStarbase && planet.isb == 0 && !planet.lpplprod);
         CHECK(planet.iWarpFling == (warps[pattern] ? warps[pattern] + twos[pattern] - 4 : 0));
-        CHECK(packetKills == !warps[pattern] && rgplr[0].lResLastYear == 90);
+        CHECK(packetKills == !warps[pattern] && app.state.rgplr[0].lResLastYear == 90);
         integrations++;
     }
-    reset();
+    reset(app);
     printf("Mass driver source: %lu defined standalone cases; %u construction/packet cases; %d assertions passed\n", cases, integrations, checks);
     return 0;
 }

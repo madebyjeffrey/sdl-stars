@@ -5,6 +5,6 @@
 #include <stdint.h>
 #include <windows.h>
 
-int16_t FWriteTutorialMFile(int16_t iTurn);
+int16_t FWriteTutorialMFile(APPSESSION &app, int16_t iTurn);
 
 #endif

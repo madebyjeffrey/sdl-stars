@@ -1,6 +1,8 @@
 #ifndef STARS_NATIVE_H
 #define STARS_NATIVE_H
 
+class APPSESSION;
+
 // Helpers the Win32 build needs where Stars' Win16 types and behavior differ
 // from Win32. See docs/NATIVE-PORT.md.
 
@@ -40,7 +42,7 @@ typedef struct tagPOINT16 {
 
 // qsort16 sorts like Stars' Win16 CRT qsort, which decides the order of
 // elements with equal keys. Turn generation depends on that order.
-void qsort16(void *base, size_t count, size_t width, int (*compare)(const void *, const void *));
+void qsort16(APPSESSION &app, void *base, size_t count, size_t width, int (*compare)(APPSESSION &, const void *, const void *));
 
 /*
  * Files
@@ -66,8 +68,8 @@ int16_t FFileReadOnly(const char *szFile);
 void    MakeDir(const char *szDir);
 // Unlike MakeDir, reservation fails if the directory already exists.
 int     CreateNativeDir(const char *pszDir);
-typedef int16_t (*FNativeDirectoryEntryProc)(void *lpData, const char *pszEntry);
-int16_t FNativeEnumerateDirectory(const char *pszDir, FNativeDirectoryEntryProc pfnEntry, void *lpData);
+typedef int16_t (*FNativeDirectoryEntryProc)(APPSESSION &, void *lpData, const char *pszEntry);
+int16_t FNativeEnumerateDirectory(APPSESSION &app, const char *pszDir, FNativeDirectoryEntryProc pfnEntry, void *lpData);
 int16_t FNativeFileSize(const char *pszFile, int64_t *pcbFile);
 int16_t FNativeDirectoryExists(const char *pszDir);
 // Inspect the final component without following links or Windows reparse points.

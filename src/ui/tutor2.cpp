@@ -1,6 +1,7 @@
 #include "win.h"
+#include "uistate.h"
 
-int16_t CchTutorString(char *pchOut, TutorId idt) {
+int16_t CchTutorString(APPSESSION &app, char *pchOut, TutorId idt) {
     int16_t  iOffset;
     int16_t  fHigh;
     int16_t  iChunk;
@@ -13,7 +14,7 @@ int16_t CchTutorString(char *pchOut, TutorId idt) {
     uint8_t *pch;
 
     iNibble = 0;
-    if (idt == iLastTutGet) {
+    if (idt == app.lpui->iLastTutGet) {
         return strlen(pchOut);
     }
     iChunk = idt >> 6;

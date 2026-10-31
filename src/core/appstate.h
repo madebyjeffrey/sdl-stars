@@ -4,7 +4,7 @@
 #include <cstddef>
 #include "filesession.h"
 
-// Original debug names remain fields; aliases below borrow this one value.
+// Original debug names remain owned fields; callers receive the owner explicitly.
 // Packed runtime types retain the stronger alignment of their former globals.
 struct APPGAMESTATE {
     APPGAMESTATE() noexcept;
@@ -168,15 +168,19 @@ struct APPGAMESTATE {
     alignas(std::max_align_t) ZIPORDER  vrgZip[4] = {};
 };
 
+struct APPUISTATE;
+
 class APPSESSION {
 public:
+    // The derived desktop owner supplies its stable UI value; the host leaves it null.
+    APPUISTATE *const lpui;
     APPGAMESTATE state;
     NATIVEFILESESSION files;
-    NATIVEGAMEHEAPS heaps{state.rglphb};
+    NATIVEGAMEHEAPS heaps{*this};
     NATIVEFILESESSION *previous = nullptr;
     bool fFilesBound = false;
     ~APPSESSION() noexcept { Close(); }
-    APPSESSION() noexcept { BindFiles(); }
+    explicit APPSESSION(APPUISTATE *lpui = nullptr) noexcept : lpui(lpui) { BindFiles(); }
     APPSESSION(const APPSESSION &) = delete;
     APPSESSION &operator=(const APPSESSION &) = delete;
     void BindFiles() noexcept {
@@ -196,6 +200,6 @@ public:
     // The caller stops UI borrowers before resetting their game state.
     void Reset() noexcept { Close(); state = APPGAMESTATE{}; BindFiles(); }
 };
-APPSESSION &GetAppSession();
+namespace host { extern APPSESSION app; }
 
 #endif

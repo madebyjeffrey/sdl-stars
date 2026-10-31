@@ -1,4 +1,6 @@
 #include "win.h"
+#include "appstate.h"
+#include "callbackcontext.h"
 #include "control_io.h"
 #include <stars_compat.h>
 
@@ -30,6 +32,8 @@ constexpr auto WM_STARS_SYSCOMMAND = (win32::WM_APP + 1);
 // FrameWndProcDeferred defers FrameWndProc's restore and maximize commands
 // to the message loop and passes every other message straight through.
 LRESULT  FrameWndProcDeferred(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+
     switch (msg) {
     case win32::WM_SYSCOMMAND:
         if ((wParam & 0xfff0) == win32::SC_RESTORE || (wParam & 0xfff0) == win32::SC_MAXIMIZE) {
@@ -40,9 +44,9 @@ LRESULT  FrameWndProcDeferred(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_STARS_SYSCOMMAND:
         if (win32::IsIconic(hwnd))
             ui::ShowWindow(hwnd, win32::SW_RESTORE);
-        return FrameWndProc(hwnd, win32::WM_SYSCOMMAND, wParam, lParam);
+        return FrameWndProc(app, hwnd, win32::WM_SYSCOMMAND, wParam, lParam);
     }
-    return FrameWndProc(hwnd, msg, wParam, lParam);
+    return FrameWndProc(app, hwnd, msg, wParam, lParam);
 }
 
 /*

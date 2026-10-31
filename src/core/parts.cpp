@@ -1,4 +1,5 @@
 #include "common.h"
+#include "appstate.h"
 #include "part_query_io.h"
 #include "race_query_io.h"
 
@@ -21,18 +22,18 @@ SHDEF *LpshdefSBT() { return rgshdefSBT; }
 
 PLANETARY *LpplanetaryFromId(int16_t id) { return &rgplanetary[id]; }
 
-int16_t FLookupPartX(PART *ppart, uint16_t grhst, uint16_t iItem) {
+int16_t FLookupPartX(APPSESSION &app, PART *ppart, uint16_t grhst, uint16_t iItem) {
     ppart->hs.grhst = static_cast<HullSlotType>(grhst);
     ppart->hs.iItem = iItem;
     ppart->hs.cItem = 0;
-    return PartQueryIO().pfnLookup(ppart);
+    return PartQueryIO().pfnLookup(app, ppart);
 }
 
-int16_t FLookupPart(PART *ppart) {
+int16_t FLookupPart(APPSESSION &app, PART *ppart) {
     RaceAttribute raMajor;
     HS            hs;
 
-    raMajor = static_cast<RaceAttribute>(idPlayer == iplrNone ? static_cast<int>(raNone) : RaceQueryIO().pfnStat(&rgplr[idPlayer], rsMajorAdv));
+    raMajor = static_cast<RaceAttribute>(app.state.idPlayer == iplrNone ? static_cast<int>(raNone) : RaceQueryIO().pfnStat(&app.state.rgplr[app.state.idPlayer], rsMajorAdv));
     hs = ppart->hs;
     switch (hs.grhst) {
     default:
@@ -42,22 +43,22 @@ int16_t FLookupPart(PART *ppart) {
             return mdPartAvailInvalid;
         }
         ppart->SetPengine(&rgengine[hs.iItem]);
-        if (idPlayer == iplrNone)
+        if (app.state.idPlayer == iplrNone)
             break;
         if (hs.iItem == iengineSettlersDelight && raMajor != raCheapCol) {
             return mdPartAvailRestricted;
         }
         if (((hs.iItem >= iengineSubGalacticFuelScoop && hs.iItem <= iengineGalaxyScoop) || hs.iItem == iengineRadiatingHydroRamScoop) &&
-            RaceQueryIO().pfnGrbit(&rgplr[idPlayer], ibitRaceNoRamscoops) != 0) {
+            RaceQueryIO().pfnGrbit(&app.state.rgplr[app.state.idPlayer], ibitRaceNoRamscoops) != 0) {
             return mdPartAvailRestricted;
         }
-        if ((hs.iItem == iengineGalaxyScoop || hs.iItem == iengineFuelMizer) && RaceQueryIO().pfnGrbit(&rgplr[idPlayer], ibitRaceIFE) == 0) {
+        if ((hs.iItem == iengineGalaxyScoop || hs.iItem == iengineFuelMizer) && RaceQueryIO().pfnGrbit(&app.state.rgplr[app.state.idPlayer], ibitRaceIFE) == 0) {
             return mdPartAvailRestricted;
         }
-        if (hs.iItem == iengineInterspace10 && RaceQueryIO().pfnGrbit(&rgplr[idPlayer], ibitRaceNoRamscoops) == 0) {
+        if (hs.iItem == iengineInterspace10 && RaceQueryIO().pfnGrbit(&app.state.rgplr[app.state.idPlayer], ibitRaceNoRamscoops) == 0) {
             return mdPartAvailRestricted;
         }
-        if (!PartQueryIO().pfnHidden(ppart))
+        if (!PartQueryIO().pfnHidden(app, ppart))
             break;
         return mdPartAvailRestricted;
     case hstShield:
@@ -71,7 +72,7 @@ int16_t FLookupPart(PART *ppart) {
         if (hs.iItem == ishieldCrobySharmor && raMajor != raDefend) {
             return mdPartAvailRestricted;
         }
-        if (!PartQueryIO().pfnHidden(ppart))
+        if (!PartQueryIO().pfnHidden(app, ppart))
             break;
         return mdPartAvailRestricted;
     case hstHull:
@@ -79,7 +80,7 @@ int16_t FLookupPart(PART *ppart) {
             return mdPartAvailInvalid;
         }
         ppart->SetPhul(&rghuldef[hs.iItem].hul);
-        if (idPlayer == iplrNone)
+        if (app.state.idPlayer == iplrNone)
             break;
         if ((hs.iItem == ihuldefMiniColonyShip || hs.iItem == ihuldefMetaMorph) && raMajor != raCheapCol) {
             return mdPartAvailRestricted;
@@ -92,7 +93,7 @@ int16_t FLookupPart(PART *ppart) {
         case ihuldefMaxiMiner:
         case ihuldefMidgetMiner:
         case ihuldefUltraMiner:
-            if (RaceQueryIO().pfnGrbit(&rgplr[idPlayer], ibitRaceOBRM) != 0) {
+            if (RaceQueryIO().pfnGrbit(&app.state.rgplr[app.state.idPlayer], ibitRaceOBRM) != 0) {
                 return mdPartAvailRestricted;
             }
             /* fallthrough */
@@ -101,7 +102,7 @@ int16_t FLookupPart(PART *ppart) {
             case ihuldefMidgetMiner:
             case ihuldefMiner:
             case ihuldefUltraMiner:
-                if (RaceQueryIO().pfnGrbit(&rgplr[idPlayer], ibitRaceARM) == 0) {
+                if (RaceQueryIO().pfnGrbit(&app.state.rgplr[app.state.idPlayer], ibitRaceARM) == 0) {
                     return mdPartAvailRestricted;
                 }
                 /* fallthrough */
@@ -118,7 +119,7 @@ int16_t FLookupPart(PART *ppart) {
                 if ((hs.iItem == ihuldefMiniMineLayer || hs.iItem == ihuldefSuperMineLayer) && raMajor != raMines) {
                     return mdPartAvailRestricted;
                 }
-                if (!PartQueryIO().pfnHidden(ppart))
+                if (!PartQueryIO().pfnHidden(app, ppart))
                     break;
                 return mdPartAvailRestricted;
             }
@@ -129,9 +130,9 @@ int16_t FLookupPart(PART *ppart) {
             return mdPartAvailInvalid;
         }
         ppart->SetPhul(&rghuldefSB[hs.iItem].hul);
-        if (idPlayer == iplrNone)
+        if (app.state.idPlayer == iplrNone)
             break;
-        if ((hs.iItem == isbhullSpaceDock || hs.iItem == isbhullUltraStation) && RaceQueryIO().pfnGrbit(&rgplr[idPlayer], ibitRaceISB) == 0) {
+        if ((hs.iItem == isbhullSpaceDock || hs.iItem == isbhullUltraStation) && RaceQueryIO().pfnGrbit(&app.state.rgplr[app.state.idPlayer], ibitRaceISB) == 0) {
             return mdPartAvailRestricted;
         }
         if (hs.iItem != isbhullDeathStar || raMajor == raMacintosh)
@@ -148,7 +149,7 @@ int16_t FLookupPart(PART *ppart) {
         if (hs.iItem == iarmorFieldedKelarium && raMajor != raDefend) {
             return mdPartAvailRestricted;
         }
-        if (!PartQueryIO().pfnHidden(ppart))
+        if (!PartQueryIO().pfnHidden(app, ppart))
             break;
         return mdPartAvailRestricted;
     case hstSpecialE:
@@ -156,9 +157,9 @@ int16_t FLookupPart(PART *ppart) {
             return mdPartAvailInvalid;
         }
         ppart->SetPspecial(&rgspecialE[hs.iItem]);
-        if (idPlayer == iplrNone)
+        if (app.state.idPlayer == iplrNone)
             break;
-        if (PartQueryIO().pfnHidden(ppart)) {
+        if (PartQueryIO().pfnHidden(app, ppart)) {
             return mdPartAvailRestricted;
         }
         switch (hs.iItem) {
@@ -202,9 +203,9 @@ int16_t FLookupPart(PART *ppart) {
             return mdPartAvailInvalid;
         }
         ppart->SetPspecial(&rgspecialM[hs.iItem]);
-        if (idPlayer == iplrNone)
+        if (app.state.idPlayer == iplrNone)
             break;
-        if (PartQueryIO().pfnHidden(ppart)) {
+        if (PartQueryIO().pfnHidden(app, ppart)) {
             return mdPartAvailRestricted;
         }
         if (hs.iItem == ispecialMColonizationModule && raMajor == raMacintosh) {
@@ -218,7 +219,7 @@ int16_t FLookupPart(PART *ppart) {
             return mdPartAvailInvalid;
         }
         ppart->SetPspecialsb(&rgspecialSB[hs.iItem]);
-        if (idPlayer == iplrNone)
+        if (app.state.idPlayer == iplrNone)
             break;
         if (hs.iItem >= ispecialSBMassDriver5 && hs.iItem <= ispecialSBUltraDriver13) {
             if (hs.iItem == ispecialSBMassDriver7 || hs.iItem == ispecialSBUltraDriver10 || raMajor == raMassAccel)
@@ -238,7 +239,7 @@ int16_t FLookupPart(PART *ppart) {
             return mdPartAvailInvalid;
         }
         ppart->SetPmines(&rgmines[hs.iItem]);
-        if (idPlayer == iplrNone)
+        if (app.state.idPlayer == iplrNone)
             break;
         switch (hs.iItem) {
         case iminesMineDispenser40:
@@ -267,7 +268,7 @@ int16_t FLookupPart(PART *ppart) {
             return mdPartAvailInvalid;
         }
         ppart->SetPmining(&rgmining[hs.iItem]);
-        if (idPlayer == iplrNone)
+        if (app.state.idPlayer == iplrNone)
             break;
         switch (hs.iItem) {
         case iminingRoboMiner:
@@ -275,18 +276,18 @@ int16_t FLookupPart(PART *ppart) {
         case iminingRoboSuperMiner:
         case iminingRoboMidgetMiner:
         case iminingRoboUltraMiner:
-            if (RaceQueryIO().pfnGrbit(&rgplr[idPlayer], ibitRaceOBRM) != 0) {
+            if (RaceQueryIO().pfnGrbit(&app.state.rgplr[app.state.idPlayer], ibitRaceOBRM) != 0) {
                 return mdPartAvailRestricted;
             }
             /* fallthrough */
         default:
-            if ((hs.iItem == iminingRoboMidgetMiner || hs.iItem == iminingRoboUltraMiner) && RaceQueryIO().pfnGrbit(&rgplr[idPlayer], ibitRaceARM) == 0) {
+            if ((hs.iItem == iminingRoboMidgetMiner || hs.iItem == iminingRoboUltraMiner) && RaceQueryIO().pfnGrbit(&app.state.rgplr[app.state.idPlayer], ibitRaceARM) == 0) {
                 return mdPartAvailRestricted;
             }
             if (hs.iItem == iminingOrbitalAdjuster && raMajor != raTerra) {
                 return mdPartAvailRestricted;
             }
-            if (!PartQueryIO().pfnHidden(ppart))
+            if (!PartQueryIO().pfnHidden(app, ppart))
                 break;
             return mdPartAvailRestricted;
         }
@@ -296,13 +297,13 @@ int16_t FLookupPart(PART *ppart) {
             return mdPartAvailInvalid;
         }
         ppart->SetPscanner(&rgscanner[hs.iItem]);
-        if (idPlayer == iplrNone)
+        if (app.state.idPlayer == iplrNone)
             break;
         switch (hs.iItem) {
         case iscannerFerretScanner:
         case iscannerDolphinScanner:
         case iscannerElephantScanner:
-            if (RaceQueryIO().pfnGrbit(&rgplr[idPlayer], ibitRaceNoAdvScanner) != 0) {
+            if (RaceQueryIO().pfnGrbit(&app.state.rgplr[app.state.idPlayer], ibitRaceNoAdvScanner) != 0) {
                 return mdPartAvailRestricted;
             }
             /* fallthrough */
@@ -330,7 +331,7 @@ int16_t FLookupPart(PART *ppart) {
         if ((hs.iItem == ibeamBlunderbuss || hs.iItem == ibeamGatlingNeutrinoCannon) && raMajor != raAttack) {
             return mdPartAvailRestricted;
         }
-        if (!PartQueryIO().pfnHidden(ppart))
+        if (!PartQueryIO().pfnHidden(app, ppart))
             break;
         return mdPartAvailRestricted;
     case hstTorp:
@@ -338,7 +339,7 @@ int16_t FLookupPart(PART *ppart) {
             return mdPartAvailInvalid;
         }
         ppart->SetPtorp(&rgtorp[hs.iItem]);
-        if (idPlayer == iplrNone || !PartQueryIO().pfnHidden(ppart))
+        if (app.state.idPlayer == iplrNone || !PartQueryIO().pfnHidden(app, ppart))
             break;
         return mdPartAvailRestricted;
     case hstBomb:
@@ -346,7 +347,7 @@ int16_t FLookupPart(PART *ppart) {
             return mdPartAvailInvalid;
         }
         ppart->SetPbomb(&rgbomb[hs.iItem]);
-        if (idPlayer == iplrNone)
+        if (app.state.idPlayer == iplrNone)
             break;
         if (hs.iItem >= ibombSmartBomb && hs.iItem <= ibombAnnihilatorBomb && raMajor == raDefend) {
             return mdPartAvailRestricted;
@@ -354,7 +355,7 @@ int16_t FLookupPart(PART *ppart) {
         if (hs.iItem == ibombRetroBomb && raMajor != raTerra) {
             return mdPartAvailRestricted;
         }
-        if (!PartQueryIO().pfnHidden(ppart))
+        if (!PartQueryIO().pfnHidden(app, ppart))
             break;
         return mdPartAvailRestricted;
     case hstPlanetary:
@@ -362,10 +363,10 @@ int16_t FLookupPart(PART *ppart) {
             return mdPartAvailInvalid;
         }
         ppart->SetPplanetary(&rgplanetary[hs.iItem]);
-        if (idPlayer == iplrNone)
+        if (app.state.idPlayer == iplrNone)
             break;
         if (hs.iItem >= iplanetaryViewer50 && hs.iItem <= iplanetarySnooper620X && ppart->pplanetary()->grAbility < 0 &&
-            RaceQueryIO().pfnGrbit(&rgplr[idPlayer], ibitRaceNoAdvScanner) != 0) {
+            RaceQueryIO().pfnGrbit(&app.state.rgplr[app.state.idPlayer], ibitRaceNoAdvScanner) != 0) {
             return mdPartAvailRestricted;
         }
         if (hs.iItem >= iplanetaryViewer50 && hs.iItem <= iplanetarySnooper620X && raMajor == raMacintosh) {
@@ -377,7 +378,7 @@ int16_t FLookupPart(PART *ppart) {
         if (hs.iItem >= iplanetaryLaserBattery && hs.iItem <= iplanetaryNeutronShield && raMajor == raAttack) {
             return mdPartAvailRestricted;
         }
-        if (!PartQueryIO().pfnHidden(ppart))
+        if (!PartQueryIO().pfnHidden(app, ppart))
             break;
         return mdPartAvailRestricted;
     case hstTerra:
@@ -385,24 +386,24 @@ int16_t FLookupPart(PART *ppart) {
             return mdPartAvailInvalid;
         }
         ppart->SetPterra(&rgterra[hs.iItem]);
-        if (idPlayer != iplrNone && hs.iItem >= iterraTotalTerraform3 && hs.iItem <= iterraTotalTerraform30 &&
-            RaceQueryIO().pfnGrbit(&rgplr[idPlayer], ibitRaceTT) == 0) {
+        if (app.state.idPlayer != iplrNone && hs.iItem >= iterraTotalTerraform3 && hs.iItem <= iterraTotalTerraform30 &&
+            RaceQueryIO().pfnGrbit(&app.state.rgplr[app.state.idPlayer], ibitRaceTT) == 0) {
             return mdPartAvailRestricted;
         }
     }
-    return idPlayer == iplrNone ? static_cast<int>(mdPartAvailAvailable) : PartQueryIO().pfnTechStatus((char *)ppart->pcom().rgTech());
+    return app.state.idPlayer == iplrNone ? static_cast<int>(mdPartAvailAvailable) : PartQueryIO().pfnTechStatus(app, (char *)ppart->pcom().rgTech());
 }
 
-void LookupBestPlanetaryScanner(PART *ppart) {
+void LookupBestPlanetaryScanner(APPSESSION &app, PART *ppart) {
     ppart->hs.iItem = iplanetarySnooper620X;
     ppart->hs.grhst = hstPlanetary;
-    while (ppart->hs.iItem >= iplanetaryViewer50 && PartQueryIO().pfnLookup(ppart) != mdPartAvailAvailable && ppart->hs.iItem != iplanetaryViewer50) {
+    while (ppart->hs.iItem >= iplanetaryViewer50 && PartQueryIO().pfnLookup(app, ppart) != mdPartAvailAvailable && ppart->hs.iItem != iplanetaryViewer50) {
         ppart->hs.iItem--;
     }
     return;
 }
 
-int16_t TechStatus(char *rgTech) {
+int16_t TechStatus(APPSESSION &app, char *rgTech) {
     int16_t fInAWhile;
     int16_t i;
     int16_t fAlmost;
@@ -412,10 +413,10 @@ int16_t TechStatus(char *rgTech) {
     fAlmost = 0;
     fInAWhile = 0;
     for (i = 0; i < 6; i++) {
-        if (rgplr[idPlayer].rgTech[i] < rgTech[i]) {
+        if (app.state.rgplr[app.state.idPlayer].rgTech[i] < rgTech[i]) {
             cMiss++;
-            if (i == rgplr[idPlayer].iTechNow()) {
-                if (rgplr[idPlayer].rgTech[i] + 1 == rgTech[i]) {
+            if (i == app.state.rgplr[app.state.idPlayer].iTechNow()) {
+                if (app.state.rgplr[app.state.idPlayer].rgTech[i] + 1 == rgTech[i]) {
                     fAlmost = 1;
                 } else {
                     fInAWhile = i + 1;
@@ -430,7 +431,7 @@ int16_t TechStatus(char *rgTech) {
         return mdPartAvailNextTech;
     }
     if (cMiss == 1 && fInAWhile) {
-        return rgTech[fInAWhile - 1] - rgplr[idPlayer].rgTech[fInAWhile - 1] + 1;
+        return rgTech[fInAWhile - 1] - app.state.rgplr[app.state.idPlayer].rgTech[fInAWhile - 1] + 1;
     }
     return mdPartAvailOtherTech;
 }

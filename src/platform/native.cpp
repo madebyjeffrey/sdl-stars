@@ -19,14 +19,14 @@ static void qsortSwap16(unsigned char *a, unsigned char *b, size_t width) {
 // Reconstructed from 0024:0866-09c6, matching qsort.asm in C700 and MSVC
 // MLIBCEW.LIB. The initial sorted check, first-element pivot, and strict
 // partition boundaries matter: ICompLong compares planet X coordinates only.
-void qsort16(void *base, size_t count, size_t width, int (*compare)(const void *, const void *)) {
+void qsort16(APPSESSION &app, void *base, size_t count, size_t width, int (*compare)(APPSESSION &, const void *, const void *)) {
     if (count < 2 || width == 0)
         return;
 
     unsigned char *items = (unsigned char *)base;
     size_t         i;
     for (i = 1; i < count; ++i) {
-        if ((int16_t)compare(items + i * width, items + (i - 1) * width) < 0)
+        if ((int16_t)compare(app, items + i * width, items + (i - 1) * width) < 0)
             break;
     }
     if (i == count)
@@ -41,7 +41,7 @@ void qsort16(void *base, size_t count, size_t width, int (*compare)(const void *
             size_t lastLess = lo, firstGreater = hi;
             for (;;) {
                 while (++left != hi) {
-                    int order = (int16_t)compare(items + left * width, items + lo * width);
+                    int order = (int16_t)compare(app, items + left * width, items + lo * width);
                     if (order > 0)
                         break;
                     if (order < 0)
@@ -49,7 +49,7 @@ void qsort16(void *base, size_t count, size_t width, int (*compare)(const void *
                 }
                 for (;;) {
                     --right;
-                    int order = (int16_t)compare(items + lo * width, items + right * width);
+                    int order = (int16_t)compare(app, items + lo * width, items + right * width);
                     if (order > 0)
                         break;
                     if (order < 0)
@@ -219,7 +219,7 @@ int16_t FFileReadOnly(const char *szFile) { return IAccessNativePath(szFile, 2) 
 void MakeDir(const char *szDir) { ICreateNativeDirectory(szDir, 0777); }
 int CreateNativeDir(const char *pszDir) { return ICreateNativeDirectory(pszDir, 0777); }
 int16_t FEnsureNativeDir(const char *pszDir) { return FEnsureNativeDirectory(pszDir); }
-int16_t FNativeEnumerateDirectory(const char *pszDir, FNativeDirectoryEntryProc pfnEntry, void *lpData) {
+int16_t FNativeEnumerateDirectory(APPSESSION &app, const char *pszDir, FNativeDirectoryEntryProc pfnEntry, void *lpData) {
     NATIVEDIR *pdir;
     const char *pszEntry;
     if (!pfnEntry || !(pdir = PdirNativeOpen(pszDir))) return 0;
@@ -229,7 +229,7 @@ int16_t FNativeEnumerateDirectory(const char *pszDir, FNativeDirectoryEntryProc 
         pszEntry = PszNativeReadDir(pdir);
         if (!pszEntry) return errno == 0;
         if (!FUtf8Valid(pszEntry, strlen(pszEntry))) { errno = EILSEQ; return 0; }
-        if (!pfnEntry(lpData, pszEntry)) return 1;
+        if (!pfnEntry(app, lpData, pszEntry)) return 1;
     }
 }
 int16_t FNativeFileSize(const char *pszFile, int64_t *pcbFile) {

@@ -1,4 +1,8 @@
 #include "stars_test.h"
+#include "appstate.h"
+#ifdef STARS_UI_SDL
+#include "uistate.h"
+#endif
 #ifdef STARS_UI_SDL
 #include "../../src/core/alert_io.h"
 #endif
@@ -19,7 +23,7 @@ int16_t fStarsTestAcceptLegacyRacePassword;
 int16_t cStarsTestLegacyRacePasswordPrompt;
 char szStarsTestLegacyRacePassword[16];
 
-int16_t FStarsTestPromptLegacyRacePassword(char *szPassword) {
+int16_t FStarsTestPromptLegacyRacePassword(APPSESSION &, char *szPassword) {
     cStarsTestLegacyRacePasswordPrompt++;
     if (!fStarsTestAcceptLegacyRacePassword)
         return 0;
@@ -39,31 +43,31 @@ static int16_t FStarsTestAlert(const char *sz, int16_t mbType) {
 }
 
 #ifdef STARS_UI_SDL
-int16_t StarsTest_AlertSz(const char *sz, int16_t mbType) { return FStarsTestAlert(sz, mbType); }
+int16_t StarsTest_AlertSz(APPSESSION &, const char *sz, int16_t mbType) { return FStarsTestAlert(sz, mbType); }
 #else
 // The native tests link hostui.c for the rest of ui.h.
 int16_t IdAlertBox(const char *sz, int16_t mbType) { return FStarsTestAlert(sz, mbType); }
 #endif
 
-int16_t FStarsTestInit(void) {
+int16_t FStarsTestInit(APPSESSION &app) {
     iStarsTestAlertResponse = 0;
     fStarsTestAcceptLegacyRacePassword = 0;
     cStarsTestLegacyRacePasswordPrompt = 0;
     szStarsTestLegacyRacePassword[0] = 0;
 #ifdef STARS_UI_SDL
-    hInst = win32::GetModuleHandleA(NULL);
-    memset(&vtimer, 0, sizeof(TIMER));
+    app.lpui->hInst = win32::GetModuleHandleA(NULL);
+    memset(&app.lpui->vtimer, 0, sizeof(TIMER));
 #endif
-    szBase[0] = 0;
-    ini.SetWFlags(0);
-    memset(&tutor, 0, sizeof(TUTOR));
-    Randomize2(12345);
-    fFileErrSilent = 1;
-    idPlayer = iplrNone;
+    app.state.szBase[0] = 0;
+    app.state.ini.SetWFlags(0);
+    memset(&app.state.tutor, 0, sizeof(TUTOR));
+    Randomize2(app, 12345);
+    app.state.fFileErrSilent = 1;
+    app.state.idPlayer = iplrNone;
 #ifdef STARS_UI_SDL
-    return FCreateStuff();
+    return FCreateStuff(app);
 #else
-    InitGameStuff();
+    InitGameStuff(app);
     return 1;
 #endif
 }
@@ -140,7 +144,7 @@ static int16_t FCopyRace(const char *szDir) {
     return fclose(pfDst) == 0;
 }
 
-int16_t FStarsTestNewGame(const char *szDir, uint32_t lSeed, const char **rgszAi, int16_t cAi) {
+int16_t FStarsTestNewGame(APPSESSION &app, const char *szDir, uint32_t lSeed, const char **rgszAi, int16_t cAi) {
     char    szDef[cbTestPath];
     FILE   *fp;
     int16_t i;
@@ -161,69 +165,69 @@ int16_t FStarsTestNewGame(const char *szDir, uint32_t lSeed, const char **rgszAi
     fprintf(fp, "%s%sgame.xy\r\n", szDir, szDirSep);
     fclose(fp);
 
-    if (!GenNewGameFromFile(szDef))
+    if (!GenNewGameFromFile(app, szDef))
         return 0;
-    DestroyCurGame();
-    snprintf(szBase, sizeof(szBase), "%s%sgame", szDir, szDirSep);
+    DestroyCurGame(app);
+    snprintf(app.state.szBase, sizeof(app.state.szBase), "%s%sgame", szDir, szDirSep);
     return 1;
 }
 
-int16_t FStarsTestLoadHost(void) {
-    DestroyCurGame();
-    idPlayer = iplrNone;
-    return FLoadGame(szBase, szTestLiteral1);
+int16_t FStarsTestLoadHost(APPSESSION &app) {
+    DestroyCurGame(app);
+    app.state.idPlayer = iplrNone;
+    return FLoadGame(app, app.state.szBase, szTestLiteral1);
 }
 
-int16_t FStarsTestLoadPlayer(int16_t iPlr) {
+int16_t FStarsTestLoadPlayer(APPSESSION &app, int16_t iPlr) {
     char szExt[16];
 
-    DestroyCurGame();
-    idPlayer = iPlr;
+    DestroyCurGame(app);
+    app.state.idPlayer = iPlr;
     snprintf(szExt, sizeof(szExt), "m%d", iPlr + 1);
-    return FLoadGame(szBase, szExt);
+    return FLoadGame(app, app.state.szBase, szExt);
 }
 
-PLANET *LpplStarsTestHomeworld(int16_t iPlr) {
+PLANET *LpplStarsTestHomeworld(APPSESSION &app, int16_t iPlr) {
     int16_t i;
 
-    for (i = 0; i < cPlanet; i++) {
-        if (lpPlanets[i].iPlayer == iPlr && lpPlanets[i].fHomeworld)
-            return &lpPlanets[i];
+    for (i = 0; i < app.state.cPlanet; i++) {
+        if (app.state.lpPlanets[i].iPlayer == iPlr && app.state.lpPlanets[i].fHomeworld)
+            return &app.state.lpPlanets[i];
     }
     return NULL;
 }
 
-FLEET *LpflStarsTestAddFleet(int16_t iPlr, int16_t idPlanet, int16_t ishdef, int16_t csh) {
+FLEET *LpflStarsTestAddFleet(APPSESSION &app, int16_t iPlr, int16_t idPlanet, int16_t ishdef, int16_t csh) {
     FLEET *lpfl;
 
-    lpfl = LpflNew(iPlr, idPlanet);
+    lpfl = LpflNew(app, iPlr, idPlanet);
     lpfl->rgcsh[ishdef] = csh;
-    rglpshdef[iPlr][ishdef].cExist += csh;
-    rglpshdef[iPlr][ishdef].cBuilt += csh;
+    app.state.rglpshdef[iPlr][ishdef].cExist += csh;
+    app.state.rglpshdef[iPlr][ishdef].cBuilt += csh;
     return lpfl;
 }
 
-int16_t FStarsTestSaveHost(void) {
-    idPlayer = iplrNone;
-    return FWriteDataFile(szBase, -1, 0);
+int16_t FStarsTestSaveHost(APPSESSION &app) {
+    app.state.idPlayer = iplrNone;
+    return FWriteDataFile(app, app.state.szBase, -1, 0);
 }
 
-int16_t FStarsTestSaveGame(void) {
+int16_t FStarsTestSaveGame(APPSESSION &app) {
     int16_t i;
 
-    for (i = 0; i < game.cPlayer; i++) {
-        idPlayer = iplrNone;
-        if (!FWriteDataFile(szBase, i, 0))
+    for (i = 0; i < app.state.game.cPlayer; i++) {
+        app.state.idPlayer = iplrNone;
+        if (!FWriteDataFile(app, app.state.szBase, i, 0))
             return 0;
     }
-    return FStarsTestSaveHost();
+    return FStarsTestSaveHost(app);
 }
 
-int16_t FStarsTestGenerate(void) {
-    DestroyCurGame();
-    idPlayer = iplrNone;
-    EnsureAis();
-    return FGenerateTurn();
+int16_t FStarsTestGenerate(APPSESSION &app) {
+    DestroyCurGame(app);
+    app.state.idPlayer = iplrNone;
+    EnsureAis(app);
+    return FGenerateTurn(app);
 }
 
 #ifdef STARS_UI_SDL

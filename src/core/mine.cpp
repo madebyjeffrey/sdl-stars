@@ -1,9 +1,10 @@
 #include "common.h"
+#include "appstate.h"
 #include "colony_io.h"
 #include "race_query_io.h"
 #include "random_io.h"
 
-void GetMineFieldCounts(uint16_t id, int16_t *pithm, int16_t *pcthm) {
+void GetMineFieldCounts(APPSESSION &app, uint16_t id, int16_t *pithm, int16_t *pcthm) {
     int16_t cthTotal;
     int16_t ithFound;
     THING  *lpth;
@@ -11,10 +12,10 @@ void GetMineFieldCounts(uint16_t id, int16_t *pithm, int16_t *pcthm) {
 
     ithFound = 0;
     cthTotal = 0;
-    lpth = lpThings;
-    lpthMac = lpThings + cThing;
+    lpth = app.state.lpThings;
+    lpthMac = app.state.lpThings + app.state.cThing;
     for (; lpth < lpthMac; lpth++) {
-        if (lpth->ith() == ithMinefield && lpth->iplr() == idPlayer) {
+        if (lpth->ith() == ithMinefield && lpth->iplr() == app.state.idPlayer) {
             cthTotal++;
             if (lpth->idFull() == id) {
                 ithFound = cthTotal;
@@ -26,36 +27,36 @@ void GetMineFieldCounts(uint16_t id, int16_t *pithm, int16_t *pcthm) {
     return;
 }
 
-int16_t FOtherStuffAtScanSel() {
+int16_t FOtherStuffAtScanSel(APPSESSION &app) {
     int16_t c;
     int16_t i;
     THING  *lpth;
     FLEET  *lpfl;
     THING  *lpthMac;
 
-    if (sel.scan.idpl != idplNone && (sel.scan.ifl != iflNone || sel.scan.ith != ithNone)) {
+    if (app.state.sel.scan.idpl != idplNone && (app.state.sel.scan.ifl != iflNone || app.state.sel.scan.ith != ithNone)) {
         return 1;
     }
-    if (sel.scan.ifl != iflNone) {
-        if (sel.scan.ith != ithNone) {
+    if (app.state.sel.scan.ifl != iflNone) {
+        if (app.state.sel.scan.ith != ithNone) {
             return 1;
         }
         c = 1;
-        for (i = 0; i < cFleet; i++) {
-            lpfl = rglpfl[i];
-            if (!rglpfl[i])
+        for (i = 0; i < app.state.cFleet; i++) {
+            lpfl = app.state.rglpfl[i];
+            if (!app.state.rglpfl[i])
                 break;
-            if (lpfl->pt.x == sel.scan.pt.x && lpfl->pt.y == sel.scan.pt.y && c-- == 0) {
+            if (lpfl->pt.x == app.state.sel.scan.pt.x && lpfl->pt.y == app.state.sel.scan.pt.y && c-- == 0) {
                 return 1;
             }
         }
     }
-    if (sel.scan.ith != ithNone) {
+    if (app.state.sel.scan.ith != ithNone) {
         c = 1;
-        lpth = lpThings;
-        lpthMac = lpThings + cThing;
+        lpth = app.state.lpThings;
+        lpthMac = app.state.lpThings + app.state.cThing;
         for (; lpth < lpthMac; lpth++) {
-            if (lpth->pt().x() == sel.scan.pt.x && lpth->pt().y() == sel.scan.pt.y && c-- == 0) {
+            if (lpth->pt().x() == app.state.sel.scan.pt.x && lpth->pt().y() == app.state.sel.scan.pt.y && c-- == 0) {
                 return 1;
             }
         }
@@ -63,7 +64,7 @@ int16_t FOtherStuffAtScanSel() {
     return 0;
 }
 
-void EstMineralsMined(PLANET *lppl, int32_t *plQuan, int32_t cMines, int16_t fApply) {
+void EstMineralsMined(APPSESSION &app, PLANET *lppl, int32_t *plQuan, int32_t cMines, int16_t fApply) {
     int32_t lQuanRem;
     int32_t lQuanAct;
     int16_t i;
@@ -81,7 +82,7 @@ void EstMineralsMined(PLANET *lppl, int32_t *plQuan, int32_t cMines, int16_t fAp
     FLEET  *lpfl;
 
     fRemote = cMines != -1;
-    fMacintosh = lppl->iPlayer != iplrNone && RaceQueryIO().pfnStat(&rgplr[lppl->iPlayer], rsMajorAdv) == raMacintosh;
+    fMacintosh = lppl->iPlayer != iplrNone && RaceQueryIO().pfnStat(&app.state.rgplr[lppl->iPlayer], rsMajorAdv) == raMacintosh;
     if (cMines == -1) {
         if (lppl->iPlayer == iplrNone || lppl->rgwtMin[3] == 0) {
             for (i = 0; i < 3; i++) {
@@ -89,11 +90,11 @@ void EstMineralsMined(PLANET *lppl, int32_t *plQuan, int32_t cMines, int16_t fAp
             }
             return;
         }
-        lMine = ColonyIO().pfnMinesOperating(lppl);
+        lMine = ColonyIO().pfnMinesOperating(app, lppl);
         if (fMacintosh) {
             lMineEff = 10;
         } else {
-            lMineEff = RaceQueryIO().pfnStat(&rgplr[lppl->iPlayer], rsMineProd);
+            lMineEff = RaceQueryIO().pfnStat(&app.state.rgplr[lppl->iPlayer], rsMineProd);
         }
     } else {
         lMine = cMines;
@@ -112,7 +113,7 @@ void EstMineralsMined(PLANET *lppl, int32_t *plQuan, int32_t cMines, int16_t fAp
         }
         lQuanRem = (int32_t)(lQuan % 100);
         lQuan = (int32_t)(lQuan / 100);
-        if (lQuanRem != 0 && gd.fGeneratingTurn && RandomIO().pfnRandom(100) < (int16_t)LOWORD(lQuanRem)) {
+        if (lQuanRem != 0 && app.state.gd.fGeneratingTurn && RandomIO().pfnRandom(app, 100) < (int16_t)LOWORD(lQuanRem)) {
             lQuan++;
         }
         plQuan[i] = lQuan;
@@ -156,15 +157,15 @@ void EstMineralsMined(PLANET *lppl, int32_t *plQuan, int32_t cMines, int16_t fAp
         }
     }
     if (fMacintosh && !fRemote) {
-        for (ifl = 0; ifl < cFleet; ifl++) {
-            lpfl = rglpfl[ifl];
-            if (!rglpfl[ifl])
+        for (ifl = 0; ifl < app.state.cFleet; ifl++) {
+            lpfl = app.state.rglpfl[ifl];
+            if (!app.state.rglpfl[ifl])
                 break;
             if (lpfl->idPlanet == lppl->id && lpfl->iPlayer == lppl->iPlayer && !lpfl->fDead && lpfl->cord <= 1 &&
                 lpfl->lpplord->rgord()[0].grTask == grTaskMine) {
-                cMines = ColonyIO().pfnFleetMining(lpfl);
+                cMines = ColonyIO().pfnFleetMining(app, lpfl);
                 if (cMines > 0) {
-                    EstMineralsMined(lppl, rglQuan, cMines, fApply);
+                    EstMineralsMined(app, lppl, rglQuan, cMines, fApply);
                     for (i = 0; i < 3; i++) {
                         plQuan[i] += rglQuan[i];
                     }

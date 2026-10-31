@@ -1,4 +1,9 @@
 #include "acutest.h"
+#include "appstate.h"
+#ifdef STARS_UI_SDL
+#include "uistate.h"
+#endif
+#include "callbackcontext.h"
 [[maybe_unused]] static char szTestLiteral1[] = "\xff";
 #include "stars_test.h"
 #include <errno.h>
@@ -16,13 +21,20 @@ typedef struct {
     int16_t fFound;
 } NATIVEENTRYCHECK;
 
-static int16_t FCheckNativeEntry(void *lpv, const char *pszEntry) {
+static int16_t FCheckNativeEntry(APPSESSION &, void *lpv, const char *pszEntry) {
     NATIVEENTRYCHECK *lpnec = (NATIVEENTRYCHECK *)lpv;
     if (!strcmp(pszEntry, lpnec->pszExpected)) lpnec->fFound = 1;
     return 1;
 }
 
 static void TestNativeFiles(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+
     char szDir[64], szFile[512], szOther[512], szLong[200], szNested[512], szMeta[512], szMetaTemp[512], rgb[16];
     int64_t cbNativeFile;
     NATIVEENTRYCHECK nec;
@@ -42,11 +54,11 @@ static void TestNativeFiles(void) {
     TEST_CHECK(FFileExists(szFile) && !FFileReadOnly(szFile));
     TEST_CHECK(FNativeFileSize(szFile, &cbNativeFile) && cbNativeFile == 6);
     nec.pszExpected = "\xe6\x9d\xb1\xe4\xba\xac-\xc3\xa9.bin"; nec.fFound = 0;
-    TEST_CHECK(FNativeEnumerateDirectory(szDir, FCheckNativeEntry, &nec) && nec.fFound);
+    TEST_CHECK(FNativeEnumerateDirectory(app, szDir, FCheckNativeEntry, &nec) && nec.fFound);
     TEST_CHECK(RenameNativeFile(szFile, szOther) == 0 && !FFileExists(szFile) && FFileExists(szOther));
     TEST_CHECK(FNativeFileSize(szOther, &cbNativeFile) && cbNativeFile == 6);
     nec.pszExpected = "\xf0\x9f\x98\x80.bin"; nec.fFound = 0;
-    TEST_CHECK(FNativeEnumerateDirectory(szDir, FCheckNativeEntry, &nec) && nec.fFound);
+    TEST_CHECK(FNativeEnumerateDirectory(app, szDir, FCheckNativeEntry, &nec) && nec.fFound);
     snprintf(szMeta, sizeof(szMeta), "%s%s\xe6\x9d\xb1\xe4\xba\xac.meta", szDir, szDirSep);
     snprintf(szMetaTemp, sizeof(szMetaTemp), "%s%s\xce\xa9.tmp", szDir, szDirSep);
     {
@@ -69,7 +81,7 @@ static void TestNativeFiles(void) {
     TEST_CHECK(RemoveNativeFile("\xff") == -1 && errno == EILSEQ);
     TEST_CHECK(CreateNativeDir("\xff") == -1 && errno == EILSEQ);
     TEST_CHECK(!FNativeDirectoryExists("\xff") && errno == EILSEQ);
-    TEST_CHECK(!FNativeEnumerateDirectory("\xff", FCheckNativeEntry, &nec) && errno == EILSEQ);
+    TEST_CHECK(!FNativeEnumerateDirectory(app, "\xff", FCheckNativeEntry, &nec) && errno == EILSEQ);
     TEST_CHECK(!FNativeFileSize("\xff", &cbNativeFile) && errno == EILSEQ);
     TEST_CHECK(!FEnsureNativeDir("\xff") && errno == EILSEQ);
     TEST_CHECK(RemoveNativePath("\xff") == -1 && errno == EILSEQ);

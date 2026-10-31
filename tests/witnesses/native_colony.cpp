@@ -1,4 +1,9 @@
 #include "planet_query_io.h"
+#include "appstate.h"
+#ifdef STARS_UI_SDL
+#include "uistate.h"
+#endif
+#include "callbackcontext.h"
 #include "race_query_io.h"
 
 #include <assert.h>
@@ -12,23 +17,23 @@ static int32_t  cfg[37];
 static int      stats, lookups, growths, grbits;
 static uint64_t floatBits;
 static void     RecordFloat(double x) noexcept { memcpy(&floatBits, &x, 8); }
-static int16_t  LookupPlanet(int16_t id, PLANET *out) {
+static int16_t  LookupPlanet(APPSESSION &, int16_t id, PLANET *out) {
     assert(id == 0);
     lookups++;
     *out = stored;
     return 1;
 }
-static int16_t Habitat(PLANET *p, int16_t player) {
+static int16_t Habitat(APPSESSION &app, PLANET *p, int16_t player) {
     assert(player == 0 || player == 1);
-    return cfg[17] ? (int16_t)cfg[16] : PctPlanetDesirability(p, player);
+    return cfg[17] ? (int16_t)cfg[16] : PctPlanetDesirability(app, p, player);
 }
-static int32_t Growth(PLANET *p, int16_t update) {
+static int32_t Growth(APPSESSION &app, PLANET *p, int16_t update) {
     growths++;
     if (cfg[25]) {
         assert(!update);
         return cfg[26];
     }
-    return ChgPopFromPlanet(p, update);
+    return ChgPopFromPlanet(app, p, update);
 }
 
 static int16_t QueryRaceStat(PLAYER *p, RaceStat stat) {
@@ -40,26 +45,26 @@ static int16_t RaceTrait(PLAYER *p, RaceGrbit bit) {
     return GetRaceGrbit(p, bit);
 }
 
-static void setup(void) {
+static void setup(APPSESSION &app) {
     memset(&planet, 0, sizeof(planet));
-    memset(rgplr, 0, sizeof(rgplr));
+    memset(app.state.rgplr, 0, sizeof(app.state.rgplr));
     memset(bases, 0, sizeof(bases));
     for (int player = 0; player < 2; player++) {
         int at = player ? 29 : 8;
-        rgplr[player].rgAttr[rsMajorAdv] = (int8_t)cfg[at];
-        rgplr[player].rgAttr[rsResGen] = (int8_t)cfg[at + 1];
-        rgplr[player].rgAttr[rsFactProd] = (int8_t)cfg[at + 2];
-        rgplr[player].rgAttr[rsFactOperate] = (int8_t)cfg[at + 3];
-        rgplr[player].rgAttr[rsMineOperate] = (int8_t)cfg[at + 4];
-        rgplr[player].pctIdealGrowth = (int8_t)cfg[at + 5];
-        rgplr[player].rgTech[0] = (int8_t)cfg[at + 6];
-        rgplr[player].grbitAttr = static_cast<RaceTraitBits>(cfg[at + 7] ? static_cast<uint32_t>(grbitRaceOBRM) : 0);
+        app.state.rgplr[player].rgAttr[rsMajorAdv] = (int8_t)cfg[at];
+        app.state.rgplr[player].rgAttr[rsResGen] = (int8_t)cfg[at + 1];
+        app.state.rgplr[player].rgAttr[rsFactProd] = (int8_t)cfg[at + 2];
+        app.state.rgplr[player].rgAttr[rsFactOperate] = (int8_t)cfg[at + 3];
+        app.state.rgplr[player].rgAttr[rsMineOperate] = (int8_t)cfg[at + 4];
+        app.state.rgplr[player].pctIdealGrowth = (int8_t)cfg[at + 5];
+        app.state.rgplr[player].rgTech[0] = (int8_t)cfg[at + 6];
+        app.state.rgplr[player].grbitAttr = static_cast<RaceTraitBits>(cfg[at + 7] ? static_cast<uint32_t>(grbitRaceOBRM) : 0);
         for (int axis = 0; axis < 3; axis++) {
-            rgplr[player].rgEnvVarMin[axis] = 0;
-            rgplr[player].rgEnvVar[axis] = 50;
-            rgplr[player].rgEnvVarMax[axis] = 100;
+            app.state.rgplr[player].rgEnvVarMin[axis] = 0;
+            app.state.rgplr[player].rgEnvVar[axis] = 50;
+            app.state.rgplr[player].rgEnvVarMax[axis] = 100;
         }
-        rglpshdefSB[player] = bases[player];
+        app.state.rglpshdefSB[player] = bases[player];
         for (int i = 0; i < 10; i++)
             bases[player][i].hul.ihuldef = (HulDef)(ihuldefOrbitalFort + cfg[22]);
     }
@@ -80,9 +85,16 @@ static void setup(void) {
         stored.rgEnvVar[i] = (int8_t)cfg[19];
     stats = lookups = growths = grbits = 0;
     floatBits = 0;
-    idPlayer = (int16_t)cfg[7];
+    app.state.idPlayer = (int16_t)cfg[7];
 }
 int main(int argc, char **argv) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+
     PLANETQUERYIO io;
     io.pfnLookup = LookupPlanet;
     io.pfnDesirability = Habitat;
@@ -101,44 +113,44 @@ int main(int argc, char **argv) {
     unsigned long cases = 0, checks = 0;
     while (fread(cfg, sizeof(cfg), 1, f) == 1) {
         assert(fread(expected, sizeof(expected), 1, f) == 1 && fread(&bits, sizeof(bits), 1, f) == 1);
-        setup();
+        setup(app);
         int64_t result;
         switch (cfg[0]) {
         case 0:
-            result = CalcPlanetMaxPop(0, (int16_t)cfg[7]);
+            result = CalcPlanetMaxPop(app, 0, (int16_t)cfg[7]);
             break;
         case 1:
-            result = CMaxMines(&planet, (int16_t)cfg[7]);
+            result = CMaxMines(app, &planet, (int16_t)cfg[7]);
             break;
         case 2:
-            result = CMaxFactories(&planet, (int16_t)cfg[7]);
+            result = CMaxFactories(app, &planet, (int16_t)cfg[7]);
             break;
         case 3:
-            result = CMaxOperableMines(&planet, (int16_t)cfg[7], (int16_t)cfg[23]);
+            result = CMaxOperableMines(app, &planet, (int16_t)cfg[7], (int16_t)cfg[23]);
             break;
         case 4:
-            result = CMaxOperableFactories(&planet, (int16_t)cfg[7], (int16_t)cfg[23]);
+            result = CMaxOperableFactories(app, &planet, (int16_t)cfg[7], (int16_t)cfg[23]);
             break;
         case 5:
-            result = CMinesOperating(&planet);
+            result = CMinesOperating(app, &planet);
             break;
         case 6:
-            result = CFactoriesOperating(&planet);
+            result = CFactoriesOperating(app, &planet);
             break;
         case 7:
-            result = CMaxDefenses(&planet, (int16_t)cfg[7]);
+            result = CMaxDefenses(app, &planet, (int16_t)cfg[7]);
             break;
         case 8:
-            result = CMaxOperableDefenses(&planet, (int16_t)cfg[7], (int16_t)cfg[23]);
+            result = CMaxOperableDefenses(app, &planet, (int16_t)cfg[7], (int16_t)cfg[23]);
             break;
         case 9:
-            result = CResourcesAtPlanet(&planet, (int16_t)cfg[7]);
+            result = CResourcesAtPlanet(app, &planet, (int16_t)cfg[7]);
             break;
         case 10:
-            result = PctPlanetCapacity(&planet);
+            result = PctPlanetCapacity(app, &planet);
             break;
         default:
-            result = PlanetQueryIO().pfnGrowth(&planet, (int16_t)cfg[24]);
+            result = PlanetQueryIO().pfnGrowth(app, &planet, (int16_t)cfg[24]);
             break;
         }
         int64_t actual[] = {result, planet.rgwtMin[3], planet.iDeltaPop};
@@ -162,7 +174,7 @@ int main(int argc, char **argv) {
             checks++;
         }
         if (cfg[0] == 0) {
-            int primary = rgplr[cfg[7]].rgAttr[rsMajorAdv];
+            int primary = app.state.rgplr[cfg[7]].rgAttr[rsMajorAdv];
             assert(stats == (primary == 8 ? 1 : primary == 0 ? 2 : 3) && lookups == 1);
             assert(grbits == (primary != 8 || (stored.iPlayer == cfg[7] && stored.fStarbase)));
             checks += 2;

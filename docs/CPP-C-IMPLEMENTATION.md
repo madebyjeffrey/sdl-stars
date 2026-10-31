@@ -2,8 +2,8 @@
 
 Tracking: [#67](https://github.com/madebyjeffrey/sdl-stars/issues/67).
 Started: 2026-10-31. Initial branch: `codex/cpp-milestone-c`, targeting `develop`.
-Current continuation: `codex/cpp-c06-namespaces` from C04/C05 PR #72
-(`c6940721`); that PR targets `develop` after merged PR #70 (`caf8d27`).
+Current continuation: `codex/cpp-c08-explicit-state` from C07 PR #74
+(`bcdd77bf`); the dependent PR chain starts at C04/C05 PR #72 against `develop`.
 Plan: [CPP-MILESTONE-C.md](CPP-MILESTONE-C.md).
 
 ## Parent and scope
@@ -31,8 +31,8 @@ verification receipts below decide completion.
 | C04 | Complete under current CI policy | Every implementation/call redirect, allocator hook and private library clone is replaced by typed module effects. Desktop/host workflows, regressions and full formal verification/audit pass. |
 | C05 | Complete under current CI policy | All 27 commands use normal linked production targets; every parent case/assertion/exclusion receipt matches. The 67 retained independent Python definitions have identical parent ASTs. See the [per-program inventory](CPP-C05-WITNESSES.md). |
 | C06 | Complete under current CI policy | All 23 C03 names use `ui::` directly; raw operations and actual type tags use `win32::`. Generated names are deleted; [boundary/vector receipts](CPP-C06-BOUNDARIES.md) account for every entry and all 38 shared SDK inputs. |
-| C07 | Locally qualified; CI pending | All 2,101 parent macros have individual dispositions; typed helpers/constants, direct calls and shim removal pass full desktop/host/regression/sanitizer checks. |
-| C08 | Pending | Remove 156 game-state and 346 UI-state aliases through explicit caller dependencies. |
+| C07 | Complete under current CI policy | All 2,101 parent macros have individual dispositions; typed helpers/constants, direct calls and shim removal pass full desktop/host/regression/sanitizer checks. |
+| C08 | Locally qualified; CI pending | All 502 inventoried aliases plus two earlier XOR-seed aliases and their accessors are removed; owned calls receive explicit references, with target-bound foreign callbacks. See [state receipts](CPP-C08-STATE.md). |
 | C09 | Pending | Finalize compiler/reference policy and remove dead migration adapters. |
 | C10 | Pending | Full final-tree audit and Linux/macOS/Windows qualification. |
 
@@ -498,4 +498,20 @@ exact C06 comparisons each match 519 files (25 accepted warnings, zero differenc
 errors/skips). The 27 witness receipts and 67 independent Python ASTs match.
 The strict manifest covers 156 production sources / 157 variants / 160 headers;
 38 real SDK C and 29 representative C++ units compile. Documentation checks pass
-26 tests and 2,819 links / 700 IDs. Remote CI is pending; C08–C10 remain pending.
+26 tests and 2,819 links / 700 IDs. All 14 enabled PR jobs and all five manual platform jobs pass at
+`bcdd77bf`; Linux desktop passes 153/153, Windows probe 2/2, game units
+13/13 and platform checks 88/88. C08–C10 remain in progress.
+
+
+## C08: explicit state consumers
+
+The [state ledger](CPP-C08-STATE.md) and JSON sidecar account for all 504 removed
+references: 156 C01 game globals, two earlier file-XOR seeds, and 346 UI globals.
+Actual owners retain their pre-main lifetime; owned callers pass `APPSESSION &`.
+Foreign callbacks bind their target/harness context, and core remains SDL-free.
+Local desktop/host/sanitizer collections pass 151/27/37 checks respectively.
+Native and host regressions plus exact C07 comparisons each match 519 files
+through turn 150 with 25 accepted warnings and zero differences/errors/skips.
+The 27 witness receipts and 67 Python ASTs match. The trace/chooser-off build
+matches 31 files and 773 normalized trace events. Compiler/header/docs checks
+pass; remote CI and C09/C10 remain pending.

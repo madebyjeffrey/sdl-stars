@@ -1,6 +1,8 @@
 #ifndef STARS_PARTS_FIXTURE_H
 #define STARS_PARTS_FIXTURE_H
 #include <cassert>
+#include "appstate.h"
+#include "callbackcontext.h"
 #include <climits>
 #include <cstdio>
 #include <cstdlib>
@@ -22,22 +24,26 @@ static void Call(int tag) {
     rgCalls[cCalls++] = tag;
 }
 static int16_t QueryStat(PLAYER *p, RaceStat stat) {
-    CHECK(idPlayer >= 0 && idPlayer < 16 && p == &rgplr[idPlayer] && stat == rsMajorAdv);
+    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+
+    CHECK(app.state.idPlayer >= 0 && app.state.idPlayer < 16 && p == &app.state.rgplr[app.state.idPlayer] && stat == rsMajorAdv);
     Call(0);
     return GetRaceStat(p, stat);
 }
 static int16_t QueryGrbit(PLAYER *p, RaceGrbit bit) {
-    CHECK(idPlayer >= 0 && idPlayer < 16 && p == &rgplr[idPlayer]);
+    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+
+    CHECK(app.state.idPlayer >= 0 && app.state.idPlayer < 16 && p == &app.state.rgplr[app.state.idPlayer]);
     Call(100 + bit);
     return GetRaceGrbit(p, bit);
 }
-static int16_t QueryTech(char *need) {
+static int16_t QueryTech(APPSESSION &app, char *need) {
     Call(2);
-    return TechStatus(need);
+    return TechStatus(app, need);
 }
-static int16_t QueryHidden(PART *part) {
+static int16_t QueryHidden(APPSESSION &app, PART *part) {
     Call(1);
-    return FShouldPartBeHidden(part);
+    return FShouldPartBeHidden(app, part);
 }
 struct PARTQUERYFIXTURE {
     RACEQUERYIOSCOPE raceScope;

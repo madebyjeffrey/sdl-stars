@@ -1,4 +1,5 @@
 #include "common.h"
+#include "appstate.h"
 #include "production_io.h"
 #include "planet_query_io.h"
 #include "part_query_io.h"
@@ -14,7 +15,7 @@ HullSlotType rghstCat[14] = {hstWeapon, hstSpecialEM, hstArmor,  hstBeam,     hs
 StringId     rgidsCat[14] = {idsWeapons2,     idsDevices,  idsArmor3,   idsBeamWeapons, idsBombs,      idsEngines,   idsMineLayers,
                              idsMiningRobots, idsScanners, idsShields3, idsElectrical,  idsMechanical, idsTorpedoes, idsOrbital};
 
-int16_t PctJammerFromHul(HUL *lphul) {
+int16_t PctJammerFromHul(APPSESSION &app, HUL *lphul) {
     int32_t pctJam;
     int16_t ihs;
     int16_t i;
@@ -26,7 +27,7 @@ int16_t PctJammerFromHul(HUL *lphul) {
         part.hs = lphul->rghs[ihs];
         if (part.hs.grhst == hstSpecialE) {
             if (part.hs.iItem >= ispecialEJammer10 && part.hs.iItem <= ispecialEJammer50) {
-                PartQueryIO().pfnLookup(&part);
+                PartQueryIO().pfnLookup(app, &part);
                 pctJam = (int16_t)(100 - part.pspecial()->grAbility);
             } else if (part.hs.iItem == ispecialEMultiFunctionPod) {
                 pctJam = 90;
@@ -62,45 +63,45 @@ int16_t PctJammerFromHul(HUL *lphul) {
     return LOWORD(pctJam);
 }
 
-SHDEF *NthValidShdef(int16_t n) {
+SHDEF *NthValidShdef(APPSESSION &app, int16_t n) {
     int16_t i;
 
-    if (fStarbaseMode) {
+    if (app.state.fStarbaseMode) {
         for (i = 0; i < 10; i++) {
-            if (!rglpshdefSB[idPlayer][i].fFree && n-- == 0) {
-                return rglpshdefSB[idPlayer] + i;
+            if (!app.state.rglpshdefSB[app.state.idPlayer][i].fFree && n-- == 0) {
+                return app.state.rglpshdefSB[app.state.idPlayer] + i;
             }
         }
     } else {
         for (i = 0; i < 16; i++) {
-            if (!rgshdef[i].fFree && n-- == 0) {
-                return &rgshdef[i];
+            if (!app.state.rgshdef[i].fFree && n-- == 0) {
+                return &app.state.rgshdef[i];
             }
         }
     }
     return NULL;
 }
 
-SHDEF *NthValidEnemyShdef(int16_t n) {
+SHDEF *NthValidEnemyShdef(APPSESSION &app, int16_t n) {
     int16_t i;
     int16_t j;
 
-    if (fStarbaseMode) {
-        for (i = 0; i < game.cPlayer; i++) {
-            if (rglpshdefSB[i] && i != idPlayer) {
+    if (app.state.fStarbaseMode) {
+        for (i = 0; i < app.state.game.cPlayer; i++) {
+            if (app.state.rglpshdefSB[i] && i != app.state.idPlayer) {
                 for (j = 0; j < 10; j++) {
-                    if (!rglpshdefSB[i][j].fFree && n-- == 0) {
-                        return rglpshdefSB[i] + j;
+                    if (!app.state.rglpshdefSB[i][j].fFree && n-- == 0) {
+                        return app.state.rglpshdefSB[i] + j;
                     }
                 }
             }
         }
     } else {
-        for (i = 0; i < game.cPlayer; i++) {
-            if (rglpshdef[i] && i != idPlayer) {
+        for (i = 0; i < app.state.game.cPlayer; i++) {
+            if (app.state.rglpshdef[i] && i != app.state.idPlayer) {
                 for (j = 0; j < 16; j++) {
-                    if (!rglpshdef[i][j].fFree && n-- == 0) {
-                        return rglpshdef[i] + j;
+                    if (!app.state.rglpshdef[i][j].fFree && n-- == 0) {
+                        return app.state.rglpshdef[i] + j;
                     }
                 }
             }
@@ -109,7 +110,7 @@ SHDEF *NthValidEnemyShdef(int16_t n) {
     return NULL;
 }
 
-void KillQueuedMassPackets(PLANET *lppl) {
+void KillQueuedMassPackets(APPSESSION &app, PLANET *lppl) {
     int16_t iprod;
     int16_t iDst;
     PROD   *lpprod;
@@ -129,20 +130,20 @@ void KillQueuedMassPackets(PLANET *lppl) {
             lpprod++;
         }
         if (iDst == 0) {
-            FreePl(lppl->lpplprod);
+            FreePl(app, lppl->lpplprod);
             lppl->lpplprod = NULL;
         } else if (iDst != iprod) {
             lppl->lpplprod->iprodMac = iDst;
         }
-        if (sel.grobj == grobjPlanet && sel.pl.id == lppl->id) {
-            PlanetQueryIO().pfnLookup(sel.pl.id, &sel.pl);
-            ProductionIO().pfnRefresh();
+        if (app.state.sel.grobj == grobjPlanet && app.state.sel.pl.id == lppl->id) {
+            PlanetQueryIO().pfnLookup(app, app.state.sel.pl.id, &app.state.sel.pl);
+            ProductionIO().pfnRefresh(app);
         }
     }
     return;
 }
 
-void KillQueuedShips(PLANET *lppl) {
+void KillQueuedShips(APPSESSION &app, PLANET *lppl) {
     int16_t iprod;
     int16_t iDst;
     PROD   *lpprod;
@@ -165,14 +166,14 @@ void KillQueuedShips(PLANET *lppl) {
             lpprod++;
         }
         if (iDst == 0) {
-            FreePl(lppl->lpplprod);
+            FreePl(app, lppl->lpplprod);
             lppl->lpplprod = NULL;
         } else if (iDst != iprod) {
             lppl->lpplprod->iprodMac = iDst;
         }
-        if (sel.grobj == grobjPlanet && sel.pl.id == lppl->id) {
-            PlanetQueryIO().pfnLookup(sel.pl.id, &sel.pl);
-            ProductionIO().pfnRefresh();
+        if (app.state.sel.grobj == grobjPlanet && app.state.sel.pl.id == lppl->id) {
+            PlanetQueryIO().pfnLookup(app, app.state.sel.pl.id, &app.state.sel.pl);
+            ProductionIO().pfnRefresh(app);
         }
     }
     return;

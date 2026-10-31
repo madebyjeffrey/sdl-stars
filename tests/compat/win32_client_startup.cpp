@@ -1,5 +1,10 @@
 /* Exercise the shared WinMain, embedded resources and actual title painting. */
 #include "win.h"
+#include "appstate.h"
+#ifdef STARS_UI_SDL
+#include "uistate.h"
+#endif
+#include "callbackcontext.h"
 #include "../../src/core/alert_io.h"
 #include "../../src/core/player_choice_io.h"
 #include "../../src/ui/desktop_choice_io.h"
@@ -96,12 +101,12 @@ static BOOL FTestReadLibraryMetadata(const char *pszFile, int *piVersion, char *
            cchExchangeRead > 0 && (size_t)cchExchangeRead < cchExchangeName;
 }
 
-static BOOL FTestLibraryTimestamp(long long *plPlayed) {
+static BOOL FTestLibraryTimestamp(APPSESSION &app, long long *plPlayed) {
     char szDir[512], szFile[512], szMetadataName[256];
     char *pch;
     NATIVEFILE *pf;
     int iVersion, iPlayer;
-    strcpy(szDir, szBase);
+    strcpy(szDir, app.state.szBase);
     pch = strrchr(szDir, chDirSep);
     if (!pch) return 0;
     *pch = 0;
@@ -114,7 +119,7 @@ static BOOL FTestLibraryTimestamp(long long *plPlayed) {
         return 0;
     }
     ICloseNativeFile(pf);
-    return iVersion == 2 && iPlayer == idPlayer;
+    return iVersion == 2 && iPlayer == app.state.idPlayer;
 }
 
 static BOOL fChecked, fPassed;
@@ -231,51 +236,53 @@ extern "C" bool SDLCALL StarsTest_SDL_RenderPresent(SDL_Renderer *lprenderer) {
     return SDL_RenderPresent(lprenderer);
 }
 
-static BOOL FCheckScannerDrag(void) {
-    HWND hwndBar = hwndScanner->rghwndScroll[win32::SB_HORZ];
+static BOOL FCheckScannerDrag(APPSESSION &app) {
+    HWND hwndBar = app.lpui->hwndScanner->rghwndScroll[win32::SB_HORZ];
     SCROLLINFO si = {sizeof(si), win32::SIF_ALL, 0, 0, 0, 0, 0};
     RECT rc;
     int i, xGrab, dxThumb, iPosSav;
-    int16_t iZoomSav = iScanZoom, xSav = xScanTop, ySav = yScanTop;
+    int16_t iZoomSav = app.state.iScanZoom, xSav = app.lpui->xScanTop, ySav = app.lpui->yScanTop;
     unsigned cPresentSav;
     Uint64 nsStart;
     BOOL fSinglePresent;
 
     /* Large test displays can fit the whole map at the saved zoom. */
     if (!win32::IsWindow(hwndBar) || !win32::IsWindowVisible(hwndBar)) {
-        ui::SendMessage(hwndFrame, win32::WM_COMMAND, zoom400 + 3905, 0);
-        hwndBar = hwndScanner->rghwndScroll[win32::SB_HORZ];
+        ui::SendMessage(app.lpui->hwndFrame, win32::WM_COMMAND, zoom400 + 3905, 0);
+        hwndBar = app.lpui->hwndScanner->rghwndScroll[win32::SB_HORZ];
     }
     if (!win32::IsWindow(hwndBar) || !win32::IsWindowVisible(hwndBar)) return 0;
-    if (!win32::GetScrollInfo(hwndScanner, win32::SB_HORZ, &si) || !win32::GetClientRect(hwndBar, &rc)) return 0;
-    iPosSav = win32::GetScrollPos(hwndScanner, win32::SB_HORZ);
-    ui::SendMessage(hwndScanner, win32::WM_HSCROLL, win32::MAKEWPARAM(win32::SB_THUMBPOSITION, si.nMin), 0);
-    ui::UpdateWindow(hwndScanner); ui::UpdateWindow(hwndBar);
+    if (!win32::GetScrollInfo(app.lpui->hwndScanner, win32::SB_HORZ, &si) || !win32::GetClientRect(hwndBar, &rc)) return 0;
+    iPosSav = win32::GetScrollPos(app.lpui->hwndScanner, win32::SB_HORZ);
+    ui::SendMessage(app.lpui->hwndScanner, win32::WM_HSCROLL, win32::MAKEWPARAM(win32::SB_THUMBPOSITION, si.nMin), 0);
+    ui::UpdateWindow(app.lpui->hwndScanner); ui::UpdateWindow(hwndBar);
     dxThumb = (((8) > ((int)((int64_t)(rc.right - 34) * si.nPage / (si.nMax - si.nMin + 1)))) ? (8) : ((int)((int64_t)(rc.right - 34) * si.nPage / (si.nMax - si.nMin + 1))));
     xGrab = 17 + dxThumb / 2;
     ui::SendMessage(hwndBar, win32::WM_LBUTTONDOWN, win32::MK_LBUTTON, win32::MAKELPARAM(xGrab, 8));
     // Each simulated drag tick includes the completed window-tree paint pass.
-    if (!FCompatPaintTree(hwndFrame)) return 0;
+    if (!FCompatPaintTree(app.lpui->hwndFrame)) return 0;
     cPresentSav = cRenderPresent; nsStart = SDL_GetPerformanceCounter();
     for (i = 1; i <= 10; i++) {
         ui::SendMessage(hwndBar, win32::WM_MOUSEMOVE, win32::MK_LBUTTON, win32::MAKELPARAM(xGrab + i * 4, 8));
-        if (win32::GetCapture() != hwndBar || !FCompatPaintTree(hwndFrame)) return 0;
+        if (win32::GetCapture() != hwndBar || !FCompatPaintTree(app.lpui->hwndFrame)) return 0;
     }
     printf("Scanner drag: %u presentations for 10 updates, %.2f ms\n", cRenderPresent - cPresentSav,
            (double)(SDL_GetPerformanceCounter() - nsStart) * 1000 / SDL_GetPerformanceFrequency());
     fSinglePresent = cRenderPresent - cPresentSav == 10;
     ui::SendMessage(hwndBar, win32::WM_LBUTTONUP, 0, win32::MAKELPARAM(xGrab + 40, 8));
-    ui::SendMessage(hwndScanner, win32::WM_HSCROLL, win32::MAKEWPARAM(win32::SB_THUMBPOSITION, iPosSav), 0);
-    if (iScanZoom != iZoomSav) {
-        ui::SendMessage(hwndFrame, win32::WM_COMMAND, iZoomSav + 3905, 0);
-        ui::SendMessage(hwndScanner, win32::WM_HSCROLL, win32::MAKEWPARAM(win32::SB_THUMBPOSITION, xSav), 0);
-        ui::SendMessage(hwndScanner, win32::WM_VSCROLL, win32::MAKEWPARAM(win32::SB_THUMBPOSITION, ySav), 0);
+    ui::SendMessage(app.lpui->hwndScanner, win32::WM_HSCROLL, win32::MAKEWPARAM(win32::SB_THUMBPOSITION, iPosSav), 0);
+    if (app.state.iScanZoom != iZoomSav) {
+        ui::SendMessage(app.lpui->hwndFrame, win32::WM_COMMAND, iZoomSav + 3905, 0);
+        ui::SendMessage(app.lpui->hwndScanner, win32::WM_HSCROLL, win32::MAKEWPARAM(win32::SB_THUMBPOSITION, xSav), 0);
+        ui::SendMessage(app.lpui->hwndScanner, win32::WM_VSCROLL, win32::MAKEWPARAM(win32::SB_THUMBPOSITION, ySav), 0);
     }
     return fSinglePresent;
 }
 
 static int iTransportPreset = -1, cTransportMenus;
 BOOL StarsTest_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND hwnd, const RECT *prc) {
+    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+
     if (iRosterMenu >= 0) {
         HMENU hmenuLibrary = win32::GetSubMenu(hmenu, 1);
         char szLabel[512];
@@ -288,7 +295,7 @@ BOOL StarsTest_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserve
             win32::PostQuitMessage(93);
             return 0;
         }
-        iPopMenuSel = iRosterMenu;
+        app.lpui->iPopMenuSel = iRosterMenu;
         if (pszRosterRace) {
             pchLabel = szLabel;
             for (pch = pszRosterRace; *pch; pch++) {
@@ -303,7 +310,7 @@ BOOL StarsTest_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserve
                 if (cch != 0 && !strcmp(szItem, szLabel)) break;
             }
             if (i == win32::GetMenuItemCount(hmenuLibrary)) { win32::PostQuitMessage(93); return 0; }
-            iPopMenuSel = win32::GetMenuItemID(hmenuLibrary, i) - 15000;
+            app.lpui->iPopMenuSel = win32::GetMenuItemID(hmenuLibrary, i) - 15000;
             pszRosterRace = NULL;
         }
         iRosterMenu = -1;
@@ -335,13 +342,13 @@ BOOL StarsTest_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserve
     return 0;
 }
 
-static BOOL FCheckMapInspection(void) {
+static BOOL FCheckMapInspection(APPSESSION &app) {
     SCANSNAPSHOT snap = {}, fresh = {};
     size_t i, j, cPlanetFound = 0;
     POINT16 pt;
     POINT screen;
-    SCAN scanSav = sel.scan;
-    SEL selSav = sel;
+    SCAN scanSav = app.state.sel.scan;
+    SEL selSav = app.state.sel;
     BOOL fPassed = 0;
     HWND hwndInspector, hwndMap, hwndChild, hwndGrandchild;
     char szNameSav[sizeof(fresh.rgobj[0].szName)];
@@ -350,26 +357,26 @@ static BOOL FCheckMapInspection(void) {
     const char *pszViewerCapture = PszCompatEnvironment("STARS_MAP_VIEWER_CAPTURE");
     NATIVEFILE *lpfile;
     const char *pszCapture = PszCompatEnvironment("STARS_MAP_CAPTURE");
-    int16_t fDirty = game.fDirty;
-    if (!FCaptureScanner(&snap) || snap.cObject < (size_t)game.cPlanMax ||
-        snap.lidGame != game.lid || snap.idPlayer != idPlayer || snap.turn != game.turn) goto LDone;
+    int16_t fDirty = app.state.game.fDirty;
+    if (!FCaptureScanner(app, &snap) || snap.cObject < (size_t)app.state.game.cPlanMax ||
+        snap.lidGame != app.state.game.lid || snap.idPlayer != app.state.idPlayer || snap.turn != app.state.game.turn) goto LDone;
     for (i = 0; i < snap.cObject; i++) {
         if (!snap.rgobj[i].szName[0]) goto LDone;
-        pt = PointTo16(snap.rgobj[i].ptUniverse); LogicalToScan(&pt);
-        screen = PointFrom16(pt); win32::ClientToScreen(hwndScanner, &screen);
+        pt = PointTo16(snap.rgobj[i].ptUniverse); LogicalToScan(app, &pt);
+        screen = PointFrom16(pt); win32::ClientToScreen(app.lpui->hwndScanner, &screen);
         if (pt.x != snap.rgobj[i].ptClient.x || pt.y != snap.rgobj[i].ptClient.y ||
             screen.x != snap.rgobj[i].ptScreen.x || screen.y != snap.rgobj[i].ptScreen.y) goto LDone;
         if (snap.rgobj[i].grType == grobjPlanet) cPlanetFound++;
         for (j = i + 1; j < snap.cObject; j++)
             if (snap.rgobj[i].grType == snap.rgobj[j].grType && snap.rgobj[i].id == snap.rgobj[j].id) goto LDone;
     }
-    if (cPlanetFound != (size_t)game.cPlanMax || game.fDirty != fDirty || memcmp(&sel, &selSav, sizeof(sel))) goto LDone;
+    if (cPlanetFound != (size_t)app.state.game.cPlanMax || app.state.game.fDirty != fDirty || memcmp(&app.state.sel, &selSav, sizeof(app.state.sel))) goto LDone;
     snap.turn++;
-    if (FSelectScannerObject(&snap, grobjPlanet, 0, 1)) goto LDone;
+    if (FSelectScannerObject(app, &snap, grobjPlanet, 0, 1)) goto LDone;
     snap.turn--;
-    if (FSelectScannerObject(&snap, grobjPlanet, UINT16_MAX, 1) ||
-        !FSelectScannerObject(&snap, grobjPlanet, 0, 1) || sel.scan.grobj != grobjPlanet || sel.scan.idpl != 0) goto LDone;
-    if (!FCaptureScanner(&fresh) || !fresh.rgobj[0].fOnScreen || !fresh.rgobj[0].fScanSelected || game.fDirty != fDirty) goto LDone;
+    if (FSelectScannerObject(app, &snap, grobjPlanet, UINT16_MAX, 1) ||
+        !FSelectScannerObject(app, &snap, grobjPlanet, 0, 1) || app.state.sel.scan.grobj != grobjPlanet || app.state.sel.scan.idpl != 0) goto LDone;
+    if (!FCaptureScanner(app, &fresh) || !fresh.rgobj[0].fOnScreen || !fresh.rgobj[0].fScanSelected || app.state.game.fDirty != fDirty) goto LDone;
     memcpy(szNameSav, fresh.rgobj[0].szName, sizeof(szNameSav));
     strcpy(fresh.rgobj[0].szName, "Quoted \"\xc3\xa9\xe2\x82\xac\"\r\n");
     lpfile = PfNativeTemporary();
@@ -398,87 +405,87 @@ static BOOL FCheckMapInspection(void) {
     if (!FCompatPresent(hwndMap) || (pszViewerCapture && !SDL_SaveBMP(hwndMap->lpComposite.get(), pszViewerCapture))) goto LDone;
     ui::SendMessage(win32::GetDlgItem(hwndMap, 1), win32::LB_SETCURSEL, 1, 0);
     ui::SendMessage(win32::GetDlgItem(hwndMap, 4), win32::BM_CLICK, 0, 0);
-    if (sel.scan.grobj != grobjPlanet || sel.scan.idpl != 1 || game.fDirty != fDirty) goto LDone;
+    if (app.state.sel.scan.grobj != grobjPlanet || app.state.sel.scan.idpl != 1 || app.state.game.fDirty != fDirty) goto LDone;
     ui::SendMessage(hwndMap, win32::WM_CLOSE,0,0);
     if (win32::IsWindow(hwndMap)) goto LDone;
     hwndMap = ShowScannerInspector();
     if (!hwndMap) goto LDone;
     ui::DestroyWindow(hwndMap); ui::DestroyWindow(hwndInspector);
-    ChangeScanSel(&scanSav,2);
+    ChangeScanSel(app, &scanSav,2);
     fPassed = 1;
 LDone:
     FreeScannerSnapshot(&snap); FreeScannerSnapshot(&fresh);
     return fPassed;
 }
 
-static BOOL FCheckReportScrollbars(void) {
+static BOOL FCheckReportScrollbars(APPSESSION &app) {
     SCROLLINFO si = {sizeof(si), win32::SIF_ALL, 0, 0, 0, 0, 0};
     BOOL fPassed = 1;
 
-    ui::SendMessage(hwndFrame, win32::WM_COMMAND, IDM_REPORT_PLANET, 0);
-    if (!win32::IsWindow(hwndReportDlg) || !vprptCur) return 0;
-    ui::SetWindowPos(hwndReportDlg, NULL, 0, 0, 300, 220, win32::SWP_NOMOVE | win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
-    if (win32::IsWindowVisible(vprptCur->hwndVScroll)) {
-        fPassed = win32::GetScrollInfo(vprptCur->hwndVScroll, win32::SB_CTL, &si) &&
-            si.nPage == (UINT)(((1) > (vprptCur->cRowsVis)) ? (1) : (vprptCur->cRowsVis)) &&
-            si.nMax - (int)si.nPage + 1 == vprptCur->cRows - vprptCur->cRowsVis;
+    ui::SendMessage(app.lpui->hwndFrame, win32::WM_COMMAND, IDM_REPORT_PLANET, 0);
+    if (!win32::IsWindow(app.lpui->hwndReportDlg) || !app.lpui->vprptCur) return 0;
+    ui::SetWindowPos(app.lpui->hwndReportDlg, NULL, 0, 0, 300, 220, win32::SWP_NOMOVE | win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
+    if (win32::IsWindowVisible(app.lpui->vprptCur->hwndVScroll)) {
+        fPassed = win32::GetScrollInfo(app.lpui->vprptCur->hwndVScroll, win32::SB_CTL, &si) &&
+            si.nPage == (UINT)(((1) > (app.lpui->vprptCur->cRowsVis)) ? (1) : (app.lpui->vprptCur->cRowsVis)) &&
+            si.nMax - (int)si.nPage + 1 == app.lpui->vprptCur->cRows - app.lpui->vprptCur->cRowsVis;
     }
-    if (win32::IsWindowVisible(vprptCur->hwndHScroll)) {
-        fPassed = fPassed && win32::GetScrollInfo(vprptCur->hwndHScroll, win32::SB_CTL, &si) &&
-            si.nPage != 0 && si.nMax - (int)si.nPage + 1 == vprptCur->cColScroll;
+    if (win32::IsWindowVisible(app.lpui->vprptCur->hwndHScroll)) {
+        fPassed = fPassed && win32::GetScrollInfo(app.lpui->vprptCur->hwndHScroll, win32::SB_CTL, &si) &&
+            si.nPage != 0 && si.nMax - (int)si.nPage + 1 == app.lpui->vprptCur->cColScroll;
     }
-    ui::SendMessage(hwndReportDlg, win32::WM_CLOSE, 0, 0);
-    return fPassed && !win32::IsWindow(hwndReportDlg);
+    ui::SendMessage(app.lpui->hwndReportDlg, win32::WM_CLOSE, 0, 0);
+    return fPassed && !win32::IsWindow(app.lpui->hwndReportDlg);
 }
 
-static BOOL FCheckToolbarPlacement(void) {
+static BOOL FCheckToolbarPlacement(APPSESSION &app) {
     static const ToolbarButton rgitb[] = {tbMineFields, tbShipDesignFilterMenu, tbEnemyClassFilterMenu, tbZoomMenu};
     POINT pt;
     RECT rc, rcTip, rcDrop, rcClient;
     SCROLLINFO si = {sizeof(si), win32::SIF_ALL, 0, 0, 0, 0, 0};
     int cPage, iMax;
     HWND hwndFocus = win32::GetFocus();
-    HWND hwndRoot = HwndCompatRoot(hwndTb);
+    HWND hwndRoot = HwndCompatRoot(app.lpui->hwndTb);
     HWND hwndButtons;
     char szClass[64];
     SDL_Event event = {};
     int i, x, iRange;
 
-    if (!win32::GetClientRect(hwndScanner, &rcClient) || !win32::GetScrollInfo(hwndScanner, win32::SB_HORZ, &si)) return 0;
-    cPage = (((1) > (ScanToPt(rcClient.right))) ? (1) : (ScanToPt(rcClient.right)));
-    iMax = ((((1000) > (dGalInv - 1000 - cPage)) ? (1000) : (dGalInv - 1000 - cPage)) + 3) & ~3;
+    if (!win32::GetClientRect(app.lpui->hwndScanner, &rcClient) || !win32::GetScrollInfo(app.lpui->hwndScanner, win32::SB_HORZ, &si)) return 0;
+    cPage = (((1) > (ScanToPt(app, rcClient.right))) ? (1) : (ScanToPt(app, rcClient.right)));
+    iMax = ((((1000) > (app.state.dGalInv - 1000 - cPage)) ? (1000) : (app.state.dGalInv - 1000 - cPage)) + 3) & ~3;
     if (si.nPage != (UINT)cPage || si.nMax - (int)si.nPage + 1 != iMax) return 0;
-    if (!win32::GetScrollInfo(hwndScanner, win32::SB_VERT, &si)) return 0;
-    cPage = (((1) > (ScanToPt(rcClient.bottom - dySBar))) ? (1) : (ScanToPt(rcClient.bottom - dySBar)));
-    iMax = ((((1000) > (dGalInv - 1000 - cPage)) ? (1000) : (dGalInv - 1000 - cPage)) + 3) & ~3;
+    if (!win32::GetScrollInfo(app.lpui->hwndScanner, win32::SB_VERT, &si)) return 0;
+    cPage = (((1) > (ScanToPt(app, rcClient.bottom - app.lpui->dySBar))) ? (1) : (ScanToPt(app, rcClient.bottom - app.lpui->dySBar)));
+    iMax = ((((1000) > (app.state.dGalInv - 1000 - cPage)) ? (1000) : (app.state.dGalInv - 1000 - cPage)) + 3) & ~3;
     if (si.nPage != (UINT)cPage || si.nMax - (int)si.nPage + 1 != iMax) return 0;
-    if (!win32::GetWindowRect(hwndTBRadar, &rc)) return 0;
-    if (!win32::GetClientRect(hwndTBRadar, &rcClient) || rcClient.right != rc.right - rc.left ||
-        hwndTBRadar->rghwndScroll[win32::SB_VERT] || hwndTBRadar->rghwndScroll[win32::SB_HORZ]) return 0;
+    if (!win32::GetWindowRect(app.lpui->hwndTBRadar, &rc)) return 0;
+    if (!win32::GetClientRect(app.lpui->hwndTBRadar, &rcClient) || rcClient.right != rc.right - rc.left ||
+        app.lpui->hwndTBRadar->rghwndScroll[win32::SB_VERT] || app.lpui->hwndTBRadar->rghwndScroll[win32::SB_HORZ]) return 0;
     pt = (POINT){(rc.left + rc.right) / 2, (rc.top + rc.bottom) / 2};
     hwndButtons = win32::WindowFromPoint(pt);
-    if (hwndButtons != hwndTBRadar && win32::GetParent(hwndButtons) != hwndTBRadar) return 0;
-    iRange = (int)ui::SendMessage(hwndTBRadar, win32::CB_GETCURSEL, 0, 0);
-    ui::SetFocus(hwndTBRadar);
-    ui::SendMessage(hwndTBRadar, win32::CB_SHOWDROPDOWN, 1, 0);
-    if (!hwndTBRadar->lpcombo || !hwndTBRadar->lpcombo->hwndPopup ||
-        !win32::GetWindowRect(hwndTBRadar->lpcombo->hwndPopup, &rcDrop) ||
+    if (hwndButtons != app.lpui->hwndTBRadar && win32::GetParent(hwndButtons) != app.lpui->hwndTBRadar) return 0;
+    iRange = (int)ui::SendMessage(app.lpui->hwndTBRadar, win32::CB_GETCURSEL, 0, 0);
+    ui::SetFocus(app.lpui->hwndTBRadar);
+    ui::SendMessage(app.lpui->hwndTBRadar, win32::CB_SHOWDROPDOWN, 1, 0);
+    if (!app.lpui->hwndTBRadar->lpcombo || !app.lpui->hwndTBRadar->lpcombo->hwndPopup ||
+        !win32::GetWindowRect(app.lpui->hwndTBRadar->lpcombo->hwndPopup, &rcDrop) ||
         rcDrop.left != rc.left || rcDrop.top != rc.bottom ||
-        !hwndTBRadar->lpcombo->hwndPopup->lpCanvas.get() ||
-        ui::SendMessage(hwndTBRadar, win32::CB_GETCOUNT, 0, 0) < 2) return 0;
+        !app.lpui->hwndTBRadar->lpcombo->hwndPopup->lpCanvas.get() ||
+        ui::SendMessage(app.lpui->hwndTBRadar, win32::CB_GETCOUNT, 0, 0) < 2) return 0;
     if (strcmp(SDL_GetCurrentVideoDriver(), "dummy") != 0 &&
-        (!(SDL_GetWindowFlags(hwndTBRadar->lpcombo->hwndPopup->lpWindow.get()) & SDL_WINDOW_POPUP_MENU) ||
-         SDL_GetWindowParent(hwndTBRadar->lpcombo->hwndPopup->lpWindow.get()) != hwndRoot->lpWindow.get())) return 0;
-    ui::SendMessage(hwndTBRadar, win32::WM_KEYDOWN, win32::VK_DOWN, 0);
-    ui::SendMessage(hwndTBRadar, win32::WM_KEYDOWN, win32::VK_RETURN, 0);
-    if (ui::SendMessage(hwndTBRadar, win32::CB_GETDROPPEDSTATE, 0, 0) || win32::GetCapture() == hwndTBRadar) return 0;
-    ui::SendMessage(hwndTBRadar, win32::CB_SETCURSEL, iRange, 0);
+        (!(SDL_GetWindowFlags(app.lpui->hwndTBRadar->lpcombo->hwndPopup->lpWindow.get()) & SDL_WINDOW_POPUP_MENU) ||
+         SDL_GetWindowParent(app.lpui->hwndTBRadar->lpcombo->hwndPopup->lpWindow.get()) != hwndRoot->lpWindow.get())) return 0;
+    ui::SendMessage(app.lpui->hwndTBRadar, win32::WM_KEYDOWN, win32::VK_DOWN, 0);
+    ui::SendMessage(app.lpui->hwndTBRadar, win32::WM_KEYDOWN, win32::VK_RETURN, 0);
+    if (ui::SendMessage(app.lpui->hwndTBRadar, win32::CB_GETDROPPEDSTATE, 0, 0) || win32::GetCapture() == app.lpui->hwndTBRadar) return 0;
+    ui::SendMessage(app.lpui->hwndTBRadar, win32::CB_SETCURSEL, iRange, 0);
     ui::SetFocus(hwndFocus);
     for (i = 0; i < 4; i++) {
         x = rgitb[i];
         if (x == tbShipDesignFilterMenu) x = tbShipDesignFilter;
         else if (x == tbEnemyClassFilterMenu) x = tbEnemyClassFilter;
-        hwndButtons = win32::GetDlgItem(hwndTb, IDC_STARS_TOOLBAR);
+        hwndButtons = win32::GetDlgItem(app.lpui->hwndTb, IDC_STARS_TOOLBAR);
         if (!ui::SendMessage(hwndButtons, win32::TB_GETRECT, IDC_STARS_TOOLBUTTON_FIRST + x, (LPARAM)&rc)) return 0;
         pt = (POINT){rc.left, rc.bottom};
         if (!win32::ClientToScreen(hwndButtons, &pt)) return 0;
@@ -491,7 +498,7 @@ static BOOL FCheckToolbarPlacement(void) {
         if (cToolbarMenu != 1 || !fToolbarAnchor) return 0;
     }
     win32::SetRect(&rc, 4, 4, 33, 32);
-    win32::MapWindowPoints(hwndTb, NULL, (POINT *)&rc, 2);
+    win32::MapWindowPoints(app.lpui->hwndTb, NULL, (POINT *)&rc, 2);
     for (i = 0; i < 2; i++) {
         pt = (POINT){rc.left + 2 + i * 10, rc.top + 2 + i * 10};
         if (!strcmp(SDL_GetCurrentVideoDriver(), "dummy") || !strcmp(SDL_GetCurrentVideoDriver(), "wayland")) {
@@ -502,15 +509,15 @@ static BOOL FCheckToolbarPlacement(void) {
             event.motion.y = (float)(pt.y + CyCompatMenuBar(hwndRoot));
             CompatRouteEvent(&event);
         } else if (!SDL_WarpMouseGlobal((float)pt.x, (float)pt.y)) return 0;
-        ShowTooltip(idsNormalView, &rc);
-        if (!hwndTooltip) return 0;
-        TooltipWndProc(hwndTooltip, 1523, 1, 0);
-        if (!win32::IsWindowVisible(hwndTooltip) || !win32::GetWindowRect(hwndTooltip, &rcTip) ||
+        ShowTooltip(app, idsNormalView, &rc);
+        if (!app.lpui->hwndTooltip) return 0;
+        TooltipWndProc(app.lpui->hwndTooltip, 1523, 1, 0);
+        if (!win32::IsWindowVisible(app.lpui->hwndTooltip) || !win32::GetWindowRect(app.lpui->hwndTooltip, &rcTip) ||
             rcTip.left != rc.left || rcTip.top != rc.bottom + 2 || win32::GetFocus() != hwndFocus) return 0;
         if (strcmp(SDL_GetCurrentVideoDriver(), "dummy") != 0 &&
-            (!(SDL_GetWindowFlags(hwndTooltip->lpWindow.get()) & SDL_WINDOW_TOOLTIP) ||
-             SDL_GetWindowParent(hwndTooltip->lpWindow.get()) != hwndRoot->lpWindow.get())) return 0;
-        ShowTooltip((StringId)(idsNoString), NULL);
+            (!(SDL_GetWindowFlags(app.lpui->hwndTooltip->lpWindow.get()) & SDL_WINDOW_TOOLTIP) ||
+             SDL_GetWindowParent(app.lpui->hwndTooltip->lpWindow.get()) != hwndRoot->lpWindow.get())) return 0;
+        ShowTooltip(app, (StringId)(idsNoString), NULL);
     }
     return 1;
 }
@@ -519,16 +526,16 @@ static BOOL fRejectRacePassword;
 static BOOL fTestLegacyRaceImport, fAcceptLegacyRacePassword;
 static int cLegacyRacePasswords;
 
-int16_t StarsTest_PromptPassword(void) {
+int16_t StarsTest_PromptPassword(APPSESSION &app) {
     if (fRejectRacePassword) return 0;
     // The frozen regression race is password protected. These tests qualify
     // file loading and client creation; password validation is outside scope.
     return pszContinue || PszCompatEnvironment("STARS_CLIENT_EXPECT_PLAYER") || PszCompatEnvironment("STARS_CLIENT_HOST_LIBRARY_TEST") || PszCompatEnvironment("STARS_CLIENT_STARTUP_MANAGED") ||
-           PszCompatEnvironment("STARS_CLIENT_EXPORT_GAME") ? 1 : PromptPassword();
+           PszCompatEnvironment("STARS_CLIENT_EXPORT_GAME") ? 1 : PromptPassword(app);
 }
 
-int16_t StarsTest_FPromptLegacyRacePassword(char *szPassword) {
-    if (!fTestLegacyRaceImport) return FPromptLegacyRacePassword(szPassword);
+int16_t StarsTest_FPromptLegacyRacePassword(APPSESSION &app, char *szPassword) {
+    if (!fTestLegacyRaceImport) return FPromptLegacyRacePassword(app, szPassword);
     cLegacyRacePasswords++;
     if (!fAcceptLegacyRacePassword) return 0;
     strcpy(szPassword, "new-\xc3\xa9");
@@ -578,6 +585,8 @@ BOOL StarsTest_FNativeOpenFileName(OPENFILENAMEA *lpof) {
 
 bool SDL_ShowWindow(SDL_Window *lpWindow);
 extern "C" bool SDLCALL StarsTest_SDL_ShowWindow(SDL_Window *lpWindow) {
+    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+
     HWND hwnd;
     bool fResult;
     BYTE r, g, b, a;
@@ -597,7 +606,7 @@ extern "C" bool SDLCALL StarsTest_SDL_ShowWindow(SDL_Window *lpWindow) {
         idRacePresentation = hwnd->id;
         SDL_SetBooleanProperty(idProperties, "stars.test.race_frame", true);
     }
-    if (hwnd == hwndFrame && !fInitComplete) cEarlyFrameShow++;
+    if (hwnd == app.lpui->hwndFrame && !fInitComplete) cEarlyFrameShow++;
     if (hwnd && hwnd->lpfnWndProc == TitleWndProc && cTitleShow++ == 0) {
         if (hwnd->lpCanvas.get() && hwnd->lpComposite.get()) {
             rgb = (BYTE *)(hwnd->lpCanvas->pixels);
@@ -608,7 +617,7 @@ extern "C" bool SDLCALL StarsTest_SDL_ShowWindow(SDL_Window *lpWindow) {
         }
     }
 
-    for (hwnd = win32::GetWindow(hwndTitle, win32::GW_HWNDFIRST); hwnd; hwnd = win32::GetWindow(hwnd, win32::GW_HWNDNEXT)) {
+    for (hwnd = win32::GetWindow(app.lpui->hwndTitle, win32::GW_HWNDFIRST); hwnd; hwnd = win32::GetWindow(hwnd, win32::GW_HWNDNEXT)) {
         if (hwnd->lpWindow.get() != lpWindow || hwnd->lpfnDlg != RaceWizardDlg2) continue;
         if (cHabShow++ == 0) {
             cr = win32::GetSysColor(win32::COLOR_BTNFACE);
@@ -627,7 +636,7 @@ extern "C" bool SDLCALL StarsTest_SDL_ShowWindow(SDL_Window *lpWindow) {
     return fResult;
 }
 
-static BOOL FPushClick(HWND hwnd) {
+static BOOL FPushClick(APPSESSION &app, HWND hwnd) {
     RECT rc, rcPane;
     POINT pt, ptEnd;
     HWND hwndAncestor, hwndPane;
@@ -635,8 +644,8 @@ static BOOL FPushClick(HWND hwnd) {
     HWND lpTitle = HwndCompatRoot(hwnd);
     SDL_Event event = {};
     for (hwndAncestor = hwnd; hwndAncestor; hwndAncestor = win32::GetParent(hwndAncestor)) {
-        if (hwndAncestor != hwndPlanet) continue;
-        hwndPane = win32::GetParent(hwndPlanet);
+        if (hwndAncestor != app.lpui->hwndPlanet) continue;
+        hwndPane = win32::GetParent(app.lpui->hwndPlanet);
         for (i = 0; i < 2; i++) {
             win32::GetWindowRect(hwnd, &rc); win32::GetClientRect(hwndPane, &rcPane);
             pt = (POINT){rc.left, rc.top}; ptEnd = (POINT){rc.right, rc.bottom};
@@ -765,9 +774,9 @@ static int iWorkflow, iWorkflowStep, cWorkflowWait, iResearchTarget, cProduction
 static BOOL fWorkflowPassed, fWorkflowBusy;
 static uint64_t idWorkflowDialog;
 
-static HWND HwndWorkflowDialog(void) {
+static HWND HwndWorkflowDialog(APPSESSION &app) {
     STARSCOMPATSNAPSHOT snap = {};
-    uint64_t idOwner = StarsCompatWindowId(hwndFrame), idDialog = 0;
+    uint64_t idOwner = StarsCompatWindowId(app.lpui->hwndFrame), idDialog = 0;
     size_t i;
     if (!StarsCompatCaptureHierarchy(&snap)) return NULL;
     for (i = 0; i < snap.cWindow; i++) {
@@ -783,10 +792,10 @@ static HWND HwndWorkflowControl(HWND hwnd, int id, LPCSTR pszClass) {
     return StarsCompatResolveWindow(StarsCompatFindControl(StarsCompatWindowId(hwnd), id, pszClass));
 }
 
-static int CProductionItems(void) {
+static int CProductionItems(APPSESSION &app) {
     int i, c = 0;
-    if (!lpplProdGlob) return -1;
-    for (i = 0; i < lpplProdGlob->iprodMac; i++) c += lpplProdGlob->rgprod()[i].cItem;
+    if (!app.state.lpplProdGlob) return -1;
+    for (i = 0; i < app.state.lpplProdGlob->iprodMac; i++) c += app.state.lpplProdGlob->rgprod()[i].cItem;
     return c;
 }
 
@@ -794,45 +803,45 @@ static int ishdefWorkflow, cShdefWorkflow;
 static const char szCopyName[] = "Compat Copy";
 static const char szRenameName[] = "Compat Renamed";
 
-static BOOL FCheckShipWorkflow(HWND hwndDialog) {
+static BOOL FCheckShipWorkflow(APPSESSION &app, HWND hwndDialog) {
     HWND hwndControl;
     SDL_Event event = {};
     LPCSTR pszName = iWorkflow == 10 ? "Discarded edit" : iWorkflow == 11 ? szRenameName : szCopyName;
     int iStep = iWorkflowStep, iRow;
     char sz[32];
     BOOL fCopy = iWorkflow == 8 || iWorkflow == 9;
-    if (hwndDialog->lpfnDlg != SlotDlg || fStarbaseMode) return 0;
+    if (hwndDialog->lpfnDlg != SlotDlg || app.state.fStarbaseMode) return 0;
     if (!fCopy && iStep < 3) {
         hwndControl = HwndWorkflowControl(hwndDialog, IDC_COMBOBOX, "ComboBox");
-        if (!hwndControl || mdBuild != mdBuildShdef) return 0;
-        if (iStep == 0) return FPushClick(hwndControl);
+        if (!hwndControl || app.lpui->mdBuild != mdBuildShdef) return 0;
+        if (iStep == 0) return FPushClick(app, hwndControl);
         if (iStep == 1) {
-            iRow = (int)ui::SendMessage(hwndControl, win32::CB_FINDSTRINGEXACT, (WPARAM)-1, (LPARAM)rgshdef[ishdefWorkflow].hul.szClass);
+            iRow = (int)ui::SendMessage(hwndControl, win32::CB_FINDSTRINGEXACT, (WPARAM)-1, (LPARAM)app.state.rgshdef[ishdefWorkflow].hul.szClass);
             if (iRow < 0 || !ui::SendMessage(hwndControl, win32::CB_GETDROPPEDSTATE, 0, 0)) return 0;
             CompatListProc(hwndControl, win32::LB_SETTOPINDEX, iRow, 0);
             return FPushComboRow(hwndControl, iRow);
         }
-        if (!lpshdefBuild || lpshdefBuild != &rgshdef[ishdefWorkflow]) return 0;
+        if (!app.lpui->lpshdefBuild || app.lpui->lpshdefBuild != &app.state.rgshdef[ishdefWorkflow]) return 0;
         hwndControl = HwndWorkflowControl(hwndDialog, iWorkflow == 12 ? IDC_DELETE : IDC_EDIT, "Button");
-        return hwndControl && win32::IsWindowEnabled(hwndControl) && FPushClick(hwndControl);
+        return hwndControl && win32::IsWindowEnabled(hwndControl) && FPushClick(app, hwndControl);
     }
     if (!fCopy) iStep -= 2;
     if (iWorkflow == 12) {
-        if (!rgshdef[ishdefWorkflow].fFree || rgplr[idPlayer].cShDef != cShdefWorkflow) return 0;
+        if (!app.state.rgshdef[ishdefWorkflow].fFree || app.state.rgplr[app.state.idPlayer].cShDef != cShdefWorkflow) return 0;
         hwndControl = HwndWorkflowControl(hwndDialog, IDCANCEL, "Button");
-        fWorkflowPassed = hwndControl && FPushClick(hwndControl);
+        fWorkflowPassed = hwndControl && FPushClick(app, hwndControl);
         return fWorkflowPassed;
     }
     if (iStep == 0) {
-        if (mdBuild != mdBuildShdef || rgplr[idPlayer].cShDef != cShdefWorkflow) return 0;
+        if (app.lpui->mdBuild != mdBuildShdef || app.state.rgplr[app.state.idPlayer].cShDef != cShdefWorkflow) return 0;
         hwndControl = HwndWorkflowControl(hwndDialog, IDC_IMPORT, "Button");
-        return hwndControl && win32::IsWindowEnabled(hwndControl) && FPushClick(hwndControl);
+        return hwndControl && win32::IsWindowEnabled(hwndControl) && FPushClick(app, hwndControl);
     }
     if (iStep <= 3) {
-        if (mdBuild != mdBuildEdit || ishdefBuild != ishdefWorkflow || lpshdefBuild != &shdefBuild) return 0;
+        if (app.lpui->mdBuild != mdBuildEdit || app.lpui->ishdefBuild != ishdefWorkflow || app.lpui->lpshdefBuild != &app.state.shdefBuild) return 0;
         hwndControl = HwndWorkflowControl(hwndDialog, IDC_EDITNAME, "Edit");
         if (!hwndControl || !win32::IsWindowVisible(hwndControl)) return 0;
-        if (iStep == 1) return FPushClick(hwndControl);
+        if (iStep == 1) return FPushClick(app, hwndControl);
         if (iStep == 2) {
             if (win32::GetFocus() != hwndControl) return 0;
             ui::SendMessage(hwndControl, win32::EM_SETSEL, 0, -1);
@@ -842,32 +851,32 @@ static BOOL FCheckShipWorkflow(HWND hwndDialog) {
             return SDL_PushEvent(&event);
         }
         win32::GetWindowTextA(hwndControl, sz, sizeof(sz));
-        if (strcmp(sz, pszName) || strcmp(shdefBuild.hul.szClass, pszName)) return 0;
+        if (strcmp(sz, pszName) || strcmp(app.state.shdefBuild.hul.szClass, pszName)) return 0;
         hwndControl = HwndWorkflowControl(hwndDialog, iWorkflow == 8 || iWorkflow == 10 ? IDCANCEL : IDOK, "Button");
-        return hwndControl && win32::IsWindowVisible(hwndControl) && FPushClick(hwndControl);
+        return hwndControl && win32::IsWindowVisible(hwndControl) && FPushClick(app, hwndControl);
     }
-    if (mdBuild != mdBuildShdef) return 0;
+    if (app.lpui->mdBuild != mdBuildShdef) return 0;
     if (iWorkflow == 8) {
-        if (!rgshdef[ishdefWorkflow].fFree || rgplr[idPlayer].cShDef != cShdefWorkflow) return 0;
-    } else if (rgshdef[ishdefWorkflow].fFree || rgplr[idPlayer].cShDef != cShdefWorkflow + 1 ||
-               strcmp(rgshdef[ishdefWorkflow].hul.szClass, iWorkflow == 11 ? szRenameName : szCopyName)) return 0;
+        if (!app.state.rgshdef[ishdefWorkflow].fFree || app.state.rgplr[app.state.idPlayer].cShDef != cShdefWorkflow) return 0;
+    } else if (app.state.rgshdef[ishdefWorkflow].fFree || app.state.rgplr[app.state.idPlayer].cShDef != cShdefWorkflow + 1 ||
+               strcmp(app.state.rgshdef[ishdefWorkflow].hul.szClass, iWorkflow == 11 ? szRenameName : szCopyName)) return 0;
     hwndControl = HwndWorkflowControl(hwndDialog, IDCANCEL, "Button");
-    fWorkflowPassed = hwndControl && FPushClick(hwndControl);
+    fWorkflowPassed = hwndControl && FPushClick(app, hwndControl);
     return fWorkflowPassed;
 }
 
-static BOOL FCheckHullWorkflow(HWND hwndDialog);
+static BOOL FCheckHullWorkflow(APPSESSION &app, HWND hwndDialog);
 
-static BOOL FCheckMergeWorkflow(HWND hwndDialog) {
+static BOOL FCheckMergeWorkflow(APPSESSION &app, HWND hwndDialog) {
     HWND hwndList = HwndWorkflowControl(hwndDialog, IDC_MERGE_FLEETS_LIST, "ListBox"), hwndControl;
     int cSel;
-    if (hwndDialog->lpfnDlg != MergeFleetsDlg || !hwndList || vcflMerge < 2 ||
-        ui::SendMessage(hwndList, win32::LB_GETCOUNT, 0, 0) != vcflMerge) return 0;
+    if (hwndDialog->lpfnDlg != MergeFleetsDlg || !hwndList || app.state.vcflMerge < 2 ||
+        ui::SendMessage(hwndList, win32::LB_GETCOUNT, 0, 0) != app.state.vcflMerge) return 0;
     cSel = (int)ui::SendMessage(hwndList, win32::LB_GETSELCOUNT, 0, 0);
     if (iWorkflowStep == 0 || iWorkflowStep == 1) {
-        if (iWorkflowStep == 1 && cSel != vcflMerge) return 0;
+        if (iWorkflowStep == 1 && cSel != app.state.vcflMerge) return 0;
         hwndControl = HwndWorkflowControl(hwndDialog, iWorkflowStep == 0 ? IDC_MERGE_FLEETS_SELECT_ALL : IDC_MERGE_FLEETS_UNSELECT_ALL, "Button");
-        return hwndControl && FPushClick(hwndControl);
+        return hwndControl && FPushClick(app, hwndControl);
     }
     if (iWorkflowStep == 2) return cSel == 0 && FPushListRow(hwndList, 0);
     if (iWorkflowStep == 3) {
@@ -875,59 +884,59 @@ static BOOL FCheckMergeWorkflow(HWND hwndDialog) {
         if (iWorkflow == 14) return FPushListRow(hwndList, 1);
     } else if (cSel != 2 || !ui::SendMessage(hwndList, win32::LB_GETSEL, 0, 0) || !ui::SendMessage(hwndList, win32::LB_GETSEL, 1, 0)) return 0;
     hwndControl = HwndWorkflowControl(hwndDialog, iWorkflow == 13 ? IDCANCEL : IDOK, "Button");
-    fWorkflowPassed = hwndControl && FPushClick(hwndControl);
+    fWorkflowPassed = hwndControl && FPushClick(app, hwndControl);
     return fWorkflowPassed;
 }
 
 static int ishXferWorkflow, cXferWorkflow, idXferWorkflow;
 
-static BOOL FCheckSplitWorkflow(HWND hwndDialog) {
+static BOOL FCheckSplitWorkflow(APPSESSION &app, HWND hwndDialog) {
     HWND hwndControl;
     int i;
-    if (hwndDialog->lpfnDlg != TransferDlg || mdXferDlg != mdXferShips || !pxfer || !rgbtnXfer ||
-        pxfer[0].id != sel.fl.id || pxfer[1].grobj != grobjFleet) return 0;
+    if (hwndDialog->lpfnDlg != TransferDlg || app.lpui->mdXferDlg != mdXferShips || !app.state.pxfer || !app.lpui->rgbtnXfer ||
+        app.state.pxfer[0].id != app.state.sel.fl.id || app.state.pxfer[1].grobj != grobjFleet) return 0;
     if (iWorkflowStep == 0) {
-        for (i = 0; i < crgbtnXfer; i++) {
-            if (rgbtnXfer[i].fVisible && !(rgbtnXfer[i].bt & 4) && rgbtnXfer[i].iSide == 1 &&
-                rgbtnXfer[i].iVal >= 0 && rgbtnXfer[i].iVal < 16 && pxfer[0].fl().rgcsh[rgbtnXfer[i].iVal] > 0) break;
+        for (i = 0; i < app.lpui->crgbtnXfer; i++) {
+            if (app.lpui->rgbtnXfer[i].fVisible && !(app.lpui->rgbtnXfer[i].bt & 4) && app.lpui->rgbtnXfer[i].iSide == 1 &&
+                app.lpui->rgbtnXfer[i].iVal >= 0 && app.lpui->rgbtnXfer[i].iVal < 16 && app.state.pxfer[0].fl().rgcsh[app.lpui->rgbtnXfer[i].iVal] > 0) break;
         }
-        if (i == crgbtnXfer) return 0;
-        ishXferWorkflow = rgbtnXfer[i].iVal;
-        cXferWorkflow = pxfer[0].fl().rgcsh[ishXferWorkflow];
-        idXferWorkflow = pxfer[1].id;
-        return pxfer[1].fl().rgcsh[ishXferWorkflow] == 0 && FPushClientRect(hwndDialog, &rgbtnXfer[i].rc, SDL_BUTTON_LEFT);
+        if (i == app.lpui->crgbtnXfer) return 0;
+        ishXferWorkflow = app.lpui->rgbtnXfer[i].iVal;
+        cXferWorkflow = app.state.pxfer[0].fl().rgcsh[ishXferWorkflow];
+        idXferWorkflow = app.state.pxfer[1].id;
+        return app.state.pxfer[1].fl().rgcsh[ishXferWorkflow] == 0 && FPushClientRect(hwndDialog, &app.lpui->rgbtnXfer[i].rc, SDL_BUTTON_LEFT);
     }
-    if (pxfer[1].fl().rgcsh[ishXferWorkflow] != 1 || pxfer[0].fl().rgcsh[ishXferWorkflow] != cXferWorkflow - 1) return 0;
+    if (app.state.pxfer[1].fl().rgcsh[ishXferWorkflow] != 1 || app.state.pxfer[0].fl().rgcsh[ishXferWorkflow] != cXferWorkflow - 1) return 0;
     hwndControl = HwndWorkflowControl(hwndDialog, iWorkflow == 15 ? IDCANCEL : IDOK, "Button");
-    fWorkflowPassed = hwndControl && FPushClick(hwndControl);
+    fWorkflowPassed = hwndControl && FPushClick(app, hwndControl);
     return fWorkflowPassed;
 }
 
 static int iSupplyWorkflow, cCargoFleetWorkflow, cCargoPlanetWorkflow;
 
-static BOOL FCheckCargoWorkflow(HWND hwndDialog) {
+static BOOL FCheckCargoWorkflow(APPSESSION &app, HWND hwndDialog) {
     HWND hwndControl;
     int i, iSide = iWorkflow == 19 ? 1 : 0;
     int dCargo = iSide == 0 ? 1 : -1;
-    if (hwndDialog->lpfnDlg != TransferDlg || mdXferDlg != mdXferCargo || !pxfer || !rgbtnXfer ||
-        pxfer[0].id != sel.fl.id || pxfer[0].grobj != grobjFleet || pxfer[1].grobj != grobjPlanet ||
-        pxfer[1].id != sel.fl.idPlanet) return 0;
+    if (hwndDialog->lpfnDlg != TransferDlg || app.lpui->mdXferDlg != mdXferCargo || !app.state.pxfer || !app.lpui->rgbtnXfer ||
+        app.state.pxfer[0].id != app.state.sel.fl.id || app.state.pxfer[0].grobj != grobjFleet || app.state.pxfer[1].grobj != grobjPlanet ||
+        app.state.pxfer[1].id != app.state.sel.fl.idPlanet) return 0;
     if (iWorkflowStep == 0) {
-        for (i = 0; i < crgbtnXfer; i++) {
-            if (rgbtnXfer[i].fVisible && !(rgbtnXfer[i].bt & 4) && rgbtnXfer[i].iSide == iSide &&
-                rgbtnXfer[i].iVal >= 0 && rgbtnXfer[i].iVal < 3 &&
-                (iWorkflow != 19 || rgbtnXfer[i].iVal == iSupplyWorkflow)) break;
+        for (i = 0; i < app.lpui->crgbtnXfer; i++) {
+            if (app.lpui->rgbtnXfer[i].fVisible && !(app.lpui->rgbtnXfer[i].bt & 4) && app.lpui->rgbtnXfer[i].iSide == iSide &&
+                app.lpui->rgbtnXfer[i].iVal >= 0 && app.lpui->rgbtnXfer[i].iVal < 3 &&
+                (iWorkflow != 19 || app.lpui->rgbtnXfer[i].iVal == iSupplyWorkflow)) break;
         }
-        if (i == crgbtnXfer) return 0;
-        iSupplyWorkflow = rgbtnXfer[i].iVal;
-        cCargoFleetWorkflow = pxfer[0].fl().rgwtMin[iSupplyWorkflow];
-        cCargoPlanetWorkflow = pxfer[1].pl().rgwtMin[iSupplyWorkflow];
-        return FPushClientRect(hwndDialog, &rgbtnXfer[i].rc, SDL_BUTTON_LEFT);
+        if (i == app.lpui->crgbtnXfer) return 0;
+        iSupplyWorkflow = app.lpui->rgbtnXfer[i].iVal;
+        cCargoFleetWorkflow = app.state.pxfer[0].fl().rgwtMin[iSupplyWorkflow];
+        cCargoPlanetWorkflow = app.state.pxfer[1].pl().rgwtMin[iSupplyWorkflow];
+        return FPushClientRect(hwndDialog, &app.lpui->rgbtnXfer[i].rc, SDL_BUTTON_LEFT);
     }
-    if (pxfer[0].fl().rgwtMin[iSupplyWorkflow] != cCargoFleetWorkflow + dCargo ||
-        pxfer[1].pl().rgwtMin[iSupplyWorkflow] != cCargoPlanetWorkflow - dCargo) return 0;
+    if (app.state.pxfer[0].fl().rgwtMin[iSupplyWorkflow] != cCargoFleetWorkflow + dCargo ||
+        app.state.pxfer[1].pl().rgwtMin[iSupplyWorkflow] != cCargoPlanetWorkflow - dCargo) return 0;
     hwndControl = HwndWorkflowControl(hwndDialog, iWorkflow == 17 ? IDCANCEL : IDOK, "Button");
-    fWorkflowPassed = hwndControl && FPushClick(hwndControl);
+    fWorkflowPassed = hwndControl && FPushClick(app, hwndControl);
     return fWorkflowPassed;
 }
 
@@ -937,110 +946,112 @@ static BOOL FPostOwnedTestFolder(HWND hwnd, char *pszFolder) {
 }
 
 static void  CheckWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
+    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+
     HWND hwndDialog, hwndControl;
     (void)hwnd; (void)msg; (void)dwTime;
     if (fWorkflowBusy) return;
     fWorkflowBusy = 1;
-    hwndDialog = HwndWorkflowDialog();
+    hwndDialog = HwndWorkflowDialog(app);
     if (++cWorkflowWait > 120) goto LFail;
     if (!hwndDialog && !idWorkflowDialog && !fWorkflowPassed) { fWorkflowBusy = 0; return; }
-    if (!hwndDialog || win32::IsWindowEnabled(hwndFrame)) goto LFail;
+    if (!hwndDialog || win32::IsWindowEnabled(app.lpui->hwndFrame)) goto LFail;
     idWorkflowDialog = StarsCompatWindowId(hwndDialog);
     if (fWorkflowPassed) { fWorkflowBusy = 0; return; }
     fprintf(stderr, "Gameplay workflow %d step %d\n", iWorkflow, iWorkflowStep);
     if (iWorkflow == 1) {
         if (hwndDialog->lpfnDlg != ResearchDlg) goto LFail;
         if (iWorkflowStep == 0) {
-            hwndControl = HwndWorkflowControl(hwndDialog, IDC_RESEARCH_ENERGY + rgplr[idPlayer].iTechNow(), "Button");
+            hwndControl = HwndWorkflowControl(hwndDialog, IDC_RESEARCH_ENERGY + app.state.rgplr[app.state.idPlayer].iTechNow(), "Button");
             if (!hwndControl || ui::SendMessage(hwndControl, win32::BM_GETCHECK, 0, 0) != win32::BST_CHECKED) goto LFail;
             hwndControl = HwndWorkflowControl(hwndDialog, IDC_RESEARCH_NEXT_FIELD, "ComboBox");
             if (!hwndControl || ui::SendMessage(hwndControl, win32::CB_GETCOUNT, 0, 0) != 8) goto LFail;
             hwndControl = HwndWorkflowControl(hwndDialog, IDC_RESEARCH_ENERGY + iResearchTarget, "Button");
-            if (!hwndControl || !win32::IsWindowEnabled(hwndControl) || !FPushClick(hwndControl)) goto LFail;
+            if (!hwndControl || !win32::IsWindowEnabled(hwndControl) || !FPushClick(app, hwndControl)) goto LFail;
         } else {
             hwndControl = HwndWorkflowControl(hwndDialog, IDC_RESEARCH_ENERGY + iResearchTarget, "Button");
-            if (iResTechNow != iResearchTarget || ui::SendMessage(hwndControl, win32::BM_GETCHECK, 0, 0) != win32::BST_CHECKED) goto LFail;
+            if (app.lpui->iResTechNow != iResearchTarget || ui::SendMessage(hwndControl, win32::BM_GETCHECK, 0, 0) != win32::BST_CHECKED) goto LFail;
             hwndControl = HwndWorkflowControl(hwndDialog, IDCANCEL, "Button");
-            if (!hwndControl || !FPushClick(hwndControl)) goto LFail;
+            if (!hwndControl || !FPushClick(app, hwndControl)) goto LFail;
             fWorkflowPassed = 1;
         }
     } else if (iWorkflow == 5) {
-        if (hwndDialog->lpfnDlg != BattlePlansDlg || iPlanSelDlg != 0) { fprintf(stderr, "Battle dialog: plan %d handler %d\n", iPlanSelDlg, hwndDialog->lpfnDlg == BattlePlansDlg); goto LFail; }
+        if (hwndDialog->lpfnDlg != BattlePlansDlg || app.lpui->iPlanSelDlg != 0) { fprintf(stderr, "Battle dialog: plan %d handler %d\n", app.lpui->iPlanSelDlg, hwndDialog->lpfnDlg == BattlePlansDlg); goto LFail; }
         hwndControl = HwndWorkflowControl(hwndDialog, IDC_BATTLE_PLAN_DUMP_CARGO, "Button");
         if (!hwndControl) goto LFail;
         if (iWorkflowStep == 0) {
-            if (btlplan.fDumpCargo != rglpbtlplan[idPlayer][0].fDumpCargo ||
-                ui::SendMessage(hwndControl, win32::BM_GETCHECK, 0, 0) != btlplan.fDumpCargo || !FPushClick(hwndControl)) goto LFail;
+            if (app.lpui->btlplan.fDumpCargo != app.state.rglpbtlplan[app.state.idPlayer][0].fDumpCargo ||
+                ui::SendMessage(hwndControl, win32::BM_GETCHECK, 0, 0) != app.lpui->btlplan.fDumpCargo || !FPushClick(app, hwndControl)) goto LFail;
         } else {
-            if (btlplan.fDumpCargo != iResearchTarget || !fDirtyPlan) { fprintf(stderr, "Dump cargo: value %d target %d check %ld dirty %d style %lx\n", btlplan.fDumpCargo, iResearchTarget, (long)ui::SendMessage(hwndControl, win32::BM_GETCHECK, 0, 0), fDirtyPlan, (unsigned long)win32::GetWindowLongPtrA(hwndControl, win32::GWL_STYLE)); goto LFail; }
+            if (app.lpui->btlplan.fDumpCargo != iResearchTarget || !app.lpui->fDirtyPlan) { fprintf(stderr, "Dump cargo: value %d target %d check %ld dirty %d style %lx\n", app.lpui->btlplan.fDumpCargo, iResearchTarget, (long)ui::SendMessage(hwndControl, win32::BM_GETCHECK, 0, 0), app.lpui->fDirtyPlan, (unsigned long)win32::GetWindowLongPtrA(hwndControl, win32::GWL_STYLE)); goto LFail; }
             hwndControl = HwndWorkflowControl(hwndDialog, IDOK, "Button");
-            if (!hwndControl || !FPushClick(hwndControl)) goto LFail;
+            if (!hwndControl || !FPushClick(app, hwndControl)) goto LFail;
             fWorkflowPassed = 1;
         }
     } else if (iWorkflow == 6) {
         if (hwndDialog->lpfnDlg != RelationsDlg) goto LFail;
         if (iWorkflowStep == 0) {
             hwndControl = HwndWorkflowControl(hwndDialog, IDC_RELATIONS_PLAYER_LIST, "ListBox");
-            if (!hwndControl || ui::SendMessage(hwndControl, win32::LB_GETCOUNT, 0, 0) != game.cPlayer - 1 ||
+            if (!hwndControl || ui::SendMessage(hwndControl, win32::LB_GETCOUNT, 0, 0) != app.state.game.cPlayer - 1 ||
                 ui::SendMessage(hwndControl, win32::LB_GETCURSEL, 0, 0) != 0) goto LFail;
-            hwndControl = HwndWorkflowControl(hwndDialog, IDC_RELATIONS_NEUTRAL + rgplr[idPlayer].rgmdRelation[idPlayer == 0], "Button");
+            hwndControl = HwndWorkflowControl(hwndDialog, IDC_RELATIONS_NEUTRAL + app.state.rgplr[app.state.idPlayer].rgmdRelation[app.state.idPlayer == 0], "Button");
             if (!hwndControl || ui::SendMessage(hwndControl, win32::BM_GETCHECK, 0, 0) != win32::BST_CHECKED) goto LFail;
             hwndControl = HwndWorkflowControl(hwndDialog, IDC_RELATIONS_NEUTRAL + iResearchTarget, "Button");
-            if (!hwndControl || !FPushClick(hwndControl)) goto LFail;
+            if (!hwndControl || !FPushClick(app, hwndControl)) goto LFail;
         } else {
             hwndControl = HwndWorkflowControl(hwndDialog, IDC_RELATIONS_NEUTRAL + iResearchTarget, "Button");
             if (!hwndControl || ui::SendMessage(hwndControl, win32::BM_GETCHECK, 0, 0) != win32::BST_CHECKED ||
-                rgplr[idPlayer].rgmdRelation[idPlayer == 0] != iResearchTarget || !fDirtyPlan) goto LFail;
+                app.state.rgplr[app.state.idPlayer].rgmdRelation[app.state.idPlayer == 0] != iResearchTarget || !app.lpui->fDirtyPlan) goto LFail;
             hwndControl = HwndWorkflowControl(hwndDialog, IDCANCEL, "Button");
-            if (!hwndControl || !FPushClick(hwndControl)) goto LFail;
+            if (!hwndControl || !FPushClick(app, hwndControl)) goto LFail;
             fWorkflowPassed = 1;
         }
     } else if (iWorkflow == 7) {
-        if (hwndDialog->lpfnDlg != BattlePlansDlg || iPlanSelDlg != 0) { fprintf(stderr, "Battle dialog: plan %d handler %d\n", iPlanSelDlg, hwndDialog->lpfnDlg == BattlePlansDlg); goto LFail; }
+        if (hwndDialog->lpfnDlg != BattlePlansDlg || app.lpui->iPlanSelDlg != 0) { fprintf(stderr, "Battle dialog: plan %d handler %d\n", app.lpui->iPlanSelDlg, hwndDialog->lpfnDlg == BattlePlansDlg); goto LFail; }
         hwndControl = HwndWorkflowControl(hwndDialog, IDC_BATTLE_PLAN_TACTIC, "ComboBox");
         if (!hwndControl) goto LFail;
         if (iWorkflowStep == 0) {
-            if (ui::SendMessage(hwndControl, win32::CB_GETCURSEL, 0, 0) != rglpbtlplan[idPlayer][0].mdTactic ||
-                ui::SendMessage(hwndControl, win32::CB_GETCOUNT, 0, 0) <= iResearchTarget || !FPushClick(hwndControl)) goto LFail;
+            if (ui::SendMessage(hwndControl, win32::CB_GETCURSEL, 0, 0) != app.state.rglpbtlplan[app.state.idPlayer][0].mdTactic ||
+                ui::SendMessage(hwndControl, win32::CB_GETCOUNT, 0, 0) <= iResearchTarget || !FPushClick(app, hwndControl)) goto LFail;
         } else if (iWorkflowStep == 1) {
             if (!ui::SendMessage(hwndControl, win32::CB_GETDROPPEDSTATE, 0, 0) ||
-                btlplan.mdTactic != rglpbtlplan[idPlayer][0].mdTactic || !FPushComboRow(hwndControl, iResearchTarget)) goto LFail;
+                app.lpui->btlplan.mdTactic != app.state.rglpbtlplan[app.state.idPlayer][0].mdTactic || !FPushComboRow(hwndControl, iResearchTarget)) goto LFail;
         } else {
-            if (ui::SendMessage(hwndControl, win32::CB_GETDROPPEDSTATE, 0, 0) || btlplan.mdTactic != iResearchTarget || !fDirtyPlan) goto LFail;
+            if (ui::SendMessage(hwndControl, win32::CB_GETDROPPEDSTATE, 0, 0) || app.lpui->btlplan.mdTactic != iResearchTarget || !app.lpui->fDirtyPlan) goto LFail;
             hwndControl = HwndWorkflowControl(hwndDialog, IDOK, "Button");
-            if (!hwndControl || !FPushClick(hwndControl)) goto LFail;
+            if (!hwndControl || !FPushClick(app, hwndControl)) goto LFail;
             fWorkflowPassed = 1;
         }
     } else if (iWorkflow == 13 || iWorkflow == 14) {
-        if (!FCheckMergeWorkflow(hwndDialog)) goto LFail;
+        if (!FCheckMergeWorkflow(app, hwndDialog)) goto LFail;
     } else if (iWorkflow == 15 || iWorkflow == 16) {
-        if (!FCheckSplitWorkflow(hwndDialog)) goto LFail;
+        if (!FCheckSplitWorkflow(app, hwndDialog)) goto LFail;
     } else if (iWorkflow >= 17 && iWorkflow <= 19) {
-        if (!FCheckCargoWorkflow(hwndDialog)) goto LFail;
+        if (!FCheckCargoWorkflow(app, hwndDialog)) goto LFail;
     } else if (iWorkflow >= 20) {
-        if (!FCheckHullWorkflow(hwndDialog)) goto LFail;
+        if (!FCheckHullWorkflow(app, hwndDialog)) goto LFail;
     } else if (iWorkflow >= 8) {
-        if (!FCheckShipWorkflow(hwndDialog)) goto LFail;
+        if (!FCheckShipWorkflow(app, hwndDialog)) goto LFail;
     } else {
-        if (hwndDialog->lpfnDlg != ProductionDlg || !lpplProdGlob) goto LFail;
+        if (hwndDialog->lpfnDlg != ProductionDlg || !app.state.lpplProdGlob) goto LFail;
         if (iWorkflowStep == 0) {
             hwndControl = HwndWorkflowControl(hwndDialog, IDC_PRODUCTION_AVAILABLE_ITEMS, "ListBox");
             if (!hwndControl || ui::SendMessage(hwndControl, win32::LB_GETCOUNT, 0, 0) <= 0 ||
                 ui::SendMessage(hwndControl, win32::LB_GETCURSEL, 0, 0) != 0) goto LFail;
-            cProductionBefore = CProductionItems();
+            cProductionBefore = CProductionItems(app);
             if (iWorkflow == 4) {
                 if (cProductionBefore != iResearchTarget) goto LFail;
                 hwndControl = HwndWorkflowControl(hwndDialog, IDCANCEL, "Button");
-                if (!hwndControl || !FPushClick(hwndControl)) goto LFail;
+                if (!hwndControl || !FPushClick(app, hwndControl)) goto LFail;
                 fWorkflowPassed = 1;
                 iWorkflowStep++; fWorkflowBusy = 0; return;
             }
             hwndControl = HwndWorkflowControl(hwndDialog, IDC_PRODUCTION_ADD, "Button");
-            if (!hwndControl || !win32::IsWindowEnabled(hwndControl) || !FPushClick(hwndControl)) goto LFail;
+            if (!hwndControl || !win32::IsWindowEnabled(hwndControl) || !FPushClick(app, hwndControl)) goto LFail;
         } else {
-            if (CProductionItems() != cProductionBefore + 1) goto LFail;
+            if (CProductionItems(app) != cProductionBefore + 1) goto LFail;
             hwndControl = HwndWorkflowControl(hwndDialog, iWorkflow == 3 ? IDOK : IDCANCEL, "Button");
-            if (!hwndControl || !FPushClick(hwndControl)) goto LFail;
+            if (!hwndControl || !FPushClick(app, hwndControl)) goto LFail;
             fWorkflowPassed = 1;
         }
     }
@@ -1053,7 +1064,7 @@ LFail:
     else win32::PostQuitMessage(93);
 }
 
-static BOOL FRunWorkflow(int iKind, int iTarget) {
+static BOOL FRunWorkflow(APPSESSION &app, int iKind, int iTarget) {
     UINT_PTR id;
     BOOL fPassed;
     win32::MSG msg;
@@ -1064,37 +1075,37 @@ static BOOL FRunWorkflow(int iKind, int iTarget) {
     id = win32::SetTimer(NULL, 0, 50, CheckWorkflow);
     if (!id) return 0;
     if (iKind >= 13 && iKind <= 19) {
-        hwndTrigger = rghwndBtn[iKind <= 14 ? 10 : iKind <= 16 ? 8 : 7];
+        hwndTrigger = app.lpui->rghwndBtn[iKind <= 14 ? 10 : iKind <= 16 ? 8 : 7];
         ui::UpdateWindow(win32::GetParent(hwndTrigger));
-        if (!win32::IsWindowVisible(hwndTrigger) || !win32::IsWindowEnabled(hwndTrigger) || !FPushClick(hwndTrigger)) {
-            fprintf(stderr, "Fleet trigger: visible %d enabled %d fleet %d point %d,%d\n", win32::IsWindowVisible(hwndTrigger), win32::IsWindowEnabled(hwndTrigger), sel.fl.id, sel.fl.pt.x, sel.fl.pt.y);
+        if (!win32::IsWindowVisible(hwndTrigger) || !win32::IsWindowEnabled(hwndTrigger) || !FPushClick(app, hwndTrigger)) {
+            fprintf(stderr, "Fleet trigger: visible %d enabled %d fleet %d point %d,%d\n", win32::IsWindowVisible(hwndTrigger), win32::IsWindowEnabled(hwndTrigger), app.state.sel.fl.id, app.state.sel.fl.pt.x, app.state.sel.fl.pt.y);
             win32::KillTimer(NULL, id); iWorkflow = 0; return 0;
         }
-        while (!fWorkflowPassed || HwndWorkflowDialog() || !win32::IsWindowEnabled(hwndFrame)) {
+        while (!fWorkflowPassed || HwndWorkflowDialog(app) || !win32::IsWindowEnabled(app.lpui->hwndFrame)) {
             if (ui::GetMessage(&msg, NULL, 0, 0) <= 0) break;
             win32::TranslateMessage(&msg); ui::DispatchMessage(&msg);
         }
     }
-    else if (iKind == 1) ui::SendMessage(hwndFrame, win32::WM_COMMAND, IDM_GAME_RESEARCH, 0);
-    else if (iKind == 5 || iKind == 7) ui::SendMessage(hwndFrame, win32::WM_COMMAND, IDM_GAME_BATTLE_PLANS1, 0);
-    else if (iKind == 6) ui::SendMessage(hwndFrame, win32::WM_COMMAND, IDM_GAME_RELATIONS, 0);
-    else if (iKind >= 8) ui::SendMessage(hwndFrame, win32::WM_COMMAND, IDM_GAME_SHIP_BUILDER, 0);
-    else ui::SendMessage(hwndFrame, win32::WM_CHAR, 'q', 1);
+    else if (iKind == 1) ui::SendMessage(app.lpui->hwndFrame, win32::WM_COMMAND, IDM_GAME_RESEARCH, 0);
+    else if (iKind == 5 || iKind == 7) ui::SendMessage(app.lpui->hwndFrame, win32::WM_COMMAND, IDM_GAME_BATTLE_PLANS1, 0);
+    else if (iKind == 6) ui::SendMessage(app.lpui->hwndFrame, win32::WM_COMMAND, IDM_GAME_RELATIONS, 0);
+    else if (iKind >= 8) ui::SendMessage(app.lpui->hwndFrame, win32::WM_COMMAND, IDM_GAME_SHIP_BUILDER, 0);
+    else ui::SendMessage(app.lpui->hwndFrame, win32::WM_CHAR, 'q', 1);
     win32::KillTimer(NULL, id);
-    fPassed = fWorkflowPassed && win32::IsWindowEnabled(hwndFrame) && !HwndWorkflowDialog() &&
+    fPassed = fWorkflowPassed && win32::IsWindowEnabled(app.lpui->hwndFrame) && !HwndWorkflowDialog(app) &&
               idWorkflowDialog && !StarsCompatResolveWindow(idWorkflowDialog);
-    if (!fPassed) fprintf(stderr, "Workflow %d returned: passed %d enabled %d dialog %p\n", iKind, fWorkflowPassed, win32::IsWindowEnabled(hwndFrame), (void *)HwndWorkflowDialog());
+    if (!fPassed) fprintf(stderr, "Workflow %d returned: passed %d enabled %d dialog %p\n", iKind, fWorkflowPassed, win32::IsWindowEnabled(app.lpui->hwndFrame), (void *)HwndWorkflowDialog(app));
     iWorkflow = 0;
     return fPassed;
 }
 
-static int CFleetTotals(int64_t *rgShip, int64_t *rgCargo) {
+static int CFleetTotals(APPSESSION &app, int64_t *rgShip, int64_t *rgCargo) {
     int i, j, c = 0;
     FLEET *lpfl;
     memset(rgShip, 0, 16 * sizeof(*rgShip)); memset(rgCargo, 0, 5 * sizeof(*rgCargo));
-    for (i = 0; i < cFleet; i++) {
-        lpfl = rglpfl[i];
-        if (!lpfl || lpfl->fDead || lpfl->iPlayer != idPlayer) continue;
+    for (i = 0; i < app.state.cFleet; i++) {
+        lpfl = app.state.rglpfl[i];
+        if (!lpfl || lpfl->fDead || lpfl->iPlayer != app.state.idPlayer) continue;
         c++;
         for (j = 0; j < 16; j++) rgShip[j] += lpfl->rgcsh[j];
         for (j = 0; j < 5; j++) rgCargo[j] += lpfl->rgwtMin[j];
@@ -1102,43 +1113,43 @@ static int CFleetTotals(int64_t *rgShip, int64_t *rgCargo) {
     return c;
 }
 
-static BOOL FCheckRepeatOrders(int idFleet) {
+static BOOL FCheckRepeatOrders(APPSESSION &app, int idFleet) {
     win32::MSG msg;
     UINT_PTR id;
     Uint64 ullStart;
-    BOOL fRepeat = sel.fl.fRepOrders, fPassed = 0;
+    BOOL fRepeat = app.state.sel.fl.fRepOrders, fPassed = 0;
     FLEET *lpfl;
     int i;
-    ui::UpdateWindow(win32::GetParent(hwndRepCB));
-    if (!win32::IsWindowVisible(hwndRepCB) || !win32::IsWindowEnabled(hwndRepCB) ||
-        ui::SendMessage(hwndRepCB, win32::BM_GETCHECK, 0, 0) != fRepeat) {
-        fprintf(stderr, "Repeat initial visible %d enabled %d check %ld expected %d\n", win32::IsWindowVisible(hwndRepCB), win32::IsWindowEnabled(hwndRepCB), (long)ui::SendMessage(hwndRepCB, win32::BM_GETCHECK, 0, 0), fRepeat);
+    ui::UpdateWindow(win32::GetParent(app.lpui->hwndRepCB));
+    if (!win32::IsWindowVisible(app.lpui->hwndRepCB) || !win32::IsWindowEnabled(app.lpui->hwndRepCB) ||
+        ui::SendMessage(app.lpui->hwndRepCB, win32::BM_GETCHECK, 0, 0) != fRepeat) {
+        fprintf(stderr, "Repeat initial visible %d enabled %d check %ld expected %d\n", win32::IsWindowVisible(app.lpui->hwndRepCB), win32::IsWindowEnabled(app.lpui->hwndRepCB), (long)ui::SendMessage(app.lpui->hwndRepCB, win32::BM_GETCHECK, 0, 0), fRepeat);
         return 0;
     }
     id = win32::SetTimer(NULL, 0, 25, NULL);
     if (!id) return 0;
     for (i = 0; i < 2; i++) {
-        if (!FPushClick(hwndRepCB)) goto LDone;
+        if (!FPushClick(app, app.lpui->hwndRepCB)) goto LDone;
         ullStart = SDL_GetTicks();
-        while (sel.fl.fRepOrders != (i == 0 ? !fRepeat : fRepeat) && SDL_GetTicks() - ullStart < 3000) {
+        while (app.state.sel.fl.fRepOrders != (i == 0 ? !fRepeat : fRepeat) && SDL_GetTicks() - ullStart < 3000) {
             if (ui::GetMessage(&msg, NULL, 0, 0) <= 0) goto LDone;
             win32::TranslateMessage(&msg); ui::DispatchMessage(&msg);
         }
-        lpfl = LpflFromId((int16_t)idFleet);
+        lpfl = LpflFromId(app, (int16_t)idFleet);
         if (!lpfl || lpfl->fRepOrders != (i == 0 ? !fRepeat : fRepeat) ||
-            sel.fl.fRepOrders != lpfl->fRepOrders || ui::SendMessage(hwndRepCB, win32::BM_GETCHECK, 0, 0) != lpfl->fRepOrders) goto LDone;
-        SelectAdjFleet(0, (int16_t)idFleet);
-        ui::UpdateWindow(win32::GetParent(hwndRepCB));
-        if (ui::SendMessage(hwndRepCB, win32::BM_GETCHECK, 0, 0) != lpfl->fRepOrders) goto LDone;
+            app.state.sel.fl.fRepOrders != lpfl->fRepOrders || ui::SendMessage(app.lpui->hwndRepCB, win32::BM_GETCHECK, 0, 0) != lpfl->fRepOrders) goto LDone;
+        SelectAdjFleet(app, 0, (int16_t)idFleet);
+        ui::UpdateWindow(win32::GetParent(app.lpui->hwndRepCB));
+        if (ui::SendMessage(app.lpui->hwndRepCB, win32::BM_GETCHECK, 0, 0) != lpfl->fRepOrders) goto LDone;
     }
     fPassed = 1;
 LDone:
-    if (!fPassed) fprintf(stderr, "Repeat step %d check %ld selected %d expected %d\n", i, (long)ui::SendMessage(hwndRepCB, win32::BM_GETCHECK, 0, 0), sel.fl.fRepOrders, i == 0 ? !fRepeat : fRepeat);
+    if (!fPassed) fprintf(stderr, "Repeat step %d check %ld selected %d expected %d\n", i, (long)ui::SendMessage(app.lpui->hwndRepCB, win32::BM_GETCHECK, 0, 0), app.state.sel.fl.fRepOrders, i == 0 ? !fRepeat : fRepeat);
     win32::KillTimer(NULL, id);
     return fPassed;
 }
 
-static BOOL FChooseWorkflowCombo(HWND hwnd, int iRow) {
+static BOOL FChooseWorkflowCombo(APPSESSION &app, HWND hwnd, int iRow) {
     win32::MSG msg;
     UINT_PTR id;
     Uint64 ullStart;
@@ -1146,7 +1157,7 @@ static BOOL FChooseWorkflowCombo(HWND hwnd, int iRow) {
     if (!win32::IsWindowVisible(hwnd) || !win32::IsWindowEnabled(hwnd) || ui::SendMessage(hwnd, win32::CB_GETCOUNT, 0, 0) <= iRow) return 0;
     id = win32::SetTimer(NULL, 0, 25, NULL);
     if (!id) return 0;
-    if (!FPushClick(hwnd)) goto LDone;
+    if (!FPushClick(app, hwnd)) goto LDone;
     ullStart = SDL_GetTicks();
     while (!ui::SendMessage(hwnd, win32::CB_GETDROPPEDSTATE, 0, 0) && SDL_GetTicks() - ullStart < 3000) {
         if (ui::GetMessage(&msg, NULL, 0, 0) <= 0) goto LDone;
@@ -1158,68 +1169,68 @@ static BOOL FChooseWorkflowCombo(HWND hwnd, int iRow) {
         if (ui::GetMessage(&msg, NULL, 0, 0) <= 0) goto LDone;
         win32::TranslateMessage(&msg); ui::DispatchMessage(&msg);
     }
-    fPassed = !ui::SendMessage(hwnd, win32::CB_GETDROPPEDSTATE, 0, 0) && ui::SendMessage(hwnd, win32::CB_GETCURSEL, 0, 0) == iRow && !HwndWorkflowDialog();
+    fPassed = !ui::SendMessage(hwnd, win32::CB_GETDROPPEDSTATE, 0, 0) && ui::SendMessage(hwnd, win32::CB_GETCURSEL, 0, 0) == iRow && !HwndWorkflowDialog(app);
 LDone:
     win32::KillTimer(NULL, id);
     return fPassed;
 }
 
-static BOOL FCheckTransportPreset(int iPreset) {
+static BOOL FCheckTransportPreset(APPSESSION &app, int iPreset) {
     win32::MSG msg;
     UINT_PTR id;
     Uint64 ullStart;
     BOOL fPassed = 0;
     int cBefore = cTransportMenus;
-    if (rgrcRef[5].bottom <= rgrcRef[5].top) return 0;
+    if (app.lpui->rgrcRef[5].bottom <= app.lpui->rgrcRef[5].top) return 0;
     id = win32::SetTimer(NULL, 0, 25, NULL);
     if (!id) return 0;
     iTransportPreset = iPreset;
-    if (!FPushClientRect(hwndPlanet, &rgrcRef[5], SDL_BUTTON_RIGHT)) goto LDone;
+    if (!FPushClientRect(app.lpui->hwndPlanet, &app.lpui->rgrcRef[5], SDL_BUTTON_RIGHT)) goto LDone;
     ullStart = SDL_GetTicks();
     while ((cTransportMenus == cBefore || iTransportPreset >= 0) && SDL_GetTicks() - ullStart < 3000) {
         if (ui::GetMessage(&msg, NULL, 0, 0) <= 0) goto LDone;
         win32::TranslateMessage(&msg); ui::DispatchMessage(&msg);
     }
-    fPassed = cTransportMenus == cBefore + 1 && iTransportPreset == -1 && !HwndWorkflowDialog();
+    fPassed = cTransportMenus == cBefore + 1 && iTransportPreset == -1 && !HwndWorkflowDialog(app);
 LDone:
     iTransportPreset = -1;
     win32::KillTimer(NULL, id);
     return fPassed;
 }
 
-static BOOL FCheckWaypointTask(int idFleet) {
+static BOOL FCheckWaypointTask(APPSESSION &app, int idFleet) {
     FLEET *lpfl;
     ORDER ordSav;
     int i;
-    int iwp = sel.iwpAct;
-    if (sel.grobj != grobjFleet || sel.fl.id != idFleet || iwp != 0 || sel.fl.cord == 0) return 0;
-    ordSav = sel.fl.lpplord->rgord()[iwp];
+    int iwp = app.state.sel.iwpAct;
+    if (app.state.sel.grobj != grobjFleet || app.state.sel.fl.id != idFleet || iwp != 0 || app.state.sel.fl.cord == 0) return 0;
+    ordSav = app.state.sel.fl.lpplord->rgord()[iwp];
     if (ordSav.grTask != grTaskNone) return 0;
-    ui::UpdateWindow(win32::GetParent(rghwndOrderDD[0]));
-    if (!FChooseWorkflowCombo(rghwndOrderDD[0], grTaskXfer)) return 0;
-    lpfl = LpflFromId((int16_t)idFleet);
-    if (!lpfl || lpfl->lpplord->rgord()[iwp].grTask != grTaskXfer || sel.fl.lpplord->rgord()[iwp].grTask != grTaskXfer) return 0;
-    if (!FCheckTransportPreset(0)) return 0;
+    ui::UpdateWindow(win32::GetParent(app.lpui->rghwndOrderDD[0]));
+    if (!FChooseWorkflowCombo(app, app.lpui->rghwndOrderDD[0], grTaskXfer)) return 0;
+    lpfl = LpflFromId(app, (int16_t)idFleet);
+    if (!lpfl || lpfl->lpplord->rgord()[iwp].grTask != grTaskXfer || app.state.sel.fl.lpplord->rgord()[iwp].grTask != grTaskXfer) return 0;
+    if (!FCheckTransportPreset(app, 0)) return 0;
     for (i = 0; i < 5; i++)
         if (lpfl->lpplord->rgord()[iwp].txp.rgia[i].iAction() != (i < 3 ? iActionLoadAll : i == 3 ? iActionNone : iActionLoadDunnage)) return 0;
-    if (!FCheckTransportPreset(1)) return 0;
+    if (!FCheckTransportPreset(app, 1)) return 0;
     for (i = 0; i < 5; i++)
         if (lpfl->lpplord->rgord()[iwp].txp.rgia[i].iAction() != (i < 4 ? iActionUnloadAll : iActionLoadDunnage)) return 0;
-    if (!FCheckTransportPreset(2)) return 0;
+    if (!FCheckTransportPreset(app, 2)) return 0;
     for (i = 0; i < 5; i++) {
         if (lpfl->lpplord->rgord()[iwp].txp.rgia[i].iAction() != (i < 3 ? iActionWaitPercent : i == 3 ? iActionNone : iActionLoadDunnage)) return 0;
         if (i < 3 && lpfl->lpplord->rgord()[iwp].txp.rgia[i].cQuan() != 100) return 0;
     }
-    if (!FCheckTransportPreset(3)) return 0;
+    if (!FCheckTransportPreset(app, 3)) return 0;
     for (i = 0; i < 5; i++)
         if (lpfl->lpplord->rgord()[iwp].txp.rgia[i].iAction() != iActionNone || lpfl->lpplord->rgord()[iwp].txp.rgia[i].cQuan() != 0) return 0;
-    SelectAdjFleet(0, (int16_t)idFleet);
-    ui::UpdateWindow(win32::GetParent(rghwndOrderDD[0]));
-    if (ui::SendMessage(rghwndOrderDD[0], win32::CB_GETCURSEL, 0, 0) != grTaskXfer ||
-        !FChooseWorkflowCombo(rghwndOrderDD[0], grTaskNone)) return 0;
-    SelectAdjFleet(0, (int16_t)idFleet);
-    ui::UpdateWindow(win32::GetParent(rghwndOrderDD[0]));
-    if (ui::SendMessage(rghwndOrderDD[0], win32::CB_GETCURSEL, 0, 0) != grTaskNone ||
+    SelectAdjFleet(app, 0, (int16_t)idFleet);
+    ui::UpdateWindow(win32::GetParent(app.lpui->rghwndOrderDD[0]));
+    if (ui::SendMessage(app.lpui->rghwndOrderDD[0], win32::CB_GETCURSEL, 0, 0) != grTaskXfer ||
+        !FChooseWorkflowCombo(app, app.lpui->rghwndOrderDD[0], grTaskNone)) return 0;
+    SelectAdjFleet(app, 0, (int16_t)idFleet);
+    ui::UpdateWindow(win32::GetParent(app.lpui->rghwndOrderDD[0]));
+    if (ui::SendMessage(app.lpui->rghwndOrderDD[0], win32::CB_GETCURSEL, 0, 0) != grTaskNone ||
         memcmp(&ordSav, &lpfl->lpplord->rgord()[iwp], sizeof(ordSav))) return 0;
     puts("Waypoint task commit, reselection and restoration passed");
     return 1;
@@ -1255,18 +1266,18 @@ static BOOL FPushWorkflowDrag(HWND hwnd, POINT ptFrom, POINT ptTo) {
     return SDL_PushEvent(&event);
 }
 
-static void DispatchWorkflowInput(win32::MSG *lpmsg) {
+static void DispatchWorkflowInput(APPSESSION &app, win32::MSG *lpmsg) {
     win32::TranslateMessage(lpmsg);
     if (((lpmsg->message != win32::WM_KEYDOWN && lpmsg->message != win32::WM_KEYUP) ||
-        !FHandleKey(lpmsg->hwnd, lpmsg->message, lpmsg->wParam, lpmsg->lParam)) &&
-        (lpmsg->message != win32::WM_CHAR || !FHandleChar(lpmsg->hwnd, lpmsg->wParam, lpmsg->lParam))) ui::DispatchMessage(lpmsg);
+        !FHandleKey(app, lpmsg->hwnd, lpmsg->message, lpmsg->wParam, lpmsg->lParam)) &&
+        (lpmsg->message != win32::WM_CHAR || !FHandleChar(app, lpmsg->hwnd, lpmsg->wParam, lpmsg->lParam))) ui::DispatchMessage(lpmsg);
 }
 
-static BOOL FCheckRouteAppendDelete(int idFleet) {
+static BOOL FCheckRouteAppendDelete(APPSESSION &app, int idFleet) {
     SCANSNAPSHOT snap = {};
     SCANOBJECT obj, objDrag;
     POINT ptFrom;
-    FLEET *lpfl = LpflFromId((int16_t)idFleet);
+    FLEET *lpfl = LpflFromId(app, (int16_t)idFleet);
     ORDER ordSav;
     RECT rc;
     win32::MSG msg;
@@ -1276,7 +1287,7 @@ static BOOL FCheckRouteAppendDelete(int idFleet) {
     BOOL fPassed = 0;
     if (!lpfl || lpfl->cord != 1) return 0;
     ordSav = lpfl->lpplord->rgord()[0];
-    if (!FCaptureScanner(&snap)) return 0;
+    if (!FCaptureScanner(app, &snap)) return 0;
     for (i = 0; i < snap.cObject; i++) {
         obj = snap.rgobj[i];
         if (obj.grType == grobjPlanet && obj.id != lpfl->idPlanet && obj.fOnScreen && !obj.fFiltered &&
@@ -1290,17 +1301,17 @@ static BOOL FCheckRouteAppendDelete(int idFleet) {
     rc = (RECT){obj.ptClient.x - 1, obj.ptClient.y - 1, obj.ptClient.x + 1, obj.ptClient.y + 1};
     id = win32::SetTimer(NULL, 0, 25, NULL);
     if (!id) return 0;
-    if (!FPushWorkflowKey(hwndFrame, SDL_SCANCODE_LSHIFT, 1) || !FPushClientRect(hwndScanner, &rc, SDL_BUTTON_LEFT) ||
-        !FPushWorkflowKey(hwndFrame, SDL_SCANCODE_LSHIFT, 0)) goto LDone;
+    if (!FPushWorkflowKey(app.lpui->hwndFrame, SDL_SCANCODE_LSHIFT, 1) || !FPushClientRect(app.lpui->hwndScanner, &rc, SDL_BUTTON_LEFT) ||
+        !FPushWorkflowKey(app.lpui->hwndFrame, SDL_SCANCODE_LSHIFT, 0)) goto LDone;
     ullStart = SDL_GetTicks();
     while (lpfl->cord != 2 && SDL_GetTicks() - ullStart < 3000) {
         if (ui::GetMessage(&msg, NULL, 0, 0) <= 0) goto LDone;
-        DispatchWorkflowInput(&msg);
+        DispatchWorkflowInput(app, &msg);
     }
     if (lpfl->cord != 2 || lpfl->lpplord->rgord()[1].grobj != grobjPlanet || lpfl->lpplord->rgord()[1].id != obj.id ||
         lpfl->lpplord->rgord()[1].pt.x != obj.ptUniverse.x || lpfl->lpplord->rgord()[1].pt.y != obj.ptUniverse.y) goto LDone;
     // Re-capture after the append: the UI may have changed the scanner view.
-    if (!FCaptureScanner(&snap)) goto LDone;
+    if (!FCaptureScanner(app, &snap)) goto LDone;
     for (i = 0; i < snap.cObject; i++)
         if (snap.rgobj[i].grType == grobjPlanet && snap.rgobj[i].id == obj.id) { ptFrom = snap.rgobj[i].ptClient; break; }
     fPassed = i < snap.cObject;
@@ -1314,106 +1325,106 @@ static BOOL FCheckRouteAppendDelete(int idFleet) {
     FreeScannerSnapshot(&snap);
     if (!fPassed) goto LDone;
     fPassed = 0;
-    if (!FPushWorkflowDrag(hwndScanner, ptFrom, objDrag.ptClient)) goto LDone;
+    if (!FPushWorkflowDrag(app.lpui->hwndScanner, ptFrom, objDrag.ptClient)) goto LDone;
     ullStart = SDL_GetTicks();
     while (lpfl->lpplord->rgord()[1].id != objDrag.id && SDL_GetTicks() - ullStart < 3000) {
         if (ui::GetMessage(&msg, NULL, 0, 0) <= 0) goto LDone;
-        DispatchWorkflowInput(&msg);
+        DispatchWorkflowInput(app, &msg);
     }
     if (lpfl->cord != 2 || lpfl->lpplord->rgord()[1].grobj != grobjPlanet || lpfl->lpplord->rgord()[1].id != objDrag.id ||
         lpfl->lpplord->rgord()[1].pt.x != objDrag.ptUniverse.x || lpfl->lpplord->rgord()[1].pt.y != objDrag.ptUniverse.y) goto LDone;
-    ui::UpdateWindow(hwndPlanet);
-    if (!FPushListRow(hwndShipLB, 1) || !FPushWorkflowKey(hwndFrame, SDL_SCANCODE_DELETE, 1) ||
-        !FPushWorkflowKey(hwndFrame, SDL_SCANCODE_DELETE, 0)) goto LDone;
+    ui::UpdateWindow(app.lpui->hwndPlanet);
+    if (!FPushListRow(app.lpui->hwndShipLB, 1) || !FPushWorkflowKey(app.lpui->hwndFrame, SDL_SCANCODE_DELETE, 1) ||
+        !FPushWorkflowKey(app.lpui->hwndFrame, SDL_SCANCODE_DELETE, 0)) goto LDone;
     ullStart = SDL_GetTicks();
     while (lpfl->cord != 1 && SDL_GetTicks() - ullStart < 3000) {
         if (ui::GetMessage(&msg, NULL, 0, 0) <= 0) goto LDone;
-        DispatchWorkflowInput(&msg);
+        DispatchWorkflowInput(app, &msg);
     }
-    fPassed = lpfl->cord == 1 && sel.fl.cord == 1 && !memcmp(&ordSav, &lpfl->lpplord->rgord()[0], sizeof(ordSav));
+    fPassed = lpfl->cord == 1 && app.state.sel.fl.cord == 1 && !memcmp(&ordSav, &lpfl->lpplord->rgord()[0], sizeof(ordSav));
 LDone:
     win32::KillTimer(NULL, id);
-    if (!fPassed) fprintf(stderr, "Route append/delete failed: count %d selected %d waypoint %d\n", lpfl->cord, sel.fl.cord, sel.iwpAct);
+    if (!fPassed) fprintf(stderr, "Route append/delete failed: count %d selected %d waypoint %d\n", lpfl->cord, app.state.sel.fl.cord, app.state.sel.iwpAct);
     else puts("Scanner Shift-click append, destination drag and waypoint-list Delete passed");
     return fPassed;
 }
 
-static BOOL FCheckCargoWorkflows(void) {
+static BOOL FCheckCargoWorkflows(APPSESSION &app) {
     FLEET *lpfl = NULL;
     PLANET *lppl = NULL;
     int32_t rgCargoFleet[5], rgCargoPlanet[4];
     int i, j, idFleet, idPlanet;
-    for (i = 0; i < cFleet; i++) {
-        lpfl = rglpfl[i];
-        if (!lpfl || lpfl->fDead || lpfl->iPlayer != idPlayer || lpfl->idPlanet == idPlanetDeepSpace || GetCargoFree(lpfl) <= 0) continue;
-        lppl = LpplFromId(lpfl->idPlanet);
-        if (!lppl || lppl->iPlayer != idPlayer) continue;
+    for (i = 0; i < app.state.cFleet; i++) {
+        lpfl = app.state.rglpfl[i];
+        if (!lpfl || lpfl->fDead || lpfl->iPlayer != app.state.idPlayer || lpfl->idPlanet == idPlanetDeepSpace || GetCargoFree(app, lpfl) <= 0) continue;
+        lppl = LpplFromId(app, lpfl->idPlanet);
+        if (!lppl || lppl->iPlayer != app.state.idPlayer) continue;
         for (j = 0; j < 3 && lppl->rgwtMin[j] <= 0; j++) {}
         if (j != 3) break;
     }
-    if (i == cFleet) return 0;
+    if (i == app.state.cFleet) return 0;
     idFleet = lpfl->id; idPlanet = lppl->id;
     memcpy(rgCargoFleet, lpfl->rgwtMin, sizeof(rgCargoFleet));
     memcpy(rgCargoPlanet, lppl->rgwtMin, sizeof(rgCargoPlanet));
-    SelectAdjFleet(0, (int16_t)idFleet);
-    if (!FRunWorkflow(17, 0)) return 0;
-    lpfl = LpflFromId((int16_t)idFleet); lppl = LpplFromId((int16_t)idPlanet);
+    SelectAdjFleet(app, 0, (int16_t)idFleet);
+    if (!FRunWorkflow(app, 17, 0)) return 0;
+    lpfl = LpflFromId(app, (int16_t)idFleet); lppl = LpplFromId(app, (int16_t)idPlanet);
     if (!lpfl || !lppl || memcmp(rgCargoFleet, lpfl->rgwtMin, sizeof(rgCargoFleet)) ||
         memcmp(rgCargoPlanet, lppl->rgwtMin, sizeof(rgCargoPlanet))) return 0;
-    if (!FRunWorkflow(18, 0)) return 0;
-    lpfl = LpflFromId((int16_t)idFleet); lppl = LpplFromId((int16_t)idPlanet);
+    if (!FRunWorkflow(app, 18, 0)) return 0;
+    lpfl = LpflFromId(app, (int16_t)idFleet); lppl = LpplFromId(app, (int16_t)idPlanet);
     if (!lpfl || !lppl) return 0;
     for (i = 0; i < 5; i++) {
         if (lpfl->rgwtMin[i] != rgCargoFleet[i] + (i == iSupplyWorkflow ? 1 : 0)) return 0;
         if (i < 4 && lppl->rgwtMin[i] != rgCargoPlanet[i] - (i == iSupplyWorkflow ? 1 : 0)) return 0;
     }
-    if (!FRunWorkflow(19, 0)) return 0;
-    lpfl = LpflFromId((int16_t)idFleet); lppl = LpplFromId((int16_t)idPlanet);
+    if (!FRunWorkflow(app, 19, 0)) return 0;
+    lpfl = LpflFromId(app, (int16_t)idFleet); lppl = LpplFromId(app, (int16_t)idPlanet);
     if (!lpfl || !lppl || memcmp(rgCargoFleet, lpfl->rgwtMin, sizeof(rgCargoFleet)) ||
         memcmp(rgCargoPlanet, lppl->rgwtMin, sizeof(rgCargoPlanet))) return 0;
     puts("Planet/fleet cargo transfer cancel, accept and reverse workflows passed");
     return 1;
 }
 
-static BOOL FCheckFleetWorkflows(void) {
+static BOOL FCheckFleetWorkflows(APPSESSION &app) {
     int64_t rgShipSav[16], rgCargoSav[5], rgShip[16], rgCargo[5];
     FLEET *lpfl, *rgflSav;
-    int i, cFleetSav = cFleet, cOwned, idFleet = idflNone;
+    int i, cFleetSav = app.state.cFleet, cOwned, idFleet = idflNone;
     BOOL fPassed = 0;
-    cOwned = CFleetTotals(rgShipSav, rgCargoSav);
+    cOwned = CFleetTotals(app, rgShipSav, rgCargoSav);
     if (cOwned < 2) return 0;
-    rgflSav = (FLEET *)(SDL_calloc((size_t)cFleet, sizeof(*rgflSav)));
+    rgflSav = (FLEET *)(SDL_calloc((size_t)app.state.cFleet, sizeof(*rgflSav)));
     if (!rgflSav) return 0;
-    for (i = 0; i < cFleet; i++) {
-        lpfl = rglpfl[i];
+    for (i = 0; i < app.state.cFleet; i++) {
+        lpfl = app.state.rglpfl[i];
         if (!lpfl) goto LDone;
         rgflSav[i] = *lpfl;
 
-        if (idFleet == idflNone && lpfl->iPlayer == idPlayer && !lpfl->fDead) idFleet = lpfl->id;
+        if (idFleet == idflNone && lpfl->iPlayer == app.state.idPlayer && !lpfl->fDead) idFleet = lpfl->id;
     }
     // The small startup frame clips the lower orders controls; use a normal gameplay size.
-    ui::SetWindowPos(hwndFrame, NULL, 0, 0, 900, 700, win32::SWP_NOMOVE | win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
-    if (!FCheckCargoWorkflows()) goto LDone;
+    ui::SetWindowPos(app.lpui->hwndFrame, NULL, 0, 0, 900, 700, win32::SWP_NOMOVE | win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
+    if (!FCheckCargoWorkflows(app)) goto LDone;
     // Select through the game's normal fleet UI entry; only copied fixtures are edited.
-    SelectAdjFleet(0, (int16_t)idFleet);
-    if (sel.grobj != grobjFleet || sel.fl.id != idFleet || !FCheckRepeatOrders(idFleet) || !FCheckWaypointTask(idFleet) || !FCheckRouteAppendDelete(idFleet) || !FRunWorkflow(13, 0) || cFleet != cFleetSav ||
-        CFleetTotals(rgShip, rgCargo) != cOwned || memcmp(rgShip, rgShipSav, sizeof(rgShip)) ||
+    SelectAdjFleet(app, 0, (int16_t)idFleet);
+    if (app.state.sel.grobj != grobjFleet || app.state.sel.fl.id != idFleet || !FCheckRepeatOrders(app, idFleet) || !FCheckWaypointTask(app, idFleet) || !FCheckRouteAppendDelete(app, idFleet) || !FRunWorkflow(app, 13, 0) || app.state.cFleet != cFleetSav ||
+        CFleetTotals(app, rgShip, rgCargo) != cOwned || memcmp(rgShip, rgShipSav, sizeof(rgShip)) ||
         memcmp(rgCargo, rgCargoSav, sizeof(rgCargo))) goto LDone;
-    for (i = 0; i < cFleet; i++) {
-        lpfl = rglpfl[i];
+    for (i = 0; i < app.state.cFleet; i++) {
+        lpfl = app.state.rglpfl[i];
         if (!lpfl || lpfl->id != rgflSav[i].id || lpfl->fDead != rgflSav[i].fDead || lpfl->cord != rgflSav[i].cord ||
             memcmp(lpfl->rgcsh, rgflSav[i].rgcsh, sizeof(lpfl->rgcsh)) ||
             memcmp(lpfl->rgwtMin, rgflSav[i].rgwtMin, sizeof(lpfl->rgwtMin))) goto LDone;
     }
-    if (!FRunWorkflow(14, 0) || CFleetTotals(rgShip, rgCargo) != cOwned - 1 ||
+    if (!FRunWorkflow(app, 14, 0) || CFleetTotals(app, rgShip, rgCargo) != cOwned - 1 ||
         memcmp(rgShip, rgShipSav, sizeof(rgShip)) || memcmp(rgCargo, rgCargoSav, sizeof(rgCargo))) goto LDone;
-    if (!FRunWorkflow(15, 0) || CFleetTotals(rgShip, rgCargo) != cOwned - 1 ||
+    if (!FRunWorkflow(app, 15, 0) || CFleetTotals(app, rgShip, rgCargo) != cOwned - 1 ||
         memcmp(rgShip, rgShipSav, sizeof(rgShip)) || memcmp(rgCargo, rgCargoSav, sizeof(rgCargo))) goto LDone;
-    lpfl = LpflFromId((int16_t)idXferWorkflow);
+    lpfl = LpflFromId(app, (int16_t)idXferWorkflow);
     if (lpfl && !lpfl->fDead) goto LDone;
-    if (!FRunWorkflow(16, 0) || CFleetTotals(rgShip, rgCargo) != cOwned ||
+    if (!FRunWorkflow(app, 16, 0) || CFleetTotals(app, rgShip, rgCargo) != cOwned ||
         memcmp(rgShip, rgShipSav, sizeof(rgShip)) || memcmp(rgCargo, rgCargoSav, sizeof(rgCargo))) goto LDone;
-    lpfl = LpflFromId((int16_t)idXferWorkflow);
+    lpfl = LpflFromId(app, (int16_t)idXferWorkflow);
     if (!lpfl || lpfl->fDead || lpfl->rgcsh[ishXferWorkflow] != 1) goto LDone;
     puts("Fleet repeat-orders, merge and split/cancel workflows passed");
     fPassed = 1;
@@ -1426,68 +1437,68 @@ LDone:
 #include "win32_designer_workflow.h"
 #include "win32_ui_polish.h"
 
-static BOOL FCheckGameplayWorkflows(void) {
+static BOOL FCheckGameplayWorkflows(APPSESSION &app) {
     PROD rgprodSav[64];
     SHDEF rgshdefSav[16];
-    BTLPLAN btlplanSav = rglpbtlplan[idPlayer][0];
-    int iRelationSav = rgplr[idPlayer].rgmdRelation[idPlayer == 0];
-    int iResearchSav = rgplr[idPlayer].iTechNow(), cProdSav, cProdItemsSav = 0, i, iResearchNew = (iResearchSav + 1) % 6;
+    BTLPLAN btlplanSav = app.state.rglpbtlplan[app.state.idPlayer][0];
+    int iRelationSav = app.state.rgplr[app.state.idPlayer].rgmdRelation[app.state.idPlayer == 0];
+    int iResearchSav = app.state.rgplr[app.state.idPlayer].iTechNow(), cProdSav, cProdItemsSav = 0, i, iResearchNew = (iResearchSav + 1) % 6;
     int16_t fNoResearchSav, fSinglePlrSav;
     const char *pszWorkflow = PszCompatEnvironment("STARS_CLIENT_WORKFLOW");
     if (pszWorkflow) {
-        if (strcmp(pszWorkflow, "polish") == 0) return FCheckMessageWheel() && FCheckPlanetPane();
-        if (strcmp(pszWorkflow, "designer") == 0) return FCheckDesignerWorkflows() && FCheckSaveReloadWorkflow();
-        return strcmp(pszWorkflow, "fleet") == 0 && FCheckFleetWorkflows();
+        if (strcmp(pszWorkflow, "polish") == 0) return FCheckMessageWheel(app) && FCheckPlanetPane(app);
+        if (strcmp(pszWorkflow, "designer") == 0) return FCheckDesignerWorkflows(app) && FCheckSaveReloadWorkflow(app);
+        return strcmp(pszWorkflow, "fleet") == 0 && FCheckFleetWorkflows(app);
     }
-    if (sel.grobj != grobjPlanet || sel.pl.iPlayer != idPlayer) {
-        fprintf(stderr, "Workflow selection: grobj %u planet %d owner %d player %d\n", sel.grobj, sel.pl.id, sel.pl.iPlayer, idPlayer);
+    if (app.state.sel.grobj != grobjPlanet || app.state.sel.pl.iPlayer != app.state.idPlayer) {
+        fprintf(stderr, "Workflow selection: grobj %u planet %d owner %d player %d\n", app.state.sel.grobj, app.state.sel.pl.id, app.state.sel.pl.iPlayer, app.state.idPlayer);
         return 0;
     }
-    if (!FRunWorkflow(1, iResearchNew) || rgplr[idPlayer].iTechNow() != iResearchNew) {
-        fprintf(stderr, "Research commit: wanted %d got %d\n", iResearchNew, rgplr[idPlayer].iTechNow()); return 0;
+    if (!FRunWorkflow(app, 1, iResearchNew) || app.state.rgplr[app.state.idPlayer].iTechNow() != iResearchNew) {
+        fprintf(stderr, "Research commit: wanted %d got %d\n", iResearchNew, app.state.rgplr[app.state.idPlayer].iTechNow()); return 0;
     }
-    if (!FRunWorkflow(1, iResearchSav) || rgplr[idPlayer].iTechNow() != iResearchSav) {
-        fprintf(stderr, "Research restore: wanted %d got %d\n", iResearchSav, rgplr[idPlayer].iTechNow()); return 0;
+    if (!FRunWorkflow(app, 1, iResearchSav) || app.state.rgplr[app.state.idPlayer].iTechNow() != iResearchSav) {
+        fprintf(stderr, "Research restore: wanted %d got %d\n", iResearchSav, app.state.rgplr[app.state.idPlayer].iTechNow()); return 0;
     }
-    cProdSav = sel.pl.lpplprod ? sel.pl.lpplprod->iprodMac : 0;
+    cProdSav = app.state.sel.pl.lpplprod ? app.state.sel.pl.lpplprod->iprodMac : 0;
     if (cProdSav > (int)SDL_arraysize(rgprodSav)) { fprintf(stderr, "Production count %d\n", cProdSav); return 0; }
-    if (cProdSav != 0) memcpy(rgprodSav, sel.pl.lpplprod->rgprod(), (size_t)cProdSav * sizeof(PROD));
+    if (cProdSav != 0) memcpy(rgprodSav, app.state.sel.pl.lpplprod->rgprod(), (size_t)cProdSav * sizeof(PROD));
     for (i = 0; i < cProdSav; i++) cProdItemsSav += rgprodSav[i].cItem;
-    fNoResearchSav = sel.pl.fNoResearch;
-    if (!FRunWorkflow(2, 0) || lpplProdGlob || hwndProdDlg || fDlgUp || sel.pl.fNoResearch != fNoResearchSav ||
-        (sel.pl.lpplprod ? sel.pl.lpplprod->iprodMac : 0) != cProdSav ||
-        (cProdSav != 0 && memcmp(rgprodSav, sel.pl.lpplprod->rgprod(), (size_t)cProdSav * sizeof(PROD)))) { fprintf(stderr, "Production cancel: passed %d glob %p dialog %p up %d research %d/%d count %d/%d\n", fWorkflowPassed, (void *)lpplProdGlob, (void *)hwndProdDlg, fDlgUp, sel.pl.fNoResearch, fNoResearchSav, sel.pl.lpplprod ? sel.pl.lpplprod->iprodMac : 0, cProdSav); return 0; }
-    if (!FRunWorkflow(3, 0) || !sel.pl.lpplprod) return 0;
-    for (i = 0, cProdSav = 0; i < sel.pl.lpplprod->iprodMac; i++) cProdSav += sel.pl.lpplprod->rgprod()[i].cItem;
-    if (cProdSav != cProdItemsSav + 1 || !FRunWorkflow(4, cProdSav)) return 0;
-    if (!FRunWorkflow(5, !btlplanSav.fDumpCargo) || rglpbtlplan[idPlayer][0].fDumpCargo != !btlplanSav.fDumpCargo ||
-        !FRunWorkflow(5, btlplanSav.fDumpCargo) || memcmp(&btlplanSav, &rglpbtlplan[idPlayer][0], sizeof(btlplanSav))) return 0;
-    if (!FRunWorkflow(7, (btlplanSav.mdTactic + 1) % 6) || rglpbtlplan[idPlayer][0].mdTactic != (btlplanSav.mdTactic + 1) % 6 ||
-        !FRunWorkflow(7, btlplanSav.mdTactic) || memcmp(&btlplanSav, &rglpbtlplan[idPlayer][0], sizeof(btlplanSav))) return 0;
-    if (game.cPlayer < 2) return 0;
-    fSinglePlrSav = game.fSinglePlr;
+    fNoResearchSav = app.state.sel.pl.fNoResearch;
+    if (!FRunWorkflow(app, 2, 0) || app.state.lpplProdGlob || app.lpui->hwndProdDlg || app.lpui->fDlgUp || app.state.sel.pl.fNoResearch != fNoResearchSav ||
+        (app.state.sel.pl.lpplprod ? app.state.sel.pl.lpplprod->iprodMac : 0) != cProdSav ||
+        (cProdSav != 0 && memcmp(rgprodSav, app.state.sel.pl.lpplprod->rgprod(), (size_t)cProdSav * sizeof(PROD)))) { fprintf(stderr, "Production cancel: passed %d glob %p dialog %p up %d research %d/%d count %d/%d\n", fWorkflowPassed, (void *)app.state.lpplProdGlob, (void *)app.lpui->hwndProdDlg, app.lpui->fDlgUp, app.state.sel.pl.fNoResearch, fNoResearchSav, app.state.sel.pl.lpplprod ? app.state.sel.pl.lpplprod->iprodMac : 0, cProdSav); return 0; }
+    if (!FRunWorkflow(app, 3, 0) || !app.state.sel.pl.lpplprod) return 0;
+    for (i = 0, cProdSav = 0; i < app.state.sel.pl.lpplprod->iprodMac; i++) cProdSav += app.state.sel.pl.lpplprod->rgprod()[i].cItem;
+    if (cProdSav != cProdItemsSav + 1 || !FRunWorkflow(app, 4, cProdSav)) return 0;
+    if (!FRunWorkflow(app, 5, !btlplanSav.fDumpCargo) || app.state.rglpbtlplan[app.state.idPlayer][0].fDumpCargo != !btlplanSav.fDumpCargo ||
+        !FRunWorkflow(app, 5, btlplanSav.fDumpCargo) || memcmp(&btlplanSav, &app.state.rglpbtlplan[app.state.idPlayer][0], sizeof(btlplanSav))) return 0;
+    if (!FRunWorkflow(app, 7, (btlplanSav.mdTactic + 1) % 6) || app.state.rglpbtlplan[app.state.idPlayer][0].mdTactic != (btlplanSav.mdTactic + 1) % 6 ||
+        !FRunWorkflow(app, 7, btlplanSav.mdTactic) || memcmp(&btlplanSav, &app.state.rglpbtlplan[app.state.idPlayer][0], sizeof(btlplanSav))) return 0;
+    if (app.state.game.cPlayer < 2) return 0;
+    fSinglePlrSav = app.state.game.fSinglePlr;
     if (fSinglePlrSav) {
-        ui::SendMessage(hwndFrame, win32::WM_COMMAND, IDM_GAME_RELATIONS, 0);
-        if (HwndWorkflowDialog() || !win32::IsWindowEnabled(hwndFrame)) return 0;
+        ui::SendMessage(app.lpui->hwndFrame, win32::WM_COMMAND, IDM_GAME_RELATIONS, 0);
+        if (HwndWorkflowDialog(app) || !win32::IsWindowEnabled(app.lpui->hwndFrame)) return 0;
     }
     // The copied human/AI fixture disables diplomacy in single-player mode.
     // Exercise its multiplayer UI in memory, then restore the game-mode flag.
-    game.fSinglePlr = 0;
-    fWorkflowPassed = FRunWorkflow(6, (iRelationSav + 1) % 3) &&
-        FRunWorkflow(6, iRelationSav) && rgplr[idPlayer].rgmdRelation[idPlayer == 0] == iRelationSav;
-    game.fSinglePlr = fSinglePlrSav;
+    app.state.game.fSinglePlr = 0;
+    fWorkflowPassed = FRunWorkflow(app, 6, (iRelationSav + 1) % 3) &&
+        FRunWorkflow(app, 6, iRelationSav) && app.state.rgplr[app.state.idPlayer].rgmdRelation[app.state.idPlayer == 0] == iRelationSav;
+    app.state.game.fSinglePlr = fSinglePlrSav;
     if (!fWorkflowPassed) return 0;
-    memcpy(rgshdefSav, rgshdef, sizeof(rgshdefSav));
-    cShdefWorkflow = rgplr[idPlayer].cShDef;
-    for (ishdefWorkflow = 0; ishdefWorkflow < 16 && !rgshdef[ishdefWorkflow].fFree; ishdefWorkflow++) {}
-    if (ishdefWorkflow == 16 || !FRunWorkflow(8, 0) || !FRunWorkflow(9, 0) ||
-        !FRunWorkflow(10, 0) || !FRunWorkflow(11, 0) || !FRunWorkflow(12, 0)) return 0;
+    memcpy(rgshdefSav, app.state.rgshdef, sizeof(rgshdefSav));
+    cShdefWorkflow = app.state.rgplr[app.state.idPlayer].cShDef;
+    for (ishdefWorkflow = 0; ishdefWorkflow < 16 && !app.state.rgshdef[ishdefWorkflow].fFree; ishdefWorkflow++) {}
+    if (ishdefWorkflow == 16 || !FRunWorkflow(app, 8, 0) || !FRunWorkflow(app, 9, 0) ||
+        !FRunWorkflow(app, 10, 0) || !FRunWorkflow(app, 11, 0) || !FRunWorkflow(app, 12, 0)) return 0;
     for (i = 0; i < 16; i++) {
         // Drawing the designer materializes its lazy combat-power cache.
-        if (!rgshdefSav[i].fFree && rgshdefSav[i].lPower == -1 && rgshdef[i].lPower != -1)
-            rgshdefSav[i].lPower = LComputePower(&rgshdefSav[i]);
-        if (rgshdefSav[i].fFree != rgshdef[i].fFree ||
-            (!rgshdefSav[i].fFree && memcmp(&rgshdefSav[i], &rgshdef[i], sizeof(SHDEF)))) {
+        if (!rgshdefSav[i].fFree && rgshdefSav[i].lPower == -1 && app.state.rgshdef[i].lPower != -1)
+            rgshdefSav[i].lPower = LComputePower(app, &rgshdefSav[i]);
+        if (rgshdefSav[i].fFree != app.state.rgshdef[i].fFree ||
+            (!rgshdefSav[i].fFree && memcmp(&rgshdefSav[i], &app.state.rgshdef[i], sizeof(SHDEF)))) {
             fprintf(stderr, "Ship restore mismatch: design %d\n", i);
             return 0;
         }
@@ -1497,6 +1508,7 @@ static BOOL FCheckGameplayWorkflows(void) {
 }
 
 INT_PTR StarsTest_AskSaveDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
     const char *pszChoice = PszCompatEnvironment("STARS_CLIENT_SWITCH_CHOICE");
     if (pszChoice && message == win32::WM_INITDIALOG) {
         if (!strcmp(pszChoice, "save")) win32::EndDialog(hwnd, 1);
@@ -1516,7 +1528,7 @@ INT_PTR StarsTest_AskSaveDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         HWND hwndSave = win32::GetDlgItem(hwnd, IDC_SAVE);
         HWND hwndSubmit = win32::GetDlgItem(hwnd, IDC_SAVESUBMIT);
         HWND hwndDontSave = win32::GetDlgItem(hwnd, IDC_NO_DON_T_SAVE);
-        if (hwndSave && hwndDontSave && (game.fSinglePlr ? !hwndSubmit : hwndSubmit != NULL)) {
+        if (hwndSave && hwndDontSave && (app.state.game.fSinglePlr ? !hwndSubmit : hwndSubmit != NULL)) {
             fHostSavePromptSeen = 1;
             win32::PostMessageA(hwnd, win32::WM_COMMAND, IDC_NO_DON_T_SAVE, (LPARAM)hwndDontSave);
         }
@@ -1524,7 +1536,7 @@ INT_PTR StarsTest_AskSaveDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
     return fRet;
 }
 
-int16_t StarsTest_AlertSz(const char *sz, int16_t mbType) {
+int16_t StarsTest_AlertSz(APPSESSION &, const char *sz, int16_t mbType) {
     if (fRejectRacePassword) return IDOK;
     if (PszCompatEnvironment("STARS_CLIENT_RACE_VERSION_TEST") && strstr(sz, "was unable to save your race data file")) {
         fRaceVersionSaveFailed = 1;
@@ -1684,17 +1696,17 @@ static BOOL FCopyOrderWithByteChange(const char *pszSource, const char *pszTarge
 }
 
 /* Cancellation must never bind the previous race to a different save path. */
-static BOOL FTestRaceCancellation(void) {
+static BOOL FTestRaceCancellation(APPSESSION &app) {
     char szCancelPassword[] = "cancel-test";
     PLAYER plrSav;
     char szProtected[512], szSnapshot[512], szExport[512], szImport[512], szDuplicate[512];
     const char *pszSettings = PszCompatEnvironment("STARS_SETTINGS_DIR");
     int16_t fOkay;
 
-    if (!FLoadLibraryRace(0, "Managed.r1")) return 0;
-    vplr.lSalt = LSaltFromSz(szCancelPassword);
-    if (!FSaveLibraryRace(0, "Protected.r1", &vplr) || !FLoadLibraryRace(0, "Managed.r1")) return 0;
-    plrSav = vplr;
+    if (!FLoadLibraryRace(app, 0, "Managed.r1")) return 0;
+    app.state.vplr.lSalt = LSaltFromSz(szCancelPassword);
+    if (!FSaveLibraryRace(app, 0, "Protected.r1", &app.state.vplr) || !FLoadLibraryRace(app, 0, "Managed.r1")) return 0;
+    plrSav = app.state.vplr;
     CchSnprintf(szProtected, sizeof(szProtected), "%s%sRace Designs%sProtected.r1", pszSettings, szDirSep, szDirSep);
     CchSnprintf(szSnapshot, sizeof(szSnapshot), "%s.snapshot", szProtected);
     CchSnprintf(szExport, sizeof(szExport), "%s.export.r1", szProtected);
@@ -1702,19 +1714,19 @@ static BOOL FTestRaceCancellation(void) {
     CchSnprintf(szDuplicate, sizeof(szDuplicate), "%s%sRace Designs%sProtected.r2", pszSettings, szDirSep, szDirSep);
     if (!FTestCopyFile(szProtected, szSnapshot)) return 0;
     fRejectRacePassword = 1;
-    lSaltLast = -5;
-    fOkay = !FLoadLibraryRace(0, "Protected.r1") && !memcmp(&vplr, &plrSav, sizeof(vplr)) &&
+    app.state.lSaltLast = -5;
+    fOkay = !FLoadLibraryRace(app, 0, "Protected.r1") && !memcmp(&app.state.vplr, &plrSav, sizeof(app.state.vplr)) &&
             !strcmp(PszCurrentLibraryRaceName(), "Managed.r1");
-    lSaltLast = -5;
-    fOkay = fOkay && !FEditLibraryRace(0, "Protected.r1");
-    lSaltLast = -5;
-    fOkay = fOkay && !FDuplicateLibraryRace(0, "Protected.r1");
-    lSaltLast = -5;
-    fOkay = fOkay && !FExportLibraryRace(0, "Protected.r1", szExport);
-    lSaltLast = -5;
-    fOkay = fOkay && !FImportLibraryRaceAs(0, szProtected, "Cancelled.r1");
+    app.state.lSaltLast = -5;
+    fOkay = fOkay && !FEditLibraryRace(app, 0, "Protected.r1");
+    app.state.lSaltLast = -5;
+    fOkay = fOkay && !FDuplicateLibraryRace(app, 0, "Protected.r1");
+    app.state.lSaltLast = -5;
+    fOkay = fOkay && !FExportLibraryRace(app, 0, "Protected.r1", szExport);
+    app.state.lSaltLast = -5;
+    fOkay = fOkay && !FImportLibraryRaceAs(app, 0, szProtected, "Cancelled.r1");
     fRejectRacePassword = 0;
-    fOkay = fOkay && !memcmp(&vplr, &plrSav, sizeof(vplr)) &&
+    fOkay = fOkay && !memcmp(&app.state.vplr, &plrSav, sizeof(app.state.vplr)) &&
             !strcmp(PszCurrentLibraryRaceName(), "Managed.r1") && FTestFilesEqual(szProtected, szSnapshot) &&
             !FFileExists(szExport) && !FFileExists(szImport) && !FFileExists(szDuplicate);
     RemoveNativeFile(szProtected);
@@ -1723,7 +1735,7 @@ static BOOL FTestRaceCancellation(void) {
 }
 
 /* Inspect the managed bytes without completing the optional race wizard. */
-static BOOL FTestLegacyRaceImport(void) {
+static BOOL FTestLegacyRaceImport(APPSESSION &app) {
     char szOldPassword[] = "old-password", szNewPassword[] = "new-\xc3\xa9";
     RTBOF rtbof = {};
     std::byte rgbBof[cbWireBof];
@@ -1735,8 +1747,8 @@ static BOOL FTestLegacyRaceImport(void) {
     int i;
     BOOL fOkay = 0;
 
-    if (!FLoadLibraryRace(0, "Managed.r1")) return 0;
-    plrSav = vplr;
+    if (!FLoadLibraryRace(app, 0, "Managed.r1")) return 0;
+    plrSav = app.state.vplr;
     CchSnprintf(szSource, sizeof(szSource), "%s%slegacy-source.r1", pszSettings, szDirSep);
     CchSnprintf(szSnapshot, sizeof(szSnapshot), "%s.snapshot", szSource);
     CchSnprintf(szCancelled, sizeof(szCancelled), "%s%sRace Designs%sLegacy-cancelled.r1", pszSettings, szDirSep, szDirSep);
@@ -1751,26 +1763,26 @@ static BOOL FTestLegacyRaceImport(void) {
         rtbof.verMajor = 2;
         rtbof.verMinor = 84;
         rtbof.dt = dtRace;
-        StreamOpen(szSource, mdCreate);
+        StreamOpen(app, szSource, mdCreate);
         FEncodeBof(rtbof, rgbBof);
-        WriteRt(rtBOF, cbWireBof, rgbBof);
-        WriteRtPlr(&plr, NULL);
+        WriteRt(app, rtBOF, cbWireBof, rgbBof);
+        WriteRtPlr(app, &plr, NULL);
         icksum = IRaceChecksum(&plr);
-        WriteRtEof(icksum);
-        StreamClose();
+        WriteRtEof(app, icksum);
+        StreamClose(app);
         if (!FTestCopyFile(szSource, szSnapshot)) goto LDone;
         cLegacyRacePasswords = 0;
-        if (!FImportLibraryRaceAs(0, szSource, rgszName[i]) || cLegacyRacePasswords != i ||
+        if (!FImportLibraryRaceAs(app, 0, szSource, rgszName[i]) || cLegacyRacePasswords != i ||
             !FTestFilesEqual(szSource, szSnapshot)) goto LDone;
         CchSnprintf(szImported, sizeof(szImported), "%s%sRace Designs%s%s", pszSettings, szDirSep, szDirSep, rgszName[i]);
-        if (FWasRaceFile(szImported, 0) != 1 || VerMinor(wVersFile) != 85 ||
-            strcmp(vplr.szName, "R\xc3\xa9") || strcmp(vplr.szNames, "R\xc3\xa9s") ||
-            vplr.lSalt != (i == 0 ? 0 : LSaltFromSz(szNewPassword)) || cLegacyRacePasswords != i) goto LDone;
+        if (FWasRaceFile(app, szImported, 0) != 1 || VerMinor(app.state.wVersFile) != 85 ||
+            strcmp(app.state.vplr.szName, "R\xc3\xa9") || strcmp(app.state.vplr.szNames, "R\xc3\xa9s") ||
+            app.state.vplr.lSalt != (i == 0 ? 0 : LSaltFromSz(szNewPassword)) || cLegacyRacePasswords != i) goto LDone;
     }
     fAcceptLegacyRacePassword = 0;
-    plrSav = vplr;
-    if (FImportLibraryRaceAs(0, szSource, "Legacy-cancelled.r1") ||
-        FFileExists(szCancelled) || memcmp(&vplr, &plrSav, sizeof(vplr)) ||
+    plrSav = app.state.vplr;
+    if (FImportLibraryRaceAs(app, 0, szSource, "Legacy-cancelled.r1") ||
+        FFileExists(szCancelled) || memcmp(&app.state.vplr, &plrSav, sizeof(app.state.vplr)) ||
         !FTestFilesEqual(szSource, szSnapshot)) goto LDone;
     fOkay = 1;
 LDone:
@@ -1781,6 +1793,8 @@ LDone:
 }
 
 static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
+    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+
     HWND lpFrame, lpTitle;
     char szRaceName[256], szDuplicate[512], szExport[512], szManaged[512], szExportSnapshot[512];
     const char *pszSettings = PszCompatEnvironment("STARS_SETTINGS_DIR");
@@ -1816,7 +1830,7 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
     char szHostSourceHost[512], szHostSourceUniverse[512], szHostManagedHost[512], szHostManagedUniverse[512];
     char szHostManagedBase[512], szHostOrderFile[512], szHostManagedOrders[512];
     char szHostOrderIdentity[512], szHostOrderPlayer[512], szHostOrderTurn[512], szHostOrderAbsentPlayer[512];
-    char szHostOrderGeneration[512], szHostOrderDifferent[512], szHostPickerOrder[512], szSavedBase[sizeof(szBase)];
+    char szHostOrderGeneration[512], szHostOrderDifferent[512], szHostPickerOrder[512], szSavedBase[sizeof(app.state.szBase)];
     char szFleetNameSav[64];
     int cchHostOrder;
     int64_t cbHostFile;
@@ -1829,7 +1843,7 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
 #ifdef __APPLE__
     if (PszCompatEnvironment("STARS_CLIENT_MAC_SHORTCUTS_TEST")) {
         win32::KillTimer(NULL, id);
-        if (!FCheckMacShortcuts()) goto LDone;
+        if (!FCheckMacShortcuts(app)) goto LDone;
         fTitlePainted = fChecked = fPassed = 1;
         puts("Mac Command shortcuts, menu hints and text editing passed");
         win32::PostQuitMessage(0);
@@ -1850,45 +1864,45 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
             CchSnprintf(szHostPickerOrder, sizeof(szHostPickerOrder), "%s.x1", pszHostPickerBase) <= 0 ||
             CchSnprintf(szHostManagedOrders, sizeof(szHostManagedOrders), "%s.x1", szHostManagedBase) <= 0) goto LDone;
         if (iHostLibraryTestStage == 0) {
-            if (!win32::IsWindowVisible(hwndTitle) || !win32::GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES) ||
-                !win32::GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES) ||
-                !win32::GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES_VIEW) ||
-                !win32::GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_VIEW) ||
-                !win32::GetDlgItem(hwndTitle, IDC_LIBRARY_IMPORT_ORDERS) ||
-                (win32::GetWindowLongPtrA(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES), win32::GWL_STYLE) & win32::WS_VISIBLE) ||
-                (win32::GetWindowLongPtrA(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_IMPORT_ORDERS), win32::GWL_STYLE) & win32::WS_VISIBLE) ||
+            if (!win32::IsWindowVisible(app.lpui->hwndTitle) || !win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_GAMES) ||
+                !win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_HOST_GAMES) ||
+                !win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_GAMES_VIEW) ||
+                !win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_HOST_VIEW) ||
+                !win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_IMPORT_ORDERS) ||
+                (win32::GetWindowLongPtrA(win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_HOST_GAMES), win32::GWL_STYLE) & win32::WS_VISIBLE) ||
+                (win32::GetWindowLongPtrA(win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_IMPORT_ORDERS), win32::GWL_STYLE) & win32::WS_VISIBLE) ||
                 !pszHostSource) goto LDone;
-            if (!FPushClick(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_VIEW))) goto LDone;
+            if (!FPushClick(app, win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_HOST_VIEW))) goto LDone;
             iHostLibraryTestStage = 20;
             return;
         }
         if (iHostLibraryTestStage == 20) {
-            if (!(win32::GetWindowLongPtrA(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES), win32::GWL_STYLE) & win32::WS_VISIBLE) ||
-                (win32::GetWindowLongPtrA(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES), win32::GWL_STYLE) & win32::WS_VISIBLE) ||
-                !(win32::GetWindowLongPtrA(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_IMPORT_ORDERS), win32::GWL_STYLE) & win32::WS_VISIBLE)) {
+            if (!(win32::GetWindowLongPtrA(win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_HOST_GAMES), win32::GWL_STYLE) & win32::WS_VISIBLE) ||
+                (win32::GetWindowLongPtrA(win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_GAMES), win32::GWL_STYLE) & win32::WS_VISIBLE) ||
+                !(win32::GetWindowLongPtrA(win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_IMPORT_ORDERS), win32::GWL_STYLE) & win32::WS_VISIBLE)) {
                 goto LDone;
             }
-            if (!FPostOwnedTestFolder(hwndTitle,SDL_strdup(pszHostSource))) goto LDone;
+            if (!FPostOwnedTestFolder(app.lpui->hwndTitle,SDL_strdup(pszHostSource))) goto LDone;
             iHostLibraryTestStage = 21;
             return;
         }
         if (iHostLibraryTestStage == 21) {
-            for (hwndHostDialog = win32::GetWindow(hwndTitle, win32::GW_HWNDFIRST); hwndHostDialog;
+            for (hwndHostDialog = win32::GetWindow(app.lpui->hwndTitle, win32::GW_HWNDFIRST); hwndHostDialog;
                  hwndHostDialog = win32::GetWindow(hwndHostDialog, win32::GW_HWNDNEXT)) {
                 if (!hwndHostDialog->fDialog || hwndHostDialog->lpfnDlg != LibraryNameDlg) continue;
                 if (!ui::SetWindowText(win32::GetDlgItem(hwndHostDialog, IDC_EDIT1), "Hosted") ||
-                    !FPushClick(win32::GetDlgItem(hwndHostDialog, IDOK))) goto LDone;
+                    !FPushClick(app, win32::GetDlgItem(hwndHostDialog, IDOK))) goto LDone;
                 iHostLibraryTestStage = 22;
                 return;
             }
             return;
         }
         if (iHostLibraryTestStage == 22) {
-            RefreshLibraryGames(hwndTitle);
-            RefreshLibraryHostGames(hwndTitle);
-            if (ui::SendMessage(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES), win32::LB_GETCOUNT, 0, 0) != 0 ||
-                ui::SendMessage(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES), win32::LB_GETCOUNT, 0, 0) != 1 ||
-                !(win32::GetWindowLongPtrA(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES), win32::GWL_STYLE) & win32::WS_VISIBLE) ||
+            RefreshLibraryGames(app, app.lpui->hwndTitle);
+            RefreshLibraryHostGames(app, app.lpui->hwndTitle);
+            if (ui::SendMessage(win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_GAMES), win32::LB_GETCOUNT, 0, 0) != 0 ||
+                ui::SendMessage(win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_HOST_GAMES), win32::LB_GETCOUNT, 0, 0) != 1 ||
+                !(win32::GetWindowLongPtrA(win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_HOST_GAMES), win32::GWL_STYLE) & win32::WS_VISIBLE) ||
                 CchSnprintf(szHostSourceHost, sizeof(szHostSourceHost), "%s%sgame.hst", pszHostSource, szDirSep) <= 0 ||
                 CchSnprintf(szHostSourceUniverse, sizeof(szHostSourceUniverse), "%s%sgame.xy", pszHostSource, szDirSep) <= 0 ||
                 CchSnprintf(szHostManagedHost, sizeof(szHostManagedHost), "%s%sGames%sHosted%sHosted.hst", pszSettings, szDirSep, szDirSep, szDirSep) <= 0 ||
@@ -1896,36 +1910,36 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
                 !FTestFilesEqual(szHostSourceHost, szHostManagedHost) ||
                 !FTestFilesEqual(szHostSourceUniverse, szHostManagedUniverse) ||
                 !pszHostPlayerSource) goto LDone;
-            if (!win32::IsWindowEnabled(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_GAME_EXPORT)) ||
-                !win32::IsWindowEnabled(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_DUPLICATE)) ||
-                !win32::IsWindowEnabled(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_RENAME))) {
+            if (!win32::IsWindowEnabled(win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_GAME_EXPORT)) ||
+                !win32::IsWindowEnabled(win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_DUPLICATE)) ||
+                !win32::IsWindowEnabled(win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_RENAME))) {
                 fprintf(stderr, "Host-only game actions are disabled\n");
                 goto LDone;
             }
-            if (!FPostOwnedTestFolder(hwndTitle,SDL_strdup(pszHostPlayerSource))) goto LDone;
+            if (!FPostOwnedTestFolder(app.lpui->hwndTitle,SDL_strdup(pszHostPlayerSource))) goto LDone;
             iHostLibraryTestStage = 25;
             return;
         }
         if (iHostLibraryTestStage == 25) {
-            for (hwndHostDialog = win32::GetWindow(hwndTitle, win32::GW_HWNDFIRST); hwndHostDialog;
+            for (hwndHostDialog = win32::GetWindow(app.lpui->hwndTitle, win32::GW_HWNDFIRST); hwndHostDialog;
                  hwndHostDialog = win32::GetWindow(hwndHostDialog, win32::GW_HWNDNEXT)) {
                 if (!hwndHostDialog->fDialog || hwndHostDialog->lpfnDlg != LibraryNameDlg) continue;
                 if (!ui::SetWindowText(win32::GetDlgItem(hwndHostDialog, IDC_EDIT1), "PlayerCopy") ||
-                    !FPushClick(win32::GetDlgItem(hwndHostDialog, IDOK))) goto LDone;
+                    !FPushClick(app, win32::GetDlgItem(hwndHostDialog, IDOK))) goto LDone;
                 iHostLibraryTestStage = 26;
                 return;
             }
             return;
         }
         if (iHostLibraryTestStage == 26) {
-            RefreshLibraryGames(hwndTitle);
-            RefreshLibraryHostGames(hwndTitle);
-            if (ui::SendMessage(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES), win32::LB_GETCOUNT, 0, 0) != 1 ||
-                ui::SendMessage(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES), win32::LB_GETCOUNT, 0, 0) != 2 ||
-                !(win32::GetWindowLongPtrA(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES), win32::GWL_STYLE) & win32::WS_VISIBLE)) goto LDone;
-            hwndList = win32::GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES);
+            RefreshLibraryGames(app, app.lpui->hwndTitle);
+            RefreshLibraryHostGames(app, app.lpui->hwndTitle);
+            if (ui::SendMessage(win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_GAMES), win32::LB_GETCOUNT, 0, 0) != 1 ||
+                ui::SendMessage(win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_HOST_GAMES), win32::LB_GETCOUNT, 0, 0) != 2 ||
+                !(win32::GetWindowLongPtrA(win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_HOST_GAMES), win32::GWL_STYLE) & win32::WS_VISIBLE)) goto LDone;
+            hwndList = win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_HOST_GAMES);
             if (ui::SendMessage(hwndList, win32::LB_SELECTSTRING, (WPARAM)-1, (LPARAM)"Hosted") == win32::LB_ERR ||
-                !FExportSelectedLibraryGame(hwndTitle, pszSettings) ||
+                !FExportSelectedLibraryGame(app, app.lpui->hwndTitle, pszSettings) ||
                 CchSnprintf(szExport, sizeof(szExport), "%s%sHosted%sHosted.hst", pszSettings, szDirSep, szDirSep) <= 0 ||
                 CchSnprintf(szHostSourceHost, sizeof(szHostSourceHost), "%s%sgame.hst", pszHostSource, szDirSep) <= 0 ||
                 !FTestFilesEqual(szExport, szHostSourceHost)) {
@@ -1933,46 +1947,46 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
                 goto LDone;
             }
             iHostLibraryTestStage = 31;
-            if (!FPushClick(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_DUPLICATE))) goto LDone;
+            if (!FPushClick(app, win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_DUPLICATE))) goto LDone;
             return;
         }
         if (iHostLibraryTestStage == 31 || iHostLibraryTestStage == 33) {
-            for (hwndHostDialog = win32::GetWindow(hwndTitle, win32::GW_HWNDFIRST); hwndHostDialog;
+            for (hwndHostDialog = win32::GetWindow(app.lpui->hwndTitle, win32::GW_HWNDFIRST); hwndHostDialog;
                  hwndHostDialog = win32::GetWindow(hwndHostDialog, win32::GW_HWNDNEXT)) {
                 if (!hwndHostDialog->fDialog || hwndHostDialog->lpfnDlg != LibraryNameDlg) continue;
                 if (!ui::SetWindowText(win32::GetDlgItem(hwndHostDialog, IDC_EDIT1),
                                     iHostLibraryTestStage == 31 ? "HostCopy" : "HostRenamed") ||
-                    !FPushClick(win32::GetDlgItem(hwndHostDialog, IDOK))) goto LDone;
+                    !FPushClick(app, win32::GetDlgItem(hwndHostDialog, IDOK))) goto LDone;
                 iHostLibraryTestStage++;
                 return;
             }
             return;
         }
         if (iHostLibraryTestStage == 32) {
-            hwndList = win32::GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES);
+            hwndList = win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_HOST_GAMES);
             if (ui::SendMessage(hwndList, win32::LB_GETCOUNT, 0, 0) != 3 ||
                 ui::SendMessage(hwndList, win32::LB_SELECTSTRING, (WPARAM)-1, (LPARAM)"HostCopy") == win32::LB_ERR) goto LDone;
             iHostLibraryTestStage = 33;
-            if (!FPushClick(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_RENAME))) goto LDone;
+            if (!FPushClick(app, win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_RENAME))) goto LDone;
             return;
         }
         if (iHostLibraryTestStage == 34) {
-            hwndList = win32::GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES);
+            hwndList = win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_HOST_GAMES);
             if (ui::SendMessage(hwndList, win32::LB_GETCOUNT, 0, 0) != 3 ||
                 ui::SendMessage(hwndList, win32::LB_FINDSTRING, (WPARAM)-1, (LPARAM)"HostCopy") != win32::LB_ERR ||
                 ui::SendMessage(hwndList, win32::LB_FINDSTRING, (WPARAM)-1, (LPARAM)"HostRenamed") == win32::LB_ERR ||
-                ui::SendMessage(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES), win32::LB_GETCOUNT, 0, 0) != 1) goto LDone;
-            if (!FPushClick(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES_VIEW))) goto LDone;
+                ui::SendMessage(win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_GAMES), win32::LB_GETCOUNT, 0, 0) != 1) goto LDone;
+            if (!FPushClick(app, win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_GAMES_VIEW))) goto LDone;
             iHostLibraryTestStage = 23;
             return;
         }
         if (iHostLibraryTestStage == 23) {
-            hwndList = win32::GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
+            hwndList = win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_GAMES);
             if (!(win32::GetWindowLongPtrA(hwndList, win32::GWL_STYLE) & win32::WS_VISIBLE) ||
                 ui::SendMessage(hwndList, win32::LB_SELECTSTRING, (WPARAM)-1,
                             (LPARAM)"PlayerCopy") == win32::LB_ERR) goto LDone;
             for (iButton = 0; iButton < (int)(sizeof(rgidLibraryButton) / sizeof(rgidLibraryButton[0])); iButton++) {
-                hwndListTarget = win32::GetDlgItem(hwndTitle, rgidLibraryButton[iButton]);
+                hwndListTarget = win32::GetDlgItem(app.lpui->hwndTitle, rgidLibraryButton[iButton]);
                 if (!win32::GetWindowRect(hwndListTarget, &rcFrame)) goto LDone;
                 ptLibraryButton = (POINT){(rcFrame.left + rcFrame.right) / 2, (rcFrame.top + rcFrame.bottom) / 2};
                 if (win32::WindowFromPoint(ptLibraryButton) != hwndListTarget) {
@@ -1981,75 +1995,75 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
                 }
             }
             iHostLibraryTestStage = 27;
-            fFreeingTitle = 0;
-            if (!FPushClick(rghwndBtnSplash[1])) goto LDone;
+            app.lpui->fFreeingTitle = 0;
+            if (!FPushClick(app, app.lpui->rghwndBtnSplash[1])) goto LDone;
             return;
         }
         if (iHostLibraryTestStage == 27) {
-            if (win32::IsWindow(hwndTitle)) return;
-            if (!lpPlanets || idPlayer == iplrNone) goto LDone;
-            if (!hwndReportDlg) {
-                ui::SendMessage(hwndFrame, win32::WM_COMMAND, IDM_REPORT_FLEET, 0);
+            if (win32::IsWindow(app.lpui->hwndTitle)) return;
+            if (!app.state.lpPlanets || app.state.idPlayer == iplrNone) goto LDone;
+            if (!app.lpui->hwndReportDlg) {
+                ui::SendMessage(app.lpui->hwndFrame, win32::WM_COMMAND, IDM_REPORT_FLEET, 0);
                 return;
             }
-            if (vprptCur != &vrptFleet || vprptCur->cRows == 0) goto LDone;
-            if (sel.grobj != grobjFleet) {
-                if (!StarsCompatPostMessageAsync(hwndReportDlg, win32::WM_LBUTTONDOWN, win32::MK_LBUTTON,
+            if (app.lpui->vprptCur != &app.state.vrptFleet || app.lpui->vprptCur->cRows == 0) goto LDone;
+            if (app.state.sel.grobj != grobjFleet) {
+                if (!StarsCompatPostMessageAsync(app.lpui->hwndReportDlg, win32::WM_LBUTTONDOWN, win32::MK_LBUTTON,
                                                  win32::MAKELPARAM(4, 20))) goto LDone;
                 return;
             }
             iHostLibraryTestStage = 28;
-            if (!StarsCompatPostMessageAsync(hwndFrame, win32::WM_CHAR, 'r', 0)) goto LDone;
+            if (!StarsCompatPostMessageAsync(app.lpui->hwndFrame, win32::WM_CHAR, 'r', 0)) goto LDone;
             return;
         }
         if (iHostLibraryTestStage == 28) {
-            for (hwndHostDialog = win32::GetWindow(hwndFrame, win32::GW_HWNDFIRST); hwndHostDialog;
+            for (hwndHostDialog = win32::GetWindow(app.lpui->hwndFrame, win32::GW_HWNDFIRST); hwndHostDialog;
                  hwndHostDialog = win32::GetWindow(hwndHostDialog, win32::GW_HWNDNEXT)) {
                 if (!hwndHostDialog->fDialog || hwndHostDialog->lpfnDlg != RenameDlg) continue;
                 if (!ui::SetWindowText(win32::GetDlgItem(hwndHostDialog, IDC_EDIT1), "Prompt save order") ||
-                    !FPushClick(win32::GetDlgItem(hwndHostDialog, IDOK))) goto LDone;
+                    !FPushClick(app, win32::GetDlgItem(hwndHostDialog, IDOK))) goto LDone;
                 iHostLibraryTestStage = 29;
                 return;
             }
             return;
         }
         if (iHostLibraryTestStage == 29) {
-            if (hwndReportDlg) ui::SendMessage(hwndReportDlg, win32::WM_CLOSE, 0, 0);
+            if (app.lpui->hwndReportDlg) ui::SendMessage(app.lpui->hwndReportDlg, win32::WM_CLOSE, 0, 0);
             iHostLibraryTestStage = 30;
-            ui::SendMessage(hwndFrame, win32::WM_COMMAND, IDM_FILE_RETURN_TO_TITLE, 0);
+            ui::SendMessage(app.lpui->hwndFrame, win32::WM_COMMAND, IDM_FILE_RETURN_TO_TITLE, 0);
             return;
         }
         if (iHostLibraryTestStage == 30) {
-            if (!fHostSavePromptSeen || !win32::IsWindowVisible(hwndTitle)) return;
-            if (!FPushClick(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_VIEW))) goto LDone;
+            if (!fHostSavePromptSeen || !win32::IsWindowVisible(app.lpui->hwndTitle)) return;
+            if (!FPushClick(app, win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_HOST_VIEW))) goto LDone;
             iHostLibraryTestStage = 24;
             return;
         }
         if (iHostLibraryTestStage == 24) {
-            if (!(win32::GetWindowLongPtrA(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES), win32::GWL_STYLE) & win32::WS_VISIBLE) ||
-                !(win32::GetWindowLongPtrA(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_IMPORT_ORDERS), win32::GWL_STYLE) & win32::WS_VISIBLE)) goto LDone;
-            hwndList = win32::GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES);
+            if (!(win32::GetWindowLongPtrA(win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_HOST_GAMES), win32::GWL_STYLE) & win32::WS_VISIBLE) ||
+                !(win32::GetWindowLongPtrA(win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_IMPORT_ORDERS), win32::GWL_STYLE) & win32::WS_VISIBLE)) goto LDone;
+            hwndList = win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_HOST_GAMES);
             if (ui::SendMessage(hwndList, win32::LB_SELECTSTRING, (WPARAM)-1, (LPARAM)"Hosted") == win32::LB_ERR) goto LDone;
             iHostLibraryTestStage = 7;
-            fFreeingTitle = 1;
-            if (!StarsCompatPostMessageAsync(hwndTitle, win32::WM_COMMAND,
+            app.lpui->fFreeingTitle = 1;
+            if (!StarsCompatPostMessageAsync(app.lpui->hwndTitle, win32::WM_COMMAND,
                                              win32::MAKEWPARAM(IDC_LIBRARY_HOST_GAMES, win32::LBN_DBLCLK),
                                              (LPARAM)hwndList)) goto LDone;
             return;
         }
         if (iHostLibraryTestStage == 7 || iHostLibraryTestStage == 8 || iHostLibraryTestStage == 9 ||
             iHostLibraryTestStage == 14) {
-            for (hwndHostDialog = win32::GetWindow(hwndFrame, win32::GW_HWNDFIRST); hwndHostDialog;
+            for (hwndHostDialog = win32::GetWindow(app.lpui->hwndFrame, win32::GW_HWNDFIRST); hwndHostDialog;
                  hwndHostDialog = win32::GetWindow(hwndHostDialog, win32::GW_HWNDNEXT)) {
                 if (!hwndHostDialog->fDialog || hwndHostDialog->lpfnDlg != HostModeDialog) continue;
                 if (iHostLibraryTestStage == 7) {
                     if (
-                        (cchHostOrder = CchSnprintf(szSavedBase, sizeof(szSavedBase), "%s", szBase)) <= 0 ||
+                        (cchHostOrder = CchSnprintf(szSavedBase, sizeof(szSavedBase), "%s", app.state.szBase)) <= 0 ||
                         (size_t)cchHostOrder >= sizeof(szSavedBase) ||
-                        (cchHostOrder = CchSnprintf(szBase, sizeof(szBase), "%s", pszHostOrderBase)) <= 0 ||
-                        (size_t)cchHostOrder >= sizeof(szBase)) { fprintf(stderr, "Host order paths invalid\n"); goto LDone; }
-                    if (!FWriteLogFile(szBase, 0)) { fprintf(stderr, "Host FWriteLogFile failed: %s\n", SDL_GetError()); goto LDone; }
-                    strcpy(szBase, szSavedBase);
+                        (cchHostOrder = CchSnprintf(app.state.szBase, sizeof(app.state.szBase), "%s", pszHostOrderBase)) <= 0 ||
+                        (size_t)cchHostOrder >= sizeof(app.state.szBase)) { fprintf(stderr, "Host order paths invalid\n"); goto LDone; }
+                    if (!FWriteLogFile(app, app.state.szBase, 0)) { fprintf(stderr, "Host FWriteLogFile failed: %s\n", SDL_GetError()); goto LDone; }
+                    strcpy(app.state.szBase, szSavedBase);
                     if (CchSnprintf(szHostOrderFile, sizeof(szHostOrderFile), "%s.x1", pszHostOrderBase) <= 0 ||
                         CchSnprintf(szHostManagedOrders, sizeof(szHostManagedOrders), "%s.x1", szHostManagedBase) <= 0 ||
                         CchSnprintf(szHostOrderIdentity, sizeof(szHostOrderIdentity), "%s.identity.x1", pszHostOrderBase) <= 0 ||
@@ -2062,65 +2076,65 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
                         !FCopyOrderWithByteChange(szHostOrderFile, szHostOrderAbsentPlayer, 14, 15) ||
                         !FCopyOrderWithByteChange(szHostOrderFile, szHostOrderTurn, 12, 1) ||
                         !FCopyOrderWithByteChange(szHostOrderFile, szHostOrderGeneration, 17, 0x20)) { fprintf(stderr, "Host order variants failed: %s\n", SDL_GetError()); goto LDone; }
-                    for (iFleetHostOrder = 0; iFleetHostOrder < cFleet; iFleetHostOrder++) {
-                        lpflHostOrder = rglpfl[iFleetHostOrder];
+                    for (iFleetHostOrder = 0; iFleetHostOrder < app.state.cFleet; iFleetHostOrder++) {
+                        lpflHostOrder = app.state.rglpfl[iFleetHostOrder];
                         if (((uint16_t)lpflHostOrder->id >> 9 & 0xf) == 0) break;
                     }
-                    if (iFleetHostOrder == cFleet) { fprintf(stderr, "Host order fixture has no player fleet\n"); goto LDone; }
+                    if (iFleetHostOrder == app.state.cFleet) { fprintf(stderr, "Host order fixture has no player fleet\n"); goto LDone; }
                     idHostOrderFleet = lpflHostOrder->id;
                     fHadFleetName = lpflHostOrder->lpszName != NULL;
                     if (fHadFleetName) CchSnprintf(szFleetNameSav, sizeof(szFleetNameSav), "%s", lpflHostOrder->lpszName);
-                    LogChangeName(grobjFleet, lpflHostOrder->id, szReplacementOrder);
-                    if (lpflHostOrder->lpszName) FreeLp(lpflHostOrder->lpszName, htString);
+                    LogChangeName(app, grobjFleet, lpflHostOrder->id, szReplacementOrder);
+                    if (lpflHostOrder->lpszName) FreeLp(app, lpflHostOrder->lpszName, htString);
                     lpflHostOrder->lpszName = NULL;
                     if (fHadFleetName) {
-                        lpflHostOrder->lpszName = (char *)(LpAlloc(strlen(szFleetNameSav) + 1, htString));
+                        lpflHostOrder->lpszName = (char *)(LpAlloc(app, strlen(szFleetNameSav) + 1, htString));
                         if (!lpflHostOrder->lpszName) goto LDone;
                         strcpy(lpflHostOrder->lpszName, szFleetNameSav);
                     }
                     if (CchSnprintf(szHostOrderDifferent, sizeof(szHostOrderDifferent), "%s-different.x1", pszHostOrderBase) <= 0 ||
-                        CchSnprintf(szBase, sizeof(szBase), "%s-different", pszHostOrderBase) <= 0 ||
-                        !FWriteLogFile(szBase, 0)) { fprintf(stderr, "Host changed order write failed: %s\n", SDL_GetError()); goto LDone; }
-                    strcpy(szBase, szSavedBase);
-                    if (FImportLibraryOrders(hwndTitle, szHostOrderIdentity)) { fprintf(stderr, "Host order identity mismatch accepted\n"); goto LDone; }
-                    if (FImportLibraryOrders(hwndTitle, szHostOrderPlayer)) { fprintf(stderr, "Host order player mismatch accepted\n"); goto LDone; }
-                    if (FImportLibraryOrders(hwndTitle, szHostOrderTurn)) { fprintf(stderr, "Host order turn mismatch accepted\n"); goto LDone; }
-                    if (FImportLibraryOrders(hwndTitle, szHostOrderGeneration)) { fprintf(stderr, "Host order generation mismatch accepted\n"); goto LDone; }
-                    if (FImportLibraryOrders(hwndTitle, szHostOrderAbsentPlayer)) { fprintf(stderr, "Host order for nonexistent player accepted\n"); goto LDone; }
-                    if (!FImportLibraryOrders(hwndTitle, szHostOrderFile)) { fprintf(stderr, "Host order valid file rejected\n"); goto LDone; }
+                        CchSnprintf(app.state.szBase, sizeof(app.state.szBase), "%s-different", pszHostOrderBase) <= 0 ||
+                        !FWriteLogFile(app, app.state.szBase, 0)) { fprintf(stderr, "Host changed order write failed: %s\n", SDL_GetError()); goto LDone; }
+                    strcpy(app.state.szBase, szSavedBase);
+                    if (FImportLibraryOrders(app, app.lpui->hwndTitle, szHostOrderIdentity)) { fprintf(stderr, "Host order identity mismatch accepted\n"); goto LDone; }
+                    if (FImportLibraryOrders(app, app.lpui->hwndTitle, szHostOrderPlayer)) { fprintf(stderr, "Host order player mismatch accepted\n"); goto LDone; }
+                    if (FImportLibraryOrders(app, app.lpui->hwndTitle, szHostOrderTurn)) { fprintf(stderr, "Host order turn mismatch accepted\n"); goto LDone; }
+                    if (FImportLibraryOrders(app, app.lpui->hwndTitle, szHostOrderGeneration)) { fprintf(stderr, "Host order generation mismatch accepted\n"); goto LDone; }
+                    if (FImportLibraryOrders(app, app.lpui->hwndTitle, szHostOrderAbsentPlayer)) { fprintf(stderr, "Host order for nonexistent player accepted\n"); goto LDone; }
+                    if (!FImportLibraryOrders(app, app.lpui->hwndTitle, szHostOrderFile)) { fprintf(stderr, "Host order valid file rejected\n"); goto LDone; }
                     if (!FTestFilesEqual(szHostOrderFile, szHostManagedOrders)) {
                         fprintf(stderr, "Host order target differs after import: target=%s\n", szHostManagedOrders);
                         if (FNativeFileSize(szHostManagedOrders, &cbHostFile)) fprintf(stderr, "target size=%lld\n", (long long)cbHostFile);
                         else fprintf(stderr, "target missing\n");
                         goto LDone;
                     }
-                    if (!FImportLibraryOrders(hwndTitle, szHostOrderFile)) { fprintf(stderr, "Host order identical file rejected\n"); goto LDone; }
+                    if (!FImportLibraryOrders(app, app.lpui->hwndTitle, szHostOrderFile)) { fprintf(stderr, "Host order identical file rejected\n"); goto LDone; }
                     if (cHostOrderConflictPrompts != 0) { fprintf(stderr, "Host order no-op prompted\n"); goto LDone; }
                     idHostOrderConflictResponse = win32::IDNO;
-                    if (FImportLibraryOrders(hwndTitle, szHostOrderDifferent) || cHostOrderConflictPrompts != 1 ||
+                    if (FImportLibraryOrders(app, app.lpui->hwndTitle, szHostOrderDifferent) || cHostOrderConflictPrompts != 1 ||
                         !FTestFilesEqual(szHostOrderFile, szHostManagedOrders)) goto LDone;
                     idHostOrderConflictResponse = win32::IDYES;
-                    if (!FImportLibraryOrders(hwndTitle, szHostOrderDifferent) || cHostOrderConflictPrompts != 2 ||
+                    if (!FImportLibraryOrders(app, app.lpui->hwndTitle, szHostOrderDifferent) || cHostOrderConflictPrompts != 2 ||
                         !FTestFilesEqual(szHostOrderDifferent, szHostManagedOrders)) goto LDone;
                     iHostLibraryTestStage = 8;
-                    if (!FPushClick(win32::GetDlgItem(hwndHostDialog, IDC_HOST_GENERATE_NOW))) goto LDone;
+                    if (!FPushClick(app, win32::GetDlgItem(hwndHostDialog, IDC_HOST_GENERATE_NOW))) goto LDone;
                     return;
                 }
                 if (iHostLibraryTestStage == 8) {
                     CchSnprintf(szHostOrderFile, sizeof(szHostOrderFile), "%s.m1", szHostManagedBase);
                     if (!FNativeFileSize(szHostOrderFile, &cbHostFile)) goto LDone;
                     CchSnprintf(szHostOrderFile, sizeof(szHostOrderFile), "%s.x1", szHostManagedBase);
-                    lpflHostOrder = LpflFromId(idHostOrderFleet);
+                    lpflHostOrder = LpflFromId(app, idHostOrderFleet);
                     if (FNativeFileSize(szHostOrderFile, &cbHostFile) || !lpflHostOrder ||
                         !lpflHostOrder->lpszName || strcmp(lpflHostOrder->lpszName, "Replacement order")) goto LDone;
-                    if ((cchHostOrder = CchSnprintf(szSavedBase, sizeof(szSavedBase), "%s", szBase)) <= 0 ||
+                    if ((cchHostOrder = CchSnprintf(szSavedBase, sizeof(szSavedBase), "%s", app.state.szBase)) <= 0 ||
                         (size_t)cchHostOrder >= sizeof(szSavedBase) ||
-                        (cchHostOrder = CchSnprintf(szBase, sizeof(szBase), "%s", pszHostPickerBase)) <= 0 ||
-                        (size_t)cchHostOrder >= sizeof(szBase) || !FWriteLogFile(szBase, 0)) goto LDone;
-                    strcpy(szBase, szSavedBase);
+                        (cchHostOrder = CchSnprintf(app.state.szBase, sizeof(app.state.szBase), "%s", pszHostPickerBase)) <= 0 ||
+                        (size_t)cchHostOrder >= sizeof(app.state.szBase) || !FWriteLogFile(app, app.state.szBase, 0)) goto LDone;
+                    strcpy(app.state.szBase, szSavedBase);
                     iHostLibraryTestStage = 9;
-                    gd.fClose = 0;
-                    if (!FPushClick(win32::GetDlgItem(hwndHostDialog, IDCANCEL))) goto LDone;
+                    app.state.gd.fClose = 0;
+                    if (!FPushClick(app, win32::GetDlgItem(hwndHostDialog, IDCANCEL))) goto LDone;
                     return;
                 }
                 return;
@@ -2129,21 +2143,21 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
             else return;
         }
         if (iHostLibraryTestStage == 10) {
-            if (!win32::IsWindowVisible(hwndTitle) ||
-                !(win32::GetWindowLongPtrA(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_IMPORT_ORDERS), win32::GWL_STYLE) & win32::WS_VISIBLE)) goto LDone;
+            if (!win32::IsWindowVisible(app.lpui->hwndTitle) ||
+                !(win32::GetWindowLongPtrA(win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_IMPORT_ORDERS), win32::GWL_STYLE) & win32::WS_VISIBLE)) goto LDone;
             fHostOrderPickerCancel = 1;
-            ui::SendMessage(hwndTitle, win32::WM_COMMAND, win32::MAKEWPARAM(IDC_LIBRARY_IMPORT_ORDERS, win32::BN_CLICKED),
-                        (LPARAM)win32::GetDlgItem(hwndTitle, IDC_LIBRARY_IMPORT_ORDERS));
+            ui::SendMessage(app.lpui->hwndTitle, win32::WM_COMMAND, win32::MAKEWPARAM(IDC_LIBRARY_IMPORT_ORDERS, win32::BN_CLICKED),
+                        (LPARAM)win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_IMPORT_ORDERS));
             if (cHostOrderPickerCalls != 1 || FNativeFileSize(szHostManagedOrders, &cbHostFile)) goto LDone;
             fHostOrderPickerCancel = 0;
             iHostLibraryTestStage = 11;
             return;
         }
         if (iHostLibraryTestStage == 11) {
-            ui::SendMessage(hwndTitle, win32::WM_COMMAND, win32::MAKEWPARAM(IDC_LIBRARY_IMPORT_ORDERS, win32::BN_CLICKED),
-                        (LPARAM)win32::GetDlgItem(hwndTitle, IDC_LIBRARY_IMPORT_ORDERS));
+            ui::SendMessage(app.lpui->hwndTitle, win32::WM_COMMAND, win32::MAKEWPARAM(IDC_LIBRARY_IMPORT_ORDERS, win32::BN_CLICKED),
+                        (LPARAM)win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_IMPORT_ORDERS));
             if (cHostOrderPickerCalls != 2 || !FTestFilesEqual(szHostPickerOrder, szHostManagedOrders)) goto LDone;
-            fFreeingTitle = 0;
+            app.lpui->fFreeingTitle = 0;
             fChecked = 1;
             fPassed = 1;
             puts("Host Games visible selection, unsaved-work prompt, order picker, validation/conflicts and generation passed");
@@ -2153,23 +2167,23 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
     }
     if (PszCompatEnvironment("STARS_CLIENT_STARTUP_SOURCE")) {
         HWND hwndDialog;
-        for (hwndDialog = win32::GetWindow(hwndFrame, win32::GW_HWNDFIRST); hwndDialog; hwndDialog = win32::GetWindow(hwndDialog, win32::GW_HWNDNEXT)) {
+        for (hwndDialog = win32::GetWindow(app.lpui->hwndFrame, win32::GW_HWNDFIRST); hwndDialog; hwndDialog = win32::GetWindow(hwndDialog, win32::GW_HWNDNEXT)) {
             if (hwndDialog->fDialog && hwndDialog->lpfnDlg == LibraryNameDlg && win32::IsWindowVisible(hwndDialog)) {
-                if (!win32::SetDlgItemTextA(hwndDialog, IDC_EDIT1, "startup-import") || !FPushClick(win32::GetDlgItem(hwndDialog, IDOK))) goto LDone;
+                if (!win32::SetDlgItemTextA(hwndDialog, IDC_EDIT1, "startup-import") || !FPushClick(app, win32::GetDlgItem(hwndDialog, IDOK))) goto LDone;
                 return;
             }
         }
         if (PszCompatEnvironment("STARS_CLIENT_STARTUP_MANAGED")) {
-            if (game.lid == 0 || !lpPlanets || idPlayer == iplrNone || hwndTitle) {
+            if (app.state.game.lid == 0 || !app.state.lpPlanets || app.state.idPlayer == iplrNone || app.lpui->hwndTitle) {
                 fprintf(stderr, "Managed startup: game %ld planets %p player %d title %p base %s\n",
-                        (long)game.lid, (void *)lpPlanets, idPlayer, (void *)hwndTitle, szBase);
+                        (long)app.state.game.lid, (void *)app.state.lpPlanets, app.state.idPlayer, (void *)app.lpui->hwndTitle, app.state.szBase);
                 goto LDone;
             }
         } else {
-            if (!win32::IsWindowVisible(hwndTitle)) return;
-            ui::UpdateWindow(hwndTitle);
-            if (!FCompatPresent(hwndTitle) || game.lid != 0 || idPlayer != iplrNone ||
-                ui::SendMessage(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES), win32::LB_FINDSTRING, (WPARAM)-1, (LPARAM)"startup-import") == win32::LB_ERR) goto LDone;
+            if (!win32::IsWindowVisible(app.lpui->hwndTitle)) return;
+            ui::UpdateWindow(app.lpui->hwndTitle);
+            if (!FCompatPresent(app.lpui->hwndTitle) || app.state.game.lid != 0 || app.state.idPlayer != iplrNone ||
+                ui::SendMessage(win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_GAMES), win32::LB_FINDSTRING, (WPARAM)-1, (LPARAM)"startup-import") == win32::LB_ERR) goto LDone;
         }
         fChecked = fPassed = fTitlePainted = 1;
         puts("Desktop startup uses the supplied game path without reopening the chooser");
@@ -2177,29 +2191,29 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
         return;
     }
     if (PszCompatEnvironment("STARS_CLIENT_RACE_ROSTER_TEST") || PszCompatEnvironment("STARS_CLIENT_RACE_LIBRARY_TEST")) {
-        HWND hwndSave = HwndRosterDialog(LibraryRaceSaveDlg);
+        HWND hwndSave = HwndRosterDialog(app, LibraryRaceSaveDlg);
         if (hwndSave) {
-            if (!FPushClick(win32::GetDlgItem(hwndSave, IDC_LIBRARY_RACE_UPDATE))) goto LDone;
+            if (!FPushClick(app, win32::GetDlgItem(hwndSave, IDC_LIBRARY_RACE_UPDATE))) goto LDone;
             return;
         }
     }
     if (PszCompatEnvironment("STARS_CLIENT_RACE_VERSION_TEST")) {
-        if (!FCheckRaceVersionWorkflow()) goto LDone;
+        if (!FCheckRaceVersionWorkflow(app)) goto LDone;
         return;
     }
     if (PszCompatEnvironment("STARS_CLIENT_RACE_ROSTER_TEST")) {
-        if (!FCheckRaceRosterWorkflow()) goto LDone;
+        if (!FCheckRaceRosterWorkflow(app)) goto LDone;
         return;
     }
     if (PszCompatEnvironment("STARS_CLIENT_RACE_NAME_CANCEL")) {
         HWND hwndTop;
         BOOL fWizard = !strcmp(PszCompatEnvironment("STARS_CLIENT_RACE_NAME_CANCEL"), "wizard");
         if (iStage == 0) {
-            if (!win32::IsWindowVisible(hwndTitle)) return;
+            if (!win32::IsWindowVisible(app.lpui->hwndTitle)) return;
             fTitlePainted = fChecked = 1;
-            if (!ui::SetWindowPos(hwndTitle, NULL, 55, 95, 0, 0, win32::SWP_NOSIZE | win32::SWP_NOZORDER | win32::SWP_NOACTIVATE)) goto LDone;
+            if (!ui::SetWindowPos(app.lpui->hwndTitle, NULL, 55, 95, 0, 0, win32::SWP_NOSIZE | win32::SWP_NOZORDER | win32::SWP_NOACTIVATE)) goto LDone;
             iStage = 1;
-            if (!FPushClick(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_RACE_NEW))) goto LDone;
+            if (!FPushClick(app, win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_RACE_NEW))) goto LDone;
             return;
         }
         if (iStage == 1 || (fWizard && iStage == 2)) {
@@ -2209,7 +2223,7 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
                     if (hwndTop->fDialog && hwndTop->lpfnDlg == LibraryNameDlg) goto LDone;
                     continue;
                 }
-                if (!(SDL_GetWindowFlags(hwndFrame->lpWindow.get()) & SDL_WINDOW_HIDDEN)) goto LDone;
+                if (!(SDL_GetWindowFlags(app.lpui->hwndFrame->lpWindow.get()) & SDL_WINDOW_HIDDEN)) goto LDone;
                 if (iStage == 2) {
                     HWND hwndRadio;
                     HDC hdcRadio;
@@ -2239,26 +2253,26 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
                     if (pszWizardCapture && (!FCompatPaintTree(hwndTop) || !FCompatPresent(hwndTop) ||
                         !SDL_SaveBMP(hwndTop->lpComposite.get(), pszWizardCapture))) goto LDone;
                 }
-                if (!FPushClick(win32::GetDlgItem(hwndTop, iStage == 1 && fWizard ? IDC_NEXT : IDCANCEL))) goto LDone;
+                if (!FPushClick(app, win32::GetDlgItem(hwndTop, iStage == 1 && fWizard ? IDC_NEXT : IDCANCEL))) goto LDone;
                 iStage = fWizard && iStage == 1 ? 2 : 4;
                 return;
             }
             return;
         }
-        if (!win32::IsWindowEnabled(hwndTitle)) return;
+        if (!win32::IsWindowEnabled(app.lpui->hwndTitle)) return;
         // Let queued native activation/show events settle after the modal closes.
         if (iStage++ < 6) return;
         for (hwndTop = HwndCompatFirstTop(); hwndTop; hwndTop = win32::GetWindow(hwndTop, win32::GW_HWNDNEXT)) {
             if (!hwndTop->lpWindow.get() || (SDL_GetWindowFlags(hwndTop->lpWindow.get()) & SDL_WINDOW_HIDDEN)) continue;
-            if (hwndTop != hwndTitle) {
+            if (hwndTop != app.lpui->hwndTitle) {
                 fprintf(stderr, "Cancelling the race dialog exposed another native window (frame %d, visible %d)\n",
-                        hwndTop == hwndFrame, win32::IsWindowVisible(hwndTop));
+                        hwndTop == app.lpui->hwndFrame, win32::IsWindowVisible(hwndTop));
                 goto LDone;
             }
         }
-        if (win32::IsWindowVisible(hwndFrame) || !win32::IsWindowVisible(hwndTitle) ||
-            (SDL_GetWindowFlags(hwndTitle->lpWindow.get()) & SDL_WINDOW_HIDDEN) ||
-            game.lid != 0 || idPlayer != iplrNone) goto LDone;
+        if (win32::IsWindowVisible(app.lpui->hwndFrame) || !win32::IsWindowVisible(app.lpui->hwndTitle) ||
+            (SDL_GetWindowFlags(app.lpui->hwndTitle->lpWindow.get()) & SDL_WINDOW_HIDDEN) ||
+            app.state.game.lid != 0 || app.state.idPlayer != iplrNone) goto LDone;
         fPassed = 1;
         puts("Race dialog cancels back to the single library window");
         win32::PostQuitMessage(0);
@@ -2267,17 +2281,17 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
     if (PszCompatEnvironment("STARS_CLIENT_RECENT_STARTUP")) {
         HWND hwndTop;
         int cVisible = 0;
-        if (!win32::IsWindowVisible(hwndTitle)) return;
+        if (!win32::IsWindowVisible(app.lpui->hwndTitle)) return;
         for (hwndTop = HwndCompatFirstTop(); hwndTop; hwndTop = win32::GetWindow(hwndTop, win32::GW_HWNDNEXT)) {
             if (!hwndTop->lpWindow.get() || (SDL_GetWindowFlags(hwndTop->lpWindow.get()) & SDL_WINDOW_HIDDEN)) continue;
-            if (hwndTop != hwndTitle) goto LDone;
+            if (hwndTop != app.lpui->hwndTitle) goto LDone;
             cVisible++;
         }
-        if (cVisible != 1 || win32::IsWindowVisible(hwndFrame) || cRecentMigrationPrompts != 0 ||
-            game.lid != 0 || idPlayer != iplrNone || !win32::GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES) ||
-            !win32::GetDlgItem(hwndTitle, IDC_LIBRARY_RACES)) goto LDone;
-        ui::UpdateWindow(hwndTitle);
-        if (!FCompatPresent(hwndTitle)) goto LDone;
+        if (cVisible != 1 || win32::IsWindowVisible(app.lpui->hwndFrame) || cRecentMigrationPrompts != 0 ||
+            app.state.game.lid != 0 || app.state.idPlayer != iplrNone || !win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_GAMES) ||
+            !win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_RACES)) goto LDone;
+        ui::UpdateWindow(app.lpui->hwndTitle);
+        if (!FCompatPresent(app.lpui->hwndTitle)) goto LDone;
         fTitlePainted = fChecked = fPassed = 1;
         puts("Startup with recent files shows only the library, without an import prompt");
         win32::PostQuitMessage(0);
@@ -2286,21 +2300,21 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
     if (PszCompatEnvironment("STARS_CLIENT_EXTERNAL_OPEN_GAME") || PszCompatEnvironment("STARS_CLIENT_EXTERNAL_OPEN_RACE")) {
         HWND hwndDialog;
         if (iStage == 0) {
-            if (!win32::IsWindowVisible(hwndTitle)) return;
-            ui::UpdateWindow(hwndTitle);
-            if (!FCompatPresent(hwndTitle)) goto LDone;
+            if (!win32::IsWindowVisible(app.lpui->hwndTitle)) return;
+            ui::UpdateWindow(app.lpui->hwndTitle);
+            if (!FCompatPresent(app.lpui->hwndTitle)) goto LDone;
             fTitlePainted = 1;
             fChecked = 1;
             iStage = 1;
-            ui::SendMessage(hwndFrame, win32::WM_COMMAND, IDM_FILE_OPEN_GAME, 0);
+            ui::SendMessage(app.lpui->hwndFrame, win32::WM_COMMAND, IDM_FILE_OPEN_GAME, 0);
             return;
         }
         if (iStage == 1) {
-            for (hwndDialog = win32::GetWindow(hwndTitle, win32::GW_HWNDFIRST); hwndDialog; hwndDialog = win32::GetWindow(hwndDialog, win32::GW_HWNDNEXT)) {
+            for (hwndDialog = win32::GetWindow(app.lpui->hwndTitle, win32::GW_HWNDFIRST); hwndDialog; hwndDialog = win32::GetWindow(hwndDialog, win32::GW_HWNDNEXT)) {
                 if (!hwndDialog->fDialog || hwndDialog->lpfnDlg != LibraryNameDlg) continue;
                 if (!ui::SetWindowText(win32::GetDlgItem(hwndDialog, IDC_EDIT1),
                                     PszCompatEnvironment("STARS_CLIENT_IMPORT_NAME") ? PszCompatEnvironment("STARS_CLIENT_IMPORT_NAME") : "external-open-game") ||
-                    !FPushClick(win32::GetDlgItem(hwndDialog, IDOK))) goto LDone;
+                    !FPushClick(app, win32::GetDlgItem(hwndDialog, IDOK))) goto LDone;
                 iStage = 2;
                 return;
             }
@@ -2308,49 +2322,49 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
         }
         if (PszCompatEnvironment("STARS_CLIENT_EXTERNAL_OPEN_RACE")) {
             if (iStage == 2) {
-                for (hwndDialog = win32::GetWindow(hwndTitle, win32::GW_HWNDFIRST); hwndDialog; hwndDialog = win32::GetWindow(hwndDialog, win32::GW_HWNDNEXT)) {
+                for (hwndDialog = win32::GetWindow(app.lpui->hwndTitle, win32::GW_HWNDFIRST); hwndDialog; hwndDialog = win32::GetWindow(hwndDialog, win32::GW_HWNDNEXT)) {
                     if (!hwndDialog->fDialog || hwndDialog->lpfnDlg != RaceWizardDlg1 || !win32::IsWindowVisible(hwndDialog)) continue;
                     iStage = 3;
-                    if (!FPushClick(win32::GetDlgItem(hwndDialog, IDCANCEL))) goto LDone;
+                    if (!FPushClick(app, win32::GetDlgItem(hwndDialog, IDCANCEL))) goto LDone;
                     return;
                 }
                 return;
             }
-            if (!win32::IsWindowEnabled(hwndTitle)) return;
-            if (ui::SendMessage(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_RACES), win32::LB_FINDSTRING, (WPARAM)-1,
-                            (LPARAM)PszCompatEnvironment("STARS_CLIENT_IMPORT_NAME")) == win32::LB_ERR || game.lid != 0 || idPlayer != iplrNone) goto LDone;
+            if (!win32::IsWindowEnabled(app.lpui->hwndTitle)) return;
+            if (ui::SendMessage(win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_RACES), win32::LB_FINDSTRING, (WPARAM)-1,
+                            (LPARAM)PszCompatEnvironment("STARS_CLIENT_IMPORT_NAME")) == win32::LB_ERR || app.state.game.lid != 0 || app.state.idPlayer != iplrNone) goto LDone;
             fPassed = 1;
             puts("Desktop Open Game imports an external race and opens its managed edit wizard");
             win32::PostQuitMessage(0);
             return;
         }
-        if (ui::SendMessage(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES), win32::LB_FINDSTRING, (WPARAM)-1,
+        if (ui::SendMessage(win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_GAMES), win32::LB_FINDSTRING, (WPARAM)-1,
                         (LPARAM)(PszCompatEnvironment("STARS_CLIENT_IMPORT_NAME") ? PszCompatEnvironment("STARS_CLIENT_IMPORT_NAME") : "external-open-game")) == win32::LB_ERR ||
-            game.lid != 0 || idPlayer != iplrNone) goto LDone;
+            app.state.game.lid != 0 || app.state.idPlayer != iplrNone) goto LDone;
         fPassed = 1;
         puts("Desktop Open Game imports the external file into the managed library");
         win32::PostQuitMessage(0);
         return;
     }
     if (pszExportGame) {
-        if (!FCheckGameExportWorkflow(id)) goto LDone;
+        if (!FCheckGameExportWorkflow(app, id)) goto LDone;
         return;
     }
     if (PszCompatEnvironment("STARS_CLIENT_RACE_LIBRARY_TEST")) {
         HWND hwndRace;
         static const DLGPROC rglpfnRaceLibrary[] = {RaceWizardDlg1, RaceWizardDlg4, RaceWizardDlg5, RaceWizardDlg2, RaceWizardDlg3, RaceWizardDlg6};
         if (iRaceLibraryTestStage == 0) {
-            if (!win32::IsWindowVisible(hwndTitle) || !win32::GetDlgItem(hwndTitle, IDC_LIBRARY_RACES) ||
-                !win32::GetDlgItem(hwndTitle, IDC_LIBRARY_RACE_NEW) || !win32::GetDlgItem(hwndTitle, IDC_LIBRARY_RACE_EDIT) ||
-                !win32::GetDlgItem(hwndTitle, IDC_LIBRARY_RACE_IMPORT)) {
+            if (!win32::IsWindowVisible(app.lpui->hwndTitle) || !win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_RACES) ||
+                !win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_RACE_NEW) || !win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_RACE_EDIT) ||
+                !win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_RACE_IMPORT)) {
                 goto LDone;
             }
-            if (!FPushClick(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_RACE_NEW))) goto LDone;
+            if (!FPushClick(app, win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_RACE_NEW))) goto LDone;
             iRaceLibraryTestStage = 1;
             return;
         }
         if (iRaceLibraryTestStage == 1) {
-            for (hwndRace = win32::GetWindow(hwndTitle, win32::GW_HWNDFIRST); hwndRace; hwndRace = win32::GetWindow(hwndRace, win32::GW_HWNDNEXT)) {
+            for (hwndRace = win32::GetWindow(app.lpui->hwndTitle, win32::GW_HWNDFIRST); hwndRace; hwndRace = win32::GetWindow(hwndRace, win32::GW_HWNDNEXT)) {
                 if (!hwndRace->fDialog) continue;
                 if (hwndRace->lpfnDlg != RaceWizardDlg1 ||
                     !win32::SetDlgItemTextA(hwndRace, IDC_RACE_NAME, "Managed") ||
@@ -2361,121 +2375,121 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
             return;
         }
         if (iRaceLibraryTestStage == 2) {
-            for (hwndRace = win32::GetWindow(hwndTitle, win32::GW_HWNDFIRST); hwndRace; hwndRace = win32::GetWindow(hwndRace, win32::GW_HWNDNEXT)) {
+            for (hwndRace = win32::GetWindow(app.lpui->hwndTitle, win32::GW_HWNDFIRST); hwndRace; hwndRace = win32::GetWindow(hwndRace, win32::GW_HWNDNEXT)) {
                 if (!hwndRace->fDialog) continue;
                 if (!win32::IsWindowVisible(hwndRace)) return;
                 i = (size_t)iRaceLibraryWizardPage;
                 if (i >= sizeof(rglpfnRaceLibrary) / sizeof(rglpfnRaceLibrary[0])) goto LDone;
-                if (!FPushClick(win32::GetDlgItem(hwndRace, i == 5 ? IDC_FINISH : IDC_NEXT))) goto LDone;
+                if (!FPushClick(app, win32::GetDlgItem(hwndRace, i == 5 ? IDC_FINISH : IDC_NEXT))) goto LDone;
                 iRaceLibraryWizardPage++;
                 return;
             }
-            if (iRaceLibraryWizardPage == 6 && win32::IsWindowEnabled(hwndTitle)) iRaceLibraryTestStage = 3;
+            if (iRaceLibraryWizardPage == 6 && win32::IsWindowEnabled(app.lpui->hwndTitle)) iRaceLibraryTestStage = 3;
             return;
         }
         if (iRaceLibraryTestStage == 3) {
-            if (!win32::IsWindowVisible(hwndTitle)) return;
-            if (!FLoadLibraryRace(hwndTitle, "Managed.r1")) goto LDone;
+            if (!win32::IsWindowVisible(app.lpui->hwndTitle)) return;
+            if (!FLoadLibraryRace(app, app.lpui->hwndTitle, "Managed.r1")) goto LDone;
             CchSnprintf(szManaged, sizeof(szManaged), "%s%sRace Designs%sManaged.r1", pszSettings, szDirSep, szDirSep);
             if (!FTestCopyFile(szManaged, pszRaceSource) || !FTestCopyFile(pszRaceSource, pszRaceSnapshot)) goto LDone;
-            if (!FSaveLibraryRace(hwndTitle, "Managed.r1.pending.r1", &vplr)) goto LDone;
-            icksRaceSaveStage = IRaceChecksum(&vplr);
-            if (!FLoadLibraryRace(hwndTitle, "Managed.r1") || IRaceChecksum(&vplr) != icksRaceSaveStage) goto LDone;
-            RefreshLibraryRaces(hwndTitle);
-            if (ui::SendMessage(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_RACES), win32::LB_GETCOUNT, 0, 0) != 2 ||
-                !FSelectClientRaceName(hwndTitle, "Managed.r1")) goto LDone;
-            icksRaceLibraryOriginal = IRaceChecksum(&vplr);
+            if (!FSaveLibraryRace(app, app.lpui->hwndTitle, "Managed.r1.pending.r1", &app.state.vplr)) goto LDone;
+            icksRaceSaveStage = IRaceChecksum(&app.state.vplr);
+            if (!FLoadLibraryRace(app, app.lpui->hwndTitle, "Managed.r1") || IRaceChecksum(&app.state.vplr) != icksRaceSaveStage) goto LDone;
+            RefreshLibraryRaces(app, app.lpui->hwndTitle);
+            if (ui::SendMessage(win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_RACES), win32::LB_GETCOUNT, 0, 0) != 2 ||
+                !FSelectClientRaceName(app.lpui->hwndTitle, "Managed.r1")) goto LDone;
+            icksRaceLibraryOriginal = IRaceChecksum(&app.state.vplr);
             icksumRaceLibrary = icksRaceLibraryOriginal;
             iRaceLibraryWizardPage = 0;
             iRaceLibraryTestStage = 4;
-            if (!FPushClick(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_RACE_EDIT))) goto LDone;
+            if (!FPushClick(app, win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_RACE_EDIT))) goto LDone;
             return;
         }
         if (iRaceLibraryTestStage == 4) {
-            for (hwndRace = win32::GetWindow(hwndTitle, win32::GW_HWNDFIRST); hwndRace; hwndRace = win32::GetWindow(hwndRace, win32::GW_HWNDNEXT)) {
+            for (hwndRace = win32::GetWindow(app.lpui->hwndTitle, win32::GW_HWNDFIRST); hwndRace; hwndRace = win32::GetWindow(hwndRace, win32::GW_HWNDNEXT)) {
                 if (!hwndRace->fDialog) continue;
                 if (iRaceLibraryWizardPage < 6) {
                     i = (size_t)iRaceLibraryWizardPage;
-                    if (i == 0 && !FPushClick(win32::GetDlgItem(hwndRace, IDC_RACE_HUMANOID + 1))) goto LDone;
-                    if (!FPushClick(win32::GetDlgItem(hwndRace, i == 5 ? IDC_FINISH : IDC_NEXT))) goto LDone;
+                    if (i == 0 && !FPushClick(app, win32::GetDlgItem(hwndRace, IDC_RACE_HUMANOID + 1))) goto LDone;
+                    if (!FPushClick(app, win32::GetDlgItem(hwndRace, i == 5 ? IDC_FINISH : IDC_NEXT))) goto LDone;
                     iRaceLibraryWizardPage++;
                     return;
                 }
                 goto LDone;
             }
-            if (iRaceLibraryWizardPage == 6 && win32::IsWindowEnabled(hwndTitle)) iRaceLibraryTestStage = 5;
+            if (iRaceLibraryWizardPage == 6 && win32::IsWindowEnabled(app.lpui->hwndTitle)) iRaceLibraryTestStage = 5;
             return;
         }
         if (iRaceLibraryTestStage == 5) {
-            if (!win32::IsWindowEnabled(hwndTitle)) return;
-            if (!FLoadLibraryRace(hwndTitle, "Managed.r1") || IRaceChecksum(&vplr) == icksRaceLibraryOriginal) goto LDone;
-            icksumRaceLibrary = IRaceChecksum(&vplr);
-            RefreshLibraryRaces(hwndTitle);
-            if (!FSelectClientRaceName(hwndTitle, "Managed.r1")) goto LDone;
+            if (!win32::IsWindowEnabled(app.lpui->hwndTitle)) return;
+            if (!FLoadLibraryRace(app, app.lpui->hwndTitle, "Managed.r1") || IRaceChecksum(&app.state.vplr) == icksRaceLibraryOriginal) goto LDone;
+            icksumRaceLibrary = IRaceChecksum(&app.state.vplr);
+            RefreshLibraryRaces(app, app.lpui->hwndTitle);
+            if (!FSelectClientRaceName(app.lpui->hwndTitle, "Managed.r1")) goto LDone;
             iRaceLibraryWizardPage = 0;
-            if (!FPushClick(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_RACE_EDIT))) goto LDone;
+            if (!FPushClick(app, win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_RACE_EDIT))) goto LDone;
             iRaceLibraryTestStage = 6;
             return;
         }
         if (iRaceLibraryTestStage == 6) {
-            for (hwndRace = win32::GetWindow(hwndTitle, win32::GW_HWNDFIRST); hwndRace; hwndRace = win32::GetWindow(hwndRace, win32::GW_HWNDNEXT)) {
+            for (hwndRace = win32::GetWindow(app.lpui->hwndTitle, win32::GW_HWNDFIRST); hwndRace; hwndRace = win32::GetWindow(hwndRace, win32::GW_HWNDNEXT)) {
                 if (!hwndRace->fDialog) continue;
-                if (!FPushClick(win32::GetDlgItem(hwndRace, IDCANCEL))) goto LDone;
+                if (!FPushClick(app, win32::GetDlgItem(hwndRace, IDCANCEL))) goto LDone;
                 iRaceLibraryTestStage = 7;
                 return;
             }
             return;
         }
         if (iRaceLibraryTestStage == 7) {
-            if (!win32::IsWindowEnabled(hwndTitle)) return;
-            if (!FLoadLibraryRace(hwndTitle, "Managed.r1") || IRaceChecksum(&vplr) != icksumRaceLibrary) goto LDone;
-            if (FImportLibraryRaceAs(hwndTitle, PszCompatEnvironment("STARS_CLIENT_RACE_IMPORT_SOURCE"), "CON.r1") ||
-                FImportLibraryRaceAs(hwndTitle, PszCompatEnvironment("STARS_CLIENT_RACE_IMPORT_SOURCE"), "COM1.r2") ||
-                FImportLibraryRaceAs(hwndTitle, PszCompatEnvironment("STARS_CLIENT_RACE_IMPORT_SOURCE"), "LPT9.r3") ||
-                FImportLibraryRaceAs(hwndTitle, PszCompatEnvironment("STARS_CLIENT_RACE_IMPORT_SOURCE"), "CLOCK$.r1") ||
-                FImportLibraryRaceAs(hwndTitle, PszCompatEnvironment("STARS_CLIENT_RACE_IMPORT_SOURCE"), "managed.R1")) goto LDone;
-            if (!FSaveLibraryRace(hwndTitle, "Imported.r2.pending.r1", &vplr)) goto LDone;
-            icksRaceImportStage = IRaceChecksum(&vplr);
-            if (!FLoadLibraryRace(hwndTitle, "Managed.r1") || IRaceChecksum(&vplr) != icksumRaceLibrary) goto LDone;
-            if (!FPushClick(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_RACE_IMPORT))) goto LDone;
+            if (!win32::IsWindowEnabled(app.lpui->hwndTitle)) return;
+            if (!FLoadLibraryRace(app, app.lpui->hwndTitle, "Managed.r1") || IRaceChecksum(&app.state.vplr) != icksumRaceLibrary) goto LDone;
+            if (FImportLibraryRaceAs(app, app.lpui->hwndTitle, PszCompatEnvironment("STARS_CLIENT_RACE_IMPORT_SOURCE"), "CON.r1") ||
+                FImportLibraryRaceAs(app, app.lpui->hwndTitle, PszCompatEnvironment("STARS_CLIENT_RACE_IMPORT_SOURCE"), "COM1.r2") ||
+                FImportLibraryRaceAs(app, app.lpui->hwndTitle, PszCompatEnvironment("STARS_CLIENT_RACE_IMPORT_SOURCE"), "LPT9.r3") ||
+                FImportLibraryRaceAs(app, app.lpui->hwndTitle, PszCompatEnvironment("STARS_CLIENT_RACE_IMPORT_SOURCE"), "CLOCK$.r1") ||
+                FImportLibraryRaceAs(app, app.lpui->hwndTitle, PszCompatEnvironment("STARS_CLIENT_RACE_IMPORT_SOURCE"), "managed.R1")) goto LDone;
+            if (!FSaveLibraryRace(app, app.lpui->hwndTitle, "Imported.r2.pending.r1", &app.state.vplr)) goto LDone;
+            icksRaceImportStage = IRaceChecksum(&app.state.vplr);
+            if (!FLoadLibraryRace(app, app.lpui->hwndTitle, "Managed.r1") || IRaceChecksum(&app.state.vplr) != icksumRaceLibrary) goto LDone;
+            if (!FPushClick(app, win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_RACE_IMPORT))) goto LDone;
             iRaceLibraryTestStage = 8;
             return;
         }
         if (iRaceLibraryTestStage == 8) {
-            for (hwndRace = win32::GetWindow(hwndTitle, win32::GW_HWNDFIRST); hwndRace; hwndRace = win32::GetWindow(hwndRace, win32::GW_HWNDNEXT)) {
+            for (hwndRace = win32::GetWindow(app.lpui->hwndTitle, win32::GW_HWNDFIRST); hwndRace; hwndRace = win32::GetWindow(hwndRace, win32::GW_HWNDNEXT)) {
                 if (!hwndRace->fDialog || !win32::GetDlgItem(hwndRace, IDC_EDIT1)) continue;
-                if (!ui::SetWindowText(win32::GetDlgItem(hwndRace, IDC_EDIT1), "Imported.r2") || !FPushClick(win32::GetDlgItem(hwndRace, IDOK))) goto LDone;
+                if (!ui::SetWindowText(win32::GetDlgItem(hwndRace, IDC_EDIT1), "Imported.r2") || !FPushClick(app, win32::GetDlgItem(hwndRace, IDOK))) goto LDone;
                 iRaceLibraryTestStage = 9;
                 return;
             }
             return;
         }
         if (iRaceLibraryTestStage == 9) {
-            for (hwndRace = win32::GetWindow(hwndTitle, win32::GW_HWNDFIRST); hwndRace; hwndRace = win32::GetWindow(hwndRace, win32::GW_HWNDNEXT)) {
+            for (hwndRace = win32::GetWindow(app.lpui->hwndTitle, win32::GW_HWNDFIRST); hwndRace; hwndRace = win32::GetWindow(hwndRace, win32::GW_HWNDNEXT)) {
                 if (!hwndRace->fDialog) continue;
-                if (!FPushClick(win32::GetDlgItem(hwndRace, IDCANCEL))) goto LDone;
+                if (!FPushClick(app, win32::GetDlgItem(hwndRace, IDCANCEL))) goto LDone;
                 iRaceLibraryTestStage = 10;
                 return;
             }
             return;
         }
         if (iRaceLibraryTestStage == 10) {
-            if (!win32::IsWindowEnabled(hwndTitle)) return;
-            RefreshLibraryRaces(hwndTitle);
-            if (ui::SendMessage(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_RACES), win32::LB_GETCOUNT, 0, 0) != 4 ||
-                !FSelectClientRaceName(hwndTitle, "Imported.r2") || !FSelectLibraryRace(hwndTitle, szRaceName) ||
-                strcmp(szRaceName, "Imported.r2") || !FLoadLibraryRace(hwndTitle, szRaceName) || !IRaceChecksum(&vplr) ||
-                !FLoadLibraryRace(hwndTitle, "Imported.r2.pending.r1") || IRaceChecksum(&vplr) != icksRaceImportStage) goto LDone;
-            if (!FDuplicateLibraryRace(hwndTitle, "Managed.r1")) goto LDone;
-            if (!FDuplicateLibraryRace(hwndTitle, "Managed.r2")) goto LDone;
+            if (!win32::IsWindowEnabled(app.lpui->hwndTitle)) return;
+            RefreshLibraryRaces(app, app.lpui->hwndTitle);
+            if (ui::SendMessage(win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_RACES), win32::LB_GETCOUNT, 0, 0) != 4 ||
+                !FSelectClientRaceName(app.lpui->hwndTitle, "Imported.r2") || !FSelectLibraryRace(app.lpui->hwndTitle, szRaceName) ||
+                strcmp(szRaceName, "Imported.r2") || !FLoadLibraryRace(app, app.lpui->hwndTitle, szRaceName) || !IRaceChecksum(&app.state.vplr) ||
+                !FLoadLibraryRace(app, app.lpui->hwndTitle, "Imported.r2.pending.r1") || IRaceChecksum(&app.state.vplr) != icksRaceImportStage) goto LDone;
+            if (!FDuplicateLibraryRace(app, app.lpui->hwndTitle, "Managed.r1")) goto LDone;
+            if (!FDuplicateLibraryRace(app, app.lpui->hwndTitle, "Managed.r2")) goto LDone;
             CchSnprintf(szDuplicate, sizeof(szDuplicate), "%s%sRace Designs%sManaged.r2", pszSettings, szDirSep, szDirSep);
             CchSnprintf(szManaged, sizeof(szManaged), "%s%sRace Designs%sManaged.r1", pszSettings, szDirSep, szDirSep);
             CchSnprintf(szExport, sizeof(szExport), "%s%sRace Designs%smanaged-export.r1", pszSettings, szDirSep, szDirSep);
             if (!FTestFilesEqual(szManaged, szDuplicate)) goto LDone;
             CchSnprintf(szDuplicate, sizeof(szDuplicate), "%s%sRace Designs%sManaged.r3", pszSettings, szDirSep, szDirSep);
             if (!FTestFilesEqual(szManaged, szDuplicate)) goto LDone;
-            if (!FExportLibraryRace(hwndTitle, "Managed.r1", szExport) ||
-                !FLoadLibraryRace(hwndTitle, "Managed.r1") || !FLoadLibraryRace(hwndTitle, "managed-export.r1")) goto LDone;
+            if (!FExportLibraryRace(app, app.lpui->hwndTitle, "Managed.r1", szExport) ||
+                !FLoadLibraryRace(app, app.lpui->hwndTitle, "Managed.r1") || !FLoadLibraryRace(app, app.lpui->hwndTitle, "managed-export.r1")) goto LDone;
             if (!FTestFilesEqual(szManaged, szExport)) goto LDone;
             CchSnprintf(szExport, sizeof(szExport), "%s%sRace Designs%smanaged-export-failure.r1", pszSettings, szDirSep, szDirSep);
             CchSnprintf(szExportSnapshot, sizeof(szExportSnapshot), "%s%sRace Designs%smanaged-export-failure.snapshot", pszSettings, szDirSep, szDirSep);
@@ -2483,7 +2497,7 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
             CchSnprintf(szRaceExportFailTarget, sizeof(szRaceExportFailTarget), "%s", szExport);
             fFailRaceExportReplace = 1;
             fExpectRaceExportFailureAlert = 1;
-            if (FExportLibraryRace(hwndTitle, "Managed.r1", szExport)) {
+            if (FExportLibraryRace(app, app.lpui->hwndTitle, "Managed.r1", szExport)) {
                 fExpectRaceExportFailureAlert = 0;
                 goto LDone;
             }
@@ -2491,20 +2505,20 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
             if (fFailRaceExportReplace || !FTestFilesEqual(szExport, szExportSnapshot)) goto LDone;
             CchSnprintf(szDuplicate, sizeof(szDuplicate), "%s%sRace Designs%sManaged.r2", pszSettings, szDirSep, szDirSep);
             CchSnprintf(szExport, sizeof(szExport), "%s%sRace Designs%sManaged.r3", pszSettings, szDirSep, szDirSep);
-            if (FDeleteLibraryRace(hwndTitle, "Managed.r2") || !FNativeFileSize(szDuplicate, &cbTestFile) ||
+            if (FDeleteLibraryRace(app, app.lpui->hwndTitle, "Managed.r2") || !FNativeFileSize(szDuplicate, &cbTestFile) ||
                 !FNativeFileSize(szExport, &cbTestFile) || !FNativeFileSize(szManaged, &cbTestFile)) goto LDone;
-            if (FDeleteLibraryRace(hwndTitle, "Managed.r3") || !FNativeFileSize(szExport, &cbTestFile) ||
+            if (FDeleteLibraryRace(app, app.lpui->hwndTitle, "Managed.r3") || !FNativeFileSize(szExport, &cbTestFile) ||
                 !FNativeFileSize(szDuplicate, &cbTestFile) || !FNativeFileSize(szManaged, &cbTestFile)) goto LDone;
-            if (!FDeleteLibraryRace(hwndTitle, "Managed.r2") || FNativeFileSize(szDuplicate, &cbTestFile) ||
+            if (!FDeleteLibraryRace(app, app.lpui->hwndTitle, "Managed.r2") || FNativeFileSize(szDuplicate, &cbTestFile) ||
                 !FNativeFileSize(szExport, &cbTestFile) || !FNativeFileSize(szManaged, &cbTestFile)) goto LDone;
             fChecked = 1;
             fPassed = 1;
-            if (!FTestRaceCancellation()) {
+            if (!FTestRaceCancellation(app)) {
                 fprintf(stderr, "Cancelled race operation changed the active design or its destination\n");
                 fPassed = 0;
                 goto LDone;
             }
-            if (!FTestLegacyRaceImport()) {
+            if (!FTestLegacyRaceImport(app)) {
                 fprintf(stderr, "Legacy race import did not retain its converted names and password\n");
                 fPassed = 0;
                 goto LDone;
@@ -2517,26 +2531,26 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
     }
     if (PszCompatEnvironment("STARS_CLIENT_GAME_DELETE_MODE")) {
         pszDeleteMode = PszCompatEnvironment("STARS_CLIENT_GAME_DELETE_MODE");
-        hwndDeleteList = win32::GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
+        hwndDeleteList = win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_GAMES);
         iDeleteSelected = ui::SendMessage(hwndDeleteList, win32::LB_FINDSTRING, (WPARAM)-1, (LPARAM)"selected-game");
         iDeleteOther = ui::SendMessage(hwndDeleteList, win32::LB_FINDSTRING, (WPARAM)-1, (LPARAM)"other-game");
-        if (!win32::IsWindowVisible(hwndTitle) || !win32::GetDlgItem(hwndTitle, IDC_LIBRARY_GAME_DELETE) || iDeleteOther == win32::LB_ERR) goto LDone;
+        if (!win32::IsWindowVisible(app.lpui->hwndTitle) || !win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_GAME_DELETE) || iDeleteOther == win32::LB_ERR) goto LDone;
         if (iStage == 0) {
             if (iDeleteSelected == win32::LB_ERR) goto LDone;
             ui::SendMessage(hwndDeleteList, win32::LB_SETCURSEL, iDeleteSelected, 0);
             iStage = 1;
-            if (!FPushClick(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_GAME_DELETE))) goto LDone;
+            if (!FPushClick(app, win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_GAME_DELETE))) goto LDone;
             return;
         }
         if (!fLibraryGameDeletePrompt) goto LDone;
-        RefreshLibraryGames(hwndTitle);
-        hwndDeleteList = win32::GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
+        RefreshLibraryGames(app, app.lpui->hwndTitle);
+        hwndDeleteList = win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_GAMES);
         iDeleteSelected = ui::SendMessage(hwndDeleteList, win32::LB_FINDSTRING, (WPARAM)-1, (LPARAM)"selected-game");
         iDeleteOther = ui::SendMessage(hwndDeleteList, win32::LB_FINDSTRING, (WPARAM)-1, (LPARAM)"other-game");
         fPassed = pszDeleteMode && strcmp(pszDeleteMode, "confirm") == 0 ? iDeleteSelected == win32::LB_ERR && iDeleteOther != win32::LB_ERR :
                   iDeleteSelected != win32::LB_ERR && iDeleteOther != win32::LB_ERR &&
                   (strcmp(pszDeleteMode, "cancel") == 0 || fLibraryGameDeleteFailureAlert);
-        if (!fPassed || (!strcmp(pszDeleteMode, "confirm") && win32::IsWindowEnabled(rghwndBtnSplash[2]))) goto LDone;
+        if (!fPassed || (!strcmp(pszDeleteMode, "confirm") && win32::IsWindowEnabled(app.lpui->rghwndBtnSplash[2]))) goto LDone;
         fChecked = 1;
         puts("Managed game deletion confirmed, cancelled, or failed through the Games view");
         win32::PostQuitMessage(0);
@@ -2560,17 +2574,17 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
         long long lPlayed;
         memset(szLongName, 'x', sizeof(szLongName) - 1);
         szLongName[sizeof(szLongName) - 1] = 0;
-        if (!win32::IsWindowVisible(hwndTitle) || !pszRoot || !pszSource || !pszCopy || !pszRename || !pszCollision || !pszBaseline ||
+        if (!win32::IsWindowVisible(app.lpui->hwndTitle) || !pszRoot || !pszSource || !pszCopy || !pszRename || !pszCollision || !pszBaseline ||
             (!fDuplicate && !fRename) ||
-            !win32::GetDlgItem(hwndTitle, IDC_LIBRARY_DUPLICATE) || !win32::GetDlgItem(hwndTitle, IDC_LIBRARY_RENAME) ||
+            !win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_DUPLICATE) || !win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_RENAME) ||
             CchSnprintf(szSource, sizeof(szSource), "%s%sGames%s%s", pszRoot, szDirSep, szDirSep, pszSource) <= 0 ||
             CchSnprintf(szCopy, sizeof(szCopy), "%s%sGames%s%s", pszRoot, szDirSep, szDirSep, pszCopy) <= 0 ||
             CchSnprintf(szRenamed, sizeof(szRenamed), "%s%sGames%s%s", pszRoot, szDirSep, szDirSep, pszRename) <= 0 ||
             CchSnprintf(szBaseline, sizeof(szBaseline), "%s%sGames%s%s", pszRoot, szDirSep, szDirSep, pszBaseline) <= 0) goto LDone;
         if (PszCompatEnvironment("STARS_CLIENT_GAME_REJECT")) {
             fExpectGameRenameFailure = 1;
-            fImported = fDuplicate ? FDuplicateLibraryGame(hwndTitle, pszSource, pszCopy) :
-                                     FRenameLibraryGame(hwndTitle, pszSource, pszRename);
+            fImported = fDuplicate ? FDuplicateLibraryGame(app, app.lpui->hwndTitle, pszSource, pszCopy) :
+                                     FRenameLibraryGame(app, app.lpui->hwndTitle, pszSource, pszRename);
             fExpectGameRenameFailure = 0;
             if (fImported) {
                 fprintf(stderr, "Unsafe managed-game action unexpectedly succeeded\n");
@@ -2582,7 +2596,7 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
             win32::PostQuitMessage(0);
             return;
         }
-        if (fDuplicate && !FDuplicateLibraryGame(hwndTitle, pszSource, pszCopy)) goto LDone;
+        if (fDuplicate && !FDuplicateLibraryGame(app, app.lpui->hwndTitle, pszSource, pszCopy)) goto LDone;
         if (fDuplicate) {
             CchSnprintf(szPath, sizeof(szPath), "%s%s%s.xy", szSource, szDirSep, pszSource);
             {
@@ -2602,18 +2616,18 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
                 CchSnprintf(szOther, sizeof(szOther), "%s%sbackup.000%s%s.m1", szCopy, szDirSep, szDirSep, pszCopy);
                 if (!FTestFilesEqual(szPath, szOther)) { fprintf(stderr, "duplicate backup mismatch\n"); goto LDone; }
             }
-            if (FDuplicateLibraryGame(hwndTitle, pszSource, "CON") ||
-                FDuplicateLibraryGame(hwndTitle, pszSource, pszCollision) ||
-                FDuplicateLibraryGame(hwndTitle, pszSource, pszCopy) ||
-                FDuplicateLibraryGame(hwndTitle, pszSource, szLongName)) { fprintf(stderr, "duplicate invalid/collision/path accepted\n"); goto LDone; }
+            if (FDuplicateLibraryGame(app, app.lpui->hwndTitle, pszSource, "CON") ||
+                FDuplicateLibraryGame(app, app.lpui->hwndTitle, pszSource, pszCollision) ||
+                FDuplicateLibraryGame(app, app.lpui->hwndTitle, pszSource, pszCopy) ||
+                FDuplicateLibraryGame(app, app.lpui->hwndTitle, pszSource, szLongName)) { fprintf(stderr, "duplicate invalid/collision/path accepted\n"); goto LDone; }
         }
-        if (fRename && FRenameLibraryGame(hwndTitle, pszSource, pszCollision)) {
+        if (fRename && FRenameLibraryGame(app, app.lpui->hwndTitle, pszSource, pszCollision)) {
             fprintf(stderr, "case-insensitive rename collision accepted\n"); goto LDone;
         }
-        if (fRename && FRenameLibraryGame(hwndTitle, pszSource, szLongName)) {
+        if (fRename && FRenameLibraryGame(app, app.lpui->hwndTitle, pszSource, szLongName)) {
             fprintf(stderr, "overlong rename path accepted\n"); goto LDone;
         }
-        if (fDuplicate && FRenameLibraryGame(hwndTitle, pszCopy, pszSource)) {
+        if (fDuplicate && FRenameLibraryGame(app, app.lpui->hwndTitle, pszCopy, pszSource)) {
             fprintf(stderr, "rename over source accepted\n"); goto LDone;
         }
         CchSnprintf(szPath, sizeof(szPath), "%s%s.library", szCopy, szDirSep);
@@ -2636,7 +2650,7 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
         CchSnprintf(szGameRenameFailTarget, sizeof(szGameRenameFailTarget), "%s", szRenamed);
         fFailGameRenamePublish = 1;
         fExpectGameRenameFailure = 1;
-        if (FRenameLibraryGame(hwndTitle, pszSource, pszRename) || fFailGameRenamePublish) {
+        if (FRenameLibraryGame(app, app.lpui->hwndTitle, pszSource, pszRename) || fFailGameRenamePublish) {
             fExpectGameRenameFailure = 0;
             fprintf(stderr, "rename publication failure was not rolled back\n");
             goto LDone;
@@ -2644,7 +2658,7 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
         fExpectGameRenameFailure = 0;
         CchSnprintf(szPath, sizeof(szPath), "%s%s%s.xy", szSource, szDirSep, pszSource);
         if (!FNativeFileSize(szPath, &cbTestFile) || FNativeDirectoryExists(szRenamed)) goto LDone;
-        if (!FRenameLibraryGame(hwndTitle, pszSource, pszRename)) { fprintf(stderr, "rename failed\n"); goto LDone; }
+        if (!FRenameLibraryGame(app, app.lpui->hwndTitle, pszSource, pszRename)) { fprintf(stderr, "rename failed\n"); goto LDone; }
         CchSnprintf(szPath, sizeof(szPath), "%s%s%s.xy", szRenamed, szDirSep, pszRename);
         {
             char szOther[512];
@@ -2681,23 +2695,23 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
     }
     if (pszImportSource) {
         if (iImportStage == 0) {
-            if (!win32::IsWindowVisible(hwndTitle)) return;
+            if (!win32::IsWindowVisible(app.lpui->hwndTitle)) return;
             iImportStage = 1;
-            gameImportSav = game;
-            idPlayerImportSav = idPlayer;
-            strcpy(szBaseImportSav, szBase);
-            if (!FImportLibraryGame(hwndTitle, pszImportSource)) goto LDone;
-            if (memcmp(&gameImportSav, &game, sizeof(game)) || idPlayerImportSav != idPlayer || strcmp(szBaseImportSav, szBase)) goto LDone;
+            gameImportSav = app.state.game;
+            idPlayerImportSav = app.state.idPlayer;
+            strcpy(szBaseImportSav, app.state.szBase);
+            if (!FImportLibraryGame(app, app.lpui->hwndTitle, pszImportSource)) goto LDone;
+            if (memcmp(&gameImportSav, &app.state.game, sizeof(app.state.game)) || idPlayerImportSav != app.state.idPlayer || strcmp(szBaseImportSav, app.state.szBase)) goto LDone;
             iImportStage = 2;
-            RefreshLibraryGames(hwndTitle);
+            RefreshLibraryGames(app, app.lpui->hwndTitle);
             {
                 int cExpected = PszCompatEnvironment("STARS_CLIENT_IMPORT_EXPECTED_PLAYERS") ?
                     atoi(PszCompatEnvironment("STARS_CLIENT_IMPORT_EXPECTED_PLAYERS")) : 2;
                 int iplrTest;
-                if (ui::SendDlgItemMessage(hwndTitle, IDC_LIBRARY_GAMES, win32::LB_GETCOUNT, 0, 0) != (cExpected != 0) ||
-                    ui::SendDlgItemMessage(hwndTitle, IDC_LIBRARY_PLAYERS, win32::CB_GETCOUNT, 0, 0) != cExpected) goto LDone;
+                if (ui::SendDlgItemMessage(app.lpui->hwndTitle, IDC_LIBRARY_GAMES, win32::LB_GETCOUNT, 0, 0) != (cExpected != 0) ||
+                    ui::SendDlgItemMessage(app.lpui->hwndTitle, IDC_LIBRARY_PLAYERS, win32::CB_GETCOUNT, 0, 0) != cExpected) goto LDone;
                 for (iplrTest = 0; iplrTest < cExpected; iplrTest++)
-                    if (!FClientLibraryPlayerYear(hwndTitle, iplrTest, 2400)) goto LDone;
+                    if (!FClientLibraryPlayerYear(app.lpui->hwndTitle, iplrTest, 2400)) goto LDone;
             }
             fChecked = 1;
             fPassed = 1;
@@ -2706,10 +2720,10 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
             return;
         }
         if (iImportStage == 1) {
-            for (hwnd = win32::GetWindow(hwndTitle, win32::GW_HWNDFIRST); hwnd; hwnd = win32::GetWindow(hwnd, win32::GW_HWNDNEXT)) {
+            for (hwnd = win32::GetWindow(app.lpui->hwndTitle, win32::GW_HWNDFIRST); hwnd; hwnd = win32::GetWindow(hwnd, win32::GW_HWNDNEXT)) {
                 if (!hwnd->fDialog || hwnd->lpfnDlg != LibraryNameDlg) continue;
                 if (!ui::SetWindowText(win32::GetDlgItem(hwnd, IDC_EDIT1), PszCompatEnvironment("STARS_CLIENT_IMPORT_NAME") ? PszCompatEnvironment("STARS_CLIENT_IMPORT_NAME") : "imported-game")) goto LDone;
-                FPushClick(win32::GetDlgItem(hwnd, IDOK));
+                FPushClick(app, win32::GetDlgItem(hwnd, IDOK));
                 return;
             }
         }
@@ -2718,10 +2732,10 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
     if (PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_SOURCE")) {
         pszExpected = PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_EXPECTED");
         if (iImportUpdateStage == 0) {
-            if (!win32::IsWindowVisible(hwndTitle)) return;
+            if (!win32::IsWindowVisible(app.lpui->hwndTitle)) return;
             iImportUpdateStage = 1;
             cAlerts = 0;
-            fImported = FImportLibraryGame(hwndTitle, PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_SOURCE"));
+            fImported = FImportLibraryGame(app, app.lpui->hwndTitle, PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_SOURCE"));
             fPassed = pszExpected && ((!strcmp(pszExpected, "fail") && !fImported && cAlerts > 0) ||
                 ((!strcmp(pszExpected, "identical") || !strcmp(pszExpected, "later") ||
                   !strcmp(pszExpected, "player16") ||
@@ -2732,29 +2746,29 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
                 ((!strcmp(pszExpected, "cancel") || !strcmp(pszExpected, "cancel-conflict")) && !fImported && cAlerts == 0));
             if (fPassed && (!strcmp(pszExpected, "later") || !strcmp(pszExpected, "adjacent"))) {
                 pszYear = !strcmp(pszExpected, "adjacent") ? "2408" : "2425";
-                hwndList = win32::GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
+                hwndList = win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_GAMES);
                 pszTarget = PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_TARGET");
-                RefreshLibraryGames(hwndTitle);
-                fPassed = pszTarget && FSelectClientGameName(hwndTitle, pszTarget) &&
-                    FClientLibraryPlayerYear(hwndTitle, 0, atoi(pszYear)) && FClientLibraryPlayerYear(hwndTitle, 1, 2400);
+                RefreshLibraryGames(app, app.lpui->hwndTitle);
+                fPassed = pszTarget && FSelectClientGameName(app.lpui->hwndTitle, pszTarget) &&
+                    FClientLibraryPlayerYear(app.lpui->hwndTitle, 0, atoi(pszYear)) && FClientLibraryPlayerYear(app.lpui->hwndTitle, 1, 2400);
                 if (!strcmp(pszExpected, "later")) {
-                    fPassed = fPassed && FSelectClientGameName(hwndTitle, "managed-copy") &&
-                        FClientLibraryPlayerYear(hwndTitle, 0, 2408);
+                    fPassed = fPassed && FSelectClientGameName(app.lpui->hwndTitle, "managed-copy") &&
+                        FClientLibraryPlayerYear(app.lpui->hwndTitle, 0, 2408);
                 }
             }
             if (fPassed && !strcmp(pszExpected, "player16")) {
-                RefreshLibraryGames(hwndTitle);
+                RefreshLibraryGames(app, app.lpui->hwndTitle);
                 pszTarget = PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_TARGET");
-                fPassed = pszTarget && FSelectClientGameName(hwndTitle, pszTarget) &&
-                    ui::SendDlgItemMessage(hwndTitle, IDC_LIBRARY_PLAYERS, win32::CB_GETCOUNT, 0, 0) == 3 &&
-                    FClientLibraryPlayerYear(hwndTitle, 15, 2401);
+                fPassed = pszTarget && FSelectClientGameName(app.lpui->hwndTitle, pszTarget) &&
+                    ui::SendDlgItemMessage(app.lpui->hwndTitle, IDC_LIBRARY_PLAYERS, win32::CB_GETCOUNT, 0, 0) == 3 &&
+                    FClientLibraryPlayerYear(app.lpui->hwndTitle, 15, 2401);
             }
             fChecked = 1;
             win32::PostQuitMessage(fPassed ? 0 : 93);
             return;
         }
         if (iImportUpdateStage == 1) {
-            for (hwnd = win32::GetWindow(hwndTitle, win32::GW_HWNDFIRST); hwnd; hwnd = win32::GetWindow(hwnd, win32::GW_HWNDNEXT)) {
+            for (hwnd = win32::GetWindow(app.lpui->hwndTitle, win32::GW_HWNDFIRST); hwnd; hwnd = win32::GetWindow(hwnd, win32::GW_HWNDNEXT)) {
                 if (!hwnd->fDialog || hwnd->lpfnDlg != LibraryTurnTargetDlg) continue;
                 hwndListTarget = win32::GetDlgItem(hwnd, IDC_LIBRARY_TURN_TARGET_LIST);
                 if (win32::IsWindowEnabled(win32::GetDlgItem(hwnd, IDOK))) goto LDone;
@@ -2764,32 +2778,32 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
                     ui::SendMessage(hwndListTarget, win32::LB_GETTEXT, iTarget, (LPARAM)szName);
                     if (pszTarget && !strcmp(pszTarget, szName)) break;
                 }
-                if (iTarget == c) { FPushClick(win32::GetDlgItem(hwnd, IDCANCEL)); return; }
+                if (iTarget == c) { FPushClick(app, win32::GetDlgItem(hwnd, IDCANCEL)); return; }
                 ui::SendMessage(hwndListTarget, win32::LB_SETCURSEL, iTarget, 0);
                 ui::SendMessage(hwnd, win32::WM_COMMAND, win32::MAKEWPARAM(IDC_LIBRARY_TURN_TARGET_LIST, win32::LBN_SELCHANGE),
                             (LPARAM)hwndListTarget);
-                FPushClick(win32::GetDlgItem(hwnd, !strcmp(pszExpected, "cancel") ? IDCANCEL : IDOK));
+                FPushClick(app, win32::GetDlgItem(hwnd, !strcmp(pszExpected, "cancel") ? IDCANCEL : IDOK));
                 return;
             }
-            for (hwnd = win32::GetWindow(hwndTitle, win32::GW_HWNDFIRST); hwnd; hwnd = win32::GetWindow(hwnd, win32::GW_HWNDNEXT)) {
+            for (hwnd = win32::GetWindow(app.lpui->hwndTitle, win32::GW_HWNDFIRST); hwnd; hwnd = win32::GetWindow(hwnd, win32::GW_HWNDNEXT)) {
                 if (!hwnd->fDialog || hwnd->lpfnDlg != LibraryTurnConflictDlg) continue;
                 if (pszExpected && !strcmp(pszExpected, "cancel-conflict"))
-                    FPushClick(win32::GetDlgItem(hwnd, IDCANCEL));
+                    FPushClick(app, win32::GetDlgItem(hwnd, IDCANCEL));
                 else if (pszExpected && !strcmp(pszExpected, "replace-conflict"))
-                    FPushClick(win32::GetDlgItem(hwnd, IDC_LIBRARY_TURN_REPLACE));
+                    FPushClick(app, win32::GetDlgItem(hwnd, IDC_LIBRARY_TURN_REPLACE));
                 else if (pszExpected && !strcmp(pszExpected, "fail-conflict"))
-                    FPushClick(win32::GetDlgItem(hwnd, IDC_LIBRARY_TURN_REPLACE));
+                    FPushClick(app, win32::GetDlgItem(hwnd, IDC_LIBRARY_TURN_REPLACE));
                 else if (pszExpected && !strcmp(pszExpected, "separate-conflict"))
-                    FPushClick(win32::GetDlgItem(hwnd, IDC_LIBRARY_TURN_SEPARATE));
+                    FPushClick(app, win32::GetDlgItem(hwnd, IDC_LIBRARY_TURN_SEPARATE));
                 else goto LDone;
                 return;
             }
             if (pszExpected && !strcmp(pszExpected, "separate-conflict")) {
-                for (hwnd = win32::GetWindow(hwndTitle, win32::GW_HWNDFIRST); hwnd; hwnd = win32::GetWindow(hwnd, win32::GW_HWNDNEXT)) {
+                for (hwnd = win32::GetWindow(app.lpui->hwndTitle, win32::GW_HWNDFIRST); hwnd; hwnd = win32::GetWindow(hwnd, win32::GW_HWNDNEXT)) {
                     if (!hwnd->fDialog || hwnd->lpfnDlg != LibraryNameDlg) continue;
                     pszCopyName = PszCompatEnvironment("STARS_CLIENT_IMPORT_COPY_NAME");
                     if (pszCopyName) ui::SetWindowText(win32::GetDlgItem(hwnd, IDC_EDIT1), pszCopyName);
-                    FPushClick(win32::GetDlgItem(hwnd, IDOK));
+                    FPushClick(app, win32::GetDlgItem(hwnd, IDOK));
                     return;
                 }
             }
@@ -2803,30 +2817,30 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
         if (iStage == 0) {
             const char *pszPlayer = PszCompatEnvironment("STARS_CLIENT_LIBRARY_OPEN_PLAYER");
             int iWanted = pszPlayer ? atoi(pszPlayer) - 1 : -1;
-            if (!win32::IsWindowVisible(hwndTitle) || !FSelectClientGameName(hwndTitle, pszName)) goto LDone;
-            hwndList = win32::GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
+            if (!win32::IsWindowVisible(app.lpui->hwndTitle) || !FSelectClientGameName(app.lpui->hwndTitle, pszName)) goto LDone;
+            hwndList = win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_GAMES);
             iGame = ui::SendMessage(hwndList, win32::LB_GETCURSEL, 0, 0);
-            if (iWanted >= 0 && !FSelectClientLibraryPlayer(hwndTitle, iWanted)) goto LDone;
+            if (iWanted >= 0 && !FSelectClientLibraryPlayer(app.lpui->hwndTitle, iWanted)) goto LDone;
             if (PszCompatEnvironment("STARS_DEBUG_LIBRARY_STARTUP"))
                 fprintf(stderr, "[DEBUG-library-startup] Opening library row %lld: %s\n", (long long)iGame, pszName);
             fChecked = 1;
             iStage = 1;
             if (PszCompatEnvironment("STARS_CLIENT_LIBRARY_DOUBLECLICK")) {
-                if (!win32::PostMessageA(hwndTitle, win32::WM_COMMAND, win32::MAKEWPARAM(IDC_LIBRARY_GAMES, win32::LBN_DBLCLK),
+                if (!win32::PostMessageA(app.lpui->hwndTitle, win32::WM_COMMAND, win32::MAKEWPARAM(IDC_LIBRARY_GAMES, win32::LBN_DBLCLK),
                                   (LPARAM)hwndList)) goto LDone;
-            } else if (!FPushClick(rghwndBtnSplash[1])) goto LDone;
+            } else if (!FPushClick(app, app.lpui->rghwndBtnSplash[1])) goto LDone;
             return;
         }
-        if (PszCompatEnvironment("STARS_CLIENT_SWITCH_CHOICE") && iStage == 20 && win32::IsWindow(hwndTitle)) {
+        if (PszCompatEnvironment("STARS_CLIENT_SWITCH_CHOICE") && iStage == 20 && win32::IsWindow(app.lpui->hwndTitle)) {
             const char *pszName = PszCompatEnvironment("STARS_CLIENT_LIBRARY_OPEN");
-            if (!FSelectClientGameName(hwndTitle, pszName) || !FSelectClientLibraryPlayer(hwndTitle, 0)) goto LDone;
+            if (!FSelectClientGameName(app.lpui->hwndTitle, pszName) || !FSelectClientLibraryPlayer(app.lpui->hwndTitle, 0)) goto LDone;
             iStage = 21;
-            if (!FPushClick(rghwndBtnSplash[1])) goto LDone;
+            if (!FPushClick(app, app.lpui->rghwndBtnSplash[1])) goto LDone;
             return;
         }
-        if (win32::IsWindow(hwndTitle)) {
+        if (win32::IsWindow(app.lpui->hwndTitle)) {
             if (PszCompatEnvironment("STARS_CLIENT_LIBRARY_DOUBLECLICK")) {
-                for (hwndDialog = win32::GetWindow(hwndTitle, win32::GW_HWNDFIRST); hwndDialog;
+                for (hwndDialog = win32::GetWindow(app.lpui->hwndTitle, win32::GW_HWNDFIRST); hwndDialog;
                      hwndDialog = win32::GetWindow(hwndDialog, win32::GW_HWNDNEXT)) {
                     if (!hwndDialog->fDialog) continue;
                     fprintf(stderr, "Game double-click unexpectedly opened a dialog\n");
@@ -2836,21 +2850,21 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
             }
             return;
         }
-        if (!lpPlanets || game.lid == 0 || idPlayer == iplrNone || !win32::IsWindowVisible(hwndFrame)) goto LDone;
+        if (!app.state.lpPlanets || app.state.game.lid == 0 || app.state.idPlayer == iplrNone || !win32::IsWindowVisible(app.lpui->hwndFrame)) goto LDone;
         if (PszCompatEnvironment("STARS_CLIENT_SWITCH_CHOICE") && iStage == 21) {
             const char *pszExpected = PszCompatEnvironment("STARS_CLIENT_EXPECT_SWITCHED_PLAYER");
-            if (pszExpected && idPlayer != atoi(pszExpected) - 1) goto LDone;
+            if (pszExpected && app.state.idPlayer != atoi(pszExpected) - 1) goto LDone;
         } else if (PszCompatEnvironment("STARS_CLIENT_EXPECT_PLAYER") &&
-                   idPlayer != atoi(PszCompatEnvironment("STARS_CLIENT_EXPECT_PLAYER")) - 1) goto LDone;
+                   app.state.idPlayer != atoi(PszCompatEnvironment("STARS_CLIENT_EXPECT_PLAYER")) - 1) goto LDone;
         if (PszCompatEnvironment("STARS_CLIENT_SWITCH_CANCEL_TEST")) {
-            int16_t idPlayerBefore = idPlayer;
-            uint16_t turnBefore = game.turn;
+            int16_t idPlayerBefore = app.state.idPlayer;
+            uint16_t turnBefore = app.state.game.turn;
             long long lPlayedBefore, lPlayedAfter;
-            if (!FTestLibraryTimestamp(&lPlayedBefore)) goto LDone;
-            game.fDirty = 1;
-            ui::SendMessage(hwndFrame, win32::WM_COMMAND, IDM_FILE_RETURN_TO_TITLE, 0);
-            if (!fSwitchCancelSent || win32::IsWindow(hwndTitle) || !lpPlanets || idPlayer != idPlayerBefore ||
-                game.turn != turnBefore || !game.fDirty || !FTestLibraryTimestamp(&lPlayedAfter) ||
+            if (!FTestLibraryTimestamp(app, &lPlayedBefore)) goto LDone;
+            app.state.game.fDirty = 1;
+            ui::SendMessage(app.lpui->hwndFrame, win32::WM_COMMAND, IDM_FILE_RETURN_TO_TITLE, 0);
+            if (!fSwitchCancelSent || win32::IsWindow(app.lpui->hwndTitle) || !app.state.lpPlanets || app.state.idPlayer != idPlayerBefore ||
+                app.state.game.turn != turnBefore || !app.state.game.fDirty || !FTestLibraryTimestamp(app, &lPlayedAfter) ||
                 lPlayedAfter != lPlayedBefore) goto LDone;
             fPassed = 1;
             puts("Canceling a player switch keeps the active player turn loaded");
@@ -2864,35 +2878,35 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
             int fSubmit = !strcmp(pszChoice, "submit");
             if (iStage != 21) {
                 char szBlocked[256];
-                int16_t idPlayerBefore = idPlayer;
-                int16_t iResearch = (rgplr[idPlayer].iTechNow() + 1) % 6;
-                PLANET *lpPlanetsBefore = lpPlanets;
+                int16_t idPlayerBefore = app.state.idPlayer;
+                int16_t iResearch = (app.state.rgplr[app.state.idPlayer].iTechNow() + 1) % 6;
+                PLANET *lpPlanetsBefore = app.state.lpPlanets;
                 if (pszFailure) {
-                    if (!FRunWorkflow(1, iResearch)) goto LDone;
-                    SetSzWorkFromDt(!strcmp(pszFailure, "orders") ? dtLog : dtHist, idPlayer);
-                    strcpy(szBlocked, szWork);
+                    if (!FRunWorkflow(app, 1, iResearch)) goto LDone;
+                    SetSzWorkFromDt(app, !strcmp(pszFailure, "orders") ? dtLog : dtHist, app.state.idPlayer);
+                    strcpy(szBlocked, app.state.szWork);
                     if (!SDL_CreateDirectory(szBlocked)) goto LDone;
-                    game.fDirty = 1;
-                    gd.fSubmit = 0;
-                    ui::SendMessage(hwndFrame, win32::WM_COMMAND, IDM_FILE_RETURN_TO_TITLE, 0);
-                    if (win32::IsWindow(hwndTitle) || lpPlanets != lpPlanetsBefore || idPlayer != idPlayerBefore ||
-                        !game.fDirty || gd.fSubmit || rgplr[idPlayer].iTechNow() != iResearch || cAlerts != 2)
+                    app.state.game.fDirty = 1;
+                    app.state.gd.fSubmit = 0;
+                    ui::SendMessage(app.lpui->hwndFrame, win32::WM_COMMAND, IDM_FILE_RETURN_TO_TITLE, 0);
+                    if (win32::IsWindow(app.lpui->hwndTitle) || app.state.lpPlanets != lpPlanetsBefore || app.state.idPlayer != idPlayerBefore ||
+                        !app.state.game.fDirty || app.state.gd.fSubmit || app.state.rgplr[app.state.idPlayer].iTechNow() != iResearch || cAlerts != 2)
                         goto LDone;
                     if (RemoveNativePath(szBlocked) != 0) goto LDone;
                     puts("Failed save preserves the active player and pending research; retrying the save");
                 }
                 cSwitchLogWrites = 0;
                 cSwitchHistoryWrites = 0;
-                game.fDirty = 1;
-                gd.fSubmit = 0;
-                ui::SendMessage(hwndFrame, win32::WM_COMMAND, IDM_FILE_RETURN_TO_TITLE, 0);
-                if (!win32::IsWindow(hwndTitle) || idPlayer != iplrNone || game.fDirty ||
-                    cSwitchLogWrites != fSave || cSwitchHistoryWrites != fSave || gd.fSubmit != fSubmit)
+                app.state.game.fDirty = 1;
+                app.state.gd.fSubmit = 0;
+                ui::SendMessage(app.lpui->hwndFrame, win32::WM_COMMAND, IDM_FILE_RETURN_TO_TITLE, 0);
+                if (!win32::IsWindow(app.lpui->hwndTitle) || app.state.idPlayer != iplrNone || app.state.game.fDirty ||
+                    cSwitchLogWrites != fSave || cSwitchHistoryWrites != fSave || app.state.gd.fSubmit != fSubmit)
                     goto LDone;
                 iStage = 20;
                 return;
             }
-            if (!lpPlanets || idPlayer != 0) goto LDone;
+            if (!app.state.lpPlanets || app.state.idPlayer != 0) goto LDone;
             fPassed = 1;
             printf("Switch prompt %s %s log and history; switched to Player 1\n", pszChoice,
                    fSave ? "saved" : "discarded");
@@ -2905,84 +2919,84 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
         return;
     }
     if (pszNewGame) {
-        if (!FCheckNewGameWorkflow()) goto LDone;
+        if (!FCheckNewGameWorkflow(app)) goto LDone;
         return;
     }
     if (iStage == 10) return;
-    lpFrame = LpCompatWindow(hwndFrame);
-    lpTitle = LpCompatWindow(hwndTitle);
-    if (!win32::GetClientRect(hwndFrame, &rcFrame) || rcFrame.right < 320 || rcFrame.bottom < 240) goto LDone;
+    lpFrame = LpCompatWindow(app.lpui->hwndFrame);
+    lpTitle = LpCompatWindow(app.lpui->hwndTitle);
+    if (!win32::GetClientRect(app.lpui->hwndFrame, &rcFrame) || rcFrame.right < 320 || rcFrame.bottom < 240) goto LDone;
     if (iStage == 5) {
         // File loading pumps messages while building the client; check only
         // after the title's Continue handler has finished replacing it.
-        if (win32::IsWindow(hwndTitle)) return;
-        if (win32::IsWindow(hwndTitle) || !win32::IsWindowVisible(hwndFrame) || !win32::IsWindow(hwndScanner) ||
-            !lpPlanets || game.lid == 0 || idPlayer == iplrNone) goto LDone;
-        if (vfs.dx != rcFrame.right || vfs.dy != rcFrame.bottom ||
-            !win32::GetClientRect(hwndScanner, &rcScanner) || rcScanner.right < 100 || rcScanner.bottom < 100) goto LDone;
-        for (i = 0; i < 6; i++) if (!rgtilePlanet[i].fPopped) goto LDone;
-        for (i = 0; i < 7; i++) if (!rgtileShip[i].fPopped) goto LDone;
-        ui::UpdateWindow(hwndFrame);
-        for (hwnd = win32::GetWindow(hwndFrame, win32::GW_CHILD); hwnd; hwnd = win32::GetWindow(hwnd, win32::GW_HWNDNEXT)) ui::UpdateWindow(hwnd);
-        if (!FCompatPresent(hwndFrame) || (pszGameCapture && !SDL_SaveBMP(lpFrame->lpComposite.get(), pszGameCapture))) goto LDone;
-        ui::SendMessage(hwndFrame, win32::WM_COMMAND, IDM_VIEW_BROWSER_TOGGLE, 0);
+        if (win32::IsWindow(app.lpui->hwndTitle)) return;
+        if (win32::IsWindow(app.lpui->hwndTitle) || !win32::IsWindowVisible(app.lpui->hwndFrame) || !win32::IsWindow(app.lpui->hwndScanner) ||
+            !app.state.lpPlanets || app.state.game.lid == 0 || app.state.idPlayer == iplrNone) goto LDone;
+        if (app.lpui->vfs.dx != rcFrame.right || app.lpui->vfs.dy != rcFrame.bottom ||
+            !win32::GetClientRect(app.lpui->hwndScanner, &rcScanner) || rcScanner.right < 100 || rcScanner.bottom < 100) goto LDone;
+        for (i = 0; i < 6; i++) if (!app.lpui->rgtilePlanet[i].fPopped) goto LDone;
+        for (i = 0; i < 7; i++) if (!app.lpui->rgtileShip[i].fPopped) goto LDone;
+        ui::UpdateWindow(app.lpui->hwndFrame);
+        for (hwnd = win32::GetWindow(app.lpui->hwndFrame, win32::GW_CHILD); hwnd; hwnd = win32::GetWindow(hwnd, win32::GW_HWNDNEXT)) ui::UpdateWindow(hwnd);
+        if (!FCompatPresent(app.lpui->hwndFrame) || (pszGameCapture && !SDL_SaveBMP(lpFrame->lpComposite.get(), pszGameCapture))) goto LDone;
+        ui::SendMessage(app.lpui->hwndFrame, win32::WM_COMMAND, IDM_VIEW_BROWSER_TOGGLE, 0);
         iStage = 6;
         return;
     }
     if (iStage == 6 || iStage == 8) {
-        if (!win32::IsWindowVisible(hwndBrowser) || !win32::IsWindow(hwndBrowserChild)) goto LDone;
-        ui::UpdateWindow(hwndBrowser);
-        ui::UpdateWindow(hwndBrowserChild);
-        if (!FCompatPresent(hwndBrowser)) goto LDone;
-        hwndBrowserPrevious = hwndBrowser;
+        if (!win32::IsWindowVisible(app.lpui->hwndBrowser) || !win32::IsWindow(app.lpui->hwndBrowserChild)) goto LDone;
+        ui::UpdateWindow(app.lpui->hwndBrowser);
+        ui::UpdateWindow(app.lpui->hwndBrowserChild);
+        if (!FCompatPresent(app.lpui->hwndBrowser)) goto LDone;
+        hwndBrowserPrevious = app.lpui->hwndBrowser;
         if (iStage == 6) {
-            if (!FPushClick(win32::GetDlgItem(hwndBrowser, IDCANCEL))) goto LDone;
+            if (!FPushClick(app, win32::GetDlgItem(app.lpui->hwndBrowser, IDCANCEL))) goto LDone;
         } else {
             event.type = SDL_EVENT_WINDOW_CLOSE_REQUESTED;
-            event.window.windowID = hwndBrowser->id;
+            event.window.windowID = app.lpui->hwndBrowser->id;
             if (!SDL_PushEvent(&event)) goto LDone;
         }
         iStage++;
         return;
     }
     if (iStage == 7 || iStage == 9) {
-        if (win32::IsWindow(hwndBrowserPrevious) || hwndBrowser || !win32::IsWindowEnabled(hwndFrame)) goto LDone;
+        if (win32::IsWindow(hwndBrowserPrevious) || app.lpui->hwndBrowser || !win32::IsWindowEnabled(app.lpui->hwndFrame)) goto LDone;
         if (iStage == 7) {
-            ui::SendMessage(hwndFrame, win32::WM_COMMAND, IDM_VIEW_BROWSER_TOGGLE, 0);
+            ui::SendMessage(app.lpui->hwndFrame, win32::WM_COMMAND, IDM_VIEW_BROWSER_TOGGLE, 0);
             iStage = 8;
         } else {
             // These checks may pump an already queued timer message.
             iStage = 10;
             win32::KillTimer(NULL, id);
             fprintf(stderr, "Starting loaded-game inspection checks\n");
-            if (!FCheckToolbarPlacement()) { fprintf(stderr, "Toolbar check failed\n"); goto LDone; }
-            if (!FCheckScannerDrag()) { fprintf(stderr, "Scanner drag check failed\n"); goto LDone; }
+            if (!FCheckToolbarPlacement(app)) { fprintf(stderr, "Toolbar check failed\n"); goto LDone; }
+            if (!FCheckScannerDrag(app)) { fprintf(stderr, "Scanner drag check failed\n"); goto LDone; }
             fprintf(stderr, "Starting map inspection check\n");
-            if (!FCheckMapInspection()) { fprintf(stderr, "Map inspection check failed\n"); goto LDone; }
+            if (!FCheckMapInspection(app)) { fprintf(stderr, "Map inspection check failed\n"); goto LDone; }
             fprintf(stderr, "Starting report check\n");
-            if (!FCheckReportScrollbars()) { fprintf(stderr, "Report scroll check failed\n"); goto LDone; }
-            if (!FCheckGameplayWorkflows()) goto LDone;
+            if (!FCheckReportScrollbars(app)) { fprintf(stderr, "Report scroll check failed\n"); goto LDone; }
+            if (!FCheckGameplayWorkflows(app)) goto LDone;
             fPassed = 1;
             win32::PostQuitMessage(0);
         }
         return;
     }
-    if (!lpFrame || !lpTitle || lpFrame == lpTitle || !win32::IsWindowVisible(hwndTitle) ||
+    if (!lpFrame || !lpTitle || lpFrame == lpTitle || !win32::IsWindowVisible(app.lpui->hwndTitle) ||
         !lpFrame->lpWindow.get() || !lpTitle->lpWindow.get() || lpFrame->id == lpTitle->id ||
         !lpTitle->lpRenderer.get() || !lpTitle->lpCanvas.get() ||
         (SDL_GetWindowFlags(lpTitle->lpWindow.get()) & (SDL_WINDOW_FULLSCREEN | SDL_WINDOW_BORDERLESS)) ||
-        (win32::GetWindowLongPtrA(hwndTitle, win32::GWL_STYLE) & win32::WS_CAPTION) != win32::WS_CAPTION ||
-        !win32::GetClientRect(hwndTitle, &rcScanner) || rcScanner.right < 600 || rcScanner.bottom < 400 ||
+        (win32::GetWindowLongPtrA(app.lpui->hwndTitle, win32::GWL_STYLE) & win32::WS_CAPTION) != win32::WS_CAPTION ||
+        !win32::GetClientRect(app.lpui->hwndTitle, &rcScanner) || rcScanner.right < 600 || rcScanner.bottom < 400 ||
         rcScanner.right > 800 || rcScanner.bottom > 600) goto LDone;
     if (iStage == 1) {
-        for (hwndWizard = win32::GetWindow(hwndTitle, win32::GW_HWNDFIRST); hwndWizard; hwndWizard = win32::GetWindow(hwndWizard, win32::GW_HWNDNEXT)) {
-            if (hwndWizard->fDialog && hwndWizard->fModal && hwndWizard->hwndOwner == hwndTitle) break;
+        for (hwndWizard = win32::GetWindow(app.lpui->hwndTitle, win32::GW_HWNDFIRST); hwndWizard; hwndWizard = win32::GetWindow(hwndWizard, win32::GW_HWNDNEXT)) {
+            if (hwndWizard->fDialog && hwndWizard->fModal && hwndWizard->hwndOwner == app.lpui->hwndTitle) break;
         }
         if (!hwndWizard) {
             if (++cWait < 20) return;
             goto LDone;
         }
-        if (!win32::IsWindowVisible(hwndWizard) || win32::IsWindowEnabled(hwndTitle) ||
+        if (!win32::IsWindowVisible(hwndWizard) || win32::IsWindowEnabled(app.lpui->hwndTitle) ||
             (strcmp(SDL_GetCurrentVideoDriver(), "dummy") != 0 &&
              SDL_GetWindowParent(hwndWizard->lpWindow.get()) != lpTitle->lpWindow.get())) goto LDone;
         ui::UpdateWindow(hwndWizard);
@@ -2991,10 +3005,10 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
             !SDL_SaveBMP(hwndWizard->lpComposite.get(), pszWizardCapture))) goto LDone;
         if (pszRaceCapture) {
             if (hwndWizard->lpfnDlg == NewGameDlg) {
-                if (!FPushClick(win32::GetDlgItem(hwndWizard, IDC_NEXT))) goto LDone;
+                if (!FPushClick(app, win32::GetDlgItem(hwndWizard, IDC_NEXT))) goto LDone;
                 return;
             }
-            if (hwndWizard->lpfnDlg != NewGameDlg2 || !FChooseRosterAction(hwndWizard, 0, 2)) goto LDone;
+            if (hwndWizard->lpfnDlg != NewGameDlg2 || !FChooseRosterAction(app, hwndWizard, 0, 2)) goto LDone;
             iStage = 3;
             cWait = 0;
             return;
@@ -3013,7 +3027,7 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
         return;
     }
     if (iStage == 3) {
-        for (hwndRace = win32::GetWindow(hwndTitle, win32::GW_HWNDFIRST); hwndRace; hwndRace = win32::GetWindow(hwndRace, win32::GW_HWNDNEXT)) {
+        for (hwndRace = win32::GetWindow(app.lpui->hwndTitle, win32::GW_HWNDFIRST); hwndRace; hwndRace = win32::GetWindow(hwndRace, win32::GW_HWNDNEXT)) {
             if (hwndRace->fDialog && hwndRace->fModal && hwndRace->hwndOwner == hwndWizard &&
                 hwndRace->lpfnDlg == rglpfnRace[iRacePage]) break;
         }
@@ -3029,19 +3043,19 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
         hwndRacePrevious = hwndRace;
         if (iRacePage == 3 && (!fHabPainted || !SDL_SaveBMP(hwndRace->lpComposite.get(), pszRaceCapture))) goto LDone;
         if (iRacePage == 5 && !fRaceBack) {
-            if (!FPushClick(win32::GetDlgItem(hwndRace, IDC_BACK))) goto LDone;
+            if (!FPushClick(app, win32::GetDlgItem(hwndRace, IDC_BACK))) goto LDone;
             fRaceBack = 1;
             iRacePage--;
             cWait = 0;
             return;
         }
         if (iRacePage < 5) {
-            if (!FPushClick(win32::GetDlgItem(hwndRace, IDC_NEXT))) goto LDone;
+            if (!FPushClick(app, win32::GetDlgItem(hwndRace, IDC_NEXT))) goto LDone;
             iRacePage++;
             cWait = 0;
             return;
         }
-        if (!FPushClick(win32::GetDlgItem(hwndRace, IDCANCEL))) goto LDone;
+        if (!FPushClick(app, win32::GetDlgItem(hwndRace, IDCANCEL))) goto LDone;
         iStage = 4;
         cWait = 0;
         return;
@@ -3052,7 +3066,7 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
             goto LDone;
         }
         if (SDL_GetWindowFromID(idRaceWindow) || !win32::IsWindowEnabled(hwndWizard) ||
-            !FPushClick(win32::GetDlgItem(hwndWizard, IDCANCEL))) goto LDone;
+            !FPushClick(app, win32::GetDlgItem(hwndWizard, IDCANCEL))) goto LDone;
         iStage = 2;
         cWait = 0;
         return;
@@ -3062,7 +3076,7 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
             if (++cWait < 20) return;
             goto LDone;
         }
-        if (!win32::IsWindowEnabled(hwndTitle)) goto LDone;
+        if (!win32::IsWindowEnabled(app.lpui->hwndTitle)) goto LDone;
         win32::KillTimer(NULL, id);
         fPassed = 1;
         event.type = SDL_EVENT_WINDOW_CLOSE_REQUESTED;
@@ -3071,11 +3085,11 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
         goto LDone;
     }
     fChecked = 1;
-    if (!win32::IsWindowVisible(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_TUTORIAL))) goto LDone;
-    ui::UpdateWindow(hwndTitle);
+    if (!win32::IsWindowVisible(win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_TUTORIAL))) goto LDone;
+    ui::UpdateWindow(app.lpui->hwndTitle);
     for (iButton = 0; iButton < 4; iButton++) {
-        if (!win32::IsWindow(rghwndBtnSplash[iButton]) || !win32::IsWindowVisible(rghwndBtnSplash[iButton])) goto LDone;
-        ui::UpdateWindow(rghwndBtnSplash[iButton]);
+        if (!win32::IsWindow(app.lpui->rghwndBtnSplash[iButton]) || !win32::IsWindowVisible(app.lpui->rghwndBtnSplash[iButton])) goto LDone;
+        ui::UpdateWindow(app.lpui->rghwndBtnSplash[iButton]);
     }
     rgb = (BYTE *)lpTitle->lpCanvas->pixels;
     cb = (size_t)lpTitle->lpCanvas->pitch * lpTitle->lpCanvas->h;
@@ -3091,9 +3105,9 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
         const char *pszGame = PszCompatEnvironment("STARS_CLIENT_EXPECT_CONTINUE_GAME");
         const char *pszYear = PszCompatEnvironment("STARS_CLIENT_EXPECT_CONTINUE_YEAR");
         char szPlayer[32];
-        win32::GetWindowTextA(rghwndBtnSplash[2], szContinue, sizeof(szContinue));
-        if (strcmp(szContinue, PszGetCompressedString(idsContinueGame))) goto LDone;
-        win32::GetDlgItemTextA(hwndTitle, IDC_LIBRARY_CONTINUE_DETAILS, szContinue, sizeof(szContinue));
+        win32::GetWindowTextA(app.lpui->rghwndBtnSplash[2], szContinue, sizeof(szContinue));
+        if (strcmp(szContinue, PszGetCompressedString(app, idsContinueGame))) goto LDone;
+        win32::GetDlgItemTextA(app.lpui->hwndTitle, IDC_LIBRARY_CONTINUE_DETAILS, szContinue, sizeof(szContinue));
         if (pszGame ? !strstr(szContinue, pszGame) : !strstr(szContinue, "Continue: managed-copy")) goto LDone;
         CchSnprintf(szPlayer, sizeof(szPlayer), "Player %s",
                     PszCompatEnvironment("STARS_CLIENT_EXPECT_PLAYER") ? PszCompatEnvironment("STARS_CLIENT_EXPECT_PLAYER") : "2");
@@ -3105,7 +3119,7 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
         }
     }
     if (pszContinue && PszCompatEnvironment("STARS_CLIENT_EXPECT_CONTINUE_DISABLED")) {
-        if (win32::IsWindowEnabled(rghwndBtnSplash[2])) goto LDone;
+        if (win32::IsWindowEnabled(app.lpui->rghwndBtnSplash[2])) goto LDone;
         fPassed = 1;
         puts("Continue is disabled when the managed game has no available player turns");
         win32::PostQuitMessage(0);
@@ -3113,27 +3127,27 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
     }
     if (pszContinue && PszCompatEnvironment("STARS_CLIENT_EXPECT_SELECTOR")) {
         char szLabel[256];
-        HWND hwndList = win32::GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
-        if (!win32::IsWindowEnabled(rghwndBtnSplash[2])) goto LDone;
-        win32::GetDlgItemTextA(hwndTitle, IDC_LIBRARY_CONTINUE_DETAILS, szLabel, sizeof(szLabel));
+        HWND hwndList = win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_GAMES);
+        if (!win32::IsWindowEnabled(app.lpui->rghwndBtnSplash[2])) goto LDone;
+        win32::GetDlgItemTextA(app.lpui->hwndTitle, IDC_LIBRARY_CONTINUE_DETAILS, szLabel, sizeof(szLabel));
         if (!strstr(szLabel, "Choose Player")) goto LDone;
         if (iStage != 30) {
             iStage = 30;
-            if (!FPushClick(rghwndBtnSplash[2])) goto LDone;
+            if (!FPushClick(app, app.lpui->rghwndBtnSplash[2])) goto LDone;
             return;
         }
         if (!hwndList || ui::SendMessage(hwndList, win32::LB_GETTEXT,
             ui::SendMessage(hwndList, win32::LB_GETCURSEL, 0, 0), (LPARAM)szLabel) == win32::LB_ERR ||
-            strcmp(szLabel, "managed-copy") || !win32::IsWindow(hwndTitle) ||
-            win32::GetFocus() != win32::GetDlgItem(hwndTitle, IDC_LIBRARY_PLAYERS) ||
-            ui::SendDlgItemMessage(hwndTitle, IDC_LIBRARY_PLAYERS, win32::CB_GETCURSEL, 0, 0) != win32::CB_ERR ||
-            win32::IsWindowEnabled(rghwndBtnSplash[1])) goto LDone;
+            strcmp(szLabel, "managed-copy") || !win32::IsWindow(app.lpui->hwndTitle) ||
+            win32::GetFocus() != win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_PLAYERS) ||
+            ui::SendDlgItemMessage(app.lpui->hwndTitle, IDC_LIBRARY_PLAYERS, win32::CB_GETCURSEL, 0, 0) != win32::CB_ERR ||
+            win32::IsWindowEnabled(app.lpui->rghwndBtnSplash[1])) goto LDone;
         fPassed = 1;
         puts("Continue selects the managed game when its remembered player is unavailable");
         win32::PostQuitMessage(0);
         return;
     }
-    if (!FPushClick(rghwndBtnSplash[pszContinue ? 2 : 0])) goto LDone;
+    if (!FPushClick(app, app.lpui->rghwndBtnSplash[pszContinue ? 2 : 0])) goto LDone;
     iStage = pszContinue ? 5 : 1;
     return;
 LDone:
@@ -3147,14 +3161,21 @@ LDone:
     }
 }
 
-int16_t StarsTest_InitInstance(int16_t nCmdShow) {
-    int16_t fResult = InitInstance(nCmdShow);
+int16_t StarsTest_InitInstance(APPSESSION &app, int16_t nCmdShow) {
+    int16_t fResult = InitInstance(app, nCmdShow);
     fInitComplete = 1;
     if (fResult) idTimer = win32::SetTimer(NULL, 0, 250, CheckStartup);
     return fResult && idTimer ? fResult : 0;
 }
 
 int main(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+
     char szCommand[256] = "";
     int nResult;
     ALERTIO io_alertio;
@@ -3206,7 +3227,7 @@ int main(void) {
         !win32::WritePrivateProfileStringA("Windows", "ShipTiles", "AFDE*BJI", "StarsUtf8.ini"))) return 1;
     setvbuf(stdout, NULL, _IONBF, 0);
     nResult = ui::WinMain(win32::GetModuleHandleA(NULL), NULL, szCommand, win32::SW_SHOWNORMAL);
-    if (win32::IsWindow(hwndTitle) && !pszImportSource && !PszCompatEnvironment("STARS_CLIENT_RACE_LIBRARY_TEST") &&
+    if (win32::IsWindow(app.lpui->hwndTitle) && !pszImportSource && !PszCompatEnvironment("STARS_CLIENT_RACE_LIBRARY_TEST") &&
         !PszCompatEnvironment("STARS_CLIENT_RECENT_STARTUP") && !PszCompatEnvironment("STARS_CLIENT_RACE_NAME_CANCEL") &&
         !PszCompatEnvironment("STARS_CLIENT_RACE_VERSION_TEST") &&
         !PszCompatEnvironment("STARS_CLIENT_EXTERNAL_OPEN_GAME") &&
