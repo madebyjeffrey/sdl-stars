@@ -1,6 +1,5 @@
 #ifndef STARS_NATIVE_H
 #define STARS_NATIVE_H
-#include "test_impl.h"
 
 // Helpers the Win32 build needs where Stars' Win16 types and behavior differ
 // from Win32. See docs/NATIVE-PORT.md.
@@ -161,8 +160,5 @@ int     CchSprintf(char *sz, const char *szFormat, ...);
 int     CchSnprintf(char *psz, size_t cb, const char *pszFormat, ...);
 int32_t LMulDiv(int32_t lNumber, int32_t lNumerator, int32_t lDenominator);
 
-decltype(RemoveNativeFile) STARS_TEST_IMPL(RemoveNativeFile);
-decltype(ReplaceNativeFile) STARS_TEST_IMPL(ReplaceNativeFile);
-decltype(RenameNativeFile) STARS_TEST_IMPL(RenameNativeFile);
 
 #endif

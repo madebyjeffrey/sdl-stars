@@ -1,5 +1,7 @@
 /* Legacy printer escapes spool the same GDI raster canvas to atomic PDF output. */
 #include "internal.h"
+#include "external_io.h"
+#include "time_io.h"
 #include "ownership.h"
 #include <cairo-pdf.h>
 #include <errno.h>
@@ -207,9 +209,9 @@ static BOOL FSubmitPrint(COMPATPRINT *lp) {
     NATIVEOWNER<SDL_Process, SDL_DestroyProcess> lpprocessOwner(SDL_CreateProcess(rgArgs, false));
     lpProcess = lpprocessOwner.get();
     if (!lpProcess) return FALSE;
-    ticks = SDL_GetTicks();
+    ticks = CompatTimeIO().pfnGetTicks();
     while (!SDL_WaitProcess(lpProcess, false, &code)) {
-        if (SDL_GetTicks() - ticks >= 30000) { SDL_KillProcess(lpProcess, true); SDL_WaitProcess(lpProcess, true, &code); code = -1; break; }
+        if (CompatTimeIO().pfnGetTicks() - ticks >= 30000) { SDL_KillProcess(lpProcess, true); SDL_WaitProcess(lpProcess, true, &code); code = -1; break; }
         // Escape is synchronous. Pump SDL/portal events without reentering a
         // caller that could delete this printer DC while its job is submitting.
         SDL_PumpEvents(); SDL_Delay(5);
@@ -268,7 +270,7 @@ static int IEscapePrinter(COMPATPRINT *lp, HDC hdc, int idEscape, int cb, LPCSTR
             char *pszAbsolute = PszCanonicalNativePath(lp->szTarget, NULL, 0);
             snprintf(szMessage, sizeof(szMessage), "The PDF was saved, but its viewer could not be opened.\n\nOpen this file in a PDF viewer to print it:\n%s", pszAbsolute ? pszAbsolute : lp->szTarget);
             SDL_Log("%s", szMessage);
-            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "PDF saved", szMessage,
+            CompatExternalIO().pfnShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "PDF saved", szMessage,
                                      hwndOwner ? hwndOwner->lpWindow.get() : NULL);
             free(pszAbsolute);
         }

@@ -1,4 +1,7 @@
 #include "common.h"
+#include "text_io.h"
+#include "player_choice_io.h"
+#include "record_io.h"
 
 int16_t rgPrimes[128] = {3,   5,   7,   11,  13,  17,  19,  23,  29,  31,  37,  41,  43,  47,  53,  59,  61,  67,  71,  73,  79,  83,  89,  97,  101, 103,
                          107, 109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193, 197, 199, 211, 223, 227, 229, 233, 239, 241,
@@ -52,7 +55,7 @@ void Randomize2(uint32_t dw) {
     return;
 }
 
-int16_t STARS_TEST_IMPL(Random)(int16_t c) {
+int16_t Random(int16_t c) {
     int32_t z;
     int32_t s1;
     int32_t k;
@@ -259,7 +262,7 @@ void StarsCopyFile(const char *szSrc, const char *szDst) {
     StarsRecoveryScope scopeRecovery;
     fFileErrSilent = TRUE;
     try {
-        StreamOpen(szSrc, mdRead);
+        RecordIO().pfnStreamOpen(szSrc, mdRead);
         hfDst = HfOpenFile(szDst, 4114, &fMissing);
         if (hfDst == -1)
             goto LStreamError;
@@ -275,11 +278,11 @@ void StarsCopyFile(const char *szSrc, const char *szDst) {
     } catch (const StarsError &) {
     }
 LStreamError:
-    StreamClose();
+    RecordIO().pfnStreamClose();
     return;
 }
 
-int16_t STARS_TEST_IMPL(AlertSz)(const char *sz, int16_t mbType) {
+int16_t AlertSz(const char *sz, int16_t mbType) {
     char szT[256];
 
     if (ini.fValidate || (ini.fLogging && ini.fGen)) {
@@ -295,7 +298,7 @@ int16_t CchGetString(StringId ids, char *psz) {
     char *pszTT;
 
     pszTT = psz;
-    pszT = PszGetCompressedString(ids);
+    pszT = TextIO().pfnCompressed(ids);
     while (*pszT != 0) {
         *psz++ = *pszT++;
     }
@@ -683,7 +686,7 @@ int16_t FCheckPassword() {
     if (ini.fValidate) {
         return FALSE;
     }
-    return PromptPassword();
+    return PlayerChoiceIO().pfnPromptPassword();
 }
 
 int32_t LSaltFromSz(const char *psz) {

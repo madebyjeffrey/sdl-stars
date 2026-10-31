@@ -1,4 +1,5 @@
 #include "win.h"
+#include "control_io.h"
 #include <stars_compat.h>
 
 DWORD GetTextExtent(HDC hdc, LPCSTR str, int len) {
@@ -114,8 +115,8 @@ int16_t CWheelLines(int16_t cPage) {
 }
 
 
-BOOL STARS_TEST_IMPL(FNativeOpenFileName)(OPENFILENAMEA *lpof) { return FUiGetOpenFileName(lpof); }
-BOOL STARS_TEST_IMPL(FNativeSaveFileName)(OPENFILENAMEA *lpof) { return FUiGetSaveFileName(lpof); }
+BOOL FNativeOpenFileName(OPENFILENAMEA *lpof) { return FUiGetOpenFileName(lpof); }
+BOOL FNativeSaveFileName(OPENFILENAMEA *lpof) { return FUiGetSaveFileName(lpof); }
 DWORD DwNativeFileDialogError(void) { return CommDlgExtendedError(); }
 
 int CchGetUtf8WindowText(HWND hwnd, char *psz, int cchMax) {
@@ -127,7 +128,7 @@ int CchGetUtf8WindowText(HWND hwnd, char *psz, int cchMax) {
 }
 
 BOOL FSetUtf8WindowText(HWND hwnd, const char *psz) {
-    return FUiSetWindowText(hwnd, psz);
+    return ControlIO().pfnFUiSetWindowText(hwnd, psz);
 }
 
 BOOL FSetNativeWindowTitle(HWND hwnd, const char *psz) {

@@ -25,7 +25,7 @@ if(STARS_NATIVE_FILE_DIALOGS)
     target_include_directories(stars-resource-modal PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
     target_link_libraries(stars-resource-modal PRIVATE stars_win32 SDL3::SDL3)
     target_compile_options(stars-resource-modal PRIVATE -Wall -Wextra -Werror)
-    stars_test_redirect(stars-resource-modal ICompatChooseFile)
+
     add_test(NAME win32_sdl_resource_modal COMMAND stars-resource-modal)
     set_tests_properties(win32_sdl_resource_modal PROPERTIES LABELS "compat;ownership;lifetime"
         ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software;STARS_FILE_DIALOG_BACKEND=native" TIMEOUT 30)
@@ -43,7 +43,7 @@ add_executable(stars-resource-messagebox tests/compat/win32_messagebox.cpp)
 target_include_directories(stars-resource-messagebox PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
 target_link_libraries(stars-resource-messagebox PRIVATE stars_win32 SDL3::SDL3)
 target_compile_options(stars-resource-messagebox PRIVATE -Wall -Wextra -Werror)
-stars_test_redirect(stars-resource-messagebox SDL_PutAudioStreamData)
+
 add_test(NAME win32_sdl_resource_messagebox COMMAND stars-resource-messagebox)
 set_tests_properties(win32_sdl_resource_messagebox PROPERTIES LABELS "compat;ownership;lifetime"
     ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software" TIMEOUT 60)
@@ -104,7 +104,7 @@ add_executable(stars-resource-messages tests/compat/message_ownership.cpp)
 target_include_directories(stars-resource-messages PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
 target_link_libraries(stars-resource-messages PRIVATE stars_win32 SDL3::SDL3)
 target_compile_options(stars-resource-messages PRIVATE -Wall -Wextra -Werror)
-stars_test_redirect(stars-resource-messages calloc malloc)
+
 add_test(NAME win32_sdl_resource_messages COMMAND stars-resource-messages)
 set_tests_properties(win32_sdl_resource_messages PROPERTIES LABELS "compat;ownership;lifetime"
     ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software" TIMEOUT 30)

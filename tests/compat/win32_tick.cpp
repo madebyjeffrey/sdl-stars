@@ -1,3 +1,4 @@
+#include "../../compat/win32/src/time_io.h"
 #include <windows.h>
 #include <SDL3/SDL.h>
 
@@ -17,3 +18,6 @@ int FTestTickCount(void) {
     dwTicks = UINT64_C(0x123456789abcdef0);
     return GetTickCount() == UINT32_C(0x9abcdef0);
 }
+
+static const COMPATTIMEIO io_compattimeio = [] { COMPATTIMEIO io; io.pfnGetTicks = StarsTest_SDL_GetTicks; return io; }();
+static COMPATTIMEIOSCOPE scope_compattimeio(io_compattimeio);

@@ -1,4 +1,11 @@
 #include "common.h"
+#include "text_io.h"
+#include "planet_query_io.h"
+#include "race_query_io.h"
+#include "alert_io.h"
+#include "player_choice_io.h"
+#include "random_io.h"
+#include "record_io.h"
 
 int16_t rgRacePrimaryTrait[10] = {40, 95, 45, 10, -100, -150, 120, 180, 90, -66};
 char    rgRW3Spacing[7] = {4, 3, 3, 3, 3, 3, 3};
@@ -108,7 +115,7 @@ int16_t CAdvantagePoints(PLAYER *pplr) {
     cPoints = 0;
     cPoints = 1650;
     BoundsCheckPlayer(pplr);
-    raMajor = static_cast<RaceAttribute>(GetRaceStat(pplr, rsMajorAdv));
+    raMajor = static_cast<RaceAttribute>(RaceQueryIO().pfnStat(pplr, rsMajorAdv));
     lInnate = (int32_t)(LInnateRaceHabitability(pplr) / 2000);
     iSpread = 1 > (20 >= pplr->pctIdealGrowth ? pplr->pctIdealGrowth : 20) ? 1 : 20 < pplr->pctIdealGrowth ? 20 : pplr->pctIdealGrowth;
     if (iSpread != pplr->pctIdealGrowth) {
@@ -154,8 +161,8 @@ int16_t CAdvantagePoints(PLAYER *pplr) {
     if (cGood > 1) {
         cPoints -= 150;
     }
-    cOperate = GetRaceStat(pplr, rsFactOperate);
-    cProduce = GetRaceStat(pplr, rsFactProd);
+    cOperate = RaceQueryIO().pfnStat(pplr, rsFactOperate);
+    cProduce = RaceQueryIO().pfnStat(pplr, rsFactProd);
     if (cOperate > 10 || cProduce > 10) {
         cOperate = 1 <= cOperate - 9 ? cOperate - 9 : 1;
         cProduce = 1 <= cProduce - 9 ? cProduce - 9 : 1;
@@ -166,7 +173,7 @@ int16_t CAdvantagePoints(PLAYER *pplr) {
             cPoints -= (int32_t)((uint32_t)(cOperate * cProduce) * pctGrowth) / 9;
         }
     }
-    i = GetRaceStat(pplr, rsResGen);
+    i = RaceQueryIO().pfnStat(pplr, rsResGen);
     i = i >= 25 ? 25 : i;
     if (i <= 7) {
         cPoints -= 2400;
@@ -178,9 +185,9 @@ int16_t CAdvantagePoints(PLAYER *pplr) {
         cPoints += (int16_t)((i - 10) * 120);
     }
     if (raMajor != raMacintosh) {
-        rgi[0] = 10 - GetRaceStat(pplr, rsFactProd);
-        rgi[1] = 10 - GetRaceStat(pplr, rsFactBuild);
-        rgi[2] = 10 - GetRaceStat(pplr, rsFactOperate);
+        rgi[0] = 10 - RaceQueryIO().pfnStat(pplr, rsFactProd);
+        rgi[1] = 10 - RaceQueryIO().pfnStat(pplr, rsFactBuild);
+        rgi[2] = 10 - RaceQueryIO().pfnStat(pplr, rsFactOperate);
         cCur = 0;
         if (rgi[0] > 0) {
             cCur += 100 * rgi[0];
@@ -213,12 +220,12 @@ int16_t CAdvantagePoints(PLAYER *pplr) {
             cCur -= (-2 - rgi[0]) * 20 * 3;
         }
         cPoints += cCur;
-        if (GetRaceGrbit(pplr, ibitRaceCheapFact) != 0) {
+        if (RaceQueryIO().pfnGrbit(pplr, ibitRaceCheapFact) != 0) {
             cPoints -= 175;
         }
-        rgi[0] = 10 - GetRaceStat(pplr, rsMineProd);
-        rgi[1] = 3 - GetRaceStat(pplr, rsMineBuild);
-        rgi[2] = 10 - GetRaceStat(pplr, rsMineOperate);
+        rgi[0] = 10 - RaceQueryIO().pfnStat(pplr, rsMineProd);
+        rgi[1] = 3 - RaceQueryIO().pfnStat(pplr, rsMineBuild);
+        rgi[2] = 10 - RaceQueryIO().pfnStat(pplr, rsMineOperate);
         cCur = 0;
         if (rgi[0] > 0) {
             cCur += 100 * rgi[0];
@@ -243,7 +250,7 @@ int16_t CAdvantagePoints(PLAYER *pplr) {
     cBad = 0;
     cGood = 0;
     for (i = 0; i <= 13; i++) {
-        if (GetRaceGrbit(pplr, static_cast<RaceGrbit>(i)) != 0) {
+        if (RaceQueryIO().pfnGrbit(pplr, static_cast<RaceGrbit>(i)) != 0) {
             if (rgRaceAdvDisPts[i] < 0) {
                 cBad++;
             } else {
@@ -261,7 +268,7 @@ int16_t CAdvantagePoints(PLAYER *pplr) {
     if (cBad - cGood > 3) {
         cPoints -= (int16_t)((cBad - cGood - 3) * 40);
     }
-    if (GetRaceGrbit(pplr, ibitRaceNoAdvScanner) != 0) {
+    if (RaceQueryIO().pfnGrbit(pplr, ibitRaceNoAdvScanner) != 0) {
         switch (raMajor) {
         default:
             break;
@@ -277,7 +284,7 @@ int16_t CAdvantagePoints(PLAYER *pplr) {
     }
     cCur = 0;
     for (i = 8; i <= 13; i++) {
-        cCur += GetRaceStat(pplr, static_cast<RaceStat>(i)) - 1;
+        cCur += RaceQueryIO().pfnStat(pplr, static_cast<RaceStat>(i)) - 1;
     }
     if (cCur > 0) {
         cPoints -= (int16_t)(cCur * cCur * 130);
@@ -288,14 +295,14 @@ int16_t CAdvantagePoints(PLAYER *pplr) {
         }
     } else if (cCur < 0) {
         cPoints += rgRaceDisEnvPts[-cCur - 1];
-        if (-cCur > 4 && GetRaceStat(pplr, rsResGen) < 10) {
+        if (-cCur > 4 && RaceQueryIO().pfnStat(pplr, rsResGen) < 10) {
             cPoints -= 190;
         }
     }
-    if (GetRaceGrbit(pplr, ibitRaceTech3) != 0) {
+    if (RaceQueryIO().pfnGrbit(pplr, ibitRaceTech3) != 0) {
         cPoints -= 180;
     }
-    if (raMajor == raMacintosh && GetRaceStat(pplr, rsTechBonus1) == 2) {
+    if (raMajor == raMacintosh && RaceQueryIO().pfnStat(pplr, rsTechBonus1) == 2) {
         cPoints -= 100;
     }
     return LOWORD((int32_t)(cPoints / 3));
@@ -324,7 +331,7 @@ int32_t LInnateRaceHabitability(PLAYER *pplr) {
 
     plrT = rgplr[0];
     lInnate = (double)0;
-    fTotalTerra = GetRaceGrbit(pplr, ibitRaceTT);
+    fTotalTerra = RaceQueryIO().pfnGrbit(pplr, ibitRaceTT);
     rgplr[0] = *pplr;
     rgDelta[2] = 0;
     rgDelta[1] = 0;
@@ -424,7 +431,7 @@ int32_t LInnateRaceHabitability(PLAYER *pplr) {
                         iTry = pplr->rgEnvVar[2] - iDelta;
                     }
                     pl.rgEnvVar[2] = iTry;
-                    pctDesire = PctPlanetDesirability(&pl, 0);
+                    pctDesire = PlanetQueryIO().pfnDesirability(&pl, 0);
                     iDelta = rgDelta[0] + rgDelta[1] + rgDelta[2];
                     if (iDelta > pctTerra) {
                         pctDesire -= (int16_t)(iDelta - pctTerra);
@@ -608,8 +615,8 @@ int16_t FWasRaceFile(char *szFile, int16_t fChkPass) {
     StarsRecoveryScope scopeRecovery;
     try {
         {
-            StreamOpen(szFile, mdRead);
-            ReadRt();
+            RecordIO().pfnStreamOpen(szFile, mdRead);
+            RecordIO().pfnReadRt();
             if (hdrCur.rt != rtBOF || hdrCur.cb != cbWireBof || BfvFromPrefix(rgbCur, sizeof(rgbCur)).verMajor() != 2 ||
                 BfvFromPrefix(rgbCur, sizeof(rgbCur)).verMinor() < 49 || BfvFromPrefix(rgbCur, sizeof(rgbCur)).verMinor() > 85) {
                 idsError = idsFileDoesBelongVersionStars;
@@ -620,7 +627,7 @@ int16_t FWasRaceFile(char *szFile, int16_t fChkPass) {
                 fLegacy = BfvFromPrefix(rgbCur, sizeof(rgbCur)).verMinor() < 85;
                 fPlural = BfvFromPrefix(rgbCur, sizeof(rgbCur)).verMinor() >= 55;
                 if (BfvFromPrefix(rgbCur, sizeof(rgbCur)).dt() == 5) {
-                    ReadRt();
+                    RecordIO().pfnReadRt();
                     if (hdrCur.rt == rtPlr) {
                         idsError = idsGameFileAppearsCorruptUnableLoadFile;
                         if (fLegacy) {
@@ -628,7 +635,7 @@ int16_t FWasRaceFile(char *szFile, int16_t fChkPass) {
                         } else {
                             ReadRtPlr(&plr, (uint8_t *)rgbCur, hdrCur.cb);
                         }
-                        ReadRt();
+                        RecordIO().pfnReadRt();
                         icksum = IRaceChecksum(&plr);
                         if (hdrCur.rt == rtEOF && hdrCur.cb == 2 && WFromStreamBytes(rgbCur) == icksum) {
                             fProtected = fLegacy && plr.lSalt != 0;
@@ -638,7 +645,7 @@ int16_t FWasRaceFile(char *szFile, int16_t fChkPass) {
                                 goto LBadFile;
                             }
                             if (fProtected) {
-                                if (!FPromptLegacyRacePassword(szPassword)) {
+                                if (!PlayerChoiceIO().pfnFPromptLegacyRacePassword(szPassword)) {
                                     idsError = -1;
                                     fRet = -1;
                                     goto LBadFile;
@@ -669,7 +676,7 @@ int16_t FWasRaceFile(char *szFile, int16_t fChkPass) {
                                    dialogs do. */
                                 pch = strrchr(szFile, chDirSep);
                                 SetSzRaceFile(pch ? pch + 1 : szFile);
-                                StreamClose();
+                                RecordIO().pfnStreamClose();
                                 fFileErrSilent = fSav;
                                 return 1;
                             }
@@ -682,14 +689,14 @@ int16_t FWasRaceFile(char *szFile, int16_t fChkPass) {
     } catch (const StarsError &) {
     }
 LBadFile:
-    StreamClose();
+    RecordIO().pfnStreamClose();
     fFileErrSilent = fSav;
     if (!fFileErrSilent && idsError != -1) {
         /* NATIVE: GenNewGameFromFile passes szWork itself; see FLoadGame. */
         if (szFile != szWork) {
             strcpy(szWork, szFile);
         }
-        AlertSz(PszFormatIds(static_cast<StringId>(idsError), NULL), MB_ICONHAND);
+        AlertIO().pfnAlertSz(TextIO().pfnFormat(static_cast<StringId>(idsError), NULL), MB_ICONHAND);
     }
     return fRet;
 
@@ -707,24 +714,24 @@ void CreateRandomRace(PLAYER *pplr) {
     PLAYER  plrT;
 
     pplr->szNames[0] = 0;
-    iVal = Random(25);
+    iVal = RandomIO().pfnRandom(25);
     if (iVal < 4) {
         for (i = 0; i < 3; i++) {
             pplr->rgEnvVarMax[i] = envImmune;
             pplr->rgEnvVarMin[i] = envImmune;
             pplr->rgEnvVar[i] = envImmune;
         }
-        pplr->pctIdealGrowth = Random(4) + 2;
+        pplr->pctIdealGrowth = RandomIO().pfnRandom(4) + 2;
     } else if (iVal < 7) {
         for (i = 0; i < 3; i++) {
             pplr->rgEnvVar[i] = 50;
             pplr->rgEnvVarMin[i] = 0;
             pplr->rgEnvVarMax[i] = 100;
         }
-        pplr->pctIdealGrowth = Random(4) + 3;
+        pplr->pctIdealGrowth = RandomIO().pfnRandom(4) + 3;
     } else if (iVal < 9) {
         for (i = 0; i < 3; i++) {
-            j = Random(2);
+            j = RandomIO().pfnRandom(2);
             if (i == 2 && pplr->rgEnvVar[0] == pplr->rgEnvVar[1]) {
                 j = pplr->rgEnvVar[0] != 0;
             }
@@ -733,61 +740,61 @@ void CreateRandomRace(PLAYER *pplr) {
                 pplr->rgEnvVarMin[i] = 0;
                 pplr->rgEnvVarMax[i] = 100;
             } else {
-                pplr->pctIdealGrowth = Random(4) + 2;
+                pplr->pctIdealGrowth = RandomIO().pfnRandom(4) + 2;
             }
         }
-        pplr->pctIdealGrowth = Random(5) + 2;
+        pplr->pctIdealGrowth = RandomIO().pfnRandom(5) + 2;
     } else {
         for (i = 0; i < 3; i++) {
-            j = Random(40) * 2 + 20;
-            k = Random(100 - j + 1);
+            j = RandomIO().pfnRandom(40) * 2 + 20;
+            k = RandomIO().pfnRandom(100 - j + 1);
             pplr->rgEnvVar[i] = j / 2 + k;
             pplr->rgEnvVarMin[i] = k;
             pplr->rgEnvVarMax[i] = k + j;
         }
         if (iVal < 12) {
-            i = Random(3);
+            i = RandomIO().pfnRandom(3);
             pplr->rgEnvVarMax[i] = envImmune;
             pplr->rgEnvVarMin[i] = envImmune;
             pplr->rgEnvVar[i] = envImmune;
         } else if (iVal < 14) {
-            i = Random(3);
+            i = RandomIO().pfnRandom(3);
             pplr->rgEnvVar[i] = 50;
             pplr->rgEnvVarMin[i] = 0;
             pplr->rgEnvVarMax[i] = 100;
         } else if (iVal < 17) {
-            i = Random(3);
-            j = Random(81);
+            i = RandomIO().pfnRandom(3);
+            j = RandomIO().pfnRandom(81);
             pplr->rgEnvVar[i] = j + 10;
             pplr->rgEnvVarMin[i] = j;
             pplr->rgEnvVarMax[i] = j + 20;
         }
-        pplr->pctIdealGrowth = Random(9) + 7;
+        pplr->pctIdealGrowth = RandomIO().pfnRandom(9) + 7;
     }
-    iVal = Random(3);
+    iVal = RandomIO().pfnRandom(3);
     for (i = 8; i <= 13; i++) {
-        SetRaceStat(pplr, static_cast<RaceStat>(i), iVal != 0 ? Random(3) : 1);
+        SetRaceStat(pplr, static_cast<RaceStat>(i), iVal != 0 ? RandomIO().pfnRandom(3) : 1);
     }
-    SetRaceStat(pplr, rsMajorAdv, Random(10));
-    iVal = Random(4);
+    SetRaceStat(pplr, rsMajorAdv, RandomIO().pfnRandom(10));
+    iVal = RandomIO().pfnRandom(4);
     for (i = 0; i <= 13; i++) {
-        SetRaceGrbit(pplr, static_cast<RaceGrbit>(i), iVal != 0 ? Random(2) : FALSE);
+        SetRaceGrbit(pplr, static_cast<RaceGrbit>(i), iVal != 0 ? RandomIO().pfnRandom(2) : FALSE);
     }
-    SetRaceGrbit(pplr, ibitRaceTech3, Random(2));
-    SetRaceGrbit(pplr, ibitRaceCheapFact, Random(2));
-    iVal = Random(3);
+    SetRaceGrbit(pplr, ibitRaceTech3, RandomIO().pfnRandom(2));
+    SetRaceGrbit(pplr, ibitRaceCheapFact, RandomIO().pfnRandom(2));
+    iVal = RandomIO().pfnRandom(3);
     if (iVal == 0) {
         for (i = 0; i <= 6; i++) {
             pplr->rgAttr[i] = vrgplrDef[0].rgAttr[i];
         }
-        pplr->rgAttr[7] = Random(5);
+        pplr->rgAttr[7] = RandomIO().pfnRandom(5);
     } else {
         for (i = 0; i <= 7; i++) {
-            pplr->rgAttr[i] = rgRaceStatMin[i] + Random(rgRaceStatMax[i] + 1 - rgRaceStatMin[i]);
+            pplr->rgAttr[i] = rgRaceStatMin[i] + RandomIO().pfnRandom(rgRaceStatMax[i] + 1 - rgRaceStatMin[i]);
         }
     }
-    if (strcmp(pplr->szName, PszGetCompressedString(idsRandom2)) == 0) {
-        CchGetString(static_cast<StringId>(idsBerserker + Random(24)), pplr->szName);
+    if (strcmp(pplr->szName, TextIO().pfnCompressed(idsRandom2)) == 0) {
+        TextIO().pfnCchGetString(static_cast<StringId>(idsBerserker + RandomIO().pfnRandom(24)), pplr->szName);
     }
     cPts = CAdvantagePoints(pplr);
     if (cPts < 0 || cPts > 50) {
@@ -799,10 +806,10 @@ void CreateRandomRace(PLAYER *pplr) {
                 strcpy(pplr->szName, plrT.szName);
                 break;
             }
-            iVal = Random(10);
+            iVal = RandomIO().pfnRandom(10);
             dAwayCur = -cPts <= cPts - 50 ? cPts - 50 : -cPts;
             if (iVal < 3) {
-                i = Random(6);
+                i = RandomIO().pfnRandom(6);
                 j = pplr->rgAttr[i + 8];
                 if (j > 0) {
                     pplr->rgAttr[i + 8] = pplr->rgAttr[i + 8] - 1;
@@ -821,8 +828,8 @@ void CreateRandomRace(PLAYER *pplr) {
                     }
                 }
             } else if (iVal < 6) {
-                iVal = Random(14);
-                j = GetRaceGrbit(pplr, static_cast<RaceGrbit>(iVal));
+                iVal = RandomIO().pfnRandom(14);
+                j = RaceQueryIO().pfnGrbit(pplr, static_cast<RaceGrbit>(iVal));
                 for (i = 0; i < 2; i++) {
                     SetRaceGrbit(pplr, static_cast<RaceGrbit>(iVal), i);
                     cPts = CAdvantagePoints(pplr);
@@ -834,8 +841,8 @@ void CreateRandomRace(PLAYER *pplr) {
                     SetRaceGrbit(pplr, static_cast<RaceGrbit>(iVal), j);
                 }
             } else if (iVal < 9) {
-                iVal = Random(7);
-                j = GetRaceStat(pplr, static_cast<RaceStat>(iVal));
+                iVal = RandomIO().pfnRandom(7);
+                j = RaceQueryIO().pfnStat(pplr, static_cast<RaceStat>(iVal));
                 for (i = -1; i <= 1; i += 2) {
                     SetRaceStat(pplr, static_cast<RaceStat>(iVal), j + i);
                     cPts = CAdvantagePoints(pplr);
@@ -846,7 +853,7 @@ void CreateRandomRace(PLAYER *pplr) {
                 if (i > 1) {
                     SetRaceStat(pplr, static_cast<RaceStat>(iVal), j);
                 }
-            } else if (Random(2) != 0) {
+            } else if (RandomIO().pfnRandom(2) != 0) {
                 j = pplr->pctIdealGrowth;
                 if (j > 1) {
                     pplr->pctIdealGrowth = j - 1;
@@ -864,9 +871,9 @@ void CreateRandomRace(PLAYER *pplr) {
                 }
                 pplr->pctIdealGrowth = j;
             } else {
-                iVal = Random(3);
+                iVal = RandomIO().pfnRandom(3);
                 if (pplr->rgEnvVar[iVal] < 0) {
-                    j = Random(31);
+                    j = RandomIO().pfnRandom(31);
                     pplr->rgEnvVar[iVal] = j + 35;
                     pplr->rgEnvVarMin[iVal] = j;
                     pplr->rgEnvVarMax[iVal] = j + 70;
@@ -895,7 +902,7 @@ void CreateRandomRace(PLAYER *pplr) {
 }
 
 int16_t PctTrueMaxGrowth(int16_t iplr) {
-    if (GetRaceStat(&rgplr[iplr], rsMajorAdv) == raCheapCol) {
+    if (RaceQueryIO().pfnStat(&rgplr[iplr], rsMajorAdv) == raCheapCol) {
         return rgplr[iplr].pctIdealGrowth * 2;
     }
     return rgplr[iplr].pctIdealGrowth;

@@ -32,6 +32,15 @@ The original map records the first exploration; detailed entries now provide
 source-backed coverage with explicit proof and test boundaries. This is not
 approval to refactor the game or a claim of exhaustive C/UI verification.
 
+## Linked witness evidence update (Milestone C)
+
+The 27 existing witness commands now run normal linked production targets.
+[The C05 inventory](../docs/CPP-C05-WITNESSES.md) maps every command, original
+case/domain/exclusion/oracle and current fixture to its specification owners.
+Earlier run records below describe their historical extraction mechanism;
+the C05 inventory supersedes that mechanism while retaining the recorded
+independent expectations and coverage limits. Canonical Dafny rules are unchanged.
+
 ## Existing technical organization
 
 [CMakeLists.txt](../CMakeLists.txt) defines the core and desktop source groups and

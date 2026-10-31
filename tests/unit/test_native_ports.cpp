@@ -10,6 +10,8 @@
 #include <stdlib.h>
 
 #include "stars_test.h"
+#include "../../src/core/record_io.h"
+
 #include "liststorage.h"
 #ifdef STARS_UI_SDL
 #include "uistate.h"
@@ -504,3 +506,6 @@ TEST_LIST = {
              {"static control color", TestStaticColor},
              {"battle heap rollover", TestBattleRollover},
              {NULL, NULL}};
+
+static const RECORDIO io_recordio = [] { RECORDIO io; io.pfnWriteRt = StarsTest_WriteRt; io.pfnReadRt = StarsTest_ReadRt; io.pfnFCreateFile = StarsTest_FCreateFile; io.pfnStreamOpen = StarsTest_StreamOpen; io.pfnStreamClose = StarsTest_StreamClose; io.pfnDirtyGame = StarsTest_DirtyGame; return io; }();
+static RECORDIOSCOPE scope_recordio(io_recordio);

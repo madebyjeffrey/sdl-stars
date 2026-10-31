@@ -20,6 +20,8 @@ for row in rows:
     except ValueError:
         name = ""
     command = row.get("command", " ".join(row.get("arguments", [])))
+    assert not re.search(r"(?:-D|/D)(?:STARS_TEST_(?:IMPL|ALLOC|CALL|REAL|STATE_DOUBLE)|[A-Za-z_]\w*=StarsTest_)", command), f"Test symbol substitution in compiler command: {path}"
+    assert not re.search(r"(?:stars_core|stars-ui-compat-check|stars_win32|stars_filedialog_windows)-test-", command), f"Private production test clone in compiler command: {path}"
     cpp = "-x c++" in command or "-x objective-c++" in command or path.suffix in (".cpp", ".mm")
     if name.startswith(("src/", "compat/win32/src/")) or any(path.is_relative_to(directory) for directory in generated):
         assert path.suffix in (".cpp", ".mm"), f"Owned production source has a migration extension: {path}"
@@ -49,7 +51,7 @@ header_directories = [root / "src/core", root / "src/platform"]
 if any(path.is_relative_to(root / "compat/win32/src") for path in production):
     header_directories += [root / "src/ui", root / "compat/win32/include"]
     private_headers = [root / "compat/win32/src" / name
-                       for name in ("platform.h", "cleanup.h", "profile_io.h", "file_read.h")]
+                       for name in ("platform.h", "cleanup.h", "file_read.h")] + sorted((root / "compat/win32/src").glob("*_io.h"))
 else:
     private_headers = []
 headers = [path for directory in header_directories for path in directory.glob("*.h")] + private_headers
@@ -65,6 +67,7 @@ for directory in ("src", "compat/win32/include", "compat/win32/src"):
         if path.suffix not in (".h", ".c", ".cpp", ".m", ".mm"):
             continue
         text = path.read_text(encoding="utf-8")
+        assert not re.search(r"STARS_TEST_(?:IMPL|STATE_DOUBLE|ALLOC_)|stars_test_redirect|StarsTestReal_", text), f"Transitional test routing remains: {path}"
         assert not re.search(r'extern\s+"C"|__cplusplus', text), f"Owned C interface remains: {path}"
         assert not re.search(r"#\s*define\s+(?:min|max)\s*\(", text), f"Owned min/max macro remains: {path}"
         assert not re.search(r'\(\s*(?:char\s*\*|LPSTR|PSTR)\s*\)\s*"', text), f"Mutable string-literal cast remains: {path}"

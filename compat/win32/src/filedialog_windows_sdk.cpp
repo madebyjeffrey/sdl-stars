@@ -1,3 +1,13 @@
+#include "windows_chooser_io.h"
+
+static thread_local const WINDOWSCHOOSERIO *lpIO;
+const WINDOWSCHOOSERIO &WindowsChooserIO() noexcept {
+    static const WINDOWSCHOOSERIO io;
+    return lpIO ? *lpIO : io;
+}
+WINDOWSCHOOSERIOSCOPE::WINDOWSCHOOSERIOSCOPE(const WINDOWSCHOOSERIO &io) noexcept : io(io), lpPrev(lpIO) { lpIO = &this->io; }
+WINDOWSCHOOSERIOSCOPE::~WINDOWSCHOOSERIOSCOPE() noexcept { lpIO = lpPrev; }
+
 /* NATIVE: Keep system Unicode dialogs separate from the wrapper API namespace. */
 #include <windows.h>
 #include <commdlg.h>
@@ -5,7 +15,6 @@
 #include <string.h>
 #include "filedialog_windows_bridge.h"
 #include "../../../src/platform/errors.h"
-#include "../../../src/platform/test_impl.h"
 
 typedef struct WINDOWSCHOOSER {
     int (*pfnPump)(void *);
@@ -47,7 +56,7 @@ static UINT_PTR CALLBACK ChooserHook(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     return 0;
 }
 
-int STARS_TEST_IMPL(IChooseWindowsFile)(void *lpWindow, int fSave, const char *pszTitle, const char *pszFolder,
+int IChooseWindowsFile(void *lpWindow, int fSave, const char *pszTitle, const char *pszFolder,
                        const char *pszName, const WINDOWSFILEFILTER *rgfilter, int cFilter,
                        int *lpiFilter, char *pszPath, size_t cbPath,
                        int (*pfnPump)(void *), void *lpv) {

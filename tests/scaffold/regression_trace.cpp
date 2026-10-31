@@ -20,9 +20,10 @@
 #define StarsTestReturnAddress() NULL
 #endif
 #include "win.h"
+#include "../../src/core/random_io.h"
+#include "../../src/core/capacity_io.h"
 
-int16_t StarsTestReal_Random(int16_t c);
-int16_t StarsTestReal_PctPlanetCapacity(PLANET *lppl);
+
 
 static FILE   *vpfileTrace;
 static int16_t vfTraceInit;
@@ -62,7 +63,7 @@ int16_t StarsTest_Random(int16_t c) {
 
     lSeed1 = lRandSeed1;
     lSeed2 = lRandSeed2;
-    r = StarsTestReal_Random(c);
+    r = Random(c);
     snprintf(szSeeds, sizeof(szSeeds), " %ld %ld", (long)lSeed1, (long)lSeed2);
     TraceCall('R', c, r, StarsTestReturnAddress(), szSeeds);
     return r;
@@ -72,7 +73,12 @@ int16_t StarsTest_Random(int16_t c) {
 int16_t StarsTest_PctPlanetCapacity(PLANET *lppl) {
     int16_t pct;
 
-    pct = StarsTestReal_PctPlanetCapacity(lppl);
+    pct = PctPlanetCapacity(lppl);
     TraceCall('P', lppl->id, pct, StarsTestReturnAddress(), "");
     return pct;
 }
+
+static const RANDOMIO io_randomio = [] { RANDOMIO io; io.pfnRandom = StarsTest_Random; return io; }();
+static RANDOMIOSCOPE scope_randomio(io_randomio);
+static const CAPACITYIO io_capacityio = [] { CAPACITYIO io; io.pfnPctPlanetCapacity = StarsTest_PctPlanetCapacity; return io; }();
+static CAPACITYIOSCOPE scope_capacityio(io_capacityio);

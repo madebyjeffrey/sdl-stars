@@ -5,7 +5,6 @@ static BOOL fCreatingGame;
 static int cNewGameChoices, iNewGameStep;
 static BOOL fRevisionRenamed;
 static GAME gameNewSav;
-void StarsTestReal_NewGameWizard(HWND hwnd, int16_t fReadOnly);
 
 static BOOL FSamePath(const char *pszLeft, const char *pszRight) {
     char chLeft, chRight;
@@ -21,11 +20,10 @@ static BOOL FSamePath(const char *pszLeft, const char *pszRight) {
 
 void StarsTest_NewGameWizard(HWND hwnd, int16_t fReadOnly) {
     fCreatingGame = pszNewGame != NULL;
-    StarsTestReal_NewGameWizard(hwnd, fReadOnly);
+    NewGameWizard(hwnd, fReadOnly);
     fCreatingGame = FALSE;
 }
 
-int16_t StarsTestReal_FCreateFile(DtFileType dt, int16_t iplr, char *pszBase);
 int16_t StarsTest_FCreateFile(DtFileType dt, int16_t iplr, char *pszBase) {
     const char *pszFailure = PszCompatEnvironment("STARS_CLIENT_LIBRARY_FAIL_WRITE");
     DtFileType dtFailure = pszFailure && !strcmp(pszFailure, "host") ? dtHost : dtXY;
@@ -34,7 +32,7 @@ int16_t StarsTest_FCreateFile(DtFileType dt, int16_t iplr, char *pszBase) {
         SetSzWorkFromDt(dt, iplr);
         if (!SDL_CreateDirectory(szWork)) return FALSE;
     }
-    fCreated = StarsTestReal_FCreateFile(dt, iplr, pszBase);
+    fCreated = FCreateFile(dt, iplr, pszBase);
     if (PszCompatEnvironment("STARS_CLIENT_SWITCH_CHOICE") && fCreated) {
         if (dt == dtLog) cSwitchLogWrites++;
         if (dt == dtHist) cSwitchHistoryWrites++;

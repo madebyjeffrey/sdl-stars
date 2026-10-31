@@ -1,5 +1,6 @@
 /* WinHelp's separate viewer is adapted to the packaged original HTML guide. */
 #include "internal.h"
+#include "path_io.h"
 #include <SDL3/SDL.h>
 #include <errno.h>
 #include <limits.h>
@@ -74,7 +75,7 @@ static char *PszHelpDocument(const char *pszDirectory, const char *pszPage) {
     }
     // Put the requested context inside the exported file: OpenFile portals
     // receive a descriptor and cannot carry a browser URL fragment with it.
-    pszBase = SDL_GetPrefPath("stars", "help");
+    pszBase = CompatPathIO().pfnGetPrefPath("stars", "help");
     if (!pszBase) goto fail;
     cch = snprintf(szTarget, sizeof(szTarget), "%sguide-%08x-%s", pszBase, STARS_HELP_BUNDLE_CRC, pszPage);
     SDL_free(pszBase);
@@ -139,7 +140,7 @@ BOOL WINAPI WinHelpA(HWND hWndMain, LPCSTR pszHelp, UINT uCommand, ULONG_PTR dwD
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
-    pszBase = SDL_GetBasePath();
+    pszBase = CompatPathIO().pfnGetBasePath();
     if (!pszBase) {
         SetLastError(ERROR_PATH_NOT_FOUND);
         return FALSE;

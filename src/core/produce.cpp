@@ -1,4 +1,12 @@
 #include "common.h"
+#include "presentation_io.h"
+#include "production_io.h"
+#include "colony_io.h"
+#include "planet_query_io.h"
+#include "research_io.h"
+#include "part_query_io.h"
+#include "race_query_io.h"
+#include "text_io.h"
 
 void InitProduction(PROD *rgprod) {
     int16_t  iWarp;
@@ -20,7 +28,7 @@ void InitProduction(PROD *rgprod) {
     }
     lpplProdGlob = LpplAlloc<PLPROD>(4, i, htOrd);
     if (sel.pl.lpplprod) {
-        memcpy(lpplProdGlob->rgprod(), sel.pl.lpplprod->rgprod(), i * 4);
+        HeapIO().pfnCopy(lpplProdGlob->rgprod(), sel.pl.lpplprod->rgprod(), i * 4);
     } else {
         i = 0;
     }
@@ -28,10 +36,10 @@ void InitProduction(PROD *rgprod) {
     cProdGlob = 0;
     pProdGlob = rgprod;
     memset(rgprod, 0, 64 * sizeof(PROD));
-    if (sel.pl.fStarbase && LphuldefFromId(rglpshdefSB[idPlayer][sel.pl.isb].hul.ihuldef)->hul.wtCargoMax != 0) {
+    if (sel.pl.fStarbase && PartQueryIO().pfnHull(rglpshdefSB[idPlayer][sel.pl.isb].hul.ihuldef)->hul.wtCargoMax != 0) {
         for (i = 0; i < 16; i++) {
             if (!rgshdef[i].fFree && !rgshdef[i].fGift) {
-                if (LphuldefFromId(rglpshdefSB[idPlayer][sel.pl.isb].hul.ihuldef)->hul.wtCargoMax >= rgshdef[i].hul.wtEmpty) {
+                if (PartQueryIO().pfnHull(rglpshdefSB[idPlayer][sel.pl.isb].hul.ihuldef)->hul.wtCargoMax >= rgshdef[i].hul.wtEmpty) {
                     rgprod[cProdGlob].cItem = 0x3ff;
                     rgprod[cProdGlob].iItem = i;
                     rgprod[cProdGlob].grobj = grobjFleet;
@@ -50,13 +58,13 @@ void InitProduction(PROD *rgprod) {
     }
     part.hs.grhst = hstPlanetary;
     part.hs.iItem = iplanetaryGenesisDevice;
-    if (FLookupPart(&part) == mdPartAvailAvailable) {
+    if (PartQueryIO().pfnLookup(&part) == mdPartAvailAvailable) {
         rgprod[cProdGlob].cItem = 1;
         rgprod[cProdGlob].iItem = iobjGenesis;
         rgprod[cProdGlob].grobj = grobjPlanet;
         cProdGlob++;
     }
-    iWarp = IWarpMAFromLppl(&sel.pl, NULL);
+    iWarp = ColonyIO().pfnWarp(&sel.pl, NULL);
     if (iWarp > 0) {
         for (i = 0; i < 4; i++) {
             rgprod[cProdGlob].cItem = 0x3ff;
@@ -65,21 +73,21 @@ void InitProduction(PROD *rgprod) {
             cProdGlob++;
         }
     }
-    u = CMaxFactories(&sel.pl, idPlayer) - sel.pl.cFactories;
+    u = ColonyIO().pfnMaxFactories(&sel.pl, idPlayer) - sel.pl.cFactories;
     if ((int16_t)u > 0) {
         rgprod[cProdGlob].cItem = LOWORD(1020 >= u ? (uint32_t)u : 1020);
         rgprod[cProdGlob].iItem = mdIdleFactory;
         rgprod[cProdGlob].grobj = grobjPlanet;
         cProdGlob++;
     }
-    u = CMaxMines(&sel.pl, idPlayer) - sel.pl.cMines;
+    u = ColonyIO().pfnMaxMines(&sel.pl, idPlayer) - sel.pl.cMines;
     if ((int16_t)u > 0) {
         rgprod[cProdGlob].cItem = LOWORD(1020 >= u ? (uint32_t)u : 1020);
         rgprod[cProdGlob].iItem = mdIdleMine;
         rgprod[cProdGlob].grobj = grobjPlanet;
         cProdGlob++;
     }
-    u = CMaxDefenses(&sel.pl, idPlayer) - sel.pl.cDefenses;
+    u = ColonyIO().pfnMaxDefenses(&sel.pl, idPlayer) - sel.pl.cDefenses;
     if ((int16_t)u > 0) {
         rgprod[cProdGlob].cItem = u;
         rgprod[cProdGlob].iItem = mdIdleDefense;
@@ -90,13 +98,13 @@ void InitProduction(PROD *rgprod) {
     rgprod[cProdGlob].iItem = mdIdleAlchemy;
     rgprod[cProdGlob].grobj = grobjPlanet;
     cProdGlob++;
-    if (sel.pl.iScanner == 31 && GetRaceStat(&rgplr[idPlayer], rsMajorAdv) != raMacintosh) {
+    if (sel.pl.iScanner == 31 && RaceQueryIO().pfnStat(&rgplr[idPlayer], rsMajorAdv) != raMacintosh) {
         rgprod[cProdGlob].cItem = 1;
         rgprod[cProdGlob].iItem = iobjPlanetaryScanner;
         rgprod[cProdGlob].grobj = grobjPlanet;
         cProdGlob++;
     }
-    i = IpctCanTerraformLppl(&sel.pl);
+    i = ColonyIO().pfnTerraformPercent(&sel.pl);
     if (i > 0) {
         rgprod[cProdGlob].cItem = (uint16_t)i;
         rgprod[cProdGlob].iItem = mdIdleTerraform;
@@ -104,9 +112,9 @@ void InitProduction(PROD *rgprod) {
         cProdGlob++;
     }
     for (i = 0; i < 7; i++) {
-        if (GetRaceStat(&rgplr[idPlayer], rsMajorAdv) == raMacintosh && (i == 0 || i == 1 || i == 2))
+        if (RaceQueryIO().pfnStat(&rgplr[idPlayer], rsMajorAdv) == raMacintosh && (i == 0 || i == 1 || i == 2))
             continue;
-        if (GetRaceStat(&rgplr[idPlayer], rsMajorAdv) != raTerra || (i != 4 && i != 5)) {
+        if (RaceQueryIO().pfnStat(&rgplr[idPlayer], rsMajorAdv) != raTerra || (i != 4 && i != 5)) {
             rgprod[cProdGlob].cItem = 0x3ff;
             rgprod[cProdGlob].iItem = LOWORD(i);
             rgprod[cProdGlob].grobj = grobjPlanet;
@@ -120,7 +128,7 @@ void InitProduction(PROD *rgprod) {
         }
         if (iSrc >= cProdGlob) {
             if (ipl + 1 < lpplProdGlob->iprodMac) {
-                memcpy(lpprod, lpprod + 1, (lpplProdGlob->iprodMac - (ipl + 1)) * sizeof(PROD));
+                HeapIO().pfnCopy(lpprod, lpprod + 1, (lpplProdGlob->iprodMac - (ipl + 1)) * sizeof(PROD));
                 ipl--;
             }
             lpplProdGlob->iprodMac--;
@@ -140,7 +148,7 @@ void InitProduction(PROD *rgprod) {
         lpprod++;
     }
     if (gd.fTutorial && idPlayer == 0) {
-        AdvanceTutor();
+        PresentationIO().pfnTutor();
     }
     return;
 }
@@ -154,11 +162,11 @@ void FinishProduction(int16_t fWrite) {
         }
         sel.pl.lpplprod = lpplProdGlob;
         lpplProdGlob = NULL;
-        FLookupPlanet(idWriteBack, &sel.pl);
-        FLookupPlanet(sel.pl.id, &sel.pl);
+        PlanetQueryIO().pfnLookup(idWriteBack, &sel.pl);
+        PlanetQueryIO().pfnLookup(sel.pl.id, &sel.pl);
         if (!fAi) {
-            FillSelProdLB();
-            RedrawPlanShip(tileProductionOrOrbit);
+            ProductionIO().pfnRefresh();
+            PresentationIO().pfnRedraw(tileProductionOrOrbit);
         }
     } else {
         sel.pl.fNoResearch = gd.fNoResearchSav;
@@ -167,7 +175,7 @@ void FinishProduction(int16_t fWrite) {
     lpplProdGlob = NULL;
     if (gd.fTutorial && idPlayer == 0) {
         tutor.fProgress = TRUE;
-        AdvanceTutor();
+        PresentationIO().pfnTutor();
     }
     return;
 }
@@ -209,9 +217,9 @@ char *PszNameProdItem(PROD *lpprod) {
     if (iItem >= iobjPlanetaryScannerFirst && iItem <= iobjPlanetaryScannerLast) {
         strcpy(szWork, LpplanetaryFromId(LOWORD(iItem) - iobjPlanetaryScannerFirst)->szName);
     } else if (iItem == iobjPlanetaryScanner) {
-        CchGetString(idsPlanetaryScanner, szWork);
+        TextIO().pfnCchGetString(idsPlanetaryScanner, szWork);
     } else {
-        CchGetString(static_cast<StringId>(idsMines + LOWORD(iItem)), szWork);
+        TextIO().pfnCchGetString(static_cast<StringId>(idsMines + LOWORD(iItem)), szWork);
     }
     return szWork;
 }
@@ -237,7 +245,7 @@ void GetProductionCosts(PLANET *lppl, PROD *lpprod, uint32_t *rgCost, int16_t ip
     int16_t       rgCostsPartCur[4];
     int16_t       rgCostsPartNew[4];
 
-    raMajor = static_cast<RaceAttribute>(GetRaceStat(&rgplr[lppl->iPlayer], rsMajorAdv));
+    raMajor = static_cast<RaceAttribute>(RaceQueryIO().pfnStat(&rgplr[lppl->iPlayer], rsMajorAdv));
     fStarbase = FALSE;
     iItem = lpprod->iItem;
     cItem = lpprod->cItem;
@@ -271,10 +279,10 @@ void GetProductionCosts(PLANET *lppl, PROD *lpprod, uint32_t *rgCost, int16_t ip
                     }
                 }
             } else {
-                lphulT = &LphuldefFromId(lphulCur->ihuldef)->hul;
+                lphulT = &PartQueryIO().pfnHull(lphulCur->ihuldef)->hul;
                 part.hs.grhst = hstNone;
                 part.SetPhul(lphulT);
-                GetTruePartCost(iplr, &part, (uint16_t *)rgCostsPartCur);
+                PartQueryIO().pfnTrueCost(iplr, &part, (uint16_t *)rgCostsPartCur);
                 for (i = 0; i < 4; i++) {
                     rgCosts[i] -= rgCostsPartCur[i];
                 }
@@ -282,11 +290,11 @@ void GetProductionCosts(PLANET *lppl, PROD *lpprod, uint32_t *rgCost, int16_t ip
                 for (i = 0; i < chs; i++) {
                     if (lphulCur->rghs[i].cItem != 0 && lphulNew->rghs[i].cItem != 0) {
                         part.hs = lphulCur->rghs[i];
-                        FLookupPart(&part);
-                        GetTruePartCost(iplr, &part, (uint16_t *)rgCostsPartCur);
+                        PartQueryIO().pfnLookup(&part);
+                        PartQueryIO().pfnTrueCost(iplr, &part, (uint16_t *)rgCostsPartCur);
                         part.hs = lphulNew->rghs[i];
-                        FLookupPart(&part);
-                        GetTruePartCost(iplr, &part, (uint16_t *)rgCostsPartNew);
+                        PartQueryIO().pfnLookup(&part);
+                        PartQueryIO().pfnTrueCost(iplr, &part, (uint16_t *)rgCostsPartNew);
                         if (lphulCur->rghs[i].grhst != lphulNew->rghs[i].grhst) {
                             for (j = 0; j < 4; j++) {
                                 rgCostsPartCur[j] *= lphulCur->rghs[i].cItem;
@@ -317,7 +325,7 @@ void GetProductionCosts(PLANET *lppl, PROD *lpprod, uint32_t *rgCost, int16_t ip
                 }
             }
         }
-        if (fStarbase && (GetRaceGrbit(&rgplr[iplr], ibitRaceISB) != 0 || GetRaceStat(&rgplr[iplr], rsMajorAdv) == raMacintosh)) {
+        if (fStarbase && (RaceQueryIO().pfnGrbit(&rgplr[iplr], ibitRaceISB) != 0 || RaceQueryIO().pfnStat(&rgplr[iplr], rsMajorAdv) == raMacintosh)) {
             for (i = 0; i < 4; i++) {
                 rgCosts[i] -= (uint32_t)rgCosts[i] / 5;
             }
@@ -335,7 +343,7 @@ void GetProductionCosts(PLANET *lppl, PROD *lpprod, uint32_t *rgCost, int16_t ip
         switch (iItem) {
         case iobjFactory:
         case mdIdleFactory:
-            cost = GetRaceGrbit(&rgplr[iplr], ibitRaceCheapFact);
+            cost = RaceQueryIO().pfnGrbit(&rgplr[iplr], ibitRaceCheapFact);
             if (gd.fTutorial) {
                 for (i = 0; i < 3; i++) {
                     rgCost[i] = (int16_t)(2 - cost);
@@ -345,25 +353,25 @@ void GetProductionCosts(PLANET *lppl, PROD *lpprod, uint32_t *rgCost, int16_t ip
                 *rgCost = 0;
                 rgCost[2] = (int16_t)(4 - cost);
             }
-            rgCost[3] = GetRaceStat(&rgplr[iplr], rsFactBuild);
+            rgCost[3] = RaceQueryIO().pfnStat(&rgplr[iplr], rsFactBuild);
             break;
         case iobjMine:
         case mdIdleMine:
             for (i = 0; i < 3; i++) {
                 rgCost[i] = 0;
             }
-            rgCost[3] = GetRaceStat(&rgplr[iplr], rsMineBuild);
+            rgCost[3] = RaceQueryIO().pfnStat(&rgplr[iplr], rsMineBuild);
             break;
         case iobjDefense:
         case mdIdleDefense:
             part.hs.grhst = hstPlanetary;
             part.hs.iItem = iplanetarySDI;
-            FLookupPart(&part);
+            PartQueryIO().pfnLookup(&part);
             for (i = 0; i < 3; i++) {
                 rgCost[i] = part.pplanetary()->rgwtOreCost[i];
             }
             rgCost[3] = (uint32_t)part.pplanetary()->resCost;
-            if (GetRaceStat(&rgplr[iplr], rsMajorAdv) != raDefend)
+            if (RaceQueryIO().pfnStat(&rgplr[iplr], rsMajorAdv) != raDefend)
                 break;
             for (i = 0; i < 4; i++) {
                 rgCost[i] = (uint32_t)((uint32_t)(rgCost[i] * 3) / 5);
@@ -374,13 +382,13 @@ void GetProductionCosts(PLANET *lppl, PROD *lpprod, uint32_t *rgCost, int16_t ip
             for (i = 0; i < 3; i++) {
                 rgCost[i] = 0;
             }
-            rgCost[3] = (uint32_t)(GetRaceGrbit(&rgplr[iplr], ibitRaceMineralAlchemy) == 0 ? 100 : 25);
+            rgCost[3] = (uint32_t)(RaceQueryIO().pfnGrbit(&rgplr[iplr], ibitRaceMineralAlchemy) == 0 ? 100 : 25);
             break;
         case iobjGenesis:
             part.hs.grhst = hstPlanetary;
             part.hs.iItem = iplanetaryGenesisDevice;
-            FLookupPart(&part);
-            GetTruePartCost(iplr, &part, rgCosts);
+            PartQueryIO().pfnLookup(&part);
+            PartQueryIO().pfnTrueCost(iplr, &part, rgCosts);
             for (i = 0; i < 4; i++) {
                 rgCost[i] = (uint32_t)rgCosts[i];
             }
@@ -408,7 +416,7 @@ void GetProductionCosts(PLANET *lppl, PROD *lpprod, uint32_t *rgCost, int16_t ip
             rgCost[2] = 0;
             rgCost[1] = 0;
             *rgCost = 0;
-            if (GetRaceGrbit(&rgplr[iplr], ibitRaceTT) != 0) {
+            if (RaceQueryIO().pfnGrbit(&rgplr[iplr], ibitRaceTT) != 0) {
                 rgCost[3] = 70;
             } else {
                 rgCost[3] = 100;
@@ -431,8 +439,8 @@ void GetProductionCosts(PLANET *lppl, PROD *lpprod, uint32_t *rgCost, int16_t ip
         case iobjPlanetaryScannerSnooper620X:
             part.hs.grhst = hstPlanetary;
             part.hs.iItem = LOWORD(iItem) - 18;
-            FLookupPart(&part);
-            GetTruePartCost(iplr, &part, rgCosts);
+            PartQueryIO().pfnLookup(&part);
+            PartQueryIO().pfnTrueCost(iplr, &part, rgCosts);
             for (i = 0; i < 4; i++) {
                 rgCost[i] = (uint32_t)rgCosts[i];
             }
@@ -467,18 +475,18 @@ void EstimateItemProdSched(PLANET *lppl, PLPROD *lpplprod, ProdItemType iItem, i
     }
     pl = *lppl;
     pl.lpplprod = LpplAlloc<PLPROD>(4, lpplprod->iprodMax, htOrd);
-    memcpy(pl.lpplprod->rgprod(), lpplprod->rgprod(), lpplprod->iprodMac * 4);
+    HeapIO().pfnCopy(pl.lpplprod->rgprod(), lpplprod->rgprod(), lpplprod->iprodMac * 4);
     pl.lpplprod->iprodMac = lpplprod->iprodMac;
     iMac = lpplprod->iprodMac;
     prodPartial.cItem = 0;
     *piLast = 0;
     *piFirst = 0;
     for (iPass = 1; iPass < 100; iPass++) {
-        EstMineralsMined(&pl, rglQuan, -1, TRUE);
+        ColonyIO().pfnEstimateMining(&pl, rglQuan, -1, TRUE);
         for (j = 0; j < 3; j++) {
             rgRes[j] = pl.rgwtMin[j];
         }
-        rgRes[3] = CResourcesAtPlanet(&pl, lppl->iPlayer);
+        rgRes[3] = ResearchIO().pfnResources(&pl, lppl->iPlayer);
         if (!pl.fNoResearch) {
             cResearch = (int32_t)(rgRes[3] * (int16_t)rgplr[lppl->iPlayer].pctResearch) / 100;
             rgRes[3] -= cResearch;
@@ -505,7 +513,7 @@ void EstimateItemProdSched(PLANET *lppl, PLPROD *lpplprod, ProdItemType iItem, i
                     }
                     lpprod->cItem = 1020;
                 }
-                cBuilt = CBuildProdItem(&pl, lpprod, i == -1 ? NULL : &prodPartial, rgRes, fAlchemy, &mdStatusRaw, FALSE);
+                cBuilt = ProductionIO().pfnBuild(&pl, lpprod, i == -1 ? NULL : &prodPartial, rgRes, fAlchemy, &mdStatusRaw, FALSE);
                 mdStatus = static_cast<mdProdStat>(mdStatusRaw);
                 if (iItem == i) {
                     if (cBuilt > 0 && *piFirst == 0) {
@@ -548,7 +556,7 @@ void EstimateItemProdSched(PLANET *lppl, PLPROD *lpplprod, ProdItemType iItem, i
         for (j = 0; j < 3; j++) {
             pl.rgwtMin[j] = rgRes[j];
         }
-        ChgPopFromPlanet(&pl, TRUE);
+        PlanetQueryIO().pfnGrowth(&pl, TRUE);
     }
     if (*piFirst == 0) {
         *piFirst = 100;

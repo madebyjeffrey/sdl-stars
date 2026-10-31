@@ -15,6 +15,7 @@ typedef struct COMPATPROFILE {
 // Unlink run during noexcept cleanup and must not throw. Allocations use free().
 struct PROFILEIO {
     void *(*pfnAllocate)(size_t) = std::malloc;
+    decltype(&PfNativeOpen) pfnOpen = PfNativeOpen;
     decltype(&CbGetNativeLine) pfnReadLine = CbGetNativeLine;
     decltype(&PfNativeCreateTemp) pfnCreateTemp = PfNativeCreateTemp;
     decltype(&ICopyNativePermissions) pfnCopyPermissions = ICopyNativePermissions;

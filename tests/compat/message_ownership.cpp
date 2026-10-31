@@ -1,4 +1,6 @@
 #include "internal.h"
+#include "../../compat/win32/src/message_alloc_io.h"
+
 #include <stars_compat.h>
 #include <atomic>
 #include <cstdio>
@@ -52,11 +54,19 @@ static HWND MakeWindow() {
 }
 static bool Take(HWND hwnd, MSG &msg) { return PeekMessageA(&msg,hwnd,wmPayload,wmNested,PM_REMOVE); }
 int main() {
-    CHECK(FCompatVideo());
-    HWND hwnd = MakeWindow(); CHECK(hwnd);
-    uint64_t id = StarsCompatWindowId(hwnd); CHECK(id);
+    HWND hwnd;
+    uint64_t id;
     MSG msg{};
-    int before = cReleased;
+    int before;
+    COMPATMESSAGEALLOCIO io_compatmessageallocio;
+    io_compatmessageallocio.pfnAllocate = StarsTest_malloc;
+    io_compatmessageallocio.pfnAllocateZero = StarsTest_calloc;
+    COMPATMESSAGEALLOCIOSCOPE scope_compatmessageallocio(io_compatmessageallocio);
+
+    CHECK(FCompatVideo());
+    hwnd = MakeWindow(); CHECK(hwnd);
+    id = StarsCompatWindowId(hwnd); CHECK(id);
+    before = cReleased;
     CHECK(StarsCompatPostOwnedMessageAsync(id,wmPayload,MakePayload(11),0));
     CHECK(Take(hwnd,msg) && !PvCompatMessagePayload(msg.wParam));
     DispatchMessageA(&msg); CHECK(cReleased == before+1 && cDelivered == 1);
@@ -84,18 +94,18 @@ int main() {
     before = cReleased;
     fFailMalloc = true;
     bool fAllocationPosted = true;
-    std::thread allocationFailure([&] { fAllocationPosted = StarsCompatPostOwnedMessageAsync(id,wmPayload,MakePayload(11),0); });
+    std::thread allocationFailure([&, io_compatmessageallocio] { COMPATMESSAGEALLOCIOSCOPE workerScope(io_compatmessageallocio); fAllocationPosted = StarsCompatPostOwnedMessageAsync(id,wmPayload,MakePayload(11),0); });
     allocationFailure.join();
     CHECK(!fAllocationPosted && !fFailMalloc && cReleased == before+1);
     bool fPosted = false;
     before = cReleased;
-    std::thread worker([&] { fPosted = StarsCompatPostOwnedMessageAsync(id,wmPayload,MakePayload(11),0); });
+    std::thread worker([&, io_compatmessageallocio] { COMPATMESSAGEALLOCIOSCOPE workerScope(io_compatmessageallocio); fPosted = StarsCompatPostOwnedMessageAsync(id,wmPayload,MakePayload(11),0); });
     worker.join(); CHECK(fPosted && Take(hwnd,msg));
     DispatchMessageA(&msg); CHECK(cReleased == before+1);
 
     before = cReleased;
     SDL_SetEventFilter([](void *, SDL_Event *event) -> bool { return event->type != SDL_EVENT_USER; },nullptr);
-    std::thread rejected([&] { fPosted = StarsCompatPostOwnedMessageAsync(id,wmPayload,MakePayload(11),0); });
+    std::thread rejected([&, io_compatmessageallocio] { COMPATMESSAGEALLOCIOSCOPE workerScope(io_compatmessageallocio); fPosted = StarsCompatPostOwnedMessageAsync(id,wmPayload,MakePayload(11),0); });
     rejected.join(); SDL_SetEventFilter(nullptr,nullptr);
     CHECK(!fPosted && cReleased == before+1);
 
@@ -114,7 +124,7 @@ int main() {
         return true;
     },&barrier);
     before = cReleased;
-    std::thread racing([&] { fPosted = StarsCompatPostOwnedMessageAsync(id,wmPayload,MakePayload(11),0); });
+    std::thread racing([&, io_compatmessageallocio] { COMPATMESSAGEALLOCIOSCOPE workerScope(io_compatmessageallocio); fPosted = StarsCompatPostOwnedMessageAsync(id,wmPayload,MakePayload(11),0); });
     const uint64_t deadline = SDL_GetTicks()+2000;
     while (!barrier.fEntered.load(std::memory_order_acquire) && SDL_GetTicks()<deadline) std::this_thread::yield();
     const bool fEntered = barrier.fEntered.load(std::memory_order_acquire);
@@ -144,16 +154,16 @@ int main() {
     CHECK(StarsCompatPostOwnedMessageAsync(id,wmPayload,MakePayload(11),0));
     CHECK(Take(hwnd,msg));
     CHECK(StarsCompatPostOwnedMessageAsync(id,wmPayload,MakePayload(11),0));
-    std::thread unpumped([&] { fPosted = StarsCompatPostOwnedMessageAsync(id,wmPayload,MakePayload(11),0); });
+    std::thread unpumped([&, io_compatmessageallocio] { COMPATMESSAGEALLOCIOSCOPE workerScope(io_compatmessageallocio); fPosted = StarsCompatPostOwnedMessageAsync(id,wmPayload,MakePayload(11),0); });
     unpumped.join(); CHECK(fPosted);
     StarsCompatProcessExit(); CHECK(cReleased == before+3);
     before = cReleased;
-    std::thread late([&] { fPosted = StarsCompatPostOwnedMessageAsync(id,wmPayload,MakePayload(11),0); });
+    std::thread late([&, io_compatmessageallocio] { COMPATMESSAGEALLOCIOSCOPE workerScope(io_compatmessageallocio); fPosted = StarsCompatPostOwnedMessageAsync(id,wmPayload,MakePayload(11),0); });
     late.join(); CHECK(!fPosted && cReleased == before+1);
 
     CHECK(FCompatVideo()); hwnd = MakeWindow(); CHECK(hwnd && StarsCompatWindowId(hwnd) != id);
     before = cReleased; const int cDeliveredBefore = cDelivered;
-    std::thread oldTarget([&] { fPosted = StarsCompatPostOwnedMessageAsync(id,wmPayload,MakePayload(11),0); });
+    std::thread oldTarget([&, io_compatmessageallocio] { COMPATMESSAGEALLOCIOSCOPE workerScope(io_compatmessageallocio); fPosted = StarsCompatPostOwnedMessageAsync(id,wmPayload,MakePayload(11),0); });
     oldTarget.join(); CHECK(fPosted);
     CHECK(!Take(hwnd,msg));
     CHECK(cReleased == before+1 && cDelivered == cDeliveredBefore);

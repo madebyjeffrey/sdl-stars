@@ -1,3 +1,5 @@
+#include "../../compat/win32/src/path_io.h"
+#include "../../compat/win32/src/external_io.h"
 /* Packaged UTF-8 guide selection and launch contracts; no browser is opened. */
 #include <windows.h>
 #include <SDL3/SDL.h>
@@ -60,6 +62,14 @@ int main(int argc, char **argv) {
     FILE *lpFile;
     DIR *lpDirectory;
     struct dirent *lpEntry;
+
+    COMPATPATHIO io_compatpathio;
+    io_compatpathio.pfnGetBasePath = StarsTest_SDL_GetBasePath;
+    io_compatpathio.pfnGetPrefPath = StarsTest_SDL_GetPrefPath;
+    COMPATPATHIOSCOPE scope_compatpathio(io_compatpathio);
+    COMPATEXTERNALIO io_compatexternalio;
+    io_compatexternalio.pfnOpenURL = StarsTest_SDL_OpenURL;
+    COMPATEXTERNALIOSCOPE scope_compatexternalio(io_compatexternalio);
 
     CHECK(argc == 2 && mkdtemp(szRoot));
     CHECK(SDL_setenv_unsafe("XDG_DATA_HOME", szRoot, 1) == 0);

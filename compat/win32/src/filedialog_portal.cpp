@@ -1,5 +1,7 @@
 /* Native Linux chooser: libdbus wire protocol, without a GTK/Qt dependency. */
 #include "filedialog_backend.h"
+#include "input_io.h"
+#include "time_io.h"
 #include <dbus/dbus.h>
 #include <limits.h>
 #include <stdio.h>
@@ -182,7 +184,7 @@ static BOOL FPumpChooser(HWND hwndOwner) {
     }
     return !FStarsErrorPending() && (!hwndOwner || IsWindow(hwndOwner));
 }
-int STARS_TEST_IMPL(ICompatChooseFile)(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFolder,
+int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFolder,
                      LPCSTR pszName, const COMPATFILEFILTER *rgfilter, int cFilter,
                      int *lpiFilter, char *pszPath, size_t cbPath) {
     DBusConnection *lpBus = NULL;
@@ -218,10 +220,10 @@ int STARS_TEST_IMPL(ICompatChooseFile)(HWND hwndOwner, BOOL fSave, LPCSTR pszTit
         props = SDL_GetWindowProperties(hwndOwner->lpWindow.get());
         /* SDL exports xdg-foreign asynchronously. Copy the handle before the
            modal pump, which may destroy its window and property storage. */
-        nsStart = SDL_GetTicks();
-        while (strcmp(SDL_GetCurrentVideoDriver(), "wayland") == 0 &&
+        nsStart = CompatTimeIO().pfnGetTicks();
+        while (strcmp(CompatInputIO().pfnGetCurrentVideoDriver(), "wayland") == 0 &&
                !SDL_GetStringProperty(props, SDL_PROP_WINDOW_WAYLAND_XDG_TOPLEVEL_EXPORT_HANDLE_STRING, NULL) &&
-               SDL_GetTicks() - nsStart < 1000) {
+               CompatTimeIO().pfnGetTicks() - nsStart < 1000) {
             if (!FPumpChooser(hwndOwner)) { iResult = 0; goto done; }
             SDL_Delay(1);
         }
@@ -261,10 +263,10 @@ int STARS_TEST_IMPL(ICompatChooseFile)(HWND hwndOwner, BOOL fSave, LPCSTR pszTit
             !dbus_message_iter_close_container(&args, &options)) goto done;
     }
     if (!dbus_connection_send_with_reply(lpBus, lpCall, &lpPending, 10000) || !lpPending) goto done;
-    nsStart = SDL_GetTicks();
+    nsStart = CompatTimeIO().pfnGetTicks();
     while (!dbus_pending_call_get_completed(lpPending)) {
         if (!FPumpChooser(hwndOwner)) { iResult = 0; goto done; }
-        if (!dbus_connection_read_write_dispatch(lpBus, 10) || SDL_GetTicks() - nsStart > 11000) goto done;
+        if (!dbus_connection_read_write_dispatch(lpBus, 10) || CompatTimeIO().pfnGetTicks() - nsStart > 11000) goto done;
     }
     lpReply = dbus_pending_call_steal_reply(lpPending);
     if (!lpReply || dbus_message_get_type(lpReply) == DBUS_MESSAGE_TYPE_ERROR ||
@@ -283,8 +285,8 @@ int STARS_TEST_IMPL(ICompatChooseFile)(HWND hwndOwner, BOOL fSave, LPCSTR pszTit
             dbus_message_unref(lpMessage); responses.rgMessage[i] = NULL;
         }
         responses.cMessage = 0;
-        if (SDL_GetTicks() - msOwnerCheck >= 1000) {
-            msOwnerCheck = SDL_GetTicks();
+        if (CompatTimeIO().pfnGetTicks() - msOwnerCheck >= 1000) {
+            msOwnerCheck = CompatTimeIO().pfnGetTicks();
             if (!dbus_bus_name_has_owner(lpBus, pszSender, &error)) break;
         }
     }

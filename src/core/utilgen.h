@@ -9,13 +9,9 @@ extern uint8_t acPN[];
 extern int16_t rgPrimes[128];
 extern char    aPNCmpr[];
 extern char    rgPNLookupTable[];
-#ifdef STARS_TEST_STATE_DOUBLE
-extern int32_t lFileSeed1;
-extern int32_t lFileSeed2;
-#else
 extern int32_t &lFileSeed1;
 extern int32_t &lFileSeed2;
-#endif
+
 
 void    PushRandom(int32_t lNew1, int32_t lNew2);
 void    PopRandom();
@@ -51,7 +47,5 @@ int32_t LDistance2(POINT16 pt1, POINT16 pt2);
 char   *PszGetLine(char **ppszBeg);
 int16_t CParseNumbers(char *psz, int32_t *pl, int16_t cMax);
 
-decltype(AlertSz) STARS_TEST_IMPL(AlertSz);
-decltype(Random) STARS_TEST_IMPL(Random);
 
 #endif

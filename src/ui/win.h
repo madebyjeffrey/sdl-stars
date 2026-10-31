@@ -56,10 +56,6 @@ int CchGetUtf8WindowText(HWND hwnd, char *psz, int cchMax);
 BOOL FSetUtf8WindowText(HWND hwnd, const char *psz);
 BOOL FSetNativeWindowTitle(HWND hwnd, const char *psz);
 
-decltype(PromptPassword) STARS_TEST_IMPL(PromptPassword);
-decltype(FPromptLegacyRacePassword) STARS_TEST_IMPL(FPromptLegacyRacePassword);
-decltype(FNativeSaveFileName) STARS_TEST_IMPL(FNativeSaveFileName);
-decltype(FNativeOpenFileName) STARS_TEST_IMPL(FNativeOpenFileName);
 
 #include <wincompat_calls.h>
 

@@ -1,5 +1,7 @@
 /* Test native backend selection and shared wrapper contracts without desktop input. */
 #include "internal.h"
+#include "../../compat/win32/src/windows_chooser_io.h"
+
 #include <stars_compat.h>
 #include "filedialog_windows_bridge.h"
 #include <stdio.h>
@@ -43,6 +45,10 @@ int main(void) {
     NATIVEFILE *lpfile;
     MSG msg;
     int i;
+
+    WINDOWSCHOOSERIO io_windowschooserio;
+    io_windowschooserio.pfnIChooseWindowsFile = StarsTest_IChooseWindowsFile;
+    WINDOWSCHOOSERIOSCOPE scope_windowschooserio(io_windowschooserio);
 
     CHECK(SDL_setenv_unsafe("STARS_FILE_DIALOG_BACKEND", "native", 1) == 0);
     CHECK(PszNativeCwd(szCwd, sizeof(szCwd)));

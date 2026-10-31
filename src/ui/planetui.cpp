@@ -1,4 +1,13 @@
 #include "win.h"
+#include "text_io.h"
+#include "control_io.h"
+#include "presentation_io.h"
+#include "production_io.h"
+#include "colony_io.h"
+#include "research_io.h"
+#include "part_query_io.h"
+#include "race_query_io.h"
+#include "alert_io.h"
 
 LRESULT CALLBACK PlanetWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     HDC                hdc;
@@ -25,46 +34,46 @@ LRESULT CALLBACK PlanetWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
         for (i = 0; i < 3; i++) {
             rghwndOrderDD[i] = HwndUiCreateWindowEx(0, szCombobox, "OrdDD", (i == 1 ? 528 : 0) | (CBS_DROPDOWNLIST | WS_CHILD | WS_VSCROLL), 100, 100, 200,
                                             i == 2 ? 160 : 80, hwnd, NULL, hInst, NULL);
-            LUiSendMessage(rghwndOrderDD[i], WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
+            ControlIO().pfnLUiSendMessage(rghwndOrderDD[i], WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
         }
         for (i = idsTaskHere; i <= idsTransferFleet; i++) {
-            psz = PszGetCompressedString(static_cast<StringId>(i));
-            LUiSendMessage(rghwndOrderDD[0], CB_ADDSTRING, 0, (LPARAM)psz);
+            psz = TextIO().pfnCompressed(static_cast<StringId>(i));
+            ControlIO().pfnLUiSendMessage(rghwndOrderDD[0], CB_ADDSTRING, 0, (LPARAM)psz);
         }
         hwndOrderED = HwndUiCreateWindowEx(0, szEdit, NULL, ES_RIGHT | WS_CHILD | WS_BORDER, 100, 100, 200, 50, hwnd, NULL, hInst, NULL);
-        LUiSendMessage(hwndOrderED, EM_LIMITTEXT, 4, 0);
-        LUiSendMessage(hwndOrderED, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
+        ControlIO().pfnLUiSendMessage(hwndOrderED, EM_LIMITTEXT, 4, 0);
+        ControlIO().pfnLUiSendMessage(hwndOrderED, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
         lpfnRealEditProc = (WNDPROC)GetWindowLongPtr(hwndOrderED, GWLP_WNDPROC);
         SetWindowLongPtr(hwndOrderED, GWLP_WNDPROC, (LONG_PTR)lpfnFakeEditProc);
         hwndBattleDD = HwndUiCreateWindowEx(0, szCombobox, "BattleDD", CBS_DROPDOWNLIST | WS_CHILD | WS_VSCROLL, 100, 100, 200, 80, hwnd, NULL, hInst, NULL);
-        LUiSendMessage(hwndBattleDD, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
+        ControlIO().pfnLUiSendMessage(hwndBattleDD, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
         hwndShipDD = HwndUiCreateWindowEx(0, szCombobox, "ShipDD", CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_HASSTRINGS | WS_CHILD | WS_VSCROLL, 100, 100, 200, 80, hwnd,
                                   NULL, hInst, NULL);
-        LUiSendMessage(hwndShipDD, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
-        GetClientRect(hwndShipDD, &rc);
+        ControlIO().pfnLUiSendMessage(hwndShipDD, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
+        ControlIO().pfnGetClientRect(hwndShipDD, &rc);
         dyShipDD = rc.bottom;
         hwndShipLB = HwndUiCreateWindowEx(0, szListbox, "ShipLB", LBS_NOTIFY | LBS_NOINTEGRALHEIGHT | LBS_DISABLENOSCROLL | WS_CHILD | WS_BORDER | WS_VSCROLL, 100, 100,
                                   200, 80, hwnd, NULL, hInst, NULL);
-        LUiSendMessage(hwndShipLB, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
+        ControlIO().pfnLUiSendMessage(hwndShipLB, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
         hwndFleetCompLB =
             HwndUiCreateWindowEx(0, szListbox, "FleetCompLB", LBS_NOTIFY | LBS_OWNERDRAWFIXED | LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT | WS_CHILD | WS_BORDER | WS_VSCROLL,
                          100, 100, 200, 80, hwnd, NULL, hInst, NULL);
-        LUiSendMessage(hwndFleetCompLB, WM_SETFONT, (WPARAM)rghfontArial8[0], 0);
+        ControlIO().pfnLUiSendMessage(hwndFleetCompLB, WM_SETFONT, (WPARAM)rghfontArial8[0], 0);
         hwndPlanetProdLB =
             HwndUiCreateWindowEx(0, szListbox, "PlanetProdLB", LBS_NOTIFY | LBS_OWNERDRAWFIXED | LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT | WS_CHILD | WS_BORDER | WS_VSCROLL,
                          100, 100, 200, 80, hwnd, NULL, hInst, NULL);
-        LUiSendMessage(hwndPlanetProdLB, WM_SETFONT, (WPARAM)rghfontArial8[0], 0);
+        ControlIO().pfnLUiSendMessage(hwndPlanetProdLB, WM_SETFONT, (WPARAM)rghfontArial8[0], 0);
         for (i = 0; i < 13; i++) {
-            psz = PszGetCompressedString(static_cast<StringId>(idsCargo2 + i));
+            psz = TextIO().pfnCompressed(static_cast<StringId>(idsCargo2 + i));
             rghwndBtn[i] = HwndUiCreateWindowEx(0, szButton, psz, WS_CHILD, 100, 100, 100, dyArial8 * 2, hwnd, NULL, hInst, NULL);
-            LUiSendMessage(rghwndBtn[i], WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
+            ControlIO().pfnLUiSendMessage(rghwndBtn[i], WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
         }
         hwndRepCB =
-            HwndUiCreateWindowEx(0, szButton, PszGetCompressedString(idsRepeatOrders), BS_AUTOCHECKBOX | WS_CHILD, 100, 100, 150, dyArial8, hwnd, NULL, hInst, NULL);
-        LUiSendMessage(hwndRepCB, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
+            HwndUiCreateWindowEx(0, szButton, TextIO().pfnCompressed(idsRepeatOrders), BS_AUTOCHECKBOX | WS_CHILD, 100, 100, 150, dyArial8, hwnd, NULL, hInst, NULL);
+        ControlIO().pfnLUiSendMessage(hwndRepCB, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
         break;
     case WM_ERASEBKGND:
-        GetClientRect(hwnd, &rc);
+        ControlIO().pfnGetClientRect(hwnd, &rc);
         FillRect((HDC)wParam, &rc, hbrButtonFace);
         return 1;
     case WM_CTLCOLORMSGBOX:
@@ -87,19 +96,19 @@ LRESULT CALLBACK PlanetWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
     case WM_LBUTTONDOWN:
     case WM_LBUTTONDBLCLK:
     case WM_RBUTTONDOWN:
-        HwndUiSetFocus(hwndFrame);
+        ControlIO().pfnHwndUiSetFocus(hwndFrame);
         PlanetClick(LOWORD(lParam), HIWORD(lParam), wParam, message == WM_RBUTTONDOWN);
         return 0;
     case WM_PAINT:
         hdc = BeginPaint(hwnd, &ps);
-        DrawPlanShip(hdc, tileAll);
+        ControlIO().pfnDrawPlanShip(hdc, tileAll);
         EndPaint(hwnd, &ps);
         break;
     case WM_SETCURSOR:
         hcs = 0;
         GetCursorPos16(&pt);
         ScreenToClient16(hwnd, &pt);
-        GetClientRect(hwnd, &rc);
+        ControlIO().pfnGetClientRect(hwnd, &rc);
         if (PtInRect(&rc, PointFrom16(pt)) == 0)
             goto Default;
         hcs = ClickInShipOrders(pt, 0, TRUE, FALSE);
@@ -141,7 +150,7 @@ LRESULT CALLBACK PlanetWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
             if (lppl->iPlayer == idPlayer) {
                 if (sel.grobj == grobjPlanet && sel.id == lppl->id)
                     break;
-                SelectAdjPlanet(0, lppl->id);
+                PresentationIO().pfnSelectPlanet(0, lppl->id);
                 return 0;
             }
         }
@@ -152,7 +161,7 @@ LRESULT CALLBACK PlanetWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
             if (lpfl->iPlayer == idPlayer) {
                 if (sel.grobj == grobjFleet && sel.id == lpfl->id)
                     break;
-                SelectAdjFleet(0, lpfl->id);
+                PresentationIO().pfnSelectFleet(0, lpfl->id);
                 return 0;
             }
         }
@@ -164,36 +173,36 @@ LRESULT CALLBACK PlanetWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
         }
         if ((HWND)lParam == hwndShipDD) {
             if (HIWORD(wParam) == 1) {
-                DrawPlanShip(NULL, static_cast<TileBits>(tileShipList | tileErase));
+                ControlIO().pfnDrawPlanShip(NULL, static_cast<TileBits>(tileShipList | tileErase));
             }
         } else {
             if ((HWND)lParam == rghwndBtn[4] && HIWORD(wParam) == 0) {
-                if (GetKeyState(VK_SHIFT) < 0) {
-                    SelectAdjPlanet(0, IdFindAdjStarbase(sel.pl.id, FALSE));
+                if (ControlIO().pfnGetKeyState(VK_SHIFT) < 0) {
+                    PresentationIO().pfnSelectPlanet(0, IdFindAdjStarbase(sel.pl.id, FALSE));
                     goto LRefocus;
                 }
-                SelectAdjPlanet(-1, 0);
+                PresentationIO().pfnSelectPlanet(-1, 0);
             LRefocus:
-                HwndUiSetFocus(hwndFrame);
+                ControlIO().pfnHwndUiSetFocus(hwndFrame);
                 return 0;
             } else if ((HWND)lParam == rghwndBtn[5] && HIWORD(wParam) == 0) {
-                if (GetKeyState(VK_SHIFT) < 0) {
-                    SelectAdjPlanet(0, IdFindAdjStarbase(sel.pl.id, TRUE));
+                if (ControlIO().pfnGetKeyState(VK_SHIFT) < 0) {
+                    PresentationIO().pfnSelectPlanet(0, IdFindAdjStarbase(sel.pl.id, TRUE));
                     goto LRefocus;
                 }
-                SelectAdjPlanet(1, 0);
+                PresentationIO().pfnSelectPlanet(1, 0);
                 goto LRefocus;
             } else if ((HWND)lParam == rghwndBtn[0] && HIWORD(wParam) == 0) {
-                lSel = LUiSendMessage(hwndShipDD, CB_GETCURSEL, 0, 0);
+                lSel = ControlIO().pfnLUiSendMessage(hwndShipDD, CB_GETCURSEL, 0, 0);
                 if (lSel == -1 || !FLookupOrbitingXfer(sel.pl.id, LOWORD(lSel), &xf, idflNone)) {
                     return 0;
                 }
                 TransferStuff(sel.pl.id, grobjPlanet, xf.id, xf.grobj, mdXferCargo);
                 goto LRefocus;
             } else if ((HWND)lParam == rghwndBtn[1] && HIWORD(wParam) == 0) {
-                lSel = LUiSendMessage(hwndShipDD, CB_GETCURSEL, 0, 0);
+                lSel = ControlIO().pfnLUiSendMessage(hwndShipDD, CB_GETCURSEL, 0, 0);
                 if (lSel != -1 && FLookupOrbitingXfer(sel.pl.id, LOWORD(lSel), &xf, idflNone) && xf.grobj == grobjFleet) {
-                    SelectAdjFleet(0, xf.id);
+                    PresentationIO().pfnSelectFleet(0, xf.id);
                 }
                 goto LRefocus;
             } else if ((HWND)lParam == rghwndBtn[2] && HIWORD(wParam) == 0) {
@@ -205,7 +214,7 @@ LRESULT CALLBACK PlanetWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
                 ChangeProduction(FALSE);
                 goto LRefocus;
             } else if ((HWND)lParam == rghwndBtn[12] && HIWORD(wParam) == 0) {
-                if (AlertSz(PszFormatIds(idsSureWantDeleteEverythingPlanetsProductionQueue, NULL), MB_YESNO | MB_ICONQUESTION | MB_TASKMODAL) != IDYES) {
+                if (AlertIO().pfnAlertSz(TextIO().pfnFormat(idsSureWantDeleteEverythingPlanetsProductionQueue, NULL), MB_YESNO | MB_ICONQUESTION | MB_TASKMODAL) != IDYES) {
                     return 0;
                 }
                 ChangeProduction(TRUE);
@@ -213,11 +222,11 @@ LRESULT CALLBACK PlanetWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
             } else {
                 if ((HWND)lParam != hwndPlanetProdLB || HIWORD(wParam) != 1)
                     goto Default;
-                DrawPlanShip(NULL, tileProductionOrOrbit);
+                ControlIO().pfnDrawPlanShip(NULL, tileProductionOrOrbit);
                 if (!gd.fTutorial)
                     goto Default;
                 tutor.fProgress = TRUE;
-                AdvanceTutor();
+                PresentationIO().pfnTutor();
                 goto Default;
             }
         }
@@ -294,7 +303,7 @@ void DrawPlanetMinSum(HDC hdc, TILE *ptile, OBJ obj) {
         rgrcRef[10].top = -5;
         rgrcRef[10].bottom = -6;
     }
-    if (FDrawTileNC(hdc, ptile, &rc, PszGetCompressedString(idsMineralsHand))) {
+    if (FDrawTileNC(hdc, ptile, &rc, TextIO().pfnCompressed(idsMineralsHand))) {
         if (!ppl) {
             ppl = &sel.pl;
         }
@@ -311,7 +320,7 @@ void DrawPlanetMinSum(HDC hdc, TILE *ptile, OBJ obj) {
             }
             SelectObject(hdc, rghfontArial8[0]);
             SetTextColor(hdc, crButtonText);
-            c = wsprintf(szWork, PszGetCompressedString(idsLdkt), ppl->rgwtMin[i]);
+            c = wsprintf(szWork, TextIO().pfnCompressed(idsLdkt), ppl->rgwtMin[i]);
             RightTextOut(hdc, xRight, yTop, szWork, c, dxRight);
             yTop += dyArial8;
         }
@@ -321,27 +330,27 @@ void DrawPlanetMinSum(HDC hdc, TILE *ptile, OBJ obj) {
         SetRect(&rgrcRef[7], xLeft, yTop, xRight, dyArial8 * 2 + yTop);
         if (!ptile->fMinDraw) {
             SelectObject(hdc, rghfontArial8[1]);
-            c = CchGetString(idsMines4, szWork);
+            c = TextIO().pfnCchGetString(idsMines4, szWork);
             TextOut(hdc, xLeft, yTop, szWork, c);
             SelectObject(hdc, rghfontArial8[0]);
         }
-        if (GetRaceStat(&rgplr[idPlayer], rsMajorAdv) == raMacintosh) {
-            c = wsprintf(szWork, PszGetCompressedString(idsD), CMinesOperating(ppl));
+        if (RaceQueryIO().pfnStat(&rgplr[idPlayer], rsMajorAdv) == raMacintosh) {
+            c = wsprintf(szWork, TextIO().pfnCompressed(idsD), ColonyIO().pfnMinesOperating(ppl));
         } else {
-            c = wsprintf(szWork, PszGetCompressedString(idsDD), ppl->cMines, CMaxOperableMines(ppl, idPlayer, FALSE));
+            c = wsprintf(szWork, TextIO().pfnCompressed(idsDD), ppl->cMines, ColonyIO().pfnOperableMines(ppl, idPlayer, FALSE));
         }
         RightTextOut(hdc, xRight, yTop, szWork, c, dxRight * 2);
         yTop += dyArial8;
         if (!ptile->fMinDraw) {
             SelectObject(hdc, rghfontArial8[1]);
-            c = CchGetString(idsFactories4, szWork);
+            c = TextIO().pfnCchGetString(idsFactories4, szWork);
             TextOut(hdc, xLeft, yTop, szWork, c);
             SelectObject(hdc, rghfontArial8[0]);
         }
-        if (GetRaceStat(&rgplr[idPlayer], rsMajorAdv) == raMacintosh) {
-            c = CchGetString(idsN, szWork);
+        if (RaceQueryIO().pfnStat(&rgplr[idPlayer], rsMajorAdv) == raMacintosh) {
+            c = TextIO().pfnCchGetString(idsN, szWork);
         } else {
-            c = wsprintf(szWork, PszGetCompressedString(idsDD), ppl->cFactories, CMaxOperableFactories(ppl, idPlayer, FALSE));
+            c = wsprintf(szWork, TextIO().pfnCompressed(idsDD), ppl->cFactories, ColonyIO().pfnOperableFactories(ppl, idPlayer, FALSE));
         }
         RightTextOut(hdc, xRight, yTop, szWork, c, dxRight * 2);
         yTop += dyArial8;
@@ -367,46 +376,46 @@ void DrawPlanetStats(HDC hdc, TILE *ptile, OBJ obj) {
     RECT    rc;
     PART    part;
 
-    if (FDrawTileNC(hdc, ptile, &rc, PszGetCompressedString(idsStatus))) {
+    if (FDrawTileNC(hdc, ptile, &rc, TextIO().pfnCompressed(idsStatus))) {
         xLeft = rc.left + 4;
         xRight = rc.right - 4;
         yTop = rc.top;
         SelectObject(hdc, rghfontArial8[1]);
-        c = CchGetString(idsPopulation4, szWork);
+        c = TextIO().pfnCchGetString(idsPopulation4, szWork);
         l = GetTextExtent(hdc, szWork, c);
-        c = CchGetString(idsScannerType, szWork);
+        c = TextIO().pfnCchGetString(idsScannerType, szWork);
         l2 = GetTextExtent(hdc, szWork, c);
         if (l2 > l) {
             l = l2;
         }
-        c = CchGetString(idsScannerRange, szWork);
+        c = TextIO().pfnCchGetString(idsScannerRange, szWork);
         l2 = GetTextExtent(hdc, szWork, c);
         if (l2 > l) {
             l = l2;
         }
-        c = CchGetString(idsDefenses4, szWork);
+        c = TextIO().pfnCchGetString(idsDefenses4, szWork);
         l2 = GetTextExtent(hdc, szWork, c);
         if (l2 > l) {
             l = l2;
         }
-        c = CchGetString(idsDefenseType, szWork);
+        c = TextIO().pfnCchGetString(idsDefenseType, szWork);
         l2 = GetTextExtent(hdc, szWork, c);
         if (l2 > l) {
             l = l2;
         }
-        c = CchGetString(idsDefCoverage, szWork);
+        c = TextIO().pfnCchGetString(idsDefCoverage, szWork);
         l2 = GetTextExtent(hdc, szWork, c);
         if (l2 > l) {
             l = l2;
         }
-        c = CchGetString(idsResourcesYear, szWork);
+        c = TextIO().pfnCchGetString(idsResourcesYear, szWork);
         l2 = GetTextExtent(hdc, szWork, c);
         if (l2 > l) {
             l = l2;
         }
         dxRight = xRight - xLeft - LOWORD(l);
         if (!ptile->fMinDraw) {
-            c = CchGetString(idsPopulation4, szWork);
+            c = TextIO().pfnCchGetString(idsPopulation4, szWork);
             TextOut(hdc, xLeft, yTop, szWork, c);
         }
         SelectObject(hdc, rghfontArial8[0]);
@@ -416,17 +425,17 @@ void DrawPlanetStats(HDC hdc, TILE *ptile, OBJ obj) {
         yTop += dyArial8;
         if (!ptile->fMinDraw) {
             SelectObject(hdc, rghfontArial8[1]);
-            c = CchGetString(idsResourcesYear, szWork);
+            c = TextIO().pfnCchGetString(idsResourcesYear, szWork);
             TextOut(hdc, xLeft, yTop, szWork, c);
             SelectObject(hdc, rghfontArial8[0]);
         }
         SetRect(&rgrcRef[8], xLeft, yTop, xRight, yTop + dyArial8);
-        cResAvail = CResourcesAtPlanet(&sel.pl, idPlayer);
+        cResAvail = ResearchIO().pfnResources(&sel.pl, idPlayer);
         cRes = cResAvail;
         if (!sel.pl.fNoResearch) {
             cResAvail -= MulDiv(cRes, rgplr[idPlayer].pctResearch, 100);
         }
-        c = wsprintf(szWork, PszGetCompressedString(idsDD), cResAvail, cRes);
+        c = wsprintf(szWork, TextIO().pfnCompressed(idsDD), cResAvail, cRes);
         RightTextOut(hdc, xRight, yTop, szWork, c, dxRight);
         yTop += dyArial8;
         hbrSav = (HBRUSH)SelectObject(hdc, hbrButtonHilite);
@@ -434,19 +443,19 @@ void DrawPlanetStats(HDC hdc, TILE *ptile, OBJ obj) {
         SelectObject(hdc, hbrSav);
         if (!ptile->fMinDraw) {
             SelectObject(hdc, rghfontArial8[1]);
-            c = CchGetString(idsScannerType, szWork);
+            c = TextIO().pfnCchGetString(idsScannerType, szWork);
             TextOut(hdc, xLeft, yTop, szWork, c);
             SelectObject(hdc, rghfontArial8[0]);
         }
         SetRect(&rgrcRef[11], xLeft, yTop, xRight, dyArial8 * 2 + yTop);
-        if (GetRaceStat(&rgplr[idPlayer], rsMajorAdv) == raMacintosh) {
-            CchGetString(idsOrganic, szWork);
+        if (RaceQueryIO().pfnStat(&rgplr[idPlayer], rsMajorAdv) == raMacintosh) {
+            TextIO().pfnCchGetString(idsOrganic, szWork);
             dRange = GetPlanetScannerRange(&sel.pl, &dRangeP);
         } else if (sel.pl.iScanner == 31) {
-            CchGetString(idsNone4, szWork);
+            TextIO().pfnCchGetString(idsNone4, szWork);
             dRange = 0;
         } else {
-            LookupBestPlanetaryScanner(&part);
+            ProductionIO().pfnScanner(&part);
             strcpy(szWork, part.pcom().szName());
             dRange = GetPlanetScannerRange(&sel.pl, &dRangeP);
         }
@@ -454,20 +463,20 @@ void DrawPlanetStats(HDC hdc, TILE *ptile, OBJ obj) {
         yTop += dyArial8;
         if (!ptile->fMinDraw) {
             SelectObject(hdc, rghfontArial8[1]);
-            c = CchGetString(idsScannerRange, szWork);
+            c = TextIO().pfnCchGetString(idsScannerRange, szWork);
             TextOut(hdc, xLeft, yTop, szWork, c);
             SelectObject(hdc, rghfontArial8[0]);
         }
         if (dRange > 0) {
             if (dRangeP > 0) {
-                c = wsprintf(szWork, PszGetCompressedString(idsDDLY), dRangeP, dRange);
+                c = wsprintf(szWork, TextIO().pfnCompressed(idsDDLY), dRangeP, dRange);
             } else if (dRange < 100) {
-                c = wsprintf(szWork, PszGetCompressedString(idsDLightYears), dRange);
+                c = wsprintf(szWork, TextIO().pfnCompressed(idsDLightYears), dRange);
             } else {
-                c = wsprintf(szWork, PszGetCompressedString(idsDLY), dRange);
+                c = wsprintf(szWork, TextIO().pfnCompressed(idsDLY), dRange);
             }
         } else {
-            CchGetString(idsNone4, szWork);
+            TextIO().pfnCchGetString(idsNone4, szWork);
             c = 0;
         }
         RightTextOut(hdc, xRight, yTop, szWork, c, dxRight);
@@ -477,26 +486,26 @@ void DrawPlanetStats(HDC hdc, TILE *ptile, OBJ obj) {
         SelectObject(hdc, hbrSav);
         if (!ptile->fMinDraw) {
             SelectObject(hdc, rghfontArial8[1]);
-            c = CchGetString(idsDefenses4, szWork);
+            c = TextIO().pfnCchGetString(idsDefenses4, szWork);
             TextOut(hdc, xLeft, yTop, szWork, c);
         }
         SelectObject(hdc, rghfontArial8[0]);
         SetRect(&rgrcRef[10], xLeft, yTop, xRight, 3 * dyArial8 + yTop);
-        if (GetRaceStat(&rgplr[idPlayer], rsMajorAdv) == raMacintosh) {
-            c = CchGetString(idsN, szWork);
+        if (RaceQueryIO().pfnStat(&rgplr[idPlayer], rsMajorAdv) == raMacintosh) {
+            c = TextIO().pfnCchGetString(idsN, szWork);
         } else {
-            c = wsprintf(szWork, PszGetCompressedString(idsDD), sel.pl.cDefenses, CMaxOperableDefenses(&sel.pl, idPlayer, FALSE));
+            c = wsprintf(szWork, TextIO().pfnCompressed(idsDD), sel.pl.cDefenses, ColonyIO().pfnOperableDefenses(&sel.pl, idPlayer, FALSE));
         }
         RightTextOut(hdc, xRight, yTop, szWork, c, dxRight);
         yTop += dyArial8;
         if (!ptile->fMinDraw) {
             SelectObject(hdc, rghfontArial8[1]);
-            c = CchGetString(idsDefenseType, szWork);
+            c = TextIO().pfnCchGetString(idsDefenseType, szWork);
             TextOut(hdc, xLeft, yTop, szWork, c);
             SelectObject(hdc, rghfontArial8[0]);
         }
         if (sel.pl.cDefenses == 0) {
-            CchGetString(GetRaceStat(&rgplr[idPlayer], rsMajorAdv) == raMacintosh ? idsN : idsNone4, szWork);
+            TextIO().pfnCchGetString(RaceQueryIO().pfnStat(&rgplr[idPlayer], rsMajorAdv) == raMacintosh ? idsN : idsNone4, szWork);
             dRange = 0;
         } else {
             FGetBestDefensePart(&part);
@@ -507,7 +516,7 @@ void DrawPlanetStats(HDC hdc, TILE *ptile, OBJ obj) {
         yTop += dyArial8;
         if (!ptile->fMinDraw) {
             SelectObject(hdc, rghfontArial8[1]);
-            c = CchGetString(idsDefCoverage, szWork);
+            c = TextIO().pfnCchGetString(idsDefCoverage, szWork);
             TextOut(hdc, xLeft, yTop, szWork, c);
             SelectObject(hdc, rghfontArial8[0]);
         }
@@ -517,7 +526,7 @@ void DrawPlanetStats(HDC hdc, TILE *ptile, OBJ obj) {
             c = wsprintf(szWork, PCTDXPCTDPCTPCT, LOWORD((int32_t)((double)pct * 100)),
                          LOWORD((int32_t)((pct - (double)(int16_t)LOWORD((int32_t)((double)pct * 100)) / 100.0) * 10000)));
         } else {
-            c = CchGetString(GetRaceStat(&rgplr[idPlayer], rsMajorAdv) == raMacintosh ? idsN : idsNone4, szWork);
+            c = TextIO().pfnCchGetString(RaceQueryIO().pfnStat(&rgplr[idPlayer], rsMajorAdv) == raMacintosh ? idsN : idsNone4, szWork);
             psz = szWork;
         }
         RightTextOut(hdc, xRight, yTop, szWork, c, dxRight);
@@ -558,7 +567,7 @@ void DrawPlanetStarbase(HDC hdc, TILE *ptile, OBJ obj) {
         strcpy(szWork, lpshdef->hul.szClass);
         psz = szWork;
     } else {
-        psz = PszGetCompressedString(idsStarbase2);
+        psz = TextIO().pfnCompressed(idsStarbase2);
     }
     if (FDrawTileNC(hdc, ptile, &rc, psz)) {
         xLeft = rc.left + 4;
@@ -573,47 +582,47 @@ void DrawPlanetStarbase(HDC hdc, TILE *ptile, OBJ obj) {
         } else {
             SetRect(&rgrcRef[14], xLeft, yTop, xRight, dyArial8 * 4 + yTop);
             SelectObject(hdc, rghfontArial8[1]);
-            c = CchGetString(idsDockCapacity, szWork);
+            c = TextIO().pfnCchGetString(idsDockCapacity, szWork);
             l = GetTextExtent(hdc, szWork, c);
             dxRight = xRight - xLeft - LOWORD(l);
             TextOut(hdc, xLeft, yTop, szWork, c);
             SelectObject(hdc, rghfontArial8[0]);
-            w = LphuldefFromId(lpshdef->hul.ihuldef)->hul.wtCargoMax;
+            w = PartQueryIO().pfnHull(lpshdef->hul.ihuldef)->hul.wtCargoMax;
             if (w == 0) {
-                c = CchGetString(idsNone4, szWork);
+                c = TextIO().pfnCchGetString(idsNone4, szWork);
             } else if ((uint32_t)w == 0xffff) {
-                c = CchGetString(idsUnlimited, szWork);
+                c = TextIO().pfnCchGetString(idsUnlimited, szWork);
             } else {
                 c = wsprintf(szWork, PCTDKT, w);
             }
             RightTextOut(hdc, xRight, yTop, szWork, c, dxRight);
             yTop += dyArial8;
             SelectObject(hdc, rghfontArial8[1]);
-            c = CchGetString(idsArmor2, szWork);
+            c = TextIO().pfnCchGetString(idsArmor2, szWork);
             TextOut(hdc, xLeft, yTop, szWork, c);
             w = lpshdef->hul.dp;
             if (w == 0) {
-                c = CchGetString(idsNone4, szWork);
+                c = TextIO().pfnCchGetString(idsNone4, szWork);
             } else {
-                c = wsprintf(szWork, PszGetCompressedString(idsLddp), w, 0);
+                c = wsprintf(szWork, TextIO().pfnCompressed(idsLddp), w, 0);
             }
             SelectObject(hdc, rghfontArial8[0]);
             RightTextOut(hdc, xRight, yTop, szWork, c, dxRight);
             yTop += dyArial8;
             SelectObject(hdc, rghfontArial8[1]);
-            c = CchGetString(idsShields2, szWork);
+            c = TextIO().pfnCchGetString(idsShields2, szWork);
             TextOut(hdc, xLeft, yTop, szWork, c);
             l = DpShieldOfShdef(lpshdef, idPlayer);
             if (l == 0) {
-                c = CchGetString(idsNone4, szWork);
+                c = TextIO().pfnCchGetString(idsNone4, szWork);
             } else {
-                c = wsprintf(szWork, PszGetCompressedString(idsLddp), l);
+                c = wsprintf(szWork, TextIO().pfnCompressed(idsLddp), l);
             }
             SelectObject(hdc, rghfontArial8[0]);
             RightTextOut(hdc, xRight, yTop, szWork, c, dxRight);
             yTop += dyArial8;
             SelectObject(hdc, rghfontArial8[1]);
-            c = CchGetString(idsDamage2, szWork);
+            c = TextIO().pfnCchGetString(idsDamage2, szWork);
             TextOut(hdc, xLeft, yTop, szWork, c);
             SelectObject(hdc, rghfontArial8[0]);
             w = sel.pl.pctDp;
@@ -624,7 +633,7 @@ void DrawPlanetStarbase(HDC hdc, TILE *ptile, OBJ obj) {
                 c = wsprintf(szWork, PCTDPCTPCT, (uint32_t)w / 5);
                 crForeSav = SetTextColor(hdc, 127);
             } else {
-                c = CchGetString(idsNone4, szWork);
+                c = TextIO().pfnCchGetString(idsNone4, szWork);
             }
             RightTextOut(hdc, xRight, yTop, szWork, c, dxRight);
             yTop += dyArial8;
@@ -636,25 +645,25 @@ void DrawPlanetStarbase(HDC hdc, TILE *ptile, OBJ obj) {
             SelectObject(hdc, hbrSav);
             SelectObject(hdc, rghfontArial8[1]);
             SetRect(&rgrcRef[16], xLeft, yTop, xRight, yTop + dyArial8);
-            c = CchGetString(idsMassDriver, szWork);
+            c = TextIO().pfnCchGetString(idsMassDriver, szWork);
             TextOut(hdc, xLeft, yTop, szWork, c);
-            iWarp = IWarpMAFromLppl(&sel.pl, &fTwo);
+            iWarp = ColonyIO().pfnWarp(&sel.pl, &fTwo);
             if (iWarp > 0) {
-                c = wsprintf(szWork, PszGetCompressedString(idsWarpD), iWarp);
+                c = wsprintf(szWork, TextIO().pfnCompressed(idsWarpD), iWarp);
                 if (fTwo) {
                     szWork[c++] = '+';
                 }
             } else {
-                c = wsprintf(szWork, PszGetCompressedString(idsNone4));
+                c = wsprintf(szWork, TextIO().pfnCompressed(idsNone4));
             }
             SelectObject(hdc, rghfontArial8[0]);
             RightTextOut(hdc, xRight, yTop, szWork, c, dxRight);
             yTop += dyArial8;
             SelectObject(hdc, rghfontArial8[1]);
-            c = CchGetString(idsDestination3, szWork);
+            c = TextIO().pfnCchGetString(idsDestination3, szWork);
             TextOut(hdc, xLeft, yTop, szWork, c);
             if (sel.pl.idFling == 0) {
-                c = CchGetString(idsNone4, szWork);
+                c = TextIO().pfnCchGetString(idsNone4, szWork);
             } else {
                 psz = PszGetCompressedPlanet(rgidPlan[sel.pl.idFling - 1]);
                 c = 0;
@@ -669,7 +678,7 @@ void DrawPlanetStarbase(HDC hdc, TILE *ptile, OBJ obj) {
             if (iWarp == 0) {
                 bt |= 4;
             }
-            DrawBtn(hdc, &rgrcRef[13], bt, gd.fSetMassMode, PszGetCompressedString(idsSetDest));
+            DrawBtn(hdc, &rgrcRef[13], bt, gd.fSetMassMode, TextIO().pfnCompressed(idsSetDest));
             if (iWarp > 0) {
                 SetRect(&rgrcRef[15], xLeft + c + 4, yTop + 3, xRight, yTop + dyArial8 + 3);
                 DrawMassWarpGauge(hdc, &rgrcRef[15], !fTwo ? iWarp : -iWarp, sel.pl.iWarpFling + 4);
@@ -710,7 +719,7 @@ void DrawMassWarpGauge(HDC hdc, RECT *prc, int16_t iBest, int16_t iCur) {
     lCur = (int16_t)(iCur - 4);
     l = LDrawGauge(hdc, prc, 1, &lCur, &hbr, lMax);
     iMode = SetBkMode(hdc, TRANSPARENT);
-    c = wsprintf(szWork, PszGetCompressedString(idsWarpLd), l + 4);
+    c = wsprintf(szWork, TextIO().pfnCompressed(idsWarpLd), l + 4);
     l = GetTextExtent(hdc, szWork, c);
     RcCtrTextOut(hdc, prc, szWork, c);
     SetBkMode(hdc, iMode);
@@ -744,7 +753,7 @@ void DrawPlanetProduction(HDC hdc, TILE *ptile, OBJ obj) {
         rgrcRef[17].bottom = -6;
         ptile->fFixCtls = FALSE;
     }
-    if (!FDrawTileNC(hdc, ptile, &rc, PszGetCompressedString(idsProduction))) {
+    if (!FDrawTileNC(hdc, ptile, &rc, TextIO().pfnCompressed(idsProduction))) {
         FUiShowWindow(hwndPlanetProdLB, SW_HIDE);
         FUiShowWindow(rghwndBtn[11], SW_HIDE);
         FUiShowWindow(rghwndBtn[12], SW_HIDE);
@@ -753,7 +762,7 @@ void DrawPlanetProduction(HDC hdc, TILE *ptile, OBJ obj) {
         xRight = rc.right - 4;
         yTop = rc.top;
         yTop += 4;
-        GetClientRect(hwndPlanetProdLB, &rcT);
+        ControlIO().pfnGetClientRect(hwndPlanetProdLB, &rcT);
         swp = SWP_NOZORDER | SWP_NOACTIVATE;
         dyPlanetProdLB = (dyArial8 + 2) * (!gd.fSmallTileMode ? 5 : 3);
         dyWrong = dyPlanetProdLB - (rcT.bottom - rcT.top);
@@ -762,12 +771,12 @@ void DrawPlanetProduction(HDC hdc, TILE *ptile, OBJ obj) {
         } else {
             dxPlanetProdLB = xRight - xLeft;
         }
-        FUiSetWindowPos(hwndPlanetProdLB, NULL, xLeft, yTop, xRight - xLeft, dyPlanetProdLB, swp);
+        ControlIO().pfnFUiSetWindowPos(hwndPlanetProdLB, NULL, xLeft, yTop, xRight - xLeft, dyPlanetProdLB, swp);
         FUiShowWindow(hwndPlanetProdLB, SW_SHOW);
-        GetClientRect(hwndPlanetProdLB, &rcT);
+        ControlIO().pfnGetClientRect(hwndPlanetProdLB, &rcT);
         dyPlanetProdLB = rcT.bottom - rcT.top;
         yTop += dyPlanetProdLB + 4;
-        iSel = LOWORD(LUiSendMessage(hwndPlanetProdLB, LB_GETCURSEL, 0, 0));
+        iSel = LOWORD(ControlIO().pfnLUiSendMessage(hwndPlanetProdLB, LB_GETCURSEL, 0, 0));
         if (iSel < 0) {
             iSel = 0;
         }
@@ -780,7 +789,7 @@ void DrawPlanetProduction(HDC hdc, TILE *ptile, OBJ obj) {
         }
         if (c != 0) {
             SelectObject(hdc, rghfontArial8[1]);
-            cch = CchGetString(idsCompletion, szT);
+            cch = TextIO().pfnCchGetString(idsCompletion, szT);
             TextOut(hdc, xLeft, yTop, szT, cch);
             dxRight = xRight - xLeft - LOWORD(GetTextExtent(hdc, szT, cch));
             SelectObject(hdc, rghfontArial8[0]);
@@ -790,11 +799,11 @@ void DrawPlanetProduction(HDC hdc, TILE *ptile, OBJ obj) {
         }
         yTop += dyArial8;
         SelectObject(hdc, rghfontArial8[1]);
-        cch = CchGetString(idsRoute3, szT);
+        cch = TextIO().pfnCchGetString(idsRoute3, szT);
         TextOut(hdc, xLeft, yTop, szT, cch);
         dxRight = xRight - xLeft - LOWORD(GetTextExtent(hdc, szT, cch));
         if (sel.pl.idRoute == 0) {
-            c = CchGetString(idsNone4, szWork);
+            c = TextIO().pfnCchGetString(idsNone4, szWork);
         } else {
             psz = PszGetCompressedPlanet(rgidPlan[sel.pl.idRoute - 1]);
             c = 0;
@@ -807,14 +816,14 @@ void DrawPlanetProduction(HDC hdc, TILE *ptile, OBJ obj) {
         xStart = xLeft;
         i = 11;
         while (i <= 12) {
-            FUiSetWindowPos(rghwndBtn[i], NULL, xStart, yTop, c, (dyArial8 >> 1) + dyArial8, SWP_NOZORDER | SWP_NOACTIVATE);
+            ControlIO().pfnFUiSetWindowPos(rghwndBtn[i], NULL, xStart, yTop, c, (dyArial8 >> 1) + dyArial8, SWP_NOZORDER | SWP_NOACTIVATE);
             FUiShowWindow(rghwndBtn[i], SW_SHOW);
             i++;
             xStart += c + 8;
         }
-        FUiEnableWindow(rghwndBtn[12], sel.pl.lpplprod && sel.pl.lpplprod->iprodMac != 0);
+        ControlIO().pfnFUiEnableWindow(rghwndBtn[12], sel.pl.lpplprod && sel.pl.lpplprod->iprodMac != 0);
         SetRect(&rgrcRef[17], xStart, yTop, xStart + c, yTop + dyArial8 + (dyArial8 >> 1));
-        DrawBtn(hdc, &rgrcRef[17], 8, gd.fSetRouteMode, PszGetCompressedString(idsRoute2));
+        DrawBtn(hdc, &rgrcRef[17], 8, gd.fSetRouteMode, TextIO().pfnCompressed(idsRoute2));
     }
     return;
 }
@@ -832,7 +841,7 @@ void DrawPlanShipBitmap(HDC hdc, TILE *ptile, OBJ obj) {
     RECT    rc;
 
     if (sel.grobj == grobjPlanet) {
-        psz = PszGetPlanetName(obj.ppl()->id);
+        psz = TextIO().pfnPlanetName(obj.ppl()->id);
         i = obj.ppl()->id;
         i += 8;
         iOffset = i % 28;
@@ -887,7 +896,7 @@ void DrawPlanShipBitmap(HDC hdc, TILE *ptile, OBJ obj) {
             iOffset = sel.grobj == grobjFleet ? 6 : 5;
             i = 4;
             while (i <= iOffset) {
-                FUiSetWindowPos(rghwndBtn[i], NULL, xLeft, yTop, dx, dy, SWP_NOZORDER | SWP_NOACTIVATE);
+                ControlIO().pfnFUiSetWindowPos(rghwndBtn[i], NULL, xLeft, yTop, dx, dy, SWP_NOZORDER | SWP_NOACTIVATE);
                 FUiShowWindow(rghwndBtn[i], SW_SHOW);
                 i++;
                 yTop += (!gd.fSmallTileMode ? 3 : 2) + dy;
@@ -931,7 +940,7 @@ void DrawPlanetShipList(HDC hdc, TILE *ptile, OBJ obj) {
         rgrcRef[4].top = -5;
         rgrcRef[4].bottom = -6;
     }
-    if (!FDrawTileNC(hdc, ptile, &rc, PszGetCompressedString(!pfl ? idsFleetsOrbit : idsOtherFleetsHere))) {
+    if (!FDrawTileNC(hdc, ptile, &rc, TextIO().pfnCompressed(!pfl ? idsFleetsOrbit : idsOtherFleetsHere))) {
         for (i = 0; i <= 2; i++) {
             FUiShowWindow(rghwndBtn[i], SW_HIDE);
         }
@@ -946,11 +955,11 @@ void DrawPlanetShipList(HDC hdc, TILE *ptile, OBJ obj) {
         } else {
             dxShipDD = xRight - xLeft;
         }
-        FUiSetWindowPos(hwndShipDD, NULL, xLeft, yTop, xRight - xLeft, 5 * dyShipDD, swp);
+        ControlIO().pfnFUiSetWindowPos(hwndShipDD, NULL, xLeft, yTop, xRight - xLeft, 5 * dyShipDD, swp);
         FUiShowWindow(hwndShipDD, SW_SHOW);
         yTop += dyShipDD + 3;
-        lSel = LUiSendMessage(hwndShipDD, CB_GETCURSEL, 0, 0);
-        FUiEnableWindow(rghwndBtn[0], lSel != -1);
+        lSel = ControlIO().pfnLUiSendMessage(hwndShipDD, CB_GETCURSEL, 0, 0);
+        ControlIO().pfnFUiEnableWindow(rghwndBtn[0], lSel != -1);
         if (lSel == -1) {
             fDoneDrawing = TRUE;
             fUnknown = TRUE;
@@ -964,10 +973,10 @@ void DrawPlanetShipList(HDC hdc, TILE *ptile, OBJ obj) {
             fDoneDrawing = TRUE;
         }
         if (fDoneDrawing) {
-            FUiEnableWindow(rghwndBtn[1], FALSE);
+            ControlIO().pfnFUiEnableWindow(rghwndBtn[1], FALSE);
         } else {
             fObjIsThing = xf.grobj == grobjThing;
-            FUiEnableWindow(rghwndBtn[1], fObjIsThing == 0 && xf.iPlayerObj() == idPlayer);
+            ControlIO().pfnFUiEnableWindow(rghwndBtn[1], fObjIsThing == 0 && xf.iPlayerObj() == idPlayer);
         }
         rgrcRef[1].top = -5;
         rgrcRef[1].bottom = -6;
@@ -977,11 +986,11 @@ void DrawPlanetShipList(HDC hdc, TILE *ptile, OBJ obj) {
         if (!gd.fSmallTileMode) {
             if (!fDoneDrawing && !fUnknown) {
                 SelectObject(hdc, rghfontArial8[1]);
-                c = CchGetString(idsCargo3, szWork);
+                c = TextIO().pfnCchGetString(idsCargo3, szWork);
                 l = GetTextExtent(hdc, szWork, c);
             }
             if (!fDoneDrawing && !fUnknown && !fObjIsThing) {
-                c = CchGetString(idsFuel3, szWork);
+                c = TextIO().pfnCchGetString(idsFuel3, szWork);
                 l2 = GetTextExtent(hdc, szWork, c);
                 if (l2 > l) {
                     l = l2;
@@ -1001,7 +1010,7 @@ void DrawPlanetShipList(HDC hdc, TILE *ptile, OBJ obj) {
                 yTop += dyArial8 + 4;
             }
             if (!fDoneDrawing && !fUnknown) {
-                c = CchGetString(idsCargo3, szWork);
+                c = TextIO().pfnCchGetString(idsCargo3, szWork);
                 TextOut(hdc, xLeft, yTop, szWork, c);
                 SetRect(&rcGauge, xLeft + LOWORD(l), yTop, xRight, yTop + dyArial8);
                 rgrcRef[4] = rcGauge;
@@ -1022,14 +1031,14 @@ void DrawPlanetShipList(HDC hdc, TILE *ptile, OBJ obj) {
         xStart = xLeft;
         i = 0;
         while (i <= 2) {
-            FUiSetWindowPos(rghwndBtn[(int16_t)(i + 1) % 3], NULL, xStart, yTop, c, (dyArial8 >> 1) + dyArial8, SWP_NOZORDER | SWP_NOACTIVATE);
+            ControlIO().pfnFUiSetWindowPos(rghwndBtn[(int16_t)(i + 1) % 3], NULL, xStart, yTop, c, (dyArial8 >> 1) + dyArial8, SWP_NOZORDER | SWP_NOACTIVATE);
             if (i != 2 || pfl) {
                 FUiShowWindow(rghwndBtn[i], SW_SHOW);
             }
             i++;
             xStart += c + 6;
         }
-        FUiEnableWindow(rghwndBtn[2], (idSkip == idflNone || !fUnknown) && !fObjIsThing);
+        ControlIO().pfnFUiEnableWindow(rghwndBtn[2], (idSkip == idflNone || !fUnknown) && !fObjIsThing);
     }
     return;
 }
@@ -1195,7 +1204,7 @@ HCURSOR ClickInPlanetOrders(POINT16 pt, int16_t sks, int16_t fCursor, int16_t fR
         GlobalPD.SetRgi(0, i);
         GlobalPD.SetRgi(2, sel.pl.rgwtMin[i]);
         GlobalPD.SetRgi(3, (uint32_t)sel.pl.rgMinConc[i]);
-        EstMineralsMined(&sel.pl, rglQuan, -1, FALSE);
+        ColonyIO().pfnEstimateMining(&sel.pl, rglQuan, -1, FALSE);
         GlobalPD.SetRgi(4, rglQuan[i]);
         GlobalPD.SetRgi(1, sel.pl.fHomeworld);
         Popup(hwndPlanet, pt.x, pt.y);
@@ -1207,13 +1216,13 @@ HCURSOR ClickInPlanetOrders(POINT16 pt, int16_t sks, int16_t fCursor, int16_t fR
         GlobalPD.idPlan = sel.pl.id;
         GlobalPD.SetFFactory(pt.y >= rgrcRef[7].top + dyArial8);
         if (GlobalPD.fFactory) {
-            GlobalPD.cMax = CMaxFactories(&sel.pl, idPlayer);
+            GlobalPD.cMax = ColonyIO().pfnMaxFactories(&sel.pl, idPlayer);
             GlobalPD.cCur = sel.pl.cFactories;
-            GlobalPD.cOperate = CMaxOperableFactories(&sel.pl, idPlayer, FALSE);
+            GlobalPD.cOperate = ColonyIO().pfnOperableFactories(&sel.pl, idPlayer, FALSE);
         } else {
-            GlobalPD.cMax = CMaxMines(&sel.pl, idPlayer);
+            GlobalPD.cMax = ColonyIO().pfnMaxMines(&sel.pl, idPlayer);
             GlobalPD.cCur = sel.pl.cMines;
-            GlobalPD.cOperate = CMaxOperableMines(&sel.pl, idPlayer, FALSE);
+            GlobalPD.cOperate = ColonyIO().pfnOperableMines(&sel.pl, idPlayer, FALSE);
         }
         Popup(hwndPlanet, pt.x, pt.y);
     } else if (PtInRect(&rgrcRef[8], PointFrom16(pt)) != 0) {
@@ -1222,7 +1231,7 @@ HCURSOR ClickInPlanetOrders(POINT16 pt, int16_t sks, int16_t fCursor, int16_t fR
         }
         GlobalPD.grPopup = grPopupResources;
         GlobalPD.idPlanet = sel.pl.id;
-        GlobalPD.iPlanetVar = GlobalPD.iPlanVal = CResourcesAtPlanet(&sel.pl, idPlayer);
+        GlobalPD.iPlanetVar = GlobalPD.iPlanVal = ResearchIO().pfnResources(&sel.pl, idPlayer);
         if (!sel.pl.fNoResearch) {
             GlobalPD.iPlanVal -= MulDiv(GlobalPD.iPlanetVar, rgplr[idPlayer].pctResearch, 100);
         }
@@ -1245,31 +1254,31 @@ HCURSOR ClickInPlanetOrders(POINT16 pt, int16_t sks, int16_t fCursor, int16_t fR
         GlobalPD.grPopup = grPopupComponent;
         Popup(hwndPlanet, pt.x, pt.y);
     } else if (PtInRect(&rgrcRef[11], PointFrom16(pt)) != 0) {
-        if (sel.pl.iScanner == 31 && GetRaceStat(&rgplr[idPlayer], rsMajorAdv) != raMacintosh) {
+        if (sel.pl.iScanner == 31 && RaceQueryIO().pfnStat(&rgplr[idPlayer], rsMajorAdv) != raMacintosh) {
             return NULL;
         }
         if (fCursor) {
             return hcurArrowHelp;
         }
-        if (GetRaceStat(&rgplr[idPlayer], rsMajorAdv) == raMacintosh) {
+        if (RaceQueryIO().pfnStat(&rgplr[idPlayer], rsMajorAdv) == raMacintosh) {
             GlobalPD.grPopup = grPopupString;
             GlobalPD.dxOut = 180;
             GlobalPD.psz = szPopupBuffer;
-            CchGetString(idsRaceCannotBuildPlanetaryScannersStarbasesHave, szPopupBuffer);
+            TextIO().pfnCchGetString(idsRaceCannotBuildPlanetaryScannersStarbasesHave, szPopupBuffer);
         } else {
-            LookupBestPlanetaryScanner(&GlobalPD.part);
+            ProductionIO().pfnScanner(&GlobalPD.part);
             GlobalPD.grPopup = grPopupComponent;
         }
         Popup(hwndPlanet, pt.x, pt.y);
     } else if (PtInRect(&rgrcRef[13], PointFrom16(pt)) != 0) {
-        iWarp = IWarpMAFromLppl(&sel.pl, NULL);
+        iWarp = ColonyIO().pfnWarp(&sel.pl, NULL);
         if (iWarp == 0) {
             return NULL;
         }
         if (fCursor) {
             return hcurHand;
         }
-        InitBtnTrack(&btnt, hwndPlanet, NULL, &rgrcRef[13], 8, 80, gd.fSetMassMode, TRUE, PszGetCompressedString(idsSetDest));
+        InitBtnTrack(&btnt, hwndPlanet, NULL, &rgrcRef[13], 8, 80, gd.fSetMassMode, TRUE, TextIO().pfnCompressed(idsSetDest));
         while (FTrackBtn(&btnt)) {
         }
         gd.fSetMassMode ^= btnt.fDown;
@@ -1285,7 +1294,7 @@ HCURSOR ClickInPlanetOrders(POINT16 pt, int16_t sks, int16_t fCursor, int16_t fR
         GlobalPD.fSummary = FALSE;
         Popup(hwndPlanet, pt.x, pt.y);
     } else if (PtInRect(&rgrcRef[16], PointFrom16(pt)) != 0) {
-        iWarp = IWarpMAFromLppl(&sel.pl, NULL);
+        iWarp = ColonyIO().pfnWarp(&sel.pl, NULL);
         if (iWarp == 0) {
             return NULL;
         }
@@ -1294,7 +1303,7 @@ HCURSOR ClickInPlanetOrders(POINT16 pt, int16_t sks, int16_t fCursor, int16_t fR
         }
         GlobalPD.part.hs.grhst = hstSpecialSB;
         GlobalPD.part.hs.iItem = iWarp + 2;
-        FLookupPart(&GlobalPD.part);
+        PartQueryIO().pfnLookup(&GlobalPD.part);
         GlobalPD.grPopup = grPopupComponent;
         Popup(hwndPlanet, pt.x, pt.y);
     } else if (PtInRect(&rgrcRef[15], PointFrom16(pt)) != 0) {
@@ -1303,7 +1312,7 @@ HCURSOR ClickInPlanetOrders(POINT16 pt, int16_t sks, int16_t fCursor, int16_t fR
         if (fCursor) {
             return hcurHand;
         }
-        InitBtnTrack(&btnt, hwndPlanet, NULL, &rgrcRef[17], 8, 80, gd.fSetRouteMode, TRUE, PszGetCompressedString(idsRoute2));
+        InitBtnTrack(&btnt, hwndPlanet, NULL, &rgrcRef[17], 8, 80, gd.fSetRouteMode, TRUE, TextIO().pfnCompressed(idsRoute2));
         while (FTrackBtn(&btnt)) {
         }
         gd.fSetRouteMode ^= btnt.fDown;
@@ -1400,7 +1409,7 @@ void ReflowColumn(int16_t iCol, int16_t iTile, int16_t fRedraw) {
         }
     }
     if (fRedraw) {
-        GetClientRect(hwndPlanet, &rc);
+        ControlIO().pfnGetClientRect(hwndPlanet, &rc);
         rc.top = yTop;
         rc.left = 198 * iCol + 4;
         rc.right = rc.left + 191;
@@ -1414,7 +1423,7 @@ void ReflowColumn(int16_t iCol, int16_t iTile, int16_t fRedraw) {
         yTop += (!ptile[iTile].fPopped ? dyArial8 + 3 : ptile[iTile].dyFull) + 4;
     }
     if (fRedraw) {
-        DrawPlanShip(hdc, static_cast<TileBits>(grbit));
+        ControlIO().pfnDrawPlanShip(hdc, static_cast<TileBits>(grbit));
         ReleaseDC(hwndPlanet, hdc);
     }
     return;
@@ -1438,7 +1447,7 @@ void DrawCBEntireItem(DRAWITEMSTRUCT *lpdis, int16_t inflate) {
     if (inflate > 0) {
         inflate = -inflate;
     }
-    LUiSendMessage(lpdis->hwndItem, !fListbox ? CB_GETLBTEXT : LB_GETTEXT, lpdis->itemID, (LPARAM)szWork);
+    ControlIO().pfnLUiSendMessage(lpdis->hwndItem, !fListbox ? CB_GETLBTEXT : LB_GETTEXT, lpdis->itemID, (LPARAM)szWork);
     DrawProductionItem(lpdis->hDC, &rc, szWork, inflate, fSelected, fListbox);
     HandleFocusState(lpdis, inflate + 2);
     return;
@@ -1579,10 +1588,10 @@ void DrawProductionItem(HDC hdc, RECT *prc, char *psz, int16_t inflate, int16_t 
     if (ich >= 6) {
         if ((psz[ich - 5] - ' ') & 2) {
             if (psz[ich - 1] == '*') {
-                ich = CchGetString(idsNeeded, szT);
+                ich = TextIO().pfnCchGetString(idsNeeded, szT);
                 goto LRightOut;
             }
-            CchGetString(idsUpTo, szT);
+            TextIO().pfnCchGetString(idsUpTo, szT);
         } else {
             szT[0] = 0;
         }
@@ -1637,10 +1646,10 @@ void DrawPlanShip(HDC hdc, TileBits grbit) {
             rgrcRef[i].top = -5;
         }
         if (rgplr[idPlayer].fDead && hdc) {
-            GetClientRect(hwndPlanet, &rc);
+            ControlIO().pfnGetClientRect(hwndPlanet, &rc);
             SetBkColor(hdc, crButtonFace);
             SetTextColor(hdc, crButtonText);
-            i = CchGetString(idsDeceased, szWork);
+            i = TextIO().pfnCchGetString(idsDeceased, szWork);
             DiaganolTextOut(hdc, &rc, szWork, i);
         }
     } else {
@@ -1685,16 +1694,16 @@ void SetPlanetTitleBar(HWND hwnd) {
     char *psz;
 
     if (sel.grobj == grobjPlanet) {
-        psz = PszGetPlanetName(sel.pl.id);
-        CchGetString(idsPlanet2, szTitle);
+        psz = TextIO().pfnPlanetName(sel.pl.id);
+        TextIO().pfnCchGetString(idsPlanet2, szTitle);
         lstrcat(szTitle, psz);
         psz = szTitle;
     } else if (sel.grobj == grobjFleet) {
         psz = PszGetFleetName(sel.fl.id);
     } else {
-        psz = PszGetCompressedString(idsPlanetView);
+        psz = TextIO().pfnCompressed(idsPlanetView);
     }
-    FUiSetWindowText(hwnd, psz);
+    ControlIO().pfnFUiSetWindowText(hwnd, psz);
     return;
 }
 
@@ -1705,7 +1714,7 @@ void FillShipDD(int16_t idSkip) {
     FLEET  *lpfl;
     POINT16 ptSel;
 
-    LUiSendMessage(hwndShipDD, CB_RESETCONTENT, 0, 0);
+    ControlIO().pfnLUiSendMessage(hwndShipDD, CB_RESETCONTENT, 0, 0);
     if (sel.grobj == grobjPlanet) {
         ptSel = rgptPlan[sel.id];
     } else {
@@ -1720,7 +1729,7 @@ void FillShipDD(int16_t idSkip) {
             PszGetFleetName(lpfl->id);
             memmove(&szWork[1], szWork, 50);
             szWork[0] = lpfl->iPlayer == idPlayer ? 32 : 120;
-            LUiSendMessage(hwndShipDD, CB_ADDSTRING, 0, (LPARAM)szWork);
+            ControlIO().pfnLUiSendMessage(hwndShipDD, CB_ADDSTRING, 0, (LPARAM)szWork);
         }
     }
     lpth = lpThings;
@@ -1730,10 +1739,10 @@ void FillShipDD(int16_t idSkip) {
             PszGetThingName(lpth->idFull());
             memmove(&szWork[1], szWork, 50);
             szWork[0] = lpth->iplr() == idPlayer ? 32 : 120;
-            LUiSendMessage(hwndShipDD, CB_ADDSTRING, 0, (LPARAM)szWork);
+            ControlIO().pfnLUiSendMessage(hwndShipDD, CB_ADDSTRING, 0, (LPARAM)szWork);
         }
     }
-    LUiSendMessage(hwndShipDD, CB_SETCURSEL, 0, 0);
+    ControlIO().pfnLUiSendMessage(hwndShipDD, CB_SETCURSEL, 0, 0);
     return;
 }
 
@@ -1754,18 +1763,18 @@ void FillPlanetProdLB(HWND hwnd, PLPROD *lpplprod, PLANET *lppl) {
     if (!hwnd) {
         hwnd = hwndPlanetProdLB;
     }
-    LUiSendMessage(hwnd, LB_RESETCONTENT, 0, 0);
+    ControlIO().pfnLUiSendMessage(hwnd, LB_RESETCONTENT, 0, 0);
     if (!lpplprod) {
         lpplprod = lppl->lpplprod;
     }
     if (!lpplprod || lpplprod->iprodMac == 0) {
-        psz = PszGetCompressedString(idsQueueEmpty);
+        psz = TextIO().pfnCompressed(idsQueueEmpty);
     } else {
         if (!hwndProdDlg)
             goto NoMsg;
-        psz = PszGetCompressedString(idsTopQueue);
+        psz = TextIO().pfnCompressed(idsTopQueue);
     }
-    LUiSendMessage(hwnd, LB_ADDSTRING, 0, (LPARAM)psz);
+    ControlIO().pfnLUiSendMessage(hwnd, LB_ADDSTRING, 0, (LPARAM)psz);
 NoMsg:
     if (lpplprod) {
         resCost = 0;
@@ -1774,7 +1783,7 @@ NoMsg:
         }
         for (i = 0; i < lpplprod->iprodMac; i++) {
             FProdItemLine(lppl, lpplprod, i, TRUE, szTemp);
-            LUiSendMessage(hwnd, LB_ADDSTRING, 0, (LPARAM)szTemp);
+            ControlIO().pfnLUiSendMessage(hwnd, LB_ADDSTRING, 0, (LPARAM)szTemp);
         }
     }
     return;
@@ -1783,8 +1792,8 @@ NoMsg:
 // ShowPlanetSel refills the planet tile's production queue when
 // ChangeMainObjSel selects a planet.
 void ShowPlanetSel() {
-    FillPlanetProdLB(NULL, NULL, NULL);
-    LUiSendMessage(hwndPlanetProdLB, LB_SETCURSEL, 0, 0);
+    ControlIO().pfnFillPlanetProdLB(NULL, NULL, NULL);
+    ControlIO().pfnLUiSendMessage(hwndPlanetProdLB, LB_SETCURSEL, 0, 0);
     return;
 }
 
@@ -1794,7 +1803,7 @@ void ShowFleetSel() {
     FillOrdersLB();
     FillFleetCompLB();
     FillBattleDD(sel.fl.iplan + 1);
-    LUiSendMessage(rghwndOrderDD[0], CB_SETCURSEL, sel.fl.lpplord->rgord()[0].grTask, 0);
+    ControlIO().pfnLUiSendMessage(rghwndOrderDD[0], CB_SETCURSEL, sel.fl.lpplord->rgord()[0].grTask, 0);
     return;
 }
 
@@ -1824,17 +1833,17 @@ void ShowMainObjSel(int16_t fSameType, int16_t idSkip) {
     }
     FillShipDD(idSkip);
     if (fSameType) {
-        DrawPlanShip(NULL, static_cast<TileBits>(0x4fff));
+        ControlIO().pfnDrawPlanShip(NULL, static_cast<TileBits>(0x4fff));
     } else {
-        InvalidateRect(hwndPlanet, NULL, TRUE);
+        ControlIO().pfnInvalidateRect(hwndPlanet, NULL, TRUE);
         if ((grbitScan & grbitScanAddWaypoints) && sel.grobj == grobjPlanet) {
             grbitScan = static_cast<GrbitScan>(grbitScan & 0xffef);
-            InvalidateRect(hwndTb, NULL, TRUE);
+            ControlIO().pfnInvalidateRect(hwndTb, NULL, TRUE);
         }
     }
     SetPlanetTitleBar(hwndPlanet);
     if (gd.fTutorial) {
-        AdvanceTutor();
+        PresentationIO().pfnTutor();
     }
     return;
 }
@@ -1842,12 +1851,12 @@ void ShowMainObjSel(int16_t fSameType, int16_t idSkip) {
 // FillSelProdLB refills the planet tile's production queue for the
 // selected planet.
 void FillSelProdLB() {
-    FillPlanetProdLB(NULL, NULL, NULL);
+    ControlIO().pfnFillPlanetProdLB(NULL, NULL, NULL);
     return;
 }
 
 // RedrawPlanShip redraws the planet window's tiles in grbit.
 void RedrawPlanShip(TileBits grbit) {
-    DrawPlanShip(NULL, grbit);
+    ControlIO().pfnDrawPlanShip(NULL, grbit);
     return;
 }

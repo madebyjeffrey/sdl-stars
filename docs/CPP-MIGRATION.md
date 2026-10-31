@@ -85,7 +85,7 @@ Completed migration evidence is recorded in the milestone A section.
 | [callback.cpp](../compat/win32/src/callback.cpp), [message.c](../compat/win32/src/message.c), and [exception_callbacks.cpp](../tests/compat/exception_callbacks.cpp) contain/deliver callback failures. | Retain cleanup-before-delivery, including the unowned timer/window modal-pump cases fixed in #61. |
 | [structs.h](../src/core/structs.h) and [wincompat_structs.h](../compat/win32/include/wincompat_structs.h) use packing, anonymous aggregates and zero-length tails. | Separate wire/resource layouts from runtime storage before replacing their representation or disabling extensions. |
 | [memory.c](../src/core/memory.c) supplies bulk-reset heaps, movable allocations and borrowed pointers; [globals.c](../src/core/globals.c) owns shared state. | Document pointer invalidation and initialization policies before adding typed owners or a state context. |
-| [test-redirect.cmake](../cmake/test-redirect.cmake), SDK comparisons, the 27 source-witness programs, and the archived tutorial observer depend on current declarations/source shapes. | Migrate tests and tooling with their consumers, preserve independent evidence, and update observer/parser dependencies in the same PR as their inputs. |
+| `cmake/test-redirect.cmake` (historical; removed in C04), SDK comparisons, the 27 source-witness programs, and the archived tutorial observer depend on current declarations/source shapes. | Migrate tests and tooling with their consumers, preserve independent evidence, and update observer/parser dependencies in the same PR as their inputs. |
 
 ## Delivery and merge rules
 

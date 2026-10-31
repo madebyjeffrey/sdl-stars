@@ -1,4 +1,10 @@
 #include "common.h"
+#include "fleet_query_io.h"
+#include "presentation_io.h"
+#include "production_io.h"
+#include "planet_query_io.h"
+#include "part_query_io.h"
+#include "race_query_io.h"
 
 int16_t FCanSplit(int32_t cBoat) {
     if (rgplr[idPlayer].cFleet == 0x200) {
@@ -61,7 +67,7 @@ void SelectAdjFleet(int16_t dInc, int16_t idFleet) {
             idFleet = sel.fl.id;
         }
         if (!vrptFleet.fCached) {
-            InvalidateReport(rptFleets, 1);
+            PresentationIO().pfnInvalidateReport(rptFleets, 1);
         }
         for (i = 0; i < cFleet; i++) {
             lpfl = rglpfl[i];
@@ -136,7 +142,7 @@ int16_t WtMaxShdefStat(SHDEF *lpshdef, int16_t grStat) {
         if (grStat != 2) {
             return 0;
         }
-        wt = LphuldefFromId(lphul->ihuldef)->hul.wtCargoMax;
+        wt = PartQueryIO().pfnHull(lphul->ihuldef)->hul.wtCargoMax;
         for (j = 0; j < lphul->chs; j++) {
             if (lphul->rghs[j].grhst == hstSpecialM) {
                 switch (lphul->rghs[j].iItem) {
@@ -154,7 +160,7 @@ int16_t WtMaxShdefStat(SHDEF *lpshdef, int16_t grStat) {
             }
         }
     } else {
-        wt = LphuldefFromId(lphul->ihuldef)->hul.wtFuelMax;
+        wt = PartQueryIO().pfnHull(lphul->ihuldef)->hul.wtFuelMax;
         for (j = 0; j < lphul->chs; j++) {
             if (lphul->rghs[j].grhst != hstSpecialM) {
                 if (lphul->rghs[j].grhst == hstSpecialE && lphul->rghs[j].iItem == ispecialEAntiMatterGenerator) {
@@ -184,11 +190,11 @@ int16_t FEnumCalcJettison(void *lprt, RecordType rt, int16_t cb, PLANET *lppl, i
         if (CxvFromPrefix(prtxfer, 5).grobj1() != grobjFleet || CxvFromPrefix(prtxfer, 5).grobj2() != grobjOther) {
             return TRUE;
         }
-        if (!FLookupFleet(iFleet, &fl)) {
+        if (!FleetQueryIO().pfnLookup(iFleet, &fl)) {
             return TRUE;
         }
         pt = fl.pt;
-        if (!FLookupFleet(CxvFromPrefix(prtxfer, 2).id1(), &fl)) {
+        if (!FleetQueryIO().pfnLookup(CxvFromPrefix(prtxfer, 2).id1(), &fl)) {
             return TRUE;
         }
         if (fl.pt.x != pt.x || fl.pt.y != pt.y) {
@@ -224,10 +230,10 @@ int32_t GetCargoFree(FLEET *lpfl) {
     for (i = 0; i <= 3; i++) {
         cHave += lpfl->rgwtMin[i];
     }
-    return LGetFleetStat(lpfl, 2) - cHave;
+    return ProductionIO().pfnFleetStat(lpfl, 2) - cHave;
 }
 
-int32_t GetFuelFree(FLEET *lpfl) { return LGetFleetStat(lpfl, 1) - lpfl->rgwtMin[4]; }
+int32_t GetFuelFree(FLEET *lpfl) { return ProductionIO().pfnFleetStat(lpfl, 1) - lpfl->rgwtMin[4]; }
 
 int32_t ChgCargo(GrobjClass grobj, int16_t id, MineralType iSupply, int32_t dChg, void *pobj) {
     THING  *pth;
@@ -243,7 +249,7 @@ int32_t ChgCargo(GrobjClass grobj, int16_t id, MineralType iSupply, int32_t dChg
         if (pobj) {
             ppl = (PLANET *)pobj;
         } else if (grobj == grobjPlanet) {
-            FLookupPlanet(id, &xfer.pl());
+            PlanetQueryIO().pfnLookup(id, &xfer.pl());
             ppl = &xfer.pl();
         } else {
             memset(&xfer.pl(), 0, sizeof(PLANET));
@@ -263,7 +269,7 @@ int32_t ChgCargo(GrobjClass grobj, int16_t id, MineralType iSupply, int32_t dChg
         }
         if (dChg == 0 || pobj || grobj == grobjOther)
             break;
-        FLookupPlanet(idWriteBack, &xfer.pl());
+        PlanetQueryIO().pfnLookup(idWriteBack, &xfer.pl());
         break;
     case grobjThing:
         if (pobj) {
@@ -299,7 +305,7 @@ int32_t ChgCargo(GrobjClass grobj, int16_t id, MineralType iSupply, int32_t dChg
         if (pobj) {
             pfl = (FLEET *)pobj;
         } else {
-            FLookupFleet(id, &xfer.fl());
+            FleetQueryIO().pfnLookup(id, &xfer.fl());
             pfl = &xfer.fl();
         }
         if (iSupply <= Fuel) {
@@ -322,7 +328,7 @@ int32_t ChgCargo(GrobjClass grobj, int16_t id, MineralType iSupply, int32_t dChg
             pfl->rgwtMin[iSupply] += dChg;
         }
         if (dChg != 0 && !pobj) {
-            FLookupFleet(idWriteBack, pfl);
+            FleetQueryIO().pfnLookup(idWriteBack, pfl);
         }
     }
     return dChg;
@@ -397,12 +403,12 @@ int32_t EstFuelUse(FLEET *lpfl, int16_t iOrd, int16_t iWarp, int32_t dTravel, in
     if (iWarp == -1) {
         iWarp = lpfl->lpplord->rgord()[iOrd + 1].iWarp;
     }
-    fEfficient = GetRaceGrbit(&rgplr[lpfl->iPlayer], ibitRaceIFE);
+    fEfficient = RaceQueryIO().pfnGrbit(&rgplr[lpfl->iPlayer], ibitRaceIFE);
     for (i = 0, lpshdef = rglpshdef[lpfl->iPlayer]; i < 16; i++, lpshdef++) {
         if (lpfl->rgcsh[i] != 0) {
             for (j = 0; j < lpshdef->hul.chs && lpshdef->hul.rghs[j].grhst != hstEngine; j++) {
             }
-            if (j == lpshdef->hul.chs || lpshdef->hul.rghs[j].cItem < LphuldefFromId(lpshdef->hul.ihuldef)->hul.rghs[j].cItem) {
+            if (j == lpshdef->hul.chs || lpshdef->hul.rghs[j].cItem < PartQueryIO().pfnHull(lpshdef->hul.ihuldef)->hul.rghs[j].cItem) {
                 rgieff[i] = 99999;
                 continue;
             }
@@ -588,7 +594,7 @@ static int16_t IWarpForWaypoint(FLEET *lpfl, ORDER *lpord, int16_t fFastest) {
             if (iwp > 1 && lpord[-1].iWarp > (uint16_t)iWarp && lpord[-1].iWarp <= 10) {
                 iWarp = lpord[-1].iWarp;
             }
-            if (LFuelUseToWaypoint(lpfl, iwp, TRUE) >= (int32_t)(LGetFleetStat(lpfl, 1) / 10) || lpfl->rgwtMin[4] < (int32_t)(LGetFleetStat(lpfl, 1) * 7) / 10)
+            if (LFuelUseToWaypoint(lpfl, iwp, TRUE) >= (int32_t)(ProductionIO().pfnFleetStat(lpfl, 1) / 10) || lpfl->rgwtMin[4] < (int32_t)(ProductionIO().pfnFleetStat(lpfl, 1) * 7) / 10)
                 goto LOptimizeSpeed;
             iWarp++;
             goto LTryLimitedSpeed;
@@ -604,7 +610,7 @@ static int16_t IWarpForWaypoint(FLEET *lpfl, ORDER *lpord, int16_t fFastest) {
             lFuel = LFuelUseToWaypoint(lpfl, iwp, TRUE);
             if (lFuel > lpfl->rgwtMin[4])
                 goto LDecWarp;
-            if (((lppl && lppl->fStarbase && lppl->iPlayer == idPlayer && LphuldefFromId(rglpshdefSB[idPlayer][lppl->isb].hul.ihuldef)->hul.wtCargoMax != 0) ||
+            if (((lppl && lppl->fStarbase && lppl->iPlayer == idPlayer && PartQueryIO().pfnHull(rglpshdefSB[idPlayer][lppl->isb].hul.ihuldef)->hul.wtCargoMax != 0) ||
                  lFuel <= (int32_t)(lpfl->rgwtMin[4] / 2) || fGoFlatOut))
                 break;
         LDecWarp:
@@ -713,7 +719,7 @@ int32_t LFuelUseToWaypoint(FLEET *lpfl, int16_t iwp, int16_t fMaxCargo) {
         }
         if (lpord[i + 1].grobj == grobjPlanet) {
             lppl = LpplFromId(lpord[i + 1].id);
-            if (lppl && lppl->iPlayer == idPlayer && lppl->fStarbase && LphuldefFromId(rglpshdefSB[idPlayer][lppl->isb].hul.ihuldef)->hul.wtCargoMax != 0) {
+            if (lppl && lppl->iPlayer == idPlayer && lppl->fStarbase && PartQueryIO().pfnHull(rglpshdefSB[idPlayer][lppl->isb].hul.ihuldef)->hul.wtCargoMax != 0) {
                 lCur = 0;
             }
         }
@@ -758,7 +764,7 @@ void FleetTransferCargoBalance(FLEET *pflNew1, FLEET *pflNew2) {
             memset(&rgflCur[i], 0, sizeof(FLEET));
             rgflCur[i].iPlayer = iplr;
         } else {
-            FLookupFleet(rgpflNew[i]->id, &rgflCur[i]);
+            FleetQueryIO().pfnLookup(rgpflNew[i]->id, &rgflCur[i]);
         }
         rgCargoCapLoss[i] = 0;
         rgCargoCapacity[i] = 0;
@@ -901,8 +907,8 @@ void DestroyAllIshdefSB(int16_t ishdefSB, int16_t iplr) {
     for (; lppl < lpplMac; lppl++) {
         if (lppl->iPlayer == iplr && lppl->fStarbase && lppl->isb == ishdefSB) {
             lppl->fStarbase = FALSE;
-            KillQueuedShips(lppl);
-            KillQueuedMassPackets(lppl);
+            ProductionIO().pfnKillShips(lppl);
+            ProductionIO().pfnKillPackets(lppl);
         }
     }
     return;
@@ -921,7 +927,7 @@ void DestroyAllIshdef(int16_t ishdef, int16_t iplr) {
     cDel = 0;
     if (ishdef >= 16) {
         DestroyAllIshdefSB(ishdef - 16, iplr);
-        InvalidateReport(rptPlanets, 1);
+        PresentationIO().pfnInvalidateReport(rptPlanets, 1);
     } else {
         for (lpfl = *rglpfl, i = 0; i < cFleet; lpfl = rglpfl[i]) {
             if (lpfl->iPlayer != iplr || lpfl->rgcsh[ishdef] <= 0)
@@ -944,19 +950,19 @@ void DestroyAllIshdef(int16_t ishdef, int16_t iplr) {
             FleetTransferCargoBalance(&flNew, &flDead);
             *lpfl = flNew;
             if (sel.grobj == grobjFleet && sel.fl.id == flNew.id) {
-                FLookupFleet(flNew.id, &sel.fl);
+                FleetQueryIO().pfnLookup(flNew.id, &sel.fl);
                 ShowScanSel(0);
                 FillShipDD(sel.fl.id);
                 grbit = -31819;
-                FLookupFleet(sel.fl.id, &sel.fl);
+                FleetQueryIO().pfnLookup(sel.fl.id, &sel.fl);
                 FillFleetCompLB();
-                RedrawPlanShip(static_cast<TileBits>(grbit));
+                PresentationIO().pfnRedraw(static_cast<TileBits>(grbit));
                 InvalidateMine();
             }
         IncrementI:
             i++;
         }
-        InvalidateReport(rptFleets, 1);
+        PresentationIO().pfnInvalidateReport(rptFleets, 1);
     }
     RemoveIshdefFromAllQueues(ishdef, FALSE);
     return;
@@ -996,8 +1002,8 @@ void RemoveIshdefFromAllQueues(int16_t ishdef, int16_t fSpaceDocks) {
         }
     }
     if (sel.grobj == grobjPlanet && sel.pl.lpplprod) {
-        FLookupPlanet(sel.pl.id, &sel.pl);
-        FillSelProdLB();
+        PlanetQueryIO().pfnLookup(sel.pl.id, &sel.pl);
+        ProductionIO().pfnRefresh();
     }
     return;
 }
@@ -1064,15 +1070,15 @@ void Merge2Fleets(FLEET *lpflDst, FLEET *lpflDel, int16_t fNoDelete) {
     }
     FleetTransferCargoBalance(rgfl, &rgfl[1]);
     for (i = 0; i < 2; i++) {
-        FLookupFleet(idWriteBack, &rgfl[i]);
+        FleetQueryIO().pfnLookup(idWriteBack, &rgfl[i]);
     }
     if (fLeft) {
-        InvalidateReport(rptFleets, 2);
+        PresentationIO().pfnInvalidateReport(rptFleets, 2);
     } else if (fNoDelete) {
         lpflDel->fDead = TRUE;
     } else {
         FDeleteFleet(rgfl[1].id, grobjFleet, rgfl[0].id);
-        InvalidateReport(rptFleets, 2);
+        PresentationIO().pfnInvalidateReport(rptFleets, 2);
     }
     return;
 }
@@ -1155,7 +1161,7 @@ void GetTruePartCost(int16_t iPlayer, PART *ppart, uint16_t *rgCost) {
             if (cExcess > 19) {
                 cExcess = 19;
             }
-            if (GetRaceGrbit(&rgplr[iPlayer], ibitRaceBleedingEdgeTech) != 0) {
+            if (RaceQueryIO().pfnGrbit(&rgplr[iPlayer], ibitRaceBleedingEdgeTech) != 0) {
                 cExcess = 5 * cExcess;
                 if (cExcess > 80) {
                     cExcess = 80;
@@ -1176,8 +1182,8 @@ void GetTruePartCost(int16_t iPlayer, PART *ppart, uint16_t *rgCost) {
             }
         }
     LOtherDiddles:
-        if (ppart->hs.grhst == hstSpecialSB && GetRaceStat(&rgplr[iPlayer], rsMajorAdv) == raStargate &&
-            GetRaceStat(&rgplr[iPlayer], rsMajorAdv) == raStargate && ppart->hs.iItem >= ispecialSBStargate100250 &&
+        if (ppart->hs.grhst == hstSpecialSB && RaceQueryIO().pfnStat(&rgplr[iPlayer], rsMajorAdv) == raStargate &&
+            RaceQueryIO().pfnStat(&rgplr[iPlayer], rsMajorAdv) == raStargate && ppart->hs.iItem >= ispecialSBStargate100250 &&
             ppart->hs.iItem <= ispecialSBStargateAnyAny) {
             for (i = 0; i < 4; i++) {
                 rgCost[i] -= rgCost[i] >> 2;
@@ -1187,7 +1193,7 @@ void GetTruePartCost(int16_t iPlayer, PART *ppart, uint16_t *rgCost) {
             case hstBeam:
             case hstTorp:
             case hstBomb:
-                if (GetRaceStat(&rgplr[iPlayer], rsMajorAdv) == raAttack) {
+                if (RaceQueryIO().pfnStat(&rgplr[iPlayer], rsMajorAdv) == raAttack) {
                     for (i = 0; i < 4; i++) {
                         rgCost[i] -= rgCost[i] >> 2;
                     }
@@ -1199,7 +1205,7 @@ void GetTruePartCost(int16_t iPlayer, PART *ppart, uint16_t *rgCost) {
                 case hstBeam:
                 case hstTorp:
                 case hstBomb:
-                    if (GetRaceStat(&rgplr[iPlayer], rsMajorAdv) == raDefend) {
+                    if (RaceQueryIO().pfnStat(&rgplr[iPlayer], rsMajorAdv) == raDefend) {
                         for (i = 0; i < 4; i++) {
                             rgCost[i] += rgCost[i] >> 2;
                         }
@@ -1207,9 +1213,9 @@ void GetTruePartCost(int16_t iPlayer, PART *ppart, uint16_t *rgCost) {
                     }
                     /* fallthrough */
                 default:
-                    if (ppart->hs.grhst == hstTerra && GetRaceStat(&rgplr[iPlayer], rsMajorAdv) == raTerra) {
+                    if (ppart->hs.grhst == hstTerra && RaceQueryIO().pfnStat(&rgplr[iPlayer], rsMajorAdv) == raTerra) {
                         rgCost[3] = (uint32_t)rgCost[3] / 2;
-                    } else if (ppart->hs.grhst == hstEngine && GetRaceGrbit(&rgplr[iPlayer], ibitRaceCheapEngines) != 0) {
+                    } else if (ppart->hs.grhst == hstEngine && RaceQueryIO().pfnGrbit(&rgplr[iPlayer], ibitRaceCheapEngines) != 0) {
                         for (i = 0; i < 4; i++) {
                             rgCost[i] -= rgCost[i] >> 1;
                         }
@@ -1217,7 +1223,7 @@ void GetTruePartCost(int16_t iPlayer, PART *ppart, uint16_t *rgCost) {
                 }
             }
         }
-        if (cExcess < 1 && GetRaceGrbit(&rgplr[iPlayer], ibitRaceBleedingEdgeTech) != 0 && !gd.fDontCalcBleed) {
+        if (cExcess < 1 && RaceQueryIO().pfnGrbit(&rgplr[iPlayer], ibitRaceBleedingEdgeTech) != 0 && !gd.fDontCalcBleed) {
             for (i = 0; i < 6 && lpcom.rgTech()[i] <= 0; i++) {
             }
             if (i < 6) {

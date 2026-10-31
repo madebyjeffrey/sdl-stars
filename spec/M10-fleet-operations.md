@@ -249,7 +249,7 @@ fields. `Slot` retains all thirteen name bytes and normal boolean validity.
 Malformed pointers, invalid active waypoint/cargo indices, oversized localized
 fallbacks and arbitrary callbacks are outside the checked native adapter.
 
-[Source-extracted transport checks](../tests/spec/check_transport_presets_source.py)
+[Linked production transport checks](../tests/spec/check_transport_presets_source.py)
 compile the current menu/customization, amount/action, refresh and label/control
 blocks with native structures. The **131,593 assertions** cover all sixteen
 valid-slot masks, all 65,536 int16 bit patterns under both quantity limits, all

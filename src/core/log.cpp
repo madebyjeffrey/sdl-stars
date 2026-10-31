@@ -1,4 +1,12 @@
 #include "common.h"
+#include "fleet_query_io.h"
+#include "text_io.h"
+#include "presentation_io.h"
+#include "turn_io.h"
+#include "heap_io.h"
+#include "planet_query_io.h"
+#include "alert_io.h"
+#include "record_io.h"
 
 void WriteMemResearch(int16_t wResearch) {
     uint8_t rgb[cbWireResearch];
@@ -74,7 +82,7 @@ void LogChangeShDef(SHDEF *lpshdefNew) {
         }
         if (gd.fTutorial && idPlayer == 0) {
             tutor.fChange = TRUE;
-            AdvanceTutor();
+            PresentationIO().pfnTutor();
         }
     }
     return;
@@ -89,7 +97,7 @@ void LogChangeName(GrobjClass grobj, int16_t id, char *szName) {
     lpfl = LpflFromId(id);
     if (lpfl) {
         if (lpfl->lpszName) {
-            FreeLp(lpfl->lpszName, htString);
+            HeapIO().pfnFree(lpfl->lpszName, htString);
         }
         if (!szName || *szName == 0) {
             rtchgname.rgb[0] = 0;
@@ -114,7 +122,7 @@ void LogChangeName(GrobjClass grobj, int16_t id, char *szName) {
         memcpy(rgbName + cbWireChangeName, rtchgname.rgb, cOut + 1);
         WriteMemRt(rtLogFleetName, cOut + 5, rgbName);
         if (gd.fTutorial) {
-            AdvanceTutor();
+            PresentationIO().pfnTutor();
         }
     }
     return;
@@ -246,7 +254,7 @@ void LogChangeRelations() {
     WriteMemRt(rtLogRelations, game.cPlayer, rgplr[idPlayer].rgmdRelation);
     if (gd.fTutorial && idPlayer == 0) {
         tutor.fChange = TRUE;
-        AdvanceTutor();
+        PresentationIO().pfnTutor();
     }
     return;
 }
@@ -255,7 +263,7 @@ void LogChangeBtlplan(BTLPLAN *pbtlplan) {
     WriteBattlePlan(pbtlplan, TRUE);
     if (gd.fTutorial && idPlayer == 0) {
         tutor.fChange = TRUE;
-        AdvanceTutor();
+        PresentationIO().pfnTutor();
     }
     return;
 }
@@ -533,9 +541,9 @@ static void WriteMemRtCore(RecordType rt, int16_t cb, void *rg, bool fZipProd) {
 
     if (!fLogOff) {
         if (imemLogCur + cb + 2 > 32000) {
-            AlertSz(PszFormatIds(idsLogFileHasReachedMaximumAllowableSize, NULL), MB_ICONHAND);
+            AlertIO().pfnAlertSz(TextIO().pfnFormat(idsLogFileHasReachedMaximumAllowableSize, NULL), MB_ICONHAND);
         }
-        DirtyGame(TRUE);
+        RecordIO().pfnDirtyGame(TRUE);
         imemLogPrev = imemLogCur;
         hdr.cb = cb;
         hdr.rt = rt;
@@ -570,7 +578,7 @@ void WriteMemZpqRt(int16_t cb) {
     WriteMemRtCore(rtLogPlayerZpq1, cb, nullptr, true);
 }
 
-void STARS_TEST_IMPL(DirtyGame)(int16_t fDirty) {
+void DirtyGame(int16_t fDirty) {
     if (fDirty != game.fDirty) {
         game.fDirty = fDirty;
         if (!fAi) {
@@ -692,7 +700,7 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
             } else if (!lppl->lpplprod) {
                 return TRUE;
             } else {
-                FreeLp(lppl->lpplprod, htOrd);
+                HeapIO().pfnFree(lppl->lpplprod, htOrd);
                 lppl->lpplprod = NULL;
             }
             break;
@@ -717,7 +725,7 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
             !FReadUserString(lpb + cbWireChangeName, cb - cbWireChangeName, szT, 32, NULL)) return FALSE;
         NATIVEBYTEREADER(std::as_bytes(std::span(lpb, 2))).FReadI16Le(id);
         if ((lpfl = LpflFromId(id)) == 0) return FALSE;
-        if (lpfl->lpszName) FreeLp(lpfl->lpszName, htString);
+        if (lpfl->lpszName) HeapIO().pfnFree(lpfl->lpszName, htString);
         lpfl->lpszName = NULL;
         if (*szT) {
             lpfl->lpszName = LpAlloc<char>(strlen(szT) + 1, htString);
@@ -833,7 +841,7 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
                         if (l != cXfer) {
                             id = CxvFromPrefix(lpb, 5).grobj1() == grobjFleet ? -32768 : 0;
                             id |= rgxf[0].idObj();
-                            FSendPlrMsg(rgxf[0].iPlayerObj(), idmUnableTransferKtKtRequest, static_cast<MsgGoto>(id), id, LOWORD(cXfer) - LOWORD(l), i, LOWORD(cXfer), 0, 0, 0);
+                            TurnIO().pfnMessage(rgxf[0].iPlayerObj(), idmUnableTransferKtKtRequest, static_cast<MsgGoto>(id), id, LOWORD(cXfer) - LOWORD(l), i, LOWORD(cXfer), 0, 0, 0);
                             rgcXfer[i] = l;
                         }
                     }
@@ -914,11 +922,11 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
                                     if (l == 0) {
                                         idm = static_cast<MessageId>(idm + 1);
                                     }
-                                    FSendPlrMsg(rgxf[0].iPlayerObj(), idm, static_cast<MsgGoto>(rgxf[0].idObj() | 0x8000), rgxf[0].idObj(), i, -LOWORD(l), i, 0, 0, 0);
+                                    TurnIO().pfnMessage(rgxf[0].iPlayerObj(), idm, static_cast<MsgGoto>(rgxf[0].idObj() | 0x8000), rgxf[0].idObj(), i, -LOWORD(l), i, 0, 0, 0);
                                 } else {
                                     id = CxvFromPrefix(lpb, 5).grobj1() == grobjFleet ? -32768 : 0;
                                     id |= rgxf[0].idObj();
-                                    FSendPlrMsg(rgxf[0].iPlayerObj(), idmUnableTransferKtKtRequest, static_cast<MsgGoto>(id), id, -LOWORD(l) - LOWORD(cXfer), i, -LOWORD(cXfer), 0, 0,
+                                    TurnIO().pfnMessage(rgxf[0].iPlayerObj(), idmUnableTransferKtKtRequest, static_cast<MsgGoto>(id), id, -LOWORD(l) - LOWORD(cXfer), i, -LOWORD(cXfer), 0, 0,
                                                 0);
                                 }
                             }
@@ -929,17 +937,17 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
             }
         }
         if (CxvFromPrefix(lpb, 5).grobj1() == grobjFleet) {
-            FLookupFleet(idWriteBack, &rgxf[0].fl());
+            FleetQueryIO().pfnLookup(idWriteBack, &rgxf[0].fl());
         } else {
-            FLookupPlanet(idWriteBack, &rgxf[0].pl());
+            PlanetQueryIO().pfnLookup(idWriteBack, &rgxf[0].pl());
         }
         switch (CxvFromPrefix(lpb, 5).grobj2()) {
         case grobjFleet:
-            FLookupFleet(idWriteBack, &rgxf[1].fl());
+            FleetQueryIO().pfnLookup(idWriteBack, &rgxf[1].fl());
             break;
         case grobjPlanet:
         case grobjOther:
-            FLookupPlanet(idWriteBack, &rgxf[1].pl());
+            PlanetQueryIO().pfnLookup(idWriteBack, &rgxf[1].pl());
             break;
         case grobjThing:
             FLookupThing(idWriteBack, &rgxf[1].th());
@@ -1030,7 +1038,7 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
         }
         FleetTransferCargoBalance(&rgxf[0].fl(), &rgxf[1].fl());
         for (iPass = 0; iPass < 2; iPass++) {
-            FLookupFleet(idWriteBack, &rgxf[iPass].fl());
+            FleetQueryIO().pfnLookup(idWriteBack, &rgxf[iPass].fl());
             lpfl = LpflFromId(rgxf[iPass].idObj());
             if (lpfl) {
                 lpfl->SetFCompChg(TRUE);
@@ -1179,10 +1187,10 @@ int16_t FLoadLogFile(char *pszLog) {
             }
         } else {
         StrOpen:
-            StreamOpen(pszLog, static_cast<MdOpenFlags>(16416));
+            RecordIO().pfnStreamOpen(pszLog, static_cast<MdOpenFlags>(16416));
         }
 
-        ReadRt();
+        RecordIO().pfnReadRt();
         if (hdrCur.rt != rtBOF || BfvFromPrefix(rgbCur, sizeof(rgbCur)).verMajor() != 2 || BfvFromPrefix(rgbCur, sizeof(rgbCur)).verMinor() != 85) {
             FileError(idsFileDoesBelongVersionStars);
             goto FailSuccess;
@@ -1192,7 +1200,7 @@ int16_t FLoadLogFile(char *pszLog) {
             if (vlpMemStream) {
                 vlpMemStream = NULL;
             } else {
-                StreamClose();
+                RecordIO().pfnStreamClose();
             }
             return TRUE;
         }
@@ -1209,14 +1217,14 @@ int16_t FLoadLogFile(char *pszLog) {
         if (gd.fGeneratingTurn) {
             rgplr[idPlayer].fCrippled = BfvFromPrefix(rgbCur, sizeof(rgbCur)).fCrippled();
         }
-        ReadRt();
+        RecordIO().pfnReadRt();
         NATIVEBYTEREADER(std::as_bytes(std::span(rgbCur)).first(2)).FReadI16Le(cbLog);
         for (iCur = 0; iCur < cbLog; iCur += hdrCur.cb + 2) {
-            ReadRt();
+            RecordIO().pfnReadRt();
             FEncodeHdr(hdrCur, std::as_writable_bytes(std::span(lpLog + iCur, cbWireHdr)));
             memmove(lpLog + (2 + iCur), rgbCur, hdrCur.cb);
         }
-        ReadRt();
+        RecordIO().pfnReadRt();
         for (lppmp = &vlpmsgplrOut; *lppmp; lppmp = &(*lppmp)->lpmsgplrNext) {
         }
         while (hdrCur.rt == rtPlrMsg) {
@@ -1226,7 +1234,7 @@ int16_t FLoadLogFile(char *pszLog) {
                 lppmp = &lpmp->lpmsgplrNext;
                 vcmsgplrOut++;
             }
-            ReadRt();
+            RecordIO().pfnReadRt();
         }
         if (hdrCur.rt != rtEOF) {
             fRet = FALSE;
@@ -1237,9 +1245,9 @@ Done:
         if (vlpMemStream) {
             vlpMemStream = NULL;
         } else {
-            StreamClose();
+            RecordIO().pfnStreamClose();
         }
-        DirtyGame(FALSE);
+        RecordIO().pfnDirtyGame(FALSE);
         return fRet;
     } catch (const StarsError &) {
         if (vlpMemStream) {
@@ -1248,7 +1256,7 @@ Done:
         if (hf == -1) {
             return TRUE;
         }
-        StreamClose();
+        RecordIO().pfnStreamClose();
         return FALSE;
     }
 }
@@ -1270,14 +1278,14 @@ int16_t FCheckLogFile(int16_t iplr, int16_t *pfError) {
             }
             return FALSE;
         }
-        ReadRt();
+        RecordIO().pfnReadRt();
         NATIVEBYTEREADER(std::as_bytes(std::span(rgbCur)).first(2)).FReadI16Le(cbLog);
         for (iCur = 0; iCur < cbLog; iCur += hdrCur.cb + 2) {
-            ReadRt();
+            RecordIO().pfnReadRt();
         }
-        ReadRt();
+        RecordIO().pfnReadRt();
         while (hdrCur.rt == rtPlrMsg) {
-            ReadRt();
+            RecordIO().pfnReadRt();
         }
         if (hdrCur.rt != rtEOF) {
             *pfError = 3;
@@ -1286,13 +1294,13 @@ int16_t FCheckLogFile(int16_t iplr, int16_t *pfError) {
         }
         imemLogCur = cbLog;
 Done:
-        StreamClose();
+        RecordIO().pfnStreamClose();
         return fRet;
     } catch (const StarsError &) {
         if (hf == -1) {
             return TRUE;
         }
-        StreamClose();
+        RecordIO().pfnStreamClose();
         *pfError = 3;
         return FALSE;
     }
@@ -1325,8 +1333,8 @@ int16_t FWriteLogFile(char *pszFileBase, int16_t iPlayer) {
     if (pszFileBase != szBase) {
         strcpy(szBase, pszFileBase);
     }
-    if (!FCreateFile(dtLog, iPlayer, NULL)) {
-        AlertSz(PszFormatIds(idsUnableCreateLogFile, NULL), MB_ICONHAND);
+    if (!RecordIO().pfnFCreateFile(dtLog, iPlayer, NULL)) {
+        AlertIO().pfnAlertSz(TextIO().pfnFormat(idsUnableCreateLogFile, NULL), MB_ICONHAND);
         return FALSE;
     }
     StarsRecoveryScope scopeRecovery;
@@ -1335,10 +1343,10 @@ int16_t FWriteLogFile(char *pszFileBase, int16_t iPlayer) {
         /* Preserve the unused 15-byte metadata area in the orders-file header. */
         memset(rtlh.rgbUnused, 0, sizeof(rtlh.rgbUnused));
         FEncodeLogHdr(rtlh, std::as_writable_bytes(std::span(rgbLogHdr)));
-        WriteRt(static_cast<RecordType>(9), cbWireLogHdr, rgbLogHdr);
+        RecordIO().pfnWriteRt(static_cast<RecordType>(9), cbWireLogHdr, rgbLogHdr);
         for (; iCur < imemLogCur; iCur += HdvFromPrefix(lprts).cb() + 2) {
             lprts = lpLog + iCur;
-            WriteRt(static_cast<RecordType>(HdvFromPrefix(lprts).rt()), HdvFromPrefix(lprts).cb(), lpLog + (2 + iCur));
+            RecordIO().pfnWriteRt(static_cast<RecordType>(HdvFromPrefix(lprts).rt()), HdvFromPrefix(lprts).cb(), lpLog + (2 + iCur));
         }
         iCur = vcmsgplrOut;
         lpmp = vlpmsgplrOut;
@@ -1346,13 +1354,13 @@ int16_t FWriteLogFile(char *pszFileBase, int16_t iPlayer) {
             WriteRtPlrMsg(lpmp);
             lpmp = lpmp->lpmsgplrNext;
         }
-        WriteRt(rtEOF, 0, NULL);
-        StreamClose();
-        DirtyGame(FALSE);
+        RecordIO().pfnWriteRt(rtEOF, 0, NULL);
+        RecordIO().pfnStreamClose();
+        RecordIO().pfnDirtyGame(FALSE);
         gd.fWriteTurnNum = TRUE;
         return TRUE;
     } catch (const StarsError &) {
-        StreamClose();
+        RecordIO().pfnStreamClose();
         return FALSE;
     }
 }
@@ -1367,16 +1375,16 @@ int16_t FWriteHistFile(int16_t iPlayer) {
     std::byte rgbHistHdr[cbWireHistHdr];
     uint8_t  *lpb;
 
-    if (!FCreateFile(dtHist, iPlayer, NULL)) {
-        AlertSz(PszFormatIds(idsUnableCreateHistoryFile, NULL), MB_ICONHAND);
+    if (!RecordIO().pfnFCreateFile(dtHist, iPlayer, NULL)) {
+        AlertIO().pfnAlertSz(TextIO().pfnFormat(idsUnableCreateHistoryFile, NULL), MB_ICONHAND);
         return FALSE;
     }
     StarsRecoveryScope scopeRecovery;
     try {
         rthh.cPlanet = cPlanet;
         rthh.cPlanetExtra = rgplr[iPlayer].cFleet;
-        if (!FEncodeRtHistHdr(rthh, rgbHistHdr)) { StreamClose(); return FALSE; }
-        WriteRt(rtHistHdr, cbWireHistHdr, rgbHistHdr);
+        if (!FEncodeRtHistHdr(rthh, rgbHistHdr)) { RecordIO().pfnStreamClose(); return FALSE; }
+        RecordIO().pfnWriteRt(rtHistHdr, cbWireHistHdr, rgbHistHdr);
         i = 0;
         lppl = lpPlanets;
         while (i < cPlanet) {
@@ -1384,7 +1392,7 @@ int16_t FWriteHistFile(int16_t iPlayer) {
             i++;
             lppl++;
         }
-        WriteRt(rtMsgFilt, cbbitfMsg, bitfMsgFiltered);
+        RecordIO().pfnWriteRt(rtMsgFilt, cbbitfMsg, bitfMsgFiltered);
         for (i = 0; i < game.cPlayer; i++) {
             if (i != iPlayer && rgplr[i].det != detNone) {
                 WriteRtPlr(&rgplr[i], NULL);
@@ -1428,16 +1436,16 @@ int16_t FWriteHistFile(int16_t iPlayer) {
             i = AhvFromLp(vlpbAiData).cbAiHist();
             lpb = vlpbAiData;
             for (; i >= 1024; i -= 1023) {
-                WriteRt(rtAiData, 1023, lpb);
+                RecordIO().pfnWriteRt(rtAiData, 1023, lpb);
                 lpb += 1023;
             }
-            WriteRt(rtAiData, i, lpb);
+            RecordIO().pfnWriteRt(rtAiData, i, lpb);
         }
-        WriteRt(rtEOF, 0, NULL);
-        StreamClose();
+        RecordIO().pfnWriteRt(rtEOF, 0, NULL);
+        RecordIO().pfnStreamClose();
         return TRUE;
     } catch (const StarsError &) {
-        StreamClose();
+        RecordIO().pfnStreamClose();
         return FALSE;
     }
 }

@@ -1,3 +1,6 @@
+#ifndef _WIN32
+#include "../../compat/win32/src/display_io.h"
+#endif
 /* Desktop geometry and coordinate mapping shared with the Windows SDK. */
 #include <windows.h>
 #include <limits.h>
@@ -41,6 +44,15 @@ int main(void) {
     UINT cLines = UINT_MAX;
     DWORD dwProcess = 0;
     int result, dx, dy, i;
+#ifndef _WIN32
+    COMPATDISPLAYIO io_compatdisplayio;
+    io_compatdisplayio.pfnGetDisplays = StarsTest_SDL_GetDisplays;
+    io_compatdisplayio.pfnGetPrimaryDisplay = StarsTest_SDL_GetPrimaryDisplay;
+    io_compatdisplayio.pfnGetDisplayBounds = StarsTest_SDL_GetDisplayBounds;
+    io_compatdisplayio.pfnGetDisplayUsableBounds = StarsTest_SDL_GetDisplayUsableBounds;
+    COMPATDISPLAYIOSCOPE scope_compatdisplayio(io_compatdisplayio);
+#endif
+
     CHECK(GetSystemMetrics(SM_CXSCREEN) > 0 && GetSystemMetrics(SM_CYSCREEN) > 0);
     CHECK(GetSystemMetrics(SM_CMONITORS) > 0);
     SetRect(&rcVirt, GetSystemMetrics(SM_XVIRTUALSCREEN), GetSystemMetrics(SM_YVIRTUALSCREEN), 0, 0);

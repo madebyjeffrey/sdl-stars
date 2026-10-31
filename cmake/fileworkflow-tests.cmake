@@ -4,7 +4,7 @@ target_link_libraries(stars-compat-fileworkflow PRIVATE stars_core stars-ui-comp
 target_include_directories(stars-compat-fileworkflow PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
 target_compile_definitions(stars-compat-fileworkflow PRIVATE STARS_TEST_FILE_WORKFLOW=1)
 target_compile_options(stars-compat-fileworkflow PRIVATE -Wall -Wextra -Werror)
-stars_test_redirect(stars-compat-fileworkflow InitInstance AlertSz PromptPassword MessageBoxA FNativeOpenFileName FNativeSaveFileName)
+
 set_target_properties(stars-compat-fileworkflow PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 if(STARS_BUILD_TESTS)
     add_test(NAME win32_client_fileworkflow_dummy COMMAND "${Python3_EXECUTABLE}"

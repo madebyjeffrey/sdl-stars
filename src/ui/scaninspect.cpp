@@ -1,5 +1,7 @@
 /* Semantic inspection belongs to the scanner UI, not the generic HWND runtime. */
 #include "win.h"
+#include "text_io.h"
+#include "control_io.h"
 #include "scaninspect.h"
 #include <stdlib.h>
 #include <stars_compat.h>
@@ -44,7 +46,7 @@ BOOL FCaptureScanner(SCANSNAPSHOT *lpsnap) {
     if (!lpsnap->rgobj) return FALSE;
     lpsnap->lidGame = game.lid; lpsnap->turn = game.turn;
     lpsnap->idPlayer = idPlayer; lpsnap->iZoom = iScanZoom;
-    GetClientRect(hwndScanner, &lpsnap->rcViewport);
+    ControlIO().pfnGetClientRect(hwndScanner, &lpsnap->rcViewport);
     lpsnap->rcViewport.bottom = StarsMax(0, lpsnap->rcViewport.bottom - dySBar);
     /* Name helpers use the game's scratch buffer; a read-only capture preserves it. */
     memcpy(szWorkSav, szWork, sizeof(szWork));
@@ -54,7 +56,7 @@ BOOL FCaptureScanner(SCANSNAPSHOT *lpsnap) {
         lppl = LpplFromId((int16_t)i);
         lpobj->iPlayer = lppl ? lppl->iPlayer : iplrNone;
         lpobj->det = lppl ? lppl->det : 0;
-        CchSprintf(lpobj->szName, "%s", PszGetPlanetName((int16_t)i));
+        CchSprintf(lpobj->szName, "%s", TextIO().pfnPlanetName((int16_t)i));
         ScanObjectPosition(lpsnap, lpobj, rgptPlan[i]);
         lpobj->fScanSelected = sel.scan.grobj == grobjPlanet && sel.scan.idpl == (int16_t)i;
         lpobj->fMainSelected = sel.grobj == grobjPlanet && sel.id == (int16_t)i;
@@ -119,7 +121,7 @@ BOOL FSelectScannerObject(const SCANSNAPSHOT *lpsnap, uint16_t grType, uint16_t 
     else scan.ith = i;
     ChangeScanSel(&scan, 2);
     if (fReveal) FEnsurePointOnScreen(pt, TRUE);
-    InvalidateRect(hwndScanner, NULL, FALSE);
+    ControlIO().pfnInvalidateRect(hwndScanner, NULL, FALSE);
     return TRUE;
 }
 
@@ -156,17 +158,17 @@ BOOL FWriteScannerSnapshot(const SCANSNAPSHOT *lpsnap, NATIVEFILE *lpfile) {
 }
 
 static void ScannerInspectDetails(HWND hwnd) {
-    int i = (int)LUiSendMessage(GetDlgItem(hwnd, 1), LB_GETCURSEL, 0, 0);
+    int i = (int)ControlIO().pfnLUiSendMessage(ControlIO().pfnGetDlgItem(hwnd, 1), LB_GETCURSEL, 0, 0);
     SCANOBJECT *lp;
     char sz[768];
-    if (i < 0 || (size_t)i >= snapScanInspector.cObject) { FUiSetWindowText(GetDlgItem(hwnd,2), "No active player scanner. Load a game and refresh."); return; }
+    if (i < 0 || (size_t)i >= snapScanInspector.cObject) { ControlIO().pfnFUiSetWindowText(ControlIO().pfnGetDlgItem(hwnd,2), "No active player scanner. Load a game and refresh."); return; }
     lp = &snapScanInspector.rgobj[i];
     CchSprintf(sz,"%s\r\nKind %u, ID %u, owner %d, detail %d\r\nUniverse (%ld, %ld)\r\nScanner (%ld, %ld), screen (%ld, %ld)\r\nOn screen: %s; filtered: %s\r\nScanner selection: %s; main selection: %s\r\nGame %ld, turn %u, player %d",
         lp->szName,lp->grType,lp->id,lp->iPlayer,lp->det,(long)lp->ptUniverse.x,(long)lp->ptUniverse.y,
         (long)lp->ptClient.x,(long)lp->ptClient.y,(long)lp->ptScreen.x,(long)lp->ptScreen.y,
         lp->fOnScreen?"yes":"no",lp->fFiltered?"yes":"no",lp->fScanSelected?"yes":"no",lp->fMainSelected?"yes":"no",
         (long)snapScanInspector.lidGame,snapScanInspector.turn,snapScanInspector.idPlayer);
-    FUiSetWindowText(GetDlgItem(hwnd,2),sz);
+    ControlIO().pfnFUiSetWindowText(ControlIO().pfnGetDlgItem(hwnd,2),sz);
 }
 
 static void RefreshScannerInspector(HWND hwnd) {
@@ -175,16 +177,16 @@ static void RefreshScannerInspector(HWND hwnd) {
     const SCANOBJECT *lp;
 
     FreeScannerSnapshot(&snapScanInspector);
-    LUiSendMessage(GetDlgItem(hwnd, 1), LB_RESETCONTENT, 0, 0);
+    ControlIO().pfnLUiSendMessage(ControlIO().pfnGetDlgItem(hwnd, 1), LB_RESETCONTENT, 0, 0);
     if (FCaptureScanner(&snapScanInspector)) {
         for (i = 0; i < snapScanInspector.cObject; i++) {
             lp = &snapScanInspector.rgobj[i];
             CchSprintf(sz, "%s %u: %s%s", lp->grType == grobjPlanet ? "Planet" : lp->grType == grobjFleet ? "Fleet" : "Thing",
                        lp->id, lp->szName, lp->fOnScreen ? "" : " [offscreen]");
-            LUiSendMessage(GetDlgItem(hwnd, 1), LB_ADDSTRING, 0, (LPARAM)sz);
+            ControlIO().pfnLUiSendMessage(ControlIO().pfnGetDlgItem(hwnd, 1), LB_ADDSTRING, 0, (LPARAM)sz);
         }
     }
-    LUiSendMessage(GetDlgItem(hwnd, 1), LB_SETCURSEL, 0, 0);
+    ControlIO().pfnLUiSendMessage(ControlIO().pfnGetDlgItem(hwnd, 1), LB_SETCURSEL, 0, 0);
     ScannerInspectDetails(hwnd);
 }
 
@@ -205,20 +207,20 @@ static LRESULT CALLBACK ScannerInspectorProc(HWND hwnd, UINT msg, WPARAM w, LPAR
                           108, 8, 130, 24, hwnd, (HMENU)(INT_PTR)4, hInst, NULL)) return -1;
         return 0;
     case WM_SIZE:
-        GetClientRect(hwnd, &rc);
-        FUiMoveWindow(GetDlgItem(hwnd, 1), 8, 40, StarsMax(0, rc.right / 2 - 12), StarsMax(0, rc.bottom - 48), TRUE);
-        FUiMoveWindow(GetDlgItem(hwnd, 2), rc.right / 2, 40, StarsMax(0, rc.right / 2 - 8), StarsMax(0, rc.bottom - 48), TRUE);
+        ControlIO().pfnGetClientRect(hwnd, &rc);
+        FUiMoveWindow(ControlIO().pfnGetDlgItem(hwnd, 1), 8, 40, StarsMax(0, rc.right / 2 - 12), StarsMax(0, rc.bottom - 48), TRUE);
+        FUiMoveWindow(ControlIO().pfnGetDlgItem(hwnd, 2), rc.right / 2, 40, StarsMax(0, rc.right / 2 - 8), StarsMax(0, rc.bottom - 48), TRUE);
         return 0;
     case WM_COMMAND:
         if (LOWORD(w) == 3 && HIWORD(w) == BN_CLICKED) RefreshScannerInspector(hwnd);
         else if (LOWORD(w) == 1 && HIWORD(w) == LBN_SELCHANGE) ScannerInspectDetails(hwnd);
         else if (LOWORD(w) == 4 && HIWORD(w) == BN_CLICKED) {
-            i = (int)LUiSendMessage(GetDlgItem(hwnd, 1), LB_GETCURSEL, 0, 0);
+            i = (int)ControlIO().pfnLUiSendMessage(ControlIO().pfnGetDlgItem(hwnd, 1), LB_GETCURSEL, 0, 0);
             if (i >= 0 && (size_t)i < snapScanInspector.cObject) {
                 lp = &snapScanInspector.rgobj[i];
-                if (!FSelectScannerObject(&snapScanInspector, lp->grType, lp->id, TRUE)) MessageBeep(MB_ICONEXCLAMATION);
+                if (!FSelectScannerObject(&snapScanInspector, lp->grType, lp->id, TRUE)) ControlIO().pfnMessageBeep(MB_ICONEXCLAMATION);
                 RefreshScannerInspector(hwnd);
-                LUiSendMessage(GetDlgItem(hwnd, 1), LB_SETCURSEL, i, 0);
+                ControlIO().pfnLUiSendMessage(ControlIO().pfnGetDlgItem(hwnd, 1), LB_SETCURSEL, i, 0);
                 ScannerInspectDetails(hwnd);
             }
         }
@@ -256,7 +258,7 @@ HWND ShowScannerInspector(void) {
 }
 
 void CloseScannerInspector(void) {
-    if (IsWindow(hwndScanInspector)) FUiDestroyWindow(hwndScanInspector);
+    if (IsWindow(hwndScanInspector)) ControlIO().pfnFUiDestroyWindow(hwndScanInspector);
     hwndScanInspector = NULL;
     FreeScannerSnapshot(&snapScanInspector);
 }

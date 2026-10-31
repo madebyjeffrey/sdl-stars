@@ -8,6 +8,5 @@
 INT_PTR CALLBACK AskSaveDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 int16_t FCanLeaveCurrentGame(void);
 
-decltype(AskSaveDialog) STARS_TEST_IMPL(AskSaveDialog);
 
 #endif

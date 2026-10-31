@@ -15,6 +15,5 @@ void    GetIniWinRc(char *szSection, char *szIniFile, StringId ids, WN *pwn);
 void    ReadIniSettings();
 void    ReadIniTileSettings(char *pszFormat, TILE *rgtile, int16_t ctile);
 
-decltype(InitInstance) STARS_TEST_IMPL(InitInstance);
 
 #endif

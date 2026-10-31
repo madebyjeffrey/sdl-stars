@@ -1,4 +1,9 @@
 #include "win.h"
+#include "fleet_query_io.h"
+#include "text_io.h"
+#include "control_io.h"
+#include "alert_io.h"
+#include "desktop_choice_io.h"
 #include "uistate.h"
 #include "ownership.h"
 #include <stars_compat.h>
@@ -15,7 +20,7 @@ static int IStarsMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdL
     memset(&vtimer, 0, sizeof(TIMER));
     vtimer.fAutoGenWhenIn = TRUE;
     if (!hPrevInstance && InitMDIApp() == 0) {
-        AlertSz(PszFormatIds(idsUnableInitializeStars, NULL), MB_ICONHAND);
+        AlertIO().pfnAlertSz(TextIO().pfnFormat(idsUnableInitializeStars, NULL), MB_ICONHAND);
         return 0;
     }
     fSeed = FALSE;
@@ -24,11 +29,11 @@ static int IStarsMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdL
         return 0;
     }
     if (!FGetSystemColors()) {
-        AlertSz(PszFormatIds(idsUnableInitializeStars, NULL), MB_ICONHAND);
+        AlertIO().pfnAlertSz(TextIO().pfnFormat(idsUnableInitializeStars, NULL), MB_ICONHAND);
         return 0;
     }
-    if (InitInstance(nCmdShow) == 0) {
-        AlertSz(PszFormatIds(idsUnableInitializeStars, NULL), MB_ICONHAND);
+    if (DesktopChoiceIO().pfnInitInstance(nCmdShow) == 0) {
+        AlertIO().pfnAlertSz(TextIO().pfnFormat(idsUnableInitializeStars, NULL), MB_ICONHAND);
         return 0;
     }
     if (!ParseCmdLine(lpCmdLine, &fSeed, &lSeed)) { FreeStuff(); return 2; }
@@ -62,7 +67,7 @@ static int IStarsMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdL
 } catch (const StarsError &error) {
     StarsPrimaryErrorScope primary;
     try {
-        AlertSz(PszFormatIds(static_cast<StringId>(error.ids ? error.ids : idsMemory), NULL), MB_ICONHAND);
+        AlertIO().pfnAlertSz(TextIO().pfnFormat(static_cast<StringId>(error.ids ? error.ids : idsMemory), NULL), MB_ICONHAND);
         FreeStuff();
     } catch (...) {
     }
@@ -70,7 +75,7 @@ static int IStarsMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdL
 } catch (...) {
     StarsPrimaryErrorScope primary;
     try {
-        AlertSz(PszFormatIds(idsUnableInitializeStars, NULL), MB_ICONHAND);
+        AlertIO().pfnAlertSz(TextIO().pfnFormat(idsUnableInitializeStars, NULL), MB_ICONHAND);
         FreeStuff();
     } catch (...) {
     }
@@ -189,15 +194,15 @@ INT_PTR CALLBACK About(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     case WM_INITDIALOG:
         iAbout1st = -11;
         iAboutPartial = 0;
-        FUiSetWindowText(GetDlgItem(hwnd, IDC_ABOUT_DEMO_TEXT), SzVersion());
+        ControlIO().pfnFUiSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_ABOUT_DEMO_TEXT), SzVersion());
         uTimerId = SetTimer(hwnd, 14, 50, NULL);
         return 1;
     case WM_ERASEBKGND:
-        GetClientRect(hwnd, &rc);
+        ControlIO().pfnGetClientRect(hwnd, &rc);
         FillRect((HDC)wParam, &rc, hbrButtonFace);
         return 1;
     case WM_TIMER:
-        hwndCtl = GetDlgItem(hwnd, IDC_ABOUT_CREDITS_TEXT);
+        hwndCtl = ControlIO().pfnGetDlgItem(hwnd, IDC_ABOUT_CREDITS_TEXT);
         iAboutPartial += 2;
         if (iAboutPartial >= dyArial8) {
             iAboutPartial = 0;
@@ -206,7 +211,7 @@ INT_PTR CALLBACK About(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 iAbout1st = -11;
             }
         }
-        GetClientRect(hwndCtl, &rc);
+        ControlIO().pfnGetClientRect(hwndCtl, &rc);
         hdc = GetDC(hwndCtl);
         SelectObject(hdc, rghfontArial8[1]);
         SetBkMode(hdc, OPAQUE);
@@ -217,7 +222,7 @@ INT_PTR CALLBACK About(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         rc.bottom = rc.top + dyArial8;
         for (i = iAbout1st; i < iAbout1st + 10; i++) {
             if (i >= 0 && i < 77) {
-                RcCtrTextOut(hdc, &rc, PszGetCompressedString(static_cast<StringId>(idsDesignProgramming + i)), -1);
+                RcCtrTextOut(hdc, &rc, TextIO().pfnCompressed(static_cast<StringId>(idsDesignProgramming + i)), -1);
             } else if (i >= 77) {
                 break;
             }
@@ -246,7 +251,7 @@ INT_PTR CALLBACK About(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         case IDCANCEL:
             KillTimer(hwnd, uTimerId);
             uTimerId = 0;
-            EndDialog(hwnd, 1);
+            ControlIO().pfnEndDialog(hwnd, 1);
             return 1;
         }
         break;
@@ -260,7 +265,7 @@ int16_t FHandleChar(HWND hwnd, uint16_t ch, int32_t lParam) {
     if ((hwndScanner && (ch == 43 || ch == 45)) || (ch == 118 || ch == 86)) {
         hwndF = GetFocus();
         if (!hwndMessage || hwndF != hwndMsgEdit) {
-            LUiSendMessage(hwndScanner, WM_CHAR, ch, lParam);
+            ControlIO().pfnLUiSendMessage(hwndScanner, WM_CHAR, ch, lParam);
             return TRUE;
         }
     }
@@ -279,15 +284,15 @@ int16_t FHandleKey(HWND hwnd, int16_t iMsg, int16_t iKey, uint32_t dw) {
 
     if (iMsg == WM_KEYDOWN) {
         if (iKey == VK_ESCAPE && hwndBrowser && GetActiveWindow() == hwndBrowser) {
-            FUiDestroyWindow(hwndBrowser);
+            ControlIO().pfnFUiDestroyWindow(hwndBrowser);
             return TRUE;
         }
         if (iKey == VK_ESCAPE && hwndPopup) {
-            LUiSendMessage(hwndPopup, WM_LBUTTONUP, 0, 0);
+            ControlIO().pfnLUiSendMessage(hwndPopup, WM_LBUTTONUP, 0, 0);
             return TRUE;
         }
         if (iKey == VK_ESCAPE && hwndReportDlg) {
-            FUiDestroyWindow(hwndReportDlg);
+            ControlIO().pfnFUiDestroyWindow(hwndReportDlg);
             return TRUE;
         }
     } else if (iMsg == WM_KEYUP && hwndTb && (iKey == VK_ESCAPE || iKey == VK_RETURN)) {
@@ -300,7 +305,7 @@ int16_t FHandleKey(HWND hwnd, int16_t iMsg, int16_t iKey, uint32_t dw) {
         GetCursorPos16(&pt);
         hwndOver = WindowFromPoint(PointFrom16(pt));
         if (hwndOver == hwndScanner) {
-            LUiSendMessage(hwndOver, WM_SETCURSOR, (WPARAM)hwndOver, 0);
+            ControlIO().pfnLUiSendMessage(hwndOver, WM_SETCURSOR, (WPARAM)hwndOver, 0);
         }
     }
     if (iMsg != WM_KEYDOWN) {
@@ -340,7 +345,7 @@ int16_t FHandleKey(HWND hwnd, int16_t iMsg, int16_t iKey, uint32_t dw) {
                 hwndF == hwndMsgScroll || hwndF == hwndFleetCompLB || hwndF == hwndShipDD) {
                 return FALSE;
             }
-            if (hwndBrowser && hwndF == GetDlgItem(hwndBrowser, IDC_BROWSER_COMPONENT_CATEGORY)) {
+            if (hwndBrowser && hwndF == ControlIO().pfnGetDlgItem(hwndBrowser, IDC_BROWSER_COMPONENT_CATEGORY)) {
                 return FALSE;
             }
         }
@@ -349,7 +354,7 @@ int16_t FHandleKey(HWND hwnd, int16_t iMsg, int16_t iKey, uint32_t dw) {
                 md = iKey - 49;
                 if (md != (grbitScan & grbitScanViewMask)) {
                     ExecuteButton(static_cast<ToolbarButton>(iKey - 49), TRUE);
-                    InvalidateRect(hwndTb, NULL, FALSE);
+                    ControlIO().pfnInvalidateRect(hwndTb, NULL, FALSE);
                 }
                 return TRUE;
             }
@@ -364,14 +369,14 @@ int16_t FHandleKey(HWND hwnd, int16_t iMsg, int16_t iKey, uint32_t dw) {
                 itb = tbFleetPaths;
                 break;
             case '0':
-                if (GetKeyState(VK_SHIFT) < 0) {
+                if (ControlIO().pfnGetKeyState(VK_SHIFT) < 0) {
                     itb = tbShipCounts;
                 } else {
                     itb = tbPlanetNames;
                 }
             }
             ExecuteButton(itb, FIsButtonDown(itb) == 0);
-            InvalidateRect(hwndTb, NULL, FALSE);
+            ControlIO().pfnInvalidateRect(hwndTb, NULL, FALSE);
             return TRUE;
         }
         switch (iKey) {
@@ -391,7 +396,7 @@ int16_t FHandleKey(HWND hwnd, int16_t iMsg, int16_t iKey, uint32_t dw) {
             if (hwndF == hwndShipLB) {
                 return FALSE;
             }
-            LUiSendMessage(hwndMessage, WM_KEYDOWN, iKey, dw);
+            ControlIO().pfnLUiSendMessage(hwndMessage, WM_KEYDOWN, iKey, dw);
             break;
         case VK_OEM_COMMA:
         case VK_OEM_PERIOD:
@@ -405,8 +410,8 @@ int16_t FHandleKey(HWND hwnd, int16_t iMsg, int16_t iKey, uint32_t dw) {
                 }
                 if (iWarp >= 0 && iWarp <= 11) {
                     SetScanPathWarp(iwp, iWarp);
-                    FLookupFleet(idWriteBack, &sel.fl);
-                    DrawPlanShip(NULL, static_cast<TileBits>(tileFleetOrders | tileFleetComp | tileMinimized));
+                    FleetQueryIO().pfnLookup(idWriteBack, &sel.fl);
+                    ControlIO().pfnDrawPlanShip(NULL, static_cast<TileBits>(tileFleetOrders | tileFleetComp | tileMinimized));
                 }
             }
             return TRUE;

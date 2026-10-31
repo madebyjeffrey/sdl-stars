@@ -4,8 +4,9 @@
  */
 #include <windows.h>
 #include <SDL3/SDL.h>
+#include "time_io.h"
 
 DWORD WINAPI GetTickCount(void) {
     // SDL owns the monotonic clock; truncation preserves Win32's 49.7-day wrap.
-    return (DWORD)SDL_GetTicks();
+    return (DWORD)CompatTimeIO().pfnGetTicks();
 }

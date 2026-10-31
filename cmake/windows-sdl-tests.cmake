@@ -19,7 +19,7 @@ if(STARS_NATIVE_FILE_DIALOGS)
     add_executable(stars-compat-filedialog-native-flow tests/compat/win32_filedialog_windows_flow.cpp)
     target_link_libraries(stars-compat-filedialog-native-flow PRIVATE stars_win32 SDL3::SDL3)
     target_include_directories(stars-compat-filedialog-native-flow PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
-    stars_test_redirect(stars-compat-filedialog-native-flow IChooseWindowsFile)
+
     target_compile_options(stars-compat-filedialog-native-flow PRIVATE -Wall -Wextra $<$<COMPILE_LANGUAGE:C>:-Wpedantic> -Werror)
     set_target_properties(stars-compat-filedialog-native-flow PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
     file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/test-native-filedialog")
@@ -57,7 +57,7 @@ foreach(STARS_COMPAT_TEST windows bitmap dib memory timers controls edit regions
         ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software")
 endforeach()
 target_sources(stars-compat-dib PRIVATE tests/compat/win32_dib_invalid.cpp)
-stars_test_redirect(stars-compat-input SDL_GetKeyboardState SDL_GetModState SDL_GetGlobalMouseState SDL_GetCurrentVideoDriver)
+
 
 add_executable(stars-compat-windows-platform tests/compat/win32_windows_platform.cpp)
 add_library(stars-compat-platform-fixture OBJECT tests/compat/win32_platform_fixture.cpp)
@@ -83,7 +83,7 @@ target_link_libraries(stars-compat-client-startup PRIVATE stars_core stars-ui-co
 target_include_directories(stars-compat-client-startup PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
 target_compile_definitions(stars-compat-client-startup PRIVATE STARS_TEST_CLIENT_STARTUP=1)
 target_compile_options(stars-compat-client-startup PRIVATE -Wall -Wextra -Werror)
-stars_test_redirect(stars-compat-client-startup InitInstance AlertSz SDL_ShowWindow PromptPassword FPromptLegacyRacePassword AskSaveDialog TrackPopupMenu MessageBoxA RemoveNativeFile ReplaceNativeFile RenameNativeFile SDL_RenderPresent SDL_GetPrefPath NewGameWizard FCreateFile FNativeOpenFileName SDL_ShowOpenFolderDialog SDL_SetWindowTitle)
+
 set_target_properties(stars-compat-client-startup PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 add_test(NAME win32_client_continue_dummy COMMAND "${Python3_EXECUTABLE}"
     "${PROJECT_SOURCE_DIR}/tests/compat/run_client_continue.py" "$<TARGET_FILE:stars-compat-client-startup>")
@@ -132,7 +132,7 @@ target_link_libraries(stars-native-tutorial PRIVATE stars_core stars-ui-compat-c
 target_include_directories(stars-native-tutorial PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
 target_compile_definitions(stars-native-tutorial PRIVATE STARS_TEST_TUTORIAL=1)
 target_compile_options(stars-native-tutorial PRIVATE -Wall -Wextra -Werror)
-stars_test_redirect(stars-native-tutorial InitInstance MessageBoxA TrackPopupMenu)
+
 set_target_properties(stars-native-tutorial PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 add_test(NAME win32_native_tutorial_smoke_dummy COMMAND "${Python3_EXECUTABLE}"
     "${PROJECT_SOURCE_DIR}/tests/compat/run_native_tutorial.py" "$<TARGET_FILE:stars-native-tutorial>"

@@ -1,8 +1,9 @@
 # Milestone C: finish the C++ conversion
 
 Status: implementation active; C01–C03 merged under the current CI policy.
-C04 begins with profile/file effects and the first linked C05 witness;
-remaining effect and witness families are pending.
+C04/C05 now replace all test redirects/clones and all 27 extracted witness
+programs with typed effects and normal linked targets; local qualification passes,
+with enabled PR CI pending.
 Evidence: [CPP-C-IMPLEMENTATION.md](CPP-C-IMPLEMENTATION.md).
 Tracking: [#67](https://github.com/madebyjeffrey/sdl-stars/issues/67).
 Recorded: 2026-10-29; refreshed against merged B on 2026-10-31.

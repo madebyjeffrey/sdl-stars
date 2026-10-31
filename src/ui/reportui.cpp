@@ -1,4 +1,13 @@
 #include "win.h"
+#include "text_io.h"
+#include "control_io.h"
+#include "presentation_io.h"
+#include "colony_io.h"
+#include "planet_query_io.h"
+#include "research_io.h"
+#include "part_query_io.h"
+#include "alert_io.h"
+#include "capacity_io.h"
 
 // Wheel deltas short of a notch, for rows and for columns.
 static int16_t dWheelRows;
@@ -43,16 +52,16 @@ LRESULT CALLBACK ReportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         }
         ReleaseDC(hwnd, hdc);
         SortReportCache(vprptCur->irpt, vprptCur->icolSort);
-        FUiSetWindowPos(hwnd, NULL, 0, 0, vprptCur->ptSize.x, vprptCur->ptSize.y, SWP_NOMOVE | SWP_NOZORDER | SWP_NOREDRAW);
-        StickyDlgPos(hwnd, &vprptCur->ptDlg, TRUE);
+        ControlIO().pfnFUiSetWindowPos(hwnd, NULL, 0, 0, vprptCur->ptSize.x, vprptCur->ptSize.y, SWP_NOMOVE | SWP_NOZORDER | SWP_NOREDRAW);
+        ControlIO().pfnStickyDlgPos(hwnd, &vprptCur->ptDlg, TRUE);
         vprptCur->hwndVScroll = HwndUiCreateWindowEx(0, "SCROLLBAR", NULL, SBS_VERT | WS_CHILD, 0, 0, 50, 50, hwnd, NULL, hInst, NULL);
         vprptCur->hwndHScroll = HwndUiCreateWindowEx(0, "SCROLLBAR", NULL, WS_CHILD, 0, 0, 50, 50, hwnd, NULL, hInst, NULL);
         if (gd.fTutorial) {
-            AdvanceTutor();
+            PresentationIO().pfnTutor();
         }
         /* fallthrough */
     case WM_SIZE:
-        GetClientRect(hwnd, &rc);
+        ControlIO().pfnGetClientRect(hwnd, &rc);
         cRow = (int16_t)(rc.bottom - 36) / (dyArial8 + 4);
         vprptCur->cRowsVis = cRow >= vprptCur->cRows ? vprptCur->cRows : cRow;
         if (vprptCur->cRowsVis >= vprptCur->cRows) {
@@ -71,7 +80,7 @@ LRESULT CALLBACK ReportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                                 vprptCur->cRowsVis, vprptCur->irowFirst, TRUE);
         }
         dx = GetSystemMetrics(SM_CXVSCROLL);
-        FUiSetWindowPos(vprptCur->hwndVScroll, NULL, rc.right - dx, dyArial8 + 6, dx, (dyArial8 + 4) * vprptCur->cRowsVis + 1, swp);
+        ControlIO().pfnFUiSetWindowPos(vprptCur->hwndVScroll, NULL, rc.right - dx, dyArial8 + 6, dx, (dyArial8 + 4) * vprptCur->cRowsVis + 1, swp);
         SetHScrollBar();
         if (msg == WM_CREATE) {
             return 1;
@@ -82,7 +91,7 @@ LRESULT CALLBACK ReportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         ((MINMAXINFO *)lParam)->ptMinTrackSize.y = 220;
         return 0;
     case WM_ERASEBKGND:
-        GetClientRect(hwnd, &rc);
+        ControlIO().pfnGetClientRect(hwnd, &rc);
         FillRect((HDC)wParam, &rc, hbrButtonFace);
         return 1;
     case WM_LBUTTONDOWN:
@@ -123,7 +132,7 @@ LRESULT CALLBACK ReportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             ExecuteReportClick(pt, vprptCur->irpt, iCol, iRow);
         }
         if (gd.fTutorial) {
-            AdvanceTutor();
+            PresentationIO().pfnTutor();
         }
         break;
     case WM_MOUSEWHEEL:
@@ -137,14 +146,14 @@ LRESULT CALLBACK ReportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             cRow = CWheelNotches(&dWheelRows, i);
             if (cRow != 0) {
                 iNew = GetScrollPos(vprptCur->hwndVScroll, SB_CTL) - cRow * CWheelLines(vprptCur->cRowsVis - 1);
-                LUiSendMessage(hwnd, WM_VSCROLL, MAKEWPARAM(SB_THUMBPOSITION, (WORD)iNew), (LPARAM)vprptCur->hwndVScroll);
+                ControlIO().pfnLUiSendMessage(hwnd, WM_VSCROLL, MAKEWPARAM(SB_THUMBPOSITION, (WORD)iNew), (LPARAM)vprptCur->hwndVScroll);
             }
             return 0;
         }
         iCol = CWheelNotches(&dWheelCols, msg == WM_MOUSEWHEEL ? -i : i);
         if (iCol != 0) {
             iNew = GetScrollPos(vprptCur->hwndHScroll, SB_CTL) + iCol;
-            LUiSendMessage(hwnd, WM_HSCROLL, MAKEWPARAM(SB_THUMBPOSITION, (WORD)iNew), (LPARAM)vprptCur->hwndHScroll);
+            ControlIO().pfnLUiSendMessage(hwnd, WM_HSCROLL, MAKEWPARAM(SB_THUMBPOSITION, (WORD)iNew), (LPARAM)vprptCur->hwndHScroll);
         }
         return 0;
     case WM_VSCROLL:
@@ -183,14 +192,14 @@ LRESULT CALLBACK ReportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         }
         if (iNew != iCur) {
             vprptCur->irowFirst = iNew;
-            GetClientRect(hwnd, &rc);
+            ControlIO().pfnGetClientRect(hwnd, &rc);
             rc.left = 2;
             rc.right -= GetSystemMetrics(SM_CXVSCROLL);
             rc.top = dyArial8 + 6;
             rc.bottom = (dyArial8 + 4) * vprptCur->cRowsVis + rc.top;
             ScrollWindow(hwnd, 0, (dyArial8 + 4) * (iCur - iNew), &rc, &rc);
             SetScrollPos((HWND)lParam, SB_CTL, iNew, TRUE);
-            FUiUpdateWindow(hwnd);
+            ControlIO().pfnFUiUpdateWindow(hwnd);
         }
         return 0;
     case WM_HSCROLL:
@@ -236,8 +245,8 @@ LRESULT CALLBACK ReportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                     i++;
                 }
                 vprptCur->cFieldFirst = i;
-                InvalidateRect(hwnd, NULL, TRUE);
-                FUiUpdateWindow(hwnd);
+                ControlIO().pfnInvalidateRect(hwnd, NULL, TRUE);
+                ControlIO().pfnFUiUpdateWindow(hwnd);
             }
         }
         return 0;
@@ -248,7 +257,7 @@ LRESULT CALLBACK ReportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         gd.fRptSafeDraw = FALSE;
         return 1;
     case WM_DESTROY:
-        StickyDlgPos(hwnd, &vprptCur->ptDlg, FALSE);
+        ControlIO().pfnStickyDlgPos(hwnd, &vprptCur->ptDlg, FALSE);
         GetWindowRect(hwnd, &rc);
         vprptCur->ptSize.x = rc.right - rc.left;
         vprptCur->ptSize.y = rc.bottom - rc.top;
@@ -271,12 +280,12 @@ LRESULT CALLBACK ReportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         CheckMenuItem(hmenu, idm, MF_UNCHECKED);
         vprptCur = 0;
         if (gd.fTutorial) {
-            AdvanceTutor();
+            PresentationIO().pfnTutor();
         }
         break;
     case WM_COMMAND:
         if (LOWORD(wParam) == IDCANCEL) {
-            FUiDestroyWindow(hwnd);
+            ControlIO().pfnFUiDestroyWindow(hwnd);
             return 1;
         }
         break;
@@ -297,7 +306,7 @@ void SetHScrollBar() {
     int16_t  xTitle;
     RECT     rc;
 
-    GetClientRect(hwndReportDlg, &rc);
+    ControlIO().pfnGetClientRect(hwndReportDlg, &rc);
     dx = GetSystemMetrics(SM_CXVSCROLL);
     xTitle = vprptCur->rgbdx[0] * 2 + 2;
     xRight = rc.right - xTitle - 2 - dx;
@@ -335,7 +344,7 @@ void SetHScrollBar() {
         vprptCur->cColScroll = ccolHidden;
     }
     dy = GetSystemMetrics(SM_CYHSCROLL);
-    FUiSetWindowPos(vprptCur->hwndHScroll, NULL, xTitle, dyArial8 + 6 + (dyArial8 + 4) * vprptCur->cRowsVis + 1, rc.right - dx - xTitle, dy, swp);
+    ControlIO().pfnFUiSetWindowPos(vprptCur->hwndHScroll, NULL, xTitle, dyArial8 + 6 + (dyArial8 + 4) * vprptCur->cRowsVis + 1, rc.right - dx - xTitle, dy, swp);
     return;
 }
 
@@ -434,14 +443,14 @@ INT_PTR CALLBACK ScoreXDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam
     case WM_INITDIALOG:
         InitScoreDlg(hwnd, gd.fScoreVictory);
         fInScoreDialog = TRUE;
-        StickyDlgPos(hwnd, &ptStickyScoreXDlg, TRUE);
+        ControlIO().pfnStickyDlgPos(hwnd, &ptStickyScoreXDlg, TRUE);
         hwndScoreXDlg = hwnd;
         if (gd.fTutorial) {
-            AdvanceTutor();
+            PresentationIO().pfnTutor();
         }
         return 1;
     case WM_ERASEBKGND:
-        GetClientRect(hwnd, &rc);
+        ControlIO().pfnGetClientRect(hwnd, &rc);
         FillRect((HDC)wParam, &rc, hbrButtonFace);
         return 1;
     case WM_PAINT:
@@ -472,32 +481,32 @@ INT_PTR CALLBACK ScoreXDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam
         if (gd.fScoreVictory != 2 || HIWORD(lParam) <= 2 || HIWORD(lParam) >= (uint16_t)(dyArial10 + dyArial8 - 2)) {
             return 0;
         }
-        cchHistory = CchGetString(idsHistory, szT);
+        cchHistory = TextIO().pfnCchGetString(idsHistory, szT);
         for (i = 0; i < 8; i++) {
             strcpy(&szWork[i * 40], szT);
             psz = &szWork[i * 40 + cchHistory];
-            cch = CchGetString(static_cast<StringId>(idsPlanets + i), psz);
+            cch = TextIO().pfnCchGetString(static_cast<StringId>(idsPlanets + i), psz);
             psz[cch - 1] = 0;
             rgid[c] = (uint32_t)(gd.iCurGraph == i);
             rgszScan[c++] = &szWork[i * 40];
         }
-        iSel = PopupMenu(hwnd, LOWORD(lParam), HIWORD(lParam), c, rgid, rgszScan, -2, FALSE);
+        iSel = ControlIO().pfnPopupMenu(hwnd, LOWORD(lParam), HIWORD(lParam), c, rgid, rgszScan, -2, FALSE);
         if (iSel == -1) {
             return 0;
         }
         gd.iCurGraph = iSel;
         gd.fChgReports = TRUE;
-        InvalidateRect(hwnd, NULL, TRUE);
+        ControlIO().pfnInvalidateRect(hwnd, NULL, TRUE);
         return 0;
     case WM_COMMAND:
         switch (LOWORD(wParam)) {
         case IDCANCEL:
-            StickyDlgPos(hwnd, &ptStickyScoreXDlg, FALSE);
-            EndDialog(hwnd, i);
+            ControlIO().pfnStickyDlgPos(hwnd, &ptStickyScoreXDlg, FALSE);
+            ControlIO().pfnEndDialog(hwnd, i);
             fInScoreDialog = FALSE;
             hwndScoreXDlg = 0;
             if (gd.fTutorial) {
-                AdvanceTutor();
+                PresentationIO().pfnTutor();
             }
             return 1;
         case IDC_HELP:
@@ -505,10 +514,10 @@ INT_PTR CALLBACK ScoreXDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam
             return 1;
         case IDC_SCORE_SWITCH:
             gd.fScoreVictory = (uint32_t)(gd.fScoreVictory + 1) % 3;
-            InvalidateRect(hwnd, NULL, TRUE);
+            ControlIO().pfnInvalidateRect(hwnd, NULL, TRUE);
             InitScoreDlg(hwnd, gd.fScoreVictory);
             if (gd.fTutorial) {
-                AdvanceTutor();
+                PresentationIO().pfnTutor();
             }
         }
         /* fallthrough */
@@ -535,30 +544,30 @@ void InitScoreDlg(HWND hwnd, int16_t fVictory) {
         dx = 600;
         dy = 400;
     } else if (fVictory) {
-        psz = PszGetCompressedString(idsExceedsSecondPlaceScore);
+        psz = TextIO().pfnCompressed(idsExceedsSecondPlaceScore);
         vdxScoreX = (uint32_t)(LOWORD(GetTextExtent(hdc, psz, strlen(psz))) * 3) / 2 + 6 * dxDig;
         dx = (int16_t)((4 <= game.cPlayer ? game.cPlayer : 4) * dyArial8 * 3) / 2 + vdxScoreX + 8;
         dy = (int16_t)(11 * dyArial8 * 3) / 2 + 88;
     } else {
-        psz = PszGetCompressedString(idsUnarmedShips2);
+        psz = TextIO().pfnCompressed(idsUnarmedShips2);
         vdxScoreX = LOWORD(GetTextExtent(hdc, psz, strlen(psz))) + 8;
         dx = (4 <= game.cPlayer ? game.cPlayer : 4) * dxDig * 5 + vdxScoreX + 8;
         dy = (int16_t)(11 * dyArial8 * 3) / 2 + 88;
     }
     ReleaseDC(hwnd, hdc);
     GetWindowRect(hwnd, &rcWindow);
-    GetClientRect(hwnd, &rc);
+    ControlIO().pfnGetClientRect(hwnd, &rc);
     dxFrame = rcWindow.right - rcWindow.left - rc.right;
     dyFrame = rcWindow.bottom - rcWindow.top - rc.bottom;
-    FUiSetWindowPos(hwnd, NULL, 0, 0, dxFrame + dx, dyFrame + dy, SWP_NOMOVE | SWP_NOZORDER);
-    GetWindowRect(GetDlgItem(hwnd, IDCANCEL), &rc);
+    ControlIO().pfnFUiSetWindowPos(hwnd, NULL, 0, 0, dxFrame + dx, dyFrame + dy, SWP_NOMOVE | SWP_NOZORDER);
+    GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDCANCEL), &rc);
     MapWindowPoints(NULL, hwnd, (POINT *)&rc, 2);
     OffsetRect(&rc, 0, dy - 4 - rc.bottom);
     dx = (int16_t)(dx - (rc.right - rc.left) * 3) / 4;
-    FUiSetWindowPos(GetDlgItem(hwnd, IDC_SCORE_SWITCH), NULL, dx, rc.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
-    FUiSetWindowPos(GetDlgItem(hwnd, IDCANCEL), NULL, dx * 2 + (rc.right - rc.left), rc.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
-    FUiSetWindowPos(GetDlgItem(hwnd, IDC_HELP), NULL, 3 * dx + (rc.right - rc.left) * 2, rc.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
-    FUiSetWindowText(hwnd, PszGetCompressedString(static_cast<StringId>(idsPlayerScores + fVictory)));
+    ControlIO().pfnFUiSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_SCORE_SWITCH), NULL, dx, rc.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+    ControlIO().pfnFUiSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDCANCEL), NULL, dx * 2 + (rc.right - rc.left), rc.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+    ControlIO().pfnFUiSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_HELP), NULL, 3 * dx + (rc.right - rc.left) * 2, rc.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+    ControlIO().pfnFUiSetWindowText(hwnd, TextIO().pfnCompressed(static_cast<StringId>(idsPlayerScores + fVictory)));
     return;
 }
 
@@ -589,7 +598,7 @@ void DrawVCReport(HDC hdc) {
     SelectObject(hdc, rghfontArial8[4]);
     xLeft = vdxScoreX;
     for (i = 0; i < game.cPlayer; i++) {
-        psz = PszPlayerName(i, TRUE, TRUE, TRUE, 0, NULL);
+        psz = TextIO().pfnPlayerName(i, TRUE, TRUE, TRUE, 0, NULL);
         cch = strlen(psz);
         l = GetTextExtent(hdc, psz, cch);
         dxDig = LOWORD((int32_t)((double)(uint32_t)LOWORD(l) / 1.4142));
@@ -661,7 +670,7 @@ void DrawVCReport(HDC hdc) {
                     yTop += dyArial8 / 2;
                 }
             }
-            cch = CchGetString(ids, szWork);
+            cch = TextIO().pfnCchGetString(ids, szWork);
             ids = static_cast<StringId>(ids + 1);
             if (iPass == 1) {
                 SetTextColor(hdc, i >= 7 || GetVCCheck(&game, static_cast<VictoryCondition>(cCur)) != 0 ? 0 : 8355711);
@@ -692,7 +701,7 @@ void DrawVCReport(HDC hdc) {
                 if (i != 2 && i != 3) {
                     xLeft += 4;
                 }
-                cch = CchGetString(idsT, szWork);
+                cch = TextIO().pfnCchGetString(idsT, szWork);
                 if (iPass == 1) {
                     TextOut(hdc, xLeft, yTop, szWork, cch);
                 }
@@ -732,7 +741,7 @@ void DrawScoreReport(HDC hdc) {
     SelectObject(hdc, rghfontArial8[4]);
     xLeft = (int16_t)(5 * dxDig - (int16_t)(3 * dyArial8) / 2) / 2 + vdxScoreX;
     for (i = 0; i < game.cPlayer; i++) {
-        psz = PszPlayerName(i, TRUE, TRUE, TRUE, 0, NULL);
+        psz = TextIO().pfnPlayerName(i, TRUE, TRUE, TRUE, 0, NULL);
         cch = strlen(psz);
         l = GetTextExtent(hdc, psz, cch);
         dx45 = LOWORD((int32_t)((double)(uint32_t)LOWORD(l) / 1.4142));
@@ -760,7 +769,7 @@ void DrawScoreReport(HDC hdc) {
     SetTextColor(hdc, 0);
     for (i = 0; i < 9; i++) {
         PatBlt(hdc, vdxScoreX + 4, yTop - dyArial8 / 4, game.cPlayer * dxDig * 5, 1, PATCOPY);
-        cch = CchGetString(ids, szWork);
+        cch = TextIO().pfnCchGetString(ids, szWork);
         ids = static_cast<StringId>(ids + 1);
         SetTextColor(hdc, 0);
         RightTextOut(hdc, vdxScoreX, yTop, szWork, cch, 0);
@@ -846,16 +855,16 @@ void DrawHistoryReport(HDC hdc) {
     SCOREX  *lpsx;
 
     SetBkMode(hdc, TRANSPARENT);
-    GetClientRect(hwndScoreXDlg, &rcChart);
+    ControlIO().pfnGetClientRect(hwndScoreXDlg, &rcChart);
     ExpandRc(&rcChart, -48, 0);
     rcChart.top = dyArial10 + dyArial8;
     rcChart.bottom -= dyArial8 * 4;
     rc = rcChart;
     rc.top = dyArial8 / 2;
     rc.bottom = rc.top + dyArial10;
-    cch = CchGetString(idsHistory, szT);
+    cch = TextIO().pfnCchGetString(idsHistory, szT);
     psz = &szT[cch];
-    cch = CchGetString(static_cast<StringId>(idsPlanets + gd.iCurGraph), psz);
+    cch = TextIO().pfnCchGetString(static_cast<StringId>(idsPlanets + gd.iCurGraph), psz);
     psz[cch - 1] = 0;
     SelectObject(hdc, rghfontArial10[1]);
     SetTextColor(hdc, crButtonText);
@@ -956,7 +965,7 @@ void DrawHistoryReport(HDC hdc) {
         yCur = rcChart.top + 6;
         for (i = 0; i < game.cPlayer; i++) {
             if (rgsxPlr[i]) {
-                psz = PszPlayerName(i, TRUE, TRUE, FALSE, 0, NULL);
+                psz = TextIO().pfnPlayerName(i, TRUE, TRUE, FALSE, 0, NULL);
                 SetTextColor(hdc, i == idPlayer ? 0xffffff : rgcrPlrHistory[i]);
                 TextOut(hdc, xCur, yCur, psz, strlen(psz));
                 yCur += dyArial8;
@@ -1029,7 +1038,7 @@ int16_t DxReportColHdr(ReportType irpt, int16_t iCol, char *psz, HDC hdc) {
         *psz = 0;
         return 0;
     case rptPlanets:
-        cch = CchGetString(static_cast<StringId>(idsPlanetName + iCol), psz);
+        cch = TextIO().pfnCchGetString(static_cast<StringId>(idsPlanetName + iCol), psz);
         dx = LOWORD(GetTextExtent(hdc, psz, cch));
         if ((uint16_t)iCol > colPlanetRoutingDest)
             break;
@@ -1048,7 +1057,7 @@ int16_t DxReportColHdr(ReportType irpt, int16_t iCol, char *psz, HDC hdc) {
         case colPlanetValue:
             ids = idsN100100;
         ChkAltString:
-            cch = CchGetString(ids, szT);
+            cch = TextIO().pfnCchGetString(ids, szT);
             dx2 = LOWORD(GetTextExtent(hdc, szT, cch));
         DxChk:
             if (dx2 <= dx)
@@ -1076,7 +1085,7 @@ int16_t DxReportColHdr(ReportType irpt, int16_t iCol, char *psz, HDC hdc) {
         }
         break;
     case rptFleets:
-        cch = CchGetString(static_cast<StringId>(idsFleetName + iCol), psz);
+        cch = TextIO().pfnCchGetString(static_cast<StringId>(idsFleetName + iCol), psz);
         dx = LOWORD(GetTextExtent(hdc, psz, cch));
         if ((uint16_t)iCol > colFleetMass)
             break;
@@ -1112,7 +1121,7 @@ int16_t DxReportColHdr(ReportType irpt, int16_t iCol, char *psz, HDC hdc) {
         }
         break;
     case rptEnemyFleets:
-        cch = CchGetString(static_cast<StringId>(idsFleetName2 + iCol), psz);
+        cch = TextIO().pfnCchGetString(static_cast<StringId>(idsFleetName2 + iCol), psz);
         dx = LOWORD(GetTextExtent(hdc, psz, cch));
         switch (iCol) {
         case colEnemyFleetLocation:
@@ -1127,7 +1136,7 @@ int16_t DxReportColHdr(ReportType irpt, int16_t iCol, char *psz, HDC hdc) {
         }
         break;
     case rptBattles:
-        cch = CchGetString(static_cast<StringId>(idsLocation4 + iCol), psz);
+        cch = TextIO().pfnCchGetString(static_cast<StringId>(idsLocation4 + iCol), psz);
         dx = LOWORD(GetTextExtent(hdc, psz, cch));
         if (iCol == colBattleLocation) {
             dx = dx * 2 + dx / 2;
@@ -1182,7 +1191,7 @@ void DrawReportItem(HDC hdc, RECT *prc, ReportType irpt, int16_t irow, int16_t i
             if (lppl->idRoute == 0) {
                 psz = szDblDash;
             } else {
-                psz = PszGetPlanetName(lppl->idRoute - 1);
+                psz = TextIO().pfnPlanetName(lppl->idRoute - 1);
             }
             ExtTextOut(hdc, prc->left, prc->top, ETO_CLIPPED, prc, psz, strlen(psz), NULL);
             break;
@@ -1190,7 +1199,7 @@ void DrawReportItem(HDC hdc, RECT *prc, ReportType irpt, int16_t irow, int16_t i
             if (lppl->idFling == 0) {
                 psz = szDblDash;
             } else {
-                psz = PszGetPlanetName(lppl->idFling - 1);
+                psz = TextIO().pfnPlanetName(lppl->idFling - 1);
             }
             ExtTextOut(hdc, prc->left, prc->top, ETO_CLIPPED, prc, psz, strlen(psz), NULL);
             break;
@@ -1198,14 +1207,14 @@ void DrawReportItem(HDC hdc, RECT *prc, ReportType irpt, int16_t irow, int16_t i
             if (sel.grobj == grobjPlanet && sel.pl.id == lppl->id) {
                 SetTextColor(hdc, 127);
             }
-            psz = PszGetPlanetName(lppl->id);
+            psz = TextIO().pfnPlanetName(lppl->id);
             ExtTextOut(hdc, prc->left, prc->top, ETO_CLIPPED, prc, psz, strlen(psz), NULL);
             if (!lppl->fStarbase)
                 break;
             rc = *prc;
             dx = (int16_t)(rc.bottom - rc.top) / 3 - 1;
             rc.left = rc.right - dx;
-            if (LphuldefFromId(rglpshdefSB[idPlayer][lppl->isb].hul.ihuldef)->hul.wtCargoMax != 0) {
+            if (PartQueryIO().pfnHull(rglpshdefSB[idPlayer][lppl->isb].hul.ihuldef)->hul.wtCargoMax != 0) {
                 hbr = hbrYellow;
             } else {
                 hbr = hbrBlue;
@@ -1213,7 +1222,7 @@ void DrawReportItem(HDC hdc, RECT *prc, ReportType irpt, int16_t irow, int16_t i
             rc.top = prc->top;
             rc.bottom = rc.top + dx;
             FillRect(hdc, &rc, hbr);
-            if (IWarpMAFromLppl(lppl, NULL) > 0) {
+            if (ColonyIO().pfnWarp(lppl, NULL) > 0) {
                 rc.top = prc->top + dx + 1;
                 rc.bottom = rc.top + dx;
                 FillRect(hdc, &rc, hbrPurple);
@@ -1232,12 +1241,12 @@ void DrawReportItem(HDC hdc, RECT *prc, ReportType irpt, int16_t irow, int16_t i
             RightTextOut(hdc, prc->right, prc->top, szT, cch, 0);
             break;
         case colPlanetCapacity:
-            cch = wsprintf(szT, PCTDPCTPCT, PctPlanetCapacity(lppl));
+            cch = wsprintf(szT, PCTDPCTPCT, CapacityIO().pfnPctPlanetCapacity(lppl));
             RightTextOut(hdc, prc->right, prc->top, szT, cch, 0);
             break;
         case colPlanetDefense:
             i = lppl->cDefenses;
-            j = CMaxOperableDefenses(lppl, idPlayer, FALSE);
+            j = ColonyIO().pfnOperableDefenses(lppl, idPlayer, FALSE);
             if (i > 0) {
                 CalcPctSurvive(lppl, &pct, NULL);
                 pct = (float)((double)1.0 - pct);
@@ -1252,11 +1261,11 @@ void DrawReportItem(HDC hdc, RECT *prc, ReportType irpt, int16_t irow, int16_t i
             goto DrawPlusDef;
         case colPlanetFactories:
             i = lppl->cFactories;
-            j = CMaxOperableFactories(lppl, idPlayer, FALSE);
+            j = ColonyIO().pfnOperableFactories(lppl, idPlayer, FALSE);
             goto DrawMineFact;
         case colPlanetMines:
             i = lppl->cMines;
-            j = CMaxOperableMines(lppl, idPlayer, FALSE);
+            j = ColonyIO().pfnOperableMines(lppl, idPlayer, FALSE);
         DrawMineFact:
             cch = CommaFormatLong(szT, i);
         DrawPlusDef:
@@ -1266,9 +1275,9 @@ void DrawReportItem(HDC hdc, RECT *prc, ReportType irpt, int16_t irow, int16_t i
             RightTextOut(hdc, prc->right, prc->top, szT, cch, 0);
             break;
         case colPlanetValue:
-            cch = CchGetString(idsN100, szT);
+            cch = TextIO().pfnCchGetString(idsN100, szT);
             dx = LOWORD(GetTextExtent(hdc, szT, cch));
-            i = PctPlanetDesirability(lppl, idPlayer);
+            i = PlanetQueryIO().pfnDesirability(lppl, idPlayer);
             cch = wsprintf(szT, PCTDPCTPCT, i);
             if (i <= 10) {
                 SetTextColor(hdc, i >= 0 ? 32639 : 0xff);
@@ -1288,7 +1297,7 @@ void DrawReportItem(HDC hdc, RECT *prc, ReportType irpt, int16_t irow, int16_t i
             xCur = dx * 4 + prc->left;
             if (icol == colPlanetMiningRate) {
                 xCur -= dx;
-                EstMineralsMined(lppl, rgl, -1, FALSE);
+                ColonyIO().pfnEstimateMining(lppl, rgl, -1, FALSE);
             }
             for (i = 0; i < 3; i++) {
                 if (icol == colPlanetMinerals) {
@@ -1315,18 +1324,18 @@ void DrawReportItem(HDC hdc, RECT *prc, ReportType irpt, int16_t irow, int16_t i
         case colPlanetProduction:
             pl = sel.pl;
             sel.pl = *lppl;
-            FillPlanetProdLB(NULL, NULL, lppl);
+            ControlIO().pfnFillPlanetProdLB(NULL, NULL, lppl);
             sel.pl = pl;
             DrawProductionItem(hdc, prc, szWork, 0, FALSE, 2);
             break;
         case colPlanetResources:
-            cch = CchGetString(idsN1000, szT);
+            cch = TextIO().pfnCchGetString(idsN1000, szT);
             dx = LOWORD(GetTextExtent(hdc, szT, cch));
-            i = j = CResourcesAtPlanet(lppl, idPlayer);
+            i = j = ResearchIO().pfnResources(lppl, idPlayer);
             if (!lppl->fNoResearch) {
                 i -= MulDiv(i, rgplr[idPlayer].pctResearch, 100);
             }
-            CchGetString(idsD4, szT);
+            TextIO().pfnCchGetString(idsD4, szT);
             cch = wsprintf(szWork, szT, i);
             RightTextOut(hdc, prc->left + dx, prc->top, szWork, cch, 0);
             cch = wsprintf(szT, PCTD, j);
@@ -1357,10 +1366,10 @@ void DrawReportItem(HDC hdc, RECT *prc, ReportType irpt, int16_t irow, int16_t i
             break;
         case colFleetLocation:
             if (lpfl->idPlanet != idPlanetDeepSpace) {
-                psz = PszGetPlanetName(lpfl->idPlanet);
+                psz = TextIO().pfnPlanetName(lpfl->idPlanet);
             } else {
                 psz = szT;
-                wsprintf(szT, PszGetCompressedString(idsSpaceDD), lpfl->pt.x, lpfl->pt.y);
+                wsprintf(szT, TextIO().pfnCompressed(idsSpaceDD), lpfl->pt.x, lpfl->pt.y);
             }
             ExtTextOut(hdc, prc->left, prc->top, ETO_CLIPPED, prc, psz, strlen(psz), NULL);
             break;
@@ -1438,10 +1447,10 @@ void DrawReportItem(HDC hdc, RECT *prc, ReportType irpt, int16_t irow, int16_t i
         switch (icol) {
         case colBattleLocation:
             if (BdvFromLp(lpbd).idPlanet() != idPlanetNone) {
-                psz = PszGetPlanetName(BdvFromLp(lpbd).idPlanet());
+                psz = TextIO().pfnPlanetName(BdvFromLp(lpbd).idPlanet());
             } else {
                 psz = szT;
-                wsprintf(szT, PszGetCompressedString(idsSpaceDD), BdvFromLp(lpbd).pt().x(), BdvFromLp(lpbd).pt().y());
+                wsprintf(szT, TextIO().pfnCompressed(idsSpaceDD), BdvFromLp(lpbd).pt().x(), BdvFromLp(lpbd).pt().y());
             }
             if (BdvFromLp(lpbd).pt().x() == sel.scan.pt.x && BdvFromLp(lpbd).pt().y() == sel.scan.pt.y) {
                 SetTextColor(hdc, 127);
@@ -1521,10 +1530,10 @@ void DrawReportItem(HDC hdc, RECT *prc, ReportType irpt, int16_t irow, int16_t i
                 break;
             case colEnemyFleetLocation:
                 if (lpfl->idPlanet != idPlanetDeepSpace) {
-                    psz = PszGetPlanetName(lpfl->idPlanet);
+                    psz = TextIO().pfnPlanetName(lpfl->idPlanet);
                 } else {
                     psz = szT;
-                    wsprintf(szT, PszGetCompressedString(idsSpaceDD), lpfl->pt.x, lpfl->pt.y);
+                    wsprintf(szT, TextIO().pfnCompressed(idsSpaceDD), lpfl->pt.x, lpfl->pt.y);
                 }
                 ExtTextOut(hdc, prc->left, prc->top, ETO_CLIPPED, prc, psz, strlen(psz), NULL);
                 break;
@@ -1552,7 +1561,7 @@ void DrawReportItem(HDC hdc, RECT *prc, ReportType irpt, int16_t irow, int16_t i
                 l = 0;
                 for (i = 0; i < 16; i++) {
                     if (lpfl->rgcsh[i] != 0) {
-                        j = LphuldefFromId(rglpshdef[lpfl->iPlayer][i].hul.ihuldef)->imdCategory;
+                        j = PartQueryIO().pfnHull(rglpshdef[lpfl->iPlayer][i].hul.ihuldef)->imdCategory;
                         if (j <= 1 || j >= 6) {
                             l += lpfl->rgcsh[i];
                         }
@@ -1565,7 +1574,7 @@ void DrawReportItem(HDC hdc, RECT *prc, ReportType irpt, int16_t irow, int16_t i
             LEFleetCount:
                 l = 0;
                 for (i = 0; i < 16; i++) {
-                    if (lpfl->rgcsh[i] != 0 && LphuldefFromId(rglpshdef[lpfl->iPlayer][i].hul.ihuldef)->imdCategory == j) {
+                    if (lpfl->rgcsh[i] != 0 && PartQueryIO().pfnHull(rglpshdef[lpfl->iPlayer][i].hul.ihuldef)->imdCategory == j) {
                         l += lpfl->rgcsh[i];
                     }
                 }
@@ -1769,9 +1778,9 @@ TryTier2:
                 iRet = -1;
                 break;
             }
-            psz = PszGetPlanetName(lppl1->idRoute - 1);
+            psz = TextIO().pfnPlanetName(lppl1->idRoute - 1);
             strcpy(szT, psz);
-            psz = PszGetPlanetName(lppl2->idRoute - 1);
+            psz = TextIO().pfnPlanetName(lppl2->idRoute - 1);
             iRet = strcmp(szT, psz);
             break;
         case colPlanetDriverDest:
@@ -1787,31 +1796,31 @@ TryTier2:
                 iRet = -1;
                 break;
             }
-            psz = PszGetPlanetName(lppl1->idFling - 1);
+            psz = TextIO().pfnPlanetName(lppl1->idFling - 1);
             strcpy(szT, psz);
-            psz = PszGetPlanetName(lppl2->idFling - 1);
+            psz = TextIO().pfnPlanetName(lppl2->idFling - 1);
             iRet = strcmp(szT, psz);
             break;
         case colPlanetName:
-            psz = PszGetPlanetName(lppl1->id);
+            psz = TextIO().pfnPlanetName(lppl1->id);
             strcpy(szT, psz);
-            psz = PszGetPlanetName(lppl2->id);
+            psz = TextIO().pfnPlanetName(lppl2->id);
             iRet = strcmp(szT, psz);
             break;
         case colPlanetProduction:
-            FillPlanetProdLB(NULL, NULL, lppl1);
+            ControlIO().pfnFillPlanetProdLB(NULL, NULL, lppl1);
             strcpy(szT, szWork);
-            FillPlanetProdLB(NULL, NULL, lppl2);
+            ControlIO().pfnFillPlanetProdLB(NULL, NULL, lppl2);
             iRet = strcmp(&szT[6], &szWork[6]);
             break;
         case colPlanetCapacity:
-            iRet = PctPlanetCapacity(lppl1) - PctPlanetCapacity(lppl2);
+            iRet = CapacityIO().pfnPctPlanetCapacity(lppl1) - CapacityIO().pfnPctPlanetCapacity(lppl2);
             break;
         case colPlanetPopulation:
             iRet = LOWORD(lppl1->rgwtMin[3]) - LOWORD(lppl2->rgwtMin[3]);
             break;
         case colPlanetValue:
-            iRet = PctPlanetDesirability(lppl1, idPlayer) - PctPlanetDesirability(lppl2, idPlayer);
+            iRet = PlanetQueryIO().pfnDesirability(lppl1, idPlayer) - PlanetQueryIO().pfnDesirability(lppl2, idPlayer);
             break;
         case colPlanetMinConc:
             if (iSubsort == 3) {
@@ -1864,12 +1873,12 @@ TryTier2:
                 iLast = iSubsort;
                 iFirst = iSubsort;
             }
-            EstMineralsMined(lppl1, rgl, -1, FALSE);
+            ColonyIO().pfnEstimateMining(lppl1, rgl, -1, FALSE);
             l1 = 0;
             for (i = iFirst; i <= iLast; i++) {
                 l1 += rgl[i];
             }
-            EstMineralsMined(lppl2, rgl, -1, FALSE);
+            ColonyIO().pfnEstimateMining(lppl2, rgl, -1, FALSE);
             l2 = 0;
             for (i = iFirst; i <= iLast; i++) {
                 l2 += rgl[i];
@@ -1902,7 +1911,7 @@ TryTier2:
             iRet = 0;
             break;
         case colPlanetResources:
-            iRet = CResourcesAtPlanet(lppl1, idPlayer) - CResourcesAtPlanet(lppl2, idPlayer);
+            iRet = ResearchIO().pfnResources(lppl1, idPlayer) - ResearchIO().pfnResources(lppl2, idPlayer);
         }
         break;
     case rptFleets:
@@ -1919,15 +1928,15 @@ TryTier2:
             break;
         case colFleetLocation:
             if (lpfl1->idPlanet != idPlanetDeepSpace) {
-                psz = PszGetPlanetName(lpfl1->idPlanet);
+                psz = TextIO().pfnPlanetName(lpfl1->idPlanet);
                 strcpy(szT, psz);
             } else {
-                wsprintf(szT, PszGetCompressedString(idsSpaceDD), lpfl1->pt.x, lpfl1->pt.y);
+                wsprintf(szT, TextIO().pfnCompressed(idsSpaceDD), lpfl1->pt.x, lpfl1->pt.y);
             }
             if (lpfl2->idPlanet != idPlanetDeepSpace) {
-                psz = PszGetPlanetName(lpfl2->idPlanet);
+                psz = TextIO().pfnPlanetName(lpfl2->idPlanet);
             } else {
-                wsprintf(szWork, PszGetCompressedString(idsSpaceDD), lpfl2->pt.x, lpfl2->pt.y);
+                wsprintf(szWork, TextIO().pfnCompressed(idsSpaceDD), lpfl2->pt.x, lpfl2->pt.y);
                 psz = szWork;
             }
             iRet = strcmp(szT, psz);
@@ -2048,15 +2057,15 @@ TryTier2:
         switch (icolSort) {
         case colBattleLocation:
             if (BdvFromLp(lpbd1).idPlanet() != idPlanetNone) {
-                psz = PszGetPlanetName(BdvFromLp(lpbd1).idPlanet());
+                psz = TextIO().pfnPlanetName(BdvFromLp(lpbd1).idPlanet());
                 strcpy(szT, psz);
             } else {
-                wsprintf(szT, PszGetCompressedString(idsSpaceDD), BdvFromLp(lpbd1).pt().x(), BdvFromLp(lpbd1).pt().y());
+                wsprintf(szT, TextIO().pfnCompressed(idsSpaceDD), BdvFromLp(lpbd1).pt().x(), BdvFromLp(lpbd1).pt().y());
             }
             if (BdvFromLp(lpbd2).idPlanet() != idPlanetNone) {
-                psz = PszGetPlanetName(BdvFromLp(lpbd2).idPlanet());
+                psz = TextIO().pfnPlanetName(BdvFromLp(lpbd2).idPlanet());
             } else {
-                wsprintf(szWork, PszGetCompressedString(idsSpaceDD), BdvFromLp(lpbd2).pt().x(), BdvFromLp(lpbd2).pt().y());
+                wsprintf(szWork, TextIO().pfnCompressed(idsSpaceDD), BdvFromLp(lpbd2).pt().x(), BdvFromLp(lpbd2).pt().y());
                 psz = szWork;
             }
             iRet = strcmp(szT, psz);
@@ -2134,15 +2143,15 @@ TryTier2:
                 break;
             case colEnemyFleetLocation:
                 if (lpfl1->idPlanet != idPlanetDeepSpace) {
-                    psz = PszGetPlanetName(lpfl1->idPlanet);
+                    psz = TextIO().pfnPlanetName(lpfl1->idPlanet);
                     strcpy(szT, psz);
                 } else {
-                    wsprintf(szT, PszGetCompressedString(idsSpaceDD), lpfl1->pt.x, lpfl1->pt.y);
+                    wsprintf(szT, TextIO().pfnCompressed(idsSpaceDD), lpfl1->pt.x, lpfl1->pt.y);
                 }
                 if (lpfl2->idPlanet != idPlanetDeepSpace) {
-                    psz = PszGetPlanetName(lpfl2->idPlanet);
+                    psz = TextIO().pfnPlanetName(lpfl2->idPlanet);
                 } else {
-                    wsprintf(szWork, PszGetCompressedString(idsSpaceDD), lpfl2->pt.x, lpfl2->pt.y);
+                    wsprintf(szWork, TextIO().pfnCompressed(idsSpaceDD), lpfl2->pt.x, lpfl2->pt.y);
                     psz = szWork;
                 }
                 iRet = strcmp(szT, psz);
@@ -2186,13 +2195,13 @@ TryTier2:
                 l1 = 0;
                 for (i = 0; i < 16; i++) {
                     if (lpfl1->rgcsh[i] != 0) {
-                        j = static_cast<HullCategory>(LphuldefFromId(rglpshdef[lpfl1->iPlayer][i].hul.ihuldef)->imdCategory);
+                        j = static_cast<HullCategory>(PartQueryIO().pfnHull(rglpshdef[lpfl1->iPlayer][i].hul.ihuldef)->imdCategory);
                         if ((int16_t)j <= hullCatFreighter || (int16_t)j >= hullCatMiner) {
                             l1 += lpfl1->rgcsh[i];
                         }
                     }
                     if (lpfl2->rgcsh[i] != 0) {
-                        j = static_cast<HullCategory>(LphuldefFromId(rglpshdef[lpfl2->iPlayer][i].hul.ihuldef)->imdCategory);
+                        j = static_cast<HullCategory>(PartQueryIO().pfnHull(rglpshdef[lpfl2->iPlayer][i].hul.ihuldef)->imdCategory);
                         if ((int16_t)j <= hullCatFreighter || (int16_t)j >= hullCatMiner) {
                             l2 += lpfl2->rgcsh[i];
                         }
@@ -2205,10 +2214,10 @@ TryTier2:
                 l2 = 0;
                 l1 = 0;
                 for (i = 0; i < 16; i++) {
-                    if (lpfl1->rgcsh[i] != 0 && LphuldefFromId(rglpshdef[lpfl1->iPlayer][i].hul.ihuldef)->imdCategory == j) {
+                    if (lpfl1->rgcsh[i] != 0 && PartQueryIO().pfnHull(rglpshdef[lpfl1->iPlayer][i].hul.ihuldef)->imdCategory == j) {
                         l1 += lpfl1->rgcsh[i];
                     }
-                    if (lpfl2->rgcsh[i] != 0 && LphuldefFromId(rglpshdef[lpfl2->iPlayer][i].hul.ihuldef)->imdCategory == j) {
+                    if (lpfl2->rgcsh[i] != 0 && PartQueryIO().pfnHull(rglpshdef[lpfl2->iPlayer][i].hul.ihuldef)->imdCategory == j) {
                         l2 += lpfl2->rgcsh[i];
                     }
                 }
@@ -2276,7 +2285,7 @@ void ReportColumnPopup(POINT16 pt, int16_t icol, int16_t fRightBtn) {
     DxReportColHdr(vprptCur->irpt, icol, szColTitle, hdc);
     cItems = 0;
     for (i = 0; i < 2; i++) {
-        cch = CchGetString(i == 0 ? idsSort : idsReverseSort, rgsz[cItems]);
+        cch = TextIO().pfnCchGetString(i == 0 ? idsSort : idsReverseSort, rgsz[cItems]);
         strcpy(&rgsz[cItems][cch], szColTitle);
         cItems++;
         if ((vprptCur->irpt == rptPlanets && (icol == colPlanetMinConc || icol == colPlanetMinerals || icol == colPlanetMiningRate)) ||
@@ -2291,7 +2300,7 @@ void ReportColumnPopup(POINT16 pt, int16_t icol, int16_t fRightBtn) {
             rgsz[cItems][0] = -1;
             rgsz[cItems][1] = 0;
             cItems++;
-            strcpy(rgsz[cItems], PszGetCompressedString(idsWeightedAverage));
+            strcpy(rgsz[cItems], TextIO().pfnCompressed(idsWeightedAverage));
             cItems++;
             rgsz[cItems++][0] = 0;
             cSubsort = 5;
@@ -2300,9 +2309,9 @@ void ReportColumnPopup(POINT16 pt, int16_t icol, int16_t fRightBtn) {
     rgsz[cItems][0] = -1;
     rgsz[cItems][1] = 0;
     cItems++;
-    cch = CchGetString(idsHide, rgsz[cItems]);
+    cch = TextIO().pfnCchGetString(idsHide, rgsz[cItems]);
     strcpy(&rgsz[cItems][cch], szColTitle);
-    cch = CchGetString(idsColumn, szT);
+    cch = TextIO().pfnCchGetString(idsColumn, szT);
     strcat(rgsz[cItems], szT);
     iHide = cItems;
     iSortLast = cItems;
@@ -2320,9 +2329,9 @@ void ReportColumnPopup(POINT16 pt, int16_t icol, int16_t fRightBtn) {
     while (i < vprptCur->cFields) {
         if (!(ibit & vprptCur->grbitVisible)) {
             DxReportColHdr(vprptCur->irpt, i, szColTitle, hdc);
-            cch = CchGetString(idsShow, rgsz[cItems]);
+            cch = TextIO().pfnCchGetString(idsShow, rgsz[cItems]);
             strcpy(&rgsz[cItems][cch], szColTitle);
-            cch = CchGetString(idsColumn, szT);
+            cch = TextIO().pfnCchGetString(idsColumn, szT);
             strcat(rgsz[cItems], szT);
             rgcol[cItems] = i;
             cItems++;
@@ -2341,7 +2350,7 @@ void ReportColumnPopup(POINT16 pt, int16_t icol, int16_t fRightBtn) {
             psz[i] = 0;
         }
     }
-    iRet = PopupMenu(hwndReportDlg, pt.x, pt.y, cItems, NULL, psz, -1, fRightBtn);
+    iRet = ControlIO().pfnPopupMenu(hwndReportDlg, pt.x, pt.y, cItems, NULL, psz, -1, fRightBtn);
     if (iRet >= 0) {
         gd.fChgReports = TRUE;
         if (iRet < iSortLast) {
@@ -2369,7 +2378,7 @@ void ReportColumnPopup(POINT16 pt, int16_t icol, int16_t fRightBtn) {
         if (fccolChange) {
             SetHScrollBar();
         }
-        InvalidateRect(hwndReportDlg, NULL, TRUE);
+        ControlIO().pfnInvalidateRect(hwndReportDlg, NULL, TRUE);
     }
     return;
 }
@@ -2385,12 +2394,12 @@ void InvalidateReport(ReportType irpt, int16_t fReload) {
     fResetRpt = FALSE;
     if (!gd.fGeneratingTurn && !fAi) {
         if (hwndReportDlg && irpt == vprptCur->irpt) {
-            GetClientRect(hwndReportDlg, &rc);
+            ControlIO().pfnGetClientRect(hwndReportDlg, &rc);
             if (fReload != 2) {
                 rc.top = dyArial8 + 6;
                 rc.bottom = (dyArial8 + 4) * vprptCur->cRowsVis + rc.top;
             }
-            InvalidateRect(hwndReportDlg, &rc, fReload == 2);
+            ControlIO().pfnInvalidateRect(hwndReportDlg, &rc, fReload == 2);
             gd.fRptSafeDraw = TRUE;
         } else if (!vprptCur) {
             fClearRpt = fReload;
@@ -2421,7 +2430,7 @@ void InvalidateReport(ReportType irpt, int16_t fReload) {
         } else if (fReload && hwndReportDlg && irpt == vprptCur->irpt) {
             SetReportScrollInfo(vprptCur->hwndVScroll, vprptCur->cRows - vprptCur->cRowsVis,
                                 vprptCur->cRowsVis, vprptCur->irowFirst, FALSE);
-            InvalidateRect(hwndReportDlg, NULL, TRUE);
+            ControlIO().pfnInvalidateRect(hwndReportDlg, NULL, TRUE);
         }
     }
     return;
@@ -2444,11 +2453,11 @@ void ExecuteReportClick(POINT16 pt, ReportType irpt, int16_t icol, int16_t irow)
     case rptPlanets:
         lppl = lpPlanets + vlprgidPlanet[irow];
         if (hwndProdDlg) {
-            MessageBeep(MB_OK);
+            ControlIO().pfnMessageBeep(MB_OK);
             break;
         }
-        SelectAdjPlanet(0, lppl->id);
-        InvalidateReport(rptPlanets, 0);
+        PresentationIO().pfnSelectPlanet(0, lppl->id);
+        PresentationIO().pfnInvalidateReport(rptPlanets, 0);
         switch (icol) {
         case colPlanetName:
             if (lppl->fStarbase && pt.x > vprptCur->rgbdx[0] * 2 - 8) {
@@ -2482,7 +2491,7 @@ void ExecuteReportClick(POINT16 pt, ReportType irpt, int16_t icol, int16_t irow)
         case colPlanetResources:
             GlobalPD.grPopup = grPopupResources;
             GlobalPD.idPlanet = sel.pl.id;
-            GlobalPD.iPlanetVar = GlobalPD.iPlanVal = CResourcesAtPlanet(&sel.pl, idPlayer);
+            GlobalPD.iPlanetVar = GlobalPD.iPlanVal = ResearchIO().pfnResources(&sel.pl, idPlayer);
             if (!sel.pl.fNoResearch) {
                 GlobalPD.iPlanVal -= MulDiv(GlobalPD.iPlanetVar, rgplr[idPlayer].pctResearch, 100);
             }
@@ -2509,7 +2518,7 @@ void ExecuteReportClick(POINT16 pt, ReportType irpt, int16_t icol, int16_t irow)
             GlobalPD.SetRgi(0, i);
             GlobalPD.SetRgi(2, sel.pl.rgwtMin[i]);
             GlobalPD.SetRgi(3, (uint32_t)sel.pl.rgMinConc[i]);
-            EstMineralsMined(&sel.pl, rglQuan, -1, FALSE);
+            ColonyIO().pfnEstimateMining(&sel.pl, rglQuan, -1, FALSE);
             GlobalPD.SetRgi(4, rglQuan[i]);
             GlobalPD.SetRgi(1, sel.pl.fHomeworld);
             Popup(hwndReportDlg, pt.x, pt.y);
@@ -2525,13 +2534,13 @@ void ExecuteReportClick(POINT16 pt, ReportType irpt, int16_t icol, int16_t irow)
             GlobalPD.idPlan = sel.pl.id;
             GlobalPD.SetFFactory(icol == colPlanetFactories);
             if (GlobalPD.fFactory) {
-                GlobalPD.cMax = CMaxFactories(&sel.pl, idPlayer);
+                GlobalPD.cMax = ColonyIO().pfnMaxFactories(&sel.pl, idPlayer);
                 GlobalPD.cCur = sel.pl.cFactories;
-                GlobalPD.cOperate = CMaxOperableFactories(&sel.pl, idPlayer, FALSE);
+                GlobalPD.cOperate = ColonyIO().pfnOperableFactories(&sel.pl, idPlayer, FALSE);
             } else {
-                GlobalPD.cMax = CMaxMines(&sel.pl, idPlayer);
+                GlobalPD.cMax = ColonyIO().pfnMaxMines(&sel.pl, idPlayer);
                 GlobalPD.cCur = sel.pl.cMines;
-                GlobalPD.cOperate = CMaxOperableMines(&sel.pl, idPlayer, FALSE);
+                GlobalPD.cOperate = ColonyIO().pfnOperableMines(&sel.pl, idPlayer, FALSE);
             }
             Popup(hwndReportDlg, pt.x, pt.y);
         }
@@ -2539,11 +2548,11 @@ void ExecuteReportClick(POINT16 pt, ReportType irpt, int16_t icol, int16_t irow)
     case rptFleets:
         lpfl = rglpfl[vlprgidFleet[irow]];
         if (mdXferDlg != mdXferNone) {
-            MessageBeep(MB_OK);
+            ControlIO().pfnMessageBeep(MB_OK);
             break;
         }
-        SelectAdjFleet(0, lpfl->id);
-        InvalidateReport(rptFleets, 0);
+        PresentationIO().pfnSelectFleet(0, lpfl->id);
+        PresentationIO().pfnInvalidateReport(rptFleets, 0);
         switch (icol) {
         case colFleetFuel:
         case colFleetCargo:
@@ -2560,7 +2569,7 @@ void ExecuteReportClick(POINT16 pt, ReportType irpt, int16_t icol, int16_t irow)
         case colFleetTask:
             if (FDestIsWP0(lpfl))
                 break;
-            LUiSendMessage(hwndShipLB, LB_SETCURSEL, 1, 0);
+            ControlIO().pfnLUiSendMessage(hwndShipLB, LB_SETCURSEL, 1, 0);
             SetScanWp(1);
             break;
         case colFleetComposition:
@@ -2582,7 +2591,7 @@ void ExecuteReportClick(POINT16 pt, ReportType irpt, int16_t icol, int16_t irow)
         scan.grobj = static_cast<GrobjClass>(grobjPlanet | grobjFleet | grobjOther | grobjThing | mdExact);
         ChangeScanSel(&scan, 0);
         CtrPointScan(scan.pt, TRUE);
-        InvalidateReport(rptPlanets, 0);
+        PresentationIO().pfnInvalidateReport(rptPlanets, 0);
         if (BdvFromLp(lpbd).pt().x() == sel.scan.pt.x && BdvFromLp(lpbd).pt().y() == sel.scan.pt.y)
             break;
 
@@ -2608,14 +2617,14 @@ void ExecuteReportClick(POINT16 pt, ReportType irpt, int16_t icol, int16_t irow)
             }
             lpfl = rglpfl[vlprgidMisc[irow]];
             if (mdXferDlg != mdXferNone) {
-                MessageBeep(MB_OK);
+                ControlIO().pfnMessageBeep(MB_OK);
             } else {
                 FFindNearestObject(lpfl->pt, grobjFleet, &scan);
                 scan.ifl = vlprgidMisc[irow];
                 ChangeScanSel(&scan, 2);
                 FEnsurePointOnScreen(lpfl->pt, TRUE);
                 irowEFleetCur = irow;
-                InvalidateReport(rptEnemyFleets, 0);
+                PresentationIO().pfnInvalidateReport(rptEnemyFleets, 0);
             }
         }
     }
@@ -2631,17 +2640,17 @@ INT_PTR CALLBACK PrintMapDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) 
     switch (msg) {
     case WM_INITDIALOG:
         for (i = 0; i < 2; i++) {
-            hwndEdit = GetDlgItem(hwnd, i + 268);
-            LUiSendMessage(hwndEdit, EM_LIMITTEXT, 1, 0);
-            LUiSendMessage(hwndEdit, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
+            hwndEdit = ControlIO().pfnGetDlgItem(hwnd, i + 268);
+            ControlIO().pfnLUiSendMessage(hwndEdit, EM_LIMITTEXT, 1, 0);
+            ControlIO().pfnLUiSendMessage(hwndEdit, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
             szWork[0] = vrgcPrintMapPage[i] + '0';
             szWork[1] = 0;
-            FUiSetWindowText(hwndEdit, szWork);
+            ControlIO().pfnFUiSetWindowText(hwndEdit, szWork);
         }
-        StickyDlgPos(hwnd, &ptStickyPrintMapDlg, TRUE);
+        ControlIO().pfnStickyDlgPos(hwnd, &ptStickyPrintMapDlg, TRUE);
         return 1;
     case WM_ERASEBKGND:
-        GetClientRect(hwnd, &rc);
+        ControlIO().pfnGetClientRect(hwnd, &rc);
         FillRect((HDC)wParam, &rc, hbrButtonFace);
         return 1;
     case WM_CTLCOLORMSGBOX:
@@ -2662,18 +2671,18 @@ INT_PTR CALLBACK PrintMapDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) 
         case IDCANCEL:
             if (LOWORD(wParam) == IDOK) {
                 for (i = 0; i < 2; i++) {
-                    hwndEdit = GetDlgItem(hwnd, i + 268);
-                    GetWindowText(hwndEdit, szWork, 10);
+                    hwndEdit = ControlIO().pfnGetDlgItem(hwnd, i + 268);
+                    ControlIO().pfnGetWindowText(hwndEdit, szWork, 10);
                     if (szWork[0] == 0 || szWork[1] != 0 || szWork[0] <= '0' || szWork[0] > '9') {
-                        AlertSz(PszFormatIds(idsMustSpecifyNumberBetween19, NULL), MB_ICONHAND);
-                        HwndUiSetFocus(hwndEdit);
+                        AlertIO().pfnAlertSz(TextIO().pfnFormat(idsMustSpecifyNumberBetween19, NULL), MB_ICONHAND);
+                        ControlIO().pfnHwndUiSetFocus(hwndEdit);
                         break;
                     }
                     vrgcPrintMapPage[i] = szWork[0] - '0';
                 }
             }
-            StickyDlgPos(hwnd, &ptStickyPrintMapDlg, FALSE);
-            EndDialog(hwnd, LOWORD(wParam) == IDOK);
+            ControlIO().pfnStickyDlgPos(hwnd, &ptStickyPrintMapDlg, FALSE);
+            ControlIO().pfnEndDialog(hwnd, LOWORD(wParam) == IDOK);
             return 1;
         case IDC_HELP:
             WinHelp(hwnd, szHelpFile, HELP_CONTEXT, idhPrintingAMapOfTheUniverse);
@@ -2681,10 +2690,10 @@ INT_PTR CALLBACK PrintMapDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) 
         case IDC_PRINT_MAP_PAGES_X:
         case IDC_PRINT_MAP_PAGES_Y:
             if (HIWORD(wParam) == 0x400) {
-                GetWindowText((HWND)lParam, szWork, 10);
+                ControlIO().pfnGetWindowText((HWND)lParam, szWork, 10);
                 if (szWork[0] != 0 && (szWork[0] <= '0' || szWork[0] > '9')) {
-                    MessageBeep(MB_OK);
-                    FUiSetWindowText((HWND)lParam, &szWork[1]);
+                    ControlIO().pfnMessageBeep(MB_OK);
+                    ControlIO().pfnFUiSetWindowText((HWND)lParam, &szWork[1]);
                 }
             }
         }

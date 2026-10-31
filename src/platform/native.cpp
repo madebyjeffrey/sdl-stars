@@ -305,12 +305,4 @@ int16_t FNativePathInfo(const char *psz, int16_t *pfDirectory, int16_t *pfLink) 
     *pfLink = info.fLink;
     return TRUE;
 }
-int STARS_TEST_IMPL(RemoveNativeFile)(const char *psz) { return IRemoveNativePath(psz, FALSE); }
-int RemoveNativePath(const char *psz) { return IRemoveNativePath(psz, TRUE); }
-int STARS_TEST_IMPL(ReplaceNativeFile)(const char *pszOld, const char *pszNew) {
-    return IRenameNativePath(pszOld, pszNew, TRUE, FALSE);
-}
-int STARS_TEST_IMPL(RenameNativeFile)(const char *pszOld, const char *pszNew) {
-    return IRenameNativePath(pszOld, pszNew, FALSE, FALSE);
-}
 NATIVEFILE *PfOpenNativeFile(const char *psz, const char *pszMode) { return PfNativeOpen(psz, pszMode); }

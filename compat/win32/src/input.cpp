@@ -3,6 +3,7 @@
  * Stars adaptation: exact window IDs, per-window buttons and normal focus loss.
  */
 #include "internal.h"
+#include "input_io.h"
 #include <stars_compat.h>
 #include <math.h>
 #include <stdlib.h>
@@ -74,7 +75,7 @@ static WPARAM WInputButtons(void) {
 
 static void InputMouse(HWND hwnd, int x, int y, WPARAM buttons) {
     POINT pt = {x, y - CyCompatMenuBar(hwnd)};
-    if (!fInputKeys) InputModifiers(SDL_GetModState());
+    if (!fInputKeys) InputModifiers(CompatInputIO().pfnGetModState());
     SetKeyDown(VK_LBUTTON, buttons & MK_LBUTTON);
     SetKeyDown(VK_RBUTTON, buttons & MK_RBUTTON);
     SetKeyDown(VK_MBUTTON, buttons & MK_MBUTTON);
@@ -98,7 +99,7 @@ BOOL WINAPI GetCursorPos(LPPOINT lppt) {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
-    pszDriver = SDL_GetCurrentVideoDriver();
+    pszDriver = CompatInputIO().pfnGetCurrentVideoDriver();
     if (pszDriver && strcmp(pszDriver, "dummy") == 0) {
         if (!fCursor) { SetLastError(ERROR_NOT_SUPPORTED); return FALSE; }
         *lppt = ptCursor;
@@ -123,7 +124,7 @@ BOOL WINAPI GetCursorPos(LPPOINT lppt) {
     }
     if (!pszDriver || (strcmp(pszDriver, "x11") != 0 && strcmp(pszDriver, "cocoa") != 0 &&
                        strcmp(pszDriver, "windows") != 0)) { SetLastError(ERROR_NOT_SUPPORTED); return FALSE; }
-    SDL_GetGlobalMouseState(&x, &y);
+    CompatInputIO().pfnGetGlobalMouseState(&x, &y);
     if (!isfinite(x) || !isfinite(y) || (double)x < INT32_MIN || (double)x > INT32_MAX ||
         (double)y < INT32_MIN || (double)y > INT32_MAX) return FALSE;
     lppt->x = (LONG)x; lppt->y = (LONG)y;
@@ -266,14 +267,14 @@ SHORT WINAPI GetAsyncKeyState(int vk) {
     if (!SDL_IsMainThread() || vk < 0 || vk > 255 ||
         !(SDL_WasInit(SDL_INIT_VIDEO) & SDL_INIT_VIDEO)) return 0;
     SDL_PumpEvents();
-    rgf = SDL_GetKeyboardState(&cKeys);
+    rgf = CompatInputIO().pfnGetKeyboardState(&cKeys);
     for (i = 0; rgf && i < cKeys; i++) {
         key = VkFromScancode((SDL_Scancode)i);
         if (key != 0 && rgf[i]) rgb[key] = 0x80;
         key = VkSideFromScancode((SDL_Scancode)i);
         if (key != 0 && rgf[i]) rgb[key] = 0x80;
     }
-    mod = SDL_GetModState();
+    mod = CompatInputIO().pfnGetModState();
     rgb[VK_LSHIFT] |= (mod & SDL_KMOD_LSHIFT) ? 0x80 : 0;
     rgb[VK_RSHIFT] |= (mod & SDL_KMOD_RSHIFT) ? 0x80 : 0;
     rgb[VK_LCONTROL] |= (mod & SDL_KMOD_LCTRL) ? 0x80 : 0;
@@ -283,8 +284,8 @@ SHORT WINAPI GetAsyncKeyState(int vk) {
     rgb[VK_SHIFT] |= rgb[VK_LSHIFT] | rgb[VK_RSHIFT];
     rgb[VK_CONTROL] |= rgb[VK_LCONTROL] | rgb[VK_RCONTROL];
     rgb[VK_MENU] |= rgb[VK_LMENU] | rgb[VK_RMENU];
-    buttons = SDL_GetCurrentVideoDriver() && !strcmp(SDL_GetCurrentVideoDriver(), "wayland") ?
-              SDL_GetMouseState(NULL, NULL) : SDL_GetGlobalMouseState(NULL, NULL);
+    buttons = CompatInputIO().pfnGetCurrentVideoDriver() && !strcmp(CompatInputIO().pfnGetCurrentVideoDriver(), "wayland") ?
+              SDL_GetMouseState(NULL, NULL) : CompatInputIO().pfnGetGlobalMouseState(NULL, NULL);
     rgb[VK_LBUTTON] = (buttons & SDL_BUTTON_LMASK) ? 0x80 : 0;
     rgb[VK_RBUTTON] = (buttons & SDL_BUTTON_RMASK) ? 0x80 : 0;
     rgb[VK_MBUTTON] = (buttons & SDL_BUTTON_MMASK) ? 0x80 : 0;
@@ -522,7 +523,7 @@ void CompatRouteEvent(const SDL_Event *lpevent) {
         if (hwndFocus && HwndCompatRoot(hwndFocus) == hwnd) hwnd = hwndFocus;
         if (!IsWindowEnabled(hwnd) || !lpevent->text.text)
             return;
-        if (!fInputKeys) InputModifiers(SDL_GetModState());
+        if (!fInputKeys) InputModifiers(CompatInputIO().pfnGetModState());
         if (hwnd && hwnd->iControl == 3) CompatEditComposition(hwnd, "", 0, 0);
         CompatTextInput(hwnd, lpevent->text.text);
         return;
