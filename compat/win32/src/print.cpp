@@ -128,6 +128,7 @@ static cairo_status_t WritePDF(void *lpv, const unsigned char *rgb, unsigned cb)
 static int StartPrint(COMPATPRINT *lp, int cb, LPCSTR pszTitle) {
     OPENFILENAMEA ofn = {};
     char szFile[PATH_MAX] = "Stars map.pdf";
+    NATIVEFILETEMPRESULT nft;
     if (lp->fActive || cb < 0 || cb > 4096 || (cb != 0 && !pszTitle)) { win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return win32::SP_ERROR; }
     if (cb != 0 && !FUtf8Valid(pszTitle, static_cast<std::size_t>(cb))) { win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return win32::SP_ERROR; }
     if (cb) std::memcpy(lp->szTitle, pszTitle, cb);
@@ -145,8 +146,10 @@ static int StartPrint(COMPATPRINT *lp, int cb, LPCSTR pszTitle) {
     else if (std::snprintf(lp->szTemp, sizeof(lp->szTemp), "%s.tmp-XXXXXX", lp->szTarget) >= static_cast<int>(sizeof(lp->szTemp))) {
         lp->szTemp[0] = 0; win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return win32::SP_ERROR;
     }
-    lp->lpfile.reset(PfNativeCreateTemp(lp->szTemp));
+    nft = NftNativeCreateTemp(lp->szTemp);
+    lp->lpfile.reset(nft.lpfile.release());
     if (!lp->lpfile) { lp->szTemp[0] = 0; win32::SetLastError(win32::ERROR_ACCESS_DENIED); return win32::SP_ERROR; }
+    CchCopyUtf8(std::span{lp->szTemp}, nft.szPath);
     lp->lpPDF.reset(cairo_pdf_surface_create_for_stream(WritePDF, lp, lp->cxPhysical * 72.0 / 300, lp->cyPhysical * 72.0 / 300));
     if (cairo_surface_status(lp->lpPDF.get()) != CAIRO_STATUS_SUCCESS) { AbortPrint(lp); win32::SetLastError(win32::ERROR_NOT_ENOUGH_MEMORY); return win32::SP_ERROR; }
     cairo_pdf_surface_set_metadata(lp->lpPDF.get(), CAIRO_PDF_METADATA_TITLE, lp->szTitle);

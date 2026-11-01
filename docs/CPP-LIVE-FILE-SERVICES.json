@@ -1,6 +1,6 @@
 {
   "parent": "c7f5e933",
-  "status": "File-service migration active; typed open/byte/seek/record/element/modes/metadata/path-text and owned line/directory batches complete and verified.",
+  "status": "File-service migration active; typed open/byte/seek/record/element/modes/metadata/path-text/line-directory and temporary-result batches complete and verified.",
   "open": {
     "status": "complete; verified",
     "interfaces": [
@@ -367,7 +367,7 @@
   "pending": {
     "byte_io": "Native/token byte I/O, record streams, WriteRt/RECORDIO and typed element streams are complete; remaining memory-source and text-writer boundaries are separate work.",
     "seek": "Scoped seek origins complete; existing position-result widths and native/SDK error mappings are retained.",
-    "stream_open": "Scoped modes, returned metadata, owned/bounded path text, lines and directory entries are complete. Temporary-path results, other interfaces and the explicit old OutputFileString uint16_t boundary remain open.",
+    "stream_open": "Scoped modes, returned metadata and owned/bounded path, line, directory and temporary results are complete. Other interfaces, the explicit old OutputFileString uint16_t boundary and file-selection migration remain open.",
     "selection": "Milestone D remains open; no picker backend or user workflow was changed by this batch.",
     "qualification": "Final complete-state inventory, Debug/Release and actual platform qualification remain required.",
     "memory_sources": "Memory-backed record source pointers still need bounds/cursor ownership. Batch file lowword/signed sizing and filename-copy loops remain a separate audit; this batch preserves their existing allocation/read count."
@@ -5516,6 +5516,120 @@
       "baseline": "Behavior-neutral for game behavior and valid IO. Binary line bytes/newlines, partial final lines, EOF/error flags, one-byte behavior, byte-count limits, UTF-8/BOM checks, directory iteration and publication order unchanged. No saved record/storage width, native/frozen-original baseline, unit golden, wire byte, RNG or canonical model changed; no scenario/checkpoint moved and no regression export required.",
       "remaining": "Temporary-path results, other buffer interfaces, memory-source/batch audits, text-writer boundary and Milestone D remain active. L05 text cleanup and L08 final qualification remain open.",
       "receipts": "dist/verification/live-cpp/l06j/"
+    }
+  },
+  "temporary_results": {
+    "parent": "b673e973",
+    "status": "complete; verified",
+    "interface": "NftNativeCreateTemp takes a readonly UTF-8 string view ending in XXXXXX and returns a move-only NATIVEFILETEMPRESULT with its owned candidate path and NATIVEFILEOWNER stream. The caller input is unchanged; a successful stream closes automatically until explicitly adopted. Attempted candidate paths remain available on open failure. Old mutable char* factory and profile raw allocation-provider protocol removed.",
+    "native_creation": "Windows retains six BCrypt bytes per candidate, the same alphabet/128-attempt retry bound, exclusive read/write noninheritable binary creation and deny-sharing policy. POSIX retains mkstemp and its 0600 mode; post-create path-allocation failure still unlinks before unwinding. Accepted file owners are published only after path state is ready.",
+    "temporary_stream": "PfNativeTemporary adopts the same result. Windows keeps delete-on-close; POSIX still unlinks immediately, closes on unlink failure and transfers the accepted stream only afterward.",
+    "callers": "Help still validates its bounded template before creation and closes before rename/unlink. Printing retains the same fixed path field and request limits; it copies the same-length ASCII-substituted UTF-8 result through a bounded helper before Cairo setup/abort paths. Profile saves retain the candidate until close/unlink/rename cleanup.",
+    "profile_stages": "SzProfileTempTemplate returns the owned path-plus-.XXXXXX request. PROFILEIO has actual typed template/create providers. Its Allocate/Temporary/Mode/BOM/row/newline/flush/sync/close/rename stages, LastError mappings, close-before-unlink and rollback behavior remain. The test provider delegates successful template construction to production and gives its fake stream the matching close deleter before caller adoption.",
+    "old_invocations": 9,
+    "pre_existing_invocations": 6,
+    "pre_migration_characterization_calls": 3,
+    "actual_provider_invocations": 2,
+    "actual_provider_callbacks": 2,
+    "ownership": "NATIVEFILEOWNER is a unique_ptr with an explicit close policy; result moves/adoption do not allocate. Profile template/candidate strings replace its raw allocated path slot; contract 71 and the active heap allowlist are updated. Persistent printer path storage and all saved record/handle widths remain unchanged.",
+    "reference_tests": "Before migration host Release and Windows under Wine passed malformed-template EINVAL without input mutation, invalid UTF-8 EILSEQ, missing-parent ENOENT, actual Unicode creation/read/write/identity and temporary-stream behavior. The typed contract additionally asserts the original readonly request and candidate length are preserved.",
+    "calls": [
+      {
+        "path": "compat/win32/src/help.cpp",
+        "parent_line": 91,
+        "function": "PfNativeCreateTemp",
+        "original_call": "PfNativeCreateTemp(szTemp)",
+        "current_call": "NftNativeCreateTemp(szTemp)",
+        "current_line": 92,
+        "origin": "existing parent call"
+      },
+      {
+        "path": "compat/win32/src/print.cpp",
+        "parent_line": 148,
+        "function": "PfNativeCreateTemp",
+        "original_call": "PfNativeCreateTemp(lp->szTemp)",
+        "current_call": "NftNativeCreateTemp(lp->szTemp)",
+        "current_line": 149,
+        "origin": "existing parent call"
+      },
+      {
+        "path": "compat/win32/src/profile_save.cpp",
+        "parent_line": 35,
+        "function": "pfnAllocate",
+        "original_call": "pfnAllocate(std::strlen(pszPath) + 12)",
+        "current_call": "pfnTempTemplate(pszPath)",
+        "current_line": 43,
+        "origin": "existing parent call"
+      },
+      {
+        "path": "compat/win32/src/profile_save.cpp",
+        "parent_line": 38,
+        "function": "pfnCreateTemp",
+        "original_call": "pfnCreateTemp(szTemp)",
+        "current_call": "pfnCreateTemp(*szTemplate)",
+        "current_line": 45,
+        "origin": "existing parent call"
+      },
+      {
+        "path": "src/platform/fileio.cpp",
+        "parent_line": 710,
+        "function": "PfNativeCreateTemp",
+        "original_call": "PfNativeCreateTemp(text.data())",
+        "current_call": "NftNativeCreateTemp(name)",
+        "current_line": 713,
+        "origin": "existing parent call"
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "parent_line": 21,
+        "function": "PfNativeCreateTemp",
+        "original_call": "PfNativeCreateTemp(szBadTemplate)",
+        "current_call": "NftNativeCreateTemp(szBadTemplate)",
+        "current_line": 21,
+        "origin": "pre-migration characterization call"
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "parent_line": 22,
+        "function": "PfNativeCreateTemp",
+        "original_call": "PfNativeCreateTemp(szInvalidTemplate)",
+        "current_call": "NftNativeCreateTemp(szInvalidTemplate)",
+        "current_line": 22,
+        "origin": "pre-migration characterization call"
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "parent_line": 24,
+        "function": "PfNativeCreateTemp",
+        "original_call": "PfNativeCreateTemp(szMissingTemplate)",
+        "current_call": "NftNativeCreateTemp(szMissingTemplate)",
+        "current_line": 24,
+        "origin": "pre-migration characterization call"
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "parent_line": 27,
+        "function": "PfNativeCreateTemp",
+        "original_call": "PfNativeCreateTemp(path)",
+        "current_call": "NftNativeCreateTemp(szTemplate)",
+        "current_line": 28,
+        "origin": "existing parent call"
+      }
+    ],
+    "verification": {
+      "batch": "L06k readonly temporary requests and owned path/stream results",
+      "debug_build": "Pass; no warnings; 161 standalone headers compile in both include orders. Compiler/source policy passes for 158 owned sources and 159 variants.",
+      "desktop": "153/153, including actual profile allocation/create failure stages, cleanup and publication providers, help/printing/chooser workflows, all 29 leak checks and available SDL tutorial checkpoints.",
+      "host_units": "28/28",
+      "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+      "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+      "windows": "147/147 owned production units and two changed contract/provider units compile with strict MinGW. Actual Windows file tests (3), encoding tests (8), recovery tests (12) and the file-service contract pass under Wine. Native Windows desktop and actual Linux final qualification remain pending.",
+      "characterization": "Host Release and Windows under Wine first passed malformed template EINVAL without mutation, invalid UTF-8 EILSEQ, missing-parent ENOENT and Unicode temporary read/write/identity behavior. Final typed tests also assert the request remains unchanged and candidate length is retained. Existing real temporary-stream tests pass.",
+      "interfaces": "Nine old invocations: six existing, including profile template allocation, plus three pre-migration references. NftNativeCreateTemp takes a readonly view and returns a move-only candidate path/stream owner. Two actual profile provider invocations and two provider callbacks use owned template/create results; old mutable buffer and allocation-provider overloads removed.",
+      "ownership": "Unadopted streams carry an explicit close policy. Help/print/profile callers release into their existing close policy before subsequent effects. Profile paths/templates are owned strings; its raw allocation/free site is retired. The fake stage provider also carries a matching deleter, and all original close/unlink/rename failure vectors remain passing.",
+      "baseline": "Behavior-neutral for game behavior and valid IO. Exclusive creation, permissions/sharing, retry limits, system RNG use, candidate substitution length, POSIX unlink/Windows delete-on-close, template/path limits and publication stages retained. No saved layout/handle width, native/frozen-original baseline, unit golden, wire byte, game RNG or canonical model changed; no scenario/checkpoint moved and no regression export required.",
+      "remaining": "Other buffer/service interfaces, memory-source/batch audits, the text-writer boundary and Milestone D remain active. L05 text cleanup and L08 final qualification remain open.",
+      "receipts": "dist/verification/live-cpp/l06k/"
     }
   }
 }

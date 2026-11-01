@@ -53,6 +53,7 @@ static char *PszHelpDocument(const char *pszDirectory, const char *pszPage) {
     char szSource[PATH_MAX], szTarget[PATH_MAX], szTemp[PATH_MAX];
     char *pszBase, *pszBody = nullptr, *pszMarker, *pszResult = nullptr;
     NATIVEFILE *lpSource = nullptr, *lpTarget = nullptr;
+    NATIVEFILETEMPRESULT nft;
     std::size_t cbPrefix, cbRead;
     int cch;
     BOOL fOk;
@@ -88,7 +89,8 @@ static char *PszHelpDocument(const char *pszDirectory, const char *pszPage) {
     if (cch < 0 || static_cast<std::size_t>(cch) >= sizeof(szTarget)) goto fail;
     cch = std::snprintf(szTemp, sizeof(szTemp), "%s.tmp-XXXXXX", szTarget);
     if (cch < 0 || static_cast<std::size_t>(cch) >= sizeof(szTemp)) goto fail;
-    lpTarget = PfNativeCreateTemp(szTemp);
+    nft = NftNativeCreateTemp(szTemp);
+    lpTarget = nft.lpfile.release();
     targetOwner.reset(lpTarget);
     if (!lpTarget) goto fail;
     cbPrefix = static_cast<std::size_t>((pszMarker - pszBody));
@@ -98,7 +100,7 @@ static char *PszHelpDocument(const char *pszDirectory, const char *pszPage) {
     if (IFlushNativeFile(lpTarget) || ISyncNativeFile(lpTarget)) fOk = 0;
     if (ICloseNativeFile(targetOwner.release())) fOk = 0;
     lpTarget = nullptr;
-    if (!fOk || IRenameNativePath(szTemp, szTarget, 1, 1)) { IUnlinkNativePath(szTemp); goto fail; }
+    if (!fOk || IRenameNativePath(nft.szPath.c_str(), szTarget, 1, 1)) { IUnlinkNativePath(nft.szPath.c_str()); goto fail; }
     pszResult = strdup(szTarget);
     if (!pszResult) goto fail;
     goto done;

@@ -14,11 +14,12 @@ struct COMPATPROFILE {
 // ReadLine belongs to loading; the other effects belong to saving. Close and
 // Unlink run during noexcept cleanup and must not throw. CRT node allocations
 // use free(); line reads return owned string values.
+std::optional<std::string> SzProfileTempTemplate(std::string_view szPath);
 struct PROFILEIO {
-    void *(*pfnAllocate)(std::size_t) = std::malloc;
+    decltype(&SzProfileTempTemplate) pfnTempTemplate = SzProfileTempTemplate;
     decltype(&PfNativeOpen) pfnOpen = PfNativeOpen;
     decltype(&SzGetNativeLine) pfnReadLine = SzGetNativeLine;
-    decltype(&PfNativeCreateTemp) pfnCreateTemp = PfNativeCreateTemp;
+    decltype(&NftNativeCreateTemp) pfnCreateTemp = NftNativeCreateTemp;
     decltype(&ICopyNativePermissions) pfnCopyPermissions = ICopyNativePermissions;
     decltype(&CbWriteNativeStream) pfnWrite = CbWriteNativeStream;
     decltype(&IPutNativeString) pfnPutString = IPutNativeString;

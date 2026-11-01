@@ -12,8 +12,15 @@ static int failure,published,unlinked,cleanupOK,opened,closed,syncCalled,renameC
 static char output[256];static size_t used;
 struct PROFILEFAILURE {};
 static bool fNestedFailure;
-static void *TestMalloc(size_t n){return failure==Allocate?NULL:malloc(n);}
-static NATIVEFILE *TestTemp(char *p){(void)p;if(failure==Temporary)return NULL;opened=1;return (NATIVEFILE *)(uintptr_t)1;}
+static std::optional<std::string> TestTempTemplate(std::string_view path){return failure==Allocate?std::nullopt:SzProfileTempTemplate(path);}
+static int TestClose(NATIVEFILE *fp);
+static NATIVEFILETEMPRESULT TestTemp(std::string_view path){
+    NATIVEFILETEMPRESULT nft;
+    if(failure==Temporary)return nft;
+    nft.szPath=path;opened=1;
+    nft.lpfile=NATIVEFILEOWNER((NATIVEFILE *)(uintptr_t)1,TestClose);
+    return nft;
+}
 static int TestMode(NATIVEFILE *fp,const char *p){(void)fp;(void)p;return failure==Mode?-1:0;}
 static size_t TestWrite(std::span<const std::byte> data,NATIVEFILE *fp){(void)fp;if(failure==Bom)return 2;memcpy(output+used,data.data(),data.size());used+=data.size();return data.size();}
 static int TestPuts(const char *s,NATIVEFILE *fp){
@@ -41,7 +48,7 @@ int main(void){
     COMPATPROFILE second={},first={};int ret;
     second.szRaw=szSecond;first.szRaw=szFirst;first.lpNext=&second;
     PROFILEIO io;
-    io.pfnAllocate=TestMalloc;io.pfnCreateTemp=TestTemp;io.pfnCopyPermissions=TestMode;
+    io.pfnTempTemplate=TestTempTemplate;io.pfnCreateTemp=TestTemp;io.pfnCopyPermissions=TestMode;
     io.pfnWrite=TestWrite;io.pfnPutString=TestPuts;io.pfnPutChar=TestPutc;
     io.pfnFlush=TestFlush;io.pfnSync=TestSync;io.pfnClose=TestClose;
     io.pfnRename=TestRename;io.pfnUnlink=TestUnlink;

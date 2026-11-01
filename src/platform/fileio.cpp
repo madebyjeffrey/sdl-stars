@@ -672,50 +672,53 @@ int ICopyNativePermissions(NATIVEFILE *pf, const char *psz) {
     return pf->fd < 0 ? pf->Fail(ENOTSUP) : fchmod(pf->fd, st.st_mode & 0777);
 #endif
 }
-NATIVEFILE *PfNativeCreateTemp(char *text) {
-    if (!FPath(text)) return nullptr;
-    std::size_t n = std::strlen(text);
-    if (n < 6 || std::strcmp(text + n - 6, "XXXXXX") != 0) { errno = EINVAL; return nullptr; }
-    return FileCall<NATIVEFILE *>(nullptr, nullptr, [&]() -> NATIVEFILE * {
+NATIVEFILETEMPRESULT NftNativeCreateTemp(std::string_view szTemplate) {
+    NATIVEFILETEMPRESULT nft;
+    std::size_t n = szTemplate.size();
+    if (!FUtf8Valid(szTemplate)) { errno = EILSEQ; return nft; }
+    if (n < 6 || szTemplate.substr(n - 6) != "XXXXXX") { errno = EINVAL; return nft; }
+    FileCall(nullptr, false, [&] {
+        nft.szPath.assign(szTemplate);
         auto pf = std::make_unique<NATIVEFILE>(); pf->grfAccess = 3;
 #ifdef _WIN32
         static const char alphabet[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
         for (int attempt = 0; attempt < 128; ++attempt) {
             unsigned char bytes[6];
-            if (BCryptGenRandom(nullptr, bytes, sizeof(bytes), BCRYPT_USE_SYSTEM_PREFERRED_RNG) != 0) { errno = EIO; return nullptr; }
-            for (int i = 0; i < 6; ++i) text[n - 6 + i] = alphabet[bytes[i] % 62];
-            pf->pth = PathFromUtf8(text);
+            if (BCryptGenRandom(nullptr, bytes, sizeof(bytes), BCRYPT_USE_SYSTEM_PREFERRED_RNG) != 0) { errno = EIO; return false; }
+            for (int i = 0; i < 6; ++i) nft.szPath[n - 6 + i] = alphabet[bytes[i] % 62];
+            pf->pth = PathFromUtf8(nft.szPath.c_str());
             int err = _wsopen_s(&pf->fd, pf->pth.c_str(), _O_CREAT | _O_EXCL | _O_RDWR | _O_NOINHERIT | _O_BINARY,
                                _SH_DENYRW, _S_IREAD | _S_IWRITE);
-            if (err == 0) return pf.release();
-            errno = err; if (err != EEXIST) return nullptr;
+            if (err == 0) { nft.lpfile.reset(pf.release()); return true; }
+            errno = err; if (err != EEXIST) return false;
         }
-        errno = EEXIST; return nullptr;
+        errno = EEXIST; return false;
 #else
         // mkstemp's descriptor and 0600 mode are kept as one owned resource.
         // Allocate all C++ state before claiming the file, including its path.
-        pf->pth = PathFromUtf8(text);
-        pf->fd = mkstemp(text);
-        if (pf->fd < 0) return nullptr;
-        try { pf->pth = PathFromUtf8(text); }
-        catch (...) { unlink(text); throw; }
-        return pf.release();
+        pf->pth = PathFromUtf8(nft.szPath.c_str());
+        pf->fd = mkstemp(nft.szPath.data());
+        if (pf->fd < 0) return false;
+        try { pf->pth = PathFromUtf8(nft.szPath.c_str()); }
+        catch (...) { unlink(nft.szPath.c_str()); throw; }
+        nft.lpfile.reset(pf.release());
+        return true;
 #endif
     });
+    return nft;
 }
 NATIVEFILE *PfNativeTemporary(void) {
     return FileCall<NATIVEFILE *>(nullptr, nullptr, [&]() -> NATIVEFILE * {
         std::string name = SzFromUtf8((fs::temp_directory_path() / "stars-file-XXXXXX").u8string());
-        std::vector<char> text(name.begin(), name.end()); text.push_back(0);
-        NATIVEFILE *pf = PfNativeCreateTemp(text.data());
-        if (pf) {
+        auto nft = NftNativeCreateTemp(name);
+        if (nft.lpfile) {
 #ifdef _WIN32
-            pf->fDelete = true;
+            nft.lpfile->fDelete = true;
 #else
-            if (unlink(text.data()) != 0) { ICloseNativeFile(pf); return nullptr; }
+            if (unlink(nft.szPath.c_str()) != 0) { nft.lpfile.reset(); return nullptr; }
 #endif
         }
-        return pf;
+        return nft.lpfile.release();
     });
 }
 

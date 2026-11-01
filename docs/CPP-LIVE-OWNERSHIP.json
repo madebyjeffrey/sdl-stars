@@ -502,8 +502,8 @@
       "id": "71",
       "path": "compat/win32/src/profile_save.cpp",
       "scope": "FSaveProfile",
-      "owner": "releaseTemp scope",
-      "reason": "The durable profile writer owns the temporary path and stream while preserving replace/sync semantics; the existing scoped cleanup releases the matched path allocation."
+      "owner": "owned template/result strings and releaseProfile stream/publication scope",
+      "reason": "The durable profile writer builds an owned readonly template, adopts the returned owned stream into its actual close provider, and retains the candidate path through unlink/rename. Close-before-unlink and failure-stage publication semantics remain; no raw path allocation/free remains."
     },
     {
       "id": "72",
@@ -2094,16 +2094,6 @@
       "contract": "70"
     },
     {
-      "path": "compat/win32/src/profile_save.cpp",
-      "line": 32,
-      "scope": "FSaveProfile",
-      "operation": "free",
-      "code": "std::free(szTemp)",
-      "normalized_call": "std::free(szTemp)",
-      "compiler_context": true,
-      "contract": "71"
-    },
-    {
       "path": "compat/win32/src/resource.cpp",
       "line": 119,
       "scope": "HmenuTemplateItems",
@@ -2846,6 +2836,19 @@
       "compiler_context": true,
       "contract": "89",
       "disposition": "L06j replaced raw getline buffer ownership with returned optional strings"
+    }
+  ],
+  "retired_temp_path_sites": [
+    {
+      "path": "compat/win32/src/profile_save.cpp",
+      "line": 32,
+      "scope": "FSaveProfile",
+      "operation": "free",
+      "code": "std::free(szTemp)",
+      "normalized_call": "std::free(szTemp)",
+      "compiler_context": true,
+      "contract": "71",
+      "disposition": "L06k replaced raw temporary-path allocation with owned template/result values"
     }
   ]
 }

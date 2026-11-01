@@ -10,6 +10,8 @@
 #include <array>
 #include <span>
 #include <string>
+#include <string_view>
+#include <memory>
 #include <variant>
 #include <type_traits>
 #include "nativeformat.h"
@@ -52,9 +54,16 @@ struct NATIVEFILEOPENRESULT {
 // Native access is required for live identity, exclusive creation and durable IO.
 NATIVEFILE *PfNativeOpen(const char *psz, NATIVEFILEMODE mode);
 NATIVEFILE *PfNativeOpenFlags(const char *psz, NATIVEFILEOPENOPTIONS nfo);
-NATIVEFILE *PfNativeCreateTemp(char *pszTemplate);
-NATIVEFILE *PfNativeTemporary(void);
 int ICloseNativeFile(NATIVEFILE *pf);
+using NATIVEFILEOWNER = std::unique_ptr<NATIVEFILE, decltype(&ICloseNativeFile)>;
+struct NATIVEFILETEMPRESULT {
+    std::string szPath;
+    NATIVEFILEOWNER lpfile{nullptr, ICloseNativeFile};
+};
+// The readonly UTF-8 template ends in XXXXXX. The result retains the attempted
+// candidate even on open failure and owns an unadopted successful stream.
+NATIVEFILETEMPRESULT NftNativeCreateTemp(std::string_view szTemplate);
+NATIVEFILE *PfNativeTemporary(void);
 // A present count includes successful zero-byte IO; nullopt reports failure
 // through errno. Partial counts and stream error/EOF state remain observable.
 std::optional<std::size_t> CbReadNativeFile(NATIVEFILE *pf, std::span<std::byte> rgb);

@@ -12,12 +12,23 @@
 int main(void) {
     unsigned char rgb[] = {0, 255, 26, 13, 10, 128}, out[16];
     std::uint16_t rgwOut[4];
-    char dir[4096], path[8192], other[8192];
+    char dir[4096], szTemplate[8192], other[8192];
     std::optional<NATIVEFILEINFO> info, opened;
     std::optional<NATIVEFILEIDENTITY> nfiTemp, nfiPath;
     CHECK(FFilesystemTempDir(dir, sizeof(dir)));
-    CHECK(snprintf(path, sizeof(path), "%s/caf\xc3\xa9-XXXXXX", dir) > 0);
-    NATIVEFILE *temp = PfNativeCreateTemp(path);
+    {
+        char szBadTemplate[]="bad-template", szInvalidTemplate[]="\xffXXXXXX", szMissingTemplate[8192];
+        errno=0;CHECK(!NftNativeCreateTemp(szBadTemplate).lpfile && errno==EINVAL && !strcmp(szBadTemplate,"bad-template"));
+        errno=0;CHECK(!NftNativeCreateTemp(szInvalidTemplate).lpfile && errno==EILSEQ);
+        CHECK(snprintf(szMissingTemplate,sizeof(szMissingTemplate),"%s/missing/XXXXXX",dir)>0);
+        errno=0;CHECK(!NftNativeCreateTemp(szMissingTemplate).lpfile && errno==ENOENT);
+    }
+    CHECK(snprintf(szTemplate, sizeof(szTemplate), "%s/caf\xc3\xa9-XXXXXX", dir) > 0);
+    const std::string szRequest(szTemplate);
+    auto nft = NftNativeCreateTemp(szTemplate);
+    CHECK(nft.lpfile && std::string_view(szTemplate)==szRequest && nft.szPath.size()==szRequest.size());
+    const char *path = nft.szPath.c_str();
+    NATIVEFILE *temp = nft.lpfile.release();
     CHECK(temp && CWriteNative(std::span{rgb}, temp) == sizeof(rgb));
     CHECK((opened = IGetNativeOpenInfo(temp)).has_value() && opened->fRegular && !opened->fDirectory && opened->cb == sizeof(rgb));
     CHECK((nfiTemp = FNativeFileIdentity(temp)));
