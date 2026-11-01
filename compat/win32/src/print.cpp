@@ -56,9 +56,10 @@ static HGLOBAL HglobPrintNames(COMPATPRINT *lp) {
     if (!h) return nullptr;
     lpn = static_cast<DEVNAMES *>((win32::GlobalLock(h))); if (!lpn) { win32::GlobalFree(h); return nullptr; }
     psz = reinterpret_cast<char *>(lpn) + sizeof(*lpn);
-    lpn->wDriverOffset = static_cast<WORD>((psz - reinterpret_cast<char *>(lpn))); std::strcpy(psz, pszDriver); psz += std::strlen(psz) + 1;
-    lpn->wDeviceOffset = static_cast<WORD>((psz - reinterpret_cast<char *>(lpn))); std::strcpy(psz, pszDevice); psz += std::strlen(psz) + 1;
-    lpn->wOutputOffset = static_cast<WORD>((psz - reinterpret_cast<char *>(lpn))); std::strcpy(psz, pszPort); lpn->wDefault = 1;
+    const auto rgchNames = std::span{reinterpret_cast<char *>(lpn), cb};
+    lpn->wDriverOffset = static_cast<WORD>((psz - reinterpret_cast<char *>(lpn))); CchCopyUtf8(rgchNames.subspan(lpn->wDriverOffset), pszDriver); psz += std::strlen(psz) + 1;
+    lpn->wDeviceOffset = static_cast<WORD>((psz - reinterpret_cast<char *>(lpn))); CchCopyUtf8(rgchNames.subspan(lpn->wDeviceOffset), pszDevice); psz += std::strlen(psz) + 1;
+    lpn->wOutputOffset = static_cast<WORD>((psz - reinterpret_cast<char *>(lpn))); CchCopyUtf8(rgchNames.subspan(lpn->wOutputOffset), pszPort); lpn->wDefault = 1;
     win32::GlobalUnlock(h); return h;
 }
 BOOL win32::PrintDlgA(LPPRINTDLGA lppd) {
@@ -139,10 +140,10 @@ static int StartPrint(COMPATPRINT *lp, int cb, LPCSTR pszTitle) {
         ofn.lpstrFilter = "PDF documents\0*.pdf\0"; ofn.nFilterIndex = 1; ofn.lpstrDefExt = "pdf";
         ofn.lpstrTitle = "Print to PDF"; ofn.Flags = win32::OFN_HIDEREADONLY | win32::OFN_PATHMUSTEXIST | win32::OFN_NOREADONLYRETURN | win32::OFN_OVERWRITEPROMPT | win32::OFN_NOCHANGEDIR;
         if (!win32::GetSaveFileNameA(&ofn)) return win32::CommDlgExtendedError() ? win32::SP_ERROR : win32::SP_APPABORT;
-        std::strcpy(lp->szTarget, szFile);
+        CchCopyUtf8(std::span{lp->szTarget}, szFile);
     }
     lp->fKeep = 0;
-    if (lp->fSpool) std::strcpy(lp->szTemp, "/tmp/stars-print-XXXXXX");
+    if (lp->fSpool) CchCopyUtf8(std::span{lp->szTemp}, "/tmp/stars-print-XXXXXX");
     else if (std::snprintf(lp->szTemp, sizeof(lp->szTemp), "%s.tmp-XXXXXX", lp->szTarget) >= static_cast<int>(sizeof(lp->szTemp))) {
         lp->szTemp[0] = 0; win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return win32::SP_ERROR;
     }

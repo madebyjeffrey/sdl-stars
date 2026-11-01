@@ -1175,7 +1175,7 @@ std::int16_t PopupVCRMenu(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16
                 break;
             rgsz[c] = psz;
             rgid[c] = i;
-            std::strcpy(psz, app.state.szWork);
+            CchCopyUtf8Prefix(std::span{rgch}.subspan(static_cast<std::size_t>(psz - rgch)), app.state.szWork);
             psz += cch + 1;
             if (i == app.lpui->viVCRFocus) {
                 iChecked = c;

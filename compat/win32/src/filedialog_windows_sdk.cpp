@@ -9,6 +9,8 @@ WINDOWSCHOOSERIOSCOPE::WINDOWSCHOOSERIOSCOPE(const WINDOWSCHOOSERIO &io) noexcep
 WINDOWSCHOOSERIOSCOPE::~WINDOWSCHOOSERIOSCOPE() noexcept { lpIO = lpPrev; }
 
 /* NATIVE: Keep system Unicode dialogs separate from the wrapper API namespace. */
+#include <algorithm>
+#include <span>
 #include <windows.h>
 #include <commdlg.h>
 #include <cstdlib>
@@ -83,7 +85,10 @@ int IChooseWindowsFile(void *lpWindow, int fSave, const char *pszTitle, const ch
     pwszCwd = cchCwd != 0 ? static_cast<wchar_t *>(std::malloc(static_cast<std::size_t>(cchCwd) * sizeof(*pwszCwd))) : nullptr;
     if (!pwszTitle || !pwszFolder || !pwszName || !pwszFile || !pwszCwd ||
         !GetCurrentDirectoryW(cchCwd, pwszCwd) || std::wcslen(pwszName) >= 32768) goto done;
-    std::wcscpy(pwszFile, pwszName);
+    {
+        const auto rgchFile = std::span{pwszFile, 32768}.first(std::wcslen(pwszName) + 1);
+        std::copy_n(pwszName, rgchFile.size(), rgchFile.begin());
+    }
     for (i = 0; i < cFilter; i++) {
         pwszLabel = LpwszChooserText(rgfilter[i].pszName, CP_UTF8);
         pwszPattern = LpwszChooserText(rgfilter[i].pszPattern, CP_UTF8);

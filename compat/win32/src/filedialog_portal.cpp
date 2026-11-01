@@ -3,6 +3,7 @@
 #include "input_io.h"
 #include "time_io.h"
 #include <dbus/dbus.h>
+#include <algorithm>
 #include <climits>
 #include <cstdio>
 #include <cstdlib>
@@ -257,11 +258,14 @@ int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFol
     if (!lpRandom) goto done;
     if (CReadNative(std::span{rgbToken}, lpRandom) != sizeof(rgbToken)) { randomOwner.reset(); goto done; }
     randomOwner.reset();
-    std::strcpy(szToken, "stars_");
+    CchCopyUtf8(std::span{szToken}, "stars_");
     for (i = 0; i < 16; i++) std::snprintf(szToken + 6 + i * 2, 3, "%02x", rgbToken[i]);
     pszUnique = dbus_bus_get_unique_name(lpBus);
     if (!pszUnique || std::strlen(pszUnique) >= sizeof(szSender)) goto done;
-    std::strcpy(szSender, pszUnique + 1);
+    {
+        const auto rgchSender = std::span{szSender}.first(std::strlen(pszUnique));
+        std::copy_n(pszUnique + 1, rgchSender.size(), rgchSender.begin());
+    }
     for (i = 0; szSender[i]; i++) if (szSender[i] == '.') szSender[i] = '_';
     std::snprintf(szRequest, sizeof(szRequest), "%s/request/%s/%s", PORTAL_PATH, szSender, szToken);
     pszRequest = strdup(szRequest); if (!pszRequest) goto done;

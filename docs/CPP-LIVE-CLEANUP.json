@@ -109,7 +109,8 @@
         "owned-planet-fleet-and-thing-name-values",
         "owned-compressed-planet-encoded-fleet-environment-production-and-ETA-labels",
         "owned-message-format-decode-and-version-results",
-        "readonly-bounded-message-input-views"
+        "readonly-bounded-message-input-views",
+        "bounded-fitting-chooser-printer-and-menu-copies"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -524,6 +525,19 @@
           "baseline": "Behavior-neutral: native/frozen-original baseline bytes and unit goldens unchanged. No scenario/checkpoint moved and no regression export required.",
           "remaining": "Readonly bounded message format/parameter inputs, post-migration message/cache staging and borrowed-return audit, 52 initial copy sites, wrapper formatting and manual bounds review, L06 service results/Milestone D, generated/retained macro audit and L08 final platform qualification remain active.",
           "receipts": "dist/verification/live-cpp/l05aa/"
+        },
+        {
+          "batch": "L05ab twenty-one bounded chooser, printer and menu copies",
+          "debug_build": "Pass; no warnings. Compiler/source policy: 158 owned sources, 159 variants, 161 standalone headers in both orders; exact raw-copy inventory passes.",
+          "desktop": "154/154 including all 29 leak checks, printer Unicode byte-limit/offset vectors, file workflows, independent witnesses, and available SDL tutorial checkpoints.",
+          "host_units": "29/29 in Release.",
+          "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+          "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+          "windows": "147/147 owned production syntax checks; changed printer test and isolated real Windows SDK chooser also pass strict MinGW C++20. Compilation only; native Windows SDL and Linux portal execution require opt-in CI.",
+          "characterization": "Parent production and final suite both pass a complete 255-byte UTF-8 printer name and 256-byte rejection. Checks include all DEVNAMES offsets, strings, NUL-inclusive allocation size and failure without output handles.",
+          "inventory": "277 migrated initial sites; 31 initial sites remain. The exact lexical raw-copy inventory totals 37 including six SDK declaration/definition/implementation extras.",
+          "baseline": "Behavior-neutral; native and frozen-original baseline files unchanged. No wire/layout, game rule, RNG, tie order or floating boundary change; no checkpoint moved.",
+          "receipts": "dist/verification/live-cpp/l05ab/"
         }
       ],
       "bounded_formatting": {
@@ -771,6 +785,11 @@
         "status": "complete; verified",
         "evidence": "docs/CPP-LIVE-OWNED-TEXT.json",
         "qualification": "L06u readonly bounded message views; other const interfaces remain pending."
+      },
+      "bounded_chooser_print_copies": {
+        "status": "complete; locally verified; platform CI pending",
+        "sites": 21,
+        "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
       }
     },
     {
@@ -3821,77 +3840,88 @@
       "path": "compat/win32/src/filedialog.cpp",
       "line": 162,
       "code": "strcpy(szOld, lp->szDir); strcpy(lp->szDir, szReal);",
-      "disposition": "pending"
+      "disposition": "bounded-fitting-span-L05ab",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "compat/win32/src/filedialog.cpp",
       "line": 162,
       "code": "strcpy(szOld, lp->szDir); strcpy(lp->szDir, szReal);",
-      "disposition": "pending"
+      "disposition": "bounded-fitting-span-L05ab",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "compat/win32/src/filedialog.cpp",
       "line": 164,
       "code": "strcpy(lp->szDir, szOld); free(pszPrevious);",
-      "disposition": "pending"
+      "disposition": "bounded-fitting-span-L05ab",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "compat/win32/src/filedialog.cpp",
       "line": 199,
       "code": "strcpy(szParent, szPath); pszBase = strrchr(szParent, '/');",
-      "disposition": "pending"
+      "disposition": "bounded-fitting-span-L05ab",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "compat/win32/src/filedialog.cpp",
       "line": 225,
       "code": "strcpy(lp->szResult, szParent);",
-      "disposition": "pending"
+      "disposition": "bounded-fitting-span-L05ab",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "compat/win32/src/filedialog.cpp",
       "line": 394,
       "code": "if (PszCanonicalNativePath(pszPath, szReal, sizeof(szReal))) { strcpy(lp->szDir, szReal); pszName[0] = 0; }",
-      "disposition": "pending"
+      "disposition": "bounded-fitting-span-L05ab",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "compat/win32/src/filedialog.cpp",
       "line": 402,
       "code": "if (PszCanonicalNativePath(szParent, szReal, sizeof(szReal)) && IGetNativeFileInfo(szReal, &st, 1) == 0 && st.fDirectory) strcpy(lp->szDir, szReal);",
-      "disposition": "pending"
+      "disposition": "bounded-fitting-span-L05ab",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "compat/win32/src/filedialog.cpp",
       "line": 450,
       "code": "strcpy(dlg.szDir, szCwd); szInitial[0] = 0;",
-      "disposition": "pending"
+      "disposition": "bounded-fitting-span-L05ab",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "compat/win32/src/filedialog.cpp",
       "line": 454,
       "code": "IGetNativeFileInfo(dlg.szDir, &st, 1) != 0 || !st.fDirectory) strcpy(dlg.szDir, szCwd);",
-      "disposition": "pending"
+      "disposition": "bounded-fitting-span-L05ab",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "compat/win32/src/filedialog.cpp",
       "line": 543,
       "code": "strcpy(szPath, dlg.szResult); pch = strrchr(szPath, '/');",
-      "disposition": "pending"
+      "disposition": "bounded-fitting-span-L05ab",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "compat/win32/src/filedialog.cpp",
       "line": 546,
       "code": "strcpy(lpof->lpstrFile, dlg.szResult);",
-      "disposition": "pending"
+      "disposition": "bounded-fitting-span-L05ab",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "c_header",
@@ -4220,14 +4250,16 @@
       "path": "compat/win32/src/filedialog_portal.cpp",
       "line": 240,
       "code": "strcpy(szToken, \"stars_\");",
-      "disposition": "pending"
+      "disposition": "bounded-fitting-span-L05ab",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "compat/win32/src/filedialog_portal.cpp",
       "line": 244,
       "code": "strcpy(szSender, pszUnique + 1);",
-      "disposition": "pending"
+      "disposition": "bounded-fitting-span-L05ab",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "c_header",
@@ -4580,7 +4612,8 @@
       "path": "compat/win32/src/filedialog_windows_sdk.cpp",
       "line": 80,
       "code": "wcscpy(pwszFile, pwszName);",
-      "disposition": "pending"
+      "disposition": "bounded-fitting-span-L05ab",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "c_header",
@@ -7555,35 +7588,40 @@
       "path": "compat/win32/src/print.cpp",
       "line": 59,
       "code": "lpn->wDriverOffset = (WORD)(psz - (char *)lpn); strcpy(psz, pszDriver); psz += strlen(psz) + 1;",
-      "disposition": "pending"
+      "disposition": "bounded-fitting-span-L05ab",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "compat/win32/src/print.cpp",
       "line": 60,
       "code": "lpn->wDeviceOffset = (WORD)(psz - (char *)lpn); strcpy(psz, pszDevice); psz += strlen(psz) + 1;",
-      "disposition": "pending"
+      "disposition": "bounded-fitting-span-L05ab",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "compat/win32/src/print.cpp",
       "line": 61,
       "code": "lpn->wOutputOffset = (WORD)(psz - (char *)lpn); strcpy(psz, pszPort); lpn->wDefault = 1;",
-      "disposition": "pending"
+      "disposition": "bounded-fitting-span-L05ab",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "compat/win32/src/print.cpp",
       "line": 141,
       "code": "strcpy(lp->szTarget, szFile);",
-      "disposition": "pending"
+      "disposition": "bounded-fitting-span-L05ab",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "compat/win32/src/print.cpp",
       "line": 144,
       "code": "if (lp->fSpool) strcpy(lp->szTemp, \"/tmp/stars-print-XXXXXX\");",
-      "disposition": "pending"
+      "disposition": "bounded-fitting-span-L05ab",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "c_header",
@@ -15504,7 +15542,8 @@
       "path": "src/ui/buildui.cpp",
       "line": 1101,
       "code": "strcpy(pch + -2, pch + -1);",
-      "disposition": "pending"
+      "disposition": "bounded-fitting-span-L05ab",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
@@ -22748,7 +22787,8 @@
       "path": "src/ui/vcr.cpp",
       "line": 1177,
       "code": "strcpy(psz, app.state.szWork);",
-      "disposition": "pending"
+      "disposition": "bounded-fitting-span-L05ab",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "c_header",

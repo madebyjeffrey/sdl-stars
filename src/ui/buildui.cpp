@@ -1097,7 +1097,7 @@ void DrawBuildSelComp(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
                             for (pch = &szWord[cch - 1]; pch > szWord && *pch != '('; pch--) {
                             }
                             if (*pch == '(' && pch > &szWord[1] && pch[-1] == ' ' && pch[-2] == 's') {
-                                std::strcpy(pch + -2, pch + -1);
+                                CchCopyUtf8Prefix(std::span{szWord}.subspan(static_cast<std::size_t>(pch - 2 - szWord)), pch - 1);
                             }
                         }
                     }

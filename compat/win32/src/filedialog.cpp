@@ -166,9 +166,9 @@ static BOOL FChangeFileDirectory(HWND hwnd, COMPATFILEDIALOG *lp, LPCSTR psz, BO
         previousOwner.reset(pszPrevious);
         if (!pszPrevious) { FileError(hwnd, "There is not enough memory to navigate."); return 0; }
     }
-    std::strcpy(szOld, lp->szDir); std::strcpy(lp->szDir, szReal);
+    CchCopyUtf8(std::span{szOld}, lp->szDir); CchCopyUtf8(std::span{lp->szDir}, szReal);
     if (!FRefreshFiles(hwnd, lp)) {
-        std::strcpy(lp->szDir, szOld); previousOwner.reset();
+        CchCopyUtf8(std::span{lp->szDir}, szOld); previousOwner.reset();
         if (win32::IsWindow(hwnd)) win32::SetWindowTextA(win32::GetDlgItem(hwnd, ID_FILE_PATH), lp->szDir);
         return 0;
     }
@@ -202,7 +202,7 @@ static int IAcceptFilePath(HWND hwnd, COMPATFILEDIALOG *lp, LPCSTR pszName) {
             FileError(hwnd, "The filename is too long."); return 0;
         }
     }
-    std::strcpy(szParent, szPath); pszBase = std::strrchr(szParent, '/');
+    CchCopyUtf8(std::span{szParent}, szPath); pszBase = std::strrchr(szParent, '/');
     if (!pszBase || !pszBase[1] || std::strpbrk(pszBase + 1, "*?")) { FileError(hwnd, "Enter a valid filename."); return 0; }
     if (pszBase == szParent) pszBase[1] = 0; else *pszBase = 0;
     if (!CchCanonicalNativePath(szParent, std::span{szReal}) || !(stParent = IGetNativeFileInfo(szReal, NATIVELINKMODE::follow)) || !stParent->fDirectory) {
@@ -228,7 +228,7 @@ static int IAcceptFilePath(HWND hwnd, COMPATFILEDIALOG *lp, LPCSTR pszName) {
     if (lp->fSave && fExists && (lp->lpof->Flags & win32::OFN_OVERWRITEPROMPT) &&
         CompatChoiceIO().pfnMessageBoxA(hwnd, "This file already exists. Replace it?", "Confirm save", win32::MB_YESNO | win32::MB_ICONEXCLAMATION | win32::MB_DEFBUTTON2) != win32::IDYES) return 0;
     if (hwnd && !win32::IsWindow(hwnd)) return 0;
-    std::strcpy(lp->szResult, szParent);
+    CchCopyUtf8(std::span{lp->szResult}, szParent);
     cch = std::strlen(lp->szResult) + 1;
     if (cch > lp->lpof->nMaxFile) {
         lp->dwError = win32::FNERR_BUFFERTOOSMALL;
@@ -397,7 +397,7 @@ static void RememberFileSelection(COMPATFILEDIALOG *lp, LPCSTR pszPath, char *ps
     std::optional<NATIVEFILEINFO> st;
     /* A validation error or declined overwrite must not reset navigation. */
     if ((st = IGetNativeFileInfo(pszPath, NATIVELINKMODE::follow)).has_value() && st->fDirectory) {
-        if (CchCanonicalNativePath(pszPath, std::span{szReal})) { std::strcpy(lp->szDir, szReal); pszName[0] = 0; }
+        if (CchCanonicalNativePath(pszPath, std::span{szReal})) { CchCopyUtf8(std::span{lp->szDir}, szReal); pszName[0] = 0; }
         return;
     }
     SDL_strlcpy(szParent, pszPath, sizeof(szParent));
@@ -405,7 +405,7 @@ static void RememberFileSelection(COMPATFILEDIALOG *lp, LPCSTR pszPath, char *ps
     if (!pch) return;
     SDL_strlcpy(pszName, pch + 1, PATH_MAX);
     if (pch == szParent) pch[1] = 0; else *pch = 0;
-    if (CchCanonicalNativePath(szParent, std::span{szReal}) && (st = IGetNativeFileInfo(szReal, NATIVELINKMODE::follow)).has_value() && st->fDirectory) std::strcpy(lp->szDir, szReal);
+    if (CchCanonicalNativePath(szParent, std::span{szReal}) && (st = IGetNativeFileInfo(szReal, NATIVELINKMODE::follow)).has_value() && st->fDirectory) CchCopyUtf8(std::span{lp->szDir}, szReal);
 }
 #endif
 static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
@@ -453,11 +453,11 @@ static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
     dlg.iFilter = lpof->nFilterIndex > 0 && lpof->nFilterIndex <= static_cast<DWORD>(dlg.cFilter) ? static_cast<int>(lpof->nFilterIndex) - 1 : 0;
     if (!CchNativeCwd(std::span{szCwd})) { dlg.dwError = win32::CDERR_INITIALIZATION; goto done; }
     if (!FUtf8Valid(szCwd, std::strlen(szCwd))) { dlg.dwError = win32::FNERR_INVALIDFILENAME; goto done; }
-    std::strcpy(dlg.szDir, szCwd); szInitial[0] = 0;
+    CchCopyUtf8(std::span{dlg.szDir}, szCwd); szInitial[0] = 0;
     if (lpof->lpstrInitialDir && *lpof->lpstrInitialDir) {
         std::optional<NATIVEFILEINFO> st;
         if (!FJoinFile(szPath, szCwd, lpof->lpstrInitialDir) || !CchCanonicalNativePath(szPath, std::span{dlg.szDir}) ||
-            !(st = IGetNativeFileInfo(dlg.szDir, NATIVELINKMODE::follow)) || !st->fDirectory) std::strcpy(dlg.szDir, szCwd);
+            !(st = IGetNativeFileInfo(dlg.szDir, NATIVELINKMODE::follow)) || !st->fDirectory) CchCopyUtf8(std::span{dlg.szDir}, szCwd);
     }
     if (*lpof->lpstrFile) {
         if (!FJoinFile(szPath, dlg.szDir, lpof->lpstrFile)) { dlg.dwError = win32::FNERR_INVALIDFILENAME; goto done; }
@@ -546,10 +546,10 @@ static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
 selected:
 #endif
     {
-        std::strcpy(szPath, dlg.szResult); pch = std::strrchr(szPath, '/');
+        CchCopyUtf8(std::span{szPath}, dlg.szResult); pch = std::strrchr(szPath, '/');
         if (pch == szPath) pch[1] = 0; else *pch = 0;
         if (!(lpof->Flags & win32::OFN_NOCHANGEDIR) && IChangeNativeCwd(szPath) != 0) { dlg.dwError = win32::CDERR_INITIALIZATION; goto restore; }
-        std::strcpy(lpof->lpstrFile, dlg.szResult);
+        CchCopyUtf8(std::span{lpof->lpstrFile, static_cast<std::size_t>(lpof->nMaxFile)}, dlg.szResult);
         pch = std::strrchr(dlg.szResult, '/') + 1;
         lpof->nFileOffset = static_cast<WORD>((pch - dlg.szResult));
         if (lpof->lpstrFileTitle && lpof->nMaxFileTitle)

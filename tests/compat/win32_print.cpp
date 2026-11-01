@@ -1,4 +1,5 @@
 #include "../../compat/win32/src/external_io.h"
+#include <string>
 /* Printer DC lifetime, raster pages, atomic PDF output and real process spooling. */
 #include <windows.h>
 #include <stars_compat.h>
@@ -85,6 +86,7 @@ int main(int argc, char **argv) {
     POINT pt;
     RECT rc;
     int query = win32::NEWFRAME;
+    std::string szPrinter;
     COMPATEXTERNALIO io_compatexternalio;
     io_compatexternalio.pfnOpenURL = StarsTest_SDL_OpenURL;
     io_compatexternalio.pfnShowSimpleMessageBox = StarsTest_SDL_ShowSimpleMessageBox;
@@ -102,6 +104,25 @@ int main(int argc, char **argv) {
     snprintf(szCapture, sizeof(szCapture), "%s/spooled.pdf", pszDir);
 #endif
     SDL_unsetenv_unsafe("STARS_SDL_PRINTER"); SDL_unsetenv_unsafe("STARS_SDL_PRINT_PAPER"); SDL_unsetenv_unsafe("STARS_SDL_PRINT_ORIENTATION");
+    // DEVNAMES keeps the complete UTF-8 printer name, including at its byte limit.
+    for (int i = 0; i < 85; i++) szPrinter += "\xe4\xb8\xad";
+    SDL_setenv_unsafe("STARS_SDL_PRINTER", szPrinter.c_str(), 1);
+    pd = {}; pd.lStructSize = sizeof(pd); pd.Flags = win32::PD_RETURNDEFAULT;
+    CHECK(win32::PrintDlgA(&pd) && !pd.hDC && pd.hDevMode && pd.hDevNames);
+    lpn = static_cast<DEVNAMES *>(win32::GlobalLock(pd.hDevNames)); CHECK(lpn && lpn->wDefault == 1);
+    CHECK(lpn->wDriverOffset == sizeof(*lpn));
+    CHECK(strcmp(reinterpret_cast<char *>(lpn) + lpn->wDriverOffset, "Stars SDL3/Cairo") == 0);
+    CHECK(lpn->wDeviceOffset == lpn->wDriverOffset + sizeof("Stars SDL3/Cairo"));
+    CHECK(strcmp(reinterpret_cast<char *>(lpn) + lpn->wDeviceOffset, szPrinter.c_str()) == 0);
+    CHECK(lpn->wOutputOffset == lpn->wDeviceOffset + szPrinter.size() + 1);
+    CHECK(strcmp(reinterpret_cast<char *>(lpn) + lpn->wOutputOffset, "CUPS:") == 0);
+    CHECK(win32::GlobalSize(pd.hDevNames) >= lpn->wOutputOffset + sizeof("CUPS:"));
+    win32::GlobalUnlock(pd.hDevNames); FreePrinter(&pd);
+    szPrinter += 'x'; SDL_setenv_unsafe("STARS_SDL_PRINTER", szPrinter.c_str(), 1);
+    pd = {}; pd.lStructSize = sizeof(pd); pd.Flags = win32::PD_RETURNDEFAULT;
+    CHECK(!win32::PrintDlgA(&pd) && !pd.hDevMode && !pd.hDevNames && !pd.hDC);
+    CHECK(win32::GetLastError() == win32::ERROR_INVALID_PARAMETER);
+    SDL_unsetenv_unsafe("STARS_SDL_PRINTER");
     CHECK(InitPrinter(&pd, szPages) && pd.hDC && pd.hDevMode && pd.hDevNames && pd.nCopies == 1);
     CHECK(win32::CommDlgExtendedError() == 0);
     lpdm = (DEVMODE*)(win32::GlobalLock(pd.hDevMode)); CHECK(lpdm && lpdm->dmSize == sizeof(*lpdm) && lpdm->mode.printer.dmPaperSize == win32::DMPAPER_LETTER);
