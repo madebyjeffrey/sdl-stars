@@ -1,6 +1,6 @@
 {
   "parent": "c7f5e933",
-  "status": "File-service migration active; open/byte/seek/record/element/modes and returned metadata/size/path-kind/identity values complete and verified.",
+  "status": "File-service migration active; typed open/byte/seek/record/element/modes/metadata and owned canonical/CWD/URI path-text batches complete and verified.",
   "open": {
     "status": "complete; verified",
     "interfaces": [
@@ -367,7 +367,7 @@
   "pending": {
     "byte_io": "Native/token byte I/O, record streams, WriteRt/RECORDIO and typed element streams are complete; remaining memory-source and text-writer boundaries are separate work.",
     "seek": "Scoped seek origins complete; existing position-result widths and native/SDK error mappings are retained.",
-    "stream_open": "Scoped stream modes and returned metadata/size/path-kind/identity values are complete. Canonical/current-directory/temporary-path results and other interfaces remain; OutputFileString retains its explicit old uint16_t write-count boundary pending repair.",
+    "stream_open": "Scoped modes, returned metadata and owned/bounded canonical/CWD/URI text are complete. Temporary-path and line/directory result protocols, other interfaces and the explicit old OutputFileString uint16_t boundary remain open.",
     "selection": "Milestone D remains open; no picker backend or user workflow was changed by this batch.",
     "qualification": "Final complete-state inventory, Debug/Release and actual platform qualification remain required.",
     "memory_sources": "Memory-backed record source pointers still need bounds/cursor ownership. Batch file lowword/signed sizing and filename-copy loops remain a separate audit; this batch preserves their existing allocation/read count."
@@ -4918,6 +4918,299 @@
       "baseline": "Behavior-neutral. Existing NATIVEFILEINFO/COMPATFILE storage widths and layouts, saved records, wire bytes, integer limits, UTF-8 handling, RNG, canonical models and unit goldens unchanged. No native or frozen original baseline changed and no scenario/checkpoint moved; no regression export required.",
       "remaining": "Canonical/current-directory and temporary-path results, other buffer interfaces, memory-source/batch audits, text-writer boundary and Milestone D remain active. L05 text cleanup and L08 final qualification remain open.",
       "receipts": "dist/verification/live-cpp/l06h/"
+    }
+  },
+  "path_text_results": {
+    "parent": "471d6d04",
+    "status": "complete; verified",
+    "interfaces": "SzCanonicalNativePath/SzNativeCwd return optional owned UTF-8 strings. CchCanonicalNativePath/CchNativeCwd take actual char spans and return optional byte counts excluding NUL. SzCompatFileUri returns an optional owned URI. Old mixed caller-buffer/nullable-allocation/capacity protocols and raw allocated URI returns are removed.",
+    "capacities": "Owned queries retain the complete path. Bounded queries resolve and validate first, reserve a NUL, and fail with ERANGE before copying if the span is too small. Invalid UTF-8 retains EILSEQ before capacity handling. Input/output aliases remain safe because resolution finishes in independent owned storage before publication.",
+    "native_policy": "POSIX canonicalization still resolves links; Windows still uses absolute/lexically-normal paths with existence validation without resolving reparse points. Current-directory results and generic UTF-8 separators retain the same policy and bytes.",
+    "uri_policy": "The builder retains the exact file scheme, uppercase percent escapes, safe-byte set, drive-prefix slash and UNC prefix handling. The absolute path and URI are owned strings across construction and callbacks; bad_alloc remains an empty result with ENOMEM, and other exceptions stay contained. SDL event reference acquisition/release and help/print fallback/error order remain.",
+    "old_call_sites": 28,
+    "pre_existing_call_sites": 19,
+    "pre_migration_characterization_calls": 9,
+    "production_old_calls": 14,
+    "test_old_calls": 14,
+    "foreign_adapter": "The genuine non-Windows _getcwd ABI still accepts a caller pointer/capacity or returns a CRT allocation for a null pointer, ignoring its positive capacity as before. It selects exactly one native bounded/owned query. The raw allocation now lives only at that CRT boundary and is released by its foreign caller. SDK prototypes and actual Windows CRT behavior are unchanged.",
+    "ownership": "Removed two raw path/URI allocation sites from the active ownership allowlist; added the one necessary _getcwd CRT-return allocation under the revised contract 90. Absolute-path/URI owners are now C++ values. Existing staged HTML/document owners and help directory-release-before-launch order remain.",
+    "reference_tests": "Before production migration the host Release and actual Windows contract under Wine passed exact byte-capacity/NUL, undersized/zero-capacity sentinel preservation, canonical input/output aliasing, CWD capacity handling and invalid-UTF-8-before-capacity checks. The linked macOS services reference also passed null _getcwd allocation with positive capacity one and matched free.",
+    "calls": [
+      {
+        "path": "compat/win32/src/document.cpp",
+        "parent_line": 13,
+        "function": "PszCanonicalNativePath",
+        "original_call": "PszCanonicalNativePath(pszPath, nullptr, 0)",
+        "origin": "existing parent call",
+        "current_call": "SzCanonicalNativePath(pszPath)",
+        "current_line": 15
+      },
+      {
+        "path": "compat/win32/src/document.cpp",
+        "parent_line": 42,
+        "function": "PszCompatFileUri",
+        "original_call": "PszCompatFileUri(pszPath)",
+        "origin": "existing parent call",
+        "current_call": "SzCompatFileUri(pszPath)",
+        "current_line": 45
+      },
+      {
+        "path": "compat/win32/src/file.cpp",
+        "parent_line": 80,
+        "function": "PszNativeCwd",
+        "original_call": "PszNativeCwd(szCwd, sizeof(szCwd))",
+        "origin": "existing parent call",
+        "current_call": "CchNativeCwd(std::span{szCwd})",
+        "current_line": 80
+      },
+      {
+        "path": "compat/win32/src/filedialog.cpp",
+        "parent_line": 153,
+        "function": "PszCanonicalNativePath",
+        "original_call": "PszCanonicalNativePath(szPath, szReal, sizeof(szReal))",
+        "origin": "existing parent call",
+        "current_call": "CchCanonicalNativePath(szPath, std::span{szReal})",
+        "current_line": 153
+      },
+      {
+        "path": "compat/win32/src/filedialog.cpp",
+        "parent_line": 206,
+        "function": "PszCanonicalNativePath",
+        "original_call": "PszCanonicalNativePath(szParent, szReal, sizeof(szReal))",
+        "origin": "existing parent call",
+        "current_call": "CchCanonicalNativePath(szParent, std::span{szReal})",
+        "current_line": 206
+      },
+      {
+        "path": "compat/win32/src/filedialog.cpp",
+        "parent_line": 398,
+        "function": "PszCanonicalNativePath",
+        "original_call": "PszCanonicalNativePath(pszPath, szReal, sizeof(szReal))",
+        "origin": "existing parent call",
+        "current_call": "CchCanonicalNativePath(pszPath, std::span{szReal})",
+        "current_line": 398
+      },
+      {
+        "path": "compat/win32/src/filedialog.cpp",
+        "parent_line": 406,
+        "function": "PszCanonicalNativePath",
+        "original_call": "PszCanonicalNativePath(szParent, szReal, sizeof(szReal))",
+        "origin": "existing parent call",
+        "current_call": "CchCanonicalNativePath(szParent, std::span{szReal})",
+        "current_line": 406
+      },
+      {
+        "path": "compat/win32/src/filedialog.cpp",
+        "parent_line": 452,
+        "function": "PszNativeCwd",
+        "original_call": "PszNativeCwd(szCwd, sizeof(szCwd))",
+        "origin": "existing parent call",
+        "current_call": "CchNativeCwd(std::span{szCwd})",
+        "current_line": 452
+      },
+      {
+        "path": "compat/win32/src/filedialog.cpp",
+        "parent_line": 457,
+        "function": "PszCanonicalNativePath",
+        "original_call": "PszCanonicalNativePath(szPath, dlg.szDir, sizeof(dlg.szDir))",
+        "origin": "existing parent call",
+        "current_call": "CchCanonicalNativePath(szPath, std::span{dlg.szDir})",
+        "current_line": 457
+      },
+      {
+        "path": "compat/win32/src/filedialog.cpp",
+        "parent_line": 466,
+        "function": "PszCanonicalNativePath",
+        "original_call": "PszCanonicalNativePath(szPath, dlg.szDir, sizeof(dlg.szDir))",
+        "origin": "existing parent call",
+        "current_call": "CchCanonicalNativePath(szPath, std::span{dlg.szDir})",
+        "current_line": 466
+      },
+      {
+        "path": "compat/win32/src/help.cpp",
+        "parent_line": 159,
+        "function": "PszCanonicalNativePath",
+        "original_call": "PszCanonicalNativePath(szDirectory, nullptr, 0)",
+        "origin": "existing parent call",
+        "current_call": "SzCanonicalNativePath(szDirectory)",
+        "current_line": 160
+      },
+      {
+        "path": "compat/win32/src/help.cpp",
+        "parent_line": 166,
+        "function": "PszCanonicalNativePath",
+        "original_call": "PszCanonicalNativePath(szDirectory, nullptr, 0)",
+        "origin": "existing parent call",
+        "current_call": "SzCanonicalNativePath(szDirectory)",
+        "current_line": 167
+      },
+      {
+        "path": "compat/win32/src/print.cpp",
+        "parent_line": 270,
+        "function": "PszCanonicalNativePath",
+        "original_call": "PszCanonicalNativePath(lp->szTarget, nullptr, 0)",
+        "origin": "existing parent call",
+        "current_call": "SzCanonicalNativePath(lp->szTarget)",
+        "current_line": 270
+      },
+      {
+        "path": "compat/win32/src/services.cpp",
+        "parent_line": 116,
+        "function": "PszNativeCwd",
+        "original_call": "PszNativeCwd(pszPath, static_cast<std::size_t>(cchPath))",
+        "origin": "existing parent call",
+        "current_alternatives": [
+          {
+            "call": "CchNativeCwd(std::span{pszPath, static_cast<std::size_t>(cchPath)})",
+            "line": 117
+          },
+          {
+            "call": "SzNativeCwd()",
+            "line": 118
+          }
+        ]
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "parent_line": 29,
+        "function": "PszCanonicalNativePath",
+        "original_call": "PszCanonicalNativePath(path, nullptr, 0)",
+        "origin": "pre-migration characterization call",
+        "current_call": "SzCanonicalNativePath(path)",
+        "current_line": 29
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "parent_line": 30,
+        "function": "PszNativeCwd",
+        "original_call": "PszNativeCwd(nullptr, 0)",
+        "origin": "pre-migration characterization call",
+        "current_call": "SzNativeCwd()",
+        "current_line": 29
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "parent_line": 36,
+        "function": "PszCanonicalNativePath",
+        "original_call": "PszCanonicalNativePath(path, exact.data(), exact.size())",
+        "origin": "pre-migration characterization call",
+        "current_call": "CchCanonicalNativePath(path, std::span{exact})",
+        "current_line": 34
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "parent_line": 37,
+        "function": "PszCanonicalNativePath",
+        "original_call": "PszCanonicalNativePath(path, shortPath.data(), shortPath.size())",
+        "origin": "pre-migration characterization call",
+        "current_call": "CchCanonicalNativePath(path, std::span{shortPath})",
+        "current_line": 35
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "parent_line": 38,
+        "function": "PszCanonicalNativePath",
+        "original_call": "PszCanonicalNativePath(path, exact.data(), 0)",
+        "origin": "pre-migration characterization call",
+        "current_call": "CchCanonicalNativePath(path, std::span{exact}.first(0))",
+        "current_line": 36
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "parent_line": 39,
+        "function": "PszCanonicalNativePath",
+        "original_call": "PszCanonicalNativePath(exact.data(), exact.data(), exact.size())",
+        "origin": "pre-migration characterization call",
+        "current_call": "CchCanonicalNativePath(exact.data(), std::span{exact})",
+        "current_line": 37
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "parent_line": 40,
+        "function": "PszNativeCwd",
+        "original_call": "PszNativeCwd(cwd.data(),cwd.size())",
+        "origin": "pre-migration characterization call",
+        "current_call": "CchNativeCwd(std::span{cwd})",
+        "current_line": 38
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "parent_line": 41,
+        "function": "PszNativeCwd",
+        "original_call": "PszNativeCwd(shortCwd.data(),shortCwd.size())",
+        "origin": "pre-migration characterization call",
+        "current_call": "CchNativeCwd(std::span{shortCwd})",
+        "current_line": 39
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "parent_line": 42,
+        "function": "PszCanonicalNativePath",
+        "original_call": "PszCanonicalNativePath(\"\\xff\",exact.data(),1)",
+        "origin": "pre-migration characterization call",
+        "current_call": "CchCanonicalNativePath(\"\\xff\", std::span{exact}.first(1))",
+        "current_line": 40
+      },
+      {
+        "path": "tests/compat/win32_filedialog_windows_flow.cpp",
+        "parent_line": 54,
+        "function": "PszNativeCwd",
+        "original_call": "PszNativeCwd(szCwd, sizeof(szCwd))",
+        "origin": "existing parent call",
+        "current_call": "CchNativeCwd(std::span{szCwd})",
+        "current_line": 54
+      },
+      {
+        "path": "tests/compat/win32_filedialog_windows_flow.cpp",
+        "parent_line": 84,
+        "function": "PszNativeCwd",
+        "original_call": "PszNativeCwd(szAfter, sizeof(szAfter))",
+        "origin": "existing parent call",
+        "current_call": "CchNativeCwd(std::span{szAfter})",
+        "current_line": 84
+      },
+      {
+        "path": "tests/compat/win32_windows_platform.cpp",
+        "parent_line": 25,
+        "function": "PszNativeCwd",
+        "original_call": "PszNativeCwd(szCwd, sizeof(szCwd))",
+        "origin": "existing parent call",
+        "current_call": "CchNativeCwd(std::span{szCwd})",
+        "current_line": 24
+      },
+      {
+        "path": "tests/compat/win32_windows_platform.cpp",
+        "parent_line": 36,
+        "function": "PszCanonicalNativePath",
+        "original_call": "PszCanonicalNativePath(szOther, NULL, 0)",
+        "origin": "existing parent call",
+        "current_call": "SzCanonicalNativePath(szOther)",
+        "current_line": 35
+      },
+      {
+        "path": "tests/compat/win32_windows_platform.cpp",
+        "parent_line": 38,
+        "function": "PszCompatFileUri",
+        "original_call": "PszCompatFileUri(szOther)",
+        "origin": "existing parent call",
+        "current_call": "SzCompatFileUri(szOther)",
+        "current_line": 37
+      }
+    ],
+    "verification": {
+      "batch": "L06i owned canonical/CWD/URI strings and bounded path spans",
+      "debug_build": "Pass; no warnings; 161 standalone headers compile in both include orders. Compiler/source policy passes for 158 owned sources and 159 variants.",
+      "desktop": "153/153, including native path capacities, the CRT allocation boundary, help/printing/chooser flows, callback cleanup, all 29 leak checks and available SDL tutorial checkpoints.",
+      "host_units": "28/28",
+      "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+      "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+      "windows": "147/147 owned production units and two changed contract/service units compile with strict MinGW; Windows platform and chooser-flow fixtures compile separately with peer wrapper flags. Actual Windows file tests (3), encoding tests (8), recovery tests (12) and the file-service contract pass under Wine. Native Windows desktop and actual Linux final qualification remain pending.",
+      "characterization": "Pre-migration host Release and Windows under Wine passed exact byte capacity/NUL, too-small and zero-capacity sentinel preservation, canonical input/output aliasing, current-directory capacity and invalid UTF-8 error precedence. The macOS linked services reference passed the null _getcwd allocation protocol with positive capacity one. All assertions pass after migration.",
+      "interfaces": "All 28 old query call sites (19 existing plus nine reference calls) use owned optional strings or bounded spans/optional counts. The genuine CRT _getcwd adapter chooses between two exclusive native query branches; it still performs one query per call. Application nullable-output/capacity and raw URI-return overloads removed.",
+      "ownership": "Two raw path/URI allocation sites retired from the active allowlist. One necessary CRT-return allocation is isolated in _getcwd under contract 90; no public native path/URI service requires caller free. Help directory release, staged document ownership, URI callback lifetime, print fallback and SDL event cleanup retain their order.",
+      "baseline": "Behavior-neutral; POSIX canonicalization, Windows absolute/existence/reparse policy, generic UTF-8 separators, URI percent encoding and path byte limits unchanged. No native/frozen-original baseline, unit golden, record width, game logic, wire byte, RNG or canonical model changed; no scenario/checkpoint moved and no regression export required.",
+      "remaining": "Temporary-path and line/directory result protocols, other buffer interfaces, memory-source/batch audits, the text-writer boundary and Milestone D remain active. L05 text cleanup and L08 final qualification remain open.",
+      "receipts": "dist/verification/live-cpp/l06i/"
     }
   }
 }

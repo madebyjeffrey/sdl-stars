@@ -51,7 +51,7 @@ int main(void) {
     WINDOWSCHOOSERIOSCOPE scope_windowschooserio(io_windowschooserio);
 
     CHECK(SDL_setenv_unsafe("STARS_FILE_DIALOG_BACKEND", "native", 1) == 0);
-    CHECK(PszNativeCwd(szCwd, sizeof(szCwd)));
+    CHECK(CchNativeCwd(std::span{szCwd}));
     CHECK(SDL_strlcpy(szChosen, szCwd, sizeof(szChosen)) < sizeof(szChosen));
     CHECK(SDL_strlcat(szChosen, "/\xce\xa9.m1", sizeof(szChosen)) < sizeof(szChosen));
     lpfile = PfNativeOpen(szChosen, NATIVEFILEMODE::writeTruncate); CHECK(lpfile && ICloseNativeFile(lpfile) == 0);
@@ -81,7 +81,7 @@ int main(void) {
         if (iAction == 2) CHECK(win32::PeekMessageA(&msg, NULL, win32::WM_QUIT, win32::WM_QUIT, win32::PM_REMOVE) && msg.wParam == 73);
     }
     CHECK(!win32::IsWindow(hwndOwner) && !fBad && cCalls == 5);
-    CHECK(PszNativeCwd(szAfter, sizeof(szAfter)) && strcmp(szAfter, szCwd) == 0);
+    CHECK(CchNativeCwd(std::span{szAfter}) && strcmp(szAfter, szCwd) == 0);
     CHECK(IUnlinkNativePath(szChosen) == 0);
     StarsCompatShutdown();
     puts("Windows native wrapper file flow passed");

@@ -111,7 +111,8 @@ done:
 BOOL win32::WinHelpA(HWND hWndMain, LPCSTR pszHelp, UINT uCommand, ULONG_PTR dwData) {
     const char *pszBase, *pszName, *pszPage = nullptr;
     char szDirectory[PATH_MAX];
-    char *pszDirectory, *pszDocument;
+    const char *pszDirectory;
+    char *pszDocument;
     std::size_t i;
     int cch;
     BOOL fLaunched;
@@ -156,24 +157,24 @@ BOOL win32::WinHelpA(HWND hWndMain, LPCSTR pszHelp, UINT uCommand, ULONG_PTR dwD
         win32::SetLastError(win32::ERROR_FILENAME_EXCED_RANGE);
         return 0;
     }
-    pszDirectory = PszCanonicalNativePath(szDirectory, nullptr, 0);
-    if (!pszDirectory) {
+    auto szDirectoryOwned = SzCanonicalNativePath(szDirectory);
+    if (!szDirectoryOwned) {
         cch = std::snprintf(szDirectory, sizeof(szDirectory), "%s%s/help", pszBase, STARS_INSTALLED_DATA);
         if (cch < 0 || static_cast<std::size_t>(cch) >= sizeof(szDirectory)) {
             win32::SetLastError(win32::ERROR_FILENAME_EXCED_RANGE);
             return 0;
         }
-        pszDirectory = PszCanonicalNativePath(szDirectory, nullptr, 0);
-        if (!pszDirectory) {
+        szDirectoryOwned = SzCanonicalNativePath(szDirectory);
+        if (!szDirectoryOwned) {
             win32::SetLastError(win32::ERROR_PATH_NOT_FOUND);
             return 0;
         }
     }
-    NATIVEOWNER<char, std::free> directoryOwner(pszDirectory);
+    pszDirectory = szDirectoryOwned->c_str();
     if (!FHelpAssets(pszDirectory)) return 0;
     pszDocument = PszHelpDocument(pszDirectory, pszPage);
     NATIVEOWNER<char, std::free> documentOwner(pszDocument);
-    directoryOwner.reset();
+    szDirectoryOwned.reset();
     if (!pszDocument) return 0;
     fLaunched = FCompatOpenDocument(pszDocument);
     documentOwner.reset();

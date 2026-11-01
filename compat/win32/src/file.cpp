@@ -77,7 +77,7 @@ HFILE win32::OpenFile(LPCSTR pszFile, LPOFSTRUCT lpof, UINT flags) {
         if (std::strlen(pszFile) >= sizeof(szPath)) { dwError = win32::ERROR_FILENAME_EXCED_RANGE; goto LReturn; }
         std::strcpy(szPath, pszFile);
     } else {
-        if (!PszNativeCwd(szCwd, sizeof(szCwd))) { dwError = DwFileError(); goto LReturn; }
+        if (!CchNativeCwd(std::span{szCwd})) { dwError = DwFileError(); goto LReturn; }
         if (std::snprintf(szPath, sizeof(szPath), "%s/%s", szCwd, pszFile) >= static_cast<int>(sizeof(szPath))) {
             dwError = win32::ERROR_FILENAME_EXCED_RANGE; goto LReturn;
         }

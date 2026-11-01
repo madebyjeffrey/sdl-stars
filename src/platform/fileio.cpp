@@ -563,36 +563,45 @@ int IRenameNativePath(const char *oldPath, const char *newPath, int replace, int
 #endif
     });
 }
-static char *CopyNativePath(const fs::path &pth, char *out, std::size_t capacity) {
+static std::optional<std::string> SzNativePath(const fs::path &pth) {
     std::string text = SzFromUtf8(pth.generic_u8string());
-    if (!FUtf8Valid(text.data(), text.size())) { errno = EILSEQ; return nullptr; }
-    if (out && text.size() >= capacity) { errno = ERANGE; return nullptr; }
-    if (!out) { out = static_cast<char *>(std::malloc(text.size() + 1)); if (!out) return nullptr; }
-    std::memcpy(out, text.c_str(), text.size() + 1);
-    return out;
+    if (!FUtf8Valid(text.data(), text.size())) { errno = EILSEQ; return std::nullopt; }
+    return text;
 }
-char *PszCanonicalNativePath(const char *psz, char *out, std::size_t capacity) {
-    if (!FPath(psz)) return nullptr;
-    return FileCall<char *>(nullptr, nullptr, [&]() -> char * {
+std::optional<std::string> SzCanonicalNativePath(const char *psz) {
+    if (!FPath(psz)) return std::nullopt;
+    return FileCall<std::optional<std::string>>(nullptr, std::nullopt, [&]() -> std::optional<std::string> {
         std::error_code ec; fs::path pth = PathFromUtf8(psz);
 #ifdef _WIN32
         // The old SDK bridge used GetFullPathName plus existence, without
         // resolving reparse points or changing the user's path identity.
         pth = fs::absolute(pth, ec).lexically_normal();
-        if (!ec && !fs::exists(pth, ec)) { errno = ENOENT; return nullptr; }
+        if (!ec && !fs::exists(pth, ec)) { errno = ENOENT; return std::nullopt; }
 #else
         pth = fs::canonical(pth, ec);
 #endif
-        if (ec) { SetError(ec); return nullptr; }
-        return CopyNativePath(pth, out, capacity);
+        if (ec) { SetError(ec); return std::nullopt; }
+        return SzNativePath(pth);
     });
 }
-char *PszNativeCwd(char *out, std::size_t capacity) {
-    return FileCall<char *>(nullptr, nullptr, [&]() -> char * {
+std::optional<std::string> SzNativeCwd() {
+    return FileCall<std::optional<std::string>>(nullptr, std::nullopt, [&]() -> std::optional<std::string> {
         std::error_code ec; auto pth = fs::current_path(ec);
-        if (ec) { SetError(ec); return nullptr; }
-        return CopyNativePath(pth, out, capacity);
+        if (ec) { SetError(ec); return std::nullopt; }
+        return SzNativePath(pth);
     });
+}
+static std::optional<std::size_t> CchCopyNativePath(std::optional<std::string> text, std::span<char> out) {
+    if (!text) return std::nullopt;
+    if (text->size() >= out.size()) { errno = ERANGE; return std::nullopt; }
+    std::memcpy(out.data(), text->c_str(), text->size() + 1);
+    return text->size();
+}
+std::optional<std::size_t> CchCanonicalNativePath(const char *psz, std::span<char> out) {
+    return CchCopyNativePath(SzCanonicalNativePath(psz), out);
+}
+std::optional<std::size_t> CchNativeCwd(std::span<char> out) {
+    return CchCopyNativePath(SzNativeCwd(), out);
 }
 int IChangeNativeCwd(const char *psz) {
     if (!FPath(psz)) return -1;

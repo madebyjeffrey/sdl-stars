@@ -74,9 +74,9 @@
     {
       "id": "10",
       "path": "compat/win32/src/document.cpp",
-      "scope": "PszCompatFileUri",
-      "owner": "absolute owner and uri owner -> returned URI owner",
-      "reason": "Native path and URI buffers use the existing matched CRT allocator. URI construction holds both owners and transfers the completed URI; launch also scopes its SDL event reference."
+      "scope": "SzCompatFileUri",
+      "owner": "owned optional absolute-path and URI strings",
+      "reason": "The path and URI are C++ values scoped through encoding and launch callbacks. URI allocation failures remain contained as errno/empty results; no raw URI allocation/transfer remains."
     },
     {
       "id": "11",
@@ -633,10 +633,10 @@
     },
     {
       "id": "90",
-      "path": "src/platform/fileio.cpp",
-      "scope": "CopyNativePath",
-      "owner": "caller-provided span or returned path owner",
-      "reason": "The native path adapter either fills caller storage or transfers its single CRT allocation into an explicit caller owner. Preserve its allocator/error contract; stronger public result types belong to L06."
+      "path": "compat/win32/src/services.cpp",
+      "scope": "_getcwd",
+      "owner": "foreign CRT caller, released with free()",
+      "reason": "The non-Windows _getcwd ABI must return a CRT allocation for a null caller buffer, including its existing ignored positive capacity. The native service now returns an owned UTF-8 string; only this genuine CRT boundary allocates/copies its returned NUL-terminated bytes."
     },
     {
       "id": "91",
@@ -902,16 +902,6 @@
       "normalized_call": "std::calloc(dlg.cItems,sizeof(*dlg.rgItems))",
       "compiler_context": true,
       "contract": "9"
-    },
-    {
-      "path": "compat/win32/src/document.cpp",
-      "line": 16,
-      "scope": "PszCompatFileUri",
-      "operation": "malloc",
-      "code": "std::malloc(std::strlen(pszAbsolute) * 3 + 9)",
-      "normalized_call": "std::malloc(std::strlen(pszAbsolute)*3+9)",
-      "compiler_context": true,
-      "contract": "10"
     },
     {
       "path": "compat/win32/src/edit.cpp",
@@ -2434,16 +2424,6 @@
       "contract": "89"
     },
     {
-      "path": "src/platform/fileio.cpp",
-      "line": 533,
-      "scope": "CopyNativePath",
-      "operation": "malloc",
-      "code": "std::malloc(text.size() + 1)",
-      "normalized_call": "std::malloc(text.size()+1)",
-      "compiler_context": true,
-      "contract": "90"
-    },
-    {
       "path": "src/platform/native.cpp",
       "line": 102,
       "scope": "CchSprintf",
@@ -2765,6 +2745,16 @@
       "normalized_call": "std::calloc(c,sizeof(*lpobj))",
       "compiler_context": true,
       "contract": "103"
+    },
+    {
+      "path": "compat/win32/src/services.cpp",
+      "line": 120,
+      "scope": "_getcwd",
+      "operation": "malloc",
+      "code": "std::malloc(szCwd->size() + 1)",
+      "normalized_call": "std::malloc(szCwd->size()+1)",
+      "compiler_context": true,
+      "contract": "90"
     }
   ],
   "foreign_result_owners": [
@@ -2789,8 +2779,8 @@
     {
       "path": "compat/win32/src/help.cpp",
       "scope": "WinHelpA",
-      "owner": "directoryOwner and documentOwner",
-      "contract": "Matched native path results stay owned across guide validation and document-launch callbacks."
+      "owner": "owned directory string and documentOwner",
+      "contract": "Canonical directory is an optional owned UTF-8 string; the staged HTML document retains its matched CRT owner through launch callbacks."
     },
     {
       "path": "compat/win32/src/inspect.cpp",
@@ -2828,6 +2818,30 @@
         ],
         "full_platform_jobs": "Skipped by opt-in policy; no native Windows execution inferred."
       }
+    }
+  ],
+  "retired_path_text_sites": [
+    {
+      "path": "compat/win32/src/document.cpp",
+      "line": 16,
+      "scope": "PszCompatFileUri",
+      "operation": "malloc",
+      "code": "std::malloc(std::strlen(pszAbsolute) * 3 + 9)",
+      "normalized_call": "std::malloc(std::strlen(pszAbsolute)*3+9)",
+      "compiler_context": true,
+      "contract": "10",
+      "disposition": "L06i replaced by owned optional string results"
+    },
+    {
+      "path": "src/platform/fileio.cpp",
+      "line": 533,
+      "scope": "CopyNativePath",
+      "operation": "malloc",
+      "code": "std::malloc(text.size() + 1)",
+      "normalized_call": "std::malloc(text.size()+1)",
+      "compiler_context": true,
+      "contract": "90",
+      "disposition": "L06i replaced by owned optional string results"
     }
   ]
 }

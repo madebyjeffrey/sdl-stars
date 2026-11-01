@@ -6,6 +6,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <string>
+#include <vector>
+#include <algorithm>
 #define CHECK(f) do { if (!(f)) { fprintf(stderr,"line %d: %s (errno %d)\n",__LINE__,#f,errno); return 1; } } while (0)
 int main(void) {
     unsigned char rgb[] = {0, 255, 26, 13, 10, 128}, out[16];
@@ -21,6 +23,22 @@ int main(void) {
     CHECK((nfiTemp = FNativeFileIdentity(temp)));
     CHECK(ISyncNativeFile(temp) == 0 && ICloseNativeFile(temp) == 0);
     CHECK((nfiPath = FNativeFileIdentity(path)) && nfiPath->idDevice == nfiTemp->idDevice && nfiPath->idFile == nfiTemp->idFile);
+    // Native path results count UTF-8 bytes, reserve the terminator and leave
+    // undersized or invalid destinations untouched, even when input aliases it.
+    {
+        const auto szCanonicalOwned = SzCanonicalNativePath(path), szCwdOwned = SzNativeCwd();
+        CHECK(szCanonicalOwned && szCwdOwned);
+        const std::string &szCanonical = *szCanonicalOwned, &szCwd = *szCwdOwned;
+        std::vector<char> exact(szCanonical.size()+1, '#'), shortPath(szCanonical.size(), '#');
+        std::vector<char> cwd(szCwd.size()+1, '#'), shortCwd(szCwd.size(), '#');
+        CHECK(CchCanonicalNativePath(path, std::span{exact})==szCanonical.size() && !strcmp(exact.data(),szCanonical.c_str()));
+        errno=0;CHECK(!CchCanonicalNativePath(path, std::span{shortPath}) && errno==ERANGE && std::ranges::all_of(shortPath,[](char ch){return ch=='#';}));
+        errno=0;CHECK(!CchCanonicalNativePath(path, std::span{exact}.first(0)) && errno==ERANGE && !strcmp(exact.data(),szCanonical.c_str()));
+        CHECK(CchCanonicalNativePath(exact.data(), std::span{exact})==szCanonical.size() && !strcmp(exact.data(),szCanonical.c_str()));
+        CHECK(CchNativeCwd(std::span{cwd})==szCwd.size() && !strcmp(cwd.data(),szCwd.c_str()));
+        errno=0;CHECK(!CchNativeCwd(std::span{shortCwd}) && errno==ERANGE && std::ranges::all_of(shortCwd,[](char ch){return ch=='#';}));
+        errno=0;CHECK(!CchCanonicalNativePath("\xff", std::span{exact}.first(1)) && errno==EILSEQ && !strcmp(exact.data(),szCanonical.c_str()));
+    }
     // The bound owner closes every legacy stream and retains token reuse.
     {
         NATIVEFILESESSION session;

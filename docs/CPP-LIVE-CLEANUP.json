@@ -428,6 +428,11 @@
         "production_consumers": 39,
         "interfaces": "Three numeric scratch getters return 12-byte owned arrays; grouped decimal returns a 15-byte owned array. All output/count pointer overloads and shared szFormatNumber storage removed.",
         "rounding_repair": "Complete; verified: only the intermediate addition is widened before division and the existing clamp. See docs/CPP-LIVE-OWNED-TEXT.json."
+      },
+      "owned_native_path_results": {
+        "status": "complete; verified under L06i",
+        "evidence": "docs/CPP-LIVE-FILE-SERVICES.json",
+        "interfaces": "Canonical path, CWD and file URI are owned strings; bounded native path destinations carry physical spans."
       }
     },
     {
@@ -446,7 +451,8 @@
         "readonly-record-payload-spans-and-scratch-capacity-validation",
         "typed-element-streams-and-concrete-byte-providers",
         "scoped-native-stream-modes-and-actual-open-providers",
-        "returned-native-metadata-size-path-kind-and-identity-values"
+        "returned-native-metadata-size-path-kind-and-identity-values",
+        "owned-canonical-cwd-uri-results-and-bounded-path-spans"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -577,6 +583,21 @@
           "baseline": "Behavior-neutral. Existing NATIVEFILEINFO/COMPATFILE storage widths and layouts, saved records, wire bytes, integer limits, UTF-8 handling, RNG, canonical models and unit goldens unchanged. No native or frozen original baseline changed and no scenario/checkpoint moved; no regression export required.",
           "remaining": "Canonical/current-directory and temporary-path results, other buffer interfaces, memory-source/batch audits, text-writer boundary and Milestone D remain active. L05 text cleanup and L08 final qualification remain open.",
           "receipts": "dist/verification/live-cpp/l06h/"
+        },
+        {
+          "batch": "L06i owned canonical/CWD/URI strings and bounded path spans",
+          "debug_build": "Pass; no warnings; 161 standalone headers compile in both include orders. Compiler/source policy passes for 158 owned sources and 159 variants.",
+          "desktop": "153/153, including native path capacities, the CRT allocation boundary, help/printing/chooser flows, callback cleanup, all 29 leak checks and available SDL tutorial checkpoints.",
+          "host_units": "28/28",
+          "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+          "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+          "windows": "147/147 owned production units and two changed contract/service units compile with strict MinGW; Windows platform and chooser-flow fixtures compile separately with peer wrapper flags. Actual Windows file tests (3), encoding tests (8), recovery tests (12) and the file-service contract pass under Wine. Native Windows desktop and actual Linux final qualification remain pending.",
+          "characterization": "Pre-migration host Release and Windows under Wine passed exact byte capacity/NUL, too-small and zero-capacity sentinel preservation, canonical input/output aliasing, current-directory capacity and invalid UTF-8 error precedence. The macOS linked services reference passed the null _getcwd allocation protocol with positive capacity one. All assertions pass after migration.",
+          "interfaces": "All 28 old query call sites (19 existing plus nine reference calls) use owned optional strings or bounded spans/optional counts. The genuine CRT _getcwd adapter chooses between two exclusive native query branches; it still performs one query per call. Application nullable-output/capacity and raw URI-return overloads removed.",
+          "ownership": "Two raw path/URI allocation sites retired from the active allowlist. One necessary CRT-return allocation is isolated in _getcwd under contract 90; no public native path/URI service requires caller free. Help directory release, staged document ownership, URI callback lifetime, print fallback and SDL event cleanup retain their order.",
+          "baseline": "Behavior-neutral; POSIX canonicalization, Windows absolute/existence/reparse policy, generic UTF-8 separators, URI percent encoding and path byte limits unchanged. No native/frozen-original baseline, unit golden, record width, game logic, wire byte, RNG or canonical model changed; no scenario/checkpoint moved and no regression export required.",
+          "remaining": "Temporary-path and line/directory result protocols, other buffer interfaces, memory-source/batch audits, the text-writer boundary and Milestone D remain active. L05 text cleanup and L08 final qualification remain open.",
+          "receipts": "dist/verification/live-cpp/l06i/"
         }
       ],
       "roman_output": {
@@ -590,14 +611,14 @@
         "current_call_sites": 26,
         "pre_existing_call_sites": 19,
         "interface": "Named typed access/sharing/options replace all three positional-integer open interfaces; small-token opens return token/missing as one value. Old integer-mode and missing-output overloads removed.",
-        "pending": "Canonical/current-directory/temporary-path results and file-selection interfaces remain open."
+        "pending": "Temporary-path and line/directory result protocols and file-selection interfaces remain open."
       },
       "file_bytes_and_seek": {
         "status": "complete; verified",
         "evidence": "docs/CPP-LIVE-FILE-SERVICES.json",
         "parent_call_expressions": 98,
         "interfaces": "Six native/token byte functions use spans and optional counts; every seek-origin interface and actual held-lock read provider uses the typed contract. Old overloads removed.",
-        "pending": "Other path results, text-writer boundary and Milestone D remain."
+        "pending": "Other buffer/result interfaces, text-writer boundary and Milestone D remain."
       },
       "record_streams": {
         "status": "complete; verified",
@@ -637,6 +658,13 @@
         "pre_existing_invocations": 72,
         "actual_provider_callbacks": 1,
         "interfaces": "Optional native metadata records, 64-bit sizes, path-kind and device/file identity values; scoped link policy; actual publication provider migrated. Old outputs and nullable identity-source pair removed."
+      },
+      "path_text_results": {
+        "status": "complete; verified",
+        "evidence": "docs/CPP-LIVE-FILE-SERVICES.json",
+        "old_call_sites": 28,
+        "pre_existing_call_sites": 19,
+        "interfaces": "Owned optional canonical/CWD/file-URI strings and bounded span/count variants. Only the genuine _getcwd CRT adapter retains a raw allocation protocol."
       }
     },
     {

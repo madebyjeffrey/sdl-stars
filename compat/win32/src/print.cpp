@@ -267,9 +267,8 @@ static int IEscapePrinter(COMPATPRINT *lp, HDC hdc, int idEscape, int cb, LPCSTR
         if (!FCompatOpenDocument(lp->szTarget)) {
             char szMessage[PATH_MAX + 160];
             HWND hwndOwner = win32::IsWindow(lp->hwndOwner) ? lp->hwndOwner : nullptr;
-            char *pszAbsolute = PszCanonicalNativePath(lp->szTarget, nullptr, 0);
-            NATIVEOWNER<char, std::free> absoluteOwner(pszAbsolute);
-            std::snprintf(szMessage, sizeof(szMessage), "The PDF was saved, but its viewer could not be opened.\n\nOpen this file in a PDF viewer to print it:\n%s", pszAbsolute ? pszAbsolute : lp->szTarget);
+            const auto szAbsolute = SzCanonicalNativePath(lp->szTarget);
+            std::snprintf(szMessage, sizeof(szMessage), "The PDF was saved, but its viewer could not be opened.\n\nOpen this file in a PDF viewer to print it:\n%s", szAbsolute ? szAbsolute->c_str() : lp->szTarget);
             SDL_Log("%s", szMessage);
             CompatExternalIO().pfnShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "PDF saved", szMessage,
                                      hwndOwner ? hwndOwner->lpWindow.get() : nullptr);

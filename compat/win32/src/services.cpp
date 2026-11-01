@@ -112,8 +112,14 @@ LInvalid:
 int _access(const char *pszPath, int mdAccess) { return IAccessNativePath(pszPath, mdAccess); }
 int _mkdir(const char *pszPath) { return ICreateNativeDirectory(pszPath, 0777); }
 char *_getcwd(char *pszPath, int cchPath) {
+    char *pszResult;
     if (cchPath <= 0) { errno = EINVAL; return nullptr; }
-    return PszNativeCwd(pszPath, static_cast<std::size_t>(cchPath));
+    if (pszPath) return CchNativeCwd(std::span{pszPath, static_cast<std::size_t>(cchPath)}) ? pszPath : nullptr;
+    const auto szCwd = SzNativeCwd();
+    if (!szCwd) return nullptr;
+    pszResult = static_cast<char *>(std::malloc(szCwd->size() + 1));
+    if (pszResult) std::memcpy(pszResult, szCwd->c_str(), szCwd->size() + 1);
+    return pszResult;
 }
 int _stricmp(const char *psz1, const char *psz2) { return strcasecmp(psz1, psz2); }
 int _strnicmp(const char *psz1, const char *psz2, std::size_t cb) { return strncasecmp(psz1, psz2, cb); }

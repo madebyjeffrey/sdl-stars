@@ -13,7 +13,6 @@ int main(void) {
     char szPath[PATH_MAX], szOther[PATH_MAX], szCwd[PATH_MAX], sz[32];
     const char rgb[] = {'A', '\r', '\n', 0x1a, 'Z'};
     char rgbRead[sizeof(rgb)];
-    char *pszReal, *pszUri;
     HFILE hf, hfOther;
     OFSTRUCT of;
     DWORD dwHigh;
@@ -22,7 +21,7 @@ int main(void) {
     BOOL fFound = 0;
 
     CHECK(ICreateNativeDirectory(pszDir, 0700) == 0 || errno == EEXIST);
-    CHECK(PszNativeCwd(szCwd, sizeof(szCwd)));
+    CHECK(CchNativeCwd(std::span{szCwd}));
     CHECK(snprintf(szPath, sizeof(szPath), "%s/%s/\xe6\x9d\xb1\xe4\xba\xac.bin", szCwd, pszDir) < (int)sizeof(szPath));
     CHECK(snprintf(szOther, sizeof(szOther), "%s/%s/other.bin", szCwd, pszDir) < (int)sizeof(szOther));
     hf = win32::OpenFile(szPath, &of, win32::OF_CREATE | win32::OF_SHARE_EXCLUSIVE);
@@ -33,11 +32,10 @@ int main(void) {
     CHECK(win32::_llseek(hf, 0, SEEK_SET) == 0 && win32::_lread(hf, rgbRead, sizeof(rgbRead)) == sizeof(rgbRead));
     CHECK(memcmp(rgb, rgbRead, sizeof(rgb)) == 0 && win32::_lclose(hf) == 0);
     CHECK(IRenameNativePath(szPath, szOther, 1, 1) == 0 && IAccessNativePath(szPath, 0) != 0);
-    pszReal = PszCanonicalNativePath(szOther, NULL, 0);
-    CHECK(pszReal && strcmp(pszReal, szOther) == 0); free(pszReal);
-    pszUri = PszCompatFileUri(szOther);
-    CHECK(pszUri && strncmp(pszUri, "file:///", 8) == 0 && strstr(pszUri, "%C3%A9-%CE%A9"));
-    free(pszUri);
+    const auto szReal = SzCanonicalNativePath(szOther);
+    CHECK(szReal && *szReal == szOther);
+    const auto szUri = SzCompatFileUri(szOther);
+    CHECK(szUri && szUri->starts_with("file:///") && szUri->find("%C3%A9-%CE%A9") != std::string::npos);
     lpdir = PdirNativeOpen(pszDir); CHECK(lpdir);
     while ((lpentry = PszNativeReadDir(lpdir))) if (strcmp(lpentry, "other.bin") == 0) fFound = 1;
     CHECK(ICloseNativeDir(lpdir) == 0 && fFound);
