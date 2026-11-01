@@ -263,15 +263,15 @@ void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
         for (i = 0; i < 16; i++) {
             cShip += lpfl->rgcsh[i];
         }
-        TextIO().pfnCchGetString(app, idsShipCountLd, szT);
+        TextIO().pfnCchGetString(app, idsShipCountLd, std::span{szT});
         c = win32::wsprintfA(app.state.szWork, szT, cShip);
         win32::TextOutA(hdc, prc->left + 86, yTop, app.state.szWork, c);
         yTop += app.state.dyArial8 + 2;
         if (lpfl->det == detAll || lpfl->det == detMore) {
             cMass = WtFromLpfl(app, lpfl);
-            c = TextIO().pfnCchGetString(app, idsFuel2, szT);
+            c = TextIO().pfnCchGetString(app, idsFuel2, std::span{szT});
             l = GetTextExtent(hdc, szT, c);
-            c2 = TextIO().pfnCchGetString(app, idsCargo, app.state.szWork);
+            c2 = TextIO().pfnCchGetString(app, idsCargo, std::span{app.state.szWork});
             l2 = GetTextExtent(hdc, app.state.szWork, c2);
             if (l2 > l) {
                 l = l2;
@@ -289,7 +289,7 @@ void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
         } else {
             cMass = lpfl->wtFleet();
         }
-        c = TextIO().pfnCchGetString(app, !app.state.gd.fSmallTileMode ? idsFleetMassLdkt : idsMassLdkt, szT);
+        c = TextIO().pfnCchGetString(app, !app.state.gd.fSmallTileMode ? idsFleetMassLdkt : idsMassLdkt, std::span{szT});
         c = win32::wsprintfA(app.state.szWork, szT, cMass);
         win32::TextOutA(hdc, prc->left + 86, yTop, app.state.szWork, c);
         yTop += app.state.dyArial8 + 2;
@@ -298,7 +298,7 @@ void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
             if (lpfl->cord > 1) {
                 lpord++;
             }
-            TextIO().pfnCchGetString(app, !app.state.gd.fSmallTileMode ? idsWaypointS : idsWpS, szWP);
+            TextIO().pfnCchGetString(app, !app.state.gd.fSmallTileMode ? idsWaypointS : idsWpS, std::span{szWP});
             if (lpfl->cord == 1) {
                 c = win32::wsprintfA(szT, szWP, TextIO().pfnCompressed(app, idsNone));
             } else {
@@ -306,19 +306,19 @@ void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
             }
             win32::TextOutA(hdc, prc->left + 86, yTop, szT, c);
             yTop += app.state.dyArial8 + 2;
-            TextIO().pfnCchGetString(app, !app.state.gd.fSmallTileMode ? idsWaypointTaskS : idsTaskS, szT);
+            TextIO().pfnCchGetString(app, !app.state.gd.fSmallTileMode ? idsWaypointTaskS : idsTaskS, std::span{szT});
             c = win32::wsprintfA(app.state.szWork, szT, TextIO().pfnCompressed(app, static_cast<StringId>(idsTaskHere + lpord->grTask)));
             win32::TextOutA(hdc, prc->left + 86, yTop, app.state.szWork, c);
             yTop += app.state.dyArial8 + 2;
             if (lpfl->cord > 1) {
                 if (lpord->iWarp == 11) {
-                    c = TextIO().pfnCchGetString(app, idsUseStargate, app.state.szWork);
+                    c = TextIO().pfnCchGetString(app, idsUseStargate, std::span{app.state.szWork});
                 } else {
-                    TextIO().pfnCchGetString(app, !app.state.gd.fSmallTileMode ? idsWarpSpeedD : idsWarpD, szT);
+                    TextIO().pfnCchGetString(app, !app.state.gd.fSmallTileMode ? idsWarpSpeedD : idsWarpD, std::span{szT});
                     c = win32::wsprintfA(app.state.szWork, szT, lpord->iWarp);
                 }
             } else {
-                c = TextIO().pfnCchGetString(app, !app.state.gd.fSmallTileMode ? idsWarpSpeedStopped : idsWarpStopped, app.state.szWork);
+                c = TextIO().pfnCchGetString(app, !app.state.gd.fSmallTileMode ? idsWarpSpeedStopped : idsWarpStopped, std::span{app.state.szWork});
             }
             win32::TextOutA(hdc, prc->left + 86, yTop, app.state.szWork, c);
             yTop += app.state.dyArial8 + 2;
@@ -334,10 +334,10 @@ void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
         if (!lpfl->fdirValid())
             goto FinishUp;
         if (lpfl->iwarpFlt() != 0) {
-            TextIO().pfnCchGetString(app, !app.state.gd.fSmallTileMode ? idsWarpSpeedD : idsWarpD, szT);
+            TextIO().pfnCchGetString(app, !app.state.gd.fSmallTileMode ? idsWarpSpeedD : idsWarpD, std::span{szT});
             c = win32::wsprintfA(app.state.szWork, szT, lpfl->iwarpFlt());
         } else {
-            c = TextIO().pfnCchGetString(app, !app.state.gd.fSmallTileMode ? idsWarpSpeedStopped : idsWarpStopped, app.state.szWork);
+            c = TextIO().pfnCchGetString(app, !app.state.gd.fSmallTileMode ? idsWarpSpeedStopped : idsWarpStopped, std::span{app.state.szWork});
         }
         win32::TextOutA(hdc, prc->left + 86, yTop, app.state.szWork, c);
         yTop += app.state.dyArial8 + 2;
@@ -397,11 +397,11 @@ void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
             win32::SetBkColor(hdc, app.lpui->crButtonFace);
             win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
             if (lpth->thp().iWarp() != 0) {
-                TextIO().pfnCchGetString(app, idsTravelingWarpD, szT);
+                TextIO().pfnCchGetString(app, idsTravelingWarpD, std::span{szT});
                 c = win32::wsprintfA(app.state.szWork, szT, lpth->thp().iWarp() + 4);
                 win32::TextOutA(hdc, xLeft, yTop, app.state.szWork, c);
                 yTop += app.state.dyArial8 + 2;
-                TextIO().pfnCchGetString(app, idsDestination, szT);
+                TextIO().pfnCchGetString(app, idsDestination, std::span{szT});
                 psz = TextIO().pfnPlanetName(app, lpth->thp().idPlanet());
                 std::strcat(szT, psz);
                 win32::TextOutA(hdc, xLeft, yTop, szT, std::strlen(szT));
@@ -421,25 +421,25 @@ void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
             win32::SetTextColor(hdc, app.lpui->crButtonText);
             win32::SetBkColor(hdc, app.lpui->crButtonFace);
             win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-            cch = TextIO().pfnCchGetString(app, idsLocation, szT);
+            cch = TextIO().pfnCchGetString(app, idsLocation, std::span{szT});
             xLeft += LOWORD(GetTextExtent(hdc, szT, cch)) + 20;
             RightTextOut(app, hdc, xLeft - 4, yTop, szT, cch, 0);
-            cch = TextIO().pfnCchGetString(app, idsDD5, szT);
+            cch = TextIO().pfnCchGetString(app, idsDD5, std::span{szT});
             c = win32::wsprintfA(app.state.szWork, szT, lpth->pt().x(), lpth->pt().y());
             win32::TextOutA(hdc, xLeft, yTop, app.state.szWork, c);
             yTop += static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2;
-            c = TextIO().pfnCchGetString(app, idsDestination2, app.state.szWork);
+            c = TextIO().pfnCchGetString(app, idsDestination2, std::span{app.state.szWork});
             RightTextOut(app, hdc, xLeft - 4, yTop, app.state.szWork, c, 0);
             if ((1 << app.state.idPlayer & lpth->thw().grbitPlrTrav()) && (lpthDest = LpthFromId(app, lpth->thw().idPartner()))) {
                 c = win32::wsprintfA(app.state.szWork, szT, lpthDest->pt().x(), lpthDest->pt().y());
             } else {
-                c = TextIO().pfnCchGetString(app, idsUnknown2, app.state.szWork);
+                c = TextIO().pfnCchGetString(app, idsUnknown2, std::span{app.state.szWork});
             }
             win32::TextOutA(hdc, xLeft, yTop, app.state.szWork, c);
             yTop += static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2;
-            c = TextIO().pfnCchGetString(app, idsStability, app.state.szWork);
+            c = TextIO().pfnCchGetString(app, idsStability, std::span{app.state.szWork});
             RightTextOut(app, hdc, xLeft - 4, yTop, app.state.szWork, c, 0);
-            c = TextIO().pfnCchGetString(app, static_cast<StringId>(idsRockSolid + PctWormholeMoves(lpth)), app.state.szWork);
+            c = TextIO().pfnCchGetString(app, static_cast<StringId>(idsRockSolid + PctWormholeMoves(lpth)), std::span{app.state.szWork});
             win32::TextOutA(hdc, xLeft, yTop, app.state.szWork, c);
             goto FinishUp;
         } else if (lpth->ith() == ithMysteryTrader) {
@@ -462,15 +462,15 @@ void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
         win32::SetTextColor(hdc, app.lpui->crButtonText);
         win32::SetBkColor(hdc, app.lpui->crButtonFace);
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-        TextIO().pfnCchGetString(app, idsLocationDD, szT);
+        TextIO().pfnCchGetString(app, idsLocationDD, std::span{szT});
         c = win32::wsprintfA(app.state.szWork, szT, lpth->pt().x(), lpth->pt().y());
         win32::TextOutA(hdc, xLeft, yTop, app.state.szWork, c);
         yTop += app.state.dyArial8 + 2;
-        TextIO().pfnCchGetString(app, idsFieldTypeS, szT);
+        TextIO().pfnCchGetString(app, idsFieldTypeS, std::span{szT});
         c = win32::wsprintfA(app.state.szWork, szT, app.state.rgszMineField[lpth->thm().iType()]);
         win32::TextOutA(hdc, xLeft, yTop, app.state.szWork, c);
         yTop += app.state.dyArial8 + 2;
-        TextIO().pfnCchGetString(app, idsFieldRadiusDLYLdMines, szT);
+        TextIO().pfnCchGetString(app, idsFieldRadiusDLYLdMines, std::span{szT});
         c = win32::wsprintfA(app.state.szWork, szT, LOWORD(static_cast<std::int32_t>(std::sqrt(static_cast<double>(lpth->thm().cMines())))), lpth->thm().cMines());
         win32::TextOutA(hdc, xLeft, yTop, app.state.szWork, c);
         yTop += app.state.dyArial8 + 2;
@@ -488,14 +488,14 @@ void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
         if (lpth->thm().iType() != mineSpeedBump) {
             lDecay = 10 <= lDecay ? lDecay : 10;
         }
-        TextIO().pfnCchGetString(app, idsDecayRateLdYear, szT);
+        TextIO().pfnCchGetString(app, idsDecayRateLdYear, std::span{szT});
         c = win32::wsprintfA(app.state.szWork, szT, lDecay);
         win32::TextOutA(hdc, xLeft, yTop, app.state.szWork, c);
         yTop += app.state.dyArial8 + 2;
         if (lpth->iplr() != app.state.idPlayer)
             goto FinishUp;
         GetMineFieldCounts(app, lpth->idFull(), &i, &c2);
-        TextIO().pfnCchGetString(app, idsFieldDD, szT);
+        TextIO().pfnCchGetString(app, idsFieldDD, std::span{szT});
         c = win32::wsprintfA(app.state.szWork, szT, i, c2);
         win32::TextOutA(hdc, xLeft, yTop, app.state.szWork, c);
         yTop += app.state.dyArial8 + 2;
@@ -541,7 +541,7 @@ void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
                 win32::DeleteDC(hdcMem);
             }
             if (pl.det >= detSome) {
-                c = TextIO().pfnCchGetString(app, static_cast<StringId>(idsVal + (fShortLabels == 0)), app.state.szWork);
+                c = TextIO().pfnCchGetString(app, static_cast<StringId>(idsVal + (fShortLabels == 0)), std::span{app.state.szWork});
                 dx = LOWORD(GetTextExtent(hdc, app.state.szWork, c));
                 win32::SetTextColor(hdc, app.lpui->crButtonText);
                 win32::TextOutA(hdc, xL, yCur, app.state.szWork, c);
@@ -570,7 +570,7 @@ void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
                 c += CommaFormatLong(app, &szT[c], static_cast<std::uint32_t>((pl.rgwtMin[3] * 100)));
                 RightTextOut(app, hdc, xR, yCur, szT, c, 0);
             } else if (pl.iPlayer == iplrNone) {
-                c = TextIO().pfnCchGetString(app, idsUninhabited, szT);
+                c = TextIO().pfnCchGetString(app, idsUninhabited, std::span{szT});
                 RightTextOut(app, hdc, xR, yCur, szT, c, 0);
             } else {
                 if (pl.det >= detSome) {
@@ -580,7 +580,7 @@ void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
                     if (l > 0) {
                         c += win32::wsprintfA(std::span{app.state.szWork}.subspan(static_cast<std::size_t>(c)), TextIO().pfnCompressed(app, idsCLd00), 177, l);
                     } else {
-                        c += TextIO().pfnCchGetString(app, idsMsg1264, &app.state.szWork[c]);
+                        c += TextIO().pfnCchGetString(app, idsMsg1264, std::span{app.state.szWork}.subspan(static_cast<std::size_t>(c)));
                     }
                     RightTextOut(app, hdc, xR, yCur, app.state.szWork, c, 0);
                 }
@@ -599,7 +599,7 @@ void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
                     std::strcat(app.state.szWork, "s");
                     c++;
                 }
-                c += TextIO().pfnCchGetString(app, idsOld, &app.state.szWork[c]);
+                c += TextIO().pfnCchGetString(app, idsOld, std::span{app.state.szWork}.subspan(static_cast<std::size_t>(c)));
             }
             win32::SetTextColor(hdc, dNum > 5 ? 0xff : 0);
             win32::TextOutA(hdc, xL, yCur, app.state.szWork, c);
@@ -1166,8 +1166,8 @@ void SetMineralTitleBar(APPSESSION &app, HWND hwnd) {
     RECT       rc;
 
     fVisCB = 0;
-    TextIO().pfnCchGetString(app, idsDeepSpace, szDeepSpace);
-    TextIO().pfnCchGetString(app, idsSummary, szSummary);
+    TextIO().pfnCchGetString(app, idsDeepSpace, std::span{szDeepSpace});
+    TextIO().pfnCchGetString(app, idsSummary, std::span{szSummary});
     grobj = app.state.sel.scan.grobj == grobjOther ? app.state.sel.scan.grobjFull : app.state.sel.scan.grobj;
     if (grobj & grobjPlanet) {
         if (app.state.sel.scan.idpl != idplNone) {

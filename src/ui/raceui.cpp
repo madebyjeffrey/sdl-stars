@@ -269,7 +269,7 @@ INT_PTR  RaceWizardDlg1(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         _Draw3dFrame(app, hdc, &rcGBox, -1);
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
         win32::SetBkColor(hdc, app.lpui->crButtonFace);
-        cch = TextIO().pfnCchGetString(app, idsPredefinedRaces, app.state.szWork);
+        cch = TextIO().pfnCchGetString(app, idsPredefinedRaces, std::span{app.state.szWork});
         win32::TextOutA(hdc, rcGBox.left + 8, rcGBox.top - (app.state.dyArial8 >> 1), app.state.szWork, cch);
         win32::GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDC_COMBOBOX), &rcGBox);
         win32::ScreenToClient(hwnd, reinterpret_cast<POINT *>(&rcGBox.right));
@@ -339,7 +339,7 @@ INT_PTR  RaceWizardDlg1(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             }
             if (i < 7 && LOWORD(wParam) < IDC_RACE_CUSTOM) {
                 std::ranges::fill(app.state.vplr.szName, 0);
-                TextIO().pfnCchGetString(app, static_cast<StringId>(idsHumanoid + LOWORD(wParam) - IDC_RACE_HUMANOID), app.state.vplr.szName);
+                TextIO().pfnCchGetString(app, static_cast<StringId>(idsHumanoid + LOWORD(wParam) - IDC_RACE_HUMANOID), std::span{app.state.vplr.szName});
                 win32::SetDlgItemTextA(hwnd, IDC_RACE_NAME, app.state.vplr.szName);
                 std::ranges::fill(app.state.vplr.szNames, 0);
                 psz = TextIO().pfnPlayerName(app, 0, 1, 1, 0, 0, &app.state.vplr);
@@ -392,7 +392,7 @@ INT_PTR  RaceWizardDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         hdc = win32::GetDC(hwnd);
         ControlIO().pfnGetClientRect(hwnd, &rc);
         hfontSav = static_cast<HFONT>(win32::SelectObject(hdc, app.lpui->rghfontArial8[1]));
-        cch = TextIO().pfnCchGetString(app, idsTemperature, szTemp);
+        cch = TextIO().pfnCchGetString(app, idsTemperature, std::span{szTemp});
         dxLabel = LOWORD(GetTextExtent(hdc, szTemp, cch)) + 10;
         dxMiddle = LOWORD(GetTextExtent(hdc, "200mR", 5)) + 10;
         dxMiddle = rc.right - dxLabel - dxMiddle;
@@ -413,7 +413,7 @@ INT_PTR  RaceWizardDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, i + 291), nullptr, 3 * dy + dxLabel + 6, app.lpui->vrgrcRCW[5 * i + 3].top, dxMiddle - 6 * dy - 12, dy, win32::SWP_NOZORDER);
             win32::CheckDlgButton(hwnd, i + 291, app.state.vplr.rgEnvVarMax[i] < 0);
         }
-        cch = TextIO().pfnCchGetString(app, idsMaximumColonistGrowthRatePerYear, app.state.szWork);
+        cch = TextIO().pfnCchGetString(app, idsMaximumColonistGrowthRatePerYear, std::span{app.state.szWork});
         app.lpui->vrgrcRCW[15].left = dxLabel + LOWORD(GetTextExtent(hdc, app.state.szWork, cch)) + LOWORD(GetTextExtent(hdc, "15%", 3)) + 4;
         app.lpui->vrgrcRCW[15].top = 9 * dy + yTop - 3 + 3 * (app.state.dyArial8 / 2);
         app.lpui->vrgrcRCW[15].right = app.lpui->vrgrcRCW[15].left + 15;
@@ -536,12 +536,12 @@ void DrawRace2(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
                        win32::PATCOPY);
             }
             if (app.state.vplr.rgEnvVarMax[i] < 0) {
-                cch = TextIO().pfnCchGetString(app, idsN2, szT);
+                cch = TextIO().pfnCchGetString(app, idsN2, std::span{szT});
                 CtrTextOut(hdc, xRLabel, app.lpui->vrgrcRCW[5 * i + 2].top + 1 + app.state.dyArial8, szT, cch);
             } else {
                 psz = PszCalcEnvVar(app, static_cast<EnvType>(i), app.state.vplr.rgEnvVarMin[i]);
                 CtrTextOut(hdc, xRLabel, app.lpui->vrgrcRCW[5 * i + 2].top + 1, psz, 0);
-                cch = TextIO().pfnCchGetString(app, idsTo2, szT);
+                cch = TextIO().pfnCchGetString(app, idsTo2, std::span{szT});
                 CtrTextOut(hdc, xRLabel, app.lpui->vrgrcRCW[5 * i + 2].top + 1 + app.state.dyArial8, szT, cch);
                 psz = PszCalcEnvVar(app, static_cast<EnvType>(i), app.state.vplr.rgEnvVarMax[i]);
                 CtrTextOut(hdc, xRLabel, app.lpui->vrgrcRCW[5 * i + 2].top + 1 + app.state.dyArial8 * 2, psz, 0);
@@ -590,7 +590,7 @@ void DrawRace2(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
     }
     if (iDraw & 8) {
         if (iDraw == -1) {
-            cch = TextIO().pfnCchGetString(app, idsMaximumColonistGrowthRatePerYear, app.state.szWork);
+            cch = TextIO().pfnCchGetString(app, idsMaximumColonistGrowthRatePerYear, std::span{app.state.szWork});
             win32::TextOutA(hdc, app.lpui->vrgrcRCW->left, app.lpui->vrgrcRCW[15].top + 3, app.state.szWork, cch);
             DrawBtn(app, hdc, app.lpui->vrgrcRCW + 15, 0xa0 | bt1, 0, nullptr);
             DrawBtn(app, hdc, app.lpui->vrgrcRCW + 16, 0xa1 | bt1, 0, nullptr);
@@ -634,7 +634,7 @@ void DrawRace2(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
         if (iStore != app.lpui->viStore) {
             app.lpui->viStore = iStore;
             if (l2 == 1) {
-                cch = TextIO().pfnCchGetString(app, l == 1000000 ? idsPlanetsWillHabitableRace : idsVirtuallyPlanetsWillHabitableRace, app.state.szWork);
+                cch = TextIO().pfnCchGetString(app, l == 1000000 ? idsPlanetsWillHabitableRace : idsVirtuallyPlanetsWillHabitableRace, std::span{app.state.szWork});
             } else {
                 // The explanation exceeds szT's 32 bytes; format from the text
                 // table instead of corrupting the habitat page's stack.
@@ -918,7 +918,7 @@ void DrawRace3(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
             idsT = ids;
         }
         ids = static_cast<StringId>(ids + 1);
-        cch = TextIO().pfnCchGetString(app, idsT, app.state.szWork);
+        cch = TextIO().pfnCchGetString(app, idsT, std::span{app.state.szWork});
         if (iDraw == -1) {
             win32::TextOutA(hdc, 6, yTop, app.state.szWork, cch);
         }
@@ -953,7 +953,7 @@ void DrawRace3(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
             } else {
                 idsT = ids;
             }
-            cch = TextIO().pfnCchGetString(app, idsT, app.state.szWork);
+            cch = TextIO().pfnCchGetString(app, idsT, std::span{app.state.szWork});
             win32::TextOutA(hdc, app.lpui->vrgrcRCW[irc].right + 4, yTop, app.state.szWork, cch);
         }
         ids = static_cast<StringId>(ids + 1);
@@ -1064,7 +1064,7 @@ INT_PTR  RaceWizardDlg4(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         ExpandRc(&rcGBox, app.state.dyArial8 + 2, app.state.dyArial8 >> 1);
         rcGBox.top -= 4;
         _Draw3dFrame(app, hdc, &rcGBox, -1);
-        cch = TextIO().pfnCchGetString(app, idsPrimaryRacialTrait, app.state.szWork);
+        cch = TextIO().pfnCchGetString(app, idsPrimaryRacialTrait, std::span{app.state.szWork});
         win32::TextOutA(hdc, rcGBox.left + 8, rcGBox.top - (app.state.dyArial8 >> 1), app.state.szWork, cch);
         ControlIO().pfnGetClientRect(hwnd, &rc);
         rc.top = rcGBox.bottom + 12;
@@ -1074,13 +1074,13 @@ INT_PTR  RaceWizardDlg4(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         win32::ScreenToClient(hwnd, reinterpret_cast<POINT *>(&rcGBox));
         rc.bottom = rcGBox.top - 6;
         _Draw3dFrame(app, hdc, &rc, -1);
-        cch = TextIO().pfnCchGetString(app, idsDescriptionTrait, app.state.szWork);
+        cch = TextIO().pfnCchGetString(app, idsDescriptionTrait, std::span{app.state.szWork});
         win32::TextOutA(hdc, rc.left + 8, rc.top - (app.state.dyArial8 >> 1), app.state.szWork, cch);
         ids = static_cast<StringId>(idsMustExpandSurviveGivenSmallCheapColony + RaceQueryIO().pfnStat(&app.state.vplr, rsMajorAdv) * 3);
         cch = 0;
         i = 0;
         while (i < 3) {
-            cch += TextIO().pfnCchGetString(app, ids, &szT[cch]);
+            cch += TextIO().pfnCchGetString(app, ids, std::span{szT}.subspan(static_cast<std::size_t>(cch)));
             i++;
             ids = static_cast<StringId>(ids + 1);
         }
@@ -1182,9 +1182,9 @@ INT_PTR  RaceWizardDlg5(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         _Draw3dFrame(app, hdc, &rc, -1);
         app.lpui->rcCargo = rc;
         app.lpui->rcCargo.top -= app.state.dyArial8 >> 1;
-        cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsImprovedFuelEfficiency + app.state.cColDrop), app.state.szWork);
+        cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsImprovedFuelEfficiency + app.state.cColDrop), std::span{app.state.szWork});
         win32::TextOutA(hdc, rc.left + 8, rc.top - (app.state.dyArial8 >> 1), app.state.szWork, cch);
-        cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsGivesFuelMizerGalaxyScoopEnginesIncreases + app.state.cColDrop), app.state.szWork);
+        cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsGivesFuelMizerGalaxyScoopEnginesIncreases + app.state.cColDrop), std::span{app.state.szWork});
         ExpandRc(&rc, -app.state.dyArial8 - 2, -(app.state.dyArial8 >> 1));
         rc.top += 4;
         win32::DrawTextA(hdc, app.state.szWork, cch, &rc, win32::DT_WORDBREAK);
@@ -1275,8 +1275,8 @@ INT_PTR  RaceWizardDlg6(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             rcGBox.bottom = rc.bottom;
             ExpandRc(&rcGBox, app.state.dyArial8, app.state.dyArial8 >> 1);
             _Draw3dFrame(app, hdc, &rcGBox, -1);
-            cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsEnergy + i), app.state.szWork);
-            cch += TextIO().pfnCchGetString(app, idsResearch, &app.state.szWork[cch]);
+            cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsEnergy + i), std::span{app.state.szWork});
+            cch += TextIO().pfnCchGetString(app, idsResearch, std::span{app.state.szWork}.subspan(static_cast<std::size_t>(cch)));
             win32::TextOutA(hdc, rcGBox.left + 8, rcGBox.top - (app.state.dyArial8 >> 1), app.state.szWork, cch);
         }
         win32::EndPaint(hwnd, &ps);
@@ -1358,7 +1358,7 @@ void DrawRaceAdvantagePoints(APPSESSION &app, HDC hdc, RECT *prc, PLAYER *pplr) 
     plf = static_cast<LOGFONT *>(win32::LocalAlloc(64, sizeof(LOGFONT)));
     plfOwner.reset(plf);
     plf->lfHeight = -24;
-    TextIO().pfnCchGetString(app, idsArialBold, plf->lfFaceName);
+    TextIO().pfnCchGetString(app, idsArialBold, std::span{plf->lfFaceName});
     hfont = win32::CreateFontIndirectA(plf);
     hfontSav = static_cast<HFONT>(win32::SelectObject(hdc, hfont));
     win32::GetTextMetricsA(hdc, &tm);
@@ -1378,9 +1378,9 @@ void DrawRaceAdvantagePoints(APPSESSION &app, HDC hdc, RECT *prc, PLAYER *pplr) 
     RcCtrTextOut(app, hdc, &rc, app.state.szWork, -1);
     win32::SetTextColor(hdc, 0);
     win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-    c = TextIO().pfnCchGetString(app, idsPointsLeft, app.state.szWork);
+    c = TextIO().pfnCchGetString(app, idsPointsLeft, std::span{app.state.szWork});
     dx = LOWORD(GetTextExtent(hdc, app.state.szWork, c));
-    cch = TextIO().pfnCchGetString(app, idsAdvantage, szAdvantage);
+    cch = TextIO().pfnCchGetString(app, idsAdvantage, std::span{szAdvantage});
     RightTextOut(app, hdc, rc.left, 3, szAdvantage, cch, 0);
     RightTextOut(app, hdc, rc.left, app.state.dyArial8 + 3, app.state.szWork, c, 0);
     rc.left -= dx + 4;
@@ -1434,7 +1434,7 @@ std::int16_t FSaveRace(APPSESSION &app, char *szFileSuggest, PLAYER *pplr) {
         szFile[0] = 0;
     }
     szDirName[0] = 0;
-    TextIO().pfnCchGetString(app, idsStarsRaceFilesR, szFilter);
+    TextIO().pfnCchGetString(app, idsStarsRaceFilesR, std::span{szFilter});
     for (i = 0; szFilter[i] != 0; i++) {
         if (szFilter[i] == '|') {
             szFilter[i] = 0;
@@ -1471,7 +1471,7 @@ void SetRCWTitle(APPSESSION &app, HWND hwnd, std::int16_t iStep) {
     char    szBuf[50];
     std::int16_t cch;
 
-    cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsCustomRaceWizardStepD6 + app.state.fRCWReadOnly), szBuf);
+    cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsCustomRaceWizardStepD6 + app.state.fRCWReadOnly), std::span{szBuf});
     cch = win32::wsprintfA(app.state.szWork, szBuf, iStep);
     ControlIO().pfnSetWindowText(hwnd, app.state.szWork);
     return;

@@ -44,7 +44,7 @@ INT_PTR  RelationsDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         _Draw3dFrame(app, hdc, &rcGBox, -1);
         win32::SetBkColor(hdc, app.lpui->crButtonFace);
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-        i = TextIO().pfnCchGetString(app, idsRelation, app.state.szWork);
+        i = TextIO().pfnCchGetString(app, idsRelation, std::span{app.state.szWork});
         win32::TextOutA(hdc, rcGBox.left + 8, rcGBox.top - (app.state.dyArial8 >> 1), app.state.szWork, i);
         win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
         win32::EndPaint(hwnd, &ps);

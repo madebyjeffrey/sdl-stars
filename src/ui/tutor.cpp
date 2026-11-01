@@ -231,7 +231,7 @@ void StartTutor(APPSESSION &app, std::int16_t fRestart) {
             app.state.iScanZoom = zoom100;
         }
         if (app.state.game.lid == 0) {
-            cch = TextIO().pfnCchGetString(app, idsTutorial, app.state.szBase);
+            cch = TextIO().pfnCchGetString(app, idsTutorial, std::span{app.state.szBase});
             if (!fRestart) {
                 std::strcat(app.state.szBase, ".xy");
                 if (FFileExists(app.state.szBase) &&
@@ -2257,7 +2257,7 @@ std::int16_t FCheckZip(APPSESSION &app, std::int16_t iZip, ITEMACTION *lpiaGoal,
             piaCur++;
             lpiaGoal++;
         }
-        TextIO().pfnCchGetString(app, ids, szT);
+        TextIO().pfnCchGetString(app, ids, std::span{szT});
         std::strcpy(app.state.vrgZip[iZip].szName, szT);
         return 1;
     }
@@ -2278,7 +2278,7 @@ std::int16_t FCheckZip(APPSESSION &app, std::int16_t iZip, ITEMACTION *lpiaGoal,
         piaCur++;
         lpiaGoal++;
     }
-    TextIO().pfnCchGetString(app, ids, szT);
+    TextIO().pfnCchGetString(app, ids, std::span{szT});
     if (strcmpi(szT, app.state.vrgZip[iZip].szName) == 0) {
         app.state.tutor.idh = static_cast<HelpContextId>(idhSav);
         return 1;
@@ -2372,7 +2372,7 @@ std::int16_t FCheckFleetName(APPSESSION &app, std::int16_t id, StringId ids) {
         }
         return 0;
     }
-    TextIO().pfnCchGetString(app, ids, szT);
+    TextIO().pfnCchGetString(app, ids, std::span{szT});
     if (_stricmp(szT, lpfl->lpszName) == 0) {
         app.state.tutor.idh = static_cast<HelpContextId>(idhSav);
         return 1;

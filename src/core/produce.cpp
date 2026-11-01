@@ -219,9 +219,9 @@ char *PszNameProdItem(APPSESSION &app, PROD *lpprod) {
     if (iItem >= iobjPlanetaryScannerFirst && iItem <= iobjPlanetaryScannerLast) {
         std::strcpy(app.state.szWork, LpplanetaryFromId(LOWORD(iItem) - iobjPlanetaryScannerFirst)->szName);
     } else if (iItem == iobjPlanetaryScanner) {
-        TextIO().pfnCchGetString(app, idsPlanetaryScanner, app.state.szWork);
+        TextIO().pfnCchGetString(app, idsPlanetaryScanner, std::span{app.state.szWork});
     } else {
-        TextIO().pfnCchGetString(app, static_cast<StringId>(idsMines + LOWORD(iItem)), app.state.szWork);
+        TextIO().pfnCchGetString(app, static_cast<StringId>(idsMines + LOWORD(iItem)), std::span{app.state.szWork});
     }
     return app.state.szWork;
 }

@@ -178,7 +178,7 @@ std::int16_t FCreateFonts(APPSESSION &app, HDC hdc) {
     plfOwner.reset(plf);
     for (i = 0; i < 4; i++) {
         if (app.lpui->rgszArial[i][0] == 0) {
-            TextIO().pfnCchGetString(app, static_cast<StringId>(idsArial2 + i), app.lpui->rgszArial[i]);
+            TextIO().pfnCchGetString(app, static_cast<StringId>(idsArial2 + i), std::span{app.lpui->rgszArial[i]});
         }
     }
     plf->lfHeight = -win32::MulDiv(10, win32::GetDeviceCaps(hdc, win32::LOGPIXELSY), 72);
@@ -381,7 +381,7 @@ void GetIniWinRc(APPSESSION &app, char *szSection, char *szIniFile, StringId ids
     std::int16_t fNeg;
     std::int16_t rg[4];
 
-    TextIO().pfnCchGetString(app, ids, szEntry);
+    TextIO().pfnCchGetString(app, ids, std::span{szEntry});
     cch = ProfileTextIO().pfnReadString(szSection, szEntry, "X", app.state.szWork, 20, szIniFile);
     if (cch != 17 || (app.state.szWork[0] != 'M' && app.state.szWork[0] != 'R' && app.state.szWork[0] != 'I')) {
     NoRc:
@@ -438,8 +438,8 @@ void ReadIniSettings(APPSESSION &app) {
     app.state.ini.fGen = 0;
     app.state.ini.fTry = 0;
     app.state.ini.fWait = 0;
-    TextIO().pfnCchGetString(app, idsWindows, szSection);
-    TextIO().pfnCchGetString(app, idsStarsIni, szIniFile);
+    TextIO().pfnCchGetString(app, idsWindows, std::span{szSection});
+    TextIO().pfnCchGetString(app, idsStarsIni, std::span{szIniFile});
     GetIniWinRc(app, szSection, szIniFile, idsMain, &app.state.ini.wnFrame);
     GetIniWinRc(app, szSection, szIniFile, idsReportfleetwin, &wnT);
     if (wnT.rc.left != -32768) {
@@ -469,73 +469,73 @@ void ReadIniSettings(APPSESSION &app) {
         app.state.vrptPlanet.ptSize.x = wnT.rc.right - wnT.rc.left;
         app.state.vrptPlanet.ptSize.y = wnT.rc.bottom - wnT.rc.top;
     }
-    TextIO().pfnCchGetString(app, idsResolution, szEntry);
+    TextIO().pfnCchGetString(app, idsResolution, std::span{szEntry});
     i = win32::GetPrivateProfileIntA(szSection, szEntry, 0, szIniFile);
     if (i == 0 && (app.lpui->vcScreenColors <= 4 || app.state.gd.mdScreenSize == 0)) {
         AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsNoteStarsPrefersScreenResolutionLeast800x600, nullptr), win32::MB_ICONHAND);
     }
-    TextIO().pfnCchGetString(app, idsLayout, szEntry);
+    TextIO().pfnCchGetString(app, idsLayout, std::span{szEntry});
     app.lpui->iWindowLayout = static_cast<WindowLayout>(win32::GetPrivateProfileIntA(szSection, szEntry, 1, szIniFile));
     app.lpui->iWindowLayout = 2 < (layoutLarge <= static_cast<std::int16_t>(app.lpui->iWindowLayout) ? app.lpui->iWindowLayout : 0) ? layoutSmall
                     : layoutLarge > static_cast<std::int16_t>(app.lpui->iWindowLayout)                          ? layoutLarge
                                                                                     : app.lpui->iWindowLayout;
-    TextIO().pfnCchGetString(app, idsStyle1width, szEntry);
+    TextIO().pfnCchGetString(app, idsStyle1width, std::span{szEntry});
     app.lpui->vfs.dxPlanWant = win32::GetPrivateProfileIntA(szSection, szEntry, 396, szIniFile);
     app.lpui->vfs.dxPlanWant = (app.lpui->vfs.dxPlanWant <= 10 ? 10 : app.lpui->vfs.dxPlanWant) >= 2000 ? 2000 : app.lpui->vfs.dxPlanWant > 10 ? app.lpui->vfs.dxPlanWant : 10;
-    TextIO().pfnCchGetString(app, idsStyle1height, szEntry);
+    TextIO().pfnCchGetString(app, idsStyle1height, std::span{szEntry});
     app.lpui->vfs.dyMsgWant = win32::GetPrivateProfileIntA(szSection, szEntry, 110, szIniFile);
     app.lpui->vfs.dyMsgWant = (app.lpui->vfs.dyMsgWant <= 10 ? 10 : app.lpui->vfs.dyMsgWant) >= 2000 ? 2000 : app.lpui->vfs.dyMsgWant > 10 ? app.lpui->vfs.dyMsgWant : 10;
-    TextIO().pfnCchGetString(app, idsStyle1height2, szEntry);
+    TextIO().pfnCchGetString(app, idsStyle1height2, std::span{szEntry});
     app.lpui->vfs.dyMinWant = win32::GetPrivateProfileIntA(szSection, szEntry, 192, szIniFile);
     app.lpui->vfs.dyMinWant = (app.lpui->vfs.dyMinWant <= 10 ? 10 : app.lpui->vfs.dyMinWant) >= 2000 ? 2000 : app.lpui->vfs.dyMinWant > 10 ? app.lpui->vfs.dyMinWant : 10;
-    TextIO().pfnCchGetString(app, idsStyle2width, szEntry);
+    TextIO().pfnCchGetString(app, idsStyle2width, std::span{szEntry});
     app.lpui->vfs.dx2PlanWant = win32::GetPrivateProfileIntA(szSection, szEntry, 396, szIniFile);
     app.lpui->vfs.dx2PlanWant = (app.lpui->vfs.dx2PlanWant <= 10 ? 10 : app.lpui->vfs.dx2PlanWant) >= 2000 ? 2000 : app.lpui->vfs.dx2PlanWant > 10 ? app.lpui->vfs.dx2PlanWant : 10;
-    TextIO().pfnCchGetString(app, idsStyle2height, szEntry);
+    TextIO().pfnCchGetString(app, idsStyle2height, std::span{szEntry});
     app.lpui->vfs.dy2MsgWant = win32::GetPrivateProfileIntA(szSection, szEntry, 110, szIniFile);
     app.lpui->vfs.dy2MsgWant = (app.lpui->vfs.dy2MsgWant <= 10 ? 10 : app.lpui->vfs.dy2MsgWant) >= 2000 ? 2000 : app.lpui->vfs.dy2MsgWant > 10 ? app.lpui->vfs.dy2MsgWant : 10;
-    TextIO().pfnCchGetString(app, idsStyle2height2, szEntry);
+    TextIO().pfnCchGetString(app, idsStyle2height2, std::span{szEntry});
     app.lpui->vfs.dy2MinWant = win32::GetPrivateProfileIntA(szSection, szEntry, 192, szIniFile);
     app.lpui->vfs.dy2MinWant = (app.lpui->vfs.dy2MinWant <= 10 ? 10 : app.lpui->vfs.dy2MinWant) >= 2000 ? 2000 : app.lpui->vfs.dy2MinWant > 10 ? app.lpui->vfs.dy2MinWant : 10;
-    TextIO().pfnCchGetString(app, idsToolbar, szEntry);
+    TextIO().pfnCchGetString(app, idsToolbar, std::span{szEntry});
     i = win32::GetPrivateProfileIntA(szSection, szEntry, 1, szIniFile);
     app.state.gd.fToolbar = i != 0;
-    TextIO().pfnCchGetString(app, idsPlanettiles, szEntry);
+    TextIO().pfnCchGetString(app, idsPlanettiles, std::span{szEntry});
     cch = ProfileTextIO().pfnReadString(szSection, szEntry, "X", app.state.szWork, 20, szIniFile);
     ReadIniTileSettings(app.state.szWork, app.lpui->rgtilePlanet, 6);
-    TextIO().pfnCchGetString(app, idsShiptiles, szEntry);
+    TextIO().pfnCchGetString(app, idsShiptiles, std::span{szEntry});
     cch = ProfileTextIO().pfnReadString(szSection, szEntry, "X", app.state.szWork, 20, szIniFile);
     ReadIniTileSettings(app.state.szWork, app.lpui->rgtileShip, 7);
-    TextIO().pfnCchGetString(app, idsSelection, szEntry);
+    TextIO().pfnCchGetString(app, idsSelection, std::span{szEntry});
     cch = ProfileTextIO().pfnReadString(szSection, szEntry, "N", app.state.szWork, 20, szIniFile);
     ReadIniSelection(app, app.state.szWork, cch);
-    TextIO().pfnCchGetString(app, idsMessage, szEntry);
+    TextIO().pfnCchGetString(app, idsMessage, std::span{szEntry});
     i = win32::GetPrivateProfileIntA(szSection, szEntry, 0, szIniFile);
     app.state.ini.iMsg = i;
-    TextIO().pfnCchGetString(app, idsGameid, szEntry);
+    TextIO().pfnCchGetString(app, idsGameid, std::span{szEntry});
     cch = ProfileTextIO().pfnReadString(szSection, szEntry, "0", app.state.szWork, 10, szIniFile);
     ReadIniIdentity(app, app.state.szWork, cch);
-    TextIO().pfnCchGetString(app, idsScanzoom, szEntry);
+    TextIO().pfnCchGetString(app, idsScanzoom, std::span{szEntry});
     w = win32::GetPrivateProfileIntA(szSection, szEntry, 4, szIniFile);
     if (w >= 1 && w <= 9) {
         app.state.iScanZoom = static_cast<ScanZoom>(w - 5);
     }
-    TextIO().pfnCchGetString(app, idsScanfilterv25, szEntry);
+    TextIO().pfnCchGetString(app, idsScanfilterv25, std::span{szEntry});
     w = win32::GetPrivateProfileIntA(szSection, szEntry, 0, szIniFile);
     app.lpui->grbitScanShip = w;
-    TextIO().pfnCchGetString(app, idsScanefilterv25, szEntry);
+    TextIO().pfnCchGetString(app, idsScanefilterv25, std::span{szEntry});
     w = win32::GetPrivateProfileIntA(szSection, szEntry, 0, szIniFile);
     app.lpui->grbitScanEShip = w;
-    TextIO().pfnCchGetString(app, idsScanmines, szEntry);
+    TextIO().pfnCchGetString(app, idsScanmines, std::span{szEntry});
     w = win32::GetPrivateProfileIntA(szSection, szEntry, 15, szIniFile);
     app.lpui->grbitScanMines = w & 0xf;
-    TextIO().pfnCchGetString(app, idsScanradar, szEntry);
+    TextIO().pfnCchGetString(app, idsScanradar, std::span{szEntry});
     w = win32::GetPrivateProfileIntA(szSection, szEntry, 100, szIniFile);
     if (w < 0 || w > 100) {
         w = 100;
     }
     app.lpui->vpctRadarView = w;
-    TextIO().pfnCchGetString(app, idsScanmodev25, szEntry);
+    TextIO().pfnCchGetString(app, idsScanmodev25, std::span{szEntry});
     w = win32::GetPrivateProfileIntA(szSection, szEntry, 224, szIniFile);
     app.lpui->grbitScan = static_cast<GrbitScan>(w & 0xc00f);
     if (app.lpui->grbitScan >= 6) {
@@ -544,87 +544,87 @@ void ReadIniSettings(APPSESSION &app) {
     } else {
         app.lpui->grbitScan = static_cast<GrbitScan>(app.lpui->grbitScan | w & 0x3ff0);
     }
-    TextIO().pfnCchGetString(app, idsMineralscale, szEntry);
+    TextIO().pfnCchGetString(app, idsMineralscale, std::span{szEntry});
     app.lpui->cMinGrafMax = win32::GetPrivateProfileIntA(szSection, szEntry, app.lpui->cMinGrafMax, szIniFile);
     if (app.lpui->cMinGrafMax < 100 || app.lpui->cMinGrafMax > 30000) {
         app.lpui->cMinGrafMax = 5000;
     }
-    TextIO().pfnCchGetString(app, idsFiles, szSection);
-    TextIO().pfnCchGetString(app, idsLogging, szEntry);
+    TextIO().pfnCchGetString(app, idsFiles, std::span{szSection});
+    TextIO().pfnCchGetString(app, idsLogging, std::span{szEntry});
     app.state.ini.fLogging = win32::GetPrivateProfileIntA(szSection, szEntry, 0, szIniFile);
-    TextIO().pfnCchGetString(app, idsWait2, szEntry);
+    TextIO().pfnCchGetString(app, idsWait2, std::span{szEntry});
     app.state.ini.fWait = win32::GetPrivateProfileIntA(szSection, szEntry, 0, szIniFile);
-    TextIO().pfnCchGetString(app, idsFile1, szEntry);
+    TextIO().pfnCchGetString(app, idsFile1, std::span{szEntry});
     cch = ProfileTextIO().pfnReadString(szSection, szEntry, ".", app.state.szWork, 256, szIniFile);
     ReadIniRecent(app, szSection, szEntry, szIniFile, cch);
-    TextIO().pfnCchGetString(app, idsTurn, szEntry);
+    TextIO().pfnCchGetString(app, idsTurn, std::span{szEntry});
     app.state.ini.turn = win32::GetPrivateProfileIntA(szSection, szEntry, app.state.game.turn, szIniFile);
-    TextIO().pfnCchGetString(app, idsMisc, szSection);
-    TextIO().pfnCchGetString(app, idsDefaultpassword, szEntry);
+    TextIO().pfnCchGetString(app, idsMisc, std::span{szSection});
+    TextIO().pfnCchGetString(app, idsDefaultpassword, std::span{szEntry});
     ProfileTextIO().pfnReadString(szSection, szEntry, "", app.state.vszDefPass, 16, szIniFile);
-    TextIO().pfnCchGetString(app, idsProgress, szEntry);
+    TextIO().pfnCchGetString(app, idsProgress, std::span{szEntry});
     w = win32::GetPrivateProfileIntA(szSection, szEntry, 0, szIniFile);
     app.state.gd.fProgressTxt = w != 0;
-    TextIO().pfnCchGetString(app, idsNewreports, szEntry);
+    TextIO().pfnCchGetString(app, idsNewreports, std::span{szEntry});
     w = win32::GetPrivateProfileIntA(szSection, szEntry, 0, szIniFile);
     app.state.gd.fPerPlayerDumps = w != 0;
-    TextIO().pfnCchGetString(app, idsNohostnames, szEntry);
+    TextIO().pfnCchGetString(app, idsNohostnames, std::span{szEntry});
     w = win32::GetPrivateProfileIntA(szSection, szEntry, 0, szIniFile);
     app.state.gd.fNoHostNames = w != 0;
-    TextIO().pfnCchGetString(app, idsBackups, szEntry);
+    TextIO().pfnCchGetString(app, idsBackups, std::span{szEntry});
     app.state.vcBackupDirs = win32::GetPrivateProfileIntA(szSection, szEntry, 1, szIniFile);
     if (app.state.vcBackupDirs < 1 || app.state.vcBackupDirs > 999) {
         app.state.vcBackupDirs = 1;
     }
-    TextIO().pfnCchGetString(app, idsReportplanfld, szEntry);
+    TextIO().pfnCchGetString(app, idsReportplanfld, std::span{szEntry});
     app.state.vrptPlanet.grbitVisible = static_cast<std::uint32_t>(win32::GetPrivateProfileIntA(szSection, szEntry, -1, szIniFile));
-    TextIO().pfnCchGetString(app, idsReportplansort, szEntry);
+    TextIO().pfnCchGetString(app, idsReportplansort, std::span{szEntry});
     i = win32::GetPrivateProfileIntA(szSection, szEntry, 0, szIniFile);
     app.state.vrptPlanet.fAscending = (i & 0x100) != 0;
     i &= 0xff;
     app.state.vrptPlanet.icolSort = i;
-    TextIO().pfnCchGetString(app, idsReportfleetfld, szEntry);
+    TextIO().pfnCchGetString(app, idsReportfleetfld, std::span{szEntry});
     app.state.vrptFleet.grbitVisible = static_cast<std::uint32_t>(win32::GetPrivateProfileIntA(szSection, szEntry, -1, szIniFile));
-    TextIO().pfnCchGetString(app, idsReportfleetsort, szEntry);
+    TextIO().pfnCchGetString(app, idsReportfleetsort, std::span{szEntry});
     i = win32::GetPrivateProfileIntA(szSection, szEntry, 0, szIniFile);
     app.state.vrptFleet.fAscending = (i & 0x100) != 0;
     i &= 0xff;
     app.state.vrptFleet.icolSort = i;
-    TextIO().pfnCchGetString(app, idsReportefleetfld, szEntry);
+    TextIO().pfnCchGetString(app, idsReportefleetfld, std::span{szEntry});
     app.state.vrptEFleet.grbitVisible = static_cast<std::uint32_t>(win32::GetPrivateProfileIntA(szSection, szEntry, -1, szIniFile));
-    TextIO().pfnCchGetString(app, idsReportefltsort, szEntry);
+    TextIO().pfnCchGetString(app, idsReportefltsort, std::span{szEntry});
     i = win32::GetPrivateProfileIntA(szSection, szEntry, 0, szIniFile);
     app.state.vrptEFleet.fAscending = (i & 0x100) != 0;
     i &= 0xff;
     app.state.vrptEFleet.icolSort = i;
-    TextIO().pfnCchGetString(app, idsReportbtlfld, szEntry);
+    TextIO().pfnCchGetString(app, idsReportbtlfld, std::span{szEntry});
     app.state.vrptBattle.grbitVisible = static_cast<std::uint32_t>(win32::GetPrivateProfileIntA(szSection, szEntry, -1, szIniFile));
-    TextIO().pfnCchGetString(app, idsReportbtlsort, szEntry);
+    TextIO().pfnCchGetString(app, idsReportbtlsort, std::span{szEntry});
     i = win32::GetPrivateProfileIntA(szSection, szEntry, 0, szIniFile);
     app.state.vrptBattle.fAscending = (i & 0x100) != 0;
     i &= 0xff;
     app.state.vrptBattle.icolSort = i;
-    TextIO().pfnCchGetString(app, idsReportdefgraph, szEntry);
+    TextIO().pfnCchGetString(app, idsReportdefgraph, std::span{szEntry});
     app.state.gd.iCurGraph = win32::GetPrivateProfileIntA(szSection, szEntry, 7, szIniFile);
-    TextIO().pfnCchGetString(app, idsReportefltsort, szEntry);
+    TextIO().pfnCchGetString(app, idsReportefltsort, std::span{szEntry});
     if (app.state.gd.iCurGraph > 7) {
         app.state.gd.iCurGraph = 7;
     }
-    TextIO().pfnCchGetString(app, idsVcrspeed, szEntry);
+    TextIO().pfnCchGetString(app, idsVcrspeed, std::span{szEntry});
     app.lpui->viSpeedVCR = win32::GetPrivateProfileIntA(szSection, szEntry, 1, szIniFile);
     _strdate(app.state.szWork);
     app.state.szWork[5] = 0;
     app.state.szWork[2] = 0;
     uDateCur = std::atoi(&app.state.szWork[3]) + std::atoi(app.state.szWork) * 31 + std::atoi(&app.state.szWork[6]) * 31 * 12;
-    TextIO().pfnCchGetString(app, idsHistoryinfo, szEntry);
+    TextIO().pfnCchGetString(app, idsHistoryinfo, std::span{szEntry});
     app.lpui->uDateInstalled = win32::GetPrivateProfileIntA(szSection, szEntry, -1, szIniFile);
     if (uDateCur < app.lpui->uDateInstalled) {
         app.lpui->uDateInstalled = uDateCur;
     }
     app.state.gd.fTrialPeriodOver = uDateCur >= static_cast<std::uint16_t>((app.lpui->uDateInstalled + 21));
-    TextIO().pfnCchGetString(app, idsFonts, szSection);
+    TextIO().pfnCchGetString(app, idsFonts, std::span{szSection});
     for (i = 0; i < 4; i++) {
-        TextIO().pfnCchGetString(app, static_cast<StringId>(idsArial + i), szEntry);
+        TextIO().pfnCchGetString(app, static_cast<StringId>(idsArial + i), std::span{szEntry});
         ProfileTextIO().pfnReadString(szSection, szEntry, "", app.state.szWork, 80, szIniFile);
         cch = std::strlen(app.state.szWork);
         if (cch >= 5 && cch <= 31) {

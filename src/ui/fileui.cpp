@@ -124,9 +124,9 @@ void AddMRUFile(APPSESSION &app, const char *pszFileName, const char *pszExt) {
             std::strcpy(app.lpui->vrgszMRU + 256 * i, app.lpui->vrgszMRU + 256 * (i - 1));
         }
         std::strcpy(app.lpui->vrgszMRU, szT);
-        TextIO().pfnCchGetString(app, idsStarsIni, szIniFile);
-        TextIO().pfnCchGetString(app, idsFiles, szSection);
-        TextIO().pfnCchGetString(app, idsFile1, szEntry);
+        TextIO().pfnCchGetString(app, idsStarsIni, std::span{szIniFile});
+        TextIO().pfnCchGetString(app, idsFiles, std::span{szSection});
+        TextIO().pfnCchGetString(app, idsFile1, std::span{szEntry});
         psz = &szEntry[std::strlen(szEntry) - 1];
         for (i = 0; i < 9; i++) {
             *psz = i + '1';

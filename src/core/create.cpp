@@ -1280,7 +1280,7 @@ std::int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
                 app.state.rgplr[i].fHacker = 1;
             }
             if (app.state.rgplr[i].szName[0] == 0) {
-                TextIO().pfnCchGetString(app, static_cast<StringId>(idsBerserker + RandomIO().pfnRandom(app, 24)), app.state.rgplr[i].szName);
+                TextIO().pfnCchGetString(app, static_cast<StringId>(idsBerserker + RandomIO().pfnRandom(app, 24)), std::span{app.state.rgplr[i].szName});
                 CchSprintf(app.state.rgplr[i].szNames, "%ss", app.state.rgplr[i].szName);
             }
         }
@@ -1299,7 +1299,7 @@ std::int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
                         c = 0;
                     }
                 }
-                TextIO().pfnCchGetString(app, static_cast<StringId>(idsBerserker + c), app.state.rgplr[i].szName);
+                TextIO().pfnCchGetString(app, static_cast<StringId>(idsBerserker + c), std::span{app.state.rgplr[i].szName});
                 std::strcpy(app.state.rgplr[i].szNames, app.state.rgplr[i].szName);
                 std::strcat(app.state.rgplr[i].szNames, "s");
             }
@@ -1363,15 +1363,15 @@ void CreateTutorWorld(APPSESSION &app) {
     app.state.game.lid = 9236297;
     app.state.game.rgvc[7] = 128;
     app.state.game.rgvc[8] = 129;
-    TextIO().pfnCchGetString(app, idsTutorialGame, app.state.game.szName);
+    TextIO().pfnCchGetString(app, idsTutorialGame, std::span{app.state.game.szName});
     app.state.rgplr[0] = vrgplrDef[0];
-    TextIO().pfnCchGetString(app, idsHumanoid, app.state.rgplr[0].szName);
+    TextIO().pfnCchGetString(app, idsHumanoid, std::span{app.state.rgplr[0].szName});
     CchSprintf(app.state.rgplr[0].szNames, "%ss", app.state.rgplr[0].szName);
     app.state.rgplr[1] = *LpplrComp(idAiTurinDrone, lvlAiEasy);
     app.state.rgplr[1].fAi = 1;
     app.state.rgplr[1].lvlAi = lvlAiEasy;
     app.state.rgplr[1].idAi = idAiTurinDrone;
-    TextIO().pfnCchGetString(app, idsBerserker, app.state.rgplr[1].szName);
+    TextIO().pfnCchGetString(app, idsBerserker, std::span{app.state.rgplr[1].szName});
     Randomize(app, 1234567890);
     for (i = 1; i <= 2; i++) {
         CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsSHD), app.state.szBase, i);

@@ -52,7 +52,7 @@ static void  ChoosePages(HWND hwnd, UINT msg, UINT_PTR id, DWORD ticks) {
 }
 static BOOL FTextViewContracts(APPSESSION &app) {
     NATIVEOWNER<std::remove_pointer_t<HDC>, win32::DeleteDC> hdc(win32::CreateCompatibleDC(NULL));
-    char sz[sizeof(app.state.szLastStrGet)], szExpected[sizeof(app.state.szLastStrGet)];
+    char sz[sizeof(app.state.szLastStrGet)], szExpected[sizeof(app.state.szLastStrGet)], rgch[7];
     const char *psz = sz;
 
     if (!hdc) return 0;
@@ -63,6 +63,9 @@ static BOOL FTextViewContracts(APPSESSION &app) {
     strcpy(sz, "borrowed");
     RightTextOut(app, hdc.get(), 80, 0, psz, -1, 0);
     if (strcmp(sz, "borrowed")) return 0;
+    memset(rgch, '!', sizeof(rgch));
+    RightTextOut(app, hdc.get(), 80, 0, std::span{rgch}.subspan(1, 3), -1, 0);
+    if (memcmp(rgch + 1, szExpected, 2) || rgch[3] || rgch[0] != '!' || rgch[4] != '!') return 0;
     RightTextOut(app, hdc.get(), 80, 0, "literal", 0, 0);
     return 1;
 }

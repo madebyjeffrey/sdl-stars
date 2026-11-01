@@ -250,14 +250,14 @@ LShowTask:
             if (ord.tlm().cTime < 5) {
                 CchSprintf(app.state.szWork, "%s  %dy", TextIO().pfnCompressed(app, ids), ord.tlm().cTime + 1);
             } else {
-                TextIO().pfnCchGetString(app, ids, app.state.szWork);
+                TextIO().pfnCchGetString(app, ids, std::span{app.state.szWork});
             }
             return app.state.szWork;
         case grTaskPatrol:
             if (ord.tptl().iDist < 11) {
                 CchSprintf(app.state.szWork, "%s  %dly", TextIO().pfnCompressed(app, ids), (ord.tptl().iDist + 1) * 50);
             } else {
-                TextIO().pfnCchGetString(app, ids, app.state.szWork);
+                TextIO().pfnCchGetString(app, ids, std::span{app.state.szWork});
             }
             return app.state.szWork;
         case grTaskAutoRoute:
@@ -353,7 +353,7 @@ void DumpPlanets(APPSESSION &app) {
             fOpen = 1;
             j = app.state.gd.fPerPlayerDumps + 2;
             for (i = 0; i < j; i++) {
-                cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsPlanetNameOwnerStarbaseTypeReportAge + i), szForm);
+                cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsPlanetNameOwnerStarbaseTypeReportAge + i), std::span{szForm});
                 for (psz = szForm; *psz != 0; psz++) {
                     if (*psz == '*') {
                         *psz = '\t';
@@ -577,7 +577,7 @@ void DumpFleets(APPSESSION &app) {
             fOpen = 1;
             j = app.state.gd.fPerPlayerDumps + 2;
             for (i = 0; i < j; i++) {
-                cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsFleetNameXYPlanetDestinationBattle + i), szForm);
+                cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsFleetNameXYPlanetDestinationBattle + i), std::span{szForm});
                 for (psz = szForm; *psz != 0; psz++) {
                     if (*psz == '*') {
                         *psz = '\t';

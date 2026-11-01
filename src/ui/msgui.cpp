@@ -195,10 +195,10 @@ LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 for (i = app.state.cMsg; i < app.state.iMsgCur; i++) {
                     lpmsgplr = lpmsgplr->lpmsgplrNext;
                 }
-                if (TextIO().pfnCchGetString(app, idsSCC, szT) >= 32) {
+                if (TextIO().pfnCchGetString(app, idsSCC, std::span{szT}) >= 32) {
                 }
                 cch = win32::wsprintfA(std::span{reinterpret_cast<char *>(app.lpui->lpb2k), std::size_t{0x800}}, szT, TextIO().pfnPlayerName(app, lpmsgplr->iPlrFrom, 1, 1, 1, 0, nullptr), 13, 10);
-                if (TextIO().pfnCchGetString(app, idsSCC2, szT) >= 32) {
+                if (TextIO().pfnCchGetString(app, idsSCC2, std::span{szT}) >= 32) {
                 }
                 cch += win32::wsprintfA(std::span{reinterpret_cast<char *>(app.lpui->lpb2k), std::size_t{0x800}}.subspan(static_cast<std::size_t>(cch)), szT,
                                 lpmsgplr->iPlrTo == 0 ? TextIO().pfnCompressed(app, idsEverybody) : TextIO().pfnPlayerName(app, lpmsgplr->iPlrTo - 1, 1, 1, 1, 0, nullptr),
@@ -224,7 +224,7 @@ LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             iMode = win32::SetBkMode(hdc, win32::TRANSPARENT);
             if ((app.state.iMsgCur < 0 && app.state.cMsg > 0) ||
                 (app.state.iMsgCur >= 0 && app.state.iMsgCur < app.state.cMsg && (app.state.bitfMsgFiltered[PresentationIO().pfnMessageId(app, app.state.iMsgCur) >> 3] & 1 << (PresentationIO().pfnMessageId(app, app.state.iMsgCur) & 7)))) {
-                cch = TextIO().pfnCchGetString(app, idsFiltered, app.state.szWork);
+                cch = TextIO().pfnCchGetString(app, idsFiltered, std::span{app.state.szWork});
                 DiaganolTextOut(app, hdc, &rc, app.state.szWork, cch);
                 lpsz = PszGetMessageN(app, app.state.iMsgCur);
             }
@@ -243,7 +243,7 @@ LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         } else {
             iMode = win32::SetBkMode(hdc, win32::TRANSPARENT);
             win32::SetTextColor(hdc, app.lpui->crButtonText);
-            cch = TextIO().pfnCchGetString(app, idsTo3, szT);
+            cch = TextIO().pfnCchGetString(app, idsTo3, std::span{szT});
             RightTextOut(app, hdc, rc.left + 26, rc.top, szT, cch, 0);
             win32::SetBkMode(hdc, iMode);
         }
@@ -667,10 +667,10 @@ void SetMsgTitle(APPSESSION &app, HWND hwnd) {
             }
         }
         if (cMsgTot != 0) {
-            TextIO().pfnCchGetString(app, idsYearDCMessagesDD, szT);
+            TextIO().pfnCchGetString(app, idsYearDCMessagesDD, std::span{szT});
             win32::wsprintfA(app.state.szWork, szT, app.state.game.turn + 2400, ch, app.state.iMsgCur + 1, cMsgTot);
         } else {
-            TextIO().pfnCchGetString(app, idsYearDCMessagesNone, szT);
+            TextIO().pfnCchGetString(app, idsYearDCMessagesNone, std::span{szT});
             win32::wsprintfA(app.state.szWork, szT, app.state.game.turn + 2400, ch);
         }
         ControlIO().pfnEnableWindow(app.lpui->rghwndMsgBtn[0], IMsgPrev(app, 0) != imsgNone);

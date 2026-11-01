@@ -6,6 +6,12 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `CchGetString` now receives the destination capacity and returns a terminated
+  UTF-8 prefix when a catalog entry is too long. Previously it copied until the
+  source terminator regardless of the destination size. Report headings,
+  toolbar rows and mutable text-drawing buffers now carry their capacities;
+  fitting catalog text, file records and host results are unchanged.
+
 - `CchSprintf` and the SDL `wsprintfA` now receive each destination's actual
   capacity. Previously both allowed 1,024 output bytes even for smaller stack
   buffers or slices. Short destinations now receive a terminated, complete

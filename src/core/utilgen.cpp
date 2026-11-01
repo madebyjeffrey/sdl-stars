@@ -294,17 +294,14 @@ std::int16_t AlertSz(APPSESSION &app, const char *sz, std::int16_t mbType) {
     return IdAlertBox(sz, mbType);
 }
 
-std::int16_t CchGetString(APPSESSION &app, StringId ids, char *psz) {
-    char *pszT;
-    char *pszTT;
+std::int16_t CchGetString(APPSESSION &app, StringId ids, std::span<char> psz) {
+    if (psz.empty()) return 0;
+    const std::string_view szT = TextIO().pfnCompressed(app, ids);
+    const std::size_t cch = CchUtf8Prefix(szT, psz.size() - 1);
 
-    pszTT = psz;
-    pszT = TextIO().pfnCompressed(app, ids);
-    while (*pszT != 0) {
-        *psz++ = *pszT++;
-    }
-    *psz = 0;
-    return psz - pszTT;
+    std::memmove(psz.data(), szT.data(), cch);
+    psz[cch] = 0;
+    return static_cast<std::int16_t>(cch);
 }
 
 char *PszFromInt(APPSESSION &app, std::int16_t i, std::int16_t *pcch) {

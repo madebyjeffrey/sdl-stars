@@ -242,6 +242,15 @@ Undersized-output tests check adjacent sentinel bytes, empty and one-byte
 destinations, and truncation within a multibyte UTF-8 code point. Output that
 fits, saved records and host results are unchanged.
 
+## Catalog-copy destination capacity — fixed on develop
+
+`CchGetString` copied a catalog entry without receiving the destination size.
+It now takes a span and truncates only between complete UTF-8 code points.
+Caller helpers and injected text providers carry the same capacity. History
+headings also handle empty copies and remove a whole final code point; mutable
+`RightTextOut` array/span calls retain their replacement behavior, while borrowed
+text remains untouched. Catalog bytes, file records and host results are unchanged.
+
 ## Habitat-page stack corruption — fixed on main
 
 `raceui.c`: `DrawRace2` copied `idsCanExpect1DPlanetsWillHabitable`

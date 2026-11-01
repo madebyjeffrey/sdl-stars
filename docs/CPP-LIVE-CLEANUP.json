@@ -72,7 +72,8 @@
       "status": "active",
       "completed_substeps": [
         "typed-metadata-scan-destinations",
-        "formatter-destination-capacities"
+        "formatter-destination-capacities",
+        "catalog-copy-destination-capacities-and-typed-providers"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -107,6 +108,18 @@
           "correction": "Previously unchecked 1024-byte writes now bounded by actual destination capacity; valid fitting output, numeric formats, UTF-8 boundaries and 1024-byte ceiling preserved.",
           "baseline": "Unchanged; no checkpoint moved. Wire layouts, IDs, catalogs and canonical models unchanged.",
           "receipts": "dist/verification/live-cpp/l05b/"
+        },
+        {
+          "batch": "L05c catalog destination capacity repair",
+          "debug_build": "Pass; no warnings; headers in both include orders.",
+          "desktop": "152/152; includes every-size UTF-8 catalog prefix/sentinel cases, six typed text providers, mutable array/span versus borrowed drawing, 29 leaks, ownership/callback tests, linked witnesses and available tutorial.",
+          "host_units": "27/27",
+          "native_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped reference inputs.",
+          "host_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped reference inputs.",
+          "windows": "146/146 strict owned application/wrapper syntax. Explicit array spans address independently reproduced GCC 16.2.0 MinGW function-pointer conversion failure. Compilation evidence only.",
+          "baseline": "Unchanged; no checkpoint moved; wire layouts, catalog bytes, IDs and canonical models unchanged.",
+          "receipts": "dist/verification/live-cpp/l05c/",
+          "windows_test_syntax": "Eight changed unit, drawing and linked-provider translation units checked using their actual Windows test definitions, including STARS_USE_WIN_STUBS for the SDL unit harness."
         }
       ],
       "bounded_formatting": {
@@ -115,6 +128,18 @@
         "pointer_callers": 26,
         "capacity_sources": "Fixed array extents/tail subspans; production-line and ETA helpers receive caller spans; message scratch uses its actual 0x800-byte arena allocation.",
         "pending": "Catalog-copy destinations, strcpy/strcat, typed format arguments and borrowed scratch results remain open."
+      },
+      "catalog_destinations": {
+        "status": "complete; verified",
+        "calls": 464,
+        "pointer_destinations": 28,
+        "native_inventory": "56 translation units; zero parse errors before migration.",
+        "interface": "CchGetString and its actual providers take destination spans; copy a complete UTF-8 prefix, terminate if nonempty, return bytes written. No unbounded application overload remains.",
+        "helpers": "DxReportColHdr and GetLibraryFileFilter carry spans. Mutable RightTextOut takes spans, with array-only forwarding; the const borrowing overload remains separate. Non-array mutable pointers at existing callers all draw positive-length or strlen text and need no write-back.",
+        "providers": "Six linked witness providers migrated to the actual span interface; two old scalar adapters removed.",
+        "history": "Guard empty copies and trim one complete final code point, preserving existing ASCII heading behavior.",
+        "remaining": "strcpy/strcat, formatter argument typing and shared scratch returns remain pending.",
+        "windows_calls": "Explicit spans at all 436 array destinations: GCC 16.2.0 MinGW loses array extent during implicit conversion through a function pointer, reproduced independently. Extents remain deduced from arrays; no guessed capacity or suppression."
       }
     },
     {

@@ -382,7 +382,7 @@ char *PszPlayerName(APPSESSION &app, std::int16_t iPlayer, std::int16_t fCapital
             *pchEnd-- = 0;
         }
         if (pchEnd < szName) {
-            TextIO().pfnCchGetString(app, idsName, szName);
+            TextIO().pfnCchGetString(app, idsName, std::span{szName});
         }
         if (fPlural && pplr->szNames[0] == 0) {
             pchEnd = &szName[std::strlen(szName) - 1];
@@ -391,9 +391,9 @@ char *PszPlayerName(APPSESSION &app, std::int16_t iPlayer, std::int16_t fCapital
             }
         }
         if (grWord == 1) {
-            TextIO().pfnCchGetString(app, idsHave2, &szName[std::strlen(szName)]);
+            TextIO().pfnCchGetString(app, idsHave2, std::span{szName}.subspan(static_cast<std::size_t>(std::strlen(szName))));
         } else if (grWord == 2) {
-            TextIO().pfnCchGetString(app, idsAre, &szName[std::strlen(szName)]);
+            TextIO().pfnCchGetString(app, idsAre, std::span{szName}.subspan(static_cast<std::size_t>(std::strlen(szName))));
         }
     } else {
         CchSprintf(szName, TextIO().pfnCompressed(app, idsPlayerD2), iPlayer + 1);
@@ -401,9 +401,9 @@ char *PszPlayerName(APPSESSION &app, std::int16_t iPlayer, std::int16_t fCapital
             std::strcat(szName, "'s");
         }
         if (grWord == 1) {
-            TextIO().pfnCchGetString(app, idsHas, &szName[std::strlen(szName)]);
+            TextIO().pfnCchGetString(app, idsHas, std::span{szName}.subspan(static_cast<std::size_t>(std::strlen(szName))));
         } else if (grWord == 2) {
-            TextIO().pfnCchGetString(app, idsIs2, &szName[std::strlen(szName)]);
+            TextIO().pfnCchGetString(app, idsIs2, std::span{szName}.subspan(static_cast<std::size_t>(std::strlen(szName))));
         }
     }
     std::strcpy(app.state.szWork, szName);
@@ -762,7 +762,7 @@ char *PszGetThingName(APPSESSION &app, std::int16_t id) {
         break;
     case ithMineralPacket:
         if (lpth->thp().iWarp() == 0) {
-            TextIO().pfnCchGetString(app, idsSalvage, app.state.szWork);
+            TextIO().pfnCchGetString(app, idsSalvage, std::span{app.state.szWork});
             return app.state.szWork;
         }
         if (lpth->iplr() != app.state.idPlayer) {
@@ -2584,7 +2584,7 @@ std::int16_t CchGetETA(APPSESSION &app, HDC hdc, FLEET *lpfl, std::span<char> sz
             if (hdc) {
                 SetHdcTextColor(hdc, 0xff);
             }
-            c = TextIO().pfnCchGetString(app, idsNever, sz.data());
+            c = TextIO().pfnCchGetString(app, idsNever, sz);
             return c;
         }
         if (iSpeed < 0) {
@@ -2598,7 +2598,7 @@ std::int16_t CchGetETA(APPSESSION &app, HDC hdc, FLEET *lpfl, std::span<char> sz
             } else {
                 ids = idsUncertain;
             }
-            c = TextIO().pfnCchGetString(app, ids, sz.data());
+            c = TextIO().pfnCchGetString(app, ids, sz);
             return c;
         }
         if (iSpeed >= static_cast<std::int16_t>(LOWORD(static_cast<std::int32_t>(dbl)))) {

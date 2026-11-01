@@ -88,14 +88,12 @@ static const char *TestPszGetCompressedString(APPSESSION &, int id) {
         return "Unused%d";
     return "Automatic orders";
 }
-static void TestCchGetString(APPSESSION &, int id, char *out) {
+static std::int16_t TestCchGetString(APPSESSION &, StringId id, std::span<char> out) {
     char szItem[16];
     if (id == idsSD2)
-        strcpy(out, "%s %d");
-    else {
-        snprintf(szItem, sizeof(szItem), "Item%d", id - idsMines);
-        snprintf(out, 15, "%.14s", szItem);
-    }
+        return static_cast<std::int16_t>(CchCopyUtf8(out, "%s %d"));
+    snprintf(szItem, sizeof(szItem), "Item%d", static_cast<int>(id) - static_cast<int>(idsMines));
+    return static_cast<std::int16_t>(CchCopyUtf8(out, std::string_view(szItem).substr(0, 14)));
 }
 static int TestLUiDialogBox(int instance, int resource, HWND hwnd, int proc) {
     APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
@@ -203,7 +201,7 @@ int main(void) {
     TEXTIO           ioText;
     ioText.pfnCompressed = WITNESSADAPTER<&TestPszGetCompressedString, decltype(ioText.pfnCompressed)>::Call;
     ioText.pfnFormat = WITNESSADAPTER<&TestPszFormatIds, decltype(ioText.pfnFormat)>::Call;
-    ioText.pfnCchGetString = WITNESSADAPTER<&TestCchGetString, decltype(ioText.pfnCchGetString)>::Call;
+    ioText.pfnCchGetString = TestCchGetString;
     TEXTIOSCOPE scopeText(ioText);
     ALERTIO     ioAlert;
     ioAlert.pfnAlertSz = WITNESSADAPTER<&TestAlertSz, decltype(ioAlert.pfnAlertSz)>::Call;

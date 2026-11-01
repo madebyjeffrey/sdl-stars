@@ -335,7 +335,7 @@ void DrawPlanetMinSum(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
         win32::SetRect(&app.lpui->rgrcRef[7], xLeft, yTop, xRight, app.state.dyArial8 * 2 + yTop);
         if (!ptile->fMinDraw) {
             win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-            c = TextIO().pfnCchGetString(app, idsMines4, app.state.szWork);
+            c = TextIO().pfnCchGetString(app, idsMines4, std::span{app.state.szWork});
             win32::TextOutA(hdc, xLeft, yTop, app.state.szWork, c);
             win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
         }
@@ -348,12 +348,12 @@ void DrawPlanetMinSum(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
         yTop += app.state.dyArial8;
         if (!ptile->fMinDraw) {
             win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-            c = TextIO().pfnCchGetString(app, idsFactories4, app.state.szWork);
+            c = TextIO().pfnCchGetString(app, idsFactories4, std::span{app.state.szWork});
             win32::TextOutA(hdc, xLeft, yTop, app.state.szWork, c);
             win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
         }
         if (RaceQueryIO().pfnStat(&app.state.rgplr[app.state.idPlayer], rsMajorAdv) == raMacintosh) {
-            c = TextIO().pfnCchGetString(app, idsN, app.state.szWork);
+            c = TextIO().pfnCchGetString(app, idsN, std::span{app.state.szWork});
         } else {
             c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDD), ppl->cFactories, ColonyIO().pfnOperableFactories(app, ppl, app.state.idPlayer, 0));
         }
@@ -386,41 +386,41 @@ void DrawPlanetStats(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
         xRight = rc.right - 4;
         yTop = rc.top;
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-        c = TextIO().pfnCchGetString(app, idsPopulation4, app.state.szWork);
+        c = TextIO().pfnCchGetString(app, idsPopulation4, std::span{app.state.szWork});
         l = GetTextExtent(hdc, app.state.szWork, c);
-        c = TextIO().pfnCchGetString(app, idsScannerType, app.state.szWork);
+        c = TextIO().pfnCchGetString(app, idsScannerType, std::span{app.state.szWork});
         l2 = GetTextExtent(hdc, app.state.szWork, c);
         if (l2 > l) {
             l = l2;
         }
-        c = TextIO().pfnCchGetString(app, idsScannerRange, app.state.szWork);
+        c = TextIO().pfnCchGetString(app, idsScannerRange, std::span{app.state.szWork});
         l2 = GetTextExtent(hdc, app.state.szWork, c);
         if (l2 > l) {
             l = l2;
         }
-        c = TextIO().pfnCchGetString(app, idsDefenses4, app.state.szWork);
+        c = TextIO().pfnCchGetString(app, idsDefenses4, std::span{app.state.szWork});
         l2 = GetTextExtent(hdc, app.state.szWork, c);
         if (l2 > l) {
             l = l2;
         }
-        c = TextIO().pfnCchGetString(app, idsDefenseType, app.state.szWork);
+        c = TextIO().pfnCchGetString(app, idsDefenseType, std::span{app.state.szWork});
         l2 = GetTextExtent(hdc, app.state.szWork, c);
         if (l2 > l) {
             l = l2;
         }
-        c = TextIO().pfnCchGetString(app, idsDefCoverage, app.state.szWork);
+        c = TextIO().pfnCchGetString(app, idsDefCoverage, std::span{app.state.szWork});
         l2 = GetTextExtent(hdc, app.state.szWork, c);
         if (l2 > l) {
             l = l2;
         }
-        c = TextIO().pfnCchGetString(app, idsResourcesYear, app.state.szWork);
+        c = TextIO().pfnCchGetString(app, idsResourcesYear, std::span{app.state.szWork});
         l2 = GetTextExtent(hdc, app.state.szWork, c);
         if (l2 > l) {
             l = l2;
         }
         dxRight = xRight - xLeft - LOWORD(l);
         if (!ptile->fMinDraw) {
-            c = TextIO().pfnCchGetString(app, idsPopulation4, app.state.szWork);
+            c = TextIO().pfnCchGetString(app, idsPopulation4, std::span{app.state.szWork});
             win32::TextOutA(hdc, xLeft, yTop, app.state.szWork, c);
         }
         win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
@@ -430,7 +430,7 @@ void DrawPlanetStats(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
         yTop += app.state.dyArial8;
         if (!ptile->fMinDraw) {
             win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-            c = TextIO().pfnCchGetString(app, idsResourcesYear, app.state.szWork);
+            c = TextIO().pfnCchGetString(app, idsResourcesYear, std::span{app.state.szWork});
             win32::TextOutA(hdc, xLeft, yTop, app.state.szWork, c);
             win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
         }
@@ -448,16 +448,16 @@ void DrawPlanetStats(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
         win32::SelectObject(hdc, hbrSav);
         if (!ptile->fMinDraw) {
             win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-            c = TextIO().pfnCchGetString(app, idsScannerType, app.state.szWork);
+            c = TextIO().pfnCchGetString(app, idsScannerType, std::span{app.state.szWork});
             win32::TextOutA(hdc, xLeft, yTop, app.state.szWork, c);
             win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
         }
         win32::SetRect(&app.lpui->rgrcRef[11], xLeft, yTop, xRight, app.state.dyArial8 * 2 + yTop);
         if (RaceQueryIO().pfnStat(&app.state.rgplr[app.state.idPlayer], rsMajorAdv) == raMacintosh) {
-            TextIO().pfnCchGetString(app, idsOrganic, app.state.szWork);
+            TextIO().pfnCchGetString(app, idsOrganic, std::span{app.state.szWork});
             dRange = GetPlanetScannerRange(app, &app.state.sel.pl, &dRangeP);
         } else if (app.state.sel.pl.iScanner == 31) {
-            TextIO().pfnCchGetString(app, idsNone4, app.state.szWork);
+            TextIO().pfnCchGetString(app, idsNone4, std::span{app.state.szWork});
             dRange = 0;
         } else {
             ProductionIO().pfnScanner(app, &part);
@@ -468,7 +468,7 @@ void DrawPlanetStats(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
         yTop += app.state.dyArial8;
         if (!ptile->fMinDraw) {
             win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-            c = TextIO().pfnCchGetString(app, idsScannerRange, app.state.szWork);
+            c = TextIO().pfnCchGetString(app, idsScannerRange, std::span{app.state.szWork});
             win32::TextOutA(hdc, xLeft, yTop, app.state.szWork, c);
             win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
         }
@@ -481,7 +481,7 @@ void DrawPlanetStats(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
                 c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDLY), dRange);
             }
         } else {
-            TextIO().pfnCchGetString(app, idsNone4, app.state.szWork);
+            TextIO().pfnCchGetString(app, idsNone4, std::span{app.state.szWork});
             c = 0;
         }
         RightTextOut(app, hdc, xRight, yTop, app.state.szWork, c, dxRight);
@@ -491,13 +491,13 @@ void DrawPlanetStats(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
         win32::SelectObject(hdc, hbrSav);
         if (!ptile->fMinDraw) {
             win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-            c = TextIO().pfnCchGetString(app, idsDefenses4, app.state.szWork);
+            c = TextIO().pfnCchGetString(app, idsDefenses4, std::span{app.state.szWork});
             win32::TextOutA(hdc, xLeft, yTop, app.state.szWork, c);
         }
         win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
         win32::SetRect(&app.lpui->rgrcRef[10], xLeft, yTop, xRight, 3 * app.state.dyArial8 + yTop);
         if (RaceQueryIO().pfnStat(&app.state.rgplr[app.state.idPlayer], rsMajorAdv) == raMacintosh) {
-            c = TextIO().pfnCchGetString(app, idsN, app.state.szWork);
+            c = TextIO().pfnCchGetString(app, idsN, std::span{app.state.szWork});
         } else {
             c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDD), app.state.sel.pl.cDefenses, ColonyIO().pfnOperableDefenses(app, &app.state.sel.pl, app.state.idPlayer, 0));
         }
@@ -505,12 +505,12 @@ void DrawPlanetStats(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
         yTop += app.state.dyArial8;
         if (!ptile->fMinDraw) {
             win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-            c = TextIO().pfnCchGetString(app, idsDefenseType, app.state.szWork);
+            c = TextIO().pfnCchGetString(app, idsDefenseType, std::span{app.state.szWork});
             win32::TextOutA(hdc, xLeft, yTop, app.state.szWork, c);
             win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
         }
         if (app.state.sel.pl.cDefenses == 0) {
-            TextIO().pfnCchGetString(app, RaceQueryIO().pfnStat(&app.state.rgplr[app.state.idPlayer], rsMajorAdv) == raMacintosh ? idsN : idsNone4, app.state.szWork);
+            TextIO().pfnCchGetString(app, RaceQueryIO().pfnStat(&app.state.rgplr[app.state.idPlayer], rsMajorAdv) == raMacintosh ? idsN : idsNone4, std::span{app.state.szWork});
             dRange = 0;
         } else {
             FGetBestDefensePart(app, &part);
@@ -521,7 +521,7 @@ void DrawPlanetStats(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
         yTop += app.state.dyArial8;
         if (!ptile->fMinDraw) {
             win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-            c = TextIO().pfnCchGetString(app, idsDefCoverage, app.state.szWork);
+            c = TextIO().pfnCchGetString(app, idsDefCoverage, std::span{app.state.szWork});
             win32::TextOutA(hdc, xLeft, yTop, app.state.szWork, c);
             win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
         }
@@ -531,7 +531,7 @@ void DrawPlanetStats(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
             c = win32::wsprintfA(app.state.szWork, app.state.PCTDXPCTDPCTPCT, LOWORD(static_cast<std::int32_t>((static_cast<double>(pct) * 100))),
                          LOWORD(static_cast<std::int32_t>(((pct - static_cast<double>(static_cast<std::int16_t>(LOWORD(static_cast<std::int32_t>((static_cast<double>(pct) * 100))))) / 100.0) * 10000))));
         } else {
-            c = TextIO().pfnCchGetString(app, RaceQueryIO().pfnStat(&app.state.rgplr[app.state.idPlayer], rsMajorAdv) == raMacintosh ? idsN : idsNone4, app.state.szWork);
+            c = TextIO().pfnCchGetString(app, RaceQueryIO().pfnStat(&app.state.rgplr[app.state.idPlayer], rsMajorAdv) == raMacintosh ? idsN : idsNone4, std::span{app.state.szWork});
             psz = app.state.szWork;
         }
         RightTextOut(app, hdc, xRight, yTop, app.state.szWork, c, dxRight);
@@ -587,27 +587,27 @@ void DrawPlanetStarbase(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
         } else {
             win32::SetRect(&app.lpui->rgrcRef[14], xLeft, yTop, xRight, app.state.dyArial8 * 4 + yTop);
             win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-            c = TextIO().pfnCchGetString(app, idsDockCapacity, app.state.szWork);
+            c = TextIO().pfnCchGetString(app, idsDockCapacity, std::span{app.state.szWork});
             l = GetTextExtent(hdc, app.state.szWork, c);
             dxRight = xRight - xLeft - LOWORD(l);
             win32::TextOutA(hdc, xLeft, yTop, app.state.szWork, c);
             win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
             w = PartQueryIO().pfnHull(lpshdef->hul.ihuldef)->hul.wtCargoMax;
             if (w == 0) {
-                c = TextIO().pfnCchGetString(app, idsNone4, app.state.szWork);
+                c = TextIO().pfnCchGetString(app, idsNone4, std::span{app.state.szWork});
             } else if (static_cast<std::uint32_t>(w) == 0xffff) {
-                c = TextIO().pfnCchGetString(app, idsUnlimited, app.state.szWork);
+                c = TextIO().pfnCchGetString(app, idsUnlimited, std::span{app.state.szWork});
             } else {
                 c = win32::wsprintfA(app.state.szWork, app.lpui->PCTDKT, w);
             }
             RightTextOut(app, hdc, xRight, yTop, app.state.szWork, c, dxRight);
             yTop += app.state.dyArial8;
             win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-            c = TextIO().pfnCchGetString(app, idsArmor2, app.state.szWork);
+            c = TextIO().pfnCchGetString(app, idsArmor2, std::span{app.state.szWork});
             win32::TextOutA(hdc, xLeft, yTop, app.state.szWork, c);
             w = lpshdef->hul.dp;
             if (w == 0) {
-                c = TextIO().pfnCchGetString(app, idsNone4, app.state.szWork);
+                c = TextIO().pfnCchGetString(app, idsNone4, std::span{app.state.szWork});
             } else {
                 c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsLddp), w, 0);
             }
@@ -615,11 +615,11 @@ void DrawPlanetStarbase(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
             RightTextOut(app, hdc, xRight, yTop, app.state.szWork, c, dxRight);
             yTop += app.state.dyArial8;
             win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-            c = TextIO().pfnCchGetString(app, idsShields2, app.state.szWork);
+            c = TextIO().pfnCchGetString(app, idsShields2, std::span{app.state.szWork});
             win32::TextOutA(hdc, xLeft, yTop, app.state.szWork, c);
             l = DpShieldOfShdef(app, lpshdef, app.state.idPlayer);
             if (l == 0) {
-                c = TextIO().pfnCchGetString(app, idsNone4, app.state.szWork);
+                c = TextIO().pfnCchGetString(app, idsNone4, std::span{app.state.szWork});
             } else {
                 c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsLddp), l);
             }
@@ -627,7 +627,7 @@ void DrawPlanetStarbase(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
             RightTextOut(app, hdc, xRight, yTop, app.state.szWork, c, dxRight);
             yTop += app.state.dyArial8;
             win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-            c = TextIO().pfnCchGetString(app, idsDamage2, app.state.szWork);
+            c = TextIO().pfnCchGetString(app, idsDamage2, std::span{app.state.szWork});
             win32::TextOutA(hdc, xLeft, yTop, app.state.szWork, c);
             win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
             w = app.state.sel.pl.pctDp;
@@ -638,7 +638,7 @@ void DrawPlanetStarbase(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
                 c = win32::wsprintfA(app.state.szWork, app.state.PCTDPCTPCT, static_cast<std::uint32_t>(w) / 5);
                 crForeSav = win32::SetTextColor(hdc, 127);
             } else {
-                c = TextIO().pfnCchGetString(app, idsNone4, app.state.szWork);
+                c = TextIO().pfnCchGetString(app, idsNone4, std::span{app.state.szWork});
             }
             RightTextOut(app, hdc, xRight, yTop, app.state.szWork, c, dxRight);
             yTop += app.state.dyArial8;
@@ -650,7 +650,7 @@ void DrawPlanetStarbase(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
             win32::SelectObject(hdc, hbrSav);
             win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
             win32::SetRect(&app.lpui->rgrcRef[16], xLeft, yTop, xRight, yTop + app.state.dyArial8);
-            c = TextIO().pfnCchGetString(app, idsMassDriver, app.state.szWork);
+            c = TextIO().pfnCchGetString(app, idsMassDriver, std::span{app.state.szWork});
             win32::TextOutA(hdc, xLeft, yTop, app.state.szWork, c);
             iWarp = ColonyIO().pfnWarp(app, &app.state.sel.pl, &fTwo);
             if (iWarp > 0) {
@@ -665,10 +665,10 @@ void DrawPlanetStarbase(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
             RightTextOut(app, hdc, xRight, yTop, app.state.szWork, c, dxRight);
             yTop += app.state.dyArial8;
             win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-            c = TextIO().pfnCchGetString(app, idsDestination3, app.state.szWork);
+            c = TextIO().pfnCchGetString(app, idsDestination3, std::span{app.state.szWork});
             win32::TextOutA(hdc, xLeft, yTop, app.state.szWork, c);
             if (app.state.sel.pl.idFling == 0) {
-                c = TextIO().pfnCchGetString(app, idsNone4, app.state.szWork);
+                c = TextIO().pfnCchGetString(app, idsNone4, std::span{app.state.szWork});
             } else {
                 psz = PszGetCompressedPlanet(app, app.state.rgidPlan[app.state.sel.pl.idFling - 1]);
                 c = 0;
@@ -794,7 +794,7 @@ void DrawPlanetProduction(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
         }
         if (c != 0) {
             win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-            cch = TextIO().pfnCchGetString(app, idsCompletion, szT);
+            cch = TextIO().pfnCchGetString(app, idsCompletion, std::span{szT});
             win32::TextOutA(hdc, xLeft, yTop, szT, cch);
             dxRight = xRight - xLeft - LOWORD(GetTextExtent(hdc, szT, cch));
             win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
@@ -804,11 +804,11 @@ void DrawPlanetProduction(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
         }
         yTop += app.state.dyArial8;
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-        cch = TextIO().pfnCchGetString(app, idsRoute3, szT);
+        cch = TextIO().pfnCchGetString(app, idsRoute3, std::span{szT});
         win32::TextOutA(hdc, xLeft, yTop, szT, cch);
         dxRight = xRight - xLeft - LOWORD(GetTextExtent(hdc, szT, cch));
         if (app.state.sel.pl.idRoute == 0) {
-            c = TextIO().pfnCchGetString(app, idsNone4, app.state.szWork);
+            c = TextIO().pfnCchGetString(app, idsNone4, std::span{app.state.szWork});
         } else {
             psz = PszGetCompressedPlanet(app, app.state.rgidPlan[app.state.sel.pl.idRoute - 1]);
             c = 0;
@@ -991,11 +991,11 @@ void DrawPlanetShipList(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
         if (!app.state.gd.fSmallTileMode) {
             if (!fDoneDrawing && !fUnknown) {
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-                c = TextIO().pfnCchGetString(app, idsCargo3, app.state.szWork);
+                c = TextIO().pfnCchGetString(app, idsCargo3, std::span{app.state.szWork});
                 l = GetTextExtent(hdc, app.state.szWork, c);
             }
             if (!fDoneDrawing && !fUnknown && !fObjIsThing) {
-                c = TextIO().pfnCchGetString(app, idsFuel3, app.state.szWork);
+                c = TextIO().pfnCchGetString(app, idsFuel3, std::span{app.state.szWork});
                 l2 = GetTextExtent(hdc, app.state.szWork, c);
                 if (l2 > l) {
                     l = l2;
@@ -1015,7 +1015,7 @@ void DrawPlanetShipList(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
                 yTop += app.state.dyArial8 + 4;
             }
             if (!fDoneDrawing && !fUnknown) {
-                c = TextIO().pfnCchGetString(app, idsCargo3, app.state.szWork);
+                c = TextIO().pfnCchGetString(app, idsCargo3, std::span{app.state.szWork});
                 win32::TextOutA(hdc, xLeft, yTop, app.state.szWork, c);
                 win32::SetRect(&rcGauge, xLeft + LOWORD(l), yTop, xRight, yTop + app.state.dyArial8);
                 app.lpui->rgrcRef[4] = rcGauge;
@@ -1269,7 +1269,7 @@ HCURSOR ClickInPlanetOrders(APPSESSION &app, POINT16 pt, std::int16_t sks, std::
             app.lpui->GlobalPD.grPopup = grPopupString;
             app.lpui->GlobalPD.dxOut = 180;
             app.lpui->GlobalPD.psz = app.lpui->szPopupBuffer;
-            TextIO().pfnCchGetString(app, idsRaceCannotBuildPlanetaryScannersStarbasesHave, app.lpui->szPopupBuffer);
+            TextIO().pfnCchGetString(app, idsRaceCannotBuildPlanetaryScannersStarbasesHave, std::span{app.lpui->szPopupBuffer});
         } else {
             ProductionIO().pfnScanner(app, &app.lpui->GlobalPD.part);
             app.lpui->GlobalPD.grPopup = grPopupComponent;
@@ -1593,10 +1593,10 @@ void DrawProductionItem(APPSESSION &app, HDC hdc, RECT *prc, char *psz, std::int
     if (ich >= 6) {
         if ((psz[ich - 5] - ' ') & 2) {
             if (psz[ich - 1] == '*') {
-                ich = TextIO().pfnCchGetString(app, idsNeeded, szT);
+                ich = TextIO().pfnCchGetString(app, idsNeeded, std::span{szT});
                 goto LRightOut;
             }
-            TextIO().pfnCchGetString(app, idsUpTo, szT);
+            TextIO().pfnCchGetString(app, idsUpTo, std::span{szT});
         } else {
             szT[0] = 0;
         }
@@ -1654,7 +1654,7 @@ void DrawPlanShip(APPSESSION &app, HDC hdc, TileBits grbit) {
             ControlIO().pfnGetClientRect(app.lpui->hwndPlanet, &rc);
             win32::SetBkColor(hdc, app.lpui->crButtonFace);
             win32::SetTextColor(hdc, app.lpui->crButtonText);
-            i = TextIO().pfnCchGetString(app, idsDeceased, app.state.szWork);
+            i = TextIO().pfnCchGetString(app, idsDeceased, std::span{app.state.szWork});
             DiaganolTextOut(app, hdc, &rc, app.state.szWork, i);
         }
     } else {
@@ -1700,7 +1700,7 @@ void SetPlanetTitleBar(APPSESSION &app, HWND hwnd) {
 
     if (app.state.sel.grobj == grobjPlanet) {
         psz = TextIO().pfnPlanetName(app, app.state.sel.pl.id);
-        TextIO().pfnCchGetString(app, idsPlanet2, szTitle);
+        TextIO().pfnCchGetString(app, idsPlanet2, std::span{szTitle});
         win32::lstrcatA(szTitle, psz);
         psz = szTitle;
     } else if (app.state.sel.grobj == grobjFleet) {

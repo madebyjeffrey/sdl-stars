@@ -390,7 +390,7 @@ char *PszFormatString(APPSESSION &app, const char *pszFormat, std::int16_t *pPar
             case 'S':
                 if (*pParams == app.state.idPlayer)
                     goto DoNothing;
-                TextIO().pfnCchGetString(app, idsOf2, szBuf);
+                TextIO().pfnCchGetString(app, idsOf2, std::span{szBuf});
                 pchT = TextIO().pfnPlayerName(app, *pParams, 0, 0, 0, 0, nullptr);
                 std::strcat(szBuf, pchT);
                 std::strcat(szBuf, TextIO().pfnCompressed(app, idsOrigin));
@@ -448,7 +448,7 @@ char *PszFormatString(APPSESSION &app, const char *pszFormat, std::int16_t *pPar
                 goto FinishString;
             case 'G':
                 w = *pParams;
-                c = TextIO().pfnCchGetString(app, static_cast<StringId>(idsMineField + w), szBuf);
+                c = TextIO().pfnCchGetString(app, static_cast<StringId>(idsMineField + w), std::span{szBuf});
                 pch = PchAppendMessageText(app, pch, szBuf);
                 pParams++;
                 break;

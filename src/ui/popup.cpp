@@ -127,7 +127,7 @@ void DrawPopup(APPSESSION &app, HWND hwnd, HDC hdc) {
         if (app.lpui->GlobalPD.rgi[4] < 0)
             break;
         RightTextOut(app, hdc, dx, 3 * app.state.dyArial8 + 4, TextIO().pfnCompressed(app, idsMiningRate), 0, 0);
-        TextIO().pfnCchGetString(app, idsLdktYr, szT);
+        TextIO().pfnCchGetString(app, idsLdktYr, std::span{szT});
         c = win32::wsprintfA(app.state.szWork, szT, app.lpui->GlobalPD.rgi[4]);
         win32::TextOutA(hdc, dx, 3 * app.state.dyArial8 + 4, app.state.szWork, c);
         break;
@@ -138,17 +138,17 @@ void DrawPopup(APPSESSION &app, HWND hwnd, HDC hdc) {
         break;
     case grPopupFleet:
         if (rc.bottom - rc.top < app.state.dyArial8 * 2) {
-            c = TextIO().pfnCchGetString(app, idsNone2, app.state.szWork);
+            c = TextIO().pfnCchGetString(app, idsNone2, std::span{app.state.szWork});
             win32::TextOutA(hdc, 4, 4, app.state.szWork, c);
             win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
             break;
         }
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-        c = TextIO().pfnCchGetString(app, idsShipName, app.state.szWork);
+        c = TextIO().pfnCchGetString(app, idsShipName, std::span{app.state.szWork});
         win32::TextOutA(hdc, 4, 4, app.state.szWork, c);
         RightTextOut(app, hdc, rc.right - 4 - app.lpui->GlobalPD.dxDamage, 4, "#", 1, 0);
         if (app.lpui->GlobalPD.dxDamage != 0) {
-            c = TextIO().pfnCchGetString(app, idsDamage2, app.state.szWork);
+            c = TextIO().pfnCchGetString(app, idsDamage2, std::span{app.state.szWork});
             RightTextOut(app, hdc, rc.right - 4, 4, app.state.szWork, c, 0);
             win32::PatBlt(hdc, 4, app.state.dyArial8 + 2, rc.right - 8, 1, win32::BLACKNESS);
         }
@@ -609,7 +609,7 @@ POINT16 PtDisplayPlanetStateInfo(APPSESSION &app, HDC hdc, std::int16_t fPrint) 
             pctDesire = PlanetQueryIO().pfnDesirability(app, lppl, app.state.idPlayer);
             lppl->rgEnvVar[app.lpui->GlobalPD.iPlanetVar] = iValSav;
             if (pctDesireOld < pctDesire) {
-                cch = TextIO().pfnCchGetString(app, idsIfTerraform, app.state.szWork);
+                cch = TextIO().pfnCchGetString(app, idsIfTerraform, std::span{app.state.szWork});
                 WrapTextOut(app, hdc, &x, &y, app.state.szWork, cch, 4, xMax - 4, nullptr, 0, fPrint);
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
                 WrapTextOut(app, hdc, &x, &y, app.state.rgszPlanetAttr[app.lpui->GlobalPD.iPlanetVar], 0, 4, xMax - 4, nullptr, 0, fPrint);
@@ -618,7 +618,7 @@ POINT16 PtDisplayPlanetStateInfo(APPSESSION &app, HDC hdc, std::int16_t fPrint) 
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
                 WrapTextOut(app, hdc, &x, &y, PszCalcEnvVar(app, static_cast<EnvType>(app.lpui->GlobalPD.iPlanetVar), iNewVal), 0, 4, xMax - 4, nullptr, 0, fPrint);
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
-                cch = TextIO().pfnCchGetString(app, idsPlanetsValueWouldImprove, app.state.szWork);
+                cch = TextIO().pfnCchGetString(app, idsPlanetsValueWouldImprove, std::span{app.state.szWork});
                 WrapTextOut(app, hdc, &x, &y, app.state.szWork, cch, 4, xMax - 4, nullptr, 0, fPrint);
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
                 cch = win32::wsprintfA(app.state.szWork, "%d%%.  ", pctDesire);
@@ -640,7 +640,7 @@ POINT16 PtDisplayPlanetStateInfo(APPSESSION &app, HDC hdc, std::int16_t fPrint) 
         } else {
             ids = idsValueDOutsideHabitableRangeRace;
         }
-        TextIO().pfnCchGetString(app, ids, app.state.szWork);
+        TextIO().pfnCchGetString(app, ids, std::span{app.state.szWork});
         cch = win32::wsprintfA(szOut, app.state.szWork, dChg);
         win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
         WrapTextOut(app, hdc, &x, &y, szOut, cch, 4, xMax - 4, nullptr, 0, fPrint);
@@ -780,7 +780,7 @@ POINT16 PtDisplayPlanetPopInfo(APPSESSION &app, HDC hdc, std::int16_t fPrint) {
     x = 4;
     y += app.state.dyArial8;
     if (pl.iPlayer == app.state.idPlayer && pctDesire >= 0 && pl.rgwtMin[3] < lMax) {
-        c = TextIO().pfnCchGetString(app, idsPopulation, szT);
+        c = TextIO().pfnCchGetString(app, idsPopulation, std::span{szT});
         WrapTextOut(app, hdc, &x, &y, szT, c, 4, xMax, nullptr, 0, fPrint);
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
         psz = TextIO().pfnPlanetName(app, pl.id);
@@ -788,7 +788,7 @@ POINT16 PtDisplayPlanetPopInfo(APPSESSION &app, HDC hdc, std::int16_t fPrint) {
         win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
         lPopChg = PlanetQueryIO().pfnGrowth(app, &pl, 0);
         if (pctDesire == 0 || lPopChg <= 0) {
-            c = TextIO().pfnCchGetString(app, idsWillGrowYear, szT);
+            c = TextIO().pfnCchGetString(app, idsWillGrowYear, std::span{szT});
         } else {
             psz = TextIO().pfnCompressed(app, idsWillGrowLd00Ld00Year);
             c = win32::wsprintfA(szT, psz, lPopChg, pl.rgwtMin[3] + lPopChg);
@@ -805,7 +805,7 @@ POINT16 PtDisplayPlanetPopInfo(APPSESSION &app, HDC hdc, std::int16_t fPrint) {
     WrapTextOut(app, hdc, &x, &y, psz, 0, 4, xMax, nullptr, 0, fPrint);
     win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
     if (pl.uDefGuess == 0) {
-        c = TextIO().pfnCchGetString(app, idsAppearsHavePlanetaryDefenses, app.state.szWork);
+        c = TextIO().pfnCchGetString(app, idsAppearsHavePlanetaryDefenses, std::span{app.state.szWork});
     } else {
         psz = TextIO().pfnCompressed(app, idsHasPlanetaryDefensesApproximatelyDCoverage);
         c = win32::wsprintfA(szT, psz, pl.uDefGuess * 6 + 3);
@@ -930,7 +930,7 @@ POINT16 PtDisplayFactoryMineInfo(APPSESSION &app, HDC hdc, std::int16_t dx, std:
     }
     win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
     if (fPrint) {
-        TextIO().pfnCchGetString(app, idsSInfo, szT);
+        TextIO().pfnCchGetString(app, idsSInfo, std::span{szT});
         c = win32::wsprintfA(app.state.szWork, szT, pszType);
         CtrTextOut(hdc, dx >> 1, y, app.state.szWork, c);
     }

@@ -152,7 +152,7 @@ void CreateChildWindows(APPSESSION &app) {
         CchCopyUtf8(szPlayerUtf8, sizeof(szPlayerUtf8), psz, std::strlen(psz));
         std::snprintf(szData, sizeof(szData), "Stars! -- %s -- %s -- %s", szNameUtf8, szPlayerUtf8, szGame);
     } else {
-        TextIO().pfnCchGetString(app, idsStarsSHostMode, app.state.szWork);
+        TextIO().pfnCchGetString(app, idsStarsSHostMode, std::span{app.state.szWork});
         win32::wsprintfA(szData, app.state.szWork, app.state.game.szName);
         CchCopyUtf8(szNameUtf8, sizeof(szNameUtf8), szData, std::strlen(szData));
         std::strcpy(szData, szNameUtf8);
@@ -1104,7 +1104,7 @@ void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
                 rc.bottom = dSize;
                 rc.right = dSize;
                 dSize -= dMargin * 2;
-                cch = TextIO().pfnCchGetString(app, idsStarsUniverseMap, app.state.szWork);
+                cch = TextIO().pfnCchGetString(app, idsStarsUniverseMap, std::span{app.state.szWork});
                 iPrintResult = win32::Escape(pd.hDC, win32::STARTDOC, cch, app.state.szWork, nullptr);
                 if (iPrintResult <= 0) goto LPrintMapCleanup;
                 for (xPage = 0; xPage < cPageX; xPage++) {
@@ -1118,7 +1118,7 @@ void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
                             hfontSav = nullptr;
                         }
                         y = ptLegendA.y + yOff;
-                        cch = TextIO().pfnCchGetString(app, idsStarsUniverseMap, app.state.szWork);
+                        cch = TextIO().pfnCchGetString(app, idsStarsUniverseMap, std::span{app.state.szWork});
                         win32::TextOutA(pd.hDC, ptLegendA.x + xOff, y, app.state.szWork, cch);
                         y += dyPrint;
                         win32::TextOutA(pd.hDC, ptLegendA.x + xOff, y, app.state.game.szName, std::strlen(app.state.game.szName));
@@ -1131,7 +1131,7 @@ void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
                         if ((app.lpui->grbitScan & grbitScanViewMask) != 5) {
                             y = ptLegendB.y + yOff;
                             for (i = 0; i < 5; i++) {
-                                cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsPlanet3 + i), app.state.szWork);
+                                cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsPlanet3 + i), std::span{app.state.szWork});
                                 win32::TextOutA(pd.hDC, ptLegendB.x + xOff, y, app.state.szWork, cch);
                                 y += dyPrint;
                             }
@@ -1742,7 +1742,7 @@ std::int16_t FOpenGame(APPSESSION &app, HWND hwnd, std::int16_t fRaceOnly) {
         goto LGotFileName;
     }
     szFile[0] = 0;
-    TextIO().pfnCchGetString(app, !fRaceOnly ? idsStarsGameFilesMHstRStars : idsStarsGameFilesRFiles, szFilter);
+    TextIO().pfnCchGetString(app, !fRaceOnly ? idsStarsGameFilesMHstRStars : idsStarsGameFilesRFiles, std::span{szFilter});
     for (i = 0; szFilter[i] != 0; i++) {
         if (szFilter[i] == '|') {
             szFilter[i] = 0;
@@ -1912,7 +1912,7 @@ void DrawHostDialog2(APPSESSION &app, HWND hwnd, HDC hdcIn) {
         cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsD2), i + 1);
         RightTextOut(app, hdc, x, yCur, app.state.szWork, cch, 0);
         win32::SetTextColor(hdc, app.state.rgOut[i] <= 0 ? 32512 : 127);
-        TextIO().pfnCchGetString(app, static_cast<StringId>(idsTurned + app.state.rgOut[i]), szStat);
+        TextIO().pfnCchGetString(app, static_cast<StringId>(idsTurned + app.state.rgOut[i]), std::span{szStat});
         if (app.state.gd.fNoHostNames) {
             cch = win32::wsprintfA(app.state.szWork, " %s", szStat);
         } else {
@@ -2037,7 +2037,7 @@ INT_PTR  HostModeDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         hmenuPopup = win32::CreatePopupMenu();
         app.lpui->iPopMenuSel = -1;
         for (i = 0; i < 3; i++) {
-            TextIO().pfnCchGetString(app, static_cast<StringId>(idsHumanControlled + i), app.state.szWork);
+            TextIO().pfnCchGetString(app, static_cast<StringId>(idsHumanControlled + i), std::span{app.state.szWork});
             mf = i == 1                                                         ? app.state.rgplr[iDiamond].fAi != 0 && app.state.rgplr[iDiamond].idAi != idAiMaid ? 0 : 3
                  : app.state.rgplr[iDiamond].fAi == 0 || app.state.rgplr[iDiamond].idAi == idAiMaid ? 0
                                                                                 : 3;
@@ -2310,9 +2310,9 @@ void WriteIniSettings(APPSESSION &app) {
     szPd[0] = '%';
     szPd[1] = 'd';
     szPd[2] = 0;
-    TextIO().pfnCchGetString(app, idsWindows, szSection);
-    TextIO().pfnCchGetString(app, idsStarsIni, szIniFile);
-    TextIO().pfnCchGetString(app, idsResolution, szEntry);
+    TextIO().pfnCchGetString(app, idsWindows, std::span{szSection});
+    TextIO().pfnCchGetString(app, idsStarsIni, std::span{szIniFile});
+    TextIO().pfnCchGetString(app, idsResolution, std::span{szEntry});
     i = 0;
     if (app.lpui->vcScreenColors <= 4) {
         i |= 1;
@@ -2322,53 +2322,53 @@ void WriteIniSettings(APPSESSION &app) {
     }
     win32::wsprintfA(app.state.szWork, szPd, i);
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
-    TextIO().pfnCchGetString(app, idsMain, szEntry);
+    TextIO().pfnCchGetString(app, idsMain, std::span{szEntry});
     SetWindowIniString(app, app.state.szWork, app.lpui->hwndFrame);
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
-    TextIO().pfnCchGetString(app, idsReportfleetwin, szEntry);
+    TextIO().pfnCchGetString(app, idsReportfleetwin, std::span{szEntry});
     win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsC04d04d04d04d), 77, app.state.vrptFleet.ptDlg.x, app.state.vrptFleet.ptDlg.y, app.state.vrptFleet.ptDlg.x + app.state.vrptFleet.ptSize.x,
              app.state.vrptFleet.ptDlg.y + app.state.vrptFleet.ptSize.y);
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
-    TextIO().pfnCchGetString(app, idsReportefleetwin, szEntry);
+    TextIO().pfnCchGetString(app, idsReportefleetwin, std::span{szEntry});
     win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsC04d04d04d04d), 77, app.state.vrptEFleet.ptDlg.x, app.state.vrptEFleet.ptDlg.y, app.state.vrptEFleet.ptDlg.x + app.state.vrptEFleet.ptSize.x,
              app.state.vrptEFleet.ptDlg.y + app.state.vrptEFleet.ptSize.y);
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
-    TextIO().pfnCchGetString(app, idsReportbtlwin, szEntry);
+    TextIO().pfnCchGetString(app, idsReportbtlwin, std::span{szEntry});
     win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsC04d04d04d04d), 77, app.state.vrptBattle.ptDlg.x, app.state.vrptBattle.ptDlg.y, app.state.vrptBattle.ptDlg.x + app.state.vrptBattle.ptSize.x,
              app.state.vrptBattle.ptDlg.y + app.state.vrptBattle.ptSize.y);
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
-    TextIO().pfnCchGetString(app, idsReportplanwin, szEntry);
+    TextIO().pfnCchGetString(app, idsReportplanwin, std::span{szEntry});
     win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsC04d04d04d04d), 77, app.state.vrptPlanet.ptDlg.x, app.state.vrptPlanet.ptDlg.y, app.state.vrptPlanet.ptDlg.x + app.state.vrptPlanet.ptSize.x,
              app.state.vrptPlanet.ptDlg.y + app.state.vrptPlanet.ptSize.y);
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
-    TextIO().pfnCchGetString(app, idsLayout, szEntry);
+    TextIO().pfnCchGetString(app, idsLayout, std::span{szEntry});
     win32::wsprintfA(app.state.szWork, szPd, app.lpui->iWindowLayout);
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
-    TextIO().pfnCchGetString(app, idsStyle1width, szEntry);
+    TextIO().pfnCchGetString(app, idsStyle1width, std::span{szEntry});
     win32::wsprintfA(app.state.szWork, szPd, app.lpui->vfs.dxPlanWant);
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
-    TextIO().pfnCchGetString(app, idsStyle1height, szEntry);
+    TextIO().pfnCchGetString(app, idsStyle1height, std::span{szEntry});
     win32::wsprintfA(app.state.szWork, szPd, app.lpui->vfs.dyMsgWant);
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
-    TextIO().pfnCchGetString(app, idsStyle1height2, szEntry);
+    TextIO().pfnCchGetString(app, idsStyle1height2, std::span{szEntry});
     win32::wsprintfA(app.state.szWork, szPd, app.lpui->vfs.dyMinWant);
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
-    TextIO().pfnCchGetString(app, idsStyle2width, szEntry);
+    TextIO().pfnCchGetString(app, idsStyle2width, std::span{szEntry});
     win32::wsprintfA(app.state.szWork, szPd, app.lpui->vfs.dx2PlanWant);
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
-    TextIO().pfnCchGetString(app, idsStyle2height, szEntry);
+    TextIO().pfnCchGetString(app, idsStyle2height, std::span{szEntry});
     win32::wsprintfA(app.state.szWork, szPd, app.lpui->vfs.dy2MsgWant);
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
-    TextIO().pfnCchGetString(app, idsStyle2height2, szEntry);
+    TextIO().pfnCchGetString(app, idsStyle2height2, std::span{szEntry});
     win32::wsprintfA(app.state.szWork, szPd, app.lpui->vfs.dy2MinWant);
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
-    TextIO().pfnCchGetString(app, idsToolbar, szEntry);
+    TextIO().pfnCchGetString(app, idsToolbar, std::span{szEntry});
     win32::wsprintfA(app.state.szWork, szPd, app.state.gd.fToolbar);
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
     iPass = 2;
     rgtile = app.lpui->rgtilePlanet;
     ctile = 6;
-    TextIO().pfnCchGetString(app, idsPlanettiles, szEntry);
+    TextIO().pfnCchGetString(app, idsPlanettiles, std::span{szEntry});
     while (iPass-- != 0) {
         psz = app.state.szWork;
         iCol = 0;
@@ -2386,11 +2386,11 @@ void WriteIniSettings(APPSESSION &app) {
         }
         *psz = 0;
         ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
-        TextIO().pfnCchGetString(app, idsShiptiles, szEntry);
+        TextIO().pfnCchGetString(app, idsShiptiles, std::span{szEntry});
         rgtile = app.lpui->rgtileShip;
         ctile = 7;
     }
-    TextIO().pfnCchGetString(app, idsSelection, szEntry);
+    TextIO().pfnCchGetString(app, idsSelection, std::span{szEntry});
     switch (app.state.sel.grobj) {
     default:
         break;
@@ -2408,101 +2408,101 @@ void WriteIniSettings(APPSESSION &app) {
     }
     win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsCCD), ch, static_cast<std::int16_t>(static_cast<std::int8_t>(LOBYTE(app.state.idPlayer + 66))), app.state.sel.id);
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
-    TextIO().pfnCchGetString(app, idsMessage, szEntry);
+    TextIO().pfnCchGetString(app, idsMessage, std::span{szEntry});
     win32::wsprintfA(app.state.szWork, app.state.PCTD, app.state.iMsgCur);
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
-    TextIO().pfnCchGetString(app, idsGameid, szEntry);
+    TextIO().pfnCchGetString(app, idsGameid, std::span{szEntry});
     win32::wsprintfA(app.state.szWork, "%lx", app.state.game.lid);
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
-    TextIO().pfnCchGetString(app, idsScanzoom, szEntry);
+    TextIO().pfnCchGetString(app, idsScanzoom, std::span{szEntry});
     app.state.szWork[0] = app.state.iScanZoom + '5';
     app.state.szWork[1] = 0;
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
     if (app.state.gd.fChgScanner) {
         itoa(app.lpui->grbitScan, app.state.szWork, 10);
-        TextIO().pfnCchGetString(app, idsScanmodev25, szEntry);
+        TextIO().pfnCchGetString(app, idsScanmodev25, std::span{szEntry});
         ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
         itoa(app.lpui->grbitScanShip, app.state.szWork, 10);
-        TextIO().pfnCchGetString(app, idsScanfilterv25, szEntry);
+        TextIO().pfnCchGetString(app, idsScanfilterv25, std::span{szEntry});
         ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
         itoa(app.lpui->grbitScanEShip, app.state.szWork, 10);
-        TextIO().pfnCchGetString(app, idsScanefilterv25, szEntry);
+        TextIO().pfnCchGetString(app, idsScanefilterv25, std::span{szEntry});
         ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
         itoa(app.lpui->grbitScanMines, app.state.szWork, 10);
-        TextIO().pfnCchGetString(app, idsScanmines, szEntry);
+        TextIO().pfnCchGetString(app, idsScanmines, std::span{szEntry});
         ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
         itoa(app.lpui->vpctRadarView, app.state.szWork, 10);
-        TextIO().pfnCchGetString(app, idsScanradar, szEntry);
+        TextIO().pfnCchGetString(app, idsScanradar, std::span{szEntry});
         ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
     }
     itoa(app.lpui->cMinGrafMax, app.state.szWork, 10);
-    TextIO().pfnCchGetString(app, idsMineralscale, szEntry);
+    TextIO().pfnCchGetString(app, idsMineralscale, std::span{szEntry});
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
     if (app.state.idPlayer != iplrNone) {
-        TextIO().pfnCchGetString(app, idsFiles, szSection);
-        TextIO().pfnCchGetString(app, idsWait2, szEntry);
+        TextIO().pfnCchGetString(app, idsFiles, std::span{szSection});
+        TextIO().pfnCchGetString(app, idsWait2, std::span{szEntry});
         app.state.szWork[0] = (app.lpui->uTimerId != 0) + '0';
         ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
         if (app.state.gd.fWriteTurnNum) {
             itoa(app.state.game.turn, app.state.szWork, 10);
-            TextIO().pfnCchGetString(app, idsTurn, szEntry);
+            TextIO().pfnCchGetString(app, idsTurn, std::span{szEntry});
             ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
             app.state.gd.fWriteTurnNum = 0;
         }
-        TextIO().pfnCchGetString(app, idsFile1, szEntry);
+        TextIO().pfnCchGetString(app, idsFile1, std::span{szEntry});
         win32::wsprintfA(app.state.szWork, "%s.m%d", app.state.szBase, app.state.idPlayer + 1);
         ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
     }
-    TextIO().pfnCchGetString(app, idsMisc, szSection);
+    TextIO().pfnCchGetString(app, idsMisc, std::span{szSection});
     if (app.state.gd.fChgReports) {
-        TextIO().pfnCchGetString(app, idsReportplanfld, szEntry);
+        TextIO().pfnCchGetString(app, idsReportplanfld, std::span{szEntry});
         win32::wsprintfA(app.state.szWork, app.state.PCTD, LOWORD(app.state.vrptPlanet.grbitVisible));
         ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
-        TextIO().pfnCchGetString(app, idsReportplansort, szEntry);
+        TextIO().pfnCchGetString(app, idsReportplansort, std::span{szEntry});
         i = app.state.vrptPlanet.icolSort;
         if (app.state.vrptPlanet.fAscending) {
             i |= 0x100;
         }
         win32::wsprintfA(app.state.szWork, app.state.PCTD, i);
         ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
-        TextIO().pfnCchGetString(app, idsReportfleetfld, szEntry);
+        TextIO().pfnCchGetString(app, idsReportfleetfld, std::span{szEntry});
         win32::wsprintfA(app.state.szWork, app.state.PCTD, LOWORD(app.state.vrptFleet.grbitVisible));
         ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
-        TextIO().pfnCchGetString(app, idsReportfleetsort, szEntry);
+        TextIO().pfnCchGetString(app, idsReportfleetsort, std::span{szEntry});
         i = app.state.vrptFleet.icolSort;
         if (app.state.vrptFleet.fAscending) {
             i |= 0x100;
         }
         win32::wsprintfA(app.state.szWork, app.state.PCTD, i);
         ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
-        TextIO().pfnCchGetString(app, idsReportefleetfld, szEntry);
+        TextIO().pfnCchGetString(app, idsReportefleetfld, std::span{szEntry});
         win32::wsprintfA(app.state.szWork, app.state.PCTD, LOWORD(app.state.vrptEFleet.grbitVisible));
         ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
-        TextIO().pfnCchGetString(app, idsReportefltsort, szEntry);
+        TextIO().pfnCchGetString(app, idsReportefltsort, std::span{szEntry});
         i = app.state.vrptEFleet.icolSort;
         if (app.state.vrptEFleet.fAscending) {
             i |= 0x100;
         }
         win32::wsprintfA(app.state.szWork, app.state.PCTD, i);
         ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
-        TextIO().pfnCchGetString(app, idsReportbtlfld, szEntry);
+        TextIO().pfnCchGetString(app, idsReportbtlfld, std::span{szEntry});
         win32::wsprintfA(app.state.szWork, app.state.PCTD, LOWORD(app.state.vrptBattle.grbitVisible));
         ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
-        TextIO().pfnCchGetString(app, idsReportbtlsort, szEntry);
+        TextIO().pfnCchGetString(app, idsReportbtlsort, std::span{szEntry});
         i = app.state.vrptBattle.icolSort;
         if (app.state.vrptBattle.fAscending) {
             i |= 0x100;
         }
         win32::wsprintfA(app.state.szWork, app.state.PCTD, i);
         ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
-        TextIO().pfnCchGetString(app, idsReportdefgraph, szEntry);
+        TextIO().pfnCchGetString(app, idsReportdefgraph, std::span{szEntry});
         win32::wsprintfA(app.state.szWork, app.state.PCTD, app.state.gd.iCurGraph);
         ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
     }
-    TextIO().pfnCchGetString(app, idsHistoryinfo, szEntry);
+    TextIO().pfnCchGetString(app, idsHistoryinfo, std::span{szEntry});
     win32::wsprintfA(app.state.szWork, app.state.PCTD, app.lpui->uDateInstalled);
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
-    TextIO().pfnCchGetString(app, idsVcrspeed, szEntry);
+    TextIO().pfnCchGetString(app, idsVcrspeed, std::span{szEntry});
     win32::wsprintfA(app.state.szWork, app.state.PCTD, app.lpui->viSpeedVCR);
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
     WriteIniPresets(app, szIniFile);

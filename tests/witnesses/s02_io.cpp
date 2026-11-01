@@ -14,9 +14,8 @@
 static const char *const *fixture;
 static int                loadOK = 1, checks;
 static char               szDirectory[4096], szFixture[8192];
-static int16_t            GetString(APPSESSION &, StringId id, char *out) {
-    strcpy(out, id == static_cast<StringId>(1) ? "A" : "k");
-    return 1;
+static std::int16_t GetString(APPSESSION &, StringId id, std::span<char> out) {
+    return static_cast<std::int16_t>(CchCopyUtf8(out, id == static_cast<StringId>(1) ? "A" : "k"));
 }
 static NATIVEFILE *OpenFixture(const char *, const char *) {
     NATIVEFILE *pf;

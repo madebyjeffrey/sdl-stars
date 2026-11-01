@@ -114,7 +114,7 @@ LRESULT  TbWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 if (itb == tbScannerRange) iRadar = c;
             } else {
                 rgbtn[c].iBitmap = itb;
-                TextIO().pfnCchGetString(app, static_cast<StringId>(idsNormalView + static_cast<int>(itb)), rgszTip[itb]);
+                TextIO().pfnCchGetString(app, static_cast<StringId>(idsNormalView + static_cast<int>(itb)), std::span{rgszTip[itb]});
                 rgbtn[c].iString = reinterpret_cast<INT_PTR>(rgszTip[itb]);
                 rgbtn[c].fsStyle = itb <= tbNoPlayerInfoView ? win32::BTNS_CHECKGROUP : win32::BTNS_CHECK;
                 if (itb == tbShipDesignFilter || itb == tbEnemyClassFilter) rgbtn[c].fsStyle |= win32::BTNS_DROPDOWN;
@@ -366,7 +366,7 @@ void ExecuteButton(APPSESSION &app, ToolbarButton itb, std::int16_t fDown) {
             } else {
                 rgid[c] = static_cast<std::uint32_t>((app.lpui->grbitScanMines == 0));
             }
-            TextIO().pfnCchGetString(app, static_cast<StringId>(i), &app.state.szWork[(i - idsMineFields) * 30 + 160]);
+            TextIO().pfnCchGetString(app, static_cast<StringId>(i), std::span{app.state.szWork}.subspan(static_cast<std::size_t>((i - idsMineFields) * 30 + 160), 30));
             rgszScan[c++] = &app.state.szWork[(i - idsMineFields) * 30 + 160];
         }
         rgid[c] = 0;
@@ -375,7 +375,7 @@ void ExecuteButton(APPSESSION &app, ToolbarButton itb, std::int16_t fDown) {
         rgszScan[c++] = &app.state.szWork[250];
         for (i = 0; i < 4; i++) {
             rgid[c] = static_cast<std::uint32_t>(((1 << i & app.lpui->grbitScanMines) != 0));
-            TextIO().pfnCchGetString(app, static_cast<StringId>(idsMineFields3 + i), &app.state.szWork[i * 30]);
+            TextIO().pfnCchGetString(app, static_cast<StringId>(idsMineFields3 + i), std::span{app.state.szWork}.subspan(static_cast<std::size_t>(i * 30), 30));
             rgszScan[c++] = &app.state.szWork[i * 30];
         }
         pt = PtToolbarMenu(app, itb);
@@ -401,7 +401,7 @@ void ExecuteButton(APPSESSION &app, ToolbarButton itb, std::int16_t fDown) {
         c = 0;
         for (i = idsDesigns; i <= idsDesigns2; i++) {
             rgid[c] = 0;
-            TextIO().pfnCchGetString(app, static_cast<StringId>(i), &app.state.szWork[(i - idsDesigns) * 20]);
+            TextIO().pfnCchGetString(app, static_cast<StringId>(i), std::span{app.state.szWork}.subspan(static_cast<std::size_t>((i - idsDesigns) * 20), 20));
             rgszScan[c++] = &app.state.szWork[(i - idsDesigns) * 20];
         }
         rgid[c] = 0;
@@ -456,7 +456,7 @@ void ExecuteButton(APPSESSION &app, ToolbarButton itb, std::int16_t fDown) {
         c = 0;
         for (i = idsDesigns; i <= idsDesigns2; i++) {
             rgid[c] = 0;
-            TextIO().pfnCchGetString(app, static_cast<StringId>(i), &app.state.szWork[(i - idsDesigns) * 25 + 200]);
+            TextIO().pfnCchGetString(app, static_cast<StringId>(i), std::span{app.state.szWork}.subspan(static_cast<std::size_t>((i - idsDesigns) * 25 + 200), 25));
             rgszScan[c++] = &app.state.szWork[(i - idsDesigns) * 25 + 200];
         }
         rgid[c] = 0;
@@ -465,7 +465,7 @@ void ExecuteButton(APPSESSION &app, ToolbarButton itb, std::int16_t fDown) {
         rgszScan[c++] = &app.state.szWork[300];
         for (i = 0; i < 8; i++) {
             rgid[c] = static_cast<std::uint32_t>(((1 << i & app.lpui->grbitScanEShip) != 0));
-            TextIO().pfnCchGetString(app, static_cast<StringId>(idsColony + i), &app.state.szWork[i * 25]);
+            TextIO().pfnCchGetString(app, static_cast<StringId>(idsColony + i), std::span{app.state.szWork}.subspan(static_cast<std::size_t>(i * 25), 25));
             rgszScan[c++] = &app.state.szWork[i * 25];
         }
         pt = PtToolbarMenu(app, itb);
@@ -573,7 +573,7 @@ void ShowTooltip(APPSESSION &app, StringId ids, RECT *prc) {
         }
     } else if (ids != app.lpui->vidsTooltip || win32::EqualRect(prc, &app.lpui->vrcTooltip) == 0) {
         app.lpui->vidsTooltip = ids;
-        cch = TextIO().pfnCchGetString(app, static_cast<StringId>(app.lpui->vidsTooltip), app.state.szWork);
+        cch = TextIO().pfnCchGetString(app, static_cast<StringId>(app.lpui->vidsTooltip), std::span{app.state.szWork});
         app.lpui->vrcTooltip = *prc;
         hdc = win32::GetDC(nullptr);
         hfontSav = static_cast<HFONT>(win32::SelectObject(hdc, app.lpui->rghfontArial8[0]));
@@ -679,7 +679,7 @@ LRESULT  TooltipWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         ControlIO().pfnGetClientRect(hwnd, &rc);
         win32::FrameRect(hdc, &rc, app.lpui->hbrWindowFrame);
         win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
-        cch = TextIO().pfnCchGetString(app, static_cast<StringId>(app.lpui->vidsTooltip), app.state.szWork);
+        cch = TextIO().pfnCchGetString(app, static_cast<StringId>(app.lpui->vidsTooltip), std::span{app.state.szWork});
         bkSav = win32::SetBkMode(hdc, win32::TRANSPARENT);
         win32::SetTextColor(hdc, app.lpui->crWindowText);
         win32::ExtTextOutA(hdc, 3, 3, 0, nullptr, app.state.szWork, cch, nullptr);

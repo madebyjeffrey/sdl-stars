@@ -29,7 +29,7 @@ void InitGameStuff(APPSESSION &app) {
     app.state.lpMsg = LpAlloc<std::uint8_t>(app, 0xffc8, htMsg);
     app.state.vlprgidPlanet = LpAlloc<std::uint16_t>(app, 0x800, htPerm);
     app.state.vlprgidFleet = LpAlloc<std::uint16_t>(app, 0x800, htPerm);
-    TextIO().pfnCchGetString(app, idsDefault, app.state.vrgZipProd[0].szName);
+    TextIO().pfnCchGetString(app, idsDefault, std::span{app.state.vrgZipProd[0].szName});
     app.state.vrgZipProd[0].fValid = 1;
     return;
 }

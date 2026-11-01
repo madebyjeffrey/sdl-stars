@@ -1962,7 +1962,7 @@ void DrawScannerSBar(APPSESSION &app, HDC hdc, RECT *prc, SBAR *psbar, std::int1
         } else if (grReal & 8) {
             PszGetThingName(app, !psbar ? app.state.lpThings[app.state.sel.scan.ith].idFull() : psbar->id);
         } else if (grReal == 0 && grobj == grobjOther) {
-            TextIO().pfnCchGetString(app, idsDeepSpaceWaypoint, app.state.szWork);
+            TextIO().pfnCchGetString(app, idsDeepSpaceWaypoint, std::span{app.state.szWork});
         } else {
             fDoName = 0;
         }
@@ -1997,9 +1997,9 @@ void DrawScannerSBar(APPSESSION &app, HDC hdc, RECT *prc, SBAR *psbar, std::int1
             std::strcpy(szBuf, PszGetDistance(app, pt.x, pt.y, pt2.x, pt2.y));
             for (psz = szBuf; *psz != ' '; psz++) {
             }
-            TextIO().pfnCchGetString(app, static_cast<StringId>(idsLy + (rc.right >= 350)), psz + 1);
+            TextIO().pfnCchGetString(app, static_cast<StringId>(idsLy + (rc.right >= 350)), std::span{szBuf}.subspan(static_cast<std::size_t>(psz - szBuf + 1)));
             if (!psbar || !psbar->pscan) {
-                TextIO().pfnCchGetString(app, idsFrom, psz + std::strlen(psz));
+                TextIO().pfnCchGetString(app, idsFrom, std::span{szBuf}.subspan(static_cast<std::size_t>(psz - szBuf + std::strlen(psz))));
                 std::strcat(psz + 8, PszGetLocName(app, app.state.sel.grobj, app.state.sel.id, pt2.x, pt2.y));
             }
             win32::ExtTextOutA(hdc, rcT.left + 3, rcT.top + 2, win32::ETO_CLIPPED, &rcClip, szBuf, std::strlen(szBuf), nullptr);
@@ -2516,7 +2516,7 @@ std::int16_t FHandleWayPointDrag(APPSESSION &app, POINT16 pt) {
             if (scan.grobj == grobjNone) {
                 rgpt[0] = ptLogical;
                 sbar.id = -1;
-                TextIO().pfnCchGetString(app, idsDeepSpace, szDeepSpace);
+                TextIO().pfnCchGetString(app, idsDeepSpace, std::span{szDeepSpace});
                 sbar.psz = szDeepSpace;
             } else {
                 rgpt[0] = scan.pt;
@@ -2815,7 +2815,7 @@ GoWithPartial:
         return 1;
     }
 
-    cch = TextIO().pfnCchGetString(app, idsFleet, szT);
+    cch = TextIO().pfnCchGetString(app, idsFleet, std::span{szT});
     if (strnicmp(szName, szT, cch) == 0) {
         pch = szName + 6;
     } else {
@@ -2963,7 +2963,7 @@ std::int16_t FHandleMeasuringTape(APPSESSION &app, SCAN *pscan, POINT16 pt) {
             win32::LineTo(hdc, ptNew.x, ptNew.y);
             if (scan.grobj == grobjNone) {
                 sbar.id = -1;
-                TextIO().pfnCchGetString(app, idsDeepSpace, szT);
+                TextIO().pfnCchGetString(app, idsDeepSpace, std::span{szT});
                 sbar.psz = szT;
             } else {
                 if (scan.grobj == grobjPlanet) {

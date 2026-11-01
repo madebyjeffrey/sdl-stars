@@ -10,7 +10,7 @@ void ReadIniPresets(APPSESSION &app, char *szIniFile) {
     std::int16_t i, iPass, cch, cpq;
     char    szSection[16], szEntry[16], *psz;
 
-    TextIO().pfnCchGetString(app, idsZiporders, szSection);
+    TextIO().pfnCchGetString(app, idsZiporders, std::span{szSection});
     std::fill_n(app.state.vrgZip, 4, ZIPORDER{});
     for (i = 0; i < 4; i++) {
         std::strcpy(szEntry, szSection);
@@ -88,7 +88,7 @@ void ReadIniPresets(APPSESSION &app, char *szIniFile) {
             }
         }
     }
-    TextIO().pfnCchGetString(app, idsDefault, app.state.vrgZipProd[0].szName);
+    TextIO().pfnCchGetString(app, idsDefault, std::span{app.state.vrgZipProd[0].szName});
     app.state.vrgZipProd[0].fValid = 1;
     return;
 }
@@ -98,7 +98,7 @@ void WriteIniPresets(APPSESSION &app, char *szIniFile) {
     char    szSection[16], szEntry[16], *psz;
 
     if (app.state.gd.fChgZipOrd) {
-        TextIO().pfnCchGetString(app, idsZiporders, szSection);
+        TextIO().pfnCchGetString(app, idsZiporders, std::span{szSection});
         for (i = 0; i < 4; i++) {
             std::strcpy(szEntry, szSection);
             psz = &szEntry[std::strlen(szEntry)];
@@ -121,7 +121,7 @@ void WriteIniPresets(APPSESSION &app, char *szIniFile) {
     }
     if (app.state.gd.fChgZipProd) {
         for (i = 0; i < 5; i++) {
-            TextIO().pfnCchGetString(app, idsZiporders, szSection);
+            TextIO().pfnCchGetString(app, idsZiporders, std::span{szSection});
             std::strcpy(szEntry, szSection);
             psz = &szEntry[std::strlen(szEntry)];
             *psz++ = 'P';

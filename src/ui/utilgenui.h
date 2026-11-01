@@ -15,7 +15,11 @@ void ChopTrailingSpaces(const char *pBeg, const char **ppEnd);
 void RcCtrTextOut(APPSESSION &app, HDC hdc, RECT *prc, const char *psz, std::int16_t cLen);
 // The mutable overload preserves the legacy cLen == -1 output-buffer request.
 void RightTextOut(APPSESSION &app, HDC hdc, std::int16_t x, std::int16_t y, const char *psz, std::int16_t cLen, std::int16_t dxErase);
-void RightTextOut(APPSESSION &app, HDC hdc, std::int16_t x, std::int16_t y, char *psz, std::int16_t cLen, std::int16_t dxErase);
+void RightTextOut(APPSESSION &app, HDC hdc, std::int16_t x, std::int16_t y, std::span<char> psz, std::int16_t cLen, std::int16_t dxErase);
+template<std::size_t N>
+void RightTextOut(APPSESSION &app, HDC hdc, std::int16_t x, std::int16_t y, char (&psz)[N], std::int16_t cLen, std::int16_t dxErase) {
+    RightTextOut(app, hdc, x, y, std::span{psz}, cLen, dxErase);
+}
 void DiaganolTextOut(APPSESSION &app, HDC hdc, RECT *prc, const char *psz, std::int16_t cLen);
 void ExpandRc(RECT *prc, std::int16_t dx, std::int16_t dy);
 void OffsetRc(RECT *prc, std::int16_t dx, std::int16_t dy);

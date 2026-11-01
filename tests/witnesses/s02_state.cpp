@@ -14,9 +14,8 @@ static char       *memory[9], disk[9][256], *pszRecentBacking;
 static const char *inputs[9], *startupInput;
 static int         attempts, failAt, checks;
 static int16_t     under[9];
-static int16_t     GetString(APPSESSION &, StringId id, char *out) {
-    strcpy(out, id == idsFile1 ? "File1" : id == idsFiles ? "Files" : "stars.ini");
-    return (int16_t)strlen(out);
+static std::int16_t GetString(APPSESSION &, StringId id, std::span<char> out) {
+    return static_cast<std::int16_t>(CchCopyUtf8(out, id == idsFile1 ? "File1" : id == idsFiles ? "Files" : "stars.ini"));
 }
 static DWORD ReadString(LPCSTR, LPCSTR key, LPCSTR, LPSTR out, DWORD cap, LPCSTR) {
     const char *s = inputs[key[4] - '1'];

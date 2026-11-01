@@ -953,11 +953,12 @@ std::int16_t FDuplicateLibraryRace(APPSESSION &app, HWND hwnd, const char *pszNa
     return 1;
 }
 
-static void GetLibraryFileFilter(APPSESSION &app, StringId ids, char *pszFilter) {
+static void GetLibraryFileFilter(APPSESSION &app, StringId ids, std::span<char> pszFilter) {
     char *pch;
 
+    if (pszFilter.empty()) return;
     TextIO().pfnCchGetString(app, ids, pszFilter);
-    for (pch = pszFilter; *pch; pch++) if (*pch == '|') *pch = 0;
+    for (pch = pszFilter.data(); *pch; pch++) if (*pch == '|') *pch = 0;
 }
 
 std::int16_t FExportLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName, const char *pszTarget) {
@@ -1667,7 +1668,7 @@ std::int16_t FExportLibraryGame(APPSESSION &app, HWND hwnd, const char *pszName,
 
     if (!pszTarget) {
         if (!std::getenv("STARS_CLIENT_EXPORT_GAME")) {
-            TextIO().pfnCchGetString(app, idsLibraryExportZipPrompt, szMessage);
+            TextIO().pfnCchGetString(app, idsLibraryExportZipPrompt, std::span{szMessage});
             iChoice = CompatChoiceIO().pfnMessageBoxA(hwnd, szMessage,
                                  TextIO().pfnCompressed(app, idsLibraryExportGameTitle), win32::MB_YESNOCANCEL | win32::MB_ICONQUESTION | win32::MB_TASKMODAL);
             if (iChoice == IDCANCEL) return 0;
@@ -1996,7 +1997,7 @@ static std::int16_t FChooseLibraryImportFile(APPSESSION &app, HWND hwnd, char *p
 
     ofn = {};
     std::fill_n(pszChosen, cchChosen, 0);
-    TextIO().pfnCchGetString(app, idsStarsGameFilesMHstRStars, szFilter);
+    TextIO().pfnCchGetString(app, idsStarsGameFilesMHstRStars, std::span{szFilter});
     pch = std::strstr(szFilter, "*.M*;");
     if (pch) {
         std::memmove(pch + 11, pch, std::strlen(pch) + 1);
@@ -2330,9 +2331,9 @@ std::int16_t FDeleteLibraryGameRecentPaths(APPSESSION &app, const char *pszDirec
         }
         while (j < 9) rgpszRecent[j++][0] = 0;
     }
-    TextIO().pfnCchGetString(app, idsStarsIni, szIniFile);
-    TextIO().pfnCchGetString(app, idsFiles, szSection);
-    TextIO().pfnCchGetString(app, idsFile1, szEntry);
+    TextIO().pfnCchGetString(app, idsStarsIni, std::span{szIniFile});
+    TextIO().pfnCchGetString(app, idsFiles, std::span{szSection});
+    TextIO().pfnCchGetString(app, idsFile1, std::span{szEntry});
     for (i = 0; i < 9; i++) {
         szEntry[std::strlen(szEntry) - 1] = static_cast<char>(('1' + i));
         std::strcpy(app.lpui->vrgszMRU + 256 * i, rgpszRecent[i]);

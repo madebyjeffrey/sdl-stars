@@ -172,7 +172,7 @@ INT_PTR  ProductionDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             app.lpui->GlobalPD.grPopup = grPopupString;
             app.lpui->GlobalPD.dxOut = 180;
             app.lpui->GlobalPD.psz = app.lpui->szPopupBuffer;
-            TextIO().pfnCchGetString(app, idsRightClickBlueDiamondApplyProductionTemplate, app.lpui->szPopupBuffer);
+            TextIO().pfnCchGetString(app, idsRightClickBlueDiamondApplyProductionTemplate, std::span{app.lpui->szPopupBuffer});
             Popup(app, hwnd, pt.x, pt.y);
             break;
         }
@@ -542,7 +542,7 @@ void DrawProductionDlg(APPSESSION &app, HWND hwnd, HDC hdc, RECT *prc, std::int1
             ProductionIO().pfnQuote(app, &app.state.sel.pl, &prod, reinterpret_cast<std::uint32_t *>(rgCost), app.state.idPlayer, 0);
             rc.bottom = app.lpui->yTopFutureTech + 4;
             win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-            c = TextIO().pfnCchGetString(app, idsRequiredMinerals, app.state.szWork);
+            c = TextIO().pfnCchGetString(app, idsRequiredMinerals, std::span{app.state.szWork});
             win32::TextOutA(hdc, rc.left, rc.bottom, app.state.szWork, c);
             rc.left += 20;
             rc.right -= 20;
@@ -580,7 +580,7 @@ void DrawProductionDlg(APPSESSION &app, HWND hwnd, HDC hdc, RECT *prc, std::int1
     DrawDiamond(app, hdc, &rc, app.lpui->hbrBBlue);
     app.lpui->rcProdDiamond = rc;
     win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-    c = TextIO().pfnCchGetString(app, idsApplyDefineProductionTemplate, app.state.szWork);
+    c = TextIO().pfnCchGetString(app, idsApplyDefineProductionTemplate, std::span{app.state.szWork});
     win32::TextOutA(hdc, rc.right + 4, rc.top, app.state.szWork, c);
     if (fCreatedDC) {
         win32::ReleaseDC(hwnd, hdc);
@@ -704,11 +704,11 @@ INT_PTR  ZipProdDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         _Draw3dFrame(app, hdc, &rcGBox, -1);
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
         win32::SetBkColor(hdc, app.lpui->crButtonFace);
-        cch = TextIO().pfnCchGetString(app, idsCustomOrders, app.state.szWork);
+        cch = TextIO().pfnCchGetString(app, idsCustomOrders, std::span{app.state.szWork});
         win32::TextOutA(hdc, rcGBox.left + 8, rcGBox.top - (app.state.dyArial8 >> 1), app.state.szWork, cch);
         rcGBox.top = rcGBox.bottom + 8;
         if (app.state.vrgZipProd[app.lpui->iResTechNow].fValid) {
-            cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsContributeResearch + app.state.vrgZipProd[app.lpui->iResTechNow].fNoResearch), app.state.szWork);
+            cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsContributeResearch + app.state.vrgZipProd[app.lpui->iResTechNow].fNoResearch), std::span{app.state.szWork});
             win32::TextOutA(hdc, rcGBox.left, app.lpui->vyZPDStatic, app.state.szWork, cch);
         }
         win32::EndPaint(hwnd, &ps);
@@ -816,9 +816,9 @@ void FillZipProdLB(APPSESSION &app, HWND hwndDlg, ZIPPRODQ *pzpq) {
     if (!pzpq->fValid || pzpq->cpq == 0) {
         ControlIO().pfnSendMessage(hwndLB, win32::LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(TextIO().pfnCompressed(app, idsAutoBuildOrders)));
     } else {
-        TextIO().pfnCchGetString(app, idsSD2, szFormat);
+        TextIO().pfnCchGetString(app, idsSD2, std::span{szFormat});
         for (i = 0; i < pzpq->cpq; i++) {
-            TextIO().pfnCchGetString(app, static_cast<StringId>(idsMines + pzpq->rgpq[i].mdIdle()), szAuto);
+            TextIO().pfnCchGetString(app, static_cast<StringId>(idsMines + pzpq->rgpq[i].mdIdle()), std::span{szAuto});
             if (pzpq->rgpq[i].cQuan() == 1 || pzpq->rgpq[i].mdIdle() == iobjAlchemy) {
                 std::strcpy(app.state.szWork, szAuto);
             } else {

@@ -85,7 +85,7 @@ INT_PTR  ZipOrderDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         _Draw3dFrame(app, hdc, &rcGBox, -1);
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
         win32::SetBkColor(hdc, app.lpui->crButtonFace);
-        cch = TextIO().pfnCchGetString(app, idsCustomOrders, app.state.szWork);
+        cch = TextIO().pfnCchGetString(app, idsCustomOrders, std::span{app.state.szWork});
         win32::TextOutA(hdc, rcGBox.left + 8, rcGBox.top - (app.state.dyArial8 >> 1), app.state.szWork, cch);
         rcGBox.top = rcGBox.bottom + 8;
         if (app.state.vrgZip[app.lpui->iResTechNow].fValid) {
@@ -99,7 +99,7 @@ INT_PTR  ZipOrderDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 rcGBox.top += app.state.dyArial8;
             }
         } else {
-            cch = TextIO().pfnCchGetString(app, idsEmptyCustomSlot, app.state.szWork);
+            cch = TextIO().pfnCchGetString(app, idsEmptyCustomSlot, std::span{app.state.szWork});
             win32::TextOutA(hdc, 12, rcGBox.top, app.state.szWork, cch);
         }
         win32::EndPaint(hwnd, &ps);
@@ -367,7 +367,7 @@ void FormatTransportPresetAction(APPSESSION &app, std::int16_t i) {
     std::int16_t cch;
     XferActionType iAction;
                 iAction = static_cast<XferActionType>(app.state.vrgZip[app.lpui->iResTechNow].txp.rgia[i].iAction());
-                cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsAction + static_cast<int>(iAction)), app.state.szWork);
+                cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsAction + static_cast<int>(iAction)), std::span{app.state.szWork});
                 if (app.state.szWork[cch - 1] == '.') {
                     win32::wsprintfA(std::span{app.state.szWork}.subspan(static_cast<std::size_t>(cch - 3)), " %dkT", app.state.vrgZip[app.lpui->iResTechNow].txp.rgia[i].cQuan());
                 }

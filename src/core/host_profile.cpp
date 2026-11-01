@@ -22,8 +22,8 @@ std::int16_t FIniValue(APPSESSION &app, const char *pszText, StringId idsSection
     std::size_t      cch;
     std::int16_t     fInSection;
 
-    TextIO().pfnCchGetString(app, idsSection, szSection);
-    TextIO().pfnCchGetString(app, idsKey, szKey);
+    TextIO().pfnCchGetString(app, idsSection, std::span{szSection});
+    TextIO().pfnCchGetString(app, idsKey, std::span{szKey});
     fInSection = 0;
     for (pch = pszText; *pch != 0; pch = *pchEnd != 0 ? pchEnd + 1 : pchEnd) {
         pchEnd = std::strchr(pch, '\n');

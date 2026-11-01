@@ -12,9 +12,8 @@
 static const char *transport[4], *production[5];
 static char        savedTransport[4][80], savedProduction[5][80];
 static int         writes, checks;
-static int16_t     GetString(APPSESSION &, StringId id, char *out) {
-    strcpy(out, id == idsDefault ? "Default" : "ZipOrders");
-    return (int16_t)strlen(out);
+static std::int16_t GetString(APPSESSION &, StringId id, std::span<char> out) {
+    return static_cast<std::int16_t>(CchCopyUtf8(out, id == idsDefault ? "Default" : "ZipOrders"));
 }
 static DWORD ReadString(LPCSTR section, LPCSTR key, LPCSTR fallback, LPSTR out, DWORD cap, LPCSTR file) {
     const char *s = key[9] == 'P' ? production[key[10] - '1'] : transport[key[9] - '1'];

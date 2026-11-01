@@ -192,9 +192,9 @@ void RcCtrTextOut(APPSESSION &app, HDC hdc, RECT *prc, const char *psz, std::int
     return;
 }
 
-void RightTextOut(APPSESSION &app, HDC hdc, std::int16_t x, std::int16_t y, char *psz, std::int16_t cLen, std::int16_t dxErase) {
+void RightTextOut(APPSESSION &app, HDC hdc, std::int16_t x, std::int16_t y, std::span<char> psz, std::int16_t cLen, std::int16_t dxErase) {
     if (cLen == -1) cLen = TextIO().pfnCchGetString(app, idsNone2, psz);
-    RightTextOut(app, hdc, x, y, static_cast<const char *>(psz), cLen, dxErase);
+    RightTextOut(app, hdc, x, y, psz.data(), cLen, dxErase);
 }
 
 void RightTextOut(APPSESSION &app, HDC hdc, std::int16_t x, std::int16_t y, const char *psz, std::int16_t cLen, std::int16_t dxErase) {
@@ -203,7 +203,7 @@ void RightTextOut(APPSESSION &app, HDC hdc, std::int16_t x, std::int16_t y, cons
 
     if (cLen == -1) {
         char szNone[sizeof(app.state.szLastStrGet)];
-        cLen = TextIO().pfnCchGetString(app, idsNone2, szNone);
+        cLen = TextIO().pfnCchGetString(app, idsNone2, std::span{szNone});
         RightTextOut(app, hdc, x, y, static_cast<const char *>(szNone), cLen, dxErase);
         return;
     } else if (cLen == 0) {

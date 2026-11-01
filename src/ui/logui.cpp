@@ -40,7 +40,7 @@ std::int16_t FWriteTutorialMFile(APPSESSION &app, std::int16_t iTurn) {
                 app.state.vlpMemStream += 2 + HdvFromPrefix(app.state.vlpMemStream).cb();
             } while (HdvFromPrefix(app.state.vlpMemStream).rt() != rtBOF);
         }
-        cch = TextIO().pfnCchGetString(app, idsTutorial, szT);
+        cch = TextIO().pfnCchGetString(app, idsTutorial, std::span{szT});
         std::strcpy(&szT[cch], iTurn == 37 ? ".hst" : ".m1");
         RecordIO().pfnStreamOpen(app, szT, mdCreate);
         do {

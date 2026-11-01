@@ -55,7 +55,7 @@ void NewGameWizard(APPSESSION &app, HWND hwnd, std::int16_t fReadOnly) {
     GAME    gameT;
 
     iStepMaxSoFar = 0;
-    TextIO().pfnCchGetString(app, idsGameXy, szFile);
+    TextIO().pfnCchGetString(app, idsGameXy, std::span{szFile});
     app.lpui->vrgrcRCW = rgrcStack;
     app.lpui->iPanelActive = rwPageNone;
     app.state.fRCWReadOnly = fReadOnly;
@@ -85,7 +85,7 @@ void NewGameWizard(APPSESSION &app, HWND hwnd, std::int16_t fReadOnly) {
         app.state.game.rgvc[6] = 9;
         app.state.game.rgvc[7] = 7;
         app.state.game.rgvc[8] = 1;
-        TextIO().pfnCchGetString(app, static_cast<StringId>(idsShootingFishBarrel + 5 * lvlAi + app.state.game.mdSize), app.state.game.szName);
+        TextIO().pfnCchGetString(app, static_cast<StringId>(idsShootingFishBarrel + 5 * lvlAi + app.state.game.mdSize), std::span{app.state.game.szName});
         goto Step1;
     }
     lvlAi = lvlAiStandard;
@@ -159,7 +159,7 @@ Finish:
                 c = app.state.vrgplrTypeNew[i] >> 2;
                 app.state.rgplr[i] = vrgplrDef[c];
             }
-            TextIO().pfnCchGetString(app, static_cast<StringId>(idsHumanoid + c), app.state.rgplr[i].szName);
+            TextIO().pfnCchGetString(app, static_cast<StringId>(idsHumanoid + c), std::span{app.state.rgplr[i].szName});
             win32::wsprintfA(app.state.rgplr[i].szNames, "%ss", app.state.rgplr[i].szName);
             break;
         case 2:
@@ -187,7 +187,7 @@ Finish:
             app.state.rgplr[i].fHacker = 1;
         }
         if (app.state.rgplr[i].szName[0] == 0) {
-            TextIO().pfnCchGetString(app, static_cast<StringId>(idsBerserker + RandomIO().pfnRandom(app, 24)), app.state.rgplr[i].szName);
+            TextIO().pfnCchGetString(app, static_cast<StringId>(idsBerserker + RandomIO().pfnRandom(app, 24)), std::span{app.state.rgplr[i].szName});
         }
         if (app.state.rgplr[i].szNames[0] == 0) {
             win32::wsprintfA(app.state.rgplr[i].szNames, "%ss", app.state.rgplr[i].szName);
@@ -208,7 +208,7 @@ Finish:
                     c = 0;
                 }
             }
-            TextIO().pfnCchGetString(app, static_cast<StringId>(idsBerserker + c), app.state.rgplr[i].szName);
+            TextIO().pfnCchGetString(app, static_cast<StringId>(idsBerserker + c), std::span{app.state.rgplr[i].szName});
             std::strcpy(app.state.rgplr[i].szNames, app.state.rgplr[i].szName);
             std::strcat(app.state.rgplr[i].szNames, "s");
         }
@@ -354,7 +354,7 @@ INT_PTR  NewGameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         _Draw3dFrame(app, hdc, &rcGBox, -1);
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
         win32::SetBkColor(hdc, app.lpui->crButtonFace);
-        c = TextIO().pfnCchGetString(app, idsUniverseSize, app.state.szWork);
+        c = TextIO().pfnCchGetString(app, idsUniverseSize, std::span{app.state.szWork});
         win32::TextOutA(hdc, rcGBox.left + 8, rcGBox.top - (app.state.dyArial8 >> 1), app.state.szWork, c);
         win32::GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_SPARSE), &rcGBox);
         win32::ScreenToClient(hwnd, reinterpret_cast<POINT *>(&rcGBox));
@@ -366,7 +366,7 @@ INT_PTR  NewGameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         _Draw3dFrame(app, hdc, &rcGBox, -1);
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
         win32::SetBkColor(hdc, app.lpui->crButtonFace);
-        c = TextIO().pfnCchGetString(app, idsDensity, app.state.szWork);
+        c = TextIO().pfnCchGetString(app, idsDensity, std::span{app.state.szWork});
         win32::TextOutA(hdc, rcGBox.left + 8, rcGBox.top - (app.state.dyArial8 >> 1), app.state.szWork, c);
         win32::GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_CLOSE), &rcGBox);
         win32::ScreenToClient(hwnd, reinterpret_cast<POINT *>(&rcGBox));
@@ -378,7 +378,7 @@ INT_PTR  NewGameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         _Draw3dFrame(app, hdc, &rcGBox, -1);
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
         win32::SetBkColor(hdc, app.lpui->crButtonFace);
-        c = TextIO().pfnCchGetString(app, idsPlayerPositions, app.state.szWork);
+        c = TextIO().pfnCchGetString(app, idsPlayerPositions, std::span{app.state.szWork});
         win32::TextOutA(hdc, rcGBox.left + 8, rcGBox.top - (app.state.dyArial8 >> 1), app.state.szWork, c);
         win32::EndPaint(hwnd, &ps);
         return 1;
@@ -577,7 +577,7 @@ INT_PTR  NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         if (app.lpui->iPopMenuSel != -1) {
             if (app.lpui->iPopMenuSel == 0) {
                 app.state.vplr = vrgplrDef[0];
-                TextIO().pfnCchGetString(app, idsHumanoid, app.state.vplr.szName);
+                TextIO().pfnCchGetString(app, idsHumanoid, std::span{app.state.vplr.szName});
                 win32::wsprintfA(app.state.vplr.szNames, "%ss", app.state.vplr.szName);
                 szLibraryRace[0] = 0;
                 app.state.szRacePass[0] = 0;
@@ -610,7 +610,7 @@ INT_PTR  NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             } else if (app.lpui->iPopMenuSel == 2) {
                 if ((iCurVal & 3) == 1) {
                     app.state.vplr = vrgplrDef[iCurVal >> 2];
-                    TextIO().pfnCchGetString(app, static_cast<StringId>((iCurVal >> 2) + 0x567), app.state.vplr.szName);
+                    TextIO().pfnCchGetString(app, static_cast<StringId>((iCurVal >> 2) + 0x567), std::span{app.state.vplr.szName});
                     win32::wsprintfA(app.state.vplr.szNames, "%ss", app.state.vplr.szName);
                 } else {
                     app.state.vplr = app.lpui->vrgplrNew[iCurVal >> 2];
@@ -729,20 +729,20 @@ void DrawNewGame2(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
                 win32::SetTextColor(hdc, 127);
                 goto DisplayName;
             }
-            TextIO().pfnCchGetString(app, idsUnknownPlayer, app.state.szWork);
+            TextIO().pfnCchGetString(app, idsUnknownPlayer, std::span{app.state.szWork});
             goto DisplayName;
         }
         switch (app.state.vrgplrTypeNew[i] & 3) {
         case 0:
-            TextIO().pfnCchGetString(app, idsPlayer2, app.state.szWork);
+            TextIO().pfnCchGetString(app, idsPlayer2, std::span{app.state.szWork});
             break;
         case 1:
             if (iPlr >= 6) {
                 ids = iPlr == 6 ? (app.state.fRCWReadOnly ? idsUnknownPlayer : idsRandom) : idsExpansionPlayer;
-                TextIO().pfnCchGetString(app, ids, app.state.szWork);
+                TextIO().pfnCchGetString(app, ids, std::span{app.state.szWork});
                 break;
             }
-            TextIO().pfnCchGetString(app, idsS, szT);
+            TextIO().pfnCchGetString(app, idsS, std::span{szT});
             win32::wsprintfA(app.state.szWork, szT, TextIO().pfnCompressed(app, static_cast<StringId>(idsHumanoid + iPlr)));
             break;
         case 2:
@@ -897,7 +897,7 @@ void DrawNewGame3(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
             xLeft = rcCBox.left;
             yTop = rcCBox.bottom + 6 + static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2;
         }
-        cch = TextIO().pfnCchGetString(app, ids, app.state.szWork);
+        cch = TextIO().pfnCchGetString(app, ids, std::span{app.state.szWork});
         ids = static_cast<StringId>(ids + 1);
         if (iDraw == -1) {
             win32::TextOutA(hdc, xLeft, yTop, app.state.szWork, cch);
@@ -930,7 +930,7 @@ void DrawNewGame3(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
                 DrawBtn(app, hdc, app.lpui->vrgrcRCW + (irc + 1), 0xa1 | bt, 0, nullptr);
             }
             xLeft = app.lpui->vrgrcRCW[irc].right + 4;
-            cch = TextIO().pfnCchGetString(app, ids, app.state.szWork);
+            cch = TextIO().pfnCchGetString(app, ids, std::span{app.state.szWork});
             if (iDraw == -1) {
                 win32::TextOutA(hdc, xLeft, yTop, app.state.szWork, cch);
             }
@@ -987,7 +987,7 @@ void SetNGWTitle(APPSESSION &app, HWND hwnd, std::int16_t iStep) {
     std::int16_t cch;
     char    szBuf[50];
 
-    cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsAdvancedNewGameWizardStepD3 + app.state.fRCWReadOnly), szBuf);
+    cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsAdvancedNewGameWizardStepD3 + app.state.fRCWReadOnly), std::span{szBuf});
     cch = win32::wsprintfA(app.state.szWork, szBuf, iStep);
     ControlIO().pfnSetWindowText(hwnd, app.state.szWork);
     return;

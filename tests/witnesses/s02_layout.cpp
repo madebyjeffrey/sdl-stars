@@ -9,9 +9,8 @@
 #include "text_io.h"
 #include "win.h"
 static const char *input;
-static int16_t     GetString(APPSESSION &, StringId, char *out) {
-    strcpy(out, "key");
-    return 3;
+static std::int16_t GetString(APPSESSION &, StringId, std::span<char> out) {
+    return static_cast<std::int16_t>(CchCopyUtf8(out, "key"));
 }
 static DWORD ReadString(LPCSTR, LPCSTR, LPCSTR, LPSTR out, DWORD cap, LPCSTR) {
     size_t n = strlen(input);

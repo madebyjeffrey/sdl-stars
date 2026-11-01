@@ -135,7 +135,7 @@ void PickANameAndBmp(APPSESSION &app, SHDEF *pshdef, StringId ids, std::int16_t 
     }
     pshdef->hul.ibmp = ibmpStart + i;
     for (i = 0; i < 20; i++) {
-        TextIO().pfnCchGetString(app, static_cast<StringId>(RandomIO().pfnRandom(app, cids) + ids), pshdef->hul.szClass);
+        TextIO().pfnCchGetString(app, static_cast<StringId>(RandomIO().pfnRandom(app, cids) + ids), std::span{pshdef->hul.szClass});
         if (pshdef->ishdef >= 16) {
             for (ishdef = 0; ishdef < 10 && (app.state.rglpshdefSB[app.state.idPlayer][ishdef].fFree || app.state.rglpshdefSB[app.state.idPlayer][ishdef].hul.ihuldef != pshdef->hul.ihuldef ||
                                              std::strcmp(pshdef->hul.szClass, app.state.rglpshdefSB[app.state.idPlayer][ishdef].hul.szClass) != 0);

@@ -128,9 +128,8 @@ static const char *TestPszFormatIds(APPSESSION &, int id, void *p) {
     (void)p;
     return "amount";
 }
-static int TestCchGetString(APPSESSION &app, int id, char *out) {
-    strcpy(out, TestPszGetCompressedString(app, id));
-    return (int)strlen(out);
+static std::int16_t TestCchGetString(APPSESSION &app, StringId id, std::span<char> out) {
+    return static_cast<std::int16_t>(CchCopyUtf8(out, TestPszGetCompressedString(app, static_cast<int>(id))));
 }
 static void TestAlertSz(APPSESSION &, const char *s, int flags) {
     (void)s;
@@ -246,7 +245,7 @@ int main(void) {
     TEXTIO            ioText;
     ioText.pfnCompressed = WITNESSADAPTER<&TestPszGetCompressedString, decltype(ioText.pfnCompressed)>::Call;
     ioText.pfnFormat = WITNESSADAPTER<&TestPszFormatIds, decltype(ioText.pfnFormat)>::Call;
-    ioText.pfnCchGetString = WITNESSADAPTER<&TestCchGetString, decltype(ioText.pfnCchGetString)>::Call;
+    ioText.pfnCchGetString = TestCchGetString;
     ioText.pfnPlayerName = WITNESSADAPTER<&TestPszPlayerName, decltype(ioText.pfnPlayerName)>::Call;
     TEXTIOSCOPE scopeText(ioText);
     ALERTIO     ioAlert;

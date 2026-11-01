@@ -26,7 +26,7 @@ char   *PszGetCompressedPlanet(APPSESSION &app, std::int16_t id);
 void    OutputFileString(const char *szFile, const char *sz);
 void    StarsCopyFile(APPSESSION &app, const char *szSrc, const char *szDst);
 std::int16_t AlertSz(APPSESSION &app, const char *sz, std::int16_t mbType);
-std::int16_t CchGetString(APPSESSION &app, StringId ids, char *psz);
+std::int16_t CchGetString(APPSESSION &app, StringId ids, std::span<char> psz);
 char   *PszFromInt(APPSESSION &app, std::int16_t i, std::int16_t *pcch);
 char   *PszFromLong(APPSESSION &app, std::int32_t l, std::int16_t *pcch);
 char   *PszFromLongK(APPSESSION &app, std::int32_t l, std::int16_t *pcch);

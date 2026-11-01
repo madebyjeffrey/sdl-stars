@@ -488,12 +488,12 @@ INT_PTR  ScoreXDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         if (app.state.gd.fScoreVictory != 2 || HIWORD(lParam) <= 2 || HIWORD(lParam) >= static_cast<std::uint16_t>((app.lpui->dyArial10 + app.state.dyArial8 - 2))) {
             return 0;
         }
-        cchHistory = TextIO().pfnCchGetString(app, idsHistory, szT);
+        cchHistory = TextIO().pfnCchGetString(app, idsHistory, std::span{szT});
         for (i = 0; i < 8; i++) {
             std::strcpy(&app.state.szWork[i * 40], szT);
             psz = &app.state.szWork[i * 40 + cchHistory];
-            cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsPlanets + i), psz);
-            psz[cch - 1] = 0;
+            cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsPlanets + i), std::span{app.state.szWork}.subspan(static_cast<std::size_t>(psz - app.state.szWork)));
+            if (cch > 0) psz[CchUtf8Prefix(std::string_view(psz, cch), cch - 1)] = 0;
             rgid[c] = static_cast<std::uint32_t>((app.state.gd.iCurGraph == i));
             rgszScan[c++] = &app.state.szWork[i * 40];
         }
@@ -677,7 +677,7 @@ void DrawVCReport(APPSESSION &app, HDC hdc) {
                     yTop += app.state.dyArial8 / 2;
                 }
             }
-            cch = TextIO().pfnCchGetString(app, ids, app.state.szWork);
+            cch = TextIO().pfnCchGetString(app, ids, std::span{app.state.szWork});
             ids = static_cast<StringId>(ids + 1);
             if (iPass == 1) {
                 win32::SetTextColor(hdc, i >= 7 || GetVCCheck(&app.state.game, static_cast<VictoryCondition>(cCur)) != 0 ? 0 : 8355711);
@@ -708,7 +708,7 @@ void DrawVCReport(APPSESSION &app, HDC hdc) {
                 if (i != 2 && i != 3) {
                     xLeft += 4;
                 }
-                cch = TextIO().pfnCchGetString(app, idsT, app.state.szWork);
+                cch = TextIO().pfnCchGetString(app, idsT, std::span{app.state.szWork});
                 if (iPass == 1) {
                     win32::TextOutA(hdc, xLeft, yTop, app.state.szWork, cch);
                 }
@@ -776,7 +776,7 @@ void DrawScoreReport(APPSESSION &app, HDC hdc) {
     win32::SetTextColor(hdc, 0);
     for (i = 0; i < 9; i++) {
         win32::PatBlt(hdc, app.lpui->vdxScoreX + 4, yTop - app.state.dyArial8 / 4, app.state.game.cPlayer * dxDig * 5, 1, win32::PATCOPY);
-        cch = TextIO().pfnCchGetString(app, ids, app.state.szWork);
+        cch = TextIO().pfnCchGetString(app, ids, std::span{app.state.szWork});
         ids = static_cast<StringId>(ids + 1);
         win32::SetTextColor(hdc, 0);
         RightTextOut(app, hdc, app.lpui->vdxScoreX, yTop, app.state.szWork, cch, 0);
@@ -869,10 +869,10 @@ void DrawHistoryReport(APPSESSION &app, HDC hdc) {
     rc = rcChart;
     rc.top = app.state.dyArial8 / 2;
     rc.bottom = rc.top + app.lpui->dyArial10;
-    cch = TextIO().pfnCchGetString(app, idsHistory, szT);
+    cch = TextIO().pfnCchGetString(app, idsHistory, std::span{szT});
     psz = &szT[cch];
-    cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsPlanets + app.state.gd.iCurGraph), psz);
-    psz[cch - 1] = 0;
+    cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsPlanets + app.state.gd.iCurGraph), std::span{szT}.subspan(static_cast<std::size_t>(psz - szT)));
+    if (cch > 0) psz[CchUtf8Prefix(std::string_view(psz, cch), cch - 1)] = 0;
     win32::SelectObject(hdc, app.lpui->rghfontArial10[1]);
     win32::SetTextColor(hdc, app.lpui->crButtonText);
     RcCtrTextOut(app, hdc, &rc, szT, 0);
@@ -1030,7 +1030,7 @@ std::int32_t LFetchScoreXVal(SCOREX *lpsx, std::int16_t iVal) {
     }
 }
 
-std::int16_t DxReportColHdr(APPSESSION &app, ReportType irpt, std::int16_t iCol, char *psz, HDC hdc) {
+std::int16_t DxReportColHdr(APPSESSION &app, ReportType irpt, std::int16_t iCol, std::span<char> psz, HDC hdc) {
     char     szT[40];
     StringId ids;
     std::int16_t  dxDigit;
@@ -1038,15 +1038,16 @@ std::int16_t DxReportColHdr(APPSESSION &app, ReportType irpt, std::int16_t iCol,
     std::int16_t  cch;
     std::int16_t  dx2;
 
+    if (psz.empty()) return 0;
     szT[0] = '8';
     dxDigit = LOWORD(GetTextExtent(hdc, szT, 1));
     switch (irpt) {
     default:
-        *psz = 0;
+        psz[0] = 0;
         return 0;
     case rptPlanets:
         cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsPlanetName + iCol), psz);
-        dx = LOWORD(GetTextExtent(hdc, psz, cch));
+        dx = LOWORD(GetTextExtent(hdc, psz.data(), cch));
         if (static_cast<std::uint16_t>(iCol) > colPlanetRoutingDest)
             break;
         switch (iCol) {
@@ -1064,7 +1065,7 @@ std::int16_t DxReportColHdr(APPSESSION &app, ReportType irpt, std::int16_t iCol,
         case colPlanetValue:
             ids = idsN100100;
         ChkAltString:
-            cch = TextIO().pfnCchGetString(app, ids, szT);
+            cch = TextIO().pfnCchGetString(app, ids, std::span{szT});
             dx2 = LOWORD(GetTextExtent(hdc, szT, cch));
         DxChk:
             if (dx2 <= dx)
@@ -1093,7 +1094,7 @@ std::int16_t DxReportColHdr(APPSESSION &app, ReportType irpt, std::int16_t iCol,
         break;
     case rptFleets:
         cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsFleetName + iCol), psz);
-        dx = LOWORD(GetTextExtent(hdc, psz, cch));
+        dx = LOWORD(GetTextExtent(hdc, psz.data(), cch));
         if (static_cast<std::uint16_t>(iCol) > colFleetMass)
             break;
         switch (iCol) {
@@ -1129,7 +1130,7 @@ std::int16_t DxReportColHdr(APPSESSION &app, ReportType irpt, std::int16_t iCol,
         break;
     case rptEnemyFleets:
         cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsFleetName2 + iCol), psz);
-        dx = LOWORD(GetTextExtent(hdc, psz, cch));
+        dx = LOWORD(GetTextExtent(hdc, psz.data(), cch));
         switch (iCol) {
         case colEnemyFleetLocation:
             dx = dx * 2 + dx / 2;
@@ -1144,7 +1145,7 @@ std::int16_t DxReportColHdr(APPSESSION &app, ReportType irpt, std::int16_t iCol,
         break;
     case rptBattles:
         cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsLocation4 + iCol), psz);
-        dx = LOWORD(GetTextExtent(hdc, psz, cch));
+        dx = LOWORD(GetTextExtent(hdc, psz.data(), cch));
         if (iCol == colBattleLocation) {
             dx = dx * 2 + dx / 2;
         }
@@ -1282,7 +1283,7 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
             RightTextOut(app, hdc, prc->right, prc->top, szT, cch, 0);
             break;
         case colPlanetValue:
-            cch = TextIO().pfnCchGetString(app, idsN100, szT);
+            cch = TextIO().pfnCchGetString(app, idsN100, std::span{szT});
             dx = LOWORD(GetTextExtent(hdc, szT, cch));
             i = PlanetQueryIO().pfnDesirability(app, lppl, app.state.idPlayer);
             cch = win32::wsprintfA(szT, app.state.PCTDPCTPCT, i);
@@ -1336,13 +1337,13 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
             DrawProductionItem(app, hdc, prc, app.state.szWork, 0, 0, 2);
             break;
         case colPlanetResources:
-            cch = TextIO().pfnCchGetString(app, idsN1000, szT);
+            cch = TextIO().pfnCchGetString(app, idsN1000, std::span{szT});
             dx = LOWORD(GetTextExtent(hdc, szT, cch));
             i = j = ResearchIO().pfnResources(app, lppl, app.state.idPlayer);
             if (!lppl->fNoResearch) {
                 i -= win32::MulDiv(i, app.state.rgplr[app.state.idPlayer].pctResearch, 100);
             }
-            TextIO().pfnCchGetString(app, idsD4, szT);
+            TextIO().pfnCchGetString(app, idsD4, std::span{szT});
             cch = win32::wsprintfA(app.state.szWork, szT, i);
             RightTextOut(app, hdc, prc->left + dx, prc->top, app.state.szWork, cch, 0);
             cch = win32::wsprintfA(szT, app.state.PCTD, j);
@@ -2292,7 +2293,7 @@ void ReportColumnPopup(APPSESSION &app, POINT16 pt, std::int16_t icol, std::int1
     DxReportColHdr(app, app.lpui->vprptCur->irpt, icol, szColTitle, hdc);
     cItems = 0;
     for (i = 0; i < 2; i++) {
-        cch = TextIO().pfnCchGetString(app, i == 0 ? idsSort : idsReverseSort, rgsz[cItems]);
+        cch = TextIO().pfnCchGetString(app, i == 0 ? idsSort : idsReverseSort, std::span{rgsz[cItems]});
         std::strcpy(&rgsz[cItems][cch], szColTitle);
         cItems++;
         if ((app.lpui->vprptCur->irpt == rptPlanets && (icol == colPlanetMinConc || icol == colPlanetMinerals || icol == colPlanetMiningRate)) ||
@@ -2316,9 +2317,9 @@ void ReportColumnPopup(APPSESSION &app, POINT16 pt, std::int16_t icol, std::int1
     rgsz[cItems][0] = -1;
     rgsz[cItems][1] = 0;
     cItems++;
-    cch = TextIO().pfnCchGetString(app, idsHide, rgsz[cItems]);
+    cch = TextIO().pfnCchGetString(app, idsHide, std::span{rgsz[cItems]});
     std::strcpy(&rgsz[cItems][cch], szColTitle);
-    cch = TextIO().pfnCchGetString(app, idsColumn, szT);
+    cch = TextIO().pfnCchGetString(app, idsColumn, std::span{szT});
     std::strcat(rgsz[cItems], szT);
     iHide = cItems;
     iSortLast = cItems;
@@ -2336,9 +2337,9 @@ void ReportColumnPopup(APPSESSION &app, POINT16 pt, std::int16_t icol, std::int1
     while (i < app.lpui->vprptCur->cFields) {
         if (!(ibit & app.lpui->vprptCur->grbitVisible)) {
             DxReportColHdr(app, app.lpui->vprptCur->irpt, i, szColTitle, hdc);
-            cch = TextIO().pfnCchGetString(app, idsShow, rgsz[cItems]);
+            cch = TextIO().pfnCchGetString(app, idsShow, std::span{rgsz[cItems]});
             std::strcpy(&rgsz[cItems][cch], szColTitle);
-            cch = TextIO().pfnCchGetString(app, idsColumn, szT);
+            cch = TextIO().pfnCchGetString(app, idsColumn, std::span{szT});
             std::strcat(rgsz[cItems], szT);
             rgcol[cItems] = i;
             cItems++;

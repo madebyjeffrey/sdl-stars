@@ -14,7 +14,7 @@ void             DrawVCReport(APPSESSION &app, HDC hdc);
 void             DrawScoreReport(APPSESSION &app, HDC hdc);
 void             DrawHistoryReport(APPSESSION &app, HDC hdc);
 std::int32_t          LFetchScoreXVal(SCOREX *lpsx, std::int16_t iVal);
-std::int16_t          DxReportColHdr(APPSESSION &app, ReportType irpt, std::int16_t iCol, char *psz, HDC hdc);
+std::int16_t          DxReportColHdr(APPSESSION &app, ReportType irpt, std::int16_t iCol, std::span<char> psz, HDC hdc);
 void             DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::int16_t irow, std::int16_t icol);
 void             DrawMineralItem(APPSESSION &app, HDC hdc, std::int16_t x, std::int16_t y, std::int16_t iMineral, std::int32_t l);
 void             SortReportCache(APPSESSION &app, ReportType irpt, std::int16_t icol);

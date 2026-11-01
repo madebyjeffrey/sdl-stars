@@ -76,16 +76,16 @@ void DrawShipOrders(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
             rcT.right = xRight;
             win32::FillRect(hdc, &rcT, app.lpui->hbrButtonFace);
         }
-        c = TextIO().pfnCchGetString(app, idsComing, app.state.szWork);
+        c = TextIO().pfnCchGetString(app, idsComing, std::span{app.state.szWork});
         l = GetTextExtent(hdc, app.state.szWork, c);
-        c = TextIO().pfnCchGetString(app, idsWayPt, app.state.szWork);
+        c = TextIO().pfnCchGetString(app, idsWayPt, std::span{app.state.szWork});
         lTot = GetTextExtent(hdc, app.state.szWork, c);
         if (lTot > l) {
             l = lTot;
         }
         dxRight = xRight - xLeft - LOWORD(l);
         if (!ptile->fMinDraw) {
-            c = TextIO().pfnCchGetString(app, app.state.sel.iwpAct <= 0 ? idsWayPt : idsComing, app.state.szWork);
+            c = TextIO().pfnCchGetString(app, app.state.sel.iwpAct <= 0 ? idsWayPt : idsComing, std::span{app.state.szWork});
             win32::TextOutA(hdc, xLeft, yTop, app.state.szWork, c);
         }
         win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
@@ -116,7 +116,7 @@ void DrawShipOrders(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
     DoDistance:
         if (!ptile->fMinDraw) {
             win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-            c = TextIO().pfnCchGetString(app, idsDistance, app.state.szWork);
+            c = TextIO().pfnCchGetString(app, idsDistance, std::span{app.state.szWork});
             win32::TextOutA(hdc, xLeft, yTop, app.state.szWork, c);
         }
         win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
@@ -125,7 +125,7 @@ void DrawShipOrders(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
         yTop += app.state.dyArial8 - app.state.gd.fSmallTileMode;
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
         if (!ptile->fMinDraw) {
-            c = TextIO().pfnCchGetString(app, idsWarpFactor, app.state.szWork);
+            c = TextIO().pfnCchGetString(app, idsWarpFactor, std::span{app.state.szWork});
             win32::TextOutA(hdc, xLeft, yTop, app.state.szWork, c);
         }
         iWarp = app.state.sel.fl.lpplord->rgord()[iScanActual].iWarp;
@@ -138,14 +138,14 @@ void DrawShipOrders(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
             if (iWarp < 11) {
                 c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsWarpD2), iWarp);
             } else {
-                c = TextIO().pfnCchGetString(app, idsUseStargate, app.state.szWork);
+                c = TextIO().pfnCchGetString(app, idsUseStargate, std::span{app.state.szWork});
             }
             RightTextOut(app, hdc, xRight, yTop, app.state.szWork, c, dxRight);
         }
         yTop += app.state.dyArial8;
         if (!ptile->fMinDraw) {
             win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-            c = TextIO().pfnCchGetString(app, idsTravelTime, app.state.szWork);
+            c = TextIO().pfnCchGetString(app, idsTravelTime, std::span{app.state.szWork});
             win32::TextOutA(hdc, xLeft, yTop, app.state.szWork, c);
         }
         win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
@@ -155,7 +155,7 @@ void DrawShipOrders(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
         yTop += app.state.dyArial8 - app.state.gd.fSmallTileMode;
         if (!ptile->fMinDraw) {
             win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-            c = TextIO().pfnCchGetString(app, idsEstFuelUsage, app.state.szWork);
+            c = TextIO().pfnCchGetString(app, idsEstFuelUsage, std::span{app.state.szWork});
             win32::TextOutA(hdc, xLeft, yTop, app.state.szWork, c);
         }
         win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
@@ -280,7 +280,7 @@ void DrawShipWayPtOrders(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
                 break;
             case grTaskGive:
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-                cch = TextIO().pfnCchGetString(app, idsTo3, szT);
+                cch = TextIO().pfnCchGetString(app, idsTo3, std::span{szT});
                 szT[cch] = ' ';
                 cch++;
                 szT[cch] = 0;
@@ -456,7 +456,7 @@ void DrawShipWayPtOrders(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
                         goto ShowString;
                     }
                     ColonyIO().pfnEstimateMining(app, lppl, rgl, cMine, 0);
-                    c = TextIO().pfnCchGetString(app, idsMiningRatePerYear, app.state.szWork);
+                    c = TextIO().pfnCchGetString(app, idsMiningRatePerYear, std::span{app.state.szWork});
                     win32::TextOutA(hdc, xLeft, yTopMsg, app.state.szWork, c);
                     yTopMsg += dyCur;
                     dxRight = xLeft;
@@ -572,9 +572,9 @@ void DrawShipCargo(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
         yTop = rc.top + 1;
         dxRight = app.lpui->dxMaxMineralQuan;
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-        c = TextIO().pfnCchGetString(app, idsCargo3, app.state.szWork);
+        c = TextIO().pfnCchGetString(app, idsCargo3, std::span{app.state.szWork});
         l = GetTextExtent(hdc, app.state.szWork, c);
-        c = TextIO().pfnCchGetString(app, idsFuel3, app.state.szWork);
+        c = TextIO().pfnCchGetString(app, idsFuel3, std::span{app.state.szWork});
         l2 = GetTextExtent(hdc, app.state.szWork, c);
         if (l2 > l) {
             l = l2;
@@ -587,7 +587,7 @@ void DrawShipCargo(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
         DrawFleetGauge(app, hdc, &rcGauge, pfl, 4);
         yTop += (!app.state.gd.fSmallTileMode ? 4 : 2) + app.state.dyArial8;
         if (!ptile->fMinDraw) {
-            c = TextIO().pfnCchGetString(app, idsCargo3, app.state.szWork);
+            c = TextIO().pfnCchGetString(app, idsCargo3, std::span{app.state.szWork});
             win32::TextOutA(hdc, xLeft, yTop, app.state.szWork, c);
         }
         win32::SetRect(&rcGauge, xLeft + LOWORD(l), yTop, xRight, yTop + app.state.dyArial8);
@@ -610,7 +610,7 @@ void DrawShipCargo(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
             if (!ptile->fMinDraw) {
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
                 win32::SetTextColor(hdc, 0xffffff);
-                c = TextIO().pfnCchGetString(app, idsColonists2, app.state.szWork);
+                c = TextIO().pfnCchGetString(app, idsColonists2, std::span{app.state.szWork});
                 win32::TextOutA(hdc, xLeft, yTop, app.state.szWork, c);
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
                 win32::SetTextColor(hdc, app.lpui->crButtonText);
@@ -674,7 +674,7 @@ void DrawFleetComp(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
         app.lpui->dyFleetCompLB = rcT.bottom - rcT.top;
         yTop += (!app.state.gd.fSmallTileMode ? 4 : 2) + app.lpui->dyFleetCompLB;
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-        c = TextIO().pfnCchGetString(app, idsBattlePlan2, app.state.szWork);
+        c = TextIO().pfnCchGetString(app, idsBattlePlan2, std::span{app.state.szWork});
         dxLabel = LOWORD(GetTextExtent(hdc, app.state.szWork, c));
         if (!ptile->fMinDraw) {
             win32::TextOutA(hdc, xLeft, yTop + 4, app.state.szWork, c);
@@ -688,18 +688,18 @@ void DrawFleetComp(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
         ControlIO().pfnSetWindowPos(app.lpui->hwndBattleDD, nullptr, xLeft + dxLabel, yTop, app.lpui->dxBattleDD, 5 * app.lpui->dyShipDD, swp);
         ui::ShowWindow(app.lpui->hwndBattleDD, win32::SW_SHOW);
         yTop += app.lpui->dyShipDD + 3;
-        c = TextIO().pfnCchGetString(app, idsEstRange, app.state.szWork);
+        c = TextIO().pfnCchGetString(app, idsEstRange, std::span{app.state.szWork});
         l = GetTextExtent(hdc, app.state.szWork, c);
         if (!ptile->fMinDraw) {
             win32::TextOutA(hdc, xLeft, yTop, app.state.szWork, c);
         }
         win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
-        c = TextIO().pfnCchGetString(app, idsN9999LY, app.state.szWork);
+        c = TextIO().pfnCchGetString(app, idsN9999LY, std::span{app.state.szWork});
         dxRight = LOWORD(GetTextExtent(hdc, app.state.szWork, c)) + 6;
         i = IFindIdealWarp(app, nullptr, 0);
         l = EstFuelUse(app, &app.state.sel.fl, 0, i, -1, 1);
         if (l >= 1000000000) {
-            c = TextIO().pfnCchGetString(app, idsInfinite, app.state.szWork);
+            c = TextIO().pfnCchGetString(app, idsInfinite, std::span{app.state.szWork});
         } else {
             c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsLdLY), l);
         }
@@ -708,13 +708,13 @@ void DrawFleetComp(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
             yTop += app.state.dyArial8;
             if (!ptile->fMinDraw) {
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-                c = TextIO().pfnCchGetString(app, idsPercentCloaked, app.state.szWork);
+                c = TextIO().pfnCchGetString(app, idsPercentCloaked, std::span{app.state.szWork});
                 win32::TextOutA(hdc, xLeft, yTop, app.state.szWork, c);
             }
             win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
             i = PctCloakFromLpfl(app, &app.state.sel.fl);
             if (i == 0) {
-                c = TextIO().pfnCchGetString(app, idsNone2, app.state.szWork);
+                c = TextIO().pfnCchGetString(app, idsNone2, std::span{app.state.szWork});
             } else {
                 c = win32::wsprintfA(app.state.szWork, app.state.PCTDPCTPCT, i);
             }
@@ -1067,16 +1067,16 @@ void DrawFleetGauge(APPSESSION &app, HDC hdc, RECT *prc, FLEET *lpfl, std::int16
             if (l < 11) {
                 c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsWarpLd), l);
             } else {
-                c = TextIO().pfnCchGetString(app, idsUseStargate, app.state.szWork);
+                c = TextIO().pfnCchGetString(app, idsUseStargate, std::span{app.state.szWork});
             }
         } else {
-            c = TextIO().pfnCchGetString(app, idsStopped, app.state.szWork);
+            c = TextIO().pfnCchGetString(app, idsStopped, std::span{app.state.szWork});
         }
     } else if (grbit == 7) {
         if (l != 0) {
             c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsWarpLd), l);
         } else {
-            c = TextIO().pfnCchGetString(app, idsAutomatic, app.state.szWork);
+            c = TextIO().pfnCchGetString(app, idsAutomatic, std::span{app.state.szWork});
         }
     } else if (cSections == 1 && grbit != 4) {
         c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsLdkt), l);
@@ -2079,7 +2079,7 @@ HCURSOR ClickInShipOrders(APPSESSION &app, POINT16 pt, std::int16_t sks, std::in
             app.lpui->GlobalPD.grPopup = grPopupString;
             app.lpui->GlobalPD.dxOut = 180;
             app.lpui->GlobalPD.psz = app.lpui->szPopupBuffer;
-            TextIO().pfnCchGetString(app, idsRightClickBlueDiamondBringPopupMenu, app.lpui->szPopupBuffer);
+            TextIO().pfnCchGetString(app, idsRightClickBlueDiamondBringPopupMenu, std::span{app.lpui->szPopupBuffer});
             Popup(app, app.lpui->hwndPlanet, pt.x, pt.y);
         }
     } else {
@@ -2509,7 +2509,7 @@ void FillBattleDD(APPSESSION &app, std::int16_t iSel) {
     std::int16_t i;
 
     ControlIO().pfnSendMessage(app.lpui->hwndBattleDD, win32::CB_RESETCONTENT, 0, 0);
-    TextIO().pfnCchGetString(app, idsBattlePlans, app.state.szWork);
+    TextIO().pfnCchGetString(app, idsBattlePlans, std::span{app.state.szWork});
     ControlIO().pfnSendMessage(app.lpui->hwndBattleDD, win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(app.state.szWork));
     for (i = 0; i < app.state.rgcbtlplan[app.state.idPlayer]; i++) {
         std::strcpy(app.state.szWork, app.state.rglpbtlplan[app.state.idPlayer][i].szName);

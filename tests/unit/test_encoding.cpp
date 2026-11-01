@@ -7,6 +7,13 @@
 [[maybe_unused]] static char szTestLiteral1[] = "\x5cw \x5ci \x5cu";
 [[maybe_unused]] static char szTestLiteral2[] = "\x5ch";
 #include "stars_test.h"
+#include "text_io.h"
+#include <iterator>
+
+static char *PszTestCatalog(APPSESSION &, StringId) {
+    static char sz[] = "ab\xc3\xa9\xf0\x9f\x98\x80z";
+    return sz;
+}
 
 static void TestEncoding(void) {
     char sz[32], szSmall[4];
@@ -146,6 +153,22 @@ static void TestFormattedTextBounds(void) {
     TEST_CHECK(CchSprintf(std::span{rgch}.subspan(2, 1), "%d", 12345) == 0 && rgch[2] == 0 && rgch[3] == 'b');
     rgch[2] = '!';
     TEST_CHECK(CchSprintf(std::span<char>{}, "%d", 12345) == 0 && rgch[2] == '!');
+    TEXTIO io;
+    io.pfnCompressed = PszTestCatalog;
+    TEXTIOSCOPE textScope(io);
+    const std::size_t rgcch[] = {0, 0, 1, 2, 2, 4, 4, 4, 4, 8, 9};
+    char rgb[16];
+    for (std::size_t cb = 0; cb < std::size(rgcch); cb++) {
+        memset(rgb, '!', sizeof(rgb));
+        TEST_CHECK(CchGetString(app, idsName, std::span{rgb}.subspan(2, cb)) == static_cast<std::int16_t>(rgcch[cb]));
+        TEST_CHECK(!memcmp(rgb + 2, PszTestCatalog(app, idsName), rgcch[cb]));
+        if (cb != 0) {
+            TEST_CHECK(rgb[2 + rgcch[cb]] == 0);
+            TEST_CHECK(FUtf8Valid(rgb + 2, rgcch[cb]));
+        }
+        TEST_CHECK(rgb[0] == '!' && rgb[1] == '!');
+        for (std::size_t i = 2 + cb; i < sizeof(rgb); i++) TEST_CHECK(rgb[i] == '!');
+    }
 }
 
 #ifdef STARS_UI_SDL

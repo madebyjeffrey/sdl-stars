@@ -49,14 +49,14 @@ char *PszProductionETA(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod, ProdItem
         } else {
             ids = idsNever;
         }
-        c = TextIO().pfnCchGetString(app, ids, app.state.szWork);
+        c = TextIO().pfnCchGetString(app, ids, std::span{app.state.szWork});
     } else if (iTurnEnd == 100) {
         c = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsDYears), iTurnBegin);
     } else if (iTurnBegin == iTurnEnd) {
         if (iTurnBegin == 0) {
-            c = TextIO().pfnCchGetString(app, idsSkipped, app.state.szWork);
+            c = TextIO().pfnCchGetString(app, idsSkipped, std::span{app.state.szWork});
         } else if (iTurnBegin == -1) {
-            c = TextIO().pfnCchGetString(app, idsNeeded, app.state.szWork);
+            c = TextIO().pfnCchGetString(app, idsNeeded, std::span{app.state.szWork});
         } else {
             c = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsDYear), iTurnBegin);
             if (iTurnBegin != 1) {
@@ -1058,7 +1058,7 @@ char *PszProdQueueTop(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod) {
                 return app.state.szWork;
             }
         }
-        TextIO().pfnCchGetString(app, idsQueueEmpty, app.state.szWork);
+        TextIO().pfnCchGetString(app, idsQueueEmpty, std::span{app.state.szWork});
     }
     return app.state.szWork;
 }
