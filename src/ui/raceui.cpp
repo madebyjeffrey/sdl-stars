@@ -1426,7 +1426,7 @@ std::int16_t FSaveRace(APPSESSION &app, char *szFileSuggest, PLAYER *pplr) {
     if (szFileSuggest == app.state.szRaceFile && app.state.szRaceFile[0] && szRaceFileSuggest[0] &&
         std::strncmp(app.state.szRaceFile, szRaceFileSuggest, std::strlen(app.state.szRaceFile)) == 0) szFileSuggest = szRaceFileSuggest;
     if (szFileSuggest) {
-        std::strcpy(szFile, szFileSuggest);
+        CchCopyUtf8(std::span{szFile}, szFileSuggest);
     } else {
         szFile[0] = 0;
     }

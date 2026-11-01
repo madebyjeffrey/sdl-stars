@@ -272,7 +272,7 @@ INT_PTR  SlotDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 ControlIO().pfnSetWindowText(reinterpret_cast<HWND>(lParam), app.state.szWork);
                 ControlIO().pfnSendMessage(reinterpret_cast<HWND>(lParam), win32::EM_SETSEL, LOWORD(lSel), static_cast<std::int16_t>(HIWORD(lSel)));
             }
-            win32::lstrcpyA(app.lpui->lpshdefBuild->hul.szClass, app.state.szWork);
+            CchCopyUtf8(std::span{app.lpui->lpshdefBuild->hul.szClass}, app.state.szWork);
             DrawBuildSelHull(app, hwnd, nullptr, 256, nullptr);
             app.lpui->fInEditUpdate = 0;
             if (app.state.gd.fTutorial) {
@@ -1691,7 +1691,7 @@ void FillBuildPartsLB(APPSESSION &app, HWND hwndLB, std::int16_t grbit) {
                     sz[1] = i + 'A';
                     sz[2] = part.pcom().ibmp() % 26 + 'A';
                     sz[3] = part.pcom().ibmp() / 26 + 'A';
-                    std::strcpy(&sz[4], part.pcom().szName());
+                    CchCopyUtf8(std::span{sz}.subspan(4), part.pcom().szName());
                     ControlIO().pfnSendMessage(hwndLB, win32::LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(sz));
                 }
                 i++;

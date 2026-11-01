@@ -139,7 +139,7 @@ Finish:
     gameT.turn = 0;
     DestroyCurGame(app);
     app.state.game = gameT;
-    std::strcpy(app.state.szBase, szFile);
+    CchCopyUtf8(std::span{app.state.szBase}, szFile);
     app.state.szBase[std::strlen(app.state.szBase) - 3] = 0;
     for (i = 0; i < 16 && app.state.vrgplrTypeNew[i] != 0; i++) {
         switch (app.state.vrgplrTypeNew[i] & 3) {
@@ -205,8 +205,8 @@ Finish:
                 }
             }
             TextIO().pfnCchGetString(app, static_cast<StringId>(idsBerserker + c), std::span{app.state.rgplr[i].szName});
-            std::strcpy(app.state.rgplr[i].szNames, app.state.rgplr[i].szName);
-            std::strcat(app.state.rgplr[i].szNames, "s");
+            CchCopyUtf8(std::span{app.state.rgplr[i].szNames}, app.state.rgplr[i].szName);
+            FAppendUtf8(std::span{app.state.rgplr[i].szNames}, "s");
         }
     }
     for (i = 0; i < app.state.game.cPlayer; i++) {
@@ -602,7 +602,7 @@ INT_PTR  NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                     if (iNewVal < 0) goto FinishClick;
                     app.lpui->vrgplrNew[iNewVal] = app.state.vplr;
                     CchCopyUtf8(app.lpui->vrgszFileNew + iNewVal * 13, 13, app.state.szRaceFile, std::strlen(app.state.szRaceFile));
-                    std::strcpy(rgszLibraryRaceNew[iNewVal], szLibraryRace);
+                    CchCopyUtf8(std::span{rgszLibraryRaceNew[iNewVal]}, szLibraryRace);
                     iNewVal = iNewVal << 2 | 2;
                 }
             } else if (app.lpui->iPopMenuSel == 2) {
@@ -612,14 +612,14 @@ INT_PTR  NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                     win32::wsprintfA(app.state.vplr.szNames, "%ss", app.state.vplr.szName);
                 } else {
                     app.state.vplr = app.lpui->vrgplrNew[iCurVal >> 2];
-                    std::strcpy(app.state.szRaceFile, app.lpui->vrgszFileNew + (iCurVal >> 2) * 13);
+                    CchCopyUtf8(std::span{app.state.szRaceFile}, app.lpui->vrgszFileNew + (iCurVal >> 2) * 13);
                 }
                 app.state.lSaltCur = app.state.vplr.lSalt;
                 app.state.lSaltLast = 0;
                 if (!FCheckPassword(app))
                     goto FinishClick;
                 if (app.state.vplr.lSalt != 0) {
-                    std::strcpy(app.state.szRacePass, app.state.szPassLast);
+                    CchCopyUtf8(std::span{app.state.szRacePass}, app.state.szPassLast);
                 } else {
                     app.state.szRacePass[0] = 0;
                 }
@@ -632,7 +632,7 @@ INT_PTR  NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                         goto PlaceNew;
                     app.lpui->vrgplrNew[iCurVal >> 2] = app.state.vplr;
                     CchCopyUtf8(app.lpui->vrgszFileNew + (iCurVal >> 2) * 13, 13, app.state.szRaceFile, std::strlen(app.state.szRaceFile));
-                    std::strcpy(rgszLibraryRaceNew[iCurVal >> 2], szLibraryRace);
+                    CchCopyUtf8(std::span{rgszLibraryRaceNew[iCurVal >> 2]}, szLibraryRace);
                     iNewVal = iCurVal;
                     iCurVal = -1;
                 }

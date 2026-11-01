@@ -5,6 +5,7 @@
 #endif
 #include "callbackcontext.h"
 #include <cstring>
+#include <string>
 #include "library_path_io.h"
 #include "preferencesui.h"
 #include "profile_text_io.h"
@@ -135,6 +136,13 @@ int main(void) {
     inputs[8] = "iiii";
     recent(app);
     CHECK(app.state.ini.fStartupFile && strcmp(app.state.szBase, "aaaa") == 0 && strcmp(memory[1], "iiii") == 0 && memory[8][0] == 0);
+    reset(app);
+    const std::string szLong = std::string(253, 'x') + "\xc3\xa9";
+    startupInput = szLong.c_str();
+    inputs[8] = szLong.c_str();
+    recent(app);
+    CHECK(app.state.ini.fStartupFile && app.state.szBase == szLong);
+    CHECK(memory[0] == szLong && memory[0][255] == 0 && memory[8][0] == 0);
     reset(app);
     strcpy(memory[0], "a.m1");
     AddMRUFile(app, const_cast<char *>("A"), const_cast<char *>("M1"));

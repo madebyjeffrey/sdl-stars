@@ -99,7 +99,8 @@
         "owned-numeric-text-values",
         "scaled-numeric-rounding-overflow-repair",
         "bounded-fitting-race-password-report-save-and-host-copies",
-        "owned-legacy-race-password-result"
+        "owned-legacy-race-password-result",
+        "bounded-ui-preset-roster-label-and-path-copies"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -361,6 +362,22 @@
           "baseline": "Behavior-neutral: UTF-8 limits, prompt/confirmation order, password hashes, cancellation, file publication, record widths/layouts, game/RNG/rounding and all baseline/golden bytes remain unchanged. No scenario/checkpoint moved; no regression export required.",
           "remaining": "Other L05 copies/const text/scratch results, L06 service interfaces and Milestone D, and L08 final reconciliation/platform qualification remain active.",
           "receipts": "dist/verification/live-cpp/l06s/"
+        },
+        {
+          "batch": "L05t twenty bounded UI/preset copies",
+          "debug_build": "Pass, no warnings. Release SDL regression and Release host builds pass. Compiler/source policy covers 158 owned sources, 159 variants and 161 standalone headers in both orders; exact raw-copy inventory passes.",
+          "desktop": "153/153, including all 29 leak checks, both extended linked preference witnesses, actual designer/race/roster/library workflows, battle tests and available SDL tutorial checkpoints.",
+          "host_units": "28/28 in Release",
+          "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+          "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+          "windows": "Strict MinGW compilation passes all 147 owned production units and five actual affected consumer/witness units. Compilation evidence only for this UI batch; actual Windows desktop and Linux final qualification remain pending.",
+          "characterization": "Before changing production, both linked preset/state witnesses pass new full-budget Unicode vectors: twelve-byte transport and production names, all twelve production orders, and a 255-byte UTF-8 startup/recent path compacted from the last MRU slot. The final full suite reruns them successfully, including existing exhaustive coverage of all 65536 production words.",
+          "scope": "Twenty raw copies retired: seven new-game roster/path/password sites; four complete typed preset-key constructions; two preset name tails; startup path and MRU compaction; battle-plan suffix; tutorial suffix; race chooser suggestion; designer name and component list row. Array/tail/row spans retain physical capacities and strict fitting bytes. No clipping, game/codec changes or new production allocation.",
+          "capacity_evidence": "Each migrated site records its current capacity reason in CPP-LIVE-TEXT-COPIES.json. Canonical generated names/catalog values and stored field/arena bounds are summarized in the local capacity-proof receipt. Existing unused tail bytes remain untouched. Removing the designer lstrcpyA call does not change LastError: its implementation only delegates to strcpy for these nonnull inputs.",
+          "inventory": "220 migrated sites; 88 initial application copy sites remain. The lexical raw-spelling allowlist totals 94, including SDK declarations/definitions.",
+          "baseline": "Behavior-neutral. Native/frozen-original baselines, unit goldens, file widths/layouts, game rules, RNG, tie order and binary64 boundaries remain unchanged. No scenario/checkpoint moved; no regression export required.",
+          "remaining": "Remaining L05 copies/const text/shared scratch results, L06 service interfaces and Milestone D, and L08 reconciliation/platform qualification remain active.",
+          "receipts": "dist/verification/live-cpp/l05t/"
         }
       ],
       "bounded_formatting": {
@@ -425,8 +442,8 @@
         "temperature_commit": "03d8b039",
         "windows_host_test_configuration_commit": "09bb4477",
         "policy": "Actual array/tail spans; complete terminated UTF-8 prefixes; overlapping views supported. Paths/record staging keep separate strict contracts.",
-        "remaining_initial_sites": 108,
-        "remaining_lexical_spellings": 114,
+        "remaining_initial_sites": 88,
+        "remaining_lexical_spellings": 94,
         "inventory_scope": "The initial copy inventory and the current lexical policy differ: the latter also includes SDK declaration/definition spellings. Both remain explicitly accounted for.",
         "enforcement": "The manifest checks exact remaining raw-copy spellings and multiplicities. New or removed raw sites require updating the maintained inventory; migrated sites cannot silently be reintroduced."
       },
@@ -517,6 +534,13 @@
         "status": "complete; verified",
         "sites": 1,
         "interface": "NewPasswordDlg copies accepted replacement text into the actual owned 16-byte result span; no erased-capacity char* output remains."
+      },
+      "bounded_ui_copies": {
+        "status": "complete; verified",
+        "parent": "037c0a38",
+        "evidence": "docs/CPP-LIVE-TEXT-COPIES.json",
+        "sites": 20,
+        "interfaces": "Actual array/tail/row spans, strict fitting text copies/append and typed complete key formatting preserve valid path, password, roster, preset and label bytes."
       }
     },
     {

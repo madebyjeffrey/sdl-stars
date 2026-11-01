@@ -49,7 +49,7 @@ std::int16_t FWriteTutorialMFile(APPSESSION &app, std::int16_t iTurn) {
             } while (HdrMemStream(app).rt != rtBOF);
         }
         cch = TextIO().pfnCchGetString(app, idsTutorial, std::span{szT});
-        std::strcpy(&szT[cch], iTurn == 37 ? ".hst" : ".m1");
+        CchCopyUtf8(std::span{szT}.subspan(static_cast<std::size_t>(cch)), iTurn == 37 ? ".hst" : ".m1");
         StarsFileGuard closeStream(app.state.hf);
         RecordIO().pfnStreamOpen(app, szT, mdCreate);
         do {

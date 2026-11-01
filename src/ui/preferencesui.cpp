@@ -13,10 +13,7 @@ void ReadIniPresets(APPSESSION &app, char *szIniFile) {
     TextIO().pfnCchGetString(app, idsZiporders, std::span{szSection});
     std::fill_n(app.state.vrgZip, 4, ZIPORDER{});
     for (i = 0; i < 4; i++) {
-        std::strcpy(szEntry, szSection);
-        psz = &szEntry[std::strlen(szEntry)];
-        *psz = i + '1';
-        psz[1] = 0;
+        CchSnprintf(std::span{szEntry}, "%s%d", szSection, i + 1);
         ProfileTextIO().pfnReadString(szSection, szEntry, "", app.state.szWork, 80, szIniFile);
         cch = std::strlen(app.state.szWork);
         if (cch >= 20 && cch <= 32) {
@@ -46,11 +43,7 @@ void ReadIniPresets(APPSESSION &app, char *szIniFile) {
     }
     std::fill_n(app.state.vrgZipProd, 5, ZIPPRODQ{});
     for (i = 0; i < 5; i++) {
-        std::strcpy(szEntry, szSection);
-        psz = &szEntry[std::strlen(szEntry)];
-        *psz++ = 'P';
-        *psz = i + '1';
-        psz[1] = 0;
+        CchSnprintf(std::span{szEntry}, "%sP%d", szSection, i + 1);
         ProfileTextIO().pfnReadString(szSection, szEntry, "", app.state.szWork, 80, szIniFile);
         cch = std::strlen(app.state.szWork);
         if (cch >= 3 && cch <= 64) {
@@ -100,10 +93,7 @@ void WriteIniPresets(APPSESSION &app, char *szIniFile) {
     if (app.state.gd.fChgZipOrd) {
         TextIO().pfnCchGetString(app, idsZiporders, std::span{szSection});
         for (i = 0; i < 4; i++) {
-            std::strcpy(szEntry, szSection);
-            psz = &szEntry[std::strlen(szEntry)];
-            *psz = i + '1';
-            psz[1] = 0;
+            CchSnprintf(std::span{szEntry}, "%s%d", szSection, i + 1);
             if (app.state.vrgZip[i].fValid) {
                 psz = app.state.szWork;
                 for (iPass = 0; iPass < 5; iPass++) {
@@ -112,7 +102,7 @@ void WriteIniPresets(APPSESSION &app, char *szIniFile) {
                     *psz++ = (app.state.vrgZip[i].txp.rgia[iPass].cQuan() >> 4 & 0xf) + 'a';
                     *psz++ = (app.state.vrgZip[i].txp.rgia[iPass].cQuan() >> 8 & 0xf) + 'a';
                 }
-                std::strcpy(psz, app.state.vrgZip[i].szName);
+                CchCopyUtf8(std::span{app.state.szWork}.subspan(static_cast<std::size_t>(psz - app.state.szWork)), app.state.vrgZip[i].szName);
             } else {
                 app.state.szWork[0] = 0;
             }
@@ -122,11 +112,7 @@ void WriteIniPresets(APPSESSION &app, char *szIniFile) {
     if (app.state.gd.fChgZipProd) {
         for (i = 0; i < 5; i++) {
             TextIO().pfnCchGetString(app, idsZiporders, std::span{szSection});
-            std::strcpy(szEntry, szSection);
-            psz = &szEntry[std::strlen(szEntry)];
-            *psz++ = 'P';
-            *psz = i + '1';
-            psz[1] = 0;
+            CchSnprintf(std::span{szEntry}, "%sP%d", szSection, i + 1);
             if (app.state.vrgZipProd[i].fValid) {
                 psz = app.state.szWork;
                 *psz++ = app.state.vrgZipProd[i].fNoResearch + 'a';
@@ -137,7 +123,7 @@ void WriteIniPresets(APPSESSION &app, char *szIniFile) {
                     *psz++ = (app.state.vrgZipProd[i].rgpq[iPass].w >> 8 & 0xf) + 'a';
                     *psz++ = (app.state.vrgZipProd[i].rgpq[iPass].w >> 0xc & 0xf) + 'a';
                 }
-                std::strcpy(psz, app.state.vrgZipProd[i].szName);
+                CchCopyUtf8(std::span{app.state.szWork}.subspan(static_cast<std::size_t>(psz - app.state.szWork)), app.state.vrgZipProd[i].szName);
             } else {
                 app.state.szWork[0] = 0;
             }
@@ -196,7 +182,7 @@ void ReadIniRecent(APPSESSION &app, char *szSection, char *szEntry, char *szIniF
 
     if (cch > 3) {
         app.state.ini.fStartupFile = 1;
-        std::strcpy(app.state.szBase, app.state.szWork);
+        CchCopyUtf8(std::span{app.state.szBase}, app.state.szWork);
     } else {
         app.state.ini.fStartupFile = 0;
     }
@@ -215,7 +201,7 @@ void ReadIniRecent(APPSESSION &app, char *szSection, char *szEntry, char *szIniF
     for (i = 0; i < 9; i++) {
         if (app.lpui->vrgszMRU[i * 256] != 0) {
             if (i != iPass) {
-                std::strcpy(app.lpui->vrgszMRU + 256 * iPass, app.lpui->vrgszMRU + 256 * i);
+                CchCopyUtf8(std::span{app.lpui->vrgszMRU, std::size_t{2304}}.subspan(256 * iPass, 256), app.lpui->vrgszMRU + 256 * i);
                 app.lpui->vrgszMRU[i * 256] = 0;
             }
             iPass++;

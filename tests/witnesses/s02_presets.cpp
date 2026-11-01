@@ -5,6 +5,7 @@
 #endif
 #include "callbackcontext.h"
 #include <cstring>
+#include <string>
 #include "preferencesui.h"
 #include "profile_text_io.h"
 #include "text_io.h"
@@ -119,6 +120,20 @@ int main(void) {
     production[1] = savedProduction[1];
     ReadIniPresets(app, szIniFile);
     CHECK(!app.state.vrgZipProd[1].fValid);
+    // Both preset formats retain a full twelve-byte UTF-8 name after their
+    // encoded order prefix, including all twelve production orders.
+    reset(app);
+    const std::string szName = "\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9";
+    const std::string szTransport = std::string(20, 'a') + szName;
+    const std::string szProduction = std::string("am") + std::string(48, 'a') + szName;
+    transport[0] = szTransport.c_str();
+    production[1] = szProduction.c_str();
+    ReadIniPresets(app, szIniFile);
+    CHECK(app.state.vrgZip[0].fValid && strcmp(app.state.vrgZip[0].szName, szName.c_str()) == 0);
+    CHECK(app.state.vrgZipProd[1].fValid && app.state.vrgZipProd[1].cpq == 12 && strcmp(app.state.vrgZipProd[1].szName, szName.c_str()) == 0);
+    app.state.gd.fChgZipOrd = app.state.gd.fChgZipProd = 1;
+    WriteIniPresets(app, szIniFile);
+    CHECK(writes == 9 && savedTransport[0] == szTransport && savedProduction[1] == szProduction);
     // Exhaust every packed PRODQ1 word through the actual reader and writer.
     reset(app);
     production[1] = encoded;

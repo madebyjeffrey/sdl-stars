@@ -1,6 +1,6 @@
 {
   "migration_parent": "d3d3724c",
-  "status": "200 migrated sites complete; remaining text work active",
+  "status": "220 migrated sites complete; remaining text work active",
   "contracts": {
     "display": "Write a terminated complete UTF-8 prefix into the actual destination span; preserve fitting bytes. Views borrow synchronously and overlapping copies use memmove.",
     "append": "Scan only inside the destination span for its NUL. An unterminated nonempty destination is cleared and zero bytes are appended.",
@@ -1973,6 +1973,206 @@
       "original_call": "std::strcpy(reinterpret_cast<char *>(win32::GetWindowLongPtrA(hwnd, win32::DWLP_USER)), szPass)",
       "destination_span": "std::span{*reinterpret_cast<std::array<char, 16> *>(win32::GetWindowLongPtrA(hwnd, win32::DWLP_USER))}",
       "role": "The modal operation owns a concrete 16-byte result through the callback. Accepted nonempty passwords retain the existing 15-byte UTF-8 limit and hash/confirmation behavior; the caller receives the array by value."
+    },
+    {
+      "path": "src/ui/createui.cpp",
+      "scope": "NewGameWizard",
+      "baseline_line": 142,
+      "migration_parent": "037c0a38",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.szBase, szFile)",
+      "destination_span": "CchCopyUtf8(std::span{app.state.szBase}, szFile)",
+      "role": "The chosen local path and base fields both have 256 bytes; extension removal and generation order stay unchanged."
+    },
+    {
+      "path": "src/ui/createui.cpp",
+      "scope": "NewGameWizard",
+      "baseline_line": 208,
+      "migration_parent": "037c0a38",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.rgplr[i].szNames, app.state.rgplr[i].szName)",
+      "destination_span": "CchCopyUtf8(std::span{app.state.rgplr[i].szNames}, app.state.rgplr[i].szName)",
+      "role": "The 24 generated race names are at most nine UTF-8 bytes; both fields have 32 bytes."
+    },
+    {
+      "path": "src/ui/createui.cpp",
+      "scope": "NewGameWizard",
+      "baseline_line": 209,
+      "migration_parent": "037c0a38",
+      "operation": "strcat",
+      "original_call": "std::strcat(app.state.rgplr[i].szNames, \"s\")",
+      "destination_span": "FAppendUtf8(std::span{app.state.rgplr[i].szNames}, \"s\")",
+      "role": "The generated singular plus s and NUL fits the 32-byte plural field; uniqueness and RNG order remain."
+    },
+    {
+      "path": "src/ui/createui.cpp",
+      "scope": "NewGameDlg2",
+      "baseline_line": 605,
+      "migration_parent": "037c0a38",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(rgszLibraryRaceNew[iNewVal], szLibraryRace)",
+      "destination_span": "CchCopyUtf8(std::span{rgszLibraryRaceNew[iNewVal]}, szLibraryRace)",
+      "role": "Validated UTF-8 text fits within the actual same-width field; copy through NUL only, preserving unused tail bytes and publication order. Both local and roster rows have 256 bytes."
+    },
+    {
+      "path": "src/ui/createui.cpp",
+      "scope": "NewGameDlg2",
+      "baseline_line": 615,
+      "migration_parent": "037c0a38",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.szRaceFile, app.lpui->vrgszFileNew + (iCurVal >> 2) * 13)",
+      "destination_span": "CchCopyUtf8(std::span{app.state.szRaceFile}, app.lpui->vrgszFileNew + (iCurVal >> 2) * 13)",
+      "role": "The terminated cached filename row has 13 bytes and fits the unchanged 16-byte race-file field."
+    },
+    {
+      "path": "src/ui/createui.cpp",
+      "scope": "NewGameDlg2",
+      "baseline_line": 622,
+      "migration_parent": "037c0a38",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.szRacePass, app.state.szPassLast)",
+      "destination_span": "CchCopyUtf8(std::span{app.state.szRacePass}, app.state.szPassLast)",
+      "role": "Validated UTF-8 text fits within the actual same-width field; copy through NUL only, preserving unused tail bytes and publication order. Both password fields have 16 bytes and retain the 15-byte budget."
+    },
+    {
+      "path": "src/ui/createui.cpp",
+      "scope": "NewGameDlg2",
+      "baseline_line": 635,
+      "migration_parent": "037c0a38",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(rgszLibraryRaceNew[iCurVal >> 2], szLibraryRace)",
+      "destination_span": "CchCopyUtf8(std::span{rgszLibraryRaceNew[iCurVal >> 2]}, szLibraryRace)",
+      "role": "Validated UTF-8 text fits within the actual same-width field; copy through NUL only, preserving unused tail bytes and publication order. Both local and roster rows have 256 bytes."
+    },
+    {
+      "path": "src/ui/preferencesui.cpp",
+      "scope": "ReadIniPresets",
+      "baseline_line": 16,
+      "migration_parent": "037c0a38",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szEntry, szSection)",
+      "destination_span": "CchSnprintf(std::span{szEntry}, \"%s%d\", szSection, i + 1)",
+      "role": "The canonical ZipOrders section has nine bytes; key plus optional P and one digit fits the actual 16-byte key span. Typed bounded formatting replaces the copy and manual suffix writes together."
+    },
+    {
+      "path": "src/ui/preferencesui.cpp",
+      "scope": "ReadIniPresets",
+      "baseline_line": 49,
+      "migration_parent": "037c0a38",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szEntry, szSection)",
+      "destination_span": "CchSnprintf(std::span{szEntry}, \"%sP%d\", szSection, i + 1)",
+      "role": "The canonical ZipOrders section has nine bytes; key plus optional P and one digit fits the actual 16-byte key span. Typed bounded formatting replaces the copy and manual suffix writes together."
+    },
+    {
+      "path": "src/ui/preferencesui.cpp",
+      "scope": "WriteIniPresets",
+      "baseline_line": 103,
+      "migration_parent": "037c0a38",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szEntry, szSection)",
+      "destination_span": "CchSnprintf(std::span{szEntry}, \"%s%d\", szSection, i + 1)",
+      "role": "The canonical ZipOrders section has nine bytes; key plus optional P and one digit fits the actual 16-byte key span. Typed bounded formatting replaces the copy and manual suffix writes together."
+    },
+    {
+      "path": "src/ui/preferencesui.cpp",
+      "scope": "WriteIniPresets",
+      "baseline_line": 125,
+      "migration_parent": "037c0a38",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szEntry, szSection)",
+      "destination_span": "CchSnprintf(std::span{szEntry}, \"%sP%d\", szSection, i + 1)",
+      "role": "The canonical ZipOrders section has nine bytes; key plus optional P and one digit fits the actual 16-byte key span. Typed bounded formatting replaces the copy and manual suffix writes together."
+    },
+    {
+      "path": "src/ui/preferencesui.cpp",
+      "scope": "WriteIniPresets",
+      "baseline_line": 115,
+      "migration_parent": "037c0a38",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(psz, app.state.vrgZip[i].szName)",
+      "destination_span": "CchCopyUtf8(std::span{app.state.szWork}.subspan(static_cast<std::size_t>(psz - app.state.szWork)), app.state.vrgZip[i].szName)",
+      "role": "Twenty encoded transport bytes precede at most twelve UTF-8 name bytes and NUL in the 360-byte work array. Preserve the encoded order prefix and exact profile value."
+    },
+    {
+      "path": "src/ui/preferencesui.cpp",
+      "scope": "WriteIniPresets",
+      "baseline_line": 140,
+      "migration_parent": "037c0a38",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(psz, app.state.vrgZipProd[i].szName)",
+      "destination_span": "CchCopyUtf8(std::span{app.state.szWork}.subspan(static_cast<std::size_t>(psz - app.state.szWork)), app.state.vrgZipProd[i].szName)",
+      "role": "Two header bytes and at most 48 production-order bytes precede the 12-byte UTF-8 name and NUL in the 360-byte work array. Packed widths/order remain."
+    },
+    {
+      "path": "src/ui/preferencesui.cpp",
+      "scope": "ReadIniRecent",
+      "baseline_line": 199,
+      "migration_parent": "037c0a38",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.szBase, app.state.szWork)",
+      "destination_span": "CchCopyUtf8(std::span{app.state.szBase}, app.state.szWork)",
+      "role": "The production init.cpp profile read admits 255 path bytes plus NUL into szWork before this call; destination base has 256 bytes. Preserve startup-state behavior."
+    },
+    {
+      "path": "src/ui/preferencesui.cpp",
+      "scope": "ReadIniRecent",
+      "baseline_line": 218,
+      "migration_parent": "037c0a38",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.lpui->vrgszMRU + 256 * iPass, app.lpui->vrgszMRU + 256 * i)",
+      "destination_span": "CchCopyUtf8(std::span{app.lpui->vrgszMRU, std::size_t{2304}}.subspan(256 * iPass, 256), app.lpui->vrgszMRU + 256 * i)",
+      "role": "Compact nine terminated 256-byte profile rows within their actual 2304-byte arena. Distinct rows preserve ordering, trailing bytes and source clearing."
+    },
+    {
+      "path": "src/ui/battleui.cpp",
+      "scope": "BattlePlansDlg",
+      "baseline_line": 322,
+      "migration_parent": "037c0a38",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&app.lpui->btlplan.szName[cLen], \" (2)\")",
+      "destination_span": "CchCopyUtf8(std::span{app.lpui->btlplan.szName}.subspan(static_cast<std::size_t>(cLen)), \" (2)\")",
+      "role": "The existing cLen <= 27 admission leaves five bytes for the unchanged four-byte suffix and NUL in the 32-byte name. Existing suffix-number decisions remain."
+    },
+    {
+      "path": "src/ui/logui.cpp",
+      "scope": "FWriteTutorialMFile",
+      "baseline_line": 52,
+      "migration_parent": "037c0a38",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&szT[cch], iTurn == 37 ? \".hst\" : \".m1\")",
+      "destination_span": "CchCopyUtf8(std::span{szT}.subspan(static_cast<std::size_t>(cch)), iTurn == 37 ? \".hst\" : \".m1\")",
+      "role": "The canonical Tutorial catalog text is eight bytes and the suffix is at most four; the actual local path has 30 bytes. Resource/stream order remains."
+    },
+    {
+      "path": "src/ui/raceui.cpp",
+      "scope": "FSaveRace",
+      "baseline_line": 1429,
+      "migration_parent": "037c0a38",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szFile, szFileSuggest)",
+      "destination_span": "CchCopyUtf8(std::span{szFile}, szFileSuggest)",
+      "role": "Actual callers supply the fixed 16-byte race cache, its 256-byte validated UI path cache or the short default literal. The 256-byte chooser suggestion keeps its whole path; cancellation behavior remains."
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "scope": "SlotDlg",
+      "baseline_line": 275,
+      "migration_parent": "037c0a38",
+      "operation": "strcpy",
+      "original_call": "win32::lstrcpyA(app.lpui->lpshdefBuild->hul.szClass, app.state.szWork)",
+      "destination_span": "CchCopyUtf8(std::span{app.lpui->lpshdefBuild->hul.szClass}, app.state.szWork)",
+      "role": "The designer edit control limits admitted names to 31 UTF-8 bytes; the actual hull class field has 32 bytes. Screen-fitting, notifications and tutorial progression remain."
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "scope": "FillBuildPartsLB",
+      "baseline_line": 1694,
+      "migration_parent": "037c0a38",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&sz[4], part.pcom().szName())",
+      "destination_span": "CchCopyUtf8(std::span{sz}.subspan(4), part.pcom().szName())",
+      "role": "The selected component/hull name comes from a 32-byte catalog field; the 200-byte list row leaves 196 bytes after its four-byte selection prefix."
     }
   ],
   "remaining_spelling_scope": "Lexical raw-copy spellings, including SDK declarations/definitions; comments/literals excluded with the manifest lexer. Exact counts prevent new raw sites during the remaining migration.",
@@ -2097,27 +2297,6 @@
       "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
     },
     {
-      "path": "src/ui/battleui.cpp",
-      "normalized_call": "std::strcpy(&app.lpui->btlplan.szName[cLen],)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/buildui.cpp",
-      "normalized_call": "lstrcpyA(app.lpui->lpshdefBuild->hul.szClass,app.state.szWork)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/buildui.cpp",
-      "normalized_call": "std::strcpy(&sz[4],part.pcom().szName())",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
       "path": "src/ui/buildui.cpp",
       "normalized_call": "std::strcpy(lpsz+cLen,)",
       "count": 1,
@@ -2133,56 +2312,7 @@
     },
     {
       "path": "src/ui/createui.cpp",
-      "normalized_call": "std::strcat(app.state.rgplr[i].szNames,)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/createui.cpp",
       "normalized_call": "std::strcpy(app.state.game.szName,app.state.szBase)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/createui.cpp",
-      "normalized_call": "std::strcpy(app.state.rgplr[i].szNames,app.state.rgplr[i].szName)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/createui.cpp",
-      "normalized_call": "std::strcpy(app.state.szBase,szFile)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/createui.cpp",
-      "normalized_call": "std::strcpy(app.state.szRaceFile,app.lpui->vrgszFileNew+(iCurVal>>2)*13)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/createui.cpp",
-      "normalized_call": "std::strcpy(app.state.szRacePass,app.state.szPassLast)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/createui.cpp",
-      "normalized_call": "std::strcpy(rgszLibraryRaceNew[iCurVal>>2],szLibraryRace)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/createui.cpp",
-      "normalized_call": "std::strcpy(rgszLibraryRaceNew[iNewVal],szLibraryRace)",
       "count": 1,
       "status": "pending",
       "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
@@ -2349,13 +2479,6 @@
       "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
     },
     {
-      "path": "src/ui/logui.cpp",
-      "normalized_call": "std::strcpy(&szT[cch],iTurn==37?:)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
       "path": "src/ui/mdi.cpp",
       "normalized_call": "std::strcat(app.state.szWork,)",
       "count": 1,
@@ -2442,48 +2565,6 @@
     {
       "path": "src/ui/planetui.cpp",
       "normalized_call": "lstrcatA(szTitle,psz)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/preferencesui.cpp",
-      "normalized_call": "std::strcpy(app.lpui->vrgszMRU+256*iPass,app.lpui->vrgszMRU+256*i)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/preferencesui.cpp",
-      "normalized_call": "std::strcpy(app.state.szBase,app.state.szWork)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/preferencesui.cpp",
-      "normalized_call": "std::strcpy(psz,app.state.vrgZipProd[i].szName)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/preferencesui.cpp",
-      "normalized_call": "std::strcpy(psz,app.state.vrgZip[i].szName)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/preferencesui.cpp",
-      "normalized_call": "std::strcpy(szEntry,szSection)",
-      "count": 4,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/raceui.cpp",
-      "normalized_call": "std::strcpy(szFile,szFileSuggest)",
       "count": 1,
       "status": "pending",
       "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
@@ -2763,6 +2844,29 @@
       "baseline": "Behavior-neutral: UTF-8 limits, prompt/confirmation order, password hashes, cancellation, file publication, record widths/layouts, game/RNG/rounding and all baseline/golden bytes remain unchanged. No scenario/checkpoint moved; no regression export required.",
       "remaining": "Other L05 copies/const text/scratch results, L06 service interfaces and Milestone D, and L08 final reconciliation/platform qualification remain active.",
       "receipts": "dist/verification/live-cpp/l06s/"
+    }
+  },
+  "bounded_ui_copies": {
+    "status": "complete; verified",
+    "parent": "037c0a38",
+    "sites": 20,
+    "evidence": "Parent-linked witnesses cover full twelve-byte UTF-8 preset names, twelve production orders and a 255-byte UTF-8 startup/recent path before production migration.",
+    "retained": "Other path, message and shared-scratch destinations still require their own contract migration.",
+    "verification": {
+      "batch": "L05t twenty bounded UI/preset copies",
+      "debug_build": "Pass, no warnings. Release SDL regression and Release host builds pass. Compiler/source policy covers 158 owned sources, 159 variants and 161 standalone headers in both orders; exact raw-copy inventory passes.",
+      "desktop": "153/153, including all 29 leak checks, both extended linked preference witnesses, actual designer/race/roster/library workflows, battle tests and available SDL tutorial checkpoints.",
+      "host_units": "28/28 in Release",
+      "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+      "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+      "windows": "Strict MinGW compilation passes all 147 owned production units and five actual affected consumer/witness units. Compilation evidence only for this UI batch; actual Windows desktop and Linux final qualification remain pending.",
+      "characterization": "Before changing production, both linked preset/state witnesses pass new full-budget Unicode vectors: twelve-byte transport and production names, all twelve production orders, and a 255-byte UTF-8 startup/recent path compacted from the last MRU slot. The final full suite reruns them successfully, including existing exhaustive coverage of all 65536 production words.",
+      "scope": "Twenty raw copies retired: seven new-game roster/path/password sites; four complete typed preset-key constructions; two preset name tails; startup path and MRU compaction; battle-plan suffix; tutorial suffix; race chooser suggestion; designer name and component list row. Array/tail/row spans retain physical capacities and strict fitting bytes. No clipping, game/codec changes or new production allocation.",
+      "capacity_evidence": "Each migrated site records its current capacity reason in CPP-LIVE-TEXT-COPIES.json. Canonical generated names/catalog values and stored field/arena bounds are summarized in the local capacity-proof receipt. Existing unused tail bytes remain untouched. Removing the designer lstrcpyA call does not change LastError: its implementation only delegates to strcpy for these nonnull inputs.",
+      "inventory": "220 migrated sites; 88 initial application copy sites remain. The lexical raw-spelling allowlist totals 94, including SDK declarations/definitions.",
+      "baseline": "Behavior-neutral. Native/frozen-original baselines, unit goldens, file widths/layouts, game rules, RNG, tie order and binary64 boundaries remain unchanged. No scenario/checkpoint moved; no regression export required.",
+      "remaining": "Remaining L05 copies/const text/shared scratch results, L06 service interfaces and Milestone D, and L08 reconciliation/platform qualification remain active.",
+      "receipts": "dist/verification/live-cpp/l05t/"
     }
   }
 }

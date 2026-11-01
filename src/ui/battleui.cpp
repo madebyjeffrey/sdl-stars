@@ -319,7 +319,7 @@ INT_PTR  BattlePlansDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             cLen = std::strlen(app.lpui->btlplan.szName);
             if (cLen <= 27) {
                 if (app.lpui->btlplan.szName[cLen - 1] != ')' || std::isdigit(app.lpui->btlplan.szName[cLen - 2]) == 0 || app.lpui->btlplan.szName[cLen - 3] != '(') {
-                    std::strcpy(&app.lpui->btlplan.szName[cLen], " (2)");
+                    CchCopyUtf8(std::span{app.lpui->btlplan.szName}.subspan(static_cast<std::size_t>(cLen)), " (2)");
                 } else if (app.lpui->btlplan.szName[cLen - 2] == '9') {
                     app.lpui->btlplan.szName[cLen - 2] = '0';
                 } else {
