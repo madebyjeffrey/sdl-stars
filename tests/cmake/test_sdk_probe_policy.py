@@ -4,7 +4,7 @@ import tempfile
 import unittest
 import xml.etree.ElementTree as ET
 
-from configure_matrix import sdk_outcome, assert_sdk_registry, assert_sdk_compilation
+from configure_matrix import sdk_outcome, assert_sdk_registry, assert_sdk_compilation, sdk_reference_name
 
 
 class SdkProbePolicy(unittest.TestCase):
@@ -44,6 +44,12 @@ class SdkProbePolicy(unittest.TestCase):
         for report in (self.receipt(skipped=self.diagnostics), self.receipt(omitted=self.diagnostics)):
             with self.assertRaises(AssertionError):
                 sdk_outcome(report, self.diagnostics, self.names)
+
+    def test_source_already_named_reference_has_one_suffix(self):
+        self.assertEqual(sdk_reference_name(Path('win32_gdi_reference.c')),
+                         'test_win32_gdi_reference')
+        self.assertEqual(sdk_reference_name(Path('win32_abi.c')),
+                         'test_win32_abi_reference')
 
     def test_registry_rejects_replacement_with_same_count(self):
         with self.assertRaises(AssertionError):
