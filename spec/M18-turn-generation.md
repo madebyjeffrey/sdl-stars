@@ -131,6 +131,7 @@ not a proved runtime outcome. The dated collection run records actual checks.
 | <a id="m18-ac05"></a>**M18-AC05** / [M18-US02](#m18-us02) | Given a cursor expecting production, when passed healing, then do not advance the cursor. | `Next`, vectors |
 | <a id="m18-ac06"></a>**M18-AC06** / [M18-US03](#m18-us03) | Given a successful logical year, when scoring and writing, then increment the year before scores and output. | `Schedule`; E18-2 output adapter |
 | <a id="m18-ac07"></a>**M18-AC07** / [M18-US04](#m18-us04) | Given one output write failure, when interpreting the top-level success flag, then require separate file validation before distribution. | E18-2; FGenerateTurn/S01 |
+| <a id="m18-ac08"></a>**M18-AC08** / [M18-US02](#m18-us02) | Given annual Produce research completion, enter M12 with a true pool flag; nonpool advancement/recursive grants reuse the same contracts with false, without distributing another annual pool. | M12 `Begin`/`EndGrants`; [host research](M12-host-research-resolution.md), `Produce`/`UpdateResearchStatus`. Actual host entry/recursion fixtures and separate Produce tail spies; normal-level host rank descent and catalog-bounded scans now have proofs. Successful native-domain completion and complete phase/state integration remain open. |
 
 ## 5. Interaction and quality requirements
 
@@ -184,6 +185,11 @@ further decomposition; it is not a claim that their algorithms are proved.
 | E18-2 | Backup creation/rotation, generation-byte storage, per-player views and ignored write results are filesystem/state adapters. No all-file transaction or C refinement is proved. | M18/S01/M17; output validation and interrupted-year recovery fixtures. |
 
 ## 7. Evidence and verification
+
+The [M09 host execution contract](M09-production-execution.md) now supplies
+production entry/resource, manual validation, builder handoff and queue/application
+routing rules. Complete native object/callback and annual-state effects remain
+open; the phase cursor alone does not prove them.
 
 [FGenerateTurn](../src/core/turn.c), [Produce](../src/core/turn2.c), [order effects](../src/core/turn3.c), [native regression](../tests/scaffold/REGRESSION.md), and [binary64 boundaries](../docs/DOUBLE-PRECISION.md). Frozen original fixtures are historical evidence and must not be regenerated.
 

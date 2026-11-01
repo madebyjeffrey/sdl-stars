@@ -129,6 +129,8 @@ def main():
     parser.add_argument("--links-only", action="store_true")
     parser.add_argument("--cores", type=int, default=4)
     parser.add_argument("--time-limit", type=int, default=60)
+    parser.add_argument("--progress", choices=("None", "Symbol", "Batch"), default="None",
+                        help="Dafny progress reporting; proof and audit scope are unchanged")
     args = parser.parse_args()
     links_ok = links()
     requirements_ok = requirements()
@@ -139,7 +141,8 @@ def main():
     sources = [str(p.relative_to(ROOT)) for p in sorted(SPEC.rglob("*.dfy"))]
     subprocess.run(["dafny", "--version"], cwd=ROOT, check=True)
     subprocess.run(["dafny", "verify", *sources, "--verify-included-files",
-                    "--cores", str(args.cores), "--verification-time-limit", str(args.time_limit)], cwd=ROOT, check=True)
+                    "--cores", str(args.cores), "--verification-time-limit", str(args.time_limit),
+                    "--progress", args.progress], cwd=ROOT, check=True)
     subprocess.run(["dafny", "audit", *sources], cwd=ROOT, check=True)
     return 0
 

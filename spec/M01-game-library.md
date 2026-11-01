@@ -6,7 +6,10 @@ Inspected: 2026-10-24, `e2eae18cff0f990db20415c1c2262aed2022f95b`, with the
 existing local specification collection. Runtime sources are unchanged.
 Canonical definitions: [entry point](M01-library-specification.dfy),
 [M01Library](dafny/M01-library.dfy), [shared library names](dafny/S01-library-names.dfy).
-Verification: [collection run](README.md#m01-and-m02-verification).
+Verification: [collection run](README.md#m01-and-m02-verification),
+[publication continuation](README.md#m01-import-publication-and-recovery).
+The [import publication companion](M01-import-publication.md) records its newer
+inspection revision and exact post-admission recovery scope.
 
 [Workflow and state diagrams](#workflow-and-state-diagrams) and
 [cross-module sequences](#cross-module-sequences) provide visual reading paths.
@@ -194,7 +197,8 @@ previous-session destruction, file checks and their existing formal definitions.
 Sources: `FImportDesktopFile`, `FImportLibraryGame`, `FindImportUniverse`,
 `CopyImportEntry`, `CopyBackupDirectory`, `FInspectImportFile`.
 Models: `FNewFamily`, `FBackupDirectory`, shared S01 file/ZIP predicates and
-publication relation.
+publication relation; [publication/recovery programs](M01-import-publication.md)
+specify the post-admission family tail.
 
 1. Select an existing nonempty file or directory. BOF race dispatch goes to M02;
    ZIP input extracts into a temporary stage, then runs family import.
@@ -226,7 +230,9 @@ Sources: `FindLibraryTurnMatch`, `FImportSubsequentTurn`,
 `FReplaceConflictingLibraryTurn`, `FImportConflictingTurnAsCopy`.
 Models: `ImportTarget`, M06 `ClassifyImport`, S01 `FImportEffect`,
 `PublishLaterTurn`, `FTransition`; `BackupSlot` selects the first free backup,
-and `ConflictCopy` describes copy metadata.
+and `ConflictCopy` describes copy metadata. The
+[publication companion](M01-import-publication.md) owns exact source call order,
+partial cleanup, return/notice outcomes and recovery attempts.
 
 Match an inspected incoming turn by internal game ID against stored universes.
 A single match is selected directly; 2–64 require explicit target choice; more
@@ -239,8 +245,10 @@ metadata parse in this match scan.
   rejects dangling/unreadable destination entries. It retains existing orders
   and history because no previous player turn advanced.
 - A strictly later turn stages/rechecks, preserves a temporary previous turn,
-  publishes and then retires only that player's old orders. History and other
-  players remain. Retirement failure attempts restoration; restoration failure
+  publishes and then attempts to retire only that player's old orders when the
+  orders-file query reported presence. A failed query also skips retirement;
+  native TRUE therefore does not establish that old orders are absent. History
+  and other players remain. Retirement failure attempts restoration; restoration failure
   reports the recovery path. Skipped years do not become a conflict.
 - Changed same-year or older input prompts Cancel, Replace or Separate Copy.
   Replace stages a full copy, backs up that player's `.mN`, optional `.xN` and
@@ -334,7 +342,7 @@ Named tests are evidence of scope; the dated run in §7 establishes execution.
 | <a id="m01-ac05"></a>M01-AC05 / US03 | Given `.xy` and valid host state but no player turns, import can succeed and appear in Host Games; universe-only input fails. | `FNewFamily`, `FHostRow`; S01 family inspection. | Host-library and new-game import cases. |
 | <a id="m01-ac06"></a>M01-AC06 / US03 | Given two top-level universes or an invalid ZIP entry, import fails before publishing a managed game. | §3.3; S01 `FArchive`, inspection boundary. | Export/import runner; exhaustive archive cases not covered. |
 | <a id="m01-ac07"></a>M01-AC07 / US04 | Given 2–64 matching copies, require target selection; over 64 fails. Identical bytes do not trigger replacement. | `ImportTarget`, `TurnAction`; match/conflict source. | Multi-copy startup tests; 64/65 boundary model, native boundary test gap. |
-| <a id="m01-ac08"></a>M01-AC08 / US04 | Given a later Player 2 turn, retire only Player 2 orders after publication; on first Player 2 import retain orders/history. | S01 `FImportEffect`/`PublishLaterTurn`, M06 classification. | Update/failure harness; restoration failure remains explicit. |
+| <a id="m01-ac08"></a>M01-AC08 / US04 | Given a later Player 2 turn with orders presence reported TRUE, when import returns TRUE, remove only Player 2 orders after publication; on first Player 2 import retain orders/history. A FALSE orders query can leave old orders despite success (AC16). | S01 completed `FImportEffect`/`PublishLaterTurn`, M06 classification; [native `Later`](M01-import-publication.md#first-player-and-later-turn-publication). | Update/failure harness; restoration failure remains explicit. |
 | <a id="m01-ac09"></a>M01-AC09 / US04 | Given changed same/older input, Cancel preserves destination; Replace backs up player files; Separate Copy preserves the original. | §3.4; S01 effects, `ConflictCopy`. | Conflict runner; backup exhaustion needs focused runtime coverage. |
 | <a id="m01-ac10"></a>M01-AC10 / US05 | Given Rename or Duplicate, preserve internal ID, title and exchange basename; only Duplicate resets remembered player/time. | `RenamePreservesIdentity`, `DuplicateNotPlayed`. | Library safety runner, metadata/file checks. |
 | <a id="m01-ac11"></a>M01-AC11 / US05 | Given sidecar/family target collision or a link, staging fails without truncating an earlier staged file; failed rename publication reports restoration outcome. | `FCopyTargets`, `RenameOutcome`; copy source. | Library safety fault injection; native races remain external. |
@@ -342,6 +350,16 @@ Named tests are evidence of scope; the dated run in §7 establishes execution.
 | <a id="m01-ac13"></a>M01-AC13 / US07 | Given cancelled deletion, remove nothing. Confirmed deletion never traverses a link target; partial failure does not claim restoration. | `DeleteOutcome`, `NoLinkTraversal`; removal source. | Delete runner cancellation/failure/link checks. |
 | <a id="m01-ac14"></a>M01-AC14 / US07 | Given deletion of the Continue target, suppress automatic promotion; failed recent cleanup warns after deletion. | §3.5; Continue suppression, `DeletedRecentWarning`. | Delete/Continue tests; settings-write failure scope limited. |
 | <a id="m01-ac15"></a>M01-AC15 / US08 | Given wrong game/player/turn/generation orders, reject; identical bytes succeed unchanged; different existing orders require confirmation. | `FHostOrders`, `OrdersAction`; S01 `FOrdersFor`. | Host-library cases and model conditions; no execution claim. |
+| <a id="m01-ac16"></a>M01-AC16 / US04 | Given an existing orders file and a FALSE size-query result, when preservation and installation succeed, return TRUE while retaining orders. Do not treat this result as completed logical retirement. | [Publication companion](M01-import-publication.md#first-player-and-later-turn-publication); `Later`, `Vectors`; `FImportSubsequentTurn`. | Extracted-controller exhaustive reply masks; real native query errors/OS qualification remain S04 work. |
+| <a id="m01-ac17"></a>M01-AC17 / US04 | Given an occupied tick-derived stage, exclusive-copy failure still leads to attempted stage removal. If previous-turn preservation fails instead, clean stage only; previous residue may remain. | `Later`, `CollisionCleanup`, `StageFailure`, `InstallPrior`; source cleanup branches. | Source-controller collision and partial-copy profiles; path-alias/reachability qualification remains open. |
+| <a id="m01-ac18"></a>M01-AC18 / US04 | Given failed orders retirement, successful restoration returns FALSE with the old turn restored; failed restoration returns FALSE with the incoming target and previous recovery copy potentially present. | `RetireFailed`, `RetirementOutcomes`; recovery notice source. | Checked witnesses and extracted-controller failure combinations; durability/retry discovery remains open. |
+| <a id="m01-ac19"></a>M01-AC19 / US04 | Given conflict publication failure and failed first restore, retry after stage cleanup. Successful retry reports ordinary replacement failure; two failed restores report the recovery hold. Successful publication with failed hold cleanup returns TRUE plus warning, possibly with partial hold residue. | `ConflictReplace`, `RetriedRestore`, `PublishedWithRemnant`; full conflict controller. | Extracted-controller call traces, partial cleanup profiles and formal witnesses; native recursive-helper/OS refinement remains open. |
+| <a id="m01-ac20"></a>M01-AC20 / US03 | Given an admitted family with a reserved pending path, on ordinary publication success/failure clear pending memory. Cleanup failure may leave directories/files; allocation failure has no generic import-failed alert. | `FamilyPublish`, `FamilyClearsPending`; family publication tail, shallow `RemoveImportFile`. | Extracted-tail reply masks and general clearing proof; admission/copy-helper and native cleanup qualification remain open. |
+| <a id="m01-ac21"></a>M01-AC21 / US04, US05 | Given Separate Copy, clone with incoming player and played time zero, retain exchange basename, and publish only the stage. On failure attempt stage cleanup without moving the original directory. | `SeparateCopy`; `FImportConflictingTurnAsCopy` argument/control flow; stage-only helper contract. | Extracted whole-controller cases assert clone arguments and projected original preservation; disjoint paths and real helper footprints remain qualification obligations. |
+| <a id="m01-ac22"></a>M01-AC22 / US03, US05 / Observed | Given naming-dialog initialization, use the work area or screen fallback, visible/readable owner or work fallback, then center with C signed division and clamp without resizing. Bind output pointer, limit input to 255 and set initial text. Oversized dialogs are not promised to fit. | `Initialize`, `GeometrySafe`, `Position`; [shared dialog](M01-library-name-dialog.md). | [Source fixture](../tests/spec/check_library_name_dialog_source.py) checks hidden/failed owner, failed-written dialog rectangle, fallback and oversized/odd dimensions; unwritten/overflow and native DPI/lifetime remain S05/S06. |
+| <a id="m01-ac23"></a>M01-AC23 / US03, US04, US05 / Observed | Given Cancel, close with FALSE while callback returns handled TRUE and output stays unchanged. OK accepts only a valid available name; invalid/colliding input keeps the dialog open. Other commands are unhandled. Only successful OK copies prefix plus NUL, retaining output tails. | `Command`, `Unhandled`, `CancelLeavesBuffers`, `InvalidOrCollisionKeepsOutput`; actual LibraryNameDlg. | [Source fixture](../tests/spec/check_library_name_dialog_source.py) checks both mode branches, high notification words, output bytes and repeated OK/Cancel; real control/text routing remains S05. |
+| <a id="m01-ac24"></a>M01-AC24 / US03, US05 / Observed | Given game-name collision, probe then format suffixes 2…9999 using signed root budget and continuation-byte retreat. Exhaustion leaves final 9999 candidate unprobed; the dialog reports Name Taken and requires another OK, rather than accepting it. | `SuggestGame`, `GameLoop`, `BackBoundary`, `FinalGameCandidateNotProbed`. | [Source fixture](../tests/spec/check_library_name_dialog_source.py) covers first/next/all-failed queries and repeated validation; localized revision suffixes from other callers and native enumeration remain separate. |
+| <a id="m01-ac25"></a>M01-AC25 / US03, US05 / Observed | Given invalid/taken feedback, copy message body before fetching caption from shared compressed-string scratch storage; show the retained body and leave output untouched. | `Command` Body/CopyBody/Caption/Message order; LibraryNameDlg. | [Source fixture](../tests/spec/check_library_name_dialog_source.py) overwrites the same scratch buffer for distinct body/caption values. Localized string bounds and native visual/accessibility behavior remain S03/S05. |
 
 ## 5. Interaction and quality requirements
 
@@ -364,7 +382,7 @@ Named tests are evidence of scope; the dated run in §7 establishes execution.
 | Names, path limits, sanitization core and collisions | Shared S01 library-name definitions; source-derived default text, suffix formatting, native Unicode comparison and maximal UTF-8 cut extraction remain adapter obligations. `FUtf8Cut` checks a supplied safe prefix, not its maximality. |
 | Lists, per-player years, Continue ranking/action | `FGamesRow`, `FHostRow`, `Latest`, `Continue`, `PlayerYear`; inputs already reflect the distinct inspection levels described above. Enumeration, listbox sorting/focus and I/O scheduling are native obligations. |
 | Setup and publication | Existing M03/M05 rules and S01 metadata; no duplicate generation algorithm. |
-| Family/ZIP import and turn update | `FNewFamily`, `ImportTarget`, `TurnAction`; existing S01 framing/archive/effects and M06 classification. Full record semantics remain S01/gameplay concerns. |
+| Family/ZIP import and turn update | `FNewFamily`, `ImportTarget`, `TurnAction`; S01 framing/archive/completed effects and M06 classification. [M01ImportPublication](M01-import-publication.md) supplies source-specific publication/cleanup programs and explicit helper replies. Full admission/enumeration and native helper refinement remain open. |
 | Host orders | `FHostOrders`, `OrdersAction`, shared S01 identity match; native player-count extraction and staged bytes are checked by source adapters. |
 | Copy/rename | `Renamed`, `Duplicated`, `ConflictCopy`, `CopiedLeaf`, `FCopyTargets`, `RenameOutcome`; actual recursive enumeration, case comparison, exclusive copy and native replacement are external results. |
 | Deletion and export | `DeleteOutcome`, `RecurseDelete`, `FExportFamily`, `ExportReturn`; tree side effects, settings writes, ZIP codec and callbacks remain separately tested obligations. |
@@ -383,7 +401,10 @@ Source functions are named in §3; relevant test sources are the
 [game export runner](../tests/compat/run_game_export.py),
 [library safety runner](../tests/compat/run_game_library_safety.py) and
 [delete runner](../tests/compat/run_game_library_delete.py).
-Actual commands, counts and failures for this batch are in the
+The [publication source fixture](../tests/spec/check_library_publication_source.py)
+checks extracted controllers under scripted helper replies; it does not implement
+the native filesystem or prove complete helper refinement.
+Actual commands, counts and failures for the original batch are in the
 [shared verification record](README.md#m01-and-m02-verification).
 
 | Decision / gap | Owner / consequence |
@@ -501,13 +522,28 @@ sequenceDiagram
             Library->>Files: Check stored universe membership, stage and install
             Note over Library,Files: Keep existing history and pre-existing orders
         else Strictly later existing turn
-            Library->>Files: Stage/revalidate, preserve previous turn, install incoming
-            Library->>Files: Retire only this player's old .xN
-            alt Publication/retirement failed
-                Library->>Files: Attempt restoration of prior turn
-                Library-->>Player: Report failure and prior-copy recovery path if restoration fails
-            else Published successfully
-                Library-->>Player: Updated player year, histories and other players retained
+            Library->>Files: Stage and revalidate incoming
+            alt Stage failed
+                Library->>Files: Attempt stage cleanup
+                Library-->>Player: Stage failure
+            else Stage prepared
+                Library->>Files: Query this player's orders presence
+                Library->>Files: Preserve previous turn, install incoming
+                alt Preparation or install failed
+                    Library-->>Player: Failure with branch-specific cleanup remnants
+                else Installed and orders query reported TRUE
+                    Library->>Files: Remove only this player's old .xN
+                    alt Orders removal failed
+                        Library->>Files: Attempt restoration of prior turn
+                        Library-->>Player: Failure; recovery path if restoration failed
+                    else Orders removed
+                        Library->>Files: Attempt previous-file cleanup
+                        Library-->>Player: Success, histories and other players retained
+                    end
+                else Installed and orders query reported FALSE
+                    Library->>Files: Attempt previous-file cleanup
+                    Library-->>Player: Success; old orders may remain
+                end
             end
         else Changed same-year or older
             Library-->>Player: Cancel / Replace with backup / Import as Separate Copy

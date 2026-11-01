@@ -5,6 +5,27 @@ the `2.6j` branch keeps it. 2.8 is released (tag `v2.8.0`, branch `2.8` for
 patch releases). 2.9 is released (tag `v2.9.0`); `main` is the 2.9 line,
 and its builds count toward 2.9.1.
 
+## C++ migration completion
+
+[Milestone B PR #66](https://github.com/madebyjeffrey/sdl-stars/pull/66) is merged
+and qualified. [Milestone C](CPP-MILESTONE-C.md) is planned from its `develop`
+merge `62bb854`; it covers owned `.cpp`/`.mm` file renames, removal of
+transitional language and symbol overrides, explicit callback/test/state seams,
+linked source witnesses, real wrapper namespaces and final strict C++ policy.
+It preserves game/file behavior and introduces no object-oriented redesign.
+The [completion analysis](CPP-CONVERSION-COMPLETION-ANALYSIS.md) records the
+historical active B revision. C's refreshed plan revalidates the merged tree and
+proposes delivery batches; C01 still requires a full consumer inventory and
+fresh parent checks. C implementation remains pending.
+
+[Milestone D](CPP-MILESTONE-D.md) ([issue #71](https://github.com/madebyjeffrey/sdl-stars/issues/71))
+plans a C++ file-selection interface behind the SDL Win32 wrapper after C. It
+retains the Win32 open/save entry points as
+adapters, moves the four picker backends to a typed request/result handoff and
+migrates a real open/save caller pair. It is planned, not implemented. The
+[earlier D analysis](CPP-MILESTONE-D-ANALYSIS.md) remains an assessment of broader
+domain-encapsulation candidates, which are outside this milestone.
+
 ## SDL desktop consolidation
 
 The desktop product uses SDL3 through `compat/win32` on every platform. The native
@@ -630,7 +651,11 @@ other the serial-unlocked shareware), which can point at causes.
 
 | Bug | Starting point (see KNOWN-BUGS.md) | Status |
 | --- | --- | --- |
+| Race habitat growth hit test | IrcRaceDlgHitTest reads a three-element habitat array at index 3 for growth rectangles 15/16; [mechanism and evidence](KNOWN-BUGS.md#race-habitat-growth-hit-test--located-on-main) | actual helper/native-layout fixture reproduces both array-bounds diagnostics; full native event reachability, original comparison and separate repair remain open; no runtime change |
 | Production editor queue sanitization | `InitProduction` overlapping `memcpy` and diverging logical/physical row cursors; [mechanism and evidence](KNOWN-BUGS.md#production-editor-queue-sanitization--located-on-main) | current source fixtures confirm the defined cursor case and flag overlap before executing it; full UI trigger, original comparison and repair open |
+| Planet queue capacity wrap | `FLookupPlanet` count+2 growth narrows the maximum header, then `FDupPlanet` can allocate too little for active rows; [mechanism and evidence](KNOWN-BUGS.md#planet-queue-capacity-wrap--located-on-main) | guarded source write/read chain confirms counts 254/255 and undersized requests; actual host partial prepend also confirms 255-row header wrapping/missing spare; full allocator/UI reachability, original comparison and separately scoped repair open |
+| Genesis stock write-back | `FBuildObject` clears planet fields but Produce later republishes its separate working mineral stocks; [mechanism](KNOWN-BUGS.md#genesis-stock-write-back--located-on-main) | actual Produce/builder/application/RNG fixtures confirm the two stages; full game/original comparison and intended preserve/erase behavior remain open; no runtime repair |
+| Forecast helper side effects | `EstimateItemProdSched` inherits generating/RNG context and apply=true mining touches live AR remote miners; actual builder can emit alchemy messages; [mechanisms](KNOWN-BUGS.md#forecast-helper-side-effects--located-on-main) | source fixtures confirm native RNG/fleet/message effects; full UI/AI contexts, original comparison and separately scoped behavior decision open |
 | East/West speed bump immunity | `FTravelThroughMineFields`, `FIntersectCircleLine` horizontal case | not reproduced (`test_turn.c`) |
 | Cheap starbase (UltraStation variant) | `PROD.pct` against edited designs | fixed (`test_log.c`): a design change or deletion clears queued progress |
 | [freepop] hack | `COLDROP` replay in `FRunLogRecord` | open |

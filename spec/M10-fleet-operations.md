@@ -11,6 +11,11 @@ Verification: [M08–M11 collection results](README.md#m08m11-verification) and
 
 [Workflow and state diagrams](#workflow-and-state-diagrams) provide a visual reading path.
 
+The [native colony capability producer](M08-colony-capabilities.md) now specifies
+first-slot gate range and its actual lookup/pointer contract. The source ignores
+availability when reading range; this supplies metadata and does not close
+travel permission, range/mass damage, disclosure or complete gate execution.
+
 ## 1. Purpose, scope and ownership
 
 Let a player inspect fleets, transfer cargo and ships, compose waypoint tasks,
@@ -368,6 +373,11 @@ kept separate.
 | <a id="m10-ac15"></a>M10-AC15 / US02 | Given a preset that leaves fuel quantity 4095, when normal single-line refresh selects fuel, then write the initial payload before the notification clamps fuel to 4000; preserve other rows. | `RefreshTransport`, `RefreshOnlySelected`, `Complete`; `UpdateOrdersDDs`, `ChangedEdit` | Source fixture checks initial/final snapshots and three write-back calls; live-window/no-unrelated-reentrancy adapter explicit. |
 | <a id="m10-ac16"></a>M10-AC16 / US02, US06 | Given raw action 15 or percentage 4095, when projecting to task semantics, then do not claim S06-supported valid execution; storage compatibility does not establish action eligibility. | `SelectedAction`, `Typed`, S06 `ActionFits`; `UpdateOrdersDDs` | Checked mapping and source combo-error fixture; complete host execution remains E10-4. |
 | <a id="m10-ac17"></a>M10-AC17 / US02 | Given a percentage action's period-ending custom label, when painting a preset summary, then replace the final three bytes with quantity and literal kT; this path does not infer percent units. | `ActionLabel`; `ZipOrderDlg` | Formal/native label fixtures; malformed/localized buffers and visual/accessibility qualification Open. |
+| <a id="m10-ac18"></a>M10-AC18 / US01, M09-US05 | Given completed ship construction with player fleet count exactly 512, scan to the first null/greater owner, match first-order point and require strict 32766-built > prior stack; no candidate loses construction after charging. Another raw fleet count follows allocation. | `ShipPlan`, `Candidate`; [construction-stack contract](M19-construction-effects.md#ships-fleet-capacity-and-packed-damage). | Actual full 512-entry failure roster/host loop, threshold and null/owner/point fixtures; saved-game/new-fleet registration qualification remains open. |
+| <a id="m10-ac19"></a>M10-AC19 / US01, M09-US05 | Given a construction merge, preserve native packed share/damage rounding, signed-16 ship counts and original-damage arithmetic; retain already written share on a later undefined boundary. This is a separate algorithm from player fleet merging. | `Rebalance`; [damage rules](M19-construction-effects.md#ships-fleet-capacity-and-packed-damage). | All 65,536 native damage words at a declared context, checked numeric boundaries; broad source refinement, combat and player merge/split damage remain E10-3/E19-2. |
+| <a id="m10-ac20"></a>M10-AC20 / US01, US02, M09-US05 | Given created ships, apply signed-16 stack addition and unsigned-32 design counters; then derive fuel and call routing/default-order helpers before selecting singular/multiple and stopped/moving notices. | `CreateStack`, `ShipNotice`; actual `CreateShip`/`FBuildObject`. | Native stack/counter wrapping and new-fleet provider cases; actual allocator, fuel/routing derivation and order lifetimes remain their owners' obligations. |
+| <a id="m10-ac21"></a>M10-AC21 / US02, US06 | Given mining capacity, scan sixteen signed ship counts, skip nonpositive stacks before hull access, scan declared slots, query only exact mining kind/item 0..6, and preserve signed ability/count arithmetic and unsigned accumulation before the 4000 upper cap. | `SlotSum`, `DesignSum`, `CapacityCap`; [mining capacity](M19-mining-and-depletion.md#fleet-mining-capacity). | Actual CMineFromLpfl, common.h/fresh IDs and explicit part/ability provider; slot/count/ability/lookup-count matrix. Full catalog/pointer refinement remains open. |
+| <a id="m10-ac22"></a>M10-AC22 / US02, US06 | Given invalid extent in a skipped nonpositive design, do not access it; an active extent above sixteen or overflowing signed per-ship*stack product has no defined capacity. Included zero-count parts still perform lookup. | `SlotSum`, `DesignSum`; source short-circuit and domain fixtures. | Checked boundary model; undefined cases excluded before C. Full remote-task phase/target/cancellation behavior remains E10-4. |
 
 ## 5. Interaction and quality requirements
 
@@ -381,14 +391,18 @@ kept separate.
 | <a id="m10-qr03"></a>M10-QR03 | Open: maximum-fleet route editing, merge and fuel-preview latency target. | M10/S05 owner to set workload/percentile/time and benchmark. |
 | <a id="m10-qr04"></a>M10-QR04 | Observed text/persistence: fleet names retain UTF-8 byte limits and commands preserve ID/task layouts. | [Unicode boundaries](../docs/UNICODE-BOUNDARIES.md), S01; multilingual visual and redirect/replay matrix Open. |
 
+The [construction-effects companion](M19-construction-effects.md#ships-fleet-capacity-and-packed-damage)
+now supplies the separate construction merge/stack rules. It does not close
+player merge/split, combat or full native routing/allocator refinement.
+
 ## 6. Coverage inventory, evidence and open decisions
 
 | Boundary | Rules / reason not fully formalized | Owner / next evidence |
 | --- | --- | --- |
 | E10-1 | Selection/report wrap, fleet rename, plan controls, nontransport task defaults/enablement, append/move, active-index recovery and full native modal/lifetime behavior remain. Preset commands/custom rollback, amount/action controls and a bounded synchronous transport refresh now have checked models/source fixtures (§3.1.1–4). S06 owns typed payloads; M07 owns gestures. | M10/M07/M14/M15/S05; complete task/default/target state machine, real reentrancy/lifetime and keyboard scenarios; retain preset/quantity fixtures. |
 | E10-2 | Object-specific cargo eligibility/capacity, jettison, endpoint lookup/write-back and error paths. `Move` assumes valid nonnegative endpoints and free capacity. | M10/S06/S01; ownership, partial-detail and rejected-transfer cases. |
-| E10-3 | Split allocation/destruction, bulk-merge policy, packed damage averaging, proportional cargo and binary64 threshold/remainder order, redirects. `Merge` covers only per-design two-fleet overflow. | M10/S06; full composition transition model and conservation/rounding fixtures. |
-| E10-4 | Fuel cargo assignment/distance/floating branches/warp recommendation; gates and gate damage; arrival/repeat/auto-target helpers; remote mining, colonization, transport, scrap, patrol, route, mine-laying/sweeping, ownership transfer and phase interactions. All are representable future extraction, not unspecified successful tasks. | M10/M19/M18/M14; task-by-task execution companions with RNG, arithmetic and prerequisite traces. |
+| E10-3 | Split allocation/destruction, bulk-merge policy, packed damage averaging beyond the separate construction-stack contract, proportional cargo and binary64 threshold/remainder order, redirects. `Merge` covers only per-design two-fleet overflow. | M10/S06; full composition transition model and conservation/rounding fixtures. |
+| E10-4 | Fuel cargo assignment/distance/floating branches/warp recommendation; gates and gate damage; arrival/repeat/auto-target helpers; remote mining task eligibility/cancellation/phase integration (numeric capacity and mineral/depletion effects now specified in the [mining companion](M19-mining-and-depletion.md)), colonization, transport, scrap, patrol, route, mine-laying/sweeping, ownership transfer and phase interactions. All are representable future extraction, not unspecified successful tasks. | M10/M19/M18/M14; task-by-task execution companions with RNG, arithmetic and prerequisite traces. |
 
 Evidence: [ship unit tests](../tests/unit/test_ship.c) cover two-fleet overflow,
 bulk-merge overflow retention, no-heal and waypoint/warp regressions. The

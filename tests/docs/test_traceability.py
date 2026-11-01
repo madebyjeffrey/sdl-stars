@@ -157,6 +157,33 @@ module Real {
             self.assertIn("tests/context.py", reverse)
             self.assertIn("No criterion-level reference resolved", reverse)
 
+    def test_cross_module_edges_link_to_the_owning_trace_page(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            paths = self.fixture(root)
+            source = root / "spec/M01-library.md"
+            source.write_text(source.read_text().replace("US01, US02 / Observed", "US01, US02, M02-US01 / Observed"))
+            other = root / "spec/M02-races.md"
+            other.write_text('''# Races
+<a id="m02-us01"></a>
+**M02-US01 — Select.** As a player, select a race.
+
+| ID / story | Acceptance | Rule | Evidence |
+| --- | --- | --- | --- |
+| <a id="m02-ac01"></a>M02-AC01 / M01-US01 | Keep the library handoff. | Native boundary. | Open. |
+''')
+            catalog = traces.Catalog(root, paths + [other])
+            link = lambda p, a="": p.relative_to(root).as_posix() + ("#" + a if a else "")
+            first = traces.module_page(catalog, "M01", "Library", link, lambda text, _: text)
+            second = traces.module_page(catalog, "M02", "Races", link, lambda text, _: text)
+            self.assertIn("[M02-AC01](M02.md#trace-m02-ac01)", first)
+            self.assertIn("[M02-US01](M02.md#trace-m02-us01)", first)
+            self.assertIn("[M01-AC01](M01.md#trace-m01-ac01)", second)
+            self.assertIn("[M01-US01](M01.md#trace-m01-us01)", second)
+            self.assertIn("[M01-AC01](#trace-m01-ac01)", first)
+            self.assertNotIn("](#trace-m02-", first)
+            self.assertNotIn("](#trace-m01-", second)
+
 
 if __name__ == "__main__":
     unittest.main()

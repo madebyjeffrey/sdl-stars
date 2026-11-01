@@ -2,3 +2,4 @@
 include "dafny/S06-shared-state.dfy"
 include "dafny/S06-lookups.dfy"
 include "dafny/S06-state-extensions.dfy"
+include "dafny/S06-planet-editor.dfy"
