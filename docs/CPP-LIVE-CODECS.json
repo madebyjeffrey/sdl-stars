@@ -1,0 +1,304 @@
+{
+  "parent": "e875ac5a",
+  "status": "complete; verified for this codec scope",
+  "interfaces": {
+    "FCompressUserString": "Borrows non-NUL byte text and an actual writable byte span; returns optional encoded-byte count. No allocation; failure leaves output untouched.",
+    "FDecompressUserString": "Borrows encoded bytes and a character destination including NUL; returns optional decoded-byte count excluding NUL. Invalid bytes/capacity clear only the first byte of a nonempty destination.",
+    "FDecompressUserStringBytes": "Same bounded decode/size contract; deliberately permits CP1252/non-UTF-8 bytes at the narrow legacy race import boundary. Embedded decoded NUL remains invalid.",
+    "FReadUserString": "Borrows record bytes and actual text destination; returns optional record bytes consumed including marker and raw NUL, retaining raw/compressed admission and UTF-8 checks.",
+    "FReadLegacyRaceString": "The actual private legacy race reader also uses spans and an optional consumed-byte count; keeps its exact 32-byte field budget and the caller full-record-consumption check."
+  },
+  "preserved_limits": {
+    "compression": "Original 1024-byte staging and nibble completion/padding boundaries retained: 2047 spaces can produce 1024 bytes; the next complete nibble pair still fails.",
+    "decompression": "Destination capacity includes NUL and remains at most 1024; encoded input retains the positive int16_t range. Existing callers preserve their logical output budgets within actual physical arrays/arena slices.",
+    "names": "Saved fields keep 31 UTF-8 bytes plus NUL. Compression budgets are unchanged; UTF-8 admission remains at the applicable record boundary."
+  },
+  "callers": {
+    "by_operation": {
+      "FDecompressUserString": 9,
+      "FCompressUserString": 17,
+      "FReadUserString": 13,
+      "FDecompressUserStringBytes": 2,
+      "FReadLegacyRaceString": 2
+    },
+    "message_arena": "The 0x800-byte UI arena is split through actual spans: compression uses its second half, and displayed text decoding uses its remaining tail with the existing 1000-byte text budget.",
+    "validated_heap_copies": "Read fleet names and replayed name orders copy validated UTF-8 plus NUL into the exact persistent allocation. Battle-plan decode copies into its actual fixed name field. No allocator, storage width, publication order or wire record changes.",
+    "migrated_call_sites": 43,
+    "pre_existing_call_sites": 32,
+    "pre_migration_reference_test_sites": 11
+  },
+  "verification": {
+    "batch": "L06a bounded user-string codec and record-reader interfaces",
+    "debug_build": "Pass; no new warnings; public headers in both include orders.",
+    "desktop": "153/153; includes known byte vectors, all non-NUL byte values, UTF-8 versus legacy decoding, every short output budget/sentinel, scratch limits, successful zero-byte counts, empty/oversized spans and existing record/import/message/ownership/leak tests and available tutorial checkpoints.",
+    "host_units": "28/28",
+    "native_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped reference inputs.",
+    "host_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped reference inputs.",
+    "windows": "147/147 owned production/wrapper translation units and four changed test units compile with strict MinGW. Actual Windows utilgen (9 cases), save (22), log (18) and race (7) executables pass under Wine with per-case isolation. Native Windows desktop qualification remains pending.",
+    "characterization": "The same byte vectors, capacity/sentinel checks, all-byte legacy round trip and scratch-boundary cases passed against the old pointer/count implementation before migration. Actual encoded/decoded/consumed counts are now explicit optional results; old output-count overloads are removed.",
+    "test_adaptation": "The first mechanically migrated characterization predicates used optional != 0, which compares values rather than presence. Changed those predicates to has_value; byte, sentinel, limit and failure assertions are unchanged. Successful zero-byte results are tested explicitly.",
+    "baseline": "Behavior-neutral for existing valid calls. Frozen original/native baselines, catalog sources, all unit goldens, wire widths/layouts, seed consumption and canonical models unchanged. No scenario/checkpoint moved and no regression export required.",
+    "receipts": "dist/verification/live-cpp/l06a/"
+  },
+  "pending_other_work": "LogChangeName raw caller validation and its unchecked fallback/persistent copies remain in the live copy inventory for a separate repair, along with other text/path copies and service interfaces.",
+  "sites": [
+    {
+      "path": "src/ui/msgui.cpp",
+      "line": 210,
+      "operation": "FDecompressUserString",
+      "original_call": "FDecompressUserString(app, reinterpret_cast<char *>(lpmsgplr->rgbMsg()), lpmsgplr->cLen, reinterpret_cast<char *>(app.lpui->lpb2k) + cch, &i)"
+    },
+    {
+      "path": "src/ui/msgui.cpp",
+      "line": 581,
+      "operation": "FCompressUserString",
+      "original_call": "FCompressUserString(app, reinterpret_cast<char *>(app.lpui->lpb2k), reinterpret_cast<char *>(app.lpui->lpb2k) + 1024, &cbNew)"
+    },
+    {
+      "path": "src/ui/msgui.cpp",
+      "line": 663,
+      "operation": "FDecompressUserString",
+      "original_call": "FDecompressUserString(app, reinterpret_cast<char *>(lpmp->rgbMsg()), lpmp->cLen, reinterpret_cast<char *>(app.lpui->lpb2k), &i)"
+    },
+    {
+      "path": "src/core/log.cpp",
+      "line": 119,
+      "operation": "FCompressUserString",
+      "original_call": "FCompressUserString(app, szName, reinterpret_cast<char *>(&rtchgname.rgb[1]), &cOut)"
+    },
+    {
+      "path": "src/core/log.cpp",
+      "line": 733,
+      "operation": "FReadUserString",
+      "original_call": "FReadUserString(app, lpb + cbWireChangeName, cb - cbWireChangeName, szT, 32, nullptr)"
+    },
+    {
+      "path": "src/core/save.cpp",
+      "line": 53,
+      "operation": "FCompressUserString",
+      "original_call": "FCompressUserString(app, szName.data(), reinterpret_cast<char *>(rgb + 1), &cOut)"
+    },
+    {
+      "path": "src/core/file.cpp",
+      "line": 34,
+      "operation": "FDecompressUserString",
+      "original_call": "FDecompressUserString(app, const_cast<char *>(reinterpret_cast<const char*>(lpb)) + 1, *lpb, psz, &cOut)"
+    },
+    {
+      "path": "src/core/file.cpp",
+      "line": 62,
+      "operation": "FReadUserString",
+      "original_call": "FReadUserString(app, lpb, cb - static_cast<std::size_t>((lpb - lprt)), shdef.hul.szClass,\n                         sizeof(shdef.hul.szClass), nullptr)"
+    },
+    {
+      "path": "src/core/file.cpp",
+      "line": 125,
+      "operation": "FReadUserString",
+      "original_call": "FReadUserString(app, pbIn + iOff, cb - iOff, pplr->szName, sizeof(pplr->szName), &cbRead)"
+    },
+    {
+      "path": "src/core/file.cpp",
+      "line": 127,
+      "operation": "FReadUserString",
+      "original_call": "FReadUserString(app, pbIn + iOff, cb - iOff, pplr->szNames, sizeof(pplr->szNames), nullptr)"
+    },
+    {
+      "path": "src/core/file.cpp",
+      "line": 1063,
+      "operation": "FReadUserString",
+      "original_call": "FReadUserString(app, reinterpret_cast<std::uint8_t *>(app.state.rgbCur), app.state.hdrCur.cb, szT, 32, nullptr)"
+    },
+    {
+      "path": "src/core/file.cpp",
+      "line": 1080,
+      "operation": "FReadUserString",
+      "original_call": "FReadUserString(app, lpb + 4, cb - 4, szName, sizeof(szName), nullptr)"
+    },
+    {
+      "path": "src/core/race.cpp",
+      "line": 529,
+      "operation": "FDecompressUserStringBytes",
+      "original_call": "FDecompressUserStringBytes(app, const_cast<char *>(reinterpret_cast<const char*>(lpb)) + 1, lpb[0], szRaw, &cOut)"
+    },
+    {
+      "path": "src/core/msg.cpp",
+      "line": 729,
+      "operation": "FDecompressUserString",
+      "original_call": "FDecompressUserString(app, reinterpret_cast<char *>(PmvCur(app).RgbMsg()), cLen, szText, &cOut)"
+    },
+    {
+      "path": "tests/unit/test_log.cpp",
+      "line": 34,
+      "operation": "FCompressUserString",
+      "original_call": "FCompressUserString(app, szTestLiteral2, (char *)rt.rgb + 1, &cOut)"
+    },
+    {
+      "path": "tests/unit/test_race.cpp",
+      "line": 52,
+      "operation": "FCompressUserString",
+      "original_call": "FCompressUserString(app, (char *)szName, (char *)pb + 1, &cOut)"
+    },
+    {
+      "path": "tests/unit/test_race.cpp",
+      "line": 62,
+      "operation": "FCompressUserString",
+      "original_call": "FCompressUserString(app, (char *)szNames, (char *)pb + 1, &cOut)"
+    },
+    {
+      "path": "tests/unit/test_race.cpp",
+      "line": 429,
+      "operation": "FCompressUserString",
+      "original_call": "FCompressUserString(app, szLong, (char *)&rgb[iOff + 1], &cOut)"
+    },
+    {
+      "path": "tests/unit/test_save.cpp",
+      "line": 358,
+      "operation": "FCompressUserString",
+      "original_call": "FCompressUserString(app, szExpected, szPacked, &cPacked)"
+    },
+    {
+      "path": "tests/unit/test_save.cpp",
+      "line": 359,
+      "operation": "FDecompressUserString",
+      "original_call": "FDecompressUserString(app, szPacked, cPacked, szRound, &cRound)"
+    },
+    {
+      "path": "tests/unit/test_save.cpp",
+      "line": 381,
+      "operation": "FReadUserString",
+      "original_call": "FReadUserString(app, rgb, 3, sz, sizeof(sz), NULL)"
+    },
+    {
+      "path": "tests/unit/test_save.cpp",
+      "line": 383,
+      "operation": "FReadUserString",
+      "original_call": "FReadUserString(app, rgb, 4, sz, sizeof(sz), &cbRead)"
+    },
+    {
+      "path": "tests/unit/test_save.cpp",
+      "line": 386,
+      "operation": "FReadUserString",
+      "original_call": "FReadUserString(app, rgb, 4, sz, sizeof(sz), NULL)"
+    },
+    {
+      "path": "tests/unit/test_save.cpp",
+      "line": 388,
+      "operation": "FCompressUserString",
+      "original_call": "FCompressUserString(app, szTestLiteral1, (char *)rgb + 1, &cOut)"
+    },
+    {
+      "path": "tests/unit/test_save.cpp",
+      "line": 390,
+      "operation": "FReadUserString",
+      "original_call": "FReadUserString(app, rgb, cOut, sz, sizeof(sz), NULL)"
+    },
+    {
+      "path": "tests/unit/test_save.cpp",
+      "line": 391,
+      "operation": "FReadUserString",
+      "original_call": "FReadUserString(app, rgb, cOut + 1, sz, sizeof(sz), &cbRead)"
+    },
+    {
+      "path": "tests/unit/test_save.cpp",
+      "line": 394,
+      "operation": "FReadUserString",
+      "original_call": "FReadUserString(app, rgb, 2, sz, sizeof(sz), NULL)"
+    },
+    {
+      "path": "tests/unit/test_save.cpp",
+      "line": 397,
+      "operation": "FReadUserString",
+      "original_call": "FReadUserString(app, rgb, 2, sz, sizeof(sz), NULL)"
+    },
+    {
+      "path": "tests/unit/test_save.cpp",
+      "line": 561,
+      "operation": "FCompressUserString",
+      "original_call": "FCompressUserString(app, btlplan.szName, szPacked, &cOut)"
+    },
+    {
+      "path": "tests/unit/test_save.cpp",
+      "line": 668,
+      "operation": "FCompressUserString",
+      "original_call": "FCompressUserString(app, szName, szPacked, &cOut)"
+    },
+    {
+      "path": "tests/unit/test_utilgen.cpp",
+      "line": 25,
+      "operation": "FCompressUserString",
+      "original_call": "FCompressUserString(app, \" aA\", szPacked + 2, &cPacked)"
+    },
+    {
+      "path": "tests/unit/test_utilgen.cpp",
+      "line": 33,
+      "operation": "FDecompressUserString",
+      "original_call": "FDecompressUserString(app, reinterpret_cast<const char *>(rgbExpected), 2, szRound + 2, &cRound)"
+    },
+    {
+      "path": "tests/unit/test_utilgen.cpp",
+      "line": 41,
+      "operation": "FCompressUserString",
+      "original_call": "FCompressUserString(app, szInput, szPacked, &cPacked)"
+    },
+    {
+      "path": "tests/unit/test_utilgen.cpp",
+      "line": 43,
+      "operation": "FDecompressUserStringBytes",
+      "original_call": "FDecompressUserStringBytes(app, szPacked, cPacked, szRound, &cRound)"
+    },
+    {
+      "path": "tests/unit/test_utilgen.cpp",
+      "line": 45,
+      "operation": "FDecompressUserString",
+      "original_call": "FDecompressUserString(app, szPacked, cPacked, szRound, &cRound)"
+    },
+    {
+      "path": "tests/unit/test_utilgen.cpp",
+      "line": 49,
+      "operation": "FCompressUserString",
+      "original_call": "FCompressUserString(app, szInput, szPacked, &cPacked)"
+    },
+    {
+      "path": "tests/unit/test_utilgen.cpp",
+      "line": 52,
+      "operation": "FCompressUserString",
+      "original_call": "FCompressUserString(app, szInput, szPacked, &cPacked)"
+    },
+    {
+      "path": "tests/unit/test_utilgen.cpp",
+      "line": 54,
+      "operation": "FCompressUserString",
+      "original_call": "FCompressUserString(app, szInput, szPacked, &cPacked)"
+    },
+    {
+      "path": "tests/unit/test_utilgen.cpp",
+      "line": 56,
+      "operation": "FDecompressUserString",
+      "original_call": "FDecompressUserString(app, szPacked, cPacked, szRound, &cRound)"
+    },
+    {
+      "path": "tests/unit/test_utilgen.cpp",
+      "line": 58,
+      "operation": "FCompressUserString",
+      "original_call": "FCompressUserString(app, szInput, szPacked, &cPacked)"
+    },
+    {
+      "path": "tests/unit/test_utilgen.cpp",
+      "line": 59,
+      "operation": "FDecompressUserString",
+      "original_call": "FDecompressUserString(app, szPacked, cPacked, szRound, &cRound)"
+    },
+    {
+      "path": "src/core/race.cpp",
+      "line": 552,
+      "operation": "FReadLegacyRaceString",
+      "original_call": "FReadLegacyRaceString(app, lpb + iOff, cb - static_cast<std::size_t>(iOff), pplr->szName, sizeof(pplr->szName), &cbRead)"
+    },
+    {
+      "path": "src/core/race.cpp",
+      "line": 555,
+      "operation": "FReadLegacyRaceString",
+      "original_call": "FReadLegacyRaceString(app, lpb + iOff, cb - static_cast<std::size_t>(iOff), pplr->szNames, sizeof(pplr->szNames), &cbRead)"
+    }
+  ]
+}

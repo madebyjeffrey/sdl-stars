@@ -14,27 +14,24 @@
 char mpishdefishTutor[6] = {3, 4, 9, 6, 7, 14};
 
 // The length marker and raw terminator must both belong to this record.
-std::int16_t FReadUserString(APPSESSION &app, const std::uint8_t *lpb, std::size_t cb, char *psz, std::size_t cchMax, std::size_t *pcbRead) {
-    const std::uint8_t *lpbEnd;
+std::optional<std::size_t> FReadUserString(APPSESSION &app, std::span<const std::byte> lpb, std::span<char> psz) {
     std::size_t cch;
-    std::int16_t cOut;
+    std::uint8_t cOut;
 
-    if (cchMax == 0) return 0;
+    if (psz.empty()) return std::nullopt;
     psz[0] = 0;
-    if (cb == 0 || cchMax > 1024) return 0;
-    if (*lpb == 0) {
-        lpbEnd = static_cast<const std::uint8_t *>(std::memchr(lpb + 1, 0, StarsMin(cb - 1, cchMax)));
-        if (!lpbEnd) return 0;
-        cch = static_cast<std::size_t>((lpbEnd - lpb - 1));
-        if (CchCopyUtf8(psz, cchMax, reinterpret_cast<const char *>(lpb) + 1, cch) < 0) return 0;
-        if (pcbRead) *pcbRead = cch + 2;
-    } else {
-        if (*lpb > cb - 1) return 0;
-        cOut = static_cast<std::int16_t>(cchMax) - 1;
-        if (!FDecompressUserString(app, const_cast<char *>(reinterpret_cast<const char*>(lpb)) + 1, *lpb, psz, &cOut)) return 0;
-        if (pcbRead) *pcbRead = static_cast<std::size_t>(*lpb) + 1;
+    if (lpb.empty() || psz.size() > 1024) return std::nullopt;
+    cOut = std::to_integer<std::uint8_t>(lpb[0]);
+    if (cOut == 0) {
+        const auto rgbName = lpb.subspan(1).first(std::min(lpb.size() - 1, psz.size()));
+        const auto lpbEnd = std::find(rgbName.begin(), rgbName.end(), std::byte{0});
+        if (lpbEnd == rgbName.end()) return std::nullopt;
+        cch = static_cast<std::size_t>(lpbEnd - rgbName.begin());
+        if (CchCopyUtf8(psz, std::string_view(reinterpret_cast<const char *>(rgbName.data()), cch)) < 0) return std::nullopt;
+        return cch + 2;
     }
-    return 1;
+    if (cOut > lpb.size() - 1 || !FDecompressUserString(app, lpb.subspan(1, cOut), psz)) return std::nullopt;
+    return static_cast<std::size_t>(cOut) + 1;
 }
 
 std::int16_t FReadShDef(APPSESSION &app, const std::uint8_t *lprt, SHDEF *lpshdef, std::int16_t iplrLoad, std::size_t cb) {
@@ -59,8 +56,7 @@ std::int16_t FReadShDef(APPSESSION &app, const std::uint8_t *lprt, SHDEF *lpshde
     if (shdef.hul.ibmp < iFirst || shdef.hul.ibmp >= iFirst + 4) {
         shdef.hul.ibmp = (shdef.hul.ibmp & 3) | iFirst;
     }
-    if (!FReadUserString(app, lpb, cb - static_cast<std::size_t>((lpb - lprt)), shdef.hul.szClass,
-                         sizeof(shdef.hul.szClass), nullptr)) return 0;
+    if (!FReadUserString(app, std::as_bytes(std::span(lpb, cb - static_cast<std::size_t>((lpb - lprt)))), std::span{shdef.hul.szClass}.first(sizeof(shdef.hul.szClass)))) return 0;
     ishdef = shdef.ishdef;
     if (ishdef >= 16) {
         ishdef -= 16;
@@ -105,7 +101,7 @@ std::int16_t FReadShDef(APPSESSION &app, const std::uint8_t *lprt, SHDEF *lpshde
 
 void ReadRtPlr(APPSESSION &app, PLAYER *pplr, std::uint8_t *pbIn, std::size_t cb) {
     std::int16_t iOff;
-    std::size_t cbRead;
+    std::optional<std::size_t> cbRead;
 
     *pplr = {};
     if (cb < cbWirePlayerPartial) goto invalid;
@@ -122,9 +118,9 @@ void ReadRtPlr(APPSESSION &app, PLAYER *pplr, std::uint8_t *pbIn, std::size_t cb
         iOff = cbWirePlayerPartial;
         FDecodePlayer(std::as_bytes(std::span(pbIn, cb)), *pplr, iOff);
     }
-    if (!FReadUserString(app, pbIn + iOff, cb - iOff, pplr->szName, sizeof(pplr->szName), &cbRead)) goto invalid;
-    iOff += static_cast<std::int16_t>(cbRead);
-    if (!FReadUserString(app, pbIn + iOff, cb - iOff, pplr->szNames, sizeof(pplr->szNames), nullptr)) goto invalid;
+    if (!(cbRead = FReadUserString(app, std::as_bytes(std::span(pbIn + iOff, cb - iOff)), std::span{pplr->szName}.first(sizeof(pplr->szName))))) goto invalid;
+    iOff += static_cast<std::int16_t>(*cbRead);
+    if (!FReadUserString(app, std::as_bytes(std::span(pbIn + iOff, cb - iOff)), std::span{pplr->szNames}.first(sizeof(pplr->szNames)))) goto invalid;
     pplr->fLearned = 0;
     return;
 invalid:
@@ -1060,9 +1056,9 @@ std::int16_t FReadFleet(APPSESSION &app, FLEET *lpfl) {
     }
     RecordIO().pfnReadRt(app);
     if (app.state.hdrCur.rt == rtString) {
-        if (!FReadUserString(app, reinterpret_cast<std::uint8_t *>(app.state.rgbCur), app.state.hdrCur.cb, szT, 32, nullptr)) goto Corrupt;
+        if (!FReadUserString(app, std::as_bytes(std::span(app.state.rgbCur, app.state.hdrCur.cb)), std::span{szT}.first(32))) goto Corrupt;
         lpfl->lpszName = LpAlloc<char>(app, std::strlen(szT) + 1, htString);
-        std::strcpy(lpfl->lpszName, szT);
+        CchCopyUtf8(std::span(lpfl->lpszName, std::strlen(szT) + 1), szT);
         RecordIO().pfnReadRt(app);
     } else {
         lpfl->lpszName = nullptr;
@@ -1077,9 +1073,9 @@ std::int16_t UnpackBattlePlan(APPSESSION &app, std::uint8_t *lpb, BTLPLAN *lpbtl
     char szName[32];
 
     if (cb < 4) goto invalid;
-    if (!FReadUserString(app, lpb + 4, cb - 4, szName, sizeof(szName), nullptr)) goto invalid;
+    if (!FReadUserString(app, std::as_bytes(std::span(lpb + 4, cb - 4)), std::span{szName}.first(sizeof(szName)))) goto invalid;
     FDecodeBattlePlanPrefix(std::as_bytes(std::span(lpb, cbWireBattlePlan)), *lpbtlplan);
-    std::strcpy(lpbtlplan->szName, szName);
+    CchCopyUtf8(std::span{lpbtlplan->szName}, szName);
     lpbtlplan->iplan = iplan;
     return 1;
 invalid:

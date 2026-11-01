@@ -3,11 +3,15 @@
 
 #include "common.h"
 #include <cstdint>
+#include <optional>
+#include <span>
+#include <string_view>
 #include <cstddef>
 
 extern char mpishdefishTutor[6];
 
-std::int16_t FReadUserString(APPSESSION &app, const std::uint8_t *lpb, std::size_t cb, char *psz, std::size_t cchMax, std::size_t *pcbRead);
+// Success returns record bytes consumed, including its marker/terminator.
+std::optional<std::size_t> FReadUserString(APPSESSION &app, std::span<const std::byte> lpb, std::span<char> psz);
 std::int16_t FReadShDef(APPSESSION &app, const std::uint8_t *lprt, SHDEF *lpshdef, std::int16_t iplrLoad, std::size_t cb);
 void    ReadRtPlr(APPSESSION &app, PLAYER *pplr, std::uint8_t *pbIn, std::size_t cb);
 std::int16_t FLoadGame(APPSESSION &app, const char *pszFileName, const char *pszExt);

@@ -49,7 +49,9 @@ static int16_t FWriteLegacyRaceFixture(APPSESSION &app, char *szFile, int16_t ve
     memmove(pb, plr.rgmdRelation, i + 1);
     pb += i + 1;
     cOut = 31;
-    if (fCompressed && FCompressUserString(app, (char *)szName, (char *)pb + 1, &cOut)) {
+    const auto cbPacked1 = fCompressed ? FCompressUserString(app, (char *)szName, std::as_writable_bytes(std::span((char *)pb + 1, static_cast<std::size_t>(cOut)))) : std::nullopt;
+    if (cbPacked1) cOut = static_cast<std::int16_t>(*cbPacked1);
+    if (fCompressed && cbPacked1) {
         *pb = (uint8_t)cOut;
         pb += cOut + 1;
     } else {
@@ -59,7 +61,9 @@ static int16_t FWriteLegacyRaceFixture(APPSESSION &app, char *szFile, int16_t ve
     }
     if (fPlural) {
         cOut = 31;
-        if (fCompressed && FCompressUserString(app, (char *)szNames, (char *)pb + 1, &cOut)) {
+        const auto cbPacked2 = fCompressed ? FCompressUserString(app, (char *)szNames, std::as_writable_bytes(std::span((char *)pb + 1, static_cast<std::size_t>(cOut)))) : std::nullopt;
+        if (cbPacked2) cOut = static_cast<std::int16_t>(*cbPacked2);
+        if (fCompressed && cbPacked2) {
             *pb = (uint8_t)cOut;
             pb += cOut + 1;
         } else {
@@ -426,7 +430,9 @@ static void test_ReadRtPlr_bounds_record_lengths(void) {
     memset(szLong, 'a', 32);
     szLong[32] = 0;
     cOut = 64;
-    TEST_ASSERT(FCompressUserString(app, szLong, (char *)&rgb[iOff + 1], &cOut));
+    const auto cbPacked3 = FCompressUserString(app, szLong, std::as_writable_bytes(std::span((char *)&rgb[iOff + 1], static_cast<std::size_t>(cOut))));
+    if (cbPacked3) cOut = static_cast<std::int16_t>(*cbPacked3);
+    TEST_ASSERT(cbPacked3);
     rgb[iOff] = (uint8_t)cOut;
     memset(&buf, 0x55, sizeof(buf));
     ReadRtPlr(app, &buf.plr, rgb, sizeof(rgb));

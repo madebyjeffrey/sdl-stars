@@ -355,8 +355,10 @@ static void test_utf8_saved_names(void) {
     memcpy(szExpected + 27, "\xf0\x9f\x98\x80", 5);
     strcpy(app.state.rgplr[0].szName, szExpected);
     strcpy(app.state.rgplr[0].szNames, "caf\xc3\xa9-\xce\xa9");
-    TEST_ASSERT(FCompressUserString(app, szExpected, szPacked, &cPacked));
-    TEST_ASSERT(FDecompressUserString(app, szPacked, cPacked, szRound, &cRound));
+    const auto cbPacked1 = FCompressUserString(app, szExpected, std::as_writable_bytes(std::span(szPacked, static_cast<std::size_t>(cPacked))));
+    if (cbPacked1) cPacked = static_cast<std::int16_t>(*cbPacked1);
+    TEST_ASSERT(cbPacked1);
+    TEST_ASSERT(FDecompressUserString(app, std::as_bytes(std::span(szPacked, static_cast<std::size_t>(cPacked))), std::span(szRound, static_cast<std::size_t>(cRound) + 1)));
     TEST_CHECK(strcmp(szRound, szExpected) == 0);
     TEST_ASSERT(FStarsTestSaveHost(app));
     TEST_ASSERT(FStarsTestLoadHost(app));
@@ -374,27 +376,29 @@ static void test_utf8_record_bounds(void) {
 
     uint8_t rgb[64];
     char sz[32];
-    size_t cbRead;
+    std::optional<size_t> cbRead;
     int16_t cOut;
 
     memcpy(rgb, "\0\xc3\xa9\0", 4);
-    TEST_CHECK(!FReadUserString(app, rgb, 3, sz, sizeof(sz), NULL));
+    TEST_CHECK(!FReadUserString(app, std::as_bytes(std::span(rgb, 3)), std::span{sz}.first(sizeof(sz))));
     TEST_CHECK(sz[0] == 0);
-    TEST_CHECK(FReadUserString(app, rgb, 4, sz, sizeof(sz), &cbRead));
+    TEST_CHECK((cbRead = FReadUserString(app, std::as_bytes(std::span(rgb, 4)), std::span{sz}.first(sizeof(sz)))));
     TEST_CHECK(cbRead == 4 && !strcmp(sz, "\xc3\xa9"));
     rgb[1] = 0xff;
-    TEST_CHECK(!FReadUserString(app, rgb, 4, sz, sizeof(sz), NULL));
+    TEST_CHECK(!FReadUserString(app, std::as_bytes(std::span(rgb, 4)), std::span{sz}.first(sizeof(sz))));
     cOut = 63;
-    TEST_ASSERT(FCompressUserString(app, szTestLiteral1, (char *)rgb + 1, &cOut));
+    const auto cbPacked2 = FCompressUserString(app, szTestLiteral1, std::as_writable_bytes(std::span((char *)rgb + 1, static_cast<std::size_t>(cOut))));
+    if (cbPacked2) cOut = static_cast<std::int16_t>(*cbPacked2);
+    TEST_ASSERT(cbPacked2);
     rgb[0] = cOut;
-    TEST_CHECK(!FReadUserString(app, rgb, cOut, sz, sizeof(sz), NULL));
-    TEST_CHECK(FReadUserString(app, rgb, cOut + 1, sz, sizeof(sz), &cbRead));
+    TEST_CHECK(!FReadUserString(app, std::as_bytes(std::span(rgb, cOut)), std::span{sz}.first(sizeof(sz))));
+    TEST_CHECK((cbRead = FReadUserString(app, std::as_bytes(std::span(rgb, cOut + 1)), std::span{sz}.first(sizeof(sz)))));
     TEST_CHECK(cbRead == (size_t)cOut + 1 && !strcmp(sz, "\xf0\x9f\x98\x80"));
     rgb[0] = 1; rgb[1] = 0x0b;
-    TEST_CHECK(!FReadUserString(app, rgb, 2, sz, sizeof(sz), NULL));
+    TEST_CHECK(!FReadUserString(app, std::as_bytes(std::span(rgb, 2)), std::span{sz}.first(sizeof(sz))));
     TEST_CHECK(sz[0] == 0);
     rgb[1] = 0xff;
-    TEST_CHECK(!FReadUserString(app, rgb, 2, sz, sizeof(sz), NULL));
+    TEST_CHECK(!FReadUserString(app, std::as_bytes(std::span(rgb, 2)), std::span{sz}.first(sizeof(sz))));
 }
 
 static void test_utf8_design_and_plan_bounds(void) {
@@ -558,7 +562,9 @@ static void test_utf8_raw_battle_plan(void) {
     TEST_ASSERT(FStarsTestInit(app));
     for (i = 0; i < 10; i++) memcpy(btlplan.szName + i * 3, "\xe6\x9d\xb1", 3);
     btlplan.szName[30] = 'X'; btlplan.szName[31] = 0;
-    TEST_ASSERT(!FCompressUserString(app, btlplan.szName, szPacked, &cOut));
+    const auto cbPacked3 = FCompressUserString(app, btlplan.szName, std::as_writable_bytes(std::span(szPacked, static_cast<std::size_t>(cOut))));
+    if (cbPacked3) cOut = static_cast<std::int16_t>(*cbPacked3);
+    TEST_ASSERT(!cbPacked3);
     WriteBattlePlan(app, &btlplan, 1);
     TEST_ASSERT(FGetPrevLogRt(app, &hdr, rgb));
     TEST_CHECK(hdr.rt == rtBtlPlan && hdr.cb == sizeof(BTLPLAN) + 1 && rgb[4] == 0);
@@ -665,7 +671,9 @@ static void test_design_wire_admission(void) {
     TEST_CHECK(memcmp(rgshdefT, before, sizeof(before)) == 0);
     // Compressed partial names may have a marker above sixteen. It remains
     // hul.chs, rather than becoming a full-design slot validation rule.
-    TEST_ASSERT(FCompressUserString(app, szName, szPacked, &cOut));
+    const auto cbPacked4 = FCompressUserString(app, szName, std::as_writable_bytes(std::span(szPacked, static_cast<std::size_t>(cOut))));
+    if (cbPacked4) cOut = static_cast<std::int16_t>(*cbPacked4);
+    TEST_ASSERT(cbPacked4);
     TEST_ASSERT(cOut > 16 && cOut < 32);
     memset(rgshdefT, 0, sizeof(rgshdefT));
     rgb[6] = cOut;

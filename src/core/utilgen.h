@@ -3,6 +3,9 @@
 
 #include "common.h"
 #include <cstdint>
+#include <optional>
+#include <span>
+#include <string_view>
 
 extern std::int16_t aiPNChunkOffset[];
 extern std::uint8_t acPN[];
@@ -32,9 +35,13 @@ char   *PszFromLong(APPSESSION &app, std::int32_t l, std::int16_t *pcch);
 char   *PszFromLongK(APPSESSION &app, std::int32_t l, std::int16_t *pcch);
 std::int16_t CommaFormatLong(APPSESSION &app, char *psz, std::int32_t l);
 void    BoundPoints(RECT *prc, POINT16 *rgpt, std::int16_t cpt);
-std::int16_t FCompressUserString(APPSESSION &app, const char *szIn, char *szOut, std::int16_t *pcOut);
-std::int16_t FDecompressUserString(APPSESSION &app, const char *szIn, std::int16_t cIn, char *szOut, std::int16_t *pcOut);
-std::int16_t FDecompressUserStringBytes(APPSESSION &app, const char *szIn, std::int16_t cIn, char *szOut, std::int16_t *pcOut);
+// Success returns encoded bytes; failure leaves the destination unchanged.
+// Input is non-NUL byte text; UTF-8 validation belongs to its record boundary.
+std::optional<std::size_t> FCompressUserString(APPSESSION &app, std::string_view szIn, std::span<std::byte> szOut);
+// Success returns decoded bytes excluding NUL. Output capacity includes NUL;
+// failure empties a nonempty destination. The Bytes form is for legacy races.
+std::optional<std::size_t> FDecompressUserString(APPSESSION &app, std::span<const std::byte> szIn, std::span<char> szOut);
+std::optional<std::size_t> FDecompressUserStringBytes(APPSESSION &app, std::span<const std::byte> szIn, std::span<char> szOut);
 std::int16_t NybbleFromCh(APPSESSION &app, std::uint8_t ch);
 char    ChFromNybble(APPSESSION &app, std::int16_t nyb);
 std::int16_t FIntersectCircleLine(POINT16 ptL1, POINT16 ptL2, POINT16 ptC, std::int32_t r2, std::int16_t dMax, std::int16_t *pdStart, std::int16_t *pdEnd);

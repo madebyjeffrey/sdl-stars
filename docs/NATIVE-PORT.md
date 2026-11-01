@@ -200,6 +200,14 @@ detail in [WIN16-PARITY.md](WIN16-PARITY.md).
   existing 360-byte budget. `CPP-LIVE-OWNED-TEXT.json` records these caller
   lifetimes. Other shared scratch results and const text interfaces remain
   pending migration.
+  User-string compression/decompression and both saved-name readers now take
+  byte/text spans and return optional encoded, decoded or consumed counts.
+  The caller's existing compression budget and destination NUL capacity stay
+  explicit; staging, nibble padding, failed-output effects and UTF-8 admission
+  are unchanged. The byte decoder remains a deliberate legacy race boundary.
+  Validated decoded names copy into their actual fixed field or exactly sized
+  persistent allocation. `CPP-LIVE-CODECS.json` records all 32 existing calls plus 11 migrated reference-test calls,
+  physical buffers and the pre-migration reference tests.
   Saved player/design/battle-plan names
   use bounded staging with the existing 31-byte compression budget and raw
   marker/NUL framing. `CbEncodeRtShDef` takes a byte span and returns an optional

@@ -50,7 +50,9 @@ static bool FAppendWireName(APPSESSION &app, std::span<std::byte> &rgbOut, std::
     if (pchEnd == szName.end()) return false;
     cch = static_cast<std::size_t>(pchEnd - szName.begin());
     if (cch > 31 || !FUtf8Valid(std::string_view(szName.data(), cch))) return false;
-    if (cch != 0 && FCompressUserString(app, szName.data(), reinterpret_cast<char *>(rgb + 1), &cOut)) {
+    const auto cbPacked1 = cch != 0 ? FCompressUserString(app, std::string_view(szName.data(), cch), std::span{rgb}.subspan(1, static_cast<std::size_t>(cOut))) : std::nullopt;
+    if (cbPacked1) cOut = static_cast<std::int16_t>(*cbPacked1);
+    if (cch != 0 && cbPacked1) {
         rgb[0] = static_cast<std::byte>(cOut);
         cb = static_cast<std::size_t>(cOut) + 1;
     } else {

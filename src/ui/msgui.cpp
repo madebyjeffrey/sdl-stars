@@ -207,7 +207,8 @@ LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                                 13, 10);
                 if (lpmsgplr->cLen >= 0) {
                     i = 1000;
-                    FDecompressUserString(app, reinterpret_cast<char *>(lpmsgplr->rgbMsg()), lpmsgplr->cLen, reinterpret_cast<char *>(app.lpui->lpb2k) + cch, &i);
+                    const auto szText = std::span{reinterpret_cast<char *>(app.lpui->lpb2k), std::size_t{0x800}}.subspan(static_cast<std::size_t>(cch));
+                    FDecompressUserString(app, std::as_bytes(std::span(lpmsgplr->rgbMsg(), static_cast<std::size_t>(lpmsgplr->cLen))), szText.first(std::min(szText.size(), static_cast<std::size_t>(i) + 1)));
                 } else {
                     std::strcpy(reinterpret_cast<char *>(app.lpui->lpb2k) + cch, reinterpret_cast<const char *>(lpmsgplr->rgbMsg()));
                 }
@@ -578,7 +579,10 @@ std::int16_t FFinishPlrMsgEntry(APPSESSION &app, std::int16_t dInc) {
         return 0;
     }
     cbNew = cb;
-    if (FCompressUserString(app, reinterpret_cast<char *>(app.lpui->lpb2k), reinterpret_cast<char *>(app.lpui->lpb2k) + 1024, &cbNew)) {
+    const auto rgbPacked = std::as_writable_bytes(std::span{app.lpui->lpb2k, std::size_t{0x800}}).subspan(1024);
+    const auto cbPacked1 = FCompressUserString(app, std::string_view(reinterpret_cast<char *>(app.lpui->lpb2k), static_cast<std::size_t>(cb)), rgbPacked.first(std::min(rgbPacked.size(), static_cast<std::size_t>(cbNew))));
+    if (cbPacked1) cbNew = static_cast<std::int16_t>(*cbPacked1);
+    if (cbPacked1) {
         cb = cbNew;
         lpbMsg = app.lpui->lpb2k + 1024;
     } else {
@@ -660,7 +664,7 @@ void SetMsgTitle(APPSESSION &app, HWND hwnd) {
                     goto FinishUp;
                 } else {
                     i = 1000;
-                    FDecompressUserString(app, reinterpret_cast<char *>(lpmp->rgbMsg()), lpmp->cLen, reinterpret_cast<char *>(app.lpui->lpb2k), &i);
+                    FDecompressUserString(app, std::as_bytes(std::span(lpmp->rgbMsg(), static_cast<std::size_t>(lpmp->cLen))), std::span{reinterpret_cast<char *>(app.lpui->lpb2k), std::size_t{0x800}}.first(static_cast<std::size_t>(i) + 1));
                     ControlIO().pfnSetWindowText(app.lpui->hwndMsgEdit, reinterpret_cast<LPCSTR>(app.lpui->lpb2k));
                 }
                 goto FinishUp;

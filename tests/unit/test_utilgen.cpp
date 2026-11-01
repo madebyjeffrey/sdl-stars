@@ -7,6 +7,81 @@
 
 #include "stars_test.h"
 
+static void test_UserString_codec_contract(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    char szPacked[1032], szRound[1032], szInput[2049];
+    int16_t cPacked, cRound;
+    const unsigned char rgbExpected[] = {0x01, 0xb0};
+
+    TEST_ASSERT(FStarsTestInit(app));
+    for (int16_t cb = 0; cb <= 4; cb++) {
+        memset(szPacked, '!', sizeof(szPacked));
+        cPacked = cb;
+        const auto cbPacked1 = FCompressUserString(app, " aA", std::as_writable_bytes(std::span(szPacked + 2, static_cast<std::size_t>(cPacked))));
+        if (cbPacked1) cPacked = static_cast<std::int16_t>(*cbPacked1);
+        TEST_CHECK(cbPacked1.has_value() == (cb >= 2));
+        TEST_CHECK(szPacked[1] == '!' && szPacked[2 + cb] == '!');
+        if (cb < 2) TEST_CHECK(cPacked == cb && szPacked[2] == '!');
+        else TEST_CHECK(cPacked == 2 && memcmp(szPacked + 2, rgbExpected, 2) == 0);
+    }
+    for (int16_t cb = 0; cb <= 5; cb++) {
+        memset(szRound, '!', sizeof(szRound));
+        cRound = cb;
+        TEST_CHECK(FDecompressUserString(app, std::as_bytes(std::span{rgbExpected}), std::span(szRound + 2, static_cast<std::size_t>(cRound) + 1)).has_value() == (cb >= 3));
+        TEST_CHECK(cRound == cb && szRound[1] == '!' && szRound[3 + cb] == '!');
+        if (cb < 3) TEST_CHECK(szRound[2] == 0 && szRound[3] == '!');
+        else TEST_CHECK(strcmp(szRound + 2, " aA") == 0);
+    }
+    for (int i = 1; i <= 255; i++) szInput[i - 1] = static_cast<char>(i);
+    szInput[255] = 0;
+    cPacked = 1024;
+    const auto cbPacked2 = FCompressUserString(app, szInput, std::as_writable_bytes(std::span(szPacked, static_cast<std::size_t>(cPacked))));
+    if (cbPacked2) cPacked = static_cast<std::int16_t>(*cbPacked2);
+    TEST_ASSERT(cbPacked2);
+    cRound = 1023;
+    TEST_ASSERT(FDecompressUserStringBytes(app, std::as_bytes(std::span(szPacked, static_cast<std::size_t>(cPacked))), std::span(szRound, static_cast<std::size_t>(cRound) + 1)));
+    TEST_CHECK(memcmp(szInput, szRound, 256) == 0);
+    TEST_CHECK(!FDecompressUserString(app, std::as_bytes(std::span(szPacked, static_cast<std::size_t>(cPacked))), std::span(szRound, static_cast<std::size_t>(cRound) + 1)) && szRound[0] == 0);
+    memset(szInput, ' ', sizeof(szInput));
+    szInput[2047] = 0;
+    cPacked = 1024;
+    const auto cbPacked3 = FCompressUserString(app, szInput, std::as_writable_bytes(std::span(szPacked, static_cast<std::size_t>(cPacked))));
+    if (cbPacked3) cPacked = static_cast<std::int16_t>(*cbPacked3);
+    TEST_CHECK(cbPacked3 && cPacked == 1024);
+    szInput[2047] = ' '; szInput[2048] = 0;
+    cPacked = 1024;
+    const auto cbPacked4 = FCompressUserString(app, szInput, std::as_writable_bytes(std::span(szPacked, static_cast<std::size_t>(cPacked))));
+    if (cbPacked4) cPacked = static_cast<std::int16_t>(*cbPacked4);
+    TEST_CHECK(!cbPacked4 && cPacked == 1024);
+    szInput[1023] = 0;
+    const auto cbPacked5 = FCompressUserString(app, szInput, std::as_writable_bytes(std::span(szPacked, static_cast<std::size_t>(cPacked))));
+    if (cbPacked5) cPacked = static_cast<std::int16_t>(*cbPacked5);
+    TEST_ASSERT(cbPacked5);
+    cRound = 1023;
+    TEST_CHECK(FDecompressUserString(app, std::as_bytes(std::span(szPacked, static_cast<std::size_t>(cPacked))), std::span(szRound, static_cast<std::size_t>(cRound) + 1)) && strlen(szRound) == 1023);
+    szInput[1023] = ' '; szInput[1024] = 0; cPacked = 1024;
+    const auto cbPacked6 = FCompressUserString(app, szInput, std::as_writable_bytes(std::span(szPacked, static_cast<std::size_t>(cPacked))));
+    if (cbPacked6) cPacked = static_cast<std::int16_t>(*cbPacked6);
+    TEST_ASSERT(cbPacked6);
+    TEST_CHECK(!FDecompressUserString(app, std::as_bytes(std::span(szPacked, static_cast<std::size_t>(cPacked))), std::span(szRound, static_cast<std::size_t>(cRound) + 1)) && szRound[0] == 0);
+    const auto cbEmpty = FCompressUserString(app, std::string_view{}, std::span<std::byte>{});
+    TEST_CHECK(cbEmpty && *cbEmpty == 0);
+    const auto cchEmpty = FDecompressUserString(app, std::span<const std::byte>{}, std::span{szRound}.first(1));
+    TEST_CHECK(cchEmpty && *cchEmpty == 0 && szRound[0] == 0);
+    memset(szRound, '!', sizeof(szRound));
+    const auto cchDecoded = FDecompressUserString(app, std::as_bytes(std::span{rgbExpected}), std::span{szRound}.first(4));
+    TEST_CHECK(cchDecoded && *cchDecoded == 3 && strcmp(szRound, " aA") == 0 && szRound[4] == '!');
+    TEST_CHECK(!FDecompressUserString(app, std::span<const std::byte>{}, std::span<char>{szRound, 0}) && szRound[0] == ' ');
+    TEST_CHECK(!FDecompressUserString(app, std::span<const std::byte>{}, std::span{szRound}.first(1025)) && szRound[0] == 0 && szRound[1] == 'a');
+    memset(szPacked, '!', sizeof(szPacked));
+    TEST_CHECK(!FCompressUserString(app, std::string_view("a\0b", 3), std::as_writable_bytes(std::span{szPacked})) && szPacked[0] == '!');
+}
+
 static POINT16 Pt(int16_t x, int16_t y) {
     POINT16 pt;
 
@@ -170,6 +245,7 @@ static void test_XorFileBuf_seed_alias_order(void) {
 }
 
 TEST_LIST = {{"XorFileBuf retains RHS-before-destination evaluation", test_XorFileBuf_seed_alias_order},
+             {"user-string codecs retain bytes, limits and failure effects", test_UserString_codec_contract},
              {"XorFileBuf retains bytes, unaligned access and seed consumption", test_XorFileBuf_unaligned_bytes},
              {"StarsCopyFile", test_StarsCopyFile},
              {"PszFromLong", test_PszFromLong},

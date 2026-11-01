@@ -116,7 +116,9 @@ void LogChangeName(APPSESSION &app, GrobjClass grobj, std::int16_t id, char *szN
             cOut = std::strlen(szName);
             lpfl->lpszName = LpAlloc<char>(app, std::strlen(szName) + 1, htString);
             std::strcpy(lpfl->lpszName, szName);
-            if (FCompressUserString(app, szName, reinterpret_cast<char *>(&rtchgname.rgb[1]), &cOut)) {
+            const auto cbPacked1 = FCompressUserString(app, szName, std::as_writable_bytes(std::span{rtchgname.rgb}).subspan(1).first(std::min(static_cast<std::size_t>(cOut), std::size(rtchgname.rgb) - 1)));
+            if (cbPacked1) cOut = static_cast<std::int16_t>(*cbPacked1);
+            if (cbPacked1) {
                 rtchgname.rgb[0] = cOut;
             } else {
                 rtchgname.rgb[0] = 0;
@@ -730,14 +732,14 @@ std::int16_t FRunLogRecord(APPSESSION &app, RecordType rt, std::int16_t cb, std:
         break;
     case rtLogFleetName:
         if (cb < static_cast<std::int16_t>(cbWireChangeName) ||
-            !FReadUserString(app, lpb + cbWireChangeName, cb - cbWireChangeName, szT, 32, nullptr)) return 0;
+            !FReadUserString(app, std::as_bytes(std::span(lpb + cbWireChangeName, cb - cbWireChangeName)), std::span{szT}.first(32))) return 0;
         NATIVEBYTEREADER(std::as_bytes(std::span(lpb, 2))).FReadI16Le(id);
         if (!(lpfl = LpflFromId(app, id))) return 0;
         if (lpfl->lpszName) HeapIO().pfnFree(app, lpfl->lpszName, htString);
         lpfl->lpszName = nullptr;
         if (*szT) {
             lpfl->lpszName = LpAlloc<char>(app, std::strlen(szT) + 1, htString);
-            std::strcpy(lpfl->lpszName, szT);
+            CchCopyUtf8(std::span(lpfl->lpszName, std::strlen(szT) + 1), szT);
         }
         break;
     case rtThing:

@@ -31,7 +31,9 @@ static void test_FRunLogRecord_rejects_invalid_utf8_name(void) {
     memset(&rt, 0, sizeof(rt));
     rt.id = lpfl->id;
     cOut = 31;
-    TEST_ASSERT(FCompressUserString(app, szTestLiteral2, (char *)rt.rgb + 1, &cOut));
+    const auto cbPacked1 = FCompressUserString(app, szTestLiteral2, std::as_writable_bytes(std::span((char *)rt.rgb + 1, static_cast<std::size_t>(cOut))));
+    if (cbPacked1) cOut = static_cast<std::int16_t>(*cbPacked1);
+    TEST_ASSERT(cbPacked1);
     rt.rgb[0] = cOut;
     TEST_CHECK(!FRunLogRecord(app, rtLogFleetName, offsetof(RTCHGNAME, rgb) + cOut + 1, (uint8_t *)&rt));
     TEST_CHECK(strcmp(lpfl->lpszName, "Original") == 0);

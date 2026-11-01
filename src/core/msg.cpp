@@ -726,7 +726,7 @@ MSGPLR *LpmsgplrFromRt(APPSESSION &app) {
     cLen = PmvCur(app).cLen();
     if (cLen >= 0) {
         cOut = sizeof(szText) - 1;
-        if (!FDecompressUserString(app, reinterpret_cast<char *>(PmvCur(app).RgbMsg()), cLen, szText, &cOut)) return nullptr;
+        if (!FDecompressUserString(app, std::as_bytes(std::span(PmvCur(app).RgbMsg(), static_cast<std::size_t>(cLen))), std::span(szText, static_cast<std::size_t>(cOut) + 1))) return nullptr;
     } else {
         pszEnd = static_cast<const char *>(std::memchr(PmvCur(app).RgbMsg(), 0, -cLen));
         if (!pszEnd || pszEnd - reinterpret_cast<char *>(PmvCur(app).RgbMsg()) >= static_cast<int>(sizeof(szText)) ||

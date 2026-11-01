@@ -327,8 +327,8 @@
         "temperature_commit": "03d8b039",
         "windows_host_test_configuration_commit": "09bb4477",
         "policy": "Actual array/tail spans; complete terminated UTF-8 prefixes; overlapping views supported. Paths/record staging keep separate strict contracts.",
-        "remaining_initial_sites": 130,
-        "remaining_lexical_spellings": 136,
+        "remaining_initial_sites": 126,
+        "remaining_lexical_spellings": 132,
         "inventory_scope": "The initial copy inventory and the current lexical policy differ: the latter also includes SDK declaration/definition spellings. Both remain explicitly accounted for.",
         "enforcement": "The manifest checks exact remaining raw-copy spellings and multiplicities. New or removed raw sites require updating the maintained inventory; migrated sites cannot silently be reintroduced."
       },
@@ -361,12 +361,36 @@
       "status": "active",
       "completed_substeps": [
         "ship-design-encoding-span-and-optional-count",
-        "remove-unused-player-output-storage"
+        "remove-unused-player-output-storage",
+        "user-string-codec-spans-and-optional-counts"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
         "typed-native-file-modes-and-results",
         "typed-file-selection-Milestone-D"
+      ],
+      "user_string_codecs": {
+        "status": "complete; verified",
+        "evidence": "docs/CPP-LIVE-CODECS.json",
+        "interfaces": "Three public codecs and public/private saved-name readers use spans and optional encoded/decoded/consumed counts. Old raw-pointer/count and output-count overloads removed.",
+        "migrated_call_sites": 43,
+        "pre_existing_call_sites": 32,
+        "pre_migration_reference_test_sites": 11
+      },
+      "verification": [
+        {
+          "batch": "L06a bounded user-string codec and record-reader interfaces",
+          "debug_build": "Pass; no new warnings; public headers in both include orders.",
+          "desktop": "153/153; includes known byte vectors, all non-NUL byte values, UTF-8 versus legacy decoding, every short output budget/sentinel, scratch limits, successful zero-byte counts, empty/oversized spans and existing record/import/message/ownership/leak tests and available tutorial checkpoints.",
+          "host_units": "28/28",
+          "native_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped reference inputs.",
+          "host_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped reference inputs.",
+          "windows": "147/147 owned production/wrapper translation units and four changed test units compile with strict MinGW. Actual Windows utilgen (9 cases), save (22), log (18) and race (7) executables pass under Wine with per-case isolation. Native Windows desktop qualification remains pending.",
+          "characterization": "The same byte vectors, capacity/sentinel checks, all-byte legacy round trip and scratch-boundary cases passed against the old pointer/count implementation before migration. Actual encoded/decoded/consumed counts are now explicit optional results; old output-count overloads are removed.",
+          "test_adaptation": "The first mechanically migrated characterization predicates used optional != 0, which compares values rather than presence. Changed those predicates to has_value; byte, sentinel, limit and failure assertions are unchanged. Successful zero-byte results are tested explicitly.",
+          "baseline": "Behavior-neutral for existing valid calls. Frozen original/native baselines, catalog sources, all unit goldens, wire widths/layouts, seed consumption and canonical models unchanged. No scenario/checkpoint moved and no regression export required.",
+          "receipts": "dist/verification/live-cpp/l06a/"
+        }
       ]
     },
     {
@@ -10191,14 +10215,16 @@
       "path": "src/core/file.cpp",
       "line": 1064,
       "code": "strcpy(lpfl->lpszName, szT);",
-      "disposition": "pending"
+      "disposition": "bounded-record-codec-copy-L06a",
+      "evidence": "docs/CPP-LIVE-CODECS.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/file.cpp",
       "line": 1081,
       "code": "strcpy(lpbtlplan->szName, szName);",
-      "disposition": "pending"
+      "disposition": "bounded-record-codec-copy-L06a",
+      "evidence": "docs/CPP-LIVE-CODECS.json"
     },
     {
       "kind": "c_header",
@@ -10407,7 +10433,8 @@
       "path": "src/core/log.cpp",
       "line": 733,
       "code": "strcpy(lpfl->lpszName, szT);",
-      "disposition": "pending"
+      "disposition": "bounded-record-codec-copy-L06a",
+      "evidence": "docs/CPP-LIVE-CODECS.json"
     },
     {
       "kind": "unbounded_copy",
@@ -13580,7 +13607,8 @@
       "path": "src/core/utilgen.cpp",
       "line": 508,
       "code": "strcpy(szOut, szWork);",
-      "disposition": "pending"
+      "disposition": "bounded-record-codec-copy-L06a",
+      "evidence": "docs/CPP-LIVE-CODECS.json"
     },
     {
       "kind": "c_header",

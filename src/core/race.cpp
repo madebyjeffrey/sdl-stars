@@ -508,33 +508,31 @@ std::uint16_t IRaceChecksum(PLAYER *pplr) {
     return ick;
 }
 
-static std::int16_t FReadLegacyRaceString(APPSESSION &app, const std::uint8_t *lpb, std::size_t cb, char *szRaw, std::size_t cchMax, std::size_t *pcbRead) {
-    const std::uint8_t *lpbEnd;
+static std::optional<std::size_t> FReadLegacyRaceString(APPSESSION &app, std::span<const std::byte> lpb, std::span<char> szRaw) {
     std::size_t cch;
-    std::int16_t cOut;
+    std::uint8_t cOut;
 
+    if (szRaw.empty()) return std::nullopt;
     szRaw[0] = 0;
-    if (cb == 0 || cchMax != 32) return 0;
-    if (lpb[0] == 0) {
-        lpbEnd = static_cast<const std::uint8_t *>(std::memchr(lpb + 1, 0, cb - 1));
-        if (!lpbEnd) return 0;
-        cch = static_cast<std::size_t>((lpbEnd - lpb - 1));
-        if (cch >= cchMax) return 0;
-        std::memcpy(szRaw, lpb + 1, cch);
+    if (lpb.empty() || szRaw.size() != 32) return std::nullopt;
+    cOut = std::to_integer<std::uint8_t>(lpb[0]);
+    if (cOut == 0) {
+        const auto rgbName = lpb.subspan(1);
+        const auto lpbEnd = std::find(rgbName.begin(), rgbName.end(), std::byte{0});
+        if (lpbEnd == rgbName.end()) return std::nullopt;
+        cch = static_cast<std::size_t>(lpbEnd - rgbName.begin());
+        if (cch >= szRaw.size()) return std::nullopt;
+        std::memcpy(szRaw.data(), rgbName.data(), cch);
         szRaw[cch] = 0;
-        if (pcbRead) *pcbRead = cch + 2;
-    } else {
-        if (lpb[0] > cb - 1) return 0;
-        cOut = static_cast<std::int16_t>(cchMax) - 1;
-        if (!FDecompressUserStringBytes(app, const_cast<char *>(reinterpret_cast<const char*>(lpb)) + 1, lpb[0], szRaw, &cOut)) return 0;
-        if (pcbRead) *pcbRead = static_cast<std::size_t>(lpb[0]) + 1;
+        return cch + 2;
     }
-    return 1;
+    if (cOut > lpb.size() - 1 || !FDecompressUserStringBytes(app, lpb.subspan(1, cOut), szRaw)) return std::nullopt;
+    return static_cast<std::size_t>(cOut) + 1;
 }
 
 static std::int16_t FReadLegacyRacePlayer(APPSESSION &app, PLAYER *pplr, const std::uint8_t *lpb, std::size_t cb, std::int16_t fPlural) {
     std::int16_t iOff;
-    std::size_t cbRead;
+    std::optional<std::size_t> cbRead;
 
     *pplr = {};
     if (cb < cbWirePlayerPartial) return 0;
@@ -549,11 +547,11 @@ static std::int16_t FReadLegacyRacePlayer(APPSESSION &app, PLAYER *pplr, const s
         iOff = cbWirePlayerPartial;
         FDecodePlayer(std::as_bytes(std::span(lpb, cb)), *pplr, iOff);
     }
-    if (!FReadLegacyRaceString(app, lpb + iOff, cb - static_cast<std::size_t>(iOff), pplr->szName, sizeof(pplr->szName), &cbRead)) return 0;
-    iOff += static_cast<std::int16_t>(cbRead);
+    if (!(cbRead = FReadLegacyRaceString(app, std::as_bytes(std::span(lpb + iOff, cb - static_cast<std::size_t>(iOff))), std::span{pplr->szName}))) return 0;
+    iOff += static_cast<std::int16_t>(*cbRead);
     if (fPlural) {
-        if (!FReadLegacyRaceString(app, lpb + iOff, cb - static_cast<std::size_t>(iOff), pplr->szNames, sizeof(pplr->szNames), &cbRead)) return 0;
-        iOff += static_cast<std::int16_t>(cbRead);
+        if (!(cbRead = FReadLegacyRaceString(app, std::as_bytes(std::span(lpb + iOff, cb - static_cast<std::size_t>(iOff))), std::span{pplr->szNames}))) return 0;
+        iOff += static_cast<std::int16_t>(*cbRead);
     }
     if (static_cast<std::size_t>(iOff) != cb) return 0;
     pplr->fLearned = 0;

@@ -1,4 +1,5 @@
 #include "common.h"
+#include <limits>
 #include "appstate.h"
 #include "text_io.h"
 #include "player_choice_io.h"
@@ -407,17 +408,19 @@ void BoundPoints(RECT *prc, POINT16 *rgpt, std::int16_t cpt) {
     return;
 }
 
-std::int16_t FCompressUserString(APPSESSION &app, const char *szIn, char *szOut, std::int16_t *pcOut) {
+std::optional<std::size_t> FCompressUserString(APPSESSION &app, std::string_view szIn, std::span<std::byte> szOut) {
     std::int16_t fHalf;
     char    szWork[1024];
     std::int16_t iNyb;
     char   *pchOut;
     std::int16_t cNyb;
+    std::size_t ich, cOut;
 
     fHalf = 0;
     pchOut = szWork;
-    for (; *szIn != 0; szIn++) {
-        iNyb = NybbleFromCh(app, *szIn);
+    if (szIn.find(char{0}) != std::string_view::npos) return std::nullopt;
+    for (ich = 0; ich < szIn.size(); ich++) {
+        iNyb = NybbleFromCh(app, static_cast<std::uint8_t>(szIn[ich]));
         if (iNyb < 11) {
             cNyb = 1;
         } else if ((iNyb & 0xf) != 0xf) {
@@ -434,7 +437,7 @@ std::int16_t FCompressUserString(APPSESSION &app, const char *szIn, char *szOut,
                 pchOut++;
                 fHalf = 0;
                 if (pchOut - szWork >= 0x400) {
-                    return 0;
+                    return std::nullopt;
                 }
             }
             iNyb >>= 4;
@@ -444,23 +447,28 @@ std::int16_t FCompressUserString(APPSESSION &app, const char *szIn, char *szOut,
         *pchOut |= 0xf;
         pchOut++;
     }
-    if (pchOut - szWork > *pcOut) {
-        return 0;
+    if (static_cast<std::size_t>(pchOut - szWork) > szOut.size()) {
+        return std::nullopt;
     }
-    *pcOut = pchOut - szWork;
-    std::memcpy(szOut, szWork, *pcOut);
-    return 1;
+    cOut = static_cast<std::size_t>(pchOut - szWork);
+    if (cOut != 0) std::memmove(szOut.data(), szWork, cOut);
+    return cOut;
 }
 
-static std::int16_t FDecompressUserStringInternal(APPSESSION &app, const char *szIn, std::int16_t cIn, char *szOut, std::int16_t *pcOut, std::int16_t fUtf8) {
+static std::optional<std::size_t> FDecompressUserStringInternal(APPSESSION &app, std::span<const std::byte> rgbIn, std::span<char> szOut, bool fUtf8) {
     std::int16_t fHalf;
+    std::int16_t cIn;
+    const char *szIn = reinterpret_cast<const char *>(rgbIn.data());
     char    szWork[1024];
     std::int16_t iNyb;
     char   *pchOut;
+    std::size_t cOut;
 
     fHalf = 0;
     pchOut = szWork;
-    if (cIn < 0 || *pcOut < 0 || *pcOut >= static_cast<std::int16_t>(sizeof(szWork))) goto invalid;
+    if (szOut.empty()) return std::nullopt;
+    if (rgbIn.size() > static_cast<std::size_t>(std::numeric_limits<std::int16_t>::max()) || szOut.size() > sizeof(szWork)) goto invalid;
+    cIn = static_cast<std::int16_t>(rgbIn.size());
     while (cIn > 0) {
         if (fHalf) {
             iNyb = *szIn & 0xf;
@@ -496,26 +504,27 @@ static std::int16_t FDecompressUserStringInternal(APPSESSION &app, const char *s
         }
         *pchOut = ChFromNybble(app, iNyb);
         pchOut++;
-        if (pchOut - szWork > *pcOut) {
+        if (static_cast<std::size_t>(pchOut - szWork) >= szOut.size()) {
             goto invalid;
         }
     }
     *pchOut = 0;
     if (std::memchr(szWork, 0, static_cast<std::size_t>((pchOut - szWork))) != nullptr) goto invalid;
     if (fUtf8 && !FUtf8Valid(szWork, static_cast<std::size_t>((pchOut - szWork)))) goto invalid;
-    std::strcpy(szOut, szWork);
-    return 1;
+    cOut = static_cast<std::size_t>(pchOut - szWork);
+    std::memmove(szOut.data(), szWork, cOut + 1);
+    return cOut;
 invalid:
     szOut[0] = 0;
-    return 0;
+    return std::nullopt;
 }
 
-std::int16_t FDecompressUserString(APPSESSION &app, const char *szIn, std::int16_t cIn, char *szOut, std::int16_t *pcOut) {
-    return FDecompressUserStringInternal(app, szIn, cIn, szOut, pcOut, 1);
+std::optional<std::size_t> FDecompressUserString(APPSESSION &app, std::span<const std::byte> szIn, std::span<char> szOut) {
+    return FDecompressUserStringInternal(app, szIn, szOut, true);
 }
 
-std::int16_t FDecompressUserStringBytes(APPSESSION &app, const char *szIn, std::int16_t cIn, char *szOut, std::int16_t *pcOut) {
-    return FDecompressUserStringInternal(app, szIn, cIn, szOut, pcOut, 0);
+std::optional<std::size_t> FDecompressUserStringBytes(APPSESSION &app, std::span<const std::byte> szIn, std::span<char> szOut) {
+    return FDecompressUserStringInternal(app, szIn, szOut, false);
 }
 
 std::int16_t NybbleFromCh(APPSESSION &app, std::uint8_t ch) {
