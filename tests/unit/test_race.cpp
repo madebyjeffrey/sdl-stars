@@ -142,7 +142,7 @@ static void test_FWasRaceFile_imports_unprotected_legacy_designs(void) {
 
     snprintf(szSaved, sizeof(szSaved), "%s%ssaved.r1", szDir, szDirSep);
     TEST_ASSERT(FCreateFile(app, dtRace, iplrNone, szSaved));
-    WriteRtPlr(app, &app.state.vplr, NULL);
+    WriteRtPlr(app, &app.state.vplr);
     icksum = IRaceChecksum(&app.state.vplr);
     WriteRtEof(app, icksum);
     StreamClose(app);
@@ -229,7 +229,7 @@ static void test_FWasRaceFile_legacy_replaces_protected_password_and_confirms_sh
     TEST_CHECK(memcmp(rgbBefore, rgbAfter, cbBefore) == 0);
     snprintf(szSaved, sizeof(szSaved), "%s%sreplaced.r1", szDir, szDirSep);
     TEST_ASSERT(FCreateFile(app, dtRace, iplrNone, szSaved));
-    WriteRtPlr(app, &app.state.vplr, NULL);
+    WriteRtPlr(app, &app.state.vplr);
     icksum = IRaceChecksum(&app.state.vplr);
     WriteRtEof(app, icksum);
     StreamClose(app);
@@ -366,7 +366,7 @@ static void test_IRaceChecksum_ignores_stale_name_bytes(void) {
     // Save as FSaveRace does.
     snprintf(szFile, sizeof(szFile), "%s%sshort.r1", szDir, szDirSep);
     TEST_ASSERT(FCreateFile(app, dtRace, iplrNone, szFile));
-    WriteRtPlr(app, &plr, NULL);
+    WriteRtPlr(app, &plr);
     icksum = IRaceChecksum(&plr);
     WriteRtEof(app, icksum);
     StreamClose(app);

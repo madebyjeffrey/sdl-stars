@@ -6,6 +6,13 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `WriteRtPlr`, `WriteRtShDef` and `WriteBattlePlan` now bound saved-name
+  staging and reject unterminated or invalid UTF-8 names before publishing a
+  record. Ship-design encoding takes an actual byte span and returns its byte
+  count; insufficient capacity leaves the destination unchanged. The old
+  unchecked storage/cursor arguments are removed. Valid record bytes,
+  compression budgets and host results are unchanged.
+
 - Display and fixed-label copies in `SetMsgTitle`, `ReadIniSettings`, report
   fields and drawing/name helpers now use their actual array or tail capacity.
   Oversized text receives a terminated complete UTF-8 prefix. Fitting text,

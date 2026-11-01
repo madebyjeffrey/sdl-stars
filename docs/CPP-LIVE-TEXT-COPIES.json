@@ -1,6 +1,6 @@
 {
   "migration_parent": "d3d3724c",
-  "status": "169 migrated sites complete; remaining text work active",
+  "status": "177 migrated sites complete; remaining text work active",
   "contracts": {
     "display": "Write a terminated complete UTF-8 prefix into the actual destination span; preserve fitting bytes. Views borrow synchronously and overlapping copies use memmove.",
     "append": "Scan only inside the destination span for its NUL. An unterminated nonempty destination is cleared and zero bytes are appended.",
@@ -1696,6 +1696,70 @@
       "original_call": "std::strcpy(app.state.szWork, lpshdef->hul.szClass)",
       "destination_span": "std::span{app.state.szWork}",
       "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+    },
+    {
+      "path": "src/core/save.cpp",
+      "baseline_line": 70,
+      "original_call": "strcpy((char *)pb + 1, pplr->szName);",
+      "stage": "L05h",
+      "role": "Saved-name record staging: a bounded 31-byte UTF-8 name, a one-byte compression marker/count, and raw NUL framing. Preserve compression budget and valid bytes; never truncate a saved name. Encoding uses real output spans and returns failure before publication when text or capacity is invalid.",
+      "implementation": "FAppendWireName; CbEncodeRtShDef; stream writers own their staging buffers."
+    },
+    {
+      "path": "src/core/save.cpp",
+      "baseline_line": 79,
+      "original_call": "strcpy((char *)pb + 1, pplr->szNames);",
+      "stage": "L05h",
+      "role": "Saved-name record staging: a bounded 31-byte UTF-8 name, a one-byte compression marker/count, and raw NUL framing. Preserve compression budget and valid bytes; never truncate a saved name. Encoding uses real output spans and returns failure before publication when text or capacity is invalid.",
+      "implementation": "FAppendWireName; CbEncodeRtShDef; stream writers own their staging buffers."
+    },
+    {
+      "path": "src/core/save.cpp",
+      "baseline_line": 100,
+      "original_call": "strcpy(szHulName, lpshdef->hul.szClass);",
+      "stage": "L05h",
+      "role": "Saved-name record staging: a bounded 31-byte UTF-8 name, a one-byte compression marker/count, and raw NUL framing. Preserve compression budget and valid bytes; never truncate a saved name. Encoding uses real output spans and returns failure before publication when text or capacity is invalid.",
+      "implementation": "FAppendWireName; CbEncodeRtShDef; stream writers own their staging buffers."
+    },
+    {
+      "path": "src/core/save.cpp",
+      "baseline_line": 102,
+      "original_call": "strcpy(szHulName, PartQueryIO().pfnHull(lpshdef->hul.ihuldef)->hul.szClass);",
+      "stage": "L05h",
+      "role": "Saved-name record staging: a bounded 31-byte UTF-8 name, a one-byte compression marker/count, and raw NUL framing. Preserve compression budget and valid bytes; never truncate a saved name. Encoding uses real output spans and returns failure before publication when text or capacity is invalid.",
+      "implementation": "FAppendWireName; CbEncodeRtShDef; stream writers own their staging buffers."
+    },
+    {
+      "path": "src/core/save.cpp",
+      "baseline_line": 109,
+      "original_call": "strcpy((char *)pb + 1, szHulName);",
+      "stage": "L05h",
+      "role": "Saved-name record staging: a bounded 31-byte UTF-8 name, a one-byte compression marker/count, and raw NUL framing. Preserve compression budget and valid bytes; never truncate a saved name. Encoding uses real output spans and returns failure before publication when text or capacity is invalid.",
+      "implementation": "FAppendWireName; CbEncodeRtShDef; stream writers own their staging buffers."
+    },
+    {
+      "path": "src/core/save.cpp",
+      "baseline_line": 806,
+      "original_call": "strcpy((char *)&rgb[1], lpsz);",
+      "stage": "L05h",
+      "role": "Saved-name record staging: a bounded 31-byte UTF-8 name, a one-byte compression marker/count, and raw NUL framing. Preserve compression budget and valid bytes; never truncate a saved name. Encoding uses real output spans and returns failure before publication when text or capacity is invalid.",
+      "implementation": "FAppendWireName; CbEncodeRtShDef; stream writers own their staging buffers."
+    },
+    {
+      "path": "src/core/save.cpp",
+      "baseline_line": 849,
+      "original_call": "strcpy(szPlanName, lpbtlplan->szName);",
+      "stage": "L05h",
+      "role": "Saved-name record staging: a bounded 31-byte UTF-8 name, a one-byte compression marker/count, and raw NUL framing. Preserve compression budget and valid bytes; never truncate a saved name. Encoding uses real output spans and returns failure before publication when text or capacity is invalid.",
+      "implementation": "FAppendWireName; CbEncodeRtShDef; stream writers own their staging buffers."
+    },
+    {
+      "path": "src/core/save.cpp",
+      "baseline_line": 855,
+      "original_call": "strcpy((char *)pb + 1, szPlanName);",
+      "stage": "L05h",
+      "role": "Saved-name record staging: a bounded 31-byte UTF-8 name, a one-byte compression marker/count, and raw NUL framing. Preserve compression budget and valid bytes; never truncate a saved name. Encoding uses real output spans and returns failure before publication when text or capacity is invalid.",
+      "implementation": "FAppendWireName; CbEncodeRtShDef; stream writers own their staging buffers."
     }
   ],
   "remaining_spelling_scope": "Lexical raw-copy spellings, including SDK declarations/definitions; comments/literals excluded with the manifest lexer. Exact counts prevent new raw sites during the remaining migration.",
@@ -1830,62 +1894,6 @@
       "path": "src/core/save.cpp",
       "normalized_call": "std::strcat(app.state.szWork,)",
       "count": 2,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/core/save.cpp",
-      "normalized_call": "std::strcpy(reinterpret_cast<char*>(&rgb[1]),lpsz)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/core/save.cpp",
-      "normalized_call": "std::strcpy(reinterpret_cast<char*>(pb)+1,pplr->szName)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/core/save.cpp",
-      "normalized_call": "std::strcpy(reinterpret_cast<char*>(pb)+1,pplr->szNames)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/core/save.cpp",
-      "normalized_call": "std::strcpy(reinterpret_cast<char*>(pb)+1,szHulName)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/core/save.cpp",
-      "normalized_call": "std::strcpy(reinterpret_cast<char*>(pb)+1,szPlanName)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/core/save.cpp",
-      "normalized_call": "std::strcpy(szHulName,PartQueryIO().pfnHull(lpshdef->hul.ihuldef)->hul.szClass)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/core/save.cpp",
-      "normalized_call": "std::strcpy(szHulName,lpshdef->hul.szClass)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/core/save.cpp",
-      "normalized_call": "std::strcpy(szPlanName,lpbtlplan->szName)",
-      "count": 1,
       "status": "pending",
       "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
     },
@@ -2624,5 +2632,11 @@
       "status": "SDK-boundary review",
       "role": "SDK-shaped declarations/definitions or caller-provisioned message/string buffer; retain only where the current ABI contract requires it."
     }
-  ]
+  ],
+  "wire_name_contract": {
+    "parent": "c4429e49",
+    "text": "At most 31 UTF-8 bytes with a terminator inside the provided source span. Raw fields retain marker zero plus NUL; compressed fields retain the existing 31-byte codec budget.",
+    "output": "Ship-design encoding accepts an actual byte span and returns an optional byte count. Failed encoding leaves the destination unchanged. Stream publication and pure encoding are separate operations.",
+    "callers": "Real log, race, library and save callers plus actual test consumers migrate; old raw-pointer/cursor overloads removed. No production player-record caller used external storage."
+  }
 }

@@ -117,7 +117,7 @@ static void  PrintGame(HWND hwnd, UINT msg, UINT_PTR id, DWORD ticks) {
         plr = vrgplrDef[0]; plr.lSalt = 0;
         fPassed = FCreateFile(app, dtRace, iplrNone, szInstalledRace);
         if (fPassed) {
-            WriteRtPlr(app, &plr, NULL); icksum = IRaceChecksum(&plr);
+            WriteRtPlr(app, &plr); icksum = IRaceChecksum(&plr);
             WriteRtEof(app, icksum); StreamClose(app);
         }
     }

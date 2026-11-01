@@ -1450,7 +1450,7 @@ std::int16_t FSaveRace(APPSESSION &app, char *szFileSuggest, PLAYER *pplr) {
             AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsStarsUnableSaveRaceDataFilePlease, nullptr), win32::MB_ICONHAND);
             return 0;
         }
-        WriteRtPlr(app, pplr, nullptr);
+        WriteRtPlr(app, pplr);
         icksum = IRaceChecksum(pplr);
         WriteRtEof(app, icksum);
         RecordIO().pfnStreamClose(app);

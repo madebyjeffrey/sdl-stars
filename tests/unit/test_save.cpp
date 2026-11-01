@@ -7,6 +7,9 @@
 [[maybe_unused]] static char szTestLiteral1[] = "\xf0\x9f\x98\x80";
 
 #include "stars_test.h"
+#include <algorithm>
+#include <iterator>
+#include "record_io.h"
 
 // ScanCloakedStarbase puts a player-0 fleet with a dScanRange2 penetrating
 // scanner 100 ly from player 1's homeworld, whose starbase design has
@@ -428,6 +431,114 @@ static void test_utf8_design_and_plan_bounds(void) {
     TEST_CHECK(app.state.idsFileError == 0 && !strcmp(btlplan.szName, "\xc3\xa9"));
 }
 
+static int cNameRecords;
+static void CountNameRecord(APPSESSION &, RecordType, int16_t, void *) { cNameRecords++; }
+static void test_invalid_written_names(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    PLAYER plr{};
+    SHDEF shdef{};
+    BTLPLAN plan{};
+    HDR hdr;
+    uint8_t rgb[64];
+    TEST_ASSERT(FStarsTestInit(app));
+    RECORDIO io = RecordIO();
+    io.pfnWriteRt = CountNameRecord;
+    RECORDIOSCOPE recordScope(io);
+    cNameRecords = 0;
+    plr.det = detAll;
+    memset(plr.szName, 'x', sizeof(plr.szName));
+    app.state.idsFileError = 0;
+    WriteRtPlr(app, &plr);
+    TEST_CHECK(cNameRecords == 0 && app.state.idsFileError == idsGameFileAppearsCorruptUnableLoadFile);
+    plr.szName[0] = '\xff'; plr.szName[1] = 0;
+    app.state.idsFileError = 0;
+    WriteRtPlr(app, &plr);
+    TEST_CHECK(cNameRecords == 0 && app.state.idsFileError == idsGameFileAppearsCorruptUnableLoadFile);
+    shdef.det = detAll;
+    shdef.hul.ihuldef = ihuldefScout;
+    memset(shdef.hul.szClass, 'x', sizeof(shdef.hul.szClass));
+    app.state.idsFileError = 0;
+    WriteRtShDef(app, &shdef);
+    TEST_CHECK(cNameRecords == 0 && app.state.idsFileError == idsGameFileAppearsCorruptUnableLoadFile);
+    memset(plan.szName, 'x', sizeof(plan.szName));
+    app.state.idsFileError = 0;
+    WriteBattlePlan(app, &plan, 0);
+    TEST_CHECK(cNameRecords == 0 && app.state.idsFileError == idsGameFileAppearsCorruptUnableLoadFile);
+    app.state.idsFileError = 0;
+    WriteBattlePlan(app, &plan, 1);
+    TEST_CHECK(!FGetPrevLogRt(app, &hdr, rgb) && app.state.idsFileError == idsGameFileAppearsCorruptUnableLoadFile);
+    app.state.idsFileError = 0;
+    WriteRtString(app, "\xff");
+    TEST_CHECK(cNameRecords == 0 && app.state.idsFileError == idsGameFileAppearsCorruptUnableLoadFile);
+}
+
+static void test_design_encoder_spans(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    SHDEF shdef{}, decoded[16]{};
+    std::byte reference[147], rgb[154], expected[154];
+    size_t cb;
+    const uint8_t *lprt;
+
+    TEST_ASSERT(FStarsTestInit(app));
+    app.state.idPlayer = iplrNone;
+    shdef.det = detAll;
+    shdef.ishdef = 2;
+    shdef.hul.ihuldef = ihuldefScout;
+    for (int iName = 0; iName < 3; iName++) {
+        shdef.hul.chs = iName == 2 ? 16 : 0;
+        memset(shdef.hul.szClass, 0, sizeof(shdef.hul.szClass));
+        if (iName == 1) strcpy(shdef.hul.szClass, "Scout");
+        if (iName == 2) {
+            for (int i = 0; i < 10; i++) memcpy(shdef.hul.szClass + i * 3, "\xe6\x9d\xb1", 3);
+            shdef.hul.szClass[30] = 'X';
+        }
+        const auto cbName = CbEncodeRtShDef(app, &shdef, reference);
+        const size_t ibName = cbWireShDefFull + shdef.hul.chs * cbWireHs;
+        TEST_ASSERT(cbName);
+        if (iName == 0) TEST_CHECK(*cbName == cbWireShDefFull + 2 && reference[cbWireShDefFull] == std::byte{0});
+        if (iName == 2) {
+            TEST_CHECK(*cbName == ibName + 33 && reference[ibName] == std::byte{0});
+            TEST_CHECK(!memcmp(reference + ibName + 1, shdef.hul.szClass, 32));
+        }
+        for (cb = 0; cb <= *cbName + 2; cb++) {
+            std::fill(std::begin(rgb), std::end(rgb), std::byte{0x55});
+            std::fill(std::begin(expected), std::end(expected), std::byte{0x55});
+            const auto written = CbEncodeRtShDef(app, &shdef, std::span{rgb}.subspan(3, cb));
+            if (cb < *cbName) TEST_CHECK(!written);
+            else {
+                TEST_CHECK(written && *written == *cbName);
+                memcpy(expected + 3, reference, *cbName);
+            }
+            TEST_CHECK(!memcmp(rgb, expected, sizeof(rgb)));
+        }
+        memset(decoded, 0, sizeof(decoded));
+        lprt = reinterpret_cast<const uint8_t *>(reference);
+        TEST_ASSERT(FReadShDef(app, lprt, decoded, 0, *cbName));
+        TEST_CHECK(!strcmp(decoded[2].hul.szClass, shdef.hul.szClass));
+    }
+    memset(shdef.hul.szClass, 'x', sizeof(shdef.hul.szClass));
+    std::fill(std::begin(rgb), std::end(rgb), std::byte{0x55});
+    TEST_CHECK(!CbEncodeRtShDef(app, &shdef, rgb));
+    TEST_CHECK(std::all_of(std::begin(rgb), std::end(rgb), [](std::byte ch) { return ch == std::byte{0x55}; }));
+    shdef.hul.szClass[0] = '\xff'; shdef.hul.szClass[1] = 0;
+    TEST_CHECK(!CbEncodeRtShDef(app, &shdef, rgb));
+    TEST_CHECK(std::all_of(std::begin(rgb), std::end(rgb), [](std::byte ch) { return ch == std::byte{0x55}; }));
+    // A partial design exports the catalog name and ignores custom-name bytes.
+    shdef.det = detSome;
+    memset(shdef.hul.szClass, 'x', sizeof(shdef.hul.szClass));
+    TEST_CHECK(CbEncodeRtShDef(app, &shdef, rgb).has_value());
+}
+
 static void test_utf8_raw_battle_plan(void) {
 #ifdef STARS_UI_SDL
     APPSESSION &app = ui::app;
@@ -565,7 +676,9 @@ static void test_design_wire_admission(void) {
     // Partial export uses the catalog name and its six-byte prefix, ignoring
     // custom text and the non-slot marker retained in hul.chs.
     pb = rgbWritten;
-    WriteRtShDef(app, &rgshdefT[2], &pb);
+    const auto cbWritten = CbEncodeRtShDef(app, &rgshdefT[2], std::as_writable_bytes(std::span{rgbWritten}));
+    TEST_ASSERT(cbWritten);
+    pb += *cbWritten;
     memset(rgshdefT, 0, sizeof(rgshdefT));
     TEST_ASSERT(FReadShDef(app, rgbWritten, rgshdefT, 0, pb - rgbWritten));
     TEST_CHECK(!strcmp(rgshdefT[2].hul.szClass, LphuldefFromId(ihuldefScout)->hul.szClass));
@@ -806,7 +919,7 @@ static void test_WriteRtPlr_partial_bytes(void) {
     plr.iPlayer = -2; plr.cShDef = -1; plr.cPlanet = -32768; plr.cFleet = 4095; plr.cshdefSB = 15;
     plr.det = detMinimal; plr.iPlrBmp = 17; plr.fInclude = 1; plr.fAi = 1; plr.lvlAi = 3; plr.idAi = 5;
     StreamOpen(app, szFile, mdCreate); SetFileSeeds(app, 123456, 789012);
-    WriteRtPlr(app, &plr, NULL);
+    WriteRtPlr(app, &plr);
     GetFileSeeds(app, &lSeed1, &lSeed2);
     TEST_CHECK(lSeed1 == 125172514 && lSeed2 == 2112981774);
     StreamClose(app);
@@ -857,6 +970,8 @@ TEST_LIST = {{"thing records retain exact encrypted bytes and seed consumption",
              {"fleet readers preserve scratch admission and incremental publication", test_fleet_scratch_admission},
              {"ship-design bytes preserve import admission and knowledge", test_design_wire_admission},
              {"UTF-8 records require complete in-record text", test_utf8_record_bounds},
+             {"invalid saved names never publish a record", test_invalid_written_names},
+             {"design encoding respects destination spans and keeps wire text", test_design_encoder_spans},
              {"maximum raw UTF-8 battle-plan names round trip", test_utf8_raw_battle_plan},
              {"design and battle-plan readers respect text record boundaries", test_utf8_design_and_plan_bounds},
              {"UTF-8 saved names and byte capacities", test_utf8_saved_names},

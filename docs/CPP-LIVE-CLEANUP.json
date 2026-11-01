@@ -79,7 +79,8 @@
         "typed-legacy-width-formatting",
         "display-and-fixed-label-copy-spans",
         "history-menu-logical-row-capacities",
-        "temperature-unit-UTF8-repair"
+        "temperature-unit-UTF8-repair",
+        "bounded-wire-name-staging"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -207,7 +208,31 @@
           "windows": "147/147 strict owned application/wrapper syntax for the copy migration; the final SDL encoding/history test translation unit also passes. Actual Windows host report (2 cases) and encoding (6 cases) executables compile and pass under Wine with per-case isolation. Native Windows desktop execution remains a final qualification item.",
           "test_execution": "An earlier desktop run overlapped baseline export/restoration with a new-game fixture reader and timed out. Repeated with stable fixtures: all 153 pass; no game/test assertions or timeouts changed.",
           "canonical_models": "Unchanged; these fixes implement the existing UTF-8/capacity contracts.",
-          "receipts": "dist/verification/live-cpp/l05g/"
+          "receipts": "dist/verification/live-cpp/l05g/",
+          "linux_ci": {
+            "run": 41288319494,
+            "commit": "c4429e49",
+            "status": "success",
+            "jobs": [
+              "host units",
+              "resource ownership ASan/UBSan/LSan",
+              "linked C++20 witnesses"
+            ],
+            "full_platform_jobs": "Skipped by default opt-in policy."
+          }
+        },
+        {
+          "batch": "L05h bounded saved-name staging and typed ship-design encoding",
+          "debug_build": "Pass; no new warnings; standalone headers in both include orders.",
+          "desktop": "153/153 on the final full run; includes actual legacy race import/password/source-preservation workflows, capacity/sentinel/decoder tests, all existing leak and ownership checks, linked witnesses and available SDL tutorial checkpoints.",
+          "host_units": "28/28",
+          "native_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped reference inputs.",
+          "host_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped reference inputs.",
+          "windows": "147/147 strict owned production/wrapper translation units; five changed test units and the final legacy fixture compile. Actual Windows host save (22 cases), log (18) and race (7) executables pass under Wine with per-case isolation. Native Windows desktop qualification remains pending.",
+          "initial_failure": "The desktop legacy-import fixture used WriteRtPlr to manufacture CP1252 input. The application writer now correctly rejects invalid UTF-8, so the fixture independently encodes its original CP1252 reference bytes. Import conversion/password/source-preservation assertions are unchanged; final full suite passes.",
+          "baseline": "Ran regression-export after fixture readers finished. Restored clock-derived game-ID/encryption-salt churn because every semantic checkpoint matched; no scenario or checkpoint moved. Frozen original fixtures and live unit goldens unchanged.",
+          "canonical_models": "Unchanged; fixed field widths, valid record bytes, compression budgets and seed consumption retained. Invalid in-memory names fail before publication.",
+          "receipts": "dist/verification/live-cpp/l05h/"
         }
       ],
       "bounded_formatting": {
@@ -272,15 +297,32 @@
         "temperature_commit": "03d8b039",
         "windows_host_test_configuration_commit": "09bb4477",
         "policy": "Actual array/tail spans; complete terminated UTF-8 prefixes; overlapping views supported. Paths/record staging keep separate strict contracts.",
-        "remaining_initial_sites": 139,
-        "remaining_lexical_spellings": 145,
+        "remaining_initial_sites": 131,
+        "remaining_lexical_spellings": 137,
         "inventory_scope": "The initial copy inventory and the current lexical policy differ: the latter also includes SDK declaration/definition spellings. Both remain explicitly accounted for.",
         "enforcement": "The manifest checks exact remaining raw-copy spellings and multiplicities. New or removed raw sites require updating the maintained inventory; migrated sites cannot silently be reintroduced."
+      },
+      "wire_name_staging": {
+        "status": "complete; verified",
+        "copies": 8,
+        "evidence": "docs/CPP-LIVE-TEXT-COPIES.json",
+        "contract": "Player, ship-design, string and battle-plan staging preserve valid bytes, 31-byte compression budget, raw marker/NUL framing, fixed record widths and seed consumption. Unterminated or invalid UTF-8 names fail before record publication.",
+        "interface": "CbEncodeRtShDef borrows an actual byte span and returns an optional byte count; failure leaves the destination unchanged. Stream writers own staging; actual log/race/library/test consumers migrated and old raw-storage/cursor parameters removed.",
+        "legacy_fixture": "Desktop import reference explicitly encodes CP1252 legacy bytes, independently of the UTF-8-only application writer; conversion/password/source-preservation assertions retained."
       }
     },
     {
       "id": "L06",
-      "status": "pending"
+      "status": "active",
+      "completed_substeps": [
+        "ship-design-encoding-span-and-optional-count",
+        "remove-unused-player-output-storage"
+      ],
+      "pending_substeps": [
+        "remaining-buffer-and-length-interfaces",
+        "typed-native-file-modes-and-results",
+        "typed-file-selection-Milestone-D"
+      ]
     },
     {
       "id": "L07",
@@ -11599,56 +11641,64 @@
       "path": "src/core/save.cpp",
       "line": 70,
       "code": "strcpy((char *)pb + 1, pplr->szName);",
-      "disposition": "pending"
+      "disposition": "bounded-wire-name-staging-L05h",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/save.cpp",
       "line": 79,
       "code": "strcpy((char *)pb + 1, pplr->szNames);",
-      "disposition": "pending"
+      "disposition": "bounded-wire-name-staging-L05h",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/save.cpp",
       "line": 100,
       "code": "strcpy(szHulName, lpshdef->hul.szClass);",
-      "disposition": "pending"
+      "disposition": "bounded-wire-name-staging-L05h",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/save.cpp",
       "line": 102,
       "code": "strcpy(szHulName, PartQueryIO().pfnHull(lpshdef->hul.ihuldef)->hul.szClass);",
-      "disposition": "pending"
+      "disposition": "bounded-wire-name-staging-L05h",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/save.cpp",
       "line": 109,
       "code": "strcpy((char *)pb + 1, szHulName);",
-      "disposition": "pending"
+      "disposition": "bounded-wire-name-staging-L05h",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/save.cpp",
       "line": 806,
       "code": "strcpy((char *)&rgb[1], lpsz);",
-      "disposition": "pending"
+      "disposition": "bounded-wire-name-staging-L05h",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/save.cpp",
       "line": 849,
       "code": "strcpy(szPlanName, lpbtlplan->szName);",
-      "disposition": "pending"
+      "disposition": "bounded-wire-name-staging-L05h",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/save.cpp",
       "line": 855,
       "code": "strcpy((char *)pb + 1, szPlanName);",
-      "disposition": "pending"
+      "disposition": "bounded-wire-name-staging-L05h",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",

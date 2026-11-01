@@ -79,7 +79,13 @@ void LogChangeShDef(APPSESSION &app, SHDEF *lpshdefNew) {
             lpshdefNew->det = detAll;
             FEncodeRtChgShDefPrefix(rtchg, std::as_writable_bytes(std::span(rgb)));
             pb = rgb + cbWireChgShDef;
-            WriteRtShDef(app, lpshdefNew, &pb);
+            const auto cb = CbEncodeRtShDef(app, lpshdefNew, std::as_writable_bytes(std::span(rgb)).subspan(cbWireChgShDef));
+            if (!cb) {
+                FileError(app, idsGameFileAppearsCorruptUnableLoadFile);
+                if (FStarsRecoveryActive()) StarsThrowError(starsErrorFile, app.state.idsFileError);
+                return;
+            }
+            pb += *cb;
             WriteMemRt(app, rtLogShDef, pb - rgb, rgb);
         }
         if (app.state.gd.fTutorial && app.state.idPlayer == 0) {
@@ -1397,7 +1403,7 @@ std::int16_t FWriteHistFile(APPSESSION &app, std::int16_t iPlayer) {
         RecordIO().pfnWriteRt(app, rtMsgFilt, app.state.cbbitfMsg, app.state.bitfMsgFiltered);
         for (i = 0; i < app.state.game.cPlayer; i++) {
             if (i != iPlayer && app.state.rgplr[i].det != detNone) {
-                WriteRtPlr(app, &app.state.rgplr[i], nullptr);
+                WriteRtPlr(app, &app.state.rgplr[i]);
             }
         }
         for (i = 0; i < app.state.game.cPlayer; i++) {
@@ -1405,7 +1411,7 @@ std::int16_t FWriteHistFile(APPSESSION &app, std::int16_t iPlayer) {
                 lpshdef = app.state.rglpshdef[i];
                 for (j = 0; j < 16; j++) {
                     if (!lpshdef[j].fFree) {
-                        WriteRtShDef(app, lpshdef + j, nullptr);
+                        WriteRtShDef(app, lpshdef + j);
                     }
                 }
             }
@@ -1415,7 +1421,7 @@ std::int16_t FWriteHistFile(APPSESSION &app, std::int16_t iPlayer) {
                 lpshdef = app.state.rglpshdefSB[i];
                 for (j = 0; j < 10; j++) {
                     if (!lpshdef[j].fFree) {
-                        WriteRtShDef(app, lpshdef + j, nullptr);
+                        WriteRtShDef(app, lpshdef + j);
                     }
                 }
             }

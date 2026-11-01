@@ -651,7 +651,7 @@ std::int16_t FSaveLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName, P
         RemoveNativePath(szTempDir);
         return 0;
     }
-    WriteRtPlr(app, pplr, nullptr);
+    WriteRtPlr(app, pplr);
     icksum = IRaceChecksum(pplr);
     WriteRtEof(app, icksum);
     RecordIO().pfnStreamClose(app);

@@ -249,6 +249,20 @@ now clears the borrowed stream without heap-release calls. A resource-skip and
 injected disk-full test cover the error state and subsequent stream selection.
 Recorded tutorial bytes, save records and host results are unchanged.
 
+## Saved-name staging capacity — fixed on develop
+
+`WriteRtPlr`, `WriteRtShDef` and `WriteBattlePlan` copied fixed names with
+unbounded string operations; the ship-design writer also accepted an output
+cursor without its capacity. Unterminated in-memory names could read past their
+field or overwrite staging storage. Names now require an in-field terminator,
+valid UTF-8 and the existing 31-byte budget. Encoding and stream publication
+are separate: `CbEncodeRtShDef` returns an optional byte count and leaves the
+provided span unchanged on failure; failed encoding cannot publish a partial
+design-change log. Capacity/sentinel and actual decoder tests cover empty,
+compressed and maximum raw names. Valid wire bytes, compression budget and both
+regression baselines remain unchanged. The legacy-import fixture writes its
+CP1252 reference bytes independently of the UTF-8 application writer.
+
 ## Display-copy destination capacity — fixed on develop
 
 `SetMsgTitle`, `ReadIniSettings`, report-field staging and drawing/name helpers

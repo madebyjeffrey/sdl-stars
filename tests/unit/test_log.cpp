@@ -152,7 +152,9 @@ static void test_FRunLogRecord_design_change_clears_progress(void) {
     rgb[0] = 1; // mdChg=1, player=0; design occupies bits 8–12.
     rgb[1] = 16 + isb;
     pb = rgb + cbWireChgShDef;
-    WriteRtShDef(app, &shdef, &pb);
+    const auto cbWritten = CbEncodeRtShDef(app, &shdef, std::as_writable_bytes(std::span{rgb}).subspan(cbWireChgShDef));
+    TEST_ASSERT(cbWritten);
+    pb += *cbWritten;
     TEST_ASSERT(FRunLogRecord(app, rtLogShDef, (int16_t)(pb - rgb), rgb));
     TEST_ASSERT(lppl->lpplprod != NULL && lppl->lpplprod->iprodMac == 1);
     TEST_CHECK_(lppl->lpplprod->rgprod()[0].pct == 0, "the edited design kept %d%%", lppl->lpplprod->rgprod()[0].pct);

@@ -1739,12 +1739,13 @@ static BOOL FTestLegacyRaceImport(APPSESSION &app) {
     char szOldPassword[] = "old-password", szNewPassword[] = "new-\xc3\xa9";
     RTBOF rtbof = {};
     std::byte rgbBof[cbWireBof];
+    std::byte rgbPlr[264];
     PLAYER plr, plrSav;
     char szSource[512], szSnapshot[512], szImported[512], szCancelled[512];
     const char *pszSettings = PszCompatEnvironment("STARS_SETTINGS_DIR");
     const char *rgszName[] = {"Legacy.r1", "Legacy-protected.r1"};
     uint16_t icksum;
-    int i;
+    int i, iRelation;
     BOOL fOkay = 0;
 
     if (!FLoadLibraryRace(app, 0, "Managed.r1")) return 0;
@@ -1766,7 +1767,23 @@ static BOOL FTestLegacyRaceImport(APPSESSION &app) {
         StreamOpen(app, szSource, mdCreate);
         FEncodeBof(rtbof, rgbBof);
         WriteRt(app, rtBOF, cbWireBof, rgbBof);
-        WriteRtPlr(app, &plr, NULL);
+        // This fixture deliberately writes CP1252, outside the UTF-8-only
+        // application writer. Import must still convert these original bytes.
+        FEncodePlayer(plr, rgbPlr);
+        auto rgbTail = std::span{rgbPlr}.subspan(plr.det == detAll ? cbWirePlayerPrefix : cbWirePlayerPartial);
+        NATIVEBYTEWRITER writer(rgbTail);
+        if (plr.det == detAll) {
+            for (iRelation = 15; iRelation >= 0 && plr.rgmdRelation[iRelation] == 0; iRelation--) {
+            }
+            iRelation++;
+            writer.FWriteU8(static_cast<uint8_t>(iRelation));
+            writer.FWriteBytes(std::as_bytes(std::span{plr.rgmdRelation}.first(iRelation)));
+        }
+        writer.FWriteU8(0);
+        writer.FWriteBytes(std::as_bytes(std::span{plr.szName}.first(strlen(plr.szName) + 1)));
+        writer.FWriteU8(0);
+        writer.FWriteBytes(std::as_bytes(std::span{plr.szNames}.first(strlen(plr.szNames) + 1)));
+        WriteRt(app, rtPlr, sizeof(rgbPlr) - rgbTail.size() + writer.CbWritten(), rgbPlr);
         icksum = IRaceChecksum(&plr);
         WriteRtEof(app, icksum);
         StreamClose(app);

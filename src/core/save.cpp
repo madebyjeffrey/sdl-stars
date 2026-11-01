@@ -39,85 +39,88 @@ void WriteOrders(APPSESSION &app, FLEET *lpfl) {
     return;
 }
 
-void WriteRtPlr(APPSESSION &app, PLAYER *pplr, std::uint8_t *pbStore) {
-    std::uint8_t  rgb[264];
-    std::int16_t  i;
-    std::uint8_t *pb;
-    std::int16_t  cOut;
+// Every saved name has a 31-byte UTF-8 budget. The marker and raw NUL
+// are part of the wire image, and the compression budget stays exactly 31.
+static bool FAppendWireName(APPSESSION &app, std::span<std::byte> &rgbOut, std::span<const char> szName) {
+    const auto pchEnd = std::find(szName.begin(), szName.end(), 0);
+    std::size_t cch, cb;
+    std::int16_t cOut = 31;
+    std::byte rgb[33];
 
-    if (!pbStore) {
-        pbStore = rgb;
+    if (pchEnd == szName.end()) return false;
+    cch = static_cast<std::size_t>(pchEnd - szName.begin());
+    if (cch > 31 || !FUtf8Valid(std::string_view(szName.data(), cch))) return false;
+    if (cch != 0 && FCompressUserString(app, szName.data(), reinterpret_cast<char *>(rgb + 1), &cOut)) {
+        rgb[0] = static_cast<std::byte>(cOut);
+        cb = static_cast<std::size_t>(cOut) + 1;
+    } else {
+        NATIVEBYTEWRITER writer(rgb);
+        writer.FWriteU8(0);
+        writer.FWriteBytes(std::as_bytes(szName.first(cch + 1)));
+        cb = writer.CbWritten();
     }
+    if (!NATIVEBYTEWRITER(rgbOut).FWriteBytes(std::span(rgb).first(cb))) return false;
+    rgbOut = rgbOut.subspan(cb);
+    return true;
+}
+
+void WriteRtPlr(APPSESSION &app, PLAYER *pplr) {
+    std::uint8_t rgb[264];
+    std::int16_t i;
+    auto pbStore = std::as_writable_bytes(std::span(rgb));
+    std::span<std::byte> pb;
+
     if (pplr->fDead) {
         pplr->det = detAll;
     }
-    FEncodePlayer(*pplr, std::as_writable_bytes(std::span(pbStore, cbWirePlayer)));
+    FEncodePlayer(*pplr, pbStore.first(cbWirePlayer));
     if (pplr->det == detAll) {
         for (i = 15; i >= 0 && pplr->rgmdRelation[i] == 0; i--) {
         }
         i++;
-        pb = pbStore + cbWirePlayerPrefix;
-        *pb++ = i;
-        std::memmove(pb, pplr->rgmdRelation, i);
-        pb += i;
+        pb = pbStore.subspan(cbWirePlayerPrefix);
+        NATIVEBYTEWRITER relations(pb);
+        relations.FWriteU8(static_cast<std::uint8_t>(i));
+        relations.FWriteBytes(std::as_bytes(std::span(pplr->rgmdRelation).first(i)));
+        pb = pb.subspan(static_cast<std::size_t>(i) + 1);
     } else {
-        pb = pbStore + cbWirePlayerPartial;
+        pb = pbStore.subspan(cbWirePlayerPartial);
     }
-    cOut = 31;
-    if (pplr->szName[0] != 0 && FCompressUserString(app, pplr->szName, reinterpret_cast<char *>(pb) + 1, &cOut)) {
-        *pb = cOut;
-        pb += 1 + cOut;
-    } else {
-        std::strcpy(reinterpret_cast<char *>(pb) + 1, pplr->szName);
-        *pb = 0;
-        pb += 2 + std::strlen(pplr->szName);
-    }
-    cOut = 31;
-    if (pplr->szNames[0] != 0 && FCompressUserString(app, pplr->szNames, reinterpret_cast<char *>(pb) + 1, &cOut)) {
-        *pb = cOut;
-        pb += 1 + cOut;
-    } else {
-        std::strcpy(reinterpret_cast<char *>(pb) + 1, pplr->szNames);
-        *pb = 0;
-        pb += 2 + std::strlen(pplr->szNames);
-    }
-    RecordIO().pfnWriteRt(app, rtPlr, pb - pbStore, pbStore);
-    return;
-}
-
-void WriteRtShDef(APPSESSION &app, SHDEF *lpshdef, std::uint8_t **ppbStore) {
-    std::uint8_t  rgb[147];
-    char     szHulName[32];
-    std::uint8_t *pb;
-    std::int16_t  cOut;
-    std::size_t   ibName;
-
-    if (!FEncodeShDefFixed(*lpshdef, std::as_writable_bytes(std::span(rgb)), ibName)) {
+    if (!FAppendWireName(app, pb, std::span{pplr->szName}) || !FAppendWireName(app, pb, std::span{pplr->szNames})) {
         FileError(app, idsGameFileAppearsCorruptUnableLoadFile);
+        if (FStarsRecoveryActive()) StarsThrowError(starsErrorFile, app.state.idsFileError);
         return;
     }
-    pb = rgb + ibName;
+    RecordIO().pfnWriteRt(app, rtPlr, pbStore.size() - pb.size(), rgb);
+}
+
+std::optional<std::size_t> CbEncodeRtShDef(APPSESSION &app, const SHDEF *lpshdef, std::span<std::byte> rgbOut) {
+    std::uint8_t rgb[147];
+    std::size_t ibName, cb;
+    std::span<const char> szHulName;
+
+    if (!FEncodeShDefFixed(*lpshdef, std::as_writable_bytes(std::span(rgb)), ibName)) return std::nullopt;
     if (lpshdef->det == detAll) {
-        std::strcpy(szHulName, lpshdef->hul.szClass);
+        szHulName = std::span{lpshdef->hul.szClass};
     } else {
-        std::strcpy(szHulName, PartQueryIO().pfnHull(lpshdef->hul.ihuldef)->hul.szClass);
+        szHulName = std::span{PartQueryIO().pfnHull(lpshdef->hul.ihuldef)->hul.szClass};
     }
-    cOut = 31;
-    if (szHulName[0] != 0 && FCompressUserString(app, szHulName, reinterpret_cast<char *>(pb) + 1, &cOut)) {
-        *pb = cOut;
-        pb += 1 + cOut;
-    } else {
-        std::strcpy(reinterpret_cast<char *>(pb) + 1, szHulName);
-        *pb = 0;
-        pb += 2 + std::strlen(szHulName);
+    auto pb = std::as_writable_bytes(std::span(rgb)).subspan(ibName);
+    if (!FAppendWireName(app, pb, szHulName)) return std::nullopt;
+    cb = sizeof(rgb) - pb.size();
+    if (!NATIVEBYTEWRITER(rgbOut).FWriteBytes(std::as_bytes(std::span(rgb)).first(cb))) return std::nullopt;
+    return cb;
+}
+
+void WriteRtShDef(APPSESSION &app, SHDEF *lpshdef) {
+    std::byte rgb[147];
+    const auto cb = CbEncodeRtShDef(app, lpshdef, rgb);
+    if (!cb) {
+        FileError(app, idsGameFileAppearsCorruptUnableLoadFile);
+        if (FStarsRecoveryActive()) StarsThrowError(starsErrorFile, app.state.idsFileError);
+        return;
     }
-    if (ppbStore) {
-        std::memmove(*ppbStore, rgb, pb - rgb);
-        *ppbStore += pb - rgb;
-    } else {
-        RecordIO().pfnWriteRt(app, rtShDef, pb - rgb, rgb);
-    }
-    return;
+    RecordIO().pfnWriteRt(app, rtShDef, *cb, rgb);
 }
 
 std::int16_t FWriteDataFile(APPSESSION &app, char *pszFileBase, std::int16_t iPlayer, std::int16_t fAppend) {
@@ -334,9 +337,9 @@ LAppend:
                     std::memcpy(plrT.rgEnvVarMin, app.state.rgplr[i].rgEnvVarMin, sizeof(plrT.rgEnvVarMin));
                     std::memcpy(plrT.rgEnvVarMax, app.state.rgplr[i].rgEnvVarMax, sizeof(plrT.rgEnvVarMax));
                     plrT.det = detAll;
-                    WriteRtPlr(app, &plrT, nullptr);
+                    WriteRtPlr(app, &plrT);
                 } else {
-                    WriteRtPlr(app, &app.state.rgplr[i], nullptr);
+                    WriteRtPlr(app, &app.state.rgplr[i]);
                 }
             }
         }
@@ -372,7 +375,7 @@ LAppend:
                 lpshdef = app.state.rglpshdef[i];
                 for (j = 0; j < 16; j++) {
                     if (!lpshdef[j].fFree && lpshdef[j].fInclude) {
-                        WriteRtShDef(app, lpshdef + j, nullptr);
+                        WriteRtShDef(app, lpshdef + j);
                     }
                 }
             }
@@ -390,7 +393,7 @@ LAppend:
                 lpshdef = app.state.rglpshdefSB[i];
                 for (j = 0; j < 10; j++) {
                     if (!lpshdef[j].fFree && lpshdef[j].fInclude) {
-                        WriteRtShDef(app, lpshdef + j, nullptr);
+                        WriteRtShDef(app, lpshdef + j);
                     }
                 }
             }
@@ -790,27 +793,20 @@ void WriteFleet(APPSESSION &app, FLEET *lpfl) {
     }
 }
 
-void WriteRtString(APPSESSION &app, char *lpsz) {
-    std::uint8_t rgb[33];
-    std::int16_t cOut;
+void WriteRtString(APPSESSION &app, const char *lpsz) {
+    std::byte rgb[33];
+    std::size_t cch;
+    std::span<std::byte> pb = rgb;
 
     if (lpsz && *lpsz != 0) {
-        if (std::strlen(lpsz) > 31 || !FUtf8Valid(lpsz, std::strlen(lpsz))) {
+        cch = std::strlen(lpsz);
+        if (!FAppendWireName(app, pb, std::span(lpsz, cch + 1))) {
             FileError(app, idsGameFileAppearsCorruptUnableLoadFile);
             if (FStarsRecoveryActive()) StarsThrowError(starsErrorFile, app.state.idsFileError);
             return;
         }
-        cOut = 31;
-        if (FCompressUserString(app, lpsz, reinterpret_cast<char *>(&rgb[1]), &cOut)) {
-            rgb[0] = cOut;
-        } else {
-            std::strcpy(reinterpret_cast<char *>(&rgb[1]), lpsz);
-            rgb[0] = 0;
-            cOut = std::strlen(lpsz) + 1;
-        }
-        RecordIO().pfnWriteRt(app, rtString, cOut + 1, rgb);
+        RecordIO().pfnWriteRt(app, rtString, sizeof(rgb) - pb.size(), rgb);
     }
-    return;
 }
 
 void MarkFleet(APPSESSION &app, FLEET *lpfl, DetType det) {
@@ -838,30 +834,23 @@ void MarkFleet(APPSESSION &app, FLEET *lpfl, DetType det) {
 void WriteBattlePlan(APPSESSION &app, BTLPLAN *lpbtlplan, std::int16_t fLog) {
     // A raw name adds a length marker before its fixed 32-byte field.
     std::uint8_t  rgb[cbWireBattlePlan + 32 + 1];
-    std::uint8_t *pb;
-    char     szPlanName[32];
-    std::int16_t  cOut;
+    std::span<std::byte> pb;
 
     FEncodeBattlePlanPrefix(*lpbtlplan, std::as_writable_bytes(std::span(rgb)).first(cbWireBattlePlan));
     if (lpbtlplan->fDelete) {
-        pb = &rgb[2];
+        pb = std::as_writable_bytes(std::span(rgb)).subspan(2);
     } else {
-        pb = &rgb[4];
-        std::strcpy(szPlanName, lpbtlplan->szName);
-        cOut = 31;
-        if (szPlanName[0] != 0 && FCompressUserString(app, szPlanName, reinterpret_cast<char *>(pb) + 1, &cOut)) {
-            *pb = cOut;
-            pb += 1 + cOut;
-        } else {
-            std::strcpy(reinterpret_cast<char *>(pb) + 1, szPlanName);
-            *pb = 0;
-            pb += 2 + std::strlen(szPlanName);
+        pb = std::as_writable_bytes(std::span(rgb)).subspan(4);
+        if (!FAppendWireName(app, pb, std::span{lpbtlplan->szName})) {
+            FileError(app, idsGameFileAppearsCorruptUnableLoadFile);
+            if (FStarsRecoveryActive()) StarsThrowError(starsErrorFile, app.state.idsFileError);
+            return;
         }
     }
     if (fLog) {
-        WriteMemRt(app, rtBtlPlan, pb - rgb, rgb);
+        WriteMemRt(app, rtBtlPlan, sizeof(rgb) - pb.size(), rgb);
     } else {
-        RecordIO().pfnWriteRt(app, rtBtlPlan, pb - rgb, rgb);
+        RecordIO().pfnWriteRt(app, rtBtlPlan, sizeof(rgb) - pb.size(), rgb);
     }
     return;
 }
