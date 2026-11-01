@@ -1,6 +1,6 @@
 {
   "migration_parent": "d3d3724c",
-  "status": "294 copy migrations recorded; live text work remains active",
+  "status": "297 copy migrations recorded; live text work remains active",
   "contracts": {
     "display": "Write a terminated complete UTF-8 prefix into the actual destination span; preserve fitting bytes. Views borrow synchronously and overlapping copies use memmove.",
     "append": "Scan only inside the destination span for its NUL. An unterminated nonempty destination is cleared and zero bytes are appended.",
@@ -2913,6 +2913,36 @@
       "original_call": "strcat(app.state.szBackup, szDirSep)",
       "destination_owner": "Returned std::string backup directory and separate std::string current/backup file paths",
       "role": "Intentional path-capacity repair: preserve full basename/directory/extension bytes, rotation naming, file-operation order and copy-versus-rename choice. Reserve both four-byte suffix tails before file rotation; do not mutate the session basename or truncate paths."
+    },
+    {
+      "path": "src/core/util.cpp",
+      "scope": "ClearFile",
+      "baseline_line": 2497,
+      "migration_parent": "087dc5cd",
+      "operation": "strcpy",
+      "original_call": "strcpy(szFile, app.state.szBase)",
+      "destination_owner": "REPORTFILEPATH: a returned optional std::array sized from sizeof(APPGAMESTATE::szBase), a dot and the longest immutable extension",
+      "role": "Intentional report-path capacity repair. One bounded builder admits the whole terminated UTF-8 basename and extension for ClearFile and OutputSz, preserving their different existing extension policies without truncating paths. Stack ownership avoids adding allocations to memory-error reporting."
+    },
+    {
+      "path": "src/core/util.cpp",
+      "scope": "ClearFile",
+      "baseline_line": 2502,
+      "migration_parent": "087dc5cd",
+      "operation": "strcat",
+      "original_call": "strcat(szFile, \".\")",
+      "destination_owner": "REPORTFILEPATH: a returned optional std::array sized from sizeof(APPGAMESTATE::szBase), a dot and the longest immutable extension",
+      "role": "Intentional report-path capacity repair. One bounded builder admits the whole terminated UTF-8 basename and extension for ClearFile and OutputSz, preserving their different existing extension policies without truncating paths. Stack ownership avoids adding allocations to memory-error reporting."
+    },
+    {
+      "path": "src/core/util.cpp",
+      "scope": "ClearFile",
+      "baseline_line": 2504,
+      "migration_parent": "087dc5cd",
+      "operation": "strcat",
+      "original_call": "strcat(szFile, app.state.mpdtsz[dt])",
+      "destination_owner": "REPORTFILEPATH: a returned optional std::array sized from sizeof(APPGAMESTATE::szBase), a dot and the longest immutable extension",
+      "role": "Intentional report-path capacity repair. One bounded builder admits the whole terminated UTF-8 basename and extension for ClearFile and OutputSz, preserving their different existing extension policies without truncating paths. Stack ownership avoids adding allocations to memory-error reporting."
     }
   ],
   "remaining_spelling_scope": "Lexical raw-copy spellings, including SDK declarations/definitions; comments/literals excluded with the manifest lexer. Exact counts prevent new raw sites during the remaining migration.",
@@ -2948,27 +2978,6 @@
     {
       "path": "src/core/race.cpp",
       "normalized_call": "std::strcpy(app.state.szWork,szFile)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/core/util.cpp",
-      "normalized_call": "std::strcat(szFile,)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/core/util.cpp",
-      "normalized_call": "std::strcat(szFile,app.state.mpdtsz[dt])",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/core/util.cpp",
-      "normalized_call": "std::strcpy(szFile,app.state.szBase)",
       "count": 1,
       "status": "pending",
       "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
@@ -3360,6 +3369,40 @@
         "src/core/turn2.cpp": "b9b712721940c0baea8f3876737d6c1590100bb7d3c37f12745374507bcd83f3",
         "src/core/turn2.h": "b6fbf6b3de9c999a1285c8e4597ab1067da3777ffe358990e15a30dd30717e88",
         "tests/unit/test_turn.cpp": "12bcc95b0a8d98878bdcd6391adaadd5c577d8fe2273295ebbe4021cf209897c"
+      }
+    }
+  },
+  "report_file_paths": {
+    "status": "complete; locally verified; final native Windows/Linux platform qualification pending",
+    "parent": "087dc5cd",
+    "sites": 3,
+    "reproduction": "Actual parent ASan reports a two-byte strcat stack overflow past ClearFile szFile[256] for a valid 255-byte UTF-8 basename. The actual parent OutputSz test fails because its complete .log path is absent at the same basename limit.",
+    "repair": "ClearFile and OutputSz share a complete optional stack-owned REPORTFILEPATH. Its capacity is derived from the basename field plus dot, longest extension and terminator, without adding heap allocation to the allocation-error alert path. The extension table is an immutable typed C++ class constant, rather than eight mutable pointers in each session. Existing append versus replace-last-extension behavior remains. OutputSz borrows readonly sized text.",
+    "remaining": "11 raw-copy calls, other path admission/ownership seams, buffer/service views, borrowed storage, wrapper formatting, Milestone D and final qualification remain active.",
+    "verification": {
+      "batch": "L05af complete bounded report filenames and readonly report text",
+      "parent": "087dc5cd",
+      "status": "complete; locally verified; final native Windows/Linux platform qualification pending",
+      "reproduction": "The actual parent Debug ASan/UBSan utility executable reports a two-byte strcat stack overflow beyond ClearFile szFile[256] for a valid 255-byte UTF-8 basename. Its independent OutputSz case fails the complete .log-path existence assertion at the same boundary.",
+      "repair": "One optional REPORTFILEPATH value admits the complete terminated UTF-8 basename and extension before filesystem calls. Its std::array capacity is derived from the source field, dot, longest immutable extension and terminator. Stack storage adds no allocations to memory-error logging. The original-named mpdtsz table becomes a static constexpr array of string views; no production code changed it. ClearFile retains its existing replace-last-extension policy, and OutputSz retains its append-extension policy. Record widths, report text budget, timestamp/header/append behavior, game rules and borrowed work-buffer effects stay unchanged.",
+      "debug_build": "Pass; no warnings. Compiler/source policy covers 158 owned sources, 159 variants and 161 standalone headers in both orders; exact raw-copy inventory passes.",
+      "desktop": "154/154 including 29 leak checks, all linked/witness/client workflows and available SDL tutorial checkpoints. The full 80-page tutorial remains unfinished.",
+      "host_units": "29/29 Release host tests; the actual utility executable contains 13 host cases.",
+      "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+      "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+      "sanitizers": "The actual macOS Debug ASan/UBSan utility executable passes all 14 cases twice consecutively, including full report paths and bounded nonterminated text. Focused qualification, not a whole-suite sanitizer claim.",
+      "windows": "147/147 owned production units and the actual changed test consumer pass strict MinGW C++20. The actual Windows Release host test_util.exe passes all 13 isolated cases under Wine. This is not full native Windows SDL or Linux execution of this batch.",
+      "readonly_inputs": "All four production OutputSz calls migrate through std::string_view. Their arguments are local arrays: two FRunCmdLine calls use szTemp[80], TurnLog uses szTemp[256], and AlertSz uses szT[256]. These do not alias the work buffer mutated by the existing SzVersion lookup. The actual test passes a three-byte nonterminated v-Omega slice with an adjacent exclamation guard and requires exactly that slice in the report.",
+      "tests": "Actually write and append both .log and .chk at short, 251-byte and 255-byte UTF-8 basenames. Verify one exact version header, preserved earlier bytes, timestamp/message separators, complete Unicode text and unchanged basename. Actually remove a 259-byte .chk path and retain replacement of an existing .hst extension. Test paths stay below Windows 260 UTF-16 code units. Fixtures replace/truncate their own files and remain repeatable.",
+      "baseline": "592 baseline files byte-identical after restoring 592 regeneration-only file changes; all 519 checkpoints match and none moved. Native baseline fully exported and compared; frozen original fixtures are untouched.",
+      "inventory": "Three actual raw-copy calls retired; 11 remain. The ledger contains 297 copy-migration records; original-line identity reconciliation remains part of L08.",
+      "remaining": "Other filename admission/ownership seams, mutable/readonly service views, post-migration scratch/borrowed storage including diagnostic text staging, wrapper formatting, Milestone D and final inventory/platform qualification remain active.",
+      "receipts": "dist/verification/live-cpp/l05af/",
+      "source_sha256": {
+        "src/core/appstate.h": "50b8d47e123cedb61087ad6e57dc98a0139b79a3fce6e32cae19477f46b7b927",
+        "src/core/util.cpp": "fe0db1d9e3c678e147b246fc993ac8ac627c75685d705c68d644d764cf1362fe",
+        "src/core/util.h": "12224654d2e6d812522891b95b407571c1f9aca5ad78623a4fb4138ca82b8aec",
+        "tests/unit/test_util.cpp": "055e0d29816c7dfefb020501cfc06a050c1f7642cc2fb5abd707626ac8a1c82e"
       }
     }
   }

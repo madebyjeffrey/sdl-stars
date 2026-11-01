@@ -4,6 +4,7 @@
 #include "common.h"
 #include <cstdint>
 #include <array>
+#include <string_view>
 
 extern std::uint32_t rgcrDrawStars2b[5];
 extern std::uint32_t rgcrDrawStars2a[5];
@@ -71,7 +72,7 @@ std::int32_t  WtFromLpfl(APPSESSION &app, FLEET *lpfl);
 std::int16_t  FCanBuildShdef(APPSESSION &app, SHDEF *lpshdef, std::int16_t iplr);
 std::int16_t  IshFindSimilarDesign(APPSESSION &app, HUL *lphul, std::int16_t iPlrDst);
 void     ClearFile(APPSESSION &app, std::int16_t dt);
-void     OutputSz(APPSESSION &app, std::int16_t dt, const char *sz);
+void     OutputSz(APPSESSION &app, std::int16_t dt, std::string_view sz);
 void     TurnLog(APPSESSION &app, StringId ids);
 std::int16_t  PtToScan(APPSESSION &app, std::int16_t d);
 std::int16_t  ScanToPt(APPSESSION &app, std::int16_t d);

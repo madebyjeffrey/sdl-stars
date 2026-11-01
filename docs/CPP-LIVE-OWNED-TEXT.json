@@ -6459,5 +6459,31 @@
       "remaining": "23 raw-copy calls, other readonly/drawing/service protocols, post-migration scratch and borrowing, wrapper formatting, Milestone D and L08 final inventory/platform qualification remain active.",
       "receipts": "dist/verification/live-cpp/l06w/"
     }
+  },
+  "readonly_report_inputs": {
+    "status": "complete; locally verified; final native Windows/Linux platform qualification pending",
+    "interface": "void OutputSz(APPSESSION&, std::int16_t dt, std::string_view sz)",
+    "calls": [
+      {
+        "path": "src/core/turn.cpp",
+        "scope": "FRunCmdLine",
+        "count": 2,
+        "source": "local szTemp[80]"
+      },
+      {
+        "path": "src/core/util.cpp",
+        "scope": "TurnLog",
+        "count": 1,
+        "source": "local szTemp[256]"
+      },
+      {
+        "path": "src/core/utilgen.cpp",
+        "scope": "AlertSz",
+        "count": 1,
+        "source": "local szT[256]"
+      }
+    ],
+    "ownership": "Synchronous borrowing; all actual production inputs remain live and stable across the existing version-header lookup. The input may be a nonterminated slice. Existing diagnostic text staging and work-buffer side effects remain for the separate storage audit.",
+    "verification": "docs/CPP-LIVE-TEXT-COPIES.json: report_file_paths.verification"
   }
 }

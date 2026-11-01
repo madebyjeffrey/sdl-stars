@@ -114,7 +114,8 @@
         "bounded-fitting-mineral-message-and-tutorial-copies",
         "bounded-ship-clone-name-field-repair",
         "unused-unbounded-Win32-string-shims-retired",
-        "owned-backup-path-capacity-repair"
+        "owned-backup-path-capacity-repair",
+        "bounded-complete-report-file-paths"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -622,6 +623,32 @@
             "src/core/turn2.h": "b6fbf6b3de9c999a1285c8e4597ab1067da3777ffe358990e15a30dd30717e88",
             "tests/unit/test_turn.cpp": "12bcc95b0a8d98878bdcd6391adaadd5c577d8fe2273295ebbe4021cf209897c"
           }
+        },
+        {
+          "batch": "L05af complete bounded report filenames and readonly report text",
+          "parent": "087dc5cd",
+          "status": "complete; locally verified; final native Windows/Linux platform qualification pending",
+          "reproduction": "The actual parent Debug ASan/UBSan utility executable reports a two-byte strcat stack overflow beyond ClearFile szFile[256] for a valid 255-byte UTF-8 basename. Its independent OutputSz case fails the complete .log-path existence assertion at the same boundary.",
+          "repair": "One optional REPORTFILEPATH value admits the complete terminated UTF-8 basename and extension before filesystem calls. Its std::array capacity is derived from the source field, dot, longest immutable extension and terminator. Stack storage adds no allocations to memory-error logging. The original-named mpdtsz table becomes a static constexpr array of string views; no production code changed it. ClearFile retains its existing replace-last-extension policy, and OutputSz retains its append-extension policy. Record widths, report text budget, timestamp/header/append behavior, game rules and borrowed work-buffer effects stay unchanged.",
+          "debug_build": "Pass; no warnings. Compiler/source policy covers 158 owned sources, 159 variants and 161 standalone headers in both orders; exact raw-copy inventory passes.",
+          "desktop": "154/154 including 29 leak checks, all linked/witness/client workflows and available SDL tutorial checkpoints. The full 80-page tutorial remains unfinished.",
+          "host_units": "29/29 Release host tests; the actual utility executable contains 13 host cases.",
+          "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+          "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+          "sanitizers": "The actual macOS Debug ASan/UBSan utility executable passes all 14 cases twice consecutively, including full report paths and bounded nonterminated text. Focused qualification, not a whole-suite sanitizer claim.",
+          "windows": "147/147 owned production units and the actual changed test consumer pass strict MinGW C++20. The actual Windows Release host test_util.exe passes all 13 isolated cases under Wine. This is not full native Windows SDL or Linux execution of this batch.",
+          "readonly_inputs": "All four production OutputSz calls migrate through std::string_view. Their arguments are local arrays: two FRunCmdLine calls use szTemp[80], TurnLog uses szTemp[256], and AlertSz uses szT[256]. These do not alias the work buffer mutated by the existing SzVersion lookup. The actual test passes a three-byte nonterminated v-Omega slice with an adjacent exclamation guard and requires exactly that slice in the report.",
+          "tests": "Actually write and append both .log and .chk at short, 251-byte and 255-byte UTF-8 basenames. Verify one exact version header, preserved earlier bytes, timestamp/message separators, complete Unicode text and unchanged basename. Actually remove a 259-byte .chk path and retain replacement of an existing .hst extension. Test paths stay below Windows 260 UTF-16 code units. Fixtures replace/truncate their own files and remain repeatable.",
+          "baseline": "592 baseline files byte-identical after restoring 592 regeneration-only file changes; all 519 checkpoints match and none moved. Native baseline fully exported and compared; frozen original fixtures are untouched.",
+          "inventory": "Three actual raw-copy calls retired; 11 remain. The ledger contains 297 copy-migration records; original-line identity reconciliation remains part of L08.",
+          "remaining": "Other filename admission/ownership seams, mutable/readonly service views, post-migration scratch/borrowed storage including diagnostic text staging, wrapper formatting, Milestone D and final inventory/platform qualification remain active.",
+          "receipts": "dist/verification/live-cpp/l05af/",
+          "source_sha256": {
+            "src/core/appstate.h": "50b8d47e123cedb61087ad6e57dc98a0139b79a3fce6e32cae19477f46b7b927",
+            "src/core/util.cpp": "fe0db1d9e3c678e147b246fc993ac8ac627c75685d705c68d644d764cf1362fe",
+            "src/core/util.h": "12224654d2e6d812522891b95b407571c1f9aca5ad78623a4fb4138ca82b8aec",
+            "tests/unit/test_util.cpp": "055e0d29816c7dfefb020501cfc06a050c1f7642cc2fb5abd707626ac8a1c82e"
+          }
         }
       ],
       "bounded_formatting": {
@@ -895,6 +922,11 @@
         "status": "complete; locally verified; final native Windows/Linux platform qualification pending",
         "sites": 9,
         "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
+      },
+      "report_file_paths": {
+        "status": "complete; locally verified; final native Windows/Linux platform qualification pending",
+        "sites": 3,
+        "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
       }
     },
     {
@@ -931,7 +963,8 @@
         "readonly-fixed-tutorial-preset-action-view",
         "fixed-ship-clone-name-field-view",
         "bounded-mutable-text-fitting-view",
-        "owned-backup-directory-result"
+        "owned-backup-directory-result",
+        "readonly-sized-report-text"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -1470,6 +1503,11 @@
       "owned_backup_directory": {
         "status": "complete; locally verified; final native Windows/Linux platform qualification pending",
         "interface": "CreateBackupDir returns a complete std::string; the one production consumer owns its path rather than reading session scratch.",
+        "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
+      },
+      "report_text_view": {
+        "status": "complete; locally verified; final native Windows/Linux platform qualification pending",
+        "interface": "OutputSz borrows std::string_view through all four production calls; the actual test passes a nonterminated Unicode slice with an adjacent guard.",
         "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
       }
     },
@@ -14786,21 +14824,24 @@
       "path": "src/core/util.cpp",
       "line": 2497,
       "code": "strcpy(szFile, app.state.szBase);",
-      "disposition": "pending"
+      "disposition": "bounded-report-file-path-capacity-repair-L05af",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/util.cpp",
       "line": 2502,
       "code": "strcat(szFile, \".\");",
-      "disposition": "pending"
+      "disposition": "bounded-report-file-path-capacity-repair-L05af",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/util.cpp",
       "line": 2504,
       "code": "strcat(szFile, app.state.mpdtsz[dt]);",
-      "disposition": "pending"
+      "disposition": "bounded-report-file-path-capacity-repair-L05af",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "c_header",

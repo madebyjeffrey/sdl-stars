@@ -1,10 +1,12 @@
 #ifndef STARS_APPSTATE_H
 #define STARS_APPSTATE_H
 #include "common.h"
+#include <array>
 #include <cstddef>
 #include <optional>
 #include <span>
 #include <string>
+#include <string_view>
 #include "filesession.h"
 
 // Original debug names remain owned fields; callers receive the owner explicitly.
@@ -57,7 +59,7 @@ struct APPGAMESTATE {
     alignas(std::max_align_t) const char     *PCTDPCTPCT = "%d%%";
     alignas(std::max_align_t) const char     *PCTDXPCTDPCTPCT = "%d.%d%%";
     alignas(std::max_align_t) const char     *PCTLD = "%ld";
-    alignas(std::max_align_t) const char     *mpdtsz[8] = {"xy", "x", "hst", "m", "h", "r", "log", "chk"};
+    inline static constexpr std::array<std::string_view, 8> mpdtsz = {"xy", "x", "hst", "m", "h", "r", "log", "chk"};
     alignas(std::max_align_t) const char     *rgchcompstrlower = " aehilnorstbcdfgjkmpquvwxyz";
     alignas(std::max_align_t) const char     *rgszMineField[3] = {"Standard", "Heavy", "Speed Bump"};
     alignas(std::max_align_t) const char     *rgszMinerals[6] = {"Ironium", "Boranium", "Germanium", "Colonists", "Fuel", "Resources"};

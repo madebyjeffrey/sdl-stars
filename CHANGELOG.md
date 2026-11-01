@@ -6,6 +6,13 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `ClearFile` and `OutputSz` now form complete report filenames within a
+  capacity derived from the basename and extension limits. Their former
+  256-byte arrays could overflow while clearing a report or truncate the path
+  while writing one. Near-limit UTF-8 basenames now reach the intended `.chk`
+  or `.log` file. Existing extension selection, report text, saved layouts and
+  game rules remain unchanged. No native regression scenario or checkpoint moved.
+
 - `FGenerateTurn` and `CreateBackupDir` now build complete backup paths in
   owned strings. A valid basename near its 255-byte limit could overflow the
   256-byte backup arrays or leave no room for a file extension. Rotation keeps

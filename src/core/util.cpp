@@ -2508,36 +2508,55 @@ std::int16_t IshFindSimilarDesign(APPSESSION &app, HUL *lphul, std::int16_t iPlr
     return ishdefNone;
 }
 
-void ClearFile(APPSESSION &app, std::int16_t dt) {
-    char *pch;
-    char  szFile[256];
+static constexpr std::size_t cchFileExtensionMax = [] {
+    std::size_t cch = 0;
 
-    std::strcpy(szFile, app.state.szBase);
-    pch = std::strrchr(szFile, 46);
-    if (pch) {
-        pch[1] = 0;
-    } else {
-        std::strcat(szFile, ".");
+    for (const auto sz : APPGAMESTATE::mpdtsz) cch = std::max(cch, sz.size());
+    return cch;
+}();
+
+using REPORTFILEPATH = std::array<char, sizeof(APPGAMESTATE::szBase) + 1 + cchFileExtensionMax>;
+
+static std::optional<REPORTFILEPATH> SzReportFile(APPSESSION &app, std::int16_t dt, bool fReplaceExtension) {
+    REPORTFILEPATH szFile{};
+    std::string_view szBase;
+    std::size_t ich;
+    const auto pchEnd = std::find(std::begin(app.state.szBase), std::end(app.state.szBase), '\0');
+
+    if (dt < 0 || static_cast<std::size_t>(dt) >= APPGAMESTATE::mpdtsz.size() || pchEnd == std::end(app.state.szBase)) return std::nullopt;
+    szBase = {app.state.szBase, static_cast<std::size_t>(pchEnd - app.state.szBase)};
+    if (!FUtf8Valid(szBase)) return std::nullopt;
+    ich = fReplaceExtension ? szBase.rfind('.') : std::string_view::npos;
+    if (ich != std::string_view::npos) szBase = szBase.substr(0, ich);
+    // Reports also run from allocation-error alerts: reserve the full path on the stack.
+    if (CchCopyUtf8(std::span{szFile}, szBase) < 0 || !FAppendUtf8(std::span{szFile}, ".") ||
+        !FAppendUtf8(std::span{szFile}, APPGAMESTATE::mpdtsz[static_cast<std::size_t>(dt)])) return std::nullopt;
+    return szFile;
+}
+
+void ClearFile(APPSESSION &app, std::int16_t dt) {
+    const auto szFile = SzReportFile(app, dt, true);
+
+    if (szFile) {
+        RemoveNativeFile(szFile->data());
     }
-    std::strcat(szFile, app.state.mpdtsz[dt]);
-    RemoveNativeFile(szFile);
     return;
 }
 
-void OutputSz(APPSESSION &app, std::int16_t dt, const char *sz) {
+void OutputSz(APPSESSION &app, std::int16_t dt, std::string_view sz) {
     char szTime[100];
-    char szFile[256];
     char szDate[100];
     char szTemp[256];
+    const auto szFile = SzReportFile(app, dt, false);
 
-    CchSprintf(szFile, "%s.%s", app.state.szBase, app.state.mpdtsz[dt]);
-    if (!FFileExists(szFile)) {
+    if (!szFile) return;
+    if (!FFileExists(szFile->data())) {
         CchSprintf(szTemp, "Stars! %s\r\n\r\n", SzVersion(app).data());
-        OutputFileString(szFile, szTemp);
+        OutputFileString(szFile->data(), szTemp);
     }
     GetDateTimeSz(szDate, szTime);
     CchSprintf(szTemp, "%s %s - %s\r\n", szDate, szTime, sz);
-    OutputFileString(szFile, szTemp);
+    OutputFileString(szFile->data(), szTemp);
     return;
 }
 

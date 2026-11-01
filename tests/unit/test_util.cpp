@@ -9,6 +9,94 @@
 #include "text_io.h"
 #include <string>
 
+static std::string SzReadReportFile(const std::string &szFile) {
+    NATIVEFILEOWNER lpfile(PfNativeOpen(szFile.c_str(), NATIVEFILEMODE::read), ICloseNativeFile);
+    TEST_ASSERT_(lpfile, "open %s", szFile.c_str());
+    const auto cb = CbNativeFile(lpfile.get());
+    TEST_ASSERT(cb >= 0 && cb < 65536);
+    std::string sz(static_cast<std::size_t>(cb), '\0');
+    TEST_ASSERT(CbReadNativeFile(lpfile.get(), std::as_writable_bytes(std::span{sz})) == sz.size());
+    return sz;
+}
+
+static void test_ReportFilePath_write(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    char szDir[cbTestPath];
+
+    TEST_ASSERT(FStarsTestInit(app));
+    TEST_ASSERT(FStarsTestDir("report-file-path", szDir, sizeof(szDir)));
+    const std::string szDirectory = std::string(szDir) + chDirSep;
+    const std::string szHeader = "Stars! " + std::string(SzVersion(app).data()) + "\r\n\r\n";
+    for (const auto cch : {0u, 251u, 255u}) {
+        const std::string szPrefix = "éééééééé";
+        TEST_ASSERT(cch == 0 || szDirectory.size() + szPrefix.size() < cch);
+        const std::string szBase = cch == 0 ? szDirectory + "report" :
+            szDirectory + szPrefix + std::string(cch - szDirectory.size() - szPrefix.size(), 'a');
+        TEST_ASSERT(CchCopyUtf8(std::span{app.state.szBase}, szBase) >= 0);
+        for (const auto dt : {6, 7}) {
+            const std::string szFile = szBase + (dt == 6 ? ".log" : ".chk");
+            RemoveNativeFile(szFile.c_str());
+            OutputSz(app, dt, "first Ω");
+            TEST_ASSERT_(FFileExists(szFile.c_str()), "complete report path: %s", szFile.c_str());
+            const auto szFirst = SzReadReportFile(szFile);
+            TEST_CHECK(szFirst.starts_with(szHeader));
+            TEST_CHECK(szFirst.ends_with(" - first Ω\r\n"));
+            OutputSz(app, dt, "second");
+            const auto szSecond = SzReadReportFile(szFile);
+            TEST_CHECK(szSecond.starts_with(szFirst));
+            TEST_CHECK(szSecond.ends_with(" - second\r\n"));
+            TEST_CHECK(szSecond.find(szHeader, szHeader.size()) == std::string::npos);
+            const char szSlice[] = {'v', '\xce', '\xa9', '!'};
+            OutputSz(app, dt, std::string_view{szSlice, 3});
+            TEST_CHECK(SzReadReportFile(szFile).ends_with(" - vΩ\r\n"));
+            TEST_CHECK(std::string_view(app.state.szBase) == szBase);
+            TEST_CHECK(RemoveNativeFile(szFile.c_str()) == 0);
+        }
+    }
+}
+
+static void test_ReportFilePath_clear(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    char szDir[cbTestPath];
+
+    TEST_ASSERT(FStarsTestInit(app));
+    TEST_ASSERT(FStarsTestDir("clear-report-path", szDir, sizeof(szDir)));
+    const std::string szDirectory = std::string(szDir) + chDirSep;
+    const std::string szPrefix = "éééééééé";
+    TEST_ASSERT(szDirectory.size() + szPrefix.size() < 255);
+    const std::string szBase = szDirectory + szPrefix + std::string(255 - szDirectory.size() - szPrefix.size(), 'a');
+    TEST_ASSERT(CchCopyUtf8(std::span{app.state.szBase}, szBase) >= 0);
+    const std::string szFile = szBase + ".chk";
+    {
+        NATIVEFILEOWNER lpfile(PfNativeOpen(szFile.c_str(), NATIVEFILEMODE::writeTruncate), ICloseNativeFile);
+        TEST_ASSERT(lpfile);
+        TEST_ASSERT(CbWriteNativeFile(lpfile.get(), std::as_bytes(std::span{"report", 6})) == 6);
+    }
+    ClearFile(app, 7);
+    TEST_CHECK(!FFileExists(szFile.c_str()));
+    TEST_CHECK(std::string_view(app.state.szBase) == szBase);
+    const std::string szExtended = szBase.substr(0, 251) + ".hst";
+    const std::string szCheck = szBase.substr(0, 251) + ".chk";
+    TEST_ASSERT(CchCopyUtf8(std::span{app.state.szBase}, szExtended) >= 0);
+    {
+        NATIVEFILEOWNER lpfile(PfNativeOpen(szCheck.c_str(), NATIVEFILEMODE::writeTruncate), ICloseNativeFile);
+        TEST_ASSERT(lpfile);
+    }
+    ClearFile(app, 7);
+    TEST_CHECK(!FFileExists(szCheck.c_str()));
+    TEST_CHECK(std::string_view(app.state.szBase) == szExtended);
+}
+
 static void test_DecorateHullName_owned(void) {
 #ifdef STARS_UI_SDL
     APPSESSION &app = ui::app;
@@ -464,6 +552,8 @@ static void test_ObjectName_contract(void) {
 }
 
 TEST_LIST = {
+    {"reports write and append complete UTF-8 paths", test_ReportFilePath_write},
+    {"reports clear complete UTF-8 paths", test_ReportFilePath_clear},
     {"object names retain planet, fleet, thing and work-buffer behavior", test_ObjectName_contract},
     {"hull-name values retain duplicate ordinals and UTF-8 byte budgets", test_DecorateHullName_owned},
     {"player-name values survive other lookups and scratch formatting", test_PlayerName_owned_results},

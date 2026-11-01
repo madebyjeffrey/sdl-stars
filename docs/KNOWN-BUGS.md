@@ -17,6 +17,19 @@ J/JRC3/JRC4 fix claims below come from the supplied list and are not independent
 verified release history. See [WIN16-PARITY.md](WIN16-PARITY.md) for native changes
 and [ROADMAP.md](ROADMAP.md) for the post-tag work.
 
+## Report-file path capacity — fixed on develop
+
+`ClearFile` and `OutputSz` staged report filenames in 256-byte arrays even
+though `szBase` alone can hold 255 UTF-8 bytes. Adding a dot and extension
+overflowed the clearer and truncated the writer's filename. Actual parent
+tests reproduce a two-byte ASan stack overflow in `ClearFile` and a missing
+complete `.log` path from `OutputSz`. Both now use one optional owned path
+whose capacity includes the complete basename, dot, longest extension and
+terminator. Its storage stays on the stack because reports also run from
+allocation-error alerts. The extension table is an immutable typed constant;
+report text now enters through a sized readonly view. Existing extension
+selection, header/append behavior, saved widths and game rules remain.
+
 ## Turn-backup path capacity — fixed on develop
 
 `FGenerateTurn` joined the backup directory, basename and extension inside a
