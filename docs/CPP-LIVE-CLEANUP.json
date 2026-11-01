@@ -162,7 +162,8 @@
       "status": "active",
       "completed_substeps": [
         "typed-generated-help-api",
-        "obsolete-callback-instance-scaffolding"
+        "obsolete-callback-instance-scaffolding",
+        "tutorial-borrowed-resource-cleanup"
       ],
       "pending_substeps": [
         "embedded-resource-release-ceremony"
@@ -193,6 +194,17 @@
           "host": "No game logic or host interface changed; L05c host results remain current.",
           "baseline": "Unchanged; wire layouts, catalog/data bytes, IDs and canonical models unchanged.",
           "receipts": "dist/verification/live-cpp/l07b/"
+        },
+        {
+          "batch": "L07c FWriteTutorialMFile borrowed-resource cleanup",
+          "reproduction": "New native-port unit first failed all three cleanup assertions on 9bc263ca; passes after the fix.",
+          "debug_build": "Pass, no warnings.",
+          "desktop": "152/152, including resource-skip/error preservation, injected disk-full and borrowed-source cleanup; available tutorial and 29 leaks.",
+          "native_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped reference inputs.",
+          "windows": "Strict MinGW compilation of logui.cpp and the changed native-port unit passes (1/1 each). Compilation evidence only.",
+          "host": "No core/host code or interface changed; prior host qualification remains current.",
+          "baseline": "Unchanged; no checkpoint moved. Recorded tutorial bytes, wire layouts, catalogs, IDs and canonical models unchanged.",
+          "receipts": "dist/verification/live-cpp/l07c/"
         }
       ],
       "callbacks": {
@@ -208,10 +220,16 @@
         "providers": "Production-lifecycle and include-order tests use the actual DLGPROC type."
       },
       "resource_review": {
-        "status": "corrections pending, separate commits",
-        "tutorial": "LoadResource/LockResource borrows module bytes. GlobalUnlock calls LpMemory, fails with ERROR_INVALID_HANDLE and clobbers prior error state; FreeResource does nothing. Remove this heap-release ceremony in an intentional error-state fix.",
+        "status": "title bitmap correction pending",
+        "tutorial": "Fixed: module bytes are borrowed, primary errors survive cleanup and failed output clears the active memory source.",
         "title": "HdibLoadBigResource allocates a writable GMEM_FIXED copy. WM_DESTROY currently calls the no-op FreeResource and clears its only application reference, retaining the allocation until runtime shutdown. Replace with the actual matched heap release in its own bug-fix commit.",
         "foreign_api": "Keep genuine SDK-compatible FreeResource behavior and real GlobalAlloc/GlobalLock/GlobalUnlock/GlobalFree contracts for owned native storage."
+      },
+      "tutorial_resource_fix": {
+        "status": "complete; verified",
+        "reproduction": "New native-port unit test first reproduced all three failures on 9bc263ca: skipped-resource path replaced prior error, failed stream-open replaced disk-full error, and borrowed input remained active.",
+        "correction": "Remove GlobalUnlock/FreeResource for module bytes; clear vlpMemStream in the failed-output path. Keep file side effects and recorded tutorial bytes unchanged.",
+        "separate_bug_commit": "FWriteTutorialMFile resource lifetime/primary-error cleanup; title bitmap ownership remains a separate pending fix."
       }
     },
     {

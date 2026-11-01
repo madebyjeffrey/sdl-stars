@@ -8,6 +8,7 @@
 #include "appstate.h"
 #ifdef STARS_UI_SDL
 #include "uistate.h"
+#include "logui.h"
 #endif
 #include "callbackcontext.h"
 [[maybe_unused]] static char szTestLiteral1[] = "native-port-test";
@@ -22,6 +23,30 @@
 #include "uistate.h"
 #include <stars_compat.h>
 #include <errno.h>
+#endif
+
+// Module resource bytes are borrowed, and cleanup must retain the primary error.
+#ifdef STARS_UI_SDL
+static void FailTutorialStreamOpen(APPSESSION &, const char *, MdOpenFlags) {
+    win32::SetLastError(win32::ERROR_DISK_FULL);
+    StarsThrowError(starsErrorFile, 0);
+}
+static void TestTutorialResourceBorrow(void) {
+    APPSESSION &app = ui::app;
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+
+    TEST_ASSERT(FStarsTestInit(app));
+    win32::SetLastError(0x4321);
+    TEST_ASSERT(FWriteTutorialMFile(app, 1000) == 2);
+    TEST_CHECK(win32::GetLastError() == 0x4321);
+    TEST_CHECK(app.state.vlpMemStream == nullptr);
+    RECORDIO io = RecordIO();
+    io.pfnStreamOpen = FailTutorialStreamOpen;
+    RECORDIOSCOPE recordScope(io);
+    TEST_CHECK(FWriteTutorialMFile(app, 0) == 0);
+    TEST_CHECK(win32::GetLastError() == win32::ERROR_DISK_FULL);
+    TEST_CHECK(app.state.vlpMemStream == nullptr && !FStarsErrorPending());
+}
 #endif
 
 static uint8_t rgRecord[4][1024];
@@ -589,6 +614,7 @@ static void TestDibFromBitmapFailureReleasesStorage(void) {
 
 TEST_LIST = {
 #ifdef STARS_UI_SDL
+    {"tutorial resource cleanup retains errors and clears borrowed input", TestTutorialResourceBorrow},
     {"application session stops UI before releasing files and heaps", TestApplicationUiSessionClose},
     {"bitmap converter queries the native BITMAP width", TestDibFromBitmapNativeQuery},
     {"failed bitmap conversion releases temporary global storage", TestDibFromBitmapFailureReleasesStorage},

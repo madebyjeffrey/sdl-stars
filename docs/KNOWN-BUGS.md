@@ -232,6 +232,15 @@ sentinel (-1). Host part lookup has no player race or technology restrictions.
 when writing an empty EOF record. `PtToScan` replaces negative signed shifts
 with multiplication, preserving scanner scaling and rounding.
 
+## Tutorial resource cleanup — fixed on develop
+
+`FWriteTutorialMFile` passed immutable module resource bytes to `GlobalUnlock`,
+which replaced the prior error with `ERROR_INVALID_HANDLE`; `FreeResource` did
+nothing. Its failed-output path also left `vlpMemStream` active. The function
+now clears the borrowed stream without heap-release calls. A resource-skip and
+injected disk-full test cover the error state and subsequent stream selection.
+Recorded tutorial bytes, save records and host results are unchanged.
+
 ## Formatter destination capacity — fixed on develop
 
 `CchSprintf` and SDL `wsprintfA` passed a constant 1024-byte capacity to the

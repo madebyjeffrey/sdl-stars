@@ -156,6 +156,10 @@ detail in [WIN16-PARITY.md](WIN16-PARITY.md).
   libraries' internally owned files remain outside this service. The game's
   heaps (`memory.cpp`) retain their `calloc`/`realloc` allocation geometry under an
   explicit chain owner and C++20 typed lifetime operations.
+- **Tutorial resources:** module bytes are borrowed for replay/export, with no
+  heap unlock or free. `FWriteTutorialMFile` clears its active memory source on
+  failed output and preserves the primary error instead of replacing it with a
+  heap-handle lookup error.
 - **Callbacks:** dialog calls pass their concrete callback directly. The generic
   `FARPROC` alias and instance-style temporary/cleanup ceremony are gone. The
   browser, gauge and tutorial configuration slots use `DLGPROC`; their existing

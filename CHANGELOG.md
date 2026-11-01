@@ -6,6 +6,12 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `FWriteTutorialMFile` treats tutorial resource bytes as borrowed module data.
+  Previously its heap-unlock cleanup replaced the last error with an invalid
+  handle error, and a failed output operation left the memory stream active.
+  Cleanup now preserves the primary error and clears the borrowed input on
+  failure. Tutorial bytes, file records and host results are unchanged.
+
 - `CchGetString` now receives the destination capacity and returns a terminated
   UTF-8 prefix when a catalog entry is too long. Previously it copied until the
   source terminator regardless of the destination size. Report headings,

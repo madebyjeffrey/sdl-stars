@@ -30,8 +30,6 @@ std::int16_t FWriteTutorialMFile(APPSESSION &app, std::int16_t iTurn) {
             goto BailOut;
         if (cSkip >= *app.state.vlpMemStream) {
             app.state.vlpMemStream = nullptr;
-            win32::GlobalUnlock(hres);
-            win32::FreeResource(hres);
             return 2;
         }
         app.state.vlpMemStream++;
@@ -49,13 +47,10 @@ std::int16_t FWriteTutorialMFile(APPSESSION &app, std::int16_t iTurn) {
         } while (HdvFromPrefix(app.state.vlpMemStream).rt() != rtBOF);
         RecordIO().pfnStreamClose(app);
         app.state.vlpMemStream = nullptr;
-        win32::GlobalUnlock(hres);
-        win32::FreeResource(hres);
         return 1;
     } catch (const StarsError &) {
         if (app.state.vlpMemStream) {
-            win32::GlobalUnlock(hres);
-            win32::FreeResource(hres);
+            app.state.vlpMemStream = nullptr;
             return 0;
         }
         if (app.state.hf == -1) {
