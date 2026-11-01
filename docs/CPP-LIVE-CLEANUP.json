@@ -148,7 +148,32 @@
     },
     {
       "id": "L07",
-      "status": "pending"
+      "status": "active",
+      "completed_substeps": [
+        "typed-generated-help-api"
+      ],
+      "pending_substeps": [
+        "obsolete-callback-instance-scaffolding",
+        "embedded-resource-release-ceremony"
+      ],
+      "help_api": {
+        "status": "complete; verified",
+        "change": "Stage a C++20 context struct, constexpr context/file tables and typed metadata constants from the packaged guide header. Include guard retained; no value macros or typedef enter the generated API.",
+        "asset_contract": "Every other asset remains byte-identical to its archive entry; every context ID/page/file row and numeric metadata value is retained. SHA newline comparison uses a generated typed stamp constant.",
+        "ordering": "Independent generator/API sub-batch while L05 string builders and typed formatting remain active."
+      },
+      "verification": [
+        {
+          "batch": "L07a generated help API",
+          "debug_build": "Pass, no warnings. Generated C++20 header consumed by the actual help implementation.",
+          "desktop": "152/152, including recursive clean/regeneration, exact asset-byte comparison, context/file rows and numeric metadata checks, available tutorial and 29 leaks.",
+          "native_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped reference inputs.",
+          "windows": "Strict MinGW compilation of the help consumer with the generated C++ header passes; compilation evidence only.",
+          "host": "No core/host source or interface changed; L05c host qualification remains current.",
+          "baseline": "Unchanged. No archive, rendered asset, ID, catalog, wire layout or canonical model changed.",
+          "receipts": "dist/verification/live-cpp/l07a/"
+        }
+      ]
     },
     {
       "id": "L08",

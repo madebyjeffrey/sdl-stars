@@ -42,7 +42,7 @@ static BOOL FHelpAssets(const char *pszDirectory) {
         win32::SetLastError(win32::ERROR_ACCESS_DENIED);
         return 0;
     }
-    fStamp = PszGetNativeLine(szStamp, sizeof(szStamp), lpFile) && !std::strcmp(szStamp, STARS_HELP_SHA "\n");
+    fStamp = PszGetNativeLine(szStamp, sizeof(szStamp), lpFile) && !std::strcmp(szStamp, STARS_HELP_STAMP);
     ICloseNativeFile(lpFile);
     if (!fStamp) win32::SetLastError(win32::ERROR_BAD_FORMAT);
     return fStamp;
