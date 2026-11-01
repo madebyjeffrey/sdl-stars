@@ -675,7 +675,7 @@ INT_PTR  NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         }
         if (i < 4) {
             if (i != 0 && app.state.vrgplrTypeNew[0] == 0 && !app.state.fRCWReadOnly) {
-                AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMustHaveLeastOnePlayerGame, nullptr), win32::MB_ICONHAND);
+                AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMustHaveLeastOnePlayerGame, nullptr).data(), win32::MB_ICONHAND);
             } else {
                 if (i == 3 && !FChooseNewGameName(app, hwnd)) return 1;
                 ControlIO().pfnStickyDlgPos(hwnd, &app.lpui->ptStickyNewDlg, 0);

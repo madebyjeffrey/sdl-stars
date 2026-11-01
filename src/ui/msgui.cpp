@@ -12,6 +12,7 @@
 static std::int16_t dWheelMessages;
 
 LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+    std::array<char, 256> szMessage{};
     std::array<char, cchCatalogText> szCatalogLpsz{};
     std::array<char, 50> szPlayerName{};
     APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
@@ -222,7 +223,8 @@ LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                     szCatalogLpsz = TextIO().pfnCompressed(app, idsMessageTypeHasFilteredWillShownDefault);
                     lpsz = szCatalogLpsz.data();
                 } else {
-                    lpsz = PszGetMessageN(app, app.state.iMsgCur);
+                    szMessage = PszGetMessageN(app, app.state.iMsgCur);
+                    lpsz = szMessage.data();
                 }
             }
             win32::SetTextColor(hdc, 0xffffff);
@@ -231,7 +233,8 @@ LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 (app.state.iMsgCur >= 0 && app.state.iMsgCur < app.state.cMsg && (app.state.bitfMsgFiltered[PresentationIO().pfnMessageId(app, app.state.iMsgCur) >> 3] & 1 << (PresentationIO().pfnMessageId(app, app.state.iMsgCur) & 7)))) {
                 cch = TextIO().pfnCchGetString(app, idsFiltered, std::span{app.state.szWork});
                 DiaganolTextOut(app, hdc, &rc, app.state.szWork, cch);
-                lpsz = PszGetMessageN(app, app.state.iMsgCur);
+                szMessage = PszGetMessageN(app, app.state.iMsgCur);
+                lpsz = szMessage.data();
             }
             win32::SetTextColor(hdc, app.lpui->crButtonText);
             rcActual = rc;

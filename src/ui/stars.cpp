@@ -25,7 +25,7 @@ static int IStarsMain(APPSESSION &app, HINSTANCE hInstance, HINSTANCE hPrevInsta
     app.lpui->vtimer = {};
     app.lpui->vtimer.fAutoGenWhenIn = 1;
     if (!hPrevInstance && InitMDIApp(app) == 0) {
-        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableInitializeStars, nullptr), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableInitializeStars, nullptr).data(), win32::MB_ICONHAND);
         return 0;
     }
     fSeed = 0;
@@ -34,11 +34,11 @@ static int IStarsMain(APPSESSION &app, HINSTANCE hInstance, HINSTANCE hPrevInsta
         return 0;
     }
     if (!FGetSystemColors(app)) {
-        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableInitializeStars, nullptr), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableInitializeStars, nullptr).data(), win32::MB_ICONHAND);
         return 0;
     }
     if (DesktopChoiceIO().pfnInitInstance(app, nCmdShow) == 0) {
-        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableInitializeStars, nullptr), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableInitializeStars, nullptr).data(), win32::MB_ICONHAND);
         return 0;
     }
     if (!ParseCmdLine(app, lpCmdLine, &fSeed, &lSeed)) { FreeStuff(app); return 2; }
@@ -72,7 +72,7 @@ static int IStarsMain(APPSESSION &app, HINSTANCE hInstance, HINSTANCE hPrevInsta
 } catch (const StarsError &error) {
     StarsPrimaryErrorScope primary;
     try {
-        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, static_cast<StringId>(error.ids ? error.ids : idsMemory), nullptr), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, static_cast<StringId>(error.ids ? error.ids : idsMemory), nullptr).data(), win32::MB_ICONHAND);
         FreeStuff(app);
     } catch (...) {
     }
@@ -80,7 +80,7 @@ static int IStarsMain(APPSESSION &app, HINSTANCE hInstance, HINSTANCE hPrevInsta
 } catch (...) {
     StarsPrimaryErrorScope primary;
     try {
-        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableInitializeStars, nullptr), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableInitializeStars, nullptr).data(), win32::MB_ICONHAND);
         FreeStuff(app);
     } catch (...) {
     }
@@ -203,7 +203,7 @@ INT_PTR  About(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     case win32::WM_INITDIALOG:
         uiState.iAbout1st = -11;
         uiState.iAboutPartial = 0;
-        ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_ABOUT_DEMO_TEXT), SzVersion(app));
+        ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_ABOUT_DEMO_TEXT), SzVersion(app).data());
         uiState.uTimerId = win32::SetTimer(hwnd, 14, 50, nullptr);
         return 1;
     case win32::WM_ERASEBKGND:

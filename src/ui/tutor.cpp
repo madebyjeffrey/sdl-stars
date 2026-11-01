@@ -63,7 +63,7 @@ INT_PTR  TutorDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         case IDCANCEL:
             ShowTutor(app, 0);
             if (app.state.tutor.fShowHidMsg) {
-                AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMakeTutorialReappearCompleteTaskChooseTutorial, nullptr), win32::MB_ICONASTERISK);
+                AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMakeTutorialReappearCompleteTaskChooseTutorial, nullptr).data(), win32::MB_ICONASTERISK);
                 app.state.tutor.fShowHidMsg = 0;
             }
             return 1;
@@ -229,7 +229,7 @@ void StartTutor(APPSESSION &app, std::int16_t fRestart) {
             if (!fRestart) {
                 std::strcat(app.state.szBase, ".xy");
                 if (FFileExists(app.state.szBase) &&
-                    AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsTutorialHasRunBeforeWouldLikeDestroy, nullptr), win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_TASKMODAL) != win32::IDYES) {
+                    AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsTutorialHasRunBeforeWouldLikeDestroy, nullptr).data(), win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_TASKMODAL) != win32::IDYES) {
                     app.state.szBase[cch] = 0;
                     std::strcat(app.state.szBase, ".m1");
                     app.state.ini.fStartupFile = 1;
@@ -408,7 +408,7 @@ void RestoreGameState(APPSESSION &app) {
 }
 
 std::int16_t FAskKillTutor(APPSESSION &app) {
-    if (app.state.game.turn >= 30 || AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsCurrentlyRunningStarsTutorialDoWantExit, nullptr), win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_TASKMODAL) == win32::IDYES) {
+    if (app.state.game.turn >= 30 || AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsCurrentlyRunningStarsTutorialDoWantExit, nullptr).data(), win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_TASKMODAL) == win32::IDYES) {
         EndTutor(app, 1);
         return 1;
     }
@@ -2315,7 +2315,7 @@ void TutorError(APPSESSION &app, StringId idsError) {
     } else if (app.state.tutor.idsError != idsError || app.state.tutor.cError++ >= 3) {
         app.state.tutor.cError = 0;
         app.state.tutor.idsError = idsError;
-        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsError, nullptr), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsError, nullptr).data(), win32::MB_ICONHAND);
     }
     return;
 }

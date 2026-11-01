@@ -477,7 +477,7 @@ static void test_LocationText_contract(void) {
     app.state.lpThings = &th; app.state.cThing = 1;
     TEST_CHECK(std::string(PszGetLocName(app, grobjThing, static_cast<std::int16_t>(th.idFull()), 0, 0).data()) == "Wormhole");
     app.state.lpThings = lpthSav; app.state.cThing = cThingSav;
-    TEST_CHECK(!strcmp(PszFormatString(app, "\\n|\\w", rgParams), "Space (12, 34)|Space (12, 34)"));
+    TEST_CHECK(!strcmp(PszFormatString(app, "\\n|\\w", rgParams).data(), "Space (12, 34)|Space (12, 34)"));
     app.state.dyArial8 = 14;
     TEST_CHECK(std::string(PszGetDistance(app, 0, 0, 3, 4).data()) == "5.0  Light Years");
     app.state.dyArial8 = 15;

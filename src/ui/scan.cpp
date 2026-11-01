@@ -2565,7 +2565,7 @@ std::int16_t FHandleWayPointDrag(APPSESSION &app, POINT16 pt) {
         }
         ControlIO().pfnGetClientRect(app.lpui->hwndScanner, &rc);
         if (fDup) {
-            fDel = AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsSureWantDeleteCurrentWaypoint, nullptr), win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_TASKMODAL) == win32::IDYES;
+            fDel = AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsSureWantDeleteCurrentWaypoint, nullptr).data(), win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_TASKMODAL) == win32::IDYES;
             if (app.lpui->grbitScan & grbitScanFleetPaths) {
                 hpenSav = static_cast<HPEN>(win32::SelectObject(hdc, app.lpui->hpenStarbase));
                 win32::MoveToEx(hdc, rgpt[2].x, rgpt[2].y, nullptr);
@@ -2777,7 +2777,7 @@ INT_PTR  FindDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             if (LOWORD(wParam) == IDOK) {
                 win32::GetDlgItemTextA(hwnd, IDC_EDIT1, szName, 40);
                 if (!FSelectSz(app, szName)) {
-                    AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsSorryCantFindPlanetFleetName, nullptr), win32::MB_ICONHAND);
+                    AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsSorryCantFindPlanetFleetName, nullptr).data(), win32::MB_ICONHAND);
                     ControlIO().pfnSetFocus(ControlIO().pfnGetDlgItem(hwnd, IDC_EDIT1));
                     ui::SendDlgItemMessage(hwnd, IDC_EDIT1, win32::EM_SETSEL, 0, -1);
                     return 0;

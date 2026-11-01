@@ -119,7 +119,7 @@ std::int16_t FGenerateTurn(APPSESSION &app) {
             CchSprintf(app.state.szWork, "%s.x%d", app.state.szBase, j + 1);
             app.state.idPlayer = j;
             if (FLoadLogFile(app, app.state.szWork) && !FRunLogFile(app)) {
-                AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsPlayerLogFileAppearsCorruptUnableLoad, nullptr), win32::MB_ICONHAND);
+                AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsPlayerLogFileAppearsCorruptUnableLoad, nullptr).data(), win32::MB_ICONHAND);
                 goto FreeStuffUp;
             }
             UpdateProgressGauge(app, static_cast<ProgressStep>(LMulDiv(60, i + 1, app.state.game.cPlayer) + 370));
@@ -624,7 +624,7 @@ std::int16_t FSetUpBatchProcessing(APPSESSION &app) {
             if (std::cmp_greater(*cb, szBatch.max_size())) throw std::bad_alloc{};
             szBatch.resize(static_cast<std::size_t>(*cb));
         } catch (const std::bad_alloc &) {
-            AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMemory, nullptr), win32::MB_ICONHAND);
+            AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMemory, nullptr).data(), win32::MB_ICONHAND);
             StarsThrowError(starsErrorMemory, idsMemory);
         }
         RgFromStream(app, std::as_writable_bytes(std::span{szBatch}));

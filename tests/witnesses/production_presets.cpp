@@ -117,10 +117,10 @@ static void TestEndDialog(HWND hwnd, int result) {
     (void)result;
     ended++;
 }
-static const char *TestPszFormatIds(APPSESSION &, int id, void *p) {
+static std::array<char, 256> TestPszFormatIds(APPSESSION &, int id, void *p) {
     (void)id;
     (void)p;
-    return "memory";
+    return SzWitnessText("memory");
 }
 static void TestAlertSz(APPSESSION &, const char *s, int flags) {
     (void)s;

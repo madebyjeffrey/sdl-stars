@@ -107,12 +107,13 @@
         "owned-location-and-distance-values",
         "complete-owned-planet-caption-capacity-repair",
         "owned-planet-fleet-and-thing-name-values",
-        "owned-compressed-planet-encoded-fleet-environment-production-and-ETA-labels"
+        "owned-compressed-planet-encoded-fleet-environment-production-and-ETA-labels",
+        "owned-message-format-decode-and-version-results"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
         "const-text-interfaces",
-        "other-shared-scratch-text-results",
+        "post-migration-scratch-storage-and-borrowed-return-audit",
         "remaining-wrapper-formatting-callers"
       ],
       "metadata_scan": {
@@ -504,6 +505,24 @@
           "baseline": "Behavior-neutral: native/frozen-original baseline bytes and unit goldens unchanged. No scenario/checkpoint moved and no regression export required. Game rules, record sizes, element widths, wire bytes, RNG, qsort16 ties and binary64 boundaries remain.",
           "remaining": "Message formatting/decompression and version scratch text, const interfaces and stable borrowed-name review, remaining text/path copies and wrapper formatting, L06 numeric/service results and Milestone D, and L08 final inventory/platform qualification remain active.",
           "receipts": "dist/verification/live-cpp/l05z/"
+        },
+        {
+          "batch": "L05aa owned message, formatted text and version results",
+          "debug_build": "Pass, no warnings. Release SDL regression and host builds pass. Compiler/source policy covers 158 owned sources, 159 variants and 161 standalone headers in both orders; exact raw-copy inventory passes.",
+          "desktop": "153/153, including actual alert/scroll/splash consumers, all three formatting-provider witnesses, 29 leak checks and available SDL tutorial checkpoints.",
+          "host_units": "28/28 in Release, including full message-byte and current queue/version effect references.",
+          "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+          "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+          "windows": "Final strict MinGW compilation passes all 147 production units and six actual affected unit/provider consumers. Rebuilt encoding/message/version tests pass 12 cases, utilities 11 and utility-generation 17 under Wine: 40 total. Actual native Windows SDL and Linux final qualification remain pending.",
+          "sanitizers": "Native macOS Debug ASan/UBSan execution passes all three affected encoding/message, utility and utility-generation executables, including UTF-8 capacity edges and the new retained-result checks. Focused execution, not whole-suite sanitizer qualification.",
+          "byte_reference": "All 387 current message IDs, including holes, match independent literal UTF-8 source bytes from text/messages.txt before and after migration. Little-endian IDs and NUL-terminated texts hash to 0x340443fddde7c605. Maximum source text is 200 bytes inside the retained 256-byte decode result/cache budget.",
+          "characterization": "Parent and final cases preserve a valid Unicode cache hit without altering work/message text, Work/integer formatting, catalog formatting, actual player-view queued messages, missing/invalid message empty output and exact generated version text. Final values for decoded, formatted, ID-formatted, queued and version text survive later lookups and explicit overwrite of all three staging buffers. Existing UTF-8 truncation and message grammar vectors remain.",
+          "interfaces": "Five message APIs return initialized owned 256-byte arrays; SzVersion returns an owned 360-byte array. TEXTIO derives the exact format result type; all three actual providers return matching owned values. All 93 production calls are inventoried: synchronous consumers borrow only through the full expression, while message scrolling/drawing and splash drawing retain named owners. The original GetMessageN psz local retains its name and becomes an owned array. No pointer-result compatibility overload remains.",
+          "inventory_correction": "The first build found five IStarsMain alerts missed by the function-range scanner because they occur in a function-try-block and its catches. Migrated them and added an independent full-source token/call audit: all 93 live production calls match the ledger. Final whole build, Windows compilation and all tests pass.",
+          "effects": "Retain existing 256-byte message/decode limits, version budget, cache flags/bytes, message/work writes, grammar, parameter consumption, complete-code-point truncation and missing-message behavior. No allocation, saved-state layout, record width, game rule, RNG or floating operation change.",
+          "baseline": "Behavior-neutral: native/frozen-original baseline bytes and unit goldens unchanged. No scenario/checkpoint moved and no regression export required.",
+          "remaining": "Readonly bounded message format/parameter inputs, post-migration message/cache staging and borrowed-return audit, 52 initial copy sites, wrapper formatting and manual bounds review, L06 service results/Milestone D, generated/retained macro audit and L08 final platform qualification remain active.",
+          "receipts": "dist/verification/live-cpp/l05aa/"
         }
       ],
       "bounded_formatting": {
@@ -731,6 +750,20 @@
           "PszGetETA -> array<char,360>"
         ],
         "production_calls": 34,
+        "evidence": "docs/CPP-LIVE-OWNED-TEXT.json"
+      },
+      "message_values": {
+        "status": "complete; verified",
+        "parent": "d1f8832f",
+        "interfaces": [
+          "PszGetMessageN -> array<char,256>",
+          "PszFormatString -> array<char,256>",
+          "PszFormatMessage -> array<char,256>",
+          "PszFormatIds/TEXTIO.pfnFormat -> array<char,256>",
+          "PszGetCompressedMessage -> array<char,256>",
+          "SzVersion -> array<char,360>"
+        ],
+        "production_calls": 93,
         "evidence": "docs/CPP-LIVE-OWNED-TEXT.json"
       }
     },

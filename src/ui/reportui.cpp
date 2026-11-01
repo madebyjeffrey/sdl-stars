@@ -2735,7 +2735,7 @@ INT_PTR  PrintMapDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                     hwndEdit = ControlIO().pfnGetDlgItem(hwnd, i + 268);
                     ControlIO().pfnGetWindowText(hwndEdit, app.state.szWork, 10);
                     if (app.state.szWork[0] == 0 || app.state.szWork[1] != 0 || app.state.szWork[0] <= '0' || app.state.szWork[0] > '9') {
-                        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMustSpecifyNumberBetween19, nullptr), win32::MB_ICONHAND);
+                        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMustSpecifyNumberBetween19, nullptr).data(), win32::MB_ICONHAND);
                         ControlIO().pfnSetFocus(hwndEdit);
                         break;
                     }

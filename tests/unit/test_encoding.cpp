@@ -11,6 +11,8 @@
 #include "stars_test.h"
 #include "text_io.h"
 #include <iterator>
+#include "version.h"
+#include <string>
 
 static void TestCatalogOwnership(void) {
 #ifdef STARS_UI_SDL
@@ -50,6 +52,83 @@ static void TestCatalogBytes(void) {
             uHash = (uHash ^ static_cast<uint8_t>(sz[i])) * 1099511628211ULL;
     }
     TEST_CHECK(uHash == 0xb7fccea32b3950e5ULL);
+}
+
+// Independent source bytes include holes, literal backslashes and NULs;
+// IDs are hashed as little-endian 16-bit values before each message.
+static void TestMessageCatalogBytes(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    std::uint64_t uHash = 14695981039346656037ULL;
+    TEST_ASSERT(FStarsTestInit(app));
+    app.state.iLastMsgGet = -1;
+    for (std::uint16_t id = 0; id < 387; id++) {
+        const auto szMessage = PszGetCompressedMessage(app, static_cast<MessageId>(id));
+        const auto *psz = szMessage.data();
+        TEST_CHECK(std::strlen(psz) < sizeof(app.state.szLastMsgGet));
+        TEST_CHECK(FUtf8Valid(psz, std::strlen(psz)));
+        for (std::uint8_t b : {static_cast<std::uint8_t>(id), static_cast<std::uint8_t>(id >> 8)})
+            uHash = (uHash ^ b) * 1099511628211ULL;
+        for (std::size_t i = 0; i <= std::strlen(psz); i++)
+            uHash = (uHash ^ static_cast<std::uint8_t>(psz[i])) * 1099511628211ULL;
+        TEST_CHECK(std::string_view(app.state.szLastMsgGet) == psz);
+    }
+    TEST_CHECK(uHash == 0x340443fddde7c605ULL);
+    CchCopyUtf8Prefix(std::span{app.state.szLastMsgGet}, "Cache-\xce\xa9");
+    CchCopyUtf8Prefix(std::span{app.state.szMsgBuf}, "unchanged message");
+    CchCopyUtf8Prefix(std::span{app.state.szWork}, "unchanged work");
+    app.state.iLastMsgGet = 127;
+    TEST_CHECK(std::string_view(PszGetCompressedMessage(app, static_cast<MessageId>(127)).data()) == "Cache-\xce\xa9");
+    TEST_CHECK(std::string_view(app.state.szMsgBuf) == "unchanged message");
+    TEST_CHECK(std::string_view(app.state.szWork) == "unchanged work");
+    app.state.iLastMsgGet = -1;
+}
+
+static std::string SzMessageBytes(const char *psz) { return psz; }
+static void TestMessageAndVersionText(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    const char *pszBattle = "You have received one battle recording this year.";
+    std::int16_t rgParams[2] = {-123, 55};
+    TEST_ASSERT(FStarsTestInit(app));
+    CchCopyUtf8Prefix(std::span{app.state.szWork}, "World-\xce\xa9");
+    const auto szFormat = PszFormatString(app, "\\w \\i \\u", rgParams);
+    const auto szCompressed = PszGetCompressedMessage(app, idmHaveReceivedOneBattleRecordingYear);
+    TEST_CHECK(SzMessageBytes(PszFormatString(app, "\\w \\i \\u", rgParams).data()) == "World-\xce\xa9 -123 55");
+    TEST_CHECK(std::string_view(app.state.szMsgBuf) == "World-\xce\xa9 -123 55");
+    TEST_CHECK(SzMessageBytes(PszFormatMessage(app, idmHaveReceivedOneBattleRecordingYear, nullptr).data()) == pszBattle);
+    TEST_CHECK(std::string_view(app.state.szMsgBuf) == pszBattle);
+    const auto szExpanded = PszFormatMessage(app, idmHaveReceivedOneBattleRecordingYear, nullptr);
+    TEST_CHECK(SzMessageBytes(PszFormatIds(app, idsNewTurnAvailable, nullptr).data()) == "The new turn is available.");
+    const auto szIds = TextIO().pfnFormat(app, idsNewTurnAvailable, nullptr);
+    TEST_CHECK(std::string_view(app.state.szWork) == "World-\xce\xa9");
+    ResetMessages(app);
+    TEST_CHECK(SzMessageBytes(PszGetMessageN(app, -1).data()).empty());
+    TEST_CHECK(app.state.szMsgBuf[0] == 0);
+    TEST_ASSERT(FSendPlrMsg2XGen(app, 0, idmHaveReceivedOneBattleRecordingYear, gotoNone, 0, 0));
+    TEST_CHECK(SzMessageBytes(PszGetMessageN(app, 0).data()) == pszBattle);
+    const auto szQueued = PszGetMessageN(app, 0);
+    TEST_CHECK(SzMessageBytes(PszGetMessageN(app, 1).data()).empty());
+    TEST_CHECK(SzMessageBytes(SzVersion(app).data()) == std::string("Version ") + STARS_VERSION_DISPLAY);
+    TEST_CHECK(std::string_view(app.state.szWork) == std::string("Version ") + STARS_VERSION_DISPLAY);
+    const auto szVersion = SzVersion(app);
+    CchCopyUtf8Prefix(std::span{app.state.szMsgBuf}, "changed message");
+    CchCopyUtf8Prefix(std::span{app.state.szLastMsgGet}, "changed cache");
+    CchCopyUtf8Prefix(std::span{app.state.szWork}, "changed work");
+    TEST_CHECK(std::string_view(szFormat.data()) == "World-\xce\xa9 -123 55");
+    TEST_CHECK(std::string_view(szCompressed.data()) == pszBattle);
+    TEST_CHECK(std::string_view(szExpanded.data()) == pszBattle);
+    TEST_CHECK(std::string_view(szIds.data()) == "The new turn is available.");
+    TEST_CHECK(std::string_view(szQueued.data()) == pszBattle);
+    TEST_CHECK(std::string_view(szVersion.data()) == std::string("Version ") + STARS_VERSION_DISPLAY);
 }
 
 static std::array<char, cchCatalogText> PszTestCatalog(APPSESSION &, StringId) {
@@ -114,7 +193,7 @@ static void TestEnvironmentText(void) {
     CchCopyUtf8Prefix(std::span{app.state.szWork}, "changed");
     TEST_CHECK(std::string_view(szTemperature.data()) == "-200ºC");
     TEST_CHECK(std::string_view(szGravity.data()) == "1.00g");
-    TEST_CHECK(std::string_view(PszFormatString(app, "\\E|\\w", rgParams)) == "0ºC|0ºC");
+    TEST_CHECK(std::string_view(PszFormatString(app, "\\E|\\w", rgParams).data()) == "0ºC|0ºC");
 }
 
 static void TestDisplayCopyBounds(void) {
@@ -332,6 +411,7 @@ static void TestDefinitionLineVariants(void) {
 }
 
 static void TestFormattedTextBounds(void) {
+    std::array<char, 256> szMessage{};
 #ifdef STARS_UI_SDL
     APPSESSION &app = ui::app;
 #else
@@ -346,13 +426,15 @@ static void TestFormattedTextBounds(void) {
 
     TEST_ASSERT(FStarsTestInit(app));
     strcpy(app.state.szWork, "World");
-    TEST_CHECK(!strcmp(PszFormatString(app, szTestLiteral1, rgParams), "World -123 55"));
+    TEST_CHECK(!strcmp(PszFormatString(app, szTestLiteral1, rgParams).data(), "World -123 55"));
     memset(szFormat, 'a', 252);
     memcpy(szFormat + 252, "\xf0\x9f\x98\x80 suffix", 12);
-    psz = PszFormatString(app, szFormat, NULL);
+    szMessage = PszFormatString(app, szFormat, NULL);
+    psz = szMessage.data();
     TEST_CHECK(strlen(psz) == 252 && FUtf8Valid(psz, strlen(psz)));
     memset(app.state.szBase, 'a', sizeof(app.state.szBase) - 1); app.state.szBase[sizeof(app.state.szBase) - 1] = 0;
-    psz = PszFormatString(app, szTestLiteral2, NULL);
+    szMessage = PszFormatString(app, szTestLiteral2, NULL);
+    psz = szMessage.data();
     TEST_CHECK(strlen(psz) < sizeof(app.state.szMsgBuf) && FUtf8Valid(psz, strlen(psz)));
     memset(szFormat, 'a', 1022);
     memcpy(szFormat + 1022, "\xc3\xa9z", 4);
@@ -457,7 +539,7 @@ static void TestScannerSnapshotUtf8(void) {
 }
 #endif
 
-TEST_LIST = {{"strict UTF-8 append fits atomically within its span", TestStrictAppend}, {"definition line variants preserve creation and source bytes", TestDefinitionLineVariants}, {"formatted text stays bounded and preserves UTF-8", TestFormattedTextBounds},
+TEST_LIST = {{"decoded messages match all source bytes and cache effects", TestMessageCatalogBytes}, {"message and version text retain buffer and queue contracts", TestMessageAndVersionText}, {"strict UTF-8 append fits atomically within its span", TestStrictAppend}, {"definition line variants preserve creation and source bytes", TestDefinitionLineVariants}, {"formatted text stays bounded and preserves UTF-8", TestFormattedTextBounds},
              {"catalog values survive subsequent lookups", TestCatalogOwnership},
              {"decoded catalog matches every source byte", TestCatalogBytes},
              {"environment labels contain UTF-8 units", TestEnvironmentText},

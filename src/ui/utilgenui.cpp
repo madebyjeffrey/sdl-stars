@@ -1075,7 +1075,7 @@ INT_PTR  PasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 } else {
                     app.lpui->vcPasswordFailures++;
                     Delay(app.lpui->vcPasswordFailures < 10 ? 1000 : app.lpui->vcPasswordFailures < 100 ? 5000 : 10000);
-                    AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsPasswordHaveEnteredIncorrectPleaseTry, nullptr), win32::MB_ICONHAND);
+                    AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsPasswordHaveEnteredIncorrectPleaseTry, nullptr).data(), win32::MB_ICONHAND);
                     ControlIO().pfnSetFocus(ControlIO().pfnGetDlgItem(hwnd, IDC_EDIT1));
                     ui::SendDlgItemMessage(hwnd, IDC_EDIT1, win32::EM_SETSEL, 0, -1);
                     break;
@@ -1147,7 +1147,7 @@ INT_PTR  NewPasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 }
                 lSalt2 = LSaltFromSz(szPassConfirm);
                 if (lSalt != lSalt2) {
-                    AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsPasswordsTypedTwoFieldsSamePleaseReenter, nullptr), win32::MB_ICONHAND);
+                    AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsPasswordsTypedTwoFieldsSamePleaseReenter, nullptr).data(), win32::MB_ICONHAND);
                     ControlIO().pfnSetFocus(ControlIO().pfnGetDlgItem(hwnd, IDC_EDIT1));
                     ui::SendDlgItemMessage(hwnd, IDC_EDIT1, win32::EM_SETSEL, 0, -1);
                     break;
@@ -1165,7 +1165,7 @@ INT_PTR  NewPasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                     if (FWriteDataFile(app, app.state.szBase, app.state.idPlayer, 0)) {
                         app.state.lSaltLast = lSalt;
                     } else {
-                        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableCreateHostFile, nullptr), win32::MB_ICONHAND);
+                        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableCreateHostFile, nullptr).data(), win32::MB_ICONHAND);
                         app.state.lSaltCur = app.state.lSaltLast;
                     }
                 }

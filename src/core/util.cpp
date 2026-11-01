@@ -2532,7 +2532,7 @@ void OutputSz(APPSESSION &app, std::int16_t dt, const char *sz) {
 
     CchSprintf(szFile, "%s.%s", app.state.szBase, app.state.mpdtsz[dt]);
     if (!FFileExists(szFile)) {
-        CchSprintf(szTemp, "Stars! %s\r\n\r\n", SzVersion(app));
+        CchSprintf(szTemp, "Stars! %s\r\n\r\n", SzVersion(app).data());
         OutputFileString(szFile, szTemp);
     }
     GetDateTimeSz(szDate, szTime);
@@ -2545,16 +2545,16 @@ void TurnLog(APPSESSION &app, StringId ids) {
     char szTemp[256];
 
     if (app.state.ini.fLogging) {
-        CchSprintf(szTemp, TextIO().pfnFormat(app, ids, nullptr), app.state.game.turn + 2401);
+        CchSprintf(szTemp, TextIO().pfnFormat(app, ids, nullptr).data(), app.state.game.turn + 2401);
         OutputSz(app, 6, szTemp);
     }
     return;
 }
 
-char *SzVersion(APPSESSION &app) {
+std::array<char, 360> SzVersion(APPSESSION &app) {
     /* The original formatted idsVersionD02dC ("Version %d.%02d%c") with 2, 60, 'j'. */
     CchSprintf(app.state.szWork, "Version %s", STARS_VERSION_DISPLAY);
-    return app.state.szWork;
+    return SzLocationLabel(app.state.szWork);
 }
 
 std::int16_t CchGetETA(APPSESSION &app, HDC hdc, FLEET *lpfl, std::span<char> sz, std::int16_t iwp, std::int16_t fSmall) {

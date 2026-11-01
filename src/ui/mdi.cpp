@@ -387,16 +387,16 @@ LRESULT  FrameWndProc(APPSESSION &app, HWND hwnd, UINT msg, WPARAM wParam, LPARA
         }
         if (app.state.idPlayer != iplrNone && FNewTurnAvail(app, app.state.idPlayer)) {
             if (uTimerIdOld != 0) {
-                AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsNewTurnAvailable, nullptr), win32::MB_ICONASTERISK);
+                AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsNewTurnAvailable, nullptr).data(), win32::MB_ICONASTERISK);
                 id = 6;
             } else {
-                id = AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsNewTurnAvailableWouldLikeLoad, nullptr), win32::MB_YESNOCANCEL | win32::MB_ICONQUESTION | win32::MB_TASKMODAL);
+                id = AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsNewTurnAvailableWouldLikeLoad, nullptr).data(), win32::MB_YESNOCANCEL | win32::MB_ICONQUESTION | win32::MB_TASKMODAL);
             }
             if (id == 6) {
                 win32::wsprintfA(szExt, app.state.MPCTD, app.state.idPlayer + 1);
                 DestroyCurGame(app);
                 if (!FLoadGame(app, app.state.szBase, szExt)) {
-                    AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableOpenNewTurnFile, nullptr), win32::MB_ICONHAND);
+                    AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableOpenNewTurnFile, nullptr).data(), win32::MB_ICONHAND);
                 } else {
                     CreateChildWindows(app);
                 }
@@ -418,13 +418,13 @@ LRESULT  FrameWndProc(APPSESSION &app, HWND hwnd, UINT msg, WPARAM wParam, LPARA
             goto Default;
         }
         if (app.lpui->uTimerType == hostTimerWaitTurn) {
-            id = AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsTurnHasSubmittedChangesMadeAfterTurn, nullptr), win32::MB_YESNOCANCEL | win32::MB_ICONQUESTION | win32::MB_TASKMODAL);
+            id = AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsTurnHasSubmittedChangesMadeAfterTurn, nullptr).data(), win32::MB_YESNOCANCEL | win32::MB_ICONQUESTION | win32::MB_TASKMODAL);
             if (id == 6 && !FMarkFile(app, dtLog, app.state.idPlayer, mdMarkDone, 0)) {
-                AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsNewTurnCurrentlyGeneratedHostNewTurn, nullptr), win32::MB_ICONHAND);
+                AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsNewTurnCurrentlyGeneratedHostNewTurn, nullptr).data(), win32::MB_ICONHAND);
                 win32::wsprintfA(szExt, app.state.MPCTD, app.state.idPlayer + 1);
                 DestroyCurGame(app);
                 if (!FLoadGame(app, app.state.szBase, szExt)) {
-                    AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableOpenNewTurnFile, nullptr), win32::MB_ICONHAND);
+                    AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableOpenNewTurnFile, nullptr).data(), win32::MB_ICONHAND);
                 } else {
                     CreateChildWindows(app);
                 }
@@ -1026,7 +1026,7 @@ void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
             }
         LShowMissingRecent:
             CchCopyUtf8(std::span{app.state.szWork}, szT);
-            AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsCantOpenFile, nullptr), win32::MB_ICONHAND);
+            AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsCantOpenFile, nullptr).data(), win32::MB_ICONHAND);
             break;
         case IDM_RACE_CREATE:
             app.state.vplr = vrgplrDef[0];
@@ -1200,9 +1200,9 @@ void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
 LPrintMapCleanup:
                 print.Close();
                 if (iPrintResult <= 0 && iPrintResult != win32::SP_APPABORT)
-                    AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnablePrintGameMapPrinterMayOff, nullptr), win32::MB_ICONHAND);
+                    AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnablePrintGameMapPrinterMayOff, nullptr).data(), win32::MB_ICONHAND);
             } else {
-                AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnablePrintGameMapPrinterMayOff, nullptr), win32::MB_ICONHAND);
+                AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnablePrintGameMapPrinterMayOff, nullptr).data(), win32::MB_ICONHAND);
             }
             break;
         case IDM_VIEW_PLAYER_COLORS:
@@ -1228,7 +1228,7 @@ LPrintMapCleanup:
             break;
         case IDM_FILE_HOST_GAME:
             if (!app.state.game.fSinglePlr &&
-                AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsGameAlreadyHostedAnotherInstanceStarsWould, nullptr), win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_TASKMODAL) != win32::IDYES)
+                AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsGameAlreadyHostedAnotherInstanceStarsWould, nullptr).data(), win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_TASKMODAL) != win32::IDYES)
                 break;
             /* fallthrough */
         case IDM_TURN_GENERATE:
@@ -1259,7 +1259,7 @@ LPrintMapCleanup:
             if (app.state.gd.fTutorial) {
                 PresentationIO().pfnTutor(app);
                 if (!app.state.tutor.fTurnDone) {
-                    AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsTutorialTurnWillGeneratedHaveYetCompleted, nullptr), win32::MB_ICONHAND);
+                    AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsTutorialTurnWillGeneratedHaveYetCompleted, nullptr).data(), win32::MB_ICONHAND);
                     break;
                 }
                 ShowTutor(app, 0);
@@ -1267,11 +1267,11 @@ LPrintMapCleanup:
                     Randomize(app, 1234567890);
                     FWriteHistFile(app, idCur);
                     if (!FWriteTutorialMFile(app, app.state.game.turn + 1)) {
-                        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, static_cast<StringId>(app.state.idsFileError), nullptr), win32::MB_ICONHAND);
+                        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, static_cast<StringId>(app.state.idsFileError), nullptr).data(), win32::MB_ICONHAND);
                         break;
                     }
                     if (app.state.game.turn == 35 && !FWriteTutorialMFile(app, app.state.game.turn + 2)) {
-                        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, static_cast<StringId>(app.state.idsFileError), nullptr), win32::MB_ICONHAND);
+                        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, static_cast<StringId>(app.state.idsFileError), nullptr).data(), win32::MB_ICONHAND);
                         break;
                     }
                     CchCopyUtf8(std::span{app.state.szWork}, app.state.szBase);
@@ -1292,10 +1292,10 @@ LPrintMapCleanup:
             app.state.idsFileError = -1;
             if (FCheckFile(app, dtHost, iplrNone, mdMarkInUse)) {
                 if (FBadFileError(static_cast<StringId>(app.state.idsFileError))) {
-                    AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, static_cast<StringId>(app.state.idsFileError), nullptr), win32::MB_ICONHAND);
+                    AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, static_cast<StringId>(app.state.idsFileError), nullptr).data(), win32::MB_ICONHAND);
                     break;
                 }
-                if (AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsGameAlreadyHostedAnotherInstanceStarsWould, nullptr), win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_TASKMODAL) == win32::IDYES)
+                if (AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsGameAlreadyHostedAnotherInstanceStarsWould, nullptr).data(), win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_TASKMODAL) == win32::IDYES)
                     goto LWaitForTurn;
                 break;
             }
@@ -1326,7 +1326,7 @@ LPrintMapCleanup:
             if (!FLoadGame(app, app.state.szBase, szExt)) {
                 win32::SetCursor(hcurSav);
                 HideProgressGauge(app);
-                AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableOpenNewTurnFile, nullptr), win32::MB_ICONHAND);
+                AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableOpenNewTurnFile, nullptr).data(), win32::MB_ICONHAND);
                 break;
             }
             HideProgressGauge(app);
@@ -1456,17 +1456,17 @@ LPrintMapCleanup:
             LNewTurnAvail:
                 FWriteHistFile(app, app.state.idPlayer);
                 if (app.state.game.fDirty) {
-                    id = AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsSorryTurnHasAlreadyGeneratedAnyChanges, nullptr), win32::MB_OKCANCEL | win32::MB_ICONEXCLAMATION);
+                    id = AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsSorryTurnHasAlreadyGeneratedAnyChanges, nullptr).data(), win32::MB_OKCANCEL | win32::MB_ICONEXCLAMATION);
                     if (id == 2)
                         break;
                 } else {
-                    AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsNewTurnAvailable, nullptr), win32::MB_ICONASTERISK);
+                    AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsNewTurnAvailable, nullptr).data(), win32::MB_ICONASTERISK);
                 }
                 win32::wsprintfA(szExt, app.state.MPCTD, app.state.idPlayer + 1);
                 app.state.game.fDirty = 0;
                 DestroyCurGame(app);
                 if (!FLoadGame(app, app.state.szBase, szExt)) {
-                    AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableOpenNewTurnFile, nullptr), win32::MB_ICONHAND);
+                    AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableOpenNewTurnFile, nullptr).data(), win32::MB_ICONHAND);
                 } else {
                     CreateChildWindows(app);
                     ControlIO().pfnSendMessage(app.lpui->hwndFrame, win32::WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
@@ -1489,7 +1489,7 @@ LPrintMapCleanup:
         case IDM_TURN_END_A:
         case IDM_TURN_END_B:
             if (!app.lpui->hwndScanner) {
-                AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsGameCurrentlyLoaded, nullptr), win32::MB_ICONHAND);
+                AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsGameCurrentlyLoaded, nullptr).data(), win32::MB_ICONHAND);
                 break;
             }
             if (app.state.idPlayer == iplrNone) {
@@ -1616,7 +1616,7 @@ LPrintMapCleanup:
         case IDM_SCAN_ZOOM_7:
         case IDM_SCAN_ZOOM_8:
             if (!app.lpui->hwndScanner) {
-                AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsCantChangeZoomFactorUntilGameOpen, nullptr), win32::MB_ICONHAND);
+                AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsCantChangeZoomFactorUntilGameOpen, nullptr).data(), win32::MB_ICONHAND);
                 break;
             }
             hmenu = GetASubMenu(app, hwnd, menuView);
@@ -2095,7 +2095,7 @@ INT_PTR  HostModeDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                         return 1;
                     }
                 } else if (CFindTurnsOutstanding(app) != 0 &&
-                           AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsSureWishGenerateOptionDoesGuaranteePlayers, nullptr), win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_SYSTEMMODAL) != win32::IDYES) {
+                           AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsSureWishGenerateOptionDoesGuaranteePlayers, nullptr).data(), win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_SYSTEMMODAL) != win32::IDYES) {
                     return 1;
                 }
             }
@@ -2200,7 +2200,7 @@ void  HostTimerProc(HWND hwnd, UINT msg, UINT_PTR idTimer, DWORD dwTime) {
             win32::wsprintfA(szExt, app.state.MPCTD, app.state.idPlayer + 1);
             DestroyCurGame(app);
             if (!FLoadGame(app, app.state.szBase, szExt)) {
-                AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableOpenNewTurnFile, nullptr), win32::MB_ICONHAND);
+                AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableOpenNewTurnFile, nullptr).data(), win32::MB_ICONHAND);
                 goto Done;
             }
             app.state.idPlayer = idCur;
@@ -2220,7 +2220,7 @@ void  HostTimerProc(HWND hwnd, UINT msg, UINT_PTR idTimer, DWORD dwTime) {
     Loop:
         cOut = CFindTurnsOutstanding(app);
         if (app.state.gd.fAllAis) {
-            AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsAutoGenerateDisabledBecauseHumanPlayersDead, nullptr), win32::MB_ICONHAND);
+            AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsAutoGenerateDisabledBecauseHumanPlayersDead, nullptr).data(), win32::MB_ICONHAND);
             ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_HOST_AUTO_GENERATE), 0);
             goto Done;
         }
@@ -2602,6 +2602,7 @@ void RefitFrameChildren(APPSESSION &app) {
 }
 
 LRESULT  TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+    std::array<char, 360> szVersion{};
     std::array<char, cchCatalogText> szCatalogPsz{};
     APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
 
@@ -2887,12 +2888,12 @@ LRESULT  TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         }
         win32::SelectObject(hdc, app.lpui->rghfontArial10[1]);
         win32::SetBkMode(hdc, win32::TRANSPARENT);
-        SzVersion(app);
+        szVersion = SzVersion(app);
         win32::GetWindowRect(app.lpui->rghwndBtnSplash[0], &rcT);
         win32::MapWindowPoints(nullptr, hwnd, reinterpret_cast<POINT *>(&rcT), 2);
         rcWnd.top = rcT.top - static_cast<std::int16_t>((9 * app.state.dyArial8)) / 2;
         rcWnd.bottom = static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2 + rcWnd.top;
-        RcCtrTextOut(app, hdc, &rcWnd, app.state.szWork, std::strlen(app.state.szWork));
+        RcCtrTextOut(app, hdc, &rcWnd, szVersion.data(), std::strlen(szVersion.data()));
         win32::EndPaint(hwnd, &ps);
         plfOwner.reset();
         break;

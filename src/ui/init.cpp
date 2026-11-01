@@ -160,7 +160,7 @@ std::int16_t FCreateStuff(APPSESSION &app) {
     InitGameStuff(app);
     if (fFailed || !app.lpui->hbmpScanner || !app.lpui->hbmpUnknownPlanet || !app.lpui->hbmpBackBld || !app.lpui->hdibRaces || !app.lpui->hdibRacesT || !app.lpui->hdibRacesX || !app.lpui->hbmpMono || !app.lpui->hbmpScanShip || !app.lpui->hbmpMsg ||
         !app.lpui->hiconHost || !app.lpui->hiconStars || !app.lpui->hiconWait) {
-        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableLoadBitmaps, nullptr), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableLoadBitmaps, nullptr).data(), win32::MB_ICONHAND);
         return 0;
     }
     return 1;
@@ -472,7 +472,7 @@ void ReadIniSettings(APPSESSION &app) {
     TextIO().pfnCchGetString(app, idsResolution, std::span{szEntry});
     i = win32::GetPrivateProfileIntA(szSection, szEntry, 0, szIniFile);
     if (i == 0 && (app.lpui->vcScreenColors <= 4 || app.state.gd.mdScreenSize == 0)) {
-        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsNoteStarsPrefersScreenResolutionLeast800x600, nullptr), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsNoteStarsPrefersScreenResolutionLeast800x600, nullptr).data(), win32::MB_ICONHAND);
     }
     TextIO().pfnCchGetString(app, idsLayout, std::span{szEntry});
     app.lpui->iWindowLayout = static_cast<WindowLayout>(win32::GetPrivateProfileIntA(szSection, szEntry, 1, szIniFile));

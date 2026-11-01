@@ -666,7 +666,7 @@ std::int16_t FSaveLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName, P
     if (!fOkay) {
         RemoveNativeFile(szRaceLibraryTemp);
         RemoveNativePath(szTempDir);
-        if (win32::IsWindow(hwnd)) AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsStarsUnableSaveRaceDataFilePlease, nullptr), win32::MB_ICONHAND);
+        if (win32::IsWindow(hwnd)) AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsStarsUnableSaveRaceDataFilePlease, nullptr).data(), win32::MB_ICONHAND);
         return 0;
     }
     RemoveNativePath(szTempDir);
@@ -2136,7 +2136,7 @@ std::int16_t FImportLibraryGame(APPSESSION &app, HWND hwnd, const char *pszSourc
     return FPublishImportedLibraryGame(app, {szLibraryRoot,szLibraryPending,szLibraryName},li,szDir);
 LInvalidSource:
     CchSnprintf(std::span{app.state.szWork, sizeof(app.state.szWork)}, "%s", szSource);
-    AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsCantOpenFile, nullptr), win32::MB_ICONHAND);
+    AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsCantOpenFile, nullptr).data(), win32::MB_ICONHAND);
     return 0;
 }
 

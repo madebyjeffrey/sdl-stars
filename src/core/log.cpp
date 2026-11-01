@@ -563,7 +563,7 @@ static void WriteMemRtCore(APPSESSION &app, RecordType rt, std::int16_t cb, void
 
     if (!app.state.fLogOff) {
         if (app.state.imemLogCur + cb + 2 > 32000) {
-            AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsLogFileHasReachedMaximumAllowableSize, nullptr), win32::MB_ICONHAND);
+            AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsLogFileHasReachedMaximumAllowableSize, nullptr).data(), win32::MB_ICONHAND);
         }
         RecordIO().pfnDirtyGame(app, 1);
         app.state.imemLogPrev = app.state.imemLogCur;
@@ -1360,7 +1360,7 @@ std::int16_t FWriteLogFile(APPSESSION &app, char *pszFileBase, std::int16_t iPla
         std::strcpy(app.state.szBase, pszFileBase);
     }
     if (!RecordIO().pfnFCreateFile(app, dtLog, iPlayer, nullptr)) {
-        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableCreateLogFile, nullptr), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableCreateLogFile, nullptr).data(), win32::MB_ICONHAND);
         return 0;
     }
     StarsRecoveryScope scopeRecovery;
@@ -1402,7 +1402,7 @@ std::int16_t FWriteHistFile(APPSESSION &app, std::int16_t iPlayer) {
     std::uint8_t  *lpb;
 
     if (!RecordIO().pfnFCreateFile(app, dtHist, iPlayer, nullptr)) {
-        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableCreateHistoryFile, nullptr), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableCreateHistoryFile, nullptr).data(), win32::MB_ICONHAND);
         return 0;
     }
     StarsRecoveryScope scopeRecovery;

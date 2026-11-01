@@ -183,7 +183,7 @@ std::int16_t FLoadGame(APPSESSION &app, const char *pszFileName, const char *psz
         RecordIO().pfnReadRt(app);
         if (app.state.hdrCur.rt != rtGame || app.state.hdrCur.cb != cbWireGame) {
         XYCorrupt:
-            AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUniverseDefinitionFileSeemsMissingCorrupt, nullptr), win32::MB_ICONHAND);
+            AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUniverseDefinitionFileSeemsMissingCorrupt, nullptr).data(), win32::MB_ICONHAND);
             goto LError;
         }
         FDecodeGame(std::as_bytes(std::span(app.state.rgbCur)), app.state.game);
@@ -247,7 +247,7 @@ std::int16_t FLoadGame(APPSESSION &app, const char *pszFileName, const char *psz
                 } else {
                 CorruptHist:
                     RecordIO().pfnStreamClose(app);
-                    AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsHistoryFileAppearsCorruptHistoricalDataWill, nullptr), win32::MB_ICONHAND);
+                    AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsHistoryFileAppearsCorruptHistoricalDataWill, nullptr).data(), win32::MB_ICONHAND);
                     goto LNoHistFile;
                 }
                 RecordIO().pfnReadRt(app);
@@ -450,7 +450,7 @@ LNextTurn:
         }
         if (!FCheckPassword(app)) {
             if (app.state.ini.fValidate || app.state.ini.fLogging)
-                AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsPasswordHaveEnteredIncorrectPleaseTry, nullptr), win32::MB_ICONHAND);
+                AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsPasswordHaveEnteredIncorrectPleaseTry, nullptr).data(), win32::MB_ICONHAND);
             goto LError;
         }
         ReadPlayerMessages(app);
@@ -716,7 +716,7 @@ LNextTurn:
         app.state.idPlayer = iplrSav;
         if (app.state.hdrCur.rt != rtEOF) {
         Corrupt:
-            AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsGameFileAppearsCorruptUnableLoadFile, nullptr), win32::MB_ICONHAND);
+            AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsGameFileAppearsCorruptUnableLoadFile, nullptr).data(), win32::MB_ICONHAND);
             goto LError;
         }
         cbFile = CbFileSize(app.state.hf);
@@ -749,7 +749,7 @@ LNextTurn:
                 cPlanetHist = app.state.cPlanet;
                 goto LNextTurn;
             }
-            AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsWarningIgnoringUnexpectedDataAfterEof, nullptr), win32::MB_ICONHAND);
+            AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsWarningIgnoringUnexpectedDataAfterEof, nullptr).data(), win32::MB_ICONHAND);
         }
         RecordIO().pfnStreamClose(app);
         if (cturn > 1 && !app.state.rgplr[iPlayer].fAi && !app.state.ini.fDumpPlanets && !app.state.ini.fDumpFleets && !app.state.ini.fDumpMap) {
@@ -806,7 +806,7 @@ LNextTurn:
         if (!app.state.gd.fDontDoLogFiles) {
             CchSprintf(app.state.szWork, "%s.x%s", pszFileName, pszExt + 1);
             if (!FLoadLogFile(app, app.state.szWork) || !FRunLogFile(app)) {
-                AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsPlayerLogFileAppearsCorruptUnableLoad, nullptr), win32::MB_ICONHAND);
+                AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsPlayerLogFileAppearsCorruptUnableLoad, nullptr).data(), win32::MB_ICONHAND);
                 goto LError;
             }
         }
@@ -1070,7 +1070,7 @@ std::int16_t FReadFleet(APPSESSION &app, FLEET *lpfl) {
     }
     return 1;
 Corrupt:
-    AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsGameFileAppearsCorruptUnableLoadFile, nullptr), win32::MB_ICONHAND);
+    AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsGameFileAppearsCorruptUnableLoadFile, nullptr).data(), win32::MB_ICONHAND);
     return 0;
 }
 
@@ -1216,7 +1216,7 @@ void DestroyCurGame(APPSESSION &app) {
 void FileError(APPSESSION &app, StringId ids) {
     app.state.idsFileError = ids;
     if (!app.state.fFileErrSilent && !app.state.gd.fGeneratingTurn) {
-        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, ids, nullptr), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, ids, nullptr).data(), win32::MB_ICONHAND);
     }
     return;
 }
@@ -1288,7 +1288,7 @@ std::int16_t FOpenFile(APPSESSION &app, DtFileType dt, std::int16_t iPlayer, std
                         goto LBadFile;
                     }
                     if (dt == dtHost && !app.state.gd.fHostMode && rtbof.fInUse) {
-                        if (AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsHostFileMarkedUseAnotherInstanceStars, nullptr), win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_TASKMODAL) != win32::IDYES)
+                        if (AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsHostFileMarkedUseAnotherInstanceStars, nullptr).data(), win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_TASKMODAL) != win32::IDYES)
                             goto LBadFile;
                     } else {
                         if (!rtbof.fDone && app.state.gd.fGeneratingTurn && !app.state.gd.fForceTurn) {

@@ -125,10 +125,10 @@ static std::array<char, cchCatalogText> TestPszGetCompressedString(APPSESSION &,
         return SzWitnessText(szLiteral4);
     return SzWitnessText(szLiteral5);
 }
-static const char *TestPszFormatIds(APPSESSION &, int id, void *p) {
+static std::array<char, 256> TestPszFormatIds(APPSESSION &, int id, void *p) {
     (void)id;
     (void)p;
-    return "amount";
+    return SzWitnessText("amount");
 }
 static std::int16_t TestCchGetString(APPSESSION &app, StringId id, std::span<char> out) {
     return static_cast<std::int16_t>(CchCopyUtf8(out, TestPszGetCompressedString(app, id).data()));

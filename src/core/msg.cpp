@@ -258,13 +258,20 @@ std::int16_t FGetNMsgbig(APPSESSION &app, MessageId iMsg, MSGBIG *pmb) {
     return 1;
 }
 
-char *PszGetMessageN(APPSESSION &app, std::int16_t iMsg) {
+// Keep current message/cache effects while callers retain independent text.
+static std::array<char, 256> SzMessageLabel(std::string_view sz) {
+    std::array<char, 256> szResult{};
+    CchCopyUtf8Prefix(std::span{szResult}, sz);
+    return szResult;
+}
+
+std::array<char, 256> PszGetMessageN(APPSESSION &app, std::int16_t iMsg) {
     MSGBIG mb;
-    char  *psz;
+    std::array<char, 256> psz{};
 
     if (!FGetNMsgbig(app, static_cast<MessageId>(iMsg), &mb)) {
         app.state.szMsgBuf[0] = 0;
-        return app.state.szMsgBuf;
+        return SzMessageLabel(app.state.szMsgBuf);
     }
     psz = PszFormatMessage(app, static_cast<MessageId>(mb.iMsg), mb.rgParam);
     return psz;
@@ -281,7 +288,7 @@ static char *PchAppendMessageText(APPSESSION &app, char *pch, const char *psz) {
     return pch + cch;
 }
 
-char *PszFormatString(APPSESSION &app, const char *pszFormat, std::int16_t *pParamsReal) {
+std::array<char, 256> PszFormatString(APPSESSION &app, const char *pszFormat, std::int16_t *pParamsReal) {
     std::array<char, 360> szDisplayLabel{};
     std::array<char, 360> szObjectName{};
     std::array<char, cchCatalogText> szCatalogPchT{};
@@ -539,12 +546,12 @@ char *PszFormatString(APPSESSION &app, const char *pszFormat, std::int16_t *pPar
     }
     *pch = 0;
     app.state.szMsgBuf[CchUtf8Prefix(app.state.szMsgBuf, sizeof(app.state.szMsgBuf) - 1)] = 0;
-    return app.state.szMsgBuf;
+    return SzMessageLabel(app.state.szMsgBuf);
 }
 
-char *PszFormatMessage(APPSESSION &app, MessageId idm, std::int16_t *pParams) { return PszFormatString(app, PszGetCompressedMessage(app, idm), pParams); }
+std::array<char, 256> PszFormatMessage(APPSESSION &app, MessageId idm, std::int16_t *pParams) { return PszFormatString(app, PszGetCompressedMessage(app, idm).data(), pParams); }
 
-char *PszFormatIds(APPSESSION &app, StringId ids, std::int16_t *pParams) { return PszFormatString(app, TextIO().pfnCompressed(app, ids).data(), pParams); }
+std::array<char, 256> PszFormatIds(APPSESSION &app, StringId ids, std::int16_t *pParams) { return PszFormatString(app, TextIO().pfnCompressed(app, ids).data(), pParams); }
 
 std::int16_t FRemovePlayerMessage(APPSESSION &app, std::int16_t iPlr, MessageId iMsg, MsgGoto iObj) {
     std::uint8_t *lpbMax;
@@ -811,7 +818,7 @@ void ReadPlayerMessages(APPSESSION &app) {
     return;
 }
 
-char *PszGetCompressedMessage(APPSESSION &app, MessageId idm) {
+std::array<char, 256> PszGetCompressedMessage(APPSESSION &app, MessageId idm) {
     std::int16_t  iBuild;
     std::int16_t  iNibble;
     std::int16_t  i;
@@ -825,7 +832,7 @@ char *PszGetCompressedMessage(APPSESSION &app, MessageId idm) {
 
     iNibble = 0;
     if (idm == app.state.iLastMsgGet) {
-        return app.state.szLastMsgGet;
+        return SzMessageLabel(app.state.szLastMsgGet);
     }
     iChunk = idm >> 6;
     iOffset = idm & 0x3f;
@@ -857,7 +864,7 @@ char *PszGetCompressedMessage(APPSESSION &app, MessageId idm) {
         }
     }
     *pszOut = 0;
-    return app.state.szLastMsgGet;
+    return SzMessageLabel(app.state.szLastMsgGet);
 }
 
 void SetFilteringGroups(APPSESSION &app, MessageId idm, std::int16_t fSet) {

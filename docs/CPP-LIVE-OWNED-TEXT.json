@@ -1,6 +1,6 @@
 {
   "parent": "00f055c5",
-  "status": "Player, catalog, report, hull, numeric, location, object, environment and production/ETA labels return owned values; message text, other scratch text and const interfaces remain active.",
+  "status": "All identified game scratch-text getter families now return owned values, including message/version text. Bounded copies, readonly inputs and scratch-storage/borrowed-return review remain active.",
   "player_names": {
     "implementation": "PszPlayerName returns std::array<char, 50> by value with initialized storage; the previous 50-byte label budget and grammar remain. No heap allocation or shared-work-buffer return.",
     "provider": "TEXTIO uses the real return type; its actual transport-presets witness provider returns the same value type without a generic scalar adapter.",
@@ -3819,7 +3819,7 @@
     "production_calls": 78,
     "providers": "TEXTIO derives the exact owned return type; lifecycle, location and native-file-UI providers return independent 360-byte arrays.",
     "effects": "Existing work-buffer writes remain for message work expansion and explicit workspace consumers. Names, UTF-8 budgets, ownership prefixes, orbit flags, missing-object behavior and all formatter expressions stay unchanged. No allocation, record layout or compatibility overload is added.",
-    "remaining": "Encoded fleet labels and compressed planet names now return owned values under display_labels; message/version text, const interfaces, scanner tail bounds and three mineral-summary appends remain pending.",
+    "remaining": "Encoded labels and messages now return owned values. Remaining readonly interfaces, scratch-storage review, scanner tail bounds and three mineral-summary appends remain pending.",
     "calls": [
       {
         "path": "src/core/msg.cpp",
@@ -4574,7 +4574,7 @@
       "maximum_utf8_bytes": 18
     },
     "effects": "Preserve the compressed-name cache bytes and its existing flag behavior, all work writes, numeric ETA outputs, sentinel/trailing-space bytes, formatter expressions, gravity arithmetic, queue markers, part indexes and upgrade/downgrade rules. Five numeric-only ETA calls retain their existing out-parameter use and discard the owned label. No allocation or record-layout change.",
-    "remaining": "Message formatting/decompression and version text remain scratch-return APIs. Stable persistent borrowed names and readonly interfaces still need review; numeric ETA output parameters remain separate L06 result work. Remaining bounded-copy sites, scanner tail bounds, mineral-summary appends, wrapper formatting and Milestone D remain active.",
+    "remaining": "Message/version results now return owned values under message_values. Readonly text/parameter inputs, stable borrowed names, post-migration scratch storage, numeric ETA outputs and the remaining copy/service interfaces still need review.",
     "calls": [
       {
         "path": "src/core/aiutil.cpp",
@@ -4900,6 +4900,886 @@
       "baseline": "Behavior-neutral: native/frozen-original baseline bytes and unit goldens unchanged. No scenario/checkpoint moved and no regression export required. Game rules, record sizes, element widths, wire bytes, RNG, qsort16 ties and binary64 boundaries remain.",
       "remaining": "Message formatting/decompression and version scratch text, const interfaces and stable borrowed-name review, remaining text/path copies and wrapper formatting, L06 numeric/service results and Milestone D, and L08 final inventory/platform qualification remain active.",
       "receipts": "dist/verification/live-cpp/l05z/"
+    }
+  },
+  "message_values": {
+    "status": "complete; verified",
+    "parent": "d1f8832f",
+    "interfaces": [
+      "PszGetMessageN -> array<char,256>",
+      "PszFormatString -> array<char,256>",
+      "PszFormatMessage -> array<char,256>",
+      "PszFormatIds/TEXTIO.pfnFormat -> array<char,256>",
+      "PszGetCompressedMessage -> array<char,256>",
+      "SzVersion -> array<char,360>"
+    ],
+    "production_calls": 93,
+    "providers": "All three actual production-lifecycle, production-presets and transport-presets formatting providers return initialized matching 256-byte arrays. TEXTIO derives the real return type; no pointer-result overload or provider-result cast remains.",
+    "byte_reference": {
+      "source": "text/messages.txt",
+      "ids": 387,
+      "hash": "0x340443fddde7c605",
+      "maximum_utf8_bytes": 200
+    },
+    "audit": "All live source/header/include/Objective-C++ call tokens match the migrated ledger, including IStarsMain function-try-block and both catch bodies. Final audit: 93 production calls.",
+    "effects": "Preserve 256-byte message/decode limits, 360-byte version budget, current cache/message/work writes, grammar, parameter consumption, UTF-8 clipping and missing-message behavior. Named arrays retain scroll/drawing text; immediate alerts borrow a value through the synchronous call. No allocation or saved-state layout change.",
+    "remaining": "Message format and parameter inputs still need readonly bounded L06 contracts. The retained session message/cache staging fields need a post-migration storage audit; stable library/command-line borrowing, private text cursors, remaining L05 bounded copies/wrapper formatting, L06 services/Milestone D and L08 final qualification remain active.",
+    "calls": [
+      {
+        "path": "src/core/battle.cpp",
+        "function": "FDeleteBattlePlan",
+        "parent_line": 44,
+        "parent_call": "TextIO().pfnFormat(app, idsCurrentlyHaveFleetsUsingBattlePlanIf, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 44,
+        "current_call_line": "if (AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsCurrentlyHaveFleetsUsingBattlePlanIf, nullptr).data(), win32::MB_OKCANCEL | win32::MB_ICONEXCLAMATION) == IDCANCEL)"
+      },
+      {
+        "path": "src/core/create.cpp",
+        "function": "GenerateWorld",
+        "parent_line": 915,
+        "parent_call": "TextIO().pfnFormat(app, idsUnableCreateUniverseDefinitionFile, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 915,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableCreateUniverseDefinitionFile, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/core/create.cpp",
+        "function": "GenerateWorld",
+        "parent_line": 944,
+        "parent_call": "TextIO().pfnFormat(app, idsUnableOpenNewTurnFile, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 944,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableOpenNewTurnFile, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/core/create.cpp",
+        "function": "GenNewGameFromFile",
+        "parent_line": 1024,
+        "parent_call": "TextIO().pfnFormat(app, idsMemory, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 1024,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMemory, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/core/create.cpp",
+        "function": "GenNewGameFromFile",
+        "parent_line": 1037,
+        "parent_call": "TextIO().pfnFormat(app, idsIllegalGameTitle, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 1037,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsIllegalGameTitle, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/core/create.cpp",
+        "function": "GenNewGameFromFile",
+        "parent_line": 1046,
+        "parent_call": "TextIO().pfnFormat(app, idsUniverseDefinitionFileAppearsTooShort, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 1046,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUniverseDefinitionFileAppearsTooShort, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/core/create.cpp",
+        "function": "GenNewGameFromFile",
+        "parent_line": 1053,
+        "parent_call": "TextIO().pfnFormat(app, idsLine2HasBadUniverseDefinitionParameter, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 1053,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsLine2HasBadUniverseDefinitionParameter, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/core/create.cpp",
+        "function": "GenNewGameFromFile",
+        "parent_line": 1078,
+        "parent_call": "TextIO().pfnFormat(app, idsLine3HasBadUniverseDefinitionParameter, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 1078,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsLine3HasBadUniverseDefinitionParameter, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/core/create.cpp",
+        "function": "GenNewGameFromFile",
+        "parent_line": 1109,
+        "parent_call": "TextIO().pfnFormat(app, idsLine4HasImproperNumberPlayerFiles, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 1109,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsLine4HasImproperNumberPlayerFiles, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/core/file.cpp",
+        "function": "FLoadGame",
+        "parent_line": 186,
+        "parent_call": "TextIO().pfnFormat(app, idsUniverseDefinitionFileSeemsMissingCorrupt, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 186,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUniverseDefinitionFileSeemsMissingCorrupt, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/core/file.cpp",
+        "function": "FLoadGame",
+        "parent_line": 250,
+        "parent_call": "TextIO().pfnFormat(app, idsHistoryFileAppearsCorruptHistoricalDataWill, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 250,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsHistoryFileAppearsCorruptHistoricalDataWill, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/core/file.cpp",
+        "function": "FLoadGame",
+        "parent_line": 453,
+        "parent_call": "TextIO().pfnFormat(app, idsPasswordHaveEnteredIncorrectPleaseTry, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 453,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsPasswordHaveEnteredIncorrectPleaseTry, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/core/file.cpp",
+        "function": "FLoadGame",
+        "parent_line": 719,
+        "parent_call": "TextIO().pfnFormat(app, idsGameFileAppearsCorruptUnableLoadFile, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 719,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsGameFileAppearsCorruptUnableLoadFile, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/core/file.cpp",
+        "function": "FLoadGame",
+        "parent_line": 752,
+        "parent_call": "TextIO().pfnFormat(app, idsWarningIgnoringUnexpectedDataAfterEof, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 752,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsWarningIgnoringUnexpectedDataAfterEof, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/core/file.cpp",
+        "function": "FLoadGame",
+        "parent_line": 809,
+        "parent_call": "TextIO().pfnFormat(app, idsPlayerLogFileAppearsCorruptUnableLoad, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 809,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsPlayerLogFileAppearsCorruptUnableLoad, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/core/file.cpp",
+        "function": "FReadFleet",
+        "parent_line": 1073,
+        "parent_call": "TextIO().pfnFormat(app, idsGameFileAppearsCorruptUnableLoadFile, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 1073,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsGameFileAppearsCorruptUnableLoadFile, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/core/file.cpp",
+        "function": "FileError",
+        "parent_line": 1219,
+        "parent_call": "TextIO().pfnFormat(app, ids, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 1219,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, ids, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/core/file.cpp",
+        "function": "FOpenFile",
+        "parent_line": 1291,
+        "parent_call": "TextIO().pfnFormat(app, idsHostFileMarkedUseAnotherInstanceStars, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 1291,
+        "current_call_line": "if (AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsHostFileMarkedUseAnotherInstanceStars, nullptr).data(), win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_TASKMODAL) != win32::IDYES)"
+      },
+      {
+        "path": "src/core/log.cpp",
+        "function": "WriteMemRtCore",
+        "parent_line": 566,
+        "parent_call": "TextIO().pfnFormat(app, idsLogFileHasReachedMaximumAllowableSize, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 566,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsLogFileHasReachedMaximumAllowableSize, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/core/log.cpp",
+        "function": "FWriteLogFile",
+        "parent_line": 1363,
+        "parent_call": "TextIO().pfnFormat(app, idsUnableCreateLogFile, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 1363,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableCreateLogFile, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/core/log.cpp",
+        "function": "FWriteHistFile",
+        "parent_line": 1405,
+        "parent_call": "TextIO().pfnFormat(app, idsUnableCreateHistoryFile, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 1405,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableCreateHistoryFile, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/core/memory.cpp",
+        "function": "CbHeapItem",
+        "parent_line": 40,
+        "parent_call": "TextIO().pfnFormat(app, idsMemory, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 40,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMemory, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/core/memory.cpp",
+        "function": "LphbAlloc",
+        "parent_line": 58,
+        "parent_call": "TextIO().pfnFormat(app, idsMemory, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 58,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMemory, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/core/memory.cpp",
+        "function": "LphbReAlloc",
+        "parent_line": 106,
+        "parent_call": "TextIO().pfnFormat(app, idsMemory, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 106,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMemory, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/core/msg.cpp",
+        "function": "PszGetMessageN",
+        "parent_line": 269,
+        "parent_call": "PszFormatMessage(app, static_cast<MessageId>(mb.iMsg), mb.rgParam)",
+        "lifetime": "Original psz local becomes an owned array and forwards the formatted message by value.",
+        "line": 276,
+        "current_call_line": "psz = PszFormatMessage(app, static_cast<MessageId>(mb.iMsg), mb.rgParam);"
+      },
+      {
+        "path": "src/core/msg.cpp",
+        "function": "PszFormatMessage",
+        "parent_line": 545,
+        "parent_call": "PszFormatString(app, PszGetCompressedMessage(app, idm), pParams)",
+        "lifetime": "Owned formatted array forwarded directly by value.",
+        "line": 552,
+        "current_call_line": "std::array<char, 256> PszFormatMessage(APPSESSION &app, MessageId idm, std::int16_t *pParams) { return PszFormatString(app, PszGetCompressedMessage(app, idm).data(), pParams); }"
+      },
+      {
+        "path": "src/core/msg.cpp",
+        "function": "PszFormatMessage",
+        "parent_line": 545,
+        "parent_call": "PszGetCompressedMessage(app, idm)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 552,
+        "current_call_line": "std::array<char, 256> PszFormatMessage(APPSESSION &app, MessageId idm, std::int16_t *pParams) { return PszFormatString(app, PszGetCompressedMessage(app, idm).data(), pParams); }"
+      },
+      {
+        "path": "src/core/msg.cpp",
+        "function": "PszFormatIds",
+        "parent_line": 547,
+        "parent_call": "PszFormatString(app, TextIO().pfnCompressed(app, ids).data(), pParams)",
+        "lifetime": "Owned formatted array forwarded directly by value.",
+        "line": 554,
+        "current_call_line": "std::array<char, 256> PszFormatIds(APPSESSION &app, StringId ids, std::int16_t *pParams) { return PszFormatString(app, TextIO().pfnCompressed(app, ids).data(), pParams); }"
+      },
+      {
+        "path": "src/core/race.cpp",
+        "function": "FWasRaceFile",
+        "parent_line": 699,
+        "parent_call": "TextIO().pfnFormat(app, static_cast<StringId>(idsError), nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 699,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, static_cast<StringId>(idsError), nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/core/save.cpp",
+        "function": "FWriteDataFile",
+        "parent_line": 482,
+        "parent_call": "TextIO().pfnFormat(app, idsUnableUpdateTurnFile, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 482,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableUpdateTurnFile, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/core/save.cpp",
+        "function": "FWriteDataFile",
+        "parent_line": 484,
+        "parent_call": "TextIO().pfnFormat(app, idsUnableCreateNewTurnFile, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 484,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableCreateNewTurnFile, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/core/save.cpp",
+        "function": "FWriteDataFile",
+        "parent_line": 487,
+        "parent_call": "TextIO().pfnFormat(app, idsUnableCreateHostFile, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 487,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableCreateHostFile, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/core/save.cpp",
+        "function": "WriteRt",
+        "parent_line": 1099,
+        "parent_call": "TextIO().pfnFormat(app, idsErrorWritingFile, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 1099,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsErrorWritingFile, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/core/save.cpp",
+        "function": "RgToStream",
+        "parent_line": 1121,
+        "parent_call": "TextIO().pfnFormat(app, idsErrorWritingFile, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 1121,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsErrorWritingFile, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/core/turn.cpp",
+        "function": "FGenerateTurn",
+        "parent_line": 122,
+        "parent_call": "TextIO().pfnFormat(app, idsPlayerLogFileAppearsCorruptUnableLoad, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 122,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsPlayerLogFileAppearsCorruptUnableLoad, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/core/turn.cpp",
+        "function": "FSetUpBatchProcessing",
+        "parent_line": 627,
+        "parent_call": "TextIO().pfnFormat(app, idsMemory, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 627,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMemory, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/core/util.cpp",
+        "function": "OutputSz",
+        "parent_line": 2535,
+        "parent_call": "SzVersion(app)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 2535,
+        "current_call_line": "CchSprintf(szTemp, \"Stars! %s\\r\\n\\r\\n\", SzVersion(app).data());"
+      },
+      {
+        "path": "src/core/util.cpp",
+        "function": "TurnLog",
+        "parent_line": 2548,
+        "parent_call": "TextIO().pfnFormat(app, ids, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 2548,
+        "current_call_line": "CchSprintf(szTemp, TextIO().pfnFormat(app, ids, nullptr).data(), app.state.game.turn + 2401);"
+      },
+      {
+        "path": "src/ui/buildui.cpp",
+        "function": "SlotDlg",
+        "parent_line": 430,
+        "parent_call": "TextIO().pfnFormat(app, idsCantCopyShipDesignBecauseCantBuild, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 430,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsCantCopyShipDesignBecauseCantBuild, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/ui/buildui.cpp",
+        "function": "SlotDlg",
+        "parent_line": 537,
+        "parent_call": "TextIO().pfnFormat(app, idsShipDesignDoesHaveAnyEnginesMust, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 537,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsShipDesignDoesHaveAnyEnginesMust, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/ui/createui.cpp",
+        "function": "NewGameDlg2",
+        "parent_line": 678,
+        "parent_call": "TextIO().pfnFormat(app, idsMustHaveLeastOnePlayerGame, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 678,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMustHaveLeastOnePlayerGame, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/ui/init.cpp",
+        "function": "FCreateStuff",
+        "parent_line": 163,
+        "parent_call": "TextIO().pfnFormat(app, idsUnableLoadBitmaps, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 163,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableLoadBitmaps, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/ui/init.cpp",
+        "function": "ReadIniSettings",
+        "parent_line": 475,
+        "parent_call": "TextIO().pfnFormat(app, idsNoteStarsPrefersScreenResolutionLeast800x600, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 475,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsNoteStarsPrefersScreenResolutionLeast800x600, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/ui/libraryui.cpp",
+        "function": "FSaveLibraryRace",
+        "parent_line": 669,
+        "parent_call": "TextIO().pfnFormat(app, idsStarsUnableSaveRaceDataFilePlease, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 669,
+        "current_call_line": "if (win32::IsWindow(hwnd)) AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsStarsUnableSaveRaceDataFilePlease, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/ui/libraryui.cpp",
+        "function": "FImportLibraryGame",
+        "parent_line": 2139,
+        "parent_call": "TextIO().pfnFormat(app, idsCantOpenFile, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 2139,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsCantOpenFile, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "function": "FrameWndProc",
+        "parent_line": 390,
+        "parent_call": "TextIO().pfnFormat(app, idsNewTurnAvailable, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 390,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsNewTurnAvailable, nullptr).data(), win32::MB_ICONASTERISK);"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "function": "FrameWndProc",
+        "parent_line": 393,
+        "parent_call": "TextIO().pfnFormat(app, idsNewTurnAvailableWouldLikeLoad, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 393,
+        "current_call_line": "id = AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsNewTurnAvailableWouldLikeLoad, nullptr).data(), win32::MB_YESNOCANCEL | win32::MB_ICONQUESTION | win32::MB_TASKMODAL);"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "function": "FrameWndProc",
+        "parent_line": 399,
+        "parent_call": "TextIO().pfnFormat(app, idsUnableOpenNewTurnFile, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 399,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableOpenNewTurnFile, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "function": "FrameWndProc",
+        "parent_line": 421,
+        "parent_call": "TextIO().pfnFormat(app, idsTurnHasSubmittedChangesMadeAfterTurn, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 421,
+        "current_call_line": "id = AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsTurnHasSubmittedChangesMadeAfterTurn, nullptr).data(), win32::MB_YESNOCANCEL | win32::MB_ICONQUESTION | win32::MB_TASKMODAL);"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "function": "FrameWndProc",
+        "parent_line": 423,
+        "parent_call": "TextIO().pfnFormat(app, idsNewTurnCurrentlyGeneratedHostNewTurn, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 423,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsNewTurnCurrentlyGeneratedHostNewTurn, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "function": "FrameWndProc",
+        "parent_line": 427,
+        "parent_call": "TextIO().pfnFormat(app, idsUnableOpenNewTurnFile, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 427,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableOpenNewTurnFile, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "function": "CommandHandler",
+        "parent_line": 1029,
+        "parent_call": "TextIO().pfnFormat(app, idsCantOpenFile, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 1029,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsCantOpenFile, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "function": "CommandHandler",
+        "parent_line": 1203,
+        "parent_call": "TextIO().pfnFormat(app, idsUnablePrintGameMapPrinterMayOff, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 1203,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnablePrintGameMapPrinterMayOff, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "function": "CommandHandler",
+        "parent_line": 1205,
+        "parent_call": "TextIO().pfnFormat(app, idsUnablePrintGameMapPrinterMayOff, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 1205,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnablePrintGameMapPrinterMayOff, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "function": "CommandHandler",
+        "parent_line": 1231,
+        "parent_call": "TextIO().pfnFormat(app, idsGameAlreadyHostedAnotherInstanceStarsWould, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 1231,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsGameAlreadyHostedAnotherInstanceStarsWould, nullptr).data(), win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_TASKMODAL) != win32::IDYES)"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "function": "CommandHandler",
+        "parent_line": 1262,
+        "parent_call": "TextIO().pfnFormat(app, idsTutorialTurnWillGeneratedHaveYetCompleted, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 1262,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsTutorialTurnWillGeneratedHaveYetCompleted, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "function": "CommandHandler",
+        "parent_line": 1270,
+        "parent_call": "TextIO().pfnFormat(app, static_cast<StringId>(app.state.idsFileError), nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 1270,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, static_cast<StringId>(app.state.idsFileError), nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "function": "CommandHandler",
+        "parent_line": 1274,
+        "parent_call": "TextIO().pfnFormat(app, static_cast<StringId>(app.state.idsFileError), nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 1274,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, static_cast<StringId>(app.state.idsFileError), nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "function": "CommandHandler",
+        "parent_line": 1295,
+        "parent_call": "TextIO().pfnFormat(app, static_cast<StringId>(app.state.idsFileError), nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 1295,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, static_cast<StringId>(app.state.idsFileError), nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "function": "CommandHandler",
+        "parent_line": 1298,
+        "parent_call": "TextIO().pfnFormat(app, idsGameAlreadyHostedAnotherInstanceStarsWould, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 1298,
+        "current_call_line": "if (AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsGameAlreadyHostedAnotherInstanceStarsWould, nullptr).data(), win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_TASKMODAL) == win32::IDYES)"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "function": "CommandHandler",
+        "parent_line": 1329,
+        "parent_call": "TextIO().pfnFormat(app, idsUnableOpenNewTurnFile, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 1329,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableOpenNewTurnFile, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "function": "CommandHandler",
+        "parent_line": 1459,
+        "parent_call": "TextIO().pfnFormat(app, idsSorryTurnHasAlreadyGeneratedAnyChanges, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 1459,
+        "current_call_line": "id = AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsSorryTurnHasAlreadyGeneratedAnyChanges, nullptr).data(), win32::MB_OKCANCEL | win32::MB_ICONEXCLAMATION);"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "function": "CommandHandler",
+        "parent_line": 1463,
+        "parent_call": "TextIO().pfnFormat(app, idsNewTurnAvailable, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 1463,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsNewTurnAvailable, nullptr).data(), win32::MB_ICONASTERISK);"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "function": "CommandHandler",
+        "parent_line": 1469,
+        "parent_call": "TextIO().pfnFormat(app, idsUnableOpenNewTurnFile, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 1469,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableOpenNewTurnFile, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "function": "CommandHandler",
+        "parent_line": 1492,
+        "parent_call": "TextIO().pfnFormat(app, idsGameCurrentlyLoaded, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 1492,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsGameCurrentlyLoaded, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "function": "CommandHandler",
+        "parent_line": 1619,
+        "parent_call": "TextIO().pfnFormat(app, idsCantChangeZoomFactorUntilGameOpen, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 1619,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsCantChangeZoomFactorUntilGameOpen, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "function": "HostModeDialog",
+        "parent_line": 2098,
+        "parent_call": "TextIO().pfnFormat(app, idsSureWishGenerateOptionDoesGuaranteePlayers, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 2098,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsSureWishGenerateOptionDoesGuaranteePlayers, nullptr).data(), win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_SYSTEMMODAL) != win32::IDYES) {"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "function": "HostTimerProc",
+        "parent_line": 2203,
+        "parent_call": "TextIO().pfnFormat(app, idsUnableOpenNewTurnFile, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 2203,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableOpenNewTurnFile, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "function": "HostTimerProc",
+        "parent_line": 2223,
+        "parent_call": "TextIO().pfnFormat(app, idsAutoGenerateDisabledBecauseHumanPlayersDead, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 2223,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsAutoGenerateDisabledBecauseHumanPlayersDead, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "function": "TitleWndProc",
+        "parent_line": 2890,
+        "parent_call": "SzVersion(app)",
+        "lifetime": "Named version array survives window queries and is consumed directly by splash drawing.",
+        "line": 2891,
+        "current_call_line": "szVersion = SzVersion(app);"
+      },
+      {
+        "path": "src/ui/msgui.cpp",
+        "function": "MessageWndProc",
+        "parent_line": 225,
+        "parent_call": "PszGetMessageN(app, app.state.iMsgCur)",
+        "lifetime": "Named function-local array owns the text through all uses of the existing pointer local.",
+        "line": 226,
+        "current_call_line": "szMessage = PszGetMessageN(app, app.state.iMsgCur);"
+      },
+      {
+        "path": "src/ui/msgui.cpp",
+        "function": "MessageWndProc",
+        "parent_line": 234,
+        "parent_call": "PszGetMessageN(app, app.state.iMsgCur)",
+        "lifetime": "Named function-local array owns the text through all uses of the existing pointer local.",
+        "line": 236,
+        "current_call_line": "szMessage = PszGetMessageN(app, app.state.iMsgCur);"
+      },
+      {
+        "path": "src/ui/planetui.cpp",
+        "function": "PlanetWndProc",
+        "parent_line": 225,
+        "parent_call": "TextIO().pfnFormat(app, idsSureWantDeleteEverythingPlanetsProductionQueue, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 225,
+        "current_call_line": "if (AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsSureWantDeleteEverythingPlanetsProductionQueue, nullptr).data(), win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_TASKMODAL) != win32::IDYES) {"
+      },
+      {
+        "path": "src/ui/produceui.cpp",
+        "function": "ChangeProduction",
+        "parent_line": 44,
+        "parent_call": "TextIO().pfnFormat(app, idsThereIsntEnoughFreeMemoryModifyProduction, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 44,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsThereIsntEnoughFreeMemoryModifyProduction, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/ui/raceui.cpp",
+        "function": "FSaveRace",
+        "parent_line": 1457,
+        "parent_call": "TextIO().pfnFormat(app, idsStarsUnableSaveRaceDataFilePlease, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 1457,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsStarsUnableSaveRaceDataFilePlease, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/ui/reportui.cpp",
+        "function": "PrintMapDlg",
+        "parent_line": 2738,
+        "parent_call": "TextIO().pfnFormat(app, idsMustSpecifyNumberBetween19, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 2738,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMustSpecifyNumberBetween19, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/ui/scan.cpp",
+        "function": "FHandleWayPointDrag",
+        "parent_line": 2568,
+        "parent_call": "TextIO().pfnFormat(app, idsSureWantDeleteCurrentWaypoint, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 2568,
+        "current_call_line": "fDel = AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsSureWantDeleteCurrentWaypoint, nullptr).data(), win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_TASKMODAL) == win32::IDYES;"
+      },
+      {
+        "path": "src/ui/scan.cpp",
+        "function": "FindDlg",
+        "parent_line": 2780,
+        "parent_call": "TextIO().pfnFormat(app, idsSorryCantFindPlanetFleetName, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 2780,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsSorryCantFindPlanetFleetName, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/ui/shipui.cpp",
+        "function": "ChangeTransportAmount",
+        "parent_line": 2643,
+        "parent_call": "TextIO().pfnFormat(app, idsAmountCargoMaySpecifyHereMustBetween, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 2643,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsAmountCargoMaySpecifyHereMustBetween, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/ui/stars.cpp",
+        "function": "About",
+        "parent_line": 206,
+        "parent_call": "SzVersion(app)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 206,
+        "current_call_line": "ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_ABOUT_DEMO_TEXT), SzVersion(app).data());"
+      },
+      {
+        "path": "src/ui/tutor.cpp",
+        "function": "TutorDlg",
+        "parent_line": 66,
+        "parent_call": "TextIO().pfnFormat(app, idsMakeTutorialReappearCompleteTaskChooseTutorial, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 66,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMakeTutorialReappearCompleteTaskChooseTutorial, nullptr).data(), win32::MB_ICONASTERISK);"
+      },
+      {
+        "path": "src/ui/tutor.cpp",
+        "function": "StartTutor",
+        "parent_line": 232,
+        "parent_call": "TextIO().pfnFormat(app, idsTutorialHasRunBeforeWouldLikeDestroy, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 232,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsTutorialHasRunBeforeWouldLikeDestroy, nullptr).data(), win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_TASKMODAL) != win32::IDYES) {"
+      },
+      {
+        "path": "src/ui/tutor.cpp",
+        "function": "FAskKillTutor",
+        "parent_line": 411,
+        "parent_call": "TextIO().pfnFormat(app, idsCurrentlyRunningStarsTutorialDoWantExit, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 411,
+        "current_call_line": "if (app.state.game.turn >= 30 || AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsCurrentlyRunningStarsTutorialDoWantExit, nullptr).data(), win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_TASKMODAL) == win32::IDYES) {"
+      },
+      {
+        "path": "src/ui/tutor.cpp",
+        "function": "TutorError",
+        "parent_line": 2318,
+        "parent_call": "TextIO().pfnFormat(app, idsError, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 2318,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsError, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/ui/utilgenui.cpp",
+        "function": "PasswordDlg",
+        "parent_line": 1078,
+        "parent_call": "TextIO().pfnFormat(app, idsPasswordHaveEnteredIncorrectPleaseTry, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 1078,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsPasswordHaveEnteredIncorrectPleaseTry, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/ui/utilgenui.cpp",
+        "function": "NewPasswordDlg",
+        "parent_line": 1150,
+        "parent_call": "TextIO().pfnFormat(app, idsPasswordsTypedTwoFieldsSamePleaseReenter, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 1150,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsPasswordsTypedTwoFieldsSamePleaseReenter, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/ui/utilgenui.cpp",
+        "function": "NewPasswordDlg",
+        "parent_line": 1168,
+        "parent_call": "TextIO().pfnFormat(app, idsUnableCreateHostFile, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 1168,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableCreateHostFile, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/ui/vcr.cpp",
+        "function": "BattleVCR",
+        "parent_line": 55,
+        "parent_call": "TextIO().pfnFormat(app, idsMemory, nullptr)",
+        "lifetime": "Temporary owned array survives the synchronous alert, copy, formatting, comparison or window-text call through the full expression.",
+        "line": 55,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMemory, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/ui/stars.cpp",
+        "function": "IStarsMain",
+        "parent_line": 28,
+        "parent_call": "TextIO().pfnFormat(app, idsUnableInitializeStars, nullptr)",
+        "lifetime": "Temporary owned message survives the synchronous entry-point/error-handler alert through the full expression.",
+        "line": 28,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableInitializeStars, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/ui/stars.cpp",
+        "function": "IStarsMain",
+        "parent_line": 37,
+        "parent_call": "TextIO().pfnFormat(app, idsUnableInitializeStars, nullptr)",
+        "lifetime": "Temporary owned message survives the synchronous entry-point/error-handler alert through the full expression.",
+        "line": 37,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableInitializeStars, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/ui/stars.cpp",
+        "function": "IStarsMain",
+        "parent_line": 41,
+        "parent_call": "TextIO().pfnFormat(app, idsUnableInitializeStars, nullptr)",
+        "lifetime": "Temporary owned message survives the synchronous entry-point/error-handler alert through the full expression.",
+        "line": 41,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableInitializeStars, nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/ui/stars.cpp",
+        "function": "IStarsMain",
+        "parent_line": 75,
+        "parent_call": "TextIO().pfnFormat(app, static_cast<StringId>(error.ids ? error.ids : idsMemory), nullptr)",
+        "lifetime": "Temporary owned message survives the synchronous entry-point/error-handler alert through the full expression.",
+        "line": 75,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, static_cast<StringId>(error.ids ? error.ids : idsMemory), nullptr).data(), win32::MB_ICONHAND);"
+      },
+      {
+        "path": "src/ui/stars.cpp",
+        "function": "IStarsMain",
+        "parent_line": 83,
+        "parent_call": "TextIO().pfnFormat(app, idsUnableInitializeStars, nullptr)",
+        "lifetime": "Temporary owned message survives the synchronous entry-point/error-handler alert through the full expression.",
+        "line": 83,
+        "current_call_line": "AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableInitializeStars, nullptr).data(), win32::MB_ICONHAND);"
+      }
+    ],
+    "verification": {
+      "batch": "L05aa owned message, formatted text and version results",
+      "debug_build": "Pass, no warnings. Release SDL regression and host builds pass. Compiler/source policy covers 158 owned sources, 159 variants and 161 standalone headers in both orders; exact raw-copy inventory passes.",
+      "desktop": "153/153, including actual alert/scroll/splash consumers, all three formatting-provider witnesses, 29 leak checks and available SDL tutorial checkpoints.",
+      "host_units": "28/28 in Release, including full message-byte and current queue/version effect references.",
+      "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+      "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+      "windows": "Final strict MinGW compilation passes all 147 production units and six actual affected unit/provider consumers. Rebuilt encoding/message/version tests pass 12 cases, utilities 11 and utility-generation 17 under Wine: 40 total. Actual native Windows SDL and Linux final qualification remain pending.",
+      "sanitizers": "Native macOS Debug ASan/UBSan execution passes all three affected encoding/message, utility and utility-generation executables, including UTF-8 capacity edges and the new retained-result checks. Focused execution, not whole-suite sanitizer qualification.",
+      "byte_reference": "All 387 current message IDs, including holes, match independent literal UTF-8 source bytes from text/messages.txt before and after migration. Little-endian IDs and NUL-terminated texts hash to 0x340443fddde7c605. Maximum source text is 200 bytes inside the retained 256-byte decode result/cache budget.",
+      "characterization": "Parent and final cases preserve a valid Unicode cache hit without altering work/message text, Work/integer formatting, catalog formatting, actual player-view queued messages, missing/invalid message empty output and exact generated version text. Final values for decoded, formatted, ID-formatted, queued and version text survive later lookups and explicit overwrite of all three staging buffers. Existing UTF-8 truncation and message grammar vectors remain.",
+      "interfaces": "Five message APIs return initialized owned 256-byte arrays; SzVersion returns an owned 360-byte array. TEXTIO derives the exact format result type; all three actual providers return matching owned values. All 93 production calls are inventoried: synchronous consumers borrow only through the full expression, while message scrolling/drawing and splash drawing retain named owners. The original GetMessageN psz local retains its name and becomes an owned array. No pointer-result compatibility overload remains.",
+      "inventory_correction": "The first build found five IStarsMain alerts missed by the function-range scanner because they occur in a function-try-block and its catches. Migrated them and added an independent full-source token/call audit: all 93 live production calls match the ledger. Final whole build, Windows compilation and all tests pass.",
+      "effects": "Retain existing 256-byte message/decode limits, version budget, cache flags/bytes, message/work writes, grammar, parameter consumption, complete-code-point truncation and missing-message behavior. No allocation, saved-state layout, record width, game rule, RNG or floating operation change.",
+      "baseline": "Behavior-neutral: native/frozen-original baseline bytes and unit goldens unchanged. No scenario/checkpoint moved and no regression export required.",
+      "remaining": "Readonly bounded message format/parameter inputs, post-migration message/cache staging and borrowed-return audit, 52 initial copy sites, wrapper formatting and manual bounds review, L06 service results/Milestone D, generated/retained macro audit and L08 final platform qualification remain active.",
+      "receipts": "dist/verification/live-cpp/l05aa/"
     }
   }
 }

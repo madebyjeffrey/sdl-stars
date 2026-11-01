@@ -37,7 +37,7 @@ std::uint16_t CbHeapItem(APPSESSION &app, std::uint16_t cb, HeapType ht) {
     std::uint32_t cbItem = (static_cast<std::uint32_t>(cb) + 2 + cbAlign - 1) / cbAlign * cbAlign;
 
     if (cbItem > static_cast<std::uint32_t>(UINT16_MAX - CbHbHeader(ht))) {
-        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMemory, nullptr), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMemory, nullptr).data(), win32::MB_ICONHAND);
         StarsThrowError(starsErrorMemory, idsMemory);
     }
     return cbItem;
@@ -55,7 +55,7 @@ HB *LphbAlloc(APPSESSION &app, std::uint16_t cb, HeapType ht) {
     /* NATIVE: the original locked a zero-filled GlobalAlloc block. */
     hmem = std::calloc(1, cb);
     if (!hmem) {
-        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMemory, nullptr), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMemory, nullptr).data(), win32::MB_ICONHAND);
         StarsThrowError(starsErrorMemory, idsMemory);
     }
     // The lifetime operation retains calloc's initialized representation.
@@ -103,7 +103,7 @@ HB *LphbReAlloc(APPSESSION &app, HB *lphb) {
     hmem = std::realloc(hmem, static_cast<std::size_t>((lphb->cbBlock + cbGrow)));
     if (!hmem) {
     LReAllocOOM:
-        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMemory, nullptr), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMemory, nullptr).data(), win32::MB_ICONHAND);
         StarsThrowError(starsErrorMemory, idsMemory);
     }
     hmem = std::memmove(hmem, hmem, static_cast<std::size_t>(cbCur) + cbGrow);

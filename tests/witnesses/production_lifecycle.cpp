@@ -111,10 +111,10 @@ static void TestStickyDlgPos(HWND hwnd, POINT16 *point, int restore) {
     assert(hwnd == HwndWitness(7) && point == &app.lpui->ptStickyProduceDlg && !restore);
     event("Sticky;");
 }
-static const char *TestPszFormatIds(APPSESSION &, int id, void *p) {
+static std::array<char, 256> TestPszFormatIds(APPSESSION &, int id, void *p) {
     (void)p;
     assert(id == idsThereIsntEnoughFreeMemoryModifyProduction);
-    return "memory";
+    return SzWitnessText("memory");
 }
 static void TestAlertSz(APPSESSION &, const char *s, int flags) {
     assert(strcmp(s, "memory") == 0 && flags == win32::MB_ICONHAND);

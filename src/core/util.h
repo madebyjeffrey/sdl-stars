@@ -75,7 +75,7 @@ void     OutputSz(APPSESSION &app, std::int16_t dt, const char *sz);
 void     TurnLog(APPSESSION &app, StringId ids);
 std::int16_t  PtToScan(APPSESSION &app, std::int16_t d);
 std::int16_t  ScanToPt(APPSESSION &app, std::int16_t d);
-char    *SzVersion(APPSESSION &app);
+std::array<char, 360> SzVersion(APPSESSION &app);
 void     ChangeScanSel(APPSESSION &app, SCAN *pscan, std::int16_t fValidScan);
 std::int16_t  FFindSomethingAndSelectIt(APPSESSION &app);
 std::int16_t  CchGetETA(APPSESSION &app, HDC hdc, FLEET *lpfl, std::span<char> sz, std::int16_t iwp, std::int16_t fSmall);
