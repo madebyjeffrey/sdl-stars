@@ -15,6 +15,36 @@ They never extract or rewrite current production. Existing linked C++ witnesses,
 current strict compiler policy and C++ qualification remain in place. Porting
 these additional historical cases to linked C++ tests remains open.
 
+## Consolidation verification
+
+The unpublished work is integrated into `develop` at `26a54e72`; the primary
+project folder now checks out that branch. Every registered checkout head is
+included. Production, build configuration, catalogs, resources and frozen
+regression fixtures remain identical to qualified `b6491ed2`. The C++ interface
+review's six follow-ups are recorded in [the roadmap](../docs/ROADMAP.md#c-follow-up-review-backlog),
+including the separate planned Milestone D file-selection work. They are not
+reported as implemented by this consolidation.
+
+Fresh macOS checks on 2026-10-31:
+
+| Check | Actual result |
+| --- | --- |
+| SDL Debug configure/build | Pass; no compiler warnings. Old caches referring to the former project path are preserved under dist/pre-consolidation-*; fresh standard build directories use this checkout. |
+| Full desktop CTest collection | First run: 150/151 pass. win32_sdl_leaks_memory reports zero leaks but times out after 61.26 seconds; its unchanged isolated retry passes in 1.96 seconds. All 151 entries have a passing result, with this retry retained explicitly. Includes available tutorial smoke coverage and 29 leak checks; no complete 80-page walkthrough claim. |
+| SDL-free host collection | 27/27 pass. |
+| Full native and host regressions | Each matches 519 files through turn 150, with 25 existing unused-storage warnings, zero differences/errors and zero skipped reference inputs. No baseline exported. |
+| Additional historical C11 witnesses | All fourteen pinned programs pass; these are historical evidence, not current C++ refinement. |
+| Compiler/interface manifest | 157 owned C++20 sources, 158 compile variants, two independent C references and 160 standalone headers in both include orders pass. |
+| Documentation and checker tests | 26 handbook tests and nine spec-checker tests pass. Local checks cover 3,176 links/includes and 785 requirement IDs with zero errors; rendered handbook checks 231 pages and 46,069 local links/assets with zero errors. |
+| Full Dafny verification and audit | Dafny 4.11.0: 13,216 verified, zero errors; auditor zero findings. |
+
+Commands include cmake --preset macos-sdl-debug, its matching build preset,
+ctest --test-dir dist/macos-sdl-debug --output-on-failure --timeout 300 -j 4,
+make test-host, make regression, make regression-host, tests/spec/historical_c11.py,
+and tests/spec/verify.py --time-limit 120 --progress Symbol. Python drivers use
+the build's Python 3.14 environment. Receipts are retained in
+dist/verification/consolidation/. Linux and Windows were not rerun locally.
+
 ## Purpose and scope
 
 Identify the high-level logical modules of SDL-Stars and progressively specify

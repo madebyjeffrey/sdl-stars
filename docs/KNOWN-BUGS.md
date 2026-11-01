@@ -91,7 +91,7 @@ recorded in [the implementation ledger](CPP-B-IMPLEMENTATION.md).
 
 ## Race habitat growth hit test — located on main
 
-`raceui.c`: habitat initialization exposes 17 hit rectangles; 15 and 16 are the
+`raceui.cpp`: habitat initialization exposes 17 hit rectangles; 15 and 16 are the
 growth arrows. `IrcRaceDlgHitTest` tests immunity using
 `vplr.rgEnvVarMax[i / 5]` for every hit on this page. Both growth hits therefore
 read index 3 of the three-element array. Its adjacency to `pctIdealGrowth`
@@ -99,12 +99,12 @@ does not make the C array access defined. Read-only mode and other active pages
 skip that read.
 
 The [M04 boundary](../spec/M04-wizard-controller.md#habitat-growth-hit-test-boundary)
-and [source fixture](../tests/spec/check_race_hit_source.py) use the actual helper,
-native PLAYER layout and initialized rectangle receipts: 104 defined cases pass,
-and both growth hits stop at an array-bounds sanitizer diagnostic. The fixture
+and [historical C11 fixture](../tests/spec/check_race_hit_source.py) use the
+pre-migration helper, native PLAYER layout and initialized rectangle receipts:
+104 defined cases pass, and both growth hits stop at an array-bounds sanitizer diagnostic. The fixture
 does not consume an undefined return value. Full native mouse/paint reachability,
-original-binary comparison and a separately scoped repair remain open; no runtime
-or regression-baseline change was made by this specification review.
+current C++ sanitizer reproduction, original-binary comparison and a separately
+scoped repair remain open; no runtime or regression-baseline change was made by this specification review.
 
 ## Production editor queue sanitization — located on main
 
