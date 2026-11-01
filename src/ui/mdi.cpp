@@ -155,7 +155,7 @@ void CreateChildWindows(APPSESSION &app) {
         TextIO().pfnCchGetString(app, idsStarsSHostMode, std::span{app.state.szWork});
         win32::wsprintfA(szData, app.state.szWork, app.state.game.szName);
         CchCopyUtf8(szNameUtf8, sizeof(szNameUtf8), szData, std::strlen(szData));
-        std::strcpy(szData, szNameUtf8);
+        CchCopyUtf8Prefix(std::span{szData}, szNameUtf8);
     }
     FSetNativeWindowTitle(app.lpui->hwndFrame, szData);
     if (app.state.idPlayer != iplrNone) {
@@ -1907,7 +1907,7 @@ void DrawHostDialog2(APPSESSION &app, HWND hwnd, HDC hdcIn) {
             cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsSS), TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, nullptr), szStat);
         }
         if (app.state.rgplr[i].fHacker) {
-            std::strcat(app.state.szWork, " - HACKER");
+            CchAppendUtf8Prefix(std::span{app.state.szWork}, " - HACKER");
             cch += 9;
         }
         win32::TextOutA(hdc, x + 4, yCur, app.state.szWork, cch);
@@ -2220,9 +2220,9 @@ void  HostTimerProc(HWND hwnd, UINT msg, UINT_PTR idTimer, DWORD dwTime) {
         }
         win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsHostModeDPlayer), cOut);
         if (cOut != 1) {
-            std::strcat(app.state.szWork, "s");
+            CchAppendUtf8Prefix(std::span{app.state.szWork}, "s");
         }
-        std::strcat(app.state.szWork, TextIO().pfnCompressed(app, idsOut));
+        CchAppendUtf8Prefix(std::span{app.state.szWork}, TextIO().pfnCompressed(app, idsOut));
         ControlIO().pfnSetWindowText(app.lpui->hwndFrame, app.state.szWork);
     RedrawText:
         hwndT = win32::GetWindow(app.lpui->hwndFrame, win32::GW_HWNDPREV);
@@ -2864,7 +2864,7 @@ LRESULT  TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             dx = rcWnd.right;
             DrawABunchOfStars(app, hdc, &rcWnd);
             plf->lfHeight = static_cast<std::int16_t>(-rcWnd.bottom) / 3;
-            std::strcpy(plf->lfFaceName, app.lpui->rgszArial[3]);
+            CchCopyUtf8Prefix(std::span{plf->lfFaceName}, app.lpui->rgszArial[3]);
             hfont = win32::CreateFontIndirectA(plf);
             win32::SetTextColor(hdc, 10158235);
             if (hfont) {

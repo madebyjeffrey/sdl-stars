@@ -365,7 +365,7 @@ char *PszPlayerName(APPSESSION &app, std::int16_t iPlayer, std::int16_t fCapital
     }
     if (pplr->szName[0] != 0) {
         if (fThe) {
-            std::strcpy(szName, "the ");
+            CchCopyUtf8Prefix(std::span{szName}, "the ");
             if (fCapital) {
                 szName[0] = 'T';
             }
@@ -373,9 +373,9 @@ char *PszPlayerName(APPSESSION &app, std::int16_t iPlayer, std::int16_t fCapital
             szName[0] = 0;
         }
         if (fPlural && pplr->szNames[0] != 0) {
-            std::strcat(szName, pplr->szNames);
+            CchAppendUtf8Prefix(std::span{szName}, pplr->szNames);
         } else {
-            std::strcat(szName, pplr->szName);
+            CchAppendUtf8Prefix(std::span{szName}, pplr->szName);
         }
         pchEnd = &szName[std::strlen(szName) - 1];
         while (*pchEnd == ' ' && pchEnd >= szName) {
@@ -387,7 +387,7 @@ char *PszPlayerName(APPSESSION &app, std::int16_t iPlayer, std::int16_t fCapital
         if (fPlural && pplr->szNames[0] == 0) {
             pchEnd = &szName[std::strlen(szName) - 1];
             if (*pchEnd != 's' && (*pchEnd != 'e' || pchEnd[-1] != 's')) {
-                std::strcat(szName, "s");
+                CchAppendUtf8Prefix(std::span{szName}, "s");
             }
         }
         if (grWord == 1) {
@@ -398,7 +398,7 @@ char *PszPlayerName(APPSESSION &app, std::int16_t iPlayer, std::int16_t fCapital
     } else {
         CchSprintf(szName, TextIO().pfnCompressed(app, idsPlayerD2), iPlayer + 1);
         if (!fPlural) {
-            std::strcat(szName, "'s");
+            CchAppendUtf8Prefix(std::span{szName}, "'s");
         }
         if (grWord == 1) {
             TextIO().pfnCchGetString(app, idsHas, std::span{szName}.subspan(static_cast<std::size_t>(std::strlen(szName))));
@@ -406,7 +406,7 @@ char *PszPlayerName(APPSESSION &app, std::int16_t iPlayer, std::int16_t fCapital
             TextIO().pfnCchGetString(app, idsIs2, std::span{szName}.subspan(static_cast<std::size_t>(std::strlen(szName))));
         }
     }
-    std::strcpy(app.state.szWork, szName);
+    CchCopyUtf8Prefix(std::span{app.state.szWork}, szName);
     return app.state.szWork;
 }
 
@@ -773,13 +773,13 @@ char *PszGetThingName(APPSESSION &app, std::int16_t id) {
         CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsSmineralPacket), szPlr);
         break;
     case ithWormhole:
-        std::strcpy(app.state.szWork, TextIO().pfnCompressed(app, idsWormhole));
+        CchCopyUtf8Prefix(std::span{app.state.szWork}, TextIO().pfnCompressed(app, idsWormhole));
         break;
     case ithMysteryTrader:
-        std::strcpy(app.state.szWork, TextIO().pfnCompressed(app, idsMysteryTrader));
+        CchCopyUtf8Prefix(std::span{app.state.szWork}, TextIO().pfnCompressed(app, idsMysteryTrader));
         break;
     default:
-        std::strcpy(app.state.szWork, TextIO().pfnCompressed(app, idsMysteryObject));
+        CchCopyUtf8Prefix(std::span{app.state.szWork}, TextIO().pfnCompressed(app, idsMysteryObject));
     }
     return app.state.szWork;
 }
@@ -812,7 +812,7 @@ char *PszGetFleetName(APPSESSION &app, std::int16_t id) {
             if (ishdef == 16) {
                 lpsz = TextIO().pfnCompressed(app, idsFleet);
             } else {
-                std::strcpy(szShdef, app.state.rglpshdef[iplr][ishdef].hul.szClass);
+                CchCopyUtf8Prefix(std::span{szShdef}, app.state.rglpshdef[iplr][ishdef].hul.szClass);
                 cch = std::strlen(szShdef);
                 if (cch > 28) {
                     cch = static_cast<std::int16_t>(CchUtf8Prefix(szShdef, 28));
@@ -854,7 +854,7 @@ char *PszFleetNameFromWord(APPSESSION &app, std::uint16_t w) {
     if (app.state.rglpshdef[app.state.idPlayer][ishdef].fFree) {
         lpsz = TextIO().pfnCompressed(app, idsFleet);
     } else {
-        std::strcpy(szShdef, app.state.rglpshdef[app.state.idPlayer][ishdef].hul.szClass);
+        CchCopyUtf8Prefix(std::span{szShdef}, app.state.rglpshdef[app.state.idPlayer][ishdef].hul.szClass);
         cch = std::strlen(szShdef);
         if (cch > 28) {
             cch = static_cast<std::int16_t>(CchUtf8Prefix(szShdef, 28));
@@ -880,7 +880,7 @@ char *PszGetPlanetName(APPSESSION &app, std::int16_t id) {
     if (fInOrbit) {
         CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsOrbitingS), psz);
     } else {
-        std::strcpy(app.state.szWork, psz);
+        CchCopyUtf8Prefix(std::span{app.state.szWork}, psz);
     }
     return app.state.szWork;
 }
@@ -1200,7 +1200,7 @@ char *PszGetLocName(APPSESSION &app, GrobjClass grobj, std::int16_t id, std::int
         return PszGetThingName(app, id);
 NoObj:
     if (x == -1 && y == -1) {
-        std::strcpy(app.state.szWork, TextIO().pfnCompressed(app, idsDeepSpace));
+        CchCopyUtf8Prefix(std::span{app.state.szWork}, TextIO().pfnCompressed(app, idsDeepSpace));
     } else {
         CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsSpaceDD), x, y);
     }

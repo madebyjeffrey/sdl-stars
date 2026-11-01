@@ -908,7 +908,7 @@ void DrawNewGame3(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
             win32::wsprintfA(app.state.szWork, app.state.PCTD, GetVCVal(app, &app.state.game, static_cast<VictoryCondition>(vcCur), 0));
             if (rgNG3Width[i][j] < 0) {
                 dxItem += static_cast<std::int16_t>((3 * dxDig)) / 2;
-                std::strcat(app.state.szWork, "%");
+                CchAppendUtf8Prefix(std::span{app.state.szWork}, "%");
             }
             xLeft += dxItem;
             if (iDraw == -1 || iDraw == vcCur || vcCur == 8) {

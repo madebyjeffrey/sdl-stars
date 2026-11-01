@@ -3,6 +3,7 @@
  * No native-sized state in this module reaches game files.
  */
 #include "internal.h"
+#include "encoding.h"
 #include <algorithm>
 #include "display_io.h"
 #include "input_io.h"
@@ -145,7 +146,7 @@ HGDIOBJ win32::GetStockObject(int i) {
     if (i < 0 || i >= 18 || !rgStock[i].fAlive) return nullptr;
     if (rgStock[i].iKind == objFont && !rgStock[i].lpFont.get()) {
         rgStock[i].lf.lfHeight = -12;
-        std::strcpy(rgStock[i].lf.lfFaceName, i == win32::SYSTEM_FIXED_FONT || i == win32::ANSI_FIXED_FONT || i == win32::OEM_FIXED_FONT ?
+        CchCopyUtf8Prefix(std::span{rgStock[i].lf.lfFaceName}, i == win32::SYSTEM_FIXED_FONT || i == win32::ANSI_FIXED_FONT || i == win32::OEM_FIXED_FONT ?
                "monospace" : "sans-serif");
         rgStock[i].lpFont.reset(LpNewCompatFont(&rgStock[i].lf));
         if (!rgStock[i].lpFont.get()) return nullptr;

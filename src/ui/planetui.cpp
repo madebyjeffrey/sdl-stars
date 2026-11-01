@@ -461,7 +461,7 @@ void DrawPlanetStats(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
             dRange = 0;
         } else {
             ProductionIO().pfnScanner(app, &part);
-            std::strcpy(app.state.szWork, part.pcom().szName());
+            CchCopyUtf8Prefix(std::span{app.state.szWork}, part.pcom().szName());
             dRange = GetPlanetScannerRange(app, &app.state.sel.pl, &dRangeP);
         }
         RightTextOut(app, hdc, xRight, yTop, app.state.szWork, 0, dxRight);
@@ -514,7 +514,7 @@ void DrawPlanetStats(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
             dRange = 0;
         } else {
             FGetBestDefensePart(app, &part);
-            std::strcpy(app.state.szWork, part.pcom().szName());
+            CchCopyUtf8Prefix(std::span{app.state.szWork}, part.pcom().szName());
             dRange = 1;
         }
         RightTextOut(app, hdc, xRight, yTop, app.state.szWork, 0, dxRight);
@@ -569,7 +569,7 @@ void DrawPlanetStarbase(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
     }
     if (app.state.sel.pl.fStarbase) {
         lpshdef = app.state.rglpshdefSB[app.state.idPlayer] + app.state.sel.pl.isb;
-        std::strcpy(app.state.szWork, lpshdef->hul.szClass);
+        CchCopyUtf8Prefix(std::span{app.state.szWork}, lpshdef->hul.szClass);
         psz = app.state.szWork;
     } else {
         psz = TextIO().pfnCompressed(app, idsStarbase2);
@@ -672,7 +672,7 @@ void DrawPlanetStarbase(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
             } else {
                 psz = PszGetCompressedPlanet(app, app.state.rgidPlan[app.state.sel.pl.idFling - 1]);
                 c = 0;
-                std::strcpy(app.state.szWork, psz);
+                CchCopyUtf8Prefix(std::span{app.state.szWork}, psz);
             }
             win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
             RightTextOut(app, hdc, xRight, yTop, app.state.szWork, c, dxRight);
@@ -812,7 +812,7 @@ void DrawPlanetProduction(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
         } else {
             psz = PszGetCompressedPlanet(app, app.state.rgidPlan[app.state.sel.pl.idRoute - 1]);
             c = 0;
-            std::strcpy(app.state.szWork, psz);
+            CchCopyUtf8Prefix(std::span{app.state.szWork}, psz);
         }
         win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
         RightTextOut(app, hdc, xRight, yTop, app.state.szWork, c, dxRight);

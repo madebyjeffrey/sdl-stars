@@ -110,7 +110,7 @@ void DrawPopup(APPSESSION &app, HWND hwnd, HDC hdc) {
         if (app.lpui->GlobalPD.rgi[2] >= 0) {
             c = win32::wsprintfA(app.state.szWork, "%ldkT", app.lpui->GlobalPD.rgi[2]);
         } else {
-            std::strcpy(app.state.szWork, TextIO().pfnCompressed(app, idsUnknown2));
+            CchCopyUtf8Prefix(std::span{app.state.szWork}, TextIO().pfnCompressed(app, idsUnknown2));
             c = std::strlen(app.state.szWork);
         }
         win32::TextOutA(hdc, dx, app.state.dyArial8 + 4, app.state.szWork, c);
@@ -235,7 +235,7 @@ void DrawPopup(APPSESSION &app, HWND hwnd, HDC hdc) {
         rc.left += 6;
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
         win32::SetBkMode(hdc, win32::TRANSPARENT);
-        std::strcpy(app.state.szWork, app.lpui->GlobalPD.lpshdef->hul.szClass);
+        CchCopyUtf8Prefix(std::span{app.state.szWork}, app.lpui->GlobalPD.lpshdef->hul.szClass);
         CtrTextOut(hdc, ((rc.right - 0x4c) >> 1) + 0x4c, 6, app.state.szWork, 0);
         DrawBuildSelHull(app, hwnd, hdc, -1, &rc);
     }

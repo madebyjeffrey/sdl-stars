@@ -187,6 +187,11 @@ detail in [WIN16-PARITY.md](WIN16-PARITY.md).
   after their existing legacy-width format normalization; their UTF-8 clipping
   and written-count behavior remain unchanged. No owned implementation uses
   C variadic argument handling.
+  Display/fixed-label copy and append helpers in `encoding.cpp` take explicit
+  spans and borrowed text views, terminate complete UTF-8 prefixes, and use
+  overlapping-safe moves. Each migrated site records its actual array/tail
+  capacity in `CPP-LIVE-TEXT-COPIES.json`. Paths and record-building buffers
+  remain separate migration work with their strict failure and byte contracts.
 - **Platforms:** the game code (`common.h`) builds without Windows headers;
   `stars-host` links it alone. Both host and client use binary64 `double`,
   with contraction and fast-math disabled. The migration's intentional turn

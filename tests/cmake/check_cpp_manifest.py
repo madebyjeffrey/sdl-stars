@@ -1,5 +1,6 @@
 """Audit actual compilation, owned declarations and explicit C-reference exceptions."""
 from pathlib import Path
+from collections import Counter
 import json
 import re
 import sys
@@ -86,6 +87,10 @@ ownership = json.loads((root / "docs/CPP-LIVE-OWNERSHIP.json").read_text())
 ownership_contracts = {entry["id"]: entry for entry in ownership["contracts"]}
 heap_sites = {(entry["path"], entry["normalized_call"]) for entry in ownership["sites"]
               if ownership_contracts[entry["contract"]].get("owner") and ownership_contracts[entry["contract"]].get("reason")}
+text_copies = json.loads((root / "docs/CPP-LIVE-TEXT-COPIES.json").read_text())
+remaining_copies = Counter({(entry["path"], entry["normalized_call"]): entry["count"]
+                           for entry in text_copies["remaining_raw_spellings"]})
+actual_copies = Counter()
 
 for directory in ("src", "compat/win32/include", "compat/win32/src"):
     for path in (root / directory).rglob("*"):
@@ -106,6 +111,14 @@ for directory in ("src", "compat/win32/include", "compat/win32/src"):
         if path.is_relative_to(root / "src") and not path.is_relative_to(root / "src/platform"):
             assert not re.search(r"\bFreeResource\s*\(", code), f"Borrow module bytes; release owned heap copies with their allocator: {path}"
         assert not re.search(r"(?<![\w:.])(?:malloc|calloc|realloc|free)\s*\(", code), f"Owned CRT allocator calls must use std qualification: {path}"
+        for copy in re.finditer(r"\b(?:(?:std\s*::\s*)?(?:strcpy|strcat|wcscpy|wcscat)|lstrcpyA|lstrcatA)\s*\(", code):
+            end, depth = copy.end(), 1
+            while depth:
+                if code[end] == "(": depth += 1
+                elif code[end] == ")": depth -= 1
+                end += 1
+            call = re.sub(r"\s+", "", code[copy.start():end])
+            actual_copies[(path.relative_to(root).as_posix(), call)] += 1
         for allocation in re.finditer(r"\b(?:(?:std\s*::\s*)?(?:malloc|calloc|realloc|free)|strdup|SDL_malloc|SDL_calloc|SDL_realloc|SDL_free|SDL_strdup)\s*\(", code):
             end, depth = allocation.end(), 1
             while depth:
@@ -122,4 +135,6 @@ for directory in ("src", "compat/win32/include", "compat/win32/src"):
         assert not re.search(r"#\s*define\s+(?:min|max)\s*\(", text), f"Owned min/max macro remains: {path}"
         assert not re.search(r'\(\s*(?:char\s*\*|LPSTR|PSTR)\s*\)\s*"', text), f"Mutable string-literal cast remains: {path}"
         assert not re.search(r'const_cast\s*<\s*char\s*\*\s*>\s*\(\s*"', text), f"Mutable string-literal cast remains: {path}"
+assert actual_copies == remaining_copies, ("Raw text-copy inventory differs; use bounded text operations and update CPP-LIVE-TEXT-COPIES.json: "
+                                          f"new={actual_copies - remaining_copies}, stale={remaining_copies - actual_copies}")
 print(f"Owned C++20 sources: {len(production)}; compiled variants: {count}; independent C references: {len(references)}; standalone headers: {len(headers) if ordinary else 0} in both orders")

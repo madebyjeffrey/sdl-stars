@@ -789,9 +789,9 @@ std::int16_t FRunCmdLine(APPSESSION &app) {
                 if (!app.state.gd.fNoHostNames) {
                     ich += CchSprintf(std::span{szTemp}.subspan(static_cast<std::size_t>(ich)), "\"%s\" ", TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, nullptr));
                 }
-                std::strcat(szTemp, TextIO().pfnCompressed(app, static_cast<StringId>(idsTurned + app.state.rgOut[i])));
+                CchAppendUtf8Prefix(std::span{szTemp}, TextIO().pfnCompressed(app, static_cast<StringId>(idsTurned + app.state.rgOut[i])));
                 if (app.state.rgplr[i].fHacker) {
-                    std::strcat(szTemp, " - HACKER");
+                    CchAppendUtf8Prefix(std::span{szTemp}, " - HACKER");
                 }
                 OutputSz(app, 7, szTemp);
             }

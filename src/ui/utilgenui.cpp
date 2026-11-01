@@ -253,7 +253,7 @@ void DiaganolTextOut(APPSESSION &app, HDC hdc, RECT *prc, const char *psz, std::
         plf = static_cast<LOGFONT *>(win32::LocalAlloc(64, sizeof(LOGFONT)));
         plfOwner.reset(plf);
         plf->lfWeight = 900;
-        std::strcpy(plf->lfFaceName, app.lpui->rgszArial[1]);
+        CchCopyUtf8Prefix(std::span{plf->lfFaceName}, app.lpui->rgszArial[1]);
         plf->lfHeight = -(dx <= dy ? dy : dx);
     TryAgain:
         if (plf->lfHeight > -5)
@@ -1070,7 +1070,7 @@ INT_PTR  PasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 if (lSalt == app.state.lSaltCur) {
                     if (!app.state.gd.fHotSeat) {
                         app.state.lSaltLast = app.state.lSaltCur;
-                        std::strcpy(app.state.szPassLast, szPass);
+                        CchCopyUtf8Prefix(std::span{app.state.szPassLast}, szPass);
                     }
                 } else {
                     app.lpui->vcPasswordFailures++;
@@ -1325,7 +1325,7 @@ HFONT HfontPrinterCreate(APPSESSION &app, HDC hdc, std::int16_t iSize, std::int1
     plfOwner.reset(plf);
     *plf = {};
     plf->lfHeight = -win32::MulDiv(iSize, win32::GetDeviceCaps(hdc, win32::LOGPIXELSY), 72);
-    std::strcpy(plf->lfFaceName, app.lpui->rgszArial[1]);
+    CchCopyUtf8Prefix(std::span{plf->lfFaceName}, app.lpui->rgszArial[1]);
     hfontNew = win32::CreateFontIndirectA(plf);
     if (pdyFont && hfontNew) {
         hfontSav = static_cast<HFONT>(win32::SelectObject(hdc, hfontNew));

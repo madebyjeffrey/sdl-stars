@@ -648,7 +648,7 @@ void DrawVCR(APPSESSION &app, HDC hdc, std::int16_t iStart, std::int16_t iEnd) {
             if (csh > 1) {
                 c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsSD), lpshdef->hul.szClass, csh);
             } else {
-                std::strcpy(app.state.szWork, lpshdef->hul.szClass);
+                CchCopyUtf8Prefix(std::span{app.state.szWork}, lpshdef->hul.szClass);
                 c = std::strlen(app.state.szWork);
             }
             win32::TextOutA(hdc, x, y, app.state.szWork, c);
@@ -672,7 +672,7 @@ void DrawVCR(APPSESSION &app, HDC hdc, std::int16_t iStart, std::int16_t iEnd) {
                 if (csh > 1) {
                     c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsSD), lpshdef->hul.szClass, csh);
                 } else {
-                    std::strcpy(app.state.szWork, lpshdef->hul.szClass);
+                    CchCopyUtf8Prefix(std::span{app.state.szWork}, lpshdef->hul.szClass);
                     c = std::strlen(app.state.szWork);
                 }
                 win32::TextOutA(hdc, x, y, app.state.szWork, c);
@@ -717,10 +717,10 @@ void DrawVCR(APPSESSION &app, HDC hdc, std::int16_t iStart, std::int16_t iEnd) {
                 if (j > 0) {
                     c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDestroyingDShip), j);
                     if (j == 1) {
-                        std::strcpy(&app.state.szWork[c], ".");
+                        CchCopyUtf8Prefix(std::span{app.state.szWork}.subspan(static_cast<std::size_t>(c)), ".");
                         c++;
                     } else {
-                        std::strcpy(&app.state.szWork[c], "s.");
+                        CchCopyUtf8Prefix(std::span{app.state.szWork}.subspan(static_cast<std::size_t>(c)), "s.");
                         c += 2;
                     }
                     win32::TextOutA(hdc, x, y, app.state.szWork, c);
@@ -758,7 +758,7 @@ void DrawVCR(APPSESSION &app, HDC hdc, std::int16_t iStart, std::int16_t iEnd) {
                 if (csh > 1 || cshT != 0) {
                     c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsSD), lpshdef->hul.szClass, csh);
                 } else {
-                    std::strcpy(app.state.szWork, lpshdef->hul.szClass);
+                    CchCopyUtf8Prefix(std::span{app.state.szWork}, lpshdef->hul.szClass);
                     c = std::strlen(app.state.szWork);
                 }
                 if (cshT != 0) {

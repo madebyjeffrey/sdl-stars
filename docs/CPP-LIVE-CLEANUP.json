@@ -76,7 +76,10 @@
         "catalog-copy-destination-capacities-and-typed-providers",
         "typed-bounded-native-formatting",
         "typed-native-stream-formatting",
-        "typed-legacy-width-formatting"
+        "typed-legacy-width-formatting",
+        "display-and-fixed-label-copy-spans",
+        "history-menu-logical-row-capacities",
+        "temperature-unit-UTF8-repair"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -179,7 +182,32 @@
           "native_inventory": "54 translation units, zero compiler errors, 1373 text call sites; refreshed inventory identifies 252 strcpy and 53 strcat sites for the next stage.",
           "test_driver": "Initial full suite had one 45-second new-game timeout: CheckStartup re-entered the active failed-save research workflow and reset its timer state. Separate test-only guard prevents restarting that workflow. The same full -j6 collection then passed all 153 assertions; no timeout or expectation weakened.",
           "baseline": "Unchanged; no catalog bytes, IDs, wire layouts or canonical models changed.",
-          "receipts": "dist/verification/live-cpp/l05f/"
+          "receipts": "dist/verification/live-cpp/l05f/",
+          "linux_ci": {
+            "run": 41286413944,
+            "commit": "d3d3724c",
+            "status": "success",
+            "jobs": [
+              "host units",
+              "resource ownership ASan/UBSan/LSan",
+              "linked C++20 witnesses"
+            ],
+            "full_platform_jobs": "Skipped by default opt-in policy."
+          }
+        },
+        {
+          "batch": "L05g bounded display copies, logical rows and temperature-text repair",
+          "debug_build": "Pass; no new warnings; all standalone headers in both orders.",
+          "desktop": "153/153 on the final clean run, including the actual history-menu builder, UTF-8 copy/append capacities/overlap, temperature labels, live dump goldens, ownership/leak checks, linked witnesses and available tutorial.",
+          "host_units": "28/28",
+          "native_regression": "519 matches, 25 existing warnings, zero differences/errors and zero skipped reference inputs.",
+          "host_regression": "519 matches, 25 existing warnings, zero differences/errors and zero skipped reference inputs.",
+          "baseline": "Ran regression-export as required for the intentional repair. Export rewrites clock-derived IDs/salts; restored the existing baseline because all decrypted comparisons matched and no scenario or checkpoint moved. Frozen original fixtures unchanged.",
+          "golden": "Windows-regenerated dumps exactly match the expected live goldens. Only dumps.p1 differs from the parent: six single-byte temperature units become UTF-8. Numeric values and CRLF endings unchanged.",
+          "windows": "147/147 strict owned application/wrapper syntax for the copy migration; the final SDL encoding/history test translation unit also passes. Actual Windows host report (2 cases) and encoding (6 cases) executables compile and pass under Wine with per-case isolation. Native Windows desktop execution remains a final qualification item.",
+          "test_execution": "An earlier desktop run overlapped baseline export/restoration with a new-game fixture reader and timed out. Repeated with stable fixtures: all 153 pass; no game/test assertions or timeouts changed.",
+          "canonical_models": "Unchanged; these fixes implement the existing UTF-8/capacity contracts.",
+          "receipts": "dist/verification/live-cpp/l05g/"
         }
       ],
       "bounded_formatting": {
@@ -232,6 +260,22 @@
         "contracts": "Keep the existing two format normalizers, 32-bit legacy long conversions, 1024-byte output ceiling, destination bounds, complete UTF-8 clipping and written-count/error returns. SDK C comparison declarations remain independent.",
         "tests": "Actual core helper and SDL service vectors cover 32-bit signed/unsigned extrema, packed bitfields, malformed/missing values, LastError, UTF-8 truncation and sentinel boundaries; existing shared SDK vectors unchanged.",
         "packing": "Transient format values and their standard-library types use native packing even when the Win32 header is first included in a packed-record scope; independent type-isolation checks verify native argument/span alignment and caller packing restoration. Header consumers inherit the concrete formatter dependency."
+      },
+      "display_copies": {
+        "status": "169 sites complete; remaining text copies and ownership work active",
+        "evidence": "docs/CPP-LIVE-TEXT-COPIES.json",
+        "native_parent_inventory": "54 translation units; zero compiler errors; compiler-located display/fixed-label destinations reviewed before migration.",
+        "calls": 169,
+        "copy_calls": 138,
+        "append_calls": 31,
+        "history_commit": "24f9872b",
+        "temperature_commit": "03d8b039",
+        "windows_host_test_configuration_commit": "09bb4477",
+        "policy": "Actual array/tail spans; complete terminated UTF-8 prefixes; overlapping views supported. Paths/record staging keep separate strict contracts.",
+        "remaining_initial_sites": 139,
+        "remaining_lexical_spellings": 145,
+        "inventory_scope": "The initial copy inventory and the current lexical policy differ: the latter also includes SDK declaration/definition spellings. Both remain explicitly accounted for.",
+        "enforcement": "The manifest checks exact remaining raw-copy spellings and multiplicities. New or removed raw sites require updating the maintained inventory; migrated sites cannot silently be reintroduced."
       }
     },
     {
@@ -3634,7 +3678,8 @@
       "path": "compat/win32/src/font.cpp",
       "line": 192,
       "code": "strcpy(szFamily, lpfont->lf.lfFaceName);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "c_header",
@@ -6291,7 +6336,8 @@
       "path": "compat/win32/src/paint.cpp",
       "line": 147,
       "code": "strcpy(rgStock[i].lf.lfFaceName, i == win32::SYSTEM_FIXED_FONT || i == win32::ANSI_FIXED_FONT || i == win32::OEM_FIXED_FONT ?",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "c_header",
@@ -10501,21 +10547,24 @@
       "path": "src/core/msg.cpp",
       "line": 394,
       "code": "strcat(szBuf, pchT);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/msg.cpp",
       "line": 395,
       "code": "strcat(szBuf, TextIO().pfnCompressed(app, idsOrigin));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/msg.cpp",
       "line": 509,
       "code": "strcpy(szBuf, lpshdef->hul.szClass);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "c_header",
@@ -10552,14 +10601,16 @@
       "path": "src/core/planet.cpp",
       "line": 1047,
       "code": "strcpy(app.state.szWork, psz);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/planet.cpp",
       "line": 1053,
       "code": "strcpy(app.state.szWork, szLine);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "c_header",
@@ -10617,35 +10668,40 @@
       "path": "src/core/produce.cpp",
       "line": 197,
       "code": "strcpy(app.state.szWork, app.state.rglpshdefSB[app.state.idPlayer][iItem].hul.szClass);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/produce.cpp",
       "line": 203,
       "code": "strcat(app.state.szWork, \" (downgrade)\");",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/produce.cpp",
       "line": 209,
       "code": "strcat(app.state.szWork, \" (upgrade)\");",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/produce.cpp",
       "line": 214,
       "code": "strcpy(app.state.szWork, app.state.rgshdef[iItem].hul.szClass);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/produce.cpp",
       "line": 219,
       "code": "strcpy(app.state.szWork, LpplanetaryFromId(LOWORD(iItem) - iobjPlanetaryScannerFirst)->szName);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "c_header",
@@ -11007,329 +11063,376 @@
       "path": "src/core/report.cpp",
       "line": 370,
       "code": "strcpy(szForm, PszGetCompressedPlanet(app, app.state.rgidPlan[lppl->id]));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/report.cpp",
       "line": 376,
       "code": "strcpy(&szForm[1], TextIO().pfnPlayerName(app, lppl->iPlayer, 1, 0, 0, 0, NULL));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/report.cpp",
       "line": 382,
       "code": "strcpy(&szForm[1], app.state.rglpshdefSB[lppl->iPlayer][lppl->isb].hul.szClass);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/report.cpp",
       "line": 390,
       "code": "strcpy(&szForm[1], PszFromLong(app, (uint32_t)(lppl->rgwtMin[3] * 100), NULL));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/report.cpp",
       "line": 393,
       "code": "strcpy(&szForm[1], PszFromLong(app, l, NULL));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/report.cpp",
       "line": 406,
       "code": "strcpy(&szForm[1], app.state.szWork);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/report.cpp",
       "line": 427,
       "code": "strcpy(&szForm[1], PszFromLong(app, lppl->rgwtMin[i], NULL));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/report.cpp",
       "line": 435,
       "code": "strcpy(&szForm[1], PszFromLong(app, rgl[i], NULL));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/report.cpp",
       "line": 442,
       "code": "strcpy(&szForm[1], PszFromInt(app, lppl->rgMinConc[i], NULL));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/report.cpp",
       "line": 447,
       "code": "strcpy(&szForm[1], PszFromInt(app, ResearchIO().pfnResources(app, lppl, app.state.idPlayer), NULL));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/report.cpp",
       "line": 455,
       "code": "strcpy(&szForm[1], PszCalcEnvVar(app, static_cast<EnvType>(i), lppl->rgEnvVar[i]));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/report.cpp",
       "line": 459,
       "code": "strcpy(&szForm[1], PszCalcEnvVar(app, static_cast<EnvType>(i), lppl->rgEnvVarOrig[i]));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/report.cpp",
       "line": 462,
       "code": "strcpy(&szForm[1], PszFromInt(app, PctPlanetOptValue(app, lppl, app.state.idPlayer), NULL));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/report.cpp",
       "line": 463,
       "code": "strcat(&szForm[1], \"%\");",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/report.cpp",
       "line": 472,
       "code": "strcpy(&szForm[1], PszFromInt(app, CapacityIO().pfnPctPlanetCapacity(app, lppl), NULL));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/report.cpp",
       "line": 474,
       "code": "strcpy(&szForm[1], PszFromInt(app, GetPlanetScannerRange(app, lppl, &i), NULL));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/report.cpp",
       "line": 476,
       "code": "strcpy(&szForm[1], PszFromInt(app, i, NULL));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/report.cpp",
       "line": 483,
       "code": "strcpy(&szForm[1], TextIO().pfnPlanetName(app, lppl->idFling - 1));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/report.cpp",
       "line": 486,
       "code": "strcpy(&szForm[1], PszFromInt(app, i, NULL));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/report.cpp",
       "line": 491,
       "code": "strcpy(&szForm[1], TextIO().pfnPlanetName(app, lppl->idRoute - 1));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/report.cpp",
       "line": 500,
       "code": "strcpy(&szForm[1], PszFromInt(app, part.pspecialsb()->grAbility2, NULL));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/report.cpp",
       "line": 502,
       "code": "strcpy(&szForm[1], PszFromInt(app, part.pspecialsb()->grAbility, NULL));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/report.cpp",
       "line": 516,
       "code": "strcpy(&szForm[1], PszFromInt(app, i, NULL));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/report.cpp",
       "line": 601,
       "code": "strcpy(&szForm[1], PszFromInt(app, lpfl->pt.x, NULL));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/report.cpp",
       "line": 603,
       "code": "strcpy(&szForm[1], PszFromInt(app, lpfl->pt.y, NULL));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/report.cpp",
       "line": 609,
       "code": "strcpy(&szForm[1], psz);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/report.cpp",
       "line": 614,
       "code": "strcpy(&szForm[1], PszGetDestName(app, lpfl, NULL));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/report.cpp",
       "line": 616,
       "code": "strcpy(&szForm[1], PszFromInt(app, lpfl->dirFltX(), NULL));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/report.cpp",
       "line": 617,
       "code": "strcat(szForm, \".\");",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/report.cpp",
       "line": 618,
       "code": "strcat(szForm, PszFromInt(app, lpfl->dirFltY(), NULL));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/report.cpp",
       "line": 624,
       "code": "strcpy(&szForm[1], app.state.rglpbtlplan[lpfl->iplr()][lpfl->iplan].szName);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/report.cpp",
       "line": 633,
       "code": "strcpy(&szForm[1], PszFromLong(app, l, NULL));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/report.cpp",
       "line": 636,
       "code": "strcpy(&szForm[1], PszFromLong(app, lpfl->rgwtMin[i], NULL));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/report.cpp",
       "line": 640,
       "code": "strcpy(&szForm[1], PszFromInt(app, lpfl->iPlayer + 1, NULL));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/report.cpp",
       "line": 643,
       "code": "strcpy(&szForm[1], PszGetETA(app, NULL, lpfl, NULL));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/report.cpp",
       "line": 656,
       "code": "strcpy(&szForm[1], PszFromInt(app, i, NULL));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/report.cpp",
       "line": 658,
       "code": "strcpy(&szForm[1], PszFromLong(app, WtFromLpfl(app, lpfl), NULL));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/report.cpp",
       "line": 660,
       "code": "strcpy(&szForm[1], PszFromInt(app, PctCloakFromLpfl(app, lpfl), NULL));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/report.cpp",
       "line": 666,
       "code": "strcpy(&szForm[1], PszFromInt(app, j, NULL));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/report.cpp",
       "line": 668,
       "code": "strcpy(&szForm[1], PszFromInt(app, i, NULL));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/report.cpp",
       "line": 671,
       "code": "strcpy(&szForm[1], PszGetTaskName(app, lpfl, &i));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/report.cpp",
       "line": 676,
       "code": "strcpy(&szForm[1], PszFromLong(app, ColonyIO().pfnFleetMining(app, lpfl), NULL));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/report.cpp",
       "line": 678,
       "code": "strcpy(&szForm[1], PszFromLong(app, CMineSweepFromLpfl(app, lpfl), NULL));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/report.cpp",
       "line": 680,
       "code": "strcpy(&szForm[1], PszFromLong(app, CLayMinesFromLpfl(app, lpfl, mineAll, ishdefAll), NULL));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/report.cpp",
       "line": 682,
       "code": "strcpy(&szForm[1], PszFromLong(app, PctTerraFromLpfl(app, lpfl), NULL));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/report.cpp",
       "line": 693,
       "code": "strcpy(&szForm[1], PszFromLong(app, l, NULL));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/report.cpp",
       "line": 702,
       "code": "strcpy(&szForm[1], PszFromLong(app, l, NULL));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
@@ -12719,14 +12822,16 @@
       "path": "src/core/turn.cpp",
       "line": 791,
       "code": "strcat(szTemp, TextIO().pfnCompressed(app, static_cast<StringId>(idsTurned + app.state.rgOut[i])));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/turn.cpp",
       "line": 793,
       "code": "strcat(szTemp, \" - HACKER\");",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "c_header",
@@ -13226,91 +13331,104 @@
       "path": "src/core/util.cpp",
       "line": 367,
       "code": "strcpy(szName, \"the \");",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/util.cpp",
       "line": 375,
       "code": "strcat(szName, pplr->szNames);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/util.cpp",
       "line": 377,
       "code": "strcat(szName, pplr->szName);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/util.cpp",
       "line": 389,
       "code": "strcat(szName, \"s\");",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/util.cpp",
       "line": 400,
       "code": "strcat(szName, \"'s\");",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/util.cpp",
       "line": 408,
       "code": "strcpy(app.state.szWork, szName);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/util.cpp",
       "line": 775,
       "code": "strcpy(app.state.szWork, TextIO().pfnCompressed(app, idsWormhole));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/util.cpp",
       "line": 778,
       "code": "strcpy(app.state.szWork, TextIO().pfnCompressed(app, idsMysteryTrader));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/util.cpp",
       "line": 781,
       "code": "strcpy(app.state.szWork, TextIO().pfnCompressed(app, idsMysteryObject));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/util.cpp",
       "line": 814,
       "code": "strcpy(szShdef, app.state.rglpshdef[iplr][ishdef].hul.szClass);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/util.cpp",
       "line": 856,
       "code": "strcpy(szShdef, app.state.rglpshdef[app.state.idPlayer][ishdef].hul.szClass);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/util.cpp",
       "line": 882,
       "code": "strcpy(app.state.szWork, psz);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/util.cpp",
       "line": 1202,
       "code": "strcpy(app.state.szWork, TextIO().pfnCompressed(app, idsDeepSpace));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
@@ -14304,35 +14422,40 @@
       "path": "src/ui/buildui.cpp",
       "line": 1107,
       "code": "strcat(szWord, \", \");",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/buildui.cpp",
       "line": 1109,
       "code": "strcat(szWord, TextIO().pfnCompressed(app, idsOr));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/buildui.cpp",
       "line": 1112,
       "code": "strcat(app.state.szWork, szWord);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/buildui.cpp",
       "line": 1133,
       "code": "strcat(szWord, part.pcom().szName());",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/buildui.cpp",
       "line": 1135,
       "code": "strcat(szWord, \"s\");",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
@@ -14553,7 +14676,8 @@
       "path": "src/ui/createui.cpp",
       "line": 914,
       "code": "strcat(app.state.szWork, \"%\");",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "c_header",
@@ -14681,35 +14805,40 @@
       "path": "src/ui/init.cpp",
       "line": 186,
       "code": "strcpy(plf->lfFaceName, app.lpui->rgszArial[i]);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/init.cpp",
       "line": 189,
       "code": "strcpy(plf->lfFaceName, app.lpui->rgszArial[0]);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/init.cpp",
       "line": 196,
       "code": "strcpy(plf->lfFaceName, app.lpui->rgszArial[i]);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/init.cpp",
       "line": 199,
       "code": "strcpy(plf->lfFaceName, app.lpui->rgszArial[1]);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/init.cpp",
       "line": 631,
       "code": "strcpy(app.lpui->rgszArial[i], app.state.szWork);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "c_header",
@@ -15379,14 +15508,16 @@
       "path": "src/ui/libraryui.cpp",
       "line": 458,
       "code": "strcpy(szMessage, TextIO().pfnCompressed(app, idsLibraryStorageFailed));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/libraryui.cpp",
       "line": 478,
       "code": "strcpy(szMessage, TextIO().pfnCompressed(app, idsLibraryStorageFailed));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
@@ -15414,14 +15545,16 @@
       "path": "src/ui/libraryui.cpp",
       "line": 897,
       "code": "strcpy(app.state.vplr.szName, TextIO().pfnCompressed(app, idsHumanoid));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/libraryui.cpp",
       "line": 898,
       "code": "strcpy(app.state.vplr.szNames, TextIO().pfnCompressed(app, idsLibraryHumanoids));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
@@ -15463,28 +15596,32 @@
       "path": "src/ui/libraryui.cpp",
       "line": 2251,
       "code": "strcpy(szMessage, TextIO().pfnCompressed(app, idsLibraryStorageFailed));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/libraryui.cpp",
       "line": 2291,
       "code": "if (cchTarget <= 0 || (size_t)cchTarget >= sizeof(szMessage)) strcpy(szMessage, TextIO().pfnCompressed(app, idsLibraryStorageFailed));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/libraryui.cpp",
       "line": 2292,
       "code": "} else strcpy(szMessage, TextIO().pfnCompressed(app, idsLibraryStorageFailed));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/libraryui.cpp",
       "line": 2297,
       "code": "if (cchTarget <= 0 || (size_t)cchTarget >= sizeof(szMessage)) strcpy(szMessage, TextIO().pfnCompressed(app, idsLibraryStorageFailed));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
@@ -15512,7 +15649,8 @@
       "path": "src/ui/libraryui.cpp",
       "line": 2671,
       "code": "strcpy(szMessage, TextIO().pfnCompressed(app, idsLibraryStorageFailed));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
@@ -16484,7 +16622,8 @@
       "path": "src/ui/mdi.cpp",
       "line": 158,
       "code": "strcpy(szData, szNameUtf8);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
@@ -16561,28 +16700,32 @@
       "path": "src/ui/mdi.cpp",
       "line": 1922,
       "code": "strcat(app.state.szWork, \" - HACKER\");",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/mdi.cpp",
       "line": 2238,
       "code": "strcat(app.state.szWork, \"s\");",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/mdi.cpp",
       "line": 2240,
       "code": "strcat(app.state.szWork, TextIO().pfnCompressed(app, idsOut));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/mdi.cpp",
       "line": 2882,
       "code": "strcpy(plf->lfFaceName, app.lpui->rgszArial[3]);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "c_header",
@@ -16702,35 +16845,40 @@
       "path": "src/ui/mineui.cpp",
       "line": 406,
       "code": "strcat(szT, psz);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/mineui.cpp",
       "line": 566,
       "code": "strcpy(szT, TextIO().pfnCompressed(app, static_cast<StringId>(idsPop + (fShortLabels == 0))));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/mineui.cpp",
       "line": 578,
       "code": "strcpy(app.state.szWork, szT);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/mineui.cpp",
       "line": 599,
       "code": "strcat(app.state.szWork, \"s\");",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/mineui.cpp",
       "line": 932,
       "code": "strcpy(rgsz[c], app.state.rglpshdef[lpfl->iPlayer][ishdef].hul.szClass);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
@@ -16758,7 +16906,8 @@
       "path": "src/ui/mineui.cpp",
       "line": 1189,
       "code": "strcpy(app.lpui->szMineralTitle, psz);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "c_header",
@@ -16962,7 +17111,8 @@
       "path": "src/ui/msgui.cpp",
       "line": 734,
       "code": "strcpy(app.lpui->szMsgTitle, app.state.szWork);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "c_header",
@@ -17469,35 +17619,40 @@
       "path": "src/ui/planetui.cpp",
       "line": 464,
       "code": "strcpy(app.state.szWork, part.pcom().szName());",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/planetui.cpp",
       "line": 517,
       "code": "strcpy(app.state.szWork, part.pcom().szName());",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/planetui.cpp",
       "line": 572,
       "code": "strcpy(app.state.szWork, lpshdef->hul.szClass);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/planetui.cpp",
       "line": 675,
       "code": "strcpy(app.state.szWork, psz);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/planetui.cpp",
       "line": 815,
       "code": "strcpy(app.state.szWork, psz);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "c_header",
@@ -17659,14 +17814,16 @@
       "path": "src/ui/popup.cpp",
       "line": 113,
       "code": "strcpy(app.state.szWork, TextIO().pfnCompressed(app, idsUnknown2));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/popup.cpp",
       "line": 238,
       "code": "strcpy(app.state.szWork, app.lpui->GlobalPD.lpshdef->hul.szClass);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "c_header",
@@ -17704,7 +17861,8 @@
       "path": "src/ui/preferencesui.cpp",
       "line": 41,
       "code": "strcpy(app.state.vrgZip[i].szName, psz);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
@@ -17718,7 +17876,8 @@
       "path": "src/ui/preferencesui.cpp",
       "line": 64,
       "code": "strcpy(app.state.vrgZipProd[i].szName, psz);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
@@ -17944,42 +18103,48 @@
       "path": "src/ui/produceui.cpp",
       "line": 568,
       "code": "strcpy(&szT[c], app.state.szWork);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/produceui.cpp",
       "line": 602,
       "code": "strcpy(&szT[6], psz);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/produceui.cpp",
       "line": 607,
       "code": "strcat(&szT[6], \" (Auto Build)\");",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/produceui.cpp",
       "line": 734,
       "code": "strcpy(app.state.szWork, app.state.vrgZipProd[app.lpui->iResTechNow].szName);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/produceui.cpp",
       "line": 745,
       "code": "strcpy(app.state.vrgZipProd[app.lpui->iResTechNow].szName, app.state.szWork);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/produceui.cpp",
       "line": 822,
       "code": "strcpy(app.state.szWork, szAuto);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "c_header",
@@ -18195,28 +18360,32 @@
       "path": "src/ui/raceui.cpp",
       "line": 345,
       "code": "strcpy(app.state.vplr.szNames, psz);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/raceui.cpp",
       "line": 930,
       "code": "strcat(app.state.szWork, \"00\");",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/raceui.cpp",
       "line": 932,
       "code": "strcat(app.state.szWork, \"kT\");",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/raceui.cpp",
       "line": 1323,
       "code": "strcpy(plf->lfFaceName, app.lpui->rgszArial[1]);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
@@ -18616,154 +18785,176 @@
       "path": "src/ui/reportui.cpp",
       "line": 493,
       "code": "strcpy(&app.state.szWork[i * 40], szT);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/reportui.cpp",
       "line": 701,
       "code": "strcat(app.state.szWork, \"%\");",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/reportui.cpp",
       "line": 1363,
       "code": "strcpy(szT, app.state.rglpbtlplan[lpfl->iplr()][lpfl->iplan].szName);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/reportui.cpp",
       "line": 1789,
       "code": "strcpy(szT, psz);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/reportui.cpp",
       "line": 1807,
       "code": "strcpy(szT, psz);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/reportui.cpp",
       "line": 1813,
       "code": "strcpy(szT, psz);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/reportui.cpp",
       "line": 1819,
       "code": "strcpy(szT, app.state.szWork);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/reportui.cpp",
       "line": 1932,
       "code": "strcpy(szT, psz);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/reportui.cpp",
       "line": 1939,
       "code": "strcpy(szT, psz);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/reportui.cpp",
       "line": 1956,
       "code": "strcpy(szT, psz);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/reportui.cpp",
       "line": 1996,
       "code": "strcpy(szT, psz);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/reportui.cpp",
       "line": 2068,
       "code": "strcpy(szT, psz);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/reportui.cpp",
       "line": 2147,
       "code": "strcpy(szT, psz);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/reportui.cpp",
       "line": 2154,
       "code": "strcpy(szT, psz);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/reportui.cpp",
       "line": 2296,
       "code": "strcpy(&rgsz[cItems][cch], szColTitle);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/reportui.cpp",
       "line": 2300,
       "code": "strcpy(rgsz[cItems], rgsz[cItems - 1]);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/reportui.cpp",
       "line": 2304,
       "code": "strcpy(rgsz[cItems], app.state.rgszMinerals[j]);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/reportui.cpp",
       "line": 2310,
       "code": "strcpy(rgsz[cItems], TextIO().pfnCompressed(app, idsWeightedAverage));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/reportui.cpp",
       "line": 2320,
       "code": "strcpy(&rgsz[cItems][cch], szColTitle);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/reportui.cpp",
       "line": 2322,
       "code": "strcat(rgsz[cItems], szT);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/reportui.cpp",
       "line": 2340,
       "code": "strcpy(&rgsz[cItems][cch], szColTitle);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/reportui.cpp",
       "line": 2342,
       "code": "strcat(rgsz[cItems], szT);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "c_header",
@@ -19051,21 +19242,24 @@
       "path": "src/ui/researchui.cpp",
       "line": 304,
       "code": "strcpy(app.state.szWork, part.pcom().szName());",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/researchui.cpp",
       "line": 871,
       "code": "strcpy(app.state.szWork, ppart->pcom().szName());",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/researchui.cpp",
       "line": 1470,
       "code": "strcpy(app.state.szWork, szT);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "c_header",
@@ -19678,14 +19872,16 @@
       "path": "src/ui/scan.cpp",
       "line": 1956,
       "code": "strcpy(app.state.szWork, psbar->psz);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/scan.cpp",
       "line": 1996,
       "code": "strcpy(szBuf, PszGetDistance(app, pt.x, pt.y, pt2.x, pt2.y));",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
@@ -19902,28 +20098,32 @@
       "path": "src/ui/ship2ui.cpp",
       "line": 126,
       "code": "strcpy(app.state.szWork, app.state.vrgZip[app.lpui->iResTechNow].szName);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/ship2ui.cpp",
       "line": 135,
       "code": "strcpy(app.state.vrgZip[app.lpui->iResTechNow].szName, app.state.szWork);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/ship2ui.cpp",
       "line": 310,
       "code": "strcpy(szT, psz);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/ship2ui.cpp",
       "line": 312,
       "code": "strcat(szT, \" *\");",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "c_header",
@@ -20450,35 +20650,40 @@
       "path": "src/ui/shipui.cpp",
       "line": 770,
       "code": "strcpy(app.state.szWork, szFleetName);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/shipui.cpp",
       "line": 774,
       "code": "strcpy(szT, app.state.szWork);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/shipui.cpp",
       "line": 2412,
       "code": "strcpy(&app.state.szWork[1], app.state.rgszMinerals[iMin]);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/shipui.cpp",
       "line": 2446,
       "code": "strcpy(&szT[1], psz);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/shipui.cpp",
       "line": 2515,
       "code": "strcpy(app.state.szWork, app.state.rglpbtlplan[app.state.idPlayer][i].szName);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "c_header",
@@ -21113,14 +21318,16 @@
       "path": "src/ui/utilgenui.cpp",
       "line": 256,
       "code": "strcpy(plf->lfFaceName, app.lpui->rgszArial[1]);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/utilgenui.cpp",
       "line": 1073,
       "code": "strcpy(app.state.szPassLast, szPass);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
@@ -21134,7 +21341,8 @@
       "path": "src/ui/utilgenui.cpp",
       "line": 1330,
       "code": "strcpy(plf->lfFaceName, app.lpui->rgszArial[1]);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "c_header",
@@ -21410,35 +21618,40 @@
       "path": "src/ui/vcr.cpp",
       "line": 655,
       "code": "strcpy(app.state.szWork, lpshdef->hul.szClass);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/vcr.cpp",
       "line": 679,
       "code": "strcpy(app.state.szWork, lpshdef->hul.szClass);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/vcr.cpp",
       "line": 724,
       "code": "strcpy(&app.state.szWork[c], \".\");",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/vcr.cpp",
       "line": 727,
       "code": "strcpy(&app.state.szWork[c], \"s.\");",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/vcr.cpp",
       "line": 765,
       "code": "strcpy(app.state.szWork, lpshdef->hul.szClass);",
-      "disposition": "pending"
+      "disposition": "bounded-UTF8-prefix-span-L05g",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",

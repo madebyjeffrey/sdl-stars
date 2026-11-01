@@ -392,8 +392,8 @@ char *PszFormatString(APPSESSION &app, const char *pszFormat, std::int16_t *pPar
                     goto DoNothing;
                 TextIO().pfnCchGetString(app, idsOf2, std::span{szBuf});
                 pchT = TextIO().pfnPlayerName(app, *pParams, 0, 0, 0, 0, nullptr);
-                std::strcat(szBuf, pchT);
-                std::strcat(szBuf, TextIO().pfnCompressed(app, idsOrigin));
+                CchAppendUtf8Prefix(std::span{szBuf}, pchT);
+                CchAppendUtf8Prefix(std::span{szBuf}, TextIO().pfnCompressed(app, idsOrigin));
                 pchT = szBuf;
                 goto FinishString;
             case 'm':
@@ -507,7 +507,7 @@ char *PszFormatString(APPSESSION &app, const char *pszFormat, std::int16_t *pPar
                     pchT = TextIO().pfnPlayerName(app, c, 0, 0, 1, 0, nullptr);
                     CchSprintf(szBuf, "%s %s", pchT, lpshdef->hul.szClass);
                 } else {
-                    std::strcpy(szBuf, lpshdef->hul.szClass);
+                    CchCopyUtf8Prefix(std::span{szBuf}, lpshdef->hul.szClass);
                 }
                 pch = PchAppendMessageText(app, pch, szBuf);
                 pParams++;

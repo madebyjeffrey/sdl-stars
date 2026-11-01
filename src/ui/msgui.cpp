@@ -730,7 +730,7 @@ void SetMsgTitle(APPSESSION &app, HWND hwnd) {
         }
         ControlIO().pfnEnableWindow(app.lpui->rghwndMsgBtn[1], app.lpui->mdMsgObj != mdMsgObjNone);
     FinishUp:
-        std::strcpy(app.lpui->szMsgTitle, app.state.szWork);
+        CchCopyUtf8Prefix(std::span{app.lpui->szMsgTitle}, app.state.szWork);
         ControlIO().pfnInvalidateRect(app.lpui->hwndMessage, &app.lpui->rcMsgTitle, 1);
     }
     return;

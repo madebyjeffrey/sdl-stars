@@ -1,5 +1,6 @@
 /* Fontconfig chooses installed faces; FreeType measures/rasterizes UTF-8 text. */
 #include "internal.h"
+#include "encoding.h"
 #include "ownership.h"
 #include <ft2build.h>
 #include FT_FREETYPE_H
@@ -189,7 +190,7 @@ static COMPATFONT *LpNewFontRaster(const LOGFONTA *lplf, int cMax) {
     if (!lpfont) return nullptr;
     lpfont->library = library;
     lpfont->lf = *lplf; lpfont->lf.lfFaceName[win32::LF_FACESIZE - 1] = 0;
-    std::strcpy(szFamily, lpfont->lf.lfFaceName);
+    CchCopyUtf8Prefix(std::span{szFamily}, lpfont->lf.lfFaceName);
     fBold = lplf->lfWeight >= 600;
     fItalic = lplf->lfItalic;
     // The game stores styled face names rather than setting LOGFONT style flags.

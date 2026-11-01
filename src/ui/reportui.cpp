@@ -698,7 +698,7 @@ void DrawVCReport(APPSESSION &app, HDC hdc) {
                 }
                 cch = win32::wsprintfA(app.state.szWork, app.state.PCTD, vcVal);
                 if (i == 3) {
-                    std::strcat(app.state.szWork, "%");
+                    CchAppendUtf8Prefix(std::span{app.state.szWork}, "%");
                     cch++;
                 }
                 if (iPass == 1) {
@@ -1361,7 +1361,7 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
         switch (icol) {
         case colFleetBattlePlan:
             i = lpfl->iplan;
-            std::strcpy(szT, app.state.rglpbtlplan[lpfl->iplr()][lpfl->iplan].szName);
+            CchCopyUtf8Prefix(std::span{szT}, app.state.rglpbtlplan[lpfl->iplr()][lpfl->iplan].szName);
             psz = szT;
             win32::ExtTextOutA(hdc, prc->left, prc->top, win32::ETO_CLIPPED, prc, psz, std::strlen(psz), nullptr);
             break;
@@ -1787,7 +1787,7 @@ TryTier2:
                 break;
             }
             psz = TextIO().pfnPlanetName(app, lppl1->idRoute - 1);
-            std::strcpy(szT, psz);
+            CchCopyUtf8Prefix(std::span{szT}, psz);
             psz = TextIO().pfnPlanetName(app, lppl2->idRoute - 1);
             iRet = std::strcmp(szT, psz);
             break;
@@ -1805,19 +1805,19 @@ TryTier2:
                 break;
             }
             psz = TextIO().pfnPlanetName(app, lppl1->idFling - 1);
-            std::strcpy(szT, psz);
+            CchCopyUtf8Prefix(std::span{szT}, psz);
             psz = TextIO().pfnPlanetName(app, lppl2->idFling - 1);
             iRet = std::strcmp(szT, psz);
             break;
         case colPlanetName:
             psz = TextIO().pfnPlanetName(app, lppl1->id);
-            std::strcpy(szT, psz);
+            CchCopyUtf8Prefix(std::span{szT}, psz);
             psz = TextIO().pfnPlanetName(app, lppl2->id);
             iRet = std::strcmp(szT, psz);
             break;
         case colPlanetProduction:
             ControlIO().pfnFillPlanetProdLB(app, nullptr, nullptr, lppl1);
-            std::strcpy(szT, app.state.szWork);
+            CchCopyUtf8Prefix(std::span{szT}, app.state.szWork);
             ControlIO().pfnFillPlanetProdLB(app, nullptr, nullptr, lppl2);
             iRet = std::strcmp(&szT[6], &app.state.szWork[6]);
             break;
@@ -1930,14 +1930,14 @@ TryTier2:
         switch (icolSort) {
         case colFleetName:
             psz = PszGetFleetName(app, lpfl1->id);
-            std::strcpy(szT, psz);
+            CchCopyUtf8Prefix(std::span{szT}, psz);
             psz = PszGetFleetName(app, lpfl2->id);
             iRet = std::strcmp(szT, psz);
             break;
         case colFleetLocation:
             if (lpfl1->idPlanet != idPlanetDeepSpace) {
                 psz = TextIO().pfnPlanetName(app, lpfl1->idPlanet);
-                std::strcpy(szT, psz);
+                CchCopyUtf8Prefix(std::span{szT}, psz);
             } else {
                 win32::wsprintfA(szT, TextIO().pfnCompressed(app, idsSpaceDD), lpfl1->pt.x, lpfl1->pt.y);
             }
@@ -1954,7 +1954,7 @@ TryTier2:
             break;
         case colFleetDestination:
             psz = PszGetDestName(app, lpfl1, nullptr);
-            std::strcpy(szT, psz);
+            CchCopyUtf8Prefix(std::span{szT}, psz);
             psz = PszGetDestName(app, lpfl2, nullptr);
             iRet = std::strcmp(szT, psz);
             if (iRet < 0) {
@@ -1994,7 +1994,7 @@ TryTier2:
             break;
         case colFleetTask:
             psz = PszGetTaskName(app, lpfl1, &i1);
-            std::strcpy(szT, psz);
+            CchCopyUtf8Prefix(std::span{szT}, psz);
             psz = PszGetTaskName(app, lpfl2, &i2);
             iRet = std::strcmp(szT, psz);
             if (iRet < 0) {
@@ -2066,7 +2066,7 @@ TryTier2:
         case colBattleLocation:
             if (BdvFromLp(app, lpbd1).idPlanet() != idPlanetNone) {
                 psz = TextIO().pfnPlanetName(app, BdvFromLp(app, lpbd1).idPlanet());
-                std::strcpy(szT, psz);
+                CchCopyUtf8Prefix(std::span{szT}, psz);
             } else {
                 win32::wsprintfA(szT, TextIO().pfnCompressed(app, idsSpaceDD), BdvFromLp(app, lpbd1).pt().x(), BdvFromLp(app, lpbd1).pt().y());
             }
@@ -2145,14 +2145,14 @@ TryTier2:
             switch (icolSort) {
             case colEnemyFleetName:
                 psz = PszGetFleetName(app, lpfl1->id);
-                std::strcpy(szT, psz);
+                CchCopyUtf8Prefix(std::span{szT}, psz);
                 psz = PszGetFleetName(app, lpfl2->id);
                 iRet = std::strcmp(szT, psz);
                 break;
             case colEnemyFleetLocation:
                 if (lpfl1->idPlanet != idPlanetDeepSpace) {
                     psz = TextIO().pfnPlanetName(app, lpfl1->idPlanet);
-                    std::strcpy(szT, psz);
+                    CchCopyUtf8Prefix(std::span{szT}, psz);
                 } else {
                     win32::wsprintfA(szT, TextIO().pfnCompressed(app, idsSpaceDD), lpfl1->pt.x, lpfl1->pt.y);
                 }
@@ -2294,21 +2294,21 @@ void ReportColumnPopup(APPSESSION &app, POINT16 pt, std::int16_t icol, std::int1
     cItems = 0;
     for (i = 0; i < 2; i++) {
         cch = TextIO().pfnCchGetString(app, i == 0 ? idsSort : idsReverseSort, std::span{rgsz[cItems]});
-        std::strcpy(&rgsz[cItems][cch], szColTitle);
+        CchCopyUtf8Prefix(std::span{rgsz[cItems]}.subspan(static_cast<std::size_t>(cch)), szColTitle);
         cItems++;
         if ((app.lpui->vprptCur->irpt == rptPlanets && (icol == colPlanetMinConc || icol == colPlanetMinerals || icol == colPlanetMiningRate)) ||
             (app.lpui->vprptCur->irpt == rptFleets && icol == colFleetCargo)) {
-            std::strcpy(rgsz[cItems], rgsz[cItems - 1]);
+            CchCopyUtf8Prefix(std::span{rgsz[cItems]}, rgsz[cItems - 1]);
             rgsz[cItems - 1][0] = 0;
             cItems++;
             for (j = 0; j < (app.lpui->vprptCur->irpt == rptFleets) + 3; j++) {
-                std::strcpy(rgsz[cItems], app.state.rgszMinerals[j]);
+                CchCopyUtf8Prefix(std::span{rgsz[cItems]}, app.state.rgszMinerals[j]);
                 cItems++;
             }
             rgsz[cItems][0] = -1;
             rgsz[cItems][1] = 0;
             cItems++;
-            std::strcpy(rgsz[cItems], TextIO().pfnCompressed(app, idsWeightedAverage));
+            CchCopyUtf8Prefix(std::span{rgsz[cItems]}, TextIO().pfnCompressed(app, idsWeightedAverage));
             cItems++;
             rgsz[cItems++][0] = 0;
             cSubsort = 5;
@@ -2318,9 +2318,9 @@ void ReportColumnPopup(APPSESSION &app, POINT16 pt, std::int16_t icol, std::int1
     rgsz[cItems][1] = 0;
     cItems++;
     cch = TextIO().pfnCchGetString(app, idsHide, std::span{rgsz[cItems]});
-    std::strcpy(&rgsz[cItems][cch], szColTitle);
+    CchCopyUtf8Prefix(std::span{rgsz[cItems]}.subspan(static_cast<std::size_t>(cch)), szColTitle);
     cch = TextIO().pfnCchGetString(app, idsColumn, std::span{szT});
-    std::strcat(rgsz[cItems], szT);
+    CchAppendUtf8Prefix(std::span{rgsz[cItems]}, szT);
     iHide = cItems;
     iSortLast = cItems;
     cItems++;
@@ -2338,9 +2338,9 @@ void ReportColumnPopup(APPSESSION &app, POINT16 pt, std::int16_t icol, std::int1
         if (!(ibit & app.lpui->vprptCur->grbitVisible)) {
             DxReportColHdr(app, app.lpui->vprptCur->irpt, i, szColTitle, hdc);
             cch = TextIO().pfnCchGetString(app, idsShow, std::span{rgsz[cItems]});
-            std::strcpy(&rgsz[cItems][cch], szColTitle);
+            CchCopyUtf8Prefix(std::span{rgsz[cItems]}.subspan(static_cast<std::size_t>(cch)), szColTitle);
             cch = TextIO().pfnCchGetString(app, idsColumn, std::span{szT});
-            std::strcat(rgsz[cItems], szT);
+            CchAppendUtf8Prefix(std::span{rgsz[cItems]}, szT);
             rgcol[cItems] = i;
             cItems++;
         }

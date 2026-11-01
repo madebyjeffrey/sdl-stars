@@ -1103,12 +1103,12 @@ void DrawBuildSelComp(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
                     }
                     if (grhst != 0) {
                         if ((grhst - 1) & grhst) {
-                            std::strcat(szWord, ", ");
+                            CchAppendUtf8Prefix(std::span{szWord}, ", ");
                         } else {
-                            std::strcat(szWord, TextIO().pfnCompressed(app, idsOr));
+                            CchAppendUtf8Prefix(std::span{szWord}, TextIO().pfnCompressed(app, idsOr));
                         }
                     }
-                    std::strcat(app.state.szWork, szWord);
+                    CchAppendUtf8Prefix(std::span{app.state.szWork}, szWord);
                 }
                 x = rc.left;
                 /* NATIVE: original passed &rc.top */
@@ -1129,9 +1129,9 @@ void DrawBuildSelComp(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
         } else {
             win32::wsprintfA(szWord, "%d ", hsShip.cItem);
         }
-        std::strcat(szWord, part.pcom().szName());
+        CchAppendUtf8Prefix(std::span{szWord}, part.pcom().szName());
         if (fPlural) {
-            std::strcat(szWord, "s");
+            CchAppendUtf8Prefix(std::span{szWord}, "s");
         }
         cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsCostS), szWord);
         win32::TextOutA(hdc, rc.left, rc.top, app.state.szWork, cch);

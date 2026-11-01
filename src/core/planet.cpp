@@ -1048,13 +1048,13 @@ char *PszProdQueueTop(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod) {
     if (!lpplprod || lpplprod->iprodMac == 0) {
         psz = TextIO().pfnCompressed(app, idsQueueEmpty);
         if (psz != app.state.szWork) {
-            std::strcpy(app.state.szWork, psz);
+            CchCopyUtf8Prefix(std::span{app.state.szWork}, psz);
         }
     }
     if (lpplprod) {
         for (i = 0; i < lpplprod->iprodMac; i++) {
             if (FProdItemLine(app, lppl, lpplprod, i, 0, szLine)) {
-                std::strcpy(app.state.szWork, szLine);
+                CchCopyUtf8Prefix(std::span{app.state.szWork}, szLine);
                 return app.state.szWork;
             }
         }

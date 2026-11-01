@@ -403,7 +403,7 @@ void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
                 yTop += app.state.dyArial8 + 2;
                 TextIO().pfnCchGetString(app, idsDestination, std::span{szT});
                 psz = TextIO().pfnPlanetName(app, lpth->thp().idPlanet());
-                std::strcat(szT, psz);
+                CchAppendUtf8Prefix(std::span{szT}, psz);
                 win32::TextOutA(hdc, xLeft, yTop, szT, std::strlen(szT));
             }
             yTop += static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2;
@@ -563,7 +563,7 @@ void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
             }
             win32::SetTextColor(hdc, app.lpui->crButtonText);
             if (pl.iPlayer != iplrNone) {
-                std::strcpy(szT, TextIO().pfnCompressed(app, static_cast<StringId>(idsPop + (fShortLabels == 0))));
+                CchCopyUtf8Prefix(std::span{szT}, TextIO().pfnCompressed(app, static_cast<StringId>(idsPop + (fShortLabels == 0))));
             }
             if (pl.det == detAll) {
                 c = std::strlen(szT);
@@ -575,7 +575,7 @@ void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
             } else {
                 if (pl.det >= detSome) {
                     l = static_cast<std::int32_t>((pl.uPopGuess * 4));
-                    std::strcpy(app.state.szWork, szT);
+                    CchCopyUtf8Prefix(std::span{app.state.szWork}, szT);
                     c = std::strlen(szT);
                     if (l > 0) {
                         c += win32::wsprintfA(std::span{app.state.szWork}.subspan(static_cast<std::size_t>(c)), TextIO().pfnCompressed(app, idsCLd00), 177, l);
@@ -596,7 +596,7 @@ void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
             } else {
                 c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsReportDYear), dNum);
                 if (dNum > 1) {
-                    std::strcat(app.state.szWork, "s");
+                    CchAppendUtf8Prefix(std::span{app.state.szWork}, "s");
                     c++;
                 }
                 c += TextIO().pfnCchGetString(app, idsOld, std::span{app.state.szWork}.subspan(static_cast<std::size_t>(c)));
@@ -929,7 +929,7 @@ void MineClick(APPSESSION &app, std::int16_t x, std::int16_t y, std::int16_t msg
                 for (ishdef = 0; ishdef < 16; ishdef++) {
                     if (lpfl->rgcsh[ishdef] > 0) {
                         rgid[c] = ishdef;
-                        std::strcpy(rgsz[c], app.state.rglpshdef[lpfl->iPlayer][ishdef].hul.szClass);
+                        CchCopyUtf8Prefix(std::span{rgsz[c]}, app.state.rglpshdef[lpfl->iPlayer][ishdef].hul.szClass);
                         rgpsz[c] = rgsz[c];
                         c++;
                     }
@@ -1186,7 +1186,7 @@ void SetMineralTitleBar(APPSESSION &app, HWND hwnd) {
         psz = PszGetThingName(app, app.state.lpThings[app.state.sel.scan.ith].idFull());
         std::strcat(psz, szSummary);
     }
-    std::strcpy(app.lpui->szMineralTitle, psz);
+    CchCopyUtf8Prefix(std::span{app.lpui->szMineralTitle}, psz);
     ControlIO().pfnInvalidateRect(hwnd, nullptr, 1);
     if (fVisCB) {
         fVisCB = app.state.lpThings[app.state.sel.scan.ith].ith() == ithMinefield && app.state.lpThings[app.state.sel.scan.ith].thm().iType() == mineStandard && app.state.lpThings[app.state.sel.scan.ith].iplr() == app.state.idPlayer &&

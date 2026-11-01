@@ -183,20 +183,20 @@ std::int16_t FCreateFonts(APPSESSION &app, HDC hdc) {
     }
     plf->lfHeight = -win32::MulDiv(10, win32::GetDeviceCaps(hdc, win32::LOGPIXELSY), 72);
     for (i = 0; i < 2; i++) {
-        std::strcpy(plf->lfFaceName, app.lpui->rgszArial[i]);
+        CchCopyUtf8Prefix(std::span{plf->lfFaceName}, app.lpui->rgszArial[i]);
         app.lpui->rghfontArial10[i] = win32::CreateFontIndirectA(plf);
     }
-    std::strcpy(plf->lfFaceName, app.lpui->rgszArial[0]);
+    CchCopyUtf8Prefix(std::span{plf->lfFaceName}, app.lpui->rgszArial[0]);
     plf->lfHeight = -win32::MulDiv(6, win32::GetDeviceCaps(hdc, win32::LOGPIXELSY), 72);
     app.lpui->rghfontArial6[0] = win32::CreateFontIndirectA(plf);
     plf->lfHeight = -win32::MulDiv(7, win32::GetDeviceCaps(hdc, win32::LOGPIXELSY), 72);
     app.lpui->rghfontArial7[0] = win32::CreateFontIndirectA(plf);
     plf->lfHeight = -win32::MulDiv(8, win32::GetDeviceCaps(hdc, win32::LOGPIXELSY), 72);
     for (i = 0; i < 4; i++) {
-        std::strcpy(plf->lfFaceName, app.lpui->rgszArial[i]);
+        CchCopyUtf8Prefix(std::span{plf->lfFaceName}, app.lpui->rgszArial[i]);
         app.lpui->rghfontArial8[i] = win32::CreateFontIndirectA(plf);
     }
-    std::strcpy(plf->lfFaceName, app.lpui->rgszArial[1]);
+    CchCopyUtf8Prefix(std::span{plf->lfFaceName}, app.lpui->rgszArial[1]);
     plf->lfEscapement = 3150;
     app.lpui->rghfontArial8[4] = win32::CreateFontIndirectA(plf);
     hfontSav = static_cast<HFONT>(win32::SelectObject(hdc, app.lpui->rghfontArial8[0]));
@@ -628,7 +628,7 @@ void ReadIniSettings(APPSESSION &app) {
         ProfileTextIO().pfnReadString(szSection, szEntry, "", app.state.szWork, 80, szIniFile);
         cch = std::strlen(app.state.szWork);
         if (cch >= 5 && cch <= 31) {
-            std::strcpy(app.lpui->rgszArial[i], app.state.szWork);
+            CchCopyUtf8Prefix(std::span{app.lpui->rgszArial[i]}, app.state.szWork);
         }
     }
     ReadIniPresets(app, szIniFile);

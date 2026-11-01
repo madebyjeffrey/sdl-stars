@@ -39,7 +39,7 @@ void ReadIniPresets(APPSESSION &app, char *szIniFile) {
                                                        (app.state.vrgZip[i].txp.rgia[iPass].cQuan() | app.state.vrgZip[i].txp.rgia[iPass].iAction() << 0xc));
                     psz++;
                 }
-                std::strcpy(app.state.vrgZip[i].szName, psz);
+                CchCopyUtf8Prefix(std::span{app.state.vrgZip[i].szName}, psz);
                 app.state.vrgZip[i].fValid = 1;
             }
         }
@@ -62,7 +62,7 @@ void ReadIniPresets(APPSESSION &app, char *szIniFile) {
                     iPass++;
                 }
                 if (iPass >= cpq * 4 + 2 && std::strlen(psz) <= 12) {
-                    std::strcpy(app.state.vrgZipProd[i].szName, psz);
+                    CchCopyUtf8Prefix(std::span{app.state.vrgZipProd[i].szName}, psz);
                     psz = app.state.szWork;
                     app.state.vrgZipProd[i].fNoResearch = *psz != 'a';
                     app.state.vrgZipProd[i].fValid = 1;

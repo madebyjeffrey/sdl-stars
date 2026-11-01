@@ -1954,7 +1954,7 @@ void DrawScannerSBar(APPSESSION &app, HDC hdc, RECT *prc, SBAR *psbar, std::int1
         ExpandRc(&rcClip, -2, -2);
         grReal = grobj == grobjOther ? app.state.sel.scan.grobjFull : grobj;
         if (psbar && psbar->psz) {
-            std::strcpy(app.state.szWork, psbar->psz);
+            CchCopyUtf8Prefix(std::span{app.state.szWork}, psbar->psz);
         } else if (grReal & 1) {
             TextIO().pfnPlanetName(app, !psbar ? app.state.sel.scan.idpl : psbar->id);
         } else if (grReal & 2) {
@@ -1994,7 +1994,7 @@ void DrawScannerSBar(APPSESSION &app, HDC hdc, RECT *prc, SBAR *psbar, std::int1
             pt2.x = -1;
         }
         if (pt.x != -1 && pt2.x != -1 && (pt.x != pt2.x || pt.y != pt2.y)) {
-            std::strcpy(szBuf, PszGetDistance(app, pt.x, pt.y, pt2.x, pt2.y));
+            CchCopyUtf8Prefix(std::span{szBuf}, PszGetDistance(app, pt.x, pt.y, pt2.x, pt2.y));
             for (psz = szBuf; *psz != ' '; psz++) {
             }
             TextIO().pfnCchGetString(app, static_cast<StringId>(idsLy + (rc.right >= 350)), std::span{szBuf}.subspan(static_cast<std::size_t>(psz - szBuf + 1)));

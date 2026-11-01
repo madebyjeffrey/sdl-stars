@@ -301,7 +301,7 @@ DrawComingAttractions:
                             rc.top += app.state.dyArial8;
                             if (rc.top + app.state.dyArial8 > rc.bottom)
                                 goto TooManyToFinish;
-                            std::strcpy(app.state.szWork, part.pcom().szName());
+                            CchCopyUtf8Prefix(std::span{app.state.szWork}, part.pcom().szName());
                             win32::TextOutA(hdc, rc.left + 8, rc.top, app.state.szWork, std::strlen(app.state.szWork));
                             if (app.lpui->cFutureTech < 8) {
                                 app.lpui->rghsFutureTech[app.lpui->cFutureTech++] = part.hs;
@@ -868,7 +868,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, std::int16_t dx, std::int16_
         DiaganolTextOut(app, hdc, &rcData, app.state.szWork, c);
     } else {
         win32::SelectObject(hdc, app.lpui->rghfontArial10[1]);
-        std::strcpy(app.state.szWork, ppart->pcom().szName());
+        CchCopyUtf8Prefix(std::span{app.state.szWork}, ppart->pcom().szName());
         CtrTextOut(hdc, dx >> 1, 3, app.state.szWork, 0);
         if (ppart->hs.grhst == hstHull || ppart->hs.grhst == hstSBHull) {
             DrawFleetBitmap(app, nullptr, hdc, 5, app.lpui->dyArial10 + 5, 0, ppart->pcom().ibmp(), 0, 0, -1, 0);
@@ -1467,7 +1467,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, std::int16_t dx, std::int16_
                     TextIO().pfnCchGetString(app, dmgFloor == 999 ? idsSmartBombsStrictlyAdditiveHaveMinimumKill : idsIfPlanetHasDefensesBombGuaranteedKill, std::span{app.state.szWork});
                     c += win32::wsprintfA(std::span{szT}.subspan(static_cast<std::size_t>(c)), app.state.szWork, 100 * dmgFloor);
                 }
-                std::strcpy(app.state.szWork, szT);
+                CchCopyUtf8Prefix(std::span{app.state.szWork}, szT);
             }
             WrapTextOut(app, hdc, &xText, &yText, app.state.szWork, c, rcData.left, rcData.right - rcData.left, nullptr, 0, 1);
             xText = rcData.left;

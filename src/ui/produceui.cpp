@@ -564,7 +564,7 @@ void DrawProductionDlg(APPSESSION &app, HWND hwnd, HDC hdc, RECT *prc, std::int1
                 c = win32::wsprintfA(szT, TextIO().pfnCompressed(app, idsDDoneCompletion), prod.pct);
                 if (PszProductionETA(app, &app.state.sel.pl, app.state.lpplProdGlob, static_cast<ProdItemType>(LOWORD(lSel)), nullptr, nullptr) != app.state.szWork) {
                 }
-                std::strcpy(&szT[c], app.state.szWork);
+                CchCopyUtf8Prefix(std::span{szT}.subspan(static_cast<std::size_t>(c)), app.state.szWork);
                 win32::TextOutA(hdc, rc.left - 20, rc.bottom, szT, std::strlen(szT));
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
             }
@@ -598,12 +598,12 @@ void FillProdSrcLB(APPSESSION &app, HWND hwndLB, std::int16_t mdFill) {
     for (i = 0; i < app.state.cProdGlob; i++) {
         if (app.state.pProdGlob[i].cItem > 0) {
             psz = PszNameProdItem(app, app.state.pProdGlob + i);
-            std::strcpy(&szT[6], psz);
+            CchCopyUtf8Prefix(std::span{szT}.subspan(6), psz);
             if (app.state.pProdGlob[i].grobj == grobjFleet) {
                 szT[0] = app.state.pProdGlob[i].iItem < iobjPacketGerm ? 42 : 35;
             } else if (app.state.pProdGlob[i].iItem < mdIdleFactory) {
                 szT[0] = 'I';
-                std::strcat(&szT[6], " (Auto Build)");
+                CchAppendUtf8Prefix(std::span{szT}.subspan(6), " (Auto Build)");
             } else {
                 szT[0] = ' ';
             }
@@ -729,7 +729,7 @@ INT_PTR  ZipProdDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             case IDC_IMPORT:
             case IDC_RENAME:
                 if (app.state.vrgZipProd[app.lpui->iResTechNow].fValid) {
-                    std::strcpy(app.state.szWork, app.state.vrgZipProd[app.lpui->iResTechNow].szName);
+                    CchCopyUtf8Prefix(std::span{app.state.szWork}, app.state.vrgZipProd[app.lpui->iResTechNow].szName);
                 } else {
                     win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsCustomD), app.lpui->iResTechNow);
                 }
@@ -739,7 +739,7 @@ INT_PTR  ZipProdDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                     if (app.state.szWork[0] == 0) {
                         win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsCustomD), app.lpui->iResTechNow);
                     }
-                    std::strcpy(app.state.vrgZipProd[app.lpui->iResTechNow].szName, app.state.szWork);
+                    CchCopyUtf8Prefix(std::span{app.state.vrgZipProd[app.lpui->iResTechNow].szName}, app.state.szWork);
                     pszT = &app.state.szWork[64];
                     psz = app.state.szWork;
                     while (*psz != 0) {
@@ -816,7 +816,7 @@ void FillZipProdLB(APPSESSION &app, HWND hwndDlg, ZIPPRODQ *pzpq) {
         for (i = 0; i < pzpq->cpq; i++) {
             TextIO().pfnCchGetString(app, static_cast<StringId>(idsMines + pzpq->rgpq[i].mdIdle()), std::span{szAuto});
             if (pzpq->rgpq[i].cQuan() == 1 || pzpq->rgpq[i].mdIdle() == iobjAlchemy) {
-                std::strcpy(app.state.szWork, szAuto);
+                CchCopyUtf8Prefix(std::span{app.state.szWork}, szAuto);
             } else {
                 win32::wsprintfA(app.state.szWork, szFormat, szAuto, pzpq->rgpq[i].cQuan());
             }

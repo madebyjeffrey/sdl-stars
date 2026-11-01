@@ -249,6 +249,18 @@ now clears the borrowed stream without heap-release calls. A resource-skip and
 injected disk-full test cover the error state and subsequent stream selection.
 Recorded tutorial bytes, save records and host results are unchanged.
 
+## Display-copy destination capacity — fixed on develop
+
+`SetMsgTitle`, `ReadIniSettings`, report-field staging and drawing/name helpers
+used `strcpy`/`strcat` without carrying destination capacities. Display and
+fixed-label sites now copy or append complete UTF-8 prefixes into array or
+explicit tail spans. The audit accounts for all 169 migrated sites and freezes
+remaining raw-copy spellings while path, wire-storage and owned-result work
+continues. Copy/append tests cover every short capacity, non-NUL source views,
+overlap and unterminated destinations. Fitting text and both game baselines
+remain unchanged; the separate temperature-label repair accounts for the live
+report golden change.
+
 ## History-menu row capacity — fixed on develop
 
 `ScoreXDlg` divides the shared work buffer into eight 40-byte history labels,

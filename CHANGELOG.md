@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- Display and fixed-label copies in `SetMsgTitle`, `ReadIniSettings`, report
+  fields and drawing/name helpers now use their actual array or tail capacity.
+  Oversized text receives a terminated complete UTF-8 prefix. Fitting text,
+  fixed field widths, file records and host results are unchanged.
+
 - `ScoreXDlg` keeps each history-menu heading within its 40-byte row.
   Previously the catalog append could use the rest of the shared work buffer
   and overwrite the next heading. Long labels now retain a complete UTF-8

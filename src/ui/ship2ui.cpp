@@ -122,7 +122,7 @@ INT_PTR  ZipOrderDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             case IDC_IMPORT:
             case IDC_RENAME:
                 if (app.state.vrgZip[app.lpui->iResTechNow].fValid) {
-                    std::strcpy(app.state.szWork, app.state.vrgZip[app.lpui->iResTechNow].szName);
+                    CchCopyUtf8Prefix(std::span{app.state.szWork}, app.state.vrgZip[app.lpui->iResTechNow].szName);
                 } else {
                     win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsCustomD), app.lpui->iResTechNow);
                 }
@@ -130,7 +130,7 @@ INT_PTR  ZipOrderDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                     if (app.state.szWork[0] == 0) {
                         win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsCustomD), app.lpui->iResTechNow);
                     }
-                    std::strcpy(app.state.vrgZip[app.lpui->iResTechNow].szName, app.state.szWork);
+                    CchCopyUtf8Prefix(std::span{app.state.vrgZip[app.lpui->iResTechNow].szName}, app.state.szWork);
                     pszT = &app.state.szWork[64];
                     psz = app.state.szWork;
                     while (*psz != 0) {
@@ -305,9 +305,9 @@ INT_PTR  MergeFleetsDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         ControlIO().pfnStickyDlgPos(hwnd, &app.lpui->ptStickyMergeFleetsDlg, 1);
         for (i = 0; i < app.state.vcflMerge; i++) {
             psz = PszGetFleetName(app, app.state.rglpfl[app.state.vrgiflMerge[i]]->id);
-            std::strcpy(szT, psz);
+            CchCopyUtf8Prefix(std::span{szT}, psz);
             if (app.state.rglpfl[app.state.vrgiflMerge[i]]->cord > 1) {
-                std::strcat(szT, " *");
+                CchAppendUtf8Prefix(std::span{szT}, " *");
             }
             ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_MERGE_FLEETS_LIST), win32::LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(szT));
             ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_MERGE_FLEETS_LIST), win32::LB_SETSEL, app.state.vcflMerge == 2 || app.state.rglpfl[app.state.vrgiflMerge[i]]->id == app.state.sel.fl.id, i);

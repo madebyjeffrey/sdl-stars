@@ -195,29 +195,29 @@ char *PszNameProdItem(APPSESSION &app, PROD *lpprod) {
                 app.state.szWork[0] = 0;
                 return app.state.szWork;
             }
-            std::strcpy(app.state.szWork, app.state.rglpshdefSB[app.state.idPlayer][iItem].hul.szClass);
+            CchCopyUtf8Prefix(std::span{app.state.szWork}, app.state.rglpshdefSB[app.state.idPlayer][iItem].hul.szClass);
             if (!app.state.sel.pl.fStarbase) {
                 return app.state.szWork;
             }
             iDelta = app.state.rglpshdefSB[app.state.idPlayer][app.state.sel.pl.isb].hul.ihuldef - app.state.rglpshdefSB[app.state.idPlayer][iItem].hul.ihuldef;
             if (iDelta > 0) {
-                std::strcat(app.state.szWork, " (downgrade)");
+                CchAppendUtf8Prefix(std::span{app.state.szWork}, " (downgrade)");
                 return app.state.szWork;
             }
             if (iDelta >= 0) {
                 return app.state.szWork;
             }
-            std::strcat(app.state.szWork, " (upgrade)");
+            CchAppendUtf8Prefix(std::span{app.state.szWork}, " (upgrade)");
             return app.state.szWork;
         } else {
             if (app.state.rgshdef[iItem].fFree)
                 goto LBogus;
-            std::strcpy(app.state.szWork, app.state.rgshdef[iItem].hul.szClass);
+            CchCopyUtf8Prefix(std::span{app.state.szWork}, app.state.rgshdef[iItem].hul.szClass);
             return app.state.szWork;
         }
     }
     if (iItem >= iobjPlanetaryScannerFirst && iItem <= iobjPlanetaryScannerLast) {
-        std::strcpy(app.state.szWork, LpplanetaryFromId(LOWORD(iItem) - iobjPlanetaryScannerFirst)->szName);
+        CchCopyUtf8Prefix(std::span{app.state.szWork}, LpplanetaryFromId(LOWORD(iItem) - iobjPlanetaryScannerFirst)->szName);
     } else if (iItem == iobjPlanetaryScanner) {
         TextIO().pfnCchGetString(app, idsPlanetaryScanner, std::span{app.state.szWork});
     } else {

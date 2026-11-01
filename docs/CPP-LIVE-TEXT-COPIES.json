@@ -1,0 +1,2628 @@
+{
+  "migration_parent": "d3d3724c",
+  "status": "169 migrated sites complete; remaining text work active",
+  "contracts": {
+    "display": "Write a terminated complete UTF-8 prefix into the actual destination span; preserve fitting bytes. Views borrow synchronously and overlapping copies use memmove.",
+    "append": "Scan only inside the destination span for its NUL. An unterminated nonempty destination is cleared and zero bytes are appended.",
+    "strict_boundaries": "Path/record operations require separate explicit contracts and are not migrated by this display-prefix operation."
+  },
+  "sites": [
+    {
+      "path": "compat/win32/src/font.cpp",
+      "scope": "LpNewFontRaster",
+      "baseline_line": 192,
+      "migration_parent_line": 192,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szFamily, lpfont->lf.lfFaceName)",
+      "destination_span": "std::span{szFamily}",
+      "role": "Native font face/family text uses its real 32-byte destination budget, preserving LOGFONT field widths and complete UTF-8 code points."
+    },
+    {
+      "path": "compat/win32/src/paint.cpp",
+      "scope": "GetStockObject",
+      "baseline_line": 147,
+      "migration_parent_line": 148,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(rgStock[i].lf.lfFaceName, i == win32::SYSTEM_FIXED_FONT || i == win32::ANSI_FIXED_FONT || i == win32::OEM_FIXED_FONT ?\n               \"monospace\" : \"sans-serif\")",
+      "destination_span": "std::span{rgStock[i].lf.lfFaceName}",
+      "role": "Native font face/family text uses its real 32-byte destination budget, preserving LOGFONT field widths and complete UTF-8 code points."
+    },
+    {
+      "path": "src/core/msg.cpp",
+      "scope": "PszFormatString",
+      "baseline_line": 394,
+      "migration_parent_line": 395,
+      "operation": "strcat",
+      "original_call": "std::strcat(szBuf, pchT)",
+      "destination_span": "std::span{szBuf}",
+      "role": "Display/fixed-label text in the named local array or explicit array tail; retain fitting bytes and terminate a complete UTF-8 prefix within that capacity."
+    },
+    {
+      "path": "src/core/msg.cpp",
+      "scope": "PszFormatString",
+      "baseline_line": 395,
+      "migration_parent_line": 396,
+      "operation": "strcat",
+      "original_call": "std::strcat(szBuf, TextIO().pfnCompressed(app, idsOrigin))",
+      "destination_span": "std::span{szBuf}",
+      "role": "Display/fixed-label text in the named local array or explicit array tail; retain fitting bytes and terminate a complete UTF-8 prefix within that capacity."
+    },
+    {
+      "path": "src/core/msg.cpp",
+      "scope": "PszFormatString",
+      "baseline_line": 509,
+      "migration_parent_line": 510,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szBuf, lpshdef->hul.szClass)",
+      "destination_span": "std::span{szBuf}",
+      "role": "Display/fixed-label text in the named local array or explicit array tail; retain fitting bytes and terminate a complete UTF-8 prefix within that capacity."
+    },
+    {
+      "path": "src/core/planet.cpp",
+      "scope": "PszProdQueueTop",
+      "baseline_line": 1047,
+      "migration_parent_line": 1051,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.szWork, psz)",
+      "destination_span": "std::span{app.state.szWork}",
+      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+    },
+    {
+      "path": "src/core/planet.cpp",
+      "scope": "PszProdQueueTop",
+      "baseline_line": 1053,
+      "migration_parent_line": 1057,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.szWork, szLine)",
+      "destination_span": "std::span{app.state.szWork}",
+      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+    },
+    {
+      "path": "src/core/produce.cpp",
+      "scope": "PszNameProdItem",
+      "baseline_line": 197,
+      "migration_parent_line": 198,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.szWork, app.state.rglpshdefSB[app.state.idPlayer][iItem].hul.szClass)",
+      "destination_span": "std::span{app.state.szWork}",
+      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+    },
+    {
+      "path": "src/core/produce.cpp",
+      "scope": "PszNameProdItem",
+      "baseline_line": 203,
+      "migration_parent_line": 204,
+      "operation": "strcat",
+      "original_call": "std::strcat(app.state.szWork, \" (downgrade)\")",
+      "destination_span": "std::span{app.state.szWork}",
+      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+    },
+    {
+      "path": "src/core/produce.cpp",
+      "scope": "PszNameProdItem",
+      "baseline_line": 209,
+      "migration_parent_line": 210,
+      "operation": "strcat",
+      "original_call": "std::strcat(app.state.szWork, \" (upgrade)\")",
+      "destination_span": "std::span{app.state.szWork}",
+      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+    },
+    {
+      "path": "src/core/produce.cpp",
+      "scope": "PszNameProdItem",
+      "baseline_line": 214,
+      "migration_parent_line": 215,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.szWork, app.state.rgshdef[iItem].hul.szClass)",
+      "destination_span": "std::span{app.state.szWork}",
+      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+    },
+    {
+      "path": "src/core/produce.cpp",
+      "scope": "PszNameProdItem",
+      "baseline_line": 219,
+      "migration_parent_line": 220,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.szWork, LpplanetaryFromId(LOWORD(iItem) - iobjPlanetaryScannerFirst)->szName)",
+      "destination_span": "std::span{app.state.szWork}",
+      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "DumpPlanets",
+      "baseline_line": 370,
+      "migration_parent_line": 370,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szForm, PszGetCompressedPlanet(app, app.state.rgidPlan[lppl->id]))",
+      "destination_span": "std::span{szForm}",
+      "role": "Planet/fleet export field staging: reserve the leading tab byte for tail spans; retain fitting text, numeric values and CRLF framing."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "DumpPlanets",
+      "baseline_line": 376,
+      "migration_parent_line": 376,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&szForm[1], TextIO().pfnPlayerName(app, lppl->iPlayer, 1, 0, 0, 0, nullptr))",
+      "destination_span": "std::span{szForm}.subspan(1)",
+      "role": "Planet/fleet export field staging: reserve the leading tab byte for tail spans; retain fitting text, numeric values and CRLF framing."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "DumpPlanets",
+      "baseline_line": 382,
+      "migration_parent_line": 382,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&szForm[1], app.state.rglpshdefSB[lppl->iPlayer][lppl->isb].hul.szClass)",
+      "destination_span": "std::span{szForm}.subspan(1)",
+      "role": "Planet/fleet export field staging: reserve the leading tab byte for tail spans; retain fitting text, numeric values and CRLF framing."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "DumpPlanets",
+      "baseline_line": 390,
+      "migration_parent_line": 390,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&szForm[1], PszFromLong(app, static_cast<std::uint32_t>((lppl->rgwtMin[3] * 100)), nullptr))",
+      "destination_span": "std::span{szForm}.subspan(1)",
+      "role": "Planet/fleet export field staging: reserve the leading tab byte for tail spans; retain fitting text, numeric values and CRLF framing."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "DumpPlanets",
+      "baseline_line": 393,
+      "migration_parent_line": 393,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&szForm[1], PszFromLong(app, l, nullptr))",
+      "destination_span": "std::span{szForm}.subspan(1)",
+      "role": "Planet/fleet export field staging: reserve the leading tab byte for tail spans; retain fitting text, numeric values and CRLF framing."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "DumpPlanets",
+      "baseline_line": 406,
+      "migration_parent_line": 406,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&szForm[1], app.state.szWork)",
+      "destination_span": "std::span{szForm}.subspan(1)",
+      "role": "Planet/fleet export field staging: reserve the leading tab byte for tail spans; retain fitting text, numeric values and CRLF framing."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "DumpPlanets",
+      "baseline_line": 427,
+      "migration_parent_line": 427,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&szForm[1], PszFromLong(app, lppl->rgwtMin[i], nullptr))",
+      "destination_span": "std::span{szForm}.subspan(1)",
+      "role": "Planet/fleet export field staging: reserve the leading tab byte for tail spans; retain fitting text, numeric values and CRLF framing."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "DumpPlanets",
+      "baseline_line": 435,
+      "migration_parent_line": 435,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&szForm[1], PszFromLong(app, rgl[i], nullptr))",
+      "destination_span": "std::span{szForm}.subspan(1)",
+      "role": "Planet/fleet export field staging: reserve the leading tab byte for tail spans; retain fitting text, numeric values and CRLF framing."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "DumpPlanets",
+      "baseline_line": 442,
+      "migration_parent_line": 442,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&szForm[1], PszFromInt(app, lppl->rgMinConc[i], nullptr))",
+      "destination_span": "std::span{szForm}.subspan(1)",
+      "role": "Planet/fleet export field staging: reserve the leading tab byte for tail spans; retain fitting text, numeric values and CRLF framing."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "DumpPlanets",
+      "baseline_line": 447,
+      "migration_parent_line": 447,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&szForm[1], PszFromInt(app, ResearchIO().pfnResources(app, lppl, app.state.idPlayer), nullptr))",
+      "destination_span": "std::span{szForm}.subspan(1)",
+      "role": "Planet/fleet export field staging: reserve the leading tab byte for tail spans; retain fitting text, numeric values and CRLF framing."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "DumpPlanets",
+      "baseline_line": 455,
+      "migration_parent_line": 455,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&szForm[1], PszCalcEnvVar(app, static_cast<EnvType>(i), lppl->rgEnvVar[i]))",
+      "destination_span": "std::span{szForm}.subspan(1)",
+      "role": "Planet/fleet export field staging: reserve the leading tab byte for tail spans; retain fitting text, numeric values and CRLF framing."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "DumpPlanets",
+      "baseline_line": 459,
+      "migration_parent_line": 459,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&szForm[1], PszCalcEnvVar(app, static_cast<EnvType>(i), lppl->rgEnvVarOrig[i]))",
+      "destination_span": "std::span{szForm}.subspan(1)",
+      "role": "Planet/fleet export field staging: reserve the leading tab byte for tail spans; retain fitting text, numeric values and CRLF framing."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "DumpPlanets",
+      "baseline_line": 462,
+      "migration_parent_line": 462,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&szForm[1], PszFromInt(app, PctPlanetOptValue(app, lppl, app.state.idPlayer), nullptr))",
+      "destination_span": "std::span{szForm}.subspan(1)",
+      "role": "Planet/fleet export field staging: reserve the leading tab byte for tail spans; retain fitting text, numeric values and CRLF framing."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "DumpPlanets",
+      "baseline_line": 463,
+      "migration_parent_line": 463,
+      "operation": "strcat",
+      "original_call": "std::strcat(&szForm[1], \"%\")",
+      "destination_span": "std::span{szForm}.subspan(1)",
+      "role": "Planet/fleet export field staging: reserve the leading tab byte for tail spans; retain fitting text, numeric values and CRLF framing."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "DumpPlanets",
+      "baseline_line": 472,
+      "migration_parent_line": 472,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&szForm[1], PszFromInt(app, CapacityIO().pfnPctPlanetCapacity(app, lppl), nullptr))",
+      "destination_span": "std::span{szForm}.subspan(1)",
+      "role": "Planet/fleet export field staging: reserve the leading tab byte for tail spans; retain fitting text, numeric values and CRLF framing."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "DumpPlanets",
+      "baseline_line": 474,
+      "migration_parent_line": 474,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&szForm[1], PszFromInt(app, GetPlanetScannerRange(app, lppl, &i), nullptr))",
+      "destination_span": "std::span{szForm}.subspan(1)",
+      "role": "Planet/fleet export field staging: reserve the leading tab byte for tail spans; retain fitting text, numeric values and CRLF framing."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "DumpPlanets",
+      "baseline_line": 476,
+      "migration_parent_line": 476,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&szForm[1], PszFromInt(app, i, nullptr))",
+      "destination_span": "std::span{szForm}.subspan(1)",
+      "role": "Planet/fleet export field staging: reserve the leading tab byte for tail spans; retain fitting text, numeric values and CRLF framing."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "DumpPlanets",
+      "baseline_line": 483,
+      "migration_parent_line": 483,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&szForm[1], TextIO().pfnPlanetName(app, lppl->idFling - 1))",
+      "destination_span": "std::span{szForm}.subspan(1)",
+      "role": "Planet/fleet export field staging: reserve the leading tab byte for tail spans; retain fitting text, numeric values and CRLF framing."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "DumpPlanets",
+      "baseline_line": 486,
+      "migration_parent_line": 486,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&szForm[1], PszFromInt(app, i, nullptr))",
+      "destination_span": "std::span{szForm}.subspan(1)",
+      "role": "Planet/fleet export field staging: reserve the leading tab byte for tail spans; retain fitting text, numeric values and CRLF framing."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "DumpPlanets",
+      "baseline_line": 491,
+      "migration_parent_line": 491,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&szForm[1], TextIO().pfnPlanetName(app, lppl->idRoute - 1))",
+      "destination_span": "std::span{szForm}.subspan(1)",
+      "role": "Planet/fleet export field staging: reserve the leading tab byte for tail spans; retain fitting text, numeric values and CRLF framing."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "DumpPlanets",
+      "baseline_line": 500,
+      "migration_parent_line": 500,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&szForm[1], PszFromInt(app, part.pspecialsb()->grAbility2, nullptr))",
+      "destination_span": "std::span{szForm}.subspan(1)",
+      "role": "Planet/fleet export field staging: reserve the leading tab byte for tail spans; retain fitting text, numeric values and CRLF framing."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "DumpPlanets",
+      "baseline_line": 502,
+      "migration_parent_line": 502,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&szForm[1], PszFromInt(app, part.pspecialsb()->grAbility, nullptr))",
+      "destination_span": "std::span{szForm}.subspan(1)",
+      "role": "Planet/fleet export field staging: reserve the leading tab byte for tail spans; retain fitting text, numeric values and CRLF framing."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "DumpPlanets",
+      "baseline_line": 516,
+      "migration_parent_line": 516,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&szForm[1], PszFromInt(app, i, nullptr))",
+      "destination_span": "std::span{szForm}.subspan(1)",
+      "role": "Planet/fleet export field staging: reserve the leading tab byte for tail spans; retain fitting text, numeric values and CRLF framing."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "DumpFleets",
+      "baseline_line": 601,
+      "migration_parent_line": 601,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&szForm[1], PszFromInt(app, lpfl->pt.x, nullptr))",
+      "destination_span": "std::span{szForm}.subspan(1)",
+      "role": "Planet/fleet export field staging: reserve the leading tab byte for tail spans; retain fitting text, numeric values and CRLF framing."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "DumpFleets",
+      "baseline_line": 603,
+      "migration_parent_line": 603,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&szForm[1], PszFromInt(app, lpfl->pt.y, nullptr))",
+      "destination_span": "std::span{szForm}.subspan(1)",
+      "role": "Planet/fleet export field staging: reserve the leading tab byte for tail spans; retain fitting text, numeric values and CRLF framing."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "DumpFleets",
+      "baseline_line": 609,
+      "migration_parent_line": 609,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&szForm[1], psz)",
+      "destination_span": "std::span{szForm}.subspan(1)",
+      "role": "Planet/fleet export field staging: reserve the leading tab byte for tail spans; retain fitting text, numeric values and CRLF framing."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "DumpFleets",
+      "baseline_line": 614,
+      "migration_parent_line": 614,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&szForm[1], PszGetDestName(app, lpfl, nullptr))",
+      "destination_span": "std::span{szForm}.subspan(1)",
+      "role": "Planet/fleet export field staging: reserve the leading tab byte for tail spans; retain fitting text, numeric values and CRLF framing."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "DumpFleets",
+      "baseline_line": 616,
+      "migration_parent_line": 616,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&szForm[1], PszFromInt(app, lpfl->dirFltX(), nullptr))",
+      "destination_span": "std::span{szForm}.subspan(1)",
+      "role": "Planet/fleet export field staging: reserve the leading tab byte for tail spans; retain fitting text, numeric values and CRLF framing."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "DumpFleets",
+      "baseline_line": 617,
+      "migration_parent_line": 617,
+      "operation": "strcat",
+      "original_call": "std::strcat(szForm, \".\")",
+      "destination_span": "std::span{szForm}",
+      "role": "Planet/fleet export field staging: reserve the leading tab byte for tail spans; retain fitting text, numeric values and CRLF framing."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "DumpFleets",
+      "baseline_line": 618,
+      "migration_parent_line": 618,
+      "operation": "strcat",
+      "original_call": "std::strcat(szForm, PszFromInt(app, lpfl->dirFltY(), nullptr))",
+      "destination_span": "std::span{szForm}",
+      "role": "Planet/fleet export field staging: reserve the leading tab byte for tail spans; retain fitting text, numeric values and CRLF framing."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "DumpFleets",
+      "baseline_line": 624,
+      "migration_parent_line": 624,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&szForm[1], app.state.rglpbtlplan[lpfl->iplr()][lpfl->iplan].szName)",
+      "destination_span": "std::span{szForm}.subspan(1)",
+      "role": "Planet/fleet export field staging: reserve the leading tab byte for tail spans; retain fitting text, numeric values and CRLF framing."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "DumpFleets",
+      "baseline_line": 633,
+      "migration_parent_line": 633,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&szForm[1], PszFromLong(app, l, nullptr))",
+      "destination_span": "std::span{szForm}.subspan(1)",
+      "role": "Planet/fleet export field staging: reserve the leading tab byte for tail spans; retain fitting text, numeric values and CRLF framing."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "DumpFleets",
+      "baseline_line": 636,
+      "migration_parent_line": 636,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&szForm[1], PszFromLong(app, lpfl->rgwtMin[i], nullptr))",
+      "destination_span": "std::span{szForm}.subspan(1)",
+      "role": "Planet/fleet export field staging: reserve the leading tab byte for tail spans; retain fitting text, numeric values and CRLF framing."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "DumpFleets",
+      "baseline_line": 640,
+      "migration_parent_line": 640,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&szForm[1], PszFromInt(app, lpfl->iPlayer + 1, nullptr))",
+      "destination_span": "std::span{szForm}.subspan(1)",
+      "role": "Planet/fleet export field staging: reserve the leading tab byte for tail spans; retain fitting text, numeric values and CRLF framing."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "DumpFleets",
+      "baseline_line": 643,
+      "migration_parent_line": 643,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&szForm[1], PszGetETA(app, nullptr, lpfl, nullptr))",
+      "destination_span": "std::span{szForm}.subspan(1)",
+      "role": "Planet/fleet export field staging: reserve the leading tab byte for tail spans; retain fitting text, numeric values and CRLF framing."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "DumpFleets",
+      "baseline_line": 656,
+      "migration_parent_line": 656,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&szForm[1], PszFromInt(app, i, nullptr))",
+      "destination_span": "std::span{szForm}.subspan(1)",
+      "role": "Planet/fleet export field staging: reserve the leading tab byte for tail spans; retain fitting text, numeric values and CRLF framing."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "DumpFleets",
+      "baseline_line": 658,
+      "migration_parent_line": 658,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&szForm[1], PszFromLong(app, WtFromLpfl(app, lpfl), nullptr))",
+      "destination_span": "std::span{szForm}.subspan(1)",
+      "role": "Planet/fleet export field staging: reserve the leading tab byte for tail spans; retain fitting text, numeric values and CRLF framing."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "DumpFleets",
+      "baseline_line": 660,
+      "migration_parent_line": 660,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&szForm[1], PszFromInt(app, PctCloakFromLpfl(app, lpfl), nullptr))",
+      "destination_span": "std::span{szForm}.subspan(1)",
+      "role": "Planet/fleet export field staging: reserve the leading tab byte for tail spans; retain fitting text, numeric values and CRLF framing."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "DumpFleets",
+      "baseline_line": 666,
+      "migration_parent_line": 666,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&szForm[1], PszFromInt(app, j, nullptr))",
+      "destination_span": "std::span{szForm}.subspan(1)",
+      "role": "Planet/fleet export field staging: reserve the leading tab byte for tail spans; retain fitting text, numeric values and CRLF framing."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "DumpFleets",
+      "baseline_line": 668,
+      "migration_parent_line": 668,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&szForm[1], PszFromInt(app, i, nullptr))",
+      "destination_span": "std::span{szForm}.subspan(1)",
+      "role": "Planet/fleet export field staging: reserve the leading tab byte for tail spans; retain fitting text, numeric values and CRLF framing."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "DumpFleets",
+      "baseline_line": 671,
+      "migration_parent_line": 671,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&szForm[1], PszGetTaskName(app, lpfl, &i))",
+      "destination_span": "std::span{szForm}.subspan(1)",
+      "role": "Planet/fleet export field staging: reserve the leading tab byte for tail spans; retain fitting text, numeric values and CRLF framing."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "DumpFleets",
+      "baseline_line": 676,
+      "migration_parent_line": 676,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&szForm[1], PszFromLong(app, ColonyIO().pfnFleetMining(app, lpfl), nullptr))",
+      "destination_span": "std::span{szForm}.subspan(1)",
+      "role": "Planet/fleet export field staging: reserve the leading tab byte for tail spans; retain fitting text, numeric values and CRLF framing."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "DumpFleets",
+      "baseline_line": 678,
+      "migration_parent_line": 678,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&szForm[1], PszFromLong(app, CMineSweepFromLpfl(app, lpfl), nullptr))",
+      "destination_span": "std::span{szForm}.subspan(1)",
+      "role": "Planet/fleet export field staging: reserve the leading tab byte for tail spans; retain fitting text, numeric values and CRLF framing."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "DumpFleets",
+      "baseline_line": 680,
+      "migration_parent_line": 680,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&szForm[1], PszFromLong(app, CLayMinesFromLpfl(app, lpfl, mineAll, ishdefAll), nullptr))",
+      "destination_span": "std::span{szForm}.subspan(1)",
+      "role": "Planet/fleet export field staging: reserve the leading tab byte for tail spans; retain fitting text, numeric values and CRLF framing."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "DumpFleets",
+      "baseline_line": 682,
+      "migration_parent_line": 682,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&szForm[1], PszFromLong(app, PctTerraFromLpfl(app, lpfl), nullptr))",
+      "destination_span": "std::span{szForm}.subspan(1)",
+      "role": "Planet/fleet export field staging: reserve the leading tab byte for tail spans; retain fitting text, numeric values and CRLF framing."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "DumpFleets",
+      "baseline_line": 693,
+      "migration_parent_line": 693,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&szForm[1], PszFromLong(app, l, nullptr))",
+      "destination_span": "std::span{szForm}.subspan(1)",
+      "role": "Planet/fleet export field staging: reserve the leading tab byte for tail spans; retain fitting text, numeric values and CRLF framing."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "DumpFleets",
+      "baseline_line": 702,
+      "migration_parent_line": 702,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&szForm[1], PszFromLong(app, l, nullptr))",
+      "destination_span": "std::span{szForm}.subspan(1)",
+      "role": "Planet/fleet export field staging: reserve the leading tab byte for tail spans; retain fitting text, numeric values and CRLF framing."
+    },
+    {
+      "path": "src/core/turn.cpp",
+      "scope": "FRunCmdLine",
+      "baseline_line": 791,
+      "migration_parent_line": 792,
+      "operation": "strcat",
+      "original_call": "std::strcat(szTemp, TextIO().pfnCompressed(app, static_cast<StringId>(idsTurned + app.state.rgOut[i])))",
+      "destination_span": "std::span{szTemp}",
+      "role": "Display/fixed-label text in the named local array or explicit array tail; retain fitting bytes and terminate a complete UTF-8 prefix within that capacity."
+    },
+    {
+      "path": "src/core/turn.cpp",
+      "scope": "FRunCmdLine",
+      "baseline_line": 793,
+      "migration_parent_line": 794,
+      "operation": "strcat",
+      "original_call": "std::strcat(szTemp, \" - HACKER\")",
+      "destination_span": "std::span{szTemp}",
+      "role": "Display/fixed-label text in the named local array or explicit array tail; retain fitting bytes and terminate a complete UTF-8 prefix within that capacity."
+    },
+    {
+      "path": "src/core/util.cpp",
+      "scope": "PszPlayerName",
+      "baseline_line": 367,
+      "migration_parent_line": 368,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szName, \"the \")",
+      "destination_span": "std::span{szName}",
+      "role": "Player-name display composition retains the existing 50-byte local budget and shared-result behavior; owned results remain pending."
+    },
+    {
+      "path": "src/core/util.cpp",
+      "scope": "PszPlayerName",
+      "baseline_line": 375,
+      "migration_parent_line": 376,
+      "operation": "strcat",
+      "original_call": "std::strcat(szName, pplr->szNames)",
+      "destination_span": "std::span{szName}",
+      "role": "Player-name display composition retains the existing 50-byte local budget and shared-result behavior; owned results remain pending."
+    },
+    {
+      "path": "src/core/util.cpp",
+      "scope": "PszPlayerName",
+      "baseline_line": 377,
+      "migration_parent_line": 378,
+      "operation": "strcat",
+      "original_call": "std::strcat(szName, pplr->szName)",
+      "destination_span": "std::span{szName}",
+      "role": "Player-name display composition retains the existing 50-byte local budget and shared-result behavior; owned results remain pending."
+    },
+    {
+      "path": "src/core/util.cpp",
+      "scope": "PszPlayerName",
+      "baseline_line": 389,
+      "migration_parent_line": 390,
+      "operation": "strcat",
+      "original_call": "std::strcat(szName, \"s\")",
+      "destination_span": "std::span{szName}",
+      "role": "Player-name display composition retains the existing 50-byte local budget and shared-result behavior; owned results remain pending."
+    },
+    {
+      "path": "src/core/util.cpp",
+      "scope": "PszPlayerName",
+      "baseline_line": 400,
+      "migration_parent_line": 401,
+      "operation": "strcat",
+      "original_call": "std::strcat(szName, \"'s\")",
+      "destination_span": "std::span{szName}",
+      "role": "Player-name display composition retains the existing 50-byte local budget and shared-result behavior; owned results remain pending."
+    },
+    {
+      "path": "src/core/util.cpp",
+      "scope": "PszPlayerName",
+      "baseline_line": 408,
+      "migration_parent_line": 409,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.szWork, szName)",
+      "destination_span": "std::span{app.state.szWork}",
+      "role": "Player-name display composition retains the existing 50-byte local budget and shared-result behavior; owned results remain pending."
+    },
+    {
+      "path": "src/core/util.cpp",
+      "scope": "PszGetThingName",
+      "baseline_line": 775,
+      "migration_parent_line": 776,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.szWork, TextIO().pfnCompressed(app, idsWormhole))",
+      "destination_span": "std::span{app.state.szWork}",
+      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+    },
+    {
+      "path": "src/core/util.cpp",
+      "scope": "PszGetThingName",
+      "baseline_line": 778,
+      "migration_parent_line": 779,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.szWork, TextIO().pfnCompressed(app, idsMysteryTrader))",
+      "destination_span": "std::span{app.state.szWork}",
+      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+    },
+    {
+      "path": "src/core/util.cpp",
+      "scope": "PszGetThingName",
+      "baseline_line": 781,
+      "migration_parent_line": 782,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.szWork, TextIO().pfnCompressed(app, idsMysteryObject))",
+      "destination_span": "std::span{app.state.szWork}",
+      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+    },
+    {
+      "path": "src/core/util.cpp",
+      "scope": "PszGetFleetName",
+      "baseline_line": 814,
+      "migration_parent_line": 815,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szShdef, app.state.rglpshdef[iplr][ishdef].hul.szClass)",
+      "destination_span": "std::span{szShdef}",
+      "role": "Display/fixed-label text in the named local array or explicit array tail; retain fitting bytes and terminate a complete UTF-8 prefix within that capacity."
+    },
+    {
+      "path": "src/core/util.cpp",
+      "scope": "PszFleetNameFromWord",
+      "baseline_line": 856,
+      "migration_parent_line": 857,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szShdef, app.state.rglpshdef[app.state.idPlayer][ishdef].hul.szClass)",
+      "destination_span": "std::span{szShdef}",
+      "role": "Display/fixed-label text in the named local array or explicit array tail; retain fitting bytes and terminate a complete UTF-8 prefix within that capacity."
+    },
+    {
+      "path": "src/core/util.cpp",
+      "scope": "PszGetPlanetName",
+      "baseline_line": 882,
+      "migration_parent_line": 883,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.szWork, psz)",
+      "destination_span": "std::span{app.state.szWork}",
+      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+    },
+    {
+      "path": "src/core/util.cpp",
+      "scope": "PszGetLocName",
+      "baseline_line": 1202,
+      "migration_parent_line": 1203,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.szWork, TextIO().pfnCompressed(app, idsDeepSpace))",
+      "destination_span": "std::span{app.state.szWork}",
+      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "scope": "DrawBuildSelComp",
+      "baseline_line": 1107,
+      "migration_parent_line": 1106,
+      "operation": "strcat",
+      "original_call": "std::strcat(szWord, \", \")",
+      "destination_span": "std::span{szWord}",
+      "role": "Display/fixed-label text in the named local array or explicit array tail; retain fitting bytes and terminate a complete UTF-8 prefix within that capacity."
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "scope": "DrawBuildSelComp",
+      "baseline_line": 1109,
+      "migration_parent_line": 1108,
+      "operation": "strcat",
+      "original_call": "std::strcat(szWord, TextIO().pfnCompressed(app, idsOr))",
+      "destination_span": "std::span{szWord}",
+      "role": "Display/fixed-label text in the named local array or explicit array tail; retain fitting bytes and terminate a complete UTF-8 prefix within that capacity."
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "scope": "DrawBuildSelComp",
+      "baseline_line": 1112,
+      "migration_parent_line": 1111,
+      "operation": "strcat",
+      "original_call": "std::strcat(app.state.szWork, szWord)",
+      "destination_span": "std::span{app.state.szWork}",
+      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "scope": "DrawBuildSelComp",
+      "baseline_line": 1133,
+      "migration_parent_line": 1132,
+      "operation": "strcat",
+      "original_call": "std::strcat(szWord, part.pcom().szName())",
+      "destination_span": "std::span{szWord}",
+      "role": "Display/fixed-label text in the named local array or explicit array tail; retain fitting bytes and terminate a complete UTF-8 prefix within that capacity."
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "scope": "DrawBuildSelComp",
+      "baseline_line": 1135,
+      "migration_parent_line": 1134,
+      "operation": "strcat",
+      "original_call": "std::strcat(szWord, \"s\")",
+      "destination_span": "std::span{szWord}",
+      "role": "Display/fixed-label text in the named local array or explicit array tail; retain fitting bytes and terminate a complete UTF-8 prefix within that capacity."
+    },
+    {
+      "path": "src/ui/createui.cpp",
+      "scope": "DrawNewGame3",
+      "baseline_line": 914,
+      "migration_parent_line": 911,
+      "operation": "strcat",
+      "original_call": "std::strcat(app.state.szWork, \"%\")",
+      "destination_span": "std::span{app.state.szWork}",
+      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+    },
+    {
+      "path": "src/ui/init.cpp",
+      "scope": "FCreateFonts",
+      "baseline_line": 186,
+      "migration_parent_line": 186,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(plf->lfFaceName, app.lpui->rgszArial[i])",
+      "destination_span": "std::span{plf->lfFaceName}",
+      "role": "Native font face/family text uses its real 32-byte destination budget, preserving LOGFONT field widths and complete UTF-8 code points."
+    },
+    {
+      "path": "src/ui/init.cpp",
+      "scope": "FCreateFonts",
+      "baseline_line": 189,
+      "migration_parent_line": 189,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(plf->lfFaceName, app.lpui->rgszArial[0])",
+      "destination_span": "std::span{plf->lfFaceName}",
+      "role": "Native font face/family text uses its real 32-byte destination budget, preserving LOGFONT field widths and complete UTF-8 code points."
+    },
+    {
+      "path": "src/ui/init.cpp",
+      "scope": "FCreateFonts",
+      "baseline_line": 196,
+      "migration_parent_line": 196,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(plf->lfFaceName, app.lpui->rgszArial[i])",
+      "destination_span": "std::span{plf->lfFaceName}",
+      "role": "Native font face/family text uses its real 32-byte destination budget, preserving LOGFONT field widths and complete UTF-8 code points."
+    },
+    {
+      "path": "src/ui/init.cpp",
+      "scope": "FCreateFonts",
+      "baseline_line": 199,
+      "migration_parent_line": 199,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(plf->lfFaceName, app.lpui->rgszArial[1])",
+      "destination_span": "std::span{plf->lfFaceName}",
+      "role": "Native font face/family text uses its real 32-byte destination budget, preserving LOGFONT field widths and complete UTF-8 code points."
+    },
+    {
+      "path": "src/ui/init.cpp",
+      "scope": "ReadIniSettings",
+      "baseline_line": 631,
+      "migration_parent_line": 631,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.lpui->rgszArial[i], app.state.szWork)",
+      "destination_span": "std::span{app.lpui->rgszArial[i]}",
+      "role": "Native font face/family text uses its real 32-byte destination budget, preserving LOGFONT field widths and complete UTF-8 code points."
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "scope": "FChooseLibraryGameName",
+      "baseline_line": 458,
+      "migration_parent_line": 460,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szMessage, TextIO().pfnCompressed(app, idsLibraryStorageFailed))",
+      "destination_span": "std::span{szMessage}",
+      "role": "Display/fixed-label text in the named local array or explicit array tail; retain fitting bytes and terminate a complete UTF-8 prefix within that capacity."
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "scope": "FChooseLibraryRaceName",
+      "baseline_line": 478,
+      "migration_parent_line": 480,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szMessage, TextIO().pfnCompressed(app, idsLibraryStorageFailed))",
+      "destination_span": "std::span{szMessage}",
+      "role": "Display/fixed-label text in the named local array or explicit array tail; retain fitting bytes and terminate a complete UTF-8 prefix within that capacity."
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "scope": "FBeginLibraryRace",
+      "baseline_line": 897,
+      "migration_parent_line": 899,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.vplr.szName, TextIO().pfnCompressed(app, idsHumanoid))",
+      "destination_span": "std::span{app.state.vplr.szName}",
+      "role": "Fixed 32-byte race-name label field; preserve the generated/default name and its existing UTF-8 byte budget."
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "scope": "FBeginLibraryRace",
+      "baseline_line": 898,
+      "migration_parent_line": 900,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.vplr.szNames, TextIO().pfnCompressed(app, idsLibraryHumanoids))",
+      "destination_span": "std::span{app.state.vplr.szNames}",
+      "role": "Fixed 32-byte race-name label field; preserve the generated/default name and its existing UTF-8 byte budget."
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "scope": "FDuplicateLibraryGame",
+      "baseline_line": 2251,
+      "migration_parent_line": 2254,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szMessage, TextIO().pfnCompressed(app, idsLibraryStorageFailed))",
+      "destination_span": "std::span{szMessage}",
+      "role": "Display/fixed-label text in the named local array or explicit array tail; retain fitting bytes and terminate a complete UTF-8 prefix within that capacity."
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "scope": "FRenameLibraryGame",
+      "baseline_line": 2291,
+      "migration_parent_line": 2294,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szMessage, TextIO().pfnCompressed(app, idsLibraryStorageFailed))",
+      "destination_span": "std::span{szMessage}",
+      "role": "Display/fixed-label text in the named local array or explicit array tail; retain fitting bytes and terminate a complete UTF-8 prefix within that capacity."
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "scope": "FRenameLibraryGame",
+      "baseline_line": 2292,
+      "migration_parent_line": 2295,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szMessage, TextIO().pfnCompressed(app, idsLibraryStorageFailed))",
+      "destination_span": "std::span{szMessage}",
+      "role": "Display/fixed-label text in the named local array or explicit array tail; retain fitting bytes and terminate a complete UTF-8 prefix within that capacity."
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "scope": "FRenameLibraryGame",
+      "baseline_line": 2297,
+      "migration_parent_line": 2300,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szMessage, TextIO().pfnCompressed(app, idsLibraryStorageFailed))",
+      "destination_span": "std::span{szMessage}",
+      "role": "Display/fixed-label text in the named local array or explicit array tail; retain fitting bytes and terminate a complete UTF-8 prefix within that capacity."
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "scope": "FFinishLibraryGame",
+      "baseline_line": 2671,
+      "migration_parent_line": 2674,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szMessage, TextIO().pfnCompressed(app, idsLibraryStorageFailed))",
+      "destination_span": "std::span{szMessage}",
+      "role": "Display/fixed-label text in the named local array or explicit array tail; retain fitting bytes and terminate a complete UTF-8 prefix within that capacity."
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "scope": "CreateChildWindows",
+      "baseline_line": 158,
+      "migration_parent_line": 158,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szData, szNameUtf8)",
+      "destination_span": "std::span{szData}",
+      "role": "Display/fixed-label text in the named local array or explicit array tail; retain fitting bytes and terminate a complete UTF-8 prefix within that capacity."
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "scope": "DrawHostDialog2",
+      "baseline_line": 1922,
+      "migration_parent_line": 1910,
+      "operation": "strcat",
+      "original_call": "std::strcat(app.state.szWork, \" - HACKER\")",
+      "destination_span": "std::span{app.state.szWork}",
+      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "scope": "HostTimerProc",
+      "baseline_line": 2238,
+      "migration_parent_line": 2223,
+      "operation": "strcat",
+      "original_call": "std::strcat(app.state.szWork, \"s\")",
+      "destination_span": "std::span{app.state.szWork}",
+      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "scope": "HostTimerProc",
+      "baseline_line": 2240,
+      "migration_parent_line": 2225,
+      "operation": "strcat",
+      "original_call": "std::strcat(app.state.szWork, TextIO().pfnCompressed(app, idsOut))",
+      "destination_span": "std::span{app.state.szWork}",
+      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "scope": "TitleWndProc",
+      "baseline_line": 2882,
+      "migration_parent_line": 2867,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(plf->lfFaceName, app.lpui->rgszArial[3])",
+      "destination_span": "std::span{plf->lfFaceName}",
+      "role": "Native font face/family text uses its real 32-byte destination budget, preserving LOGFONT field widths and complete UTF-8 code points."
+    },
+    {
+      "path": "src/ui/mineui.cpp",
+      "scope": "DrawMineSurvey",
+      "baseline_line": 406,
+      "migration_parent_line": 406,
+      "operation": "strcat",
+      "original_call": "std::strcat(szT, psz)",
+      "destination_span": "std::span{szT}",
+      "role": "Display/fixed-label text in the named local array or explicit array tail; retain fitting bytes and terminate a complete UTF-8 prefix within that capacity."
+    },
+    {
+      "path": "src/ui/mineui.cpp",
+      "scope": "DrawMineSurvey",
+      "baseline_line": 566,
+      "migration_parent_line": 566,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szT, TextIO().pfnCompressed(app, static_cast<StringId>(idsPop + (fShortLabels == 0))))",
+      "destination_span": "std::span{szT}",
+      "role": "Display/fixed-label text in the named local array or explicit array tail; retain fitting bytes and terminate a complete UTF-8 prefix within that capacity."
+    },
+    {
+      "path": "src/ui/mineui.cpp",
+      "scope": "DrawMineSurvey",
+      "baseline_line": 578,
+      "migration_parent_line": 578,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.szWork, szT)",
+      "destination_span": "std::span{app.state.szWork}",
+      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+    },
+    {
+      "path": "src/ui/mineui.cpp",
+      "scope": "DrawMineSurvey",
+      "baseline_line": 599,
+      "migration_parent_line": 599,
+      "operation": "strcat",
+      "original_call": "std::strcat(app.state.szWork, \"s\")",
+      "destination_span": "std::span{app.state.szWork}",
+      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+    },
+    {
+      "path": "src/ui/mineui.cpp",
+      "scope": "MineClick",
+      "baseline_line": 932,
+      "migration_parent_line": 932,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(rgsz[c], app.state.rglpshdef[lpfl->iPlayer][ishdef].hul.szClass)",
+      "destination_span": "std::span{rgsz[c]}",
+      "role": "Display/fixed-label text in the named local array or explicit array tail; retain fitting bytes and terminate a complete UTF-8 prefix within that capacity."
+    },
+    {
+      "path": "src/ui/mineui.cpp",
+      "scope": "SetMineralTitleBar",
+      "baseline_line": 1189,
+      "migration_parent_line": 1189,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.lpui->szMineralTitle, psz)",
+      "destination_span": "std::span{app.lpui->szMineralTitle}",
+      "role": "The 90-byte mineral-title destination is bounded; borrowed-source append sites remain separately pending."
+    },
+    {
+      "path": "src/ui/msgui.cpp",
+      "scope": "SetMsgTitle",
+      "baseline_line": 734,
+      "migration_parent_line": 733,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.lpui->szMsgTitle, app.state.szWork)",
+      "destination_span": "std::span{app.lpui->szMsgTitle}",
+      "role": "The 90-byte message-title field is bounded independently of the larger source scratch buffer."
+    },
+    {
+      "path": "src/ui/planetui.cpp",
+      "scope": "DrawPlanetStats",
+      "baseline_line": 464,
+      "migration_parent_line": 464,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.szWork, part.pcom().szName())",
+      "destination_span": "std::span{app.state.szWork}",
+      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+    },
+    {
+      "path": "src/ui/planetui.cpp",
+      "scope": "DrawPlanetStats",
+      "baseline_line": 517,
+      "migration_parent_line": 517,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.szWork, part.pcom().szName())",
+      "destination_span": "std::span{app.state.szWork}",
+      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+    },
+    {
+      "path": "src/ui/planetui.cpp",
+      "scope": "DrawPlanetStarbase",
+      "baseline_line": 572,
+      "migration_parent_line": 572,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.szWork, lpshdef->hul.szClass)",
+      "destination_span": "std::span{app.state.szWork}",
+      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+    },
+    {
+      "path": "src/ui/planetui.cpp",
+      "scope": "DrawPlanetStarbase",
+      "baseline_line": 675,
+      "migration_parent_line": 675,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.szWork, psz)",
+      "destination_span": "std::span{app.state.szWork}",
+      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+    },
+    {
+      "path": "src/ui/planetui.cpp",
+      "scope": "DrawPlanetProduction",
+      "baseline_line": 815,
+      "migration_parent_line": 815,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.szWork, psz)",
+      "destination_span": "std::span{app.state.szWork}",
+      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "scope": "DrawPopup",
+      "baseline_line": 113,
+      "migration_parent_line": 113,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.szWork, TextIO().pfnCompressed(app, idsUnknown2))",
+      "destination_span": "std::span{app.state.szWork}",
+      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "scope": "DrawPopup",
+      "baseline_line": 238,
+      "migration_parent_line": 238,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.szWork, app.lpui->GlobalPD.lpshdef->hul.szClass)",
+      "destination_span": "std::span{app.state.szWork}",
+      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+    },
+    {
+      "path": "src/ui/preferencesui.cpp",
+      "scope": "ReadIniPresets",
+      "baseline_line": 41,
+      "migration_parent_line": 42,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.vrgZip[i].szName, psz)",
+      "destination_span": "std::span{app.state.vrgZip[i].szName}",
+      "role": "Fixed preset name: 12 UTF-8 payload bytes plus NUL; retain stored field width and fitting names."
+    },
+    {
+      "path": "src/ui/preferencesui.cpp",
+      "scope": "ReadIniPresets",
+      "baseline_line": 64,
+      "migration_parent_line": 65,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.vrgZipProd[i].szName, psz)",
+      "destination_span": "std::span{app.state.vrgZipProd[i].szName}",
+      "role": "Fixed preset name: 12 UTF-8 payload bytes plus NUL; retain stored field width and fitting names."
+    },
+    {
+      "path": "src/ui/produceui.cpp",
+      "scope": "DrawProductionDlg",
+      "baseline_line": 568,
+      "migration_parent_line": 567,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&szT[c], app.state.szWork)",
+      "destination_span": "std::span{szT}.subspan(static_cast<std::size_t>(c))",
+      "role": "Display/fixed-label text in the named local array or explicit array tail; retain fitting bytes and terminate a complete UTF-8 prefix within that capacity."
+    },
+    {
+      "path": "src/ui/produceui.cpp",
+      "scope": "FillProdSrcLB",
+      "baseline_line": 602,
+      "migration_parent_line": 601,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&szT[6], psz)",
+      "destination_span": "std::span{szT}.subspan(6)",
+      "role": "Display/fixed-label text in the named local array or explicit array tail; retain fitting bytes and terminate a complete UTF-8 prefix within that capacity."
+    },
+    {
+      "path": "src/ui/produceui.cpp",
+      "scope": "FillProdSrcLB",
+      "baseline_line": 607,
+      "migration_parent_line": 606,
+      "operation": "strcat",
+      "original_call": "std::strcat(&szT[6], \" (Auto Build)\")",
+      "destination_span": "std::span{szT}.subspan(6)",
+      "role": "Display/fixed-label text in the named local array or explicit array tail; retain fitting bytes and terminate a complete UTF-8 prefix within that capacity."
+    },
+    {
+      "path": "src/ui/produceui.cpp",
+      "scope": "ZipProdDlg",
+      "baseline_line": 734,
+      "migration_parent_line": 732,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.szWork, app.state.vrgZipProd[app.lpui->iResTechNow].szName)",
+      "destination_span": "std::span{app.state.szWork}",
+      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+    },
+    {
+      "path": "src/ui/produceui.cpp",
+      "scope": "ZipProdDlg",
+      "baseline_line": 745,
+      "migration_parent_line": 742,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.vrgZipProd[app.lpui->iResTechNow].szName, app.state.szWork)",
+      "destination_span": "std::span{app.state.vrgZipProd[app.lpui->iResTechNow].szName}",
+      "role": "Fixed preset name: 12 UTF-8 payload bytes plus NUL; retain stored field width and fitting names."
+    },
+    {
+      "path": "src/ui/produceui.cpp",
+      "scope": "FillZipProdLB",
+      "baseline_line": 822,
+      "migration_parent_line": 819,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.szWork, szAuto)",
+      "destination_span": "std::span{app.state.szWork}",
+      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+    },
+    {
+      "path": "src/ui/raceui.cpp",
+      "scope": "RaceWizardDlg1",
+      "baseline_line": 345,
+      "migration_parent_line": 339,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.vplr.szNames, psz)",
+      "destination_span": "std::span{app.state.vplr.szNames}",
+      "role": "Fixed 32-byte race-name label field; preserve the generated/default name and its existing UTF-8 byte budget."
+    },
+    {
+      "path": "src/ui/raceui.cpp",
+      "scope": "DrawRace3",
+      "baseline_line": 930,
+      "migration_parent_line": 924,
+      "operation": "strcat",
+      "original_call": "std::strcat(app.state.szWork, \"00\")",
+      "destination_span": "std::span{app.state.szWork}",
+      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+    },
+    {
+      "path": "src/ui/raceui.cpp",
+      "scope": "DrawRace3",
+      "baseline_line": 932,
+      "migration_parent_line": 926,
+      "operation": "strcat",
+      "original_call": "std::strcat(app.state.szWork, \"kT\")",
+      "destination_span": "std::span{app.state.szWork}",
+      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+    },
+    {
+      "path": "src/ui/raceui.cpp",
+      "scope": "InvalidateAdvPtsRect",
+      "baseline_line": 1323,
+      "migration_parent_line": 1317,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(plf->lfFaceName, app.lpui->rgszArial[1])",
+      "destination_span": "std::span{plf->lfFaceName}",
+      "role": "Native font face/family text uses its real 32-byte destination budget, preserving LOGFONT field widths and complete UTF-8 code points."
+    },
+    {
+      "path": "src/ui/reportui.cpp",
+      "scope": "ScoreXDlg",
+      "baseline_line": 493,
+      "migration_parent_line": 493,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&app.state.szWork[i * 40], szT)",
+      "destination_span": "std::span{app.state.szWork}.subspan(static_cast<std::size_t>(i) * 40, 40)",
+      "role": "One of eight logical 40-byte history labels in shared work storage; preserve the following row and the unused tail."
+    },
+    {
+      "path": "src/ui/reportui.cpp",
+      "scope": "DrawVCReport",
+      "baseline_line": 701,
+      "migration_parent_line": 701,
+      "operation": "strcat",
+      "original_call": "std::strcat(app.state.szWork, \"%\")",
+      "destination_span": "std::span{app.state.szWork}",
+      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+    },
+    {
+      "path": "src/ui/reportui.cpp",
+      "scope": "DrawReportItem",
+      "baseline_line": 1363,
+      "migration_parent_line": 1364,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szT, app.state.rglpbtlplan[lpfl->iplr()][lpfl->iplan].szName)",
+      "destination_span": "std::span{szT}",
+      "role": "Display/fixed-label text in the named local array or explicit array tail; retain fitting bytes and terminate a complete UTF-8 prefix within that capacity."
+    },
+    {
+      "path": "src/ui/reportui.cpp",
+      "scope": "ICompReport",
+      "baseline_line": 1789,
+      "migration_parent_line": 1790,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szT, psz)",
+      "destination_span": "std::span{szT}",
+      "role": "Display/fixed-label text in the named local array or explicit array tail; retain fitting bytes and terminate a complete UTF-8 prefix within that capacity."
+    },
+    {
+      "path": "src/ui/reportui.cpp",
+      "scope": "ICompReport",
+      "baseline_line": 1807,
+      "migration_parent_line": 1808,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szT, psz)",
+      "destination_span": "std::span{szT}",
+      "role": "Display/fixed-label text in the named local array or explicit array tail; retain fitting bytes and terminate a complete UTF-8 prefix within that capacity."
+    },
+    {
+      "path": "src/ui/reportui.cpp",
+      "scope": "ICompReport",
+      "baseline_line": 1813,
+      "migration_parent_line": 1814,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szT, psz)",
+      "destination_span": "std::span{szT}",
+      "role": "Display/fixed-label text in the named local array or explicit array tail; retain fitting bytes and terminate a complete UTF-8 prefix within that capacity."
+    },
+    {
+      "path": "src/ui/reportui.cpp",
+      "scope": "ICompReport",
+      "baseline_line": 1819,
+      "migration_parent_line": 1820,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szT, app.state.szWork)",
+      "destination_span": "std::span{szT}",
+      "role": "Display/fixed-label text in the named local array or explicit array tail; retain fitting bytes and terminate a complete UTF-8 prefix within that capacity."
+    },
+    {
+      "path": "src/ui/reportui.cpp",
+      "scope": "ICompReport",
+      "baseline_line": 1932,
+      "migration_parent_line": 1933,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szT, psz)",
+      "destination_span": "std::span{szT}",
+      "role": "Display/fixed-label text in the named local array or explicit array tail; retain fitting bytes and terminate a complete UTF-8 prefix within that capacity."
+    },
+    {
+      "path": "src/ui/reportui.cpp",
+      "scope": "ICompReport",
+      "baseline_line": 1939,
+      "migration_parent_line": 1940,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szT, psz)",
+      "destination_span": "std::span{szT}",
+      "role": "Display/fixed-label text in the named local array or explicit array tail; retain fitting bytes and terminate a complete UTF-8 prefix within that capacity."
+    },
+    {
+      "path": "src/ui/reportui.cpp",
+      "scope": "ICompReport",
+      "baseline_line": 1956,
+      "migration_parent_line": 1957,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szT, psz)",
+      "destination_span": "std::span{szT}",
+      "role": "Display/fixed-label text in the named local array or explicit array tail; retain fitting bytes and terminate a complete UTF-8 prefix within that capacity."
+    },
+    {
+      "path": "src/ui/reportui.cpp",
+      "scope": "ICompReport",
+      "baseline_line": 1996,
+      "migration_parent_line": 1997,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szT, psz)",
+      "destination_span": "std::span{szT}",
+      "role": "Display/fixed-label text in the named local array or explicit array tail; retain fitting bytes and terminate a complete UTF-8 prefix within that capacity."
+    },
+    {
+      "path": "src/ui/reportui.cpp",
+      "scope": "ICompReport",
+      "baseline_line": 2068,
+      "migration_parent_line": 2069,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szT, psz)",
+      "destination_span": "std::span{szT}",
+      "role": "Display/fixed-label text in the named local array or explicit array tail; retain fitting bytes and terminate a complete UTF-8 prefix within that capacity."
+    },
+    {
+      "path": "src/ui/reportui.cpp",
+      "scope": "ICompReport",
+      "baseline_line": 2147,
+      "migration_parent_line": 2148,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szT, psz)",
+      "destination_span": "std::span{szT}",
+      "role": "Display/fixed-label text in the named local array or explicit array tail; retain fitting bytes and terminate a complete UTF-8 prefix within that capacity."
+    },
+    {
+      "path": "src/ui/reportui.cpp",
+      "scope": "ICompReport",
+      "baseline_line": 2154,
+      "migration_parent_line": 2155,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szT, psz)",
+      "destination_span": "std::span{szT}",
+      "role": "Display/fixed-label text in the named local array or explicit array tail; retain fitting bytes and terminate a complete UTF-8 prefix within that capacity."
+    },
+    {
+      "path": "src/ui/reportui.cpp",
+      "scope": "ReportColumnPopup",
+      "baseline_line": 2296,
+      "migration_parent_line": 2297,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&rgsz[cItems][cch], szColTitle)",
+      "destination_span": "std::span{rgsz[cItems]}.subspan(static_cast<std::size_t>(cch))",
+      "role": "A 50-byte popup label row or its remaining tail; retain its existing prefix and the next row."
+    },
+    {
+      "path": "src/ui/reportui.cpp",
+      "scope": "ReportColumnPopup",
+      "baseline_line": 2300,
+      "migration_parent_line": 2301,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(rgsz[cItems], rgsz[cItems - 1])",
+      "destination_span": "std::span{rgsz[cItems]}",
+      "role": "A 50-byte popup label row or its remaining tail; retain its existing prefix and the next row."
+    },
+    {
+      "path": "src/ui/reportui.cpp",
+      "scope": "ReportColumnPopup",
+      "baseline_line": 2304,
+      "migration_parent_line": 2305,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(rgsz[cItems], app.state.rgszMinerals[j])",
+      "destination_span": "std::span{rgsz[cItems]}",
+      "role": "A 50-byte popup label row or its remaining tail; retain its existing prefix and the next row."
+    },
+    {
+      "path": "src/ui/reportui.cpp",
+      "scope": "ReportColumnPopup",
+      "baseline_line": 2310,
+      "migration_parent_line": 2311,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(rgsz[cItems], TextIO().pfnCompressed(app, idsWeightedAverage))",
+      "destination_span": "std::span{rgsz[cItems]}",
+      "role": "A 50-byte popup label row or its remaining tail; retain its existing prefix and the next row."
+    },
+    {
+      "path": "src/ui/reportui.cpp",
+      "scope": "ReportColumnPopup",
+      "baseline_line": 2320,
+      "migration_parent_line": 2321,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&rgsz[cItems][cch], szColTitle)",
+      "destination_span": "std::span{rgsz[cItems]}.subspan(static_cast<std::size_t>(cch))",
+      "role": "A 50-byte popup label row or its remaining tail; retain its existing prefix and the next row."
+    },
+    {
+      "path": "src/ui/reportui.cpp",
+      "scope": "ReportColumnPopup",
+      "baseline_line": 2322,
+      "migration_parent_line": 2323,
+      "operation": "strcat",
+      "original_call": "std::strcat(rgsz[cItems], szT)",
+      "destination_span": "std::span{rgsz[cItems]}",
+      "role": "A 50-byte popup label row or its remaining tail; retain its existing prefix and the next row."
+    },
+    {
+      "path": "src/ui/reportui.cpp",
+      "scope": "ReportColumnPopup",
+      "baseline_line": 2340,
+      "migration_parent_line": 2341,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&rgsz[cItems][cch], szColTitle)",
+      "destination_span": "std::span{rgsz[cItems]}.subspan(static_cast<std::size_t>(cch))",
+      "role": "A 50-byte popup label row or its remaining tail; retain its existing prefix and the next row."
+    },
+    {
+      "path": "src/ui/reportui.cpp",
+      "scope": "ReportColumnPopup",
+      "baseline_line": 2342,
+      "migration_parent_line": 2343,
+      "operation": "strcat",
+      "original_call": "std::strcat(rgsz[cItems], szT)",
+      "destination_span": "std::span{rgsz[cItems]}",
+      "role": "A 50-byte popup label row or its remaining tail; retain its existing prefix and the next row."
+    },
+    {
+      "path": "src/ui/researchui.cpp",
+      "scope": "DrawResearchDlg",
+      "baseline_line": 304,
+      "migration_parent_line": 304,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.szWork, part.pcom().szName())",
+      "destination_span": "std::span{app.state.szWork}",
+      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+    },
+    {
+      "path": "src/ui/researchui.cpp",
+      "scope": "DisplayComponentInfo",
+      "baseline_line": 871,
+      "migration_parent_line": 871,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.szWork, ppart->pcom().szName())",
+      "destination_span": "std::span{app.state.szWork}",
+      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+    },
+    {
+      "path": "src/ui/researchui.cpp",
+      "scope": "DisplayComponentInfo",
+      "baseline_line": 1470,
+      "migration_parent_line": 1470,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.szWork, szT)",
+      "destination_span": "std::span{app.state.szWork}",
+      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+    },
+    {
+      "path": "src/ui/scan.cpp",
+      "scope": "DrawScannerSBar",
+      "baseline_line": 1956,
+      "migration_parent_line": 1957,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.szWork, psbar->psz)",
+      "destination_span": "std::span{app.state.szWork}",
+      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+    },
+    {
+      "path": "src/ui/scan.cpp",
+      "scope": "DrawScannerSBar",
+      "baseline_line": 1996,
+      "migration_parent_line": 1997,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szBuf, PszGetDistance(app, pt.x, pt.y, pt2.x, pt2.y))",
+      "destination_span": "std::span{szBuf}",
+      "role": "Display/fixed-label text in the named local array or explicit array tail; retain fitting bytes and terminate a complete UTF-8 prefix within that capacity."
+    },
+    {
+      "path": "src/ui/ship2ui.cpp",
+      "scope": "ZipOrderDlg",
+      "baseline_line": 126,
+      "migration_parent_line": 125,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.szWork, app.state.vrgZip[app.lpui->iResTechNow].szName)",
+      "destination_span": "std::span{app.state.szWork}",
+      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+    },
+    {
+      "path": "src/ui/ship2ui.cpp",
+      "scope": "ZipOrderDlg",
+      "baseline_line": 135,
+      "migration_parent_line": 133,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.vrgZip[app.lpui->iResTechNow].szName, app.state.szWork)",
+      "destination_span": "std::span{app.state.vrgZip[app.lpui->iResTechNow].szName}",
+      "role": "Fixed preset name: 12 UTF-8 payload bytes plus NUL; retain stored field width and fitting names."
+    },
+    {
+      "path": "src/ui/ship2ui.cpp",
+      "scope": "MergeFleetsDlg",
+      "baseline_line": 310,
+      "migration_parent_line": 308,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szT, psz)",
+      "destination_span": "std::span{szT}",
+      "role": "Display/fixed-label text in the named local array or explicit array tail; retain fitting bytes and terminate a complete UTF-8 prefix within that capacity."
+    },
+    {
+      "path": "src/ui/ship2ui.cpp",
+      "scope": "MergeFleetsDlg",
+      "baseline_line": 312,
+      "migration_parent_line": 310,
+      "operation": "strcat",
+      "original_call": "std::strcat(szT, \" *\")",
+      "destination_span": "std::span{szT}",
+      "role": "Display/fixed-label text in the named local array or explicit array tail; retain fitting bytes and terminate a complete UTF-8 prefix within that capacity."
+    },
+    {
+      "path": "src/ui/shipui.cpp",
+      "scope": "ShipCommandProc",
+      "baseline_line": 770,
+      "migration_parent_line": 769,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.szWork, szFleetName)",
+      "destination_span": "std::span{app.state.szWork}",
+      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+    },
+    {
+      "path": "src/ui/shipui.cpp",
+      "scope": "ShipCommandProc",
+      "baseline_line": 774,
+      "migration_parent_line": 772,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szT, app.state.szWork)",
+      "destination_span": "std::span{szT}",
+      "role": "Display/fixed-label text in the named local array or explicit array tail; retain fitting bytes and terminate a complete UTF-8 prefix within that capacity."
+    },
+    {
+      "path": "src/ui/shipui.cpp",
+      "scope": "UpdateOrdersDDs",
+      "baseline_line": 2412,
+      "migration_parent_line": 2406,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&app.state.szWork[1], app.state.rgszMinerals[iMin])",
+      "destination_span": "std::span{app.state.szWork}.subspan(1)",
+      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+    },
+    {
+      "path": "src/ui/shipui.cpp",
+      "scope": "UpdateOrdersDDs",
+      "baseline_line": 2446,
+      "migration_parent_line": 2440,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&szT[1], psz)",
+      "destination_span": "std::span{szT}.subspan(1)",
+      "role": "Display/fixed-label text in the named local array or explicit array tail; retain fitting bytes and terminate a complete UTF-8 prefix within that capacity."
+    },
+    {
+      "path": "src/ui/shipui.cpp",
+      "scope": "FillBattleDD",
+      "baseline_line": 2515,
+      "migration_parent_line": 2509,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.szWork, app.state.rglpbtlplan[app.state.idPlayer][i].szName)",
+      "destination_span": "std::span{app.state.szWork}",
+      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+    },
+    {
+      "path": "src/ui/utilgenui.cpp",
+      "scope": "DiaganolTextOut",
+      "baseline_line": 256,
+      "migration_parent_line": 256,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(plf->lfFaceName, app.lpui->rgszArial[1])",
+      "destination_span": "std::span{plf->lfFaceName}",
+      "role": "Native font face/family text uses its real 32-byte destination budget, preserving LOGFONT field widths and complete UTF-8 code points."
+    },
+    {
+      "path": "src/ui/utilgenui.cpp",
+      "scope": "PasswordDlg",
+      "baseline_line": 1073,
+      "migration_parent_line": 1073,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.szPassLast, szPass)",
+      "destination_span": "std::span{app.state.szPassLast}",
+      "role": "Display/fixed-label text in the named local array or explicit array tail; retain fitting bytes and terminate a complete UTF-8 prefix within that capacity."
+    },
+    {
+      "path": "src/ui/utilgenui.cpp",
+      "scope": "HfontPrinterCreate",
+      "baseline_line": 1330,
+      "migration_parent_line": 1328,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(plf->lfFaceName, app.lpui->rgszArial[1])",
+      "destination_span": "std::span{plf->lfFaceName}",
+      "role": "Native font face/family text uses its real 32-byte destination budget, preserving LOGFONT field widths and complete UTF-8 code points."
+    },
+    {
+      "path": "src/ui/vcr.cpp",
+      "scope": "DrawVCR",
+      "baseline_line": 655,
+      "migration_parent_line": 651,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.szWork, lpshdef->hul.szClass)",
+      "destination_span": "std::span{app.state.szWork}",
+      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+    },
+    {
+      "path": "src/ui/vcr.cpp",
+      "scope": "DrawVCR",
+      "baseline_line": 679,
+      "migration_parent_line": 675,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.szWork, lpshdef->hul.szClass)",
+      "destination_span": "std::span{app.state.szWork}",
+      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+    },
+    {
+      "path": "src/ui/vcr.cpp",
+      "scope": "DrawVCR",
+      "baseline_line": 724,
+      "migration_parent_line": 720,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&app.state.szWork[c], \".\")",
+      "destination_span": "std::span{app.state.szWork}.subspan(static_cast<std::size_t>(c))",
+      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+    },
+    {
+      "path": "src/ui/vcr.cpp",
+      "scope": "DrawVCR",
+      "baseline_line": 727,
+      "migration_parent_line": 723,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&app.state.szWork[c], \"s.\")",
+      "destination_span": "std::span{app.state.szWork}.subspan(static_cast<std::size_t>(c))",
+      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+    },
+    {
+      "path": "src/ui/vcr.cpp",
+      "scope": "DrawVCR",
+      "baseline_line": 765,
+      "migration_parent_line": 761,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.szWork, lpshdef->hul.szClass)",
+      "destination_span": "std::span{app.state.szWork}",
+      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+    }
+  ],
+  "remaining_spelling_scope": "Lexical raw-copy spellings, including SDK declarations/definitions; comments/literals excluded with the manifest lexer. Exact counts prevent new raw sites during the remaining migration.",
+  "remaining_raw_spellings": [
+    {
+      "path": "src/core/create.cpp",
+      "normalized_call": "std::strcat(app.state.rgplr[i].szNames,)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/core/create.cpp",
+      "normalized_call": "std::strcpy(app.state.rgplr[i].szNames,app.state.rgplr[i].szName)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/core/create.cpp",
+      "normalized_call": "std::strcpy(app.state.szBase,pszFile)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/core/create.cpp",
+      "normalized_call": "std::strcpy(app.state.szWork,lpbStart)",
+      "count": 2,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/core/create.cpp",
+      "normalized_call": "std::strcpy(app.state.szWork,pszFile)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/core/file.cpp",
+      "normalized_call": "std::strcpy(app.state.szBase,pszFileName)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/core/file.cpp",
+      "normalized_call": "std::strcpy(lpbtlplan->szName,szName)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/core/file.cpp",
+      "normalized_call": "std::strcpy(lpfl->lpszName,szT)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/core/log.cpp",
+      "normalized_call": "std::strcpy(app.state.szBase,pszFileBase)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/core/log.cpp",
+      "normalized_call": "std::strcpy(lpfl->lpszName,szName)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/core/log.cpp",
+      "normalized_call": "std::strcpy(lpfl->lpszName,szT)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/core/log.cpp",
+      "normalized_call": "std::strcpy(reinterpret_cast<char*>(&rtchgname.rgb[1]),szName)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/core/race.cpp",
+      "normalized_call": "std::strcpy(app.state.szRacePass,app.state.szPassLast)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/core/race.cpp",
+      "normalized_call": "std::strcpy(app.state.szRacePass,szPassword)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/core/race.cpp",
+      "normalized_call": "std::strcpy(app.state.szWork,szFile)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/core/race.cpp",
+      "normalized_call": "std::strcpy(pplr->szName,plrT.szName)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "normalized_call": "std::strcpy(app.state.szBase,szFile)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "normalized_call": "std::strcpy(szFile,app.state.szBase)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/core/save.cpp",
+      "normalized_call": "std::strcat(app.state.szWork,)",
+      "count": 2,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/core/save.cpp",
+      "normalized_call": "std::strcpy(reinterpret_cast<char*>(&rgb[1]),lpsz)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/core/save.cpp",
+      "normalized_call": "std::strcpy(reinterpret_cast<char*>(pb)+1,pplr->szName)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/core/save.cpp",
+      "normalized_call": "std::strcpy(reinterpret_cast<char*>(pb)+1,pplr->szNames)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/core/save.cpp",
+      "normalized_call": "std::strcpy(reinterpret_cast<char*>(pb)+1,szHulName)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/core/save.cpp",
+      "normalized_call": "std::strcpy(reinterpret_cast<char*>(pb)+1,szPlanName)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/core/save.cpp",
+      "normalized_call": "std::strcpy(szHulName,PartQueryIO().pfnHull(lpshdef->hul.ihuldef)->hul.szClass)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/core/save.cpp",
+      "normalized_call": "std::strcpy(szHulName,lpshdef->hul.szClass)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/core/save.cpp",
+      "normalized_call": "std::strcpy(szPlanName,lpbtlplan->szName)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/core/turn.cpp",
+      "normalized_call": "std::strcat(szT,app.state.szBase)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/core/turn.cpp",
+      "normalized_call": "std::strcat(szT,pchT+1)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/core/turn.cpp",
+      "normalized_call": "std::strcpy(pchBak,)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/core/turn.cpp",
+      "normalized_call": "std::strcpy(pchBak,pchCur)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/core/turn.cpp",
+      "normalized_call": "std::strcpy(pchCur,)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/core/turn.cpp",
+      "normalized_call": "std::strcpy(szT,app.state.szBackup)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/core/turn2.cpp",
+      "normalized_call": "std::strcat(app.state.szBackup,szDirSep)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/core/turn2.cpp",
+      "normalized_call": "std::strcpy(app.state.szBackup,app.state.szBase)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/core/turn2.cpp",
+      "normalized_call": "std::strcpy(pchT,)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/core/util.cpp",
+      "normalized_call": "std::strcat(psz,)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/core/util.cpp",
+      "normalized_call": "std::strcat(szFile,)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/core/util.cpp",
+      "normalized_call": "std::strcat(szFile,app.state.mpdtsz[dt])",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/core/util.cpp",
+      "normalized_call": "std::strcpy(psz,lpshdef->hul.szClass)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/core/util.cpp",
+      "normalized_call": "std::strcpy(szFile,app.state.szBase)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/core/utilgen.cpp",
+      "normalized_call": "std::strcpy(szOut,szWork)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/host/host.cpp",
+      "normalized_call": "std::strcat(szCmdLine,)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/host/host.cpp",
+      "normalized_call": "std::strcat(szCmdLine,argv[i])",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/battleui.cpp",
+      "normalized_call": "std::strcpy(&app.lpui->btlplan.szName[cLen],)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "normalized_call": "lstrcpyA(app.lpui->lpshdefBuild->hul.szClass,app.state.szWork)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "normalized_call": "std::strcpy(&sz[4],part.pcom().szName())",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "normalized_call": "std::strcpy(lpsz+cLen,)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "normalized_call": "std::strcpy(pch+-2,pch+-1)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/createui.cpp",
+      "normalized_call": "std::strcat(app.state.rgplr[i].szNames,)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/createui.cpp",
+      "normalized_call": "std::strcpy(app.state.game.szName,app.state.szBase)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/createui.cpp",
+      "normalized_call": "std::strcpy(app.state.rgplr[i].szNames,app.state.rgplr[i].szName)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/createui.cpp",
+      "normalized_call": "std::strcpy(app.state.szBase,szFile)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/createui.cpp",
+      "normalized_call": "std::strcpy(app.state.szRaceFile,app.lpui->vrgszFileNew+(iCurVal>>2)*13)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/createui.cpp",
+      "normalized_call": "std::strcpy(app.state.szRacePass,app.state.szPassLast)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/createui.cpp",
+      "normalized_call": "std::strcpy(rgszLibraryRaceNew[iCurVal>>2],szLibraryRace)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/createui.cpp",
+      "normalized_call": "std::strcpy(rgszLibraryRaceNew[iNewVal],szLibraryRace)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/fileui.cpp",
+      "normalized_call": "std::strcat(szT,)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/fileui.cpp",
+      "normalized_call": "std::strcat(szT,pszExt)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/fileui.cpp",
+      "normalized_call": "std::strcpy(app.lpui->vrgszMRU+256*i,app.lpui->vrgszMRU+256*(i-1))",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/fileui.cpp",
+      "normalized_call": "std::strcpy(app.lpui->vrgszMRU,szT)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/fileui.cpp",
+      "normalized_call": "std::strcpy(szT,app.lpui->vrgszMRU+256*i)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/fileui.cpp",
+      "normalized_call": "std::strcpy(szT,pszFileName)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "normalized_call": "std::strcpy(app.lpui->vrgszMRU+256*i,rgpszRecent[i])",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "normalized_call": "std::strcpy(app.state.szBase,szFile)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "normalized_call": "std::strcpy(plc->szName,pszName)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "normalized_call": "std::strcpy(prv->szLatest,pszName)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "normalized_call": "std::strcpy(prv->szSame,pszName)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "normalized_call": "std::strcpy(pszName,szName)",
+      "count": 2,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "normalized_call": "std::strcpy(rgpszRecent[j],rgpszRecent[i])",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "normalized_call": "std::strcpy(szDir,)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "normalized_call": "std::strcpy(szDir,app.state.szBase)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "normalized_call": "std::strcpy(szDir,szSource)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "normalized_call": "std::strcpy(szFilter,TextIO().pfnCompressed(app,idsLibraryOrdersImportFilter))",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "normalized_call": "std::strcpy(szLibraryExchangeName,szStem)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "normalized_call": "std::strcpy(szLibraryName,TextIO().pfnCompressed(app,idsLibraryDefaultGameName))",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "normalized_call": "std::strcpy(szMessage,TextIO().pfnCompressed(app,ids))",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "normalized_call": "std::strcpy(szName,rv.szSame)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "normalized_call": "std::strcpy(szOriginal,pszName)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "normalized_call": "std::strcpy(szSource,pszSource)",
+      "count": 2,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/libraryzip.cpp",
+      "normalized_call": "std::strcpy(szPath,szFile)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/logui.cpp",
+      "normalized_call": "std::strcpy(&szT[cch],iTurn==37?:)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "normalized_call": "std::strcat(app.state.szWork,)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "normalized_call": "std::strcpy(&app.state.szWork[3],app.lpui->vrgszMRU+256*i)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "normalized_call": "std::strcpy(app.state.szBase,app.state.szWork)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "normalized_call": "std::strcpy(app.state.szBase,szFile)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "normalized_call": "std::strcpy(app.state.szBase,szT)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "normalized_call": "std::strcpy(app.state.szWork,app.state.szBase)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "normalized_call": "std::strcpy(app.state.szWork,szT)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "normalized_call": "std::strcpy(szFile,app.state.szBase)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "normalized_call": "std::strcpy(szFile,app.state.szWork)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "normalized_call": "std::strcpy(szT,app.lpui->vrgszMRU+256*(LOWORD(wParam)-4300))",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/mineui.cpp",
+      "normalized_call": "std::strcat(psz,szSummary)",
+      "count": 3,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/msgui.cpp",
+      "normalized_call": "std::strcpy(reinterpret_cast<char*>(app.lpui->lpb2k)+cch,reinterpret_cast<constchar*>(lpmsgplr->rgbMsg()))",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/planetui.cpp",
+      "normalized_call": "lstrcatA(szTitle,psz)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/preferencesui.cpp",
+      "normalized_call": "std::strcpy(app.lpui->vrgszMRU+256*iPass,app.lpui->vrgszMRU+256*i)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/preferencesui.cpp",
+      "normalized_call": "std::strcpy(app.state.szBase,app.state.szWork)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/preferencesui.cpp",
+      "normalized_call": "std::strcpy(psz,app.state.vrgZipProd[i].szName)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/preferencesui.cpp",
+      "normalized_call": "std::strcpy(psz,app.state.vrgZip[i].szName)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/preferencesui.cpp",
+      "normalized_call": "std::strcpy(szEntry,szSection)",
+      "count": 4,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/raceui.cpp",
+      "normalized_call": "std::strcpy(szFile,szFileSuggest)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/scan.cpp",
+      "normalized_call": "std::strcat(psz+8,PszGetLocName(app,app.state.sel.grobj,app.state.sel.id,pt2.x,pt2.y))",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/tutor.cpp",
+      "normalized_call": "std::strcat(app.state.szBase,)",
+      "count": 2,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/tutor.cpp",
+      "normalized_call": "std::strcpy(app.state.vrgZip[iZip].szName,szT)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/utilgenui.cpp",
+      "normalized_call": "std::strcpy(reinterpret_cast<char*>(win32::GetWindowLongPtrA(hwnd,win32::DWLP_USER)),szPass)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "src/ui/vcr.cpp",
+      "normalized_call": "std::strcpy(psz,app.state.szWork)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "compat/win32/include/wincompat_api.h",
+      "normalized_call": "lstrcatA(LPSTRlpString1,LPCSTRlpString2)",
+      "count": 1,
+      "status": "SDK-boundary review",
+      "role": "SDK-shaped declarations/definitions or caller-provisioned message/string buffer; retain only where the current ABI contract requires it."
+    },
+    {
+      "path": "compat/win32/include/wincompat_api.h",
+      "normalized_call": "lstrcpyA(LPSTRlpString1,LPCSTRlpString2)",
+      "count": 1,
+      "status": "SDK-boundary review",
+      "role": "SDK-shaped declarations/definitions or caller-provisioned message/string buffer; retain only where the current ABI contract requires it."
+    },
+    {
+      "path": "compat/win32/src/file.cpp",
+      "normalized_call": "std::strcpy(lpof->szPathName,szPath)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "compat/win32/src/file.cpp",
+      "normalized_call": "std::strcpy(szPath,pszFile)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "compat/win32/src/filedialog.cpp",
+      "normalized_call": "std::strcpy(dlg.szDir,szCwd)",
+      "count": 2,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "compat/win32/src/filedialog.cpp",
+      "normalized_call": "std::strcpy(lp->szDir,szOld)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "compat/win32/src/filedialog.cpp",
+      "normalized_call": "std::strcpy(lp->szDir,szReal)",
+      "count": 3,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "compat/win32/src/filedialog.cpp",
+      "normalized_call": "std::strcpy(lp->szResult,szParent)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "compat/win32/src/filedialog.cpp",
+      "normalized_call": "std::strcpy(lpof->lpstrFile,dlg.szResult)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "compat/win32/src/filedialog.cpp",
+      "normalized_call": "std::strcpy(szOld,lp->szDir)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "compat/win32/src/filedialog.cpp",
+      "normalized_call": "std::strcpy(szParent,szPath)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "compat/win32/src/filedialog.cpp",
+      "normalized_call": "std::strcpy(szPath,dlg.szResult)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "compat/win32/src/filedialog_portal.cpp",
+      "normalized_call": "std::strcpy(szSender,pszUnique+1)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "compat/win32/src/filedialog_portal.cpp",
+      "normalized_call": "std::strcpy(szToken,)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "compat/win32/src/filedialog_windows_sdk.cpp",
+      "normalized_call": "std::wcscpy(pwszFile,pwszName)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "compat/win32/src/list.cpp",
+      "normalized_call": "std::strcpy(reinterpret_cast<LPSTR>(l),lp->rgitem[i].psz)",
+      "count": 1,
+      "status": "SDK-boundary review",
+      "role": "SDK-shaped declarations/definitions or caller-provisioned message/string buffer; retain only where the current ABI contract requires it."
+    },
+    {
+      "path": "compat/win32/src/print.cpp",
+      "normalized_call": "std::strcpy(lp->szTarget,szFile)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "compat/win32/src/print.cpp",
+      "normalized_call": "std::strcpy(lp->szTemp,)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "compat/win32/src/print.cpp",
+      "normalized_call": "std::strcpy(psz,pszDevice)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "compat/win32/src/print.cpp",
+      "normalized_call": "std::strcpy(psz,pszDriver)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "compat/win32/src/print.cpp",
+      "normalized_call": "std::strcpy(psz,pszPort)",
+      "count": 1,
+      "status": "pending",
+      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+    },
+    {
+      "path": "compat/win32/src/services.cpp",
+      "normalized_call": "lstrcatA(LPSTRpszDest,LPCSTRpszSource)",
+      "count": 1,
+      "status": "SDK-boundary review",
+      "role": "SDK-shaped declarations/definitions or caller-provisioned message/string buffer; retain only where the current ABI contract requires it."
+    },
+    {
+      "path": "compat/win32/src/services.cpp",
+      "normalized_call": "lstrcpyA(LPSTRpszDest,LPCSTRpszSource)",
+      "count": 1,
+      "status": "SDK-boundary review",
+      "role": "SDK-shaped declarations/definitions or caller-provisioned message/string buffer; retain only where the current ABI contract requires it."
+    },
+    {
+      "path": "compat/win32/src/services.cpp",
+      "normalized_call": "std::strcat(pszDest,pszSource)",
+      "count": 1,
+      "status": "SDK-boundary review",
+      "role": "SDK-shaped declarations/definitions or caller-provisioned message/string buffer; retain only where the current ABI contract requires it."
+    },
+    {
+      "path": "compat/win32/src/services.cpp",
+      "normalized_call": "std::strcpy(pszDest,pszSource)",
+      "count": 1,
+      "status": "SDK-boundary review",
+      "role": "SDK-shaped declarations/definitions or caller-provisioned message/string buffer; retain only where the current ABI contract requires it."
+    },
+    {
+      "path": "compat/win32/src/toolbar.cpp",
+      "normalized_call": "std::strcpy(reinterpret_cast<char*>(l),lp->rgbtn[i].psz)",
+      "count": 1,
+      "status": "SDK-boundary review",
+      "role": "SDK-shaped declarations/definitions or caller-provisioned message/string buffer; retain only where the current ABI contract requires it."
+    }
+  ]
+}

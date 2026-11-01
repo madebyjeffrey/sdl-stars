@@ -336,7 +336,7 @@ INT_PTR  RaceWizardDlg1(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 win32::SetDlgItemTextA(hwnd, IDC_RACE_NAME, app.state.vplr.szName);
                 std::ranges::fill(app.state.vplr.szNames, 0);
                 psz = TextIO().pfnPlayerName(app, 0, 1, 1, 0, 0, &app.state.vplr);
-                std::strcpy(app.state.vplr.szNames, psz);
+                CchCopyUtf8Prefix(std::span{app.state.vplr.szNames}, psz);
                 win32::SetDlgItemTextA(hwnd, IDC_RACE_PLURAL_NAME, app.state.vplr.szNames);
             }
             if (LOWORD(wParam) <= IDC_RACE_RANDOM) {
@@ -921,9 +921,9 @@ void DrawRace3(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
         if (rgRW3Width[i] < 0 && (i > 0 || !fMacintosh)) {
             dxItem += dxkT;
             if (i == 0) {
-                std::strcat(app.state.szWork, "00");
+                CchAppendUtf8Prefix(std::span{app.state.szWork}, "00");
             } else {
-                std::strcat(app.state.szWork, "kT");
+                CchAppendUtf8Prefix(std::span{app.state.szWork}, "kT");
             }
         }
         dx += dxItem;
@@ -1314,7 +1314,7 @@ void InvalidateAdvPtsRect(APPSESSION &app, HWND hwnd) {
     plfOwner.reset(plf);
     hdc = win32::GetDC(hwnd);
     plf->lfHeight = -24;
-    std::strcpy(plf->lfFaceName, app.lpui->rgszArial[1]);
+    CchCopyUtf8Prefix(std::span{plf->lfFaceName}, app.lpui->rgszArial[1]);
     hfont = win32::CreateFontIndirectA(plf);
     hfontSav = static_cast<HFONT>(win32::SelectObject(hdc, hfont));
     win32::GetTextMetricsA(hdc, &tm);

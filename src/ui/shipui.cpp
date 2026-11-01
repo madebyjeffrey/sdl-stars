@@ -766,10 +766,10 @@ void ShipCommandProc(APPSESSION &app, HWND hwnd, WPARAM wParam, LPARAM lParam) {
         PresentationIO().pfnSelectFleet(app, 1, 0);
     } else if (reinterpret_cast<HWND>(lParam) == app.lpui->rghwndBtn[6] && HIWORD(wParam) == 0) {
         CchSprintf(szFleetName, "%s", PszGetFleetName(app, app.state.sel.fl.id));
-        std::strcpy(app.state.szWork, szFleetName);
+        CchCopyUtf8Prefix(std::span{app.state.szWork}, szFleetName);
         ControlIO().pfnStickyDlgPos(hwnd, &app.lpui->ptStickyRenameDlg, 0);
         if (ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_RENAME), app.lpui->hwndFrame, RenameDlg, 0) != 0) {
-            std::strcpy(szT, app.state.szWork);
+            CchCopyUtf8Prefix(std::span{szT}, app.state.szWork);
             if (std::strcmp(szT, PszGetFleetName(app, app.state.sel.fl.id)) != 0) {
                 LogChangeName(app, grobjFleet, app.state.sel.fl.id, szT);
                 PresentationIO().pfnInvalidateReport(app, rptFleets, 1);
@@ -2403,7 +2403,7 @@ void UpdateOrdersDDs(APPSESSION &app, std::int16_t iLevel) {
                 } else {
                     iMin = i - 1;
                 }
-                std::strcpy(&app.state.szWork[1], app.state.rgszMinerals[iMin]);
+                CchCopyUtf8Prefix(std::span{app.state.szWork}.subspan(1), app.state.rgszMinerals[iMin]);
                 if (app.state.sel.fl.lpplord->rgord()[app.state.sel.iwpAct].txp.rgia[iMin].iAction() != iActionNone) {
                     app.state.szWork[0] = '*';
                     if (iSel == -1) {
@@ -2437,7 +2437,7 @@ void UpdateOrdersDDs(APPSESSION &app, std::int16_t iLevel) {
             for (i = 0; i < app.state.game.cPlayer; i++) {
                 if (i != app.state.idPlayer) {
                     psz = TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, nullptr);
-                    std::strcpy(&szT[1], psz);
+                    CchCopyUtf8Prefix(std::span{szT}.subspan(1), psz);
                     ControlIO().pfnSendMessage(app.lpui->rghwndOrderDD[1], win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(szT));
                 }
             }
@@ -2506,7 +2506,7 @@ void FillBattleDD(APPSESSION &app, std::int16_t iSel) {
     TextIO().pfnCchGetString(app, idsBattlePlans, std::span{app.state.szWork});
     ControlIO().pfnSendMessage(app.lpui->hwndBattleDD, win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(app.state.szWork));
     for (i = 0; i < app.state.rgcbtlplan[app.state.idPlayer]; i++) {
-        std::strcpy(app.state.szWork, app.state.rglpbtlplan[app.state.idPlayer][i].szName);
+        CchCopyUtf8Prefix(std::span{app.state.szWork}, app.state.rglpbtlplan[app.state.idPlayer][i].szName);
         ControlIO().pfnSendMessage(app.lpui->hwndBattleDD, win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(app.state.szWork));
     }
     ControlIO().pfnSendMessage(app.lpui->hwndBattleDD, win32::CB_SETCURSEL, iSel, 0);
