@@ -2704,10 +2704,10 @@
     },
     {
       "path": "src/ui/scan.cpp",
-      "normalized_call": "std::strcat(psz+8,PszGetLocName(app,app.state.sel.grobj,app.state.sel.id,pt2.x,pt2.y))",
+      "normalized_call": "std::strcat(psz+8,PszGetLocName(app,app.state.sel.grobj,app.state.sel.id,pt2.x,pt2.y).data())",
       "count": 1,
       "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
+      "role": "The location source is an owned value; migration of the scanner destination tail capacity is still pending."
     },
     {
       "path": "src/ui/tutor.cpp",

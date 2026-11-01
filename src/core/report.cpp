@@ -53,7 +53,7 @@ std::array<char, 360> PszGetDestName(APPSESSION &app, FLEET *lpfl, HDC hdc) {
         }
     }
     ord = lpfl->lpplord->rgord()[1];
-    return SzReportLabel(PszGetLocName(app, static_cast<GrobjClass>(ord.grobj), ord.id, ord.pt.x, ord.pt.y));
+    return PszGetLocName(app, static_cast<GrobjClass>(ord.grobj), ord.id, ord.pt.x, ord.pt.y);
 
 LNoDest:
     return SzReportLabel(app.state.szDblDash);

@@ -7,6 +7,7 @@
 
 #include "stars_test.h"
 #include "record_io.h"
+#include "text_io.h"
 #include <string>
 #include <limits>
 
@@ -444,7 +445,52 @@ static void test_XorFileBuf_seed_alias_order(void) {
     TEST_CHECK(lSeed1 == 645001258 && lSeed2 == -720506926);
 }
 
-TEST_LIST = {{"definition lines retain whitespace and delimiter grammar", test_PszGetLine_contract}, {"file copy uses full size and rejects unavailable metadata", test_Copy_size_result}, {"numeric parser preserves grammar, capacity and partial assignment", test_CParseNumbers_contract}, {"numeric text retains widths, signs, grouping and scaled boundaries", test_NumberText_boundaries},
+static char *PszLocationPlanet(APPSESSION &app, std::int16_t id) {
+    TEST_CHECK(id == 0);
+    CchCopyUtf8(std::span{app.state.szWork}, "World-\xce\xa9");
+    return app.state.szWork;
+}
+static void test_LocationText_contract(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    THING th{};
+    THING *lpthSav;
+    std::int16_t cThingSav;
+    std::int16_t rgParams[2] = {12, 34};
+    TEST_ASSERT(FStarsTestInit(app));
+    TEXTIO text;
+    text.pfnPlanetName = PszLocationPlanet;
+    TEXTIOSCOPE textScope(text);
+    TEST_CHECK(std::string(PszGetLocName(app, grobjNone, -1, -1, -1).data()) == "Deep Space");
+    TEST_CHECK(std::string(PszGetLocName(app, grobjNone, -1, -32768, 32767).data()) == "Space (-32768, 32767)");
+    TEST_CHECK(std::string(PszGetLocName(app, grobjPlanet, 0, 0, 0).data()) == "World-\xce\xa9");
+    app.state.idPlayer = 0;
+    TEST_CHECK(std::string(PszGetLocName(app, grobjFleet, 0, 0, 0).data()) == "Fleet #1");
+    th.SetIth(ithWormhole);
+    lpthSav = app.state.lpThings; cThingSav = app.state.cThing;
+    app.state.lpThings = &th; app.state.cThing = 1;
+    TEST_CHECK(std::string(PszGetLocName(app, grobjThing, static_cast<std::int16_t>(th.idFull()), 0, 0).data()) == "Wormhole");
+    app.state.lpThings = lpthSav; app.state.cThing = cThingSav;
+    TEST_CHECK(!strcmp(PszFormatString(app, "\\n|\\w", rgParams), "Space (12, 34)|Space (12, 34)"));
+    app.state.dyArial8 = 14;
+    TEST_CHECK(std::string(PszGetDistance(app, 0, 0, 3, 4).data()) == "5.0  Light Years");
+    app.state.dyArial8 = 15;
+    TEST_CHECK(std::string(PszGetDistance(app, 0, 0, 1, 1).data()) == "1.41  l.y.");
+    const auto szFirst = PszGetLocName(app, grobjNone, -1, 12, 34);
+    const auto szSecond = PszGetLocName(app, grobjNone, -1, -1, -1);
+    const auto szDistance = PszGetDistance(app, 0, 0, 1, 1);
+    PszGetLocName(app, grobjPlanet, 0, 0, 0);
+    TEST_CHECK(std::string_view(szFirst.data()) == "Space (12, 34)");
+    TEST_CHECK(std::string_view(szSecond.data()) == "Deep Space");
+    TEST_CHECK(std::string_view(szDistance.data()) == "1.41  l.y.");
+
+}
+
+TEST_LIST = {{"location and distance text preserve branches and work expansion", test_LocationText_contract}, {"definition lines retain whitespace and delimiter grammar", test_PszGetLine_contract}, {"file copy uses full size and rejects unavailable metadata", test_Copy_size_result}, {"numeric parser preserves grammar, capacity and partial assignment", test_CParseNumbers_contract}, {"numeric text retains widths, signs, grouping and scaled boundaries", test_NumberText_boundaries},
              {"numeric text values survive subsequent lookups", test_NumberText_owned},
              {"Roman numerals retain all int16 values within actual capacity", test_IntToRoman_bounded},
              {"XorFileBuf retains RHS-before-destination evaluation", test_XorFileBuf_seed_alias_order},

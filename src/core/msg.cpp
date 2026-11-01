@@ -284,6 +284,7 @@ static char *PchAppendMessageText(APPSESSION &app, char *pch, const char *psz) {
 char *PszFormatString(APPSESSION &app, const char *pszFormat, std::int16_t *pParamsReal) {
     std::array<char, cchCatalogText> szCatalogPchT{};
     std::array<char, 50> szPlayerName{};
+    std::array<char, 360> szLocation{};
     std::int16_t  iMineral;
     std::int16_t  cOut;
     std::int16_t  c;
@@ -466,7 +467,8 @@ char *PszFormatString(APPSESSION &app, const char *pszFormat, std::int16_t *pPar
                     goto LThingName;
                 }
                 if (*pParams != -1) {
-                    pchT = PszGetLocName(app, grobjNone, -1, *pParams, pParams[1]);
+                    szLocation = PszGetLocName(app, grobjNone, -1, *pParams, pParams[1]);
+                    pchT = szLocation.data();
                     pParams++;
                     goto FinishString;
                 }

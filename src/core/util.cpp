@@ -1195,22 +1195,30 @@ std::int16_t FFleetSplitAll(APPSESSION &app, FLEET *pfl) {
     return 0;
 }
 
-char *PszGetLocName(APPSESSION &app, GrobjClass grobj, std::int16_t id, std::int16_t x, std::int16_t y) {
+// Keep the work-buffer effects used by later message \w fields, while callers
+// retain an independent value through subsequent lookups or drawing.
+static std::array<char, 360> SzLocationLabel(std::string_view sz) {
+    std::array<char, 360> szResult{};
+    CchCopyUtf8Prefix(std::span{szResult}, sz);
+    return szResult;
+}
+
+std::array<char, 360> PszGetLocName(APPSESSION &app, GrobjClass grobj, std::int16_t id, std::int16_t x, std::int16_t y) {
     if (id == -1)
         goto NoObj;
     if (grobj == grobjPlanet)
-        return TextIO().pfnPlanetName(app, id);
+        return SzLocationLabel(TextIO().pfnPlanetName(app, id));
     if (grobj == grobjFleet)
-        return PszGetFleetName(app, id);
+        return SzLocationLabel(PszGetFleetName(app, id));
     if (grobj == grobjThing)
-        return PszGetThingName(app, id);
+        return SzLocationLabel(PszGetThingName(app, id));
 NoObj:
     if (x == -1 && y == -1) {
         CchCopyUtf8Prefix(std::span{app.state.szWork}, TextIO().pfnCompressed(app, idsDeepSpace).data());
     } else {
         CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsSpaceDD).data(), x, y);
     }
-    return app.state.szWork;
+    return SzLocationLabel(app.state.szWork);
 }
 
 std::int16_t IshdefPrimaryFromLpfl(APPSESSION &app, FLEET *lpfl, std::int16_t *pcDiff) {
@@ -1242,7 +1250,7 @@ std::int16_t IshdefPrimaryFromLpfl(APPSESSION &app, FLEET *lpfl, std::int16_t *p
     return ish;
 }
 
-char *PszGetDistance(APPSESSION &app, std::int16_t x1, std::int16_t y1, std::int16_t x2, std::int16_t y2) {
+std::array<char, 360> PszGetDistance(APPSESSION &app, std::int16_t x1, std::int16_t y1, std::int16_t x2, std::int16_t y2) {
     std::int32_t d;
     std::int16_t fStarted;
     std::int32_t d2;
@@ -1256,7 +1264,7 @@ char *PszGetDistance(APPSESSION &app, std::int16_t x1, std::int16_t y1, std::int
     } else {
         CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsLdLdLY).data(), d2, d);
     }
-    return app.state.szWork;
+    return SzLocationLabel(app.state.szWork);
 }
 
 double DGetDistance(std::int16_t x1, std::int16_t y1, std::int16_t x2, std::int16_t y2) {

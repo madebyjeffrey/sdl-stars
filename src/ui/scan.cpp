@@ -1994,13 +1994,13 @@ void DrawScannerSBar(APPSESSION &app, HDC hdc, RECT *prc, SBAR *psbar, std::int1
             pt2.x = -1;
         }
         if (pt.x != -1 && pt2.x != -1 && (pt.x != pt2.x || pt.y != pt2.y)) {
-            CchCopyUtf8Prefix(std::span{szBuf}, PszGetDistance(app, pt.x, pt.y, pt2.x, pt2.y));
+            CchCopyUtf8Prefix(std::span{szBuf}, PszGetDistance(app, pt.x, pt.y, pt2.x, pt2.y).data());
             for (psz = szBuf; *psz != ' '; psz++) {
             }
             TextIO().pfnCchGetString(app, static_cast<StringId>(idsLy + (rc.right >= 350)), std::span{szBuf}.subspan(static_cast<std::size_t>(psz - szBuf + 1)));
             if (!psbar || !psbar->pscan) {
                 TextIO().pfnCchGetString(app, idsFrom, std::span{szBuf}.subspan(static_cast<std::size_t>(psz - szBuf + std::strlen(psz))));
-                std::strcat(psz + 8, PszGetLocName(app, app.state.sel.grobj, app.state.sel.id, pt2.x, pt2.y));
+                std::strcat(psz + 8, PszGetLocName(app, app.state.sel.grobj, app.state.sel.id, pt2.x, pt2.y).data());
             }
             win32::ExtTextOutA(hdc, rcT.left + 3, rcT.top + 2, win32::ETO_CLIPPED, &rcClip, szBuf, std::strlen(szBuf), nullptr);
         }

@@ -30,6 +30,7 @@ void DrawShipOrders(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
     std::int16_t iScanActual;
     RECT    rcGauge;
     const char *psz;
+    std::array<char, 360> szLocation{};
     std::int16_t xLeft;
     ORDER   ord;
     std::int32_t l;
@@ -91,13 +92,15 @@ void DrawShipOrders(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
         win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
         if (app.state.sel.iwpAct > 0) {
             ord = app.state.sel.fl.lpplord->rgord()[app.state.sel.iwpAct - 1];
-            psz = PszGetLocName(app, static_cast<GrobjClass>(ord.grobj), ord.id, ord.pt.x, ord.pt.y);
+            szLocation = PszGetLocName(app, static_cast<GrobjClass>(ord.grobj), ord.id, ord.pt.x, ord.pt.y);
+            psz = szLocation.data();
             iScanActual = app.state.sel.iwpAct;
         } else if (app.state.sel.fl.cord <= 1) {
             psz = "";
         } else {
             ord = app.state.sel.fl.lpplord->rgord()[1];
-            psz = PszGetLocName(app, static_cast<GrobjClass>(ord.grobj), ord.id, ord.pt.x, ord.pt.y);
+            szLocation = PszGetLocName(app, static_cast<GrobjClass>(ord.grobj), ord.id, ord.pt.x, ord.pt.y);
+            psz = szLocation.data();
             ord = app.state.sel.fl.lpplord->rgord()[0];
             iScanActual = 1;
         }
@@ -121,7 +124,7 @@ void DrawShipOrders(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
         }
         win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
         pt = app.state.sel.fl.lpplord->rgord()[iScanActual].pt;
-        RightTextOut(app, hdc, xRight, yTop, PszGetDistance(app, ord.pt.x, ord.pt.y, pt.x, pt.y), 0, dxRight);
+        RightTextOut(app, hdc, xRight, yTop, PszGetDistance(app, ord.pt.x, ord.pt.y, pt.x, pt.y).data(), 0, dxRight);
         yTop += app.state.dyArial8 - app.state.gd.fSmallTileMode;
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
         if (!ptile->fMinDraw) {
@@ -2364,12 +2367,14 @@ void FillFleetCompLB(APPSESSION &app) {
 void FillOrdersLB(APPSESSION &app) {
     std::int16_t i;
     char   *psz;
+    std::array<char, 360> szLocation{};
     ORDER   ord;
 
     ControlIO().pfnSendMessage(app.lpui->hwndShipLB, win32::LB_RESETCONTENT, 0, 0);
     for (i = 0; i < app.state.sel.fl.cord; i++) {
         ord = app.state.sel.fl.lpplord->rgord()[i];
-        psz = PszGetLocName(app, static_cast<GrobjClass>(ord.grobj), ord.id, ord.pt.x, ord.pt.y);
+        szLocation = PszGetLocName(app, static_cast<GrobjClass>(ord.grobj), ord.id, ord.pt.x, ord.pt.y);
+        psz = szLocation.data();
         ControlIO().pfnSendMessage(app.lpui->hwndShipLB, win32::LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(psz));
     }
     SetOrdersLbSel(app, app.state.sel.iwpAct);

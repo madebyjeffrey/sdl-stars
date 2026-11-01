@@ -3776,5 +3776,36 @@
       "current_call_line": "szNumber = PszFromLongK(app, l);",
       "lifetime": "Named szNumber owns the label through its draw operation."
     }
-  ]
+  ],
+  "location_distance": {
+    "status": "complete; verified",
+    "parent": "7925b732",
+    "interfaces": [
+      "PszGetLocName -> array<char,360>",
+      "PszGetDistance -> array<char,360>"
+    ],
+    "production_calls": {
+      "location": 7,
+      "distance": 2
+    },
+    "lifetimes": "Message expansion, report labels, ship orders, fleet rendering and scanner captions consume actual owned values. Named arrays retain text through existing pointer locals; immediate drawing/formatting calls borrow only until return.",
+    "effects": "Keep existing work-buffer writes for message \\w expansion, object-name delegation, catalog bytes, coordinate formatting and distance rounding. No allocation or record layout change.",
+    "remaining": "The underlying planet/fleet/thing name services and other shared scratch interfaces remain active; scanner destination-tail bounds remain pending.",
+    "verification": {
+      "batch": "L05w owned location and distance values",
+      "debug_build": "Pass, no warnings. Release SDL regression and host builds pass. Compiler/source policy covers 158 owned sources, 159 variants and 161 standalone headers in both orders; maintained raw-copy spellings pass.",
+      "desktop": "153/153, including all 29 leak checks, actual message/report/UI consumers and available SDL tutorial checkpoints. Focused utility, encoding and report checks pass 3/3.",
+      "host_units": "28/28 in Release",
+      "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+      "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+      "windows": "147/147 owned production units and three actual affected test consumers compile with strict MinGW. Rebuilt Windows utilities pass 16 cases, encoding 10 and reports three under Wine (29 total). Actual native Windows SDL and Linux final qualification remain pending.",
+      "characterization": "Parent/final actual utility checks preserve Deep Space, signed coordinate extremes, a Unicode planet provider, a missing fleet, an actual wormhole record and both distance-caption variants. The message grammar vector \\n|\\w returns the coordinate label twice before and after migration. New owned-value assertions retain two locations and a distance through later lookups.",
+      "interfaces": "PszGetLocName and PszGetDistance return independent fixed 360-byte arrays, matching the existing work/display capacity. Seven location and two distance production consumers migrate: message expansion, report destination, ship/order drawing and scanner text. Existing named pointer locals borrow named owners; immediate drawing/copy/formatting calls borrow only until return. The unchanged typed fleet formatter directly accepts the owned array value.",
+      "effects": "Keep existing object-name delegation and all work-buffer effects required by current message \\w expansion. Coordinate and distance formulas, binary64 rounding, flags, formatting grammar, UTF-8 bytes, names and field widths remain. No allocation or compatibility overload is added.",
+      "inventory": "Copy inventory remains 255 migrated sites and 53 initial application sites pending (59 lexical spellings including SDK declarations/definitions). The scanner append spelling now reads the owned result; its destination-capacity migration remains explicitly pending.",
+      "baseline": "Behavior-neutral: native/frozen-original baseline bytes and unit goldens unchanged. No scenario/checkpoint moved; no regression export required. Game rules, record layouts, RNG, tie order and binary64 boundaries remain.",
+      "remaining": "Underlying planet/fleet/thing scratch-return interfaces, scanner tail capacity, other L05 path/text/const/wrapper formatting, L06 service interfaces/Milestone D and L08 final qualification remain active.",
+      "receipts": "dist/verification/live-cpp/l05w/"
+    }
+  }
 }
