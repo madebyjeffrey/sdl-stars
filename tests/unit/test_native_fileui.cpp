@@ -12,6 +12,7 @@
 #include "mineui.h"
 #include "msgui.h"
 #include "tutor.h"
+#include "utilgenui.h"
 #include "text_io.h"
 #include <algorithm>
 #include <array>
@@ -261,7 +262,50 @@ static void TestShipCloneNameBounds(void) {
     StarsCompatProcessExit();
 }
 
-TEST_LIST = {{"ship clone suffix handles empty and short UTF-8 names within its field", TestShipCloneNameBounds},
+static void TestTextFitViews(void) {
+    APPSESSION &app = ui::app;
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    WNDCLASSA wc{};
+    HWND hwnd, hwndSav;
+    HDC hdc;
+    HGDIOBJ hfontSav;
+    std::int16_t dxOne, dxTwo;
+    std::array<char, 12> rgch;
+    TEST_ASSERT(FStarsTestInit(app));
+    wc.lpfnWndProc = ui::DefWindowProc; wc.lpszClassName = "StarsTextFitProbe";
+    wc.hInstance = win32::GetModuleHandleA(nullptr); TEST_ASSERT(win32::RegisterClassA(&wc));
+    hwnd = ui::CreateWindowEx(0, wc.lpszClassName, "Text fit", win32::WS_OVERLAPPED, 0, 0, 200, 100, nullptr, nullptr, wc.hInstance, nullptr);
+    TEST_ASSERT(hwnd);
+    hwndSav = app.lpui->hwndFrame; app.lpui->hwndFrame = hwnd;
+    hdc = win32::GetDC(hwnd); TEST_ASSERT(hdc);
+    hfontSav = win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
+    dxOne = LOWORD(GetTextExtent(hdc, "\xc3\xa9", 2));
+    dxTwo = LOWORD(GetTextExtent(hdc, "\xc3\xa9\xc3\xa9", 4));
+    win32::SelectObject(hdc, hfontSav); win32::ReleaseDC(hwnd, hdc);
+    TEST_ASSERT(dxOne > 0 && dxTwo > dxOne);
+    rgch.fill('q'); CchCopyUtf8(std::span{rgch}, "\xc3\xa9\xc3\xa9");
+    TEST_CHECK(FStringFitsScreen(app, std::span{rgch}.first(5), dxTwo));
+    TEST_CHECK(std::string_view(rgch.data()) == "\xc3\xa9\xc3\xa9");
+    TEST_CHECK(!FStringFitsScreen(app, std::span{rgch}.first(5), dxOne));
+    TEST_CHECK(std::string_view(rgch.data()) == "\xc3\xa9");
+    TEST_CHECK(std::all_of(rgch.begin() + 5, rgch.end(), [](char ch) { return ch == 'q'; }));
+    rgch[0] = 0;
+    TEST_CHECK(FStringFitsScreen(app, std::span{rgch}.first(1), 0));
+    rgch.fill('q'); rgch[3] = 0;
+    win32::SetLastError(win32::ERROR_ACCESS_DENIED);
+    TEST_CHECK(!FStringFitsScreen(app, std::span{rgch}.first(3), dxOne));
+    TEST_CHECK(win32::GetLastError() == win32::ERROR_ACCESS_DENIED);
+    TEST_CHECK(!FStringFitsScreen(app, {}, dxOne));
+    TEST_CHECK(win32::GetLastError() == win32::ERROR_ACCESS_DENIED);
+    TEST_CHECK(rgch[0] == 'q' && rgch[1] == 'q' && rgch[2] == 'q' && rgch[3] == 0);
+    TEST_CHECK(std::all_of(rgch.begin() + 4, rgch.end(), [](char ch) { return ch == 'q'; }));
+    app.lpui->hwndFrame = hwndSav;
+    TEST_CHECK(ui::DestroyWindow(hwnd));
+    StarsCompatProcessExit();
+}
+
+TEST_LIST = {{"text fitting preserves exact glyph limits and UTF-8 field tails", TestTextFitViews},
+             {"ship clone suffix handles empty and short UTF-8 names within its field", TestShipCloneNameBounds},
              {"raw player message paints its full UTF-8 byte budget within the display buffer", TestRawMessageDisplay},
              {"mineral captions and tutorial preset keep complete text and field widths", TestMineralAndTutorialText},
              {"planet title retains complete UTF-8 names beyond its former local buffer", TestPlanetTitleCapacity}, {"library-name dialog preserves accepted text and cancelled storage", TestLibraryNameDialog},

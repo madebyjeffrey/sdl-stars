@@ -49,11 +49,6 @@ DWORD win32::GetCurrentThreadId(void) {
 #endif
 }
 
-LPSTR win32::lstrcatA(LPSTR pszDest, LPCSTR pszSource) { return std::strcat(pszDest, pszSource); }
-LPSTR win32::lstrcpyA(LPSTR pszDest, LPCSTR pszSource) {
-    if (!pszDest || !pszSource) return nullptr;
-    return std::strcpy(pszDest, pszSource);
-}
 int win32::lstrlenA(LPCSTR psz) { return psz ? static_cast<int>(std::strlen(psz)) : 0; }
 int win32::lstrcmpiA(LPCSTR psz1, LPCSTR psz2) { return strcasecmp(psz1, psz2); }
 

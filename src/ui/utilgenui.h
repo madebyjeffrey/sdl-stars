@@ -3,6 +3,7 @@
 
 #include "win.h"
 #include <cstdint>
+#include <span>
 #include <windows.h>
 
 INT_PTR  RandomSeedDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
@@ -32,7 +33,8 @@ void     DrawBtn(APPSESSION &app, HDC hdc, RECT *prc, std::int16_t bt, std::int1
 std::int16_t  FGetMouseMove(POINT16 *ppt);
 std::int16_t  FGetRMouseMove(POINT16 *ppt);
 void     DrawFuzzyBorder(APPSESSION &app, HDC hdc, RECT *prc);
-std::int16_t  FStringFitsScreen(APPSESSION &app, char *lpsz, std::int16_t dxMax);
+// Text must terminate inside its mutable view; rejected views stay untouched.
+bool FStringFitsScreen(APPSESSION &app, std::span<char> lpsz, std::int16_t dxMax);
 HBRUSH   HbrGet(APPSESSION &app, COLORREF cr);
 void     FreeHbr(APPSESSION &app, HBRUSH hbr);
 std::uint16_t DibNumColors(void *pv);

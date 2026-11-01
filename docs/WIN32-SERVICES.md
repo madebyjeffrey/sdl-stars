@@ -1,9 +1,8 @@
 # UI string, arithmetic and CRT services
 
-The local runtime implements the UI's narrow Windows string functions,
-`MulDiv` and `GetCurrentThreadId`. This brings coverage to **83/178 inventoried
-Win32 APIs (46.6%, rounded to 47%)**. All six inventoried Microsoft CRT helpers
-are also implemented; they are counted separately from the Win32 percentage.
+The local runtime supplies narrow string measurement/comparison, typed
+formatting, `MulDiv` and `GetCurrentThreadId` for SDL callers. It also supplies
+the Microsoft CRT adapters used on non-Windows platforms.
 
 ## Contracts and limits
 
@@ -16,9 +15,13 @@ are also implemented; they are counted separately from the Win32 percentage.
   Wide strings, pointer/64-bit modifiers, floating point and other format
   extensions are rejected. This is the application's subset, not a complete
   printf or Unicode implementation.
-- `lstrcpyA`, `lstrcatA`, `lstrlenA` and `lstrcmpiA` provide narrow byte strings.
+- `lstrlenA` and `lstrcmpiA` provide narrow byte-string measurement/comparison.
   Comparisons follow the current C locale; Windows locale-specific collation
   is not emulated. No UTF-16 conversion is added to these ANSI calls.
+  The unused `lstrcpyA` and `lstrcatA` copy entry points have been retired;
+  application text copies use bounded UTF-8 operations. Their old fixture
+  assertions are removed; comparison and lowercase vectors still run against
+  the wrapper and the independent SDK reference.
 - `MulDiv` uses a 64-bit intermediate, nearest rounding with ties away from
   zero, and `-1` for zero denominators or overflow. The SDK comparison also
   checks the legacy rejection of an exact `INT_MIN` result. Core `LMulDiv`
@@ -29,7 +32,7 @@ are also implemented; they are counted separately from the Win32 percentage.
   `_strdate`/`_strtime` use the local clock and their Windows nine-byte buffer
   formats. There is no drive-letter or backslash translation.
 
-The game core continues to use `native.c`. These symbols are linked only into
+The game core continues to use `native.cpp`. These symbols are linked only into
 SDL compatibility consumers. Windows uses its SDK and CRT; the Linux host
 does not link this library.
 

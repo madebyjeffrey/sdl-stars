@@ -206,9 +206,7 @@ HFILE _lclose (HFILE hFile);
 LONG _llseek (HFILE hFile, LONG lOffset, int iOrigin);
 UINT _lread (HFILE hFile, LPVOID lpBuffer, UINT uBytes);
 UINT _lwrite (HFILE hFile, LPCCH lpBuffer, UINT uBytes);
-LPSTR lstrcatA (LPSTR lpString1, LPCSTR lpString2);
 int lstrcmpiA (LPCSTR lpString1, LPCSTR lpString2);
-LPSTR lstrcpyA (LPSTR lpString1, LPCSTR lpString2);
 int lstrlenA (LPCSTR lpString);
 int wsprintfAFields(std::span<char>, LPCSTR, std::span<const NATIVEFORMATARG>);
 template<class... ARGS>

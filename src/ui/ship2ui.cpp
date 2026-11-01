@@ -266,7 +266,7 @@ INT_PTR  RenameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         case IDCANCEL:
             if (LOWORD(wParam) == IDOK) {
                 win32::GetDlgItemTextA(hwnd, IDC_EDIT1, app.state.szWork, 32);
-                FStringFitsScreen(app, app.state.szWork, 160);
+                FStringFitsScreen(app, std::span<char>{app.state.szWork}, 160);
             }
             ControlIO().pfnStickyDlgPos(hwnd, &app.lpui->ptStickyRenameDlg, 0);
             ControlIO().pfnEndDialog(hwnd, LOWORD(wParam) == IDOK);
@@ -276,7 +276,7 @@ INT_PTR  RenameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 app.lpui->fInEditUpdate = 1;
                 ControlIO().pfnGetWindowText(reinterpret_cast<HWND>(lParam), app.state.szWork, 250);
                 lSel = ControlIO().pfnSendMessage(reinterpret_cast<HWND>(lParam), win32::EM_GETSEL, 0, 0);
-                if (!FStringFitsScreen(app, app.state.szWork, 160)) {
+                if (!FStringFitsScreen(app, std::span<char>{app.state.szWork}, 160)) {
                     ControlIO().pfnSetWindowText(reinterpret_cast<HWND>(lParam), app.state.szWork);
                     ControlIO().pfnSendMessage(reinterpret_cast<HWND>(lParam), win32::EM_SETSEL, LOWORD(lSel), static_cast<std::int16_t>(HIWORD(lSel)));
                 }

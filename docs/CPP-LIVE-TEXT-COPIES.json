@@ -2975,50 +2975,8 @@
       "role": "The location source is an owned value; migration of the scanner destination tail capacity is still pending."
     },
     {
-      "path": "compat/win32/include/wincompat_api.h",
-      "normalized_call": "lstrcatA(LPSTRlpString1,LPCSTRlpString2)",
-      "count": 1,
-      "status": "SDK-boundary review",
-      "role": "SDK-shaped declarations/definitions or caller-provisioned message/string buffer; retain only where the current ABI contract requires it."
-    },
-    {
-      "path": "compat/win32/include/wincompat_api.h",
-      "normalized_call": "lstrcpyA(LPSTRlpString1,LPCSTRlpString2)",
-      "count": 1,
-      "status": "SDK-boundary review",
-      "role": "SDK-shaped declarations/definitions or caller-provisioned message/string buffer; retain only where the current ABI contract requires it."
-    },
-    {
       "path": "compat/win32/src/list.cpp",
       "normalized_call": "std::strcpy(reinterpret_cast<LPSTR>(l),lp->rgitem[i].psz)",
-      "count": 1,
-      "status": "SDK-boundary review",
-      "role": "SDK-shaped declarations/definitions or caller-provisioned message/string buffer; retain only where the current ABI contract requires it."
-    },
-    {
-      "path": "compat/win32/src/services.cpp",
-      "normalized_call": "lstrcatA(LPSTRpszDest,LPCSTRpszSource)",
-      "count": 1,
-      "status": "SDK-boundary review",
-      "role": "SDK-shaped declarations/definitions or caller-provisioned message/string buffer; retain only where the current ABI contract requires it."
-    },
-    {
-      "path": "compat/win32/src/services.cpp",
-      "normalized_call": "lstrcpyA(LPSTRpszDest,LPCSTRpszSource)",
-      "count": 1,
-      "status": "SDK-boundary review",
-      "role": "SDK-shaped declarations/definitions or caller-provisioned message/string buffer; retain only where the current ABI contract requires it."
-    },
-    {
-      "path": "compat/win32/src/services.cpp",
-      "normalized_call": "std::strcat(pszDest,pszSource)",
-      "count": 1,
-      "status": "SDK-boundary review",
-      "role": "SDK-shaped declarations/definitions or caller-provisioned message/string buffer; retain only where the current ABI contract requires it."
-    },
-    {
-      "path": "compat/win32/src/services.cpp",
-      "normalized_call": "std::strcpy(pszDest,pszSource)",
       "count": 1,
       "status": "SDK-boundary review",
       "role": "SDK-shaped declarations/definitions or caller-provisioned message/string buffer; retain only where the current ABI contract requires it."
@@ -3311,6 +3269,35 @@
       "inventory": "285 migrated initial copy sites; 23 initial sites remain. Exact lexical raw-copy inventory totals 29 including six SDK extras.",
       "remaining": "Other copies, mutable/readonly service views including FStringFitsScreen, post-migration scratch/borrowed storage, wrapper formatting, Milestone D and L08 final inventory/platform qualification remain active.",
       "receipts": "dist/verification/live-cpp/l05ad/"
+    }
+  },
+  "retired_unbounded_copy_shims": {
+    "status": "complete; locally verified; final platform qualification pending",
+    "parent": "2bbd5afa",
+    "functions": [
+      "win32::lstrcpyA",
+      "win32::lstrcatA"
+    ],
+    "reason": "No production caller remains after the fitting-copy migrations. Both unused unbounded entry points and their declarations are retired. Shared .inc SDK-fixture assertions for those APIs are removed; all still-supported comparison/lowercase vectors retain their bytes through direct literal initialization. The maintained raw-copy policy keeps rejecting reintroduction.",
+    "lexical_spellings_removed": 6,
+    "remaining": "285 migrated initial copy sites; 23 actual raw-copy call spellings remain, with no extra unused SDK declarations/definitions. Other active cleanup stages remain open.",
+    "discovery": "The first full build found the shared .inc consumer missed by the initial extension-filtered search. The inventory was broadened to include fragments; both independent SDK and wrapper consumers are requalified after retiring the obsolete assertions.",
+    "verification": {
+      "batch": "L06w bounded text fitting and unused copy-API retirement",
+      "debug_build": "Pass; no warnings. Source/compiler policy: 158 owned sources, 159 variants, 161 standalone headers in both orders; exact raw-copy inventory passes.",
+      "desktop": "154/154 including all 29 leak checks, actual geometric UTF-8 fitting/field-tail cases, services comparisons, designer/rename/library workflows, independent witnesses and available SDL tutorial checkpoints.",
+      "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+      "host": "UI/wrapper-only changes. Core, host, shared platform and CMake sources remain unchanged; the 29/29 Release host tests and 519-match host regression already qualified at 3c52f9bf remain applicable. Linux host CI also passes at parent 2bbd5afa. Unchanged host tests are not repeated.",
+      "windows": "147/147 production syntax checks and both actual fitter/services consumer translation units pass strict MinGW C++20. The updated independent services SDK reference compiles as real MinGW C11 with -Wall -Wextra -Werror and passes under Wine against Windows APIs/CRT. This SDK execution does not qualify the new fitter on native Windows SDL.",
+      "characterization": "Parent actual renderer measures one/two accented glyphs; exact two-glyph width leaves text untouched, one-glyph width trims only at the complete UTF-8 boundary, and empty terminated text fits. Final actual tests use exact physical slices and also reject a slice whose terminator lies just outside it, plus an empty span, preserving every byte and LastError on rejection.",
+      "sanitizers": "Actual native-file UI executable passes native macOS Debug ASan/UBSan, including new pixel-limit/invalid-view tests and previous clone-name, caption, message and modal cases. Focused execution; no whole-suite sanitizer claim.",
+      "interfaces": "FStringFitsScreen receives mutable spans from all four current callers, returns bool, and uses a native local byte counter with the renderer int limit checked. Work[360] and the fixed HUL[32] view stay bounded through the final mutation. The C-pointer overload, strlen rescan and local Win16-sized count/flag are retired. No saved or address-dependent scalar changes.",
+      "retired_APIs": "lstrcpyA/lstrcatA have no production caller. Their public declarations and definitions are removed, retiring six extra lexical raw-copy spellings. Their shared .inc fixture assertions are retired; all live comparison/lowercase/formatting/arithmetic/CRT vectors remain and run in both wrapper and independent SDK consumers.",
+      "discovery": "The first full build found shared .inc test references missed by the initial extension-filtered search. The search was broadened, the obsolete assertions were explicitly retired, the still-supported test inputs were initialized directly, and the complete build/suites and independent SDK reference then passed. There are no owned production .inc/.inl/.ipp/.tpp fragments hidden from the maintained production audit.",
+      "inventory": "285 migrated initial copy sites; 23 live raw-copy calls remain. The raw-call ledger no longer includes unused SDK declaration/definition extras.",
+      "baseline": "Behavior-neutral for actual callers and valid terminated text. No native/frozen-original baseline, saved width/layout, game rule, RNG, tie order, floating boundary, catalog or unit golden changes. No scenario/checkpoint moved and no regression export required.",
+      "remaining": "23 raw-copy calls, other readonly/drawing/service protocols, post-migration scratch and borrowing, wrapper formatting, Milestone D and L08 final inventory/platform qualification remain active.",
+      "receipts": "dist/verification/live-cpp/l06w/"
     }
   }
 }

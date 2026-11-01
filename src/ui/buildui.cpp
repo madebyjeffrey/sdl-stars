@@ -268,7 +268,7 @@ INT_PTR  SlotDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             app.lpui->fInEditUpdate = 1;
             ControlIO().pfnGetWindowText(reinterpret_cast<HWND>(lParam), app.state.szWork, 250);
             lSel = ControlIO().pfnSendMessage(reinterpret_cast<HWND>(lParam), win32::EM_GETSEL, 0, 0);
-            if (!FStringFitsScreen(app, app.state.szWork, 160)) {
+            if (!FStringFitsScreen(app, std::span<char>{app.state.szWork}, 160)) {
                 ControlIO().pfnSetWindowText(reinterpret_cast<HWND>(lParam), app.state.szWork);
                 ControlIO().pfnSendMessage(reinterpret_cast<HWND>(lParam), win32::EM_SETSEL, LOWORD(lSel), static_cast<std::int16_t>(HIWORD(lSel)));
             }
@@ -1809,6 +1809,6 @@ void MakeNewName(APPSESSION &app, std::span<char, 32> lpsz) {
             lpsz[cLen - 2] = lpsz[cLen - 2] + 1;
         }
     }
-    FStringFitsScreen(app, lpsz.data(), 160);
+    FStringFitsScreen(app, lpsz, 160);
     return;
 }

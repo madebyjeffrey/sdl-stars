@@ -18,7 +18,7 @@
 #define CHECK(f) do { if (!(f)) { fprintf(stderr, "line %d: %s\n", __LINE__, #f); return 1; } } while (0)
 
 int main(void) {
-    char sz[1024], szPath[128], szFile[160], szDate[9], szTime[9];
+    char sz[1024] = "Fleet #10", szPath[128], szFile[160], szDate[9], szTime[9];
     FILE *fp;
     DWORD idThread = GetCurrentThreadId();
     int i, j, k, n, nExpected;
@@ -42,7 +42,6 @@ int main(void) {
     CHECK(MulDiv(INT32_MIN, 1, 1) == -1);
     CHECK(MulDiv(INT32_MIN, -1, 1) == -1);
     CHECK(lstrlenA(NULL) == 0 && lstrlenA("fleet") == 5);
-    CHECK(lstrcpyA(sz, "Fleet") == sz && lstrcatA(sz, " #10") == sz);
     CHECK(!strcmp(sz, "Fleet #10") && lstrcmpiA(sz, "FLEET #10") == 0);
     CHECK(lstrcmpiA("a", "b") < 0 && lstrcmpiA("z", "a") > 0);
     CHECK(wsprintfA(sz, "%ld of %ldkT: %08lx %d %s %c %%", (LONG)-1234567890,
@@ -75,7 +74,8 @@ int main(void) {
     CHECK(_stricmp("Fleet", "FLEET") == 0 && _stricmp("a", "b") < 0);
     CHECK(_strnicmp("Fleet one", "FLEET two", 5) == 0);
     CHECK(_strnicmp("a", "b", 0) == 0);
-    CHECK(!strcmp(_strlwr(lstrcpyA(sz, "FL33T")), "fl33t"));
+    memcpy(sz, "FL33T", sizeof("FL33T"));
+    CHECK(!strcmp(_strlwr(sz), "fl33t"));
     CHECK(!strcmp(itoa(INT32_MIN, sz, 10), "-2147483648"));
     CHECK(!strcmp(itoa(-1, sz, 16), "ffffffff"));
     CHECK(!strcmp(itoa(35, sz, 36), "z"));

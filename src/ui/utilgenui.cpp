@@ -9,6 +9,8 @@
 #include "ownership.h"
 #include "resourcecodec.h"
 #include <stars_compat.h>
+#include <algorithm>
+#include <limits>
 
 INT_PTR  RandomSeedDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
@@ -723,19 +725,23 @@ void DrawFuzzyBorder(APPSESSION &app, HDC hdc, RECT *prc) {
     return;
 }
 
-std::int16_t FStringFitsScreen(APPSESSION &app, char *lpsz, std::int16_t dxMax) {
+bool FStringFitsScreen(APPSESSION &app, std::span<char> lpsz, std::int16_t dxMax) {
     HDC     hdc;
-    std::int16_t c;
-    std::int16_t fFit;
+    std::size_t c;
+    bool    fFit;
     HFONT   hfontSav;
+    std::span<char>::iterator pchEnd;
 
-    fFit = 1;
+    if (lpsz.empty()) return false;
+    pchEnd = std::find(lpsz.begin(), lpsz.end(), 0);
+    if (pchEnd == lpsz.end() || pchEnd - lpsz.begin() > std::numeric_limits<int>::max()) return false;
+    fFit = true;
     hdc = win32::GetDC(app.lpui->hwndFrame);
-    c = std::strlen(lpsz);
+    c = static_cast<std::size_t>(pchEnd - lpsz.begin());
     hfontSav = static_cast<HFONT>(win32::SelectObject(hdc, app.lpui->rghfontArial8[0]));
-    while (c > 0 && LOWORD(GetTextExtent(hdc, lpsz, c)) > static_cast<std::uint16_t>(dxMax)) {
-        fFit = 0;
-        c = static_cast<std::int16_t>(CchUtf8Prefix(lpsz, c - 1));
+    while (c > 0 && LOWORD(GetTextExtent(hdc, lpsz.data(), static_cast<int>(c))) > static_cast<std::uint16_t>(dxMax)) {
+        fFit = false;
+        c = CchUtf8Prefix(std::string_view(lpsz.data(), c), c - 1);
         lpsz[c] = 0;
     }
     win32::SelectObject(hdc, hfontSav);

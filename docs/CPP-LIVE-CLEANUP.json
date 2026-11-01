@@ -112,7 +112,8 @@
         "readonly-bounded-message-input-views",
         "bounded-fitting-chooser-printer-and-menu-copies",
         "bounded-fitting-mineral-message-and-tutorial-copies",
-        "bounded-ship-clone-name-field-repair"
+        "bounded-ship-clone-name-field-repair",
+        "unused-unbounded-Win32-string-shims-retired"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -855,6 +856,12 @@
         "status": "complete; locally verified; final platform qualification pending",
         "sites": 1,
         "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
+      },
+      "retired_unbounded_copy_shims": {
+        "status": "complete; locally verified; final platform qualification pending",
+        "functions": 2,
+        "lexical_spellings_removed": 6,
+        "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
       }
     },
     {
@@ -889,7 +896,8 @@
         "readonly-bounded-message-format-and-parameter-views",
         "named-production-estimate-ETA-and-task-label-results",
         "readonly-fixed-tutorial-preset-action-view",
-        "fixed-ship-clone-name-field-view"
+        "fixed-ship-clone-name-field-view",
+        "bounded-mutable-text-fitting-view"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -1237,6 +1245,23 @@
           "platform": "Full Linux/Windows CI run 41343668047 targets parent bba10904. At local verification time its Linux host, resource sanitizer and independent witness jobs passed; desktop jobs remained live. Final revision still requires actual platform qualification.",
           "remaining": "31 tracked initial raw-copy sites plus other readonly/buffer service APIs, scratch-storage/borrowed-return review, wrapper formatting, typed file selection (Milestone D), and L08 final inventory/platform qualification remain open.",
           "receipts": "dist/verification/live-cpp/l06v/"
+        },
+        {
+          "batch": "L06w bounded text fitting and unused copy-API retirement",
+          "debug_build": "Pass; no warnings. Source/compiler policy: 158 owned sources, 159 variants, 161 standalone headers in both orders; exact raw-copy inventory passes.",
+          "desktop": "154/154 including all 29 leak checks, actual geometric UTF-8 fitting/field-tail cases, services comparisons, designer/rename/library workflows, independent witnesses and available SDL tutorial checkpoints.",
+          "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+          "host": "UI/wrapper-only changes. Core, host, shared platform and CMake sources remain unchanged; the 29/29 Release host tests and 519-match host regression already qualified at 3c52f9bf remain applicable. Linux host CI also passes at parent 2bbd5afa. Unchanged host tests are not repeated.",
+          "windows": "147/147 production syntax checks and both actual fitter/services consumer translation units pass strict MinGW C++20. The updated independent services SDK reference compiles as real MinGW C11 with -Wall -Wextra -Werror and passes under Wine against Windows APIs/CRT. This SDK execution does not qualify the new fitter on native Windows SDL.",
+          "characterization": "Parent actual renderer measures one/two accented glyphs; exact two-glyph width leaves text untouched, one-glyph width trims only at the complete UTF-8 boundary, and empty terminated text fits. Final actual tests use exact physical slices and also reject a slice whose terminator lies just outside it, plus an empty span, preserving every byte and LastError on rejection.",
+          "sanitizers": "Actual native-file UI executable passes native macOS Debug ASan/UBSan, including new pixel-limit/invalid-view tests and previous clone-name, caption, message and modal cases. Focused execution; no whole-suite sanitizer claim.",
+          "interfaces": "FStringFitsScreen receives mutable spans from all four current callers, returns bool, and uses a native local byte counter with the renderer int limit checked. Work[360] and the fixed HUL[32] view stay bounded through the final mutation. The C-pointer overload, strlen rescan and local Win16-sized count/flag are retired. No saved or address-dependent scalar changes.",
+          "retired_APIs": "lstrcpyA/lstrcatA have no production caller. Their public declarations and definitions are removed, retiring six extra lexical raw-copy spellings. Their shared .inc fixture assertions are retired; all live comparison/lowercase/formatting/arithmetic/CRT vectors remain and run in both wrapper and independent SDK consumers.",
+          "discovery": "The first full build found shared .inc test references missed by the initial extension-filtered search. The search was broadened, the obsolete assertions were explicitly retired, the still-supported test inputs were initialized directly, and the complete build/suites and independent SDK reference then passed. There are no owned production .inc/.inl/.ipp/.tpp fragments hidden from the maintained production audit.",
+          "inventory": "285 migrated initial copy sites; 23 live raw-copy calls remain. The raw-call ledger no longer includes unused SDK declaration/definition extras.",
+          "baseline": "Behavior-neutral for actual callers and valid terminated text. No native/frozen-original baseline, saved width/layout, game rule, RNG, tie order, floating boundary, catalog or unit golden changes. No scenario/checkpoint moved and no regression export required.",
+          "remaining": "23 raw-copy calls, other readonly/drawing/service protocols, post-migration scratch and borrowing, wrapper formatting, Milestone D and L08 final inventory/platform qualification remain active.",
+          "receipts": "dist/verification/live-cpp/l06w/"
         }
       ],
       "roman_output": {
@@ -1401,6 +1426,12 @@
         "status": "complete; locally verified; final platform qualification pending",
         "interface": "MakeNewName uses span<char,32> from the actual stored field",
         "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
+      },
+      "mutable_text_fit_view": {
+        "status": "complete; locally verified; final platform qualification pending",
+        "production_calls": 4,
+        "interface": "FStringFitsScreen uses mutable spans and a Boolean fit result",
+        "evidence": "docs/CPP-LIVE-OWNED-TEXT.json"
       }
     },
     {
@@ -1591,7 +1622,7 @@
       "id": "L08",
       "status": "pending",
       "linux_desktop_execution_budget": {
-        "status": "requalification pending",
+        "status": "complete; verified at 2bbd5afa",
         "workflow": ".github/workflows/unit.yml",
         "job": "unit",
         "timeout_minutes": 30,
@@ -1599,7 +1630,20 @@
         "observed_head": "d84690f3",
         "evidence": "The 20-minute job deadline cancelled the fresh build/full desktop run after 98/156 passing tests and zero reported test failures. Build/configuration ran from about 20:23 to 20:35:55 UTC; sequential tests were still progressing at 20:42:52 before cancellation at 20:42:56.",
         "scope": "Only the opt-in Linux desktop job overall deadline increases. Full suite, test-level timeouts, build concurrency, optional flags and all other jobs keep their settings. No product, compiler, file-format or baseline change.",
-        "receipts": "dist/verification/live-cpp/linux-ci-budget/"
+        "receipts": "dist/verification/live-cpp/linux-ci-budget/",
+        "qualified_run": 41348836830
+      },
+      "last_full_platform_qualification": {
+        "head": "2bbd5afa8a639c0a46d04ccf8ad0dcf969ce2b5d",
+        "run": 41348836830,
+        "status": "all five jobs successful",
+        "linux_desktop": "156/156 including actual portal",
+        "windows_desktop": "134/134 including corrected Unicode printer and clone-name field cases",
+        "linux_host": "29/29",
+        "resource_sanitizers": "45/45",
+        "independent_witnesses": "job successful",
+        "SDK_matrix": "21 contracts pass with no failed contracts in each SDK/both matrix variant; diagnostic-only differences remain explicit",
+        "scope": "Qualifies parent 2bbd5afa, including the MakeNewName fix and CI deadline. Does not qualify the subsequent fitter/API retirement; final revision still requires platform qualification."
       }
     }
   ],
