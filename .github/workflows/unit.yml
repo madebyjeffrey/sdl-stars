@@ -123,11 +123,23 @@ jobs:
           ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
           UBSAN_OPTIONS: halt_on_error=1
         run: |
-          result=0
-          for witness in tests/spec/check_*_source.py; do
-            python "$witness" || result=1
-          done
-          exit "$result"
+          python - <<'PYTHON'
+          import json
+          from pathlib import Path
+          import subprocess
+          import sys
+
+          inventory = json.loads(Path("docs/CPP-C05-WITNESSES.json").read_text())
+          programs = [entry["program"] for entry in inventory["programs"]]
+          assert len(programs) == inventory["program_count"] == len(set(programs))
+          failed = []
+          for program in programs:
+              if subprocess.run([sys.executable, program]).returncode:
+                  failed.append(program)
+          if failed:
+              print("Failed current production witnesses:", *failed, sep="\n")
+          raise SystemExit(bool(failed))
+          PYTHON
 
   # The unit tests that need no windows, built natively with gcc.
   host-linux:
