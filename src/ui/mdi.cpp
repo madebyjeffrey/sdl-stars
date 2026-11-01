@@ -2684,8 +2684,8 @@ LRESULT  TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         break;
     case win32::WM_DESTROY:
         if (app.lpui->vhdibTitle) {
-            win32::GlobalUnlock(app.lpui->vhdibTitle);
-            win32::FreeResource(app.lpui->vhdibTitle);
+            // HdibLoadBigResource returns an owned, writable heap copy.
+            win32::GlobalFree(app.lpui->vhdibTitle);
             app.lpui->vhdibTitle = nullptr;
         }
         if (app.lpui->fFreeingTitle)

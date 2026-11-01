@@ -160,6 +160,8 @@ detail in [WIN16-PARITY.md](WIN16-PARITY.md).
   heap unlock or free. `FWriteTutorialMFile` clears its active memory source on
   failed output and preserves the primary error instead of replacing it with a
   heap-handle lookup error.
+  `HdibLoadBigResource` instead returns a writable heap copy; title-window
+  destruction releases that copy with `GlobalFree`, not `FreeResource`.
 - **Callbacks:** dialog calls pass their concrete callback directly. The generic
   `FARPROC` alias and instance-style temporary/cleanup ceremony are gone. The
   browser, gauge and tutorial configuration slots use `DLGPROC`; their existing

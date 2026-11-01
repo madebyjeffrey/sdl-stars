@@ -101,6 +101,8 @@ for directory in ("src", "compat/win32/include", "compat/win32/src"):
         assert not re.search(r"\bNULL\b", code), f"Owned null spelling must use nullptr: {path}"
         assert not re.search(r"\btypedef\b", code), f"Owned type aliases must use C++ declarations: {path}"
         assert not re.search(r"\b(?:FARPROC|MakeProcInstance|FreeProcInstance)\b", code), f"Use typed callbacks without Win16 instance wrappers: {path}"
+        if path.is_relative_to(root / "src") and not path.is_relative_to(root / "src/platform"):
+            assert not re.search(r"\bFreeResource\s*\(", code), f"Borrow module bytes; release owned heap copies with their allocator: {path}"
         assert not re.search(r"(?<![\w:.])(?:malloc|calloc|realloc|free)\s*\(", code), f"Owned CRT allocator calls must use std qualification: {path}"
         for allocation in re.finditer(r"\b(?:(?:std\s*::\s*)?(?:malloc|calloc|realloc|free)|strdup|SDL_malloc|SDL_calloc|SDL_realloc|SDL_free|SDL_strdup)\s*\(", code):
             end, depth = allocation.end(), 1

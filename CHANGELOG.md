@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `TitleWndProc` now frees the writable title bitmap when its window is
+  destroyed. Previously it passed the allocated copy to `FreeResource`, which
+  left it allocated until runtime shutdown. Repeated destruction remains safe;
+  rendering, file records and host results are unchanged.
+
 - `FWriteTutorialMFile` treats tutorial resource bytes as borrowed module data.
   Previously its heap-unlock cleanup replaced the last error with an invalid
   handle error, and a failed output operation left the memory stream active.

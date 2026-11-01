@@ -232,6 +232,14 @@ sentinel (-1). Host part lookup has no player race or technology restrictions.
 when writing an empty EOF record. `PtToScan` replaces negative signed shifts
 with multiplication, preserving scanner scaling and rounding.
 
+## Title bitmap lifetime — fixed on develop
+
+`HdibLoadBigResource` allocates a writable `GMEM_FIXED` copy, but `TitleWndProc`
+passed it to the no-op `FreeResource` before clearing its only application
+reference. The copy remained allocated until runtime shutdown. Destruction now
+uses `GlobalFree`. A native-port test checks the live allocation count before
+creation and after repeated destruction. Rendering and host results are unchanged.
+
 ## Tutorial resource cleanup — fixed on develop
 
 `FWriteTutorialMFile` passed immutable module resource bytes to `GlobalUnlock`,

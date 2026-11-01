@@ -159,15 +159,15 @@
     },
     {
       "id": "L07",
-      "status": "active",
+      "status": "complete",
       "completed_substeps": [
         "typed-generated-help-api",
         "obsolete-callback-instance-scaffolding",
-        "tutorial-borrowed-resource-cleanup"
-      ],
-      "pending_substeps": [
+        "tutorial-borrowed-resource-cleanup",
+        "title-copy-matched-release",
         "embedded-resource-release-ceremony"
       ],
+      "pending_substeps": [],
       "help_api": {
         "status": "complete; verified",
         "change": "Stage a C++20 context struct, constexpr context/file tables and typed metadata constants from the packaged guide header. Include guard retained; no value macros or typedef enter the generated API.",
@@ -205,6 +205,17 @@
           "host": "No core/host code or interface changed; prior host qualification remains current.",
           "baseline": "Unchanged; no checkpoint moved. Recorded tutorial bytes, wire layouts, catalogs, IDs and canonical models unchanged.",
           "receipts": "dist/verification/live-cpp/l07c/"
+        },
+        {
+          "batch": "L07d TitleWndProc bitmap lifetime",
+          "reproduction": "Native-port unit first reproduced the retained heap allocation after initial and repeated destruction on d213a150; passes after matched release.",
+          "debug_build": "Pass, no warnings.",
+          "desktop": "152/152; includes allocation-count/idempotent title destruction, rendering and window workflows, tutorial, ownership tests and 29 leaks. Final source audit passes separately after adding the application FreeResource ban.",
+          "native_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped reference inputs.",
+          "windows": "Strict MinGW compilation of mdi.cpp and changed native-port unit passes (1/1 each). Compilation evidence only.",
+          "host": "No core/host code or interface changed; prior host qualification remains current.",
+          "baseline": "Unchanged; no checkpoint moved. Bitmap bytes, rendering inputs, wire layouts, catalogs, IDs and canonical models unchanged.",
+          "receipts": "dist/verification/live-cpp/l07d/"
         }
       ],
       "callbacks": {
@@ -220,9 +231,9 @@
         "providers": "Production-lifecycle and include-order tests use the actual DLGPROC type."
       },
       "resource_review": {
-        "status": "title bitmap correction pending",
+        "status": "complete",
         "tutorial": "Fixed: module bytes are borrowed, primary errors survive cleanup and failed output clears the active memory source.",
-        "title": "HdibLoadBigResource allocates a writable GMEM_FIXED copy. WM_DESTROY currently calls the no-op FreeResource and clears its only application reference, retaining the allocation until runtime shutdown. Replace with the actual matched heap release in its own bug-fix commit.",
+        "title": "Fixed: release the real writable heap copy with GlobalFree at WM_DESTROY; repeated destruction is idempotent.",
         "foreign_api": "Keep genuine SDK-compatible FreeResource behavior and real GlobalAlloc/GlobalLock/GlobalUnlock/GlobalFree contracts for owned native storage."
       },
       "tutorial_resource_fix": {
@@ -230,7 +241,15 @@
         "reproduction": "New native-port unit test first reproduced all three failures on 9bc263ca: skipped-resource path replaced prior error, failed stream-open replaced disk-full error, and borrowed input remained active.",
         "correction": "Remove GlobalUnlock/FreeResource for module bytes; clear vlpMemStream in the failed-output path. Keep file side effects and recorded tutorial bytes unchanged.",
         "separate_bug_commit": "FWriteTutorialMFile resource lifetime/primary-error cleanup; title bitmap ownership remains a separate pending fix."
-      }
+      },
+      "title_copy_fix": {
+        "status": "complete; verified",
+        "reproduction": "Native-port test first reproduced a retained allocation after WM_DESTROY and again after repeated destruction on d213a150.",
+        "correction": "TitleWndProc releases the writable GMEM_FIXED copy from HdibLoadBigResource with GlobalFree, then clears its handle; no redundant fixed-memory unlock or FreeResource.",
+        "remaining_sdk_roles": "FreeResource remains a genuine SDK-compatible no-op in the wrapper, with no application callers. GlobalUnlock/GlobalFree still manage actual native heap storage in bitmap helpers and SDK adapters.",
+        "separate_bug_commit": "TitleWndProc retained allocated bitmap until runtime shutdown; tutorial cleanup is already fixed independently."
+      },
+      "enforcement": "Owned code rejects generic FARPROC/Win16 callback-instance wrappers. Application code cannot call FreeResource; genuine SDK implementations stay in adapters. The help staging check rejects value macros/typedefs and compares every asset/context/file row and numeric value."
     },
     {
       "id": "L08",
