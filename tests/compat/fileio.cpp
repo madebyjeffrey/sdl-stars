@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <string>
 #define CHECK(f) do { if (!(f)) { fprintf(stderr,"line %d: %s (errno %d)\n",__LINE__,#f,errno); return 1; } } while (0)
 int main(void) {
     unsigned char rgb[] = {0, 255, 26, 13, 10, 128}, out[16];
@@ -60,6 +61,25 @@ int main(void) {
     CHECK(CNativeScan(pf,"%d\n",&version)==1 && version==2 && PszGetNativeLine(line,sizeof(line),pf) && !strcmp(line,"name\n"));
     CHECK(CNativeScan(pf,"%d\n%lld\n",&player,&played)==2 && player==7 && played==1234567890123LL);
     CHECK(PszGetNativeLine(line,sizeof(line),pf) && !strcmp(line,"next\n"));CHECK(ICloseNativeFile(pf)==0);
+    // Stream formatting writes binary bytes and measures long output before
+    // allocating its second-pass buffer; counts include bytes after a NUL.
+    {
+        const std::string payload(3072, 'x');
+        char expected[4096], actual[4096];
+        int count = -1;
+        const int cb = snprintf(expected, sizeof(expected), "%ld|%llu|%c%s:end", -123L, 18446744073709551615ULL, 0, payload.c_str());
+        pf=PfNativeTemporary();CHECK(pf);
+        CHECK(CchNativePrintf(pf,"%ld|%llu|%c%s:end%n",std::int32_t{-123},18446744073709551615ULL,0,payload,&count)==cb && count==cb);
+        CHECK(LNativePosition(pf)==cb && ISeekNativeFile(pf,0,0)==0);
+        CHECK(CReadNative(actual,1,sizeof(actual),pf)==static_cast<std::size_t>(cb) && !memcmp(actual,expected,cb));
+        CHECK(ICloseNativeFile(pf)==0);
+        pf=PfNativeTemporary();CHECK(pf);
+        count=-1;
+        CHECK(CchNativePrintf(pf,"ab%n%c",&count,0)==3 && count==2 && CbNativeFile(pf)==3);
+        errno=0;CHECK(CchNativePrintf(pf,"prefix %d")==-1 && errno==EINVAL && CbNativeFile(pf)==3);
+        errno=0;CHECK(CchNativePrintf(pf,nullptr)==-1 && errno==EINVAL && CbNativeFile(pf)==3);
+        CHECK(ICloseNativeFile(pf)==0);
+    }
     // Metadata scanning commits each field and leaves the first non-digit unread.
     pf=PfNativeTemporary();CHECK(pf && IPutNativeString(" \t-2147483648\n+9223372036854775807!",pf)==0 && ISeekNativeFile(pf,0,0)==0);
     CHECK(CNativeScan(pf,"%d\n%lld",&player,&played)==2 && player==INT32_MIN && played==INT64_MAX);

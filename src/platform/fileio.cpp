@@ -8,7 +8,6 @@
 #include <cerrno>
 #include <cctype>
 #include <climits>
-#include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -375,23 +374,19 @@ std::int64_t CbGetNativeLine(char **ppsz, std::size_t *pcb, NATIVEFILE *pf) {
     return static_cast<std::int64_t>(cb);
 }
 int IPutNativeString(const char *psz, NATIVEFILE *pf) { std::size_t cb = std::strlen(psz); return CWriteNative(psz, 1, cb, pf) == cb ? 0 : EOF; }
-int CchNativePrintf(NATIVEFILE *pf, const char *fmt, ...) {
-    std::va_list args;
-    va_start(args, fmt);
+int CchNativePrintfFields(NATIVEFILE *pf, std::string_view fmt, std::span<const NATIVEFORMATARG> args) {
     char small[2048];
-    std::va_list copy; va_copy(copy, args);
-    int cb = std::vsnprintf(small, sizeof(small), fmt, copy);
-    va_end(copy);
+    int cb = CchFormatNative(small, fmt, args);
     int ret = -1;
     if (cb >= 0 && static_cast<std::size_t>(cb) < sizeof(small)) ret = CWriteNative(small, 1, cb, pf) == static_cast<std::size_t>(cb) ? cb : -1;
     else if (cb >= 0) {
         ret = FileCall(pf, -1, [&] {
             std::vector<char> rgb(static_cast<std::size_t>(cb) + 1);
-            std::vsnprintf(rgb.data(), rgb.size(), fmt, args);
+            if (CchFormatNative(rgb, fmt, args) < 0) return -1;
             return CWriteNative(rgb.data(), 1, cb, pf) == static_cast<std::size_t>(cb) ? cb : -1;
         });
     }
-    va_end(args); return ret;
+    return ret;
 }
 int CNativeScanFields(NATIVEFILE *pf, const char *fmt, std::span<const NATIVEINTEGERFIELD> rgFields) {
     int count = 0, ch;

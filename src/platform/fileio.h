@@ -5,6 +5,7 @@
 #include <array>
 #include <span>
 #include <variant>
+#include "nativeformat.h"
 struct NATIVEFILE;
 
 struct NATIVEDIR;
@@ -45,7 +46,13 @@ int ChPutNativeFile(int ch, NATIVEFILE *pf);
 char *PszGetNativeLine(char *psz, int cb, NATIVEFILE *pf);
 std::int64_t CbGetNativeLine(char **ppsz, std::size_t *pcb, NATIVEFILE *pf);
 int IPutNativeString(const char *psz, NATIVEFILE *pf);
-int CchNativePrintf(NATIVEFILE *pf, const char *pszFormat, ...);
+int CchNativePrintfFields(NATIVEFILE *pf, std::string_view szFormat, std::span<const NATIVEFORMATARG> rgArgs);
+template<class... ARGS>
+int CchNativePrintf(NATIVEFILE *pf, const char *pszFormat, ARGS... args) {
+    if (!pszFormat) { errno = EINVAL; return -1; }
+    const std::array<NATIVEFORMATARG, sizeof...(ARGS)> rgArgs = {NATIVEFORMATARG{args}...};
+    return CchNativePrintfFields(pf, pszFormat, rgArgs);
+}
 // Metadata's ASCII integer fields: %d and %lld, with scanf whitespace rules.
 using NATIVEINTEGERFIELD = std::variant<int *, long long *>;
 int CNativeScanFields(NATIVEFILE *pf, const char *pszFormat, std::span<const NATIVEINTEGERFIELD> rgFields);

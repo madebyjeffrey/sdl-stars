@@ -175,9 +175,11 @@ detail in [WIN16-PARITY.md](WIN16-PARITY.md).
   retain complete UTF-8 code points when truncating. `LMulDiv` rounds like
   Win32 `MulDiv`. Every format in
   the string table formats the same through both.
-  `CchSnprintf` takes an actual destination span and typed C++ values, including
-  packed scalar fields. `nativeformat.cpp` validates the value list and uses
-  the CRT for each conversion, retaining native widths, byte counts, locale,
+  `CchNativePrintf` also uses the typed value list, preserving the 2048-byte
+  stack path and measured second pass for longer stream output, including
+  binary NUL bytes. `CchSnprintf` takes an actual destination span and typed
+  C++ values, including packed scalar fields. `nativeformat.cpp` validates the
+  value list and uses the CRT for each conversion, retaining native widths, byte counts, locale,
   rounding and count destinations. Missing or incompatible values fail with
   `EINVAL`; extra values remain ignored. Publication fault providers use the
   same typed value span. The private CRT calls remain the foreign formatting
