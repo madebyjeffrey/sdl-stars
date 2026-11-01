@@ -1,6 +1,6 @@
 {
   "migration_parent": "d3d3724c",
-  "status": "182 migrated sites complete; remaining text work active",
+  "status": "184 migrated sites complete; remaining text work active",
   "contracts": {
     "display": "Write a terminated complete UTF-8 prefix into the actual destination span; preserve fitting bytes. Views borrow synchronously and overlapping copies use memmove.",
     "append": "Scan only inside the destination span for its NUL. An unterminated nonempty destination is cleared and zero bytes are appended.",
@@ -1797,6 +1797,22 @@
       "original_call": "std::strcpy(szOut,szWork)",
       "role": "Bounded string record decoding: copy only validated UTF-8 text plus its NUL into the actual fixed field or exactly sized persistent string allocation. Decoder staging publishes its known byte count directly into the provided output span.",
       "evidence": "docs/CPP-LIVE-CODECS.json"
+    },
+    {
+      "path": "src/core/log.cpp",
+      "scope": "LogChangeName",
+      "stage": "L05k",
+      "original_call": "std::strcpy(lpfl->lpszName,szName)",
+      "role": "Validate and stage a borrowed name before resizing its durable owner. Encode the raw marker/NUL through a bounded byte writer; the compression budget remains the actual name byte length.",
+      "evidence": "docs/CPP-LIVE-RENAME.json"
+    },
+    {
+      "path": "src/core/log.cpp",
+      "scope": "LogChangeName",
+      "stage": "L05k",
+      "original_call": "std::strcpy(reinterpret_cast<char*>(&rtchgname.rgb[1]),szName)",
+      "role": "Validate and stage a borrowed name before resizing its durable owner. Encode the raw marker/NUL through a bounded byte writer; the compression budget remains the actual name byte length.",
+      "evidence": "docs/CPP-LIVE-RENAME.json"
     }
   ],
   "remaining_spelling_scope": "Lexical raw-copy spellings, including SDK declarations/definitions; comments/literals excluded with the manifest lexer. Exact counts prevent new raw sites during the remaining migration.",
@@ -1846,20 +1862,6 @@
     {
       "path": "src/core/log.cpp",
       "normalized_call": "std::strcpy(app.state.szBase,pszFileBase)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/core/log.cpp",
-      "normalized_call": "std::strcpy(lpfl->lpszName,szName)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/core/log.cpp",
-      "normalized_call": "std::strcpy(reinterpret_cast<char*>(&rtchgname.rgb[1]),szName)",
       "count": 1,
       "status": "pending",
       "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."

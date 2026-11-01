@@ -781,8 +781,8 @@ void ShipCommandProc(APPSESSION &app, HWND hwnd, WPARAM wParam, LPARAM lParam) {
         ControlIO().pfnStickyDlgPos(hwnd, &app.lpui->ptStickyRenameDlg, 0);
         if (ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_RENAME), app.lpui->hwndFrame, RenameDlg, 0) != 0) {
             CchCopyUtf8Prefix(std::span{szT}, app.state.szWork);
-            if (std::strcmp(szT, PszGetFleetName(app, app.state.sel.fl.id)) != 0) {
-                LogChangeName(app, grobjFleet, app.state.sel.fl.id, szT);
+            if (std::strcmp(szT, PszGetFleetName(app, app.state.sel.fl.id)) != 0 &&
+                LogChangeName(app, grobjFleet, app.state.sel.fl.id, szT)) {
                 PresentationIO().pfnInvalidateReport(app, rptFleets, 1);
                 FillOrdersLB(app);
                 ControlIO().pfnDrawPlanShip(app, nullptr, static_cast<TileBits>(tileFleetOrders | tileBitmap | tileErase));

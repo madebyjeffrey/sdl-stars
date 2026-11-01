@@ -6,6 +6,12 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `LogChangeName` now rejects names exceeding 31 UTF-8 bytes, malformed UTF-8
+  and embedded NULs before changing the fleet or log. Previously it could
+  write an overlong name that replay rejected. Borrowed name slices are staged
+  before replacement, and failed name allocation/resize retains the current
+  owner. Valid name bytes, record sizes and host turn results are unchanged.
+
 - `PszGetCompressedString` now returns owned catalog text. Multiple lookups
   no longer overwrite one another, and retained popup, button-tracking and
   menu labels keep their storage alive. Fleet destination/task labels also

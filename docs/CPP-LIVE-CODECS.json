@@ -40,7 +40,7 @@
     "baseline": "Behavior-neutral for existing valid calls. Frozen original/native baselines, catalog sources, all unit goldens, wire widths/layouts, seed consumption and canonical models unchanged. No scenario/checkpoint moved and no regression export required.",
     "receipts": "dist/verification/live-cpp/l06a/"
   },
-  "pending_other_work": "LogChangeName raw caller validation and its unchecked fallback/persistent copies remain in the live copy inventory for a separate repair, along with other text/path copies and service interfaces.",
+  "pending_other_work": "LogChangeName caller validation and unchecked copies are now repaired in L05k (CPP-LIVE-RENAME.json). Other text/path copies and service interfaces remain in the live ledger.",
   "sites": [
     {
       "path": "src/ui/msgui.cpp",

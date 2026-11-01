@@ -3,11 +3,14 @@
 
 #include "common.h"
 #include <cstdint>
+#include <string_view>
 
 void    LogSplitFleet(APPSESSION &app, std::int16_t id);
 void    LogMergeFleet(APPSESSION &app, std::int16_t id);
 void    LogChangeShDef(APPSESSION &app, SHDEF *lpshdefNew);
-void    LogChangeName(APPSESSION &app, GrobjClass grobj, std::int16_t id, char *szName);
+// Empty text clears the name; accepted names are at most 31 UTF-8 bytes.
+// Input is borrowed only for the call and may alias the current name.
+[[nodiscard]] bool LogChangeName(APPSESSION &app, GrobjClass grobj, std::int16_t id, std::string_view szName);
 void    LogChangeFleet(APPSESSION &app, FLEET *pfl, FLEET *pflNew);
 void    LogChangeRelations(APPSESSION &app);
 void    LogChangeBtlplan(APPSESSION &app, BTLPLAN *pbtlplan);

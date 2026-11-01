@@ -83,7 +83,8 @@
         "bounded-wire-name-staging",
         "owned-player-name-values",
         "owned-catalog-values",
-        "owned-report-destination-and-task-labels"
+        "owned-report-destination-and-task-labels",
+        "fleet-rename-admission-and-owned-replacement"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -263,6 +264,19 @@
           "baseline": "Ran regression-export after all fixture readers finished; restored only clock-derived ID/salt churn because no semantic scenario/checkpoint moved. Frozen original fixtures, catalog sources and all unit goldens unchanged.",
           "contracts": "No allocation added. Existing 256-byte catalog and 360-byte report budgets, all text IDs, fixed wire layouts/widths, RNG consumption and canonical models unchanged. Retained borrows have actual named/UI owners; old unchecked result overloads and obsolete catalog cache state removed.",
           "receipts": "dist/verification/live-cpp/l05j/"
+        },
+        {
+          "batch": "L05k bounded fleet-name admission and owner replacement",
+          "debug_build": "Pass; no new warnings; public headers in both include orders.",
+          "desktop": "153/153; includes the actual UI/host-order fixture consumers, invalid UTF-8/byte-limit/NUL admission, non-NUL slices, aliases, empty clears, maximum raw wire bytes, injected name allocation/resize failures, existing ownership/leak checks and available tutorial checkpoints.",
+          "host_units": "28/28",
+          "native_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped reference inputs.",
+          "host_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped reference inputs.",
+          "windows": "147/147 owned production/wrapper units and both changed test units compile with strict MinGW. Actual Windows log executable passes all 21 cases under Wine with per-case isolation. Native Windows desktop qualification remains pending.",
+          "reproduction": "The added 32-byte ASCII test failed against the old writer: current name replaced, log advanced and no admission error set. It passes after validation precedes replacement/publication.",
+          "failure_scope": "Name allocation/resize failures retain the current owner and log; existing log-append failure effects and successful tutorial callback order are preserved.",
+          "baseline": "Ran regression-export after all fixture readers finished; restored only clock-derived game-ID/encryption-salt churn because no semantic scenario/checkpoint moved. Frozen original fixtures, all unit goldens, valid wire bytes/layouts, normal compression budgets, RNG consumption and canonical models unchanged.",
+          "receipts": "dist/verification/live-cpp/l05k/"
         }
       ],
       "bounded_formatting": {
@@ -327,8 +341,8 @@
         "temperature_commit": "03d8b039",
         "windows_host_test_configuration_commit": "09bb4477",
         "policy": "Actual array/tail spans; complete terminated UTF-8 prefixes; overlapping views supported. Paths/record staging keep separate strict contracts.",
-        "remaining_initial_sites": 126,
-        "remaining_lexical_spellings": 132,
+        "remaining_initial_sites": 124,
+        "remaining_lexical_spellings": 130,
         "inventory_scope": "The initial copy inventory and the current lexical policy differ: the latter also includes SDK declaration/definition spellings. Both remain explicitly accounted for.",
         "enforcement": "The manifest checks exact remaining raw-copy spellings and multiplicities. New or removed raw sites require updating the maintained inventory; migrated sites cannot silently be reintroduced."
       },
@@ -354,6 +368,12 @@
         "report_consumers": 8,
         "retained_capacity": 256,
         "byte_reference": "All 1516 current IDs match independent canonical UTF-8 source bytes before and after the migration."
+      },
+      "fleet_rename": {
+        "status": "complete; verified",
+        "evidence": "docs/CPP-LIVE-RENAME.json",
+        "removed_raw_copies": 2,
+        "interface": "Readonly view and checked boolean result; staged aliases and current persistent owner retained on name allocation/resize failure."
       }
     },
     {
@@ -10419,14 +10439,16 @@
       "path": "src/core/log.cpp",
       "line": 111,
       "code": "strcpy(lpfl->lpszName, szName);",
-      "disposition": "pending"
+      "disposition": "bounded-fleet-rename-L05k",
+      "evidence": "docs/CPP-LIVE-RENAME.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/log.cpp",
       "line": 116,
       "code": "strcpy((char *)&rtchgname.rgb[1], szName);",
-      "disposition": "pending"
+      "disposition": "bounded-fleet-rename-L05k",
+      "evidence": "docs/CPP-LIVE-RENAME.json"
     },
     {
       "kind": "unbounded_copy",

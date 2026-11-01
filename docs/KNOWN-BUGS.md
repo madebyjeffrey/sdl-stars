@@ -249,6 +249,20 @@ now clears the borrowed stream without heap-release calls. A resource-skip and
 injected disk-full test cover the error state and subsequent stream selection.
 Recorded tutorial bytes, save records and host results are unchanged.
 
+## Fleet-name admission and replacement — fixed on develop
+
+`LogChangeName` accepted names beyond the reader's 31-byte UTF-8 budget and
+freed the current name before copying or allocating its replacement. A 32-byte
+ASCII name could be written successfully and then rejected by log replay;
+borrowed input could refer to freed storage, and allocation failure invalidated
+the old owner. The function now takes a readonly text view, validates/stages
+it before replacement and uses the existing typed resize service. The actual
+UI and fixture callers check its success result. Rejected input and failed
+name allocation/resize leave the fleet name and log unchanged. Tests cover
+both allocation paths, malformed/overlong text, non-NUL slices, aliases, empty
+clears and the maximum raw UTF-8 wire image. Valid compression budgets, record
+widths and host results are unchanged; log-append failure effects remain as before.
+
 ## Catalog scratch aliases — fixed on develop
 
 `PszGetCompressedString` decoded every lookup into the same state buffer.

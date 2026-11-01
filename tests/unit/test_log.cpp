@@ -8,6 +8,133 @@
 [[maybe_unused]] static char szTestLiteral2[] = "\xc3";
 
 #include "stars_test.h"
+#include <vector>
+#include <limits>
+#include "heap_io.h"
+
+static void test_LogChangeName_rejects_oversized(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    char szDir[cbTestPath], szName[33];
+    FLEET *lpfl;
+    char *pszNameOld;
+    size_t cbLog;
+
+    TEST_ASSERT(FStarsTestInit(app));
+    TEST_ASSERT(FStarsTestDir("LogChangeName_bounds", szDir, sizeof(szDir)));
+    TEST_ASSERT(FStarsTestNewGame(app, szDir, 12345, nullptr, 0));
+    TEST_ASSERT(FStarsTestLoadPlayer(app, 0));
+    lpfl = LpflStarsTestAddFleet(app, 0, idPlanetDeepSpace, 0, 1);
+    TEST_ASSERT(LogChangeName(app, grobjFleet, lpfl->id, szTestLiteral1));
+    pszNameOld = lpfl->lpszName;
+    cbLog = app.state.imemLogCur;
+    std::vector<uint8_t> rgbLog(app.state.lpLog, app.state.lpLog + cbLog);
+    memset(szName, 'a', 32); szName[32] = 0;
+    const std::string_view rgszBad[] = {std::string_view(szName, 32), std::string_view("a\0b", 3), std::string_view("\xff", 1), "😀😀😀😀😀😀😀😀"};
+    for (const auto szBad : rgszBad) {
+        app.state.idsFileError = 0;
+        TEST_CHECK(!LogChangeName(app, grobjFleet, lpfl->id, szBad));
+        TEST_CHECK(lpfl->lpszName == pszNameOld && strcmp(lpfl->lpszName, "Original") == 0);
+        TEST_CHECK(static_cast<size_t>(app.state.imemLogCur) == cbLog);
+        TEST_CHECK(memcmp(rgbLog.data(), app.state.lpLog, cbLog) == 0);
+        TEST_CHECK(app.state.idsFileError == idsGameFileAppearsCorruptUnableLoadFile);
+    }
+}
+
+static int cNameFrees;
+static void *TestFailNameAllocate(APPSESSION &, uint16_t, HeapType) { StarsThrowError(starsErrorMemory, 0); }
+static void *TestFailNameResize(APPSESSION &, void *, uint16_t, HeapType) { StarsThrowError(starsErrorMemory, 0); }
+static void TestNameFree(APPSESSION &app, void *lp, HeapType ht) { cNameFrees++; FreeLp(app, lp, ht); }
+
+static void test_LogChangeName_allocation_failure(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    char szDir[cbTestPath];
+    FLEET *lpfl;
+    char *pszNameOld;
+    size_t cbLog;
+    bool fCaught;
+    int i;
+
+    TEST_ASSERT(FStarsTestInit(app));
+    TEST_ASSERT(FStarsTestDir("LogChangeName_failure", szDir, sizeof(szDir)));
+    TEST_ASSERT(FStarsTestNewGame(app, szDir, 12345, nullptr, 0));
+    TEST_ASSERT(FStarsTestLoadPlayer(app, 0));
+    lpfl = LpflStarsTestAddFleet(app, 0, idPlanetDeepSpace, 0, 1);
+    TEST_ASSERT(LogChangeName(app, grobjFleet, lpfl->id, szTestLiteral1));
+    HEAPIO io = HeapIO();
+    io.pfnAllocate = TestFailNameAllocate; io.pfnResize = TestFailNameResize; io.pfnFree = TestNameFree;
+    for (i = 0; i < 2; i++) {
+        pszNameOld = lpfl->lpszName;
+        cbLog = app.state.imemLogCur;
+        std::vector<uint8_t> rgbLog(app.state.lpLog, app.state.lpLog + cbLog);
+        cNameFrees = 0; fCaught = false;
+        {
+            HEAPIOSCOPE heapScope(io);
+            try {
+                (void)LogChangeName(app, grobjFleet, lpfl->id, "Replacement");
+            } catch (const StarsError &error) {
+                fCaught = true;
+                TEST_CHECK(error.mdError == starsErrorMemory && error.ids == 0);
+            }
+        }
+        TEST_CHECK(fCaught && cNameFrees == 0 && lpfl->lpszName == pszNameOld);
+        TEST_CHECK(static_cast<size_t>(app.state.imemLogCur) == cbLog && memcmp(rgbLog.data(), app.state.lpLog, cbLog) == 0);
+        if (pszNameOld) TEST_CHECK(strcmp(lpfl->lpszName, "Original") == 0);
+        TEST_ASSERT(LogChangeName(app, grobjFleet, lpfl->id, {}));
+        TEST_CHECK(!lpfl->lpszName);
+    }
+}
+
+static void test_LogChangeName_wire_and_borrowing(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    char szDir[cbTestPath], szName[32], szRead[32];
+    uint8_t rgb[cbWireChangeName + 33]{};
+    HDR hdr;
+    FLEET *lpfl;
+    size_t cbLog;
+    int i;
+
+    TEST_ASSERT(FStarsTestInit(app));
+    TEST_ASSERT(FStarsTestDir("LogChangeName_wire", szDir, sizeof(szDir)));
+    TEST_ASSERT(FStarsTestNewGame(app, szDir, 12345, nullptr, 0));
+    TEST_ASSERT(FStarsTestLoadPlayer(app, 0));
+    lpfl = LpflStarsTestAddFleet(app, 0, idPlanetDeepSpace, 0, 1);
+    TEST_ASSERT(LogChangeName(app, grobjFleet, lpfl->id, szTestLiteral1));
+    for (i = 0; i < 7; i++) memcpy(szName + i * 4, "\xf0\x9f\x98\x80", 4);
+    memcpy(szName + 28, "XYZ", 4);
+    TEST_ASSERT(LogChangeName(app, grobjFleet, lpfl->id, szName));
+    TEST_CHECK(strcmp(lpfl->lpszName, szName) == 0);
+    TEST_ASSERT(FGetPrevLogRt(app, &hdr, rgb));
+    TEST_ASSERT(hdr.rt == rtLogFleetName && hdr.cb == cbWireChangeName + 33 && rgb[cbWireChangeName] == 0);
+    TEST_CHECK(memcmp(rgb + cbWireChangeName + 1, szName, 32) == 0);
+    const auto cbRead = FReadUserString(app, std::as_bytes(std::span{rgb}).subspan(cbWireChangeName), std::span{szRead});
+    TEST_CHECK(cbRead && *cbRead == 33 && strcmp(szRead, szName) == 0);
+    const std::string_view szBorrowed(lpfl->lpszName + 4, 24);
+    TEST_ASSERT(LogChangeName(app, grobjFleet, lpfl->id, szBorrowed));
+    TEST_CHECK(strlen(lpfl->lpszName) == 24 && memcmp(lpfl->lpszName, szName + 4, 24) == 0);
+    TEST_ASSERT(LogChangeName(app, grobjFleet, lpfl->id, std::string_view("Slice!", 5)));
+    TEST_CHECK(strcmp(lpfl->lpszName, "Slice") == 0);
+    cbLog = app.state.imemLogCur;
+    TEST_CHECK(!LogChangeName(app, grobjFleet, std::numeric_limits<int16_t>::max(), "Ignored") && static_cast<size_t>(app.state.imemLogCur) == cbLog);
+    TEST_ASSERT(LogChangeName(app, grobjFleet, lpfl->id, {}));
+    TEST_CHECK(!lpfl->lpszName);
+    TEST_ASSERT(FGetPrevLogRt(app, &hdr, rgb));
+    TEST_CHECK(hdr.cb == cbWireChangeName + 2 && rgb[cbWireChangeName] == 0 && rgb[cbWireChangeName + 1] == 0);
+}
 
 static void test_FRunLogRecord_rejects_invalid_utf8_name(void) {
 #ifdef STARS_UI_SDL
@@ -27,7 +154,7 @@ static void test_FRunLogRecord_rejects_invalid_utf8_name(void) {
     TEST_ASSERT(FStarsTestNewGame(app, szDir, 12345, NULL, 0));
     TEST_ASSERT(FStarsTestLoadPlayer(app, 0));
     lpfl = LpflStarsTestAddFleet(app, 0, idPlanetDeepSpace, 0, 1);
-    LogChangeName(app, grobjFleet, lpfl->id, szTestLiteral1);
+    TEST_ASSERT(LogChangeName(app, grobjFleet, lpfl->id, szTestLiteral1));
     memset(&rt, 0, sizeof(rt));
     rt.id = lpfl->id;
     cOut = 31;
@@ -903,6 +1030,9 @@ static void test_minefield_log_replay_bytes(void) {
 }
 
 TEST_LIST = {{"minefield log replay keeps signed flag and subtype/no-read behavior", test_minefield_log_replay_bytes},
+             {"fleet rename rejects oversized input before changing state", test_LogChangeName_rejects_oversized},
+             {"fleet rename allocation failures retain the current owner and log", test_LogChangeName_allocation_failure},
+             {"fleet rename retains wire names, slices and aliased input", test_LogChangeName_wire_and_borrowing},
              {"default template comparison retains adjacent physical bytes", test_zipprod_comparison_physical_tail},
              {"production template replay retains odd bytes and callback timing", test_zipprod_replay_and_callback_order},
              {"routing writer preserves exact prefix bytes", test_routing_writer_bytes},

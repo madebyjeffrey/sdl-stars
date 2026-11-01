@@ -2101,7 +2101,7 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
                     idHostOrderFleet = lpflHostOrder->id;
                     fHadFleetName = lpflHostOrder->lpszName != NULL;
                     if (fHadFleetName) CchSnprintf(std::span{szFleetNameSav, sizeof(szFleetNameSav)}, "%s", lpflHostOrder->lpszName);
-                    LogChangeName(app, grobjFleet, lpflHostOrder->id, szReplacementOrder);
+                    if (!LogChangeName(app, grobjFleet, lpflHostOrder->id, szReplacementOrder)) goto LDone;
                     if (lpflHostOrder->lpszName) FreeLp(app, lpflHostOrder->lpszName, htString);
                     lpflHostOrder->lpszName = NULL;
                     if (fHadFleetName) {

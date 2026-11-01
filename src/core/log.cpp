@@ -96,46 +96,58 @@ void LogChangeShDef(APPSESSION &app, SHDEF *lpshdefNew) {
     return;
 }
 
-void LogChangeName(APPSESSION &app, GrobjClass grobj, std::int16_t id, char *szName) {
+bool LogChangeName(APPSESSION &app, GrobjClass grobj, std::int16_t id, std::string_view szName) {
     FLEET    *lpfl;
-    std::int16_t   cOut;
+    std::int16_t cOut;
     RTCHGNAME rtchgname;
     std::uint8_t rgbName[cbWireChangeName + 33];
+    char szNameT[32];
 
     lpfl = LpflFromId(app, id);
-    if (lpfl) {
-        if (lpfl->lpszName) {
-            HeapIO().pfnFree(app, lpfl->lpszName, htString);
-        }
-        if (!szName || *szName == 0) {
-            rtchgname.rgb[0] = 0;
-            rtchgname.rgb[1] = 0;
-            cOut = 1;
-            lpfl->lpszName = nullptr;
+    if (!lpfl) return false;
+    // Stage before replacement: a caller may borrow the current fleet name.
+    if (szName.size() > 31 || CchCopyUtf8(std::span{szNameT}, szName) < 0) {
+        FileError(app, idsGameFileAppearsCorruptUnableLoadFile);
+        if (FStarsRecoveryActive()) StarsThrowError(starsErrorFile, app.state.idsFileError);
+        return false;
+    }
+    if (szName.empty()) {
+        rtchgname.rgb[0] = 0;
+        rtchgname.rgb[1] = 0;
+        cOut = 1;
+    } else {
+        cOut = static_cast<std::int16_t>(szName.size());
+        const auto cbPacked = FCompressUserString(app, std::string_view(szNameT, szName.size()), std::as_writable_bytes(std::span{rtchgname.rgb}).subspan(1, szName.size()));
+        if (cbPacked) {
+            cOut = static_cast<std::int16_t>(*cbPacked);
+            rtchgname.rgb[0] = static_cast<std::uint8_t>(cOut);
         } else {
-            cOut = std::strlen(szName);
-            lpfl->lpszName = LpAlloc<char>(app, std::strlen(szName) + 1, htString);
-            std::strcpy(lpfl->lpszName, szName);
-            const auto cbPacked1 = FCompressUserString(app, szName, std::as_writable_bytes(std::span{rtchgname.rgb}).subspan(1).first(std::min(static_cast<std::size_t>(cOut), std::size(rtchgname.rgb) - 1)));
-            if (cbPacked1) cOut = static_cast<std::int16_t>(*cbPacked1);
-            if (cbPacked1) {
-                rtchgname.rgb[0] = cOut;
-            } else {
-                rtchgname.rgb[0] = 0;
-                std::strcpy(reinterpret_cast<char *>(&rtchgname.rgb[1]), szName);
-                cOut++;
-            }
-        }
-        rtchgname.grobj = grobj;
-        rtchgname.id = id;
-        FEncodeChangeNamePrefix(rtchgname, std::as_writable_bytes(std::span(rgbName)).first(cbWireChangeName));
-        std::memcpy(rgbName + cbWireChangeName, rtchgname.rgb, cOut + 1);
-        WriteMemRt(app, rtLogFleetName, cOut + 5, rgbName);
-        if (app.state.gd.fTutorial) {
-            PresentationIO().pfnTutor(app);
+            NATIVEBYTEWRITER writer(std::as_writable_bytes(std::span{rtchgname.rgb}));
+            writer.FWriteU8(0);
+            writer.FWriteBytes(std::as_bytes(std::span{szNameT}).first(szName.size() + 1));
+            cOut++;
         }
     }
-    return;
+    rtchgname.grobj = grobj;
+    rtchgname.id = id;
+    FEncodeChangeNamePrefix(rtchgname, std::as_writable_bytes(std::span{rgbName}).first(cbWireChangeName));
+    NATIVEBYTEWRITER(std::as_writable_bytes(std::span{rgbName}).subspan(cbWireChangeName)).FWriteBytes(std::as_bytes(std::span{rtchgname.rgb}).first(static_cast<std::size_t>(cOut) + 1));
+    if (szName.empty()) {
+        if (lpfl->lpszName) HeapIO().pfnFree(app, lpfl->lpszName, htString);
+        lpfl->lpszName = nullptr;
+    } else {
+        // The resize service reuses the current slot when possible and keeps
+        // its owner valid on allocation failure, before any log publication.
+        if (lpfl->lpszName) {
+            lpfl->lpszName = LpReAlloc<char>(app, lpfl->lpszName, static_cast<std::uint16_t>(szName.size() + 1), htString);
+        } else {
+            lpfl->lpszName = LpAlloc<char>(app, static_cast<std::uint16_t>(szName.size() + 1), htString);
+        }
+        CchCopyUtf8(std::span(lpfl->lpszName, szName.size() + 1), std::string_view(szNameT, szName.size()));
+    }
+    WriteMemRt(app, rtLogFleetName, cOut + 5, rgbName);
+    if (app.state.gd.fTutorial) PresentationIO().pfnTutor(app);
+    return true;
 }
 
 void LogChangeFleet(APPSESSION &app, FLEET *pfl, FLEET *pflNew) {

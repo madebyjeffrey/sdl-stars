@@ -208,6 +208,12 @@ detail in [WIN16-PARITY.md](WIN16-PARITY.md).
   Validated decoded names copy into their actual fixed field or exactly sized
   persistent allocation. `CPP-LIVE-CODECS.json` records all 32 existing calls plus 11 migrated reference-test calls,
   physical buffers and the pre-migration reference tests.
+  `LogChangeName` borrows a readonly text view, validates/stages its 31-byte
+  UTF-8 budget and returns a checked success result. Persistent name replacement
+  uses the typed arena resize service, preserving its current owner on failure;
+  the staged input also permits slices of that owner. Wire framing/compression
+  budgets remain unchanged. `CPP-LIVE-RENAME.json` records the caller and fault
+  evidence.
   Saved player/design/battle-plan names
   use bounded staging with the existing 31-byte compression budget and raw
   marker/NUL framing. `CbEncodeRtShDef` takes a byte span and returns an optional
