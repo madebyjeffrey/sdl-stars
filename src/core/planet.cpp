@@ -297,7 +297,7 @@ char *PszCalcEnvVar(APPSESSION &app, EnvType iEnv, std::int16_t iVar) {
     default:
         return PszCalcGravity(app, iVar);
     case Temperature:
-        CchSprintf(app.state.szWork, "%d%cC", iVar * 4 - 200, 186);
+        CchSprintf(app.state.szWork, "%dºC", iVar * 4 - 200);
         break;
     case Radiation:
         CchSprintf(app.state.szWork, "%dmR", iVar);

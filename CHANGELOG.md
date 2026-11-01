@@ -6,6 +6,12 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `PszCalcEnvVar` now emits the temperature unit `ºC` as UTF-8. Previously
+  it inserted the single byte `0xBA`, which was invalid application text and
+  could lose its suffix during UTF-8 copying or drawing. The live planet-report
+  golden now contains the same UTF-8 unit. Numeric values, save records and
+  turn-generation results are unchanged.
+
 - `TitleWndProc` now frees the writable title bitmap when its window is
   destroyed. Previously it passed the allocated copy to `FreeResource`, which
   left it allocated until runtime shutdown. Repeated destruction remains safe;

@@ -45,6 +45,26 @@ static void TestEncoding(void) {
     TEST_CHECK(CchUtf8Prefix("a\xffz", 2) == 1);
 }
 
+static void TestEnvironmentText(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    const char *psz;
+    for (int16_t i = 0; i <= 100; i++) {
+        psz = PszCalcEnvVar(app, Temperature, i);
+        TEST_CHECK(FUtf8Valid(psz, strlen(psz)));
+        TEST_CHECK(!strcmp(psz + strlen(psz) - 3, "ºC"));
+    }
+    TEST_CHECK(!strcmp(PszCalcEnvVar(app, Temperature, 0), "-200ºC"));
+    TEST_CHECK(!strcmp(PszCalcEnvVar(app, Temperature, 50), "0ºC"));
+    TEST_CHECK(!strcmp(PszCalcEnvVar(app, Temperature, 100), "200ºC"));
+    TEST_CHECK(!strcmp(PszCalcEnvVar(app, Gravity, 50), "1.00g"));
+    TEST_CHECK(!strcmp(PszCalcEnvVar(app, Radiation, 50), "50mR"));
+}
+
 static void TestPasswords(void) {
 #ifdef STARS_UI_SDL
     APPSESSION &app = ui::app;
@@ -205,6 +225,7 @@ static void TestScannerSnapshotUtf8(void) {
 #endif
 
 TEST_LIST = {{"formatted text stays bounded and preserves UTF-8", TestFormattedTextBounds},
+             {"environment labels contain UTF-8 units", TestEnvironmentText},
 #ifdef STARS_UI_SDL
              {"scanner snapshots preserve UTF-8 and reject malformed names", TestScannerSnapshotUtf8},
 #endif

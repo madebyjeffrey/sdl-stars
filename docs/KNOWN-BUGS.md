@@ -249,6 +249,15 @@ now clears the borrowed stream without heap-release calls. A resource-skip and
 injected disk-full test cover the error state and subsequent stream selection.
 Recorded tutorial bytes, save records and host results are unchanged.
 
+## Temperature-label encoding — fixed on develop
+
+`PszCalcEnvVar` used `%c` with 186 for the `º` in a temperature unit,
+producing a single CP1252 byte inside UTF-8 application text. Drawing and
+bounded UTF-8 copies could reject or stop at that byte. It now emits UTF-8
+`ºC`, preserving the character and every numeric value. All 101 temperature
+values are checked for valid UTF-8, and live report goldens use the same bytes.
+Save records and both turn-generation baselines remain unchanged.
+
 ## Formatter destination capacity — fixed on develop
 
 `CchSprintf` and SDL `wsprintfA` passed a constant 1024-byte capacity to the
