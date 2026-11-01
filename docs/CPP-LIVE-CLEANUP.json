@@ -1721,6 +1721,47 @@
         "independent_witnesses": "job successful",
         "SDK_matrix": "21 contracts pass with no failed contracts in each SDK/both matrix variant; diagnostic-only differences remain explicit",
         "scope": "Qualifies parent 2bbd5afa, including the MakeNewName fix and CI deadline. Does not qualify the subsequent fitter/API retirement; final revision still requires platform qualification."
+      },
+      "windows_backup_directory_fixture": {
+        "batch": "L05ag native Windows backup-directory fixture qualification",
+        "parent": "fef58be402b5147ccf71db880d3e997f70840e39",
+        "status": "fixture corrected and locally verified; full native Windows/Linux qualification pending",
+        "failed_platform_run": {
+          "id": 41353956286,
+          "head": "087dc5cdbc93cc22f541d78f2840beb703793e13",
+          "url": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41353956286",
+          "windows": "133/134 pass; only the backup-directory boundary fixture fails its seven existence/removal checks.",
+          "linux_desktop": "156/156 pass",
+          "linux_host": "29/29 pass",
+          "resource_sanitizers": "45/45 pass",
+          "independent_witnesses": "job succeeds"
+        },
+        "root_cause": "The fixture used eight e-acute characters to keep the full filename below 260 UTF-16 units, but Windows directory creation separately reserves room for an 8.3 filename (MAX_PATH - 12). The resulting 249/255-unit directories are rejected by both the actual C++ file service and CreateDirectoryW; the latter reports ERROR_FILENAME_EXCED_RANGE (206). Wine accepts those same inputs and therefore did not expose the native failure.",
+        "native_reproduction": {
+          "run": 41356392422,
+          "job": 124997242421,
+          "head": "34f8b9c9112f9b5a913d293ee447ca9f4c07df8d",
+          "url": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41356392422",
+          "command": "path-probe.exe 8 (red), path-probe.exe 16 (green)",
+          "scope": "Minimized probe links the actual fileio.cpp/encoding.cpp/nativeformat.cpp and compares direct Windows API calls. Two otherwise identical 250-byte parent paths differ only in Unicode prefix count.",
+          "original": "257/263 UTF-8 path bytes; 249/255 UTF-16 units; create fails, native SDK error 206.",
+          "corrected": "Same 257/263 UTF-8 path bytes; 241/247 UTF-16 units; create, plain/trailing lookup and SDK query all pass.",
+          "eliminated_hypotheses": "Trailing separators and divergence between the C++ service and direct Windows calls do not cause this failure."
+        },
+        "repair": "Change only the backup-directory naming fixture prefix from eight to sixteen e-acute characters. Keep its 255-byte basename assertion, full 257/263-byte backup paths, all seven rotation-name branches, actual creation/removal and repeated-work-directory coverage. The separate turn-generation 250/255-byte overflow regression case is untouched. Production code, names, saved layouts and game behavior are unchanged.",
+        "reference": "https://learn.microsoft.com/windows/win32/fileio/maximum-file-path-limitation",
+        "debug_build": "Pass; no new warnings. Source policy covers 158 sources, 159 variants, 161 standalone headers in both orders; exact live raw-copy inventory remains 11.",
+        "desktop": "154/154 including 29 leak checks, actual turn cases and available SDL tutorial checkpoints.",
+        "host_units": "29/29",
+        "sanitizers": "Actual Debug ASan/UBSan turn executable passes all 9 cases twice consecutively.",
+        "windows_host": "Actual rebuilt MinGW Windows Release test_turn.exe passes all 9 isolated cases under Wine. This is supplementary evidence; the native Windows probe is the deciding directory-limit comparison.",
+        "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+        "host_regression": "Production and host inputs remain byte-identical to the fef58be4 candidate already qualified with 519 host matches. Its prior host regression remains applicable; no unchanged host regression is repeated for this test-only fixture correction.",
+        "baseline": "No behavior change and no export. Every native baseline file remains unmodified; frozen original fixtures are untouched.",
+        "cleanup": "Task-only diagnostic source/workflow, original native results and Wine comparison are preserved under dist/verification/live-cpp/l05ag/probe/. Both local and remote diagnostic branch references are removed; develop never switched branches. No diagnostic code or workflow change is added to develop.",
+        "remaining": "11 actual raw-copy calls, remaining path/buffer/ownership work, typed file-selection Milestone D and final complete-state audit/platform qualification remain open.",
+        "receipts": "dist/verification/live-cpp/l05ag/",
+        "test_sha256": "122b1cf1e1ebff402da0126f46fd268a653b86a0f194770430aeb2baa178a55a"
       }
     }
   ],

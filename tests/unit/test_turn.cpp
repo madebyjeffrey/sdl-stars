@@ -246,7 +246,8 @@ static void test_backup_directory_names(void) {
 
     TEST_ASSERT(FStarsTestInit(app));
     TEST_ASSERT(FStarsTestDir("backup-directory-names", szDir, sizeof(szDir)));
-    std::string szDirectory = std::string(szDir) + chDirSep + "éééééééé";
+    // Keep the byte boundary while fitting Windows' MAX_PATH - 12 directory limit.
+    std::string szDirectory = std::string(szDir) + chDirSep + "éééééééééééééééé";
     TEST_ASSERT(szDirectory.size() < 250);
     szDirectory.append(250 - szDirectory.size(), 'a');
     TEST_ASSERT(FEnsureNativeDir(szDirectory.c_str()));

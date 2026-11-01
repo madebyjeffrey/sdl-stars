@@ -3370,6 +3370,10 @@
         "src/core/turn2.h": "b6fbf6b3de9c999a1285c8e4597ab1067da3777ffe358990e15a30dd30717e88",
         "tests/unit/test_turn.cpp": "12bcc95b0a8d98878bdcd6391adaadd5c577d8fe2273295ebbe4021cf209897c"
       }
+    },
+    "windows_fixture_correction": {
+      "status": "fixture corrected and locally verified; full native Windows/Linux qualification pending",
+      "evidence": "docs/CPP-LIVE-CLEANUP.json: L08.windows_backup_directory_fixture"
     }
   },
   "report_file_paths": {
