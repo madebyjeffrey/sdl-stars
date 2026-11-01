@@ -45,7 +45,8 @@ std::optional<std::size_t> FDecompressUserStringBytes(APPSESSION &app, std::span
 std::int16_t NybbleFromCh(APPSESSION &app, std::uint8_t ch);
 char    ChFromNybble(APPSESSION &app, std::int16_t nyb);
 std::int16_t FIntersectCircleLine(POINT16 ptL1, POINT16 ptL2, POINT16 ptC, std::int32_t r2, std::int16_t dMax, std::int16_t *pdStart, std::int16_t *pdEnd);
-void    IntToRoman(std::int16_t i, char *pszOut);
+// Success returns bytes excluding NUL; failure empties a nonempty destination.
+std::optional<std::size_t> IntToRoman(std::int16_t i, std::span<char> pszOut);
 std::int16_t FCheckPassword(APPSESSION &app);
 std::int32_t LSaltFromSz(const char *psz);
 std::int32_t LDistance2(POINT16 pt1, POINT16 pt2);

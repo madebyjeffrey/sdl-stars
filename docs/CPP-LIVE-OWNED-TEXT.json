@@ -3339,5 +3339,30 @@
       "lifetime": "synchronous-full-expression",
       "line": 849
     }
-  ]
+  ],
+  "hull_labels": {
+    "parent": "5a66d8b5",
+    "status": "complete; verified",
+    "interface": "DecorateHullName returns std::array<char, 40>; IntToRoman takes std::span<char> and returns std::optional<std::size_t> excluding NUL. No unbounded output overload remains.",
+    "consumers": [
+      "src/ui/popup.cpp: DrawPopup drawing owns szTB through TextOutA",
+      "src/ui/popup.cpp: popup measurement owns szTB through GetTextExtent"
+    ],
+    "budget": "Same 40-byte popup arrays. Class names use fixed 32-byte fields; at most 16 matching designs add an ordinal I through XVI, at most four Roman digits plus three punctuation bytes. No save layout or element width changed.",
+    "roman_contract": "Preserve repeated-X spelling across the entire signed int16 domain, with nonpositive values empty. Insufficient destination capacity returns nullopt and clears only its first byte if nonempty; empty output still needs NUL storage.",
+    "tests": "Full int16 numeric domain, capacities zero through seven with sentinels for every real hull ordinal, all 16 matching hulls at the 31-byte UTF-8 name limit, free/unique/own-player cases and independent owned results.",
+    "pending": "Other shared scratch results, const text, paths and other buffer/length services remain active.",
+    "verification": {
+      "batch": "L05l owned hull labels and bounded Roman numeral output",
+      "debug_build": "Pass; no new warnings; standalone headers compile in both include orders.",
+      "desktop": "153/153, including available SDL tutorial checkpoints and all 29 leak checks.",
+      "host_units": "28/28",
+      "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors and skipped reference inputs.",
+      "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors and skipped reference inputs.",
+      "windows": "147/147 owned production/wrapper units and both changed test units compile with strict MinGW; actual Windows utility executables pass all 20 cases under Wine. Native Windows desktop qualification remains pending.",
+      "contract_checks": "All 65,536 signed 16-bit Roman inputs; capacities zero through seven with sentinels for every real hull ordinal; 16 duplicate hulls at the UTF-8 byte limit; free/unique/own-player cases and independent owned results.",
+      "baseline": "Behavior-neutral. No regression baseline, unit golden, fixed field/record width, valid text bytes, duplicate ordering, rounding or RNG consumption changed.",
+      "receipts": "dist/verification/live-cpp/l05l/"
+    }
+  }
 }

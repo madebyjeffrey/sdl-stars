@@ -2026,22 +2026,21 @@ void GetTrueHullCost(std::int16_t iPlayer, HUL *lphul, std::uint16_t *rgCost) {
     return;
 }
 
-void DecorateHullName(APPSESSION &app, std::int16_t iplr, std::int16_t ish, char *psz) {
+std::array<char, 40> DecorateHullName(APPSESSION &app, std::int16_t iplr, std::int16_t ish) {
     std::int16_t i;
     std::int16_t c;
     SHDEF  *lpshdef;
     std::int16_t iVal;
+    std::array<char, 40> psz{};
 
     lpshdef = app.state.rglpshdef[iplr] + ish;
-    if (lpshdef->fFree) {
-        *psz = 0;
-    } else {
-        std::strcpy(psz, lpshdef->hul.szClass);
+    if (!lpshdef->fFree) {
+        CchCopyUtf8Prefix(std::span{psz}, lpshdef->hul.szClass);
         if (iplr != app.state.idPlayer) {
             c = 0;
             iVal = 1;
             for (i = 0; i < 16; i++) {
-                if (i != ish && !app.state.rglpshdef[iplr][i].fFree && std::strcmp(psz, app.state.rglpshdef[iplr][i].hul.szClass) == 0) {
+                if (i != ish && !app.state.rglpshdef[iplr][i].fFree && std::strcmp(lpshdef->hul.szClass, app.state.rglpshdef[iplr][i].hul.szClass) == 0) {
                     c++;
                     if (i < ish) {
                         iVal++;
@@ -2049,15 +2048,17 @@ void DecorateHullName(APPSESSION &app, std::int16_t iplr, std::int16_t ish, char
                 }
             }
             if (c != 0) {
-                c = std::strlen(psz);
+                c = std::strlen(psz.data());
                 psz[c] = ' ';
                 psz[c + 1] = '(';
-                IntToRoman(iVal, psz + (c + 2));
-                std::strcat(psz, ")");
+                // At most 16 designs: 31 name bytes + three punctuation
+                // bytes + at most four Roman digits fit the existing budget.
+                IntToRoman(iVal, std::span{psz}.subspan(c + 2));
+                CchAppendUtf8Prefix(std::span{psz}, ")");
             }
         }
     }
-    return;
+    return psz;
 }
 
 std::int16_t FMatchTarget(APPSESSION &app, FLEET *lpflTarget, MdTarget mdTarget, std::int16_t fExact) {

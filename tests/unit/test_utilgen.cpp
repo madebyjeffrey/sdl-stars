@@ -6,6 +6,30 @@
 #include "callbackcontext.h"
 
 #include "stars_test.h"
+#include <string>
+
+static void test_IntToRoman_bounded(void) {
+    const char *rgszOnes[] = {"", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"};
+    char szRoman[3282];
+
+    // Preserve the original repeated-X notation over its entire input range.
+    for (int i = -32768; i <= 32767; i++) {
+        const auto szExpected = i > 0 ? std::string(static_cast<std::size_t>(i / 10), 'X') + rgszOnes[i % 10] : std::string{};
+        const auto cch = IntToRoman(static_cast<std::int16_t>(i), std::span{szRoman});
+        TEST_CHECK(cch && *cch == szExpected.size() && szExpected == szRoman);
+    }
+    for (int16_t i = 0; i <= 16; i++) {
+        const auto szExpected = std::string(static_cast<std::size_t>(i / 10), 'X') + rgszOnes[i % 10];
+        for (std::size_t cb = 0; cb <= 7; cb++) {
+            std::fill(std::begin(szRoman), std::end(szRoman), '!');
+            const auto cch = IntToRoman(i, std::span{szRoman}.subspan(1, cb));
+            TEST_CHECK(cch.has_value() == (cb > szExpected.size()));
+            TEST_CHECK(szRoman[0] == '!' && szRoman[cb + 1] == '!');
+            if (cch) TEST_CHECK(szExpected == szRoman + 1);
+            else if (cb != 0) TEST_CHECK(szRoman[1] == 0);
+        }
+    }
+}
 
 static void test_UserString_codec_contract(void) {
 #ifdef STARS_UI_SDL
@@ -244,7 +268,8 @@ static void test_XorFileBuf_seed_alias_order(void) {
     TEST_CHECK(lSeed1 == 645001258 && lSeed2 == -720506926);
 }
 
-TEST_LIST = {{"XorFileBuf retains RHS-before-destination evaluation", test_XorFileBuf_seed_alias_order},
+TEST_LIST = {{"Roman numerals retain all int16 values within actual capacity", test_IntToRoman_bounded},
+             {"XorFileBuf retains RHS-before-destination evaluation", test_XorFileBuf_seed_alias_order},
              {"user-string codecs retain bytes, limits and failure effects", test_UserString_codec_contract},
              {"XorFileBuf retains bytes, unaligned access and seed consumption", test_XorFileBuf_unaligned_bytes},
              {"StarsCopyFile", test_StarsCopyFile},

@@ -92,7 +92,7 @@ void DrawPopup(APPSESSION &app, HWND hwnd, HDC hdc) {
     char    *lpsz;
     std::int16_t  csh;
     std::int16_t  dpT;
-    char     szTB[40];
+    std::array<char, 40> szTB{};
 
     crBack = win32::SetBkColor(hdc, 0xffffff);
     crFore = win32::SetTextColor(hdc, 0);
@@ -165,8 +165,8 @@ void DrawPopup(APPSESSION &app, HWND hwnd, HDC hdc) {
                         win32::SetTextColor(hdc, 0);
                     }
                 }
-                DecorateHullName(app, app.lpui->GlobalPD.lpfl->iplr(), i, szTB);
-                lpsz = szTB;
+                szTB = DecorateHullName(app, app.lpui->GlobalPD.lpfl->iplr(), i);
+                lpsz = szTB.data();
                 win32::TextOutA(hdc, 4, yCur, lpsz, std::strlen(lpsz));
                 c = win32::wsprintfA(app.state.szWork, app.state.PCTD, app.lpui->GlobalPD.lpfl->rgcsh[i]);
                 RightTextOut(app, hdc, rc.right - 4 - app.lpui->GlobalPD.dxDamage, yCur, app.state.szWork, c, 0);
@@ -266,7 +266,7 @@ void Popup(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16_t y) {
     std::int16_t dxL;
     char   *lpsz;
     std::int16_t dxR;
-    char    szTB[40];
+    std::array<char, 40> szTB{};
     std::int16_t dxName;
     std::int16_t dxCoord;
 
@@ -310,8 +310,8 @@ void Popup(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16_t y) {
         for (i = 0; i < 16; i++) {
             if (app.lpui->GlobalPD.lpfl->rgcsh[i] > 0 && (app.lpui->GlobalPD.grbit == 0 || FIsPopupHullType(app, i))) {
                 dy += app.state.dyArial8;
-                DecorateHullName(app, app.lpui->GlobalPD.lpfl->iplr(), i, szTB);
-                lpsz = szTB;
+                szTB = DecorateHullName(app, app.lpui->GlobalPD.lpfl->iplr(), i);
+                lpsz = szTB.data();
                 dx = LOWORD(GetTextExtent(hdc, lpsz, std::strlen(lpsz)));
                 dxL = dxL <= dx ? dx : dxL;
                 c = win32::wsprintfA(app.state.szWork, app.state.PCTD, app.lpui->GlobalPD.lpfl->rgcsh[i]);

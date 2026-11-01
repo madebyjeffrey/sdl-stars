@@ -200,6 +200,12 @@ detail in [WIN16-PARITY.md](WIN16-PARITY.md).
   existing 360-byte budget. `CPP-LIVE-OWNED-TEXT.json` records these caller
   lifetimes. Other shared scratch results and const text interfaces remain
   pending migration.
+  Hull-label decoration now returns the existing 40-byte popup budget by value;
+  drawing and measurement own that result. Roman numeral conversion takes an
+  actual destination span and returns an optional byte count, retaining its
+  repeated-X notation across the signed 16-bit range. The 31-byte class-name
+  field, duplicate-slot ordering and all saved widths are unchanged; see
+  [the owned-text ledger](CPP-LIVE-OWNED-TEXT.json).
   User-string compression/decompression and both saved-name readers now take
   byte/text spans and return optional encoded, decoded or consumed counts.
   The caller's existing compression budget and destination NUL capacity stay

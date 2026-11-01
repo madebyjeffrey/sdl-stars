@@ -1,6 +1,6 @@
 {
   "migration_parent": "d3d3724c",
-  "status": "184 migrated sites complete; remaining text work active",
+  "status": "186 migrated sites complete; remaining text work active",
   "contracts": {
     "display": "Write a terminated complete UTF-8 prefix into the actual destination span; preserve fitting bytes. Views borrow synchronously and overlapping copies use memmove.",
     "append": "Scan only inside the destination span for its NUL. An unterminated nonempty destination is cleared and zero bytes are appended.",
@@ -1813,6 +1813,26 @@
       "original_call": "std::strcpy(reinterpret_cast<char*>(&rtchgname.rgb[1]),szName)",
       "role": "Validate and stage a borrowed name before resizing its durable owner. Encode the raw marker/NUL through a bounded byte writer; the compression budget remains the actual name byte length.",
       "evidence": "docs/CPP-LIVE-RENAME.json"
+    },
+    {
+      "path": "src/core/util.cpp",
+      "scope": "DecorateHullName",
+      "baseline_line": 2032,
+      "migration_parent": "5a66d8b5",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(psz, lpshdef->hul.szClass)",
+      "destination_span": "std::span{psz}; returned std::array<char, 40>",
+      "role": "Owned hull label retains the actual popup budget: 31 UTF-8 name bytes, three punctuation bytes and at most four Roman digits for 16 design slots. Both drawing and measurement retain the returned value."
+    },
+    {
+      "path": "src/core/util.cpp",
+      "scope": "DecorateHullName",
+      "baseline_line": 2049,
+      "migration_parent": "5a66d8b5",
+      "operation": "strcat",
+      "original_call": "std::strcat(psz, \")\")",
+      "destination_span": "std::span{psz}; returned std::array<char, 40>",
+      "role": "Owned hull label retains the actual popup budget: 31 UTF-8 name bytes, three punctuation bytes and at most four Roman digits for 16 design slots. Both drawing and measurement retain the returned value."
     }
   ],
   "remaining_spelling_scope": "Lexical raw-copy spellings, including SDK declarations/definitions; comments/literals excluded with the manifest lexer. Exact counts prevent new raw sites during the remaining migration.",
@@ -1980,13 +2000,6 @@
     },
     {
       "path": "src/core/util.cpp",
-      "normalized_call": "std::strcat(psz,)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/core/util.cpp",
       "normalized_call": "std::strcat(szFile,)",
       "count": 1,
       "status": "pending",
@@ -1995,13 +2008,6 @@
     {
       "path": "src/core/util.cpp",
       "normalized_call": "std::strcat(szFile,app.state.mpdtsz[dt])",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/core/util.cpp",
-      "normalized_call": "std::strcpy(psz,lpshdef->hul.szClass)",
       "count": 1,
       "status": "pending",
       "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."

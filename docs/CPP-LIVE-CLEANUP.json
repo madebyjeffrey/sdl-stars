@@ -84,7 +84,8 @@
         "owned-player-name-values",
         "owned-catalog-values",
         "owned-report-destination-and-task-labels",
-        "fleet-rename-admission-and-owned-replacement"
+        "fleet-rename-admission-and-owned-replacement",
+        "owned-hull-label-and-bounded-roman-numerals"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -277,6 +278,18 @@
           "failure_scope": "Name allocation/resize failures retain the current owner and log; existing log-append failure effects and successful tutorial callback order are preserved.",
           "baseline": "Ran regression-export after all fixture readers finished; restored only clock-derived game-ID/encryption-salt churn because no semantic scenario/checkpoint moved. Frozen original fixtures, all unit goldens, valid wire bytes/layouts, normal compression budgets, RNG consumption and canonical models unchanged.",
           "receipts": "dist/verification/live-cpp/l05k/"
+        },
+        {
+          "batch": "L05l owned hull labels and bounded Roman numeral output",
+          "debug_build": "Pass; no new warnings; standalone headers compile in both include orders.",
+          "desktop": "153/153, including available SDL tutorial checkpoints and all 29 leak checks.",
+          "host_units": "28/28",
+          "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors and skipped reference inputs.",
+          "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors and skipped reference inputs.",
+          "windows": "147/147 owned production/wrapper units and both changed test units compile with strict MinGW; actual Windows utility executables pass all 20 cases under Wine. Native Windows desktop qualification remains pending.",
+          "contract_checks": "All 65,536 signed 16-bit Roman inputs; capacities zero through seven with sentinels for every real hull ordinal; 16 duplicate hulls at the UTF-8 byte limit; free/unique/own-player cases and independent owned results.",
+          "baseline": "Behavior-neutral. No regression baseline, unit golden, fixed field/record width, valid text bytes, duplicate ordering, rounding or RNG consumption changed.",
+          "receipts": "dist/verification/live-cpp/l05l/"
         }
       ],
       "bounded_formatting": {
@@ -341,8 +354,8 @@
         "temperature_commit": "03d8b039",
         "windows_host_test_configuration_commit": "09bb4477",
         "policy": "Actual array/tail spans; complete terminated UTF-8 prefixes; overlapping views supported. Paths/record staging keep separate strict contracts.",
-        "remaining_initial_sites": 124,
-        "remaining_lexical_spellings": 130,
+        "remaining_initial_sites": 122,
+        "remaining_lexical_spellings": 128,
         "inventory_scope": "The initial copy inventory and the current lexical policy differ: the latter also includes SDK declaration/definition spellings. Both remain explicitly accounted for.",
         "enforcement": "The manifest checks exact remaining raw-copy spellings and multiplicities. New or removed raw sites require updating the maintained inventory; migrated sites cannot silently be reintroduced."
       },
@@ -374,6 +387,12 @@
         "evidence": "docs/CPP-LIVE-RENAME.json",
         "removed_raw_copies": 2,
         "interface": "Readonly view and checked boolean result; staged aliases and current persistent owner retained on name allocation/resize failure."
+      },
+      "hull_labels": {
+        "status": "complete; verified",
+        "evidence": "docs/CPP-LIVE-OWNED-TEXT.json",
+        "consumers": 2,
+        "interface": "DecorateHullName returns its existing 40-byte popup budget by value; IntToRoman takes a destination span and returns an optional byte count."
       }
     },
     {
@@ -382,7 +401,8 @@
       "completed_substeps": [
         "ship-design-encoding-span-and-optional-count",
         "remove-unused-player-output-storage",
-        "user-string-codec-spans-and-optional-counts"
+        "user-string-codec-spans-and-optional-counts",
+        "bounded-roman-numeral-output"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -411,7 +431,12 @@
           "baseline": "Behavior-neutral for existing valid calls. Frozen original/native baselines, catalog sources, all unit goldens, wire widths/layouts, seed consumption and canonical models unchanged. No scenario/checkpoint moved and no regression export required.",
           "receipts": "dist/verification/live-cpp/l06a/"
         }
-      ]
+      ],
+      "roman_output": {
+        "status": "complete; verified",
+        "evidence": "docs/CPP-LIVE-OWNED-TEXT.json",
+        "contract": "IntToRoman receives the actual output span and returns an optional count, preserving every signed 16-bit input and rejecting insufficient storage before writing a payload."
+      }
     },
     {
       "id": "L07",
@@ -13579,14 +13604,16 @@
       "path": "src/core/util.cpp",
       "line": 2032,
       "code": "strcpy(psz, lpshdef->hul.szClass);",
-      "disposition": "pending"
+      "disposition": "owned-hull-label-L05l",
+      "evidence": "docs/CPP-LIVE-OWNED-TEXT.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/util.cpp",
       "line": 2049,
       "code": "strcat(psz, \")\");",
-      "disposition": "pending"
+      "disposition": "owned-hull-label-L05l",
+      "evidence": "docs/CPP-LIVE-OWNED-TEXT.json"
     },
     {
       "kind": "unbounded_copy",

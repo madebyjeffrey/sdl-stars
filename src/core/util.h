@@ -61,7 +61,7 @@ std::int16_t  GetShdefScannerRange(APPSESSION &app, SHDEF *lpshdef, std::int16_t
 std::int32_t  LCalcFuelGainFromRamScoops(APPSESSION &app, FLEET *lpfl, std::int16_t iWarp, std::int32_t dTravel);
 std::int32_t  CalcPlayerScore(APPSESSION &app, std::int16_t iPlr, SCORE *pscore);
 void     GetTrueHullCost(std::int16_t iPlayer, HUL *lphul, std::uint16_t *rgCost);
-void     DecorateHullName(APPSESSION &app, std::int16_t iplr, std::int16_t ish, char *psz);
+std::array<char, 40> DecorateHullName(APPSESSION &app, std::int16_t iplr, std::int16_t ish);
 std::int16_t  FMatchTarget(APPSESSION &app, FLEET *lpflTarget, MdTarget mdTarget, std::int16_t fExact);
 void     ValidateWaypoints(APPSESSION &app);
 std::int32_t  ChgPopFromPlanet(APPSESSION &app, PLANET *lppl, std::int16_t fUpdate);

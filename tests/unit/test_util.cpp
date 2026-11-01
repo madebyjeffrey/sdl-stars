@@ -7,6 +7,42 @@
 
 #include "stars_test.h"
 #include "text_io.h"
+#include <string>
+
+static void test_DecorateHullName_owned(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    std::array<SHDEF, 16> rgshdef{};
+    const char *rgszRoman[] = {"I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII", "XIII", "XIV", "XV", "XVI"};
+    const char *pszName = "東東東東東東東東東東X";
+
+    TEST_ASSERT(FStarsTestInit(app));
+    const auto iplr = app.state.idPlayer == 0 ? 1 : 0;
+    auto *lpshdefSav = app.state.rglpshdef[iplr];
+    app.state.rglpshdef[iplr] = rgshdef.data();
+    for (auto &shdef : rgshdef) strcpy(shdef.hul.szClass, pszName);
+    const auto szFirst = DecorateHullName(app, iplr, 0);
+    for (int16_t ish = 0; ish < 16; ish++) {
+        const auto szName = DecorateHullName(app, iplr, ish);
+        TEST_CHECK(std::string(pszName) + " (" + rgszRoman[ish] + ")" == szName.data());
+        TEST_CHECK(FUtf8Valid(szName.data(), strlen(szName.data())));
+    }
+    TEST_CHECK(std::string(pszName) + " (I)" == szFirst.data());
+    for (auto &shdef : rgshdef) shdef.fFree = 1;
+    TEST_CHECK(DecorateHullName(app, iplr, 0)[0] == 0);
+    rgshdef[0].fFree = 0;
+    TEST_CHECK(!strcmp(DecorateHullName(app, iplr, 0).data(), pszName));
+    rgshdef[1].fFree = 0;
+    const auto idPlayerSav = app.state.idPlayer;
+    app.state.idPlayer = iplr;
+    TEST_CHECK(!strcmp(DecorateHullName(app, iplr, 1).data(), pszName));
+    app.state.idPlayer = idPlayerSav;
+    app.state.rglpshdef[iplr] = lpshdefSav;
+}
 
 static void test_PlayerName_owned_results(void) {
 #ifdef STARS_UI_SDL
@@ -354,6 +390,7 @@ static void test_TransferStuff_restores_borrowed_frame_on_lookup_failure(void) {
 #endif
 
 TEST_LIST = {
+    {"hull-name values retain duplicate ordinals and UTF-8 byte budgets", test_DecorateHullName_owned},
     {"player-name values survive other lookups and scratch formatting", test_PlayerName_owned_results},
     {"player-name values retain grammar and UTF-8 byte budgets", test_PlayerName_text_contract},
 #ifdef STARS_UI_SDL

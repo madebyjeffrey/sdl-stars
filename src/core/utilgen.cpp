@@ -652,31 +652,23 @@ std::int16_t FIntersectCircleLine(POINT16 ptL1, POINT16 ptL2, POINT16 ptC, std::
     return 1;
 }
 
-void IntToRoman(std::int16_t i, char *pszOut) {
-    if (i <= 0) {
-        *pszOut = 0;
-    } else {
-        for (; i >= 10; i -= 10) {
-            *pszOut++ = 'X';
-        }
-        if (i == 9) {
-            *pszOut++ = 'I';
-            *pszOut++ = 'X';
-        } else {
-            if (i >= 4) {
-                if (i == 4) {
-                    *pszOut++ = 'I';
-                }
-                *pszOut++ = 'V';
-                i -= 5;
-            }
-            while (i-- > 0) {
-                *pszOut++ = 'I';
-            }
-        }
-        *pszOut = 0;
+std::optional<std::size_t> IntToRoman(std::int16_t i, std::span<char> pszOut) {
+    constexpr std::string_view rgszOnes[] = {"", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"};
+    std::size_t c;
+    std::size_t cTens;
+    std::string_view szOnes;
+
+    cTens = i > 0 ? static_cast<std::size_t>(i / 10) : 0;
+    szOnes = rgszOnes[i > 0 ? i % 10 : 0];
+    c = cTens + szOnes.size();
+    if (pszOut.size() <= c) {
+        if (!pszOut.empty()) pszOut[0] = 0;
+        return std::nullopt;
     }
-    return;
+    std::fill_n(pszOut.begin(), cTens, 'X');
+    std::copy(szOnes.begin(), szOnes.end(), pszOut.begin() + cTens);
+    pszOut[c] = 0;
+    return c;
 }
 
 std::int16_t FCheckPassword(APPSESSION &app) {
