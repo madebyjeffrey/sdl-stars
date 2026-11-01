@@ -23382,7 +23382,7 @@
     ],
     "restart_order": [
       "Read this checkpoint and check git status/log; preserve unrelated title-modernized assets.",
-      "Check the latest unit.yml workflow for the published L05ai code commit. The preceding full green run is 41359970698 at 8262a2c6; it does not qualify L05ai. The ignored L05ai platform-ci.json receipt records the newly dispatched run.",
+      "Check unit.yml run 41363769853 for published L05ai code commit b76ec1fc. The preceding full green run is 41359970698 at 8262a2c6; it does not qualify L05ai.",
       "Resolve any new platform failures before beginning a new cleanup batch.",
       "Review the seven remaining raw-copy sites and take the next focused, characterized change; keep broader L05/L06 work open."
     ],
@@ -23391,6 +23391,13 @@
       "docs/CPP-LIVE-OWNED-TEXT.json: game_file_input_views",
       "dist/verification/live-cpp/l05ai/ (ignored local logs and source hashes)"
     ],
-    "goal_status": "Overall goal remains unfinished. This is a restart checkpoint, not a completion claim."
+    "goal_status": "Overall goal remains unfinished. This is a restart checkpoint, not a completion claim.",
+    "published_batch_head": "b76ec1fcc1276790150457670f5f667bcec4eccc",
+    "platform_ci": {
+      "run_id": 41363769853,
+      "url": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41363769853",
+      "status_at_handoff": "All five jobs confirmed in progress; final result pending",
+      "qualified_source_head": "b76ec1fcc1276790150457670f5f667bcec4eccc"
+    }
   }
 }
