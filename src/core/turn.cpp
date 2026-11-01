@@ -283,8 +283,8 @@ int16_t FGenerateTurn(APPSESSION &app) {
         for (i = 0; i < app.state.game.cPlayer; i++) {
             for (j = 0; j < 10; j++) {
                 if (!app.state.rglpshdefSB[i][j].fFree) {
-                    app.state.rglpshdefSB[i][j].SetLVisible((int16_t)(100 - PctCloakFromHuldef(app, &app.state.rglpshdefSB[i][j].hul, i, nullptr)));
-                    app.state.rglpshdefSB[i][j].SetLVisible((uint32_t)(app.state.rglpshdefSB[i][j].lVisible() * app.state.rglpshdefSB[i][j].lVisible()));
+                    app.state.rglpshdefSB[i][j].SetLVisible(static_cast<int16_t>((100 - PctCloakFromHuldef(app, &app.state.rglpshdefSB[i][j].hul, i, nullptr))));
+                    app.state.rglpshdefSB[i][j].SetLVisible(static_cast<uint32_t>((app.state.rglpshdefSB[i][j].lVisible() * app.state.rglpshdefSB[i][j].lVisible())));
                 }
             }
             for (j = 0; j < 16; j++) {
@@ -337,7 +337,7 @@ int16_t FGenerateTurn(APPSESSION &app) {
         }
         j = 875;
         fDone = 0;
-        app.state.game.wGen = (uint16_t)RandomIO().pfnRandom(app, 8);
+        app.state.game.wGen = static_cast<uint16_t>(RandomIO().pfnRandom(app, 8));
         i = 0;
         while (!fDone) {
             UpdateProgressGauge(app, static_cast<ProgressStep>(j));
@@ -694,7 +694,7 @@ int16_t ParseCmdLine(APPSESSION &app, char *lpCmdLine, int16_t *pfSeed, uint32_t
                     }
                     pch = lpT;
                     while (*lpT != 0 && *lpT != ' ') lpT++;
-                    if (!FCopyCmdPath(app, pch, (size_t)(lpT - pch))) return 0;
+                    if (!FCopyCmdPath(app, pch, static_cast<size_t>((lpT - pch)))) return 0;
                     lpT--;
                     if (!FSetUpBatchProcessing(app))
                         break;
@@ -727,7 +727,7 @@ int16_t ParseCmdLine(APPSESSION &app, char *lpCmdLine, int16_t *pfSeed, uint32_t
                     *plSeed = 0;
                     while (lpT[1] >= '0' && lpT[1] <= '9') {
                         lpT++;
-                        *plSeed = 10 * *plSeed + (uint32_t)(*lpT - '0');
+                        *plSeed = 10 * *plSeed + static_cast<uint32_t>((*lpT - '0'));
                     }
                     break;
                 case 'P':
@@ -736,7 +736,7 @@ int16_t ParseCmdLine(APPSESSION &app, char *lpCmdLine, int16_t *pfSeed, uint32_t
                     }
                     pch = lpT;
                     while (*lpT != 0 && *lpT != ' ') lpT++;
-                    cbPass = (size_t)(lpT - pch);
+                    cbPass = static_cast<size_t>((lpT - pch));
                     cchPass = CchCopyUtf8(app.state.szPassLast, sizeof(app.state.szPassLast), pch, cbPass);
                     if (cchPass < 0) {
                         AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, cchPass == -3 ? idsNativeCommandPasswordTooLong : idsNativeCommandPasswordEncoding), win32::MB_ICONHAND);
@@ -750,7 +750,7 @@ int16_t ParseCmdLine(APPSESSION &app, char *lpCmdLine, int16_t *pfSeed, uint32_t
         } else {
             pch = lpT;
             while (*lpT != 0 && *lpT != ' ') lpT++;
-            if (!FCopyCmdPath(app, pch, (size_t)(lpT - pch))) return 0;
+            if (!FCopyCmdPath(app, pch, static_cast<size_t>((lpT - pch)))) return 0;
             app.state.ini.fStartupFile = 1;
             app.state.ini.fCmdLine = 1;
         }
@@ -1000,7 +1000,7 @@ void MoveThings(APPSESSION &app, int16_t fPostProd) {
         MoveTh:
             ptSrc = lpth->pt();
             d = DGetDistance(ptSrc.x, ptSrc.y, ptDst.x, ptDst.y);
-            dLeft = LOWORD((int32_t)d);
+            dLeft = LOWORD(static_cast<int32_t>(d));
             if (dLeft <= dRange) {
             MadeItThere:
                 if (lpth->ith() == ithMysteryTrader) {
@@ -1050,26 +1050,26 @@ void MoveThings(APPSESSION &app, int16_t fPostProd) {
                     pctCaught = 1000;
                 } else if (iWarp > 0) {
                     iWarp = iWarp2;
-                    pctCaught = LOWORD((int32_t)((int32_t)(iWarp * 1000) / iWarpPacket2));
+                    pctCaught = LOWORD(static_cast<int32_t>((static_cast<int32_t>((iWarp * 1000)) / iWarpPacket2)));
                 } else {
                     pctCaught = 0;
                 }
                 pctMinKeep = 1000 - pctCaught;
                 for (i = 0; i < 3; i++) {
-                    rgwtTerra[i] = LOWORD((int32_t)(lpth->thp().rgwtMin(i) * pctMinKeep) / 1000);
+                    rgwtTerra[i] = LOWORD(static_cast<int32_t>((lpth->thp().rgwtMin(i) * pctMinKeep)) / 1000);
                 }
-                pctMinKeep = (int16_t)(1000 - pctCaught) / 9 + pctCaught;
+                pctMinKeep = static_cast<int16_t>((1000 - pctCaught)) / 9 + pctCaught;
                 wtTot = 0;
                 for (i = 0; i < 3; i++) {
                     if (lpth->thp().rgwtMin(i) < 0) {
                         lpth->thp().SetRgwtMin(i, 0);
                     }
                     wtTot += lpth->thp().rgwtMin(i);
-                    lppl->rgwtMin[i] += (int32_t)(lpth->thp().rgwtMin(i) * pctMinKeep) / 1000;
+                    lppl->rgwtMin[i] += static_cast<int32_t>((lpth->thp().rgwtMin(i) * pctMinKeep)) / 1000;
                 }
                 if (pctCaught == 1000)
                     goto LAllSafe;
-                dmgRaw = (int32_t)((int16_t)(iWarpPacket * iWarpPacket - iWarp) * wtTot) / 160;
+                dmgRaw = static_cast<int32_t>((static_cast<int16_t>((iWarpPacket * iWarpPacket - iWarp)) * wtTot)) / 160;
                 if (fTerra) {
                     iplr = lpth->iplr();
                     for (i = 0; i < 3; i++) {
@@ -1149,7 +1149,7 @@ void MoveThings(APPSESSION &app, int16_t fPostProd) {
                 if (lppl->iPlayer == iplrNone)
                     goto LFreeThePacket;
                 CalcPctSurvive(app, lppl, &pct, nullptr);
-                dmgRaw = (int32_t)((double)pct * dmgRaw);
+                dmgRaw = static_cast<int32_t>((static_cast<double>(pct) * dmgRaw));
                 if (dmgRaw == 0 || RaceQueryIO().pfnStat(&app.state.rgplr[lppl->iPlayer], rsMajorAdv) == raMacintosh) {
                 LAllSafe:
                     TurnIO().pfnMessage(app, lppl->iPlayer,
@@ -1159,7 +1159,7 @@ void MoveThings(APPSESSION &app, int16_t fPostProd) {
                 }
                 lColKilled = lppl->rgwtMin[3];
                 if (lColKilled != 0) {
-                    lColKilled = (int32_t)(lColKilled * dmgRaw) / 1000;
+                    lColKilled = static_cast<int32_t>((lColKilled * dmgRaw)) / 1000;
                     if (lColKilled < dmgRaw) {
                         lColKilled = dmgRaw;
                     }
@@ -1168,14 +1168,14 @@ void MoveThings(APPSESSION &app, int16_t fPostProd) {
                         UninhabitPlanet(app, lppl);
                         goto LFreeThePacket;
                     }
-                    lDefKilled = (int32_t)(lppl->cDefenses * dmgRaw) / 1000;
+                    lDefKilled = static_cast<int32_t>((lppl->cDefenses * dmgRaw)) / 1000;
                     if (lDefKilled == 0 && lppl->cDefenses != 0) {
-                        lDefKilled = (uint32_t)(RandomIO().pfnRandom(app, 20) < dmgRaw);
+                        lDefKilled = static_cast<uint32_t>((RandomIO().pfnRandom(app, 20) < dmgRaw));
                     }
-                    if (lDefKilled < (int32_t)(dmgRaw / 20)) {
-                        lDefKilled = (int32_t)(dmgRaw / 20);
+                    if (lDefKilled < static_cast<int32_t>((dmgRaw / 20))) {
+                        lDefKilled = static_cast<int32_t>((dmgRaw / 20));
                     }
-                    if (lDefKilled > (int32_t)lppl->cDefenses) {
+                    if (lDefKilled > static_cast<int32_t>(lppl->cDefenses)) {
                         lDefKilled = lppl->cDefenses;
                     }
                     if (lDefKilled == 0) {
@@ -1199,12 +1199,12 @@ void MoveThings(APPSESSION &app, int16_t fPostProd) {
                 lpth--;
                 lpthMac--;
             } else {
-                dxRound = (double)(ptDst.x <= ptSrc.x ? (double)-0.5 : (double)0.5);
-                dyRound = (double)(ptDst.y <= ptSrc.y ? (double)-0.5 : (double)0.5);
-                if ((double)d > (double)0.0001 || (double)d < (double)-0.0001) {
-                    r = (double)((double)dRange / d);
-                    ptSrc.x = LOWORD((int32_t)((double)r * (int16_t)(ptDst.x - ptSrc.x) + dxRound)) + ptSrc.x;
-                    ptSrc.y = LOWORD((int32_t)((double)r * (int16_t)(ptDst.y - ptSrc.y) + dyRound)) + ptSrc.y;
+                dxRound = static_cast<double>((ptDst.x <= ptSrc.x ? static_cast<double>(-0.5) : static_cast<double>(0.5)));
+                dyRound = static_cast<double>((ptDst.y <= ptSrc.y ? static_cast<double>(-0.5) : static_cast<double>(0.5)));
+                if (static_cast<double>(d) > static_cast<double>(0.0001) || static_cast<double>(d) < static_cast<double>(-0.0001)) {
+                    r = static_cast<double>((static_cast<double>(dRange) / d));
+                    ptSrc.x = LOWORD(static_cast<int32_t>((static_cast<double>(r) * static_cast<int16_t>((ptDst.x - ptSrc.x)) + dxRound))) + ptSrc.x;
+                    ptSrc.y = LOWORD(static_cast<int32_t>((static_cast<double>(r) * static_cast<int16_t>((ptDst.y - ptSrc.y)) + dyRound))) + ptSrc.y;
                     if (ptSrc.x == ptDst.x && ptSrc.y == ptDst.y)
                         goto MadeItThere;
                     lpth->pt().Set(ptSrc);
@@ -1257,17 +1257,17 @@ void FuelFleets(APPSESSION &app) {
                 lphul = &app.state.rglpshdef[lpfl->iPlayer][i].hul;
                 for (j = lphul->chs - 1; j >= 0; j--) {
                     if (lphul->rghs[j].grhst == hstSpecialE && lphul->rghs[j].iItem == ispecialEAntiMatterGenerator) {
-                        cPods += (uint32_t)(lpfl->rgcsh[i] * lphul->rghs[j].cItem);
+                        cPods += static_cast<uint32_t>((lpfl->rgcsh[i] * lphul->rghs[j].cItem));
                     }
                 }
                 lpshdef = app.state.rglpshdef[lpfl->iPlayer] + i;
                 if (lpshdef->hul.ihuldef == ihuldefFuelTransport || lpshdef->hul.ihuldef == ihuldefSuperFuelXport) {
-                    csh += (uint32_t)(lpfl->rgcsh[i] * 200);
+                    csh += static_cast<uint32_t>((lpfl->rgcsh[i] * 200));
                 }
             }
         }
         if (csh != 0 || cPods != 0) {
-            lpfl->rgwtMin[4] = (((ProductionIO().pfnFleetStat(app, lpfl, 1)) < (lpfl->rgwtMin[4] + csh + (uint32_t)(cPods * 50))) ? (ProductionIO().pfnFleetStat(app, lpfl, 1)) : (lpfl->rgwtMin[4] + csh + (uint32_t)(cPods * 50)));
+            lpfl->rgwtMin[4] = (((ProductionIO().pfnFleetStat(app, lpfl, 1)) < (lpfl->rgwtMin[4] + csh + static_cast<uint32_t>((cPods * 50)))) ? (ProductionIO().pfnFleetStat(app, lpfl, 1)) : (lpfl->rgwtMin[4] + csh + static_cast<uint32_t>((cPods * 50))));
         }
     }
     return;
@@ -1443,7 +1443,7 @@ void MoveFleets(APPSESSION &app) {
                                     }
                                 }
                             }
-                            dTravel = (int32_t)DGetDistance(ptBeg.x, ptBeg.y, ptEnd.x, ptEnd.y);
+                            dTravel = static_cast<int32_t>(DGetDistance(ptBeg.x, ptBeg.y, ptEnd.x, ptEnd.y));
                             if (!FStargateJump(app, lpfl, isbsSrc, isbsDst, LOWORD(dTravel)))
                                 continue;
                             lpfl->fHereAllTurn = 0;
@@ -1460,11 +1460,11 @@ void MoveFleets(APPSESSION &app) {
                             fGotEnufFuel = wtFuel2Dest <= lpfl->rgwtMin[4];
                             fRanOutOfFuel = 0;
                             if (fGotEnufFuel) {
-                                dRange = dRange <= (int32_t)(uint32_t)(lpord[1].iWarp * lpord[1].iWarp) ? (uint32_t)(lpord[1].iWarp * lpord[1].iWarp) : dRange;
+                                dRange = dRange <= static_cast<int32_t>(static_cast<uint32_t>((lpord[1].iWarp * lpord[1].iWarp))) ? static_cast<uint32_t>((lpord[1].iWarp * lpord[1].iWarp)) : dRange;
                             }
                             if (cPass == 0) {
                                 if (lpfl->rgwtMin[3] > 10 && RaceQueryIO().pfnStat(&app.state.rgplr[lpfl->iPlayer], rsMajorAdv) == raMacintosh) {
-                                    cDie = (int32_t)((uint32_t)(lpfl->rgwtMin[3] * 3) + 33) / 100;
+                                    cDie = static_cast<int32_t>((static_cast<uint32_t>((lpfl->rgwtMin[3] * 3)) + 33)) / 100;
                                     if (cDie > 0) {
                                         lpfl->rgwtMin[3] -= cDie;
                                         TurnIO().pfnMessage(app, lpfl->iPlayer, idmDueRigorsWarpAccelerationColonistsHaveDied, static_cast<MsgGoto>(lpfl->id | 0x8000), LOWORD(cDie), HIWORD(cDie),
@@ -1520,13 +1520,13 @@ void MoveFleets(APPSESSION &app) {
                                         }
                                     }
                                 }
-                                dTravel = (uint32_t)(lpord[1].iWarp * lpord[1].iWarp);
+                                dTravel = static_cast<uint32_t>((lpord[1].iWarp * lpord[1].iWarp));
                                 if (lpord[1].grobj == grobjFleet) {
                                     lpfl->lpflNext = LpflFromId(app, lpord[1].id);
                                     if (lpfl->lpflNext) {
                                         fDone = 0;
                                         lpfl->fDone = 0;
-                                        lpfl->lPower = (uint32_t)LOWORD(dTravel);
+                                        lpfl->lPower = static_cast<uint32_t>(LOWORD(dTravel));
                                         lpfl->lFuelUsed = 0;
                                         continue;
                                     }
@@ -1535,8 +1535,8 @@ void MoveFleets(APPSESSION &app) {
                                 if (lpfl->lpflNext->fDone) {
                                     dTravel = lpfl->dMoveLeft();
                                 } else {
-                                    dTravel = lpfl->dMoveLeft() >= (int16_t)(lpfl->dMoveLeft() + lpfl->dMoveUsed() + 4) / 5
-                                                  ? (int16_t)((int16_t)(lpfl->dMoveLeft() + lpfl->dMoveUsed() + 4) / 5)
+                                    dTravel = lpfl->dMoveLeft() >= static_cast<int16_t>((lpfl->dMoveLeft() + lpfl->dMoveUsed() + 4)) / 5
+                                                  ? static_cast<int16_t>((static_cast<int16_t>((lpfl->dMoveLeft() + lpfl->dMoveUsed() + 4)) / 5))
                                                   : lpfl->dMoveLeft();
                                 }
                                 dRange -= lpfl->dMoveUsed();
@@ -1546,7 +1546,7 @@ void MoveFleets(APPSESSION &app) {
                             }
                             d = DGetDistance(ptBeg.x, ptBeg.y, ptEnd.x, ptEnd.y);
                             dTravel =
-                                dTravel < (int16_t)LOWORD((int32_t)((double)d + 0.9999)) ? dTravel : (int16_t)LOWORD((int32_t)((double)d + 0.9999));
+                                dTravel < static_cast<int16_t>(LOWORD(static_cast<int32_t>((static_cast<double>(d) + 0.9999)))) ? dTravel : static_cast<int16_t>(LOWORD(static_cast<int32_t>((static_cast<double>(d) + 0.9999))));
                             if (dTravel > dRange) {
                                 lpfl->rgwtMin[4] = 0;
                                 wtFuelUsed = 1;
@@ -1564,7 +1564,7 @@ void MoveFleets(APPSESSION &app) {
                                 lpfl->rgwtMin[4] = 0 <= lpfl->rgwtMin[4] - wtFuelUsed ? lpfl->rgwtMin[4] - wtFuelUsed : 0;
                             }
                             if (lpfl->rgwtMin[4] == 0 && wtFuelUsed > 0 &&
-                                (((double)d - 0.99999 >= (double)dTravel || dRange == 0) && !fGotEnufFuel)) {
+                                ((static_cast<double>(d) - 0.99999 >= static_cast<double>(dTravel) || dRange == 0) && !fGotEnufFuel)) {
                                 i = 0;
                                 do {
                                     i++;
@@ -1591,7 +1591,7 @@ void MoveFleets(APPSESSION &app) {
                                 lpfl->SetDirFltY(dy + 127);
                                 lpfl->SetIwarpFlt(lpfl->lpplord->rgord()[1].iWarp);
                             }
-                            dActTravel = (int32_t)((double)d - 0.99999);
+                            dActTravel = static_cast<int32_t>((static_cast<double>(d) - 0.99999));
                             dMineTravel = dTravel < dActTravel ? LOWORD(dTravel) : LOWORD(dActTravel);
                             if (lpord[1].iWarp < 11 && !FTravelThroughMineFields(app, lpfl, &dMineTravel, nullptr)) {
                                 lpfl->SetDMoveLeft(0);
@@ -1632,12 +1632,12 @@ void MoveFleets(APPSESSION &app) {
                                     }
                                 }
                             } else {
-                                dxRound = (double)(ptEnd.x <= ptBeg.x ? (double)-0.5 : (double)0.5);
-                                dyRound = (double)(ptEnd.y <= ptBeg.y ? (double)-0.5 : (double)0.5);
-                                if ((double)d > (double)0.0001 || (double)d < (double)-0.0001) {
-                                    r = (double)((double)dTravel / d);
-                                    lpfl->pt.x = LOWORD((int32_t)((double)r * (int16_t)(ptEnd.x - ptBeg.x) + dxRound)) + ptBeg.x;
-                                    lpfl->pt.y = LOWORD((int32_t)((double)r * (int16_t)(ptEnd.y - ptBeg.y) + dyRound)) + ptBeg.y;
+                                dxRound = static_cast<double>((ptEnd.x <= ptBeg.x ? static_cast<double>(-0.5) : static_cast<double>(0.5)));
+                                dyRound = static_cast<double>((ptEnd.y <= ptBeg.y ? static_cast<double>(-0.5) : static_cast<double>(0.5)));
+                                if (static_cast<double>(d) > static_cast<double>(0.0001) || static_cast<double>(d) < static_cast<double>(-0.0001)) {
+                                    r = static_cast<double>((static_cast<double>(dTravel) / d));
+                                    lpfl->pt.x = LOWORD(static_cast<int32_t>((static_cast<double>(r) * static_cast<int16_t>((ptEnd.x - ptBeg.x)) + dxRound))) + ptBeg.x;
+                                    lpfl->pt.y = LOWORD(static_cast<int32_t>((static_cast<double>(r) * static_cast<int16_t>((ptEnd.y - ptBeg.y)) + dyRound))) + ptBeg.y;
                                     lpfl->idPlanet = idPlanetDeepSpace;
                                 }
                                 if (cPass > 0 && lpfl->dMoveLeft() > 0) {
@@ -1653,10 +1653,10 @@ void MoveFleets(APPSESSION &app) {
                         if (app.state.gd.fRadiatingEngine && lpfl->rgwtMin[3] > 0 && cPass <= 1 &&
                             app.state.rgplr[lpfl->iPlayer].rgEnvVarMin[2] + app.state.rgplr[lpfl->iPlayer].rgEnvVarMax[2] < 170 &&
                             app.state.rgplr[lpfl->iPlayer].rgEnvVarMax[2] != envImmune) {
-                            iCtr = (int16_t)(app.state.rgplr[lpfl->iPlayer].rgEnvVarMin[2] + app.state.rgplr[lpfl->iPlayer].rgEnvVarMax[2]) / 2;
-                            pct = (int16_t)((0x56 - iCtr) >> 1);
-                            pct = (int32_t)(pct * lpfl->rgwtMin[3]) / 100;
-                            if (lpfl->rgwtMin[3] < (int16_t)(1 <= pct ? pct : 1)) {
+                            iCtr = static_cast<int16_t>((app.state.rgplr[lpfl->iPlayer].rgEnvVarMin[2] + app.state.rgplr[lpfl->iPlayer].rgEnvVarMax[2])) / 2;
+                            pct = static_cast<int16_t>(((0x56 - iCtr) >> 1));
+                            pct = static_cast<int32_t>((pct * lpfl->rgwtMin[3])) / 100;
+                            if (lpfl->rgwtMin[3] < static_cast<int16_t>((1 <= pct ? pct : 1))) {
                                 pct = lpfl->rgwtMin[3];
                             } else if (1 > pct) {
                                 pct = 1;
@@ -1889,16 +1889,16 @@ LHitSkip1:
                 cshT = lpfl->rgcsh[i];
                 rgishInc[cishInc++] = i;
                 cEngines = app.state.rglpshdef[lpfl->iPlayer][i].hul.rghs[0].cItem;
-                dpShield = (uint32_t)(cshT * DpShieldOfShdef(app, app.state.rglpshdef[iPlayer] + i, iPlayer));
-                dpsh = (uint32_t)app.state.rglpshdef[iPlayer][i].hul.dp;
-                dmgToApply = (uint32_t)(((uint32_t)(cshT * dmgPer) + dmgExtra) * cEngines);
+                dpShield = static_cast<uint32_t>((cshT * DpShieldOfShdef(app, app.state.rglpshdef[iPlayer] + i, iPlayer)));
+                dpsh = static_cast<uint32_t>(app.state.rglpshdef[iPlayer][i].hul.dp);
+                dmgToApply = static_cast<uint32_t>(((static_cast<uint32_t>((cshT * dmgPer)) + dmgExtra) * cEngines));
                 dmgTot += dmgToApply;
-                dmgReduce = dpShield < (int32_t)(dmgToApply >> 1) ? dpShield : (int32_t)(dmgToApply >> 1);
+                dmgReduce = dpShield < static_cast<int32_t>((dmgToApply >> 1)) ? dpShield : static_cast<int32_t>((dmgToApply >> 1));
                 dmgToApply -= dmgReduce;
-                cshDamaged = LOWORD((int32_t)(lpfl->rgcsh[i] * lpfl->rgdv[i].pctSh()) / 100);
-                dmgToApply += (int32_t)((uint32_t)(dpsh * lpfl->rgdv[i].pctDp()) * cshDamaged) / 500;
+                cshDamaged = LOWORD(static_cast<int32_t>((lpfl->rgcsh[i] * lpfl->rgdv[i].pctSh())) / 100);
+                dmgToApply += static_cast<int32_t>((static_cast<uint32_t>((dpsh * lpfl->rgdv[i].pctDp())) * cshDamaged)) / 500;
                 dmgExtra = 0;
-                dmgPerShip = (int32_t)(dmgToApply / cshT);
+                dmgPerShip = static_cast<int32_t>((dmgToApply / cshT));
                 if (dmgPerShip > dpsh) {
                     cshDead += cshT;
                     flDead.rgcsh[i] = cshT;
@@ -1906,7 +1906,7 @@ LHitSkip1:
                     cshT = 0;
                 } else {
                     flSrc.rgdv[i].SetPctSh(100);
-                    flSrc.rgdv[i].SetPctDp(LOWORD((int32_t)((int32_t)(dmgPerShip * 500) / dpsh)));
+                    flSrc.rgdv[i].SetPctDp(LOWORD(static_cast<int32_t>((static_cast<int32_t>((dmgPerShip * 500)) / dpsh))));
                     if (flSrc.rgdv[i].pctDp() == 0) {
                         flSrc.rgdv[i].SetPctDp(1);
                     }
@@ -1931,7 +1931,7 @@ LHitSkip1:
         if (!lpthHit) {
             dx = ptDst.x - ptSrc.x;
             dy = ptDst.y - ptSrc.y;
-            dTravel = LOWORD((int32_t)((double)sqrt((double)((uint32_t)(dx * dx) + (uint32_t)(dy * (int16_t)(ptDst.y - ptSrc.y)))) + 0.5));
+            dTravel = LOWORD(static_cast<int32_t>((static_cast<double>(sqrt(static_cast<double>((static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * static_cast<int16_t>((ptDst.y - ptSrc.y)))))))) + 0.5)));
             ptAct.x = LMulDiv(dx, dEnd, dTravel) + ptSrc.x;
             ptAct.y = LMulDiv(dy, dEnd, dTravel) + ptSrc.y;
             if (cshDead != 0) {
@@ -1953,16 +1953,16 @@ LHitSkip1:
                 if (lpth->iplr() != iPlayer && lpth->ith() == ithMinefield && app.state.rgplr[lpth->iplr()].rgmdRelation[iPlayer] != 1 && lpth->thm().iType() == iType) {
                     dx = lpth->pt().x() - ptAct.x;
                     dy = lpth->pt().y() - ptAct.y;
-                    d2 = (uint32_t)(dx * dx) + (uint32_t)(dy * (int16_t)(lpth->pt().y() - ptAct.y)) - lpth->thm().cMines();
+                    d2 = static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * static_cast<int16_t>((lpth->pt().y() - ptAct.y)))) - lpth->thm().cMines();
                     if (d2 < d2Closest) {
                         d2Closest = d2;
                         lpthClosest = lpth;
                     }
                 }
             }
-            d2 = (int32_t)(lpthClosest->thm().cMines() / 20);
+            d2 = static_cast<int32_t>((lpthClosest->thm().cMines() / 20));
             if (d2 > 50) {
-                d2 = (int32_t)(lpthClosest->thm().cMines() / 100);
+                d2 = static_cast<int32_t>((lpthClosest->thm().cMines() / 100));
                 if (d2 < 50) {
                     d2 = 50;
                 }

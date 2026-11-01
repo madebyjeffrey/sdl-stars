@@ -38,7 +38,7 @@ UINT_PTR win32::SetTimer(HWND hwnd, UINT_PTR id, UINT cMillis, TIMERPROC lpfn) {
     }
     lp = LpTimer(hwnd, id);
     if (!lp) {
-        lp = (COMPATTIMER *)(calloc(1, sizeof(*lp)));
+        lp = static_cast<COMPATTIMER *>((calloc(1, sizeof(*lp))));
         if (!lp) { win32::SetLastError(win32::ERROR_NOT_ENOUGH_MEMORY); return 0; }
         lp->hwnd = hwnd;
         if (!hwnd) {
@@ -70,7 +70,7 @@ BOOL win32::KillTimer(HWND hwnd, UINT_PTR id) {
 
 static BOOL FTimerMatches(COMPATTIMER *lp, HWND hwnd, UINT msgMin, UINT msgMax) {
     return ((msgMin == 0 && msgMax == 0) || (msgMin <= win32::WM_TIMER && msgMax >= win32::WM_TIMER)) &&
-           (!hwnd || ((INT_PTR)hwnd == -1 ? !lp->hwnd : hwnd == lp->hwnd || win32::IsChild(hwnd, lp->hwnd)));
+           (!hwnd || (reinterpret_cast<INT_PTR>(hwnd) == -1 ? !lp->hwnd : hwnd == lp->hwnd || win32::IsChild(hwnd, lp->hwnd)));
 }
 
 void CompatGenerateTimer(HWND hwnd, UINT msgMin, UINT msgMax) {
@@ -100,7 +100,7 @@ int CMillisCompatTimerWait(HWND hwnd, UINT msgMin, UINT msgMax) {
         if (lp->fQueued || !FTimerMatches(lp, hwnd, msgMin, msgMax)) continue;
         msWait = lp->msDue > msNow ? lp->msDue - msNow : 0;
         if (msWait > INT_MAX) msWait = INT_MAX;
-        if (cMillis == -1 || (int)msWait < cMillis) cMillis = (int)msWait;
+        if (cMillis == -1 || static_cast<int>(msWait) < cMillis) cMillis = static_cast<int>(msWait);
     }
     return cMillis;
 }

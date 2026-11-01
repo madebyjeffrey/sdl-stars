@@ -140,16 +140,16 @@ void DoRobotoidAiTurn(APPSESSION &app, PROD *rgprod) {
     }
     j = 4;
     if (app.state.game.turn > 130) {
-        j += (uint32_t)(app.state.game.turn - 120) / 20;
+        j += static_cast<uint32_t>((app.state.game.turn - 120)) / 20;
     }
     if (j > 50) {
         j = 50;
     }
     app.state.vrgAiArmadaPotency[0] = j;
-    app.state.vrgAiArmadaPotency[1] = (int16_t)(j & 0xff) / 2;
+    app.state.vrgAiArmadaPotency[1] = static_cast<int16_t>((j & 0xff)) / 2;
     j = 6;
     if (app.state.game.turn > 115) {
-        j += (uint32_t)(app.state.game.turn - 100) / 22;
+        j += static_cast<uint32_t>((app.state.game.turn - 100)) / 22;
     }
     if (j > 12) {
         j = 12;
@@ -171,7 +171,7 @@ void DoRobotoidAiTurn(APPSESSION &app, PROD *rgprod) {
     cExistCargo = CheckAiShdefStatus(app, 11, 13, cRecyclePeriod, &iLatestCargo, rgRecycleShdef);
     CheckAiShdefStatus(app, 9, 10, cRecyclePeriod, &iLatestBomber, rgRecycleShdef);
     CheckAiShdefStatus(app, 2, 5, cRecyclePeriod, &iLatestMeta, rgRecycleShdef);
-    CheckAiShdefStatus(app, 6, 7, (uint32_t)(3 * cRecyclePeriod) / 2, &iLatestBattle, rgRecycleShdef);
+    CheckAiShdefStatus(app, 6, 7, static_cast<uint32_t>((3 * cRecyclePeriod)) / 2, &iLatestBattle, rgRecycleShdef);
     if (app.state.game.turn > 80) {
         SplitOutShdefs(app, rgRecycleShdef);
         memset(rgRecycleSBShdef, 0, 16);
@@ -230,7 +230,7 @@ void DoRobotoidAiTurn(APPSESSION &app, PROD *rgprod) {
             } else {
                 cFr =
                     app.state.rgplr[app.state.idPlayer].cPlanet / 8 <= AhvFromLp(app, app.state.vlpbAiData).cStarbase() * 4 ? AhvFromLp(app, app.state.vlpbAiData).cStarbase() * 4 : app.state.rgplr[app.state.idPlayer].cPlanet / 8;
-                if (iLatestCargo != ishdefNone && (cExistCargo < (int16_t)(cFr * 8) / 10 || (cExistCargo < cFr && RandomIO().pfnRandom(app, 3) == 0))) {
+                if (iLatestCargo != ishdefNone && (cExistCargo < static_cast<int16_t>((cFr * 8)) / 10 || (cExistCargo < cFr && RandomIO().pfnRandom(app, 3) == 0))) {
                     AddItemToQueue(app, iLatestCargo, 1, grobjFleet, addItemEnd);
                     fWrite = 1;
                 }
@@ -243,7 +243,7 @@ void DoRobotoidAiTurn(APPSESSION &app, PROD *rgprod) {
                 }
                 AddItemToQueue(app, 1, 1, grobjFleet, addItemEnd);
                 fWrite = 1;
-                l = (uint32_t)(lppl->rgwtMin[3] * PctTrueMaxGrowth(app, app.state.idPlayer));
+                l = static_cast<uint32_t>((lppl->rgwtMin[3] * PctTrueMaxGrowth(app, app.state.idPlayer)));
                 cRes = ResearchIO().pfnResources(app, lppl, app.state.idPlayer);
                 if (l > 2300 && cRes > 35 && iAiLvl > 0) {
                     AddItemToQueue(app, 1, 1, grobjFleet, addItemEnd);
@@ -287,7 +287,7 @@ void DoRobotoidAiTurn(APPSESSION &app, PROD *rgprod) {
                         }
                     }
                 }
-                if (iLatestMeta != ishdefNone && (app.state.rgshdef[iLatestMeta].cExist < (uint32_t)(app.state.game.cPlanMax / 7 + 6) || RandomIO().pfnRandom(app, 2) != 0)) {
+                if (iLatestMeta != ishdefNone && (app.state.rgshdef[iLatestMeta].cExist < static_cast<uint32_t>((app.state.game.cPlanMax / 7 + 6)) || RandomIO().pfnRandom(app, 2) != 0)) {
                     if (iLatestBattle != ishdefNone && RandomIO().pfnRandom(app, 2) == 0) {
                         iLatest = iLatestBattle;
                     } else {
@@ -302,7 +302,7 @@ void DoRobotoidAiTurn(APPSESSION &app, PROD *rgprod) {
                     }
                     GetTrueHullCost(app.state.idPlayer, &app.state.rgshdef[iLatest].hul, rgCosts);
                     for (j = 0; j < 4; j++) {
-                        rgResAvail[j] -= (uint32_t)((uint32_t)(3 * rgCosts[j]) / 5);
+                        rgResAvail[j] -= static_cast<uint32_t>((static_cast<uint32_t>((3 * rgCosts[j])) / 5));
                         if (rgResAvail[j] < 0)
                             goto TryShip3;
                     }
@@ -310,7 +310,7 @@ void DoRobotoidAiTurn(APPSESSION &app, PROD *rgprod) {
                     fWrite = 1;
                 }
             TryShip3:
-                if (iLatestDestroyer != ishdefNone && app.state.rgshdef[iLatestDestroyer].cExist < (uint32_t)(app.state.game.cPlanMax / 12 + 8)) {
+                if (iLatestDestroyer != ishdefNone && app.state.rgshdef[iLatestDestroyer].cExist < static_cast<uint32_t>((app.state.game.cPlanMax / 12 + 8))) {
                     GetResourcesAvailable(app, lppl, rgResAvail);
                     GetProdQCost(app, lppl, rgResCost);
                     for (i = 0; i < 4; i++) {
@@ -321,7 +321,7 @@ void DoRobotoidAiTurn(APPSESSION &app, PROD *rgprod) {
                     for (i = 0; i < 5; i++) {
                         GetTrueHullCost(app.state.idPlayer, &app.state.rgshdef[iLatestDestroyer].hul, rgCosts);
                         for (j = 0; j < 4; j++) {
-                            rgResAvail[j] -= (uint32_t)rgCosts[j];
+                            rgResAvail[j] -= static_cast<uint32_t>(rgCosts[j]);
                             if (rgResAvail[j] < 0)
                                 goto FinishProd;
                         }
@@ -344,7 +344,7 @@ void DoRobotoidAiTurn(APPSESSION &app, PROD *rgprod) {
         if (lpfl->cord > 1 && lpfl->lpplord->rgord()[1].grobj == grobjThing) {
             dx = lpfl->pt.x - lpfl->lpplord->rgord()[1].pt.x;
             dy = lpfl->pt.y - lpfl->lpplord->rgord()[1].pt.y;
-            lDist = (uint32_t)(dx * dx) + (uint32_t)(dy * dy);
+            lDist = static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy));
             if (lDist > 40000) {
                 ChangeMainObjSel(app, grobjFleet, lpfl->id);
                 app.state.sel.fl.cord = 1;
@@ -547,11 +547,11 @@ void EnsureRobotoidShdefs(APPSESSION &app) {
 
     for (ish = 11; ish <= 13; ish++) {
         if (app.state.rgshdef[ish].fFree && app.state.rgplr[app.state.idPlayer].rgTech[2] >= 2 && app.state.rgplr[app.state.idPlayer].rgTech[3] >= (ish - 11) * 3 + 4 &&
-            (ish == 11 || (uint16_t)(app.state.game.turn - app.state.rgshdef[ish - 1].turn) > 14)) {
+            (ish == 11 || static_cast<uint16_t>((app.state.game.turn - app.state.rgshdef[ish - 1].turn)) > 14)) {
             if (app.state.rgplr[app.state.idPlayer].rgTech[3] < 10) {
-                FCreateAiShdef(app, ish, ihuldefPrivateer, (uint8_t *)&vrgRobAip[ish == 11 ? robRecipePrivateerBeam : robRecipePrivateerTorpedo]);
+                FCreateAiShdef(app, ish, ihuldefPrivateer, static_cast<uint8_t *>(&vrgRobAip[ish == 11 ? robRecipePrivateerBeam : robRecipePrivateerTorpedo]));
             } else {
-                for (i = 0; i < 5 && FCreateAiShdef(app, ish, ihuldefMetaMorph, (uint8_t *)&vrgRobAip[vrgRobIshAip[irobRecipeMetaMorphCargoBeamA + RandomIO().pfnRandom(app, 6)]]) == 0;
+                for (i = 0; i < 5 && FCreateAiShdef(app, ish, ihuldefMetaMorph, static_cast<uint8_t *>(&vrgRobAip[vrgRobIshAip[irobRecipeMetaMorphCargoBeamA + RandomIO().pfnRandom(app, 6)]])) == 0;
                      i++) {
                 }
             }
@@ -559,39 +559,39 @@ void EnsureRobotoidShdefs(APPSESSION &app) {
     }
     if (app.state.rgshdef[14].fFree && app.state.rgplr[app.state.idPlayer].rgTech[1] >= 5 && app.state.rgplr[app.state.idPlayer].rgTech[4] >= 6 && app.state.rgplr[app.state.idPlayer].rgTech[3] >= 6 &&
         app.state.rgplr[app.state.idPlayer].rgTech[2] >= 6 && app.state.rgplr[app.state.idPlayer].rgTech[0] >= 2) {
-        for (i = 0; i < 5 && (FCreateAiShdef(app, 14, ihuldefNubian, (uint8_t *)&vrgRobAip[robRecipeNubianMixedBeams]) ||
-                              !FCreateAiShdef(app, 14, ihuldefDestroyer, (uint8_t *)&vrgRobAip[vrgRobIshAip[irobRecipeDestroyerBeamA + RandomIO().pfnRandom(app, 4)]]));
+        for (i = 0; i < 5 && (FCreateAiShdef(app, 14, ihuldefNubian, static_cast<uint8_t *>(&vrgRobAip[robRecipeNubianMixedBeams])) ||
+                              !FCreateAiShdef(app, 14, ihuldefDestroyer, static_cast<uint8_t *>(&vrgRobAip[vrgRobIshAip[irobRecipeDestroyerBeamA + RandomIO().pfnRandom(app, 4)]])));
              i++) {
         }
     }
     if (app.state.rgshdef[15].fFree && app.state.rgplr[app.state.idPlayer].rgTech[4] >= 10 && app.state.rgplr[app.state.idPlayer].rgTech[3] >= 8 && app.state.rgplr[app.state.idPlayer].rgTech[2] >= 9 &&
-        app.state.rgplr[app.state.idPlayer].rgTech[1] >= 14 && !FCreateAiShdef(app, 15, ihuldefNubian, (uint8_t *)&vrgRobAip[robRecipeNubianMixedBeams])) {
-        for (i = 0; i < 5 && FCreateAiShdef(app, 15, ihuldefDestroyer, (uint8_t *)&vrgRobAip[vrgRobIshAip[irobRecipeDestroyerTorpedoShield + RandomIO().pfnRandom(app, 4)]]) == 0;
+        app.state.rgplr[app.state.idPlayer].rgTech[1] >= 14 && !FCreateAiShdef(app, 15, ihuldefNubian, static_cast<uint8_t *>(&vrgRobAip[robRecipeNubianMixedBeams]))) {
+        for (i = 0; i < 5 && FCreateAiShdef(app, 15, ihuldefDestroyer, static_cast<uint8_t *>(&vrgRobAip[vrgRobIshAip[irobRecipeDestroyerTorpedoShield + RandomIO().pfnRandom(app, 4)]])) == 0;
              i++) {
         }
     }
     for (ish = 2; ish <= 5; ish++) {
         if (app.state.rgshdef[ish].fFree && app.state.rgplr[app.state.idPlayer].rgTech[1] >= 10 && app.state.rgplr[app.state.idPlayer].rgTech[3] >= 10 && app.state.rgplr[app.state.idPlayer].rgTech[2] >= 9 &&
-            app.state.rgplr[app.state.idPlayer].rgTech[0] >= 6 && (ish == 2 || (!app.state.rgshdef[ish - 1].fFree && (uint16_t)(app.state.game.turn - app.state.rgshdef[ish - 1].turn) > 12))) {
+            app.state.rgplr[app.state.idPlayer].rgTech[0] >= 6 && (ish == 2 || (!app.state.rgshdef[ish - 1].fFree && static_cast<uint16_t>((app.state.game.turn - app.state.rgshdef[ish - 1].turn)) > 12))) {
             shBase = !((ish - 2) & 1) ? irobRecipeMetaMorphBeamDefense : irobRecipeMetaMorphMissileA;
-            for (i = 0; i < 5 && FCreateAiShdef(app, ish, ihuldefMetaMorph, (uint8_t *)&vrgRobAip[vrgRobIshAip[RandomIO().pfnRandom(app, 4) + shBase]]) == 0; i++) {
+            for (i = 0; i < 5 && FCreateAiShdef(app, ish, ihuldefMetaMorph, static_cast<uint8_t *>(&vrgRobAip[vrgRobIshAip[RandomIO().pfnRandom(app, 4) + shBase]])) == 0; i++) {
             }
         }
     }
     for (ish = 6; ish <= 7; ish++) {
         if (app.state.rgshdef[ish].fFree && app.state.rgplr[app.state.idPlayer].rgTech[5] >= 4 && app.state.rgplr[app.state.idPlayer].rgTech[4] >= 10 && app.state.rgplr[app.state.idPlayer].rgTech[3] >= 12 &&
             app.state.rgplr[app.state.idPlayer].rgTech[2] >= 12 && app.state.rgplr[app.state.idPlayer].rgTech[0] >= 6 && app.state.rgplr[app.state.idPlayer].rgTech[1] >= 15 &&
-            (ish == 6 || (!app.state.rgshdef[ish - 1].fFree && (uint16_t)(app.state.game.turn - app.state.rgshdef[ish - 1].turn) > 20))) {
+            (ish == 6 || (!app.state.rgshdef[ish - 1].fFree && static_cast<uint16_t>((app.state.game.turn - app.state.rgshdef[ish - 1].turn)) > 20))) {
             shBase = ish == 6 ? irobRecipeBattleshipMissileBeam : irobRecipeBattleshipBeamA;
-            for (i = 0; i < 5 && FCreateAiShdef(app, ish, ihuldefBattleship, (uint8_t *)&vrgRobAip[vrgRobIshAip[RandomIO().pfnRandom(app, 4) + shBase]]) == 0; i++) {
+            for (i = 0; i < 5 && FCreateAiShdef(app, ish, ihuldefBattleship, static_cast<uint8_t *>(&vrgRobAip[vrgRobIshAip[RandomIO().pfnRandom(app, 4) + shBase]])) == 0; i++) {
             }
         }
     }
     for (ish = 9; ish <= 10; ish++) {
         if (app.state.rgshdef[ish].fFree && app.state.rgplr[app.state.idPlayer].rgTech[1] >= 14 &&
-            ((ish == 9 || (!app.state.rgshdef[ish - 1].fFree && (uint16_t)(app.state.game.turn - app.state.rgshdef[ish - 1].turn) > 15)) &&
-             !FCreateAiShdef(app, ish, ihuldefBattleship, (uint8_t *)&vrgRobAip[robRecipeBattleshipMcm]))) {
-            FCreateAiShdef(app, ish, ihuldefB52Bomber, (uint8_t *)&vrgRobAip[ish == 9 ? robRecipeB52SmartThenNormal : robRecipeB52RetroThenSmart]);
+            ((ish == 9 || (!app.state.rgshdef[ish - 1].fFree && static_cast<uint16_t>((app.state.game.turn - app.state.rgshdef[ish - 1].turn)) > 15)) &&
+             !FCreateAiShdef(app, ish, ihuldefBattleship, static_cast<uint8_t *>(&vrgRobAip[robRecipeBattleshipMcm])))) {
+            FCreateAiShdef(app, ish, ihuldefB52Bomber, static_cast<uint8_t *>(&vrgRobAip[ish == 9 ? robRecipeB52SmartThenNormal : robRecipeB52RetroThenSmart]));
         }
     }
     if (app.state.rgshdef[0].hul.ihuldef != ihuldefFrigate && app.state.rgplr[app.state.idPlayer].lvlAi > lvlAiStandard && app.state.rgshdef[0].cExist == 0 && app.state.rgplr[app.state.idPlayer].rgTech[5] >= 4 &&
@@ -599,7 +599,7 @@ void EnsureRobotoidShdefs(APPSESSION &app) {
         shdef = app.state.rgshdef[0];
         shdef.fFree = 1;
         FChangeAiShdef(app, &shdef, 0);
-        FCreateAiShdef(app, 0, ihuldefFrigate, (uint8_t *)&vrgRobAip[robRecipeFrigateScoutMineLayer]);
+        FCreateAiShdef(app, 0, ihuldefFrigate, static_cast<uint8_t *>(&vrgRobAip[robRecipeFrigateScoutMineLayer]));
     }
     return;
 }
@@ -651,11 +651,11 @@ LTryNewTarget:
     if (lppl->iPlayer == app.state.idPlayer && lppl->fStarbase) {
         if (cshWar >= app.state.vrgAiArmadaPotency[0] && cshBomb >= app.state.vrgAiArmadaPotency[2]) {
             if (app.state.sel.pl.rgwtMin[3] > 3000) {
-                cCol = (int32_t)(app.state.sel.pl.rgwtMin[3] / 10);
+                cCol = static_cast<int32_t>((app.state.sel.pl.rgwtMin[3] / 10));
             } else if (app.state.sel.pl.rgwtMin[3] > 2000) {
-                cCol = (int32_t)(app.state.sel.pl.rgwtMin[3] / 15);
+                cCol = static_cast<int32_t>((app.state.sel.pl.rgwtMin[3] / 15));
             } else if (app.state.sel.pl.rgwtMin[3] > 1000) {
-                cCol = (int32_t)(app.state.sel.pl.rgwtMin[3] / 20);
+                cCol = static_cast<int32_t>((app.state.sel.pl.rgwtMin[3] / 20));
             } else {
                 cCol = 0;
             }
@@ -709,22 +709,22 @@ LTryNewTarget:
         goto TargetPotentArmada;
     } else if (lppl->iPlayer == app.state.idPlayer) {
         if (lppl->rgwtMin[3] > 1000) {
-            XferAiSupply(app, grobjPlanet, lpfl->idPlanet, grobjFleet, lpfl->id, Colonists, (int16_t)LOWORD(lppl->rgwtMin[3]) / 5);
+            XferAiSupply(app, grobjPlanet, lpfl->idPlanet, grobjFleet, lpfl->id, Colonists, static_cast<int16_t>(LOWORD(lppl->rgwtMin[3])) / 5);
             FleetQueryIO().pfnLookup(app, lpfl->id, &app.state.sel.fl);
         }
         goto TargetPotentArmada;
     } else if (lppl->iPlayer != app.state.idPlayer) {
         lPopUs = lpfl->rgwtMin[3];
-        lPopEnemy = (int32_t)(lppl->uPopGuess * 4);
-        pctDef = (uint32_t)(lppl->uDefGuess * 6) + 6;
-        pctDef = (int32_t)(pctDef * 3) / 4;
-        lPopEnemy = (int32_t)((int32_t)(lPopEnemy * 100) / (100 - pctDef));
-        if (lPopEnemy < (int32_t)(lPopUs / 5) || (lPopEnemy < 200 && lPopUs > 350) || (lPopEnemy < 10 && lPopUs > 150)) {
-            cXfer = (int32_t)(lPopEnemy * 5) / 4;
-            if (lpfl->rgwtMin[3] < (cXfer <= (int32_t)(lpfl->rgwtMin[3] / 2) ? (int32_t)(lpfl->rgwtMin[3] / 2) : cXfer)) {
+        lPopEnemy = static_cast<int32_t>((lppl->uPopGuess * 4));
+        pctDef = static_cast<uint32_t>((lppl->uDefGuess * 6)) + 6;
+        pctDef = static_cast<int32_t>((pctDef * 3)) / 4;
+        lPopEnemy = static_cast<int32_t>((static_cast<int32_t>((lPopEnemy * 100)) / (100 - pctDef)));
+        if (lPopEnemy < static_cast<int32_t>((lPopUs / 5)) || (lPopEnemy < 200 && lPopUs > 350) || (lPopEnemy < 10 && lPopUs > 150)) {
+            cXfer = static_cast<int32_t>((lPopEnemy * 5)) / 4;
+            if (lpfl->rgwtMin[3] < (cXfer <= static_cast<int32_t>((lpfl->rgwtMin[3] / 2)) ? static_cast<int32_t>((lpfl->rgwtMin[3] / 2)) : cXfer)) {
                 cXfer = lpfl->rgwtMin[3];
-            } else if (cXfer <= (int32_t)(lpfl->rgwtMin[3] / 2)) {
-                cXfer = (int32_t)(lpfl->rgwtMin[3] / 2);
+            } else if (cXfer <= static_cast<int32_t>((lpfl->rgwtMin[3] / 2))) {
+                cXfer = static_cast<int32_t>((lpfl->rgwtMin[3] / 2));
             }
             if (cXfer > 30000) {
                 cXfer = 30000;
@@ -897,16 +897,16 @@ void DoTurinDroneAiTurn(APPSESSION &app, PROD *rgprod) {
     }
     j = 3;
     if (app.state.game.turn > 130) {
-        j += (uint32_t)(app.state.game.turn - 120) / 20;
+        j += static_cast<uint32_t>((app.state.game.turn - 120)) / 20;
     }
     if (j > 50) {
         j = 50;
     }
     app.state.vrgAiArmadaPotency[0] = j;
-    app.state.vrgAiArmadaPotency[1] = (int16_t)(j & 0xff) / 2;
+    app.state.vrgAiArmadaPotency[1] = static_cast<int16_t>((j & 0xff)) / 2;
     j = 6;
     if (app.state.game.turn > 115) {
-        j += (uint32_t)(app.state.game.turn - 100) / 22;
+        j += static_cast<uint32_t>((app.state.game.turn - 100)) / 22;
     }
     if (j > 12) {
         j = 12;
@@ -952,7 +952,7 @@ void DoTurinDroneAiTurn(APPSESSION &app, PROD *rgprod) {
                 if (lppl->rgMinConc[i] > 66) {
                     bT = 75;
                 } else {
-                    bT = (int16_t)lppl->rgMinConc[i] / 2;
+                    bT = static_cast<int16_t>(lppl->rgMinConc[i]) / 2;
                 }
                 b += bT;
             }
@@ -976,7 +976,7 @@ void DoTurinDroneAiTurn(APPSESSION &app, PROD *rgprod) {
             } else if (!lppl->fStarbase || lppl->rgwtMin[3] < 200) {
                 ChangeMainObjSel(app, grobjPlanet, lppl->id);
                 app.state.sel.pl.fNoResearch = lppl->rgwtMin[3] < 200;
-                if ((uint32_t)app.state.sel.pl.fNoResearch != lppl->fNoResearch) {
+                if (static_cast<uint32_t>(app.state.sel.pl.fNoResearch) != lppl->fNoResearch) {
                     PlanetQueryIO().pfnLookup(app, idWriteBack, &app.state.sel.pl);
                 }
             } else {
@@ -1003,15 +1003,15 @@ void DoTurinDroneAiTurn(APPSESSION &app, PROD *rgprod) {
                             fWrite = 1;
                         }
                     } else if (!app.state.rgshdef[0].fFree && app.state.rgshdef[0].hul.ihuldef == ihuldefFrigate &&
-                               app.state.rgshdef[0].cExist < (uint32_t)(app.state.game.cPlanMax / 4 >= 32 ? 32 : app.state.game.cPlanMax / 4) &&
-                               app.state.rgshdef[0].cExist > (uint32_t)(app.state.rgshdef[0].cBuilt / 10)) {
+                               app.state.rgshdef[0].cExist < static_cast<uint32_t>((app.state.game.cPlanMax / 4 >= 32 ? 32 : app.state.game.cPlanMax / 4)) &&
+                               app.state.rgshdef[0].cExist > static_cast<uint32_t>((app.state.rgshdef[0].cBuilt / 10))) {
                         AddItemToQueue(app, 0, 1, grobjFleet, addItemEnd);
                         fWrite = 1;
                     }
                     cFr = app.state.rgplr[app.state.idPlayer].cPlanet / 10 <= AhvFromLp(app, app.state.vlpbAiData).cStarbase() * 2 ? AhvFromLp(app, app.state.vlpbAiData).cStarbase() * 2
                                                                                                 : app.state.rgplr[app.state.idPlayer].cPlanet / 10;
                     if (app.state.rgplr[app.state.idPlayer].rgTech[2] >= 5 && iLatestCargo != ishdefNone &&
-                        (cExistCargo < cFr || (cExistCargo < (int16_t)(10 * cFr) / 7 && RandomIO().pfnRandom(app, 4) == 0))) {
+                        (cExistCargo < cFr || (cExistCargo < static_cast<int16_t>((10 * cFr)) / 7 && RandomIO().pfnRandom(app, 4) == 0))) {
                         AddItemToQueue(app, iLatestCargo, 1, grobjFleet, addItemEnd);
                         fWrite = 1;
                     }
@@ -1022,7 +1022,7 @@ void DoTurinDroneAiTurn(APPSESSION &app, PROD *rgprod) {
                         AddItemToQueue(app, 1, 1, grobjFleet, addItemEnd);
                         fWrite = 1;
                     }
-                    l = (uint32_t)(lppl->rgwtMin[3] * PctTrueMaxGrowth(app, app.state.idPlayer));
+                    l = static_cast<uint32_t>((lppl->rgwtMin[3] * PctTrueMaxGrowth(app, app.state.idPlayer)));
                     cRes = ResearchIO().pfnResources(app, lppl, app.state.idPlayer);
                     if (!app.state.rgshdef[12].fFree && RandomIO().pfnRandom(app, 3) == 0) {
                         id = lppl->id;
@@ -1056,7 +1056,7 @@ void DoTurinDroneAiTurn(APPSESSION &app, PROD *rgprod) {
                             }
                         }
                     }
-                    if (iLatestBattle != ishdefNone && app.state.rgshdef[iLatestBattle].cExist < (uint32_t)(app.state.game.cPlanMax / 24 + 4)) {
+                    if (iLatestBattle != ishdefNone && app.state.rgshdef[iLatestBattle].cExist < static_cast<uint32_t>((app.state.game.cPlanMax / 24 + 4))) {
                         GetResourcesAvailable(app, lppl, rgResAvail);
                         GetProdQCost(app, lppl, rgResCost);
                         for (i = 0; i < 4; i++) {
@@ -1067,7 +1067,7 @@ void DoTurinDroneAiTurn(APPSESSION &app, PROD *rgprod) {
                         for (i = 0; i < 5; i++) {
                             GetTrueHullCost(app.state.idPlayer, &app.state.rgshdef[iLatestBattle].hul, rgCosts);
                             for (j = 0; j < 4; j++) {
-                                rgResAvail[j] -= (uint32_t)rgCosts[j];
+                                rgResAvail[j] -= static_cast<uint32_t>(rgCosts[j]);
                                 if (rgResAvail[j] < 0)
                                     goto FinishProd;
                             }
@@ -1075,7 +1075,7 @@ void DoTurinDroneAiTurn(APPSESSION &app, PROD *rgprod) {
                             AddItemToQueue(app, iLatestBattle, 1, grobjFleet, addItemEnd);
                         }
                     }
-                    if (iLatestCruiser != ishdefNone && app.state.rgshdef[iLatestCruiser].cExist < (uint32_t)(app.state.game.cPlanMax / 12 + 8)) {
+                    if (iLatestCruiser != ishdefNone && app.state.rgshdef[iLatestCruiser].cExist < static_cast<uint32_t>((app.state.game.cPlanMax / 12 + 8))) {
                         GetResourcesAvailable(app, lppl, rgResAvail);
                         GetProdQCost(app, lppl, rgResCost);
                         for (i = 0; i < 4; i++) {
@@ -1086,7 +1086,7 @@ void DoTurinDroneAiTurn(APPSESSION &app, PROD *rgprod) {
                         for (i = 0; i < 5; i++) {
                             GetTrueHullCost(app.state.idPlayer, &app.state.rgshdef[iLatestCruiser].hul, rgCosts);
                             for (j = 0; j < 4; j++) {
-                                rgResAvail[j] -= (uint32_t)rgCosts[j];
+                                rgResAvail[j] -= static_cast<uint32_t>(rgCosts[j]);
                                 if (rgResAvail[j] < 0)
                                     goto FinishProd;
                             }
@@ -1094,7 +1094,7 @@ void DoTurinDroneAiTurn(APPSESSION &app, PROD *rgprod) {
                             AddItemToQueue(app, iLatestCruiser, 1, grobjFleet, addItemEnd);
                         }
                     }
-                    if (iLatestDestroyer != ishdefNone && app.state.rgshdef[iLatestDestroyer].cExist < (uint32_t)(app.state.game.cPlanMax / 4 + 12)) {
+                    if (iLatestDestroyer != ishdefNone && app.state.rgshdef[iLatestDestroyer].cExist < static_cast<uint32_t>((app.state.game.cPlanMax / 4 + 12))) {
                         GetResourcesAvailable(app, lppl, rgResAvail);
                         GetProdQCost(app, lppl, rgResCost);
                         for (i = 0; i < 4; i++) {
@@ -1105,7 +1105,7 @@ void DoTurinDroneAiTurn(APPSESSION &app, PROD *rgprod) {
                         for (i = 0; i < 5; i++) {
                             GetTrueHullCost(app.state.idPlayer, &app.state.rgshdef[iLatestDestroyer].hul, rgCosts);
                             for (j = 0; j < 4; j++) {
-                                rgResAvail[j] -= (uint32_t)rgCosts[j];
+                                rgResAvail[j] -= static_cast<uint32_t>(rgCosts[j]);
                                 if (rgResAvail[j] < 0)
                                     goto FinishProd;
                             }
@@ -1113,7 +1113,7 @@ void DoTurinDroneAiTurn(APPSESSION &app, PROD *rgprod) {
                             AddItemToQueue(app, iLatestDestroyer, 1, grobjFleet, addItemEnd);
                         }
                     }
-                    if (iLatestTroop != ishdefNone && !app.state.rgshdef[15].fFree && app.state.rgshdef[iLatestTroop].cExist < (uint32_t)(app.state.game.cPlanMax / 12 + 8)) {
+                    if (iLatestTroop != ishdefNone && !app.state.rgshdef[15].fFree && app.state.rgshdef[iLatestTroop].cExist < static_cast<uint32_t>((app.state.game.cPlanMax / 12 + 8))) {
                         GetResourcesAvailable(app, lppl, rgResAvail);
                         GetProdQCost(app, lppl, rgResCost);
                         for (i = 0; i < 4; i++) {
@@ -1124,7 +1124,7 @@ void DoTurinDroneAiTurn(APPSESSION &app, PROD *rgprod) {
                         for (i = 0; i < 5; i++) {
                             GetTrueHullCost(app.state.idPlayer, &app.state.rgshdef[iLatestTroop].hul, rgCosts);
                             for (j = 0; j < 4; j++) {
-                                rgResAvail[j] -= (uint32_t)rgCosts[j];
+                                rgResAvail[j] -= static_cast<uint32_t>(rgCosts[j]);
                                 if (rgResAvail[j] < 0)
                                     goto FinishProd;
                             }
@@ -1420,14 +1420,14 @@ void EnsureTurinDroneShdefs(APPSESSION &app, int16_t iroCur) {
     int16_t i;
 
     if (app.state.rgshdef[8].fFree && app.state.rgplr[app.state.idPlayer].rgTech[2] >= 5 && app.state.rgplr[app.state.idPlayer].rgTech[3] >= 8) {
-        FCreateAiShdef(app, 8, ihuldefRogue, (uint8_t *)&vrgTDAip[tdRecipeRogueCargoScanner]);
+        FCreateAiShdef(app, 8, ihuldefRogue, static_cast<uint8_t *>(&vrgTDAip[tdRecipeRogueCargoScanner]));
     }
     if (app.state.rgshdef[9].fFree && app.state.rgplr[app.state.idPlayer].rgTech[2] >= 7 && app.state.rgplr[app.state.idPlayer].rgTech[3] >= 11) {
-        FCreateAiShdef(app, 9, ihuldefGalleon, (uint8_t *)&vrgTDAip[tdRecipeGalleonCargoScanner]);
+        FCreateAiShdef(app, 9, ihuldefGalleon, static_cast<uint8_t *>(&vrgTDAip[tdRecipeGalleonCargoScanner]));
     }
     if (app.state.rgshdef[10].fFree && app.state.rgplr[app.state.idPlayer].rgTech[1] >= 5 && app.state.rgplr[app.state.idPlayer].rgTech[4] >= 5 && app.state.rgplr[app.state.idPlayer].rgTech[3] >= 4 &&
         app.state.rgplr[app.state.idPlayer].rgTech[2] >= 5) {
-        for (i = 0; i < 4 && FCreateAiShdef(app, 10, ihuldefDestroyer, (uint8_t *)&vrgTDAip[vrgTDIshAip[itdRecipeDestroyerTorpedo + RandomIO().pfnRandom(app, 1)]]) == 0; i++) {
+        for (i = 0; i < 4 && FCreateAiShdef(app, 10, ihuldefDestroyer, static_cast<uint8_t *>(&vrgTDAip[vrgTDIshAip[itdRecipeDestroyerTorpedo + RandomIO().pfnRandom(app, 1)]])) == 0; i++) {
         }
     }
     if (app.state.rgshdef[1].fFree || app.state.rgshdef[1].cExist == 0) {
@@ -1436,7 +1436,7 @@ void EnsureTurinDroneShdefs(APPSESSION &app, int16_t iroCur) {
             shdef.fFree = 1;
             FChangeAiShdef(app, &shdef, 1);
         }
-        FCreateAiShdef(app, 1, ihuldefColonyShip, (uint8_t *)&vrgTDAip[tdRecipeColonizer]);
+        FCreateAiShdef(app, 1, ihuldefColonyShip, static_cast<uint8_t *>(&vrgTDAip[tdRecipeColonizer]));
     }
     if (app.state.rgshdef[0].fFree || app.state.rgshdef[0].cExist == 0) {
         if (!app.state.rgshdef[0].fFree) {
@@ -1444,7 +1444,7 @@ void EnsureTurinDroneShdefs(APPSESSION &app, int16_t iroCur) {
             shdef.fFree = 1;
             FChangeAiShdef(app, &shdef, 0);
         }
-        FCreateAiShdef(app, 0, ihuldefFrigate, (uint8_t *)&vrgTDAip[tdRecipeFrigateScout]);
+        FCreateAiShdef(app, 0, ihuldefFrigate, static_cast<uint8_t *>(&vrgTDAip[tdRecipeFrigateScout]));
     }
     if ((app.state.rgshdef[2].fFree || app.state.rgshdef[2].cExist == 0) && app.state.rgplr[app.state.idPlayer].rgTech[3] >= 7 && app.state.rgplr[app.state.idPlayer].rgTech[4] >= 4) {
         if (!app.state.rgshdef[2].fFree) {
@@ -1452,26 +1452,26 @@ void EnsureTurinDroneShdefs(APPSESSION &app, int16_t iroCur) {
             shdef.fFree = 1;
             FChangeAiShdef(app, &shdef, 2);
         }
-        FCreateAiShdef(app, 2, ihuldefMiner, (uint8_t *)&vrgTDAip[tdRecipeMiner]);
+        FCreateAiShdef(app, 2, ihuldefMiner, static_cast<uint8_t *>(&vrgTDAip[tdRecipeMiner]));
     }
     if ((app.state.rgshdef[12].fFree || app.state.rgshdef[12].cExist == 0) && app.state.rgplr[app.state.idPlayer].rgTech[3] >= 4 && app.state.rgplr[app.state.idPlayer].rgTech[5] >= 4) {
-        FCreateAiShdef(app, 12, ihuldefPrivateer, (uint8_t *)&vrgTDAip[tdRecipePrivateerMineLayer]);
+        FCreateAiShdef(app, 12, ihuldefPrivateer, static_cast<uint8_t *>(&vrgTDAip[tdRecipePrivateerMineLayer]));
     }
     if (app.state.rgshdef[13].fFree && app.state.rgplr[app.state.idPlayer].rgTech[1] >= 8 && app.state.rgplr[app.state.idPlayer].rgTech[4] >= 7 && app.state.rgplr[app.state.idPlayer].rgTech[3] >= 6) {
-        FCreateAiShdef(app, 13, ihuldefStealthBomber, (uint8_t *)&vrgTDAip[tdRecipeStealthBomber]);
+        FCreateAiShdef(app, 13, ihuldefStealthBomber, static_cast<uint8_t *>(&vrgTDAip[tdRecipeStealthBomber]));
     }
     if (app.state.rgshdef[14].fFree && app.state.rgplr[app.state.idPlayer].rgTech[1] >= 11 && app.state.rgplr[app.state.idPlayer].rgTech[4] >= 12 && app.state.rgplr[app.state.idPlayer].rgTech[3] >= 15 &&
         app.state.rgplr[app.state.idPlayer].rgTech[2] >= 9) {
-        FCreateAiShdef(app, 14, ihuldefStealthBomber, (uint8_t *)&vrgTDAip[tdRecipeStealthBomber]);
+        FCreateAiShdef(app, 14, ihuldefStealthBomber, static_cast<uint8_t *>(&vrgTDAip[tdRecipeStealthBomber]));
     }
     if (app.state.rgshdef[4].fFree && app.state.rgplr[app.state.idPlayer].rgTech[1] >= 5 && app.state.rgplr[app.state.idPlayer].rgTech[4] >= 6 && app.state.rgplr[app.state.idPlayer].rgTech[3] >= 13 &&
         app.state.rgplr[app.state.idPlayer].rgTech[2] >= 7) {
-        for (i = 0; i < 5 && FCreateAiShdef(app, 4, ihuldefBattleship, (uint8_t *)&vrgTDAip[vrgTDIshAip[itdRecipeBattleshipBeamA + RandomIO().pfnRandom(app, 4)]]) == 0; i++) {
+        for (i = 0; i < 5 && FCreateAiShdef(app, 4, ihuldefBattleship, static_cast<uint8_t *>(&vrgTDAip[vrgTDIshAip[itdRecipeBattleshipBeamA + RandomIO().pfnRandom(app, 4)]])) == 0; i++) {
         }
     }
     if (app.state.rgshdef[15].fFree && app.state.rgplr[app.state.idPlayer].rgTech[1] >= 5 && app.state.rgplr[app.state.idPlayer].rgTech[4] >= 6 && app.state.rgplr[app.state.idPlayer].rgTech[3] >= 13 &&
         app.state.rgplr[app.state.idPlayer].rgTech[2] >= 7) {
-        for (i = 0; i < 5 && FCreateAiShdef(app, 15, ihuldefRogue, (uint8_t *)&vrgTDAip[tdRecipeRogueCargoScanner]) == 0; i++) {
+        for (i = 0; i < 5 && FCreateAiShdef(app, 15, ihuldefRogue, static_cast<uint8_t *>(&vrgTDAip[tdRecipeRogueCargoScanner])) == 0; i++) {
         }
     }
     return;

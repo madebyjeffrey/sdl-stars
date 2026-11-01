@@ -101,28 +101,28 @@ void EstMineralsMined(APPSESSION &app, PLANET *lppl, int32_t *plQuan, int32_t cM
         lMineEff = 10;
     }
     for (i = 0; i <= 2; i++) {
-        lConc = (uint32_t)lppl->rgMinConc[i];
+        lConc = static_cast<uint32_t>(lppl->rgMinConc[i]);
         if (lConc < 30 && lppl->fHomeworld && (!fRemote || fMacintosh)) {
             lConc = 30;
         }
-        lQuanAct = (uint32_t)(lMine * lConc);
+        lQuanAct = static_cast<uint32_t>((lMine * lConc));
         if (!fRemote) {
-            lQuan = (int32_t)(lQuanAct * lMineEff) / 10;
+            lQuan = static_cast<int32_t>((lQuanAct * lMineEff)) / 10;
         } else {
             lQuan = lQuanAct;
         }
-        lQuanRem = (int32_t)(lQuan % 100);
-        lQuan = (int32_t)(lQuan / 100);
-        if (lQuanRem != 0 && app.state.gd.fGeneratingTurn && RandomIO().pfnRandom(app, 100) < (int16_t)LOWORD(lQuanRem)) {
+        lQuanRem = static_cast<int32_t>((lQuan % 100));
+        lQuan = static_cast<int32_t>((lQuan / 100));
+        if (lQuanRem != 0 && app.state.gd.fGeneratingTurn && RandomIO().pfnRandom(app, 100) < static_cast<int16_t>(LOWORD(lQuanRem))) {
             lQuan++;
         }
         plQuan[i] = lQuan;
         if (fApply) {
             lppl->rgwtMin[i] += lQuan;
-            lQuanAct = (int32_t)(lQuanAct / 100);
+            lQuanAct = static_cast<int32_t>((lQuanAct / 100));
             while (lQuanAct > 0 && lppl->rgMinConc[i] > 1) {
-                lLevel = (uint32_t)lppl->rgpctMinLevel[i];
-                lConc = (uint32_t)lppl->rgMinConc[i];
+                lLevel = static_cast<uint32_t>(lppl->rgpctMinLevel[i]);
+                lConc = static_cast<uint32_t>(lppl->rgMinConc[i]);
                 if (lLevel == 0) {
                     lLevel = 256;
                 }
@@ -133,14 +133,14 @@ void EstMineralsMined(APPSESSION &app, PLANET *lppl, int32_t *plQuan, int32_t cM
                 } else if (lConc < 25) {
                     lConc = 25;
                 }
-                lLeft = (int32_t)((int32_t)(lLevel * 12500) / 256 / lConc);
+                lLeft = static_cast<int32_t>((static_cast<int32_t>((lLevel * 12500)) / 256 / lConc));
                 if (lLeft <= lQuanAct) {
                     lQuanAct -= lLeft;
                     lppl->rgMinConc[i]--;
                     lppl->rgpctMinLevel[i] = 0;
                 } else {
-                    lLength = (int32_t)(12500 / lConc);
-                    lLeft = (int32_t)((int32_t)((lLeft - lQuanAct) * 0x100) / lLength);
+                    lLength = static_cast<int32_t>((12500 / lConc));
+                    lLeft = static_cast<int32_t>((static_cast<int32_t>(((lLeft - lQuanAct) * 0x100)) / lLength));
                     if (lLeft < 1) {
                         lLeft = 1;
                     }

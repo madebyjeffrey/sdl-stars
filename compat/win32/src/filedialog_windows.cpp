@@ -4,11 +4,11 @@
 #include <stdlib.h>
 
 static int FPumpWindowsChooser(void *lpv) {
-    HWND hwndOwner = (HWND)lpv;
+    HWND hwndOwner = static_cast<HWND>(lpv);
     win32::MSG msg;
 
     while (win32::PeekMessageA(&msg, nullptr, 0, 0, win32::PM_REMOVE)) {
-        if (msg.message == win32::WM_QUIT) { win32::PostQuitMessage((int)msg.wParam); return 0; }
+        if (msg.message == win32::WM_QUIT) { win32::PostQuitMessage(static_cast<int>(msg.wParam)); return 0; }
         win32::TranslateMessage(&msg); win32::DispatchMessageA(&msg);
         if (FStarsErrorPending()) return 0;
         if (hwndOwner && !win32::IsWindow(hwndOwner)) return 0;
@@ -24,7 +24,7 @@ int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFol
     int i, iResult;
 
     if (cFilter != 0) {
-        rg = (WINDOWSFILEFILTER *)calloc((size_t)cFilter, sizeof(*rg));
+        rg = static_cast<WINDOWSFILEFILTER *>(calloc(static_cast<size_t>(cFilter), sizeof(*rg)));
         if (!rg) return -1;
         for (i = 0; i < cFilter; i++) {
             rg[i].pszName = rgfilter[i].pszName;

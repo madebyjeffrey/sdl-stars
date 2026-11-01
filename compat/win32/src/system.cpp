@@ -10,7 +10,7 @@ static BOOL FDisplayRect(BOOL fUsable, LPRECT lprc) {
     if (!FCompatVideo()) return 0;
     id = CompatDisplayIO().pfnGetPrimaryDisplay();
     if (!id || !(fUsable ? CompatDisplayIO().pfnGetDisplayUsableBounds(id, &rc) : CompatDisplayIO().pfnGetDisplayBounds(id, &rc)) ||
-        rc.w <= 0 || rc.h <= 0 || (int64_t)rc.x + rc.w > INT_MAX || (int64_t)rc.y + rc.h > INT_MAX) return 0;
+        rc.w <= 0 || rc.h <= 0 || static_cast<int64_t>(rc.x) + rc.w > INT_MAX || static_cast<int64_t>(rc.y) + rc.h > INT_MAX) return 0;
     win32::SetRect(lprc, rc.x, rc.y, rc.x + rc.w, rc.y + rc.h);
     return 1;
 }
@@ -27,11 +27,11 @@ static BOOL FVirtualRect(LPRECT lprc, int *lpc) {
     for (i = 0; i < c; i++) {
         if (!CompatDisplayIO().pfnGetDisplayBounds(rgid[i], &rc) || rc.w <= 0 || rc.h <= 0) { fOk = 0; break; }
         xMin = StarsMin(xMin, rc.x); yMin = StarsMin(yMin, rc.y);
-        xMax = (((xMax) > ((int64_t)rc.x + rc.w)) ? (xMax) : ((int64_t)rc.x + rc.w)); yMax = (((yMax) > ((int64_t)rc.y + rc.h)) ? (yMax) : ((int64_t)rc.y + rc.h));
+        xMax = (((xMax) > (static_cast<int64_t>(rc.x) + rc.w)) ? (xMax) : (static_cast<int64_t>(rc.x) + rc.w)); yMax = (((yMax) > (static_cast<int64_t>(rc.y) + rc.h)) ? (yMax) : (static_cast<int64_t>(rc.y) + rc.h));
     }
     SDL_free(rgid);
     if (!fOk || xMax > INT_MAX || yMax > INT_MAX || xMax - xMin > INT_MAX || yMax - yMin > INT_MAX) return 0;
-    win32::SetRect(lprc, (int)xMin, (int)yMin, (int)xMax, (int)yMax); *lpc = c;
+    win32::SetRect(lprc, static_cast<int>(xMin), static_cast<int>(yMin), static_cast<int>(xMax), static_cast<int>(yMax)); *lpc = c;
     return 1;
 }
 
@@ -63,21 +63,21 @@ int win32::GetSystemMetrics(int i) {
 
 BOOL win32::SystemParametersInfoA(UINT action, UINT param, PVOID lpv, UINT flags) {
     RECT rc;
-    (void)param; (void)flags;
+    static_cast<void>(param); static_cast<void>(flags);
     if (!SDL_IsMainThread() || !lpv) { win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return 0; }
     switch (action) {
     case win32::SPI_GETWORKAREA:
         if (!FDisplayRect(1, &rc)) return 0;
-        *(RECT *)lpv = rc; return 1;
+        *static_cast<RECT *>(lpv) = rc; return 1;
     case win32::SPI_GETWHEELSCROLLLINES: case win32::SPI_GETWHEELSCROLLCHARS:
         /* SDL exposes wheel deltas, but no portable desktop line/character preference. */
-        *(UINT *)lpv = 3; return 1;
+        *static_cast<UINT *>(lpv) = 3; return 1;
     default: win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return 0;
     }
 }
 
 DWORD win32::GetWindowThreadProcessId(HWND hwnd, LPDWORD lpdwProcess) {
     if (!LpCompatWindow(hwnd)) { win32::SetLastError(win32::ERROR_INVALID_WINDOW_HANDLE); return 0; }
-    if (lpdwProcess) *lpdwProcess = (DWORD)getpid();
+    if (lpdwProcess) *lpdwProcess = static_cast<DWORD>(getpid());
     return win32::GetCurrentThreadId();
 }

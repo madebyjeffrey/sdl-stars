@@ -72,7 +72,7 @@ LRESULT  TbWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         if (!win32::InitCommonControlsEx(&icc)) return -1;
         hwndButtons = ui::CreateWindowEx(0, win32::TOOLBARCLASSNAMEA, nullptr,
             win32::WS_CHILD | win32::WS_VISIBLE | win32::TBSTYLE_TOOLTIPS | win32::CCS_NORESIZE | win32::CCS_NOPARENTALIGN | win32::CCS_NODIVIDER,
-            0, 2, 10, 32, hwnd, (HMENU)(INT_PTR)IDC_STARS_TOOLBAR, app.lpui->hInst, nullptr);
+            0, 2, 10, 32, hwnd, reinterpret_cast<HMENU>(static_cast<INT_PTR>(IDC_STARS_TOOLBAR)), app.lpui->hInst, nullptr);
         if (!hwndButtons) return -1;
         ControlIO().pfnSendMessage(hwndButtons, win32::TB_BUTTONSTRUCTSIZE, sizeof(TBBUTTON), 0);
         ControlIO().pfnSendMessage(hwndButtons, win32::TB_SETBITMAPSIZE, 0, win32::MAKELPARAM(24, 23));
@@ -82,15 +82,15 @@ LRESULT  TbWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         ControlIO().pfnSendMessage(hwndButtons, win32::TB_SETEXTENDEDSTYLE, 0, win32::TBSTYLE_EX_DRAWDDARROWS);
         // FGetSystemColors has mapped palette entry 253 to the button
         // face. Use that writable DIB instead of the magenta source resource.
-        lpbi = (BITMAPINFO *)win32::GlobalLock(app.lpui->hdibToolbar);
+        lpbi = static_cast<BITMAPINFO *>(win32::GlobalLock(app.lpui->hdibToolbar));
         if (!lpbi) return -1;
         hdc = win32::GetDC(hwndButtons);
         hdcMem = win32::CreateCompatibleDC(hdc);
         hbmp = win32::CreateCompatibleBitmap(hdc, lpbi->bmiHeader.biWidth, lpbi->bmiHeader.biHeight);
-        hbmpSav = (HBITMAP)win32::SelectObject(hdcMem, hbmp);
+        hbmpSav = static_cast<HBITMAP>(win32::SelectObject(hdcMem, hbmp));
         if (!hdcMem || !hbmp || !win32::StretchDIBits(hdcMem, 0, 0, lpbi->bmiHeader.biWidth, lpbi->bmiHeader.biHeight,
                 0, 0, lpbi->bmiHeader.biWidth, lpbi->bmiHeader.biHeight,
-                (BYTE *)lpbi + lpbi->bmiHeader.biSize + PaletteSize(&lpbi->bmiHeader), lpbi, win32::DIB_RGB_COLORS, win32::SRCCOPY)) {
+                reinterpret_cast<BYTE *>(lpbi) + lpbi->bmiHeader.biSize + PaletteSize(&lpbi->bmiHeader), lpbi, win32::DIB_RGB_COLORS, win32::SRCCOPY)) {
             if (hbmpSav) win32::SelectObject(hdcMem, hbmpSav);
             win32::DeleteDC(hdcMem); if (hbmp) win32::DeleteObject(hbmp);
             win32::ReleaseDC(hwndButtons, hdc); win32::GlobalUnlock(app.lpui->hdibToolbar);
@@ -98,12 +98,12 @@ LRESULT  TbWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         }
         win32::SelectObject(hdcMem, hbmpSav); win32::DeleteDC(hdcMem);
         win32::ReleaseDC(hwndButtons, hdc); win32::GlobalUnlock(app.lpui->hdibToolbar);
-        win32::SetWindowLongPtrA(hwnd, win32::GWLP_USERDATA, (LONG_PTR)hbmp);
-        add.hInst = nullptr; add.nID = (UINT_PTR)hbmp;
-        if (ControlIO().pfnSendMessage(hwndButtons, win32::TB_ADDBITMAP, 18, (LPARAM)&add) < 0) return -1;
+        win32::SetWindowLongPtrA(hwnd, win32::GWLP_USERDATA, reinterpret_cast<LONG_PTR>(hbmp));
+        add.hInst = nullptr; add.nID = reinterpret_cast<UINT_PTR>(hbmp);
+        if (ControlIO().pfnSendMessage(hwndButtons, win32::TB_ADDBITMAP, 18, reinterpret_cast<LPARAM>(&add)) < 0) return -1;
         c = 0; iRadar = -1;
         for (i = 0; i < 29; i++) {
-            itb = (ToolbarButton)(int8_t)vrgTBBtn[i];
+            itb = static_cast<ToolbarButton>(static_cast<int8_t>(vrgTBBtn[i]));
             if (itb == tbShipDesignFilterMenu || itb == tbEnemyClassFilterMenu) continue;
             rgbtn[c].fsState = win32::TBSTATE_ENABLED;
             rgbtn[c].idCommand = IDC_STARS_TOOLBUTTON_FIRST + itb;
@@ -115,41 +115,41 @@ LRESULT  TbWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             } else {
                 rgbtn[c].iBitmap = itb;
                 TextIO().pfnCchGetString(app, static_cast<StringId>(idsNormalView + static_cast<int>(itb)), rgszTip[itb]);
-                rgbtn[c].iString = (INT_PTR)rgszTip[itb];
+                rgbtn[c].iString = reinterpret_cast<INT_PTR>(rgszTip[itb]);
                 rgbtn[c].fsStyle = itb <= tbNoPlayerInfoView ? win32::BTNS_CHECKGROUP : win32::BTNS_CHECK;
                 if (itb == tbShipDesignFilter || itb == tbEnemyClassFilter) rgbtn[c].fsStyle |= win32::BTNS_DROPDOWN;
                 if (itb == tbMineFields || itb == tbZoomMenu) rgbtn[c].fsStyle = win32::BTNS_WHOLEDROPDOWN;
             }
             c++;
         }
-        if (!ControlIO().pfnSendMessage(hwndButtons, win32::TB_ADDBUTTONS, c, (LPARAM)rgbtn)) return -1;
-        if (iRadar < 0 || !ControlIO().pfnSendMessage(hwndButtons, win32::TB_GETITEMRECT, iRadar, (LPARAM)&rc)) return -1;
+        if (!ControlIO().pfnSendMessage(hwndButtons, win32::TB_ADDBUTTONS, c, reinterpret_cast<LPARAM>(rgbtn))) return -1;
+        if (iRadar < 0 || !ControlIO().pfnSendMessage(hwndButtons, win32::TB_GETITEMRECT, iRadar, reinterpret_cast<LPARAM>(&rc))) return -1;
         app.lpui->hwndTBRadar = ui::CreateWindowEx(0, "COMBOBOX", nullptr, win32::CBS_DROPDOWN | win32::CBS_AUTOHSCROLL | win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_VSCROLL,
             rc.left, (28 - app.state.dyArial8 - 8) / 2 + 4, rc.right - rc.left, 11 * app.state.dyArial8 + 28, hwnd, nullptr, app.lpui->hInst, nullptr);
         if (!app.lpui->hwndTBRadar) return -1;
         ControlIO().pfnSetWindowPos(app.lpui->hwndTBRadar, win32::HWND_TOP, 0, 0, 0, 0, win32::SWP_NOMOVE | win32::SWP_NOSIZE | win32::SWP_NOACTIVATE);
-        ControlIO().pfnSendMessage(app.lpui->hwndTBRadar, win32::WM_SETFONT, (WPARAM)app.lpui->rghfontArial8[1], 0);
+        ControlIO().pfnSendMessage(app.lpui->hwndTBRadar, win32::WM_SETFONT, reinterpret_cast<WPARAM>(app.lpui->rghfontArial8[1]), 0);
         iSel = -1;
         for (j = 0; j < 10; j++) {
             pct = 100 - 10 * j;
             if (pct == app.lpui->vpctRadarView) iSel = j;
             win32::wsprintfA(app.state.szWork, app.state.PCTDPCTPCT, pct);
-            ControlIO().pfnSendMessage(app.lpui->hwndTBRadar, win32::CB_ADDSTRING, 0, (LPARAM)app.state.szWork);
+            ControlIO().pfnSendMessage(app.lpui->hwndTBRadar, win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(app.state.szWork));
         }
         ControlIO().pfnSendMessage(app.lpui->hwndTBRadar, win32::CB_SETEXTENDEDUI, 4, 0);
         ControlIO().pfnSendMessage(app.lpui->hwndTBRadar, win32::CB_SETCURSEL, iSel, 0);
         win32::wsprintfA(app.state.szWork, app.state.PCTDPCTPCT, app.lpui->vpctRadarView); ControlIO().pfnSetWindowText(app.lpui->hwndTBRadar, app.state.szWork);
-        app.lpui->lpfnRealComboProc = (WNDPROC)win32::GetWindowLongPtrA(app.lpui->hwndTBRadar, win32::GWLP_WNDPROC);
-        win32::SetWindowLongPtrA(app.lpui->hwndTBRadar, win32::GWLP_WNDPROC, (LONG_PTR)app.lpui->lpfnFakeComboProc);
+        app.lpui->lpfnRealComboProc = reinterpret_cast<WNDPROC>(win32::GetWindowLongPtrA(app.lpui->hwndTBRadar, win32::GWLP_WNDPROC));
+        win32::SetWindowLongPtrA(app.lpui->hwndTBRadar, win32::GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(app.lpui->lpfnFakeComboProc));
         hwndCE = win32::GetWindow(app.lpui->hwndTBRadar, win32::GW_CHILD);
         if (hwndCE) {
-            app.lpui->lpfnRealCEProc = (WNDPROC)win32::GetWindowLongPtrA(hwndCE, win32::GWLP_WNDPROC);
-            win32::SetWindowLongPtrA(hwndCE, win32::GWLP_WNDPROC, (LONG_PTR)app.lpui->lpfnFakeCEProc);
+            app.lpui->lpfnRealCEProc = reinterpret_cast<WNDPROC>(win32::GetWindowLongPtrA(hwndCE, win32::GWLP_WNDPROC));
+            win32::SetWindowLongPtrA(hwndCE, win32::GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(app.lpui->lpfnFakeCEProc));
         }
         SyncToolbar(app, hwnd);
         return 0;
     case win32::WM_NCDESTROY:
-        hbmp = (HBITMAP)win32::GetWindowLongPtrA(hwnd, win32::GWLP_USERDATA);
+        hbmp = reinterpret_cast<HBITMAP>(win32::GetWindowLongPtrA(hwnd, win32::GWLP_USERDATA));
         if (hbmp) win32::DeleteObject(hbmp);
         win32::SetWindowLongPtrA(hwnd, win32::GWLP_USERDATA, 0);
         return ui::DefWindowProc(hwnd, msg, wParam, lParam);
@@ -164,7 +164,7 @@ LRESULT  TbWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         ui::MoveWindow(hwndButtons, 0, 2, rc.right, 32, 1);
         return 0;
     case win32::WM_COMMAND:
-        if ((HWND)lParam == hwndButtons) {
+        if (reinterpret_cast<HWND>(lParam) == hwndButtons) {
             itb = static_cast<ToolbarButton>(LOWORD(wParam) - IDC_STARS_TOOLBUTTON_FIRST);
             if (itb >= tbNormalView && itb <= tbShipCounts) {
                 ExecuteButton(app, itb, itb <= tbNoPlayerInfoView || !FIsButtonDown(app, itb));
@@ -172,10 +172,10 @@ LRESULT  TbWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             }
             return 0;
         }
-        if ((HWND)lParam == app.lpui->hwndTBRadar && HIWORD(wParam) == win32::CBN_KILLFOCUS) win32::PostMessageA(hwnd, 1524, 0, 0);
+        if (reinterpret_cast<HWND>(lParam) == app.lpui->hwndTBRadar && HIWORD(wParam) == win32::CBN_KILLFOCUS) win32::PostMessageA(hwnd, 1524, 0, 0);
         return 0;
     case win32::WM_NOTIFY:
-        lpnm = (NMTOOLBAR *)lParam;
+        lpnm = reinterpret_cast<NMTOOLBAR *>(lParam);
         if (lpnm && lpnm->hdr.hwndFrom == hwndButtons && lpnm->hdr.code == win32::TBN_DROPDOWN) {
             itb = static_cast<ToolbarButton>(lpnm->iItem - IDC_STARS_TOOLBUTTON_FIRST);
             if (itb == tbShipDesignFilter) itb = tbShipDesignFilterMenu;
@@ -187,10 +187,10 @@ LRESULT  TbWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         return 0;
     case 1524: TerminateToolbarFocus(app, 0); return 0;
     case win32::WM_ERASEBKGND:
-        ControlIO().pfnGetClientRect(hwnd, &rc); win32::FillRect((HDC)wParam, &rc, app.lpui->hbrButtonFace); return 1;
+        ControlIO().pfnGetClientRect(hwnd, &rc); win32::FillRect(reinterpret_cast<HDC>(wParam), &rc, app.lpui->hbrButtonFace); return 1;
     case win32::WM_CTLCOLORMSGBOX: case win32::WM_CTLCOLOREDIT: case win32::WM_CTLCOLORLISTBOX:
     case win32::WM_CTLCOLORBTN: case win32::WM_CTLCOLORDLG: case win32::WM_CTLCOLORSCROLLBAR: case win32::WM_CTLCOLORSTATIC:
-        win32::SetBkColor((HDC)wParam, app.lpui->crButtonFace); return (LRESULT)app.lpui->hbrButtonFace;
+        win32::SetBkColor(reinterpret_cast<HDC>(wParam), app.lpui->crButtonFace); return reinterpret_cast<LRESULT>(app.lpui->hbrButtonFace);
     case win32::WM_PAINT:
         hdc = win32::BeginPaint(hwnd, &ps); ControlIO().pfnGetClientRect(hwnd, &rc);
         DrawToolbar(app, hdc, &rc); win32::EndPaint(hwnd, &ps); return 0;
@@ -199,12 +199,12 @@ LRESULT  TbWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 }
 
 void DrawToolbar(APPSESSION &app, HDC hdc, RECT *prc) {
-    (void)hdc; (void)prc;
+    static_cast<void>(hdc); static_cast<void>(prc);
     SyncToolbar(app, app.lpui->hwndTb);
 }
 
 void DrawBitmapButton(APPSESSION &app, HDC hdc, POINT16 pt, ToolbarButton ibtn, int16_t fDown) {
-    (void)hdc; (void)pt;
+    static_cast<void>(hdc); static_cast<void>(pt);
     ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(app.lpui->hwndTb, IDC_STARS_TOOLBAR), win32::TB_CHECKBUTTON, IDC_STARS_TOOLBUTTON_FIRST + ibtn, fDown);
 }
 
@@ -215,12 +215,12 @@ int16_t ItbFromPpt(APPSESSION &app, POINT16 *ppt) {
     RECT rc;
     TBBUTTON btn;
 
-    i = (int16_t)ControlIO().pfnSendMessage(hwndButtons, win32::TB_HITTEST, 0, (LPARAM)&pt);
+    i = static_cast<int16_t>(ControlIO().pfnSendMessage(hwndButtons, win32::TB_HITTEST, 0, reinterpret_cast<LPARAM>(&pt)));
     if (i < 0) {
         i = -i - 1;
     }
-    if (ControlIO().pfnSendMessage(hwndButtons, win32::TB_GETBUTTON, i, (LPARAM)&btn) &&
-        ControlIO().pfnSendMessage(hwndButtons, win32::TB_GETITEMRECT, i, (LPARAM)&rc) && win32::PtInRect(&rc, pt)) {
+    if (ControlIO().pfnSendMessage(hwndButtons, win32::TB_GETBUTTON, i, reinterpret_cast<LPARAM>(&btn)) &&
+        ControlIO().pfnSendMessage(hwndButtons, win32::TB_GETITEMRECT, i, reinterpret_cast<LPARAM>(&rc)) && win32::PtInRect(&rc, pt)) {
         ppt->x = rc.left; ppt->y = rc.top + 2;
         return btn.idCommand - IDC_STARS_TOOLBUTTON_FIRST;
     }
@@ -293,7 +293,7 @@ static POINT16 PtToolbarMenu(APPSESSION &app, ToolbarButton itb) {
 
     if (itb == tbShipDesignFilterMenu) itb = tbShipDesignFilter;
     else if (itb == tbEnemyClassFilterMenu) itb = tbEnemyClassFilter;
-    if (ControlIO().pfnSendMessage(hwndButtons, win32::TB_GETRECT, IDC_STARS_TOOLBUTTON_FIRST + itb, (LPARAM)&rc)) {
+    if (ControlIO().pfnSendMessage(hwndButtons, win32::TB_GETRECT, IDC_STARS_TOOLBUTTON_FIRST + itb, reinterpret_cast<LPARAM>(&rc))) {
         pt.x = rc.left; pt.y = rc.bottom;
         win32::MapWindowPoints(hwndButtons, app.lpui->hwndTb, &pt, 1);
     }
@@ -362,9 +362,9 @@ void ExecuteButton(APPSESSION &app, ToolbarButton itb, int16_t fDown) {
         }
         for (i = idsMineFields; i <= idsMineFields2; i++) {
             if (i == idsMineFields) {
-                rgid[c] = (uint32_t)(app.lpui->grbitScanMines == 15);
+                rgid[c] = static_cast<uint32_t>((app.lpui->grbitScanMines == 15));
             } else {
-                rgid[c] = (uint32_t)(app.lpui->grbitScanMines == 0);
+                rgid[c] = static_cast<uint32_t>((app.lpui->grbitScanMines == 0));
             }
             TextIO().pfnCchGetString(app, static_cast<StringId>(i), &app.state.szWork[(i - idsMineFields) * 30 + 160]);
             rgszScan[c++] = &app.state.szWork[(i - idsMineFields) * 30 + 160];
@@ -374,7 +374,7 @@ void ExecuteButton(APPSESSION &app, ToolbarButton itb, int16_t fDown) {
         app.state.szWork[251] = 0;
         rgszScan[c++] = &app.state.szWork[250];
         for (i = 0; i < 4; i++) {
-            rgid[c] = (uint32_t)((1 << i & app.lpui->grbitScanMines) != 0);
+            rgid[c] = static_cast<uint32_t>(((1 << i & app.lpui->grbitScanMines) != 0));
             TextIO().pfnCchGetString(app, static_cast<StringId>(idsMineFields3 + i), &app.state.szWork[i * 30]);
             rgszScan[c++] = &app.state.szWork[i * 30];
         }
@@ -412,7 +412,7 @@ void ExecuteButton(APPSESSION &app, ToolbarButton itb, int16_t fDown) {
         grbitSh = 1;
         while (ish < 16) {
             if (!app.state.rgshdef[ish].fFree) {
-                rgid[c] = (uint32_t)((grbitSh & app.lpui->grbitScanShip) != 0);
+                rgid[c] = static_cast<uint32_t>(((grbitSh & app.lpui->grbitScanShip) != 0));
                 rgszScan[c++] = app.state.rgshdef[ish].hul.szClass;
             }
             ish++;
@@ -464,7 +464,7 @@ void ExecuteButton(APPSESSION &app, ToolbarButton itb, int16_t fDown) {
         app.state.szWork[301] = 0;
         rgszScan[c++] = &app.state.szWork[300];
         for (i = 0; i < 8; i++) {
-            rgid[c] = (uint32_t)((1 << i & app.lpui->grbitScanEShip) != 0);
+            rgid[c] = static_cast<uint32_t>(((1 << i & app.lpui->grbitScanEShip) != 0));
             TextIO().pfnCchGetString(app, static_cast<StringId>(idsColony + i), &app.state.szWork[i * 25]);
             rgszScan[c++] = &app.state.szWork[i * 25];
         }
@@ -497,7 +497,7 @@ void ExecuteButton(APPSESSION &app, ToolbarButton itb, int16_t fDown) {
     case tbZoomMenu:
         c = 0;
         for (i = 0; i < 9; i++) {
-            rgid[c] = (uint32_t)(app.state.iScanZoom + 4 == i);
+            rgid[c] = static_cast<uint32_t>((app.state.iScanZoom + 4 == i));
             win32::wsprintfA(&app.state.szWork[i * 8], app.state.PCTDPCTPCT, vrgpctZoom[i]);
             rgszScan[c++] = &app.state.szWork[i * 8];
         }
@@ -541,7 +541,7 @@ void TerminateToolbarFocus(APPSESSION &app, int16_t fCancel) {
     } else if (pct > 100) {
         pct = 100;
     }
-    ControlIO().pfnSendMessage(app.lpui->hwndTBRadar, win32::CB_SETCURSEL, (int16_t)(100 - pct) / 10, 0);
+    ControlIO().pfnSendMessage(app.lpui->hwndTBRadar, win32::CB_SETCURSEL, static_cast<int16_t>((100 - pct)) / 10, 0);
     win32::wsprintfA(app.state.szWork, app.state.PCTDPCTPCT, pct);
     ControlIO().pfnSetWindowText(app.lpui->hwndTBRadar, app.state.szWork);
     if (pct != app.lpui->vpctRadarView) {
@@ -564,7 +564,7 @@ void ShowTooltip(APPSESSION &app, StringId ids, RECT *prc) {
     int16_t fShowNow;
 
     fVisCur = app.lpui->hwndTooltip && win32::IsWindowVisible(app.lpui->hwndTooltip) != 0;
-    if ((int16_t)ids < idsUniverseDefinitionFileSeemsMissingCorrupt || !prc) {
+    if (static_cast<int16_t>(ids) < idsUniverseDefinitionFileSeemsMissingCorrupt || !prc) {
         if (app.lpui->hwndTooltip) {
             ControlIO().pfnDestroyWindow(app.lpui->hwndTooltip);
         }
@@ -576,7 +576,7 @@ void ShowTooltip(APPSESSION &app, StringId ids, RECT *prc) {
         cch = TextIO().pfnCchGetString(app, static_cast<StringId>(app.lpui->vidsTooltip), app.state.szWork);
         app.lpui->vrcTooltip = *prc;
         hdc = win32::GetDC(nullptr);
-        hfontSav = (HFONT)win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
+        hfontSav = static_cast<HFONT>(win32::SelectObject(hdc, app.lpui->rghfontArial8[0]));
         app.lpui->dxTip = LOWORD(GetTextExtent(hdc, app.state.szWork, cch));
         win32::SelectObject(hdc, hfontSav);
         win32::ReleaseDC(nullptr, hdc);
@@ -586,7 +586,7 @@ void ShowTooltip(APPSESSION &app, StringId ids, RECT *prc) {
         } else {
             ControlIO().pfnInvalidateRect(app.lpui->hwndTooltip, nullptr, 1);
         }
-        ControlIO().pfnSetWindowPos(app.lpui->hwndTooltip, (HWND)-1, 0, 0, app.lpui->dxTip + 6, app.state.dyArial8 + 6, win32::SWP_NOMOVE | win32::SWP_NOZORDER | win32::SWP_NOACTIVATE | win32::SWP_NOOWNERZORDER);
+        ControlIO().pfnSetWindowPos(app.lpui->hwndTooltip, reinterpret_cast<HWND>(-1), 0, 0, app.lpui->dxTip + 6, app.state.dyArial8 + 6, win32::SWP_NOMOVE | win32::SWP_NOZORDER | win32::SWP_NOACTIVATE | win32::SWP_NOOWNERZORDER);
         fShowNow = app.lpui->vtickTooltipLast + 400 >= win32::GetTickCount() || fVisCur != 0;
         TooltipWndProc(app.lpui->hwndTooltip, 1523, fShowNow, 0);
     }
@@ -650,7 +650,7 @@ LRESULT  TooltipWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             if (pt.y + app.state.dyArial8 + 6 > rc.bottom) {
                 pt.y = StarsMax(rc.top, app.lpui->vrcTooltip.top - app.state.dyArial8 - 8);
             }
-            ControlIO().pfnSetWindowPos(hwnd, (HWND)-1, pt.x, pt.y, 0, 0, win32::SWP_NOSIZE | win32::SWP_NOACTIVATE | win32::SWP_SHOWWINDOW | win32::SWP_NOOWNERZORDER);
+            ControlIO().pfnSetWindowPos(hwnd, reinterpret_cast<HWND>(-1), pt.x, pt.y, 0, 0, win32::SWP_NOSIZE | win32::SWP_NOACTIVATE | win32::SWP_SHOWWINDOW | win32::SWP_NOOWNERZORDER);
             ControlIO().pfnUpdateWindow(hwnd);
             if (app.lpui->vidTimerTooltip != -1) {
                 win32::KillTimer(hwnd, app.lpui->vidTimerTooltip);
@@ -672,7 +672,7 @@ LRESULT  TooltipWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         }
     case win32::WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        win32::FillRect((HDC)wParam, &rc, app.lpui->hbrTooltip);
+        win32::FillRect(reinterpret_cast<HDC>(wParam), &rc, app.lpui->hbrTooltip);
         return 1;
     case win32::WM_PAINT:
         hdc = win32::BeginPaint(hwnd, &ps);

@@ -68,7 +68,7 @@ static int IStarsMain(APPSESSION &app, HINSTANCE hInstance, HINSTANCE hPrevInsta
     CloseScannerInspector();
     ClosePlanetPane(app);
     FreeStuff(app);
-    return (int16_t)msg.wParam;
+    return static_cast<int16_t>(msg.wParam);
 } catch (const StarsError &error) {
     StarsPrimaryErrorScope primary;
     try {
@@ -133,14 +133,14 @@ int16_t FGetSystemColors(APPSESSION &app) {
     app.lpui->dxWinFrame = win32::GetSystemMetrics(win32::SM_CXFRAME);
     app.lpui->dyWinFrame = win32::GetSystemMetrics(win32::SM_CYFRAME);
     if (app.lpui->hdibPlaque) {
-        lpbi = (BITMAPINFO *)win32::GlobalLock(app.lpui->hdibPlaque);
+        lpbi = static_cast<BITMAPINFO *>(win32::GlobalLock(app.lpui->hdibPlaque));
         lpbi->bmiColors[249].rgbRed = app.lpui->crButtonFace;
         lpbi->bmiColors[249].rgbGreen = LOWORD(app.lpui->crButtonFace) >> 8;
         lpbi->bmiColors[249].rgbBlue = HIWORD(app.lpui->crButtonFace);
         win32::GlobalUnlock(app.lpui->hdibPlaque);
     }
     if (app.lpui->hdibToolbar) {
-        lpbi = (BITMAPINFO *)win32::GlobalLock(app.lpui->hdibToolbar);
+        lpbi = static_cast<BITMAPINFO *>(win32::GlobalLock(app.lpui->hdibToolbar));
         lpbi->bmiColors[253].rgbRed = app.lpui->crButtonFace;
         lpbi->bmiColors[253].rgbGreen = LOWORD(app.lpui->crButtonFace) >> 8;
         lpbi->bmiColors[253].rgbBlue = HIWORD(app.lpui->crButtonFace);
@@ -209,7 +209,7 @@ INT_PTR  About(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         return 1;
     case win32::WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        win32::FillRect((HDC)wParam, &rc, uiState.hbrButtonFace);
+        win32::FillRect(reinterpret_cast<HDC>(wParam), &rc, uiState.hbrButtonFace);
         return 1;
     case win32::WM_TIMER:
         hwndCtl = ControlIO().pfnGetDlgItem(hwnd, IDC_ABOUT_CREDITS_TEXT);
@@ -251,8 +251,8 @@ INT_PTR  About(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     case win32::WM_CTLCOLORSCROLLBAR:
     case win32::WM_CTLCOLORSTATIC:
         if (message == win32::WM_CTLCOLORSTATIC) {
-            win32::SetBkColor((HDC)wParam, uiState.crButtonFace);
-            return (INT_PTR)uiState.hbrButtonFace;
+            win32::SetBkColor(reinterpret_cast<HDC>(wParam), uiState.crButtonFace);
+            return reinterpret_cast<INT_PTR>(uiState.hbrButtonFace);
         }
         break;
     case win32::WM_COMMAND:
@@ -315,7 +315,7 @@ int16_t FHandleKey(APPSESSION &app, HWND hwnd, int16_t iMsg, int16_t iKey, uint3
         GetCursorPos16(&pt);
         hwndOver = win32::WindowFromPoint(PointFrom16(pt));
         if (hwndOver == app.lpui->hwndScanner) {
-            ControlIO().pfnSendMessage(hwndOver, win32::WM_SETCURSOR, (WPARAM)hwndOver, 0);
+            ControlIO().pfnSendMessage(hwndOver, win32::WM_SETCURSOR, reinterpret_cast<WPARAM>(hwndOver), 0);
         }
     }
     if (iMsg != win32::WM_KEYDOWN) {

@@ -27,7 +27,7 @@ Step1:
     app.lpui->iPanelActive = rwPageRace;
     lpProc = (RaceWizardDlg1);
     mdRet = static_cast<WizardButton>(ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_RACE_WIZARD_1), app.lpui->hwndRaceParent, lpProc, 0));
-    if (mdRet == wizCancel || mdRet == (WizardButton)-1)
+    if (mdRet == wizCancel || mdRet == static_cast<WizardButton>(-1))
         goto LCancel;
     if (mdRet == wizFinish)
         goto Finish;
@@ -35,7 +35,7 @@ Step2:
     app.lpui->iPanelActive = rwPagePrimaryTrait;
     lpProc = (RaceWizardDlg4);
     mdRet = static_cast<WizardButton>(ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_RACE_WIZARD_4), app.lpui->hwndRaceParent, lpProc, 0));
-    if (mdRet == wizCancel || mdRet == (WizardButton)-1)
+    if (mdRet == wizCancel || mdRet == static_cast<WizardButton>(-1))
         goto LCancel;
     if (mdRet == wizBack)
         goto Step1;
@@ -45,7 +45,7 @@ Step3:
     app.lpui->iPanelActive = rwPageLesserTraits;
     lpProc = (RaceWizardDlg5);
     mdRet = static_cast<WizardButton>(ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_RACE_WIZARD_5), app.lpui->hwndRaceParent, lpProc, 0));
-    if (mdRet == wizCancel || mdRet == (WizardButton)-1)
+    if (mdRet == wizCancel || mdRet == static_cast<WizardButton>(-1))
         goto LCancel;
     if (mdRet == wizBack)
         goto Step2;
@@ -55,7 +55,7 @@ Step4:
     app.lpui->iPanelActive = rwPageHabitability;
     lpProc = (RaceWizardDlg2);
     mdRet = static_cast<WizardButton>(ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_RACE_WIZARD_2), app.lpui->hwndRaceParent, lpProc, 0));
-    if (mdRet == wizCancel || mdRet == (WizardButton)-1)
+    if (mdRet == wizCancel || mdRet == static_cast<WizardButton>(-1))
         goto LCancel;
     if (mdRet == wizBack)
         goto Step3;
@@ -65,7 +65,7 @@ Step5:
     app.lpui->iPanelActive = rwPageEconomy;
     lpProc = (RaceWizardDlg3);
     mdRet = static_cast<WizardButton>(ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_RACE_WIZARD_3), app.lpui->hwndRaceParent, lpProc, 0));
-    if (mdRet == wizCancel || mdRet == (WizardButton)-1)
+    if (mdRet == wizCancel || mdRet == static_cast<WizardButton>(-1))
         goto LCancel;
     if (mdRet == wizBack)
         goto Step4;
@@ -75,7 +75,7 @@ Step6:
     app.lpui->iPanelActive = rwPageResearch;
     lpProc = (RaceWizardDlg6);
     mdRet = static_cast<WizardButton>(ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_RACE_WIZARD_6), app.lpui->hwndRaceParent, lpProc, 0));
-    if (mdRet == wizCancel || mdRet == (WizardButton)-1)
+    if (mdRet == wizCancel || mdRet == static_cast<WizardButton>(-1))
         goto LCancel;
     if (mdRet == wizBack)
         goto Step5;
@@ -111,7 +111,7 @@ Finish:
     if (!fDontWrite) {
         if (FHasCurrentLibraryRace()) {
             if (!FSaveCurrentLibraryRace(app, app.lpui->hwndRaceParent, &app.state.vplr)) goto Step1;
-        } else if (!FSaveRace(app, (char *)(app.state.szRaceFile[0] == 0 ? "stars.r1" : app.state.szRaceFile), &app.state.vplr)) goto Step1;
+        } else if (!FSaveRace(app, const_cast<char *>(reinterpret_cast<const char*>((app.state.szRaceFile[0] == 0 ? "stars.r1" : app.state.szRaceFile))), &app.state.vplr)) goto Step1;
     }
     if (fDontWrite) {
         fResult = 1;
@@ -180,7 +180,7 @@ INT_PTR  RaceWizardDlg1(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         hwndCB = ControlIO().pfnGetDlgItem(hwnd, IDC_COMBOBOX);
         for (i = idsSurfaceMinerals; i <= idsDefenses3; i++) {
             psz = TextIO().pfnCompressed(app, static_cast<StringId>(i));
-            ControlIO().pfnSendMessage(hwndCB, win32::CB_ADDSTRING, 0, (LPARAM)psz);
+            ControlIO().pfnSendMessage(hwndCB, win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(psz));
         }
         i = RaceQueryIO().pfnStat(&app.state.vplr, rsUseLeftover);
         ControlIO().pfnSendMessage(hwndCB, win32::CB_SETCURSEL, i, 0);
@@ -222,7 +222,7 @@ INT_PTR  RaceWizardDlg1(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         win32::RealizePalette(hdc);
         InitBtnTrack(&btnt, hwnd, nullptr, prc, bt, 80, 0, 0, nullptr);
         while (FTrackBtn(app, &btnt)) {
-            iCur = (int16_t)(iCur + 32 + iDir) % 32;
+            iCur = static_cast<int16_t>((iCur + 32 + iDir)) % 32;
             DibBlt(hdc, app.lpui->rgrcBuildSpin[0].left - 2, app.lpui->rgrcBuildSpin[0].top - 35, 32, 32, app.lpui->hdibRaces, (iCur & 7) * 0x20, (3 - (iCur >> 3)) * 0x20, 32, 32, 13369376);
         }
         app.state.vplr.iPlrBmp = iCur;
@@ -230,7 +230,7 @@ INT_PTR  RaceWizardDlg1(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         return 1;
     case win32::WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        win32::FillRect((HDC)wParam, &rc, app.lpui->hbrButtonFace);
+        win32::FillRect(reinterpret_cast<HDC>(wParam), &rc, app.lpui->hbrButtonFace);
         return 1;
     case win32::WM_CTLCOLORMSGBOX:
     case win32::WM_CTLCOLOREDIT:
@@ -239,11 +239,11 @@ INT_PTR  RaceWizardDlg1(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     case win32::WM_CTLCOLORDLG:
     case win32::WM_CTLCOLORSCROLLBAR:
     case win32::WM_CTLCOLORSTATIC:
-        for (i = 271; i <= 278 && (HWND)lParam != ControlIO().pfnGetDlgItem(hwnd, i); i++) {
+        for (i = 271; i <= 278 && reinterpret_cast<HWND>(lParam) != ControlIO().pfnGetDlgItem(hwnd, i); i++) {
         }
         if (i <= 278 || message == win32::WM_CTLCOLORSTATIC) {
-            win32::SetBkColor((HDC)wParam, app.lpui->crButtonFace);
-            return (INT_PTR)app.lpui->hbrButtonFace;
+            win32::SetBkColor(reinterpret_cast<HDC>(wParam), app.lpui->crButtonFace);
+            return reinterpret_cast<INT_PTR>(app.lpui->hbrButtonFace);
         }
         break;
     case win32::WM_PAINT:
@@ -259,9 +259,9 @@ INT_PTR  RaceWizardDlg1(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         ControlIO().pfnGetClientRect(hwnd, &rc);
         DrawRaceAdvantagePoints(app, hdc, &rc, pplr);
         win32::GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDC_RACE_HUMANOID), &rcGBox);
-        win32::ScreenToClient(hwnd, (POINT *)&rcGBox);
+        win32::ScreenToClient(hwnd, reinterpret_cast<POINT *>(&rcGBox));
         win32::GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDC_RACE_CUSTOM), &rc);
-        win32::ScreenToClient(hwnd, (POINT *)&rc.right);
+        win32::ScreenToClient(hwnd, reinterpret_cast<POINT *>(&rc.right));
         rcGBox.right = rc.right;
         rcGBox.bottom = rc.bottom;
         ExpandRc(&rcGBox, app.state.dyArial8, app.state.dyArial8 >> 1);
@@ -271,7 +271,7 @@ INT_PTR  RaceWizardDlg1(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         cch = TextIO().pfnCchGetString(app, idsPredefinedRaces, app.state.szWork);
         win32::TextOutA(hdc, rcGBox.left + 8, rcGBox.top - (app.state.dyArial8 >> 1), app.state.szWork, cch);
         win32::GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDC_COMBOBOX), &rcGBox);
-        win32::ScreenToClient(hwnd, (POINT *)&rcGBox.right);
+        win32::ScreenToClient(hwnd, reinterpret_cast<POINT *>(&rcGBox.right));
         pt.x = rcGBox.right + 32;
         pt.y = rcGBox.bottom - 32;
         iOffset = app.state.vplr.iPlrBmp;
@@ -356,7 +356,7 @@ INT_PTR  RaceWizardDlg1(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_NEXT), LOWORD(wParam) != IDC_RACE_RANDOM);
             app.state.vplr.iPlrBmp = pplr->iPlrBmp;
             win32::GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDC_COMBOBOX), &rc);
-            win32::ScreenToClient(hwnd, (POINT *)&rc.right);
+            win32::ScreenToClient(hwnd, reinterpret_cast<POINT *>(&rc.right));
             rc.left = rc.right + 32;
             rc.top = rc.bottom - 32;
             rc.right = rc.left + 32;
@@ -390,12 +390,12 @@ INT_PTR  RaceWizardDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         app.lpui->viStore = -1;
         hdc = win32::GetDC(hwnd);
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        hfontSav = (HFONT)win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
+        hfontSav = static_cast<HFONT>(win32::SelectObject(hdc, app.lpui->rghfontArial8[1]));
         cch = TextIO().pfnCchGetString(app, idsTemperature, szTemp);
         dxLabel = LOWORD(GetTextExtent(hdc, szTemp, cch)) + 10;
         dxMiddle = LOWORD(GetTextExtent(hdc, "200mR", 5)) + 10;
         dxMiddle = rc.right - dxLabel - dxMiddle;
-        dy = (int16_t)(3 * app.state.dyArial8) / 2;
+        dy = static_cast<int16_t>((3 * app.state.dyArial8)) / 2;
         yTop = 3 * app.state.dyArial8;
         win32::SetRect(app.lpui->vrgrcRCW, dxLabel, yTop, dxLabel + dy, yTop + dy);
         win32::SetRect(app.lpui->vrgrcRCW + 1, dxLabel + dy + 6, yTop, dxLabel + dxMiddle - dy - 6, yTop + dy);
@@ -404,9 +404,9 @@ INT_PTR  RaceWizardDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         win32::SetRect(app.lpui->vrgrcRCW + 4, dxLabel + dxMiddle - 3 * dy, yTop + dy + 4, dxLabel + dxMiddle, dy * 2 + yTop + 4);
         for (i = 0; i < 5; i++) {
             app.lpui->vrgrcRCW[i + 5] = app.lpui->vrgrcRCW[i];
-            win32::OffsetRect((RECT *)&app.lpui->vrgrcRCW[i + 5].left, 0, 3 * dy + app.state.dyArial8 / 2);
+            win32::OffsetRect(reinterpret_cast<RECT *>(&app.lpui->vrgrcRCW[i + 5].left), 0, 3 * dy + app.state.dyArial8 / 2);
             app.lpui->vrgrcRCW[i + 10] = app.lpui->vrgrcRCW[i];
-            win32::OffsetRect((RECT *)&app.lpui->vrgrcRCW[i + 0xa].left, 0, 6 * dy + app.state.dyArial8);
+            win32::OffsetRect(reinterpret_cast<RECT *>(&app.lpui->vrgrcRCW[i + 0xa].left), 0, 6 * dy + app.state.dyArial8);
         }
         for (i = 0; i < 3; i++) {
             ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, i + 291), nullptr, 3 * dy + dxLabel + 6, app.lpui->vrgrcRCW[5 * i + 3].top, dxMiddle - 6 * dy - 12, dy, win32::SWP_NOZORDER);
@@ -431,7 +431,7 @@ INT_PTR  RaceWizardDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         return 1;
     case win32::WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        win32::FillRect((HDC)wParam, &rc, app.lpui->hbrButtonFace);
+        win32::FillRect(reinterpret_cast<HDC>(wParam), &rc, app.lpui->hbrButtonFace);
         return 1;
     case win32::WM_CTLCOLORMSGBOX:
     case win32::WM_CTLCOLOREDIT:
@@ -440,11 +440,11 @@ INT_PTR  RaceWizardDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     case win32::WM_CTLCOLORDLG:
     case win32::WM_CTLCOLORSCROLLBAR:
     case win32::WM_CTLCOLORSTATIC:
-        for (i = 291; i <= 293 && (HWND)lParam != ControlIO().pfnGetDlgItem(hwnd, i); i++) {
+        for (i = 291; i <= 293 && reinterpret_cast<HWND>(lParam) != ControlIO().pfnGetDlgItem(hwnd, i); i++) {
         }
         if (i <= 293 || message == win32::WM_CTLCOLORSTATIC) {
-            win32::SetBkColor((HDC)wParam, app.lpui->crButtonFace);
-            return (INT_PTR)app.lpui->hbrButtonFace;
+            win32::SetBkColor(reinterpret_cast<HDC>(wParam), app.lpui->crButtonFace);
+            return reinterpret_cast<INT_PTR>(app.lpui->hbrButtonFace);
         }
         break;
     case win32::WM_PAINT:
@@ -526,7 +526,7 @@ void DrawRace2(APPSESSION &app, HWND hwnd, HDC hdc, int16_t iDraw) {
     DrawRaceAdvantagePoints(app, hdc, &rc, nullptr);
     bkMode = win32::SetBkMode(hdc, win32::TRANSPARENT);
     win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-    xRLabel = (int16_t)(rc.right - app.lpui->vrgrcRCW[2].right) / 2 + app.lpui->vrgrcRCW[2].right;
+    xRLabel = static_cast<int16_t>((rc.right - app.lpui->vrgrcRCW[2].right)) / 2 + app.lpui->vrgrcRCW[2].right;
     for (i = 0; i < 3; i++) {
         if (1 << i & iDraw) {
             if (iDraw != -1) {
@@ -568,7 +568,7 @@ void DrawRace2(APPSESSION &app, HWND hwnd, HDC hdc, int16_t iDraw) {
         default:
             if (!(iDraw & 0xfff0))
                 break;
-            DrawBtn(app, hdc, app.lpui->vrgrcRCW + i, 8 | bt | bt1, 0, (char *)(iMod == 3 ? "<<     >>" : ">>     <<"));
+            DrawBtn(app, hdc, app.lpui->vrgrcRCW + i, 8 | bt | bt1, 0, const_cast<char *>(reinterpret_cast<const char*>((iMod == 3 ? "<<     >>" : ">>     <<"))));
             break;
         case 1:
             if (1 << iPit & iDraw) {
@@ -605,9 +605,9 @@ void DrawRace2(APPSESSION &app, HWND hwnd, HDC hdc, int16_t iDraw) {
         l = 1;
         for (i = 0; i < 3; i++) {
             if (app.state.vplr.rgEnvVarMax[i] < 0 || app.state.vplr.rgEnvVarMax[i] - app.state.vplr.rgEnvVarMin[i] == 100) {
-                l = (uint32_t)(l * 100);
+                l = static_cast<uint32_t>((l * 100));
             } else if (i == 2) {
-                l = (uint32_t)(l * (int16_t)(app.state.vplr.rgEnvVarMax[i] - app.state.vplr.rgEnvVarMin[i]));
+                l = static_cast<uint32_t>((l * static_cast<int16_t>((app.state.vplr.rgEnvVarMax[i] - app.state.vplr.rgEnvVarMin[i]))));
             } else {
                 l2 = 0;
                 for (iStore = app.state.vplr.rgEnvVarMin[i]; iStore <= app.state.vplr.rgEnvVarMax[i]; iStore++) {
@@ -616,16 +616,16 @@ void DrawRace2(APPSESSION &app, HWND hwnd, HDC hdc, int16_t iDraw) {
                     } else if (iStore < 90) {
                         l2 += 10;
                     } else {
-                        l2 += (int16_t)(100 - iStore);
+                        l2 += static_cast<int16_t>((100 - iStore));
                     }
                 }
-                l = (int32_t)(l * l2) / 9;
+                l = static_cast<int32_t>((l * l2)) / 9;
             }
         }
         if (l < 1) {
             l = 1;
         }
-        l2 = (int32_t)(((int32_t)(l >> 1) + 0xf4240) / l);
+        l2 = static_cast<int32_t>(((static_cast<int32_t>((l >> 1)) + 0xf4240) / l));
         iStore = LOWORD(l2);
         if (l == 1000000) {
             iStore = 0;
@@ -661,7 +661,7 @@ int16_t IrcRaceDlgHitTest(APPSESSION &app, POINT16 pt) {
     if (app.state.fRCWReadOnly) {
         return -1;
     }
-    for (i = 0; i < app.lpui->crcRCW && win32::PtInRect((RECT *)&app.lpui->vrgrcRCW[i].left, PointFrom16(pt)) == 0; i++) {
+    for (i = 0; i < app.lpui->crcRCW && win32::PtInRect(reinterpret_cast<RECT *>(&app.lpui->vrgrcRCW[i].left), PointFrom16(pt)) == 0; i++) {
     }
     if (i < app.lpui->crcRCW) {
         if (app.lpui->iPanelActive == rwPageHabitability && app.state.vplr.rgEnvVarMax[i / 5] < 0) {
@@ -694,7 +694,7 @@ int16_t FTrackRaceDlg2(APPSESSION &app, HWND hwnd, POINT16 pt, int16_t kbd) {
     if (iMod == 1 && irc < 15) {
         win32::SetCapture(hwnd);
         win32::SetCursor(app.lpui->hcurCloseGrab);
-        dWidth = (int16_t)(app.state.vplr.rgEnvVarMax[i] - app.state.vplr.rgEnvVarMin[i]) / 2;
+        dWidth = static_cast<int16_t>((app.state.vplr.rgEnvVarMax[i] - app.state.vplr.rgEnvVarMin[i])) / 2;
         while (FGetMouseMove(&pt)) {
             if (pt.x < app.lpui->vrgrcRCW[irc].left) {
                 pt.x = app.lpui->vrgrcRCW[irc].left;
@@ -711,7 +711,7 @@ int16_t FTrackRaceDlg2(APPSESSION &app, HWND hwnd, POINT16 pt, int16_t kbd) {
             if (app.state.vplr.rgEnvVarMax[i] != dShift + dWidth) {
                 app.state.vplr.rgEnvVarMin[i] = dShift - dWidth;
                 app.state.vplr.rgEnvVarMax[i] = dShift + dWidth;
-                app.state.vplr.rgEnvVar[i] = app.state.vplr.rgEnvVarMin[i] + (int16_t)(app.state.vplr.rgEnvVarMax[i] - app.state.vplr.rgEnvVarMin[i]) / 2;
+                app.state.vplr.rgEnvVar[i] = app.state.vplr.rgEnvVarMin[i] + static_cast<int16_t>((app.state.vplr.rgEnvVarMax[i] - app.state.vplr.rgEnvVarMin[i])) / 2;
                 DrawRace2(app, hwnd, nullptr, 1 << i);
             }
         }
@@ -781,13 +781,13 @@ int16_t FTrackRaceDlg2(APPSESSION &app, HWND hwnd, POINT16 pt, int16_t kbd) {
             if (app.state.vplr.rgEnvVarMin[i] != iMin || app.state.vplr.rgEnvVarMax[i] != iMax) {
                 app.state.vplr.rgEnvVarMin[i] = iMin;
                 app.state.vplr.rgEnvVarMax[i] = iMax;
-                app.state.vplr.rgEnvVar[i] = app.state.vplr.rgEnvVarMin[i] + (int16_t)(app.state.vplr.rgEnvVarMax[i] - app.state.vplr.rgEnvVarMin[i]) / 2;
+                app.state.vplr.rgEnvVar[i] = app.state.vplr.rgEnvVarMin[i] + static_cast<int16_t>((app.state.vplr.rgEnvVarMax[i] - app.state.vplr.rgEnvVarMin[i])) / 2;
                 DrawRace2(app, hwnd, btnt.hdc, 1 << i);
             }
         }
     }
     if (irc < 15) {
-        app.state.vplr.rgEnvVar[i] = app.state.vplr.rgEnvVarMin[i] + (int16_t)(app.state.vplr.rgEnvVarMax[i] - app.state.vplr.rgEnvVarMin[i]) / 2;
+        app.state.vplr.rgEnvVar[i] = app.state.vplr.rgEnvVarMin[i] + static_cast<int16_t>((app.state.vplr.rgEnvVarMax[i] - app.state.vplr.rgEnvVarMin[i])) / 2;
     }
     return 1;
 }
@@ -812,7 +812,7 @@ INT_PTR  RaceWizardDlg3(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         return 1;
     case win32::WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        win32::FillRect((HDC)wParam, &rc, app.lpui->hbrButtonFace);
+        win32::FillRect(reinterpret_cast<HDC>(wParam), &rc, app.lpui->hbrButtonFace);
         return 1;
     case win32::WM_CTLCOLORMSGBOX:
     case win32::WM_CTLCOLOREDIT:
@@ -821,9 +821,9 @@ INT_PTR  RaceWizardDlg3(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     case win32::WM_CTLCOLORDLG:
     case win32::WM_CTLCOLORSCROLLBAR:
     case win32::WM_CTLCOLORSTATIC:
-        if ((HWND)lParam == ControlIO().pfnGetDlgItem(hwnd, IDC_RACE_FACTORY_GERMANIUM_DISCOUNT) || message == win32::WM_CTLCOLORSTATIC) {
-            win32::SetBkColor((HDC)wParam, app.lpui->crButtonFace);
-            return (INT_PTR)app.lpui->hbrButtonFace;
+        if (reinterpret_cast<HWND>(lParam) == ControlIO().pfnGetDlgItem(hwnd, IDC_RACE_FACTORY_GERMANIUM_DISCOUNT) || message == win32::WM_CTLCOLORSTATIC) {
+            win32::SetBkColor(reinterpret_cast<HDC>(wParam), app.lpui->crButtonFace);
+            return reinterpret_cast<INT_PTR>(app.lpui->hbrButtonFace);
         }
         break;
     case win32::WM_SETCURSOR:
@@ -907,9 +907,9 @@ void DrawRace3(APPSESSION &app, HWND hwnd, HDC hdc, int16_t iDraw) {
         }
         if (i == 4) {
             if (iDraw == -1) {
-                ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_RACE_FACTORY_GERMANIUM_DISCOUNT), nullptr, 6, yTop, rc.right - 12, (int16_t)(3 * app.state.dyArial8) / 2, win32::SWP_NOZORDER);
+                ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_RACE_FACTORY_GERMANIUM_DISCOUNT), nullptr, 6, yTop, rc.right - 12, static_cast<int16_t>((3 * app.state.dyArial8)) / 2, win32::SWP_NOZORDER);
             }
-            yTop += (int16_t)(5 * app.state.dyArial8) / 2;
+            yTop += static_cast<int16_t>((5 * app.state.dyArial8)) / 2;
         }
         if (fMacintosh && ids == idsOneResourceGeneratedEachYearEvery) {
             idsT = idsAnnualResourcesPlanetValueSqrtPopulationEnergy;
@@ -941,7 +941,7 @@ void DrawRace3(APPSESSION &app, HWND hwnd, HDC hdc, int16_t iDraw) {
         app.lpui->vrgrcRCW[irc].right = app.lpui->vrgrcRCW[irc].left + 15;
         app.lpui->vrgrcRCW[irc].bottom = (app.state.dyArial8 >> 1) + app.lpui->vrgrcRCW[irc].top + 3;
         app.lpui->vrgrcRCW[irc + 1] = app.lpui->vrgrcRCW[irc];
-        win32::OffsetRect((RECT *)&app.lpui->vrgrcRCW[irc + 1].left, 0, app.lpui->vrgrcRCW[irc].bottom - app.lpui->vrgrcRCW[irc].top - 1);
+        win32::OffsetRect(reinterpret_cast<RECT *>(&app.lpui->vrgrcRCW[irc + 1].left), 0, app.lpui->vrgrcRCW[irc].bottom - app.lpui->vrgrcRCW[irc].top - 1);
         if (iDraw == -1) {
             DrawBtn(app, hdc, app.lpui->vrgrcRCW + irc, 0xa0 | bt, 0, nullptr);
             DrawBtn(app, hdc, app.lpui->vrgrcRCW + (irc + 1), 0xa1 | bt, 0, nullptr);
@@ -957,7 +957,7 @@ void DrawRace3(APPSESSION &app, HWND hwnd, HDC hdc, int16_t iDraw) {
         }
         ids = static_cast<StringId>(ids + 1);
         irc += 2;
-        yTop += (int16_t)((rgRW3Spacing[i] + 1) * app.state.dyArial8) / 2;
+        yTop += static_cast<int16_t>(((rgRW3Spacing[i] + 1) * app.state.dyArial8)) / 2;
     }
     if (fMacintosh) {
         app.lpui->crcRCW = 2;
@@ -1032,7 +1032,7 @@ INT_PTR  RaceWizardDlg4(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         return 1;
     case win32::WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        win32::FillRect((HDC)wParam, &rc, app.lpui->hbrButtonFace);
+        win32::FillRect(reinterpret_cast<HDC>(wParam), &rc, app.lpui->hbrButtonFace);
         return 1;
     case win32::WM_CTLCOLORMSGBOX:
     case win32::WM_CTLCOLOREDIT:
@@ -1041,11 +1041,11 @@ INT_PTR  RaceWizardDlg4(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     case win32::WM_CTLCOLORDLG:
     case win32::WM_CTLCOLORSCROLLBAR:
     case win32::WM_CTLCOLORSTATIC:
-        for (i = 271; i <= 280 && (HWND)lParam != ControlIO().pfnGetDlgItem(hwnd, i); i++) {
+        for (i = 271; i <= 280 && reinterpret_cast<HWND>(lParam) != ControlIO().pfnGetDlgItem(hwnd, i); i++) {
         }
         if (i <= 280 || message == win32::WM_CTLCOLORSTATIC) {
-            win32::SetBkColor((HDC)wParam, app.lpui->crButtonFace);
-            return (INT_PTR)app.lpui->hbrButtonFace;
+            win32::SetBkColor(reinterpret_cast<HDC>(wParam), app.lpui->crButtonFace);
+            return reinterpret_cast<INT_PTR>(app.lpui->hbrButtonFace);
         }
         break;
     case win32::WM_PAINT:
@@ -1055,9 +1055,9 @@ INT_PTR  RaceWizardDlg4(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
         win32::SetBkColor(hdc, app.lpui->crButtonFace);
         win32::GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDC_RACE_HYPER_EXPANSION), &rcGBox);
-        win32::ScreenToClient(hwnd, (POINT *)&rcGBox);
+        win32::ScreenToClient(hwnd, reinterpret_cast<POINT *>(&rcGBox));
         win32::GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDC_RACE_JACK_OF_ALL_TRADES), &rc);
-        win32::ScreenToClient(hwnd, (POINT *)&rc.right);
+        win32::ScreenToClient(hwnd, reinterpret_cast<POINT *>(&rc.right));
         rcGBox.right = rc.right;
         rcGBox.bottom = rc.bottom;
         ExpandRc(&rcGBox, app.state.dyArial8 + 2, app.state.dyArial8 >> 1);
@@ -1070,7 +1070,7 @@ INT_PTR  RaceWizardDlg4(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         rc.left += 12;
         rc.right -= 12;
         win32::GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDC_HELP), &rcGBox);
-        win32::ScreenToClient(hwnd, (POINT *)&rcGBox);
+        win32::ScreenToClient(hwnd, reinterpret_cast<POINT *>(&rcGBox));
         rc.bottom = rcGBox.top - 6;
         _Draw3dFrame(app, hdc, &rc, -1);
         cch = TextIO().pfnCchGetString(app, idsDescriptionTrait, app.state.szWork);
@@ -1147,7 +1147,7 @@ INT_PTR  RaceWizardDlg5(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         return 1;
     case win32::WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        win32::FillRect((HDC)wParam, &rc, app.lpui->hbrButtonFace);
+        win32::FillRect(reinterpret_cast<HDC>(wParam), &rc, app.lpui->hbrButtonFace);
         return 1;
     case win32::WM_CTLCOLORMSGBOX:
     case win32::WM_CTLCOLOREDIT:
@@ -1156,11 +1156,11 @@ INT_PTR  RaceWizardDlg5(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     case win32::WM_CTLCOLORDLG:
     case win32::WM_CTLCOLORSCROLLBAR:
     case win32::WM_CTLCOLORSTATIC:
-        for (i = 291; i <= 304 && (HWND)lParam != ControlIO().pfnGetDlgItem(hwnd, i); i++) {
+        for (i = 291; i <= 304 && reinterpret_cast<HWND>(lParam) != ControlIO().pfnGetDlgItem(hwnd, i); i++) {
         }
         if (i <= 304 || message == win32::WM_CTLCOLORSTATIC) {
-            win32::SetBkColor((HDC)wParam, app.lpui->crButtonFace);
-            return (INT_PTR)app.lpui->hbrButtonFace;
+            win32::SetBkColor(reinterpret_cast<HDC>(wParam), app.lpui->crButtonFace);
+            return reinterpret_cast<INT_PTR>(app.lpui->hbrButtonFace);
         }
         break;
     case win32::WM_PAINT:
@@ -1170,13 +1170,13 @@ INT_PTR  RaceWizardDlg5(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
         win32::SetBkColor(hdc, app.lpui->crButtonFace);
         win32::GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDC_RACE_REGENERATING_SHIELDS), &rcGBox);
-        win32::ScreenToClient(hwnd, (POINT *)&rcGBox.right);
+        win32::ScreenToClient(hwnd, reinterpret_cast<POINT *>(&rcGBox.right));
         ControlIO().pfnGetClientRect(hwnd, &rc);
         rc.top = rcGBox.bottom + 12;
         rc.left += 12;
         rc.right -= 12;
         win32::GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDC_HELP), &rcGBox);
-        win32::ScreenToClient(hwnd, (POINT *)&rcGBox);
+        win32::ScreenToClient(hwnd, reinterpret_cast<POINT *>(&rcGBox));
         rc.bottom = rcGBox.top - 12;
         _Draw3dFrame(app, hdc, &rc, -1);
         app.lpui->rcCargo = rc;
@@ -1243,7 +1243,7 @@ INT_PTR  RaceWizardDlg6(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         return 1;
     case win32::WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        win32::FillRect((HDC)wParam, &rc, app.lpui->hbrButtonFace);
+        win32::FillRect(reinterpret_cast<HDC>(wParam), &rc, app.lpui->hbrButtonFace);
         return 1;
     case win32::WM_CTLCOLORMSGBOX:
     case win32::WM_CTLCOLOREDIT:
@@ -1252,11 +1252,11 @@ INT_PTR  RaceWizardDlg6(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     case win32::WM_CTLCOLORDLG:
     case win32::WM_CTLCOLORSCROLLBAR:
     case win32::WM_CTLCOLORSTATIC:
-        for (i = 271; i <= 288 && (HWND)lParam != ControlIO().pfnGetDlgItem(hwnd, i); i++) {
+        for (i = 271; i <= 288 && reinterpret_cast<HWND>(lParam) != ControlIO().pfnGetDlgItem(hwnd, i); i++) {
         }
-        if (i <= 288 || (HWND)lParam == ControlIO().pfnGetDlgItem(hwnd, IDC_RACE_START_HIGHER_TECH) || message == win32::WM_CTLCOLORSTATIC) {
-            win32::SetBkColor((HDC)wParam, app.lpui->crButtonFace);
-            return (INT_PTR)app.lpui->hbrButtonFace;
+        if (i <= 288 || reinterpret_cast<HWND>(lParam) == ControlIO().pfnGetDlgItem(hwnd, IDC_RACE_START_HIGHER_TECH) || message == win32::WM_CTLCOLORSTATIC) {
+            win32::SetBkColor(reinterpret_cast<HDC>(wParam), app.lpui->crButtonFace);
+            return reinterpret_cast<INT_PTR>(app.lpui->hbrButtonFace);
         }
         break;
     case win32::WM_PAINT:
@@ -1267,9 +1267,9 @@ INT_PTR  RaceWizardDlg6(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         win32::SetBkColor(hdc, app.lpui->crButtonFace);
         for (i = 0; i < 6; i++) {
             win32::GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, 3 * i + 271), &rcGBox);
-            win32::ScreenToClient(hwnd, (POINT *)&rcGBox);
+            win32::ScreenToClient(hwnd, reinterpret_cast<POINT *>(&rcGBox));
             win32::GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, 3 * i + 273), &rc);
-            win32::ScreenToClient(hwnd, (POINT *)&rc.right);
+            win32::ScreenToClient(hwnd, reinterpret_cast<POINT *>(&rc.right));
             rcGBox.right = rc.right;
             rcGBox.bottom = rc.bottom;
             ExpandRc(&rcGBox, app.state.dyArial8, app.state.dyArial8 >> 1);
@@ -1316,13 +1316,13 @@ void InvalidateAdvPtsRect(APPSESSION &app, HWND hwnd) {
     RECT       rc;
     HFONT      hfontSav;
 
-    plf = (LOGFONT *)win32::LocalAlloc(64, sizeof(LOGFONT));
+    plf = static_cast<LOGFONT *>(win32::LocalAlloc(64, sizeof(LOGFONT)));
     plfOwner.reset(plf);
     hdc = win32::GetDC(hwnd);
     plf->lfHeight = -24;
     strcpy(plf->lfFaceName, app.lpui->rgszArial[1]);
     hfont = win32::CreateFontIndirectA(plf);
-    hfontSav = (HFONT)win32::SelectObject(hdc, hfont);
+    hfontSav = static_cast<HFONT>(win32::SelectObject(hdc, hfont));
     win32::GetTextMetricsA(hdc, &tm);
     dyBig = tm.tmHeight + tm.tmExternalLeading;
     dx = LOWORD(GetTextExtent(hdc, "-99999", 6)) + 8;
@@ -1354,12 +1354,12 @@ void DrawRaceAdvantagePoints(APPSESSION &app, HDC hdc, RECT *prc, PLAYER *pplr) 
     RECT       rc;
     HFONT      hfontSav;
 
-    plf = (LOGFONT *)win32::LocalAlloc(64, sizeof(LOGFONT));
+    plf = static_cast<LOGFONT *>(win32::LocalAlloc(64, sizeof(LOGFONT)));
     plfOwner.reset(plf);
     plf->lfHeight = -24;
     TextIO().pfnCchGetString(app, idsArialBold, plf->lfFaceName);
     hfont = win32::CreateFontIndirectA(plf);
-    hfontSav = (HFONT)win32::SelectObject(hdc, hfont);
+    hfontSav = static_cast<HFONT>(win32::SelectObject(hdc, hfont));
     win32::GetTextMetricsA(hdc, &tm);
     dyBig = tm.tmHeight + tm.tmExternalLeading;
     dx = LOWORD(GetTextExtent(hdc, "-99999", 6)) + 8;

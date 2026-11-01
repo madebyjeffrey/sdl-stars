@@ -22,7 +22,7 @@ INT_PTR  RelationsDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         win32::CheckRadioButton(hwnd, IDC_RELATIONS_NEUTRAL, IDC_RELATIONS_ENEMY, app.state.rgplr[app.state.idPlayer].rgmdRelation[app.state.idPlayer == 0] + 2004);
         for (i = 0; i < app.state.game.cPlayer; i++) {
             if (i != app.state.idPlayer) {
-                ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_RELATIONS_PLAYER_LIST), win32::LB_ADDSTRING, 0, (LPARAM)TextIO().pfnPlayerName(app, i, 0, 0, 0, 0, nullptr));
+                ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_RELATIONS_PLAYER_LIST), win32::LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(TextIO().pfnPlayerName(app, i, 0, 0, 0, 0, nullptr)));
             }
         }
         ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_RELATIONS_PLAYER_LIST), win32::LB_SETCURSEL, 0, 0);
@@ -30,14 +30,14 @@ INT_PTR  RelationsDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         /* fallthrough */
     case win32::WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        win32::FillRect((HDC)wParam, &rc, app.lpui->hbrButtonFace);
+        win32::FillRect(reinterpret_cast<HDC>(wParam), &rc, app.lpui->hbrButtonFace);
         return 1;
     case win32::WM_PAINT:
         hdc = win32::BeginPaint(hwnd, &ps);
         win32::GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDC_RELATIONS_FRIEND), &rcGBox);
-        win32::ScreenToClient(hwnd, (POINT *)&rcGBox);
+        win32::ScreenToClient(hwnd, reinterpret_cast<POINT *>(&rcGBox));
         win32::GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDC_RELATIONS_ENEMY), &rc);
-        win32::ScreenToClient(hwnd, (POINT *)&rc.right);
+        win32::ScreenToClient(hwnd, reinterpret_cast<POINT *>(&rc.right));
         rcGBox.right = rc.right;
         rcGBox.bottom = rc.bottom;
         ExpandRc(&rcGBox, app.state.dyArial8, app.state.dyArial8 >> 1);
@@ -56,9 +56,9 @@ INT_PTR  RelationsDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     case win32::WM_CTLCOLORDLG:
     case win32::WM_CTLCOLORSCROLLBAR:
     case win32::WM_CTLCOLORSTATIC:
-        if ((HWND)lParam != ControlIO().pfnGetDlgItem(hwnd, IDC_RELATIONS_PLAYER_LIST)) {
-            win32::SetBkColor((HDC)wParam, app.lpui->crButtonFace);
-            return (INT_PTR)app.lpui->hbrButtonFace;
+        if (reinterpret_cast<HWND>(lParam) != ControlIO().pfnGetDlgItem(hwnd, IDC_RELATIONS_PLAYER_LIST)) {
+            win32::SetBkColor(reinterpret_cast<HDC>(wParam), app.lpui->crButtonFace);
+            return reinterpret_cast<INT_PTR>(app.lpui->hbrButtonFace);
         }
         break;
     case win32::WM_COMMAND:
@@ -113,7 +113,7 @@ INT_PTR  NewPlanNameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         return 1;
     case win32::WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        win32::FillRect((HDC)wParam, &rc, app.lpui->hbrButtonFace);
+        win32::FillRect(reinterpret_cast<HDC>(wParam), &rc, app.lpui->hbrButtonFace);
         return 1;
     case win32::WM_CTLCOLORMSGBOX:
     case win32::WM_CTLCOLOREDIT:
@@ -123,8 +123,8 @@ INT_PTR  NewPlanNameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     case win32::WM_CTLCOLORSCROLLBAR:
     case win32::WM_CTLCOLORSTATIC:
         if (message == win32::WM_CTLCOLORSTATIC) {
-            win32::SetBkColor((HDC)wParam, app.lpui->crButtonFace);
-            return (INT_PTR)app.lpui->hbrButtonFace;
+            win32::SetBkColor(reinterpret_cast<HDC>(wParam), app.lpui->crButtonFace);
+            return reinterpret_cast<INT_PTR>(app.lpui->hbrButtonFace);
         }
         break;
     case win32::WM_COMMAND:
@@ -165,26 +165,26 @@ INT_PTR  BattlePlansDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         }
         app.lpui->btlplan = app.state.rglpbtlplan[app.state.idPlayer][app.lpui->iPlanSelDlg];
         for (i = 0; i < app.state.rgcbtlplan[app.state.idPlayer]; i++) {
-            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SELECT), win32::CB_ADDSTRING, 0, (LPARAM)app.state.rglpbtlplan[app.state.idPlayer][i].szName);
+            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SELECT), win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(app.state.rglpbtlplan[app.state.idPlayer][i].szName));
         }
         ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SELECT), win32::CB_SETCURSEL, app.lpui->iPlanSelDlg, 0);
         ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_RENAME), app.lpui->iPlanSelDlg > 0);
         ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_DELETE), app.lpui->iPlanSelDlg > 0);
         for (i = idsDisengage; i <= idsMaximizeDamage; i++) {
-            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_TACTIC), win32::CB_ADDSTRING, 0, (LPARAM)TextIO().pfnCompressed(app, static_cast<StringId>(i)));
+            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_TACTIC), win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(TextIO().pfnCompressed(app, static_cast<StringId>(i))));
         }
         ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_TACTIC), win32::CB_SETCURSEL, app.lpui->btlplan.mdTactic, 0);
         for (i = idsNoneDisengage; i <= idsFreighters; i++) {
-            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_PRIMARY_TARGET), win32::CB_ADDSTRING, 0, (LPARAM)TextIO().pfnCompressed(app, static_cast<StringId>(i)));
+            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_PRIMARY_TARGET), win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(TextIO().pfnCompressed(app, static_cast<StringId>(i))));
         }
         ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_PRIMARY_TARGET), win32::CB_SETCURSEL, app.lpui->btlplan.mdTarget1, 0);
         if (!app.state.game.fSinglePlr) {
             for (i = idsNobody; i <= idsEveryone; i++) {
-                ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_ATTACK_WHO), win32::CB_ADDSTRING, 0, (LPARAM)TextIO().pfnCompressed(app, static_cast<StringId>(i)));
+                ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_ATTACK_WHO), win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(TextIO().pfnCompressed(app, static_cast<StringId>(i))));
             }
             for (i = 0; i < app.state.game.cPlayer; i++) {
                 if (i != app.state.idPlayer) {
-                    ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_ATTACK_WHO), win32::CB_ADDSTRING, 0, (LPARAM)TextIO().pfnPlayerName(app, i, 0, 1, 0, 0, nullptr));
+                    ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_ATTACK_WHO), win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(TextIO().pfnPlayerName(app, i, 0, 1, 0, 0, nullptr)));
                 }
             }
             i = app.lpui->btlplan.iplrAttack;
@@ -193,12 +193,12 @@ INT_PTR  BattlePlansDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             }
             ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_ATTACK_WHO), win32::CB_SETCURSEL, i, 0);
         } else {
-            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_ATTACK_WHO), win32::CB_ADDSTRING, 0, (LPARAM)TextIO().pfnCompressed(app, idsEveryone));
+            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_ATTACK_WHO), win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(TextIO().pfnCompressed(app, idsEveryone)));
             ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_ATTACK_WHO), win32::CB_SETCURSEL, 0, 0);
             ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_ATTACK_WHO), 0);
         }
         for (i = idsNoneDisengage; i <= idsFreighters; i++) {
-            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SECONDARY_TARGET), win32::CB_ADDSTRING, 0, (LPARAM)TextIO().pfnCompressed(app, static_cast<StringId>(i)));
+            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SECONDARY_TARGET), win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(TextIO().pfnCompressed(app, static_cast<StringId>(i))));
         }
         ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SECONDARY_TARGET), win32::CB_SETCURSEL, app.lpui->btlplan.mdTarget2, 0);
         ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_DUMP_CARGO), win32::BM_SETCHECK, app.lpui->btlplan.fDumpCargo, 0);
@@ -214,16 +214,16 @@ INT_PTR  BattlePlansDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     case win32::WM_CTLCOLORDLG:
     case win32::WM_CTLCOLORSCROLLBAR:
     case win32::WM_CTLCOLORSTATIC:
-        for (idc = 1053; idc <= 1058 && (HWND)lParam != ControlIO().pfnGetDlgItem(hwnd, idc); idc++) {
+        for (idc = 1053; idc <= 1058 && reinterpret_cast<HWND>(lParam) != ControlIO().pfnGetDlgItem(hwnd, idc); idc++) {
         }
         if (idc >= 1053 || message == win32::WM_CTLCOLORSTATIC) {
-            win32::SetBkColor((HDC)wParam, app.lpui->crButtonFace);
-            return (INT_PTR)app.lpui->hbrButtonFace;
+            win32::SetBkColor(reinterpret_cast<HDC>(wParam), app.lpui->crButtonFace);
+            return reinterpret_cast<INT_PTR>(app.lpui->hbrButtonFace);
         }
         break;
     case win32::WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        win32::FillRect((HDC)wParam, &rc, app.lpui->hbrButtonFace);
+        win32::FillRect(reinterpret_cast<HDC>(wParam), &rc, app.lpui->hbrButtonFace);
         return 1;
     case win32::WM_COMMAND:
         switch (LOWORD(wParam)) {
@@ -258,7 +258,7 @@ INT_PTR  BattlePlansDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SELECT), win32::CB_SETCURSEL, app.lpui->iPlanSelDlg - 1, 0);
                 ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SELECT), win32::CB_RESETCONTENT, 0, 0);
                 for (i = 0; i < app.state.rgcbtlplan[app.state.idPlayer]; i++) {
-                    ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SELECT), win32::CB_ADDSTRING, 0, (LPARAM)app.state.rglpbtlplan[app.state.idPlayer][i].szName);
+                    ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SELECT), win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(app.state.rglpbtlplan[app.state.idPlayer][i].szName));
                 }
                 ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SELECT), win32::CB_SETCURSEL, app.lpui->iPlanSelDlg - 1, 0);
                 goto LSelectName;
@@ -301,7 +301,7 @@ INT_PTR  BattlePlansDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 app.state.rglpbtlplan[app.state.idPlayer][app.lpui->iPlanSelDlg] = app.lpui->btlplan;
                 ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SELECT), win32::CB_RESETCONTENT, 0, 0);
                 for (i = 0; i < app.state.rgcbtlplan[app.state.idPlayer]; i++) {
-                    ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SELECT), win32::CB_ADDSTRING, 0, (LPARAM)app.state.rglpbtlplan[app.state.idPlayer][i].szName);
+                    ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SELECT), win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(app.state.rglpbtlplan[app.state.idPlayer][i].szName));
                 }
                 ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SELECT), win32::CB_SETCURSEL, app.lpui->iPlanSelDlg, 0);
             }
@@ -333,7 +333,7 @@ INT_PTR  BattlePlansDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_TACTIC), win32::CB_SETCURSEL, app.lpui->btlplan.mdTactic, 0);
             ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SELECT), win32::CB_RESETCONTENT, 0, 0);
             for (i = 0; i < app.state.rgcbtlplan[app.state.idPlayer]; i++) {
-                ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SELECT), win32::CB_ADDSTRING, 0, (LPARAM)app.state.rglpbtlplan[app.state.idPlayer][i].szName);
+                ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SELECT), win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(app.state.rglpbtlplan[app.state.idPlayer][i].szName));
             }
             ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SELECT), win32::CB_SETCURSEL, app.lpui->iPlanSelDlg, 0);
             ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_PRIMARY_TARGET), win32::CB_SETCURSEL, app.lpui->btlplan.mdTarget1, 0);

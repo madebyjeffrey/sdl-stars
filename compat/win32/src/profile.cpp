@@ -29,14 +29,14 @@ static void FreeProfile(COMPATPROFILE *lp) {
 
 static char *PszTrimProfile(char *psz) {
     char *pszEnd;
-    while (*psz && isspace((unsigned char)*psz)) psz++;
+    while (*psz && isspace(static_cast<unsigned char>(*psz))) psz++;
     pszEnd = psz + strlen(psz);
-    while (pszEnd > psz && isspace((unsigned char)pszEnd[-1])) *--pszEnd = 0;
+    while (pszEnd > psz && isspace(static_cast<unsigned char>(pszEnd[-1]))) *--pszEnd = 0;
     return psz;
 }
 
 static COMPATPROFILE *LpProfileLine(const char *pszRaw) {
-    COMPATPROFILE *lp = (COMPATPROFILE *)calloc(1, sizeof(*lp));
+    COMPATPROFILE *lp = static_cast<COMPATPROFILE *>(calloc(1, sizeof(*lp)));
     char *psz, *pszEnd;
 
     if (!lp) return nullptr;
@@ -75,12 +75,12 @@ static BOOL FLoadProfile(const char *pszPath, COMPATPROFILE **lplp) {
         return errno == ENOENT;
     }
     while ((cbLine = io.pfnReadLine(&sz, &cb, fp)) >= 0) {
-        cbTotal += (size_t)cbLine;
-        if (cbTotal > 8 * 1024 * 1024 || !FUtf8Valid(sz, (size_t)cbLine)) {
+        cbTotal += static_cast<size_t>(cbLine);
+        if (cbTotal > 8 * 1024 * 1024 || !FUtf8Valid(sz, static_cast<size_t>(cbLine))) {
             win32::SetLastError(win32::ERROR_BAD_FORMAT); goto LReturn;
         }
-        if (cbTotal == (size_t)cbLine && cbLine >= 3 && !memcmp(sz, "\xef\xbb\xbf", 3))
-            memmove(sz, sz + 3, (size_t)cbLine - 2);
+        if (cbTotal == static_cast<size_t>(cbLine) && cbLine >= 3 && !memcmp(sz, "\xef\xbb\xbf", 3))
+            memmove(sz, sz + 3, static_cast<size_t>(cbLine) - 2);
         *lplpNext = LpProfileLine(sz);
         if (!*lplpNext) { win32::SetLastError(win32::ERROR_NOT_ENOUGH_MEMORY); goto LReturn; }
         lplpNext = &(*lplpNext)->lpNext;
@@ -130,7 +130,7 @@ static char *SzProfilePath(LPCSTR pszFile) {
     if (!pszDir || !*pszDir) pszDir = PszCompatEnvironment("STARS_SETTINGS_DIR");
     if (pszDir && *pszDir) {
         cb = strlen(pszDir) + strlen(pszFile) + 2;
-        sz = (char *)(malloc(cb));
+        sz = static_cast<char *>((malloc(cb)));
         if (sz) snprintf(sz, cb, "%s/%s", pszDir, pszFile);
         goto LReturn;
     }
@@ -147,11 +147,11 @@ static char *SzProfilePath(LPCSTR pszFile) {
 #else
     if (pszDir && *pszDir == '/') {
         cb = strlen(pszDir) + strlen(pszFile) + 8;
-        sz = (char *)(malloc(cb));
+        sz = static_cast<char *>((malloc(cb)));
         if (sz) snprintf(sz, cb, "%s/stars/%s", pszDir, pszFile);
     } else if (pszHome && *pszHome == '/') {
         cb = strlen(pszHome) + strlen(pszFile) + 16;
-        sz = (char *)(malloc(cb));
+        sz = static_cast<char *>((malloc(cb)));
         if (sz) snprintf(sz, cb, "%s/.config/stars/%s", pszHome, pszFile);
     } else {
         sz = strdup(pszFile);
@@ -238,7 +238,7 @@ DWORD win32::GetPrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR p
     }
     releaseProfile.Close();
     lockProfile.unlock();
-    return (DWORD)cchOut;
+    return static_cast<DWORD>(cchOut);
 }
 
 UINT win32::GetPrivateProfileIntA(LPCSTR pszSection, LPCSTR pszKey, INT nDefault, LPCSTR pszFile) {
@@ -247,14 +247,14 @@ UINT win32::GetPrivateProfileIntA(LPCSTR pszSection, LPCSTR pszKey, INT nDefault
     BOOL fNegative = 0;
 
     if (ProfileTextIO().pfnReadString(pszSection, pszKey, "", sz, sizeof(sz), pszFile) == 0)
-        return (UINT)nDefault;
-    while (isspace((unsigned char)*psz)) psz++;
+        return static_cast<UINT>(nDefault);
+    while (isspace(static_cast<unsigned char>(*psz))) psz++;
     if (*psz == '+' || *psz == '-') { fNegative = *psz == '-'; psz++; }
     if (psz[0] == '0' && (psz[1] == 'x' || psz[1] == 'X')) { radix = 16; psz += 2; }
     for (; *psz; psz++) {
-        if (*psz >= '0' && *psz <= '9') digit = (UINT)(*psz - '0');
-        else if (*psz >= 'a' && *psz <= 'f') digit = (UINT)(*psz - 'a' + 10);
-        else if (*psz >= 'A' && *psz <= 'F') digit = (UINT)(*psz - 'A' + 10);
+        if (*psz >= '0' && *psz <= '9') digit = static_cast<UINT>((*psz - '0'));
+        else if (*psz >= 'a' && *psz <= 'f') digit = static_cast<UINT>((*psz - 'a' + 10));
+        else if (*psz >= 'A' && *psz <= 'F') digit = static_cast<UINT>((*psz - 'A' + 10));
         else break;
         if (digit >= radix) break;
         u = u * radix + digit;
@@ -294,7 +294,7 @@ BOOL win32::WritePrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR 
     } else {
         if (!lpSection) {
             cb = strlen(pszSection) + 4;
-            szLine = (char *)(malloc(cb));
+            szLine = static_cast<char *>((malloc(cb)));
             if (!szLine) goto LMemory;
             snprintf(szLine, cb, "[%s]\n", pszSection);
             lpSection = LpProfileLine(szLine);
@@ -304,7 +304,7 @@ BOOL win32::WritePrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR 
             *lplp = lpSection;
         }
         cb = strlen(pszKey) + strlen(pszValue) + 3;
-        szLine = (char *)(malloc(cb));
+        szLine = static_cast<char *>((malloc(cb)));
         if (!szLine) goto LMemory;
         snprintf(szLine, cb, "%s=%s\n", pszKey, pszValue);
         lpNew = LpProfileLine(szLine);

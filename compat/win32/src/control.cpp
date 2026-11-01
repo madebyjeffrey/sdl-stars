@@ -13,7 +13,7 @@ DWORD win32::GetSysColor(int i) {
         win32::RGB(255,255,225), win32::RGB(0,0,0), win32::RGB(0,0,255), win32::RGB(16,132,208),
         win32::RGB(181,181,181), win32::RGB(0,0,128), win32::RGB(192,192,192)
     };
-    return i >= 0 && i < (int)(sizeof(rgcr) / sizeof(rgcr[0])) ? rgcr[i] : 0;
+    return i >= 0 && i < static_cast<int>((sizeof(rgcr) / sizeof(rgcr[0]))) ? rgcr[i] : 0;
 }
 
 LRESULT win32::SendDlgItemMessageA(HWND hwnd, int id, UINT msg, WPARAM w, LPARAM l) {
@@ -29,7 +29,7 @@ BOOL win32::SetDlgItemTextA(HWND hwnd, int id, LPCSTR psz) {
 UINT win32::GetDlgItemTextA(HWND hwnd, int id, LPSTR psz, int cch) {
     if (!psz || cch <= 0) return 0;
     psz[0] = 0;
-    return (UINT)win32::SendDlgItemMessageA(hwnd, id, win32::WM_GETTEXT, (WPARAM)cch, (LPARAM)psz);
+    return static_cast<UINT>(win32::SendDlgItemMessageA(hwnd, id, win32::WM_GETTEXT, static_cast<WPARAM>(cch), reinterpret_cast<LPARAM>(psz)));
 }
 
 BOOL win32::CheckDlgButton(HWND hwnd, int id, UINT check) {
@@ -43,7 +43,7 @@ BOOL win32::CheckDlgButton(HWND hwnd, int id, UINT check) {
 }
 
 UINT win32::IsDlgButtonChecked(HWND hwnd, int id) {
-    return (UINT)win32::SendDlgItemMessageA(hwnd, id, win32::BM_GETCHECK, 0, 0);
+    return static_cast<UINT>(win32::SendDlgItemMessageA(hwnd, id, win32::BM_GETCHECK, 0, 0));
 }
 
 BOOL win32::CheckRadioButton(HWND hwnd, int idFirst, int idLast, int idCheck) {
@@ -51,7 +51,7 @@ BOOL win32::CheckRadioButton(HWND hwnd, int idFirst, int idLast, int idCheck) {
     int c = 0, i = 0, id;
     if (!LpCompatWindow(hwnd) || idFirst > idLast) return 0;
     for (lp = win32::GetWindow(hwnd, win32::GW_CHILD); lp; lp = win32::GetWindow(lp, win32::GW_HWNDNEXT)) c++;
-    rghwnd = (HWND *)(calloc(c ? (size_t)c : 1, sizeof(*rghwnd)));
+    rghwnd = static_cast<HWND *>((calloc(c ? static_cast<size_t>(c) : 1, sizeof(*rghwnd))));
     if (!rghwnd) return 0;
     for (lp = win32::GetWindow(hwnd, win32::GW_CHILD); lp; lp = win32::GetWindow(lp, win32::GW_HWNDNEXT)) rghwnd[i++] = lp;
     for (i = 0; i < c; i++) {
@@ -72,7 +72,7 @@ static UINT CheckMax(UINT type) {
 
 static void NotifyControl(HWND hwnd, UINT code) {
     HWND lp = LpCompatWindow(hwnd);
-    if (lp && lp->hwndParent) win32::SendMessageA(lp->hwndParent, win32::WM_COMMAND, win32::MAKEWPARAM(lp->idChild, code), (LPARAM)hwnd);
+    if (lp && lp->hwndParent) win32::SendMessageA(lp->hwndParent, win32::WM_COMMAND, win32::MAKEWPARAM(lp->idChild, code), reinterpret_cast<LPARAM>(hwnd));
 }
 
 static void AutoRadio(HWND hwnd) {
@@ -106,7 +106,7 @@ static void ClickControl(HWND hwnd) {
 
 static BOOL FControlPoint(HWND hwnd, LPARAM l) {
     RECT rc;
-    POINT pt = {(int16_t)LOWORD(l), (int16_t)HIWORD(l)};
+    POINT pt = {static_cast<int16_t>(LOWORD(l)), static_cast<int16_t>(HIWORD(l))};
     return win32::GetClientRect(hwnd, &rc) && win32::PtInRect(&rc, pt);
 }
 
@@ -130,10 +130,10 @@ static void PaintControl(HWND hwnd) {
     fCheck = fButton && CheckMax(type) != 0;
     win32::SetBkMode(hdc, win32::TRANSPARENT);
     win32::SetTextColor(hdc, win32::GetSysColor(win32::IsWindowEnabled(hwnd) ? win32::COLOR_BTNTEXT : win32::COLOR_GRAYTEXT));
-    if (lp->hfontControl) hfontOld = (HFONT)win32::SelectObject(hdc, lp->hfontControl);
-    hbr = (HBRUSH)win32::SendMessageA(lp->hwndParent,
+    if (lp->hfontControl) hfontOld = static_cast<HFONT>(win32::SelectObject(hdc, lp->hfontControl));
+    hbr = reinterpret_cast<HBRUSH>(win32::SendMessageA(lp->hwndParent,
                             fButton && (type == win32::BS_PUSHBUTTON || type == win32::BS_DEFPUSHBUTTON) ? win32::WM_CTLCOLORBTN : win32::WM_CTLCOLORSTATIC,
-                            (WPARAM)hdc, (LPARAM)hwnd);
+                            reinterpret_cast<WPARAM>(hdc), reinterpret_cast<LPARAM>(hwnd)));
     if (!win32::IsWindow(hwnd)) return;
     if (!hbr) hbr = hbrOwn = win32::CreateSolidBrush(win32::GetSysColor(win32::COLOR_BTNFACE));
     win32::FillRect(hdc, &rc, hbr);
@@ -141,7 +141,7 @@ static void PaintControl(HWND hwnd) {
     format = win32::DT_LEFT | win32::DT_WORDBREAK;
     if (fButton && (type == win32::BS_PUSHBUTTON || type == win32::BS_DEFPUSHBUTTON)) {
         if (type == win32::BS_DEFPUSHBUTTON) {
-            win32::FrameRect(hdc, &rc, (HBRUSH)win32::GetStockObject(win32::BLACK_BRUSH)); win32::InflateRect(&rc, -1, -1);
+            win32::FrameRect(hdc, &rc, static_cast<HBRUSH>(win32::GetStockObject(win32::BLACK_BRUSH))); win32::InflateRect(&rc, -1, -1);
         }
         CompatDrawClassicEdge(hdc, &rc, lp->fPressed, 1);
         win32::InflateRect(&rcText, -4, -3);
@@ -153,16 +153,16 @@ static void PaintControl(HWND hwnd) {
         x = lp->dwStyle & win32::BS_LEFTTEXT ? rc.right - d : 0;
         win32::SetRect(&rcBox, x, y, x + d, y + d);
         hbrOld = win32::SelectObject(hdc, win32::GetStockObject(win32::WHITE_BRUSH));
-        hpenOld = (HPEN)win32::SelectObject(hdc, win32::GetStockObject(win32::BLACK_PEN));
+        hpenOld = static_cast<HPEN>(win32::SelectObject(hdc, win32::GetStockObject(win32::BLACK_PEN)));
         if (type == win32::BS_RADIOBUTTON || type == win32::BS_AUTORADIOBUTTON) win32::Ellipse(hdc, rcBox.left, rcBox.top, rcBox.right, rcBox.bottom);
-        else { win32::FillRect(hdc, &rcBox, (HBRUSH)win32::GetStockObject(win32::WHITE_BRUSH)); CompatDrawClassicEdge(hdc, &rcBox, 1, 1); }
+        else { win32::FillRect(hdc, &rcBox, static_cast<HBRUSH>(win32::GetStockObject(win32::WHITE_BRUSH))); CompatDrawClassicEdge(hdc, &rcBox, 1, 1); }
         if (lp->bstCheck) {
             win32::InflateRect(&rcBox, -3, -3);
             if (type == win32::BS_RADIOBUTTON || type == win32::BS_AUTORADIOBUTTON) {
                 win32::SelectObject(hdc, win32::GetStockObject(win32::BLACK_BRUSH));
                 win32::Ellipse(hdc, rcBox.left, rcBox.top, rcBox.right, rcBox.bottom);
             } else {
-                if (lp->bstCheck == win32::BST_INDETERMINATE) win32::FillRect(hdc, &rcBox, (HBRUSH)win32::GetStockObject(win32::GRAY_BRUSH));
+                if (lp->bstCheck == win32::BST_INDETERMINATE) win32::FillRect(hdc, &rcBox, static_cast<HBRUSH>(win32::GetStockObject(win32::GRAY_BRUSH)));
                 else {
                     for (j = 0; j < 3; j++) {
                         win32::MoveToEx(hdc, rcBox.left, rcBox.top + 2 + j, nullptr);
@@ -180,7 +180,7 @@ static void PaintControl(HWND hwnd) {
         rcBox = rc; rcBox.top += 7;
         CompatDrawClassicEdge(hdc, &rcBox, 1, 1);
         rcText.left += 8;
-        if (win32::GetTextExtentPoint32A(hdc, lp->pszTitle, (int)SDL_strlen(lp->pszTitle), &size)) {
+        if (win32::GetTextExtentPoint32A(hdc, lp->pszTitle, static_cast<int>(SDL_strlen(lp->pszTitle)), &size)) {
             rcBox = rcText; rcBox.right = rcBox.left + size.cx + 4; rcBox.bottom = rcBox.top + size.cy;
             win32::FillRect(hdc, &rcBox, hbr);
         }
@@ -215,7 +215,7 @@ static void PaintControl(HWND hwnd) {
         } else {
             win32::InflateRect(&rcBox, -1, -1);
         }
-        win32::FrameRect(hdc, &rcBox, (HBRUSH)win32::GetStockObject(win32::GRAY_BRUSH));
+        win32::FrameRect(hdc, &rcBox, static_cast<HBRUSH>(win32::GetStockObject(win32::GRAY_BRUSH)));
     }
     if (hfontOld) win32::SelectObject(hdc, hfontOld);
     if (hbrOwn) win32::DeleteObject(hbrOwn);
@@ -227,8 +227,8 @@ static LRESULT ControlCommon(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     LRESULT result;
     if (!lp) return 0;
     switch (msg) {
-    case win32::WM_GETFONT: return (LRESULT)lp->hfontControl;
-    case win32::WM_SETFONT: lp->hfontControl = (HFONT)w; if (l) win32::InvalidateRect(hwnd, nullptr, 1); return 0;
+    case win32::WM_GETFONT: return reinterpret_cast<LRESULT>(lp->hfontControl);
+    case win32::WM_SETFONT: lp->hfontControl = reinterpret_cast<HFONT>(w); if (l) win32::InvalidateRect(hwnd, nullptr, 1); return 0;
     case win32::WM_PAINT: PaintControl(hwnd); return 0;
     case win32::WM_ERASEBKGND: return 1;
     case win32::WM_SETTEXT:
@@ -256,7 +256,7 @@ static LRESULT  ButtonProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
                              type == win32::BS_RADIOBUTTON || type == win32::BS_AUTORADIOBUTTON ? win32::DLGC_RADIOBUTTON : 0);
     case win32::BM_GETCHECK: return CheckMax(type) ? lp->bstCheck : 0;
     case win32::BM_SETCHECK:
-        lp->bstCheck = ((((UINT)w) < (CheckMax(type))) ? ((UINT)w) : (CheckMax(type)));
+        lp->bstCheck = (((static_cast<UINT>(w)) < (CheckMax(type))) ? (static_cast<UINT>(w)) : (CheckMax(type)));
         if (type == win32::BS_RADIOBUTTON || type == win32::BS_AUTORADIOBUTTON) {
             if (lp->bstCheck) lp->dwStyle |= win32::WS_TABSTOP; else lp->dwStyle &= ~win32::WS_TABSTOP;
         }
@@ -264,7 +264,7 @@ static LRESULT  ButtonProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     case win32::BM_GETSTATE: return lp->bstCheck | (lp->fPressed ? win32::BST_PUSHED : 0) | (win32::GetFocus() == hwnd ? win32::BST_FOCUS : 0);
     case win32::BM_SETSTATE: lp->fPressed = !!w; win32::InvalidateRect(hwnd, nullptr, 1); return 0;
     case win32::BM_SETSTYLE:
-        lp->dwStyle = (lp->dwStyle & ~win32::BS_TYPEMASK) | ((DWORD)w & win32::BS_TYPEMASK);
+        lp->dwStyle = (lp->dwStyle & ~win32::BS_TYPEMASK) | (static_cast<DWORD>(w) & win32::BS_TYPEMASK);
         if (l) win32::InvalidateRect(hwnd, nullptr, 1);
         return 0;
     case win32::BM_CLICK:
@@ -342,7 +342,7 @@ static LRESULT  StaticProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
 
 BOOL FCompatControlClass(LPCSTR psz, HINSTANCE hInstance) {
     WNDCLASSA wc = {};
-    if ((UINT_PTR)psz <= UINT16_MAX) return 0;
+    if (reinterpret_cast<UINT_PTR>(psz) <= UINT16_MAX) return 0;
     if (SDL_strcasecmp(psz, "Button") == 0) { wc.lpszClassName = "Button"; wc.lpfnWndProc = ButtonProc; wc.style = win32::CS_DBLCLKS; }
     else if (SDL_strcasecmp(psz, "Static") == 0) { wc.lpszClassName = "Static"; wc.lpfnWndProc = StaticProc; }
     else if (SDL_strcasecmp(psz, "StarsMessageText") == 0) { wc.lpszClassName = "StarsMessageText"; wc.lpfnWndProc = CompatMessageTextProc; }

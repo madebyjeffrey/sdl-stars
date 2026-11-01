@@ -10,7 +10,7 @@ DWORD GetTextExtent(HDC hdc, LPCSTR str, int len) {
     if (!win32::GetTextExtentPoint32A(hdc, str, len, &size))
         return 0;
 
-    return MAKELONG((WORD)size.cx, (WORD)size.cy);
+    return MAKELONG(static_cast<WORD>(size.cx), static_cast<WORD>(size.cy));
 }
 
 /*
@@ -98,8 +98,8 @@ int16_t CWheelNotches(int16_t *pdWheel, int16_t dWheel) {
     if ((d < 0 && dWheel > 0) || (d > 0 && dWheel < 0))
         d = 0;
     d += dWheel;
-    c = (int16_t)(d / win32::WHEEL_DELTA);
-    *pdWheel = (int16_t)(d - c * win32::WHEEL_DELTA);
+    c = static_cast<int16_t>((d / win32::WHEEL_DELTA));
+    *pdWheel = static_cast<int16_t>((d - c * win32::WHEEL_DELTA));
     return c;
 }
 
@@ -113,9 +113,9 @@ int16_t CWheelLines(int16_t cPage) {
     }
     if (!win32::SystemParametersInfoA(win32::SPI_GETWHEELSCROLLLINES, 0, &cLines, 0))
         cLines = 3;
-    if (cLines == win32::WHEEL_PAGESCROLL || cLines > (UINT)cPage)
+    if (cLines == win32::WHEEL_PAGESCROLL || cLines > static_cast<UINT>(cPage))
         return cPage;
-    return (int16_t)cLines;
+    return static_cast<int16_t>(cLines);
 }
 
 

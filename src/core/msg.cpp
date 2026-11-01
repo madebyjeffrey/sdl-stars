@@ -69,7 +69,7 @@ int16_t FSendPlrMsg(APPSESSION &app, int16_t iPlr, MessageId iMsg, MsgGoto iObj,
         }
         return 0;
     }
-    lpb = (uint8_t *)app.state.lpMsg + app.state.imemMsgCur;
+    lpb = static_cast<uint8_t *>(app.state.lpMsg) + app.state.imemMsgCur;
     memmove(lpb, rgbWork, cbMsg);
     app.state.imemMsgCur += cbMsg;
     app.state.cMsg++;
@@ -87,7 +87,7 @@ int16_t FSendPrependedPlrMsg(APPSESSION &app, int16_t iPlr, MessageId iMsg, MsgG
         }
         return 0;
     }
-    memmove((uint8_t *)app.state.lpMsg + cbMsg, app.state.lpMsg, app.state.imemMsgCur);
+    memmove(static_cast<uint8_t *>(app.state.lpMsg) + cbMsg, app.state.lpMsg, app.state.imemMsgCur);
     memmove(app.state.lpMsg, rgbWork, cbMsg);
     app.state.imemMsgCur += cbMsg;
     app.state.cMsg++;
@@ -119,7 +119,7 @@ int16_t PackageUpMsg(APPSESSION &app, uint8_t *pb, int16_t iPlr, MessageId iMsg,
             break;
         }
     }
-    if ((uint16_t)(app.state.imemMsgCur + 20) > 0xffc8) {
+    if (static_cast<uint16_t>((app.state.imemMsgCur + 20)) > 0xffc8) {
         return -1;
     }
     lpb = pb;
@@ -169,7 +169,7 @@ int16_t FSendPlrMsg2XGen(APPSESSION &app, int16_t fPrepend, MessageId iMsg, MsgG
     MSGHDR mh{};
     int16_t  rgArgs[2];
 
-    if ((uint16_t)(app.state.imemMsgCur + 20) > 0xffc8) {
+    if (static_cast<uint16_t>((app.state.imemMsgCur + 20)) > 0xffc8) {
         return 0;
     }
     pb = rgb;
@@ -200,10 +200,10 @@ int16_t FSendPlrMsg2XGen(APPSESSION &app, int16_t fPrepend, MessageId iMsg, MsgG
     }
     cSize = pb - rgb;
     if (fPrepend) {
-        memmove((uint8_t *)app.state.lpMsg + cSize, app.state.lpMsg, app.state.imemMsgCur);
+        memmove(static_cast<uint8_t *>(app.state.lpMsg) + cSize, app.state.lpMsg, app.state.imemMsgCur);
         memmove(app.state.lpMsg, rgb, cSize);
     } else {
-        memmove((uint8_t *)app.state.lpMsg + app.state.imemMsgCur, rgb, cSize);
+        memmove(static_cast<uint8_t *>(app.state.lpMsg) + app.state.imemMsgCur, rgb, cSize);
     }
     app.state.imemMsgCur += cSize;
     app.state.cMsg++;
@@ -229,10 +229,10 @@ int16_t FGetNMsgbig(APPSESSION &app, MessageId iMsg, MSGBIG *pmb) {
     uint8_t *lpb;
     uint16_t u;
 
-    if ((int16_t)iMsg < idmColonistsDroppedMassacredGroundTroops || (int16_t)iMsg >= app.state.cMsg) {
+    if (static_cast<int16_t>(iMsg) < idmColonistsDroppedMassacredGroundTroops || static_cast<int16_t>(iMsg) >= app.state.cMsg) {
         return 0;
     }
-    lpb = (uint8_t *)app.state.lpMsg;
+    lpb = static_cast<uint8_t *>(app.state.lpMsg);
     lpbMax = lpb + app.state.imemMsgCur;
     while (lpb < lpbMax) {
         lpmh = lpb;
@@ -250,7 +250,7 @@ int16_t FGetNMsgbig(APPSESSION &app, MessageId iMsg, MSGBIG *pmb) {
             lpb += 1 + ((u & 1) == 1);
             u >>= 1;
         }
-        if ((int16_t)iMsg <= idmColonistsDroppedMassacredGroundTroops)
+        if (static_cast<int16_t>(iMsg) <= idmColonistsDroppedMassacredGroundTroops)
             break;
         iMsg = static_cast<MessageId>(iMsg - 1);
     }
@@ -274,7 +274,7 @@ static char *PchAppendMessageText(APPSESSION &app, char *pch, const char *psz) {
     size_t cch;
     std::string_view szText(psz);
 
-    cch = CchUtf8Prefix(szText, (size_t)(app.state.szMsgBuf + sizeof(app.state.szMsgBuf) - 1 - pch));
+    cch = CchUtf8Prefix(szText, static_cast<size_t>((app.state.szMsgBuf + sizeof(app.state.szMsgBuf) - 1 - pch)));
     memmove(pch, psz, cch);
     pch[cch] = 0;
     return pch + cch;
@@ -340,7 +340,7 @@ char *PszFormatString(APPSESSION &app, const char *pszFormat, int16_t *pParamsRe
                 pchT = app.state.rgszPlanetAttr[*pParams];
                 goto FinishString;
             case 'E':
-                pchT = PszCalcEnvVar(app, static_cast<EnvType>((uint16_t)*pParams >> 8 & 0xff & 0xff), *pParams & 0xff);
+                pchT = PszCalcEnvVar(app, static_cast<EnvType>(static_cast<uint16_t>(*pParams) >> 8 & 0xff & 0xff), *pParams & 0xff);
                 goto FinishString;
             case 'I':
                 pchT = TextIO().pfnCompressed(app, static_cast<StringId>(idsDecreased + *pParams));
@@ -403,7 +403,7 @@ char *PszFormatString(APPSESSION &app, const char *pszFormat, int16_t *pParamsRe
                 pchT = app.state.rgszMineField[*pParams];
                 goto FinishString;
             case 'P':
-                if ((double)(int16_t)(*pParams / 100) >= (double)10.0) {
+                if (static_cast<double>(static_cast<int16_t>((*pParams / 100))) >= static_cast<double>(10.0)) {
                     c = CchSprintf(szBuf, app.state.PCTDPCTPCT, *pParams / 100);
                 } else {
                     c = CchSprintf(szBuf, app.state.PCTDXPCTDPCTPCT, *pParams / 100, *pParams - *pParams / 100 * 100);
@@ -468,7 +468,7 @@ char *PszFormatString(APPSESSION &app, const char *pszFormat, int16_t *pParamsRe
                     goto DoFleet;
                 goto DoPlanet;
             case 'O':
-                w = (uint16_t)*pParams >> 9 & 0xf;
+                w = static_cast<uint16_t>(*pParams) >> 9 & 0xf;
                 pchT = TextIO().pfnPlayerName(app, w, 0, 0, 0, 0, nullptr);
                 goto FinishString;
             case 'u':
@@ -479,7 +479,7 @@ char *PszFormatString(APPSESSION &app, const char *pszFormat, int16_t *pParamsRe
             case 'U':
             case 'V':
             case 'v':
-                l = (int32_t)((uint32_t)pParams[1] << 0x10) | (uint32_t)*pParams;
+                l = static_cast<int32_t>((static_cast<uint32_t>(pParams[1]) << 0x10)) | static_cast<uint32_t>(*pParams);
                 pParams += 2;
                 c = CchSprintf(szBuf, app.state.PCTLD, l);
                 pch = PchAppendMessageText(app, pch, szBuf);
@@ -532,7 +532,7 @@ int16_t FRemovePlayerMessage(APPSESSION &app, int16_t iPlr, MessageId iMsg, MsgG
     int16_t  cDel;
 
     cDel = 0;
-    lpb = (uint8_t *)app.state.lpMsg;
+    lpb = static_cast<uint8_t *>(app.state.lpMsg);
     lpbMax = lpb + app.state.imemMsgCur;
     for (; lpb < lpbMax; lpb += cbWireMsgTurn + MtvFromLp(app, lpb).cbParams()) {
         if (MtvFromLp(app, lpb).iPlr() == iPlr && MtvFromLp(app, lpb).msghdr().iMsg() == iMsg && MtvFromLp(app, lpb).msghdr().wGoto() == iObj) {
@@ -547,7 +547,7 @@ int16_t FFindPlayerMessage(APPSESSION &app, int16_t iPlr, int16_t iMsg, MsgGoto 
     uint8_t *lpbMax;
     uint8_t *lpb;
 
-    lpb = (uint8_t *)app.state.lpMsg;
+    lpb = static_cast<uint8_t *>(app.state.lpMsg);
     lpbMax = lpb + app.state.imemMsgCur;
     for (; lpb < lpbMax; lpb += cbWireMsgTurn + MtvFromLp(app, lpb).cbParams()) {
         if (MtvFromLp(app, lpb).iPlr() == iPlr && MtvFromLp(app, lpb).msghdr().iMsg() == iMsg && MtvFromLp(app, lpb).msghdr().wGoto() == iObj) {
@@ -564,7 +564,7 @@ void MarkPlanetsPlayerLost(APPSESSION &app, int16_t iPlayer) {
     uint16_t w;
     uint8_t *lpb;
 
-    lpb = (uint8_t *)app.state.lpMsg;
+    lpb = static_cast<uint8_t *>(app.state.lpMsg);
     lpbMax = lpb + app.state.imemMsgCur;
     for (; lpb < lpbMax; lpb += cbWireMsgTurn + MtvFromLp(app, lpb).cbParams()) {
         if (MtvFromLp(app, lpb).iPlr() == iPlayer) {
@@ -643,7 +643,7 @@ void WritePlayerMessages(APPSESSION &app, int16_t iPlayer) {
 
     cbMsg = 0;
     if (iPlayer != iplrNone) {
-        lpb = (uint8_t *)app.state.lpMsg;
+        lpb = static_cast<uint8_t *>(app.state.lpMsg);
         lpbMax = lpb + app.state.imemMsgCur;
         for (; lpb < lpbMax; lpb += cbWireMsgTurn + MtvFromLp(app, lpb).cbParams()) {
             if (cbMsg + 20 >= 1024) {
@@ -715,11 +715,11 @@ MSGPLR *LpmsgplrFromRt(APPSESSION &app) {
     cLen = PmvCur(app).cLen();
     if (cLen >= 0) {
         cOut = sizeof(szText) - 1;
-        if (!FDecompressUserString(app, (char *)PmvCur(app).RgbMsg(), cLen, szText, &cOut)) return nullptr;
+        if (!FDecompressUserString(app, reinterpret_cast<char *>(PmvCur(app).RgbMsg()), cLen, szText, &cOut)) return nullptr;
     } else {
-        pszEnd = (const char *)memchr(PmvCur(app).RgbMsg(), 0, -cLen);
-        if (!pszEnd || pszEnd - (char *)PmvCur(app).RgbMsg() >= (int)sizeof(szText) ||
-            !FUtf8Valid((char *)PmvCur(app).RgbMsg(), (size_t)(pszEnd - (char *)PmvCur(app).RgbMsg()))) return nullptr;
+        pszEnd = static_cast<const char *>(memchr(PmvCur(app).RgbMsg(), 0, -cLen));
+        if (!pszEnd || pszEnd - reinterpret_cast<char *>(PmvCur(app).RgbMsg()) >= static_cast<int>(sizeof(szText)) ||
+            !FUtf8Valid(reinterpret_cast<char *>(PmvCur(app).RgbMsg()), static_cast<size_t>((pszEnd - reinterpret_cast<char *>(PmvCur(app).RgbMsg()))))) return nullptr;
     }
     lpmp = LpmsgplrAlloc(app, sizeof(MSGPLR) + app.state.hdrCur.cb - cbWirePlrMsg);
     lpmp->lpmsgplrNext = nullptr;
@@ -745,9 +745,9 @@ void ReadPlayerMessages(APPSESSION &app) {
 
     imemMsgT = 0;
     fOOM = 0;
-    lpb = (uint8_t *)app.state.lpMsg + app.state.imemMsgCur;
+    lpb = static_cast<uint8_t *>(app.state.lpMsg) + app.state.imemMsgCur;
     while (app.state.hdrCur.rt == rtMsg) {
-        if (app.state.hdrCur.cb != 0 && (uint16_t)(app.state.imemMsgCur + imemMsgT) < (uint16_t)(0xffc8 - app.state.hdrCur.cb)) {
+        if (app.state.hdrCur.cb != 0 && static_cast<uint16_t>((app.state.imemMsgCur + imemMsgT)) < static_cast<uint16_t>((0xffc8 - app.state.hdrCur.cb))) {
             memmove(lpb + imemMsgT, app.state.rgbCur, app.state.hdrCur.cb);
             imemMsgT += app.state.hdrCur.cb;
         }
@@ -809,7 +809,7 @@ char *PszGetCompressedMessage(APPSESSION &app, MessageId idm) {
     }
     iChunk = idm >> 6;
     iOffset = idm & 0x3f;
-    pch = (uint8_t *)&aMSGCmpr[aiMSGChunkOffset[iChunk]];
+    pch = reinterpret_cast<uint8_t *>(&aMSGCmpr[aiMSGChunkOffset[iChunk]]);
     pchLen = &acMSG[iChunk * 64];
     i = 0;
     while (i < iOffset) {
@@ -863,7 +863,7 @@ void SetFilteringGroups(APPSESSION &app, MessageId idm, int16_t fSet) {
         app.state.bitfMsgFiltered[idmPair >> 3] = (app.state.bitfMsgFiltered[idmPair >> 3] & ~(1 << (idmPair & 7))) | (fSet == 0) << (idmPair & 7);
         break;
     default:
-        if ((int16_t)idm >= idmHasLoaded && (int16_t)idm <= idmHasBeamed2) {
+        if (static_cast<int16_t>(idm) >= idmHasLoaded && static_cast<int16_t>(idm) <= idmHasBeamed2) {
             for (i = 43; i <= 46; i++) {
                 app.state.bitfMsgFiltered[i >> 3] = (app.state.bitfMsgFiltered[i >> 3] & ~(1 << (i & 7))) | (fSet == 0) << (i & 7);
             }
@@ -905,18 +905,18 @@ void SetFilteringGroups(APPSESSION &app, MessageId idm, int16_t fSet) {
                 app.state.bitfMsgFiltered[idmPair >> 3] = (app.state.bitfMsgFiltered[idmPair >> 3] & ~(1 << (idmPair & 7))) | (fSet == 0) << (idmPair & 7);
                 break;
             default:
-                if ((int16_t)idm >= idmHasBombedKillingColonists && (int16_t)idm <= idmHasBombedKillingColonistsDestroyingDefensesFacto) {
+                if (static_cast<int16_t>(idm) >= idmHasBombedKillingColonists && static_cast<int16_t>(idm) <= idmHasBombedKillingColonistsDestroyingDefensesFacto) {
                     for (i = 96; i <= 100; i++) {
                         app.state.bitfMsgFiltered[i >> 3] = (app.state.bitfMsgFiltered[i >> 3] & ~(1 << (i & 7))) | (fSet == 0) << (i & 7);
                     }
-                } else if ((int16_t)idm >= idmHasBombedKillingColonists2 && (int16_t)idm <= idmHasBombedKillingColonistsDestroyingDefensesFacto3) {
+                } else if (static_cast<int16_t>(idm) >= idmHasBombedKillingColonists2 && static_cast<int16_t>(idm) <= idmHasBombedKillingColonistsDestroyingDefensesFacto3) {
                     for (i = 106; i <= 110; i++) {
                         app.state.bitfMsgFiltered[i >> 3] = (app.state.bitfMsgFiltered[i >> 3] & ~(1 << (i & 7))) | (fSet == 0) << (i & 7);
                     }
                 } else if (idm == idmHasLoaded2 || idm == idmHasBeamed3) {
                     idmPair = static_cast<MessageId>(idm ^ idmHasLoaded2 ^ idmHasBeamed3);
                     app.state.bitfMsgFiltered[idmPair >> 3] = (app.state.bitfMsgFiltered[idmPair >> 3] & ~(1 << (idmPair & 7))) | (fSet == 0) << (idmPair & 7);
-                } else if ((int16_t)idm >= idmBattleTookPlaceDestroyedTakingDamage && (int16_t)idm <= idmBattleTookPlaceInvolvingRacesLostForces2) {
+                } else if (static_cast<int16_t>(idm) >= idmBattleTookPlaceDestroyedTakingDamage && static_cast<int16_t>(idm) <= idmBattleTookPlaceInvolvingRacesLostForces2) {
                     for (i = 145; i <= 168; i++) {
                         app.state.bitfMsgFiltered[i >> 3] = (app.state.bitfMsgFiltered[i >> 3] & ~(1 << (i & 7))) | (fSet == 0) << (i & 7);
                     }

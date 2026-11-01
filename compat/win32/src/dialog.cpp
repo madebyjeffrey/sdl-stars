@@ -34,7 +34,7 @@ LRESULT  CompatDialogProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     HBRUSH hbr;
     if (!lp) return 0;
     if (msg == win32::WM_NCCREATE) {
-        lpc = (COMPATDLGCREATE *)(((const CREATESTRUCTA *)l)->lpCreateParams);
+        lpc = static_cast<COMPATDLGCREATE *>(((reinterpret_cast<const CREATESTRUCTA *>(l))->lpCreateParams));
         if (!lpc) return 0;
         lp->fDialog = 1; lp->lpfnDlg = lpc->lpfn; lp->hfontDialog = lpc->hfont;
         lpc->hfont = nullptr;
@@ -52,15 +52,15 @@ LRESULT  CompatDialogProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         return lp->lDlgMsgResult;
     }
     switch (msg) {
-    case win32::WM_GETFONT: return (LRESULT)lp->hfontDialog;
+    case win32::WM_GETFONT: return reinterpret_cast<LRESULT>(lp->hfontDialog);
     case win32::WM_ERASEBKGND: {
         RECT rc;
         win32::GetClientRect(hwnd, &rc); hbr = win32::CreateSolidBrush(win32::GetSysColor(win32::COLOR_BTNFACE));
         if (!hbr) return 0;
-        win32::FillRect((HDC)w, &rc, hbr); win32::DeleteObject(hbr); return 1;
+        win32::FillRect(reinterpret_cast<HDC>(w), &rc, hbr); win32::DeleteObject(hbr); return 1;
     }
     case win32::WM_CLOSE:
-        win32::SendMessageA(hwnd, win32::WM_COMMAND, win32::MAKEWPARAM(win32::IDCANCEL, 0), (LPARAM)win32::GetDlgItem(hwnd, win32::IDCANCEL)); return 0;
+        win32::SendMessageA(hwnd, win32::WM_COMMAND, win32::MAKEWPARAM(win32::IDCANCEL, 0), reinterpret_cast<LPARAM>(win32::GetDlgItem(hwnd, win32::IDCANCEL))); return 0;
     case win32::WM_COMMAND:
         // The application decides whether OK/Cancel ends a modal or just an edit.
         return 0;
@@ -130,7 +130,7 @@ static HWND HwndCreateDialog(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGPRO
     if (!SDL_IsMainThread() || (hwndOwner && !win32::IsWindow(hwndOwner))) return nullptr;
     if (!hinst) hinst = win32::GetModuleHandleA(nullptr);
     hrsrc = win32::FindResourceA(hinst, psz, win32::RT_DIALOG);
-    if (!FCompatDialogTemplate((const BYTE *)(win32::LockResource(win32::LoadResource(hinst, hrsrc))), win32::SizeofResource(hinst, hrsrc), &dlg)) return nullptr;
+    if (!FCompatDialogTemplate(static_cast<const BYTE *>((win32::LockResource(win32::LoadResource(hinst, hrsrc)))), win32::SizeofResource(hinst, hrsrc), &dlg)) return nullptr;
     if (dlg.idClass || (dlg.pszClass && *dlg.pszClass) || dlg.idMenu || (dlg.pszMenu && *dlg.pszMenu)) goto done;
     dc.lpfn = lpfn; dc.fModal = fModal;
     if (!FDialogUnits(&dlg, &dc)) goto done;
@@ -141,24 +141,24 @@ static HWND HwndCreateDialog(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGPRO
     if (!hwnd) goto done;
     dc.hfont = nullptr;
     if (!fModal && FStarsErrorPending()) goto fail;
-    win32::SendMessageA(hwnd, win32::WM_SETFONT, (WPARAM)hwnd->hfontDialog, 0);
+    win32::SendMessageA(hwnd, win32::WM_SETFONT, reinterpret_cast<WPARAM>(hwnd->hfontDialog), 0);
     if (!win32::IsWindow(hwnd)) { hwnd = nullptr; goto done; }
     if (!fModal && FStarsErrorPending()) goto fail;
     for (i = 0; i < dlg.cItems; i++) {
         lpitem = &dlg.rgItems[i]; pszClass = PszDialogClass(lpitem);
         pszTitle = lpitem->pszTitle ? lpitem->pszTitle : win32::MAKEINTRESOURCE(lpitem->idTitle);
-        if (!pszClass || lpitem->cbCreate || (UINT_PTR)pszTitle <= UINT16_MAX) goto fail;
+        if (!pszClass || lpitem->cbCreate || reinterpret_cast<UINT_PTR>(pszTitle) <= UINT16_MAX) goto fail;
         rc = RECT{lpitem->x, lpitem->y, lpitem->cx, lpitem->cy};
         win32::MapDialogRect(hwnd, &rc);
         hwndChild = win32::CreateWindowExA(lpitem->dwExStyle, pszClass, pszTitle, lpitem->dwStyle,
                                    rc.left, rc.top, rc.right, rc.bottom,
-                                   hwnd, (HMENU)(INT_PTR)(int16_t)lpitem->id, hinst, nullptr);
+                                   hwnd, reinterpret_cast<HMENU>(static_cast<INT_PTR>(static_cast<int16_t>(lpitem->id))), hinst, nullptr);
         if (!hwndChild || !win32::IsWindow(hwnd) || (!fModal && FStarsErrorPending())) goto fail;
-        win32::SendMessageA(hwndChild, win32::WM_SETFONT, (WPARAM)hwnd->hfontDialog, 0);
+        win32::SendMessageA(hwndChild, win32::WM_SETFONT, reinterpret_cast<WPARAM>(hwnd->hfontDialog), 0);
         if (!win32::IsWindow(hwnd) || (!fModal && FStarsErrorPending())) goto fail;
     }
     hwndFocus = HwndDialogTab(hwnd, nullptr, 0);
-    fFocus = win32::SendMessageA(hwnd, win32::WM_INITDIALOG, (WPARAM)hwndFocus, param) != 0;
+    fFocus = win32::SendMessageA(hwnd, win32::WM_INITDIALOG, reinterpret_cast<WPARAM>(hwndFocus), param) != 0;
     if (!win32::IsWindow(hwnd)) { hwnd = nullptr; goto done; }
     if (!fModal && FStarsErrorPending()) goto fail;
     if (!hwnd->fEndDialog) {
@@ -209,7 +209,7 @@ BOOL win32::IsDialogMessageA(HWND hwnd, LPMSG lpmsg) {
     UINT id;
     if (!lp || !lp->fDialog || !lpmsg || (lpmsg->hwnd != hwnd && !win32::IsChild(hwnd, lpmsg->hwnd))) return 0;
     if (lpmsg->message != win32::WM_KEYDOWN && lpmsg->message != win32::WM_SYSKEYDOWN) return 0;
-    code = win32::SendMessageA(lpmsg->hwnd, win32::WM_GETDLGCODE, lpmsg->wParam, (LPARAM)lpmsg);
+    code = win32::SendMessageA(lpmsg->hwnd, win32::WM_GETDLGCODE, lpmsg->wParam, reinterpret_cast<LPARAM>(lpmsg));
     if (!win32::IsWindow(hwnd)) return 1;
     if (code & win32::DLGC_WANTALLKEYS) return 0;
     hwndFocus = win32::GetFocus();
@@ -222,10 +222,10 @@ BOOL win32::IsDialogMessageA(HWND hwnd, LPMSG lpmsg) {
         id = lpmsg->wParam == win32::VK_ESCAPE ? win32::IDCANCEL : win32::IDOK;
         if (lpmsg->wParam == win32::VK_RETURN) {
             for (hwndNext = win32::GetWindow(hwnd, win32::GW_CHILD); hwndNext; hwndNext = win32::GetWindow(hwndNext, win32::GW_HWNDNEXT))
-                if (hwndNext->iControl == 1 && (hwndNext->dwStyle & win32::BS_TYPEMASK) == win32::BS_DEFPUSHBUTTON) { id = (UINT)win32::GetDlgCtrlID(hwndNext); break; }
+                if (hwndNext->iControl == 1 && (hwndNext->dwStyle & win32::BS_TYPEMASK) == win32::BS_DEFPUSHBUTTON) { id = static_cast<UINT>(win32::GetDlgCtrlID(hwndNext)); break; }
         }
         hwndNext = win32::GetDlgItem(hwnd, id);
-        if (!hwndNext || win32::IsWindowEnabled(hwndNext)) win32::SendMessageA(hwnd, win32::WM_COMMAND, win32::MAKEWPARAM(id, win32::BN_CLICKED), (LPARAM)hwndNext);
+        if (!hwndNext || win32::IsWindowEnabled(hwndNext)) win32::SendMessageA(hwnd, win32::WM_COMMAND, win32::MAKEWPARAM(id, win32::BN_CLICKED), reinterpret_cast<LPARAM>(hwndNext));
         return 1;
     }
     return 0;
@@ -254,7 +254,7 @@ INT_PTR win32::DialogBoxParamA(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGP
     if (hwnd) {
         while (win32::IsWindow(hwnd) && !hwnd->fEndDialog) {
             result = win32::GetMessageA(&msg, nullptr, 0, 0);
-            if (result <= 0) { if (result == 0) win32::PostQuitMessage((int)msg.wParam); break; }
+            if (result <= 0) { if (result == 0) win32::PostQuitMessage(static_cast<int>(msg.wParam)); break; }
             if (!win32::IsDialogMessageA(hwnd, &msg)) { win32::TranslateMessage(&msg); win32::DispatchMessageA(&msg); }
         }
         value = hwnd->fEndDialog ? hwnd->lDlgResult : -1;

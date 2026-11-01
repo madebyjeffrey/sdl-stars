@@ -71,9 +71,9 @@ void DrawABunchOfStars(APPSESSION &app, HDC hdc, RECT *prc) {
     win32::InflateRect(&rc, -3, -3);
     dx = rc.right - rc.left;
     dy = rc.bottom - rc.top;
-    lPixTot = (uint32_t)(dx * (int16_t)(rc.bottom - rc.top));
+    lPixTot = static_cast<uint32_t>((dx * static_cast<int16_t>((rc.bottom - rc.top))));
     for (iClr = 0; iClr < 5; iClr++) {
-        iMax = LOWORD((int32_t)(lPixTot / rgDSDivCnt[iClr]));
+        iMax = LOWORD(static_cast<int32_t>((lPixTot / rgDSDivCnt[iClr])));
         for (i = 0; i < iMax; i++) {
             rcOut.left = RandomIO().pfnRandom(app, dx) + rc.left;
             rcOut.top = RandomIO().pfnRandom(app, dy) + rc.top;
@@ -84,7 +84,7 @@ void DrawABunchOfStars(APPSESSION &app, HDC hdc, RECT *prc) {
         }
     }
     for (iClr = 0; iClr < 4; iClr++) {
-        iMax = LOWORD((int32_t)(lPixTot / rgDSDivCnt2[iClr])) + 1;
+        iMax = LOWORD(static_cast<int32_t>((lPixTot / rgDSDivCnt2[iClr]))) + 1;
         for (i = 0; i < iMax; i++) {
             rcOut.left = RandomIO().pfnRandom(app, dx) + rc.left;
             rcOut.top = RandomIO().pfnRandom(app, dy) + rc.top;

@@ -19,8 +19,8 @@ struct PORTALRESPONSES {
     BOOL fOverflow;
 };
 static DBusHandlerResult SavePortalResponse(DBusConnection *lpBus, DBusMessage *lpMessage, void *lpv) {
-    PORTALRESPONSES *lp = (PORTALRESPONSES *)lpv;
-    (void)lpBus;
+    PORTALRESPONSES *lp = static_cast<PORTALRESPONSES *>(lpv);
+    static_cast<void>(lpBus);
     if (!dbus_message_is_signal(lpMessage, PORTAL_REQUEST, "Response")) return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
     if (lp->cMessage < 16) lp->rgMessage[lp->cMessage++] = dbus_message_ref(lpMessage);
     else lp->fOverflow = 1;
@@ -39,7 +39,7 @@ static BOOL FOption(DBusMessageIter *lpOptions, LPCSTR pszKey, LPCSTR pszType,
 static BOOL FFolderOption(DBusMessageIter *lpOptions, LPCSTR pszFolder) {
     DBusMessageIter entry, value, bytes;
     const char *pszKey = "current_folder";
-    int cb = (int)strlen(pszFolder) + 1;
+    int cb = static_cast<int>(strlen(pszFolder)) + 1;
     return dbus_message_iter_open_container(lpOptions, DBUS_TYPE_DICT_ENTRY, nullptr, &entry) &&
            dbus_message_iter_append_basic(&entry, DBUS_TYPE_STRING, &pszKey) &&
            dbus_message_iter_open_container(&entry, DBUS_TYPE_VARIANT, "ay", &value) &&
@@ -69,10 +69,10 @@ static BOOL FFilter(DBusMessageIter *lpIter, const COMPATFILEFILTER *lpFilter) {
         pszEnd = strchr(psz, ';'); if (!pszEnd) pszEnd = psz + strlen(psz);
         c = 0;
         if (pszEnd - psz == 3 && memcmp(psz, "*.*", 3) == 0) szPattern[c++] = '*';
-        else for (i = 0; i < (size_t)(pszEnd - psz); i++) {
+        else for (i = 0; i < static_cast<size_t>(pszEnd - psz); i++) {
             if ((psz[i] >= 'a' && psz[i] <= 'z') || (psz[i] >= 'A' && psz[i] <= 'Z')) {
-                szPattern[c++] = '['; szPattern[c++] = (char)SDL_tolower((unsigned char)psz[i]);
-                szPattern[c++] = (char)SDL_toupper((unsigned char)psz[i]); szPattern[c++] = ']';
+                szPattern[c++] = '['; szPattern[c++] = static_cast<char>(SDL_tolower(static_cast<unsigned char>(psz[i])));
+                szPattern[c++] = static_cast<char>(SDL_toupper(static_cast<unsigned char>(psz[i]))); szPattern[c++] = ']';
             } else szPattern[c++] = psz[i];
         }
         szPattern[c] = 0;
@@ -124,14 +124,14 @@ static BOOL FUriPath(LPCSTR pszUri, char *pszPath, size_t cbPath) {
     if (*pszUri != '/') return 0;
     while (*pszUri) {
         if (*pszUri == '?' || *pszUri == '#') return 0;
-        ch = (unsigned char)*pszUri++;
+        ch = static_cast<unsigned char>(*pszUri++);
         if (ch == '%') {
             if (!pszUri[0] || !pszUri[1] || (hi = IHex(pszUri[0])) < 0 || (lo = IHex(pszUri[1])) < 0) return 0;
-            ch = (unsigned char)((hi << 4) | lo); pszUri += 2;
+            ch = static_cast<unsigned char>((hi << 4) | lo); pszUri += 2;
             if (ch == 0) return 0;
         }
         if (c + 1 >= cbPath) return 0;
-        pszPath[c++] = (char)ch;
+        pszPath[c++] = static_cast<char>(ch);
     }
     pszPath[c] = 0; return 1;
 }
@@ -177,7 +177,7 @@ static int IResponse(DBusMessage *lpMessage, const COMPATFILEFILTER *rgfilter, i
 static BOOL FPumpChooser(HWND hwndOwner) {
     win32::MSG msg;
     while (win32::PeekMessageA(&msg, nullptr, 0, 0, win32::PM_REMOVE)) {
-        if (msg.message == win32::WM_QUIT) { win32::PostQuitMessage((int)msg.wParam); return 0; }
+        if (msg.message == win32::WM_QUIT) { win32::PostQuitMessage(static_cast<int>(msg.wParam)); return 0; }
         win32::TranslateMessage(&msg); win32::DispatchMessageA(&msg);
         if (FStarsErrorPending()) return 0;
         if (hwndOwner && !win32::IsWindow(hwndOwner)) return 0;

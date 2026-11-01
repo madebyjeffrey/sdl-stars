@@ -5,21 +5,21 @@
 
 static BOOL FDlgWord(const BYTE *rgb, size_t cb, size_t *lpib, WORD *lpw) {
     if (*lpib > cb || cb - *lpib < 2) return 0;
-    *lpw = (WORD)(rgb[*lpib] | (rgb[*lpib + 1] << 8));
+    *lpw = static_cast<WORD>((rgb[*lpib] | (rgb[*lpib + 1] << 8)));
     *lpib += 2;
     return 1;
 }
 static BOOL FDlgDword(const BYTE *rgb, size_t cb, size_t *lpib, DWORD *lpdw) {
     WORD lo, hi;
     if (!FDlgWord(rgb, cb, lpib, &lo) || !FDlgWord(rgb, cb, lpib, &hi)) return 0;
-    *lpdw = (DWORD)lo | ((DWORD)hi << 16);
+    *lpdw = static_cast<DWORD>(lo) | (static_cast<DWORD>(hi) << 16);
     return 1;
 }
 static BOOL FDlgRect(const BYTE *rgb, size_t cb, size_t *lpib, int16_t *lpx, int16_t *lpy, int16_t *lpcx, int16_t *lpcy) {
     WORD x, y, cx, cy;
     if (!FDlgWord(rgb, cb, lpib, &x) || !FDlgWord(rgb, cb, lpib, &y) ||
         !FDlgWord(rgb, cb, lpib, &cx) || !FDlgWord(rgb, cb, lpib, &cy)) return 0;
-    *lpx = (int16_t)x; *lpy = (int16_t)y; *lpcx = (int16_t)cx; *lpcy = (int16_t)cy;
+    *lpx = static_cast<int16_t>(x); *lpy = static_cast<int16_t>(y); *lpcx = static_cast<int16_t>(cx); *lpcy = static_cast<int16_t>(cy);
     return *lpcx >= 0 && *lpcy >= 0;
 }
 static BOOL FDlgField(const BYTE *rgb, size_t cb, size_t *lpib, WORD *lpid, char **lppsz) {
@@ -32,7 +32,7 @@ static BOOL FDlgField(const BYTE *rgb, size_t cb, size_t *lpib, WORD *lpid, char
         cch++;
         if (!FDlgWord(rgb, cb, lpib, &w)) return 0;
     }
-    psz = (char *)(malloc(cch * 3 + 1));
+    psz = static_cast<char *>((malloc(cch * 3 + 1)));
     if (!psz) return 0;
     if (CchUtf16leToUtf8(psz, cch * 3 + 1, rgb + ibStart, cch) < 0) { free(psz); return 0; }
     *lppsz = psz;
@@ -67,7 +67,7 @@ BOOL FCompatDialogTemplate(const BYTE *rgb, size_t cb, COMPATDLGTEMPLATE *lpdlg)
     }
     // Even an ordinal class/title needs a complete fixed header and three fields.
     if (dlg.cItems > (cb - ib) / 24) goto fail;
-    if (dlg.cItems && !(dlg.rgItems = (COMPATDLGITEM *)(calloc(dlg.cItems, sizeof(*dlg.rgItems))))) goto fail;
+    if (dlg.cItems && !(dlg.rgItems = static_cast<COMPATDLGITEM *>((calloc(dlg.cItems, sizeof(*dlg.rgItems)))))) goto fail;
     for (i = 0; i < dlg.cItems; i++) {
         ib += (4 - ib % 4) % 4;
         lpitem = &dlg.rgItems[i];

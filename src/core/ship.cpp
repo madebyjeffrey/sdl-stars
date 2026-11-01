@@ -47,7 +47,7 @@ int16_t FCanMerge(APPSESSION &app, FLEET *pfl) {
             }
         }
     }
-    if (cfl == 1 || csh > (int32_t)(uint32_t)(32766 - (app.state.rgplr[pfl->iPlayer].cFleet - 1))) {
+    if (cfl == 1 || csh > static_cast<int32_t>(static_cast<uint32_t>((32766 - (app.state.rgplr[pfl->iPlayer].cFleet - 1))))) {
         return 0;
     }
     return 1;
@@ -86,10 +86,10 @@ void SelectAdjFleet(APPSESSION &app, int16_t dInc, int16_t idFleet) {
             goto FinishUp;
         } else {
             if (dInc != 0) {
-                for (i = 0; i < (int16_t)app.state.rgplr[app.state.idPlayer].cFleet && app.state.rglpfl[app.state.vlprgidFleet[i]]->id != idFleet; i++) {
+                for (i = 0; i < static_cast<int16_t>(app.state.rgplr[app.state.idPlayer].cFleet) && app.state.rglpfl[app.state.vlprgidFleet[i]]->id != idFleet; i++) {
                 }
                 i += dInc;
-                if (i >= (int16_t)app.state.rgplr[app.state.idPlayer].cFleet) {
+                if (i >= static_cast<int16_t>(app.state.rgplr[app.state.idPlayer].cFleet)) {
                     i = 0;
                 } else if (i < 0) {
                     i = app.state.rgplr[app.state.idPlayer].cFleet - 1;
@@ -127,7 +127,7 @@ int32_t LGetFleetStat(APPSESSION &app, FLEET *lpfl, int16_t grStat) {
     }
     for (i = 0; i < 16; i++) {
         if (lpfl->rgcsh[i] != 0) {
-            l += (uint32_t)(lpfl->rgcsh[i] * WtMaxShdefStat(app.state.rglpshdef[lpfl->iPlayer] + i, grStat));
+            l += static_cast<uint32_t>((lpfl->rgcsh[i] * WtMaxShdefStat(app.state.rglpshdef[lpfl->iPlayer] + i, grStat)));
         }
     }
     return l;
@@ -187,7 +187,7 @@ int16_t FEnumCalcJettison(APPSESSION &app, void *lprt, RecordType rt, int16_t cb
     uint8_t  *prtxfer;
 
     if (rt == rtLogCargoXfer8 || rt == rtLogCargoXfer16) {
-        prtxfer = (uint8_t *)lprt;
+        prtxfer = static_cast<uint8_t *>(lprt);
         if (CxvFromPrefix(prtxfer, 5).grobj1() != grobjFleet || CxvFromPrefix(prtxfer, 5).grobj2() != grobjOther) {
             return 1;
         }
@@ -203,14 +203,14 @@ int16_t FEnumCalcJettison(APPSESSION &app, void *lprt, RecordType rt, int16_t cb
         }
         grbit = CxvFromPrefix(prtxfer, 6).grbitItems();
         if (rt == rtLogCargoXfer16) {
-            prtxferx = (uint8_t *)lprt;
+            prtxferx = static_cast<uint8_t *>(lprt);
         }
         j = 0;
         i = 0;
         while (i < 5) {
             if (grbit & 1) {
                 if (rt == rtLogCargoXfer8) {
-                    lppl->rgwtMin[i] -= (int16_t)CxvFromPrefix(prtxfer, 6 + (j + 1)).cQuan8(j);
+                    lppl->rgwtMin[i] -= static_cast<int16_t>(CxvFromPrefix(prtxfer, 6 + (j + 1)).cQuan8(j));
                 } else {
                     lppl->rgwtMin[i] -= CxvFromPrefix(prtxferx, 6 + (j + 1) * 2).cQuan16(j);
                 }
@@ -248,7 +248,7 @@ int32_t ChgCargo(APPSESSION &app, GrobjClass grobj, int16_t id, MineralType iSup
     case grobjPlanet:
     case grobjOther:
         if (pobj) {
-            ppl = (PLANET *)pobj;
+            ppl = static_cast<PLANET *>(pobj);
         } else if (grobj == grobjPlanet) {
             PlanetQueryIO().pfnLookup(app, id, &xfer.pl());
             ppl = &xfer.pl();
@@ -274,7 +274,7 @@ int32_t ChgCargo(APPSESSION &app, GrobjClass grobj, int16_t id, MineralType iSup
         break;
     case grobjThing:
         if (pobj) {
-            pth = (THING *)pobj;
+            pth = static_cast<THING *>(pobj);
         } else {
             FLookupThing(app, id, &xfer.th());
             pth = &xfer.th();
@@ -287,9 +287,9 @@ int32_t ChgCargo(APPSESSION &app, GrobjClass grobj, int16_t id, MineralType iSup
                 return pth->thp().rgwtMin(iSupply);
             }
             if (pth->thp().rgwtMin(iSupply) + dChg < 0) {
-                dChg = (int16_t)-pth->thp().rgwtMin(iSupply);
+                dChg = static_cast<int16_t>(-pth->thp().rgwtMin(iSupply));
             }
-            wtFree = (uint32_t)(pth->thp().wtMax() * 10);
+            wtFree = static_cast<uint32_t>((pth->thp().wtMax() * 10));
             for (i = 0; i < 3; i++) {
                 wtFree -= pth->thp().rgwtMin(i);
             }
@@ -304,7 +304,7 @@ int32_t ChgCargo(APPSESSION &app, GrobjClass grobj, int16_t id, MineralType iSup
         break;
     default:
         if (pobj) {
-            pfl = (FLEET *)pobj;
+            pfl = static_cast<FLEET *>(pobj);
         } else {
             FleetQueryIO().pfnLookup(app, id, &xfer.fl());
             pfl = &xfer.fl();
@@ -415,7 +415,7 @@ int32_t EstFuelUse(APPSESSION &app, FLEET *lpfl, int16_t iOrd, int16_t iWarp, in
             }
             rgieff[i] = LpengineFromId(lpshdef->hul.rghs[j].iItem)->rgcFuelUsed[iWarp];
             if (fEfficient) {
-                rgieff[i] -= (int32_t)(rgieff[i] * 15) / 100;
+                rgieff[i] -= static_cast<int32_t>((rgieff[i] * 15)) / 100;
             }
             if (lpshdef->hul.rghs[j].iItem == iengineRadiatingHydroRamScoop) {
                 app.state.gd.fRadiatingEngine = 1;
@@ -432,7 +432,7 @@ int32_t EstFuelUse(APPSESSION &app, FLEET *lpfl, int16_t iOrd, int16_t iWarp, in
         } else {
             lpord = &lpfl->lpplord->rgord()[iOrd];
             d = DGetDistance(lpord->pt.x, lpord->pt.y, lpord[1].pt.x, lpord[1].pt.y);
-            dTravel = (int16_t)LOWORD((int32_t)((double)d + 0.9999));
+            dTravel = static_cast<int16_t>(LOWORD(static_cast<int32_t>((static_cast<double>(d) + 0.9999))));
         }
     }
     lFuel = 0;
@@ -441,19 +441,19 @@ int32_t EstFuelUse(APPSESSION &app, FLEET *lpfl, int16_t iOrd, int16_t iWarp, in
         for (i = 0; i < 16; i++) {
             if (lpfl->rgcsh[i] > 0) {
                 if (rgieff[i] == iEffCur) {
-                    if (wtCargo < (int32_t)(uint32_t)(lpfl->rgcsh[i] * WtMaxShdefStat(app.state.rglpshdef[lpfl->iPlayer] + i, 2))) {
+                    if (wtCargo < static_cast<int32_t>(static_cast<uint32_t>((lpfl->rgcsh[i] * WtMaxShdefStat(app.state.rglpshdef[lpfl->iPlayer] + i, 2))))) {
                         wtCargoT = wtCargo;
                     } else {
-                        wtCargoT = (uint32_t)(lpfl->rgcsh[i] * (int16_t)WtMaxShdefStat(app.state.rglpshdef[lpfl->iPlayer] + i, 2));
+                        wtCargoT = static_cast<uint32_t>((lpfl->rgcsh[i] * static_cast<int16_t>(WtMaxShdefStat(app.state.rglpshdef[lpfl->iPlayer] + i, 2))));
                     }
                     wtCargo -= wtCargoT;
                     if (rgieff[i] > 0) {
-                        wtMass = (uint32_t)(lpfl->rgcsh[i] * (uint32_t)app.state.rglpshdef[lpfl->iPlayer][i].hul.wtEmpty) + wtCargoT;
-                        lT = (uint32_t)(iEffCur * dTravel);
+                        wtMass = static_cast<uint32_t>((lpfl->rgcsh[i] * static_cast<uint32_t>(app.state.rglpshdef[lpfl->iPlayer][i].hul.wtEmpty))) + wtCargoT;
+                        lT = static_cast<uint32_t>((iEffCur * dTravel));
                         if (wtMass < 200 || (lT < 500000 && wtMass < 4000) || (lT < 100000 && wtMass < 20000)) {
-                            lFuel += (int32_t)(wtMass * lT) / 2000;
+                            lFuel += static_cast<int32_t>((wtMass * lT)) / 2000;
                         } else {
-                            lFuel = (int32_t)((double)lT * wtMass / 2000.0) + lFuel;
+                            lFuel = static_cast<int32_t>((static_cast<double>(lT) * wtMass / 2000.0)) + lFuel;
                         }
                     }
                 } else if (rgieff[i] > iEffCur && rgieff[i] < iEffNext) {
@@ -468,14 +468,14 @@ int32_t EstFuelUse(APPSESSION &app, FLEET *lpfl, int16_t iOrd, int16_t iWarp, in
     if (!fRangeOnly) {
         lFuel += 9;
     }
-    lFuel = (int32_t)(lFuel / 10);
+    lFuel = static_cast<int32_t>((lFuel / 10));
     if (fRangeOnly) {
         if (lFuel == 0) {
             lFuel = 1000000000;
         } else if (lFuel > 100000) {
-            lFuel = (int32_t)(lpfl->rgwtMin[4] / (int32_t)(lFuel / 1000));
+            lFuel = static_cast<int32_t>((lpfl->rgwtMin[4] / static_cast<int32_t>((lFuel / 1000))));
         } else {
-            lFuel = (int32_t)((int32_t)(lpfl->rgwtMin[4] * 1000) / lFuel);
+            lFuel = static_cast<int32_t>((static_cast<int32_t>((lpfl->rgwtMin[4] * 1000)) / lFuel));
         }
     }
     return lFuel;
@@ -592,10 +592,10 @@ static int16_t IWarpForWaypoint(APPSESSION &app, FLEET *lpfl, ORDER *lpord, int1
             lppl = nullptr;
         }
         if (!fGoFlatOut && (!lppl || (lppl->iPlayer != iplrNone && lppl->iPlayer != app.state.idPlayer))) {
-            if (iwp > 1 && lpord[-1].iWarp > (uint16_t)iWarp && lpord[-1].iWarp <= 10) {
+            if (iwp > 1 && lpord[-1].iWarp > static_cast<uint16_t>(iWarp) && lpord[-1].iWarp <= 10) {
                 iWarp = lpord[-1].iWarp;
             }
-            if (LFuelUseToWaypoint(app, lpfl, iwp, 1) >= (int32_t)(ProductionIO().pfnFleetStat(app, lpfl, 1) / 10) || lpfl->rgwtMin[4] < (int32_t)(ProductionIO().pfnFleetStat(app, lpfl, 1) * 7) / 10)
+            if (LFuelUseToWaypoint(app, lpfl, iwp, 1) >= static_cast<int32_t>((ProductionIO().pfnFleetStat(app, lpfl, 1) / 10)) || lpfl->rgwtMin[4] < static_cast<int32_t>((ProductionIO().pfnFleetStat(app, lpfl, 1) * 7)) / 10)
                 goto LOptimizeSpeed;
             iWarp++;
             goto LTryLimitedSpeed;
@@ -612,7 +612,7 @@ static int16_t IWarpForWaypoint(APPSESSION &app, FLEET *lpfl, ORDER *lpord, int1
             if (lFuel > lpfl->rgwtMin[4])
                 goto LDecWarp;
             if (((lppl && lppl->fStarbase && lppl->iPlayer == app.state.idPlayer && PartQueryIO().pfnHull(app.state.rglpshdefSB[app.state.idPlayer][lppl->isb].hul.ihuldef)->hul.wtCargoMax != 0) ||
-                 lFuel <= (int32_t)(lpfl->rgwtMin[4] / 2) || fGoFlatOut))
+                 lFuel <= static_cast<int32_t>((lpfl->rgwtMin[4] / 2)) || fGoFlatOut))
                 break;
         LDecWarp:
             iWarp--;
@@ -624,15 +624,15 @@ static int16_t IWarpForWaypoint(APPSESSION &app, FLEET *lpfl, ORDER *lpord, int1
     }
 LOptimizeSpeed:
     if (iWarp > 1 && lpord->grobj != grobjFleet) {
-        lDist = LOWORD((int32_t)DGetDistance(lpord->pt.x, lpord->pt.y, lpord[-1].pt.x, lpord[-1].pt.y));
+        lDist = LOWORD(static_cast<int32_t>(DGetDistance(lpord->pt.x, lpord->pt.y, lpord[-1].pt.x, lpord[-1].pt.y)));
         cSpeed = iWarp * iWarp;
-        cTravel = (int16_t)(iWarp * iWarp + lDist - 1) / cSpeed;
+        cTravel = static_cast<int16_t>((iWarp * iWarp + lDist - 1)) / cSpeed;
         do {
             iWarp--;
             if (iWarp <= 1)
                 break;
             cSpeed = iWarp * iWarp;
-        } while (cTravel == (int16_t)(lDist + cSpeed - 1) / cSpeed);
+        } while (cTravel == static_cast<int16_t>((lDist + cSpeed - 1)) / cSpeed);
         iWarp++;
     } else {
         cTravel = 2;
@@ -678,28 +678,28 @@ int32_t LFuelUseToWaypoint(APPSESSION &app, FLEET *lpfl, int16_t iwp, int16_t fM
     for (i = 0; i < iwp; i++) {
         iWarp = lpord[i + 1].iWarp;
         if (iWarp > 0 && iWarp < 11) {
-            dbl = (double)((double)DGetDistance(lpord[i].pt.x, lpord[i].pt.y, lpord[i + 1].pt.x, lpord[i + 1].pt.y) + 0.99999);
-            dist = LOWORD((int32_t)dbl);
-            dbl = (double)((double)dbl / iWarp / iWarp);
-            cYears = LOWORD((int32_t)((double)dbl + 0.9999));
+            dbl = static_cast<double>((static_cast<double>(DGetDistance(lpord[i].pt.x, lpord[i].pt.y, lpord[i + 1].pt.x, lpord[i + 1].pt.y)) + 0.99999));
+            dist = LOWORD(static_cast<int32_t>(dbl));
+            dbl = static_cast<double>((static_cast<double>(dbl) / iWarp / iWarp));
+            cYears = LOWORD(static_cast<int32_t>((static_cast<double>(dbl) + 0.9999)));
             l = EstFuelUse(app, lpfl, i, iWarp, -1, 0);
         } else {
             cYears = 1;
             l = 0;
         }
         if (cYears > 1) {
-            lOneYearUse = EstFuelUse(app, lpfl, i, iWarp, (int16_t)(iWarp * iWarp), 0);
-            lFuelGain = (uint32_t)(lOneYearUse * (int16_t)(cYears - 1));
-            lFuelGain += EstFuelUse(app, lpfl, i, iWarp, (int16_t)(dist - iWarp * iWarp * (cYears - 1)), 0);
+            lOneYearUse = EstFuelUse(app, lpfl, i, iWarp, static_cast<int16_t>((iWarp * iWarp)), 0);
+            lFuelGain = static_cast<uint32_t>((lOneYearUse * static_cast<int16_t>((cYears - 1))));
+            lFuelGain += EstFuelUse(app, lpfl, i, iWarp, static_cast<int16_t>((dist - iWarp * iWarp * (cYears - 1))), 0);
             if (lFuelGain > l) {
                 l = lFuelGain;
             }
-            lFuelGain = LCalcFuelGainFromRamScoops(app, lpfl, iWarp, (int16_t)(iWarp * iWarp));
+            lFuelGain = LCalcFuelGainFromRamScoops(app, lpfl, iWarp, static_cast<int16_t>((iWarp * iWarp)));
             for (j = 0; j < 16; j++) {
                 if (lpfl->rgcsh[j] != 0) {
                     lpshdef = app.state.rglpshdef[app.state.idPlayer] + j;
                     if (lpshdef->hul.ihuldef == ihuldefFuelTransport || lpshdef->hul.ihuldef == ihuldefSuperFuelXport) {
-                        lFuelGain += (uint32_t)(lpfl->rgcsh[j] * 200);
+                        lFuelGain += static_cast<uint32_t>((lpfl->rgcsh[j] * 200));
                     }
                 }
             }
@@ -707,7 +707,7 @@ int32_t LFuelUseToWaypoint(APPSESSION &app, FLEET *lpfl, int16_t iwp, int16_t fM
                 if (lOneYearUse <= lFuelGain) {
                     l = lOneYearUse;
                 } else {
-                    lOneYearUse = (uint32_t)((lOneYearUse - lFuelGain) * (int16_t)(cYears - 1)) + lOneYearUse;
+                    lOneYearUse = static_cast<uint32_t>(((lOneYearUse - lFuelGain) * static_cast<int16_t>((cYears - 1)))) + lOneYearUse;
                     if (lOneYearUse < l) {
                         l = lOneYearUse;
                     }
@@ -783,23 +783,23 @@ void FleetTransferCargoBalance(APPSESSION &app, FLEET *pflNew1, FLEET *pflNew2) 
             for (i = 0; i < 2; i++) {
                 rgrgcshLoss[i][ishdef] = rgflCur[i].rgcsh[ishdef] - rgpflNew[i]->rgcsh[ishdef];
                 if (rgflCur[i].rgcsh[ishdef] != 0) {
-                    rgFuelCapacity[i] += (uint32_t)(rgflCur[i].rgcsh[ishdef] * wtFuelMax);
-                    rgCargoCapacity[i] += (uint32_t)(rgflCur[i].rgcsh[ishdef] * wtCargoMax);
+                    rgFuelCapacity[i] += static_cast<uint32_t>((rgflCur[i].rgcsh[ishdef] * wtFuelMax));
+                    rgCargoCapacity[i] += static_cast<uint32_t>((rgflCur[i].rgcsh[ishdef] * wtCargoMax));
                     if (rgrgcshLoss[i][ishdef] > 0) {
-                        rgFuelCapLoss[i] += (uint32_t)(rgrgcshLoss[i][ishdef] * wtFuelMax);
-                        rgCargoCapLoss[i] += (uint32_t)(rgrgcshLoss[i][ishdef] * wtCargoMax);
+                        rgFuelCapLoss[i] += static_cast<uint32_t>((rgrgcshLoss[i][ishdef] * wtFuelMax));
+                        rgCargoCapLoss[i] += static_cast<uint32_t>((rgrgcshLoss[i][ishdef] * wtCargoMax));
                     }
                 }
             }
             if (!fDeadFleet && rgrgcshLoss[0][ishdef] == -rgrgcshLoss[1][ishdef] && rgrgcshLoss[0][ishdef] != 0) {
                 iSrc = rgrgcshLoss[0][ishdef] < 0;
                 if (rgflCur[iSrc].rgcsh[ishdef] > 0) {
-                    cshDmgSrc = (int32_t)(rgflCur[iSrc].rgdv[ishdef].pctSh() * rgflCur[iSrc].rgcsh[ishdef]) / 100;
+                    cshDmgSrc = static_cast<int32_t>((rgflCur[iSrc].rgdv[ishdef].pctSh() * rgflCur[iSrc].rgcsh[ishdef])) / 100;
                 } else {
                     cshDmgSrc = 0;
                 }
                 if (rgflCur[iSrc == 0].rgcsh[ishdef] > 0) {
-                    cshDmgDst = (int32_t)(rgflCur[iSrc == 0].rgdv[ishdef].pctSh() * rgflCur[iSrc == 0].rgcsh[ishdef]) / 100;
+                    cshDmgDst = static_cast<int32_t>((rgflCur[iSrc == 0].rgdv[ishdef].pctSh() * rgflCur[iSrc == 0].rgcsh[ishdef])) / 100;
                 } else {
                     cshDmgDst = 0;
                 }
@@ -809,18 +809,18 @@ void FleetTransferCargoBalance(APPSESSION &app, FLEET *pflNew1, FLEET *pflNew2) 
                     } else {
                         cshDmgMoved = cshDmgSrc;
                     }
-                    pctNew = (int32_t)((int32_t)((uint32_t)(cshDmgDst * rgflCur[iSrc == 0].rgdv[ishdef].pctDp()) +
-                                                 (uint32_t)(cshDmgMoved * rgflCur[iSrc].rgdv[ishdef].pctDp()) + rgpflNew[iSrc == 0]->rgcsh[ishdef] - 1) /
-                                       rgpflNew[iSrc == 0]->rgcsh[ishdef]);
+                    pctNew = static_cast<int32_t>((static_cast<int32_t>((static_cast<uint32_t>((cshDmgDst * rgflCur[iSrc == 0].rgdv[ishdef].pctDp())) +
+                                                 static_cast<uint32_t>((cshDmgMoved * rgflCur[iSrc].rgdv[ishdef].pctDp())) + rgpflNew[iSrc == 0]->rgcsh[ishdef] - 1)) /
+                                       rgpflNew[iSrc == 0]->rgcsh[ishdef]));
                     rgpflNew[iSrc == 0]->rgdv[ishdef].dp = rgpflNew[iSrc == 0]->rgdv[ishdef].pctSh() | (LOWORD(pctNew) & 0x1ff) * 0x80;
-                    pctNew = (int32_t)((int32_t)((uint32_t)((cshDmgDst + cshDmgMoved) * 100) + rgpflNew[iSrc == 0]->rgcsh[ishdef] - 1) /
-                                       rgpflNew[iSrc == 0]->rgcsh[ishdef]);
+                    pctNew = static_cast<int32_t>((static_cast<int32_t>((static_cast<uint32_t>(((cshDmgDst + cshDmgMoved) * 100)) + rgpflNew[iSrc == 0]->rgcsh[ishdef] - 1)) /
+                                       rgpflNew[iSrc == 0]->rgcsh[ishdef]));
                     rgpflNew[iSrc == 0]->rgdv[ishdef].dp = (rgpflNew[iSrc == 0]->rgdv[ishdef].dp & 0xff80) | (LOWORD(pctNew) & 0x7f);
                     if (cshDmgMoved == cshDmgSrc) {
                         rgpflNew[iSrc]->rgdv[ishdef].dp = 0;
                     } else {
-                        pctNew = (int32_t)((int32_t)((uint32_t)((cshDmgSrc - cshDmgMoved) * 100) + rgpflNew[iSrc]->rgcsh[ishdef] - 1) /
-                                           rgpflNew[iSrc]->rgcsh[ishdef]);
+                        pctNew = static_cast<int32_t>((static_cast<int32_t>((static_cast<uint32_t>(((cshDmgSrc - cshDmgMoved) * 100)) + rgpflNew[iSrc]->rgcsh[ishdef] - 1)) /
+                                           rgpflNew[iSrc]->rgcsh[ishdef]));
                         rgpflNew[iSrc]->rgdv[ishdef].SetPctSh(LOWORD(pctNew));
                     }
                 } else if (cshDmgSrc != 0) {
@@ -830,17 +830,17 @@ void FleetTransferCargoBalance(APPSESSION &app, FLEET *pflNew1, FLEET *pflNew2) 
                         cshDmgMoved = cshDmgSrc;
                     }
                     rgpflNew[iSrc == 0]->rgdv[ishdef].dp = rgpflNew[iSrc == 0]->rgdv[ishdef].pctSh() | (rgpflNew[iSrc]->rgdv[ishdef].pctDp() & 0x1ff) * 0x80;
-                    pctNew = (int32_t)((int32_t)((uint32_t)(cshDmgMoved * 100) + rgpflNew[iSrc == 0]->rgcsh[ishdef] - 1) / rgpflNew[iSrc == 0]->rgcsh[ishdef]);
+                    pctNew = static_cast<int32_t>((static_cast<int32_t>((static_cast<uint32_t>((cshDmgMoved * 100)) + rgpflNew[iSrc == 0]->rgcsh[ishdef] - 1)) / rgpflNew[iSrc == 0]->rgcsh[ishdef]));
                     rgpflNew[iSrc == 0]->rgdv[ishdef].dp = (rgpflNew[iSrc == 0]->rgdv[ishdef].dp & 0xff80) | (LOWORD(pctNew) & 0x7f);
                     if (cshDmgMoved == cshDmgSrc) {
                         rgpflNew[iSrc]->rgdv[ishdef].dp = 0;
                     } else {
-                        pctNew = (int32_t)((int32_t)((uint32_t)((cshDmgSrc - cshDmgMoved) * 100) + rgpflNew[iSrc]->rgcsh[ishdef] - 1) /
-                                           rgpflNew[iSrc]->rgcsh[ishdef]);
+                        pctNew = static_cast<int32_t>((static_cast<int32_t>((static_cast<uint32_t>(((cshDmgSrc - cshDmgMoved) * 100)) + rgpflNew[iSrc]->rgcsh[ishdef] - 1)) /
+                                           rgpflNew[iSrc]->rgcsh[ishdef]));
                         rgpflNew[iSrc]->rgdv[ishdef].SetPctSh(LOWORD(pctNew));
                     }
                 } else if (cshDmgDst != 0) {
-                    pctNew = (int32_t)((int32_t)((uint32_t)(cshDmgDst * 100) + rgpflNew[iSrc == 0]->rgcsh[ishdef] - 1) / rgpflNew[iSrc == 0]->rgcsh[ishdef]);
+                    pctNew = static_cast<int32_t>((static_cast<int32_t>((static_cast<uint32_t>((cshDmgDst * 100)) + rgpflNew[iSrc == 0]->rgcsh[ishdef] - 1)) / rgpflNew[iSrc == 0]->rgcsh[ishdef]));
                     rgpflNew[iSrc == 0]->rgdv[ishdef].dp = (rgpflNew[iSrc == 0]->rgdv[ishdef].dp & 0xff80) | (LOWORD(pctNew) & 0x7f);
                 } else {
                     rgpflNew[iSrc == 0]->rgdv[ishdef].dp = rgpflNew[iSrc == 0]->rgdv[ishdef].dp & 0xff80;
@@ -851,9 +851,9 @@ void FleetTransferCargoBalance(APPSESSION &app, FLEET *pflNew1, FLEET *pflNew2) 
     for (i = 0; i < 2; i++) {
         if (rgFuelCapacity[i] != 0) {
             if (rgpflNew[i]->rgwtMin[4] > 45000 || rgFuelCapLoss[i] > 45000) {
-                lChg = (int32_t)((double)rgpflNew[i]->rgwtMin[4] * rgFuelCapLoss[i] / rgFuelCapacity[i]);
+                lChg = static_cast<int32_t>((static_cast<double>(rgpflNew[i]->rgwtMin[4]) * rgFuelCapLoss[i] / rgFuelCapacity[i]));
             } else {
-                lChg = (int32_t)((int32_t)(rgpflNew[i]->rgwtMin[4] * rgFuelCapLoss[i]) / rgFuelCapacity[i]);
+                lChg = static_cast<int32_t>((static_cast<int32_t>((rgpflNew[i]->rgwtMin[4] * rgFuelCapLoss[i])) / rgFuelCapacity[i]));
             }
             rgrgCargoDelta[i][4] -= lChg;
         }
@@ -863,17 +863,17 @@ void FleetTransferCargoBalance(APPSESSION &app, FLEET *pflNew1, FLEET *pflNew2) 
                 wtCargoTot += rgpflNew[i]->rgwtMin[j];
             }
             if (wtCargoTot > 45000 || rgCargoCapLoss[i] > 45000) {
-                wtCargoXfer = (int32_t)((double)wtCargoTot * rgCargoCapLoss[i] / rgCargoCapacity[i]);
+                wtCargoXfer = static_cast<int32_t>((static_cast<double>(wtCargoTot) * rgCargoCapLoss[i] / rgCargoCapacity[i]));
             } else {
-                wtCargoXfer = (int32_t)((int32_t)(wtCargoTot * rgCargoCapLoss[i]) / rgCargoCapacity[i]);
+                wtCargoXfer = static_cast<int32_t>((static_cast<int32_t>((wtCargoTot * rgCargoCapLoss[i])) / rgCargoCapacity[i]));
             }
             lChg = wtCargoXfer;
             if (wtCargoXfer != 0 && wtCargoTot != 0) {
                 for (j = 0; j <= 3; j++) {
                     if (rgpflNew[i]->rgwtMin[j] > 45000 || wtCargoXfer > 45000) {
-                        l = (int32_t)((double)rgpflNew[i]->rgwtMin[j] * wtCargoXfer / wtCargoTot);
+                        l = static_cast<int32_t>((static_cast<double>(rgpflNew[i]->rgwtMin[j]) * wtCargoXfer / wtCargoTot));
                     } else {
-                        l = (int32_t)((int32_t)(rgpflNew[i]->rgwtMin[j] * wtCargoXfer) / wtCargoTot);
+                        l = static_cast<int32_t>((static_cast<int32_t>((rgpflNew[i]->rgwtMin[j] * wtCargoXfer)) / wtCargoTot));
                     }
                     l = l < lChg ? l : lChg;
                     rgrgCargoDelta[i][j] -= l;
@@ -985,7 +985,7 @@ void RemoveIshdefFromAllQueues(APPSESSION &app, int16_t ishdef, int16_t fSpaceDo
             iprod = 0;
             lpprod = lppl->lpplprod->rgprod();
             while (iprod < lppl->lpplprod->iprodMac) {
-                if (lpprod->grobj != grobjFleet || lpprod->iItem != (uint32_t)ishdef) {
+                if (lpprod->grobj != grobjFleet || lpprod->iItem != static_cast<uint32_t>(ishdef)) {
                     if (iDst != iprod) {
                         lppl->lpplprod->rgprod()[iDst] = *lpprod;
                     }
@@ -1026,7 +1026,7 @@ int16_t CshQueued(APPSESSION &app, int16_t ishdef, int16_t *pfProgress, int16_t 
             iprod = 0;
             lpprod = lppl->lpplprod->rgprod();
             while (iprod < lppl->lpplprod->iprodMac) {
-                if (lpprod->grobj == grobjFleet && lpprod->iItem == (uint32_t)ishdef) {
+                if (lpprod->grobj == grobjFleet && lpprod->iItem == static_cast<uint32_t>(ishdef)) {
                     csh += lpprod->cItem;
                     if (lpprod->pct != 0) {
                         *pfProgress = 1;
@@ -1215,7 +1215,7 @@ void GetTruePartCost(APPSESSION &app, int16_t iPlayer, PART *ppart, uint16_t *rg
                     /* fallthrough */
                 default:
                     if (ppart->hs.grhst == hstTerra && RaceQueryIO().pfnStat(&app.state.rgplr[iPlayer], rsMajorAdv) == raTerra) {
-                        rgCost[3] = (uint32_t)rgCost[3] / 2;
+                        rgCost[3] = static_cast<uint32_t>(rgCost[3]) / 2;
                     } else if (ppart->hs.grhst == hstEngine && RaceQueryIO().pfnGrbit(&app.state.rgplr[iPlayer], ibitRaceCheapEngines) != 0) {
                         for (i = 0; i < 4; i++) {
                             rgCost[i] -= rgCost[i] >> 1;

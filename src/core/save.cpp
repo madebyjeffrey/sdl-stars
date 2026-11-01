@@ -63,20 +63,20 @@ void WriteRtPlr(APPSESSION &app, PLAYER *pplr, uint8_t *pbStore) {
         pb = pbStore + cbWirePlayerPartial;
     }
     cOut = 31;
-    if (pplr->szName[0] != 0 && FCompressUserString(app, pplr->szName, (char *)pb + 1, &cOut)) {
+    if (pplr->szName[0] != 0 && FCompressUserString(app, pplr->szName, reinterpret_cast<char *>(pb) + 1, &cOut)) {
         *pb = cOut;
         pb += 1 + cOut;
     } else {
-        strcpy((char *)pb + 1, pplr->szName);
+        strcpy(reinterpret_cast<char *>(pb) + 1, pplr->szName);
         *pb = 0;
         pb += 2 + strlen(pplr->szName);
     }
     cOut = 31;
-    if (pplr->szNames[0] != 0 && FCompressUserString(app, pplr->szNames, (char *)pb + 1, &cOut)) {
+    if (pplr->szNames[0] != 0 && FCompressUserString(app, pplr->szNames, reinterpret_cast<char *>(pb) + 1, &cOut)) {
         *pb = cOut;
         pb += 1 + cOut;
     } else {
-        strcpy((char *)pb + 1, pplr->szNames);
+        strcpy(reinterpret_cast<char *>(pb) + 1, pplr->szNames);
         *pb = 0;
         pb += 2 + strlen(pplr->szNames);
     }
@@ -102,11 +102,11 @@ void WriteRtShDef(APPSESSION &app, SHDEF *lpshdef, uint8_t **ppbStore) {
         strcpy(szHulName, PartQueryIO().pfnHull(lpshdef->hul.ihuldef)->hul.szClass);
     }
     cOut = 31;
-    if (szHulName[0] != 0 && FCompressUserString(app, szHulName, (char *)pb + 1, &cOut)) {
+    if (szHulName[0] != 0 && FCompressUserString(app, szHulName, reinterpret_cast<char *>(pb) + 1, &cOut)) {
         *pb = cOut;
         pb += 1 + cOut;
     } else {
-        strcpy((char *)pb + 1, szHulName);
+        strcpy(reinterpret_cast<char *>(pb) + 1, szHulName);
         *pb = 0;
         pb += 2 + strlen(szHulName);
     }
@@ -194,9 +194,9 @@ int16_t FWriteDataFile(APPSESSION &app, char *pszFileBase, int16_t iPlayer, int1
                             if (!app.state.rglpfl[iflT])
                                 break;
                             if (lpflTarget->fInclude && lpflTarget->iPlayer != iPlayer) {
-                                dx = (int16_t)(lpflTarget->pt.x - pt.x);
-                                dy = (int16_t)(lpflTarget->pt.y - pt.y);
-                                l = (uint32_t)(dx * dx) + (uint32_t)(dy * dy);
+                                dx = static_cast<int16_t>((lpflTarget->pt.x - pt.x));
+                                dy = static_cast<int16_t>((lpflTarget->pt.y - pt.y));
+                                l = static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy));
                                 if (((!fFoundIdeal && !lpflTarget->fMark) || (l < lBest && (!fFoundIdeal || !lpflTarget->fMark))) &&
                                     (FMatchTarget(app, lpflTarget, mdTarget, 0) && FAttackPlayer(app, lpfl, lpflTarget->iPlayer))) {
                                     lpflBest = lpflTarget;
@@ -214,7 +214,7 @@ int16_t FWriteDataFile(APPSESSION &app, char *pszFileBase, int16_t iPlayer, int1
                         if (j == 550) {
                             j = 10000;
                         }
-                        if (lpflBest && lBest != 0 && lBest <= (int32_t)(uint32_t)(j * j)) {
+                        if (lpflBest && lBest != 0 && lBest <= static_cast<int32_t>(static_cast<uint32_t>((j * j)))) {
                             if (lpfl->lpplord->iordMax <= lpfl->cord + 1) {
                                 lpfl->lpplord = LpplReAlloc(app, lpfl->lpplord, lpfl->cord + 2);
                                 lpord = lpfl->lpplord->rgord();
@@ -328,7 +328,7 @@ LAppend:
                    full-detail copy with only the habitat filled in. */
                 if (iPlayer != iplrNone && i != iPlayer && !app.state.rgplr[i].fDead && RaceQueryIO().pfnStat(&app.state.rgplr[iPlayer], rsMajorAdv) == raTerra) {
                     plrT = app.state.rgplr[i];
-                    memset(&plrT.idPlanetHome, 0, (uint8_t *)&plrT.szName - (uint8_t *)&plrT.idPlanetHome);
+                    memset(&plrT.idPlanetHome, 0, reinterpret_cast<uint8_t *>(&plrT.szName) - reinterpret_cast<uint8_t *>(&plrT.idPlanetHome));
                     memcpy(plrT.rgEnvVar, app.state.rgplr[i].rgEnvVar, sizeof(plrT.rgEnvVar));
                     memcpy(plrT.rgEnvVarMin, app.state.rgplr[i].rgEnvVarMin, sizeof(plrT.rgEnvVarMin));
                     memcpy(plrT.rgEnvVarMax, app.state.rgplr[i].rgEnvVarMax, sizeof(plrT.rgEnvVarMax));
@@ -515,15 +515,15 @@ void WriteBattles(APPSESSION &app, int16_t iPlayer) {
     cbT = 0;
     if (iPlayer != iplrNone && app.state.lpbBattleLog != app.state.lpbBattleCur) {
         lphb = app.state.rglphb[11];
-        lpbBattle = (uint8_t *)lphb + (sizeof(HB) + 2);
+        lpbBattle = reinterpret_cast<uint8_t *>(lphb) + (sizeof(HB) + 2);
         fPlayerCur = 1 << iPlayer;
         while (lphb) {
-            for (lpbtldata = (uint8_t *)lpbBattle; lphb->ibTop <= sizeof(HB) || BdvFromLp(app, lpbtldata).id() == 0xffff; lpbtldata = (uint8_t *)lpbBattle) {
+            for (lpbtldata = static_cast<uint8_t *>(lpbBattle); lphb->ibTop <= sizeof(HB) || BdvFromLp(app, lpbtldata).id() == 0xffff; lpbtldata = static_cast<uint8_t *>(lpbBattle)) {
                 lphb = lphb->lphbNext;
                 if (!lphb) {
                     return;
                 }
-                lpbBattle = (uint8_t *)lphb + (sizeof(HB) + 2);
+                lpbBattle = reinterpret_cast<uint8_t *>(lphb) + (sizeof(HB) + 2);
             }
             if (BdvFromLp(app, lpbtldata).grfPlr() & fPlayerCur) {
                 for (i = 0; i < app.state.game.cPlayer; i++) {
@@ -575,7 +575,7 @@ void WriteBattles(APPSESSION &app, int16_t iPlayer) {
                     lpbBattle += BdvFromLp(app, lpbtldata).cbData();
                 } else {
                     cb = BdvFromLp(app, lpbtldata).ctok() * 29 + 14;
-                    lpbtlrec = (uint8_t *)(lpbBattle + cb);
+                    lpbtlrec = static_cast<uint8_t *>((lpbBattle + cb));
                     if (cb < 1024) {
                         RecordIO().pfnWriteRt(app, rtBtlData, cb, lpbBattle);
                         lpbBattle += cb;
@@ -589,7 +589,7 @@ void WriteBattles(APPSESSION &app, int16_t iPlayer) {
                         lpbBattle += 14 + 29 * ctok;
                         ctok = BdvFromLp(app, lpbtldata).ctok() - ctok;
                         while (ctok > 0) {
-                            if ((uint16_t)ctok > 35) {
+                            if (static_cast<uint16_t>(ctok) > 35) {
                                 RecordIO().pfnWriteRt(app, rtContinue, 1015, lpbBattle);
                                 lpbBattle += 1015;
                                 ctok -= 35;
@@ -611,17 +611,17 @@ void WriteBattles(APPSESSION &app, int16_t iPlayer) {
                                 cb -= cbRec;
                                 for (; cbRec >= 1024; cbRec -= 1023) {
                                     RecordIO().pfnWriteRt(app, rtContinue, 1023, lpbtlrec);
-                                    lpbtlrec = (uint8_t *)((uint8_t *)lpbtlrec + 0x3ff);
+                                    lpbtlrec = static_cast<uint8_t *>((static_cast<uint8_t *>(lpbtlrec) + 0x3ff));
                                 }
                                 if (cbRec != 0) {
                                     RecordIO().pfnWriteRt(app, rtContinue, cbRec, lpbtlrec);
-                                    lpbtlrec = (uint8_t *)((uint8_t *)lpbtlrec + cbRec);
+                                    lpbtlrec = static_cast<uint8_t *>((static_cast<uint8_t *>(lpbtlrec) + cbRec));
                                 }
                             } else {
                                 cbT = 0;
                                 do {
                                     cbT += cbRec;
-                                    lpbtlrec = (uint8_t *)((uint8_t *)lpbtlrec + cbRec);
+                                    lpbtlrec = static_cast<uint8_t *>((static_cast<uint8_t *>(lpbtlrec) + cbRec));
                                     cb -= cbRec;
                                     if (cb != 0) {
                                         cbRec = BevFromLp(app, lpbtlrec).ctok() * 8 + 6;
@@ -629,7 +629,7 @@ void WriteBattles(APPSESSION &app, int16_t iPlayer) {
                                 } while (cb != 0 && cbT + cbRec < 1024);
                                 RecordIO().pfnWriteRt(app, rtContinue, cbT, lpbBattle);
                             }
-                            lpbBattle = (uint8_t *)lpbtlrec;
+                            lpbBattle = static_cast<uint8_t *>(lpbtlrec);
                         }
                     }
                 }
@@ -771,7 +771,7 @@ void WriteFleet(APPSESSION &app, FLEET *lpfl) {
     if (fPartial) {
         for (i = 0; i < 16; i++) {
             if (lpfl->rgcsh[i] > 0) {
-                wt += (uint32_t)(lpfl->rgcsh[i] * (uint32_t)app.state.rglpshdef[lpfl->iPlayer][i].hul.wtEmpty);
+                wt += static_cast<uint32_t>((lpfl->rgcsh[i] * static_cast<uint32_t>(app.state.rglpshdef[lpfl->iPlayer][i].hul.wtEmpty)));
             }
         }
         for (i = 0; i <= 3; i++) {
@@ -800,10 +800,10 @@ void WriteRtString(APPSESSION &app, char *lpsz) {
             return;
         }
         cOut = 31;
-        if (FCompressUserString(app, lpsz, (char *)&rgb[1], &cOut)) {
+        if (FCompressUserString(app, lpsz, reinterpret_cast<char *>(&rgb[1]), &cOut)) {
             rgb[0] = cOut;
         } else {
-            strcpy((char *)&rgb[1], lpsz);
+            strcpy(reinterpret_cast<char *>(&rgb[1]), lpsz);
             rgb[0] = 0;
             cOut = strlen(lpsz) + 1;
         }
@@ -848,11 +848,11 @@ void WriteBattlePlan(APPSESSION &app, BTLPLAN *lpbtlplan, int16_t fLog) {
         pb = &rgb[4];
         strcpy(szPlanName, lpbtlplan->szName);
         cOut = 31;
-        if (szPlanName[0] != 0 && FCompressUserString(app, szPlanName, (char *)pb + 1, &cOut)) {
+        if (szPlanName[0] != 0 && FCompressUserString(app, szPlanName, reinterpret_cast<char *>(pb) + 1, &cOut)) {
             *pb = cOut;
             pb += 1 + cOut;
         } else {
-            strcpy((char *)pb + 1, szPlanName);
+            strcpy(reinterpret_cast<char *>(pb) + 1, szPlanName);
             *pb = 0;
             pb += 2 + strlen(szPlanName);
         }
@@ -965,7 +965,7 @@ void WriteBOF(APPSESSION &app, int16_t iPlayer, int16_t dt, int16_t fMulti) {
     rtbof.turn = app.state.game.turn;
     rtbof.fCrippled = 0;
     rtbof.iPlayer = iPlayer;
-    rtbof.lSaltTime = (int16_t)(LOWORD(DwTickCount()) + RandomIO().pfnRandom(app, 2000));
+    rtbof.lSaltTime = static_cast<int16_t>((LOWORD(DwTickCount()) + RandomIO().pfnRandom(app, 2000)));
     rtbof.dt = dt;
     rtbof.fDone = app.state.gd.fSubmit;
     rtbof.fInUse = app.state.gd.fHostMode;
@@ -1048,7 +1048,7 @@ int16_t FMarkFile(APPSESSION &app, DtFileType dt, int16_t iPlayer, MdMark mdMark
                     PlvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).SetIdAi(idAiMaid);
                 }
                 PlvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).SetLSalt(~PlvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).lSalt());
-                LSeekFile(app.state.hf, (int16_t)-(app.state.hdrCur.cb + 2), 1);
+                LSeekFile(app.state.hf, static_cast<int16_t>(-(app.state.hdrCur.cb + 2)), 1);
                 SetFileSeeds(app, lSeedSav1, lSeedSav2);
                 RecordIO().pfnWriteRt(app, rtPlr, app.state.hdrCur.cb, app.state.rgbCur);
                 fChange = dt == dtTurn;
@@ -1316,8 +1316,8 @@ void SetVisPFFleets(APPSESSION &app, int16_t iPlr) {
                 }
                 iRadius = GetCachedFleetScannerRange(app, lpfl, &iRadPlanet, &pctDetect, &iSteal);
                 iRadius = 0 <= iRadius ? iRadius : 0;
-                lRadius2 = (uint32_t)(iRadius * iRadius);
-                lRadPlanet2 = (uint32_t)(iRadPlanet * iRadPlanet);
+                lRadius2 = static_cast<uint32_t>((iRadius * iRadius));
+                lRadPlanet2 = static_cast<uint32_t>((iRadPlanet * iRadPlanet));
                 pt = lpfl->pt;
                 for (j = 0; j < app.state.cFleet; j++) {
                     lpfl2 = app.state.rglpfl[j];
@@ -1332,17 +1332,17 @@ void SetVisPFFleets(APPSESSION &app, int16_t iPlr) {
                             if (dx <= iRadius) {
                                 dy = abs(pt.y - lpfl2->pt.y);
                                 if (dy <= iRadius) {
-                                    l = (uint32_t)(dx * dx) + (uint32_t)(dy * dy);
-                                    if ((uint32_t)(dx * dx) + (uint32_t)(dy * dy) <= lRadius2 && (lpfl2->idPlanet == idPlanetDeepSpace || l <= lRadPlanet2)) {
+                                    l = static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy));
+                                    if (static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy)) <= lRadius2 && (lpfl2->idPlanet == idPlanetDeepSpace || l <= lRadPlanet2)) {
                                         pctCloak = PctCloakFromLpfl(app, lpfl2);
                                         if (pctDetect != 100) {
-                                            pctCloak = (int16_t)(pctCloak * pctDetect) / 100;
+                                            pctCloak = static_cast<int16_t>((pctCloak * pctDetect)) / 100;
                                         }
                                         if (pctCloak == 0) {
                                             MarkFleet(app, lpfl2, detSome);
-                                        } else if (l <= (int32_t)(lRadius2 * (int16_t)(100 - pctCloak)) / 100 * (int16_t)(100 - pctCloak) / 100 &&
+                                        } else if (l <= static_cast<int32_t>((lRadius2 * static_cast<int16_t>((100 - pctCloak)))) / 100 * static_cast<int16_t>((100 - pctCloak)) / 100 &&
                                                    (lpfl2->idPlanet == idPlanetDeepSpace ||
-                                                    l <= (int32_t)(lRadPlanet2 * (int16_t)(100 - pctCloak)) / 100 * (int16_t)(100 - pctCloak) / 100)) {
+                                                    l <= static_cast<int32_t>((lRadPlanet2 * static_cast<int16_t>((100 - pctCloak)))) / 100 * static_cast<int16_t>((100 - pctCloak)) / 100)) {
                                             MarkFleet(app, lpfl2, detSome);
                                         }
                                     }
@@ -1364,7 +1364,7 @@ void SetVisPFFleets(APPSESSION &app, int16_t iPlr) {
                                 (lpth->ith() != ithMineralPacket || !lpth->thp().fInclude()) && (lpth->ith() != ithWormhole || !lpth->thw().fInclude())) {
                                 dx = abs(pt.x - lpth->pt().x());
                                 dy = abs(pt.y - lpth->pt().y());
-                                l = (uint32_t)(dx * dx) + (uint32_t)(dy * dy);
+                                l = static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy));
                                 if (l <= lRadius2 || lpth->ith() == ithMinefield) {
                                     if (lpth->ith() == ithMineralPacket) {
                                         lpth->thp().SetFInclude(1);
@@ -1377,13 +1377,13 @@ void SetVisPFFleets(APPSESSION &app, int16_t iPlr) {
                                         lpth->tht().SetFInclude(1);
 
                                     } else if (lpth->ith() == ithWormhole) {
-                                        if (!(lpth->thw().grbitPlr() & grbitPlr) && l > (int32_t)(lRadius2 >> 4) && l > lRadPlanet2)
+                                        if (!(lpth->thw().grbitPlr() & grbitPlr) && l > static_cast<int32_t>((lRadius2 >> 4)) && l > lRadPlanet2)
                                             continue;
                                         lpth->thw().SetGrbitPlr(lpth->thw().grbitPlr() | grbitPlr);
                                         lpth->thw().SetFInclude(1);
 
                                     } else {
-                                        if (((lpth->thm().grbitPlr() & grbitPlr) && l <= lRadius2) || l <= lRadPlanet2 || l <= (int32_t)(lRadius2 >> 4) ||
+                                        if (((lpth->thm().grbitPlr() & grbitPlr) && l <= lRadius2) || l <= lRadPlanet2 || l <= static_cast<int32_t>((lRadius2 >> 4)) ||
                                             l <= lpth->thm().cMines()) {
                                             lpth->thm().SetGrbitPlr(lpth->thm().grbitPlr() | grbitPlr);
                                             lpth->thm().SetGrbitPlrNow(lpth->thm().grbitPlrNow() | grbitPlr);
@@ -1400,7 +1400,7 @@ void SetVisPFFleets(APPSESSION &app, int16_t iPlr) {
                 }
                 if (iRadPlanet > 0) {
                     iRadius = iRadPlanet;
-                    lRadius2 = (uint32_t)(iRadius * iRadius);
+                    lRadius2 = static_cast<uint32_t>((iRadius * iRadius));
                     pt = lpfl->pt;
                     lppl = app.state.lpPlanets;
                     lpplMac = app.state.lpPlanets + app.state.cPlanet;
@@ -1410,13 +1410,13 @@ void SetVisPFFleets(APPSESSION &app, int16_t iPlr) {
                             if (dx <= iRadius) {
                                 dy = abs(app.state.rgptPlan[lppl->id].y - pt.y);
                                 if (dy <= iRadius) {
-                                    d2 = (uint32_t)(dx * dx) + (uint32_t)(dy * dy);
-                                    if ((uint32_t)(dx * dx) + (uint32_t)(dy * dy) <= lRadius2) {
+                                    d2 = static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy));
+                                    if (static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy)) <= lRadius2) {
                                         if (!lppl->fStarbase || lppl->iPlayer == iplrNone)
                                             goto LMark101;
 
                                         lVis2 = app.state.rglpshdefSB[lppl->iPlayer][lppl->isb].lVisible();
-                                        if (lVis2 < 10000 && d2 > (int32_t)((int64_t)lRadius2 * lVis2 / 10000)) {
+                                        if (lVis2 < 10000 && d2 > static_cast<int32_t>((static_cast<int64_t>(lRadius2) * lVis2 / 10000))) {
                                             MarkPlanet(app, lppl, iPlr, detObscure);
                                             continue;
                                         }
@@ -1481,8 +1481,8 @@ void SetVisPFPlanets(APPSESSION &app, int16_t iPlr) {
     for (; lppl < lpplMac; lppl++) {
         if (lppl->iPlayer == iPlr) {
             iRadius = GetPlanetScannerRange(app, lppl, &iRadPlanet);
-            lRadius2 = (uint32_t)(iRadius * iRadius);
-            lRadPlanet2 = (uint32_t)(iRadPlanet * iRadPlanet);
+            lRadius2 = static_cast<uint32_t>((iRadius * iRadius));
+            lRadPlanet2 = static_cast<uint32_t>((iRadPlanet * iRadPlanet));
             pt = app.state.rgptPlan[lppl->id];
             for (j = 0; j < app.state.cFleet; j++) {
                 lpfl2 = app.state.rglpfl[j];
@@ -1493,14 +1493,14 @@ void SetVisPFPlanets(APPSESSION &app, int16_t iPlr) {
                     if (dx <= iRadius) {
                         dy = abs(pt.y - lpfl2->pt.y);
                         if (dy <= iRadius) {
-                            l = (uint32_t)(dx * dx) + (uint32_t)(dy * dy);
-                            if ((uint32_t)(dx * dx) + (uint32_t)(dy * dy) <= lRadius2 && (lpfl2->idPlanet == idPlanetDeepSpace || l <= lRadPlanet2)) {
+                            l = static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy));
+                            if (static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy)) <= lRadius2 && (lpfl2->idPlanet == idPlanetDeepSpace || l <= lRadPlanet2)) {
                                 pctCloak = PctCloakFromLpfl(app, lpfl2);
                                 if (pctCloak == 0) {
                                     MarkFleet(app, lpfl2, detSome);
-                                } else if (l <= (int32_t)(lRadius2 * (int16_t)(100 - pctCloak)) / 100 * (int16_t)(100 - pctCloak) / 100 &&
+                                } else if (l <= static_cast<int32_t>((lRadius2 * static_cast<int16_t>((100 - pctCloak)))) / 100 * static_cast<int16_t>((100 - pctCloak)) / 100 &&
                                            (lpfl2->idPlanet == idPlanetDeepSpace ||
-                                            l <= (int32_t)(lRadPlanet2 * (int16_t)(100 - pctCloak)) / 100 * (int16_t)(100 - pctCloak) / 100)) {
+                                            l <= static_cast<int32_t>((lRadPlanet2 * static_cast<int16_t>((100 - pctCloak)))) / 100 * static_cast<int16_t>((100 - pctCloak)) / 100)) {
                                     MarkFleet(app, lpfl2, detSome);
                                 }
                             }
@@ -1518,8 +1518,8 @@ void SetVisPFPlanets(APPSESSION &app, int16_t iPlr) {
     for (; lppl < lpplMac; lppl++) {
         if (lppl->iPlayer == iPlr) {
             iRadius = GetPlanetScannerRange(app, lppl, &iRadPlanet);
-            lRadius2 = (uint32_t)(iRadius * iRadius);
-            lRadPlanet2 = (uint32_t)(iRadPlanet * iRadPlanet);
+            lRadius2 = static_cast<uint32_t>((iRadius * iRadius));
+            lRadPlanet2 = static_cast<uint32_t>((iRadPlanet * iRadPlanet));
             pt = app.state.rgptPlan[lppl->id];
             lpth = app.state.lpThings;
             lpthMac = app.state.lpThings + app.state.cThing;
@@ -1536,8 +1536,8 @@ void SetVisPFPlanets(APPSESSION &app, int16_t iPlr) {
                             if (dx <= iRadius) {
                                 dy = abs(pt.y - lpth->pt().y());
                                 if (dy <= iRadius) {
-                                    l = (uint32_t)(dx * dx) + (uint32_t)(dy * dy);
-                                    if ((uint32_t)(dx * dx) + (uint32_t)(dy * dy) <= lRadius2) {
+                                    l = static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy));
+                                    if (static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy)) <= lRadius2) {
                                         if (lpth->ith() == ithMineralPacket) {
                                             lpth->thp().SetFInclude(1);
                                         LThIncPlr2:
@@ -1549,13 +1549,13 @@ void SetVisPFPlanets(APPSESSION &app, int16_t iPlr) {
                                             lpth->tht().SetFInclude(1);
 
                                         } else if (lpth->ith() == ithWormhole) {
-                                            if (!(lpth->thw().grbitPlr() & grbitPlr) && l > (int32_t)(lRadius2 >> 4) && l > lRadPlanet2)
+                                            if (!(lpth->thw().grbitPlr() & grbitPlr) && l > static_cast<int32_t>((lRadius2 >> 4)) && l > lRadPlanet2)
                                                 continue;
                                             lpth->thw().SetGrbitPlr(lpth->thw().grbitPlr() | grbitPlr);
                                             lpth->thw().SetFInclude(1);
 
                                         } else {
-                                            if ((lpth->thm().grbitPlr() & grbitPlr) || l <= lRadPlanet2 || l <= (int32_t)(lRadius2 >> 4)) {
+                                            if ((lpth->thm().grbitPlr() & grbitPlr) || l <= lRadPlanet2 || l <= static_cast<int32_t>((lRadius2 >> 4))) {
                                                 lpth->thm().SetGrbitPlr(lpth->thm().grbitPlr() | grbitPlr);
                                                 lpth->thm().SetGrbitPlrNow(lpth->thm().grbitPlrNow() | grbitPlr);
                                                 goto LThIncPlr2;
@@ -1578,12 +1578,12 @@ void SetVisPFPlanets(APPSESSION &app, int16_t iPlr) {
     for (; lppl < lpplMac; lppl++) {
         if (lppl->iPlayer == iPlr) {
             iRadius = GetPlanetScannerRange(app, lppl, &iRadPlanet);
-            lRadius2 = (uint32_t)(iRadius * iRadius);
-            lRadPlanet2 = (uint32_t)(iRadPlanet * iRadPlanet);
+            lRadius2 = static_cast<uint32_t>((iRadius * iRadius));
+            lRadPlanet2 = static_cast<uint32_t>((iRadPlanet * iRadPlanet));
             pt = app.state.rgptPlan[lppl->id];
             if (fStargateView && lppl->fStarbase && rgStargateRange[lppl->isb] > 0) {
                 iRadius = rgStargateRange[lppl->isb];
-                lRadius2 = (uint32_t)(iRadius * iRadius);
+                lRadius2 = static_cast<uint32_t>((iRadius * iRadius));
                 lppl2 = app.state.lpPlanets;
                 lpplMac2 = app.state.lpPlanets + app.state.cPlanet;
                 for (; lppl2 < lpplMac2; lppl2++) {
@@ -1597,11 +1597,11 @@ void SetVisPFPlanets(APPSESSION &app, int16_t iPlr) {
                         dy = abs(app.state.rgptPlan[lppl2->id].y - pt.y);
                         if (dy > iRadius)
                             continue;
-                        d2 = (uint32_t)(dx * dx) + (uint32_t)(dy * dy);
-                        if ((uint32_t)(dx * dx) + (uint32_t)(dy * dy) > lRadius2)
+                        d2 = static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy));
+                        if (static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy)) > lRadius2)
                             continue;
                         lVis2 = app.state.rglpshdefSB[lppl2->iPlayer][lppl2->isb].lVisible();
-                        if (lVis2 < 10000 && d2 > (int32_t)((int64_t)lRadius2 * lVis2 / 10000))
+                        if (lVis2 < 10000 && d2 > static_cast<int32_t>((static_cast<int64_t>(lRadius2) * lVis2 / 10000)))
                             continue;
 
                     LMarkStargate:
@@ -1619,8 +1619,8 @@ void SetVisPFPlanets(APPSESSION &app, int16_t iPlr) {
     for (; lppl < lpplMac; lppl++) {
         if (lppl->iPlayer == iPlr) {
             iRadius = GetPlanetScannerRange(app, lppl, &iRadPlanet);
-            lRadius2 = (uint32_t)(iRadius * iRadius);
-            lRadPlanet2 = (uint32_t)(iRadPlanet * iRadPlanet);
+            lRadius2 = static_cast<uint32_t>((iRadius * iRadius));
+            lRadPlanet2 = static_cast<uint32_t>((iRadPlanet * iRadPlanet));
             pt = app.state.rgptPlan[lppl->id];
             if (iRadPlanet > 0) {
                 iRadius = iRadPlanet;
@@ -1633,13 +1633,13 @@ void SetVisPFPlanets(APPSESSION &app, int16_t iPlr) {
                         if (dx <= iRadius) {
                             dy = abs(app.state.rgptPlan[lppl2->id].y - pt.y);
                             if (dy <= iRadius) {
-                                d2 = (uint32_t)(dx * dx) + (uint32_t)(dy * dy);
-                                if ((uint32_t)(dx * dx) + (uint32_t)(dy * dy) <= lRadius2) {
+                                d2 = static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy));
+                                if (static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy)) <= lRadius2) {
                                     if (!lppl2->fStarbase || lppl2->iPlayer == iplrNone)
                                         goto LMark102;
 
                                     lVis2 = app.state.rglpshdefSB[lppl2->iPlayer][lppl2->isb].lVisible();
-                                    if (lVis2 < 10000 && d2 > (int32_t)((int64_t)lRadius2 * lVis2 / 10000)) {
+                                    if (lVis2 < 10000 && d2 > static_cast<int32_t>((static_cast<int64_t>(lRadius2) * lVis2 / 10000))) {
                                         MarkPlanet(app, lppl2, iPlr, detObscure);
                                         continue;
                                     }
@@ -1686,7 +1686,7 @@ void SetVisPFThings(APPSESSION &app, int16_t iPlr) {
                 lpth->thp().SetFInclude(1);
                 iRadius = lpth->thp().iWarp() + 4;
                 iRadius *= iRadius;
-                lRadius2 = (uint32_t)(iRadius * iRadius);
+                lRadius2 = static_cast<uint32_t>((iRadius * iRadius));
                 pt = lpth->pt();
                 for (j = 0; j < app.state.cFleet; j++) {
                     lpfl2 = app.state.rglpfl[j];
@@ -1697,12 +1697,12 @@ void SetVisPFThings(APPSESSION &app, int16_t iPlr) {
                         if (dx <= iRadius) {
                             dy = abs(pt.y - lpfl2->pt.y);
                             if (dy <= iRadius) {
-                                l = (uint32_t)(dx * dx) + (uint32_t)(dy * dy);
-                                if ((uint32_t)(dx * dx) + (uint32_t)(dy * dy) <= lRadius2) {
+                                l = static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy));
+                                if (static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy)) <= lRadius2) {
                                     pctCloak = PctCloakFromLpfl(app, lpfl2);
                                     if (pctCloak == 0) {
                                         MarkFleet(app, lpfl2, detSome);
-                                    } else if (l <= (int32_t)(lRadius2 * (int16_t)(100 - pctCloak)) / 100 * (int16_t)(100 - pctCloak) / 100) {
+                                    } else if (l <= static_cast<int32_t>((lRadius2 * static_cast<int16_t>((100 - pctCloak)))) / 100 * static_cast<int16_t>((100 - pctCloak)) / 100) {
                                         MarkFleet(app, lpfl2, detSome);
                                     }
                                 }
@@ -1726,8 +1726,8 @@ void SetVisPFThings(APPSESSION &app, int16_t iPlr) {
                                 if (dx <= iRadius) {
                                     dy = abs(pt.y - lpth2->pt().y());
                                     if (dy <= iRadius) {
-                                        l = (uint32_t)(dx * dx) + (uint32_t)(dy * dy);
-                                        if ((uint32_t)(dx * dx) + (uint32_t)(dy * dy) <= lRadius2) {
+                                        l = static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy));
+                                        if (static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy)) <= lRadius2) {
                                             if (lpth2->ith() == ithMineralPacket) {
                                                 lpth2->thp().SetFInclude(1);
                                             LThIncPlr3:
@@ -1764,13 +1764,13 @@ void SetVisPFThings(APPSESSION &app, int16_t iPlr) {
                         if (dx <= iRadius) {
                             dy = abs(app.state.rgptPlan[lppl2->id].y - pt.y);
                             if (dy <= iRadius) {
-                                d2 = (uint32_t)(dx * dx) + (uint32_t)(dy * dy);
-                                if ((uint32_t)(dx * dx) + (uint32_t)(dy * dy) <= lRadius2) {
+                                d2 = static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy));
+                                if (static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy)) <= lRadius2) {
                                     if (!lppl2->fStarbase || lppl2->iPlayer == iplrNone)
                                         goto LMark103;
 
                                     lVis2 = app.state.rglpshdefSB[lppl2->iPlayer][lppl2->isb].lVisible();
-                                    if (lVis2 < 10000 && d2 > (int32_t)((int64_t)lRadius2 * lVis2 / 10000)) {
+                                    if (lVis2 < 10000 && d2 > static_cast<int32_t>((static_cast<int64_t>(lRadius2) * lVis2 / 10000))) {
                                         MarkPlanet(app, lppl2, iPlr, detObscure);
                                         continue;
                                     }
@@ -1800,8 +1800,8 @@ void SetVisPFThings(APPSESSION &app, int16_t iPlr) {
                         if (dx <= lRadius2) {
                             dy = abs(pt.y - lpfl2->pt.y);
                             if (dy <= lRadius2) {
-                                l = (uint32_t)(dx * dx) + (uint32_t)(dy * dy);
-                                if ((uint32_t)(dx * dx) + (uint32_t)(dy * dy) <= lRadius2) {
+                                l = static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy));
+                                if (static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy)) <= lRadius2) {
                                     pctCloak = PctCloakFromLpfl(app, lpfl2);
                                     if (pctCloak == 0 || RandomIO().pfnRandom(app, 100) >= pctCloak) {
                                         MarkFleet(app, lpfl2, detSome);

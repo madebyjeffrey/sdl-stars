@@ -24,7 +24,7 @@ INT_PTR  RandomSeedDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         return 1;
     case win32::WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        win32::FillRect((HDC)wParam, &rc, app.lpui->hbrButtonFace);
+        win32::FillRect(reinterpret_cast<HDC>(wParam), &rc, app.lpui->hbrButtonFace);
         return 1;
     case win32::WM_CTLCOLORMSGBOX:
     case win32::WM_CTLCOLOREDIT:
@@ -34,8 +34,8 @@ INT_PTR  RandomSeedDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     case win32::WM_CTLCOLORSCROLLBAR:
     case win32::WM_CTLCOLORSTATIC:
         if (message == win32::WM_CTLCOLORSTATIC) {
-            win32::SetBkColor((HDC)wParam, app.lpui->crButtonFace);
-            return (INT_PTR)app.lpui->hbrButtonFace;
+            win32::SetBkColor(reinterpret_cast<HDC>(wParam), app.lpui->crButtonFace);
+            return reinterpret_cast<INT_PTR>(app.lpui->hbrButtonFace);
         }
         break;
     case win32::WM_COMMAND:
@@ -45,7 +45,7 @@ INT_PTR  RandomSeedDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 pch = szValue;
                 dw = 0;
                 for (; isdigit(*pch) != 0; pch++) {
-                    dw = (uint32_t)(dw * 10) + (int16_t)(*pch - '0');
+                    dw = static_cast<uint32_t>((dw * 10)) + static_cast<int16_t>((*pch - '0'));
                 }
                 if (dw == 0) {
                     return 1;
@@ -186,8 +186,8 @@ void RcCtrTextOut(APPSESSION &app, HDC hdc, RECT *prc, const char *psz, int16_t 
         cLen = win32::lstrlenA(psz);
     }
     l = GetTextExtent(hdc, psz, cLen);
-    x = (int16_t)(prc->right - prc->left - LOWORD(l)) / 2 + prc->left;
-    y = (int16_t)(prc->bottom - prc->top - HIWORD(l)) / 2 + prc->top;
+    x = static_cast<int16_t>((prc->right - prc->left - LOWORD(l))) / 2 + prc->left;
+    y = static_cast<int16_t>((prc->bottom - prc->top - HIWORD(l))) / 2 + prc->top;
     win32::TextOutA(hdc, x, y, psz, cLen);
     return;
 }
@@ -250,7 +250,7 @@ void DiaganolTextOut(APPSESSION &app, HDC hdc, RECT *prc, const char *psz, int16
     dx = prc->right - prc->left;
     dy = prc->bottom - prc->top;
     if (dx >= 10 && dy >= 10) {
-        plf = (LOGFONT *)win32::LocalAlloc(64, sizeof(LOGFONT));
+        plf = static_cast<LOGFONT *>(win32::LocalAlloc(64, sizeof(LOGFONT)));
         plfOwner.reset(plf);
         plf->lfWeight = 900;
         strcpy(plf->lfFaceName, app.lpui->rgszArial[1]);
@@ -261,21 +261,21 @@ void DiaganolTextOut(APPSESSION &app, HDC hdc, RECT *prc, const char *psz, int16
 
         dyEstFont = win32::MulDiv(111, -plf->lfHeight, 100);
         if (dy < dyEstFont) {
-            plf->lfHeight += 2 <= (int16_t)(dyEstFont - dy) / 2 ? (int16_t)(dyEstFont - dy) / 2 : 2;
+            plf->lfHeight += 2 <= static_cast<int16_t>((dyEstFont - dy)) / 2 ? static_cast<int16_t>((dyEstFont - dy)) / 2 : 2;
             goto TryAgain;
         }
-        angle = (double)atan2((double)(int16_t)(dy - dyEstFont), (double)dx);
-        rotate = (double)((double)angle / 3.141592654 * 1800.0 + 0.5);
-        plf->lfEscapement = LOWORD((int32_t)rotate);
+        angle = static_cast<double>(atan2(static_cast<double>(static_cast<int16_t>((dy - dyEstFont))), static_cast<double>(dx)));
+        rotate = static_cast<double>((static_cast<double>(angle) / 3.141592654 * 1800.0 + 0.5));
+        plf->lfEscapement = LOWORD(static_cast<int32_t>(rotate));
         hfont = win32::CreateFontIndirectA(plf);
-        hfontSav = (HFONT)win32::SelectObject(hdc, hfont);
+        hfontSav = static_cast<HFONT>(win32::SelectObject(hdc, hfont));
         l = GetTextExtent(hdc, psz, cLen);
         dxText = LOWORD(l);
         dyText = HIWORD(l);
-        dsin = (double)sin(angle);
-        dcos = (double)cos(angle);
-        dxFlat = LOWORD((int32_t)((double)dcos * dxText + (double)dsin * dyText));
-        dyFlat = LOWORD((int32_t)((double)dsin * dxText + (double)dcos * dyText));
+        dsin = static_cast<double>(sin(angle));
+        dcos = static_cast<double>(cos(angle));
+        dxFlat = LOWORD(static_cast<int32_t>((static_cast<double>(dcos) * dxText + static_cast<double>(dsin) * dyText)));
+        dyFlat = LOWORD(static_cast<int32_t>((static_cast<double>(dsin) * dxText + static_cast<double>(dcos) * dyText)));
         if (dxFlat + 8 > dx || dyFlat + 8 > dy) {
             win32::SelectObject(hdc, hfontSav);
             win32::DeleteObject(hfont);
@@ -294,8 +294,8 @@ void DiaganolTextOut(APPSESSION &app, HDC hdc, RECT *prc, const char *psz, int16
             plf->lfHeight += (((2) > (StarsMax(dHtX, dHtY) - plf->lfHeight)) ? (2) : (StarsMax(dHtX, dHtY) - plf->lfHeight)) + 1;
             goto TryAgain;
         }
-        xStart = (int16_t)(dx - dxFlat) / 2 + prc->left;
-        yStart = prc->bottom - (int16_t)(dy - dyFlat) / 2 - LOWORD((int32_t)((double)dcos * dyText));
+        xStart = static_cast<int16_t>((dx - dxFlat)) / 2 + prc->left;
+        yStart = prc->bottom - static_cast<int16_t>((dy - dyFlat)) / 2 - LOWORD(static_cast<int32_t>((static_cast<double>(dcos) * dyText)));
         win32::TextOutA(hdc, xStart, yStart, psz, cLen);
         win32::SelectObject(hdc, hfontSav);
         win32::DeleteObject(hfont);
@@ -372,16 +372,16 @@ int32_t LDrawGauge(APPSESSION &app, HDC hdc, RECT *prc, int16_t cSegs, int32_t *
 
     fHuge = cTot >= 10000000;
     if (fHuge) {
-        cTot = (int32_t)(cTot / 1000);
+        cTot = static_cast<int32_t>((cTot / 1000));
     }
-    dx = (int16_t)(rc.right - rc.left);
+    dx = static_cast<int16_t>((rc.right - rc.left));
     for (i = 0; i < cSegs; i++) {
         if (!fHuge) {
             lSum += rgSize[i];
         } else {
-            lSum += (int32_t)(rgSize[i] / 1000);
+            lSum += static_cast<int32_t>((rgSize[i] / 1000));
         }
-        rc.right = prc->left + 1 + LOWORD((int32_t)((int32_t)(dx * lSum) / cTot));
+        rc.right = prc->left + 1 + LOWORD(static_cast<int32_t>((static_cast<int32_t>((dx * lSum)) / cTot)));
         if (rc.right > rc.left) {
             win32::FillRect(hdc, &rc, rghbr[i]);
         }
@@ -394,7 +394,7 @@ FinRet:
         win32::FillRect(hdc, &rc, app.lpui->hbrButtonFace);
     }
     if (fHuge) {
-        lSum = (uint32_t)(lSum * 1000);
+        lSum = static_cast<uint32_t>((lSum * 1000));
     }
     return lSum;
 }
@@ -408,7 +408,7 @@ void _Draw3dFrame(APPSESSION &app, HDC hdc, RECT *prc, int16_t fErase) {
     rc = *prc;
     dx = prc->right - prc->left;
     dy = prc->bottom - prc->top;
-    hbrSav = (HBRUSH)win32::SelectObject(hdc, app.lpui->hbrButtonHilite);
+    hbrSav = static_cast<HBRUSH>(win32::SelectObject(hdc, app.lpui->hbrButtonHilite));
     if (fErase == -1 || fErase == -2) {
         win32::PatBlt(hdc, rc.left, rc.bottom, dx + 1, 1, win32::PATCOPY);
         win32::PatBlt(hdc, rc.right, rc.top, 1, dy, win32::PATCOPY);
@@ -461,7 +461,7 @@ int16_t FTrackBtn(APPSESSION &app, BTNT *pbtnt) {
     if (pbtnt->fFirst) {
         win32::SetCapture(pbtnt->hwnd);
         DrawBtn(app, pbtnt->hdc, &pbtnt->rc, pbtnt->btf, pbtnt->fDown ^ pbtnt->fInitDown, pbtnt->szText);
-        pbtnt->lTicks = win32::GetTickCount() + (int16_t)(3 * pbtnt->dTimer);
+        pbtnt->lTicks = win32::GetTickCount() + static_cast<int16_t>((3 * pbtnt->dTimer));
         pbtnt->fFirst = 0;
         return 1;
     }
@@ -520,14 +520,14 @@ void DrawBtn(APPSESSION &app, HDC hdc, RECT *prc, int16_t bt, int16_t fDown, con
     prc = &rcButton;
     fDisabled = bt & 4;
     rc = *prc;
-    hbrSav = (HBRUSH)win32::SelectObject(hdc, app.lpui->hbrWindowFrame);
+    hbrSav = static_cast<HBRUSH>(win32::SelectObject(hdc, app.lpui->hbrWindowFrame));
     if (!(bt & 0x40)) {
         win32::FrameRect(hdc, &rc, app.lpui->hbrWindowFrame);
         ExpandRc(&rc, -1, -1);
     }
     dx = rc.right - rc.left - 1;
     dy = rc.bottom - rc.top - 1;
-    dxFace = (int16_t)(prc->right - prc->left) - 5;
+    dxFace = static_cast<int16_t>((prc->right - prc->left)) - 5;
     win32::SelectObject(hdc, !fDown ? app.lpui->hbrButtonHilite : app.lpui->hbrButtonShadow);
     win32::PatBlt(hdc, rc.left, rc.top, dx, 1, win32::PATCOPY);
     win32::PatBlt(hdc, rc.left, rc.top, 1, dy, win32::PATCOPY);
@@ -569,14 +569,14 @@ void DrawBtn(APPSESSION &app, HDC hdc, RECT *prc, int16_t bt, int16_t fDown, con
         }
         for (ipt = 0; ipt < cpt; ipt++) {
             if (rgptDraw[ipt].x >= 0) {
-                rgptDraw[ipt].x = LOWORD((int32_t)(rgptDraw[ipt].x * dxFace) / 11);
+                rgptDraw[ipt].x = LOWORD(static_cast<int32_t>((rgptDraw[ipt].x * dxFace)) / 11);
             } else {
                 rgptDraw[ipt].x = rgptDraw[0].x * 2 - rgptDraw[-rgptDraw[ipt].x].x;
             }
-            rgptDraw[ipt].y = LOWORD((int32_t)(rgptDraw[ipt].y * dxFace) / 11);
+            rgptDraw[ipt].y = LOWORD(static_cast<int32_t>((rgptDraw[ipt].y * dxFace)) / 11);
         }
-        dx = LOWORD((int32_t)(dx * dxFace) / 11);
-        dy = LOWORD((int32_t)(dy * dxFace) / 11);
+        dx = LOWORD(static_cast<int32_t>((dx * dxFace)) / 11);
+        dy = LOWORD(static_cast<int32_t>((dy * dxFace)) / 11);
         dxOffset = ((prc->right - prc->left - dx) >> 1) + fDown;
         dyOffset = ((prc->bottom - prc->top - dy) >> 1) + fDown;
         if (bt == 2 || bt == 3) {
@@ -649,7 +649,7 @@ void DrawBtn(APPSESSION &app, HDC hdc, RECT *prc, int16_t bt, int16_t fDown, con
     }
     win32::SelectObject(hdc, hbrSav);
     if (szText) {
-        hfontSav = (HFONT)win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
+        hfontSav = static_cast<HFONT>(win32::SelectObject(hdc, app.lpui->rghfontArial8[1]));
         bkMode = win32::SetBkMode(hdc, win32::TRANSPARENT);
         crSav = win32::SetTextColor(hdc, !fDisabled ? app.lpui->crButtonText : app.lpui->crButtonHilite);
         rc = *prc;
@@ -710,7 +710,7 @@ void DrawFuzzyBorder(APPSESSION &app, HDC hdc, RECT *prc) {
 
     crBack = win32::SetBkColor(hdc, app.lpui->crButtonFace);
     crFore = win32::SetTextColor(hdc, app.lpui->crWindowText);
-    hbrSav = (HBRUSH)win32::SelectObject(hdc, app.lpui->hbr50Screen);
+    hbrSav = static_cast<HBRUSH>(win32::SelectObject(hdc, app.lpui->hbr50Screen));
     dx = prc->right - prc->left;
     dy = prc->bottom - prc->top;
     win32::PatBlt(hdc, prc->left, prc->top, dx, 2, win32::PATINVERT);
@@ -732,10 +732,10 @@ int16_t FStringFitsScreen(APPSESSION &app, char *lpsz, int16_t dxMax) {
     fFit = 1;
     hdc = win32::GetDC(app.lpui->hwndFrame);
     c = strlen(lpsz);
-    hfontSav = (HFONT)win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
-    while (c > 0 && LOWORD(GetTextExtent(hdc, lpsz, c)) > (uint16_t)dxMax) {
+    hfontSav = static_cast<HFONT>(win32::SelectObject(hdc, app.lpui->rghfontArial8[0]));
+    while (c > 0 && LOWORD(GetTextExtent(hdc, lpsz, c)) > static_cast<uint16_t>(dxMax)) {
         fFit = 0;
-        c = (int16_t)CchUtf8Prefix(lpsz, c - 1);
+        c = static_cast<int16_t>(CchUtf8Prefix(lpsz, c - 1));
         lpsz[c] = 0;
     }
     win32::SelectObject(hdc, hfontSav);
@@ -831,17 +831,17 @@ HPALETTE HpalFromDib(HGLOBAL hdib) {
     BITMAPINFOHEADER *lpbi;
     LOGPALETTE       *ppal;
 
-    lpb = (char *)win32::LockResource(hdib);
+    lpb = static_cast<char *>(win32::LockResource(hdib));
     if (!lpb) {
         return nullptr;
     }
-    lpbi = (BITMAPINFOHEADER *)lpb;
+    lpbi = reinterpret_cast<BITMAPINFOHEADER *>(lpb);
     cColors = DibNumColors(lpbi);
     if (cColors > 256) {
         win32::GlobalUnlock(hdib);
         return nullptr;
     }
-    ppal = (LOGPALETTE *)win32::LocalAlloc(64, cColors * 4 + 8);
+    ppal = static_cast<LOGPALETTE *>(win32::LocalAlloc(64, cColors * 4 + 8));
     ppalOwner.reset(ppal);
     ppal->palNumEntries = cColors;
     ppal->palVersion = 768;
@@ -865,7 +865,7 @@ HPALETTE HpalBlackReserved() {
     LOGPALETTE *ppal;
 
     cColors = 256;
-    ppal = (LOGPALETTE *)win32::LocalAlloc(64, cColors * 4 + 8);
+    ppal = static_cast<LOGPALETTE *>(win32::LocalAlloc(64, cColors * 4 + 8));
     ppalOwner.reset(ppal);
     ppal->palNumEntries = cColors;
     ppal->palVersion = 768;
@@ -884,7 +884,7 @@ uint16_t PaletteSize(void *pv) {
     uint16_t          NumColors;
     BITMAPINFOHEADER *lpbi;
 
-    lpbi = (BITMAPINFOHEADER *)pv;
+    lpbi = static_cast<BITMAPINFOHEADER *>(pv);
     NumColors = DibNumColors(lpbi);
     if (RawLoad32(lpbi) == 12) {
         return 3 * NumColors;
@@ -899,12 +899,12 @@ int16_t DibBlt(HDC hdc, int16_t x0, int16_t y0, int16_t dx, int16_t dy, HGLOBAL 
     if (!hdib) {
         return win32::PatBlt(hdc, x0, y0, dx, dy, rop);
     }
-    lpbi = (BITMAPINFOHEADER *)win32::GlobalLock(hdib);
+    lpbi = static_cast<BITMAPINFOHEADER *>(win32::GlobalLock(hdib));
     if (!lpbi) {
         return 0;
     }
-    pBuf = (char *)lpbi + LOWORD(RawLoad32(lpbi)) + PaletteSize(lpbi);
-    win32::StretchDIBits(hdc, x0, y0, dx, dy, x1, y1, dxSrc, dySrc, pBuf, (LPBITMAPINFO)lpbi, 0, rop);
+    pBuf = reinterpret_cast<char *>(lpbi) + LOWORD(RawLoad32(lpbi)) + PaletteSize(lpbi);
+    win32::StretchDIBits(hdc, x0, y0, dx, dy, x1, y1, dxSrc, dySrc, pBuf, reinterpret_cast<LPBITMAPINFO>(lpbi), 0, rop);
     win32::GlobalUnlock(hdib);
     return 1;
 }
@@ -932,7 +932,7 @@ HGLOBAL DibFromBitmap(HBITMAP hbm, uint32_t biStyle, uint16_t biBits, HPALETTE h
         return nullptr;
     }
     if (!hpal) {
-        hpal = (HPALETTE)win32::GetStockObject(win32::DEFAULT_PALETTE);
+        hpal = static_cast<HPALETTE>(win32::GetStockObject(win32::DEFAULT_PALETTE));
     }
     win32::GetObjectA(hbm, sizeof(bm), &bm);
     if (biBits == 0) {
@@ -949,7 +949,7 @@ HGLOBAL DibFromBitmap(HBITMAP hbm, uint32_t biStyle, uint16_t biBits, HPALETTE h
     bi.biYPelsPerMeter = 0;
     bi.biClrUsed = 0;
     bi.biClrImportant = 0;
-    dwLen = (uint32_t)PaletteSize(&bi) + bi.biSize;
+    dwLen = static_cast<uint32_t>(PaletteSize(&bi)) + bi.biSize;
     hdc = win32::GetDC(nullptr);
     hpal = win32::SelectPalette(hdc, hpal, 0);
     win32::RealizePalette(hdc);
@@ -958,25 +958,25 @@ HGLOBAL DibFromBitmap(HBITMAP hbm, uint32_t biStyle, uint16_t biBits, HPALETTE h
     if (!hdib) {
         return nullptr;
     }
-    lpbi = (BITMAPINFOHEADER *)win32::GlobalLock(hdib); fLocked = lpbi != nullptr;
+    lpbi = static_cast<BITMAPINFOHEADER *>(win32::GlobalLock(hdib)); fLocked = lpbi != nullptr;
     *lpbi = bi;
-    win32::GetDIBits(hdc, hbm, 0, LOWORD(bi.biHeight), nullptr, (BITMAPINFO *)lpbi, 0);
+    win32::GetDIBits(hdc, hbm, 0, LOWORD(bi.biHeight), nullptr, reinterpret_cast<BITMAPINFO *>(lpbi), 0);
     bi = *lpbi;
     win32::GlobalUnlock(hdib); fLocked = false;
     if (bi.biSizeImage == 0) {
-        bi.biSizeImage = (uint32_t)((int32_t)((uint32_t)(((uint32_t)(bm.bmWidth * (uint32_t)biBits) + 31) / 32) * 4) * bm.bmHeight);
+        bi.biSizeImage = static_cast<uint32_t>((static_cast<int32_t>((static_cast<uint32_t>(((static_cast<uint32_t>((bm.bmWidth * static_cast<uint32_t>(biBits))) + 31) / 32)) * 4)) * bm.bmHeight));
         if (biStyle != 0) {
-            bi.biSizeImage = (uint32_t)((uint32_t)(bi.biSizeImage * 3) / 2);
+            bi.biSizeImage = static_cast<uint32_t>((static_cast<uint32_t>((bi.biSizeImage * 3)) / 2));
         }
     }
-    dwLen = (uint32_t)PaletteSize(&bi) + bi.biSize + bi.biSizeImage;
+    dwLen = static_cast<uint32_t>(PaletteSize(&bi)) + bi.biSize + bi.biSizeImage;
     h = win32::GlobalReAlloc(hdib, dwLen, 0);
     if (h) {
         dib.release();
         hdib = h;
         dib.reset(hdib);
-        lpbi = (BITMAPINFOHEADER *)win32::GlobalLock(hdib); fLocked = lpbi != nullptr;
-        if (win32::GetDIBits(hdc, hbm, 0, LOWORD(bi.biHeight), (uint8_t *)lpbi + LOWORD(lpbi->biSize) + PaletteSize(lpbi), (BITMAPINFO *)lpbi, 0) == 0) {
+        lpbi = static_cast<BITMAPINFOHEADER *>(win32::GlobalLock(hdib)); fLocked = lpbi != nullptr;
+        if (win32::GetDIBits(hdc, hbm, 0, LOWORD(bi.biHeight), reinterpret_cast<uint8_t *>(lpbi) + LOWORD(lpbi->biSize) + PaletteSize(lpbi), reinterpret_cast<BITMAPINFO *>(lpbi), 0) == 0) {
             win32::GlobalUnlock(hdib); fLocked = false;
             return nullptr;
         }
@@ -1005,7 +1005,7 @@ HGLOBAL HdibLoadBigResource(APPSESSION &app, BitmapId idb) {
     if (!hres) {
         return nullptr;
     }
-    lpstr = (char *)win32::LockResource(hres);
+    lpstr = static_cast<char *>(win32::LockResource(hres));
     if (!lpstr) {
         return nullptr;
     }
@@ -1015,7 +1015,7 @@ HGLOBAL HdibLoadBigResource(APPSESSION &app, BitmapId idb) {
     if (!hdib) {
         return nullptr;
     }
-    memcpy((char *)hdib, lpstr, cb);
+    memcpy(static_cast<char *>(hdib), lpstr, cb);
     // Embedded bytes become actual native GDI headers in the writable copy.
     // Incomplete/unknown resource prefixes retain their prior copied bytes.
     const auto rgb = std::as_bytes(std::span(lpstr, cb));
@@ -1043,7 +1043,7 @@ INT_PTR  PasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         return 1;
     case win32::WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        win32::FillRect((HDC)wParam, &rc, app.lpui->hbrButtonFace);
+        win32::FillRect(reinterpret_cast<HDC>(wParam), &rc, app.lpui->hbrButtonFace);
         return 1;
     case win32::WM_CTLCOLORMSGBOX:
     case win32::WM_CTLCOLOREDIT:
@@ -1053,8 +1053,8 @@ INT_PTR  PasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     case win32::WM_CTLCOLORSCROLLBAR:
     case win32::WM_CTLCOLORSTATIC:
         if (message == win32::WM_CTLCOLORSTATIC) {
-            win32::SetBkColor((HDC)wParam, app.lpui->crButtonFace);
-            return (INT_PTR)app.lpui->hbrButtonFace;
+            win32::SetBkColor(reinterpret_cast<HDC>(wParam), app.lpui->crButtonFace);
+            return reinterpret_cast<INT_PTR>(app.lpui->hbrButtonFace);
         }
         break;
     case win32::WM_COMMAND:
@@ -1117,7 +1117,7 @@ INT_PTR  NewPasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         return 1;
     case win32::WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        win32::FillRect((HDC)wParam, &rc, app.lpui->hbrButtonFace);
+        win32::FillRect(reinterpret_cast<HDC>(wParam), &rc, app.lpui->hbrButtonFace);
         return 1;
     case win32::WM_CTLCOLORMSGBOX:
     case win32::WM_CTLCOLOREDIT:
@@ -1127,8 +1127,8 @@ INT_PTR  NewPasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     case win32::WM_CTLCOLORSCROLLBAR:
     case win32::WM_CTLCOLORSTATIC:
         if (message == win32::WM_CTLCOLORSTATIC) {
-            win32::SetBkColor((HDC)wParam, app.lpui->crButtonFace);
-            return (INT_PTR)app.lpui->hbrButtonFace;
+            win32::SetBkColor(reinterpret_cast<HDC>(wParam), app.lpui->crButtonFace);
+            return reinterpret_cast<INT_PTR>(app.lpui->hbrButtonFace);
         }
         break;
     case win32::WM_COMMAND:
@@ -1157,7 +1157,7 @@ INT_PTR  NewPasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                         AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsNativeLegacyRacePasswordRequired), win32::MB_ICONHAND);
                         break;
                     }
-                    strcpy((char *)win32::GetWindowLongPtrA(hwnd, win32::DWLP_USER), szPass);
+                    strcpy(reinterpret_cast<char *>(win32::GetWindowLongPtrA(hwnd, win32::DWLP_USER)), szPass);
                 } else if (app.state.idPlayer != iplrNone) {
                     WriteMemPassword(app, lSalt);
                 } else {
@@ -1185,7 +1185,7 @@ int16_t FPromptLegacyRacePassword(APPSESSION &app, char *szPassword) {
     int16_t fRet;
 
     lpProc = (NewPasswordDlg);
-    fRet = (int16_t)ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_NEW_PASSWORD), app.lpui->hwndFrame, lpProc, (LPARAM)szPassword);
+    fRet = static_cast<int16_t>(ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_NEW_PASSWORD), app.lpui->hwndFrame, lpProc, reinterpret_cast<LPARAM>(szPassword)));
     return fRet > 0;
 }
 
@@ -1232,7 +1232,7 @@ INT_PTR  ProgressGaugeDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
         return 1;
     case win32::WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        win32::FillRect((HDC)wParam, &rc, app.lpui->hbrButtonFace);
+        win32::FillRect(reinterpret_cast<HDC>(wParam), &rc, app.lpui->hbrButtonFace);
         return 1;
     case win32::WM_CTLCOLORMSGBOX:
     case win32::WM_CTLCOLOREDIT:
@@ -1241,8 +1241,8 @@ INT_PTR  ProgressGaugeDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     case win32::WM_CTLCOLORDLG:
     case win32::WM_CTLCOLORSCROLLBAR:
     case win32::WM_CTLCOLORSTATIC:
-        win32::SetBkColor((HDC)wParam, app.lpui->crButtonFace);
-        return (INT_PTR)app.lpui->hbrButtonFace;
+        win32::SetBkColor(reinterpret_cast<HDC>(wParam), app.lpui->crButtonFace);
+        return reinterpret_cast<INT_PTR>(app.lpui->hbrButtonFace);
     case win32::WM_PAINT:
         hdc = win32::BeginPaint(hwnd, &ps);
         DrawProgressGauge(app, hdc, 1, 0);
@@ -1323,14 +1323,14 @@ HFONT HfontPrinterCreate(APPSESSION &app, HDC hdc, int16_t iSize, int16_t *pdyFo
     TEXTMETRIC tm;
     HFONT      hfontSav;
 
-    plf = (LOGFONT *)win32::LocalAlloc(64, sizeof(LOGFONT));
+    plf = static_cast<LOGFONT *>(win32::LocalAlloc(64, sizeof(LOGFONT)));
     plfOwner.reset(plf);
     memset(plf, 0, sizeof(LOGFONT));
     plf->lfHeight = -win32::MulDiv(iSize, win32::GetDeviceCaps(hdc, win32::LOGPIXELSY), 72);
     strcpy(plf->lfFaceName, app.lpui->rgszArial[1]);
     hfontNew = win32::CreateFontIndirectA(plf);
     if (pdyFont && hfontNew) {
-        hfontSav = (HFONT)win32::SelectObject(hdc, hfontNew);
+        hfontSav = static_cast<HFONT>(win32::SelectObject(hdc, hfontNew));
         win32::GetTextMetricsA(hdc, &tm);
         *pdyFont = tm.tmHeight + tm.tmExternalLeading;
         win32::SelectObject(hdc, hfontSav);

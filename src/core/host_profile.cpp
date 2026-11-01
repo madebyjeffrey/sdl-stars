@@ -3,7 +3,7 @@
 
 // FSzEqNoCase compares two strings, ignoring case, as INI names are.
 static int16_t FSzEqNoCase(const char *sz1, const char *sz2) {
-    while (*sz1 != 0 && tolower((unsigned char)*sz1) == tolower((unsigned char)*sz2)) {
+    while (*sz1 != 0 && tolower(static_cast<unsigned char>(*sz1)) == tolower(static_cast<unsigned char>(*sz2))) {
         sz1++;
         sz2++;
     }
@@ -30,7 +30,7 @@ int16_t FIniValue(APPSESSION &app, const char *pszText, StringId idsSection, Str
         if (!pchEnd) {
             pchEnd = pch + strlen(pch);
         }
-        cch = (size_t)(pchEnd - pch) < sizeof(szLine) - 1 ? (size_t)(pchEnd - pch) : sizeof(szLine) - 1;
+        cch = static_cast<size_t>((pchEnd - pch)) < sizeof(szLine) - 1 ? static_cast<size_t>((pchEnd - pch)) : sizeof(szLine) - 1;
         cch = CchUtf8Prefix(pch, cch);
         memcpy(szLine, pch, cch);
         while (cch > 0 && (szLine[cch - 1] == '\r' || szLine[cch - 1] == ' ' || szLine[cch - 1] == '\t')) {

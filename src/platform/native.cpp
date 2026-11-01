@@ -23,10 +23,10 @@ void qsort16(APPSESSION &app, void *base, size_t count, size_t width, int (*comp
     if (count < 2 || width == 0)
         return;
 
-    unsigned char *items = (unsigned char *)base;
+    unsigned char *items = static_cast<unsigned char *>(base);
     size_t         i;
     for (i = 1; i < count; ++i) {
-        if ((int16_t)compare(app, items + i * width, items + (i - 1) * width) < 0)
+        if (static_cast<int16_t>(compare(app, items + i * width, items + (i - 1) * width)) < 0)
             break;
     }
     if (i == count)
@@ -41,7 +41,7 @@ void qsort16(APPSESSION &app, void *base, size_t count, size_t width, int (*comp
             size_t lastLess = lo, firstGreater = hi;
             for (;;) {
                 while (++left != hi) {
-                    int order = (int16_t)compare(app, items + left * width, items + lo * width);
+                    int order = static_cast<int16_t>(compare(app, items + left * width, items + lo * width));
                     if (order > 0)
                         break;
                     if (order < 0)
@@ -49,7 +49,7 @@ void qsort16(APPSESSION &app, void *base, size_t count, size_t width, int (*comp
                 }
                 for (;;) {
                     --right;
-                    int order = (int16_t)compare(app, items + lo * width, items + right * width);
+                    int order = static_cast<int16_t>(compare(app, items + lo * width, items + right * width));
                     if (order > 0)
                         break;
                     if (order < 0)
@@ -99,7 +99,7 @@ int CchSprintf(char *sz, const char *szFormat, ...) {
 
     // Dropping l only shortens the format, so a copy its size holds it.
     cbFmt = strlen(szFormat) + 1;
-    szFmt = cbFmt <= sizeof(szFmtSmall) ? szFmtSmall : (char *)malloc(cbFmt);
+    szFmt = cbFmt <= sizeof(szFmtSmall) ? szFmtSmall : static_cast<char *>(malloc(cbFmt));
     format.reset(szFmt == szFmtSmall ? nullptr : szFmt);
     if (!szFmt) {
         sz[0] = 0;
@@ -132,7 +132,7 @@ int CchSprintf(char *sz, const char *szFormat, ...) {
         return 0;
     }
     if (cch >= 1024) {
-        cch = (int)CchUtf8Prefix(sz, 1023);
+        cch = static_cast<int>(CchUtf8Prefix(sz, 1023));
         sz[cch] = 0;
     }
     return cch;
@@ -151,14 +151,14 @@ int32_t LMulDiv(int32_t lNumber, int32_t lNumerator, int32_t lDenominator) {
         lDenominator = -lDenominator;
     }
     if ((lNumber < 0) == (lNumerator < 0)) {
-        l = ((int64_t)lNumber * lNumerator + lDenominator / 2) / lDenominator;
+        l = (static_cast<int64_t>(lNumber) * lNumerator + lDenominator / 2) / lDenominator;
     } else {
-        l = ((int64_t)lNumber * lNumerator - lDenominator / 2) / lDenominator;
+        l = (static_cast<int64_t>(lNumber) * lNumerator - lDenominator / 2) / lDenominator;
     }
     if (l > 2147483647 || l < -2147483647) {
         return -1;
     }
-    return (int32_t)l;
+    return static_cast<int32_t>(l);
 }
 
 #ifdef _WIN32
@@ -177,7 +177,7 @@ uint32_t DwTickCount() {
     struct timespec ts;
 
     clock_gettime(CLOCK_MONOTONIC, &ts);
-    return (uint32_t)((uint64_t)ts.tv_sec * 1000 + (uint64_t)ts.tv_nsec / 1000000);
+    return static_cast<uint32_t>((static_cast<uint64_t>(ts.tv_sec) * 1000 + static_cast<uint64_t>(ts.tv_nsec) / 1000000));
 }
 
 void GetDateTimeSz(char *szDate, char *szTime) {
@@ -193,7 +193,7 @@ void GetDateTimeSz(char *szDate, char *szTime) {
 int16_t FSzPrefixNoCase(const char *sz1, const char *sz2, int16_t cch) { return strncasecmp(sz1, sz2, cch) == 0; }
 
 #endif
-int64_t LNativeTime(void) { return (int64_t)time(nullptr); }
+int64_t LNativeTime(void) { return static_cast<int64_t>(time(nullptr)); }
 
 int CchSnprintf(char *psz, size_t cb, const char *pszFormat, ...) {
     va_list args;

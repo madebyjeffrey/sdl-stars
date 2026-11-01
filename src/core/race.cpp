@@ -76,8 +76,8 @@ void BoundsCheckPlayer(PLAYER *pplr) {
                 pplr->rgEnvVarMax[i] = pplr->rgEnvVarMin[i];
                 pplr->fHacker = 1;
             }
-            if (pplr->rgEnvVar[i] != pplr->rgEnvVarMin[i] + (int16_t)(pplr->rgEnvVarMax[i] - pplr->rgEnvVarMin[i]) / 2) {
-                pplr->rgEnvVar[i] = pplr->rgEnvVarMin[i] + (int16_t)(pplr->rgEnvVarMax[i] - pplr->rgEnvVarMin[i]) / 2;
+            if (pplr->rgEnvVar[i] != pplr->rgEnvVarMin[i] + static_cast<int16_t>((pplr->rgEnvVarMax[i] - pplr->rgEnvVarMin[i])) / 2) {
+                pplr->rgEnvVar[i] = pplr->rgEnvVarMin[i] + static_cast<int16_t>((pplr->rgEnvVarMax[i] - pplr->rgEnvVarMin[i])) / 2;
                 pplr->fHacker = 1;
             }
         }
@@ -117,7 +117,7 @@ int16_t CAdvantagePoints(APPSESSION &app, PLAYER *pplr) {
     cPoints = 1650;
     BoundsCheckPlayer(pplr);
     raMajor = static_cast<RaceAttribute>(RaceQueryIO().pfnStat(pplr, rsMajorAdv));
-    lInnate = (int32_t)(LInnateRaceHabitability(app, pplr) / 2000);
+    lInnate = static_cast<int32_t>((LInnateRaceHabitability(app, pplr) / 2000));
     iSpread = 1 > (20 >= pplr->pctIdealGrowth ? pplr->pctIdealGrowth : 20) ? 1 : 20 < pplr->pctIdealGrowth ? 20 : pplr->pctIdealGrowth;
     if (iSpread != pplr->pctIdealGrowth) {
         iSpread = 1;
@@ -126,7 +126,7 @@ int16_t CAdvantagePoints(APPSESSION &app, PLAYER *pplr) {
     }
     pctGrowth = iSpread;
     if (iSpread <= 5) {
-        cPoints += (uint32_t)((int16_t)(6 - iSpread) * 4200);
+        cPoints += static_cast<uint32_t>((static_cast<int16_t>((6 - iSpread)) * 4200));
     } else if (iSpread > 13) {
         if (iSpread < 20) {
             iSpread = (iSpread - 13) * 3 + 21;
@@ -149,12 +149,12 @@ int16_t CAdvantagePoints(APPSESSION &app, PLAYER *pplr) {
         }
         iSpread = (iSpread - 5) * 2 + 5;
     }
-    lInnate = (int32_t)(lInnate * iSpread) / 24;
+    lInnate = static_cast<int32_t>((lInnate * iSpread)) / 24;
     cPoints -= lInnate;
     cGood = 0;
     for (i = 0; i < 3; i++) {
         if (pplr->rgEnvVar[i] >= 0) {
-            cPoints += (int16_t)(abs(pplr->rgEnvVar[i] - 50) * 4);
+            cPoints += static_cast<int16_t>((abs(pplr->rgEnvVar[i] - 50) * 4));
         } else {
             cGood++;
         }
@@ -169,9 +169,9 @@ int16_t CAdvantagePoints(APPSESSION &app, PLAYER *pplr) {
         cProduce = 1 <= cProduce - 9 ? cProduce - 9 : 1;
         cProduce = (raMajor == raCheapCol ? 3 : 2) * cProduce;
         if (cGood >= 2) {
-            cPoints -= (int32_t)((uint32_t)(cOperate * cProduce) * pctGrowth) / 2;
+            cPoints -= static_cast<int32_t>((static_cast<uint32_t>((cOperate * cProduce)) * pctGrowth)) / 2;
         } else {
-            cPoints -= (int32_t)((uint32_t)(cOperate * cProduce) * pctGrowth) / 9;
+            cPoints -= static_cast<int32_t>((static_cast<uint32_t>((cOperate * cProduce)) * pctGrowth)) / 9;
         }
     }
     i = RaceQueryIO().pfnStat(pplr, rsResGen);
@@ -183,7 +183,7 @@ int16_t CAdvantagePoints(APPSESSION &app, PLAYER *pplr) {
     } else if (i == 9) {
         cPoints -= 600;
     } else if (i > 10) {
-        cPoints += (int16_t)((i - 10) * 120);
+        cPoints += static_cast<int16_t>(((i - 10) * 120));
     }
     if (raMajor != raMacintosh) {
         rgi[0] = 10 - RaceQueryIO().pfnStat(pplr, rsFactProd);
@@ -206,7 +206,7 @@ int16_t CAdvantagePoints(APPSESSION &app, PLAYER *pplr) {
             cCur += 35 * rgi[2];
         }
         if (cCur > 700) {
-            cCur = (int16_t)(cCur - 700) / 3 + 700;
+            cCur = static_cast<int16_t>((cCur - 700)) / 3 + 700;
         }
         if (rgi[2] <= -7) {
             if (rgi[2] >= -11) {
@@ -261,13 +261,13 @@ int16_t CAdvantagePoints(APPSESSION &app, PLAYER *pplr) {
         }
     }
     if (cBad + cGood > 4) {
-        cPoints -= (int16_t)((cBad + cGood) * 10 * (cBad + cGood - 4));
+        cPoints -= static_cast<int16_t>(((cBad + cGood) * 10 * (cBad + cGood - 4)));
     }
     if (cGood - cBad > 3) {
-        cPoints -= (int16_t)((cGood - cBad - 3) * 60);
+        cPoints -= static_cast<int16_t>(((cGood - cBad - 3) * 60));
     }
     if (cBad - cGood > 3) {
-        cPoints -= (int16_t)((cBad - cGood - 3) * 40);
+        cPoints -= static_cast<int16_t>(((cBad - cGood - 3) * 40));
     }
     if (RaceQueryIO().pfnGrbit(pplr, ibitRaceNoAdvScanner) != 0) {
         switch (raMajor) {
@@ -288,7 +288,7 @@ int16_t CAdvantagePoints(APPSESSION &app, PLAYER *pplr) {
         cCur += RaceQueryIO().pfnStat(pplr, static_cast<RaceStat>(i)) - 1;
     }
     if (cCur > 0) {
-        cPoints -= (int16_t)(cCur * cCur * 130);
+        cPoints -= static_cast<int16_t>((cCur * cCur * 130));
         if (cCur == 6) {
             cPoints += 1430;
         } else if (cCur == 5) {
@@ -306,7 +306,7 @@ int16_t CAdvantagePoints(APPSESSION &app, PLAYER *pplr) {
     if (raMajor == raMacintosh && RaceQueryIO().pfnStat(pplr, rsTechBonus1) == 2) {
         cPoints -= 100;
     }
-    return LOWORD((int32_t)(cPoints / 3));
+    return LOWORD(static_cast<int32_t>((cPoints / 3)));
 }
 
 int32_t LInnateRaceHabitability(APPSESSION &app, PLAYER *pplr) {
@@ -331,7 +331,7 @@ int32_t LInnateRaceHabitability(APPSESSION &app, PLAYER *pplr) {
     int16_t pctTerra;
 
     plrT = app.state.rgplr[0];
-    lInnate = (double)0;
+    lInnate = static_cast<double>(0);
     fTotalTerra = RaceQueryIO().pfnGrbit(pplr, ibitRaceTT);
     app.state.rgplr[0] = *pplr;
     rgDelta[2] = 0;
@@ -372,12 +372,12 @@ int32_t LInnateRaceHabitability(APPSESSION &app, PLAYER *pplr) {
                 rgSteps[i] = 11;
             }
         }
-        l3 = (double)0;
+        l3 = static_cast<double>(0);
         for (i = 0; i < rgSteps[0]; i++) {
             if (i == 0 || rgSteps[0] <= 1) {
                 iTry = rgBase[0];
             } else {
-                iTry = (int16_t)(i * rgInc[0]) / (rgSteps[0] - 1) + rgBase[0];
+                iTry = static_cast<int16_t>((i * rgInc[0])) / (rgSteps[0] - 1) + rgBase[0];
             }
             if (iTerra != 0 && pplr->rgEnvVar[0] >= 0) {
                 iDelta = pplr->rgEnvVar[0] - iTry;
@@ -392,12 +392,12 @@ int32_t LInnateRaceHabitability(APPSESSION &app, PLAYER *pplr) {
                 iTry = pplr->rgEnvVar[0] - iDelta;
             }
             pl.rgEnvVar[0] = iTry;
-            l2 = (double)0;
+            l2 = static_cast<double>(0);
             for (j = 0; j < rgSteps[1]; j++) {
                 if (j == 0 || rgSteps[1] <= 1) {
                     iTry = rgBase[1];
                 } else {
-                    iTry = (int16_t)(j * rgInc[1]) / (rgSteps[1] - 1) + rgBase[1];
+                    iTry = static_cast<int16_t>((j * rgInc[1])) / (rgSteps[1] - 1) + rgBase[1];
                 }
                 if (iTerra != 0 && pplr->rgEnvVar[1] >= 0) {
                     iDelta = pplr->rgEnvVar[1] - iTry;
@@ -417,7 +417,7 @@ int32_t LInnateRaceHabitability(APPSESSION &app, PLAYER *pplr) {
                     if (k == 0 || rgSteps[2] <= 1) {
                         iTry = rgBase[2];
                     } else {
-                        iTry = (int16_t)(k * rgInc[2]) / (rgSteps[2] - 1) + rgBase[2];
+                        iTry = static_cast<int16_t>((k * rgInc[2])) / (rgSteps[2] - 1) + rgBase[2];
                     }
                     if (iTerra != 0 && pplr->rgEnvVar[2] >= 0) {
                         iDelta = pplr->rgEnvVar[2] - iTry;
@@ -435,46 +435,46 @@ int32_t LInnateRaceHabitability(APPSESSION &app, PLAYER *pplr) {
                     pctDesire = PlanetQueryIO().pfnDesirability(app, &pl, 0);
                     iDelta = rgDelta[0] + rgDelta[1] + rgDelta[2];
                     if (iDelta > pctTerra) {
-                        pctDesire -= (int16_t)(iDelta - pctTerra);
+                        pctDesire -= static_cast<int16_t>((iDelta - pctTerra));
                         if (pctDesire < 0) {
                             pctDesire = 0;
                         }
                     }
-                    pctDesire = (uint32_t)(pctDesire * pctDesire);
+                    pctDesire = static_cast<uint32_t>((pctDesire * pctDesire));
                     if (iTerra == 0) {
-                        pctDesire = (uint32_t)(pctDesire * 7);
+                        pctDesire = static_cast<uint32_t>((pctDesire * 7));
                     } else if (iTerra == 1) {
-                        pctDesire = (uint32_t)(pctDesire * 5);
+                        pctDesire = static_cast<uint32_t>((pctDesire * 5));
                     } else {
-                        pctDesire = (uint32_t)(pctDesire * 6);
+                        pctDesire = static_cast<uint32_t>((pctDesire * 6));
                     }
                     l1 += pctDesire;
                 }
                 if (pplr->rgEnvVar[2] >= 0) {
-                    l1 = (int32_t)(l1 * rgInc[2]) / 100;
+                    l1 = static_cast<int32_t>((l1 * rgInc[2])) / 100;
                 } else {
-                    l1 = (uint32_t)(l1 * 11);
+                    l1 = static_cast<uint32_t>((l1 * 11));
                 }
-                l2 = (double)((double)l1 + l2);
+                l2 = static_cast<double>((static_cast<double>(l1) + l2));
             }
             if (pplr->rgEnvVar[1] >= 0) {
-                l2 = (double)((double)l2 * rgInc[1] / 100);
+                l2 = static_cast<double>((static_cast<double>(l2) * rgInc[1] / 100));
             } else {
-                l2 = (double)((double)l2 * 11);
+                l2 = static_cast<double>((static_cast<double>(l2) * 11));
             }
-            l3 = (double)((double)l3 + l2);
+            l3 = static_cast<double>((static_cast<double>(l3) + l2));
         }
         if (pplr->rgEnvVar[0] >= 0) {
-            l3 = (double)((double)l3 * rgInc[0] / 100);
+            l3 = static_cast<double>((static_cast<double>(l3) * rgInc[0] / 100));
         } else {
-            l3 = (double)((double)l3 * 11);
+            l3 = static_cast<double>((static_cast<double>(l3) * 11));
         }
-        lInnate = (double)((double)lInnate + l3);
+        lInnate = static_cast<double>((static_cast<double>(lInnate) + l3));
     }
     if (pplr != app.state.rgplr) {
         app.state.rgplr[0] = plrT;
     }
-    return (int32_t)((double)lInnate / 10.0 + 0.5);
+    return static_cast<int32_t>((static_cast<double>(lInnate) / 10.0 + 0.5));
 }
 
 uint16_t IRaceChecksum(PLAYER *pplr) {
@@ -515,18 +515,18 @@ static int16_t FReadLegacyRaceString(APPSESSION &app, const uint8_t *lpb, size_t
     szRaw[0] = 0;
     if (cb == 0 || cchMax != 32) return 0;
     if (lpb[0] == 0) {
-        lpbEnd = (const uint8_t *)memchr(lpb + 1, 0, cb - 1);
+        lpbEnd = static_cast<const uint8_t *>(memchr(lpb + 1, 0, cb - 1));
         if (!lpbEnd) return 0;
-        cch = (size_t)(lpbEnd - lpb - 1);
+        cch = static_cast<size_t>((lpbEnd - lpb - 1));
         if (cch >= cchMax) return 0;
         memcpy(szRaw, lpb + 1, cch);
         szRaw[cch] = 0;
         if (pcbRead) *pcbRead = cch + 2;
     } else {
         if (lpb[0] > cb - 1) return 0;
-        cOut = (int16_t)cchMax - 1;
-        if (!FDecompressUserStringBytes(app, (char *)lpb + 1, lpb[0], szRaw, &cOut)) return 0;
-        if (pcbRead) *pcbRead = (size_t)lpb[0] + 1;
+        cOut = static_cast<int16_t>(cchMax) - 1;
+        if (!FDecompressUserStringBytes(app, const_cast<char *>(reinterpret_cast<const char*>(lpb)) + 1, lpb[0], szRaw, &cOut)) return 0;
+        if (pcbRead) *pcbRead = static_cast<size_t>(lpb[0]) + 1;
     }
     return 1;
 }
@@ -539,8 +539,8 @@ static int16_t FReadLegacyRacePlayer(APPSESSION &app, PLAYER *pplr, const uint8_
     if (cb < cbWirePlayerPartial) return 0;
     if ((lpb[6] & 7) == detAll) {
         iOff = cbWirePlayerPrefix;
-        if (cb <= (size_t)iOff || lpb[iOff] > sizeof(pplr->rgmdRelation) ||
-            lpb[iOff] > cb - (size_t)iOff - 1) return 0;
+        if (cb <= static_cast<size_t>(iOff) || lpb[iOff] > sizeof(pplr->rgmdRelation) ||
+            lpb[iOff] > cb - static_cast<size_t>(iOff) - 1) return 0;
         FDecodePlayer(std::as_bytes(std::span(lpb, cb)), *pplr, iOff);
         memmove(pplr->rgmdRelation, lpb + iOff + 1, lpb[iOff]);
         iOff += lpb[iOff] + 1;
@@ -548,13 +548,13 @@ static int16_t FReadLegacyRacePlayer(APPSESSION &app, PLAYER *pplr, const uint8_
         iOff = cbWirePlayerPartial;
         FDecodePlayer(std::as_bytes(std::span(lpb, cb)), *pplr, iOff);
     }
-    if (!FReadLegacyRaceString(app, lpb + iOff, cb - (size_t)iOff, pplr->szName, sizeof(pplr->szName), &cbRead)) return 0;
-    iOff += (int16_t)cbRead;
+    if (!FReadLegacyRaceString(app, lpb + iOff, cb - static_cast<size_t>(iOff), pplr->szName, sizeof(pplr->szName), &cbRead)) return 0;
+    iOff += static_cast<int16_t>(cbRead);
     if (fPlural) {
-        if (!FReadLegacyRaceString(app, lpb + iOff, cb - (size_t)iOff, pplr->szNames, sizeof(pplr->szNames), &cbRead)) return 0;
-        iOff += (int16_t)cbRead;
+        if (!FReadLegacyRaceString(app, lpb + iOff, cb - static_cast<size_t>(iOff), pplr->szNames, sizeof(pplr->szNames), &cbRead)) return 0;
+        iOff += static_cast<int16_t>(cbRead);
     }
-    if ((size_t)iOff != cb) return 0;
+    if (static_cast<size_t>(iOff) != cb) return 0;
     pplr->fLearned = 0;
     return 1;
 }
@@ -632,9 +632,9 @@ int16_t FWasRaceFile(APPSESSION &app, char *szFile, int16_t fChkPass) {
                     if (app.state.hdrCur.rt == rtPlr) {
                         idsError = idsGameFileAppearsCorruptUnableLoadFile;
                         if (fLegacy) {
-                            if (!FReadLegacyRacePlayer(app, &plr, (const uint8_t *)app.state.rgbCur, app.state.hdrCur.cb, fPlural)) goto LBadFile;
+                            if (!FReadLegacyRacePlayer(app, &plr, reinterpret_cast<const uint8_t *>(app.state.rgbCur), app.state.hdrCur.cb, fPlural)) goto LBadFile;
                         } else {
-                            ReadRtPlr(app, &plr, (uint8_t *)app.state.rgbCur, app.state.hdrCur.cb);
+                            ReadRtPlr(app, &plr, reinterpret_cast<uint8_t *>(app.state.rgbCur), app.state.hdrCur.cb);
                         }
                         RecordIO().pfnReadRt(app);
                         icksum = IRaceChecksum(&plr);

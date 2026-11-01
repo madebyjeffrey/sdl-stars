@@ -21,12 +21,12 @@ static HACCEL LpAccel(HACCEL haccel) {
 }
 HACCEL win32::CreateAcceleratorTableA(LPACCEL rgaccel, int c) {
     HACCEL lp;
-    if (!SDL_IsMainThread() || !rgaccel || c <= 0 || (size_t)c > SIZE_MAX / sizeof(ACCEL)) return nullptr;
-    lp = (HACCEL)(calloc(1, sizeof(*lp)));
+    if (!SDL_IsMainThread() || !rgaccel || c <= 0 || static_cast<size_t>(c) > SIZE_MAX / sizeof(ACCEL)) return nullptr;
+    lp = static_cast<HACCEL>((calloc(1, sizeof(*lp))));
     if (!lp) return nullptr;
-    lp->rg = (ACCEL *)(malloc((size_t)c * sizeof(ACCEL)));
+    lp->rg = static_cast<ACCEL *>((malloc(static_cast<size_t>(c) * sizeof(ACCEL))));
     if (!lp->rg) { free(lp); return nullptr; }
-    memcpy(lp->rg, rgaccel, (size_t)c * sizeof(ACCEL));
+    memcpy(lp->rg, rgaccel, static_cast<size_t>(c) * sizeof(ACCEL));
     lp->c = c; lp->fAlive = 1; lp->hnext = haccels; haccels = lp;
     return lp;
 }
@@ -49,7 +49,7 @@ BOOL win32::DestroyAcceleratorTable(HACCEL haccel) {
 }
 HACCEL win32::LoadAcceleratorsA(HINSTANCE hInstance, LPCSTR pszName) {
     HRSRC hrsrc = win32::FindResourceA(hInstance, pszName, win32::RT_ACCELERATOR);
-    const BYTE *rgb = (const BYTE *)(win32::LockResource(win32::LoadResource(hInstance, hrsrc)));
+    const BYTE *rgb = static_cast<const BYTE *>((win32::LockResource(win32::LoadResource(hInstance, hrsrc))));
     DWORD cb = win32::SizeofResource(hInstance, hrsrc);
     ACCEL *rg;
     HACCEL lp;
@@ -57,15 +57,15 @@ HACCEL win32::LoadAcceleratorsA(HINSTANCE hInstance, LPCSTR pszName) {
     WORD flags;
     if (!rgb || cb == 0 || cb % 8 || cb / 8 > INT_MAX) return nullptr;
     for (lp = haccels; lp; lp = lp->hnext) if (lp->hrsrc == hrsrc) return lp;
-    c = (int)(cb / 8);
-    rg = (ACCEL *)(calloc((size_t)c, sizeof(*rg)));
+    c = static_cast<int>((cb / 8));
+    rg = static_cast<ACCEL *>((calloc(static_cast<size_t>(c), sizeof(*rg))));
     if (!rg) return nullptr;
     for (i = 0; i < c; i++) {
-        flags = (WORD)(rgb[i * 8] | (rgb[i * 8 + 1] << 8));
+        flags = static_cast<WORD>((rgb[i * 8] | (rgb[i * 8 + 1] << 8)));
         if ((flags & ~0x9f) || ((flags & 0x80) != (i == c - 1 ? 0x80 : 0))) { free(rg); return nullptr; }
-        rg[i].fVirt = (BYTE)(flags & ~0x80);
-        rg[i].key = (WORD)(rgb[i * 8 + 2] | (rgb[i * 8 + 3] << 8));
-        rg[i].cmd = (WORD)(rgb[i * 8 + 4] | (rgb[i * 8 + 5] << 8));
+        rg[i].fVirt = static_cast<BYTE>((flags & ~0x80));
+        rg[i].key = static_cast<WORD>((rgb[i * 8 + 2] | (rgb[i * 8 + 3] << 8)));
+        rg[i].cmd = static_cast<WORD>((rgb[i * 8 + 4] | (rgb[i * 8 + 5] << 8)));
     }
     lp = win32::CreateAcceleratorTableA(rg, c);
     free(rg);

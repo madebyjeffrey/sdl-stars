@@ -8,5 +8,5 @@
 
 DWORD win32::GetTickCount(void) {
     // SDL owns the monotonic clock; truncation preserves Win32's 49.7-day wrap.
-    return (DWORD)CompatTimeIO().pfnGetTicks();
+    return static_cast<DWORD>(CompatTimeIO().pfnGetTicks());
 }

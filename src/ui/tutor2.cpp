@@ -19,7 +19,7 @@ int16_t CchTutorString(APPSESSION &app, char *pchOut, TutorId idt) {
     }
     iChunk = idt >> 6;
     iOffset = idt & 0x3f;
-    pch = (uint8_t *)&aTUTCmpr[aiTUTChunkOffset[iChunk]];
+    pch = reinterpret_cast<uint8_t *>(&aTUTCmpr[aiTUTChunkOffset[iChunk]]);
     pchLen = &acTUT[iChunk * 64];
     i = 0;
     while (i < iOffset) {

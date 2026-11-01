@@ -19,7 +19,7 @@ char *PszGetCompressedString(APPSESSION &app, StringId ids) {
     }
     iChunk = ids >> 6;
     iOffset = ids & 0x3f;
-    pch = (uint8_t *)&aSTRCmpr[aiSTRChunkOffset[iChunk]];
+    pch = reinterpret_cast<uint8_t *>(&aSTRCmpr[aiSTRChunkOffset[iChunk]]);
     pchLen = &acSTR[iChunk * 64];
     i = 0;
     while (i < iOffset) {

@@ -3,8 +3,8 @@
 #include <stdio.h>
 
 BOOL win32::ExitWindowsEx(UINT uFlags, DWORD dwReason) {
-    (void)uFlags;
-    (void)dwReason;
+    static_cast<void>(uFlags);
+    static_cast<void>(dwReason);
     win32::SetLastError(win32::ERROR_NOT_SUPPORTED);
     return 0;
 }

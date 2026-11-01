@@ -35,7 +35,7 @@ LRESULT  PopupWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         case grPopupShdef:
         case grPopupShdefSB:
             ControlIO().pfnGetClientRect(hwnd, &rc);
-            win32::FillRect((HDC)wParam, &rc, app.lpui->hbrButtonFace);
+            win32::FillRect(reinterpret_cast<HDC>(wParam), &rc, app.lpui->hbrButtonFace);
             return 1;
         default:
             goto Default;
@@ -96,7 +96,7 @@ void DrawPopup(APPSESSION &app, HWND hwnd, HDC hdc) {
     crBack = win32::SetBkColor(hdc, 0xffffff);
     crFore = win32::SetTextColor(hdc, 0);
     bkMode = win32::SetBkMode(hdc, win32::OPAQUE);
-    hfontSav = (HFONT)win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
+    hfontSav = static_cast<HFONT>(win32::SelectObject(hdc, app.lpui->rghfontArial8[1]));
     ControlIO().pfnGetClientRect(hwnd, &rc);
     switch (app.lpui->GlobalPD.grPopup) {
     default:
@@ -170,11 +170,11 @@ void DrawPopup(APPSESSION &app, HWND hwnd, HDC hdc) {
                 RightTextOut(app, hdc, rc.right - 4 - app.lpui->GlobalPD.dxDamage, yCur, app.state.szWork, c, 0);
                 if (app.lpui->GlobalPD.fRedDamage && app.lpui->GlobalPD.lpfl->rgdv[i].dp != 0) {
                     csh = app.lpui->GlobalPD.lpfl->rgcsh[i];
-                    csh = LOWORD((int32_t)((uint32_t)(app.lpui->GlobalPD.lpfl->rgdv[i].dp & 0x7f) * csh) / 0x64);
+                    csh = LOWORD(static_cast<int32_t>((static_cast<uint32_t>((app.lpui->GlobalPD.lpfl->rgdv[i].dp & 0x7f)) * csh)) / 0x64);
                     if (csh <= 0) {
                         csh = 1;
                     }
-                    dpT = (uint32_t)(app.lpui->GlobalPD.lpfl->rgdv[i].dp >> 7 & 0x1ff) / 5;
+                    dpT = static_cast<uint32_t>((app.lpui->GlobalPD.lpfl->rgdv[i].dp >> 7 & 0x1ff)) / 5;
                     if (dpT == 0) {
                         dpT = 1;
                     }
@@ -229,7 +229,7 @@ void DrawPopup(APPSESSION &app, HWND hwnd, HDC hdc) {
         break;
     case grPopupShdef:
     case grPopupShdefSB:
-        app.state.fStarbaseMode = (int16_t)app.lpui->GlobalPD.lpshdef->hul.ihuldef >= ihuldefOrbitalFort;
+        app.state.fStarbaseMode = static_cast<int16_t>(app.lpui->GlobalPD.lpshdef->hul.ihuldef) >= ihuldefOrbitalFort;
         DrawSlotDlg(app, hwnd, hdc, &rc, -1);
         rc.top = app.state.dyArial8 + 306;
         rc.left += 6;
@@ -269,7 +269,7 @@ void Popup(APPSESSION &app, HWND hwnd, int16_t x, int16_t y) {
     pt.y = y;
     ClientToScreen16(hwnd, &pt);
     hdc = win32::GetDC(hwnd);
-    hfontSav = (HFONT)win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
+    hfontSav = static_cast<HFONT>(win32::SelectObject(hdc, app.lpui->rghfontArial8[0]));
     switch (app.lpui->GlobalPD.grPopup) {
     default:
         break;
@@ -382,7 +382,7 @@ void Popup(APPSESSION &app, HWND hwnd, int16_t x, int16_t y) {
     // Popup drawing reads hwndPopup, so publish the handle before the first paint.
     app.lpui->hwndPopup = ui::CreateWindowEx(win32::WS_EX_NOACTIVATE, app.lpui->szPopup, nullptr, win32::WS_POPUP | win32::WS_BORDER,
                                pt.x, pt.y, dx, dy, hwnd, nullptr, app.lpui->hInst, nullptr);
-    ControlIO().pfnSendMessage(app.lpui->hwndPopup, win32::WM_SETFONT, (WPARAM)app.lpui->rghfontArial8[0], 0);
+    ControlIO().pfnSendMessage(app.lpui->hwndPopup, win32::WM_SETFONT, reinterpret_cast<WPARAM>(app.lpui->rghfontArial8[0]), 0);
     ui::ShowWindow(app.lpui->hwndPopup, win32::SW_SHOW);
     win32::SetCapture(app.lpui->hwndPopup);
     return;
@@ -458,7 +458,7 @@ int16_t PopupMenu(APPSESSION &app, HWND hwnd, int16_t x, int16_t y, int16_t cStr
                     win32::AppendMenuA(hmenuSub, !fCheckedCur ? win32::MF_BYCOMMAND : win32::MF_CHECKED, i + 15000, szTemp);
                 }
             }
-            win32::AppendMenuA(hmenuPopup, (!fChecked ? 0 : 8) | 0x10, (UINT_PTR)hmenuSub, pszTitle);
+            win32::AppendMenuA(hmenuPopup, (!fChecked ? 0 : 8) | 0x10, reinterpret_cast<UINT_PTR>(hmenuSub), pszTitle);
         } else if (*rgsz[i] == -1 && rgsz[i][1] == 0) {
             win32::AppendMenuA(hmenuPopup, win32::MF_SEPARATOR, 0, nullptr);
         } else {
@@ -485,7 +485,7 @@ int16_t PopupMenu(APPSESSION &app, HWND hwnd, int16_t x, int16_t y, int16_t cStr
     }
     /* The original accepted only the first 100 items; the target popups now
        list every object at a location. */
-    if (ui::PeekMessage(&msg, app.lpui->hwndFrame, 273, 273, 2) && msg.wParam >= 15000 && msg.wParam < 15000 + (WPARAM)cString) {
+    if (ui::PeekMessage(&msg, app.lpui->hwndFrame, 273, 273, 2) && msg.wParam >= 15000 && msg.wParam < 15000 + static_cast<WPARAM>(cString)) {
         app.lpui->iPopMenuSel = msg.wParam - 15000;
     }
     return app.lpui->iPopMenuSel;
@@ -724,7 +724,7 @@ POINT16 PtDisplayPlanetPopInfo(APPSESSION &app, HDC hdc, int16_t fPrint) {
         win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
         DxStreamTextOut(hdc, &x, y, TextIO().pfnCompressed(app, idsWillKillOffApproximately), 0, fPrint);
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-        c = win32::wsprintfA(app.state.szWork, app.state.PCTDXPCTDPCTPCT, (int16_t)-pctDesire / 10, (int16_t)-pctDesire % 10);
+        c = win32::wsprintfA(app.state.szWork, app.state.PCTDXPCTDPCTPCT, static_cast<int16_t>(-pctDesire) / 10, static_cast<int16_t>(-pctDesire) % 10);
         DxStreamTextOut(hdc, &x, y, app.state.szWork, c, fPrint);
         win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
         DxStreamTextOut(hdc, &x, y, TextIO().pfnCompressed(app, idsOf), 0, fPrint);

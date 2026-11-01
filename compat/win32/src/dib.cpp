@@ -16,26 +16,26 @@ static BOOL FCompatDibInfo(const BITMAPINFOHEADER &bi, const BYTE *rgb, size_t c
         return SDL_SetError("Unsupported DIB dimensions, compression or pixel format");
     // Bound allocation and work for malformed resource headers before touching bits.
     if (bi.biWidth > 16384 || bi.biHeight > 16384 || bi.biHeight < -16384 ||
-        (uint64_t)bi.biWidth * (uint64_t)(bi.biHeight < 0 ? -bi.biHeight : bi.biHeight) > UINT64_C(67108864))
+        static_cast<uint64_t>(bi.biWidth) * static_cast<uint64_t>((bi.biHeight < 0 ? -bi.biHeight : bi.biHeight)) > UINT64_C(67108864))
         return SDL_SetError("DIB exceeds the initial 16384-axis / 64M-pixel limit");
     memset(lpdib, 0, sizeof(*lpdib));
     lpdib->cx = bi.biWidth;
     lpdib->cy = bi.biHeight < 0 ? -bi.biHeight : bi.biHeight;
     lpdib->fTopDown = bi.biHeight < 0;
     lpdib->cBits = bi.biBitCount;
-    lpdib->cColors = bi.biBitCount <= 8 ? (int)(bi.biClrUsed ? bi.biClrUsed : 1u << bi.biBitCount) : 0;
+    lpdib->cColors = bi.biBitCount <= 8 ? static_cast<int>((bi.biClrUsed ? bi.biClrUsed : 1u << bi.biBitCount)) : 0;
     if (bi.biClrUsed > 256 || (lpdib->cColors != 0 && lpdib->cColors > (1 << bi.biBitCount)) ||
         (bi.biBitCount > 8 && bi.biClrUsed != 0))
         return SDL_SetError("Invalid DIB color table");
-    lpdib->cbInfo = cbWireDibHeader + (size_t)lpdib->cColors * cbWireRgbQuad;
-    lpdib->cbRow = (((size_t)lpdib->cx * lpdib->cBits + 31) / 32) * 4;
-    lpdib->cbBits = lpdib->cbRow * (size_t)lpdib->cy;
+    lpdib->cbInfo = cbWireDibHeader + static_cast<size_t>(lpdib->cColors) * cbWireRgbQuad;
+    lpdib->cbRow = ((static_cast<size_t>(lpdib->cx) * lpdib->cBits + 31) / 32) * 4;
+    lpdib->cbBits = lpdib->cbRow * static_cast<size_t>(lpdib->cy);
     if (cbInfo < lpdib->cbInfo || cbBits < lpdib->cbBits || !lpBits ||
         (bi.biSizeImage != 0 && bi.biSizeImage < lpdib->cbBits))
         return SDL_SetError("Truncated DIB color table or pixel buffer");
-    for (i = 0; i < (size_t)lpdib->cColors; i++)
+    for (i = 0; i < static_cast<size_t>(lpdib->cColors); i++)
         lpdib->rgcr[i] = win32::RGB(rgb[cbWireDibHeader + i * 4 + 2], rgb[cbWireDibHeader + i * 4 + 1], rgb[cbWireDibHeader + i * 4]);
-    lpdib->lpBits = (const BYTE *)(lpBits);
+    lpdib->lpBits = static_cast<const BYTE *>((lpBits));
     return 1;
 }
 
@@ -79,8 +79,8 @@ SDL_Surface *LpCompatDibSurface(const COMPATDIB *lpdib) {
     if (!lpsurface)
         return nullptr;
     for (y = 0; y < lpdib->cy; y++) {
-        rgb = lpdib->lpBits + (size_t)(lpdib->fTopDown ? y : lpdib->cy - 1 - y) * lpdib->cbRow;
-        lpout = (BYTE *)lpsurface->pixels + (size_t)y * lpsurface->pitch;
+        rgb = lpdib->lpBits + static_cast<size_t>((lpdib->fTopDown ? y : lpdib->cy - 1 - y)) * lpdib->cbRow;
+        lpout = static_cast<BYTE *>(lpsurface->pixels) + static_cast<size_t>(y) * lpsurface->pitch;
         for (x = 0; x < lpdib->cx; x++) {
             if (lpdib->cBits <= 8) {
                 iColor = lpdib->cBits == 1 ? (rgb[x / 8] >> (7 - x % 8)) & 1 :
@@ -94,9 +94,9 @@ SDL_Surface *LpCompatDibSurface(const COMPATDIB *lpdib) {
             } else {
                 cr = win32::RGB(rgb[x * (lpdib->cBits / 8) + 2], rgb[x * (lpdib->cBits / 8) + 1], rgb[x * (lpdib->cBits / 8)]);
             }
-            lpout[x * 4] = (BYTE)cr;
-            lpout[x * 4 + 1] = (BYTE)(cr >> 8);
-            lpout[x * 4 + 2] = (BYTE)(cr >> 16);
+            lpout[x * 4] = static_cast<BYTE>(cr);
+            lpout[x * 4 + 1] = static_cast<BYTE>((cr >> 8));
+            lpout[x * 4 + 2] = static_cast<BYTE>((cr >> 16));
             lpout[x * 4 + 3] = 255;
         }
     }

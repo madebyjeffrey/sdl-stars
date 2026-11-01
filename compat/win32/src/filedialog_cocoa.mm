@@ -12,7 +12,7 @@
 @implementation StarsFilePanelDelegate
 - (BOOL)panel:(id)sender shouldEnableURL:(NSURL *)url {
     NSNumber *fDirectory = nil;
-    (void)sender;
+    static_cast<void>(sender);
     [url getResourceValue:&fDirectory forKey:NSURLIsDirectoryKey error:nil];
     if (fDirectory.boolValue || self.rgPatterns.count == 0) return YES;
     for (NSString *pattern in [self.rgPatterns[self.iFilter] componentsSeparatedByString:@";"]) {
@@ -41,7 +41,7 @@ int IChooseCocoaFile(void *lpWindow, int fSave, const char *pszTitle, const char
         panel.title = title; panel.directoryURL = [NSURL fileURLWithPath:folder isDirectory:YES];
         panel.nameFieldStringValue = name; panel.canCreateDirectories = YES;
         if (!fSave) {
-            NSOpenPanel *open = (NSOpenPanel *)panel;
+            NSOpenPanel *open = static_cast<NSOpenPanel *>(panel);
             open.canChooseFiles = YES; open.canChooseDirectories = NO; open.allowsMultipleSelection = NO;
         }
         StarsFilePanelDelegate *delegate = [StarsFilePanelDelegate new];
@@ -81,7 +81,7 @@ int IChooseCocoaFile(void *lpWindow, int fSave, const char *pszTitle, const char
         const char *path = panel.URL.fileSystemRepresentation;
         if (!path || strlen(path) >= cbPath) return -1;
         memcpy(pszPath, path, strlen(path) + 1);
-        if (cFilter != 0) *lpiFilter = (int)delegate.iFilter;
+        if (cFilter != 0) *lpiFilter = static_cast<int>(delegate.iFilter);
         return 1;
     }
 }

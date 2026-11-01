@@ -52,7 +52,7 @@ void InitProduction(APPSESSION &app, PROD *rgprod) {
     for (i = 0; i < 10; i++) {
         if (!app.state.rglpshdefSB[app.state.idPlayer][i].fFree && !app.state.rglpshdefSB[app.state.idPlayer][i].fGift && (app.state.sel.pl.isb != i || !app.state.sel.pl.fStarbase)) {
             rgprod[app.state.cProdGlob].cItem = 1;
-            rgprod[app.state.cProdGlob].iItem = LOWORD((int16_t)(i + 16));
+            rgprod[app.state.cProdGlob].iItem = LOWORD(static_cast<int16_t>((i + 16)));
             rgprod[app.state.cProdGlob].grobj = grobjFleet;
             app.state.cProdGlob++;
         }
@@ -69,27 +69,27 @@ void InitProduction(APPSESSION &app, PROD *rgprod) {
     if (iWarp > 0) {
         for (i = 0; i < 4; i++) {
             rgprod[app.state.cProdGlob].cItem = 0x3ff;
-            rgprod[app.state.cProdGlob].iItem = LOWORD((int16_t)(i + 14));
+            rgprod[app.state.cProdGlob].iItem = LOWORD(static_cast<int16_t>((i + 14)));
             rgprod[app.state.cProdGlob].grobj = grobjPlanet;
             app.state.cProdGlob++;
         }
     }
     u = ColonyIO().pfnMaxFactories(app, &app.state.sel.pl, app.state.idPlayer) - app.state.sel.pl.cFactories;
-    if ((int16_t)u > 0) {
-        rgprod[app.state.cProdGlob].cItem = LOWORD(1020 >= u ? (uint32_t)u : 1020);
+    if (static_cast<int16_t>(u) > 0) {
+        rgprod[app.state.cProdGlob].cItem = LOWORD(1020 >= u ? static_cast<uint32_t>(u) : 1020);
         rgprod[app.state.cProdGlob].iItem = mdIdleFactory;
         rgprod[app.state.cProdGlob].grobj = grobjPlanet;
         app.state.cProdGlob++;
     }
     u = ColonyIO().pfnMaxMines(app, &app.state.sel.pl, app.state.idPlayer) - app.state.sel.pl.cMines;
-    if ((int16_t)u > 0) {
-        rgprod[app.state.cProdGlob].cItem = LOWORD(1020 >= u ? (uint32_t)u : 1020);
+    if (static_cast<int16_t>(u) > 0) {
+        rgprod[app.state.cProdGlob].cItem = LOWORD(1020 >= u ? static_cast<uint32_t>(u) : 1020);
         rgprod[app.state.cProdGlob].iItem = mdIdleMine;
         rgprod[app.state.cProdGlob].grobj = grobjPlanet;
         app.state.cProdGlob++;
     }
     u = ColonyIO().pfnMaxDefenses(app, &app.state.sel.pl, app.state.idPlayer) - app.state.sel.pl.cDefenses;
-    if ((int16_t)u > 0) {
+    if (static_cast<int16_t>(u) > 0) {
         rgprod[app.state.cProdGlob].cItem = u;
         rgprod[app.state.cProdGlob].iItem = mdIdleDefense;
         rgprod[app.state.cProdGlob].grobj = grobjPlanet;
@@ -107,7 +107,7 @@ void InitProduction(APPSESSION &app, PROD *rgprod) {
     }
     i = ColonyIO().pfnTerraformPercent(app, &app.state.sel.pl);
     if (i > 0) {
-        rgprod[app.state.cProdGlob].cItem = (uint16_t)i;
+        rgprod[app.state.cProdGlob].cItem = static_cast<uint16_t>(i);
         rgprod[app.state.cProdGlob].iItem = mdIdleTerraform;
         rgprod[app.state.cProdGlob].grobj = grobjPlanet;
         app.state.cProdGlob++;
@@ -125,7 +125,7 @@ void InitProduction(APPSESSION &app, PROD *rgprod) {
     ipl = 0;
     lpprod = app.state.lpplProdGlob->rgprod();
     while (ipl < app.state.lpplProdGlob->iprodMac) {
-        for (iSrc = 0; iSrc < app.state.cProdGlob && ((uint32_t)app.state.pProdGlob[iSrc].grobj != lpprod->grobj || (uint32_t)app.state.pProdGlob[iSrc].iItem != lpprod->iItem); iSrc++) {
+        for (iSrc = 0; iSrc < app.state.cProdGlob && (static_cast<uint32_t>(app.state.pProdGlob[iSrc].grobj) != lpprod->grobj || static_cast<uint32_t>(app.state.pProdGlob[iSrc].iItem) != lpprod->iItem); iSrc++) {
         }
         if (iSrc >= app.state.cProdGlob) {
             if (ipl + 1 < app.state.lpplProdGlob->iprodMac) {
@@ -271,8 +271,8 @@ void GetProductionCosts(APPSESSION &app, PLANET *lppl, PROD *lpprod, uint32_t *r
             GetTrueHullCost(iplr, lphulCur, rgCostsCur);
             if (lphulCur->ihuldef != lphulNew->ihuldef) {
                 for (i = 0; i < 4; i++) {
-                    costHalf = (uint32_t)rgCosts[i] / 2;
-                    costUpg = rgCosts[i] - (int16_t)rgCostsCur[i] / 2;
+                    costHalf = static_cast<uint32_t>(rgCosts[i]) / 2;
+                    costUpg = rgCosts[i] - static_cast<int16_t>(rgCostsCur[i]) / 2;
                     if (costHalf > costUpg) {
                         rgCosts[i] = costHalf;
                     } else {
@@ -283,7 +283,7 @@ void GetProductionCosts(APPSESSION &app, PLANET *lppl, PROD *lpprod, uint32_t *r
                 lphulT = &PartQueryIO().pfnHull(lphulCur->ihuldef)->hul;
                 part.hs.grhst = hstNone;
                 part.SetPhul(lphulT);
-                PartQueryIO().pfnTrueCost(app, iplr, &part, (uint16_t *)rgCostsPartCur);
+                PartQueryIO().pfnTrueCost(app, iplr, &part, reinterpret_cast<uint16_t *>(rgCostsPartCur));
                 for (i = 0; i < 4; i++) {
                     rgCosts[i] -= rgCostsPartCur[i];
                 }
@@ -292,34 +292,34 @@ void GetProductionCosts(APPSESSION &app, PLANET *lppl, PROD *lpprod, uint32_t *r
                     if (lphulCur->rghs[i].cItem != 0 && lphulNew->rghs[i].cItem != 0) {
                         part.hs = lphulCur->rghs[i];
                         PartQueryIO().pfnLookup(app, &part);
-                        PartQueryIO().pfnTrueCost(app, iplr, &part, (uint16_t *)rgCostsPartCur);
+                        PartQueryIO().pfnTrueCost(app, iplr, &part, reinterpret_cast<uint16_t *>(rgCostsPartCur));
                         part.hs = lphulNew->rghs[i];
                         PartQueryIO().pfnLookup(app, &part);
-                        PartQueryIO().pfnTrueCost(app, iplr, &part, (uint16_t *)rgCostsPartNew);
+                        PartQueryIO().pfnTrueCost(app, iplr, &part, reinterpret_cast<uint16_t *>(rgCostsPartNew));
                         if (lphulCur->rghs[i].grhst != lphulNew->rghs[i].grhst) {
                             for (j = 0; j < 4; j++) {
                                 rgCostsPartCur[j] *= lphulCur->rghs[i].cItem;
                                 rgCostsPartNew[j] *= lphulNew->rghs[i].cItem;
-                                cost = (int16_t)(3 * rgCostsPartNew[j]) / 10 <= rgCostsPartNew[j] - (int16_t)(7 * rgCostsPartCur[j]) / 10
-                                           ? rgCostsPartNew[j] - (int16_t)(7 * rgCostsPartCur[j]) / 10
-                                           : (int16_t)(3 * rgCostsPartNew[j]) / 10;
-                                rgCosts[j] -= rgCosts[j] >= (uint16_t)(rgCostsPartNew[j] - cost) ? rgCostsPartNew[j] - cost : rgCosts[j];
+                                cost = static_cast<int16_t>((3 * rgCostsPartNew[j])) / 10 <= rgCostsPartNew[j] - static_cast<int16_t>((7 * rgCostsPartCur[j])) / 10
+                                           ? rgCostsPartNew[j] - static_cast<int16_t>((7 * rgCostsPartCur[j])) / 10
+                                           : static_cast<int16_t>((3 * rgCostsPartNew[j])) / 10;
+                                rgCosts[j] -= rgCosts[j] >= static_cast<uint16_t>((rgCostsPartNew[j] - cost)) ? rgCostsPartNew[j] - cost : rgCosts[j];
                             }
                         } else if (lphulCur->rghs[i].iItem != lphulNew->rghs[i].iItem) {
                             for (j = 0; j < 4; j++) {
                                 rgCostsPartCur[j] *= lphulCur->rghs[i].cItem;
                                 rgCostsPartNew[j] *= lphulNew->rghs[i].cItem;
-                                cost = (int16_t)(rgCostsPartNew[j] * 2) / 10 <= rgCostsPartNew[j] - (int16_t)(rgCostsPartCur[j] * 8) / 10
-                                           ? rgCostsPartNew[j] - (int16_t)(rgCostsPartCur[j] * 8) / 10
-                                           : (int16_t)(rgCostsPartNew[j] * 2) / 10;
-                                rgCosts[j] -= rgCosts[j] >= (uint16_t)(rgCostsPartNew[j] - cost) ? rgCostsPartNew[j] - cost : rgCosts[j];
+                                cost = static_cast<int16_t>((rgCostsPartNew[j] * 2)) / 10 <= rgCostsPartNew[j] - static_cast<int16_t>((rgCostsPartCur[j] * 8)) / 10
+                                           ? rgCostsPartNew[j] - static_cast<int16_t>((rgCostsPartCur[j] * 8)) / 10
+                                           : static_cast<int16_t>((rgCostsPartNew[j] * 2)) / 10;
+                                rgCosts[j] -= rgCosts[j] >= static_cast<uint16_t>((rgCostsPartNew[j] - cost)) ? rgCostsPartNew[j] - cost : rgCosts[j];
                             }
                         } else {
                             for (j = 0; j < 4; j++) {
                                 rgCostsPartCur[j] *= lphulCur->rghs[i].cItem;
                                 rgCostsPartNew[j] *= lphulNew->rghs[i].cItem;
                                 cost = 0 <= rgCostsPartNew[j] - rgCostsPartCur[j] ? rgCostsPartNew[j] - rgCostsPartCur[j] : 0;
-                                rgCosts[j] -= rgCosts[j] >= (uint16_t)(rgCostsPartNew[j] - cost) ? rgCostsPartNew[j] - cost : rgCosts[j];
+                                rgCosts[j] -= rgCosts[j] >= static_cast<uint16_t>((rgCostsPartNew[j] - cost)) ? rgCostsPartNew[j] - cost : rgCosts[j];
                             }
                         }
                     }
@@ -328,16 +328,16 @@ void GetProductionCosts(APPSESSION &app, PLANET *lppl, PROD *lpprod, uint32_t *r
         }
         if (fStarbase && (RaceQueryIO().pfnGrbit(&app.state.rgplr[iplr], ibitRaceISB) != 0 || RaceQueryIO().pfnStat(&app.state.rgplr[iplr], rsMajorAdv) == raMacintosh)) {
             for (i = 0; i < 4; i++) {
-                rgCosts[i] -= (uint32_t)rgCosts[i] / 5;
+                rgCosts[i] -= static_cast<uint32_t>(rgCosts[i]) / 5;
             }
         }
         if (fStarbase) {
             for (i = 0; i < 4; i++) {
-                rgCost[i] = (uint32_t)((uint32_t)(rgCosts[i] + 1) / 2);
+                rgCost[i] = static_cast<uint32_t>((static_cast<uint32_t>((rgCosts[i] + 1)) / 2));
             }
         } else {
             for (i = 0; i < 4; i++) {
-                rgCost[i] = (uint32_t)rgCosts[i];
+                rgCost[i] = static_cast<uint32_t>(rgCosts[i]);
             }
         }
     } else {
@@ -347,12 +347,12 @@ void GetProductionCosts(APPSESSION &app, PLANET *lppl, PROD *lpprod, uint32_t *r
             cost = RaceQueryIO().pfnGrbit(&app.state.rgplr[iplr], ibitRaceCheapFact);
             if (app.state.gd.fTutorial) {
                 for (i = 0; i < 3; i++) {
-                    rgCost[i] = (int16_t)(2 - cost);
+                    rgCost[i] = static_cast<int16_t>((2 - cost));
                 }
             } else {
                 rgCost[1] = 0;
                 *rgCost = 0;
-                rgCost[2] = (int16_t)(4 - cost);
+                rgCost[2] = static_cast<int16_t>((4 - cost));
             }
             rgCost[3] = RaceQueryIO().pfnStat(&app.state.rgplr[iplr], rsFactBuild);
             break;
@@ -371,11 +371,11 @@ void GetProductionCosts(APPSESSION &app, PLANET *lppl, PROD *lpprod, uint32_t *r
             for (i = 0; i < 3; i++) {
                 rgCost[i] = part.pplanetary()->rgwtOreCost[i];
             }
-            rgCost[3] = (uint32_t)part.pplanetary()->resCost;
+            rgCost[3] = static_cast<uint32_t>(part.pplanetary()->resCost);
             if (RaceQueryIO().pfnStat(&app.state.rgplr[iplr], rsMajorAdv) != raDefend)
                 break;
             for (i = 0; i < 4; i++) {
-                rgCost[i] = (uint32_t)((uint32_t)(rgCost[i] * 3) / 5);
+                rgCost[i] = static_cast<uint32_t>((static_cast<uint32_t>((rgCost[i] * 3)) / 5));
             }
             break;
         case iobjAlchemy:
@@ -383,7 +383,7 @@ void GetProductionCosts(APPSESSION &app, PLANET *lppl, PROD *lpprod, uint32_t *r
             for (i = 0; i < 3; i++) {
                 rgCost[i] = 0;
             }
-            rgCost[3] = (uint32_t)(RaceQueryIO().pfnGrbit(&app.state.rgplr[iplr], ibitRaceMineralAlchemy) == 0 ? 100 : 25);
+            rgCost[3] = static_cast<uint32_t>((RaceQueryIO().pfnGrbit(&app.state.rgplr[iplr], ibitRaceMineralAlchemy) == 0 ? 100 : 25));
             break;
         case iobjGenesis:
             part.hs.grhst = hstPlanetary;
@@ -391,7 +391,7 @@ void GetProductionCosts(APPSESSION &app, PLANET *lppl, PROD *lpprod, uint32_t *r
             PartQueryIO().pfnLookup(app, &part);
             PartQueryIO().pfnTrueCost(app, iplr, &part, rgCosts);
             for (i = 0; i < 4; i++) {
-                rgCost[i] = (uint32_t)rgCosts[i];
+                rgCost[i] = static_cast<uint32_t>(rgCosts[i]);
             }
             break;
         case iobjPacketIron:
@@ -399,9 +399,9 @@ void GetProductionCosts(APPSESSION &app, PLANET *lppl, PROD *lpprod, uint32_t *r
         case iobjPacketGerm:
             j = raMajor == raMassAccel ? 70 : raMajor == raStargate ? 120 : 110;
             for (i = 0; i < 3; i++) {
-                rgCost[i] = iItem - 14 == (uint32_t)i ? j : 0;
+                rgCost[i] = iItem - 14 == static_cast<uint32_t>(i) ? j : 0;
             }
-            rgCost[i] = (uint32_t)(raMajor == raMassAccel ? 5 : 10);
+            rgCost[i] = static_cast<uint32_t>((raMajor == raMassAccel ? 5 : 10));
             break;
         case iobjPacket:
         case iobjPacketMixed:
@@ -409,7 +409,7 @@ void GetProductionCosts(APPSESSION &app, PLANET *lppl, PROD *lpprod, uint32_t *r
             for (i = 0; i < 3; i++) {
                 rgCost[i] = j;
             }
-            rgCost[i] = (uint32_t)(raMajor == raMassAccel ? 5 : 10);
+            rgCost[i] = static_cast<uint32_t>((raMajor == raMassAccel ? 5 : 10));
             break;
         case iobjMinTerraform:
         case iobjMaxTerraform:
@@ -424,7 +424,7 @@ void GetProductionCosts(APPSESSION &app, PLANET *lppl, PROD *lpprod, uint32_t *r
             }
             if (raMajor != raTerra)
                 break;
-            rgCost[3] = (uint32_t)(rgCost[3] / 2);
+            rgCost[3] = static_cast<uint32_t>((rgCost[3] / 2));
             break;
         case iobjPlanetaryScanner:
             iItem = iobjPlanetaryScannerFirst;
@@ -443,13 +443,13 @@ void GetProductionCosts(APPSESSION &app, PLANET *lppl, PROD *lpprod, uint32_t *r
             PartQueryIO().pfnLookup(app, &part);
             PartQueryIO().pfnTrueCost(app, iplr, &part, rgCosts);
             for (i = 0; i < 4; i++) {
-                rgCost[i] = (uint32_t)rgCosts[i];
+                rgCost[i] = static_cast<uint32_t>(rgCosts[i]);
             }
         }
     }
     if (!fOnlyOne) {
         for (i = 0; i < 4; i++) {
-            rgCost[i] = (uint32_t)(rgCost[i] * cItem);
+            rgCost[i] = static_cast<uint32_t>((rgCost[i] * cItem));
         }
     }
     return;
@@ -489,7 +489,7 @@ void EstimateItemProdSched(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod, Prod
         }
         rgRes[3] = ResearchIO().pfnResources(app, &pl, lppl->iPlayer);
         if (!pl.fNoResearch) {
-            cResearch = (int32_t)(rgRes[3] * (int16_t)app.state.rgplr[lppl->iPlayer].pctResearch) / 100;
+            cResearch = static_cast<int32_t>((rgRes[3] * static_cast<int16_t>(app.state.rgplr[lppl->iPlayer].pctResearch))) / 100;
             rgRes[3] -= cResearch;
         } else {
             cResearch = 0;
@@ -543,11 +543,11 @@ void EstimateItemProdSched(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod, Prod
                         pl.cFactories += cBuilt;
                     }
                 }
-                if ((int16_t)mdStatus >= mdProdStatSome)
+                if (static_cast<int16_t>(mdStatus) >= mdProdStatSome)
                     break;
             }
         }
-        if ((int16_t)iItem < iobjMine) {
+        if (static_cast<int16_t>(iItem) < iobjMine) {
             *piFirst = LOWORD(rgRes[3]);
             if (iItem == static_cast<ProdItemType>(iprodEstimateResearchResources)) {
                 *piFirst += LOWORD(cResearch);

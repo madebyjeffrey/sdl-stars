@@ -81,7 +81,7 @@ BOOL win32::PostMessageA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
     if (!SDL_IsMainThread() || (hwnd && !LpCompatWindow(hwnd)))
         return 0;
-    lpmsg = (COMPATMESSAGE *)(CompatMessageAllocIO().pfnAllocateZero(1, sizeof(*lpmsg)));
+    lpmsg = static_cast<COMPATMESSAGE *>((CompatMessageAllocIO().pfnAllocateZero(1, sizeof(*lpmsg))));
     if (!lpmsg) {
         SDL_SetError("Win32 message allocation failed");
         return 0;
@@ -247,7 +247,7 @@ BOOL CompatPostInput(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
 }
 
 BOOL CompatQueueTimer(HWND hwnd, UINT_PTR id, TIMERPROC lpfn, void *lpvCallbackContext) {
-    if (!win32::PostMessageA(hwnd, win32::WM_TIMER, id, (LPARAM)lpfn)) return 0;
+    if (!win32::PostMessageA(hwnd, win32::WM_TIMER, id, reinterpret_cast<LPARAM>(lpfn))) return 0;
     lpLast->fTimer = 1;
     lpLast->lpvCallbackContext = lpvCallbackContext;
     return 1;
@@ -280,7 +280,7 @@ void CompatClearMessages() {
 static BOOL FMessageMatches(const win32::MSG *lpmsg, HWND hwnd, UINT msgMin, UINT msgMax) {
     if (lpmsg->message == win32::WM_QUIT)
         return 1;
-    if ((INT_PTR)hwnd == -1) {
+    if (reinterpret_cast<INT_PTR>(hwnd) == -1) {
         if (lpmsg->hwnd)
             return 0;
     } else if (hwnd && lpmsg->hwnd != hwnd && !win32::IsChild(hwnd, lpmsg->hwnd))
@@ -289,7 +289,7 @@ static BOOL FMessageMatches(const win32::MSG *lpmsg, HWND hwnd, UINT msgMin, UIN
 }
 
 static BOOL FValidFilter(HWND hwnd, UINT msgMin, UINT msgMax) {
-    if (!SDL_IsMainThread() || (hwnd && (INT_PTR)hwnd != -1 && !LpCompatWindow(hwnd)) || msgMin > msgMax) {
+    if (!SDL_IsMainThread() || (hwnd && reinterpret_cast<INT_PTR>(hwnd) != -1 && !LpCompatWindow(hwnd)) || msgMin > msgMax) {
         SDL_SetError("Invalid window or message filter on Win32 UI thread");
         return 0;
     }
@@ -373,7 +373,7 @@ BOOL win32::WaitMessage(void) {
 }
 
 void win32::PostQuitMessage(int code) {
-    win32::PostMessageA(nullptr, win32::WM_QUIT, (WPARAM)code, 0);
+    win32::PostMessageA(nullptr, win32::WM_QUIT, static_cast<WPARAM>(code), 0);
 }
 
 LRESULT win32::CallWindowProcA(WNDPROC lpfn, HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
@@ -402,7 +402,7 @@ LRESULT win32::DispatchMessageA(const win32::MSG *lpmsg) {
         if (lpmsg->hwnd && !LpCompatWindow(lpmsg->hwnd)) return 0;
         COMPATDISPATCHSCOPE dispatch;
         COMPATCALLBACKCONTEXTSCOPE context(payload ? payload->lpvCallbackContext : PvCompatCallbackContext());
-        CompatInvokeTimerProc((TIMERPROC)lpmsg->lParam, lpmsg->hwnd, win32::WM_TIMER, lpmsg->wParam, win32::GetTickCount());
+        CompatInvokeTimerProc(reinterpret_cast<TIMERPROC>(lpmsg->lParam), lpmsg->hwnd, win32::WM_TIMER, lpmsg->wParam, win32::GetTickCount());
         return 0;
     }
     if (!lpmsg->hwnd) return 0;
@@ -456,11 +456,11 @@ LRESULT win32::DefWindowProcA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         if (lpwin->lpclass->wc.hbrBackground) {
             RECT rc;
             win32::GetClientRect(hwnd, &rc);
-            return win32::FillRect((HDC)wParam, &rc, lpwin->lpclass->wc.hbrBackground);
+            return win32::FillRect(reinterpret_cast<HDC>(wParam), &rc, lpwin->lpclass->wc.hbrBackground);
         }
         return 0;
     case win32::WM_WINDOWPOSCHANGING: {
-        WINDOWPOS *lpwp = (WINDOWPOS *)lParam;
+        WINDOWPOS *lpwp = reinterpret_cast<WINDOWPOS *>(lParam);
         MINMAXINFO mmi = {};
         const SDL_DisplayMode *lpMode;
         if (!lpwp || (lpwp->flags & win32::SWP_NOSIZE) || lpwin->hwndParent ||
@@ -470,7 +470,7 @@ LRESULT win32::DefWindowProcA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             mmi.ptMaxSize.x = mmi.ptMaxTrackSize.x = lpMode->w;
             mmi.ptMaxSize.y = mmi.ptMaxTrackSize.y = lpMode->h;
         }
-        win32::SendMessageA(hwnd, win32::WM_GETMINMAXINFO, 0, (LPARAM)&mmi);
+        win32::SendMessageA(hwnd, win32::WM_GETMINMAXINFO, 0, reinterpret_cast<LPARAM>(&mmi));
         if (!LpCompatWindow(hwnd)) return 0;
         if (mmi.ptMinTrackSize.x > 0) lpwp->cx = StarsMax(lpwp->cx, mmi.ptMinTrackSize.x);
         if (mmi.ptMinTrackSize.y > 0) lpwp->cy = StarsMax(lpwp->cy, mmi.ptMinTrackSize.y);
@@ -479,7 +479,7 @@ LRESULT win32::DefWindowProcA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         return 0;
     }
     case win32::WM_WINDOWPOSCHANGED: {
-        const WINDOWPOS *lpwp = (const WINDOWPOS *)lParam;
+        const WINDOWPOS *lpwp = reinterpret_cast<const WINDOWPOS *>(lParam);
         RECT rc;
         POINT pt = {0, 0};
         UINT flags;
@@ -502,8 +502,8 @@ LRESULT win32::DefWindowProcA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         win32::DestroyWindow(hwnd);
         return 0;
     case win32::WM_SETTEXT:
-        if (!lParam || !FUtf8Valid((const char *)lParam, strlen((const char *)lParam)) ||
-            !(pszNew = SDL_strdup((const char *)lParam))) return 0;
+        if (!lParam || !FUtf8Valid(reinterpret_cast<const char *>(lParam), strlen(reinterpret_cast<const char *>(lParam))) ||
+            !(pszNew = SDL_strdup(reinterpret_cast<const char *>(lParam)))) return 0;
         if (lpwin->lpWindow.get() && !FCompatNativeTitle(lpwin->lpWindow.get(), pszNew)) {
             SDL_free(pszNew);
             return 0;
@@ -515,11 +515,11 @@ LRESULT win32::DefWindowProcA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         if (!lParam || wParam == 0)
             return 0;
         psz = lpwin->pszTitle;
-        cch = CchUtf8Prefix(psz, (size_t)wParam - 1);
-        memcpy((char *)lParam, psz, cch); ((char *)lParam)[cch] = 0;
-        return (LRESULT)cch;
+        cch = CchUtf8Prefix(psz, static_cast<size_t>(wParam) - 1);
+        memcpy(reinterpret_cast<char *>(lParam), psz, cch); (reinterpret_cast<char *>(lParam))[cch] = 0;
+        return static_cast<LRESULT>(cch);
     case win32::WM_GETTEXTLENGTH:
-        return (LRESULT)SDL_strlen(lpwin->pszTitle);
+        return static_cast<LRESULT>(SDL_strlen(lpwin->pszTitle));
     default:
         // WM_DESTROY does not quit: the application's last-window policy owns WM_QUIT.
         return 0;

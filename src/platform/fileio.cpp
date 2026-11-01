@@ -223,7 +223,7 @@ NATIVEFILE *PfNativeOpenFlags(const char *psz, unsigned access, unsigned share,
             int err = _wsopen_s(&pf->fd, pf->pth.c_str(), flags, sharing, _S_IREAD | _S_IWRITE);
             if (err != 0) { errno = err; return nullptr; }
 #else
-            (void)share;
+            static_cast<void>(share);
             int flags = access == 1 ? O_RDONLY : access == 2 ? O_WRONLY : O_RDWR;
             flags |= O_CLOEXEC;
             if (create) flags |= O_CREAT;
@@ -500,7 +500,7 @@ int IRemoveNativePath(const char *psz, int directory) {
             return -1;
         }
 #else
-        (void)directory;
+        static_cast<void>(directory);
 #endif
         std::error_code ec;
         if (fs::remove(PathFromUtf8(psz), ec)) return 0;
@@ -519,7 +519,7 @@ int IRenameNativePath(const char *oldPath, const char *newPath, int replace, int
                 error == ERROR_ALREADY_EXISTS || error == ERROR_FILE_EXISTS ? EEXIST : EACCES;
         return -1;
 #else
-        (void)replace; (void)sync;
+        static_cast<void>(replace); static_cast<void>(sync);
         std::error_code ec; fs::rename(PathFromUtf8(oldPath), PathFromUtf8(newPath), ec);
         if (ec) { SetError(ec); return -1; }
         return 0;

@@ -30,7 +30,15 @@
     },
     {
       "id": "L02",
-      "status": "pending"
+      "status": "complete",
+      "evidence": "docs/CPP-LIVE-CASTS.json",
+      "ordering": "Executed after declaration sub-batch L01a, while its compiler type inventory was current; L01 header qualification follows.",
+      "converted": {
+        "static_cast": 4154,
+        "reinterpret_cast": 800,
+        "const_cast-and-reinterpret_cast": 14
+      },
+      "compiler_enforcement": "-Wold-style-cast on every owned source; disabling it is rejected by manifest policy"
     },
     {
       "id": "L03",
@@ -20668,6 +20676,29 @@
       "compiler_manifest": "157 sources; 158 variants; 160 headers in both orders; negative policy checks pass",
       "baseline": "unchanged",
       "receipts": "dist/verification/live-cpp/l01a/"
+    },
+    {
+      "batch": "L02",
+      "debug_build": "pass; no warnings; old-style casts are errors",
+      "desktop": "151/151; includes 29 leak checks and available tutorial smoke",
+      "host": "27/27",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "windows_syntax": "94 core/UI/host/platform translation units: 92 initial, 2 pass after converting the conditional library casts and supplying genuine zlib headers; Windows SDK chooser/process adapters also pass strict syntax with -Wold-style-cast",
+      "wire_inventory": "46 record names; 259 unchanged frozen measurements; pointer alias chains remain visible in explicit casts",
+      "canonical_models": "unchanged",
+      "baseline": "unchanged",
+      "receipts": "dist/verification/live-cpp/l02/"
     }
   ],
   "generators": [

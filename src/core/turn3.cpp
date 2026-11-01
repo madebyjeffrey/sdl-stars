@@ -206,9 +206,9 @@ void SatisfyOrders(APPSESSION &app, int16_t iPass) {
                                 }
                                 amount = StarsMin(2000000, amount);
                                 if (amount < 65536) {
-                                    amountEdit = (uint32_t)((uint32_t)(amount * ord.txp.rgia[j].cQuan()) / 100);
+                                    amountEdit = static_cast<uint32_t>((static_cast<uint32_t>((amount * ord.txp.rgia[j].cQuan())) / 100));
                                 } else {
-                                    amountEdit = (uint32_t)((int32_t)(amount / 100) * ord.txp.rgia[j].cQuan());
+                                    amountEdit = static_cast<uint32_t>((static_cast<int32_t>((amount / 100)) * ord.txp.rgia[j].cQuan()));
                                 }
                                 amountEdit -= lpfl->rgwtMin[j];
                                 if (amountEdit < 0) {
@@ -386,7 +386,7 @@ void SatisfyOrders(APPSESSION &app, int16_t iPass) {
                                 continue;
                             case iActionUnloadAll:
                             case iActionUnloadExact:
-                                amount = ((((uint32_t)lpfl->rgwtMin[j]) < ((uint32_t)amountEdit)) ? ((uint32_t)lpfl->rgwtMin[j]) : ((uint32_t)amountEdit));
+                                amount = (((static_cast<uint32_t>(lpfl->rgwtMin[j])) < (static_cast<uint32_t>(amountEdit))) ? (static_cast<uint32_t>(lpfl->rgwtMin[j])) : (static_cast<uint32_t>(amountEdit)));
                             Unload:
                                 if (iLoad != 0)
                                     continue;
@@ -406,7 +406,7 @@ void SatisfyOrders(APPSESSION &app, int16_t iPass) {
                                         goto LCantDrop;
                                     }
                                     FQueueColonistDrop(app, lpfl, &pl, amount);
-                                } else if (j == 3 && ord.grobj == grobjFleet && lpfl->iPlayer != ((uint16_t)ord.id >> 9 & 0xf)) {
+                                } else if (j == 3 && ord.grobj == grobjFleet && lpfl->iPlayer != (static_cast<uint16_t>(ord.id) >> 9 & 0xf)) {
                                     idm = idmAllowedTransferColonistsAnotherPlayer;
                                     goto LCantDrop;
                                 } else if (ord.grobj == grobjFleet && app.state.rgplr[lpflWP->iPlayer].rgmdRelation[lpfl->iPlayer] == 2) {
@@ -492,7 +492,7 @@ void SatisfyOrders(APPSESSION &app, int16_t iPass) {
                                     TurnIO().pfnMessage(app, lpfl->iPlayer, idmHasLoaded, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, LOWORD(l), HIWORD(l), 4, xWP, idWP, 0);
                                 } else if (l < 0) {
                                     TurnIO().pfnMessage(app, lpfl->iPlayer, idmHasUnloaded, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, -LOWORD(l),
-                                                LOWORD((uint32_t)((uint32_t)-l >> 0x10)), 4, xWP, idWP, 0);
+                                                LOWORD(static_cast<uint32_t>((static_cast<uint32_t>(-l) >> 0x10))), 4, xWP, idWP, 0);
                                 }
                             }
                         }
@@ -582,27 +582,27 @@ void SatisfyOrders(APPSESSION &app, int16_t iPass) {
                                     } else {
                                         lpshdefT = app.state.rglpshdef[lpfl->iPlayer] + j;
                                     }
-                                    lT = (uint32_t)(lpfl->rgcsh[j] * (uint32_t)lpshdefT->hul.rgwtOreCost[i]);
+                                    lT = static_cast<uint32_t>((lpfl->rgcsh[j] * static_cast<uint32_t>(lpshdefT->hul.rgwtOreCost[i])));
                                     if (lpshdefT->fGift) {
-                                        lT = (int32_t)(lT / 4);
+                                        lT = static_cast<int32_t>((lT / 4));
                                     }
                                     lAmt += lT;
                                 }
                             }
                             if (ord.grTask == grTaskColonize) {
-                                lAmt = (int32_t)(lAmt * 3) / 4;
+                                lAmt = static_cast<int32_t>((lAmt * 3)) / 4;
                             } else if (pl.id == idplNone) {
-                                lAmt = (int32_t)(lAmt / 3);
+                                lAmt = static_cast<int32_t>((lAmt / 3));
                             } else if (pl.fStarbase) {
                                 if (fUltimate) {
-                                    lAmt = (int32_t)(lAmt * 9) / 10;
+                                    lAmt = static_cast<int32_t>((lAmt * 9)) / 10;
                                 } else {
-                                    lAmt = (int32_t)(lAmt * 4) / 5;
+                                    lAmt = static_cast<int32_t>((lAmt * 4)) / 5;
                                 }
                             } else if (fUltimate) {
-                                lAmt = (int32_t)(lAmt * 9) / 20;
+                                lAmt = static_cast<int32_t>((lAmt * 9)) / 20;
                             } else {
-                                lAmt = (int32_t)(lAmt / 3);
+                                lAmt = static_cast<int32_t>((lAmt / 3));
                             }
                             lAmt += lpfl->rgwtMin[i];
                             lXferMinerals += lAmt;
@@ -624,9 +624,9 @@ void SatisfyOrders(APPSESSION &app, int16_t iPass) {
                                     } else {
                                         lpshdefT = app.state.rglpshdef[lpfl->iPlayer] + j;
                                     }
-                                    lT = (uint32_t)(lpfl->rgcsh[j] * (uint32_t)lpshdefT->hul.resCost);
+                                    lT = static_cast<uint32_t>((lpfl->rgcsh[j] * static_cast<uint32_t>(lpshdefT->hul.resCost)));
                                     if (lpshdefT->fGift) {
-                                        lT = (int32_t)(lT / 4);
+                                        lT = static_cast<int32_t>((lT / 4));
                                     }
                                     lResUltimate += lT;
                                 }
@@ -637,7 +637,7 @@ void SatisfyOrders(APPSESSION &app, int16_t iPass) {
                             app.state.vrgPlanResExtra[pl.id] = app.state.vrgPlanResExtra[pl.id] + LOWORD(lResUltimate);
                             if (lResUltimate > 0 && pl.iPlayer != iplrNone) {
                                 lAmt = ResearchIO().pfnResources(app, &pl, pl.iPlayer);
-                                lResUltimate = (int32_t)((int32_t)(lResUltimate * lAmt) / (lResUltimate + lAmt));
+                                lResUltimate = static_cast<int32_t>((static_cast<int32_t>((lResUltimate * lAmt)) / (lResUltimate + lAmt)));
                             }
                             idm = static_cast<MessageId>(idmHasDismantledKtMineralsWhichHaveDeposited2 + pl.fStarbase);
                             TurnIO().pfnMessage(app, lpfl->iPlayer, idm, static_cast<MsgGoto>(iGoto), WFromLpfl(app, lpfl), LOWORD(lXferMinerals), HIWORD(lXferMinerals), pl.id, LOWORD(lResUltimate),
@@ -858,7 +858,7 @@ void SatisfyOrders(APPSESSION &app, int16_t iPass) {
                             cMine = CLayMinesFromLpfl(app, lpfl, static_cast<MineFieldType>(j), ishdefAll);
                             if (cMine != 0) {
                                 if (!lpfl->fHereAllTurn) {
-                                    cMine = (int32_t)(cMine / 2);
+                                    cMine = static_cast<int32_t>((cMine / 2));
                                 }
                                 lpthBest = nullptr;
                                 lBest = 10000000;
@@ -866,9 +866,9 @@ void SatisfyOrders(APPSESSION &app, int16_t iPass) {
                                 lpthMac = app.state.lpThings + app.state.cThing;
                                 for (; lpth < lpthMac; lpth++) {
                                     if (lpth->iplr() == lpfl->iPlayer && lpth->ith() == ithMinefield && lpth->thm().iType() == j) {
-                                        dx = (int16_t)(lpfl->pt.x - lpth->pt().x());
-                                        dy = (int16_t)(lpfl->pt.y - lpth->pt().y());
-                                        l = (uint32_t)(dx * dx) + (uint32_t)(dy * dy);
+                                        dx = static_cast<int16_t>((lpfl->pt.x - lpth->pt().x()));
+                                        dy = static_cast<int16_t>((lpfl->pt.y - lpth->pt().y()));
+                                        l = static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy));
                                         if (lpth->thm().cMines() >= l && l < lBest) {
                                             lBest = l;
                                             lpthBest = lpth;
@@ -876,10 +876,10 @@ void SatisfyOrders(APPSESSION &app, int16_t iPass) {
                                     }
                                 }
                                 if (lpthBest && lpthBest->thm().cMines() < 1000000) {
-                                    { const auto xForThing = (LOWORD((int32_t)((int32_t)((uint32_t)(lpthBest->pt().x() * lpthBest->thm().cMines()) + (uint32_t)(lpfl->pt.x * cMine)) /
-                                                         (cMine + lpthBest->thm().cMines())))); auto &thForThing = *(lpthBest); thForThing.pt().SetX(xForThing); }
-                                    { const auto yForThing = (LOWORD((int32_t)((int32_t)((uint32_t)(lpthBest->pt().y() * lpthBest->thm().cMines()) + (uint32_t)(lpfl->pt.y * cMine)) /
-                                                         (cMine + lpthBest->thm().cMines())))); auto &thForThing = *(lpthBest); thForThing.pt().SetY(yForThing); }
+                                    { const auto xForThing = (LOWORD(static_cast<int32_t>((static_cast<int32_t>((static_cast<uint32_t>((lpthBest->pt().x() * lpthBest->thm().cMines())) + static_cast<uint32_t>((lpfl->pt.x * cMine)))) /
+                                                         (cMine + lpthBest->thm().cMines()))))); auto &thForThing = *(lpthBest); thForThing.pt().SetX(xForThing); }
+                                    { const auto yForThing = (LOWORD(static_cast<int32_t>((static_cast<int32_t>((static_cast<uint32_t>((lpthBest->pt().y() * lpthBest->thm().cMines())) + static_cast<uint32_t>((lpfl->pt.y * cMine)))) /
+                                                         (cMine + lpthBest->thm().cMines()))))); auto &thForThing = *(lpthBest); thForThing.pt().SetY(yForThing); }
                                     lpthBest->thm().SetCMines(lpthBest->thm().cMines() + cMine);
                                     idm = idmHasIncreasedMinefieldMines;
                                 } else {

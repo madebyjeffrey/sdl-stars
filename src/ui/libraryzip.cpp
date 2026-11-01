@@ -45,9 +45,9 @@ enum {
 };
 static uint32_t idZipTemp;
 
-static uint16_t WZip16(const uint8_t *p) { return (uint16_t)(p[0] | ((uint16_t)p[1] << 8)); }
+static uint16_t WZip16(const uint8_t *p) { return static_cast<uint16_t>((p[0] | (static_cast<uint16_t>(p[1]) << 8))); }
 static uint32_t DwZip32(const uint8_t *p) {
-    return (uint32_t)p[0] | ((uint32_t)p[1] << 8) | ((uint32_t)p[2] << 16) | ((uint32_t)p[3] << 24);
+    return static_cast<uint32_t>(p[0]) | (static_cast<uint32_t>(p[1]) << 8) | (static_cast<uint32_t>(p[2]) << 16) | (static_cast<uint32_t>(p[3]) << 24);
 }
 static ZIPCENTRAL ZipCentralHeader(const uint8_t *rgbHeader) {
     ZIPCENTRAL zc;
@@ -64,13 +64,13 @@ static ZIPCENTRAL ZipCentralHeader(const uint8_t *rgbHeader) {
     return zc;
 }
 static void PutZip16(NATIVEFILE *pf, uint16_t w) { ChPutNativeFile(w & 255, pf); ChPutNativeFile(w >> 8, pf); }
-static void PutZip32(NATIVEFILE *pf, uint32_t dw) { PutZip16(pf, (uint16_t)dw); PutZip16(pf, (uint16_t)(dw >> 16)); }
+static void PutZip32(NATIVEFILE *pf, uint32_t dw) { PutZip16(pf, static_cast<uint16_t>(dw)); PutZip16(pf, static_cast<uint16_t>((dw >> 16))); }
 
 static int16_t FZipSafeName(const char *psz) {
     const char *pszCurrent = psz, *pszPart = psz;
     if (!*psz || *psz == '/' || *psz == '\\') return 0;
     for (; *pszCurrent; pszCurrent++) {
-        if ((unsigned char)*pszCurrent < 32 || *pszCurrent == '\\' || *pszCurrent == ':') return 0;
+        if (static_cast<unsigned char>(*pszCurrent) < 32 || *pszCurrent == '\\' || *pszCurrent == ':') return 0;
         if (*pszCurrent == '/') {
             if (pszCurrent == pszPart || (pszCurrent - pszPart == 1 && pszPart[0] == '.') ||
                 (pszCurrent - pszPart == 2 && pszPart[0] == '.' && pszPart[1] == '.')) return 0;
@@ -86,7 +86,7 @@ static int16_t FZipNameUtf8Supported(const char *pszName, size_t cbName, uint16_
     if (!FUtf8Valid(pszName, cbName)) return 0;
     if (wFlags & ZIP_UTF8_FILENAME_FLAG) return 1;
     for (iByte = 0; iByte < cbName; iByte++)
-        if ((unsigned char)pszName[iByte] >= 0x80) return 0;
+        if (static_cast<unsigned char>(pszName[iByte]) >= 0x80) return 0;
     return 1;
 }
 
@@ -95,15 +95,15 @@ static int16_t FZipEnsureCapacity(ZIPFILES *pz) {
     int cCapacity;
     if (pz->c < pz->cMax) return 1;
     cCapacity = pz->cMax ? pz->cMax * 2 : 16;
-    rgpszFiles = (char **)SDL_realloc(pz->rgpsz, (size_t)cCapacity * sizeof(*rgpszFiles));
+    rgpszFiles = static_cast<char **>(SDL_realloc(pz->rgpsz, static_cast<size_t>(cCapacity) * sizeof(*rgpszFiles)));
     if (!rgpszFiles) { pz->fBad = 1; return 0; }
-    pz->rgpsz = LpStartHeapArray<char *>(rgpszFiles,(size_t)cCapacity * sizeof(*rgpszFiles));
+    pz->rgpsz = LpStartHeapArray<char *>(rgpszFiles,static_cast<size_t>(cCapacity) * sizeof(*rgpszFiles));
     pz->cMax = cCapacity;
     return 1;
 }
 
 static int16_t FCollectZipFiles(APPSESSION &app, void *lpData, const char *pszName) {
-    ZIPFILES *pz = (ZIPFILES *)lpData;
+    ZIPFILES *pz = static_cast<ZIPFILES *>(lpData);
     char szPath[512], *pszRelative;
     int16_t fDir, fLink;
     ZIPFILES zfChild = {0};
@@ -151,21 +151,21 @@ static int16_t FWriteZipEntry(NATIVEFILE *pfZip, const char *pszRoot, ZIPENTRY *
     });
     if (CchSnprintf(szPath, sizeof(szPath), "%s%s%s", pszRoot, szDirSep, pze->pszName) <= 0 ||
         !FNativeFileSize(szPath, &cb) || cb < 0 || cb > UINT32_MAX || cbName > UINT16_MAX ||
-        (uint64_t)LNativePosition(pfZip) > UINT32_MAX) return 0;
+        static_cast<uint64_t>(LNativePosition(pfZip)) > UINT32_MAX) return 0;
     pf = PfOpenNativeFile(szPath, "rb");
     if (!pf) return 0;
-    rgbData = (uint8_t *)SDL_malloc(cb ? (size_t)cb : 1);
+    rgbData = static_cast<uint8_t *>(SDL_malloc(cb ? static_cast<size_t>(cb) : 1));
     if (!rgbData) return 0;
-    if (CReadNative(rgbData, 1, (size_t)cb, pf) != (size_t)cb) return 0;
+    if (CReadNative(rgbData, 1, static_cast<size_t>(cb), pf) != static_cast<size_t>(cb)) return 0;
     if (ICloseNativeFile(std::exchange(pf, nullptr)) != 0) return 0;
-    pze->dwCrc = (uint32_t)crc32(0, rgbData, (uInt)cb);
-    pze->cbSize = (uint32_t)cb;
-    pze->dwOffset = (uint32_t)LNativePosition(pfZip);
+    pze->dwCrc = static_cast<uint32_t>(crc32(0, rgbData, static_cast<uInt>(cb)));
+    pze->cbSize = static_cast<uint32_t>(cb);
+    pze->dwOffset = static_cast<uint32_t>(LNativePosition(pfZip));
     PutZip32(pfZip, ZIP_LOCAL_SIGNATURE); PutZip16(pfZip, 20); PutZip16(pfZip, 0x800); PutZip16(pfZip, 0);
     PutZip16(pfZip, 0); PutZip16(pfZip, 0); PutZip32(pfZip, pze->dwCrc);
     PutZip32(pfZip, pze->cbSize); PutZip32(pfZip, pze->cbSize);
-    PutZip16(pfZip, (uint16_t)cbName); PutZip16(pfZip, 0);
-    if (CWriteNative(pze->pszName, 1, cbName, pfZip) != cbName || CWriteNative(rgbData, 1, (size_t)cb, pfZip) != (size_t)cb) {
+    PutZip16(pfZip, static_cast<uint16_t>(cbName)); PutZip16(pfZip, 0);
+    if (CWriteNative(pze->pszName, 1, cbName, pfZip) != cbName || CWriteNative(rgbData, 1, static_cast<size_t>(cb), pfZip) != static_cast<size_t>(cb)) {
         return 0;
     }
     entry.Close();
@@ -192,32 +192,32 @@ int16_t FZipLibraryDirectory(APPSESSION &app, const char *pszDirectory, const ch
     if (!FNativeEnumerateDirectory(app, pszDirectory, FCollectZipFiles, &zf) || zf.fBad || zf.c > UINT16_MAX) goto done;
     for (i = 0; i < 1000; i++) {
         cchTemp = CchSnprintf(szTemp, sizeof(szTemp), "%s.tmp.%u", pszArchive, idZipTemp++);
-        if (cchTemp <= 0 || (size_t)cchTemp >= sizeof(szTemp)) goto done;
+        if (cchTemp <= 0 || static_cast<size_t>(cchTemp) >= sizeof(szTemp)) goto done;
         pf = PfOpenNativeFile(szTemp, "wbx");
         if (pf) break;
         if (!FNativeFileSize(szTemp, &cbExisting)) goto done;
     }
     if (!pf) goto done;
-    rgzentry = (ZIPENTRY *)SDL_calloc(zf.c ? (size_t)zf.c : 1, sizeof(*rgzentry));
+    rgzentry = static_cast<ZIPENTRY *>(SDL_calloc(zf.c ? static_cast<size_t>(zf.c) : 1, sizeof(*rgzentry)));
     if (!rgzentry) goto done;
-    rgzentry = LpStartHeapArray<ZIPENTRY>(rgzentry,(zf.c ? (size_t)zf.c : 1) * sizeof(*rgzentry));
+    rgzentry = LpStartHeapArray<ZIPENTRY>(rgzentry,(zf.c ? static_cast<size_t>(zf.c) : 1) * sizeof(*rgzentry));
     for (i = 0; i < zf.c; i++) {
         rgzentry[i].pszName = SDL_strdup(zf.rgpsz[i]);
         if (!rgzentry[i].pszName || !FWriteZipEntry(pf, pszDirectory, &rgzentry[i])) goto done;
     }
-    dwStart = (uint32_t)LNativePosition(pf);
+    dwStart = static_cast<uint32_t>(LNativePosition(pf));
     for (i = 0; i < zf.c; i++) {
         cbName = strlen(rgzentry[i].pszName);
         PutZip32(pf, ZIP_CENTRAL_SIGNATURE); PutZip16(pf, 20); PutZip16(pf, 20); PutZip16(pf, 0x800);
         PutZip16(pf, 0); PutZip16(pf, 0); PutZip16(pf, 0); PutZip32(pf, rgzentry[i].dwCrc);
-        PutZip32(pf, rgzentry[i].cbSize); PutZip32(pf, rgzentry[i].cbSize); PutZip16(pf, (uint16_t)cbName);
+        PutZip32(pf, rgzentry[i].cbSize); PutZip32(pf, rgzentry[i].cbSize); PutZip16(pf, static_cast<uint16_t>(cbName));
         PutZip16(pf, 0); PutZip16(pf, 0); PutZip16(pf, 0); PutZip16(pf, 0);
         PutZip32(pf, 0); PutZip32(pf, rgzentry[i].dwOffset);
         if (CWriteNative(rgzentry[i].pszName, 1, cbName, pf) != cbName) goto done;
     }
-    dwLength = (uint32_t)LNativePosition(pf) - dwStart;
+    dwLength = static_cast<uint32_t>(LNativePosition(pf)) - dwStart;
     PutZip32(pf, ZIP_EOCD_SIGNATURE); PutZip16(pf, 0); PutZip16(pf, 0);
-    PutZip16(pf, (uint16_t)zf.c); PutZip16(pf, (uint16_t)zf.c);
+    PutZip16(pf, static_cast<uint16_t>(zf.c)); PutZip16(pf, static_cast<uint16_t>(zf.c));
     PutZip32(pf, dwLength); PutZip32(pf, dwStart); PutZip16(pf, 0);
     if (FNativeStreamError(pf)) goto done;
     if (ICloseNativeFile(pf) != 0) { pf = nullptr; goto done; }
@@ -234,9 +234,9 @@ static int16_t FZipMakeParents(const char *pszRoot, const char *pszName, char *s
     int cch;
     size_t i, cchBase = strlen(pszRoot) + strlen(szDirSep);
     cch = CchSnprintf(szFile, cbFile, "%s%s%s", pszRoot, szDirSep, pszName);
-    if (cch <= 0 || (size_t)cch >= cbFile || (size_t)cch >= sizeof(szPath)) return 0;
+    if (cch <= 0 || static_cast<size_t>(cch) >= cbFile || static_cast<size_t>(cch) >= sizeof(szPath)) return 0;
     strcpy(szPath, szFile);
-    for (i = cchBase; i < (size_t)cch; i++) if (szPath[i] == '/' || szPath[i] == '\\') {
+    for (i = cchBase; i < static_cast<size_t>(cch); i++) if (szPath[i] == '/' || szPath[i] == '\\') {
         ch = szPath[i]; szPath[i] = 0;
         if (!FNativeDirectoryExists(szPath) && CreateNativeDir(szPath) != 0) return 0;
         szPath[i] = ch;
@@ -268,10 +268,10 @@ int16_t FUnzipLibraryArchive(const char *pszArchive, const char *pszDirectory) {
         if (pf) ICloseNativeFile(pf);
     });
     if (!pf || !FNativeFileSize(pszArchive, &archiveSize) || archiveSize < ZIP_EOCD_SIZE) goto done;
-    tailOffset = archiveSize > sizeof(rgbTail) ? (long)(archiveSize - sizeof(rgbTail)) : 0;
+    tailOffset = archiveSize > sizeof(rgbTail) ? static_cast<long>((archiveSize - sizeof(rgbTail))) : 0;
     if (ISeekNativeFile(pf, tailOffset, SEEK_SET) != 0) goto done;
     cbRead = CReadNative(rgbTail, 1, sizeof(rgbTail), pf);
-    lSearch = (long)(cbRead >= ZIP_EOCD_SIZE ? cbRead - ZIP_EOCD_SIZE : 0);
+    lSearch = static_cast<long>((cbRead >= ZIP_EOCD_SIZE ? cbRead - ZIP_EOCD_SIZE : 0));
     for (;;) { if (DwZip32(rgbTail + lSearch) == ZIP_EOCD_SIGNATURE) { eocd = tailOffset + lSearch; break; } if (!lSearch--) break; }
     if (eocd < 0 || ISeekNativeFile(pf, eocd + 4, SEEK_SET) != 0 ||
         CReadNative(rgbTail, 1, ZIP_EOCD_FIELDS_AFTER_SIGNATURE_SIZE, pf) != ZIP_EOCD_FIELDS_AFTER_SIGNATURE_SIZE ||
@@ -279,8 +279,8 @@ int16_t FUnzipLibraryArchive(const char *pszArchive, const char *pszDirectory) {
     if (WZip16(rgbTail + ZIP_EOCD_DISK_NUMBER_OFFSET) || WZip16(rgbTail + ZIP_EOCD_CENTRAL_DISK_OFFSET) ||
         WZip16(rgbTail + ZIP_EOCD_ENTRIES_ON_DISK_OFFSET) != WZip16(rgbTail + ZIP_EOCD_ENTRY_COUNT_OFFSET)) goto done;
     cEntries = WZip16(rgbTail + ZIP_EOCD_ENTRY_COUNT_OFFSET);
-    centralOffset = (long)DwZip32(rgbTail + ZIP_EOCD_CENTRAL_OFFSET_OFFSET);
-    if (cEntries > 4096 || (uint64_t)centralOffset + DwZip32(rgbTail + ZIP_EOCD_CENTRAL_SIZE_OFFSET) > (uint64_t)eocd ||
+    centralOffset = static_cast<long>(DwZip32(rgbTail + ZIP_EOCD_CENTRAL_OFFSET_OFFSET));
+    if (cEntries > 4096 || static_cast<uint64_t>(centralOffset) + DwZip32(rgbTail + ZIP_EOCD_CENTRAL_SIZE_OFFSET) > static_cast<uint64_t>(eocd) ||
         ISeekNativeFile(pf, centralOffset, SEEK_SET) != 0) goto done;
     for (i = 0; i < cEntries; i++) {
         if (CReadNative(rgbCentral, 1, sizeof(rgbCentral), pf) != sizeof(rgbCentral) || DwZip32(rgbCentral) != ZIP_CENTRAL_SIGNATURE) goto done;
@@ -300,18 +300,18 @@ int16_t FUnzipLibraryArchive(const char *pszArchive, const char *pszDirectory) {
         if (cbTotal > 512U * 1024U * 1024U) goto done;
         szName[zc.wNameLength] = 0;
         lNext = LNativePosition(pf) + zc.wExtraLength + zc.wCommentLength;
-        if (zc.dwLocalOffset >= (uint32_t)centralOffset ||
+        if (zc.dwLocalOffset >= static_cast<uint32_t>(centralOffset) ||
             ISeekNativeFile(pf, zc.dwLocalOffset, SEEK_SET) != 0 || CReadNative(rgbLocal, 1, sizeof(rgbLocal), pf) != sizeof(rgbLocal) ||
             DwZip32(rgbLocal) != ZIP_LOCAL_SIGNATURE || WZip16(rgbLocal + ZIP_LOCAL_FLAGS_OFFSET) != zc.wFlags ||
             WZip16(rgbLocal + ZIP_LOCAL_METHOD_OFFSET) != zc.wMethod) goto done;
         wLocalNameLength = WZip16(rgbLocal + ZIP_LOCAL_NAME_LENGTH_OFFSET);
         wLocalExtraLength = WZip16(rgbLocal + ZIP_LOCAL_EXTRA_LENGTH_OFFSET);
         if (wLocalNameLength != zc.wNameLength) goto done;
-        rgbLocalName = (uint8_t *)SDL_malloc(wLocalNameLength ? wLocalNameLength : 1);
+        rgbLocalName = static_cast<uint8_t *>(SDL_malloc(wLocalNameLength ? wLocalNameLength : 1));
         if (!rgbLocalName || CReadNative(rgbLocalName, 1, wLocalNameLength, pf) != wLocalNameLength ||
             memcmp(rgbLocalName, szName, zc.wNameLength) != 0 ||
             ISeekNativeFile(pf, wLocalExtraLength, SEEK_CUR) != 0 ||
-            (uint64_t)LNativePosition(pf) + zc.cbCompressed > (uint64_t)centralOffset) goto done;
+            static_cast<uint64_t>(LNativePosition(pf)) + zc.cbCompressed > static_cast<uint64_t>(centralOffset)) goto done;
         SDL_free(rgbLocalName); rgbLocalName = nullptr;
         if (szName[zc.wNameLength - 1] == '/') {
             szName[zc.wNameLength - 1] = 0;
@@ -321,8 +321,8 @@ int16_t FUnzipLibraryArchive(const char *pszArchive, const char *pszDirectory) {
             continue;
         }
         if (!FZipSafeName(szName)) goto done;
-        rgbCompressed = (uint8_t *)SDL_malloc(zc.cbCompressed ? zc.cbCompressed : 1);
-        rgbData = (uint8_t *)SDL_malloc(zc.cbUncompressed ? zc.cbUncompressed : 1);
+        rgbCompressed = static_cast<uint8_t *>(SDL_malloc(zc.cbCompressed ? zc.cbCompressed : 1));
+        rgbData = static_cast<uint8_t *>(SDL_malloc(zc.cbUncompressed ? zc.cbUncompressed : 1));
         if (!rgbCompressed || !rgbData || CReadNative(rgbCompressed, 1, zc.cbCompressed, pf) != zc.cbCompressed) goto done;
         if (zc.wMethod == 0) {
             if (zc.cbCompressed != zc.cbUncompressed) goto done;
@@ -337,7 +337,7 @@ int16_t FUnzipLibraryArchive(const char *pszArchive, const char *pszDirectory) {
                 zs.total_out != zc.cbUncompressed) { inflateEnd(&zs); fInflating = 0; goto done; }
             inflateEnd(&zs); fInflating = 0;
         }
-        if ((uint32_t)crc32(0, rgbData, zc.cbUncompressed) != zc.dwCrc ||
+        if (static_cast<uint32_t>(crc32(0, rgbData, zc.cbUncompressed)) != zc.dwCrc ||
             !FZipMakeParents(pszDirectory, szName, szOutput, sizeof(szOutput)) ||
             FNativeFileSize(szOutput, &cbExisting)) goto done;
         pfOutput = PfOpenNativeFile(szOutput, "wbx");

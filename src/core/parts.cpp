@@ -391,7 +391,7 @@ int16_t FLookupPart(APPSESSION &app, PART *ppart) {
             return mdPartAvailRestricted;
         }
     }
-    return app.state.idPlayer == iplrNone ? static_cast<int>(mdPartAvailAvailable) : PartQueryIO().pfnTechStatus(app, (char *)ppart->pcom().rgTech());
+    return app.state.idPlayer == iplrNone ? static_cast<int>(mdPartAvailAvailable) : PartQueryIO().pfnTechStatus(app, reinterpret_cast<char *>(ppart->pcom().rgTech()));
 }
 
 void LookupBestPlanetaryScanner(APPSESSION &app, PART *ppart) {

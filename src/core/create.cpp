@@ -89,9 +89,9 @@ int16_t GenerateWorld(APPSESSION &app, int16_t fBatchMode) {
     cKill = 0;
     app.state.dGal = 400 * app.state.game.mdSize + 400;
     app.state.dGalInv = app.state.dGal + 2000;
-    cPlanMax = LOWORD((int32_t)(app.state.dGal * app.state.dGal) / 5000);
+    cPlanMax = LOWORD(static_cast<int32_t>((app.state.dGal * app.state.dGal)) / 5000);
     cPlanMax += cPlanMax / 4 * (app.state.game.mdDensity - 1);
-    if ((int16_t)app.state.game.mdDensity >= densityPacked) {
+    if (static_cast<int16_t>(app.state.game.mdDensity) >= densityPacked) {
         cPlanMax += cPlanMax / 4;
     }
     cPlanMax = cPlanMax >= 999 ? 999 : cPlanMax;
@@ -103,7 +103,7 @@ int16_t GenerateWorld(APPSESSION &app, int16_t fBatchMode) {
         app.state.rgptPlan[i].x = RandomIO().pfnRandom(app, dy) + dx;
         app.state.rgptPlan[i].y = RandomIO().pfnRandom(app, dy) + dx;
     }
-    qsort16(app, app.state.rgptPlan, iMax, sizeof(POINT16), (APPQSORTCOMPARE)ICompLong);
+    qsort16(app, app.state.rgptPlan, iMax, sizeof(POINT16), reinterpret_cast<APPQSORTCOMPARE>(ICompLong));
     pptMax = &app.state.rgptPlan[iMax];
     for (ppt = app.state.rgptPlan; ppt < pptMax; ppt++) {
         if (ppt->y >= 0) {
@@ -146,7 +146,7 @@ int16_t GenerateWorld(APPSESSION &app, int16_t fBatchMode) {
                 if (k != j) {
                     dx = pt.x - app.state.rgptPlan[k].x;
                     dy = pt.y - app.state.rgptPlan[k].y;
-                    l = (uint32_t)(dx * dx) + (uint32_t)(dy * dy);
+                    l = static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy));
                     if (l < lBest) {
                         lBest = l;
                         iBest = k;
@@ -155,21 +155,21 @@ int16_t GenerateWorld(APPSESSION &app, int16_t fBatchMode) {
             }
             if (lBest > 144) {
                 if (lBest > 1600) {
-                    app.state.rgptPlan[j].x = (int16_t)(app.state.rgptPlan[iBest].x * 2 + app.state.rgptPlan[j].x) / 3;
-                    app.state.rgptPlan[j].y = (int16_t)(app.state.rgptPlan[iBest].y * 2 + app.state.rgptPlan[j].y) / 3;
+                    app.state.rgptPlan[j].x = static_cast<int16_t>((app.state.rgptPlan[iBest].x * 2 + app.state.rgptPlan[j].x)) / 3;
+                    app.state.rgptPlan[j].y = static_cast<int16_t>((app.state.rgptPlan[iBest].y * 2 + app.state.rgptPlan[j].y)) / 3;
                 } else if (lBest > 625) {
-                    app.state.rgptPlan[j].x = (int16_t)(app.state.rgptPlan[j].x + app.state.rgptPlan[iBest].x) / 2;
-                    app.state.rgptPlan[j].y = (int16_t)(app.state.rgptPlan[j].y + app.state.rgptPlan[iBest].y) / 2;
+                    app.state.rgptPlan[j].x = static_cast<int16_t>((app.state.rgptPlan[j].x + app.state.rgptPlan[iBest].x)) / 2;
+                    app.state.rgptPlan[j].y = static_cast<int16_t>((app.state.rgptPlan[j].y + app.state.rgptPlan[iBest].y)) / 2;
                 } else if (lBest > 324) {
-                    app.state.rgptPlan[j].x = (int16_t)(app.state.rgptPlan[j].x * 2 + app.state.rgptPlan[iBest].x) / 3;
-                    app.state.rgptPlan[j].y = (int16_t)(app.state.rgptPlan[j].y * 2 + app.state.rgptPlan[iBest].y) / 3;
+                    app.state.rgptPlan[j].x = static_cast<int16_t>((app.state.rgptPlan[j].x * 2 + app.state.rgptPlan[iBest].x)) / 3;
+                    app.state.rgptPlan[j].y = static_cast<int16_t>((app.state.rgptPlan[j].y * 2 + app.state.rgptPlan[iBest].y)) / 3;
                 } else {
-                    app.state.rgptPlan[j].x = (int16_t)(app.state.rgptPlan[j].x * 4 + app.state.rgptPlan[iBest].x) / 5;
-                    app.state.rgptPlan[j].y = (int16_t)(app.state.rgptPlan[j].y * 4 + app.state.rgptPlan[iBest].y) / 5;
+                    app.state.rgptPlan[j].x = static_cast<int16_t>((app.state.rgptPlan[j].x * 4 + app.state.rgptPlan[iBest].x)) / 5;
+                    app.state.rgptPlan[j].y = static_cast<int16_t>((app.state.rgptPlan[j].y * 4 + app.state.rgptPlan[iBest].y)) / 5;
                 }
             }
         }
-        qsort16(app, app.state.rgptPlan, cPlanMax, sizeof(POINT16), (APPQSORTCOMPARE)ICompLong);
+        qsort16(app, app.state.rgptPlan, cPlanMax, sizeof(POINT16), reinterpret_cast<APPQSORTCOMPARE>(ICompLong));
     }
     memset(grUsed, 0, 128);
     for (i = 0; i < cPlanMax; i++) {
@@ -196,7 +196,7 @@ int16_t GenerateWorld(APPSESSION &app, int16_t fBatchMode) {
             lppl->det = detAll;
             lppl->iScanner = 31;
             if (!app.state.game.fNoRandom) {
-                lppl->fArtifact = (uint32_t)(RandomIO().pfnRandom(app, 3) == 0) & 1;
+                lppl->fArtifact = static_cast<uint32_t>((RandomIO().pfnRandom(app, 3) == 0)) & 1;
             }
             lppl->rgEnvVar[0] = RandomIO().pfnRandom(app, 90) + 1;
             lppl->rgEnvVar[0] += RandomIO().pfnRandom(app, 10);
@@ -256,28 +256,28 @@ int16_t GenerateWorld(APPSESSION &app, int16_t fBatchMode) {
             lppl++;
         }
         for (j = 0; j < 3; j++) {
-            app.state.lpPlanets->rgwtMin[j] = (int16_t)(RandomIO().pfnRandom(app, app.state.lpPlanets->rgMinConc[j] * 10) + 10);
+            app.state.lpPlanets->rgwtMin[j] = static_cast<int16_t>((RandomIO().pfnRandom(app, app.state.lpPlanets->rgMinConc[j] * 10) + 10));
             if (app.state.lpPlanets->rgwtMin[j] < 200) {
-                app.state.lpPlanets->rgwtMin[j] += (int16_t)(RandomIO().pfnRandom(app, 150) + 155);
+                app.state.lpPlanets->rgwtMin[j] += static_cast<int16_t>((RandomIO().pfnRandom(app, 150) + 155));
             }
             if (app.state.game.fBBSPlay) {
-                app.state.lpPlanets->rgwtMin[j] += (int32_t)(app.state.lpPlanets->rgwtMin[j] / 4);
+                app.state.lpPlanets->rgwtMin[j] += static_cast<int32_t>((app.state.lpPlanets->rgwtMin[j] / 4));
             }
         }
-        l = (uint32_t)(app.state.dGal * 6);
-        lDistIdeal2 = (int32_t)((int32_t)(app.state.dGal * app.state.dGal) / app.state.game.cPlayer) - l;
+        l = static_cast<uint32_t>((app.state.dGal * 6));
+        lDistIdeal2 = static_cast<int32_t>((static_cast<int32_t>((app.state.dGal * app.state.dGal)) / app.state.game.cPlayer)) - l;
         if (lDistIdeal2 < 0) {
             lDistIdeal2 = 0;
         } else {
-            lDistIdeal2 = (int32_t)(lDistIdeal2 * 9) / 10;
+            lDistIdeal2 = static_cast<int32_t>((lDistIdeal2 * 9)) / 10;
         }
-        lDistIdeal2 = (int32_t)(lDistIdeal2 * (int16_t)app.state.game.mdStartDist) / 3 + l;
-        lDistMin2 = (int32_t)(lDistIdeal2 * 9) / 10;
-        lDistMax2 = (int32_t)(lDistIdeal2 * 7) / 6;
+        lDistIdeal2 = static_cast<int32_t>((lDistIdeal2 * static_cast<int16_t>(app.state.game.mdStartDist))) / 3 + l;
+        lDistMin2 = static_cast<int32_t>((lDistIdeal2 * 9)) / 10;
+        lDistMax2 = static_cast<int32_t>((lDistIdeal2 * 7)) / 6;
 RetryAll:
         lBest = 100000000;
         dMin = app.state.dGal / 4 + 1000;
-        dMax = (int16_t)(3 * app.state.dGal) / 4 + 1000;
+        dMax = static_cast<int16_t>((3 * app.state.dGal)) / 4 + 1000;
         for (i = 0; i < 50; i++) {
             rgi[0] = RandomIO().pfnRandom(app, cPlanMax);
             pt = app.state.rgptPlan[rgi[0]];
@@ -297,7 +297,7 @@ RetryAll:
             }
             if (dx == 0 && dy == 0)
                 break;
-            l = (uint32_t)(dx * dx) + (uint32_t)(dy * dy);
+            l = static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy));
             if (l < lBest) {
                 lBest = l;
                 iBest = rgi[0];
@@ -325,7 +325,7 @@ RetryAll:
                     for (k = 0; k < i; k++) {
                         dx = pt.x - app.state.rgptPlan[rgi[k]].x;
                         dy = pt.y - app.state.rgptPlan[rgi[k]].y;
-                        l = (uint32_t)(dx * dx) + (uint32_t)(dy * dy);
+                        l = static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy));
                         if (l <= 0 || l < lDistMin2)
                             break;
                         if (l <= lDistMax2) {
@@ -350,7 +350,7 @@ RetryAll:
                         for (k = 0; k < i; k++) {
                             dx = pt.x - app.state.rgptPlan[rgi[k]].x;
                             dy = pt.y - app.state.rgptPlan[rgi[k]].y;
-                            l = (uint32_t)(dx * dx) + (uint32_t)(dy * dy);
+                            l = static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy));
                             if (l <= 0 || l < lDistMin2)
                                 break;
                             if (l <= lDistMax2) {
@@ -362,8 +362,8 @@ RetryAll:
                     }
                 }
                 if (iBest == rgi[i]) {
-                    lDistMin2 -= (int32_t)(lDistIdeal2 / 35);
-                    lDistMax2 += (int32_t)(lDistIdeal2 / 35);
+                    lDistMin2 -= static_cast<int32_t>((lDistIdeal2 / 35));
+                    lDistMax2 += static_cast<int32_t>((lDistIdeal2 / 35));
                     goto RetryAll;
                 }
             }
@@ -451,7 +451,7 @@ RetryAll:
             } else {
                 app.state.lpPlanets[iMin].rgwtMin[3] = 250;
             }
-            app.state.lpPlanets[iMin].SetUGuesses((app.state.lpPlanets[iMin].uGuesses() & 0xf000) | ((uint32_t)LOWORD(app.state.lpPlanets[iMin].rgwtMin[3]) / 4 & 0xfff));
+            app.state.lpPlanets[iMin].SetUGuesses((app.state.lpPlanets[iMin].uGuesses() & 0xf000) | (static_cast<uint32_t>(LOWORD(app.state.lpPlanets[iMin].rgwtMin[3])) / 4 & 0xfff));
             for (j = 0; j < 3; j++) {
                 app.state.lpPlanets[iMin].rgwtMin[j] = app.state.lpPlanets->rgwtMin[j];
                 if (app.state.gd.fTutorial) {
@@ -470,13 +470,13 @@ RetryAll:
             if (app.state.rgplr[i].fAi) {
                 iT = 50;
                 if (app.state.rgplr[i].lvlAi >= lvlAiExpert) {
-                    app.state.lpPlanets[iMin].rgwtMin[3] += (int32_t)(app.state.lpPlanets[iMin].rgwtMin[3] / 10);
+                    app.state.lpPlanets[iMin].rgwtMin[3] += static_cast<int32_t>((app.state.lpPlanets[iMin].rgwtMin[3] / 10));
                 }
             }
             if (app.state.game.fBBSPlay) {
                 pct10 = PctTrueMaxGrowth(app, i) * 2 + 10;
-                app.state.lpPlanets[iMin].rgwtMin[3] = (uint32_t)(app.state.lpPlanets[iMin].rgwtMin[3] * pct10);
-                app.state.lpPlanets[iMin].rgwtMin[3] = (int32_t)(app.state.lpPlanets[iMin].rgwtMin[3] / 10);
+                app.state.lpPlanets[iMin].rgwtMin[3] = static_cast<uint32_t>((app.state.lpPlanets[iMin].rgwtMin[3] * pct10));
+                app.state.lpPlanets[iMin].rgwtMin[3] = static_cast<int32_t>((app.state.lpPlanets[iMin].rgwtMin[3] / 10));
                 app.state.lpPlanets[iMin].uPopGuess <<= 2;
             }
             j = RaceQueryIO().pfnStat(&app.state.rgplr[i], rsUseLeftover);
@@ -496,7 +496,7 @@ RetryAll:
                 } else {
                     iLow = 2;
                 }
-                pl[iLow] += (int16_t)((ktLeft >> 2) + (ktLeft & 3));
+                pl[iLow] += static_cast<int16_t>(((ktLeft >> 2) + (ktLeft & 3)));
                 ktLeft >>= 2;
                 for (j = 0; j < 3; j++) {
                     pl[j] += ktLeft;
@@ -514,12 +514,12 @@ RetryAll:
                 pb = app.state.lpPlanets[iMin].rgMinConc;
                 iLow = 0;
                 for (j = 0; j < 3; j++) {
-                    if ((int16_t)pb[j] < pb[iLow]) {
+                    if (static_cast<int16_t>(pb[j]) < pb[iLow]) {
                         iLow = j;
                     }
                 }
                 pb[iLow] += ktLeft;
-                ktLeft = (int16_t)(ktLeft + 1) / 2;
+                ktLeft = static_cast<int16_t>((ktLeft + 1)) / 2;
                 for (j = 0; j < 3; j++) {
                     pb[j] += ktLeft;
                 }
@@ -531,7 +531,7 @@ RetryAll:
                 app.state.lpPlanets[iMin].cFactories += iT / 5;
                 break;
             case 4:
-                app.state.lpPlanets[iMin].cDefenses += (int16_t)(iT + 5) / 10;
+                app.state.lpPlanets[iMin].cDefenses += static_cast<int16_t>((iT + 5)) / 10;
             }
             if (RaceQueryIO().pfnStat(&app.state.rgplr[i], rsMajorAdv) == raMacintosh) {
                 app.state.lpPlanets[iMin].cMines = 0;
@@ -543,19 +543,19 @@ RetryAll:
             if (app.state.rgplr[i].rgEnvVarMax[0] == envImmune) {
                 iT = RandomIO().pfnRandom(app, 99) + 1;
             } else {
-                iT = app.state.rgplr[i].rgEnvVarMin[0] + (int16_t)(app.state.rgplr[i].rgEnvVarMax[0] - app.state.rgplr[i].rgEnvVarMin[0]) / 2;
+                iT = app.state.rgplr[i].rgEnvVarMin[0] + static_cast<int16_t>((app.state.rgplr[i].rgEnvVarMax[0] - app.state.rgplr[i].rgEnvVarMin[0])) / 2;
             }
             app.state.lpPlanets[iMin].rgEnvVar[0] = app.state.lpPlanets[iMin].rgEnvVarOrig[0] = iT;
             if (app.state.rgplr[i].rgEnvVarMax[1] == envImmune) {
                 iT = RandomIO().pfnRandom(app, 99) + 1;
             } else {
-                iT = app.state.rgplr[i].rgEnvVarMin[1] + (int16_t)(app.state.rgplr[i].rgEnvVarMax[1] - app.state.rgplr[i].rgEnvVarMin[1]) / 2;
+                iT = app.state.rgplr[i].rgEnvVarMin[1] + static_cast<int16_t>((app.state.rgplr[i].rgEnvVarMax[1] - app.state.rgplr[i].rgEnvVarMin[1])) / 2;
             }
             app.state.lpPlanets[iMin].rgEnvVar[1] = app.state.lpPlanets[iMin].rgEnvVarOrig[1] = iT;
             if (app.state.rgplr[i].rgEnvVarMax[2] == envImmune) {
                 iT = RandomIO().pfnRandom(app, 99) + 1;
             } else {
-                iT = app.state.rgplr[i].rgEnvVarMin[2] + (int16_t)(app.state.rgplr[i].rgEnvVarMax[2] - app.state.rgplr[i].rgEnvVarMin[2]) / 2;
+                iT = app.state.rgplr[i].rgEnvVarMin[2] + static_cast<int16_t>((app.state.rgplr[i].rgEnvVarMax[2] - app.state.rgplr[i].rgEnvVarMin[2])) / 2;
             }
             app.state.lpPlanets[iMin].rgEnvVar[2] = app.state.lpPlanets[iMin].rgEnvVarOrig[2] = iT;
             if (!app.state.rgplr[i].fAi) {
@@ -581,7 +581,7 @@ RetryAll:
             if (RaceQueryIO().pfnStat(&app.state.rgplr[i], rsMajorAdv) == raMassAccel) {
                 lpshdef->hul.rghs[0].iItem = ispecialSBMassDriver5;
                 lpshdef->hul.rghs[0].cItem = 1;
-                if ((int16_t)app.state.game.mdSize > sizeTiny) {
+                if (static_cast<int16_t>(app.state.game.mdSize) > sizeTiny) {
                     lpshdef[1].fFree = 0;
                     app.state.rgplr[i].cshdefSB++;
                     lpshdef[1].cExist = 1;
@@ -590,7 +590,7 @@ RetryAll:
             } else if (RaceQueryIO().pfnStat(&app.state.rgplr[i], rsMajorAdv) == raStargate && !app.state.game.fTutorial) {
                 lpshdef->hul.rghs[0].iItem = ispecialSBStargate100250;
                 lpshdef->hul.rghs[0].cItem = 1;
-                if ((int16_t)app.state.game.mdSize > sizeTiny) {
+                if (static_cast<int16_t>(app.state.game.mdSize) > sizeTiny) {
                     lpshdef[1] = lpshdef[2];
                     lpshdef[1].ishdef = 17;
                     lpshdef[1].fFree = 0;
@@ -672,20 +672,20 @@ RetryAll:
             } else if (raMajor == raStargate) {
                 CreateStartupShip(app, i, idHome, 7, 1);
                 CreateStartupShip(app, i, idHome, 8, 1);
-                if ((int16_t)app.state.game.mdSize > sizeTiny)
+                if (static_cast<int16_t>(app.state.game.mdSize) > sizeTiny)
                     goto LGive2ndPlanet;
-            } else if (raMajor == raMassAccel && (int16_t)app.state.game.mdSize > sizeTiny) {
+            } else if (raMajor == raMassAccel && static_cast<int16_t>(app.state.game.mdSize) > sizeTiny) {
             LGive2ndPlanet:
                 lpplPicked = nullptr;
                 lpplClosest = nullptr;
                 ptHome = app.state.rgptPlan[idHome];
                 cFit = 0;
-                lDistMin2 = (int32_t)(app.state.dGal * 15) / 100;
-                lDistMin2 = (uint32_t)(lDistMin2 * lDistMin2);
-                lDistMax2 = (int32_t)(app.state.dGal * 23) / 100;
-                lDistMax2 = (uint32_t)(lDistMax2 * lDistMax2);
-                lDistIdeal2 = (int32_t)(app.state.dGal * 20) / 100;
-                lDistIdeal2 = (uint32_t)(lDistIdeal2 * lDistIdeal2);
+                lDistMin2 = static_cast<int32_t>((app.state.dGal * 15)) / 100;
+                lDistMin2 = static_cast<uint32_t>((lDistMin2 * lDistMin2));
+                lDistMax2 = static_cast<int32_t>((app.state.dGal * 23)) / 100;
+                lDistMax2 = static_cast<uint32_t>((lDistMax2 * lDistMax2));
+                lDistIdeal2 = static_cast<int32_t>((app.state.dGal * 20)) / 100;
+                lDistIdeal2 = static_cast<uint32_t>((lDistIdeal2 * lDistIdeal2));
                 lBest = 10000000;
                 pptMax = &app.state.rgptPlan[cPlanMax];
                 ppt = app.state.rgptPlan;
@@ -694,7 +694,7 @@ RetryAll:
                     if (lppl->iPlayer == iplrNone) {
                         dx = ppt->x - ptHome.x;
                         dy = ppt->y - ptHome.y;
-                        lDistCur2 = (uint32_t)(dx * dx) + (uint32_t)(dy * dy);
+                        lDistCur2 = static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy));
                         if (lDistCur2 >= lDistMin2 && lDistCur2 <= lDistMax2) {
                             cFit++;
                             if (RandomIO().pfnRandom(app, cFit) == 0) {
@@ -730,14 +730,14 @@ RetryAll:
                 lpplPicked->fArtifact = 0;
                 lpplPicked->cFactories = 4;
                 lpplPicked->cMines = 10;
-                lpplPicked->rgwtMin[3] = (int32_t)(app.state.lpPlanets[idHome].rgwtMin[3] * 2) / 5;
-                lpplPicked->uPopGuess = (uint32_t)LOWORD(lpplPicked->rgwtMin[3]) / 4;
+                lpplPicked->rgwtMin[3] = static_cast<int32_t>((app.state.lpPlanets[idHome].rgwtMin[3] * 2)) / 5;
+                lpplPicked->uPopGuess = static_cast<uint32_t>(LOWORD(lpplPicked->rgwtMin[3])) / 4;
                 for (j = 0; j < 3; j++) {
-                    lpplPicked->rgwtMin[j] = (int16_t)(RandomIO().pfnRandom(app, 200) + 100);
+                    lpplPicked->rgwtMin[j] = static_cast<int16_t>((RandomIO().pfnRandom(app, 200) + 100));
                 }
                 lpplPicked->iScanner = 0;
-                app.state.lpPlanets[idHome].rgwtMin[3] = (int32_t)(app.state.lpPlanets[idHome].rgwtMin[3] * 4) / 5;
-                app.state.lpPlanets[idHome].SetUGuesses((app.state.lpPlanets[idHome].uGuesses() & 0xf000) | ((uint32_t)LOWORD(app.state.lpPlanets[idHome].rgwtMin[3]) / 4 & 0xfff));
+                app.state.lpPlanets[idHome].rgwtMin[3] = static_cast<int32_t>((app.state.lpPlanets[idHome].rgwtMin[3] * 4)) / 5;
+                app.state.lpPlanets[idHome].SetUGuesses((app.state.lpPlanets[idHome].uGuesses() & 0xf000) | (static_cast<uint32_t>(LOWORD(app.state.lpPlanets[idHome].rgwtMin[3])) / 4 & 0xfff));
                 CreateStartupShip(app, i, lpplPicked->id, 0, 0);
             } else if (raMajor == raNone) {
                 CreateStartupShip(app, i, idHome, app.state.rgplr[i].rgTech[3] < 4 ? 6 : 8, 1);
@@ -962,7 +962,7 @@ int16_t CreateStartupShip(APPSESSION &app, int16_t iplr, int16_t idPlanet, int16
     FLEET  *lpfl;
 
     if (fAddShdef) {
-        ishMac = (int16_t)(int8_t)app.state.rgplr[iplr].cShDef++;
+        ishMac = static_cast<int16_t>(static_cast<int8_t>(app.state.rgplr[iplr].cShDef++));
         memmove(app.state.rglpshdef[iplr] + ishMac, LpshdefT() + ishdef, sizeof(SHDEF));
         app.state.rglpshdef[iplr][ishMac].ishdef = ishMac;
         ishdef = ishMac;
@@ -1015,7 +1015,7 @@ int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
             FileError(app, idsUniverseCreationFileAppearsInvalid);
             goto LError;
         }
-        cb = (int16_t)cbFile;
+        cb = static_cast<int16_t>(cbFile);
         lpbDef = LpAlloc<char>(app, cb + 1, htPerm);
         app.state.lpbDefMac = lpbDef + cb;
         RgFromStream(app, lpbDef, cb);
@@ -1120,7 +1120,7 @@ int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
                 cNum = CParseNumbers(lpbStart + 1, rgl, 2);
                 idAi = static_cast<AiRace>(LOWORD(rgl[0]));
                 lvlAi = LOWORD(rgl[1]);
-                if (cNum < 2 || (int16_t)idAi < idAiRobotoid || (int16_t)idAi > idAiRandom || lvlAi < 0 || lvlAi > 4) {
+                if (cNum < 2 || static_cast<int16_t>(idAi) < idAiRobotoid || static_cast<int16_t>(idAi) > idAiRandom || lvlAi < 0 || lvlAi > 4) {
                     strcpy(app.state.szWork, lpbStart);
                     goto LCantGetRace;
                 }
@@ -1166,7 +1166,7 @@ int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
             if (cNum < 2 || rgl[1] < 20 || rgl[1] > 100)
                 goto LBadDefVc;
             SetVCCheck(&app.state.game, vcOwnsPercentPlanets, 1);
-            SetVCVal(app, &app.state.game, vcOwnsPercentPlanets, (int16_t)(LOWORD(rgl[1]) - 20) / 5);
+            SetVCVal(app, &app.state.game, vcOwnsPercentPlanets, static_cast<int16_t>((LOWORD(rgl[1]) - 20)) / 5);
         }
         lpbStart = PszGetLine(&lpb);
         cNum = CParseNumbers(lpbStart, rgl, 3);
@@ -1194,7 +1194,7 @@ int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
             if (cNum < 2 || rgl[1] < 1000 || rgl[1] > 20000)
                 goto LBadDefVc;
             SetVCCheck(&app.state.game, vcExceedsScore, 1);
-            SetVCVal(app, &app.state.game, vcExceedsScore, (int16_t)(LOWORD(rgl[1]) - 1000) / 1000);
+            SetVCVal(app, &app.state.game, vcExceedsScore, static_cast<int16_t>((LOWORD(rgl[1]) - 1000)) / 1000);
         }
         lpbStart = PszGetLine(&lpb);
         cNum = CParseNumbers(lpbStart, rgl, 2);
@@ -1207,7 +1207,7 @@ int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
             if (cNum < 2 || rgl[1] < 20 || rgl[1] > 300)
                 goto LBadDefVc;
             SetVCCheck(&app.state.game, vcExceedsSecondPlaceBy, 1);
-            SetVCVal(app, &app.state.game, vcExceedsSecondPlaceBy, (int16_t)(LOWORD(rgl[1]) - 20) / 10);
+            SetVCVal(app, &app.state.game, vcExceedsSecondPlaceBy, static_cast<int16_t>((LOWORD(rgl[1]) - 20)) / 10);
         }
         lpbStart = PszGetLine(&lpb);
         cNum = CParseNumbers(lpbStart, rgl, 2);
@@ -1220,7 +1220,7 @@ int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
             if (cNum < 2 || rgl[1] < 10 || rgl[1] > 500)
                 goto LBadDefVc;
             SetVCCheck(&app.state.game, vcProductionCapacity, 1);
-            SetVCVal(app, &app.state.game, vcProductionCapacity, (int16_t)(LOWORD(rgl[1]) - 10) / 10);
+            SetVCVal(app, &app.state.game, vcProductionCapacity, static_cast<int16_t>((LOWORD(rgl[1]) - 10)) / 10);
         }
         lpbStart = PszGetLine(&lpb);
         cNum = CParseNumbers(lpbStart, rgl, 2);
@@ -1233,7 +1233,7 @@ int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
             if (cNum < 2 || rgl[1] < 10 || rgl[1] > 300)
                 goto LBadDefVc;
             SetVCCheck(&app.state.game, vcOwnsCapitalShips, 1);
-            SetVCVal(app, &app.state.game, vcOwnsCapitalShips, (int16_t)(LOWORD(rgl[1]) - 10) / 10);
+            SetVCVal(app, &app.state.game, vcOwnsCapitalShips, static_cast<int16_t>((LOWORD(rgl[1]) - 10)) / 10);
         }
         lpbStart = PszGetLine(&lpb);
         cNum = CParseNumbers(lpbStart, rgl, 2);
@@ -1246,7 +1246,7 @@ int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
             if (cNum < 2 || rgl[1] < 30 || rgl[1] > 900)
                 goto LBadDefVc;
             SetVCCheck(&app.state.game, vcHighestScoreAfterYears, 1);
-            SetVCVal(app, &app.state.game, vcHighestScoreAfterYears, (int16_t)(LOWORD(rgl[1]) - 30) / 10);
+            SetVCVal(app, &app.state.game, vcHighestScoreAfterYears, static_cast<int16_t>((LOWORD(rgl[1]) - 30)) / 10);
         }
         lpbStart = PszGetLine(&lpb);
         cNum = CParseNumbers(lpbStart, rgl, 2);
@@ -1259,7 +1259,7 @@ int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
             if (cNum < 2 || rgl[1] < 30 || rgl[1] > 500)
                 goto LBadDefVc;
             SetVCVal(app, &app.state.game, vcMeetsNumCriteria, LOWORD(rgl[0]));
-            SetVCVal(app, &app.state.game, vcMinYearsBeforeWin, (int16_t)(LOWORD(rgl[1]) - 30) / 10);
+            SetVCVal(app, &app.state.game, vcMinYearsBeforeWin, static_cast<int16_t>((LOWORD(rgl[1]) - 30)) / 10);
         }
         lpbStart = PszGetLine(&lpb);
         lpb = lpbStart + (-1 + strlen(lpbStart));
@@ -1403,7 +1403,7 @@ void InitNewGamePlr(APPSESSION &app, int16_t iStepMaxSoFar, AiLevel lvlAi) {
                     app.state.game.cPlayer = 5;
                     break;
                 }
-                if ((int16_t)lvlAi >= lvlAiTough && RandomIO().pfnRandom(app, 6 - lvlAi) == 0) {
+                if (static_cast<int16_t>(lvlAi) >= lvlAiTough && RandomIO().pfnRandom(app, 6 - lvlAi) == 0) {
                     app.state.game.cPlayer = 4;
                     break;
                 }
@@ -1418,11 +1418,11 @@ void InitNewGamePlr(APPSESSION &app, int16_t iStepMaxSoFar, AiLevel lvlAi) {
                     app.state.game.cPlayer = 5;
                     break;
                 }
-                if ((int16_t)lvlAi >= lvlAiTough && RandomIO().pfnRandom(app, 7 - lvlAi) == 0) {
+                if (static_cast<int16_t>(lvlAi) >= lvlAiTough && RandomIO().pfnRandom(app, 7 - lvlAi) == 0) {
                     app.state.game.cPlayer = 8;
                     break;
                 }
-                if ((int16_t)lvlAi >= lvlAiTough && RandomIO().pfnRandom(app, 7 - lvlAi) == 0) {
+                if (static_cast<int16_t>(lvlAi) >= lvlAiTough && RandomIO().pfnRandom(app, 7 - lvlAi) == 0) {
                     app.state.game.cPlayer = 6;
                     break;
                 }
@@ -1437,11 +1437,11 @@ void InitNewGamePlr(APPSESSION &app, int16_t iStepMaxSoFar, AiLevel lvlAi) {
                     app.state.game.cPlayer = 10 - RandomIO().pfnRandom(app, 2);
                     break;
                 }
-                if ((int16_t)lvlAi >= lvlAiTough && RandomIO().pfnRandom(app, 7 - lvlAi) == 0) {
+                if (static_cast<int16_t>(lvlAi) >= lvlAiTough && RandomIO().pfnRandom(app, 7 - lvlAi) == 0) {
                     app.state.game.cPlayer = 13;
                     break;
                 }
-                if ((int16_t)lvlAi >= lvlAiTough && RandomIO().pfnRandom(app, 7 - lvlAi) == 0) {
+                if (static_cast<int16_t>(lvlAi) >= lvlAiTough && RandomIO().pfnRandom(app, 7 - lvlAi) == 0) {
                     app.state.game.cPlayer = 11;
                     break;
                 }
@@ -1450,9 +1450,9 @@ void InitNewGamePlr(APPSESSION &app, int16_t iStepMaxSoFar, AiLevel lvlAi) {
             case sizeHuge:
                 if (lvlAi == lvlAiExpert && RandomIO().pfnRandom(app, 10) == 0) {
                     app.state.game.cPlayer = 13 - RandomIO().pfnRandom(app, 3);
-                } else if ((int16_t)lvlAi >= lvlAiTough && RandomIO().pfnRandom(app, 9 - lvlAi) == 0) {
+                } else if (static_cast<int16_t>(lvlAi) >= lvlAiTough && RandomIO().pfnRandom(app, 9 - lvlAi) == 0) {
                     app.state.game.cPlayer = 14;
-                } else if ((int16_t)lvlAi >= lvlAiTough && RandomIO().pfnRandom(app, 7 - lvlAi) == 0) {
+                } else if (static_cast<int16_t>(lvlAi) >= lvlAiTough && RandomIO().pfnRandom(app, 7 - lvlAi) == 0) {
                     app.state.game.cPlayer = 15;
                 } else {
                     app.state.game.cPlayer = 16;
@@ -1464,11 +1464,11 @@ void InitNewGamePlr(APPSESSION &app, int16_t iStepMaxSoFar, AiLevel lvlAi) {
                 break;
             case lvlAiEasy:
                 while (i < app.state.game.cPlayer) {
-                    if (i < (int16_t)(app.state.game.cPlayer + 1) / 3 + 1) {
+                    if (i < static_cast<int16_t>((app.state.game.cPlayer + 1)) / 3 + 1) {
                         app.state.vrgplrTypeNew[i++] = 11;
-                    } else if (i < (int16_t)((app.state.game.cPlayer + 1) * 2) / 3 + 1) {
+                    } else if (i < static_cast<int16_t>(((app.state.game.cPlayer + 1) * 2)) / 3 + 1) {
                         app.state.vrgplrTypeNew[i++] = 15;
-                    } else if (i < (int16_t)((app.state.game.cPlayer + 1) * 5) / 6 + 1) {
+                    } else if (i < static_cast<int16_t>(((app.state.game.cPlayer + 1) * 5)) / 6 + 1) {
                         app.state.vrgplrTypeNew[i++] = 7;
                     } else {
                         app.state.vrgplrTypeNew[i++] = 27;
@@ -1477,15 +1477,15 @@ void InitNewGamePlr(APPSESSION &app, int16_t iStepMaxSoFar, AiLevel lvlAi) {
                 break;
             case lvlAiStandard:
                 while (i < app.state.game.cPlayer) {
-                    if (i < (int16_t)((app.state.game.cPlayer + 5) * 2) / 7 + 1) {
+                    if (i < static_cast<int16_t>(((app.state.game.cPlayer + 5) * 2)) / 7 + 1) {
                         app.state.vrgplrTypeNew[i++] = 39;
-                    } else if (i < (int16_t)((app.state.game.cPlayer - 1) * 3 + 6) / 7 + 1) {
+                    } else if (i < static_cast<int16_t>(((app.state.game.cPlayer - 1) * 3 + 6)) / 7 + 1) {
                         app.state.vrgplrTypeNew[i++] = 35;
-                    } else if (i < (int16_t)((app.state.game.cPlayer - 1) * 4 + 6) / 7 + 1) {
+                    } else if (i < static_cast<int16_t>(((app.state.game.cPlayer - 1) * 4 + 6)) / 7 + 1) {
                         app.state.vrgplrTypeNew[i++] = 43;
-                    } else if (i < (int16_t)((app.state.game.cPlayer - 1) * 5 + 6) / 7 + 1) {
+                    } else if (i < static_cast<int16_t>(((app.state.game.cPlayer - 1) * 5 + 6)) / 7 + 1) {
                         app.state.vrgplrTypeNew[i++] = 47;
-                    } else if (i < (int16_t)((app.state.game.cPlayer - 1) * 6 + 6) / 7 + 1) {
+                    } else if (i < static_cast<int16_t>(((app.state.game.cPlayer - 1) * 6 + 6)) / 7 + 1) {
                         app.state.vrgplrTypeNew[i++] = 51;
                     } else {
                         app.state.vrgplrTypeNew[i++] = 155;
@@ -1494,15 +1494,15 @@ void InitNewGamePlr(APPSESSION &app, int16_t iStepMaxSoFar, AiLevel lvlAi) {
                 break;
             case lvlAiTough:
                 while (i < app.state.game.cPlayer) {
-                    if (i < (int16_t)((app.state.game.cPlayer + 5) * 2) / 7 + 1) {
+                    if (i < static_cast<int16_t>(((app.state.game.cPlayer + 5) * 2)) / 7 + 1) {
                         app.state.vrgplrTypeNew[i++] = 83;
-                    } else if (i < (int16_t)((app.state.game.cPlayer - 1) * 3 + 6) / 7 + 1) {
+                    } else if (i < static_cast<int16_t>(((app.state.game.cPlayer - 1) * 3 + 6)) / 7 + 1) {
                         app.state.vrgplrTypeNew[i++] = 71;
-                    } else if (i < (int16_t)((app.state.game.cPlayer - 1) * 4 + 6) / 7 + 1) {
+                    } else if (i < static_cast<int16_t>(((app.state.game.cPlayer - 1) * 4 + 6)) / 7 + 1) {
                         app.state.vrgplrTypeNew[i++] = 67;
-                    } else if (i < (int16_t)((app.state.game.cPlayer - 1) * 5 + 6) / 7 + 1) {
+                    } else if (i < static_cast<int16_t>(((app.state.game.cPlayer - 1) * 5 + 6)) / 7 + 1) {
                         app.state.vrgplrTypeNew[i++] = 87;
-                    } else if (i < (int16_t)((app.state.game.cPlayer - 1) * 6 + 6) / 7 + 1) {
+                    } else if (i < static_cast<int16_t>(((app.state.game.cPlayer - 1) * 6 + 6)) / 7 + 1) {
                         app.state.vrgplrTypeNew[i++] = 91;
                     } else {
                         app.state.vrgplrTypeNew[i++] = 155;
@@ -1511,11 +1511,11 @@ void InitNewGamePlr(APPSESSION &app, int16_t iStepMaxSoFar, AiLevel lvlAi) {
                 break;
             case lvlAiExpert:
                 while (i < app.state.game.cPlayer) {
-                    if (i < (int16_t)(app.state.game.cPlayer + 1) / 3 + 1) {
+                    if (i < static_cast<int16_t>((app.state.game.cPlayer + 1)) / 3 + 1) {
                         app.state.vrgplrTypeNew[i++] = 99;
-                    } else if (i < (int16_t)((app.state.game.cPlayer - 1) * 6 + 11) / 12 + 1) {
+                    } else if (i < static_cast<int16_t>(((app.state.game.cPlayer - 1) * 6 + 11)) / 12 + 1) {
                         app.state.vrgplrTypeNew[i++] = 119;
-                    } else if (i < (int16_t)((app.state.game.cPlayer - 1) * 5 + 5) / 6 + 1) {
+                    } else if (i < static_cast<int16_t>(((app.state.game.cPlayer - 1) * 5 + 5)) / 6 + 1) {
                         app.state.vrgplrTypeNew[i++] = 115;
                     } else {
                         app.state.vrgplrTypeNew[i++] = 123;

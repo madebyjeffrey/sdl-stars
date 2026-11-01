@@ -20,8 +20,8 @@ static void SetReportScrollInfo(HWND hwnd, int iMax, int cPage, int iPos, BOOL f
     SCROLLINFO si = {sizeof(si), win32::SIF_RANGE | win32::SIF_PAGE | win32::SIF_POS, 0, 0, 0, 0, 0};
 
     /* Legacy report ranges describe the last row/column position. */
-    si.nPage = (UINT)StarsMax(1, cPage);
-    si.nMax = StarsMax(0, iMax) + (int)si.nPage - 1;
+    si.nPage = static_cast<UINT>(StarsMax(1, cPage));
+    si.nMax = StarsMax(0, iMax) + static_cast<int>(si.nPage) - 1;
     si.nPos = iPos;
     win32::SetScrollInfo(hwnd, win32::SB_CTL, &si, fRedraw);
 }
@@ -67,7 +67,7 @@ LRESULT  ReportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         /* fallthrough */
     case win32::WM_SIZE:
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        cRow = (int16_t)(rc.bottom - 36) / (app.state.dyArial8 + 4);
+        cRow = static_cast<int16_t>((rc.bottom - 36)) / (app.state.dyArial8 + 4);
         app.lpui->vprptCur->cRowsVis = cRow >= app.lpui->vprptCur->cRows ? app.lpui->vprptCur->cRows : cRow;
         if (app.lpui->vprptCur->cRowsVis >= app.lpui->vprptCur->cRows) {
             swp = win32::SWP_NOZORDER | win32::SWP_HIDEWINDOW;
@@ -92,12 +92,12 @@ LRESULT  ReportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         }
         return 0;
     case win32::WM_GETMINMAXINFO:
-        ((MINMAXINFO *)lParam)->ptMinTrackSize.x = 300;
-        ((MINMAXINFO *)lParam)->ptMinTrackSize.y = 220;
+        (reinterpret_cast<MINMAXINFO *>(lParam))->ptMinTrackSize.x = 300;
+        (reinterpret_cast<MINMAXINFO *>(lParam))->ptMinTrackSize.y = 220;
         return 0;
     case win32::WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        win32::FillRect((HDC)wParam, &rc, app.lpui->hbrButtonFace);
+        win32::FillRect(reinterpret_cast<HDC>(wParam), &rc, app.lpui->hbrButtonFace);
         return 1;
     case win32::WM_LBUTTONDOWN:
     case win32::WM_LBUTTONDBLCLK:
@@ -110,7 +110,7 @@ LRESULT  ReportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         if (pt.y < app.state.dyArial8 + 6) {
             iRow = -1;
         } else {
-            iRow = (int16_t)(pt.y - 2 - (app.state.dyArial8 + 4)) / (app.state.dyArial8 + 4);
+            iRow = static_cast<int16_t>((pt.y - 2 - (app.state.dyArial8 + 4))) / (app.state.dyArial8 + 4);
             if (iRow >= app.lpui->vprptCur->cRowsVis)
                 break;
             iRow += app.lpui->vprptCur->irowFirst;
@@ -151,18 +151,18 @@ LRESULT  ReportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             cRow = CWheelNotches(&dWheelRows, i);
             if (cRow != 0) {
                 iNew = win32::GetScrollPos(app.lpui->vprptCur->hwndVScroll, win32::SB_CTL) - cRow * CWheelLines(app.lpui->vprptCur->cRowsVis - 1);
-                ControlIO().pfnSendMessage(hwnd, win32::WM_VSCROLL, win32::MAKEWPARAM(win32::SB_THUMBPOSITION, (WORD)iNew), (LPARAM)app.lpui->vprptCur->hwndVScroll);
+                ControlIO().pfnSendMessage(hwnd, win32::WM_VSCROLL, win32::MAKEWPARAM(win32::SB_THUMBPOSITION, static_cast<WORD>(iNew)), reinterpret_cast<LPARAM>(app.lpui->vprptCur->hwndVScroll));
             }
             return 0;
         }
         iCol = CWheelNotches(&dWheelCols, msg == win32::WM_MOUSEWHEEL ? -i : i);
         if (iCol != 0) {
             iNew = win32::GetScrollPos(app.lpui->vprptCur->hwndHScroll, win32::SB_CTL) + iCol;
-            ControlIO().pfnSendMessage(hwnd, win32::WM_HSCROLL, win32::MAKEWPARAM(win32::SB_THUMBPOSITION, (WORD)iNew), (LPARAM)app.lpui->vprptCur->hwndHScroll);
+            ControlIO().pfnSendMessage(hwnd, win32::WM_HSCROLL, win32::MAKEWPARAM(win32::SB_THUMBPOSITION, static_cast<WORD>(iNew)), reinterpret_cast<LPARAM>(app.lpui->vprptCur->hwndHScroll));
         }
         return 0;
     case win32::WM_VSCROLL:
-        iCur = win32::GetScrollPos((HWND)lParam, win32::SB_CTL);
+        iCur = win32::GetScrollPos(reinterpret_cast<HWND>(lParam), win32::SB_CTL);
         iNew = iCur;
         if (LOWORD(wParam) <= win32::SB_BOTTOM) {
             switch (LOWORD(wParam)) {
@@ -183,7 +183,7 @@ LRESULT  ReportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 break;
             case win32::SB_THUMBPOSITION:
             case win32::SB_THUMBTRACK:
-                iNew = (short)HIWORD(wParam);
+                iNew = static_cast<short>(HIWORD(wParam));
                 break;
             case win32::SB_TOP:
                 iNew = 0;
@@ -203,12 +203,12 @@ LRESULT  ReportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             rc.top = app.state.dyArial8 + 6;
             rc.bottom = (app.state.dyArial8 + 4) * app.lpui->vprptCur->cRowsVis + rc.top;
             win32::ScrollWindow(hwnd, 0, (app.state.dyArial8 + 4) * (iCur - iNew), &rc, &rc);
-            win32::SetScrollPos((HWND)lParam, win32::SB_CTL, iNew, 1);
+            win32::SetScrollPos(reinterpret_cast<HWND>(lParam), win32::SB_CTL, iNew, 1);
             ControlIO().pfnUpdateWindow(hwnd);
         }
         return 0;
     case win32::WM_HSCROLL:
-        iCur = win32::GetScrollPos((HWND)lParam, win32::SB_CTL);
+        iCur = win32::GetScrollPos(reinterpret_cast<HWND>(lParam), win32::SB_CTL);
         iNew = iCur;
         if (LOWORD(wParam) <= win32::SB_BOTTOM) {
             switch (LOWORD(wParam)) {
@@ -229,7 +229,7 @@ LRESULT  ReportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 break;
             case win32::SB_THUMBPOSITION:
             case win32::SB_THUMBTRACK:
-                iNew = (short)HIWORD(wParam);
+                iNew = static_cast<short>(HIWORD(wParam));
                 break;
             case win32::SB_TOP:
                 iNew = 0;
@@ -242,8 +242,8 @@ LRESULT  ReportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             iNew = 0;
         }
         if (iNew != iCur) {
-            win32::SetScrollPos((HWND)lParam, win32::SB_CTL, iNew, 1);
-            iNew = win32::GetScrollPos((HWND)lParam, win32::SB_CTL);
+            win32::SetScrollPos(reinterpret_cast<HWND>(lParam), win32::SB_CTL, iNew, 1);
+            iNew = win32::GetScrollPos(reinterpret_cast<HWND>(lParam), win32::SB_CTL);
             if (iNew != iCur) {
                 i = 1;
                 for (ibit = 2; i < app.lpui->vprptCur->cFields && (!(ibit & app.lpui->vprptCur->grbitVisible) || iNew-- > 0); ibit *= 2) {
@@ -384,7 +384,7 @@ void DrawReport(APPSESSION &app, HWND hwnd, HDC hdc, RECT *prc) {
             if (i == 0) {
                 win32::TextOutA(hdc, rc.left + 3, rc.top + 2, szTit, strlen(szTit));
             } else {
-                CtrTextOut(hdc, (int16_t)(rc.right - rc.left) / 2 + rc.left, rc.top + 2, szTit, 0);
+                CtrTextOut(hdc, static_cast<int16_t>((rc.right - rc.left)) / 2 + rc.left, rc.top + 2, szTit, 0);
             }
             _Draw3dFrame(app, hdc, &rc, 0);
             xCol += dx;
@@ -458,7 +458,7 @@ INT_PTR  ScoreXDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         return 1;
     case win32::WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        win32::FillRect((HDC)wParam, &rc, app.lpui->hbrButtonFace);
+        win32::FillRect(reinterpret_cast<HDC>(wParam), &rc, app.lpui->hbrButtonFace);
         return 1;
     case win32::WM_PAINT:
         hdc = win32::BeginPaint(hwnd, &ps);
@@ -485,7 +485,7 @@ INT_PTR  ScoreXDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     case win32::WM_LBUTTONDOWN:
     case win32::WM_RBUTTONDOWN:
         c = 0;
-        if (app.state.gd.fScoreVictory != 2 || HIWORD(lParam) <= 2 || HIWORD(lParam) >= (uint16_t)(app.lpui->dyArial10 + app.state.dyArial8 - 2)) {
+        if (app.state.gd.fScoreVictory != 2 || HIWORD(lParam) <= 2 || HIWORD(lParam) >= static_cast<uint16_t>((app.lpui->dyArial10 + app.state.dyArial8 - 2))) {
             return 0;
         }
         cchHistory = TextIO().pfnCchGetString(app, idsHistory, szT);
@@ -494,7 +494,7 @@ INT_PTR  ScoreXDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             psz = &app.state.szWork[i * 40 + cchHistory];
             cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsPlanets + i), psz);
             psz[cch - 1] = 0;
-            rgid[c] = (uint32_t)(app.state.gd.iCurGraph == i);
+            rgid[c] = static_cast<uint32_t>((app.state.gd.iCurGraph == i));
             rgszScan[c++] = &app.state.szWork[i * 40];
         }
         iSel = ControlIO().pfnPopupMenu(app, hwnd, LOWORD(lParam), HIWORD(lParam), c, rgid, rgszScan, -2, 0);
@@ -520,7 +520,7 @@ INT_PTR  ScoreXDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             win32::WinHelpA(hwnd, app.lpui->szHelpFile, win32::HELP_CONTEXT, idhScoreSheet);
             return 1;
         case IDC_SCORE_SWITCH:
-            app.state.gd.fScoreVictory = (uint32_t)(app.state.gd.fScoreVictory + 1) % 3;
+            app.state.gd.fScoreVictory = static_cast<uint32_t>((app.state.gd.fScoreVictory + 1)) % 3;
             ControlIO().pfnInvalidateRect(hwnd, nullptr, 1);
             InitScoreDlg(app, hwnd, app.state.gd.fScoreVictory);
             if (app.state.gd.fTutorial) {
@@ -552,14 +552,14 @@ void InitScoreDlg(APPSESSION &app, HWND hwnd, int16_t fVictory) {
         dy = 400;
     } else if (fVictory) {
         psz = TextIO().pfnCompressed(app, idsExceedsSecondPlaceScore);
-        app.lpui->vdxScoreX = (uint32_t)(LOWORD(GetTextExtent(hdc, psz, strlen(psz))) * 3) / 2 + 6 * dxDig;
-        dx = (int16_t)((4 <= app.state.game.cPlayer ? app.state.game.cPlayer : 4) * app.state.dyArial8 * 3) / 2 + app.lpui->vdxScoreX + 8;
-        dy = (int16_t)(11 * app.state.dyArial8 * 3) / 2 + 88;
+        app.lpui->vdxScoreX = static_cast<uint32_t>((LOWORD(GetTextExtent(hdc, psz, strlen(psz))) * 3)) / 2 + 6 * dxDig;
+        dx = static_cast<int16_t>(((4 <= app.state.game.cPlayer ? app.state.game.cPlayer : 4) * app.state.dyArial8 * 3)) / 2 + app.lpui->vdxScoreX + 8;
+        dy = static_cast<int16_t>((11 * app.state.dyArial8 * 3)) / 2 + 88;
     } else {
         psz = TextIO().pfnCompressed(app, idsUnarmedShips2);
         app.lpui->vdxScoreX = LOWORD(GetTextExtent(hdc, psz, strlen(psz))) + 8;
         dx = (4 <= app.state.game.cPlayer ? app.state.game.cPlayer : 4) * dxDig * 5 + app.lpui->vdxScoreX + 8;
-        dy = (int16_t)(11 * app.state.dyArial8 * 3) / 2 + 88;
+        dy = static_cast<int16_t>((11 * app.state.dyArial8 * 3)) / 2 + 88;
     }
     win32::ReleaseDC(hwnd, hdc);
     win32::GetWindowRect(hwnd, &rcWindow);
@@ -568,9 +568,9 @@ void InitScoreDlg(APPSESSION &app, HWND hwnd, int16_t fVictory) {
     dyFrame = rcWindow.bottom - rcWindow.top - rc.bottom;
     ControlIO().pfnSetWindowPos(hwnd, nullptr, 0, 0, dxFrame + dx, dyFrame + dy, win32::SWP_NOMOVE | win32::SWP_NOZORDER);
     win32::GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDCANCEL), &rc);
-    win32::MapWindowPoints(nullptr, hwnd, (POINT *)&rc, 2);
+    win32::MapWindowPoints(nullptr, hwnd, reinterpret_cast<POINT *>(&rc), 2);
     win32::OffsetRect(&rc, 0, dy - 4 - rc.bottom);
-    dx = (int16_t)(dx - (rc.right - rc.left) * 3) / 4;
+    dx = static_cast<int16_t>((dx - (rc.right - rc.left) * 3)) / 4;
     ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_SCORE_SWITCH), nullptr, dx, rc.top, 0, 0, win32::SWP_NOSIZE | win32::SWP_NOZORDER);
     ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDCANCEL), nullptr, dx * 2 + (rc.right - rc.left), rc.top, 0, 0, win32::SWP_NOSIZE | win32::SWP_NOZORDER);
     ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_HELP), nullptr, 3 * dx + (rc.right - rc.left) * 2, rc.top, 0, 0, win32::SWP_NOSIZE | win32::SWP_NOZORDER);
@@ -608,7 +608,7 @@ void DrawVCReport(APPSESSION &app, HDC hdc) {
         psz = TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, nullptr);
         cch = strlen(psz);
         l = GetTextExtent(hdc, psz, cch);
-        dxDig = LOWORD((int32_t)((double)(uint32_t)LOWORD(l) / 1.4142));
+        dxDig = LOWORD(static_cast<int32_t>((static_cast<double>(static_cast<uint32_t>(LOWORD(l))) / 1.4142)));
         if (app.state.rgplr[i].fInclude && app.state.rgplr[i].fDead) {
             cr = 8355711;
         } else if (app.state.vlprgScoreX[i].fWinner) {
@@ -617,8 +617,8 @@ void DrawVCReport(APPSESSION &app, HDC hdc) {
             cr = 0;
         }
         win32::SetTextColor(hdc, cr);
-        win32::TextOutA(hdc, xLeft - dxDig + (int16_t)(3 * app.state.dyArial8) / 2, yTop - dxDig - app.state.dyArial8 / 2 - 4, psz, cch);
-        xLeft += (int16_t)(3 * app.state.dyArial8) / 2;
+        win32::TextOutA(hdc, xLeft - dxDig + static_cast<int16_t>((3 * app.state.dyArial8)) / 2, yTop - dxDig - app.state.dyArial8 / 2 - 4, psz, cch);
+        xLeft += static_cast<int16_t>((3 * app.state.dyArial8)) / 2;
     }
     win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
     win32::SelectObject(hdc, app.lpui->hbrButtonShadow);
@@ -626,22 +626,22 @@ void DrawVCReport(APPSESSION &app, HDC hdc) {
     ids = idsOwns;
     cCur = 0;
     hdcMem = win32::CreateCompatibleDC(hdc);
-    hbmpSav = (HBITMAP)win32::SelectObject(hdcMem, app.lpui->hbmpMono);
+    hbmpSav = static_cast<HBITMAP>(win32::SelectObject(hdcMem, app.lpui->hbmpMono));
     win32::SetTextColor(hdc, 0);
     win32::SetBkColor(hdc, 0xffffff);
     xLeft = app.lpui->vdxScoreX + 4;
-    pt.x = (int16_t)((int16_t)(3 * app.state.dyArial8) / 2 - 12) / 2;
-    pt.y = (int16_t)((int16_t)(3 * app.state.dyArial8) / 2 - 11) / 2 - app.state.dyArial8 / 4;
+    pt.x = static_cast<int16_t>((static_cast<int16_t>((3 * app.state.dyArial8)) / 2 - 12)) / 2;
+    pt.y = static_cast<int16_t>((static_cast<int16_t>((3 * app.state.dyArial8)) / 2 - 11)) / 2 - app.state.dyArial8 / 4;
     for (i = 0; i < app.state.game.cPlayer; i++) {
         grbitVC = app.state.vlprgScoreX[i].grbitVC;
         for (j = 0; j < 7; j++, grbitVC >>= 1) {
             if (grbitVC & 1) {
-                win32::BitBlt(hdc, xLeft + pt.x, yTop + pt.y + (int16_t)(j * app.state.dyArial8 * 3) / 2, 14, 12, hdcMem, 0, 0, win32::SRCAND);
+                win32::BitBlt(hdc, xLeft + pt.x, yTop + pt.y + static_cast<int16_t>((j * app.state.dyArial8 * 3)) / 2, 14, 12, hdcMem, 0, 0, win32::SRCAND);
                 if ((app.state.rgplr[i].fInclude && app.state.rgplr[i].fDead) || GetVCCheck(&app.state.game, static_cast<VictoryCondition>((j > 1) + j)) == 0) {
                     win32::SetTextColor(hdc, app.lpui->crButtonShadow);
                 LOrIt:
                     win32::SetBkColor(hdc, 0);
-                    win32::BitBlt(hdc, xLeft + pt.x, yTop + pt.y + (int16_t)(j * app.state.dyArial8 * 3) / 2, 14, 12, hdcMem, 0, 0, win32::SRCPAINT);
+                    win32::BitBlt(hdc, xLeft + pt.x, yTop + pt.y + static_cast<int16_t>((j * app.state.dyArial8 * 3)) / 2, 14, 12, hdcMem, 0, 0, win32::SRCPAINT);
                     win32::SetTextColor(hdc, 0);
                     win32::SetBkColor(hdc, 0xffffff);
                 } else if (app.state.vlprgScoreX[i].fWinner) {
@@ -650,10 +650,10 @@ void DrawVCReport(APPSESSION &app, HDC hdc) {
                 }
             }
         }
-        win32::PatBlt(hdc, xLeft, yTop - app.state.dyArial8 / 4, 1, (int16_t)(7 * app.state.dyArial8 * 3) / 2 + 1, win32::PATCOPY);
-        xLeft += (int16_t)(3 * app.state.dyArial8) / 2;
+        win32::PatBlt(hdc, xLeft, yTop - app.state.dyArial8 / 4, 1, static_cast<int16_t>((7 * app.state.dyArial8 * 3)) / 2 + 1, win32::PATCOPY);
+        xLeft += static_cast<int16_t>((3 * app.state.dyArial8)) / 2;
     }
-    win32::PatBlt(hdc, xLeft, yTop - app.state.dyArial8 / 4, 1, (int16_t)(7 * app.state.dyArial8 * 3) / 2 + 1, win32::PATCOPY);
+    win32::PatBlt(hdc, xLeft, yTop - app.state.dyArial8 / 4, 1, static_cast<int16_t>((7 * app.state.dyArial8 * 3)) / 2 + 1, win32::PATCOPY);
     win32::SelectObject(hdcMem, hbmpSav);
     win32::DeleteDC(hdcMem);
     for (i = 0; i < 9; i++) {
@@ -672,7 +672,7 @@ void DrawVCReport(APPSESSION &app, HDC hdc) {
             }
             xLeft = xStart;
             if (i <= 7 && iPass == 1) {
-                win32::PatBlt(hdc, app.lpui->vdxScoreX + 4, yTop - app.state.dyArial8 / 4, (int16_t)(app.state.dyArial8 * app.state.game.cPlayer * 3) / 2, 1, win32::PATCOPY);
+                win32::PatBlt(hdc, app.lpui->vdxScoreX + 4, yTop - app.state.dyArial8 / 4, static_cast<int16_t>((app.state.dyArial8 * app.state.game.cPlayer * 3)) / 2, 1, win32::PATCOPY);
                 if (i == 7) {
                     yTop += app.state.dyArial8 / 2;
                 }
@@ -692,7 +692,7 @@ void DrawVCReport(APPSESSION &app, HDC hdc) {
                 vcVal = GetVCVal(app, &app.state.game, static_cast<VictoryCondition>(cCur), 0);
                 if (i == 0) {
                     idsT = idsPlanets3;
-                    vcVal = LOWORD((int32_t)(vcVal * app.state.game.cPlanMax) / 100);
+                    vcVal = LOWORD(static_cast<int32_t>((vcVal * app.state.game.cPlanMax)) / 100);
                 } else {
                     idsT = ids;
                 }
@@ -717,7 +717,7 @@ void DrawVCReport(APPSESSION &app, HDC hdc) {
                 ids = static_cast<StringId>(ids + 1);
             }
             if (iPass == 1) {
-                yTop += (int16_t)(3 * app.state.dyArial8) / 2;
+                yTop += static_cast<int16_t>((3 * app.state.dyArial8)) / 2;
             }
         }
     }
@@ -746,12 +746,12 @@ void DrawScoreReport(APPSESSION &app, HDC hdc) {
     win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
     dxDig = LOWORD(GetTextExtent(hdc, "9", 1));
     win32::SelectObject(hdc, app.lpui->rghfontArial8[4]);
-    xLeft = (int16_t)(5 * dxDig - (int16_t)(3 * app.state.dyArial8) / 2) / 2 + app.lpui->vdxScoreX;
+    xLeft = static_cast<int16_t>((5 * dxDig - static_cast<int16_t>((3 * app.state.dyArial8)) / 2)) / 2 + app.lpui->vdxScoreX;
     for (i = 0; i < app.state.game.cPlayer; i++) {
         psz = TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, nullptr);
         cch = strlen(psz);
         l = GetTextExtent(hdc, psz, cch);
-        dx45 = LOWORD((int32_t)((double)(uint32_t)LOWORD(l) / 1.4142));
+        dx45 = LOWORD(static_cast<int32_t>((static_cast<double>(static_cast<uint32_t>(LOWORD(l))) / 1.4142)));
         if (app.state.rgplr[i].fInclude && app.state.rgplr[i].fDead) {
             cr = 8355711;
         } else if (app.state.vlprgScoreX[i].fWinner) {
@@ -760,17 +760,17 @@ void DrawScoreReport(APPSESSION &app, HDC hdc) {
             cr = 0;
         }
         win32::SetTextColor(hdc, cr);
-        win32::TextOutA(hdc, xLeft - dx45 + (int16_t)(3 * app.state.dyArial8) / 2, yTop - dx45 - app.state.dyArial8 / 2 - 4, psz, cch);
+        win32::TextOutA(hdc, xLeft - dx45 + static_cast<int16_t>((3 * app.state.dyArial8)) / 2, yTop - dx45 - app.state.dyArial8 / 2 - 4, psz, cch);
         xLeft += 5 * dxDig;
     }
     win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
     win32::SelectObject(hdc, app.lpui->hbrButtonShadow);
     ids = idsPlanets;
     xLeft = app.lpui->vdxScoreX + 4;
-    pt.x = (int16_t)((int16_t)(3 * app.state.dyArial8) / 2 - 12) / 2;
-    pt.y = (int16_t)((int16_t)(3 * app.state.dyArial8) / 2 - 11) / 2 - app.state.dyArial8 / 4;
+    pt.x = static_cast<int16_t>((static_cast<int16_t>((3 * app.state.dyArial8)) / 2 - 12)) / 2;
+    pt.y = static_cast<int16_t>((static_cast<int16_t>((3 * app.state.dyArial8)) / 2 - 11)) / 2 - app.state.dyArial8 / 4;
     for (i = 0; i <= app.state.game.cPlayer; i++) {
-        win32::PatBlt(hdc, xLeft, yTop - app.state.dyArial8 / 4, 1, (int16_t)(9 * app.state.dyArial8 * 3) / 2 + 1, win32::PATCOPY);
+        win32::PatBlt(hdc, xLeft, yTop - app.state.dyArial8 / 4, 1, static_cast<int16_t>((9 * app.state.dyArial8 * 3)) / 2 + 1, win32::PATCOPY);
         xLeft += 5 * dxDig;
     }
     win32::SetTextColor(hdc, 0);
@@ -797,7 +797,7 @@ void DrawScoreReport(APPSESSION &app, HDC hdc) {
                     case 2:
                     case 3:
                     case 4:
-                        lVal = (int32_t)((uint32_t)(app.state.vlprgScoreX[j].score.rgcsh[i - 2] & 0x1fff) << (app.state.vlprgScoreX[j].score.rgcsh[i - 2] >> 0xd << 1));
+                        lVal = static_cast<int32_t>((static_cast<uint32_t>((app.state.vlprgScoreX[j].score.rgcsh[i - 2] & 0x1fff)) << (app.state.vlprgScoreX[j].score.rgcsh[i - 2] >> 0xd << 1)));
                         break;
                     case 5:
                         lVal = app.state.vlprgScoreX[j].score.cTechLevels;
@@ -809,7 +809,7 @@ void DrawScoreReport(APPSESSION &app, HDC hdc) {
                         lVal = app.state.vlprgScoreX[j].score.lScore;
                         break;
                     case 8:
-                        lVal = (int16_t)app.state.vlprgScoreX[j].turn;
+                        lVal = static_cast<int16_t>(app.state.vlprgScoreX[j].turn);
                     }
                 }
                 if (iPass == 0) {
@@ -830,7 +830,7 @@ void DrawScoreReport(APPSESSION &app, HDC hdc) {
                 }
             }
         }
-        yTop += (int16_t)(3 * app.state.dyArial8) / 2;
+        yTop += static_cast<int16_t>((3 * app.state.dyArial8)) / 2;
     }
     win32::PatBlt(hdc, app.lpui->vdxScoreX + 4, yTop - app.state.dyArial8 / 4, app.state.game.cPlayer * dxDig * 5, 1, win32::PATCOPY);
     return;
@@ -899,11 +899,11 @@ void DrawHistoryReport(APPSESSION &app, HDC hdc) {
     } else {
         iYearBase = app.state.game.turn - 100;
     }
-    cYears = (uint32_t)((int32_t)(app.state.game.turn + 4) / 5 * 5);
+    cYears = static_cast<uint32_t>((static_cast<int32_t>((app.state.game.turn + 4)) / 5 * 5));
     if (cYears > 100) {
         cYears = 100;
     } else if (cYears > 50) {
-        cYears = (uint32_t)((int32_t)((cYears + 5) / 10) * 10);
+        cYears = static_cast<uint32_t>((static_cast<int32_t>(((cYears + 5) / 10)) * 10));
     }
     xCur = rcChart.left;
     win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
@@ -912,10 +912,10 @@ void DrawHistoryReport(APPSESSION &app, HDC hdc) {
     } else {
         j = 10;
     }
-    cDrawn = (int16_t)LOWORD(cYears) / j;
+    cDrawn = static_cast<int16_t>(LOWORD(cYears)) / j;
     if (cDrawn > 0) {
         for (i = 0; i <= cDrawn; i++) {
-            xCur = (int16_t)(dx * i) / cDrawn + rcChart.left;
+            xCur = static_cast<int16_t>((dx * i)) / cDrawn + rcChart.left;
             cch = win32::wsprintfA(szT, app.state.PCTD, iYearBase + 2400 + i * j);
             CtrTextOut(hdc, xCur, rcChart.bottom + 6, szT, cch);
             if (i > 0 && i < cDrawn) {
@@ -957,11 +957,11 @@ void DrawHistoryReport(APPSESSION &app, HDC hdc) {
         } else if (cScaleMax <= 12000) {
             cInc = 1000;
         } else {
-            cInc = (uint32_t)((int32_t)(cScaleMax / 12) / 500 * 500);
+            cInc = static_cast<uint32_t>((static_cast<int32_t>((cScaleMax / 12)) / 500 * 500));
         }
         xCur = rcChart.left - 6;
         for (cCur = cInc; cCur < cScaleMax; cCur += cInc) {
-            yCur = rcChart.bottom - LOWORD((int32_t)((int32_t)(dy * cCur) / cScaleMax));
+            yCur = rcChart.bottom - LOWORD(static_cast<int32_t>((static_cast<int32_t>((dy * cCur)) / cScaleMax)));
             if (yCur < app.state.dyArial8 / 2 + rcChart.top)
                 break;
             cch = win32::wsprintfA(app.state.szWork, app.state.PCTLD, cCur);
@@ -982,14 +982,14 @@ void DrawHistoryReport(APPSESSION &app, HDC hdc) {
             if (app.state.rgsxPlr[i]) {
                 cDrawn = 0;
                 hpen = win32::CreatePen(0, 1, i == app.state.idPlayer ? 0xffffff : app.lpui->rgcrPlrHistory[i]);
-                hpenSav = (HPEN)win32::SelectObject(hdc, hpen);
+                hpenSav = static_cast<HPEN>(win32::SelectObject(hdc, hpen));
                 for (j = 0; j < app.state.rgcsxPlr[i]; j++) {
                     lpsx = app.state.rgsxPlr[i] + j;
-                    if (lpsx->turn >= iYearBase && lpsx->turn <= (uint16_t)(LOWORD(cYears) + iYearBase)) {
+                    if (lpsx->turn >= iYearBase && lpsx->turn <= static_cast<uint16_t>((LOWORD(cYears) + iYearBase))) {
                         dYear = lpsx->turn - iYearBase;
                         cCur = LFetchScoreXVal(lpsx, app.state.gd.iCurGraph);
-                        pt.x = LOWORD((int32_t)((int32_t)((uint32_t)dYear * dx) / cYears)) + rcChart.left;
-                        pt.y = rcChart.bottom - LOWORD((int32_t)((int32_t)(cCur * dy) / cScaleMax));
+                        pt.x = LOWORD(static_cast<int32_t>((static_cast<int32_t>((static_cast<uint32_t>(dYear) * dx)) / cYears))) + rcChart.left;
+                        pt.y = rcChart.bottom - LOWORD(static_cast<int32_t>((static_cast<int32_t>((cCur * dy)) / cScaleMax)));
                         if (cDrawn == 0) {
                             win32::MoveToEx(hdc, pt.x, pt.y, nullptr);
                         } else {
@@ -1018,7 +1018,7 @@ int32_t LFetchScoreXVal(SCOREX *lpsx, int16_t iVal) {
     case 2:
     case 3:
     case 4:
-        return (int32_t)((uint32_t)(lpsx->score.rgcsh[iVal - 2] & 0x1fff) << (lpsx->score.rgcsh[iVal - 2] >> 0xd << 1));
+        return static_cast<int32_t>((static_cast<uint32_t>((lpsx->score.rgcsh[iVal - 2] & 0x1fff)) << (lpsx->score.rgcsh[iVal - 2] >> 0xd << 1)));
     case 5:
         return lpsx->score.cTechLevels;
     case 6:
@@ -1047,7 +1047,7 @@ int16_t DxReportColHdr(APPSESSION &app, ReportType irpt, int16_t iCol, char *psz
     case rptPlanets:
         cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsPlanetName + iCol), psz);
         dx = LOWORD(GetTextExtent(hdc, psz, cch));
-        if ((uint16_t)iCol > colPlanetRoutingDest)
+        if (static_cast<uint16_t>(iCol) > colPlanetRoutingDest)
             break;
         switch (iCol) {
         case colPlanetStarbase:
@@ -1094,7 +1094,7 @@ int16_t DxReportColHdr(APPSESSION &app, ReportType irpt, int16_t iCol, char *psz
     case rptFleets:
         cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsFleetName + iCol), psz);
         dx = LOWORD(GetTextExtent(hdc, psz, cch));
-        if ((uint16_t)iCol > colFleetMass)
+        if (static_cast<uint16_t>(iCol) > colFleetMass)
             break;
         switch (iCol) {
         case colFleetLocation:
@@ -1150,7 +1150,7 @@ int16_t DxReportColHdr(APPSESSION &app, ReportType irpt, int16_t iCol, char *psz
         }
     }
     dx += 5;
-    return (int16_t)(dx + 1) / 2 * 2;
+    return static_cast<int16_t>((dx + 1)) / 2 * 2;
 }
 
 void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, int16_t irow, int16_t icol) {
@@ -1183,7 +1183,7 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, int16_
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
         win32::SetTextColor(hdc, 0);
         win32::SetBkMode(hdc, win32::TRANSPARENT);
-        if ((uint16_t)icol > colPlanetRoutingDest)
+        if (static_cast<uint16_t>(icol) > colPlanetRoutingDest)
             break;
         switch (icol) {
         case colPlanetStarbase:
@@ -1219,7 +1219,7 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, int16_
             if (!lppl->fStarbase)
                 break;
             rc = *prc;
-            dx = (int16_t)(rc.bottom - rc.top) / 3 - 1;
+            dx = static_cast<int16_t>((rc.bottom - rc.top)) / 3 - 1;
             rc.left = rc.right - dx;
             if (PartQueryIO().pfnHull(app.state.rglpshdefSB[app.state.idPlayer][lppl->isb].hul.ihuldef)->hul.wtCargoMax != 0) {
                 hbr = app.lpui->hbrYellow;
@@ -1244,7 +1244,7 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, int16_
             if (CalcPlanetMaxPop(app, lppl->id, lppl->iPlayer) < lppl->rgwtMin[3]) {
                 win32::SetTextColor(hdc, 0xff);
             }
-            cch = CommaFormatLong(app, szT, (uint32_t)(lppl->rgwtMin[3] * 100));
+            cch = CommaFormatLong(app, szT, static_cast<uint32_t>((lppl->rgwtMin[3] * 100)));
             RightTextOut(app, hdc, prc->right, prc->top, szT, cch, 0);
             break;
         case colPlanetCapacity:
@@ -1256,9 +1256,9 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, int16_
             j = ColonyIO().pfnOperableDefenses(app, lppl, app.state.idPlayer, 0);
             if (i > 0) {
                 CalcPctSurvive(app, lppl, &pct, nullptr);
-                pct = (float)((double)1.0 - pct);
-                cch = win32::wsprintfA(szT, app.state.PCTDXPCTDPCTPCT, LOWORD((int32_t)((double)pct * 100)),
-                               LOWORD((int32_t)((pct - (double)(int16_t)LOWORD((int32_t)((double)pct * 100)) / 100.0) * 10000)));
+                pct = static_cast<float>((static_cast<double>(1.0) - pct));
+                cch = win32::wsprintfA(szT, app.state.PCTDXPCTDPCTPCT, LOWORD(static_cast<int32_t>((static_cast<double>(pct) * 100))),
+                               LOWORD(static_cast<int32_t>(((pct - static_cast<double>(static_cast<int16_t>(LOWORD(static_cast<int32_t>((static_cast<double>(pct) * 100))))) / 100.0) * 10000))));
                 goto DrawPlusDef;
             }
             szT[2] = '-';
@@ -1355,7 +1355,7 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, int16_
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
         win32::SetTextColor(hdc, 0);
         win32::SetBkMode(hdc, win32::TRANSPARENT);
-        if ((uint16_t)icol > colFleetMass)
+        if (static_cast<uint16_t>(icol) > colFleetMass)
             break;
         switch (icol) {
         case colFleetBattlePlan:
@@ -1449,7 +1449,7 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, int16_
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
         win32::SetTextColor(hdc, 0);
         win32::SetBkMode(hdc, win32::TRANSPARENT);
-        if ((uint16_t)icol > colBattleTheirsLeft)
+        if (static_cast<uint16_t>(icol) > colBattleTheirsLeft)
             break;
         switch (icol) {
         case colBattleLocation:
@@ -1465,7 +1465,7 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, int16_
             win32::ExtTextOutA(hdc, prc->left, prc->top, win32::ETO_CLIPPED, prc, psz, strlen(psz), nullptr);
             break;
         case colBattleSides:
-            DrawMineralItem(app, hdc, prc->right - 2, prc->top, -1, (uint32_t)BdvFromLp(app, lpbd).cplr());
+            DrawMineralItem(app, hdc, prc->right - 2, prc->top, -1, static_cast<uint32_t>(BdvFromLp(app, lpbd).cplr()));
             break;
         case colBattleStarbase:
             if (CBattleUnits(app, lpbd, static_cast<BattleUnitFlags>(grBuOurUnits | grBuIncludeSb)) != 0) {
@@ -1475,7 +1475,7 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, int16_
             } else {
                 chT = ' ';
             }
-            CtrTextOut(hdc, (int16_t)(prc->right - prc->left) / 2 + prc->left, prc->top, &chT, 1);
+            CtrTextOut(hdc, static_cast<int16_t>((prc->right - prc->left)) / 2 + prc->left, prc->top, &chT, 1);
             break;
         case colBattleUnarmed:
             i = 11;
@@ -1526,7 +1526,7 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, int16_
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
         win32::SetTextColor(hdc, 0);
         win32::SetBkMode(hdc, win32::TRANSPARENT);
-        if ((uint16_t)icol <= colEnemyFleetUtility) {
+        if (static_cast<uint16_t>(icol) <= colEnemyFleetUtility) {
             switch (icol) {
             case colEnemyFleetName:
                 if (app.state.sel.scan.grobj == grobjFleet && app.state.rglpfl[app.state.sel.scan.ifl]->id == lpfl->id) {
@@ -1661,7 +1661,7 @@ void SortReportCache(APPSESSION &app, ReportType irpt, int16_t icol) {
         switch (irpt) {
         case rptFleets:
             app.lpui->vlprgidRep = app.state.vlprgidFleet;
-            for (iItem = 0; (int16_t)iItem < app.state.cFleet; iItem++) {
+            for (iItem = 0; static_cast<int16_t>(iItem) < app.state.cFleet; iItem++) {
                 lpfl = app.state.rglpfl[iItem];
                 if (!app.state.rglpfl[iItem])
                     break;
@@ -1673,7 +1673,7 @@ void SortReportCache(APPSESSION &app, ReportType irpt, int16_t icol) {
         case rptEnemyFleets:
             app.lpui->vlprgidRep = app.lpui->vlprgidMisc;
             app.state.vrptBattle.fCached = 0;
-            for (iItem = 0; (int16_t)iItem < app.state.cFleet; iItem++) {
+            for (iItem = 0; static_cast<int16_t>(iItem) < app.state.cFleet; iItem++) {
                 lpfl = app.state.rglpfl[iItem];
                 if (!app.state.rglpfl[iItem])
                     break;
@@ -1707,7 +1707,7 @@ void SortReportCache(APPSESSION &app, ReportType irpt, int16_t icol) {
             return;
         }
         app.lpui->vprptCur->cRows = cRows;
-        qsort16(app, rgidRep, cRows, sizeof(uint16_t), (APPQSORTCOMPARE)ICompReport);
+        qsort16(app, rgidRep, cRows, sizeof(uint16_t), reinterpret_cast<APPQSORTCOMPARE>(ICompReport));
         memcpy(app.lpui->vlprgidRep, rgidRep, cRows * 2);
         app.lpui->vprptCur->fCached = 1;
     }
@@ -1754,7 +1754,7 @@ TryTier2:
     case rptPlanets:
         lppl1 = app.state.lpPlanets + *pid1;
         lppl2 = app.state.lpPlanets + *pid2;
-        if ((uint16_t)icolSort > colPlanetRoutingDest)
+        if (static_cast<uint16_t>(icolSort) > colPlanetRoutingDest)
             break;
         switch (icolSort) {
         case colPlanetStarbase:
@@ -1845,22 +1845,22 @@ TryTier2:
             break;
         case colPlanetDefense:
             if (lppl1->cDefenses == 0) {
-                pct1 = (float)0;
+                pct1 = static_cast<float>(0);
             } else {
                 CalcPctSurvive(app, lppl1, &pct1, nullptr);
-                pct1 = (float)((double)1.0 - pct1);
+                pct1 = static_cast<float>((static_cast<double>(1.0) - pct1));
             }
             if (lppl2->cDefenses == 0) {
-                pct2 = (float)0;
+                pct2 = static_cast<float>(0);
             } else {
                 CalcPctSurvive(app, lppl2, &pct2, nullptr);
-                pct2 = (float)((double)1.0 - pct2);
+                pct2 = static_cast<float>((static_cast<double>(1.0) - pct2));
             }
-            if ((double)pct1 < (double)pct2) {
+            if (static_cast<double>(pct1) < static_cast<double>(pct2)) {
                 iRet = -1;
                 break;
             }
-            if ((double)pct1 > (double)pct2) {
+            if (static_cast<double>(pct1) > static_cast<double>(pct2)) {
                 iRet = 1;
                 break;
             }
@@ -1924,7 +1924,7 @@ TryTier2:
     case rptFleets:
         lpfl1 = app.state.rglpfl[*pid1];
         lpfl2 = app.state.rglpfl[*pid2];
-        if ((uint16_t)icolSort > colFleetMass)
+        if (static_cast<uint16_t>(icolSort) > colFleetMass)
             break;
         switch (icolSort) {
         case colFleetName:
@@ -2059,7 +2059,7 @@ TryTier2:
             iRet = 0;
             break;
         }
-        if ((uint16_t)icolSort > colBattleTheirsLeft)
+        if (static_cast<uint16_t>(icolSort) > colBattleTheirsLeft)
             break;
         switch (icolSort) {
         case colBattleLocation:
@@ -2080,16 +2080,16 @@ TryTier2:
         case colBattleStarbase:
             l1 = CBattleUnits(app, lpbd1, static_cast<BattleUnitFlags>(grBuOurUnits | grBuIncludeSb));
             if (l1 == 0) {
-                l1 = (int32_t)(CBattleUnits(app, lpbd1, static_cast<BattleUnitFlags>(grBuTheirUnits | grBuIncludeSb)) * 2);
+                l1 = static_cast<int32_t>((CBattleUnits(app, lpbd1, static_cast<BattleUnitFlags>(grBuTheirUnits | grBuIncludeSb)) * 2));
             }
             l2 = CBattleUnits(app, lpbd2, static_cast<BattleUnitFlags>(grBuOurUnits | grBuIncludeSb));
             if (l2 != 0)
                 goto LRetDiff;
-            l2 = (int32_t)(CBattleUnits(app, lpbd2, static_cast<BattleUnitFlags>(grBuTheirUnits | grBuIncludeSb)) * 2);
+            l2 = static_cast<int32_t>((CBattleUnits(app, lpbd2, static_cast<BattleUnitFlags>(grBuTheirUnits | grBuIncludeSb)) * 2));
             goto LRetDiff;
         case colBattleSides:
-            l1 = (uint32_t)BdvFromLp(app, lpbd1).cplr();
-            l2 = (uint32_t)BdvFromLp(app, lpbd2).cplr();
+            l1 = static_cast<uint32_t>(BdvFromLp(app, lpbd1).cplr());
+            l2 = static_cast<uint32_t>(BdvFromLp(app, lpbd2).cplr());
             goto LRetDiff;
         case colBattleUnarmed:
             i = 11;
@@ -2140,7 +2140,7 @@ TryTier2:
     case rptEnemyFleets:
         lpfl1 = app.state.rglpfl[*pid1];
         lpfl2 = app.state.rglpfl[*pid2];
-        if ((uint16_t)icolSort <= colEnemyFleetUtility) {
+        if (static_cast<uint16_t>(icolSort) <= colEnemyFleetUtility) {
             switch (icolSort) {
             case colEnemyFleetName:
                 psz = PszGetFleetName(app, lpfl1->id);
@@ -2203,13 +2203,13 @@ TryTier2:
                 for (i = 0; i < 16; i++) {
                     if (lpfl1->rgcsh[i] != 0) {
                         j = static_cast<HullCategory>(PartQueryIO().pfnHull(app.state.rglpshdef[lpfl1->iPlayer][i].hul.ihuldef)->imdCategory);
-                        if ((int16_t)j <= hullCatFreighter || (int16_t)j >= hullCatMiner) {
+                        if (static_cast<int16_t>(j) <= hullCatFreighter || static_cast<int16_t>(j) >= hullCatMiner) {
                             l1 += lpfl1->rgcsh[i];
                         }
                     }
                     if (lpfl2->rgcsh[i] != 0) {
                         j = static_cast<HullCategory>(PartQueryIO().pfnHull(app.state.rglpshdef[lpfl2->iPlayer][i].hul.ihuldef)->imdCategory);
-                        if ((int16_t)j <= hullCatFreighter || (int16_t)j >= hullCatMiner) {
+                        if (static_cast<int16_t>(j) <= hullCatFreighter || static_cast<int16_t>(j) >= hullCatMiner) {
                             l2 += lpfl2->rgcsh[i];
                         }
                     }
@@ -2368,7 +2368,7 @@ void ReportColumnPopup(APPSESSION &app, POINT16 pt, int16_t icol, int16_t fRight
             if (cSubsort == 0) {
                 app.lpui->vprptCur->fAscending = iRet == 0;
             } else {
-                app.lpui->vprptCur->iSubsort = (int16_t)(iRet - 2) % (cSubsort + 3 + (app.lpui->vprptCur->irpt == rptFleets));
+                app.lpui->vprptCur->iSubsort = static_cast<int16_t>((iRet - 2)) % (cSubsort + 3 + (app.lpui->vprptCur->irpt == rptFleets));
                 if (app.lpui->vprptCur->iSubsort > (app.lpui->vprptCur->irpt == rptFleets) + 3) {
                     app.lpui->vprptCur->iSubsort = (app.lpui->vprptCur->irpt == rptFleets) + 3;
                 }
@@ -2377,10 +2377,10 @@ void ReportColumnPopup(APPSESSION &app, POINT16 pt, int16_t icol, int16_t fRight
             SortReportCache(app, app.lpui->vprptCur->irpt, icol);
         } else if (iRet == iHide) {
             fccolChange = 1;
-            app.lpui->vprptCur->grbitVisible &= (int16_t)~(1 << icol);
+            app.lpui->vprptCur->grbitVisible &= static_cast<int16_t>(~(1 << icol));
         } else if (iRet >= iBase) {
             fccolChange = 1;
-            app.lpui->vprptCur->grbitVisible |= (int16_t)(1 << rgcol[iRet]);
+            app.lpui->vprptCur->grbitVisible |= static_cast<int16_t>((1 << rgcol[iRet]));
         }
         if (fccolChange) {
             SetHScrollBar(app);
@@ -2518,13 +2518,13 @@ void ExecuteReportClick(APPSESSION &app, POINT16 pt, ReportType irpt, int16_t ic
                 ibit *= 2;
             }
             dxOffset = pt.x - xCur;
-            for (i = 1; i <= 3 && (int16_t)(i * 2 * app.lpui->vprptCur->rgbdx[icol]) / 3 <= dxOffset; i++) {
+            for (i = 1; i <= 3 && static_cast<int16_t>((i * 2 * app.lpui->vprptCur->rgbdx[icol])) / 3 <= dxOffset; i++) {
             }
             i--;
             app.lpui->GlobalPD.grPopup = grPopupMineral;
             app.lpui->GlobalPD.SetRgi(0, i);
             app.lpui->GlobalPD.SetRgi(2, app.state.sel.pl.rgwtMin[i]);
-            app.lpui->GlobalPD.SetRgi(3, (uint32_t)app.state.sel.pl.rgMinConc[i]);
+            app.lpui->GlobalPD.SetRgi(3, static_cast<uint32_t>(app.state.sel.pl.rgMinConc[i]));
             ColonyIO().pfnEstimateMining(app, &app.state.sel.pl, rglQuan, -1, 0);
             app.lpui->GlobalPD.SetRgi(4, rglQuan[i]);
             app.lpui->GlobalPD.SetRgi(1, app.state.sel.pl.fHomeworld);
@@ -2651,7 +2651,7 @@ INT_PTR  PrintMapDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         for (i = 0; i < 2; i++) {
             hwndEdit = ControlIO().pfnGetDlgItem(hwnd, i + 268);
             ControlIO().pfnSendMessage(hwndEdit, win32::EM_LIMITTEXT, 1, 0);
-            ControlIO().pfnSendMessage(hwndEdit, win32::WM_SETFONT, (WPARAM)app.lpui->rghfontArial8[1], 0);
+            ControlIO().pfnSendMessage(hwndEdit, win32::WM_SETFONT, reinterpret_cast<WPARAM>(app.lpui->rghfontArial8[1]), 0);
             app.state.szWork[0] = app.lpui->vrgcPrintMapPage[i] + '0';
             app.state.szWork[1] = 0;
             ControlIO().pfnSetWindowText(hwndEdit, app.state.szWork);
@@ -2660,7 +2660,7 @@ INT_PTR  PrintMapDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         return 1;
     case win32::WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        win32::FillRect((HDC)wParam, &rc, app.lpui->hbrButtonFace);
+        win32::FillRect(reinterpret_cast<HDC>(wParam), &rc, app.lpui->hbrButtonFace);
         return 1;
     case win32::WM_CTLCOLORMSGBOX:
     case win32::WM_CTLCOLOREDIT:
@@ -2670,8 +2670,8 @@ INT_PTR  PrintMapDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     case win32::WM_CTLCOLORSCROLLBAR:
     case win32::WM_CTLCOLORSTATIC:
         if (msg == win32::WM_CTLCOLORSTATIC) {
-            win32::SetBkColor((HDC)wParam, app.lpui->crButtonFace);
-            return (INT_PTR)app.lpui->hbrButtonFace;
+            win32::SetBkColor(reinterpret_cast<HDC>(wParam), app.lpui->crButtonFace);
+            return reinterpret_cast<INT_PTR>(app.lpui->hbrButtonFace);
         }
         break;
     case win32::WM_COMMAND:
@@ -2699,10 +2699,10 @@ INT_PTR  PrintMapDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         case IDC_PRINT_MAP_PAGES_X:
         case IDC_PRINT_MAP_PAGES_Y:
             if (HIWORD(wParam) == 0x400) {
-                ControlIO().pfnGetWindowText((HWND)lParam, app.state.szWork, 10);
+                ControlIO().pfnGetWindowText(reinterpret_cast<HWND>(lParam), app.state.szWork, 10);
                 if (app.state.szWork[0] != 0 && (app.state.szWork[0] <= '0' || app.state.szWork[0] > '9')) {
                     ControlIO().pfnMessageBeep(win32::MB_OK);
-                    ControlIO().pfnSetWindowText((HWND)lParam, &app.state.szWork[1]);
+                    ControlIO().pfnSetWindowText(reinterpret_cast<HWND>(lParam), &app.state.szWork[1]);
                 }
             }
         }

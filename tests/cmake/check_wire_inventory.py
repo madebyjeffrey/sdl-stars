@@ -78,6 +78,20 @@ operations = r"ReadRt|WriteRt|WriteMemRt|FGetPrevLogRt|XorFileBuf|RgFromStream|R
 native_io = (root / "src/platform/fileio.h").read_text(encoding="utf-8")
 operations += "|" + "|".join(sorted(set(re.findall(r"(?m)^[A-Za-z_]\w*\s+\**([A-Za-z_]\w*)\s*\(", mask(native_io)))))
 operations += r"|read|write|_read|_write|fread|fwrite|_lread|_lwrite|ReadFile|WriteFile"
+# Follow the current using declarations, including handle alias chains, so an
+# explicit cast to HDC or HGLOBAL remains visible without a spelled '*'.
+aliases = {}
+for path in paths:
+    aliases.update(re.findall(r"\busing\s+(\w+)\s*=\s*([^;]+);", mask(path.read_text(encoding="utf-8"))))
+
+def pointer_alias(name, seen=()):
+    name = name.strip()
+    if "*" in name:
+        return True
+    if name not in aliases or name in seen:
+        return False
+    return pointer_alias(aliases[name], (*seen, name))
+
 for path in paths:
     name = path.relative_to(root).as_posix()
     original = path.read_text(encoding="utf-8")
@@ -91,8 +105,9 @@ for path in paths:
         site("byte-operation", match.start(), close(text, opening), operation=match[1])
     for match in re.finditer(r"\(\s*(?:(?:const|volatile|struct|union)\s+)*[A-Za-z_]\w*(?:::\w+)*(?:\s+const)?\s*\*+(?:\s*const)?\s*\)", text):
         site("pointer-cast-candidate", match.start(), match.end())
-    for match in re.finditer(r"\b(?:reinterpret_cast|static_cast|const_cast)\s*<[^;{}<>]*\*[^;{}<>]*>", text):
-        site("pointer-cast-candidate", match.start(), match.end())
+    for match in re.finditer(r"\b(?:reinterpret_cast|static_cast|const_cast)\s*<([^;{}<>]*)>", text):
+        if pointer_alias(match[1]) or re.fullmatch(r"LP[A-Z]\w*|PVOID|PBYTE|PWORD|PDWORD", match[1].strip()):
+            site("pointer-cast-candidate", match.start(), match.end())
     # Pointer aliases (LPVOID etc.) are also candidates, not just '*'.
     for match in re.finditer(r"\(\s*(?:LP[A-Z]\w*|PVOID|PBYTE|PWORD|PDWORD)\s*\)", text):
         site("pointer-cast-candidate", match.start(), match.end())

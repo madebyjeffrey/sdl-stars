@@ -54,7 +54,7 @@ THING *LpthNew(APPSESSION &app, int16_t iplr, ThingType ith) {
 
 void FreeLpth(APPSESSION &app, THING *lpth) {
     if (lpth < app.state.lpThings + (app.state.cThing - 1)) {
-        memmove(lpth, lpth + 1, (app.state.cThing - (int16_t)((uint8_t *)lpth - (uint8_t *)app.state.lpThings) / 18 - 1) * sizeof(THING));
+        memmove(lpth, lpth + 1, (app.state.cThing - static_cast<int16_t>((reinterpret_cast<uint8_t *>(lpth) - reinterpret_cast<uint8_t *>(app.state.lpThings))) / 18 - 1) * sizeof(THING));
     }
     app.state.cThing--;
     return;
@@ -73,7 +73,7 @@ int16_t CPlanetsInCircle(APPSESSION &app, POINT16 pt, int32_t r2) {
     int16_t  dx;
     int16_t  xEnd;
 
-    r = LOWORD((int32_t)((double)sqrt((double)r2) + 0.9999));
+    r = LOWORD(static_cast<int32_t>((static_cast<double>(sqrt(static_cast<double>(r2))) + 0.9999)));
     xStart = pt.x - r;
     xEnd = pt.x + r;
     yStart = pt.y - r;
@@ -81,7 +81,7 @@ int16_t CPlanetsInCircle(APPSESSION &app, POINT16 pt, int32_t r2) {
     cPl = 0;
     pptEnd = &app.state.rgptPlan[app.state.game.cPlanMax];
     dx = app.state.rgptPlan[app.state.game.cPlanMax - 1].x - app.state.rgptPlan[0].x;
-    i = LOWORD((int32_t)((int32_t)((int16_t)(pt.x - app.state.rgptPlan[0].x) * app.state.game.cPlanMax) / dx));
+    i = LOWORD(static_cast<int32_t>((static_cast<int32_t>((static_cast<int16_t>((pt.x - app.state.rgptPlan[0].x)) * app.state.game.cPlanMax)) / dx)));
     if (i >= app.state.game.cPlanMax) {
         i = app.state.game.cPlanMax - 1;
     }
@@ -94,7 +94,7 @@ int16_t CPlanetsInCircle(APPSESSION &app, POINT16 pt, int32_t r2) {
         if (ppt->x >= xStart && ppt->y >= yStart && ppt->y <= yEnd) {
             dx = ppt->x - pt.x;
             dy = ppt->y - pt.y;
-            if ((uint32_t)(dx * dx) + (uint32_t)(dy * dy) <= r2) {
+            if (static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy)) <= r2) {
                 cPl++;
             }
         }
@@ -151,9 +151,9 @@ int16_t IValidateWormholePos(APPSESSION &app, THING *lpthWorm) {
     lpthMac = app.state.lpThings + app.state.cThing;
     for (; lpth < lpthMac; lpth++) {
         if (lpth->ith() == ithWormhole && lpth != lpthWorm) {
-            dx = (int16_t)(pt.x - lpth->pt().x());
-            dy = (int16_t)(pt.y - lpth->pt().y());
-            l = (uint32_t)(dx * dx) + (uint32_t)(dy * dy);
+            dx = static_cast<int16_t>((pt.x - lpth->pt().x()));
+            dy = static_cast<int16_t>((pt.y - lpth->pt().y()));
+            l = static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy));
             if (lpth->idFull() == lpthWorm->thw().idPartner()) {
                 if (l < 4900) {
                     if (l < 25) {
@@ -180,9 +180,9 @@ int16_t IValidateWormholePos(APPSESSION &app, THING *lpthWorm) {
         }
     }
     for (i = 0; i < app.state.game.cPlanMax; i++) {
-        dx = (int16_t)(pt.x - app.state.rgptPlan[i].x);
-        dy = (int16_t)(pt.y - app.state.rgptPlan[i].y);
-        l = (uint32_t)(dx * dx) + (uint32_t)(dy * dy);
+        dx = static_cast<int16_t>((pt.x - app.state.rgptPlan[i].x));
+        dy = static_cast<int16_t>((pt.y - app.state.rgptPlan[i].y));
+        l = static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy));
         if (l < 784) {
             if (l < 25) {
                 iRet |= 8;
@@ -201,7 +201,7 @@ int16_t IValidateWormholePos(APPSESSION &app, THING *lpthWorm) {
 int16_t PctWormholeMoves(THING *lpth) {
     int16_t pct;
 
-    pct = (int16_t)lpth->thw().cLastMove() / 5;
+    pct = static_cast<int16_t>(lpth->thw().cLastMove()) / 5;
     pct -= 2 - lpth->thw().iStable();
     if (pct < 0) {
         pct = 0;
@@ -290,7 +290,7 @@ void DoThingInteractions(APPSESSION &app, int16_t fPostMove) {
                                         continue;
                                     } else {
                                         cTechCur = 0;
-                                        cTech = (int32_t)((wtMin - 5000) / 1200) + 6;
+                                        cTech = static_cast<int32_t>(((wtMin - 5000) / 1200)) + 6;
                                         for (i = 0; i < 6; i++) {
                                             cTechCur += app.state.rgplr[lpfl->iPlayer].rgTech[i];
                                         }
@@ -333,10 +333,10 @@ void DoThingInteractions(APPSESSION &app, int16_t fPostMove) {
                                             rgTech[iLowest]++;
                                             iplrSav = app.state.idPlayer;
                                             app.state.idPlayer = iplr;
-                                            wtNext = CostOfDevelopingItem(app, (char *)rgTech);
+                                            wtNext = CostOfDevelopingItem(app, reinterpret_cast<char *>(rgTech));
                                             app.state.idPlayer = iplrSav;
                                             lSpent = app.state.rgplr[iplr].rgResSpent[iLowest];
-                                            lSpent = (int32_t)(lSpent * 2);
+                                            lSpent = static_cast<int32_t>((lSpent * 2));
                                             if (wtNext > 0) {
                                                 lSpent += wtNext;
                                             }
@@ -382,7 +382,7 @@ void DoThingInteractions(APPSESSION &app, int16_t fPostMove) {
                                             cGive = 1;
                                         }
                                         if (app.state.game.turn > 100 && !app.state.game.fSinglePlr) {
-                                            cGive += RandomIO().pfnRandom(app, (uint32_t)app.state.game.turn / 100 + 1);
+                                            cGive += RandomIO().pfnRandom(app, static_cast<uint32_t>(app.state.game.turn) / 100 + 1);
                                         }
                                         if (cGive > 5) {
                                             cGive = 5;
@@ -419,7 +419,7 @@ void DoThingInteractions(APPSESSION &app, int16_t fPostMove) {
                                         continue;
                                     }
                                 } else {
-                                    idm = static_cast<MessageId>(IdmGiveTraderPart(app, grbitTrader, iplr, (uint16_t *)&iGoto));
+                                    idm = static_cast<MessageId>(IdmGiveTraderPart(app, grbitTrader, iplr, reinterpret_cast<uint16_t *>(&iGoto)));
                                     TurnIO().pfnMessage2(app, lpfl->iplr(), idm, static_cast<MsgGoto>(iGoto), WFromLpfl(app, lpfl), 0);
                                 }
                             }
@@ -431,18 +431,18 @@ void DoThingInteractions(APPSESSION &app, int16_t fPostMove) {
                 for (; lppl < lpplMac; lppl++) {
                     if (lppl->iPlayer != iplrNone && lppl->fStarbase && app.state.rgplr[lppl->iPlayer].fAi && app.state.rgplr[lppl->iPlayer].lvlAi >= lvlAiTough &&
                         !(1 << lppl->iPlayer & lpth->tht().grbitPlr())) {
-                        dx = (int16_t)(app.state.rgptPlan[lppl->id].x - pt.x);
+                        dx = static_cast<int16_t>((app.state.rgptPlan[lppl->id].x - pt.x));
                         if (dx > 100)
                             break;
-                        dy = (int16_t)(app.state.rgptPlan[lppl->id].y - pt.y);
-                        l = (uint32_t)(dx * dx) + (uint32_t)(dy * dy);
+                        dy = static_cast<int16_t>((app.state.rgptPlan[lppl->id].y - pt.y));
+                        l = static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy));
                         if (l <= 10000) {
                             wtNext = 0;
                             for (i = 0; i < 3; i++) {
                                 wtNext += lppl->rgwtMin[i];
                             }
                             iplr = lppl->iPlayer;
-                            wtThreshhold = (uint32_t)(app.state.rgplr[iplr].lvlAi == lvlAiTough ? 3500 : 5000);
+                            wtThreshhold = static_cast<uint32_t>((app.state.rgplr[iplr].lvlAi == lvlAiTough ? 3500 : 5000));
                             if (wtNext >= wtThreshhold) {
                                 if (lpth->tht().grbitTrader() == grbitTraderNone)
                                     goto LAutoTech;

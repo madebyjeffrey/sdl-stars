@@ -34,7 +34,7 @@ uint16_t CbHbHeader(HeapType ht) {
 
 uint16_t CbHeapItem(APPSESSION &app, uint16_t cb, HeapType ht) {
     uint32_t cbAlign = CbHeapAlign(ht);
-    uint32_t cbItem = ((uint32_t)cb + 2 + cbAlign - 1) / cbAlign * cbAlign;
+    uint32_t cbItem = (static_cast<uint32_t>(cb) + 2 + cbAlign - 1) / cbAlign * cbAlign;
 
     if (cbItem > static_cast<uint32_t>(UINT16_MAX - CbHbHeader(ht))) {
         AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMemory, nullptr), win32::MB_ICONHAND);
@@ -88,7 +88,7 @@ HB *LphbReAlloc(APPSESSION &app, HB *lphb) {
     cbGrow = app.state.mphtcbAlloc[lphb->ht];
     if (cbCur >= 0xffdc)
         goto LReAllocOOM;
-    if (cbCur > (uint16_t)(0xffdc - cbGrow)) {
+    if (cbCur > static_cast<uint16_t>((0xffdc - cbGrow))) {
         cbGrow = 0xffdc - cbCur;
     }
     // Keep the stable link slot before realloc invalidates the old address.
@@ -100,7 +100,7 @@ HB *LphbReAlloc(APPSESSION &app, HB *lphb) {
         plphb = &lphbT->lphbNext;
     }
     /* NATIVE: GlobalReAlloc zero-filled the bytes it added. */
-    hmem = realloc(hmem, (size_t)(lphb->cbBlock + cbGrow));
+    hmem = realloc(hmem, static_cast<size_t>((lphb->cbBlock + cbGrow)));
     if (!hmem) {
     LReAllocOOM:
         AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMemory, nullptr), win32::MB_ICONHAND);
@@ -186,7 +186,7 @@ void *LpAlloc(APPSESSION &app, uint16_t cb, HeapType ht) {
             }
             cbItem = lpb - lpbPrev - 2;
             RawStore16(lpbPrev, cbItem | 1);
-            if ((uint16_t)(cbItem + 2) >= cb) {
+            if (static_cast<uint16_t>((cbItem + 2)) >= cb) {
                 RawStore16(lpbPrev, RawLoad16(lpbPrev) & 0xfffe);
                 lpbPrev += 2;
                 lphb->cbFree -= cbItem + 2;
@@ -200,7 +200,7 @@ void *LpAlloc(APPSESSION &app, uint16_t cb, HeapType ht) {
 HB *LphbFromLpHt(APPSESSION &app, void *lp, HeapType ht) {
     HB *lphb;
 
-    if ((int16_t)ht < htOrd || (int16_t)ht >= htCount) {
+    if (static_cast<int16_t>(ht) < htOrd || static_cast<int16_t>(ht) >= htCount) {
         return nullptr;
     }
     for (lphb = app.state.rglphb[ht]; lphb && (reinterpret_cast<uintptr_t>(lp) <= reinterpret_cast<uintptr_t>(lphb->hmem) || reinterpret_cast<uintptr_t>(lp) - reinterpret_cast<uintptr_t>(lphb->hmem) >= lphb->cbBlock); lphb = lphb->lphbNext) {

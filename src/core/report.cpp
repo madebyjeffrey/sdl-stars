@@ -208,7 +208,7 @@ LShowTask:
             }
             for (i = 4; i >= 0; i--) {
                 opOrd = static_cast<XferActionType>(ord.txp.rgia[i].iAction());
-                if (idsAction + static_cast<int>(opOrd) > (int16_t)ids) {
+                if (idsAction + static_cast<int>(opOrd) > static_cast<int16_t>(ids)) {
                     ids = static_cast<StringId>(idsAction + static_cast<int>(opOrd));
                     icr = i;
                 }
@@ -289,7 +289,7 @@ void DumpUniverse(APPSESSION &app) {
             CchSprintf(app.state.szWork, "%s.map", app.state.szBase);
             RecordIO().pfnStreamOpen(app, app.state.szWork, mdCreate);
             fOpen = 1;
-            RgToStream(app, (void *)"#\tX\tY\tName\r\n", 12);
+            RgToStream(app, const_cast<void *>(reinterpret_cast<const void*>("#\tX\tY\tName\r\n")), 12);
             for (i = 0; i < app.state.game.cPlanMax; i++) {
                 cch = CchSprintf(app.state.szWork, "%d\t%d\t%d\t%s\r\n", i + 1, app.state.rgptPlan[i].x, app.state.rgptPlan[i].y, PszGetCompressedPlanet(app, app.state.rgidPlan[i]));
                 RgToStream(app, app.state.szWork, cch);
@@ -387,9 +387,9 @@ void DumpPlanets(APPSESSION &app) {
                 RgToStream(app, szForm, strlen(szForm));
                 szForm[1] = 0;
                 if (lppl->det == detAll) {
-                    strcpy(&szForm[1], PszFromLong(app, (uint32_t)(lppl->rgwtMin[3] * 100), nullptr));
+                    strcpy(&szForm[1], PszFromLong(app, static_cast<uint32_t>((lppl->rgwtMin[3] * 100)), nullptr));
                 } else if (lppl->iPlayer != iplrNone && lppl->det >= detSome) {
-                    l = (uint32_t)(lppl->uPopGuess * 400);
+                    l = static_cast<uint32_t>((lppl->uPopGuess * 400));
                     strcpy(&szForm[1], PszFromLong(app, l, nullptr));
                 }
                 RgToStream(app, szForm, strlen(szForm));
@@ -408,9 +408,9 @@ void DumpPlanets(APPSESSION &app) {
                 RgToStream(app, szForm, strlen(szForm));
                 if (lppl->det == detAll) {
                     CalcPctSurvive(app, lppl, &pct, nullptr);
-                    pct = (float)((double)1.0 - pct);
-                    CchSprintf(&szForm[1], "%ld\t%ld\t%d.%d%%", (int32_t)lppl->cMines, (int32_t)lppl->cFactories, LOWORD((int32_t)((double)pct * 100)),
-                               LOWORD((int32_t)((pct - (double)(int16_t)LOWORD((int32_t)((double)pct * 100)) / 100.0) * 10000)));
+                    pct = static_cast<float>((static_cast<double>(1.0) - pct));
+                    CchSprintf(&szForm[1], "%ld\t%ld\t%d.%d%%", static_cast<int32_t>(lppl->cMines), static_cast<int32_t>(lppl->cFactories), LOWORD(static_cast<int32_t>((static_cast<double>(pct) * 100))),
+                               LOWORD(static_cast<int32_t>(((pct - static_cast<double>(static_cast<int16_t>(LOWORD(static_cast<int32_t>((static_cast<double>(pct) * 100))))) / 100.0) * 10000))));
                 } else {
                     szForm[2] = '\t';
                     szForm[1] = '\t';
@@ -506,7 +506,7 @@ void DumpPlanets(APPSESSION &app) {
                             i = -1;
                         }
                         if (i == -1) {
-                            RgToStream(app, (void *)"\t0\t0", 4);
+                            RgToStream(app, const_cast<void *>(reinterpret_cast<const void*>("\t0\t0")), 4);
                         }
                         if (lppl->fStarbase) {
                             i = lppl->pctDp;

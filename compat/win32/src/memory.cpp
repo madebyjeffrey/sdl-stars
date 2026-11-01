@@ -58,7 +58,7 @@ HGLOBAL win32::GlobalAlloc(UINT flags, SIZE_T cb) {
         win32::SetLastError(win32::ERROR_INVALID_PARAMETER);
         return nullptr;
     }
-    lp = (COMPATMEMORY *)(calloc(1, sizeof(*lp)));
+    lp = static_cast<COMPATMEMORY *>((calloc(1, sizeof(*lp))));
     if (!lp) {
         win32::SetLastError(win32::ERROR_NOT_ENOUGH_MEMORY);
         return nullptr;
@@ -67,7 +67,7 @@ HGLOBAL win32::GlobalAlloc(UINT flags, SIZE_T cb) {
     lp->fMoveable = (flags & win32::GMEM_MOVEABLE) != 0;
     lp->cb = cb;
     if (cb != 0 || !lp->fMoveable) {
-        lp->rgb = (BYTE *)(flags & win32::GMEM_ZEROINIT ? calloc(1, cb ? cb : 1) : malloc(cb ? cb : 1));
+        lp->rgb = static_cast<BYTE *>((flags & win32::GMEM_ZEROINIT ? calloc(1, cb ? cb : 1) : malloc(cb ? cb : 1)));
         if (!lp->rgb) {
             win32::SetLastError(win32::ERROR_NOT_ENOUGH_MEMORY);
             return nullptr;
@@ -75,7 +75,7 @@ HGLOBAL win32::GlobalAlloc(UINT flags, SIZE_T cb) {
     }
     std::unique_lock lockMemory(fMemoryLock);
     // Movable handles are tagged IDs, never pointers into an allocation header.
-    lp->h = lp->fMoveable ? (HANDLE)(idMemory++ * 16 + 3) : (HANDLE)lp->rgb;
+    lp->h = lp->fMoveable ? reinterpret_cast<HANDLE>((idMemory++ * 16 + 3)) : static_cast<HANDLE>(lp->rgb);
     lp->lpNext = lpMemory;
     lpMemory = block.release();
     lockMemory.unlock();
@@ -185,7 +185,7 @@ HGLOBAL win32::GlobalReAlloc(HGLOBAL h, SIZE_T cb, UINT flags) {
     if (flags & win32::GMEM_MODIFY) {
         if (!lp->fMoveable && (flags & win32::GMEM_MOVEABLE)) {
             lp->fMoveable = 1;
-            lp->h = (HANDLE)(idMemory++ * 16 + 3);
+            lp->h = reinterpret_cast<HANDLE>((idMemory++ * 16 + 3));
         }
         hRet = lp->h; goto LReturn;
     }
@@ -200,7 +200,7 @@ HGLOBAL win32::GlobalReAlloc(HGLOBAL h, SIZE_T cb, UINT flags) {
         else win32::SetLastError(win32::ERROR_NOT_ENOUGH_MEMORY);
         goto LReturn;
     }
-    rgb = (BYTE *)(realloc(lp->rgb, cb ? cb : 1));
+    rgb = static_cast<BYTE *>((realloc(lp->rgb, cb ? cb : 1)));
     if (!rgb) { win32::SetLastError(win32::ERROR_NOT_ENOUGH_MEMORY); goto LReturn; }
     if ((flags & win32::GMEM_ZEROINIT) && cb > lp->cb)
         memset(rgb + lp->cb, 0, cb - lp->cb);

@@ -34,7 +34,7 @@ static BOOL FOwnerList(HWND hwnd) { return (hwnd->dwStyle & (hwnd->lpcombo ? win
 static void NotifyList(HWND hwnd, UINT code) {
     HWND lp = LpCompatWindow(hwnd);
     if (lp && lp->hwndParent && (lp->dwStyle & win32::LBS_NOTIFY))
-        win32::SendMessageA(lp->hwndParent, win32::WM_COMMAND, win32::MAKEWPARAM(lp->idChild, code), (LPARAM)hwnd);
+        win32::SendMessageA(lp->hwndParent, win32::WM_COMMAND, win32::MAKEWPARAM(lp->idChild, code), reinterpret_cast<LPARAM>(hwnd));
 }
 static int CListPage(HWND hwnd) {
     RECT rc;
@@ -52,12 +52,12 @@ static void ClampList(HWND hwnd) {
         StarsRestore<BOOL> restoreSync(lp->fScrollSync);
         lp->fScrollSync = 1;
         if (hwnd->dwStyle & win32::LBS_DISABLENOSCROLL) si.fMask |= win32::SIF_DISABLENOSCROLL;
-        si.nMax = StarsMax(0, lp->cItem - 1); si.nPage = (UINT)CListPage(hwnd); si.nPos = lp->iTop;
+        si.nMax = StarsMax(0, lp->cItem - 1); si.nPage = static_cast<UINT>(CListPage(hwnd)); si.nPos = lp->iTop;
         if (lp->fScrollV) win32::SetScrollInfo(hwnd, win32::SB_VERT, &si, 1);
         if (!win32::IsWindow(hwnd)) return;
         win32::GetClientRect(hwnd, &rc);
         if (lp->fScrollH) {
-            si.nMax = StarsMax(0, lp->cxExtent - 1); si.nPage = (UINT)StarsMax(1, rc.right); si.nPos = lp->xOffset;
+            si.nMax = StarsMax(0, lp->cxExtent - 1); si.nPage = static_cast<UINT>(StarsMax(1, rc.right)); si.nPos = lp->xOffset;
             lp->xOffset = win32::SetScrollInfo(hwnd, win32::SB_HORZ, &si, 1);
             if (!win32::IsWindow(hwnd)) return;
         }
@@ -77,9 +77,9 @@ static void RevealList(HWND hwnd, int i) {
 static void DeleteNotice(HWND hwnd, UINT i, LPARAM lData) {
     DELETEITEMSTRUCT ds;
     if (!FOwnerList(hwnd) || !win32::IsWindow(hwnd->hwndParent)) return;
-    memset(&ds, 0, sizeof(ds)); ds.CtlType = hwnd->lpcombo ? win32::ODT_COMBOBOX : win32::ODT_LISTBOX; ds.CtlID = (UINT)hwnd->idChild;
-    ds.itemID = i; ds.hwndItem = hwnd; ds.itemData = (ULONG_PTR)lData;
-    win32::SendMessageA(hwnd->hwndParent, win32::WM_DELETEITEM, (WPARAM)hwnd->idChild, (LPARAM)&ds);
+    memset(&ds, 0, sizeof(ds)); ds.CtlType = hwnd->lpcombo ? win32::ODT_COMBOBOX : win32::ODT_LISTBOX; ds.CtlID = static_cast<UINT>(hwnd->idChild);
+    ds.itemID = i; ds.hwndItem = hwnd; ds.itemData = static_cast<ULONG_PTR>(lData);
+    win32::SendMessageA(hwnd->hwndParent, win32::WM_DELETEITEM, static_cast<WPARAM>(hwnd->idChild), reinterpret_cast<LPARAM>(&ds));
 }
 static void EndListDrag(HWND hwnd, BOOL fRelease);
 static void ResetList(HWND hwnd) {
@@ -96,7 +96,7 @@ static void ResetList(HWND hwnd) {
     lp->iAnchor = -1; lp->szSearch[0] = 0;
     EndListDrag(hwnd, 1);
     win32::InvalidateRect(hwnd, nullptr, 1);
-    for (i = 0; i < c; i++) { SDL_free(rg[i].psz); rg[i].psz = nullptr; DeleteNotice(hwnd, (UINT)i, rg[i].lData); }
+    for (i = 0; i < c; i++) { SDL_free(rg[i].psz); rg[i].psz = nullptr; DeleteNotice(hwnd, static_cast<UINT>(i), rg[i].lData); }
     rgKeep.reset();
     if (win32::IsWindow(hwnd) && !hwnd->fDestroying) ClampList(hwnd);
 }
@@ -111,13 +111,13 @@ static LRESULT AddList(HWND hwnd, int i, LPCSTR psz) {
     if (!pszNew) return win32::LB_ERRSPACE;
     if (lp->cItem == lp->cAlloc) {
         cAlloc = lp->cAlloc > (INT_MAX - 16) / 2 ? INT_MAX : lp->cAlloc * 2 + 16;
-        if ((size_t)cAlloc > SIZE_MAX / sizeof(*rg)) { SDL_free(pszNew); return win32::LB_ERRSPACE; }
-        rg = (COMPATLISTITEM *)(SDL_realloc(lp->rgitem, (size_t)cAlloc * sizeof(*rg)));
+        if (static_cast<size_t>(cAlloc) > SIZE_MAX / sizeof(*rg)) { SDL_free(pszNew); return win32::LB_ERRSPACE; }
+        rg = static_cast<COMPATLISTITEM *>((SDL_realloc(lp->rgitem, static_cast<size_t>(cAlloc) * sizeof(*rg))));
         if (!rg) { SDL_free(pszNew); return win32::LB_ERRSPACE; }
         lp->rgitem = rg; lp->cAlloc = cAlloc;
     }
     if (i < 0 || i > lp->cItem) i = lp->cItem;
-    memmove(lp->rgitem + i + 1, lp->rgitem + i, (size_t)(lp->cItem - i) * sizeof(*lp->rgitem));
+    memmove(lp->rgitem + i + 1, lp->rgitem + i, static_cast<size_t>((lp->cItem - i)) * sizeof(*lp->rgitem));
     lp->rgitem[i] = COMPATLISTITEM{pszNew, 0, 0}; lp->cItem++; lp->nMutation++;
     if (lp->iSel >= i) lp->iSel++;
     if (lp->cItem > 1 && lp->iCaret >= i) lp->iCaret++;
@@ -179,7 +179,7 @@ static void DragList(HWND hwnd, LPARAM l) {
     auto lplistKeep = hwnd->lplist;
     COMPATLIST *lp = lplistKeep.get();
     RECT rc;
-    int y = (int16_t)HIWORD(l), i, j, iFirst, iLast;
+    int y = static_cast<int16_t>(HIWORD(l)), i, j, iFirst, iLast;
     if (lp->cItem == 0 || !win32::GetClientRect(hwnd, &rc)) return;
     if (y < 0) lp->iTop = StarsMax(0, lp->iTop - 1);
     else if (y >= rc.bottom) lp->iTop++;
@@ -201,14 +201,14 @@ static BOOL FDrawOwnerList(HWND hwnd, HDC hdc, int i, UINT action, BOOL fFocus, 
     DRAWITEMSTRUCT ds = {};
     RECT rc;
     BOOL fItem = i >= 0 && i < lp->cItem;
-    ds.CtlType = win32::ODT_LISTBOX; ds.CtlID = (UINT)hwnd->idChild;
-    ds.itemID = (UINT)i; ds.itemAction = action;
+    ds.CtlType = win32::ODT_LISTBOX; ds.CtlID = static_cast<UINT>(hwnd->idChild);
+    ds.itemID = static_cast<UINT>(i); ds.itemAction = action;
     ds.itemState = (fItem && (FMulti(hwnd) ? lp->rgitem[i].fSelected : i == lp->iSel) ? win32::ODS_SELECTED : 0) |
                    (fFocus ? win32::ODS_FOCUS : 0) | (win32::IsWindowEnabled(hwnd) ? 0 : win32::ODS_DISABLED);
     ds.hwndItem = hwnd; ds.hDC = hdc; ds.rcItem = *lprcItem;
-    ds.itemData = fItem ? (ULONG_PTR)lp->rgitem[i].lData : 0;
+    ds.itemData = fItem ? static_cast<ULONG_PTR>(lp->rgitem[i].lData) : 0;
     win32::GetClientRect(hwnd, &rc); win32::IntersectClipRect(hdc, rc.left, rc.top, rc.right, rc.bottom);
-    win32::SendMessageA(hwnd->hwndParent, win32::WM_DRAWITEM, (WPARAM)hwnd->idChild, (LPARAM)&ds);
+    win32::SendMessageA(hwnd->hwndParent, win32::WM_DRAWITEM, static_cast<WPARAM>(hwnd->idChild), reinterpret_cast<LPARAM>(&ds));
     win32::SelectClipRgn(hdc, nullptr);
     return win32::IsWindow(hwnd);
 }
@@ -229,10 +229,10 @@ static void DrawListSelection(HWND hwnd, int iOld) {
     for (j = 0; j < 2; j++) {
         i = rgi[j];
         if (i < 0 || i >= lp->cItem) continue;
-        y = (int64_t)(i - lp->iTop) * lp->cyItem;
+        y = static_cast<int64_t>((i - lp->iTop)) * lp->cyItem;
         if (y >= rc.bottom || y + lp->cyItem <= 0) continue;
-        win32::SetRect(&rcItem, -lp->xOffset, (int)y, StarsMax(rc.right, lp->cxExtent) - lp->xOffset,
-                (int)StarsMin(y + lp->cyItem, INT_MAX));
+        win32::SetRect(&rcItem, -lp->xOffset, static_cast<int>(y), StarsMax(rc.right, lp->cxExtent) - lp->xOffset,
+                static_cast<int>(StarsMin(y + lp->cyItem, INT_MAX)));
         if (!FDrawOwnerList(hwnd, hdc, i, win32::ODA_SELECT, win32::GetFocus() == hwnd && i == lp->iCaret, &rcItem)) break;
         // The owner may replace the items or select another row during drawing.
         if (lp->nMutation != n || lp->iSel != rgi[1]) { win32::InvalidateRect(hwnd, nullptr, 1); break; }
@@ -245,14 +245,14 @@ static void DrawListFocus(HWND hwnd, BOOL fFocus) {
     HDC hdc;
     RECT rc, rcItem;
     int i = lp->cItem != 0 ? lp->iCaret : -1;
-    int64_t y = i >= 0 ? (int64_t)(i - lp->iTop) * lp->cyItem : 0;
+    int64_t y = i >= 0 ? static_cast<int64_t>((i - lp->iTop)) * lp->cyItem : 0;
     if (!FOwnerList(hwnd) || hwnd->lpcombo || !win32::IsWindowVisible(hwnd) || !win32::GetClientRect(hwnd, &rc) ||
         y >= rc.bottom || y + lp->cyItem <= 0) return;
     hdc = win32::GetDC(hwnd); if (!hdc) return;
     if (hwnd->hfontControl) win32::SelectObject(hdc, hwnd->hfontControl);
     win32::SetBkMode(hdc, win32::TRANSPARENT); win32::SetTextColor(hdc, win32::GetSysColor(win32::COLOR_WINDOWTEXT));
     win32::SetBkColor(hdc, win32::GetSysColor(win32::COLOR_WINDOW));
-    win32::SetRect(&rcItem, -lp->xOffset, (int)y, StarsMax(rc.right, lp->cxExtent) - lp->xOffset, (int)StarsMin(y + lp->cyItem, INT_MAX));
+    win32::SetRect(&rcItem, -lp->xOffset, static_cast<int>(y), StarsMax(rc.right, lp->cxExtent) - lp->xOffset, static_cast<int>(StarsMin(y + lp->cyItem, INT_MAX)));
     FDrawOwnerList(hwnd, hdc, i, win32::ODA_FOCUS, fFocus, &rcItem);
     win32::ReleaseDC(hwnd, hdc);
 }
@@ -269,10 +269,10 @@ static void PaintList(HWND hwnd) {
     BOOL fSel, fFocus = win32::GetFocus() == hwnd;
     if (!hdc) return;
     win32::GetClientRect(hwnd, &rc);
-    if (hwnd->hfontControl) hfontOld = (HFONT)win32::SelectObject(hdc, hwnd->hfontControl);
+    if (hwnd->hfontControl) hfontOld = static_cast<HFONT>(win32::SelectObject(hdc, hwnd->hfontControl));
     win32::SetBkMode(hdc, win32::TRANSPARENT); win32::SetTextColor(hdc, win32::GetSysColor(win32::COLOR_WINDOWTEXT));
     win32::SetBkColor(hdc, win32::GetSysColor(win32::COLOR_WINDOW));
-    hbr = (HBRUSH)win32::SendMessageA(hwnd->hwndParent, win32::WM_CTLCOLORLISTBOX, (WPARAM)hdc, (LPARAM)hwnd);
+    hbr = reinterpret_cast<HBRUSH>(win32::SendMessageA(hwnd->hwndParent, win32::WM_CTLCOLORLISTBOX, reinterpret_cast<WPARAM>(hdc), reinterpret_cast<LPARAM>(hwnd)));
     if (!win32::IsWindow(hwnd)) return;
     if (!hbr) hbr = hbrOwn = win32::CreateSolidBrush(win32::GetBkColor(hdc));
     win32::FillRect(hdc, &rc, hbr);
@@ -302,7 +302,7 @@ static void PaintList(HWND hwnd) {
             win32::SetTextColor(hdc, win32::GetSysColor(fSel ? win32::COLOR_HIGHLIGHTTEXT : win32::IsWindowEnabled(hwnd) ? win32::COLOR_WINDOWTEXT : win32::COLOR_GRAYTEXT));
             rcItem.left += 2;
             win32::DrawTextA(hdc, lp->rgitem[i].psz, -1, &rcItem, win32::DT_LEFT | win32::DT_SINGLELINE | win32::DT_VCENTER | win32::DT_NOPREFIX);
-            if (fFocus && i == lp->iCaret) win32::FrameRect(hdc, &rcItem, (HBRUSH)win32::GetStockObject(win32::GRAY_BRUSH));
+            if (fFocus && i == lp->iCaret) win32::FrameRect(hdc, &rcItem, static_cast<HBRUSH>(win32::GetStockObject(win32::GRAY_BRUSH)));
         }
     }
     if ((hwnd->dwStyle & win32::WS_BORDER) || (hwnd->dwExStyle & win32::WS_EX_CLIENTEDGE)) CompatDrawClassicEdge(hdc, &rc, 1, 1);
@@ -319,7 +319,7 @@ LRESULT  CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     TEXTMETRICA tm;
     MEASUREITEMSTRUCT ms;
     RECT rc;
-    int i = (int)w, j, c, iNext, cyBar, cy;
+    int i = static_cast<int>(w), j, c, iNext, cyBar, cy;
     WINDOWPOS *lpwp;
     int64_t yItem;
     LPARAM lData;
@@ -342,10 +342,10 @@ LRESULT  CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         hdc = win32::GetDC(hwnd);
         if (hdc) { if (win32::GetTextMetricsA(hdc, &tm)) lp->cyItem = StarsMax(1, tm.tmHeight); win32::ReleaseDC(hwnd, hdc); }
         if (lpwin->dwStyle & win32::LBS_OWNERDRAWFIXED) {
-            memset(&ms, 0, sizeof(ms)); ms.CtlType = win32::ODT_LISTBOX; ms.CtlID = (UINT)lpwin->idChild; ms.itemHeight = (UINT)lp->cyItem;
-            win32::SendMessageA(lpwin->hwndParent, win32::WM_MEASUREITEM, (WPARAM)lpwin->idChild, (LPARAM)&ms);
+            memset(&ms, 0, sizeof(ms)); ms.CtlType = win32::ODT_LISTBOX; ms.CtlID = static_cast<UINT>(lpwin->idChild); ms.itemHeight = static_cast<UINT>(lp->cyItem);
+            win32::SendMessageA(lpwin->hwndParent, win32::WM_MEASUREITEM, static_cast<WPARAM>(lpwin->idChild), reinterpret_cast<LPARAM>(&ms));
             if (!win32::IsWindow(hwnd)) return -1;
-            if (ms.itemHeight != 0 && ms.itemHeight <= INT_MAX) lp->cyItem = (int)ms.itemHeight;
+            if (ms.itemHeight != 0 && ms.itemHeight <= INT_MAX) lp->cyItem = static_cast<int>(ms.itemHeight);
         }
         if (!(lpwin->dwStyle & win32::LBS_NOINTEGRALHEIGHT) && lpwin->hwndParent && !lpwin->lpcombo) {
             cyBar = lpwin->dwStyle & win32::WS_HSCROLL ? win32::GetSystemMetrics(win32::SM_CYHSCROLL) : 0;
@@ -355,7 +355,7 @@ LRESULT  CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         return 0;
     case win32::WM_WINDOWPOSCHANGING:
         if (l && !(lpwin->dwStyle & win32::LBS_NOINTEGRALHEIGHT) && !lpwin->lpcombo) {
-            lpwp = (WINDOWPOS *)l;
+            lpwp = reinterpret_cast<WINDOWPOS *>(l);
             cyBar = lpwin->dwStyle & win32::WS_HSCROLL ? win32::GetSystemMetrics(win32::SM_CYHSCROLL) : 0;
             if (!(lpwp->flags & win32::SWP_NOSIZE) && lpwp->cy > cyBar)
                 lpwp->cy = cyBar + (lpwp->cy - cyBar) / lp->cyItem * lp->cyItem;
@@ -366,24 +366,24 @@ LRESULT  CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         CompatDestroyList(hwnd); return 0;
     case win32::LB_ADDSTRING:
         i = lp->cItem;
-        if (l && (lpwin->dwStyle & (lpwin->lpcombo ? win32::CBS_SORT : win32::LBS_SORT))) for (i = 0; i < lp->cItem; i++) if (SDL_strcasecmp((LPCSTR)l, lp->rgitem[i].psz) < 0) break;
-        return AddList(hwnd, i, (LPCSTR)l);
-    case win32::LB_INSERTSTRING: return AddList(hwnd, i, (LPCSTR)l);
+        if (l && (lpwin->dwStyle & (lpwin->lpcombo ? win32::CBS_SORT : win32::LBS_SORT))) for (i = 0; i < lp->cItem; i++) if (SDL_strcasecmp(reinterpret_cast<LPCSTR>(l), lp->rgitem[i].psz) < 0) break;
+        return AddList(hwnd, i, reinterpret_cast<LPCSTR>(l));
+    case win32::LB_INSERTSTRING: return AddList(hwnd, i, reinterpret_cast<LPCSTR>(l));
     case win32::LB_DELETESTRING:
         if (i < 0 || i >= lp->cItem) return win32::LB_ERR;
         lData = lp->rgitem[i].lData; SDL_free(lp->rgitem[i].psz);
-        memmove(lp->rgitem + i, lp->rgitem + i + 1, (size_t)(lp->cItem - i - 1) * sizeof(*lp->rgitem));
+        memmove(lp->rgitem + i, lp->rgitem + i + 1, static_cast<size_t>((lp->cItem - i - 1)) * sizeof(*lp->rgitem));
         lp->cItem--; lp->nMutation++;
         if (lp->iSel == i) lp->iSel = -1; else if (lp->iSel > i) lp->iSel--;
         if (lp->iAnchor == i) lp->iAnchor = -1; else if (lp->iAnchor > i) lp->iAnchor--;
         if (lp->iCaret > i) lp->iCaret--;
-        ClampList(hwnd); c = lp->cItem; DeleteNotice(hwnd, (UINT)i, lData); return c;
+        ClampList(hwnd); c = lp->cItem; DeleteNotice(hwnd, static_cast<UINT>(i), lData); return c;
     case win32::LB_RESETCONTENT: ResetList(hwnd); return 0;
     case win32::LB_GETCOUNT: return lp->cItem;
-    case win32::LB_GETTEXTLEN: return i >= 0 && i < lp->cItem ? (LRESULT)strlen(lp->rgitem[i].psz) : win32::LB_ERR;
+    case win32::LB_GETTEXTLEN: return i >= 0 && i < lp->cItem ? static_cast<LRESULT>(strlen(lp->rgitem[i].psz)) : win32::LB_ERR;
     case win32::LB_GETTEXT:
         if (i < 0 || i >= lp->cItem || !l) return win32::LB_ERR;
-        strcpy((LPSTR)l, lp->rgitem[i].psz); return (LRESULT)strlen(lp->rgitem[i].psz);
+        strcpy(reinterpret_cast<LPSTR>(l), lp->rgitem[i].psz); return static_cast<LRESULT>(strlen(lp->rgitem[i].psz));
     case win32::LB_GETITEMDATA: return i >= 0 && i < lp->cItem ? lp->rgitem[i].lData : win32::LB_ERR;
     case win32::LB_SETITEMDATA:
         if (i < -1 || i >= lp->cItem) return win32::LB_ERR;
@@ -410,23 +410,23 @@ LRESULT  CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         return c;
     case win32::LB_GETSELITEMS:
         if (!FMulti(hwnd) || !l || i < 0) return win32::LB_ERR;
-        for (j = c = 0; j < lp->cItem && c < i; j++) if (lp->rgitem[j].fSelected) ((int *)l)[c++] = j;
+        for (j = c = 0; j < lp->cItem && c < i; j++) if (lp->rgitem[j].fSelected) (reinterpret_cast<int *>(l))[c++] = j;
         return c;
     case win32::LB_SETTOPINDEX: lp->iTop = i; ClampList(hwnd); return 0;
     case win32::LB_GETTOPINDEX: return lp->iTop;
     case win32::LB_GETHORIZONTALEXTENT: return lp->cxExtent;
     case win32::LB_SETHORIZONTALEXTENT:
-        lp->cxExtent = (((0) > ((int)w)) ? (0) : ((int)w)); ClampList(hwnd); return 0;
+        lp->cxExtent = (((0) > (static_cast<int>(w))) ? (0) : (static_cast<int>(w))); ClampList(hwnd); return 0;
     case win32::LB_GETITEMHEIGHT: return lp->cyItem;
     case win32::LB_SETITEMHEIGHT:
         if (l <= 0 || l > 255) return win32::LB_ERR;
-        lp->cyItem = (int)l; ClampList(hwnd); return 0;
+        lp->cyItem = static_cast<int>(l); ClampList(hwnd); return 0;
     case win32::LB_GETITEMRECT:
         if (i < 0 || i >= lp->cItem || !l) return win32::LB_ERR;
         win32::GetClientRect(hwnd, &rc);
-        yItem = (int64_t)(i - lp->iTop) * lp->cyItem;
+        yItem = static_cast<int64_t>((i - lp->iTop)) * lp->cyItem;
         if (yItem < INT_MIN || yItem + lp->cyItem > INT_MAX) return win32::LB_ERR;
-        win32::SetRect((LPRECT)l, 0, (int)yItem, rc.right, (int)(yItem + lp->cyItem)); return 1;
+        win32::SetRect(reinterpret_cast<LPRECT>(l), 0, static_cast<int>(yItem), rc.right, static_cast<int>((yItem + lp->cyItem))); return 1;
     case win32::LB_SETCARETINDEX:
         if (i < 0 || i >= lp->cItem) return win32::LB_ERR;
         lp->iCaret = i; RevealList(hwnd, i); return 0;
@@ -435,15 +435,15 @@ LRESULT  CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         if (!l || lp->cItem == 0) return win32::LB_ERR;
         if (i < -1 || i >= lp->cItem) i = -1;
         for (j = 1; j <= lp->cItem; j++) {
-            iNext = (int)(((int64_t)i + j) % lp->cItem);
-            if ((msg == win32::LB_FINDSTRINGEXACT ? SDL_strcasecmp(lp->rgitem[iNext].psz, (LPCSTR)l) :
-                 SDL_strncasecmp(lp->rgitem[iNext].psz, (LPCSTR)l, strlen((LPCSTR)l))) == 0) return iNext;
+            iNext = static_cast<int>(((static_cast<int64_t>(i) + j) % lp->cItem));
+            if ((msg == win32::LB_FINDSTRINGEXACT ? SDL_strcasecmp(lp->rgitem[iNext].psz, reinterpret_cast<LPCSTR>(l)) :
+                 SDL_strncasecmp(lp->rgitem[iNext].psz, reinterpret_cast<LPCSTR>(l), strlen(reinterpret_cast<LPCSTR>(l)))) == 0) return iNext;
         }
         return win32::LB_ERR;
     case win32::WM_GETDLGCODE: return win32::DLGC_WANTARROWS | win32::DLGC_WANTCHARS;
-    case win32::WM_GETFONT: return (LRESULT)lpwin->hfontControl;
+    case win32::WM_GETFONT: return reinterpret_cast<LRESULT>(lpwin->hfontControl);
     case win32::WM_SETFONT:
-        lpwin->hfontControl = (HFONT)w;
+        lpwin->hfontControl = reinterpret_cast<HFONT>(w);
         if (!FOwnerList(hwnd) && (hdc = win32::GetDC(hwnd))) {
             if (lpwin->hfontControl) win32::SelectObject(hdc, lpwin->hfontControl);
             if (win32::GetTextMetricsA(hdc, &tm)) lp->cyItem = StarsMax(1, tm.tmHeight);
@@ -461,14 +461,14 @@ LRESULT  CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         return 0;
     case win32::WM_LBUTTONDOWN: case win32::WM_LBUTTONDBLCLK:
         win32::SetFocus(hwnd); if (!win32::IsWindow(hwnd)) return 0;
-        i = lp->iTop + (int16_t)HIWORD(l) / lp->cyItem;
-        if ((int16_t)HIWORD(l) < 0) return 0;
+        i = lp->iTop + static_cast<int16_t>(HIWORD(l)) / lp->cyItem;
+        if (static_cast<int16_t>(HIWORD(l)) < 0) return 0;
         SDL_free(lp->rgSelectedDrag); lp->rgSelectedDrag = nullptr; lp->cSelectedDrag = 0;
         if ((lpwin->dwStyle & win32::LBS_EXTENDEDSEL) && (w & win32::MK_CONTROL) && lp->cItem != 0) {
-            lp->rgSelectedDrag = (BYTE *)(SDL_malloc((size_t)lp->cItem));
+            lp->rgSelectedDrag = static_cast<BYTE *>((SDL_malloc(static_cast<size_t>(lp->cItem))));
             if (lp->rgSelectedDrag) {
                 lp->cSelectedDrag = lp->cItem;
-                for (j = 0; j < lp->cItem; j++) lp->rgSelectedDrag[j] = (BYTE)lp->rgitem[j].fSelected;
+                for (j = 0; j < lp->cItem; j++) lp->rgSelectedDrag[j] = static_cast<BYTE>(lp->rgitem[j].fSelected);
             }
         }
         ExtendedSelectList(hwnd, i, (w & win32::MK_CONTROL) != 0, (w & win32::MK_SHIFT) != 0, 0);
@@ -477,7 +477,7 @@ LRESULT  CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         else {
             win32::SetCapture(hwnd);
             if (win32::IsWindow(hwnd) && win32::GetCapture() == hwnd) {
-                lpwin->fTracking = 1; lp->iDrag = i; lp->grfDrag = (DWORD)w; lp->lDragPoint = l;
+                lpwin->fTracking = 1; lp->iDrag = i; lp->grfDrag = static_cast<DWORD>(w); lp->lDragPoint = l;
                 lp->idDragTimer = win32::SetTimer(hwnd, UINTPTR_MAX, 100, nullptr);
             }
         }
@@ -516,11 +516,11 @@ LRESULT  CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         return 0;
     case win32::WM_CHAR:
         if (w < 32 || w > 255 || lp->cItem == 0) return 0;
-        c = (int)strlen(lp->szSearch);
-        if (CompatTimeIO().pfnGetTicks() - lp->msSearch > 1000 || c >= (int)sizeof(lp->szSearch) - 1 ||
-            (c == 1 && (BYTE)lp->szSearch[0] == (BYTE)w)) c = 0;
-        lp->szSearch[c] = (char)w; lp->szSearch[c + 1] = 0; lp->msSearch = CompatTimeIO().pfnGetTicks();
-        i = (int)CompatListProc(hwnd, win32::LB_FINDSTRING, c != 0 ? lp->iCaret - 1 : lp->iCaret, (LPARAM)lp->szSearch);
+        c = static_cast<int>(strlen(lp->szSearch));
+        if (CompatTimeIO().pfnGetTicks() - lp->msSearch > 1000 || c >= static_cast<int>(sizeof(lp->szSearch)) - 1 ||
+            (c == 1 && static_cast<BYTE>(lp->szSearch[0]) == static_cast<BYTE>(w))) c = 0;
+        lp->szSearch[c] = static_cast<char>(w); lp->szSearch[c + 1] = 0; lp->msSearch = CompatTimeIO().pfnGetTicks();
+        i = static_cast<int>(CompatListProc(hwnd, win32::LB_FINDSTRING, c != 0 ? lp->iCaret - 1 : lp->iCaret, reinterpret_cast<LPARAM>(lp->szSearch)));
         if (i != win32::LB_ERR) ExtendedSelectList(hwnd, i, 0, 0, 1);
         return 0;
     case win32::WM_HSCROLL:
@@ -552,7 +552,7 @@ LRESULT  CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         }
         ClampList(hwnd); return 0;
     case win32::WM_MOUSEWHEEL:
-        lp->iTop = (int)((((int64_t)INT_MAX) < (((((int64_t)0) > ((int64_t)lp->iTop - (int16_t)HIWORD(w) / win32::WHEEL_DELTA * 3)) ? ((int64_t)0) : ((int64_t)lp->iTop - (int16_t)HIWORD(w) / win32::WHEEL_DELTA * 3)))) ? ((int64_t)INT_MAX) : (((((int64_t)0) > ((int64_t)lp->iTop - (int16_t)HIWORD(w) / win32::WHEEL_DELTA * 3)) ? ((int64_t)0) : ((int64_t)lp->iTop - (int16_t)HIWORD(w) / win32::WHEEL_DELTA * 3))));
+        lp->iTop = static_cast<int>((((static_cast<int64_t>(INT_MAX)) < ((((static_cast<int64_t>(0)) > (static_cast<int64_t>(lp->iTop) - static_cast<int16_t>(HIWORD(w)) / win32::WHEEL_DELTA * 3)) ? (static_cast<int64_t>(0)) : (static_cast<int64_t>(lp->iTop) - static_cast<int16_t>(HIWORD(w)) / win32::WHEEL_DELTA * 3)))) ? (static_cast<int64_t>(INT_MAX)) : ((((static_cast<int64_t>(0)) > (static_cast<int64_t>(lp->iTop) - static_cast<int16_t>(HIWORD(w)) / win32::WHEEL_DELTA * 3)) ? (static_cast<int64_t>(0)) : (static_cast<int64_t>(lp->iTop) - static_cast<int16_t>(HIWORD(w)) / win32::WHEEL_DELTA * 3)))));
         ClampList(hwnd); return 0;
     default: return win32::DefWindowProcA(hwnd, msg, w, l);
     }

@@ -23,7 +23,7 @@
 #include <unistd.h>
 
 int win32::MulDiv(int nNumber, int nNumerator, int nDenominator) {
-    int64_t lProduct = (int64_t)nNumber * nNumerator;
+    int64_t lProduct = static_cast<int64_t>(nNumber) * nNumerator;
     int64_t lDenominator = nDenominator, lResult;
     BOOL fNegative;
 
@@ -35,7 +35,7 @@ int win32::MulDiv(int nNumber, int nNumerator, int nDenominator) {
     lResult = (lProduct + lDenominator / 2) / lDenominator;
     if (fNegative) lResult = -lResult;
     // The SDK rejects an INT_MIN result as overflow as well as larger magnitudes.
-    return lResult <= INT32_MIN || lResult > INT32_MAX ? -1 : (int)lResult;
+    return lResult <= INT32_MIN || lResult > INT32_MAX ? -1 : static_cast<int>(lResult);
 }
 
 DWORD win32::GetCurrentThreadId(void) {
@@ -43,7 +43,7 @@ DWORD win32::GetCurrentThreadId(void) {
     return (DWORD)SDL_GetCurrentThreadID();
 #elif defined(__APPLE__)
     uint64_t id;
-    return pthread_threadid_np(nullptr, &id) == 0 ? (DWORD)id : 0;
+    return pthread_threadid_np(nullptr, &id) == 0 ? static_cast<DWORD>(id) : 0;
 #else
     return (DWORD)syscall(SYS_gettid);
 #endif
@@ -54,7 +54,7 @@ LPSTR win32::lstrcpyA(LPSTR pszDest, LPCSTR pszSource) {
     if (!pszDest || !pszSource) return nullptr;
     return strcpy(pszDest, pszSource);
 }
-int win32::lstrlenA(LPCSTR psz) { return psz ? (int)strlen(psz) : 0; }
+int win32::lstrlenA(LPCSTR psz) { return psz ? static_cast<int>(strlen(psz)) : 0; }
 int win32::lstrcmpiA(LPCSTR psz1, LPCSTR psz2) { return strcasecmp(psz1, psz2); }
 
 int win32::wsprintfA(LPSTR pszDest, LPCSTR pszFormat, ...) {
@@ -76,14 +76,14 @@ int win32::wsprintfA(LPSTR pszDest, LPCSTR pszFormat, ...) {
         }
         pszStart = psz;
         while (*psz == '-' || *psz == '#' || *psz == '0') psz++;
-        while (isdigit((unsigned char)*psz)) psz++;
+        while (isdigit(static_cast<unsigned char>(*psz))) psz++;
         if (*psz == '.') {
             psz++;
-            while (isdigit((unsigned char)*psz)) psz++;
+            while (isdigit(static_cast<unsigned char>(*psz))) psz++;
         }
-        if (cch + (size_t)(psz - pszStart) + 2 >= sizeof(szFormat)) goto LInvalid;
-        memcpy(szFormat + cch, pszStart, (size_t)(psz - pszStart));
-        cch += (size_t)(psz - pszStart);
+        if (cch + static_cast<size_t>((psz - pszStart)) + 2 >= sizeof(szFormat)) goto LInvalid;
+        memcpy(szFormat + cch, pszStart, static_cast<size_t>((psz - pszStart)));
+        cch += static_cast<size_t>((psz - pszStart));
         chLength = 0;
         if (*psz == 'h' || *psz == 'l') chLength = *psz++;
         chType = *psz;
@@ -100,7 +100,7 @@ int win32::wsprintfA(LPSTR pszDest, LPCSTR pszFormat, ...) {
     va_end(args);
     if (cchResult < 0) { pszDest[0] = 0; return 0; }
     if (cchResult > 1023) {
-        cchResult = (int)CchUtf8Prefix(pszDest, 1023);
+        cchResult = static_cast<int>(CchUtf8Prefix(pszDest, 1023));
         pszDest[cchResult] = 0;
     }
     return cchResult;
@@ -115,7 +115,7 @@ int _access(const char *pszPath, int mdAccess) { return IAccessNativePath(pszPat
 int _mkdir(const char *pszPath) { return ICreateNativeDirectory(pszPath, 0777); }
 char *_getcwd(char *pszPath, int cchPath) {
     if (cchPath <= 0) { errno = EINVAL; return nullptr; }
-    return PszNativeCwd(pszPath, (size_t)cchPath);
+    return PszNativeCwd(pszPath, static_cast<size_t>(cchPath));
 }
 int _stricmp(const char *psz1, const char *psz2) { return strcasecmp(psz1, psz2); }
 int _strnicmp(const char *psz1, const char *psz2, size_t cb) { return strncasecmp(psz1, psz2, cb); }
@@ -145,12 +145,12 @@ char *_strtime(char *szTime) { return SzTime(szTime, "%H:%M:%S"); }
 
 char *itoa(int n, char *sz, int radix) {
     char rgch[33];
-    unsigned int u = (unsigned int)n;
+    unsigned int u = static_cast<unsigned int>(n);
     int cch = 0, i = 0;
 
     if (!sz || radix < 2 || radix > 36) { errno = EINVAL; return nullptr; }
     if (n < 0 && radix == 10) { sz[i++] = '-'; u = 0u - u; }
-    do { rgch[cch++] = "0123456789abcdefghijklmnopqrstuvwxyz"[u % (unsigned)radix]; u /= (unsigned)radix; } while (u);
+    do { rgch[cch++] = "0123456789abcdefghijklmnopqrstuvwxyz"[u % static_cast<unsigned>(radix)]; u /= static_cast<unsigned>(radix); } while (u);
     while (cch != 0) sz[i++] = rgch[--cch];
     sz[i] = 0;
     return sz;

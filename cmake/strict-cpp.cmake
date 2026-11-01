@@ -19,6 +19,7 @@ function(stars_apply_strict_cpp_directory directory)
                 if(NOT applied)
                     set_property(SOURCE "${absolute}" TARGET_DIRECTORY "${target}" APPEND PROPERTY COMPILE_OPTIONS
                         "$<$<COMPILE_LANGUAGE:CXX,OBJCXX>:-Wpedantic>"
+                        "$<$<COMPILE_LANGUAGE:CXX,OBJCXX>:-Wold-style-cast>"
                         "$<$<COMPILE_LANGUAGE:CXX,OBJCXX>:-Werror>")
                     set_source_files_properties("${absolute}" TARGET_DIRECTORY "${target}" PROPERTIES STARS_STRICT_CPP TRUE)
                 endif()

@@ -28,7 +28,7 @@ static wchar_t *LpwszChooserText(const char *psz, UINT cp) {
 
     cch = MultiByteToWideChar(cp, cp == CP_UTF8 ? MB_ERR_INVALID_CHARS : 0, psz, -1, nullptr, 0);
     if (cch == 0) return nullptr;
-    pwsz = (wchar_t *)malloc((size_t)cch * sizeof(*pwsz));
+    pwsz = static_cast<wchar_t *>(malloc(static_cast<size_t>(cch) * sizeof(*pwsz)));
     if (pwsz) MultiByteToWideChar(cp, cp == CP_UTF8 ? MB_ERR_INVALID_CHARS : 0, psz, -1, pwsz, cch);
     return pwsz;
 }
@@ -38,11 +38,11 @@ static UINT_PTR CALLBACK ChooserHook(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
 
     try {
     if (msg == WM_INITDIALOG) {
-        lp = (WINDOWSCHOOSER *)((OPENFILENAMEW *)l)->lCustData;
-        SetWindowLongPtrW(hwnd, GWLP_USERDATA, (LONG_PTR)lp);
+        lp = reinterpret_cast<WINDOWSCHOOSER *>(reinterpret_cast<OPENFILENAMEW *>(l)->lCustData);
+        SetWindowLongPtrW(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(lp));
         SetTimer(hwnd, 1, 20, nullptr);
     } else if (msg == WM_TIMER && w == 1) {
-        lp = (WINDOWSCHOOSER *)GetWindowLongPtrW(hwnd, GWLP_USERDATA);
+        lp = reinterpret_cast<WINDOWSCHOOSER *>(GetWindowLongPtrW(hwnd, GWLP_USERDATA));
         if (lp && !lp->pfnPump(lp->lpv)) {
             lp->fStopped = 1;
             PostMessageW(GetParent(hwnd), WM_COMMAND, IDCANCEL, 0);
@@ -72,9 +72,9 @@ int IChooseWindowsFile(void *lpWindow, int fSave, const char *pszTitle, const ch
     pwszTitle = LpwszChooserText(pszTitle, CP_UTF8);
     pwszFolder = LpwszChooserText(pszFolder, CP_UTF8);
     pwszName = LpwszChooserText(pszName, CP_UTF8);
-    pwszFile = (wchar_t *)calloc(32768, sizeof(*pwszFile));
+    pwszFile = static_cast<wchar_t *>(calloc(32768, sizeof(*pwszFile)));
     cchCwd = GetCurrentDirectoryW(0, nullptr);
-    pwszCwd = cchCwd != 0 ? (wchar_t *)malloc((size_t)cchCwd * sizeof(*pwszCwd)) : nullptr;
+    pwszCwd = cchCwd != 0 ? static_cast<wchar_t *>(malloc(static_cast<size_t>(cchCwd) * sizeof(*pwszCwd))) : nullptr;
     if (!pwszTitle || !pwszFolder || !pwszName || !pwszFile || !pwszCwd ||
         !GetCurrentDirectoryW(cchCwd, pwszCwd) || wcslen(pwszName) >= 32768) goto done;
     wcscpy(pwszFile, pwszName);
@@ -84,7 +84,7 @@ int IChooseWindowsFile(void *lpWindow, int fSave, const char *pszTitle, const ch
         if (!pwszLabel || !pwszPattern) { free(pwszLabel); free(pwszPattern); goto done; }
         cchLabel = wcslen(pwszLabel) + 1; cchPattern = wcslen(pwszPattern) + 1;
         {
-            wchar_t *pwszNew = (wchar_t *)realloc(pwszFilter, (cchFilter + cchLabel + cchPattern) * sizeof(*pwszFilter));
+            wchar_t *pwszNew = static_cast<wchar_t *>(realloc(pwszFilter, (cchFilter + cchLabel + cchPattern) * sizeof(*pwszFilter)));
             if (!pwszNew) { free(pwszLabel); free(pwszPattern); goto done; }
             pwszFilter = pwszNew;
         }
@@ -94,15 +94,15 @@ int IChooseWindowsFile(void *lpWindow, int fSave, const char *pszTitle, const ch
         pwszFilter[cchFilter - 1] = 0;
         free(pwszLabel); free(pwszPattern);
     }
-    of.lStructSize = sizeof(of); of.hwndOwner = (HWND)lpWindow;
+    of.lStructSize = sizeof(of); of.hwndOwner = static_cast<HWND>(lpWindow);
     of.lpstrTitle = pwszTitle; of.lpstrInitialDir = pwszFolder;
-    of.lpstrFilter = pwszFilter; of.nFilterIndex = (DWORD)*lpiFilter + 1;
+    of.lpstrFilter = pwszFilter; of.nFilterIndex = static_cast<DWORD>(*lpiFilter) + 1;
     of.lpstrFile = pwszFile; of.nMaxFile = 32768;
     /* Stars validates extensions, existence and overwrite after selection. */
     of.Flags = OFN_EXPLORER | OFN_HIDEREADONLY | OFN_NOCHANGEDIR | OFN_NOTESTFILECREATE;
     if (pfnPump) {
         of.Flags |= OFN_ENABLEHOOK;
-        of.lpfnHook = ChooserHook; of.lCustData = (LPARAM)&chooser;
+        of.lpfnHook = ChooserHook; of.lCustData = reinterpret_cast<LPARAM>(&chooser);
     }
     fSelected = fSave ? GetSaveFileNameW(&of) : GetOpenFileNameW(&of);
     dwError = fSelected ? 0 : CommDlgExtendedError();
@@ -110,10 +110,10 @@ int IChooseWindowsFile(void *lpWindow, int fSave, const char *pszTitle, const ch
     if (!SetCurrentDirectoryW(pwszCwd)) goto done;
     if (chooser.fStopped || !fSelected) { iResult = dwError == 0 ? 0 : -1; goto done; }
     cb = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, pwszFile, -1, nullptr, 0, nullptr, nullptr);
-    if (cb == 0 || (size_t)cb > cbPath) goto done;
+    if (cb == 0 || static_cast<size_t>(cb) > cbPath) goto done;
     if (!WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, pwszFile, -1, pszPath, cb, nullptr, nullptr)) goto done;
     for (i = 0; pszPath[i]; i++) if (pszPath[i] == '\\') pszPath[i] = '/';
-    if (of.nFilterIndex > 0 && of.nFilterIndex <= (DWORD)cFilter) *lpiFilter = (int)of.nFilterIndex - 1;
+    if (of.nFilterIndex > 0 && of.nFilterIndex <= static_cast<DWORD>(cFilter)) *lpiFilter = static_cast<int>(of.nFilterIndex) - 1;
     iResult = 1;
 done:
     free(pwszTitle); free(pwszFolder); free(pwszName); free(pwszFilter); free(pwszFile); free(pwszCwd);

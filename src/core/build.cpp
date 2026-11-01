@@ -28,7 +28,7 @@ int16_t PctJammerFromHul(APPSESSION &app, HUL *lphul) {
         if (part.hs.grhst == hstSpecialE) {
             if (part.hs.iItem >= ispecialEJammer10 && part.hs.iItem <= ispecialEJammer50) {
                 PartQueryIO().pfnLookup(app, &part);
-                pctJam = (int16_t)(100 - part.pspecial()->grAbility);
+                pctJam = static_cast<int16_t>((100 - part.pspecial()->grAbility));
             } else if (part.hs.iItem == ispecialEMultiFunctionPod) {
                 pctJam = 90;
             } else {
@@ -45,17 +45,17 @@ int16_t PctJammerFromHul(APPSESSION &app, HUL *lphul) {
         }
         if (pctJam < 100) {
             for (i = part.hs.cItem; i > 0; i--) {
-                pctHit = (uint32_t)(pctHit * pctJam);
-                pctHit = (int32_t)(pctHit / 100);
+                pctHit = static_cast<uint32_t>((pctHit * pctJam));
+                pctHit = static_cast<int32_t>((pctHit / 100));
             }
         }
     }
     if (pctHit < 100) {
         pctHit = 100;
     }
-    pctJam = (int16_t)(100 - (int16_t)(LOWORD(pctHit) + 50) / 100);
-    if ((int16_t)lphul->ihuldef > ihuldefOrbitalFort) {
-        pctJam -= (int32_t)(pctJam / 4);
+    pctJam = static_cast<int16_t>((100 - static_cast<int16_t>((LOWORD(pctHit) + 50)) / 100));
+    if (static_cast<int16_t>(lphul->ihuldef) > ihuldefOrbitalFort) {
+        pctJam -= static_cast<int32_t>((pctJam / 4));
     }
     if (pctJam > 95) {
         pctJam = 95;

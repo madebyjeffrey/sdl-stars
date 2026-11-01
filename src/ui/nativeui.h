@@ -16,7 +16,7 @@ static inline POINT PointFrom16(POINT16 pt) {
 
 // PointTo16 narrows a Win32 point to a Stars point.
 static inline POINT16 PointTo16(POINT pt) {
-    POINT16 out = {(int16_t)pt.x, (int16_t)pt.y};
+    POINT16 out = {static_cast<int16_t>(pt.x), static_cast<int16_t>(pt.y)};
     return out;
 }
 

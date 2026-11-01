@@ -17,7 +17,7 @@ int16_t FPromptLegacyRacePassword([[maybe_unused]] APPSESSION &app, char *szPass
 #ifdef STARS_TEST_GOLDEN_DIR
     return FStarsTestPromptLegacyRacePassword(app, szPassword);
 #else
-    (void)szPassword;
+    static_cast<void>(szPassword);
     return 0;
 #endif
 }

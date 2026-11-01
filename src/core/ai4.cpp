@@ -77,23 +77,23 @@ void DoCyberAiTurn(APPSESSION &app, PROD *rgprod) {
     MergeAllShdefs(app, 15360);
     iAttackStr = 1;
     if (app.state.game.turn > 50) {
-        iAttackStr += (uint32_t)(app.state.game.turn - 50) / 10;
+        iAttackStr += static_cast<uint32_t>((app.state.game.turn - 50)) / 10;
     }
     if (app.state.game.turn > 100) {
-        iAttackStr += (uint32_t)(app.state.game.turn - 100) / 10 * ((uint32_t)app.state.game.turn / 100);
+        iAttackStr += static_cast<uint32_t>((app.state.game.turn - 100)) / 10 * (static_cast<uint32_t>(app.state.game.turn) / 100);
     }
     j = 3;
     if (app.state.game.turn > 130) {
-        j += (uint32_t)(app.state.game.turn - 120) / 20;
+        j += static_cast<uint32_t>((app.state.game.turn - 120)) / 20;
     }
     if (j > 50) {
         j = 50;
     }
     app.state.vrgAiCyberArmadaPotency[0] = j;
-    app.state.vrgAiCyberArmadaPotency[1] = (int16_t)(j & 0xff) / 2;
+    app.state.vrgAiCyberArmadaPotency[1] = static_cast<int16_t>((j & 0xff)) / 2;
     j = 6;
     if (app.state.game.turn > 115) {
-        j += (uint32_t)(app.state.game.turn - 100) / 22;
+        j += static_cast<uint32_t>((app.state.game.turn - 100)) / 22;
     }
     if (j > 12) {
         j = 12;
@@ -120,7 +120,7 @@ void DoCyberAiTurn(APPSESSION &app, PROD *rgprod) {
     }
     iLatestBattle = ishdefNone;
     for (i = 0; i <= 1; i++) {
-        if (!app.state.rgshdef[i * 4 + 6].fFree && (uint16_t)(app.state.game.turn - app.state.rgshdef[i * 4 + 6].turn) > cRecyclePeriod) {
+        if (!app.state.rgshdef[i * 4 + 6].fFree && static_cast<uint16_t>((app.state.game.turn - app.state.rgshdef[i * 4 + 6].turn)) > cRecyclePeriod) {
             fScrap = 1;
             for (j = i * 4 + 9; j >= i * 4 + 6; j--) {
                 if (!app.state.rgshdef[j].fFree) {
@@ -269,10 +269,10 @@ void DoCyberAiTurn(APPSESSION &app, PROD *rgprod) {
             }
             if ((lpfl->rgcsh[14] > 0 || lpfl->rgcsh[15] > 0) && lpfl->idPlanet != idPlanetDeepSpace) {
                 iStrDef = 0;
-                if ((uint16_t)(app.state.game.turn - app.state.rgshdef[14].turn) < (uint16_t)(cRecyclePeriod - 10)) {
+                if (static_cast<uint16_t>((app.state.game.turn - app.state.rgshdef[14].turn)) < static_cast<uint16_t>((cRecyclePeriod - 10))) {
                     iStrDef += lpfl->rgcsh[14];
                 }
-                if ((uint16_t)(app.state.game.turn - app.state.rgshdef[15].turn) < (uint16_t)(cRecyclePeriod - 10)) {
+                if (static_cast<uint16_t>((app.state.game.turn - app.state.rgshdef[15].turn)) < static_cast<uint16_t>((cRecyclePeriod - 10))) {
                     iStrDef += lpfl->rgcsh[15];
                 }
                 if (iStrDef > 0) {
@@ -382,7 +382,7 @@ void DoCyberAiTurn(APPSESSION &app, PROD *rgprod) {
         ChangeMainObjSel(app, grobjPlanet, lppl->id);
         ProductionIO().pfnInitialize(app, rgprod);
         fWrite = 0;
-        lNewPop = (uint32_t)(lppl->rgwtMin[3] * PctTrueMaxGrowth(app, app.state.idPlayer));
+        lNewPop = static_cast<uint32_t>((lppl->rgwtMin[3] * PctTrueMaxGrowth(app, app.state.idPlayer)));
         GetResourcesAvailable(app, lppl, rgResAvail);
         GetProdQCost(app, lppl, rgResCost);
         for (i = 0; i < 4; i++) {
@@ -392,7 +392,7 @@ void DoCyberAiTurn(APPSESSION &app, PROD *rgprod) {
         pctValue = PlanetQueryIO().pfnDesirability(app, lppl, app.state.idPlayer);
         pctValueIdeal = PctPlanetOptValue(app, lppl, app.state.idPlayer);
         if (pctValue < 10) {
-            i = LOWORD((int32_t)((rgResAvail[3] - rgResCost[3]) / 70)) + 1;
+            i = LOWORD(static_cast<int32_t>(((rgResAvail[3] - rgResCost[3]) / 70))) + 1;
             AddItemToQueue(app, mdIdleTerraform, i, grobjPlanet, addItemEnd);
             fWrite = 1;
         } else {
@@ -529,7 +529,7 @@ void DoCyberPackets(APPSESSION &app) {
             GetProdQCost(app, lppl, rgResCost);
             if (!CivFromLp(app, lpciPlan).fNeedScanPkt() && (lppl->isb == 1 || lppl->isb == 3 || lppl->isb == 6 || lppl->isb == 8) &&
                 (lppl->rgwtMin[0] > 700 || lppl->rgwtMin[1] > 700 || lppl->rgwtMin[2] > 700)) {
-                iPacketMax = LOWORD((int32_t)(rgResAvail[3] / 2));
+                iPacketMax = LOWORD(static_cast<int32_t>((rgResAvail[3] / 2)));
                 iPacketMax /= 5;
                 if (iPacketMax < 7) {
                     lpplDst = nullptr;
@@ -588,9 +588,9 @@ void DoCyberPackets(APPSESSION &app) {
                 rgResAvail[1] -= rgResCost[1];
                 rgResAvail[2] -= rgResCost[2];
                 lMineral = rgResAvail[0] - 70 + (rgResAvail[1] - 70) + (rgResAvail[2] - 70);
-                cResLeft = LOWORD((int32_t)(rgResAvail[3] / 2));
-                lPackets = (int16_t)((int16_t)(cResLeft - 5) / 5);
-                MivFromLp(app, plMinMax).SetValue(lMineral < (int32_t)(uint32_t)(lPackets * 70) ? lMineral : (uint32_t)(lPackets * 70));
+                cResLeft = LOWORD(static_cast<int32_t>((rgResAvail[3] / 2)));
+                lPackets = static_cast<int16_t>((static_cast<int16_t>((cResLeft - 5)) / 5));
+                MivFromLp(app, plMinMax).SetValue(lMineral < static_cast<int32_t>(static_cast<uint32_t>((lPackets * 70))) ? lMineral : static_cast<uint32_t>((lPackets * 70)));
                 if (lMineral > 150) {
                     lpplDst = LpplFindClosestEnum(app, lppl, FEnumPktAttack);
                 } else {
@@ -612,17 +612,17 @@ void DoCyberPackets(APPSESSION &app) {
                         iWarpDst = 0;
                     }
                     iWarp = ColonyIO().pfnWarp(app, lppl, &fTwoMA) + 3;
-                    dDistance = (double)(int16_t)(iWarp * iWarp);
+                    dDistance = static_cast<double>(static_cast<int16_t>((iWarp * iWarp)));
                     dDistanceTgt = DGetDistance(app.state.rgptPlan[lppl->id].x, app.state.rgptPlan[lppl->id].y, app.state.rgptPlan[lpplDst->id].x, app.state.rgptPlan[lpplDst->id].y);
-                    dMod = (double)((double)(uint32_t)((iWarp * iWarp - iWarpDst * iWarpDst) * (100 - (lpplDst->uDefGuess + 5))) / 16000.0);
-                    lMinNeeded = (int32_t)((1000 >= (uint16_t)((lpplDst->uPopGuess + 25) * 4) ? (double)(uint32_t)((lpplDst->uPopGuess + 25) * 4)
-                                                                                              : (double)1000) /
-                                           dMod);
+                    dMod = static_cast<double>((static_cast<double>(static_cast<uint32_t>(((iWarp * iWarp - iWarpDst * iWarpDst) * (100 - (lpplDst->uDefGuess + 5))))) / 16000.0));
+                    lMinNeeded = static_cast<int32_t>(((1000 >= static_cast<uint16_t>(((lpplDst->uPopGuess + 25) * 4)) ? static_cast<double>(static_cast<uint32_t>(((lpplDst->uPopGuess + 25) * 4)))
+                                                                                              : static_cast<double>(1000)) /
+                                           dMod));
                     lMineral = lMinNeeded < lMineral ? lMinNeeded : lMineral;
                     if (fTwoMA) {
-                        lMineral = (int32_t)((double)lMineral / pow(0.875, (double)((double)dDistanceTgt / dDistance)));
+                        lMineral = static_cast<int32_t>((static_cast<double>(lMineral) / pow(0.875, static_cast<double>((static_cast<double>(dDistanceTgt) / dDistance)))));
                     } else {
-                        lMineral = (int32_t)((double)lMineral / pow(0.75, (double)((double)dDistanceTgt / dDistance)));
+                        lMineral = static_cast<int32_t>((static_cast<double>(lMineral) / pow(0.75, static_cast<double>((static_cast<double>(dDistanceTgt) / dDistance)))));
                     }
                     for (; lMineral > 0; lMineral -= 70) {
                         iMin = 0;
@@ -648,7 +648,7 @@ void DoCyberPackets(APPSESSION &app) {
                     app.state.sel.pl.idFling = lpplDst->id + 1;
                     PlanetQueryIO().pfnLookup(app, idWriteBack, &app.state.sel.pl);
                     CivFromLp(app, lpciPlanDst).SetIPktTarget(3);
-                    if ((double)dDistance < (double)dDistanceTgt) {
+                    if (static_cast<double>(dDistance) < static_cast<double>(dDistanceTgt)) {
                         CivFromLp(app, lpciPlan).SetFNeedScanPkt(1);
                     }
                     CivFromLp(app, lpciPlan).SetFLaunchedPkt(0);
@@ -761,8 +761,8 @@ int16_t IdGetBestScannerDest(APPSESSION &app, PLANET *lppl, CompassDir iDir) {
             ptEdge.y = iSize;
         }
     }
-    dAdjust = RandomIO().pfnRandom(app, (int32_t)((double)iSize * 0.3));
-    dAdjust -= LOWORD((int32_t)((double)iSize * 0.15));
+    dAdjust = RandomIO().pfnRandom(app, static_cast<int32_t>((static_cast<double>(iSize) * 0.3)));
+    dAdjust -= LOWORD(static_cast<int32_t>((static_cast<double>(iSize) * 0.15)));
     if (ptEdge.x == 0 || ptEdge.x == iSize) {
         ptEdge.y += dAdjust;
         if (ptEdge.y > iSize) {
@@ -810,7 +810,7 @@ int16_t IdGetBestScannerDest(APPSESSION &app, PLANET *lppl, CompassDir iDir) {
     ptEdge.x += 1000;
     if (FFindNearestObject(app, ptEdge, static_cast<GrobjClass>(grobjPlanet | mdNoRecurse), &scan)) {
         lpplDst = LpplFromId(app, scan.idpl);
-        if ((lpplDst && lpplDst->iPlayer == app.state.idPlayer) || (int32_t)LDistance2(app.state.rgptPlan[scan.idpl], app.state.rgptPlan[lppl->id]) < (int16_t)(iDistance * iDistance)) {
+        if ((lpplDst && lpplDst->iPlayer == app.state.idPlayer) || static_cast<int32_t>(LDistance2(app.state.rgptPlan[scan.idpl], app.state.rgptPlan[lppl->id])) < static_cast<int16_t>((iDistance * iDistance))) {
             return idplNone;
         }
         return scan.idpl + 1;
@@ -909,14 +909,14 @@ int16_t FFillProdMinesAndFactories(APPSESSION &app, PLANET *lppl) {
         if (app.state.pProdGlob[i].grobj == grobjPlanet) {
             if (app.state.pProdGlob[i].iItem == mdIdleMine) {
                 iMaxMines = (((0) > (ColonyIO().pfnOperableMines(app, lppl, app.state.idPlayer, 0) - ColonyIO().pfnMinesOperating(app, lppl) - iAddMines)) ? (0) : (ColonyIO().pfnOperableMines(app, lppl, app.state.idPlayer, 0) - ColonyIO().pfnMinesOperating(app, lppl) - iAddMines));
-                ProductionIO().pfnQuote(app, lppl, app.state.pProdGlob + i, (uint32_t *)rgMineCost, app.state.idPlayer, 1);
+                ProductionIO().pfnQuote(app, lppl, app.state.pProdGlob + i, reinterpret_cast<uint32_t *>(rgMineCost), app.state.idPlayer, 1);
             }
             if (app.state.pProdGlob[i].iItem == mdIdleFactory) {
                 iMaxFactories = (((0) > (ColonyIO().pfnOperableFactories(app, lppl, app.state.idPlayer, 0) - CFactoriesOperating(app, lppl) - iAddFactories)) ? (0) : (ColonyIO().pfnOperableFactories(app, lppl, app.state.idPlayer, 0) - CFactoriesOperating(app, lppl) - iAddFactories));
-                ProductionIO().pfnQuote(app, lppl, app.state.pProdGlob + i, (uint32_t *)rgFactCost, app.state.idPlayer, 1);
+                ProductionIO().pfnQuote(app, lppl, app.state.pProdGlob + i, reinterpret_cast<uint32_t *>(rgFactCost), app.state.idPlayer, 1);
             }
             if (app.state.pProdGlob[i].iItem == mdIdleAlchemy) {
-                ProductionIO().pfnQuote(app, lppl, app.state.pProdGlob + i, (uint32_t *)rgAlchCost, app.state.idPlayer, 1);
+                ProductionIO().pfnQuote(app, lppl, app.state.pProdGlob + i, reinterpret_cast<uint32_t *>(rgAlchCost), app.state.idPlayer, 1);
             }
             if (app.state.pProdGlob[i].iItem == mdIdleTerraform) {
                 iMaxTerra = app.state.pProdGlob[i].cItem;
@@ -924,7 +924,7 @@ int16_t FFillProdMinesAndFactories(APPSESSION &app, PLANET *lppl) {
         }
     }
     if (iMaxTerra > 0 && app.state.rgplr[app.state.idPlayer].idAi == idAiMacinti) {
-        cAdd = LOWORD((int32_t)((rgResLeft[3] + 69) / 70));
+        cAdd = LOWORD(static_cast<int32_t>(((rgResLeft[3] + 69) / 70)));
         if (cAdd > iMaxTerra) {
             cAdd = iMaxTerra;
         }
@@ -941,11 +941,11 @@ int16_t FFillProdMinesAndFactories(APPSESSION &app, PLANET *lppl) {
             }
         }
         if (iMaxMines > 0) {
-            iAddMines = (((iMaxMines) < ((int16_t)(rgResLeft[3] / rgMineCost[3]))) ? (iMaxMines) : ((int16_t)(rgResLeft[3] / rgMineCost[3])));
+            iAddMines = (((iMaxMines) < (static_cast<int16_t>((rgResLeft[3] / rgMineCost[3])))) ? (iMaxMines) : (static_cast<int16_t>((rgResLeft[3] / rgMineCost[3]))));
         } else {
             iAddMines = 0;
         }
-        rgResLeft[3] -= (uint32_t)(iAddMines * rgMineCost[3]);
+        rgResLeft[3] -= static_cast<uint32_t>((iAddMines * rgMineCost[3]));
         iAddFactories = 0;
         iAddAlchemy = 0;
         fInsert = 1;
@@ -954,31 +954,31 @@ int16_t FFillProdMinesAndFactories(APPSESSION &app, PLANET *lppl) {
     iMaxFactBuildable = iMaxFactories;
     if (iMaxFactories > 0) {
         if (!app.state.gd.fTutorial) {
-            iMaxFactories = (((iMaxFactories) < ((int16_t)(rgResLeft[2] / rgFactCost[2]))) ? (iMaxFactories) : ((int16_t)(rgResLeft[2] / rgFactCost[2])));
+            iMaxFactories = (((iMaxFactories) < (static_cast<int16_t>((rgResLeft[2] / rgFactCost[2])))) ? (iMaxFactories) : (static_cast<int16_t>((rgResLeft[2] / rgFactCost[2]))));
         } else {
-            iMaxFactories = (((((((((iMaxFactories) < ((int16_t)(rgResLeft[0] / rgFactCost[0]))) ? (iMaxFactories) : ((int16_t)(rgResLeft[0] / rgFactCost[0])))) < ((int16_t)(rgResLeft[1] / rgFactCost[1]))) ? ((((iMaxFactories) < ((int16_t)(rgResLeft[0] / rgFactCost[0]))) ? (iMaxFactories) : ((int16_t)(rgResLeft[0] / rgFactCost[0])))) : ((int16_t)(rgResLeft[1] / rgFactCost[1])))) < ((int16_t)(rgResLeft[2] / rgFactCost[2]))) ? (((((((iMaxFactories) < ((int16_t)(rgResLeft[0] / rgFactCost[0]))) ? (iMaxFactories) : ((int16_t)(rgResLeft[0] / rgFactCost[0])))) < ((int16_t)(rgResLeft[1] / rgFactCost[1]))) ? ((((iMaxFactories) < ((int16_t)(rgResLeft[0] / rgFactCost[0]))) ? (iMaxFactories) : ((int16_t)(rgResLeft[0] / rgFactCost[0])))) : ((int16_t)(rgResLeft[1] / rgFactCost[1])))) : ((int16_t)(rgResLeft[2] / rgFactCost[2])));
+            iMaxFactories = (((((((((iMaxFactories) < (static_cast<int16_t>((rgResLeft[0] / rgFactCost[0])))) ? (iMaxFactories) : (static_cast<int16_t>((rgResLeft[0] / rgFactCost[0]))))) < (static_cast<int16_t>((rgResLeft[1] / rgFactCost[1])))) ? ((((iMaxFactories) < (static_cast<int16_t>((rgResLeft[0] / rgFactCost[0])))) ? (iMaxFactories) : (static_cast<int16_t>((rgResLeft[0] / rgFactCost[0]))))) : (static_cast<int16_t>((rgResLeft[1] / rgFactCost[1]))))) < (static_cast<int16_t>((rgResLeft[2] / rgFactCost[2])))) ? (((((((iMaxFactories) < (static_cast<int16_t>((rgResLeft[0] / rgFactCost[0])))) ? (iMaxFactories) : (static_cast<int16_t>((rgResLeft[0] / rgFactCost[0]))))) < (static_cast<int16_t>((rgResLeft[1] / rgFactCost[1])))) ? ((((iMaxFactories) < (static_cast<int16_t>((rgResLeft[0] / rgFactCost[0])))) ? (iMaxFactories) : (static_cast<int16_t>((rgResLeft[0] / rgFactCost[0]))))) : (static_cast<int16_t>((rgResLeft[1] / rgFactCost[1]))))) : (static_cast<int16_t>((rgResLeft[2] / rgFactCost[2]))));
         }
     }
     if (iMaxFactories > 0) {
-        iAddFactories = (((iMaxFactories) < ((int16_t)(rgResLeft[3] / rgFactCost[3]))) ? (iMaxFactories) : ((int16_t)(rgResLeft[3] / rgFactCost[3])));
+        iAddFactories = (((iMaxFactories) < (static_cast<int16_t>((rgResLeft[3] / rgFactCost[3])))) ? (iMaxFactories) : (static_cast<int16_t>((rgResLeft[3] / rgFactCost[3]))));
     } else {
         iAddFactories = 0;
     }
-    rgResLeft[3] -= (uint32_t)(iAddFactories * rgFactCost[3]);
+    rgResLeft[3] -= static_cast<uint32_t>((iAddFactories * rgFactCost[3]));
     if (iMaxMines > 0) {
-        iAddMines = (((iMaxMines) < ((int16_t)(rgResLeft[3] / rgMineCost[3]))) ? (iMaxMines) : ((int16_t)(rgResLeft[3] / rgMineCost[3])));
+        iAddMines = (((iMaxMines) < (static_cast<int16_t>((rgResLeft[3] / rgMineCost[3])))) ? (iMaxMines) : (static_cast<int16_t>((rgResLeft[3] / rgMineCost[3]))));
     } else {
         iAddMines = 0;
     }
-    rgResLeft[3] -= (uint32_t)(iAddMines * rgMineCost[3]);
+    rgResLeft[3] -= static_cast<uint32_t>((iAddMines * rgMineCost[3]));
 LAdd:
     if (rgAlchCost[3] > 0 && app.state.rgplr[app.state.idPlayer].rgTech[3] == 26 && app.state.rgplr[app.state.idPlayer].rgTech[5] == 26 && app.state.rgplr[app.state.idPlayer].rgTech[0] == 26 &&
         app.state.rgplr[app.state.idPlayer].rgTech[1] == 26 && app.state.rgplr[app.state.idPlayer].rgTech[4] == 26 && app.state.rgplr[app.state.idPlayer].rgTech[2] == 26) {
-        iAddAlchemy = 0 <= LOWORD((int32_t)(rgResLeft[3] / rgAlchCost[3])) + 1 ? LOWORD((int32_t)(rgResLeft[3] / rgAlchCost[3])) + 1 : 0;
+        iAddAlchemy = 0 <= LOWORD(static_cast<int32_t>((rgResLeft[3] / rgAlchCost[3]))) + 1 ? LOWORD(static_cast<int32_t>((rgResLeft[3] / rgAlchCost[3]))) + 1 : 0;
     } else {
         iAddAlchemy = 0;
     }
-    rgResLeft[3] -= (uint32_t)(iAddAlchemy * rgAlchCost[3]);
+    rgResLeft[3] -= static_cast<uint32_t>((iAddAlchemy * rgAlchCost[3]));
     if (iAddFactories > 0) {
         AddItemToQueue(app, mdIdleFactory, iAddFactories, grobjPlanet, addItemEnd);
     }
@@ -1072,7 +1072,7 @@ LTarget:
         ord.id = lpplDst->id;
         ord.grTask = grTaskNone;
         ord.fValidTask = 1;
-        ord.iWarp = (uint16_t)IFindIdealWarp(app, lpfl, 1);
+        ord.iWarp = static_cast<uint16_t>(IFindIdealWarp(app, lpfl, 1));
         if (FMoveAiFleet(app, lpfl, &ord, 0)) {
             lpfl->fMark = 1;
         }
@@ -1107,7 +1107,7 @@ int16_t FEnumDropOffStage2(APPSESSION &app, PLANET *lpplSrc, PLANET *lpplTest) {
     if (CtvFromLp(app, lpciPlanTemp).At(lpplTest->id).cFreightersDst() == 3) {
         return 0;
     }
-    if (lpplTest->iPlayer != app.state.idPlayer || (uint32_t)(CtvFromLp(app, lpciPlanTemp).At(lpplTest->id).cFreightersDst() * 210) + lpplTest->rgwtMin[3] >= 1000) {
+    if (lpplTest->iPlayer != app.state.idPlayer || static_cast<uint32_t>((CtvFromLp(app, lpciPlanTemp).At(lpplTest->id).cFreightersDst() * 210)) + lpplTest->rgwtMin[3] >= 1000) {
         return 0;
     }
     if (LDistance2(app.state.rgptPlan[lpplSrc->id], app.state.rgptPlan[lpplTest->id]) <= 160000) {
@@ -1159,9 +1159,9 @@ int16_t FEnumNeedMinerals(APPSESSION &app, PLANET *lpplSrc, PLANET *lpplTest) {
         if (fTwoMA) {
             iWarpDst++;
         }
-        dDistance = (double)(iWarpSrc >= iWarpDst ? (double)iWarpDst : (double)iWarpSrc);
-        dDistance = (double)((double)dDistance * dDistance * 3.5);
-        if ((double)LDistance2(app.state.rgptPlan[lpplSrc->id], app.state.rgptPlan[lpplTest->id]) <= (double)dDistance * dDistance) {
+        dDistance = static_cast<double>((iWarpSrc >= iWarpDst ? static_cast<double>(iWarpDst) : static_cast<double>(iWarpSrc)));
+        dDistance = static_cast<double>((static_cast<double>(dDistance) * dDistance * 3.5));
+        if (static_cast<double>(LDistance2(app.state.rgptPlan[lpplSrc->id], app.state.rgptPlan[lpplTest->id])) <= static_cast<double>(dDistance) * dDistance) {
             return 1;
         }
         return 0;
@@ -1204,21 +1204,21 @@ int16_t FEnumPktAttack(APPSESSION &app, PLANET *lpplSrc, PLANET *lpplTest) {
     if (iWarp == iWarpDst) {
         return 0;
     }
-    dDistance = (double)((double)dDistance * dDistance);
+    dDistance = static_cast<double>((static_cast<double>(dDistance) * dDistance));
     dDistanceTgt = DGetDistance(app.state.rgptPlan[lpplSrc->id].x, app.state.rgptPlan[lpplSrc->id].y, app.state.rgptPlan[lpplTest->id].x, app.state.rgptPlan[lpplTest->id].y);
-    if ((double)dDistanceTgt <= (double)dDistance * 2.5) {
+    if (static_cast<double>(dDistanceTgt) <= static_cast<double>(dDistance) * 2.5) {
         if (fTwoMA) {
-            lMineral = (int32_t)((double)(int32_t)MivFromLp(app, plMinMax).value() * pow(0.875, (double)((double)dDistanceTgt / dDistance)));
+            lMineral = static_cast<int32_t>((static_cast<double>(static_cast<int32_t>(MivFromLp(app, plMinMax).value())) * pow(0.875, static_cast<double>((static_cast<double>(dDistanceTgt) / dDistance)))));
         } else {
-            lMineral = (int32_t)((double)(int32_t)MivFromLp(app, plMinMax).value() * pow(0.75, (double)((double)dDistanceTgt / dDistance)));
+            lMineral = static_cast<int32_t>((static_cast<double>(static_cast<int32_t>(MivFromLp(app, plMinMax).value())) * pow(0.75, static_cast<double>((static_cast<double>(dDistanceTgt) / dDistance)))));
         }
         if (lpplTest->uDefGuess > 99 || lpplTest->uPopGuess == 0) {
             return 0;
         }
-        dMod = (double)((double)(uint32_t)((iWarp * iWarp - iWarpDst * iWarpDst) * (100 - (lpplTest->uDefGuess + 5))) / 16000.0);
+        dMod = static_cast<double>((static_cast<double>(static_cast<uint32_t>(((iWarp * iWarp - iWarpDst * iWarpDst) * (100 - (lpplTest->uDefGuess + 5))))) / 16000.0));
         lMinNeeded =
-            (int32_t)((1000 >= (uint16_t)((lpplTest->uPopGuess + 25) * 4) ? (double)(uint32_t)((lpplTest->uPopGuess + 25) * 4) : (double)1000) /
-                      dMod);
+            static_cast<int32_t>(((1000 >= static_cast<uint16_t>(((lpplTest->uPopGuess + 25) * 4)) ? static_cast<double>(static_cast<uint32_t>(((lpplTest->uPopGuess + 25) * 4))) : static_cast<double>(1000)) /
+                      dMod));
         if (lMinNeeded <= lMineral) {
             return 1;
         }
@@ -1265,44 +1265,44 @@ void EnsureCyberAiShdefs(APPSESSION &app, int16_t iroCur) {
         FChangeAiShdef(app, &shdef, 0);
     }
     if (app.state.rgshdef[0].fFree) {
-        FCreateAiShdef(app, 0, ihuldefFrigate, (uint8_t *)&vrgCyberAip[cyberRecipeFrigateScoutMineLayer]);
+        FCreateAiShdef(app, 0, ihuldefFrigate, static_cast<uint8_t *>(&vrgCyberAip[cyberRecipeFrigateScoutMineLayer]));
     }
     if (app.state.rgshdef[4].fFree && app.state.game.turn > 30 &&
-        (app.state.game.turn > 75 || !FCreateAiShdef(app, 4, ihuldefDestroyer, (uint8_t *)&vrgCyberAip[cyberRecipeDestroyerBeamThrust]))) {
-        for (i = 5; i > 0 && FCreateAiShdef(app, 4, ihuldefDestroyer, (uint8_t *)&vrgCyberAip[vrgCyberIshAip[icyberRecipeDestroyerBeamThrust + RandomIO().pfnRandom(app, i)]]) == 0;
+        (app.state.game.turn > 75 || !FCreateAiShdef(app, 4, ihuldefDestroyer, static_cast<uint8_t *>(&vrgCyberAip[cyberRecipeDestroyerBeamThrust])))) {
+        for (i = 5; i > 0 && FCreateAiShdef(app, 4, ihuldefDestroyer, static_cast<uint8_t *>(&vrgCyberAip[vrgCyberIshAip[icyberRecipeDestroyerBeamThrust + RandomIO().pfnRandom(app, i)]])) == 0;
              i--) {
         }
     }
-    if (app.state.rgshdef[5].fFree && !app.state.rgshdef[4].fFree && app.state.game.turn > (uint16_t)(app.state.rgshdef[4].turn + 20) &&
-        (app.state.game.turn > 75 || !FCreateAiShdef(app, 5, ihuldefDestroyer, (uint8_t *)&vrgCyberAip[cyberRecipeDestroyerTorpedoThrust]))) {
-        for (i = 5; i > 0 && FCreateAiShdef(app, 5, ihuldefDestroyer, (uint8_t *)&vrgCyberAip[vrgCyberIshAip[icyberRecipeDestroyerTorpedoThrust + RandomIO().pfnRandom(app, i)]]) == 0;
+    if (app.state.rgshdef[5].fFree && !app.state.rgshdef[4].fFree && app.state.game.turn > static_cast<uint16_t>((app.state.rgshdef[4].turn + 20)) &&
+        (app.state.game.turn > 75 || !FCreateAiShdef(app, 5, ihuldefDestroyer, static_cast<uint8_t *>(&vrgCyberAip[cyberRecipeDestroyerTorpedoThrust])))) {
+        for (i = 5; i > 0 && FCreateAiShdef(app, 5, ihuldefDestroyer, static_cast<uint8_t *>(&vrgCyberAip[vrgCyberIshAip[icyberRecipeDestroyerTorpedoThrust + RandomIO().pfnRandom(app, i)]])) == 0;
              i--) {
         }
     }
     if (app.state.rgshdef[2].fFree && app.state.game.turn > 20) {
-        FCreateAiShdef(app, 2, ihuldefPrivateer, (uint8_t *)&vrgCyberAip[cyberRecipePrivateerBeam]);
+        FCreateAiShdef(app, 2, ihuldefPrivateer, static_cast<uint8_t *>(&vrgCyberAip[cyberRecipePrivateerBeam]));
     }
-    if (app.state.rgshdef[3].fFree && !app.state.rgshdef[2].fFree && app.state.game.turn > (uint16_t)(app.state.rgshdef[2].turn + 20)) {
-        FCreateAiShdef(app, 3, ihuldefPrivateer, (uint8_t *)&vrgCyberAip[cyberRecipePrivateerTorpedo]);
+    if (app.state.rgshdef[3].fFree && !app.state.rgshdef[2].fFree && app.state.game.turn > static_cast<uint16_t>((app.state.rgshdef[2].turn + 20))) {
+        FCreateAiShdef(app, 3, ihuldefPrivateer, static_cast<uint8_t *>(&vrgCyberAip[cyberRecipePrivateerTorpedo]));
     }
     for (ish = 6; ish <= 10; ish += 4) {
-        if (app.state.rgshdef[ish].fFree && ((ish == 6 && app.state.game.turn > 40) || (!app.state.rgshdef[6].fFree && app.state.game.turn > (uint16_t)(app.state.rgshdef[6].turn + 30)))) {
+        if (app.state.rgshdef[ish].fFree && ((ish == 6 && app.state.game.turn > 40) || (!app.state.rgshdef[6].fFree && app.state.game.turn > static_cast<uint16_t>((app.state.rgshdef[6].turn + 30))))) {
             ishCur = ish + 2;
             for (i = 3; i > 0; i--) {
-                if (FCreateAiShdef(app, ishCur, ihuldefNubian, (uint8_t *)&vrgCyberAip[vrgCyberIshAip[icyberRecipeNubianMissileBeam + RandomIO().pfnRandom(app, i)]])) {
+                if (FCreateAiShdef(app, ishCur, ihuldefNubian, static_cast<uint8_t *>(&vrgCyberAip[vrgCyberIshAip[icyberRecipeNubianMissileBeam + RandomIO().pfnRandom(app, i)]]))) {
                     ishCur--;
                     break;
                 }
             }
             for (i = 4; i > 0; i--) {
                 if (FCreateAiShdef(app, ishCur, ihuldefBattleship,
-                                   (uint8_t *)&vrgCyberAip[vrgCyberIshAip[icyberRecipeBattleshipMissileTorpedoThrust + RandomIO().pfnRandom(app, i)]])) {
+                                   static_cast<uint8_t *>(&vrgCyberAip[vrgCyberIshAip[icyberRecipeBattleshipMissileTorpedoThrust + RandomIO().pfnRandom(app, i)]]))) {
                     ishCur--;
                     break;
                 }
             }
             for (i = 3; i > 0; i--) {
-                if (FCreateAiShdef(app, ishCur, ihuldefBattleship, (uint8_t *)&vrgCyberAip[vrgCyberIshAip[icyberRecipeBattleshipMixedBeamsThrust + RandomIO().pfnRandom(app, i)]])) {
+                if (FCreateAiShdef(app, ishCur, ihuldefBattleship, static_cast<uint8_t *>(&vrgCyberAip[vrgCyberIshAip[icyberRecipeBattleshipMixedBeamsThrust + RandomIO().pfnRandom(app, i)]]))) {
                     ishCur--;
                     break;
                 }
@@ -1313,7 +1313,7 @@ void EnsureCyberAiShdefs(APPSESSION &app, int16_t iroCur) {
             low = icyberRecipeBattleshipMixedBeamsThrust - high;
         LCruiser:
             for (i = high; i > 0; i--) {
-                if (FCreateAiShdef(app, ishCur, ihuldefCruiser, (uint8_t *)&vrgCyberAip[vrgCyberIshAip[RandomIO().pfnRandom(app, i) + low]]))
+                if (FCreateAiShdef(app, ishCur, ihuldefCruiser, static_cast<uint8_t *>(&vrgCyberAip[vrgCyberIshAip[RandomIO().pfnRandom(app, i) + low]])))
                     break;
             }
             ishCur--;
@@ -1323,28 +1323,28 @@ void EnsureCyberAiShdefs(APPSESSION &app, int16_t iroCur) {
             low = ishCur == ish ? icyberRecipeCruiserStreamingBeams : icyberRecipeCruiserTorpedo;
             goto LCruiser;
         LBomber:
-            if (!FCreateAiShdef(app, ish + 3, ihuldefNubian, (uint8_t *)&vrgCyberAip[cyberRecipeNubianMcm]) &&
-                !FCreateAiShdef(app, ish + 3, ihuldefBattleship, (uint8_t *)&vrgCyberAip[cyberRecipeBattleshipMcm]) &&
-                !FCreateAiShdef(app, ish + 3, ihuldefB52Bomber, (uint8_t *)&vrgCyberAip[cyberRecipeB52RetroThenSmart])) {
-                FCreateAiShdef(app, ish + 3, ihuldefB52Bomber, (uint8_t *)&vrgCyberAip[cyberRecipeB52SmartThenNormal]);
+            if (!FCreateAiShdef(app, ish + 3, ihuldefNubian, static_cast<uint8_t *>(&vrgCyberAip[cyberRecipeNubianMcm])) &&
+                !FCreateAiShdef(app, ish + 3, ihuldefBattleship, static_cast<uint8_t *>(&vrgCyberAip[cyberRecipeBattleshipMcm])) &&
+                !FCreateAiShdef(app, ish + 3, ihuldefB52Bomber, static_cast<uint8_t *>(&vrgCyberAip[cyberRecipeB52RetroThenSmart]))) {
+                FCreateAiShdef(app, ish + 3, ihuldefB52Bomber, static_cast<uint8_t *>(&vrgCyberAip[cyberRecipeB52SmartThenNormal]));
             }
         }
     }
     for (ish = 14; ish <= 15; ish++) {
-        if (app.state.rgshdef[ish].fFree && ((ish == 14 && app.state.game.turn > 30) || (!app.state.rgshdef[14].fFree && app.state.game.turn > (uint16_t)(app.state.rgshdef[14].turn + 20)))) {
+        if (app.state.rgshdef[ish].fFree && ((ish == 14 && app.state.game.turn > 30) || (!app.state.rgshdef[14].fFree && app.state.game.turn > static_cast<uint16_t>((app.state.rgshdef[14].turn + 20))))) {
             for (i = 7; i > 0 && FCreateAiShdef(app, ish, ihuldefBattleship,
-                                                (uint8_t *)&vrgCyberAip[vrgCyberIshAip[icyberRecipeBattleshipMixedBeamsThrust + RandomIO().pfnRandom(app, i)]]) == 0;
+                                                static_cast<uint8_t *>(&vrgCyberAip[vrgCyberIshAip[icyberRecipeBattleshipMixedBeamsThrust + RandomIO().pfnRandom(app, i)]])) == 0;
                  i--) {
             }
             if (i == 0) {
                 for (i = 9;
-                     i > 0 && FCreateAiShdef(app, ish, ihuldefCruiser, (uint8_t *)&vrgCyberAip[vrgCyberIshAip[icyberRecipeCruiserStreamingBeams + RandomIO().pfnRandom(app, i)]]) == 0;
+                     i > 0 && FCreateAiShdef(app, ish, ihuldefCruiser, static_cast<uint8_t *>(&vrgCyberAip[vrgCyberIshAip[icyberRecipeCruiserStreamingBeams + RandomIO().pfnRandom(app, i)]])) == 0;
                      i--) {
                 }
             }
             if (i == 0) {
                 for (i = 10;
-                     i > 0 && FCreateAiShdef(app, ish, ihuldefDestroyer, (uint8_t *)&vrgCyberAip[vrgCyberIshAip[icyberRecipeDestroyerBeamThrust + RandomIO().pfnRandom(app, i)]]) == 0;
+                     i > 0 && FCreateAiShdef(app, ish, ihuldefDestroyer, static_cast<uint8_t *>(&vrgCyberAip[vrgCyberIshAip[icyberRecipeDestroyerBeamThrust + RandomIO().pfnRandom(app, i)]])) == 0;
                      i--) {
                 }
             }

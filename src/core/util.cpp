@@ -43,7 +43,7 @@ int16_t FDupPlanet(APPSESSION &app, PLANET *lppl, PLANET *ppl) {
     }
     if (!ppl->lpplprod) {
         ppl->lpplprod = LpplAlloc<PLPROD>(app, 4, lppl->lpplprod->iprodMax, htOrd);
-    } else if ((int16_t)ppl->lpplprod->iprodMax < lppl->lpplprod->iprodMac) {
+    } else if (static_cast<int16_t>(ppl->lpplprod->iprodMax) < lppl->lpplprod->iprodMac) {
         ppl->lpplprod = LpplReAlloc(app, ppl->lpplprod, lppl->lpplprod->iprodMax);
     }
     HeapIO().pfnCopy(ppl->lpplprod->rgprod(), lppl->lpplprod->rgprod(), lppl->lpplprod->iprodMac * 4);
@@ -105,7 +105,7 @@ void CalcPctSurvive(APPSESSION &app, PLANET *lppl, float *ppct, float *ppctSmart
     int16_t cMax;
 
     if (ppctSmart) {
-        *ppctSmart = (float)1.0;
+        *ppctSmart = static_cast<float>(1.0);
     }
     if (lppl->iPlayer != iplrNone && lppl->cDefenses != 0) {
         iPlrSav = app.state.idPlayer;
@@ -116,16 +116,16 @@ void CalcPctSurvive(APPSESSION &app, PLANET *lppl, float *ppct, float *ppctSmart
             if (cMax < cDefenses) {
                 cDefenses = cMax;
             }
-            pct = (float)pow((double)(1.0 - (double)part.pplanetary()->grAbility / 1000.0), (double)cDefenses);
+            pct = static_cast<float>(pow(static_cast<double>((1.0 - static_cast<double>(part.pplanetary()->grAbility) / 1000.0)), static_cast<double>(cDefenses)));
             if (ppctSmart) {
-                *ppctSmart = (float)pow((double)(1.0 - (double)part.pplanetary()->grAbility / 2000.0), (double)cDefenses);
+                *ppctSmart = static_cast<float>(pow(static_cast<double>((1.0 - static_cast<double>(part.pplanetary()->grAbility) / 2000.0)), static_cast<double>(cDefenses)));
             }
         } else {
-            pct = (float)1.0;
+            pct = static_cast<float>(1.0);
         }
         app.state.idPlayer = iPlrSav;
     } else {
-        pct = (float)1.0;
+        pct = static_cast<float>(1.0);
     }
     *ppct = pct;
     return;
@@ -162,7 +162,7 @@ int16_t FLookupPlanet(APPSESSION &app, int16_t iPlanet, PLANET *ppl) {
                     lpPl->lpplprod = nullptr;
                     goto FinishCopy;
                 }
-                if ((int16_t)lpPl->lpplprod->iprodMax < ppl->lpplprod->iprodMac) {
+                if (static_cast<int16_t>(lpPl->lpplprod->iprodMax) < ppl->lpplprod->iprodMac) {
                     lpPl->lpplprod = LpplReAlloc(app, lpPl->lpplprod, ppl->lpplprod->iprodMac + 2);
                 }
                 HeapIO().pfnCopy(lpPl->lpplprod->rgprod(), ppl->lpplprod->rgprod(), ppl->lpplprod->iprodMac * 4);
@@ -190,7 +190,7 @@ int32_t DpOfLpflIshdef(APPSESSION &app, FLEET *lpfl, int16_t ishdef) {
     int32_t dp;
 
     dpShdef = app.state.rglpshdef[lpfl->iPlayer][ishdef].hul.dp;
-    dp = (int32_t)(lpfl->rgcsh[ishdef] * (int16_t)((int16_t)(lpfl->rgdv[ishdef].pctSh() * dpShdef) / 10 * lpfl->rgdv[ishdef].pctDp())) / 5000;
+    dp = static_cast<int32_t>((lpfl->rgcsh[ishdef] * static_cast<int16_t>((static_cast<int16_t>((lpfl->rgdv[ishdef].pctSh() * dpShdef)) / 10 * lpfl->rgdv[ishdef].pctDp())))) / 5000;
     return dp;
 }
 
@@ -248,36 +248,36 @@ int32_t LComputePower(APPSESSION &app, SHDEF *lpshdef) {
             default:
                 break;
             case hstBeam:
-                dp = (int32_t)((uint32_t)(part.pbeam()->dp * part.hs.cItem) * (int16_t)(part.pbeam()->dRangeMax + 3)) / 4;
+                dp = static_cast<int32_t>((static_cast<uint32_t>((part.pbeam()->dp * part.hs.cItem)) * static_cast<int16_t>((part.pbeam()->dRangeMax + 3)))) / 4;
                 if (part.pbeam()->grfAbilities & beamSapper) {
-                    dp = (int32_t)(dp / 3);
+                    dp = static_cast<int32_t>((dp / 3));
                 }
                 dpBeams += dp;
                 break;
             case hstTorp:
-                dpTorps += (int32_t)((uint32_t)(part.ptorp()->dp * part.hs.cItem) * (int16_t)(part.ptorp()->dRangeMax - 2)) / 2;
+                dpTorps += static_cast<int32_t>((static_cast<uint32_t>((part.ptorp()->dp * part.hs.cItem)) * static_cast<int16_t>((part.ptorp()->dRangeMax - 2)))) / 2;
                 break;
             case hstBomb:
-                dpBombs += (uint32_t)((part.pbomb()->dDmgCol + part.pbomb()->dDmgBldg) * part.hs.cItem * 2);
+                dpBombs += static_cast<uint32_t>(((part.pbomb()->dDmgCol + part.pbomb()->dDmgBldg) * part.hs.cItem * 2));
                 break;
             case hstSpecialE:
                 if (part.hs.iItem == ispecialEEnergyCapacitor || part.hs.iItem == ispecialEFluxCapacitor) {
                     for (i = part.hs.cItem; i > 0; i--) {
-                        pctCap = (int32_t)(pctCap * (part.pspecial()->grAbility + 100)) / 100;
+                        pctCap = static_cast<int32_t>((pctCap * (part.pspecial()->grAbility + 100))) / 100;
                     }
                 }
             }
         }
     }
     if (pctCap != 1000) {
-        pctCap = (int32_t)(pctCap / 10);
+        pctCap = static_cast<int32_t>((pctCap / 10));
         if (pctCap > 255) {
             pctCap = 255;
         }
-        dpBeams = (int32_t)(dpBeams * pctCap) / 100;
+        dpBeams = static_cast<int32_t>((dpBeams * pctCap)) / 100;
     }
     dSpeed = SpdOfShip(app, nullptr, 0, nullptr, 0, lpshdef);
-    dpBeams += (int32_t)(dpBeams * (int16_t)(dSpeed - 4)) / 10;
+    dpBeams += static_cast<int32_t>((dpBeams * static_cast<int16_t>((dSpeed - 4)))) / 10;
     return dpBombs + dpBeams + dpTorps;
 }
 
@@ -314,22 +314,22 @@ int32_t DpShieldOfShdef(APPSESSION &app, SHDEF *lpshdef, int16_t iplr) {
         if (lphs->grhst == hstShield && lphs->cItem > 0) {
             part.hs = *lphs;
             PartQueryIO().pfnLookup(app, &part);
-            dpShdef += (uint32_t)(part.pshield()->dp * lphs->cItem);
+            dpShdef += static_cast<uint32_t>((part.pshield()->dp * lphs->cItem));
         } else if (lphs->grhst == hstArmor && lphs->cItem > 0 && lphs->iItem == iarmorFieldedKelarium) {
-            dpShdef += (uint32_t)(lphs->cItem * 50);
+            dpShdef += static_cast<uint32_t>((lphs->cItem * 50));
         } else if (lphs->grhst == hstArmor && lphs->iItem == iarmorMegaPolyShell) {
-            dpShdef += (uint32_t)(lphs->cItem * 100);
+            dpShdef += static_cast<uint32_t>((lphs->cItem * 100));
         }
         ihs++;
         lphs++;
     }
     if (RaceQueryIO().pfnGrbit(&app.state.rgplr[iplr], ibitRaceRegeneratingShields) != 0) {
-        dpShdef += (int32_t)(dpShdef * 2) / 5;
+        dpShdef += static_cast<int32_t>((dpShdef * 2)) / 5;
     }
     if (dpShdef & 0xffff0000) {
         dpShdef = 65535;
     }
-    return (uint32_t)LOWORD(dpShdef);
+    return static_cast<uint32_t>(LOWORD(dpShdef));
 }
 
 int16_t IStargateFromLppl(APPSESSION &app, PLANET *lppl) {
@@ -444,20 +444,20 @@ int16_t FCalcFleetBombDamage(APPSESSION &app, FLEET *lpfl, int32_t *pdmgPeople, 
                         PartQueryIO().pfnLookup(app, &part);
                         fBomber = 1;
                         if (part.hs.iItem == ibombRetroBomb) {
-                            *ppctTerra += (uint32_t)(part.hs.cItem * lpfl->rgcsh[ishdef]);
+                            *ppctTerra += static_cast<uint32_t>((part.hs.cItem * lpfl->rgcsh[ishdef]));
                         } else if (part.hs.cItem > 0) {
                             if (part.pbomb()->dDmgBldg == 0) {
-                                cIter = (uint32_t)(part.hs.cItem * lpfl->rgcsh[ishdef]);
-                                dmgT = (double)(1.0 - (double)part.pbomb()->dDmgCol / 1000.0);
+                                cIter = static_cast<uint32_t>((part.hs.cItem * lpfl->rgcsh[ishdef]));
+                                dmgT = static_cast<double>((1.0 - static_cast<double>(part.pbomb()->dDmgCol) / 1000.0));
                                 while (cIter-- > 0) {
-                                    dmgSmart = (double)((double)dmgSmart * dmgT);
+                                    dmgSmart = static_cast<double>((static_cast<double>(dmgSmart) * dmgT));
                                 }
                             } else {
-                                *pdmgPeople += (uint32_t)((uint32_t)(part.hs.cItem * lpfl->rgcsh[ishdef]) * part.pbomb()->dDmgCol);
-                                *pdmgBldg += (uint32_t)((uint32_t)(part.hs.cItem * lpfl->rgcsh[ishdef]) * part.pbomb()->dDmgBldg);
+                                *pdmgPeople += static_cast<uint32_t>((static_cast<uint32_t>((part.hs.cItem * lpfl->rgcsh[ishdef])) * part.pbomb()->dDmgCol));
+                                *pdmgBldg += static_cast<uint32_t>((static_cast<uint32_t>((part.hs.cItem * lpfl->rgcsh[ishdef])) * part.pbomb()->dDmgBldg));
                                 if (part.hs.iItem >= ibombLadyFingerBomb && part.hs.iItem <= ibombCherryBomb) {
                                     dmgFloor = 3;
-                                    *pdmgPeopleMin += (uint32_t)((uint32_t)(part.hs.cItem * lpfl->rgcsh[ishdef]) * dmgFloor);
+                                    *pdmgPeopleMin += static_cast<uint32_t>((static_cast<uint32_t>((part.hs.cItem * lpfl->rgcsh[ishdef])) * dmgFloor));
                                 }
                             }
                         }
@@ -465,14 +465,14 @@ int16_t FCalcFleetBombDamage(APPSESSION &app, FLEET *lpfl, int32_t *pdmgPeople, 
                                app.state.rglpshdef[iplr][ishdef].hul.rghs[j].iItem == ibeamMultiContainedMunition) {
                         part.hs = app.state.rglpshdef[iplr][ishdef].hul.rghs[j];
                         fBomber = 1;
-                        *pdmgPeople += (uint32_t)((uint32_t)(part.hs.cItem * lpfl->rgcsh[ishdef]) * 20);
-                        *pdmgBldg += (uint32_t)((uint32_t)(part.hs.cItem * lpfl->rgcsh[ishdef]) * 5);
-                        *pdmgPeopleMin += (uint32_t)((uint32_t)(part.hs.cItem * lpfl->rgcsh[ishdef]) * 3);
+                        *pdmgPeople += static_cast<uint32_t>((static_cast<uint32_t>((part.hs.cItem * lpfl->rgcsh[ishdef])) * 20));
+                        *pdmgBldg += static_cast<uint32_t>((static_cast<uint32_t>((part.hs.cItem * lpfl->rgcsh[ishdef])) * 5));
+                        *pdmgPeopleMin += static_cast<uint32_t>((static_cast<uint32_t>((part.hs.cItem * lpfl->rgcsh[ishdef])) * 3));
                     } else if (app.state.rglpshdef[iplr][ishdef].hul.rghs[j].grhst == hstSpecialM &&
                                app.state.rglpshdef[iplr][ishdef].hul.rghs[j].iItem == ispecialMOrbitalConstructionModule) {
                         part.hs = app.state.rglpshdef[iplr][ishdef].hul.rghs[j];
                         fBomber = 1;
-                        *pdmgPeopleMin += (uint32_t)((uint32_t)(part.hs.cItem * lpfl->rgcsh[ishdef]) * 20);
+                        *pdmgPeopleMin += static_cast<uint32_t>((static_cast<uint32_t>((part.hs.cItem * lpfl->rgcsh[ishdef])) * 20));
                     }
                 }
             }
@@ -486,7 +486,7 @@ int16_t FCalcFleetBombDamage(APPSESSION &app, FLEET *lpfl, int32_t *pdmgPeople, 
             lpfl = nullptr;
         }
     }
-    *pdmgPeopleSmart = (int32_t)(1000.0 - (double)dmgSmart * 1000.0 + 0.5);
+    *pdmgPeopleSmart = static_cast<int32_t>((1000.0 - static_cast<double>(dmgSmart) * 1000.0 + 0.5));
     if (*pdmgPeopleSmart >= 1000) {
         *pdmgPeopleSmart = 1000;
     }
@@ -520,7 +520,7 @@ void LinkFleets(APPSESSION &app, int16_t fUnused) {
         lpflHead = app.state.rglpfl[iflHead];
         if (!lpflHead->fDead && !lpflHead->lpflNext) {
             for (i = 0; i < cSrc; i++) {
-                if (lpflHead->pt.y <= rglpflSrc[i]->pt.y && (lpflHead->pt.y < rglpflSrc[i]->pt.y || (uint16_t)lpflHead->pt.x <= (uint16_t)rglpflSrc[i]->pt.x)) {
+                if (lpflHead->pt.y <= rglpflSrc[i]->pt.y && (lpflHead->pt.y < rglpflSrc[i]->pt.y || static_cast<uint16_t>(lpflHead->pt.x) <= static_cast<uint16_t>(rglpflSrc[i]->pt.x))) {
                     if (lpflHead->pt.x == rglpflSrc[i]->pt.x && lpflHead->pt.y == rglpflSrc[i]->pt.y) {
                         lpflHead->lpflNext = rglpflSrc[i]->lpflNext;
                         rglpflSrc[i]->lpflNext = lpflHead;
@@ -541,7 +541,7 @@ void LinkFleets(APPSESSION &app, int16_t fUnused) {
                         lpflTail = app.state.rglpfl[iflTail];
                         if (!lpflTail->fDead && !lpflTail->lpflNext) {
                             pt = lpflTail->pt;
-                            pSearch = (FLEET **)bsearch(&pt, rglpflSrc, cSrc, sizeof(FLEET *), (QSORTCOMPARE)ICompFleetPoint2);
+                            pSearch = static_cast<FLEET **>(bsearch(&pt, rglpflSrc, cSrc, sizeof(FLEET *), reinterpret_cast<QSORTCOMPARE>(ICompFleetPoint2)));
                             if (pSearch) {
                                 lpflHead = *pSearch;
                                 lpflTail->lpflNext = lpflHead->lpflNext;
@@ -562,15 +562,15 @@ int ICompFleetPoint(FLEET **ppfl1, FLEET **ppfl2) {
     int32_t l2;
     int32_t l1;
 
-    l1 = ((uint32_t)(*ppfl1)->pt.x & 0xffff) | ((uint32_t)(*ppfl1)->pt.y & 0xffff) << 0x10;
-    l2 = ((uint32_t)(*ppfl2)->pt.x & 0xffff) | ((uint32_t)(*ppfl2)->pt.y & 0xffff) << 0x10;
+    l1 = (static_cast<uint32_t>((*ppfl1)->pt.x) & 0xffff) | (static_cast<uint32_t>((*ppfl1)->pt.y) & 0xffff) << 0x10;
+    l2 = (static_cast<uint32_t>((*ppfl2)->pt.x) & 0xffff) | (static_cast<uint32_t>((*ppfl2)->pt.y) & 0xffff) << 0x10;
     l1 -= l2;
     if (l1 < 0) {
         l1 = -1;
     } else if (l1 > 0) {
         l1 = 1;
     }
-    return (int16_t)LOWORD(l1);
+    return static_cast<int16_t>(LOWORD(l1));
 }
 
 int ICompFleetPoint2(int32_t *pl, FLEET **ppfl) {
@@ -578,14 +578,14 @@ int ICompFleetPoint2(int32_t *pl, FLEET **ppfl) {
     int32_t l1;
 
     l1 = *pl;
-    l2 = ((uint32_t)(*ppfl)->pt.x & 0xffff) | ((uint32_t)(*ppfl)->pt.y & 0xffff) << 0x10;
+    l2 = (static_cast<uint32_t>((*ppfl)->pt.x) & 0xffff) | (static_cast<uint32_t>((*ppfl)->pt.y) & 0xffff) << 0x10;
     l1 -= l2;
     if (l1 < 0) {
         l1 = -1;
     } else if (l1 > 0) {
         l1 = 1;
     }
-    return (int16_t)LOWORD(l1);
+    return static_cast<int16_t>(LOWORD(l1));
 }
 
 int16_t FLookupSelShip(APPSESSION &app, FLEET *pfl) {
@@ -606,7 +606,7 @@ FLEET *LpflFromId(APPSESSION &app, int16_t idFleet) {
     int16_t iHi;
 
     i = 0;
-    iplr = (uint16_t)idFleet >> 9 & 0xf;
+    iplr = static_cast<uint16_t>(idFleet) >> 9 & 0xf;
     idFleet &= 0x1fff;
     for (iplrCur = 0; iplrCur < iplr; iplrCur++) {
         i += app.state.rgplr[iplrCur].cFleet;
@@ -683,7 +683,7 @@ int16_t FDupFleet(APPSESSION &app, FLEET *lpfl, FLEET *pfl) {
     pfl->lpplord = lpplordT;
     if (!pfl->lpplord) {
         pfl->lpplord = LpplAlloc<PLORD>(app, 18, lpfl->lpplord->iordMax, htOrd);
-    } else if ((int16_t)pfl->lpplord->iordMax < lpfl->lpplord->iordMac) {
+    } else if (static_cast<int16_t>(pfl->lpplord->iordMax) < lpfl->lpplord->iordMac) {
         pfl->lpplord = LpplReAlloc(app, pfl->lpplord, lpfl->lpplord->iordMax);
     }
     HeapIO().pfnCopy(pfl->lpplord->rgord(), lpfl->lpplord->rgord(), lpfl->lpplord->iordMac * 18);
@@ -693,12 +693,12 @@ int16_t FDupFleet(APPSESSION &app, FLEET *lpfl, FLEET *pfl) {
 
 int16_t FLookupObject(APPSESSION &app, GrobjClass grobj, int16_t id, void *pobj) {
     if (grobj == grobjFleet) {
-        return FleetQueryIO().pfnLookup(app, id, (FLEET *)pobj);
+        return FleetQueryIO().pfnLookup(app, id, static_cast<FLEET *>(pobj));
     }
     if (grobj == grobjPlanet) {
-        return PlanetQueryIO().pfnLookup(app, id, (PLANET *)pobj);
+        return PlanetQueryIO().pfnLookup(app, id, static_cast<PLANET *>(pobj));
     }
-    return FLookupThing(app, id, (THING *)pobj);
+    return FLookupThing(app, id, static_cast<THING *>(pobj));
 }
 
 int16_t FLookupOrbitingXfer(APPSESSION &app, int16_t idPlanet, int16_t iNth, XFER *pxf, int16_t idSkip) {
@@ -796,7 +796,7 @@ char *PszGetFleetName(APPSESSION &app, int16_t id) {
 
     lpfl = LpflFromId(app, id & 0x7fff);
     id &= 0x7fff;
-    iplr = (uint16_t)id >> 9 & 0xf;
+    iplr = static_cast<uint16_t>(id) >> 9 & 0xf;
     ifl = id & 0x1ff;
     if (iplr != app.state.idPlayer) {
         CchSprintf(szPlr, "%s ", TextIO().pfnPlayerName(app, iplr, 0, 0, 0, 0, nullptr));
@@ -814,7 +814,7 @@ char *PszGetFleetName(APPSESSION &app, int16_t id) {
                 strcpy(szShdef, app.state.rglpshdef[iplr][ishdef].hul.szClass);
                 cch = strlen(szShdef);
                 if (cch > 28) {
-                    cch = (int16_t)CchUtf8Prefix(szShdef, 28);
+                    cch = static_cast<int16_t>(CchUtf8Prefix(szShdef, 28));
                 }
                 if (cshdef > 1) {
                     szShdef[cch] = '+';
@@ -856,7 +856,7 @@ char *PszFleetNameFromWord(APPSESSION &app, uint16_t w) {
         strcpy(szShdef, app.state.rglpshdef[app.state.idPlayer][ishdef].hul.szClass);
         cch = strlen(szShdef);
         if (cch > 28) {
-            cch = (int16_t)CchUtf8Prefix(szShdef, 28);
+            cch = static_cast<int16_t>(CchUtf8Prefix(szShdef, 28));
         }
         if (w & 0x2000) {
             szShdef[cch] = '+';
@@ -1095,7 +1095,7 @@ int16_t FFleetMergeAll(APPSESSION &app, FLEET *pfl) {
                passed 32767 to 32766 and lost the rest; a fleet that doesn't
                fit is left out of the merge. */
             if (lpfl && lpfl->ifl() != pfl->ifl()) {
-                for (j = 0; j < 16 && (int32_t)pfl->rgcsh[j] + lpfl->rgcsh[j] <= 32767; j++) {
+                for (j = 0; j < 16 && static_cast<int32_t>(pfl->rgcsh[j]) + lpfl->rgcsh[j] <= 32767; j++) {
                 }
                 if (j < 16) {
                     continue;
@@ -1107,12 +1107,12 @@ int16_t FFleetMergeAll(APPSESSION &app, FLEET *pfl) {
                 while (j < 16) {
                     if (lpfl->rgcsh[j] != 0) {
                         if (lpfl->rgdv[j].dp != 0) {
-                            cshT = LOWORD((int32_t)(lpfl->rgcsh[j] * (int16_t)lpfl->rgdv[j].pctSh()) / 100);
+                            cshT = LOWORD(static_cast<int32_t>((lpfl->rgcsh[j] * static_cast<int16_t>(lpfl->rgdv[j].pctSh()))) / 100);
                             if (cshT == 0) {
                                 cshT = 1;
                             }
                             rgcshDamaged[j] += cshT;
-                            dpT = (uint32_t)(lpfl->rgdv[j].pctDp() * cshT);
+                            dpT = static_cast<uint32_t>((lpfl->rgdv[j].pctDp() * cshT));
                             rgdp[j] += dpT;
                         }
                         if (lpfl->ifl() != pfl->ifl()) {
@@ -1142,8 +1142,8 @@ int16_t FFleetMergeAll(APPSESSION &app, FLEET *pfl) {
         if (rgcshDamaged[j] == 0 || lpflMerge->rgcsh[j] == 0) {
             lpflMerge->rgdv[j].dp = 0;
         } else {
-            lpflMerge->rgdv[j].SetPctSh(LOWORD((int32_t)((int32_t)((uint32_t)(rgcshDamaged[j] * 100) + (int16_t)(lpflMerge->rgcsh[j] - 1)) / lpflMerge->rgcsh[j])));
-            lpflMerge->rgdv[j].SetPctDp(LOWORD((int32_t)(rgdp[j] / rgcshDamaged[j])));
+            lpflMerge->rgdv[j].SetPctSh(LOWORD(static_cast<int32_t>((static_cast<int32_t>((static_cast<uint32_t>((rgcshDamaged[j] * 100)) + static_cast<int16_t>((lpflMerge->rgcsh[j] - 1)))) / lpflMerge->rgcsh[j]))));
+            lpflMerge->rgdv[j].SetPctDp(LOWORD(static_cast<int32_t>((rgdp[j] / rgcshDamaged[j]))));
         }
         j++;
         lpshdef++;
@@ -1241,9 +1241,9 @@ char *PszGetDistance(APPSESSION &app, int16_t x1, int16_t y1, int16_t x2, int16_
     int32_t d2;
 
     fStarted = 0;
-    d = (int32_t)((double)DGetDistance(x1, y1, x2, y2) * 100.0 + 0.5);
-    d2 = (int32_t)(d / 100);
-    d -= (uint32_t)(d2 * 100);
+    d = static_cast<int32_t>((static_cast<double>(DGetDistance(x1, y1, x2, y2)) * 100.0 + 0.5));
+    d2 = static_cast<int32_t>((d / 100));
+    d -= static_cast<uint32_t>((d2 * 100));
     if (app.state.dyArial8 <= 14) {
         CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsLdLdLightYears), d2, d);
     } else {
@@ -1257,10 +1257,10 @@ double DGetDistance(int16_t x1, int16_t y1, int16_t x2, int16_t y2) {
     int32_t dx;
     int32_t l;
 
-    dx = (int16_t)(x2 - x1);
-    dy = (int16_t)(y2 - y1);
-    l = (uint32_t)(dx * dx) + (uint32_t)(dy * dy);
-    return sqrt((double)l);
+    dx = static_cast<int16_t>((x2 - x1));
+    dy = static_cast<int16_t>((y2 - y1));
+    l = static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy));
+    return sqrt(static_cast<double>(l));
 }
 
 int16_t FFindNearestObject(APPSESSION &app, POINT16 pt, GrobjClass grobj, SCAN *pscan) {
@@ -1291,7 +1291,7 @@ int16_t FFindNearestObject(APPSESSION &app, POINT16 pt, GrobjClass grobj, SCAN *
     scan.idpl = idplNone;
     if (grobj & mdScanRadius) {
         lSquare = ScanToPt(app, 20);
-        lSquare = (uint32_t)(lSquare * lSquare);
+        lSquare = static_cast<uint32_t>((lSquare * lSquare));
     } else if (grobj & mdExact) {
         lSquare = 0;
     }
@@ -1300,9 +1300,9 @@ int16_t FFindNearestObject(APPSESSION &app, POINT16 pt, GrobjClass grobj, SCAN *
         while (i < app.state.game.cPlanMax) {
             dx = pt.x - ppt->x;
             dy = pt.y - ppt->y;
-            lTry = (uint32_t)(dx * dx);
-            if ((int32_t)(uint32_t)(dx * dx) <= lSquare) {
-                lTry += (uint32_t)(dy * dy);
+            lTry = static_cast<uint32_t>((dx * dx));
+            if (static_cast<int32_t>(static_cast<uint32_t>((dx * dx))) <= lSquare) {
+                lTry += static_cast<uint32_t>((dy * dy));
                 if (lTry <= lSquare && (lSquare != lTry || lSquare == 0)) {
                     lSquare = lTry;
                     scan.pt = *ppt;
@@ -1322,9 +1322,9 @@ int16_t FFindNearestObject(APPSESSION &app, POINT16 pt, GrobjClass grobj, SCAN *
                 break;
             dx = pt.x - lpfl->pt.x;
             dy = pt.y - lpfl->pt.y;
-            lTry = (uint32_t)(dx * dx);
-            if ((int32_t)(uint32_t)(dx * dx) <= lSquare) {
-                lTry += (uint32_t)(dy * dy);
+            lTry = static_cast<uint32_t>((dx * dx));
+            if (static_cast<int32_t>(static_cast<uint32_t>((dx * dx))) <= lSquare) {
+                lTry += static_cast<uint32_t>((dy * dy));
                 if (lTry <= lSquare) {
                     if ((lTry == lSquare && !(scan.grobj & grobjPlanet)) || (lpfl->pt.x == scan.pt.x && lpfl->pt.y == scan.pt.y)) {
                         if ((scan.grobjFull & grobjFleet) && (app.state.rglpfl[scan.ifl]->iPlayer == app.state.idPlayer || lpfl->iPlayer != app.state.idPlayer))
@@ -1355,14 +1355,14 @@ int16_t FFindNearestObject(APPSESSION &app, POINT16 pt, GrobjClass grobj, SCAN *
         for (; lpth < lpthMac; lpth++) {
             dx = pt.x - lpth->pt().x();
             dy = pt.y - lpth->pt().y();
-            lTry = (uint32_t)(dx * dx);
-            if ((int32_t)(uint32_t)(dx * dx) <= lSquare) {
-                lTry += (uint32_t)(dy * dy);
+            lTry = static_cast<uint32_t>((dx * dx));
+            if (static_cast<int32_t>(static_cast<uint32_t>((dx * dx))) <= lSquare) {
+                lTry += static_cast<uint32_t>((dy * dy));
                 if (lTry <= lSquare) {
                     if ((lTry == lSquare && !(scan.grobj & (grobjPlanet | grobjFleet))) || (lpth->pt().x() == scan.pt.x && lpth->pt().y() == scan.pt.y)) {
                         if (scan.grobjFull & grobjThing)
                             continue;
-                        scan.ith = (int16_t)((uint8_t *)lpth - (uint8_t *)app.state.lpThings) / 18;
+                        scan.ith = static_cast<int16_t>((reinterpret_cast<uint8_t *>(lpth) - reinterpret_cast<uint8_t *>(app.state.lpThings))) / 18;
                         scan.grobjFull = static_cast<GrobjClass>(scan.grobjFull | grobjThing);
                         if (scan.grobj == grobjNone)
                             goto SelectThing;
@@ -1374,7 +1374,7 @@ int16_t FFindNearestObject(APPSESSION &app, POINT16 pt, GrobjClass grobj, SCAN *
                     }
                 SelectThing:
                     scan.pt = lpth->pt();
-                    scan.ith = (int16_t)((uint8_t *)lpth - (uint8_t *)app.state.lpThings) / 18;
+                    scan.ith = static_cast<int16_t>((reinterpret_cast<uint8_t *>(lpth) - reinterpret_cast<uint8_t *>(app.state.lpThings))) / 18;
                     scan.idpl = idplNone;
                     scan.ifl = iflNone;
                     scan.grobjFull = grobjThing;
@@ -1388,9 +1388,9 @@ int16_t FFindNearestObject(APPSESSION &app, POINT16 pt, GrobjClass grobj, SCAN *
             ptWp = app.state.sel.fl.lpplord->rgord()[i].pt;
             dx = pt.x - ptWp.x;
             dy = pt.y - ptWp.y;
-            lTry = (uint32_t)(dx * dx);
-            if ((int32_t)(uint32_t)(dx * dx) <= lSquare) {
-                lTry += (uint32_t)(dy * dy);
+            lTry = static_cast<uint32_t>((dx * dx));
+            if (static_cast<int32_t>(static_cast<uint32_t>((dx * dx))) <= lSquare) {
+                lTry += static_cast<uint32_t>((dy * dy));
                 if (lTry <= lSquare) {
                     if ((lTry == lSquare && !(scan.grobj & (grobjPlanet | grobjFleet | grobjThing))) || (ptWp.x == scan.pt.x && ptWp.y == scan.pt.y)) {
                         if ((scan.grobjFull & grobjOther) && i != app.state.sel.scan.iwp)
@@ -1496,16 +1496,16 @@ int16_t ScanToPt(APPSESSION &app, int16_t d) {
         d *= 4;
         break;
     case zoom38:
-        d = (int16_t)(d * 8) / 3;
+        d = static_cast<int16_t>((d * 8)) / 3;
         break;
     case zoom75:
-        d = (int16_t)(d * 4) / 3;
+        d = static_cast<int16_t>((d * 4)) / 3;
         break;
     case zoom125:
-        d = (int16_t)(d * 4) / 5;
+        d = static_cast<int16_t>((d * 4)) / 5;
         break;
     case zoom150:
-        d = (int16_t)(d * 2) / 3;
+        d = static_cast<int16_t>((d * 2)) / 3;
     }
     return d;
 }
@@ -1555,10 +1555,10 @@ void UpdateShdefCost(APPSESSION &app, SHDEF *lpshdef) {
     part.SetPhul(lphul);
     PartQueryIO().pfnTrueCost(app, app.state.idPlayer, &part, rgCosts);
     for (c = 0; c < 3; c++) {
-        rgMin[c] = (uint32_t)rgCosts[c];
+        rgMin[c] = static_cast<uint32_t>(rgCosts[c]);
     }
-    resCost = (uint32_t)rgCosts[3];
-    wt = (uint32_t)lphul->wtEmpty;
+    resCost = static_cast<uint32_t>(rgCosts[3]);
+    wt = static_cast<uint32_t>(lphul->wtEmpty);
     lpshdef->hul.dp = lphul->dp;
     lphul = &lpshdef->hul;
     for (c = 0; c < lphul->chs; c++) {
@@ -1567,17 +1567,17 @@ void UpdateShdefCost(APPSESSION &app, SHDEF *lpshdef) {
             PartQueryIO().pfnLookup(app, &part);
             PartQueryIO().pfnTrueCost(app, app.state.idPlayer, &part, rgCosts);
             for (k = 0; k < 3; k++) {
-                rgMin[k] += (uint32_t)(lphul->rghs[c].cItem * rgCosts[k]);
+                rgMin[k] += static_cast<uint32_t>((lphul->rghs[c].cItem * rgCosts[k]));
             }
-            resCost += (uint32_t)(lphul->rghs[c].cItem * rgCosts[3]);
-            wt += (uint32_t)(lphul->rghs[c].cItem * part.pcom().cMass());
+            resCost += static_cast<uint32_t>((lphul->rghs[c].cItem * rgCosts[3]));
+            wt += static_cast<uint32_t>((lphul->rghs[c].cItem * part.pcom().cMass()));
             switch (lphul->rghs[c].grhst) {
             default:
                 break;
             case hstArmor:
                 /* 32-bit: the original's int16_t overflowed for large slots
                    (24 Superlatanium), and RS then halved the negative value. */
-                dpT = (int32_t)lphul->rghs[c].cItem * part.parmor()->dp;
+                dpT = static_cast<int32_t>(lphul->rghs[c].cItem) * part.parmor()->dp;
                 if (fWeakArmor) {
                     dpT >>= 1;
                 }
@@ -1609,7 +1609,7 @@ uint16_t WPackLong(int32_t l) {
 
     exp = 0;
     while (l & 0xffffe000) {
-        l = (uint32_t)((uint32_t)l >> 2);
+        l = static_cast<uint32_t>((static_cast<uint32_t>(l) >> 2));
         exp++;
     }
     return exp << 0xd | LOWORD(l);
@@ -1626,13 +1626,13 @@ int16_t GetPlanetScannerRange(APPSESSION &app, PLANET *lppl, int16_t *pDeep) {
         *pDeep = 0;
     }
     if (RaceQueryIO().pfnStat(&app.state.rgplr[lppl->iPlayer], rsMajorAdv) == raMacintosh) {
-        dRange = LOWORD((int32_t)sqrt((double)(uint32_t)(lppl->rgwtMin[3] * 10)));
+        dRange = LOWORD(static_cast<int32_t>(sqrt(static_cast<double>(static_cast<uint32_t>((lppl->rgwtMin[3] * 10))))));
         if (RaceQueryIO().pfnGrbit(&app.state.rgplr[app.state.idPlayer], ibitRaceNoAdvScanner) != 0) {
-            dRange = LOWORD((int32_t)(dRange * 1412) / 1000);
+            dRange = LOWORD(static_cast<int32_t>((dRange * 1412)) / 1000);
             if (pDeep) {
                 *pDeep = 0;
             }
-        } else if (pDeep && lppl->fStarbase && (int16_t)app.state.rglpshdefSB[lppl->iPlayer][lppl->isb].hul.ihuldef >= ihuldefUltraStation) {
+        } else if (pDeep && lppl->fStarbase && static_cast<int16_t>(app.state.rglpshdefSB[lppl->iPlayer][lppl->isb].hul.ihuldef) >= ihuldefUltraStation) {
             *pDeep = dRange / 2;
         }
         goto LFinishUp;
@@ -1678,7 +1678,7 @@ int16_t GetCachedFleetScannerRange(APPSESSION &app, FLEET *lpfl, int16_t *pdPlan
             if (dT != 2047 && dT > dRange) {
                 dRange = dT;
             }
-            if ((int16_t)app.state.rglpshdef[iPlr][i].dScanRange2 > dPlanRange) {
+            if (static_cast<int16_t>(app.state.rglpshdef[iPlr][i].dScanRange2) > dPlanRange) {
                 dPlanRange = app.state.rglpshdef[iPlr][i].dScanRange2;
             }
             if (app.state.rglpshdef[iPlr][i].pctDetect < pctDetect) {
@@ -1757,8 +1757,8 @@ int16_t GetShdefScannerRange(APPSESSION &app, SHDEF *lpshdef, int16_t iplr, int1
     double   lBIPR4;
     double   lRange4;
 
-    lRange4 = (double)0;
-    lPlanRange4 = (double)0;
+    lRange4 = static_cast<double>(0);
+    lPlanRange4 = static_cast<double>(0);
     fHasScanner = 0;
     iSteal = 0;
     cDetectors = 0;
@@ -1775,17 +1775,17 @@ int16_t GetShdefScannerRange(APPSESSION &app, SHDEF *lpshdef, int16_t iplr, int1
         case ihuldefScout:
         case ihuldefDestroyer:
         case ihuldefFrigate:
-            if ((double)lBIR4 < (double)0) {
+            if (static_cast<double>(lBIR4) < static_cast<double>(0)) {
                 if (app.state.game.fTutorial) {
                     lBIR4 = 2.56e+06;
                     lBIPR4 = 160000.0;
                 } else {
-                    lBIPR4 = (double)(int16_t)(app.state.rgplr[iplr].rgTech[4] * 10);
-                    lBIR4 = (double)((double)lBIPR4 * 2);
-                    lBIPR4 = (double)((double)lBIPR4 * lBIPR4);
-                    lBIPR4 = (double)((double)lBIPR4 * lBIPR4);
-                    lBIR4 = (double)((double)lBIR4 * lBIR4);
-                    lBIR4 = (double)((double)lBIR4 * lBIR4);
+                    lBIPR4 = static_cast<double>(static_cast<int16_t>((app.state.rgplr[iplr].rgTech[4] * 10)));
+                    lBIR4 = static_cast<double>((static_cast<double>(lBIPR4) * 2));
+                    lBIPR4 = static_cast<double>((static_cast<double>(lBIPR4) * lBIPR4));
+                    lBIPR4 = static_cast<double>((static_cast<double>(lBIPR4) * lBIPR4));
+                    lBIR4 = static_cast<double>((static_cast<double>(lBIR4) * lBIR4));
+                    lBIR4 = static_cast<double>((static_cast<double>(lBIR4) * lBIR4));
                 }
             }
             lRange4 = lBIR4;
@@ -1801,10 +1801,10 @@ int16_t GetShdefScannerRange(APPSESSION &app, SHDEF *lpshdef, int16_t iplr, int1
             fHasScanner = 1;
             iScanner = static_cast<iscanner>(lphs->iItem);
             lT = dRangeT = LpscannerFromId(lphs->iItem)->dRange;
-            lT = (double)((double)lT * lT);
-            lT = (double)((double)lT * lT);
-            lT = (double)((double)lT * (uint32_t)lphs->cItem);
-            lRange4 = (double)((double)lRange4 + lT);
+            lT = static_cast<double>((static_cast<double>(lT) * lT));
+            lT = static_cast<double>((static_cast<double>(lT) * lT));
+            lT = static_cast<double>((static_cast<double>(lT) * static_cast<uint32_t>(lphs->cItem)));
+            lRange4 = static_cast<double>((static_cast<double>(lRange4) + lT));
             dRangeT = LpscannerFromId(iScanner)->grfAbilities;
             if (iScanner == iscannerChameleonScanner) {
                 dRangeT = 45;
@@ -1822,20 +1822,20 @@ int16_t GetShdefScannerRange(APPSESSION &app, SHDEF *lpshdef, int16_t iplr, int1
                 continue;
             dRangeT = dRangeT == 1 ? 50 : dRangeT == 2 ? 100 : 200;
         LPlanScan:
-            lT = (double)dRangeT;
-            lT = (double)((double)lT * lT);
-            lT = (double)((double)lT * lT);
-            lT = (double)((double)lT * (uint32_t)lphs->cItem);
-            lPlanRange4 = (double)((double)lPlanRange4 + lT);
+            lT = static_cast<double>(dRangeT);
+            lT = static_cast<double>((static_cast<double>(lT) * lT));
+            lT = static_cast<double>((static_cast<double>(lT) * lT));
+            lT = static_cast<double>((static_cast<double>(lT) * static_cast<uint32_t>(lphs->cItem)));
+            lPlanRange4 = static_cast<double>((static_cast<double>(lPlanRange4) + lT));
         } else if (lphs->grhst == hstArmor && lphs->iItem == iarmorMegaPolyShell) {
             dRangeT = 80;
             dRangeT2 = 40;
         LOddBallScanners:
-            lT = (double)dRangeT;
-            lT = (double)((double)lT * lT);
-            lT = (double)((double)lT * lT);
-            lT = (double)((double)lT * (uint32_t)lphs->cItem);
-            lRange4 = (double)((double)lRange4 + lT);
+            lT = static_cast<double>(dRangeT);
+            lT = static_cast<double>((static_cast<double>(lT) * lT));
+            lT = static_cast<double>((static_cast<double>(lT) * lT));
+            lT = static_cast<double>((static_cast<double>(lT) * static_cast<uint32_t>(lphs->cItem)));
+            lRange4 = static_cast<double>((static_cast<double>(lRange4) + lT));
             dRangeT = dRangeT2;
             goto LPlanScan;
         } else if (lphs->grhst == hstBeam && lphs->iItem == ibeamMultiContainedMunition) {
@@ -1850,8 +1850,8 @@ int16_t GetShdefScannerRange(APPSESSION &app, SHDEF *lpshdef, int16_t iplr, int1
             cDetectors += lphs->cItem;
         }
     }
-    if ((double)lRange4 > (double)0 || fHasScanner) {
-        dRange = LOWORD((int32_t)sqrt((double)sqrt(lRange4)));
+    if (static_cast<double>(lRange4) > static_cast<double>(0) || fHasScanner) {
+        dRange = LOWORD(static_cast<int32_t>(sqrt(static_cast<double>(sqrt(lRange4)))));
         if (iplr != iplrNone && RaceQueryIO().pfnGrbit(&app.state.rgplr[iplr], ibitRaceNoAdvScanner) != 0) {
             dRange *= 2;
         }
@@ -1859,7 +1859,7 @@ int16_t GetShdefScannerRange(APPSESSION &app, SHDEF *lpshdef, int16_t iplr, int1
         dRange = -1;
     }
     if (pdPlanRange) {
-        *pdPlanRange = LOWORD((int32_t)sqrt((double)sqrt(lPlanRange4)));
+        *pdPlanRange = LOWORD(static_cast<int32_t>(sqrt(static_cast<double>(sqrt(lPlanRange4)))));
     }
     if (piSteal) {
         *piSteal = iSteal;
@@ -1894,22 +1894,22 @@ int32_t LCalcFuelGainFromRamScoops(APPSESSION &app, FLEET *lpfl, int16_t iWarp, 
                 if (rgiFuel[iWarp] == 0) {
                     pctShip10 += lpshdef->hul.rghs[0].cItem;
                     if (rgiFuel[iWarp + 1] == 0) {
-                        pctShip10 += (uint32_t)(lpshdef->hul.rghs[0].cItem * 2);
+                        pctShip10 += static_cast<uint32_t>((lpshdef->hul.rghs[0].cItem * 2));
                         if (iWarp < 9 && rgiFuel[iWarp + 2] == 0) {
-                            pctShip10 += (uint32_t)(lpshdef->hul.rghs[0].cItem * 3);
+                            pctShip10 += static_cast<uint32_t>((lpshdef->hul.rghs[0].cItem * 3));
                             if (iWarp < 8 && rgiFuel[iWarp + 3] == 0) {
-                                pctShip10 += (uint32_t)(lpshdef->hul.rghs[0].cItem * 4);
+                                pctShip10 += static_cast<uint32_t>((lpshdef->hul.rghs[0].cItem * 4));
                             }
                         }
                     }
                 }
-                pct10 += (uint32_t)(pctShip10 * lpfl->rgcsh[i]);
+                pct10 += static_cast<uint32_t>((pctShip10 * lpfl->rgcsh[i]));
             }
         }
         i++;
         lpshdef++;
     }
-    pct10 = (uint32_t)(pct10 * dTravel);
+    pct10 = static_cast<uint32_t>((pct10 * dTravel));
     return pct10;
 }
 
@@ -1939,7 +1939,7 @@ int32_t CalcPlayerScore(APPSESSION &app, int16_t iPlr, SCORE *pscore) {
             if (app.state.vrgiplrPopScore && app.state.vrgiplrPopScore[lppl->id] == iPlr) {
                 pl.rgwtMin[3] = app.state.vrgwtPopScore[lppl->id];
             }
-            lTemp = (int32_t)((pl.rgwtMin[3] + 999) / 1000);
+            lTemp = static_cast<int32_t>(((pl.rgwtMin[3] + 999) / 1000));
             if (lTemp > 6) {
                 lTemp = 6;
             }
@@ -1950,8 +1950,8 @@ int32_t CalcPlayerScore(APPSESSION &app, int16_t iPlr, SCORE *pscore) {
             score.cResources += ResearchIO().pfnResources(app, &pl, iPlr);
         }
     }
-    score.lScore += (int32_t)(score.cResources / 30);
-    score.lScore += (int16_t)(3 * score.cStarbase);
+    score.lScore += static_cast<int32_t>((score.cResources / 30));
+    score.lScore += static_cast<int16_t>((3 * score.cStarbase));
     if (!app.state.rgplr[iPlr].fDead) {
         for (i = 0; i < 6; i++) {
             iTech = app.state.rgplr[iPlr].rgTech[i];
@@ -1959,11 +1959,11 @@ int32_t CalcPlayerScore(APPSESSION &app, int16_t iPlr, SCORE *pscore) {
             if (iTech < 4) {
                 score.lScore += iTech;
             } else if (iTech < 7) {
-                score.lScore += (int16_t)(iTech * 2 - 3);
+                score.lScore += static_cast<int16_t>((iTech * 2 - 3));
             } else if (iTech < 10) {
-                score.lScore += (int16_t)(3 * iTech - 9);
+                score.lScore += static_cast<int16_t>((3 * iTech - 9));
             } else {
-                score.lScore += (int16_t)(iTech * 4 - 18);
+                score.lScore += static_cast<int16_t>((iTech * 4 - 18));
             }
         }
     }
@@ -1996,9 +1996,9 @@ int32_t CalcPlayerScore(APPSESSION &app, int16_t iPlr, SCORE *pscore) {
             }
         }
     }
-    score.lScore += (int32_t)((rgcsh[0] < score.cPlanet ? rgcsh[0] : score.cPlanet) / 2) + (int32_t)((rgcsh[1] < score.cPlanet ? rgcsh[1] : score.cPlanet) * 2);
+    score.lScore += static_cast<int32_t>(((rgcsh[0] < score.cPlanet ? rgcsh[0] : score.cPlanet) / 2)) + static_cast<int32_t>(((rgcsh[1] < score.cPlanet ? rgcsh[1] : score.cPlanet) * 2));
     if (rgcsh[2] > 0) {
-        score.lScore += (int32_t)((int32_t)((int32_t)(rgcsh[2] * 8) * score.cPlanet) / (score.cPlanet + rgcsh[2]));
+        score.lScore += static_cast<int32_t>((static_cast<int32_t>((static_cast<int32_t>((rgcsh[2] * 8)) * score.cPlanet)) / (score.cPlanet + rgcsh[2])));
     }
     for (i = 0; i < 3; i++) {
         score.rgcsh[i] = WPackLong(rgcsh[i]);
@@ -2250,9 +2250,9 @@ int32_t ChgPopFromPlanet(APPSESSION &app, PLANET *lppl, int16_t fUpdate) {
     lPopOld = lppl->rgwtMin[3];
     fPopDied = 1;
     if (pctDesire < 0) {
-        lPopInc100 = 1 <= (int32_t)(lPopOld * (int16_t)-pctDesire) / 10 ? (int32_t)(lPopOld * (int16_t)-pctDesire) / 10 : 1;
-        lPopInc = (int32_t)(lPopInc100 / 100);
-        lPopIncDelta = (int32_t)(lPopInc100 % 100);
+        lPopInc100 = 1 <= static_cast<int32_t>((lPopOld * static_cast<int16_t>(-pctDesire))) / 10 ? static_cast<int32_t>((lPopOld * static_cast<int16_t>(-pctDesire))) / 10 : 1;
+        lPopInc = static_cast<int32_t>((lPopInc100 / 100));
+        lPopIncDelta = static_cast<int32_t>((lPopInc100 % 100));
         if (lPopInc == 0 && lPopIncDelta == 0) {
             lPopIncDelta = 1;
         }
@@ -2265,31 +2265,31 @@ int32_t ChgPopFromPlanet(APPSESSION &app, PLANET *lppl, int16_t fUpdate) {
         goto LUpdateAndExit;
     }
     lMaxPop = CalcPlanetMaxPop(app, lppl->id, lppl->iPlayer);
-    pctGrow100 = (int16_t)(PctTrueMaxGrowth(app, lppl->iPlayer) * pctDesire);
-    if (lPopOld > (int32_t)(lMaxPop / 4)) {
-        pctFull = (int32_t)((int32_t)(lPopOld * 1000) / lMaxPop);
+    pctGrow100 = static_cast<int16_t>((PctTrueMaxGrowth(app, lppl->iPlayer) * pctDesire));
+    if (lPopOld > static_cast<int32_t>((lMaxPop / 4))) {
+        pctFull = static_cast<int32_t>((static_cast<int32_t>((lPopOld * 1000)) / lMaxPop));
         if (lPopOld >= lMaxPop) {
             if (lPopOld < lMaxPop + 10) {
                 return 0;
             }
-            pctRetard = -300 <= 99 - (int32_t)(pctFull / 10) ? 99 - (int32_t)(pctFull / 10) : -300;
-            pctGrow100 = (int32_t)(pctRetard * 4);
+            pctRetard = -300 <= 99 - static_cast<int32_t>((pctFull / 10)) ? 99 - static_cast<int32_t>((pctFull / 10)) : -300;
+            pctGrow100 = static_cast<int32_t>((pctRetard * 4));
         } else {
             pctRetard = 1000 - pctFull;
-            pctRetard = (uint32_t)(pctRetard * pctRetard);
+            pctRetard = static_cast<uint32_t>((pctRetard * pctRetard));
             if (pctGrow100 < 1000) {
-                pctGrow100 = (int32_t)(pctGrow100 * pctRetard) / 562500;
+                pctGrow100 = static_cast<int32_t>((pctGrow100 * pctRetard)) / 562500;
             } else {
-                pctGrow100 = (uint32_t)((int32_t)((int32_t)(pctGrow100 / 10) * pctRetard) / 562500 * 10);
+                pctGrow100 = static_cast<uint32_t>((static_cast<int32_t>((static_cast<int32_t>((pctGrow100 / 10)) * pctRetard)) / 562500 * 10));
             }
         }
     }
-    lPopInc100 = (uint32_t)(lPopOld * (int32_t)(pctGrow100 / 100));
+    lPopInc100 = static_cast<uint32_t>((lPopOld * static_cast<int32_t>((pctGrow100 / 100))));
     if (lPopInc100 < 10000000) {
-        lPopInc100 = (int32_t)(lPopOld * pctGrow100) / 100;
+        lPopInc100 = static_cast<int32_t>((lPopOld * pctGrow100)) / 100;
     }
-    lPopInc = (int32_t)(lPopInc100 / 100);
-    lPopIncDelta = (int32_t)(lPopInc100 % 100);
+    lPopInc = static_cast<int32_t>((lPopInc100 / 100));
+    lPopIncDelta = static_cast<int32_t>((lPopInc100 % 100));
     if (lPopInc == 0 && lPopIncDelta == 0) {
         lPopIncDelta = 1;
     }
@@ -2303,7 +2303,7 @@ int32_t ChgPopFromPlanet(APPSESSION &app, PLANET *lppl, int16_t fUpdate) {
     }
 LUpdateAndExit:
     if (fUpdate) {
-        lppl->iDeltaPop = (uint16_t)DeltaCur;
+        lppl->iDeltaPop = static_cast<uint16_t>(DeltaCur);
         lppl->rgwtMin[3] += lPopInc;
     }
     return lPopInc;
@@ -2379,7 +2379,7 @@ LSrcChk:
             }
         }
     }
-    dTravel = LOWORD((int32_t)DGetDistance(ptSrc.x, ptSrc.y, ptDst.x, ptDst.y));
+    dTravel = LOWORD(static_cast<int32_t>(DGetDistance(ptSrc.x, ptSrc.y, ptDst.x, ptDst.y)));
     fDanger = 0;
     for (ishdef = 0; ishdef < 16; ishdef++) {
         if (lpfl->rgcsh[ishdef] != 0) {
@@ -2427,7 +2427,7 @@ int32_t WtFromLpfl(APPSESSION &app, FLEET *lpfl) {
     cMass = 0;
     for (i = 0; i < 16; i++) {
         if (lpfl->rgcsh[i] > 0) {
-            cMass += (uint32_t)(lpfl->rgcsh[i] * (uint32_t)app.state.rglpshdef[lpfl->iPlayer][i].hul.wtEmpty);
+            cMass += static_cast<uint32_t>((lpfl->rgcsh[i] * static_cast<uint32_t>(app.state.rglpshdef[lpfl->iPlayer][i].hul.wtEmpty)));
         }
     }
     for (i = 0; i <= 3; i++) {
@@ -2442,7 +2442,7 @@ int16_t FCanBuildShdef(APPSESSION &app, SHDEF *lpshdef, int16_t iplr) {
     PART    part;
 
     iplrSav = app.state.idPlayer;
-    if ((int16_t)lpshdef->hul.ihuldef >= ihuldefOrbitalFort) {
+    if (static_cast<int16_t>(lpshdef->hul.ihuldef) >= ihuldefOrbitalFort) {
         part.hs.grhst = hstSBHull;
         part.hs.iItem = lpshdef->hul.ihuldef - ihuldefOrbitalFort;
     } else {
@@ -2599,10 +2599,10 @@ int16_t CchGetETA(APPSESSION &app, HDC hdc, FLEET *lpfl, char *sz, int16_t iwp, 
             c = TextIO().pfnCchGetString(app, ids, sz);
             return c;
         }
-        if (iSpeed >= (int16_t)LOWORD((int32_t)dbl)) {
+        if (iSpeed >= static_cast<int16_t>(LOWORD(static_cast<int32_t>(dbl)))) {
             iSpeed = 1;
         } else {
-            iSpeed = (int16_t)(LOWORD((int32_t)dbl) + iSpeed - 1) / iSpeed;
+            iSpeed = static_cast<int16_t>((LOWORD(static_cast<int32_t>(dbl)) + iSpeed - 1)) / iSpeed;
         }
         cYears += iSpeed;
         i++;

@@ -43,7 +43,7 @@ BOOL FCaptureScanner(APPSESSION &app, SCANSNAPSHOT *lpsnap) {
     unsigned grRelation;
     char szWorkSav[sizeof(app.state.szWork)];
     if (!lpsnap || lpsnap->rgobj || lpsnap->cObject != 0 || !FScannerReady(app)) return 0;
-    c = (size_t)app.state.game.cPlanMax + (size_t)app.state.cFleet + (size_t)app.state.cThing;
+    c = static_cast<size_t>(app.state.game.cPlanMax) + static_cast<size_t>(app.state.cFleet) + static_cast<size_t>(app.state.cThing);
     if (c > SIZE_MAX / sizeof(*lpobj)) return 0;
     lpsnap->rgobj.reset(static_cast<SCANOBJECT *>(calloc(c, sizeof(*lpobj))));
     if (!lpsnap->rgobj) return 0;
@@ -53,38 +53,38 @@ BOOL FCaptureScanner(APPSESSION &app, SCANSNAPSHOT *lpsnap) {
     lpsnap->rcViewport.bottom = StarsMax(0, lpsnap->rcViewport.bottom - app.lpui->dySBar);
     /* Name helpers use the game's scratch buffer; a read-only capture preserves it. */
     memcpy(szWorkSav, app.state.szWork, sizeof(app.state.szWork));
-    for (i = 0; i < (size_t)app.state.game.cPlanMax; i++) {
+    for (i = 0; i < static_cast<size_t>(app.state.game.cPlanMax); i++) {
         lpobj = &lpsnap->rgobj[lpsnap->cObject++];
-        lpobj->grType = grobjPlanet; lpobj->id = (uint16_t)i; lpobj->ith = ithNone;
-        lppl = LpplFromId(app, (int16_t)i);
+        lpobj->grType = grobjPlanet; lpobj->id = static_cast<uint16_t>(i); lpobj->ith = ithNone;
+        lppl = LpplFromId(app, static_cast<int16_t>(i));
         lpobj->iPlayer = lppl ? lppl->iPlayer : iplrNone;
         lpobj->det = lppl ? lppl->det : 0;
-        CchSprintf(lpobj->szName, "%s", TextIO().pfnPlanetName(app, (int16_t)i));
+        CchSprintf(lpobj->szName, "%s", TextIO().pfnPlanetName(app, static_cast<int16_t>(i)));
         ScanObjectPosition(app, lpsnap, lpobj, app.state.rgptPlan[i]);
-        lpobj->fScanSelected = app.state.sel.scan.grobj == grobjPlanet && app.state.sel.scan.idpl == (int16_t)i;
-        lpobj->fMainSelected = app.state.sel.grobj == grobjPlanet && app.state.sel.id == (int16_t)i;
+        lpobj->fScanSelected = app.state.sel.scan.grobj == grobjPlanet && app.state.sel.scan.idpl == static_cast<int16_t>(i);
+        lpobj->fMainSelected = app.state.sel.grobj == grobjPlanet && app.state.sel.id == static_cast<int16_t>(i);
     }
-    for (i = 0; i < (size_t)app.state.cFleet && app.state.rglpfl[i]; i++) {
+    for (i = 0; i < static_cast<size_t>(app.state.cFleet) && app.state.rglpfl[i]; i++) {
         lpfl = app.state.rglpfl[i];
         if (lpfl->fDead) continue;
         lpobj = &lpsnap->rgobj[lpsnap->cObject++];
-        lpobj->grType = grobjFleet; lpobj->id = (uint16_t)lpfl->id; lpobj->ith = ithNone;
+        lpobj->grType = grobjFleet; lpobj->id = static_cast<uint16_t>(lpfl->id); lpobj->ith = ithNone;
         lpobj->iPlayer = lpfl->iPlayer; lpobj->det = lpfl->det;
         CchSprintf(lpobj->szName, "%s", PszGetFleetName(app, lpfl->id));
         ScanObjectPosition(app, lpsnap, lpobj, lpfl->pt);
-        lpobj->fScanSelected = app.state.sel.scan.grobj == grobjFleet && app.state.sel.scan.ifl == (int16_t)i;
+        lpobj->fScanSelected = app.state.sel.scan.grobj == grobjFleet && app.state.sel.scan.ifl == static_cast<int16_t>(i);
         lpobj->fMainSelected = app.state.sel.grobj == grobjFleet && app.state.sel.id == lpfl->id;
         lpobj->fFiltered = (app.lpui->grbitScan & grbitScanViewMask) == scanViewNoPlayerInfo ||
             (CShipsScanVis(app, lpfl) == 0 && !lpobj->fScanSelected && !lpobj->fMainSelected);
     }
-    for (i = 0; app.state.lpThings && i < (size_t)app.state.cThing; i++) {
+    for (i = 0; app.state.lpThings && i < static_cast<size_t>(app.state.cThing); i++) {
         lpth = &app.state.lpThings[i];
         lpobj = &lpsnap->rgobj[lpsnap->cObject++];
         lpobj->grType = grobjThing; lpobj->id = lpth->idFull(); lpobj->ith = lpth->ith();
         lpobj->iPlayer = lpth->iplr(); lpobj->det = 0;
         CchSprintf(lpobj->szName, "%s", PszGetThingName(app, lpth->idFull()));
         ScanObjectPosition(app, lpsnap, lpobj, lpth->pt());
-        lpobj->fScanSelected = app.state.sel.scan.grobj == grobjThing && app.state.sel.scan.ith == (int16_t)i;
+        lpobj->fScanSelected = app.state.sel.scan.grobj == grobjThing && app.state.sel.scan.ith == static_cast<int16_t>(i);
         lpobj->fFiltered = (app.lpui->grbitScan & grbitScanViewMask) == scanViewNoPlayerInfo;
         if (lpth->ith() == ithMinefield) {
             grRelation = lpth->iplr() == app.state.idPlayer ? 1 :
@@ -104,10 +104,10 @@ BOOL FSelectScannerObject(APPSESSION &app, const SCANSNAPSHOT *lpsnap, uint16_t 
     if (!lpsnap || !FScannerReady(app) || lpsnap->lidGame != app.state.game.lid || lpsnap->turn != app.state.game.turn || lpsnap->idPlayer != app.state.idPlayer) return 0;
     memset(&scan, 0, sizeof(scan)); scan.idpl = idplNone; scan.ifl = iflNone; scan.ith = ithNone; scan.iwp = iwpNone;
     if (grType == grobjPlanet) {
-        if (id >= (uint16_t)app.state.game.cPlanMax) return 0;
-        scan.idpl = (int16_t)id; pt = app.state.rgptPlan[id];
+        if (id >= static_cast<uint16_t>(app.state.game.cPlanMax)) return 0;
+        scan.idpl = static_cast<int16_t>(id); pt = app.state.rgptPlan[id];
     } else if (grType == grobjFleet) {
-        for (i = 0; i < app.state.cFleet && app.state.rglpfl[i]; i++) if ((uint16_t)app.state.rglpfl[i]->id == id && !app.state.rglpfl[i]->fDead) break;
+        for (i = 0; i < app.state.cFleet && app.state.rglpfl[i]; i++) if (static_cast<uint16_t>(app.state.rglpfl[i]->id) == id && !app.state.rglpfl[i]->fDead) break;
         if (i == app.state.cFleet || !app.state.rglpfl[i]) return 0;
         scan.ifl = i; pt = app.state.rglpfl[i]->pt;
     } else if (grType == grobjThing) {
@@ -119,7 +119,7 @@ BOOL FSelectScannerObject(APPSESSION &app, const SCANSNAPSHOT *lpsnap, uint16_t 
        fleets at one planet must not all resolve to the nearest fleet. */
     FFindNearestObject(app, pt, static_cast<GrobjClass>(grobjPlanet | grobjFleet | grobjThing | mdExact), &scan);
     scan.grobj = static_cast<GrobjClass>(grType); scan.grobjFull = static_cast<GrobjClass>(scan.grobjFull | grType); scan.pt = pt; scan.iwp = iwpNone;
-    if (grType == grobjPlanet) scan.idpl = (int16_t)id;
+    if (grType == grobjPlanet) scan.idpl = static_cast<int16_t>(id);
     else if (grType == grobjFleet) scan.ifl = i;
     else scan.ith = i;
     ChangeScanSel(app, &scan, 2);
@@ -133,10 +133,10 @@ static BOOL FWriteScanString(NATIVEFILE *lpfile, const char *psz) {
 
     if (!FUtf8Valid(psz, strlen(psz)) || ChPutNativeFile('"', lpfile) == EOF) return 0;
     while (*psz) {
-        ch = (unsigned char)*psz++;
-        if (ch == '"' || ch == '\\') { if (ChPutNativeFile('\\', lpfile) == EOF || ChPutNativeFile((int)ch, lpfile) == EOF) return 0; }
+        ch = static_cast<unsigned char>(*psz++);
+        if (ch == '"' || ch == '\\') { if (ChPutNativeFile('\\', lpfile) == EOF || ChPutNativeFile(static_cast<int>(ch), lpfile) == EOF) return 0; }
         else if (ch < 32) { if (CchNativePrintf(lpfile, "\\u%04x", ch) < 0) return 0; }
-        else if (ChPutNativeFile((int)ch, lpfile) == EOF) return 0;
+        else if (ChPutNativeFile(static_cast<int>(ch), lpfile) == EOF) return 0;
     }
     return ChPutNativeFile('"', lpfile) != EOF;
 }
@@ -146,14 +146,14 @@ BOOL FWriteScannerSnapshot(const SCANSNAPSHOT *lpsnap, NATIVEFILE *lpfile) {
     const SCANOBJECT *lp;
     if (!lpsnap || !lpfile || (lpsnap->cObject != 0 && !lpsnap->rgobj)) return 0;
     if (CchNativePrintf(lpfile, "{\"schema\":1,\"game\":%ld,\"turn\":%u,\"player\":%d,\"zoom\":%d,\"viewport\":[%ld,%ld,%ld,%ld],\"objects\":[\n",
-        (long)lpsnap->lidGame, lpsnap->turn, lpsnap->idPlayer, lpsnap->iZoom,
-        (long)lpsnap->rcViewport.left,(long)lpsnap->rcViewport.top,(long)lpsnap->rcViewport.right,(long)lpsnap->rcViewport.bottom) < 0) return 0;
+        static_cast<long>(lpsnap->lidGame), lpsnap->turn, lpsnap->idPlayer, lpsnap->iZoom,
+        static_cast<long>(lpsnap->rcViewport.left),static_cast<long>(lpsnap->rcViewport.top),static_cast<long>(lpsnap->rcViewport.right),static_cast<long>(lpsnap->rcViewport.bottom)) < 0) return 0;
     for (i = 0; i < lpsnap->cObject; i++) {
         lp = &lpsnap->rgobj[i];
         if (!memchr(lp->szName, 0, sizeof(lp->szName))) return 0;
         if (CchNativePrintf(lpfile, "%s{\"kind\":%u,\"id\":%u,\"owner\":%d,\"detail\":%d,\"thingType\":%d,\"universe\":[%ld,%ld],\"client\":[%ld,%ld],\"screen\":[%ld,%ld],"
             "\"onScreen\":%s,\"filtered\":%s,\"scanSelected\":%s,\"mainSelected\":%s,\"name\":", i ? ",\n" : "", lp->grType,lp->id,lp->iPlayer,lp->det,lp->ith,
-            (long)lp->ptUniverse.x,(long)lp->ptUniverse.y,(long)lp->ptClient.x,(long)lp->ptClient.y,(long)lp->ptScreen.x,(long)lp->ptScreen.y,
+            static_cast<long>(lp->ptUniverse.x),static_cast<long>(lp->ptUniverse.y),static_cast<long>(lp->ptClient.x),static_cast<long>(lp->ptClient.y),static_cast<long>(lp->ptScreen.x),static_cast<long>(lp->ptScreen.y),
             lp->fOnScreen ? "true":"false",lp->fFiltered ? "true":"false",lp->fScanSelected ? "true":"false",lp->fMainSelected ? "true":"false") < 0 ||
             !FWriteScanString(lpfile,lp->szName) || ChPutNativeFile('}',lpfile) == EOF) return 0;
     }
@@ -161,16 +161,16 @@ BOOL FWriteScannerSnapshot(const SCANSNAPSHOT *lpsnap, NATIVEFILE *lpfile) {
 }
 
 static void ScannerInspectDetails(HWND hwnd) {
-    int i = (int)ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, 1), win32::LB_GETCURSEL, 0, 0);
+    int i = static_cast<int>(ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, 1), win32::LB_GETCURSEL, 0, 0));
     SCANOBJECT *lp;
     char sz[768];
-    if (i < 0 || (size_t)i >= snapScanInspector.cObject) { ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd,2), "No active player scanner. Load a game and refresh."); return; }
+    if (i < 0 || static_cast<size_t>(i) >= snapScanInspector.cObject) { ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd,2), "No active player scanner. Load a game and refresh."); return; }
     lp = &snapScanInspector.rgobj[i];
     CchSprintf(sz,"%s\r\nKind %u, ID %u, owner %d, detail %d\r\nUniverse (%ld, %ld)\r\nScanner (%ld, %ld), screen (%ld, %ld)\r\nOn screen: %s; filtered: %s\r\nScanner selection: %s; main selection: %s\r\nGame %ld, turn %u, player %d",
-        lp->szName,lp->grType,lp->id,lp->iPlayer,lp->det,(long)lp->ptUniverse.x,(long)lp->ptUniverse.y,
-        (long)lp->ptClient.x,(long)lp->ptClient.y,(long)lp->ptScreen.x,(long)lp->ptScreen.y,
+        lp->szName,lp->grType,lp->id,lp->iPlayer,lp->det,static_cast<long>(lp->ptUniverse.x),static_cast<long>(lp->ptUniverse.y),
+        static_cast<long>(lp->ptClient.x),static_cast<long>(lp->ptClient.y),static_cast<long>(lp->ptScreen.x),static_cast<long>(lp->ptScreen.y),
         lp->fOnScreen?"yes":"no",lp->fFiltered?"yes":"no",lp->fScanSelected?"yes":"no",lp->fMainSelected?"yes":"no",
-        (long)snapScanInspector.lidGame,snapScanInspector.turn,snapScanInspector.idPlayer);
+        static_cast<long>(snapScanInspector.lidGame),snapScanInspector.turn,snapScanInspector.idPlayer);
     ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd,2),sz);
 }
 
@@ -186,7 +186,7 @@ static void RefreshScannerInspector(APPSESSION &app, HWND hwnd) {
             lp = &snapScanInspector.rgobj[i];
             CchSprintf(sz, "%s %u: %s%s", lp->grType == grobjPlanet ? "Planet" : lp->grType == grobjFleet ? "Fleet" : "Thing",
                        lp->id, lp->szName, lp->fOnScreen ? "" : " [offscreen]");
-            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, 1), win32::LB_ADDSTRING, 0, (LPARAM)sz);
+            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, 1), win32::LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(sz));
         }
     }
     ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, 1), win32::LB_SETCURSEL, 0, 0);
@@ -203,13 +203,13 @@ static LRESULT  ScannerInspectorProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     switch (msg) {
     case win32::WM_CREATE:
         if (!ui::CreateWindowEx(0, "ListBox", "", win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP | win32::WS_BORDER | win32::WS_VSCROLL | win32::LBS_NOTIFY | win32::LBS_NOINTEGRALHEIGHT,
-                          8, 40, 300, 300, hwnd, (HMENU)(INT_PTR)1, app.lpui->hInst, nullptr) ||
+                          8, 40, 300, 300, hwnd, reinterpret_cast<HMENU>(static_cast<INT_PTR>(1)), app.lpui->hInst, nullptr) ||
             !ui::CreateWindowEx(0, "Edit", "", win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP | win32::WS_BORDER | win32::ES_MULTILINE | win32::ES_READONLY | win32::ES_AUTOVSCROLL,
-                          320, 40, 320, 300, hwnd, (HMENU)(INT_PTR)2, app.lpui->hInst, nullptr) ||
+                          320, 40, 320, 300, hwnd, reinterpret_cast<HMENU>(static_cast<INT_PTR>(2)), app.lpui->hInst, nullptr) ||
             !ui::CreateWindowEx(0, "Button", "Refresh", win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
-                          8, 8, 90, 24, hwnd, (HMENU)(INT_PTR)3, app.lpui->hInst, nullptr) ||
+                          8, 8, 90, 24, hwnd, reinterpret_cast<HMENU>(static_cast<INT_PTR>(3)), app.lpui->hInst, nullptr) ||
             !ui::CreateWindowEx(0, "Button", "Select / reveal", win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
-                          108, 8, 130, 24, hwnd, (HMENU)(INT_PTR)4, app.lpui->hInst, nullptr)) return -1;
+                          108, 8, 130, 24, hwnd, reinterpret_cast<HMENU>(static_cast<INT_PTR>(4)), app.lpui->hInst, nullptr)) return -1;
         return 0;
     case win32::WM_SIZE:
         ControlIO().pfnGetClientRect(hwnd, &rc);
@@ -220,8 +220,8 @@ static LRESULT  ScannerInspectorProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         if (LOWORD(w) == 3 && HIWORD(w) == win32::BN_CLICKED) RefreshScannerInspector(app, hwnd);
         else if (LOWORD(w) == 1 && HIWORD(w) == win32::LBN_SELCHANGE) ScannerInspectDetails(hwnd);
         else if (LOWORD(w) == 4 && HIWORD(w) == win32::BN_CLICKED) {
-            i = (int)ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, 1), win32::LB_GETCURSEL, 0, 0);
-            if (i >= 0 && (size_t)i < snapScanInspector.cObject) {
+            i = static_cast<int>(ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, 1), win32::LB_GETCURSEL, 0, 0));
+            if (i >= 0 && static_cast<size_t>(i) < snapScanInspector.cObject) {
                 lp = &snapScanInspector.rgobj[i];
                 if (!FSelectScannerObject(app, &snapScanInspector, lp->grType, lp->id, 1)) ControlIO().pfnMessageBeep(win32::MB_ICONEXCLAMATION);
                 RefreshScannerInspector(app, hwnd);
@@ -251,7 +251,7 @@ HWND ShowScannerInspector(void) {
         if (!fScanInspectorClass) {
             wc.lpfnWndProc = ScannerInspectorProc;
             wc.hInstance = app.lpui->hInst;
-            wc.hbrBackground = (HBRUSH)(INT_PTR)(win32::COLOR_BTNFACE + 1);
+            wc.hbrBackground = reinterpret_cast<HBRUSH>(static_cast<INT_PTR>((win32::COLOR_BTNFACE + 1)));
             if (!win32::RegisterClassA(&wc)) return nullptr;
             fScanInspectorClass = 1;
         }

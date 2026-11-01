@@ -82,7 +82,7 @@ static BOOL FNativePosition(SDL_Window *lpWindow, int *lpx, int *lpy) {
         lpWindow = SDL_GetWindowParent(lpWindow);
     } while (lpWindow);
     if (xWide < INT32_MIN || xWide > INT32_MAX || yWide < INT32_MIN || yWide > INT32_MAX) return 0;
-    *lpx = (int)xWide; *lpy = (int)yWide;
+    *lpx = static_cast<int>(xWide); *lpy = static_cast<int>(yWide);
     return 1;
 }
 
@@ -173,7 +173,7 @@ static void UpdateCompatLiveResize(SDL_Event *lpevent) {
 }
 
 static bool SDLCALL FWatchLiveResize(void *lpv, SDL_Event *lpevent) noexcept {
-    (void)lpv;
+    static_cast<void>(lpv);
     CompatInvokeCleanup([](void *lpvEvent) { UpdateCompatLiveResize(static_cast<SDL_Event *>(lpvEvent)); }, lpevent, nullptr);
     return true;
 }
@@ -217,7 +217,7 @@ HWND LpCompatWindowFromId(SDL_WindowID id) {
 BOOL CompatPeekPaint(LPMSG lpmsg, HWND hwnd, UINT msgMin, UINT msgMax) {
     HWND lpwin;
 
-    if ((INT_PTR)hwnd == -1 || ((msgMin != 0 || msgMax != 0) &&
+    if (reinterpret_cast<INT_PTR>(hwnd) == -1 || ((msgMin != 0 || msgMax != 0) &&
         (win32::WM_PAINT < msgMin || win32::WM_PAINT > msgMax)))
         return 0;
     for (lpwin = lpWindows; lpwin; lpwin = lpwin->lpNext) {
@@ -235,7 +235,7 @@ BOOL CompatPeekPaint(LPMSG lpmsg, HWND hwnd, UINT msgMin, UINT msgMax) {
 
 static COMPATCLASS *LpFindClass(LPCSTR pszClass, HINSTANCE hInstance) {
     COMPATCLASS *lpclass;
-    UINT_PTR idClass = (UINT_PTR)pszClass;
+    UINT_PTR idClass = reinterpret_cast<UINT_PTR>(pszClass);
 
     if (!pszClass)
         return nullptr;
@@ -251,7 +251,7 @@ ATOM win32::RegisterClassA(const WNDCLASSA *lpwc) {
     COMPATCLASS *lpclass;
 
     if (!SDL_IsMainThread() || fShutdown || !lpwc || !lpwc->lpfnWndProc ||
-        (UINT_PTR)lpwc->lpszClassName <= UINT16_MAX ||
+        reinterpret_cast<UINT_PTR>(lpwc->lpszClassName) <= UINT16_MAX ||
         !FUtf8Valid(lpwc->lpszClassName, strlen(lpwc->lpszClassName)) ||
         lpwc->cbWndExtra < 0 || lpwc->cbClsExtra < 0 || atomNext > UINT16_MAX)
         return 0;
@@ -264,11 +264,11 @@ ATOM win32::RegisterClassA(const WNDCLASSA *lpwc) {
         return 0;
     lpclass->wc = *lpwc;
     lpclass->pszClass.reset(SDL_strdup(lpwc->lpszClassName));
-    if ((UINT_PTR)lpwc->lpszMenuName > UINT16_MAX)
+    if (reinterpret_cast<UINT_PTR>(lpwc->lpszMenuName) > UINT16_MAX)
         lpclass->pszMenu.reset(SDL_strdup(lpwc->lpszMenuName));
     if (lpwc->cbClsExtra != 0)
-        lpclass->rgbExtra.reset((BYTE *)calloc(1, (size_t)lpwc->cbClsExtra));
-    if (!lpclass->pszClass || ((UINT_PTR)lpwc->lpszMenuName > UINT16_MAX && !lpclass->pszMenu) ||
+        lpclass->rgbExtra.reset(static_cast<BYTE *>(calloc(1, static_cast<size_t>(lpwc->cbClsExtra))));
+    if (!lpclass->pszClass || (reinterpret_cast<UINT_PTR>(lpwc->lpszMenuName) > UINT16_MAX && !lpclass->pszMenu) ||
         (lpwc->cbClsExtra != 0 && !lpclass->rgbExtra)) {
         delete lpclass;
         return 0;
@@ -276,7 +276,7 @@ ATOM win32::RegisterClassA(const WNDCLASSA *lpwc) {
     lpclass->wc.lpszClassName = lpclass->pszClass.get();
     if (lpclass->pszMenu)
         lpclass->wc.lpszMenuName = lpclass->pszMenu.get();
-    lpclass->atom = (ATOM)atomNext++;
+    lpclass->atom = static_cast<ATOM>(atomNext++);
     lpclass->lpNext = lpClasses;
     lpClasses = lpclass;
     return lpclass->atom;
@@ -316,7 +316,7 @@ static void DestroyCompatWindow(HWND lpwin, BOOL fDestroyMessage, BOOL fNotify) 
     if (fNotify && (win32::GetFocus() == lpwin || win32::IsChild(lpwin, win32::GetFocus()))) win32::SetFocus(nullptr);
     lpwin->fVisible = 0;
     if (fDestroyMessage && !(lpwin->dwExStyle & win32::WS_EX_NOPARENTNOTIFY) && hwndParent && !hwndParent->fDestroying)
-        win32::SendMessageA(hwndParent, win32::WM_PARENTNOTIFY, win32::MAKEWPARAM(win32::WM_DESTROY, lpwin->idChild), (LPARAM)lpwin);
+        win32::SendMessageA(hwndParent, win32::WM_PARENTNOTIFY, win32::MAKEWPARAM(win32::WM_DESTROY, lpwin->idChild), reinterpret_cast<LPARAM>(lpwin));
     if (fDestroyMessage)
         win32::SendMessageA(lpwin, win32::WM_DESTROY, 0, 0);
     // WM_DESTROY sees live children; WM_NCDESTROY follows their teardown.
@@ -445,7 +445,7 @@ HWND win32::CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
     if (!lpwin)
         return nullptr;
     if (lpclass->wc.cbWndExtra != 0)
-        lpwin->rgbExtra = (BYTE *)(calloc(1, (size_t)lpclass->wc.cbWndExtra));
+        lpwin->rgbExtra = static_cast<BYTE *>((calloc(1, static_cast<size_t>(lpclass->wc.cbWndExtra))));
     if (lpclass->wc.cbWndExtra != 0 && !lpwin->rgbExtra) {
         delete lpwin;
         return nullptr;
@@ -457,14 +457,14 @@ HWND win32::CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
         return nullptr;
     }
     if (fChild) {
-        if ((int64_t)x + dx > INT32_MAX || (int64_t)y + dy > INT32_MAX) {
+        if (static_cast<int64_t>(x) + dx > INT32_MAX || static_cast<int64_t>(y) + dy > INT32_MAX) {
             SDL_free(lpwin->pszTitle);
             free(lpwin->rgbExtra);
             delete lpwin;
             return nullptr;
         }
         lpwin->hwndParent = lpparent;
-        lpwin->idChild = (LONG_PTR)hMenu;
+        lpwin->idChild = reinterpret_cast<LONG_PTR>(hMenu);
         win32::SetRect(&lpwin->rcChild, x, y, x + dx, y + dy);
     } else {
         lpwin->hwndOwner = lpparent ? HwndCompatRoot(lpparent) : nullptr;
@@ -474,7 +474,7 @@ HWND win32::CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
         if (dwExStyle & win32::WS_EX_TOPMOST) flags |= SDL_WINDOW_ALWAYS_ON_TOP;
         if ((dwExStyle & win32::WS_EX_NOACTIVATE) || (dwStyle & win32::WS_DISABLED)) flags |= SDL_WINDOW_NOT_FOCUSABLE;
         if (fDialogSequence && lpSequenceWindow.get() && lpwin->hwndOwner == hwndSequenceOwner &&
-            (UINT_PTR)pszClass > UINT16_MAX && !strcmp(pszClass, "#32770") &&
+            reinterpret_cast<UINT_PTR>(pszClass) > UINT16_MAX && !strcmp(pszClass, "#32770") &&
             SDL_GetWindowSize(lpSequenceWindow.get(), &cxReuse, &cyReuse) && cxReuse == dx && cyReuse == dy &&
             (SDL_GetWindowFlags(lpSequenceWindow.get()) & (SDL_WINDOW_BORDERLESS | SDL_WINDOW_RESIZABLE |
              SDL_WINDOW_ALWAYS_ON_TOP | SDL_WINDOW_NOT_FOCUSABLE)) ==
@@ -489,12 +489,12 @@ HWND win32::CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
             lpwin->fDeferPresent = fReuse = 1;
         } else {
             if (lpSequenceWindow.get() && lpwin->hwndOwner == hwndSequenceOwner &&
-                (UINT_PTR)pszClass > UINT16_MAX && !strcmp(pszClass, "#32770")) {
+                reinterpret_cast<UINT_PTR>(pszClass) > UINT16_MAX && !strcmp(pszClass, "#32770")) {
                 DestroySequenceWindow();
             }
             // Menus, combo lists and tooltips need compositor popup roles so
             // their placement remains relative to the owner without focus loss.
-            fNativePopup = lpwin->hwndOwner && (UINT_PTR)pszClass > UINT16_MAX &&
+            fNativePopup = lpwin->hwndOwner && reinterpret_cast<UINT_PTR>(pszClass) > UINT16_MAX &&
                 (!strcmp(pszClass, "StarsCompatPopup") || !strcmp(pszClass, "StarsComboPopup") ||
                  !strcmp(pszClass, "starstt") || !strcmp(pszClass, "starspopup") ||
                  !strcmp(pszClass, "StarsCompatToolbarTip")) &&
@@ -516,8 +516,8 @@ HWND win32::CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
         }
         if (!lpwin->lpWindow.get() ||
             (!fReuse && !fNativePopup && FNativePositionable(lpwin->lpWindow.get()) && !SDL_SetWindowPosition(lpwin->lpWindow.get(),
-                                  x == win32::CW_USEDEFAULT ? (int)SDL_WINDOWPOS_CENTERED : x,
-                                  y == win32::CW_USEDEFAULT ? (int)SDL_WINDOWPOS_CENTERED : y)) ||
+                                  x == win32::CW_USEDEFAULT ? static_cast<int>(SDL_WINDOWPOS_CENTERED) : x,
+                                  y == win32::CW_USEDEFAULT ? static_cast<int>(SDL_WINDOWPOS_CENTERED) : y)) ||
             (!fReuse && !SDL_SyncWindow(lpwin->lpWindow.get())) ||
             // Cocoa can expose an owned popup during creation despite SDL_WINDOW_HIDDEN.
             (!fReuse && !SDL_HideWindow(lpwin->lpWindow.get())) ||
@@ -527,7 +527,7 @@ HWND win32::CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
              !SDL_SetWindowFullscreen(lpwin->lpWindow.get(), true)) ||
             (!fReuse && !fNativePopup && lpwin->hwndOwner && lpwin->hwndOwner->lpWindow.get() &&
              ((SDL_GetWindowFlags(lpwin->hwndOwner->lpWindow.get()) & SDL_WINDOW_FULLSCREEN) ||
-              ((UINT_PTR)pszClass > UINT16_MAX && !strcmp(pszClass, "#32770"))) &&
+              (reinterpret_cast<UINT_PTR>(pszClass) > UINT16_MAX && !strcmp(pszClass, "#32770"))) &&
              // Native dialogs need a transient parent even when the owner is windowed.
              // The dummy driver has no native window hierarchy; HWND ownership
              // still applies there, but SDL_SetWindowParent is unsupported.
@@ -580,18 +580,18 @@ HWND win32::CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
     }
     cs.hMenu = hMenu;
     cs.cx = dx; cs.cy = dy; cs.x = x; cs.y = y;
-    cs.style = (LONG)dwStyle;
+    cs.style = static_cast<LONG>(dwStyle);
     cs.dwExStyle = dwExStyle;
     cs.lpszName = pszTitle;
     cs.lpszClass = pszClass;
-    lr = win32::SendMessageA(lpwin, win32::WM_NCCREATE, 0, (LPARAM)&cs);
+    lr = win32::SendMessageA(lpwin, win32::WM_NCCREATE, 0, reinterpret_cast<LPARAM>(&cs));
     if (!lpwin->fAlive)
         return nullptr;
     if (!lr) {
         DestroyCompatWindow(lpwin, 0, 1);
         return nullptr;
     }
-    lr = win32::SendMessageA(lpwin, win32::WM_CREATE, 0, (LPARAM)&cs);
+    lr = win32::SendMessageA(lpwin, win32::WM_CREATE, 0, reinterpret_cast<LPARAM>(&cs));
     if (!lpwin->fAlive)
         return nullptr;
     if (lr == -1) {
@@ -614,7 +614,7 @@ HWND win32::CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
         win32::SendMessageA(lpwin, win32::WM_SIZE, win32::SIZE_RESTORED, win32::MAKELPARAM(rcClient.right, rcClient.bottom));
         if (!lpwin->fAlive) return nullptr;
         if (!(lpwin->dwExStyle & win32::WS_EX_NOPARENTNOTIFY))
-            win32::SendMessageA(lpwin->hwndParent, win32::WM_PARENTNOTIFY, win32::MAKEWPARAM(win32::WM_CREATE, lpwin->idChild), (LPARAM)lpwin);
+            win32::SendMessageA(lpwin->hwndParent, win32::WM_PARENTNOTIFY, win32::MAKEWPARAM(win32::WM_CREATE, lpwin->idChild), reinterpret_cast<LPARAM>(lpwin));
         if (!lpwin->fAlive) return nullptr;
     } else {
         // Win32 initializes top-level client layout even when the native
@@ -661,12 +661,12 @@ LONG_PTR win32::GetWindowLongPtrA(HWND hwnd, int ib) {
     if (ib == win32::GWLP_ID)
         return lpwin->idChild;
     if (ib == win32::GWLP_HINSTANCE)
-        return (LONG_PTR)lpwin->lpclass->wc.hInstance;
+        return reinterpret_cast<LONG_PTR>(lpwin->lpclass->wc.hInstance);
     if (ib == win32::GWL_STYLE)
-        return (LONG)lpwin->dwStyle;
+        return static_cast<LONG>(lpwin->dwStyle);
     if (ib == win32::GWL_EXSTYLE)
-        return (LONG)lpwin->dwExStyle;
-    if (ib >= 0 && ib <= lpwin->lpclass->wc.cbWndExtra - (int)sizeof(l)) {
+        return static_cast<LONG>(lpwin->dwExStyle);
+    if (ib >= 0 && ib <= lpwin->lpclass->wc.cbWndExtra - static_cast<int>(sizeof(l))) {
         memcpy(&l, lpwin->rgbExtra + ib, sizeof(l));
         return l;
     }
@@ -703,7 +703,7 @@ LONG_PTR win32::SetWindowLongPtrA(HWND hwnd, int ib, LONG_PTR lNew) {
         lpwin->lpfnWndProc = lpfn;
         return lOld;
     }
-    if (ib >= 0 && ib <= lpwin->lpclass->wc.cbWndExtra - (int)sizeof(lNew)) {
+    if (ib >= 0 && ib <= lpwin->lpclass->wc.cbWndExtra - static_cast<int>(sizeof(lNew))) {
         memcpy(&lOld, lpwin->rgbExtra + ib, sizeof(lOld));
         memcpy(lpwin->rgbExtra + ib, &lNew, sizeof(lNew));
         return lOld;
@@ -771,17 +771,17 @@ BOOL win32::GetWindowPlacement(HWND hwnd, WINDOWPLACEMENT *lpwndpl) {
         idDisplay = SDL_GetDisplayForWindow(lpwin->lpWindow.get());
         if (!idDisplay || !CompatDisplayIO().pfnGetDisplayBounds(idDisplay, &rcDisplay) ||
             !CompatDisplayIO().pfnGetDisplayUsableBounds(idDisplay, &rcWork)) return 0;
-        dx = (int64_t)rcWork.x - rcDisplay.x;
-        dy = (int64_t)rcWork.y - rcDisplay.y;
-        xLeft = (int64_t)wndpl.rcNormalPosition.left - dx;
-        xRight = (int64_t)wndpl.rcNormalPosition.right - dx;
-        yTop = (int64_t)wndpl.rcNormalPosition.top - dy;
-        yBottom = (int64_t)wndpl.rcNormalPosition.bottom - dy;
+        dx = static_cast<int64_t>(rcWork.x) - rcDisplay.x;
+        dy = static_cast<int64_t>(rcWork.y) - rcDisplay.y;
+        xLeft = static_cast<int64_t>(wndpl.rcNormalPosition.left) - dx;
+        xRight = static_cast<int64_t>(wndpl.rcNormalPosition.right) - dx;
+        yTop = static_cast<int64_t>(wndpl.rcNormalPosition.top) - dy;
+        yBottom = static_cast<int64_t>(wndpl.rcNormalPosition.bottom) - dy;
         if (xLeft < INT32_MIN || xLeft > INT32_MAX || xRight < INT32_MIN || xRight > INT32_MAX ||
             yTop < INT32_MIN || yTop > INT32_MAX || yBottom < INT32_MIN || yBottom > INT32_MAX) {
             win32::SetLastError(win32::ERROR_ARITHMETIC_OVERFLOW); return 0;
         }
-        win32::SetRect(&wndpl.rcNormalPosition, (LONG)xLeft, (LONG)yTop, (LONG)xRight, (LONG)yBottom);
+        win32::SetRect(&wndpl.rcNormalPosition, static_cast<LONG>(xLeft), static_cast<LONG>(yTop), static_cast<LONG>(xRight), static_cast<LONG>(yBottom));
     }
     *lpwndpl = wndpl;
     return 1;
@@ -793,7 +793,7 @@ BOOL StarsCompatSetInitialShowCommand(HWND hwnd, int sw) {
     if (!lpwin || lpwin->hwndParent || lpwin->fVisible ||
         (sw != win32::SW_HIDE && sw != win32::SW_SHOW && sw != win32::SW_SHOWNORMAL && sw != win32::SW_RESTORE &&
          sw != win32::SW_SHOWMINIMIZED && sw != win32::SW_SHOWMAXIMIZED)) return 0;
-    lpwin->swInitial = (UINT)sw;
+    lpwin->swInitial = static_cast<UINT>(sw);
     return 1;
 }
 
@@ -811,7 +811,7 @@ static BOOL ShowCompatWindow(HWND hwnd, int sw, BOOL fRedraw, BOOL fNotify) {
     if (sw != win32::SW_HIDE && sw != win32::SW_SHOW && sw != win32::SW_SHOWNORMAL && sw != win32::SW_RESTORE &&
         sw != win32::SW_SHOWMINIMIZED && sw != win32::SW_SHOWMAXIMIZED) return 0;
     if (sw == win32::SW_SHOW && lpwin->swInitial != 0) {
-        sw = (int)lpwin->swInitial;
+        sw = static_cast<int>(lpwin->swInitial);
         // The headless driver cannot maximize/minimize a native window. Keep
         // the deferred startup show visible so client workflows can run there.
         if (!strcmp(CompatInputIO().pfnGetCurrentVideoDriver(), "dummy") &&
@@ -820,7 +820,7 @@ static BOOL ShowCompatWindow(HWND hwnd, int sw, BOOL fRedraw, BOOL fNotify) {
     swOld = lpwin->swState;
     swNew = sw == win32::SW_RESTORE && swOld == win32::SW_SHOWMINIMIZED && lpwin->fRestoreMax ? win32::SW_SHOWMAXIMIZED :
             sw == win32::SW_RESTORE || sw == win32::SW_SHOWNORMAL ? win32::SW_SHOWNORMAL :
-            sw == win32::SW_SHOWMINIMIZED || sw == win32::SW_SHOWMAXIMIZED ? (UINT)sw : swOld;
+            sw == win32::SW_SHOWMINIMIZED || sw == win32::SW_SHOWMAXIMIZED ? static_cast<UINT>(sw) : swOld;
     CompatRememberNormal(hwnd);
     rcSaved = lpwin->rcNormal;
     // Renderer setup can recreate SDL's native window. Do it while hidden so
@@ -900,7 +900,7 @@ static BOOL ShowCompatWindow(HWND hwnd, int sw, BOOL fRedraw, BOOL fNotify) {
     if (fRedraw && fVisible && !fWasVisible && lpwin->hwndParent)
         win32::InvalidateRect(hwnd, nullptr, 1);
     if (fNotify && !fPrepare && fVisible != fWasVisible)
-        win32::SendMessageA(hwnd, win32::WM_SHOWWINDOW, (WPARAM)fVisible, 0);
+        win32::SendMessageA(hwnd, win32::WM_SHOWWINDOW, static_cast<WPARAM>(fVisible), 0);
     // A native renderer can acquire a new drawable when the hidden window is
     // shown. Submit the completed frame there without waiting for queued exposure.
     if (fPrepare && lpwin->fAlive) {
@@ -1060,7 +1060,7 @@ BOOL win32::SetWindowPos(HWND hwnd, HWND hwndAfter, int x, int y, int dx, int dy
     wp = WINDOWPOS{hwnd, hwndAfter, x, y, dx, dy, flags};
     wpOld = wp;
     if (!FCompatPosition(lpwin, &wpOld)) return 0;
-    if (!(flags & win32::SWP_NOSENDCHANGING)) win32::SendMessageA(hwnd, win32::WM_WINDOWPOSCHANGING, 0, (LPARAM)&wp);
+    if (!(flags & win32::SWP_NOSENDCHANGING)) win32::SendMessageA(hwnd, win32::WM_WINDOWPOSCHANGING, 0, reinterpret_cast<LPARAM>(&wp));
     if (!lpwin->fAlive || lpwin->fDestroying) return 0;
     wp.hwnd = hwnd;
     if ((wp.flags & ~flagsAllowed) ||
@@ -1072,7 +1072,7 @@ BOOL win32::SetWindowPos(HWND hwnd, HWND hwndAfter, int x, int y, int dx, int dy
     if (wp.flags & win32::SWP_NOSIZE) { wp.cx = wpOld.cx; wp.cy = wpOld.cy; }
     if (wp.cx < 0) wp.cx = 0;
     if (wp.cy < 0) wp.cy = 0;
-    if ((int64_t)wp.x + wp.cx > INT32_MAX || (int64_t)wp.y + wp.cy > INT32_MAX) {
+    if (static_cast<int64_t>(wp.x) + wp.cx > INT32_MAX || static_cast<int64_t>(wp.y) + wp.cy > INT32_MAX) {
         win32::SetLastError(win32::ERROR_INVALID_PARAMETER);
         return 0;
     }
@@ -1112,7 +1112,7 @@ BOOL win32::SetWindowPos(HWND hwnd, HWND hwndAfter, int x, int y, int dx, int dy
         win32::SetFocus(hwnd);
         if (!lpwin->fAlive) return 1;
     }
-    if (fChanged) win32::SendMessageA(hwnd, win32::WM_WINDOWPOSCHANGED, 0, (LPARAM)&wp);
+    if (fChanged) win32::SendMessageA(hwnd, win32::WM_WINDOWPOSCHANGED, 0, reinterpret_cast<LPARAM>(&wp));
     if (!lpwin->fAlive) return 1;
     if (fRedraw && fChanged) {
         win32::InvalidateRect(hwnd, nullptr, 1);
@@ -1129,13 +1129,13 @@ BOOL win32::MoveWindow(HWND hwnd, int x, int y, int dx, int dy, BOOL fRepaint) {
 }
 
 BOOL win32::SetWindowTextA(HWND hwnd, LPCSTR psz) {
-    return psz && (BOOL)win32::SendMessageA(hwnd, win32::WM_SETTEXT, 0, (LPARAM)psz);
+    return psz && static_cast<BOOL>(win32::SendMessageA(hwnd, win32::WM_SETTEXT, 0, reinterpret_cast<LPARAM>(psz)));
 }
 
 int win32::GetWindowTextA(HWND hwnd, LPSTR psz, int cchMax) {
     if (!psz || cchMax <= 0)
         return 0;
-    return (int)win32::SendMessageA(hwnd, win32::WM_GETTEXT, (WPARAM)cchMax, (LPARAM)psz);
+    return static_cast<int>(win32::SendMessageA(hwnd, win32::WM_GETTEXT, static_cast<WPARAM>(cchMax), reinterpret_cast<LPARAM>(psz)));
 }
 
 int win32::GetClassNameA(HWND hwnd, LPSTR psz, int cchMax) {
@@ -1144,9 +1144,9 @@ int win32::GetClassNameA(HWND hwnd, LPSTR psz, int cchMax) {
 
     if (!lpwin || !psz || cchMax <= 0)
         return 0;
-    cch = CchUtf8Prefix(lpwin->lpclass->pszClass.get(), (size_t)cchMax - 1);
+    cch = CchUtf8Prefix(lpwin->lpclass->pszClass.get(), static_cast<size_t>(cchMax) - 1);
     memcpy(psz, lpwin->lpclass->pszClass.get(), cch); psz[cch] = 0;
-    return (int)cch;
+    return static_cast<int>(cch);
 }
 
 HWND HwndCompatRoot(HWND hwnd) {
@@ -1190,13 +1190,13 @@ HWND HwndCompatFirstTop(void) { return hwndFirstTop; }
 HWND win32::GetDlgItem(HWND hwnd, int id) {
     HWND lp;
     for (lp = win32::GetWindow(hwnd, win32::GW_CHILD); lp; lp = win32::GetWindow(lp, win32::GW_HWNDNEXT))
-        if ((int)lp->idChild == id) return lp;
+        if (static_cast<int>(lp->idChild) == id) return lp;
     return nullptr;
 }
 
 int win32::GetDlgCtrlID(HWND hwnd) {
     HWND lpwin = LpCompatWindow(hwnd);
-    return lpwin ? (int)lpwin->idChild : 0;
+    return lpwin ? static_cast<int>(lpwin->idChild) : 0;
 }
 
 BOOL win32::GetClientRect(HWND hwnd, LPRECT lprc) {
@@ -1225,10 +1225,10 @@ static BOOL FClientOrigin(HWND hwnd, int64_t *lpx, int64_t *lpy) {
 static BOOL FConvertPoint(HWND hwnd, LPPOINT lppt, BOOL fToScreen) {
     int64_t x, y;
     if (!lppt || !FClientOrigin(hwnd, &x, &y)) return 0;
-    x = (int64_t)lppt->x + (fToScreen ? x : -x);
-    y = (int64_t)lppt->y + (fToScreen ? y : -y);
+    x = static_cast<int64_t>(lppt->x) + (fToScreen ? x : -x);
+    y = static_cast<int64_t>(lppt->y) + (fToScreen ? y : -y);
     if (x < INT32_MIN || x > INT32_MAX || y < INT32_MIN || y > INT32_MAX) return 0;
-    lppt->x = (LONG)x; lppt->y = (LONG)y;
+    lppt->x = static_cast<LONG>(x); lppt->y = static_cast<LONG>(y);
     return 1;
 }
 
@@ -1248,13 +1248,13 @@ int win32::MapWindowPoints(HWND hwndFrom, HWND hwndTo, LPPOINT rgpt, UINT cpt) {
     dx = xFrom - xTo; dy = yFrom - yTo;
     /* Validate every coordinate before writing: a failed array mapping is atomic. */
     for (i = 0; i < cpt; i++) {
-        x = (int64_t)rgpt[i].x + dx; y = (int64_t)rgpt[i].y + dy;
+        x = static_cast<int64_t>(rgpt[i].x) + dx; y = static_cast<int64_t>(rgpt[i].y) + dy;
         if (x < INT32_MIN || x > INT32_MAX || y < INT32_MIN || y > INT32_MAX) {
             win32::SetLastError(win32::ERROR_ARITHMETIC_OVERFLOW); return 0;
         }
     }
-    for (i = 0; i < cpt; i++) { rgpt[i].x = (LONG)((int64_t)rgpt[i].x + dx); rgpt[i].y = (LONG)((int64_t)rgpt[i].y + dy); }
-    return (int)(int32_t)MAKELONG((WORD)dx, (WORD)dy);
+    for (i = 0; i < cpt; i++) { rgpt[i].x = static_cast<LONG>((static_cast<int64_t>(rgpt[i].x) + dx)); rgpt[i].y = static_cast<LONG>((static_cast<int64_t>(rgpt[i].y) + dy)); }
+    return static_cast<int>(static_cast<int32_t>(MAKELONG(static_cast<WORD>(dx), static_cast<WORD>(dy))));
 }
 
 BOOL win32::GetWindowRect(HWND hwnd, LPRECT lprc) {
@@ -1264,7 +1264,7 @@ BOOL win32::GetWindowRect(HWND hwnd, LPRECT lprc) {
     y -= CyCompatMenuBar(hwnd); rc.bottom += CyCompatMenuBar(hwnd);
     if (x < INT32_MIN || y < INT32_MIN || x + rc.right > INT32_MAX || y + rc.bottom > INT32_MAX)
         return 0;
-    return win32::SetRect(lprc, (LONG)x, (LONG)y, (LONG)(x + rc.right), (LONG)(y + rc.bottom));
+    return win32::SetRect(lprc, static_cast<LONG>(x), static_cast<LONG>(y), static_cast<LONG>((x + rc.right)), static_cast<LONG>((y + rc.bottom)));
 }
 
 BOOL win32::IsWindowEnabled(HWND hwnd) {
@@ -1298,7 +1298,7 @@ BOOL win32::FlashWindow(HWND hwnd, BOOL fInvert) {
     }
     lpwin->fCaptionActive = fCaptionActive;
     // Caption callbacks can destroy the HWND; retain the prior value locally.
-    win32::SendMessageA(hwnd, win32::WM_NCACTIVATE, (WPARAM)fCaptionActive, 0);
+    win32::SendMessageA(hwnd, win32::WM_NCACTIVATE, static_cast<WPARAM>(fCaptionActive), 0);
     return fWasActive;
 }
 
@@ -1311,10 +1311,10 @@ HWND win32::SetFocus(HWND hwnd) {
     // Removing keyboard focus does not deactivate the top-level window.
     if (hwnd) CompatSetActive(HwndCompatRoot(hwnd));
     hwndFocus = hwnd;
-    if (hwndOld) win32::SendMessageA(hwndOld, win32::WM_KILLFOCUS, (WPARAM)hwnd, 0);
+    if (hwndOld) win32::SendMessageA(hwndOld, win32::WM_KILLFOCUS, reinterpret_cast<WPARAM>(hwnd), 0);
     // A focus callback can destroy or redirect the requested target.
     if (hwndFocus == hwnd && LpCompatWindow(hwnd))
-        win32::SendMessageA(hwnd, win32::WM_SETFOCUS, (WPARAM)hwndOld, 0);
+        win32::SendMessageA(hwnd, win32::WM_SETFOCUS, reinterpret_cast<WPARAM>(hwndOld), 0);
     return hwndOld;
 }
 
@@ -1335,7 +1335,7 @@ BOOL win32::EnableWindow(HWND hwnd, BOOL fEnable) {
        make a compositor withdraw the fullscreen title while the picker opens. */
     if (lpwin->fAlive && lpwin->lpWindow.get() && lpwin->cNativeFileDialogs == 0)
         SDL_SetWindowFocusable(lpwin->lpWindow.get(), fEnable && !(lpwin->dwExStyle & win32::WS_EX_NOACTIVATE));
-    if (lpwin->fAlive) win32::SendMessageA(hwnd, win32::WM_ENABLE, (WPARAM)fEnable, 0);
+    if (lpwin->fAlive) win32::SendMessageA(hwnd, win32::WM_ENABLE, static_cast<WPARAM>(fEnable), 0);
     return fWasDisabled;
 }
 
@@ -1398,11 +1398,11 @@ void CompatFocusWindow(HWND hwnd) {
         return;
     hwndFocus = hwnd;
     if (LpCompatWindow(hwndOld)) {
-        CompatPostInput(hwndOld, win32::WM_KILLFOCUS, (WPARAM)hwnd, 0);
+        CompatPostInput(hwndOld, win32::WM_KILLFOCUS, reinterpret_cast<WPARAM>(hwnd), 0);
         CompatPostInput(hwndOld, win32::WM_ACTIVATE, win32::WA_INACTIVE, 0);
     }
     if (hwnd) {
-        CompatPostInput(hwnd, win32::WM_SETFOCUS, (WPARAM)hwndOld, 0);
+        CompatPostInput(hwnd, win32::WM_SETFOCUS, reinterpret_cast<WPARAM>(hwndOld), 0);
         CompatPostInput(hwnd, win32::WM_ACTIVATE, win32::WA_ACTIVE, 0);
     }
 }

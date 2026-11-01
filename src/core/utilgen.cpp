@@ -31,7 +31,7 @@ void Randomize(APPSESSION &app, uint32_t dw) {
     int16_t b;
 
     a = LOWORD(dw) & 0x3f;
-    b = LOWORD((uint32_t)(dw >> 6)) & 0x3f;
+    b = LOWORD(static_cast<uint32_t>((dw >> 6))) & 0x3f;
     if (a == b) {
         b = (b + 1) & 0x3f;
     }
@@ -45,7 +45,7 @@ void Randomize2(APPSESSION &app, uint32_t dw) {
     int16_t b;
 
     a = LOWORD(dw) & 0x7f;
-    b = LOWORD((uint32_t)(dw >> 7)) & 0x7f;
+    b = LOWORD(static_cast<uint32_t>((dw >> 7))) & 0x7f;
     a ^= 0x35;
     b ^= 0x5c;
     if (a == b) {
@@ -64,13 +64,13 @@ int16_t Random(APPSESSION &app, int16_t c) {
 
     s1 = app.state.lRandSeed1;
     s2 = app.state.lRandSeed2;
-    k = (int32_t)(s1 / 53668);
-    s1 = (uint32_t)((s1 - (uint32_t)(k * 53668)) * 0x9c4e) - (uint32_t)(k * 12211);
+    k = static_cast<int32_t>((s1 / 53668));
+    s1 = static_cast<uint32_t>(((s1 - static_cast<uint32_t>((k * 53668))) * 0x9c4e)) - static_cast<uint32_t>((k * 12211));
     if (s1 < 0) {
         s1 += 2147483563;
     }
-    k = (int32_t)(s2 / 52774);
-    s2 = (uint32_t)((s2 - (uint32_t)(k * 52774)) * 0x9ef4) - (uint32_t)(k * 3791);
+    k = static_cast<int32_t>((s2 / 52774));
+    s2 = static_cast<uint32_t>(((s2 - static_cast<uint32_t>((k * 52774))) * 0x9ef4)) - static_cast<uint32_t>((k * 3791));
     if (s2 < 0) {
         s2 += 2147483399;
     }
@@ -83,7 +83,7 @@ int16_t Random(APPSESSION &app, int16_t c) {
     if (c <= 0) {
         return 0;
     }
-    return LOWORD((uint32_t)((uint32_t)z % c));
+    return LOWORD(static_cast<uint32_t>((static_cast<uint32_t>(z) % c)));
 }
 
 void GetFileSeeds(APPSESSION &app, int32_t *pl1, int32_t *pl2) {
@@ -125,13 +125,13 @@ int32_t LGetNextFileXor(APPSESSION &app) {
 
     s1 = app.state.lFileSeed1;
     s2 = app.state.lFileSeed2;
-    k = (int32_t)(s1 / 53668);
-    s1 = (uint32_t)((s1 - (uint32_t)(k * 53668)) * 0x9c4e) - (uint32_t)(k * 12211);
+    k = static_cast<int32_t>((s1 / 53668));
+    s1 = static_cast<uint32_t>(((s1 - static_cast<uint32_t>((k * 53668))) * 0x9c4e)) - static_cast<uint32_t>((k * 12211));
     if (s1 < 0) {
         s1 += 2147483563;
     }
-    k = (int32_t)(s2 / 52774);
-    s2 = (uint32_t)((s2 - (uint32_t)(k * 52774)) * 0x9ef4) - (uint32_t)(k * 3791);
+    k = static_cast<int32_t>((s2 / 52774));
+    s2 = static_cast<uint32_t>(((s2 - static_cast<uint32_t>((k * 52774))) * 0x9ef4)) - static_cast<uint32_t>((k * 3791));
     if (s2 < 0) {
         s2 += 2147483399;
     }
@@ -158,18 +158,18 @@ void XorFileBuf(APPSESSION &app, char *rgb, int16_t cb) {
     }
     cb &= 3;
     if (cb > 0) {
-        pch = (char *)pl;
+        pch = static_cast<char *>(pl);
         lPrev = LGetNextFileXor(app);
         while (cb-- != 0) {
-            *pch ^= (int16_t)(int8_t)LOBYTE(LOWORD(lPrev) & 0xff);
-            lPrev = (int32_t)(lPrev >> 8);
+            *pch ^= static_cast<int16_t>(static_cast<int8_t>(LOBYTE(LOWORD(lPrev) & 0xff)));
+            lPrev = static_cast<int32_t>((lPrev >> 8));
             pch++;
         }
     }
     return;
 }
 
-int ICompLong(APPSESSION &, int32_t *pl1, int32_t *pl2) { return (int16_t)(*pl1 - *pl2); }
+int ICompLong(APPSESSION &, int32_t *pl1, int32_t *pl2) { return static_cast<int16_t>((*pl1 - *pl2)); }
 
 char *PszGetCompressedPlanet(APPSESSION &app, int16_t id) {
     int16_t  fCap;
@@ -193,7 +193,7 @@ char *PszGetCompressedPlanet(APPSESSION &app, int16_t id) {
     }
     iChunk = id >> 6;
     iOffset = id & 0x3f;
-    pch = (uint8_t *)&aPNCmpr[aiPNChunkOffset[iChunk]];
+    pch = reinterpret_cast<uint8_t *>(&aPNCmpr[aiPNChunkOffset[iChunk]]);
     pchLen = &acPN[iChunk * 64];
     i = 0;
     while (i < iOffset) {
@@ -336,12 +336,12 @@ char *PszFromLongK(APPSESSION &app, int32_t l, int16_t *pcch) {
     fLarge = l >= 10000;
     fExtraLarge = l >= 1000000;
     if (fExtraLarge) {
-        l = (int32_t)((l + 500000) / 0xf4240);
+        l = static_cast<int32_t>(((l + 500000) / 0xf4240));
         if (l > 999) {
             l = 999;
         }
     } else if (fLarge) {
-        l = (int32_t)((l + 500) / 1000);
+        l = static_cast<int32_t>(((l + 500) / 1000));
         if (l > 999) {
             l = 999;
         }
@@ -462,7 +462,7 @@ static int16_t FDecompressUserStringInternal(APPSESSION &app, const char *szIn, 
 
     fHalf = 0;
     pchOut = szWork;
-    if (cIn < 0 || *pcOut < 0 || *pcOut >= (int16_t)sizeof(szWork)) goto invalid;
+    if (cIn < 0 || *pcOut < 0 || *pcOut >= static_cast<int16_t>(sizeof(szWork))) goto invalid;
     while (cIn > 0) {
         if (fHalf) {
             iNyb = *szIn & 0xf;
@@ -503,8 +503,8 @@ static int16_t FDecompressUserStringInternal(APPSESSION &app, const char *szIn, 
         }
     }
     *pchOut = 0;
-    if (memchr(szWork, 0, (size_t)(pchOut - szWork)) != nullptr) goto invalid;
-    if (fUtf8 && !FUtf8Valid(szWork, (size_t)(pchOut - szWork))) goto invalid;
+    if (memchr(szWork, 0, static_cast<size_t>((pchOut - szWork))) != nullptr) goto invalid;
+    if (fUtf8 && !FUtf8Valid(szWork, static_cast<size_t>((pchOut - szWork)))) goto invalid;
     strcpy(szOut, szWork);
     return 1;
 invalid:
@@ -589,19 +589,19 @@ int16_t FIntersectCircleLine(POINT16 ptL1, POINT16 ptL2, POINT16 ptC, int32_t r2
     int32_t xI;
     int32_t r2I;
 
-    dx = (int16_t)(ptL2.x - ptL1.x);
-    dy = (int16_t)(ptL2.y - ptL1.y);
-    dxdy = (uint32_t)(dx * dy);
-    dx2 = (uint32_t)(dx * dx);
-    dy2 = (uint32_t)(dy * dy);
+    dx = static_cast<int16_t>((ptL2.x - ptL1.x));
+    dy = static_cast<int16_t>((ptL2.y - ptL1.y));
+    dxdy = static_cast<uint32_t>((dx * dy));
+    dx2 = static_cast<uint32_t>((dx * dx));
+    dy2 = static_cast<uint32_t>((dy * dy));
     if (dxdy > 500000 || dx2 > 500000 || dy2 > 500000) {
-        dxI = (double)(((double)dxdy * (int16_t)(ptC.y - ptL1.y) + (double)dx2 * ptC.x + (double)dy2 * ptL1.x) / (dx2 + dy2));
-        xI = (int32_t)dxI;
+        dxI = static_cast<double>(((static_cast<double>(dxdy) * static_cast<int16_t>((ptC.y - ptL1.y)) + static_cast<double>(dx2) * ptC.x + static_cast<double>(dy2) * ptL1.x) / (dx2 + dy2)));
+        xI = static_cast<int32_t>(dxI);
     } else {
-        xI = (int32_t)((int32_t)((uint32_t)(dxdy * (int16_t)(ptC.y - ptL1.y)) + (uint32_t)(dx2 * ptC.x) + (uint32_t)(dy2 * ptL1.x)) / (dx2 + dy2));
+        xI = static_cast<int32_t>((static_cast<int32_t>((static_cast<uint32_t>((dxdy * static_cast<int16_t>((ptC.y - ptL1.y)))) + static_cast<uint32_t>((dx2 * ptC.x)) + static_cast<uint32_t>((dy2 * ptL1.x)))) / (dx2 + dy2)));
     }
     if (dx != 0) {
-        yI = ptL1.y + (int32_t)((int32_t)((xI - ptL1.x) * dy) / dx);
+        yI = ptL1.y + static_cast<int32_t>((static_cast<int32_t>(((xI - ptL1.x) * dy)) / dx));
     } else {
         /* A vertical route's closest point is level with the field's center.
            The original used ptL1.y, measuring from the route's start. */
@@ -609,19 +609,19 @@ int16_t FIntersectCircleLine(POINT16 ptL1, POINT16 ptL2, POINT16 ptC, int32_t r2
     }
     dxI = xI - ptC.x;
     dyI = yI - ptC.y;
-    r2I = (uint32_t)(dxI * dxI) + (uint32_t)(dyI * dyI);
+    r2I = static_cast<uint32_t>((dxI * dxI)) + static_cast<uint32_t>((dyI * dyI));
     if (r2 <= r2I) {
         return 0;
     }
     dxT = xI - ptL1.x;
     dyT = yI - ptL1.y;
-    lT = (uint32_t)(dxT * dxT) + (uint32_t)(dyT * dyT);
-    dCtr = LOWORD((int32_t)sqrt((double)lT));
+    lT = static_cast<uint32_t>((dxT * dxT)) + static_cast<uint32_t>((dyT * dyT));
+    dCtr = LOWORD(static_cast<int32_t>(sqrt(static_cast<double>(lT))));
     lT = r2 - r2I;
     if (lT <= 0) {
         return 0;
     }
-    dOff = LOWORD((int32_t)sqrt((double)lT));
+    dOff = LOWORD(static_cast<int32_t>(sqrt(static_cast<double>(lT))));
     if (ptL1.x < ptL2.x) {
         if (xI < ptL1.x) {
             dCtr = -dCtr;
@@ -699,10 +699,10 @@ int32_t LSaltFromSz(const char *psz) {
     }
     while (*psz != 0) {
         // Original x86 arithmetic wraps at 32 bits and treats bytes as signed.
-        lSalt = (int32_t)((uint32_t)lSalt + (uint32_t)(int32_t)(int16_t)*psz);
+        lSalt = static_cast<int32_t>((static_cast<uint32_t>(lSalt) + static_cast<uint32_t>(static_cast<int32_t>(static_cast<int16_t>(*psz)))));
         psz++;
         if (*psz != 0) {
-            lSalt = (int32_t)((uint32_t)lSalt * (uint32_t)(int32_t)(int16_t)*psz);
+            lSalt = static_cast<int32_t>((static_cast<uint32_t>(lSalt) * static_cast<uint32_t>(static_cast<int32_t>(static_cast<int16_t>(*psz)))));
             psz++;
         }
     }
@@ -716,9 +716,9 @@ int32_t LDistance2(POINT16 pt1, POINT16 pt2) {
     int32_t dy;
     int32_t dx;
 
-    dx = (int16_t)(pt1.x - pt2.x);
-    dy = (int16_t)(pt1.y - pt2.y);
-    return (uint32_t)(dx * dx) + (uint32_t)(dy * dy);
+    dx = static_cast<int16_t>((pt1.x - pt2.x));
+    dy = static_cast<int16_t>((pt1.y - pt2.y));
+    return static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy));
 }
 
 char *PszGetLine(char **ppszBeg) {
@@ -753,7 +753,7 @@ int16_t CParseNumbers(char *psz, int32_t *pl, int16_t cMax) {
         }
         if (*psz != ' ') {
             fValid = 1;
-            lNum = (uint32_t)(lNum * 10) + (int16_t)(*psz - '0');
+            lNum = static_cast<uint32_t>((lNum * 10)) + static_cast<int16_t>((*psz - '0'));
         } else if (fValid) {
             pl[iRead++] = lNum;
             lNum = 0;

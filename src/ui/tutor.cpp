@@ -38,12 +38,12 @@ INT_PTR  TutorDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message) {
     case win32::WM_INITDIALOG:
         app.state.tutor.hwnd = hwnd;
-        ControlIO().pfnSetWindowPos(hwnd, (HWND)-1, 0, 0, 0, 0, win32::SWP_NOSIZE | win32::SWP_NOMOVE);
+        ControlIO().pfnSetWindowPos(hwnd, reinterpret_cast<HWND>(-1), 0, 0, 0, 0, win32::SWP_NOSIZE | win32::SWP_NOMOVE);
         ControlIO().pfnStickyDlgPos(hwnd, &app.lpui->ptStickyTutorDlg, 1);
         return 1;
     case win32::WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        win32::FillRect((HDC)wParam, &rc, app.lpui->hbrButtonFace);
+        win32::FillRect(reinterpret_cast<HDC>(wParam), &rc, app.lpui->hbrButtonFace);
         return 1;
     case win32::WM_PAINT:
         DrawTutorText(app, hwnd);
@@ -70,7 +70,7 @@ INT_PTR  TutorDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             }
             return 1;
         case IDC_TUTOR_HINT:
-            win32::WinHelpA(hwnd, app.lpui->szHelpFile, win32::HELP_CONTEXT, (int16_t)app.state.tutor.idh);
+            win32::WinHelpA(hwnd, app.lpui->szHelpFile, win32::HELP_CONTEXT, static_cast<int16_t>(app.state.tutor.idh));
             return 1;
         default:
             return 0;
@@ -96,7 +96,7 @@ INT_PTR  PanicDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message) {
     case win32::WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        win32::FillRect((HDC)wParam, &rc, app.lpui->hbrButtonFace);
+        win32::FillRect(reinterpret_cast<HDC>(wParam), &rc, app.lpui->hbrButtonFace);
         return 1;
     case win32::WM_CTLCOLORMSGBOX:
     case win32::WM_CTLCOLOREDIT:
@@ -106,8 +106,8 @@ INT_PTR  PanicDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     case win32::WM_CTLCOLORSCROLLBAR:
     case win32::WM_CTLCOLORSTATIC:
         if (message == win32::WM_CTLCOLORSTATIC) {
-            win32::SetBkColor((HDC)wParam, app.lpui->crButtonFace);
-            return (INT_PTR)app.lpui->hbrButtonFace;
+            win32::SetBkColor(reinterpret_cast<HDC>(wParam), app.lpui->crButtonFace);
+            return reinterpret_cast<INT_PTR>(app.lpui->hbrButtonFace);
         }
         break;
     case win32::WM_COMMAND:
@@ -116,7 +116,7 @@ INT_PTR  PanicDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             ControlIO().pfnEndDialog(hwnd, 0);
             return 1;
         case IDC_HELP:
-            win32::WinHelpA(hwnd, app.lpui->szHelpFile, win32::HELP_CONTEXT, (int16_t)app.state.tutor.idh);
+            win32::WinHelpA(hwnd, app.lpui->szHelpFile, win32::HELP_CONTEXT, static_cast<int16_t>(app.state.tutor.idh));
             return 1;
         case IDC_PANIC_REDO_TURN:
         case IDC_PANIC_COMPLETE_TURN:
@@ -157,12 +157,12 @@ void DrawTutorText(APPSESSION &app, HWND hwnd) {
     win32::GetWindowRect(hwnd, &rc);
     win32::GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDCANCEL), &rcBtn);
     rc.bottom = rcBtn.top;
-    win32::ScreenToClient(hwnd, (POINT *)&rc);
-    win32::ScreenToClient(hwnd, (POINT *)&rc.right);
+    win32::ScreenToClient(hwnd, reinterpret_cast<POINT *>(&rc));
+    win32::ScreenToClient(hwnd, reinterpret_cast<POINT *>(&rc.right));
     rc.top += app.state.dyArial8 * 2;
-    rc.bottom -= (int16_t)(app.state.dyArial8 * 2) / 3;
-    rc.left += (int16_t)(app.state.dyArial8 * 2) / 3;
-    rc.right -= (int16_t)(app.state.dyArial8 * 2) / 3;
+    rc.bottom -= static_cast<int16_t>((app.state.dyArial8 * 2)) / 3;
+    rc.left += static_cast<int16_t>((app.state.dyArial8 * 2)) / 3;
+    rc.right -= static_cast<int16_t>((app.state.dyArial8 * 2)) / 3;
     win32::SelectObject(hdc, app.lpui->hbrButtonShadow);
     win32::PatBlt(hdc, rc.left, rc.top, rc.right - rc.left, 1, win32::PATCOPY);
     win32::PatBlt(hdc, rc.left, rc.top, 1, rc.bottom - rc.top, win32::PATCOPY);
@@ -248,7 +248,7 @@ void StartTutor(APPSESSION &app, int16_t fRestart) {
             }
             if (app.state.game.lid == 0) {
                 CreateTutorWorld(app);
-                memset((uint8_t *)(ZIPPRODQ *)app.state.vrgZipProd + 14, 0, 26);
+                memset(reinterpret_cast<uint8_t *>(reinterpret_cast<ZIPPRODQ *>(app.state.vrgZipProd)) + 14, 0, 26);
                 app.state.vrgZipProd[0].fValid = 1;
                 app.state.gd.fChgZipProd = 1;
             }
@@ -320,7 +320,7 @@ void AdvanceTutor(APPSESSION &app) {
     } else {
         app.state.tutor.idh = static_cast<HelpContextId>(3510);
     }
-    if ((int16_t)app.state.tutor.idt >= 640 || app.state.tutor.fTutorDone) {
+    if (static_cast<int16_t>(app.state.tutor.idt) >= 640 || app.state.tutor.fTutorDone) {
         if (app.state.tutor.idsError != 522) {
             TutorError(app, idsTutorialFinishedCanContinuePlayGameStart);
         }
@@ -331,12 +331,12 @@ void AdvanceTutor(APPSESSION &app) {
         return;
     }
 LUpdatePage:
-    win32::wsprintfA(szTitle, TextIO().pfnCompressed(app, idsStarsTutorPageD80), (int16_t)app.state.tutor.idt / 8 + 1);
+    win32::wsprintfA(szTitle, TextIO().pfnCompressed(app, idsStarsTutorPageD80), static_cast<int16_t>(app.state.tutor.idt) / 8 + 1);
     ControlIO().pfnSetWindowText(app.state.tutor.hwnd, szTitle);
     ShowTutor(app, 1);
     win32::GetWindowRect(app.state.tutor.hwnd, &rc);
-    win32::ScreenToClient(app.state.tutor.hwnd, (POINT *)&rc);
-    win32::ScreenToClient(app.state.tutor.hwnd, (POINT *)&rc.right);
+    win32::ScreenToClient(app.state.tutor.hwnd, reinterpret_cast<POINT *>(&rc));
+    win32::ScreenToClient(app.state.tutor.hwnd, reinterpret_cast<POINT *>(&rc.right));
     ExpandRc(&rc, -app.state.dyArial8, -2 * app.state.dyArial8);
     ControlIO().pfnInvalidateRect(app.state.tutor.hwnd, &rc, 1);
     return;
@@ -2686,11 +2686,11 @@ int16_t FCheckQueue(APPSESSION &app, int16_t ipl, int16_t iprod, GrobjClass grob
     if (!lppl || !lppl->lpplprod || lppl->lpplprod->iprodMac <= iprod)
         goto LReturn;
     prod = lppl->lpplprod->rgprod()[iprod];
-    if (prod.grobj != (uint32_t)grobj || prod.iItem != (uint32_t)iItem) {
+    if (prod.grobj != static_cast<uint32_t>(grobj) || prod.iItem != static_cast<uint32_t>(iItem)) {
         TutorError(app, idsTutorialProductionQueueDoesContainRequestedItem);
-    } else if (prod.cItem != (uint32_t)cItem) {
+    } else if (prod.cItem != static_cast<uint32_t>(cItem)) {
         TutorError(app, idsTutorialProductionQueueDoesContainRightCount);
-    } else if (fNoResearch != 0xffff && lppl->fNoResearch != (uint32_t)fNoResearch) {
+    } else if (fNoResearch != 0xffff && lppl->fNoResearch != static_cast<uint32_t>(fNoResearch)) {
         TutorError(app, idsTutorialContributeLeftoverCheckboxProductionQueu);
     } else {
         fRet = 1;

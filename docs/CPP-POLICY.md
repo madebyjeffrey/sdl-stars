@@ -1,7 +1,7 @@
 # Maintained C++ and independent-reference policy
 
 Owned production uses ISO C++20 (`.cpp`) or Objective-C++20 (`.mm`), extensions
-off, with `-Wpedantic -Werror` in every actual compile variant. Native AppKit
+off, with `-Wpedantic -Wold-style-cast -Werror` in every actual compile variant. Native AppKit
 sources retain ARC/blocks and CMake's `-x objective-c++` driver spelling for `.mm`;
 that is not permission to force a C source into C++. Ordinary tests consume the
 same application headers and linked production targets. No function redirection,

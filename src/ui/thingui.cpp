@@ -16,7 +16,7 @@ void DrawThingGauge(APPSESSION &app, HDC hdc, RECT *prc, THING *lpth, int16_t md
     fDisabled = 0;
     win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
     cSections = 1;
-    lMax = (uint32_t)(lpth->thp().wtMax() * 10);
+    lMax = static_cast<uint32_t>((lpth->thp().wtMax() * 10));
     if (md < 0 || md > 4) {
         if (md == 5) {
             for (i = 0; i < 3; i++) {
@@ -44,7 +44,7 @@ void DrawThingGauge(APPSESSION &app, HDC hdc, RECT *prc, THING *lpth, int16_t md
         c = win32::wsprintfA(app.state.szWork, "%ld of %ldkT", l, lMax);
     }
     l = GetTextExtent(hdc, app.state.szWork, c);
-    if ((int16_t)LOWORD(l) < prc->right - prc->left - 3) {
+    if (static_cast<int16_t>(LOWORD(l)) < prc->right - prc->left - 3) {
         RcCtrTextOut(app, hdc, prc, app.state.szWork, c);
     }
     win32::SetBkMode(hdc, iMode);

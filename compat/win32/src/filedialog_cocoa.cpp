@@ -7,10 +7,10 @@ static char *PszCocoaLabelUtf8(LPCSTR psz) {
     return FUtf8Valid(psz, strlen(psz)) ? SDL_strdup(psz) : nullptr;
 }
 static int FPumpCocoaChooser(void *lpv) {
-    HWND hwndOwner = (HWND)(lpv);
+    HWND hwndOwner = static_cast<HWND>((lpv));
     win32::MSG msg;
     while (win32::PeekMessageA(&msg, nullptr, 0, 0, win32::PM_REMOVE)) {
-        if (msg.message == win32::WM_QUIT) { win32::PostQuitMessage((int)msg.wParam); return 0; }
+        if (msg.message == win32::WM_QUIT) { win32::PostQuitMessage(static_cast<int>(msg.wParam)); return 0; }
         win32::TranslateMessage(&msg); win32::DispatchMessageA(&msg);
         if (FStarsErrorPending()) return 0;
         if (hwndOwner && !win32::IsWindow(hwndOwner)) return 0;
@@ -27,7 +27,7 @@ int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFol
     pszTitleUtf = PszCocoaLabelUtf8(pszTitle);
     if (!pszTitleUtf) return -1;
     if (cFilter != 0) {
-        rg = (COCOAFILEFILTER *)(calloc((size_t)cFilter, sizeof(*rg))); if (!rg) goto done;
+        rg = static_cast<COCOAFILEFILTER *>((calloc(static_cast<size_t>(cFilter), sizeof(*rg)))); if (!rg) goto done;
         for (i = 0; i < cFilter; i++) {
             rg[i].pszName = PszCocoaLabelUtf8(rgfilter[i].pszName);
             rg[i].pszPattern = PszCocoaLabelUtf8(rgfilter[i].pszPattern);
@@ -39,6 +39,6 @@ int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFol
     iResult = IChooseCocoaFile(lpWindow, fSave, pszTitleUtf, pszFolder, pszName, rg, cFilter,
                              lpiFilter, pszPath, cbPath, FPumpCocoaChooser, hwndOwner);
 done:
-    if (rg) for (i = 0; i < cFilter; i++) { SDL_free((void *)rg[i].pszName); SDL_free((void *)rg[i].pszPattern); }
+    if (rg) for (i = 0; i < cFilter; i++) { SDL_free(const_cast<void *>(reinterpret_cast<const void*>(rg[i].pszName))); SDL_free(const_cast<void *>(reinterpret_cast<const void*>(rg[i].pszPattern))); }
     free(rg); SDL_free(pszTitleUtf); return iResult;
 }

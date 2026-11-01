@@ -54,11 +54,11 @@ static HGLOBAL HglobPrintNames(COMPATPRINT *lp) {
     DEVNAMES *lpn;
     char *psz;
     if (!h) return nullptr;
-    lpn = (DEVNAMES *)(win32::GlobalLock(h)); if (!lpn) { win32::GlobalFree(h); return nullptr; }
-    psz = (char *)lpn + sizeof(*lpn);
-    lpn->wDriverOffset = (WORD)(psz - (char *)lpn); strcpy(psz, pszDriver); psz += strlen(psz) + 1;
-    lpn->wDeviceOffset = (WORD)(psz - (char *)lpn); strcpy(psz, pszDevice); psz += strlen(psz) + 1;
-    lpn->wOutputOffset = (WORD)(psz - (char *)lpn); strcpy(psz, pszPort); lpn->wDefault = 1;
+    lpn = static_cast<DEVNAMES *>((win32::GlobalLock(h))); if (!lpn) { win32::GlobalFree(h); return nullptr; }
+    psz = reinterpret_cast<char *>(lpn) + sizeof(*lpn);
+    lpn->wDriverOffset = static_cast<WORD>((psz - reinterpret_cast<char *>(lpn))); strcpy(psz, pszDriver); psz += strlen(psz) + 1;
+    lpn->wDeviceOffset = static_cast<WORD>((psz - reinterpret_cast<char *>(lpn))); strcpy(psz, pszDevice); psz += strlen(psz) + 1;
+    lpn->wOutputOffset = static_cast<WORD>((psz - reinterpret_cast<char *>(lpn))); strcpy(psz, pszPort); lpn->wDefault = 1;
     win32::GlobalUnlock(h); return h;
 }
 BOOL win32::PrintDlgA(LPPRINTDLGA lppd) {
@@ -100,7 +100,7 @@ BOOL win32::PrintDlgA(LPPRINTDLGA lppd) {
     hMode = win32::GlobalAlloc(win32::GMEM_MOVEABLE | win32::GMEM_ZEROINIT, sizeof(*lpdm));
     hNames = HglobPrintNames(lp);
     if (!hMode || !hNames) { dwError = win32::CDERR_MEMALLOCFAILURE; goto fail; }
-    lpdm = (DEVMODEA *)(win32::GlobalLock(hMode)); if (!lpdm) goto fail;
+    lpdm = static_cast<DEVMODEA *>((win32::GlobalLock(hMode))); if (!lpdm) goto fail;
     CchCopyUtf8(lpdm->dmDeviceName, sizeof(lpdm->dmDeviceName), lp->fSpool ? lp->szPrinter : "Stars PDF",
                 CchUtf8Prefix(lp->fSpool ? lp->szPrinter : "Stars PDF", sizeof(lpdm->dmDeviceName) - 1));
     lpdm->dmSize = sizeof(*lpdm); lpdm->dmSpecVersion = 0x401; lpdm->dmDriverVersion = 1;
@@ -122,14 +122,14 @@ fail:
     win32::GlobalFree(hMode); win32::GlobalFree(hNames); CompatSetDialogError(dwError); return 0;
 }
 static cairo_status_t WritePDF(void *lpv, const unsigned char *rgb, unsigned cb) {
-    COMPATPRINT *lp = (COMPATPRINT *)(lpv);
+    COMPATPRINT *lp = static_cast<COMPATPRINT *>((lpv));
     return CWriteNative(rgb, 1, cb, lp->lpfile.get()) == cb ? CAIRO_STATUS_SUCCESS : CAIRO_STATUS_WRITE_ERROR;
 }
 static int StartPrint(COMPATPRINT *lp, int cb, LPCSTR pszTitle) {
     OPENFILENAMEA ofn = {};
     char szFile[PATH_MAX] = "Stars map.pdf";
     if (lp->fActive || cb < 0 || cb > 4096 || (cb != 0 && !pszTitle)) { win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return win32::SP_ERROR; }
-    if (cb != 0 && !FUtf8Valid(pszTitle, (size_t)cb)) { win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return win32::SP_ERROR; }
+    if (cb != 0 && !FUtf8Valid(pszTitle, static_cast<size_t>(cb))) { win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return win32::SP_ERROR; }
     if (cb) memcpy(lp->szTitle, pszTitle, cb);
     lp->szTitle[cb] = 0;
     if (!lp->fSpool && !*lp->szTarget) {
@@ -142,7 +142,7 @@ static int StartPrint(COMPATPRINT *lp, int cb, LPCSTR pszTitle) {
     }
     lp->fKeep = 0;
     if (lp->fSpool) strcpy(lp->szTemp, "/tmp/stars-print-XXXXXX");
-    else if (snprintf(lp->szTemp, sizeof(lp->szTemp), "%s.tmp-XXXXXX", lp->szTarget) >= (int)sizeof(lp->szTemp)) {
+    else if (snprintf(lp->szTemp, sizeof(lp->szTemp), "%s.tmp-XXXXXX", lp->szTarget) >= static_cast<int>(sizeof(lp->szTemp))) {
         lp->szTemp[0] = 0; win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return win32::SP_ERROR;
     }
     lp->lpfile.reset(PfNativeCreateTemp(lp->szTemp));
@@ -187,7 +187,7 @@ static BOOL FPrintMarked(SDL_Surface *lpSurface) {
     const BYTE *rgb;
     int x, y;
     for (y = 0; y < lpSurface->h; y++) {
-        rgb = (BYTE *)lpSurface->pixels + (size_t)y * lpSurface->pitch;
+        rgb = static_cast<BYTE *>(lpSurface->pixels) + static_cast<size_t>(y) * lpSurface->pitch;
         for (x = 0; x < lpSurface->w; x++, rgb += 4) if (rgb[0] != 255 || rgb[1] != 255 || rgb[2] != 255) return 1;
     }
     return 0;
@@ -223,13 +223,13 @@ static int IEscapePrinter(COMPATPRINT *lp, HDC hdc, int idEscape, int cb, LPCSTR
     int id;
     BOOL fOk;
     if (idEscape == win32::QUERYESCSUPPORT) {
-        if (!pszIn || cb < (int)sizeof(int)) return 0;
+        if (!pszIn || cb < static_cast<int>(sizeof(int))) return 0;
         memcpy(&id, pszIn, sizeof(id));
         return id == win32::STARTDOC || id == win32::NEWFRAME || id == win32::ENDDOC || id == win32::ABORTDOC || id == win32::QUERYESCSUPPORT || id == win32::GETPHYSPAGESIZE || id == win32::GETPRINTINGOFFSET;
     }
     if (idEscape == win32::GETPHYSPAGESIZE || idEscape == win32::GETPRINTINGOFFSET) {
         if (!lpOut) { win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return win32::SP_ERROR; }
-        *(POINT *)lpOut = idEscape == win32::GETPHYSPAGESIZE ? POINT{lp->cxPhysical, lp->cyPhysical} : POINT{75, 75}; return 1;
+        *static_cast<POINT *>(lpOut) = idEscape == win32::GETPHYSPAGESIZE ? POINT{lp->cxPhysical, lp->cyPhysical} : POINT{75, 75}; return 1;
     }
     lpSurface = LpCompatPrinterSurface(hdc);
     if (idEscape == win32::STARTDOC) {

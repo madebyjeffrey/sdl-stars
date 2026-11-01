@@ -9,11 +9,11 @@ HMODULE win32::GetModuleHandleA(LPCSTR pszName) {
         SDL_SetError("Only the current embedded resource module is supported");
         return nullptr;
     }
-    return (HMODULE)&bModule;
+    return reinterpret_cast<HMODULE>(&bModule);
 }
 
 static BOOL FModule(HMODULE hModule) {
-    return SDL_IsMainThread() && (!hModule || hModule == (HMODULE)&bModule);
+    return SDL_IsMainThread() && (!hModule || hModule == reinterpret_cast<HMODULE>(&bModule));
 }
 
 static const COMPATRESOURCE *LpResourceIndex(size_t i) {
@@ -29,36 +29,36 @@ static const COMPATRESOURCE *LpResource(HRSRC hrsrc) {
     if (!SDL_IsMainThread())
         return nullptr;
     for (i = 0; i < cCompatResources + cCompatUIResources + cCompatImageResources; i++)
-        if (hrsrc == (HRSRC)LpResourceIndex(i))
+        if (hrsrc == const_cast<HRSRC>(reinterpret_cast<const win32::HRSRC__*>(LpResourceIndex(i))))
             return LpResourceIndex(i);
     return nullptr;
 }
 
 HRSRC win32::FindResourceA(HMODULE hModule, LPCSTR pszName, LPCSTR pszType) {
     size_t i;
-    UINT_PTR id = (UINT_PTR)pszName;
+    UINT_PTR id = reinterpret_cast<UINT_PTR>(pszName);
     const COMPATRESOURCE *lpres;
 
-    if (!FModule(hModule) || (UINT_PTR)pszType > UINT16_MAX || !pszName)
+    if (!FModule(hModule) || reinterpret_cast<UINT_PTR>(pszType) > UINT16_MAX || !pszName)
         return nullptr;
     for (i = 0; i < cCompatResources + cCompatUIResources + cCompatImageResources; i++) {
         lpres = LpResourceIndex(i);
-        if (lpres->type == (UINT_PTR)pszType &&
+        if (lpres->type == reinterpret_cast<UINT_PTR>(pszType) &&
             ((id <= UINT16_MAX && lpres->id == id) ||
              (id > UINT16_MAX && lpres->pszName && SDL_strcasecmp(pszName, lpres->pszName) == 0)))
-            return (HRSRC)lpres;
+            return const_cast<HRSRC>(reinterpret_cast<const win32::HRSRC__*>(lpres));
     }
     return nullptr;
 }
 
 DWORD win32::SizeofResource(HMODULE hModule, HRSRC hrsrc) {
     const COMPATRESOURCE *lpres = FModule(hModule) ? LpResource(hrsrc) : nullptr;
-    return lpres ? (DWORD)lpres->cb : 0;
+    return lpres ? static_cast<DWORD>(lpres->cb) : 0;
 }
 
 HGLOBAL win32::LoadResource(HMODULE hModule, HRSRC hrsrc) {
     const COMPATRESOURCE *lpres = FModule(hModule) ? LpResource(hrsrc) : nullptr;
-    return lpres ? (HGLOBAL)lpres->rgb : nullptr;
+    return lpres ? const_cast<HGLOBAL>(reinterpret_cast<const void*>(lpres->rgb)) : nullptr;
 }
 
 LPVOID win32::LockResource(HGLOBAL hres) {
@@ -67,13 +67,13 @@ LPVOID win32::LockResource(HGLOBAL hres) {
     if (!SDL_IsMainThread())
         return nullptr;
     for (i = 0; i < cCompatResources + cCompatUIResources + cCompatImageResources; i++)
-        if (hres == (HGLOBAL)LpResourceIndex(i)->rgb)
-            return (LPVOID)LpResourceIndex(i)->rgb;
+        if (hres == const_cast<HGLOBAL>(reinterpret_cast<const void*>(LpResourceIndex(i)->rgb)))
+            return const_cast<LPVOID>(reinterpret_cast<const void*>(LpResourceIndex(i)->rgb));
     return nullptr;
 }
 
 BOOL win32::FreeResource(HGLOBAL hres) {
-    (void)hres; // Obsolete on Win32: embedded bytes are module-owned, never freed here.
+    static_cast<void>(hres); // Obsolete on Win32: embedded bytes are module-owned, never freed here.
     return 0;
 }
 
@@ -87,7 +87,7 @@ HBITMAP win32::LoadBitmapA(HINSTANCE hInstance, LPCSTR pszName) {
  * this parser, and no resource pointer is cast to an aligned structure. */
 static BOOL FMenuWord(const BYTE *rgb, size_t cb, size_t *lpib, WORD *lpw) {
     if (*lpib > cb || cb - *lpib < 2) return 0;
-    *lpw = (WORD)(rgb[*lpib] | (rgb[*lpib + 1] << 8));
+    *lpw = static_cast<WORD>((rgb[*lpib] | (rgb[*lpib + 1] << 8)));
     *lpib += 2;
     return 1;
 }
@@ -115,13 +115,13 @@ static HMENU HmenuTemplateItems(const BYTE *rgb, size_t cb, size_t *lpib, int de
             if (!FMenuWord(rgb, cb, lpib, &wch)) goto fail;
             if (wch) cch++;
         } while (wch);
-        psz = (char *)(malloc(cch * 3 + 1));
+        psz = static_cast<char *>((malloc(cch * 3 + 1)));
         if (!psz) goto fail;
         if (CchUtf16leToUtf8(psz, cch * 3 + 1, rgb + ibText, cch) < 0) { free(psz); goto fail; }
         if (!(flags & win32::MF_POPUP) && id == 0 && cch == 0) flags |= win32::MF_SEPARATOR;
         if (flags & win32::MF_POPUP) hsub = HmenuTemplateItems(rgb, cb, lpib, depth + 1);
         if (((flags & win32::MF_POPUP) && !hsub) ||
-            !win32::AppendMenuA(hmenu, flags, hsub ? (UINT_PTR)hsub : id, psz)) {
+            !win32::AppendMenuA(hmenu, flags, hsub ? reinterpret_cast<UINT_PTR>(hsub) : id, psz)) {
             if (hsub) win32::DestroyMenu(hsub);
             free(psz);
             goto fail;
@@ -147,5 +147,5 @@ HMENU HmenuCompatTemplate(const BYTE *rgb, size_t cb) {
 }
 HMENU win32::LoadMenuA(HINSTANCE hInstance, LPCSTR pszName) {
     HRSRC hrsrc = win32::FindResourceA(hInstance, pszName, win32::RT_MENU);
-    return HmenuCompatTemplate((const BYTE *)(win32::LockResource(win32::LoadResource(hInstance, hrsrc))), win32::SizeofResource(hInstance, hrsrc));
+    return HmenuCompatTemplate(static_cast<const BYTE *>((win32::LockResource(win32::LoadResource(hInstance, hrsrc)))), win32::SizeofResource(hInstance, hrsrc));
 }

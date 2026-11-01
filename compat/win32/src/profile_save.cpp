@@ -32,7 +32,7 @@ BOOL FSaveProfile(COMPATPROFILE *lp, const char *pszPath, const PROFILEIO &io) {
         free(szTemp);
     });
 
-    szTemp = (char *)io.pfnAllocate(strlen(pszPath) + 12);
+    szTemp = static_cast<char *>(io.pfnAllocate(strlen(pszPath) + 12));
     if (!szTemp) { win32::SetLastError(win32::ERROR_NOT_ENOUGH_MEMORY); return 0; }
     snprintf(szTemp, strlen(pszPath) + 12, "%s.XXXXXX", pszPath);
     fp = io.pfnCreateTemp(szTemp);

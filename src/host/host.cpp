@@ -50,15 +50,15 @@ static int16_t FReadHostIni(APPSESSION &app, const char *szFile) {
     ISeekNativeFile(pf, 0, SEEK_END);
     cb = LNativePosition(pf);
     ISeekNativeFile(pf, 0, SEEK_SET);
-    NATIVEOWNER<char, std::free> text(static_cast<char *>(malloc((size_t)cb + 1)));
+    NATIVEOWNER<char, std::free> text(static_cast<char *>(malloc(static_cast<size_t>(cb) + 1)));
     pszText = text.get();
-    if (!pszText || CReadNative(pszText, 1, (size_t)cb, pf) != (size_t)cb) {
+    if (!pszText || CReadNative(pszText, 1, static_cast<size_t>(cb), pf) != static_cast<size_t>(cb)) {
         return 0;
     }
     ICloseNativeFile(file.Release());
     pszText[cb] = 0;
-    if (!FUtf8Valid(pszText, (size_t)cb)) return 0;
-    if (cb >= 3 && !memcmp(pszText, "\xef\xbb\xbf", 3)) memmove(pszText, pszText + 3, (size_t)cb - 2);
+    if (!FUtf8Valid(pszText, static_cast<size_t>(cb))) return 0;
+    if (cb >= 3 && !memcmp(pszText, "\xef\xbb\xbf", 3)) memmove(pszText, pszText + 3, static_cast<size_t>(cb) - 2);
     app.state.ini.fLogging = LIniInt(app, pszText, idsFiles, idsLogging, 0) != 0;
     if (!FIniValue(app, pszText, idsMisc, idsDefaultpassword, app.state.vszDefPass, 16)) {
         app.state.vszDefPass[0] = 0;
@@ -170,7 +170,7 @@ int main(int argc, char *argv[]) try {
     return app.state.vretExitValue;
 } catch (const StarsError &error) {
     fprintf(stderr, "stars-host: %s failure (message %u)\n",
-            error.mdError == starsErrorMemory ? "memory" : "file", (unsigned)error.ids);
+            error.mdError == starsErrorMemory ? "memory" : "file", static_cast<unsigned>(error.ids));
     return 2;
 } catch (...) {
     fprintf(stderr, "stars-host: unexpected operation failure\n");

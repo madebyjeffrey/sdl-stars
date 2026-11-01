@@ -28,7 +28,7 @@ int16_t InitMDIApp(APPSESSION &app) {
     wc.hInstance = app.lpui->hInst;
     wc.hIcon = win32::LoadIconA(app.lpui->hInst, "StarsIco");
     wc.hCursor = win32::LoadCursorA(nullptr, win32::MAKEINTRESOURCE(32512));
-    wc.hbrBackground = (HBRUSH)13;
+    wc.hbrBackground = reinterpret_cast<HBRUSH>(13);
     wc.lpszMenuName = "StarsMenu";
     wc.lpszClassName = app.lpui->szFrame;
     if (win32::RegisterClassA(&wc) == 0) {
@@ -38,35 +38,35 @@ int16_t InitMDIApp(APPSESSION &app) {
     wc.lpfnWndProc = MessageWndProc;
     wc.hIcon = 0;
     wc.lpszMenuName = nullptr;
-    wc.hbrBackground = (HBRUSH)win32::GetStockObject(win32::LTGRAY_BRUSH);
+    wc.hbrBackground = static_cast<HBRUSH>(win32::GetStockObject(win32::LTGRAY_BRUSH));
     wc.lpszClassName = app.lpui->szMessage;
     if (win32::RegisterClassA(&wc) == 0) {
         return 0;
     }
     wc.style = 523;
     wc.lpfnWndProc = ScannerWndProc;
-    wc.hbrBackground = (HBRUSH)win32::GetStockObject(win32::BLACK_BRUSH);
+    wc.hbrBackground = static_cast<HBRUSH>(win32::GetStockObject(win32::BLACK_BRUSH));
     wc.lpszClassName = app.lpui->szScan;
     if (win32::RegisterClassA(&wc) == 0) {
         return 0;
     }
     wc.style = 523;
     wc.lpfnWndProc = MineWndProc;
-    wc.hbrBackground = (HBRUSH)win32::GetStockObject(win32::LTGRAY_BRUSH);
+    wc.hbrBackground = static_cast<HBRUSH>(win32::GetStockObject(win32::LTGRAY_BRUSH));
     wc.lpszClassName = app.lpui->szMine;
     if (win32::RegisterClassA(&wc) == 0) {
         return 0;
     }
     wc.style = 520;
     wc.lpfnWndProc = TbWndProc;
-    wc.hbrBackground = (HBRUSH)win32::GetStockObject(win32::LTGRAY_BRUSH);
+    wc.hbrBackground = static_cast<HBRUSH>(win32::GetStockObject(win32::LTGRAY_BRUSH));
     wc.lpszClassName = app.lpui->szTb;
     if (win32::RegisterClassA(&wc) == 0) {
         return 0;
     }
     wc.style = 0x200;
     wc.lpfnWndProc = PlanetWndProc;
-    wc.hbrBackground = (HBRUSH)win32::GetStockObject(win32::LTGRAY_BRUSH);
+    wc.hbrBackground = static_cast<HBRUSH>(win32::GetStockObject(win32::LTGRAY_BRUSH));
     wc.hIcon = 0;
     wc.lpszClassName = app.lpui->szPlanet;
     if (win32::RegisterClassA(&wc) == 0) {
@@ -77,7 +77,7 @@ int16_t InitMDIApp(APPSESSION &app) {
     if (win32::RegisterClassA(&wc) == 0) return 0;
     wc.style = 2560;
     wc.lpfnWndProc = PopupWndProc;
-    wc.hbrBackground = (HBRUSH)win32::GetStockObject(win32::WHITE_BRUSH);
+    wc.hbrBackground = static_cast<HBRUSH>(win32::GetStockObject(win32::WHITE_BRUSH));
     wc.hIcon = 0;
     wc.lpszClassName = app.lpui->szPopup;
     if (win32::RegisterClassA(&wc) == 0) {
@@ -85,7 +85,7 @@ int16_t InitMDIApp(APPSESSION &app) {
     }
     wc.style = 2560;
     wc.lpfnWndProc = TooltipWndProc;
-    wc.hbrBackground = (HBRUSH)win32::GetStockObject(win32::WHITE_BRUSH);
+    wc.hbrBackground = static_cast<HBRUSH>(win32::GetStockObject(win32::WHITE_BRUSH));
     wc.hIcon = 0;
     wc.lpszClassName = app.lpui->szTooltip;
     if (win32::RegisterClassA(&wc) == 0) {
@@ -93,7 +93,7 @@ int16_t InitMDIApp(APPSESSION &app) {
     }
     wc.style = 0x200;
     wc.lpfnWndProc = BrowserWndProc;
-    wc.hbrBackground = (HBRUSH)win32::GetStockObject(win32::LTGRAY_BRUSH);
+    wc.hbrBackground = static_cast<HBRUSH>(win32::GetStockObject(win32::LTGRAY_BRUSH));
     wc.hIcon = 0;
     wc.lpszClassName = app.lpui->szBrowser;
     if (win32::RegisterClassA(&wc) == 0) {
@@ -106,7 +106,7 @@ int16_t InitMDIApp(APPSESSION &app) {
     wc.hInstance = app.lpui->hInst;
     wc.hIcon = 0;
     wc.hCursor = win32::LoadCursorA(nullptr, win32::MAKEINTRESOURCE(32512));
-    wc.hbrBackground = (HBRUSH)win32::GetStockObject(win32::BLACK_BRUSH);
+    wc.hbrBackground = static_cast<HBRUSH>(win32::GetStockObject(win32::BLACK_BRUSH));
     wc.lpszMenuName = nullptr;
     wc.lpszClassName = app.lpui->szTitle;
     if (win32::RegisterClassA(&wc) == 0) {
@@ -119,7 +119,7 @@ int16_t InitMDIApp(APPSESSION &app) {
     wc.hInstance = app.lpui->hInst;
     wc.hIcon = 0;
     wc.hCursor = win32::LoadCursorA(nullptr, win32::MAKEINTRESOURCE(32512));
-    wc.hbrBackground = (HBRUSH)win32::GetStockObject(win32::LTGRAY_BRUSH);
+    wc.hbrBackground = static_cast<HBRUSH>(win32::GetStockObject(win32::LTGRAY_BRUSH));
     wc.lpszMenuName = nullptr;
     wc.lpszClassName = app.lpui->szReport;
     if (win32::RegisterClassA(&wc) == 0) {
@@ -256,11 +256,11 @@ LRESULT  FrameWndProc(APPSESSION &app, HWND hwnd, UINT msg, WPARAM wParam, LPARA
         }
         return 0;
     case win32::WM_PALETTECHANGED:
-        if ((HWND)wParam != hwnd)
+        if (reinterpret_cast<HWND>(wParam) != hwnd)
             goto MapIt;
         return 0;
     case win32::WM_INITMENU:
-        InitializeMenu(app, (HMENU)wParam);
+        InitializeMenu(app, reinterpret_cast<HMENU>(wParam));
         return 0;
     case WM_STARS_STARTUP:
         app.state.idPlayer = iplrNone;
@@ -322,8 +322,8 @@ LRESULT  FrameWndProc(APPSESSION &app, HWND hwnd, UINT msg, WPARAM wParam, LPARA
         FGetSystemColors(app);
         return 0;
     case win32::WM_GETMINMAXINFO:
-        ((MINMAXINFO *)lParam)->ptMinTrackSize.x = 520;
-        ((MINMAXINFO *)lParam)->ptMinTrackSize.y = 380;
+        (reinterpret_cast<MINMAXINFO *>(lParam))->ptMinTrackSize.x = 520;
+        (reinterpret_cast<MINMAXINFO *>(lParam))->ptMinTrackSize.y = 380;
         return 0;
     case win32::WM_SIZE:
         if (wParam != 2 && wParam != 0)
@@ -477,7 +477,7 @@ LRESULT  FrameWndProc(APPSESSION &app, HWND hwnd, UINT msg, WPARAM wParam, LPARA
         case 'r':
         case 'R':
             if (app.state.sel.grobj == grobjFleet) {
-                ShipCommandProc(app, app.lpui->hwndPlanet, 0, (LPARAM)app.lpui->rghwndBtn[6]);
+                ShipCommandProc(app, app.lpui->hwndPlanet, 0, reinterpret_cast<LPARAM>(app.lpui->rghwndBtn[6]));
             }
         }
         if (iOffset == 0 && idPlanet == 0) {
@@ -491,25 +491,25 @@ LRESULT  FrameWndProc(APPSESSION &app, HWND hwnd, UINT msg, WPARAM wParam, LPARA
         return 0;
     case win32::WM_QUERYDRAGICON:
         if (app.state.idPlayer == iplrNone) {
-            return (LRESULT)app.lpui->hiconHost;
+            return reinterpret_cast<LRESULT>(app.lpui->hiconHost);
         }
         if (app.lpui->uTimerId == 0) {
-            return (LRESULT)app.lpui->hiconStars;
+            return reinterpret_cast<LRESULT>(app.lpui->hiconStars);
         }
-        return (LRESULT)app.lpui->hiconWait;
+        return reinterpret_cast<LRESULT>(app.lpui->hiconWait);
     case win32::WM_ERASEBKGND:
         if (win32::IsIconic(hwnd) != 0) {
             ControlIO().pfnGetClientRect(hwnd, &rc);
-            win32::FillRect((HDC)wParam, &rc, app.lpui->hbrDesktop);
+            win32::FillRect(reinterpret_cast<HDC>(wParam), &rc, app.lpui->hbrDesktop);
             return 0;
         }
         ControlIO().pfnGetClientRect(hwnd, &rc);
         if (app.lpui->hwndScanner) {
             ControlIO().pfnGetClientRect(app.lpui->hwndScanner, &rc2);
-            win32::MapWindowPoints(app.lpui->hwndScanner, hwnd, (POINT *)&rc2, 2);
-            win32::ExcludeClipRect((HDC)wParam, rc2.left, rc2.top, rc2.right, rc2.bottom);
+            win32::MapWindowPoints(app.lpui->hwndScanner, hwnd, reinterpret_cast<POINT *>(&rc2), 2);
+            win32::ExcludeClipRect(reinterpret_cast<HDC>(wParam), rc2.left, rc2.top, rc2.right, rc2.bottom);
         }
-        win32::FillRect((HDC)wParam, &rc, app.lpui->hbrButtonFace);
+        win32::FillRect(reinterpret_cast<HDC>(wParam), &rc, app.lpui->hbrButtonFace);
         return 1;
     case win32::WM_PAINT:
         if (win32::IsIconic(hwnd) != 0) {
@@ -519,7 +519,7 @@ LRESULT  FrameWndProc(APPSESSION &app, HWND hwnd, UINT msg, WPARAM wParam, LPARA
             return 0;
         }
         hdc = win32::BeginPaint(hwnd, &ps);
-        hbrSav = (HBRUSH)win32::SelectObject(hdc, app.lpui->hbrButtonShadow);
+        hbrSav = static_cast<HBRUSH>(win32::SelectObject(hdc, app.lpui->hbrButtonShadow));
         switch (app.lpui->iWindowLayout) {
         case layoutLarge:
         default:
@@ -572,7 +572,7 @@ LRESULT  FrameWndProc(APPSESSION &app, HWND hwnd, UINT msg, WPARAM wParam, LPARA
         }
         grSel = static_cast<PaneSplitter>(grSelRaw);
         hdc = win32::GetDC(hwnd);
-        hbrSav = (HBRUSH)win32::SelectObject(hdc, app.lpui->hbr50Screen);
+        hbrSav = static_cast<HBRUSH>(win32::SelectObject(hdc, app.lpui->hbr50Screen));
         ptD.y = 0;
         ptD.x = 0;
         InvertPaneBorder(app, hdc, grSel, ptD, nullptr);
@@ -1074,8 +1074,8 @@ void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
                     cPageX = cPageY;
                     cPageY = i;
                 }
-                ldx = (uint32_t)(dxMax * cPageX);
-                ldy = (uint32_t)(dyMax * cPageY);
+                ldx = static_cast<uint32_t>((dxMax * cPageX));
+                ldy = static_cast<uint32_t>((dyMax * cPageY));
                 if (ldx > 32000) {
                     ldx = 32000;
                 }
@@ -1092,8 +1092,8 @@ void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
                     ptLegendB.x = dSize / 2;
                     ptLegendB.y = ptLegendA.y;
                 } else {
-                    if (ldx - (int16_t)((int16_t)(3 * dxDPI) / 2) < ldy) {
-                        ldy = ldx - (int16_t)((int16_t)(3 * dxDPI) / 2);
+                    if (ldx - static_cast<int16_t>((static_cast<int16_t>((3 * dxDPI)) / 2)) < ldy) {
+                        ldy = ldx - static_cast<int16_t>((static_cast<int16_t>((3 * dxDPI)) / 2));
                     }
                     dSize = LOWORD(ldy);
                     ptLegendA.x = dSize + dMargin;
@@ -1113,7 +1113,7 @@ void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
                         yOff = -dyMax * yPage;
                         win32::Rectangle(pd.hDC, xOff, yOff, xOff + rc.right, yOff + rc.bottom);
                         if (hfontPrint) {
-                            hfontSav = (HFONT)win32::SelectObject(pd.hDC, hfontPrint);
+                            hfontSav = static_cast<HFONT>(win32::SelectObject(pd.hDC, hfontPrint));
                         } else {
                             hfontSav = 0;
                         }
@@ -1139,15 +1139,15 @@ void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
                             if (hfontPrintTiny) {
                                 win32::SelectObject(pd.hDC, hfontPrintTiny);
                             }
-                            CtrTextOut(pd.hDC, ptLegendB.x + xOff, (int16_t)(3 * dyPrint) / 2 + y - dyPrintTiny / 2, "|", 1);
-                            CtrTextOut(pd.hDC, ptLegendB.x + xOff, (int16_t)(5 * dyPrint) / 2 + y - dyPrintTiny / 2, "+", 1);
-                            CtrTextOut(pd.hDC, ptLegendB.x + xOff, (int16_t)(9 * dyPrint) / 2 + y + 8 - dyPrintTiny, "2", 1);
+                            CtrTextOut(pd.hDC, ptLegendB.x + xOff, static_cast<int16_t>((3 * dyPrint)) / 2 + y - dyPrintTiny / 2, "|", 1);
+                            CtrTextOut(pd.hDC, ptLegendB.x + xOff, static_cast<int16_t>((5 * dyPrint)) / 2 + y - dyPrintTiny / 2, "+", 1);
+                            CtrTextOut(pd.hDC, ptLegendB.x + xOff, static_cast<int16_t>((9 * dyPrint)) / 2 + y + 8 - dyPrintTiny, "2", 1);
                             if (hfontPrint) {
                                 win32::SelectObject(pd.hDC, hfontPrint);
                             }
                             DrawPlanetPrintDot(pd.hDC, ptLegendB.x + xOff, y - 4 + dyPrint / 2, 1);
-                            DrawPlanetPrintDot(pd.hDC, ptLegendB.x + xOff, y - 4 + (int16_t)(7 * dyPrint) / 2, 0);
-                            DrawPlanetPrintDot(pd.hDC, ptLegendB.x + xOff, (int16_t)(9 * dyPrint) / 2 + y + 8, 0);
+                            DrawPlanetPrintDot(pd.hDC, ptLegendB.x + xOff, y - 4 + static_cast<int16_t>((7 * dyPrint)) / 2, 0);
+                            DrawPlanetPrintDot(pd.hDC, ptLegendB.x + xOff, static_cast<int16_t>((9 * dyPrint)) / 2 + y + 8, 0);
                         }
                         if ((app.lpui->grbitScan & grbitScanViewMask) != 5) {
                             if (hfontPrintTiny) {
@@ -1156,14 +1156,14 @@ void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
                             lppl = app.state.lpPlanets;
                             lpplMac = app.state.lpPlanets + app.state.cPlanet;
                             for (; lppl < lpplMac; lppl++) {
-                                x = (int16_t)(app.state.rgptPlan[lppl->id].x - 1000);
-                                y = (int16_t)(app.state.dGalInv - 1000 - app.state.rgptPlan[lppl->id].y);
-                                x = (int32_t)((int32_t)(x * dSize) / app.state.dGal) + dMargin + xOff;
-                                y = (int32_t)((int32_t)(y * dSize) / app.state.dGal) + dMargin + yOff;
+                                x = static_cast<int16_t>((app.state.rgptPlan[lppl->id].x - 1000));
+                                y = static_cast<int16_t>((app.state.dGalInv - 1000 - app.state.rgptPlan[lppl->id].y));
+                                x = static_cast<int32_t>((static_cast<int32_t>((x * dSize)) / app.state.dGal)) + dMargin + xOff;
+                                y = static_cast<int32_t>((static_cast<int32_t>((y * dSize)) / app.state.dGal)) + dMargin + yOff;
                                 if (lppl->iPlayer == app.state.idPlayer) {
                                     if (lppl->fStarbase) {
                                         CtrTextOut(pd.hDC, LOWORD(x), LOWORD(y) + 4 - dyPrintTiny,
-                                                   (char *)(app.state.rglpshdefSB[lppl->iPlayer][lppl->isb].hul.ihuldef == ihuldefOrbitalFort ? "|" : "+"), 1);
+                                                   const_cast<char *>(reinterpret_cast<const char*>((app.state.rglpshdefSB[lppl->iPlayer][lppl->isb].hul.ihuldef == ihuldefOrbitalFort ? "|" : "+"))), 1);
                                     }
                                     DrawPlanetPrintDot(pd.hDC, LOWORD(x), LOWORD(y), 1);
                                 } else if (lppl->iPlayer != iplrNone) {
@@ -1176,10 +1176,10 @@ void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
                             win32::SelectObject(pd.hDC, hfontPrint);
                         }
                         for (i = 0; i < app.state.game.cPlanMax; i++) {
-                            x = (int16_t)(app.state.rgptPlan[i].x - 1000);
-                            y = (int16_t)(app.state.dGalInv - 1000 - app.state.rgptPlan[i].y);
-                            x = (int32_t)((int32_t)(x * dSize) / app.state.dGal) + dMargin + xOff;
-                            y = (int32_t)((int32_t)(y * dSize) / app.state.dGal) + dMargin + yOff;
+                            x = static_cast<int16_t>((app.state.rgptPlan[i].x - 1000));
+                            y = static_cast<int16_t>((app.state.dGalInv - 1000 - app.state.rgptPlan[i].y));
+                            x = static_cast<int32_t>((static_cast<int32_t>((x * dSize)) / app.state.dGal)) + dMargin + xOff;
+                            y = static_cast<int32_t>((static_cast<int32_t>((y * dSize)) / app.state.dGal)) + dMargin + yOff;
                             DrawPlanetPrintDot(pd.hDC, LOWORD(x), LOWORD(y), 0);
                             if (app.lpui->grbitScan & grbitScanPlanetNames) {
                                 CtrTextOut(pd.hDC, LOWORD(x), LOWORD(y) + 14, TextIO().pfnPlanetName(app, i), 0);
@@ -1441,7 +1441,7 @@ LPrintMapCleanup:
             }
         case IDM_HELP_CONTEXT_13002:
         case IDM_HELP_INTRO:
-            win32::WinHelpA(hwnd, app.lpui->szHelpFile, win32::HELP_CONTEXT, (uint32_t)(LOWORD(wParam) == IDM_HELP_INTRO ? 4501 : 13002));
+            win32::WinHelpA(hwnd, app.lpui->szHelpFile, win32::HELP_CONTEXT, static_cast<uint32_t>((LOWORD(wParam) == IDM_HELP_INTRO ? 4501 : 13002)));
             break;
         case IDM_HELP_CONTENTS:
         case IDM_HELP_CONTENTS2:
@@ -1929,21 +1929,21 @@ void DrawHostDialog2(APPSESSION &app, HWND hwnd, HDC hdcIn) {
     }
     cch = win32::wsprintfA(app.state.szWork, app.state.PCTD, app.state.game.turn + 2401);
     ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_HOST_NEXT_YEAR_TEXT), app.state.szWork);
-    dsec = (uint32_t)((win32::GetTickCount() - app.state.ctickLast) / 1000);
+    dsec = static_cast<uint32_t>(((win32::GetTickCount() - app.state.ctickLast) / 1000));
     if (dsec < 60) {
         cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDSeconds), LOWORD(dsec));
     } else {
-        dmin = LOWORD((uint32_t)(dsec / 60));
-        dsec -= (uint32_t)(60 * dmin);
+        dmin = LOWORD(static_cast<uint32_t>((dsec / 60)));
+        dsec -= static_cast<uint32_t>((60 * dmin));
         if (dmin < 60) {
             cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsD02d), dmin, LOWORD(dsec));
         } else {
-            dhour = (uint32_t)dmin / 60;
+            dhour = static_cast<uint32_t>(dmin) / 60;
             dmin -= 60 * dhour;
             if (dhour < 24) {
                 cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsD02d02d), dhour, dmin, LOWORD(dsec));
             } else {
-                dday = (uint32_t)dhour / 24;
+                dday = static_cast<uint32_t>(dhour) / 24;
                 dhour -= dday * 24;
                 cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDDaysD02d02d), dday, dhour, dmin, LOWORD(dsec));
             }
@@ -2002,7 +2002,7 @@ INT_PTR  HostModeDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         return 0;
     case win32::WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        win32::FillRect((HDC)wParam, &rc, app.lpui->hbrButtonFace);
+        win32::FillRect(reinterpret_cast<HDC>(wParam), &rc, app.lpui->hbrButtonFace);
         return 1;
     case win32::WM_CTLCOLORMSGBOX:
     case win32::WM_CTLCOLOREDIT:
@@ -2011,8 +2011,8 @@ INT_PTR  HostModeDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     case win32::WM_CTLCOLORDLG:
     case win32::WM_CTLCOLORSCROLLBAR:
     case win32::WM_CTLCOLORSTATIC:
-        win32::SetBkColor((HDC)wParam, app.lpui->crButtonFace);
-        return (INT_PTR)app.lpui->hbrButtonFace;
+        win32::SetBkColor(reinterpret_cast<HDC>(wParam), app.lpui->crButtonFace);
+        return reinterpret_cast<INT_PTR>(app.lpui->hbrButtonFace);
     case win32::WM_SETCURSOR:
     case win32::WM_LBUTTONDOWN:
     case win32::WM_RBUTTONDOWN:
@@ -2020,8 +2020,8 @@ INT_PTR  HostModeDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         ScreenToClient16(hwnd, &pt);
         if (pt.x < 6 || pt.x >= app.state.dyArial8 + 7 || pt.y < 48)
             break;
-        iDiamond = (int16_t)(pt.y - 48) / (app.state.dyArial8 + 4);
-        if (iDiamond >= app.state.game.cPlayer || (int16_t)(pt.y - 48) % (app.state.dyArial8 + 4) >= app.state.dyArial8 + 1)
+        iDiamond = static_cast<int16_t>((pt.y - 48)) / (app.state.dyArial8 + 4);
+        if (iDiamond >= app.state.game.cPlayer || static_cast<int16_t>((pt.y - 48)) % (app.state.dyArial8 + 4) >= app.state.dyArial8 + 1)
             break;
         if (message == win32::WM_SETCURSOR) {
             win32::SetCursor(app.lpui->hcurHand);
@@ -2153,7 +2153,7 @@ INT_PTR  HostOptionsDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam
     case win32::WM_INITDIALOG:
     case win32::WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        win32::FillRect((HDC)wParam, &rc, app.lpui->hbrButtonFace);
+        win32::FillRect(reinterpret_cast<HDC>(wParam), &rc, app.lpui->hbrButtonFace);
         return 1;
     case win32::WM_CTLCOLORMSGBOX:
     case win32::WM_CTLCOLOREDIT:
@@ -2162,8 +2162,8 @@ INT_PTR  HostOptionsDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam
     case win32::WM_CTLCOLORDLG:
     case win32::WM_CTLCOLORSCROLLBAR:
     case win32::WM_CTLCOLORSTATIC:
-        win32::SetBkColor((HDC)wParam, app.lpui->crButtonFace);
-        return (INT_PTR)app.lpui->hbrButtonFace;
+        win32::SetBkColor(reinterpret_cast<HDC>(wParam), app.lpui->crButtonFace);
+        return reinterpret_cast<INT_PTR>(app.lpui->hbrButtonFace);
     case win32::WM_PAINT:
         hdc = win32::BeginPaint(hwnd, &ps);
         DrawHostOptions(hwnd, hdc, -1);
@@ -2406,7 +2406,7 @@ void WriteIniSettings(APPSESSION &app) {
     case grobjOther:
         ch = 'E';
     }
-    win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsCCD), ch, (int16_t)(int8_t)LOBYTE(app.state.idPlayer + 66), app.state.sel.id);
+    win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsCCD), ch, static_cast<int16_t>(static_cast<int8_t>(LOBYTE(app.state.idPlayer + 66))), app.state.sel.id);
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
     TextIO().pfnCchGetString(app, idsMessage, szEntry);
     win32::wsprintfA(app.state.szWork, app.state.PCTD, app.state.iMsgCur);
@@ -2639,7 +2639,7 @@ LRESULT  TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     case win32::WM_CREATE:
         if (getenv("STARS_DEBUG_LIBRARY_STARTUP"))
             fprintf(stderr, "[DEBUG-library-startup] TitleWndProc WM_CREATE begin hwnd=%p visible=%d\n",
-                    (void *)hwnd, win32::IsWindowVisible(hwnd));
+                    static_cast<void *>(hwnd), win32::IsWindowVisible(hwnd));
         if (app.lpui->vcScreenColors >= 8) {
             app.lpui->vhdibTitle = HdibLoadBigResource(app, IDDIB_SPLASH);
             if (!app.lpui->vhpalSplash && app.lpui->vhdibTitle) {
@@ -2650,18 +2650,18 @@ LRESULT  TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         dx = (((120) < ((rc.right - 48) / 5 - 12)) ? (120) : ((rc.right - 48) / 5 - 12));
         dxGap = (rc.right - 5 * dx) / 6;
         xCur = dxGap;
-        dy = rc.bottom <= 500 ? app.state.dyArial8 * 2 : (int16_t)(5 * app.state.dyArial8) / 2;
+        dy = rc.bottom <= 500 ? app.state.dyArial8 * 2 : static_cast<int16_t>((5 * app.state.dyArial8)) / 2;
         for (i = 0; i < 5; i++) {
             idButton = i == 3 ? IDC_LIBRARY_TUTORIAL : i == 4 ? 3 : i;
             psz = TextIO().pfnCompressed(app, static_cast<StringId>(i == 3 ? idsLibraryStartTutorial : idsNewGame + idButton));
-            hwndButton = ui::CreateWindowEx(0, "BUTTON", psz, win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP, xCur, rc.bottom - dy - (int16_t)(5 * app.state.dyArial8) / 2, dx, dy, hwnd,
-                                      (HMENU)(uintptr_t)idButton, app.lpui->hInst, nullptr);
+            hwndButton = ui::CreateWindowEx(0, "BUTTON", psz, win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP, xCur, rc.bottom - dy - static_cast<int16_t>((5 * app.state.dyArial8)) / 2, dx, dy, hwnd,
+                                      reinterpret_cast<HMENU>(static_cast<uintptr_t>(idButton)), app.lpui->hInst, nullptr);
             if (i != 3) app.lpui->rghwndBtnSplash[idButton] = hwndButton;
             if (i == 2 && (app.state.szBase[0] == 0 || !FFileExists(app.state.szBase))) {
                 ControlIO().pfnEnableWindow(app.lpui->rghwndBtnSplash[2], 0);
             }
             if (rc.bottom < 500) {
-                ControlIO().pfnSendMessage(hwndButton, win32::WM_SETFONT, (WPARAM)app.lpui->rghfontArial8[1], 0);
+                ControlIO().pfnSendMessage(hwndButton, win32::WM_SETFONT, reinterpret_cast<WPARAM>(app.lpui->rghfontArial8[1]), 0);
             }
             xCur += dx + dxGap;
         }
@@ -2694,7 +2694,7 @@ LRESULT  TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         }
         return 0;
     case win32::WM_PALETTECHANGED:
-        if ((HWND)wParam != hwnd)
+        if (reinterpret_cast<HWND>(wParam) != hwnd)
             goto MapIt;
         break;
     case win32::WM_DESTROY:
@@ -2859,10 +2859,10 @@ LRESULT  TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             win32::EndPaint(hwnd, &ps);
             break;
         }
-        plf = (LOGFONT *)win32::LocalAlloc(64, sizeof(LOGFONT));
+        plf = static_cast<LOGFONT *>(win32::LocalAlloc(64, sizeof(LOGFONT)));
         plfOwner.reset(plf);
         hdc = win32::BeginPaint(hwnd, &ps);
-        hbrSav = (HBRUSH)win32::SelectObject(hdc, app.lpui->hbrButtonFace);
+        hbrSav = static_cast<HBRUSH>(win32::SelectObject(hdc, app.lpui->hbrButtonFace));
         ControlIO().pfnGetClientRect(hwnd, &rcWnd);
         if (app.lpui->vcScreenColors >= 8) {
             win32::SetTextColor(hdc, 50298879);
@@ -2878,15 +2878,15 @@ LRESULT  TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             rc.bottom = 0;
             dx = rcWnd.right;
             DrawABunchOfStars(app, hdc, &rcWnd);
-            plf->lfHeight = (int16_t)-rcWnd.bottom / 3;
+            plf->lfHeight = static_cast<int16_t>(-rcWnd.bottom) / 3;
             strcpy(plf->lfFaceName, app.lpui->rgszArial[3]);
             hfont = win32::CreateFontIndirectA(plf);
             win32::SetTextColor(hdc, 10158235);
             if (hfont) {
-                hfontSav = (HFONT)win32::SelectObject(hdc, hfont);
+                hfontSav = static_cast<HFONT>(win32::SelectObject(hdc, hfont));
                 win32::SetBkMode(hdc, win32::TRANSPARENT);
                 rcT = rcWnd;
-                rcT.bottom = (int16_t)(3 * rcT.bottom) / 4;
+                rcT.bottom = static_cast<int16_t>((3 * rcT.bottom)) / 4;
                 RcCtrTextOut(app, hdc, &rcT, "Stars!", 6);
                 win32::SelectObject(hdc, hfontSav);
                 win32::DeleteObject(hfont);
@@ -2896,9 +2896,9 @@ LRESULT  TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         win32::SetBkMode(hdc, win32::TRANSPARENT);
         SzVersion(app);
         win32::GetWindowRect(app.lpui->rghwndBtnSplash[0], &rcT);
-        win32::MapWindowPoints(nullptr, hwnd, (POINT *)&rcT, 2);
-        rcWnd.top = rcT.top - (int16_t)(9 * app.state.dyArial8) / 2;
-        rcWnd.bottom = (int16_t)(3 * app.state.dyArial8) / 2 + rcWnd.top;
+        win32::MapWindowPoints(nullptr, hwnd, reinterpret_cast<POINT *>(&rcT), 2);
+        rcWnd.top = rcT.top - static_cast<int16_t>((9 * app.state.dyArial8)) / 2;
+        rcWnd.bottom = static_cast<int16_t>((3 * app.state.dyArial8)) / 2 + rcWnd.top;
         RcCtrTextOut(app, hdc, &rcWnd, app.state.szWork, strlen(app.state.szWork));
         win32::EndPaint(hwnd, &ps);
         plfOwner.reset();

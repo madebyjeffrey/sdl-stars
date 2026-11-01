@@ -12,13 +12,13 @@ char *PszCompatFileUri(const char *pszPath) {
 
     pszAbsolute = PszCanonicalNativePath(pszPath, nullptr, 0);
     if (!pszAbsolute) return nullptr;
-    pszUri = (char *)(malloc(strlen(pszAbsolute) * 3 + 9));
+    pszUri = static_cast<char *>((malloc(strlen(pszAbsolute) * 3 + 9)));
     if (!pszUri) { free(pszAbsolute); return nullptr; }
     memcpy(pszUri, "file://", 7); lpchOut = pszUri + 7;
 #ifdef _WIN32
     if (pszAbsolute[1] == ':') *lpchOut++ = '/';
 #endif
-    lpch = (const unsigned char *)pszAbsolute;
+    lpch = reinterpret_cast<const unsigned char *>(pszAbsolute);
 #ifdef _WIN32
     if (lpch[0] == '/' && lpch[1] == '/') lpch += 2;
 #endif
@@ -29,7 +29,7 @@ char *PszCompatFileUri(const char *pszPath) {
 #ifdef _WIN32
             || (ch == ':' && lpch == (const unsigned char *)pszAbsolute + 1)
 #endif
-        ) *lpchOut++ = (char)ch;
+        ) *lpchOut++ = static_cast<char>(ch);
         else { *lpchOut++ = '%'; *lpchOut++ = rgchHex[ch >> 4]; *lpchOut++ = rgchHex[ch & 15]; }
     }
     *lpchOut = 0; free(pszAbsolute);

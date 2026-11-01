@@ -13,7 +13,7 @@ static HWND LpScrollWindow(HWND hwnd, int sb) {
 }
 
 static int IScrollMax(const COMPATSCROLL *lpscr) {
-    return (int)((((int64_t)lpscr->iMin) > ((int64_t)lpscr->iMax - (lpscr->cPage != 0 ? lpscr->cPage - 1 : 0))) ? ((int64_t)lpscr->iMin) : ((int64_t)lpscr->iMax - (lpscr->cPage != 0 ? lpscr->cPage - 1 : 0)));
+    return static_cast<int>((((static_cast<int64_t>(lpscr->iMin)) > (static_cast<int64_t>(lpscr->iMax) - (lpscr->cPage != 0 ? lpscr->cPage - 1 : 0))) ? (static_cast<int64_t>(lpscr->iMin)) : (static_cast<int64_t>(lpscr->iMax) - (lpscr->cPage != 0 ? lpscr->cPage - 1 : 0))));
 }
 
 void CompatLayoutScrollbars(HWND hwnd) {
@@ -31,7 +31,7 @@ void CompatLayoutScrollbars(HWND hwnd) {
         hbar = hwnd->rghwndScroll[i];
         if (fShow && !win32::IsWindow(hbar)) {
             hbar = win32::CreateWindowExA(win32::WS_EX_NOPARENTNOTIFY, "ScrollBar", "", win32::WS_CHILD | (i == win32::SB_VERT ? win32::SBS_VERT : win32::SBS_HORZ),
-                                  0, 0, 1, 1, hwnd, (HMENU)(INT_PTR)(-100 - i), nullptr, nullptr);
+                                  0, 0, 1, 1, hwnd, reinterpret_cast<HMENU>(static_cast<INT_PTR>((-100 - i))), nullptr, nullptr);
             if (!win32::IsWindow(hwnd)) return;
             hwnd->rghwndScroll[i] = hbar;
             if (hbar) hbar->fNcScroll = 1;
@@ -81,15 +81,15 @@ int win32::SetScrollInfo(HWND hwnd, int sb, LPCSCROLLINFO lpsi, BOOL fRedraw) {
     RECT rc;
     if (!LpScrollWindow(hwnd, sb)) return 0;
     if (!lpsi || lpsi->cbSize != sizeof(*lpsi) || (lpsi->fMask & ~(win32::SIF_ALL | win32::SIF_DISABLENOSCROLL))) { win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return 0; }
-    if (sb == win32::SB_CTL && hwnd->iControl != 5) return (int)win32::SendMessageA(hwnd, win32::SBM_SETSCROLLINFO, fRedraw, (LPARAM)lpsi);
+    if (sb == win32::SB_CTL && hwnd->iControl != 5) return static_cast<int>(win32::SendMessageA(hwnd, win32::SBM_SETSCROLLINFO, fRedraw, reinterpret_cast<LPARAM>(lpsi)));
     styleOld = hwnd->dwStyle;
     lpscr = &hwnd->rgscr[sb == win32::SB_CTL ? 0 : sb];
     if (lpsi->fMask & win32::SIF_RANGE) {
         lpscr->iMin = lpsi->nMin; lpscr->iMax = StarsMax(lpsi->nMin, lpsi->nMax);
     }
-    cRange = (int64_t)lpscr->iMax - lpscr->iMin + 1;
-    if (lpsi->fMask & win32::SIF_PAGE) lpscr->cPage = (UINT)((((uint64_t)lpsi->nPage) < ((uint64_t)cRange)) ? ((uint64_t)lpsi->nPage) : ((uint64_t)cRange));
-    else lpscr->cPage = (UINT)((((uint64_t)lpscr->cPage) < ((uint64_t)cRange)) ? ((uint64_t)lpscr->cPage) : ((uint64_t)cRange));
+    cRange = static_cast<int64_t>(lpscr->iMax) - lpscr->iMin + 1;
+    if (lpsi->fMask & win32::SIF_PAGE) lpscr->cPage = static_cast<UINT>((((static_cast<uint64_t>(lpsi->nPage)) < (static_cast<uint64_t>(cRange))) ? (static_cast<uint64_t>(lpsi->nPage)) : (static_cast<uint64_t>(cRange))));
+    else lpscr->cPage = static_cast<UINT>((((static_cast<uint64_t>(lpscr->cPage)) < (static_cast<uint64_t>(cRange))) ? (static_cast<uint64_t>(lpscr->cPage)) : (static_cast<uint64_t>(cRange))));
     if (lpsi->fMask & win32::SIF_POS) lpscr->iPos = lpsi->nPos;
     lpscr->iPos = (((lpscr->iMin) > ((((lpscr->iPos) < (IScrollMax(lpscr))) ? (lpscr->iPos) : (IScrollMax(lpscr))))) ? (lpscr->iMin) : ((((lpscr->iPos) < (IScrollMax(lpscr))) ? (lpscr->iPos) : (IScrollMax(lpscr)))));
     fShow = IScrollMax(lpscr) > lpscr->iMin;
@@ -112,7 +112,7 @@ BOOL win32::GetScrollInfo(HWND hwnd, int sb, LPSCROLLINFO lpsi) {
     HWND hbar;
     if (!LpScrollWindow(hwnd, sb)) return 0;
     if (!lpsi || lpsi->cbSize != sizeof(*lpsi) || (lpsi->fMask & ~win32::SIF_ALL)) { win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return 0; }
-    if (sb == win32::SB_CTL && hwnd->iControl != 5) return (BOOL)win32::SendMessageA(hwnd, win32::SBM_GETSCROLLINFO, 0, (LPARAM)lpsi);
+    if (sb == win32::SB_CTL && hwnd->iControl != 5) return static_cast<BOOL>(win32::SendMessageA(hwnd, win32::SBM_GETSCROLLINFO, 0, reinterpret_cast<LPARAM>(lpsi)));
     lpscr = &hwnd->rgscr[sb == win32::SB_CTL ? 0 : sb];
     if (lpsi->fMask & win32::SIF_RANGE) { lpsi->nMin = lpscr->iMin; lpsi->nMax = lpscr->iMax; }
     if (lpsi->fMask & win32::SIF_PAGE) lpsi->nPage = lpscr->cPage;
@@ -133,9 +133,9 @@ static int ISetScrollPos(HWND hwnd, COMPATSCROLL *lpscr, int iPos, BOOL fRedraw)
 
 static BOOL FSetScrollRange(HWND hwnd, COMPATSCROLL *lpscr, int iMin, int iMax, BOOL fRedraw) {
     if (iMin > iMax) iMin = iMax = 0;
-    if ((int64_t)iMax - iMin > INT32_MAX) { win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return 0; }
+    if (static_cast<int64_t>(iMax) - iMin > INT32_MAX) { win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return 0; }
     lpscr->iMin = iMin; lpscr->iMax = iMax;
-    lpscr->cPage = (UINT)((((uint64_t)lpscr->cPage) < ((uint64_t)((int64_t)iMax - iMin + 1))) ? ((uint64_t)lpscr->cPage) : ((uint64_t)((int64_t)iMax - iMin + 1)));
+    lpscr->cPage = static_cast<UINT>((((static_cast<uint64_t>(lpscr->cPage)) < (static_cast<uint64_t>((static_cast<int64_t>(iMax) - iMin + 1)))) ? (static_cast<uint64_t>(lpscr->cPage)) : (static_cast<uint64_t>((static_cast<int64_t>(iMax) - iMin + 1)))));
     lpscr->fDisable = IScrollMax(lpscr) == iMin;
     lpscr->iPos = (((iMin) > ((((lpscr->iPos) < (IScrollMax(lpscr))) ? (lpscr->iPos) : (IScrollMax(lpscr))))) ? (iMin) : ((((lpscr->iPos) < (IScrollMax(lpscr))) ? (lpscr->iPos) : (IScrollMax(lpscr)))));
     if (fRedraw) win32::InvalidateRect(hwnd, nullptr, 0);
@@ -145,7 +145,7 @@ static BOOL FSetScrollRange(HWND hwnd, COMPATSCROLL *lpscr, int iMin, int iMax, 
 int win32::GetScrollPos(HWND hwnd, int sb) {
     HWND lpwin = LpScrollWindow(hwnd, sb);
     if (!lpwin) return 0;
-    if (sb == win32::SB_CTL) return (int)win32::SendMessageA(hwnd, win32::SBM_GETPOS, 0, 0);
+    if (sb == win32::SB_CTL) return static_cast<int>(win32::SendMessageA(hwnd, win32::SBM_GETPOS, 0, 0));
     return lpwin->rgscr[sb].iPos;
 }
 
@@ -155,7 +155,7 @@ BOOL win32::GetScrollRange(HWND hwnd, int sb, int *lpiMin, int *lpiMax) {
     if (!lpwin) return 0;
     if (!lpiMin || !lpiMax) { win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return 0; }
     if (sb == win32::SB_CTL) {
-        lr = win32::SendMessageA(hwnd, win32::SBM_GETRANGE, (WPARAM)lpiMin, (LPARAM)lpiMax);
+        lr = win32::SendMessageA(hwnd, win32::SBM_GETRANGE, reinterpret_cast<WPARAM>(lpiMin), reinterpret_cast<LPARAM>(lpiMax));
         return lpwin->iControl == 5 || lr != 0;
     }
     *lpiMin = lpwin->rgscr[sb].iMin; *lpiMax = lpwin->rgscr[sb].iMax;
@@ -166,7 +166,7 @@ int win32::SetScrollPos(HWND hwnd, int sb, int iPos, BOOL fRedraw) {
     HWND lpwin = LpScrollWindow(hwnd, sb);
     HWND hbar;
     if (!lpwin) return 0;
-    if (sb == win32::SB_CTL) return (int)win32::SendMessageA(hwnd, win32::SBM_SETPOS, (WPARAM)(INT_PTR)iPos, (LPARAM)fRedraw);
+    if (sb == win32::SB_CTL) return static_cast<int>(win32::SendMessageA(hwnd, win32::SBM_SETPOS, static_cast<WPARAM>(static_cast<INT_PTR>(iPos)), static_cast<LPARAM>(fRedraw)));
     /* Only the scrollbar changes here. Invalidating its owner's client made
        ScrollScanner abandon pixel scrolling and redraw the entire map. */
     iPos = ISetScrollPos(hwnd, &lpwin->rgscr[sb], iPos, 0);
@@ -182,17 +182,17 @@ BOOL win32::SetScrollRange(HWND hwnd, int sb, int iMin, int iMax, BOOL fRedraw) 
     HWND lpwin = LpScrollWindow(hwnd, sb);
     DWORD dwStyle;
     if (!lpwin) return 0;
-    if (iMin <= iMax && (int64_t)iMax - iMin > INT32_MAX) {
+    if (iMin <= iMax && static_cast<int64_t>(iMax) - iMin > INT32_MAX) {
         win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return 0;
     }
     if (sb == win32::SB_CTL) {
         if (lpwin->iControl == 5) {
             win32::SendMessageA(hwnd, fRedraw ? win32::SBM_SETRANGEREDRAW : win32::SBM_SETRANGE,
-                         (WPARAM)(INT_PTR)iMin, (LPARAM)iMax);
+                         static_cast<WPARAM>(static_cast<INT_PTR>(iMin)), static_cast<LPARAM>(iMax));
             return 1;
         }
-        return (BOOL)win32::SendMessageA(hwnd, fRedraw ? win32::SBM_SETRANGEREDRAW : win32::SBM_SETRANGE,
-                                  (WPARAM)(INT_PTR)iMin, (LPARAM)iMax);
+        return static_cast<BOOL>(win32::SendMessageA(hwnd, fRedraw ? win32::SBM_SETRANGEREDRAW : win32::SBM_SETRANGE,
+                                  static_cast<WPARAM>(static_cast<INT_PTR>(iMin)), static_cast<LPARAM>(iMax)));
     }
     if (!FSetScrollRange(hwnd, &lpwin->rgscr[sb], iMin, iMax, fRedraw)) return 0;
     dwStyle = sb == win32::SB_HORZ ? win32::WS_HSCROLL : win32::WS_VSCROLL;
@@ -219,15 +219,15 @@ static BOOL FScrollGeom(HWND hwnd, SCROLLGEOM *lpg) {
     lpg->cAxis = lpg->fVert ? lpg->rc.bottom : lpg->rc.right;
     lpg->cCross = lpg->fVert ? lpg->rc.right : lpg->rc.bottom;
     lpg->dArrow = StarsMin(17, lpg->cAxis / 2);
-    cRange = (int64_t)lpscr->iMax - lpscr->iMin + 1;
+    cRange = static_cast<int64_t>(lpscr->iMax) - lpscr->iMin + 1;
     lpg->dThumb = (((lpg->cAxis - 2 * lpg->dArrow) < (lpscr->cPage != 0 ?
-        (((8) > ((int)((int64_t)(lpg->cAxis - 2 * lpg->dArrow) * lpscr->cPage / StarsMax(1, cRange)))) ? (8) : ((int)((int64_t)(lpg->cAxis - 2 * lpg->dArrow) * lpscr->cPage / StarsMax(1, cRange)))) : 17)) ? (lpg->cAxis - 2 * lpg->dArrow) : (lpscr->cPage != 0 ?
-        (((8) > ((int)((int64_t)(lpg->cAxis - 2 * lpg->dArrow) * lpscr->cPage / StarsMax(1, cRange)))) ? (8) : ((int)((int64_t)(lpg->cAxis - 2 * lpg->dArrow) * lpscr->cPage / StarsMax(1, cRange)))) : 17));
+        (((8) > (static_cast<int>((static_cast<int64_t>((lpg->cAxis - 2 * lpg->dArrow)) * lpscr->cPage / StarsMax(1, cRange))))) ? (8) : (static_cast<int>((static_cast<int64_t>((lpg->cAxis - 2 * lpg->dArrow)) * lpscr->cPage / StarsMax(1, cRange))))) : 17)) ? (lpg->cAxis - 2 * lpg->dArrow) : (lpscr->cPage != 0 ?
+        (((8) > (static_cast<int>((static_cast<int64_t>((lpg->cAxis - 2 * lpg->dArrow)) * lpscr->cPage / StarsMax(1, cRange))))) ? (8) : (static_cast<int>((static_cast<int64_t>((lpg->cAxis - 2 * lpg->dArrow)) * lpscr->cPage / StarsMax(1, cRange))))) : 17));
     lpg->dTravel = lpg->cAxis - 2 * lpg->dArrow - lpg->dThumb;
     iPos = lpwin->fTracking && lpwin->sbScrollTrack == win32::SB_THUMBTRACK ? lpwin->iScrollTrack : lpscr->iPos;
     iPos = (((lpscr->iMin) > ((((iPos) < (IScrollMax(lpscr))) ? (iPos) : (IScrollMax(lpscr))))) ? (lpscr->iMin) : ((((iPos) < (IScrollMax(lpscr))) ? (iPos) : (IScrollMax(lpscr)))));
-    cRange = (int64_t)IScrollMax(lpscr) - lpscr->iMin;
-    lpg->iThumb = lpg->dArrow + (cRange ? (int)(((int64_t)iPos - lpscr->iMin) * lpg->dTravel / cRange) : 0);
+    cRange = static_cast<int64_t>(IScrollMax(lpscr)) - lpscr->iMin;
+    lpg->iThumb = lpg->dArrow + (cRange ? static_cast<int>(((static_cast<int64_t>(iPos) - lpscr->iMin) * lpg->dTravel / cRange)) : 0);
     return lpg->cAxis > 0 && lpg->cCross > 0;
 }
 
@@ -237,7 +237,7 @@ static void ScrollRect(const SCROLLGEOM *lpg, RECT *lprc, int iFirst, int iLast)
 }
 
 static UINT SbScrollHit(const SCROLLGEOM *lpg, LPARAM l) {
-    POINT pt = {(int16_t)LOWORD(l), (int16_t)HIWORD(l)};
+    POINT pt = {static_cast<int16_t>(LOWORD(l)), static_cast<int16_t>(HIWORD(l))};
     int iAxis = lpg->fVert ? pt.y : pt.x;
     if (!win32::PtInRect(&lpg->rc, pt)) return win32::SB_ENDSCROLL;
     if (iAxis < lpg->dArrow) return win32::SB_LINEUP;
@@ -251,7 +251,7 @@ static void NotifyScroll(HWND hwnd, UINT sb, int iPos) {
     HWND lpwin = LpCompatWindow(hwnd);
     if (lpwin && !lpwin->fDestroying && lpwin->hwndParent)
         win32::SendMessageA(lpwin->hwndParent, lpwin->dwStyle & win32::SBS_VERT ? win32::WM_VSCROLL : win32::WM_HSCROLL,
-                     win32::MAKEWPARAM(sb, sb == win32::SB_THUMBTRACK || sb == win32::SB_THUMBPOSITION ? iPos : 0), lpwin->fNcScroll ? 0 : (LPARAM)hwnd);
+                     win32::MAKEWPARAM(sb, sb == win32::SB_THUMBTRACK || sb == win32::SB_THUMBPOSITION ? iPos : 0), lpwin->fNcScroll ? 0 : reinterpret_cast<LPARAM>(hwnd));
 }
 
 static void PaintScroll(HWND hwnd) {
@@ -267,20 +267,20 @@ static void PaintScroll(HWND hwnd) {
     // A resized bar can retain dirty pixels even when its client size is zero.
     // Begin/EndPaint must validate them so paint does not starve other messages.
     if (!FScrollGeom(hwnd, &g)) { win32::EndPaint(hwnd, &ps); return; }
-    hbr = (HBRUSH)win32::SendMessageA(lpwin->hwndParent, win32::WM_CTLCOLORSCROLLBAR, (WPARAM)hdc, (LPARAM)hwnd);
+    hbr = reinterpret_cast<HBRUSH>(win32::SendMessageA(lpwin->hwndParent, win32::WM_CTLCOLORSCROLLBAR, reinterpret_cast<WPARAM>(hdc), reinterpret_cast<LPARAM>(hwnd)));
     if (!win32::IsWindow(hwnd)) return;
     if (!hbr) hbr = hbrOwn = win32::CreateSolidBrush(win32::GetSysColor(win32::COLOR_SCROLLBAR));
     hbrFace = win32::CreateSolidBrush(win32::GetSysColor(win32::COLOR_BTNFACE));
     win32::FillRect(hdc, &g.rc, hbr);
     fEnabled = win32::IsWindowEnabled(hwnd) && lpwin->rgscr[0].iMin != lpwin->rgscr[0].iMax;
-    hbrGlyph = (HBRUSH)win32::GetStockObject(fEnabled ? win32::BLACK_BRUSH : win32::GRAY_BRUSH);
+    hbrGlyph = static_cast<HBRUSH>(win32::GetStockObject(fEnabled ? win32::BLACK_BRUSH : win32::GRAY_BRUSH));
     for (i = 0; i < 2; i++) {
         ScrollRect(&g, &rc, i ? g.cAxis - g.dArrow : 0, i ? g.cAxis : g.dArrow);
         win32::FillRect(hdc, &rc, hbrFace);
-        CompatDrawClassicEdge(hdc, &rc, lpwin->fTracking && lpwin->fPressed && lpwin->sbScrollTrack == (UINT)i, 1);
+        CompatDrawClassicEdge(hdc, &rc, lpwin->fTracking && lpwin->fPressed && lpwin->sbScrollTrack == static_cast<UINT>(i), 1);
         iCenter = i ? g.cAxis - g.dArrow / 2 - 1 : g.dArrow / 2;
         iCross = g.cCross / 2;
-        if (lpwin->fTracking && lpwin->fPressed && lpwin->sbScrollTrack == (UINT)i) { iCenter++; iCross++; }
+        if (lpwin->fTracking && lpwin->fPressed && lpwin->sbScrollTrack == static_cast<UINT>(i)) { iCenter++; iCross++; }
         if (g.dArrow >= 9 && g.cCross >= 9)
             for (j = 0; j < 4; j++) {
                 iAxis = iCenter + (i ? 2 - j : j - 2);
@@ -295,7 +295,7 @@ static void PaintScroll(HWND hwnd) {
         CompatDrawClassicEdge(hdc, &rc, 0, 1);
         if (win32::GetFocus() == hwnd) {
             win32::InflateRect(&rc, -2, -2);
-            win32::FrameRect(hdc, &rc, (HBRUSH)win32::GetStockObject(win32::GRAY_BRUSH));
+            win32::FrameRect(hdc, &rc, static_cast<HBRUSH>(win32::GetStockObject(win32::GRAY_BRUSH)));
         }
     }
     if (hbrFace) win32::DeleteObject(hbrFace);
@@ -346,17 +346,17 @@ LRESULT  CompatScrollProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         lpwin->iControl = 5;
         lpscr->iMin = lpscr->iMax = lpscr->iPos = 0;
         return 1;
-    case win32::SBM_SETSCROLLINFO: return win32::SetScrollInfo(hwnd, win32::SB_CTL, (LPCSCROLLINFO)l, (BOOL)w);
-    case win32::SBM_GETSCROLLINFO: return win32::GetScrollInfo(hwnd, win32::SB_CTL, (LPSCROLLINFO)l);
+    case win32::SBM_SETSCROLLINFO: return win32::SetScrollInfo(hwnd, win32::SB_CTL, reinterpret_cast<LPCSCROLLINFO>(l), static_cast<BOOL>(w));
+    case win32::SBM_GETSCROLLINFO: return win32::GetScrollInfo(hwnd, win32::SB_CTL, reinterpret_cast<LPSCROLLINFO>(l));
     case win32::SBM_GETPOS: return lpscr->iPos;
-    case win32::SBM_SETPOS: return ISetScrollPos(hwnd, lpscr, (int)(INT_PTR)w, !!l);
+    case win32::SBM_SETPOS: return ISetScrollPos(hwnd, lpscr, static_cast<int>(static_cast<INT_PTR>(w)), !!l);
     case win32::SBM_SETRANGE:
     case win32::SBM_SETRANGEREDRAW:
         iOld = lpscr->iPos;
-        return FSetScrollRange(hwnd, lpscr, (int)(INT_PTR)w, (int)l, msg == win32::SBM_SETRANGEREDRAW) ? iOld : 0;
+        return FSetScrollRange(hwnd, lpscr, static_cast<int>(static_cast<INT_PTR>(w)), static_cast<int>(l), msg == win32::SBM_SETRANGEREDRAW) ? iOld : 0;
     case win32::SBM_GETRANGE:
         if (!w || !l) return 0;
-        *(int *)w = lpscr->iMin; *(int *)l = lpscr->iMax;
+        *reinterpret_cast<int *>(w) = lpscr->iMin; *reinterpret_cast<int *>(l) = lpscr->iMax;
         return 0;
     case win32::WM_GETDLGCODE: return win32::DLGC_WANTARROWS;
     case win32::WM_PAINT: PaintScroll(hwnd); return 0;
@@ -386,7 +386,7 @@ LRESULT  CompatScrollProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         lpwin->sbScrollTrack = sb; lpwin->iScrollTrack = lpscr->iPos;
         lpwin->lScrollPoint = l;
         if (sb != win32::SB_THUMBTRACK) lpwin->idScrollTimer = win32::SetTimer(hwnd, UINTPTR_MAX, 400, nullptr);
-        lpwin->dScrollGrab = (g.fVert ? (int16_t)HIWORD(l) : (int16_t)LOWORD(l)) - g.iThumb;
+        lpwin->dScrollGrab = (g.fVert ? static_cast<int16_t>(HIWORD(l)) : static_cast<int16_t>(LOWORD(l))) - g.iThumb;
         win32::InvalidateRect(hwnd, nullptr, 0);
         NotifyScroll(hwnd, sb, lpscr->iPos);
         return 0;
@@ -398,10 +398,10 @@ LRESULT  CompatScrollProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         COMPATPRESENTSCOPE deferPresent(hwndRoot);
         lpwin->lScrollPoint = l;
         if (lpwin->sbScrollTrack == win32::SB_THUMBTRACK) {
-            iAxis = g.fVert ? (int16_t)HIWORD(l) : (int16_t)LOWORD(l);
+            iAxis = g.fVert ? static_cast<int16_t>(HIWORD(l)) : static_cast<int16_t>(LOWORD(l));
             iOffset = (((0) > (StarsMin(iAxis - lpwin->dScrollGrab - g.dArrow, g.dTravel))) ? (0) : (StarsMin(iAxis - lpwin->dScrollGrab - g.dArrow, g.dTravel)));
-            cRange = (int64_t)IScrollMax(lpscr) - lpscr->iMin;
-            lpwin->iScrollTrack = g.dTravel ? (int)(lpscr->iMin + (iOffset * cRange + g.dTravel / 2) / g.dTravel) : lpscr->iMin;
+            cRange = static_cast<int64_t>(IScrollMax(lpscr)) - lpscr->iMin;
+            lpwin->iScrollTrack = g.dTravel ? static_cast<int>((lpscr->iMin + (iOffset * cRange + g.dTravel / 2) / g.dTravel)) : lpscr->iMin;
             win32::InvalidateRect(hwnd, nullptr, 0);
             NotifyScroll(hwnd, win32::SB_THUMBTRACK, lpwin->iScrollTrack);
         } else {

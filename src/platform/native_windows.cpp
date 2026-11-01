@@ -16,7 +16,7 @@ char *PszNativeCommandLine(void) {
     }
     while (*pwsz == L' ' || *pwsz == L'\t') pwsz++;
     cb = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, pwsz, -1, nullptr, 0, nullptr, nullptr);
-    if (cb == 0 || !(psz = (char *)malloc(cb))) return nullptr;
+    if (cb == 0 || !(psz = static_cast<char *>(malloc(cb)))) return nullptr;
     NATIVEOWNER<char, std::free> command(psz);
     if (!WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, pwsz, -1, psz, cb, nullptr, nullptr)) {
         return nullptr;
@@ -31,16 +31,16 @@ char **RgpszNativeArguments(int *lpc) {
     int i, c;
     NATIVEOWNER<WCHAR *, LocalFree> wideArguments(rgpwsz);
     if (!rgpwsz) return nullptr;
-    cb = ((size_t)*lpc + 1) * sizeof(*rgpsz);
+    cb = (static_cast<size_t>(*lpc) + 1) * sizeof(*rgpsz);
     for (i = 0; i < *lpc; i++) {
         c = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, rgpwsz[i], -1, nullptr, 0, nullptr, nullptr);
         if (c == 0) { wideArguments.reset(); return nullptr; }
         cb += c;
     }
-    rgpsz = (char **)malloc(cb);
+    rgpsz = static_cast<char **>(malloc(cb));
     if (!rgpsz) { wideArguments.reset(); return nullptr; }
     NATIVEOWNER<char *, std::free> arguments(rgpsz);
-    pch = (char *)(rgpsz + *lpc + 1);
+    pch = reinterpret_cast<char *>(rgpsz + *lpc + 1);
     for (i = 0; i < *lpc; i++) {
         c = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, rgpwsz[i], -1, nullptr, 0, nullptr, nullptr);
         rgpsz[i] = pch;

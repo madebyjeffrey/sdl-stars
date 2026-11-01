@@ -38,8 +38,8 @@ for row in rows:
         assert not re.search(r"(?:^|\s)-x\s", command.replace("-x objective-c++", "") if path.suffix == ".mm" else command), f"Owned production source has a language override: {path}"
         standards = re.findall(r"-std=(\S+)", command)
         assert standards and standards[-1] in ("c++20", "c++2a"), f"Owned production source lacks ISO C++20: {path}"
-        assert "-Wpedantic" in command and "-Werror" in command, f"Owned production source lacks strict diagnostics: {path}"
-        assert not re.search(r"-fpermissive|-Wno-(?:missing-field-initializers|missing-braces|pedantic)|-Wno-error(?:=pedantic)?(?:\s|$)", command), f"Owned production source disables strict diagnostics: {path}"
+        assert "-Wpedantic" in command and "-Wold-style-cast" in command and "-Werror" in command, f"Owned production source lacks strict diagnostics: {path}"
+        assert not re.search(r"-fpermissive|-Wno-(?:missing-field-initializers|missing-braces|pedantic|old-style-cast)|-Wno-error(?:=pedantic|=old-style-cast)?(?:\s|$)", command), f"Owned production source disables strict diagnostics: {path}"
         count += 1
         production.add(path)
     elif name.startswith("tests/"):

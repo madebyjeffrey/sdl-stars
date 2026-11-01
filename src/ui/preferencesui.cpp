@@ -31,10 +31,10 @@ void ReadIniPresets(APPSESSION &app, char *szIniFile) {
                     psz++;
                     app.state.vrgZip[i].txp.rgia[iPass].SetCQuan(*psz - 'a');
                     psz++;
-                    app.state.vrgZip[i].txp.rgia[iPass].SetCQuan(((uint32_t)(*psz - 'a') & 0xfff) << 4 |
+                    app.state.vrgZip[i].txp.rgia[iPass].SetCQuan((static_cast<uint32_t>((*psz - 'a')) & 0xfff) << 4 |
                                                        (app.state.vrgZip[i].txp.rgia[iPass].cQuan() | app.state.vrgZip[i].txp.rgia[iPass].iAction() << 0xc));
                     psz++;
-                    app.state.vrgZip[i].txp.rgia[iPass].SetCQuan(((uint32_t)(*psz - 'a') & 0xff) << 8 |
+                    app.state.vrgZip[i].txp.rgia[iPass].SetCQuan((static_cast<uint32_t>((*psz - 'a')) & 0xff) << 8 |
                                                        (app.state.vrgZip[i].txp.rgia[iPass].cQuan() | app.state.vrgZip[i].txp.rgia[iPass].iAction() << 0xc));
                     psz++;
                 }
@@ -180,11 +180,11 @@ void ReadIniIdentity(APPSESSION &app, const char *pszIdentity, int16_t cch) {
 
     app.state.ini.lid = 0;
     for (i = 0; i < cch; i++) {
-        app.state.ini.lid = (int32_t)(app.state.ini.lid * 16);
+        app.state.ini.lid = static_cast<int32_t>((app.state.ini.lid * 16));
         if (pszIdentity[i] >= '0' && pszIdentity[i] <= '9') {
-            app.state.ini.lid += (int16_t)(pszIdentity[i] - '0');
+            app.state.ini.lid += static_cast<int16_t>((pszIdentity[i] - '0'));
         } else if (pszIdentity[i] >= 'a' && pszIdentity[i] <= 'f') {
-            app.state.ini.lid += (int16_t)(pszIdentity[i] - 'W');
+            app.state.ini.lid += static_cast<int16_t>((pszIdentity[i] - 'W'));
         }
     }
 }

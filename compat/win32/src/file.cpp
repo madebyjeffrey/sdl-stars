@@ -76,7 +76,7 @@ HFILE win32::OpenFile(LPCSTR pszFile, LPOFSTRUCT lpof, UINT flags) {
         strcpy(szPath, pszFile);
     } else {
         if (!PszNativeCwd(szCwd, sizeof(szCwd))) { dwError = DwFileError(); goto LReturn; }
-        if (snprintf(szPath, sizeof(szPath), "%s/%s", szCwd, pszFile) >= (int)sizeof(szPath)) {
+        if (snprintf(szPath, sizeof(szPath), "%s/%s", szCwd, pszFile) >= static_cast<int>(sizeof(szPath))) {
             dwError = win32::ERROR_FILENAME_EXCED_RANGE; goto LReturn;
         }
     }
@@ -111,7 +111,7 @@ HFILE win32::OpenFile(LPCSTR pszFile, LPOFSTRUCT lpof, UINT flags) {
         }
     if ((flags & win32::OF_CREATE) && ITruncateNativeFile(pf, 0) != 0) { dwError = DwFileError(); goto LUnlock; }
     if (flags & win32::OF_EXIST) { hf = 1; goto LUnlock; }
-    lpNew = (COMPATFILE *)(calloc(1, sizeof(*lpNew)));
+    lpNew = static_cast<COMPATFILE *>((calloc(1, sizeof(*lpNew))));
     if (!lpNew) { dwError = win32::ERROR_NOT_ENOUGH_MEMORY; goto LUnlock; }
     for (hf = 3; hf <= INT16_MAX && LpFile(hf); hf++) {}
     if (hf > INT16_MAX) { hf = win32::HFILE_ERROR; dwError = win32::ERROR_TOO_MANY_OPEN_FILES; goto LUnlock; }
@@ -123,7 +123,7 @@ LUnlock:
     free(lpNew);
     lockFiles.unlock();
 LReturn:
-    lpof->nErrCode = (WORD)dwError;
+    lpof->nErrCode = static_cast<WORD>(dwError);
     if (dwError != win32::NO_ERROR) win32::SetLastError(dwError);
     return hf;
 }
@@ -161,7 +161,7 @@ LONG win32::_llseek(HFILE hf, LONG offset, int origin) {
         }
     }
     lockFiles.unlock();
-    return (LONG)pos;
+    return static_cast<LONG>(pos);
 }
 
 UINT win32::_lread(HFILE hf, LPVOID rgb, UINT cb) {
@@ -178,7 +178,7 @@ UINT win32::_lread(HFILE hf, LPVOID rgb, UINT cb) {
         }
     }
     lockFiles.unlock();
-    return (UINT)cbRead;
+    return static_cast<UINT>(cbRead);
 }
 
 UINT win32::_lwrite(HFILE hf, LPCCH rgb, UINT cb) {
@@ -200,20 +200,20 @@ UINT win32::_lwrite(HFILE hf, LPCCH rgb, UINT cb) {
         }
     }
     lockFiles.unlock();
-    return (UINT)cbWrite;
+    return static_cast<UINT>(cbWrite);
 }
 
 DWORD win32::GetFileSize(HANDLE h, LPDWORD lpdwHigh) {
     COMPATFILE *lp;
     int64_t cb;
     DWORD dw = win32::INVALID_FILE_SIZE;
-    INT_PTR id = (INT_PTR)h;
+    INT_PTR id = reinterpret_cast<INT_PTR>(h);
 
     std::unique_lock lockFiles(fFileLock);
-    lp = id >= 0 && id <= INT_MAX ? LpFile((HFILE)id) : nullptr;
+    lp = id >= 0 && id <= INT_MAX ? LpFile(static_cast<HFILE>(id)) : nullptr;
     if (lp && (cb = CbNativeFile(lp->pf)) >= 0) {
-        dw = (DWORD)(uint64_t)cb;
-        if (lpdwHigh) *lpdwHigh = (DWORD)((uint64_t)cb >> 32);
+        dw = static_cast<DWORD>(static_cast<uint64_t>(cb));
+        if (lpdwHigh) *lpdwHigh = static_cast<DWORD>((static_cast<uint64_t>(cb) >> 32));
         win32::SetLastError(win32::NO_ERROR);
     } else if (lp) win32::SetLastError(DwFileError());
     else win32::SetLastError(win32::ERROR_INVALID_HANDLE);

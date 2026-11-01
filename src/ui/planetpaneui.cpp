@@ -16,7 +16,7 @@ struct PLANETPANE {
 };
 
 static PLANETPANE *LpPlanetPane(HWND hwnd) {
-    return (PLANETPANE *)win32::GetWindowLongPtrA(hwnd, win32::GWLP_USERDATA);
+    return reinterpret_cast<PLANETPANE *>(win32::GetWindowLongPtrA(hwnd, win32::GWLP_USERDATA));
 }
 
 static void SetPlanetPaneScroll(HWND hwnd, int iAxis, SCROLLINFO *lpsi) {
@@ -95,7 +95,7 @@ LRESULT  PlanetPaneWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam
         NATIVEOWNER<PLANETPANE, std::free> pane(static_cast<PLANETPANE *>(calloc(1, sizeof(*lp))));
         lp = pane.get();
         if (!lp) return -1;
-        win32::SetWindowLongPtrA(hwnd, win32::GWLP_USERDATA, (LONG_PTR)lp);
+        win32::SetWindowLongPtrA(hwnd, win32::GWLP_USERDATA, reinterpret_cast<LONG_PTR>(lp));
         pane.release();
         lp->hwndContent = ui::CreateWindowEx(0, app.lpui->szPlanet, nullptr, win32::WS_CHILD | win32::WS_VISIBLE, 0, 0, 198, 1, hwnd, nullptr, app.lpui->hInst, nullptr);
         return lp->hwndContent ? 0 : -1;
@@ -124,7 +124,7 @@ LRESULT  PlanetPaneWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam
     case win32::WM_MOUSEWHEEL:
     case win32::WM_MOUSEHWHEEL:
         if (!lp) return 0;
-        c = CWheelNotches(&lp->dWheel, (int16_t)HIWORD(wParam));
+        c = CWheelNotches(&lp->dWheel, static_cast<int16_t>(HIWORD(wParam)));
         if (c == 0) return 0;
         ControlIO().pfnGetClientRect(hwnd, &rc);
         d = StarsMax(1, app.state.dyArial8 + 4);

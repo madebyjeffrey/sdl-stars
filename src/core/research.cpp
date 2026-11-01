@@ -16,17 +16,17 @@ int32_t GetTechLevelCost(APPSESSION &app, TechFieldType iTech, int16_t iLevel, i
     for (i = 0; i < 6; i++) {
         cTech += app.state.rgplr[iplr].rgTech[i];
     }
-    lCost = (int16_t)(10 * cTech) + rglTechCost[iLevel];
+    lCost = static_cast<int16_t>((10 * cTech)) + rglTechCost[iLevel];
     i = RaceQueryIO().pfnStat(&app.state.rgplr[iplr], static_cast<RaceStat>(iTech + 8)) - 1;
     if (i != 0) {
         if (i < 0) {
-            lCost += lCost - (int32_t)(lCost >> 2);
+            lCost += lCost - static_cast<int32_t>((lCost >> 2));
         } else {
-            lCost = (int32_t)(lCost / 2);
+            lCost = static_cast<int32_t>((lCost / 2));
         }
     }
     if (app.state.game.fSlowTech) {
-        lCost = (int32_t)(lCost * 2);
+        lCost = static_cast<int32_t>((lCost * 2));
     }
     return lCost;
 }
@@ -71,7 +71,7 @@ int32_t CostOfDevelopingItem(APPSESSION &app, char *rgTech) {
 
     fUnreachable = 0;
     lCost = 0;
-    pTech = (char *)app.state.rgplr[app.state.idPlayer].rgTech;
+    pTech = reinterpret_cast<char *>(app.state.rgplr[app.state.idPlayer].rgTech);
     for (i = 0; i < 6 && rgTech[i] <= 26; i++) {
     }
     if (i < 6) {
@@ -82,7 +82,7 @@ int32_t CostOfDevelopingItem(APPSESSION &app, char *rgTech) {
         if (rgTech[i] > pTech[i]) {
             lSpent = app.state.rgplr[app.state.idPlayer].rgResSpent[i];
             if (app.state.game.fSlowTech) {
-                lSpent = (int32_t)(lSpent * 2);
+                lSpent = static_cast<int32_t>((lSpent * 2));
             }
             lCur = -lSpent;
             while (rgTech[i] > pTech[i]) {

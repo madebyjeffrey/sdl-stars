@@ -25,7 +25,7 @@ int16_t FWriteTutorialMFile(APPSESSION &app, int16_t iTurn) {
         BailOut:
             return 0;
         }
-        app.state.vlpMemStream = (uint8_t *)win32::LockResource(hres);
+        app.state.vlpMemStream = static_cast<uint8_t *>(win32::LockResource(hres));
         if (!app.state.vlpMemStream)
             goto BailOut;
         if (cSkip >= *app.state.vlpMemStream) {
@@ -78,5 +78,5 @@ uint8_t *LpbLoadTutorLog(APPSESSION &app) {
     if (!hres) {
         return nullptr;
     }
-    return (uint8_t *)win32::LockResource(hres);
+    return static_cast<uint8_t *>(win32::LockResource(hres));
 }

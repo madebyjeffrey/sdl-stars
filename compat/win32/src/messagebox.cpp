@@ -37,7 +37,7 @@ static void ScrollMessage(COMPATMSGBOX *lp, int y) {
     win32::InvalidateRect(lp->hwndBody, nullptr, 1);
 }
 LRESULT  CompatMessageTextProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
-    COMPATMSGBOX *lp = (COMPATMSGBOX *)win32::GetWindowLongPtrA(hwnd, win32::GWLP_USERDATA);
+    COMPATMSGBOX *lp = reinterpret_cast<COMPATMSGBOX *>(win32::GetWindowLongPtrA(hwnd, win32::GWLP_USERDATA));
     HDC hdc;
     PAINTSTRUCT ps;
     HGDIOBJ hold;
@@ -46,7 +46,7 @@ LRESULT  CompatMessageTextProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     RECT rc;
     int y;
     if (msg == win32::WM_NCCREATE) {
-        win32::SetWindowLongPtrA(hwnd, win32::GWLP_USERDATA, (LONG_PTR)((CREATESTRUCTA *)l)->lpCreateParams); return 1;
+        win32::SetWindowLongPtrA(hwnd, win32::GWLP_USERDATA, reinterpret_cast<LONG_PTR>((reinterpret_cast<CREATESTRUCTA *>(l))->lpCreateParams)); return 1;
     }
     if (!lp) return win32::DefWindowProcA(hwnd, msg, w, l);
     switch (msg) {
@@ -64,7 +64,7 @@ LRESULT  CompatMessageTextProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         if (hold) win32::SelectObject(hdc, hold);
         win32::EndPaint(hwnd, &ps); return 0;
     case win32::WM_GETDLGCODE: return win32::DLGC_WANTARROWS;
-    case win32::WM_MOUSEWHEEL: ScrollMessage(lp, lp->yScroll - (SHORT)HIWORD(w) / win32::WHEEL_DELTA * 48); return 0;
+    case win32::WM_MOUSEWHEEL: ScrollMessage(lp, lp->yScroll - static_cast<SHORT>(HIWORD(w)) / win32::WHEEL_DELTA * 48); return 0;
     case win32::WM_KEYDOWN:
         y = lp->yScroll;
         if (w == win32::VK_UP) y -= 16;
@@ -109,7 +109,7 @@ static void PaintMessageIcon(HWND hwnd, COMPATMSGBOX *lp) {
         psz = icon == win32::MB_ICONHAND ? "X" : icon == win32::MB_ICONEXCLAMATION ? "!" : icon == win32::MB_ICONQUESTION ? "?" : "i";
         hbr = win32::CreateSolidBrush(cr);
         if (hbr) {
-            holdBrush = (HBRUSH)win32::SelectObject(hdc, hbr); win32::Ellipse(hdc, 16, 16, 48, 48);
+            holdBrush = static_cast<HBRUSH>(win32::SelectObject(hdc, hbr)); win32::Ellipse(hdc, 16, 16, 48, 48);
             win32::SelectObject(hdc, holdBrush); win32::DeleteObject(hbr);
         }
         holdFont = win32::SelectObject(hdc, lp->hfontIcon);
@@ -120,7 +120,7 @@ static void PaintMessageIcon(HWND hwnd, COMPATMSGBOX *lp) {
     win32::EndPaint(hwnd, &ps);
 }
 static INT_PTR  MessageDialogProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
-    COMPATMSGBOX *lp = (COMPATMSGBOX *)win32::GetWindowLongPtrA(hwnd, win32::DWLP_USER);
+    COMPATMSGBOX *lp = reinterpret_cast<COMPATMSGBOX *>(win32::GetWindowLongPtrA(hwnd, win32::DWLP_USER));
     int i;
     if (msg == win32::WM_INITDIALOG) { win32::SetWindowLongPtrA(hwnd, win32::DWLP_USER, l); return 1; }
     if (!lp) return 0;
@@ -129,7 +129,7 @@ static INT_PTR  MessageDialogProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         win32::SetFocus(win32::IsWindow(lp->hwndLastFocus) ? lp->hwndLastFocus : win32::GetDlgItem(hwnd, lp->rgid[lp->iDefault]));
         return 1;
     }
-    if (msg == win32::WM_MOUSEWHEEL) { ScrollMessage(lp, lp->yScroll - (SHORT)HIWORD(w) / win32::WHEEL_DELTA * 48); return 1; }
+    if (msg == win32::WM_MOUSEWHEEL) { ScrollMessage(lp, lp->yScroll - static_cast<SHORT>(HIWORD(w)) / win32::WHEEL_DELTA * 48); return 1; }
     if (msg == win32::WM_CLOSE) { if (lp->idCancel) win32::EndDialog(hwnd, lp->idCancel); return 1; }
     if (msg == win32::WM_COMMAND) {
         for (i = 0; i < lp->cButtons; i++)
@@ -157,7 +157,7 @@ static BOOL FMessageKey(HWND hwnd, COMPATMSGBOX *lp, const win32::MSG *lpmsg) {
     if (lpmsg->message == win32::WM_SYSCHAR) {
         for (i = 0; i < lp->cButtons; i++) {
             psz = SDL_strchr(PszMessageButton(lp->rgid[i]), '&');
-            if (psz && SDL_tolower((int)lpmsg->wParam) == SDL_tolower((unsigned char)psz[1])) { win32::EndDialog(hwnd, lp->rgid[i]); return 1; }
+            if (psz && SDL_tolower(static_cast<int>(lpmsg->wParam)) == SDL_tolower(static_cast<unsigned char>(psz[1]))) { win32::EndDialog(hwnd, lp->rgid[i]); return 1; }
         }
     }
     return 0;
@@ -256,11 +256,11 @@ int win32::MessageBoxA(HWND hwndOwner, LPCSTR pszText, LPCSTR pszCaption, UINT t
     }
     if (!win32::MoveWindow(hwnd, x, y, cx, cy, 0)) goto done;
     box.hwndBody = win32::CreateWindowExA(0, "StarsMessageText", "", win32::WS_CHILD | win32::WS_VISIBLE | (box.cyText < box.cyTotal ? win32::WS_TABSTOP : 0),
-                                  xText, 16, cx - xText - 16, box.cyText, hwnd, (HMENU)0xffff, win32::GetModuleHandleA(nullptr), &box);
+                                  xText, 16, cx - xText - 16, box.cyText, hwnd, reinterpret_cast<HMENU>(0xffff), win32::GetModuleHandleA(nullptr), &box);
     if (!box.hwndBody) goto done;
     if (box.cyText < box.cyTotal) {
         box.hwndScroll = win32::CreateWindowExA(0, "ScrollBar", "", win32::WS_CHILD | win32::WS_VISIBLE | win32::SBS_VERT,
-                                        box.cxText + 3, 0, 17, box.cyText, box.hwndBody, (HMENU)1, win32::GetModuleHandleA(nullptr), nullptr);
+                                        box.cxText + 3, 0, 17, box.cyText, box.hwndBody, reinterpret_cast<HMENU>(1), win32::GetModuleHandleA(nullptr), nullptr);
         if (!box.hwndScroll) goto done;
         win32::SetScrollRange(box.hwndScroll, win32::SB_CTL, 0, box.cyTotal - box.cyText, 1);
     }
@@ -268,12 +268,12 @@ int win32::MessageBoxA(HWND hwndOwner, LPCSTR pszText, LPCSTR pszCaption, UINT t
         hwndButton = win32::CreateWindowExA(0, "Button", PszMessageButton(box.rgid[i]), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP |
                                      (i == box.iDefault ? win32::BS_DEFPUSHBUTTON : win32::BS_PUSHBUTTON),
                                      (cx - cxButtons) / 2 + i * 96, box.cyText + 32, 88, 26,
-                                     hwnd, (HMENU)(INT_PTR)box.rgid[i], win32::GetModuleHandleA(nullptr), nullptr);
+                                     hwnd, reinterpret_cast<HMENU>(static_cast<INT_PTR>(box.rgid[i])), win32::GetModuleHandleA(nullptr), nullptr);
         if (!hwndButton) goto done;
-        win32::SendMessageA(hwndButton, win32::WM_SETFONT, (WPARAM)box.hfont, 0);
+        win32::SendMessageA(hwndButton, win32::WM_SETFONT, reinterpret_cast<WPARAM>(box.hfont), 0);
     }
     if (type & 0xf0) { lf.lfHeight = -26; lf.lfWeight = win32::FW_BOLD; SDL_strlcpy(lf.lfFaceName, "sans-serif", sizeof(lf.lfFaceName)); box.hfontIcon = win32::CreateFontIndirectA(&lf); }
-    win32::SendMessageA(hwnd, win32::WM_INITDIALOG, (WPARAM)win32::GetDlgItem(hwnd, box.rgid[box.iDefault]), (LPARAM)&box);
+    win32::SendMessageA(hwnd, win32::WM_INITDIALOG, reinterpret_cast<WPARAM>(win32::GetDlgItem(hwnd, box.rgid[box.iDefault])), reinterpret_cast<LPARAM>(&box));
     box.hwndLastFocus = win32::GetDlgItem(hwnd, box.rgid[box.iDefault]);
     win32::ShowWindow(hwnd, win32::SW_SHOW);
     SDL_RaiseWindow(hwnd->lpWindow.get()); SDL_SyncWindow(hwnd->lpWindow.get());
@@ -282,12 +282,12 @@ int win32::MessageBoxA(HWND hwndOwner, LPCSTR pszText, LPCSTR pszCaption, UINT t
     while (win32::IsWindow(hwnd) && !hwnd->fEndDialog) {
         if (win32::IsChild(hwnd, win32::GetFocus())) box.hwndLastFocus = win32::GetFocus();
         result = win32::GetMessageA(&msg, nullptr, 0, 0);
-        if (result <= 0) { if (result == 0) win32::PostQuitMessage((int)msg.wParam); break; }
+        if (result <= 0) { if (result == 0) win32::PostQuitMessage(static_cast<int>(msg.wParam)); break; }
         // SDL root activation may be routed before its queued WM_SETFOCUS.
         if (win32::GetFocus() == hwnd && win32::IsWindow(box.hwndLastFocus)) win32::SetFocus(box.hwndLastFocus);
         if (!FMessageKey(hwnd, &box, &msg) && !win32::IsDialogMessageA(hwnd, &msg)) { win32::TranslateMessage(&msg); win32::DispatchMessageA(&msg); }
     }
-    if (win32::IsWindow(hwnd) && hwnd->fEndDialog) value = (int)hwnd->lDlgResult;
+    if (win32::IsWindow(hwnd) && hwnd->fEndDialog) value = static_cast<int>(hwnd->lDlgResult);
     if (value == 0) win32::SetLastError(win32::ERROR_CANCELLED);
 done:
     destroyBox.Close();

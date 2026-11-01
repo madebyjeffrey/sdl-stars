@@ -77,7 +77,7 @@ static COLORREF CrPalette(HDC lpdc, COLORREF cr) {
     UINT i;
     PALETTEENTRY pe;
     if ((cr >> 24) != 1) return cr & UINT32_C(0x00ffffff);
-    i = (WORD)cr;
+    i = static_cast<WORD>(cr);
     if (i >= lpdc->lppalette->cEntries) return win32::RGB(0, 0, 0);
     pe = RgpeCompatPalette(lpdc->lppalette)[i];
     return win32::RGB(pe.peRed, pe.peGreen, pe.peBlue);
@@ -177,11 +177,11 @@ HPEN win32::CreatePen(int iStyle, int cWidth, COLORREF crColor) {
     }
     lpobj = LpNewObject(objPen, crColor, iStyle == win32::PS_NULL);
     if (lpobj) lpobj->iPenStyle = iStyle;
-    return (HPEN)lpobj;
+    return reinterpret_cast<HPEN>(lpobj);
 }
 
 HBRUSH win32::CreateSolidBrush(COLORREF crColor) {
-    return (HBRUSH)LpNewObject(objBrush, crColor, 0);
+    return reinterpret_cast<HBRUSH>(LpNewObject(objBrush, crColor, 0));
 }
 
 HPALETTE win32::CreatePalette(const LOGPALETTE *lppal) {
@@ -190,24 +190,24 @@ HPALETTE win32::CreatePalette(const LOGPALETTE *lppal) {
     NATIVEARRAYOWNER<PALETTEENTRY, std::free> rgpeOwner;
     if (!SDL_IsMainThread() || !lppal || lppal->palVersion != 0x300 || lppal->palNumEntries == 0)
         return nullptr;
-    rgpeOwner.reset((PALETTEENTRY *)malloc((size_t)lppal->palNumEntries * sizeof(*rgpe))); rgpe = rgpeOwner.get();
+    rgpeOwner.reset(static_cast<PALETTEENTRY *>(malloc(static_cast<size_t>(lppal->palNumEntries) * sizeof(*rgpe)))); rgpe = rgpeOwner.get();
     if (!rgpe) return nullptr;
-    memcpy(rgpe, lppal->palPalEntry, (size_t)lppal->palNumEntries * sizeof(*rgpe));
+    memcpy(rgpe, lppal->palPalEntry, static_cast<size_t>(lppal->palNumEntries) * sizeof(*rgpe));
     lpobj = LpNewObject(objPalette, 0, 0);
     if (!lpobj) return nullptr;
     lpobj->rgpe.reset(rgpeOwner.release()); lpobj->cEntries = lppal->palNumEntries;
-    return (HPALETTE)lpobj;
+    return reinterpret_cast<HPALETTE>(lpobj);
 }
 
 HPALETTE win32::SelectPalette(HDC hdc, HPALETTE hpal, BOOL fBackground) {
     HDC lpdc = LpDC(hdc);
-    COMPATOBJECT *lpobj = LpObject((HGDIOBJ)hpal), *lpold;
-    (void)fBackground;
+    COMPATOBJECT *lpobj = LpObject(static_cast<HGDIOBJ>(hpal)), *lpold;
+    static_cast<void>(fBackground);
     if (!lpdc || !lpobj || lpobj->iKind != objPalette) return nullptr;
     lpold = lpdc->lppalette;
     lpold->cSelected--; lpobj->cSelected++;
     lpdc->lppalette = lpobj;
-    return (HPALETTE)lpold;
+    return reinterpret_cast<HPALETTE>(lpold);
 }
 
 UINT win32::RealizePalette(HDC hdc) {
@@ -222,12 +222,12 @@ BOOL win32::UnrealizeObject(HGDIOBJ h) {
 }
 
 UINT win32::GetPaletteEntries(HPALETTE hpal, UINT iStart, UINT cEntries, LPPALETTEENTRY rgpe) {
-    COMPATOBJECT *lpobj = LpObject((HGDIOBJ)hpal);
+    COMPATOBJECT *lpobj = LpObject(static_cast<HGDIOBJ>(hpal));
     if (!lpobj || lpobj->iKind != objPalette) return 0;
     if (!rgpe) return lpobj->cEntries;
     if (iStart >= lpobj->cEntries) return 0;
     cEntries = StarsMin(cEntries, lpobj->cEntries - iStart);
-    memcpy(rgpe, RgpeCompatPalette(lpobj) + iStart, (size_t)cEntries * sizeof(*rgpe));
+    memcpy(rgpe, RgpeCompatPalette(lpobj) + iStart, static_cast<size_t>(cEntries) * sizeof(*rgpe));
     return cEntries;
 }
 
@@ -241,7 +241,7 @@ HFONT win32::CreateFontIndirectA(const LOGFONTA *lplf) {
     lpobj = LpNewObject(objFont, 0, 0);
     if (!lpobj) return nullptr;
     lpobj->lpFont.reset(lpfontOwner.release()); lpobj->lf = *lplf;
-    return (HFONT)lpobj;
+    return reinterpret_cast<HFONT>(lpobj);
 }
 
 BOOL win32::DeleteObject(HGDIOBJ h) {
@@ -392,13 +392,13 @@ static BOOL FComposeChildren(HWND hwnd, SDL_Surface *lpSurface, int64_t x, int64
     win32::GetClientRect(hwnd, &client);
     if (!hwnd->lpcombo && (hwnd->dwStyle & (win32::WS_HSCROLL | win32::WS_VSCROLL)) == (win32::WS_HSCROLL | win32::WS_VSCROLL)) {
         CompatGetSurfaceRect(hwnd, &rc);
-        left = ((((int64_t)lprcClip->left) > (x + client.right)) ? ((int64_t)lprcClip->left) : (x + client.right));
-        top = ((((int64_t)lprcClip->top) > (y + client.bottom)) ? ((int64_t)lprcClip->top) : (y + client.bottom));
-        right = ((((int64_t)lprcClip->right) < (x + rc.right)) ? ((int64_t)lprcClip->right) : (x + rc.right));
-        bottom = ((((int64_t)lprcClip->bottom) < (y + rc.bottom)) ? ((int64_t)lprcClip->bottom) : (y + rc.bottom));
+        left = (((static_cast<int64_t>(lprcClip->left)) > (x + client.right)) ? (static_cast<int64_t>(lprcClip->left)) : (x + client.right));
+        top = (((static_cast<int64_t>(lprcClip->top)) > (y + client.bottom)) ? (static_cast<int64_t>(lprcClip->top)) : (y + client.bottom));
+        right = (((static_cast<int64_t>(lprcClip->right)) < (x + rc.right)) ? (static_cast<int64_t>(lprcClip->right)) : (x + rc.right));
+        bottom = (((static_cast<int64_t>(lprcClip->bottom)) < (y + rc.bottom)) ? (static_cast<int64_t>(lprcClip->bottom)) : (y + rc.bottom));
         if (right > left && bottom > top) {
-            dst = SDL_Rect{(int)left * iScale, (int)top * iScale,
-                             (int)(right - left) * iScale, (int)(bottom - top) * iScale};
+            dst = SDL_Rect{static_cast<int>(left) * iScale, static_cast<int>(top) * iScale,
+                             static_cast<int>((right - left)) * iScale, static_cast<int>((bottom - top)) * iScale};
             cr = win32::GetSysColor(win32::COLOR_BTNFACE);
             SDL_FillSurfaceRect(lpSurface, &dst, SDL_MapSurfaceRGB(lpSurface, cr & 255, (cr >> 8) & 255, (cr >> 16) & 255));
         }
@@ -412,20 +412,20 @@ static BOOL FComposeChildren(HWND hwnd, SDL_Surface *lpSurface, int64_t x, int64
         if (!lp->fVisible || lp->fDestroying) continue;
         clip = *lprcClip;
         if (!lp->fNcScroll) {
-            clip.right = (LONG)((((int64_t)clip.right) < (x + client.right)) ? ((int64_t)clip.right) : (x + client.right));
-            clip.bottom = (LONG)((((int64_t)clip.bottom) < (y + client.bottom)) ? ((int64_t)clip.bottom) : (y + client.bottom));
+            clip.right = static_cast<LONG>((((static_cast<int64_t>(clip.right)) < (x + client.right)) ? (static_cast<int64_t>(clip.right)) : (x + client.right)));
+            clip.bottom = static_cast<LONG>((((static_cast<int64_t>(clip.bottom)) < (y + client.bottom)) ? (static_cast<int64_t>(clip.bottom)) : (y + client.bottom)));
         }
         left = x + lp->rcChild.left; top = y + lp->rcChild.top;
         right = x + lp->rcChild.right; bottom = y + lp->rcChild.bottom;
         if (left >= clip.right || top >= clip.bottom ||
             right <= clip.left || bottom <= clip.top) continue;
-        rc.left = (LONG)(left > clip.left ? left : clip.left);
-        rc.top = (LONG)(top > clip.top ? top : clip.top);
-        rc.right = (LONG)(right < clip.right ? right : clip.right);
-        rc.bottom = (LONG)(bottom < clip.bottom ? bottom : clip.bottom);
+        rc.left = static_cast<LONG>((left > clip.left ? left : clip.left));
+        rc.top = static_cast<LONG>((top > clip.top ? top : clip.top));
+        rc.right = static_cast<LONG>((right < clip.right ? right : clip.right));
+        rc.bottom = static_cast<LONG>((bottom < clip.bottom ? bottom : clip.bottom));
         if (!FCanvas(lp)) return 0;
         dst = SDL_Rect{rc.left * iScale, rc.top * iScale, (rc.right - rc.left) * iScale, (rc.bottom - rc.top) * iScale};
-        src = SDL_Rect{(int)(rc.left - left) * iScale, (int)(rc.top - top) * iScale, dst.w, dst.h};
+        src = SDL_Rect{static_cast<int>((rc.left - left)) * iScale, static_cast<int>((rc.top - top)) * iScale, dst.w, dst.h};
         if (!SDL_BlitSurface(lp->lpCanvas.get(), &src, lpSurface, &dst) ||
             !FComposeChildren(lp, lpSurface, left, top, &rc, iScale)) return 0;
     }
@@ -528,14 +528,14 @@ static HDC HdcNew(HWND hwnd, BOOL fPaint) {
         return nullptr;
     // Never dereference public HDC tokens. Monotonic IDs permit immediate release
     // of frequent paint DC allocations without making stale handles valid again.
-    lpdc->hdcToken = (HDC)(idDCNext++ * 16);
+    lpdc->hdcToken = reinterpret_cast<HDC>((idDCNext++ * 16));
     lpdc->hwnd = hwnd;
     if (hwnd)
         win32::GetClientRect(hwnd, &lpdc->rcClip);
-    lpdc->lppen = (COMPATOBJECT *)(win32::GetStockObject(win32::BLACK_PEN));
-    lpdc->lpbrush = (COMPATOBJECT *)(win32::GetStockObject(win32::WHITE_BRUSH));
-    lpdc->lpfont = (COMPATOBJECT *)(win32::GetStockObject(win32::SYSTEM_FONT));
-    lpdc->lppalette = (COMPATOBJECT *)(win32::GetStockObject(win32::DEFAULT_PALETTE));
+    lpdc->lppen = static_cast<COMPATOBJECT *>((win32::GetStockObject(win32::BLACK_PEN)));
+    lpdc->lpbrush = static_cast<COMPATOBJECT *>((win32::GetStockObject(win32::WHITE_BRUSH)));
+    lpdc->lpfont = static_cast<COMPATOBJECT *>((win32::GetStockObject(win32::SYSTEM_FONT)));
+    lpdc->lppalette = static_cast<COMPATOBJECT *>((win32::GetStockObject(win32::DEFAULT_PALETTE)));
     if (!lpdc->lpfont) { delete lpdc; return nullptr; }
     lpdc->lppen->cSelected++;
     lpdc->lpbrush->cSelected++;
@@ -575,8 +575,8 @@ HBITMAP win32::CreateCompatibleBitmap(HDC hdc, int cx, int cy) {
     if (!lpdc || cx < 0 || cy < 0)
         return nullptr;
     if (cx == 0 || cy == 0)
-        return (HBITMAP)LpNewBitmap(1, 1, 1);
-    return (HBITMAP)LpNewBitmap(cx, cy, lpdc->fMemory && lpdc->lpbitmap->fMono);
+        return reinterpret_cast<HBITMAP>(LpNewBitmap(1, 1, 1));
+    return reinterpret_cast<HBITMAP>(LpNewBitmap(cx, cy, lpdc->fMemory && lpdc->lpbitmap->fMono));
 }
 
 HDC win32::CreateCompatibleDC(HDC hdc) {
@@ -608,13 +608,13 @@ int win32::GetObjectA(HANDLE h, int cb, LPVOID lpv) {
 
     if (lpobj && lpobj->iKind == objPalette) {
         if (!lpv) return sizeof(WORD);
-        if (cb < (int)sizeof(WORD)) return 0;
-        *(WORD *)lpv = (WORD)lpobj->cEntries;
+        if (cb < static_cast<int>(sizeof(WORD))) return 0;
+        *static_cast<WORD *>(lpv) = static_cast<WORD>(lpobj->cEntries);
         return sizeof(WORD);
     }
     if (lpobj && lpobj->iKind == objFont) {
         if (!lpv) return sizeof(LOGFONTA);
-        if (cb < (int)sizeof(LOGFONTA)) return 0;
+        if (cb < static_cast<int>(sizeof(LOGFONTA))) return 0;
         memcpy(lpv, &lpobj->lf, sizeof(lpobj->lf));
         return sizeof(LOGFONTA);
     }
@@ -622,7 +622,7 @@ int win32::GetObjectA(HANDLE h, int cb, LPVOID lpv) {
         return 0;
     if (!lpv)
         return sizeof(bm);
-    if (cb < (int)sizeof(bm))
+    if (cb < static_cast<int>(sizeof(bm)))
         return 0;
     bm.bmWidth = lpobj->lpSurface.get()->w;
     bm.bmHeight = lpobj->lpSurface.get()->h;
@@ -711,7 +711,7 @@ static BOOL FAddUpdate(RECT **lprgrc, size_t *lpcrc, RECT rc) {
         if (rc.left >= (*lprgrc)[i].left && rc.top >= (*lprgrc)[i].top &&
             rc.right <= (*lprgrc)[i].right && rc.bottom <= (*lprgrc)[i].bottom) return 1;
     if (*lpcrc >= SIZE_MAX / sizeof(*rgrc) - 1) return 0;
-    rgrc = (RECT *)(realloc(*lprgrc, (*lpcrc + 1) * sizeof(*rgrc)));
+    rgrc = static_cast<RECT *>((realloc(*lprgrc, (*lpcrc + 1) * sizeof(*rgrc))));
     if (!rgrc) return 0;
     rgrc[(*lpcrc)++] = rc; *lprgrc = rgrc;
     return 1;
@@ -752,7 +752,7 @@ BOOL win32::InvalidateRect(HWND hwnd, const RECT *lprc, BOOL fErase) {
     rgrc = lpwin->rgrcUpdate.get(); crc = lpwin->crcUpdate;
     if (!FAddUpdate(&rgrc, &crc, rc)) return 0;
     // FAddUpdate may have relocated the allocation; retain ownership before SetUpdate.
-    (void)lpwin->rgrcUpdate.release();
+    static_cast<void>(lpwin->rgrcUpdate.release());
     SetUpdate(lpwin, rgrc, crc); lpwin->fErase |= fErase;
     return 1;
 }
@@ -760,7 +760,7 @@ BOOL win32::InvalidateRect(HWND hwnd, const RECT *lprc, BOOL fErase) {
 static BOOL FPaintClip(HDC lpdc, HWND hwnd) {
     RECT *rgrc = nullptr;
     if (hwnd->crcUpdate != 0) {
-        rgrc = (RECT *)(malloc(hwnd->crcUpdate * sizeof(*rgrc)));
+        rgrc = static_cast<RECT *>((malloc(hwnd->crcUpdate * sizeof(*rgrc))));
         if (!rgrc) return 0;
         memcpy(rgrc, hwnd->rgrcUpdate.get(), hwnd->crcUpdate * sizeof(*rgrc));
     }
@@ -781,7 +781,7 @@ BOOL win32::GetUpdateRect(HWND hwnd, LPRECT lprc, BOOL fErase) {
         hdc = win32::GetDC(hwnd);
         if (hdc) {
             if (!FPaintClip(LpDC(hdc), lpwin)) { win32::ReleaseDC(hwnd, hdc); return 0; }
-            if (win32::SendMessageA(hwnd, win32::WM_ERASEBKGND, (WPARAM)hdc, 0) && LpCompatWindow(hwnd))
+            if (win32::SendMessageA(hwnd, win32::WM_ERASEBKGND, reinterpret_cast<WPARAM>(hdc), 0) && LpCompatWindow(hwnd))
                 lpwin->fErase = 0;
             if (LpDC(hdc)) LpDC(hdc)->fPaint = 0;
             win32::ReleaseDC(hwnd, hdc);
@@ -811,7 +811,7 @@ HDC win32::BeginPaint(HWND hwnd, LPPAINTSTRUCT lpps) {
     lpwin->fErase = 0;
     lpwin->hdcPaint = hdc;
     if (fErase)
-        lpps->fErase = !win32::SendMessageA(hwnd, win32::WM_ERASEBKGND, (WPARAM)hdc, 0);
+        lpps->fErase = !win32::SendMessageA(hwnd, win32::WM_ERASEBKGND, reinterpret_cast<WPARAM>(hdc), 0);
     return LpDC(hdc) ? hdc : nullptr;
 }
 
@@ -879,12 +879,12 @@ static BOOL FClip(HDC lpdc, RECT *lprc) {
  * subtraction, and clip rectangles before narrowing, so extreme origins cannot
  * overflow a signed Win32 coordinate or address a pixel outside its surface. */
 static LONG LCoord(int64_t l) {
-    return (LONG)((((int64_t)INT_MIN) > (((((int64_t)INT_MAX) < (l)) ? ((int64_t)INT_MAX) : (l)))) ? ((int64_t)INT_MIN) : (((((int64_t)INT_MAX) < (l)) ? ((int64_t)INT_MAX) : (l))));
+    return static_cast<LONG>((((static_cast<int64_t>(INT_MIN)) > ((((static_cast<int64_t>(INT_MAX)) < (l)) ? (static_cast<int64_t>(INT_MAX)) : (l)))) ? (static_cast<int64_t>(INT_MIN)) : ((((static_cast<int64_t>(INT_MAX)) < (l)) ? (static_cast<int64_t>(INT_MAX)) : (l)))));
 }
 
 static RECT RcDevice(HDC lpdc, RECT rc) {
-    return RECT{LCoord((int64_t)rc.left - lpdc->ptOrg.x), LCoord((int64_t)rc.top - lpdc->ptOrg.y),
-                  LCoord((int64_t)rc.right - lpdc->ptOrg.x), LCoord((int64_t)rc.bottom - lpdc->ptOrg.y)};
+    return RECT{LCoord(static_cast<int64_t>(rc.left) - lpdc->ptOrg.x), LCoord(static_cast<int64_t>(rc.top) - lpdc->ptOrg.y),
+                  LCoord(static_cast<int64_t>(rc.right) - lpdc->ptOrg.x), LCoord(static_cast<int64_t>(rc.bottom) - lpdc->ptOrg.y)};
 }
 
 BOOL win32::SetWindowOrgEx(HDC hdc, int x, int y, LPPOINT lppt) {
@@ -932,18 +932,18 @@ HRGN win32::CreateRectRgn(int left, int top, int right, int bottom) {
     lpobj = LpNewObject(objRegion, 0, 0);
     if (!lpobj) return nullptr;
     lpobj->rcRegion = RECT{StarsMin(left, right), StarsMin(top, bottom), StarsMax(left, right), StarsMax(top, bottom)};
-    return (HRGN)lpobj;
+    return reinterpret_cast<HRGN>(lpobj);
 }
 
 int win32::SelectClipRgn(HDC hdc, HRGN hrgn) {
     HDC lpdc = LpDC(hdc);
-    COMPATOBJECT *lpobj = hrgn ? LpObject((HGDIOBJ)hrgn) : nullptr;
+    COMPATOBJECT *lpobj = hrgn ? LpObject(static_cast<HGDIOBJ>(hrgn)) : nullptr;
     RECT *rgrc = nullptr;
     size_t crc = 0;
 
     if (!lpdc || (hrgn && (!lpobj || lpobj->iKind != objRegion))) return win32::ERROR;
     if (lpobj && lpobj->rcRegion.left < lpobj->rcRegion.right && lpobj->rcRegion.top < lpobj->rcRegion.bottom) {
-        rgrc = (RECT *)(malloc(sizeof(*rgrc)));
+        rgrc = static_cast<RECT *>((malloc(sizeof(*rgrc))));
         if (!rgrc) return win32::ERROR;
         *rgrc = lpobj->rcRegion; crc = 1;
     }
@@ -986,7 +986,7 @@ static int IClipRect(HDC hdc, int left, int top, int right, int bottom, BOOL fEx
         rgsrc = &rcBase; crcSrc = 1;
     } else { rgsrc = lpdc->rgrcRegion.get(); crcSrc = lpdc->crcRegion; }
     if (crcSrc > SIZE_MAX / (4 * sizeof(*rgrc))) return win32::ERROR;
-    rgrc = (RECT *)(crcSrc ? malloc(crcSrc * 4 * sizeof(*rgrc)) : nullptr);
+    rgrc = static_cast<RECT *>((crcSrc ? malloc(crcSrc * 4 * sizeof(*rgrc)) : nullptr));
     if (crcSrc != 0 && !rgrc) return win32::ERROR;
     for (i = 0; i < crcSrc; i++) {
         rc = rgsrc[i];
@@ -1030,13 +1030,13 @@ static void DevicePixel(HDC lpdc, int64_t x, int64_t y, COLORREF crColor) {
     BYTE *rgb;
 
     crColor = CrPalette(lpdc, crColor);
-    rgb = (BYTE *)LpDCRasterSurface(lpdc)->pixels + (size_t)y * LpDCRasterSurface(lpdc)->pitch + (size_t)x * 4;
+    rgb = static_cast<BYTE *>(LpDCRasterSurface(lpdc)->pixels) + static_cast<size_t>(y) * LpDCRasterSurface(lpdc)->pitch + static_cast<size_t>(x) * 4;
     if (lpdc->fMemory && lpdc->lpbitmap->fMono)
-        crColor = ((BYTE)crColor + (BYTE)(crColor >> 8) + (BYTE)(crColor >> 16) >= 384) ?
+        crColor = (static_cast<BYTE>(crColor) + static_cast<BYTE>((crColor >> 8)) + static_cast<BYTE>((crColor >> 16)) >= 384) ?
                   win32::RGB(255, 255, 255) : win32::RGB(0, 0, 0);
-    rgb[0] = (BYTE)crColor;
-    rgb[1] = (BYTE)(crColor >> 8);
-    rgb[2] = (BYTE)(crColor >> 16);
+    rgb[0] = static_cast<BYTE>(crColor);
+    rgb[1] = static_cast<BYTE>((crColor >> 8));
+    rgb[2] = static_cast<BYTE>((crColor >> 16));
     rgb[3] = 255;
 }
 
@@ -1054,11 +1054,11 @@ COLORREF win32::GetPixel(HDC hdc, int x, int y) {
     int64_t px, py;
 
     if (!lpdc || !FClip(lpdc, &rc)) return win32::CLR_INVALID;
-    px = (int64_t)x - lpdc->ptOrg.x; py = (int64_t)y - lpdc->ptOrg.y;
+    px = static_cast<int64_t>(x) - lpdc->ptOrg.x; py = static_cast<int64_t>(y) - lpdc->ptOrg.y;
     if (px < rc.left || px >= rc.right || py < rc.top || py >= rc.bottom || !FRegionPixel(lpdc, px, py))
         return win32::CLR_INVALID;
-    rgb = (BYTE *)LpDCSurface(lpdc)->pixels + (size_t)(py * IDCScale(lpdc)) * LpDCSurface(lpdc)->pitch +
-          (size_t)(px * IDCScale(lpdc)) * 4;
+    rgb = static_cast<BYTE *>(LpDCSurface(lpdc)->pixels) + static_cast<size_t>((py * IDCScale(lpdc))) * LpDCSurface(lpdc)->pitch +
+          static_cast<size_t>((px * IDCScale(lpdc))) * 4;
     return win32::RGB(rgb[0], rgb[1], rgb[2]);
 }
 
@@ -1070,12 +1070,12 @@ COLORREF win32::SetPixel(HDC hdc, int x, int y, COLORREF cr) {
     int64_t px, py;
 
     if (!lpdc || !FColor(cr) || !FClip(lpdc, &rc)) return win32::CLR_INVALID;
-    px = (int64_t)x - lpdc->ptOrg.x; py = (int64_t)y - lpdc->ptOrg.y;
+    px = static_cast<int64_t>(x) - lpdc->ptOrg.x; py = static_cast<int64_t>(y) - lpdc->ptOrg.y;
     if (px < rc.left || px >= rc.right || py < rc.top || py >= rc.bottom || !FRegionPixel(lpdc, px, py))
         return win32::CLR_INVALID;
     cr = CrPalette(lpdc, cr);
     if (lpdc->fMemory && lpdc->lpbitmap->fMono)
-        cr = ((BYTE)cr + (BYTE)(cr >> 8) + (BYTE)(cr >> 16) >= 384) ? win32::RGB(255, 255, 255) : 0;
+        cr = (static_cast<BYTE>(cr) + static_cast<BYTE>((cr >> 8)) + static_cast<BYTE>((cr >> 16)) >= 384) ? win32::RGB(255, 255, 255) : 0;
     ShapePixel(lpdc, &rc, px, py, cr);
     return cr;
 }
@@ -1087,14 +1087,14 @@ static COLORREF CrBrush(HDC lpdc, COMPATOBJECT *lpbrush, int64_t x, int64_t y) {
     x = (x - lpdc->ptBrush.x) % lpsurface->w; y = (y - lpdc->ptBrush.y) % lpsurface->h;
     if (x < 0) x += lpsurface->w;
     if (y < 0) y += lpsurface->h;
-    rgb = (BYTE *)lpsurface->pixels + (size_t)y * lpsurface->pitch + (size_t)x * 4;
+    rgb = static_cast<BYTE *>(lpsurface->pixels) + static_cast<size_t>(y) * lpsurface->pitch + static_cast<size_t>(x) * 4;
     // A monochrome pattern uses the destination DC's text/background colors.
     if (lpbrush->fMono) return CrPalette(lpdc, rgb[0] ? lpdc->crBk : lpdc->crText);
     return win32::RGB(rgb[0], rgb[1], rgb[2]);
 }
 
 HBRUSH win32::CreatePatternBrush(HBITMAP hbmp) {
-    COMPATOBJECT *lpbm = LpObject((HGDIOBJ)hbmp), *lpobj;
+    COMPATOBJECT *lpbm = LpObject(static_cast<HGDIOBJ>(hbmp)), *lpobj;
     SDL_Surface *lpsurface;
     if (!lpbm || lpbm->iKind != objBitmap) return nullptr;
     NATIVEOWNER<SDL_Surface, FreeCompatSurface> lpsurfaceOwner(SDL_DuplicateSurface(lpbm->lpSurface.get()));
@@ -1103,7 +1103,7 @@ HBRUSH win32::CreatePatternBrush(HBITMAP hbmp) {
     lpobj = LpNewObject(objBrush, 0, 0);
     if (!lpobj) return nullptr;
     lpobj->lpSurface.reset(lpsurfaceOwner.release()); lpobj->fMono = lpbm->fMono;
-    return (HBRUSH)lpobj;
+    return reinterpret_cast<HBRUSH>(lpobj);
 }
 
 static BOOL FFillDevice(HDC lpdc, RECT rcFill, COMPATOBJECT *lpbrush, BOOL fRop);
@@ -1111,8 +1111,8 @@ static BOOL FFillDevice(HDC lpdc, RECT rcFill, COMPATOBJECT *lpbrush, BOOL fRop)
 int win32::FillRect(HDC hdc, const RECT *lprc, HBRUSH hbr) {
     HDC lpdc = LpDC(hdc);
     COMPATOBJECT brush = {}, *lpbrush = LpObject(hbr);
-    if ((UINT_PTR)hbr > 0 && (UINT_PTR)hbr <= win32::COLOR_MENUBAR + 1) {
-        brush.iKind = objBrush; brush.crColor = win32::GetSysColor((int)(UINT_PTR)hbr - 1); lpbrush = &brush;
+    if (reinterpret_cast<UINT_PTR>(hbr) > 0 && reinterpret_cast<UINT_PTR>(hbr) <= win32::COLOR_MENUBAR + 1) {
+        brush.iKind = objBrush; brush.crColor = win32::GetSysColor(static_cast<int>(reinterpret_cast<UINT_PTR>(hbr)) - 1); lpbrush = &brush;
     }
     if (!lpdc || !lprc || !lpbrush || lpbrush->iKind != objBrush) return 0;
     return FFillDevice(lpdc, RcDevice(lpdc, *lprc), lpbrush, 0);
@@ -1157,7 +1157,7 @@ static BOOL FUsesPattern(BYTE rop) {
 }
 
 static COLORREF CrSurfacePixel(SDL_Surface *lpsurface, int x, int y) {
-    BYTE *rgb = (BYTE *)lpsurface->pixels + (size_t)y * lpsurface->pitch + (size_t)x * 4;
+    BYTE *rgb = static_cast<BYTE *>(lpsurface->pixels) + static_cast<size_t>(y) * lpsurface->pitch + static_cast<size_t>(x) * 4;
     return win32::RGB(rgb[0], rgb[1], rgb[2]);
 }
 
@@ -1172,10 +1172,10 @@ static void ShapePixel(HDC lpdc, const RECT *lprc, int64_t x, int64_t y, COLORRE
     if (x < lprc->left || x >= lprc->right || y < lprc->top || y >= lprc->bottom || !FRegionPixel(lpdc, x, y)) return;
     crPen = CrPalette(lpdc, crPen);
     if (lpdc->fMemory && lpdc->lpbitmap->fMono)
-        crPen = ((BYTE)crPen + (BYTE)(crPen >> 8) + (BYTE)(crPen >> 16) >= 384) ? win32::RGB(255, 255, 255) : 0;
+        crPen = (static_cast<BYTE>(crPen) + static_cast<BYTE>((crPen >> 8)) + static_cast<BYTE>((crPen >> 16)) >= 384) ? win32::RGB(255, 255, 255) : 0;
     for (iy = 0; iy < iScale; iy++) for (ix = 0; ix < iScale; ix++) {
         cr = 0;
-        crDest = CrSurfacePixel(LpDCRasterSurface(lpdc), (int)(x * iScale + ix), (int)(y * iScale + iy));
+        crDest = CrSurfacePixel(LpDCRasterSurface(lpdc), static_cast<int>((x * iScale + ix)), static_cast<int>((y * iScale + iy)));
         for (i = 0; i < 4; i++)
             if ((lpdc->iRop2 - 1) & (1 << i))
                 cr |= (i & 2 ? crPen : ~crPen) & (i & 1 ? crDest : ~crDest);
@@ -1196,7 +1196,7 @@ static BOOL FFillDevice(HDC lpdc, RECT rcFill, COMPATOBJECT *lpbrush, BOOL fRop)
     if (!lpbrush->lpSurface.get() && (!fRop || lpdc->iRop2 == win32::R2_COPYPEN)) {
         lpsurface = LpDCSurface(lpdc); cr = CrPalette(lpdc, lpbrush->crColor);
         if (lpdc->fMemory && lpdc->lpbitmap->fMono)
-            cr = ((BYTE)cr + (BYTE)(cr >> 8) + (BYTE)(cr >> 16) >= 384) ? win32::RGB(255, 255, 255) : 0;
+            cr = (static_cast<BYTE>(cr) + static_cast<BYTE>((cr >> 8)) + static_cast<BYTE>((cr >> 16)) >= 384) ? win32::RGB(255, 255, 255) : 0;
         crc = lpdc->fRegion ? lpdc->crcRegion : 1;
         for (i = 0; i < crc; i++) {
             if (lpdc->fRegion) {
@@ -1210,7 +1210,7 @@ static BOOL FFillDevice(HDC lpdc, RECT rcFill, COMPATOBJECT *lpbrush, BOOL fRop)
                 sdlrc = SDL_Rect{rcPaint.left * iScale, rcPaint.top * iScale,
                                    (rcPaint.right - rcPaint.left) * iScale, (rcPaint.bottom - rcPaint.top) * iScale};
                 if (!SDL_FillSurfaceRect(lpsurface, &sdlrc, SDL_MapSurfaceRGB(lpsurface,
-                                        (BYTE)cr, (BYTE)(cr >> 8), (BYTE)(cr >> 16)))) return 0;
+                                        static_cast<BYTE>(cr), static_cast<BYTE>((cr >> 8)), static_cast<BYTE>((cr >> 16))))) return 0;
             }
         }
         return 1;
@@ -1239,7 +1239,7 @@ BOOL win32::BitBlt(HDC hdc, int x, int y, int cx, int cy, HDC hdcSrc, int xSrc, 
     HDC lpdc = LpDC(hdc), lpdcSrc = nullptr;
     SDL_Surface *lpsrc = nullptr;
     RECT rcClip;
-    BYTE rop = (BYTE)(dwRop >> 16);
+    BYTE rop = static_cast<BYTE>((dwRop >> 16));
     BOOL fSource = FUsesSource(rop), fMonoSrc = 0, fMonoDst;
     int64_t px, py, pxSrc = 0, pySrc = 0;
     int64_t x0, y0, x1, y1, ix, iy, cxCopy, cyCopy;
@@ -1261,35 +1261,35 @@ BOOL win32::BitBlt(HDC hdc, int x, int y, int cx, int cy, HDC hdcSrc, int xSrc, 
         fMonoSrc = lpdcSrc->fMemory && lpdcSrc->lpbitmap->fMono;
         iScaleSrc = IDCScale(lpdcSrc);
     }
-    px = (int64_t)x - lpdc->ptOrg.x; py = (int64_t)y - lpdc->ptOrg.y;
-    if (fSource) { pxSrc = (int64_t)xSrc - lpdcSrc->ptOrg.x; pySrc = (int64_t)ySrc - lpdcSrc->ptOrg.y; }
+    px = static_cast<int64_t>(x) - lpdc->ptOrg.x; py = static_cast<int64_t>(y) - lpdc->ptOrg.y;
+    if (fSource) { pxSrc = static_cast<int64_t>(xSrc) - lpdcSrc->ptOrg.x; pySrc = static_cast<int64_t>(ySrc) - lpdcSrc->ptOrg.y; }
     fMonoDst = lpdc->fMemory && lpdc->lpbitmap->fMono;
-    x0 = ((((int64_t)0) > ((int64_t)rcClip.left - px)) ? ((int64_t)0) : ((int64_t)rcClip.left - px));
-    y0 = ((((int64_t)0) > ((int64_t)rcClip.top - py)) ? ((int64_t)0) : ((int64_t)rcClip.top - py));
-    x1 = ((((int64_t)cx) < ((int64_t)rcClip.right - px)) ? ((int64_t)cx) : ((int64_t)rcClip.right - px));
-    y1 = ((((int64_t)cy) < ((int64_t)rcClip.bottom - py)) ? ((int64_t)cy) : ((int64_t)rcClip.bottom - py));
+    x0 = (((static_cast<int64_t>(0)) > (static_cast<int64_t>(rcClip.left) - px)) ? (static_cast<int64_t>(0)) : (static_cast<int64_t>(rcClip.left) - px));
+    y0 = (((static_cast<int64_t>(0)) > (static_cast<int64_t>(rcClip.top) - py)) ? (static_cast<int64_t>(0)) : (static_cast<int64_t>(rcClip.top) - py));
+    x1 = (((static_cast<int64_t>(cx)) < (static_cast<int64_t>(rcClip.right) - px)) ? (static_cast<int64_t>(cx)) : (static_cast<int64_t>(rcClip.right) - px));
+    y1 = (((static_cast<int64_t>(cy)) < (static_cast<int64_t>(rcClip.bottom) - py)) ? (static_cast<int64_t>(cy)) : (static_cast<int64_t>(rcClip.bottom) - py));
     if (fSource) {
         x0 = StarsMax(x0, -pxSrc); y0 = StarsMax(y0, -pySrc);
-        x1 = (((x1) < ((int64_t)lpsrc->w / IDCScale(lpdcSrc) - pxSrc)) ? (x1) : ((int64_t)lpsrc->w / IDCScale(lpdcSrc) - pxSrc));
-        y1 = (((y1) < ((int64_t)lpsrc->h / IDCScale(lpdcSrc) - pySrc)) ? (y1) : ((int64_t)lpsrc->h / IDCScale(lpdcSrc) - pySrc));
+        x1 = (((x1) < (static_cast<int64_t>(lpsrc->w) / IDCScale(lpdcSrc) - pxSrc)) ? (x1) : (static_cast<int64_t>(lpsrc->w) / IDCScale(lpdcSrc) - pxSrc));
+        y1 = (((y1) < (static_cast<int64_t>(lpsrc->h) / IDCScale(lpdcSrc) - pySrc)) ? (y1) : (static_cast<int64_t>(lpsrc->h) / IDCScale(lpdcSrc) - pySrc));
     }
     if (x0 >= x1 || y0 >= y1)
         return 1;
     cxCopy = x1 - x0; cyCopy = y1 - y0;
-    if ((uint64_t)cxCopy > SIZE_MAX / sizeof(*rgcr) / (uint64_t)cyCopy / iScale / iScale)
+    if (static_cast<uint64_t>(cxCopy) > SIZE_MAX / sizeof(*rgcr) / static_cast<uint64_t>(cyCopy) / iScale / iScale)
         return 0;
-    cPixels = (size_t)cxCopy * (size_t)cyCopy * iScale * iScale;
+    cPixels = static_cast<size_t>(cxCopy) * static_cast<size_t>(cyCopy) * iScale * iScale;
     if (fSource) {
         // Capture before writing: overlapping blits must not feed updated pixels back.
-        rgcr = (COLORREF *)(malloc(cPixels * sizeof(*rgcr)));
+        rgcr = static_cast<COLORREF *>((malloc(cPixels * sizeof(*rgcr))));
         if (!rgcr)
             return 0;
         i = 0;
         for (iy = y0; iy < y1; iy++)
             for (ix = x0; ix < x1; ix++)
                 for (iyPixel = 0; iyPixel < iScale; iyPixel++) for (ixPixel = 0; ixPixel < iScale; ixPixel++)
-                    rgcr[i++] = CrSurfacePixel(lpsrc, (int)((pxSrc + ix) * iScaleSrc + ixPixel * iScaleSrc / iScale),
-                                              (int)((pySrc + iy) * iScaleSrc + iyPixel * iScaleSrc / iScale));
+                    rgcr[i++] = CrSurfacePixel(lpsrc, static_cast<int>(((pxSrc + ix) * iScaleSrc + ixPixel * iScaleSrc / iScale)),
+                                              static_cast<int>(((pySrc + iy) * iScaleSrc + iyPixel * iScaleSrc / iScale)));
     }
     i = 0;
     for (iy = y0; iy < y1; iy++) {
@@ -1300,10 +1300,10 @@ BOOL win32::BitBlt(HDC hdc, int x, int y, int cx, int cy, HDC hdcSrc, int xSrc, 
             else if (fSource && !fMonoSrc && fMonoDst)
                 crSource = crSource == CrPalette(lpdcSrc, lpdcSrc->crBk) ? win32::RGB(255, 255, 255) : 0;
             crPattern = CrBrush(lpdc, lpdc->lpbrush, px + ix, py + iy);
-            if (fMonoDst) crPattern = ((BYTE)crPattern + (BYTE)(crPattern >> 8) + (BYTE)(crPattern >> 16) >= 384) ? win32::RGB(255, 255, 255) : 0;
+            if (fMonoDst) crPattern = (static_cast<BYTE>(crPattern) + static_cast<BYTE>((crPattern >> 8)) + static_cast<BYTE>((crPattern >> 16)) >= 384) ? win32::RGB(255, 255, 255) : 0;
             if (!FRegionPixel(lpdc, px + ix, py + iy)) continue;
-            crDest = CrSurfacePixel(LpDCRasterSurface(lpdc), (int)((px + ix) * iScale + ixPixel),
-                                   (int)((py + iy) * iScale + iyPixel));
+            crDest = CrSurfacePixel(LpDCRasterSurface(lpdc), static_cast<int>(((px + ix) * iScale + ixPixel)),
+                                   static_cast<int>(((py + iy) * iScale + iyPixel)));
             DevicePixel(lpdc, (px + ix) * iScale + ixPixel, (py + iy) * iScale + iyPixel,
                         CrRop(rop, crPattern, crSource, crDest));
         }
@@ -1330,16 +1330,16 @@ BOOL win32::ScrollWindow(HWND hwnd, int dx, int dy, const RECT *lprc, const RECT
             win32::IntersectRect(&rcClip, lprcClip ? lprcClip : &rcClient, &rcClient) &&
             win32::IntersectRect(&rcArea, &rcScroll, &rcClip);
     if (!lprc) for (hwndChild = lpwin->hwndFirstChild; hwndChild; hwndChild = hwndChild->hwndZNext) {
-        if ((int64_t)hwndChild->rcChild.left + dx < INT_MIN ||
-            (int64_t)hwndChild->rcChild.right + dx > INT_MAX ||
-            (int64_t)hwndChild->rcChild.top + dy < INT_MIN ||
-            (int64_t)hwndChild->rcChild.bottom + dy > INT_MAX) {
+        if (static_cast<int64_t>(hwndChild->rcChild.left) + dx < INT_MIN ||
+            static_cast<int64_t>(hwndChild->rcChild.right) + dx > INT_MAX ||
+            static_cast<int64_t>(hwndChild->rcChild.top) + dy < INT_MIN ||
+            static_cast<int64_t>(hwndChild->rcChild.bottom) + dy > INT_MAX) {
             win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return 0;
         }
     }
     if (!fArea) goto MoveChildren;
-    rcMoved = RECT{LCoord((int64_t)rcArea.left + dx), LCoord((int64_t)rcArea.top + dy),
-                     LCoord((int64_t)rcArea.right + dx), LCoord((int64_t)rcArea.bottom + dy)};
+    rcMoved = RECT{LCoord(static_cast<int64_t>(rcArea.left) + dx), LCoord(static_cast<int64_t>(rcArea.top) + dy),
+                     LCoord(static_cast<int64_t>(rcArea.right) + dx), LCoord(static_cast<int64_t>(rcArea.bottom) + dy)};
     fCopy = win32::IntersectRect(&rcDest, &rcArea, &rcMoved);
     fErase = lpwin->fErase;
     for (i = 0; i < lpwin->crcUpdate; i++) {
@@ -1348,8 +1348,8 @@ BOOL win32::ScrollWindow(HWND hwnd, int dx, int dy, const RECT *lprc, const RECT
             // The whole-client variant moves pending damage with the pixels.
             if (!FSubtractUpdate(&rgrc, &crc, rc, &rcClip)) goto Fail;
             if (!win32::IntersectRect(&rc, &rc, &rcClip)) continue;
-            rc = RECT{LCoord((int64_t)rc.left + dx), LCoord((int64_t)rc.top + dy),
-                        LCoord((int64_t)rc.right + dx), LCoord((int64_t)rc.bottom + dy)};
+            rc = RECT{LCoord(static_cast<int64_t>(rc.left) + dx), LCoord(static_cast<int64_t>(rc.top) + dy),
+                        LCoord(static_cast<int64_t>(rc.right) + dx), LCoord(static_cast<int64_t>(rc.bottom) + dy)};
             if (!win32::IntersectRect(&rc, &rc, &rcClip)) continue;
         }
         if (!FAddUpdate(&rgrc, &crc, rc)) goto Fail;
@@ -1359,16 +1359,16 @@ BOOL win32::ScrollWindow(HWND hwnd, int dx, int dy, const RECT *lprc, const RECT
         if (!FCanvas(hwnd)) goto Fail;
         lpsurface = lpwin->lpCanvas.get();
         iScale = lpwin->iCanvasScale;
-        cbRow = (size_t)(rcDest.right - rcDest.left) * iScale * 4;
+        cbRow = static_cast<size_t>((rcDest.right - rcDest.left)) * iScale * 4;
         /* Window canvases are RGBA32. Copy overlapping rows in movement order,
            avoiding the generic raster-op path's per-pixel conversions. */
         dRow = dy > 0 ? -1 : 1;
         yFirst = dy > 0 ? rcDest.bottom * iScale - 1 : rcDest.top * iScale;
         yLast = dy > 0 ? rcDest.top * iScale - 1 : rcDest.bottom * iScale;
         for (y = yFirst; y != yLast; y += dRow) {
-            lpDst = (BYTE *)lpsurface->pixels + (size_t)y * lpsurface->pitch + (size_t)rcDest.left * iScale * 4;
-            lpSrc = (BYTE *)lpsurface->pixels + (size_t)((int64_t)y - (int64_t)dy * iScale) * lpsurface->pitch +
-                    (size_t)((int64_t)rcDest.left - dx) * iScale * 4;
+            lpDst = static_cast<BYTE *>(lpsurface->pixels) + static_cast<size_t>(y) * lpsurface->pitch + static_cast<size_t>(rcDest.left) * iScale * 4;
+            lpSrc = static_cast<BYTE *>(lpsurface->pixels) + static_cast<size_t>((static_cast<int64_t>(y) - static_cast<int64_t>(dy) * iScale)) * lpsurface->pitch +
+                    static_cast<size_t>((static_cast<int64_t>(rcDest.left) - dx)) * iScale * 4;
             memmove(lpDst, lpSrc, cbRow);
         }
     }
@@ -1378,8 +1378,8 @@ MoveChildren:
     if (!lprc) for (hwndChild = lpwin->hwndFirstChild; hwndChild; hwndChild = hwndNext) {
         hwndNext = hwndChild->hwndZNext;
         if (!win32::IsWindow(hwndChild)) continue;
-        if (!win32::SetWindowPos(hwndChild, nullptr, (int)((int64_t)hwndChild->rcChild.left + dx),
-                          (int)((int64_t)hwndChild->rcChild.top + dy), 0, 0,
+        if (!win32::SetWindowPos(hwndChild, nullptr, static_cast<int>((static_cast<int64_t>(hwndChild->rcChild.left) + dx)),
+                          static_cast<int>((static_cast<int64_t>(hwndChild->rcChild.top) + dy)), 0, 0,
                           win32::SWP_NOSIZE | win32::SWP_NOZORDER | win32::SWP_NOACTIVATE | win32::SWP_NOREDRAW)) return 0;
         if (!win32::IsWindow(hwnd)) return 0;
     }
@@ -1391,7 +1391,7 @@ Fail:
 
 
 BOOL win32::PatBlt(HDC hdc, int x, int y, int cx, int cy, DWORD dwRop) {
-    if (FUsesSource((BYTE)(dwRop >> 16)))
+    if (FUsesSource(static_cast<BYTE>((dwRop >> 16))))
         return 0;
     return win32::BitBlt(hdc, x, y, cx, cy, nullptr, 0, 0, dwRop);
 }
@@ -1415,7 +1415,7 @@ static void PenPixel(HDC lpdc, const RECT *lprc, int64_t x, int64_t y, uint64_t 
     if (lpdc->lppen->fNull) return;
     if (iStyle == win32::PS_SOLID) { ShapePixel(lpdc, lprc, x, y, lpdc->lppen->crColor); return; }
     for (i = 0; i < rgc[iStyle - 1]; i++) cCycle += rgDash[iStyle - 1][i];
-    iPhase = (unsigned)(iPixel % cCycle);
+    iPhase = static_cast<unsigned>((iPixel % cCycle));
     for (i = 0; i < rgc[iStyle - 1]; i++) {
         if (iPhase < rgDash[iStyle - 1][i]) {
             if (!(i & 1)) ShapePixel(lpdc, lprc, x, y, lpdc->lppen->crColor);
@@ -1444,27 +1444,27 @@ static BOOL FLineBound(double p, double q, double *lpt0, double *lpt1) {
 }
 
 static void Line(HDC lpdc, RECT rc, POINT pt0, POINT pt1, BOOL fExcludeEnd, uint64_t *lpiPhase) {
-    double xStart = (double)pt0.x - lpdc->ptOrg.x, yStart = (double)pt0.y - lpdc->ptOrg.y;
-    double xEnd = (double)pt1.x - lpdc->ptOrg.x, yEnd = (double)pt1.y - lpdc->ptOrg.y;
+    double xStart = static_cast<double>(pt0.x) - lpdc->ptOrg.x, yStart = static_cast<double>(pt0.y) - lpdc->ptOrg.y;
+    double xEnd = static_cast<double>(pt1.x) - lpdc->ptOrg.x, yEnd = static_cast<double>(pt1.y) - lpdc->ptOrg.y;
     double dx = xEnd - xStart, dy = yEnd - yStart, t0 = 0, t1 = 1;
     int64_t x, y, x1, y1, cx, cy, sx, sy, err, e2;
     uint64_t iPixel, iPhase = lpiPhase ? *lpiPhase : 0;
-    if (lpiPhase) *lpiPhase += (uint64_t)(((fabs(dx)) > (fabs(dy))) ? (fabs(dx)) : (fabs(dy))) + !fExcludeEnd;
+    if (lpiPhase) *lpiPhase += static_cast<uint64_t>((((fabs(dx)) > (fabs(dy))) ? (fabs(dx)) : (fabs(dy)))) + !fExcludeEnd;
 
     if (rc.left >= rc.right || rc.top >= rc.bottom || lpdc->lppen->fNull ||
         !FLineBound(-dx, xStart - rc.left, &t0, &t1) ||
-        !FLineBound(dx, (double)rc.right - 1 - xStart, &t0, &t1) ||
+        !FLineBound(dx, static_cast<double>(rc.right) - 1 - xStart, &t0, &t1) ||
         !FLineBound(-dy, yStart - rc.top, &t0, &t1) ||
-        !FLineBound(dy, (double)rc.bottom - 1 - yStart, &t0, &t1))
+        !FLineBound(dy, static_cast<double>(rc.bottom) - 1 - yStart, &t0, &t1))
         return;
-    x = (int64_t)(xStart + t0 * dx);
-    y = (int64_t)(yStart + t0 * dy);
-    x1 = (int64_t)(xStart + t1 * dx);
-    y1 = (int64_t)(yStart + t1 * dy);
+    x = static_cast<int64_t>((xStart + t0 * dx));
+    y = static_cast<int64_t>((yStart + t0 * dy));
+    x1 = static_cast<int64_t>((xStart + t1 * dx));
+    y1 = static_cast<int64_t>((yStart + t1 * dy));
     cx = llabs(x1 - x); cy = -llabs(y1 - y);
     sx = x < x1 ? 1 : -1; sy = y < y1 ? 1 : -1;
     err = cx + cy;
-    iPixel = iPhase + (uint64_t)(((fabs((double)x - xStart)) > (fabs((double)y - yStart))) ? (fabs((double)x - xStart)) : (fabs((double)y - yStart)));
+    iPixel = iPhase + static_cast<uint64_t>((((fabs(static_cast<double>(x) - xStart)) > (fabs(static_cast<double>(y) - yStart))) ? (fabs(static_cast<double>(x) - xStart)) : (fabs(static_cast<double>(y) - yStart))));
     for (;;) {
         if (!(fExcludeEnd && x == xEnd && y == yEnd))
             PenPixel(lpdc, &rc, x, y, iPixel);
@@ -1508,8 +1508,8 @@ BOOL win32::Rectangle(HDC hdc, int left, int top, int right, int bottom) {
     FFillDevice(lpdc, RcDevice(lpdc, rcFill), lpdc->lpbrush, 1);
     // Counterclockwise from top-right, sharing one dash phase and painting
     // each corner once, matches the default Win32 rectangle traversal.
-    if (r - (int64_t)l == 1) Line(lpdc, rc, POINT{l, t}, POINT{l, b - 1}, 0, &iPhase);
-    else if (b - (int64_t)t == 1) Line(lpdc, rc, POINT{r - 1, t}, POINT{l, t}, 0, &iPhase);
+    if (r - static_cast<int64_t>(l) == 1) Line(lpdc, rc, POINT{l, t}, POINT{l, b - 1}, 0, &iPhase);
+    else if (b - static_cast<int64_t>(t) == 1) Line(lpdc, rc, POINT{r - 1, t}, POINT{l, t}, 0, &iPhase);
     else {
         Line(lpdc, rc, POINT{r - 1, t}, POINT{l, t}, 1, &iPhase);
         Line(lpdc, rc, POINT{l, t}, POINT{l, b - 1}, 1, &iPhase);
@@ -1529,11 +1529,11 @@ struct COMPATELLIPSE {
 static void EllipsePoint(COMPATELLIPSE *lp, int64_t x, int64_t y) {
     size_t iRow;
     if (y < lp->rc.top || y >= lp->rc.bottom) return;
-    iRow = (size_t)(y - lp->rc.top);
+    iRow = static_cast<size_t>((y - lp->rc.top));
     lp->rglLeft[iRow] = StarsMin(lp->rglLeft[iRow], x);
     lp->rglRight[iRow] = StarsMax(lp->rglRight[iRow], x);
     if (x >= lp->rc.left && x < lp->rc.right)
-        lp->rgb[iRow * lp->cx + (size_t)(x - lp->rc.left)] = 1;
+        lp->rgb[iRow * lp->cx + static_cast<size_t>((x - lp->rc.left))] = 1;
 }
 
 __extension__ using COMPATELLIPSEERROR = __int128;
@@ -1574,8 +1574,8 @@ BOOL win32::Ellipse(HDC hdc, int left, int top, int right, int bottom) {
     BOOL fBorder;
 
     if (!lpdc || !FClip(lpdc, &rcClip)) return 0;
-    l = (int64_t)StarsMin(left, right) - lpdc->ptOrg.x; r = (int64_t)StarsMax(left, right) - lpdc->ptOrg.x;
-    t = (int64_t)StarsMin(top, bottom) - lpdc->ptOrg.y; b = (int64_t)StarsMax(top, bottom) - lpdc->ptOrg.y;
+    l = static_cast<int64_t>(StarsMin(left, right)) - lpdc->ptOrg.x; r = static_cast<int64_t>(StarsMax(left, right)) - lpdc->ptOrg.x;
+    t = static_cast<int64_t>(StarsMin(top, bottom)) - lpdc->ptOrg.y; b = static_cast<int64_t>(StarsMax(top, bottom)) - lpdc->ptOrg.y;
     if (l == r || t == b || (r - l == 1 && b - t == 1) || r <= rcClip.left || l >= rcClip.right || b <= rcClip.top || t >= rcClip.bottom) return 1;
     // Cap iteration work independently of the clipped mask size.
     if (r - l > 1048576 || b - t > 1048576) return 0;
@@ -1584,14 +1584,14 @@ BOOL win32::Ellipse(HDC hdc, int left, int top, int right, int bottom) {
     }
     if (lpdc->lppen->fNull && (r - l <= 2 || b - t <= 2))
         return FFillDevice(lpdc, RECT{LCoord(l), LCoord(t), LCoord(r - 1), LCoord(b - 1)}, lpdc->lpbrush, 1);
-    el.rc = RECT{(LONG)StarsMax(l, rcClip.left), (LONG)StarsMax(t, rcClip.top),
-                   (LONG)StarsMin(r, rcClip.right), (LONG)StarsMin(b, rcClip.bottom)};
+    el.rc = RECT{static_cast<LONG>(StarsMax(l, rcClip.left)), static_cast<LONG>(StarsMax(t, rcClip.top)),
+                   static_cast<LONG>(StarsMin(r, rcClip.right)), static_cast<LONG>(StarsMin(b, rcClip.bottom))};
     el.cx = el.rc.right - el.rc.left;
-    if ((size_t)el.cx > SIZE_MAX / (size_t)(el.rc.bottom - el.rc.top)) return 0;
-    cb = (size_t)el.cx * (size_t)(el.rc.bottom - el.rc.top);
-    el.rgb = (BYTE *)(calloc(cb, 1));
-    el.rglLeft = (int64_t *)(malloc((size_t)(el.rc.bottom - el.rc.top) * sizeof(*el.rglLeft)));
-    el.rglRight = (int64_t *)(malloc((size_t)(el.rc.bottom - el.rc.top) * sizeof(*el.rglRight)));
+    if (static_cast<size_t>(el.cx) > SIZE_MAX / static_cast<size_t>((el.rc.bottom - el.rc.top))) return 0;
+    cb = static_cast<size_t>(el.cx) * static_cast<size_t>((el.rc.bottom - el.rc.top));
+    el.rgb = static_cast<BYTE *>((calloc(cb, 1)));
+    el.rglLeft = static_cast<int64_t *>((malloc(static_cast<size_t>((el.rc.bottom - el.rc.top)) * sizeof(*el.rglLeft))));
+    el.rglRight = static_cast<int64_t *>((malloc(static_cast<size_t>((el.rc.bottom - el.rc.top)) * sizeof(*el.rglRight))));
     if (!el.rgb || !el.rglLeft || !el.rglRight) {
         free(el.rgb); free(el.rglLeft); free(el.rglRight); return 0;
     }
@@ -1600,7 +1600,7 @@ BOOL win32::Ellipse(HDC hdc, int left, int top, int right, int bottom) {
     }
     EllipseOutline(&el, l, t, r - 1, b - 1);
     for (y = el.rc.top; y < el.rc.bottom; y++) for (x = el.rc.left; x < el.rc.right; x++) {
-        i = (size_t)(y - el.rc.top); fBorder = el.rgb[i * el.cx + (size_t)(x - el.rc.left)] != 0;
+        i = static_cast<size_t>((y - el.rc.top)); fBorder = el.rgb[i * el.cx + static_cast<size_t>((x - el.rc.left))] != 0;
         if (fBorder && !lpdc->lppen->fNull) ShapePixel(lpdc, &el.rc, x, y, lpdc->lppen->crColor);
         else if (!lpdc->lpbrush->fNull && x >= el.rglLeft[i] && x <= el.rglRight[i])
             ShapePixel(lpdc, &el.rc, x, y, CrBrush(lpdc, lpdc->lpbrush, x, y));
@@ -1681,22 +1681,22 @@ int win32::GetDeviceCaps(HDC hdc, int index) {
 }
 
 static void DrawFontPixel(void *lpv, int64_t x, int64_t y, BYTE alpha) {
-    COMPATTEXTDRAW *lpdraw = (COMPATTEXTDRAW *)(lpv);
+    COMPATTEXTDRAW *lpdraw = static_cast<COMPATTEXTDRAW *>((lpv));
     int iScale = IDCScale(lpdraw->lpdc);
-    int64_t px = (int64_t)lpdraw->x * iScale + llround(lpdraw->cs * x + lpdraw->sn * y);
-    int64_t py = (int64_t)lpdraw->y * iScale + llround(-lpdraw->sn * x + lpdraw->cs * y);
+    int64_t px = static_cast<int64_t>(lpdraw->x) * iScale + llround(lpdraw->cs * x + lpdraw->sn * y);
+    int64_t py = static_cast<int64_t>(lpdraw->y) * iScale + llround(-lpdraw->sn * x + lpdraw->cs * y);
     COLORREF cr;
     BYTE *rgb;
     unsigned r, g, b;
 
-    if (px < (int64_t)lpdraw->rc.left * iScale || px >= (int64_t)lpdraw->rc.right * iScale ||
-        py < (int64_t)lpdraw->rc.top * iScale || py >= (int64_t)lpdraw->rc.bottom * iScale ||
+    if (px < static_cast<int64_t>(lpdraw->rc.left) * iScale || px >= static_cast<int64_t>(lpdraw->rc.right) * iScale ||
+        py < static_cast<int64_t>(lpdraw->rc.top) * iScale || py >= static_cast<int64_t>(lpdraw->rc.bottom) * iScale ||
         !FRegionPixel(lpdraw->lpdc, px / iScale, py / iScale)) return;
     cr = CrPalette(lpdraw->lpdc, lpdraw->lpdc->crText);
-    rgb = (BYTE *)LpDCRasterSurface(lpdraw->lpdc)->pixels + (size_t)py * LpDCRasterSurface(lpdraw->lpdc)->pitch + (size_t)px * 4;
-    r = ((BYTE)cr * alpha + rgb[0] * (255 - alpha) + 127) / 255;
-    g = ((BYTE)(cr >> 8) * alpha + rgb[1] * (255 - alpha) + 127) / 255;
-    b = ((BYTE)(cr >> 16) * alpha + rgb[2] * (255 - alpha) + 127) / 255;
+    rgb = static_cast<BYTE *>(LpDCRasterSurface(lpdraw->lpdc)->pixels) + static_cast<size_t>(py) * LpDCRasterSurface(lpdraw->lpdc)->pitch + static_cast<size_t>(px) * 4;
+    r = (static_cast<BYTE>(cr) * alpha + rgb[0] * (255 - alpha) + 127) / 255;
+    g = (static_cast<BYTE>((cr >> 8)) * alpha + rgb[1] * (255 - alpha) + 127) / 255;
+    b = (static_cast<BYTE>((cr >> 16)) * alpha + rgb[2] * (255 - alpha) + 127) / 255;
     DevicePixel(lpdraw->lpdc, px, py, win32::RGB(r, g, b));
 }
 
@@ -1712,14 +1712,14 @@ static void DrawFontRect(COMPATTEXTDRAW *lpdraw, int64_t dx, int yTop, int yBott
         if (py < yMin) yMin = py;
         if (py > yMax) yMax = py;
     }
-    xLeft = (int)fmax(lpdraw->rc.left, fmin(lpdraw->rc.right, floor(xMin)));
-    xRight = (int)fmax(lpdraw->rc.left, fmin(lpdraw->rc.right, ceil(xMax)));
-    yFirst = (int)fmax(lpdraw->rc.top, fmin(lpdraw->rc.bottom, floor(yMin)));
-    yLast = (int)fmax(lpdraw->rc.top, fmin(lpdraw->rc.bottom, ceil(yMax)));
+    xLeft = static_cast<int>(fmax(lpdraw->rc.left, fmin(lpdraw->rc.right, floor(xMin))));
+    xRight = static_cast<int>(fmax(lpdraw->rc.left, fmin(lpdraw->rc.right, ceil(xMax))));
+    yFirst = static_cast<int>(fmax(lpdraw->rc.top, fmin(lpdraw->rc.bottom, floor(yMin))));
+    yLast = static_cast<int>(fmax(lpdraw->rc.top, fmin(lpdraw->rc.bottom, ceil(yMax))));
     for (y = yFirst; y < yLast; y++)
         for (x = xLeft; x < xRight; x++) {
-            u = lpdraw->cs * ((int64_t)x - lpdraw->x) - lpdraw->sn * ((int64_t)y - lpdraw->y);
-            v = lpdraw->sn * ((int64_t)x - lpdraw->x) + lpdraw->cs * ((int64_t)y - lpdraw->y);
+            u = lpdraw->cs * (static_cast<int64_t>(x) - lpdraw->x) - lpdraw->sn * (static_cast<int64_t>(y) - lpdraw->y);
+            v = lpdraw->sn * (static_cast<int64_t>(x) - lpdraw->x) + lpdraw->cs * (static_cast<int64_t>(y) - lpdraw->y);
             if (u >= fmin(0, dx) && u < fmax(0, dx) && v >= yTop && v < yBottom)
                 Pixel(lpdraw->lpdc, &lpdraw->rc, x, y, cr);
         }
@@ -1745,7 +1745,7 @@ static BOOL FDrawText(HDC lpdc, int x, int y, LPCSTR psz, int cch, UINT options,
             for (iy = rc.top; iy < rc.bottom; iy++) for (ix = rc.left; ix < rc.right; ix++) Pixel(lpdc, &rc, ix, iy, lpdc->crBk);
     }
     if (options & win32::ETO_CLIPPED) win32::IntersectRect(&draw.rc, &draw.rc, lprc);
-    draw.lpdc = lpdc; draw.x = (int64_t)x - lpdc->ptOrg.x; draw.y = (int64_t)y - lpdc->ptOrg.y;
+    draw.lpdc = lpdc; draw.x = static_cast<int64_t>(x) - lpdc->ptOrg.x; draw.y = static_cast<int64_t>(y) - lpdc->ptOrg.y;
     angle = (lpdc->lpfont->lf.lfEscapement % 3600) * (3.14159265358979323846 / 1800.0);
     draw.cs = cos(angle); draw.sn = sin(angle);
     dx = size.cx;
@@ -1768,7 +1768,7 @@ BOOL win32::ExtTextOutA(HDC hdc, int x, int y, UINT options, const RECT *lprc,
                        LPCSTR psz, UINT cch, const INT *rgdx) {
     HDC lpdc = LpDC(hdc);
     if (!lpdc || cch > INT_MAX || (options & ~(win32::ETO_OPAQUE | win32::ETO_CLIPPED))) return 0;
-    return FDrawText(lpdc, x, y, psz, (int)cch, options, lprc, rgdx);
+    return FDrawText(lpdc, x, y, psz, static_cast<int>(cch), options, lprc, rgdx);
 }
 
 struct COMPATTEXTLINE { int i, cch, dx; };
@@ -1789,11 +1789,11 @@ int win32::DrawTextA(HDC hdc, LPCSTR psz, int cch, LPRECT lprc, UINT flags) {
                      win32::DT_EXPANDTABS | win32::DT_NOCLIP | win32::DT_EXTERNALLEADING | win32::DT_CALCRECT | win32::DT_NOPREFIX;
 
     if (!lpdc || !lprc || !psz || cch < -1 || (flags & ~supported)) return 0;
-    if (cch == -1) { cch = (int)strnlen(psz, 1024 * 1024 + 1); }
+    if (cch == -1) { cch = static_cast<int>(strnlen(psz, 1024 * 1024 + 1)); }
     if (cch > 1024 * 1024) return 0;
     if (cch == 0) { if (flags & win32::DT_CALCRECT) lprc->bottom = lprc->top; return 0; }
-    sz = (char *)(malloc((size_t)cch * 8 + 1)); rgUnderline = (BYTE *)(calloc((size_t)cch * 8 + 1, 1));
-    rgline = (COMPATTEXTLINE *)(malloc(((size_t)cch * 8 + 1) * sizeof(*rgline)));
+    sz = static_cast<char *>((malloc(static_cast<size_t>(cch) * 8 + 1))); rgUnderline = static_cast<BYTE *>((calloc(static_cast<size_t>(cch) * 8 + 1, 1)));
+    rgline = static_cast<COMPATTEXTLINE *>((malloc((static_cast<size_t>(cch) * 8 + 1) * sizeof(*rgline))));
     if (!sz || !rgUnderline || !rgline) goto LReturn;
     for (i = 0; i < cch; i++) {
         if (!(flags & win32::DT_NOPREFIX) && psz[i] == '&') {
@@ -1813,15 +1813,15 @@ int win32::DrawTextA(HDC hdc, LPCSTR psz, int cch, LPRECT lprc, UINT flags) {
     sz[c] = 0;
     FCompatFontMetrics(lpdc->lpfont->lpFont.get(), &tm);
     dyLine = tm.tmHeight + (flags & win32::DT_EXTERNALLEADING ? tm.tmExternalLeading : 0);
-    dxAvail = (int64_t)lprc->right - lprc->left;
+    dxAvail = static_cast<int64_t>(lprc->right) - lprc->left;
     i = 0;
     while (i < c) {
         iStart = i; iBreak = -1; dxBreak = 0; dx = 0;
         while (i < c && sz[i] != '\r' && sz[i] != '\n') {
-            cStep = CbUtf8Char(sz + i, (size_t)(c - i), &ch);
+            cStep = CbUtf8Char(sz + i, static_cast<size_t>((c - i)), &ch);
             if (cStep == 0) goto LReturn;
             if (!win32::GetTextExtentPoint32A(hdc, sz + i, cStep, &size)) goto LReturn;
-            if (sz[i] == ' ' || sz[i] == '\t') { iBreak = i; dxBreak = (int)dx; }
+            if (sz[i] == ' ' || sz[i] == '\t') { iBreak = i; dxBreak = static_cast<int>(dx); }
             dx += size.cx;
             if (dx > INT_MAX) goto LReturn;
             if ((flags & win32::DT_WORDBREAK) && !(flags & win32::DT_SINGLELINE) && dx > dxAvail && iBreak > iStart) {
@@ -1832,15 +1832,15 @@ int win32::DrawTextA(HDC hdc, LPCSTR psz, int cch, LPRECT lprc, UINT flags) {
             }
             i += cStep;
         }
-        rgline[cLines++] = COMPATTEXTLINE{iStart, i - iStart, (int)dx};
+        rgline[cLines++] = COMPATTEXTLINE{iStart, i - iStart, static_cast<int>(dx)};
         if (i < c && sz[i++] == '\r' && i < c && sz[i] == '\n') i++;
 LNextLine:
         if (rgline[cLines - 1].dx > dxMax) dxMax = rgline[cLines - 1].dx;
     }
-    if ((int64_t)cLines * dyLine > INT_MAX) goto LReturn;
+    if (static_cast<int64_t>(cLines) * dyLine > INT_MAX) goto LReturn;
     dy = cLines * dyLine;
     if (flags & win32::DT_CALCRECT) {
-        if ((int64_t)lprc->left + dxMax > INT_MAX || (int64_t)lprc->top + dy > INT_MAX) goto LReturn;
+        if (static_cast<int64_t>(lprc->left) + dxMax > INT_MAX || static_cast<int64_t>(lprc->top) + dy > INT_MAX) goto LReturn;
         lprc->right = lprc->left + dxMax; lprc->bottom = lprc->top + dy;
         nReturn = dy; goto LReturn;
     }
@@ -1852,28 +1852,28 @@ LNextLine:
     }
     y = lprc->top;
     if (flags & win32::DT_SINGLELINE) {
-        if (flags & win32::DT_VCENTER) y += ((int64_t)lprc->bottom - lprc->top - dy) / 2;
-        else if (flags & win32::DT_BOTTOM) y = (int64_t)lprc->bottom - dy;
+        if (flags & win32::DT_VCENTER) y += (static_cast<int64_t>(lprc->bottom) - lprc->top - dy) / 2;
+        else if (flags & win32::DT_BOTTOM) y = static_cast<int64_t>(lprc->bottom) - dy;
     }
     nReturn = dy;
     for (i = 0; i < cLines; i++, y += dyLine) {
         x = lprc->left;
-        if (flags & win32::DT_CENTER) x += ((int64_t)lprc->right - lprc->left - rgline[i].dx) / 2;
-        else if (flags & win32::DT_RIGHT) x = (int64_t)lprc->right - rgline[i].dx;
+        if (flags & win32::DT_CENTER) x += (static_cast<int64_t>(lprc->right) - lprc->left - rgline[i].dx) / 2;
+        else if (flags & win32::DT_RIGHT) x = static_cast<int64_t>(lprc->right) - rgline[i].dx;
         if (x < INT_MIN || x > INT_MAX || y < INT_MIN || y > INT_MAX ||
-            !win32::TextOutA(hdc, (int)x, (int)y, sz + rgline[i].i, rgline[i].cch)) { nReturn = 0; break; }
+            !win32::TextOutA(hdc, static_cast<int>(x), static_cast<int>(y), sz + rgline[i].i, rgline[i].cch)) { nReturn = 0; break; }
         for (j = 0; j < rgline[i].cch; j++) {
             if (!rgUnderline[rgline[i].i + j]) continue;
             win32::GetTextExtentPoint32A(hdc, sz + rgline[i].i, j, &size);
             dx = x + size.cx;
-            cStep = CbUtf8Char(sz + rgline[i].i + j, (size_t)(rgline[i].cch - j), &ch);
+            cStep = CbUtf8Char(sz + rgline[i].i + j, static_cast<size_t>((rgline[i].cch - j)), &ch);
             if (cStep == 0) continue;
             win32::GetTextExtentPoint32A(hdc, sz + rgline[i].i + j, cStep, &size);
             // Leave a pixel below the baseline, matching ordinary font
             // underlines, so mnemonic marks do not merge into the glyph.
             if (dx >= INT_MIN && dx + size.cx <= INT_MAX && y + tm.tmAscent + 2 <= INT_MAX) {
-                RECT rc = {(LONG)dx, (LONG)(y + tm.tmAscent + 1), (LONG)(dx + size.cx), (LONG)(y + tm.tmAscent + 2)};
-                COMPATTEXTDRAW draw = {lpdc, {}, dx - lpdc->ptOrg.x, -(int64_t)lpdc->ptOrg.y, 1, 0};
+                RECT rc = {static_cast<LONG>(dx), static_cast<LONG>((y + tm.tmAscent + 1)), static_cast<LONG>((dx + size.cx)), static_cast<LONG>((y + tm.tmAscent + 2))};
+                COMPATTEXTDRAW draw = {lpdc, {}, dx - lpdc->ptOrg.x, -static_cast<int64_t>(lpdc->ptOrg.y), 1, 0};
                 if (FClip(lpdc, &draw.rc)) DrawFontRect(&draw, rc.right - rc.left, rc.top, rc.bottom, lpdc->crText);
             }
         }
@@ -1908,7 +1908,7 @@ HBITMAP HbmpCompatResource(const BYTE *rgb, size_t cb) {
     if (!lpobj) return nullptr;
     lpobj->lpSurface.reset(lpsurfaceOwner.release());
     lpobj->fMono = dib.cBits == 1;
-    return (HBITMAP)lpobj;
+    return reinterpret_cast<HBITMAP>(lpobj);
 }
 
 int win32::GetDIBits(HDC hdc, HBITMAP hbm, UINT iStart, UINT cLines, LPVOID lpBits, LPBITMAPINFO lpbmi, UINT usage) {
@@ -1943,10 +1943,10 @@ int win32::GetDIBits(HDC hdc, HBITMAP hbm, UINT iStart, UINT cLines, LPVOID lpBi
     bi.biHeight = fTopDown ? -lpsurface->h : lpsurface->h;
     bi.biPlanes = 1;
     bi.biClrUsed = bi.biBitCount == 1 ? 2 : 0;
-    cbRow = (((size_t)lpsurface->w * bi.biBitCount + 31) / 32) * 4;
-    if (cbRow > UINT32_MAX / (size_t)lpsurface->h)
+    cbRow = ((static_cast<size_t>(lpsurface->w) * bi.biBitCount + 31) / 32) * 4;
+    if (cbRow > UINT32_MAX / static_cast<size_t>(lpsurface->h))
         return 0;
-    bi.biSizeImage = (DWORD)(cbRow * (size_t)lpsurface->h);
+    bi.biSizeImage = static_cast<DWORD>((cbRow * static_cast<size_t>(lpsurface->h)));
     lpbmi->bmiHeader = bi;
     // A format query may supply only the 40-byte header, with no palette storage.
     if (bi.biBitCount == 1 && !fQuery) {
@@ -1955,26 +1955,26 @@ int win32::GetDIBits(HDC hdc, HBITMAP hbm, UINT iStart, UINT cLines, LPVOID lpBi
     }
     if (!lpBits)
         return lpsurface->h;
-    if (iStart >= (UINT)lpsurface->h)
+    if (iStart >= static_cast<UINT>(lpsurface->h))
         return 0;
-    cCopy = (((cLines) < ((UINT)lpsurface->h - iStart)) ? (cLines) : ((UINT)lpsurface->h - iStart));
+    cCopy = (((cLines) < (static_cast<UINT>(lpsurface->h) - iStart)) ? (cLines) : (static_cast<UINT>(lpsurface->h) - iStart));
     for (i = 0; i < cCopy; i++) {
-        rgb = (BYTE *)lpBits + (size_t)i * cbRow;
+        rgb = static_cast<BYTE *>(lpBits) + static_cast<size_t>(i) * cbRow;
         memset(rgb, 0, cbRow);
-        y = fTopDown ? (int)(iStart + i) : lpsurface->h - 1 - (int)(iStart + i);
+        y = fTopDown ? static_cast<int>((iStart + i)) : lpsurface->h - 1 - static_cast<int>((iStart + i));
         for (x = 0; x < lpsurface->w; x++) {
             cr = CrSurfacePixel(lpsurface, x, y);
             if (bi.biBitCount == 1) {
-                if ((BYTE)cr + (BYTE)(cr >> 8) + (BYTE)(cr >> 16) >= 384)
-                    rgb[x / 8] |= (BYTE)(1 << (7 - x % 8));
+                if (static_cast<BYTE>(cr) + static_cast<BYTE>((cr >> 8)) + static_cast<BYTE>((cr >> 16)) >= 384)
+                    rgb[x / 8] |= static_cast<BYTE>((1 << (7 - x % 8)));
             } else {
-                rgb[x * (bi.biBitCount / 8)] = (BYTE)(cr >> 16);
-                rgb[x * (bi.biBitCount / 8) + 1] = (BYTE)(cr >> 8);
-                rgb[x * (bi.biBitCount / 8) + 2] = (BYTE)cr;
+                rgb[x * (bi.biBitCount / 8)] = static_cast<BYTE>((cr >> 16));
+                rgb[x * (bi.biBitCount / 8) + 1] = static_cast<BYTE>((cr >> 8));
+                rgb[x * (bi.biBitCount / 8) + 2] = static_cast<BYTE>(cr);
             }
         }
     }
-    return (int)cCopy;
+    return static_cast<int>(cCopy);
 }
 
 static BOOL FPaletteDib(HDC lpdc, const BITMAPINFO *lpbmi, const void *lpBits, UINT usage, COMPATDIB *lpdib) {
@@ -1982,7 +1982,7 @@ static BOOL FPaletteDib(HDC lpdc, const BITMAPINFO *lpbmi, const void *lpBits, U
     UINT c, i;
     WORD index;
     PALETTEENTRY pe;
-    const BYTE *rgb = (const BYTE *)lpbmi;
+    const BYTE *rgb = reinterpret_cast<const BYTE *>(lpbmi);
     if (usage == win32::DIB_RGB_COLORS) return FCompatNativeDib(lpbmi, SIZE_MAX, lpBits, SIZE_MAX, lpdib);
     if (usage != win32::DIB_PAL_COLORS || !lpbmi || lpbmi->bmiHeader.biSize != sizeof(info.bi)) return 0;
     info.bi = lpbmi->bmiHeader;
@@ -2007,7 +2007,7 @@ int win32::StretchDIBits(HDC hdc, int xDest, int yDest, int cxDest, int cyDest,
     SDL_Surface *lpsrc;
     NATIVEOWNER<SDL_Surface, FreeCompatSurface> lpsurfaceOwner;
     RECT rcClip;
-    BYTE rop = (BYTE)(dwRop >> 16);
+    BYTE rop = static_cast<BYTE>((dwRop >> 16));
     int64_t px, py;
     int64_t x0, y0, x1, y1, ix, iy, sx, sy, yTop;
     COLORREF crSource, crPattern, crDest;
@@ -2016,25 +2016,25 @@ int win32::StretchDIBits(HDC hdc, int xDest, int yDest, int cxDest, int cyDest,
         cxDest <= 0 || cyDest <= 0 || cxSrc <= 0 || cySrc <= 0 ||
         (dwRop & UINT32_C(0xff000000)) || !FPaletteDib(lpdc, lpbmi, lpBits, usage, &dib))
         return 0;
-    yTop = dib.fTopDown ? ySrc : (int64_t)dib.cy - ySrc - cySrc;
-    if (xSrc < 0 || yTop < 0 || (int64_t)xSrc + cxSrc > dib.cx || yTop + cySrc > dib.cy ||
+    yTop = dib.fTopDown ? ySrc : static_cast<int64_t>(dib.cy) - ySrc - cySrc;
+    if (xSrc < 0 || yTop < 0 || static_cast<int64_t>(xSrc) + cxSrc > dib.cx || yTop + cySrc > dib.cy ||
         (FUsesPattern(rop) && lpdc->lpbrush->fNull) || !FClip(lpdc, &rcClip))
         return 0;
     lpsurfaceOwner.reset(LpCompatDibSurface(&dib)); lpsrc = lpsurfaceOwner.get();
     if (!lpsrc)
         return 0;
-    px = (int64_t)xDest - lpdc->ptOrg.x; py = (int64_t)yDest - lpdc->ptOrg.y;
-    x0 = ((((int64_t)0) > ((int64_t)rcClip.left - px)) ? ((int64_t)0) : ((int64_t)rcClip.left - px));
-    y0 = ((((int64_t)0) > ((int64_t)rcClip.top - py)) ? ((int64_t)0) : ((int64_t)rcClip.top - py));
-    x1 = ((((int64_t)cxDest) < ((int64_t)rcClip.right - px)) ? ((int64_t)cxDest) : ((int64_t)rcClip.right - px));
-    y1 = ((((int64_t)cyDest) < ((int64_t)rcClip.bottom - py)) ? ((int64_t)cyDest) : ((int64_t)rcClip.bottom - py));
+    px = static_cast<int64_t>(xDest) - lpdc->ptOrg.x; py = static_cast<int64_t>(yDest) - lpdc->ptOrg.y;
+    x0 = (((static_cast<int64_t>(0)) > (static_cast<int64_t>(rcClip.left) - px)) ? (static_cast<int64_t>(0)) : (static_cast<int64_t>(rcClip.left) - px));
+    y0 = (((static_cast<int64_t>(0)) > (static_cast<int64_t>(rcClip.top) - py)) ? (static_cast<int64_t>(0)) : (static_cast<int64_t>(rcClip.top) - py));
+    x1 = (((static_cast<int64_t>(cxDest)) < (static_cast<int64_t>(rcClip.right) - px)) ? (static_cast<int64_t>(cxDest)) : (static_cast<int64_t>(rcClip.right) - px));
+    y1 = (((static_cast<int64_t>(cyDest)) < (static_cast<int64_t>(rcClip.bottom) - py)) ? (static_cast<int64_t>(cyDest)) : (static_cast<int64_t>(rcClip.bottom) - py));
     for (iy = y0; iy < y1; iy++) {
         sy = yTop + iy * cySrc / cyDest;
         for (ix = x0; ix < x1; ix++) {
-            sx = (int64_t)xSrc + ix * cxSrc / cxDest;
+            sx = static_cast<int64_t>(xSrc) + ix * cxSrc / cxDest;
             crPattern = CrBrush(lpdc, lpdc->lpbrush, px + ix, py + iy);
-            crSource = CrSurfacePixel(lpsrc, (int)sx, (int)sy);
-            crDest = CrDCPixel(lpdc, (int)(px + ix), (int)(py + iy));
+            crSource = CrSurfacePixel(lpsrc, static_cast<int>(sx), static_cast<int>(sy));
+            crDest = CrDCPixel(lpdc, static_cast<int>((px + ix)), static_cast<int>((py + iy)));
             Pixel(lpdc, &rcClip, px + ix, py + iy,
                   CrRop(rop, crPattern, crSource, crDest));
         }
@@ -2089,7 +2089,7 @@ HBITMAP HbmpCompatSurface(SDL_Surface *lpSurface, BOOL fMono) {
     lpobj = LpNewObject(objBitmap, 0, 0);
     if (!lpobj) return nullptr;
     lpobj->lpSurface.reset(lpsurfaceOwner.release()); lpobj->fMono = fMono;
-    return (HBITMAP)lpobj;
+    return reinterpret_cast<HBITMAP>(lpobj);
 }
 BOOL win32::DrawIcon(HDC hdc, int x, int y, HICON hicon) {
     HDC lpdc = LpDC(hdc);
@@ -2100,10 +2100,10 @@ BOOL win32::DrawIcon(HDC hdc, int x, int y, HICON hicon) {
     COLORREF crDst, crSrc;
     if (!lpdc || !lp || !lp->lpXor || !FClip(lpdc, &rc)) return 0;
     for (iy = 0; iy < 32; iy++) for (ix = 0; ix < 32; ix++) {
-        dx = (int64_t)x - lpdc->ptOrg.x + ix; dy = (int64_t)y - lpdc->ptOrg.y + iy;
+        dx = static_cast<int64_t>(x) - lpdc->ptOrg.x + ix; dy = static_cast<int64_t>(y) - lpdc->ptOrg.y + iy;
         if (dx < rc.left || dy < rc.top || dx >= rc.right || dy >= rc.bottom || !FRegionPixel(lpdc, dx, dy)) continue;
         sx = ix * lp->lpXor->w / 32; sy = iy * lp->lpXor->h / 32;
-        crDst = CrDCPixel(lpdc, (int)dx, (int)dy); crSrc = CrSurfacePixel(lp->lpXor.get(), sx, sy);
+        crDst = CrDCPixel(lpdc, static_cast<int>(dx), static_cast<int>(dy)); crSrc = CrSurfacePixel(lp->lpXor.get(), sx, sy);
         Pixel(lpdc, &rc, dx, dy, (lp->rgbAnd[sy * lp->lpXor->w + sx] ? crDst : 0) ^ crSrc);
     }
     return lpdc->fMemory || lpdc->fScreen || FCompatPresent(lpdc->hwnd);

@@ -83,24 +83,24 @@ static BOOL AddButtons(HWND hwnd, int iInsert, size_t c, const TBBUTTON *rgbtn) 
     size_t i;
     if (!rgbtn || iInsert < 0 || iInsert > lp->c || c > 4096 || c + lp->c > 4096 ||
         lp->cbButton != sizeof(TBBUTTON)) return 0;
-    rgNew = (COMPATTOOLBUTTON *)(calloc(c + (size_t)lp->c + 1, sizeof(*rgNew)));
+    rgNew = static_cast<COMPATTOOLBUTTON *>((calloc(c + static_cast<size_t>(lp->c) + 1, sizeof(*rgNew))));
     if (!rgNew) return 0;
     for (i = 0; i < c; i++) {
         rgNew[iInsert + i].btn = rgbtn[i];
         // This subset accepts direct UTF-8 text, not string pool/callback indices.
         if (rgbtn[i].iString > 65535) {
-            rgNew[iInsert + i].psz = SDL_strdup((const char *)rgbtn[i].iString);
+            rgNew[iInsert + i].psz = SDL_strdup(reinterpret_cast<const char *>(rgbtn[i].iString));
             if (!rgNew[iInsert + i].psz) break;
-            rgNew[iInsert + i].btn.iString = (INT_PTR)rgNew[iInsert + i].psz;
+            rgNew[iInsert + i].btn.iString = reinterpret_cast<INT_PTR>(rgNew[iInsert + i].psz);
         } else if (rgbtn[i].iString > 0) break;
     }
     if (i != c) {
         for (i = 0; i < c; i++) SDL_free(rgNew[iInsert + i].psz);
         free(rgNew); return 0;
     }
-    if (iInsert != 0) memcpy(rgNew, lp->rgbtn, (size_t)iInsert * sizeof(*rgNew));
-    if (lp->c != iInsert) memcpy(rgNew + iInsert + c, lp->rgbtn + iInsert, (size_t)(lp->c - iInsert) * sizeof(*rgNew));
-    free(lp->rgbtn); lp->rgbtn = rgNew; lp->c += (int)c;
+    if (iInsert != 0) memcpy(rgNew, lp->rgbtn, static_cast<size_t>(iInsert) * sizeof(*rgNew));
+    if (lp->c != iInsert) memcpy(rgNew + iInsert + c, lp->rgbtn + iInsert, static_cast<size_t>((lp->c - iInsert)) * sizeof(*rgNew));
+    free(lp->rgbtn); lp->rgbtn = rgNew; lp->c += static_cast<int>(c);
     lp->iDown = lp->iHot = -1;
     HideTip(hwnd); LayoutToolbar(hwnd);
     return 1;
@@ -116,25 +116,25 @@ static int AddBitmap(HWND hwnd, int c, const TBADDBITMAP *lpadd) {
     int iFirst;
     BOOL fCopy;
     if (!lpadd || c <= 0 || c > 4096 || c > 4096 - lp->cImage) return -1;
-    hbmp = lpadd->hInst ? win32::LoadBitmapA(lpadd->hInst, (LPCSTR)lpadd->nID) : (HBITMAP)lpadd->nID;
+    hbmp = lpadd->hInst ? win32::LoadBitmapA(lpadd->hInst, reinterpret_cast<LPCSTR>(lpadd->nID)) : reinterpret_cast<HBITMAP>(lpadd->nID);
     if (!hbmp || !win32::GetObjectA(hbmp, sizeof(bm), &bm) || bm.bmHeight < lp->cyBitmap ||
         bm.bmWidth / lp->cxBitmap < c) {
         if (lpadd->hInst && hbmp) win32::DeleteObject(hbmp);
         return -1;
     }
     hsrc = win32::CreateCompatibleDC(nullptr); hdst = win32::CreateCompatibleDC(nullptr);
-    hOldSrc = (HBITMAP)win32::SelectObject(hsrc, hbmp);
+    hOldSrc = static_cast<HBITMAP>(win32::SelectObject(hsrc, hbmp));
     // A fresh memory DC contains a monochrome bitmap. Match the selected
     // source instead, or the copied toolbar icons lose all their colors.
     hcopy = win32::CreateCompatibleBitmap(hsrc, bm.bmWidth, bm.bmHeight);
-    hOldDst = (HBITMAP)win32::SelectObject(hdst, hcopy);
+    hOldDst = static_cast<HBITMAP>(win32::SelectObject(hdst, hcopy));
     fCopy = hsrc && hdst && hcopy && win32::BitBlt(hdst, 0, 0, bm.bmWidth, bm.bmHeight, hsrc, 0, 0, win32::SRCCOPY);
     if (hOldSrc) win32::SelectObject(hsrc, hOldSrc);
     if (hOldDst) win32::SelectObject(hdst, hOldDst);
     win32::DeleteDC(hsrc); win32::DeleteDC(hdst);
     if (lpadd->hInst) win32::DeleteObject(hbmp);
     if (!fCopy) { if (hcopy) win32::DeleteObject(hcopy); return -1; }
-    rgbmp = (COMPATTOOLBITMAP *)(realloc(lp->rgbmp, (size_t)(lp->cbmp + 1) * sizeof(*rgbmp)));
+    rgbmp = static_cast<COMPATTOOLBITMAP *>((realloc(lp->rgbmp, static_cast<size_t>((lp->cbmp + 1)) * sizeof(*rgbmp))));
     if (!rgbmp) { win32::DeleteObject(hcopy); return -1; }
     lp->rgbmp = rgbmp; iFirst = lp->cImage;
     lp->rgbmp[lp->cbmp++] = COMPATTOOLBITMAP{hcopy, iFirst, c}; lp->cImage += c;
@@ -156,7 +156,7 @@ static void PaintToolbar(HWND hwnd) {
     hdc = win32::BeginPaint(hwnd, &ps);
     if (!hdc) return;
     win32::GetClientRect(hwnd, &rc);
-    win32::FillRect(hdc, &rc, (HBRUSH)win32::GetStockObject(win32::LTGRAY_BRUSH));
+    win32::FillRect(hdc, &rc, static_cast<HBRUSH>(win32::GetStockObject(win32::LTGRAY_BRUSH)));
     for (i = 0; i < lp->c; i++) {
         lpbtn = &lp->rgbtn[i]; rc = lpbtn->rc;
         if (lpbtn->btn.fsState & win32::TBSTATE_HIDDEN) continue;
@@ -180,7 +180,7 @@ static void PaintToolbar(HWND hwnd) {
         y = rc.top + (lp->cy - lp->cyBitmap) / 2 + fDown;
         for (j = 0; j < lp->cbmp; j++) {
             if (lpbtn->btn.iBitmap < lp->rgbmp[j].iFirst || lpbtn->btn.iBitmap >= lp->rgbmp[j].iFirst + lp->rgbmp[j].c) continue;
-            hsrc = win32::CreateCompatibleDC(hdc); hOld = (HBITMAP)win32::SelectObject(hsrc, lp->rgbmp[j].hbmp);
+            hsrc = win32::CreateCompatibleDC(hdc); hOld = static_cast<HBITMAP>(win32::SelectObject(hsrc, lp->rgbmp[j].hbmp));
             win32::BitBlt(hdc, x, y, lp->cxBitmap, lp->cyBitmap, hsrc,
                    (lpbtn->btn.iBitmap - lp->rgbmp[j].iFirst) * lp->cxBitmap, 0, win32::SRCCOPY);
             win32::SelectObject(hsrc, hOld); win32::DeleteDC(hsrc); break;
@@ -216,14 +216,14 @@ static void ClickToolbar(HWND hwnd, int i, BOOL fDrop, BOOL fMouse) {
     btn = lp->rgbtn[i].btn;
     if (!win32::IsWindowEnabled(hwnd) || !(btn.fsState & win32::TBSTATE_ENABLED) || (btn.fsStyle & win32::BTNS_SEP)) return;
     if (fDrop) {
-        nm.hdr = NMHDR{hwnd, (UINT_PTR)hwnd->idChild, win32::TBN_DROPDOWN};
+        nm.hdr = NMHDR{hwnd, static_cast<UINT_PTR>(hwnd->idChild), win32::TBN_DROPDOWN};
         nm.iItem = btn.idCommand; nm.tbButton = btn; nm.rcButton = lp->rgbtn[i].rc;
         // Menu activation is independent of the split button's action/check
         // state, and remains visible throughout the parent's modal menu loop.
         StarsRestore<BOOL> restorePressed(lp->fDropPressed);
         lp->idDrop = btn.idCommand; lp->fDropPressed = 1;
         win32::InvalidateRect(hwnd, nullptr, 1); win32::UpdateWindow(hwnd);
-        result = win32::SendMessageA(hwndParent, win32::WM_NOTIFY, nm.hdr.idFrom, (LPARAM)&nm);
+        result = win32::SendMessageA(hwndParent, win32::WM_NOTIFY, nm.hdr.idFrom, reinterpret_cast<LPARAM>(&nm));
         if (!win32::IsWindow(hwnd) || !(lp = hwnd->lptoolbar.get())) return;
         lp->fDropPressed = 0;
         win32::InvalidateRect(hwnd, nullptr, 1);
@@ -246,7 +246,7 @@ static void ClickToolbar(HWND hwnd, int i, BOOL fDrop, BOOL fMouse) {
         } else lp->rgbtn[i].btn.fsState ^= win32::TBSTATE_CHECKED;
     }
     win32::InvalidateRect(hwnd, nullptr, 1);
-    win32::SendMessageA(hwndParent, win32::WM_COMMAND, win32::MAKEWPARAM(btn.idCommand, 0), (LPARAM)hwnd);
+    win32::SendMessageA(hwndParent, win32::WM_COMMAND, win32::MAKEWPARAM(btn.idCommand, 0), reinterpret_cast<LPARAM>(hwnd));
 }
 
 LRESULT  CompatToolbarTipProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
@@ -257,7 +257,7 @@ LRESULT  CompatToolbarTipProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     if (msg == win32::WM_PAINT) {
         hdc = win32::BeginPaint(hwnd, &ps); win32::GetClientRect(hwnd, &rc);
         hbr = win32::CreateSolidBrush(win32::GetSysColor(win32::COLOR_INFOBK)); win32::FillRect(hdc, &rc, hbr); win32::DeleteObject(hbr);
-        win32::FrameRect(hdc, &rc, (HBRUSH)win32::GetStockObject(win32::BLACK_BRUSH));
+        win32::FrameRect(hdc, &rc, static_cast<HBRUSH>(win32::GetStockObject(win32::BLACK_BRUSH)));
         win32::InflateRect(&rc, -3, -3); win32::SetBkMode(hdc, win32::TRANSPARENT); win32::SetTextColor(hdc, win32::GetSysColor(win32::COLOR_INFOTEXT));
         win32::DrawTextA(hdc, hwnd->pszTitle, -1, &rc, win32::DT_LEFT | win32::DT_SINGLELINE | win32::DT_NOPREFIX);
         win32::EndPaint(hwnd, &ps); return 0;
@@ -277,10 +277,10 @@ static void ShowToolbarTip(HWND hwnd) {
     int x, y;
     if (lp->iHot < 0 || lp->iHot >= lp->c) return;
     lpbtn = &lp->rgbtn[lp->iHot]; rc = lpbtn->rc;
-    win32::MapWindowPoints(hwnd, nullptr, (POINT *)&rc, 2);
+    win32::MapWindowPoints(hwnd, nullptr, reinterpret_cast<POINT *>(&rc), 2);
     if (!win32::GetCursorPos(&pt) || !win32::PtInRect(&rc, pt)) { HideTip(hwnd); lp->iHot = -1; return; }
     if (win32::IsWindowVisible(lp->hwndTip) || !lpbtn->psz || !*lpbtn->psz) return;
-    hdc = win32::GetDC(hwnd); win32::GetTextExtentPoint32A(hdc, lpbtn->psz, (int)strlen(lpbtn->psz), &size); win32::ReleaseDC(hwnd, hdc);
+    hdc = win32::GetDC(hwnd); win32::GetTextExtentPoint32A(hdc, lpbtn->psz, static_cast<int>(strlen(lpbtn->psz)), &size); win32::ReleaseDC(hwnd, hdc);
     hwndRoot = HwndCompatRoot(hwnd); win32::GetWindowRect(hwndRoot, &rcRoot);
     x = (((rcRoot.left) > (StarsMin(rc.left, rcRoot.right - size.cx - 6))) ? (rcRoot.left) : (StarsMin(rc.left, rcRoot.right - size.cx - 6))); y = rc.bottom + 2;
     if (y + size.cy + 6 > rcRoot.bottom) y = StarsMax(rcRoot.top, rc.top - size.cy - 8);
@@ -297,7 +297,7 @@ static void ShowToolbarTip(HWND hwnd) {
 LRESULT  CompatToolbarProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     auto lptoolbarKeep = hwnd->lptoolbar;
     COMPATTOOLBAR *lp = lptoolbarKeep.get();
-    POINT pt = {(int16_t)LOWORD(l), (int16_t)HIWORD(l)};
+    POINT pt = {static_cast<int16_t>(LOWORD(l)), static_cast<int16_t>(HIWORD(l))};
     int i, j, id, step;
     BYTE mask;
     BOOL fDrop;
@@ -326,35 +326,35 @@ LRESULT  CompatToolbarProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     case win32::WM_NCDESTROY: CompatDestroyToolbar(hwnd); return 0;
     case win32::WM_PAINT: PaintToolbar(hwnd); return 0;
     case win32::WM_ERASEBKGND: return 1;
-    case win32::TB_BUTTONSTRUCTSIZE: lp->cbButton = (UINT)w; return 0;
-    case win32::TB_ADDBUTTONSA: return AddButtons(hwnd, lp->c, (size_t)w, (const TBBUTTON *)l);
-    case win32::TB_INSERTBUTTONA: return AddButtons(hwnd, ((((int)w) < (lp->c)) ? ((int)w) : (lp->c)), 1, (const TBBUTTON *)l);
+    case win32::TB_BUTTONSTRUCTSIZE: lp->cbButton = static_cast<UINT>(w); return 0;
+    case win32::TB_ADDBUTTONSA: return AddButtons(hwnd, lp->c, static_cast<size_t>(w), reinterpret_cast<const TBBUTTON *>(l));
+    case win32::TB_INSERTBUTTONA: return AddButtons(hwnd, (((static_cast<int>(w)) < (lp->c)) ? (static_cast<int>(w)) : (lp->c)), 1, reinterpret_cast<const TBBUTTON *>(l));
     case win32::TB_DELETEBUTTON:
-        i = (int)w; if (i < 0 || i >= lp->c) return 0;
-        SDL_free(lp->rgbtn[i].psz); memmove(lp->rgbtn + i, lp->rgbtn + i + 1, (size_t)(lp->c - i - 1) * sizeof(*lp->rgbtn));
+        i = static_cast<int>(w); if (i < 0 || i >= lp->c) return 0;
+        SDL_free(lp->rgbtn[i].psz); memmove(lp->rgbtn + i, lp->rgbtn + i + 1, static_cast<size_t>((lp->c - i - 1)) * sizeof(*lp->rgbtn));
         lp->c--; lp->iDown = lp->iHot = -1; HideTip(hwnd); LayoutToolbar(hwnd); return 1;
     case win32::TB_BUTTONCOUNT: return lp->c;
-    case win32::TB_COMMANDTOINDEX: return IndexButton(lp, (int)w);
+    case win32::TB_COMMANDTOINDEX: return IndexButton(lp, static_cast<int>(w));
     case win32::TB_GETBUTTON:
-        if (!l || (int)w < 0 || (int)w >= lp->c) return 0;
-        *(TBBUTTON *)l = lp->rgbtn[w].btn; return 1;
-    case win32::TB_GETITEMRECT: i = (int)w; goto LRect;
-    case win32::TB_GETRECT: i = IndexButton(lp, (int)w);
+        if (!l || static_cast<int>(w) < 0 || static_cast<int>(w) >= lp->c) return 0;
+        *reinterpret_cast<TBBUTTON *>(l) = lp->rgbtn[w].btn; return 1;
+    case win32::TB_GETITEMRECT: i = static_cast<int>(w); goto LRect;
+    case win32::TB_GETRECT: i = IndexButton(lp, static_cast<int>(w));
     LRect:
         if (!l || i < 0 || i >= lp->c) return 0;
-        *(RECT *)l = lp->rgbtn[i].rc; return 1;
-    case win32::TB_HITTEST: return l ? HitToolbar(lp, *(POINT *)l) : -1;
-    case win32::TB_ADDBITMAP: return AddBitmap(hwnd, (int)w, (const TBADDBITMAP *)l);
+        *reinterpret_cast<RECT *>(l) = lp->rgbtn[i].rc; return 1;
+    case win32::TB_HITTEST: return l ? HitToolbar(lp, *reinterpret_cast<POINT *>(l)) : -1;
+    case win32::TB_ADDBITMAP: return AddBitmap(hwnd, static_cast<int>(w), reinterpret_cast<const TBADDBITMAP *>(l));
     case win32::TB_SETBUTTONSIZE: case win32::TB_SETBITMAPSIZE:
         if (!LOWORD(l) || !HIWORD(l) || LOWORD(l) > 4096 || HIWORD(l) > 4096) return 0;
         if (msg == win32::TB_SETBUTTONSIZE) { lp->cx = LOWORD(l); lp->cy = HIWORD(l); }
         else { lp->cxBitmap = LOWORD(l); lp->cyBitmap = HIWORD(l); }
         LayoutToolbar(hwnd); return 1;
     case win32::TB_GETBUTTONSIZE: return MAKELONG(lp->cx, lp->cy);
-    case win32::TB_SETINDENT: if (w > 4096) return 0; lp->xIndent = (int)w; LayoutToolbar(hwnd); return 1;
-    case win32::TB_SETMAXTEXTROWS: lp->cTextRows = (int)w; win32::InvalidateRect(hwnd, nullptr, 1); return 1;
+    case win32::TB_SETINDENT: if (w > 4096) return 0; lp->xIndent = static_cast<int>(w); LayoutToolbar(hwnd); return 1;
+    case win32::TB_SETMAXTEXTROWS: lp->cTextRows = static_cast<int>(w); win32::InvalidateRect(hwnd, nullptr, 1); return 1;
     case win32::TB_GETTEXTROWS: return lp->cTextRows;
-    case win32::TB_SETEXTENDEDSTYLE: id = (int)lp->dwExStyle; lp->dwExStyle = (DWORD)l; LayoutToolbar(hwnd); return id;
+    case win32::TB_SETEXTENDEDSTYLE: id = static_cast<int>(lp->dwExStyle); lp->dwExStyle = static_cast<DWORD>(l); LayoutToolbar(hwnd); return id;
     case win32::TB_GETEXTENDEDSTYLE: return lp->dwExStyle;
     case win32::TB_AUTOSIZE:
         if (!(hwnd->dwStyle & win32::CCS_NORESIZE)) {
@@ -364,21 +364,21 @@ LRESULT  CompatToolbarProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         }
         return 0;
     case win32::TB_SETSTATE: case win32::TB_GETSTATE: case win32::TB_GETBITMAP: case win32::TB_GETBUTTONTEXTA:
-        i = IndexButton(lp, (int)w); if (i < 0) return -1;
+        i = IndexButton(lp, static_cast<int>(w)); if (i < 0) return -1;
         if (msg == win32::TB_GETSTATE) return lp->rgbtn[i].btn.fsState;
         if (msg == win32::TB_GETBITMAP) return lp->rgbtn[i].btn.iBitmap;
         if (msg == win32::TB_GETBUTTONTEXTA) {
             if (!lp->rgbtn[i].psz) return -1;
-            if (l) strcpy((char *)l, lp->rgbtn[i].psz);
-            return (LRESULT)strlen(lp->rgbtn[i].psz);
+            if (l) strcpy(reinterpret_cast<char *>(l), lp->rgbtn[i].psz);
+            return static_cast<LRESULT>(strlen(lp->rgbtn[i].psz));
         }
-        if (lp->rgbtn[i].btn.fsState != (BYTE)l) {
-            lp->rgbtn[i].btn.fsState = (BYTE)l; LayoutToolbar(hwnd);
+        if (lp->rgbtn[i].btn.fsState != static_cast<BYTE>(l)) {
+            lp->rgbtn[i].btn.fsState = static_cast<BYTE>(l); LayoutToolbar(hwnd);
         }
         return 1;
     case win32::TB_CHECKBUTTON: case win32::TB_ENABLEBUTTON: case win32::TB_PRESSBUTTON: case win32::TB_HIDEBUTTON:
     case win32::TB_ISBUTTONCHECKED: case win32::TB_ISBUTTONENABLED: case win32::TB_ISBUTTONPRESSED: case win32::TB_ISBUTTONHIDDEN:
-        i = IndexButton(lp, (int)w); if (i < 0) return 0;
+        i = IndexButton(lp, static_cast<int>(w)); if (i < 0) return 0;
         mask = msg == win32::TB_CHECKBUTTON || msg == win32::TB_ISBUTTONCHECKED ? win32::TBSTATE_CHECKED :
                msg == win32::TB_ENABLEBUTTON || msg == win32::TB_ISBUTTONENABLED ? win32::TBSTATE_ENABLED :
                msg == win32::TB_PRESSBUTTON || msg == win32::TB_ISBUTTONPRESSED ? win32::TBSTATE_PRESSED : win32::TBSTATE_HIDDEN;
@@ -388,8 +388,8 @@ LRESULT  CompatToolbarProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         if (state != lp->rgbtn[i].btn.fsState) LayoutToolbar(hwnd);
         return 1;
     case win32::TB_GETHOTITEM: return lp->iHot;
-    case win32::TB_SETHOTITEM: i = lp->iHot; lp->iHot = (int)w < lp->c ? (int)w : -1; return i;
-    case win32::TB_GETTOOLTIPS: return (LRESULT)lp->hwndTip;
+    case win32::TB_SETHOTITEM: i = lp->iHot; lp->iHot = static_cast<int>(w) < lp->c ? static_cast<int>(w) : -1; return i;
+    case win32::TB_GETTOOLTIPS: return reinterpret_cast<LRESULT>(lp->hwndTip);
     case win32::WM_TIMER: if (w == 1) ShowToolbarTip(hwnd); return 0;
     case win32::WM_MOUSEMOVE:
         i = HitToolbar(lp, pt);

@@ -34,8 +34,8 @@ static COMPATMENUITEM *LpItem(HMENU hmenu, UINT id, UINT flags, HMENU *lphmenu, 
     int i;
     if (!lp) return nullptr;
     if (flags & win32::MF_BYPOSITION) {
-        if (id >= (UINT)lp->citem) return nullptr;
-        *lphmenu = lp; *lpi = (int)id;
+        if (id >= static_cast<UINT>(lp->citem)) return nullptr;
+        *lphmenu = lp; *lpi = static_cast<int>(id);
         return &lp->rgitem[id];
     }
     for (i = 0; i < lp->citem; i++) {
@@ -76,7 +76,7 @@ HMENU win32::GetSubMenu(HMENU hmenu, int i) {
 }
 UINT win32::GetMenuItemID(HMENU hmenu, int i) {
     HMENU lp = LpMenu(hmenu);
-    return lp && i >= 0 && i < lp->citem && !lp->rgitem[i].hsub ? (UINT)lp->rgitem[i].id : UINT_MAX;
+    return lp && i >= 0 && i < lp->citem && !lp->rgitem[i].hsub ? static_cast<UINT>(lp->rgitem[i].id) : UINT_MAX;
 }
 BOOL win32::InsertMenuA(HMENU hmenu, UINT pos, UINT flags, UINT_PTR id, LPCSTR psz) {
     HMENU lp = LpMenu(hmenu), hsub = nullptr, hp;
@@ -86,13 +86,13 @@ BOOL win32::InsertMenuA(HMENU hmenu, UINT pos, UINT flags, UINT_PTR id, LPCSTR p
     if (!lp || (flags & ~(win32::MF_BYPOSITION | win32::MF_POPUP | win32::MF_SEPARATOR | win32::MF_CHECKED | win32::MF_GRAYED | win32::MF_DISABLED)))
         return 0;
     if (pos == UINT_MAX) i = lp->citem;
-    else if (flags & win32::MF_BYPOSITION) i = pos > (UINT)lp->citem ? lp->citem : (int)pos;
+    else if (flags & win32::MF_BYPOSITION) i = pos > static_cast<UINT>(lp->citem) ? lp->citem : static_cast<int>(pos);
     else if (!LpItem(lp, pos, 0, &lp, &i)) return 0;
     if (flags & win32::MF_SEPARATOR) flags = win32::MF_SEPARATOR | win32::MF_DISABLED | win32::MF_GRAYED;
     else {
         if (psz && !FUtf8Valid(psz, strlen(psz))) return 0;
         if (flags & win32::MF_POPUP) {
-            hsub = LpMenu((HMENU)id);
+            hsub = LpMenu(reinterpret_cast<HMENU>(id));
             if (!hsub || hsub->hparent || hsub->hwndOwner) return 0;
             for (hp = lp; hp; hp = hp->hparent)
                 if (hp == hsub || ++cDepth >= 64) return 0;
@@ -101,8 +101,8 @@ BOOL win32::InsertMenuA(HMENU hmenu, UINT pos, UINT flags, UINT_PTR id, LPCSTR p
         item.psz.reset(SDL_strdup(psz ? psz : ""));
         if (!item.psz) return 0;
     }
-    if (lp->citem == INT_MAX || (size_t)lp->citem + 1 > SIZE_MAX / sizeof(COMPATMENUITEM)) return 0;
-    rg.reset(new (std::nothrow) COMPATMENUITEM[(size_t)lp->citem + 1]{});
+    if (lp->citem == INT_MAX || static_cast<size_t>(lp->citem) + 1 > SIZE_MAX / sizeof(COMPATMENUITEM)) return 0;
+    rg.reset(new (std::nothrow) COMPATMENUITEM[static_cast<size_t>(lp->citem) + 1]{});
     if (!rg) return 0;
     item.id = id; item.flags = flags & ~win32::MF_BYPOSITION; item.hsub = hsub;
     // Finish all allocations before moving installed labels or submenu links.
@@ -165,7 +165,7 @@ BOOL win32::EnableMenuItem(HMENU hmenu, UINT id, UINT flags) {
     if (!lpitem) return -1;
     old = lpitem->flags & (win32::MF_DISABLED | win32::MF_GRAYED);
     lpitem->flags = (lpitem->flags & ~(win32::MF_DISABLED | win32::MF_GRAYED)) | (flags & (win32::MF_DISABLED | win32::MF_GRAYED));
-    return (BOOL)old;
+    return static_cast<BOOL>(old);
 }
 UINT win32::GetMenuState(HMENU hmenu, UINT id, UINT flags) {
     HMENU lp;
@@ -173,7 +173,7 @@ UINT win32::GetMenuState(HMENU hmenu, UINT id, UINT flags) {
     int i;
     lpitem = LpItem(hmenu, id, flags, &lp, &i);
     if (!lpitem) return UINT_MAX;
-    return lpitem->flags | (lpitem->hsub ? (UINT)(win32::GetMenuItemCount(lpitem->hsub) & 0xff) << 8 : 0);
+    return lpitem->flags | (lpitem->hsub ? static_cast<UINT>((win32::GetMenuItemCount(lpitem->hsub) & 0xff)) << 8 : 0);
 }
 int win32::GetMenuStringA(HMENU hmenu, UINT id, LPSTR psz, int cch, UINT flags) {
     HMENU lp;
@@ -183,10 +183,10 @@ int win32::GetMenuStringA(HMENU hmenu, UINT id, LPSTR psz, int cch, UINT flags) 
     lpitem = LpItem(hmenu, id, flags, &lp, &i);
     if (!lpitem || !lpitem->psz) { if (psz && cch > 0) psz[0] = 0; return 0; }
     c = strlen(lpitem->psz.get());
-    if (!psz || cch <= 0) return (int)(((c) < ((size_t)INT_MAX)) ? (c) : ((size_t)INT_MAX));
-    c = CchUtf8Prefix(lpitem->psz.get(), (size_t)cch - 1);
+    if (!psz || cch <= 0) return static_cast<int>((((c) < (static_cast<size_t>(INT_MAX))) ? (c) : (static_cast<size_t>(INT_MAX))));
+    c = CchUtf8Prefix(lpitem->psz.get(), static_cast<size_t>(cch) - 1);
     memcpy(psz, lpitem->psz.get(), c); psz[c] = 0;
-    return (int)c;
+    return static_cast<int>(c);
 }
 void CompatShutdownMenus(void) {
     HMENU lp, next;
@@ -218,7 +218,7 @@ int CyCompatMenuBar(HWND hwnd) {
     if (!hwnd || hwnd->hwndParent || !(lp = LpMenu(hwnd->hmenu)) || lp->citem == 0) return 0;
     if (!SDL_GetWindowSize(hwnd->lpWindow.get(), &cx, &cy)) return 0;
     if (!hwnd->fMenuLayoutDirty && hwnd->cxMenu == cx) return hwnd->cyMenu;
-    rgrcOwner.reset((RECT *)calloc((size_t)lp->citem, sizeof(*rgrc))); rgrc = rgrcOwner.get();
+    rgrcOwner.reset(static_cast<RECT *>(calloc(static_cast<size_t>(lp->citem), sizeof(*rgrc)))); rgrc = rgrcOwner.get();
     if (!rgrc) return 0;
     hdc = win32::GetDC(nullptr);
     if (!hdc) return 0;
@@ -302,8 +302,8 @@ BOOL win32::GetMenuItemRect(HWND hwnd, HMENU hmenu, UINT i, LPRECT lprc) {
     HMENU lp = LpMenu(hmenu);
     HWND lpwin = LpCompatWindow(lp ? lp->hwndOwner : nullptr);
     POINT pt = {0, 0};
-    (void)hwnd; // Attached bar geometry belongs to the menu's window.
-    if (!lpwin || !lprc || CyCompatMenuBar(lpwin) == 0 || i >= (UINT)lpwin->cMenu ||
+    static_cast<void>(hwnd); // Attached bar geometry belongs to the menu's window.
+    if (!lpwin || !lprc || CyCompatMenuBar(lpwin) == 0 || i >= static_cast<UINT>(lpwin->cMenu) ||
         !win32::ClientToScreen(lpwin, &pt)) return 0;
     *lprc = lpwin->rgrcMenu[i];
     return win32::OffsetRect(lprc, pt.x, pt.y - lpwin->cyMenu);
@@ -389,7 +389,7 @@ static void PopupPaint(COMPATPOPUP *lppop) {
         }
         win32::SetTextColor(hdc, win32::GetSysColor(fDisabled ? win32::COLOR_GRAYTEXT : fSelected ? win32::COLOR_HIGHLIGHTTEXT : win32::COLOR_MENUTEXT));
         hpen = win32::CreatePen(win32::PS_SOLID, 1, win32::GetSysColor(fDisabled ? win32::COLOR_GRAYTEXT : fSelected ? win32::COLOR_HIGHLIGHTTEXT : win32::COLOR_MENUTEXT));
-        hpenOld = (HPEN)(win32::SelectObject(hdc, hpen));
+        hpenOld = static_cast<HPEN>((win32::SelectObject(hdc, hpen)));
         if (lp->rgitem[i].flags & win32::MF_CHECKED) {
             win32::MoveToEx(hdc, rc.left + 5, y, nullptr); win32::LineTo(hdc, rc.left + 8, y + 3); win32::LineTo(hdc, rc.left + 14, y - 4);
         }
@@ -410,10 +410,10 @@ static void PopupPaint(COMPATPOPUP *lppop) {
     win32::EndPaint(lppop->hwnd, &ps);
 }
 static LRESULT  PopupProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
-    COMPATPOPUP *lppop = (COMPATPOPUP *)win32::GetWindowLongPtrA(hwnd, 0);
+    COMPATPOPUP *lppop = reinterpret_cast<COMPATPOPUP *>(win32::GetWindowLongPtrA(hwnd, 0));
     if (msg == win32::WM_NCCREATE) {
-        lppop = (COMPATPOPUP *)(((CREATESTRUCTA *)l)->lpCreateParams);
-        win32::SetWindowLongPtrA(hwnd, 0, (LONG_PTR)lppop);
+        lppop = static_cast<COMPATPOPUP *>(((reinterpret_cast<CREATESTRUCTA *>(l))->lpCreateParams));
+        win32::SetWindowLongPtrA(hwnd, 0, reinterpret_cast<LONG_PTR>(lppop));
     }
     if (lppop && msg == win32::WM_PAINT) { PopupPaint(lppop); return 0; }
     if (lppop && (msg == win32::WM_CLOSE || msg == win32::WM_CANCELMODE)) { lppop->lptrack->fDone = 1; return 0; }
@@ -426,7 +426,7 @@ static void ClosePopups(COMPATTRACK *lpt, int cKeep) {
         if (win32::IsWindow(lp->hwnd)) win32::DestroyWindow(lp->hwnd);
         lp->rgrc.reset(); lp->hwnd = nullptr;
         if (!(lpt->flags & win32::TPM_NONOTIFY) && win32::IsWindow(lpt->hwndOwner))
-            win32::SendMessageA(lpt->hwndOwner, win32::WM_UNINITMENUPOPUP, (WPARAM)lp->hmenu, 0);
+            win32::SendMessageA(lpt->hwndOwner, win32::WM_UNINITMENUPOPUP, reinterpret_cast<WPARAM>(lp->hmenu), 0);
     }
 }
 static BOOL OpenPopup(COMPATTRACK *lpt, HMENU hmenu, int x, int y, int iParent) {
@@ -444,13 +444,13 @@ static BOOL OpenPopup(COMPATTRACK *lpt, HMENU hmenu, int x, int y, int iParent) 
     WNDCLASSA wc = {};
     if (lpt->cLevel >= 64) return 0;
     if (!(lpt->flags & win32::TPM_NONOTIFY))
-        win32::SendMessageA(lpt->hwndOwner, win32::WM_INITMENUPOPUP, (WPARAM)hmenu, win32::MAKELPARAM(iParent, 0));
+        win32::SendMessageA(lpt->hwndOwner, win32::WM_INITMENUPOPUP, reinterpret_cast<WPARAM>(hmenu), win32::MAKELPARAM(iParent, 0));
     lp = LpMenu(hmenu);
     if (!lp || !win32::IsWindow(lpt->hwndOwner) || lpt->fDone || lp->citem == 0) return 0;
     lppop = &lpt->rgpopup[lpt->cLevel];
     *lppop = COMPATPOPUP{};
     lppop->lptrack = lpt; lppop->hmenu = lp; lppop->iSel = -1; lppop->cItem = lp->citem;
-    lppop->rgrc.reset((RECT *)calloc((size_t)lp->citem, sizeof(RECT)));
+    lppop->rgrc.reset(static_cast<RECT *>(calloc(static_cast<size_t>(lp->citem), sizeof(RECT))));
     if (!lppop->rgrc) return 0;
     hdc = win32::GetDC(nullptr);
     if (!hdc) { lppop->rgrc.reset(); return 0; }
@@ -458,7 +458,7 @@ static BOOL OpenPopup(COMPATTRACK *lpt, HMENU hmenu, int x, int y, int iParent) 
     win32::GetTextMetricsA(hdc, &tm); cyRow = StarsMax(20, tm.tmHeight + 8);
     for (i = 0; i < lp->citem; i++) {
         size.cx = 0;
-        if (lp->rgitem[i].psz && !win32::GetTextExtentPoint32A(hdc, lp->rgitem[i].psz.get(), (int)strlen(lp->rgitem[i].psz.get()), &size)) break;
+        if (lp->rgitem[i].psz && !win32::GetTextExtentPoint32A(hdc, lp->rgitem[i].psz.get(), static_cast<int>(strlen(lp->rgitem[i].psz.get())), &size)) break;
         if (size.cx > 8100 || cy > 32000 - cyRow) break;
         cx = StarsMax(cx, size.cx + 72);
         dy = lp->rgitem[i].flags & win32::MF_SEPARATOR ? 8 : cyRow;
@@ -475,15 +475,15 @@ static BOOL OpenPopup(COMPATTRACK *lpt, HMENU hmenu, int x, int y, int iParent) 
         else if (lpt->flags & win32::TPM_VCENTERALIGN) yWide -= cy / 2;
     }
     if (CompatDisplayIO().pfnGetDisplayUsableBounds(SDL_GetDisplayForPoint(&point), &bounds)) {
-        if (lpt->cLevel > 0 && xWide + cx > (int64_t)bounds.x + bounds.w &&
-            win32::GetWindowRect(lpt->rgpopup[lpt->cLevel - 1].hwnd, &rcParent)) xWide = (int64_t)rcParent.left - cx + 2;
-        xWide = ((((int64_t)bounds.x) > ((((xWide) < ((int64_t)bounds.x + StarsMax(0, bounds.w - cx))) ? (xWide) : ((int64_t)bounds.x + StarsMax(0, bounds.w - cx))))) ? ((int64_t)bounds.x) : ((((xWide) < ((int64_t)bounds.x + StarsMax(0, bounds.w - cx))) ? (xWide) : ((int64_t)bounds.x + StarsMax(0, bounds.w - cx)))));
-        yWide = ((((int64_t)bounds.y) > ((((yWide) < ((int64_t)bounds.y + StarsMax(0, bounds.h - cy))) ? (yWide) : ((int64_t)bounds.y + StarsMax(0, bounds.h - cy))))) ? ((int64_t)bounds.y) : ((((yWide) < ((int64_t)bounds.y + StarsMax(0, bounds.h - cy))) ? (yWide) : ((int64_t)bounds.y + StarsMax(0, bounds.h - cy)))));
+        if (lpt->cLevel > 0 && xWide + cx > static_cast<int64_t>(bounds.x) + bounds.w &&
+            win32::GetWindowRect(lpt->rgpopup[lpt->cLevel - 1].hwnd, &rcParent)) xWide = static_cast<int64_t>(rcParent.left) - cx + 2;
+        xWide = (((static_cast<int64_t>(bounds.x)) > ((((xWide) < (static_cast<int64_t>(bounds.x) + StarsMax(0, bounds.w - cx))) ? (xWide) : (static_cast<int64_t>(bounds.x) + StarsMax(0, bounds.w - cx))))) ? (static_cast<int64_t>(bounds.x)) : ((((xWide) < (static_cast<int64_t>(bounds.x) + StarsMax(0, bounds.w - cx))) ? (xWide) : (static_cast<int64_t>(bounds.x) + StarsMax(0, bounds.w - cx)))));
+        yWide = (((static_cast<int64_t>(bounds.y)) > ((((yWide) < (static_cast<int64_t>(bounds.y) + StarsMax(0, bounds.h - cy))) ? (yWide) : (static_cast<int64_t>(bounds.y) + StarsMax(0, bounds.h - cy))))) ? (static_cast<int64_t>(bounds.y)) : ((((yWide) < (static_cast<int64_t>(bounds.y) + StarsMax(0, bounds.h - cy))) ? (yWide) : (static_cast<int64_t>(bounds.y) + StarsMax(0, bounds.h - cy)))));
     }
     if (xWide < INT_MIN || xWide > INT_MAX || yWide < INT_MIN || yWide > INT_MAX) {
         lppop->rgrc.reset(); return 0;
     }
-    x = (int)xWide; y = (int)yWide;
+    x = static_cast<int>(xWide); y = static_cast<int>(yWide);
     wc.lpfnWndProc = PopupProc; wc.cbWndExtra = sizeof(LONG_PTR); wc.lpszClassName = "StarsCompatPopup";
     win32::RegisterClassA(&wc);
     lppop->hwnd = win32::CreateWindowExA(win32::WS_EX_TOPMOST | win32::WS_EX_NOACTIVATE, wc.lpszClassName, "", win32::WS_POPUP, x, y, cx, cy,
@@ -509,8 +509,8 @@ static void SelectPopup(COMPATTRACK *lpt, int iLevel, int i, BOOL fMouse) {
     win32::InvalidateRect(lppop->hwnd, nullptr, 0); win32::UpdateWindow(lppop->hwnd);
     if (i >= 0 && !(lpt->flags & win32::TPM_NONOTIFY) && (lp = LpMenu(lppop->hmenu)) && i < lp->citem) {
         flags = lp->rgitem[i].flags | win32::MF_HILITE | (fMouse ? win32::MF_MOUSESELECT : 0);
-        id = lp->rgitem[i].hsub ? (UINT)i : (UINT)lp->rgitem[i].id;
-        win32::SendMessageA(lpt->hwndOwner, win32::WM_MENUSELECT, win32::MAKEWPARAM(id, flags), (LPARAM)lp);
+        id = lp->rgitem[i].hsub ? static_cast<UINT>(i) : static_cast<UINT>(lp->rgitem[i].id);
+        win32::SendMessageA(lpt->hwndOwner, win32::WM_MENUSELECT, win32::MAKEWPARAM(id, flags), reinterpret_cast<LPARAM>(lp));
     }
 }
 static void ActivatePopup(COMPATTRACK *lpt, int iLevel, BOOL fKeyboard) {
@@ -520,7 +520,7 @@ static void ActivatePopup(COMPATTRACK *lpt, int iLevel, BOOL fKeyboard) {
     POINT pt;
     if (!FSelectable(lp, i)) return;
     hsub = lp->rgitem[i].hsub;
-    if (!hsub) { lpt->id = (UINT)lp->rgitem[i].id; lpt->fDone = 1; return; }
+    if (!hsub) { lpt->id = static_cast<UINT>(lp->rgitem[i].id); lpt->fDone = 1; return; }
     if (lpt->cLevel > iLevel + 1 && lpt->rgpopup[iLevel + 1].hmenu == hsub) return;
     ClosePopups(lpt, iLevel + 1);
     pt.x = lppop->cx - 2; pt.y = lppop->rgrc[i].top;
@@ -536,7 +536,7 @@ static BOOL FMenuMnemonic(const COMPATMENUITEM *lpitem, WPARAM vk) {
     if (!psz || vk > 255) return 0;
     for (; *psz; psz++) if (*psz == '&' && psz[1]) {
         if (psz[1] == '&') { psz++; continue; }
-        if (SDL_toupper((unsigned char)psz[1]) == SDL_toupper((int)vk)) return 1;
+        if (SDL_toupper(static_cast<unsigned char>(psz[1])) == SDL_toupper(static_cast<int>(vk))) return 1;
     }
     return 0;
 }
@@ -547,7 +547,7 @@ static int IMenuBarPoint(HWND hwnd, POINT pt) {
     if (!lpwin) return -1;
     CyCompatMenuBar(lpwin);
     for (i = 0; i < lpwin->cMenu; i++)
-        if (win32::GetMenuItemRect(hwnd, lpwin->hmenu, (UINT)i, &rc) && win32::PtInRect(&rc, pt)) return i;
+        if (win32::GetMenuItemRect(hwnd, lpwin->hmenu, static_cast<UINT>(i), &rc) && win32::PtInRect(&rc, pt)) return i;
     return -1;
 }
 static BOOL OpenMenuBar(COMPATTRACK *lpt, int i, BOOL fKeyboard) {
@@ -557,12 +557,12 @@ static BOOL OpenMenuBar(COMPATTRACK *lpt, int i, BOOL fKeyboard) {
     int j;
     if (!lpwin || win32::GetMenu(lpwin) != lp || !FSelectable(lp, i)) return 0;
     hsub = lp->rgitem[i].hsub;
-    if (!hsub) { lpt->id = (UINT)lp->rgitem[i].id; lpt->fDone = 1; return 1; }
-    if (!win32::GetMenuItemRect(lpwin, lp, (UINT)i, &rc)) return 0;
+    if (!hsub) { lpt->id = static_cast<UINT>(lp->rgitem[i].id); lpt->fDone = 1; return 1; }
+    if (!win32::GetMenuItemRect(lpwin, lp, static_cast<UINT>(i), &rc)) return 0;
     ClosePopups(lpt, 0);
     if (!win32::IsWindow(lpt->hwndOwner) || win32::GetMenu(lpt->hwndOwner) != lp) return 0;
     lpt->iBar = i; lpwin->iMenuHot = i; lpwin->fMenuDirty = 1; FCompatPresent(lpwin);
-    win32::SendMessageA(lpwin, win32::WM_MENUSELECT, win32::MAKEWPARAM(i, win32::MF_POPUP), (LPARAM)lp);
+    win32::SendMessageA(lpwin, win32::WM_MENUSELECT, win32::MAKEWPARAM(i, win32::MF_POPUP), reinterpret_cast<LPARAM>(lp));
     if (!OpenPopup(lpt, hsub, rc.left, rc.bottom, i)) return 0;
     if (fKeyboard) {
         lp = LpMenu(hsub);
@@ -595,13 +595,13 @@ static BOOL PopupInput(COMPATTRACK *lpt, const win32::MSG *lpmsg) {
     }
     if (!lpt->cLevel) return 0;
     if (lpt->hmenuBar && lpmsg->message == win32::WM_SYSCHAR && LpCompatWindow(lpt->hwndOwner) &&
-        lpt->hwndOwner->vkMenuSuppress && SDL_toupper((int)lpmsg->wParam) == SDL_toupper((int)lpt->hwndOwner->vkMenuSuppress)) {
+        lpt->hwndOwner->vkMenuSuppress && SDL_toupper(static_cast<int>(lpmsg->wParam)) == SDL_toupper(static_cast<int>(lpt->hwndOwner->vkMenuSuppress))) {
         lpt->hwndOwner->vkMenuSuppress = 0;
         return 1;
     }
     if (fMouse) {
         if (lpmsg->message == win32::WM_MOUSEWHEEL) return 1;
-        pt.x = (SHORT)LOWORD(lpmsg->lParam); pt.y = (SHORT)HIWORD(lpmsg->lParam);
+        pt.x = static_cast<SHORT>(LOWORD(lpmsg->lParam)); pt.y = static_cast<SHORT>(HIWORD(lpmsg->lParam));
         if (!win32::ClientToScreen(lpmsg->hwnd, &pt)) return 1;
         if (lpt->hmenuBar && (i = IMenuBarPoint(lpt->hwndOwner, pt)) >= 0) {
             if (i != lpt->iBar && FSelectable(LpMenu(lpt->hmenuBar), i)) {
@@ -682,7 +682,7 @@ static BOOL TrackMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND 
     HWND hwndCapture;
     win32::MSG msg;
     int result;
-    (void)lprc;
+    static_cast<void>(lprc);
     if (!SDL_IsMainThread() || !win32::IsMenu(hmenu) || FMenuTracked(hmenu) || !win32::IsWindow(hwnd) || reserved != 0 ||
         (lptrack && !(flags & win32::TPM_RECURSE)) ||
         (flags & ~(win32::TPM_RECURSE | win32::TPM_RIGHTBUTTON | win32::TPM_CENTERALIGN | win32::TPM_RIGHTALIGN | win32::TPM_VCENTERALIGN |
@@ -707,7 +707,7 @@ static BOOL TrackMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND 
     COMPATCLEANUPSCOPE closePopups([&] { ClosePopups(&track, 0); }, hwnd);
     if (!(flags & win32::TPM_NONOTIFY)) {
         win32::SendMessageA(hwnd, win32::WM_ENTERMENULOOP, !hbar, 0);
-        if (win32::IsWindow(hwnd) && !track.fDone) win32::SendMessageA(hwnd, win32::WM_INITMENU, (WPARAM)(hbar ? hbar : hmenu), 0);
+        if (win32::IsWindow(hwnd) && !track.fDone) win32::SendMessageA(hwnd, win32::WM_INITMENU, reinterpret_cast<WPARAM>((hbar ? hbar : hmenu)), 0);
     }
     if (!track.fDone && win32::IsWindow(hwnd) && win32::IsMenu(hmenu)) {
         if (!(hbar ? OpenMenuBar(&track, iBar, fKeyboard) : OpenPopup(&track, hmenu, x, y, 0))) track.fFailed = 1;
@@ -715,7 +715,7 @@ static BOOL TrackMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND 
             win32::SetCapture(hwnd);
             while (!track.fDone && win32::IsWindow(hwnd) && win32::IsMenu(track.hmenuRoot) && !track.fFailed && win32::GetCapture() == hwnd) {
                 result = win32::GetMessageA(&msg, nullptr, 0, 0);
-                if (result <= 0) { if (result == 0) win32::PostQuitMessage((int)msg.wParam); track.fFailed = 1; break; }
+                if (result <= 0) { if (result == 0) win32::PostQuitMessage(static_cast<int>(msg.wParam)); track.fFailed = 1; break; }
                 if (!PopupInput(&track, &msg)) { win32::TranslateMessage(&msg); win32::DispatchMessageA(&msg); }
             }
         }
@@ -728,7 +728,7 @@ static BOOL TrackMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND 
     if (FStarsErrorPending()) return 0;
     if (!track.fFailed && track.id != 0 && !(flags & (win32::TPM_NONOTIFY | win32::TPM_RETURNCMD)) && win32::IsWindow(hwnd))
         win32::PostMessageA(hwnd, win32::WM_COMMAND, win32::MAKEWPARAM(track.id, 0), 0);
-    return flags & win32::TPM_RETURNCMD ? (BOOL)track.id : !track.fFailed;
+    return flags & win32::TPM_RETURNCMD ? static_cast<BOOL>(track.id) : !track.fFailed;
 }
 
 BOOL win32::TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND hwnd, const RECT *lprc) {
@@ -749,20 +749,20 @@ BOOL FCompatMenuMessage(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         return 0;
     }
     if (!(lp = LpMenu(lpwin->hmenu)) || !win32::IsWindowEnabled(hwnd) || lp->citem == 0) return 0;
-    if (msg == win32::WM_SYSCHAR && lpwin->vkMenuSuppress && SDL_toupper((int)w) == SDL_toupper((int)lpwin->vkMenuSuppress)) {
+    if (msg == win32::WM_SYSCHAR && lpwin->vkMenuSuppress && SDL_toupper(static_cast<int>(w)) == SDL_toupper(static_cast<int>(lpwin->vkMenuSuppress))) {
         lpwin->vkMenuSuppress = 0; return 1;
     }
     if (msg == win32::WM_NCLBUTTONDOWN && w == win32::HTMENU) {
-        pt.x = (SHORT)LOWORD(l); pt.y = (SHORT)HIWORD(l);
+        pt.x = static_cast<SHORT>(LOWORD(l)); pt.y = static_cast<SHORT>(HIWORD(l));
         i = IMenuBarPoint(hwnd, pt); fOpen = 1;
-    } else if (msg == win32::WM_SYSKEYDOWN && w != win32::VK_MENU && w != win32::VK_F10 && ((UINT_PTR)l & (UINT32_C(1) << 29)) &&
+    } else if (msg == win32::WM_SYSKEYDOWN && w != win32::VK_MENU && w != win32::VK_F10 && (static_cast<UINT_PTR>(l) & (UINT32_C(1) << 29)) &&
                !(win32::GetKeyState(win32::VK_CONTROL) & 0x8000)) {
         // SDL backends may omit text-input events for Alt-letter combinations.
         for (j = 0; j < lp->citem; j++) if (FSelectable(lp, j) && FMenuMnemonic(&lp->rgitem[j], w)) { i = j; break; }
         if (i < 0) return 0;
         fOpen = 1; lpwin->fMenuAltUsed = 1; lpwin->vkMenuSuppress = w;
     } else if (msg == win32::WM_SYSCHAR || (msg == win32::WM_SYSCOMMAND && (w & 0xfff0) == win32::SC_KEYMENU && l)) {
-        for (j = 0; j < lp->citem; j++) if (FSelectable(lp, j) && FMenuMnemonic(&lp->rgitem[j], msg == win32::WM_SYSCHAR ? w : (WPARAM)l)) { i = j; break; }
+        for (j = 0; j < lp->citem; j++) if (FSelectable(lp, j) && FMenuMnemonic(&lp->rgitem[j], msg == win32::WM_SYSCHAR ? w : static_cast<WPARAM>(l))) { i = j; break; }
         fOpen = 1; lpwin->fMenuAltUsed = 1;
     } else if (msg == win32::WM_SYSKEYDOWN && w == win32::VK_MENU) {
         lpwin->fMenuAltUsed = 0; lpwin->vkMenuSuppress = 0; return 1;
@@ -839,7 +839,7 @@ int ICompatAccelMenu(HWND hwnd, UINT cmd, BOOL fNotify) {
     c = CAccelPath(hmenu, cmd, rgh, rgi, 0, &fEnabled);
     if (c == 0) return 0;
     if (!fNotify) return fEnabled ? 1 : 2;
-    win32::SendMessageA(hwnd, win32::WM_INITMENU, (WPARAM)hmenu, 0);
+    win32::SendMessageA(hwnd, win32::WM_INITMENU, reinterpret_cast<WPARAM>(hmenu), 0);
     for (i = 0; i < 63; i++) {
         lpwin = LpCompatWindow(hwnd);
         if (!lpwin) return 2;
@@ -847,7 +847,7 @@ int ICompatAccelMenu(HWND hwnd, UINT cmd, BOOL fNotify) {
         if (c == 0) return 0;
         if (i >= c - 1) return fEnabled ? 1 : 2;
         hsub = win32::GetSubMenu(rgh[i], rgi[i]);
-        win32::SendMessageA(hwnd, win32::WM_INITMENUPOPUP, (WPARAM)hsub, win32::MAKELPARAM(rgi[i], 0));
+        win32::SendMessageA(hwnd, win32::WM_INITMENUPOPUP, reinterpret_cast<WPARAM>(hsub), win32::MAKELPARAM(rgi[i], 0));
     }
     lpwin = LpCompatWindow(hwnd);
     if (!lpwin) return 2;
