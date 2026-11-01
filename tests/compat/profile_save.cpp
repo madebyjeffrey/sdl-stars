@@ -15,12 +15,12 @@ static bool fNestedFailure;
 static void *TestMalloc(size_t n){return failure==Allocate?NULL:malloc(n);}
 static NATIVEFILE *TestTemp(char *p){(void)p;if(failure==Temporary)return NULL;opened=1;return (NATIVEFILE *)(uintptr_t)1;}
 static int TestMode(NATIVEFILE *fp,const char *p){(void)fp;(void)p;return failure==Mode?-1:0;}
-static size_t TestWrite(const void *data,size_t size,size_t count,NATIVEFILE *fp){(void)fp;if(failure==Bom)return 2;memcpy(output+used,data,size*count);used+=size*count;return count;}
+static size_t TestWrite(std::span<const std::byte> data,NATIVEFILE *fp){(void)fp;if(failure==Bom)return 2;memcpy(output+used,data.data(),data.size());used+=data.size();return data.size();}
 static int TestPuts(const char *s,NATIVEFILE *fp){
     (void)fp;
     if (fNestedFailure) {
         PROFILEIO io = ProfileIO();
-        io.pfnWrite = CWriteNative;
+        io.pfnWrite = CbWriteNativeStream;
         PROFILEIOSCOPE nested(io);
         throw PROFILEFAILURE{};
     }
@@ -61,21 +61,21 @@ int main(void){
     printf("S02 linked save-control witnesses: %d passed\n",checks);
 
     CHECK(win32::GetLastError() == win32::ERROR_WRITE_FAULT);
-    CHECK(ProfileIO().pfnWrite == CWriteNative);
+    CHECK(ProfileIO().pfnWrite == CbWriteNativeStream);
     {
         PROFILEIOSCOPE outer(io);
         bool fCaught = false, fThreadDefault = false;
         CHECK(ProfileIO().pfnWrite == TestWrite);
-        io.pfnWrite = CWriteNative;
+        io.pfnWrite = CbWriteNativeStream;
         CHECK(ProfileIO().pfnWrite == TestWrite);
         {
             PROFILEIOSCOPE inner(io);
-            CHECK(ProfileIO().pfnWrite == CWriteNative);
+            CHECK(ProfileIO().pfnWrite == CbWriteNativeStream);
         }
         CHECK(ProfileIO().pfnWrite == TestWrite);
         win32::SetLastError(77);
         std::thread worker([&] {
-            fThreadDefault = ProfileIO().pfnWrite == CWriteNative && win32::GetLastError() == 0;
+            fThreadDefault = ProfileIO().pfnWrite == CbWriteNativeStream && win32::GetLastError() == 0;
             win32::SetLastError(91);
         });
         worker.join();
@@ -91,7 +91,7 @@ int main(void){
         used=0;
         CHECK(FSaveProfile(&first, "unused") && used == 7);
     }
-    CHECK(ProfileIO().pfnWrite == CWriteNative);
+    CHECK(ProfileIO().pfnWrite == CbWriteNativeStream);
     std::puts("Profile providers: nesting, owned snapshots, callback unwinding, retry and thread isolation passed");
     return 0;
 }

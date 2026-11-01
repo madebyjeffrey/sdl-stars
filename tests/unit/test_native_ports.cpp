@@ -553,7 +553,7 @@ static void TestApplicationUiSessionClose(void) {
     CchSnprintf(std::span{szPath, sizeof(szPath)},"%s%ssession.dat",szDir,szDirSep);
     NATIVEFILE *pf = PfNativeOpen(szPath,"wb");
     TEST_ASSERT(pf);
-    TEST_ASSERT(CWriteNative("x",1,1,pf) == 1 && ICloseNativeFile(pf) == 0);
+    TEST_ASSERT(CWriteNative(std::span{"x"}.first(1), pf) == 1 && ICloseNativeFile(pf) == 0);
     const auto nfr = HfNativeOpenLegacy(szPath, {.mdShare = NATIVEFILESHARE::denyNone});
     int16_t hfSession = nfr.hf;
     TEST_ASSERT(hfSession >= 3 && !nfr.fMissing);

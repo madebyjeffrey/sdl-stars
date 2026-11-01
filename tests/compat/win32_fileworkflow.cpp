@@ -60,8 +60,8 @@ static BOOL FEqualFiles(const char *pszLeft, const char *pszRight) {
     BOOL fEqual = pfLeft && pfRight;
     if (!fEqual) goto LDone;
     do {
-        cbLeft = CReadNative(rgbLeft, 1, sizeof(rgbLeft), pfLeft);
-        cbRight = CReadNative(rgbRight, 1, sizeof(rgbRight), pfRight);
+        cbLeft = CReadNative(std::span{rgbLeft}, pfLeft);
+        cbRight = CReadNative(std::span{rgbRight}, pfRight);
         if (cbLeft != cbRight || memcmp(rgbLeft, rgbRight, cbLeft)) { fEqual = 0; break; }
     } while (cbLeft != 0);
 LDone:
@@ -75,8 +75,8 @@ static BOOL FCopyFile(const char *pszSource, const char *pszTarget) {
     size_t cb;
     BOOL fCopied = pfSource && pfTarget;
     if (!fCopied) goto LDone;
-    while ((cb = CReadNative(rgb, 1, sizeof(rgb), pfSource)) != 0) {
-        if (CWriteNative(rgb, 1, cb, pfTarget) != cb) { fCopied = 0; break; }
+    while ((cb = CReadNative(std::span{rgb}, pfSource)) != 0) {
+        if (CWriteNative(std::span{rgb}.first(cb), pfTarget) != cb) { fCopied = 0; break; }
     }
     if (FNativeStreamError(pfSource)) fCopied = 0;
 LDone:

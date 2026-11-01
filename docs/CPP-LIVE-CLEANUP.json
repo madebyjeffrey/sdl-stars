@@ -443,7 +443,8 @@
         "native-and-token-byte-spans-and-optional-counts",
         "scoped-seek-origins-and-actual-provider-migration",
         "physical-record-stream-spans",
-        "readonly-record-payload-spans-and-scratch-capacity-validation"
+        "readonly-record-payload-spans-and-scratch-capacity-validation",
+        "typed-element-streams-and-concrete-byte-providers"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -530,6 +531,21 @@
           "baseline": "Ran regression-export after every fixture reader finished. Both comparisons prove no semantic scenario/checkpoint movement. Restored generated ID/salt/checkpoint-hash churn and accepted unused storage; native and frozen original baselines, unit goldens, record widths, normal bytes, RNG and canonical models unchanged.",
           "remaining": "Element streams, memory-source/batch audits, stream modes, paths/results, text-writer boundary and Milestone D remain active.",
           "receipts": "dist/verification/live-cpp/l06e/"
+        },
+        {
+          "batch": "L06f typed element streams and concrete byte-span providers",
+          "debug_build": "Pass; no new warnings; 161 standalone headers compile in both include orders; compiler/source policy passes for 158 owned sources and 159 variants.",
+          "desktop": "153/153, including actual library/profile fault providers, all 29 leak checks and available SDL tutorial checkpoints.",
+          "host_units": "28/28",
+          "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+          "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+          "windows": "All 147 owned production units and 14 selected test translation units compile with strict MinGW; the Linux-only inspector fixture also compiles using peer wrapper flags. Actual Windows file tests (3 cases), encoding tests (8), recovery tests (12) and the standalone file-service contract pass under Wine. Native Windows desktop and actual Linux qualification remain pending.",
+          "reference_tests": "The pre-migration host Release contract passed the new incomplete uint32 read and multi-element write checks. Final typed spans preserve complete-element counts, partial-prefix bytes, untouched tail, stream position and EOF. Existing byte/uint16, profile failure-stage, nesting/thread, copy fault and exception checks pass.",
+          "interfaces": "59 existing direct calls and three pre-migration reference calls use typed element spans or concrete byte spans. Three additional actual provider invocations and four provider callbacks use the same byte contract. Old void-pointer/size/count overloads removed.",
+          "inventory_correction": "First Debug build found a caller in win32_profile.inc missed by the initial cpp-only search. Migrated it, searched all source extensions and qualified its profile translation unit. Final full build and tests pass.",
+          "baseline": "Behavior-neutral. No regression baseline or frozen original fixture changed; no scenario/checkpoint moved. Record layouts, element widths, wire bytes, UTF-8 limits, RNG, canonical models and unit goldens unchanged; no regression export required.",
+          "remaining": "Memory-source/batch audits, stream modes, paths/results, text-writer boundary and Milestone D remain active; L05 text work and L08 final qualification remain open.",
+          "receipts": "dist/verification/live-cpp/l06f/"
         }
       ],
       "roman_output": {
@@ -543,14 +559,14 @@
         "current_call_sites": 26,
         "pre_existing_call_sites": 19,
         "interface": "Named typed access/sharing/options replace all three positional-integer open interfaces; small-token opens return token/missing as one value. Old integer-mode and missing-output overloads removed.",
-        "pending": "Remaining stream mode strings, byte buffers, seeks, path/results and file-selection interfaces remain open."
+        "pending": "Remaining stream mode strings, path/results and file-selection interfaces remain open."
       },
       "file_bytes_and_seek": {
         "status": "complete; verified",
         "evidence": "docs/CPP-LIVE-FILE-SERVICES.json",
         "parent_call_expressions": 98,
         "interfaces": "Six native/token byte functions use spans and optional counts; every seek-origin interface and actual held-lock read provider uses the typed contract. Old overloads removed.",
-        "pending": "Element-count and record-stream buffers, native stream mode strings, other file/path results, text-writer boundary and Milestone D remain."
+        "pending": "Native stream mode strings, other file/path results, text-writer boundary and Milestone D remain."
       },
       "record_streams": {
         "status": "complete; verified",
@@ -558,7 +574,7 @@
         "call_sites": 72,
         "pre_existing_calls": 68,
         "interface": "RgFromStream/RgToStream accept actual byte spans and preserve exception/zero-range contracts; old pointer/count overloads removed.",
-        "remaining": "WriteRt/RECORDIO payloads, raw element-count streams, memory source bounds and batch input sizing/parsing remain."
+        "remaining": "Memory source bounds and batch input sizing/parsing remain."
       },
       "record_payloads": {
         "status": "complete; verified",
@@ -567,6 +583,14 @@
         "pre_existing_calls": 44,
         "actual_providers": 2,
         "interface": "Readonly physical payload spans through WriteRt and actual RECORDIO consumers; oversize sources reject before scratch/seed changes and publication. Existing framing and valid bytes retained."
+      },
+      "element_streams": {
+        "status": "complete; verified",
+        "evidence": "docs/CPP-LIVE-FILE-SERVICES.json",
+        "direct_calls": 62,
+        "pre_existing_calls": 59,
+        "actual_provider_callbacks": 4,
+        "interface": "Typed element spans derive widths/counts; concrete byte-span providers retain partial-transfer effects. Old pointer/size/count overloads removed."
       }
     },
     {

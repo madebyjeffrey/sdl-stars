@@ -15,9 +15,9 @@ static NATIVEFILE *copyOpen(const char *path, const char *mode) {
         copyTarget = f;
     return f;
 }
-static size_t copyRead(void *data, size_t size, size_t count, NATIVEFILE *f) { return f == copySource && (faults & 1) ? 0 : CReadNative(data, size, count, f); }
+static size_t copyRead(std::span<std::byte> data, NATIVEFILE *f) { return f == copySource && (faults & 1) ? 0 : CbReadNativeStream(data, f); }
 static int    copyError(NATIVEFILE *f) { return FNativeStreamError(f) || (f == copySource && (faults & 1)); }
-static size_t copyWrite(const void *data, size_t size, size_t count, NATIVEFILE *f) { return CWriteNative(data, size, faults & 2 ? count / 2 : count, f); }
+static size_t copyWrite(std::span<const std::byte> data, NATIVEFILE *f) { return CbWriteNativeStream(faults & 2 ? data.first(data.size() / 2) : data, f); }
 static int    copyClose(NATIVEFILE *f) {
     int forced = (f == copySource && (faults & 4)) || (f == copyTarget && (faults & 8));
     if (f == copySource)

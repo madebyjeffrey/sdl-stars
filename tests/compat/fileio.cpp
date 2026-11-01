@@ -9,12 +9,13 @@
 #define CHECK(f) do { if (!(f)) { fprintf(stderr,"line %d: %s (errno %d)\n",__LINE__,#f,errno); return 1; } } while (0)
 int main(void) {
     unsigned char rgb[] = {0, 255, 26, 13, 10, 128}, out[16];
+    std::uint16_t rgwOut[4];
     char dir[4096], path[8192], other[8192];
     NATIVEFILEINFO info;
     CHECK(FFilesystemTempDir(dir, sizeof(dir)));
     CHECK(snprintf(path, sizeof(path), "%s/caf\xc3\xa9-XXXXXX", dir) > 0);
     NATIVEFILE *temp = PfNativeCreateTemp(path);
-    CHECK(temp && CWriteNative(rgb, 1, sizeof(rgb), temp) == sizeof(rgb));
+    CHECK(temp && CWriteNative(std::span{rgb}, temp) == sizeof(rgb));
     CHECK(ISyncNativeFile(temp) == 0 && ICloseNativeFile(temp) == 0);
     // The bound owner closes every legacy stream and retains token reuse.
     {
@@ -35,7 +36,7 @@ int main(void) {
     }
     NATIVEFILE *pf = PfNativeOpen(path,"r+b");
     CHECK(pf && CbNativeFile(pf) == 6 && LNativePosition(pf) == 0);
-    CHECK(CReadNative(out,2,4,pf) == 3 && !memcmp(out,rgb,6) && FNativeStreamEof(pf) && !FNativeStreamError(pf));
+    CHECK(CReadNative(std::span{rgwOut}, pf) == 3 && !memcmp(rgwOut,rgb,6) && FNativeStreamEof(pf) && !FNativeStreamError(pf));
     CHECK(CbNativeFile(pf) == 6 && LNativePosition(pf) == 6 && FNativeStreamEof(pf));
     CHECK(ISeekNativeFile(pf, 2, NATIVESEEKORIGIN::begin)==0 && !FNativeStreamEof(pf));
     CHECK(ChPutNativeFile(42,pf)==42 && ISeekNativeFile(pf, 2, NATIVESEEKORIGIN::begin)==0 && ChGetNativeFile(pf)==42);
@@ -47,7 +48,7 @@ int main(void) {
     CHECK(LSeekNativeFile(pf, 2, NATIVESEEKORIGIN::begin)==2 && ITruncateNativeFile(pf,2)==0 && CbNativeFile(pf)==2);
     CHECK(LSeekNativeFile(pf, 8, NATIVESEEKORIGIN::begin)==8 && ITruncateNativeFile(pf,8)==0 && CbNativeFile(pf)==8);
     uint64_t dev,ino;CHECK(FNativeFileIdentity(pf,NULL,&dev,&ino));CHECK(ICloseNativeFile(pf)==0);
-    pf=PfNativeOpen(path,"rb");CHECK(pf && CReadNative(out,1,8,pf)==8 && out[0]=='Z' && !out[7]);CHECK(ICloseNativeFile(pf)==0);
+    pf=PfNativeOpen(path,"rb");CHECK(pf && CReadNative(std::span{out}.first(8), pf)==8 && out[0]=='Z' && !out[7]);CHECK(ICloseNativeFile(pf)==0);
     pf=PfNativeOpen(path,"ab");CHECK(pf && ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin)==0 && ChPutNativeFile('A',pf)=='A' && ICloseNativeFile(pf)==0);
     CHECK(IGetNativeFileInfo(path,&info,1)==0 && info.cb==9 && info.fRegular);
     pf=PfNativeOpen(path,"rb");CHECK(pf && ISeekNativeFile(pf, 8, NATIVESEEKORIGIN::begin)==0 && ChGetNativeFile(pf)=='A');CHECK(ICloseNativeFile(pf)==0);
@@ -79,6 +80,20 @@ int main(void) {
         CHECK(ICloseNativeFile(pf)==0);
         errno=0;CHECK(!CbReadNativeFile(nullptr, std::as_writable_bytes(std::span{bytes}).first(static_cast<std::size_t>(0))) && errno==EBADF);
     }
+    // Incomplete elements still expose their transferred prefix, but are not
+    // counted as complete objects; neither byte position nor EOF is rolled back.
+    {
+        std::uint32_t word = 0xa5a5a5a5U;
+        const std::uint32_t words[] = {0x01020304U, 0xf0e0d0c0U};
+        pf=PfNativeTemporary();CHECK(pf);
+        CHECK(CWriteNative(std::span{"abc"}.first(3), pf)==3 && ISeekNativeFile(pf,0,NATIVESEEKORIGIN::begin)==0);
+        CHECK(CReadNative(std::span{&word, 1}, pf)==0 && !memcmp(&word,"abc",3));
+        CHECK(reinterpret_cast<const unsigned char *>(&word)[3]==0xa5 && LNativePosition(pf)==3 && FNativeStreamEof(pf));
+        CHECK(ICloseNativeFile(pf)==0);
+        pf=PfNativeTemporary();CHECK(pf);
+        CHECK(CWriteNative(std::span{words}, pf)==2 && LNativePosition(pf)==sizeof(words));
+        CHECK(ICloseNativeFile(pf)==0);
+    }
     // Stream formatting writes binary bytes and measures long output before
     // allocating its second-pass buffer; counts include bytes after a NUL.
     {
@@ -89,7 +104,7 @@ int main(void) {
         pf=PfNativeTemporary();CHECK(pf);
         CHECK(CchNativePrintf(pf,"%ld|%llu|%c%s:end%n",std::int32_t{-123},18446744073709551615ULL,0,payload,&count)==cb && count==cb);
         CHECK(LNativePosition(pf)==cb && ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin)==0);
-        CHECK(CReadNative(actual,1,sizeof(actual),pf)==static_cast<std::size_t>(cb) && !memcmp(actual,expected,cb));
+        CHECK(CReadNative(std::span{actual}, pf)==static_cast<std::size_t>(cb) && !memcmp(actual,expected,cb));
         CHECK(ICloseNativeFile(pf)==0);
         pf=PfNativeTemporary();CHECK(pf);
         count=-1;

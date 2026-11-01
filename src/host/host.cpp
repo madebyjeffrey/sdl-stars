@@ -52,7 +52,7 @@ static std::int16_t FReadHostIni(APPSESSION &app, const char *szFile) {
     ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin);
     NATIVEOWNER<char, std::free> text(static_cast<char *>(std::malloc(static_cast<std::size_t>(cb) + 1)));
     pszText = text.get();
-    if (!pszText || CReadNative(pszText, 1, static_cast<std::size_t>(cb), pf) != static_cast<std::size_t>(cb)) {
+    if (!pszText || CReadNative(std::span{pszText, static_cast<std::size_t>(cb)}, pf) != static_cast<std::size_t>(cb)) {
         return 0;
     }
     ICloseNativeFile(file.Release());

@@ -210,13 +210,13 @@ static void TestInvalidDefinition(void) {
     pf = PfNativeOpen(szFile, "wb"); TEST_ASSERT(pf);
     IPutNativeString("Title\r\n", pf);
     memset(szPadding, 'a', sizeof(szPadding));
-    for (i = 0; i < 64; i++) TEST_CHECK(CWriteNative(szPadding, 1, sizeof(szPadding), pf) == sizeof(szPadding));
+    for (i = 0; i < 64; i++) TEST_CHECK(CWriteNative(std::span{szPadding}, pf) == sizeof(szPadding));
     ICloseNativeFile(pf);
     TEST_CHECK(!GenNewGameFromFile(app, szFile));
     TEST_CHECK(app.state.idsFileError == idsUniverseCreationFileAppearsInvalid);
     TEST_CHECK(!FStarsRecoveryActive() && app.state.lpbDefUni == NULL);
     pf = PfNativeOpen(szFile, "wb"); TEST_ASSERT(pf);
-    TEST_CHECK(CWriteNative("Title\0hidden\r\n", 1, 14, pf) == 14); ICloseNativeFile(pf);
+    TEST_CHECK(CWriteNative(std::span{"Title\0hidden\r\n"}.first(14), pf) == 14); ICloseNativeFile(pf);
     TEST_CHECK(!GenNewGameFromFile(app, szFile));
     TEST_CHECK(app.state.idsFileError == idsUniverseCreationFileAppearsInvalid);
     TEST_CHECK(!FStarsRecoveryActive() && app.state.lpbDefUni == NULL);
@@ -337,7 +337,7 @@ static void TestScannerSnapshotUtf8(void) {
     snap.cObject = 1;
     pf = PfNativeTemporary(); TEST_ASSERT(pf);
     TEST_ASSERT(FWriteScannerSnapshot(&snap, pf));
-    ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin); cb = CReadNative(sz, 1, sizeof(sz) - 1, pf); sz[cb] = 0;
+    ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin); cb = CReadNative(std::span{sz}.first(sizeof(sz) - 1), pf); sz[cb] = 0;
     TEST_CHECK(FUtf8Valid(sz, cb));
     TEST_CHECK(strstr(sz, psz) != NULL && strstr(sz, "\\u000d\\u000a") != NULL);
     strcpy(obj.szName, "\xff");

@@ -156,7 +156,7 @@ static std::int16_t FWriteZipEntry(NATIVEFILE *pfZip, const char *pszRoot, ZIPEN
     if (!pf) return 0;
     rgbData = static_cast<std::uint8_t *>(SDL_malloc(cb ? static_cast<std::size_t>(cb) : 1));
     if (!rgbData) return 0;
-    if (CReadNative(rgbData, 1, static_cast<std::size_t>(cb), pf) != static_cast<std::size_t>(cb)) return 0;
+    if (CReadNative(std::span{rgbData, static_cast<std::size_t>(cb)}, pf) != static_cast<std::size_t>(cb)) return 0;
     if (ICloseNativeFile(std::exchange(pf, nullptr)) != 0) return 0;
     pze->dwCrc = static_cast<std::uint32_t>(crc32(0, rgbData, static_cast<uInt>(cb)));
     pze->cbSize = static_cast<std::uint32_t>(cb);
@@ -165,7 +165,7 @@ static std::int16_t FWriteZipEntry(NATIVEFILE *pfZip, const char *pszRoot, ZIPEN
     PutZip16(pfZip, 0); PutZip16(pfZip, 0); PutZip32(pfZip, pze->dwCrc);
     PutZip32(pfZip, pze->cbSize); PutZip32(pfZip, pze->cbSize);
     PutZip16(pfZip, static_cast<std::uint16_t>(cbName)); PutZip16(pfZip, 0);
-    if (CWriteNative(pze->pszName, 1, cbName, pfZip) != cbName || CWriteNative(rgbData, 1, static_cast<std::size_t>(cb), pfZip) != static_cast<std::size_t>(cb)) {
+    if (CWriteNative(std::span{pze->pszName, cbName}, pfZip) != cbName || CWriteNative(std::span{rgbData, static_cast<std::size_t>(cb)}, pfZip) != static_cast<std::size_t>(cb)) {
         return 0;
     }
     entry.Close();
@@ -213,7 +213,7 @@ std::int16_t FZipLibraryDirectory(APPSESSION &app, const char *pszDirectory, con
         PutZip32(pf, rgzentry[i].cbSize); PutZip32(pf, rgzentry[i].cbSize); PutZip16(pf, static_cast<std::uint16_t>(cbName));
         PutZip16(pf, 0); PutZip16(pf, 0); PutZip16(pf, 0); PutZip16(pf, 0);
         PutZip32(pf, 0); PutZip32(pf, rgzentry[i].dwOffset);
-        if (CWriteNative(rgzentry[i].pszName, 1, cbName, pf) != cbName) goto done;
+        if (CWriteNative(std::span{rgzentry[i].pszName, cbName}, pf) != cbName) goto done;
     }
     dwLength = static_cast<std::uint32_t>(LNativePosition(pf)) - dwStart;
     PutZip32(pf, ZIP_EOCD_SIGNATURE); PutZip16(pf, 0); PutZip16(pf, 0);
@@ -270,11 +270,11 @@ std::int16_t FUnzipLibraryArchive(const char *pszArchive, const char *pszDirecto
     if (!pf || !FNativeFileSize(pszArchive, &archiveSize) || archiveSize < ZIP_EOCD_SIZE) goto done;
     tailOffset = archiveSize > sizeof(rgbTail) ? static_cast<long>((archiveSize - sizeof(rgbTail))) : 0;
     if (ISeekNativeFile(pf, tailOffset, NATIVESEEKORIGIN::begin) != 0) goto done;
-    cbRead = CReadNative(rgbTail, 1, sizeof(rgbTail), pf);
+    cbRead = CReadNative(std::span{rgbTail}, pf);
     lSearch = static_cast<long>((cbRead >= ZIP_EOCD_SIZE ? cbRead - ZIP_EOCD_SIZE : 0));
     for (;;) { if (DwZip32(rgbTail + lSearch) == ZIP_EOCD_SIGNATURE) { eocd = tailOffset + lSearch; break; } if (!lSearch--) break; }
     if (eocd < 0 || ISeekNativeFile(pf, eocd + 4, NATIVESEEKORIGIN::begin) != 0 ||
-        CReadNative(rgbTail, 1, ZIP_EOCD_FIELDS_AFTER_SIGNATURE_SIZE, pf) != ZIP_EOCD_FIELDS_AFTER_SIGNATURE_SIZE ||
+        CReadNative(std::span{rgbTail}.first(ZIP_EOCD_FIELDS_AFTER_SIGNATURE_SIZE), pf) != ZIP_EOCD_FIELDS_AFTER_SIGNATURE_SIZE ||
         eocd + ZIP_EOCD_SIZE + WZip16(rgbTail + ZIP_EOCD_COMMENT_LENGTH_OFFSET) != archiveSize) goto done;
     if (WZip16(rgbTail + ZIP_EOCD_DISK_NUMBER_OFFSET) || WZip16(rgbTail + ZIP_EOCD_CENTRAL_DISK_OFFSET) ||
         WZip16(rgbTail + ZIP_EOCD_ENTRIES_ON_DISK_OFFSET) != WZip16(rgbTail + ZIP_EOCD_ENTRY_COUNT_OFFSET)) goto done;
@@ -283,14 +283,14 @@ std::int16_t FUnzipLibraryArchive(const char *pszArchive, const char *pszDirecto
     if (cEntries > 4096 || static_cast<std::uint64_t>(centralOffset) + DwZip32(rgbTail + ZIP_EOCD_CENTRAL_SIZE_OFFSET) > static_cast<std::uint64_t>(eocd) ||
         ISeekNativeFile(pf, centralOffset, NATIVESEEKORIGIN::begin) != 0) goto done;
     for (i = 0; i < cEntries; i++) {
-        if (CReadNative(rgbCentral, 1, sizeof(rgbCentral), pf) != sizeof(rgbCentral) || DwZip32(rgbCentral) != ZIP_CENTRAL_SIGNATURE) goto done;
+        if (CReadNative(std::span{rgbCentral}, pf) != sizeof(rgbCentral) || DwZip32(rgbCentral) != ZIP_CENTRAL_SIGNATURE) goto done;
         zc = ZipCentralHeader(rgbCentral);
         if (!zc.wNameLength || zc.wNameLength >= sizeof(szName) || zc.cbUncompressed > 64U * 1024U * 1024U ||
             (zc.wFlags & 1) || (zc.wMethod != 0 && zc.wMethod != 8) ||
             WZip16(rgbCentral + ZIP_CENTRAL_DISK_START_OFFSET) != 0 ||
             ((zc.dwExternalAttributes >> 16) & 0170000U) == 0120000U ||
             (zc.dwExternalAttributes & 0x400U) ||
-            CReadNative(szName, 1, zc.wNameLength, pf) != zc.wNameLength) goto done;
+            CReadNative(std::span{szName}.first(zc.wNameLength), pf) != zc.wNameLength) goto done;
         if (std::memchr(szName, 0, zc.wNameLength)) goto done;
         if (!FZipNameUtf8Supported(szName, zc.wNameLength, zc.wFlags)) {
             fUnsupportedName = 1;
@@ -301,14 +301,14 @@ std::int16_t FUnzipLibraryArchive(const char *pszArchive, const char *pszDirecto
         szName[zc.wNameLength] = 0;
         lNext = LNativePosition(pf) + zc.wExtraLength + zc.wCommentLength;
         if (zc.dwLocalOffset >= static_cast<std::uint32_t>(centralOffset) ||
-            ISeekNativeFile(pf, zc.dwLocalOffset, NATIVESEEKORIGIN::begin) != 0 || CReadNative(rgbLocal, 1, sizeof(rgbLocal), pf) != sizeof(rgbLocal) ||
+            ISeekNativeFile(pf, zc.dwLocalOffset, NATIVESEEKORIGIN::begin) != 0 || CReadNative(std::span{rgbLocal}, pf) != sizeof(rgbLocal) ||
             DwZip32(rgbLocal) != ZIP_LOCAL_SIGNATURE || WZip16(rgbLocal + ZIP_LOCAL_FLAGS_OFFSET) != zc.wFlags ||
             WZip16(rgbLocal + ZIP_LOCAL_METHOD_OFFSET) != zc.wMethod) goto done;
         wLocalNameLength = WZip16(rgbLocal + ZIP_LOCAL_NAME_LENGTH_OFFSET);
         wLocalExtraLength = WZip16(rgbLocal + ZIP_LOCAL_EXTRA_LENGTH_OFFSET);
         if (wLocalNameLength != zc.wNameLength) goto done;
         rgbLocalName = static_cast<std::uint8_t *>(SDL_malloc(wLocalNameLength ? wLocalNameLength : 1));
-        if (!rgbLocalName || CReadNative(rgbLocalName, 1, wLocalNameLength, pf) != wLocalNameLength ||
+        if (!rgbLocalName || CReadNative(std::span{rgbLocalName, wLocalNameLength}, pf) != wLocalNameLength ||
             std::memcmp(rgbLocalName, szName, zc.wNameLength) != 0 ||
             ISeekNativeFile(pf, wLocalExtraLength, NATIVESEEKORIGIN::current) != 0 ||
             static_cast<std::uint64_t>(LNativePosition(pf)) + zc.cbCompressed > static_cast<std::uint64_t>(centralOffset)) goto done;
@@ -323,7 +323,7 @@ std::int16_t FUnzipLibraryArchive(const char *pszArchive, const char *pszDirecto
         if (!FZipSafeName(szName)) goto done;
         rgbCompressed = static_cast<std::uint8_t *>(SDL_malloc(zc.cbCompressed ? zc.cbCompressed : 1));
         rgbData = static_cast<std::uint8_t *>(SDL_malloc(zc.cbUncompressed ? zc.cbUncompressed : 1));
-        if (!rgbCompressed || !rgbData || CReadNative(rgbCompressed, 1, zc.cbCompressed, pf) != zc.cbCompressed) goto done;
+        if (!rgbCompressed || !rgbData || CReadNative(std::span{rgbCompressed, zc.cbCompressed}, pf) != zc.cbCompressed) goto done;
         if (zc.wMethod == 0) {
             if (zc.cbCompressed != zc.cbUncompressed) goto done;
             std::memcpy(rgbData, rgbCompressed, zc.cbUncompressed);
@@ -341,7 +341,7 @@ std::int16_t FUnzipLibraryArchive(const char *pszArchive, const char *pszDirecto
             !FZipMakeParents(pszDirectory, szName, szOutput, sizeof(szOutput)) ||
             FNativeFileSize(szOutput, &cbExisting)) goto done;
         pfOutput = PfOpenNativeFile(szOutput, "wbx");
-        fWrite = pfOutput && CWriteNative(rgbData, 1, zc.cbUncompressed, pfOutput) == zc.cbUncompressed;
+        fWrite = pfOutput && CWriteNative(std::span{rgbData, zc.cbUncompressed}, pfOutput) == zc.cbUncompressed;
         if (pfOutput && ICloseNativeFile(pfOutput) != 0) fWrite = 0;
         pfOutput = nullptr;
         if (!fWrite) goto done;

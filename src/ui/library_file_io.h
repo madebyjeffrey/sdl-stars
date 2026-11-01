@@ -4,8 +4,8 @@
 
 struct LIBRARYFILEIO {
     decltype(&PfOpenNativeFile)   pfnOpen = PfOpenNativeFile;
-    decltype(&CReadNative)        pfnRead = CReadNative;
-    decltype(&CWriteNative)       pfnWrite = CWriteNative;
+    decltype(&CbReadNativeStream)        pfnRead = CbReadNativeStream;
+    decltype(&CbWriteNativeStream)       pfnWrite = CbWriteNativeStream;
     decltype(&FNativeStreamError) pfnError = FNativeStreamError;
     decltype(&ICloseNativeFile)   pfnClose = ICloseNativeFile;
 };

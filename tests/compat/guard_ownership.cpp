@@ -26,9 +26,9 @@ int64_t CbReadGuardLine(char **ppsz, size_t *pcb, NATIVEFILE *pf) {
     if (cProfileLines > 0) cProfileLines--;
     return cb;
 }
-size_t CWriteGuardProfile(const void *rgb, size_t cb, size_t c, NATIVEFILE *pf) {
+size_t CWriteGuardProfile(std::span<const std::byte> rgb, NATIVEFILE *pf) {
     if (fFailProfileWrite) { fFailProfileWrite = false; StarsThrowError(starsErrorFile, 417); }
-    return CWriteNative(rgb, cb, c, pf);
+    return CbWriteNativeStream(rgb, pf);
 }
 static LRESULT  GuardProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     if (msg == win32::WM_APP + 1) {

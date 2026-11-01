@@ -41,7 +41,7 @@ BOOL FSaveProfile(COMPATPROFILE *lp, const char *pszPath, const PROFILEIO &io) {
     if (io.pfnCopyPermissions(fp, pszPath) != 0) {
         win32::SetLastError(DwProfileError()); io.pfnClose(std::exchange(fp, nullptr)); goto LReturn;
     }
-    if (io.pfnWrite("\xef\xbb\xbf", 1, 3, fp) != 3) { io.pfnClose(std::exchange(fp, nullptr)); goto LReturn; }
+    if (io.pfnWrite(std::as_bytes(std::span{"\xef\xbb\xbf"}).first(3), fp) != 3) { io.pfnClose(std::exchange(fp, nullptr)); goto LReturn; }
     for (; lp; lp = lp->lpNext) {
         if (io.pfnPutString(lp->szRaw, fp) == EOF) break;
         if (lp->lpNext && *lp->szRaw && lp->szRaw[std::strlen(lp->szRaw) - 1] != '\n')

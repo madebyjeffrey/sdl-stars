@@ -524,13 +524,13 @@ static std::int16_t RemovePendingFile(APPSESSION &, void *lpUnused, const char *
 static std::int16_t FReadLibraryHdr(NATIVEFILE *pf, HDR *phdr) {
     std::byte rgb[cbWireHdr];
 
-    return CReadNative(rgb, cbWireHdr, 1, pf) == 1 && FDecodeHdr(rgb, *phdr);
+    return CReadNative(std::span{&rgb, 1}, pf) == 1 && FDecodeHdr(rgb, *phdr);
 }
 
 static std::int16_t FReadLibraryBof(NATIVEFILE *pf, RTBOF *pbof) {
     std::byte rgb[cbWireBof];
 
-    return CReadNative(rgb, cbWireBof, 1, pf) == 1 && FDecodeBof(rgb, *pbof);
+    return CReadNative(std::span{&rgb, 1}, pf) == 1 && FDecodeBof(rgb, *pbof);
 }
 
 /* GenerateWorld's original companion-write loop ignores writer return values.
@@ -577,8 +577,8 @@ std::int16_t FCopyNativeFileContents(NATIVEFILE *pfSource, NATIVEFILE *pfTarget)
     int fOkay;
 
     fOkay = 1;
-    while ((cb = LibraryFileIO().pfnRead(rgb, 1, sizeof(rgb), pfSource)) != 0) {
-        if (LibraryFileIO().pfnWrite(rgb, 1, cb, pfTarget) != cb) { fOkay = 0; break; }
+    while ((cb = LibraryFileIO().pfnRead(std::as_writable_bytes(std::span{rgb}), pfSource)) != 0) {
+        if (LibraryFileIO().pfnWrite(std::as_bytes(std::span{rgb}).first(cb), pfTarget) != cb) { fOkay = 0; break; }
     }
     if (LibraryFileIO().pfnError(pfSource)) fOkay = 0;
     if (LibraryFileIO().pfnClose(pfSource) != 0) fOkay = 0;
@@ -1315,7 +1315,7 @@ std::int16_t FInspectImportFile(const char *pszFile, DtFileType dt, int iplr,
         *pfMulti = rtbof.fMulti;
         if (rtbof.fMulti) {
             std::uint16_t turnFinal;
-            if (cbFile < 4 || ISeekNativeFile(pf, -2, NATIVESEEKORIGIN::end) != 0 || CReadNative(&turnFinal, 2, 1, pf) != 1) fComplete = 0;
+            if (cbFile < 4 || ISeekNativeFile(pf, -2, NATIVESEEKORIGIN::end) != 0 || CReadNative(std::span{&turnFinal, 1}, pf) != 1) fComplete = 0;
             else if (pturn) *pturn = turnFinal;
         }
     }
@@ -1877,8 +1877,8 @@ static std::int16_t FFilesEqual(const char *pszLeft, const char *pszRight) {
     pfRight = PfOpenNativeFile(pszRight, "rb");
     if (!pfLeft || !pfRight) { fEqual = 0; goto LDone; }
     do {
-        cbLeft = CReadNative(rgbLeft, 1, sizeof(rgbLeft), pfLeft);
-        cbRight = CReadNative(rgbRight, 1, sizeof(rgbRight), pfRight);
+        cbLeft = CReadNative(std::span{rgbLeft}, pfLeft);
+        cbRight = CReadNative(std::span{rgbRight}, pfRight);
         if (cbLeft != cbRight || std::memcmp(rgbLeft, rgbRight, cbLeft)) { fEqual = 0; break; }
     } while (cbLeft != 0);
     if (FNativeStreamError(pfLeft) || FNativeStreamError(pfRight)) fEqual = 0;
@@ -2397,7 +2397,7 @@ static std::int16_t FInspectImportPlayer(APPSESSION &app, const char *pszUnivers
     fRead = FReadLibraryHdr(pf, &hdr) && hdr.rt == rtBOF && hdr.cb == cbWireBof &&
             FReadLibraryBof(pf, &rtbof) &&
             FReadLibraryHdr(pf, &hdr) && hdr.rt == rtGame && hdr.cb == cbWireGame &&
-            CReadNative(rgbGame, cbWireGame, 1, pf) == 1;
+            CReadNative(std::span{&rgbGame, 1}, pf) == 1;
     ICloseNativeFile(pf);
     if (!fRead) return 0;
     /* Inspect the selected universe without disturbing an open game's stream. */

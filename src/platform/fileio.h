@@ -10,6 +10,7 @@
 #include <array>
 #include <span>
 #include <variant>
+#include <type_traits>
 #include "nativeformat.h"
 struct NATIVEFILE;
 
@@ -46,8 +47,21 @@ int ICloseNativeFile(NATIVEFILE *pf);
 // through errno. Partial counts and stream error/EOF state remain observable.
 std::optional<std::size_t> CbReadNativeFile(NATIVEFILE *pf, std::span<std::byte> rgb);
 std::optional<std::size_t> CbWriteNativeFile(NATIVEFILE *pf, std::span<const std::byte> rgb);
-std::size_t CReadNative(void *rgb, std::size_t cb, std::size_t c, NATIVEFILE *pf);
-std::size_t CWriteNative(const void *rgb, std::size_t cb, std::size_t c, NATIVEFILE *pf);
+// Stream loops return all transferred bytes, including an incomplete element.
+std::size_t CbReadNativeStream(std::span<std::byte> rgb, NATIVEFILE *pf);
+std::size_t CbWriteNativeStream(std::span<const std::byte> rgb, NATIVEFILE *pf);
+// Element views count only complete objects; a partial final object is still
+// modified and advances the stream, as with the original element interface.
+template<class T, std::size_t N>
+    requires(std::is_trivially_copyable_v<T> && !std::is_const_v<T>)
+std::size_t CReadNative(std::span<T, N> rg, NATIVEFILE *pf) {
+    return CbReadNativeStream(std::as_writable_bytes(rg), pf) / sizeof(T);
+}
+template<class T, std::size_t N>
+    requires(std::is_trivially_copyable_v<T>)
+std::size_t CWriteNative(std::span<T, N> rg, NATIVEFILE *pf) {
+    return CbWriteNativeStream(std::as_bytes(rg), pf) / sizeof(T);
+}
 std::int64_t LSeekNativeFile(NATIVEFILE *pf, std::int64_t ib, NATIVESEEKORIGIN iOrigin);
 int ISeekNativeFile(NATIVEFILE *pf, std::int64_t ib, NATIVESEEKORIGIN iOrigin);
 std::int64_t LNativePosition(NATIVEFILE *pf);

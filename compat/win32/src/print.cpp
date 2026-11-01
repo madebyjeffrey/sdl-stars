@@ -123,7 +123,7 @@ fail:
 }
 static cairo_status_t WritePDF(void *lpv, const unsigned char *rgb, unsigned cb) {
     COMPATPRINT *lp = static_cast<COMPATPRINT *>((lpv));
-    return CWriteNative(rgb, 1, cb, lp->lpfile.get()) == cb ? CAIRO_STATUS_SUCCESS : CAIRO_STATUS_WRITE_ERROR;
+    return CWriteNative(std::span{rgb, cb}, lp->lpfile.get()) == cb ? CAIRO_STATUS_SUCCESS : CAIRO_STATUS_WRITE_ERROR;
 }
 static int StartPrint(COMPATPRINT *lp, int cb, LPCSTR pszTitle) {
     OPENFILENAMEA ofn = {};

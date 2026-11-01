@@ -1,6 +1,6 @@
 {
   "parent": "c7f5e933",
-  "status": "File-service migration active; open, native/token byte/seek, record-stream spans and bounded readonly record payloads complete and verified.",
+  "status": "File-service migration active; typed open, native/token byte/seek, record-stream, bounded payload and element-span batches complete and verified.",
   "open": {
     "status": "complete; verified",
     "interfaces": [
@@ -365,7 +365,7 @@
     }
   ],
   "pending": {
-    "byte_io": "WriteRt/RECORDIO and record-stream spans are complete; raw element-count CReadNative/CWriteNative interfaces remain.",
+    "byte_io": "Native/token byte I/O, record streams, WriteRt/RECORDIO and typed element streams are complete; remaining memory-source and text-writer boundaries are separate work.",
     "seek": "Scoped seek origins complete; existing position-result widths and native/SDK error mappings are retained.",
     "stream_open": "Native stream mode strings and remaining file/path result/out-parameter interfaces remain; OutputFileString still has the explicit old uint16_t write-count boundary pending focused repair.",
     "selection": "Milestone D remains open; no picker backend or user workflow was changed by this batch.",
@@ -2487,6 +2487,677 @@
       "baseline": "Ran regression-export after every fixture reader finished. Both comparisons prove no semantic scenario/checkpoint movement. Restored generated ID/salt/checkpoint-hash churn and accepted unused storage; native and frozen original baselines, unit goldens, record widths, normal bytes, RNG and canonical models unchanged.",
       "remaining": "Element streams, memory-source/batch audits, stream modes, paths/results, text-writer boundary and Milestone D remain active.",
       "receipts": "dist/verification/live-cpp/l06e/"
+    }
+  },
+  "element_streams": {
+    "parent": "c4b86084",
+    "status": "complete; verified",
+    "interfaces": "CReadNative/CWriteNative take spans of trivially-copyable elements and return complete-element counts derived from sizeof(T); CbReadNativeStream/CbWriteNativeStream implement the concrete byte loops and return transferred byte counts. Old void-pointer/element-size/count overloads removed.",
+    "count_contract": "A short final element still exposes transferred prefix bytes and advances stream position/EOF; it is not counted as a complete element. No rollback or atomic guarantee was added. Empty views skip IO, including native Windows empty-write truncation at the lower byte service. Existing EOF, error-generation checks and partial effects remain.",
+    "call_sites": 62,
+    "pre_existing_direct_calls": 59,
+    "pre_migration_characterization_calls": 3,
+    "production_direct_calls": 30,
+    "test_direct_calls": 32,
+    "additional_provider_invocations": 3,
+    "actual_provider_callbacks": 4,
+    "providers": "LIBRARYFILEIO read/write and PROFILEIO write now have concrete byte-span defaults. Actual copyRead/copyWrite, guard-ownership write and profile serializer TestWrite callbacks use the same contract; short-copy and BOM failure sizes, cleanup/publication stages, nesting and thread isolation remain.",
+    "capacity_sources": "Fixed arrays retain their real extent and use first/subspan for existing prefixes. Library wire arrays are one typed array element, preserving complete-record admission. Scalar and uint16/uint32 test objects determine their element width. Host/help/ZIP allocation extents and Cairo callback ranges retain their existing checked boundaries and terminator reservations. No guessed capacities or positional byte-size/count adapters remain.",
+    "reference_tests": "Before production migration the host Release file-service contract passed incomplete uint32 reads (zero complete elements, three prefix bytes transferred, untouched final byte, position three and EOF) and two-element uint32 writes (count two, position eight). Existing uint16 partial-object counts, byte/EOF/error, binary formatting, profile publication and library fault witnesses remain.",
+    "inventory_correction": "The first full Debug build found one additional call in tests/compat/win32_profile.inc, outside the initial cpp-only search. Migrated it, included its actual profile translation unit in Windows syntax checks, and searched all tracked source extensions afterward.",
+    "calls": [
+      {
+        "path": "src/ui/libraryui.cpp",
+        "function": "CReadNative",
+        "original_call": "CReadNative(rgb, cbWireHdr, 1, pf)",
+        "parent_line": 527,
+        "current_line": 527,
+        "current_call": "CReadNative(std::span{&rgb, 1}, pf)",
+        "element_or_byte_span": "std::span{&rgb, 1}",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "src/ui/libraryui.cpp",
+        "function": "CReadNative",
+        "original_call": "CReadNative(rgb, cbWireBof, 1, pf)",
+        "parent_line": 533,
+        "current_line": 533,
+        "current_call": "CReadNative(std::span{&rgb, 1}, pf)",
+        "element_or_byte_span": "std::span{&rgb, 1}",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "src/ui/libraryui.cpp",
+        "function": "CReadNative",
+        "original_call": "CReadNative(&turnFinal, 2, 1, pf)",
+        "parent_line": 1318,
+        "current_line": 1318,
+        "current_call": "CReadNative(std::span{&turnFinal, 1}, pf)",
+        "element_or_byte_span": "std::span{&turnFinal, 1}",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "src/ui/libraryui.cpp",
+        "function": "CReadNative",
+        "original_call": "CReadNative(rgbLeft, 1, sizeof(rgbLeft), pfLeft)",
+        "parent_line": 1880,
+        "current_line": 1880,
+        "current_call": "CReadNative(std::span{rgbLeft}, pfLeft)",
+        "element_or_byte_span": "std::span{rgbLeft}",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "src/ui/libraryui.cpp",
+        "function": "CReadNative",
+        "original_call": "CReadNative(rgbRight, 1, sizeof(rgbRight), pfRight)",
+        "parent_line": 1881,
+        "current_line": 1881,
+        "current_call": "CReadNative(std::span{rgbRight}, pfRight)",
+        "element_or_byte_span": "std::span{rgbRight}",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "src/ui/libraryui.cpp",
+        "function": "CReadNative",
+        "original_call": "CReadNative(rgbGame, cbWireGame, 1, pf)",
+        "parent_line": 2400,
+        "current_line": 2400,
+        "current_call": "CReadNative(std::span{&rgbGame, 1}, pf)",
+        "element_or_byte_span": "std::span{&rgbGame, 1}",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "src/ui/libraryzip.cpp",
+        "function": "CReadNative",
+        "original_call": "CReadNative(rgbData, 1, static_cast<std::size_t>(cb), pf)",
+        "parent_line": 159,
+        "current_line": 159,
+        "current_call": "CReadNative(std::span{rgbData, static_cast<std::size_t>(cb)}, pf)",
+        "element_or_byte_span": "std::span{rgbData, static_cast<std::size_t>(cb)}",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "src/ui/libraryzip.cpp",
+        "function": "CWriteNative",
+        "original_call": "CWriteNative(pze->pszName, 1, cbName, pfZip)",
+        "parent_line": 168,
+        "current_line": 168,
+        "current_call": "CWriteNative(std::span{pze->pszName, cbName}, pfZip)",
+        "element_or_byte_span": "std::span{pze->pszName, cbName}",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "src/ui/libraryzip.cpp",
+        "function": "CWriteNative",
+        "original_call": "CWriteNative(rgbData, 1, static_cast<std::size_t>(cb), pfZip)",
+        "parent_line": 168,
+        "current_line": 168,
+        "current_call": "CWriteNative(std::span{rgbData, static_cast<std::size_t>(cb)}, pfZip)",
+        "element_or_byte_span": "std::span{rgbData, static_cast<std::size_t>(cb)}",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "src/ui/libraryzip.cpp",
+        "function": "CWriteNative",
+        "original_call": "CWriteNative(rgzentry[i].pszName, 1, cbName, pf)",
+        "parent_line": 216,
+        "current_line": 216,
+        "current_call": "CWriteNative(std::span{rgzentry[i].pszName, cbName}, pf)",
+        "element_or_byte_span": "std::span{rgzentry[i].pszName, cbName}",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "src/ui/libraryzip.cpp",
+        "function": "CReadNative",
+        "original_call": "CReadNative(rgbTail, 1, sizeof(rgbTail), pf)",
+        "parent_line": 273,
+        "current_line": 273,
+        "current_call": "CReadNative(std::span{rgbTail}, pf)",
+        "element_or_byte_span": "std::span{rgbTail}",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "src/ui/libraryzip.cpp",
+        "function": "CReadNative",
+        "original_call": "CReadNative(rgbTail, 1, ZIP_EOCD_FIELDS_AFTER_SIGNATURE_SIZE, pf)",
+        "parent_line": 277,
+        "current_line": 277,
+        "current_call": "CReadNative(std::span{rgbTail}.first(ZIP_EOCD_FIELDS_AFTER_SIGNATURE_SIZE), pf)",
+        "element_or_byte_span": "std::span{rgbTail}.first(ZIP_EOCD_FIELDS_AFTER_SIGNATURE_SIZE)",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "src/ui/libraryzip.cpp",
+        "function": "CReadNative",
+        "original_call": "CReadNative(rgbCentral, 1, sizeof(rgbCentral), pf)",
+        "parent_line": 286,
+        "current_line": 286,
+        "current_call": "CReadNative(std::span{rgbCentral}, pf)",
+        "element_or_byte_span": "std::span{rgbCentral}",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "src/ui/libraryzip.cpp",
+        "function": "CReadNative",
+        "original_call": "CReadNative(szName, 1, zc.wNameLength, pf)",
+        "parent_line": 293,
+        "current_line": 293,
+        "current_call": "CReadNative(std::span{szName}.first(zc.wNameLength), pf)",
+        "element_or_byte_span": "std::span{szName}.first(zc.wNameLength)",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "src/ui/libraryzip.cpp",
+        "function": "CReadNative",
+        "original_call": "CReadNative(rgbLocal, 1, sizeof(rgbLocal), pf)",
+        "parent_line": 304,
+        "current_line": 304,
+        "current_call": "CReadNative(std::span{rgbLocal}, pf)",
+        "element_or_byte_span": "std::span{rgbLocal}",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "src/ui/libraryzip.cpp",
+        "function": "CReadNative",
+        "original_call": "CReadNative(rgbLocalName, 1, wLocalNameLength, pf)",
+        "parent_line": 311,
+        "current_line": 311,
+        "current_call": "CReadNative(std::span{rgbLocalName, wLocalNameLength}, pf)",
+        "element_or_byte_span": "std::span{rgbLocalName, wLocalNameLength}",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "src/ui/libraryzip.cpp",
+        "function": "CReadNative",
+        "original_call": "CReadNative(rgbCompressed, 1, zc.cbCompressed, pf)",
+        "parent_line": 326,
+        "current_line": 326,
+        "current_call": "CReadNative(std::span{rgbCompressed, zc.cbCompressed}, pf)",
+        "element_or_byte_span": "std::span{rgbCompressed, zc.cbCompressed}",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "src/ui/libraryzip.cpp",
+        "function": "CWriteNative",
+        "original_call": "CWriteNative(rgbData, 1, zc.cbUncompressed, pfOutput)",
+        "parent_line": 344,
+        "current_line": 344,
+        "current_call": "CWriteNative(std::span{rgbData, zc.cbUncompressed}, pfOutput)",
+        "element_or_byte_span": "std::span{rgbData, zc.cbUncompressed}",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "src/host/host.cpp",
+        "function": "CReadNative",
+        "original_call": "CReadNative(pszText, 1, static_cast<std::size_t>(cb), pf)",
+        "parent_line": 55,
+        "current_line": 55,
+        "current_call": "CReadNative(std::span{pszText, static_cast<std::size_t>(cb)}, pf)",
+        "element_or_byte_span": "std::span{pszText, static_cast<std::size_t>(cb)}",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "src/platform/fileio.cpp",
+        "function": "CReadNative",
+        "original_call": "CReadNative(&ch, 1, 1, pf)",
+        "parent_line": 363,
+        "current_line": 359,
+        "current_call": "CReadNative(std::span{&ch, 1}, pf)",
+        "element_or_byte_span": "std::span{&ch, 1}",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "src/platform/fileio.cpp",
+        "function": "CWriteNative",
+        "original_call": "CWriteNative(&byte, 1, 1, pf)",
+        "parent_line": 364,
+        "current_line": 360,
+        "current_call": "CWriteNative(std::span{&byte, 1}, pf)",
+        "element_or_byte_span": "std::span{&byte, 1}",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "src/platform/fileio.cpp",
+        "function": "CWriteNative",
+        "original_call": "CWriteNative(psz, 1, cb, pf)",
+        "parent_line": 392,
+        "current_line": 388,
+        "current_call": "CWriteNative(std::span{psz, cb}, pf)",
+        "element_or_byte_span": "std::span{psz, cb}",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "src/platform/fileio.cpp",
+        "function": "CWriteNative",
+        "original_call": "CWriteNative(small, 1, cb, pf)",
+        "parent_line": 397,
+        "current_line": 393,
+        "current_call": "CWriteNative(std::span{small}.first(static_cast<std::size_t>(cb)), pf)",
+        "element_or_byte_span": "std::span{small}.first(static_cast<std::size_t>(cb))",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "src/platform/fileio.cpp",
+        "function": "CWriteNative",
+        "original_call": "CWriteNative(rgb.data(), 1, cb, pf)",
+        "parent_line": 402,
+        "current_line": 398,
+        "current_call": "CWriteNative(std::span{rgb}.first(static_cast<std::size_t>(cb)), pf)",
+        "element_or_byte_span": "std::span{rgb}.first(static_cast<std::size_t>(cb))",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "compat/win32/src/help.cpp",
+        "function": "CReadNative",
+        "original_call": "CReadNative(pszBody, 1, STARS_HELP_BUNDLE_SIZE, lpSource)",
+        "parent_line": 70,
+        "current_line": 70,
+        "current_call": "CReadNative(std::span{pszBody, static_cast<std::size_t>(STARS_HELP_BUNDLE_SIZE)}, lpSource)",
+        "element_or_byte_span": "std::span{pszBody, static_cast<std::size_t>(STARS_HELP_BUNDLE_SIZE)}",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "compat/win32/src/help.cpp",
+        "function": "CWriteNative",
+        "original_call": "CWriteNative(pszBody, 1, cbPrefix, lpTarget)",
+        "parent_line": 95,
+        "current_line": 95,
+        "current_call": "CWriteNative(std::span{pszBody, static_cast<std::size_t>(STARS_HELP_BUNDLE_SIZE)}.first(cbPrefix), lpTarget)",
+        "element_or_byte_span": "std::span{pszBody, static_cast<std::size_t>(STARS_HELP_BUNDLE_SIZE)}.first(cbPrefix)",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "compat/win32/src/help.cpp",
+        "function": "CWriteNative",
+        "original_call": "CWriteNative(pszMarker + sizeof(szMarker) - 1, 1, cbRead - cbPrefix - sizeof(szMarker) + 1, lpTarget)",
+        "parent_line": 97,
+        "current_line": 97,
+        "current_call": "CWriteNative(std::span{pszBody, cbRead}.subspan(cbPrefix + sizeof(szMarker) - 1), lpTarget)",
+        "element_or_byte_span": "std::span{pszBody, cbRead}.subspan(cbPrefix + sizeof(szMarker) - 1)",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "compat/win32/src/print.cpp",
+        "function": "CWriteNative",
+        "original_call": "CWriteNative(rgb, 1, cb, lp->lpfile.get())",
+        "parent_line": 126,
+        "current_line": 126,
+        "current_call": "CWriteNative(std::span{rgb, cb}, lp->lpfile.get())",
+        "element_or_byte_span": "std::span{rgb, cb}",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "compat/win32/src/filedialog_portal.cpp",
+        "function": "CReadNative",
+        "original_call": "CReadNative(rgbToken, 1, sizeof(rgbToken), lpRandom)",
+        "parent_line": 258,
+        "current_line": 258,
+        "current_call": "CReadNative(std::span{rgbToken}, lpRandom)",
+        "element_or_byte_span": "std::span{rgbToken}",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "compat/win32/src/inspect.cpp",
+        "function": "CWriteNative",
+        "original_call": "CWriteNative(rgb, 1, static_cast<std::size_t>((lpEnd - rgb)), lpfile)",
+        "parent_line": 174,
+        "current_line": 174,
+        "current_call": "CWriteNative(std::span{rgb}.first(static_cast<std::size_t>((lpEnd - rgb))), lpfile)",
+        "element_or_byte_span": "std::span{rgb}.first(static_cast<std::size_t>((lpEnd - rgb)))",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "tests/unit/test_encoding.cpp",
+        "function": "CWriteNative",
+        "original_call": "CWriteNative(szPadding, 1, sizeof(szPadding), pf)",
+        "parent_line": 213,
+        "current_line": 213,
+        "current_call": "CWriteNative(std::span{szPadding}, pf)",
+        "element_or_byte_span": "std::span{szPadding}",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "tests/unit/test_encoding.cpp",
+        "function": "CWriteNative",
+        "original_call": "CWriteNative(\"Title\\0hidden\\r\\n\", 1, 14, pf)",
+        "parent_line": 219,
+        "current_line": 219,
+        "current_call": "CWriteNative(std::span{\"Title\\0hidden\\r\\n\"}.first(14), pf)",
+        "element_or_byte_span": "std::span{\"Title\\0hidden\\r\\n\"}.first(14)",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "tests/unit/test_encoding.cpp",
+        "function": "CReadNative",
+        "original_call": "CReadNative(sz, 1, sizeof(sz) - 1, pf)",
+        "parent_line": 340,
+        "current_line": 340,
+        "current_call": "CReadNative(std::span{sz}.first(sizeof(sz) - 1), pf)",
+        "element_or_byte_span": "std::span{sz}.first(sizeof(sz) - 1)",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "tests/unit/test_native_ports.cpp",
+        "function": "CWriteNative",
+        "original_call": "CWriteNative(\"x\",1,1,pf)",
+        "parent_line": 556,
+        "current_line": 556,
+        "current_call": "CWriteNative(std::span{\"x\"}.first(1), pf)",
+        "element_or_byte_span": "std::span{\"x\"}.first(1)",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "tests/unit/test_native_files.cpp",
+        "function": "CWriteNative",
+        "original_call": "CWriteNative(\"metadata\", 1, 8, pf)",
+        "parent_line": 62,
+        "current_line": 62,
+        "current_call": "CWriteNative(std::span{\"metadata\"}.first(8), pf)",
+        "element_or_byte_span": "std::span{\"metadata\"}.first(8)",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "tests/compat/win32_fileworkflow.cpp",
+        "function": "CReadNative",
+        "original_call": "CReadNative(rgbLeft, 1, sizeof(rgbLeft), pfLeft)",
+        "parent_line": 63,
+        "current_line": 63,
+        "current_call": "CReadNative(std::span{rgbLeft}, pfLeft)",
+        "element_or_byte_span": "std::span{rgbLeft}",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "tests/compat/win32_fileworkflow.cpp",
+        "function": "CReadNative",
+        "original_call": "CReadNative(rgbRight, 1, sizeof(rgbRight), pfRight)",
+        "parent_line": 64,
+        "current_line": 64,
+        "current_call": "CReadNative(std::span{rgbRight}, pfRight)",
+        "element_or_byte_span": "std::span{rgbRight}",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "tests/compat/win32_fileworkflow.cpp",
+        "function": "CReadNative",
+        "original_call": "CReadNative(rgb, 1, sizeof(rgb), pfSource)",
+        "parent_line": 78,
+        "current_line": 78,
+        "current_call": "CReadNative(std::span{rgb}, pfSource)",
+        "element_or_byte_span": "std::span{rgb}",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "tests/compat/win32_fileworkflow.cpp",
+        "function": "CWriteNative",
+        "original_call": "CWriteNative(rgb, 1, cb, pfTarget)",
+        "parent_line": 79,
+        "current_line": 79,
+        "current_call": "CWriteNative(std::span{rgb}.first(cb), pfTarget)",
+        "element_or_byte_span": "std::span{rgb}.first(cb)",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "tests/compat/guard_ownership.cpp",
+        "function": "CWriteNative",
+        "original_call": "CWriteNative(rgb, cb, c, pf)",
+        "parent_line": 31,
+        "current_line": 31,
+        "current_call": "CbWriteNativeStream(rgb, pf)",
+        "element_or_byte_span": "rgb",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "tests/compat/win32_print.cpp",
+        "function": "CReadNative",
+        "original_call": "CReadNative(sz, 1, cb, lp)",
+        "parent_line": 52,
+        "current_line": 52,
+        "current_call": "CReadNative(std::span{sz}.first(cb), lp)",
+        "element_or_byte_span": "std::span{sz}.first(cb)",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "tests/compat/win32_inspect.cpp",
+        "function": "CReadNative",
+        "original_call": "CReadNative(sz, 1, sizeof(sz) - 1, lpfile)",
+        "parent_line": 71,
+        "current_line": 71,
+        "current_call": "CReadNative(std::span{sz}.first(sizeof(sz) - 1), lpfile)",
+        "element_or_byte_span": "std::span{sz}.first(sizeof(sz) - 1)",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "tests/compat/win32_inspect.cpp",
+        "function": "CReadNative",
+        "original_call": "CReadNative(sz, 1, sizeof(sz) - 1, lpfile)",
+        "parent_line": 143,
+        "current_line": 143,
+        "current_call": "CReadNative(std::span{sz}.first(sizeof(sz) - 1), lpfile)",
+        "element_or_byte_span": "std::span{sz}.first(sizeof(sz) - 1)",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "function": "CWriteNative",
+        "original_call": "CWriteNative(rgb, 1, sizeof(rgb), temp)",
+        "parent_line": 17,
+        "current_line": 18,
+        "current_call": "CWriteNative(std::span{rgb}, temp)",
+        "element_or_byte_span": "std::span{rgb}",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "function": "CReadNative",
+        "original_call": "CReadNative(out,2,4,pf)",
+        "parent_line": 38,
+        "current_line": 39,
+        "current_call": "CReadNative(std::span{rgwOut}, pf)",
+        "element_or_byte_span": "std::span{rgwOut}",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "function": "CReadNative",
+        "original_call": "CReadNative(out,1,8,pf)",
+        "parent_line": 50,
+        "current_line": 51,
+        "current_call": "CReadNative(std::span{out}.first(8), pf)",
+        "element_or_byte_span": "std::span{out}.first(8)",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "function": "CWriteNative",
+        "original_call": "CWriteNative(\"abc\",1,3,pf)",
+        "parent_line": 88,
+        "current_line": 89,
+        "current_call": "CWriteNative(std::span{\"abc\"}.first(3), pf)",
+        "element_or_byte_span": "std::span{\"abc\"}.first(3)",
+        "origin": "pre-migration characterization call"
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "function": "CReadNative",
+        "original_call": "CReadNative(&word,sizeof(word),1,pf)",
+        "parent_line": 89,
+        "current_line": 90,
+        "current_call": "CReadNative(std::span{&word, 1}, pf)",
+        "element_or_byte_span": "std::span{&word, 1}",
+        "origin": "pre-migration characterization call"
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "function": "CWriteNative",
+        "original_call": "CWriteNative(words,sizeof(words[0]),2,pf)",
+        "parent_line": 93,
+        "current_line": 94,
+        "current_call": "CWriteNative(std::span{words}, pf)",
+        "element_or_byte_span": "std::span{words}",
+        "origin": "pre-migration characterization call"
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "function": "CReadNative",
+        "original_call": "CReadNative(actual,1,sizeof(actual),pf)",
+        "parent_line": 106,
+        "current_line": 107,
+        "current_call": "CReadNative(std::span{actual}, pf)",
+        "element_or_byte_span": "std::span{actual}",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "tests/compat/native_publication.cpp",
+        "function": "CWriteNative",
+        "original_call": "CWriteNative(pszText, 1, std::strlen(pszText), pf)",
+        "parent_line": 35,
+        "current_line": 35,
+        "current_call": "CWriteNative(std::span{pszText, std::strlen(pszText)}, pf)",
+        "element_or_byte_span": "std::span{pszText, std::strlen(pszText)}",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "tests/compat/win32_utf8.cpp",
+        "function": "CReadNative",
+        "original_call": "CReadNative(szJson, 1, sizeof(szJson) - 1, pf)",
+        "parent_line": 146,
+        "current_line": 146,
+        "current_call": "CReadNative(std::span{szJson}.first(sizeof(szJson) - 1), pf)",
+        "element_or_byte_span": "std::span{szJson}.first(sizeof(szJson) - 1)",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "tests/compat/win32_client_startup.cpp",
+        "function": "CReadNative",
+        "original_call": "CReadNative(rgb, 1, sizeof(rgb), pfSource)",
+        "parent_line": 43,
+        "current_line": 43,
+        "current_call": "CReadNative(std::span{rgb}, pfSource)",
+        "element_or_byte_span": "std::span{rgb}",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "tests/compat/win32_client_startup.cpp",
+        "function": "CWriteNative",
+        "original_call": "CWriteNative(rgb, 1, cb, pfTarget)",
+        "parent_line": 44,
+        "current_line": 44,
+        "current_call": "CWriteNative(std::span{rgb}.first(cb), pfTarget)",
+        "element_or_byte_span": "std::span{rgb}.first(cb)",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "tests/compat/win32_client_startup.cpp",
+        "function": "CWriteNative",
+        "original_call": "CWriteNative(pszText, 1, cbText, pf)",
+        "parent_line": 57,
+        "current_line": 57,
+        "current_call": "CWriteNative(std::span{pszText, cbText}, pf)",
+        "element_or_byte_span": "std::span{pszText, cbText}",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "tests/compat/win32_client_startup.cpp",
+        "function": "CReadNative",
+        "original_call": "CReadNative(rgb1, 1, sizeof(rgb1), pfFile1)",
+        "parent_line": 73,
+        "current_line": 73,
+        "current_call": "CReadNative(std::span{rgb1}, pfFile1)",
+        "element_or_byte_span": "std::span{rgb1}",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "tests/compat/win32_client_startup.cpp",
+        "function": "CReadNative",
+        "original_call": "CReadNative(rgb2, 1, sizeof(rgb2), pfFile2)",
+        "parent_line": 74,
+        "current_line": 74,
+        "current_call": "CReadNative(std::span{rgb2}, pfFile2)",
+        "element_or_byte_span": "std::span{rgb2}",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "tests/compat/win32_client_startup.cpp",
+        "function": "CReadNative",
+        "original_call": "CReadNative(szExport, 1, sizeof(szExport) - 1, lpfile)",
+        "parent_line": 385,
+        "current_line": 385,
+        "current_call": "CReadNative(std::span{szExport}.first(sizeof(szExport) - 1), lpfile)",
+        "element_or_byte_span": "std::span{szExport}.first(sizeof(szExport) - 1)",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "tests/witnesses/s02_io.cpp",
+        "function": "CWriteNative",
+        "original_call": "CWriteNative(fixture[i], 1, strlen(fixture[i]), pf)",
+        "parent_line": 30,
+        "current_line": 30,
+        "current_call": "CWriteNative(std::span{fixture[i], strlen(fixture[i])}, pf)",
+        "element_or_byte_span": "std::span{fixture[i], strlen(fixture[i])}",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "tests/witnesses/library_copy.cpp",
+        "function": "CReadNative",
+        "original_call": "CReadNative(data, size, count, f)",
+        "parent_line": 18,
+        "current_line": 18,
+        "current_call": "CbReadNativeStream(data, f)",
+        "element_or_byte_span": "data",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "tests/witnesses/library_copy.cpp",
+        "function": "CWriteNative",
+        "original_call": "CWriteNative(data, size, faults & 2 ? count / 2 : count, f)",
+        "parent_line": 20,
+        "current_line": 20,
+        "current_call": "CbWriteNativeStream(faults & 2 ? data.first(data.size() / 2) : data, f)",
+        "element_or_byte_span": "faults & 2 ? data.first(data.size() / 2) : data",
+        "origin": "existing parent call"
+      },
+      {
+        "path": "tests/compat/win32_profile.inc",
+        "function": "CReadNative",
+        "original_call": "CReadNative(sz, 1, 3, fp)",
+        "parent_line": 75,
+        "current_line": 75,
+        "current_call": "CReadNative(std::span{sz}.first(3), fp)",
+        "element_or_byte_span": "std::span{sz}.first(3)",
+        "origin": "existing parent call"
+      }
+    ],
+    "provider_invocations": [
+      {
+        "path": "src/ui/libraryui.cpp",
+        "function": "LibraryFileIO().pfnRead",
+        "span": "std::as_writable_bytes(std::span{rgb})"
+      },
+      {
+        "path": "src/ui/libraryui.cpp",
+        "function": "LibraryFileIO().pfnWrite",
+        "span": "std::as_bytes(std::span{rgb}).first(cb)"
+      },
+      {
+        "path": "compat/win32/src/profile_save.cpp",
+        "function": "io.pfnWrite",
+        "span": "std::as_bytes(std::span{\"\\xef\\xbb\\xbf\"}).first(3)"
+      }
+    ],
+    "verification": {
+      "batch": "L06f typed element streams and concrete byte-span providers",
+      "debug_build": "Pass; no new warnings; 161 standalone headers compile in both include orders; compiler/source policy passes for 158 owned sources and 159 variants.",
+      "desktop": "153/153, including actual library/profile fault providers, all 29 leak checks and available SDL tutorial checkpoints.",
+      "host_units": "28/28",
+      "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+      "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+      "windows": "All 147 owned production units and 14 selected test translation units compile with strict MinGW; the Linux-only inspector fixture also compiles using peer wrapper flags. Actual Windows file tests (3 cases), encoding tests (8), recovery tests (12) and the standalone file-service contract pass under Wine. Native Windows desktop and actual Linux qualification remain pending.",
+      "reference_tests": "The pre-migration host Release contract passed the new incomplete uint32 read and multi-element write checks. Final typed spans preserve complete-element counts, partial-prefix bytes, untouched tail, stream position and EOF. Existing byte/uint16, profile failure-stage, nesting/thread, copy fault and exception checks pass.",
+      "interfaces": "59 existing direct calls and three pre-migration reference calls use typed element spans or concrete byte spans. Three additional actual provider invocations and four provider callbacks use the same byte contract. Old void-pointer/size/count overloads removed.",
+      "inventory_correction": "First Debug build found a caller in win32_profile.inc missed by the initial cpp-only search. Migrated it, searched all source extensions and qualified its profile translation unit. Final full build and tests pass.",
+      "baseline": "Behavior-neutral. No regression baseline or frozen original fixture changed; no scenario/checkpoint moved. Record layouts, element widths, wire bytes, UTF-8 limits, RNG, canonical models and unit goldens unchanged; no regression export required.",
+      "remaining": "Memory-source/batch audits, stream modes, paths/results, text-writer boundary and Milestone D remain active; L05 text work and L08 final qualification remain open.",
+      "receipts": "dist/verification/live-cpp/l06f/"
     }
   }
 }

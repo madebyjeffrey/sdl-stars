@@ -171,7 +171,7 @@ static BOOL FWriteString(NATIVEFILE *lpfile, const char *psz, BOOL fUtf8) {
             if (CchNativePrintf(lpfile, "\\u%04x", static_cast<unsigned>(ch)) < 0) return 0;
         } else {
             lpEnd = SDL_UCS4ToUTF8(ch, rgb);
-            if (CWriteNative(rgb, 1, static_cast<std::size_t>((lpEnd - rgb)), lpfile) != static_cast<std::size_t>((lpEnd - rgb))) return 0;
+            if (CWriteNative(std::span{rgb}.first(static_cast<std::size_t>((lpEnd - rgb))), lpfile) != static_cast<std::size_t>((lpEnd - rgb))) return 0;
         }
     }
     return ChPutNativeFile('"', lpfile) != EOF;

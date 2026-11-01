@@ -40,8 +40,8 @@ static BOOL FTestCopyFile(const char *pszSource, const char *pszTarget) {
     pfTarget = PfNativeOpen(pszTarget, "wb");
     if (!pfTarget) { ICloseNativeFile(pfSource); return 0; }
     fOkay = 1;
-    while ((cb = CReadNative(rgb, 1, sizeof(rgb), pfSource)) != 0)
-        if (CWriteNative(rgb, 1, cb, pfTarget) != cb) { fOkay = 0; break; }
+    while ((cb = CReadNative(std::span{rgb}, pfSource)) != 0)
+        if (CWriteNative(std::span{rgb}.first(cb), pfTarget) != cb) { fOkay = 0; break; }
     if (FNativeStreamError(pfSource)) fOkay = 0;
     if (ICloseNativeFile(pfSource) != 0) fOkay = 0;
     if (ICloseNativeFile(pfTarget) != 0) fOkay = 0;
@@ -54,7 +54,7 @@ static BOOL FTestWriteFile(const char *pszFile, const char *pszText) {
     BOOL fOkay;
     pf = PfNativeOpen(pszFile, "wb");
     if (!pf) return 0;
-    fOkay = CWriteNative(pszText, 1, cbText, pf) == cbText;
+    fOkay = CWriteNative(std::span{pszText, cbText}, pf) == cbText;
     if (ICloseNativeFile(pf) != 0) fOkay = 0;
     return fOkay;
 }
@@ -70,8 +70,8 @@ static BOOL FTestFilesEqual(const char *pszFile1, const char *pszFile2) {
     if (!pfFile2) { ICloseNativeFile(pfFile1); return 0; }
     fEqual = 1;
     do {
-        cb1 = CReadNative(rgb1, 1, sizeof(rgb1), pfFile1);
-        cb2 = CReadNative(rgb2, 1, sizeof(rgb2), pfFile2);
+        cb1 = CReadNative(std::span{rgb1}, pfFile1);
+        cb2 = CReadNative(std::span{rgb2}, pfFile2);
         if (cb1 != cb2 || memcmp(rgb1, rgb2, cb1) != 0) { fEqual = 0; break; }
     } while (cb1 != 0);
     if (FNativeStreamError(pfFile1) || FNativeStreamError(pfFile2)) fEqual = 0;
@@ -382,7 +382,7 @@ static BOOL FCheckMapInspection(APPSESSION &app) {
     lpfile = PfNativeTemporary();
     if (!lpfile) goto LDone;
     if (!FWriteScannerSnapshot(&fresh, lpfile)) { ICloseNativeFile(lpfile); goto LDone; }
-    ISeekNativeFile(lpfile, 0, NATIVESEEKORIGIN::begin); cb = CReadNative(szExport, 1, sizeof(szExport) - 1, lpfile); szExport[cb] = 0; ICloseNativeFile(lpfile);
+    ISeekNativeFile(lpfile, 0, NATIVESEEKORIGIN::begin); cb = CReadNative(std::span{szExport}.first(sizeof(szExport) - 1), lpfile); szExport[cb] = 0; ICloseNativeFile(lpfile);
     if (!strstr(szExport, "\xc3\xa9\xe2\x82\xac") || !strstr(szExport, "\\u000d\\u000a")) goto LDone;
     memcpy(fresh.rgobj[0].szName, szNameSav, sizeof(szNameSav));
     if (pszCapture) {

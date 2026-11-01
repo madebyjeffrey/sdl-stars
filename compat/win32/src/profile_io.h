@@ -19,7 +19,7 @@ struct PROFILEIO {
     decltype(&CbGetNativeLine) pfnReadLine = CbGetNativeLine;
     decltype(&PfNativeCreateTemp) pfnCreateTemp = PfNativeCreateTemp;
     decltype(&ICopyNativePermissions) pfnCopyPermissions = ICopyNativePermissions;
-    decltype(&CWriteNative) pfnWrite = CWriteNative;
+    decltype(&CbWriteNativeStream) pfnWrite = CbWriteNativeStream;
     decltype(&IPutNativeString) pfnPutString = IPutNativeString;
     decltype(&ChPutNativeFile) pfnPutChar = ChPutNativeFile;
     decltype(&IFlushNativeFile) pfnFlush = IFlushNativeFile;

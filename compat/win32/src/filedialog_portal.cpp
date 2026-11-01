@@ -255,7 +255,7 @@ int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFol
     lpRandom = PfNativeOpen("/dev/urandom", "rb");
     randomOwner.reset(lpRandom);
     if (!lpRandom) goto done;
-    if (CReadNative(rgbToken, 1, sizeof(rgbToken), lpRandom) != sizeof(rgbToken)) { randomOwner.reset(); goto done; }
+    if (CReadNative(std::span{rgbToken}, lpRandom) != sizeof(rgbToken)) { randomOwner.reset(); goto done; }
     randomOwner.reset();
     std::strcpy(szToken, "stars_");
     for (i = 0; i < 16; i++) std::snprintf(szToken + 6 + i * 2, 3, "%02x", rgbToken[i]);

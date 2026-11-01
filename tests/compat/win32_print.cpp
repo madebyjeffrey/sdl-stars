@@ -49,7 +49,7 @@ static int FPrefix(const char *pszFile, const char *psz) {
     size_t cb = strlen(psz), cbRead;
     if (!lp) return 0;
     if (cb > sizeof(sz)) { ICloseNativeFile(lp); return 0; }
-    cbRead = CReadNative(sz, 1, cb, lp); ICloseNativeFile(lp); return cbRead == cb && memcmp(sz, psz, cb) == 0;
+    cbRead = CReadNative(std::span{sz}.first(cb), lp); ICloseNativeFile(lp); return cbRead == cb && memcmp(sz, psz, cb) == 0;
 }
 extern "C" bool SDLCALL StarsTest_SDL_OpenURL(const char *pszUri) {
     cViewer++;

@@ -294,34 +294,30 @@ std::optional<std::size_t> CbWriteNativeFile(NATIVEFILE *pf, std::span<const std
     });
 }
 
-std::size_t CReadNative(void *rgb, std::size_t cb, std::size_t c, NATIVEFILE *pf) {
-    if (!pf || cb == 0 || c == 0) return 0;
-    if (c > SIZE_MAX / cb) { pf->Fail(EOVERFLOW); return 0; }
+std::size_t CbReadNativeStream(std::span<std::byte> rgb, NATIVEFILE *pf) {
+    if (!pf || rgb.empty()) return 0;
     if (pf->fEof) return 0;
-    if (!rgb) { errno = EBADF; return 0; }
-    std::size_t total = 0, requested = cb * c;
+    std::size_t total = 0, requested = rgb.size();
     while (total < requested && !pf->fEof) {
         std::uint64_t errorsBefore = pf->cErrors;
-        const auto got = CbReadNativeFile(pf, std::span{static_cast<std::byte *>(rgb), requested}.subspan(total));
+        const auto got = CbReadNativeFile(pf, rgb.subspan(total));
         if (!got || *got == 0) break;
         total += *got;
         if (pf->cErrors != errorsBefore) break;
     }
-    return total / cb;
+    return total;
 }
-std::size_t CWriteNative(const void *rgb, std::size_t cb, std::size_t c, NATIVEFILE *pf) {
-    if (!pf || cb == 0 || c == 0) return 0;
-    if (c > SIZE_MAX / cb) { pf->Fail(EOVERFLOW); return 0; }
-    if (!rgb) { errno = EBADF; return 0; }
-    std::size_t total = 0, requested = cb * c;
+std::size_t CbWriteNativeStream(std::span<const std::byte> rgb, NATIVEFILE *pf) {
+    if (!pf || rgb.empty()) return 0;
+    std::size_t total = 0, requested = rgb.size();
     while (total < requested) {
         std::uint64_t errorsBefore = pf->cErrors;
-        const auto put = CbWriteNativeFile(pf, std::span{static_cast<const std::byte *>(rgb), requested}.subspan(total));
+        const auto put = CbWriteNativeFile(pf, rgb.subspan(total));
         if (!put || *put == 0) break;
         total += *put;
         if (pf->cErrors != errorsBefore) break;
     }
-    return total / cb;
+    return total;
 }
 std::int64_t LSeekNativeFile(NATIVEFILE *pf, std::int64_t ib, NATIVESEEKORIGIN origin) {
     if (!pf) { errno = EBADF; return -1; }
@@ -360,8 +356,8 @@ int ISyncNativeFile(NATIVEFILE *pf) {
 }
 int FNativeStreamError(NATIVEFILE *pf) { return !pf || pf->fError; }
 int FNativeStreamEof(NATIVEFILE *pf) { return pf && pf->fEof; }
-int ChGetNativeFile(NATIVEFILE *pf) { unsigned char ch; return CReadNative(&ch, 1, 1, pf) == 1 ? ch : EOF; }
-int ChPutNativeFile(int ch, NATIVEFILE *pf) { unsigned char byte = static_cast<unsigned char>(ch); return CWriteNative(&byte, 1, 1, pf) == 1 ? byte : EOF; }
+int ChGetNativeFile(NATIVEFILE *pf) { unsigned char ch; return CReadNative(std::span{&ch, 1}, pf) == 1 ? ch : EOF; }
+int ChPutNativeFile(int ch, NATIVEFILE *pf) { unsigned char byte = static_cast<unsigned char>(ch); return CWriteNative(std::span{&byte, 1}, pf) == 1 ? byte : EOF; }
 char *PszGetNativeLine(char *psz, int cb, NATIVEFILE *pf) {
     if (!psz || cb <= 0 || !pf) { errno = EINVAL; return nullptr; }
     int i = 0, ch;
@@ -389,17 +385,17 @@ std::int64_t CbGetNativeLine(char **ppsz, std::size_t *pcb, NATIVEFILE *pf) {
     (*ppsz)[cb] = 0;
     return static_cast<std::int64_t>(cb);
 }
-int IPutNativeString(const char *psz, NATIVEFILE *pf) { std::size_t cb = std::strlen(psz); return CWriteNative(psz, 1, cb, pf) == cb ? 0 : EOF; }
+int IPutNativeString(const char *psz, NATIVEFILE *pf) { std::size_t cb = std::strlen(psz); return CWriteNative(std::span{psz, cb}, pf) == cb ? 0 : EOF; }
 int CchNativePrintfFields(NATIVEFILE *pf, std::string_view fmt, std::span<const NATIVEFORMATARG> args) {
     char small[2048];
     int cb = CchFormatNative(small, fmt, args);
     int ret = -1;
-    if (cb >= 0 && static_cast<std::size_t>(cb) < sizeof(small)) ret = CWriteNative(small, 1, cb, pf) == static_cast<std::size_t>(cb) ? cb : -1;
+    if (cb >= 0 && static_cast<std::size_t>(cb) < sizeof(small)) ret = CWriteNative(std::span{small}.first(static_cast<std::size_t>(cb)), pf) == static_cast<std::size_t>(cb) ? cb : -1;
     else if (cb >= 0) {
         ret = FileCall(pf, -1, [&] {
             std::vector<char> rgb(static_cast<std::size_t>(cb) + 1);
             if (CchFormatNative(rgb, fmt, args) < 0) return -1;
-            return CWriteNative(rgb.data(), 1, cb, pf) == static_cast<std::size_t>(cb) ? cb : -1;
+            return CWriteNative(std::span{rgb}.first(static_cast<std::size_t>(cb)), pf) == static_cast<std::size_t>(cb) ? cb : -1;
         });
     }
     return ret;

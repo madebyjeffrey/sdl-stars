@@ -59,7 +59,7 @@ static void TestNativeFiles(void) {
     {
         NATIVEFILE *pf = PfOpenNativeFile(szMetaTemp, "wb");
         TEST_ASSERT(pf);
-        TEST_CHECK(CWriteNative("metadata", 1, 8, pf) == 8 && ICloseNativeFile(pf) == 0);
+        TEST_CHECK(CWriteNative(std::span{"metadata"}.first(8), pf) == 8 && ICloseNativeFile(pf) == 0);
     }
     TEST_CHECK(ReplaceNativeFile(szMetaTemp, szMeta) == 0 && FNativeFileSize(szMeta, &cbNativeFile) && cbNativeFile == 8);
     TEST_CHECK(RemoveNativeFile(szMeta) == 0);

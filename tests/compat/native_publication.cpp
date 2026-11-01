@@ -32,7 +32,7 @@ static int FWrite(const char *psz, const char *pszText) {
     int         fWritten;
     if (!pf)
         return 0;
-    fWritten = CWriteNative(pszText, 1, std::strlen(pszText), pf) == std::strlen(pszText);
+    fWritten = CWriteNative(std::span{pszText, std::strlen(pszText)}, pf) == std::strlen(pszText);
     return ICloseNativeFile(pf) == 0 && fWritten;
 }
 #define CHECK(f)                                                                                                                                               \

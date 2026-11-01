@@ -27,7 +27,7 @@ static NATIVEFILE *OpenFixture(const char *, const char *) {
     if (!pf)
         return nullptr;
     for (unsigned i = 0; fixture[i]; i++)
-        if (CWriteNative(fixture[i], 1, strlen(fixture[i]), pf) != strlen(fixture[i])) {
+        if (CWriteNative(std::span{fixture[i], strlen(fixture[i])}, pf) != strlen(fixture[i])) {
             ICloseNativeFile(pf);
             return nullptr;
         }
