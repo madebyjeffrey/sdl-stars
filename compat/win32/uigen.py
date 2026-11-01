@@ -210,7 +210,7 @@ def generate(root, output):
     source += ['constinit const COMPATRESOURCE rgCompatUIResources[] = {']
     manifest += ['static const struct { LPCSTR pszName, pszType; const BYTE *rgb; DWORD cb; } rgUIManifest[] = {']
     for i, (t, n, _) in enumerate(resources):
-        name = 'NULL' if isinstance(n, int) else f'"{n}"'
+        name = 'nullptr' if isinstance(n, int) else f'"{n}"'
         number = n if isinstance(n, int) else 0
         ident = f'MAKEINTRESOURCE({n})' if isinstance(n, int) else f'"{n}"'
         source += [f'    {{{name}, {number}, rgbUIResource{i}, sizeof(rgbUIResource{i}), {t}}},']

@@ -19,7 +19,7 @@ INT_PTR  RandomSeedDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
 
     switch (message) {
     case win32::WM_INITDIALOG:
-        ControlIO().pfnSetWindowPos(hwnd, NULL, 256, 256, 0, 0, win32::SWP_NOSIZE | win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
+        ControlIO().pfnSetWindowPos(hwnd, nullptr, 256, 256, 0, 0, win32::SWP_NOSIZE | win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
         ui::SendDlgItemMessage(hwnd, IDC_EDIT1, win32::EM_LIMITTEXT, 0x1f, 0);
         return 1;
     case win32::WM_ERASEBKGND:
@@ -215,7 +215,7 @@ void RightTextOut(APPSESSION &app, HDC hdc, int16_t x, int16_t y, const char *ps
         win32::FillRect(hdc, &rc, app.lpui->hbrButtonFace);
     } else if (dxErase > 0 && dx > dxErase) {
         win32::SetRect(&rc, x - dxErase, y, x, y + app.state.dyArial8);
-        win32::ExtTextOutA(hdc, x - dx, y, win32::ETO_OPAQUE | win32::ETO_CLIPPED, &rc, psz, cLen, NULL);
+        win32::ExtTextOutA(hdc, x - dx, y, win32::ETO_OPAQUE | win32::ETO_CLIPPED, &rc, psz, cLen, nullptr);
         return;
     }
     win32::TextOutA(hdc, x - dx, y, psz, cLen);
@@ -351,7 +351,7 @@ void StickyDlgPos(HWND hwnd, POINT16 *ppt, int16_t fInit) {
                 rc.top = 0;
             }
         }
-        ControlIO().pfnSetWindowPos(hwnd, NULL, rc.left, rc.top, 0, 0, win32::SWP_NOSIZE | win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
+        ControlIO().pfnSetWindowPos(hwnd, nullptr, rc.left, rc.top, 0, 0, win32::SWP_NOSIZE | win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
     }
     return;
 }
@@ -435,7 +435,7 @@ void _Draw3dFrame(APPSESSION &app, HDC hdc, RECT *prc, int16_t fErase) {
 
 void InitBtnTrack(BTNT *pbtnt, HWND hwnd, HDC hdc, RECT *prc, int16_t btf, int16_t dTimer, int16_t fInitDown, int16_t fNoEndRedraw, const char *szText) {
     pbtnt->hwnd = hwnd;
-    pbtnt->fCreatedDC = hdc == NULL;
+    pbtnt->fCreatedDC = hdc == nullptr;
     if (!hdc) {
         hdc = win32::GetDC(hwnd);
     }
@@ -672,7 +672,7 @@ void DrawBtn(APPSESSION &app, HDC hdc, RECT *prc, int16_t bt, int16_t fDown, con
 int16_t FGetMouseMove(POINT16 *ppt) {
     win32::MSG msg;
 
-    while (ui::PeekMessage(&msg, NULL, 0, 0, 1)) {
+    while (ui::PeekMessage(&msg, nullptr, 0, 0, 1)) {
         if (msg.message == win32::WM_MOUSEMOVE || msg.message == win32::WM_LBUTTONUP) {
             ppt->x = LOWORD(msg.lParam);
             ppt->y = HIWORD(msg.lParam);
@@ -688,7 +688,7 @@ int16_t FGetMouseMove(POINT16 *ppt) {
 int16_t FGetRMouseMove(POINT16 *ppt) {
     win32::MSG msg;
 
-    while (ui::PeekMessage(&msg, NULL, 0, 0, 1)) {
+    while (ui::PeekMessage(&msg, nullptr, 0, 0, 1)) {
         if (msg.message == win32::WM_MOUSEMOVE || msg.message == win32::WM_RBUTTONUP) {
             ppt->x = LOWORD(msg.lParam);
             ppt->y = HIWORD(msg.lParam);
@@ -759,7 +759,7 @@ HBRUSH HbrGet(APPSESSION &app, COLORREF cr) {
     }
     hbr = win32::CreateSolidBrush(cr);
     if (!hbr) {
-        return NULL;
+        return nullptr;
     }
     if (iFree == -1) {
         if (app.lpui->chbrCache >= 32) {
@@ -833,13 +833,13 @@ HPALETTE HpalFromDib(HGLOBAL hdib) {
 
     lpb = (char *)win32::LockResource(hdib);
     if (!lpb) {
-        return NULL;
+        return nullptr;
     }
     lpbi = (BITMAPINFOHEADER *)lpb;
     cColors = DibNumColors(lpbi);
     if (cColors > 256) {
         win32::GlobalUnlock(hdib);
-        return NULL;
+        return nullptr;
     }
     ppal = (LOGPALETTE *)win32::LocalAlloc(64, cColors * 4 + 8);
     ppalOwner.reset(ppal);
@@ -910,7 +910,7 @@ int16_t DibBlt(HDC hdc, int16_t x0, int16_t y0, int16_t dx, int16_t dy, HGLOBAL 
 }
 
 HGLOBAL DibFromBitmap(HBITMAP hbm, uint32_t biStyle, uint16_t biBits, HPALETTE hpal) {
-    HDC               hdc = NULL;
+    HDC               hdc = nullptr;
     HGLOBAL           h;
     uint32_t          dwLen;
     BITMAP            bm;
@@ -920,7 +920,7 @@ HGLOBAL DibFromBitmap(HBITMAP hbm, uint32_t biStyle, uint16_t biBits, HPALETTE h
     NATIVECLEANUPSCOPE dc([&]() noexcept {
         if (hdc) {
             win32::SelectPalette(hdc, hpal, 0);
-            win32::ReleaseDC(NULL, hdc);
+            win32::ReleaseDC(nullptr, hdc);
         }
     });
     NATIVEOWNER<void, win32::GlobalFree> dib;
@@ -929,7 +929,7 @@ HGLOBAL DibFromBitmap(HBITMAP hbm, uint32_t biStyle, uint16_t biBits, HPALETTE h
 
 
     if (!hbm) {
-        return NULL;
+        return nullptr;
     }
     if (!hpal) {
         hpal = (HPALETTE)win32::GetStockObject(win32::DEFAULT_PALETTE);
@@ -950,17 +950,17 @@ HGLOBAL DibFromBitmap(HBITMAP hbm, uint32_t biStyle, uint16_t biBits, HPALETTE h
     bi.biClrUsed = 0;
     bi.biClrImportant = 0;
     dwLen = (uint32_t)PaletteSize(&bi) + bi.biSize;
-    hdc = win32::GetDC(NULL);
+    hdc = win32::GetDC(nullptr);
     hpal = win32::SelectPalette(hdc, hpal, 0);
     win32::RealizePalette(hdc);
     hdib = win32::GlobalAlloc(66, dwLen);
     dib.reset(hdib);
     if (!hdib) {
-        return NULL;
+        return nullptr;
     }
-    lpbi = (BITMAPINFOHEADER *)win32::GlobalLock(hdib); fLocked = lpbi != NULL;
+    lpbi = (BITMAPINFOHEADER *)win32::GlobalLock(hdib); fLocked = lpbi != nullptr;
     *lpbi = bi;
-    win32::GetDIBits(hdc, hbm, 0, LOWORD(bi.biHeight), NULL, (BITMAPINFO *)lpbi, 0);
+    win32::GetDIBits(hdc, hbm, 0, LOWORD(bi.biHeight), nullptr, (BITMAPINFO *)lpbi, 0);
     bi = *lpbi;
     win32::GlobalUnlock(hdib); fLocked = false;
     if (bi.biSizeImage == 0) {
@@ -975,16 +975,16 @@ HGLOBAL DibFromBitmap(HBITMAP hbm, uint32_t biStyle, uint16_t biBits, HPALETTE h
         dib.release();
         hdib = h;
         dib.reset(hdib);
-        lpbi = (BITMAPINFOHEADER *)win32::GlobalLock(hdib); fLocked = lpbi != NULL;
+        lpbi = (BITMAPINFOHEADER *)win32::GlobalLock(hdib); fLocked = lpbi != nullptr;
         if (win32::GetDIBits(hdc, hbm, 0, LOWORD(bi.biHeight), (uint8_t *)lpbi + LOWORD(lpbi->biSize) + PaletteSize(lpbi), (BITMAPINFO *)lpbi, 0) == 0) {
             win32::GlobalUnlock(hdib); fLocked = false;
-            return NULL;
+            return nullptr;
         }
         bi = *lpbi;
         win32::GlobalUnlock(hdib); fLocked = false;
         return dib.release();
     }
-    return NULL;
+    return nullptr;
 }
 
 HGLOBAL HdibLoadBigResource(APPSESSION &app, BitmapId idb) {
@@ -999,21 +999,21 @@ HGLOBAL HdibLoadBigResource(APPSESSION &app, BitmapId idb) {
 
     hrsrc = win32::FindResourceA(app.lpui->hInst, win32::MAKEINTRESOURCE(idb), win32::MAKEINTRESOURCE(2));
     if (hrsrc == 0) {
-        return NULL;
+        return nullptr;
     }
     hres = win32::LoadResource(app.lpui->hInst, hrsrc);
     if (!hres) {
-        return NULL;
+        return nullptr;
     }
     lpstr = (char *)win32::LockResource(hres);
     if (!lpstr) {
-        return NULL;
+        return nullptr;
     }
     /* A writable copy: the original read the resource into its own block. */
     cb = win32::SizeofResource(app.lpui->hInst, hrsrc);
     hdib = win32::GlobalAlloc(win32::GMEM_FIXED, cb);
     if (!hdib) {
-        return NULL;
+        return nullptr;
     }
     memcpy((char *)hdib, lpstr, cb);
     // Embedded bytes become actual native GDI headers in the writable copy.
@@ -1075,7 +1075,7 @@ INT_PTR  PasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 } else {
                     app.lpui->vcPasswordFailures++;
                     Delay(app.lpui->vcPasswordFailures < 10 ? 1000 : app.lpui->vcPasswordFailures < 100 ? 5000 : 10000);
-                    AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsPasswordHaveEnteredIncorrectPleaseTry, NULL), win32::MB_ICONHAND);
+                    AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsPasswordHaveEnteredIncorrectPleaseTry, nullptr), win32::MB_ICONHAND);
                     ControlIO().pfnSetFocus(ControlIO().pfnGetDlgItem(hwnd, IDC_EDIT1));
                     ui::SendDlgItemMessage(hwnd, IDC_EDIT1, win32::EM_SETSEL, 0, -1);
                     break;
@@ -1147,7 +1147,7 @@ INT_PTR  NewPasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 }
                 lSalt2 = LSaltFromSz(szPassConfirm);
                 if (lSalt != lSalt2) {
-                    AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsPasswordsTypedTwoFieldsSamePleaseReenter, NULL), win32::MB_ICONHAND);
+                    AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsPasswordsTypedTwoFieldsSamePleaseReenter, nullptr), win32::MB_ICONHAND);
                     ControlIO().pfnSetFocus(ControlIO().pfnGetDlgItem(hwnd, IDC_EDIT1));
                     ui::SendDlgItemMessage(hwnd, IDC_EDIT1, win32::EM_SETSEL, 0, -1);
                     break;
@@ -1165,7 +1165,7 @@ INT_PTR  NewPasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                     if (FWriteDataFile(app, app.state.szBase, app.state.idPlayer, 0)) {
                         app.state.lSaltLast = lSalt;
                     } else {
-                        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableCreateHostFile, NULL), win32::MB_ICONHAND);
+                        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableCreateHostFile, nullptr), win32::MB_ICONHAND);
                         app.state.lSaltCur = app.state.lSaltLast;
                     }
                 }
@@ -1228,7 +1228,7 @@ INT_PTR  ProgressGaugeDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
         win32::GetWindowRect(hwnd, &rc);
         rc.left = (dx - (rc.right - rc.left)) >> 1;
         rc.top = (dy - (rc.bottom - rc.top)) >> 1;
-        ControlIO().pfnSetWindowPos(hwnd, NULL, rc.left, rc.top, 0, 0, win32::SWP_NOSIZE | win32::SWP_NOZORDER);
+        ControlIO().pfnSetWindowPos(hwnd, nullptr, rc.left, rc.top, 0, 0, win32::SWP_NOSIZE | win32::SWP_NOZORDER);
         return 1;
     case win32::WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
@@ -1373,7 +1373,7 @@ void UpdateProgressGauge(APPSESSION &app, ProgressStep pctX10) {
             pctX10 = static_cast<ProgressStep>(app.lpui->vpctProgressGauge);
         }
         app.lpui->vpctProgressGauge = pctX10;
-        DrawProgressGauge(app, NULL, 0, iNum);
+        DrawProgressGauge(app, nullptr, 0, iNum);
     }
     return;
 }

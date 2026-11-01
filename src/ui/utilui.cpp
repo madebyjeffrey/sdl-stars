@@ -80,7 +80,7 @@ void DrawABunchOfStars(APPSESSION &app, HDC hdc, RECT *prc) {
             rcOut.right = rcOut.left + 1;
             rcOut.bottom = rcOut.top + 1;
             win32::SetBkColor(hdc, rgcrDrawStars[iClr]);
-            win32::ExtTextOutA(hdc, 0, 0, win32::ETO_OPAQUE, &rcOut, NULL, 0, NULL);
+            win32::ExtTextOutA(hdc, 0, 0, win32::ETO_OPAQUE, &rcOut, nullptr, 0, nullptr);
         }
     }
     for (iClr = 0; iClr < 4; iClr++) {
@@ -91,12 +91,12 @@ void DrawABunchOfStars(APPSESSION &app, HDC hdc, RECT *prc) {
             rcOut.right = rcOut.left + 3;
             rcOut.bottom = rcOut.top + 3;
             win32::SetBkColor(hdc, rgcrDrawStars2b[iClr]);
-            win32::ExtTextOutA(hdc, 0, 0, win32::ETO_OPAQUE, &rcOut, NULL, 0, NULL);
+            win32::ExtTextOutA(hdc, 0, 0, win32::ETO_OPAQUE, &rcOut, nullptr, 0, nullptr);
             win32::SetBkColor(hdc, rgcrDrawStars2a[iClr]);
             win32::InflateRect(&rcOut, -1, 0);
-            win32::ExtTextOutA(hdc, 0, 0, win32::ETO_OPAQUE, &rcOut, NULL, 0, NULL);
+            win32::ExtTextOutA(hdc, 0, 0, win32::ETO_OPAQUE, &rcOut, nullptr, 0, nullptr);
             win32::InflateRect(&rcOut, 1, -1);
-            win32::ExtTextOutA(hdc, 0, 0, win32::ETO_OPAQUE, &rcOut, NULL, 0, NULL);
+            win32::ExtTextOutA(hdc, 0, 0, win32::ETO_OPAQUE, &rcOut, nullptr, 0, nullptr);
         }
     }
     PopRandom(app);

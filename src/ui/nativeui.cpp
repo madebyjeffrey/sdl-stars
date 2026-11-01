@@ -76,7 +76,7 @@ int16_t FRouteMouseWheel(win32::MSG *pmsg) {
     // of WM_MOUSEHWHEEL in client coordinates rather than screen ones.
     pt = pmsg->pt;
     hwnd = win32::WindowFromPoint(pt);
-    if (!hwnd || hwnd == pmsg->hwnd || win32::GetWindowThreadProcessId(hwnd, NULL) != win32::GetCurrentThreadId())
+    if (!hwnd || hwnd == pmsg->hwnd || win32::GetWindowThreadProcessId(hwnd, nullptr) != win32::GetCurrentThreadId())
         return 1;
     // A closed drop-down list changes its selection on the wheel. One the
     // player only points at must not change an order or a battle plan; the

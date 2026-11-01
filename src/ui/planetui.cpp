@@ -32,49 +32,49 @@ LRESULT  PlanetWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
 
     switch (message) {
     case win32::WM_MDIACTIVATE:
-        app.lpui->hwndActive = (lParam == (LPARAM)hwnd) == 0 ? NULL : hwnd;
+        app.lpui->hwndActive = (lParam == (LPARAM)hwnd) == 0 ? nullptr : hwnd;
         return 0;
     case win32::WM_CREATE:
         SetPlanetTitleBar(app, hwnd);
         for (i = 0; i < 3; i++) {
             app.lpui->rghwndOrderDD[i] = ui::CreateWindowEx(0, app.lpui->szCombobox, "OrdDD", (i == 1 ? 528 : 0) | (win32::CBS_DROPDOWNLIST | win32::WS_CHILD | win32::WS_VSCROLL), 100, 100, 200,
-                                            i == 2 ? 160 : 80, hwnd, NULL, app.lpui->hInst, NULL);
+                                            i == 2 ? 160 : 80, hwnd, nullptr, app.lpui->hInst, nullptr);
             ControlIO().pfnSendMessage(app.lpui->rghwndOrderDD[i], win32::WM_SETFONT, (WPARAM)app.lpui->rghfontArial8[1], 0);
         }
         for (i = idsTaskHere; i <= idsTransferFleet; i++) {
             psz = TextIO().pfnCompressed(app, static_cast<StringId>(i));
             ControlIO().pfnSendMessage(app.lpui->rghwndOrderDD[0], win32::CB_ADDSTRING, 0, (LPARAM)psz);
         }
-        app.lpui->hwndOrderED = ui::CreateWindowEx(0, app.lpui->szEdit, NULL, win32::ES_RIGHT | win32::WS_CHILD | win32::WS_BORDER, 100, 100, 200, 50, hwnd, NULL, app.lpui->hInst, NULL);
+        app.lpui->hwndOrderED = ui::CreateWindowEx(0, app.lpui->szEdit, nullptr, win32::ES_RIGHT | win32::WS_CHILD | win32::WS_BORDER, 100, 100, 200, 50, hwnd, nullptr, app.lpui->hInst, nullptr);
         ControlIO().pfnSendMessage(app.lpui->hwndOrderED, win32::EM_LIMITTEXT, 4, 0);
         ControlIO().pfnSendMessage(app.lpui->hwndOrderED, win32::WM_SETFONT, (WPARAM)app.lpui->rghfontArial8[1], 0);
         app.lpui->lpfnRealEditProc = (WNDPROC)win32::GetWindowLongPtrA(app.lpui->hwndOrderED, win32::GWLP_WNDPROC);
         win32::SetWindowLongPtrA(app.lpui->hwndOrderED, win32::GWLP_WNDPROC, (LONG_PTR)app.lpui->lpfnFakeEditProc);
-        app.lpui->hwndBattleDD = ui::CreateWindowEx(0, app.lpui->szCombobox, "BattleDD", win32::CBS_DROPDOWNLIST | win32::WS_CHILD | win32::WS_VSCROLL, 100, 100, 200, 80, hwnd, NULL, app.lpui->hInst, NULL);
+        app.lpui->hwndBattleDD = ui::CreateWindowEx(0, app.lpui->szCombobox, "BattleDD", win32::CBS_DROPDOWNLIST | win32::WS_CHILD | win32::WS_VSCROLL, 100, 100, 200, 80, hwnd, nullptr, app.lpui->hInst, nullptr);
         ControlIO().pfnSendMessage(app.lpui->hwndBattleDD, win32::WM_SETFONT, (WPARAM)app.lpui->rghfontArial8[1], 0);
         app.lpui->hwndShipDD = ui::CreateWindowEx(0, app.lpui->szCombobox, "ShipDD", win32::CBS_DROPDOWNLIST | win32::CBS_OWNERDRAWFIXED | win32::CBS_HASSTRINGS | win32::WS_CHILD | win32::WS_VSCROLL, 100, 100, 200, 80, hwnd,
-                                  NULL, app.lpui->hInst, NULL);
+                                  nullptr, app.lpui->hInst, nullptr);
         ControlIO().pfnSendMessage(app.lpui->hwndShipDD, win32::WM_SETFONT, (WPARAM)app.lpui->rghfontArial8[1], 0);
         ControlIO().pfnGetClientRect(app.lpui->hwndShipDD, &rc);
         app.lpui->dyShipDD = rc.bottom;
         app.lpui->hwndShipLB = ui::CreateWindowEx(0, app.lpui->szListbox, "ShipLB", win32::LBS_NOTIFY | win32::LBS_NOINTEGRALHEIGHT | win32::LBS_DISABLENOSCROLL | win32::WS_CHILD | win32::WS_BORDER | win32::WS_VSCROLL, 100, 100,
-                                  200, 80, hwnd, NULL, app.lpui->hInst, NULL);
+                                  200, 80, hwnd, nullptr, app.lpui->hInst, nullptr);
         ControlIO().pfnSendMessage(app.lpui->hwndShipLB, win32::WM_SETFONT, (WPARAM)app.lpui->rghfontArial8[1], 0);
         app.lpui->hwndFleetCompLB =
             ui::CreateWindowEx(0, app.lpui->szListbox, "FleetCompLB", win32::LBS_NOTIFY | win32::LBS_OWNERDRAWFIXED | win32::LBS_HASSTRINGS | win32::LBS_NOINTEGRALHEIGHT | win32::WS_CHILD | win32::WS_BORDER | win32::WS_VSCROLL,
-                         100, 100, 200, 80, hwnd, NULL, app.lpui->hInst, NULL);
+                         100, 100, 200, 80, hwnd, nullptr, app.lpui->hInst, nullptr);
         ControlIO().pfnSendMessage(app.lpui->hwndFleetCompLB, win32::WM_SETFONT, (WPARAM)app.lpui->rghfontArial8[0], 0);
         app.lpui->hwndPlanetProdLB =
             ui::CreateWindowEx(0, app.lpui->szListbox, "PlanetProdLB", win32::LBS_NOTIFY | win32::LBS_OWNERDRAWFIXED | win32::LBS_HASSTRINGS | win32::LBS_NOINTEGRALHEIGHT | win32::WS_CHILD | win32::WS_BORDER | win32::WS_VSCROLL,
-                         100, 100, 200, 80, hwnd, NULL, app.lpui->hInst, NULL);
+                         100, 100, 200, 80, hwnd, nullptr, app.lpui->hInst, nullptr);
         ControlIO().pfnSendMessage(app.lpui->hwndPlanetProdLB, win32::WM_SETFONT, (WPARAM)app.lpui->rghfontArial8[0], 0);
         for (i = 0; i < 13; i++) {
             psz = TextIO().pfnCompressed(app, static_cast<StringId>(idsCargo2 + i));
-            app.lpui->rghwndBtn[i] = ui::CreateWindowEx(0, app.lpui->szButton, psz, win32::WS_CHILD, 100, 100, 100, app.state.dyArial8 * 2, hwnd, NULL, app.lpui->hInst, NULL);
+            app.lpui->rghwndBtn[i] = ui::CreateWindowEx(0, app.lpui->szButton, psz, win32::WS_CHILD, 100, 100, 100, app.state.dyArial8 * 2, hwnd, nullptr, app.lpui->hInst, nullptr);
             ControlIO().pfnSendMessage(app.lpui->rghwndBtn[i], win32::WM_SETFONT, (WPARAM)app.lpui->rghfontArial8[1], 0);
         }
         app.lpui->hwndRepCB =
-            ui::CreateWindowEx(0, app.lpui->szButton, TextIO().pfnCompressed(app, idsRepeatOrders), win32::BS_AUTOCHECKBOX | win32::WS_CHILD, 100, 100, 150, app.state.dyArial8, hwnd, NULL, app.lpui->hInst, NULL);
+            ui::CreateWindowEx(0, app.lpui->szButton, TextIO().pfnCompressed(app, idsRepeatOrders), win32::BS_AUTOCHECKBOX | win32::WS_CHILD, 100, 100, 150, app.state.dyArial8, hwnd, nullptr, app.lpui->hInst, nullptr);
         ControlIO().pfnSendMessage(app.lpui->hwndRepCB, win32::WM_SETFONT, (WPARAM)app.lpui->rghfontArial8[1], 0);
         break;
     case win32::WM_ERASEBKGND:
@@ -178,7 +178,7 @@ LRESULT  PlanetWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         }
         if ((HWND)lParam == app.lpui->hwndShipDD) {
             if (HIWORD(wParam) == 1) {
-                ControlIO().pfnDrawPlanShip(app, NULL, static_cast<TileBits>(tileShipList | tileErase));
+                ControlIO().pfnDrawPlanShip(app, nullptr, static_cast<TileBits>(tileShipList | tileErase));
             }
         } else {
             if ((HWND)lParam == app.lpui->rghwndBtn[4] && HIWORD(wParam) == 0) {
@@ -219,7 +219,7 @@ LRESULT  PlanetWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 ChangeProduction(app, 0);
                 goto LRefocus;
             } else if ((HWND)lParam == app.lpui->rghwndBtn[12] && HIWORD(wParam) == 0) {
-                if (AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsSureWantDeleteEverythingPlanetsProductionQueue, NULL), win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_TASKMODAL) != win32::IDYES) {
+                if (AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsSureWantDeleteEverythingPlanetsProductionQueue, nullptr), win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_TASKMODAL) != win32::IDYES) {
                     return 0;
                 }
                 ChangeProduction(app, 1);
@@ -227,7 +227,7 @@ LRESULT  PlanetWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             } else {
                 if ((HWND)lParam != app.lpui->hwndPlanetProdLB || HIWORD(wParam) != 1)
                     goto Default;
-                ControlIO().pfnDrawPlanShip(app, NULL, tileProductionOrOrbit);
+                ControlIO().pfnDrawPlanShip(app, nullptr, tileProductionOrOrbit);
                 if (!app.state.gd.fTutorial)
                     goto Default;
                 app.state.tutor.fProgress = 1;
@@ -273,7 +273,7 @@ int16_t FDrawTileNC(APPSESSION &app, HDC hdc, TILE *ptile, RECT *prc, char *pszT
     } else {
         bt |= 1;
     }
-    DrawBtn(app, hdc, &rcT, bt, 0, NULL);
+    DrawBtn(app, hdc, &rcT, bt, 0, nullptr);
     win32::SelectObject(hdc, app.lpui->hbrButtonShadow);
     win32::PatBlt(hdc, prc->right - 18, prc->top + 1, 1, rcT.bottom - prc->top - 1, win32::PATCOPY);
 
@@ -526,7 +526,7 @@ void DrawPlanetStats(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
             win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
         }
         if (dRange != 0) {
-            CalcPctSurvive(app, &app.state.sel.pl, &pct, NULL);
+            CalcPctSurvive(app, &app.state.sel.pl, &pct, nullptr);
             pct = (float)((double)1.0 - pct);
             c = win32::wsprintfA(app.state.szWork, app.state.PCTDXPCTDPCTPCT, LOWORD((int32_t)((double)pct * 100)),
                          LOWORD((int32_t)((pct - (double)(int16_t)LOWORD((int32_t)((double)pct * 100)) / 100.0) * 10000)));
@@ -776,7 +776,7 @@ void DrawPlanetProduction(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
         } else {
             app.lpui->dxPlanetProdLB = xRight - xLeft;
         }
-        ControlIO().pfnSetWindowPos(app.lpui->hwndPlanetProdLB, NULL, xLeft, yTop, xRight - xLeft, app.lpui->dyPlanetProdLB, swp);
+        ControlIO().pfnSetWindowPos(app.lpui->hwndPlanetProdLB, nullptr, xLeft, yTop, xRight - xLeft, app.lpui->dyPlanetProdLB, swp);
         ui::ShowWindow(app.lpui->hwndPlanetProdLB, win32::SW_SHOW);
         ControlIO().pfnGetClientRect(app.lpui->hwndPlanetProdLB, &rcT);
         app.lpui->dyPlanetProdLB = rcT.bottom - rcT.top;
@@ -789,7 +789,7 @@ void DrawPlanetProduction(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
             c = 0;
             app.state.szWork[0] = 0;
         } else {
-            psz = PszProductionETA(app, ppl, NULL, static_cast<ProdItemType>(iSel), NULL, NULL);
+            psz = PszProductionETA(app, ppl, nullptr, static_cast<ProdItemType>(iSel), nullptr, nullptr);
             c = strlen(psz);
         }
         if (c != 0) {
@@ -821,7 +821,7 @@ void DrawPlanetProduction(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
         xStart = xLeft;
         i = 11;
         while (i <= 12) {
-            ControlIO().pfnSetWindowPos(app.lpui->rghwndBtn[i], NULL, xStart, yTop, c, (app.state.dyArial8 >> 1) + app.state.dyArial8, win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
+            ControlIO().pfnSetWindowPos(app.lpui->rghwndBtn[i], nullptr, xStart, yTop, c, (app.state.dyArial8 >> 1) + app.state.dyArial8, win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
             ui::ShowWindow(app.lpui->rghwndBtn[i], win32::SW_SHOW);
             i++;
             xStart += c + 8;
@@ -901,7 +901,7 @@ void DrawPlanShipBitmap(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
             iOffset = app.state.sel.grobj == grobjFleet ? 6 : 5;
             i = 4;
             while (i <= iOffset) {
-                ControlIO().pfnSetWindowPos(app.lpui->rghwndBtn[i], NULL, xLeft, yTop, dx, dy, win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
+                ControlIO().pfnSetWindowPos(app.lpui->rghwndBtn[i], nullptr, xLeft, yTop, dx, dy, win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
                 ui::ShowWindow(app.lpui->rghwndBtn[i], win32::SW_SHOW);
                 i++;
                 yTop += (!app.state.gd.fSmallTileMode ? 3 : 2) + dy;
@@ -960,7 +960,7 @@ void DrawPlanetShipList(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
         } else {
             app.lpui->dxShipDD = xRight - xLeft;
         }
-        ControlIO().pfnSetWindowPos(app.lpui->hwndShipDD, NULL, xLeft, yTop, xRight - xLeft, 5 * app.lpui->dyShipDD, swp);
+        ControlIO().pfnSetWindowPos(app.lpui->hwndShipDD, nullptr, xLeft, yTop, xRight - xLeft, 5 * app.lpui->dyShipDD, swp);
         ui::ShowWindow(app.lpui->hwndShipDD, win32::SW_SHOW);
         yTop += app.lpui->dyShipDD + 3;
         lSel = ControlIO().pfnSendMessage(app.lpui->hwndShipDD, win32::CB_GETCURSEL, 0, 0);
@@ -1036,7 +1036,7 @@ void DrawPlanetShipList(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
         xStart = xLeft;
         i = 0;
         while (i <= 2) {
-            ControlIO().pfnSetWindowPos(app.lpui->rghwndBtn[(int16_t)(i + 1) % 3], NULL, xStart, yTop, c, (app.state.dyArial8 >> 1) + app.state.dyArial8, win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
+            ControlIO().pfnSetWindowPos(app.lpui->rghwndBtn[(int16_t)(i + 1) % 3], nullptr, xStart, yTop, c, (app.state.dyArial8 >> 1) + app.state.dyArial8, win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
             if (i != 2 || pfl) {
                 ui::ShowWindow(app.lpui->rghwndBtn[i], win32::SW_SHOW);
             }
@@ -1106,7 +1106,7 @@ void PlanetClick(APPSESSION &app, int16_t x, int16_t y, int16_t sks, int16_t fRi
                     } else {
                         bt |= 1;
                     }
-                    InitBtnTrack(&btnt, app.lpui->hwndPlanet, NULL, &rc, bt, 0, 0, 0, NULL);
+                    InitBtnTrack(&btnt, app.lpui->hwndPlanet, nullptr, &rc, bt, 0, 0, 0, nullptr);
                     while (FTrackBtn(app, &btnt)) {
                     }
                     if (btnt.fDown) {
@@ -1195,10 +1195,10 @@ HCURSOR ClickInPlanetOrders(APPSESSION &app, POINT16 pt, int16_t sks, int16_t fC
     BTNT    btnt;
 
     if (app.state.sel.grobj != grobjPlanet) {
-        return NULL;
+        return nullptr;
     }
     if (fRightBtn) {
-        return NULL;
+        return nullptr;
     }
     if (win32::PtInRect(&app.lpui->rgrcRef[6], PointFrom16(pt)) != 0) {
         if (fCursor) {
@@ -1250,7 +1250,7 @@ HCURSOR ClickInPlanetOrders(APPSESSION &app, POINT16 pt, int16_t sks, int16_t fC
         Popup(app, app.lpui->hwndPlanet, pt.x, pt.y);
     } else if (win32::PtInRect(&app.lpui->rgrcRef[10], PointFrom16(pt)) != 0) {
         if (app.state.sel.pl.cDefenses == 0) {
-            return NULL;
+            return nullptr;
         }
         if (fCursor) {
             return app.lpui->hcurArrowHelp;
@@ -1260,7 +1260,7 @@ HCURSOR ClickInPlanetOrders(APPSESSION &app, POINT16 pt, int16_t sks, int16_t fC
         Popup(app, app.lpui->hwndPlanet, pt.x, pt.y);
     } else if (win32::PtInRect(&app.lpui->rgrcRef[11], PointFrom16(pt)) != 0) {
         if (app.state.sel.pl.iScanner == 31 && RaceQueryIO().pfnStat(&app.state.rgplr[app.state.idPlayer], rsMajorAdv) != raMacintosh) {
-            return NULL;
+            return nullptr;
         }
         if (fCursor) {
             return app.lpui->hcurArrowHelp;
@@ -1276,14 +1276,14 @@ HCURSOR ClickInPlanetOrders(APPSESSION &app, POINT16 pt, int16_t sks, int16_t fC
         }
         Popup(app, app.lpui->hwndPlanet, pt.x, pt.y);
     } else if (win32::PtInRect(&app.lpui->rgrcRef[13], PointFrom16(pt)) != 0) {
-        iWarp = ColonyIO().pfnWarp(app, &app.state.sel.pl, NULL);
+        iWarp = ColonyIO().pfnWarp(app, &app.state.sel.pl, nullptr);
         if (iWarp == 0) {
-            return NULL;
+            return nullptr;
         }
         if (fCursor) {
             return app.lpui->hcurHand;
         }
-        InitBtnTrack(&btnt, app.lpui->hwndPlanet, NULL, &app.lpui->rgrcRef[13], 8, 80, app.state.gd.fSetMassMode, 1, TextIO().pfnCompressed(app, idsSetDest));
+        InitBtnTrack(&btnt, app.lpui->hwndPlanet, nullptr, &app.lpui->rgrcRef[13], 8, 80, app.state.gd.fSetMassMode, 1, TextIO().pfnCompressed(app, idsSetDest));
         while (FTrackBtn(app, &btnt)) {
         }
         app.state.gd.fSetMassMode ^= btnt.fDown;
@@ -1299,9 +1299,9 @@ HCURSOR ClickInPlanetOrders(APPSESSION &app, POINT16 pt, int16_t sks, int16_t fC
         app.lpui->GlobalPD.fSummary = 0;
         Popup(app, app.lpui->hwndPlanet, pt.x, pt.y);
     } else if (win32::PtInRect(&app.lpui->rgrcRef[16], PointFrom16(pt)) != 0) {
-        iWarp = ColonyIO().pfnWarp(app, &app.state.sel.pl, NULL);
+        iWarp = ColonyIO().pfnWarp(app, &app.state.sel.pl, nullptr);
         if (iWarp == 0) {
-            return NULL;
+            return nullptr;
         }
         if (fCursor) {
             return app.lpui->hcurArrowHelp;
@@ -1317,12 +1317,12 @@ HCURSOR ClickInPlanetOrders(APPSESSION &app, POINT16 pt, int16_t sks, int16_t fC
         if (fCursor) {
             return app.lpui->hcurHand;
         }
-        InitBtnTrack(&btnt, app.lpui->hwndPlanet, NULL, &app.lpui->rgrcRef[17], 8, 80, app.state.gd.fSetRouteMode, 1, TextIO().pfnCompressed(app, idsRoute2));
+        InitBtnTrack(&btnt, app.lpui->hwndPlanet, nullptr, &app.lpui->rgrcRef[17], 8, 80, app.state.gd.fSetRouteMode, 1, TextIO().pfnCompressed(app, idsRoute2));
         while (FTrackBtn(app, &btnt)) {
         }
         app.state.gd.fSetRouteMode ^= btnt.fDown;
     }
-    return NULL;
+    return nullptr;
 }
 
 void EnsureTileSize(APPSESSION &app, int16_t fSmallTiles) {
@@ -1797,7 +1797,7 @@ NoMsg:
 // ShowPlanetSel refills the planet tile's production queue when
 // ChangeMainObjSel selects a planet.
 void ShowPlanetSel(APPSESSION &app) {
-    ControlIO().pfnFillPlanetProdLB(app, NULL, NULL, NULL);
+    ControlIO().pfnFillPlanetProdLB(app, nullptr, nullptr, nullptr);
     ControlIO().pfnSendMessage(app.lpui->hwndPlanetProdLB, win32::LB_SETCURSEL, 0, 0);
     return;
 }
@@ -1838,12 +1838,12 @@ void ShowMainObjSel(APPSESSION &app, int16_t fSameType, int16_t idSkip) {
     }
     FillShipDD(app, idSkip);
     if (fSameType) {
-        ControlIO().pfnDrawPlanShip(app, NULL, static_cast<TileBits>(0x4fff));
+        ControlIO().pfnDrawPlanShip(app, nullptr, static_cast<TileBits>(0x4fff));
     } else {
-        ControlIO().pfnInvalidateRect(app.lpui->hwndPlanet, NULL, 1);
+        ControlIO().pfnInvalidateRect(app.lpui->hwndPlanet, nullptr, 1);
         if ((app.lpui->grbitScan & grbitScanAddWaypoints) && app.state.sel.grobj == grobjPlanet) {
             app.lpui->grbitScan = static_cast<GrbitScan>(app.lpui->grbitScan & 0xffef);
-            ControlIO().pfnInvalidateRect(app.lpui->hwndTb, NULL, 1);
+            ControlIO().pfnInvalidateRect(app.lpui->hwndTb, nullptr, 1);
         }
     }
     SetPlanetTitleBar(app, app.lpui->hwndPlanet);
@@ -1856,12 +1856,12 @@ void ShowMainObjSel(APPSESSION &app, int16_t fSameType, int16_t idSkip) {
 // FillSelProdLB refills the planet tile's production queue for the
 // selected planet.
 void FillSelProdLB(APPSESSION &app) {
-    ControlIO().pfnFillPlanetProdLB(app, NULL, NULL, NULL);
+    ControlIO().pfnFillPlanetProdLB(app, nullptr, nullptr, nullptr);
     return;
 }
 
 // RedrawPlanShip redraws the planet window's tiles in grbit.
 void RedrawPlanShip(APPSESSION &app, TileBits grbit) {
-    ControlIO().pfnDrawPlanShip(app, NULL, grbit);
+    ControlIO().pfnDrawPlanShip(app, nullptr, grbit);
     return;
 }

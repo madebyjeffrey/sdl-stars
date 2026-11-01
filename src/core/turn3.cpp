@@ -92,8 +92,8 @@ void SatisfyOrders(APPSESSION &app, int16_t iPass) {
                     fFueling = 0;
                     fStealing = 0;
                     fDunnage = 0;
-                    lpflWP = NULL;
-                    lpthWP = NULL;
+                    lpflWP = nullptr;
+                    lpthWP = nullptr;
                     fAtPlanet = lpfl->idPlanet != idPlanetDeepSpace && PlanetQueryIO().pfnLookup(app, lpfl->idPlanet, &pl) != 0;
                     idWP = ord.id;
                     switch (ord.grobj) {
@@ -103,7 +103,7 @@ void SatisfyOrders(APPSESSION &app, int16_t iPass) {
                         xWP = 0xffff;
                         fHasPermission = lpfl->iPlayer == lpflWP->iPlayer;
                         if (!fHasPermission) {
-                            GetFleetScannerRange(app, lpfl, NULL, NULL, &fHasPermission);
+                            GetFleetScannerRange(app, lpfl, nullptr, nullptr, &fHasPermission);
                             if (!fHasPermission)
                                 break;
                             fStealing = 1;
@@ -132,7 +132,7 @@ void SatisfyOrders(APPSESSION &app, int16_t iPass) {
                         fHasPermission = lpfl->iPlayer == pl.iPlayer ? 3 : 0;
                         if (fHasPermission)
                             break;
-                        GetFleetScannerRange(app, lpfl, NULL, NULL, &fHasPermission);
+                        GetFleetScannerRange(app, lpfl, nullptr, nullptr, &fHasPermission);
                         if (fHasPermission == 1) {
                             fHasPermission = 0;
                         }
@@ -340,9 +340,9 @@ void SatisfyOrders(APPSESSION &app, int16_t iPass) {
                                 }
                                 if (amount != 0) {
                                     l = StarsMin(amount, amountWP);
-                                    l2 = ChgCargo(app, static_cast<GrobjClass>(ord.grobj), ord.id, static_cast<MineralType>(j), -l, NULL);
+                                    l2 = ChgCargo(app, static_cast<GrobjClass>(ord.grobj), ord.id, static_cast<MineralType>(j), -l, nullptr);
                                     if (l2 != 0) {
-                                        l = ChgCargo(app, grobjFleet, lpfl->id, static_cast<MineralType>(j), -l2, NULL);
+                                        l = ChgCargo(app, grobjFleet, lpfl->id, static_cast<MineralType>(j), -l2, nullptr);
                                         if (l != 0) {
                                             if (ord.grobj == grobjFleet && lpfl->iPlayer != lpflWP->iPlayer) {
                                                 TurnIO().pfnMessage(app, lpfl->iPlayer, idmHasStolen, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, LOWORD(l), HIWORD(l), j, idWP & 0x7fff, 0,
@@ -355,9 +355,9 @@ void SatisfyOrders(APPSESSION &app, int16_t iPass) {
                                     }
                                     if ((fFueling || fMining) && amount != -l2) {
                                         l = amount + l2;
-                                        l2 = ChgCargo(app, grobjPlanet, pl.id, static_cast<MineralType>(j), -l, NULL);
+                                        l2 = ChgCargo(app, grobjPlanet, pl.id, static_cast<MineralType>(j), -l, nullptr);
                                         if (l2 != 0) {
-                                            l = ChgCargo(app, grobjFleet, lpfl->id, static_cast<MineralType>(j), -l2, NULL);
+                                            l = ChgCargo(app, grobjFleet, lpfl->id, static_cast<MineralType>(j), -l2, nullptr);
                                             if (fMining) {
                                                 TurnIO().pfnMessage(app, lpfl->iPlayer, idmHasLoadedMiningRobotsWorking, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, LOWORD(l), HIWORD(l),
                                                             j, lpflWP->id, pl.id, 0);
@@ -416,11 +416,11 @@ void SatisfyOrders(APPSESSION &app, int16_t iPass) {
                                     goto CancelOrder;
                                 } else if (amount != 0) {
                                     if (fFueling && j != 4) {
-                                        l = ChgCargo(app, grobjPlanet, pl.id, static_cast<MineralType>(j), amount, NULL);
+                                        l = ChgCargo(app, grobjPlanet, pl.id, static_cast<MineralType>(j), amount, nullptr);
                                         TurnIO().pfnMessage(app, lpfl->iPlayer, j == 3 ? idmHasBeamed2 : idmHasUnloaded, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, LOWORD(l), HIWORD(l),
                                                     j, xWP, pl.id, 0);
                                     } else {
-                                        l = ChgCargo(app, static_cast<GrobjClass>(ord.grobj), ord.id, static_cast<MineralType>(j), amount, NULL);
+                                        l = ChgCargo(app, static_cast<GrobjClass>(ord.grobj), ord.id, static_cast<MineralType>(j), amount, nullptr);
                                         if (l > 0) {
                                             TurnIO().pfnMessage(app, lpfl->iPlayer, j == 3 ? idmHasBeamed2 : idmHasUnloaded, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, LOWORD(l),
                                                         HIWORD(l), j, xWP, idWP, 0);
@@ -429,7 +429,7 @@ void SatisfyOrders(APPSESSION &app, int16_t iPass) {
                                     }
                                 }
                                 if (amount != 0) {
-                                    l = ChgCargo(app, grobjFleet, lpfl->id, static_cast<MineralType>(j), -amount, NULL);
+                                    l = ChgCargo(app, grobjFleet, lpfl->id, static_cast<MineralType>(j), -amount, nullptr);
                                 }
                                 ord.txp.rgia[j].SetIAction(iActionNone);
                                 continue;
@@ -479,9 +479,9 @@ void SatisfyOrders(APPSESSION &app, int16_t iPass) {
                             lpfl->rgwtMin[4] = wtFuelOrig;
                         SetOptAmount:
                             if (iExcess != 0) {
-                                l2 = ChgCargo(app, static_cast<GrobjClass>(ord.grobj), ord.id, Fuel, iExcess, NULL);
+                                l2 = ChgCargo(app, static_cast<GrobjClass>(ord.grobj), ord.id, Fuel, iExcess, nullptr);
                                 if (l2 != 0) {
-                                    l = ChgCargo(app, grobjFleet, lpfl->id, Fuel, -l2, NULL);
+                                    l = ChgCargo(app, grobjFleet, lpfl->id, Fuel, -l2, nullptr);
                                 }
                             } else {
                                 l = 0;
@@ -662,7 +662,7 @@ void SatisfyOrders(APPSESSION &app, int16_t iPass) {
                             TurnIO().pfnMessage(app, pl.iPlayer, idm, static_cast<MsgGoto>(iGoto), lpfl->id, LOWORD(lXferMinerals), HIWORD(lXferMinerals), pl.id, LOWORD(lResUltimate),
                                         HIWORD(lResUltimate), i);
                         } else if (pl.id == idplNone) {
-                            lpthWP = NULL;
+                            lpthWP = nullptr;
                             DropSalvage(app, &lpthWP, pl.rgwtMin, lpfl->iplr(), &ord.pt);
                             TurnIO().pfnMessage2(app, lpfl->iPlayer, idmHasDismantledScrapLeftDeepSpace, gotoThing, lpthWP->idFull(), WFromLpfl(app, lpfl));
                         } else {
@@ -860,7 +860,7 @@ void SatisfyOrders(APPSESSION &app, int16_t iPass) {
                                 if (!lpfl->fHereAllTurn) {
                                     cMine = (int32_t)(cMine / 2);
                                 }
-                                lpthBest = NULL;
+                                lpthBest = nullptr;
                                 lBest = 10000000;
                                 lpth = app.state.lpThings;
                                 lpthMac = app.state.lpThings + app.state.cThing;

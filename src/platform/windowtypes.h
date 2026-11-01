@@ -13,7 +13,7 @@ struct tagRECT {
     int32_t bottom;
 };
 } // namespace win32
-typedef win32::HWND__ *HWND;
-typedef win32::HDC__ *HDC;
-typedef win32::tagRECT RECT;
+using HWND = win32::HWND__*;
+using HDC = win32::HDC__*;
+using RECT = win32::tagRECT;
 #endif

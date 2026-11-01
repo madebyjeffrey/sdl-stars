@@ -24,8 +24,8 @@ constexpr auto ID_FILE_NEW = 0x404;
 constexpr auto MAX_FILE_HISTORY = 32;
 constexpr auto MAX_FILE_FILTERS = 64;
 
-typedef struct COMPATFILEENTRY { char *psz; BOOL fDir; } COMPATFILEENTRY;
-typedef struct COMPATFILEDIALOG {
+struct COMPATFILEENTRY { char *psz; BOOL fDir; };
+struct COMPATFILEDIALOG {
     OPENFILENAMEA *lpof;
     BOOL fSave;
     char szDir[PATH_MAX], szResult[PATH_MAX];
@@ -37,13 +37,13 @@ typedef struct COMPATFILEDIALOG {
     int cHistory;
     BOOL fHidden;
     DWORD dwError;
-} COMPATFILEDIALOG;
+};
 static thread_local DWORD dwDialogError;
 DWORD win32::CommDlgExtendedError(void) { return dwDialogError; }
 void CompatSetDialogError(DWORD dw) { dwDialogError = dw; }
 
 static BOOL FFilePattern(LPCSTR psz, LPCSTR pszPattern, size_t cpat) {
-    LPCSTR pszStar = NULL, pszRetry = NULL, pszEnd = pszPattern + cpat;
+    LPCSTR pszStar = nullptr, pszRetry = nullptr, pszEnd = pszPattern + cpat;
     if (cpat == 3 && memcmp(pszPattern, "*.*", 3) == 0) return 1;
     while (*psz) {
         if (pszPattern < pszEnd && (*pszPattern == '?' || SDL_tolower((unsigned char)*pszPattern) == SDL_tolower((unsigned char)*psz))) { pszPattern++; psz++; }
@@ -68,7 +68,7 @@ static BOOL FFileFilter(COMPATFILEDIALOG *lp, LPCSTR psz) {
 static void FreeFileEntries(COMPATFILEDIALOG *lp) {
     size_t i;
     for (i = 0; i < lp->cEntry; i++) free(lp->rgentry[i].psz);
-    free(lp->rgentry); lp->rgentry = NULL; lp->cEntry = 0;
+    free(lp->rgentry); lp->rgentry = nullptr; lp->cEntry = 0;
 }
 static int CmpFileEntry(const void *a, const void *b) {
     const COMPATFILEENTRY *lpa = (const COMPATFILEENTRY *)(a), *lpb = (const COMPATFILEENTRY *)(b);
@@ -145,7 +145,7 @@ static BOOL FRefreshFiles(HWND hwnd, COMPATFILEDIALOG *lp) {
 static BOOL FChangeFileDirectory(HWND hwnd, COMPATFILEDIALOG *lp, LPCSTR psz, BOOL fHistory) {
     char szPath[PATH_MAX], szReal[PATH_MAX], szOld[PATH_MAX];
     NATIVEFILEINFO st;
-    char *pszPrevious = NULL;
+    char *pszPrevious = nullptr;
     if (!FJoinFile(szPath, lp->szDir, psz) || !PszCanonicalNativePath(szPath, szReal, sizeof(szReal)) || IGetNativeFileInfo(szReal, &st, 1) != 0 || !st.fDirectory) {
         FileError(hwnd, "The directory does not exist."); return 0;
     }
@@ -244,14 +244,14 @@ static void LayoutFileDialog(HWND hwnd) {
     RECT rc;
     int cx, cy;
     win32::GetClientRect(hwnd, &rc); cx = rc.right; cy = rc.bottom;
-    win32::SetWindowPos(win32::GetDlgItem(hwnd, ID_FILE_PATH), NULL, 80, 12, cx - 92, 24, win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
-    win32::SetWindowPos(win32::GetDlgItem(hwnd, ID_FILE_LIST), NULL, 12, 108, cx - 24, cy - 252, win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
-    win32::SetWindowPos(win32::GetDlgItem(hwnd, 0x441), NULL, 12, cy - 128, 80, 24, win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
-    win32::SetWindowPos(win32::GetDlgItem(hwnd, ID_FILE_NAME), NULL, 96, cy - 132, cx - 108, 26, win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
-    win32::SetWindowPos(win32::GetDlgItem(hwnd, 0x442), NULL, 12, cy - 92, 80, 24, win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
-    win32::SetWindowPos(win32::GetDlgItem(hwnd, ID_FILE_FILTER), NULL, 96, cy - 96, cx - 108, 120, win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
-    win32::SetWindowPos(win32::GetDlgItem(hwnd, win32::IDOK), NULL, cx - 188, cy - 52, 80, 28, win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
-    win32::SetWindowPos(win32::GetDlgItem(hwnd, win32::IDCANCEL), NULL, cx - 96, cy - 52, 80, 28, win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
+    win32::SetWindowPos(win32::GetDlgItem(hwnd, ID_FILE_PATH), nullptr, 80, 12, cx - 92, 24, win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
+    win32::SetWindowPos(win32::GetDlgItem(hwnd, ID_FILE_LIST), nullptr, 12, 108, cx - 24, cy - 252, win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
+    win32::SetWindowPos(win32::GetDlgItem(hwnd, 0x441), nullptr, 12, cy - 128, 80, 24, win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
+    win32::SetWindowPos(win32::GetDlgItem(hwnd, ID_FILE_NAME), nullptr, 96, cy - 132, cx - 108, 26, win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
+    win32::SetWindowPos(win32::GetDlgItem(hwnd, 0x442), nullptr, 12, cy - 92, 80, 24, win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
+    win32::SetWindowPos(win32::GetDlgItem(hwnd, ID_FILE_FILTER), nullptr, 96, cy - 96, cx - 108, 120, win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
+    win32::SetWindowPos(win32::GetDlgItem(hwnd, win32::IDOK), nullptr, cx - 188, cy - 52, 80, 28, win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
+    win32::SetWindowPos(win32::GetDlgItem(hwnd, win32::IDCANCEL), nullptr, cx - 96, cy - 52, 80, 28, win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
 }
 static HWND HwndFileControl(HWND hwnd, LPCSTR pszClass, LPCSTR pszText, DWORD style, int x, int y, int cx, int cy, int id);
 static INT_PTR  FolderDialogProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
@@ -272,7 +272,7 @@ static INT_PTR  FolderDialogProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
 static void NewFileFolder(HWND hwnd, COMPATFILEDIALOG *lp) {
     char szName[PATH_MAX], szPath[PATH_MAX];
     RECT rc, work;
-    HWND hwndFolder, hwndFocus = NULL;
+    HWND hwndFolder, hwndFocus = nullptr;
     win32::MSG msg;
     int iRet;
     BOOL fAccepted = 0, fDisabled = 0;
@@ -301,7 +301,7 @@ static void NewFileFolder(HWND hwnd, COMPATFILEDIALOG *lp) {
     win32::ShowWindow(hwndFolder, win32::SW_SHOW); win32::SetFocus(win32::GetDlgItem(hwndFolder, ID_FILE_NAME));
     win32::SendDlgItemMessageA(hwndFolder, ID_FILE_NAME, win32::EM_SETSEL, 0, -1);
     while (win32::IsWindow(hwndFolder) && !hwndFolder->fEndDialog) {
-        iRet = win32::GetMessageA(&msg, NULL, 0, 0);
+        iRet = win32::GetMessageA(&msg, nullptr, 0, 0);
         if (iRet <= 0) { if (iRet == 0) win32::PostQuitMessage((int)msg.wParam); break; }
         if (!win32::IsDialogMessageA(hwndFolder, &msg)) { win32::TranslateMessage(&msg); win32::DispatchMessageA(&msg); }
     }
@@ -379,7 +379,7 @@ static INT_PTR  FileDialogProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     }
 }
 static HWND HwndFileControl(HWND hwnd, LPCSTR pszClass, LPCSTR pszText, DWORD style, int x, int y, int cx, int cy, int id) {
-    HWND hwndControl = win32::CreateWindowExA(0, pszClass, pszText, win32::WS_CHILD | win32::WS_VISIBLE | style, x, y, cx, cy, hwnd, (HMENU)(INT_PTR)id, win32::GetModuleHandleA(NULL), NULL);
+    HWND hwndControl = win32::CreateWindowExA(0, pszClass, pszText, win32::WS_CHILD | win32::WS_VISIBLE | style, x, y, cx, cy, hwnd, (HMENU)(INT_PTR)id, win32::GetModuleHandleA(nullptr), nullptr);
     if (hwndControl) {
         win32::SendMessageA(hwndControl, win32::WM_SETFONT, (WPARAM)hwnd->hfontDialog, 0);
     }
@@ -405,7 +405,7 @@ static void RememberFileSelection(COMPATFILEDIALOG *lp, LPCSTR pszPath, char *ps
 static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
     COMPATFILEDIALOG dlg = {};
     LPCSTR psz, pszPattern;
-    HWND hwnd = NULL, hwndRoot = NULL, hwndFocus = NULL;
+    HWND hwnd = nullptr, hwndRoot = nullptr, hwndFocus = nullptr;
     char szInitial[PATH_MAX], szCwd[PATH_MAX], szPath[PATH_MAX], *pch;
     RECT rc, work;
     win32::MSG msg;
@@ -463,7 +463,7 @@ static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
         }
     }
     if (!FUtf8Valid(dlg.szDir, strlen(dlg.szDir))) { dlg.dwError = win32::FNERR_INVALIDFILENAME; goto done; }
-    hwndFocus = win32::GetFocus(); hwndRoot = lpof->hwndOwner ? HwndCompatRoot(lpof->hwndOwner) : NULL; fRestoreFocus = 1;
+    hwndFocus = win32::GetFocus(); hwndRoot = lpof->hwndOwner ? HwndCompatRoot(lpof->hwndOwner) : nullptr; fRestoreFocus = 1;
 #if defined(STARS_FILE_DIALOG_PORTAL) || defined(STARS_FILE_DIALOG_COCOA) || defined(STARS_FILE_DIALOG_WINDOWS)
     fNative = !PszCompatEnvironment("STARS_FILE_DIALOG_BACKEND") || strcmp(PszCompatEnvironment("STARS_FILE_DIALOG_BACKEND"), "compat") != 0;
     if (fNative && hwndRoot) hwndRoot->cNativeFileDialogs++;
@@ -531,7 +531,7 @@ static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
     if (!FRefreshFiles(hwnd, &dlg)) goto restore;
     win32::ShowWindow(hwnd, win32::SW_SHOW); win32::SetFocus(win32::GetDlgItem(hwnd, ID_FILE_NAME));
     while (win32::IsWindow(hwnd) && !hwnd->fEndDialog) {
-        iRet = win32::GetMessageA(&msg, NULL, 0, 0);
+        iRet = win32::GetMessageA(&msg, nullptr, 0, 0);
         if (iRet <= 0) { if (iRet == 0) win32::PostQuitMessage((int)msg.wParam); break; }
         if (!win32::IsDialogMessageA(hwnd, &msg)) { win32::TranslateMessage(&msg); win32::DispatchMessageA(&msg); }
     }

@@ -202,14 +202,14 @@ void DoCyberAiTurn(APPSESSION &app, PROD *rgprod) {
             }
         }
     }
-    lpflAttack = NULL;
-    lpflEnemy = NULL;
+    lpflAttack = nullptr;
+    lpflEnemy = nullptr;
     for (ifl = 0; ifl < app.state.cFleet; ifl++) {
         lpfl = app.state.rglpfl[ifl];
         if (!app.state.rglpfl[ifl])
             break;
         if (!app.state.fMarkedPlanets) {
-            IdNearestColonizablePlanet(app, lpfl, NULL);
+            IdNearestColonizablePlanet(app, lpfl, nullptr);
         }
         if (lpfl->iPlayer != app.state.idPlayer) {
             lpfl->lpflNext = lpflEnemy;
@@ -307,7 +307,7 @@ void DoCyberAiTurn(APPSESSION &app, PROD *rgprod) {
                         FleetQueryIO().pfnLookup(app, idWriteBack, &app.state.sel.fl);
                     } else {
                         if (lpfl->rgcsh[1] > 0) {
-                            idPlanDst = IdNearestColonizablePlanet(app, lpfl, NULL);
+                            idPlanDst = IdNearestColonizablePlanet(app, lpfl, nullptr);
                             if (idPlanDst == idplNone) {
                                 if (lpfl->lpplord->rgord()[0].grobj != grobjPlanet)
                                     continue;
@@ -532,7 +532,7 @@ void DoCyberPackets(APPSESSION &app) {
                 iPacketMax = LOWORD((int32_t)(rgResAvail[3] / 2));
                 iPacketMax /= 5;
                 if (iPacketMax < 7) {
-                    lpplDst = NULL;
+                    lpplDst = nullptr;
                 } else {
                     lpplDst = LpplFindClosestEnum(app, lppl, FEnumNeedMinerals);
                 }
@@ -594,7 +594,7 @@ void DoCyberPackets(APPSESSION &app) {
                 if (lMineral > 150) {
                     lpplDst = LpplFindClosestEnum(app, lppl, FEnumPktAttack);
                 } else {
-                    lpplDst = NULL;
+                    lpplDst = nullptr;
                 }
                 if (lpplDst) {
                     cPacket[0] = 0;
@@ -705,7 +705,7 @@ int16_t IdGetBestScannerDest(APPSESSION &app, PLANET *lppl, CompassDir iDir) {
 
     ptEdge = app.state.rgptPlan[lppl->id];
     iSize = 400 * app.state.game.mdSize + 400;
-    iWarp = ColonyIO().pfnWarp(app, lppl, NULL) + 3;
+    iWarp = ColonyIO().pfnWarp(app, lppl, nullptr) + 3;
     iDistance = iWarp * iWarp;
     ptEdge.x -= 1000;
     ptEdge.y -= 1000;
@@ -1008,7 +1008,7 @@ void DoCyberFreighter(APPSESSION &app, FLEET *lpfl, uint8_t *lpciPlanTemp) {
         if (FFindNearestObject(app, lpfl->pt, static_cast<GrobjClass>(grobjPlanet | mdNoRecurse), &scan)) {
             lpplDst = LpplFromId(app, scan.idpl);
         } else {
-            lpplDst = NULL;
+            lpplDst = nullptr;
         }
         goto LTarget;
     }
@@ -1436,7 +1436,7 @@ LTryNewTarget:
             if (app.state.game.fAisBand) {
                 lpplTarget = LpplFindBestEnum(app, lppl, FEnumCalcArmadaHumanDest);
             } else {
-                lpplTarget = NULL;
+                lpplTarget = nullptr;
             }
             if (!lpplTarget) {
                 lpplTarget = LpplFindBestEnum(app, lppl, FEnumCalcArmadaDest);

@@ -2,13 +2,15 @@
 #define STARS_FILEIO_H
 #include <stddef.h>
 #include <stdint.h>
-typedef struct NATIVEFILE NATIVEFILE;
-typedef struct NATIVEDIR NATIVEDIR;
-typedef struct NATIVEFILEINFO {
+struct NATIVEFILE;
+
+struct NATIVEDIR;
+
+struct NATIVEFILEINFO {
     int64_t cb;
     uint32_t grfMode;
     int fDirectory, fRegular, fLink;
-} NATIVEFILEINFO;
+};
 
 // Strict UTF-8 paths; binary bytes are never decoded or translated. All service
 // functions contain exceptions and report failures through return values/errno.

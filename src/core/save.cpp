@@ -179,7 +179,7 @@ int16_t FWriteDataFile(APPSESSION &app, char *pszFileBase, int16_t iPlayer, int1
                         lpord->tptl().iDist = lpord[1].tptl().iDist;
                     }
                     if (lpord->grTask == grTaskPatrol && (lpfl->cord <= 1 || lpord[1].grobj != grobjFleet)) {
-                        lpflBest = NULL;
+                        lpflBest = nullptr;
                         lBest = 100000000;
                         fFoundIdeal = 0;
                         if (lpfl->idPlanet == idPlanetDeepSpace && lpfl->cord >= 2 && lpfl->fRepOrders) {
@@ -314,7 +314,7 @@ int16_t FWriteDataFile(APPSESSION &app, char *pszFileBase, int16_t iPlayer, int1
     try {
         if (fAppend && FAppendFile(app, iPlayer))
             goto LAppend;
-        if (!RecordIO().pfnFCreateFile(app, iPlayer == iplrNone ? dtHost : dtTurn, iPlayer, NULL))
+        if (!RecordIO().pfnFCreateFile(app, iPlayer == iplrNone ? dtHost : dtTurn, iPlayer, nullptr))
             goto LFail;
 LAppend:
         WriteBattles(app, iPlayer);
@@ -333,9 +333,9 @@ LAppend:
                     memcpy(plrT.rgEnvVarMin, app.state.rgplr[i].rgEnvVarMin, sizeof(plrT.rgEnvVarMin));
                     memcpy(plrT.rgEnvVarMax, app.state.rgplr[i].rgEnvVarMax, sizeof(plrT.rgEnvVarMax));
                     plrT.det = detAll;
-                    WriteRtPlr(app, &plrT, NULL);
+                    WriteRtPlr(app, &plrT, nullptr);
                 } else {
-                    WriteRtPlr(app, &app.state.rgplr[i], NULL);
+                    WriteRtPlr(app, &app.state.rgplr[i], nullptr);
                 }
             }
         }
@@ -371,7 +371,7 @@ LAppend:
                 lpshdef = app.state.rglpshdef[i];
                 for (j = 0; j < 16; j++) {
                     if (!lpshdef[j].fFree && lpshdef[j].fInclude) {
-                        WriteRtShDef(app, lpshdef + j, NULL);
+                        WriteRtShDef(app, lpshdef + j, nullptr);
                     }
                 }
             }
@@ -389,7 +389,7 @@ LAppend:
                 lpshdef = app.state.rglpshdefSB[i];
                 for (j = 0; j < 10; j++) {
                     if (!lpshdef[j].fFree && lpshdef[j].fInclude) {
-                        WriteRtShDef(app, lpshdef + j, NULL);
+                        WriteRtShDef(app, lpshdef + j, nullptr);
                     }
                 }
             }
@@ -473,12 +473,12 @@ LAppend:
 LFail:
     app.state.idPlayer = iPlayer;
     if (fAppend) {
-        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableUpdateTurnFile, NULL), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableUpdateTurnFile, nullptr), win32::MB_ICONHAND);
     } else if (iPlayer != iplrNone) {
-        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableCreateNewTurnFile, NULL), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableCreateNewTurnFile, nullptr), win32::MB_ICONHAND);
     } else {
         app.state.idPlayer = iplrNone;
-        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableCreateHostFile, NULL), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableCreateHostFile, nullptr), win32::MB_ICONHAND);
     }
     app.state.idPlayer = iplrNone;
     fRet = 0;
@@ -1120,7 +1120,7 @@ void WriteRt(APPSESSION &app, RecordType rt, int16_t cb, void *rg) {
 
 void RgToStream(APPSESSION &app, const void *rg, uint16_t cb) {
     if (cb != 0 && CbWriteFile(app.state.hf, rg, cb) != cb) {
-        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsErrorWritingFile, NULL), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsErrorWritingFile, nullptr), win32::MB_ICONHAND);
         StarsThrowError(starsErrorFile, idsErrorWritingFile);
     }
     return;
@@ -1232,7 +1232,7 @@ void SetVisPFInit(APPSESSION &app, int16_t iPlr) {
             }
             if (iPlr != iplrNone && lpfl->idPlanet != idPlanetDeepSpace) {
                 lppl = app.state.lpPlanets + lpfl->idPlanet;
-                detNew = GetCachedFleetScannerRange(app, lpfl, NULL, NULL, &iSteal) < 0 ? 1 : 3;
+                detNew = GetCachedFleetScannerRange(app, lpfl, nullptr, nullptr, &iSteal) < 0 ? 1 : 3;
                 if (iSteal >= 2) {
                     detNew = 4;
                 }
@@ -1466,7 +1466,7 @@ void SetVisPFPlanets(APPSESSION &app, int16_t iPlr) {
         for (i = 0; i < 10; i++) {
             rgStargateRange[i] = 0;
             if (!app.state.rglpshdefSB[iPlr][i].fFree) {
-                rgStargateRange[i] = StargateRangeFromLppl(app, NULL, iPlr, i);
+                rgStargateRange[i] = StargateRangeFromLppl(app, nullptr, iPlr, i);
                 if (rgStargateRange[i] > 0) {
                     fStargateView = 1;
                 }

@@ -4,10 +4,10 @@
 #include "fileio.h"
 #include <cstdlib>
 
-typedef struct COMPATPROFILE {
+struct COMPATPROFILE {
     char *szRaw, *szParsed, *pszSection, *pszKey, *pszValue;
     struct COMPATPROFILE *lpNext;
-} COMPATPROFILE;
+};
 
 // Profile parsing and publication use the same native service as the product.
 // A provider changes only I/O effects; the serializer and stage order stay linked.

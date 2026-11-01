@@ -37,7 +37,7 @@ uint16_t CbHeapItem(APPSESSION &app, uint16_t cb, HeapType ht) {
     uint32_t cbItem = ((uint32_t)cb + 2 + cbAlign - 1) / cbAlign * cbAlign;
 
     if (cbItem > static_cast<uint32_t>(UINT16_MAX - CbHbHeader(ht))) {
-        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMemory, NULL), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMemory, nullptr), win32::MB_ICONHAND);
         StarsThrowError(starsErrorMemory, idsMemory);
     }
     return cbItem;
@@ -47,7 +47,7 @@ HB *LphbAlloc(APPSESSION &app, uint16_t cb, HeapType ht) {
     void *hmem;
     HB   *lphb;
 
-    lphb = NULL;
+    lphb = nullptr;
     cb += CbHbHeader(ht);
     if (cb < app.state.mphtcbAlloc[ht]) {
         cb = app.state.mphtcbAlloc[ht];
@@ -55,7 +55,7 @@ HB *LphbAlloc(APPSESSION &app, uint16_t cb, HeapType ht) {
     /* NATIVE: the original locked a zero-filled GlobalAlloc block. */
     hmem = calloc(1, cb);
     if (!hmem) {
-        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMemory, NULL), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMemory, nullptr), win32::MB_ICONHAND);
         StarsThrowError(starsErrorMemory, idsMemory);
     }
     // The lifetime operation retains calloc's initialized representation.
@@ -81,7 +81,7 @@ HB *LphbReAlloc(APPSESSION &app, HB *lphb) {
     uint16_t cbGrow;
 
     if (!lphb) {
-        return NULL;
+        return nullptr;
     }
     hmem = lphb->hmem;
     cbCur = lphb->cbBlock;
@@ -103,7 +103,7 @@ HB *LphbReAlloc(APPSESSION &app, HB *lphb) {
     hmem = realloc(hmem, (size_t)(lphb->cbBlock + cbGrow));
     if (!hmem) {
     LReAllocOOM:
-        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMemory, NULL), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMemory, nullptr), win32::MB_ICONHAND);
         StarsThrowError(starsErrorMemory, idsMemory);
     }
     hmem = std::memmove(hmem, hmem, static_cast<std::size_t>(cbCur) + cbGrow);
@@ -201,12 +201,12 @@ HB *LphbFromLpHt(APPSESSION &app, void *lp, HeapType ht) {
     HB *lphb;
 
     if ((int16_t)ht < htOrd || (int16_t)ht >= htCount) {
-        return NULL;
+        return nullptr;
     }
     for (lphb = app.state.rglphb[ht]; lphb && (reinterpret_cast<uintptr_t>(lp) <= reinterpret_cast<uintptr_t>(lphb->hmem) || reinterpret_cast<uintptr_t>(lp) - reinterpret_cast<uintptr_t>(lphb->hmem) >= lphb->cbBlock); lphb = lphb->lphbNext) {
     }
     if (!lphb) {
-        return NULL;
+        return nullptr;
     }
     return lphb;
 }

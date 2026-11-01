@@ -3,18 +3,18 @@
 #include <stars_compat.h>
 #include <string.h>
 
-typedef struct COMPATDLGCREATE { DLGPROC lpfn; HFONT hfont; int cxUnit, cyUnit; BOOL fModal; } COMPATDLGCREATE;
+struct COMPATDLGCREATE { DLGPROC lpfn; HFONT hfont; int cxUnit, cyUnit; BOOL fModal; };
 
 void CompatDestroyDialog(HWND hwnd) {
     if (hwnd->hfontDialog) win32::DeleteObject(hwnd->hfontDialog);
-    hwnd->hfontDialog = NULL;
+    hwnd->hfontDialog = nullptr;
 }
 static HWND HwndDialogTab(HWND hwnd, HWND hwndCurrent, BOOL fBack) {
-    HWND lp, hwndFirst = NULL, hwndLast = NULL, hwndPrevious = NULL;
+    HWND lp, hwndFirst = nullptr, hwndLast = nullptr, hwndPrevious = nullptr;
     BOOL fFound;
     while (hwndCurrent && win32::IsChild(hwnd, hwndCurrent) && win32::GetParent(hwndCurrent) != hwnd)
         hwndCurrent = win32::GetParent(hwndCurrent);
-    fFound = hwndCurrent == NULL;
+    fFound = hwndCurrent == nullptr;
     for (lp = win32::GetWindow(hwnd, win32::GW_CHILD); lp; lp = win32::GetWindow(lp, win32::GW_HWNDNEXT)) {
         if (!lp->fVisible || !win32::IsWindowEnabled(lp) || !(lp->dwStyle & win32::WS_TABSTOP)) continue;
         if (!hwndFirst) hwndFirst = lp;
@@ -37,7 +37,7 @@ LRESULT  CompatDialogProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         lpc = (COMPATDLGCREATE *)(((const CREATESTRUCTA *)l)->lpCreateParams);
         if (!lpc) return 0;
         lp->fDialog = 1; lp->lpfnDlg = lpc->lpfn; lp->hfontDialog = lpc->hfont;
-        lpc->hfont = NULL;
+        lpc->hfont = nullptr;
         lp->cxDlgUnit = lpc->cxUnit; lp->cyDlgUnit = lpc->cyUnit; lp->fModal = lpc->fModal;
         return 1;
     }
@@ -86,7 +86,7 @@ static BOOL FDialogUnits(COMPATDLGTEMPLATE *lpdlg, COMPATDLGCREATE *lpc) {
     CchCopyUtf8(lf.lfFaceName, sizeof(lf.lfFaceName), lpdlg->pszFont ? lpdlg->pszFont : "MS Sans Serif",
                 CchUtf8Prefix(lpdlg->pszFont ? lpdlg->pszFont : "MS Sans Serif", sizeof(lf.lfFaceName) - 1));
     lpc->hfont = win32::CreateFontIndirectA(&lf);
-    if (!lpc->hfont || !(hdc = win32::CreateCompatibleDC(NULL))) return 0;
+    if (!lpc->hfont || !(hdc = win32::CreateCompatibleDC(nullptr))) return 0;
     hold = win32::SelectObject(hdc, lpc->hfont);
     fOk = win32::GetTextExtentPoint32A(hdc, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz", 52, &size) && win32::GetTextMetricsA(hdc, &tm);
     if (fOk) { lpc->cxUnit = (size.cx / 26 + 1) / 2; lpc->cyUnit = tm.tmHeight; fOk = lpc->cxUnit > 0 && lpc->cyUnit > 0; }
@@ -100,24 +100,24 @@ HWND HwndCompatDynamicDialog(LPCSTR pszTitle, DWORD dwStyle, DWORD dwExStyle, co
     COMPATCLEANUPSCOPE deleteFont([&] { if (dc.hfont) win32::DeleteObject(dc.hfont); });
     dlg.cPoints = 8;
     dc.lpfn = lpfn; dc.fModal = 1;
-    if (!FDialogUnits(&dlg, &dc)) return NULL;
+    if (!FDialogUnits(&dlg, &dc)) return nullptr;
     hwnd = win32::CreateWindowExA(dwExStyle, "#32770", pszTitle, dwStyle & ~win32::WS_VISIBLE,
                          lprc->left, lprc->top, lprc->right - lprc->left, lprc->bottom - lprc->top,
-                         hwndOwner, NULL, win32::GetModuleHandleA(NULL), &dc);
+                         hwndOwner, nullptr, win32::GetModuleHandleA(nullptr), &dc);
     deleteFont.Close();
     return hwnd;
 }
 static LPCSTR PszDialogClass(COMPATDLGITEM *lpitem) {
     static const char *rgpsz[] = {"Button", "Edit", "Static", "ListBox", "ScrollBar", "ComboBox"};
     if (lpitem->pszClass && *lpitem->pszClass) return lpitem->pszClass;
-    return lpitem->idClass >= 0x80 && lpitem->idClass <= 0x85 ? rgpsz[lpitem->idClass - 0x80] : NULL;
+    return lpitem->idClass >= 0x80 && lpitem->idClass <= 0x85 ? rgpsz[lpitem->idClass - 0x80] : nullptr;
 }
 static HWND HwndCreateDialog(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGPROC lpfn, LPARAM param, BOOL fModal) {
     HRSRC hrsrc;
     COMPATDLGTEMPLATE dlg = {};
     COMPATDLGCREATE dc = {};
     COMPATDLGITEM *lpitem;
-    HWND hwnd = NULL, hwndChild, hwndFocus;
+    HWND hwnd = nullptr, hwndChild, hwndFocus;
     RECT rc;
     WORD i;
     LPCSTR pszClass, pszTitle;
@@ -126,23 +126,23 @@ static HWND HwndCreateDialog(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGPRO
     COMPATCLEANUPSCOPE deleteFont([&] { if (dc.hfont) win32::DeleteObject(dc.hfont); });
     COMPATCLEANUPSCOPE destroyDialog([&] { if (win32::IsWindow(hwnd)) win32::DestroyWindow(hwnd); }, hwndOwner);
     // A checked caller cannot take ownership of a modeless window on failure.
-    if (!fModal && FStarsErrorPending()) return NULL;
-    if (!SDL_IsMainThread() || (hwndOwner && !win32::IsWindow(hwndOwner))) return NULL;
-    if (!hinst) hinst = win32::GetModuleHandleA(NULL);
+    if (!fModal && FStarsErrorPending()) return nullptr;
+    if (!SDL_IsMainThread() || (hwndOwner && !win32::IsWindow(hwndOwner))) return nullptr;
+    if (!hinst) hinst = win32::GetModuleHandleA(nullptr);
     hrsrc = win32::FindResourceA(hinst, psz, win32::RT_DIALOG);
-    if (!FCompatDialogTemplate((const BYTE *)(win32::LockResource(win32::LoadResource(hinst, hrsrc))), win32::SizeofResource(hinst, hrsrc), &dlg)) return NULL;
+    if (!FCompatDialogTemplate((const BYTE *)(win32::LockResource(win32::LoadResource(hinst, hrsrc))), win32::SizeofResource(hinst, hrsrc), &dlg)) return nullptr;
     if (dlg.idClass || (dlg.pszClass && *dlg.pszClass) || dlg.idMenu || (dlg.pszMenu && *dlg.pszMenu)) goto done;
     dc.lpfn = lpfn; dc.fModal = fModal;
     if (!FDialogUnits(&dlg, &dc)) goto done;
     hwnd = win32::CreateWindowExA(dlg.dwExStyle, "#32770", dlg.pszTitle, dlg.dwStyle & ~win32::WS_VISIBLE,
                          win32::MulDiv(dlg.x, dc.cxUnit, 4), win32::MulDiv(dlg.y, dc.cyUnit, 8),
-                         win32::MulDiv(dlg.cx, dc.cxUnit, 4), win32::MulDiv(dlg.cy, dc.cyUnit, 8), hwndOwner, NULL, hinst, &dc);
+                         win32::MulDiv(dlg.cx, dc.cxUnit, 4), win32::MulDiv(dlg.cy, dc.cyUnit, 8), hwndOwner, nullptr, hinst, &dc);
     // The dialog record owns the font after WM_NCCREATE, including failure cleanup.
     if (!hwnd) goto done;
-    dc.hfont = NULL;
+    dc.hfont = nullptr;
     if (!fModal && FStarsErrorPending()) goto fail;
     win32::SendMessageA(hwnd, win32::WM_SETFONT, (WPARAM)hwnd->hfontDialog, 0);
-    if (!win32::IsWindow(hwnd)) { hwnd = NULL; goto done; }
+    if (!win32::IsWindow(hwnd)) { hwnd = nullptr; goto done; }
     if (!fModal && FStarsErrorPending()) goto fail;
     for (i = 0; i < dlg.cItems; i++) {
         lpitem = &dlg.rgItems[i]; pszClass = PszDialogClass(lpitem);
@@ -152,26 +152,26 @@ static HWND HwndCreateDialog(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGPRO
         win32::MapDialogRect(hwnd, &rc);
         hwndChild = win32::CreateWindowExA(lpitem->dwExStyle, pszClass, pszTitle, lpitem->dwStyle,
                                    rc.left, rc.top, rc.right, rc.bottom,
-                                   hwnd, (HMENU)(INT_PTR)(int16_t)lpitem->id, hinst, NULL);
+                                   hwnd, (HMENU)(INT_PTR)(int16_t)lpitem->id, hinst, nullptr);
         if (!hwndChild || !win32::IsWindow(hwnd) || (!fModal && FStarsErrorPending())) goto fail;
         win32::SendMessageA(hwndChild, win32::WM_SETFONT, (WPARAM)hwnd->hfontDialog, 0);
         if (!win32::IsWindow(hwnd) || (!fModal && FStarsErrorPending())) goto fail;
     }
-    hwndFocus = HwndDialogTab(hwnd, NULL, 0);
+    hwndFocus = HwndDialogTab(hwnd, nullptr, 0);
     fFocus = win32::SendMessageA(hwnd, win32::WM_INITDIALOG, (WPARAM)hwndFocus, param) != 0;
-    if (!win32::IsWindow(hwnd)) { hwnd = NULL; goto done; }
+    if (!win32::IsWindow(hwnd)) { hwnd = nullptr; goto done; }
     if (!fModal && FStarsErrorPending()) goto fail;
     if (!hwnd->fEndDialog) {
         if (fModal || (dlg.dwStyle & win32::WS_VISIBLE)) {
             // Prepare the initialized dialog before exposing its native window;
             // otherwise the compositor first displays the empty black canvas.
-            win32::InvalidateRect(hwnd, NULL, 1);
+            win32::InvalidateRect(hwnd, nullptr, 1);
             win32::UpdateWindow(hwnd);
-            if (!win32::IsWindow(hwnd)) { hwnd = NULL; goto done; }
+            if (!win32::IsWindow(hwnd)) { hwnd = nullptr; goto done; }
             if (!fModal && FStarsErrorPending()) goto fail;
             for (hwndChild = win32::GetWindow(hwnd, win32::GW_CHILD); hwndChild; hwndChild = win32::GetWindow(hwndChild, win32::GW_HWNDNEXT)) {
                 win32::UpdateWindow(hwndChild);
-                if (!win32::IsWindow(hwnd)) { hwnd = NULL; goto done; }
+                if (!win32::IsWindow(hwnd)) { hwnd = nullptr; goto done; }
                 if (!fModal && FStarsErrorPending()) goto fail;
             }
             hwnd->fDeferPresent = 0;
@@ -182,12 +182,12 @@ static HWND HwndCreateDialog(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGPRO
         }
         if (fFocus && win32::IsWindow(hwndFocus) && win32::IsWindowEnabled(hwndFocus)) win32::SetFocus(hwndFocus);
     }
-    if (!win32::IsWindow(hwnd)) hwnd = NULL;
+    if (!win32::IsWindow(hwnd)) hwnd = nullptr;
     if (!fModal && FStarsErrorPending()) goto fail;
     goto done;
 fail:
     destroyDialog.Close();
-    hwnd = NULL;
+    hwnd = nullptr;
 done:
     deleteFont.Close();
     freeTemplate.Close();
@@ -231,16 +231,16 @@ BOOL win32::IsDialogMessageA(HWND hwnd, LPMSG lpmsg) {
     return 0;
 }
 INT_PTR win32::DialogBoxParamA(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGPROC lpfn, LPARAM param) {
-    HWND hwnd = NULL, hwndFocus = win32::GetFocus(), hwndRoot;
+    HWND hwnd = nullptr, hwndFocus = win32::GetFocus(), hwndRoot;
     BOOL fEnable;
     win32::MSG msg;
     int result;
     INT_PTR value = -1;
     if (!SDL_IsMainThread() || FStarsErrorPending()) return -1;
     // Nested wizard loops must unwind without exposing another page after application quit.
-    if (win32::PeekMessageA(&msg, NULL, win32::WM_QUIT, win32::WM_QUIT, win32::PM_NOREMOVE)) return -1;
+    if (win32::PeekMessageA(&msg, nullptr, win32::WM_QUIT, win32::WM_QUIT, win32::PM_NOREMOVE)) return -1;
     if (hwndOwner && !win32::IsWindow(hwndOwner)) return 0;
-    hwndRoot = hwndOwner ? HwndCompatRoot(hwndOwner) : NULL;
+    hwndRoot = hwndOwner ? HwndCompatRoot(hwndOwner) : nullptr;
     fEnable = hwndRoot && win32::IsWindowEnabled(hwndRoot);
     COMPATCLEANUPSCOPE restoreOwner([&] {
         if (FCompatPendingDialogSequence(hwndRoot)) return;
@@ -253,7 +253,7 @@ INT_PTR win32::DialogBoxParamA(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGP
     hwnd = HwndCreateDialog(hinst, psz, hwndOwner, lpfn, param, 1);
     if (hwnd) {
         while (win32::IsWindow(hwnd) && !hwnd->fEndDialog) {
-            result = win32::GetMessageA(&msg, NULL, 0, 0);
+            result = win32::GetMessageA(&msg, nullptr, 0, 0);
             if (result <= 0) { if (result == 0) win32::PostQuitMessage((int)msg.wParam); break; }
             if (!win32::IsDialogMessageA(hwnd, &msg)) { win32::TranslateMessage(&msg); win32::DispatchMessageA(&msg); }
         }
@@ -274,9 +274,9 @@ INT_PTR win32::DialogBoxParamA(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGP
 // for unowned failures, including thread timers without an HWND.
 void CompatAbortCallback(HWND hwnd) noexcept {
     HWND lp;
-    while ((lp = LpCompatWindow(hwnd)) != NULL) {
+    while ((lp = LpCompatWindow(hwnd)) != nullptr) {
         if (lp->fDialog && lp->fModal) { win32::EndDialog(hwnd, 0); return; }
         hwnd = lp->hwndParent ? lp->hwndParent : lp->hwndOwner;
     }
-    win32::PostMessageA(NULL, win32::WM_NULL, 0, 0);
+    win32::PostMessageA(nullptr, win32::WM_NULL, 0, 0);
 }

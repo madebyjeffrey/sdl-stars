@@ -4,8 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef struct COMPATTOOLBUTTON { TBBUTTON btn; RECT rc; char *psz; } COMPATTOOLBUTTON;
-typedef struct COMPATTOOLBITMAP { HBITMAP hbmp; int iFirst, c; } COMPATTOOLBITMAP;
+struct COMPATTOOLBUTTON { TBBUTTON btn; RECT rc; char *psz; };
+struct COMPATTOOLBITMAP { HBITMAP hbmp; int iFirst, c; };
 struct COMPATTOOLBAR {
     COMPATTOOLBUTTON *rgbtn;
     COMPATTOOLBITMAP *rgbmp;
@@ -66,7 +66,7 @@ static void LayoutToolbar(HWND hwnd) {
         win32::SetRect(&lpbtn->rc, x, 2, x + cx, 2 + lp->cy);
         x += cx;
     }
-    win32::InvalidateRect(hwnd, NULL, 1);
+    win32::InvalidateRect(hwnd, nullptr, 1);
 }
 
 static int HitToolbar(COMPATTOOLBAR *lp, POINT pt) {
@@ -122,7 +122,7 @@ static int AddBitmap(HWND hwnd, int c, const TBADDBITMAP *lpadd) {
         if (lpadd->hInst && hbmp) win32::DeleteObject(hbmp);
         return -1;
     }
-    hsrc = win32::CreateCompatibleDC(NULL); hdst = win32::CreateCompatibleDC(NULL);
+    hsrc = win32::CreateCompatibleDC(nullptr); hdst = win32::CreateCompatibleDC(nullptr);
     hOldSrc = (HBITMAP)win32::SelectObject(hsrc, hbmp);
     // A fresh memory DC contains a monochrome bitmap. Match the selected
     // source instead, or the copied toolbar icons lose all their colors.
@@ -138,7 +138,7 @@ static int AddBitmap(HWND hwnd, int c, const TBADDBITMAP *lpadd) {
     if (!rgbmp) { win32::DeleteObject(hcopy); return -1; }
     lp->rgbmp = rgbmp; iFirst = lp->cImage;
     lp->rgbmp[lp->cbmp++] = COMPATTOOLBITMAP{hcopy, iFirst, c}; lp->cImage += c;
-    win32::InvalidateRect(hwnd, NULL, 1);
+    win32::InvalidateRect(hwnd, nullptr, 1);
     return iFirst;
 }
 
@@ -222,11 +222,11 @@ static void ClickToolbar(HWND hwnd, int i, BOOL fDrop, BOOL fMouse) {
         // state, and remains visible throughout the parent's modal menu loop.
         StarsRestore<BOOL> restorePressed(lp->fDropPressed);
         lp->idDrop = btn.idCommand; lp->fDropPressed = 1;
-        win32::InvalidateRect(hwnd, NULL, 1); win32::UpdateWindow(hwnd);
+        win32::InvalidateRect(hwnd, nullptr, 1); win32::UpdateWindow(hwnd);
         result = win32::SendMessageA(hwndParent, win32::WM_NOTIFY, nm.hdr.idFrom, (LPARAM)&nm);
         if (!win32::IsWindow(hwnd) || !(lp = hwnd->lptoolbar.get())) return;
         lp->fDropPressed = 0;
-        win32::InvalidateRect(hwnd, NULL, 1);
+        win32::InvalidateRect(hwnd, nullptr, 1);
         i = IndexButton(lp, btn.idCommand);
         if (i < 0) return;
         if (result != win32::TBDDRET_NODEFAULT && result != win32::TBDDRET_TREATPRESSED) return;
@@ -234,7 +234,7 @@ static void ClickToolbar(HWND hwnd, int i, BOOL fDrop, BOOL fMouse) {
         // Windows sends its command on release, not during TBN_DROPDOWN.
         if (fMouse) {
             lp->iDown = i; lp->rgbtn[i].btn.fsState |= win32::TBSTATE_PRESSED;
-            win32::SetCapture(hwnd); win32::InvalidateRect(hwnd, NULL, 1); return;
+            win32::SetCapture(hwnd); win32::InvalidateRect(hwnd, nullptr, 1); return;
         }
     }
     if (btn.fsStyle & win32::BTNS_CHECK) {
@@ -245,7 +245,7 @@ static void ClickToolbar(HWND hwnd, int i, BOOL fDrop, BOOL fMouse) {
             lp->rgbtn[i].btn.fsState |= win32::TBSTATE_CHECKED;
         } else lp->rgbtn[i].btn.fsState ^= win32::TBSTATE_CHECKED;
     }
-    win32::InvalidateRect(hwnd, NULL, 1);
+    win32::InvalidateRect(hwnd, nullptr, 1);
     win32::SendMessageA(hwndParent, win32::WM_COMMAND, win32::MAKEWPARAM(btn.idCommand, 0), (LPARAM)hwnd);
 }
 
@@ -277,7 +277,7 @@ static void ShowToolbarTip(HWND hwnd) {
     int x, y;
     if (lp->iHot < 0 || lp->iHot >= lp->c) return;
     lpbtn = &lp->rgbtn[lp->iHot]; rc = lpbtn->rc;
-    win32::MapWindowPoints(hwnd, NULL, (POINT *)&rc, 2);
+    win32::MapWindowPoints(hwnd, nullptr, (POINT *)&rc, 2);
     if (!win32::GetCursorPos(&pt) || !win32::PtInRect(&rc, pt)) { HideTip(hwnd); lp->iHot = -1; return; }
     if (win32::IsWindowVisible(lp->hwndTip) || !lpbtn->psz || !*lpbtn->psz) return;
     hdc = win32::GetDC(hwnd); win32::GetTextExtentPoint32A(hdc, lpbtn->psz, (int)strlen(lpbtn->psz), &size); win32::ReleaseDC(hwnd, hdc);
@@ -288,9 +288,9 @@ static void ShowToolbarTip(HWND hwnd) {
         win32::SetWindowTextA(lp->hwndTip, lpbtn->psz);
         win32::SetWindowPos(lp->hwndTip, win32::HWND_TOP, x, y, size.cx + 6, size.cy + 6, win32::SWP_NOACTIVATE);
         win32::UpdateWindow(lp->hwndTip);
-        win32::SetWindowPos(lp->hwndTip, NULL, 0, 0, 0, 0,
+        win32::SetWindowPos(lp->hwndTip, nullptr, 0, 0, 0, 0,
                      win32::SWP_NOMOVE | win32::SWP_NOSIZE | win32::SWP_NOZORDER | win32::SWP_NOACTIVATE | win32::SWP_SHOWWINDOW);
-        win32::SetTimer(hwnd, 1, 50, NULL);
+        win32::SetTimer(hwnd, 1, 50, nullptr);
     }
 }
 
@@ -319,7 +319,7 @@ LRESULT  CompatToolbarProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         if (hwnd->dwStyle & win32::TBSTYLE_TOOLTIPS) {
             win32::GetWindowRect(HwndCompatRoot(hwnd), &rc);
             lp->hwndTip = win32::CreateWindowExA(win32::WS_EX_NOACTIVATE, "StarsCompatToolbarTip", "", win32::WS_POPUP,
-                rc.left, rc.top, 1, 1, HwndCompatRoot(hwnd), NULL, hwnd->lpclass->wc.hInstance, NULL);
+                rc.left, rc.top, 1, 1, HwndCompatRoot(hwnd), nullptr, hwnd->lpclass->wc.hInstance, nullptr);
             if (!lp->hwndTip) return -1;
         }
         return 0;
@@ -352,14 +352,14 @@ LRESULT  CompatToolbarProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         LayoutToolbar(hwnd); return 1;
     case win32::TB_GETBUTTONSIZE: return MAKELONG(lp->cx, lp->cy);
     case win32::TB_SETINDENT: if (w > 4096) return 0; lp->xIndent = (int)w; LayoutToolbar(hwnd); return 1;
-    case win32::TB_SETMAXTEXTROWS: lp->cTextRows = (int)w; win32::InvalidateRect(hwnd, NULL, 1); return 1;
+    case win32::TB_SETMAXTEXTROWS: lp->cTextRows = (int)w; win32::InvalidateRect(hwnd, nullptr, 1); return 1;
     case win32::TB_GETTEXTROWS: return lp->cTextRows;
     case win32::TB_SETEXTENDEDSTYLE: id = (int)lp->dwExStyle; lp->dwExStyle = (DWORD)l; LayoutToolbar(hwnd); return id;
     case win32::TB_GETEXTENDEDSTYLE: return lp->dwExStyle;
     case win32::TB_AUTOSIZE:
         if (!(hwnd->dwStyle & win32::CCS_NORESIZE)) {
             win32::GetClientRect(hwnd->hwndParent, &rc);
-            win32::SetWindowPos(hwnd, NULL, 0, 0, rc.right, lp->cy + 4, win32::SWP_NOZORDER | win32::SWP_NOACTIVATE |
+            win32::SetWindowPos(hwnd, nullptr, 0, 0, rc.right, lp->cy + 4, win32::SWP_NOZORDER | win32::SWP_NOACTIVATE |
                          (hwnd->dwStyle & win32::CCS_NOPARENTALIGN ? win32::SWP_NOMOVE : 0));
         }
         return 0;
@@ -395,12 +395,12 @@ LRESULT  CompatToolbarProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         i = HitToolbar(lp, pt);
         if (i != lp->iHot) {
             HideTip(hwnd); lp->iHot = i >= 0 ? i : -1;
-            if ((hwnd->dwStyle & win32::TBSTYLE_TOOLTIPS) && lp->iHot >= 0) win32::SetTimer(hwnd, 1, 700, NULL);
+            if ((hwnd->dwStyle & win32::TBSTYLE_TOOLTIPS) && lp->iHot >= 0) win32::SetTimer(hwnd, 1, 700, nullptr);
         }
         if (lp->iDown >= 0 && lp->iDown < lp->c) {
             if (i == lp->iDown) lp->rgbtn[lp->iDown].btn.fsState |= win32::TBSTATE_PRESSED;
             else lp->rgbtn[lp->iDown].btn.fsState &= ~win32::TBSTATE_PRESSED;
-            win32::InvalidateRect(hwnd, NULL, 1);
+            win32::InvalidateRect(hwnd, nullptr, 1);
         }
         return 0;
     case win32::WM_LBUTTONDOWN: case win32::WM_LBUTTONDBLCLK:
@@ -410,17 +410,17 @@ LRESULT  CompatToolbarProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         fDrop = (lpbtn->fsStyle & win32::BTNS_WHOLEDROPDOWN) || ((lpbtn->fsStyle & win32::BTNS_DROPDOWN) &&
             (!(lp->dwExStyle & win32::TBSTYLE_EX_DRAWDDARROWS) || pt.x >= lp->rgbtn[i].rc.right - 11));
         if (fDrop) { ClickToolbar(hwnd, i, 1, 1); return 0; }
-        lp->iDown = i; lpbtn->fsState |= win32::TBSTATE_PRESSED; win32::SetCapture(hwnd); win32::InvalidateRect(hwnd, NULL, 1); return 0;
+        lp->iDown = i; lpbtn->fsState |= win32::TBSTATE_PRESSED; win32::SetCapture(hwnd); win32::InvalidateRect(hwnd, nullptr, 1); return 0;
     case win32::WM_LBUTTONUP:
         i = lp->iDown; lp->iDown = -1;
         if (i >= 0 && i < lp->c) lp->rgbtn[i].btn.fsState &= ~win32::TBSTATE_PRESSED;
         win32::ReleaseCapture(); if (!win32::IsWindow(hwnd)) return 0;
-        win32::InvalidateRect(hwnd, NULL, 1);
+        win32::InvalidateRect(hwnd, nullptr, 1);
         if (i >= 0 && HitToolbar(lp, pt) == i) ClickToolbar(hwnd, i, 0, 1);
         return 0;
     case win32::WM_CANCELMODE: case win32::WM_CAPTURECHANGED:
         if (lp->iDown >= 0 && lp->iDown < lp->c) lp->rgbtn[lp->iDown].btn.fsState &= ~win32::TBSTATE_PRESSED;
-        lp->iDown = -1; HideTip(hwnd); win32::InvalidateRect(hwnd, NULL, 1); return 0;
+        lp->iDown = -1; HideTip(hwnd); win32::InvalidateRect(hwnd, nullptr, 1); return 0;
     case win32::WM_KEYDOWN:
         i = lp->iHot;
         if (w == win32::VK_RETURN || w == win32::VK_SPACE || (w == win32::VK_DOWN && i >= 0 &&

@@ -28,8 +28,8 @@ LRESULT  MineWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
 
     switch (message) {
     case win32::WM_CREATE:
-        app.lpui->hwndMineCB = ui::CreateWindowEx(0, app.lpui->szButton, TextIO().pfnCompressed(app, idsDetonateMineFieldYear), win32::BS_AUTOCHECKBOX | win32::WS_CHILD, 100, 100, 150, app.state.dyArial8, hwnd, NULL,
-                                  app.lpui->hInst, NULL);
+        app.lpui->hwndMineCB = ui::CreateWindowEx(0, app.lpui->szButton, TextIO().pfnCompressed(app, idsDetonateMineFieldYear), win32::BS_AUTOCHECKBOX | win32::WS_CHILD, 100, 100, 150, app.state.dyArial8, hwnd, nullptr,
+                                  app.lpui->hInst, nullptr);
         ControlIO().pfnSendMessage(app.lpui->hwndMineCB, win32::WM_SETFONT, (WPARAM)app.lpui->rghfontArial8[1], 0);
         SetMineralTitleBar(app, hwnd);
         break;
@@ -585,7 +585,7 @@ void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
                     RightTextOut(app, hdc, xR, yCur, app.state.szWork, c, 0);
                 }
                 win32::SetTextColor(hdc, 0xff);
-                RightTextOut(app, hdc, xR, yCur + app.state.dyArial8 - 2, TextIO().pfnPlayerName(app, pl.iPlayer, 0, 1, 0, 0, NULL), 0, 0);
+                RightTextOut(app, hdc, xR, yCur + app.state.dyArial8 - 2, TextIO().pfnPlayerName(app, pl.iPlayer, 0, 1, 0, 0, nullptr), 0, 0);
             }
             yCur += app.state.dyArial8 - 2;
             dNum = app.state.game.turn - pl.turn;
@@ -935,7 +935,7 @@ void MineClick(APPSESSION &app, int16_t x, int16_t y, int16_t msg, int16_t sks) 
                     }
                 }
                 if (c > 1) {
-                    c = ControlIO().pfnPopupMenu(app, app.lpui->hwndMine, x, y, c, NULL, rgpsz, -1, 1);
+                    c = ControlIO().pfnPopupMenu(app, app.lpui->hwndMine, x, y, c, nullptr, rgpsz, -1, 1);
                     if (c == -1)
                         break;
                 } else {
@@ -1084,9 +1084,9 @@ void MineClick(APPSESSION &app, int16_t x, int16_t y, int16_t msg, int16_t sks) 
             ChangeScanSel(app, &scan, 2);
             if (!fOurs)
                 break;
-            RedrawScanSel(app, NULL, 0);
+            RedrawScanSel(app, nullptr, 0);
             ChangeMainObjSel(app, scan.grobj, idNew);
-            RedrawScanSel(app, NULL, 1);
+            RedrawScanSel(app, nullptr, 1);
             break;
         case htMineScale:
             iChecked = -1;
@@ -1106,14 +1106,14 @@ void MineClick(APPSESSION &app, int16_t x, int16_t y, int16_t msg, int16_t sks) 
                     iChecked = i;
                 }
             }
-            i = ControlIO().pfnPopupMenu(app, app.lpui->hwndMine, x, y, 9, NULL, psz, iChecked, 1);
+            i = ControlIO().pfnPopupMenu(app, app.lpui->hwndMine, x, y, 9, nullptr, psz, iChecked, 1);
             if (i == -1 || rgi[i] == app.lpui->cMinGrafMax)
                 break;
             app.lpui->cMinGrafMax = rgi[i];
-            ControlIO().pfnInvalidateRect(app.lpui->hwndMine, NULL, 1);
+            ControlIO().pfnInvalidateRect(app.lpui->hwndMine, nullptr, 1);
             if ((app.lpui->grbitScan & grbitScanViewMask) != 1)
                 break;
-            ControlIO().pfnInvalidateRect(app.lpui->hwndScanner, NULL, 1);
+            ControlIO().pfnInvalidateRect(app.lpui->hwndScanner, nullptr, 1);
             break;
         case htMineMineralConc1:
         case htMineMineralConc2:
@@ -1187,7 +1187,7 @@ void SetMineralTitleBar(APPSESSION &app, HWND hwnd) {
         strcat(psz, szSummary);
     }
     strcpy(app.lpui->szMineralTitle, psz);
-    ControlIO().pfnInvalidateRect(hwnd, NULL, 1);
+    ControlIO().pfnInvalidateRect(hwnd, nullptr, 1);
     if (fVisCB) {
         fVisCB = app.state.lpThings[app.state.sel.scan.ith].ith() == ithMinefield && app.state.lpThings[app.state.sel.scan.ith].thm().iType() == mineStandard && app.state.lpThings[app.state.sel.scan.ith].iplr() == app.state.idPlayer &&
                  RaceQueryIO().pfnStat(&app.state.rgplr[app.state.idPlayer], rsMajorAdv) == raMines;
@@ -1196,7 +1196,7 @@ void SetMineralTitleBar(APPSESSION &app, HWND hwnd) {
         ControlIO().pfnSendMessage(app.lpui->hwndMineCB, win32::BM_SETCHECK, app.state.lpThings[app.state.sel.scan.ith].thm().fDetonate() != 0, 0);
     }
     ControlIO().pfnGetClientRect(hwnd, &rc);
-    ControlIO().pfnSetWindowPos(app.lpui->hwndMineCB, NULL, 80, rc.bottom - app.state.dyArial8 * 2, rc.right - 88, app.state.dyArial8 + 4, (!fVisCB ? 0x80 : 0x40) | 4);
+    ControlIO().pfnSetWindowPos(app.lpui->hwndMineCB, nullptr, 80, rc.bottom - app.state.dyArial8 * 2, rc.right - 88, app.state.dyArial8 + 4, (!fVisCB ? 0x80 : 0x40) | 4);
     return;
 }
 
@@ -1313,7 +1313,7 @@ void PopupMineralScanChoices(APPSESSION &app, HWND hwnd, int16_t x, int16_t y) {
             rgid[c++] = (uint32_t)(uint16_t)lpth->idFull() | 0x20000000;
         }
     }
-    i = ControlIO().pfnPopupMenu(app, hwnd, x, y, c, rgid, NULL, iChecked, 1);
+    i = ControlIO().pfnPopupMenu(app, hwnd, x, y, c, rgid, nullptr, iChecked, 1);
     if (i >= 0) {
         scan = app.state.sel.scan;
         if (rgid[i] & 0x80000000) {
@@ -1344,9 +1344,9 @@ void PopupMineralScanChoices(APPSESSION &app, HWND hwnd, int16_t x, int16_t y) {
         }
         ChangeScanSel(app, &scan, 2);
         if (fOurs) {
-            RedrawScanSel(app, NULL, 0);
+            RedrawScanSel(app, nullptr, 0);
             ChangeMainObjSel(app, scan.grobj, idNew);
-            RedrawScanSel(app, NULL, 1);
+            RedrawScanSel(app, nullptr, 1);
         }
     }
     return;
@@ -1354,6 +1354,6 @@ void PopupMineralScanChoices(APPSESSION &app, HWND hwnd, int16_t x, int16_t y) {
 
 // InvalidateMine redraws the mineral window.
 void InvalidateMine(APPSESSION &app) {
-    ControlIO().pfnInvalidateRect(app.lpui->hwndMine, NULL, 1);
+    ControlIO().pfnInvalidateRect(app.lpui->hwndMine, nullptr, 1);
     return;
 }

@@ -697,7 +697,7 @@ LBadFile:
         if (szFile != app.state.szWork) {
             strcpy(app.state.szWork, szFile);
         }
-        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, static_cast<StringId>(idsError), NULL), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, static_cast<StringId>(idsError), nullptr), win32::MB_ICONHAND);
     }
     return fRet;
 

@@ -220,7 +220,7 @@ INT_PTR  RaceWizardDlg1(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         hdc = win32::GetDC(hwnd);
         win32::SelectPalette(hdc, app.lpui->vhpal, 0);
         win32::RealizePalette(hdc);
-        InitBtnTrack(&btnt, hwnd, NULL, prc, bt, 80, 0, 0, NULL);
+        InitBtnTrack(&btnt, hwnd, nullptr, prc, bt, 80, 0, 0, nullptr);
         while (FTrackBtn(app, &btnt)) {
             iCur = (int16_t)(iCur + 32 + iDir) % 32;
             DibBlt(hdc, app.lpui->rgrcBuildSpin[0].left - 2, app.lpui->rgrcBuildSpin[0].top - 35, 32, 32, app.lpui->hdibRaces, (iCur & 7) * 0x20, (3 - (iCur >> 3)) * 0x20, 32, 32, 13369376);
@@ -286,7 +286,7 @@ INT_PTR  RaceWizardDlg1(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             app.lpui->rgrcBuildSpin[1] = app.lpui->rgrcBuildSpin[0];
             win32::OffsetRect(&app.lpui->rgrcBuildSpin[1], 14, 0);
             for (i = 0; i < 2; i++) {
-                DrawBtn(app, hdc, &app.lpui->rgrcBuildSpin[i], (i == 0 ? 2 : 3) | 0x20, 0, NULL);
+                DrawBtn(app, hdc, &app.lpui->rgrcBuildSpin[i], (i == 0 ? 2 : 3) | 0x20, 0, nullptr);
             }
         }
         win32::EndPaint(hwnd, &ps);
@@ -409,7 +409,7 @@ INT_PTR  RaceWizardDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             win32::OffsetRect((RECT *)&app.lpui->vrgrcRCW[i + 0xa].left, 0, 6 * dy + app.state.dyArial8);
         }
         for (i = 0; i < 3; i++) {
-            ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, i + 291), NULL, 3 * dy + dxLabel + 6, app.lpui->vrgrcRCW[5 * i + 3].top, dxMiddle - 6 * dy - 12, dy, win32::SWP_NOZORDER);
+            ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, i + 291), nullptr, 3 * dy + dxLabel + 6, app.lpui->vrgrcRCW[5 * i + 3].top, dxMiddle - 6 * dy - 12, dy, win32::SWP_NOZORDER);
             win32::CheckDlgButton(hwnd, i + 291, app.state.vplr.rgEnvVarMax[i] < 0);
         }
         cch = TextIO().pfnCchGetString(app, idsMaximumColonistGrowthRatePerYear, app.state.szWork);
@@ -489,7 +489,7 @@ INT_PTR  RaceWizardDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 app.state.vplr.rgEnvVarMax[iVar] = 80;
                 app.state.vplr.rgEnvVar[iVar] = 50;
             }
-            DrawRace2(app, hwnd, NULL, 1 << iVar | 0xff00);
+            DrawRace2(app, hwnd, nullptr, 1 << iVar | 0xff00);
         }
     }
     return 0;
@@ -523,7 +523,7 @@ void DrawRace2(APPSESSION &app, HWND hwnd, HDC hdc, int16_t iDraw) {
         hdc = win32::GetDC(hwnd);
     }
     ControlIO().pfnGetClientRect(hwnd, &rc);
-    DrawRaceAdvantagePoints(app, hdc, &rc, NULL);
+    DrawRaceAdvantagePoints(app, hdc, &rc, nullptr);
     bkMode = win32::SetBkMode(hdc, win32::TRANSPARENT);
     win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
     xRLabel = (int16_t)(rc.right - app.lpui->vrgrcRCW[2].right) / 2 + app.lpui->vrgrcRCW[2].right;
@@ -563,7 +563,7 @@ void DrawRace2(APPSESSION &app, HWND hwnd, HDC hdc, int16_t iDraw) {
         case 2:
             if (!(iDraw & 0xfff0))
                 break;
-            DrawBtn(app, hdc, app.lpui->vrgrcRCW + i, (iMod == 0 ? 2 : 3) | bt | bt1, 0, NULL);
+            DrawBtn(app, hdc, app.lpui->vrgrcRCW + i, (iMod == 0 ? 2 : 3) | bt | bt1, 0, nullptr);
             break;
         default:
             if (!(iDraw & 0xfff0))
@@ -591,8 +591,8 @@ void DrawRace2(APPSESSION &app, HWND hwnd, HDC hdc, int16_t iDraw) {
         if (iDraw == -1) {
             cch = TextIO().pfnCchGetString(app, idsMaximumColonistGrowthRatePerYear, app.state.szWork);
             win32::TextOutA(hdc, app.lpui->vrgrcRCW->left, app.lpui->vrgrcRCW[15].top + 3, app.state.szWork, cch);
-            DrawBtn(app, hdc, app.lpui->vrgrcRCW + 15, 0xa0 | bt1, 0, NULL);
-            DrawBtn(app, hdc, app.lpui->vrgrcRCW + 16, 0xa1 | bt1, 0, NULL);
+            DrawBtn(app, hdc, app.lpui->vrgrcRCW + 15, 0xa0 | bt1, 0, nullptr);
+            DrawBtn(app, hdc, app.lpui->vrgrcRCW + 16, 0xa1 | bt1, 0, nullptr);
         } else {
             dx = LOWORD(GetTextExtent(hdc, "15%", 3));
             win32::SelectObject(hdc, app.lpui->hbrButtonFace);
@@ -712,7 +712,7 @@ int16_t FTrackRaceDlg2(APPSESSION &app, HWND hwnd, POINT16 pt, int16_t kbd) {
                 app.state.vplr.rgEnvVarMin[i] = dShift - dWidth;
                 app.state.vplr.rgEnvVarMax[i] = dShift + dWidth;
                 app.state.vplr.rgEnvVar[i] = app.state.vplr.rgEnvVarMin[i] + (int16_t)(app.state.vplr.rgEnvVarMax[i] - app.state.vplr.rgEnvVarMin[i]) / 2;
-                DrawRace2(app, hwnd, NULL, 1 << i);
+                DrawRace2(app, hwnd, nullptr, 1 << i);
             }
         }
         win32::ReleaseCapture();
@@ -748,7 +748,7 @@ int16_t FTrackRaceDlg2(APPSESSION &app, HWND hwnd, POINT16 pt, int16_t kbd) {
             psz = app.lpui->vrgszRCWWidth[1];
         }
     }
-    InitBtnTrack(&btnt, hwnd, NULL, app.lpui->vrgrcRCW + irc, bt, 80, 0, 0, psz);
+    InitBtnTrack(&btnt, hwnd, nullptr, app.lpui->vrgrcRCW + irc, bt, 80, 0, 0, psz);
     if (kbd & 4) {
         dWidth = 10 * dWidth;
         dShift = 10 * dShift;
@@ -858,7 +858,7 @@ INT_PTR  RaceWizardDlg3(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         if (LOWORD(wParam) == IDC_RACE_FACTORY_GERMANIUM_DISCOUNT) {
             i = LOWORD(ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_RACE_FACTORY_GERMANIUM_DISCOUNT), win32::BM_GETCHECK, 0, 0));
             SetRaceGrbit(&app.state.vplr, ibitRaceCheapFact, i);
-            DrawRace3(app, hwnd, NULL, 99);
+            DrawRace3(app, hwnd, nullptr, 99);
         }
     }
     return 0;
@@ -890,7 +890,7 @@ void DrawRace3(APPSESSION &app, HWND hwnd, HDC hdc, int16_t iDraw) {
         hdc = win32::GetDC(hwnd);
     }
     ControlIO().pfnGetClientRect(hwnd, &rc);
-    DrawRaceAdvantagePoints(app, hdc, &rc, NULL);
+    DrawRaceAdvantagePoints(app, hdc, &rc, nullptr);
     bkMode = win32::SetBkMode(hdc, win32::OPAQUE);
     crBkSav = win32::SetBkColor(hdc, app.lpui->crButtonFace);
     win32::SetTextColor(hdc, app.lpui->crWindowText);
@@ -907,7 +907,7 @@ void DrawRace3(APPSESSION &app, HWND hwnd, HDC hdc, int16_t iDraw) {
         }
         if (i == 4) {
             if (iDraw == -1) {
-                ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_RACE_FACTORY_GERMANIUM_DISCOUNT), NULL, 6, yTop, rc.right - 12, (int16_t)(3 * app.state.dyArial8) / 2, win32::SWP_NOZORDER);
+                ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_RACE_FACTORY_GERMANIUM_DISCOUNT), nullptr, 6, yTop, rc.right - 12, (int16_t)(3 * app.state.dyArial8) / 2, win32::SWP_NOZORDER);
             }
             yTop += (int16_t)(5 * app.state.dyArial8) / 2;
         }
@@ -943,8 +943,8 @@ void DrawRace3(APPSESSION &app, HWND hwnd, HDC hdc, int16_t iDraw) {
         app.lpui->vrgrcRCW[irc + 1] = app.lpui->vrgrcRCW[irc];
         win32::OffsetRect((RECT *)&app.lpui->vrgrcRCW[irc + 1].left, 0, app.lpui->vrgrcRCW[irc].bottom - app.lpui->vrgrcRCW[irc].top - 1);
         if (iDraw == -1) {
-            DrawBtn(app, hdc, app.lpui->vrgrcRCW + irc, 0xa0 | bt, 0, NULL);
-            DrawBtn(app, hdc, app.lpui->vrgrcRCW + (irc + 1), 0xa1 | bt, 0, NULL);
+            DrawBtn(app, hdc, app.lpui->vrgrcRCW + irc, 0xa0 | bt, 0, nullptr);
+            DrawBtn(app, hdc, app.lpui->vrgrcRCW + (irc + 1), 0xa1 | bt, 0, nullptr);
         }
         if (iDraw == -1) {
             if (fMacintosh && ids == idsColonists) {
@@ -994,7 +994,7 @@ int16_t FTrackRaceDlg3(APPSESSION &app, HWND hwnd, POINT16 pt, int16_t kbd) {
         dShift = -1;
         bt = 161;
     }
-    InitBtnTrack(&btnt, hwnd, NULL, app.lpui->vrgrcRCW + irc, bt, 80, 0, 0, NULL);
+    InitBtnTrack(&btnt, hwnd, nullptr, app.lpui->vrgrcRCW + irc, bt, 80, 0, 0, nullptr);
     if (kbd & 4) {
         dShift = 3 * dShift;
     }
@@ -1051,7 +1051,7 @@ INT_PTR  RaceWizardDlg4(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     case win32::WM_PAINT:
         hdc = win32::BeginPaint(hwnd, &ps);
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        DrawRaceAdvantagePoints(app, hdc, &rc, NULL);
+        DrawRaceAdvantagePoints(app, hdc, &rc, nullptr);
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
         win32::SetBkColor(hdc, app.lpui->crButtonFace);
         win32::GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDC_RACE_HYPER_EXPANSION), &rcGBox);
@@ -1166,7 +1166,7 @@ INT_PTR  RaceWizardDlg5(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     case win32::WM_PAINT:
         hdc = win32::BeginPaint(hwnd, &ps);
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        DrawRaceAdvantagePoints(app, hdc, &rc, NULL);
+        DrawRaceAdvantagePoints(app, hdc, &rc, nullptr);
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
         win32::SetBkColor(hdc, app.lpui->crButtonFace);
         win32::GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDC_RACE_REGENERATING_SHIELDS), &rcGBox);
@@ -1262,7 +1262,7 @@ INT_PTR  RaceWizardDlg6(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     case win32::WM_PAINT:
         hdc = win32::BeginPaint(hwnd, &ps);
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        DrawRaceAdvantagePoints(app, hdc, &rc, NULL);
+        DrawRaceAdvantagePoints(app, hdc, &rc, nullptr);
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
         win32::SetBkColor(hdc, app.lpui->crButtonFace);
         for (i = 0; i < 6; i++) {
@@ -1453,10 +1453,10 @@ int16_t FSaveRace(APPSESSION &app, char *szFileSuggest, PLAYER *pplr) {
     ofn.Flags = win32::OFN_OVERWRITEPROMPT | win32::OFN_HIDEREADONLY | win32::OFN_PATHMUSTEXIST | win32::OFN_NOREADONLYRETURN;
     if (DesktopChoiceIO().pfnFNativeSaveFileName(&ofn) != 0) {
         if (!RecordIO().pfnFCreateFile(app, dtRace, iplrNone, szFile)) {
-            AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsStarsUnableSaveRaceDataFilePlease, NULL), win32::MB_ICONHAND);
+            AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsStarsUnableSaveRaceDataFilePlease, nullptr), win32::MB_ICONHAND);
             return 0;
         }
-        WriteRtPlr(app, pplr, NULL);
+        WriteRtPlr(app, pplr, nullptr);
         icksum = IRaceChecksum(pplr);
         WriteRtEof(app, icksum);
         RecordIO().pfnStreamClose(app);

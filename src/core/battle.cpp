@@ -40,7 +40,7 @@ LCommit:
                         fFoundBigger = 1;
                     }
                 } else if (fWarn) {
-                    if (AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsCurrentlyHaveFleetsUsingBattlePlanIf, NULL), win32::MB_OKCANCEL | win32::MB_ICONEXCLAMATION) == IDCANCEL)
+                    if (AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsCurrentlyHaveFleetsUsingBattlePlanIf, nullptr), win32::MB_OKCANCEL | win32::MB_ICONEXCLAMATION) == IDCANCEL)
                         return 0;
                     fWarn = 0;
                     goto LCommit;
@@ -657,12 +657,12 @@ void DoBattles(APPSESSION &app, int16_t fPostMovement) {
     }
     HeapIO().pfnFree(app, app.state.vlpwtCargo, htMisc);
     HeapIO().pfnFree(app, app.state.vrgtok, htMisc);
-    app.state.vlpwtCargo = NULL;
-    app.state.vrgtok = NULL;
+    app.state.vlpwtCargo = nullptr;
+    app.state.vrgtok = nullptr;
     if (app.state.lpbBattleT) {
         RawStore16(app.state.lpbBattleT, 0xffff);
         HeapIO().pfnFree(app, app.state.lpbBattleT, htBattle);
-        app.state.lpbBattleT = NULL;
+        app.state.lpbBattleT = nullptr;
     }
     if (app.state.lpbBattleCur) {
         RawStore16(app.state.lpbBattleCur, 0xffff);
@@ -1013,7 +1013,7 @@ void InitializeBoard(APPSESSION &app, FLEET *lpfl, int16_t ibrc, uint16_t grfPla
                         CheckWeapons(app, ptok, &fDampeningField, pinit);
                         rgfTorp[iplr] |= ptok->fTorp;
                         CheckTarget(app, ptok, lpflCur, ishdef);
-                        ptok->spd = SpdOfShip(app, lpflCur, ishdef, ptok, fDumpCargo, NULL);
+                        ptok->spd = SpdOfShip(app, lpflCur, ishdef, ptok, fDumpCargo, nullptr);
                         ptok++;
                         if ((int16_t)(ptok - app.state.vrgtok) > 0xff)
                             goto LTooManyTokens;
@@ -1748,7 +1748,7 @@ int16_t FAttack(APPSESSION &app, int16_t itokAttacker, int16_t init, uint8_t *lp
                             if (ptokE->pctBeamDef < 100) {
                                 dp = (int32_t)(dp * (int16_t)ptokE->pctBeamDef) / 100;
                             }
-                            if (FDamageTok(app, ptokE, itok, &dp, 0, grfWeapon, part.pbeam()->grfAbilities & beamSapper, NULL)) {
+                            if (FDamageTok(app, ptokE, itok, &dp, 0, grfWeapon, part.pbeam()->grfAbilities & beamSapper, nullptr)) {
                                 if (!fSetItok) {
                                     fSetItok = 1;
                                     BevFromPrefix(lpbtlrec).SetItokAttack(itok);
@@ -1770,7 +1770,7 @@ int16_t FAttack(APPSESSION &app, int16_t itokAttacker, int16_t init, uint8_t *lp
                 LFindAnotherTarget:
                     for (fPrimary = 1; fPrimary >= 0; fPrimary--) {
                         scoreBest = 0;
-                        ptokTarget = NULL;
+                        ptokTarget = nullptr;
                         ptokE = app.state.vrgtok;
                         for (itok = 0; itok < app.state.vctok; itok++) {
                             if (ptokE->fActive && ptokE->iplr != ptok->iplr && (1 << ptokE->iplr & grfAttack) &&
@@ -1873,7 +1873,7 @@ int16_t FAttack(APPSESSION &app, int16_t itokAttacker, int16_t init, uint8_t *lp
                             grfWeapon = bitFBeamLow;
                         }
                         dpT = dp;
-                        if (FDamageTok(app, ptokTarget, itokTarget, &dp, 0, grfWeapon, part.pbeam()->grfAbilities & beamSapper, NULL)) {
+                        if (FDamageTok(app, ptokTarget, itokTarget, &dp, 0, grfWeapon, part.pbeam()->grfAbilities & beamSapper, nullptr)) {
                             if (!fSetItok) {
                                 BevFromPrefix(lpbtlrec).SetItokAttack(itokTarget);
                                 fSetItok = 1;
@@ -1932,7 +1932,7 @@ int16_t FAttack(APPSESSION &app, int16_t itokAttacker, int16_t init, uint8_t *lp
                             }
                         }
                         dpCol = (int32_t)(cTorpMiss * dp) / 8;
-                        if (dpCol > 0 && FDamageTok(app, ptokTarget, itokTarget, &dpCol, 0, static_cast<GrfWeapon>(grfWeapon | bitFDeflected), 1, NULL)) {
+                        if (dpCol > 0 && FDamageTok(app, ptokTarget, itokTarget, &dpCol, 0, static_cast<GrfWeapon>(grfWeapon | bitFDeflected), 1, nullptr)) {
                             ctokDamaged++;
                         }
                         dpT = (int32_t)(cTorpFire * dp) / 2;
@@ -2022,7 +2022,7 @@ void CreateSalvage(APPSESSION &app, FLEET *pfl, THING **plpth) {
     if (pfl->idPlanet != idPlanetDeepSpace) {
         lppl = LpplFromId(app, pfl->idPlanet);
     } else {
-        lppl = NULL;
+        lppl = nullptr;
     }
     for (i = 0; i <= 2; i++) {
         rgwtMinerals[i] = 0;
@@ -2321,7 +2321,7 @@ int16_t FDoCoolBattle(APPSESSION &app, FLEET *lpfl, int16_t cplr, uint16_t *rggr
     app.state.lpbBattleCur += 14;
     memset(app.state.rgTechBattle, 0, 6);
     memset(app.state.rgTechTrader, 0, 13);
-    app.state.lpthBattle = NULL;
+    app.state.lpthBattle = nullptr;
     cShdefsInvolved = 0;
     cShipsInvolved = 0;
     app.state.fStarbaseDied = 0;
@@ -2492,7 +2492,7 @@ int16_t FDoCoolBattle(APPSESSION &app, FLEET *lpfl, int16_t cplr, uint16_t *rggr
     lphb = LphbFromLpHt(app, lpbSav, htBattle);
     if (0xffc8 - (uint32_t)(lpbSav - (uint8_t *)lphb - sizeof(HB) + 16) < (uint32_t)BdvFromPrefix(lpbtldata).cbData()) {
         RawStore16(lpbSav, 0xffff);
-        app.state.lpbBattleT = NULL;
+        app.state.lpbBattleT = nullptr;
     } else {
         memmove(lpbSav, lpbtldata, BdvFromPrefix(lpbtldata).cbData());
         app.state.lpbBattleCur = lpbSav + BdvFromPrefix(lpbtldata).cbData();
@@ -2577,7 +2577,7 @@ void SendBattleMessages(APPSESSION &app, FLEET *lpflBtl, int16_t cplr, int16_t i
     int16_t   x;
 
     iplrStarbase = iplrNone;
-    lppl = NULL;
+    lppl = nullptr;
     memset(rgcfl, 0, 16);
     if (lpflBtl->idPlanet != idPlanetDeepSpace) {
         x = -1;
@@ -2600,7 +2600,7 @@ void SendBattleMessages(APPSESSION &app, FLEET *lpflBtl, int16_t cplr, int16_t i
         y = lpflBtl->pt.y;
     }
     lpfl = lpflBtl;
-    lpflT = NULL;
+    lpflT = nullptr;
     do {
         if (!lpfl->fDead) {
             for (i = 0; i < 16; i++) {
@@ -2675,7 +2675,7 @@ void SendBattleMessages(APPSESSION &app, FLEET *lpflBtl, int16_t cplr, int16_t i
                 TurnIO().pfnMessage(app, iplr, idm, static_cast<MsgGoto>(idBtl | 0x4000), x, y, i, j, 0, 0, 0);
                 if (!fAlive || (lppl && lppl->iPlayer != iplrNone && iplr != lppl->iPlayer))
                     continue;
-                ITechLearnATech(app, iplr, x, y, idmWreckageDiscoveredBattleHasBoostedResearchResour, NULL);
+                ITechLearnATech(app, iplr, x, y, idmWreckageDiscoveredBattleHasBoostedResearchResour, nullptr);
                 continue;
             }
             if (cShdefsInvolved == 2) {
@@ -2746,7 +2746,7 @@ void SendBattleMessages(APPSESSION &app, FLEET *lpflBtl, int16_t cplr, int16_t i
                 TurnIO().pfnMessage(app, iplr, idm, static_cast<MsgGoto>(idBtl | 0x4000), x, y, i, cUs, j, cThem, 0);
                 if (!fAlive || (lppl && lppl->iPlayer != iplrNone && iplr != lppl->iPlayer))
                     continue;
-                ITechLearnATech(app, iplr, x, y, idmWreckageDiscoveredBattleHasBoostedResearchResour, NULL);
+                ITechLearnATech(app, iplr, x, y, idmWreckageDiscoveredBattleHasBoostedResearchResour, nullptr);
                 continue;
             }
         CommonCountingCode:
@@ -2859,7 +2859,7 @@ void SendBattleMessages(APPSESSION &app, FLEET *lpflBtl, int16_t cplr, int16_t i
                 }
                 if (cUsDead == cUs || (lppl && lppl->iPlayer != iplrNone && iplr != lppl->iPlayer))
                     continue;
-                ITechLearnATech(app, iplr, x, y, idmWreckageDiscoveredBattleHasBoostedResearchResour, NULL);
+                ITechLearnATech(app, iplr, x, y, idmWreckageDiscoveredBattleHasBoostedResearchResour, nullptr);
                 continue;
             }
             if (cUsDead == 0) {
@@ -2881,11 +2881,11 @@ void SendBattleMessages(APPSESSION &app, FLEET *lpflBtl, int16_t cplr, int16_t i
                 TurnIO().pfnMessage2(app, iplr, idmBattleTookPlacePressGotoButtonView, static_cast<MsgGoto>(idBtl | 0x4000), x, y);
             }
             if (fAlive && (!lppl || lppl->iPlayer == iplrNone || iplr == lppl->iPlayer)) {
-                ITechLearnATech(app, iplr, x, y, idmWreckageDiscoveredBattleHasBoostedResearchResour, NULL);
+                ITechLearnATech(app, iplr, x, y, idmWreckageDiscoveredBattleHasBoostedResearchResour, nullptr);
             }
         } else if (lppl && lppl->iPlayer == iplr) {
             TurnIO().pfnMessage2(app, iplr, idmColonyReportsBattleTookPlaceOrbitForces, static_cast<MsgGoto>(lppl->id), lppl->id, 0);
-            ITechLearnATech(app, iplr, x, y, idmFleetFoundWreckageBattleWhichHasBoosted, NULL);
+            ITechLearnATech(app, iplr, x, y, idmFleetFoundWreckageBattleWhichHasBoosted, nullptr);
         } else if (iplr & grfSpectator) {
             lpfl = lpflBtl;
             while (lpfl->iPlayer != iplr) {
@@ -2895,7 +2895,7 @@ void SendBattleMessages(APPSESSION &app, FLEET *lpflBtl, int16_t cplr, int16_t i
             }
             if (lpfl && lpfl->iPlayer == iplr) {
                 TurnIO().pfnMessage(app, iplr, idmReportsBattleTookPlaceForcesInvolved, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, lpfl->pt.x, lpfl->pt.y, 0, 0, 0, 0);
-                ITechLearnATech(app, iplr, x, y, idmWreckageBattleOccurredOrbitHasBoostedResearch, NULL);
+                ITechLearnATech(app, iplr, x, y, idmWreckageBattleOccurredOrbitHasBoostedResearch, nullptr);
             }
         }
         if (1 << iplr & app.state.grfMissed) {

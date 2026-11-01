@@ -12,7 +12,7 @@ template<class F> class COMPATCLEANUPSCOPE {
     HWND hwndAbort;
     bool fActive = true;
 public:
-    explicit COMPATCLEANUPSCOPE(F fn, HWND hwnd = NULL) noexcept(std::is_nothrow_move_constructible_v<F>)
+    explicit COMPATCLEANUPSCOPE(F fn, HWND hwnd = nullptr) noexcept(std::is_nothrow_move_constructible_v<F>)
         : fnCleanup(std::move(fn)), hwndAbort(hwnd) {}
     ~COMPATCLEANUPSCOPE() noexcept { Close(); }
     COMPATCLEANUPSCOPE(const COMPATCLEANUPSCOPE &) = delete;

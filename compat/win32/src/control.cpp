@@ -114,9 +114,9 @@ static void PaintControl(HWND hwnd) {
     HWND lp = LpCompatWindow(hwnd);
     PAINTSTRUCT ps;
     HDC hdc;
-    HBRUSH hbr, hbrOwn = NULL;
+    HBRUSH hbr, hbrOwn = nullptr;
     HPEN hpenOld;
-    HFONT hfontOld = NULL;
+    HFONT hfontOld = nullptr;
     HGDIOBJ hbrOld;
     RECT rc, rcText, rcBox;
     SIZE size;
@@ -165,7 +165,7 @@ static void PaintControl(HWND hwnd) {
                 if (lp->bstCheck == win32::BST_INDETERMINATE) win32::FillRect(hdc, &rcBox, (HBRUSH)win32::GetStockObject(win32::GRAY_BRUSH));
                 else {
                     for (j = 0; j < 3; j++) {
-                        win32::MoveToEx(hdc, rcBox.left, rcBox.top + 2 + j, NULL);
+                        win32::MoveToEx(hdc, rcBox.left, rcBox.top + 2 + j, nullptr);
                         win32::LineTo(hdc, rcBox.left + 2, rcBox.top + 4 + j);
                         win32::LineTo(hdc, rcBox.right - 1, rcBox.top + j);
                     }
@@ -228,14 +228,14 @@ static LRESULT ControlCommon(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     if (!lp) return 0;
     switch (msg) {
     case win32::WM_GETFONT: return (LRESULT)lp->hfontControl;
-    case win32::WM_SETFONT: lp->hfontControl = (HFONT)w; if (l) win32::InvalidateRect(hwnd, NULL, 1); return 0;
+    case win32::WM_SETFONT: lp->hfontControl = (HFONT)w; if (l) win32::InvalidateRect(hwnd, nullptr, 1); return 0;
     case win32::WM_PAINT: PaintControl(hwnd); return 0;
     case win32::WM_ERASEBKGND: return 1;
     case win32::WM_SETTEXT:
         result = win32::DefWindowProcA(hwnd, msg, w, l);
-        if (result && win32::IsWindow(hwnd)) win32::InvalidateRect(hwnd, NULL, 1);
+        if (result && win32::IsWindow(hwnd)) win32::InvalidateRect(hwnd, nullptr, 1);
         return result;
-    case win32::WM_ENABLE: case win32::WM_SIZE: win32::InvalidateRect(hwnd, NULL, 1); return 0;
+    case win32::WM_ENABLE: case win32::WM_SIZE: win32::InvalidateRect(hwnd, nullptr, 1); return 0;
     default: return win32::DefWindowProcA(hwnd, msg, w, l);
     }
 }
@@ -260,12 +260,12 @@ static LRESULT  ButtonProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         if (type == win32::BS_RADIOBUTTON || type == win32::BS_AUTORADIOBUTTON) {
             if (lp->bstCheck) lp->dwStyle |= win32::WS_TABSTOP; else lp->dwStyle &= ~win32::WS_TABSTOP;
         }
-        win32::InvalidateRect(hwnd, NULL, 1); return 0;
+        win32::InvalidateRect(hwnd, nullptr, 1); return 0;
     case win32::BM_GETSTATE: return lp->bstCheck | (lp->fPressed ? win32::BST_PUSHED : 0) | (win32::GetFocus() == hwnd ? win32::BST_FOCUS : 0);
-    case win32::BM_SETSTATE: lp->fPressed = !!w; win32::InvalidateRect(hwnd, NULL, 1); return 0;
+    case win32::BM_SETSTATE: lp->fPressed = !!w; win32::InvalidateRect(hwnd, nullptr, 1); return 0;
     case win32::BM_SETSTYLE:
         lp->dwStyle = (lp->dwStyle & ~win32::BS_TYPEMASK) | ((DWORD)w & win32::BS_TYPEMASK);
-        if (l) win32::InvalidateRect(hwnd, NULL, 1);
+        if (l) win32::InvalidateRect(hwnd, nullptr, 1);
         return 0;
     case win32::BM_CLICK:
         if (type == win32::BS_GROUPBOX) return 0;
@@ -279,13 +279,13 @@ static LRESULT  ButtonProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         win32::SetCapture(hwnd);
         if (win32::IsWindow(hwnd) && win32::GetCapture() == hwnd) {
             lp->fTracking = 1; lp->fPressed = 1;
-            win32::InvalidateRect(hwnd, NULL, 1);
+            win32::InvalidateRect(hwnd, nullptr, 1);
         }
         return 0;
     case win32::WM_MOUSEMOVE:
         if (lp->fTracking && !lp->fSpace) {
             lp->fPressed = FControlPoint(hwnd, l);
-            win32::InvalidateRect(hwnd, NULL, 1);
+            win32::InvalidateRect(hwnd, nullptr, 1);
         }
         return 0;
     case win32::WM_LBUTTONUP:
@@ -294,7 +294,7 @@ static LRESULT  ButtonProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         lp->fTracking = lp->fPressed = 0;
         if (win32::GetCapture() == hwnd) win32::ReleaseCapture();
         if (!win32::IsWindow(hwnd)) return 0;
-        win32::InvalidateRect(hwnd, NULL, 1);
+        win32::InvalidateRect(hwnd, nullptr, 1);
         if (fClick) ClickControl(hwnd);
         return 0;
     case win32::WM_KEYDOWN:
@@ -302,7 +302,7 @@ static LRESULT  ButtonProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
             win32::SetCapture(hwnd);
             if (win32::IsWindow(hwnd) && win32::GetCapture() == hwnd) {
                 lp->fSpace = lp->fPressed = lp->fTracking = 1;
-                win32::InvalidateRect(hwnd, NULL, 1);
+                win32::InvalidateRect(hwnd, nullptr, 1);
             }
         }
         return 0;
@@ -310,18 +310,18 @@ static LRESULT  ButtonProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         if (w == win32::VK_SPACE && lp->fSpace) {
             lp->fSpace = lp->fPressed = lp->fTracking = 0;
             if (win32::GetCapture() == hwnd) win32::ReleaseCapture();
-            if (win32::IsWindow(hwnd)) { win32::InvalidateRect(hwnd, NULL, 1); ClickControl(hwnd); }
+            if (win32::IsWindow(hwnd)) { win32::InvalidateRect(hwnd, nullptr, 1); ClickControl(hwnd); }
         }
         return 0;
     case win32::WM_CAPTURECHANGED: case win32::WM_CANCELMODE:
         lp->fTracking = lp->fPressed = lp->fSpace = 0;
         if (msg == win32::WM_CANCELMODE && win32::GetCapture() == hwnd) win32::ReleaseCapture();
-        if (win32::IsWindow(hwnd)) win32::InvalidateRect(hwnd, NULL, 1);
+        if (win32::IsWindow(hwnd)) win32::InvalidateRect(hwnd, nullptr, 1);
         return 0;
     case win32::WM_SETFOCUS: case win32::WM_KILLFOCUS:
         if (msg == win32::WM_KILLFOCUS && lp->fSpace) win32::SendMessageA(hwnd, win32::WM_CANCELMODE, 0, 0);
         if (win32::IsWindow(hwnd)) {
-            win32::InvalidateRect(hwnd, NULL, 1);
+            win32::InvalidateRect(hwnd, nullptr, 1);
             if (lp->dwStyle & win32::BS_NOTIFY) NotifyControl(hwnd, msg == win32::WM_SETFOCUS ? win32::BN_SETFOCUS : win32::BN_KILLFOCUS);
         }
         return 0;
@@ -356,6 +356,6 @@ BOOL FCompatControlClass(LPCSTR psz, HINSTANCE hInstance) {
     else if (SDL_strcasecmp(psz, "#32770") == 0) { wc.lpszClassName = "#32770"; wc.lpfnWndProc = CompatDialogProc; wc.cbWndExtra = 3 * sizeof(LONG_PTR); }
     else return 0;
     wc.hInstance = hInstance;
-    wc.hCursor = win32::LoadCursorA(NULL, win32::MAKEINTRESOURCE(32512));
+    wc.hCursor = win32::LoadCursorA(nullptr, win32::MAKEINTRESOURCE(32512));
     return win32::RegisterClassA(&wc) != 0;
 }

@@ -4,7 +4,7 @@
 #include <limits.h>
 #include <stdlib.h>
 
-typedef struct COMPATTIMER {
+struct COMPATTIMER {
     HWND hwnd;
     UINT_PTR id;
     UINT cMillis;
@@ -13,7 +13,7 @@ typedef struct COMPATTIMER {
     void *lpvCallbackContext;
     BOOL fQueued;
     struct COMPATTIMER *lpNext;
-} COMPATTIMER;
+};
 
 static COMPATTIMER *lpTimers;
 static UINT_PTR idTimerNext = 1;
@@ -23,7 +23,7 @@ static COMPATTIMER *LpTimer(HWND hwnd, UINT_PTR id) {
     COMPATTIMER *lp;
     for (lp = lpTimers; lp; lp = lp->lpNext)
         if (lp->hwnd == hwnd && lp->id == id) return lp;
-    return NULL;
+    return nullptr;
 }
 
 UINT_PTR win32::SetTimer(HWND hwnd, UINT_PTR id, UINT cMillis, TIMERPROC lpfn) {
@@ -42,7 +42,7 @@ UINT_PTR win32::SetTimer(HWND hwnd, UINT_PTR id, UINT cMillis, TIMERPROC lpfn) {
         if (!lp) { win32::SetLastError(win32::ERROR_NOT_ENOUGH_MEMORY); return 0; }
         lp->hwnd = hwnd;
         if (!hwnd) {
-            do { id = idTimerNext++; } while (id == 0 || LpTimer(NULL, id));
+            do { id = idTimerNext++; } while (id == 0 || LpTimer(nullptr, id));
         }
         lp->id = id;
         lp->lpNext = lpTimers; lpTimers = lp;

@@ -373,7 +373,7 @@ void DumpPlanets(APPSESSION &app) {
                 if (lppl->iPlayer == iplrNone) {
                     RgToStream(app, szForm, 1);
                 } else {
-                    strcpy(&szForm[1], TextIO().pfnPlayerName(app, lppl->iPlayer, 1, 0, 0, 0, NULL));
+                    strcpy(&szForm[1], TextIO().pfnPlayerName(app, lppl->iPlayer, 1, 0, 0, 0, nullptr));
                     RgToStream(app, szForm, strlen(szForm));
                 }
                 if (lppl->iPlayer == iplrNone || !lppl->fStarbase) {
@@ -387,10 +387,10 @@ void DumpPlanets(APPSESSION &app) {
                 RgToStream(app, szForm, strlen(szForm));
                 szForm[1] = 0;
                 if (lppl->det == detAll) {
-                    strcpy(&szForm[1], PszFromLong(app, (uint32_t)(lppl->rgwtMin[3] * 100), NULL));
+                    strcpy(&szForm[1], PszFromLong(app, (uint32_t)(lppl->rgwtMin[3] * 100), nullptr));
                 } else if (lppl->iPlayer != iplrNone && lppl->det >= detSome) {
                     l = (uint32_t)(lppl->uPopGuess * 400);
-                    strcpy(&szForm[1], PszFromLong(app, l, NULL));
+                    strcpy(&szForm[1], PszFromLong(app, l, nullptr));
                 }
                 RgToStream(app, szForm, strlen(szForm));
                 if (lppl->det < detSome) {
@@ -402,12 +402,12 @@ void DumpPlanets(APPSESSION &app) {
                 RgToStream(app, szForm, strlen(szForm));
                 szForm[1] = 0;
                 if (lppl->det == detAll) {
-                    PszProdQueueTop(app, lppl, NULL);
+                    PszProdQueueTop(app, lppl, nullptr);
                     strcpy(&szForm[1], app.state.szWork);
                 }
                 RgToStream(app, szForm, strlen(szForm));
                 if (lppl->det == detAll) {
-                    CalcPctSurvive(app, lppl, &pct, NULL);
+                    CalcPctSurvive(app, lppl, &pct, nullptr);
                     pct = (float)((double)1.0 - pct);
                     CchSprintf(&szForm[1], "%ld\t%ld\t%d.%d%%", (int32_t)lppl->cMines, (int32_t)lppl->cFactories, LOWORD((int32_t)((double)pct * 100)),
                                LOWORD((int32_t)((pct - (double)(int16_t)LOWORD((int32_t)((double)pct * 100)) / 100.0) * 10000)));
@@ -424,7 +424,7 @@ void DumpPlanets(APPSESSION &app) {
                 szForm[1] = 0;
                 for (i = 0; i < 3; i++) {
                     if (lppl->det >= detSome) {
-                        strcpy(&szForm[1], PszFromLong(app, lppl->rgwtMin[i], NULL));
+                        strcpy(&szForm[1], PszFromLong(app, lppl->rgwtMin[i], nullptr));
                     }
                     RgToStream(app, szForm, strlen(szForm));
                 }
@@ -432,19 +432,19 @@ void DumpPlanets(APPSESSION &app) {
                 for (i = 0; i < 3; i++) {
                     if (lppl->det >= detMore) {
                         ColonyIO().pfnEstimateMining(app, lppl, rgl, -1, 0);
-                        strcpy(&szForm[1], PszFromLong(app, rgl[i], NULL));
+                        strcpy(&szForm[1], PszFromLong(app, rgl[i], nullptr));
                     }
                     RgToStream(app, szForm, strlen(szForm));
                 }
                 szForm[1] = 0;
                 for (i = 0; i < 3; i++) {
                     if (lppl->det >= detSome) {
-                        strcpy(&szForm[1], PszFromInt(app, lppl->rgMinConc[i], NULL));
+                        strcpy(&szForm[1], PszFromInt(app, lppl->rgMinConc[i], nullptr));
                     }
                     RgToStream(app, szForm, strlen(szForm));
                 }
                 if (lppl->det == detAll) {
-                    strcpy(&szForm[1], PszFromInt(app, ResearchIO().pfnResources(app, lppl, app.state.idPlayer), NULL));
+                    strcpy(&szForm[1], PszFromInt(app, ResearchIO().pfnResources(app, lppl, app.state.idPlayer), nullptr));
                 } else {
                     szForm[1] = 0;
                 }
@@ -459,7 +459,7 @@ void DumpPlanets(APPSESSION &app) {
                             strcpy(&szForm[1], PszCalcEnvVar(app, static_cast<EnvType>(i), lppl->rgEnvVarOrig[i]));
                             RgToStream(app, szForm, strlen(szForm));
                         }
-                        strcpy(&szForm[1], PszFromInt(app, PctPlanetOptValue(app, lppl, app.state.idPlayer), NULL));
+                        strcpy(&szForm[1], PszFromInt(app, PctPlanetOptValue(app, lppl, app.state.idPlayer), nullptr));
                         strcat(&szForm[1], "%");
                         RgToStream(app, szForm, strlen(szForm));
                     } else {
@@ -469,11 +469,11 @@ void DumpPlanets(APPSESSION &app) {
                         }
                     }
                     if (lppl->det == detAll) {
-                        strcpy(&szForm[1], PszFromInt(app, CapacityIO().pfnPctPlanetCapacity(app, lppl), NULL));
+                        strcpy(&szForm[1], PszFromInt(app, CapacityIO().pfnPctPlanetCapacity(app, lppl), nullptr));
                         RgToStream(app, szForm, strlen(szForm));
-                        strcpy(&szForm[1], PszFromInt(app, GetPlanetScannerRange(app, lppl, &i), NULL));
+                        strcpy(&szForm[1], PszFromInt(app, GetPlanetScannerRange(app, lppl, &i), nullptr));
                         RgToStream(app, szForm, strlen(szForm));
-                        strcpy(&szForm[1], PszFromInt(app, i, NULL));
+                        strcpy(&szForm[1], PszFromInt(app, i, nullptr));
                         RgToStream(app, szForm, strlen(szForm));
                         if (lppl->idFling == 0) {
                             i = 0;
@@ -483,7 +483,7 @@ void DumpPlanets(APPSESSION &app) {
                             strcpy(&szForm[1], TextIO().pfnPlanetName(app, lppl->idFling - 1));
                         }
                         RgToStream(app, szForm, strlen(szForm));
-                        strcpy(&szForm[1], PszFromInt(app, i, NULL));
+                        strcpy(&szForm[1], PszFromInt(app, i, nullptr));
                         RgToStream(app, szForm, strlen(szForm));
                         if (lppl->idRoute == 0) {
                             szForm[1] = 0;
@@ -497,9 +497,9 @@ void DumpPlanets(APPSESSION &app) {
                                 part.hs.grhst = hstSpecialSB;
                                 part.hs.iItem = i;
                                 PartQueryIO().pfnLookup(app, &part);
-                                strcpy(&szForm[1], PszFromInt(app, part.pspecialsb()->grAbility2, NULL));
+                                strcpy(&szForm[1], PszFromInt(app, part.pspecialsb()->grAbility2, nullptr));
                                 RgToStream(app, szForm, strlen(szForm));
-                                strcpy(&szForm[1], PszFromInt(app, part.pspecialsb()->grAbility, NULL));
+                                strcpy(&szForm[1], PszFromInt(app, part.pspecialsb()->grAbility, nullptr));
                                 RgToStream(app, szForm, strlen(szForm));
                             }
                         } else {
@@ -513,7 +513,7 @@ void DumpPlanets(APPSESSION &app) {
                         } else {
                             i = 0;
                         }
-                        strcpy(&szForm[1], PszFromInt(app, i, NULL));
+                        strcpy(&szForm[1], PszFromInt(app, i, nullptr));
                         RgToStream(app, szForm, strlen(szForm));
                     }
                 }
@@ -598,9 +598,9 @@ void DumpFleets(APPSESSION &app) {
                 app.state.idPlayer = iplr;
                 RgToStream(app, psz, strlen(psz));
                 szForm[0] = '\t';
-                strcpy(&szForm[1], PszFromInt(app, lpfl->pt.x, NULL));
+                strcpy(&szForm[1], PszFromInt(app, lpfl->pt.x, nullptr));
                 RgToStream(app, szForm, strlen(szForm));
-                strcpy(&szForm[1], PszFromInt(app, lpfl->pt.y, NULL));
+                strcpy(&szForm[1], PszFromInt(app, lpfl->pt.y, nullptr));
                 RgToStream(app, szForm, strlen(szForm));
                 if (lpfl->idPlanet == idPlanetDeepSpace) {
                     cch = 1;
@@ -611,11 +611,11 @@ void DumpFleets(APPSESSION &app) {
                 }
                 RgToStream(app, szForm, cch);
                 if (lpfl->det == detAll) {
-                    strcpy(&szForm[1], PszGetDestName(app, lpfl, NULL));
+                    strcpy(&szForm[1], PszGetDestName(app, lpfl, nullptr));
                 } else if (app.state.gd.fPerPlayerDumps && lpfl->det < detAll && lpfl->fdirValid()) {
-                    strcpy(&szForm[1], PszFromInt(app, lpfl->dirFltX(), NULL));
+                    strcpy(&szForm[1], PszFromInt(app, lpfl->dirFltX(), nullptr));
                     strcat(szForm, ".");
-                    strcat(szForm, PszFromInt(app, lpfl->dirFltY(), NULL));
+                    strcat(szForm, PszFromInt(app, lpfl->dirFltY(), nullptr));
                 } else {
                     szForm[1] = 0;
                 }
@@ -630,17 +630,17 @@ void DumpFleets(APPSESSION &app) {
                 for (i = 0; i < 16; i++) {
                     l += lpfl->rgcsh[i];
                 }
-                strcpy(&szForm[1], PszFromLong(app, l, NULL));
+                strcpy(&szForm[1], PszFromLong(app, l, nullptr));
                 RgToStream(app, szForm, strlen(szForm));
                 for (i = 0; i < 5; i++) {
-                    strcpy(&szForm[1], PszFromLong(app, lpfl->rgwtMin[i], NULL));
+                    strcpy(&szForm[1], PszFromLong(app, lpfl->rgwtMin[i], nullptr));
                     RgToStream(app, szForm, strlen(szForm));
                 }
                 if (app.state.gd.fPerPlayerDumps) {
-                    strcpy(&szForm[1], PszFromInt(app, lpfl->iPlayer + 1, NULL));
+                    strcpy(&szForm[1], PszFromInt(app, lpfl->iPlayer + 1, nullptr));
                     RgToStream(app, szForm, strlen(szForm));
                     if (lpfl->cord > 1) {
-                        strcpy(&szForm[1], PszGetETA(app, NULL, lpfl, NULL));
+                        strcpy(&szForm[1], PszGetETA(app, nullptr, lpfl, nullptr));
                     } else {
                         szForm[1] = '0';
                         szForm[2] = 0;
@@ -653,19 +653,19 @@ void DumpFleets(APPSESSION &app) {
                     } else {
                         i = 0;
                     }
-                    strcpy(&szForm[1], PszFromInt(app, i, NULL));
+                    strcpy(&szForm[1], PszFromInt(app, i, nullptr));
                     RgToStream(app, szForm, strlen(szForm));
-                    strcpy(&szForm[1], PszFromLong(app, WtFromLpfl(app, lpfl), NULL));
+                    strcpy(&szForm[1], PszFromLong(app, WtFromLpfl(app, lpfl), nullptr));
                     RgToStream(app, szForm, strlen(szForm));
-                    strcpy(&szForm[1], PszFromInt(app, PctCloakFromLpfl(app, lpfl), NULL));
+                    strcpy(&szForm[1], PszFromInt(app, PctCloakFromLpfl(app, lpfl), nullptr));
                     RgToStream(app, szForm, strlen(szForm));
-                    j = GetFleetScannerRange(app, lpfl, &i, NULL, NULL);
+                    j = GetFleetScannerRange(app, lpfl, &i, nullptr, nullptr);
                     if (j == -1) {
                         j = 0;
                     }
-                    strcpy(&szForm[1], PszFromInt(app, j, NULL));
+                    strcpy(&szForm[1], PszFromInt(app, j, nullptr));
                     RgToStream(app, szForm, strlen(szForm));
-                    strcpy(&szForm[1], PszFromInt(app, i, NULL));
+                    strcpy(&szForm[1], PszFromInt(app, i, nullptr));
                     RgToStream(app, szForm, strlen(szForm));
                     if (lpfl->det == detAll) {
                         strcpy(&szForm[1], PszGetTaskName(app, lpfl, &i));
@@ -673,13 +673,13 @@ void DumpFleets(APPSESSION &app) {
                         szForm[1] = 0;
                     }
                     RgToStream(app, szForm, strlen(szForm));
-                    strcpy(&szForm[1], PszFromLong(app, ColonyIO().pfnFleetMining(app, lpfl), NULL));
+                    strcpy(&szForm[1], PszFromLong(app, ColonyIO().pfnFleetMining(app, lpfl), nullptr));
                     RgToStream(app, szForm, strlen(szForm));
-                    strcpy(&szForm[1], PszFromLong(app, CMineSweepFromLpfl(app, lpfl), NULL));
+                    strcpy(&szForm[1], PszFromLong(app, CMineSweepFromLpfl(app, lpfl), nullptr));
                     RgToStream(app, szForm, strlen(szForm));
-                    strcpy(&szForm[1], PszFromLong(app, CLayMinesFromLpfl(app, lpfl, mineAll, ishdefAll), NULL));
+                    strcpy(&szForm[1], PszFromLong(app, CLayMinesFromLpfl(app, lpfl, mineAll, ishdefAll), nullptr));
                     RgToStream(app, szForm, strlen(szForm));
-                    strcpy(&szForm[1], PszFromLong(app, PctTerraFromLpfl(app, lpfl), NULL));
+                    strcpy(&szForm[1], PszFromLong(app, PctTerraFromLpfl(app, lpfl), nullptr));
                     RgToStream(app, szForm, strlen(szForm));
                     l = 0;
                     for (i = 0; i < 16; i++) {
@@ -690,7 +690,7 @@ void DumpFleets(APPSESSION &app) {
                             }
                         }
                     }
-                    strcpy(&szForm[1], PszFromLong(app, l, NULL));
+                    strcpy(&szForm[1], PszFromLong(app, l, nullptr));
                     RgToStream(app, szForm, strlen(szForm));
                     for (j = 2; j < 6; j++) {
                         l = 0;
@@ -699,7 +699,7 @@ void DumpFleets(APPSESSION &app) {
                                 l += lpfl->rgcsh[i];
                             }
                         }
-                        strcpy(&szForm[1], PszFromLong(app, l, NULL));
+                        strcpy(&szForm[1], PszFromLong(app, l, nullptr));
                         RgToStream(app, szForm, strlen(szForm));
                     }
                 }

@@ -70,13 +70,13 @@ Cleanup:
     FWriteHistFile(app, iPlayer);
     if (app.state.vrglpplAi) {
         HeapIO().pfnFree(app, app.state.vrglpplAi, htMisc);
-        app.state.vrglpplAi = NULL;
+        app.state.vrglpplAi = nullptr;
     }
     if (app.state.vlpbAiData) {
         HeapIO().pfnFree(app, app.state.vlpbAiPlanet, htMisc);
         HeapIO().pfnFree(app, app.state.vlpbAiData, htMisc);
-        app.state.vlpbAiPlanet = NULL;
-        app.state.vlpbAiData = NULL;
+        app.state.vlpbAiPlanet = nullptr;
+        app.state.vlpbAiData = nullptr;
     }
     app.state.idPlayer = idSav;
     app.state.fAi = 0;
@@ -335,8 +335,8 @@ void DoRobotoidAiTurn(APPSESSION &app, PROD *rgprod) {
         }
     }
     UpdateProgressGauge(app, progressStep4);
-    lpflAttack = NULL;
-    lpflEnemy = NULL;
+    lpflAttack = nullptr;
+    lpflEnemy = nullptr;
     for (ifl = 0; ifl < app.state.cFleet; ifl++) {
         lpfl = app.state.rglpfl[ifl];
         if (!app.state.rglpfl[ifl])
@@ -472,7 +472,7 @@ void DoRobotoidAiTurn(APPSESSION &app, PROD *rgprod) {
         if (!app.state.vrglpplAi[ipl] || lppl->fStarbase)
             break;
     }
-    lpplHome = ipl == app.state.vclpplAi ? NULL : lppl;
+    lpplHome = ipl == app.state.vclpplAi ? nullptr : lppl;
     if (!lpplHome)
         goto AtkMissions;
     for (ifl = 0; ifl < app.state.cFleet; ifl++) {
@@ -485,7 +485,7 @@ void DoRobotoidAiTurn(APPSESSION &app, PROD *rgprod) {
                 app.state.sel.fl.iplan = 4;
                 FleetQueryIO().pfnLookup(app, idWriteBack, &app.state.sel.fl);
             }
-            lppl = NULL;
+            lppl = nullptr;
             for (i = 0; i < AhvFromLp(app, app.state.vlpbAiData).cStarbase(); i++) {
                 for (j = 0; j < AhvFromLp(app, app.state.vlpbAiData).rgasb(i).cFreighter() && AhvFromLp(app, app.state.vlpbAiData).rgasb(i).rgflid(j) != lpfl->id; j++) {
                 }
@@ -667,7 +667,7 @@ LTryNewTarget:
             if (app.state.game.fAisBand) {
                 lpplTarget = LpplFindBestEnum(app, lppl, FEnumCalcArmadaHumanDest);
             } else {
-                lpplTarget = NULL;
+                lpplTarget = nullptr;
             }
             if (!lpplTarget) {
                 lpplTarget = LpplFindBestEnum(app, lppl, FEnumCalcArmadaDest);
@@ -1143,9 +1143,9 @@ void DoTurinDroneAiTurn(APPSESSION &app, PROD *rgprod) {
         if (!app.state.vrglpplAi[ipl] || lppl->fStarbase)
             break;
     }
-    lpplHome = lppl == lpplMac ? NULL : lppl;
-    lpflAttack = NULL;
-    lpflEnemy = NULL;
+    lpplHome = lppl == lpplMac ? nullptr : lppl;
+    lpflAttack = nullptr;
+    lpflEnemy = nullptr;
     for (ifl = 0; ifl < app.state.cFleet; ifl++) {
         lpfl = app.state.rglpfl[ifl];
         if (!app.state.rglpfl[ifl])
@@ -1287,8 +1287,8 @@ void DoTurinDroneAiTurn(APPSESSION &app, PROD *rgprod) {
             FleetQueryIO().pfnLookup(app, idWriteBack, &app.state.sel.fl);
             continue;
         } else {
-            lpthWorm = NULL;
-            idPlanDst = IdNearestColonizablePlanet(app, lpfl, NULL);
+            lpthWorm = nullptr;
+            idPlanDst = IdNearestColonizablePlanet(app, lpfl, nullptr);
             if (lpfl->idPlanet != idPlanetDeepSpace && app.state.sel.pl.iPlayer == app.state.idPlayer) {
                 ChangeMainObjSel(app, grobjFleet, lpfl->id);
                 XferAiSupply(app, grobjPlanet, lpfl->idPlanet, grobjFleet, lpfl->id, Colonists, 25);
@@ -1332,7 +1332,7 @@ void DoTurinDroneAiTurn(APPSESSION &app, PROD *rgprod) {
         }
         if (!lpplHome)
             goto BestSpeed;
-        lppl = NULL;
+        lppl = nullptr;
         for (i = 0; i < AhvFromLp(app, app.state.vlpbAiData).cStarbase(); i++) {
             for (j = 0; j < AhvFromLp(app, app.state.vlpbAiData).rgasb(i).cFreighter() && AhvFromLp(app, app.state.vlpbAiData).rgasb(i).rgflid(j) != lpfl->id; j++) {
             }
@@ -1372,7 +1372,7 @@ void DoTurinDroneAiTurn(APPSESSION &app, PROD *rgprod) {
         if (app.state.game.fAisBand) {
             lpplDest = LpplFindBestEnum(app, lppl, FEnumCalcArmadaHumanDest);
         } else {
-            lpplDest = NULL;
+            lpplDest = nullptr;
         }
         if (!lpplDest) {
             lpplDest = LpplFindBestEnum(app, lppl, FEnumCalcArmadaDest);

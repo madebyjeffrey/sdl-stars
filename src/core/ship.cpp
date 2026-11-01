@@ -552,9 +552,9 @@ static int16_t IWarpForWaypoint(APPSESSION &app, FLEET *lpfl, ORDER *lpord, int1
     SCAN    scan;
 
     iWarpSav = lpord->iWarp;
-    iWarp = IFindIdealWarp(app, NULL, 0);
+    iWarp = IFindIdealWarp(app, nullptr, 0);
     if (app.state.fAi) {
-        iWarpAi = IFindIdealWarp(app, NULL, 1);
+        iWarpAi = IFindIdealWarp(app, nullptr, 1);
     }
     for (iwp = lpfl->cord - 1; iwp >= 0 && lpord != &lpfl->lpplord->rgord()[iwp]; iwp--) {
     }
@@ -589,7 +589,7 @@ static int16_t IWarpForWaypoint(APPSESSION &app, FLEET *lpfl, ORDER *lpord, int1
         if (FFindNearestObject(app, lpord->pt, static_cast<GrobjClass>(grobjPlanet | mdExact), &scan)) {
             lppl = LpplFromId(app, scan.idpl);
         } else {
-            lppl = NULL;
+            lppl = nullptr;
         }
         if (!fGoFlatOut && (!lppl || (lppl->iPlayer != iplrNone && lppl->iPlayer != app.state.idPlayer))) {
             if (iwp > 1 && lpord[-1].iWarp > (uint16_t)iWarp && lpord[-1].iWarp <= 10) {
@@ -996,7 +996,7 @@ void RemoveIshdefFromAllQueues(APPSESSION &app, int16_t ishdef, int16_t fSpaceDo
             }
             if (iDst == 0) {
                 FreePl(app, lppl->lpplprod);
-                lppl->lpplprod = NULL;
+                lppl->lpplprod = nullptr;
             } else if (iDst != iprod) {
                 lppl->lpplprod->iprodMac = iDst;
             }

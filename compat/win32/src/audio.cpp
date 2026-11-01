@@ -32,7 +32,7 @@ BOOL win32::MessageBeep(UINT type) {
             if (!SDL_InitSubSystem(SDL_INIT_AUDIO)) { win32::SetLastError(win32::ERROR_NOT_SUPPORTED); return 0; }
             audio.fAudioOwned = 1;
         }
-        audio.lpAlert.reset(SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, NULL, NULL));
+        audio.lpAlert.reset(SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, nullptr, nullptr));
         if (!audio.lpAlert) { CompatShutdownAudio(); win32::SetLastError(win32::ERROR_NOT_SUPPORTED); return 0; }
     }
     for (i = 0; i < 3528; i++) {

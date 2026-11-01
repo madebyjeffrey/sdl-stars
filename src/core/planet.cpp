@@ -907,8 +907,8 @@ void UninhabitPlanet(APPSESSION &app, PLANET *lppl) {
     lppl->rgwtMin[3] = 0;
     if (lppl->lpplprod) {
         FreePl(app, app.state.lpPlanets[lppl->id].lpplprod);
-        app.state.lpPlanets[lppl->id].lpplprod = NULL;
-        lppl->lpplprod = NULL;
+        app.state.lpPlanets[lppl->id].lpplprod = nullptr;
+        lppl->lpplprod = nullptr;
     }
     lppl->fNoResearch = 0;
     lppl->fStarbase = 0;

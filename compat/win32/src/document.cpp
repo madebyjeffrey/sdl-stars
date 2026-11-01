@@ -10,10 +10,10 @@ char *PszCompatFileUri(const char *pszPath) {
     const unsigned char *lpch;
     unsigned char ch;
 
-    pszAbsolute = PszCanonicalNativePath(pszPath, NULL, 0);
-    if (!pszAbsolute) return NULL;
+    pszAbsolute = PszCanonicalNativePath(pszPath, nullptr, 0);
+    if (!pszAbsolute) return nullptr;
     pszUri = (char *)(malloc(strlen(pszAbsolute) * 3 + 9));
-    if (!pszUri) { free(pszAbsolute); return NULL; }
+    if (!pszUri) { free(pszAbsolute); return nullptr; }
     memcpy(pszUri, "file://", 7); lpchOut = pszUri + 7;
 #ifdef _WIN32
     if (pszAbsolute[1] == ':') *lpchOut++ = '/';

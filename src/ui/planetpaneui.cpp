@@ -7,13 +7,13 @@
 
 constexpr auto wmRefitPlanetPane = (win32::WM_USER + 37);
 
-typedef struct PLANETPANE {
+struct PLANETPANE {
     HWND hwndContent;
     int x, y, dxContent, dyContent, dxOuter, dyOuter;
     int idSelection, grobjSelection;
     int16_t dWheel;
     BOOL fRefitting, fPending;
-} PLANETPANE;
+};
 
 static PLANETPANE *LpPlanetPane(HWND hwnd) {
     return (PLANETPANE *)win32::GetWindowLongPtrA(hwnd, win32::GWLP_USERDATA);
@@ -78,7 +78,7 @@ static void RefitPlanetPane(APPSESSION &app, HWND hwnd) {
         for (i = 0; i < cTile; i++) rgtile[i].fFixCtls = 1;
         ui::MoveWindow(lp->hwndContent, -lp->x, -lp->y, StarsMax(dx, rc.right), StarsMax(dy, rc.bottom), 1);
     } else if (pt.x != -lp->x || pt.y != -lp->y) {
-        ControlIO().pfnSetWindowPos(lp->hwndContent, NULL, -lp->x, -lp->y, 0, 0, win32::SWP_NOSIZE | win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
+        ControlIO().pfnSetWindowPos(lp->hwndContent, nullptr, -lp->x, -lp->y, 0, 0, win32::SWP_NOSIZE | win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
     }
     lp->fRefitting = 0;
 }
@@ -97,7 +97,7 @@ LRESULT  PlanetPaneWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam
         if (!lp) return -1;
         win32::SetWindowLongPtrA(hwnd, win32::GWLP_USERDATA, (LONG_PTR)lp);
         pane.release();
-        lp->hwndContent = ui::CreateWindowEx(0, app.lpui->szPlanet, NULL, win32::WS_CHILD | win32::WS_VISIBLE, 0, 0, 198, 1, hwnd, NULL, app.lpui->hInst, NULL);
+        lp->hwndContent = ui::CreateWindowEx(0, app.lpui->szPlanet, nullptr, win32::WS_CHILD | win32::WS_VISIBLE, 0, 0, 198, 1, hwnd, nullptr, app.lpui->hInst, nullptr);
         return lp->hwndContent ? 0 : -1;
     }
     case win32::WM_SIZE:
@@ -148,10 +148,10 @@ HWND CreatePlanetPane(APPSESSION &app, HWND hwndParent) {
     HWND hwnd;
     PLANETPANE *lp;
 
-    hwnd = ui::CreateWindowEx(0, "StarsPlanetPane", NULL, win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_HSCROLL | win32::WS_VSCROLL | win32::WS_CLIPCHILDREN,
-                        -500, -500, 10, 10, hwndParent, NULL, app.lpui->hInst, NULL);
-    lp = hwnd ? LpPlanetPane(hwnd) : NULL;
-    return lp ? lp->hwndContent : NULL;
+    hwnd = ui::CreateWindowEx(0, "StarsPlanetPane", nullptr, win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_HSCROLL | win32::WS_VSCROLL | win32::WS_CLIPCHILDREN,
+                        -500, -500, 10, 10, hwndParent, nullptr, app.lpui->hInst, nullptr);
+    lp = hwnd ? LpPlanetPane(hwnd) : nullptr;
+    return lp ? lp->hwndContent : nullptr;
 }
 
 void MovePlanetPane(APPSESSION &app, int x, int y, int dx, int dy) {
@@ -179,5 +179,5 @@ void ClosePlanetPane(APPSESSION &app) {
     // WM_QUIT can leave the frame alive. Destroy the owned pane while game
     // state and brushes still exist; final SDL cleanup does not call WNDPROCs.
     ControlIO().pfnDestroyWindow(hwnd);
-    app.lpui->hwndPlanet = NULL;
+    app.lpui->hwndPlanet = nullptr;
 }

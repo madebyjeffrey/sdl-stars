@@ -1,5 +1,5 @@
 /* Inspector style fields. Names describe declarations, not support claims. */
-typedef struct STYLEFIELD { DWORD dwMask, dwValue; const char *psz; } STYLEFIELD;
+struct STYLEFIELD { DWORD dwMask, dwValue; const char *psz; };
 
 static const STYLEFIELD rgstyleWindow[] = {
     { win32::WS_CAPTION, win32::WS_CAPTION, "WS_CAPTION" },

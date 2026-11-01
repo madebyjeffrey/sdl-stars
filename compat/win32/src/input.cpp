@@ -30,7 +30,7 @@ void CompatResetInput(void) {
     memset(rgbInput, 0, sizeof(rgbInput)); memset(rgbRead, 0, sizeof(rgbRead));
     memset(rgbRecent, 0, sizeof(rgbRecent)); memset(rgbAsync, 0, sizeof(rgbAsync));
     fCursor = fInputKeys = 0;
-    hwndCursor = NULL;
+    hwndCursor = nullptr;
     memset(rghwndClick, 0, sizeof(rghwndClick)); memset(rgcClick, 0, sizeof(rgcClick));
 }
 
@@ -85,7 +85,7 @@ static void InputMouse(HWND hwnd, int x, int y, WPARAM buttons) {
 
 HWND HwndCompatPointerRoot(void) {
     SDL_Window *lpWindow = SDL_GetMouseFocus();
-    HWND hwnd = lpWindow ? LpCompatWindowFromId(SDL_GetWindowID(lpWindow)) : NULL;
+    HWND hwnd = lpWindow ? LpCompatWindowFromId(SDL_GetWindowID(lpWindow)) : nullptr;
     return HwndCompatRoot(hwnd ? hwnd : LpCompatWindow(hwndCursor));
 }
 
@@ -107,7 +107,7 @@ BOOL win32::GetCursorPos(LPPOINT lppt) {
     }
     if (pszDriver && strcmp(pszDriver, "wayland") == 0) {
         lpWindow = SDL_GetMouseFocus();
-        hwnd = lpWindow ? LpCompatWindowFromId(SDL_GetWindowID(lpWindow)) : NULL;
+        hwnd = lpWindow ? LpCompatWindowFromId(SDL_GetWindowID(lpWindow)) : nullptr;
         if (hwnd) {
             SDL_GetMouseState(&x, &y);
             if (!FInputPoint(x, y, &pt.x, &pt.y)) return 0;
@@ -146,7 +146,7 @@ HWND win32::SetCapture(HWND hwnd) {
     HWND hwndOld, lpwin = LpCompatWindow(hwnd);
 
     if (!SDL_IsMainThread() || (hwnd && (!lpwin || lpwin->fDestroying)))
-        return NULL;
+        return nullptr;
     hwndOld = win32::GetCapture();
     hwndCapture = hwnd;
     // SDL capture is optional on headless backends; logical child routing still works.
@@ -157,7 +157,7 @@ HWND win32::SetCapture(HWND hwnd) {
 
 BOOL win32::ReleaseCapture(void) {
     if (!SDL_IsMainThread()) return 0;
-    win32::SetCapture(NULL);
+    win32::SetCapture(nullptr);
     return 1;
 }
 
@@ -175,7 +175,7 @@ static HWND HwndMouseTarget(HWND hwndRoot, int *lpx, int *lpy) {
             return HwndCompatMouse(hwndRoot, lpx, lpy);
     }
     pt.x = *lpx; pt.y = *lpy;
-    if (!win32::ClientToScreen(hwndRoot, &pt) || !win32::ScreenToClient(hwnd, &pt)) return NULL;
+    if (!win32::ClientToScreen(hwndRoot, &pt) || !win32::ScreenToClient(hwnd, &pt)) return nullptr;
     *lpx = pt.x; *lpy = pt.y;
     return hwnd;
 }
@@ -190,7 +190,7 @@ void CompatTextInput(HWND hwnd, const char *pszText) {
         return;
     }
     while (*psz) {
-        ch = SDL_StepUTF8(&psz, NULL);
+        ch = SDL_StepUTF8(&psz, nullptr);
         CompatPostInput(hwnd, win32::WM_CHAR, ch, 1);
     }
 }
@@ -285,7 +285,7 @@ SHORT win32::GetAsyncKeyState(int vk) {
     rgb[win32::VK_CONTROL] |= rgb[win32::VK_LCONTROL] | rgb[win32::VK_RCONTROL];
     rgb[win32::VK_MENU] |= rgb[win32::VK_LMENU] | rgb[win32::VK_RMENU];
     buttons = CompatInputIO().pfnGetCurrentVideoDriver() && !strcmp(CompatInputIO().pfnGetCurrentVideoDriver(), "wayland") ?
-              SDL_GetMouseState(NULL, NULL) : CompatInputIO().pfnGetGlobalMouseState(NULL, NULL);
+              SDL_GetMouseState(nullptr, nullptr) : CompatInputIO().pfnGetGlobalMouseState(nullptr, nullptr);
     rgb[win32::VK_LBUTTON] = (buttons & SDL_BUTTON_LMASK) ? 0x80 : 0;
     rgb[win32::VK_RBUTTON] = (buttons & SDL_BUTTON_RMASK) ? 0x80 : 0;
     rgb[win32::VK_MBUTTON] = (buttons & SDL_BUTTON_MMASK) ? 0x80 : 0;
@@ -422,7 +422,7 @@ void CompatRouteEvent(const SDL_Event *lpevent) {
         if (lpevent->type == SDL_EVENT_WINDOW_FOCUS_GAINED && (hwnd->dwExStyle & win32::WS_EX_NOACTIVATE)) return;
         if (lpevent->type == SDL_EVENT_WINDOW_FOCUS_LOST) {
             SDL_Window *lpFocus = SDL_GetKeyboardFocus();
-            HWND hwndNativeFocus = lpFocus ? LpCompatWindowFromId(SDL_GetWindowID(lpFocus)) : NULL;
+            HWND hwndNativeFocus = lpFocus ? LpCompatWindowFromId(SDL_GetWindowID(lpFocus)) : nullptr;
             // The dummy backend can focus a nonactivating popup despite its
             // SDL flags. Preserve logical focus/capture when it belongs to us;
             // an actual switch away still follows the normal cancellation path.
@@ -440,7 +440,7 @@ void CompatRouteEvent(const SDL_Event *lpevent) {
             win32::PostMessageA(hwnd, win32::WM_MOVE, 0, win32::MAKELPARAM(lpevent->window.data1, lpevent->window.data2));
         } else if (lpevent->type == SDL_EVENT_WINDOW_RESIZED) {
             CompatRememberNormal(hwnd);
-            win32::InvalidateRect(hwnd, NULL, 1);
+            win32::InvalidateRect(hwnd, nullptr, 1);
             x = lpevent->window.data1; y = lpevent->window.data2;
             if (hwnd->fZeroX || hwnd->fZeroY) {
                 RECT rc;
@@ -458,7 +458,7 @@ void CompatRouteEvent(const SDL_Event *lpevent) {
                          win32::IsZoomed(hwnd) ? win32::SIZE_MAXIMIZED : win32::SIZE_RESTORED, win32::MAKELPARAM(x, y));
         } else if (lpevent->type == SDL_EVENT_WINDOW_EXPOSED ||
                    lpevent->type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED)
-            win32::InvalidateRect(hwnd, NULL, 1);
+            win32::InvalidateRect(hwnd, nullptr, 1);
         else if (lpevent->type == SDL_EVENT_WINDOW_FOCUS_GAINED) {
             if (HwndCompatRoot(win32::GetFocus()) != hwnd || win32::GetActiveWindow() != hwnd) CompatFocusWindow(hwnd);
         } else {
@@ -466,7 +466,7 @@ void CompatRouteEvent(const SDL_Event *lpevent) {
             fInputKeys = 0;
             hwnd->wMouseButtons = 0;
             if (HwndCompatRoot(win32::GetCapture()) == hwnd) win32::ReleaseCapture();
-            if (HwndCompatRoot(win32::GetFocus()) == hwnd || win32::GetActiveWindow() == hwnd) CompatFocusWindow(NULL);
+            if (HwndCompatRoot(win32::GetFocus()) == hwnd || win32::GetActiveWindow() == hwnd) CompatFocusWindow(nullptr);
         }
         return;
     case SDL_EVENT_KEY_DOWN:

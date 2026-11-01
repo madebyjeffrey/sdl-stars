@@ -132,7 +132,7 @@ void DrawPopup(APPSESSION &app, HWND hwnd, HDC hdc) {
         win32::TextOutA(hdc, dx, 3 * app.state.dyArial8 + 4, app.state.szWork, c);
         break;
     case grPopupPlayer:
-        CtrTextOut(hdc, rc.right >> 1, 4, TextIO().pfnPlayerName(app, app.lpui->GlobalPD.iPlayer, 1, 1, 1, 0, NULL), 0);
+        CtrTextOut(hdc, rc.right >> 1, 4, TextIO().pfnPlayerName(app, app.lpui->GlobalPD.iPlayer, 1, 1, 1, 0, nullptr), 0);
         c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsPlayerD), app.lpui->GlobalPD.iPlayer + 1);
         CtrTextOut(hdc, rc.right >> 1, app.state.dyArial8 + 4, app.state.szWork, c);
         break;
@@ -283,7 +283,7 @@ void Popup(APPSESSION &app, HWND hwnd, int16_t x, int16_t y) {
         break;
     case grPopupPlayer:
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-        psz = TextIO().pfnPlayerName(app, app.lpui->GlobalPD.iPlayer, 1, 1, 1, 0, NULL);
+        psz = TextIO().pfnPlayerName(app, app.lpui->GlobalPD.iPlayer, 1, 1, 1, 0, nullptr);
         dx = LOWORD(GetTextExtent(hdc, psz, strlen(psz))) + 8;
         dx2 = LOWORD(GetTextExtent(hdc, "Player #16", 10)) + 8;
         if (dx2 > dx) {
@@ -380,8 +380,8 @@ void Popup(APPSESSION &app, HWND hwnd, int16_t x, int16_t y) {
     pt.x = (((0) > ((((pt.x) < (win32::GetSystemMetrics(win32::SM_CXSCREEN) - dx)) ? (pt.x) : (win32::GetSystemMetrics(win32::SM_CXSCREEN) - dx)))) ? (0) : ((((pt.x) < (win32::GetSystemMetrics(win32::SM_CXSCREEN) - dx)) ? (pt.x) : (win32::GetSystemMetrics(win32::SM_CXSCREEN) - dx))));
     pt.y = (((0) > ((((pt.y) < (win32::GetSystemMetrics(win32::SM_CYSCREEN) - dy)) ? (pt.y) : (win32::GetSystemMetrics(win32::SM_CYSCREEN) - dy)))) ? (0) : ((((pt.y) < (win32::GetSystemMetrics(win32::SM_CYSCREEN) - dy)) ? (pt.y) : (win32::GetSystemMetrics(win32::SM_CYSCREEN) - dy))));
     // Popup drawing reads hwndPopup, so publish the handle before the first paint.
-    app.lpui->hwndPopup = ui::CreateWindowEx(win32::WS_EX_NOACTIVATE, app.lpui->szPopup, NULL, win32::WS_POPUP | win32::WS_BORDER,
-                               pt.x, pt.y, dx, dy, hwnd, NULL, app.lpui->hInst, NULL);
+    app.lpui->hwndPopup = ui::CreateWindowEx(win32::WS_EX_NOACTIVATE, app.lpui->szPopup, nullptr, win32::WS_POPUP | win32::WS_BORDER,
+                               pt.x, pt.y, dx, dy, hwnd, nullptr, app.lpui->hInst, nullptr);
     ControlIO().pfnSendMessage(app.lpui->hwndPopup, win32::WM_SETFONT, (WPARAM)app.lpui->rghfontArial8[0], 0);
     ui::ShowWindow(app.lpui->hwndPopup, win32::SW_SHOW);
     win32::SetCapture(app.lpui->hwndPopup);
@@ -411,7 +411,7 @@ int16_t PopupMenu(APPSESSION &app, HWND hwnd, int16_t x, int16_t y, int16_t cStr
     for (i = 0; i < cString; i++) {
         if (rgids && (iChecked != -2 || !rgsz)) {
             if (rgids[i] == -1) {
-                win32::AppendMenuA(hmenuPopup, win32::MF_SEPARATOR, 0, NULL);
+                win32::AppendMenuA(hmenuPopup, win32::MF_SEPARATOR, 0, nullptr);
             } else {
                 if (rgids[i] & 0x10000000) {
                     psz = "Deep Space";
@@ -445,7 +445,7 @@ int16_t PopupMenu(APPSESSION &app, HWND hwnd, int16_t x, int16_t y, int16_t cStr
                     fCheckedCur = LOWORD(rgids[i]);
                 }
                 if (*rgsz[i] == -1 && rgsz[i][1] == 0) {
-                    win32::AppendMenuA(hmenuSub, win32::MF_SEPARATOR, 0, NULL);
+                    win32::AppendMenuA(hmenuSub, win32::MF_SEPARATOR, 0, nullptr);
                 } else {
                     pszT = szTemp;
                     psz = rgsz[i];
@@ -460,7 +460,7 @@ int16_t PopupMenu(APPSESSION &app, HWND hwnd, int16_t x, int16_t y, int16_t cStr
             }
             win32::AppendMenuA(hmenuPopup, (!fChecked ? 0 : 8) | 0x10, (UINT_PTR)hmenuSub, pszTitle);
         } else if (*rgsz[i] == -1 && rgsz[i][1] == 0) {
-            win32::AppendMenuA(hmenuPopup, win32::MF_SEPARATOR, 0, NULL);
+            win32::AppendMenuA(hmenuPopup, win32::MF_SEPARATOR, 0, nullptr);
         } else {
             pszT = szTemp;
             psz = rgsz[i];
@@ -478,7 +478,7 @@ int16_t PopupMenu(APPSESSION &app, HWND hwnd, int16_t x, int16_t y, int16_t cStr
     } else {
         tpm = win32::TPM_LEFTBUTTON;
     }
-    ui::TrackPopupMenu(hmenuPopup, tpm, pt.x, pt.y, 0, app.lpui->hwndFrame, NULL);
+    ui::TrackPopupMenu(hmenuPopup, tpm, pt.x, pt.y, 0, app.lpui->hwndFrame, nullptr);
     win32::DestroyMenu(hmenuPopup);
     if (hmenuSub) {
         win32::DestroyMenu(hmenuSub);
@@ -610,19 +610,19 @@ POINT16 PtDisplayPlanetStateInfo(APPSESSION &app, HDC hdc, int16_t fPrint) {
             lppl->rgEnvVar[app.lpui->GlobalPD.iPlanetVar] = iValSav;
             if (pctDesireOld < pctDesire) {
                 cch = TextIO().pfnCchGetString(app, idsIfTerraform, app.state.szWork);
-                WrapTextOut(app, hdc, &x, &y, app.state.szWork, cch, 4, xMax - 4, NULL, 0, fPrint);
+                WrapTextOut(app, hdc, &x, &y, app.state.szWork, cch, 4, xMax - 4, nullptr, 0, fPrint);
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-                WrapTextOut(app, hdc, &x, &y, app.state.rgszPlanetAttr[app.lpui->GlobalPD.iPlanetVar], 0, 4, xMax - 4, NULL, 0, fPrint);
+                WrapTextOut(app, hdc, &x, &y, app.state.rgszPlanetAttr[app.lpui->GlobalPD.iPlanetVar], 0, 4, xMax - 4, nullptr, 0, fPrint);
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
-                WrapTextOut(app, hdc, &x, &y, TextIO().pfnCompressed(app, idsTo), 0, 4, xMax - 4, NULL, 0, fPrint);
+                WrapTextOut(app, hdc, &x, &y, TextIO().pfnCompressed(app, idsTo), 0, 4, xMax - 4, nullptr, 0, fPrint);
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-                WrapTextOut(app, hdc, &x, &y, PszCalcEnvVar(app, static_cast<EnvType>(app.lpui->GlobalPD.iPlanetVar), iNewVal), 0, 4, xMax - 4, NULL, 0, fPrint);
+                WrapTextOut(app, hdc, &x, &y, PszCalcEnvVar(app, static_cast<EnvType>(app.lpui->GlobalPD.iPlanetVar), iNewVal), 0, 4, xMax - 4, nullptr, 0, fPrint);
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
                 cch = TextIO().pfnCchGetString(app, idsPlanetsValueWouldImprove, app.state.szWork);
-                WrapTextOut(app, hdc, &x, &y, app.state.szWork, cch, 4, xMax - 4, NULL, 0, fPrint);
+                WrapTextOut(app, hdc, &x, &y, app.state.szWork, cch, 4, xMax - 4, nullptr, 0, fPrint);
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
                 cch = win32::wsprintfA(app.state.szWork, "%d%%.  ", pctDesire);
-                WrapTextOut(app, hdc, &x, &y, app.state.szWork, cch, 4, xMax - 4, NULL, 0, fPrint);
+                WrapTextOut(app, hdc, &x, &y, app.state.szWork, cch, 4, xMax - 4, nullptr, 0, fPrint);
             }
         }
     }
@@ -643,7 +643,7 @@ POINT16 PtDisplayPlanetStateInfo(APPSESSION &app, HDC hdc, int16_t fPrint) {
         TextIO().pfnCchGetString(app, ids, app.state.szWork);
         cch = win32::wsprintfA(szOut, app.state.szWork, dChg);
         win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
-        WrapTextOut(app, hdc, &x, &y, szOut, cch, 4, xMax - 4, NULL, 0, fPrint);
+        WrapTextOut(app, hdc, &x, &y, szOut, cch, 4, xMax - 4, nullptr, 0, fPrint);
     }
     if (x > 4) {
         y += app.state.dyArial8;
@@ -781,10 +781,10 @@ POINT16 PtDisplayPlanetPopInfo(APPSESSION &app, HDC hdc, int16_t fPrint) {
     y += app.state.dyArial8;
     if (pl.iPlayer == app.state.idPlayer && pctDesire >= 0 && pl.rgwtMin[3] < lMax) {
         c = TextIO().pfnCchGetString(app, idsPopulation, szT);
-        WrapTextOut(app, hdc, &x, &y, szT, c, 4, xMax, NULL, 0, fPrint);
+        WrapTextOut(app, hdc, &x, &y, szT, c, 4, xMax, nullptr, 0, fPrint);
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
         psz = TextIO().pfnPlanetName(app, pl.id);
-        WrapTextOut(app, hdc, &x, &y, psz, 0, 4, xMax, NULL, 0, fPrint);
+        WrapTextOut(app, hdc, &x, &y, psz, 0, 4, xMax, nullptr, 0, fPrint);
         win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
         lPopChg = PlanetQueryIO().pfnGrowth(app, &pl, 0);
         if (pctDesire == 0 || lPopChg <= 0) {
@@ -793,7 +793,7 @@ POINT16 PtDisplayPlanetPopInfo(APPSESSION &app, HDC hdc, int16_t fPrint) {
             psz = TextIO().pfnCompressed(app, idsWillGrowLd00Ld00Year);
             c = win32::wsprintfA(szT, psz, lPopChg, pl.rgwtMin[3] + lPopChg);
         }
-        WrapTextOut(app, hdc, &x, &y, szT, c, 4, xMax, NULL, 0, fPrint);
+        WrapTextOut(app, hdc, &x, &y, szT, c, 4, xMax, nullptr, 0, fPrint);
         x = 4;
         y += app.state.dyArial8;
         goto AfterDesire;
@@ -802,7 +802,7 @@ POINT16 PtDisplayPlanetPopInfo(APPSESSION &app, HDC hdc, int16_t fPrint) {
         goto AfterDesire;
     win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
     psz = TextIO().pfnPlanetName(app, pl.id);
-    WrapTextOut(app, hdc, &x, &y, psz, 0, 4, xMax, NULL, 0, fPrint);
+    WrapTextOut(app, hdc, &x, &y, psz, 0, 4, xMax, nullptr, 0, fPrint);
     win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
     if (pl.uDefGuess == 0) {
         c = TextIO().pfnCchGetString(app, idsAppearsHavePlanetaryDefenses, app.state.szWork);
@@ -811,7 +811,7 @@ POINT16 PtDisplayPlanetPopInfo(APPSESSION &app, HDC hdc, int16_t fPrint) {
         c = win32::wsprintfA(szT, psz, pl.uDefGuess * 6 + 3);
         psz = szT;
     }
-    WrapTextOut(app, hdc, &x, &y, psz, c, 4, xMax, NULL, 0, fPrint);
+    WrapTextOut(app, hdc, &x, &y, psz, c, 4, xMax, nullptr, 0, fPrint);
     x = 4;
     y += app.state.dyArial8;
 AfterDesire:

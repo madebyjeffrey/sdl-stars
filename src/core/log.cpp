@@ -104,7 +104,7 @@ void LogChangeName(APPSESSION &app, GrobjClass grobj, int16_t id, char *szName) 
             rtchgname.rgb[0] = 0;
             rtchgname.rgb[1] = 0;
             cOut = 1;
-            lpfl->lpszName = NULL;
+            lpfl->lpszName = nullptr;
         } else {
             cOut = strlen(szName);
             lpfl->lpszName = LpAlloc<char>(app, strlen(szName) + 1, htString);
@@ -400,7 +400,7 @@ void LogMakeValidXfer(APPSESSION &app, LOGXFER *plx1, LOGXFER *plx2) {
         prt = (uint8_t *)(app.state.lpLog + (app.state.imemLogCur + -app.state.hdrPrev.cb));
         break;
     default:
-        prt = NULL;
+        prt = nullptr;
     }
     if (prt && CxvFromPrefix(prt, 5).grobj1() == (plx1->grobj & 0xff) && CxvFromPrefix(prt, 5).grobj2() == (plx2->grobj & 0xff) && CxvFromPrefix(prt, 2).id1() == plx1->id && CxvFromPrefix(prt, 4).id2() == plx2->id) {
         grbit = CxvFromPrefix(prt, 6).grbitItems();
@@ -542,7 +542,7 @@ static void WriteMemRtCore(APPSESSION &app, RecordType rt, int16_t cb, void *rg,
 
     if (!app.state.fLogOff) {
         if (app.state.imemLogCur + cb + 2 > 32000) {
-            AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsLogFileHasReachedMaximumAllowableSize, NULL), win32::MB_ICONHAND);
+            AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsLogFileHasReachedMaximumAllowableSize, nullptr), win32::MB_ICONHAND);
         }
         RecordIO().pfnDirtyGame(app, 1);
         app.state.imemLogPrev = app.state.imemLogCur;
@@ -657,7 +657,7 @@ int16_t FRunLogRecord(APPSESSION &app, RecordType rt, int16_t cb, uint8_t *lpb) 
     RTCHGSHDEF rtchgshdef{};
     int16_t idFleet, cShipXfer;
 
-    lpxfCur = NULL;
+    lpxfCur = nullptr;
     switch (rt) {
     default:
         break;
@@ -702,7 +702,7 @@ int16_t FRunLogRecord(APPSESSION &app, RecordType rt, int16_t cb, uint8_t *lpb) 
                 return 1;
             } else {
                 HeapIO().pfnFree(app, lppl->lpplprod, htOrd);
-                lppl->lpplprod = NULL;
+                lppl->lpplprod = nullptr;
             }
             break;
         }
@@ -723,11 +723,11 @@ int16_t FRunLogRecord(APPSESSION &app, RecordType rt, int16_t cb, uint8_t *lpb) 
         break;
     case rtLogFleetName:
         if (cb < (int16_t)cbWireChangeName ||
-            !FReadUserString(app, lpb + cbWireChangeName, cb - cbWireChangeName, szT, 32, NULL)) return 0;
+            !FReadUserString(app, lpb + cbWireChangeName, cb - cbWireChangeName, szT, 32, nullptr)) return 0;
         NATIVEBYTEREADER(std::as_bytes(std::span(lpb, 2))).FReadI16Le(id);
         if ((lpfl = LpflFromId(app, id)) == 0) return 0;
         if (lpfl->lpszName) HeapIO().pfnFree(app, lpfl->lpszName, htString);
-        lpfl->lpszName = NULL;
+        lpfl->lpszName = nullptr;
         if (*szT) {
             lpfl->lpszName = LpAlloc<char>(app, strlen(szT) + 1, htString);
             strcpy(lpfl->lpszName, szT);
@@ -886,7 +886,7 @@ int16_t FRunLogRecord(APPSESSION &app, RecordType rt, int16_t cb, uint8_t *lpb) 
                                             lpxfCur->rgcQuan[i] -= l;
                                         }
                                     }
-                                    lpxfCur = NULL;
+                                    lpxfCur = nullptr;
                                     if (cXfer > 0)
                                         goto StealCargo;
                                     goto DoNext;
@@ -1177,7 +1177,7 @@ int16_t FLoadLogFile(APPSESSION &app, char *pszLog) {
                 return 0;
             }
             if (app.state.game.turn >= *app.state.vlpMemStream) {
-                app.state.vlpMemStream = NULL;
+                app.state.vlpMemStream = nullptr;
                 goto StrOpen;
             }
             app.state.vlpMemStream++;
@@ -1199,7 +1199,7 @@ int16_t FLoadLogFile(APPSESSION &app, char *pszLog) {
         if (app.state.game.lid != BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).lidGame() || app.state.game.turn > BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).turn()) {
         FailSuccess:
             if (app.state.vlpMemStream) {
-                app.state.vlpMemStream = NULL;
+                app.state.vlpMemStream = nullptr;
             } else {
                 RecordIO().pfnStreamClose(app);
             }
@@ -1244,7 +1244,7 @@ int16_t FLoadLogFile(APPSESSION &app, char *pszLog) {
         app.state.imemLogCur = cbLog;
 Done:
         if (app.state.vlpMemStream) {
-            app.state.vlpMemStream = NULL;
+            app.state.vlpMemStream = nullptr;
         } else {
             RecordIO().pfnStreamClose(app);
         }
@@ -1334,8 +1334,8 @@ int16_t FWriteLogFile(APPSESSION &app, char *pszFileBase, int16_t iPlayer) {
     if (pszFileBase != app.state.szBase) {
         strcpy(app.state.szBase, pszFileBase);
     }
-    if (!RecordIO().pfnFCreateFile(app, dtLog, iPlayer, NULL)) {
-        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableCreateLogFile, NULL), win32::MB_ICONHAND);
+    if (!RecordIO().pfnFCreateFile(app, dtLog, iPlayer, nullptr)) {
+        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableCreateLogFile, nullptr), win32::MB_ICONHAND);
         return 0;
     }
     StarsRecoveryScope scopeRecovery;
@@ -1355,7 +1355,7 @@ int16_t FWriteLogFile(APPSESSION &app, char *pszFileBase, int16_t iPlayer) {
             WriteRtPlrMsg(app, lpmp);
             lpmp = lpmp->lpmsgplrNext;
         }
-        RecordIO().pfnWriteRt(app, rtEOF, 0, NULL);
+        RecordIO().pfnWriteRt(app, rtEOF, 0, nullptr);
         RecordIO().pfnStreamClose(app);
         RecordIO().pfnDirtyGame(app, 0);
         app.state.gd.fWriteTurnNum = 1;
@@ -1376,8 +1376,8 @@ int16_t FWriteHistFile(APPSESSION &app, int16_t iPlayer) {
     std::byte rgbHistHdr[cbWireHistHdr];
     uint8_t  *lpb;
 
-    if (!RecordIO().pfnFCreateFile(app, dtHist, iPlayer, NULL)) {
-        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableCreateHistoryFile, NULL), win32::MB_ICONHAND);
+    if (!RecordIO().pfnFCreateFile(app, dtHist, iPlayer, nullptr)) {
+        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableCreateHistoryFile, nullptr), win32::MB_ICONHAND);
         return 0;
     }
     StarsRecoveryScope scopeRecovery;
@@ -1396,7 +1396,7 @@ int16_t FWriteHistFile(APPSESSION &app, int16_t iPlayer) {
         RecordIO().pfnWriteRt(app, rtMsgFilt, app.state.cbbitfMsg, app.state.bitfMsgFiltered);
         for (i = 0; i < app.state.game.cPlayer; i++) {
             if (i != iPlayer && app.state.rgplr[i].det != detNone) {
-                WriteRtPlr(app, &app.state.rgplr[i], NULL);
+                WriteRtPlr(app, &app.state.rgplr[i], nullptr);
             }
         }
         for (i = 0; i < app.state.game.cPlayer; i++) {
@@ -1404,7 +1404,7 @@ int16_t FWriteHistFile(APPSESSION &app, int16_t iPlayer) {
                 lpshdef = app.state.rglpshdef[i];
                 for (j = 0; j < 16; j++) {
                     if (!lpshdef[j].fFree) {
-                        WriteRtShDef(app, lpshdef + j, NULL);
+                        WriteRtShDef(app, lpshdef + j, nullptr);
                     }
                 }
             }
@@ -1414,7 +1414,7 @@ int16_t FWriteHistFile(APPSESSION &app, int16_t iPlayer) {
                 lpshdef = app.state.rglpshdefSB[i];
                 for (j = 0; j < 10; j++) {
                     if (!lpshdef[j].fFree) {
-                        WriteRtShDef(app, lpshdef + j, NULL);
+                        WriteRtShDef(app, lpshdef + j, nullptr);
                     }
                 }
             }
@@ -1442,7 +1442,7 @@ int16_t FWriteHistFile(APPSESSION &app, int16_t iPlayer) {
             }
             RecordIO().pfnWriteRt(app, rtAiData, i, lpb);
         }
-        RecordIO().pfnWriteRt(app, rtEOF, 0, NULL);
+        RecordIO().pfnWriteRt(app, rtEOF, 0, nullptr);
         RecordIO().pfnStreamClose(app);
         return 1;
     } catch (const StarsError &) {

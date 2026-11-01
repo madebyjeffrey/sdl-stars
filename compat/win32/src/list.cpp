@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef struct COMPATLISTITEM { char *psz; LPARAM lData; BOOL fSelected; } COMPATLISTITEM;
+struct COMPATLISTITEM { char *psz; LPARAM lData; BOOL fSelected; };
 struct COMPATLIST {
     COMPATLISTITEM *rgitem;
     int cItem, cAlloc, iSel, iCaret, iTop, cyItem, iAnchor, iDrag;
@@ -64,7 +64,7 @@ static void ClampList(HWND hwnd) {
         lp->iTop = (((lp->iTop) < ((((0) > (lp->cItem - CListPage(hwnd))) ? (0) : (lp->cItem - CListPage(hwnd))))) ? (lp->iTop) : ((((0) > (lp->cItem - CListPage(hwnd))) ? (0) : (lp->cItem - CListPage(hwnd)))));
         if (lp->fScrollV) win32::SetScrollPos(hwnd, win32::SB_VERT, lp->iTop, 1);
     }
-    win32::InvalidateRect(hwnd, NULL, 1);
+    win32::InvalidateRect(hwnd, nullptr, 1);
 }
 static void RevealList(HWND hwnd, int i) {
     auto lplistKeep = hwnd->lplist;
@@ -92,11 +92,11 @@ static void ResetList(HWND hwnd) {
         SDL_free(rg);
     };
     std::unique_ptr<COMPATLISTITEM[], decltype(freeItems)> rgKeep(rg, freeItems);
-    lp->rgitem = NULL; lp->cItem = lp->cAlloc = lp->iTop = lp->iCaret = 0; lp->iSel = -1; lp->nMutation++;
+    lp->rgitem = nullptr; lp->cItem = lp->cAlloc = lp->iTop = lp->iCaret = 0; lp->iSel = -1; lp->nMutation++;
     lp->iAnchor = -1; lp->szSearch[0] = 0;
     EndListDrag(hwnd, 1);
-    win32::InvalidateRect(hwnd, NULL, 1);
-    for (i = 0; i < c; i++) { SDL_free(rg[i].psz); rg[i].psz = NULL; DeleteNotice(hwnd, (UINT)i, rg[i].lData); }
+    win32::InvalidateRect(hwnd, nullptr, 1);
+    for (i = 0; i < c; i++) { SDL_free(rg[i].psz); rg[i].psz = nullptr; DeleteNotice(hwnd, (UINT)i, rg[i].lData); }
     rgKeep.reset();
     if (win32::IsWindow(hwnd) && !hwnd->fDestroying) ClampList(hwnd);
 }
@@ -171,7 +171,7 @@ static void EndListDrag(HWND hwnd, BOOL fRelease) {
     hwnd->fTracking = 0;
     if (lp->idDragTimer) win32::KillTimer(hwnd, lp->idDragTimer);
     lp->idDragTimer = 0;
-    SDL_free(lp->rgSelectedDrag); lp->rgSelectedDrag = NULL; lp->cSelectedDrag = 0;
+    SDL_free(lp->rgSelectedDrag); lp->rgSelectedDrag = nullptr; lp->cSelectedDrag = 0;
     if (fRelease && win32::GetCapture() == hwnd) win32::ReleaseCapture();
 }
 
@@ -209,7 +209,7 @@ static BOOL FDrawOwnerList(HWND hwnd, HDC hdc, int i, UINT action, BOOL fFocus, 
     ds.itemData = fItem ? (ULONG_PTR)lp->rgitem[i].lData : 0;
     win32::GetClientRect(hwnd, &rc); win32::IntersectClipRect(hdc, rc.left, rc.top, rc.right, rc.bottom);
     win32::SendMessageA(hwnd->hwndParent, win32::WM_DRAWITEM, (WPARAM)hwnd->idChild, (LPARAM)&ds);
-    win32::SelectClipRgn(hdc, NULL);
+    win32::SelectClipRgn(hdc, nullptr);
     return win32::IsWindow(hwnd);
 }
 static void DrawListSelection(HWND hwnd, int iOld) {
@@ -235,7 +235,7 @@ static void DrawListSelection(HWND hwnd, int iOld) {
                 (int)StarsMin(y + lp->cyItem, INT_MAX));
         if (!FDrawOwnerList(hwnd, hdc, i, win32::ODA_SELECT, win32::GetFocus() == hwnd && i == lp->iCaret, &rcItem)) break;
         // The owner may replace the items or select another row during drawing.
-        if (lp->nMutation != n || lp->iSel != rgi[1]) { win32::InvalidateRect(hwnd, NULL, 1); break; }
+        if (lp->nMutation != n || lp->iSel != rgi[1]) { win32::InvalidateRect(hwnd, nullptr, 1); break; }
     }
     win32::ReleaseDC(hwnd, hdc);
 }
@@ -261,8 +261,8 @@ static void PaintList(HWND hwnd) {
     COMPATLIST *lp = lplistKeep.get();
     PAINTSTRUCT ps;
     HDC hdc = win32::BeginPaint(hwnd, &ps);
-    HBRUSH hbr, hbrOwn = NULL, hbrSel;
-    HFONT hfontOld = NULL;
+    HBRUSH hbr, hbrOwn = nullptr, hbrSel;
+    HFONT hfontOld = nullptr;
     RECT rc, rcItem;
     int i, y;
     unsigned n;
@@ -284,7 +284,7 @@ static void PaintList(HWND hwnd) {
             if (hbrOwn) win32::DeleteObject(hbrOwn);
             return;
         }
-        if (lp->nMutation != n) win32::InvalidateRect(hwnd, NULL, 1);
+        if (lp->nMutation != n) win32::InvalidateRect(hwnd, nullptr, 1);
     }
     for (i = lp->iTop, y = 0; i < lp->cItem && y < rc.bottom; i++, y += lp->cyItem) {
         win32::SetRect(&rcItem, -lp->xOffset, y, StarsMax(rc.right, lp->cxExtent) - lp->xOffset, y + lp->cyItem);
@@ -294,7 +294,7 @@ static void PaintList(HWND hwnd) {
                 if (hbrOwn) win32::DeleteObject(hbrOwn);
                 return;
             }
-            if (lp->nMutation != n) { win32::InvalidateRect(hwnd, NULL, 1); break; }
+            if (lp->nMutation != n) { win32::InvalidateRect(hwnd, nullptr, 1); break; }
         } else {
             if (fSel) {
                 hbrSel = win32::CreateSolidBrush(win32::GetSysColor(win32::COLOR_HIGHLIGHT)); win32::FillRect(hdc, &rcItem, hbrSel); win32::DeleteObject(hbrSel);
@@ -388,19 +388,19 @@ LRESULT  CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     case win32::LB_SETITEMDATA:
         if (i < -1 || i >= lp->cItem) return win32::LB_ERR;
         for (j = 0; j < lp->cItem; j++) if (i == -1 || j == i) lp->rgitem[j].lData = l;
-        lp->nMutation++; win32::InvalidateRect(hwnd, NULL, 1); return 1;
+        lp->nMutation++; win32::InvalidateRect(hwnd, nullptr, 1); return 1;
     case win32::LB_SETCURSEL:
         if (FMulti(hwnd)) return win32::LB_ERR;
         j = lp->iSel;
         lp->iSel = i >= 0 && i < lp->cItem ? i : -1;
-        if (lp->iSel >= 0) { lp->iCaret = i; RevealList(hwnd, i); } else win32::InvalidateRect(hwnd, NULL, 1);
+        if (lp->iSel >= 0) { lp->iCaret = i; RevealList(hwnd, i); } else win32::InvalidateRect(hwnd, nullptr, 1);
         if (win32::IsWindow(hwnd)) DrawListSelection(hwnd, j);
         return win32::IsWindow(hwnd) ? lp->iSel : win32::LB_ERR;
     case win32::LB_GETCURSEL: return FMulti(hwnd) ? (lp->cItem ? lp->iCaret : win32::LB_ERR) : lp->iSel;
     case win32::LB_SETSEL:
         if (!FMulti(hwnd) || l < -1 || l >= lp->cItem) return win32::LB_ERR;
         for (j = 0; j < lp->cItem; j++) if (l == -1 || j == l) lp->rgitem[j].fSelected = w != 0;
-        win32::InvalidateRect(hwnd, NULL, 1); return 0;
+        win32::InvalidateRect(hwnd, nullptr, 1); return 0;
     case win32::LB_GETSEL:
         if (i < 0 || i >= lp->cItem) return win32::LB_ERR;
         return FMulti(hwnd) ? lp->rgitem[i].fSelected : i == lp->iSel;
@@ -449,21 +449,21 @@ LRESULT  CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
             if (win32::GetTextMetricsA(hdc, &tm)) lp->cyItem = StarsMax(1, tm.tmHeight);
             win32::ReleaseDC(hwnd, hdc);
         }
-        ClampList(hwnd); if (l) win32::InvalidateRect(hwnd, NULL, 1); return 0;
+        ClampList(hwnd); if (l) win32::InvalidateRect(hwnd, nullptr, 1); return 0;
     case win32::WM_PAINT: PaintList(hwnd); return 0;
     case win32::WM_ERASEBKGND: return 1;
     case win32::WM_ENABLE: case win32::WM_SIZE: ClampList(hwnd); return 0;
     case win32::WM_SETFOCUS: case win32::WM_KILLFOCUS:
         DrawListFocus(hwnd, msg == win32::WM_SETFOCUS);
         if (win32::IsWindow(hwnd)) {
-            win32::InvalidateRect(hwnd, NULL, 1); NotifyList(hwnd, msg == win32::WM_SETFOCUS ? win32::LBN_SETFOCUS : win32::LBN_KILLFOCUS);
+            win32::InvalidateRect(hwnd, nullptr, 1); NotifyList(hwnd, msg == win32::WM_SETFOCUS ? win32::LBN_SETFOCUS : win32::LBN_KILLFOCUS);
         }
         return 0;
     case win32::WM_LBUTTONDOWN: case win32::WM_LBUTTONDBLCLK:
         win32::SetFocus(hwnd); if (!win32::IsWindow(hwnd)) return 0;
         i = lp->iTop + (int16_t)HIWORD(l) / lp->cyItem;
         if ((int16_t)HIWORD(l) < 0) return 0;
-        SDL_free(lp->rgSelectedDrag); lp->rgSelectedDrag = NULL; lp->cSelectedDrag = 0;
+        SDL_free(lp->rgSelectedDrag); lp->rgSelectedDrag = nullptr; lp->cSelectedDrag = 0;
         if ((lpwin->dwStyle & win32::LBS_EXTENDEDSEL) && (w & win32::MK_CONTROL) && lp->cItem != 0) {
             lp->rgSelectedDrag = (BYTE *)(SDL_malloc((size_t)lp->cItem));
             if (lp->rgSelectedDrag) {
@@ -478,7 +478,7 @@ LRESULT  CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
             win32::SetCapture(hwnd);
             if (win32::IsWindow(hwnd) && win32::GetCapture() == hwnd) {
                 lpwin->fTracking = 1; lp->iDrag = i; lp->grfDrag = (DWORD)w; lp->lDragPoint = l;
-                lp->idDragTimer = win32::SetTimer(hwnd, UINTPTR_MAX, 100, NULL);
+                lp->idDragTimer = win32::SetTimer(hwnd, UINTPTR_MAX, 100, nullptr);
             }
         }
         return 0;

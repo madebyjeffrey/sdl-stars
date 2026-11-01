@@ -49,20 +49,20 @@ LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         for (i = 0; i < 4; i++) {
             app.lpui->hwndMessage = hwnd;
             app.lpui->rghwndMsgBtn[i] = ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, static_cast<StringId>(idsPrev2 + i)), win32::WS_CHILD, 100, 100, i == 3 ? 50 : 44, (3 * app.state.dyArial8 >> 1) - 1, hwnd,
-                                           NULL, app.lpui->hInst, NULL);
+                                           nullptr, app.lpui->hInst, nullptr);
             ControlIO().pfnSendMessage(app.lpui->rghwndMsgBtn[i], win32::WM_SETFONT, (WPARAM)app.lpui->rghfontArial8[1], 0);
         }
-        app.lpui->hwndMsgDrop = ui::CreateWindowEx(0, "COMBOBOX", "MsgDD", win32::CBS_DROPDOWNLIST | win32::WS_CHILD | win32::WS_VSCROLL, 100, 100, 200, 80, hwnd, NULL, app.lpui->hInst, NULL);
+        app.lpui->hwndMsgDrop = ui::CreateWindowEx(0, "COMBOBOX", "MsgDD", win32::CBS_DROPDOWNLIST | win32::WS_CHILD | win32::WS_VSCROLL, 100, 100, 200, 80, hwnd, nullptr, app.lpui->hInst, nullptr);
         ControlIO().pfnSendMessage(app.lpui->hwndMsgDrop, win32::WM_SETFONT, (WPARAM)app.lpui->rghfontArial8[1], 0);
-        app.lpui->hwndMsgEdit = ui::CreateWindowEx(0, "EDIT", NULL, win32::ES_MULTILINE | win32::ES_AUTOVSCROLL | win32::WS_CHILD | win32::WS_BORDER, 100, 100, 200, 50, hwnd, NULL, app.lpui->hInst, NULL);
+        app.lpui->hwndMsgEdit = ui::CreateWindowEx(0, "EDIT", nullptr, win32::ES_MULTILINE | win32::ES_AUTOVSCROLL | win32::WS_CHILD | win32::WS_BORDER, 100, 100, 200, 50, hwnd, nullptr, app.lpui->hInst, nullptr);
         ControlIO().pfnSendMessage(app.lpui->hwndMsgEdit, win32::EM_LIMITTEXT, 0x3c8, 0);
         ControlIO().pfnSendMessage(app.lpui->hwndMsgEdit, win32::WM_SETFONT, (WPARAM)app.lpui->rghfontArial8[1], 0);
-        app.lpui->hwndMsgScroll = ui::CreateWindowEx(0, "EDIT", NULL, win32::ES_MULTILINE | win32::ES_AUTOVSCROLL | win32::ES_READONLY | win32::WS_CHILD | win32::WS_BORDER | win32::WS_VSCROLL, 100, 100, 200, 50, hwnd,
-                                     NULL, app.lpui->hInst, NULL);
+        app.lpui->hwndMsgScroll = ui::CreateWindowEx(0, "EDIT", nullptr, win32::ES_MULTILINE | win32::ES_AUTOVSCROLL | win32::ES_READONLY | win32::WS_CHILD | win32::WS_BORDER | win32::WS_VSCROLL, 100, 100, 200, 50, hwnd,
+                                     nullptr, app.lpui->hInst, nullptr);
         ControlIO().pfnSetMsgTitle(app, hwnd);
         ControlIO().pfnSendMessage(app.lpui->hwndMsgDrop, win32::CB_ADDSTRING, 0, (LPARAM)TextIO().pfnCompressed(app, idsEverybody));
         for (i = 0; i < app.state.game.cPlayer; i++) {
-            psz = TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, NULL);
+            psz = TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, nullptr);
             ControlIO().pfnSendMessage(app.lpui->hwndMsgDrop, win32::CB_ADDSTRING, 0, (LPARAM)psz);
         }
         ControlIO().pfnSendMessage(app.lpui->hwndMsgDrop, win32::CB_SETCURSEL, 0, 0);
@@ -71,17 +71,17 @@ LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         dx = LOWORD(lParam);
         dy = HIWORD(lParam);
         for (i = 0; i < 3; i++) {
-            ControlIO().pfnSetWindowPos(app.lpui->rghwndMsgBtn[i], NULL, dx - 48, ((3 * app.state.dyArial8 >> 1) + 2) * i + 3 + app.state.dyArial8 * 2, 0, 0,
+            ControlIO().pfnSetWindowPos(app.lpui->rghwndMsgBtn[i], nullptr, dx - 48, ((3 * app.state.dyArial8 >> 1) + 2) * i + 3 + app.state.dyArial8 * 2, 0, 0,
                          win32::SWP_NOSIZE | win32::SWP_NOZORDER | win32::SWP_NOACTIVATE | win32::SWP_SHOWWINDOW);
         }
         win32::SetRect(&app.lpui->rcMsgText, 4, app.state.dyArial8 * 2 + 3, dx - 52, dy - 4);
         win32::SetRect(&app.lpui->rcMsgTitle, 4, 4, dx - 4, app.state.dyArial8 * 2 - 4);
         rc = app.lpui->rcMsgText;
         ExpandRc(&rc, -4, -4);
-        ControlIO().pfnSetWindowPos(app.lpui->hwndMsgDrop, NULL, rc.left + 30, rc.top, rc.right - rc.left - 84, rc.bottom - rc.top, win32::SWP_NOZORDER);
-        ControlIO().pfnSetWindowPos(app.lpui->rghwndMsgBtn[3], NULL, rc.right - 50, rc.top, 0, 0, win32::SWP_NOSIZE | win32::SWP_NOZORDER);
+        ControlIO().pfnSetWindowPos(app.lpui->hwndMsgDrop, nullptr, rc.left + 30, rc.top, rc.right - rc.left - 84, rc.bottom - rc.top, win32::SWP_NOZORDER);
+        ControlIO().pfnSetWindowPos(app.lpui->rghwndMsgBtn[3], nullptr, rc.right - 50, rc.top, 0, 0, win32::SWP_NOSIZE | win32::SWP_NOZORDER);
         rc.top += app.lpui->dyShipDD + 3;
-        ControlIO().pfnSetWindowPos(app.lpui->hwndMsgEdit, NULL, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, win32::SWP_NOZORDER);
+        ControlIO().pfnSetWindowPos(app.lpui->hwndMsgEdit, nullptr, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, win32::SWP_NOZORDER);
         goto Default;
     case win32::WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
@@ -111,7 +111,7 @@ LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             if (app.state.gd.fTutorial) {
                 PresentationIO().pfnTutor(app);
             }
-            ControlIO().pfnInvalidateRect(app.lpui->hwndMessage, NULL, 1);
+            ControlIO().pfnInvalidateRect(app.lpui->hwndMessage, nullptr, 1);
             ControlIO().pfnSetMsgTitle(app, hwnd);
         } else if (ht == htMsgZoom) {
         ZoomBox:
@@ -123,7 +123,7 @@ LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 }
                 app.state.iMsgCur = i;
             }
-            ControlIO().pfnInvalidateRect(app.lpui->hwndMessage, NULL, 1);
+            ControlIO().pfnInvalidateRect(app.lpui->hwndMessage, nullptr, 1);
             ControlIO().pfnSetMsgTitle(app, hwnd);
         } else if (ht == htMsgMode) {
         ToggleMsgMode:
@@ -146,7 +146,7 @@ LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 app.lpui->viInRe = 0;
             }
             app.state.gd.fSendMsgMode = app.state.gd.fSendMsgMode == 0;
-            ControlIO().pfnInvalidateRect(app.lpui->hwndMessage, NULL, 1);
+            ControlIO().pfnInvalidateRect(app.lpui->hwndMessage, nullptr, 1);
             ControlIO().pfnSetMsgTitle(app, hwnd);
             ControlIO().pfnSetFocus(app.lpui->hwndMsgEdit);
         }
@@ -197,11 +197,11 @@ LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 }
                 if (TextIO().pfnCchGetString(app, idsSCC, szT) >= 32) {
                 }
-                cch = win32::wsprintfA((LPSTR)app.lpui->lpb2k, szT, TextIO().pfnPlayerName(app, lpmsgplr->iPlrFrom, 1, 1, 1, 0, NULL), 13, 10);
+                cch = win32::wsprintfA((LPSTR)app.lpui->lpb2k, szT, TextIO().pfnPlayerName(app, lpmsgplr->iPlrFrom, 1, 1, 1, 0, nullptr), 13, 10);
                 if (TextIO().pfnCchGetString(app, idsSCC2, szT) >= 32) {
                 }
                 cch += win32::wsprintfA((LPSTR)app.lpui->lpb2k + cch, szT,
-                                lpmsgplr->iPlrTo == 0 ? TextIO().pfnCompressed(app, idsEverybody) : TextIO().pfnPlayerName(app, lpmsgplr->iPlrTo - 1, 1, 1, 1, 0, NULL),
+                                lpmsgplr->iPlrTo == 0 ? TextIO().pfnCompressed(app, idsEverybody) : TextIO().pfnPlayerName(app, lpmsgplr->iPlrTo - 1, 1, 1, 1, 0, nullptr),
                                 13, 10);
                 if (lpmsgplr->cLen >= 0) {
                     i = 1000;
@@ -237,7 +237,7 @@ LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             } else {
                 ControlIO().pfnSetWindowText(app.lpui->hwndMsgScroll, lpsz);
                 ExpandRc(&rc, 4, 4);
-                ControlIO().pfnSetWindowPos(app.lpui->hwndMsgScroll, NULL, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, win32::SWP_NOZORDER | win32::SWP_SHOWWINDOW);
+                ControlIO().pfnSetWindowPos(app.lpui->hwndMsgScroll, nullptr, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, win32::SWP_NOZORDER | win32::SWP_SHOWWINDOW);
             }
             win32::SetBkMode(hdc, iMode);
         } else {
@@ -408,7 +408,7 @@ LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                     app.lpui->vpartBrowser.hs.iItem = app.lpui->idMsgObj & 0xff;
                     PartQueryIO().pfnLookup(app, &app.lpui->vpartBrowser);
                     if (app.lpui->hwndBrowser) {
-                        ControlIO().pfnInvalidateRect(app.lpui->hwndBrowserChild, NULL, 1);
+                        ControlIO().pfnInvalidateRect(app.lpui->hwndBrowserChild, nullptr, 1);
                     } else {
                         app.lpui->fBrowserValid = 1;
                         win32::PostMessageA(app.lpui->hwndFrame, win32::WM_COMMAND, IDM_VIEW_BROWSER_TOGGLE2, 0);
@@ -591,7 +591,7 @@ int16_t FFinishPlrMsgEntry(APPSESSION &app, int16_t dInc) {
     } else {
         RecordIO().pfnDirtyGame(app, 1);
         lpmpCur = LpmsgplrAlloc(app, cbNew + (sizeof(MSGPLR) - 12));
-        lpmpCur->lpmsgplrNext = NULL;
+        lpmpCur->lpmsgplrNext = nullptr;
         app.state.vcmsgplrOut++;
         lpmpCur->iInRe = app.state.iMsgCur;
     }
@@ -637,10 +637,10 @@ void SetMsgTitle(APPSESSION &app, HWND hwnd) {
             win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsSendMessagesDD), app.state.iMsgSendCur + 1, app.state.vcmsgplrOut);
             rc = app.lpui->rcMsgText;
             ExpandRc(&rc, -4, -4);
-            ControlIO().pfnSetWindowPos(app.lpui->hwndMsgDrop, NULL, rc.left + 30, rc.top, rc.right - rc.left - 84, rc.bottom - rc.top, win32::SWP_NOZORDER | win32::SWP_SHOWWINDOW);
-            ControlIO().pfnSetWindowPos(app.lpui->rghwndMsgBtn[3], NULL, rc.right - 50, rc.top, 0, 0, win32::SWP_NOSIZE | win32::SWP_NOZORDER | win32::SWP_SHOWWINDOW);
+            ControlIO().pfnSetWindowPos(app.lpui->hwndMsgDrop, nullptr, rc.left + 30, rc.top, rc.right - rc.left - 84, rc.bottom - rc.top, win32::SWP_NOZORDER | win32::SWP_SHOWWINDOW);
+            ControlIO().pfnSetWindowPos(app.lpui->rghwndMsgBtn[3], nullptr, rc.right - 50, rc.top, 0, 0, win32::SWP_NOSIZE | win32::SWP_NOZORDER | win32::SWP_SHOWWINDOW);
             rc.top += app.lpui->dyShipDD + 3;
-            ControlIO().pfnSetWindowPos(app.lpui->hwndMsgEdit, NULL, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, win32::SWP_NOZORDER | win32::SWP_SHOWWINDOW);
+            ControlIO().pfnSetWindowPos(app.lpui->hwndMsgEdit, nullptr, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, win32::SWP_NOZORDER | win32::SWP_SHOWWINDOW);
             ControlIO().pfnEnableWindow(app.lpui->rghwndMsgBtn[0], app.state.iMsgSendCur > 0);
             ControlIO().pfnEnableWindow(app.lpui->rghwndMsgBtn[1], 1);
             ControlIO().pfnEnableWindow(app.lpui->rghwndMsgBtn[2], 1);

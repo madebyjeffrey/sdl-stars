@@ -503,7 +503,7 @@ static int16_t FDecompressUserStringInternal(APPSESSION &app, const char *szIn, 
         }
     }
     *pchOut = 0;
-    if (memchr(szWork, 0, (size_t)(pchOut - szWork)) != NULL) goto invalid;
+    if (memchr(szWork, 0, (size_t)(pchOut - szWork)) != nullptr) goto invalid;
     if (fUtf8 && !FUtf8Valid(szWork, (size_t)(pchOut - szWork))) goto invalid;
     strcpy(szOut, szWork);
     return 1;

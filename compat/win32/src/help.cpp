@@ -51,8 +51,8 @@ static BOOL FHelpAssets(const char *pszDirectory) {
 static char *PszHelpDocument(const char *pszDirectory, const char *pszPage) {
     static const char szMarker[] = "__STARS_HELP_START__";
     char szSource[PATH_MAX], szTarget[PATH_MAX], szTemp[PATH_MAX];
-    char *pszBase, *pszBody = NULL, *pszMarker, *pszResult = NULL;
-    NATIVEFILE *lpSource = NULL, *lpTarget = NULL;
+    char *pszBase, *pszBody = nullptr, *pszMarker, *pszResult = nullptr;
+    NATIVEFILE *lpSource = nullptr, *lpTarget = nullptr;
     size_t cbPrefix, cbRead;
     int cch;
     BOOL fOk;
@@ -64,7 +64,7 @@ static char *PszHelpDocument(const char *pszDirectory, const char *pszPage) {
     if (!lpSource || !pszBody) goto fail;
     cbRead = CReadNative(pszBody, 1, STARS_HELP_BUNDLE_SIZE, lpSource);
     fOk = cbRead == STARS_HELP_BUNDLE_SIZE && !FNativeStreamError(lpSource) && ChGetNativeFile(lpSource) == EOF;
-    ICloseNativeFile(lpSource); lpSource = NULL;
+    ICloseNativeFile(lpSource); lpSource = nullptr;
     if (!fOk || (uint32_t)crc32(0, (const BYTE *)pszBody, (uInt)cbRead) != STARS_HELP_BUNDLE_CRC) {
         win32::SetLastError(win32::ERROR_BAD_FORMAT); goto done;
     }
@@ -90,7 +90,7 @@ static char *PszHelpDocument(const char *pszDirectory, const char *pszPage) {
           CWriteNative(pszMarker + sizeof(szMarker) - 1, 1, cbRead - cbPrefix - sizeof(szMarker) + 1, lpTarget) == cbRead - cbPrefix - sizeof(szMarker) + 1;
     if (IFlushNativeFile(lpTarget) || ISyncNativeFile(lpTarget)) fOk = 0;
     if (ICloseNativeFile(lpTarget)) fOk = 0;
-    lpTarget = NULL;
+    lpTarget = nullptr;
     if (!fOk || IRenameNativePath(szTemp, szTarget, 1, 1)) { IUnlinkNativePath(szTemp); goto fail; }
     pszResult = strdup(szTarget);
     if (!pszResult) goto fail;
@@ -104,7 +104,7 @@ done:
 }
 
 BOOL win32::WinHelpA(HWND hWndMain, LPCSTR pszHelp, UINT uCommand, ULONG_PTR dwData) {
-    const char *pszBase, *pszName, *pszPage = NULL;
+    const char *pszBase, *pszName, *pszPage = nullptr;
     char szDirectory[PATH_MAX];
     char *pszDirectory, *pszDocument;
     size_t i;
@@ -151,14 +151,14 @@ BOOL win32::WinHelpA(HWND hWndMain, LPCSTR pszHelp, UINT uCommand, ULONG_PTR dwD
         win32::SetLastError(win32::ERROR_FILENAME_EXCED_RANGE);
         return 0;
     }
-    pszDirectory = PszCanonicalNativePath(szDirectory, NULL, 0);
+    pszDirectory = PszCanonicalNativePath(szDirectory, nullptr, 0);
     if (!pszDirectory) {
         cch = snprintf(szDirectory, sizeof(szDirectory), "%s%s/help", pszBase, STARS_INSTALLED_DATA);
         if (cch < 0 || (size_t)cch >= sizeof(szDirectory)) {
             win32::SetLastError(win32::ERROR_FILENAME_EXCED_RANGE);
             return 0;
         }
-        pszDirectory = PszCanonicalNativePath(szDirectory, NULL, 0);
+        pszDirectory = PszCanonicalNativePath(szDirectory, nullptr, 0);
         if (!pszDirectory) {
             win32::SetLastError(win32::ERROR_PATH_NOT_FOUND);
             return 0;

@@ -102,7 +102,7 @@ int main(int argc, char *argv[]) try {
     }
     // --ini <file> reads settings from a stars.ini, as stars.exe reads its
     // own; ParseCmdLine reads the rest.
-    szIniPath = NULL;
+    szIniPath = nullptr;
     for (i = 1; i + 1 < argc; i++) {
         if (strcmp(argv[i], "--ini") == 0) {
             szIniPath = argv[i + 1];

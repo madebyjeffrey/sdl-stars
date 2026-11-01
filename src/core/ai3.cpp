@@ -74,7 +74,7 @@ void DoMacintiAiTurn(APPSESSION &app, PROD *rgprod) {
 
     iAiLvl = app.state.rgplr[app.state.idPlayer].lvlAi;
     iPlanet = app.state.rgplr[app.state.idPlayer].idPlanetHome;
-    iroCur = IroEnsureAi(app, vrgAiMacintiResOrder, cAiMacintiResOrder, NULL, 15);
+    iroCur = IroEnsureAi(app, vrgAiMacintiResOrder, cAiMacintiResOrder, nullptr, 15);
     if (app.state.game.turn < 40 || (!app.state.rgshdef[7].fFree && app.state.rgshdef[7].hul.ihuldef == ihuldefColonyShip)) {
         fUsingTempColonizer = 1;
         if (FLookupPartX(app, &part, hstEngine, iengineGalaxyScoop) == mdPartAvailAvailable && app.state.rgshdef[7].cExist == 0) {
@@ -275,7 +275,7 @@ void DoMacintiAiTurn(APPSESSION &app, PROD *rgprod) {
                 } else {
                     cRes = ResearchIO().pfnResources(app, lppl, app.state.idPlayer);
                     if (app.state.game.turn > 120 && ColonyIO().pfnWarp(app, lppl, &j) >= 10 && lppl->rgwtMin[3] > 10000 && RandomIO().pfnRandom(app, 4) == 0) {
-                        lpplBest = NULL;
+                        lpplBest = nullptr;
                         lLeast = 100000;
                         i = 0;
                         lpprod = app.state.lpplProdGlob->rgprod();
@@ -402,7 +402,7 @@ void DoMacintiAiTurn(APPSESSION &app, PROD *rgprod) {
                         for (ifl = 0; ifl < app.state.cFleet && (lpfl = app.state.rglpfl[ifl]) != 0; ifl++) {
                             if (lpfl->idPlanet != id || lpfl->iPlayer != app.state.idPlayer)
                                 continue;
-                            if (!FPotentMacWarFleet(app, lpfl, NULL))
+                            if (!FPotentMacWarFleet(app, lpfl, nullptr))
                                 continue;
 
                             if (iLatestBomber == ishdefNone || lpfl->rgcsh[8] + lpfl->rgcsh[9] >= app.state.vrgAiArmadaPotency[2])
@@ -485,8 +485,8 @@ void DoMacintiAiTurn(APPSESSION &app, PROD *rgprod) {
         }
     }
     UpdateProgressGauge(app, progressStep4);
-    lpflAttack = NULL;
-    lpflEnemy = NULL;
+    lpflAttack = nullptr;
+    lpflEnemy = nullptr;
     for (ifl = 0; ifl < app.state.cFleet; ifl++) {
         lpfl = app.state.rglpfl[ifl];
         if (!app.state.rglpfl[ifl])
@@ -822,7 +822,7 @@ int16_t FRetargetMiner(APPSESSION &app, FLEET *lpfl) {
     int16_t ipl;
     PLANET *lpplBest;
 
-    lpplBest = NULL;
+    lpplBest = nullptr;
     cConcCur = 0;
     cConcBest = 0;
     for (ipl = 0; ipl < app.state.vclpplAi; ipl++) {
@@ -872,7 +872,7 @@ int16_t IdTargetMacFreighter(APPSESSION &app, FLEET *lpfl) {
     int16_t iM;
 
     if (lpfl->idPlanet == idPlanetDeepSpace) {
-        lpplHere = NULL;
+        lpplHere = nullptr;
         goto LFindPickup;
     }
     lpplHere = LpplFromId(app, lpfl->idPlanet);
@@ -895,7 +895,7 @@ int16_t IdTargetMacFreighter(APPSESSION &app, FLEET *lpfl) {
     lpplHere->rgwtMin[3] -= cColHaul;
     cResLost -= ResearchIO().pfnResources(app, lpplHere, app.state.idPlayer);
     lpplHere->rgwtMin[3] += cColHaul;
-    lpplBest = NULL;
+    lpplBest = nullptr;
     cResGainMost = 0;
     for (ipl = 0; ipl < app.state.vclpplAi; ipl++) {
         lppl = app.state.vrglpplAi[ipl];
@@ -951,7 +951,7 @@ LFindPickup:
         for (iM = 0; iM <= 2 && lpplHere->rgwtMin[iM] < 2500; iM++) {
         }
         if (iM <= 2) {
-            lpplBest = NULL;
+            lpplBest = nullptr;
             cMax = 1000;
             for (ipl = 0; ipl < app.state.vclpplAi; ipl++) {
                 lppl = app.state.vrglpplAi[ipl];
@@ -983,7 +983,7 @@ LFindPickup:
             }
         }
     }
-    lpplBest = NULL;
+    lpplBest = nullptr;
     pctCapMost = 0;
     for (ipl = 0; ipl < app.state.vclpplAi; ipl++) {
         lppl = app.state.vrglpplAi[ipl];
@@ -1050,7 +1050,7 @@ LTryNewTarget:
             if (app.state.game.fAisBand) {
                 lpplTarget = LpplFindBestEnum(app, lppl, FEnumCalcArmadaHumanDest);
             } else {
-                lpplTarget = NULL;
+                lpplTarget = nullptr;
             }
             if (!lpplTarget) {
                 lpplTarget = LpplFindBestEnum(app, lppl, FEnumCalcArmadaDest);

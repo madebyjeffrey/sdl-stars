@@ -84,6 +84,10 @@ for directory in ("src", "compat/win32/include", "compat/win32/src"):
         assert not re.search(r"STARS_TEST_(?:IMPL|STATE_DOUBLE|ALLOC_)|stars_test_redirect|StarsTestReal_", text), f"Transitional test routing remains: {path}"
         assert not re.search(r"GetAppSession|GetAppUiState|\bUiSession\s*\(", text), f"Implicit application state accessor remains: {path}"
         assert not re.search(r'extern\s+"C"|__cplusplus', text), f"Owned C interface remains: {path}"
+        # These declarations are C++-only; comments and literals are not code.
+        code = re.sub(r'//[^\n]*|/\*[\s\S]*?\*/|R"(?P<delimiter>[^ ()\\\t\r\n]*)\([\s\S]*?\)(?P=delimiter)"|"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'', ' ', text)
+        assert not re.search(r"\bNULL\b", code), f"Owned null spelling must use nullptr: {path}"
+        assert not re.search(r"\btypedef\b", code), f"Owned type aliases must use C++ declarations: {path}"
         assert not re.search(r"#\s*define\s+(?:min|max)\s*\(", text), f"Owned min/max macro remains: {path}"
         assert not re.search(r'\(\s*(?:char\s*\*|LPSTR|PSTR)\s*\)\s*"', text), f"Mutable string-literal cast remains: {path}"
         assert not re.search(r'const_cast\s*<\s*char\s*\*\s*>\s*\(\s*"', text), f"Mutable string-literal cast remains: {path}"

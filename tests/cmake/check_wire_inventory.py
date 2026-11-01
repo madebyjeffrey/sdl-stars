@@ -93,7 +93,7 @@ for path in paths:
         site("pointer-cast-candidate", match.start(), match.end())
     for match in re.finditer(r"\b(?:reinterpret_cast|static_cast|const_cast)\s*<[^;{}<>]*\*[^;{}<>]*>", text):
         site("pointer-cast-candidate", match.start(), match.end())
-    # Typedef pointer aliases (LPVOID etc.) are also candidates, not just '*'.
+    # Pointer aliases (LPVOID etc.) are also candidates, not just '*'.
     for match in re.finditer(r"\(\s*(?:LP[A-Z]\w*|PVOID|PBYTE|PWORD|PDWORD)\s*\)", text):
         site("pointer-cast-candidate", match.start(), match.end())
     for match in re.finditer(r"^\s*#\s*pragma\s+pack[^\n]*|\balignas\s*\([^)]*\)|__attribute__\s*\(\([^;\n]*", text, re.M):
@@ -119,7 +119,7 @@ for path in paths:
         definitions = list(re.finditer(r"\bstruct\s+(\w+)\s*\{", text[:match.start()]))
         assert definitions, f"Tail outside named type: {name}:{match[0]}"
         tag = definitions[-1][1]
-        aliases = re.findall(r"typedef\s+struct\s+" + re.escape(tag) + r"\s+(\w+)\s*;", text)
+        aliases = re.findall(r"\busing\s+(\w+)\s*=\s*" + re.escape(tag) + r"\s*;", text)
         owner = aliases[0] if aliases else tag
         member, phase, length, role = tails[owner]
         assert match[1] == member, f"Unknown tail member: {owner}:{match[0]}"
@@ -128,7 +128,7 @@ for path in paths:
     if name == "src/core/structs.h":
         for match in re.finditer(r"\b(?:int8_t|int16_t|int32_t)\s+rgcQuan\s*\[1\]\s*;", text):
             tag = list(re.finditer(r"\bstruct\s+(\w+)\s*\{", text[:match.start()]))[-1][1]
-            owner = re.findall(r"typedef\s+struct\s+" + re.escape(tag) + r"\s+(\w+)\s*;", text)[0]
+            owner = re.findall(r"\busing\s+(\w+)\s*=\s*" + re.escape(tag) + r"\s*;", text)[0]
             prefix, width, count, phase = minimum_records[owner]
             report["minimum_records"].append(dict(type=owner, member="rgcQuan", prefix=prefix, width=width,
                 count=count, checkpoint=phase, role="frozen minimum-size metadata; variable payload uses byte views"))

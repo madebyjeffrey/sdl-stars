@@ -11,7 +11,7 @@ THING *LpthNew(APPSESSION &app, int16_t iplr, ThingType ith) {
     THING   thNew;
 
     if (app.state.cThing >= 4050) {
-        return NULL;
+        return nullptr;
     }
     memset(&thNew, 0, sizeof(THING));
     thNew.SetIplr(iplr);
@@ -25,7 +25,7 @@ THING *LpthNew(APPSESSION &app, int16_t iplr, ThingType ith) {
         iItem = lpth->id();
         while (i < app.state.cThing) {
             if (iItem >= 511) {
-                return NULL;
+                return nullptr;
             }
             if (lpth->idFull() != thNew.idFull())
                 break;

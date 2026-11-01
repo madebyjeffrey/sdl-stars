@@ -14,14 +14,14 @@
 
 
 
-typedef struct COMPATMESSAGE {
+struct COMPATMESSAGE {
     win32::MSG msg;
     STARSCOMPATPAYLOAD payload;
     void *lpvCallbackContext;
     BOOL fTimer, fInput;
     BYTE rgbKey[256];
     struct COMPATMESSAGE *lpNext;
-} COMPATMESSAGE;
+};
 
 static COMPATMESSAGE *lpFirst, *lpLast;
 static void FreeMessage(COMPATMESSAGE *lp) noexcept {
@@ -297,7 +297,7 @@ static BOOL FValidFilter(HWND hwnd, UINT msgMin, UINT msgMax) {
 }
 
 static BOOL FQueuedMessage(LPMSG lpOut, HWND hwnd, UINT msgMin, UINT msgMax, UINT flags, BOOL fTimer) {
-    COMPATMESSAGE *lpmsg, *lpPrev = NULL;
+    COMPATMESSAGE *lpmsg, *lpPrev = nullptr;
 
     for (lpmsg = lpFirst; lpmsg; lpPrev = lpmsg, lpmsg = lpmsg->lpNext) {
         if (lpmsg->fTimer != fTimer || !FMessageMatches(&lpmsg->msg, hwnd, msgMin, msgMax))
@@ -363,8 +363,8 @@ BOOL win32::WaitMessage(void) {
 
     if (!SDL_IsMainThread())
         return 0;
-    while (!win32::PeekMessageA(&msg, NULL, 0, 0, win32::PM_NOREMOVE)) {
-        cMillis = CMillisCompatTimerWait(NULL, 0, 0);
+    while (!win32::PeekMessageA(&msg, nullptr, 0, 0, win32::PM_NOREMOVE)) {
+        cMillis = CMillisCompatTimerWait(nullptr, 0, 0);
         if (!(SDL_WasInit(SDL_INIT_EVENTS) & SDL_INIT_EVENTS)) return 0;
         if (SDL_WaitEventTimeout(&event, cMillis)) CompatRouteEvent(&event);
         else if (cMillis == -1) return 0;
@@ -373,7 +373,7 @@ BOOL win32::WaitMessage(void) {
 }
 
 void win32::PostQuitMessage(int code) {
-    win32::PostMessageA(NULL, win32::WM_QUIT, (WPARAM)code, 0);
+    win32::PostMessageA(nullptr, win32::WM_QUIT, (WPARAM)code, 0);
 }
 
 LRESULT win32::CallWindowProcA(WNDPROC lpfn, HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
@@ -433,7 +433,7 @@ LRESULT win32::DefWindowProcA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case win32::WM_SETCURSOR:
         if (lpwin->hwndParent && win32::SendMessageA(lpwin->hwndParent, msg, wParam, lParam)) return 1;
         if (!LpCompatWindow(hwnd)) return 0;
-        if (LOWORD(lParam) != win32::HTCLIENT) { win32::SetCursor(win32::LoadCursorA(NULL, win32::MAKEINTRESOURCE(32512))); return 1; }
+        if (LOWORD(lParam) != win32::HTCLIENT) { win32::SetCursor(win32::LoadCursorA(nullptr, win32::MAKEINTRESOURCE(32512))); return 1; }
         if (lpwin->lpclass->wc.hCursor) { win32::SetCursor(lpwin->lpclass->wc.hCursor); return 1; }
         return 0;
     case win32::WM_NCACTIVATE:

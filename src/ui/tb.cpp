@@ -70,9 +70,9 @@ LRESULT  TbWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     switch (msg) {
     case win32::WM_CREATE:
         if (!win32::InitCommonControlsEx(&icc)) return -1;
-        hwndButtons = ui::CreateWindowEx(0, win32::TOOLBARCLASSNAMEA, NULL,
+        hwndButtons = ui::CreateWindowEx(0, win32::TOOLBARCLASSNAMEA, nullptr,
             win32::WS_CHILD | win32::WS_VISIBLE | win32::TBSTYLE_TOOLTIPS | win32::CCS_NORESIZE | win32::CCS_NOPARENTALIGN | win32::CCS_NODIVIDER,
-            0, 2, 10, 32, hwnd, (HMENU)(INT_PTR)IDC_STARS_TOOLBAR, app.lpui->hInst, NULL);
+            0, 2, 10, 32, hwnd, (HMENU)(INT_PTR)IDC_STARS_TOOLBAR, app.lpui->hInst, nullptr);
         if (!hwndButtons) return -1;
         ControlIO().pfnSendMessage(hwndButtons, win32::TB_BUTTONSTRUCTSIZE, sizeof(TBBUTTON), 0);
         ControlIO().pfnSendMessage(hwndButtons, win32::TB_SETBITMAPSIZE, 0, win32::MAKELPARAM(24, 23));
@@ -99,7 +99,7 @@ LRESULT  TbWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         win32::SelectObject(hdcMem, hbmpSav); win32::DeleteDC(hdcMem);
         win32::ReleaseDC(hwndButtons, hdc); win32::GlobalUnlock(app.lpui->hdibToolbar);
         win32::SetWindowLongPtrA(hwnd, win32::GWLP_USERDATA, (LONG_PTR)hbmp);
-        add.hInst = NULL; add.nID = (UINT_PTR)hbmp;
+        add.hInst = nullptr; add.nID = (UINT_PTR)hbmp;
         if (ControlIO().pfnSendMessage(hwndButtons, win32::TB_ADDBITMAP, 18, (LPARAM)&add) < 0) return -1;
         c = 0; iRadar = -1;
         for (i = 0; i < 29; i++) {
@@ -124,8 +124,8 @@ LRESULT  TbWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         }
         if (!ControlIO().pfnSendMessage(hwndButtons, win32::TB_ADDBUTTONS, c, (LPARAM)rgbtn)) return -1;
         if (iRadar < 0 || !ControlIO().pfnSendMessage(hwndButtons, win32::TB_GETITEMRECT, iRadar, (LPARAM)&rc)) return -1;
-        app.lpui->hwndTBRadar = ui::CreateWindowEx(0, "COMBOBOX", NULL, win32::CBS_DROPDOWN | win32::CBS_AUTOHSCROLL | win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_VSCROLL,
-            rc.left, (28 - app.state.dyArial8 - 8) / 2 + 4, rc.right - rc.left, 11 * app.state.dyArial8 + 28, hwnd, NULL, app.lpui->hInst, NULL);
+        app.lpui->hwndTBRadar = ui::CreateWindowEx(0, "COMBOBOX", nullptr, win32::CBS_DROPDOWN | win32::CBS_AUTOHSCROLL | win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_VSCROLL,
+            rc.left, (28 - app.state.dyArial8 - 8) / 2 + 4, rc.right - rc.left, 11 * app.state.dyArial8 + 28, hwnd, nullptr, app.lpui->hInst, nullptr);
         if (!app.lpui->hwndTBRadar) return -1;
         ControlIO().pfnSetWindowPos(app.lpui->hwndTBRadar, win32::HWND_TOP, 0, 0, 0, 0, win32::SWP_NOMOVE | win32::SWP_NOSIZE | win32::SWP_NOACTIVATE);
         ControlIO().pfnSendMessage(app.lpui->hwndTBRadar, win32::WM_SETFONT, (WPARAM)app.lpui->rghfontArial8[1], 0);
@@ -395,7 +395,7 @@ void ExecuteButton(APPSESSION &app, ToolbarButton itb, int16_t fDown) {
         } else {
             app.lpui->grbitScan = static_cast<GrbitScan>(app.lpui->grbitScan & 0xffbf);
         }
-        ControlIO().pfnInvalidateRect(app.lpui->hwndTb, NULL, 1);
+        ControlIO().pfnInvalidateRect(app.lpui->hwndTb, nullptr, 1);
         break;
     case tbShipDesignFilterMenu:
         c = 0;
@@ -445,7 +445,7 @@ void ExecuteButton(APPSESSION &app, ToolbarButton itb, int16_t fDown) {
             if (!(app.lpui->grbitScan & grbitScanDesignFilter) && (1 << ish & app.lpui->grbitScanShip)) {
             LInvalS:
                 app.lpui->grbitScan = static_cast<GrbitScan>(app.lpui->grbitScan | grbitScanDesignFilter);
-                ControlIO().pfnInvalidateRect(app.lpui->hwndTb, NULL, 1);
+                ControlIO().pfnInvalidateRect(app.lpui->hwndTb, nullptr, 1);
             }
         }
         if (!(app.lpui->grbitScan & grbitScanDesignFilter))
@@ -488,7 +488,7 @@ void ExecuteButton(APPSESSION &app, ToolbarButton itb, int16_t fDown) {
             if (!(app.lpui->grbitScan & grbitScanEnemyFilter) && (1 << iSel & app.lpui->grbitScanEShip)) {
             LInvalE:
                 app.lpui->grbitScan = static_cast<GrbitScan>(app.lpui->grbitScan | grbitScanEnemyFilter);
-                ControlIO().pfnInvalidateRect(app.lpui->hwndTb, NULL, 1);
+                ControlIO().pfnInvalidateRect(app.lpui->hwndTb, nullptr, 1);
             }
         }
         if (!(app.lpui->grbitScan & grbitScanEnemyFilter))
@@ -511,7 +511,7 @@ void ExecuteButton(APPSESSION &app, ToolbarButton itb, int16_t fDown) {
         return;
     }
     if (itb != tbAddWaypoints) {
-        ControlIO().pfnInvalidateRect(app.lpui->hwndScanner, NULL, 1);
+        ControlIO().pfnInvalidateRect(app.lpui->hwndScanner, nullptr, 1);
     }
     if (app.state.gd.fTutorial) {
         PresentationIO().pfnTutor(app);
@@ -547,10 +547,10 @@ void TerminateToolbarFocus(APPSESSION &app, int16_t fCancel) {
     if (pct != app.lpui->vpctRadarView) {
         app.lpui->vpctRadarView = pct;
         if (!(app.lpui->grbitScan & grbitScanCoverage)) {
-            ControlIO().pfnInvalidateRect(app.lpui->hwndTb, NULL, 1);
+            ControlIO().pfnInvalidateRect(app.lpui->hwndTb, nullptr, 1);
         }
         app.lpui->grbitScan = static_cast<GrbitScan>(app.lpui->grbitScan | grbitScanCoverage);
-        ControlIO().pfnInvalidateRect(app.lpui->hwndScanner, NULL, 1);
+        ControlIO().pfnInvalidateRect(app.lpui->hwndScanner, nullptr, 1);
     }
     ControlIO().pfnSetFocus(app.lpui->hwndFrame);
     return;
@@ -575,16 +575,16 @@ void ShowTooltip(APPSESSION &app, StringId ids, RECT *prc) {
         app.lpui->vidsTooltip = ids;
         cch = TextIO().pfnCchGetString(app, static_cast<StringId>(app.lpui->vidsTooltip), app.state.szWork);
         app.lpui->vrcTooltip = *prc;
-        hdc = win32::GetDC(NULL);
+        hdc = win32::GetDC(nullptr);
         hfontSav = (HFONT)win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
         app.lpui->dxTip = LOWORD(GetTextExtent(hdc, app.state.szWork, cch));
         win32::SelectObject(hdc, hfontSav);
-        win32::ReleaseDC(NULL, hdc);
+        win32::ReleaseDC(nullptr, hdc);
         if (!app.lpui->hwndTooltip) {
-            ui::CreateWindowEx(win32::WS_EX_NOACTIVATE, app.lpui->szTooltip, NULL, win32::WS_POPUP, prc->left, prc->bottom + 2,
-                           app.lpui->dxTip + 6, app.state.dyArial8 + 6, app.lpui->hwndTb, NULL, app.lpui->hInst, NULL);
+            ui::CreateWindowEx(win32::WS_EX_NOACTIVATE, app.lpui->szTooltip, nullptr, win32::WS_POPUP, prc->left, prc->bottom + 2,
+                           app.lpui->dxTip + 6, app.state.dyArial8 + 6, app.lpui->hwndTb, nullptr, app.lpui->hInst, nullptr);
         } else {
-            ControlIO().pfnInvalidateRect(app.lpui->hwndTooltip, NULL, 1);
+            ControlIO().pfnInvalidateRect(app.lpui->hwndTooltip, nullptr, 1);
         }
         ControlIO().pfnSetWindowPos(app.lpui->hwndTooltip, (HWND)-1, 0, 0, app.lpui->dxTip + 6, app.state.dyArial8 + 6, win32::SWP_NOMOVE | win32::SWP_NOZORDER | win32::SWP_NOACTIVATE | win32::SWP_NOOWNERZORDER);
         fShowNow = app.lpui->vtickTooltipLast + 400 >= win32::GetTickCount() || fVisCur != 0;
@@ -625,7 +625,7 @@ LRESULT  TooltipWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             if (app.lpui->vidTimerTooltip != -1) {
                 win32::KillTimer(hwnd, app.lpui->vidTimerTooltip);
             }
-            if (win32::SetTimer(hwnd, 926, 700, NULL) != 0) {
+            if (win32::SetTimer(hwnd, 926, 700, nullptr) != 0) {
                 app.lpui->vidTimerTooltip = 926;
             } else {
                 app.lpui->vidTimerTooltip = -1;
@@ -655,7 +655,7 @@ LRESULT  TooltipWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             if (app.lpui->vidTimerTooltip != -1) {
                 win32::KillTimer(hwnd, app.lpui->vidTimerTooltip);
             }
-            if (win32::SetTimer(hwnd, 926, 50, NULL) != 0) {
+            if (win32::SetTimer(hwnd, 926, 50, nullptr) != 0) {
                 app.lpui->vidTimerTooltip = 926;
             } else {
                 app.lpui->vidTimerTooltip = -1;
@@ -682,7 +682,7 @@ LRESULT  TooltipWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         cch = TextIO().pfnCchGetString(app, static_cast<StringId>(app.lpui->vidsTooltip), app.state.szWork);
         bkSav = win32::SetBkMode(hdc, win32::TRANSPARENT);
         win32::SetTextColor(hdc, app.lpui->crWindowText);
-        win32::ExtTextOutA(hdc, 3, 3, 0, NULL, app.state.szWork, cch, NULL);
+        win32::ExtTextOutA(hdc, 3, 3, 0, nullptr, app.state.szWork, cch, nullptr);
         win32::SetBkMode(hdc, bkSav);
         win32::EndPaint(hwnd, &ps);
         return 0;
@@ -696,7 +696,7 @@ LRESULT  FakeComboProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     switch (msg) {
     case win32::WM_LBUTTONDOWN:
     case win32::WM_LBUTTONDBLCLK:
-        ShowTooltip(app, static_cast<StringId>(idsNoString), NULL);
+        ShowTooltip(app, static_cast<StringId>(idsNoString), nullptr);
         break;
     case win32::WM_MOUSEMOVE:
         TbWndProc(hwnd, msg, wParam, lParam);
@@ -710,7 +710,7 @@ LRESULT  FakeCEProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     switch (msg) {
     case win32::WM_LBUTTONDOWN:
     case win32::WM_LBUTTONDBLCLK:
-        ShowTooltip(app, static_cast<StringId>(idsNoString), NULL);
+        ShowTooltip(app, static_cast<StringId>(idsNoString), nullptr);
         break;
     case win32::WM_MOUSEMOVE:
         TbWndProc(hwnd, msg, wParam, lParam);

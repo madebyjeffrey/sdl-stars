@@ -25,7 +25,7 @@ static int IStarsMain(APPSESSION &app, HINSTANCE hInstance, HINSTANCE hPrevInsta
     memset(&app.lpui->vtimer, 0, sizeof(TIMER));
     app.lpui->vtimer.fAutoGenWhenIn = 1;
     if (!hPrevInstance && InitMDIApp(app) == 0) {
-        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableInitializeStars, NULL), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableInitializeStars, nullptr), win32::MB_ICONHAND);
         return 0;
     }
     fSeed = 0;
@@ -34,11 +34,11 @@ static int IStarsMain(APPSESSION &app, HINSTANCE hInstance, HINSTANCE hPrevInsta
         return 0;
     }
     if (!FGetSystemColors(app)) {
-        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableInitializeStars, NULL), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableInitializeStars, nullptr), win32::MB_ICONHAND);
         return 0;
     }
     if (DesktopChoiceIO().pfnInitInstance(app, nCmdShow) == 0) {
-        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableInitializeStars, NULL), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableInitializeStars, nullptr), win32::MB_ICONHAND);
         return 0;
     }
     if (!ParseCmdLine(app, lpCmdLine, &fSeed, &lSeed)) { FreeStuff(app); return 2; }
@@ -47,7 +47,7 @@ static int IStarsMain(APPSESSION &app, HINSTANCE hInstance, HINSTANCE hPrevInsta
     Randomize2(app, fSeed ? lSeed : win32::GetTickCount());
     StarsRethrowPendingError();
     win32::PostMessageA(app.lpui->hwndFrame, WM_STARS_STARTUP, 0, 0);
-    while (ui::GetMessage(&msg, NULL, 0, 0)) {
+    while (ui::GetMessage(&msg, nullptr, 0, 0)) {
         StarsRethrowPendingError();
         if ((msg.message == win32::WM_MOUSEWHEEL || msg.message == win32::WM_MOUSEHWHEEL) && !FRouteMouseWheel(&msg))
             continue;
@@ -72,7 +72,7 @@ static int IStarsMain(APPSESSION &app, HINSTANCE hInstance, HINSTANCE hPrevInsta
 } catch (const StarsError &error) {
     StarsPrimaryErrorScope primary;
     try {
-        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, static_cast<StringId>(error.ids ? error.ids : idsMemory), NULL), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, static_cast<StringId>(error.ids ? error.ids : idsMemory), nullptr), win32::MB_ICONHAND);
         FreeStuff(app);
     } catch (...) {
     }
@@ -80,7 +80,7 @@ static int IStarsMain(APPSESSION &app, HINSTANCE hInstance, HINSTANCE hPrevInsta
 } catch (...) {
     StarsPrimaryErrorScope primary;
     try {
-        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableInitializeStars, NULL), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableInitializeStars, nullptr), win32::MB_ICONHAND);
         FreeStuff(app);
     } catch (...) {
     }
@@ -146,9 +146,9 @@ int16_t FGetSystemColors(APPSESSION &app) {
         lpbi->bmiColors[253].rgbBlue = HIWORD(app.lpui->crButtonFace);
         win32::GlobalUnlock(app.lpui->hdibToolbar);
     }
-    hdc = win32::GetDC(NULL);
+    hdc = win32::GetDC(nullptr);
     app.lpui->vcScreenColors = win32::GetDeviceCaps(hdc, win32::BITSPIXEL) * win32::GetDeviceCaps(hdc, win32::PLANES);
-    win32::ReleaseDC(NULL, hdc);
+    win32::ReleaseDC(nullptr, hdc);
     return 1;
 }
 
@@ -205,7 +205,7 @@ INT_PTR  About(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         uiState.iAbout1st = -11;
         uiState.iAboutPartial = 0;
         ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_ABOUT_DEMO_TEXT), SzVersion(app));
-        uiState.uTimerId = win32::SetTimer(hwnd, 14, 50, NULL);
+        uiState.uTimerId = win32::SetTimer(hwnd, 14, 50, nullptr);
         return 1;
     case win32::WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
@@ -240,7 +240,7 @@ INT_PTR  About(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         }
         rc.bottom = 1000;
         win32::FillRect(hdc, &rc, uiState.hbrButtonFace);
-        win32::SelectClipRgn(hdc, NULL);
+        win32::SelectClipRgn(hdc, nullptr);
         win32::ReleaseDC(hwnd, hdc);
         break;
     case win32::WM_CTLCOLORMSGBOX:
@@ -364,7 +364,7 @@ int16_t FHandleKey(APPSESSION &app, HWND hwnd, int16_t iMsg, int16_t iKey, uint3
                 md = iKey - 49;
                 if (md != (app.lpui->grbitScan & grbitScanViewMask)) {
                     ExecuteButton(app, static_cast<ToolbarButton>(iKey - 49), 1);
-                    ControlIO().pfnInvalidateRect(app.lpui->hwndTb, NULL, 0);
+                    ControlIO().pfnInvalidateRect(app.lpui->hwndTb, nullptr, 0);
                 }
                 return 1;
             }
@@ -386,7 +386,7 @@ int16_t FHandleKey(APPSESSION &app, HWND hwnd, int16_t iMsg, int16_t iKey, uint3
                 }
             }
             ExecuteButton(app, itb, FIsButtonDown(app, itb) == 0);
-            ControlIO().pfnInvalidateRect(app.lpui->hwndTb, NULL, 0);
+            ControlIO().pfnInvalidateRect(app.lpui->hwndTb, nullptr, 0);
             return 1;
         }
         switch (iKey) {
@@ -421,7 +421,7 @@ int16_t FHandleKey(APPSESSION &app, HWND hwnd, int16_t iMsg, int16_t iKey, uint3
                 if (iWarp >= 0 && iWarp <= 11) {
                     SetScanPathWarp(app, iwp, iWarp);
                     FleetQueryIO().pfnLookup(app, idWriteBack, &app.state.sel.fl);
-                    ControlIO().pfnDrawPlanShip(app, NULL, static_cast<TileBits>(tileFleetOrders | tileFleetComp | tileMinimized));
+                    ControlIO().pfnDrawPlanShip(app, nullptr, static_cast<TileBits>(tileFleetOrders | tileFleetComp | tileMinimized));
                 }
             }
             return 1;

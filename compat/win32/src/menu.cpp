@@ -7,12 +7,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef struct COMPATMENUITEM {
+struct COMPATMENUITEM {
     UINT flags;
     UINT_PTR id;
     NATIVEOWNER<char, SDL_free> psz;
     HMENU hsub;
-} COMPATMENUITEM;
+};
 struct win32::HMENU__ {
     BOOL fAlive;
     std::unique_ptr<COMPATMENUITEM[]> rgitem;
@@ -25,16 +25,16 @@ static HMENU hmenus;
 static HMENU LpMenu(HMENU hmenu) {
     HMENU lp;
     for (lp = hmenus; lp; lp = lp->hnext)
-        if (lp == hmenu) return lp->fAlive ? lp : NULL;
-    return NULL;
+        if (lp == hmenu) return lp->fAlive ? lp : nullptr;
+    return nullptr;
 }
 static COMPATMENUITEM *LpItem(HMENU hmenu, UINT id, UINT flags, HMENU *lphmenu, int *lpi) {
     HMENU lp = LpMenu(hmenu);
     COMPATMENUITEM *lpitem;
     int i;
-    if (!lp) return NULL;
+    if (!lp) return nullptr;
     if (flags & win32::MF_BYPOSITION) {
-        if (id >= (UINT)lp->citem) return NULL;
+        if (id >= (UINT)lp->citem) return nullptr;
         *lphmenu = lp; *lpi = (int)id;
         return &lp->rgitem[id];
     }
@@ -48,7 +48,7 @@ static COMPATMENUITEM *LpItem(HMENU hmenu, UINT id, UINT flags, HMENU *lphmenu, 
             if (lpitem) return lpitem;
         }
     }
-    return NULL;
+    return nullptr;
 }
 static BOOL FMenuDepth(HMENU hmenu, int cDepth) {
     HMENU lp = LpMenu(hmenu);
@@ -60,26 +60,26 @@ static BOOL FMenuDepth(HMENU hmenu, int cDepth) {
 }
 HMENU win32::CreatePopupMenu(void) {
     HMENU lp = new (std::nothrow) win32::HMENU__{};
-    if (!lp) return NULL;
+    if (!lp) return nullptr;
     lp->fAlive = 1; lp->hnext = hmenus; hmenus = lp;
     return lp;
 }
 HMENU win32::CreateMenu(void) { return win32::CreatePopupMenu(); }
-BOOL win32::IsMenu(HMENU hmenu) { return LpMenu(hmenu) != NULL; }
+BOOL win32::IsMenu(HMENU hmenu) { return LpMenu(hmenu) != nullptr; }
 int win32::GetMenuItemCount(HMENU hmenu) {
     HMENU lp = LpMenu(hmenu);
     return lp ? lp->citem : -1;
 }
 HMENU win32::GetSubMenu(HMENU hmenu, int i) {
     HMENU lp = LpMenu(hmenu);
-    return lp && i >= 0 && i < lp->citem ? LpMenu(lp->rgitem[i].hsub) : NULL;
+    return lp && i >= 0 && i < lp->citem ? LpMenu(lp->rgitem[i].hsub) : nullptr;
 }
 UINT win32::GetMenuItemID(HMENU hmenu, int i) {
     HMENU lp = LpMenu(hmenu);
     return lp && i >= 0 && i < lp->citem && !lp->rgitem[i].hsub ? (UINT)lp->rgitem[i].id : UINT_MAX;
 }
 BOOL win32::InsertMenuA(HMENU hmenu, UINT pos, UINT flags, UINT_PTR id, LPCSTR psz) {
-    HMENU lp = LpMenu(hmenu), hsub = NULL, hp;
+    HMENU lp = LpMenu(hmenu), hsub = nullptr, hp;
     COMPATMENUITEM item = {};
     std::unique_ptr<COMPATMENUITEM[]> rg;
     int i, j, cDepth = 0;
@@ -120,12 +120,12 @@ BOOL win32::DestroyMenu(HMENU hmenu) {
     int i;
     if (!lp) return 0;
     lp->fAlive = 0;
-    if (LpCompatWindow(lp->hwndOwner) && lp->hwndOwner->hmenu == lp) lp->hwndOwner->hmenu = NULL;
-    lp->hwndOwner = NULL;
+    if (LpCompatWindow(lp->hwndOwner) && lp->hwndOwner->hmenu == lp) lp->hwndOwner->hmenu = nullptr;
+    lp->hwndOwner = nullptr;
     for (i = 0; i < lp->citem; i++) {
         if (lp->rgitem[i].hsub) win32::DestroyMenu(lp->rgitem[i].hsub);
     }
-    lp->rgitem.reset(); lp->citem = 0; lp->hparent = NULL;
+    lp->rgitem.reset(); lp->citem = 0; lp->hparent = nullptr;
     return 1;
 }
 static BOOL FRemoveMenu(HMENU hmenu, UINT pos, UINT flags, BOOL fDestroy) {
@@ -136,7 +136,7 @@ static BOOL FRemoveMenu(HMENU hmenu, UINT pos, UINT flags, BOOL fDestroy) {
     if (!lpitem) return 0;
     if (lpitem->hsub) {
         if (fDestroy) win32::DestroyMenu(lpitem->hsub);
-        else if (LpMenu(lpitem->hsub)) lpitem->hsub->hparent = NULL;
+        else if (LpMenu(lpitem->hsub)) lpitem->hsub->hparent = nullptr;
     }
     lpitem->psz.reset();
     for (; i + 1 < lp->citem; i++) lp->rgitem[i] = std::move(lp->rgitem[i + 1]);
@@ -192,16 +192,16 @@ void CompatShutdownMenus(void) {
     HMENU lp, next;
     for (lp = hmenus; lp; lp = lp->hnext) if (lp->fAlive) win32::DestroyMenu(lp);
     for (lp = hmenus; lp; lp = next) { next = lp->hnext; delete lp; }
-    hmenus = NULL;
+    hmenus = nullptr;
 }
 
 HMENU win32::GetMenu(HWND hwnd) {
     HWND lpwin = LpCompatWindow(hwnd);
-    return lpwin && !lpwin->hwndParent ? LpMenu(lpwin->hmenu) : NULL;
+    return lpwin && !lpwin->hwndParent ? LpMenu(lpwin->hmenu) : nullptr;
 }
 void CompatFreeMenuBar(HWND hwnd) {
     if (hwnd->hbmpMenu) win32::DeleteObject(hwnd->hbmpMenu);
-    hwnd->hbmpMenu = NULL;
+    hwnd->hbmpMenu = nullptr;
     hwnd->rgrcMenu.reset();
     hwnd->cyMenu = hwnd->cxMenu = hwnd->cMenu = 0;
     hwnd->fMenuDirty = hwnd->fMenuLayoutDirty = 1;
@@ -220,7 +220,7 @@ int CyCompatMenuBar(HWND hwnd) {
     if (!hwnd->fMenuLayoutDirty && hwnd->cxMenu == cx) return hwnd->cyMenu;
     rgrcOwner.reset((RECT *)calloc((size_t)lp->citem, sizeof(*rgrc))); rgrc = rgrcOwner.get();
     if (!rgrc) return 0;
-    hdc = win32::GetDC(NULL);
+    hdc = win32::GetDC(nullptr);
     if (!hdc) return 0;
     hfont = win32::SelectObject(hdc, win32::GetStockObject(win32::DEFAULT_GUI_FONT));
     win32::GetTextMetricsA(hdc, &tm); cy = StarsMax(20, tm.tmHeight + 8);
@@ -232,7 +232,7 @@ int CyCompatMenuBar(HWND hwnd) {
         if (y > 32000 - cy) break;
         win32::SetRect(&rgrc[i], x, y, x + dx, y + cy); x += dx;
     }
-    win32::SelectObject(hdc, hfont); win32::ReleaseDC(NULL, hdc);
+    win32::SelectObject(hdc, hfont); win32::ReleaseDC(nullptr, hdc);
     if (i != lp->citem) return 0;
     hwnd->rgrcMenu.reset(rgrcOwner.release());
     hwnd->cyMenu = y + cy; hwnd->cxMenu = cx; hwnd->cMenu = lp->citem;
@@ -252,12 +252,12 @@ BOOL FCompatDrawMenuBar(HWND hwnd, SDL_Surface *lpSurface) {
 
     if (cy == 0) return 1;
     if (!lp) return 0;
-    lpBar = hwnd->hbmpMenu ? LpCompatBitmapSurface(hwnd->hbmpMenu) : NULL;
+    lpBar = hwnd->hbmpMenu ? LpCompatBitmapSurface(hwnd->hbmpMenu) : nullptr;
     if (hwnd->fMenuDirty || !lpBar || lpBar->w != hwnd->cxMenu * iScale || lpBar->h != cy * iScale) {
-        hdc = win32::CreateCompatibleDC(NULL);
-        hdcScreen = win32::GetDC(NULL);
+        hdc = win32::CreateCompatibleDC(nullptr);
+        hdcScreen = win32::GetDC(nullptr);
         hbmp = win32::CreateCompatibleBitmap(hdcScreen, hwnd->cxMenu * iScale, cy * iScale);
-        if (hdcScreen) win32::ReleaseDC(NULL, hdcScreen);
+        if (hdcScreen) win32::ReleaseDC(nullptr, hdcScreen);
         if (!hdc || !hbmp) { if (hdc) win32::DeleteDC(hdc); if (hbmp) win32::DeleteObject(hbmp); return 0; }
         hOld = win32::SelectObject(hdc, hbmp);
         FCompatSetDCScale(hdc, iScale);
@@ -282,7 +282,7 @@ BOOL FCompatDrawMenuBar(HWND hwnd, SDL_Surface *lpSurface) {
         hwnd->hbmpMenu = hbmp; hwnd->fMenuDirty = 0;
     }
     lpBar = LpCompatBitmapSurface(hwnd->hbmpMenu);
-    return lpBar && SDL_BlitSurface(lpBar, NULL, lpSurface, NULL);
+    return lpBar && SDL_BlitSurface(lpBar, nullptr, lpSurface, nullptr);
 }
 BOOL win32::DrawMenuBar(HWND hwnd) {
     HWND lpwin = LpCompatWindow(hwnd);
@@ -293,14 +293,14 @@ BOOL win32::DrawMenuBar(HWND hwnd) {
     lpwin->fMenuLayoutDirty = lpwin->fMenuDirty = 1;
     CyCompatMenuBar(lpwin);
     if (!lpwin->hmenu) lpwin->cyMenu = 0;
-    win32::InvalidateRect(hwnd, NULL, 0);
+    win32::InvalidateRect(hwnd, nullptr, 0);
     if (lpwin->fCreated && cyOld != lpwin->cyMenu && win32::GetClientRect(hwnd, &rc))
         win32::SendMessageA(hwnd, win32::WM_SIZE, win32::IsIconic(hwnd) ? win32::SIZE_MINIMIZED : win32::IsZoomed(hwnd) ? win32::SIZE_MAXIMIZED : win32::SIZE_RESTORED, win32::MAKELPARAM(rc.right, rc.bottom));
     return LpCompatWindow(hwnd) && FCompatPresent(hwnd);
 }
 BOOL win32::GetMenuItemRect(HWND hwnd, HMENU hmenu, UINT i, LPRECT lprc) {
     HMENU lp = LpMenu(hmenu);
-    HWND lpwin = LpCompatWindow(lp ? lp->hwndOwner : NULL);
+    HWND lpwin = LpCompatWindow(lp ? lp->hwndOwner : nullptr);
     POINT pt = {0, 0};
     (void)hwnd; // Attached bar geometry belongs to the menu's window.
     if (!lpwin || !lprc || CyCompatMenuBar(lpwin) == 0 || i >= (UINT)lpwin->cMenu ||
@@ -314,30 +314,31 @@ BOOL win32::SetMenu(HWND hwnd, HMENU hmenu) {
     if (!lpwin || lpwin->fDestroying || lpwin->hwndParent ||
         (hmenu && (!lp || lp->hparent || (lp->hwndOwner && lp->hwndOwner != hwnd)))) return 0;
     old = LpMenu(lpwin->hmenu);
-    if (old) old->hwndOwner = NULL;
+    if (old) old->hwndOwner = nullptr;
     lpwin->hmenu = lp;
     if (lp) lp->hwndOwner = hwnd;
     lpwin->iMenuHot = -1;
     lpwin->fMenuLayoutDirty = lpwin->fMenuDirty = 1;
     if (lpwin->fCreated) return win32::DrawMenuBar(hwnd);
-    win32::InvalidateRect(hwnd, NULL, 0);
+    win32::InvalidateRect(hwnd, nullptr, 0);
     return 1;
 }
 void CompatDestroyWindowMenu(HWND hwnd) {
     HMENU hmenu = win32::GetMenu(hwnd);
-    hwnd->hmenu = NULL;
+    hwnd->hmenu = nullptr;
     CompatFreeMenuBar(hwnd);
     if (hmenu) win32::DestroyMenu(hmenu);
 }
 
-typedef struct COMPATTRACK COMPATTRACK;
-typedef struct COMPATPOPUP {
+struct COMPATTRACK;
+
+struct COMPATPOPUP {
     COMPATTRACK *lptrack;
     HMENU hmenu;
     HWND hwnd;
     NATIVEARRAYOWNER<RECT, std::free> rgrc;
     int cItem, iSel, cx, cy;
-} COMPATPOPUP;
+};
 struct COMPATTRACK {
     HWND hwndOwner;
     HMENU hmenuRoot, hmenuBar;
@@ -390,10 +391,10 @@ static void PopupPaint(COMPATPOPUP *lppop) {
         hpen = win32::CreatePen(win32::PS_SOLID, 1, win32::GetSysColor(fDisabled ? win32::COLOR_GRAYTEXT : fSelected ? win32::COLOR_HIGHLIGHTTEXT : win32::COLOR_MENUTEXT));
         hpenOld = (HPEN)(win32::SelectObject(hdc, hpen));
         if (lp->rgitem[i].flags & win32::MF_CHECKED) {
-            win32::MoveToEx(hdc, rc.left + 5, y, NULL); win32::LineTo(hdc, rc.left + 8, y + 3); win32::LineTo(hdc, rc.left + 14, y - 4);
+            win32::MoveToEx(hdc, rc.left + 5, y, nullptr); win32::LineTo(hdc, rc.left + 8, y + 3); win32::LineTo(hdc, rc.left + 14, y - 4);
         }
         if (lp->rgitem[i].hsub) {
-            win32::MoveToEx(hdc, rc.right - 12, y - 4, NULL); win32::LineTo(hdc, rc.right - 8, y); win32::LineTo(hdc, rc.right - 12, y + 4);
+            win32::MoveToEx(hdc, rc.right - 12, y - 4, nullptr); win32::LineTo(hdc, rc.right - 8, y); win32::LineTo(hdc, rc.right - 12, y + 4);
         }
         win32::SelectObject(hdc, hpenOld); win32::DeleteObject(hpen);
         NATIVEOWNER<char, SDL_free> pszOwner(SDL_strdup(lp->rgitem[i].psz ? lp->rgitem[i].psz.get() : ""));
@@ -423,7 +424,7 @@ static void ClosePopups(COMPATTRACK *lpt, int cKeep) {
     while (lpt->cLevel > cKeep) {
         lp = &lpt->rgpopup[--lpt->cLevel];
         if (win32::IsWindow(lp->hwnd)) win32::DestroyWindow(lp->hwnd);
-        lp->rgrc.reset(); lp->hwnd = NULL;
+        lp->rgrc.reset(); lp->hwnd = nullptr;
         if (!(lpt->flags & win32::TPM_NONOTIFY) && win32::IsWindow(lpt->hwndOwner))
             win32::SendMessageA(lpt->hwndOwner, win32::WM_UNINITMENUPOPUP, (WPARAM)lp->hmenu, 0);
     }
@@ -451,7 +452,7 @@ static BOOL OpenPopup(COMPATTRACK *lpt, HMENU hmenu, int x, int y, int iParent) 
     lppop->lptrack = lpt; lppop->hmenu = lp; lppop->iSel = -1; lppop->cItem = lp->citem;
     lppop->rgrc.reset((RECT *)calloc((size_t)lp->citem, sizeof(RECT)));
     if (!lppop->rgrc) return 0;
-    hdc = win32::GetDC(NULL);
+    hdc = win32::GetDC(nullptr);
     if (!hdc) { lppop->rgrc.reset(); return 0; }
     hfont = win32::SelectObject(hdc, win32::GetStockObject(win32::DEFAULT_GUI_FONT));
     win32::GetTextMetricsA(hdc, &tm); cyRow = StarsMax(20, tm.tmHeight + 8);
@@ -463,7 +464,7 @@ static BOOL OpenPopup(COMPATTRACK *lpt, HMENU hmenu, int x, int y, int iParent) 
         dy = lp->rgitem[i].flags & win32::MF_SEPARATOR ? 8 : cyRow;
         win32::SetRect(&lppop->rgrc[i], 2, cy, 0, cy + dy); cy += dy;
     }
-    win32::SelectObject(hdc, hfont); win32::ReleaseDC(NULL, hdc);
+    win32::SelectObject(hdc, hfont); win32::ReleaseDC(nullptr, hdc);
     if (i != lp->citem) { lppop->rgrc.reset(); return 0; }
     cy += 2; lppop->cx = cx; lppop->cy = cy;
     for (i = 0; i < lp->citem; i++) lppop->rgrc[i].right = cx - 2;
@@ -486,12 +487,12 @@ static BOOL OpenPopup(COMPATTRACK *lpt, HMENU hmenu, int x, int y, int iParent) 
     wc.lpfnWndProc = PopupProc; wc.cbWndExtra = sizeof(LONG_PTR); wc.lpszClassName = "StarsCompatPopup";
     win32::RegisterClassA(&wc);
     lppop->hwnd = win32::CreateWindowExA(win32::WS_EX_TOPMOST | win32::WS_EX_NOACTIVATE, wc.lpszClassName, "", win32::WS_POPUP, x, y, cx, cy,
-                                  lpt->hwndOwner, NULL, NULL, lppop);
+                                  lpt->hwndOwner, nullptr, nullptr, lppop);
     if (!lppop->hwnd) { lppop->rgrc.reset(); return 0; }
     lpt->cLevel++;
     SDL_SetWindowFocusable(lppop->hwnd->lpWindow.get(), false);
     win32::ShowWindow(lppop->hwnd, win32::SW_SHOW);
-    win32::InvalidateRect(lppop->hwnd, NULL, 0); win32::UpdateWindow(lppop->hwnd);
+    win32::InvalidateRect(lppop->hwnd, nullptr, 0); win32::UpdateWindow(lppop->hwnd);
     return 1;
 }
 static BOOL FSelectable(HMENU lp, int i) {
@@ -505,7 +506,7 @@ static void SelectPopup(COMPATTRACK *lpt, int iLevel, int i, BOOL fMouse) {
     if (i == lppop->iSel) return;
     ClosePopups(lpt, iLevel + 1);
     lppop->iSel = i;
-    win32::InvalidateRect(lppop->hwnd, NULL, 0); win32::UpdateWindow(lppop->hwnd);
+    win32::InvalidateRect(lppop->hwnd, nullptr, 0); win32::UpdateWindow(lppop->hwnd);
     if (i >= 0 && !(lpt->flags & win32::TPM_NONOTIFY) && (lp = LpMenu(lppop->hmenu)) && i < lp->citem) {
         flags = lp->rgitem[i].flags | win32::MF_HILITE | (fMouse ? win32::MF_MOUSESELECT : 0);
         id = lp->rgitem[i].hsub ? (UINT)i : (UINT)lp->rgitem[i].id;
@@ -713,7 +714,7 @@ static BOOL TrackMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND 
         else {
             win32::SetCapture(hwnd);
             while (!track.fDone && win32::IsWindow(hwnd) && win32::IsMenu(track.hmenuRoot) && !track.fFailed && win32::GetCapture() == hwnd) {
-                result = win32::GetMessageA(&msg, NULL, 0, 0);
+                result = win32::GetMessageA(&msg, nullptr, 0, 0);
                 if (result <= 0) { if (result == 0) win32::PostQuitMessage((int)msg.wParam); track.fFailed = 1; break; }
                 if (!PopupInput(&track, &msg)) { win32::TranslateMessage(&msg); win32::DispatchMessageA(&msg); }
             }
@@ -731,7 +732,7 @@ static BOOL TrackMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND 
 }
 
 BOOL win32::TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND hwnd, const RECT *lprc) {
-    return TrackMenu(hmenu, flags, x, y, reserved, hwnd, lprc, NULL, -1, 0);
+    return TrackMenu(hmenu, flags, x, y, reserved, hwnd, lprc, nullptr, -1, 0);
 }
 BOOL FCompatMenuMessage(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     HWND lpwin = LpCompatWindow(hwnd);
@@ -781,7 +782,7 @@ BOOL FCompatMenuMessage(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         } else return 0;
     } else return 0;
     if (i >= 0 && FSelectable(lp, i)) {
-        if (fOpen) TrackMenu(lp->rgitem[i].hsub ? lp->rgitem[i].hsub : lp, 0, 0, 0, 0, hwnd, NULL, lp, i, msg != win32::WM_NCLBUTTONDOWN);
+        if (fOpen) TrackMenu(lp->rgitem[i].hsub ? lp->rgitem[i].hsub : lp, 0, 0, 0, 0, hwnd, nullptr, lp, i, msg != win32::WM_NCLBUTTONDOWN);
         else { lpwin->iMenuHot = i; lpwin->fMenuDirty = 1; FCompatPresent(hwnd); }
     } else if (i < 0 && !fOpen) { lpwin->iMenuHot = -1; lpwin->fMenuDirty = 1; FCompatPresent(hwnd); }
     return 1;
@@ -798,7 +799,7 @@ BOOL FCompatMenuFocus(HWND hwnd, BOOL fGain) {
             // Some SDL backends briefly focus/recreate the popup during rendering.
             // Menu windows do not become the application's logical active window.
             if (hwnd == hp) {
-                if (!fGain && !lpFocus) { lpt->fDone = 1; CompatFocusWindow(NULL); }
+                if (!fGain && !lpFocus) { lpt->fDone = 1; CompatFocusWindow(nullptr); }
                 return 1;
             }
             if (!fGain && hwnd == HwndCompatRoot(lpt->hwndOwner) && hp->lpWindow.get() == lpFocus) return 1;

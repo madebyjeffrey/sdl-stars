@@ -116,7 +116,7 @@ int16_t FGenerateTurn(APPSESSION &app) {
             CchSprintf(app.state.szWork, "%s.x%d", app.state.szBase, j + 1);
             app.state.idPlayer = j;
             if (FLoadLogFile(app, app.state.szWork) && !FRunLogFile(app)) {
-                AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsPlayerLogFileAppearsCorruptUnableLoad, NULL), win32::MB_ICONHAND);
+                AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsPlayerLogFileAppearsCorruptUnableLoad, nullptr), win32::MB_ICONHAND);
                 goto FreeStuffUp;
             }
             UpdateProgressGauge(app, static_cast<ProgressStep>(LMulDiv(60, i + 1, app.state.game.cPlayer) + 370));
@@ -283,7 +283,7 @@ int16_t FGenerateTurn(APPSESSION &app) {
         for (i = 0; i < app.state.game.cPlayer; i++) {
             for (j = 0; j < 10; j++) {
                 if (!app.state.rglpshdefSB[i][j].fFree) {
-                    app.state.rglpshdefSB[i][j].SetLVisible((int16_t)(100 - PctCloakFromHuldef(app, &app.state.rglpshdefSB[i][j].hul, i, NULL)));
+                    app.state.rglpshdefSB[i][j].SetLVisible((int16_t)(100 - PctCloakFromHuldef(app, &app.state.rglpshdefSB[i][j].hul, i, nullptr)));
                     app.state.rglpshdefSB[i][j].SetLVisible((uint32_t)(app.state.rglpshdefSB[i][j].lVisible() * app.state.rglpshdefSB[i][j].lVisible()));
                 }
             }
@@ -357,15 +357,15 @@ int16_t FGenerateTurn(APPSESSION &app) {
 FreeStuffUp:
     UpdateProgressGauge(app, static_cast<ProgressStep>(1000));
     HeapIO().pfnFree(app, app.state.vrgPlanResExtra, htMisc);
-    app.state.vrgPlanResExtra = NULL;
+    app.state.vrgPlanResExtra = nullptr;
     HeapIO().pfnFree(app, app.state.vrgwtPopScore, htMisc);
-    app.state.vrgwtPopScore = NULL;
+    app.state.vrgwtPopScore = nullptr;
     HeapIO().pfnFree(app, app.state.vrgiplrPopScore, htMisc);
-    app.state.vrgiplrPopScore = NULL;
+    app.state.vrgiplrPopScore = nullptr;
     HeapIO().pfnFree(app, app.state.lpcd, htMisc);
-    app.state.lpcd = NULL;
+    app.state.lpcd = nullptr;
     HeapIO().pfnFree(app, app.state.lpxf, htMisc);
-    app.state.lpxf = NULL;
+    app.state.lpxf = nullptr;
     app.state.gd.fGeneratingTurn = 0;
     app.state.gd.fRetryOpens = 0;
     app.state.idPlayer = iplrNone;
@@ -487,11 +487,11 @@ void VerifyTurns(APPSESSION &app) {
         }
     }
     HeapIO().pfnFree(app, app.state.vrgPlanResExtra, htMisc);
-    app.state.vrgPlanResExtra = NULL;
+    app.state.vrgPlanResExtra = nullptr;
     HeapIO().pfnFree(app, app.state.lpcd, htMisc);
-    app.state.lpcd = NULL;
+    app.state.lpcd = nullptr;
     HeapIO().pfnFree(app, app.state.lpxf, htMisc);
-    app.state.lpxf = NULL;
+    app.state.lpxf = nullptr;
     app.state.idPlayer = idCur;
     return;
 }
@@ -786,7 +786,7 @@ int16_t FRunCmdLine(APPSESSION &app) {
                     ich = CchSprintf(szTemp, "%d: ", i + 1);
                 }
                 if (!app.state.gd.fNoHostNames) {
-                    ich += CchSprintf(&szTemp[ich], "\"%s\" ", TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, NULL));
+                    ich += CchSprintf(&szTemp[ich], "\"%s\" ", TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, nullptr));
                 }
                 strcat(szTemp, TextIO().pfnCompressed(app, static_cast<StringId>(idsTurned + app.state.rgOut[i])));
                 if (app.state.rgplr[i].fHacker) {
@@ -1148,7 +1148,7 @@ void MoveThings(APPSESSION &app, int16_t fPostProd) {
                 }
                 if (lppl->iPlayer == iplrNone)
                     goto LFreeThePacket;
-                CalcPctSurvive(app, lppl, &pct, NULL);
+                CalcPctSurvive(app, lppl, &pct, nullptr);
                 dmgRaw = (int32_t)((double)pct * dmgRaw);
                 if (dmgRaw == 0 || RaceQueryIO().pfnStat(&app.state.rgplr[lppl->iPlayer], rsMajorAdv) == raMacintosh) {
                 LAllSafe:
@@ -1593,7 +1593,7 @@ void MoveFleets(APPSESSION &app) {
                             }
                             dActTravel = (int32_t)((double)d - 0.99999);
                             dMineTravel = dTravel < dActTravel ? LOWORD(dTravel) : LOWORD(dActTravel);
-                            if (lpord[1].iWarp < 11 && !FTravelThroughMineFields(app, lpfl, &dMineTravel, NULL)) {
+                            if (lpord[1].iWarp < 11 && !FTravelThroughMineFields(app, lpfl, &dMineTravel, nullptr)) {
                                 lpfl->SetDMoveLeft(0);
                                 if (lpfl->fDead)
                                     continue;
@@ -1603,7 +1603,7 @@ void MoveFleets(APPSESSION &app) {
                             } else if (!fRanOutOfFuel && GetFuelFree(app, lpfl) > 0) {
                                 lFuelGain = LCalcFuelGainFromRamScoops(app, lpfl, lpord[1].iWarp, dTravel < dActTravel ? dTravel : dActTravel);
                                 if (lFuelGain > 0) {
-                                    lFuelGainAct = ChgCargo(app, grobjFleet, lpfl->id, Fuel, lFuelGain, NULL);
+                                    lFuelGainAct = ChgCargo(app, grobjFleet, lpfl->id, Fuel, lFuelGain, nullptr);
                                     if (lFuelGain > 32500) {
                                         lFuelGain = 32500;
                                     }
@@ -1754,7 +1754,7 @@ int16_t FTravelThroughMineFields(APPSESSION &app, FLEET *lpfl, int16_t *pdTravel
     int32_t       dmgPerShip;
     uint16_t      ibit;
 
-    lpthSalvage = NULL;
+    lpthSalvage = nullptr;
     cshDead = 0;
     /* A detonation (lpthHit) passes no travel distance. The original read
        through the NULL near pointer anyway, from the start of its data
@@ -1942,7 +1942,7 @@ LHitSkip1:
                      lpthSalvage++) {
                 }
                 if (lpthSalvage == lpthMac) {
-                    lpthSalvage = NULL;
+                    lpthSalvage = nullptr;
                 }
                 DropSalvage(app, &lpthSalvage, lpfl->rgwtMin, flSrc.iplr(), &ptAct);
             }

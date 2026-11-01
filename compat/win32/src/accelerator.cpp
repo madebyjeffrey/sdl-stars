@@ -14,18 +14,18 @@ struct win32::HACCEL__ {
 static HACCEL haccels;
 static HACCEL LpAccel(HACCEL haccel) {
     HACCEL lp;
-    if (!SDL_IsMainThread()) return NULL;
+    if (!SDL_IsMainThread()) return nullptr;
     for (lp = haccels; lp; lp = lp->hnext)
-        if (lp == haccel) return lp->fAlive ? lp : NULL;
-    return NULL;
+        if (lp == haccel) return lp->fAlive ? lp : nullptr;
+    return nullptr;
 }
 HACCEL win32::CreateAcceleratorTableA(LPACCEL rgaccel, int c) {
     HACCEL lp;
-    if (!SDL_IsMainThread() || !rgaccel || c <= 0 || (size_t)c > SIZE_MAX / sizeof(ACCEL)) return NULL;
+    if (!SDL_IsMainThread() || !rgaccel || c <= 0 || (size_t)c > SIZE_MAX / sizeof(ACCEL)) return nullptr;
     lp = (HACCEL)(calloc(1, sizeof(*lp)));
-    if (!lp) return NULL;
+    if (!lp) return nullptr;
     lp->rg = (ACCEL *)(malloc((size_t)c * sizeof(ACCEL)));
-    if (!lp->rg) { free(lp); return NULL; }
+    if (!lp->rg) { free(lp); return nullptr; }
     memcpy(lp->rg, rgaccel, (size_t)c * sizeof(ACCEL));
     lp->c = c; lp->fAlive = 1; lp->hnext = haccels; haccels = lp;
     return lp;
@@ -44,7 +44,7 @@ BOOL win32::DestroyAcceleratorTable(HACCEL haccel) {
     HACCEL lp = LpAccel(haccel);
     if (!lp) return 0;
     if (lp->hrsrc) return 1; // Module-loaded tables live until module shutdown.
-    lp->fAlive = 0; free(lp->rg); lp->rg = NULL;
+    lp->fAlive = 0; free(lp->rg); lp->rg = nullptr;
     return 1;
 }
 HACCEL win32::LoadAcceleratorsA(HINSTANCE hInstance, LPCSTR pszName) {
@@ -55,14 +55,14 @@ HACCEL win32::LoadAcceleratorsA(HINSTANCE hInstance, LPCSTR pszName) {
     HACCEL lp;
     int i, c;
     WORD flags;
-    if (!rgb || cb == 0 || cb % 8 || cb / 8 > INT_MAX) return NULL;
+    if (!rgb || cb == 0 || cb % 8 || cb / 8 > INT_MAX) return nullptr;
     for (lp = haccels; lp; lp = lp->hnext) if (lp->hrsrc == hrsrc) return lp;
     c = (int)(cb / 8);
     rg = (ACCEL *)(calloc((size_t)c, sizeof(*rg)));
-    if (!rg) return NULL;
+    if (!rg) return nullptr;
     for (i = 0; i < c; i++) {
         flags = (WORD)(rgb[i * 8] | (rgb[i * 8 + 1] << 8));
-        if ((flags & ~0x9f) || ((flags & 0x80) != (i == c - 1 ? 0x80 : 0))) { free(rg); return NULL; }
+        if ((flags & ~0x9f) || ((flags & 0x80) != (i == c - 1 ? 0x80 : 0))) { free(rg); return nullptr; }
         rg[i].fVirt = (BYTE)(flags & ~0x80);
         rg[i].key = (WORD)(rgb[i * 8 + 2] | (rgb[i * 8 + 3] << 8));
         rg[i].cmd = (WORD)(rgb[i * 8 + 4] | (rgb[i * 8 + 5] << 8));
@@ -108,5 +108,5 @@ int win32::TranslateAcceleratorA(HWND hwnd, HACCEL haccel, LPMSG lpmsg) {
 void CompatShutdownAccelerators(void) {
     HACCEL lp, next;
     for (lp = haccels; lp; lp = next) { next = lp->hnext; free(lp->rg); free(lp); }
-    haccels = NULL;
+    haccels = nullptr;
 }

@@ -79,7 +79,7 @@ SHDEF *NthValidShdef(APPSESSION &app, int16_t n) {
             }
         }
     }
-    return NULL;
+    return nullptr;
 }
 
 SHDEF *NthValidEnemyShdef(APPSESSION &app, int16_t n) {
@@ -107,7 +107,7 @@ SHDEF *NthValidEnemyShdef(APPSESSION &app, int16_t n) {
             }
         }
     }
-    return NULL;
+    return nullptr;
 }
 
 void KillQueuedMassPackets(APPSESSION &app, PLANET *lppl) {
@@ -131,7 +131,7 @@ void KillQueuedMassPackets(APPSESSION &app, PLANET *lppl) {
         }
         if (iDst == 0) {
             FreePl(app, lppl->lpplprod);
-            lppl->lpplprod = NULL;
+            lppl->lpplprod = nullptr;
         } else if (iDst != iprod) {
             lppl->lpplprod->iprodMac = iDst;
         }
@@ -167,7 +167,7 @@ void KillQueuedShips(APPSESSION &app, PLANET *lppl) {
         }
         if (iDst == 0) {
             FreePl(app, lppl->lpplprod);
-            lppl->lpplprod = NULL;
+            lppl->lpplprod = nullptr;
         } else if (iDst != iprod) {
             lppl->lpplprod->iprodMac = iDst;
         }

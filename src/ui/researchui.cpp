@@ -54,7 +54,7 @@ INT_PTR  ResearchDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         y = app.state.dyArial8 * 4 - (app.state.dyArial8 >> 1) + 1;
         for (i = 1073; i <= 1078; i++) {
             hwndRad = ControlIO().pfnGetDlgItem(hwnd, i);
-            ControlIO().pfnSetWindowPos(hwndRad, NULL, 16, y, app.lpui->dxResRadio, (int16_t)(3 * app.state.dyArial8) / 2, win32::SWP_NOZORDER | win32::SWP_SHOWWINDOW);
+            ControlIO().pfnSetWindowPos(hwndRad, nullptr, 16, y, app.lpui->dxResRadio, (int16_t)(3 * app.state.dyArial8) / 2, win32::SWP_NOZORDER | win32::SWP_SHOWWINDOW);
             y += (int16_t)(3 * app.state.dyArial8) / 2;
         }
         hwndRad = ControlIO().pfnGetDlgItem(hwnd, IDC_RESEARCH_NEXT_FIELD);
@@ -82,13 +82,13 @@ INT_PTR  ResearchDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         dx = LOWORD(GetTextExtent(hdc, TextIO().pfnCompressed(app, idsN9999992), 7));
         app.lpui->dxResRight += dx + 48;
         y += 10 * app.state.dyArial8;
-        ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDCANCEL), NULL, app.lpui->dxResLeft + app.lpui->dxResRight - 152, y - (int16_t)(3 * app.state.dyArial8) / 2 - 8, 70, (int16_t)(3 * app.state.dyArial8) / 2,
+        ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDCANCEL), nullptr, app.lpui->dxResLeft + app.lpui->dxResRight - 152, y - (int16_t)(3 * app.state.dyArial8) / 2 - 8, 70, (int16_t)(3 * app.state.dyArial8) / 2,
                      win32::SWP_NOZORDER | win32::SWP_SHOWWINDOW);
-        ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_HELP), NULL, app.lpui->dxResLeft + app.lpui->dxResRight - 76, y - (int16_t)(3 * app.state.dyArial8) / 2 - 8, 70, (int16_t)(3 * app.state.dyArial8) / 2,
+        ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_HELP), nullptr, app.lpui->dxResLeft + app.lpui->dxResRight - 76, y - (int16_t)(3 * app.state.dyArial8) / 2 - 8, 70, (int16_t)(3 * app.state.dyArial8) / 2,
                      win32::SWP_NOZORDER | win32::SWP_SHOWWINDOW);
         win32::GetWindowRect(hwnd, &rcWindow);
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        ControlIO().pfnSetWindowPos(hwnd, NULL, 0, 0, app.lpui->dxResLeft + app.lpui->dxResRight + rcWindow.right - rcWindow.left - rc.right, y + rcWindow.bottom - rcWindow.top - rc.bottom,
+        ControlIO().pfnSetWindowPos(hwnd, nullptr, 0, 0, app.lpui->dxResLeft + app.lpui->dxResRight + rcWindow.right - rcWindow.left - rc.right, y + rcWindow.bottom - rcWindow.top - rc.bottom,
                      win32::SWP_NOMOVE | win32::SWP_NOZORDER);
         ControlIO().pfnStickyDlgPos(hwnd, &app.lpui->ptStickyResDlg, 1);
         win32::SelectObject(hdc, hfontSav);
@@ -150,7 +150,7 @@ INT_PTR  ResearchDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             if (win32::IsDlgButtonChecked(hwnd, LOWORD(wParam)) != 0) {
                 app.lpui->iResTechNow = static_cast<TechFieldType>(LOWORD(wParam) - 1073);
                 ControlIO().pfnGetClientRect(hwnd, &rc);
-                DrawResearchDlg(app, hwnd, NULL, &rc, 4);
+                DrawResearchDlg(app, hwnd, nullptr, &rc, 4);
             }
         } else {
             if (LOWORD(wParam) == IDCANCEL) {
@@ -390,7 +390,7 @@ DrawYearComplete:
     ControlIO().pfnGetClientRect(ControlIO().pfnGetDlgItem(hwnd, IDC_RESEARCH_NEXT_FIELD), &rcT);
     win32::MapWindowPoints(ControlIO().pfnGetDlgItem(hwnd, IDC_RESEARCH_NEXT_FIELD), hwnd, (POINT *)&rcT, 2);
     if (rcT.top != rc.top + app.state.dyArial8 + 2) {
-        ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_RESEARCH_NEXT_FIELD), NULL, xCtr - 60, rc.top + app.state.dyArial8 + 2, rc.right - xCtr + 50, 9 * app.state.dyArial8,
+        ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_RESEARCH_NEXT_FIELD), nullptr, xCtr - 60, rc.top + app.state.dyArial8 + 2, rc.right - xCtr + 50, 9 * app.state.dyArial8,
                      win32::SWP_NOZORDER | win32::SWP_NOREDRAW);
     }
 
@@ -445,8 +445,8 @@ DrawResPct:
     app.lpui->rcSpinTop.bottom = (app.state.dyArial8 >> 1) + rc.top + 1;
     app.lpui->rcSpinBot = app.lpui->rcSpinTop;
     win32::OffsetRect(&app.lpui->rcSpinBot, 0, app.lpui->rcSpinTop.bottom - app.lpui->rcSpinTop.top - 1);
-    DrawBtn(app, hdc, &app.lpui->rcSpinTop, 160, 0, NULL);
-    DrawBtn(app, hdc, &app.lpui->rcSpinBot, 161, 0, NULL);
+    DrawBtn(app, hdc, &app.lpui->rcSpinTop, 160, 0, nullptr);
+    DrawBtn(app, hdc, &app.lpui->rcSpinBot, 161, 0, nullptr);
 
 DrawProjBudg:
     rc.top += (int16_t)(3 * app.state.dyArial8) / 2;
@@ -537,7 +537,7 @@ int16_t FTrackResearchDlg(APPSESSION &app, HWND hwnd, int16_t x, int16_t y, int1
         return 0;
     }
     ControlIO().pfnGetClientRect(hwnd, &rc);
-    InitBtnTrack(&btnt, hwnd, NULL, prc, bt, 80, 0, 0, NULL);
+    InitBtnTrack(&btnt, hwnd, nullptr, prc, bt, 80, 0, 0, nullptr);
     if (fkb & 4) {
         dChg = 10;
     } else {
@@ -583,7 +583,7 @@ INT_PTR  BrowserDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message) {
     case win32::WM_INITDIALOG:
         app.lpui->hwndBrowser = hwnd;
-        ControlIO().pfnSetWindowPos(hwnd, NULL, 0, 0, (app.state.dyArial8 <= 14 ? 0 : 40) + 358 + win32::GetSystemMetrics(win32::SM_CXDLGFRAME) * 2,
+        ControlIO().pfnSetWindowPos(hwnd, nullptr, 0, 0, (app.state.dyArial8 <= 14 ? 0 : 40) + 358 + win32::GetSystemMetrics(win32::SM_CXDLGFRAME) * 2,
                      app.lpui->dyArial10 + 72 + 12 * app.state.dyArial8 + 6 + 3 * app.state.dyArial8 + 25 + win32::GetSystemMetrics(win32::SM_CYDLGFRAME) * 2 + win32::GetSystemMetrics(win32::SM_CYCAPTION),
                      win32::SWP_NOMOVE | win32::SWP_NOZORDER);
         ControlIO().pfnStickyDlgPos(hwnd, &app.lpui->ptStickyBrowserDlg, 1);
@@ -592,12 +592,12 @@ INT_PTR  BrowserDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         hwndDD = ControlIO().pfnGetDlgItem(hwnd, IDC_BROWSER_COMPONENT_CATEGORY);
         c = win32::GetDlgItemTextA(hwnd, IDC_BACK, app.state.szWork, 80);
         dx = LOWORD(GetTextExtent(hdc, app.state.szWork, c)) + 14;
-        ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_BACK), NULL, 6, 6, dx, (int16_t)(3 * app.state.dyArial8) / 2, win32::SWP_NOZORDER);
-        ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_NEXT), NULL, (app.state.dyArial8 <= 14 ? 0 : 40) + 350 - dx, 6, dx, (int16_t)(3 * app.state.dyArial8) / 2, win32::SWP_NOZORDER);
-        ControlIO().pfnSetWindowPos(hwndDD, NULL, dx + 12, 6, (app.state.dyArial8 <= 14 ? 0 : 40) + 344 - dx * 2 - 12, 18 * app.state.dyArial8, win32::SWP_NOZORDER);
-        ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDCANCEL), NULL, (app.state.dyArial8 <= 14 ? 0 : 40) + 350 - dx,
+        ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_BACK), nullptr, 6, 6, dx, (int16_t)(3 * app.state.dyArial8) / 2, win32::SWP_NOZORDER);
+        ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_NEXT), nullptr, (app.state.dyArial8 <= 14 ? 0 : 40) + 350 - dx, 6, dx, (int16_t)(3 * app.state.dyArial8) / 2, win32::SWP_NOZORDER);
+        ControlIO().pfnSetWindowPos(hwndDD, nullptr, dx + 12, 6, (app.state.dyArial8 <= 14 ? 0 : 40) + 344 - dx * 2 - 12, 18 * app.state.dyArial8, win32::SWP_NOZORDER);
+        ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDCANCEL), nullptr, (app.state.dyArial8 <= 14 ? 0 : 40) + 350 - dx,
                      app.lpui->dyArial10 + 72 + 12 * app.state.dyArial8 + 6 + (int16_t)(3 * app.state.dyArial8) / 2 + 18, dx, (int16_t)(3 * app.state.dyArial8) / 2, win32::SWP_NOZORDER);
-        ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_BROWSER_AVAILABLE_ONLY), NULL, 6, app.lpui->dyArial10 + 72 + 12 * app.state.dyArial8 + 6 + (int16_t)(3 * app.state.dyArial8) / 2 + 18,
+        ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_BROWSER_AVAILABLE_ONLY), nullptr, 6, app.lpui->dyArial10 + 72 + 12 * app.state.dyArial8 + 6 + (int16_t)(3 * app.state.dyArial8) / 2 + 18,
                      (app.state.dyArial8 <= 14 ? 0 : 40) + 344 - dx, (int16_t)(3 * app.state.dyArial8) / 2, win32::SWP_NOZORDER);
         win32::SelectObject(hdc, hfontSav);
         win32::ReleaseDC(hwnd, hdc);
@@ -606,8 +606,8 @@ INT_PTR  BrowserDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             app.lpui->vpartBrowser.hs.iItem = 0;
         }
         PartQueryIO().pfnLookup(app, &app.lpui->vpartBrowser);
-        app.lpui->hwndBrowserChild = ui::CreateWindowEx(0, app.lpui->szBrowser, NULL, win32::WS_CHILD | win32::WS_VISIBLE, 6, (int16_t)(3 * app.state.dyArial8) / 2 + 12, (app.state.dyArial8 <= 14 ? 0 : 40) + 344,
-                                        app.lpui->dyArial10 + 72 + 12 * app.state.dyArial8 + 6, hwnd, NULL, app.lpui->hInst, NULL);
+        app.lpui->hwndBrowserChild = ui::CreateWindowEx(0, app.lpui->szBrowser, nullptr, win32::WS_CHILD | win32::WS_VISIBLE, 6, (int16_t)(3 * app.state.dyArial8) / 2 + 12, (app.state.dyArial8 <= 14 ? 0 : 40) + 344,
+                                        app.lpui->dyArial10 + 72 + 12 * app.state.dyArial8 + 6, hwnd, nullptr, app.lpui->hInst, nullptr);
         for (i = idsAll; i <= idsTorpedoes; i++) {
             ControlIO().pfnSendMessage(hwndDD, win32::CB_ADDSTRING, 0, (LPARAM)TextIO().pfnCompressed(app, static_cast<StringId>(i)));
         }
@@ -676,14 +676,14 @@ INT_PTR  BrowserDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             while (1) {
                 md = static_cast<mdPartAvail>(PartQueryIO().pfnLookup(app, &app.lpui->vpartBrowser));
                 if (md == mdPartAvailInvalid) {
-                    app.lpui->vpartBrowser.SetPcom(NULL);
+                    app.lpui->vpartBrowser.SetPcom(nullptr);
                     break;
                 }
                 if (md == mdPartAvailAvailable || fShowAll)
                     break;
                 app.lpui->vpartBrowser.hs.iItem++;
             }
-            ControlIO().pfnInvalidateRect(app.lpui->hwndBrowserChild, NULL, 1);
+            ControlIO().pfnInvalidateRect(app.lpui->hwndBrowserChild, nullptr, 1);
             break;
         case IDC_NEXT:
         case IDC_BACK:
@@ -714,7 +714,7 @@ INT_PTR  BrowserDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                         goto Top;
                     }
                     if (app.lpui->vpartBrowser.hs.iItem == 0 && !fAllHsts) {
-                        app.lpui->vpartBrowser.SetPcom(NULL);
+                        app.lpui->vpartBrowser.SetPcom(nullptr);
                         break;
                     }
                     if (LOWORD(wParam) == IDC_BACK && fAllHsts) {
@@ -740,9 +740,9 @@ INT_PTR  BrowserDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 if (PartQueryIO().pfnLookup(app, &app.lpui->vpartBrowser) == mdPartAvailAvailable)
                     break;
             NullItem:
-                app.lpui->vpartBrowser.SetPcom(NULL);
+                app.lpui->vpartBrowser.SetPcom(nullptr);
             }
-            ControlIO().pfnInvalidateRect(app.lpui->hwndBrowserChild, NULL, 1);
+            ControlIO().pfnInvalidateRect(app.lpui->hwndBrowserChild, nullptr, 1);
         }
     }
     return 0;
@@ -871,7 +871,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, int16_t dx, int16_t dy, PART
         strcpy(app.state.szWork, ppart->pcom().szName());
         CtrTextOut(hdc, dx >> 1, 3, app.state.szWork, 0);
         if (ppart->hs.grhst == hstHull || ppart->hs.grhst == hstSBHull) {
-            DrawFleetBitmap(app, NULL, hdc, 5, app.lpui->dyArial10 + 5, 0, ppart->pcom().ibmp(), 0, 0, -1, 0);
+            DrawFleetBitmap(app, nullptr, hdc, 5, app.lpui->dyArial10 + 5, 0, ppart->pcom().ibmp(), 0, 0, -1, 0);
         } else {
             win32::SelectPalette(hdc, app.lpui->vhpal, 0);
             win32::RealizePalette(hdc);
@@ -1084,7 +1084,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, int16_t dx, int16_t dy, PART
                     y -= (((1) > ((int16_t)(iEff * 4 * dyPct) / 100)) ? (1) : ((int16_t)(iEff * 4 * dyPct) / 100));
                 }
                 if (i == 0) {
-                    win32::MoveToEx(hdc, x, y, NULL);
+                    win32::MoveToEx(hdc, x, y, nullptr);
                 } else {
                     win32::LineTo(hdc, x, y);
                 }
@@ -1227,7 +1227,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, int16_t dx, int16_t dy, PART
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
                 xText = rcData.left;
                 yText = rcData.top;
-                WrapTextOut(app, hdc, &xText, &yText, app.state.szWork, c, xText, rcData.right - rcData.left, NULL, 0, 1);
+                WrapTextOut(app, hdc, &xText, &yText, app.state.szWork, c, xText, rcData.right - rcData.left, nullptr, 0, 1);
                 break;
             case ihuldefMiniMineLayer:
             case ihuldefSuperMineLayer:
@@ -1235,7 +1235,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, int16_t dx, int16_t dy, PART
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
                 xText = rcData.left;
                 yText = rcData.top;
-                WrapTextOut(app, hdc, &xText, &yText, app.state.szWork, c, xText, rcData.right - rcData.left, NULL, 0, 1);
+                WrapTextOut(app, hdc, &xText, &yText, app.state.szWork, c, xText, rcData.right - rcData.left, nullptr, 0, 1);
             }
             break;
         case hstSBHull:
@@ -1254,7 +1254,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, int16_t dx, int16_t dy, PART
             win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
             if (ppart->phul()->wtCargoMax != 0) {
                 c = TextIO().pfnCchGetString(app, idsStarbaseHullHasSpaceDockCanBuild, app.state.szWork);
-                WrapTextOut(app, hdc, &xText, &yText, app.state.szWork, c, rcData.left, rcData.right - rcData.left, NULL, 0, 1);
+                WrapTextOut(app, hdc, &xText, &yText, app.state.szWork, c, rcData.left, rcData.right - rcData.left, nullptr, 0, 1);
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
                 yText = 3 * app.state.dyArial8 + rcData.top;
                 xText = (int16_t)(rcData.right - rcData.left) / 2 + rcData.left;
@@ -1269,7 +1269,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, int16_t dx, int16_t dy, PART
                 win32::TextOutA(hdc, xText, yText, app.state.szWork, c);
             } else {
                 c = TextIO().pfnCchGetString(app, idsStarbaseHullDoesHaveSpaceDockCan, app.state.szWork);
-                WrapTextOut(app, hdc, &xText, &yText, app.state.szWork, c, rcData.left, rcData.right - rcData.left, NULL, 0, 1);
+                WrapTextOut(app, hdc, &xText, &yText, app.state.szWork, c, rcData.left, rcData.right - rcData.left, nullptr, 0, 1);
                 yText = 3 * app.state.dyArial8 + rcData.top;
             }
             yText += (int16_t)(3 * app.state.dyArial8) / 2;
@@ -1469,7 +1469,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, int16_t dx, int16_t dy, PART
                 }
                 strcpy(app.state.szWork, szT);
             }
-            WrapTextOut(app, hdc, &xText, &yText, app.state.szWork, c, rcData.left, rcData.right - rcData.left, NULL, 0, 1);
+            WrapTextOut(app, hdc, &xText, &yText, app.state.szWork, c, rcData.left, rcData.right - rcData.left, nullptr, 0, 1);
             xText = rcData.left;
             yText += app.state.dyArial8 >> 1;
             if (ppart->hs.iItem == ibombRetroBomb) {
@@ -1482,7 +1482,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, int16_t dx, int16_t dy, PART
                 TextIO().pfnCchGetString(app, idsBombWillDestroyApproximatelyDPlanetsMines, szT);
                 c = win32::wsprintfA(app.state.szWork, szT, ppart->pbomb()->dDmgBldg);
             }
-            WrapTextOut(app, hdc, &xText, &yText, app.state.szWork, c, rcData.left, rcData.right - rcData.left, NULL, 1, 1);
+            WrapTextOut(app, hdc, &xText, &yText, app.state.szWork, c, rcData.left, rcData.right - rcData.left, nullptr, 1, 1);
             if (ppart->hs.iItem >= ibombSmartBomb && ppart->hs.iItem <= ibombAnnihilatorBomb) {
                 ids = idsBombWillAvailableIfPrimaryRaceTrait;
                 break;
@@ -1559,7 +1559,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, int16_t dx, int16_t dy, PART
                 break;
             c = TextIO().pfnCchGetString(app, idsT, app.state.szWork);
         PrintSpecial:
-            WrapTextOut(app, hdc, &xText, &yText, app.state.szWork, c, rcData.left, rcData.right - rcData.left, NULL, 0, 1);
+            WrapTextOut(app, hdc, &xText, &yText, app.state.szWork, c, rcData.left, rcData.right - rcData.left, nullptr, 0, 1);
             xText = rcData.left;
             yText += app.state.dyArial8 * 2;
             break;
@@ -1647,7 +1647,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, int16_t dx, int16_t dy, PART
                 idsT = static_cast<StringId>(idsNoString);
             }
             c = TextIO().pfnCchGetString(app, idsT, app.state.szWork);
-            WrapTextOut(app, hdc, &xText, &yText, app.state.szWork, c, rcData.left, rcData.right - rcData.left, NULL, 0, 1);
+            WrapTextOut(app, hdc, &xText, &yText, app.state.szWork, c, rcData.left, rcData.right - rcData.left, nullptr, 0, 1);
             xText = rcData.left;
             yText += (int16_t)(3 * app.state.dyArial8) / 2;
             if (idsT != idsAllowsFleetsWithoutCargoJumpAnyOther) {
@@ -1705,7 +1705,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, int16_t dx, int16_t dy, PART
             yText += (app.state.dyArial8 > 14 ? 0 : 4) + app.state.dyArial8;
             win32::SelectObject(hdc, app.lpui->rghfontArial7[0]);
             win32::SetTextColor(hdc, 127);
-            WrapTextOut(app, hdc, &xText, &yText, app.state.szWork, c, rcData.left, rcData.right - rcData.left, NULL, 0, 1);
+            WrapTextOut(app, hdc, &xText, &yText, app.state.szWork, c, rcData.left, rcData.right - rcData.left, nullptr, 0, 1);
             win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
             win32::SetTextColor(hdc, 0);
             break;
@@ -1841,7 +1841,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, int16_t dx, int16_t dy, PART
             }
             if (c <= 0)
                 break;
-            WrapTextOut(app, hdc, &xText, &yText, app.state.szWork, c, rcData.left, rcData.right - rcData.left, NULL, 0, 1);
+            WrapTextOut(app, hdc, &xText, &yText, app.state.szWork, c, rcData.left, rcData.right - rcData.left, nullptr, 0, 1);
             break;
         case hstPlanetary:
             ExpandRc(&rcData, -4, -4);
@@ -1905,7 +1905,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, int16_t dx, int16_t dy, PART
                         y -= LOWORD((int32_t)((1000000 - lpct) * dyPct) / 0x30d40);
                         lpct = (int32_t)(lpct * ldelta) / 1000;
                         if (i == 0) {
-                            win32::MoveToEx(hdc, x, y, NULL);
+                            win32::MoveToEx(hdc, x, y, nullptr);
                         } else {
                             win32::LineTo(hdc, x, y);
                         }
@@ -1925,7 +1925,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, int16_t dx, int16_t dy, PART
                 c = TextIO().pfnCchGetString(app, idsEnemyFleetsOrbitingPlanetCanDetectedD, szT);
                 c = win32::wsprintfA(app.state.szWork, szT, abs(i));
                 if (i < 0) {
-                    WrapTextOut(app, hdc, &xText, &yText, app.state.szWork, c, rcData.left, rcData.right - rcData.left, NULL, 0, 1);
+                    WrapTextOut(app, hdc, &xText, &yText, app.state.szWork, c, rcData.left, rcData.right - rcData.left, nullptr, 0, 1);
                     xText = rcData.left;
                     yText += (int16_t)(3 * app.state.dyArial8) / 2;
                     c = TextIO().pfnCchGetString(app, idsScannerCanDeterminePlanetsBasicStatsDistance, szT);
@@ -1939,7 +1939,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, int16_t dx, int16_t dy, PART
                 c = TextIO().pfnCchGetString(app, idsProcessGivesPlanetNewBirthTracesCivilization, app.state.szWork);
             }
             if (c > 0) {
-                WrapTextOut(app, hdc, &xText, &yText, app.state.szWork, c, rcData.left, rcData.right - rcData.left, NULL, 0, 1);
+                WrapTextOut(app, hdc, &xText, &yText, app.state.szWork, c, rcData.left, rcData.right - rcData.left, nullptr, 0, 1);
             }
         }
         if (ids != static_cast<StringId>(idsNoString)) {

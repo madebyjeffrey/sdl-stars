@@ -79,11 +79,13 @@ inline constexpr auto TBDDRET_TREATPRESSED = 2;
 namespace win32 {
 struct tagNMHDR { HWND hwndFrom; UINT_PTR idFrom; UINT code; };
 } // namespace win32
-typedef win32::tagNMHDR NMHDR, *LPNMHDR;
+using NMHDR = win32::tagNMHDR;
+using LPNMHDR = win32::tagNMHDR*;
 namespace win32 {
 struct tagINITCOMMONCONTROLSEX { DWORD dwSize, dwICC; };
 } // namespace win32
-typedef win32::tagINITCOMMONCONTROLSEX INITCOMMONCONTROLSEX, *LPINITCOMMONCONTROLSEX;
+using INITCOMMONCONTROLSEX = win32::tagINITCOMMONCONTROLSEX;
+using LPINITCOMMONCONTROLSEX = win32::tagINITCOMMONCONTROLSEX*;
 namespace win32 {
 struct _TBBUTTON {
     int iBitmap, idCommand;
@@ -97,12 +99,14 @@ struct _TBBUTTON {
     INT_PTR iString;
 };
 } // namespace win32
-typedef win32::_TBBUTTON TBBUTTON, *LPTBBUTTON;
-typedef const TBBUTTON *LPCTBBUTTON;
+using TBBUTTON = win32::_TBBUTTON;
+using LPTBBUTTON = win32::_TBBUTTON*;
+using LPCTBBUTTON = const TBBUTTON*;
 namespace win32 {
 struct tagTBADDBITMAP { HINSTANCE hInst; UINT_PTR nID; };
 } // namespace win32
-typedef win32::tagTBADDBITMAP TBADDBITMAP, *LPTBADDBITMAP;
+using TBADDBITMAP = win32::tagTBADDBITMAP;
+using LPTBADDBITMAP = win32::tagTBADDBITMAP*;
 namespace win32 {
 struct tagNMTOOLBARA {
     NMHDR hdr;
@@ -113,8 +117,9 @@ struct tagNMTOOLBARA {
     RECT rcButton;
 };
 } // namespace win32
-typedef win32::tagNMTOOLBARA NMTOOLBARA, *LPNMTOOLBARA;
-typedef NMTOOLBARA NMTOOLBAR;
+using NMTOOLBARA = win32::tagNMTOOLBARA;
+using LPNMTOOLBARA = win32::tagNMTOOLBARA*;
+using NMTOOLBAR = NMTOOLBARA;
 namespace win32 {
 BOOL InitCommonControlsEx(const INITCOMMONCONTROLSEX *lpInit);
 }

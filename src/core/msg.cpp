@@ -353,7 +353,7 @@ char *PszFormatString(APPSESSION &app, const char *pszFormat, int16_t *pParamsRe
                 break;
             case 'L':
             case 'l':
-                pchT = TextIO().pfnPlayerName(app, *pParams & 0xf, *pszFormat == 'L', (*pParams & 0x10) != 0, (*pParams & 0x20) != 0, (*pParams & 0xc0) >> 6, NULL);
+                pchT = TextIO().pfnPlayerName(app, *pParams & 0xf, *pszFormat == 'L', (*pParams & 0x10) != 0, (*pParams & 0x20) != 0, (*pParams & 0xc0) >> 6, nullptr);
                 goto FinishString;
             case 'Z':
                 w = *pParams;
@@ -364,7 +364,7 @@ char *PszFormatString(APPSESSION &app, const char *pszFormat, int16_t *pParamsRe
                     for (; (w & 1) == 0; w >>= 1) {
                         c++;
                     }
-                    pchT = TextIO().pfnPlayerName(app, c, 0, 1, 1, 0, NULL);
+                    pchT = TextIO().pfnPlayerName(app, c, 0, 1, 1, 0, nullptr);
                     goto FinishString;
                 }
                 cOut = 0;
@@ -378,7 +378,7 @@ char *PszFormatString(APPSESSION &app, const char *pszFormat, int16_t *pParamsRe
                                 pch = PchAppendMessageText(app, pch, TextIO().pfnCompressed(app, idsAnd));
                             }
                         }
-                        pchT = TextIO().pfnPlayerName(app, i, 0, 1, 1, 0, NULL);
+                        pchT = TextIO().pfnPlayerName(app, i, 0, 1, 1, 0, nullptr);
                         pch = PchAppendMessageText(app, pch, pchT);
                         cOut++;
                     }
@@ -390,7 +390,7 @@ char *PszFormatString(APPSESSION &app, const char *pszFormat, int16_t *pParamsRe
                 if (*pParams == app.state.idPlayer)
                     goto DoNothing;
                 TextIO().pfnCchGetString(app, idsOf2, szBuf);
-                pchT = TextIO().pfnPlayerName(app, *pParams, 0, 0, 0, 0, NULL);
+                pchT = TextIO().pfnPlayerName(app, *pParams, 0, 0, 0, 0, nullptr);
                 strcat(szBuf, pchT);
                 strcat(szBuf, TextIO().pfnCompressed(app, idsOrigin));
                 pchT = szBuf;
@@ -469,7 +469,7 @@ char *PszFormatString(APPSESSION &app, const char *pszFormat, int16_t *pParamsRe
                 goto DoPlanet;
             case 'O':
                 w = (uint16_t)*pParams >> 9 & 0xf;
-                pchT = TextIO().pfnPlayerName(app, w, 0, 0, 0, 0, NULL);
+                pchT = TextIO().pfnPlayerName(app, w, 0, 0, 0, 0, nullptr);
                 goto FinishString;
             case 'u':
                 c = CchSprintf(szBuf, "%u", *pParams);
@@ -503,7 +503,7 @@ char *PszFormatString(APPSESSION &app, const char *pszFormat, int16_t *pParamsRe
                     lpshdef = app.state.rglpshdef[c] + w;
                 }
                 if (c != app.state.idPlayer) {
-                    pchT = TextIO().pfnPlayerName(app, c, 0, 0, 1, 0, NULL);
+                    pchT = TextIO().pfnPlayerName(app, c, 0, 0, 1, 0, nullptr);
                     CchSprintf(szBuf, "%s %s", pchT, lpshdef->hul.szClass);
                 } else {
                     strcpy(szBuf, lpshdef->hul.szClass);
@@ -674,8 +674,8 @@ void ResetMessages(APPSESSION &app) {
     app.state.iMsgSendCur = 0;
     memset(app.state.bitfMsgSent, 0, 49);
     memset(app.state.bitfMsgFiltered, 0, 49);
-    app.state.vlpmsgplrIn = NULL;
-    app.state.vlpmsgplrOut = NULL;
+    app.state.vlpmsgplrIn = nullptr;
+    app.state.vlpmsgplrOut = nullptr;
     app.state.vcmsgplrIn = 0;
     app.state.vcmsgplrOut = 0;
     return;
@@ -711,18 +711,18 @@ MSGPLR *LpmsgplrFromRt(APPSESSION &app) {
 
     /* NATIVE: skip records too short for their header or text; see WIN16-PARITY.md. */
     if (app.state.hdrCur.cb < cbWirePlrMsg || abs(PmvCur(app).cLen()) + cbWirePlrMsg > app.state.hdrCur.cb)
-        return NULL;
+        return nullptr;
     cLen = PmvCur(app).cLen();
     if (cLen >= 0) {
         cOut = sizeof(szText) - 1;
-        if (!FDecompressUserString(app, (char *)PmvCur(app).RgbMsg(), cLen, szText, &cOut)) return NULL;
+        if (!FDecompressUserString(app, (char *)PmvCur(app).RgbMsg(), cLen, szText, &cOut)) return nullptr;
     } else {
         pszEnd = (const char *)memchr(PmvCur(app).RgbMsg(), 0, -cLen);
         if (!pszEnd || pszEnd - (char *)PmvCur(app).RgbMsg() >= (int)sizeof(szText) ||
-            !FUtf8Valid((char *)PmvCur(app).RgbMsg(), (size_t)(pszEnd - (char *)PmvCur(app).RgbMsg()))) return NULL;
+            !FUtf8Valid((char *)PmvCur(app).RgbMsg(), (size_t)(pszEnd - (char *)PmvCur(app).RgbMsg()))) return nullptr;
     }
     lpmp = LpmsgplrAlloc(app, sizeof(MSGPLR) + app.state.hdrCur.cb - cbWirePlrMsg);
-    lpmp->lpmsgplrNext = NULL;
+    lpmp->lpmsgplrNext = nullptr;
     lpmp->iPlrFrom = PmvCur(app).iPlrFrom();
     lpmp->iPlrTo = PmvCur(app).iPlrTo();
     lpmp->iInRe = PmvCur(app).iInRe();

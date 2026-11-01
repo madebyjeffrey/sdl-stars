@@ -22,7 +22,7 @@ INT_PTR  RelationsDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         win32::CheckRadioButton(hwnd, IDC_RELATIONS_NEUTRAL, IDC_RELATIONS_ENEMY, app.state.rgplr[app.state.idPlayer].rgmdRelation[app.state.idPlayer == 0] + 2004);
         for (i = 0; i < app.state.game.cPlayer; i++) {
             if (i != app.state.idPlayer) {
-                ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_RELATIONS_PLAYER_LIST), win32::LB_ADDSTRING, 0, (LPARAM)TextIO().pfnPlayerName(app, i, 0, 0, 0, 0, NULL));
+                ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_RELATIONS_PLAYER_LIST), win32::LB_ADDSTRING, 0, (LPARAM)TextIO().pfnPlayerName(app, i, 0, 0, 0, 0, nullptr));
             }
         }
         ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_RELATIONS_PLAYER_LIST), win32::LB_SETCURSEL, 0, 0);
@@ -94,7 +94,7 @@ INT_PTR  RelationsDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             break;
         mdSBase = static_cast<ScanView>(app.lpui->grbitScan & grbitScanViewMask);
         LogChangeRelations(app);
-        ControlIO().pfnInvalidateRect(app.lpui->hwndScanner, NULL, 1);
+        ControlIO().pfnInvalidateRect(app.lpui->hwndScanner, nullptr, 1);
         break;
     }
     return 0;
@@ -107,7 +107,7 @@ INT_PTR  NewPlanNameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
 
     switch (message) {
     case win32::WM_INITDIALOG:
-        ControlIO().pfnSetWindowPos(hwnd, NULL, app.lpui->ptStickyBattlePlansDlg.x + 70, app.lpui->ptStickyBattlePlansDlg.y + 70, 0, 0, win32::SWP_NOSIZE | win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
+        ControlIO().pfnSetWindowPos(hwnd, nullptr, app.lpui->ptStickyBattlePlansDlg.x + 70, app.lpui->ptStickyBattlePlansDlg.y + 70, 0, 0, win32::SWP_NOSIZE | win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
         ui::SendDlgItemMessage(hwnd, IDC_EDIT1, win32::EM_LIMITTEXT, 0x1f, 0);
         win32::SetDlgItemTextA(hwnd, IDC_EDIT1, app.lpui->btlplan.szName);
         return 1;
@@ -184,7 +184,7 @@ INT_PTR  BattlePlansDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             }
             for (i = 0; i < app.state.game.cPlayer; i++) {
                 if (i != app.state.idPlayer) {
-                    ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_ATTACK_WHO), win32::CB_ADDSTRING, 0, (LPARAM)TextIO().pfnPlayerName(app, i, 0, 1, 0, 0, NULL));
+                    ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_ATTACK_WHO), win32::CB_ADDSTRING, 0, (LPARAM)TextIO().pfnPlayerName(app, i, 0, 1, 0, 0, nullptr));
                 }
             }
             i = app.lpui->btlplan.iplrAttack;

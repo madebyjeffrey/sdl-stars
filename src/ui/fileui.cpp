@@ -91,7 +91,7 @@ void ShowTitleScreen(APPSESSION &app) {
                  win32::GetSystemMetrics(win32::SM_CYCAPTION) - 2 * win32::GetSystemMetrics(win32::SM_CYDLGFRAME)));
         x = rcWork.left + (rcWork.right - rcWork.left - dx) / 2;
         y = rcWork.top + (rcWork.bottom - rcWork.top - dy) / 2;
-        app.lpui->hwndTitle = ui::CreateWindowEx(0, app.lpui->szTitle, "Stars!", dwStyle | win32::WS_VISIBLE, x, y, dx, dy, app.lpui->hwndFrame, NULL, app.lpui->hInst, NULL);
+        app.lpui->hwndTitle = ui::CreateWindowEx(0, app.lpui->szTitle, "Stars!", dwStyle | win32::WS_VISIBLE, x, y, dx, dy, app.lpui->hwndFrame, nullptr, app.lpui->hInst, nullptr);
         if (getenv("STARS_DEBUG_LIBRARY_STARTUP"))
             fprintf(stderr, "[DEBUG-library-startup] ShowTitleScreen CreateWindow returned title=%p valid=%d visible=%d\n",
                     (void *)app.lpui->hwndTitle, win32::IsWindow(app.lpui->hwndTitle), win32::IsWindowVisible(app.lpui->hwndTitle));

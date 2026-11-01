@@ -29,20 +29,20 @@ int16_t ChangeProduction(APPSESSION &app, int16_t fClear) {
 LWriteProdQ:
         FinishProduction(app, fSuccess);
         if (fSuccess && app.state.sel.grobj == grobjPlanet) {
-            ControlIO().pfnDrawPlanShip(app, NULL, tilePlanetStats);
+            ControlIO().pfnDrawPlanShip(app, nullptr, tilePlanetStats);
         }
         return 1;
     } catch (const StarsError &) {
         if (app.state.lpplProdGlob) {
             FreePl(app, app.state.lpplProdGlob);
         }
-        app.state.lpplProdGlob = NULL;
+        app.state.lpplProdGlob = nullptr;
         if (app.lpui->hwndProdDlg) {
             ControlIO().pfnEndDialog(app.lpui->hwndProdDlg, 0);
         }
         app.lpui->hwndProdDlg = 0;
         app.lpui->fDlgUp = 0;
-        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsThereIsntEnoughFreeMemoryModifyProduction, NULL), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsThereIsntEnoughFreeMemoryModifyProduction, nullptr), win32::MB_ICONHAND);
         return 0;
     }
 }
@@ -93,16 +93,16 @@ INT_PTR  ProductionDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             dx = 610;
             dy = 24 * app.state.dyArial8 + 24;
         }
-        ControlIO().pfnSetWindowPos(hwnd, NULL, 0, 0, dx, dy, win32::SWP_NOMOVE | win32::SWP_NOZORDER);
+        ControlIO().pfnSetWindowPos(hwnd, nullptr, 0, 0, dx, dy, win32::SWP_NOMOVE | win32::SWP_NOZORDER);
         ControlIO().pfnGetClientRect(hwnd, &rc);
         xCtr = rc.right >> 1;
         dyLB = rc.bottom - (int16_t)(17 * app.state.dyArial8) / 2 - 24;
         rc.left = (int16_t)(11 * rc.right) / 20 + 16;
         dxPBtn = (int16_t)(rc.right - rc.left) / 4;
         rc.bottom -= (int16_t)(3 * app.state.dyArial8) / 2 + 6;
-        ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_RESEARCH_LEFTOVERS_ONLY), NULL, 6, rc.bottom, rc.left - 12, (int16_t)(3 * app.state.dyArial8) / 2, win32::SWP_NOZORDER);
+        ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_RESEARCH_LEFTOVERS_ONLY), nullptr, 6, rc.bottom, rc.left - 12, (int16_t)(3 * app.state.dyArial8) / 2, win32::SWP_NOZORDER);
         for (i = 0; i < 4; i++) {
-            ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, rgidProdBtns[i]), NULL, rc.left, rc.bottom, dxPBtn - 6, (int16_t)(3 * app.state.dyArial8) / 2, win32::SWP_NOZORDER);
+            ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, rgidProdBtns[i]), nullptr, rc.left, rc.bottom, dxPBtn - 6, (int16_t)(3 * app.state.dyArial8) / 2, win32::SWP_NOZORDER);
             rc.left += dxPBtn;
         }
         dxPBtn += 24;
@@ -114,12 +114,12 @@ INT_PTR  ProductionDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             dy = 50;
         }
         for (i = 4; i < 10; i++) {
-            ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, rgidProdBtns[i]), NULL, rc.left, rc.top, dxPBtn - 6, (int16_t)(3 * app.state.dyArial8) / 2, win32::SWP_NOZORDER);
+            ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, rgidProdBtns[i]), nullptr, rc.left, rc.top, dxPBtn - 6, (int16_t)(3 * app.state.dyArial8) / 2, win32::SWP_NOZORDER);
             rc.top += dy;
         }
-        ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_AVAILABLE_ITEMS), NULL, 6, 6, rc.left - 12, dyLB, win32::SWP_NOZORDER);
+        ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_AVAILABLE_ITEMS), nullptr, 6, 6, rc.left - 12, dyLB, win32::SWP_NOZORDER);
         win32::GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_AVAILABLE_ITEMS), &rcT);
-        ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), NULL, rc.left + dxPBtn, 6, rc.left - 12, rcT.bottom - rcT.top, win32::SWP_NOZORDER);
+        ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), nullptr, rc.left + dxPBtn, 6, rc.left - 12, rcT.bottom - rcT.top, win32::SWP_NOZORDER);
         win32::ScreenToClient(hwnd, (POINT *)&rcT.right);
         app.lpui->yTopFutureTech = rcT.bottom;
         InitializeProductionDlg(app, hwnd);
@@ -185,7 +185,7 @@ INT_PTR  ProductionDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         }
         rgszZip[cMax++] = sz255;
         rgszZip[cMax++] = TextIO().pfnCompressed(app, idsCustomize);
-        i = ControlIO().pfnPopupMenu(app, hwnd, pt.x, pt.y, cMax, NULL, rgszZip, -1, 1);
+        i = ControlIO().pfnPopupMenu(app, hwnd, pt.x, pt.y, cMax, nullptr, rgszZip, -1, 1);
         if (i == cMax - 1) {
             CustomizeProductionPresets(app, hwnd);
             break;
@@ -297,7 +297,7 @@ void ProdCommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam, LPARAM lParam
         app.state.lpplProdGlob->rgprod()[iDst] = prod;
         app.state.lpplProdGlob->iprodMac++;
     FixedUp:
-        ControlIO().pfnFillPlanetProdLB(app, ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), app.state.lpplProdGlob, NULL);
+        ControlIO().pfnFillPlanetProdLB(app, ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), app.state.lpplProdGlob, nullptr);
         ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), win32::LB_SETCURSEL, iDst + 1, 0);
         if (app.state.pProdGlob[iSrc].cItem != 0)
             goto RedrawText;
@@ -341,7 +341,7 @@ void ProdCommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam, LPARAM lParam
             }
             app.state.lpplProdGlob->iprodMac--;
         }
-        ControlIO().pfnFillPlanetProdLB(app, ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), app.state.lpplProdGlob, NULL);
+        ControlIO().pfnFillPlanetProdLB(app, ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), app.state.lpplProdGlob, nullptr);
         if (lSel >= 0) {
             ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), win32::LB_SETCURSEL, LOWORD(lSel) + 1, 0);
         }
@@ -394,7 +394,7 @@ void ProdCommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam, LPARAM lParam
         } else {
             app.state.lpplProdGlob->iprodMac = 0;
         }
-        ControlIO().pfnFillPlanetProdLB(app, ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), app.state.lpplProdGlob, NULL);
+        ControlIO().pfnFillPlanetProdLB(app, ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), app.state.lpplProdGlob, nullptr);
         ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), win32::LB_SETCURSEL, 0, 0);
         ControlIO().pfnFillProdSrcLB(app, ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_AVAILABLE_ITEMS), -1);
         ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_AVAILABLE_ITEMS), win32::LB_SETCURSEL, 0, 0);
@@ -408,7 +408,7 @@ void ProdCommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam, LPARAM lParam
             rc.bottom = 7 * app.state.dyArial8 + rc.top;
             rc.left += 130;
             ControlIO().pfnInvalidateRect(hwnd, &rc, 1);
-            ControlIO().pfnDrawProductionDlg(app, hwnd, NULL, &rc, -1);
+            ControlIO().pfnDrawProductionDlg(app, hwnd, nullptr, &rc, -1);
         } else if (HIWORD(wParam) == 2) {
             if (LOWORD(wParam) == IDC_PRODUCTION_AVAILABLE_ITEMS)
                 goto AddItem;
@@ -419,7 +419,7 @@ void ProdCommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam, LPARAM lParam
         hwndLB = ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE);
         app.state.sel.pl.fNoResearch = LOWORD(ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_RESEARCH_LEFTOVERS_ONLY), win32::BM_GETCHECK, 0, 0));
         lSel = ControlIO().pfnSendMessage(hwndLB, win32::LB_GETCURSEL, 0, 0);
-        ControlIO().pfnFillPlanetProdLB(app, hwndLB, app.state.lpplProdGlob, NULL);
+        ControlIO().pfnFillPlanetProdLB(app, hwndLB, app.state.lpplProdGlob, nullptr);
         ControlIO().pfnSendMessage(hwndLB, win32::LB_SETCURSEL, LOWORD(lSel), 0);
         goto RedrawText;
     case IDOK:
@@ -437,7 +437,7 @@ void ProdCommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam, LPARAM lParam
         } else {
             PresentationIO().pfnSelectPlanet(app, c, 0);
         }
-        ProductionIO().pfnInitialize(app, NULL);
+        ProductionIO().pfnInitialize(app, nullptr);
         InitializeProductionDlg(app, hwnd);
         ControlIO().pfnGetClientRect(hwnd, &rc);
         rc.top = app.lpui->yTopFutureTech;
@@ -453,7 +453,7 @@ void ProdCommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam, LPARAM lParam
         prod = app.state.lpplProdGlob->rgprod()[lSel];
         app.state.lpplProdGlob->rgprod()[lSel] = app.state.lpplProdGlob->rgprod()[lSel + 1];
         app.state.lpplProdGlob->rgprod()[lSel + 1] = prod;
-        ControlIO().pfnFillPlanetProdLB(app, ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), app.state.lpplProdGlob, NULL);
+        ControlIO().pfnFillPlanetProdLB(app, ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), app.state.lpplProdGlob, nullptr);
         ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), win32::LB_SETCURSEL, LOWORD(lSel) + 2, 0);
         goto RedrawText;
     case IDC_PRODUCTION_ITEM_UP:
@@ -465,7 +465,7 @@ void ProdCommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam, LPARAM lParam
         prod = app.state.lpplProdGlob->rgprod()[lSel];
         app.state.lpplProdGlob->rgprod()[lSel] = app.state.lpplProdGlob->rgprod()[lSel + 1];
         app.state.lpplProdGlob->rgprod()[lSel + 1] = prod;
-        ControlIO().pfnFillPlanetProdLB(app, ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), app.state.lpplProdGlob, NULL);
+        ControlIO().pfnFillPlanetProdLB(app, ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), app.state.lpplProdGlob, nullptr);
         ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), win32::LB_SETCURSEL, LOWORD(lSel) + 1, 0);
         goto RedrawText;
     case IDC_HELP:
@@ -493,7 +493,7 @@ void InitializeProductionDlg(APPSESSION &app, HWND hwnd) {
         i++;
         lpprod++;
     }
-    ControlIO().pfnFillPlanetProdLB(app, ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), app.state.lpplProdGlob, NULL);
+    ControlIO().pfnFillPlanetProdLB(app, ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), app.state.lpplProdGlob, nullptr);
     ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), win32::LB_SETCURSEL, iSel + 1, 0);
     ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_RESEARCH_LEFTOVERS_ONLY), win32::BM_SETCHECK, app.state.sel.pl.fNoResearch, 0);
     return;
@@ -563,7 +563,7 @@ void DrawProductionDlg(APPSESSION &app, HWND hwnd, HDC hdc, RECT *prc, int16_t i
                 rc.bottom += (int16_t)(3 * app.state.dyArial8) / 2;
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
                 c = win32::wsprintfA(szT, TextIO().pfnCompressed(app, idsDDoneCompletion), prod.pct);
-                if (PszProductionETA(app, &app.state.sel.pl, app.state.lpplProdGlob, static_cast<ProdItemType>(LOWORD(lSel)), NULL, NULL) != app.state.szWork) {
+                if (PszProductionETA(app, &app.state.sel.pl, app.state.lpplProdGlob, static_cast<ProdItemType>(LOWORD(lSel)), nullptr, nullptr) != app.state.szWork) {
                 }
                 strcpy(&szT[c], app.state.szWork);
                 win32::TextOutA(hdc, rc.left - 20, rc.bottom, szT, strlen(szT));
@@ -639,10 +639,10 @@ INT_PTR  ZipProdDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         ControlIO().pfnGetClientRect(hwnd, &rc2);
         dy = rc.bottom - rc.top - rc2.bottom;
         win32::GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDC_ZIP_PROD_QUEUE), &rc2);
-        win32::MapWindowPoints(NULL, hwnd, (POINT *)&rc2, 2);
+        win32::MapWindowPoints(nullptr, hwnd, (POINT *)&rc2, 2);
         app.lpui->vyZPDStatic = rc2.bottom + 2;
         dy += rc2.bottom + app.state.dyArial8 + 6;
-        ControlIO().pfnSetWindowPos(hwnd, NULL, 0, 0, rc.right - rc.left, dy, win32::SWP_NOMOVE | win32::SWP_NOZORDER);
+        ControlIO().pfnSetWindowPos(hwnd, nullptr, 0, 0, rc.right - rc.left, dy, win32::SWP_NOMOVE | win32::SWP_NOZORDER);
         win32::CheckRadioButton(hwnd, IDC_ZIP_PROD_PRESET_1, IDC_ZIP_PROD_PRESET_4, IDC_ZIP_PROD_PRESET_1);
         ControlIO().pfnEnableZipProdBtns(app, hwnd, 0);
         app.lpui->iResTechNow = Energy;

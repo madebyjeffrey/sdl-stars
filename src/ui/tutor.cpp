@@ -65,7 +65,7 @@ INT_PTR  TutorDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         case IDCANCEL:
             ShowTutor(app, 0);
             if (app.state.tutor.fShowHidMsg) {
-                AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMakeTutorialReappearCompleteTaskChooseTutorial, NULL), win32::MB_ICONASTERISK);
+                AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMakeTutorialReappearCompleteTaskChooseTutorial, nullptr), win32::MB_ICONASTERISK);
                 app.state.tutor.fShowHidMsg = 0;
             }
             return 1;
@@ -188,7 +188,7 @@ void DrawTutorText(APPSESSION &app, HWND hwnd) {
             win32::SetTextColor(hdc, app.lpui->crButtonFace);
             win32::SetBkColor(hdc, app.lpui->crButtonText);
         }
-        WrapTextOut(app, hdc, &xLeft, &yTop, rgch, cch, rc.left, rc.right - rc.left, NULL, didt != 0 && fPara != 0, 1);
+        WrapTextOut(app, hdc, &xLeft, &yTop, rgch, cch, rc.left, rc.right - rc.left, nullptr, didt != 0 && fPara != 0, 1);
         if (app.state.tutor.idt + didt == app.state.tutor.idtBold) {
             win32::SetTextColor(hdc, app.lpui->crButtonText);
             win32::SetBkColor(hdc, app.lpui->crButtonFace);
@@ -207,7 +207,7 @@ void StartTutor(APPSESSION &app, int16_t fRestart) {
         if (!app.lpui->lpfnTutorDlgProc) {
             app.lpui->lpfnTutorDlgProc = (TutorDlg);
             if (!app.lpui->lpfnTutorDlgProc) {
-                AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMemory, NULL), win32::MB_ICONHAND);
+                AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMemory, nullptr), win32::MB_ICONHAND);
                 return;
             }
         }
@@ -235,7 +235,7 @@ void StartTutor(APPSESSION &app, int16_t fRestart) {
             if (!fRestart) {
                 strcat(app.state.szBase, ".xy");
                 if (FFileExists(app.state.szBase) &&
-                    AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsTutorialHasRunBeforeWouldLikeDestroy, NULL), win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_TASKMODAL) != win32::IDYES) {
+                    AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsTutorialHasRunBeforeWouldLikeDestroy, nullptr), win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_TASKMODAL) != win32::IDYES) {
                     app.state.szBase[cch] = 0;
                     strcat(app.state.szBase, ".m1");
                     app.state.ini.fStartupFile = 1;
@@ -252,7 +252,7 @@ void StartTutor(APPSESSION &app, int16_t fRestart) {
                 app.state.vrgZipProd[0].fValid = 1;
                 app.state.gd.fChgZipProd = 1;
             }
-            InitializeMenu(app, NULL);
+            InitializeMenu(app, nullptr);
             win32::PostMessageA(app.lpui->hwndFrame, win32::WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
             if (!app.lpui->fFreeingTitle) {
                 app.lpui->fFreeingTitle = 1;
@@ -285,7 +285,7 @@ void StartTutor(APPSESSION &app, int16_t fRestart) {
         }
     }
     ShowTutor(app, 1);
-    ControlIO().pfnInvalidateRect(app.state.tutor.hwnd, NULL, 1);
+    ControlIO().pfnInvalidateRect(app.state.tutor.hwnd, nullptr, 1);
     return;
 }
 
@@ -414,7 +414,7 @@ void RestoreGameState(APPSESSION &app) {
 }
 
 int16_t FAskKillTutor(APPSESSION &app) {
-    if (app.state.game.turn >= 30 || AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsCurrentlyRunningStarsTutorialDoWantExit, NULL), win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_TASKMODAL) == win32::IDYES) {
+    if (app.state.game.turn >= 30 || AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsCurrentlyRunningStarsTutorialDoWantExit, nullptr), win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_TASKMODAL) == win32::IDYES) {
         EndTutor(app, 1);
         return 1;
     }
@@ -2321,7 +2321,7 @@ void TutorError(APPSESSION &app, StringId idsError) {
     } else if (app.state.tutor.idsError != idsError || app.state.tutor.cError++ >= 3) {
         app.state.tutor.cError = 0;
         app.state.tutor.idsError = idsError;
-        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsError, NULL), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsError, nullptr), win32::MB_ICONHAND);
     }
     return;
 }

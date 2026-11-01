@@ -70,7 +70,7 @@ def generate(root, output):
         source += ['};']
     source += ['constinit const COMPATRESOURCE rgCompatImageResources[] = {']
     for i, (type_, identity, _) in enumerate(resources):
-        name = 'NULL' if isinstance(identity, int) else f'"{identity}"'
+        name = 'nullptr' if isinstance(identity, int) else f'"{identity}"'
         ordinal = identity if isinstance(identity, int) else 0
         source += [f'    {{{name}, {ordinal}, rgbImageResource{i}, sizeof(rgbImageResource{i}), {type_}}},']
     source += ['};', 'constinit const size_t cCompatImageResources = sizeof(rgCompatImageResources) / sizeof(rgCompatImageResources[0]);']

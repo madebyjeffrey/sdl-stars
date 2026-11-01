@@ -1,7 +1,7 @@
 #ifndef STARS_LIBRARY_PUBLICATION_H
 #define STARS_LIBRARY_PUBLICATION_H
 #include "win.h"
-typedef struct {
+struct LIBRARYIMPORT {
     const char *pszStem;
     const char *pszSource;
     const char *pszTarget;
@@ -16,7 +16,7 @@ typedef struct {
     int16_t     fCopied;
     int16_t     fBackup;
     int16_t     fCopy;
-} LIBRARYIMPORT;
+};
 // Borrow existing library path buffers at the publication boundary.
 struct LIBRARYPATHS {
     char (&szLibraryRoot)[256];

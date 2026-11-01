@@ -47,7 +47,7 @@ def generate(root, output):
         manifest.append(f'{{{identifier}, {len(data)}}},')
     source.append('constinit const COMPATRESOURCE rgCompatResources[] = {')
     for i, (identity, data) in enumerate(resources):
-        name = 'NULL' if isinstance(identity, int) else f'"{identity}"'
+        name = 'nullptr' if isinstance(identity, int) else f'"{identity}"'
         number = identity if isinstance(identity, int) else 0
         source.append(f'    {{{name}, {number}, rgbResource{i}, sizeof(rgbResource{i}), 2}},')
     source += ['};', 'constinit const size_t cCompatResources = sizeof(rgCompatResources) / sizeof(rgCompatResources[0]);']

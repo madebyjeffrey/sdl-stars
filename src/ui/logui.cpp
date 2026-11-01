@@ -29,7 +29,7 @@ int16_t FWriteTutorialMFile(APPSESSION &app, int16_t iTurn) {
         if (!app.state.vlpMemStream)
             goto BailOut;
         if (cSkip >= *app.state.vlpMemStream) {
-            app.state.vlpMemStream = NULL;
+            app.state.vlpMemStream = nullptr;
             win32::GlobalUnlock(hres);
             win32::FreeResource(hres);
             return 2;
@@ -48,7 +48,7 @@ int16_t FWriteTutorialMFile(APPSESSION &app, int16_t iTurn) {
             app.state.vlpMemStream += 2 + HdvFromPrefix(app.state.vlpMemStream).cb();
         } while (HdvFromPrefix(app.state.vlpMemStream).rt() != rtBOF);
         RecordIO().pfnStreamClose(app);
-        app.state.vlpMemStream = NULL;
+        app.state.vlpMemStream = nullptr;
         win32::GlobalUnlock(hres);
         win32::FreeResource(hres);
         return 1;
@@ -76,7 +76,7 @@ uint8_t *LpbLoadTutorLog(APPSESSION &app) {
     hrsrc = win32::FindResourceA(app.lpui->hInst, win32::MAKEINTRESOURCE(10001), win32::MAKEINTRESOURCE(10000));
     hres = win32::LoadResource(app.lpui->hInst, hrsrc);
     if (!hres) {
-        return NULL;
+        return nullptr;
     }
     return (uint8_t *)win32::LockResource(hres);
 }

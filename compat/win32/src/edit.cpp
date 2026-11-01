@@ -23,7 +23,7 @@ void CompatEditComposition(HWND hwnd, const char *pszUtf, int ich, int cch) {
     if (!FUtf8Valid(pszUtf, strlen(pszUtf)) || !(psz = SDL_strdup(pszUtf))) return;
     SDL_free(hwnd->pszEditComposition); hwnd->pszEditComposition = psz;
     hwnd->ichComposition = hwnd->cchComposition = 0;
-    win32::InvalidateRect(hwnd, NULL, 1);
+    win32::InvalidateRect(hwnd, nullptr, 1);
 }
 
 static UINT CchEdit(HWND hwnd) { return (UINT)strlen(hwnd->pszTitle); }
@@ -62,14 +62,14 @@ static void SelectEdit(HWND hwnd, UINT ichAnchor, UINT ichCaret) {
     hwnd->fEditTyping = 0;
     hwnd->iEditUndoAction = editUndoSeparate;
     hwnd->fEditManualScroll = 0;
-    win32::InvalidateRect(hwnd, NULL, 1);
+    win32::InvalidateRect(hwnd, nullptr, 1);
 }
 
 static void ChangedEdit(HWND hwnd, BOOL fNotify) {
     if (fNotify) hwnd->fEditInputRejected = 0;
     SyncEditScroll(hwnd);
     if (!win32::IsWindow(hwnd)) return;
-    win32::InvalidateRect(hwnd, NULL, 1);
+    win32::InvalidateRect(hwnd, nullptr, 1);
     if (fNotify) {
         NotifyEdit(hwnd, win32::EN_UPDATE);
         if (win32::IsWindow(hwnd)) NotifyEdit(hwnd, win32::EN_CHANGE);
@@ -78,7 +78,7 @@ static void ChangedEdit(HWND hwnd, BOOL fNotify) {
 
 static void EmptyEditUndo(HWND hwnd) {
     SDL_free(hwnd->pszEditUndo);
-    hwnd->pszEditUndo = NULL;
+    hwnd->pszEditUndo = nullptr;
     hwnd->fEditTyping = 0; hwnd->iEditUndoAction = editUndoSeparate;
 }
 
@@ -98,7 +98,7 @@ static void NormalizeEditCase(HWND hwnd) {
 static void ReplaceEdit(HWND hwnd, LPCSTR psz, BOOL fUser, BOOL fUndo, UINT iUndoAction) {
     UINT ichFirst = StarsMin(hwnd->ichAnchor, hwnd->ichCaret), ichLast = StarsMax(hwnd->ichAnchor, hwnd->ichCaret);
     size_t cchOld = CchEdit(hwnd), cch = strlen(psz), cchBase = cchOld - (ichLast - ichFirst), i;
-    char *pszNew, *pszUndo = NULL;
+    char *pszNew, *pszUndo = nullptr;
     BOOL fLimit, fGroup;
     fGroup = iUndoAction != editUndoSeparate && hwnd->pszEditUndo &&
              iUndoAction == hwnd->iEditUndoAction &&
@@ -346,7 +346,7 @@ static void ScrollEdit(HWND hwnd, int dx, int dy) {
     hwnd->fEditManualScroll = 1;
     SyncEditScroll(hwnd);
     if (!win32::IsWindow(hwnd)) return;
-    win32::InvalidateRect(hwnd, NULL, 1);
+    win32::InvalidateRect(hwnd, nullptr, 1);
 }
 
 static int ChEditClass(BYTE ch) {
@@ -382,8 +382,8 @@ static int CxEdit(HDC hdc, LPCSTR psz, UINT cch, BOOL fPassword) {
 static void PaintEdit(HWND hwnd) {
     PAINTSTRUCT ps;
     HDC hdc = win32::BeginPaint(hwnd, &ps);
-    HBRUSH hbr, hbrOwn = NULL;
-    HFONT hfontOld = NULL;
+    HBRUSH hbr, hbrOwn = nullptr;
+    HFONT hfontOld = nullptr;
     TEXTMETRICA tm;
     RECT rc, rcSel, format;
     UINT cch, ich, ichEnd, ichNext, ichFirst, ichLast, i;
@@ -461,12 +461,12 @@ static void PaintEdit(HWND hwnd) {
             win32::SetRect(&rcSel, cxCaret, yCaret, cxCaret + cx, yCaret + cy);
             hbr = win32::CreateSolidBrush(crBk); win32::FillRect(hdc, &rcSel, hbr); win32::DeleteObject(hbr);
             win32::TextOutA(hdc, cxCaret, yCaret, pszComp, (int)cchComp);
-            win32::MoveToEx(hdc, cxCaret, yCaret + cy - 1, NULL); win32::LineTo(hdc, cxCaret + cx, yCaret + cy - 1);
+            win32::MoveToEx(hdc, cxCaret, yCaret + cy - 1, nullptr); win32::LineTo(hdc, cxCaret + cx, yCaret + cy - 1);
             SDL_free(pszComp);
         }
     } else if (fFocus && hwnd->fEditCaret && ichFirst == ichLast) {
         HPEN hpenOld = (HPEN)win32::SelectObject(hdc, win32::GetStockObject(win32::BLACK_PEN));
-        win32::MoveToEx(hdc, cxCaret, yCaret, NULL); win32::LineTo(hdc, cxCaret, yCaret + cy);
+        win32::MoveToEx(hdc, cxCaret, yCaret, nullptr); win32::LineTo(hdc, cxCaret, yCaret + cy);
         win32::SelectObject(hdc, hpenOld);
     }
     SDL_free(pszDisplay);
@@ -478,7 +478,7 @@ done:
 
 static UINT IchEditPoint(HWND hwnd, LPARAM l) {
     HDC hdc = win32::GetDC(hwnd);
-    HFONT hfontOld = NULL;
+    HFONT hfontOld = nullptr;
     TEXTMETRICA tm;
     UINT ich = 0, ichEnd, cch = CchEdit(hwnd);
     int x = (int16_t)LOWORD(l) + hwnd->xEditScroll;
@@ -519,14 +519,14 @@ static void EditContextMenu(HWND hwnd, LPARAM l) {
     if (!hmenu) return;
     if (l == -1) { pt = POINT{2, 2}; win32::ClientToScreen(hwnd, &pt); }
     win32::AppendMenuA(hmenu, win32::MF_STRING | (hwnd->pszEditUndo && fWrite ? 0 : win32::MF_GRAYED), win32::WM_UNDO, "&Undo");
-    win32::AppendMenuA(hmenu, win32::MF_SEPARATOR, 0, NULL);
+    win32::AppendMenuA(hmenu, win32::MF_SEPARATOR, 0, nullptr);
     win32::AppendMenuA(hmenu, win32::MF_STRING | (fCopy && fWrite ? 0 : win32::MF_GRAYED), win32::WM_CUT, "Cu&t");
     win32::AppendMenuA(hmenu, win32::MF_STRING | (fCopy ? 0 : win32::MF_GRAYED), win32::WM_COPY, "&Copy");
     win32::AppendMenuA(hmenu, win32::MF_STRING | (fWrite && SDL_HasClipboardText() ? 0 : win32::MF_GRAYED), win32::WM_PASTE, "&Paste");
     win32::AppendMenuA(hmenu, win32::MF_STRING | (fSelection && fWrite ? 0 : win32::MF_GRAYED), win32::WM_CLEAR, "&Delete");
-    win32::AppendMenuA(hmenu, win32::MF_SEPARATOR, 0, NULL);
+    win32::AppendMenuA(hmenu, win32::MF_SEPARATOR, 0, nullptr);
     win32::AppendMenuA(hmenu, win32::MF_STRING | (CchEdit(hwnd) != 0 ? 0 : win32::MF_GRAYED), 0xff00, "Select &All");
-    id = (UINT)CompatChoiceIO().pfnTrackPopupMenu(hmenu, win32::TPM_RETURNCMD | win32::TPM_RIGHTBUTTON, pt.x, pt.y, 0, hwnd, NULL);
+    id = (UINT)CompatChoiceIO().pfnTrackPopupMenu(hmenu, win32::TPM_RETURNCMD | win32::TPM_RIGHTBUTTON, pt.x, pt.y, 0, hwnd, nullptr);
     win32::DestroyMenu(hmenu);
     if (!win32::IsWindow(hwnd)) return;
     if (id == 0xff00) win32::SendMessageA(hwnd, win32::EM_SETSEL, 0, -1);
@@ -547,7 +547,7 @@ LRESULT  CompatEditProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     switch (msg) {
     case win32::WM_SETCURSOR:
         if (LOWORD(l) != win32::HTCLIENT) return win32::DefWindowProcA(hwnd, msg, w, l);
-        win32::SetCursor(win32::LoadCursorA(NULL, win32::MAKEINTRESOURCE(32513)));
+        win32::SetCursor(win32::LoadCursorA(nullptr, win32::MAKEINTRESOURCE(32513)));
         return 1;
     case win32::WM_NCCREATE:
         lp->iControl = 3; lp->cchLimit = 30000;
@@ -570,9 +570,9 @@ LRESULT  CompatEditProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     case win32::EM_SETMODIFY: lp->fModified = w != 0; return 0;
     case win32::EM_SETREADONLY:
         if (w) lp->dwStyle |= win32::ES_READONLY; else lp->dwStyle &= ~win32::ES_READONLY;
-        win32::InvalidateRect(hwnd, NULL, 1); return 1;
+        win32::InvalidateRect(hwnd, nullptr, 1); return 1;
     case win32::EM_REPLACESEL: if (l) ReplaceEdit(hwnd, (LPCSTR)l, 0, w != 0, w ? editUndoReplace : editUndoSeparate); return 0;
-    case win32::EM_CANUNDO: return lp->pszEditUndo != NULL;
+    case win32::EM_CANUNDO: return lp->pszEditUndo != nullptr;
     case win32::EM_UNDO: case win32::WM_UNDO: return UndoEdit(hwnd);
     case win32::EM_EMPTYUNDOBUFFER: EmptyEditUndo(hwnd); return 0;
     case win32::WM_COPY: CopyEdit(hwnd); return 0;
@@ -588,13 +588,13 @@ LRESULT  CompatEditProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         if (!(lp->dwStyle & win32::ES_MULTILINE)) return 0;
         lp->fEditFormat = l != 0;
         if (l) lp->rcEditFormat = *(RECT *)l;
-        if (msg == win32::EM_SETRECT) win32::InvalidateRect(hwnd, NULL, 1);
+        if (msg == win32::EM_SETRECT) win32::InvalidateRect(hwnd, nullptr, 1);
         return 0;
     case win32::EM_GETFIRSTVISIBLELINE: return lp->dwStyle & win32::ES_MULTILINE ? lp->yEditScroll / CyEdit(hwnd) : 0;
     case win32::EM_LINESCROLL:
         if (!(lp->dwStyle & win32::ES_MULTILINE)) return 0;
         ScrollEdit(hwnd, (int)w, (int)l); return 1;
-    case win32::EM_SCROLLCARET: lp->fEditManualScroll = 0; win32::InvalidateRect(hwnd, NULL, 1); return 0;
+    case win32::EM_SCROLLCARET: lp->fEditManualScroll = 0; win32::InvalidateRect(hwnd, nullptr, 1); return 0;
     case win32::WM_HSCROLL:
         if (LOWORD(w) == win32::SB_LINELEFT) ScrollEdit(hwnd, -1, 0);
         else if (LOWORD(w) == win32::SB_LINERIGHT) ScrollEdit(hwnd, 1, 0);
@@ -658,19 +658,19 @@ LRESULT  CompatEditProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         return 0;
     case win32::WM_CONTEXTMENU: EditContextMenu(hwnd, l); return 0;
     case win32::WM_GETFONT: return (LRESULT)lp->hfontControl;
-    case win32::WM_SETFONT: lp->hfontControl = (HFONT)w; SyncEditScroll(hwnd); if (l && win32::IsWindow(hwnd)) win32::InvalidateRect(hwnd, NULL, 1); return 0;
+    case win32::WM_SETFONT: lp->hfontControl = (HFONT)w; SyncEditScroll(hwnd); if (l && win32::IsWindow(hwnd)) win32::InvalidateRect(hwnd, nullptr, 1); return 0;
     case win32::WM_PAINT: PaintEdit(hwnd); return 0;
     case win32::WM_ERASEBKGND: return 1;
     case win32::WM_ENABLE: case win32::WM_SIZE:
-        SyncEditScroll(hwnd); if (win32::IsWindow(hwnd)) win32::InvalidateRect(hwnd, NULL, 1); return 0;
+        SyncEditScroll(hwnd); if (win32::IsWindow(hwnd)) win32::InvalidateRect(hwnd, nullptr, 1); return 0;
     case win32::WM_SETFOCUS: case win32::WM_KILLFOCUS:
         lp->fEditCaret = msg == win32::WM_SETFOCUS; lp->fEditTyping = 0; lp->iEditUndoAction = editUndoSeparate;
-        if (msg == win32::WM_KILLFOCUS) { SDL_free(lp->pszEditComposition); lp->pszEditComposition = NULL; }
+        if (msg == win32::WM_KILLFOCUS) { SDL_free(lp->pszEditComposition); lp->pszEditComposition = nullptr; }
         if (lp->idEditCaretTimer) win32::KillTimer(hwnd, lp->idEditCaretTimer);
-        lp->idEditCaretTimer = msg == win32::WM_SETFOCUS ? win32::SetTimer(hwnd, UINTPTR_MAX - 2, 530, NULL) : 0;
-        win32::InvalidateRect(hwnd, NULL, 1); NotifyEdit(hwnd, msg == win32::WM_SETFOCUS ? win32::EN_SETFOCUS : win32::EN_KILLFOCUS); return 0;
+        lp->idEditCaretTimer = msg == win32::WM_SETFOCUS ? win32::SetTimer(hwnd, UINTPTR_MAX - 2, 530, nullptr) : 0;
+        win32::InvalidateRect(hwnd, nullptr, 1); NotifyEdit(hwnd, msg == win32::WM_SETFOCUS ? win32::EN_SETFOCUS : win32::EN_KILLFOCUS); return 0;
     case win32::WM_TIMER:
-        if (w == lp->idEditCaretTimer && win32::GetFocus() == hwnd) { lp->fEditCaret = !lp->fEditCaret; win32::InvalidateRect(hwnd, NULL, 0); }
+        if (w == lp->idEditCaretTimer && win32::GetFocus() == hwnd) { lp->fEditCaret = !lp->fEditCaret; win32::InvalidateRect(hwnd, nullptr, 0); }
         return 0;
     case win32::WM_LBUTTONDBLCLK:
         win32::SetFocus(hwnd); if (!win32::IsWindow(hwnd)) return 0;

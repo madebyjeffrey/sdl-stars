@@ -207,16 +207,16 @@ int16_t XferAiSupply(APPSESSION &app, GrobjClass grobjSrc, int16_t idSrc, GrobjC
         idDst = iT;
         cQuan = -cQuan;
     }
-    cAvailable = ChgCargo(app, grobjSrc, idSrc, iSupply, 0, NULL);
+    cAvailable = ChgCargo(app, grobjSrc, idSrc, iSupply, 0, nullptr);
     if (cQuan > cAvailable) {
         cQuan = LOWORD(cAvailable);
     }
     if (cQuan == 0) {
         return 0;
     }
-    dChg = LOWORD(ChgCargo(app, grobjDst, idDst, iSupply, cQuan, NULL));
+    dChg = LOWORD(ChgCargo(app, grobjDst, idDst, iSupply, cQuan, nullptr));
     if (dChg != 0) {
-        ChgCargo(app, grobjSrc, idSrc, iSupply, (int16_t)-dChg, NULL);
+        ChgCargo(app, grobjSrc, idSrc, iSupply, (int16_t)-dChg, nullptr);
     }
     return dChg;
 }
@@ -227,15 +227,15 @@ int16_t XferAiTroopers(APPSESSION &app, int16_t idSrc, int16_t idDst, int16_t cQ
     if (cQuan == 0) {
         return 0;
     }
-    cAvailable = ChgCargo(app, grobjFleet, idSrc, Colonists, 0, NULL);
+    cAvailable = ChgCargo(app, grobjFleet, idSrc, Colonists, 0, nullptr);
     if (cQuan > cAvailable) {
         cQuan = LOWORD(cAvailable);
     }
     if (cQuan == 0) {
         return 0;
     }
-    ChgCargo(app, grobjFleet, idSrc, Colonists, (int16_t)-cQuan, NULL);
-    ChgCargo(app, grobjPlanet, idDst, Colonists, cQuan, NULL);
+    ChgCargo(app, grobjFleet, idSrc, Colonists, (int16_t)-cQuan, nullptr);
+    ChgCargo(app, grobjPlanet, idDst, Colonists, cQuan, nullptr);
     return cQuan;
 }
 
@@ -355,7 +355,7 @@ LFindNearest:
     }
     app.state.fMarkedPlanets = 1;
     if (plpthWorm) {
-        *plpthWorm = NULL;
+        *plpthWorm = nullptr;
         if (lpflCol->idPlanet != idPlanetDeepSpace && app.state.game.turn < 120) {
             lppl = LpplFromId(app, lpflCol->idPlanet);
             if (lppl && lppl->iPlayer == app.state.idPlayer) {
@@ -381,7 +381,7 @@ THING *LpthWormFind(APPSESSION &app, POINT16 *ppt, int32_t d2) {
     THING   *lpthMac;
     int32_t  d2Cur;
 
-    lpthBest = NULL;
+    lpthBest = nullptr;
     grbitplr = 1 << app.state.idPlayer;
     d2Worm = 1000000;
     pctGood = 0;
@@ -412,7 +412,7 @@ THING *LpthWormFind(APPSESSION &app, POINT16 *ppt, int32_t d2) {
     if (lpthBest && RandomIO().pfnRandom(app, 100) < pctGood) {
         return lpthBest;
     }
-    return NULL;
+    return nullptr;
 }
 
 uint32_t UlFleetPower(APPSESSION &app, FLEET *lpfl) {
@@ -443,7 +443,7 @@ int16_t IdNearestUnknownPlanet(APPSESSION &app, FLEET *lpfl, THING **plpthWorm) 
     int32_t  d2Cur;
 
     if (!app.state.fMarkedPlanets) {
-        IdNearestColonizablePlanet(app, lpfl, NULL);
+        IdNearestColonizablePlanet(app, lpfl, nullptr);
     }
     lpb = app.state.vlpbAiPlanet + 15;
     d2 = 99999999;
@@ -469,7 +469,7 @@ int16_t IdNearestUnknownPlanet(APPSESSION &app, FLEET *lpfl, THING **plpthWorm) 
         lpb += 16;
     }
     if (plpthWorm) {
-        *plpthWorm = NULL;
+        *plpthWorm = nullptr;
         if (lpfl->idPlanet != idPlanetDeepSpace && RandomIO().pfnRandom(app, 100) < 5) {
             *plpthWorm = LpthWormFind(app, &pt, d2);
         }
@@ -504,7 +504,7 @@ void AddMinesToBlockedQueues(APPSESSION &app) {
                 (prod.iItem == mdIdleMine || prod.iItem == iobjAlchemy || prod.iItem == mdIdleAlchemy || prod.iItem == mdIdleTerraform))
                 continue;
             ChangeMainObjSel(app, grobjPlanet, lppl->id);
-            PszProductionETA(app, &app.state.sel.pl, app.state.sel.pl.lpplprod, iobjMine, &etaFirst, NULL);
+            PszProductionETA(app, &app.state.sel.pl, app.state.sel.pl.lpplprod, iobjMine, &etaFirst, nullptr);
             if (etaFirst != 1) {
                 if (etaFirst == -1) {
                     etaFirst = 600;
@@ -529,7 +529,7 @@ void AddMinesToBlockedQueues(APPSESSION &app) {
                     if (cBuild > 0) {
                         AddItemToQueue(app, mdIdleMine, LOWORD(cBuild), grobjPlanet, addItemFront);
                         FinishProduction(app, 1);
-                        PszProductionETA(app, &app.state.sel.pl, app.state.sel.pl.lpplprod, iobjFactory, &etaBetterMines, NULL);
+                        PszProductionETA(app, &app.state.sel.pl, app.state.sel.pl.lpplprod, iobjFactory, &etaBetterMines, nullptr);
                         if (etaBetterMines == -1) {
                             etaBetterMines = 700;
                         }
@@ -540,7 +540,7 @@ void AddMinesToBlockedQueues(APPSESSION &app) {
                         AddItemToQueue(app, iobjAlchemy, 1, grobjPlanet, addItemFront);
                         FinishProduction(app, 1);
                     }
-                    PszProductionETA(app, &app.state.sel.pl, app.state.sel.pl.lpplprod, iobjFactory, &etaBetterAlchemy, NULL);
+                    PszProductionETA(app, &app.state.sel.pl, app.state.sel.pl.lpplprod, iobjFactory, &etaBetterAlchemy, nullptr);
                     if (etaBetterAlchemy == -1) {
                         etaBetterAlchemy = 700;
                     }
@@ -668,7 +668,7 @@ int16_t IdTargetAttack(APPSESSION &app, FLEET *lpfl, FLEET *lpflAtk, FLEET *lpfl
     for (i = 0; i < 16; i++) {
         cShipsAtk += lpfl->rgcsh[i];
     }
-    lpflClosest = NULL;
+    lpflClosest = nullptr;
     lpflT = lpflEnemy;
     lDistBest = 1000000;
     pt = lpfl->pt;
@@ -706,7 +706,7 @@ int16_t IdTargetAttack(APPSESSION &app, FLEET *lpfl, FLEET *lpflAtk, FLEET *lpfl
                 return 0;
             }
             pt = lpflClosest->pt;
-            lpplClosest = NULL;
+            lpplClosest = nullptr;
             lDistBest = 1000000;
             lppl = app.state.lpPlanets;
             lpplMac = app.state.lpPlanets + app.state.cPlanet;
@@ -735,7 +735,7 @@ int16_t IdTargetAttack(APPSESSION &app, FLEET *lpfl, FLEET *lpflAtk, FLEET *lpfl
             return IdTargetAttack(app, lpfl, lpflAtk, lpflEnemy, 0);
         }
         pt = lpfl->pt;
-        lpplClosest = NULL;
+        lpplClosest = nullptr;
         lDistBest = 1000000;
         lppl = app.state.lpPlanets;
         lpplMac = app.state.lpPlanets + app.state.cPlanet;
@@ -950,9 +950,9 @@ int16_t IdTargetFreighter(APPSESSION &app, FLEET *lpflFr, PLANET *lpplHome) {
             }
         }
     }
-    lpthBest = NULL;
+    lpthBest = nullptr;
     if (FSalvageTargetFreighter2(app, lpflFr, fNeedy, iWorst, pctFull, wtCargoMax, scoreBest, &lpthBest, &idBest) && GetCargoFree(app, lpflFr) == 0) {
-        lpthBest = NULL;
+        lpthBest = nullptr;
         lpplBest = lpplHome;
         idBest = lpplHome->id;
     }
@@ -1627,7 +1627,7 @@ void MergeAllShdefs(APPSESSION &app, int16_t grbitish) {
     }
     iMax++;
     if (iMax > 0) {
-        lpflNextPass = NULL;
+        lpflNextPass = nullptr;
         crglpflW = 0;
         for (ifl = 0; ifl < app.state.cFleet; ifl++) {
             lpfl = app.state.rglpfl[ifl];
@@ -1654,7 +1654,7 @@ void MergeAllShdefs(APPSESSION &app, int16_t grbitish) {
         }
         if (lpflNextPass) {
             lpfl = lpflNextPass;
-            lpflNextPass = NULL;
+            lpflNextPass = nullptr;
             ifl = iflNextPass;
             crglpflW = 0;
             goto NextPass;
@@ -1674,7 +1674,7 @@ FLEET *LpflFindClosestEnum(APPSESSION &app, FLEET *lpfl, int16_t (*pfn)(APPSESSI
     int32_t lBest;
 
     lBest = 10000000;
-    lpflBest = NULL;
+    lpflBest = nullptr;
     pt = lpfl->pt;
     for (ish = 0; ish < app.state.cFleet; ish++) {
         lpflT = app.state.rglpfl[ish];
@@ -1702,7 +1702,7 @@ PLANET *LpplFindClosestEnum(APPSESSION &app, PLANET *lppl, int16_t (*pfn)(APPSES
     int32_t lBest;
 
     lBest = 10000000;
-    lpplBest = NULL;
+    lpplBest = nullptr;
     pt = app.state.rgptPlan[lppl->id];
     lpplT = app.state.lpPlanets;
     lpplTMac = app.state.lpPlanets + app.state.cPlanet;
@@ -1732,7 +1732,7 @@ PLANET *LpplFindBestEnum(APPSESSION &app, PLANET *lppl, int16_t (*pfn)(APPSESSIO
 
     iBest = 1;
     lBest = 10000000;
-    lpplBest = NULL;
+    lpplBest = nullptr;
     pt = app.state.rgptPlan[lppl->id];
     lpplT = app.state.lpPlanets;
     lpplTMac = app.state.lpPlanets + app.state.cPlanet;
@@ -1828,7 +1828,7 @@ int16_t IdTargetScout(APPSESSION &app, FLEET *lpfl, FLEET *lpflAtk, FLEET *lpflE
     FLEET  *lpflAtk2;
     ORDER   ord;
 
-    lpflClosest = NULL;
+    lpflClosest = nullptr;
     lpflT = lpflEnemy;
     lDistBest = 1000000;
     pt = lpfl->pt;
@@ -1864,7 +1864,7 @@ int16_t IdTargetScout(APPSESSION &app, FLEET *lpfl, FLEET *lpflAtk, FLEET *lpflE
             return 0;
         }
         pt = lpflClosest->pt;
-        lpplClosest = NULL;
+        lpplClosest = nullptr;
         lDistBest = 1000000;
         lppl = app.state.lpPlanets;
         lpplMac = app.state.lpPlanets + app.state.cPlanet;
@@ -2055,7 +2055,7 @@ int16_t IdplFindClosestStarbase(APPSESSION &app, FLEET *lpfl, int16_t fBigOnes) 
     int32_t lBest;
 
     lBest = 10000000;
-    lpplBest = NULL;
+    lpplBest = nullptr;
     pt = lpfl->lpplord->rgord()[0].pt;
     lpplT = app.state.lpPlanets;
     lpplTMac = app.state.lpPlanets + app.state.cPlanet;
@@ -2105,7 +2105,7 @@ void MoveToNearestPlanetOrEnemy(APPSESSION &app, FLEET *lpfl, int16_t dEnemyRang
     SCAN    scan;
 
     lBest = 10000000;
-    lpplBest = NULL;
+    lpplBest = nullptr;
     pt = lpfl->lpplord->rgord()[0].pt;
     lpplT = app.state.lpPlanets;
     lpplTMac = app.state.lpPlanets + app.state.cPlanet;
@@ -2852,7 +2852,7 @@ int16_t FFindBuddyAndJoinUp(APPSESSION &app, FLEET *lpfl, int16_t ishLo, int16_t
     FLEET  *lpflBest;
     ORDER   ord;
 
-    lpflBest = NULL;
+    lpflBest = nullptr;
     lDistBest = 9999999;
     for (ifl = 0; ifl < app.state.cFleet; ifl++) {
         lpflOther = app.state.rglpfl[ifl];

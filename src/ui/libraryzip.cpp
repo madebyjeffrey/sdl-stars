@@ -5,12 +5,12 @@
 #include <SDL3/SDL.h>
 #include <zlib.h>
 
-typedef struct { char **rgpsz; int c, cMax; const char *pszRoot; int16_t fBad; } ZIPFILES;
-typedef struct { char *pszName; uint32_t dwCrc, cbSize, dwOffset; } ZIPENTRY;
-typedef struct {
+struct ZIPFILES { char **rgpsz; int c, cMax; const char *pszRoot; int16_t fBad; };
+struct ZIPENTRY { char *pszName; uint32_t dwCrc, cbSize, dwOffset; };
+struct ZIPCENTRAL {
     uint16_t wFlags, wMethod, wNameLength, wExtraLength, wCommentLength;
     uint32_t dwCrc, cbCompressed, cbUncompressed, dwExternalAttributes, dwLocalOffset;
-} ZIPCENTRAL;
+};
 enum {
     ZIP_EOCD_SIGNATURE = 0x06054b50,
     ZIP_CENTRAL_SIGNATURE = 0x02014b50,
@@ -142,8 +142,8 @@ static int16_t FCollectZipFiles(APPSESSION &app, void *lpData, const char *pszNa
 static int16_t FWriteZipEntry(NATIVEFILE *pfZip, const char *pszRoot, ZIPENTRY *pze) {
     char szPath[512];
     int64_t cb;
-    uint8_t *rgbData = NULL;
-    NATIVEFILE *pf = NULL;
+    uint8_t *rgbData = nullptr;
+    NATIVEFILE *pf = nullptr;
     size_t cbName = strlen(pze->pszName);
     NATIVECLEANUPSCOPE entry([&]() noexcept {
         if (pf) ICloseNativeFile(pf);
@@ -174,9 +174,9 @@ static int16_t FWriteZipEntry(NATIVEFILE *pfZip, const char *pszRoot, ZIPENTRY *
 
 int16_t FZipLibraryDirectory(APPSESSION &app, const char *pszDirectory, const char *pszArchive) {
     ZIPFILES zf = {0};
-    ZIPENTRY *rgzentry = NULL;
+    ZIPENTRY *rgzentry = nullptr;
     char szTemp[512] = "";
-    NATIVEFILE *pf = NULL;
+    NATIVEFILE *pf = nullptr;
     uint32_t dwStart, dwLength;
     int64_t cbExisting;
     int16_t fOk = 0;
@@ -220,8 +220,8 @@ int16_t FZipLibraryDirectory(APPSESSION &app, const char *pszDirectory, const ch
     PutZip16(pf, (uint16_t)zf.c); PutZip16(pf, (uint16_t)zf.c);
     PutZip32(pf, dwLength); PutZip32(pf, dwStart); PutZip16(pf, 0);
     if (FNativeStreamError(pf)) goto done;
-    if (ICloseNativeFile(pf) != 0) { pf = NULL; goto done; }
-    pf = NULL;
+    if (ICloseNativeFile(pf) != 0) { pf = nullptr; goto done; }
+    pf = nullptr;
     if (ReplaceNativeFile(szTemp, pszArchive) != 0) goto done;
     fOk = 1;
 done:
@@ -246,9 +246,9 @@ static int16_t FZipMakeParents(const char *pszRoot, const char *pszName, char *s
 
 int16_t FUnzipLibraryArchive(const char *pszArchive, const char *pszDirectory) {
     uint8_t rgbTail[65557], rgbCentral[ZIP_CENTRAL_HEADER_SIZE], rgbLocal[ZIP_LOCAL_HEADER_SIZE];
-    uint8_t *rgbLocalName = NULL, *rgbCompressed = NULL, *rgbData = NULL;
+    uint8_t *rgbLocalName = nullptr, *rgbCompressed = nullptr, *rgbData = nullptr;
     NATIVEFILE *pf = PfOpenNativeFile(pszArchive, "rb");
-    NATIVEFILE *pfOutput = NULL;
+    NATIVEFILE *pfOutput = nullptr;
     int64_t archiveSize;
     long tailOffset, eocd = -1, centralOffset, lNext;
     uint16_t cEntries, i, wLocalNameLength, wLocalExtraLength;
@@ -312,7 +312,7 @@ int16_t FUnzipLibraryArchive(const char *pszArchive, const char *pszDirectory) {
             memcmp(rgbLocalName, szName, zc.wNameLength) != 0 ||
             ISeekNativeFile(pf, wLocalExtraLength, SEEK_CUR) != 0 ||
             (uint64_t)LNativePosition(pf) + zc.cbCompressed > (uint64_t)centralOffset) goto done;
-        SDL_free(rgbLocalName); rgbLocalName = NULL;
+        SDL_free(rgbLocalName); rgbLocalName = nullptr;
         if (szName[zc.wNameLength - 1] == '/') {
             szName[zc.wNameLength - 1] = 0;
             if (!FZipSafeName(szName) || CchSnprintf(szDirectoryEntry, sizeof(szDirectoryEntry), "%s/.zip-dir-entry", szName) <= 0 ||
@@ -343,9 +343,9 @@ int16_t FUnzipLibraryArchive(const char *pszArchive, const char *pszDirectory) {
         pfOutput = PfOpenNativeFile(szOutput, "wbx");
         fWrite = pfOutput && CWriteNative(rgbData, 1, zc.cbUncompressed, pfOutput) == zc.cbUncompressed;
         if (pfOutput && ICloseNativeFile(pfOutput) != 0) fWrite = 0;
-        pfOutput = NULL;
+        pfOutput = nullptr;
         if (!fWrite) goto done;
-        SDL_free(rgbCompressed); rgbCompressed = NULL; SDL_free(rgbData); rgbData = NULL;
+        SDL_free(rgbCompressed); rgbCompressed = nullptr; SDL_free(rgbData); rgbData = nullptr;
         if (ISeekNativeFile(pf, lNext, SEEK_SET) != 0) goto done;
     }
     fOk = 1;

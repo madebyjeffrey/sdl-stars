@@ -52,7 +52,7 @@ static int ICompatMain(int argc, char **argv) {
             return 1;
         }
     }
-    hInstance = win32::GetModuleHandleA(NULL);
+    hInstance = win32::GetModuleHandleA(nullptr);
     if (!hInstance) {
         fprintf(stderr, "stars-sdl: cannot initialize resource module: %s\n", SDL_GetError());
         return 1;
@@ -62,7 +62,7 @@ static int ICompatMain(int argc, char **argv) {
         StarsCompatProcessExit(); SDL_Quit();
         return 1;
     }
-    nResult = ui::WinMain(hInstance, NULL, szCmdLine, win32::SW_SHOWNORMAL);
+    nResult = ui::WinMain(hInstance, nullptr, szCmdLine, win32::SW_SHOWNORMAL);
     StarsCompatProcessExit();
     SDL_Quit();
     return nResult;

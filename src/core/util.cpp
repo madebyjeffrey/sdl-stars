@@ -37,7 +37,7 @@ int16_t FDupPlanet(APPSESSION &app, PLANET *lppl, PLANET *ppl) {
     if (!lppl->lpplprod) {
         if (ppl->lpplprod) {
             FreePl(app, ppl->lpplprod);
-            ppl->lpplprod = NULL;
+            ppl->lpplprod = nullptr;
         }
         return 1;
     }
@@ -62,7 +62,7 @@ THING *LpthFromId(APPSESSION &app, int16_t idth) {
             return lpth;
         }
     }
-    return NULL;
+    return nullptr;
 }
 
 PLANET *LpplFromId(APPSESSION &app, int16_t idPlanet) {
@@ -73,7 +73,7 @@ PLANET *LpplFromId(APPSESSION &app, int16_t idPlanet) {
     int16_t iHi;
 
     if (idPlanet < 0 || idPlanet >= app.state.game.cPlanMax) {
-        return NULL;
+        return nullptr;
     }
     if (app.state.cPlanet == app.state.game.cPlanMax) {
         lppl = app.state.lpPlanets + idPlanet;
@@ -94,7 +94,7 @@ PLANET *LpplFromId(APPSESSION &app, int16_t idPlanet) {
             iHi = iGuess;
         }
     }
-    return NULL;
+    return nullptr;
 }
 
 void CalcPctSurvive(APPSESSION &app, PLANET *lppl, float *ppct, float *ppctSmart) {
@@ -142,7 +142,7 @@ int16_t FLookupPlanet(APPSESSION &app, int16_t iPlanet, PLANET *ppl) {
     if (iPlanet < 0) {
         iPlanet = ppl->id;
         if (iPlanet == idplNone) {
-            PresentationIO().pfnLogPlanet(app, NULL, ppl);
+            PresentationIO().pfnLogPlanet(app, nullptr, ppl);
             return 1;
         }
         fWrite = 1;
@@ -159,7 +159,7 @@ int16_t FLookupPlanet(APPSESSION &app, int16_t iPlanet, PLANET *ppl) {
                     }
                 } else if (!ppl->lpplprod) {
                     FreePl(app, lpPl->lpplprod);
-                    lpPl->lpplprod = NULL;
+                    lpPl->lpplprod = nullptr;
                     goto FinishCopy;
                 }
                 if ((int16_t)lpPl->lpplprod->iprodMax < ppl->lpplprod->iprodMac) {
@@ -276,7 +276,7 @@ int32_t LComputePower(APPSESSION &app, SHDEF *lpshdef) {
         }
         dpBeams = (int32_t)(dpBeams * pctCap) / 100;
     }
-    dSpeed = SpdOfShip(app, NULL, 0, NULL, 0, lpshdef);
+    dSpeed = SpdOfShip(app, nullptr, 0, nullptr, 0, lpshdef);
     dpBeams += (int32_t)(dpBeams * (int16_t)(dSpeed - 4)) / 10;
     return dpBombs + dpBeams + dpTorps;
 }
@@ -483,7 +483,7 @@ int16_t FCalcFleetBombDamage(APPSESSION &app, FLEET *lpfl, int32_t *pdmgPeople, 
         if (lpflNext && lpflNext != lpflHead && lpflNext->idPlanet == lpfl->idPlanet) {
             lpfl = lpflNext;
         } else {
-            lpfl = NULL;
+            lpfl = nullptr;
         }
     }
     *pdmgPeopleSmart = (int32_t)(1000.0 - (double)dmgSmart * 1000.0 + 0.5);
@@ -512,7 +512,7 @@ void LinkFleets(APPSESSION &app, int16_t fUnused) {
         lpflHead = app.state.rglpfl[iflHead];
         if (!app.state.rglpfl[iflHead])
             break;
-        lpflHead->lpflNext = NULL;
+        lpflHead->lpflNext = nullptr;
         lpflHead->fDone = 0;
     }
     cSrc = 0;
@@ -626,7 +626,7 @@ FLEET *LpflFromId(APPSESSION &app, int16_t idFleet) {
             iHi = iGuess;
         }
     }
-    return NULL;
+    return nullptr;
 }
 
 int16_t FLookupFleet(APPSESSION &app, int16_t idFleet, FLEET *pfl) {
@@ -753,7 +753,7 @@ char *PszGetThingName(APPSESSION &app, int16_t id) {
     switch (lpth->ith()) {
     case ithMinefield:
         if (lpth->iplr() != app.state.idPlayer) {
-            CchSprintf(szPlr, "%s ", TextIO().pfnPlayerName(app, lpth->iplr(), 0, 0, 0, 0, NULL));
+            CchSprintf(szPlr, "%s ", TextIO().pfnPlayerName(app, lpth->iplr(), 0, 0, 0, 0, nullptr));
         } else {
             szPlr[0] = 0;
         }
@@ -765,7 +765,7 @@ char *PszGetThingName(APPSESSION &app, int16_t id) {
             return app.state.szWork;
         }
         if (lpth->iplr() != app.state.idPlayer) {
-            CchSprintf(szPlr, "%s ", TextIO().pfnPlayerName(app, lpth->iplr(), 0, 0, 0, 0, NULL));
+            CchSprintf(szPlr, "%s ", TextIO().pfnPlayerName(app, lpth->iplr(), 0, 0, 0, 0, nullptr));
         } else {
             szPlr[0] = 0;
         }
@@ -799,7 +799,7 @@ char *PszGetFleetName(APPSESSION &app, int16_t id) {
     iplr = (uint16_t)id >> 9 & 0xf;
     ifl = id & 0x1ff;
     if (iplr != app.state.idPlayer) {
-        CchSprintf(szPlr, "%s ", TextIO().pfnPlayerName(app, iplr, 0, 0, 0, 0, NULL));
+        CchSprintf(szPlr, "%s ", TextIO().pfnPlayerName(app, iplr, 0, 0, 0, 0, nullptr));
     } else {
         szPlr[0] = 0;
     }
@@ -975,7 +975,7 @@ int16_t FFindSomethingAndSelectIt(APPSESSION &app) {
         for (; lppl < lpplMac && lppl->iPlayer != app.state.idPlayer; lppl++) {
         }
         if (lppl == lpplMac) {
-            lppl = NULL;
+            lppl = nullptr;
         }
     }
     if (lppl) {
@@ -1082,7 +1082,7 @@ int16_t FFleetMergeAll(APPSESSION &app, FLEET *pfl) {
     int32_t rgdp[16];
     int16_t j;
 
-    lpflMerge = NULL;
+    lpflMerge = nullptr;
     cflMerge = 0;
     fCshOverflow = 0;
     memset(rgdp, 0, 64);
@@ -2181,12 +2181,12 @@ void ValidateWaypoints(APPSESSION &app) {
                         lpflTarget = LpflFromId(app, lpord->id);
                         if (!lpflTarget || lpflTarget->pt.x != lpord->pt.x || lpflTarget->pt.y != lpord->pt.y ||
                             (lpflTarget->fCompChg() && lpflTarget->iPlayer != lpfl->iPlayer)) {
-                            lpflTarget = NULL;
+                            lpflTarget = nullptr;
                             iplrHi = lpord->id & 0xfe00;
                             cFound = 0;
                             mdTarget = static_cast<MdTarget>(app.state.rglpbtlplan[lpfl->iPlayer][lpfl->iplan].mdTarget1);
                             wtMatch = 0;
-                            lpflMatch = NULL;
+                            lpflMatch = nullptr;
                             /* As in the jrc4 binary (0008:497a): one pass, taking the
                                heaviest matching fleet even if another pursuer already
                                has it. jrc3 first looked only at untargeted fleets. */
@@ -2341,7 +2341,7 @@ int16_t FCanFleetUseStargates(APPSESSION &app, FLEET *lpfl, POINT16 ptSrc, POINT
         return 0;
     }
 LSrcChk:
-    lpplSrc = NULL;
+    lpplSrc = nullptr;
     fSrcPlanet = 0;
     if (FFindNearestObject(app, ptSrc, static_cast<GrobjClass>(grobjPlanet | mdExact), &scan)) {
         fSrcPlanet = 1;
@@ -2527,7 +2527,7 @@ void TurnLog(APPSESSION &app, StringId ids) {
     char szTemp[256];
 
     if (app.state.ini.fLogging) {
-        CchSprintf(szTemp, TextIO().pfnFormat(app, ids, NULL), app.state.game.turn + 2401);
+        CchSprintf(szTemp, TextIO().pfnFormat(app, ids, nullptr), app.state.game.turn + 2401);
         OutputSz(app, 6, szTemp);
     }
     return;

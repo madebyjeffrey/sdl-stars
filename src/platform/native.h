@@ -35,10 +35,11 @@ class APPSESSION;
  * (nativeui.h).
  */
 
-typedef struct tagPOINT16 {
+struct tagPOINT16 {
     int16_t x;
     int16_t y;
-} POINT16;
+};
+using POINT16 = tagPOINT16;
 
 // qsort16 sorts like Stars' Win16 CRT qsort, which decides the order of
 // elements with equal keys. Turn generation depends on that order.
@@ -68,7 +69,7 @@ int16_t FFileReadOnly(const char *szFile);
 void    MakeDir(const char *szDir);
 // Unlike MakeDir, reservation fails if the directory already exists.
 int     CreateNativeDir(const char *pszDir);
-typedef int16_t (*FNativeDirectoryEntryProc)(APPSESSION &, void *lpData, const char *pszEntry);
+using FNativeDirectoryEntryProc = int16_t (*)(APPSESSION &, void *lpData, const char *pszEntry);
 int16_t FNativeEnumerateDirectory(APPSESSION &app, const char *pszDir, FNativeDirectoryEntryProc pfnEntry, void *lpData);
 int16_t FNativeFileSize(const char *pszFile, int64_t *pcbFile);
 int16_t FNativeDirectoryExists(const char *pszDir);

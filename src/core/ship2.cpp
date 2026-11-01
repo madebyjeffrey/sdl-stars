@@ -233,7 +233,7 @@ void KillUsedWaypoints(APPSESSION &app) {
                                 if (!lpfl->lpplord->rgord()[j].fNoAutoTrack) {
                                     lpfl->lpplord->rgord()[j].pt = lpfl->lpflNext->pt;
                                 }
-                                lpfl->lpflNext = NULL;
+                                lpfl->lpflNext = nullptr;
                             } else {
                                 lpfl->lpplord->rgord()[j].grobj = grobjOther;
                                 lpfl->lpplord->rgord()[j].id = 0;

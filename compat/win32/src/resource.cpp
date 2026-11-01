@@ -7,7 +7,7 @@ static BYTE bModule;
 HMODULE win32::GetModuleHandleA(LPCSTR pszName) {
     if (!SDL_IsMainThread() || pszName) {
         SDL_SetError("Only the current embedded resource module is supported");
-        return NULL;
+        return nullptr;
     }
     return (HMODULE)&bModule;
 }
@@ -27,11 +27,11 @@ static const COMPATRESOURCE *LpResource(HRSRC hrsrc) {
     size_t i;
 
     if (!SDL_IsMainThread())
-        return NULL;
+        return nullptr;
     for (i = 0; i < cCompatResources + cCompatUIResources + cCompatImageResources; i++)
         if (hrsrc == (HRSRC)LpResourceIndex(i))
             return LpResourceIndex(i);
-    return NULL;
+    return nullptr;
 }
 
 HRSRC win32::FindResourceA(HMODULE hModule, LPCSTR pszName, LPCSTR pszType) {
@@ -40,7 +40,7 @@ HRSRC win32::FindResourceA(HMODULE hModule, LPCSTR pszName, LPCSTR pszType) {
     const COMPATRESOURCE *lpres;
 
     if (!FModule(hModule) || (UINT_PTR)pszType > UINT16_MAX || !pszName)
-        return NULL;
+        return nullptr;
     for (i = 0; i < cCompatResources + cCompatUIResources + cCompatImageResources; i++) {
         lpres = LpResourceIndex(i);
         if (lpres->type == (UINT_PTR)pszType &&
@@ -48,28 +48,28 @@ HRSRC win32::FindResourceA(HMODULE hModule, LPCSTR pszName, LPCSTR pszType) {
              (id > UINT16_MAX && lpres->pszName && SDL_strcasecmp(pszName, lpres->pszName) == 0)))
             return (HRSRC)lpres;
     }
-    return NULL;
+    return nullptr;
 }
 
 DWORD win32::SizeofResource(HMODULE hModule, HRSRC hrsrc) {
-    const COMPATRESOURCE *lpres = FModule(hModule) ? LpResource(hrsrc) : NULL;
+    const COMPATRESOURCE *lpres = FModule(hModule) ? LpResource(hrsrc) : nullptr;
     return lpres ? (DWORD)lpres->cb : 0;
 }
 
 HGLOBAL win32::LoadResource(HMODULE hModule, HRSRC hrsrc) {
-    const COMPATRESOURCE *lpres = FModule(hModule) ? LpResource(hrsrc) : NULL;
-    return lpres ? (HGLOBAL)lpres->rgb : NULL;
+    const COMPATRESOURCE *lpres = FModule(hModule) ? LpResource(hrsrc) : nullptr;
+    return lpres ? (HGLOBAL)lpres->rgb : nullptr;
 }
 
 LPVOID win32::LockResource(HGLOBAL hres) {
     size_t i;
 
     if (!SDL_IsMainThread())
-        return NULL;
+        return nullptr;
     for (i = 0; i < cCompatResources + cCompatUIResources + cCompatImageResources; i++)
         if (hres == (HGLOBAL)LpResourceIndex(i)->rgb)
             return (LPVOID)LpResourceIndex(i)->rgb;
-    return NULL;
+    return nullptr;
 }
 
 BOOL win32::FreeResource(HGLOBAL hres) {
@@ -79,7 +79,7 @@ BOOL win32::FreeResource(HGLOBAL hres) {
 
 HBITMAP win32::LoadBitmapA(HINSTANCE hInstance, LPCSTR pszName) {
     const COMPATRESOURCE *lpres = LpResource(win32::FindResourceA(hInstance, pszName, win32::RT_BITMAP));
-    return lpres ? HbmpCompatResource(lpres->rgb, lpres->cb) : NULL;
+    return lpres ? HbmpCompatResource(lpres->rgb, lpres->cb) : nullptr;
 }
 
 /* Normal MENU templates contain WORDs, UTF-16 strings and recursive popups.
@@ -98,11 +98,11 @@ static HMENU HmenuTemplateItems(const BYTE *rgb, size_t cb, size_t *lpib, int de
     size_t cch, ibText;
     BOOL fEnd;
 
-    if (depth >= 64) return NULL;
+    if (depth >= 64) return nullptr;
     hmenu = win32::CreatePopupMenu();
-    if (!hmenu) return NULL;
+    if (!hmenu) return nullptr;
     do {
-        hsub = NULL;
+        hsub = nullptr;
         id = 0;
         if (!FMenuWord(rgb, cb, lpib, &flags) ||
             (flags & ~(0x80 | win32::MF_POPUP | win32::MF_SEPARATOR | win32::MF_CHECKED | win32::MF_GRAYED | win32::MF_DISABLED)) ||
@@ -131,7 +131,7 @@ static HMENU HmenuTemplateItems(const BYTE *rgb, size_t cb, size_t *lpib, int de
     return hmenu;
 fail:
     win32::DestroyMenu(hmenu);
-    return NULL;
+    return nullptr;
 }
 HMENU HmenuCompatTemplate(const BYTE *rgb, size_t cb) {
     WORD version, offset;
@@ -139,10 +139,10 @@ HMENU HmenuCompatTemplate(const BYTE *rgb, size_t cb) {
     HMENU hmenu;
 
     if (!SDL_IsMainThread() || !rgb || !FMenuWord(rgb, cb, &ib, &version) || version != 0 ||
-        !FMenuWord(rgb, cb, &ib, &offset) || offset > cb - ib) return NULL;
+        !FMenuWord(rgb, cb, &ib, &offset) || offset > cb - ib) return nullptr;
     ib += offset;
     hmenu = HmenuTemplateItems(rgb, cb, &ib, 0);
-    if (hmenu && ib != cb) { win32::DestroyMenu(hmenu); return NULL; }
+    if (hmenu && ib != cb) { win32::DestroyMenu(hmenu); return nullptr; }
     return hmenu;
 }
 HMENU win32::LoadMenuA(HINSTANCE hInstance, LPCSTR pszName) {

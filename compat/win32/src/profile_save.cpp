@@ -22,8 +22,8 @@ DWORD DwProfileError(void) {
 }
 
 BOOL FSaveProfile(COMPATPROFILE *lp, const char *pszPath, const PROFILEIO &io) {
-    char *szTemp = NULL;
-    NATIVEFILE *fp = NULL;
+    char *szTemp = nullptr;
+    NATIVEFILE *fp = nullptr;
     BOOL fRet = 0;
     BOOL fTemporary = 0;
     NATIVECLEANUPSCOPE releaseProfile([&]() noexcept {

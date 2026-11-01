@@ -3,7 +3,7 @@
 #include <stddef.h>
 
 /* The SDK and wrapper have distinct HWND and OPENFILENAME definitions. */
-typedef struct WINDOWSFILEFILTER { const char *pszName, *pszPattern; } WINDOWSFILEFILTER;
+struct WINDOWSFILEFILTER { const char *pszName, *pszPattern; };
 int IChooseWindowsFile(void *lpWindow, int fSave, const char *pszTitle, const char *pszFolder,
                        const char *pszName, const WINDOWSFILEFILTER *rgfilter, int cFilter,
                        int *lpiFilter, char *pszPath, size_t cbPath,

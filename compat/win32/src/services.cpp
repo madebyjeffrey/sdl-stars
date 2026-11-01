@@ -43,7 +43,7 @@ DWORD win32::GetCurrentThreadId(void) {
     return (DWORD)SDL_GetCurrentThreadID();
 #elif defined(__APPLE__)
     uint64_t id;
-    return pthread_threadid_np(NULL, &id) == 0 ? (DWORD)id : 0;
+    return pthread_threadid_np(nullptr, &id) == 0 ? (DWORD)id : 0;
 #else
     return (DWORD)syscall(SYS_gettid);
 #endif
@@ -51,7 +51,7 @@ DWORD win32::GetCurrentThreadId(void) {
 
 LPSTR win32::lstrcatA(LPSTR pszDest, LPCSTR pszSource) { return strcat(pszDest, pszSource); }
 LPSTR win32::lstrcpyA(LPSTR pszDest, LPCSTR pszSource) {
-    if (!pszDest || !pszSource) return NULL;
+    if (!pszDest || !pszSource) return nullptr;
     return strcpy(pszDest, pszSource);
 }
 int win32::lstrlenA(LPCSTR psz) { return psz ? (int)strlen(psz) : 0; }
@@ -114,7 +114,7 @@ LInvalid:
 int _access(const char *pszPath, int mdAccess) { return IAccessNativePath(pszPath, mdAccess); }
 int _mkdir(const char *pszPath) { return ICreateNativeDirectory(pszPath, 0777); }
 char *_getcwd(char *pszPath, int cchPath) {
-    if (cchPath <= 0) { errno = EINVAL; return NULL; }
+    if (cchPath <= 0) { errno = EINVAL; return nullptr; }
     return PszNativeCwd(pszPath, (size_t)cchPath);
 }
 int _stricmp(const char *psz1, const char *psz2) { return strcasecmp(psz1, psz2); }
@@ -129,13 +129,13 @@ char *_strlwr(char *sz) {
 char *strlwr(char *sz) { return _strlwr(sz); }
 
 static char *SzTime(char *sz, const char *pszFormat) {
-    time_t tmNow = time(NULL);
+    time_t tmNow = time(nullptr);
     struct tm tmLocal;
 
-    if (!sz) { errno = EINVAL; return NULL; }
+    if (!sz) { errno = EINVAL; return nullptr; }
     if (!localtime_r(&tmNow, &tmLocal) || strftime(sz, 9, pszFormat, &tmLocal) == 0) {
         sz[0] = 0;
-        return NULL;
+        return nullptr;
     }
     return sz;
 }
@@ -148,7 +148,7 @@ char *itoa(int n, char *sz, int radix) {
     unsigned int u = (unsigned int)n;
     int cch = 0, i = 0;
 
-    if (!sz || radix < 2 || radix > 36) { errno = EINVAL; return NULL; }
+    if (!sz || radix < 2 || radix > 36) { errno = EINVAL; return nullptr; }
     if (n < 0 && radix == 10) { sz[i++] = '-'; u = 0u - u; }
     do { rgch[cch++] = "0123456789abcdefghijklmnopqrstuvwxyz"[u % (unsigned)radix]; u /= (unsigned)radix; } while (u);
     while (cch != 0) sz[i++] = rgch[--cch];

@@ -79,7 +79,7 @@ void Produce(APPSESSION &app) {
                                 goto RemoveFromQueue;
                             }
                         } else if (lpprod->iItem >= iobjPacketIron && lpprod->iItem <= iobjPacketMixed) {
-                            if (ColonyIO().pfnWarp(app, lppl, NULL) == 0 || lppl->idFling == 0) {
+                            if (ColonyIO().pfnWarp(app, lppl, nullptr) == 0 || lppl->idFling == 0) {
                                 TurnIO().pfnMessage2(app, lppl->iPlayer, idmHasOrdersBuildMineralPacketEitherDoesnt, static_cast<MsgGoto>(lppl->id), lppl->id, 0);
                                 goto RemoveFromQueue;
                             }
@@ -146,7 +146,7 @@ void Produce(APPSESSION &app) {
                     RemoveFromQueue:
                         if (lppl->lpplprod->iprodMac == fPrevProdIsAlch + 1) {
                             FreePl(app, lppl->lpplprod);
-                            lppl->lpplprod = NULL;
+                            lppl->lpplprod = nullptr;
                             break;
                         }
                         if (iprodCur < lppl->lpplprod->iprodMac - 1) {
@@ -254,7 +254,7 @@ int16_t CBuildProdItem(APPSESSION &app, PLANET *lppl, PROD *lpprod, PROD *pprodP
             break;
         case iobjPacket:
             iobjOther = iobjPacketMixed;
-            if (ColonyIO().pfnWarp(app, lppl, NULL) == 0 || lppl->idFling == 0) {
+            if (ColonyIO().pfnWarp(app, lppl, nullptr) == 0 || lppl->idFling == 0) {
                 cMax = 0;
             }
         }
@@ -733,7 +733,7 @@ void TransferToOthers(APPSESSION &app) {
             for (i = 0; i < 5; i++) {
                 l2 = lpxfCur->rgcQuan[i];
                 if (l2 != 0) {
-                    l = ChgCargo(app, static_cast<GrobjClass>(lpxfCur->grobj2), lpxfCur->id2, static_cast<MineralType>(i), l2, NULL);
+                    l = ChgCargo(app, static_cast<GrobjClass>(lpxfCur->grobj2), lpxfCur->id2, static_cast<MineralType>(i), l2, nullptr);
                     if (l != l2) {
                         idm = i == 4 ? idmAttemptedTransferColonistsSuccessfullyReceivedRe : idmAttemptedTransferSuccessfullyReceived;
                         idSrc = lpxfCur->id1 | (lpxfCur->grobj1 == 2 ? 0x8000 : 0);
@@ -804,7 +804,7 @@ void DropColonists(APPSESSION &app) {
                 idPlanet = lpcdCur->idPlanetDst;
                 PlanetQueryIO().pfnLookup(app, idPlanet, &pl);
                 iplrOldOwner = pl.iPlayer;
-                CalcPctSurvive(app, &pl, &pctSurvive, NULL);
+                CalcPctSurvive(app, &pl, &pctSurvive, nullptr);
                 pctSurvive = (float)(pctSurvive + ((double)1.0 - pctSurvive) / 4.0);
                 for (lpcdLook = lpcdCur; lpcdLook < lpcdMax; lpcdLook++) {
                     if (idPlanet == lpcdLook->idPlanetDst) {
@@ -914,7 +914,7 @@ void DropColonists(APPSESSION &app) {
                         for (i = 0; i < 6; i++) {
                             app.state.rgTechBattle[i] = app.state.rgplr[iplrOldOwner].rgTech[i];
                         }
-                        i = ITechLearnATech(app, iMax, -1, pl.id, idmWreckageDiscoveredBattleHasBoostedResearchResour, NULL);
+                        i = ITechLearnATech(app, iMax, -1, pl.id, idmWreckageDiscoveredBattleHasBoostedResearchResour, nullptr);
                         pl.iPlayer = iplrNone;
                     } else if (cSides > 1) {
                         for (i = 0; i < 16; i++) {
@@ -952,7 +952,7 @@ void DropColonists(APPSESSION &app) {
                                 LpplFromId(app, pl.id)->lpplprod = pl.lpplprod;
                             } else {
                                 FreePl(app, pl.lpplprod);
-                                pl.lpplprod = NULL;
+                                pl.lpplprod = nullptr;
                             }
                         }
                     }
@@ -1289,7 +1289,7 @@ void UpdateGuesses(APPSESSION &app) {
             if (lppl->cDefenses == 0) {
                 lppl->uDefGuess = 0;
             } else {
-                CalcPctSurvive(app, lppl, &pct, NULL);
+                CalcPctSurvive(app, lppl, &pct, nullptr);
                 l = 100 - (int32_t)((double)pct * 100.0 + 0.5) + 4;
                 l = (int32_t)(l / 6);
                 if (l < 1) {
@@ -1425,7 +1425,7 @@ void TossNonAutoBuildItems(APPSESSION &app, PLANET *lppl) {
             lppl->lpplprod->iprodMac = iDst;
         } else {
             FreePl(app, lppl->lpplprod);
-            lppl->lpplprod = NULL;
+            lppl->lpplprod = nullptr;
         }
     }
     return;
@@ -1878,7 +1878,7 @@ void ThingDecay(APPSESSION &app) {
                         /* The original set fBombed even when the fleet was
                            immune to this field, sparing it from every other
                            detonating field. */
-                        if (!lpfl->fBombed && (uint32_t)(dx * dx) + (uint32_t)(dy * dy) <= lDecay && !FTravelThroughMineFields(app, lpfl, NULL, lpth)) {
+                        if (!lpfl->fBombed && (uint32_t)(dx * dx) + (uint32_t)(dy * dy) <= lDecay && !FTravelThroughMineFields(app, lpfl, nullptr, lpth)) {
                             lpfl->fBombed = 1;
                         }
                     }
@@ -2068,7 +2068,7 @@ void BreedColonistsInTransit(APPSESSION &app) {
                         continue;
                     lColGain = 1;
                 }
-                lColGainAct = ChgCargo(app, grobjFleet, lpfl->id, Colonists, lColGain, NULL);
+                lColGainAct = ChgCargo(app, grobjFleet, lpfl->id, Colonists, lColGain, nullptr);
                 if (lColGainAct > 0) {
                     TurnIO().pfnMessage2(app, lpfl->iPlayer, idmColonistsHaveMadeGoodUseTimeIncreasing, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, LOWORD(lColGainAct));
                 }

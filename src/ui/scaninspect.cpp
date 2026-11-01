@@ -124,7 +124,7 @@ BOOL FSelectScannerObject(APPSESSION &app, const SCANSNAPSHOT *lpsnap, uint16_t 
     else scan.ith = i;
     ChangeScanSel(app, &scan, 2);
     if (fReveal) FEnsurePointOnScreen(app, pt, 1);
-    ControlIO().pfnInvalidateRect(app.lpui->hwndScanner, NULL, 0);
+    ControlIO().pfnInvalidateRect(app.lpui->hwndScanner, nullptr, 0);
     return 1;
 }
 
@@ -203,13 +203,13 @@ static LRESULT  ScannerInspectorProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     switch (msg) {
     case win32::WM_CREATE:
         if (!ui::CreateWindowEx(0, "ListBox", "", win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP | win32::WS_BORDER | win32::WS_VSCROLL | win32::LBS_NOTIFY | win32::LBS_NOINTEGRALHEIGHT,
-                          8, 40, 300, 300, hwnd, (HMENU)(INT_PTR)1, app.lpui->hInst, NULL) ||
+                          8, 40, 300, 300, hwnd, (HMENU)(INT_PTR)1, app.lpui->hInst, nullptr) ||
             !ui::CreateWindowEx(0, "Edit", "", win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP | win32::WS_BORDER | win32::ES_MULTILINE | win32::ES_READONLY | win32::ES_AUTOVSCROLL,
-                          320, 40, 320, 300, hwnd, (HMENU)(INT_PTR)2, app.lpui->hInst, NULL) ||
+                          320, 40, 320, 300, hwnd, (HMENU)(INT_PTR)2, app.lpui->hInst, nullptr) ||
             !ui::CreateWindowEx(0, "Button", "Refresh", win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
-                          8, 8, 90, 24, hwnd, (HMENU)(INT_PTR)3, app.lpui->hInst, NULL) ||
+                          8, 8, 90, 24, hwnd, (HMENU)(INT_PTR)3, app.lpui->hInst, nullptr) ||
             !ui::CreateWindowEx(0, "Button", "Select / reveal", win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
-                          108, 8, 130, 24, hwnd, (HMENU)(INT_PTR)4, app.lpui->hInst, NULL)) return -1;
+                          108, 8, 130, 24, hwnd, (HMENU)(INT_PTR)4, app.lpui->hInst, nullptr)) return -1;
         return 0;
     case win32::WM_SIZE:
         ControlIO().pfnGetClientRect(hwnd, &rc);
@@ -231,7 +231,7 @@ static LRESULT  ScannerInspectorProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         }
         return 0;
     case win32::WM_DESTROY:
-        hwndScanInspector = NULL;
+        hwndScanInspector = nullptr;
         FreeScannerSnapshot(&snapScanInspector);
         return 0;
     default:
@@ -244,20 +244,20 @@ HWND ShowScannerInspector(void) {
 
     WNDCLASS wc = {0};
 
-    if (!win32::IsWindow(app.lpui->hwndFrame)) return NULL;
-    if (StarsCompatWindowId(app.lpui->hwndFrame) == 0) return NULL;
+    if (!win32::IsWindow(app.lpui->hwndFrame)) return nullptr;
+    if (StarsCompatWindowId(app.lpui->hwndFrame) == 0) return nullptr;
     wc.lpszClassName = "StarsScannerInspector";
     if (!win32::IsWindow(hwndScanInspector)) {
         if (!fScanInspectorClass) {
             wc.lpfnWndProc = ScannerInspectorProc;
             wc.hInstance = app.lpui->hInst;
             wc.hbrBackground = (HBRUSH)(INT_PTR)(win32::COLOR_BTNFACE + 1);
-            if (!win32::RegisterClassA(&wc)) return NULL;
+            if (!win32::RegisterClassA(&wc)) return nullptr;
             fScanInspectorClass = 1;
         }
         hwndScanInspector = ui::CreateWindowEx(0, wc.lpszClassName, "Stars scanner objects", win32::WS_OVERLAPPEDWINDOW,
-                                         win32::CW_USEDEFAULT, win32::CW_USEDEFAULT, 800, 450, app.lpui->hwndFrame, NULL, app.lpui->hInst, NULL);
-        if (!hwndScanInspector) return NULL;
+                                         win32::CW_USEDEFAULT, win32::CW_USEDEFAULT, 800, 450, app.lpui->hwndFrame, nullptr, app.lpui->hInst, nullptr);
+        if (!hwndScanInspector) return nullptr;
     }
     RefreshScannerInspector(app, hwndScanInspector);
     ui::ShowWindow(hwndScanInspector, win32::SW_SHOWNORMAL);
@@ -266,12 +266,12 @@ HWND ShowScannerInspector(void) {
 
 void CloseScannerInspector(void) {
     if (win32::IsWindow(hwndScanInspector)) ControlIO().pfnDestroyWindow(hwndScanInspector);
-    hwndScanInspector = NULL;
+    hwndScanInspector = nullptr;
     FreeScannerSnapshot(&snapScanInspector);
 }
 
 void ResetScannerInspectorSession() noexcept {
-    hwndScanInspector = NULL;
+    hwndScanInspector = nullptr;
     FreeScannerSnapshot(&snapScanInspector);
     fScanInspectorClass = 0;
 }

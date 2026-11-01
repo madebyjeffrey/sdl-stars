@@ -108,7 +108,7 @@ INT_PTR  ZipOrderDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         if (HIWORD(wParam) == 0 && LOWORD(wParam) >= IDC_ZIP_PROD_PRESET_1 && LOWORD(wParam) <= IDC_ZIP_PROD_PRESET_4) {
             app.lpui->iResTechNow = static_cast<TechFieldType>(LOWORD(wParam) - 1073);
             EnableZipBtns(app, hwnd, app.lpui->iResTechNow);
-            ControlIO().pfnInvalidateRect(hwnd, NULL, 1);
+            ControlIO().pfnInvalidateRect(hwnd, nullptr, 1);
         } else {
             switch (LOWORD(wParam)) {
             case IDOK:
@@ -145,7 +145,7 @@ INT_PTR  ZipOrderDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                     if (LOWORD(wParam) == IDC_IMPORT) {
                         app.state.vrgZip[app.lpui->iResTechNow].fValid = 1;
                         app.state.vrgZip[app.lpui->iResTechNow].txp = app.state.sel.fl.lpplord->rgord()[app.state.sel.iwpAct].txp;
-                        ControlIO().pfnInvalidateRect(hwnd, NULL, 1);
+                        ControlIO().pfnInvalidateRect(hwnd, nullptr, 1);
                     }
                     EnableZipBtns(app, hwnd, app.lpui->iResTechNow);
                 }
@@ -156,7 +156,7 @@ INT_PTR  ZipOrderDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 app.state.vrgZip[app.lpui->iResTechNow].fValid = 0;
                 win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsUnusedD), app.lpui->iResTechNow + 1);
                 ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd, app.lpui->iResTechNow + 1073), app.state.szWork);
-                ControlIO().pfnInvalidateRect(hwnd, NULL, 1);
+                ControlIO().pfnInvalidateRect(hwnd, nullptr, 1);
                 app.state.gd.fChgZipOrd = 1;
                 break;
             case IDC_HELP:
@@ -191,7 +191,7 @@ INT_PTR  RenameZipDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             ids = idsRenameProductionTemplate;
         }
         ControlIO().pfnSetWindowText(hwnd, TextIO().pfnCompressed(app, ids));
-        ControlIO().pfnSetWindowPos(hwnd, NULL, app.lpui->ptStickyRenameDlg.x + 70, app.lpui->ptStickyRenameDlg.y + 70, 0, 0, win32::SWP_NOSIZE | win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
+        ControlIO().pfnSetWindowPos(hwnd, nullptr, app.lpui->ptStickyRenameDlg.x + 70, app.lpui->ptStickyRenameDlg.y + 70, 0, 0, win32::SWP_NOSIZE | win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
         ui::SendDlgItemMessage(hwnd, IDC_EDIT1, win32::EM_LIMITTEXT, 0xc, 0);
         ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_EDIT1), app.state.szWork);
         ControlIO().pfnStickyDlgPos(hwnd, &app.lpui->ptStickyRenameDlg, 1);
@@ -239,7 +239,7 @@ INT_PTR  RenameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message) {
     case win32::WM_INITDIALOG:
         ControlIO().pfnSetWindowText(hwnd, TextIO().pfnCompressed(app, idsRenameFleet));
-        ControlIO().pfnSetWindowPos(hwnd, NULL, app.lpui->ptStickyRenameDlg.x + 70, app.lpui->ptStickyRenameDlg.y + 70, 0, 0, win32::SWP_NOSIZE | win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
+        ControlIO().pfnSetWindowPos(hwnd, nullptr, app.lpui->ptStickyRenameDlg.x + 70, app.lpui->ptStickyRenameDlg.y + 70, 0, 0, win32::SWP_NOSIZE | win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
         ui::SendDlgItemMessage(hwnd, IDC_EDIT1, win32::EM_LIMITTEXT, 0x1f, 0);
         ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_EDIT1), app.state.szWork);
         ControlIO().pfnStickyDlgPos(hwnd, &app.lpui->ptStickyRenameDlg, 1);

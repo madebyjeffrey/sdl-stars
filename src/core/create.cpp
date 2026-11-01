@@ -676,8 +676,8 @@ RetryAll:
                     goto LGive2ndPlanet;
             } else if (raMajor == raMassAccel && (int16_t)app.state.game.mdSize > sizeTiny) {
             LGive2ndPlanet:
-                lpplPicked = NULL;
-                lpplClosest = NULL;
+                lpplPicked = nullptr;
+                lpplClosest = nullptr;
                 ptHome = app.state.rgptPlan[idHome];
                 cFit = 0;
                 lDistMin2 = (int32_t)(app.state.dGal * 15) / 100;
@@ -909,8 +909,8 @@ RetryAll:
             app.state.game.lid = DwTickCount();
         }
         CchSprintf(app.state.szWork, "%s.xy", app.state.szBase);
-        if (!RecordIO().pfnFCreateFile(app, dtXY, iplrNone, NULL)) {
-            AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableCreateUniverseDefinitionFile, NULL), win32::MB_ICONHAND);
+        if (!RecordIO().pfnFCreateFile(app, dtXY, iplrNone, nullptr)) {
+            AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableCreateUniverseDefinitionFile, nullptr), win32::MB_ICONHAND);
             DestroyCurGame(app);
             return 0;
         }
@@ -939,7 +939,7 @@ RetryAll:
             DestroyCurGame(app);
             CchSprintf(szExt, app.state.MPCTD, iplrSingle + 1);
             if (!FLoadGame(app, app.state.szBase, szExt)) {
-                AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableOpenNewTurnFile, NULL), win32::MB_ICONHAND);
+                AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableOpenNewTurnFile, nullptr), win32::MB_ICONHAND);
                 return 0;
             }
             app.state.idPlayer = iplrSingle;
@@ -1029,7 +1029,7 @@ int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
         if (cb >= 3 && !memcmp(lpb, "\xef\xbb\xbf", 3)) lpb += 3;
         lpbStart = PszGetLine(&lpb);
         if (*lpbStart == 0 || strlen(lpbStart) > 31) {
-            AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsIllegalGameTitle, NULL), win32::MB_ICONHAND);
+            AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsIllegalGameTitle, nullptr), win32::MB_ICONHAND);
             goto LError;
         }
         if (CchCopyUtf8(app.state.game.szName, sizeof(app.state.game.szName), lpbStart, strlen(lpbStart)) < 0) {
@@ -1038,14 +1038,14 @@ int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
         }
         if (lpb >= app.state.lpbDefMac) {
         LUniDefShort:
-            AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUniverseDefinitionFileAppearsTooShort, NULL), win32::MB_ICONHAND);
+            AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUniverseDefinitionFileAppearsTooShort, nullptr), win32::MB_ICONHAND);
             goto LError;
         }
         lpbStart = PszGetLine(&lpb);
         cNum = CParseNumbers(lpbStart, rgl, 4);
         if (cNum == -1) {
         LUniDefError:
-            AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsLine2HasBadUniverseDefinitionParameter, NULL), win32::MB_ICONHAND);
+            AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsLine2HasBadUniverseDefinitionParameter, nullptr), win32::MB_ICONHAND);
             goto LError;
         }
         for (i = 0; i < cNum; i++) {
@@ -1070,7 +1070,7 @@ int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
         cNum = CParseNumbers(lpbStart, rgl, 7);
         if (cNum == -1) {
         LUniDefError3:
-            AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsLine3HasBadUniverseDefinitionParameter, NULL), win32::MB_ICONHAND);
+            AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsLine3HasBadUniverseDefinitionParameter, nullptr), win32::MB_ICONHAND);
             goto LError;
         }
         for (i = 0; i < cNum; i++) {
@@ -1101,7 +1101,7 @@ int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
         lpbStart = PszGetLine(&lpb);
         cNum = CParseNumbers(lpbStart, rgl, 1);
         if (cNum < 1 || rgl[0] < 1 || rgl[0] > 16) {
-            AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsLine4HasImproperNumberPlayerFiles, NULL), win32::MB_ICONHAND);
+            AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsLine4HasImproperNumberPlayerFiles, nullptr), win32::MB_ICONHAND);
             goto LError;
         }
         if (lpb >= app.state.lpbDefMac)
@@ -1342,7 +1342,7 @@ int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
     }
 LError:
     RecordIO().pfnStreamClose(app);
-    app.state.lpbDefUni = NULL;
+    app.state.lpbDefUni = nullptr;
     TurnLog(app, static_cast<StringId>(idsFailed + fSuccess));
     return fSuccess;
 }

@@ -77,7 +77,7 @@ SDL_Surface *LpCompatDibSurface(const COMPATDIB *lpdib) {
 
     lpsurfaceOwner.reset(SDL_CreateSurface(lpdib->cx, lpdib->cy, SDL_PIXELFORMAT_RGBA32)); lpsurface = lpsurfaceOwner.get();
     if (!lpsurface)
-        return NULL;
+        return nullptr;
     for (y = 0; y < lpdib->cy; y++) {
         rgb = lpdib->lpBits + (size_t)(lpdib->fTopDown ? y : lpdib->cy - 1 - y) * lpdib->cbRow;
         lpout = (BYTE *)lpsurface->pixels + (size_t)y * lpsurface->pitch;
@@ -88,7 +88,7 @@ SDL_Surface *LpCompatDibSurface(const COMPATDIB *lpdib) {
                 if (iColor >= lpdib->cColors) {
                     lpsurfaceOwner.reset();
                     SDL_SetError("DIB pixel index is outside its color table");
-                    return NULL;
+                    return nullptr;
                 }
                 cr = lpdib->rgcr[iColor];
             } else {

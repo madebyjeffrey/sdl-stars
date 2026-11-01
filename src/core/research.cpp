@@ -51,7 +51,7 @@ int32_t ProjectedResearchSpending(APPSESSION &app, int32_t pct) {
             if (!lppl->lpplprod || lppl->lpplprod->iprodMac == 0) {
                 lSpend += lRes;
             } else {
-                ResearchIO().pfnEstimate(app, lppl, NULL, static_cast<ProdItemType>(iprodEstimateResearchResources), &cRes, &cBogus);
+                ResearchIO().pfnEstimate(app, lppl, nullptr, static_cast<ProdItemType>(iprodEstimateResearchResources), &cRes, &cBogus);
                 lSpend += cRes;
             }
         }

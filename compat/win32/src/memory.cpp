@@ -4,14 +4,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef struct COMPATMEMORY {
+struct COMPATMEMORY {
     HANDLE h;
     BYTE *rgb;
     size_t cb;
     UINT cLocks;
     BOOL fMoveable;
     struct COMPATMEMORY *lpNext;
-} COMPATMEMORY;
+};
 
 static COMPATMEMORY *lpMemory;
 static NATIVEFLAGLOCK fMemoryLock;
@@ -47,7 +47,7 @@ static COMPATMEMORY *LpMemory(HANDLE h) {
         if (lp->h == h)
             return lp;
     win32::SetLastError(win32::ERROR_INVALID_HANDLE);
-    return NULL;
+    return nullptr;
 }
 
 HGLOBAL win32::GlobalAlloc(UINT flags, SIZE_T cb) {
@@ -56,12 +56,12 @@ HGLOBAL win32::GlobalAlloc(UINT flags, SIZE_T cb) {
 
     if (flags & ~(win32::GMEM_MOVEABLE | win32::GMEM_ZEROINIT | win32::GMEM_DISCARDABLE | win32::GMEM_NOCOMPACT | win32::GMEM_NODISCARD | win32::GMEM_SHARE)) {
         win32::SetLastError(win32::ERROR_INVALID_PARAMETER);
-        return NULL;
+        return nullptr;
     }
     lp = (COMPATMEMORY *)(calloc(1, sizeof(*lp)));
     if (!lp) {
         win32::SetLastError(win32::ERROR_NOT_ENOUGH_MEMORY);
-        return NULL;
+        return nullptr;
     }
     block.reset(lp);
     lp->fMoveable = (flags & win32::GMEM_MOVEABLE) != 0;
@@ -70,7 +70,7 @@ HGLOBAL win32::GlobalAlloc(UINT flags, SIZE_T cb) {
         lp->rgb = (BYTE *)(flags & win32::GMEM_ZEROINIT ? calloc(1, cb ? cb : 1) : malloc(cb ? cb : 1));
         if (!lp->rgb) {
             win32::SetLastError(win32::ERROR_NOT_ENOUGH_MEMORY);
-            return NULL;
+            return nullptr;
         }
     }
     std::unique_lock lockMemory(fMemoryLock);
@@ -86,7 +86,7 @@ HGLOBAL win32::GlobalFree(HGLOBAL h) {
     COMPATMEMORY **lplp, *lp;
 
     if (!h)
-        return NULL;
+        return nullptr;
     std::unique_lock lockMemory(fMemoryLock);
     for (lplp = &lpMemory; *lplp; lplp = &(*lplp)->lpNext) {
         lp = *lplp;
@@ -94,7 +94,7 @@ HGLOBAL win32::GlobalFree(HGLOBAL h) {
             *lplp = lp->lpNext;
             FreeMemoryBlock(lp);
             lockMemory.unlock();
-            return NULL;
+            return nullptr;
         }
     }
     lockMemory.unlock(); win32::SetLastError(win32::ERROR_INVALID_HANDLE);
@@ -103,7 +103,7 @@ HGLOBAL win32::GlobalFree(HGLOBAL h) {
 
 LPVOID win32::GlobalLock(HGLOBAL h) {
     COMPATMEMORY *lp;
-    LPVOID lpv = NULL;
+    LPVOID lpv = nullptr;
 
     std::unique_lock lockMemory(fMemoryLock);
     lp = LpMemory(h);
@@ -162,7 +162,7 @@ UINT win32::GlobalFlags(HGLOBAL h) {
 
 HGLOBAL win32::GlobalHandle(LPCVOID lpv) {
     COMPATMEMORY *lp;
-    HANDLE h = NULL;
+    HANDLE h = nullptr;
 
     std::unique_lock lockMemory(fMemoryLock);
     for (lp = lpMemory; lp; lp = lp->lpNext)
@@ -175,7 +175,7 @@ HGLOBAL win32::GlobalHandle(LPCVOID lpv) {
 HGLOBAL win32::GlobalReAlloc(HGLOBAL h, SIZE_T cb, UINT flags) {
     COMPATMEMORY *lp;
     BYTE *rgb;
-    HANDLE hRet = NULL;
+    HANDLE hRet = nullptr;
 
     std::unique_lock lockMemory(fMemoryLock); lp = LpMemory(h);
     if (!lp) goto LReturn;
@@ -191,7 +191,7 @@ HGLOBAL win32::GlobalReAlloc(HGLOBAL h, SIZE_T cb, UINT flags) {
     }
     if (cb == 0 && lp->fMoveable && (flags & win32::GMEM_MOVEABLE)) {
         if (lp->cLocks != 0) { win32::SetLastError(win32::ERROR_LOCKED); goto LReturn; }
-        free(lp->rgb); lp->rgb = NULL; lp->cb = 0;
+        free(lp->rgb); lp->rgb = nullptr; lp->cb = 0;
         hRet = lp->h; goto LReturn;
     }
     // Locked or fixed blocks may resize in place without invalidating live pointers.

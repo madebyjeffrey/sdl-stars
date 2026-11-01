@@ -11,13 +11,13 @@
 #include <string.h>
 #include <strings.h>
 
-typedef struct COMPATGLYPH {
+struct COMPATGLYPH {
     NATIVEARRAYOWNER<BYTE, std::free> rgb;
     int cx, cy, x, y, dx;
     BOOL fLoaded;
     DWORD ch;
     struct COMPATGLYPH *lpNext;
-} COMPATGLYPH;
+};
 
 static void FreeCompatGlyphs(COMPATGLYPH *lp) noexcept {
     COMPATGLYPH *lpNext;
@@ -46,7 +46,7 @@ static COMPATGLYPH *LpLoadGlyph(COMPATFONT *lpfont, FT_Face face, DWORD ch, COMP
     const BYTE *rgbRow;
 
     if (lp->fLoaded) return lp;
-    if (FT_Load_Char(face, ch, FT_LOAD_RENDER | FT_LOAD_TARGET_NORMAL)) return NULL;
+    if (FT_Load_Char(face, ch, FT_LOAD_RENDER | FT_LOAD_TARGET_NORMAL)) return nullptr;
     lpbm = &face->glyph->bitmap;
     lp->cx = (int)lpbm->width; lp->cy = (int)lpbm->rows;
     lp->x = face->glyph->bitmap_left;
@@ -54,7 +54,7 @@ static COMPATGLYPH *LpLoadGlyph(COMPATFONT *lpfont, FT_Face face, DWORD ch, COMP
     lp->dx = (int)((face->glyph->advance.x + 32) >> 6);
     if (lp->cx && lp->cy) {
         lp->rgb.reset((BYTE *)malloc((size_t)lp->cx * lp->cy));
-        if (!lp->rgb) return NULL;
+        if (!lp->rgb) return nullptr;
         for (y = 0; y < lp->cy; y++) {
             rgbRow = lpbm->buffer + (lpbm->pitch >= 0 ? y : lp->cy - 1 - y) * abs(lpbm->pitch);
             for (x = 0; x < lp->cx; x++)
@@ -74,7 +74,7 @@ static COMPATGLYPH *LpGlyph(COMPATFONT *lpfont, BYTE ch) {
 static BOOL FFontConfig(void) {
     if (lpConfig) return 1;
     lpConfig.reset(FcConfigCreate());
-    if (!lpConfig || !FcConfigParseAndLoad(lpConfig.get(), NULL, FcTrue) || !FcConfigBuildFonts(lpConfig.get())) {
+    if (!lpConfig || !FcConfigParseAndLoad(lpConfig.get(), nullptr, FcTrue) || !FcConfigBuildFonts(lpConfig.get())) {
         lpConfig.reset();
         return 0;
     }
@@ -96,14 +96,14 @@ static FT_Face FaceFallback(COMPATFONT *lpfont, DWORD ch) {
     FcCharSet *charset;
     FcResult result;
     FcChar8 *pszFile;
-    FT_Face face = NULL;
+    FT_Face face = nullptr;
     NATIVEOWNER<FT_FaceRec_, FT_Done_Face> lpfaceOwner;
     FT_Matrix matrix;
     FT_Vector delta;
     int index = 0;
     NATIVEOWNER<FcCharSet, FcCharSetDestroy> lpcharsetOwner;
     NATIVEOWNER<FcPattern, FcPatternDestroy> lppatternOwner, lpmatchOwner;
-    if (!FFontConfig()) return NULL;
+    if (!FFontConfig()) return nullptr;
     lppatternOwner.reset(FcPatternCreate()); pattern = lppatternOwner.get();
     lpcharsetOwner.reset(FcCharSetCreate()); charset = lpcharsetOwner.get();
     if (!pattern || !charset) goto done;
@@ -137,16 +137,16 @@ static COMPATGLYPH *LpGlyphUtf8(COMPATFONT *lpfont, DWORD ch) {
     for (lp = lpfont->lpGlyphUtf8.get(); lp; lp = lp->lpNext) if (lp->ch == ch) return lp;
     // Bound the extra cache independently of cached code points and filename length.
     if (lpfont->cGlyphUtf8 == 256) {
-        lpPrev = NULL;
+        lpPrev = nullptr;
         for (lp = lpfont->lpGlyphUtf8.get(); lp->lpNext; lp = lp->lpNext) lpPrev = lp;
-        if (lpPrev) { lpPrev->lpNext = NULL; delete lp; }
+        if (lpPrev) { lpPrev->lpNext = nullptr; delete lp; }
         else lpfont->lpGlyphUtf8.reset();
         lpfont->cGlyphUtf8--;
     }
     lpglyphOwner.reset(new (std::nothrow) COMPATGLYPH{}); lp = lpglyphOwner.get();
-    if (!lp) return NULL;
-    lpfaceOwner.reset(FT_Get_Char_Index(lpfont->face.get(), ch) ? NULL : FaceFallback(lpfont, ch)); face = lpfaceOwner.get();
-    if (!LpLoadGlyph(lpfont, face ? face : lpfont->face.get(), ch, lp)) return NULL;
+    if (!lp) return nullptr;
+    lpfaceOwner.reset(FT_Get_Char_Index(lpfont->face.get(), ch) ? nullptr : FaceFallback(lpfont, ch)); face = lpfaceOwner.get();
+    if (!LpLoadGlyph(lpfont, face ? face : lpfont->face.get(), ch, lp)) return nullptr;
     lpfaceOwner.reset();
     lp->ch = ch; lp->lpNext = lpfont->lpGlyphUtf8.release();
     lpfont->lpGlyphUtf8.reset(lp); lpfont->cGlyphUtf8++;
@@ -165,8 +165,8 @@ static COMPATFONT *LpNewFontRaster(const LOGFONTA *lplf, int cMax) {
     char szFamily[win32::LF_FACESIZE];
     char *psz;
     int index = 0, cHeight, i, cWidth = 0, dxMax = 0, iFaceError;
-    FT_Face face = NULL;
-    FT_Library libraryNew = NULL;
+    FT_Face face = nullptr;
+    FT_Library libraryNew = nullptr;
     NATIVEOWNER<FT_LibraryRec_, FT_Done_FreeType> libraryOwner;
     BOOL fBold, fItalic;
     COMPATGLYPH *lpglyph;
@@ -177,16 +177,16 @@ static COMPATFONT *LpNewFontRaster(const LOGFONTA *lplf, int cMax) {
     if (!lplf || (int64_t)lplf->lfHeight < -cMax || lplf->lfHeight > cMax ||
         lplf->lfWidth < 0 || lplf->lfWidth > cMax ||
         !memchr(lplf->lfFaceName, 0, sizeof(lplf->lfFaceName)) ||
-        !FUtf8Valid(lplf->lfFaceName, strlen(lplf->lfFaceName))) return NULL;
+        !FUtf8Valid(lplf->lfFaceName, strlen(lplf->lfFaceName))) return nullptr;
     if (!library) {
         iFaceError = FT_Init_FreeType(&libraryNew);
         libraryOwner.reset(libraryNew);
-        if (iFaceError) return NULL;
+        if (iFaceError) return nullptr;
         try { library = std::shared_ptr<FT_LibraryRec_>(std::move(libraryOwner)); }
-        catch (const std::bad_alloc &) { return NULL; }
+        catch (const std::bad_alloc &) { return nullptr; }
     }
     lpfontOwner.reset(new (std::nothrow) COMPATFONT{}); lpfont = lpfontOwner.get();
-    if (!lpfont) return NULL;
+    if (!lpfont) return nullptr;
     lpfont->library = library;
     lpfont->lf = *lplf; lpfont->lf.lfFaceName[win32::LF_FACESIZE - 1] = 0;
     strcpy(szFamily, lpfont->lf.lfFaceName);
@@ -194,7 +194,7 @@ static COMPATFONT *LpNewFontRaster(const LOGFONTA *lplf, int cMax) {
     fItalic = lplf->lfItalic;
     // The game stores styled face names rather than setting LOGFONT style flags.
     psz = strstr(szFamily, " Bold");
-    if (psz) { *psz = 0; fBold = 1; fItalic |= strstr(psz + 1, "Italic") != NULL; }
+    if (psz) { *psz = 0; fBold = 1; fItalic |= strstr(psz + 1, "Italic") != nullptr; }
     else if ((psz = strstr(szFamily, " Italic"))) { *psz = 0; fItalic = 1; }
     i = -1;
     if (!*szFamily || !strcasecmp(szFamily, "Arial") || !strcasecmp(szFamily, "Liberation Sans") ||
@@ -249,7 +249,7 @@ static COMPATFONT *LpNewFontRaster(const LOGFONTA *lplf, int cMax) {
     lpfont->tm.tmAveCharWidth = (cWidth + 26) / 52;
     if (lplf->lfWidth && lpfont->tm.tmAveCharWidth) {
         matrix.xx = (FT_Fixed)((int64_t)lplf->lfWidth * 65536 / lpfont->tm.tmAveCharWidth);
-        FT_Set_Transform(lpfont->face.get(), &matrix, NULL);
+        FT_Set_Transform(lpfont->face.get(), &matrix, nullptr);
         for (i = 0; i < 256; i++) lpfont->rgglyph[i] = COMPATGLYPH{};
         lpfont->tm.tmAveCharWidth = lplf->lfWidth;
     }
@@ -260,7 +260,7 @@ static COMPATFONT *LpNewFontRaster(const LOGFONTA *lplf, int cMax) {
     lpfont->tm.tmMaxCharWidth = dxMax;
     return lpfontOwner.release();
 LFail:
-    return NULL;
+    return nullptr;
 }
 
 COMPATFONT *LpNewCompatFont(const LOGFONTA *lplf) {

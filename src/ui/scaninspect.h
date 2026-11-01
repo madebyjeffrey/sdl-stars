@@ -11,21 +11,21 @@
  * kind, id), not array indices or pointers. Re-capture after loading a turn.
  * Planet coordinates/names are public even before the planet is explored.
  */
-typedef struct SCANOBJECT {
+struct SCANOBJECT {
     uint16_t grType, id;
     int16_t iPlayer, det, ith;
     POINT ptUniverse, ptClient, ptScreen;
     BOOL fOnScreen, fFiltered, fScanSelected, fMainSelected;
     char szName[360];
-} SCANOBJECT;
-typedef struct SCANSNAPSHOT {
+};
+struct SCANSNAPSHOT {
     int32_t lidGame;
     uint16_t turn;
     int16_t idPlayer, iZoom;
     RECT rcViewport;
     NATIVEARRAYOWNER<SCANOBJECT, std::free> rgobj;
     size_t cObject;
-} SCANSNAPSHOT;
+};
 BOOL FCaptureScanner(APPSESSION &app, SCANSNAPSHOT *lpsnap);
 void FreeScannerSnapshot(SCANSNAPSHOT *lpsnap);
 BOOL FWriteScannerSnapshot(const SCANSNAPSHOT *lpsnap, NATIVEFILE *lpfile);

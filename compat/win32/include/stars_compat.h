@@ -24,7 +24,7 @@ BOOL StarsCompatSetWindowAlertSounds(HWND hwnd, BOOL fEnable);
  * Strings are copied without calling application procedures.
  * Password text is redacted. Initialize snapshots to zero; free before reuse.
  */
-typedef struct STARSCOMPATWINDOW {
+struct STARSCOMPATWINDOW {
     uint64_t id, idParent, idOwner;
     LONG_PTR idControl;
     DWORD dwStyle, dwExStyle;
@@ -33,11 +33,11 @@ typedef struct STARSCOMPATWINDOW {
     RECT rcWindow, rcClient;
     char *pszClass, *pszText;
     BOOL fUtf8Text;
-} STARSCOMPATWINDOW;
-typedef struct STARSCOMPATSNAPSHOT {
+};
+struct STARSCOMPATSNAPSHOT {
     STARSCOMPATWINDOW *rgWindow;
     size_t cWindow;
-} STARSCOMPATSNAPSHOT;
+};
 BOOL StarsCompatCaptureHierarchy(STARSCOMPATSNAPSHOT *lpsnap);
 void StarsCompatFreeHierarchy(STARSCOMPATSNAPSHOT *lpsnap);
 /* JSON uses UTF-8 text and decimal strings for IDs, to preserve 64-bit values. */

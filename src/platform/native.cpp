@@ -184,7 +184,7 @@ void GetDateTimeSz(char *szDate, char *szTime) {
     time_t     t;
     struct tm *ptm;
 
-    t = time(NULL);
+    t = time(nullptr);
     ptm = localtime(&t);
     strftime(szDate, 9, "%m/%d/%y", ptm);
     strftime(szTime, 9, "%H:%M:%S", ptm);
@@ -193,7 +193,7 @@ void GetDateTimeSz(char *szDate, char *szTime) {
 int16_t FSzPrefixNoCase(const char *sz1, const char *sz2, int16_t cch) { return strncasecmp(sz1, sz2, cch) == 0; }
 
 #endif
-int64_t LNativeTime(void) { return (int64_t)time(NULL); }
+int64_t LNativeTime(void) { return (int64_t)time(nullptr); }
 
 int CchSnprintf(char *psz, size_t cb, const char *pszFormat, ...) {
     va_list args;

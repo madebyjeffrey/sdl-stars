@@ -14,7 +14,7 @@ void BattleVCR(APPSESSION &app, int16_t iBattle) {
     HB      *lphb;
     uint8_t  cTokAlloc;
 
-    lpProc = NULL;
+    lpProc = nullptr;
     app.lpui->viStepVCRCur = -1;
     app.state.gd.fVCRTimer = 0;
     if (app.state.gd.mdScreenSize >= 2) {
@@ -54,7 +54,7 @@ void BattleVCR(APPSESSION &app, int16_t iBattle) {
         ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_VCR), app.lpui->hwndFrame, lpProc, 0);
 
     } catch (const StarsError &) {
-        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMemory, NULL), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMemory, nullptr), win32::MB_ICONHAND);
     }
 LCleanup:
     if (lpProc) {
@@ -65,8 +65,8 @@ LCleanup:
     if (app.lpui->vrgdpVCR) {
         HeapIO().pfnFree(app, app.lpui->vrgdpVCR, htMisc);
     }
-    app.state.vrgtok = NULL;
-    app.lpui->vrgdpVCR = NULL;
+    app.state.vrgtok = nullptr;
+    app.lpui->vrgdpVCR = nullptr;
     return;
 }
 
@@ -76,7 +76,7 @@ uint8_t *BtlDataGet(APPSESSION &app, int16_t i) {
 
     lphb = app.state.rglphb[11];
     if (!lphb) {
-        return NULL;
+        return nullptr;
     }
     lpbd = (uint8_t *)lphb + (sizeof(HB) + 2);
     while (1) {
@@ -87,7 +87,7 @@ uint8_t *BtlDataGet(APPSESSION &app, int16_t i) {
             lpbd = (uint8_t *)lphb + (sizeof(HB) + 2);
         } else {
             if (BdvFromLp(app, lpbd).cbData() == 0) {
-                return NULL;
+                return nullptr;
             }
             if (i-- <= 0) {
                 return lpbd;
@@ -95,7 +95,7 @@ uint8_t *BtlDataGet(APPSESSION &app, int16_t i) {
             lpbd = (uint8_t *)lpbd + BdvFromLp(app, lpbd).cbData();
         }
     }
-    return NULL;
+    return nullptr;
 }
 
 int32_t CBattleUnits(APPSESSION &app, uint8_t *lpbd, BattleUnitFlags grbitBU) {
@@ -292,7 +292,7 @@ INT_PTR  VCRDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         ControlIO().pfnGetClientRect(hwnd, &rc);
         dyFrame = rcWindow.bottom - rcWindow.top - rc.bottom;
         win32::GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDC_VCR_REW_ALL), &rc);
-        ControlIO().pfnSetWindowPos(hwnd, NULL, 0, 0, app.lpui->dxyVCRBoard + 250, dyFrame + 24 + app.lpui->dxyVCRBoard + (rc.bottom - rc.top), win32::SWP_NOMOVE | win32::SWP_NOZORDER);
+        ControlIO().pfnSetWindowPos(hwnd, nullptr, 0, 0, app.lpui->dxyVCRBoard + 250, dyFrame + 24 + app.lpui->dxyVCRBoard + (rc.bottom - rc.top), win32::SWP_NOMOVE | win32::SWP_NOZORDER);
         for (i = 0; i < 7; i++) {
             if (i < 5) {
                 ibtn = i + 161;
@@ -302,7 +302,7 @@ INT_PTR  VCRDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 ibtn = 118;
             }
             win32::GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, ibtn), &rc);
-            win32::MapWindowPoints(NULL, hwnd, (POINT *)&rc, 2);
+            win32::MapWindowPoints(nullptr, hwnd, (POINT *)&rc, 2);
             if (app.lpui->dxyVCRSquare >= 64) {
                 dx = rc.right - rc.left;
                 dx = app.lpui->dxyVCRBoard / 2 + 8 - (int16_t)(7 * dx) / 2 - 24 + (dx + 8) * i;
@@ -311,7 +311,7 @@ INT_PTR  VCRDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 dx = 0;
             }
             win32::OffsetRect(&rc, dx, app.lpui->dxyVCRBoard + 16 - rc.top);
-            ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, ibtn), NULL, rc.left, rc.top, 0, 0, win32::SWP_NOSIZE | win32::SWP_NOZORDER);
+            ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, ibtn), nullptr, rc.left, rc.top, 0, 0, win32::SWP_NOSIZE | win32::SWP_NOZORDER);
         }
         EnableVCRButtons(app);
         ControlIO().pfnStickyDlgPos(hwnd, &app.lpui->ptStickyVCRDlg, 1);
@@ -353,7 +353,7 @@ INT_PTR  VCRDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             bkMode = win32::SetBkMode(hdc, win32::OPAQUE);
             crBkSav = win32::SetBkColor(hdc, app.lpui->crButtonFace);
             win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-            InitBtnTrack(&btnt, hwnd, NULL, prc, bt, 80, 0, 0, NULL);
+            InitBtnTrack(&btnt, hwnd, nullptr, prc, bt, 80, 0, 0, nullptr);
             while (FTrackBtn(app, &btnt)) {
                 if ((iDir == -1 && iCur > 0) || (iDir == 1 && iCur < 4)) {
                     iCur += iDir;
@@ -367,7 +367,7 @@ INT_PTR  VCRDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             win32::ReleaseDC(hwnd, hdc);
             if (app.state.gd.fVCRTimer) {
                 win32::KillTimer(hwnd, 2668);
-                app.state.gd.fVCRTimer = win32::SetTimer(hwnd, 2668, 570 - 120 * app.lpui->viSpeedVCR, NULL) != 0;
+                app.state.gd.fVCRTimer = win32::SetTimer(hwnd, 2668, 570 - 120 * app.lpui->viSpeedVCR, nullptr) != 0;
             }
             return 1;
         }
@@ -416,7 +416,7 @@ INT_PTR  VCRDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             app.lpui->viVCRFocus = -1;
         }
     GoodSel:
-        DrawVCR(app, NULL, -2, -1);
+        DrawVCR(app, nullptr, -2, -1);
         return 0;
     case win32::WM_PAINT:
         hdc = win32::BeginPaint(hwnd, &ps);
@@ -461,7 +461,7 @@ INT_PTR  VCRDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 iStep = -1;
                 break;
             case 2:
-                app.state.gd.fVCRTimer = win32::SetTimer(hwnd, 2668, 570 - 120 * app.lpui->viSpeedVCR, NULL) != 0;
+                app.state.gd.fVCRTimer = win32::SetTimer(hwnd, 2668, 570 - 120 * app.lpui->viSpeedVCR, nullptr) != 0;
                 /* fallthrough */
             case 3:
             NextBtn:
@@ -480,7 +480,7 @@ INT_PTR  VCRDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 break;
             }
             SetVCRBoard(app, iStep);
-            DrawVCR(app, NULL, -2, -1);
+            DrawVCR(app, nullptr, -2, -1);
         } else if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL) {
             if (app.state.gd.fVCRTimer) {
                 app.state.gd.fVCRTimer = 0;
@@ -592,7 +592,7 @@ void DrawVCR(APPSESSION &app, HDC hdc, int16_t iStart, int16_t iEnd) {
     int16_t xT;
     int16_t cshNew;
 
-    fCreatedDC = hdc == NULL;
+    fCreatedDC = hdc == nullptr;
     if (fCreatedDC) {
         hdc = win32::GetDC(app.lpui->hwndVCRDlg);
     }
@@ -633,11 +633,11 @@ void DrawVCR(APPSESSION &app, HDC hdc, int16_t iStart, int16_t iEnd) {
         app.lpui->rgrcBuildSpin[1] = app.lpui->rgrcBuildSpin[0];
         win32::OffsetRect(&app.lpui->rgrcBuildSpin[1], 14, 0);
         for (i = 0; i < 2; i++) {
-            DrawBtn(app, hdc, &app.lpui->rgrcBuildSpin[i], (i == 0 ? 2 : 3) | 0x20, 0, NULL);
+            DrawBtn(app, hdc, &app.lpui->rgrcBuildSpin[i], (i == 0 ? 2 : 3) | 0x20, 0, nullptr);
         }
         if (app.lpui->viStepVCRCur >= 0) {
             y += app.state.dyArial8 + 4;
-            psz = TextIO().pfnPlayerName(app, app.state.vrgtok[BevFromLp(app, app.lpui->vlpbrVCR).itok()].iplr, 1, 1, 1, 0, NULL);
+            psz = TextIO().pfnPlayerName(app, app.state.vrgtok[BevFromLp(app, app.lpui->vlpbrVCR).itok()].iplr, 1, 1, 1, 0, nullptr);
             win32::TextOutA(hdc, x, y, app.state.szWork, strlen(psz));
             y += app.state.dyArial8;
             if (BevFromLp(app, app.lpui->vlpbrVCR).itok() == app.lpui->viVCRFocus) {
@@ -660,7 +660,7 @@ void DrawVCR(APPSESSION &app, HDC hdc, int16_t iStart, int16_t iEnd) {
             win32::SetTextColor(hdc, app.lpui->crButtonText);
             fJam = 0;
             if (BevFromLp(app, app.lpui->vlpbrVCR).ctok() > 0) {
-                psz = TextIO().pfnPlayerName(app, app.state.vrgtok[BevFromLp(app, app.lpui->vlpbrVCR).itokAttack()].iplr, 0, 1, 1, 0, NULL);
+                psz = TextIO().pfnPlayerName(app, app.state.vrgtok[BevFromLp(app, app.lpui->vlpbrVCR).itokAttack()].iplr, 0, 1, 1, 0, nullptr);
                 c = win32::wsprintfA(szT, TextIO().pfnCompressed(app, idsAttacksS), psz);
                 win32::TextOutA(hdc, x, y, szT, c);
                 y += app.state.dyArial8;
@@ -694,7 +694,7 @@ void DrawVCR(APPSESSION &app, HDC hdc, int16_t iStart, int16_t iEnd) {
                     j += BevFromLp(app, app.lpui->vlpbrVCR).rgkill(i - 1).cshKill();
                     if (!rgfSeen[itokT]) {
                         rgfSeen[itokT] = 1;
-                        GetVCRStats(app, itokT, &dpT, NULL, &dpShT, &cshT);
+                        GetVCRStats(app, itokT, &dpT, nullptr, &dpShT, &cshT);
                         dpArmor += app.lpui->vrgdpVCR[itokT] - dpT;
                         dpShields += dpShT;
                     }
@@ -746,7 +746,7 @@ void DrawVCR(APPSESSION &app, HDC hdc, int16_t iStart, int16_t iEnd) {
             y += app.state.dyArial8;
             if (app.lpui->viVCRFocus >= 0) {
                 csh = 0;
-                psz = TextIO().pfnPlayerName(app, app.state.vrgtok[app.lpui->viVCRFocus].iplr, 1, 1, 1, 0, NULL);
+                psz = TextIO().pfnPlayerName(app, app.state.vrgtok[app.lpui->viVCRFocus].iplr, 1, 1, 1, 0, nullptr);
                 c = strlen(psz);
                 win32::TextOutA(hdc, x, y, app.state.szWork, c);
                 y += app.state.dyArial8;
@@ -894,7 +894,7 @@ void DrawVCR(APPSESSION &app, HDC hdc, int16_t iStart, int16_t iEnd) {
             win32::PatBlt(hdc, (app.lpui->dxyVCRSquare + 3) * x + 10, (app.lpui->dxyVCRSquare + 3) * y + 10, 1, app.lpui->dxyVCRSquare + 2, win32::BLACKNESS);
             win32::PatBlt(hdc, (app.lpui->dxyVCRSquare + 3) * x + 10 + app.lpui->dxyVCRSquare + 1, (app.lpui->dxyVCRSquare + 3) * y + 10, 1, app.lpui->dxyVCRSquare + 2, win32::BLACKNESS);
             win32::PatBlt(hdc, (app.lpui->dxyVCRSquare + 3) * x + 10, (app.lpui->dxyVCRSquare + 3) * y + 10 + app.lpui->dxyVCRSquare + 1, app.lpui->dxyVCRSquare + 2, 1, win32::BLACKNESS);
-            DrawFleetBitmap(app, NULL, hdc, (app.lpui->dxyVCRSquare + 3) * x + 11, (app.lpui->dxyVCRSquare + 3) * y + 11, 0, ibmp, ctok, app.lpui->dxyVCRSquare < 64, ibmpRace, csh);
+            DrawFleetBitmap(app, nullptr, hdc, (app.lpui->dxyVCRSquare + 3) * x + 11, (app.lpui->dxyVCRSquare + 3) * y + 11, 0, ibmp, ctok, app.lpui->dxyVCRSquare < 64, ibmpRace, csh);
         } else {
             win32::PatBlt(hdc, (app.lpui->dxyVCRSquare + 3) * x + 10, (app.lpui->dxyVCRSquare + 3) * y + 10, app.lpui->dxyVCRSquare + 2, app.lpui->dxyVCRSquare + 2, win32::BLACKNESS);
         }
@@ -1072,9 +1072,9 @@ void AnimateAttack(APPSESSION &app, HDC hdc) {
             }
             if (grfWeapon & (bitFBeamLow | bitFBeamHigh)) {
                 win32::SelectObject(hdc, !(grfWeapon & bitFBeamHigh) ? app.lpui->hpenEnemy : app.lpui->hpenStarbase);
-                win32::MoveToEx(hdc, ptBeam1.x, ptBeam1.y, NULL);
+                win32::MoveToEx(hdc, ptBeam1.x, ptBeam1.y, nullptr);
                 win32::LineTo(hdc, ptDest.x, ptDest.y);
-                win32::MoveToEx(hdc, ptBeam2.x, ptBeam2.y, NULL);
+                win32::MoveToEx(hdc, ptBeam2.x, ptBeam2.y, nullptr);
                 win32::LineTo(hdc, ptDest.x, ptDest.y);
                 win32::DrawIcon(hdc, ptDest.x - 16, ptDest.y - 16, app.lpui->rghiconVCR[0]);
             }
@@ -1150,7 +1150,7 @@ int16_t PopupVCRMenu(APPSESSION &app, HWND hwnd, int16_t x, int16_t y, uint8_t b
     fAttack = brc == app.state.vrgtok[BevFromLp(app, app.lpui->vlpbrVCR).itokAttack()].brc;
     for (i = 0; i < BdvFromLp(app, app.lpui->vlpbdVCR).ctok(); i++) {
         if (app.state.vrgtok[i].brc == brc && app.state.vrgtok[i].csh > 0) {
-            if (TextIO().pfnPlayerName(app, app.state.vrgtok[i].iplr, 0, 0, 0, 0, NULL) != app.state.szWork) {
+            if (TextIO().pfnPlayerName(app, app.state.vrgtok[i].iplr, 0, 0, 0, 0, nullptr) != app.state.szWork) {
             }
             cch = strlen(app.state.szWork);
             if (app.state.vrgtok[i].grobj == grobjPlanet) {
@@ -1185,7 +1185,7 @@ int16_t PopupVCRMenu(APPSESSION &app, HWND hwnd, int16_t x, int16_t y, uint8_t b
     if (c == 0) {
         return -1;
     }
-    iSel = ControlIO().pfnPopupMenu(app, hwnd, x, y, c, NULL, rgsz, iChecked, 1);
+    iSel = ControlIO().pfnPopupMenu(app, hwnd, x, y, c, nullptr, rgsz, iChecked, 1);
     if (iSel == -1) {
         return -1;
     }

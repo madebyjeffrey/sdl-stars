@@ -15,13 +15,13 @@ static thread_local decltype(&CbReadNativeFile) pfnReadFile = CbReadNativeFile;
 COMPATFILEREADSCOPE::COMPATFILEREADSCOPE(decltype(&CbReadNativeFile) pfnRead) noexcept : pfnPrev(pfnReadFile) { pfnReadFile = pfnRead; }
 COMPATFILEREADSCOPE::~COMPATFILEREADSCOPE() noexcept { pfnReadFile = pfnPrev; }
 
-typedef struct COMPATFILE {
+struct COMPATFILE {
     HFILE hf;
     NATIVEFILE *pf;
     UINT grAccess, grShare;
     uint64_t dev, ino;
     struct COMPATFILE *lpNext;
-} COMPATFILE;
+};
 
 static COMPATFILE *lpFiles;
 static NATIVEFLAGLOCK fFileLock;
@@ -30,7 +30,7 @@ static COMPATFILE *LpFile(HFILE hf) {
     COMPATFILE *lp;
     for (lp = lpFiles; lp; lp = lp->lpNext) if (lp->hf == hf) return lp;
     win32::SetLastError(win32::ERROR_INVALID_HANDLE);
-    return NULL;
+    return nullptr;
 }
 static DWORD DwFileError(void) {
     switch (errno) {
@@ -48,10 +48,10 @@ static DWORD DwFileError(void) {
 
 HFILE win32::OpenFile(LPCSTR pszFile, LPOFSTRUCT lpof, UINT flags) {
     char szPath[PATH_MAX], szCwd[PATH_MAX];
-    COMPATFILE *lp, *lpNew = NULL;
+    COMPATFILE *lp, *lpNew = nullptr;
     NATIVEFILEINFO st;
     UINT grAccess, grShare, share = flags & 0x70;
-    NATIVEFILE *pf = NULL;
+    NATIVEFILE *pf = nullptr;
     HFILE hf = win32::HFILE_ERROR;
     DWORD dwError = win32::NO_ERROR;
     uint64_t dev, ino;
@@ -91,7 +91,7 @@ HFILE win32::OpenFile(LPCSTR pszFile, LPOFSTRUCT lpof, UINT flags) {
     lockFiles.lock();
     if (flags & win32::OF_DELETE) {
         if (IGetNativeFileInfo(szPath, &st, 1) == 0) {
-            if (!FNativeFileIdentity(NULL, szPath, &dev, &ino)) { dwError = win32::ERROR_ACCESS_DENIED; goto LUnlock; }
+            if (!FNativeFileIdentity(nullptr, szPath, &dev, &ino)) { dwError = win32::ERROR_ACCESS_DENIED; goto LUnlock; }
             for (lp = lpFiles; lp; lp = lp->lpNext)
                 if (lp->dev == dev && lp->ino == ino) { dwError = win32::ERROR_SHARING_VIOLATION; goto LUnlock; }
         }
@@ -103,7 +103,7 @@ HFILE win32::OpenFile(LPCSTR pszFile, LPOFSTRUCT lpof, UINT flags) {
     pf = PfNativeOpenFlags(szPath, grAccess, 0, (flags & win32::OF_CREATE) != 0, 0, 0, 1);
     if (!pf || IGetNativeOpenInfo(pf, &st) != 0) { dwError = DwFileError(); goto LUnlock; }
     if (!st.fRegular) { dwError = win32::ERROR_ACCESS_DENIED; goto LUnlock; }
-    if (!FNativeFileIdentity(pf, NULL, &dev, &ino)) { dwError = win32::ERROR_ACCESS_DENIED; goto LUnlock; }
+    if (!FNativeFileIdentity(pf, nullptr, &dev, &ino)) { dwError = win32::ERROR_ACCESS_DENIED; goto LUnlock; }
     for (lp = lpFiles; lp; lp = lp->lpNext)
         if (lp->dev == dev && lp->ino == ino &&
             ((grAccess & ~lp->grShare) || (lp->grAccess & ~grShare))) {
@@ -117,7 +117,7 @@ HFILE win32::OpenFile(LPCSTR pszFile, LPOFSTRUCT lpof, UINT flags) {
     if (hf > INT16_MAX) { hf = win32::HFILE_ERROR; dwError = win32::ERROR_TOO_MANY_OPEN_FILES; goto LUnlock; }
     lpNew->hf = hf; lpNew->pf = pf; lpNew->dev = dev; lpNew->ino = ino;
     lpNew->grAccess = grAccess; lpNew->grShare = grShare;
-    lpNew->lpNext = lpFiles; lpFiles = lpNew; lpNew = NULL; pf = NULL;
+    lpNew->lpNext = lpFiles; lpFiles = lpNew; lpNew = nullptr; pf = nullptr;
 LUnlock:
     if (pf) ICloseNativeFile(pf);
     free(lpNew);
@@ -210,7 +210,7 @@ DWORD win32::GetFileSize(HANDLE h, LPDWORD lpdwHigh) {
     INT_PTR id = (INT_PTR)h;
 
     std::unique_lock lockFiles(fFileLock);
-    lp = id >= 0 && id <= INT_MAX ? LpFile((HFILE)id) : NULL;
+    lp = id >= 0 && id <= INT_MAX ? LpFile((HFILE)id) : nullptr;
     if (lp && (cb = CbNativeFile(lp->pf)) >= 0) {
         dw = (DWORD)(uint64_t)cb;
         if (lpdwHigh) *lpdwHigh = (DWORD)((uint64_t)cb >> 32);

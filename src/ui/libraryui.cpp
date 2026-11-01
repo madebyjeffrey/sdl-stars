@@ -32,12 +32,12 @@ static char szRaceLibraryRoot[256];
 static char szRaceLibraryPath[512];
 static char szRaceLibraryName[256];
 static char szRaceLibraryTemp[512];
-typedef struct {
+struct LIBRARYGAMELISTITEM {
     char szName[256];
     int iplr;
     uint16_t grfPlayers;
     uint16_t rgturn[16];
-} LIBRARYGAMELISTITEM;
+};
 static NATIVEARRAYOWNER<LIBRARYGAMELISTITEM, SDL_free> rgLibraryGameList;
 static int cLibraryGameList;
 static int cLibraryGameListMax;
@@ -49,14 +49,15 @@ static uint32_t idLibraryZipStage;
 static int16_t fHostLibraryView;
 static const char *pszRaceLibraryNameOverride;
 
-typedef struct LibraryContinue {
+struct LibraryContinue {
     char szName[256];
     int iPlayer;
     int iYear;
     long long lPlayed;
     int16_t fFound;
     int16_t fTurnAvailable;
-} LIBRARYCONTINUE;
+};
+using LIBRARYCONTINUE = LibraryContinue;
 
 static LIBRARYCONTINUE continueLibrary;
 static int16_t FFindContinueLibraryGame(APPSESSION &app);
@@ -72,19 +73,19 @@ static void SDLCALL LibraryExportFolderSelected(void *lpData, const char * const
 static int16_t FWriteLibraryMetadataValues(const char *pszDir, const char *pszName, int iplr,
                                            long long lPlayed, const char *pszExchangeName);
 
-typedef struct {
+struct RACESTATE {
     PLAYER plr;
     char szPass[sizeof(APPGAMESTATE::szRacePass)];
     char szFile[sizeof(APPGAMESTATE::szRaceFile)];
     char szPath[sizeof(szRaceLibraryPath)];
     int16_t fNew;
-} RACESTATE;
+};
 
-typedef struct {
+struct LIBRARYNAMECHECK {
     const char *pszDirectory;
     const char *pszName;
     int16_t fFound;
-} LIBRARYNAMECHECK;
+};
 
 static void SaveRaceState(APPSESSION &app, RACESTATE *prs) {
     prs->plr = app.state.vplr;
@@ -159,7 +160,7 @@ static int16_t FPortableRaceFilename(APPSESSION &app, const char *pszName) {
 static int16_t FInitRaceLibrary(void) {
     const char *pszOverride = SDL_getenv("STARS_LIBRARY_DIR");
     const char *pszSettings = SDL_getenv("STARS_SETTINGS_DIR");
-    char *pszRoot = pszOverride || pszSettings ? NULL : CompatPathIO().pfnGetPrefPath("", "Stars!");
+    char *pszRoot = pszOverride || pszSettings ? nullptr : CompatPathIO().pfnGetPrefPath("", "Stars!");
     int cch;
     NATIVEOWNER<char, SDL_free> rootPath(pszRoot);
     if (!pszOverride && !pszSettings && !pszRoot) return 0;
@@ -230,7 +231,7 @@ static int16_t FInitLibrary(void) {
 
     pszOverride = SDL_getenv("STARS_LIBRARY_DIR");
     pszSettings = SDL_getenv("STARS_SETTINGS_DIR");
-    pszRoot = pszOverride || pszSettings ? NULL : CompatPathIO().pfnGetPrefPath("", "Stars!");
+    pszRoot = pszOverride || pszSettings ? nullptr : CompatPathIO().pfnGetPrefPath("", "Stars!");
     NATIVEOWNER<char, SDL_free> rootPath(pszRoot);
     if (!pszOverride && !pszSettings && !pszRoot) return 0;
     cch = CchSnprintf(szLibraryRoot, sizeof(szLibraryRoot), "%s%sGames",
@@ -382,7 +383,7 @@ INT_PTR  LibraryNameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         y = rcOwner.top + ((rcOwner.bottom - rcOwner.top) - (rc.bottom - rc.top)) / 2;
         x = (((rcWork.left) > ((((x) < (rcWork.right - (rc.right - rc.left))) ? (x) : (rcWork.right - (rc.right - rc.left))))) ? (rcWork.left) : ((((x) < (rcWork.right - (rc.right - rc.left))) ? (x) : (rcWork.right - (rc.right - rc.left)))));
         y = (((rcWork.top) > ((((y) < (rcWork.bottom - (rc.bottom - rc.top))) ? (y) : (rcWork.bottom - (rc.bottom - rc.top))))) ? (rcWork.top) : ((((y) < (rcWork.bottom - (rc.bottom - rc.top))) ? (y) : (rcWork.bottom - (rc.bottom - rc.top)))));
-        ControlIO().pfnSetWindowPos(hwnd, NULL, x, y, 0, 0, win32::SWP_NOSIZE | win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
+        ControlIO().pfnSetWindowPos(hwnd, nullptr, x, y, 0, 0, win32::SWP_NOSIZE | win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
         win32::SetWindowLongPtrA(hwnd, win32::DWLP_USER, lParam);
         ui::SendDlgItemMessage(hwnd, IDC_EDIT1, win32::EM_LIMITTEXT, 255, 0);
         win32::SetDlgItemTextA(hwnd, IDC_EDIT1, (char *)lParam);
@@ -649,7 +650,7 @@ int16_t FSaveLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName, PLAYER
         RemoveNativePath(szTempDir);
         return 0;
     }
-    WriteRtPlr(app, pplr, NULL);
+    WriteRtPlr(app, pplr, nullptr);
     icksum = IRaceChecksum(pplr);
     WriteRtEof(app, icksum);
     RecordIO().pfnStreamClose(app);
@@ -657,7 +658,7 @@ int16_t FSaveLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName, PLAYER
     if (!fOkay) {
         RemoveNativeFile(szRaceLibraryTemp);
         RemoveNativePath(szTempDir);
-        if (win32::IsWindow(hwnd)) AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsStarsUnableSaveRaceDataFilePlease, NULL), win32::MB_ICONHAND);
+        if (win32::IsWindow(hwnd)) AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsStarsUnableSaveRaceDataFilePlease, nullptr), win32::MB_ICONHAND);
         return 0;
     }
     RemoveNativePath(szTempDir);
@@ -705,13 +706,13 @@ static int16_t FReadManagedRace(APPSESSION &app, char *pszPath, PLAYER *pplr) {
     return fOkay;
 }
 
-typedef struct {
+struct RACEVERSIONS {
     char szStem[240];
     char szLatest[256];
     char szSame[256];
     const PLAYER *pplr;
     int iMax, iLatest, iSame;
-} RACEVERSIONS;
+};
 
 static void GetRaceLibraryStem(APPSESSION &app, const char *pszName, char *pszStem) {
     size_t i, cch;
@@ -1104,7 +1105,7 @@ int16_t FExportLibraryOrders(APPSESSION &app, HWND hwnd, const char *pszTarget) 
     SetSzWorkFromDt(app, dtHist, app.state.idPlayer);
     CchSnprintf(szSourceHist, sizeof(szSourceHist), "%s", app.state.szWork);
     pf = PfOpenNativeFile(szSourceHist, "rb");
-    fHistoryExists = pf != NULL;
+    fHistoryExists = pf != nullptr;
     if (pf) ICloseNativeFile(pf);
     else if (errno != ENOENT) fSaved = 0;
     cch = CchSnprintf(szPreviousHist, sizeof(szPreviousHist), "%s_exportprevious_%u.h%d",
@@ -1244,7 +1245,7 @@ int16_t FImportLibraryRaceAs(APPSESSION &app, HWND hwnd, const char *pszSource, 
     int16_t fResult;
     pszRaceLibraryNameOverride = pszName;
     fResult = FImportLibraryRace(app, hwnd, pszSource);
-    pszRaceLibraryNameOverride = NULL;
+    pszRaceLibraryNameOverride = nullptr;
     return fResult;
 }
 
@@ -1339,13 +1340,13 @@ static int16_t FImportFamilyMember(const char *pszName, const char *pszStem, int
     return 0;
 }
 
-typedef struct {
+struct LIBRARYGAMECOPY {
     const char *pszSource;
     const char *pszTarget;
     const char *pszSourceName;
     const char *pszTargetName;
     int16_t fBad;
-} LIBRARYGAMECOPY;
+};
 
 static int16_t FReadLibraryMetadata(const char *pszDirectory, char *pszName, size_t cchName,
                                     int *piplr, long long *plPlayed,
@@ -1504,14 +1505,14 @@ int16_t CopyImportEntry(APPSESSION &, void *lpData, const char *pszName) {
     return 1;
 }
 
-typedef struct {
+struct LIBRARYBACKUP {
     const char *pszSource;
     const char *pszTarget;
     const char *pszStem;
     const char *pszName;
     const char *pszBackup;
     int16_t fBad;
-} LIBRARYBACKUP;
+};
 
 static int16_t CopyBackupEntry(APPSESSION &, void *lpData, const char *pszName) {
     LIBRARYBACKUP *plb = (LIBRARYBACKUP *)lpData;
@@ -1594,14 +1595,14 @@ static int16_t FCreateLibraryZipStage(char *pszStage, size_t cchStage, const cha
     return 0;
 }
 
-typedef struct {
+struct LIBRARYEXPORT {
     const char *pszSource;
     const char *pszTarget;
     const char *pszStem;
     int16_t fBad;
     int16_t fSawXY;
     int16_t fSawPlayable;
-} LIBRARYEXPORT;
+};
 
 static int16_t CopyGameExportEntry(APPSESSION &, void *lpData, const char *pszName) {
     LIBRARYEXPORT *ple = (LIBRARYEXPORT *)lpData;
@@ -1638,11 +1639,11 @@ static int16_t CreateLibraryExportStage(char *pszDirectory, size_t cchDirectory,
     return 0;
 }
 
-typedef struct {
+struct LIBRARYEXPORTMOVE {
     const char *pszSource;
     const char *pszTarget;
     int16_t fBad;
-} LIBRARYEXPORTMOVE;
+};
 
 static int16_t MoveGameExportEntry(APPSESSION &, void *lpData, const char *pszName) {
     LIBRARYEXPORTMOVE *plem = (LIBRARYEXPORTMOVE *)lpData;
@@ -1685,7 +1686,7 @@ int16_t FExportLibraryGame(APPSESSION &app, HWND hwnd, const char *pszName, cons
                 return FExportSelectedLibraryGame(app, hwnd, szZipName);
             }
         }
-        CompatFolderIO().pfnShowOpenFolderDialog(LibraryExportFolderSelected, PvLibraryFolderContext(hwnd), NULL, NULL, 0);
+        CompatFolderIO().pfnShowOpenFolderDialog(LibraryExportFolderSelected, PvLibraryFolderContext(hwnd), nullptr, nullptr, 0);
         return 1;
     }
     if (!FInitLibrary() || !FPortableLibraryName(app, pszName)) return 0;
@@ -1768,7 +1769,7 @@ int16_t FExportSelectedLibraryGame(APPSESSION &app, HWND hwnd, const char *pszTa
     char szDir[512];
     char szName[256];
     if (!FSelectedLibraryGameName(hwnd, szName, sizeof(szName))) return 0;
-    if (!pszTarget) return FExportLibraryGame(app, hwnd, szName, NULL);
+    if (!pszTarget) return FExportLibraryGame(app, hwnd, szName, nullptr);
     if (app.state.game.fDirty && app.state.lpPlanets && app.state.idPlayer != iplrNone) {
         CchSnprintf(szDir, sizeof(szDir), "%s%s%s", szLibraryRoot, szDirSep, szName);
         if (LibraryPathIO().pfnUnder(szDir, app.state.szBase)) PromptSaveGame(app);
@@ -1777,7 +1778,7 @@ int16_t FExportSelectedLibraryGame(APPSESSION &app, HWND hwnd, const char *pszTa
 }
 
 void ShowLibraryExportFolderPicker(HWND hwnd) {
-    CompatFolderIO().pfnShowOpenFolderDialog(LibraryExportFolderSelected, PvLibraryFolderContext(hwnd), NULL, NULL, 0);
+    CompatFolderIO().pfnShowOpenFolderDialog(LibraryExportFolderSelected, PvLibraryFolderContext(hwnd), nullptr, nullptr, 0);
 }
 
 static int16_t FindImportUniverse(APPSESSION &, void *lpData, const char *pszName) {
@@ -1791,12 +1792,12 @@ static int16_t FindImportUniverse(APPSESSION &, void *lpData, const char *pszNam
     return 1;
 }
 
-typedef struct {
+struct LIBRARYTURNMATCH {
     int32_t lidGame;
     int cMatches;
     char rgszName[64][256];
     char szSelected[256];
-} LIBRARYTURNMATCH;
+};
 
 static int16_t FindLibraryTurnMatch(APPSESSION &app, void *lpData, const char *pszName) {
     LIBRARYTURNMATCH *plm = (LIBRARYTURNMATCH *)lpData;
@@ -1811,7 +1812,7 @@ static int16_t FindLibraryTurnMatch(APPSESSION &app, void *lpData, const char *p
     if (!pf) return 1;
     ICloseNativeFile(pf);
     CchSnprintf(szUniverse, sizeof(szUniverse), "%s%s%s%s%s.xy", szLibraryRoot, szDirSep, pszName, szDirSep, pszName);
-    if (!FInspectImportFile(szUniverse, dtXY, iplrNone, &lidGame, &turn, NULL, &fMulti) || lidGame != plm->lidGame) return 1;
+    if (!FInspectImportFile(szUniverse, dtXY, iplrNone, &lidGame, &turn, nullptr, &fMulti) || lidGame != plm->lidGame) return 1;
     if (plm->cMatches < (int)(sizeof(plm->rgszName) / sizeof(plm->rgszName[0])))
         CchSnprintf(plm->rgszName[plm->cMatches], sizeof(plm->rgszName[0]), "%s", pszName);
     plm->cMatches++;
@@ -1917,7 +1918,7 @@ static int16_t FImportSubsequentTurn(APPSESSION &app, HWND hwnd, const char *psz
     if (pszExt[3]) iplr = iplr * 10 + pszExt[3] - '0';
     iplr--;
     if (iplr < 0 || iplr >= 16) return 0;
-    if (!FInspectImportFile(pszSource, dtTurn, iplr, &lidGame, &turn, NULL, &fMulti)) {
+    if (!FInspectImportFile(pszSource, dtTurn, iplr, &lidGame, &turn, nullptr, &fMulti)) {
         AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryTurnInvalid), win32::MB_ICONEXCLAMATION);
         return 0;
     }
@@ -1937,14 +1938,14 @@ static int16_t FImportSubsequentTurn(APPSESSION &app, HWND hwnd, const char *psz
     cch = CchSnprintf(szTarget, sizeof(szTarget), "%s%s%s%s%s.m%d", szLibraryRoot, szDirSep, lm.szSelected, szDirSep, lm.szSelected, iplr + 1);
     if (cch <= 0 || (size_t)cch >= sizeof(szTarget)) return 0;
     pf = PfOpenNativeFile(szTarget, "rb");
-    fHasTurn = pf != NULL;
+    fHasTurn = pf != nullptr;
     if (pf) ICloseNativeFile(pf);
     else if (errno != ENOENT) {
         AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryTurnInspectFailed), win32::MB_ICONEXCLAMATION);
         return 0;
     }
     if (fHasTurn) {
-        if (!FInspectImportFile(szTarget, dtTurn, iplr, &lidCurrent, &turnCurrent, NULL, &fMultiCurrent) || lidCurrent != lidGame) {
+        if (!FInspectImportFile(szTarget, dtTurn, iplr, &lidCurrent, &turnCurrent, nullptr, &fMultiCurrent) || lidCurrent != lidGame) {
             AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryTurnCurrentInvalid), win32::MB_ICONEXCLAMATION);
             return 0;
         }
@@ -1985,7 +1986,7 @@ static void SDLCALL LibraryImportFolderSelected(void *lpData, const char * const
 }
 
 void ShowLibraryImportFolderPicker(HWND hwnd) {
-    CompatFolderIO().pfnShowOpenFolderDialog(LibraryImportFolderSelected, PvLibraryFolderContext(hwnd), NULL, NULL, 0);
+    CompatFolderIO().pfnShowOpenFolderDialog(LibraryImportFolderSelected, PvLibraryFolderContext(hwnd), nullptr, nullptr, 0);
 }
 
 static int16_t FChooseLibraryImportFile(APPSESSION &app, HWND hwnd, char *pszChosen, size_t cchChosen) {
@@ -2118,19 +2119,19 @@ int16_t FImportLibraryGame(APPSESSION &app, HWND hwnd, const char *pszSource) {
         AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryGameIncomplete), win32::MB_ICONEXCLAMATION);
         return 0;
     }
-    if (!FChooseLibraryGameName(app, hwnd, szSource, NULL)) return 0;
+    if (!FChooseLibraryGameName(app, hwnd, szSource, nullptr)) return 0;
     strcpy(szLibraryExchangeName, szStem);
     return FPublishImportedLibraryGame(app, {szLibraryRoot,szLibraryPending,szLibraryName},li,szDir);
 LInvalidSource:
     CchSnprintf(app.state.szWork, sizeof(app.state.szWork), "%s", szSource);
-    AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsCantOpenFile, NULL), win32::MB_ICONHAND);
+    AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsCantOpenFile, nullptr), win32::MB_ICONHAND);
     return 0;
 }
 
-typedef struct {
+struct LIBRARYGAMEREMOVE {
     const char *pszDirectory;
     int16_t fFailed;
-} LIBRARYGAMEREMOVE;
+};
 
 int16_t RemoveLibraryGameTree(APPSESSION &app, const char *pszDirectory);
 
@@ -2240,7 +2241,7 @@ int16_t FDuplicateLibraryGame(APPSESSION &app, HWND hwnd, const char *pszName, c
     (void)hwnd;
     if (!pszCopyName || !FValidManagedLibraryGame(app, pszName, szSource, &iplr, &lPlayed,
                                                   szExchangeName, sizeof(szExchangeName)) ||
-        !FPortableLibraryName(app, pszCopyName) || !FLibraryNameAvailableExcept(app, pszCopyName, NULL) ||
+        !FPortableLibraryName(app, pszCopyName) || !FLibraryNameAvailableExcept(app, pszCopyName, nullptr) ||
         (cchTarget = CchSnprintf(szTarget, sizeof(szTarget), "%s%s%s", szLibraryRoot, szDirSep, pszCopyName)) <= 0 ||
         (size_t)cchTarget >= sizeof(szTarget) || strlen(szLibraryRoot) + 2 * strlen(pszCopyName) + 18 >= sizeof(app.state.szBase) ||
         !FCreateLibraryGameStagePath(szStage, sizeof(szStage))) return 0;
@@ -2465,7 +2466,7 @@ int16_t FImportLibraryOrders(APPSESSION &app, HWND hwnd, const char *pszSource) 
     cch = CchSnprintf(szUniverse, sizeof(szUniverse), "%s%s%s%s%s.xy", szLibraryRoot, szDirSep, szName, szDirSep, szName);
     if (cch <= 0 || (size_t)cch >= sizeof(szUniverse)) return 0;
     if (!FInspectImportFile(szHost, dtHost, iplrNone, &lidHost, &turnHost, &wGenHost, &fMulti) ||
-        !FInspectImportFile(szUniverse, dtXY, iplrNone, &lidUniverse, NULL, NULL, &fMulti) ||
+        !FInspectImportFile(szUniverse, dtXY, iplrNone, &lidUniverse, nullptr, nullptr, &fMulti) ||
         lidHost != lidUniverse || lidOrders != lidHost || turnOrders != turnHost || wGenOrders != wGenHost ||
         !FInspectImportPlayer(app, szUniverse, iplr)) {
         AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryOrdersMismatch), win32::MB_ICONEXCLAMATION);
@@ -2666,7 +2667,7 @@ int16_t FFinishLibraryGame(APPSESSION &app, HWND hwnd, int16_t fGenerated) {
     }
     if (fGenerated) fGenerated = FWriteLibraryMetadata(szLibraryPending, szLibraryName, app.state.idPlayer);
     if (!fGenerated) {
-        FNativeEnumerateDirectory(app, szLibraryPending, RemovePendingFile, NULL);
+        FNativeEnumerateDirectory(app, szLibraryPending, RemovePendingFile, nullptr);
         RemoveNativePath(szLibraryPending);
         strcpy(szMessage, TextIO().pfnCompressed(app, idsLibraryStorageFailed));
         CompatChoiceIO().pfnMessageBoxA(win32::IsWindow(hwnd) ? hwnd : app.lpui->hwndFrame, szMessage, TextIO().pfnCompressed(app, idsLibraryGames), win32::MB_OK | win32::MB_ICONHAND);
@@ -2726,7 +2727,7 @@ static int16_t ListLibraryGame(APPSESSION &app, void *lpList, const char *pszNam
     for (iplr = 0; iplr < 16; iplr++) {
         CchSnprintf(szFile, sizeof(szFile), "%s%s%s%s%s.m%d", szLibraryRoot, szDirSep, pszName, szDirSep, pszName, iplr + 1);
         if (!FNativeFileSize(szFile, &cbFile) || cbFile <= 0 ||
-            !FInspectImportFile(szFile, dtTurn, iplr, &lidGame, &turn, NULL, &fMulti)) continue;
+            !FInspectImportFile(szFile, dtTurn, iplr, &lidGame, &turn, nullptr, &fMulti)) continue;
         grfPlayers |= (uint16_t)(1u << iplr);
         rgturn[iplr] = turn;
     }
@@ -2750,8 +2751,8 @@ static int16_t ListLibraryHostGame(APPSESSION &app, void *lpList, const char *ps
     CchSnprintf(szHost, sizeof(szHost), "%s%s%s%s%s.hst", szLibraryRoot, szDirSep, pszName, szDirSep, pszName);
     CchSnprintf(szUniverse, sizeof(szUniverse), "%s%s%s%s%s.xy", szLibraryRoot, szDirSep, pszName, szDirSep, pszName);
     if (!FNativeFileSize(szHost, &cbFile) || cbFile <= 0 ||
-        !FInspectImportFile(szHost, dtHost, iplrNone, &lidHost, &turnHost, NULL, &fMulti) ||
-        !FInspectImportFile(szUniverse, dtXY, iplrNone, &lidUniverse, NULL, NULL, &fMulti) ||
+        !FInspectImportFile(szHost, dtHost, iplrNone, &lidHost, &turnHost, nullptr, &fMulti) ||
+        !FInspectImportFile(szUniverse, dtXY, iplrNone, &lidUniverse, nullptr, nullptr, &fMulti) ||
         lidHost != lidUniverse) return 1;
     i = ControlIO().pfnSendMessage((HWND)lpList, win32::LB_ADDSTRING, 0, (LPARAM)pszName);
     return i != win32::LB_ERR && i != win32::LB_ERRSPACE;
@@ -2790,7 +2791,7 @@ static int16_t FindContinueLibraryGame(APPSESSION &app, void *lpData, const char
     iYear = 0;
     CchSnprintf(szFile, sizeof(szFile), "%s%s%s%s%s.m%d", szLibraryRoot, szDirSep, pszName, szDirSep,
                 pszName, iPlayer + 1);
-    if (FInspectImportFile(szFile, dtTurn, iPlayer, &lidGame, &turn, NULL, &fMulti)) {
+    if (FInspectImportFile(szFile, dtTurn, iPlayer, &lidGame, &turn, nullptr, &fMulti)) {
         iYear = turn + 2400;
         fTurnAvailable = 1;
     }
@@ -2822,43 +2823,43 @@ void InitLibraryGames(APPSESSION &app, HWND hwnd, const RECT *lprc) {
     y = StarsMax(50, lprc->bottom - 360);
     ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsLibraryGames), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
                  24, y - 22, 58, 18, hwnd,
-                 (HMENU)(uintptr_t)IDC_LIBRARY_GAMES_VIEW, app.lpui->hInst, NULL);
+                 (HMENU)(uintptr_t)IDC_LIBRARY_GAMES_VIEW, app.lpui->hInst, nullptr);
     ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsLibraryHostGames), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
                  86, y - 22, 82, 18, hwnd,
-                 (HMENU)(uintptr_t)IDC_LIBRARY_HOST_VIEW, app.lpui->hInst, NULL);
+                 (HMENU)(uintptr_t)IDC_LIBRARY_HOST_VIEW, app.lpui->hInst, nullptr);
     ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsLibraryImportGame), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
                  lprc->right - 128, y - 22, 104, 18, hwnd,
-                 (HMENU)(uintptr_t)IDC_LIBRARY_IMPORT, app.lpui->hInst, NULL);
+                 (HMENU)(uintptr_t)IDC_LIBRARY_IMPORT, app.lpui->hInst, nullptr);
     ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsLibraryImportFolder), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
                  lprc->right - 240, y - 22, 104, 18, hwnd,
-                 (HMENU)(uintptr_t)IDC_LIBRARY_IMPORT_FOLDER, app.lpui->hInst, NULL);
+                 (HMENU)(uintptr_t)IDC_LIBRARY_IMPORT_FOLDER, app.lpui->hInst, nullptr);
     ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsLibraryImportOrders), win32::WS_CHILD | win32::WS_TABSTOP,
                  lprc->right - 128, y - 22, 104, 18, hwnd,
-                 (HMENU)(uintptr_t)IDC_LIBRARY_IMPORT_ORDERS, app.lpui->hInst, NULL);
+                 (HMENU)(uintptr_t)IDC_LIBRARY_IMPORT_ORDERS, app.lpui->hInst, nullptr);
     ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsLibraryExportGame), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
                  lprc->right - 464, y - 22, 96, 18, hwnd,
-                 (HMENU)(uintptr_t)IDC_LIBRARY_GAME_EXPORT, app.lpui->hInst, NULL);
+                 (HMENU)(uintptr_t)IDC_LIBRARY_GAME_EXPORT, app.lpui->hInst, nullptr);
     ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsLibraryDuplicate), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
                  lprc->right - 304, y - 22, 60, 18, hwnd,
-                 (HMENU)(uintptr_t)IDC_LIBRARY_DUPLICATE, app.lpui->hInst, NULL);
+                 (HMENU)(uintptr_t)IDC_LIBRARY_DUPLICATE, app.lpui->hInst, nullptr);
     ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsRename), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
                  lprc->right - 360, y - 22, 52, 18, hwnd,
-                 (HMENU)(uintptr_t)IDC_LIBRARY_RENAME, app.lpui->hInst, NULL);
+                 (HMENU)(uintptr_t)IDC_LIBRARY_RENAME, app.lpui->hInst, nullptr);
     ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsDelete), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
                  lprc->right - 524, y - 22, 56, 18, hwnd,
-                 (HMENU)(uintptr_t)IDC_LIBRARY_GAME_DELETE, app.lpui->hInst, NULL);
+                 (HMENU)(uintptr_t)IDC_LIBRARY_GAME_DELETE, app.lpui->hInst, nullptr);
     ui::CreateWindowEx(0, "LISTBOX", "", win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_BORDER | win32::WS_TABSTOP | win32::WS_VSCROLL | win32::LBS_NOTIFY | win32::LBS_SORT,
-                 24, y, lprc->right - 48, 90, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_GAMES, app.lpui->hInst, NULL);
+                 24, y, lprc->right - 48, 90, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_GAMES, app.lpui->hInst, nullptr);
     ui::CreateWindowEx(0, "LISTBOX", "", win32::WS_CHILD | win32::WS_BORDER | win32::WS_TABSTOP | win32::WS_VSCROLL | win32::LBS_NOTIFY | win32::LBS_SORT,
-                 24, y, lprc->right - 48, 90, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_HOST_GAMES, app.lpui->hInst, NULL);
+                 24, y, lprc->right - 48, 90, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_HOST_GAMES, app.lpui->hInst, nullptr);
     ui::CreateWindowEx(0, "STATIC", TextIO().pfnCompressed(app, idsLibraryPlayerSelect), win32::WS_CHILD | win32::WS_VISIBLE,
-                 24, y + 100, 66, 18, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_PLAYER_LABEL, app.lpui->hInst, NULL);
+                 24, y + 100, 66, 18, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_PLAYER_LABEL, app.lpui->hInst, nullptr);
     ui::CreateWindowEx(0, "COMBOBOX", "", win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP | win32::WS_VSCROLL | win32::CBS_DROPDOWNLIST,
                  94, y + 96, StarsMin(280, lprc->right - 118), 160, hwnd,
-                 (HMENU)(uintptr_t)IDC_LIBRARY_PLAYERS, app.lpui->hInst, NULL);
+                 (HMENU)(uintptr_t)IDC_LIBRARY_PLAYERS, app.lpui->hInst, nullptr);
     ui::CreateWindowEx(0, "STATIC", "", win32::WS_CHILD | win32::WS_VISIBLE,
                  24, y + 122, lprc->right - 48, 18, hwnd,
-                 (HMENU)(uintptr_t)IDC_LIBRARY_CONTINUE_DETAILS, app.lpui->hInst, NULL);
+                 (HMENU)(uintptr_t)IDC_LIBRARY_CONTINUE_DETAILS, app.lpui->hInst, nullptr);
     ui::ShowWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_LIBRARY_IMPORT_ORDERS), win32::SW_HIDE);
     ui::ShowWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_LIBRARY_HOST_GAMES), win32::SW_HIDE);
     RefreshLibraryGames(app, hwnd);
@@ -2868,10 +2869,10 @@ void InitLibraryGames(APPSESSION &app, HWND hwnd, const RECT *lprc) {
                 (unsigned long long)(CompatTimeIO().pfnGetTicks() - msStart));
 }
 
-typedef struct {
+struct LIBRARYRACEENUM {
     FNativeDirectoryEntryProc pfnEntry;
     void *lpData;
-} LIBRARYRACEENUM;
+};
 
 static int16_t EnumLibraryRace(APPSESSION &app, void *lpData, const char *pszName) {
     LIBRARYRACEENUM *plre = (LIBRARYRACEENUM *)lpData;
@@ -2899,21 +2900,21 @@ static int16_t ListLibraryRace(APPSESSION &, void *lpList, const char *pszName) 
 void InitLibraryRaces(APPSESSION &app, HWND hwnd, const RECT *lprc) {
     int y = StarsMax(160, lprc->bottom - 200);
     ui::CreateWindowEx(0, "STATIC", TextIO().pfnCompressed(app, idsLibraryRaceDesigns), win32::WS_CHILD | win32::WS_VISIBLE, 24, y - 18, 160, 18,
-                 hwnd, NULL, app.lpui->hInst, NULL);
+                 hwnd, nullptr, app.lpui->hInst, nullptr);
     ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsLibraryNew), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
-                 lprc->right - 436, y - 20, 48, 18, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_RACE_NEW, app.lpui->hInst, NULL);
+                 lprc->right - 436, y - 20, 48, 18, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_RACE_NEW, app.lpui->hInst, nullptr);
     ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsLibraryEdit), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
-                 lprc->right - 384, y - 20, 48, 18, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_RACE_EDIT, app.lpui->hInst, NULL);
+                 lprc->right - 384, y - 20, 48, 18, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_RACE_EDIT, app.lpui->hInst, nullptr);
     ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsLibraryDuplicate), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
-                 lprc->right - 332, y - 20, 62, 18, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_RACE_DUPLICATE, app.lpui->hInst, NULL);
+                 lprc->right - 332, y - 20, 62, 18, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_RACE_DUPLICATE, app.lpui->hInst, nullptr);
     ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsLibraryExport), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
-                 lprc->right - 266, y - 20, 48, 18, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_RACE_EXPORT, app.lpui->hInst, NULL);
+                 lprc->right - 266, y - 20, 48, 18, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_RACE_EXPORT, app.lpui->hInst, nullptr);
     ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsDelete), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
-                 lprc->right - 214, y - 20, 56, 18, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_RACE_DELETE, app.lpui->hInst, NULL);
+                 lprc->right - 214, y - 20, 56, 18, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_RACE_DELETE, app.lpui->hInst, nullptr);
     ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsLibraryImport), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
-                 lprc->right - 152, y - 20, 112, 18, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_RACE_IMPORT, app.lpui->hInst, NULL);
+                 lprc->right - 152, y - 20, 112, 18, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_RACE_IMPORT, app.lpui->hInst, nullptr);
     ui::CreateWindowEx(0, "LISTBOX", "", win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_BORDER | win32::WS_TABSTOP | win32::WS_VSCROLL | win32::LBS_NOTIFY | win32::LBS_SORT,
-                 24, y, lprc->right - 48, 80, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_RACES, app.lpui->hInst, NULL);
+                 24, y, lprc->right - 48, 80, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_RACES, app.lpui->hInst, nullptr);
     RefreshLibraryRaces(app, hwnd);
 }
 
@@ -3069,7 +3070,7 @@ int16_t FContinueLibraryGame(APPSESSION &app, HWND hwnd) {
     if (!FFindContinueLibraryGame(app)) return 0;
     CchSnprintf(szFile, sizeof(szFile), "%s%s%s%s%s.m%d", szLibraryRoot, szDirSep,
                 continueLibrary.szName, szDirSep, continueLibrary.szName, continueLibrary.iPlayer + 1);
-    if (FInspectImportFile(szFile, dtTurn, continueLibrary.iPlayer, &lidGame, &turn, NULL, &fMulti)) {
+    if (FInspectImportFile(szFile, dtTurn, continueLibrary.iPlayer, &lidGame, &turn, nullptr, &fMulti)) {
         strcpy(app.state.szBase, szFile);
         app.state.ini.fStartupFile = 1;
         return 1;
@@ -3178,7 +3179,7 @@ void RememberLibraryGame(APPSESSION &app) {
     if (!FReadLibraryMetadata(szDir, szMetadataName, sizeof(szMetadataName), &iplr, &lPlayed,
                               szLibraryExchangeName, sizeof(szLibraryExchangeName))) szLibraryExchangeName[0] = 0;
     if (FWriteLibraryMetadata(szDir, pch + 1, app.state.idPlayer))
-        ProfileTextIO().pfnWriteString("Library", "ContinueDeleted", NULL, TextIO().pfnCompressed(app, idsStarsIni));
+        ProfileTextIO().pfnWriteString("Library", "ContinueDeleted", nullptr, TextIO().pfnCompressed(app, idsStarsIni));
 }
 
 void CloseLibraryUiSession() noexcept {
@@ -3209,7 +3210,7 @@ int16_t FPublishSubsequentTurn(APPSESSION &app, const LIBRARYPATHS &paths, HWND 
     cch = LibraryPublicationIO().pfnCchSnprintf(szPrevious, sizeof(szPrevious), "%s.previous.%u", szTarget, dwTick);
     if (cch <= 0 || (size_t)cch >= sizeof(szPrevious)) return 0;
     if (!LibraryPublicationIO().pfnFCopyNativeFileExclusive(pszSource, szStage) ||
-        !LibraryPublicationIO().pfnFInspectImportFile(szStage, dtTurn, iplr, &lidCurrent, &turnCurrent, NULL, &fMultiCurrent) ||
+        !LibraryPublicationIO().pfnFInspectImportFile(szStage, dtTurn, iplr, &lidCurrent, &turnCurrent, nullptr, &fMultiCurrent) ||
         lidCurrent != lidGame || turnCurrent != turn) {
         if (szStage[0]) RemoveNativeFile(szStage);
         AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryTurnStageFailed), win32::MB_ICONHAND);

@@ -10,7 +10,8 @@
 #include "platform.h"
 void CompatAbortCallback(HWND hwnd) noexcept;
 
-typedef struct COMPATPRINT COMPATPRINT;
+struct COMPATPRINT;
+
 void CompatConsumeAsyncMessage(const SDL_Event *event);
 void CompatStartAsyncMessages() noexcept;
 void CompatStopAsyncMessages() noexcept;
@@ -23,20 +24,23 @@ void CompatDeletePrinter(COMPATPRINT *lpprint) noexcept;
 BOOL FCompatPrinterBusy(COMPATPRINT *lpprint);
 void CompatSetDialogError(DWORD dw);
 
-typedef struct COMPATFONT COMPATFONT;
-typedef struct COMPATLIST COMPATLIST;
-typedef struct COMPATTOOLBAR COMPATTOOLBAR;
+struct COMPATFONT;
+
+struct COMPATLIST;
+
+struct COMPATTOOLBAR;
+
 void CompatDestroyToolbar(HWND hwnd);
 LRESULT  CompatToolbarProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
 LRESULT  CompatToolbarTipProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
-typedef struct COMPATCOMBO {
+struct COMPATCOMBO {
     HWND hwndPopup, hwndEdit, hwndCapture;
     WNDPROC lpfnEdit;
     int cyDrop, cyField, cxDrop, iSave, iHot;
     BOOL fDropped, fOpening, fClosing, fSync, fExtended, fSizing;
-} COMPATCOMBO;
-typedef struct COMPATSCROLL { int iMin, iMax, iPos; UINT cPage; BOOL fDisable; } COMPATSCROLL;
-typedef struct COMPATFONTDATA { const BYTE *rgb; size_t cb; } COMPATFONTDATA;
+};
+struct COMPATSCROLL { int iMin, iMax, iPos; UINT cPage; BOOL fDisable; };
+struct COMPATFONTDATA { const BYTE *rgb; size_t cb; };
 extern const COMPATFONTDATA rgCompatFontData[12];
 COMPATFONT *LpNewCompatFont(const LOGFONTA *lplf);
 void FreeCompatFont(COMPATFONT *lpfont) noexcept;
@@ -51,14 +55,14 @@ BOOL FCompatFontDrawScaled(COMPATFONT *lpfont, LPCSTR psz, int cch, const INT *r
                           void (*pfn)(void *, int64_t, int64_t, BYTE), void *lpv);
 void CompatShutdownFonts(void);
 
-typedef struct COMPATCLASS {
+struct COMPATCLASS {
     WNDCLASSA wc;
     ATOM atom;
     NATIVEOWNER<char, SDL_free> pszClass;
     NATIVEOWNER<char, SDL_free> pszMenu;
     NATIVEARRAYOWNER<BYTE, std::free> rgbExtra;
     struct COMPATCLASS *lpNext;
-} COMPATCLASS;
+};
 
 // These native deleters keep member types stable across private SDK test redirects.
 void FreeCompatSurface(SDL_Surface *lp) noexcept;
@@ -143,13 +147,13 @@ struct win32::HWND__ {
     struct win32::HWND__ *lpNext;
 };
 
-typedef struct COMPATRESOURCE {
+struct COMPATRESOURCE {
     const char *pszName;
     WORD id;
     const BYTE *rgb;
     size_t cb;
     WORD type;
-} COMPATRESOURCE;
+};
 
 extern const COMPATRESOURCE rgCompatResources[];
 extern const size_t cCompatResources;
@@ -160,7 +164,7 @@ extern const size_t cCompatImageResources;
 // Keep resource member types identical when a test substitutes an SDL call.
 void FreeCompatCursor(SDL_Cursor *lp) noexcept;
 
-typedef struct COMPATIMAGE {
+struct COMPATIMAGE {
     BOOL fAlive, fCursor, fShared, fMono, fInvert, fAppIcon;
     // Reverse member destruction releases the cursor before its image storage.
     NATIVEARRAYOWNER<BYTE, std::free> rgbAnd;
@@ -169,7 +173,7 @@ typedef struct COMPATIMAGE {
     NATIVEOWNER<SDL_Cursor, FreeCompatCursor> lpCursor;
     HRSRC hrsrc;
     struct COMPATIMAGE *lpNext;
-} COMPATIMAGE;
+};
 COMPATIMAGE *LpCompatImage(HICON hicon);
 HICON HiconCompatResource(const BYTE *rgb, size_t cb, BOOL fCursor);
 HBITMAP HbmpCompatSurface(SDL_Surface *lpSurface, BOOL fMono);
@@ -181,21 +185,21 @@ void CompatCursorPoint(HWND hwnd, int x, int y);
 void CompatCursorLeave(HWND hwnd);
 void CompatDrawCursor(HWND hwnd, SDL_Surface *lpSurface);
 HMENU HmenuCompatTemplate(const BYTE *rgb, size_t cb);
-typedef struct COMPATDLGITEM {
+struct COMPATDLGITEM {
     DWORD dwStyle, dwExStyle;
     int16_t x, y, cx, cy;
     WORD id, idClass, idTitle;
     char *pszClass, *pszTitle;
     const BYTE *rgbCreate;
     WORD cbCreate;
-} COMPATDLGITEM;
-typedef struct COMPATDLGTEMPLATE {
+};
+struct COMPATDLGTEMPLATE {
     DWORD dwStyle, dwExStyle;
     int16_t x, y, cx, cy;
     WORD cItems, idMenu, idClass, cPoints;
     char *pszMenu, *pszClass, *pszTitle, *pszFont;
     COMPATDLGITEM *rgItems;
-} COMPATDLGTEMPLATE;
+};
 BOOL FCompatDialogTemplate(const BYTE *rgb, size_t cb, COMPATDLGTEMPLATE *lpdlg);
 void CompatFreeDialogTemplate(COMPATDLGTEMPLATE *lpdlg);
 LRESULT  CompatDialogProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
@@ -209,13 +213,13 @@ void CompatShutdownInspector(void);
 LRESULT  CompatMessageTextProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
 void CompatShutdownAudio(void) noexcept;
 
-typedef struct COMPATDIB {
+struct COMPATDIB {
     int cx, cy, cBits, cColors;
     BOOL fTopDown;
     size_t cbRow, cbBits, cbInfo;
     COLORREF rgcr[256];
     const BYTE *lpBits;
-} COMPATDIB;
+};
 
 BOOL FCompatDib(const void *lpInfo, size_t cbInfo, const void *lpBits, size_t cbBits, COMPATDIB *lpdib);
 BOOL FCompatNativeDib(const void *lpInfo, size_t cbInfo, const void *lpBits, size_t cbBits, COMPATDIB *lpdib);

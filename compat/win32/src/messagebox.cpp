@@ -5,14 +5,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef struct COMPATMSGBOX {
+struct COMPATMSGBOX {
     LPCSTR pszText;
     UINT type, format;
     int rgid[3], cButtons, iDefault, idCancel;
     int cxText, cyText, cyTotal, yScroll;
     HWND hwndBody, hwndScroll, hwndLastFocus;
     HFONT hfont, hfontIcon;
-} COMPATMSGBOX;
+};
 static const int rgrid[7][3] = {
     {win32::IDOK, 0, 0}, {win32::IDOK, win32::IDCANCEL, 0}, {win32::IDABORT, win32::IDRETRY, win32::IDIGNORE},
     {win32::IDYES, win32::IDNO, win32::IDCANCEL}, {win32::IDYES, win32::IDNO, 0}, {win32::IDRETRY, win32::IDCANCEL, 0},
@@ -34,7 +34,7 @@ static LPCSTR PszMessageButton(int id) {
 static void ScrollMessage(COMPATMSGBOX *lp, int y) {
     lp->yScroll = (((StarsMax(0, lp->cyTotal - lp->cyText)) < (StarsMax(0, y))) ? (StarsMax(0, lp->cyTotal - lp->cyText)) : (StarsMax(0, y)));
     if (win32::IsWindow(lp->hwndScroll)) win32::SetScrollPos(lp->hwndScroll, win32::SB_CTL, lp->yScroll, 1);
-    win32::InvalidateRect(lp->hwndBody, NULL, 1);
+    win32::InvalidateRect(lp->hwndBody, nullptr, 1);
 }
 LRESULT  CompatMessageTextProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     COMPATMSGBOX *lp = (COMPATMSGBOX *)win32::GetWindowLongPtrA(hwnd, win32::GWLP_USERDATA);
@@ -172,8 +172,8 @@ BOOL StarsCompatSetWindowAlertSounds(HWND hwnd, BOOL fEnable) {
 
 int win32::MessageBoxA(HWND hwndOwner, LPCSTR pszText, LPCSTR pszCaption, UINT type) {
     COMPATMSGBOX box = {};
-    HWND hwnd = NULL, hwndRoot = NULL, hwndFocus = NULL, lpwin, hwndButton;
-    HWND *rghwnd = NULL;
+    HWND hwnd = nullptr, hwndRoot = nullptr, hwndFocus = nullptr, lpwin, hwndButton;
+    HWND *rghwnd = nullptr;
     size_t cDisabled = 0, iDisabled, cTop = 0;
     HDC hdc;
     HGDIOBJ hold;
@@ -207,7 +207,7 @@ int win32::MessageBoxA(HWND hwndOwner, LPCSTR pszText, LPCSTR pszCaption, UINT t
     if (box.cButtons == 1) box.idCancel = win32::IDOK;
     box.iDefault = (type >> 8) & 3;
     if (box.iDefault >= box.cButtons) box.iDefault = 0;
-    hwndFocus = win32::GetFocus(); hwndRoot = hwndOwner ? HwndCompatRoot(hwndOwner) : NULL; fRestoreFocus = 1;
+    hwndFocus = win32::GetFocus(); hwndRoot = hwndOwner ? HwndCompatRoot(hwndOwner) : nullptr; fRestoreFocus = 1;
     if (!hwndRoot && (type & win32::MB_TASKMODAL)) {
         for (lpwin = HwndCompatFirstTop(); lpwin; lpwin = win32::GetWindow(lpwin, win32::GW_HWNDNEXT)) cTop++;
     } else if (hwndRoot) cTop = 1;
@@ -233,7 +233,7 @@ int win32::MessageBoxA(HWND hwndOwner, LPCSTR pszText, LPCSTR pszCaption, UINT t
     hwnd = HwndCompatDynamicDialog(pszCaption ? pszCaption : "Error", win32::WS_POPUP | win32::WS_CAPTION | win32::WS_SYSMENU, ex, &rc, hwndRoot, MessageDialogProc);
     if (!hwnd) goto done;
     box.hfont = hwnd->hfontDialog;
-    hdc = win32::CreateCompatibleDC(NULL); if (!hdc) goto done;
+    hdc = win32::CreateCompatibleDC(nullptr); if (!hdc) goto done;
     hold = win32::SelectObject(hdc, box.hfont);
     box.cxText = StarsMax(32, cx - xText - 16);
     rcText = RECT{0, 0, box.cxText, 0};
@@ -256,11 +256,11 @@ int win32::MessageBoxA(HWND hwndOwner, LPCSTR pszText, LPCSTR pszCaption, UINT t
     }
     if (!win32::MoveWindow(hwnd, x, y, cx, cy, 0)) goto done;
     box.hwndBody = win32::CreateWindowExA(0, "StarsMessageText", "", win32::WS_CHILD | win32::WS_VISIBLE | (box.cyText < box.cyTotal ? win32::WS_TABSTOP : 0),
-                                  xText, 16, cx - xText - 16, box.cyText, hwnd, (HMENU)0xffff, win32::GetModuleHandleA(NULL), &box);
+                                  xText, 16, cx - xText - 16, box.cyText, hwnd, (HMENU)0xffff, win32::GetModuleHandleA(nullptr), &box);
     if (!box.hwndBody) goto done;
     if (box.cyText < box.cyTotal) {
         box.hwndScroll = win32::CreateWindowExA(0, "ScrollBar", "", win32::WS_CHILD | win32::WS_VISIBLE | win32::SBS_VERT,
-                                        box.cxText + 3, 0, 17, box.cyText, box.hwndBody, (HMENU)1, win32::GetModuleHandleA(NULL), NULL);
+                                        box.cxText + 3, 0, 17, box.cyText, box.hwndBody, (HMENU)1, win32::GetModuleHandleA(nullptr), nullptr);
         if (!box.hwndScroll) goto done;
         win32::SetScrollRange(box.hwndScroll, win32::SB_CTL, 0, box.cyTotal - box.cyText, 1);
     }
@@ -268,7 +268,7 @@ int win32::MessageBoxA(HWND hwndOwner, LPCSTR pszText, LPCSTR pszCaption, UINT t
         hwndButton = win32::CreateWindowExA(0, "Button", PszMessageButton(box.rgid[i]), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP |
                                      (i == box.iDefault ? win32::BS_DEFPUSHBUTTON : win32::BS_PUSHBUTTON),
                                      (cx - cxButtons) / 2 + i * 96, box.cyText + 32, 88, 26,
-                                     hwnd, (HMENU)(INT_PTR)box.rgid[i], win32::GetModuleHandleA(NULL), NULL);
+                                     hwnd, (HMENU)(INT_PTR)box.rgid[i], win32::GetModuleHandleA(nullptr), nullptr);
         if (!hwndButton) goto done;
         win32::SendMessageA(hwndButton, win32::WM_SETFONT, (WPARAM)box.hfont, 0);
     }
@@ -281,7 +281,7 @@ int win32::MessageBoxA(HWND hwndOwner, LPCSTR pszText, LPCSTR pszCaption, UINT t
     if (fSound) win32::MessageBeep(type & 0xf0);
     while (win32::IsWindow(hwnd) && !hwnd->fEndDialog) {
         if (win32::IsChild(hwnd, win32::GetFocus())) box.hwndLastFocus = win32::GetFocus();
-        result = win32::GetMessageA(&msg, NULL, 0, 0);
+        result = win32::GetMessageA(&msg, nullptr, 0, 0);
         if (result <= 0) { if (result == 0) win32::PostQuitMessage((int)msg.wParam); break; }
         // SDL root activation may be routed before its queued WM_SETFOCUS.
         if (win32::GetFocus() == hwnd && win32::IsWindow(box.hwndLastFocus)) win32::SetFocus(box.hwndLastFocus);
@@ -293,7 +293,7 @@ done:
     destroyBox.Close();
     deleteIconFont.Close();
     restoreOwners.Close();
-    rghwndOwner.reset(); rghwnd = NULL;
+    rghwndOwner.reset(); rghwnd = nullptr;
     restoreFocus.Close();
     return value;
 }

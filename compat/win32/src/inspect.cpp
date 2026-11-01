@@ -83,10 +83,10 @@ uint64_t StarsCompatWindowId(HWND hwnd) {
 
 HWND StarsCompatResolveWindow(uint64_t id) {
     HWND lpwin;
-    if (!SDL_IsMainThread() || id == 0) return NULL;
+    if (!SDL_IsMainThread() || id == 0) return nullptr;
     for (lpwin = HwndCompatRegistry(); lpwin; lpwin = lpwin->lpNext)
         if (lpwin->fAlive && !lpwin->fDestroying && lpwin->idInspect == id) return lpwin;
-    return NULL;
+    return nullptr;
 }
 
 uint64_t StarsCompatFindControl(uint64_t idParent, LONG_PTR idControl, LPCSTR pszClass) {
@@ -283,14 +283,14 @@ static LRESULT  InspectorProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     switch (msg) {
     case win32::WM_CREATE:
         if (!win32::CreateWindowExA(0, "ListBox", "", win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_BORDER | win32::WS_TABSTOP | win32::WS_VSCROLL | win32::LBS_NOTIFY,
-                           8, 40, 400, 500, hwnd, (HMENU)(INT_PTR)1, NULL, NULL) ||
+                           8, 40, 400, 500, hwnd, (HMENU)(INT_PTR)1, nullptr, nullptr) ||
             !win32::CreateWindowExA(0, "Edit", "", win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_BORDER | win32::WS_TABSTOP |
                            win32::ES_READONLY | win32::ES_MULTILINE | win32::ES_AUTOVSCROLL | win32::ES_AUTOHSCROLL,
-                           420, 40, 360, 500, hwnd, (HMENU)(INT_PTR)2, NULL, NULL) ||
+                           420, 40, 360, 500, hwnd, (HMENU)(INT_PTR)2, nullptr, nullptr) ||
             !win32::CreateWindowExA(0, "Button", "Refresh", win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP | win32::BS_PUSHBUTTON,
-                           8, 8, 100, 24, hwnd, (HMENU)(INT_PTR)3, NULL, NULL)) return -1;
+                           8, 8, 100, 24, hwnd, (HMENU)(INT_PTR)3, nullptr, nullptr)) return -1;
         if (pfnObjectInspector) win32::CreateWindowExA(0, "Button", "Map objects", win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
-                                              120, 8, 110, 24, hwnd, (HMENU)(INT_PTR)4, NULL, NULL);
+                                              120, 8, 110, 24, hwnd, (HMENU)(INT_PTR)4, nullptr, nullptr);
         return 0;
     case win32::WM_ERASEBKGND:
         if (!win32::GetClientRect(hwnd, &rc) || !(hbr = win32::CreateSolidBrush(win32::GetSysColor(win32::COLOR_BTNFACE)))) return 0;
@@ -316,26 +316,26 @@ static LRESULT  InspectorProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
 HWND StarsCompatShowInspector(void) {
     HWND hwnd;
     WNDCLASSA wc = {};
-    if (!SDL_IsMainThread()) return NULL;
+    if (!SDL_IsMainThread()) return nullptr;
     hwnd = StarsCompatResolveWindow(idInspector);
     if (!hwnd) {
         wc.lpfnWndProc = InspectorProc; wc.lpszClassName = "StarsCompatInspector";
         if (!fInspectorClass) {
-            if (!win32::RegisterClassA(&wc)) return NULL;
+            if (!win32::RegisterClassA(&wc)) return nullptr;
             fInspectorClass = 1;
         }
         hwnd = win32::CreateWindowExA(0, wc.lpszClassName, "Stars window inspector", win32::WS_OVERLAPPEDWINDOW,
-                             win32::CW_USEDEFAULT, win32::CW_USEDEFAULT, 900, 600, NULL, NULL, NULL, NULL);
-        if (!hwnd) return NULL;
+                             win32::CW_USEDEFAULT, win32::CW_USEDEFAULT, 900, 600, nullptr, nullptr, nullptr, nullptr);
+        if (!hwnd) return nullptr;
         idInspector = StarsCompatWindowId(hwnd);
     }
-    if (!RefreshInspector(hwnd)) { win32::DestroyWindow(hwnd); return NULL; }
+    if (!RefreshInspector(hwnd)) { win32::DestroyWindow(hwnd); return nullptr; }
     win32::ShowWindow(hwnd, win32::SW_SHOWNORMAL);
     win32::SetFocus(win32::GetDlgItem(hwnd, 1));
     return hwnd;
 }
 
 void CompatShutdownInspector(void) {
-    idInspector = 0; fInspectorClass = 0; pfnObjectInspector = NULL;
+    idInspector = 0; fInspectorClass = 0; pfnObjectInspector = nullptr;
     StarsCompatFreeHierarchy(&snapInspector);
 }

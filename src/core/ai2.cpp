@@ -12,7 +12,7 @@ void DoMaidAiTurn(APPSESSION &app, PROD *rgprod) {
     int32_t rgResAvail[4];
     int16_t iroCur;
 
-    iroCur = IroEnsureAi(app, NULL, 0, NULL, app.state.game.turn >= 20 ? 15 : 0);
+    iroCur = IroEnsureAi(app, nullptr, 0, nullptr, app.state.game.turn >= 20 ? 15 : 0);
     app.state.fMarkedPlanets = 0;
     HandleBasicAiTasks(app, iroCur, rgprod, ishdefNone, rgResAvail, rgResCost);
     FillProductionQueue(app);
@@ -242,8 +242,8 @@ void DoAutomitronAiTurn(APPSESSION &app, PROD *rgprod) {
             }
         }
     }
-    lpflAttack = NULL;
-    lpflEnemy = NULL;
+    lpflAttack = nullptr;
+    lpflEnemy = nullptr;
     for (ifl = 0; ifl < app.state.cFleet; ifl++) {
         lpfl = app.state.rglpfl[ifl];
         if (!app.state.rglpfl[ifl])
@@ -355,8 +355,8 @@ void DoAutomitronAiTurn(APPSESSION &app, PROD *rgprod) {
                 continue;
             goto LScrapFleet;
         } else {
-            lpthWorm = NULL;
-            idPlanDst = IdNearestColonizablePlanet(app, lpfl, NULL);
+            lpthWorm = nullptr;
+            idPlanDst = IdNearestColonizablePlanet(app, lpfl, nullptr);
             if (lpfl->idPlanet != idPlanetDeepSpace && app.state.sel.pl.iPlayer == app.state.idPlayer) {
                 ChangeMainObjSel(app, grobjFleet, lpfl->id);
                 XferAiSupply(app, grobjPlanet, lpfl->idPlanet, grobjFleet, lpfl->id, Colonists, 150);
@@ -375,10 +375,10 @@ void DoAutomitronAiTurn(APPSESSION &app, PROD *rgprod) {
         lpplMac = app.state.lpPlanets + app.state.cPlanet;
         for (; lppl < lpplMac && (lppl->iPlayer != app.state.idPlayer || !lppl->fStarbase); lppl++) {
         }
-        lpplHome = lppl == lpplMac ? NULL : lppl;
+        lpplHome = lppl == lpplMac ? nullptr : lppl;
         if (!lpplHome)
             goto BestSpeed;
-        lppl = NULL;
+        lppl = nullptr;
         for (i = 0; i < AhvFromLp(app, app.state.vlpbAiData).cStarbase(); i++) {
             for (j = 0; j < AhvFromLp(app, app.state.vlpbAiData).rgasb(i).cFreighter() && AhvFromLp(app, app.state.vlpbAiData).rgasb(i).rgflid(j) != lpfl->id; j++) {
             }
@@ -418,7 +418,7 @@ void DoAutomitronAiTurn(APPSESSION &app, PROD *rgprod) {
         if (app.state.game.fAisBand) {
             lpplDest = LpplFindBestEnum(app, lppl, FEnumCalcArmadaHumanDest);
         } else {
-            lpplDest = NULL;
+            lpplDest = nullptr;
         }
         if (!lpplDest) {
             lpplDest = LpplFindBestEnum(app, lppl, FEnumCalcArmadaDest);
@@ -537,7 +537,7 @@ void DoRototillAiTurn(APPSESSION &app, PROD *rgprod) {
     cplanCol = 0;
     fColonyShipInQueue = 0;
     fBomberInQueue = 0;
-    iroCur = IroEnsureAi(app, NULL, 0, &ishdefSBLatest, app.state.game.turn >= 20 ? 15 : 0);
+    iroCur = IroEnsureAi(app, nullptr, 0, &ishdefSBLatest, app.state.game.turn >= 20 ? 15 : 0);
     EnsureCAShdefs(iroCur);
     lppl = app.state.lpPlanets;
     lpplMac = app.state.lpPlanets + app.state.cPlanet;
@@ -598,8 +598,8 @@ void DoRototillAiTurn(APPSESSION &app, PROD *rgprod) {
             }
         }
     }
-    lpflAttack = NULL;
-    lpflEnemy = NULL;
+    lpflAttack = nullptr;
+    lpflEnemy = nullptr;
     for (ifl = 0; ifl < app.state.cFleet; ifl++) {
         lpfl = app.state.rglpfl[ifl];
         if (!app.state.rglpfl[ifl])
@@ -731,8 +731,8 @@ void DoRototillAiTurn(APPSESSION &app, PROD *rgprod) {
             FleetQueryIO().pfnLookup(app, idWriteBack, &app.state.sel.fl);
             continue;
         } else {
-            lpthWorm = NULL;
-            idPlanDst = IdNearestColonizablePlanet(app, lpfl, app.state.rgshdef[1].hul.rghs[0].iItem <= iengineQuickJump5 ? NULL : &lpthWorm);
+            lpthWorm = nullptr;
+            idPlanDst = IdNearestColonizablePlanet(app, lpfl, app.state.rgshdef[1].hul.rghs[0].iItem <= iengineQuickJump5 ? nullptr : &lpthWorm);
             if (lpfl->idPlanet != idPlanetDeepSpace && app.state.sel.pl.iPlayer == app.state.idPlayer) {
                 ChangeMainObjSel(app, grobjFleet, lpfl->id);
                 XferAiSupply(app, grobjPlanet, lpfl->idPlanet, grobjFleet, lpfl->id, Colonists, 25);
@@ -755,10 +755,10 @@ void DoRototillAiTurn(APPSESSION &app, PROD *rgprod) {
         lpplMac = app.state.lpPlanets + app.state.cPlanet;
         for (; lppl < lpplMac && (lppl->iPlayer != app.state.idPlayer || !lppl->fStarbase); lppl++) {
         }
-        lpplHome = lppl == lpplMac ? NULL : lppl;
+        lpplHome = lppl == lpplMac ? nullptr : lppl;
         if (!lpplHome)
             goto BestSpeed;
-        lppl = NULL;
+        lppl = nullptr;
         for (i = 0; i < AhvFromLp(app, app.state.vlpbAiData).cStarbase(); i++) {
             for (j = 0; j < AhvFromLp(app, app.state.vlpbAiData).rgasb(i).cFreighter() && AhvFromLp(app, app.state.vlpbAiData).rgasb(i).rgflid(j) != lpfl->id; j++) {
             }
@@ -798,7 +798,7 @@ void DoRototillAiTurn(APPSESSION &app, PROD *rgprod) {
         if (app.state.game.fAisBand) {
             lpplDest = LpplFindBestEnum(app, lppl, FEnumCalcArmadaHumanDest);
         } else {
-            lpplDest = NULL;
+            lpplDest = nullptr;
         }
         if (!lpplDest) {
             lpplDest = LpplFindBestEnum(app, lppl, FEnumCalcArmadaDest);

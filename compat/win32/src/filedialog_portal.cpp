@@ -13,11 +13,11 @@ constexpr char PORTAL_PATH[] = "/org/freedesktop/portal/desktop";
 constexpr char PORTAL_CHOOSER[] = "org.freedesktop.portal.FileChooser";
 constexpr char PORTAL_REQUEST[] = "org.freedesktop.portal.Request";
 
-typedef struct PORTALRESPONSES {
+struct PORTALRESPONSES {
     DBusMessage *rgMessage[16];
     int cMessage;
     BOOL fOverflow;
-} PORTALRESPONSES;
+};
 static DBusHandlerResult SavePortalResponse(DBusConnection *lpBus, DBusMessage *lpMessage, void *lpv) {
     PORTALRESPONSES *lp = (PORTALRESPONSES *)lpv;
     (void)lpBus;
@@ -29,7 +29,7 @@ static DBusHandlerResult SavePortalResponse(DBusConnection *lpBus, DBusMessage *
 static BOOL FOption(DBusMessageIter *lpOptions, LPCSTR pszKey, LPCSTR pszType,
                     int type, const void *lpValue) {
     DBusMessageIter entry, value;
-    return dbus_message_iter_open_container(lpOptions, DBUS_TYPE_DICT_ENTRY, NULL, &entry) &&
+    return dbus_message_iter_open_container(lpOptions, DBUS_TYPE_DICT_ENTRY, nullptr, &entry) &&
            dbus_message_iter_append_basic(&entry, DBUS_TYPE_STRING, &pszKey) &&
            dbus_message_iter_open_container(&entry, DBUS_TYPE_VARIANT, pszType, &value) &&
            dbus_message_iter_append_basic(&value, type, lpValue) &&
@@ -40,7 +40,7 @@ static BOOL FFolderOption(DBusMessageIter *lpOptions, LPCSTR pszFolder) {
     DBusMessageIter entry, value, bytes;
     const char *pszKey = "current_folder";
     int cb = (int)strlen(pszFolder) + 1;
-    return dbus_message_iter_open_container(lpOptions, DBUS_TYPE_DICT_ENTRY, NULL, &entry) &&
+    return dbus_message_iter_open_container(lpOptions, DBUS_TYPE_DICT_ENTRY, nullptr, &entry) &&
            dbus_message_iter_append_basic(&entry, DBUS_TYPE_STRING, &pszKey) &&
            dbus_message_iter_open_container(&entry, DBUS_TYPE_VARIANT, "ay", &value) &&
            dbus_message_iter_open_container(&value, DBUS_TYPE_ARRAY, "y", &bytes) &&
@@ -50,7 +50,7 @@ static BOOL FFolderOption(DBusMessageIter *lpOptions, LPCSTR pszFolder) {
            dbus_message_iter_close_container(lpOptions, &entry);
 }
 static char *PszPortalLabel(LPCSTR psz) {
-    return FUtf8Valid(psz, strlen(psz)) ? SDL_strdup(psz) : NULL;
+    return FUtf8Valid(psz, strlen(psz)) ? SDL_strdup(psz) : nullptr;
 }
 static BOOL FFilter(DBusMessageIter *lpIter, const COMPATFILEFILTER *lpFilter) {
     DBusMessageIter filter, patterns, item;
@@ -62,7 +62,7 @@ static BOOL FFilter(DBusMessageIter *lpIter, const COMPATFILEFILTER *lpFilter) {
     pszLabel = PszPortalLabel(lpFilter->pszName);
     pszPatternUtf = PszPortalLabel(lpFilter->pszPattern);
     if (!pszLabel || !pszPatternUtf) { SDL_free(pszLabel); SDL_free(pszPatternUtf); return 0; }
-    if (!dbus_message_iter_open_container(lpIter, DBUS_TYPE_STRUCT, NULL, &filter) ||
+    if (!dbus_message_iter_open_container(lpIter, DBUS_TYPE_STRUCT, nullptr, &filter) ||
         !dbus_message_iter_append_basic(&filter, DBUS_TYPE_STRING, &pszLabel) ||
         !dbus_message_iter_open_container(&filter, DBUS_TYPE_ARRAY, "(us)", &patterns)) goto done;
     for (psz = pszPatternUtf; *psz; psz = *pszEnd ? pszEnd + 1 : pszEnd) {
@@ -78,7 +78,7 @@ static BOOL FFilter(DBusMessageIter *lpIter, const COMPATFILEFILTER *lpFilter) {
         szPattern[c] = 0;
         {
             const char *pszPattern = szPattern;
-            if (!dbus_message_iter_open_container(&patterns, DBUS_TYPE_STRUCT, NULL, &item) ||
+            if (!dbus_message_iter_open_container(&patterns, DBUS_TYPE_STRUCT, nullptr, &item) ||
                 !dbus_message_iter_append_basic(&item, DBUS_TYPE_UINT32, &kind) ||
                 !dbus_message_iter_append_basic(&item, DBUS_TYPE_STRING, &pszPattern) ||
                 !dbus_message_iter_close_container(&patterns, &item)) goto done;
@@ -93,7 +93,7 @@ static BOOL FFilterOptions(DBusMessageIter *lpOptions, const COMPATFILEFILTER *r
     const char *pszKey = "filters";
     int i;
     if (cFilter == 0) return 1;
-    if (!dbus_message_iter_open_container(lpOptions, DBUS_TYPE_DICT_ENTRY, NULL, &entry) ||
+    if (!dbus_message_iter_open_container(lpOptions, DBUS_TYPE_DICT_ENTRY, nullptr, &entry) ||
         !dbus_message_iter_append_basic(&entry, DBUS_TYPE_STRING, &pszKey) ||
         !dbus_message_iter_open_container(&entry, DBUS_TYPE_VARIANT, "a(sa(us))", &value) ||
         !dbus_message_iter_open_container(&value, DBUS_TYPE_ARRAY, "(sa(us))", &filters)) return 0;
@@ -102,7 +102,7 @@ static BOOL FFilterOptions(DBusMessageIter *lpOptions, const COMPATFILEFILTER *r
         !dbus_message_iter_close_container(&entry, &value) ||
         !dbus_message_iter_close_container(lpOptions, &entry)) return 0;
     pszKey = "current_filter";
-    return dbus_message_iter_open_container(lpOptions, DBUS_TYPE_DICT_ENTRY, NULL, &entry) &&
+    return dbus_message_iter_open_container(lpOptions, DBUS_TYPE_DICT_ENTRY, nullptr, &entry) &&
            dbus_message_iter_append_basic(&entry, DBUS_TYPE_STRING, &pszKey) &&
            dbus_message_iter_open_container(&entry, DBUS_TYPE_VARIANT, "(sa(us))", &value) &&
            FFilter(&value, &rgfilter[iFilter]) && dbus_message_iter_close_container(&entry, &value) &&
@@ -176,7 +176,7 @@ static int IResponse(DBusMessage *lpMessage, const COMPATFILEFILTER *rgfilter, i
 }
 static BOOL FPumpChooser(HWND hwndOwner) {
     win32::MSG msg;
-    while (win32::PeekMessageA(&msg, NULL, 0, 0, win32::PM_REMOVE)) {
+    while (win32::PeekMessageA(&msg, nullptr, 0, 0, win32::PM_REMOVE)) {
         if (msg.message == win32::WM_QUIT) { win32::PostQuitMessage((int)msg.wParam); return 0; }
         win32::TranslateMessage(&msg); win32::DispatchMessageA(&msg);
         if (FStarsErrorPending()) return 0;
@@ -187,18 +187,18 @@ static BOOL FPumpChooser(HWND hwndOwner) {
 int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFolder,
                      LPCSTR pszName, const COMPATFILEFILTER *rgfilter, int cFilter,
                      int *lpiFilter, char *pszPath, size_t cbPath) {
-    DBusConnection *lpBus = NULL;
-    DBusMessage *lpCall = NULL, *lpReply = NULL, *lpMessage, *lpClose;
-    DBusPendingCall *lpPending = NULL;
+    DBusConnection *lpBus = nullptr;
+    DBusMessage *lpCall = nullptr, *lpReply = nullptr, *lpMessage, *lpClose;
+    DBusPendingCall *lpPending = nullptr;
     DBusMessageIter args, options;
     DBusError error;
     dbus_bool_t fTrue = 1, fFalse = 0;
-    const char *pszParent, *pszHandle = NULL;
+    const char *pszParent, *pszHandle = nullptr;
     char szParent[64] = "", szToken[64], szRequest[512], szSender[256];
     NATIVEFILE *lpRandom;
     unsigned char rgbToken[16];
     const char *pszUnique;
-    char *pszTitleUtf = NULL, *pszRequest = NULL, *pszSender = NULL, *pszWaylandParent = NULL;
+    char *pszTitleUtf = nullptr, *pszRequest = nullptr, *pszSender = nullptr, *pszWaylandParent = nullptr;
     Uint64 nsStart;
     int iResult = -1;
     PORTALRESPONSES responses = {};
@@ -212,7 +212,7 @@ int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFol
     lpBus = dbus_bus_get_private(DBUS_BUS_SESSION, &error);
     if (!lpBus) goto done;
     dbus_connection_set_exit_on_disconnect(lpBus, 0);
-    fFilter = dbus_connection_add_filter(lpBus, SavePortalResponse, &responses, NULL);
+    fFilter = dbus_connection_add_filter(lpBus, SavePortalResponse, &responses, nullptr);
     if (!fFilter) goto done;
     dbus_bus_add_match(lpBus, "type='signal',sender='org.freedesktop.portal.Desktop',interface='org.freedesktop.portal.Request',member='Response'", &error);
     if (dbus_error_is_set(&error)) goto done;
@@ -222,12 +222,12 @@ int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFol
            modal pump, which may destroy its window and property storage. */
         nsStart = CompatTimeIO().pfnGetTicks();
         while (strcmp(CompatInputIO().pfnGetCurrentVideoDriver(), "wayland") == 0 &&
-               !SDL_GetStringProperty(props, SDL_PROP_WINDOW_WAYLAND_XDG_TOPLEVEL_EXPORT_HANDLE_STRING, NULL) &&
+               !SDL_GetStringProperty(props, SDL_PROP_WINDOW_WAYLAND_XDG_TOPLEVEL_EXPORT_HANDLE_STRING, nullptr) &&
                CompatTimeIO().pfnGetTicks() - nsStart < 1000) {
             if (!FPumpChooser(hwndOwner)) { iResult = 0; goto done; }
             SDL_Delay(1);
         }
-        pszHandle = SDL_GetStringProperty(props, SDL_PROP_WINDOW_WAYLAND_XDG_TOPLEVEL_EXPORT_HANDLE_STRING, NULL);
+        pszHandle = SDL_GetStringProperty(props, SDL_PROP_WINDOW_WAYLAND_XDG_TOPLEVEL_EXPORT_HANDLE_STRING, nullptr);
         if (pszHandle && *pszHandle && SDL_asprintf(&pszWaylandParent, "wayland:%s", pszHandle) < 0) goto done;
         xid = SDL_GetNumberProperty(props, SDL_PROP_WINDOW_X11_WINDOW_NUMBER, 0);
         if (xid != 0) snprintf(szParent, sizeof(szParent), "x11:%llx", (unsigned long long)xid);
@@ -282,7 +282,7 @@ int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFol
             if (dbus_message_has_path(lpMessage, pszRequest) && dbus_message_has_sender(lpMessage, pszSender)) {
                 iResult = IResponse(lpMessage, rgfilter, cFilter, lpiFilter, pszPath, cbPath); goto done;
             }
-            dbus_message_unref(lpMessage); responses.rgMessage[i] = NULL;
+            dbus_message_unref(lpMessage); responses.rgMessage[i] = nullptr;
         }
         responses.cMessage = 0;
         if (CompatTimeIO().pfnGetTicks() - msOwnerCheck >= 1000) {
@@ -293,7 +293,7 @@ int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFol
 done:
     if (lpBus && pszRequest && iResult != 1) {
         lpClose = dbus_message_new_method_call(PORTAL_SERVICE, pszRequest, PORTAL_REQUEST, "Close");
-        if (lpClose) { dbus_message_set_no_reply(lpClose, 1); dbus_connection_send(lpBus, lpClose, NULL); dbus_message_unref(lpClose); }
+        if (lpClose) { dbus_message_set_no_reply(lpClose, 1); dbus_connection_send(lpBus, lpClose, nullptr); dbus_message_unref(lpClose); }
     }
     if (dbus_error_is_set(&error)) SDL_SetError("File chooser portal: %s", error.message);
     else if (iResult < 0) SDL_SetError("File chooser portal failed or returned an invalid result");

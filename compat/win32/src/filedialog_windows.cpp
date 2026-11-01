@@ -7,7 +7,7 @@ static int FPumpWindowsChooser(void *lpv) {
     HWND hwndOwner = (HWND)lpv;
     win32::MSG msg;
 
-    while (win32::PeekMessageA(&msg, NULL, 0, 0, win32::PM_REMOVE)) {
+    while (win32::PeekMessageA(&msg, nullptr, 0, 0, win32::PM_REMOVE)) {
         if (msg.message == win32::WM_QUIT) { win32::PostQuitMessage((int)msg.wParam); return 0; }
         win32::TranslateMessage(&msg); win32::DispatchMessageA(&msg);
         if (FStarsErrorPending()) return 0;
@@ -19,8 +19,8 @@ static int FPumpWindowsChooser(void *lpv) {
 int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFolder,
                      LPCSTR pszName, const COMPATFILEFILTER *rgfilter, int cFilter,
                      int *lpiFilter, char *pszPath, size_t cbPath) {
-    WINDOWSFILEFILTER *rg = NULL;
-    void *lpWindow = NULL;
+    WINDOWSFILEFILTER *rg = nullptr;
+    void *lpWindow = nullptr;
     int i, iResult;
 
     if (cFilter != 0) {
@@ -32,7 +32,7 @@ int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFol
         }
     }
     if (hwndOwner && hwndOwner->lpWindow.get())
-        lpWindow = SDL_GetPointerProperty(SDL_GetWindowProperties(hwndOwner->lpWindow.get()), SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
+        lpWindow = SDL_GetPointerProperty(SDL_GetWindowProperties(hwndOwner->lpWindow.get()), SDL_PROP_WINDOW_WIN32_HWND_POINTER, nullptr);
     iResult = WindowsChooserIO().pfnIChooseWindowsFile(lpWindow, fSave, pszTitle, pszFolder, pszName, rg, cFilter,
                                 lpiFilter, pszPath, cbPath, FPumpWindowsChooser, hwndOwner);
     free(rg);

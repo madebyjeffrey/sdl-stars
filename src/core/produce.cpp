@@ -65,7 +65,7 @@ void InitProduction(APPSESSION &app, PROD *rgprod) {
         rgprod[app.state.cProdGlob].grobj = grobjPlanet;
         app.state.cProdGlob++;
     }
-    iWarp = ColonyIO().pfnWarp(app, &app.state.sel.pl, NULL);
+    iWarp = ColonyIO().pfnWarp(app, &app.state.sel.pl, nullptr);
     if (iWarp > 0) {
         for (i = 0; i < 4; i++) {
             rgprod[app.state.cProdGlob].cItem = 0x3ff;
@@ -159,10 +159,10 @@ void FinishProduction(APPSESSION &app, int16_t fWrite) {
         FreePl(app, app.state.sel.pl.lpplprod);
         if (app.state.lpplProdGlob && app.state.lpplProdGlob->iprodMac == 0) {
             FreePl(app, app.state.lpplProdGlob);
-            app.state.lpplProdGlob = NULL;
+            app.state.lpplProdGlob = nullptr;
         }
         app.state.sel.pl.lpplprod = app.state.lpplProdGlob;
-        app.state.lpplProdGlob = NULL;
+        app.state.lpplProdGlob = nullptr;
         PlanetQueryIO().pfnLookup(app, idWriteBack, &app.state.sel.pl);
         PlanetQueryIO().pfnLookup(app, app.state.sel.pl.id, &app.state.sel.pl);
         if (!app.state.fAi) {
@@ -173,7 +173,7 @@ void FinishProduction(APPSESSION &app, int16_t fWrite) {
         app.state.sel.pl.fNoResearch = app.state.gd.fNoResearchSav;
         FreePl(app, app.state.lpplProdGlob);
     }
-    app.state.lpplProdGlob = NULL;
+    app.state.lpplProdGlob = nullptr;
     if (app.state.gd.fTutorial && app.state.idPlayer == 0) {
         app.state.tutor.fProgress = 1;
         PresentationIO().pfnTutor(app);
@@ -514,7 +514,7 @@ void EstimateItemProdSched(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod, Prod
                     }
                     lpprod->cItem = 1020;
                 }
-                cBuilt = ProductionIO().pfnBuild(app, &pl, lpprod, i == -1 ? NULL : &prodPartial, rgRes, fAlchemy, &mdStatusRaw, 0);
+                cBuilt = ProductionIO().pfnBuild(app, &pl, lpprod, i == -1 ? nullptr : &prodPartial, rgRes, fAlchemy, &mdStatusRaw, 0);
                 mdStatus = static_cast<mdProdStat>(mdStatusRaw);
                 if (iItem == i) {
                     if (cBuilt > 0 && *piFirst == 0) {

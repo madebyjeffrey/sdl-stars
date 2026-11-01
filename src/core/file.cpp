@@ -59,7 +59,7 @@ int16_t FReadShDef(APPSESSION &app, const uint8_t *lprt, SHDEF *lpshdef, int16_t
         shdef.hul.ibmp = (shdef.hul.ibmp & 3) | iFirst;
     }
     if (!FReadUserString(app, lpb, cb - (size_t)(lpb - lprt), shdef.hul.szClass,
-                         sizeof(shdef.hul.szClass), NULL)) return 0;
+                         sizeof(shdef.hul.szClass), nullptr)) return 0;
     ishdef = shdef.ishdef;
     if (ishdef >= 16) {
         ishdef -= 16;
@@ -123,7 +123,7 @@ void ReadRtPlr(APPSESSION &app, PLAYER *pplr, uint8_t *pbIn, size_t cb) {
     }
     if (!FReadUserString(app, pbIn + iOff, cb - iOff, pplr->szName, sizeof(pplr->szName), &cbRead)) goto invalid;
     iOff += (int16_t)cbRead;
-    if (!FReadUserString(app, pbIn + iOff, cb - iOff, pplr->szNames, sizeof(pplr->szNames), NULL)) goto invalid;
+    if (!FReadUserString(app, pbIn + iOff, cb - iOff, pplr->szNames, sizeof(pplr->szNames), nullptr)) goto invalid;
     pplr->fLearned = 0;
     return;
 invalid:
@@ -184,7 +184,7 @@ int16_t FLoadGame(APPSESSION &app, const char *pszFileName, const char *pszExt) 
         RecordIO().pfnReadRt(app);
         if (app.state.hdrCur.rt != rtGame || app.state.hdrCur.cb != cbWireGame) {
         XYCorrupt:
-            AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUniverseDefinitionFileSeemsMissingCorrupt, NULL), win32::MB_ICONHAND);
+            AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUniverseDefinitionFileSeemsMissingCorrupt, nullptr), win32::MB_ICONHAND);
             goto LError;
         }
         FDecodeGame(std::as_bytes(std::span(app.state.rgbCur)), app.state.game);
@@ -248,7 +248,7 @@ int16_t FLoadGame(APPSESSION &app, const char *pszFileName, const char *pszExt) 
                 } else {
                 CorruptHist:
                     RecordIO().pfnStreamClose(app);
-                    AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsHistoryFileAppearsCorruptHistoricalDataWill, NULL), win32::MB_ICONHAND);
+                    AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsHistoryFileAppearsCorruptHistoricalDataWill, nullptr), win32::MB_ICONHAND);
                     goto LNoHistFile;
                 }
                 RecordIO().pfnReadRt(app);
@@ -392,10 +392,10 @@ int16_t FLoadGame(APPSESSION &app, const char *pszFileName, const char *pszExt) 
         LNoHistFile:
             cPlanetHist = 0;
             HeapIO().pfnFree(app, app.state.lpPlanets, htPlanets);
-            app.state.lpPlanets = NULL;
+            app.state.lpPlanets = nullptr;
             app.state.cThing = 0;
             HeapIO().pfnFree(app, app.state.lpThings, htThings);
-            app.state.lpThings = NULL;
+            app.state.lpThings = nullptr;
         }
         app.state.fFileErrSilent = fSilentSav;
         GetFileStatus(app, dt, iPlayer);
@@ -451,14 +451,14 @@ LNextTurn:
         }
         if (!FCheckPassword(app)) {
             if (app.state.ini.fValidate || app.state.ini.fLogging)
-                AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsPasswordHaveEnteredIncorrectPleaseTry, NULL), win32::MB_ICONHAND);
+                AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsPasswordHaveEnteredIncorrectPleaseTry, nullptr), win32::MB_ICONHAND);
             goto LError;
         }
         ReadPlayerMessages(app);
         ResetHb(app, htFleets);
         ResetHb(app, htOrd);
         HeapIO().pfnFree(app, app.state.rglpfl, htMisc);
-        app.state.rglpfl = NULL;
+        app.state.rglpfl = nullptr;
         if (!app.state.lpPlanets) {
             cPlanetAlloc = 1 <= app.state.cPlanet ? app.state.cPlanet : 1;
             app.state.lpPlanets = LpAlloc<PLANET>(app, cPlanetAlloc * sizeof(PLANET), htPlanets);
@@ -498,7 +498,7 @@ LNextTurn:
             if (app.state.hdrCur.rt == rtProdQ) {
                 if (lppl->lpplprod && lppl->lpplprod->iprodMax <= app.state.hdrCur.cb / 4) {
                     FreePl(app, lppl->lpplprod);
-                    lppl->lpplprod = NULL;
+                    lppl->lpplprod = nullptr;
                 }
                 if (!lppl->lpplprod) {
                     lppl->lpplprod = LpplAlloc<PLPROD>(app, 4, app.state.hdrCur.cb / 4 + 2, htOrd);
@@ -651,7 +651,7 @@ LNextTurn:
         }
         if (app.state.lpThings) {
             HeapIO().pfnFree(app, app.state.lpThings, htThings);
-            app.state.lpThings = NULL;
+            app.state.lpThings = nullptr;
             app.state.cThing = 0;
         }
         if (app.state.hdrCur.rt == rtThing) {
@@ -717,7 +717,7 @@ LNextTurn:
         app.state.idPlayer = iplrSav;
         if (app.state.hdrCur.rt != rtEOF) {
         Corrupt:
-            AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsGameFileAppearsCorruptUnableLoadFile, NULL), win32::MB_ICONHAND);
+            AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsGameFileAppearsCorruptUnableLoadFile, nullptr), win32::MB_ICONHAND);
             goto LError;
         }
         if (CbFileSize(app.state.hf) != LSeekFile(app.state.hf, 0, 1)) {
@@ -740,14 +740,14 @@ LNextTurn:
                         lppl->det = detSome;
                         if (lppl->lpplprod) {
                             FreePl(app, lppl->lpplprod);
-                            lppl->lpplprod = NULL;
+                            lppl->lpplprod = nullptr;
                         }
                     }
                 }
                 cPlanetHist = app.state.cPlanet;
                 goto LNextTurn;
             }
-            AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsWarningIgnoringUnexpectedDataAfterEof, NULL), win32::MB_ICONHAND);
+            AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsWarningIgnoringUnexpectedDataAfterEof, nullptr), win32::MB_ICONHAND);
         }
         RecordIO().pfnStreamClose(app);
         if (cturn > 1 && !app.state.rgplr[iPlayer].fAi && !app.state.ini.fDumpPlanets && !app.state.ini.fDumpFleets && !app.state.ini.fDumpMap) {
@@ -779,7 +779,7 @@ LNextTurn:
                         iprod = 0;
                         lpprod = lppl->lpplprod->rgprod();
                         while (iprod < lppl->lpplprod->iprodMac) {
-                            ResearchIO().pfnEstimate(app, lppl, NULL, static_cast<ProdItemType>(iprod), &iFirst, &iLast);
+                            ResearchIO().pfnEstimate(app, lppl, nullptr, static_cast<ProdItemType>(iprod), &iFirst, &iLast);
                             if (iLast > 1) {
                                 fWorking = 0;
                                 break;
@@ -804,7 +804,7 @@ LNextTurn:
         if (!app.state.gd.fDontDoLogFiles) {
             CchSprintf(app.state.szWork, "%s.x%s", pszFileName, pszExt + 1);
             if (!FLoadLogFile(app, app.state.szWork) || !FRunLogFile(app)) {
-                AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsPlayerLogFileAppearsCorruptUnableLoad, NULL), win32::MB_ICONHAND);
+                AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsPlayerLogFileAppearsCorruptUnableLoad, nullptr), win32::MB_ICONHAND);
                 goto LError;
             }
         }
@@ -1059,16 +1059,16 @@ int16_t FReadFleet(APPSESSION &app, FLEET *lpfl) {
     }
     RecordIO().pfnReadRt(app);
     if (app.state.hdrCur.rt == rtString) {
-        if (!FReadUserString(app, (uint8_t *)app.state.rgbCur, app.state.hdrCur.cb, szT, 32, NULL)) goto Corrupt;
+        if (!FReadUserString(app, (uint8_t *)app.state.rgbCur, app.state.hdrCur.cb, szT, 32, nullptr)) goto Corrupt;
         lpfl->lpszName = LpAlloc<char>(app, strlen(szT) + 1, htString);
         strcpy(lpfl->lpszName, szT);
         RecordIO().pfnReadRt(app);
     } else {
-        lpfl->lpszName = NULL;
+        lpfl->lpszName = nullptr;
     }
     return 1;
 Corrupt:
-    AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsGameFileAppearsCorruptUnableLoadFile, NULL), win32::MB_ICONHAND);
+    AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsGameFileAppearsCorruptUnableLoadFile, nullptr), win32::MB_ICONHAND);
     return 0;
 }
 
@@ -1076,7 +1076,7 @@ int16_t UnpackBattlePlan(APPSESSION &app, uint8_t *lpb, BTLPLAN *lpbtlplan, int1
     char szName[32];
 
     if (cb < 4) goto invalid;
-    if (!FReadUserString(app, lpb + 4, cb - 4, szName, sizeof(szName), NULL)) goto invalid;
+    if (!FReadUserString(app, lpb + 4, cb - 4, szName, sizeof(szName), nullptr)) goto invalid;
     FDecodeBattlePlanPrefix(std::as_bytes(std::span(lpb, cbWireBattlePlan)), *lpbtlplan);
     strcpy(lpbtlplan->szName, szName);
     lpbtlplan->iplan = iplan;
@@ -1133,26 +1133,26 @@ void DestroyCurGame(APPSESSION &app) {
         PromptSaveGame(app);
     }
     ResetHb(app, htPlanets);
-    app.state.lpPlanets = NULL;
+    app.state.lpPlanets = nullptr;
     app.state.cPlanet = 0;
     ResetHb(app, htFleets);
-    app.state.rglpfl = NULL;
+    app.state.rglpfl = nullptr;
     app.state.cFleet = 0;
     ResetHb(app, htThings);
-    app.state.lpThings = NULL;
+    app.state.lpThings = nullptr;
     app.state.cThing = 0;
     app.state.cThingAlloc = 0;
-    app.state.vlprgScoreX = NULL;
+    app.state.vlprgScoreX = nullptr;
     app.state.vrptFleet.fCached = 0;
     app.state.vrptPlanet.fCached = 0;
     app.state.vrptBattle.fCached = 0;
     app.state.vrptEFleet.fCached = 0;
     for (i = 0; i < 16; i++) {
-        app.state.rgsxPlr[i] = NULL;
+        app.state.rgsxPlr[i] = nullptr;
     }
-    app.state.lpbBattleT = NULL;
-    app.state.lpbBattleLog = NULL;
-    app.state.lpbBattleCur = NULL;
+    app.state.lpbBattleT = nullptr;
+    app.state.lpbBattleLog = nullptr;
+    app.state.lpbBattleCur = nullptr;
     app.state.gd.fAisDone = 0;
     app.state.gd.fGotoVCR = 0;
     app.state.gd.fFleetLinkValid = 0;
@@ -1166,9 +1166,9 @@ void DestroyCurGame(APPSESSION &app) {
     ResetHb(app, htOrd);
     ResetHb(app, htPlrMsg);
     for (i = 0; i < 16; i++) {
-        app.state.rglpshdef[i] = NULL;
-        app.state.rglpshdefSB[i] = NULL;
-        app.state.rglpbtlplan[i] = NULL;
+        app.state.rglpshdef[i] = nullptr;
+        app.state.rglpshdefSB[i] = nullptr;
+        app.state.rglpbtlplan[i] = nullptr;
         app.state.rgcbtlplan[i] = 0;
     }
     if (app.state.sel.grobj != grobjNone) {
@@ -1181,7 +1181,7 @@ void DestroyCurGame(APPSESSION &app) {
     app.state.imemLogCur = 0;
     app.state.imemLogPrev = -1;
     app.state.iMsgCur = 0;
-    app.state.vlpbAiData = NULL;
+    app.state.vlpbAiData = nullptr;
     ResetMessages(app);
     app.state.lSaltCur = 0;
     app.state.ctickLast = 0;
@@ -1206,15 +1206,15 @@ void DestroyCurGame(APPSESSION &app) {
     app.state.sel.pt.x = 0;
     app.state.sel.pl.id = idplNone;
     app.state.sel.fl.id = idflNone;
-    app.state.sel.fl.lpplord = NULL;
-    app.state.sel.pl.lpplprod = NULL;
+    app.state.sel.fl.lpplord = nullptr;
+    app.state.sel.pl.lpplprod = nullptr;
     return;
 }
 
 void FileError(APPSESSION &app, StringId ids) {
     app.state.idsFileError = ids;
     if (!app.state.fFileErrSilent && !app.state.gd.fGeneratingTurn) {
-        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, ids, NULL), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, ids, nullptr), win32::MB_ICONHAND);
     }
     return;
 }
@@ -1286,7 +1286,7 @@ int16_t FOpenFile(APPSESSION &app, DtFileType dt, int16_t iPlayer, int16_t md) {
                         goto LBadFile;
                     }
                     if (dt == dtHost && !app.state.gd.fHostMode && rtbof.fInUse) {
-                        if (AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsHostFileMarkedUseAnotherInstanceStars, NULL), win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_TASKMODAL) != win32::IDYES)
+                        if (AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsHostFileMarkedUseAnotherInstanceStars, nullptr), win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_TASKMODAL) != win32::IDYES)
                             goto LBadFile;
                     } else {
                         if (!rtbof.fDone && app.state.gd.fGeneratingTurn && !app.state.gd.fForceTurn) {
