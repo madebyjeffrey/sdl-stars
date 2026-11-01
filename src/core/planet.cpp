@@ -51,14 +51,14 @@ char *PszProductionETA(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod, ProdItem
         }
         c = TextIO().pfnCchGetString(app, ids, std::span{app.state.szWork});
     } else if (iTurnEnd == 100) {
-        c = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsDYears), iTurnBegin);
+        c = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsDYears).data(), iTurnBegin);
     } else if (iTurnBegin == iTurnEnd) {
         if (iTurnBegin == 0) {
             c = TextIO().pfnCchGetString(app, idsSkipped, std::span{app.state.szWork});
         } else if (iTurnBegin == -1) {
             c = TextIO().pfnCchGetString(app, idsNeeded, std::span{app.state.szWork});
         } else {
-            c = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsDYear), iTurnBegin);
+            c = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsDYear).data(), iTurnBegin);
             if (iTurnBegin != 1) {
                 app.state.szWork[c] = 's';
                 c++;
@@ -66,7 +66,7 @@ char *PszProductionETA(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod, ProdItem
             }
         }
     } else {
-        c = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsDDYears), iTurnBegin, iTurnEnd);
+        c = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsDDYears).data(), iTurnBegin, iTurnEnd);
     }
     if (etaFirst) {
         *etaFirst = iTurnBegin;
@@ -1039,17 +1039,13 @@ std::int16_t FProdItemLine(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod, std:
 // planet dump show it.
 char *PszProdQueueTop(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod) {
     char    szLine[80];
-    char   *psz;
     std::int16_t i;
 
     if (!lpplprod) {
         lpplprod = lppl->lpplprod;
     }
     if (!lpplprod || lpplprod->iprodMac == 0) {
-        psz = TextIO().pfnCompressed(app, idsQueueEmpty);
-        if (psz != app.state.szWork) {
-            CchCopyUtf8Prefix(std::span{app.state.szWork}, psz);
-        }
+        CchCopyUtf8Prefix(std::span{app.state.szWork}, TextIO().pfnCompressed(app, idsQueueEmpty).data());
     }
     if (lpplprod) {
         for (i = 0; i < lpplprod->iprodMac; i++) {

@@ -1,6 +1,6 @@
 {
   "migration_parent": "d3d3724c",
-  "status": "177 migrated sites complete; remaining text work active",
+  "status": "178 migrated sites complete; remaining text work active",
   "contracts": {
     "display": "Write a terminated complete UTF-8 prefix into the actual destination span; preserve fitting bytes. Views borrow synchronously and overlapping copies use memmove.",
     "append": "Scan only inside the destination span for its NUL. An unterminated nonempty destination is cleared and zero bytes are appended.",
@@ -1761,6 +1761,14 @@
       "stage": "L05h",
       "role": "Saved-name record staging: a bounded 31-byte UTF-8 name, a one-byte compression marker/count, and raw NUL framing. Preserve compression budget and valid bytes; never truncate a saved name. Encoding uses real output spans and returns failure before publication when text or capacity is invalid.",
       "implementation": "FAppendWireName; CbEncodeRtShDef; stream writers own their staging buffers."
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "scope": "LibraryNameDlg",
+      "stage": "L05j",
+      "original_call": "std::strcpy(szMessage, TextIO().pfnCompressed(app, ids))",
+      "role": "The message body is an owned catalog value retained before looking up the caption; the unbounded snapshot copy and shared-result alias are removed.",
+      "implementation": "szMessage owns std::array<char, cchCatalogText>; MessageBox borrows its data synchronously."
     }
   ],
   "remaining_spelling_scope": "Lexical raw-copy spellings, including SDK declarations/definitions; comments/literals excluded with the manifest lexer. Exact counts prevent new raw sites during the remaining migration.",
@@ -2222,7 +2230,7 @@
     },
     {
       "path": "src/ui/libraryui.cpp",
-      "normalized_call": "std::strcpy(szFilter,TextIO().pfnCompressed(app,idsLibraryOrdersImportFilter))",
+      "normalized_call": "std::strcpy(szFilter,TextIO().pfnCompressed(app,idsLibraryOrdersImportFilter).data())",
       "count": 1,
       "status": "pending",
       "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
@@ -2236,14 +2244,7 @@
     },
     {
       "path": "src/ui/libraryui.cpp",
-      "normalized_call": "std::strcpy(szLibraryName,TextIO().pfnCompressed(app,idsLibraryDefaultGameName))",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/libraryui.cpp",
-      "normalized_call": "std::strcpy(szMessage,TextIO().pfnCompressed(app,ids))",
+      "normalized_call": "std::strcpy(szLibraryName,TextIO().pfnCompressed(app,idsLibraryDefaultGameName).data())",
       "count": 1,
       "status": "pending",
       "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."

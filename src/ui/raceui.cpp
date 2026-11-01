@@ -81,7 +81,7 @@ Finish:
     }
     cpts = CAdvantagePoints(app, &app.state.vplr);
     if (cpts < 0) {
-        win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsAdvantagePointsCurrentlyHoleDPointsCannot), -cpts);
+        win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsAdvantagePointsCurrentlyHoleDPointsCannot).data(), -cpts);
         AlertIO().pfnAlertSz(app, app.state.szWork, win32::MB_ICONHAND);
         switch (app.lpui->iPanelActive) {
         default:
@@ -121,6 +121,7 @@ LDone:
 }
 
 INT_PTR  RaceWizardDlg1(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+    std::array<char, cchCatalogText> szCatalogPsz{};
     std::array<char, 50> szPlayerName{};
     APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
 
@@ -174,7 +175,8 @@ INT_PTR  RaceWizardDlg1(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         ui::SendDlgItemMessage(hwnd, IDC_RACE_PASSWORD, win32::EM_LIMITTEXT, 0xf, 0);
         hwndCB = ControlIO().pfnGetDlgItem(hwnd, IDC_COMBOBOX);
         for (i = idsSurfaceMinerals; i <= idsDefenses3; i++) {
-            psz = TextIO().pfnCompressed(app, static_cast<StringId>(i));
+            szCatalogPsz = TextIO().pfnCompressed(app, static_cast<StringId>(i));
+            psz = szCatalogPsz.data();
             ControlIO().pfnSendMessage(hwndCB, win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(psz));
         }
         i = RaceQueryIO().pfnStat(&app.state.vplr, rsUseLeftover);
@@ -311,7 +313,7 @@ INT_PTR  RaceWizardDlg1(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 win32::GetDlgItemTextA(hwnd, IDC_RACE_PLURAL_NAME, app.state.vplr.szNames, 32);
                 RaceQueryIO().pfnStat(&app.state.vplr, rsUseLeftover);
                 if (CchGetUtf8WindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_RACE_PASSWORD), app.state.szRacePass, 16) < 0) {
-                    AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsNativePasswordReenter), win32::MB_ICONHAND);
+                    AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsNativePasswordReenter).data(), win32::MB_ICONHAND);
                     return 1;
                 }
                 j = LOWORD(ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_COMBOBOX), win32::CB_GETCURSEL, 0, 0));
@@ -329,7 +331,7 @@ INT_PTR  RaceWizardDlg1(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             std::ranges::fill(app.state.vplr.szNames, 0);
             win32::GetDlgItemTextA(hwnd, IDC_RACE_PLURAL_NAME, app.state.vplr.szNames, 32);
             win32::GetDlgItemTextA(hwnd, LOWORD(wParam), szBuf, 32);
-            for (i = 0; i < 7 && std::strcmp(app.state.vplr.szName, TextIO().pfnCompressed(app, static_cast<StringId>(idsHumanoid + i))) != 0; i++) {
+            for (i = 0; i < 7 && std::strcmp(app.state.vplr.szName, TextIO().pfnCompressed(app, static_cast<StringId>(idsHumanoid + i)).data()) != 0; i++) {
             }
             if (i < 7 && LOWORD(wParam) < IDC_RACE_CUSTOM) {
                 std::ranges::fill(app.state.vplr.szName, 0);
@@ -633,7 +635,7 @@ void DrawRace2(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
             } else {
                 // The explanation exceeds szT's 32 bytes; format from the text
                 // table instead of corrupting the habitat page's stack.
-                cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsCanExpect1DPlanetsWillHabitable), l2);
+                cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsCanExpect1DPlanetsWillHabitable).data(), l2);
             }
             rc.left = app.lpui->vrgrcRCW->left;
             rc.top = app.lpui->vrgrcRCW[15].top + app.state.dyArial8 + 8;
@@ -1133,7 +1135,7 @@ INT_PTR  RaceWizardDlg5(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         app.state.cColDrop = 0;
         for (i = 0; i <= 13; i++) {
             hwndCtl = ControlIO().pfnGetDlgItem(hwnd, i + 291);
-            ControlIO().pfnSetWindowText(hwndCtl, TextIO().pfnCompressed(app, static_cast<StringId>(idsImprovedFuelEfficiency + i)));
+            ControlIO().pfnSetWindowText(hwndCtl, TextIO().pfnCompressed(app, static_cast<StringId>(idsImprovedFuelEfficiency + i)).data());
             ControlIO().pfnSendMessage(hwndCtl, win32::BM_SETCHECK, RaceQueryIO().pfnGrbit(&app.state.vplr, static_cast<RaceGrbit>(i)), 0);
             if (app.state.fRCWReadOnly) {
                 ControlIO().pfnEnableWindow(hwndCtl, 0);
@@ -1229,7 +1231,7 @@ INT_PTR  RaceWizardDlg6(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, i), 0);
             }
         }
-        win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsCosts75ExtraResearchFieldsStartTech), (RaceQueryIO().pfnStat(&app.state.vplr, rsMajorAdv) == raNone) + 3);
+        win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsCosts75ExtraResearchFieldsStartTech).data(), (RaceQueryIO().pfnStat(&app.state.vplr, rsMajorAdv) == raNone) + 3);
         ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_RACE_START_HIGHER_TECH), app.state.szWork);
         ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_RACE_START_HIGHER_TECH), win32::BM_SETCHECK, RaceQueryIO().pfnGrbit(&app.state.vplr, ibitRaceTech3), 0);
         if (app.state.fRCWReadOnly) {
@@ -1408,7 +1410,7 @@ void SetSzRaceFile(APPSESSION &app, const char *pszFile) {
 std::int16_t FConfirmLegacyRaceNames(APPSESSION &app, char *szName, char *szNames) {
     char szPrompt[256];
 
-    CchSprintf(szPrompt, TextIO().pfnCompressed(app, idsNativeLegacyRaceNameShortened), szName, szNames);
+    CchSprintf(szPrompt, TextIO().pfnCompressed(app, idsNativeLegacyRaceNameShortened).data(), szName, szNames);
     return AlertIO().pfnAlertSz(app, szPrompt, win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_TASKMODAL) == win32::IDYES;
 }
 

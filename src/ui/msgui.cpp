@@ -12,6 +12,7 @@
 static std::int16_t dWheelMessages;
 
 LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+    std::array<char, cchCatalogText> szCatalogLpsz{};
     std::array<char, 50> szPlayerName{};
     APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
 
@@ -48,7 +49,7 @@ LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         dWheelMessages = 0;
         for (i = 0; i < 4; i++) {
             app.lpui->hwndMessage = hwnd;
-            app.lpui->rghwndMsgBtn[i] = ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, static_cast<StringId>(idsPrev2 + i)), win32::WS_CHILD, 100, 100, i == 3 ? 50 : 44, (3 * app.state.dyArial8 >> 1) - 1, hwnd,
+            app.lpui->rghwndMsgBtn[i] = ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, static_cast<StringId>(idsPrev2 + i)).data(), win32::WS_CHILD, 100, 100, i == 3 ? 50 : 44, (3 * app.state.dyArial8 >> 1) - 1, hwnd,
                                            nullptr, app.lpui->hInst, nullptr);
             ControlIO().pfnSendMessage(app.lpui->rghwndMsgBtn[i], win32::WM_SETFONT, reinterpret_cast<WPARAM>(app.lpui->rghfontArial8[1]), 0);
         }
@@ -60,7 +61,7 @@ LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         app.lpui->hwndMsgScroll = ui::CreateWindowEx(0, "EDIT", nullptr, win32::ES_MULTILINE | win32::ES_AUTOVSCROLL | win32::ES_READONLY | win32::WS_CHILD | win32::WS_BORDER | win32::WS_VSCROLL, 100, 100, 200, 50, hwnd,
                                      nullptr, app.lpui->hInst, nullptr);
         ControlIO().pfnSetMsgTitle(app, hwnd);
-        ControlIO().pfnSendMessage(app.lpui->hwndMsgDrop, win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(TextIO().pfnCompressed(app, idsEverybody)));
+        ControlIO().pfnSendMessage(app.lpui->hwndMsgDrop, win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(TextIO().pfnCompressed(app, idsEverybody).data()));
         for (i = 0; i < app.state.game.cPlayer; i++) {
             szPlayerName = TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, nullptr);
             psz = szPlayerName.data();
@@ -202,7 +203,7 @@ LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 if (TextIO().pfnCchGetString(app, idsSCC2, std::span{szT}) >= 32) {
                 }
                 cch += win32::wsprintfA(std::span{reinterpret_cast<char *>(app.lpui->lpb2k), std::size_t{0x800}}.subspan(static_cast<std::size_t>(cch)), szT,
-                                lpmsgplr->iPlrTo == 0 ? TextIO().pfnCompressed(app, idsEverybody) : TextIO().pfnPlayerName(app, lpmsgplr->iPlrTo - 1, 1, 1, 1, 0, nullptr).data(),
+                                lpmsgplr->iPlrTo == 0 ? TextIO().pfnCompressed(app, idsEverybody).data() : TextIO().pfnPlayerName(app, lpmsgplr->iPlrTo - 1, 1, 1, 1, 0, nullptr).data(),
                                 13, 10);
                 if (lpmsgplr->cLen >= 0) {
                     i = 1000;
@@ -214,9 +215,11 @@ LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             } else {
                 idm = static_cast<MessageId>(PresentationIO().pfnMessageId(app, app.state.iMsgCur));
                 if (app.state.iMsgCur < 0 && app.state.cMsg > 0) {
-                    lpsz = TextIO().pfnCompressed(app, idsMessagesHaveSentYearFilteredIfWant);
+                    szCatalogLpsz = TextIO().pfnCompressed(app, idsMessagesHaveSentYearFilteredIfWant);
+                    lpsz = szCatalogLpsz.data();
                 } else if (app.state.iMsgCur >= 0 && (app.state.bitfMsgFiltered[idm >> 3] & 1 << (idm & 7)) && !app.state.fViewFilteredMsg) {
-                    lpsz = TextIO().pfnCompressed(app, idsMessageTypeHasFilteredWillShownDefault);
+                    szCatalogLpsz = TextIO().pfnCompressed(app, idsMessageTypeHasFilteredWillShownDefault);
+                    lpsz = szCatalogLpsz.data();
                 } else {
                     lpsz = PszGetMessageN(app, app.state.iMsgCur);
                 }
@@ -633,9 +636,9 @@ void SetMsgTitle(APPSESSION &app, HWND hwnd) {
         }
         cMsgTot = app.state.cMsg + app.state.vcmsgplrIn;
         i = app.state.gd.fSendMsgMode ? idsDone : app.state.iMsgCur >= app.state.cMsg ? idsReply : app.state.gd.fGotoVCR ? idsView : idsGoto3;
-        ControlIO().pfnSetWindowText(app.lpui->rghwndMsgBtn[1], TextIO().pfnCompressed(app, static_cast<StringId>(i)));
+        ControlIO().pfnSetWindowText(app.lpui->rghwndMsgBtn[1], TextIO().pfnCompressed(app, static_cast<StringId>(i)).data());
         if (app.state.gd.fSendMsgMode) {
-            win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsSendMessagesDD), app.state.iMsgSendCur + 1, app.state.vcmsgplrOut);
+            win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsSendMessagesDD).data(), app.state.iMsgSendCur + 1, app.state.vcmsgplrOut);
             rc = app.lpui->rcMsgText;
             ExpandRc(&rc, -4, -4);
             ControlIO().pfnSetWindowPos(app.lpui->hwndMsgDrop, nullptr, rc.left + 30, rc.top, rc.right - rc.left - 84, rc.bottom - rc.top, win32::SWP_NOZORDER | win32::SWP_SHOWWINDOW);

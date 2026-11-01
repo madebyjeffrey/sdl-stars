@@ -1,6 +1,6 @@
 {
   "parent": "00f055c5",
-  "status": "Player-name result migrated; catalog and other borrowed text results pending.",
+  "status": "Player and catalog results migrated; other shared scratch text and const interfaces remain active.",
   "player_names": {
     "implementation": "PszPlayerName returns std::array<char, 50> by value with initialized storage; the previous 50-byte label budget and grammar remain. No heap allocation or shared-work-buffer return.",
     "provider": "TEXTIO uses the real return type; its actual transport-presets witness provider returns the same value type without a generic scalar adapter.",
@@ -10,49 +10,49 @@
     "explicit_work_copies": 3,
     "drawing": "VCR draws the actual owned result rather than relying on the former szWork side effect.",
     "repair": "Two lookups and scratch-destination formatting retain independent names; host status formatting now includes its player label.",
-    "pending": "PszGetCompressedString and other catalog/scratch getters; const text interfaces.",
+    "pending": "Other shared scratch results and const text interfaces; catalog ownership is complete.",
     "work_buffer_formats": "All 13 current catalog formats using the work-buffer expansion contain no player-name expansion. Dynamic message/ID formatting retains the original explicit work-buffer input."
   },
   "player_name_calls": [
     {
       "path": "src/core/msg.cpp",
-      "line": 358,
+      "line": 360,
       "call_line": "szPlayerName = TextIO().pfnPlayerName(app, *pParams & 0xf, *pszFormat == 'L', (*pParams & 0x10) != 0, (*pParams & 0x20) != 0, (*pParams & 0xc0) >> 6, nullptr);",
       "lifetime": "Named local array owns the result through every use of the existing borrowed psz/pchT local."
     },
     {
       "path": "src/core/msg.cpp",
-      "line": 370,
+      "line": 372,
       "call_line": "szPlayerName = TextIO().pfnPlayerName(app, c, 0, 1, 1, 0, nullptr);",
       "lifetime": "Named local array owns the result through every use of the existing borrowed psz/pchT local."
     },
     {
       "path": "src/core/msg.cpp",
-      "line": 385,
+      "line": 387,
       "call_line": "szPlayerName = TextIO().pfnPlayerName(app, i, 0, 1, 1, 0, nullptr);",
       "lifetime": "Named local array owns the result through every use of the existing borrowed psz/pchT local."
     },
     {
       "path": "src/core/msg.cpp",
-      "line": 398,
+      "line": 400,
       "call_line": "szPlayerName = TextIO().pfnPlayerName(app, *pParams, 0, 0, 0, 0, nullptr);",
       "lifetime": "Named local array owns the result through every use of the existing borrowed psz/pchT local."
     },
     {
       "path": "src/core/msg.cpp",
-      "line": 478,
+      "line": 481,
       "call_line": "szPlayerName = TextIO().pfnPlayerName(app, w, 0, 0, 0, 0, nullptr);",
       "lifetime": "Named local array owns the result through every use of the existing borrowed psz/pchT local."
     },
     {
       "path": "src/core/msg.cpp",
-      "line": 513,
+      "line": 516,
       "call_line": "szPlayerName = TextIO().pfnPlayerName(app, c, 0, 0, 1, 0, nullptr);",
       "lifetime": "Named local array owns the result through every use of the existing borrowed psz/pchT local."
     },
     {
       "path": "src/core/report.cpp",
-      "line": 376,
+      "line": 386,
       "call_line": "CchCopyUtf8Prefix(std::span{szForm}.subspan(1), TextIO().pfnPlayerName(app, lppl->iPlayer, 1, 0, 0, 0, nullptr).data());",
       "lifetime": "Temporary result lives through the synchronous bounded copy into the report field."
     },
@@ -76,7 +76,7 @@
     },
     {
       "path": "src/core/util.cpp",
-      "line": 804,
+      "line": 805,
       "call_line": "CchSprintf(szPlr, \"%s \", TextIO().pfnPlayerName(app, iplr, 0, 0, 0, 0, nullptr));",
       "lifetime": "Owned value passed directly to synchronous typed formatting."
     },
@@ -100,7 +100,7 @@
     },
     {
       "path": "src/ui/createui.cpp",
-      "line": 721,
+      "line": 723,
       "call_line": "CchCopyUtf8Prefix(std::span{app.state.szWork}, TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, nullptr).data());",
       "lifetime": "Explicitly copy the owned label into shared work storage before the existing append/drawing operation."
     },
@@ -112,38 +112,38 @@
     },
     {
       "path": "src/ui/mdi.cpp",
-      "line": 1125,
+      "line": 1126,
       "call_line": "szPlayerName = TextIO().pfnPlayerName(app, app.state.idPlayer, 1, 1, 1, 0, nullptr);",
       "lifetime": "Named local array owns the result through every use of the existing borrowed psz/pchT local."
     },
     {
       "path": "src/ui/mdi.cpp",
-      "line": 1911,
-      "call_line": "cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsSS), TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, nullptr), szStat);",
+      "line": 1913,
+      "call_line": "cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsSS).data(), TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, nullptr), szStat);",
       "lifetime": "Owned value passed directly to synchronous typed formatting."
     },
     {
       "path": "src/ui/mineui.cpp",
-      "line": 588,
+      "line": 592,
       "call_line": "RightTextOut(app, hdc, xR, yCur + app.state.dyArial8 - 2, TextIO().pfnPlayerName(app, pl.iPlayer, 0, 1, 0, 0, nullptr).data(), 0, 0);",
       "lifetime": "Temporary result lives through synchronous borrowed-text drawing."
     },
     {
       "path": "src/ui/msgui.cpp",
-      "line": 65,
+      "line": 66,
       "call_line": "szPlayerName = TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, nullptr);",
       "lifetime": "Named local array owns the result through every use of the existing borrowed psz/pchT local."
     },
     {
       "path": "src/ui/msgui.cpp",
-      "line": 201,
+      "line": 202,
       "call_line": "cch = win32::wsprintfA(std::span{reinterpret_cast<char *>(app.lpui->lpb2k), std::size_t{0x800}}, szT, TextIO().pfnPlayerName(app, lpmsgplr->iPlrFrom, 1, 1, 1, 0, nullptr), 13, 10);",
       "lifetime": "Owned value passed directly to synchronous typed formatting."
     },
     {
       "path": "src/ui/msgui.cpp",
-      "line": 205,
-      "call_line": "lpmsgplr->iPlrTo == 0 ? TextIO().pfnCompressed(app, idsEverybody) : TextIO().pfnPlayerName(app, lpmsgplr->iPlrTo - 1, 1, 1, 1, 0, nullptr).data(),",
+      "line": 206,
+      "call_line": "lpmsgplr->iPlrTo == 0 ? TextIO().pfnCompressed(app, idsEverybody).data() : TextIO().pfnPlayerName(app, lpmsgplr->iPlrTo - 1, 1, 1, 1, 0, nullptr).data(),",
       "lifetime": "The chosen temporary array lives through the synchronous formatter call; the catalog arm remains borrowed pending catalog migration."
     },
     {
@@ -160,7 +160,7 @@
     },
     {
       "path": "src/ui/raceui.cpp",
-      "line": 339,
+      "line": 341,
       "call_line": "szPlayerName = TextIO().pfnPlayerName(app, 0, 1, 1, 0, 0, &app.state.vplr);",
       "lifetime": "Named local array owns the result through every use of the existing borrowed psz/pchT local."
     },
@@ -178,37 +178,37 @@
     },
     {
       "path": "src/ui/reportui.cpp",
-      "line": 980,
+      "line": 983,
       "call_line": "szPlayerName = TextIO().pfnPlayerName(app, i, 1, 1, 0, 0, nullptr);",
       "lifetime": "Named local array owns the result through every use of the existing borrowed psz/pchT local."
     },
     {
       "path": "src/ui/shipui.cpp",
-      "line": 2440,
+      "line": 2456,
       "call_line": "szPlayerName = TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, nullptr);",
       "lifetime": "Named local array owns the result through every use of the existing borrowed psz/pchT local."
     },
     {
       "path": "src/ui/vcr.cpp",
-      "line": 637,
+      "line": 638,
       "call_line": "szPlayerName = TextIO().pfnPlayerName(app, app.state.vrgtok[BevFromLp(app, app.lpui->vlpbrVCR).itok()].iplr, 1, 1, 1, 0, nullptr);",
       "lifetime": "Named local array owns the result through every use of the existing borrowed psz/pchT local."
     },
     {
       "path": "src/ui/vcr.cpp",
-      "line": 661,
+      "line": 662,
       "call_line": "szPlayerName = TextIO().pfnPlayerName(app, app.state.vrgtok[BevFromLp(app, app.lpui->vlpbrVCR).itokAttack()].iplr, 0, 1, 1, 0, nullptr);",
       "lifetime": "Named local array owns the result through every use of the existing borrowed psz/pchT local."
     },
     {
       "path": "src/ui/vcr.cpp",
-      "line": 748,
+      "line": 750,
       "call_line": "szPlayerName = TextIO().pfnPlayerName(app, app.state.vrgtok[app.lpui->viVCRFocus].iplr, 1, 1, 1, 0, nullptr);",
       "lifetime": "Named local array owns the result through every use of the existing borrowed psz/pchT local."
     },
     {
       "path": "src/ui/vcr.cpp",
-      "line": 1153,
+      "line": 1155,
       "call_line": "CchCopyUtf8Prefix(std::span{app.state.szWork}, TextIO().pfnPlayerName(app, app.state.vrgtok[i].iplr, 0, 0, 0, 0, nullptr).data());",
       "lifetime": "Explicitly copy the owned label into shared work storage before the existing append/drawing operation."
     }
@@ -225,5 +225,3119 @@
     "baseline": "Ran regression-export after all fixture readers finished; restored only clock-derived game-ID/encryption-salt churn because no semantic scenario/checkpoint moved. Frozen original fixtures and all unit goldens unchanged.",
     "contracts": "Existing 50-byte label budget, grammar, UTF-8, valid records, layout widths, seed consumption and canonical models unchanged. The intentional repair removes shared-result aliases and retains host-status player labels.",
     "receipts": "dist/verification/live-cpp/l05i/"
-  }
+  },
+  "catalog": {
+    "parent": "e1b44461",
+    "status": "complete; verified",
+    "result": "std::array<char, cchCatalogText> by value; cchCatalogText is the previous 256-byte capacity including NUL. Decoder storage is initialized and local, with no allocation.",
+    "production_consumers": 512,
+    "typed_providers": "Default production TEXTIO, four actual linked witness providers, and the actual encoding-test provider use the same owned result. Generic scalar adapters removed for these providers.",
+    "retired_state": "The old szLastStrGet state buffer and never-updated iLastStrGet field are removed. Valid StringId values never used the stale-cache branch.",
+    "lifetimes": {
+      "synchronous-full-expression": 447,
+      "named-local-owner": 58,
+      "popup-menu-local-owner": 2,
+      "named-dialog-body-value": 1,
+      "persistent-popup-owned-buffer": 1,
+      "button-tracking-local-owner": 2,
+      "view-with-named-catalog-owner": 1
+    },
+    "persistent_popup": "Copy into the active popup owner buffer before binding GlobalPD.psz.",
+    "retained_borrows": "Button tracking and popup menu label arrays keep named owners through their synchronous tracking/menu calls. Existing local psz/lpsz/pchT consumers borrow from named local owners.",
+    "report_results": "PszGetDestName and PszGetTaskName return owned 360-byte report labels on every path; all eight real report/dump/sort consumers migrated. This prevents returning pointers into temporary catalog values.",
+    "source_bytes": {
+      "count": 1516,
+      "hash": "0xb7fccea32b3950e5",
+      "source": "text/strings.txt UTF-8; little-endian 16-bit ID, payload, NUL; FNV-1a 64-bit"
+    },
+    "pending": "Other shared scratch results, including formatted messages, fleet/location/ETA/numeric/planet-name services, still require current lifetime review and migration where needed; const text interfaces remain pending.",
+    "verification": {
+      "batch": "L05j owned catalog and report labels",
+      "debug_build": "Pass; no new warnings; public headers in both include orders.",
+      "desktop": "153/153 full suite; includes independent complete catalog byte reference, consecutive/same-call lookup ownership, retained report labels, all four linked text providers, ownership/leak checks and available SDL tutorial checkpoints.",
+      "host_units": "28/28",
+      "native_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped reference inputs.",
+      "host_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped reference inputs.",
+      "windows": "147/147 owned production/wrapper units and all nine changed test units compile with strict MinGW. Actual Windows encoding (8 cases), report (3) and utility (9) executables pass under Wine with per-case isolation; report goldens unchanged. Native Windows desktop execution remains a final qualification item.",
+      "catalog_reference": "All 1516 IDs match canonical UTF-8 text/strings.txt bytes, including empty IDs; little-endian 16-bit IDs plus payload/NUL have FNV-1a 64-bit hash b7fccea32b3950e5. The reference case passed before changing the decoder and in the final desktop/host/Windows tests.",
+      "reproduction": "The new ownership test failed both consecutive-lookup and same-format-call comparisons against the shared-buffer implementation; both pass with owned results. A new report assertion initially omitted the canonical parentheses in (Delayed); corrected that test literal to the source text without a production change.",
+      "baseline": "Ran regression-export after all fixture readers finished; restored only clock-derived ID/salt churn because no semantic scenario/checkpoint moved. Frozen original fixtures, catalog sources and all unit goldens unchanged.",
+      "contracts": "No allocation added. Existing 256-byte catalog and 360-byte report budgets, all text IDs, fixed wire layouts/widths, RNG consumption and canonical models unchanged. Retained borrows have actual named/UI owners; old unchecked result overloads and obsolete catalog cache state removed.",
+      "receipts": "dist/verification/live-cpp/l05j/"
+    }
+  },
+  "catalog_calls": [
+    {
+      "path": "src/core/aiutil.cpp",
+      "call": "TextIO().pfnCompressed(app, static_cast<StringId>(RandomIO().pfnRandom(app, cids) + ids))",
+      "lifetime": "synchronous-full-expression",
+      "line": 155
+    },
+    {
+      "path": "src/core/create.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLineDUnableLoadRaceFileS)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1147
+    },
+    {
+      "path": "src/core/create.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLineDHasImproperVictoryConditionDefinition)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1162
+    },
+    {
+      "path": "src/core/create.cpp",
+      "call": "TextIO().pfnCompressed(app, static_cast<StringId>(idsBerserker + c))",
+      "lifetime": "synchronous-full-expression",
+      "line": 1293
+    },
+    {
+      "path": "src/core/create.cpp",
+      "call": "TextIO().pfnCompressed(app, idsSHD)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1377
+    },
+    {
+      "path": "src/core/create.cpp",
+      "call": "TextIO().pfnCompressed(app, idsSXD)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1379
+    },
+    {
+      "path": "src/core/file.cpp",
+      "call": "TextIO().pfnCompressed(app, idsNoteDYearsDataRead)",
+      "lifetime": "synchronous-full-expression",
+      "line": 755
+    },
+    {
+      "path": "src/core/msg.cpp",
+      "call": "TextIO().pfnCompressed(app, static_cast<StringId>(idsDecreased + *pParams))",
+      "lifetime": "named-local-owner",
+      "line": 349
+    },
+    {
+      "path": "src/core/msg.cpp",
+      "call": "TextIO().pfnCompressed(app, idsAnd)",
+      "lifetime": "synchronous-full-expression",
+      "line": 384
+    },
+    {
+      "path": "src/core/msg.cpp",
+      "call": "TextIO().pfnCompressed(app, idsOrigin)",
+      "lifetime": "synchronous-full-expression",
+      "line": 403
+    },
+    {
+      "path": "src/core/msg.cpp",
+      "call": "TextIO().pfnCompressed(app, static_cast<StringId>(idsEnergy + *pParams))",
+      "lifetime": "named-local-owner",
+      "line": 441
+    },
+    {
+      "path": "src/core/msg.cpp",
+      "call": "TextIO().pfnCompressed(app, ids)",
+      "lifetime": "synchronous-full-expression",
+      "line": 538
+    },
+    {
+      "path": "src/core/planet.cpp",
+      "call": "TextIO().pfnCompressed(app, idsDYears)",
+      "lifetime": "synchronous-full-expression",
+      "line": 54
+    },
+    {
+      "path": "src/core/planet.cpp",
+      "call": "TextIO().pfnCompressed(app, idsDYear)",
+      "lifetime": "synchronous-full-expression",
+      "line": 61
+    },
+    {
+      "path": "src/core/planet.cpp",
+      "call": "TextIO().pfnCompressed(app, idsDDYears)",
+      "lifetime": "synchronous-full-expression",
+      "line": 69
+    },
+    {
+      "path": "src/core/planet.cpp",
+      "call": "TextIO().pfnCompressed(app, idsQueueEmpty)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1048
+    },
+    {
+      "path": "src/core/race.cpp",
+      "call": "TextIO().pfnCompressed(app, idsRandom2)",
+      "lifetime": "synchronous-full-expression",
+      "line": 798
+    },
+    {
+      "path": "src/core/report.cpp",
+      "call": "TextIO().pfnCompressed(app, idsDelayed)",
+      "lifetime": "synchronous-full-expression",
+      "line": 50
+    },
+    {
+      "path": "src/core/report.cpp",
+      "call": "TextIO().pfnCompressed(app, idsTransport)",
+      "lifetime": "synchronous-full-expression",
+      "line": 226
+    },
+    {
+      "path": "src/core/report.cpp",
+      "call": "TextIO().pfnCompressed(app, ids)",
+      "lifetime": "synchronous-full-expression",
+      "line": 239
+    },
+    {
+      "path": "src/core/report.cpp",
+      "call": "TextIO().pfnCompressed(app, ids)",
+      "lifetime": "named-local-owner",
+      "line": 247
+    },
+    {
+      "path": "src/core/report.cpp",
+      "call": "TextIO().pfnCompressed(app, ids)",
+      "lifetime": "synchronous-full-expression",
+      "line": 261
+    },
+    {
+      "path": "src/core/report.cpp",
+      "call": "TextIO().pfnCompressed(app, ids)",
+      "lifetime": "synchronous-full-expression",
+      "line": 268
+    },
+    {
+      "path": "src/core/report.cpp",
+      "call": "TextIO().pfnCompressed(app, ids)",
+      "lifetime": "synchronous-full-expression",
+      "line": 275
+    },
+    {
+      "path": "src/core/report.cpp",
+      "call": "TextIO().pfnCompressed(app, ids)",
+      "lifetime": "synchronous-full-expression",
+      "line": 319
+    },
+    {
+      "path": "src/core/report.cpp",
+      "call": "TextIO().pfnCompressed(app, ids)",
+      "lifetime": "synchronous-full-expression",
+      "line": 544
+    },
+    {
+      "path": "src/core/report.cpp",
+      "call": "TextIO().pfnCompressed(app, ids)",
+      "lifetime": "synchronous-full-expression",
+      "line": 730
+    },
+    {
+      "path": "src/core/turn.cpp",
+      "call": "TextIO().pfnCompressed(app, idsNativeFilenameEncoding)",
+      "lifetime": "synchronous-full-expression",
+      "line": 606
+    },
+    {
+      "path": "src/core/turn.cpp",
+      "call": "TextIO().pfnCompressed(app, idsNativeFilenameTooLong)",
+      "lifetime": "synchronous-full-expression",
+      "line": 611
+    },
+    {
+      "path": "src/core/turn.cpp",
+      "call": "TextIO().pfnCompressed(app, cchPass == -3 ? idsNativeCommandPasswordTooLong : idsNativeCommandPasswordEncoding)",
+      "lifetime": "synchronous-full-expression",
+      "line": 743
+    },
+    {
+      "path": "src/core/turn.cpp",
+      "call": "TextIO().pfnCompressed(app, static_cast<StringId>(idsTurned + app.state.rgOut[i]))",
+      "lifetime": "synchronous-full-expression",
+      "line": 792
+    },
+    {
+      "path": "src/core/util.cpp",
+      "call": "TextIO().pfnCompressed(app, idsPlayerD2)",
+      "lifetime": "synchronous-full-expression",
+      "line": 401
+    },
+    {
+      "path": "src/core/util.cpp",
+      "call": "TextIO().pfnCompressed(app, idsSSMineField)",
+      "lifetime": "synchronous-full-expression",
+      "line": 762
+    },
+    {
+      "path": "src/core/util.cpp",
+      "call": "TextIO().pfnCompressed(app, idsSmineralPacket)",
+      "lifetime": "synchronous-full-expression",
+      "line": 774
+    },
+    {
+      "path": "src/core/util.cpp",
+      "call": "TextIO().pfnCompressed(app, idsWormhole)",
+      "lifetime": "synchronous-full-expression",
+      "line": 777
+    },
+    {
+      "path": "src/core/util.cpp",
+      "call": "TextIO().pfnCompressed(app, idsMysteryTrader)",
+      "lifetime": "synchronous-full-expression",
+      "line": 780
+    },
+    {
+      "path": "src/core/util.cpp",
+      "call": "TextIO().pfnCompressed(app, idsMysteryObject)",
+      "lifetime": "synchronous-full-expression",
+      "line": 783
+    },
+    {
+      "path": "src/core/util.cpp",
+      "call": "TextIO().pfnCompressed(app, idsFleet)",
+      "lifetime": "named-local-owner",
+      "line": 815
+    },
+    {
+      "path": "src/core/util.cpp",
+      "call": "TextIO().pfnCompressed(app, idsFleet)",
+      "lifetime": "named-local-owner",
+      "line": 830
+    },
+    {
+      "path": "src/core/util.cpp",
+      "call": "TextIO().pfnCompressed(app, idsFleet)",
+      "lifetime": "named-local-owner",
+      "line": 860
+    },
+    {
+      "path": "src/core/util.cpp",
+      "call": "TextIO().pfnCompressed(app, idsOrbitingS)",
+      "lifetime": "synchronous-full-expression",
+      "line": 887
+    },
+    {
+      "path": "src/core/util.cpp",
+      "call": "TextIO().pfnCompressed(app, idsDeepSpace)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1209
+    },
+    {
+      "path": "src/core/util.cpp",
+      "call": "TextIO().pfnCompressed(app, idsSpaceDD)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1211
+    },
+    {
+      "path": "src/core/util.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLdLdLightYears)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1255
+    },
+    {
+      "path": "src/core/util.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLdLdLY)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1257
+    },
+    {
+      "path": "src/core/util.cpp",
+      "call": "TextIO().pfnCompressed(app, !fSmall ? idsDYear : idsDy)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2619
+    },
+    {
+      "path": "src/core/utilgen.cpp",
+      "call": "TextIO().pfnCompressed(app, ids)",
+      "lifetime": "view-with-named-catalog-owner",
+      "line": 299
+    },
+    {
+      "path": "src/host/hostui.cpp",
+      "call": "PszGetCompressedString(app, idsNativeLegacyRaceNameShortened)",
+      "lifetime": "synchronous-full-expression",
+      "line": 85
+    },
+    {
+      "path": "src/ui/battleui.cpp",
+      "call": "TextIO().pfnCompressed(app, static_cast<StringId>(i))",
+      "lifetime": "synchronous-full-expression",
+      "line": 173
+    },
+    {
+      "path": "src/ui/battleui.cpp",
+      "call": "TextIO().pfnCompressed(app, static_cast<StringId>(i))",
+      "lifetime": "synchronous-full-expression",
+      "line": 177
+    },
+    {
+      "path": "src/ui/battleui.cpp",
+      "call": "TextIO().pfnCompressed(app, static_cast<StringId>(i))",
+      "lifetime": "synchronous-full-expression",
+      "line": 182
+    },
+    {
+      "path": "src/ui/battleui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsEveryone)",
+      "lifetime": "synchronous-full-expression",
+      "line": 195
+    },
+    {
+      "path": "src/ui/battleui.cpp",
+      "call": "TextIO().pfnCompressed(app, static_cast<StringId>(i))",
+      "lifetime": "synchronous-full-expression",
+      "line": 200
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "call": "TextIO().pfnCompressed(app, sw == win32::SW_SHOW ? idsDone : idsCancel)",
+      "lifetime": "synchronous-full-expression",
+      "line": 41
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "call": "TextIO().pfnCompressed(app, ids)",
+      "lifetime": "synchronous-full-expression",
+      "line": 61
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "call": "TextIO().pfnCompressed(app, static_cast<StringId>(ids + 1))",
+      "lifetime": "synchronous-full-expression",
+      "line": 64
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "call": "TextIO().pfnCompressed(app, static_cast<StringId>(ids + 2))",
+      "lifetime": "synchronous-full-expression",
+      "line": 66
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "call": "TextIO().pfnCompressed(app, static_cast<StringId>(idsDeleteDesign + fEdit))",
+      "lifetime": "synchronous-full-expression",
+      "line": 68
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsDone)",
+      "lifetime": "synchronous-full-expression",
+      "line": 135
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsCargo3)",
+      "lifetime": "synchronous-full-expression",
+      "line": 696
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsUnlimited)",
+      "lifetime": "synchronous-full-expression",
+      "line": 701
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsSpace)",
+      "lifetime": "synchronous-full-expression",
+      "line": 706
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsDock)",
+      "lifetime": "synchronous-full-expression",
+      "line": 711
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsMax)",
+      "lifetime": "synchronous-full-expression",
+      "line": 713
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsDD)",
+      "lifetime": "synchronous-full-expression",
+      "line": 736
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsNeedsD)",
+      "lifetime": "synchronous-full-expression",
+      "line": 744
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsD3)",
+      "lifetime": "synchronous-full-expression",
+      "line": 746
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLdLd)",
+      "lifetime": "synchronous-full-expression",
+      "line": 764
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsOr)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1108
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsKt)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1125
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsCostS)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1136
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsKt)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1151
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsMassLdkt)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1165
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsKt)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1223
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsCostOneSS)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1246
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsKt)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1275
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsMassLdkt)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1287
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsDmg)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1293
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLddp)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1299
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsNone)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1305
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsDD4)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1329
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsDS)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1340
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsDD6)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1354
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsDDD)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1356
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLdD)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1409
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "call": "TextIO().pfnCompressed(app, rgidsPartsSB[i])",
+      "lifetime": "synchronous-full-expression",
+      "line": 1650
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "call": "TextIO().pfnCompressed(app, rgidsParts[i])",
+      "lifetime": "synchronous-full-expression",
+      "line": 1654
+    },
+    {
+      "path": "src/ui/createui.cpp",
+      "call": "TextIO().pfnCompressed(app, static_cast<StringId>(idsBerserker + c))",
+      "lifetime": "synchronous-full-expression",
+      "line": 198
+    },
+    {
+      "path": "src/ui/createui.cpp",
+      "call": "TextIO().pfnCompressed(app, static_cast<StringId>(idsHumanoid + i))",
+      "lifetime": "named-local-owner",
+      "line": 522
+    },
+    {
+      "path": "src/ui/createui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsRandom)",
+      "lifetime": "synchronous-full-expression",
+      "line": 526
+    },
+    {
+      "path": "src/ui/createui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsExpansionPlayer)",
+      "lifetime": "synchronous-full-expression",
+      "line": 527
+    },
+    {
+      "path": "src/ui/createui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryNoRaces)",
+      "lifetime": "synchronous-full-expression",
+      "line": 534
+    },
+    {
+      "path": "src/ui/createui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsPredefinedRace)",
+      "lifetime": "synchronous-full-expression",
+      "line": 548
+    },
+    {
+      "path": "src/ui/createui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryRaceMenu)",
+      "lifetime": "synchronous-full-expression",
+      "line": 550
+    },
+    {
+      "path": "src/ui/createui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsComputerPlayer)",
+      "lifetime": "synchronous-full-expression",
+      "line": 552
+    },
+    {
+      "path": "src/ui/createui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryNewRace)",
+      "lifetime": "synchronous-full-expression",
+      "line": 554
+    },
+    {
+      "path": "src/ui/createui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsEditRace)",
+      "lifetime": "synchronous-full-expression",
+      "line": 556
+    },
+    {
+      "path": "src/ui/createui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsPlayer)",
+      "lifetime": "synchronous-full-expression",
+      "line": 558
+    },
+    {
+      "path": "src/ui/createui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsPlayer16)",
+      "lifetime": "synchronous-full-expression",
+      "line": 711
+    },
+    {
+      "path": "src/ui/createui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsPlayerD)",
+      "lifetime": "synchronous-full-expression",
+      "line": 715
+    },
+    {
+      "path": "src/ui/createui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsDeceased)",
+      "lifetime": "synchronous-full-expression",
+      "line": 726
+    },
+    {
+      "path": "src/ui/createui.cpp",
+      "call": "TextIO().pfnCompressed(app, static_cast<StringId>(idsHumanoid + iPlr))",
+      "lifetime": "synchronous-full-expression",
+      "line": 744
+    },
+    {
+      "path": "src/ui/createui.cpp",
+      "call": "TextIO().pfnCompressed(app, !app.state.fRCWReadOnly ? idsSS2 : idsS)",
+      "lifetime": "synchronous-full-expression",
+      "line": 753
+    },
+    {
+      "path": "src/ui/createui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsS)",
+      "lifetime": "synchronous-full-expression",
+      "line": 756
+    },
+    {
+      "path": "src/ui/createui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsSSComputerPlayer)",
+      "lifetime": "synchronous-full-expression",
+      "line": 759
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryGameRevisionSuffix)",
+      "lifetime": "synchronous-full-expression",
+      "line": 313
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryDefaultGameName)",
+      "lifetime": "named-local-owner",
+      "line": 335
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryGameDuplicateTitle)",
+      "lifetime": "synchronous-full-expression",
+      "line": 354
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryGameDuplicatePrompt)",
+      "lifetime": "synchronous-full-expression",
+      "line": 355
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryGameAddRevision)",
+      "lifetime": "synchronous-full-expression",
+      "line": 357
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryGameBackToWizard)",
+      "lifetime": "synchronous-full-expression",
+      "line": 358
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, ids)",
+      "lifetime": "named-dialog-body-value",
+      "line": 421
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryGames)",
+      "lifetime": "synchronous-full-expression",
+      "line": 422
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryDefaultGameName)",
+      "lifetime": "synchronous-full-expression",
+      "line": 440
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryStorageFailed)",
+      "lifetime": "synchronous-full-expression",
+      "line": 462
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryGames)",
+      "lifetime": "synchronous-full-expression",
+      "line": 463
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryStorageFailed)",
+      "lifetime": "synchronous-full-expression",
+      "line": 482
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryGames)",
+      "lifetime": "synchronous-full-expression",
+      "line": 483
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryDefaultRaceName)",
+      "lifetime": "synchronous-full-expression",
+      "line": 730
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryRaceSaveTitle)",
+      "lifetime": "synchronous-full-expression",
+      "line": 775
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryRaceSavePrompt)",
+      "lifetime": "synchronous-full-expression",
+      "line": 776
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryRaceUpdate)",
+      "lifetime": "synchronous-full-expression",
+      "line": 778
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryRaceNewVersion)",
+      "lifetime": "synchronous-full-expression",
+      "line": 779
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsCancel)",
+      "lifetime": "synchronous-full-expression",
+      "line": 780
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryRaceSaveFailed)",
+      "lifetime": "synchronous-full-expression",
+      "line": 836
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryRaceOpenFailed)",
+      "lifetime": "synchronous-full-expression",
+      "line": 854
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsHumanoid)",
+      "lifetime": "synchronous-full-expression",
+      "line": 901
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryHumanoids)",
+      "lifetime": "synchronous-full-expression",
+      "line": 902
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryRaceDuplicateFailed)",
+      "lifetime": "synchronous-full-expression",
+      "line": 940
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryRaceDuplicateFailed)",
+      "lifetime": "synchronous-full-expression",
+      "line": 945
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryRaceDuplicateFailed)",
+      "lifetime": "synchronous-full-expression",
+      "line": 951
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryRaceExportFailed)",
+      "lifetime": "synchronous-full-expression",
+      "line": 989
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryRaceExportFailed)",
+      "lifetime": "synchronous-full-expression",
+      "line": 994
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryRaceExportFailed)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1001
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryOrdersExportFilter)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1047
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryReplaceOrders)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1078
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryTitle)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1079
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryOrdersExportFailed)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1141
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryHistoryRestoreFailed)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1148
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsSaveError)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1159
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryRaceDeletePrompt)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1169
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryTitle)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1170
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryRaceDeleteFailed)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1172
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryExportGameTitle)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1675
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryGameExportFailed)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1757
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryTurnInvalid)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1926
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryTurnChooseGame)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1939
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryTurnInspectFailed)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1948
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryTurnCurrentInvalid)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1953
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryTurnPlayerInvalid)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1964
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryZipNameEncoding)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2071
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryZipInvalid)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2074
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryUniverseRequired)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2092
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryGameIncomplete)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2123
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryStorageFailed)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2256
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryGames)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2257
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryRenameFailedOriginalAt)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2295
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryStorageFailed)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2296
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryStorageFailed)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2297
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryGames)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2298
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryRenameSucceededCleanupPath)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2301
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryStorageFailed)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2302
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryGames)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2303
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryDeleteGamePrompt)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2363
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryGames)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2365
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryDeleteGameFailed)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2369
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsStarsIni)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2374
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryDeleteGameRecentFailed)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2376
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryOrdersImportFilter)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2431
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryOrdersChooseHost)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2447
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryOrdersChooseFile)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2458
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryOrdersInvalid)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2465
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryOrdersMismatch)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2476
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryOrdersReplacePrompt)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2485
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryOrdersStageFailed)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2496
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryOrdersInstallFailed)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2501
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryTurnCleanupFailed)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2610
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryGameRestoreFailed)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2623
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryTurnReplaceFailed)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2625
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibrarySeparateCopyFailed)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2653
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryStorageFailed)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2676
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryGames)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2677
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsStarsIni)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2811
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryGames)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2827
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryHostGames)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2830
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryImportGame)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2833
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryImportFolder)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2836
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryImportOrders)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2839
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryExportGame)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2842
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryDuplicate)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2845
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsRename)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2848
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsDelete)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2851
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryPlayerSelect)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2858
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryRaceDesigns)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2905
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryNew)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2907
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryEdit)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2909
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryDuplicate)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2911
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryExport)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2913
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsDelete)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2915
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryImport)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2917
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryPlayerTurn)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2960
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryContinuePlayer)",
+      "lifetime": "synchronous-full-expression",
+      "line": 3021
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryContinueChoosePlayer)",
+      "lifetime": "synchronous-full-expression",
+      "line": 3021
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsContinueGame)",
+      "lifetime": "synchronous-full-expression",
+      "line": 3024
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, static_cast<StringId>(idsNewGame + 2))",
+      "lifetime": "synchronous-full-expression",
+      "line": 3028
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsStarsIni)",
+      "lifetime": "synchronous-full-expression",
+      "line": 3185
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryTurnStageFailed)",
+      "lifetime": "synchronous-full-expression",
+      "line": 3219
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryTurnInstallFailed)",
+      "lifetime": "synchronous-full-expression",
+      "line": 3225
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryTurnPreserveFailed)",
+      "lifetime": "synchronous-full-expression",
+      "line": 3234
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryTurnInstallFailed)",
+      "lifetime": "synchronous-full-expression",
+      "line": 3240
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryTurnRestoreFailed)",
+      "lifetime": "synchronous-full-expression",
+      "line": 3246
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryTurnOrdersRetireFailed)",
+      "lifetime": "synchronous-full-expression",
+      "line": 3252
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryGameImportFailed)",
+      "lifetime": "synchronous-full-expression",
+      "line": 3280
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "call": "TextIO().pfnCompressed(app, idsYearD)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1130
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "call": "TextIO().pfnCompressed(app, idsSureWantForceGenerateDTurnsRow)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1253
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "call": "TextIO().pfnCompressed(app, ids)",
+      "lifetime": "named-local-owner",
+      "line": 1420
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "call": "TextIO().pfnCompressed(app, idsWaitingNewTurn)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1478
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "call": "TextIO().pfnCompressed(app, idsN16)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1901
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "call": "TextIO().pfnCompressed(app, idsD2)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1906
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "call": "TextIO().pfnCompressed(app, idsSS)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1913
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "call": "TextIO().pfnCompressed(app, idsDSeconds)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1928
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "call": "TextIO().pfnCompressed(app, idsD02d)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1933
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "call": "TextIO().pfnCompressed(app, idsD02d02d)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1938
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "call": "TextIO().pfnCompressed(app, idsDDaysD02d02d)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1942
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "call": "TextIO().pfnCompressed(app, idsSureWantForceGenerateDTurnsRow)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2092
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "call": "TextIO().pfnCompressed(app, idsNewTurnAvailable2)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2211
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "call": "TextIO().pfnCompressed(app, idsHostModeDPlayer)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2227
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "call": "TextIO().pfnCompressed(app, idsOut)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2231
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "call": "TextIO().pfnCompressed(app, idsC04d04d04d04d)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2284
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "call": "TextIO().pfnCompressed(app, idsC04d04d04d04d)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2320
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "call": "TextIO().pfnCompressed(app, idsC04d04d04d04d)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2324
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "call": "TextIO().pfnCompressed(app, idsC04d04d04d04d)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2328
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "call": "TextIO().pfnCompressed(app, idsC04d04d04d04d)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2332
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "call": "TextIO().pfnCompressed(app, idsCCD)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2400
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "call": "TextIO().pfnCompressed(app, static_cast<StringId>(i == 3 ? idsLibraryStartTutorial : idsNewGame + idButton))",
+      "lifetime": "named-local-owner",
+      "line": 2648
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLibraryOpenGame)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2665
+    },
+    {
+      "path": "src/ui/mineui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsDetonateMineFieldYear)",
+      "lifetime": "synchronous-full-expression",
+      "line": 31
+    },
+    {
+      "path": "src/ui/mineui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsN999mr)",
+      "lifetime": "synchronous-full-expression",
+      "line": 119
+    },
+    {
+      "path": "src/ui/mineui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsPopulation1000000)",
+      "lifetime": "synchronous-full-expression",
+      "line": 121
+    },
+    {
+      "path": "src/ui/mineui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsNone)",
+      "lifetime": "synchronous-full-expression",
+      "line": 305
+    },
+    {
+      "path": "src/ui/mineui.cpp",
+      "call": "TextIO().pfnCompressed(app, static_cast<StringId>(idsTaskHere + lpord->grTask))",
+      "lifetime": "synchronous-full-expression",
+      "line": 312
+    },
+    {
+      "path": "src/ui/mineui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsFleetCanDestroyLdMinesPerYear)",
+      "lifetime": "named-local-owner",
+      "line": 330
+    },
+    {
+      "path": "src/ui/mineui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsS2)",
+      "lifetime": "synchronous-full-expression",
+      "line": 415
+    },
+    {
+      "path": "src/ui/mineui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsTraderRequestsInterestedPartiesSendFleetLeast)",
+      "lifetime": "named-local-owner",
+      "line": 455
+    },
+    {
+      "path": "src/ui/mineui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsTraderTravelingWarpD)",
+      "lifetime": "synchronous-full-expression",
+      "line": 459
+    },
+    {
+      "path": "src/ui/mineui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsN999mr)",
+      "lifetime": "synchronous-full-expression",
+      "line": 521
+    },
+    {
+      "path": "src/ui/mineui.cpp",
+      "call": "TextIO().pfnCompressed(app, static_cast<StringId>(idsPop + (fShortLabels == 0)))",
+      "lifetime": "synchronous-full-expression",
+      "line": 570
+    },
+    {
+      "path": "src/ui/mineui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsCLd00)",
+      "lifetime": "synchronous-full-expression",
+      "line": 585
+    },
+    {
+      "path": "src/ui/mineui.cpp",
+      "call": "TextIO().pfnCompressed(app, !fShortLabels ? idsReportCurrent : idsCurrent)",
+      "lifetime": "synchronous-full-expression",
+      "line": 597
+    },
+    {
+      "path": "src/ui/mineui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsOld2)",
+      "lifetime": "synchronous-full-expression",
+      "line": 599
+    },
+    {
+      "path": "src/ui/mineui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsReportDYear)",
+      "lifetime": "synchronous-full-expression",
+      "line": 601
+    },
+    {
+      "path": "src/ui/msgui.cpp",
+      "call": "TextIO().pfnCompressed(app, static_cast<StringId>(idsPrev2 + i))",
+      "lifetime": "synchronous-full-expression",
+      "line": 52
+    },
+    {
+      "path": "src/ui/msgui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsEverybody)",
+      "lifetime": "synchronous-full-expression",
+      "line": 64
+    },
+    {
+      "path": "src/ui/msgui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsEverybody)",
+      "lifetime": "synchronous-full-expression",
+      "line": 206
+    },
+    {
+      "path": "src/ui/msgui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsMessagesHaveSentYearFilteredIfWant)",
+      "lifetime": "named-local-owner",
+      "line": 218
+    },
+    {
+      "path": "src/ui/msgui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsMessageTypeHasFilteredWillShownDefault)",
+      "lifetime": "named-local-owner",
+      "line": 221
+    },
+    {
+      "path": "src/ui/msgui.cpp",
+      "call": "TextIO().pfnCompressed(app, static_cast<StringId>(i))",
+      "lifetime": "synchronous-full-expression",
+      "line": 639
+    },
+    {
+      "path": "src/ui/msgui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsSendMessagesDD)",
+      "lifetime": "synchronous-full-expression",
+      "line": 641
+    },
+    {
+      "path": "src/ui/planetui.cpp",
+      "call": "TextIO().pfnCompressed(app, static_cast<StringId>(i))",
+      "lifetime": "named-local-owner",
+      "line": 46
+    },
+    {
+      "path": "src/ui/planetui.cpp",
+      "call": "TextIO().pfnCompressed(app, static_cast<StringId>(idsCargo2 + i))",
+      "lifetime": "named-local-owner",
+      "line": 74
+    },
+    {
+      "path": "src/ui/planetui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsRepeatOrders)",
+      "lifetime": "synchronous-full-expression",
+      "line": 80
+    },
+    {
+      "path": "src/ui/planetui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsMineralsHand)",
+      "lifetime": "synchronous-full-expression",
+      "line": 314
+    },
+    {
+      "path": "src/ui/planetui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLdkt)",
+      "lifetime": "synchronous-full-expression",
+      "line": 331
+    },
+    {
+      "path": "src/ui/planetui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsD)",
+      "lifetime": "synchronous-full-expression",
+      "line": 346
+    },
+    {
+      "path": "src/ui/planetui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsDD)",
+      "lifetime": "synchronous-full-expression",
+      "line": 348
+    },
+    {
+      "path": "src/ui/planetui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsDD)",
+      "lifetime": "synchronous-full-expression",
+      "line": 361
+    },
+    {
+      "path": "src/ui/planetui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsStatus)",
+      "lifetime": "synchronous-full-expression",
+      "line": 387
+    },
+    {
+      "path": "src/ui/planetui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsDD)",
+      "lifetime": "synchronous-full-expression",
+      "line": 446
+    },
+    {
+      "path": "src/ui/planetui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsDDLY)",
+      "lifetime": "synchronous-full-expression",
+      "line": 480
+    },
+    {
+      "path": "src/ui/planetui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsDLightYears)",
+      "lifetime": "synchronous-full-expression",
+      "line": 482
+    },
+    {
+      "path": "src/ui/planetui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsDLY)",
+      "lifetime": "synchronous-full-expression",
+      "line": 484
+    },
+    {
+      "path": "src/ui/planetui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsDD)",
+      "lifetime": "synchronous-full-expression",
+      "line": 505
+    },
+    {
+      "path": "src/ui/planetui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsStarbase2)",
+      "lifetime": "named-local-owner",
+      "line": 579
+    },
+    {
+      "path": "src/ui/planetui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLddp)",
+      "lifetime": "synchronous-full-expression",
+      "line": 617
+    },
+    {
+      "path": "src/ui/planetui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLddp)",
+      "lifetime": "synchronous-full-expression",
+      "line": 629
+    },
+    {
+      "path": "src/ui/planetui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsWarpD)",
+      "lifetime": "synchronous-full-expression",
+      "line": 662
+    },
+    {
+      "path": "src/ui/planetui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsNone4)",
+      "lifetime": "synchronous-full-expression",
+      "line": 667
+    },
+    {
+      "path": "src/ui/planetui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsSetDest)",
+      "lifetime": "synchronous-full-expression",
+      "line": 691
+    },
+    {
+      "path": "src/ui/planetui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsWarpLd)",
+      "lifetime": "synchronous-full-expression",
+      "line": 732
+    },
+    {
+      "path": "src/ui/planetui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsProduction)",
+      "lifetime": "synchronous-full-expression",
+      "line": 766
+    },
+    {
+      "path": "src/ui/planetui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsRoute2)",
+      "lifetime": "synchronous-full-expression",
+      "line": 836
+    },
+    {
+      "path": "src/ui/planetui.cpp",
+      "call": "TextIO().pfnCompressed(app, !pfl ? idsFleetsOrbit : idsOtherFleetsHere)",
+      "lifetime": "synchronous-full-expression",
+      "line": 953
+    },
+    {
+      "path": "src/ui/planetui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsSetDest)",
+      "lifetime": "button-tracking-local-owner",
+      "line": 1292
+    },
+    {
+      "path": "src/ui/planetui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsRoute2)",
+      "lifetime": "button-tracking-local-owner",
+      "line": 1327
+    },
+    {
+      "path": "src/ui/planetui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsPlanetView)",
+      "lifetime": "named-local-owner",
+      "line": 1718
+    },
+    {
+      "path": "src/ui/planetui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsQueueEmpty)",
+      "lifetime": "named-local-owner",
+      "line": 1787
+    },
+    {
+      "path": "src/ui/planetui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsTopQueue)",
+      "lifetime": "named-local-owner",
+      "line": 1792
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsMineralConcentration)",
+      "lifetime": "named-local-owner",
+      "line": 108
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsSurface)",
+      "lifetime": "synchronous-full-expression",
+      "line": 111
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsUnknown2)",
+      "lifetime": "synchronous-full-expression",
+      "line": 115
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsMineralConcentration)",
+      "lifetime": "synchronous-full-expression",
+      "line": 119
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, app.lpui->GlobalPD.rgi[3] < 30 ? idsN30 : idsHw)",
+      "lifetime": "synchronous-full-expression",
+      "line": 123
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsUnknown2)",
+      "lifetime": "synchronous-full-expression",
+      "line": 126
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsMiningRate)",
+      "lifetime": "synchronous-full-expression",
+      "line": 131
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsPlayerD)",
+      "lifetime": "synchronous-full-expression",
+      "line": 138
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsPlanet)",
+      "lifetime": "named-local-owner",
+      "line": 194
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsId)",
+      "lifetime": "synchronous-full-expression",
+      "line": 199
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsX)",
+      "lifetime": "synchronous-full-expression",
+      "line": 200
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsY)",
+      "lifetime": "synchronous-full-expression",
+      "line": 201
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsMineralConcentration0000000kt)",
+      "lifetime": "named-local-owner",
+      "line": 282
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsShipName)",
+      "lifetime": "named-local-owner",
+      "line": 306
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsN9999999)",
+      "lifetime": "named-local-owner",
+      "line": 321
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsShipName)",
+      "lifetime": "named-local-owner",
+      "line": 328
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsPlanet)",
+      "lifetime": "named-local-owner",
+      "line": 338
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsN9999)",
+      "lifetime": "synchronous-full-expression",
+      "line": 344
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, static_cast<StringId>(LOWORD(rgids[i])))",
+      "lifetime": "named-local-owner",
+      "line": 431
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsCurrently)",
+      "lifetime": "synchronous-full-expression",
+      "line": 528
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsUnknown2)",
+      "lifetime": "synchronous-full-expression",
+      "line": 533
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsColonistsImmune)",
+      "lifetime": "synchronous-full-expression",
+      "line": 543
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsEffects)",
+      "lifetime": "synchronous-full-expression",
+      "line": 549
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsColonistsPreferPlanetsWhere)",
+      "lifetime": "synchronous-full-expression",
+      "line": 553
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsBetween)",
+      "lifetime": "synchronous-full-expression",
+      "line": 560
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsAnd)",
+      "lifetime": "synchronous-full-expression",
+      "line": 564
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsCurrentlyPossessTechnology)",
+      "lifetime": "synchronous-full-expression",
+      "line": 576
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsModify)",
+      "lifetime": "synchronous-full-expression",
+      "line": 582
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsOn2)",
+      "lifetime": "synchronous-full-expression",
+      "line": 584
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsWithinRange)",
+      "lifetime": "synchronous-full-expression",
+      "line": 593
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsTo)",
+      "lifetime": "synchronous-full-expression",
+      "line": 597
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsTo)",
+      "lifetime": "synchronous-full-expression",
+      "line": 630
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsPopulation3)",
+      "lifetime": "synchronous-full-expression",
+      "line": 689
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsIs)",
+      "lifetime": "synchronous-full-expression",
+      "line": 693
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsEnemyPopulation)",
+      "lifetime": "synchronous-full-expression",
+      "line": 703
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsApproximately)",
+      "lifetime": "synchronous-full-expression",
+      "line": 708
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsUnknown)",
+      "lifetime": "synchronous-full-expression",
+      "line": 717
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsUninhabited2)",
+      "lifetime": "synchronous-full-expression",
+      "line": 724
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsWillKillOffApproximately)",
+      "lifetime": "synchronous-full-expression",
+      "line": 739
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsOf)",
+      "lifetime": "synchronous-full-expression",
+      "line": 744
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsColonistsEachTurn)",
+      "lifetime": "synchronous-full-expression",
+      "line": 751
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsColonistsSettleEveryTurn)",
+      "lifetime": "synchronous-full-expression",
+      "line": 753
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsWillSupportPopulation)",
+      "lifetime": "synchronous-full-expression",
+      "line": 759
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsColonists3)",
+      "lifetime": "synchronous-full-expression",
+      "line": 769
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsIfColonize)",
+      "lifetime": "synchronous-full-expression",
+      "line": 772
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsWould)",
+      "lifetime": "synchronous-full-expression",
+      "line": 776
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsSupport)",
+      "lifetime": "synchronous-full-expression",
+      "line": 782
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsColonists3)",
+      "lifetime": "synchronous-full-expression",
+      "line": 787
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsWillGrowLd00Ld00Year)",
+      "lifetime": "named-local-owner",
+      "line": 807
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsHasPlanetaryDefensesApproximatelyDCoverage)",
+      "lifetime": "named-local-owner",
+      "line": 825
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsZipord)",
+      "lifetime": "named-local-owner",
+      "line": 852
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsZipordProvidesAbilityQuicklySetFleets)",
+      "lifetime": "synchronous-full-expression",
+      "line": 858
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsTransportOrdersOne3CommonSetsSelect)",
+      "lifetime": "synchronous-full-expression",
+      "line": 864
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsZipordClickDiamondRightMouse)",
+      "lifetime": "synchronous-full-expression",
+      "line": 870
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsButtonClickOrderChoice)",
+      "lifetime": "synchronous-full-expression",
+      "line": 876
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsQuikload)",
+      "lifetime": "synchronous-full-expression",
+      "line": 883
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLoadMineralsAvailable)",
+      "lifetime": "synchronous-full-expression",
+      "line": 885
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsQuikdrop)",
+      "lifetime": "synchronous-full-expression",
+      "line": 892
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsUnloadEverythingFleetCarrying)",
+      "lifetime": "synchronous-full-expression",
+      "line": 894
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsWaitload)",
+      "lifetime": "synchronous-full-expression",
+      "line": 901
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsWaitFullLoadMinerals)",
+      "lifetime": "synchronous-full-expression",
+      "line": 903
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsClear2)",
+      "lifetime": "synchronous-full-expression",
+      "line": 910
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsRemoveTransportOrders)",
+      "lifetime": "synchronous-full-expression",
+      "line": 912
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, app.lpui->GlobalPD.grbit == 0 ? idsRaceIncapableBuildingMinesHoweverColonistsHave : idsRaceIncapableBuildingFactories)",
+      "lifetime": "named-local-owner",
+      "line": 959
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, ids)",
+      "lifetime": "named-local-owner",
+      "line": 973
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsResourceInfo)",
+      "lifetime": "named-local-owner",
+      "line": 1022
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, ids)",
+      "lifetime": "named-local-owner",
+      "line": 1040
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "call": "TextIO().pfnCompressed(app, idsNone2)",
+      "lifetime": "named-local-owner",
+      "line": 1057
+    },
+    {
+      "path": "src/ui/produceui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsCustomize)",
+      "lifetime": "popup-menu-local-owner",
+      "line": 187
+    },
+    {
+      "path": "src/ui/produceui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsProductionQueueS)",
+      "lifetime": "synchronous-full-expression",
+      "line": 484
+    },
+    {
+      "path": "src/ui/produceui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsKt)",
+      "lifetime": "synchronous-full-expression",
+      "line": 523
+    },
+    {
+      "path": "src/ui/produceui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsKt)",
+      "lifetime": "synchronous-full-expression",
+      "line": 560
+    },
+    {
+      "path": "src/ui/produceui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsDDoneCompletion)",
+      "lifetime": "synchronous-full-expression",
+      "line": 566
+    },
+    {
+      "path": "src/ui/produceui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsCustomizeProductionTemplates)",
+      "lifetime": "synchronous-full-expression",
+      "line": 638
+    },
+    {
+      "path": "src/ui/produceui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsUnusedD)",
+      "lifetime": "named-local-owner",
+      "line": 664
+    },
+    {
+      "path": "src/ui/produceui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsCustomD)",
+      "lifetime": "synchronous-full-expression",
+      "line": 738
+    },
+    {
+      "path": "src/ui/produceui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsCustomD)",
+      "lifetime": "synchronous-full-expression",
+      "line": 744
+    },
+    {
+      "path": "src/ui/produceui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsUnusedD)",
+      "lifetime": "synchronous-full-expression",
+      "line": 780
+    },
+    {
+      "path": "src/ui/produceui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsAutoBuildOrders)",
+      "lifetime": "synchronous-full-expression",
+      "line": 817
+    },
+    {
+      "path": "src/ui/raceui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsAdvantagePointsCurrentlyHoleDPointsCannot)",
+      "lifetime": "synchronous-full-expression",
+      "line": 84
+    },
+    {
+      "path": "src/ui/raceui.cpp",
+      "call": "TextIO().pfnCompressed(app, static_cast<StringId>(i))",
+      "lifetime": "named-local-owner",
+      "line": 178
+    },
+    {
+      "path": "src/ui/raceui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsNativePasswordReenter)",
+      "lifetime": "synchronous-full-expression",
+      "line": 316
+    },
+    {
+      "path": "src/ui/raceui.cpp",
+      "call": "TextIO().pfnCompressed(app, static_cast<StringId>(idsHumanoid + i))",
+      "lifetime": "synchronous-full-expression",
+      "line": 334
+    },
+    {
+      "path": "src/ui/raceui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsCanExpect1DPlanetsWillHabitable)",
+      "lifetime": "synchronous-full-expression",
+      "line": 638
+    },
+    {
+      "path": "src/ui/raceui.cpp",
+      "call": "TextIO().pfnCompressed(app, static_cast<StringId>(idsImprovedFuelEfficiency + i))",
+      "lifetime": "synchronous-full-expression",
+      "line": 1138
+    },
+    {
+      "path": "src/ui/raceui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsCosts75ExtraResearchFieldsStartTech)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1234
+    },
+    {
+      "path": "src/ui/raceui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsNativeLegacyRaceNameShortened)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1413
+    },
+    {
+      "path": "src/ui/reportui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsExceedsSecondPlaceScore)",
+      "lifetime": "named-local-owner",
+      "line": 555
+    },
+    {
+      "path": "src/ui/reportui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsUnarmedShips2)",
+      "lifetime": "named-local-owner",
+      "line": 561
+    },
+    {
+      "path": "src/ui/reportui.cpp",
+      "call": "TextIO().pfnCompressed(app, static_cast<StringId>(idsPlayerScores + fVictory))",
+      "lifetime": "synchronous-full-expression",
+      "line": 580
+    },
+    {
+      "path": "src/ui/reportui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsSpaceDD)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1390
+    },
+    {
+      "path": "src/ui/reportui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsSpaceDD)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1473
+    },
+    {
+      "path": "src/ui/reportui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsSpaceDD)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1556
+    },
+    {
+      "path": "src/ui/reportui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsSpaceDD)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1955
+    },
+    {
+      "path": "src/ui/reportui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsSpaceDD)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1960
+    },
+    {
+      "path": "src/ui/reportui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsSpaceDD)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2088
+    },
+    {
+      "path": "src/ui/reportui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsSpaceDD)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2093
+    },
+    {
+      "path": "src/ui/reportui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsSpaceDD)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2174
+    },
+    {
+      "path": "src/ui/reportui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsSpaceDD)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2179
+    },
+    {
+      "path": "src/ui/reportui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsWeightedAverage)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2328
+    },
+    {
+      "path": "src/ui/researchui.cpp",
+      "call": "TextIO().pfnCompressed(app, static_cast<StringId>(idsSameField + i))",
+      "lifetime": "named-local-owner",
+      "line": 63
+    },
+    {
+      "path": "src/ui/researchui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsN9999992)",
+      "lifetime": "synchronous-full-expression",
+      "line": 84
+    },
+    {
+      "path": "src/ui/researchui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsResourcesNeededComplete)",
+      "lifetime": "synchronous-full-expression",
+      "line": 361
+    },
+    {
+      "path": "src/ui/researchui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsEstimatedTimeCompletion)",
+      "lifetime": "synchronous-full-expression",
+      "line": 369
+    },
+    {
+      "path": "src/ui/researchui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLdYearC)",
+      "lifetime": "synchronous-full-expression",
+      "line": 388
+    },
+    {
+      "path": "src/ui/researchui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsFieldResearch)",
+      "lifetime": "synchronous-full-expression",
+      "line": 391
+    },
+    {
+      "path": "src/ui/researchui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsAnnualResourcesPlanets)",
+      "lifetime": "synchronous-full-expression",
+      "line": 414
+    },
+    {
+      "path": "src/ui/researchui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsTotalResourcesSpentResearchLastYear)",
+      "lifetime": "synchronous-full-expression",
+      "line": 423
+    },
+    {
+      "path": "src/ui/researchui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsResourcesBudgetedResearch)",
+      "lifetime": "synchronous-full-expression",
+      "line": 431
+    },
+    {
+      "path": "src/ui/researchui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsYearsProjectedResearchBudget)",
+      "lifetime": "synchronous-full-expression",
+      "line": 458
+    },
+    {
+      "path": "src/ui/researchui.cpp",
+      "call": "TextIO().pfnCompressed(app, static_cast<StringId>(i))",
+      "lifetime": "persistent-popup-owned-buffer",
+      "line": 533
+    },
+    {
+      "path": "src/ui/researchui.cpp",
+      "call": "TextIO().pfnCompressed(app, static_cast<StringId>(i))",
+      "lifetime": "synchronous-full-expression",
+      "line": 615
+    },
+    {
+      "path": "src/ui/researchui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsCostLdk)",
+      "lifetime": "synchronous-full-expression",
+      "line": 923
+    },
+    {
+      "path": "src/ui/researchui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsCostLd)",
+      "lifetime": "synchronous-full-expression",
+      "line": 926
+    },
+    {
+      "path": "src/ui/researchui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsUnavail)",
+      "lifetime": "synchronous-full-expression",
+      "line": 930
+    },
+    {
+      "path": "src/ui/researchui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsAvailable)",
+      "lifetime": "synchronous-full-expression",
+      "line": 933
+    },
+    {
+      "path": "src/ui/researchui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsMassDkt)",
+      "lifetime": "synchronous-full-expression",
+      "line": 974
+    },
+    {
+      "path": "src/ui/researchui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsWarp)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1027
+    },
+    {
+      "path": "src/ui/researchui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsHullWillManufacture200UnitsFuelEach)",
+      "lifetime": "named-local-owner",
+      "line": 1224
+    },
+    {
+      "path": "src/ui/researchui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsShieldStrength)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1303
+    },
+    {
+      "path": "src/ui/researchui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsArmorStrength2)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1330
+    },
+    {
+      "path": "src/ui/researchui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsWeaponAlsoMakesExcellentMineSweeperCapable)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1390
+    },
+    {
+      "path": "src/ui/researchui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsCloaksAnyShipReducingRangeWhichScanners)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1523
+    },
+    {
+      "path": "src/ui/researchui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsIncreasesDamageDoneBeamWeaponsShipD)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1545
+    },
+    {
+      "path": "src/ui/researchui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsT)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1554
+    },
+    {
+      "path": "src/ui/researchui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsT)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1560
+    },
+    {
+      "path": "src/ui/researchui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsIncreasesSpeedBattle1DSquareMovement)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1583
+    },
+    {
+      "path": "src/ui/researchui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsPodIncreasesFuelCapacityShipDmg)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1587
+    },
+    {
+      "path": "src/ui/researchui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsPodIncreasesCargoCapacityShipDkt)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1591
+    },
+    {
+      "path": "src/ui/researchui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsWarp)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1661
+    },
+    {
+      "path": "src/ui/researchui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsSafeHullMass)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1675
+    },
+    {
+      "path": "src/ui/researchui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsSafeRange)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1686
+    },
+    {
+      "path": "src/ui/researchui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsDLightYears)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1691
+    },
+    {
+      "path": "src/ui/researchui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsWarningShipsCanSuccessfullyGatedDL)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1698
+    },
+    {
+      "path": "src/ui/researchui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsWarningShipsDktCanSuccessfullyGatedExceeding)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1701
+    },
+    {
+      "path": "src/ui/researchui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsWarningShipsDktMightSuccessfullyGatedD)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1703
+    },
+    {
+      "path": "src/ui/researchui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsWarpD2)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1781
+    },
+    {
+      "path": "src/ui/researchui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsDD2)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1784
+    },
+    {
+      "path": "src/ui/researchui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsDDEngine)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1787
+    },
+    {
+      "path": "src/ui/researchui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsDD3)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1790
+    },
+    {
+      "path": "src/ui/scan.cpp",
+      "call": "TextIO().pfnCompressed(app, idsCantHaveDWaypoints)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2331
+    },
+    {
+      "path": "src/ui/ship2ui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsCustomizeZipOrders)",
+      "lifetime": "synchronous-full-expression",
+      "line": 27
+    },
+    {
+      "path": "src/ui/ship2ui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsUnusedD)",
+      "lifetime": "named-local-owner",
+      "line": 45
+    },
+    {
+      "path": "src/ui/ship2ui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsCustomD)",
+      "lifetime": "synchronous-full-expression",
+      "line": 129
+    },
+    {
+      "path": "src/ui/ship2ui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsCustomD)",
+      "lifetime": "synchronous-full-expression",
+      "line": 133
+    },
+    {
+      "path": "src/ui/ship2ui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsUnusedD)",
+      "lifetime": "synchronous-full-expression",
+      "line": 157
+    },
+    {
+      "path": "src/ui/ship2ui.cpp",
+      "call": "TextIO().pfnCompressed(app, ids)",
+      "lifetime": "synchronous-full-expression",
+      "line": 193
+    },
+    {
+      "path": "src/ui/ship2ui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsRenameFleet)",
+      "lifetime": "synchronous-full-expression",
+      "line": 241
+    },
+    {
+      "path": "src/ui/shipui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsFleetWaypoints)",
+      "lifetime": "synchronous-full-expression",
+      "line": 48
+    },
+    {
+      "path": "src/ui/shipui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsWarpD2)",
+      "lifetime": "synchronous-full-expression",
+      "line": 139
+    },
+    {
+      "path": "src/ui/shipui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLdmg)",
+      "lifetime": "synchronous-full-expression",
+      "line": 163
+    },
+    {
+      "path": "src/ui/shipui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsWaypointTask)",
+      "lifetime": "synchronous-full-expression",
+      "line": 227
+    },
+    {
+      "path": "src/ui/shipui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsWarpFactor)",
+      "lifetime": "named-local-owner",
+      "line": 272
+    },
+    {
+      "path": "src/ui/shipui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsIntercept)",
+      "lifetime": "named-local-owner",
+      "line": 276
+    },
+    {
+      "path": "src/ui/shipui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsWarpFactor)",
+      "lifetime": "named-local-owner",
+      "line": 320
+    },
+    {
+      "path": "src/ui/shipui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsN99999Kt)",
+      "lifetime": "synchronous-full-expression",
+      "line": 356
+    },
+    {
+      "path": "src/ui/shipui.cpp",
+      "call": "TextIO().pfnCompressed(app, ids)",
+      "lifetime": "named-local-owner",
+      "line": 397
+    },
+    {
+      "path": "src/ui/shipui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsFleetCanLayLdMinesPerYear)",
+      "lifetime": "named-local-owner",
+      "line": 412
+    },
+    {
+      "path": "src/ui/shipui.cpp",
+      "call": "TextIO().pfnCompressed(app, ids)",
+      "lifetime": "named-local-owner",
+      "line": 442
+    },
+    {
+      "path": "src/ui/shipui.cpp",
+      "call": "TextIO().pfnCompressed(app, ids)",
+      "lifetime": "named-local-owner",
+      "line": 491
+    },
+    {
+      "path": "src/ui/shipui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsDeepSpace2)",
+      "lifetime": "named-local-owner",
+      "line": 519
+    },
+    {
+      "path": "src/ui/shipui.cpp",
+      "call": "TextIO().pfnCompressed(app, obj.pfl()->idPlanet == idPlanetDeepSpace ? idsJettison2 : idsXFer)",
+      "lifetime": "synchronous-full-expression",
+      "line": 537
+    },
+    {
+      "path": "src/ui/shipui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsFuelCargo)",
+      "lifetime": "synchronous-full-expression",
+      "line": 580
+    },
+    {
+      "path": "src/ui/shipui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLdkt)",
+      "lifetime": "synchronous-full-expression",
+      "line": 617
+    },
+    {
+      "path": "src/ui/shipui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLdkt)",
+      "lifetime": "synchronous-full-expression",
+      "line": 629
+    },
+    {
+      "path": "src/ui/shipui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsFleetComposition)",
+      "lifetime": "synchronous-full-expression",
+      "line": 663
+    },
+    {
+      "path": "src/ui/shipui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLdLY)",
+      "lifetime": "synchronous-full-expression",
+      "line": 715
+    },
+    {
+      "path": "src/ui/shipui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsWarpLd)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1075
+    },
+    {
+      "path": "src/ui/shipui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsWarpLd)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1084
+    },
+    {
+      "path": "src/ui/shipui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLdkt)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1089
+    },
+    {
+      "path": "src/ui/shipui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLdLdmg)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1091
+    },
+    {
+      "path": "src/ui/shipui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLdLdkt)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1093
+    },
+    {
+      "path": "src/ui/shipui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsShipTransfer)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1338
+    },
+    {
+      "path": "src/ui/shipui.cpp",
+      "call": "TextIO().pfnCompressed(app, static_cast<StringId>(i == -1 ? idsPacketShell : idsIronium + i))",
+      "lifetime": "synchronous-full-expression",
+      "line": 1725
+    },
+    {
+      "path": "src/ui/shipui.cpp",
+      "call": "TextIO().pfnCompressed(app, static_cast<StringId>(idsFuel + i))",
+      "lifetime": "synchronous-full-expression",
+      "line": 1786
+    },
+    {
+      "path": "src/ui/shipui.cpp",
+      "call": "TextIO().pfnCompressed(app, static_cast<StringId>(idsLdkt + (iMap == 4)))",
+      "lifetime": "synchronous-full-expression",
+      "line": 1808
+    },
+    {
+      "path": "src/ui/shipui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsDeepSpace)",
+      "lifetime": "named-local-owner",
+      "line": 1922
+    },
+    {
+      "path": "src/ui/shipui.cpp",
+      "call": "TextIO().pfnCompressed(app, static_cast<StringId>(idsFuel + i))",
+      "lifetime": "synchronous-full-expression",
+      "line": 1934
+    },
+    {
+      "path": "src/ui/shipui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLdkt)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1954
+    },
+    {
+      "path": "src/ui/shipui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsWithinDLY)",
+      "lifetime": "named-local-owner",
+      "line": 2440
+    },
+    {
+      "path": "src/ui/shipui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsAnyEnemy)",
+      "lifetime": "named-local-owner",
+      "line": 2446
+    },
+    {
+      "path": "src/ui/shipui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsDYearC)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2467
+    },
+    {
+      "path": "src/ui/shipui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsIindefinitely)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2470
+    },
+    {
+      "path": "src/ui/shipui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLoadOptimal)",
+      "lifetime": "named-local-owner",
+      "line": 2490
+    },
+    {
+      "path": "src/ui/shipui.cpp",
+      "call": "TextIO().pfnCompressed(app, static_cast<StringId>(i))",
+      "lifetime": "named-local-owner",
+      "line": 2493
+    },
+    {
+      "path": "src/ui/shipui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsCustomize)",
+      "lifetime": "popup-menu-local-owner",
+      "line": 2558
+    },
+    {
+      "path": "src/ui/stars.cpp",
+      "call": "TextIO().pfnCompressed(app, static_cast<StringId>(idsDesignProgramming + i))",
+      "lifetime": "synchronous-full-expression",
+      "line": 234
+    },
+    {
+      "path": "src/ui/tutor.cpp",
+      "call": "TextIO().pfnCompressed(app, idsStarsTutorPageD80)",
+      "lifetime": "synchronous-full-expression",
+      "line": 328
+    },
+    {
+      "path": "src/ui/tutor.cpp",
+      "call": "TextIO().pfnCompressed(app, idsGater)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2922
+    },
+    {
+      "path": "src/ui/tutor.cpp",
+      "call": "TextIO().pfnCompressed(app, idsMineLayer)",
+      "lifetime": "synchronous-full-expression",
+      "line": 2945
+    },
+    {
+      "path": "src/ui/utilgenui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsEnterPassword)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1042
+    },
+    {
+      "path": "src/ui/utilgenui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsNativePasswordReenter)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1066
+    },
+    {
+      "path": "src/ui/utilgenui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsNativeLegacyRacePassword)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1109
+    },
+    {
+      "path": "src/ui/utilgenui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsNativeLegacyRacePassword)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1110
+    },
+    {
+      "path": "src/ui/utilgenui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsNotePasswordEffectiveImmediately)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1112
+    },
+    {
+      "path": "src/ui/utilgenui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsChangeHostPassword)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1113
+    },
+    {
+      "path": "src/ui/utilgenui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsNoteNewPasswordWillTakeEffectUntil)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1115
+    },
+    {
+      "path": "src/ui/utilgenui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsNativePasswordReenter)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1140
+    },
+    {
+      "path": "src/ui/utilgenui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsNativePasswordReenter)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1145
+    },
+    {
+      "path": "src/ui/utilgenui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsNativeLegacyRacePasswordRequired)",
+      "lifetime": "synchronous-full-expression",
+      "line": 1157
+    },
+    {
+      "path": "src/ui/utilgenui.cpp",
+      "call": "TextIO().pfnCompressed(app, idsGeneratingDataYearD)",
+      "lifetime": "named-local-owner",
+      "line": 1224
+    },
+    {
+      "path": "src/ui/vcr.cpp",
+      "call": "TextIO().pfnCompressed(app, idsPlaybackSpeedD)",
+      "lifetime": "synchronous-full-expression",
+      "line": 356
+    },
+    {
+      "path": "src/ui/vcr.cpp",
+      "call": "TextIO().pfnCompressed(app, idsPhaseDDRoundDD)",
+      "lifetime": "synchronous-full-expression",
+      "line": 622
+    },
+    {
+      "path": "src/ui/vcr.cpp",
+      "call": "TextIO().pfnCompressed(app, idsPlaybackSpeedD)",
+      "lifetime": "synchronous-full-expression",
+      "line": 625
+    },
+    {
+      "path": "src/ui/vcr.cpp",
+      "call": "TextIO().pfnCompressed(app, idsSD)",
+      "lifetime": "synchronous-full-expression",
+      "line": 652
+    },
+    {
+      "path": "src/ui/vcr.cpp",
+      "call": "TextIO().pfnCompressed(app, idsAttacksS)",
+      "lifetime": "synchronous-full-expression",
+      "line": 664
+    },
+    {
+      "path": "src/ui/vcr.cpp",
+      "call": "TextIO().pfnCompressed(app, idsSD)",
+      "lifetime": "synchronous-full-expression",
+      "line": 677
+    },
+    {
+      "path": "src/ui/vcr.cpp",
+      "call": "TextIO().pfnCompressed(app, idsDDDoing)",
+      "lifetime": "synchronous-full-expression",
+      "line": 702
+    },
+    {
+      "path": "src/ui/vcr.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLdDamageShieldsS)",
+      "lifetime": "synchronous-full-expression",
+      "line": 707
+    },
+    {
+      "path": "src/ui/vcr.cpp",
+      "call": "TextIO().pfnCompressed(app, idsLdDamageArmorC)",
+      "lifetime": "synchronous-full-expression",
+      "line": 712
+    },
+    {
+      "path": "src/ui/vcr.cpp",
+      "call": "TextIO().pfnCompressed(app, idsDamage3)",
+      "lifetime": "named-local-owner",
+      "line": 717
+    },
+    {
+      "path": "src/ui/vcr.cpp",
+      "call": "TextIO().pfnCompressed(app, idsDestroyingDShip)",
+      "lifetime": "synchronous-full-expression",
+      "line": 723
+    },
+    {
+      "path": "src/ui/vcr.cpp",
+      "call": "TextIO().pfnCompressed(app, idsSelectionDD)",
+      "lifetime": "synchronous-full-expression",
+      "line": 745
+    },
+    {
+      "path": "src/ui/vcr.cpp",
+      "call": "TextIO().pfnCompressed(app, idsSD)",
+      "lifetime": "synchronous-full-expression",
+      "line": 765
+    },
+    {
+      "path": "src/ui/vcr.cpp",
+      "call": "TextIO().pfnCompressed(app, idsInitiativeD)",
+      "lifetime": "synchronous-full-expression",
+      "line": 784
+    },
+    {
+      "path": "src/ui/vcr.cpp",
+      "call": "TextIO().pfnCompressed(app, idsMovementS)",
+      "lifetime": "synchronous-full-expression",
+      "line": 786
+    },
+    {
+      "path": "src/ui/vcr.cpp",
+      "call": "TextIO().pfnCompressed(app, idsArmorLd)",
+      "lifetime": "synchronous-full-expression",
+      "line": 789
+    },
+    {
+      "path": "src/ui/vcr.cpp",
+      "call": "TextIO().pfnCompressed(app, idsDamageD)",
+      "lifetime": "synchronous-full-expression",
+      "line": 805
+    },
+    {
+      "path": "src/ui/vcr.cpp",
+      "call": "TextIO().pfnCompressed(app, idsDamageLdD)",
+      "lifetime": "synchronous-full-expression",
+      "line": 807
+    },
+    {
+      "path": "src/ui/vcr.cpp",
+      "call": "TextIO().pfnCompressed(app, idsShieldsLd)",
+      "lifetime": "synchronous-full-expression",
+      "line": 816
+    },
+    {
+      "path": "src/ui/vcr.cpp",
+      "call": "TextIO().pfnCompressed(app, idsJammingD)",
+      "lifetime": "synchronous-full-expression",
+      "line": 821
+    },
+    {
+      "path": "src/ui/vcr.cpp",
+      "call": "TextIO().pfnCompressed(app, static_cast<StringId>(i))",
+      "lifetime": "synchronous-full-expression",
+      "line": 833
+    },
+    {
+      "path": "src/ui/vcr.cpp",
+      "call": "TextIO().pfnCompressed(app, static_cast<StringId>(i))",
+      "lifetime": "synchronous-full-expression",
+      "line": 836
+    },
+    {
+      "path": "src/ui/vcr.cpp",
+      "call": "TextIO().pfnCompressed(app, static_cast<StringId>(i))",
+      "lifetime": "synchronous-full-expression",
+      "line": 844
+    },
+    {
+      "path": "src/ui/vcr.cpp",
+      "call": "TextIO().pfnCompressed(app, static_cast<StringId>(i))",
+      "lifetime": "synchronous-full-expression",
+      "line": 849
+    }
+  ]
 }

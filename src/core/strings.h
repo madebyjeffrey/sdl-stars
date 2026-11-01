@@ -3,12 +3,16 @@
 
 #include "common.h"
 #include <cstdint>
+#include <array>
+#include <cstddef>
 
 extern char    aSTRCmpr[];
 extern std::uint8_t acSTR[];
 extern std::int16_t aiSTRChunkOffset[];
 extern char    rgSTRLookupTable[];
 
-char *PszGetCompressedString(APPSESSION &app, StringId ids);
+// Includes the terminator; decoded text owns its storage without allocation.
+inline constexpr std::size_t cchCatalogText = 256;
+std::array<char, cchCatalogText> PszGetCompressedString(APPSESSION &app, StringId ids);
 
 #endif

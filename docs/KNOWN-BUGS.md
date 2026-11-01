@@ -249,6 +249,21 @@ now clears the borrowed stream without heap-release calls. A resource-skip and
 injected disk-full test cover the error state and subsequent stream selection.
 Recorded tutorial bytes, save records and host results are unchanged.
 
+## Catalog scratch aliases — fixed on develop
+
+`PszGetCompressedString` decoded every lookup into the same state buffer.
+Keeping a returned pointer across another lookup, or using two lookups in
+one format call, could replace the first label. It now returns an initialized
+256-byte array by value without allocation. All 512 production consumers and
+the actual typed text providers use the owned result. Retained local pointers,
+button trackers and popup menus have named owners; active popup text uses its
+UI-owned buffer. `PszGetDestName` and `PszGetTaskName` return owned report labels
+on every path so catalog pointers cannot escape through those services. The
+obsolete catalog scratch/cache state is removed. An independent canonical-text
+hash checks all 1,516 current IDs, including empty IDs, and ownership tests cover
+consecutive/same-call lookups and retained report labels. Catalog bytes, record
+layouts and turn results are unchanged.
+
 ## Player-name scratch aliases — fixed on develop
 
 `PszPlayerName` returned `app.state.szWork` for every lookup. A later lookup

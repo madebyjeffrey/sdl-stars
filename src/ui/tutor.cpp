@@ -325,7 +325,7 @@ void AdvanceTutor(APPSESSION &app) {
         return;
     }
 LUpdatePage:
-    win32::wsprintfA(szTitle, TextIO().pfnCompressed(app, idsStarsTutorPageD80), static_cast<std::int16_t>(app.state.tutor.idt) / 8 + 1);
+    win32::wsprintfA(szTitle, TextIO().pfnCompressed(app, idsStarsTutorPageD80).data(), static_cast<std::int16_t>(app.state.tutor.idt) / 8 + 1);
     ControlIO().pfnSetWindowText(app.state.tutor.hwnd, szTitle);
     ShowTutor(app, 1);
     win32::GetWindowRect(app.state.tutor.hwnd, &rc);
@@ -2919,7 +2919,7 @@ std::int16_t FTutorialEnabledShipBuilder(APPSESSION &app, TutorShipBuilderAction
                     TutorError(app, idsTutorialHaventAddedRightPartDesignVerify);
                     return 0;
                 }
-                if (_stricmp(TextIO().pfnCompressed(app, idsGater), app.lpui->lpshdefBuild->hul.szClass) != 0) {
+                if (_stricmp(TextIO().pfnCompressed(app, idsGater).data(), app.lpui->lpshdefBuild->hul.szClass) != 0) {
                     TutorError(app, idsTutorialNameDesignEditboxMustGaterChange);
                     return 0;
                 }
@@ -2942,7 +2942,7 @@ std::int16_t FTutorialEnabledShipBuilder(APPSESSION &app, TutorShipBuilderAction
                     TutorError(app, idsTutorialDontHaveRightPartsDesignVerify2);
                     return 0;
                 }
-                if (_stricmp(TextIO().pfnCompressed(app, idsMineLayer), app.lpui->lpshdefBuild->hul.szClass) == 0)
+                if (_stricmp(TextIO().pfnCompressed(app, idsMineLayer).data(), app.lpui->lpshdefBuild->hul.szClass) == 0)
                     break;
                 TutorError(app, idsTutorialNameDesignEditboxMustMineLayer);
                 return 0;

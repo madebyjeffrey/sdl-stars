@@ -52,7 +52,7 @@ static void  ChoosePages(HWND hwnd, UINT msg, UINT_PTR id, DWORD ticks) {
 }
 static BOOL FTextViewContracts(APPSESSION &app) {
     NATIVEOWNER<std::remove_pointer_t<HDC>, win32::DeleteDC> hdc(win32::CreateCompatibleDC(NULL));
-    char sz[sizeof(app.state.szLastStrGet)], szExpected[sizeof(app.state.szLastStrGet)], rgch[7];
+    char sz[cchCatalogText], szExpected[cchCatalogText], rgch[7];
     const char *psz = sz;
 
     if (!hdc) return 0;

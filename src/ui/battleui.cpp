@@ -170,16 +170,16 @@ INT_PTR  BattlePlansDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_RENAME), app.lpui->iPlanSelDlg > 0);
         ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_DELETE), app.lpui->iPlanSelDlg > 0);
         for (i = idsDisengage; i <= idsMaximizeDamage; i++) {
-            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_TACTIC), win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(TextIO().pfnCompressed(app, static_cast<StringId>(i))));
+            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_TACTIC), win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(TextIO().pfnCompressed(app, static_cast<StringId>(i)).data()));
         }
         ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_TACTIC), win32::CB_SETCURSEL, app.lpui->btlplan.mdTactic, 0);
         for (i = idsNoneDisengage; i <= idsFreighters; i++) {
-            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_PRIMARY_TARGET), win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(TextIO().pfnCompressed(app, static_cast<StringId>(i))));
+            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_PRIMARY_TARGET), win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(TextIO().pfnCompressed(app, static_cast<StringId>(i)).data()));
         }
         ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_PRIMARY_TARGET), win32::CB_SETCURSEL, app.lpui->btlplan.mdTarget1, 0);
         if (!app.state.game.fSinglePlr) {
             for (i = idsNobody; i <= idsEveryone; i++) {
-                ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_ATTACK_WHO), win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(TextIO().pfnCompressed(app, static_cast<StringId>(i))));
+                ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_ATTACK_WHO), win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(TextIO().pfnCompressed(app, static_cast<StringId>(i)).data()));
             }
             for (i = 0; i < app.state.game.cPlayer; i++) {
                 if (i != app.state.idPlayer) {
@@ -192,12 +192,12 @@ INT_PTR  BattlePlansDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             }
             ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_ATTACK_WHO), win32::CB_SETCURSEL, i, 0);
         } else {
-            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_ATTACK_WHO), win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(TextIO().pfnCompressed(app, idsEveryone)));
+            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_ATTACK_WHO), win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(TextIO().pfnCompressed(app, idsEveryone).data()));
             ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_ATTACK_WHO), win32::CB_SETCURSEL, 0, 0);
             ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_ATTACK_WHO), 0);
         }
         for (i = idsNoneDisengage; i <= idsFreighters; i++) {
-            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SECONDARY_TARGET), win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(TextIO().pfnCompressed(app, static_cast<StringId>(i))));
+            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SECONDARY_TARGET), win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(TextIO().pfnCompressed(app, static_cast<StringId>(i)).data()));
         }
         ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SECONDARY_TARGET), win32::CB_SETCURSEL, app.lpui->btlplan.mdTarget2, 0);
         ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_DUMP_CARGO), win32::BM_SETCHECK, app.lpui->btlplan.fDumpCargo, 0);

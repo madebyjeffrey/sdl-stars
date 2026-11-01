@@ -2328,7 +2328,7 @@ std::int16_t FAddWayPoint(APPSESSION &app, POINT16 ptIn, SCAN *pscan) {
 
     if (app.state.sel.fl.cord == 87) {
         ControlIO().pfnMessageBeep(win32::MB_ICONASTERISK);
-        win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsCantHaveDWaypoints), 86);
+        win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsCantHaveDWaypoints).data(), 86);
         AlertIO().pfnAlertSz(app, app.state.szWork, win32::MB_ICONHAND);
         return 0;
     }

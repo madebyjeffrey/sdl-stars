@@ -32,7 +32,7 @@ static void test_PlayerName_owned_results(void) {
     TEST_CHECK(!strcmp(app.state.szWork, "Alpha ready"));
     CchSprintf(szResult, "%s/%s", TextIO().pfnPlayerName(app, 0, 0, 0, 0, 0, nullptr), TextIO().pfnPlayerName(app, 1, 0, 0, 0, 0, nullptr));
     TEST_CHECK(!strcmp(szResult, "Alpha/Beta"));
-    CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsSS), TextIO().pfnPlayerName(app, 0, 1, 1, 1, 0, nullptr), "ready");
+    CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsSS).data(), TextIO().pfnPlayerName(app, 0, 1, 1, 1, 0, nullptr), "ready");
     TEST_CHECK(!strcmp(app.state.szWork, "The Alphas are ready.                  "));
 }
 

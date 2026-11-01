@@ -202,7 +202,7 @@ void RightTextOut(APPSESSION &app, HDC hdc, std::int16_t x, std::int16_t y, cons
     RECT    rc;
 
     if (cLen == -1) {
-        char szNone[sizeof(app.state.szLastStrGet)];
+        char szNone[cchCatalogText];
         cLen = TextIO().pfnCchGetString(app, idsNone2, std::span{szNone});
         RightTextOut(app, hdc, x, y, static_cast<const char *>(szNone), cLen, dxErase);
         return;
@@ -1039,7 +1039,7 @@ INT_PTR  PasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message) {
     case win32::WM_INITDIALOG:
         ui::SendDlgItemMessage(hwnd, IDC_EDIT1, win32::EM_LIMITTEXT, 0xf, 0);
-        ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_PASSWORD_STATUS_TEXT), TextIO().pfnCompressed(app, idsEnterPassword));
+        ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_PASSWORD_STATUS_TEXT), TextIO().pfnCompressed(app, idsEnterPassword).data());
         return 1;
     case win32::WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
@@ -1063,7 +1063,7 @@ INT_PTR  PasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         case IDCANCEL:
             if (LOWORD(wParam) == IDOK) {
                 if (CchGetUtf8WindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_EDIT1), szPass, 60) < 0) {
-                    AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsNativePasswordReenter), win32::MB_ICONHAND);
+                    AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsNativePasswordReenter).data(), win32::MB_ICONHAND);
                     break;
                 }
                 lSalt = LSaltFromSz(szPass);
@@ -1106,13 +1106,13 @@ INT_PTR  NewPasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         ui::SendDlgItemMessage(hwnd, IDC_PASSWORD_CONFIRM, win32::EM_LIMITTEXT, 0xf, 0);
         win32::SetWindowLongPtrA(hwnd, win32::DWLP_USER, lParam);
         if (lParam != 0) {
-            ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_PASSWORD_STATUS_TEXT), TextIO().pfnCompressed(app, idsNativeLegacyRacePassword));
-            ControlIO().pfnSetWindowText(hwnd, TextIO().pfnCompressed(app, idsNativeLegacyRacePassword));
+            ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_PASSWORD_STATUS_TEXT), TextIO().pfnCompressed(app, idsNativeLegacyRacePassword).data());
+            ControlIO().pfnSetWindowText(hwnd, TextIO().pfnCompressed(app, idsNativeLegacyRacePassword).data());
         } else if (app.state.idPlayer == iplrNone) {
-            ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_PASSWORD_STATUS_TEXT), TextIO().pfnCompressed(app, idsNotePasswordEffectiveImmediately));
-            ControlIO().pfnSetWindowText(hwnd, TextIO().pfnCompressed(app, idsChangeHostPassword));
+            ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_PASSWORD_STATUS_TEXT), TextIO().pfnCompressed(app, idsNotePasswordEffectiveImmediately).data());
+            ControlIO().pfnSetWindowText(hwnd, TextIO().pfnCompressed(app, idsChangeHostPassword).data());
         } else {
-            ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_PASSWORD_STATUS_TEXT), TextIO().pfnCompressed(app, idsNoteNewPasswordWillTakeEffectUntil));
+            ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_PASSWORD_STATUS_TEXT), TextIO().pfnCompressed(app, idsNoteNewPasswordWillTakeEffectUntil).data());
         }
         return 1;
     case win32::WM_ERASEBKGND:
@@ -1137,12 +1137,12 @@ INT_PTR  NewPasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         case IDCANCEL:
             if (LOWORD(wParam) == IDOK) {
                 if (CchGetUtf8WindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_EDIT1), szPass, 18) < 0) {
-                    AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsNativePasswordReenter), win32::MB_ICONHAND);
+                    AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsNativePasswordReenter).data(), win32::MB_ICONHAND);
                     break;
                 }
                 lSalt = LSaltFromSz(szPass);
                 if (CchGetUtf8WindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_PASSWORD_CONFIRM), szPassConfirm, 18) < 0) {
-                    AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsNativePasswordReenter), win32::MB_ICONHAND);
+                    AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsNativePasswordReenter).data(), win32::MB_ICONHAND);
                     break;
                 }
                 lSalt2 = LSaltFromSz(szPassConfirm);
@@ -1154,7 +1154,7 @@ INT_PTR  NewPasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 }
                 if (win32::GetWindowLongPtrA(hwnd, win32::DWLP_USER) != 0) {
                     if (szPass[0] == 0) {
-                        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsNativeLegacyRacePasswordRequired), win32::MB_ICONHAND);
+                        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsNativeLegacyRacePasswordRequired).data(), win32::MB_ICONHAND);
                         break;
                     }
                     std::strcpy(reinterpret_cast<char *>(win32::GetWindowLongPtrA(hwnd, win32::DWLP_USER)), szPass);
@@ -1205,6 +1205,7 @@ void HideProgressGauge(APPSESSION &app) {
 }
 
 INT_PTR  ProgressGaugeDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+    std::array<char, cchCatalogText> szCatalogPsz{};
     APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
 
     HDC         hdc;
@@ -1220,7 +1221,8 @@ INT_PTR  ProgressGaugeDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
         app.lpui->hwndProgressGauge = hwnd;
         dx = win32::GetSystemMetrics(win32::SM_CXSCREEN);
         dy = win32::GetSystemMetrics(win32::SM_CYSCREEN);
-        psz = TextIO().pfnCompressed(app, idsGeneratingDataYearD);
+        szCatalogPsz = TextIO().pfnCompressed(app, idsGeneratingDataYearD);
+        psz = szCatalogPsz.data();
         win32::wsprintfA(app.state.szWork, psz, app.state.game.turn + 2401);
         ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_GAUGE_TEXT), app.state.szWork);
         win32::GetWindowRect(hwnd, &rc);

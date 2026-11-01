@@ -193,8 +193,13 @@ detail in [WIN16-PARITY.md](WIN16-PARITY.md).
   capacity in `CPP-LIVE-TEXT-COPIES.json`. `PszPlayerName` returns its existing
   50-byte label as an owned array; callers keep that value or borrow it only
   for a synchronous copy/draw/format operation. The actual typed text provider
-  uses the same value type. `CPP-LIVE-OWNED-TEXT.json` records the caller
-  lifetimes; catalog scratch returns remain pending migration.
+  uses the same value type. Catalog decoding also returns an owned array,
+  retaining its 256-byte capacity without allocation or shared cache storage.
+  Named owners cover retained local pointers and button/menu tracking; active
+  popup text lives in its UI buffer. Destination/task report labels own their
+  existing 360-byte budget. `CPP-LIVE-OWNED-TEXT.json` records these caller
+  lifetimes. Other shared scratch results and const text interfaces remain
+  pending migration.
   Saved player/design/battle-plan names
   use bounded staging with the existing 31-byte compression budget and raw
   marker/NUL framing. `CbEncodeRtShDef` takes a byte span and returns an optional

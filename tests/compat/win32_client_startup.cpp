@@ -3126,7 +3126,7 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
         const char *pszYear = PszCompatEnvironment("STARS_CLIENT_EXPECT_CONTINUE_YEAR");
         char szPlayer[32];
         win32::GetWindowTextA(app.lpui->rghwndBtnSplash[2], szContinue, sizeof(szContinue));
-        if (strcmp(szContinue, PszGetCompressedString(app, idsContinueGame))) goto LDone;
+        if (strcmp(szContinue, PszGetCompressedString(app, idsContinueGame).data())) goto LDone;
         win32::GetDlgItemTextA(app.lpui->hwndTitle, IDC_LIBRARY_CONTINUE_DETAILS, szContinue, sizeof(szContinue));
         if (pszGame ? !strstr(szContinue, pszGame) : !strstr(szContinue, "Continue: managed-copy")) goto LDone;
         CchSnprintf(std::span{szPlayer, sizeof(szPlayer)}, "Player %s",

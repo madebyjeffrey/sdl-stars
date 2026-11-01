@@ -81,12 +81,12 @@ static void TestInvalidateRect(HWND hwnd, RECT *rc, int erase) {
     (void)rc;
     (void)erase;
 }
-static const char *TestPszGetCompressedString(APPSESSION &, int id) {
+static std::array<char, cchCatalogText> TestPszGetCompressedString(APPSESSION &, StringId id) {
     if (id == idsCustomD)
-        return "Custom%d";
+        return SzWitnessText("Custom%d");
     if (id == idsUnusedD)
-        return "Unused%d";
-    return "Automatic orders";
+        return SzWitnessText("Unused%d");
+    return SzWitnessText("Automatic orders");
 }
 static std::int16_t TestCchGetString(APPSESSION &, StringId id, std::span<char> out) {
     char szItem[16];
@@ -199,7 +199,7 @@ int main(void) {
     ioRaceQuery.pfnStat = WITNESSADAPTER<&TestGetRaceStat, decltype(ioRaceQuery.pfnStat)>::Call;
     RACEQUERYIOSCOPE scopeRaceQuery(ioRaceQuery);
     TEXTIO           ioText;
-    ioText.pfnCompressed = WITNESSADAPTER<&TestPszGetCompressedString, decltype(ioText.pfnCompressed)>::Call;
+    ioText.pfnCompressed = TestPszGetCompressedString;
     ioText.pfnFormat = WITNESSADAPTER<&TestPszFormatIds, decltype(ioText.pfnFormat)>::Call;
     ioText.pfnCchGetString = TestCchGetString;
     TEXTIOSCOPE scopeText(ioText);

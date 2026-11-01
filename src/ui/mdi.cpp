@@ -899,6 +899,7 @@ void RestoreSelection(APPSESSION &app) {
 }
 
 void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
+    std::array<char, cchCatalogText> szCatalogPsz{};
     std::array<char, 50> szPlayerName{};
     POINT16  pt;
     HMENU    hmenu;
@@ -1126,7 +1127,7 @@ void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
                         psz = szPlayerName.data();
                         win32::TextOutA(pd.hDC, ptLegendA.x + xOff, y, psz, std::strlen(psz));
                         y += dyPrint;
-                        cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsYearD), app.state.game.turn + 2400);
+                        cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsYearD).data(), app.state.game.turn + 2400);
                         win32::TextOutA(pd.hDC, ptLegendA.x + xOff, y, app.state.szWork, cch);
                         if ((app.lpui->grbitScan & grbitScanViewMask) != 5) {
                             y = ptLegendB.y + yOff;
@@ -1249,7 +1250,7 @@ LPrintMapCleanup:
                 app.lpui->iPassCnt = 0;
             }
             if (app.state.game.fSinglePlr && app.lpui->iPassCnt != 0) {
-                win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsSureWantForceGenerateDTurnsRow), app.lpui->iPassCnt);
+                win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsSureWantForceGenerateDTurnsRow).data(), app.lpui->iPassCnt);
                 if (CompatChoiceIO().pfnMessageBoxA(win32::GetFocus(), app.state.szWork, "Stars!", win32::MB_YESNO | win32::MB_ICONEXCLAMATION | win32::MB_TASKMODAL) != win32::IDYES)
                     break;
             }
@@ -1416,7 +1417,8 @@ LPrintMapCleanup:
                         }
                     }
                 }
-                psz = TextIO().pfnCompressed(app, ids);
+                szCatalogPsz = TextIO().pfnCompressed(app, ids);
+                psz = szCatalogPsz.data();
                 win32::wsprintfA(app.state.szWork, psz, cObj, cObj == 1 ? 32 : 115);
                 app.lpui->hwndReportDlg = ui::CreateWindowEx(0, app.lpui->szReport, app.state.szWork, win32::WS_POPUP | win32::WS_CAPTION | win32::WS_SYSMENU | win32::WS_THICKFRAME | win32::WS_MINIMIZEBOX | win32::WS_MAXIMIZEBOX, 0, 0, 100,
                                              100, app.lpui->hwndFrame, nullptr, app.lpui->hInst, nullptr);
@@ -1473,7 +1475,7 @@ LPrintMapCleanup:
                 app.state.gd.fSubmit = 1;
                 FWriteLogFile(app, app.state.szBase, app.state.idPlayer);
                 FWriteHistFile(app, app.state.idPlayer);
-                ControlIO().pfnSetWindowText(app.lpui->hwndFrame, TextIO().pfnCompressed(app, idsWaitingNewTurn));
+                ControlIO().pfnSetWindowText(app.lpui->hwndFrame, TextIO().pfnCompressed(app, idsWaitingNewTurn).data());
                 ui::ShowWindow(app.lpui->hwndFrame, win32::SW_SHOWMINIMIZED);
                 app.lpui->uTimerId = win32::SetTimer(nullptr, hostTimerWaitTurn, 10000, app.lpui->lpfnHostTimerProc);
                 app.lpui->uTimerType = hostTimerWaitTurn;
@@ -1896,19 +1898,19 @@ void DrawHostDialog2(APPSESSION &app, HWND hwnd, HDC hdcIn) {
     bkMode = win32::SetBkMode(hdc, win32::OPAQUE);
     crBackSav = win32::SetBkColor(hdc, app.lpui->crButtonFace);
     win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-    x = app.state.dyArial8 + 10 + LOWORD(GetTextExtent(hdc, TextIO().pfnCompressed(app, idsN16), 4));
+    x = app.state.dyArial8 + 10 + LOWORD(GetTextExtent(hdc, TextIO().pfnCompressed(app, idsN16).data(), 4));
     yCur = 48;
     win32::SetRect(&rcDiamond, 6, yCur, app.state.dyArial8 + 7, yCur + app.state.dyArial8 + 1);
     for (i = 0; i < app.state.game.cPlayer; i++) {
         DrawDiamond(app, hdc, &rcDiamond, app.lpui->hbrBBlue);
-        cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsD2), i + 1);
+        cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsD2).data(), i + 1);
         RightTextOut(app, hdc, x, yCur, app.state.szWork, cch, 0);
         win32::SetTextColor(hdc, app.state.rgOut[i] <= 0 ? 32512 : 127);
         TextIO().pfnCchGetString(app, static_cast<StringId>(idsTurned + app.state.rgOut[i]), std::span{szStat});
         if (app.state.gd.fNoHostNames) {
             cch = win32::wsprintfA(app.state.szWork, " %s", szStat);
         } else {
-            cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsSS), TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, nullptr), szStat);
+            cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsSS).data(), TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, nullptr), szStat);
         }
         if (app.state.rgplr[i].fHacker) {
             CchAppendUtf8Prefix(std::span{app.state.szWork}, " - HACKER");
@@ -1923,21 +1925,21 @@ void DrawHostDialog2(APPSESSION &app, HWND hwnd, HDC hdcIn) {
     ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_HOST_NEXT_YEAR_TEXT), app.state.szWork);
     dsec = static_cast<std::uint32_t>(((win32::GetTickCount() - app.state.ctickLast) / 1000));
     if (dsec < 60) {
-        cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDSeconds), LOWORD(dsec));
+        cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDSeconds).data(), LOWORD(dsec));
     } else {
         dmin = LOWORD(static_cast<std::uint32_t>((dsec / 60)));
         dsec -= static_cast<std::uint32_t>((60 * dmin));
         if (dmin < 60) {
-            cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsD02d), dmin, LOWORD(dsec));
+            cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsD02d).data(), dmin, LOWORD(dsec));
         } else {
             dhour = static_cast<std::uint32_t>(dmin) / 60;
             dmin -= 60 * dhour;
             if (dhour < 24) {
-                cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsD02d02d), dhour, dmin, LOWORD(dsec));
+                cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsD02d02d).data(), dhour, dmin, LOWORD(dsec));
             } else {
                 dday = static_cast<std::uint32_t>(dhour) / 24;
                 dhour -= dday * 24;
-                cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDDaysD02d02d), dday, dhour, dmin, LOWORD(dsec));
+                cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDDaysD02d02d).data(), dday, dhour, dmin, LOWORD(dsec));
             }
         }
     }
@@ -2087,7 +2089,7 @@ INT_PTR  HostModeDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                     app.lpui->iPassCnt = 0;
                 }
                 if (app.lpui->iPassCnt != 0) {
-                    win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsSureWantForceGenerateDTurnsRow), app.lpui->iPassCnt + 1);
+                    win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsSureWantForceGenerateDTurnsRow).data(), app.lpui->iPassCnt + 1);
                     if (CompatChoiceIO().pfnMessageBoxA(win32::GetFocus(), app.state.szWork, "Stars!", win32::MB_YESNO | win32::MB_ICONEXCLAMATION | win32::MB_TASKMODAL) != win32::IDYES) {
                         app.lpui->iPassCnt = 0;
                         return 1;
@@ -2206,7 +2208,7 @@ void  HostTimerProc(HWND hwnd, UINT msg, UINT_PTR idTimer, DWORD dwTime) {
             app.lpui->uTimerId = win32::SetTimer(nullptr, hostTimerTurnReady, 1000, app.lpui->lpfnHostTimerProc);
             app.lpui->uTimerType = hostTimerTurnReady;
             win32::FlashWindow(app.lpui->hwndFrame, 1);
-            ControlIO().pfnSetWindowText(app.lpui->hwndFrame, TextIO().pfnCompressed(app, idsNewTurnAvailable2));
+            ControlIO().pfnSetWindowText(app.lpui->hwndFrame, TextIO().pfnCompressed(app, idsNewTurnAvailable2).data());
             ControlIO().pfnMessageBeep(win32::MB_ICONEXCLAMATION);
             cOut = 1;
             goto RedrawText;
@@ -2222,11 +2224,11 @@ void  HostTimerProc(HWND hwnd, UINT msg, UINT_PTR idTimer, DWORD dwTime) {
             ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_HOST_AUTO_GENERATE), 0);
             goto Done;
         }
-        win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsHostModeDPlayer), cOut);
+        win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsHostModeDPlayer).data(), cOut);
         if (cOut != 1) {
             CchAppendUtf8Prefix(std::span{app.state.szWork}, "s");
         }
-        CchAppendUtf8Prefix(std::span{app.state.szWork}, TextIO().pfnCompressed(app, idsOut));
+        CchAppendUtf8Prefix(std::span{app.state.szWork}, TextIO().pfnCompressed(app, idsOut).data());
         ControlIO().pfnSetWindowText(app.lpui->hwndFrame, app.state.szWork);
     RedrawText:
         hwndT = win32::GetWindow(app.lpui->hwndFrame, win32::GW_HWNDPREV);
@@ -2279,7 +2281,7 @@ void SetWindowIniString(APPSESSION &app, char *sz, HWND hwnd) {
         ch = 'R';
     }
     GetWindowRc(hwnd, &rc);
-    win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsC04d04d04d04d), ch, rc.left, rc.top, rc.right, rc.bottom);
+    win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsC04d04d04d04d).data(), ch, rc.left, rc.top, rc.right, rc.bottom);
     return;
 }
 
@@ -2315,19 +2317,19 @@ void WriteIniSettings(APPSESSION &app) {
     SetWindowIniString(app, app.state.szWork, app.lpui->hwndFrame);
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
     TextIO().pfnCchGetString(app, idsReportfleetwin, std::span{szEntry});
-    win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsC04d04d04d04d), 77, app.state.vrptFleet.ptDlg.x, app.state.vrptFleet.ptDlg.y, app.state.vrptFleet.ptDlg.x + app.state.vrptFleet.ptSize.x,
+    win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsC04d04d04d04d).data(), 77, app.state.vrptFleet.ptDlg.x, app.state.vrptFleet.ptDlg.y, app.state.vrptFleet.ptDlg.x + app.state.vrptFleet.ptSize.x,
              app.state.vrptFleet.ptDlg.y + app.state.vrptFleet.ptSize.y);
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
     TextIO().pfnCchGetString(app, idsReportefleetwin, std::span{szEntry});
-    win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsC04d04d04d04d), 77, app.state.vrptEFleet.ptDlg.x, app.state.vrptEFleet.ptDlg.y, app.state.vrptEFleet.ptDlg.x + app.state.vrptEFleet.ptSize.x,
+    win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsC04d04d04d04d).data(), 77, app.state.vrptEFleet.ptDlg.x, app.state.vrptEFleet.ptDlg.y, app.state.vrptEFleet.ptDlg.x + app.state.vrptEFleet.ptSize.x,
              app.state.vrptEFleet.ptDlg.y + app.state.vrptEFleet.ptSize.y);
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
     TextIO().pfnCchGetString(app, idsReportbtlwin, std::span{szEntry});
-    win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsC04d04d04d04d), 77, app.state.vrptBattle.ptDlg.x, app.state.vrptBattle.ptDlg.y, app.state.vrptBattle.ptDlg.x + app.state.vrptBattle.ptSize.x,
+    win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsC04d04d04d04d).data(), 77, app.state.vrptBattle.ptDlg.x, app.state.vrptBattle.ptDlg.y, app.state.vrptBattle.ptDlg.x + app.state.vrptBattle.ptSize.x,
              app.state.vrptBattle.ptDlg.y + app.state.vrptBattle.ptSize.y);
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
     TextIO().pfnCchGetString(app, idsReportplanwin, std::span{szEntry});
-    win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsC04d04d04d04d), 77, app.state.vrptPlanet.ptDlg.x, app.state.vrptPlanet.ptDlg.y, app.state.vrptPlanet.ptDlg.x + app.state.vrptPlanet.ptSize.x,
+    win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsC04d04d04d04d).data(), 77, app.state.vrptPlanet.ptDlg.x, app.state.vrptPlanet.ptDlg.y, app.state.vrptPlanet.ptDlg.x + app.state.vrptPlanet.ptSize.x,
              app.state.vrptPlanet.ptDlg.y + app.state.vrptPlanet.ptSize.y);
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
     TextIO().pfnCchGetString(app, idsLayout, std::span{szEntry});
@@ -2395,7 +2397,7 @@ void WriteIniSettings(APPSESSION &app) {
     case grobjOther:
         ch = 'E';
     }
-    win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsCCD), ch, static_cast<std::int16_t>(static_cast<std::int8_t>(LOBYTE(app.state.idPlayer + 66))), app.state.sel.id);
+    win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsCCD).data(), ch, static_cast<std::int16_t>(static_cast<std::int8_t>(LOBYTE(app.state.idPlayer + 66))), app.state.sel.id);
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
     TextIO().pfnCchGetString(app, idsMessage, std::span{szEntry});
     win32::wsprintfA(app.state.szWork, app.state.PCTD, app.state.iMsgCur);
@@ -2600,6 +2602,7 @@ void RefitFrameChildren(APPSESSION &app) {
 }
 
 LRESULT  TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+    std::array<char, cchCatalogText> szCatalogPsz{};
     APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
 
     NATIVEOWNER<LOGFONT, win32::LocalFree> plfOwner;
@@ -2642,7 +2645,8 @@ LRESULT  TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         dy = rc.bottom <= 500 ? app.state.dyArial8 * 2 : static_cast<std::int16_t>((5 * app.state.dyArial8)) / 2;
         for (i = 0; i < 5; i++) {
             idButton = i == 3 ? IDC_LIBRARY_TUTORIAL : i == 4 ? 3 : i;
-            psz = TextIO().pfnCompressed(app, static_cast<StringId>(i == 3 ? idsLibraryStartTutorial : idsNewGame + idButton));
+            szCatalogPsz = TextIO().pfnCompressed(app, static_cast<StringId>(i == 3 ? idsLibraryStartTutorial : idsNewGame + idButton));
+            psz = szCatalogPsz.data();
             hwndButton = ui::CreateWindowEx(0, "BUTTON", psz, win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP, xCur, rc.bottom - dy - static_cast<std::int16_t>((5 * app.state.dyArial8)) / 2, dx, dy, hwnd,
                                       reinterpret_cast<HMENU>(static_cast<std::uintptr_t>(idButton)), app.lpui->hInst, nullptr);
             if (i != 3) app.lpui->rghwndBtnSplash[idButton] = hwndButton;
@@ -2658,7 +2662,7 @@ LRESULT  TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         InitLibraryRaces(app, hwnd, &rc);
         if (std::getenv("STARS_DEBUG_LIBRARY_STARTUP"))
             std::fprintf(stderr, "[DEBUG-library-startup] TitleWndProc library initialized visible=%d\n", win32::IsWindowVisible(hwnd));
-        ControlIO().pfnSetWindowText(app.lpui->rghwndBtnSplash[1], TextIO().pfnCompressed(app, idsLibraryOpenGame));
+        ControlIO().pfnSetWindowText(app.lpui->rghwndBtnSplash[1], TextIO().pfnCompressed(app, idsLibraryOpenGame).data());
         // Paint while the native window is hidden: startup cleanup can delay
         // the first queued WM_PAINT after CreateWindow makes it visible.
         ControlIO().pfnInvalidateRect(hwnd, nullptr, 1);

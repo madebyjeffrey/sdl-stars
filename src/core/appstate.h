@@ -64,7 +64,6 @@ struct APPGAMESTATE {
     alignas(std::max_align_t) const char     *vrgszUnits[6] = {"kT", "kT", "kT", "00", "mg", "% "};
     alignas(std::max_align_t) char      iLastGet = -1;
     alignas(std::max_align_t) char      iLastMsgGet = -1;
-    alignas(std::max_align_t) char      iLastStrGet = -1;
     alignas(std::max_align_t) char      rgbCur[1024] = "";
     alignas(std::max_align_t) char      rgchcomp[13] = "+-,!.?:;'*%$";
     alignas(std::max_align_t) char      szBackup[256] = "";
@@ -72,7 +71,6 @@ struct APPGAMESTATE {
     alignas(std::max_align_t) char      szFormatNumber[12] = "";
     alignas(std::max_align_t) char      szLastGet[19] = "";
     alignas(std::max_align_t) char      szLastMsgGet[256] = "";
-    alignas(std::max_align_t) char      szLastStrGet[256] = "";
     alignas(std::max_align_t) char      szMsgBuf[256] = "";
     alignas(std::max_align_t) char      szPassLast[16] = "";
     alignas(std::max_align_t) char      szRaceFile[16] = "";

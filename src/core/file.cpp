@@ -752,7 +752,7 @@ LNextTurn:
         }
         RecordIO().pfnStreamClose(app);
         if (cturn > 1 && !app.state.rgplr[iPlayer].fAi && !app.state.ini.fDumpPlanets && !app.state.ini.fDumpFleets && !app.state.ini.fDumpMap) {
-            CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsNoteDYearsDataRead), cturn);
+            CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsNoteDYearsDataRead).data(), cturn);
             AlertIO().pfnAlertSz(app, app.state.szWork, win32::MB_ICONASTERISK);
         }
         if (FSzPrefixNoCase(pszExt, "hst", 3))

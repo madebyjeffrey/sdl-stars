@@ -6,6 +6,13 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `PszGetCompressedString` now returns owned catalog text. Multiple lookups
+  no longer overwrite one another, and retained popup, button-tracking and
+  menu labels keep their storage alive. Fleet destination/task labels also
+  return owned values. The decoder retains every catalog byte and its
+  256-byte capacity; file records, report goldens and host turn results are
+  unchanged.
+
 - `PszPlayerName` now returns an owned label instead of shared work storage.
   A second lookup no longer overwrites the first result, and host-status
   formatting retains the player name when writing into that work buffer.

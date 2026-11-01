@@ -6,6 +6,40 @@
 #include "callbackcontext.h"
 
 #include "stars_test.h"
+#include "text_io.h"
+
+static void test_ReportLabels_owned_results(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    struct {
+        PLORD orders;
+        ORDER rgord[2];
+    } storage{};
+    FLEET fl{};
+    int16_t icr;
+
+    TEST_ASSERT(FStarsTestInit(app));
+    fl.lpplord = &storage.orders;
+    fl.cord = 2;
+    storage.orders.iordMac = storage.orders.iordMax = 2;
+    storage.rgord[0].fValidTask = 1;
+    storage.rgord[0].grTask = grTaskLayMines;
+    storage.rgord[0].tlm().cTime = 1;
+    const auto szDest = PszGetDestName(app, &fl, nullptr);
+    const auto szTask = PszGetTaskName(app, &fl, &icr);
+    TEST_CHECK(icr == -1);
+    storage.rgord[0].grTask = grTaskAutoRoute;
+    const auto szNext = PszGetTaskName(app, &fl, &icr);
+    strcpy(app.state.szWork, "unrelated drawing text");
+    TEST_CHECK(strcmp(szDest.data(), "(Delayed)") == 0);
+    TEST_CHECK(strcmp(szTask.data(), "Lay Mine Field  2y") == 0);
+    TEST_CHECK(strcmp(szNext.data(), "Route") == 0);
+    TEST_CHECK(strcmp(TextIO().pfnCompressed(app, idsLayMineField).data(), "Lay Mine Field") == 0);
+}
 
 // The planet dump passed the 32-bit mine and factory counts as two 16-bit
 // words each, as the Win16 binary pushed them, so the Factories column
@@ -136,4 +170,5 @@ static void test_Dumps_match_golden_files(void) {
 }
 
 TEST_LIST = {
+    {"fleet report labels retain owned text across lookups", test_ReportLabels_owned_results},
     {"DumpPlanets mines and factories", test_DumpPlanets_mines_and_factories}, {"Dumps match golden files", test_Dumps_match_golden_files}, {NULL, NULL}};

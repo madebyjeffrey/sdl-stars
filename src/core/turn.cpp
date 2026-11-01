@@ -603,12 +603,12 @@ LError:
 
 static std::int16_t FCopyCmdPath(APPSESSION &app, const char *psz, std::size_t cb) {
     if (!FUtf8Valid(psz, cb)) {
-        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsNativeFilenameEncoding), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsNativeFilenameEncoding).data(), win32::MB_ICONHAND);
         app.state.szBase[0] = 0; app.state.ini.fCmdLine = 0; app.state.ini.fStartupFile = 0;
         return 0;
     }
     if (cb >= sizeof(app.state.szBase)) {
-        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsNativeFilenameTooLong), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsNativeFilenameTooLong).data(), win32::MB_ICONHAND);
         app.state.szBase[0] = 0; app.state.ini.fCmdLine = 0; app.state.ini.fStartupFile = 0;
         return 0;
     }
@@ -740,7 +740,7 @@ std::int16_t ParseCmdLine(APPSESSION &app, char *lpCmdLine, std::int16_t *pfSeed
                     cbPass = static_cast<std::size_t>((lpT - pch));
                     cchPass = CchCopyUtf8(app.state.szPassLast, sizeof(app.state.szPassLast), pch, cbPass);
                     if (cchPass < 0) {
-                        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, cchPass == -3 ? idsNativeCommandPasswordTooLong : idsNativeCommandPasswordEncoding), win32::MB_ICONHAND);
+                        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, cchPass == -3 ? idsNativeCommandPasswordTooLong : idsNativeCommandPasswordEncoding).data(), win32::MB_ICONHAND);
                         app.state.szBase[0] = 0; app.state.ini.fCmdLine = 0; app.state.ini.fStartupFile = 0;
                         return 0;
                     }
@@ -789,7 +789,7 @@ std::int16_t FRunCmdLine(APPSESSION &app) {
                 if (!app.state.gd.fNoHostNames) {
                     ich += CchSprintf(std::span{szTemp}.subspan(static_cast<std::size_t>(ich)), "\"%s\" ", TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, nullptr));
                 }
-                CchAppendUtf8Prefix(std::span{szTemp}, TextIO().pfnCompressed(app, static_cast<StringId>(idsTurned + app.state.rgOut[i])));
+                CchAppendUtf8Prefix(std::span{szTemp}, TextIO().pfnCompressed(app, static_cast<StringId>(idsTurned + app.state.rgOut[i])).data());
                 if (app.state.rgplr[i].fHacker) {
                     CchAppendUtf8Prefix(std::span{szTemp}, " - HACKER");
                 }

@@ -310,7 +310,7 @@ static void SuggestLibraryName(APPSESSION &app, char *pszName, std::int16_t fRev
     std::strcpy(szOriginal, pszName);
     cchMax = (static_cast<int>(sizeof(app.state.szBase)) - static_cast<int>(std::strlen(szLibraryRoot)) - 19) / 2;
     for (i = 2; i < 10000 && !FLibraryNameAvailable(app, szLibraryRoot, pszName); i++) {
-        CchSnprintf(std::span{szSuffix, sizeof(szSuffix)}, fRevision ? TextIO().pfnCompressed(app, idsLibraryGameRevisionSuffix) : " (%d)", i);
+        CchSnprintf(std::span{szSuffix, sizeof(szSuffix)}, fRevision ? TextIO().pfnCompressed(app, idsLibraryGameRevisionSuffix).data() : " (%d)", i);
         cch = (((static_cast<int>(std::strlen(szOriginal))) < ((((0) > (cchMax - static_cast<int>(std::strlen(szSuffix)))) ? (0) : (cchMax - static_cast<int>(std::strlen(szSuffix)))))) ? (static_cast<int>(std::strlen(szOriginal))) : ((((0) > (cchMax - static_cast<int>(std::strlen(szSuffix)))) ? (0) : (cchMax - static_cast<int>(std::strlen(szSuffix))))));
         /* A shortened suggestion must not split a UTF-8 character. */
         while (cch > 0 && (static_cast<unsigned char>(szOriginal[cch]) & 0xc0) == 0x80) cch--;
@@ -319,6 +319,7 @@ static void SuggestLibraryName(APPSESSION &app, char *pszName, std::int16_t fRev
 }
 
 static void GetGameLibraryName(APPSESSION &app, const char *pszName, char *pszNameOut) {
+    std::array<char, cchCatalogText> szCatalogPszName{};
     std::size_t i, cch;
     int cchMax = (static_cast<int>(sizeof(app.state.szBase)) - static_cast<int>(std::strlen(szLibraryRoot)) - 19) / 2;
 
@@ -331,7 +332,8 @@ static void GetGameLibraryName(APPSESSION &app, const char *pszName, char *pszNa
     // The game loader treats the last period as a file extension.
     for (i = 0; pszNameOut[i]; i++) if (pszNameOut[i] == '.') pszNameOut[i] = '_';
     if (!pszNameOut[0]) {
-        pszName = TextIO().pfnCompressed(app, idsLibraryDefaultGameName);
+        szCatalogPszName = TextIO().pfnCompressed(app, idsLibraryDefaultGameName);
+        pszName = szCatalogPszName.data();
         CchCopyUtf8(pszNameOut, 256, pszName, CchUtf8Prefix(pszName, cchMax));
     }
     if (!FPortableLibraryName(app, pszNameOut)) {
@@ -349,11 +351,11 @@ INT_PTR  LibraryGameRevisionDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
 
     switch (message) {
     case win32::WM_INITDIALOG:
-        ControlIO().pfnSetWindowText(hwnd, TextIO().pfnCompressed(app, idsLibraryGameDuplicateTitle));
-        CchSnprintf(std::span{szMessage, sizeof(szMessage)}, TextIO().pfnCompressed(app, idsLibraryGameDuplicatePrompt), reinterpret_cast<const char *>(lParam));
+        ControlIO().pfnSetWindowText(hwnd, TextIO().pfnCompressed(app, idsLibraryGameDuplicateTitle).data());
+        CchSnprintf(std::span{szMessage, sizeof(szMessage)}, TextIO().pfnCompressed(app, idsLibraryGameDuplicatePrompt).data(), reinterpret_cast<const char *>(lParam));
         win32::SetDlgItemTextA(hwnd, IDC_LIBRARY_GAME_REVISION_TEXT, szMessage);
-        win32::SetDlgItemTextA(hwnd, IDOK, TextIO().pfnCompressed(app, idsLibraryGameAddRevision));
-        win32::SetDlgItemTextA(hwnd, IDCANCEL, TextIO().pfnCompressed(app, idsLibraryGameBackToWizard));
+        win32::SetDlgItemTextA(hwnd, IDOK, TextIO().pfnCompressed(app, idsLibraryGameAddRevision).data());
+        win32::SetDlgItemTextA(hwnd, IDCANCEL, TextIO().pfnCompressed(app, idsLibraryGameBackToWizard).data());
         ControlIO().pfnStickyDlgPos(hwnd, &pt, 1);
         return 1;
     case win32::WM_COMMAND:
@@ -369,7 +371,8 @@ INT_PTR  LibraryGameRevisionDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
 INT_PTR  LibraryNameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
     char *pszName;
-    char szName[256], szMessage[256];
+    char szName[256];
+    std::array<char, cchCatalogText> szMessage{};
     StringId ids;
     RECT rc, rcOwner, rcWork;
     int x, y;
@@ -415,9 +418,8 @@ INT_PTR  LibraryNameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             ControlIO().pfnEndDialog(hwnd, 1);
             return 1;
         }
-        /* Each lookup reuses szLastStrGet; retain the body before fetching the caption. */
-        std::strcpy(szMessage, TextIO().pfnCompressed(app, ids));
-        CompatChoiceIO().pfnMessageBoxA(hwnd, szMessage, TextIO().pfnCompressed(app, idsLibraryGames), win32::MB_OK | win32::MB_ICONEXCLAMATION);
+        szMessage = TextIO().pfnCompressed(app, ids);
+        CompatChoiceIO().pfnMessageBoxA(hwnd, szMessage.data(), TextIO().pfnCompressed(app, idsLibraryGames).data(), win32::MB_OK | win32::MB_ICONEXCLAMATION);
         return 1;
     }
     return 0;
@@ -435,7 +437,7 @@ std::int16_t FChooseLibraryGameName(APPSESSION &app, HWND hwnd, char *pszFile, c
         CchSnprintf(std::span{szLibraryName, sizeof(szLibraryName)}, "%s", pch ? pch + 1 : pszFile);
         pch = std::strrchr(szLibraryName, '.');
         if (pch) *pch = 0;
-        if (!FPortableLibraryName(app, szLibraryName)) std::strcpy(szLibraryName, TextIO().pfnCompressed(app, idsLibraryDefaultGameName));
+        if (!FPortableLibraryName(app, szLibraryName)) std::strcpy(szLibraryName, TextIO().pfnCompressed(app, idsLibraryDefaultGameName).data());
     }
     if (pszName) {
         if (!FLibraryNameAvailable(app, szLibraryRoot, szLibraryName)) {
@@ -457,8 +459,8 @@ std::int16_t FChooseLibraryGameName(APPSESSION &app, HWND hwnd, char *pszFile, c
     CchSnprintf(std::span{pszFile, 256}, "%s%s%s.xy", szLibraryPending, szDirSep, szLibraryName);
     return 1;
 LFail:
-    CchCopyUtf8Prefix(std::span{szMessage}, TextIO().pfnCompressed(app, idsLibraryStorageFailed));
-    CompatChoiceIO().pfnMessageBoxA(hwnd, szMessage, TextIO().pfnCompressed(app, idsLibraryGames), win32::MB_OK | win32::MB_ICONHAND);
+    CchCopyUtf8Prefix(std::span{szMessage}, TextIO().pfnCompressed(app, idsLibraryStorageFailed).data());
+    CompatChoiceIO().pfnMessageBoxA(hwnd, szMessage, TextIO().pfnCompressed(app, idsLibraryGames).data(), win32::MB_OK | win32::MB_ICONHAND);
     return 0;
 }
 
@@ -477,8 +479,8 @@ static std::int16_t FChooseLibraryRaceName(APPSESSION &app, HWND hwnd, const cha
     fRaceLibraryNameDialog = 0;
     if (CchSnprintf(std::span{pszPath, cchPath}, "%s%s%s", szRaceLibraryRoot, szDirSep, szRaceLibraryName) <= 0 ||
         !FRaceLibraryNameAvailable(app, szRaceLibraryName)) {
-        CchCopyUtf8Prefix(std::span{szMessage}, TextIO().pfnCompressed(app, idsLibraryStorageFailed));
-        CompatChoiceIO().pfnMessageBoxA(hwnd, szMessage, TextIO().pfnCompressed(app, idsLibraryGames), win32::MB_OK | win32::MB_ICONHAND);
+        CchCopyUtf8Prefix(std::span{szMessage}, TextIO().pfnCompressed(app, idsLibraryStorageFailed).data());
+        CompatChoiceIO().pfnMessageBoxA(hwnd, szMessage, TextIO().pfnCompressed(app, idsLibraryGames).data(), win32::MB_OK | win32::MB_ICONHAND);
         return 0;
     }
     return 1;
@@ -725,7 +727,7 @@ static void GetRaceLibraryStem(APPSESSION &app, const char *pszName, char *pszSt
     cch = std::strlen(pszStem);
     while (cch != 0 && (pszStem[cch - 1] == ' ' || pszStem[cch - 1] == '.')) pszStem[--cch] = 0;
     while (pszStem[0] == ' ' || pszStem[0] == '.') std::memmove(pszStem, pszStem + 1, std::strlen(pszStem));
-    if (!pszStem[0]) CchSnprintf(std::span{pszStem, 240}, "%s", TextIO().pfnCompressed(app, idsLibraryDefaultRaceName));
+    if (!pszStem[0]) CchSnprintf(std::span{pszStem, 240}, "%s", TextIO().pfnCompressed(app, idsLibraryDefaultRaceName).data());
     CchSnprintf(std::span{szTest, sizeof(szTest)}, "%s.r1", pszStem);
     if (!FPortableRaceFilename(app, szTest)) {
         // Prefix reserved device names without altering the in-game race name.
@@ -770,12 +772,12 @@ INT_PTR  LibraryRaceSaveDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
     POINT16 pt = {-1, -1};
     switch (message) {
     case win32::WM_INITDIALOG:
-        ControlIO().pfnSetWindowText(hwnd, TextIO().pfnCompressed(app, idsLibraryRaceSaveTitle));
-        CchSnprintf(std::span{szMessage, sizeof(szMessage)}, TextIO().pfnCompressed(app, idsLibraryRaceSavePrompt), reinterpret_cast<const char *>(lParam));
+        ControlIO().pfnSetWindowText(hwnd, TextIO().pfnCompressed(app, idsLibraryRaceSaveTitle).data());
+        CchSnprintf(std::span{szMessage, sizeof(szMessage)}, TextIO().pfnCompressed(app, idsLibraryRaceSavePrompt).data(), reinterpret_cast<const char *>(lParam));
         win32::SetDlgItemTextA(hwnd, IDC_LIBRARY_RACE_SAVE_TEXT, szMessage);
-        win32::SetDlgItemTextA(hwnd, IDC_LIBRARY_RACE_UPDATE, TextIO().pfnCompressed(app, idsLibraryRaceUpdate));
-        win32::SetDlgItemTextA(hwnd, IDC_LIBRARY_RACE_VERSION, TextIO().pfnCompressed(app, idsLibraryRaceNewVersion));
-        win32::SetDlgItemTextA(hwnd, IDCANCEL, TextIO().pfnCompressed(app, idsCancel));
+        win32::SetDlgItemTextA(hwnd, IDC_LIBRARY_RACE_UPDATE, TextIO().pfnCompressed(app, idsLibraryRaceUpdate).data());
+        win32::SetDlgItemTextA(hwnd, IDC_LIBRARY_RACE_VERSION, TextIO().pfnCompressed(app, idsLibraryRaceNewVersion).data());
+        win32::SetDlgItemTextA(hwnd, IDCANCEL, TextIO().pfnCompressed(app, idsCancel).data());
         ControlIO().pfnStickyDlgPos(hwnd, &pt, 1);
         return 1;
     case win32::WM_COMMAND:
@@ -831,7 +833,7 @@ LReuse:
     fNewLibraryRace = 0;
     return 1;
 LFail:
-    if (win32::IsWindow(hwnd)) AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryRaceSaveFailed), win32::MB_ICONHAND);
+    if (win32::IsWindow(hwnd)) AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryRaceSaveFailed).data(), win32::MB_ICONHAND);
     return 0;
 }
 
@@ -849,7 +851,7 @@ std::int16_t FLoadLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName) {
     fResult = FWasRaceFile(app, szPath, 1);
     if (fResult <= 0) {
         RestoreRaceState(app, &rsSav, 1, 1);
-        if (win32::IsWindow(hwnd)) AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryRaceOpenFailed), win32::MB_ICONEXCLAMATION);
+        if (win32::IsWindow(hwnd)) AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryRaceOpenFailed).data(), win32::MB_ICONEXCLAMATION);
         return 0;
     }
     CchSnprintf(std::span{szRaceLibraryPath, sizeof(szRaceLibraryPath)}, "%s", szPath);
@@ -896,8 +898,8 @@ std::int16_t FBeginLibraryRace(APPSESSION &app, HWND hwnd) {
     szRaceLibraryPath[0] = 0;
     fNewLibraryRace = 1;
     app.state.vplr = vrgplrDef[0];
-    CchCopyUtf8Prefix(std::span{app.state.vplr.szName}, TextIO().pfnCompressed(app, idsHumanoid));
-    CchCopyUtf8Prefix(std::span{app.state.vplr.szNames}, TextIO().pfnCompressed(app, idsLibraryHumanoids));
+    CchCopyUtf8Prefix(std::span{app.state.vplr.szName}, TextIO().pfnCompressed(app, idsHumanoid).data());
+    CchCopyUtf8Prefix(std::span{app.state.vplr.szNames}, TextIO().pfnCompressed(app, idsLibraryHumanoids).data());
     app.state.szRacePass[0] = 0;
     SetSzRaceFile(app, "");
     fResult = RaceCreationWizard(app, hwnd, 0, 0);
@@ -935,18 +937,18 @@ std::int16_t FDuplicateLibraryRace(APPSESSION &app, HWND hwnd, const char *pszNa
     SuggestRaceFilename(app, szName);
     if (!szName[0] || CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", szRaceLibraryRoot, szDirSep, szName) <= 0) {
         RestoreRaceState(app, &rsSav, 1, 1);
-        if (win32::IsWindow(hwnd)) AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryRaceDuplicateFailed), win32::MB_ICONEXCLAMATION);
+        if (win32::IsWindow(hwnd)) AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryRaceDuplicateFailed).data(), win32::MB_ICONEXCLAMATION);
         return 0;
     }
     if (!FCopyNativeFile(szSource, szPath)) {
         RestoreRaceState(app, &rsSav, 1, 1);
-        if (win32::IsWindow(hwnd)) AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryRaceDuplicateFailed), win32::MB_ICONEXCLAMATION);
+        if (win32::IsWindow(hwnd)) AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryRaceDuplicateFailed).data(), win32::MB_ICONEXCLAMATION);
         return 0;
     }
     if (FWasRaceFile(app, szPath, 1) <= 0) {
         RemoveNativeFile(szPath);
         RestoreRaceState(app, &rsSav, 1, 1);
-        if (win32::IsWindow(hwnd)) AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryRaceDuplicateFailed), win32::MB_ICONEXCLAMATION);
+        if (win32::IsWindow(hwnd)) AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryRaceDuplicateFailed).data(), win32::MB_ICONEXCLAMATION);
         return 0;
     }
     RestoreRaceState(app, &rsSav, 1, 1);
@@ -984,19 +986,19 @@ std::int16_t FExportLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName,
     SaveRaceState(app, &rsSav);
     if (FWasRaceFile(app, szSource, 1) <= 0 || SDL_strcasecmp(szSource, pszTarget) == 0) {
         RestoreRaceState(app, &rsSav, 1, 1);
-        if (win32::IsWindow(hwnd)) AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryRaceExportFailed), win32::MB_ICONEXCLAMATION);
+        if (win32::IsWindow(hwnd)) AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryRaceExportFailed).data(), win32::MB_ICONEXCLAMATION);
         return 0;
     }
     if (!FCopyRaceExport(szSource, pszTarget, szTemp, sizeof(szTemp))) {
         RestoreRaceState(app, &rsSav, 1, 1);
-        if (win32::IsWindow(hwnd)) AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryRaceExportFailed), win32::MB_ICONEXCLAMATION);
+        if (win32::IsWindow(hwnd)) AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryRaceExportFailed).data(), win32::MB_ICONEXCLAMATION);
         return 0;
     }
     CchSnprintf(std::span{szValidate, sizeof(szValidate)}, "%s", szTemp);
     if (FWasRaceFile(app, szValidate, 1) <= 0 || ReplaceNativeFile(szTemp, pszTarget) != 0) {
         RemoveNativeFile(szTemp);
         RestoreRaceState(app, &rsSav, 1, 1);
-        if (win32::IsWindow(hwnd)) AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryRaceExportFailed), win32::MB_ICONEXCLAMATION);
+        if (win32::IsWindow(hwnd)) AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryRaceExportFailed).data(), win32::MB_ICONEXCLAMATION);
         return 0;
     }
     RestoreRaceState(app, &rsSav, 1, 1);
@@ -1042,7 +1044,7 @@ std::int16_t FExportLibraryOrders(APPSESSION &app, HWND hwnd, const char *pszTar
         ofn = {};
         std::ranges::fill(szTarget, 0);
         CchSnprintf(std::span{szTarget, sizeof(szTarget)}, "%s", szSuggested);
-        cch = CchSnprintf(std::span{szFilter, sizeof(szFilter)}, TextIO().pfnCompressed(app, idsLibraryOrdersExportFilter),
+        cch = CchSnprintf(std::span{szFilter, sizeof(szFilter)}, TextIO().pfnCompressed(app, idsLibraryOrdersExportFilter).data(),
                           app.state.idPlayer + 1, app.state.idPlayer + 1);
         if (cch <= 0 || static_cast<std::size_t>(cch) + 2 >= sizeof(szFilter)) return 0;
         for (pch = szFilter; *pch; pch++) if (*pch == '|') *pch = 0;
@@ -1073,8 +1075,8 @@ std::int16_t FExportLibraryOrders(APPSESSION &app, HWND hwnd, const char *pszTar
 
     /* Confirm the actual orders path after correcting the chooser's extension. */
     if (FNativeFileSize(szTarget, &cbTarget)) {
-        CchSnprintf(std::span{szMessage, sizeof(szMessage)}, TextIO().pfnCompressed(app, idsLibraryReplaceOrders), szTarget);
-        if (CompatChoiceIO().pfnMessageBoxA(hwnd, szMessage, TextIO().pfnCompressed(app, idsLibraryTitle), win32::MB_YESNO | win32::MB_ICONEXCLAMATION | win32::MB_DEFBUTTON2) != win32::IDYES) return 0;
+        CchSnprintf(std::span{szMessage, sizeof(szMessage)}, TextIO().pfnCompressed(app, idsLibraryReplaceOrders).data(), szTarget);
+        if (CompatChoiceIO().pfnMessageBoxA(hwnd, szMessage, TextIO().pfnCompressed(app, idsLibraryTitle).data(), win32::MB_YESNO | win32::MB_ICONEXCLAMATION | win32::MB_DEFBUTTON2) != win32::IDYES) return 0;
     }
 
     SetSzWorkFromDt(app, dtLog, app.state.idPlayer);
@@ -1136,14 +1138,14 @@ std::int16_t FExportLibraryOrders(APPSESSION &app, HWND hwnd, const char *pszTar
     CchSnprintf(std::span{szTemp, sizeof(szTemp)}, "%s.stars-export-%u", szTarget, dwTick);
     if (!FCopyNativeFileExclusive(szSource, szTemp) || ReplaceNativeFile(szTemp, szTarget) != 0) {
         RemoveNativeFile(szTemp);
-        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryOrdersExportFailed), win32::MB_ICONEXCLAMATION);
+        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryOrdersExportFailed).data(), win32::MB_ICONEXCLAMATION);
         return 0;
     }
     return 1;
 LSaveFailed:
     if (fHistoryReplaced) {
         if (fHistoryExists && ReplaceNativeFile(szPreviousHist, szSourceHist) != 0) {
-            AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryHistoryRestoreFailed), win32::MB_ICONHAND);
+            AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryHistoryRestoreFailed).data(), win32::MB_ICONHAND);
             fHistoryBackup = 0;
         } else if (!fHistoryExists) RemoveNativeFile(szSourceHist);
         else fHistoryBackup = 0;
@@ -1154,7 +1156,7 @@ LSaveFailed:
     CchSnprintf(std::span{app.state.szBase, sizeof(app.state.szBase)}, "%s", szBaseSav);
     app.state.gd.fSubmit = fSubmitSav;
     app.state.game.fDirty = fDirtySav;
-    AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsSaveError), win32::MB_ICONHAND);
+    AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsSaveError).data(), win32::MB_ICONHAND);
     return 0;
 }
 
@@ -1164,10 +1166,10 @@ std::int16_t FDeleteLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName)
     if (!FInitRaceLibrary() || !FPortableRaceFilename(app, pszName)) return 0;
     CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", szRaceLibraryRoot, szDirSep, pszName);
     if (!FNativeFileSize(szPath, &cbFile) || cbFile <= 0) return 0;
-    CchSnprintf(std::span{szMessage, sizeof(szMessage)}, TextIO().pfnCompressed(app, idsLibraryRaceDeletePrompt), pszName);
-    if (CompatChoiceIO().pfnMessageBoxA(hwnd, szMessage, TextIO().pfnCompressed(app, idsLibraryTitle), win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_TASKMODAL) != win32::IDYES) return 0;
+    CchSnprintf(std::span{szMessage, sizeof(szMessage)}, TextIO().pfnCompressed(app, idsLibraryRaceDeletePrompt).data(), pszName);
+    if (CompatChoiceIO().pfnMessageBoxA(hwnd, szMessage, TextIO().pfnCompressed(app, idsLibraryTitle).data(), win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_TASKMODAL) != win32::IDYES) return 0;
     if (RemoveNativeFile(szPath) != 0) {
-        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryRaceDeleteFailed), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryRaceDeleteFailed).data(), win32::MB_ICONHAND);
         return 0;
     }
     if (!std::strcmp(szRaceLibraryPath, szPath)) szRaceLibraryPath[0] = 0;
@@ -1670,7 +1672,7 @@ std::int16_t FExportLibraryGame(APPSESSION &app, HWND hwnd, const char *pszName,
         if (!std::getenv("STARS_CLIENT_EXPORT_GAME")) {
             TextIO().pfnCchGetString(app, idsLibraryExportZipPrompt, std::span{szMessage});
             iChoice = CompatChoiceIO().pfnMessageBoxA(hwnd, szMessage,
-                                 TextIO().pfnCompressed(app, idsLibraryExportGameTitle), win32::MB_YESNOCANCEL | win32::MB_ICONQUESTION | win32::MB_TASKMODAL);
+                                 TextIO().pfnCompressed(app, idsLibraryExportGameTitle).data(), win32::MB_YESNOCANCEL | win32::MB_ICONQUESTION | win32::MB_TASKMODAL);
             if (iChoice == IDCANCEL) return 0;
             if (iChoice == win32::IDYES) {
                 ofn = {};
@@ -1752,7 +1754,7 @@ LStageFail:
     FNativeEnumerateDirectory(app, szStage, RemoveImportFile, szStage);
     RemoveNativePath(szStage);
 LFail:
-    if (win32::IsWindow(hwnd)) AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryGameExportFailed), win32::MB_ICONHAND);
+    if (win32::IsWindow(hwnd)) AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryGameExportFailed).data(), win32::MB_ICONHAND);
     return 0;
 }
 
@@ -1921,7 +1923,7 @@ static std::int16_t FImportSubsequentTurn(APPSESSION &app, HWND hwnd, const char
     iplr--;
     if (iplr < 0 || iplr >= 16) return 0;
     if (!FInspectImportFile(pszSource, dtTurn, iplr, &lidGame, &turn, nullptr, &fMulti)) {
-        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryTurnInvalid), win32::MB_ICONEXCLAMATION);
+        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryTurnInvalid).data(), win32::MB_ICONEXCLAMATION);
         return 0;
     }
     lm = {};
@@ -1934,7 +1936,7 @@ static std::int16_t FImportSubsequentTurn(APPSESSION &app, HWND hwnd, const char
                            LibraryTurnTargetDlg, reinterpret_cast<LPARAM>(&lm)) != 1) return 0;
     } else CchSnprintf(std::span{lm.szSelected, sizeof(lm.szSelected)}, "%s", lm.rgszName[0]);
     if (!lm.szSelected[0]) {
-        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryTurnChooseGame), win32::MB_ICONEXCLAMATION);
+        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryTurnChooseGame).data(), win32::MB_ICONEXCLAMATION);
         return 0;
     }
     cch = CchSnprintf(std::span{szTarget, sizeof(szTarget)}, "%s%s%s%s%s.m%d", szLibraryRoot, szDirSep, lm.szSelected, szDirSep, lm.szSelected, iplr + 1);
@@ -1943,12 +1945,12 @@ static std::int16_t FImportSubsequentTurn(APPSESSION &app, HWND hwnd, const char
     fHasTurn = pf != nullptr;
     if (pf) ICloseNativeFile(pf);
     else if (errno != ENOENT) {
-        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryTurnInspectFailed), win32::MB_ICONEXCLAMATION);
+        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryTurnInspectFailed).data(), win32::MB_ICONEXCLAMATION);
         return 0;
     }
     if (fHasTurn) {
         if (!FInspectImportFile(szTarget, dtTurn, iplr, &lidCurrent, &turnCurrent, nullptr, &fMultiCurrent) || lidCurrent != lidGame) {
-            AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryTurnCurrentInvalid), win32::MB_ICONEXCLAMATION);
+            AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryTurnCurrentInvalid).data(), win32::MB_ICONEXCLAMATION);
             return 0;
         }
         if (FFilesEqual(pszSource, szTarget)) return 1;
@@ -1959,7 +1961,7 @@ static std::int16_t FImportSubsequentTurn(APPSESSION &app, HWND hwnd, const char
                           szLibraryRoot, szDirSep, lm.szSelected, szDirSep, lm.szSelected);
         if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szUniverse)) return 0;
         if (FNativePathInfo(szTarget, &fDirectory, &fLink) || !FInspectImportPlayer(app, szUniverse, iplr)) {
-            AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryTurnPlayerInvalid), win32::MB_ICONEXCLAMATION);
+            AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryTurnPlayerInvalid).data(), win32::MB_ICONEXCLAMATION);
             return 0;
         }
     }
@@ -2066,10 +2068,10 @@ std::int16_t FImportLibraryGame(APPSESSION &app, HWND hwnd, const char *pszSourc
             FNativeEnumerateDirectory(app, szZipStage, RemoveImportTreeEntry, szZipStage);
             RemoveNativePath(szZipStage);
             if (iZipResult == ZIP_IMPORT_UNSUPPORTED_NAME) {
-                AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryZipNameEncoding), win32::MB_ICONEXCLAMATION);
+                AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryZipNameEncoding).data(), win32::MB_ICONEXCLAMATION);
                 return 0;
             }
-            AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryZipInvalid), win32::MB_ICONEXCLAMATION);
+            AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryZipInvalid).data(), win32::MB_ICONEXCLAMATION);
             return 0;
         }
         fImported = FImportLibraryGame(app, hwnd, szZipStage);
@@ -2087,7 +2089,7 @@ std::int16_t FImportLibraryGame(APPSESSION &app, HWND hwnd, const char *pszSourc
         szStem[0] = 0;
         FNativeEnumerateDirectory(app, szDir, FindImportUniverse, szStem);
         if (!szStem[0] || szStem[0] == '!') {
-            AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryUniverseRequired), win32::MB_ICONEXCLAMATION);
+            AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryUniverseRequired).data(), win32::MB_ICONEXCLAMATION);
             return 0;
         }
         CchSnprintf(std::span{szSource, sizeof(szSource)}, "%s%s%s.xy", szDir, szDirSep, szStem);
@@ -2118,7 +2120,7 @@ std::int16_t FImportLibraryGame(APPSESSION &app, HWND hwnd, const char *pszSourc
     li.fValid = 0;
     if (!FNativeEnumerateDirectory(app, szDir, CopyImportEntry, &li) || li.fBad || !li.fSawXY || !li.fValid ||
         (li.grfPlayers == 0 && !li.fSawHost)) {
-        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryGameIncomplete), win32::MB_ICONEXCLAMATION);
+        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryGameIncomplete).data(), win32::MB_ICONEXCLAMATION);
         return 0;
     }
     if (!FChooseLibraryGameName(app, hwnd, szSource, nullptr)) return 0;
@@ -2251,8 +2253,8 @@ std::int16_t FDuplicateLibraryGame(APPSESSION &app, HWND hwnd, const char *pszNa
         RenameNativeFile(szStage, szTarget) == 0) fResult = 1;
     if (!fResult) {
         RemoveLibraryGameTree(app, szStage);
-        CchCopyUtf8Prefix(std::span{szMessage}, TextIO().pfnCompressed(app, idsLibraryStorageFailed));
-        CompatChoiceIO().pfnMessageBoxA(win32::IsWindow(hwnd) ? hwnd : app.lpui->hwndFrame, szMessage, TextIO().pfnCompressed(app, idsLibraryGames), win32::MB_OK | win32::MB_ICONHAND);
+        CchCopyUtf8Prefix(std::span{szMessage}, TextIO().pfnCompressed(app, idsLibraryStorageFailed).data());
+        CompatChoiceIO().pfnMessageBoxA(win32::IsWindow(hwnd) ? hwnd : app.lpui->hwndFrame, szMessage, TextIO().pfnCompressed(app, idsLibraryGames).data(), win32::MB_OK | win32::MB_ICONHAND);
     }
     return fResult;
 }
@@ -2290,15 +2292,15 @@ LDone:
     if (!fResult) {
         if (fRestoreFailed) {
             cchTarget = CchSnprintf(std::span{szMessage, sizeof(szMessage)},
-                                    TextIO().pfnCompressed(app, idsLibraryRenameFailedOriginalAt), szHold);
-            if (cchTarget <= 0 || static_cast<std::size_t>(cchTarget) >= sizeof(szMessage)) CchCopyUtf8Prefix(std::span{szMessage}, TextIO().pfnCompressed(app, idsLibraryStorageFailed));
-        } else CchCopyUtf8Prefix(std::span{szMessage}, TextIO().pfnCompressed(app, idsLibraryStorageFailed));
-        CompatChoiceIO().pfnMessageBoxA(win32::IsWindow(hwnd) ? hwnd : app.lpui->hwndFrame, szMessage, TextIO().pfnCompressed(app, idsLibraryGames), win32::MB_OK | win32::MB_ICONHAND);
+                                    TextIO().pfnCompressed(app, idsLibraryRenameFailedOriginalAt).data(), szHold);
+            if (cchTarget <= 0 || static_cast<std::size_t>(cchTarget) >= sizeof(szMessage)) CchCopyUtf8Prefix(std::span{szMessage}, TextIO().pfnCompressed(app, idsLibraryStorageFailed).data());
+        } else CchCopyUtf8Prefix(std::span{szMessage}, TextIO().pfnCompressed(app, idsLibraryStorageFailed).data());
+        CompatChoiceIO().pfnMessageBoxA(win32::IsWindow(hwnd) ? hwnd : app.lpui->hwndFrame, szMessage, TextIO().pfnCompressed(app, idsLibraryGames).data(), win32::MB_OK | win32::MB_ICONHAND);
     } else if (fHoldCleanupFailed) {
         cchTarget = CchSnprintf(std::span{szMessage, sizeof(szMessage)},
-                                TextIO().pfnCompressed(app, idsLibraryRenameSucceededCleanupPath), szHold);
-        if (cchTarget <= 0 || static_cast<std::size_t>(cchTarget) >= sizeof(szMessage)) CchCopyUtf8Prefix(std::span{szMessage}, TextIO().pfnCompressed(app, idsLibraryStorageFailed));
-        CompatChoiceIO().pfnMessageBoxA(win32::IsWindow(hwnd) ? hwnd : app.lpui->hwndFrame, szMessage, TextIO().pfnCompressed(app, idsLibraryGames), win32::MB_OK | win32::MB_ICONEXCLAMATION);
+                                TextIO().pfnCompressed(app, idsLibraryRenameSucceededCleanupPath).data(), szHold);
+        if (cchTarget <= 0 || static_cast<std::size_t>(cchTarget) >= sizeof(szMessage)) CchCopyUtf8Prefix(std::span{szMessage}, TextIO().pfnCompressed(app, idsLibraryStorageFailed).data());
+        CompatChoiceIO().pfnMessageBoxA(win32::IsWindow(hwnd) ? hwnd : app.lpui->hwndFrame, szMessage, TextIO().pfnCompressed(app, idsLibraryGames).data(), win32::MB_OK | win32::MB_ICONEXCLAMATION);
     }
     return fResult;
 }
@@ -2358,20 +2360,20 @@ std::int16_t FDeleteLibraryGame(APPSESSION &app, HWND hwnd, const char *pszName)
     if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szMetadata) ||
         !FReadLibraryMetadata(szDirectory, szMetadataName, sizeof(szMetadataName), &iplr, &lPlayed,
                               szExchangeName, sizeof(szExchangeName)) || std::strcmp(szMetadataName, pszName)) return 0;
-    cch = CchSnprintf(std::span{szMessage, sizeof(szMessage)}, TextIO().pfnCompressed(app, idsLibraryDeleteGamePrompt), pszName);
+    cch = CchSnprintf(std::span{szMessage, sizeof(szMessage)}, TextIO().pfnCompressed(app, idsLibraryDeleteGamePrompt).data(), pszName);
     if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szMessage)) return 0;
-    if (CompatChoiceIO().pfnMessageBoxA(hwnd, szMessage, TextIO().pfnCompressed(app, idsLibraryGames),
+    if (CompatChoiceIO().pfnMessageBoxA(hwnd, szMessage, TextIO().pfnCompressed(app, idsLibraryGames).data(),
                    win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_TASKMODAL) != win32::IDYES) return 0;
     fContinueTarget = FFindContinueLibraryGame(app) && !std::strcmp(continueLibrary.szName, pszName);
     if (!RemoveLibraryGameTree(app, szDirectory)) {
-        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryDeleteGameFailed), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryDeleteGameFailed).data(), win32::MB_ICONHAND);
         return 0;
     }
     /* Keep deletion from silently promoting another game on the next startup. */
     if (fContinueTarget)
-        ProfileTextIO().pfnWriteString("Library", "ContinueDeleted", "1", TextIO().pfnCompressed(app, idsStarsIni));
+        ProfileTextIO().pfnWriteString("Library", "ContinueDeleted", "1", TextIO().pfnCompressed(app, idsStarsIni).data());
     if (!FDeleteLibraryGameRecentPaths(app, szDirectory))
-        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryDeleteGameRecentFailed), win32::MB_ICONEXCLAMATION);
+        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryDeleteGameRecentFailed).data(), win32::MB_ICONEXCLAMATION);
     return 1;
 }
 
@@ -2426,7 +2428,7 @@ std::int16_t FImportLibraryOrders(APPSESSION &app, HWND hwnd, const char *pszSou
     if (!pszSource) {
         ofn = {};
         std::ranges::fill(szChosen, 0);
-        std::strcpy(szFilter, TextIO().pfnCompressed(app, idsLibraryOrdersImportFilter));
+        std::strcpy(szFilter, TextIO().pfnCompressed(app, idsLibraryOrdersImportFilter).data());
         for (pch = szFilter; *pch; pch++) if (*pch == '|') *pch = 0;
         ofn.lStructSize = sizeof(ofn);
         ofn.hwndOwner = hwnd;
@@ -2442,7 +2444,7 @@ std::int16_t FImportLibraryOrders(APPSESSION &app, HWND hwnd, const char *pszSou
     hwndList = ControlIO().pfnGetDlgItem(hwnd, IDC_LIBRARY_HOST_GAMES);
     i = ControlIO().pfnSendMessage(hwndList, win32::LB_GETCURSEL, 0, 0);
     if (i == win32::LB_ERR) {
-        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryOrdersChooseHost), win32::MB_ICONEXCLAMATION);
+        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryOrdersChooseHost).data(), win32::MB_ICONEXCLAMATION);
         return 0;
     }
     ControlIO().pfnSendMessage(hwndList, win32::LB_GETTEXT, i, reinterpret_cast<LPARAM>(szName));
@@ -2453,14 +2455,14 @@ std::int16_t FImportLibraryOrders(APPSESSION &app, HWND hwnd, const char *pszSou
     pszExt = std::strrchr(pszFile, '.');
     if (!pszExt || SDL_tolower(pszExt[1]) != 'x' || pszExt[2] < '1' || pszExt[2] > '9' ||
         (pszExt[3] && (pszExt[3] < '0' || pszExt[3] > '9')) || (pszExt[3] && pszExt[4])) {
-        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryOrdersChooseFile), win32::MB_ICONEXCLAMATION);
+        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryOrdersChooseFile).data(), win32::MB_ICONEXCLAMATION);
         return 0;
     }
     iplr = pszExt[2] - '1';
     if (pszExt[3]) iplr = (pszExt[2] - '0') * 10 + pszExt[3] - '1';
     if (iplr < 0 || iplr >= 16 || !FInspectImportFile(pszSource, dtLog, iplr, &lidOrders,
             &turnOrders, &wGenOrders, &fMulti)) {
-        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryOrdersInvalid), win32::MB_ICONEXCLAMATION);
+        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryOrdersInvalid).data(), win32::MB_ICONEXCLAMATION);
         return 0;
     }
     cch = CchSnprintf(std::span{szHost, sizeof(szHost)}, "%s%s%s%s%s.hst", szLibraryRoot, szDirSep, szName, szDirSep, szName);
@@ -2471,7 +2473,7 @@ std::int16_t FImportLibraryOrders(APPSESSION &app, HWND hwnd, const char *pszSou
         !FInspectImportFile(szUniverse, dtXY, iplrNone, &lidUniverse, nullptr, nullptr, &fMulti) ||
         lidHost != lidUniverse || lidOrders != lidHost || turnOrders != turnHost || wGenOrders != wGenHost ||
         !FInspectImportPlayer(app, szUniverse, iplr)) {
-        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryOrdersMismatch), win32::MB_ICONEXCLAMATION);
+        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryOrdersMismatch).data(), win32::MB_ICONEXCLAMATION);
         return 0;
     }
     cch = CchSnprintf(std::span{szTarget, sizeof(szTarget)}, "%s%s%s%s%s.x%d", szLibraryRoot, szDirSep,
@@ -2480,7 +2482,7 @@ std::int16_t FImportLibraryOrders(APPSESSION &app, HWND hwnd, const char *pszSou
     if (FNativeFileSize(szTarget, &cbFile)) {
         if (FFilesEqual(pszSource, szTarget)) return 1;
         cch = CchSnprintf(std::span{szMessage, sizeof(szMessage)},
-                          TextIO().pfnCompressed(app, idsLibraryOrdersReplacePrompt), iplr + 1, szName);
+                          TextIO().pfnCompressed(app, idsLibraryOrdersReplacePrompt).data(), iplr + 1, szName);
         if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szMessage)) return 0;
         if (AlertIO().pfnAlertSz(app, szMessage, win32::MB_YESNO | win32::MB_ICONQUESTION) != win32::IDYES) return 0;
     }
@@ -2491,12 +2493,12 @@ std::int16_t FImportLibraryOrders(APPSESSION &app, HWND hwnd, const char *pszSou
         !FInspectImportFile(szStage, dtLog, iplr, &lidOrders, &turnOrders, &wGenOrders, &fMulti) ||
         lidOrders != lidHost || turnOrders != turnHost || wGenOrders != wGenHost) {
         RemoveNativeFile(szStage);
-        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryOrdersStageFailed), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryOrdersStageFailed).data(), win32::MB_ICONHAND);
         return 0;
     }
     if (ReplaceNativeFile(szStage, szTarget) != 0) {
         RemoveNativeFile(szStage);
-        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryOrdersInstallFailed), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryOrdersInstallFailed).data(), win32::MB_ICONHAND);
         return 0;
     }
     static_cast<void>(hwnd);
@@ -2605,7 +2607,7 @@ std::int16_t FReplaceConflictingLibraryTurn(APPSESSION &app, const LIBRARYPATHS 
     fHeld = 0;
     if (!LibraryPublicationIO().pfnRemoveLibraryGameTree(app, szHold)) fCleanupFailed = 1;
     if (fCleanupFailed) {
-        LibraryPublicationIO().pfnCchSnprintf(std::span{szMessage, sizeof(szMessage)}, TextIO().pfnCompressed(app, idsLibraryTurnCleanupFailed), szHold);
+        LibraryPublicationIO().pfnCchSnprintf(std::span{szMessage, sizeof(szMessage)}, TextIO().pfnCompressed(app, idsLibraryTurnCleanupFailed).data(), szHold);
         AlertIO().pfnAlertSz(app, szMessage, win32::MB_ICONEXCLAMATION);
     }
     static_cast<void>(hwnd);
@@ -2618,9 +2620,9 @@ LDone:
         else fRestoreFailed = 1;
     }
     if (fRestoreFailed) {
-        LibraryPublicationIO().pfnCchSnprintf(std::span{szMessage, sizeof(szMessage)}, TextIO().pfnCompressed(app, idsLibraryGameRestoreFailed), szHold);
+        LibraryPublicationIO().pfnCchSnprintf(std::span{szMessage, sizeof(szMessage)}, TextIO().pfnCompressed(app, idsLibraryGameRestoreFailed).data(), szHold);
         AlertIO().pfnAlertSz(app, szMessage, win32::MB_ICONHAND);
-    } else AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryTurnReplaceFailed), win32::MB_ICONHAND);
+    } else AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryTurnReplaceFailed).data(), win32::MB_ICONHAND);
     static_cast<void>(hwnd);
     static_cast<void>(pszTarget);
     return 0;
@@ -2648,7 +2650,7 @@ std::int16_t FImportConflictingTurnAsCopy(APPSESSION &app, const LIBRARYPATHS &p
         !LibraryPublicationIO().pfnFStageConflictingTurn(szStage, paths.szLibraryName, pszSource, iplr, lidGame, turn) ||
         RenameNativeFile(szStage, szTarget) != 0) {
         if (LibraryPublicationIO().pfnFNativeDirectoryExists(szStage)) LibraryPublicationIO().pfnRemoveLibraryGameTree(app, szStage);
-        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibrarySeparateCopyFailed), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibrarySeparateCopyFailed).data(), win32::MB_ICONHAND);
         return 0;
     }
     static_cast<void>(iRemembered);
@@ -2671,8 +2673,8 @@ std::int16_t FFinishLibraryGame(APPSESSION &app, HWND hwnd, std::int16_t fGenera
     if (!fGenerated) {
         FNativeEnumerateDirectory(app, szLibraryPending, RemovePendingFile, nullptr);
         RemoveNativePath(szLibraryPending);
-        CchCopyUtf8Prefix(std::span{szMessage}, TextIO().pfnCompressed(app, idsLibraryStorageFailed));
-        CompatChoiceIO().pfnMessageBoxA(win32::IsWindow(hwnd) ? hwnd : app.lpui->hwndFrame, szMessage, TextIO().pfnCompressed(app, idsLibraryGames), win32::MB_OK | win32::MB_ICONHAND);
+        CchCopyUtf8Prefix(std::span{szMessage}, TextIO().pfnCompressed(app, idsLibraryStorageFailed).data());
+        CompatChoiceIO().pfnMessageBoxA(win32::IsWindow(hwnd) ? hwnd : app.lpui->hwndFrame, szMessage, TextIO().pfnCompressed(app, idsLibraryGames).data(), win32::MB_OK | win32::MB_ICONHAND);
     }
     szLibraryPending[0] = 0;
     return fGenerated;
@@ -2806,7 +2808,7 @@ static std::int16_t FindContinueLibraryGame(APPSESSION &app, void *lpData, const
 }
 
 static std::int16_t FFindContinueLibraryGame(APPSESSION &app) {
-    if (win32::GetPrivateProfileIntA("Library", "ContinueDeleted", 0, TextIO().pfnCompressed(app, idsStarsIni))) return 0;
+    if (win32::GetPrivateProfileIntA("Library", "ContinueDeleted", 0, TextIO().pfnCompressed(app, idsStarsIni).data())) return 0;
     continueLibrary = {};
     continueLibrary.iPlayer = -1;
     return FInitLibrary() && FNativeEnumerateDirectory(app, szLibraryRoot, FindContinueLibraryGame, &continueLibrary) &&
@@ -2822,38 +2824,38 @@ void InitLibraryGames(APPSESSION &app, HWND hwnd, const RECT *lprc) {
     if (std::getenv("STARS_DEBUG_LIBRARY_STARTUP"))
         std::fprintf(stderr, "[DEBUG-library-startup] InitLibraryGames begin hwnd=%p\n", static_cast<void *>(hwnd));
     y = StarsMax(50, lprc->bottom - 360);
-    ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsLibraryGames), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
+    ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsLibraryGames).data(), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
                  24, y - 22, 58, 18, hwnd,
                  reinterpret_cast<HMENU>(static_cast<std::uintptr_t>(IDC_LIBRARY_GAMES_VIEW)), app.lpui->hInst, nullptr);
-    ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsLibraryHostGames), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
+    ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsLibraryHostGames).data(), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
                  86, y - 22, 82, 18, hwnd,
                  reinterpret_cast<HMENU>(static_cast<std::uintptr_t>(IDC_LIBRARY_HOST_VIEW)), app.lpui->hInst, nullptr);
-    ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsLibraryImportGame), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
+    ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsLibraryImportGame).data(), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
                  lprc->right - 128, y - 22, 104, 18, hwnd,
                  reinterpret_cast<HMENU>(static_cast<std::uintptr_t>(IDC_LIBRARY_IMPORT)), app.lpui->hInst, nullptr);
-    ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsLibraryImportFolder), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
+    ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsLibraryImportFolder).data(), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
                  lprc->right - 240, y - 22, 104, 18, hwnd,
                  reinterpret_cast<HMENU>(static_cast<std::uintptr_t>(IDC_LIBRARY_IMPORT_FOLDER)), app.lpui->hInst, nullptr);
-    ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsLibraryImportOrders), win32::WS_CHILD | win32::WS_TABSTOP,
+    ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsLibraryImportOrders).data(), win32::WS_CHILD | win32::WS_TABSTOP,
                  lprc->right - 128, y - 22, 104, 18, hwnd,
                  reinterpret_cast<HMENU>(static_cast<std::uintptr_t>(IDC_LIBRARY_IMPORT_ORDERS)), app.lpui->hInst, nullptr);
-    ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsLibraryExportGame), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
+    ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsLibraryExportGame).data(), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
                  lprc->right - 464, y - 22, 96, 18, hwnd,
                  reinterpret_cast<HMENU>(static_cast<std::uintptr_t>(IDC_LIBRARY_GAME_EXPORT)), app.lpui->hInst, nullptr);
-    ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsLibraryDuplicate), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
+    ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsLibraryDuplicate).data(), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
                  lprc->right - 304, y - 22, 60, 18, hwnd,
                  reinterpret_cast<HMENU>(static_cast<std::uintptr_t>(IDC_LIBRARY_DUPLICATE)), app.lpui->hInst, nullptr);
-    ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsRename), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
+    ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsRename).data(), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
                  lprc->right - 360, y - 22, 52, 18, hwnd,
                  reinterpret_cast<HMENU>(static_cast<std::uintptr_t>(IDC_LIBRARY_RENAME)), app.lpui->hInst, nullptr);
-    ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsDelete), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
+    ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsDelete).data(), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
                  lprc->right - 524, y - 22, 56, 18, hwnd,
                  reinterpret_cast<HMENU>(static_cast<std::uintptr_t>(IDC_LIBRARY_GAME_DELETE)), app.lpui->hInst, nullptr);
     ui::CreateWindowEx(0, "LISTBOX", "", win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_BORDER | win32::WS_TABSTOP | win32::WS_VSCROLL | win32::LBS_NOTIFY | win32::LBS_SORT,
                  24, y, lprc->right - 48, 90, hwnd, reinterpret_cast<HMENU>(static_cast<std::uintptr_t>(IDC_LIBRARY_GAMES)), app.lpui->hInst, nullptr);
     ui::CreateWindowEx(0, "LISTBOX", "", win32::WS_CHILD | win32::WS_BORDER | win32::WS_TABSTOP | win32::WS_VSCROLL | win32::LBS_NOTIFY | win32::LBS_SORT,
                  24, y, lprc->right - 48, 90, hwnd, reinterpret_cast<HMENU>(static_cast<std::uintptr_t>(IDC_LIBRARY_HOST_GAMES)), app.lpui->hInst, nullptr);
-    ui::CreateWindowEx(0, "STATIC", TextIO().pfnCompressed(app, idsLibraryPlayerSelect), win32::WS_CHILD | win32::WS_VISIBLE,
+    ui::CreateWindowEx(0, "STATIC", TextIO().pfnCompressed(app, idsLibraryPlayerSelect).data(), win32::WS_CHILD | win32::WS_VISIBLE,
                  24, y + 100, 66, 18, hwnd, reinterpret_cast<HMENU>(static_cast<std::uintptr_t>(IDC_LIBRARY_PLAYER_LABEL)), app.lpui->hInst, nullptr);
     ui::CreateWindowEx(0, "COMBOBOX", "", win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP | win32::WS_VSCROLL | win32::CBS_DROPDOWNLIST,
                  94, y + 96, StarsMin(280, lprc->right - 118), 160, hwnd,
@@ -2900,19 +2902,19 @@ static std::int16_t ListLibraryRace(APPSESSION &, void *lpList, const char *pszN
 
 void InitLibraryRaces(APPSESSION &app, HWND hwnd, const RECT *lprc) {
     int y = StarsMax(160, lprc->bottom - 200);
-    ui::CreateWindowEx(0, "STATIC", TextIO().pfnCompressed(app, idsLibraryRaceDesigns), win32::WS_CHILD | win32::WS_VISIBLE, 24, y - 18, 160, 18,
+    ui::CreateWindowEx(0, "STATIC", TextIO().pfnCompressed(app, idsLibraryRaceDesigns).data(), win32::WS_CHILD | win32::WS_VISIBLE, 24, y - 18, 160, 18,
                  hwnd, nullptr, app.lpui->hInst, nullptr);
-    ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsLibraryNew), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
+    ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsLibraryNew).data(), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
                  lprc->right - 436, y - 20, 48, 18, hwnd, reinterpret_cast<HMENU>(static_cast<std::uintptr_t>(IDC_LIBRARY_RACE_NEW)), app.lpui->hInst, nullptr);
-    ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsLibraryEdit), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
+    ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsLibraryEdit).data(), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
                  lprc->right - 384, y - 20, 48, 18, hwnd, reinterpret_cast<HMENU>(static_cast<std::uintptr_t>(IDC_LIBRARY_RACE_EDIT)), app.lpui->hInst, nullptr);
-    ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsLibraryDuplicate), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
+    ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsLibraryDuplicate).data(), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
                  lprc->right - 332, y - 20, 62, 18, hwnd, reinterpret_cast<HMENU>(static_cast<std::uintptr_t>(IDC_LIBRARY_RACE_DUPLICATE)), app.lpui->hInst, nullptr);
-    ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsLibraryExport), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
+    ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsLibraryExport).data(), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
                  lprc->right - 266, y - 20, 48, 18, hwnd, reinterpret_cast<HMENU>(static_cast<std::uintptr_t>(IDC_LIBRARY_RACE_EXPORT)), app.lpui->hInst, nullptr);
-    ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsDelete), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
+    ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsDelete).data(), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
                  lprc->right - 214, y - 20, 56, 18, hwnd, reinterpret_cast<HMENU>(static_cast<std::uintptr_t>(IDC_LIBRARY_RACE_DELETE)), app.lpui->hInst, nullptr);
-    ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsLibraryImport), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
+    ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsLibraryImport).data(), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
                  lprc->right - 152, y - 20, 112, 18, hwnd, reinterpret_cast<HMENU>(static_cast<std::uintptr_t>(IDC_LIBRARY_RACE_IMPORT)), app.lpui->hInst, nullptr);
     ui::CreateWindowEx(0, "LISTBOX", "", win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_BORDER | win32::WS_TABSTOP | win32::WS_VSCROLL | win32::LBS_NOTIFY | win32::LBS_SORT,
                  24, y, lprc->right - 48, 80, hwnd, reinterpret_cast<HMENU>(static_cast<std::uintptr_t>(IDC_LIBRARY_RACES)), app.lpui->hInst, nullptr);
@@ -2955,7 +2957,7 @@ void RefreshLibraryPlayers(APPSESSION &app, HWND hwnd) {
         plgli = &rgLibraryGameList[iItem];
         for (iplr = 0; iplr < 16; iplr++) {
             if (!(plgli->grfPlayers & (1u << iplr))) continue;
-            CchSnprintf(std::span{szPlayer, sizeof(szPlayer)}, TextIO().pfnCompressed(app, idsLibraryPlayerTurn),
+            CchSnprintf(std::span{szPlayer, sizeof(szPlayer)}, TextIO().pfnCompressed(app, idsLibraryPlayerTurn).data(),
                         iplr + 1, plgli->rgturn[iplr] + 2400);
             iPlayer = ControlIO().pfnSendMessage(hwndPlayers, win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(szPlayer));
             if (iPlayer == win32::CB_ERR || iPlayer == win32::CB_ERRSPACE) break;
@@ -3016,14 +3018,14 @@ void RefreshLibraryGames(APPSESSION &app, HWND hwnd) {
     }
     if (fContinue) {
         CchSnprintf(std::span{szLabel, sizeof(szLabel)}, continueLibrary.fTurnAvailable ?
-                    TextIO().pfnCompressed(app, idsLibraryContinuePlayer) : TextIO().pfnCompressed(app, idsLibraryContinueChoosePlayer),
+                    TextIO().pfnCompressed(app, idsLibraryContinuePlayer).data() : TextIO().pfnCompressed(app, idsLibraryContinueChoosePlayer).data(),
                     continueLibrary.szName, continueLibrary.iPlayer + 1, continueLibrary.iYear);
         win32::SetDlgItemTextA(hwnd, IDC_LIBRARY_CONTINUE_DETAILS, szLabel);
-        ControlIO().pfnSetWindowText(app.lpui->rghwndBtnSplash[2], TextIO().pfnCompressed(app, idsContinueGame));
+        ControlIO().pfnSetWindowText(app.lpui->rghwndBtnSplash[2], TextIO().pfnCompressed(app, idsContinueGame).data());
         ControlIO().pfnEnableWindow(app.lpui->rghwndBtnSplash[2], 1);
     } else {
         win32::SetDlgItemTextA(hwnd, IDC_LIBRARY_CONTINUE_DETAILS, "");
-        ControlIO().pfnSetWindowText(app.lpui->rghwndBtnSplash[2], TextIO().pfnCompressed(app, static_cast<StringId>(idsNewGame + 2)));
+        ControlIO().pfnSetWindowText(app.lpui->rghwndBtnSplash[2], TextIO().pfnCompressed(app, static_cast<StringId>(idsNewGame + 2)).data());
         ControlIO().pfnEnableWindow(app.lpui->rghwndBtnSplash[2], 0);
     }
 }
@@ -3180,7 +3182,7 @@ void RememberLibraryGame(APPSESSION &app) {
     if (!FReadLibraryMetadata(szDir, szMetadataName, sizeof(szMetadataName), &iplr, &lPlayed,
                               szLibraryExchangeName, sizeof(szLibraryExchangeName))) szLibraryExchangeName[0] = 0;
     if (FWriteLibraryMetadata(szDir, pch + 1, app.state.idPlayer))
-        ProfileTextIO().pfnWriteString("Library", "ContinueDeleted", nullptr, TextIO().pfnCompressed(app, idsStarsIni));
+        ProfileTextIO().pfnWriteString("Library", "ContinueDeleted", nullptr, TextIO().pfnCompressed(app, idsStarsIni).data());
 }
 
 void CloseLibraryUiSession() noexcept {
@@ -3214,13 +3216,13 @@ std::int16_t FPublishSubsequentTurn(APPSESSION &app, const LIBRARYPATHS &paths, 
         !LibraryPublicationIO().pfnFInspectImportFile(szStage, dtTurn, iplr, &lidCurrent, &turnCurrent, nullptr, &fMultiCurrent) ||
         lidCurrent != lidGame || turnCurrent != turn) {
         if (szStage[0]) RemoveNativeFile(szStage);
-        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryTurnStageFailed), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryTurnStageFailed).data(), win32::MB_ICONHAND);
         return 0;
     }
     if (!fHasTurn) {
         if (ReplaceNativeFile(szStage, szTarget) != 0) {
             RemoveNativeFile(szStage);
-            AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryTurnInstallFailed), win32::MB_ICONHAND);
+            AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryTurnInstallFailed).data(), win32::MB_ICONHAND);
             return 0;
         }
         /* No previous turn was advanced, so retain any host orders/history. */
@@ -3229,25 +3231,25 @@ std::int16_t FPublishSubsequentTurn(APPSESSION &app, const LIBRARYPATHS &paths, 
     fHasOrders = LibraryPublicationIO().pfnFNativeFileSize(szOrders, &cbFile);
     if (!LibraryPublicationIO().pfnFCopyNativeFileExclusive(szTarget, szPrevious)) {
         RemoveNativeFile(szStage);
-        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryTurnPreserveFailed), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryTurnPreserveFailed).data(), win32::MB_ICONHAND);
         return 0;
     }
     if (ReplaceNativeFile(szStage, szTarget) != 0) {
         RemoveNativeFile(szStage);
         RemoveNativeFile(szPrevious);
-        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryTurnInstallFailed), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryTurnInstallFailed).data(), win32::MB_ICONHAND);
         return 0;
     }
     if (fHasOrders && RemoveNativeFile(szOrders) != 0) {
         if (ReplaceNativeFile(szPrevious, szTarget) != 0) {
             LibraryPublicationIO().pfnCchSnprintf(std::span{szMessage, sizeof(szMessage)},
-                        TextIO().pfnCompressed(app, idsLibraryTurnRestoreFailed),
+                        TextIO().pfnCompressed(app, idsLibraryTurnRestoreFailed).data(),
                         szPrevious);
             AlertIO().pfnAlertSz(app, szMessage, win32::MB_ICONHAND);
             return 0;
         }
         RemoveNativeFile(szPrevious);
-        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryTurnOrdersRetireFailed), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryTurnOrdersRetireFailed).data(), win32::MB_ICONHAND);
         return 0;
     }
     RemoveNativeFile(szPrevious);
@@ -3275,7 +3277,7 @@ std::int16_t FPublishImportedLibraryGame(APPSESSION &app, const LIBRARYPATHS &pa
         RemoveNativePath(szStage);
         RemoveNativePath(paths.szLibraryPending);
         paths.szLibraryPending[0] = 0;
-        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryGameImportFailed), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryGameImportFailed).data(), win32::MB_ICONHAND);
         return 0;
     }
     paths.szLibraryPending[0] = 0;

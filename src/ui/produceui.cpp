@@ -47,6 +47,7 @@ LWriteProdQ:
 }
 
 INT_PTR  ProductionDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+    std::array<char, cchCatalogText> szCatalogMenuText{};
     APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
 
     HDC                hdc;
@@ -183,7 +184,8 @@ INT_PTR  ProductionDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             }
         }
         rgszZip[cMax++] = sz255;
-        rgszZip[cMax++] = TextIO().pfnCompressed(app, idsCustomize);
+        szCatalogMenuText = TextIO().pfnCompressed(app, idsCustomize);
+        rgszZip[cMax++] = szCatalogMenuText.data();
         i = ControlIO().pfnPopupMenu(app, hwnd, pt.x, pt.y, cMax, nullptr, rgszZip, -1, 1);
         if (i == cMax - 1) {
             CustomizeProductionPresets(app, hwnd);
@@ -479,7 +481,7 @@ void InitializeProductionDlg(APPSESSION &app, HWND hwnd) {
     PROD   *lpprod;
 
     iSel = -1;
-    win32::wsprintfA(rgch, TextIO().pfnCompressed(app, idsProductionQueueS), TextIO().pfnPlanetName(app, app.state.sel.pl.id));
+    win32::wsprintfA(rgch, TextIO().pfnCompressed(app, idsProductionQueueS).data(), TextIO().pfnPlanetName(app, app.state.sel.pl.id));
     ControlIO().pfnSetWindowText(hwnd, rgch);
     ControlIO().pfnFillProdSrcLB(app, ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_AVAILABLE_ITEMS), -1);
     ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_AVAILABLE_ITEMS), win32::LB_SETCURSEL, 0, 0);
@@ -518,7 +520,7 @@ void DrawProductionDlg(APPSESSION &app, HWND hwnd, HDC hdc, RECT *prc, std::int1
         hdc = win32::GetDC(hwnd);
     }
     win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
-    dxkT = LOWORD(GetTextExtent(hdc, TextIO().pfnCompressed(app, idsKt), 2));
+    dxkT = LOWORD(GetTextExtent(hdc, TextIO().pfnCompressed(app, idsKt).data(), 2));
     win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
     win32::SetBkColor(hdc, app.lpui->crButtonFace);
     for (i = 0; i < 2; i++) {
@@ -555,13 +557,13 @@ void DrawProductionDlg(APPSESSION &app, HWND hwnd, HDC hdc, RECT *prc, std::int1
                 c = win32::wsprintfA(app.state.szWork, app.state.PCTLD, rgCost[k]);
                 RightTextOut(app, hdc, rc.right - dxkT - 2, rc.bottom, app.state.szWork, c, app.lpui->dxMaxMineralQuan);
                 if (k <= 2) {
-                    win32::TextOutA(hdc, rc.right - dxkT, rc.bottom, TextIO().pfnCompressed(app, idsKt), 2);
+                    win32::TextOutA(hdc, rc.right - dxkT, rc.bottom, TextIO().pfnCompressed(app, idsKt).data(), 2);
                 }
             }
             if (i != 0) {
                 rc.bottom += static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2;
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-                c = win32::wsprintfA(szT, TextIO().pfnCompressed(app, idsDDoneCompletion), prod.pct);
+                c = win32::wsprintfA(szT, TextIO().pfnCompressed(app, idsDDoneCompletion).data(), prod.pct);
                 if (PszProductionETA(app, &app.state.sel.pl, app.state.lpplProdGlob, static_cast<ProdItemType>(LOWORD(lSel)), nullptr, nullptr) != app.state.szWork) {
                 }
                 CchCopyUtf8Prefix(std::span{szT}.subspan(static_cast<std::size_t>(c)), app.state.szWork);
@@ -614,6 +616,7 @@ void FillProdSrcLB(APPSESSION &app, HWND hwndLB, std::int16_t mdFill) {
 }
 
 INT_PTR  ZipProdDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+    std::array<char, cchCatalogText> szCatalogPsz{};
     APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
 
     HDC         hdc;
@@ -632,7 +635,7 @@ INT_PTR  ZipProdDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
 
     switch (message) {
     case win32::WM_INITDIALOG:
-        ControlIO().pfnSetWindowText(hwnd, TextIO().pfnCompressed(app, idsCustomizeProductionTemplates));
+        ControlIO().pfnSetWindowText(hwnd, TextIO().pfnCompressed(app, idsCustomizeProductionTemplates).data());
         win32::GetWindowRect(hwnd, &rc);
         ControlIO().pfnGetClientRect(hwnd, &rc2);
         dy = rc.bottom - rc.top - rc2.bottom;
@@ -658,7 +661,8 @@ INT_PTR  ZipProdDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 *pszT = 0;
                 psz = app.state.szWork;
             } else {
-                psz = TextIO().pfnCompressed(app, idsUnusedD);
+                szCatalogPsz = TextIO().pfnCompressed(app, idsUnusedD);
+                psz = szCatalogPsz.data();
                 win32::wsprintfA(app.state.szWork, psz, iBase + 1);
                 psz = app.state.szWork;
             }
@@ -731,13 +735,13 @@ INT_PTR  ZipProdDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 if (app.state.vrgZipProd[app.lpui->iResTechNow].fValid) {
                     CchCopyUtf8Prefix(std::span{app.state.szWork}, app.state.vrgZipProd[app.lpui->iResTechNow].szName);
                 } else {
-                    win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsCustomD), app.lpui->iResTechNow);
+                    win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsCustomD).data(), app.lpui->iResTechNow);
                 }
                 if (app.lpui->iResTechNow == Energy)
                     goto LDontRename;
                 if (ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_RENAME), app.lpui->hwndFrame, RenameZipDlg, 0) != 0) {
                     if (app.state.szWork[0] == 0) {
-                        win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsCustomD), app.lpui->iResTechNow);
+                        win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsCustomD).data(), app.lpui->iResTechNow);
                     }
                     CchCopyUtf8Prefix(std::span{app.state.vrgZipProd[app.lpui->iResTechNow].szName}, app.state.szWork);
                     pszT = &app.state.szWork[64];
@@ -773,7 +777,7 @@ INT_PTR  ZipProdDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 break;
             case IDC_DELETE:
                 app.state.vrgZipProd[app.lpui->iResTechNow].fValid = 0;
-                win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsUnusedD), app.lpui->iResTechNow + 1);
+                win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsUnusedD).data(), app.lpui->iResTechNow + 1);
                 ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd, app.lpui->iResTechNow + 1073), app.state.szWork);
                 ControlIO().pfnFillZipProdLB(app, hwnd, &app.state.vrgZipProd[app.lpui->iResTechNow]);
                 app.state.gd.fChgZipProd = 1;
@@ -810,7 +814,7 @@ void FillZipProdLB(APPSESSION &app, HWND hwndDlg, ZIPPRODQ *pzpq) {
     ControlIO().pfnInvalidateRect(hwndDlg, &rc, 1);
     ControlIO().pfnSendMessage(hwndLB, win32::LB_RESETCONTENT, 0, 0);
     if (!pzpq->fValid || pzpq->cpq == 0) {
-        ControlIO().pfnSendMessage(hwndLB, win32::LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(TextIO().pfnCompressed(app, idsAutoBuildOrders)));
+        ControlIO().pfnSendMessage(hwndLB, win32::LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(TextIO().pfnCompressed(app, idsAutoBuildOrders).data()));
     } else {
         TextIO().pfnCchGetString(app, idsSD2, std::span{szFormat});
         for (i = 0; i < pzpq->cpq; i++) {

@@ -81,11 +81,12 @@
         "history-menu-logical-row-capacities",
         "temperature-unit-UTF8-repair",
         "bounded-wire-name-staging",
-        "owned-player-name-values"
+        "owned-player-name-values",
+        "owned-catalog-values",
+        "owned-report-destination-and-task-labels"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
-        "catalog-owned-text",
         "const-text-interfaces",
         "other-shared-scratch-text-results"
       ],
@@ -248,6 +249,20 @@
           "baseline": "Ran regression-export after all fixture readers finished; restored only clock-derived game-ID/encryption-salt churn because no semantic scenario/checkpoint moved. Frozen original fixtures and all unit goldens unchanged.",
           "contracts": "Existing 50-byte label budget, grammar, UTF-8, valid records, layout widths, seed consumption and canonical models unchanged. The intentional repair removes shared-result aliases and retains host-status player labels.",
           "receipts": "dist/verification/live-cpp/l05i/"
+        },
+        {
+          "batch": "L05j owned catalog and report labels",
+          "debug_build": "Pass; no new warnings; public headers in both include orders.",
+          "desktop": "153/153 full suite; includes independent complete catalog byte reference, consecutive/same-call lookup ownership, retained report labels, all four linked text providers, ownership/leak checks and available SDL tutorial checkpoints.",
+          "host_units": "28/28",
+          "native_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped reference inputs.",
+          "host_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped reference inputs.",
+          "windows": "147/147 owned production/wrapper units and all nine changed test units compile with strict MinGW. Actual Windows encoding (8 cases), report (3) and utility (9) executables pass under Wine with per-case isolation; report goldens unchanged. Native Windows desktop execution remains a final qualification item.",
+          "catalog_reference": "All 1516 IDs match canonical UTF-8 text/strings.txt bytes, including empty IDs; little-endian 16-bit IDs plus payload/NUL have FNV-1a 64-bit hash b7fccea32b3950e5. The reference case passed before changing the decoder and in the final desktop/host/Windows tests.",
+          "reproduction": "The new ownership test failed both consecutive-lookup and same-format-call comparisons against the shared-buffer implementation; both pass with owned results. A new report assertion initially omitted the canonical parentheses in (Delayed); corrected that test literal to the source text without a production change.",
+          "baseline": "Ran regression-export after all fixture readers finished; restored only clock-derived ID/salt churn because no semantic scenario/checkpoint moved. Frozen original fixtures, catalog sources and all unit goldens unchanged.",
+          "contracts": "No allocation added. Existing 256-byte catalog and 360-byte report budgets, all text IDs, fixed wire layouts/widths, RNG consumption and canonical models unchanged. Retained borrows have actual named/UI owners; old unchecked result overloads and obsolete catalog cache state removed.",
+          "receipts": "dist/verification/live-cpp/l05j/"
         }
       ],
       "bounded_formatting": {
@@ -266,7 +281,7 @@
         "helpers": "DxReportColHdr and GetLibraryFileFilter carry spans. Mutable RightTextOut takes spans, with array-only forwarding; the const borrowing overload remains separate. Non-array mutable pointers at existing callers all draw positive-length or strlen text and need no write-back.",
         "providers": "Six linked witness providers migrated to the actual span interface; two old scalar adapters removed.",
         "history": "Guard empty copies and trim one complete final code point, preserving existing ASCII heading behavior.",
-        "remaining": "strcpy/strcat, formatter argument typing and shared scratch returns remain pending.",
+        "remaining": "strcpy/strcat, other shared scratch results and const text interfaces remain pending; typed formatting and player/catalog ownership are complete.",
         "windows_calls": "Explicit spans at all 436 array destinations: GCC 16.2.0 MinGW loses array extent during implicit conversion through a function pointer, reproduced independently. Extents remain deduced from arrays; no guessed capacity or suppression."
       },
       "typed_snprintf": {
@@ -278,7 +293,7 @@
         "lifetimes": "Arguments are taken by value at the public template boundary for packed bitfields, then borrowed by a synchronous typed span. Existing argument evaluation order and scratch getter behavior are unchanged by call syntax.",
         "tests": "CRT reference byte/count/sentinel comparisons at 129 capacities per conversion case after 7b99c40e; signed/unsigned extrema, length modifiers, flags/stars, floats/wide text/pointers, binary NUL, typed count destinations, non-NUL views, packed fields and invalid lists.",
         "fortified_crt": "Typed %n destinations use read-only CRT measuring formats, avoiding writable-format fortification while retaining native count conversion.",
-        "remaining": "strcpy/strcat, owned catalog/player-name results and const text interfaces remain pending.",
+        "remaining": "strcpy/strcat, other shared scratch results and const text interfaces remain pending.",
         "linux_portability": {
           "initial_run": 41285172950,
           "diagnosis": "GNU 13 fortified -Wformat-truncation rejected the reference comparison whose maximum tested capacity 80 was smaller than its 84-byte output. Production formatter compilation passed.",
@@ -312,8 +327,8 @@
         "temperature_commit": "03d8b039",
         "windows_host_test_configuration_commit": "09bb4477",
         "policy": "Actual array/tail spans; complete terminated UTF-8 prefixes; overlapping views supported. Paths/record staging keep separate strict contracts.",
-        "remaining_initial_sites": 131,
-        "remaining_lexical_spellings": 137,
+        "remaining_initial_sites": 130,
+        "remaining_lexical_spellings": 136,
         "inventory_scope": "The initial copy inventory and the current lexical policy differ: the latter also includes SDK declaration/definition spellings. Both remain explicitly accounted for.",
         "enforcement": "The manifest checks exact remaining raw-copy spellings and multiplicities. New or removed raw sites require updating the maintained inventory; migrated sites cannot silently be reintroduced."
       },
@@ -330,7 +345,15 @@
         "evidence": "docs/CPP-LIVE-OWNED-TEXT.json",
         "calls": 33,
         "result": "std::array<char, 50> returned by value; previous label budget preserved without allocation or shared-result aliases.",
-        "pending": "Catalog and other borrowed scratch results remain separate work."
+        "pending": "Other borrowed scratch results and const text interfaces remain separate work; catalog ownership is complete."
+      },
+      "catalog_ownership": {
+        "status": "complete; verified",
+        "evidence": "docs/CPP-LIVE-OWNED-TEXT.json",
+        "production_consumers": 512,
+        "report_consumers": 8,
+        "retained_capacity": 256,
+        "byte_reference": "All 1516 current IDs match independent canonical UTF-8 source bytes before and after the migration."
       }
     },
     {
@@ -15566,7 +15589,8 @@
       "path": "src/ui/libraryui.cpp",
       "line": 417,
       "code": "strcpy(szMessage, TextIO().pfnCompressed(app, ids));",
-      "disposition": "pending"
+      "disposition": "owned-catalog-dialog-body-L05j",
+      "evidence": "docs/CPP-LIVE-OWNED-TEXT.json"
     },
     {
       "kind": "unbounded_copy",

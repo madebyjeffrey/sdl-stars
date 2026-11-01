@@ -795,7 +795,7 @@ void CreateRandomRace(APPSESSION &app, PLAYER *pplr) {
             pplr->rgAttr[i] = rgRaceStatMin[i] + RandomIO().pfnRandom(app, rgRaceStatMax[i] + 1 - rgRaceStatMin[i]);
         }
     }
-    if (std::strcmp(pplr->szName, TextIO().pfnCompressed(app, idsRandom2)) == 0) {
+    if (std::strcmp(pplr->szName, TextIO().pfnCompressed(app, idsRandom2).data()) == 0) {
         TextIO().pfnCchGetString(app, static_cast<StringId>(idsBerserker + RandomIO().pfnRandom(app, 24)), std::span{pplr->szName});
     }
     cPts = CAdvantagePoints(app, pplr);

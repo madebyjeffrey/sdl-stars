@@ -11,7 +11,15 @@
 
 std::uint16_t mpicolgrbitBU[12] = {255, 255, 255, 255, 255, 255, 255, 8, 16, 32, 64, 128};
 
-const char *PszGetDestName(APPSESSION &app, FLEET *lpfl, HDC hdc) {
+// Report labels may come from catalog values, game fields or work storage.
+// Copy at this boundary so callers retain one value through sorting/drawing.
+static std::array<char, 360> SzReportLabel(std::string_view sz) {
+    std::array<char, 360> szResult{};
+    CchCopyUtf8Prefix(std::span{szResult}, sz);
+    return szResult;
+}
+
+std::array<char, 360> PszGetDestName(APPSESSION &app, FLEET *lpfl, HDC hdc) {
     std::int16_t i;
     ORDER   ord;
 
@@ -39,16 +47,16 @@ const char *PszGetDestName(APPSESSION &app, FLEET *lpfl, HDC hdc) {
             if (hdc) {
                 SetHdcTextColor(hdc, 127);
             }
-            return TextIO().pfnCompressed(app, idsDelayed);
+            return SzReportLabel(TextIO().pfnCompressed(app, idsDelayed).data());
         default:
             break;
         }
     }
     ord = lpfl->lpplord->rgord()[1];
-    return PszGetLocName(app, static_cast<GrobjClass>(ord.grobj), ord.id, ord.pt.x, ord.pt.y);
+    return SzReportLabel(PszGetLocName(app, static_cast<GrobjClass>(ord.grobj), ord.id, ord.pt.x, ord.pt.y));
 
 LNoDest:
-    return app.state.szDblDash;
+    return SzReportLabel(app.state.szDblDash);
 }
 
 std::int16_t FDestIsWP0(FLEET *lpfl) {
@@ -135,7 +143,8 @@ LNoETA:
     return app.state.szDblDash;
 }
 
-const char *PszGetTaskName(APPSESSION &app, FLEET *lpfl, std::int16_t *picr) {
+std::array<char, 360> PszGetTaskName(APPSESSION &app, FLEET *lpfl, std::int16_t *picr) {
+    std::array<char, cchCatalogText> szCatalogPsz{};
     std::int16_t        icr;
     StringId       ids;
     XferActionType opOrd;
@@ -174,7 +183,7 @@ LShowTask:
         case grTaskXfer:
             for (i = 0; i < 4; i++) {
                 if (app.state.vrgZip[i].fValid && std::memcmp(&app.state.vrgZip[i], &ord.txp, 10) == 0)
-                    return app.state.vrgZip[i].szName;
+                    return SzReportLabel(app.state.vrgZip[i].szName);
             }
             ids = idsAction;
             iZip = -1;
@@ -202,7 +211,7 @@ LShowTask:
                         case iActionWaitPercent:
                             iZip = 2;
                         }
-                        return app.state.rgszZipOrder[iZip];
+                        return SzReportLabel(app.state.rgszZipOrder[iZip]);
                     }
                 }
             }
@@ -214,7 +223,7 @@ LShowTask:
                 }
             }
             if (ids == idsAction) {
-                return TextIO().pfnCompressed(app, idsTransport);
+                return SzReportLabel(TextIO().pfnCompressed(app, idsTransport).data());
             }
             opOrd = static_cast<XferActionType>(ord.txp.rgia[icr].iAction());
             *picr = icr;
@@ -227,7 +236,7 @@ LShowTask:
                 /* fallthrough */
             case iActionLoadAll:
             case iActionUnloadAll:
-                return TextIO().pfnCompressed(app, ids);
+                return SzReportLabel(TextIO().pfnCompressed(app, ids).data());
             case iActionFillPercent:
             case iActionWaitPercent:
                 fPercent = 1;
@@ -235,37 +244,38 @@ LShowTask:
             case iActionUnloadExact:
             case iActionSetAmount:
             case iActionSetWaypoint:
-                psz = TextIO().pfnCompressed(app, ids);
+                szCatalogPsz = TextIO().pfnCompressed(app, ids);
+                psz = szCatalogPsz.data();
                 psz[std::strlen(psz) - 3] = 0;
                 if (fPercent) {
                     CchSprintf(app.state.szWork, "%s %d%%", psz, ord.txp.rgia[icr].cQuan());
                 } else {
                     CchSprintf(app.state.szWork, icr == 4 ? "%s %dmg" : "%s %dkT", psz, ord.txp.rgia[icr].cQuan());
                 }
-                return app.state.szWork;
+                return SzReportLabel(app.state.szWork);
             default:
-                return app.state.szDblDash;
+                return SzReportLabel(app.state.szDblDash);
             }
         case grTaskLayMines:
             if (ord.tlm().cTime < 5) {
-                CchSprintf(app.state.szWork, "%s  %dy", TextIO().pfnCompressed(app, ids), ord.tlm().cTime + 1);
+                CchSprintf(app.state.szWork, "%s  %dy", TextIO().pfnCompressed(app, ids).data(), ord.tlm().cTime + 1);
             } else {
                 TextIO().pfnCchGetString(app, ids, std::span{app.state.szWork});
             }
-            return app.state.szWork;
+            return SzReportLabel(app.state.szWork);
         case grTaskPatrol:
             if (ord.tptl().iDist < 11) {
-                CchSprintf(app.state.szWork, "%s  %dly", TextIO().pfnCompressed(app, ids), (ord.tptl().iDist + 1) * 50);
+                CchSprintf(app.state.szWork, "%s  %dly", TextIO().pfnCompressed(app, ids).data(), (ord.tptl().iDist + 1) * 50);
             } else {
                 TextIO().pfnCchGetString(app, ids, std::span{app.state.szWork});
             }
-            return app.state.szWork;
+            return SzReportLabel(app.state.szWork);
         case grTaskAutoRoute:
         default:
-            return TextIO().pfnCompressed(app, ids);
+            return SzReportLabel(TextIO().pfnCompressed(app, ids).data());
         }
     }
-    return app.state.szDblDash;
+    return SzReportLabel(app.state.szDblDash);
 }
 
 void DumpUniverse(APPSESSION &app) {
@@ -306,7 +316,7 @@ void DumpUniverse(APPSESSION &app) {
     }
 DisplayStatus:
     ids = !fSuccess ? idsUnableWriteUniverseDefinitionSMapOperation : idsUniverseDefinitionHasSuccessfullyWrittenSMap;
-    CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, ids), app.state.szBase);
+    CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, ids).data(), app.state.szBase);
     if (fSuccess) {
         AlertIO().pfnAlertSz(app, app.state.szWork, win32::MB_ICONASTERISK);
     } else {
@@ -531,7 +541,7 @@ void DumpPlanets(APPSESSION &app) {
     }
 DisplayStatus:
     ids = !fSuccess ? idsUnableWritePlanetInformationSOperationTerminated : idsKnownPlanetInformationHasSuccessfullyWrittenS;
-    CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, ids), szFile);
+    CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, ids).data(), szFile);
     if (fSuccess) {
         AlertIO().pfnAlertSz(app, app.state.szWork, win32::MB_ICONASTERISK);
     } else {
@@ -611,7 +621,7 @@ void DumpFleets(APPSESSION &app) {
                 }
                 RgToStream(app, szForm, cch);
                 if (lpfl->det == detAll) {
-                    CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszGetDestName(app, lpfl, nullptr));
+                    CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszGetDestName(app, lpfl, nullptr).data());
                 } else if (app.state.gd.fPerPlayerDumps && lpfl->det < detAll && lpfl->fdirValid()) {
                     CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, lpfl->dirFltX(), nullptr));
                     CchAppendUtf8Prefix(std::span{szForm}, ".");
@@ -668,7 +678,7 @@ void DumpFleets(APPSESSION &app) {
                     CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, i, nullptr));
                     RgToStream(app, szForm, std::strlen(szForm));
                     if (lpfl->det == detAll) {
-                        CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszGetTaskName(app, lpfl, &i));
+                        CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszGetTaskName(app, lpfl, &i).data());
                     } else {
                         szForm[1] = 0;
                     }
@@ -717,7 +727,7 @@ void DumpFleets(APPSESSION &app) {
     }
 DisplayStatus:
     ids = !fSuccess ? idsUnableWriteFleetInformationSOperationTerminated : idsKnownFleetInformationHasSuccessfullyWrittenS;
-    CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, ids), szFile);
+    CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, ids).data(), szFile);
     if (fSuccess) {
         AlertIO().pfnAlertSz(app, app.state.szWork, win32::MB_ICONASTERISK);
     } else {

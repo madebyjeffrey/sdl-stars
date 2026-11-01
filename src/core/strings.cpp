@@ -1,7 +1,7 @@
 #include "common.h"
 #include "appstate.h"
 
-char *PszGetCompressedString(APPSESSION &app, StringId ids) {
+std::array<char, cchCatalogText> PszGetCompressedString(APPSESSION &app, StringId ids) {
     std::int16_t  iChunk;
     std::uint8_t *pchLen;
     std::int16_t  iBuild;
@@ -13,10 +13,10 @@ char *PszGetCompressedString(APPSESSION &app, StringId ids) {
     std::int16_t  iOffset;
     std::int16_t  fHigh;
 
+    std::array<char, cchCatalogText> szLastStrGet{};
+
+    (void)app;
     iNibble = 0;
-    if (ids == app.state.iLastStrGet) {
-        return app.state.szLastStrGet;
-    }
     iChunk = ids >> 6;
     iOffset = ids & 0x3f;
     pch = reinterpret_cast<std::uint8_t *>(&aSTRCmpr[aiSTRChunkOffset[iChunk]]);
@@ -30,7 +30,7 @@ char *PszGetCompressedString(APPSESSION &app, StringId ids) {
     pch += iNibble >> 1;
     iLen = *pchLen;
     fHigh = (iNibble & 1) == 0;
-    pszOut = app.state.szLastStrGet;
+    pszOut = szLastStrGet.data();
     iBuild = 0;
     while (iLen-- != 0) {
         if (fHigh) {
@@ -47,5 +47,5 @@ char *PszGetCompressedString(APPSESSION &app, StringId ids) {
         }
     }
     *pszOut = 0;
-    return app.state.szLastStrGet;
+    return szLastStrGet;
 }

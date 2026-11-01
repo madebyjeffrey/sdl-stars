@@ -8,6 +8,7 @@
 #include "presentation_io.h"
 
 INT_PTR  ZipOrderDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+    std::array<char, cchCatalogText> szCatalogPsz{};
     APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
 
     HDC            hdc;
@@ -23,7 +24,7 @@ INT_PTR  ZipOrderDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
 
     switch (message) {
     case win32::WM_INITDIALOG:
-        ControlIO().pfnSetWindowText(hwnd, TextIO().pfnCompressed(app, idsCustomizeZipOrders));
+        ControlIO().pfnSetWindowText(hwnd, TextIO().pfnCompressed(app, idsCustomizeZipOrders).data());
         ui::ShowWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_ZIP_PROD_QUEUE), win32::SW_HIDE);
         app.lpui->hwndZipOrderDlg = hwnd;
         win32::CheckRadioButton(hwnd, IDC_ZIP_PROD_PRESET_1, IDC_ZIP_PROD_PRESET_4, IDC_ZIP_PROD_PRESET_1);
@@ -41,7 +42,8 @@ INT_PTR  ZipOrderDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 *pszT = 0;
                 psz = app.state.szWork;
             } else {
-                psz = TextIO().pfnCompressed(app, idsUnusedD);
+                szCatalogPsz = TextIO().pfnCompressed(app, idsUnusedD);
+                psz = szCatalogPsz.data();
                 win32::wsprintfA(app.state.szWork, psz, i - 1072);
                 psz = app.state.szWork;
             }
@@ -124,11 +126,11 @@ INT_PTR  ZipOrderDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 if (app.state.vrgZip[app.lpui->iResTechNow].fValid) {
                     CchCopyUtf8Prefix(std::span{app.state.szWork}, app.state.vrgZip[app.lpui->iResTechNow].szName);
                 } else {
-                    win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsCustomD), app.lpui->iResTechNow);
+                    win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsCustomD).data(), app.lpui->iResTechNow);
                 }
                 if (ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_RENAME), app.lpui->hwndFrame, RenameZipDlg, 0) != 0) {
                     if (app.state.szWork[0] == 0) {
-                        win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsCustomD), app.lpui->iResTechNow);
+                        win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsCustomD).data(), app.lpui->iResTechNow);
                     }
                     CchCopyUtf8Prefix(std::span{app.state.vrgZip[app.lpui->iResTechNow].szName}, app.state.szWork);
                     pszT = &app.state.szWork[64];
@@ -152,7 +154,7 @@ INT_PTR  ZipOrderDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 break;
             case IDC_DELETE:
                 app.state.vrgZip[app.lpui->iResTechNow].fValid = 0;
-                win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsUnusedD), app.lpui->iResTechNow + 1);
+                win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsUnusedD).data(), app.lpui->iResTechNow + 1);
                 ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd, app.lpui->iResTechNow + 1073), app.state.szWork);
                 ControlIO().pfnInvalidateRect(hwnd, nullptr, 1);
                 app.state.gd.fChgZipOrd = 1;
@@ -188,7 +190,7 @@ INT_PTR  RenameZipDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         } else {
             ids = idsRenameProductionTemplate;
         }
-        ControlIO().pfnSetWindowText(hwnd, TextIO().pfnCompressed(app, ids));
+        ControlIO().pfnSetWindowText(hwnd, TextIO().pfnCompressed(app, ids).data());
         ControlIO().pfnSetWindowPos(hwnd, nullptr, app.lpui->ptStickyRenameDlg.x + 70, app.lpui->ptStickyRenameDlg.y + 70, 0, 0, win32::SWP_NOSIZE | win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
         ui::SendDlgItemMessage(hwnd, IDC_EDIT1, win32::EM_LIMITTEXT, 0xc, 0);
         ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_EDIT1), app.state.szWork);
@@ -236,7 +238,7 @@ INT_PTR  RenameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
 
     switch (message) {
     case win32::WM_INITDIALOG:
-        ControlIO().pfnSetWindowText(hwnd, TextIO().pfnCompressed(app, idsRenameFleet));
+        ControlIO().pfnSetWindowText(hwnd, TextIO().pfnCompressed(app, idsRenameFleet).data());
         ControlIO().pfnSetWindowPos(hwnd, nullptr, app.lpui->ptStickyRenameDlg.x + 70, app.lpui->ptStickyRenameDlg.y + 70, 0, 0, win32::SWP_NOSIZE | win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
         ui::SendDlgItemMessage(hwnd, IDC_EDIT1, win32::EM_LIMITTEXT, 0x1f, 0);
         ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_EDIT1), app.state.szWork);

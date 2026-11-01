@@ -195,7 +195,7 @@ Finish:
         if (j < i) {
             c = RandomIO().pfnRandom(app, 24);
             while (1) {
-                for (j = 0; j < app.state.game.cPlayer && std::strcmp(app.state.rgplr[j].szName, TextIO().pfnCompressed(app, static_cast<StringId>(idsBerserker + c))) != 0; j++) {
+                for (j = 0; j < app.state.game.cPlayer && std::strcmp(app.state.rgplr[j].szName, TextIO().pfnCompressed(app, static_cast<StringId>(idsBerserker + c)).data()) != 0; j++) {
                 }
                 if (j == app.state.game.cPlayer)
                     break;
@@ -419,6 +419,7 @@ INT_PTR  NewGameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
 }
 
 INT_PTR  NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+    std::array<char, cchCatalogText> szCatalogPsz{};
     APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
 
     std::int16_t     i;
@@ -518,18 +519,19 @@ INT_PTR  NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         rghmenuSubPopup[0] = win32::CreatePopupMenu();
         for (i = 0; i < 6; i++) {
             iChecked = iCurVal == i * 4 + 1 ? 8 : 0;
-            psz = TextIO().pfnCompressed(app, static_cast<StringId>(idsHumanoid + i));
+            szCatalogPsz = TextIO().pfnCompressed(app, static_cast<StringId>(idsHumanoid + i));
+            psz = szCatalogPsz.data();
             win32::AppendMenuA(rghmenuSubPopup[0], iChecked, i + 15016, psz);
         }
-        win32::AppendMenuA(rghmenuSubPopup[0], iCurVal == 25 ? win32::MF_CHECKED : 0, 15022, TextIO().pfnCompressed(app, idsRandom));
-        win32::AppendMenuA(rghmenuSubPopup[0], iCurVal == 29 ? win32::MF_CHECKED : 0, 15023, TextIO().pfnCompressed(app, idsExpansionPlayer));
+        win32::AppendMenuA(rghmenuSubPopup[0], iCurVal == 25 ? win32::MF_CHECKED : 0, 15022, TextIO().pfnCompressed(app, idsRandom).data());
+        win32::AppendMenuA(rghmenuSubPopup[0], iCurVal == 29 ? win32::MF_CHECKED : 0, 15023, TextIO().pfnCompressed(app, idsExpansionPlayer).data());
         rghmenuSubPopup[1] = win32::CreatePopupMenu();
         nrm.hmenu = rghmenuSubPopup[1];
         nrm.cRace = 0;
         nrm.pszSelected = (iCurVal & 3) == 2 ? rgszLibraryRaceNew[iCurVal >> 2] : nullptr;
         FEnumerateLibraryRaces(app, AddNewGameLibraryRace, &nrm);
         if (nrm.cRace == 0)
-            win32::AppendMenuA(nrm.hmenu, win32::MF_GRAYED, 0, TextIO().pfnCompressed(app, idsLibraryNoRaces));
+            win32::AppendMenuA(nrm.hmenu, win32::MF_GRAYED, 0, TextIO().pfnCompressed(app, idsLibraryNoRaces).data());
         rghmenuSubPopup[2] = win32::CreatePopupMenu();
         for (i = 0; i <= 6; i++) {
             rghmenuSubPopup[i + 5] = win32::CreatePopupMenu();
@@ -543,17 +545,17 @@ INT_PTR  NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         hmenuPopup = win32::CreatePopupMenu();
         app.lpui->iPopMenuSel = -1;
         iChecked = (iCurVal & 3) == 1 ? 8 : 0;
-        win32::AppendMenuA(hmenuPopup, 0x10 | iChecked, reinterpret_cast<UINT_PTR>(rghmenuSubPopup[0]), TextIO().pfnCompressed(app, idsPredefinedRace));
+        win32::AppendMenuA(hmenuPopup, 0x10 | iChecked, reinterpret_cast<UINT_PTR>(rghmenuSubPopup[0]), TextIO().pfnCompressed(app, idsPredefinedRace).data());
         iChecked = (iCurVal & 3) == 2 ? 8 : 0;
-        win32::AppendMenuA(hmenuPopup, 0x10 | iChecked, reinterpret_cast<UINT_PTR>(rghmenuSubPopup[1]), TextIO().pfnCompressed(app, idsLibraryRaceMenu));
+        win32::AppendMenuA(hmenuPopup, 0x10 | iChecked, reinterpret_cast<UINT_PTR>(rghmenuSubPopup[1]), TextIO().pfnCompressed(app, idsLibraryRaceMenu).data());
         iChecked = (iCurVal & 3) == 3 ? 8 : 0;
-        win32::AppendMenuA(hmenuPopup, 0x10 | iChecked, reinterpret_cast<UINT_PTR>(rghmenuSubPopup[2]), TextIO().pfnCompressed(app, idsComputerPlayer));
+        win32::AppendMenuA(hmenuPopup, 0x10 | iChecked, reinterpret_cast<UINT_PTR>(rghmenuSubPopup[2]), TextIO().pfnCompressed(app, idsComputerPlayer).data());
         win32::AppendMenuA(hmenuPopup, win32::MF_SEPARATOR, 0, nullptr);
-        win32::AppendMenuA(hmenuPopup, win32::MF_BYCOMMAND, 15000, TextIO().pfnCompressed(app, idsLibraryNewRace));
+        win32::AppendMenuA(hmenuPopup, win32::MF_BYCOMMAND, 15000, TextIO().pfnCompressed(app, idsLibraryNewRace).data());
         if (((iCurVal & 3) == 1 && (iCurVal >> 2) < 7) || (iCurVal & 3) == 2)
-            win32::AppendMenuA(hmenuPopup, win32::MF_BYCOMMAND, 15002, TextIO().pfnCompressed(app, idsEditRace));
+            win32::AppendMenuA(hmenuPopup, win32::MF_BYCOMMAND, 15002, TextIO().pfnCompressed(app, idsEditRace).data());
         iChecked = !(iCurVal & 3) ? 8 : 0;
-        win32::AppendMenuA(hmenuPopup, iChecked, 0x3a9b, TextIO().pfnCompressed(app, idsPlayer));
+        win32::AppendMenuA(hmenuPopup, iChecked, 0x3a9b, TextIO().pfnCompressed(app, idsPlayer).data());
         tpm = message == win32::WM_LBUTTONDOWN ? win32::TPM_LEFTBUTTON : win32::TPM_RIGHTBUTTON;
         ui::TrackPopupMenu(hmenuPopup, win32::TPM_CENTERALIGN | tpm, pt.x, pt.y, 0, hwnd, nullptr);
         if (ui::PeekMessage(&msg, hwnd, 273, 273, 2) && msg.wParam >= 15000 && msg.wParam < 15000 + INT16_MAX) {
@@ -706,11 +708,11 @@ void DrawNewGame2(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
     ControlIO().pfnGetClientRect(hwnd, &rc);
     bkMode = win32::SetBkMode(hdc, win32::TRANSPARENT);
     win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-    app.lpui->xNewGameDiamond = LOWORD(GetTextExtent(hdc, TextIO().pfnCompressed(app, idsPlayer16), 11)) + 12;
+    app.lpui->xNewGameDiamond = LOWORD(GetTextExtent(hdc, TextIO().pfnCompressed(app, idsPlayer16).data(), 11)) + 12;
     yCur = 6;
     win32::SetRect(&rcDiamond, app.lpui->xNewGameDiamond, yCur, app.lpui->xNewGameDiamond + app.state.dyArial8 + 1, yCur + app.state.dyArial8 + 1);
     for (i = 0; i < 16 && (!app.state.fRCWReadOnly || i < app.state.game.cPlayer); i++) {
-        cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsPlayerD), i + 1);
+        cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsPlayerD).data(), i + 1);
         app.state.szWork[cch++] = ':';
         app.state.szWork[cch] = 0;
         RightTextOut(app, hdc, app.lpui->xNewGameDiamond - 6, yCur, app.state.szWork, cch, 0);
@@ -721,7 +723,7 @@ void DrawNewGame2(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
                 CchCopyUtf8Prefix(std::span{app.state.szWork}, TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, nullptr).data());
                 if (!app.state.rgplr[i].fDead)
                     goto DisplayName;
-                win32::wsprintfA(std::span{app.state.szWork}.subspan(static_cast<std::size_t>(std::strlen(app.state.szWork))), " (%s)", TextIO().pfnCompressed(app, idsDeceased));
+                win32::wsprintfA(std::span{app.state.szWork}.subspan(static_cast<std::size_t>(std::strlen(app.state.szWork))), " (%s)", TextIO().pfnCompressed(app, idsDeceased).data());
                 win32::SetTextColor(hdc, 127);
                 goto DisplayName;
             }
@@ -739,7 +741,7 @@ void DrawNewGame2(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
                 break;
             }
             TextIO().pfnCchGetString(app, idsS, std::span{szT});
-            win32::wsprintfA(app.state.szWork, szT, TextIO().pfnCompressed(app, static_cast<StringId>(idsHumanoid + iPlr)));
+            win32::wsprintfA(app.state.szWork, szT, TextIO().pfnCompressed(app, static_cast<StringId>(idsHumanoid + iPlr)).data());
             break;
         case 2:
             pszFile = rgszLibraryRaceNew[iPlr][0] ? rgszLibraryRaceNew[iPlr] : app.lpui->vrgszFileNew + iPlr * 13;
@@ -748,13 +750,13 @@ void DrawNewGame2(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
                 break;
             }
             if (pszFile[0] != 0) {
-                win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, !app.state.fRCWReadOnly ? idsSS2 : idsS), app.lpui->vrgplrNew[iPlr].szNames, pszFile);
+                win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, !app.state.fRCWReadOnly ? idsSS2 : idsS).data(), app.lpui->vrgplrNew[iPlr].szNames, pszFile);
                 break;
             }
-            win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsS), app.lpui->vrgplrNew[iPlr].szNames);
+            win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsS).data(), app.lpui->vrgplrNew[iPlr].szNames);
             break;
         case 3:
-            win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsSSComputerPlayer), app.lpui->vrgszComputerPlayers[iPlr & 7], app.lpui->vrgszComputerLevel[app.state.vrgplrTypeNew[i] >> 5]);
+            win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsSSComputerPlayer).data(), app.lpui->vrgszComputerPlayers[iPlr & 7], app.lpui->vrgszComputerLevel[app.state.vrgplrTypeNew[i] >> 5]);
         }
     DisplayName:
         win32::TextOutA(hdc, rcDiamond.right + 6, yCur, app.state.szWork, std::strlen(app.state.szWork));

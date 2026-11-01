@@ -398,7 +398,7 @@ std::array<char, 50> PszPlayerName(APPSESSION &app, std::int16_t iPlayer, std::i
             TextIO().pfnCchGetString(app, idsAre, std::span{szName}.subspan(static_cast<std::size_t>(std::strlen(szName))));
         }
     } else {
-        CchSprintf(szName, TextIO().pfnCompressed(app, idsPlayerD2), iPlayer + 1);
+        CchSprintf(szName, TextIO().pfnCompressed(app, idsPlayerD2).data(), iPlayer + 1);
         if (!fPlural) {
             CchAppendUtf8Prefix(std::span{szName}, "'s");
         }
@@ -759,7 +759,7 @@ char *PszGetThingName(APPSESSION &app, std::int16_t id) {
         } else {
             szPlr[0] = 0;
         }
-        CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsSSMineField), szPlr, app.state.rgszMineField[lpth->thm().iType()]);
+        CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsSSMineField).data(), szPlr, app.state.rgszMineField[lpth->thm().iType()]);
         break;
     case ithMineralPacket:
         if (lpth->thp().iWarp() == 0) {
@@ -771,21 +771,22 @@ char *PszGetThingName(APPSESSION &app, std::int16_t id) {
         } else {
             szPlr[0] = 0;
         }
-        CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsSmineralPacket), szPlr);
+        CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsSmineralPacket).data(), szPlr);
         break;
     case ithWormhole:
-        CchCopyUtf8Prefix(std::span{app.state.szWork}, TextIO().pfnCompressed(app, idsWormhole));
+        CchCopyUtf8Prefix(std::span{app.state.szWork}, TextIO().pfnCompressed(app, idsWormhole).data());
         break;
     case ithMysteryTrader:
-        CchCopyUtf8Prefix(std::span{app.state.szWork}, TextIO().pfnCompressed(app, idsMysteryTrader));
+        CchCopyUtf8Prefix(std::span{app.state.szWork}, TextIO().pfnCompressed(app, idsMysteryTrader).data());
         break;
     default:
-        CchCopyUtf8Prefix(std::span{app.state.szWork}, TextIO().pfnCompressed(app, idsMysteryObject));
+        CchCopyUtf8Prefix(std::span{app.state.szWork}, TextIO().pfnCompressed(app, idsMysteryObject).data());
     }
     return app.state.szWork;
 }
 
 char *PszGetFleetName(APPSESSION &app, std::int16_t id) {
+    std::array<char, cchCatalogText> szCatalogLpsz{};
     std::int16_t cshdef;
     std::int16_t iplr;
     char   *lpsz;
@@ -811,7 +812,8 @@ char *PszGetFleetName(APPSESSION &app, std::int16_t id) {
         if (lpfl) {
             ishdef = IshdefPrimaryFromLpfl(app, lpfl, &cshdef);
             if (ishdef == 16) {
-                lpsz = TextIO().pfnCompressed(app, idsFleet);
+                szCatalogLpsz = TextIO().pfnCompressed(app, idsFleet);
+                lpsz = szCatalogLpsz.data();
             } else {
                 CchCopyUtf8Prefix(std::span{szShdef}, app.state.rglpshdef[iplr][ishdef].hul.szClass);
                 cch = std::strlen(szShdef);
@@ -825,7 +827,8 @@ char *PszGetFleetName(APPSESSION &app, std::int16_t id) {
                 lpsz = szShdef;
             }
         } else {
-            lpsz = TextIO().pfnCompressed(app, idsFleet);
+            szCatalogLpsz = TextIO().pfnCompressed(app, idsFleet);
+            lpsz = szCatalogLpsz.data();
         }
         CchSprintf(app.state.szWork, "%s%s #%d", szPlr, lpsz, ifl + 1);
     }
@@ -846,6 +849,7 @@ std::uint16_t WFromLpfl(APPSESSION &app, FLEET *lpfl) {
 }
 
 char *PszFleetNameFromWord(APPSESSION &app, std::uint16_t w) {
+    std::array<char, cchCatalogText> szCatalogLpsz{};
     char   *lpsz;
     char    szShdef[34];
     std::int16_t ishdef;
@@ -853,7 +857,8 @@ char *PszFleetNameFromWord(APPSESSION &app, std::uint16_t w) {
 
     ishdef = w >> 9 & 0xf;
     if (app.state.rglpshdef[app.state.idPlayer][ishdef].fFree) {
-        lpsz = TextIO().pfnCompressed(app, idsFleet);
+        szCatalogLpsz = TextIO().pfnCompressed(app, idsFleet);
+        lpsz = szCatalogLpsz.data();
     } else {
         CchCopyUtf8Prefix(std::span{szShdef}, app.state.rglpshdef[app.state.idPlayer][ishdef].hul.szClass);
         cch = std::strlen(szShdef);
@@ -879,7 +884,7 @@ char *PszGetPlanetName(APPSESSION &app, std::int16_t id) {
     id = app.state.rgidPlan[id];
     psz = PszGetCompressedPlanet(app, id);
     if (fInOrbit) {
-        CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsOrbitingS), psz);
+        CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsOrbitingS).data(), psz);
     } else {
         CchCopyUtf8Prefix(std::span{app.state.szWork}, psz);
     }
@@ -1201,9 +1206,9 @@ char *PszGetLocName(APPSESSION &app, GrobjClass grobj, std::int16_t id, std::int
         return PszGetThingName(app, id);
 NoObj:
     if (x == -1 && y == -1) {
-        CchCopyUtf8Prefix(std::span{app.state.szWork}, TextIO().pfnCompressed(app, idsDeepSpace));
+        CchCopyUtf8Prefix(std::span{app.state.szWork}, TextIO().pfnCompressed(app, idsDeepSpace).data());
     } else {
-        CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsSpaceDD), x, y);
+        CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsSpaceDD).data(), x, y);
     }
     return app.state.szWork;
 }
@@ -1247,9 +1252,9 @@ char *PszGetDistance(APPSESSION &app, std::int16_t x1, std::int16_t y1, std::int
     d2 = static_cast<std::int32_t>((d / 100));
     d -= static_cast<std::uint32_t>((d2 * 100));
     if (app.state.dyArial8 <= 14) {
-        CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsLdLdLightYears), d2, d);
+        CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsLdLdLightYears).data(), d2, d);
     } else {
-        CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsLdLdLY), d2, d);
+        CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsLdLdLY).data(), d2, d);
     }
     return app.state.szWork;
 }
@@ -2611,7 +2616,7 @@ std::int16_t CchGetETA(APPSESSION &app, HDC hdc, FLEET *lpfl, std::span<char> sz
         i++;
         lpord++;
     }
-    c = CchSprintf(sz, TextIO().pfnCompressed(app, !fSmall ? idsDYear : idsDy), cYears);
+    c = CchSprintf(sz, TextIO().pfnCompressed(app, !fSmall ? idsDYear : idsDy).data(), cYears);
     if (cYears != 1 && !fSmall && static_cast<std::size_t>(c) + 1 < sz.size()) {
         sz[c++] = 's';
     }

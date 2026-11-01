@@ -152,7 +152,7 @@ void PickANameAndBmp(APPSESSION &app, SHDEF *pshdef, StringId ids, std::int16_t 
             }
         }
     }
-    CchSprintf(pshdef->hul.szClass, "%s %d", TextIO().pfnCompressed(app, static_cast<StringId>(RandomIO().pfnRandom(app, cids) + ids)), RandomIO().pfnRandom(app, 100));
+    CchSprintf(pshdef->hul.szClass, "%s %d", TextIO().pfnCompressed(app, static_cast<StringId>(RandomIO().pfnRandom(app, cids) + ids)).data(), RandomIO().pfnRandom(app, 100));
     return;
 }
 

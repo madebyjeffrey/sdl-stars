@@ -50,28 +50,28 @@ static void clear(void) {
         cleared = 1;
     }
 }
-static const char *TestPszGetCompressedString(APPSESSION &, int id) {
+static std::array<char, cchCatalogText> TestPszGetCompressedString(APPSESSION &, StringId id) {
     switch (id) {
     case idsLibraryTurnStageFailed:
-        return "1";
+        return SzWitnessText("1");
     case idsLibraryTurnInstallFailed:
-        return "2";
+        return SzWitnessText("2");
     case idsLibraryTurnPreserveFailed:
-        return "3";
+        return SzWitnessText("3");
     case idsLibraryTurnRestoreFailed:
-        return "4";
+        return SzWitnessText("4");
     case idsLibraryGameRestoreFailed:
-        return "4";
+        return SzWitnessText("4");
     case idsLibraryTurnOrdersRetireFailed:
-        return "5";
+        return SzWitnessText("5");
     case idsLibraryTurnReplaceFailed:
-        return "6";
+        return SzWitnessText("6");
     case idsLibraryTurnCleanupFailed:
-        return "7";
+        return SzWitnessText("7");
     case idsLibrarySeparateCopyFailed:
-        return "8";
+        return SzWitnessText("8");
     case idsLibraryGameImportFailed:
-        return "9";
+        return SzWitnessText("9");
     default:
         abort();
     }
@@ -311,7 +311,7 @@ int main(void) {
     nativeIO.pfnRename = TestRename;
     NATIVEPUBLISHIOSCOPE nativeScope(nativeIO);
     TEXTIO               textIO;
-    textIO.pfnCompressed = WITNESSADAPTER<&TestPszGetCompressedString, decltype(textIO.pfnCompressed)>::Call;
+    textIO.pfnCompressed = TestPszGetCompressedString;
     TEXTIOSCOPE textScope(textIO);
     ALERTIO     alertIO;
     alertIO.pfnAlertSz = WITNESSADAPTER<&TestAlertSz, decltype(alertIO.pfnAlertSz)>::Call;

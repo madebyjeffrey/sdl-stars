@@ -282,6 +282,7 @@ static char *PchAppendMessageText(APPSESSION &app, char *pch, const char *psz) {
 }
 
 char *PszFormatString(APPSESSION &app, const char *pszFormat, std::int16_t *pParamsReal) {
+    std::array<char, cchCatalogText> szCatalogPchT{};
     std::array<char, 50> szPlayerName{};
     std::int16_t  iMineral;
     std::int16_t  cOut;
@@ -345,7 +346,8 @@ char *PszFormatString(APPSESSION &app, const char *pszFormat, std::int16_t *pPar
                 pchT = PszCalcEnvVar(app, static_cast<EnvType>(static_cast<std::uint16_t>(*pParams) >> 8 & 0xff & 0xff), *pParams & 0xff);
                 goto FinishString;
             case 'I':
-                pchT = TextIO().pfnCompressed(app, static_cast<StringId>(idsDecreased + *pParams));
+                szCatalogPchT = TextIO().pfnCompressed(app, static_cast<StringId>(idsDecreased + *pParams));
+                pchT = szCatalogPchT.data();
                 goto FinishString;
             case 'i':
                 c = CchSprintf(szBuf, app.state.PCTD, *pParams);
@@ -379,7 +381,7 @@ char *PszFormatString(APPSESSION &app, const char *pszFormat, std::int16_t *pPar
                             if (w & 0xfffe) {
                                 pch = PchAppendMessageText(app, pch, ", ");
                             } else {
-                                pch = PchAppendMessageText(app, pch, TextIO().pfnCompressed(app, idsAnd));
+                                pch = PchAppendMessageText(app, pch, TextIO().pfnCompressed(app, idsAnd).data());
                             }
                         }
                         szPlayerName = TextIO().pfnPlayerName(app, i, 0, 1, 1, 0, nullptr);
@@ -398,7 +400,7 @@ char *PszFormatString(APPSESSION &app, const char *pszFormat, std::int16_t *pPar
                 szPlayerName = TextIO().pfnPlayerName(app, *pParams, 0, 0, 0, 0, nullptr);
                 pchT = szPlayerName.data();
                 CchAppendUtf8Prefix(std::span{szBuf}, pchT);
-                CchAppendUtf8Prefix(std::span{szBuf}, TextIO().pfnCompressed(app, idsOrigin));
+                CchAppendUtf8Prefix(std::span{szBuf}, TextIO().pfnCompressed(app, idsOrigin).data());
                 pchT = szBuf;
                 goto FinishString;
             case 'm':
@@ -436,7 +438,8 @@ char *PszFormatString(APPSESSION &app, const char *pszFormat, std::int16_t *pPar
                 pchT = PszGetFleetName(app, w);
                 goto FinishString;
             case 'j':
-                pchT = TextIO().pfnCompressed(app, static_cast<StringId>(idsEnergy + *pParams));
+                szCatalogPchT = TextIO().pfnCompressed(app, static_cast<StringId>(idsEnergy + *pParams));
+                pchT = szCatalogPchT.data();
                 goto FinishString;
             case 'k':
                 part.hs.grhst = static_cast<HullSlotType>(*pParams);
@@ -532,7 +535,7 @@ char *PszFormatString(APPSESSION &app, const char *pszFormat, std::int16_t *pPar
 
 char *PszFormatMessage(APPSESSION &app, MessageId idm, std::int16_t *pParams) { return PszFormatString(app, PszGetCompressedMessage(app, idm), pParams); }
 
-char *PszFormatIds(APPSESSION &app, StringId ids, std::int16_t *pParams) { return PszFormatString(app, TextIO().pfnCompressed(app, ids), pParams); }
+char *PszFormatIds(APPSESSION &app, StringId ids, std::int16_t *pParams) { return PszFormatString(app, TextIO().pfnCompressed(app, ids).data(), pParams); }
 
 std::int16_t FRemovePlayerMessage(APPSESSION &app, std::int16_t iPlr, MessageId iMsg, MsgGoto iObj) {
     std::uint8_t *lpbMax;

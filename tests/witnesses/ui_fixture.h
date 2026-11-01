@@ -17,6 +17,12 @@
 #include "race_query_io.h"
 #include "text_io.h"
 #include "win.h"
+inline std::array<char, cchCatalogText> SzWitnessText(std::string_view sz) {
+    std::array<char, cchCatalogText> szResult{};
+    assert(sz.size() < szResult.size());
+    CchCopyUtf8Prefix(std::span{szResult}, sz);
+    return szResult;
+}
 inline HWND                   HwndWitness(int id) { return reinterpret_cast<HWND>(static_cast<intptr_t>(id)); }
 template <class T, class U> T WitnessValue(U &&value) {
     using V = std::remove_reference_t<U>;

@@ -12,8 +12,49 @@
 #include "text_io.h"
 #include <iterator>
 
-static char *PszTestCatalog(APPSESSION &, StringId) {
-    static char sz[] = "ab\xc3\xa9\xf0\x9f\x98\x80z";
+static void TestCatalogOwnership(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    char sz[64];
+    TEST_ASSERT(FStarsTestInit(app));
+    const auto szFirst = TextIO().pfnCompressed(app, idsHave2);
+    const auto szSecond = TextIO().pfnCompressed(app, idsAre);
+    CchSprintf(sz, "%s|%s", szFirst, szSecond);
+    TEST_CHECK(strcmp(sz, " have| are") == 0);
+    CchSprintf(sz, "%s|%s", TextIO().pfnCompressed(app, idsHave2), TextIO().pfnCompressed(app, idsAre));
+    TEST_CHECK(strcmp(sz, " have| are") == 0);
+}
+
+// Independent reference: UTF-8 bytes from text/strings.txt, including empty
+// IDs, hashed with their little-endian 16-bit IDs and terminating NULs.
+static void TestCatalogBytes(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    uint64_t uHash = 14695981039346656037ULL;
+    char sz[256];
+    TEST_ASSERT(FStarsTestInit(app));
+    for (uint16_t ids = 0; ids <= idsLibraryZipNameEncoding; ids++) {
+        const auto cch = CchGetString(app, static_cast<StringId>(ids), std::span{sz});
+        TEST_CHECK(cch >= 0 && cch < 256 && FUtf8Valid(sz, cch));
+        for (uint8_t b : {static_cast<uint8_t>(ids), static_cast<uint8_t>(ids >> 8)})
+            uHash = (uHash ^ b) * 1099511628211ULL;
+        for (int16_t i = 0; i <= cch; i++)
+            uHash = (uHash ^ static_cast<uint8_t>(sz[i])) * 1099511628211ULL;
+    }
+    TEST_CHECK(uHash == 0xb7fccea32b3950e5ULL);
+}
+
+static std::array<char, cchCatalogText> PszTestCatalog(APPSESSION &, StringId) {
+    std::array<char, cchCatalogText> sz{};
+    CchCopyUtf8Prefix(std::span{sz}, "ab\xc3\xa9\xf0\x9f\x98\x80z");
     return sz;
 }
 
@@ -233,7 +274,7 @@ static void TestFormattedTextBounds(void) {
     for (std::size_t cb = 0; cb < std::size(rgcch); cb++) {
         memset(rgb, '!', sizeof(rgb));
         TEST_CHECK(CchGetString(app, idsName, std::span{rgb}.subspan(2, cb)) == static_cast<std::int16_t>(rgcch[cb]));
-        TEST_CHECK(!memcmp(rgb + 2, PszTestCatalog(app, idsName), rgcch[cb]));
+        TEST_CHECK(!memcmp(rgb + 2, PszTestCatalog(app, idsName).data(), rgcch[cb]));
         if (cb != 0) {
             TEST_CHECK(rgb[2 + rgcch[cb]] == 0);
             TEST_CHECK(FUtf8Valid(rgb + 2, rgcch[cb]));
@@ -308,6 +349,8 @@ static void TestScannerSnapshotUtf8(void) {
 #endif
 
 TEST_LIST = {{"formatted text stays bounded and preserves UTF-8", TestFormattedTextBounds},
+             {"catalog values survive subsequent lookups", TestCatalogOwnership},
+             {"decoded catalog matches every source byte", TestCatalogBytes},
              {"environment labels contain UTF-8 units", TestEnvironmentText},
              {"display copy and append preserve byte limits and UTF-8", TestDisplayCopyBounds},
 #ifdef STARS_UI_SDL

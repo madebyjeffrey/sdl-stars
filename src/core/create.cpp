@@ -1144,7 +1144,7 @@ std::int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
                 fReadRace = FWasRaceFile(app, app.state.szWork, 0);
                 if (fReadRace != 1) {
                 LCantGetRace:
-                    CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsLineDUnableLoadRaceFileS), i + 5, lpbStart);
+                    CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsLineDUnableLoadRaceFileS).data(), i + 5, lpbStart);
                     AlertIO().pfnAlertSz(app, app.state.szWork, win32::MB_ICONHAND);
                     goto LError;
                 }
@@ -1159,7 +1159,7 @@ std::int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
         if (cNum < 1 || rgl[0] < 0 || rgl[0] > 1) {
         LBadDefVc:
             i += cPlr + 5;
-            CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsLineDHasImproperVictoryConditionDefinition), i);
+            CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsLineDHasImproperVictoryConditionDefinition).data(), i);
             AlertIO().pfnAlertSz(app, app.state.szWork, win32::MB_ICONHAND);
             goto LError;
         }
@@ -1290,7 +1290,7 @@ std::int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
             if (j < i) {
                 c = RandomIO().pfnRandom(app, 24);
                 while (1) {
-                    for (j = 0; j < app.state.game.cPlayer && std::strcmp(app.state.rgplr[j].szName, TextIO().pfnCompressed(app, static_cast<StringId>(idsBerserker + c))) != 0; j++) {
+                    for (j = 0; j < app.state.game.cPlayer && std::strcmp(app.state.rgplr[j].szName, TextIO().pfnCompressed(app, static_cast<StringId>(idsBerserker + c)).data()) != 0; j++) {
                     }
                     if (j == app.state.game.cPlayer)
                         break;
@@ -1374,9 +1374,9 @@ void CreateTutorWorld(APPSESSION &app) {
     TextIO().pfnCchGetString(app, idsBerserker, std::span{app.state.rgplr[1].szName});
     Randomize(app, 1234567890);
     for (i = 1; i <= 2; i++) {
-        CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsSHD), app.state.szBase, i);
+        CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsSHD).data(), app.state.szBase, i);
         RemoveNativeFile(app.state.szWork);
-        CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsSXD), app.state.szBase, i);
+        CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsSXD).data(), app.state.szBase, i);
         RemoveNativeFile(app.state.szWork);
     }
     GenerateWorld(app, 0);

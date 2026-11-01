@@ -38,7 +38,7 @@ void ShowMainControls(APPSESSION &app, HWND hwnd, std::int16_t sw) {
     ui::ShowWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_DESIGNER_ENEMY_HULLS), sw);
     ui::ShowWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_DESIGNER_COMPONENTS), sw);
     ui::ShowWindow(ControlIO().pfnGetDlgItem(hwnd, IDOK), sw == win32::SW_SHOW ? win32::SW_HIDE : win32::SW_SHOW);
-    win32::SetDlgItemTextA(hwnd, IDCANCEL, TextIO().pfnCompressed(app, sw == win32::SW_SHOW ? idsDone : idsCancel));
+    win32::SetDlgItemTextA(hwnd, IDCANCEL, TextIO().pfnCompressed(app, sw == win32::SW_SHOW ? idsDone : idsCancel).data());
     return;
 }
 
@@ -58,14 +58,14 @@ std::int16_t FCheckQueuedShip(APPSESSION &app, HWND hwnd, SHDEF *lpshdef, std::i
         }
         TextIO().pfnCchGetString(app, idsWorkDone, std::span{rgch});
         if (lpshdef->cExist > 0 && cshQueued != 0) {
-            win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, ids), LOWORD(lpshdef->cExist), lpshdef->hul.szClass, lpshdef->cExist == 1 ? "" : "s", cshQueued,
+            win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, ids).data(), LOWORD(lpshdef->cExist), lpshdef->hul.szClass, lpshdef->cExist == 1 ? "" : "s", cshQueued,
                      !fProgress ? "" : rgch);
         } else if (cshQueued != 0) {
-            win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, static_cast<StringId>(ids + 1)), cshQueued, lpshdef->hul.szClass, cshQueued == 1 ? "" : "s", !fProgress ? "" : rgch);
+            win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, static_cast<StringId>(ids + 1)).data(), cshQueued, lpshdef->hul.szClass, cshQueued == 1 ? "" : "s", !fProgress ? "" : rgch);
         } else {
-            win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, static_cast<StringId>(ids + 2)), LOWORD(lpshdef->cExist), lpshdef->hul.szClass, lpshdef->cExist == 1 ? "" : "s");
+            win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, static_cast<StringId>(ids + 2)).data(), LOWORD(lpshdef->cExist), lpshdef->hul.szClass, lpshdef->cExist == 1 ? "" : "s");
         }
-        id = CompatChoiceIO().pfnMessageBoxA(win32::GetFocus(), app.state.szWork, TextIO().pfnCompressed(app, static_cast<StringId>(idsDeleteDesign + fEdit)), win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_TASKMODAL);
+        id = CompatChoiceIO().pfnMessageBoxA(win32::GetFocus(), app.state.szWork, TextIO().pfnCompressed(app, static_cast<StringId>(idsDeleteDesign + fEdit)).data(), win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_TASKMODAL);
         ControlIO().pfnSetFocus(hwnd);
         if (id == 7) {
             return 0;
@@ -132,7 +132,7 @@ INT_PTR  SlotDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                      win32::SWP_NOZORDER);
         ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_HELP), nullptr, app.lpui->ptslotGlob.x - 74, app.lpui->ptslotGlob.y - static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2 - 6, 68, static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2,
                      win32::SWP_NOZORDER);
-        win32::SetDlgItemTextA(hwnd, IDCANCEL, TextIO().pfnCompressed(app, idsDone));
+        win32::SetDlgItemTextA(hwnd, IDCANCEL, TextIO().pfnCompressed(app, idsDone).data());
         if (app.state.gd.fTutorial) {
             PresentationIO().pfnTutor(app);
         }
@@ -693,24 +693,24 @@ void DrawSlotDlg(APPSESSION &app, HWND hwnd, HDC hdc, RECT *prc, std::int16_t iD
             }
             rc.bottom = static_cast<std::int16_t>((rc.bottom - rc.top)) / 2 + rc.top;
             if (!app.state.fStarbaseMode) {
-                RcCtrTextOut(app, hdc, &rc, TextIO().pfnCompressed(app, idsCargo3), 0);
+                RcCtrTextOut(app, hdc, &rc, TextIO().pfnCompressed(app, idsCargo3).data(), 0);
                 c = win32::wsprintfA(app.state.szWork, app.lpui->PCTDKT, WtMaxShdefStat(app.lpui->lpshdefBuild, 2));
                 RcCtrTextOut(app, hdc, &app.lpui->rcCargo, app.state.szWork, 0);
             } else {
                 if (static_cast<std::uint32_t>(lphuldef->hul.wtCargoMax) == 0xffff) {
-                    RcCtrTextOut(app, hdc, &rc, TextIO().pfnCompressed(app, idsUnlimited), 0);
+                    RcCtrTextOut(app, hdc, &rc, TextIO().pfnCompressed(app, idsUnlimited).data(), 0);
                 } else {
                     c = win32::wsprintfA(app.state.szWork, app.lpui->PCTDKT, lphuldef->hul.wtCargoMax);
                     RcCtrTextOut(app, hdc, &rc, app.state.szWork, 0);
                 }
-                RcCtrTextOut(app, hdc, &app.lpui->rcCargo, TextIO().pfnCompressed(app, idsSpace), 0);
+                RcCtrTextOut(app, hdc, &app.lpui->rcCargo, TextIO().pfnCompressed(app, idsSpace).data(), 0);
             }
             rc.top = rc.bottom;
             rc.bottom = app.lpui->rcCargo.bottom - 1;
             if (app.state.fStarbaseMode) {
-                RcCtrTextOut(app, hdc, &rc, TextIO().pfnCompressed(app, idsDock), 0);
+                RcCtrTextOut(app, hdc, &rc, TextIO().pfnCompressed(app, idsDock).data(), 0);
             } else {
-                RcCtrTextOut(app, hdc, &rc, TextIO().pfnCompressed(app, idsMax), 0);
+                RcCtrTextOut(app, hdc, &rc, TextIO().pfnCompressed(app, idsMax).data(), 0);
             }
         }
         for (; i < iMax; i++) {
@@ -733,7 +733,7 @@ void DrawSlotDlg(APPSESSION &app, HWND hwnd, HDC hdc, RECT *prc, std::int16_t iD
                     app.state.szWork[0] = 0;
                     c = 0;
                 } else {
-                    c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDD), cItem, lphuldef->hul.rghs[i].cItem);
+                    c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDD).data(), cItem, lphuldef->hul.rghs[i].cItem);
                 }
             } else {
                 win32::SelectObject(hdcMem, app.lpui->hbmpBackBld);
@@ -741,9 +741,9 @@ void DrawSlotDlg(APPSESSION &app, HWND hwnd, HDC hdc, RECT *prc, std::int16_t iD
                 win32::BitBlt(hdc, app.lpui->vrgrcSlot[i].left, app.lpui->vrgrcSlot[i].top, 64, 64, hdcMem, (ibmp & 7) * 0x40, (ibmp >> 3 & 3) * 0x40, win32::SRCCOPY);
                 iInventSel = -1;
                 if (lphuldef->hul.rghs[i].grhst & hstEngine) {
-                    c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsNeedsD), lphuldef->hul.rghs[i].cItem);
+                    c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsNeedsD).data(), lphuldef->hul.rghs[i].cItem);
                 } else {
-                    c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsD3), lphuldef->hul.rghs[i].cItem);
+                    c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsD3).data(), lphuldef->hul.rghs[i].cItem);
                 }
             }
             CtrTextOut(hdc, app.lpui->vrgrcSlot[i].left + 32, app.lpui->vrgrcSlot[i].bottom - app.lpui->dyArial6 - 4, app.state.szWork, c);
@@ -761,7 +761,7 @@ void DrawSlotDlg(APPSESSION &app, HWND hwnd, HDC hdc, RECT *prc, std::int16_t iD
             win32::SelectPalette(hdc, app.lpui->vhpal, 0);
             win32::RealizePalette(hdc);
             DibBlt(hdc, app.lpui->ptPlaque.x, app.lpui->ptPlaque.y, 60, 30, app.lpui->hdibPlaque, 0, 0, 60, 30, 13369376);
-            c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsLdLd), app.lpui->lpshdefBuild->cExist, app.lpui->lpshdefBuild->cBuilt);
+            c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsLdLd).data(), app.lpui->lpshdefBuild->cExist, app.lpui->lpshdefBuild->cBuilt);
             win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
             if (LOWORD(GetTextExtent(hdc, app.state.szWork, c)) > 50) {
                 win32::SelectObject(hdc, app.lpui->rghfontArial7[0]);
@@ -1105,7 +1105,7 @@ void DrawBuildSelComp(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
                         if ((grhst - 1) & grhst) {
                             CchAppendUtf8Prefix(std::span{szWord}, ", ");
                         } else {
-                            CchAppendUtf8Prefix(std::span{szWord}, TextIO().pfnCompressed(app, idsOr));
+                            CchAppendUtf8Prefix(std::span{szWord}, TextIO().pfnCompressed(app, idsOr).data());
                         }
                     }
                     CchAppendUtf8Prefix(std::span{app.state.szWork}, szWord);
@@ -1122,7 +1122,7 @@ void DrawBuildSelComp(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
     HullPart:
         part.hs = hsShip;
         PartQueryIO().pfnLookup(app, &part);
-        dxkT = LOWORD(GetTextExtent(hdc, TextIO().pfnCompressed(app, idsKt), 2));
+        dxkT = LOWORD(GetTextExtent(hdc, TextIO().pfnCompressed(app, idsKt).data(), 2));
         fPlural = hsShip.cItem != 1;
         if (!fPlural) {
             TextIO().pfnCchGetString(app, idsOne, std::span{szWord});
@@ -1133,7 +1133,7 @@ void DrawBuildSelComp(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
         if (fPlural) {
             CchAppendUtf8Prefix(std::span{szWord}, "s");
         }
-        cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsCostS), szWord);
+        cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsCostS).data(), szWord);
         win32::TextOutA(hdc, rc.left, rc.top, app.state.szWork, cch);
         rc.left += 8;
         rc.right -= 8;
@@ -1148,7 +1148,7 @@ void DrawBuildSelComp(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
             win32::SetTextColor(hdc, app.lpui->crWindowText);
             cch = win32::wsprintfA(app.state.szWork, app.state.PCTLD, static_cast<std::uint32_t>((c * static_cast<std::uint32_t>(rgCosts[k]))));
             RightTextOut(app, hdc, rc.right - dxkT - 64, rc.top, app.state.szWork, cch, app.lpui->dxMaxMineralQuan);
-            win32::TextOutA(hdc, rc.right - dxkT - 64, rc.top, TextIO().pfnCompressed(app, idsKt), 2);
+            win32::TextOutA(hdc, rc.right - dxkT - 64, rc.top, TextIO().pfnCompressed(app, idsKt).data(), 2);
         }
         rc.top += app.state.dyArial8;
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
@@ -1162,7 +1162,7 @@ void DrawBuildSelComp(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
             rc.left -= 8;
             rc.top += app.state.dyArial8;
             win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-            cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsMassLdkt), static_cast<std::uint32_t>((c * part.pcom().cMass())));
+            cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsMassLdkt).data(), static_cast<std::uint32_t>((c * part.pcom().cMass())));
             win32::TextOutA(hdc, rc.left, rc.top, app.state.szWork, cch);
         }
     }
@@ -1220,7 +1220,7 @@ void DrawBuildSelHull(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw, R
             goto LReleaseDC;
         lphul = &app.lpui->lpshdefBuild->hul;
         win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
-        dxkT = LOWORD(GetTextExtent(hdc, TextIO().pfnCompressed(app, idsKt), 2));
+        dxkT = LOWORD(GetTextExtent(hdc, TextIO().pfnCompressed(app, idsKt).data(), 2));
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
         dxMineral = LOWORD(GetTextExtent(hdc, app.state.rgszMinerals[2], std::strlen(app.state.rgszMinerals[2]))) + 6;
         crForeSav = win32::SetTextColor(hdc, 0);
@@ -1243,7 +1243,7 @@ void DrawBuildSelHull(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw, R
             cch = TextIO().pfnCchGetString(app, idsCost, std::span{app.state.szWork});
         } else {
             TextIO().pfnCchGetString(app, idsHull, std::span{rgch});
-            cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsCostOneSS), lphul->szClass, app.lpui->mdBuild == mdBuildHuldef ? rgch : "");
+            cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsCostOneSS).data(), lphul->szClass, app.lpui->mdBuild == mdBuildHuldef ? rgch : "");
         }
         win32::TextOutA(hdc, rc.left, rc.top, app.state.szWork, cch);
         rc.left += 8;
@@ -1272,7 +1272,7 @@ void DrawBuildSelHull(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw, R
             cch = win32::wsprintfA(app.state.szWork, app.state.PCTD, k == 5 ? rgCosts[3] : rgCosts[k]);
             RightTextOut(app, hdc, rc.left + dxMineral + app.lpui->dxMaxMineralQuan - dxkT, rc.top, app.state.szWork, cch, app.lpui->dxMaxMineralQuan);
             if (k < 5) {
-                win32::TextOutA(hdc, rc.left + dxMineral + app.lpui->dxMaxMineralQuan - dxkT, rc.top, TextIO().pfnCompressed(app, idsKt), 2);
+                win32::TextOutA(hdc, rc.left + dxMineral + app.lpui->dxMaxMineralQuan - dxkT, rc.top, TextIO().pfnCompressed(app, idsKt).data(), 2);
             }
         }
         rc.left -= 8;
@@ -1284,25 +1284,25 @@ void DrawBuildSelHull(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw, R
             } else {
                 lwt = static_cast<std::uint32_t>(lphul->wtEmpty);
             }
-            cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsMassLdkt), lwt);
+            cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsMassLdkt).data(), lwt);
             win32::TextOutA(hdc, rc.left, rc.top, app.state.szWork, cch);
         }
         rc.top -= app.state.dyArial8 * 4;
         rc.left += dxMineral + app.lpui->dxMaxMineralQuan + 24;
         if (!app.state.fStarbaseMode && (!app.lpui->hwndPopup || app.lpui->GlobalPD.grPopup != grPopupShdef || !app.lpui->GlobalPD.fToken)) {
-            cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDmg), WtMaxShdefStat(app.lpui->lpshdefBuild, 1));
+            cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDmg).data(), WtMaxShdefStat(app.lpui->lpshdefBuild, 1));
             RightTextOut(app, hdc, rc.right - 8, rc.top, app.state.szWork, cch, app.lpui->dxMaxMineralQuan);
             cch = TextIO().pfnCchGetString(app, idsMaxFuel, std::span{app.state.szWork});
             win32::TextOutA(hdc, rc.left, rc.top, app.state.szWork, cch);
             rc.top += app.state.dyArial8;
         }
-        cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsLddp), dp);
+        cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsLddp).data(), dp);
         RightTextOut(app, hdc, rc.right - 8, rc.top, app.state.szWork, cch, app.lpui->dxMaxMineralQuan + 10);
         cch = TextIO().pfnCchGetString(app, idsArmor, std::span{app.state.szWork});
         win32::TextOutA(hdc, rc.left, rc.top, app.state.szWork, cch);
         rc.top += app.state.dyArial8;
         if (app.lpui->mdBuild != mdBuildHuldef) {
-            cch = win32::wsprintfA(app.state.szWork, dpShield == 0 ? TextIO().pfnCompressed(app, idsNone) : "%lddp", dpShield);
+            cch = win32::wsprintfA(app.state.szWork, dpShield == 0 ? TextIO().pfnCompressed(app, idsNone).data() : "%lddp", dpShield);
             RightTextOut(app, hdc, rc.right - 8, rc.top, app.state.szWork, cch, app.lpui->dxMaxMineralQuan + 10);
             cch = TextIO().pfnCchGetString(app, idsShields, std::span{app.state.szWork});
             win32::TextOutA(hdc, rc.left, rc.top, app.state.szWork, cch);
@@ -1326,7 +1326,7 @@ void DrawBuildSelHull(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw, R
             }
             i = PctCloakFromHuldef(app, &app.lpui->lpshdefBuild->hul, i, nullptr);
             j = PctJammerFromHul(app, &app.lpui->lpshdefBuild->hul);
-            cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDD4), i, j);
+            cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDD4).data(), i, j);
             RightTextOut(app, hdc, rc.right - 8, rc.top, app.state.szWork, cch, app.lpui->dxMaxMineralQuan);
             cch = TextIO().pfnCchGetString(app, idsCloakJam, std::span{app.state.szWork});
             win32::TextOutA(hdc, rc.left, rc.top, app.state.szWork, cch);
@@ -1337,7 +1337,7 @@ void DrawBuildSelHull(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw, R
             } else {
                 j = SpdOfShip(app, nullptr, 0, nullptr, 0, app.lpui->lpshdefBuild) + 1;
             }
-            cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDS), i, &app.lpui->rgszSpeed[j * 3]);
+            cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDS).data(), i, &app.lpui->rgszSpeed[j * 3]);
             RightTextOut(app, hdc, rc.right - 8, rc.top, app.state.szWork, cch, app.lpui->dxMaxMineralQuan);
             cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsInitiativeMoves + (app.state.dyArial8 > 14)), std::span{app.state.szWork});
             win32::TextOutA(hdc, rc.left, rc.top, app.state.szWork, cch);
@@ -1351,9 +1351,9 @@ void DrawBuildSelHull(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw, R
                 dRange = GetShdefScannerRange(app, app.lpui->lpshdefBuild, i, &dPlanRange, &pctDetect, nullptr);
                 if (dRange > 0) {
                     if (pctDetect >= 100) {
-                        cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDD6), dRange, dPlanRange);
+                        cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDD6).data(), dRange, dPlanRange);
                     } else {
-                        cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDDD), dRange, dPlanRange, pctDetect);
+                        cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDDD).data(), dRange, dPlanRange, pctDetect);
                     }
                     RightTextOut(app, hdc, rc.right - 8, rc.top, app.state.szWork, cch, app.lpui->dxMaxMineralQuan + 40);
                     cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsScannerRange2 + (app.state.dyArial8 > 14)), std::span{app.state.szWork});
@@ -1406,7 +1406,7 @@ void DrawBuildSelHull(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw, R
                 if (app.state.fStarbaseMode) {
                     cch = win32::wsprintfA(app.state.szWork, app.state.PCTDPCTPCT, pct);
                 } else {
-                    cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsLdD), csh, pct);
+                    cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsLdD).data(), csh, pct);
                 }
                 dp = 1;
             } else {
@@ -1647,11 +1647,11 @@ void FillBuildDD(APPSESSION &app, HWND hwndDD, MdBuild md) {
     case mdBuildEdit:
         if (app.state.fStarbaseMode) {
             for (i = 0; i < 8; i++) {
-                ControlIO().pfnSendMessage(hwndDD, win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(TextIO().pfnCompressed(app, rgidsPartsSB[i])));
+                ControlIO().pfnSendMessage(hwndDD, win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(TextIO().pfnCompressed(app, rgidsPartsSB[i]).data()));
             }
         } else {
             for (i = 0; i < 13; i++) {
-                ControlIO().pfnSendMessage(hwndDD, win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(TextIO().pfnCompressed(app, rgidsParts[i])));
+                ControlIO().pfnSendMessage(hwndDD, win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(TextIO().pfnCompressed(app, rgidsParts[i]).data()));
             }
         }
     }

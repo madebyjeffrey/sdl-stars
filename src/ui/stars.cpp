@@ -231,7 +231,7 @@ INT_PTR  About(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         rc.bottom = rc.top + app.state.dyArial8;
         for (i = uiState.iAbout1st; i < uiState.iAbout1st + 10; i++) {
             if (i >= 0 && i < 77) {
-                RcCtrTextOut(app, hdc, &rc, TextIO().pfnCompressed(app, static_cast<StringId>(idsDesignProgramming + i)), -1);
+                RcCtrTextOut(app, hdc, &rc, TextIO().pfnCompressed(app, static_cast<StringId>(idsDesignProgramming + i)).data(), -1);
             } else if (i >= 77) {
                 break;
             }

@@ -112,18 +112,18 @@ static std::array<char, 50> TestPszPlayerName(APPSESSION &, int16_t i, int16_t a
     CchCopyUtf8Prefix(std::span{szName}, szLiteral0);
     return szName;
 }
-static char *TestPszGetCompressedString(APPSESSION &, int id) {
+static std::array<char, cchCatalogText> TestPszGetCompressedString(APPSESSION &, StringId id) {
     if (id >= idsAction && id <= idsLoadOptimal)
-        return actionLabels[id - idsAction];
+        return SzWitnessText(actionLabels[id - idsAction]);
     if (id == idsCustomD)
-        return szLiteral1;
+        return SzWitnessText(szLiteral1);
     if (id == idsUnusedD)
-        return szLiteral2;
+        return SzWitnessText(szLiteral2);
     if (id == idsWithinDLY)
-        return szLiteral3;
+        return SzWitnessText(szLiteral3);
     if (id == idsDYearC)
-        return szLiteral4;
-    return szLiteral5;
+        return SzWitnessText(szLiteral4);
+    return SzWitnessText(szLiteral5);
 }
 static const char *TestPszFormatIds(APPSESSION &, int id, void *p) {
     (void)id;
@@ -131,7 +131,7 @@ static const char *TestPszFormatIds(APPSESSION &, int id, void *p) {
     return "amount";
 }
 static std::int16_t TestCchGetString(APPSESSION &app, StringId id, std::span<char> out) {
-    return static_cast<std::int16_t>(CchCopyUtf8(out, TestPszGetCompressedString(app, static_cast<int>(id))));
+    return static_cast<std::int16_t>(CchCopyUtf8(out, TestPszGetCompressedString(app, id).data()));
 }
 static void TestAlertSz(APPSESSION &, const char *s, int flags) {
     (void)s;
@@ -245,7 +245,7 @@ int main(void) {
     ioProduction.pfnFleetStat = WITNESSADAPTER<&TestLGetFleetStat, decltype(ioProduction.pfnFleetStat)>::Call;
     PRODUCTIONIOSCOPE scopeProduction(ioProduction);
     TEXTIO            ioText;
-    ioText.pfnCompressed = WITNESSADAPTER<&TestPszGetCompressedString, decltype(ioText.pfnCompressed)>::Call;
+    ioText.pfnCompressed = TestPszGetCompressedString;
     ioText.pfnFormat = WITNESSADAPTER<&TestPszFormatIds, decltype(ioText.pfnFormat)>::Call;
     ioText.pfnCchGetString = TestCchGetString;
     ioText.pfnPlayerName = TestPszPlayerName;

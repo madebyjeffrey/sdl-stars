@@ -13,6 +13,7 @@
 #include "alert_io.h"
 
 LRESULT  PlanetWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+    std::array<char, cchCatalogText> szCatalogPsz{};
     APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
 
     HDC                hdc;
@@ -42,7 +43,8 @@ LRESULT  PlanetWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             ControlIO().pfnSendMessage(app.lpui->rghwndOrderDD[i], win32::WM_SETFONT, reinterpret_cast<WPARAM>(app.lpui->rghfontArial8[1]), 0);
         }
         for (i = idsTaskHere; i <= idsTransferFleet; i++) {
-            psz = TextIO().pfnCompressed(app, static_cast<StringId>(i));
+            szCatalogPsz = TextIO().pfnCompressed(app, static_cast<StringId>(i));
+            psz = szCatalogPsz.data();
             ControlIO().pfnSendMessage(app.lpui->rghwndOrderDD[0], win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(psz));
         }
         app.lpui->hwndOrderED = ui::CreateWindowEx(0, app.lpui->szEdit, nullptr, win32::ES_RIGHT | win32::WS_CHILD | win32::WS_BORDER, 100, 100, 200, 50, hwnd, nullptr, app.lpui->hInst, nullptr);
@@ -69,12 +71,13 @@ LRESULT  PlanetWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                          100, 100, 200, 80, hwnd, nullptr, app.lpui->hInst, nullptr);
         ControlIO().pfnSendMessage(app.lpui->hwndPlanetProdLB, win32::WM_SETFONT, reinterpret_cast<WPARAM>(app.lpui->rghfontArial8[0]), 0);
         for (i = 0; i < 13; i++) {
-            psz = TextIO().pfnCompressed(app, static_cast<StringId>(idsCargo2 + i));
+            szCatalogPsz = TextIO().pfnCompressed(app, static_cast<StringId>(idsCargo2 + i));
+            psz = szCatalogPsz.data();
             app.lpui->rghwndBtn[i] = ui::CreateWindowEx(0, app.lpui->szButton, psz, win32::WS_CHILD, 100, 100, 100, app.state.dyArial8 * 2, hwnd, nullptr, app.lpui->hInst, nullptr);
             ControlIO().pfnSendMessage(app.lpui->rghwndBtn[i], win32::WM_SETFONT, reinterpret_cast<WPARAM>(app.lpui->rghfontArial8[1]), 0);
         }
         app.lpui->hwndRepCB =
-            ui::CreateWindowEx(0, app.lpui->szButton, TextIO().pfnCompressed(app, idsRepeatOrders), win32::BS_AUTOCHECKBOX | win32::WS_CHILD, 100, 100, 150, app.state.dyArial8, hwnd, nullptr, app.lpui->hInst, nullptr);
+            ui::CreateWindowEx(0, app.lpui->szButton, TextIO().pfnCompressed(app, idsRepeatOrders).data(), win32::BS_AUTOCHECKBOX | win32::WS_CHILD, 100, 100, 150, app.state.dyArial8, hwnd, nullptr, app.lpui->hInst, nullptr);
         ControlIO().pfnSendMessage(app.lpui->hwndRepCB, win32::WM_SETFONT, reinterpret_cast<WPARAM>(app.lpui->rghfontArial8[1]), 0);
         break;
     case win32::WM_ERASEBKGND:
@@ -308,7 +311,7 @@ void DrawPlanetMinSum(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
         app.lpui->rgrcRef[10].top = -5;
         app.lpui->rgrcRef[10].bottom = -6;
     }
-    if (FDrawTileNC(app, hdc, ptile, &rc, TextIO().pfnCompressed(app, idsMineralsHand))) {
+    if (FDrawTileNC(app, hdc, ptile, &rc, TextIO().pfnCompressed(app, idsMineralsHand).data())) {
         if (!ppl) {
             ppl = &app.state.sel.pl;
         }
@@ -325,7 +328,7 @@ void DrawPlanetMinSum(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
             }
             win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
             win32::SetTextColor(hdc, app.lpui->crButtonText);
-            c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsLdkt), ppl->rgwtMin[i]);
+            c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsLdkt).data(), ppl->rgwtMin[i]);
             RightTextOut(app, hdc, xRight, yTop, app.state.szWork, c, dxRight);
             yTop += app.state.dyArial8;
         }
@@ -340,9 +343,9 @@ void DrawPlanetMinSum(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
             win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
         }
         if (RaceQueryIO().pfnStat(&app.state.rgplr[app.state.idPlayer], rsMajorAdv) == raMacintosh) {
-            c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsD), ColonyIO().pfnMinesOperating(app, ppl));
+            c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsD).data(), ColonyIO().pfnMinesOperating(app, ppl));
         } else {
-            c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDD), ppl->cMines, ColonyIO().pfnOperableMines(app, ppl, app.state.idPlayer, 0));
+            c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDD).data(), ppl->cMines, ColonyIO().pfnOperableMines(app, ppl, app.state.idPlayer, 0));
         }
         RightTextOut(app, hdc, xRight, yTop, app.state.szWork, c, dxRight * 2);
         yTop += app.state.dyArial8;
@@ -355,7 +358,7 @@ void DrawPlanetMinSum(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
         if (RaceQueryIO().pfnStat(&app.state.rgplr[app.state.idPlayer], rsMajorAdv) == raMacintosh) {
             c = TextIO().pfnCchGetString(app, idsN, std::span{app.state.szWork});
         } else {
-            c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDD), ppl->cFactories, ColonyIO().pfnOperableFactories(app, ppl, app.state.idPlayer, 0));
+            c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDD).data(), ppl->cFactories, ColonyIO().pfnOperableFactories(app, ppl, app.state.idPlayer, 0));
         }
         RightTextOut(app, hdc, xRight, yTop, app.state.szWork, c, dxRight * 2);
         yTop += app.state.dyArial8;
@@ -381,7 +384,7 @@ void DrawPlanetStats(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
     RECT    rc;
     PART    part;
 
-    if (FDrawTileNC(app, hdc, ptile, &rc, TextIO().pfnCompressed(app, idsStatus))) {
+    if (FDrawTileNC(app, hdc, ptile, &rc, TextIO().pfnCompressed(app, idsStatus).data())) {
         xLeft = rc.left + 4;
         xRight = rc.right - 4;
         yTop = rc.top;
@@ -440,7 +443,7 @@ void DrawPlanetStats(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
         if (!app.state.sel.pl.fNoResearch) {
             cResAvail -= win32::MulDiv(cRes, app.state.rgplr[app.state.idPlayer].pctResearch, 100);
         }
-        c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDD), cResAvail, cRes);
+        c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDD).data(), cResAvail, cRes);
         RightTextOut(app, hdc, xRight, yTop, app.state.szWork, c, dxRight);
         yTop += app.state.dyArial8;
         hbrSav = static_cast<HBRUSH>(win32::SelectObject(hdc, app.lpui->hbrButtonHilite));
@@ -474,11 +477,11 @@ void DrawPlanetStats(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
         }
         if (dRange > 0) {
             if (dRangeP > 0) {
-                c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDDLY), dRangeP, dRange);
+                c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDDLY).data(), dRangeP, dRange);
             } else if (dRange < 100) {
-                c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDLightYears), dRange);
+                c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDLightYears).data(), dRange);
             } else {
-                c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDLY), dRange);
+                c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDLY).data(), dRange);
             }
         } else {
             TextIO().pfnCchGetString(app, idsNone4, std::span{app.state.szWork});
@@ -499,7 +502,7 @@ void DrawPlanetStats(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
         if (RaceQueryIO().pfnStat(&app.state.rgplr[app.state.idPlayer], rsMajorAdv) == raMacintosh) {
             c = TextIO().pfnCchGetString(app, idsN, std::span{app.state.szWork});
         } else {
-            c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDD), app.state.sel.pl.cDefenses, ColonyIO().pfnOperableDefenses(app, &app.state.sel.pl, app.state.idPlayer, 0));
+            c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDD).data(), app.state.sel.pl.cDefenses, ColonyIO().pfnOperableDefenses(app, &app.state.sel.pl, app.state.idPlayer, 0));
         }
         RightTextOut(app, hdc, xRight, yTop, app.state.szWork, c, dxRight);
         yTop += app.state.dyArial8;
@@ -540,6 +543,7 @@ void DrawPlanetStats(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
 }
 
 void DrawPlanetStarbase(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
+    std::array<char, cchCatalogText> szCatalogPsz{};
     std::int16_t  fTwo;
     std::int16_t  dxRight;
     std::int16_t  iWarp;
@@ -572,7 +576,8 @@ void DrawPlanetStarbase(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
         CchCopyUtf8Prefix(std::span{app.state.szWork}, lpshdef->hul.szClass);
         psz = app.state.szWork;
     } else {
-        psz = TextIO().pfnCompressed(app, idsStarbase2);
+        szCatalogPsz = TextIO().pfnCompressed(app, idsStarbase2);
+        psz = szCatalogPsz.data();
     }
     if (FDrawTileNC(app, hdc, ptile, &rc, psz)) {
         xLeft = rc.left + 4;
@@ -609,7 +614,7 @@ void DrawPlanetStarbase(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
             if (w == 0) {
                 c = TextIO().pfnCchGetString(app, idsNone4, std::span{app.state.szWork});
             } else {
-                c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsLddp), w, 0);
+                c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsLddp).data(), w, 0);
             }
             win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
             RightTextOut(app, hdc, xRight, yTop, app.state.szWork, c, dxRight);
@@ -621,7 +626,7 @@ void DrawPlanetStarbase(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
             if (l == 0) {
                 c = TextIO().pfnCchGetString(app, idsNone4, std::span{app.state.szWork});
             } else {
-                c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsLddp), l);
+                c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsLddp).data(), l);
             }
             win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
             RightTextOut(app, hdc, xRight, yTop, app.state.szWork, c, dxRight);
@@ -654,12 +659,12 @@ void DrawPlanetStarbase(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
             win32::TextOutA(hdc, xLeft, yTop, app.state.szWork, c);
             iWarp = ColonyIO().pfnWarp(app, &app.state.sel.pl, &fTwo);
             if (iWarp > 0) {
-                c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsWarpD), iWarp);
+                c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsWarpD).data(), iWarp);
                 if (fTwo) {
                     app.state.szWork[c++] = '+';
                 }
             } else {
-                c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsNone4));
+                c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsNone4).data());
             }
             win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
             RightTextOut(app, hdc, xRight, yTop, app.state.szWork, c, dxRight);
@@ -683,7 +688,7 @@ void DrawPlanetStarbase(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
             if (iWarp == 0) {
                 bt |= 4;
             }
-            DrawBtn(app, hdc, &app.lpui->rgrcRef[13], bt, app.state.gd.fSetMassMode, TextIO().pfnCompressed(app, idsSetDest));
+            DrawBtn(app, hdc, &app.lpui->rgrcRef[13], bt, app.state.gd.fSetMassMode, TextIO().pfnCompressed(app, idsSetDest).data());
             if (iWarp > 0) {
                 win32::SetRect(&app.lpui->rgrcRef[15], xLeft + c + 4, yTop + 3, xRight, yTop + app.state.dyArial8 + 3);
                 DrawMassWarpGauge(app, hdc, &app.lpui->rgrcRef[15], !fTwo ? iWarp : -iWarp, app.state.sel.pl.iWarpFling + 4);
@@ -724,7 +729,7 @@ void DrawMassWarpGauge(APPSESSION &app, HDC hdc, RECT *prc, std::int16_t iBest, 
     lCur = static_cast<std::int16_t>((iCur - 4));
     l = LDrawGauge(app, hdc, prc, 1, &lCur, &hbr, lMax);
     iMode = win32::SetBkMode(hdc, win32::TRANSPARENT);
-    c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsWarpLd), l + 4);
+    c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsWarpLd).data(), l + 4);
     l = GetTextExtent(hdc, app.state.szWork, c);
     RcCtrTextOut(app, hdc, prc, app.state.szWork, c);
     win32::SetBkMode(hdc, iMode);
@@ -758,7 +763,7 @@ void DrawPlanetProduction(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
         app.lpui->rgrcRef[17].bottom = -6;
         ptile->fFixCtls = 0;
     }
-    if (!FDrawTileNC(app, hdc, ptile, &rc, TextIO().pfnCompressed(app, idsProduction))) {
+    if (!FDrawTileNC(app, hdc, ptile, &rc, TextIO().pfnCompressed(app, idsProduction).data())) {
         ui::ShowWindow(app.lpui->hwndPlanetProdLB, win32::SW_HIDE);
         ui::ShowWindow(app.lpui->rghwndBtn[11], win32::SW_HIDE);
         ui::ShowWindow(app.lpui->rghwndBtn[12], win32::SW_HIDE);
@@ -828,7 +833,7 @@ void DrawPlanetProduction(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
         }
         ControlIO().pfnEnableWindow(app.lpui->rghwndBtn[12], app.state.sel.pl.lpplprod && app.state.sel.pl.lpplprod->iprodMac != 0);
         win32::SetRect(&app.lpui->rgrcRef[17], xStart, yTop, xStart + c, yTop + app.state.dyArial8 + (app.state.dyArial8 >> 1));
-        DrawBtn(app, hdc, &app.lpui->rgrcRef[17], 8, app.state.gd.fSetRouteMode, TextIO().pfnCompressed(app, idsRoute2));
+        DrawBtn(app, hdc, &app.lpui->rgrcRef[17], 8, app.state.gd.fSetRouteMode, TextIO().pfnCompressed(app, idsRoute2).data());
     }
     return;
 }
@@ -945,7 +950,7 @@ void DrawPlanetShipList(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
         app.lpui->rgrcRef[4].top = -5;
         app.lpui->rgrcRef[4].bottom = -6;
     }
-    if (!FDrawTileNC(app, hdc, ptile, &rc, TextIO().pfnCompressed(app, !pfl ? idsFleetsOrbit : idsOtherFleetsHere))) {
+    if (!FDrawTileNC(app, hdc, ptile, &rc, TextIO().pfnCompressed(app, !pfl ? idsFleetsOrbit : idsOtherFleetsHere).data())) {
         for (i = 0; i <= 2; i++) {
             ui::ShowWindow(app.lpui->rghwndBtn[i], win32::SW_HIDE);
         }
@@ -1189,6 +1194,7 @@ void PlanetClick(APPSESSION &app, std::int16_t x, std::int16_t y, std::int16_t s
 }
 
 HCURSOR ClickInPlanetOrders(APPSESSION &app, POINT16 pt, std::int16_t sks, std::int16_t fCursor, std::int16_t fRightBtn) {
+    std::array<char, cchCatalogText> szCatalogButtonText{};
     std::int16_t i;
     std::int32_t rglQuan[3];
     std::int16_t iWarp;
@@ -1283,7 +1289,8 @@ HCURSOR ClickInPlanetOrders(APPSESSION &app, POINT16 pt, std::int16_t sks, std::
         if (fCursor) {
             return app.lpui->hcurHand;
         }
-        InitBtnTrack(&btnt, app.lpui->hwndPlanet, nullptr, &app.lpui->rgrcRef[13], 8, 80, app.state.gd.fSetMassMode, 1, TextIO().pfnCompressed(app, idsSetDest));
+        szCatalogButtonText = TextIO().pfnCompressed(app, idsSetDest);
+        InitBtnTrack(&btnt, app.lpui->hwndPlanet, nullptr, &app.lpui->rgrcRef[13], 8, 80, app.state.gd.fSetMassMode, 1, szCatalogButtonText.data());
         while (FTrackBtn(app, &btnt)) {
         }
         app.state.gd.fSetMassMode ^= btnt.fDown;
@@ -1317,7 +1324,8 @@ HCURSOR ClickInPlanetOrders(APPSESSION &app, POINT16 pt, std::int16_t sks, std::
         if (fCursor) {
             return app.lpui->hcurHand;
         }
-        InitBtnTrack(&btnt, app.lpui->hwndPlanet, nullptr, &app.lpui->rgrcRef[17], 8, 80, app.state.gd.fSetRouteMode, 1, TextIO().pfnCompressed(app, idsRoute2));
+        szCatalogButtonText = TextIO().pfnCompressed(app, idsRoute2);
+        InitBtnTrack(&btnt, app.lpui->hwndPlanet, nullptr, &app.lpui->rgrcRef[17], 8, 80, app.state.gd.fSetRouteMode, 1, szCatalogButtonText.data());
         while (FTrackBtn(app, &btnt)) {
         }
         app.state.gd.fSetRouteMode ^= btnt.fDown;
@@ -1695,6 +1703,7 @@ void DrawPlanShip(APPSESSION &app, HDC hdc, TileBits grbit) {
 }
 
 void SetPlanetTitleBar(APPSESSION &app, HWND hwnd) {
+    std::array<char, cchCatalogText> szCatalogPsz{};
     char  szTitle[30];
     char *psz;
 
@@ -1706,7 +1715,8 @@ void SetPlanetTitleBar(APPSESSION &app, HWND hwnd) {
     } else if (app.state.sel.grobj == grobjFleet) {
         psz = PszGetFleetName(app, app.state.sel.fl.id);
     } else {
-        psz = TextIO().pfnCompressed(app, idsPlanetView);
+        szCatalogPsz = TextIO().pfnCompressed(app, idsPlanetView);
+        psz = szCatalogPsz.data();
     }
     ControlIO().pfnSetWindowText(hwnd, psz);
     return;
@@ -1752,6 +1762,7 @@ void FillShipDD(APPSESSION &app, std::int16_t idSkip) {
 }
 
 void FillPlanetProdLB(APPSESSION &app, HWND hwnd, PLPROD *lpplprod, PLANET *lppl) {
+    std::array<char, cchCatalogText> szCatalogPsz{};
     std::int32_t rgwtMin[4];
     std::int16_t i;
     char    szTemp[80];
@@ -1773,11 +1784,13 @@ void FillPlanetProdLB(APPSESSION &app, HWND hwnd, PLPROD *lpplprod, PLANET *lppl
         lpplprod = lppl->lpplprod;
     }
     if (!lpplprod || lpplprod->iprodMac == 0) {
-        psz = TextIO().pfnCompressed(app, idsQueueEmpty);
+        szCatalogPsz = TextIO().pfnCompressed(app, idsQueueEmpty);
+        psz = szCatalogPsz.data();
     } else {
         if (!app.lpui->hwndProdDlg)
             goto NoMsg;
-        psz = TextIO().pfnCompressed(app, idsTopQueue);
+        szCatalogPsz = TextIO().pfnCompressed(app, idsTopQueue);
+        psz = szCatalogPsz.data();
     }
     ControlIO().pfnSendMessage(hwnd, win32::LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(psz));
 NoMsg:

@@ -296,7 +296,8 @@ std::int16_t AlertSz(APPSESSION &app, const char *sz, std::int16_t mbType) {
 
 std::int16_t CchGetString(APPSESSION &app, StringId ids, std::span<char> psz) {
     if (psz.empty()) return 0;
-    const std::string_view szT = TextIO().pfnCompressed(app, ids);
+    const auto szCatalog = TextIO().pfnCompressed(app, ids);
+    const std::string_view szT(szCatalog.data());
     const std::size_t cch = CchUtf8Prefix(szT, psz.size() - 1);
 
     std::memmove(psz.data(), szT.data(), cch);

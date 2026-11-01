@@ -124,9 +124,9 @@ static int TestGetDlgItem(HWND hwnd, int id) {
     assert(hwnd == HwndWitness(7));
     return id;
 }
-static const char *TestPszGetCompressedString(APPSESSION &, int id) {
+static std::array<char, cchCatalogText> TestPszGetCompressedString(APPSESSION &, StringId id) {
     assert(id == idsProductionQueueS);
-    return "Production %s";
+    return SzWitnessText("Production %s");
 }
 static const char *TestPszGetPlanetName(APPSESSION &, int id) {
     (void)id;
@@ -292,7 +292,7 @@ int main(void) {
     ioPartQuery.pfnHull = WITNESSADAPTER<&TestLphuldefFromId, decltype(ioPartQuery.pfnHull)>::Call;
     PARTQUERYIOSCOPE scopePartQuery(ioPartQuery);
     TEXTIO           ioText;
-    ioText.pfnCompressed = WITNESSADAPTER<&TestPszGetCompressedString, decltype(ioText.pfnCompressed)>::Call;
+    ioText.pfnCompressed = TestPszGetCompressedString;
     ioText.pfnFormat = WITNESSADAPTER<&TestPszFormatIds, decltype(ioText.pfnFormat)>::Call;
     ioText.pfnPlanetName = WITNESSADAPTER<&TestPszGetPlanetName, decltype(ioText.pfnPlanetName)>::Call;
     TEXTIOSCOPE scopeText(ioText);
