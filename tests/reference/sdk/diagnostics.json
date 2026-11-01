@@ -5,12 +5,6 @@
   "purpose": "Native SDK behavior/automation probes with reviewed source hashes; preserve assertions except explicitly documented compatibility bug fixes. Execute every probe and retain raw results. All other selected SDK checks remain gates.",
   "diagnostics": [
     {
-      "test": "test_win32_toolbar_reference",
-      "input": "tests/compat/win32_toolbar.inc",
-      "sha256": "eaa65b3377584b2756ec56dfe89d20239284c95397b897e64f5bfd1a6e6f0703",
-      "observation": "Split-dropdown notification/rectangle and command counts"
-    },
-    {
       "test": "test_win32_list_reference",
       "input": "tests/compat/win32_list.inc",
       "sha256": "54594c15549545417f94106290efb798d079cd48b04ff6e03a354b93bfa92e27",

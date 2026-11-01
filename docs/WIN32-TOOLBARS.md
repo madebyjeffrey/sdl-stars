@@ -1,7 +1,8 @@
 # Standard toolbar support
 
 Stars now creates a `ToolbarWindow32` child inside its existing toolbar layout
-container. Windows uses `comctl32`; Linux uses the SDL compatibility control.
+container. All desktop platforms use the SDL compatibility control; optional
+SDK comparison tests use native Windows `comctl32`.
 The container retains the scanner-range combo and routes commands to the existing
 `ExecuteButton` game UI handler. The existing icons, scanner flags and zoom
 commands are preserved. Game logic and saved records do not change.
@@ -14,6 +15,10 @@ Opening a split menu depresses only its arrow area and offsets the triangle;
 the action area and its checked state remain unchanged throughout the menu loop.
 `WM_NOTIFY` / `TBN_DROPDOWN` identifies the triggering command; menu
 placement uses `TB_GETRECT` and coordinate mapping. Button clicks use `WM_COMMAND`.
+Handled dropdowns return `TBDDRET_DEFAULT`. Returning `TBDDRET_NODEFAULT` or
+`TBDDRET_TREATPRESSED` falls back to an ordinary button press, with mouse capture
+and a command on release. The notification guarantees only `hdr` and `iItem`;
+callers query the rectangle instead of reading `NMTOOLBAR.rcButton`.
 The six scanner views form a check group. Toolbar check state is synchronized
 from the game's scanner flags whenever the surrounding toolbar repaints.
 
@@ -77,7 +82,7 @@ relative and absolute game filenames without touching the user's desktop.
 
 Build and debug `stars-sdl` using the existing `sdl-debug` CLion profile. No new
 Linux library is required; the implementation uses the existing SDL/GDI backend.
-The Windows UI now links `comctl32`. A focused invisible run is:
+The independent Windows SDK reference links `comctl32`. A focused invisible run is:
 
 ```sh
 cmake --preset sdl-debug
@@ -92,5 +97,7 @@ that original inventory; it does not imply complete Win32 behavior coverage.
 The complete fatal AddressSanitizer/UndefinedBehaviorSanitizer/LeakSanitizer suite
 passes **96/96** tests in a private Xvfb/Openbox environment, including the new
 actual-client X11 Continue Game workflow. The standard toolbar reference case
-also passes under Wine against Windows' `comctl32`. The final visual check uses
+previously passed under Wine. The corrected dropdown return/fallback vector now
+also passes on native Windows; see the [SDK diagnosis](CPP-C09-SDK-FINDINGS.md#toolbar-diagnosis-and-correction).
+The final visual check uses
 the real desktop compositor; the automated tests do not open desktop windows.

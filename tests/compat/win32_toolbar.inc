@@ -18,7 +18,8 @@ static_assert(sizeof(NMHDR) == (sizeof(void *) == 8 ? 24 : 12), "notification AB
 static_assert(sizeof(NMTOOLBARA) == (sizeof(void *) == 8 ? 96 : 60), "toolbar notification ABI");
 static int cCommand, idCommand, cDrop, idDrop;
 static RECT rcDrop;
-static BOOL fDestroy;
+static BOOL fDestroy, fDropRect;
+static LRESULT resultDrop = TBDDRET_DEFAULT;
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
 static BOOL fCheckPaint, fPaintPassed;
 static COLORREF rgcrAction[2048];
@@ -47,12 +48,14 @@ static LRESULT CALLBACK Parent(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     if (msg == WM_NOTIFY) {
         lpnm = (NMTOOLBAR *)l;
         if (lpnm->hdr.code == TBN_DROPDOWN) {
-            cDrop++; idDrop = lpnm->iItem; rcDrop = lpnm->rcButton;
+            cDrop++; idDrop = lpnm->iItem;
+            // Only hdr and iItem are valid for TBN_DROPDOWN.
+            fDropRect = (BOOL)SendMessageA(lpnm->hdr.hwndFrom, TB_GETRECT, idDrop, (LPARAM)&rcDrop);
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
-            if (fCheckPaint) fPaintPassed = FMenuPaint(lpnm->hdr.hwndFrom, &lpnm->rcButton, 0);
+            if (fCheckPaint) fPaintPassed = FMenuPaint(lpnm->hdr.hwndFrom, &rcDrop, 0);
 #endif
             if (fDestroy) DestroyWindow(lpnm->hdr.hwndFrom);
-            return TBDDRET_NODEFAULT;
+            return resultDrop;
         }
     }
     return DefWindowProcA(hwnd, msg, w, l);
@@ -75,7 +78,8 @@ int main(void) {
     RECT rc, rcSplit, rcWhole;
     POINT pt;
     char sz[64];
-    int i, c;
+    int i, j, c, cDropBefore;
+    BOOL fChecked;
     APPMSG msg;
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
     HWND hwndTip, hwndFocus;
@@ -128,13 +132,29 @@ int main(void) {
     Click(htb, rcSplit.left + 3, rcSplit.top + 3);
     CHECK(cCommand == 2 && idCommand == 103 && cDrop == 0);
     Click(htb, rcSplit.right - 3, rcSplit.top + 3);
-    CHECK(cDrop == 1 && idDrop == 103 && EqualRect(&rcDrop, &rcSplit) && cCommand == 2);
+    CHECK(cDrop == 1 && idDrop == 103 && fDropRect && EqualRect(&rcDrop, &rcSplit) && cCommand == 2);
     Click(htb, rcWhole.left + 3, rcWhole.top + 3);
-    CHECK(cDrop == 2 && idDrop == 104 && cCommand == 2 && EqualRect(&rcDrop, &rcWhole));
+    CHECK(cDrop == 2 && idDrop == 104 && cCommand == 2 && fDropRect && EqualRect(&rcDrop, &rcWhole));
     CHECK(SendMessageA(htb, TB_ENABLEBUTTON, 104, 0));
     Click(htb, rcWhole.left + 3, rcWhole.top + 3);
     CHECK(cDrop == 2 && !SendMessageA(htb, TB_ISBUTTONENABLED, 104, 0));
     CHECK(SendMessageA(htb, TB_ENABLEBUTTON, 104, 1));
+    // Unhandled dropdowns and TREATPRESSED complete an ordinary click on release.
+    for (i = TBDDRET_NODEFAULT; i <= TBDDRET_TREATPRESSED; i++) {
+        resultDrop = i;
+        for (j = 103; j <= 104; j++) {
+            CHECK(SendMessageA(htb, TB_GETRECT, j, (LPARAM)&rc));
+            c = cCommand; cDropBefore = cDrop;
+            fChecked = (BOOL)SendMessageA(htb, TB_ISBUTTONCHECKED, j, 0);
+            SendMessageA(htb, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(rc.right - 3, rc.top + 3));
+            CHECK(cDrop == cDropBefore + 1 && idDrop == j && cCommand == c && GetCapture() == htb);
+            CHECK(SendMessageA(htb, TB_ISBUTTONCHECKED, j, 0) == fChecked);
+            SendMessageA(htb, WM_LBUTTONUP, 0, MAKELPARAM(rc.right - 3, rc.top + 3));
+            CHECK(cCommand == c + 1 && idCommand == j && !GetCapture());
+            if (j == 103) CHECK(SendMessageA(htb, TB_ISBUTTONCHECKED, j, 0) == !fChecked);
+        }
+    }
+    resultDrop = TBDDRET_DEFAULT;
     c = cCommand;
     SendMessageA(htb, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(rcSplit.left + 3, rcSplit.top + 3));
     SendMessageA(htb, WM_MOUSEMOVE, MK_LBUTTON, MAKELPARAM(-2, -2));
