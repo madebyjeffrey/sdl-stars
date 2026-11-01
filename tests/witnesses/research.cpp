@@ -72,12 +72,11 @@ static int16_t CResearchResources(APPSESSION &app, PLANET *planet, int16_t playe
     callback(app, 1, index, player);
     return (int16_t)cfg[40 + 5 * (index % 4)];
 }
-static void Estimate(APPSESSION &app, PLANET *planet, PLPROD *row, ProdItemType item, int16_t *first, int16_t *last) {
+static PRODUCTIONESTIMATE Estimate(APPSESSION &app, PLANET *planet, PLPROD *row, ProdItemType item) {
     int index = (int)(planet - storage);
     assert(!row && item == static_cast<ProdItemType>(iprodEstimateResearchResources));
     callback(app, 2, index, app.state.idPlayer);
-    *first = (int16_t)cfg[41 + 5 * (index % 4)];
-    *last = 123;
+    return {(int16_t)cfg[41 + 5 * (index % 4)], 123};
 }
 
 static void setup(APPSESSION &app) {

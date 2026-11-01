@@ -505,7 +505,7 @@ void AddMinesToBlockedQueues(APPSESSION &app) {
                 (prod.iItem == mdIdleMine || prod.iItem == iobjAlchemy || prod.iItem == mdIdleAlchemy || prod.iItem == mdIdleTerraform))
                 continue;
             ChangeMainObjSel(app, grobjPlanet, lppl->id);
-            PszProductionETA(app, &app.state.sel.pl, app.state.sel.pl.lpplprod, iobjMine, &etaFirst, nullptr);
+            etaFirst = PszProductionETA(app, &app.state.sel.pl, app.state.sel.pl.lpplprod, iobjMine).etaFirst;
             if (etaFirst != 1) {
                 if (etaFirst == -1) {
                     etaFirst = 600;
@@ -530,7 +530,7 @@ void AddMinesToBlockedQueues(APPSESSION &app) {
                     if (cBuild > 0) {
                         AddItemToQueue(app, mdIdleMine, LOWORD(cBuild), grobjPlanet, addItemFront);
                         FinishProduction(app, 1);
-                        PszProductionETA(app, &app.state.sel.pl, app.state.sel.pl.lpplprod, iobjFactory, &etaBetterMines, nullptr);
+                        etaBetterMines = PszProductionETA(app, &app.state.sel.pl, app.state.sel.pl.lpplprod, iobjFactory).etaFirst;
                         if (etaBetterMines == -1) {
                             etaBetterMines = 700;
                         }
@@ -541,7 +541,7 @@ void AddMinesToBlockedQueues(APPSESSION &app) {
                         AddItemToQueue(app, iobjAlchemy, 1, grobjPlanet, addItemFront);
                         FinishProduction(app, 1);
                     }
-                    PszProductionETA(app, &app.state.sel.pl, app.state.sel.pl.lpplprod, iobjFactory, &etaBetterAlchemy, nullptr);
+                    etaBetterAlchemy = PszProductionETA(app, &app.state.sel.pl, app.state.sel.pl.lpplprod, iobjFactory).etaFirst;
                     if (etaBetterAlchemy == -1) {
                         etaBetterAlchemy = 700;
                     }

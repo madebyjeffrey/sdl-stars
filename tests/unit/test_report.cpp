@@ -22,7 +22,6 @@ static void test_ReportLabels_owned_results(void) {
         ORDER rgord[2];
     } storage{};
     FLEET fl{};
-    int16_t icr;
 
     TEST_ASSERT(FStarsTestInit(app));
     fl.lpplord = &storage.orders;
@@ -32,21 +31,31 @@ static void test_ReportLabels_owned_results(void) {
     storage.rgord[0].grTask = grTaskLayMines;
     storage.rgord[0].tlm().cTime = 1;
     const auto szDest = PszGetDestName(app, &fl, nullptr);
-    const auto szTask = PszGetTaskName(app, &fl, &icr);
-    TEST_CHECK(icr == -1);
+    const auto szTask = PszGetTaskName(app, &fl);
+    TEST_CHECK(szTask.icr == -1);
     storage.rgord[0].grTask = grTaskAutoRoute;
-    const auto szNext = PszGetTaskName(app, &fl, &icr);
+    const auto szNext = PszGetTaskName(app, &fl);
     strcpy(app.state.szWork, "unrelated drawing text");
     TEST_CHECK(strcmp(szDest.data(), "(Delayed)") == 0);
-    TEST_CHECK(strcmp(szTask.data(), "Lay Mine Field  2y") == 0);
-    TEST_CHECK(strcmp(szNext.data(), "Route") == 0);
+    TEST_CHECK(strcmp(szTask.sz.data(), "Lay Mine Field  2y") == 0);
+    TEST_CHECK(strcmp(szNext.sz.data(), "Route") == 0);
     TEST_CHECK(strcmp(TextIO().pfnCompressed(app, idsLayMineField).data(), "Lay Mine Field") == 0);
+    fl.cord = 1;
+    for (int i = 0; i < 5; i++) {
+        storage.rgord[0] = {};
+        storage.rgord[0].fValidTask = 1;
+        storage.rgord[0].grTask = grTaskXfer;
+        storage.rgord[0].txp.rgia[i].SetIAction(iActionUnloadExact);
+        storage.rgord[0].txp.rgia[i].SetCQuan(42);
+        const auto szCargoTask = PszGetTaskName(app, &fl);
+        TEST_CHECK(szCargoTask.icr == i);
+        TEST_CHECK(std::string_view(szCargoTask.sz.data()) == (i == 4 ? "Unload Exactly 42mg" : "Unload Exactly 42kT"));
+    }
 }
 
 static std::int16_t etaLabelFirst, etaLabelLast;
-static void EstimateLabel(APPSESSION &, PLANET *, PLPROD *, ProdItemType, std::int16_t *piFirst, std::int16_t *piLast) {
-    *piFirst = etaLabelFirst;
-    *piLast = etaLabelLast;
+static PRODUCTIONESTIMATE EstimateLabel(APPSESSION &, PLANET *, PLPROD *, ProdItemType) {
+    return {etaLabelFirst, etaLabelLast};
 }
 static std::string SzLabelBytes(const char *psz) { return psz; }
 static void test_ProductionLabel_contract(void) {
@@ -60,7 +69,6 @@ static void test_ProductionLabel_contract(void) {
     PLANET pl{};
     SHDEF rgshdef[2]{};
     SHDEF *lpshdefSav, *lpshdefSBSav;
-    std::int16_t etaFirst, etaLast;
     struct CASE { std::int16_t first, last; ProdItemType item; const char *psz; };
     const CASE rgCases[] = {
         {100, 100, iobjMine, "Unknown"}, {100, 100, mdIdleFactory, "Never"},
@@ -78,12 +86,13 @@ static void test_ProductionLabel_contract(void) {
     for (const auto &cs : rgCases) {
         etaLabelFirst = cs.first; etaLabelLast = cs.last;
         storage.rgprod[0].iItem = cs.item;
-        TEST_CHECK(SzLabelBytes(PszProductionETA(app, &pl, nullptr, iobjMine, &etaFirst, &etaLast).data()) == cs.psz);
+        const auto eta = PszProductionETA(app, &pl, nullptr, iobjMine);
+        TEST_CHECK(SzLabelBytes(eta.sz.data()) == cs.psz);
         TEST_MSG("expected [%s], got [%s]", cs.psz, app.state.szWork);
-        TEST_CHECK(etaFirst == cs.first && etaLast == cs.last);
+        TEST_CHECK(eta.etaFirst == cs.first && eta.etaLast == cs.last);
         TEST_CHECK(std::string_view(app.state.szWork) == cs.psz);
     }
-    const auto szETA = PszProductionETA(app, &pl, nullptr, iobjMine, nullptr, nullptr);
+    const auto szETA = PszProductionETA(app, &pl, nullptr, iobjMine);
     storage.q.iprodMac = 0;
     TEST_CHECK(SzLabelBytes(PszProdQueueTop(app, &pl, nullptr).data()) == "      --- Queue is Empty ---");
     storage.q.iprodMac = 1;
@@ -117,7 +126,7 @@ static void test_ProductionLabel_contract(void) {
     TEST_CHECK(SzLabelBytes(PszNameProdItem(app, &storage.rgprod[0]).data()).empty());
     TEST_CHECK(SzLabelBytes(PszFleetNameFromWord(app, 0).data()) == "Fleet #1");
     CchCopyUtf8Prefix(std::span{app.state.szWork}, "changed");
-    TEST_CHECK(std::string_view(szETA.data()) == "2 - 4 years");
+    TEST_CHECK(std::string_view(szETA.sz.data()) == "2 - 4 years");
     TEST_CHECK(std::string_view(szTop.data()) == "*\"  12Mines");
     TEST_CHECK(std::string_view(szItem.data()) == "Mines");
     TEST_CHECK(std::string_view(szFleet.data()) == "Scout-\xce\xa9+ #1");
@@ -133,27 +142,30 @@ static void test_ETALabel_contract(void) {
     COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
     struct { PLORD ord; ORDER rgord[2]; } storage{};
     FLEET fl{};
-    std::int16_t cYears;
     TEST_ASSERT(FStarsTestInit(app));
     fl.lpplord = &storage.ord;
     storage.ord.iordMac = storage.ord.iordMax = 2;
     CchCopyUtf8Prefix(std::span{app.state.szWork}, "untouched");
     fl.cord = 1;
-    TEST_CHECK(SzLabelBytes(PszGetETA(app, nullptr, &fl, &cYears).data()) == "-- " && cYears == 0);
+    const auto etaNone = PszGetETA(app, nullptr, &fl);
+    TEST_CHECK(SzLabelBytes(etaNone.sz.data()) == "-- " && etaNone.cYears == 0);
     TEST_CHECK(std::string_view(app.state.szWork) == "untouched");
     fl.cord = 2;
     storage.rgord[1].pt.x = 100; storage.rgord[1].iWarp = 5;
-    TEST_CHECK(SzLabelBytes(PszGetETA(app, nullptr, &fl, &cYears).data()) == "4y" && cYears == 4);
-    const auto szETA = PszGetETA(app, nullptr, &fl, nullptr);
+    const auto etaTravel = PszGetETA(app, nullptr, &fl);
+    TEST_CHECK(SzLabelBytes(etaTravel.sz.data()) == "4y" && etaTravel.cYears == 4);
+    const auto szETA = PszGetETA(app, nullptr, &fl);
     storage.rgord[1].iWarp = 0;
-    TEST_CHECK(SzLabelBytes(PszGetETA(app, nullptr, &fl, &cYears).data()) == "Never" && cYears == 32000);
+    const auto etaNever = PszGetETA(app, nullptr, &fl);
+    TEST_CHECK(SzLabelBytes(etaNever.sz.data()) == "Never" && etaNever.cYears == 32000);
     storage.rgord[0].fValidTask = 1;
     for (const auto task : {grTaskMerge, grTaskScrap, grTaskLayMines}) {
         storage.rgord[0].grTask = task;
-        TEST_CHECK(SzLabelBytes(PszGetETA(app, nullptr, &fl, &cYears).data()) == "-- " && cYears == 0);
+        const auto etaBlocked = PszGetETA(app, nullptr, &fl);
+        TEST_CHECK(SzLabelBytes(etaBlocked.sz.data()) == "-- " && etaBlocked.cYears == 0);
         TEST_CHECK(std::string_view(app.state.szWork) == "Never");
     }
-    TEST_CHECK(std::string_view(szETA.data()) == "4y");
+    TEST_CHECK(std::string_view(szETA.sz.data()) == "4y");
 }
 
 // The planet dump passed the 32-bit mine and factory counts as two 16-bit

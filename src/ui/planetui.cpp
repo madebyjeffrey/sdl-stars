@@ -798,7 +798,7 @@ void DrawPlanetProduction(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
             c = 0;
             app.state.szWork[0] = 0;
         } else {
-            szDisplayLabel = PszProductionETA(app, ppl, nullptr, static_cast<ProdItemType>(iSel), nullptr, nullptr);
+            szDisplayLabel = PszProductionETA(app, ppl, nullptr, static_cast<ProdItemType>(iSel)).sz;
             psz = szDisplayLabel.data();
             c = std::strlen(psz);
         }

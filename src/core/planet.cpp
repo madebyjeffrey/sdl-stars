@@ -40,7 +40,7 @@ static std::array<char, 360> SzPlanetLabel(std::string_view sz) {
     return szResult;
 }
 
-std::array<char, 360> PszProductionETA(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod, ProdItemType iItem, std::int16_t *etaFirst, std::int16_t *etaLast) {
+PRODUCTIONETARESULT PszProductionETA(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod, ProdItemType iItem) {
     std::int16_t  iTurnEnd;
     std::int16_t  iTurnBegin;
     std::int16_t  c;
@@ -49,7 +49,9 @@ std::array<char, 360> PszProductionETA(APPSESSION &app, PLANET *lppl, PLPROD *lp
     if (!lpplprod) {
         lpplprod = lppl->lpplprod;
     }
-    ResearchIO().pfnEstimate(app, lppl, lpplprod, iItem, &iTurnBegin, &iTurnEnd);
+    const auto estimate = ResearchIO().pfnEstimate(app, lppl, lpplprod, iItem);
+    iTurnBegin = estimate.iFirst;
+    iTurnEnd = estimate.iLast;
     if (iTurnBegin == 100) {
         if (lpplprod && lpplprod->iprodMac > static_cast<std::int16_t>(iItem) && lpplprod->rgprod()[iItem].grobj == grobjPlanet && lpplprod->rgprod()[iItem].iItem < mdIdleFactory) {
             ids = idsUnknown2;
@@ -75,13 +77,7 @@ std::array<char, 360> PszProductionETA(APPSESSION &app, PLANET *lppl, PLPROD *lp
     } else {
         c = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsDDYears).data(), iTurnBegin, iTurnEnd);
     }
-    if (etaFirst) {
-        *etaFirst = iTurnBegin;
-    }
-    if (etaLast) {
-        *etaLast = iTurnEnd;
-    }
-    return SzPlanetLabel(app.state.szWork);
+    return {SzPlanetLabel(app.state.szWork), iTurnBegin, iTurnEnd};
 }
 
 void ChangeMainObjSel(APPSESSION &app, GrobjClass grobjNew, std::int16_t iObjSel) {
@@ -1009,7 +1005,9 @@ std::int16_t FProdItemLine(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod, std:
     lpprod = &lpplprod->rgprod()[iprod];
     szDisplayLabel = PszNameProdItem(app, lpprod);
     psz = szDisplayLabel.data();
-    ResearchIO().pfnEstimate(app, lppl, lpplprod, static_cast<ProdItemType>(iprod), &etaFirst, &etaLast);
+    const auto estimate = ResearchIO().pfnEstimate(app, lppl, lpplprod, static_cast<ProdItemType>(iprod));
+    etaFirst = estimate.iFirst;
+    etaLast = estimate.iLast;
     if ((etaFirst == 0 && etaLast == 0) || (etaFirst == -1 && etaLast == -1)) {
         if (!fShowNever)
             return 0;

@@ -89,7 +89,7 @@ std::int16_t FDestIsWP0(FLEET *lpfl) {
     return 1;
 }
 
-std::array<char, 360> PszGetETA(APPSESSION &app, HDC hdc, FLEET *lpfl, std::int16_t *pcYears) {
+FLEETETARESULT PszGetETA(APPSESSION &app, HDC hdc, FLEET *lpfl) {
     POINT16 pt;
     std::int16_t c;
     std::int16_t i;
@@ -123,27 +123,21 @@ std::array<char, 360> PszGetETA(APPSESSION &app, HDC hdc, FLEET *lpfl, std::int1
         if (hdc && EstFuelUse(app, lpfl, 0, ord.iWarp, -1, 0) > lpfl->rgwtMin[4]) {
             SetHdcTextColor(hdc, 0xff);
         }
-        if (pcYears) {
-            psz = app.state.szWork;
-            c = 0;
-            for (; *psz >= '0' && *psz <= '9'; psz++) {
-                c = 10 * c + (*psz - '0');
-            }
-            if (c == 0) {
-                c = 32000;
-            }
-            *pcYears = c;
+        psz = app.state.szWork;
+        c = 0;
+        for (; *psz >= '0' && *psz <= '9'; psz++) {
+            c = 10 * c + (*psz - '0');
         }
-        return SzReportLabel(app.state.szWork);
+        if (c == 0) {
+            c = 32000;
+        }
+        return {SzReportLabel(app.state.szWork), c};
     }
 LNoETA:
-    if (pcYears) {
-        *pcYears = 0;
-    }
-    return SzReportLabel(app.state.szDblDash);
+    return {SzReportLabel(app.state.szDblDash), 0};
 }
 
-std::array<char, 360> PszGetTaskName(APPSESSION &app, FLEET *lpfl, std::int16_t *picr) {
+TASKNAMERESULT PszGetTaskName(APPSESSION &app, FLEET *lpfl) {
     std::array<char, cchCatalogText> szCatalogPsz{};
     std::int16_t        icr;
     StringId       ids;
@@ -156,7 +150,6 @@ std::array<char, 360> PszGetTaskName(APPSESSION &app, FLEET *lpfl, std::int16_t 
 
     icr = -1;
     ord = lpfl->lpplord->rgord()[0];
-    *picr = -1;
     if (ord.fValidTask) {
         switch (ord.grTask) {
         case grTaskXfer:
@@ -183,7 +176,7 @@ LShowTask:
         case grTaskXfer:
             for (i = 0; i < 4; i++) {
                 if (app.state.vrgZip[i].fValid && std::memcmp(&app.state.vrgZip[i], &ord.txp, 10) == 0)
-                    return SzReportLabel(app.state.vrgZip[i].szName);
+                    return {SzReportLabel(app.state.vrgZip[i].szName), icr};
             }
             ids = idsAction;
             iZip = -1;
@@ -211,7 +204,7 @@ LShowTask:
                         case iActionWaitPercent:
                             iZip = 2;
                         }
-                        return SzReportLabel(app.state.rgszZipOrder[iZip]);
+                        return {SzReportLabel(app.state.rgszZipOrder[iZip]), icr};
                     }
                 }
             }
@@ -223,10 +216,9 @@ LShowTask:
                 }
             }
             if (ids == idsAction) {
-                return SzReportLabel(TextIO().pfnCompressed(app, idsTransport).data());
+                return {SzReportLabel(TextIO().pfnCompressed(app, idsTransport).data()), icr};
             }
             opOrd = static_cast<XferActionType>(ord.txp.rgia[icr].iAction());
-            *picr = icr;
             fPercent = 0;
             switch (opOrd) {
             case iActionLoadDunnage:
@@ -236,7 +228,7 @@ LShowTask:
                 /* fallthrough */
             case iActionLoadAll:
             case iActionUnloadAll:
-                return SzReportLabel(TextIO().pfnCompressed(app, ids).data());
+                return {SzReportLabel(TextIO().pfnCompressed(app, ids).data()), icr};
             case iActionFillPercent:
             case iActionWaitPercent:
                 fPercent = 1;
@@ -252,9 +244,9 @@ LShowTask:
                 } else {
                     CchSprintf(app.state.szWork, icr == 4 ? "%s %dmg" : "%s %dkT", psz, ord.txp.rgia[icr].cQuan());
                 }
-                return SzReportLabel(app.state.szWork);
+                return {SzReportLabel(app.state.szWork), icr};
             default:
-                return SzReportLabel(app.state.szDblDash);
+                return {SzReportLabel(app.state.szDblDash), icr};
             }
         case grTaskLayMines:
             if (ord.tlm().cTime < 5) {
@@ -262,20 +254,20 @@ LShowTask:
             } else {
                 TextIO().pfnCchGetString(app, ids, std::span{app.state.szWork});
             }
-            return SzReportLabel(app.state.szWork);
+            return {SzReportLabel(app.state.szWork), icr};
         case grTaskPatrol:
             if (ord.tptl().iDist < 11) {
                 CchSprintf(app.state.szWork, "%s  %dly", TextIO().pfnCompressed(app, ids).data(), (ord.tptl().iDist + 1) * 50);
             } else {
                 TextIO().pfnCchGetString(app, ids, std::span{app.state.szWork});
             }
-            return SzReportLabel(app.state.szWork);
+            return {SzReportLabel(app.state.szWork), icr};
         case grTaskAutoRoute:
         default:
-            return SzReportLabel(TextIO().pfnCompressed(app, ids).data());
+            return {SzReportLabel(TextIO().pfnCompressed(app, ids).data()), icr};
         }
     }
-    return SzReportLabel(app.state.szDblDash);
+    return {SzReportLabel(app.state.szDblDash), icr};
 }
 
 void DumpUniverse(APPSESSION &app) {
@@ -654,7 +646,7 @@ void DumpFleets(APPSESSION &app) {
                     CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, lpfl->iPlayer + 1).data());
                     RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm))));
                     if (lpfl->cord > 1) {
-                        CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszGetETA(app, nullptr, lpfl, nullptr).data());
+                        CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszGetETA(app, nullptr, lpfl).sz.data());
                     } else {
                         szForm[1] = '0';
                         szForm[2] = 0;
@@ -682,7 +674,7 @@ void DumpFleets(APPSESSION &app) {
                     CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, i).data());
                     RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm))));
                     if (lpfl->det == detAll) {
-                        CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszGetTaskName(app, lpfl, &i).data());
+                        CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszGetTaskName(app, lpfl).sz.data());
                     } else {
                         szForm[1] = 0;
                     }

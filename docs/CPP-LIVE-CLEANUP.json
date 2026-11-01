@@ -821,7 +821,8 @@
         "readonly-definition-line-views-and-local-owned-bytes",
         "owned-legacy-race-password-result",
         "fixed-library-name-modal-and-suggestion-views",
-        "readonly-bounded-message-format-and-parameter-views"
+        "readonly-bounded-message-format-and-parameter-views",
+        "named-production-estimate-ETA-and-task-label-results"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -1152,6 +1153,23 @@
           "baseline": "Behavior-neutral for existing application callers. Native/frozen-original baseline bytes and unit goldens unchanged; no scenario/checkpoint moved and no regression export required. File format 2.85, records, field widths, game rules, RNG and binary64 boundaries remain.",
           "remaining": "Post-migration message/cache storage and borrowed-return review, other readonly/text/service protocols, 52 initial copy sites, wrapper formatting, Milestone D and L08 retained-primitive/platform qualification remain active.",
           "receipts": "dist/verification/live-cpp/l06u/"
+        },
+        {
+          "batch": "L06v named production-estimate, ETA and task-label results",
+          "debug_build": "Pass; no warnings. Source/compiler policy covers 158 owned sources, 159 variants and 161 standalone headers in both orders.",
+          "desktop": "154/154, including all 29 leak checks, available SDL tutorial checkpoints, report/cargo vectors, independent production-forecast and research witnesses, file/library and report workflows.",
+          "host_units": "29/29 in Release.",
+          "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+          "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+          "windows_syntax": "147/147 production translation units; four actual report/forecast/research consumer/provider test variants, with the final forecast test rechecked separately, pass strict MinGW C++20.",
+          "windows_runtime": "Actual optimized cross-built Windows test_report executable passes all five isolated cases under Wine: production labels/counts, fleet ETA sentinels, owned task labels/all five cargo indices, mine/factory columns and dump goldens. This is Windows ABI/CRT execution under Wine, not native Windows SDL qualification.",
+          "characterization": "Parent production passes all five task cargo-index/name vectors and existing production/fleet ETA branch and ownership checks. Final full suites and Windows execution pass them with named fields.",
+          "witness_migration": "All 25 independent forecast calls use returned values. Two old alias cases now inspect distinct fields; all six injected failure stages retain exact callback/heap/lifetime checks and verify no returned assignment on an exception. The first focused run caught the second stale alias-only expectation; it was corrected to the independent first/last result, then focused 3/3 and full 154/154 passed. No production arithmetic was changed to fit an obsolete pointer alias.",
+          "effects": "Four API families and six numeric output pointers retired across all 17 real production calls. Both actual estimate providers return the new type directly. Signed 16-bit fields, resource lowwords, sentinel meanings, simulation/formatting order, HDC colors, scratch/cache writes and comparisons remain; unused result projections in FLoadGame and DumpFleets are discarded. No actual caller read partial outputs after exceptions or aliased its two fields.",
+          "baseline": "Behavior-neutral for actual callers; no game rule, RNG/tie/rounding boundary, wire layout, catalog, saved field or checkpoint change. Native and frozen-original baseline bytes unchanged. No regression export required.",
+          "platform": "Full Linux/Windows CI run 41343668047 targets parent bba10904. At local verification time its Linux host, resource sanitizer and independent witness jobs passed; desktop jobs remained live. Final revision still requires actual platform qualification.",
+          "remaining": "31 tracked initial raw-copy sites plus other readonly/buffer service APIs, scratch-storage/borrowed-return review, wrapper formatting, typed file selection (Milestone D), and L08 final inventory/platform qualification remain open.",
+          "receipts": "dist/verification/live-cpp/l06v/"
         }
       ],
       "roman_output": {
@@ -1292,6 +1310,19 @@
           "PszFormatIds/TEXTIO.pfnFormat(APPSESSION &, StringId, span<const int16_t>) -> array<char,256>"
         ],
         "production_calls": 87,
+        "evidence": "docs/CPP-LIVE-OWNED-TEXT.json"
+      },
+      "production_label_results": {
+        "status": "complete; locally verified; platform qualification pending",
+        "parent": "bba10904",
+        "interfaces": [
+          "EstimateItemProdSched/RESEARCHIO.pfnEstimate -> PRODUCTIONESTIMATE",
+          "PszProductionETA -> PRODUCTIONETARESULT",
+          "PszGetETA -> FLEETETARESULT",
+          "PszGetTaskName -> TASKNAMERESULT"
+        ],
+        "production_calls": 17,
+        "out_parameters_removed": 6,
         "evidence": "docs/CPP-LIVE-OWNED-TEXT.json"
       }
     },

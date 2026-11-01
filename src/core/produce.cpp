@@ -463,7 +463,8 @@ void GetProductionCosts(APPSESSION &app, PLANET *lppl, PROD *lpprod, std::uint32
     return;
 }
 
-void EstimateItemProdSched(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod, ProdItemType iItem, std::int16_t *piFirst, std::int16_t *piLast) {
+PRODUCTIONESTIMATE EstimateItemProdSched(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod, ProdItemType iItem) {
+    PRODUCTIONESTIMATE estimate;
     std::int32_t    cResearch;
     PLANET     pl;
     std::int32_t    rglQuan[3];
@@ -488,8 +489,8 @@ void EstimateItemProdSched(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod, Prod
     pl.lpplprod->iprodMac = lpplprod->iprodMac;
     iMac = lpplprod->iprodMac;
     prodPartial.cItem = 0;
-    *piLast = 0;
-    *piFirst = 0;
+    estimate.iLast = 0;
+    estimate.iFirst = 0;
     for (iPass = 1; iPass < 100; iPass++) {
         ColonyIO().pfnEstimateMining(app, &pl, rglQuan, -1, 1);
         for (j = 0; j < 3; j++) {
@@ -513,8 +514,8 @@ void EstimateItemProdSched(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod, Prod
                 if (lpprod->iItem == iobjAlchemy && lpprod->grobj == grobjPlanet) {
                     if (i < iMac - 1) {
                         if (i == iItem) {
-                            *piLast = -1;
-                            *piFirst = -1;
+                            estimate.iLast = -1;
+                            estimate.iFirst = -1;
                             goto LCleanUp;
                         }
                         fAlchemy = 1;
@@ -525,17 +526,17 @@ void EstimateItemProdSched(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod, Prod
                 cBuilt = ProductionIO().pfnBuild(app, &pl, lpprod, i == -1 ? nullptr : &prodPartial, rgRes, fAlchemy, &mdStatusRaw, 0);
                 mdStatus = static_cast<mdProdStat>(mdStatusRaw);
                 if (iItem == i) {
-                    if (cBuilt > 0 && *piFirst == 0) {
-                        *piFirst = iPass;
+                    if (cBuilt > 0 && estimate.iFirst == 0) {
+                        estimate.iFirst = iPass;
                     }
                     if (mdStatus == mdProdStatSkippedAuto) {
-                        if (*piFirst != 0) {
-                            *piLast = iPass - 1;
+                        if (estimate.iFirst != 0) {
+                            estimate.iLast = iPass - 1;
                         }
                         goto LCleanUp;
                     }
                     if (mdStatus == mdProdStatComplete || mdStatus == mdProdStatCompleteAuto) {
-                        *piLast = iPass;
+                        estimate.iLast = iPass;
                         goto LCleanUp;
                     }
                 }
@@ -556,9 +557,9 @@ void EstimateItemProdSched(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod, Prod
             }
         }
         if (static_cast<std::int16_t>(iItem) < iobjMine) {
-            *piFirst = LOWORD(rgRes[3]);
+            estimate.iFirst = LOWORD(rgRes[3]);
             if (iItem == static_cast<ProdItemType>(iprodEstimateResearchResources)) {
-                *piFirst += LOWORD(cResearch);
+                estimate.iFirst += LOWORD(cResearch);
             }
             goto LCleanUp;
         }
@@ -567,13 +568,13 @@ void EstimateItemProdSched(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod, Prod
         }
         PlanetQueryIO().pfnGrowth(app, &pl, 1);
     }
-    if (*piFirst == 0) {
-        *piFirst = 100;
+    if (estimate.iFirst == 0) {
+        estimate.iFirst = 100;
     }
-    *piLast = 100;
+    estimate.iLast = 100;
 LCleanUp:
     if (pl.lpplprod) {
         FreePl(app, pl.lpplprod);
     }
-    return;
+    return estimate;
 }

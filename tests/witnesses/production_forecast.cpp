@@ -298,8 +298,8 @@ static int live(void) {
         n += heap[i].live;
     return n;
 }
-static void estimate(APPSESSION &app, PLPROD *q, uint16_t request, int16_t *first, int16_t *last) {
-    EstimateItemProdSched(app, &original, q, static_cast<ProdItemType>(request), first, last);
+static PRODUCTIONESTIMATE estimate(APPSESSION &app, PLPROD *q, uint16_t request) {
+    return EstimateItemProdSched(app, &original, q, static_cast<ProdItemType>(request));
 }
 int main(void) {
 #ifdef STARS_UI_SDL
@@ -345,13 +345,13 @@ int main(void) {
     app.state.rglpfl = fleetPointers;
     orders = LpStartPl<PLORD, ORDER>(orderBytes, sizeof(orderBytes));
     static_assert(sizeof(PROD) == 4 && sizeof(PLPROD) == 4 && offsetof(PLANET, lpplprod) == 52, "native forecast layout");
-    int16_t first, last;
+    PRODUCTIONESTIMATE result;
     reset(app);
     original.lpplprod = queue(app, 0, 0);
     PLANET before = original;
     begin();
-    estimate(app, NULL, 0, &first, &last);
-    CHECK(first == 100 && last == 100 && year == 99 && growths == 99 && !builds && frees == 1 && allocs == 1);
+    result = estimate(app, NULL, 0);
+    CHECK(result.iFirst == 100 && result.iLast == 100 && year == 99 && growths == 99 && !builds && frees == 1 && allocs == 1);
     CHECK(memcmp(&before, &original, sizeof(before)) == 0);
     reset(app);
     original.lpplprod = queue(app, 255, 255);
@@ -359,16 +359,16 @@ int main(void) {
         original.lpplprod->rgprod()[i] = row(1, 0, 2);
     script = 1;
     begin();
-    estimate(app, NULL, 254, &first, &last);
-    CHECK(first == 1 && last == 1 && builds == 255 && !growths);
+    result = estimate(app, NULL, 254);
+    CHECK(result.iFirst == 1 && result.iLast == 1 && builds == 255 && !growths);
     reset(app);
     original.lpplprod = queue(app, 1, 1);
     original.lpplprod->rgprod()[0] = row(1, 7, 1);
     before = original;
     PROD prior = original.lpplprod->rgprod()[0];
     begin();
-    estimate(app, NULL, 0, &first, &last);
-    CHECK(first == 1 && last == 1 && year == 1 && builds == 1 && growths == 0 && lastPlanet.cFactories == 0);
+    result = estimate(app, NULL, 0);
+    CHECK(result.iFirst == 1 && result.iLast == 1 && year == 1 && builds == 1 && growths == 0 && lastPlanet.cFactories == 0);
     CHECK(memcmp(&before, &original, sizeof(before)) == 0 && memcmp(&prior, original.lpplprod->rgprod(), 4) == 0);
     for (unsigned status = 0; status < 65536; status++) {
         reset(app);
@@ -378,9 +378,9 @@ int main(void) {
         script = 2;
         wordStatus = status;
         begin();
-        estimate(app, NULL, 0, &first, &last);
+        result = estimate(app, NULL, 0);
         int early = status <= 2, breaks = (int16_t)status >= mdProdStatSome;
-        CHECK(first == 1 && last == (status == 2 ? 0 : early ? 1 : 100));
+        CHECK(result.iFirst == 1 && result.iLast == (status == 2 ? 0 : early ? 1 : 100));
         CHECK(year == (early ? 1 : 99) && growths == (early ? 0 : 99) && builds == (early ? 1 : 99 * (breaks ? 1 : 2)) && frees == 1);
     }
     for (int yearDone = 1; yearDone <= 99; yearDone++)
@@ -394,8 +394,8 @@ int main(void) {
                 terminalStatus = status;
                 forcedBuilt = built;
                 begin();
-                estimate(app, NULL, 0, &first, &last);
-                CHECK(year == yearDone && first == (built ? yearDone : 0) && last == (status == 2 ? (built ? yearDone - 1 : 0) : yearDone));
+                result = estimate(app, NULL, 0);
+                CHECK(year == yearDone && result.iFirst == (built ? yearDone : 0) && result.iLast == (status == 2 ? (built ? yearDone - 1 : 0) : yearDone));
                 CHECK(growths == yearDone - 1 && frees == 1);
             }
     reset(app);
@@ -403,8 +403,8 @@ int main(void) {
     original.lpplprod->rgprod()[0] = row(1, 0, 2);
     script = 3;
     begin();
-    estimate(app, NULL, 0, &first, &last);
-    CHECK(first == 1 && last == 1 && year == 2 && growths == 1);
+    result = estimate(app, NULL, 0);
+    CHECK(result.iFirst == 1 && result.iLast == 1 && year == 2 && growths == 1);
     for (unsigned request = 32768; request < 65536; request++)
         for (int suppress = 0; suppress < 2; suppress++) {
             reset(app);
@@ -413,9 +413,9 @@ int main(void) {
             resource = (int16_t)request;
             app.state.rgplr[0].pctResearch = 33;
             begin();
-            estimate(app, NULL, request, &first, &last);
+            result = estimate(app, NULL, request);
             int32_t reserved = suppress ? 0 : (int32_t)resource * 33 / 100;
-            CHECK(first == (int16_t)((int32_t)resource - reserved + (request == 65535 ? reserved : 0)) && last == 0);
+            CHECK(result.iFirst == (int16_t)((int32_t)resource - reserved + (request == 65535 ? reserved : 0)) && result.iLast == 0);
             CHECK(year == 1 && !growths && !builds && frees == 1);
         }
     for (int pct = -128; pct <= 127; pct++) {
@@ -424,8 +424,8 @@ int main(void) {
         resource = -32768;
         app.state.rgplr[0].pctResearch = pct;
         begin();
-        estimate(app, NULL, 65534, &first, &last);
-        CHECK(first == (int16_t)(resource - (int32_t)resource * pct / 100) && last == 0);
+        result = estimate(app, NULL, 65534);
+        CHECK(result.iFirst == (int16_t)(resource - (int32_t)resource * pct / 100) && result.iLast == 0);
     }
     reset(app);
     original.lpplprod = queue(app, 1, 1);
@@ -434,8 +434,8 @@ int main(void) {
     terminalYear = 100;
     firstYear = 2;
     begin();
-    estimate(app, NULL, 0, &first, &last);
-    CHECK(first == 2 && last == 100 && year == 99 && growths == 99);
+    result = estimate(app, NULL, 0);
+    CHECK(result.iFirst == 2 && result.iLast == 100 && year == 99 && growths == 99);
     reset(app);
     original.lpplprod = queue(app, 1, 1);
     original.lpplprod->rgprod()[0] = row(1, 0, 2);
@@ -443,16 +443,16 @@ int main(void) {
     terminalYear = 100;
     firstYear = 2;
     begin();
-    first = 0;
-    estimate(app, NULL, 0, &first, &first);
-    CHECK(first == 100);
+    result.iFirst = 0;
+    result = estimate(app, NULL, 0);
+    CHECK(result.iFirst == 2 && result.iLast == 100);
     reset(app);
     original.lpplprod = queue(app, 0, 0);
     resource = 32767;
     app.state.rgplr[0].pctResearch = 0;
     begin();
-    estimate(app, NULL, 65534, &first, &first);
-    CHECK(first == 32767);
+    result = estimate(app, NULL, 65534);
+    CHECK(result.iFirst == 32767 && result.iLast == 0);
     reset(app);
     original.lpplprod = queue(app, 3, 3);
     original.lpplprod->rgprod()[0] = row(1, 3, 1);
@@ -460,18 +460,18 @@ int main(void) {
     original.lpplprod->rgprod()[2] = row(1, 0, 2);
     script = 1;
     begin();
-    estimate(app, NULL, 0, &first, &last);
-    CHECK(first == -1 && last == -1 && !builds && !growths && frees == 1);
+    result = estimate(app, NULL, 0);
+    CHECK(result.iFirst == -1 && result.iLast == -1 && !builds && !growths && frees == 1);
     begin();
-    estimate(app, NULL, 2, &first, &last);
-    CHECK(first == 1 && last == 1 && builds == 1 && tracedIndex[0] == 2 && tracedAlchemy[0]);
+    result = estimate(app, NULL, 2);
+    CHECK(result.iFirst == 1 && result.iLast == 1 && builds == 1 && tracedIndex[0] == 2 && tracedAlchemy[0]);
     reset(app);
     original.lpplprod = queue(app, 1, 1);
     original.lpplprod->rgprod()[0] = row(1, 3, 1);
     resource = resourceLater = 0;
     begin();
-    estimate(app, NULL, 65534, &first, &last);
-    CHECK(first == 0 && last == 0 && tracedCount[0] == 1020 && tracedItem[0] == 3 && builds == 1);
+    result = estimate(app, NULL, 65534);
+    CHECK(result.iFirst == 0 && result.iLast == 0 && tracedCount[0] == 1020 && tracedItem[0] == 3 && builds == 1);
     reset(app);
     original.lpplprod = queue(app, 1, 1);
     original.lpplprod->rgprod()[0] = row(1, 1, 1);
@@ -481,8 +481,8 @@ int main(void) {
     unitOre = 1;
     original.rgwtMin[0] = original.rgwtMin[1] = original.rgwtMin[2] = 100;
     begin();
-    estimate(app, NULL, 0, &first, &last);
-    CHECK(first == 2 && last == 2 && builds == 3 && growths == 1 && lastPlanet.cFactories == 1 && original.cFactories == 0);
+    result = estimate(app, NULL, 0);
+    CHECK(result.iFirst == 2 && result.iLast == 2 && builds == 3 && growths == 1 && lastPlanet.cFactories == 1 && original.cFactories == 0);
     CHECK(tracedIndex[0] == 0 && tracedIndex[1] == -1 && tracedIndex[2] == 0 && tracedItem[1] == 7 && tracedPct[1] == 59 && tracedUnused[1] == 31);
     CHECK(tracedPartial[0] && !tracedPartial[1] && tracedPartial[2]);
     reset(app);
@@ -492,7 +492,7 @@ int main(void) {
     original.cMines = 4095;
     script = 4;
     begin();
-    estimate(app, NULL, 65534, &first, &last);
+    result = estimate(app, NULL, 65534);
     CHECK(lastPlanet.cMines == 2 && !lastPlanet.cFactories && !growths);
     reset(app);
     original.lpplprod = queue(app, 1, 1);
@@ -500,8 +500,8 @@ int main(void) {
     resource = resourceLater = 100;
     app.state.gd.fGeneratingTurn = 1;
     begin();
-    estimate(app, NULL, 0, &first, &last);
-    CHECK(first == 1 && last == 1 && messages == 1 && frees == 1);
+    result = estimate(app, NULL, 0);
+    CHECK(result.iFirst == 1 && result.iLast == 1 && messages == 1 && frees == 1);
     for (int stage = 1; stage <= 5; stage++) {
         reset(app);
         original.lpplprod = queue(app, 1, 1);
@@ -509,45 +509,45 @@ int main(void) {
         failAt = stage;
         script = 1;
         terminalYear = 100;
-        first = 123;
-        last = 456;
+        result.iFirst = 123;
+        result.iLast = 456;
         begin();
         int jumped = 0;
         try {
-            estimate(app, NULL, 0, &first, &last);
+            result = estimate(app, NULL, 0);
             CHECK(0);
         } catch (const FIXTUREESCAPE &error) {
             jumped = error.stage;
         }
         CHECK(jumped == stage && frees == 0 && live() == (stage == 1 ? 1 : 2));
-        CHECK(first == (stage == 1 ? 123 : 0) && last == (stage == 1 ? 456 : 0));
+        CHECK(result.iFirst == 123 && result.iLast == 456);
     }
     reset(app);
     original.lpplprod = queue(app, 256, 2);
-    first = 123;
-    last = 456;
+    result.iFirst = 123;
+    result.iLast = 456;
     begin();
     int jumped = 0;
     try {
-        estimate(app, NULL, 65534, &first, &last);
+        result = estimate(app, NULL, 65534);
         CHECK(0);
     } catch (const FIXTUREESCAPE &error) {
         jumped = error.stage;
     }
-    CHECK(jumped == 6 && guards == 1 && !frees && first == 123 && last == 456);
+    CHECK(jumped == 6 && guards == 1 && !frees && result.iFirst == 123 && result.iLast == 456);
     reset(app);
     original.lpplprod = queue(app, 256, 2);
     spare = 2;
     begin();
-    estimate(app, NULL, 65534, &first, &last);
-    CHECK(first == 100 && last == 0 && frees == 1);
+    result = estimate(app, NULL, 65534);
+    CHECK(result.iFirst == 100 && result.iLast == 0 && frees == 1);
     reset(app);
     original.lpplprod = queue(app, 1, 1);
     original.lpplprod->rgprod()[0] = row(1, 7, 1);
     PLPROD *explicitQ = queue(app, 0, 0);
     begin();
-    estimate(app, explicitQ, 65534, &first, &last);
-    CHECK(!builds && first == 100 && original.lpplprod->rgprod()[0].cItem == 1);
+    result = estimate(app, explicitQ, 65534);
+    CHECK(!builds && result.iFirst == 100 && original.lpplprod->rgprod()[0].cItem == 1);
     reset(app);
     original.lpplprod = queue(app, 0, 0);
     app.state.rgplr[0].pctResearch = 0;
@@ -555,16 +555,16 @@ int main(void) {
     resource = 100;
     mutateResource = 1;
     begin();
-    estimate(app, NULL, 65534, &first, &last);
-    CHECK(queryOwner == 0 && original.iPlayer == 1 && first == 50);
+    result = estimate(app, NULL, 65534);
+    CHECK(queryOwner == 0 && original.iPlayer == 1 && result.iFirst == 50);
     reset(app);
     original.lpplprod = queue(app, 0, 0);
     app.state.rgplr[1].pctResearch = 50;
     resource = 100;
     mutateResource = 2;
     begin();
-    estimate(app, NULL, 65534, &first, &last);
-    CHECK(first == 100);
+    result = estimate(app, NULL, 65534);
+    CHECK(result.iFirst == 100);
     for (int generating = 0; generating < 2; generating++) {
         reset(app);
         original.lpplprod = queue(app, 1, 1);
@@ -585,9 +585,9 @@ int main(void) {
         app.state.cFleet = 1;
         before = original;
         begin();
-        estimate(app, NULL, 65535, &first, &last);
+        result = estimate(app, NULL, 65535);
         CHECK(!fleet.fHereAllTurn && draws == 3 * generating && ((app.state.lRandSeed1 != 7 || app.state.lRandSeed2 != 11) == generating));
-        CHECK(memcmp(&before, &original, sizeof(before)) == 0 && first == 90 && lastPlanet.rgwtMin[0] == 100 + 1 + (generating && drawValues[0] < 50));
+        CHECK(memcmp(&before, &original, sizeof(before)) == 0 && result.iFirst == 90 && lastPlanet.rgwtMin[0] == 100 + 1 + (generating && drawValues[0] < 50));
     }
     reset(app);
     original.lpplprod = queue(app, 0, 0);
@@ -605,7 +605,7 @@ int main(void) {
     app.state.rglpfl[1] = &fleet;
     app.state.cFleet = 2;
     begin();
-    estimate(app, NULL, 65534, &first, &last);
+    result = estimate(app, NULL, 65534);
     CHECK(fleet.fHereAllTurn);
     for (int ar = 0; ar < 2; ar++)
         for (int apply = 0; apply < 2; apply++)

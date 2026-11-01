@@ -1406,16 +1406,19 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
             psz = szReportText.data();
             win32::ExtTextOutA(hdc, prc->left, prc->top, win32::ETO_CLIPPED, prc, psz, std::strlen(psz), nullptr);
             break;
-        case colFleetTask:
-            szReportText = PszGetTaskName(app, lpfl, &i);
+        case colFleetTask: {
+            const auto taskName = PszGetTaskName(app, lpfl);
+            szReportText = taskName.sz;
+            i = taskName.icr;
             psz = szReportText.data();
             if (i != -1) {
                 win32::SetTextColor(hdc, app.lpui->rgcrMinerals[i]);
             }
             win32::ExtTextOutA(hdc, prc->left, prc->top, win32::ETO_CLIPPED, prc, psz, std::strlen(psz), nullptr);
             break;
+        }
         case colFleetEta:
-            szDisplayLabel = PszGetETA(app, hdc, lpfl, nullptr);
+            szDisplayLabel = PszGetETA(app, hdc, lpfl).sz;
             psz = szDisplayLabel.data();
             RightTextOut(app, hdc, prc->right, prc->top, psz, std::strlen(psz), 0);
             break;
@@ -2009,8 +2012,8 @@ TryTier2:
             iRet = 1;
             break;
         case colFleetEta:
-            PszGetETA(app, nullptr, lpfl1, &i1);
-            PszGetETA(app, nullptr, lpfl2, &i2);
+            i1 = PszGetETA(app, nullptr, lpfl1).cYears;
+            i2 = PszGetETA(app, nullptr, lpfl2).cYears;
             iRet = i1 - i2;
             break;
         case colFleetCloak:
@@ -2035,11 +2038,15 @@ TryTier2:
                 break;
             iRet = i1 - i2;
             break;
-        case colFleetTask:
-            szReportText = PszGetTaskName(app, lpfl1, &i1);
+        case colFleetTask: {
+            auto taskName = PszGetTaskName(app, lpfl1);
+            szReportText = taskName.sz;
+            i1 = taskName.icr;
             psz = szReportText.data();
             CchCopyUtf8Prefix(std::span{szT}, psz);
-            szReportText = PszGetTaskName(app, lpfl2, &i2);
+            taskName = PszGetTaskName(app, lpfl2);
+            szReportText = taskName.sz;
+            i2 = taskName.icr;
             psz = szReportText.data();
             iRet = std::strcmp(szT, psz);
             if (iRet < 0) {
@@ -2058,6 +2065,7 @@ TryTier2:
                 break;
             iRet = -1;
             break;
+        }
         case colFleetFuel:
             iSubsort = -1;
             /* fallthrough */

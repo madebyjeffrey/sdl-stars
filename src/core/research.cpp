@@ -38,7 +38,6 @@ std::int32_t ProjectedResearchSpending(APPSESSION &app, std::int32_t pct) {
     std::int32_t lSpend;
     PLANET *lpplMac;
     char    pctSav;
-    std::int16_t cBogus;
 
     lSpend = 0;
     pctSav = app.state.rgplr[app.state.idPlayer].pctResearch;
@@ -51,7 +50,7 @@ std::int32_t ProjectedResearchSpending(APPSESSION &app, std::int32_t pct) {
             if (!lppl->lpplprod || lppl->lpplprod->iprodMac == 0) {
                 lSpend += lRes;
             } else {
-                ResearchIO().pfnEstimate(app, lppl, nullptr, static_cast<ProdItemType>(iprodEstimateResearchResources), &cRes, &cBogus);
+                cRes = ResearchIO().pfnEstimate(app, lppl, nullptr, static_cast<ProdItemType>(iprodEstimateResearchResources)).iFirst;
                 lSpend += cRes;
             }
         }

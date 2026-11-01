@@ -158,7 +158,6 @@ std::int16_t FLoadGame(APPSESSION &app, const char *pszFileName, const char *psz
     std::int16_t  iP;
     std::int16_t  fWorking;
     std::int16_t  iprod;
-    std::int16_t  iFirst;
     std::int16_t  iLast;
     PROD    *lpprod;
     std::int16_t  iWarp;
@@ -781,7 +780,7 @@ LNextTurn:
                         iprod = 0;
                         lpprod = lppl->lpplprod->rgprod();
                         while (iprod < lppl->lpplprod->iprodMac) {
-                            ResearchIO().pfnEstimate(app, lppl, nullptr, static_cast<ProdItemType>(iprod), &iFirst, &iLast);
+                            iLast = ResearchIO().pfnEstimate(app, lppl, nullptr, static_cast<ProdItemType>(iprod)).iLast;
                             if (iLast > 1) {
                                 fWorking = 0;
                                 break;

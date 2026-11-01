@@ -5,7 +5,11 @@
 #include <cstdint>
 
 std::int16_t FGetBestDefensePart(APPSESSION &app, PART *ppart);
-std::array<char, 360> PszProductionETA(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod, ProdItemType iItem, std::int16_t *etaFirst, std::int16_t *etaLast);
+struct PRODUCTIONETARESULT {
+    std::array<char, 360> sz;
+    std::int16_t etaFirst, etaLast;
+};
+PRODUCTIONETARESULT PszProductionETA(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod, ProdItemType iItem);
 void    ChangeMainObjSel(APPSESSION &app, GrobjClass grobjNew, std::int16_t iObjSel);
 void    SelectAdjPlanet(APPSESSION &app, std::int16_t dInc, std::int16_t idPlanet);
 std::int16_t IdFindAdjStarbase(APPSESSION &app, std::int16_t idPlanet, std::int16_t fNext);

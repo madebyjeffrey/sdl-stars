@@ -6253,5 +6253,162 @@
       "remaining": "Post-migration message/cache storage and borrowed-return review, other readonly/text/service protocols, 52 initial copy sites, wrapper formatting, Milestone D and L08 retained-primitive/platform qualification remain active.",
       "receipts": "dist/verification/live-cpp/l06u/"
     }
+  },
+  "production_label_results": {
+    "status": "complete; locally verified; platform qualification pending",
+    "parent": "bba10904",
+    "interfaces": {
+      "EstimateItemProdSched/RESEARCHIO.pfnEstimate": {
+        "result": "PRODUCTIONESTIMATE",
+        "fields": [
+          "int16 iFirst",
+          "int16 iLast"
+        ],
+        "production_calls": 4
+      },
+      "PszProductionETA": {
+        "result": "PRODUCTIONETARESULT",
+        "fields": [
+          "array<char,360> sz",
+          "int16 etaFirst",
+          "int16 etaLast"
+        ],
+        "production_calls": 5
+      },
+      "PszGetETA": {
+        "result": "FLEETETARESULT",
+        "fields": [
+          "array<char,360> sz",
+          "int16 cYears"
+        ],
+        "production_calls": 4
+      },
+      "PszGetTaskName": {
+        "result": "TASKNAMERESULT",
+        "fields": [
+          "array<char,360> sz",
+          "int16 icr"
+        ],
+        "production_calls": 4
+      }
+    },
+    "providers": "Both actual RESEARCHIO estimate providers (report contract and independent research witness) return typed estimates directly. The independent production-forecast witness uses returned values in all 25 calls, with no old output adapter.",
+    "effects": "Keep estimator arithmetic, lowword/resource request cases, simulation loop order, copied queues, native heap failure and cleanup timing, callbacks, RNG/growth, labels/trailing spaces, Work writes, HDC coloring and comparison order. All actual callers had separate local outputs; none consumed partial outputs after an exception. FOpenGame and DumpFleets discard outputs they did not read. New records are call results only; no saved state or record layout changes.",
+    "retired_output_protocol": "Aliased output pointers are no longer expressible. Both former witness alias cases now check their distinct returned fields. A throwing estimator returns no value, so a caller result is unchanged; the witness keeps every fault-stage/callback/heap assertion and checks that value contract instead of partial writes to removed output parameters. Successful estimates and all existing input/script vectors remain.",
+    "characterization": "Before production edits, sdl_test_report passes all five cargo-index/name vectors, the existing eight production ETA branches, fleet ETA numeric sentinels, and owned text retention. Final qualification reruns them and the independent forecast/research witnesses.",
+    "remaining": "Other buffer/service interfaces, post-migration scratch storage and borrowing, remaining raw copies, Milestone D, wrapper formatting and L08 final inventory/platform qualification remain active.",
+    "numeric_projection": "Fleet ETA keeps its existing decimal-prefix parse of the rendered label, with zero for no ETA and 32000 for nonnumeric/zero text. The result now always includes this readonly projection. Production estimates retain signed 16-bit resource/turn values and all sentinel meanings.",
+    "call_sites": {
+      "PszProductionETA": [
+        {
+          "path": "src/core/aiutil.cpp",
+          "line": 508,
+          "code": "etaFirst = PszProductionETA(app, &app.state.sel.pl, app.state.sel.pl.lpplprod, iobjMine).etaFirst;"
+        },
+        {
+          "path": "src/core/aiutil.cpp",
+          "line": 533,
+          "code": "etaBetterMines = PszProductionETA(app, &app.state.sel.pl, app.state.sel.pl.lpplprod, iobjFactory).etaFirst;"
+        },
+        {
+          "path": "src/core/aiutil.cpp",
+          "line": 544,
+          "code": "etaBetterAlchemy = PszProductionETA(app, &app.state.sel.pl, app.state.sel.pl.lpplprod, iobjFactory).etaFirst;"
+        },
+        {
+          "path": "src/ui/planetui.cpp",
+          "line": 801,
+          "code": "szDisplayLabel = PszProductionETA(app, ppl, nullptr, static_cast<ProdItemType>(iSel)).sz;"
+        },
+        {
+          "path": "src/ui/produceui.cpp",
+          "line": 568,
+          "code": "szDisplayLabel = PszProductionETA(app, &app.state.sel.pl, app.state.lpplProdGlob, static_cast<ProdItemType>(LOWORD(lSel))).sz;"
+        }
+      ],
+      "PszGetETA": [
+        {
+          "path": "src/core/report.cpp",
+          "line": 649,
+          "code": "CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszGetETA(app, nullptr, lpfl).sz.data());"
+        },
+        {
+          "path": "src/ui/reportui.cpp",
+          "line": 1421,
+          "code": "szDisplayLabel = PszGetETA(app, hdc, lpfl).sz;"
+        },
+        {
+          "path": "src/ui/reportui.cpp",
+          "line": 2015,
+          "code": "i1 = PszGetETA(app, nullptr, lpfl1).cYears;"
+        },
+        {
+          "path": "src/ui/reportui.cpp",
+          "line": 2016,
+          "code": "i2 = PszGetETA(app, nullptr, lpfl2).cYears;"
+        }
+      ],
+      "PszGetTaskName": [
+        {
+          "path": "src/core/report.cpp",
+          "line": 677,
+          "code": "CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszGetTaskName(app, lpfl).sz.data());"
+        },
+        {
+          "path": "src/ui/reportui.cpp",
+          "line": 1410,
+          "code": "const auto taskName = PszGetTaskName(app, lpfl);"
+        },
+        {
+          "path": "src/ui/reportui.cpp",
+          "line": 2042,
+          "code": "auto taskName = PszGetTaskName(app, lpfl1);"
+        },
+        {
+          "path": "src/ui/reportui.cpp",
+          "line": 2047,
+          "code": "taskName = PszGetTaskName(app, lpfl2);"
+        }
+      ],
+      "pfnEstimate": [
+        {
+          "path": "src/core/file.cpp",
+          "line": 783,
+          "code": "iLast = ResearchIO().pfnEstimate(app, lppl, nullptr, static_cast<ProdItemType>(iprod)).iLast;"
+        },
+        {
+          "path": "src/core/planet.cpp",
+          "line": 52,
+          "code": "const auto estimate = ResearchIO().pfnEstimate(app, lppl, lpplprod, iItem);"
+        },
+        {
+          "path": "src/core/planet.cpp",
+          "line": 1008,
+          "code": "const auto estimate = ResearchIO().pfnEstimate(app, lppl, lpplprod, static_cast<ProdItemType>(iprod));"
+        },
+        {
+          "path": "src/core/research.cpp",
+          "line": 53,
+          "code": "cRes = ResearchIO().pfnEstimate(app, lppl, nullptr, static_cast<ProdItemType>(iprodEstimateResearchResources)).iFirst;"
+        }
+      ]
+    },
+    "verification": {
+      "batch": "L06v named production-estimate, ETA and task-label results",
+      "debug_build": "Pass; no warnings. Source/compiler policy covers 158 owned sources, 159 variants and 161 standalone headers in both orders.",
+      "desktop": "154/154, including all 29 leak checks, available SDL tutorial checkpoints, report/cargo vectors, independent production-forecast and research witnesses, file/library and report workflows.",
+      "host_units": "29/29 in Release.",
+      "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+      "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+      "windows_syntax": "147/147 production translation units; four actual report/forecast/research consumer/provider test variants, with the final forecast test rechecked separately, pass strict MinGW C++20.",
+      "windows_runtime": "Actual optimized cross-built Windows test_report executable passes all five isolated cases under Wine: production labels/counts, fleet ETA sentinels, owned task labels/all five cargo indices, mine/factory columns and dump goldens. This is Windows ABI/CRT execution under Wine, not native Windows SDL qualification.",
+      "characterization": "Parent production passes all five task cargo-index/name vectors and existing production/fleet ETA branch and ownership checks. Final full suites and Windows execution pass them with named fields.",
+      "witness_migration": "All 25 independent forecast calls use returned values. Two old alias cases now inspect distinct fields; all six injected failure stages retain exact callback/heap/lifetime checks and verify no returned assignment on an exception. The first focused run caught the second stale alias-only expectation; it was corrected to the independent first/last result, then focused 3/3 and full 154/154 passed. No production arithmetic was changed to fit an obsolete pointer alias.",
+      "effects": "Four API families and six numeric output pointers retired across all 17 real production calls. Both actual estimate providers return the new type directly. Signed 16-bit fields, resource lowwords, sentinel meanings, simulation/formatting order, HDC colors, scratch/cache writes and comparisons remain; unused result projections in FLoadGame and DumpFleets are discarded. No actual caller read partial outputs after exceptions or aliased its two fields.",
+      "baseline": "Behavior-neutral for actual callers; no game rule, RNG/tie/rounding boundary, wire layout, catalog, saved field or checkpoint change. Native and frozen-original baseline bytes unchanged. No regression export required.",
+      "platform": "Full Linux/Windows CI run 41343668047 targets parent bba10904. At local verification time its Linux host, resource sanitizer and independent witness jobs passed; desktop jobs remained live. Final revision still requires actual platform qualification.",
+      "remaining": "31 tracked initial raw-copy sites plus other readonly/buffer service APIs, scratch-storage/borrowed-return review, wrapper formatting, typed file selection (Milestone D), and L08 final inventory/platform qualification remain open.",
+      "receipts": "dist/verification/live-cpp/l06v/"
+    }
   }
 }
