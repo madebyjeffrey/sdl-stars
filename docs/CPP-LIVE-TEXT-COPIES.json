@@ -1,6 +1,6 @@
 {
   "migration_parent": "d3d3724c",
-  "status": "252 migrated sites complete; remaining text work active",
+  "status": "255 migrated sites complete; remaining text work active",
   "contracts": {
     "display": "Write a terminated complete UTF-8 prefix into the actual destination span; preserve fitting bytes. Views borrow synchronously and overlapping copies use memmove.",
     "append": "Scan only inside the destination span for its NUL. An unterminated nonempty destination is cleared and zero bytes are appended.",
@@ -2493,6 +2493,36 @@
       "original_call": "std::strcpy(pszName, szName)",
       "destination_span": "*pszName",
       "role": "Game name acceptance copies through the modal caller's actual fixed 256-byte span. The view lives until the synchronous dialog closes; existing portable-name/availability decisions precede copying, and cancellation leaves all destination bytes unchanged."
+    },
+    {
+      "path": "src/ui/fileui.cpp",
+      "scope": "AddMRUFile",
+      "baseline_line": 113,
+      "migration_parent": "c80e39c7",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szT, pszFileName)",
+      "destination_span": "CchCopyUtf8(std::span{szT}, pszFileName)",
+      "role": "Build the whole UTF-8 filename/dot/extension within the actual 256-byte path before MRU lookup, row mutation or profile publication. Reject any malformed or over-capacity component without clipping or changing shared state."
+    },
+    {
+      "path": "src/ui/fileui.cpp",
+      "scope": "AddMRUFile",
+      "baseline_line": 114,
+      "migration_parent": "c80e39c7",
+      "operation": "strcat",
+      "original_call": "std::strcat(szT, \".\")",
+      "destination_span": "FAppendUtf8(std::span{szT}, \".\")",
+      "role": "Build the whole UTF-8 filename/dot/extension within the actual 256-byte path before MRU lookup, row mutation or profile publication. Reject any malformed or over-capacity component without clipping or changing shared state."
+    },
+    {
+      "path": "src/ui/fileui.cpp",
+      "scope": "AddMRUFile",
+      "baseline_line": 115,
+      "migration_parent": "c80e39c7",
+      "operation": "strcat",
+      "original_call": "std::strcat(szT, pszExt)",
+      "destination_span": "FAppendUtf8(std::span{szT}, pszExt)",
+      "role": "Build the whole UTF-8 filename/dot/extension within the actual 256-byte path before MRU lookup, row mutation or profile publication. Reject any malformed or over-capacity component without clipping or changing shared state."
     }
   ],
   "remaining_spelling_scope": "Lexical raw-copy spellings, including SDK declarations/definitions; comments/literals excluded with the manifest lexer. Exact counts prevent new raw sites during the remaining migration.",
@@ -2633,27 +2663,6 @@
     {
       "path": "src/ui/createui.cpp",
       "normalized_call": "std::strcpy(app.state.game.szName,app.state.szBase)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/fileui.cpp",
-      "normalized_call": "std::strcat(szT,)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/fileui.cpp",
-      "normalized_call": "std::strcat(szT,pszExt)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/fileui.cpp",
-      "normalized_call": "std::strcpy(szT,pszFileName)",
       "count": 1,
       "status": "pending",
       "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
@@ -3026,6 +3035,30 @@
       "baseline": "Behavior-neutral. Native/frozen-original baseline bytes and unit goldens remain unchanged. No scenario/checkpoint moved; no regression export required.",
       "remaining": "Public library path/result handoffs, other L05 text/const/scratch/wrapper formatting and L06 service interfaces, Milestone D and L08 final reconciliation/platform qualification remain active.",
       "receipts": "dist/verification/live-cpp/l06t/"
+    }
+  },
+  "recent_path_admission": {
+    "status": "complete; verified",
+    "parent": "c80e39c7",
+    "sites": 3,
+    "bug": "The raw join could exceed its 256-byte local destination. Invalid UTF-8 also reached rotation/publication before later copies rejected it.",
+    "reproduction": "A short invalid UTF-8 basename produced nine profile writes in the actual parent-linked state witness; the assertion stops before any oversize vector is executed.",
+    "repair": "Strict whole-copy/append into a local destination span precedes all shared-state effects. Keep the exact dot, filename/extension spelling, existing duplicate handling, row ordering and partial valid-profile-write effects.",
+    "verification": {
+      "batch": "L05v AddMRUFile whole-path admission repair",
+      "debug_build": "Pass, no warnings. Release SDL regression and host builds pass. Source policy covers 158 owned sources, 159 variants and 161 standalone headers in both orders; exact raw-copy inventory passes.",
+      "desktop": "153/153, including the extended actual state witness, all 29 leak checks, library/recent-file workflows and available SDL tutorial checkpoints.",
+      "host_units": "28/28 in Release",
+      "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+      "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+      "windows": "Strict MinGW compilation passes 147/147 owned production units and three affected real witness/workflow consumers. Compilation evidence only; native Windows SDL and Linux final qualification remain pending.",
+      "reproduction": "Before production edits, the actual parent-linked state witness reports nine profile writes for a short malformed UTF-8 basename and fails its no-effects assertion. It stops at that safe short input before any over-capacity vector runs; the old unbounded join overflow is established from source, not claimed as an executed crashing reproduction.",
+      "tests": "After repair, six rejected cases cover malformed basename/extension, truncated UTF-8, combined one-byte overflow, full basename and oversized extension. Every rejection checks zero profile writes plus byte-identical 2304-byte memory and mock-disk snapshots. The existing exact 255-byte Unicode result still promotes and publishes all nine rows. Duplicate handling, row order, missing storage and partial profile-write failures still pass.",
+      "repair": "AddMRUFile builds filename, dot and extension within its actual 256-byte local span using strict whole-copy/append before lookup, row rotation or publication. Any invalid UTF-8 or over-capacity component returns without shared-state effects. Keep the existing dot and filename/extension bytes, no clipping or allocation.",
+      "inventory": "Three raw join sites retired. 255 migrated sites; 53 initial application copy sites remain. Lexical raw spellings total 59, including SDK declarations/definitions.",
+      "baseline": "Intentional UI preference-admission change, documented in CHANGELOG.md and ROADMAP.md. Full native baseline regenerated and compared after every reader completed: 519 matches. No scenario or checkpoint moved; preserved 592 regeneration-only fixture byte differences, leaving native/frozen-original baseline bytes and unit goldens unchanged. Saved layouts/widths, game rules, RNG, tie order, binary64 and host results remain unchanged.",
+      "remaining": "Other L05 path/text/const/scratch/wrapper formatting work, L06 service interfaces and Milestone D, and L08 final reconciliation/platform qualification remain active.",
+      "receipts": "dist/verification/live-cpp/l05v/"
     }
   }
 }

@@ -102,7 +102,8 @@
         "owned-legacy-race-password-result",
         "bounded-ui-preset-roster-label-and-path-copies",
         "bounded-library-MDI-MRU-SDK-and-ZIP-path-copies",
-        "fixed-library-name-modal-and-suggestion-views"
+        "fixed-library-name-modal-and-suggestion-views",
+        "recent-file-whole-path-admission-before-shared-effects"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -416,6 +417,22 @@
           "baseline": "Behavior-neutral. Native/frozen-original baseline bytes and unit goldens remain unchanged. No scenario/checkpoint moved; no regression export required.",
           "remaining": "Public library path/result handoffs, other L05 text/const/scratch/wrapper formatting and L06 service interfaces, Milestone D and L08 final reconciliation/platform qualification remain active.",
           "receipts": "dist/verification/live-cpp/l06t/"
+        },
+        {
+          "batch": "L05v AddMRUFile whole-path admission repair",
+          "debug_build": "Pass, no warnings. Release SDL regression and host builds pass. Source policy covers 158 owned sources, 159 variants and 161 standalone headers in both orders; exact raw-copy inventory passes.",
+          "desktop": "153/153, including the extended actual state witness, all 29 leak checks, library/recent-file workflows and available SDL tutorial checkpoints.",
+          "host_units": "28/28 in Release",
+          "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+          "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+          "windows": "Strict MinGW compilation passes 147/147 owned production units and three affected real witness/workflow consumers. Compilation evidence only; native Windows SDL and Linux final qualification remain pending.",
+          "reproduction": "Before production edits, the actual parent-linked state witness reports nine profile writes for a short malformed UTF-8 basename and fails its no-effects assertion. It stops at that safe short input before any over-capacity vector runs; the old unbounded join overflow is established from source, not claimed as an executed crashing reproduction.",
+          "tests": "After repair, six rejected cases cover malformed basename/extension, truncated UTF-8, combined one-byte overflow, full basename and oversized extension. Every rejection checks zero profile writes plus byte-identical 2304-byte memory and mock-disk snapshots. The existing exact 255-byte Unicode result still promotes and publishes all nine rows. Duplicate handling, row order, missing storage and partial profile-write failures still pass.",
+          "repair": "AddMRUFile builds filename, dot and extension within its actual 256-byte local span using strict whole-copy/append before lookup, row rotation or publication. Any invalid UTF-8 or over-capacity component returns without shared-state effects. Keep the existing dot and filename/extension bytes, no clipping or allocation.",
+          "inventory": "Three raw join sites retired. 255 migrated sites; 53 initial application copy sites remain. Lexical raw spellings total 59, including SDK declarations/definitions.",
+          "baseline": "Intentional UI preference-admission change, documented in CHANGELOG.md and ROADMAP.md. Full native baseline regenerated and compared after every reader completed: 519 matches. No scenario or checkpoint moved; preserved 592 regeneration-only fixture byte differences, leaving native/frozen-original baseline bytes and unit goldens unchanged. Saved layouts/widths, game rules, RNG, tie order, binary64 and host results remain unchanged.",
+          "remaining": "Other L05 path/text/const/scratch/wrapper formatting work, L06 service interfaces and Milestone D, and L08 final reconciliation/platform qualification remain active.",
+          "receipts": "dist/verification/live-cpp/l05v/"
         }
       ],
       "bounded_formatting": {
@@ -480,8 +497,8 @@
         "temperature_commit": "03d8b039",
         "windows_host_test_configuration_commit": "09bb4477",
         "policy": "Actual array/tail spans; complete terminated UTF-8 prefixes; overlapping views supported. Paths/record staging keep separate strict contracts.",
-        "remaining_initial_sites": 56,
-        "remaining_lexical_spellings": 62,
+        "remaining_initial_sites": 53,
+        "remaining_lexical_spellings": 59,
         "inventory_scope": "The initial copy inventory and the current lexical policy differ: the latter also includes SDK declaration/definition spellings. Both remain explicitly accounted for.",
         "enforcement": "The manifest checks exact remaining raw-copy spellings and multiplicities. New or removed raw sites require updating the maintained inventory; migrated sites cannot silently be reintroduced."
       },
@@ -593,6 +610,12 @@
         "evidence": "docs/CPP-LIVE-TEXT-COPIES.json",
         "interfaces": "LibraryNameDlg receives the actual fixed 256-byte span from four synchronous modal callers through IdPromptLibraryName. SuggestRaceFilename, SuggestLibraryName and GetGameLibraryName receive fixed destination spans; char* capacity reconstruction is removed from these helpers.",
         "behavior": "Existing game/race mode state, name sanitization, UTF-8 boundary shortening, collision retries, cancellation, callback/window lifetime and publication remain."
+      },
+      "recent_path_admission": {
+        "status": "complete; verified",
+        "evidence": "docs/CPP-LIVE-TEXT-COPIES.json",
+        "sites": 3,
+        "interface": "AddMRUFile admits a complete UTF-8 path inside its actual 256-byte row budget before mutating MRU or writing preferences; invalid/oversized input has no shared-state effects."
       }
     },
     {

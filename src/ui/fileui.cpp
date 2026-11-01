@@ -110,9 +110,8 @@ void AddMRUFile(APPSESSION &app, const char *pszFileName, const char *pszExt) {
     if (!app.lpui->vrgszMRU) {
         return;
     }
-    std::strcpy(szT, pszFileName);
-    std::strcat(szT, ".");
-    std::strcat(szT, pszExt);
+    // Reject an unrepresentable recent path before rotating or publishing rows.
+    if (CchCopyUtf8(std::span{szT}, pszFileName) < 0 || !FAppendUtf8(std::span{szT}, ".") || !FAppendUtf8(std::span{szT}, pszExt)) return;
     if (_stricmp(szT, app.lpui->vrgszMRU) != 0) {
         for (i = 1; i < 8 && _stricmp(szT, app.lpui->vrgszMRU + 256 * i) != 0; i++) {
         }

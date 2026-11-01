@@ -6,6 +6,13 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `AddMRUFile` now validates the complete UTF-8 recent-file path within its
+  256-byte row before changing the list or writing preferences. The unbounded
+  basename/extension join could overrun its local buffer, and malformed text
+  could still rotate the list and publish nine preference values. Invalid or
+  oversized paths now leave every recent-file row and preference untouched;
+  fitting filenames, file formats and host turn results are unchanged.
+
 - `FLoadGame` now rejects failed size/position queries instead of accepting two
   `-1` error results as matching EOF positions. `CbFileSize` returns an optional
   full-width count, and `StarsCopyFile` rejects an unavailable count before

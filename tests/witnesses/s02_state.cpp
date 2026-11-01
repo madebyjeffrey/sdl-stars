@@ -6,6 +6,7 @@
 #include "callbackcontext.h"
 #include <cstring>
 #include <string>
+#include <array>
 #include "library_path_io.h"
 #include "preferencesui.h"
 #include "profile_text_io.h"
@@ -143,6 +144,24 @@ int main(void) {
     recent(app);
     CHECK(app.state.ini.fStartupFile && app.state.szBase == szLong);
     CHECK(memory[0] == szLong && memory[0][255] == 0 && memory[8][0] == 0);
+    reset(app);
+    struct CASE { std::string szBase, szExt; };
+    const CASE rgRejected[] = {
+        {"\xff", "m1"}, {"base", "\xff"},
+        {std::string(253, 'x'), "m1"}, {std::string(255, 'x'), "m1"},
+        {"base", std::string(252, 'x')}, {"base", "\xe2\x82"}
+    };
+    for (const auto &cs : rgRejected) {
+        reset(app);
+        std::array<char, 2304> rgchBefore, rgchDiskBefore;
+        memcpy(rgchBefore.data(), pszRecentBacking, rgchBefore.size());
+        memcpy(rgchDiskBefore.data(), disk, rgchDiskBefore.size());
+        AddMRUFile(app, cs.szBase.c_str(), cs.szExt.c_str());
+        if (attempts != 0) fprintf(stderr, "Rejected recent path caused %d profile writes\n", attempts);
+        CHECK(attempts == 0);
+        CHECK(memcmp(rgchBefore.data(), pszRecentBacking, rgchBefore.size()) == 0);
+        CHECK(memcmp(rgchDiskBefore.data(), disk, rgchDiskBefore.size()) == 0);
+    }
     reset(app);
     const std::string szBase = std::string(250, 'x') + "\xc3\xa9";
     const std::string szRecent = szBase + ".m1";
