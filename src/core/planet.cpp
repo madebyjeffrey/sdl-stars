@@ -33,7 +33,14 @@ std::int16_t FGetBestDefensePart(APPSESSION &app, PART *ppart) {
     return fRet;
 }
 
-char *PszProductionETA(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod, ProdItemType iItem, std::int16_t *etaFirst, std::int16_t *etaLast) {
+// Preserve the session work text while callers retain an independent label.
+static std::array<char, 360> SzPlanetLabel(std::string_view sz) {
+    std::array<char, 360> szResult{};
+    CchCopyUtf8Prefix(std::span{szResult}, sz);
+    return szResult;
+}
+
+std::array<char, 360> PszProductionETA(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod, ProdItemType iItem, std::int16_t *etaFirst, std::int16_t *etaLast) {
     std::int16_t  iTurnEnd;
     std::int16_t  iTurnBegin;
     std::int16_t  c;
@@ -74,7 +81,7 @@ char *PszProductionETA(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod, ProdItem
     if (etaLast) {
         *etaLast = iTurnEnd;
     }
-    return app.state.szWork;
+    return SzPlanetLabel(app.state.szWork);
 }
 
 void ChangeMainObjSel(APPSESSION &app, GrobjClass grobjNew, std::int16_t iObjSel) {
@@ -291,7 +298,7 @@ std::int16_t IBestTerraform(APPSESSION &app, PLANET *lppl, std::int16_t fHelp) {
     return iBest;
 }
 
-char *PszCalcEnvVar(APPSESSION &app, EnvType iEnv, std::int16_t iVar) {
+std::array<char, 360> PszCalcEnvVar(APPSESSION &app, EnvType iEnv, std::int16_t iVar) {
     switch (iEnv) {
     case Gravity:
     default:
@@ -302,10 +309,10 @@ char *PszCalcEnvVar(APPSESSION &app, EnvType iEnv, std::int16_t iVar) {
     case Radiation:
         CchSprintf(app.state.szWork, "%dmR", iVar);
     }
-    return app.state.szWork;
+    return SzPlanetLabel(app.state.szWork);
 }
 
-char *PszCalcGravity(APPSESSION &app, std::int16_t iGravity) {
+std::array<char, 360> PszCalcGravity(APPSESSION &app, std::int16_t iGravity) {
     std::int16_t d;
     std::int16_t iVal;
 
@@ -319,7 +326,7 @@ char *PszCalcGravity(APPSESSION &app, std::int16_t iGravity) {
         iVal = 10000 / iVal;
     }
     CchSprintf(app.state.szWork, "%d.%02dg", iVal / 100, iVal % 100);
-    return app.state.szWork;
+    return SzPlanetLabel(app.state.szWork);
 }
 
 std::int16_t PctPlanetCapacity(APPSESSION &app, PLANET *lppl) {
@@ -985,8 +992,9 @@ std::int16_t PctCloakFromHuldef(APPSESSION &app, HUL *lphul, std::int16_t iplr, 
 // FProdItemLine formats production queue item iprod as the planet window
 // lists it: a schedule mark, the count and the name. An item that will
 // never be built is marked '&' if fShowNever is set, or is left out
-// (FALSE). PszNameProdItem names the item in szWork.
+// (FALSE). The item name stays owned through the production estimate.
 std::int16_t FProdItemLine(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod, std::int16_t iprod, std::int16_t fShowNever, std::span<char> szLine) {
+    std::array<char, 360> szDisplayLabel{};
     char    ch;
     std::int16_t cItem;
     char   *psz;
@@ -999,7 +1007,8 @@ std::int16_t FProdItemLine(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod, std:
         return 0;
     }
     lpprod = &lpplprod->rgprod()[iprod];
-    psz = PszNameProdItem(app, lpprod);
+    szDisplayLabel = PszNameProdItem(app, lpprod);
+    psz = szDisplayLabel.data();
     ResearchIO().pfnEstimate(app, lppl, lpplprod, static_cast<ProdItemType>(iprod), &etaFirst, &etaLast);
     if ((etaFirst == 0 && etaLast == 0) || (etaFirst == -1 && etaLast == -1)) {
         if (!fShowNever)
@@ -1033,11 +1042,11 @@ std::int16_t FProdItemLine(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod, std:
     return 1;
 }
 
-// PszProdQueueTop returns, in szWork, the first item of lppl's production
+// PszProdQueueTop returns an owned copy of the first item of lppl's production
 // queue (lpplprod, or the planet's own) that will be built, as
 // FProdItemLine formats it, or "Queue is empty". The reports and the
 // planet dump show it.
-char *PszProdQueueTop(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod) {
+std::array<char, 360> PszProdQueueTop(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod) {
     char    szLine[80];
     std::int16_t i;
 
@@ -1051,10 +1060,10 @@ char *PszProdQueueTop(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod) {
         for (i = 0; i < lpplprod->iprodMac; i++) {
             if (FProdItemLine(app, lppl, lpplprod, i, 0, szLine)) {
                 CchCopyUtf8Prefix(std::span{app.state.szWork}, szLine);
-                return app.state.szWork;
+                return SzPlanetLabel(app.state.szWork);
             }
         }
         TextIO().pfnCchGetString(app, idsQueueEmpty, std::span{app.state.szWork});
     }
-    return app.state.szWork;
+    return SzPlanetLabel(app.state.szWork);
 }

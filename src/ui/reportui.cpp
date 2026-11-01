@@ -1167,6 +1167,7 @@ std::int16_t DxReportColHdr(APPSESSION &app, ReportType irpt, std::int16_t iCol,
 }
 
 void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::int16_t irow, std::int16_t icol) {
+    std::array<char, 360> szDisplayLabel{};
     std::array<char, 360> szObjectName{};
     std::array<char, 360> szReportText{};
     std::uint8_t *lpbd;
@@ -1414,7 +1415,8 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
             win32::ExtTextOutA(hdc, prc->left, prc->top, win32::ETO_CLIPPED, prc, psz, std::strlen(psz), nullptr);
             break;
         case colFleetEta:
-            psz = PszGetETA(app, hdc, lpfl, nullptr);
+            szDisplayLabel = PszGetETA(app, hdc, lpfl, nullptr);
+            psz = szDisplayLabel.data();
             RightTextOut(app, hdc, prc->right, prc->top, psz, std::strlen(psz), 0);
             break;
         case colFleetCargo:

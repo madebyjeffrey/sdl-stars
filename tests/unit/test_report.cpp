@@ -7,6 +7,8 @@
 
 #include "stars_test.h"
 #include "text_io.h"
+#include "research_io.h"
+#include <string>
 
 static void test_ReportLabels_owned_results(void) {
 #ifdef STARS_UI_SDL
@@ -41,6 +43,119 @@ static void test_ReportLabels_owned_results(void) {
     TEST_CHECK(strcmp(TextIO().pfnCompressed(app, idsLayMineField).data(), "Lay Mine Field") == 0);
 }
 
+static std::int16_t etaLabelFirst, etaLabelLast;
+static void EstimateLabel(APPSESSION &, PLANET *, PLPROD *, ProdItemType, std::int16_t *piFirst, std::int16_t *piLast) {
+    *piFirst = etaLabelFirst;
+    *piLast = etaLabelLast;
+}
+static std::string SzLabelBytes(const char *psz) { return psz; }
+static void test_ProductionLabel_contract(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    struct { PLPROD q; PROD rgprod[1]; } storage{};
+    PLANET pl{};
+    SHDEF rgshdef[2]{};
+    SHDEF *lpshdefSav, *lpshdefSBSav;
+    std::int16_t etaFirst, etaLast;
+    struct CASE { std::int16_t first, last; ProdItemType item; const char *psz; };
+    const CASE rgCases[] = {
+        {100, 100, iobjMine, "Unknown"}, {100, 100, mdIdleFactory, "Never"},
+        {3, 100, iobjMine, "3 - ??? years"}, {0, 0, iobjMine, "Skipped"},
+        {-1, -1, iobjMine, "As Needed"}, {1, 1, iobjMine, "1 year"},
+        {2, 2, iobjMine, "2 years"}, {2, 4, iobjMine, "2 - 4 years"}
+    };
+    TEST_ASSERT(FStarsTestInit(app));
+    RESEARCHIO io;
+    io.pfnEstimate = EstimateLabel;
+    RESEARCHIOSCOPE scopeResearch(io);
+    pl.lpplprod = &storage.q;
+    storage.q.iprodMac = storage.q.iprodMax = 1;
+    storage.rgprod[0].grobj = grobjPlanet;
+    for (const auto &cs : rgCases) {
+        etaLabelFirst = cs.first; etaLabelLast = cs.last;
+        storage.rgprod[0].iItem = cs.item;
+        TEST_CHECK(SzLabelBytes(PszProductionETA(app, &pl, nullptr, iobjMine, &etaFirst, &etaLast).data()) == cs.psz);
+        TEST_MSG("expected [%s], got [%s]", cs.psz, app.state.szWork);
+        TEST_CHECK(etaFirst == cs.first && etaLast == cs.last);
+        TEST_CHECK(std::string_view(app.state.szWork) == cs.psz);
+    }
+    const auto szETA = PszProductionETA(app, &pl, nullptr, iobjMine, nullptr, nullptr);
+    storage.q.iprodMac = 0;
+    TEST_CHECK(SzLabelBytes(PszProdQueueTop(app, &pl, nullptr).data()) == "      --- Queue is Empty ---");
+    storage.q.iprodMac = 1;
+    storage.rgprod[0].iItem = iobjMine; storage.rgprod[0].cItem = 12;
+    etaLabelFirst = etaLabelLast = 1;
+    TEST_CHECK(SzLabelBytes(PszNameProdItem(app, &storage.rgprod[0]).data()) == "Mines");
+    TEST_CHECK(SzLabelBytes(PszProdQueueTop(app, &pl, nullptr).data()) == "*\"  12Mines");
+    TEST_MSG("queue [%s]", app.state.szWork);
+    const auto szTop = PszProdQueueTop(app, &pl, nullptr);
+    const auto szItem = PszNameProdItem(app, &storage.rgprod[0]);
+    app.state.idPlayer = 0;
+    lpshdefSav = app.state.rglpshdef[0]; lpshdefSBSav = app.state.rglpshdefSB[0];
+    app.state.rglpshdef[0] = rgshdef; app.state.rglpshdefSB[0] = rgshdef;
+    CchCopyUtf8Prefix(std::span{rgshdef[0].hul.szClass}, "Scout-\xce\xa9");
+    CchCopyUtf8Prefix(std::span{app.state.rgshdef[0].hul.szClass}, "Scout-\xce\xa9");
+    TEST_CHECK(SzLabelBytes(PszFleetNameFromWord(app, 0x2000).data()) == "Scout-\xce\xa9+ #1");
+    const auto szFleet = PszFleetNameFromWord(app, 0x2000);
+    storage.rgprod[0].grobj = grobjFleet; storage.rgprod[0].iItem = 0;
+    TEST_CHECK(SzLabelBytes(PszNameProdItem(app, &storage.rgprod[0]).data()) == "Scout-\xce\xa9");
+    storage.rgprod[0].iItem = 16;
+    app.state.sel.pl.fStarbase = 0;
+    TEST_CHECK(SzLabelBytes(PszNameProdItem(app, &storage.rgprod[0]).data()) == "Scout-\xce\xa9");
+    app.state.sel.pl.fStarbase = 1; app.state.sel.pl.isb = 1;
+    rgshdef[0].hul.ihuldef = ihuldefSpaceDock; rgshdef[1].hul.ihuldef = ihuldefSpaceStation;
+    TEST_CHECK(SzLabelBytes(PszNameProdItem(app, &storage.rgprod[0]).data()) == "Scout-\xce\xa9 (downgrade)");
+    rgshdef[1].hul.ihuldef = ihuldefOrbitalFort;
+    TEST_CHECK(SzLabelBytes(PszNameProdItem(app, &storage.rgprod[0]).data()) == "Scout-\xce\xa9 (upgrade)");
+    rgshdef[1].hul.ihuldef = ihuldefSpaceDock;
+    TEST_CHECK(SzLabelBytes(PszNameProdItem(app, &storage.rgprod[0]).data()) == "Scout-\xce\xa9");
+    rgshdef[0].fFree = 1;
+    TEST_CHECK(SzLabelBytes(PszNameProdItem(app, &storage.rgprod[0]).data()).empty());
+    TEST_CHECK(SzLabelBytes(PszFleetNameFromWord(app, 0).data()) == "Fleet #1");
+    CchCopyUtf8Prefix(std::span{app.state.szWork}, "changed");
+    TEST_CHECK(std::string_view(szETA.data()) == "2 - 4 years");
+    TEST_CHECK(std::string_view(szTop.data()) == "*\"  12Mines");
+    TEST_CHECK(std::string_view(szItem.data()) == "Mines");
+    TEST_CHECK(std::string_view(szFleet.data()) == "Scout-\xce\xa9+ #1");
+    app.state.rglpshdef[0] = lpshdefSav; app.state.rglpshdefSB[0] = lpshdefSBSav;
+}
+
+static void test_ETALabel_contract(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    struct { PLORD ord; ORDER rgord[2]; } storage{};
+    FLEET fl{};
+    std::int16_t cYears;
+    TEST_ASSERT(FStarsTestInit(app));
+    fl.lpplord = &storage.ord;
+    storage.ord.iordMac = storage.ord.iordMax = 2;
+    CchCopyUtf8Prefix(std::span{app.state.szWork}, "untouched");
+    fl.cord = 1;
+    TEST_CHECK(SzLabelBytes(PszGetETA(app, nullptr, &fl, &cYears).data()) == "-- " && cYears == 0);
+    TEST_CHECK(std::string_view(app.state.szWork) == "untouched");
+    fl.cord = 2;
+    storage.rgord[1].pt.x = 100; storage.rgord[1].iWarp = 5;
+    TEST_CHECK(SzLabelBytes(PszGetETA(app, nullptr, &fl, &cYears).data()) == "4y" && cYears == 4);
+    const auto szETA = PszGetETA(app, nullptr, &fl, nullptr);
+    storage.rgord[1].iWarp = 0;
+    TEST_CHECK(SzLabelBytes(PszGetETA(app, nullptr, &fl, &cYears).data()) == "Never" && cYears == 32000);
+    storage.rgord[0].fValidTask = 1;
+    for (const auto task : {grTaskMerge, grTaskScrap, grTaskLayMines}) {
+        storage.rgord[0].grTask = task;
+        TEST_CHECK(SzLabelBytes(PszGetETA(app, nullptr, &fl, &cYears).data()) == "-- " && cYears == 0);
+        TEST_CHECK(std::string_view(app.state.szWork) == "Never");
+    }
+    TEST_CHECK(std::string_view(szETA.data()) == "4y");
+}
+
 // The planet dump passed the 32-bit mine and factory counts as two 16-bit
 // words each, as the Win16 binary pushed them, so the Factories column
 // printed 0 and the factory count shifted into Def %.
@@ -70,7 +185,7 @@ static void test_DumpPlanets_mines_and_factories(void) {
     lppl = LpplStarsTestHomeworld(app, 0);
     TEST_ASSERT(lppl != NULL);
     TEST_ASSERT(lppl->cMines != lppl->cFactories || lppl->cMines != 0);
-    strcpy(szName, PszGetCompressedPlanet(app, app.state.rgidPlan[lppl->id]));
+    CchCopyUtf8Prefix(std::span{szName}, PszGetCompressedPlanet(app, app.state.rgidPlan[lppl->id]).data());
 
     DumpPlanets(app);
     snprintf(szFile, sizeof(szFile), "%s.pla", app.state.szBase);
@@ -170,5 +285,7 @@ static void test_Dumps_match_golden_files(void) {
 }
 
 TEST_LIST = {
+    {"production labels retain ETA, queue, upgrade and encoded-fleet text", test_ProductionLabel_contract},
+    {"fleet ETA labels retain duration and no-result effects", test_ETALabel_contract},
     {"fleet report labels retain owned text across lookups", test_ReportLabels_owned_results},
     {"DumpPlanets mines and factories", test_DumpPlanets_mines_and_factories}, {"Dumps match golden files", test_Dumps_match_golden_files}, {NULL, NULL}};

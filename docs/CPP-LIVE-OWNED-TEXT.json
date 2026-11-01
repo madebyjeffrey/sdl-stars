@@ -1,6 +1,6 @@
 {
   "parent": "00f055c5",
-  "status": "Player, catalog, report, hull, numeric, location/distance and planet/fleet/thing values migrated; other shared scratch text and const interfaces remain active.",
+  "status": "Player, catalog, report, hull, numeric, location, object, environment and production/ETA labels return owned values; message text, other scratch text and const interfaces remain active.",
   "player_names": {
     "implementation": "PszPlayerName returns std::array<char, 50> by value with initialized storage; the previous 50-byte label budget and grammar remain. No heap allocation or shared-work-buffer return.",
     "provider": "TEXTIO uses the real return type; its actual transport-presets witness provider returns the same value type without a generic scalar adapter.",
@@ -3819,7 +3819,7 @@
     "production_calls": 78,
     "providers": "TEXTIO derives the exact owned return type; lifecycle, location and native-file-UI providers return independent 360-byte arrays.",
     "effects": "Existing work-buffer writes remain for message work expansion and explicit workspace consumers. Names, UTF-8 budgets, ownership prefixes, orbit flags, missing-object behavior and all formatter expressions stay unchanged. No allocation, record layout or compatibility overload is added.",
-    "remaining": "Other scratch services (including PszFleetNameFromWord and compressed-planet lookup), const text interfaces, scanner destination-tail bounds and the three mineral-summary appends remain pending.",
+    "remaining": "Encoded fleet labels and compressed planet names now return owned values under display_labels; message/version text, const interfaces, scanner tail bounds and three mineral-summary appends remain pending.",
     "calls": [
       {
         "path": "src/core/msg.cpp",
@@ -4540,6 +4540,366 @@
       "baseline": "Behavior-neutral: native/frozen-original baseline bytes and unit goldens unchanged. No scenario/checkpoint moved; no regression export required. Game rules, record sizes, element widths, wire bytes, RNG, tie order and binary64 boundaries remain.",
       "remaining": "Other scratch services (including PszFleetNameFromWord and compressed-planet lookup), remaining L05 copies/const/wrapper formatting, L06 service interfaces/Milestone D and L08 inventory/final qualification remain active.",
       "receipts": "dist/verification/live-cpp/l05y/"
+    }
+  },
+  "display_labels": {
+    "status": "complete; verified",
+    "parent": "a05df9a5",
+    "interfaces": [
+      "PszGetCompressedPlanet -> array<char,19>",
+      "PszFleetNameFromWord -> array<char,360>",
+      "PszCalcEnvVar -> array<char,360>",
+      "PszCalcGravity -> array<char,360>",
+      "PszProductionETA -> array<char,360>",
+      "PszNameProdItem -> array<char,360>",
+      "PszProdQueueTop -> array<char,360>",
+      "PszGetETA -> array<char,360>"
+    ],
+    "production_calls": 34,
+    "calls_by_function": {
+      "PszProductionETA": 5,
+      "PszCalcEnvVar": 12,
+      "PszFleetNameFromWord": 1,
+      "PszCalcGravity": 1,
+      "PszNameProdItem": 2,
+      "PszGetCompressedPlanet": 7,
+      "PszProdQueueTop": 2,
+      "PszGetETA": 4
+    },
+    "providers": "No TEXTIO or other injected provider signature targets these eight getters; actual callers and all ordinary test consumers use their exact return types.",
+    "planet_reference": {
+      "source": "text/planets.txt",
+      "names": 999,
+      "hash": "0xc3e09344f0183f56",
+      "maximum_utf8_bytes": 18
+    },
+    "effects": "Preserve the compressed-name cache bytes and its existing flag behavior, all work writes, numeric ETA outputs, sentinel/trailing-space bytes, formatter expressions, gravity arithmetic, queue markers, part indexes and upgrade/downgrade rules. Five numeric-only ETA calls retain their existing out-parameter use and discard the owned label. No allocation or record-layout change.",
+    "remaining": "Message formatting/decompression and version text remain scratch-return APIs. Stable persistent borrowed names and readonly interfaces still need review; numeric ETA output parameters remain separate L06 result work. Remaining bounded-copy sites, scanner tail bounds, mineral-summary appends, wrapper formatting and Milestone D remain active.",
+    "calls": [
+      {
+        "path": "src/core/aiutil.cpp",
+        "function": "AddMinesToBlockedQueues",
+        "parent_line": 508,
+        "parent_call": "PszProductionETA(app, &app.state.sel.pl, app.state.sel.pl.lpplprod, iobjMine, &etaFirst, nullptr)",
+        "lifetime": "Numeric-only caller consumes the existing out-parameter; owned label is discarded and producer work effects remain.",
+        "line": 508,
+        "current_call_line": "PszProductionETA(app, &app.state.sel.pl, app.state.sel.pl.lpplprod, iobjMine, &etaFirst, nullptr);"
+      },
+      {
+        "path": "src/core/aiutil.cpp",
+        "function": "AddMinesToBlockedQueues",
+        "parent_line": 533,
+        "parent_call": "PszProductionETA(app, &app.state.sel.pl, app.state.sel.pl.lpplprod, iobjFactory, &etaBetterMines, nullptr)",
+        "lifetime": "Numeric-only caller consumes the existing out-parameter; owned label is discarded and producer work effects remain.",
+        "line": 533,
+        "current_call_line": "PszProductionETA(app, &app.state.sel.pl, app.state.sel.pl.lpplprod, iobjFactory, &etaBetterMines, nullptr);"
+      },
+      {
+        "path": "src/core/aiutil.cpp",
+        "function": "AddMinesToBlockedQueues",
+        "parent_line": 544,
+        "parent_call": "PszProductionETA(app, &app.state.sel.pl, app.state.sel.pl.lpplprod, iobjFactory, &etaBetterAlchemy, nullptr)",
+        "lifetime": "Numeric-only caller consumes the existing out-parameter; owned label is discarded and producer work effects remain.",
+        "line": 544,
+        "current_call_line": "PszProductionETA(app, &app.state.sel.pl, app.state.sel.pl.lpplprod, iobjFactory, &etaBetterAlchemy, nullptr);"
+      },
+      {
+        "path": "src/core/msg.cpp",
+        "function": "PszFormatString",
+        "parent_line": 348,
+        "parent_call": "PszCalcEnvVar(app, static_cast<EnvType>(static_cast<std::uint16_t>(*pParams) >> 8 & 0xff & 0xff), *pParams & 0xff)",
+        "lifetime": "Named function-local array owns the text through all uses of the existing pointer local.",
+        "line": 349,
+        "current_call_line": "szDisplayLabel = PszCalcEnvVar(app, static_cast<EnvType>(static_cast<std::uint16_t>(*pParams) >> 8 & 0xff & 0xff), *pParams & 0xff);"
+      },
+      {
+        "path": "src/core/msg.cpp",
+        "function": "PszFormatString",
+        "parent_line": 436,
+        "parent_call": "PszFleetNameFromWord(app, *pParams)",
+        "lifetime": "Named function-local array owns the text through all uses of the existing pointer local.",
+        "line": 438,
+        "current_call_line": "szDisplayLabel = PszFleetNameFromWord(app, *pParams);"
+      },
+      {
+        "path": "src/core/planet.cpp",
+        "function": "PszCalcEnvVar",
+        "parent_line": 298,
+        "parent_call": "PszCalcGravity(app, iVar)",
+        "lifetime": "Owned gravity array returned directly by value.",
+        "line": 305,
+        "current_call_line": "return PszCalcGravity(app, iVar);"
+      },
+      {
+        "path": "src/core/planet.cpp",
+        "function": "FProdItemLine",
+        "parent_line": 1002,
+        "parent_call": "PszNameProdItem(app, lpprod)",
+        "lifetime": "Named function-local array owns the text through all uses of the existing pointer local.",
+        "line": 1010,
+        "current_call_line": "szDisplayLabel = PszNameProdItem(app, lpprod);"
+      },
+      {
+        "path": "src/core/report.cpp",
+        "function": "DumpUniverse",
+        "parent_line": 304,
+        "parent_call": "PszGetCompressedPlanet(app, app.state.rgidPlan[i])",
+        "lifetime": "Temporary owned array lives through the synchronous copy, comparison, formatting or drawing expression.",
+        "line": 304,
+        "current_call_line": "cch = CchSprintf(app.state.szWork, \"%d\\t%d\\t%d\\t%s\\r\\n\", i + 1, app.state.rgptPlan[i].x, app.state.rgptPlan[i].y, PszGetCompressedPlanet(app, app.state.rgidPlan[i]).data());"
+      },
+      {
+        "path": "src/core/report.cpp",
+        "function": "DumpPlanets",
+        "parent_line": 380,
+        "parent_call": "PszGetCompressedPlanet(app, app.state.rgidPlan[lppl->id])",
+        "lifetime": "Temporary owned array lives through the synchronous copy, comparison, formatting or drawing expression.",
+        "line": 381,
+        "current_call_line": "CchCopyUtf8Prefix(std::span{szForm}, PszGetCompressedPlanet(app, app.state.rgidPlan[lppl->id]).data());"
+      },
+      {
+        "path": "src/core/report.cpp",
+        "function": "DumpPlanets",
+        "parent_line": 415,
+        "parent_call": "PszProdQueueTop(app, lppl, nullptr)",
+        "lifetime": "Named queue value feeds the actual bounded report-field copy.",
+        "line": 416,
+        "current_call_line": "szDisplayLabel = PszProdQueueTop(app, lppl, nullptr);"
+      },
+      {
+        "path": "src/core/report.cpp",
+        "function": "DumpPlanets",
+        "parent_line": 465,
+        "parent_call": "PszCalcEnvVar(app, static_cast<EnvType>(i), lppl->rgEnvVar[i])",
+        "lifetime": "Temporary owned array lives through the synchronous copy, comparison, formatting or drawing expression.",
+        "line": 466,
+        "current_call_line": "CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszCalcEnvVar(app, static_cast<EnvType>(i), lppl->rgEnvVar[i]).data());"
+      },
+      {
+        "path": "src/core/report.cpp",
+        "function": "DumpPlanets",
+        "parent_line": 469,
+        "parent_call": "PszCalcEnvVar(app, static_cast<EnvType>(i), lppl->rgEnvVarOrig[i])",
+        "lifetime": "Temporary owned array lives through the synchronous copy, comparison, formatting or drawing expression.",
+        "line": 470,
+        "current_call_line": "CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszCalcEnvVar(app, static_cast<EnvType>(i), lppl->rgEnvVarOrig[i]).data());"
+      },
+      {
+        "path": "src/core/report.cpp",
+        "function": "DumpFleets",
+        "parent_line": 656,
+        "parent_call": "PszGetETA(app, nullptr, lpfl, nullptr)",
+        "lifetime": "Temporary owned array lives through the synchronous copy, comparison, formatting or drawing expression.",
+        "line": 657,
+        "current_call_line": "CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszGetETA(app, nullptr, lpfl, nullptr).data());"
+      },
+      {
+        "path": "src/core/util.cpp",
+        "function": "PszGetPlanetName",
+        "parent_line": 893,
+        "parent_call": "PszGetCompressedPlanet(app, id)",
+        "lifetime": "Named function-local array owns the text through all uses of the existing pointer local.",
+        "line": 894,
+        "current_call_line": "szPlanetName = PszGetCompressedPlanet(app, id);"
+      },
+      {
+        "path": "src/ui/mineui.cpp",
+        "function": "DrawMineSurvey",
+        "parent_line": 634,
+        "parent_call": "PszCalcEnvVar(app, static_cast<EnvType>(i), iCur)",
+        "lifetime": "Named function-local array owns the text through all uses of the existing pointer local.",
+        "line": 635,
+        "current_call_line": "szDisplayLabel = PszCalcEnvVar(app, static_cast<EnvType>(i), iCur);"
+      },
+      {
+        "path": "src/ui/planetui.cpp",
+        "function": "DrawPlanetStarbase",
+        "parent_line": 678,
+        "parent_call": "PszGetCompressedPlanet(app, app.state.rgidPlan[app.state.sel.pl.idFling - 1])",
+        "lifetime": "Named function-local array owns the text through all uses of the existing pointer local.",
+        "line": 679,
+        "current_call_line": "szPlanetName = PszGetCompressedPlanet(app, app.state.rgidPlan[app.state.sel.pl.idFling - 1]);"
+      },
+      {
+        "path": "src/ui/planetui.cpp",
+        "function": "DrawPlanetProduction",
+        "parent_line": 797,
+        "parent_call": "PszProductionETA(app, ppl, nullptr, static_cast<ProdItemType>(iSel), nullptr, nullptr)",
+        "lifetime": "Named function-local array owns the text through all uses of the existing pointer local.",
+        "line": 801,
+        "current_call_line": "szDisplayLabel = PszProductionETA(app, ppl, nullptr, static_cast<ProdItemType>(iSel), nullptr, nullptr);"
+      },
+      {
+        "path": "src/ui/planetui.cpp",
+        "function": "DrawPlanetProduction",
+        "parent_line": 818,
+        "parent_call": "PszGetCompressedPlanet(app, app.state.rgidPlan[app.state.sel.pl.idRoute - 1])",
+        "lifetime": "Named function-local array owns the text through all uses of the existing pointer local.",
+        "line": 823,
+        "current_call_line": "szPlanetName = PszGetCompressedPlanet(app, app.state.rgidPlan[app.state.sel.pl.idRoute - 1]);"
+      },
+      {
+        "path": "src/ui/planetui.cpp",
+        "function": "FillPlanetProdLB",
+        "parent_line": 1785,
+        "parent_call": "PszProdQueueTop(app, lppl, lpplprod)",
+        "lifetime": "Explicit workspace staging preserves this void UI helper's existing work-result contract.",
+        "line": 1792,
+        "current_call_line": "szDisplayLabel = PszProdQueueTop(app, lppl, lpplprod);"
+      },
+      {
+        "path": "src/ui/popup.cpp",
+        "function": "PtDisplayPlanetStateInfo",
+        "parent_line": 539,
+        "parent_call": "PszCalcEnvVar(app, static_cast<EnvType>(app.lpui->GlobalPD.iPlanetVar), app.lpui->GlobalPD.iPlanVal)",
+        "lifetime": "Temporary owned array lives through the synchronous copy, comparison, formatting or drawing expression.",
+        "line": 539,
+        "current_call_line": "DxStreamTextOut(hdc, &x, y, PszCalcEnvVar(app, static_cast<EnvType>(app.lpui->GlobalPD.iPlanetVar), app.lpui->GlobalPD.iPlanVal).data(), 0, fPrint);"
+      },
+      {
+        "path": "src/ui/popup.cpp",
+        "function": "PtDisplayPlanetStateInfo",
+        "parent_line": 570,
+        "parent_call": "PszCalcEnvVar(app, static_cast<EnvType>(app.lpui->GlobalPD.iPlanetVar), app.lpui->GlobalPD.iPlrMin)",
+        "lifetime": "Temporary owned array lives through the synchronous copy, comparison, formatting or drawing expression.",
+        "line": 570,
+        "current_call_line": "DxStreamTextOut(hdc, &x, y, PszCalcEnvVar(app, static_cast<EnvType>(app.lpui->GlobalPD.iPlanetVar), app.lpui->GlobalPD.iPlrMin).data(), 0, fPrint);"
+      },
+      {
+        "path": "src/ui/popup.cpp",
+        "function": "PtDisplayPlanetStateInfo",
+        "parent_line": 574,
+        "parent_call": "PszCalcEnvVar(app, static_cast<EnvType>(app.lpui->GlobalPD.iPlanetVar), app.lpui->GlobalPD.iPlrMax)",
+        "lifetime": "Temporary owned array lives through the synchronous copy, comparison, formatting or drawing expression.",
+        "line": 574,
+        "current_call_line": "DxStreamTextOut(hdc, &x, y, PszCalcEnvVar(app, static_cast<EnvType>(app.lpui->GlobalPD.iPlanetVar), app.lpui->GlobalPD.iPlrMax).data(), 0, fPrint);"
+      },
+      {
+        "path": "src/ui/popup.cpp",
+        "function": "PtDisplayPlanetStateInfo",
+        "parent_line": 603,
+        "parent_call": "PszCalcEnvVar(app, static_cast<EnvType>(app.lpui->GlobalPD.iPlanetVar), app.lpui->GlobalPD.iPlanMin)",
+        "lifetime": "Temporary owned array lives through the synchronous copy, comparison, formatting or drawing expression.",
+        "line": 603,
+        "current_call_line": "DxStreamTextOut(hdc, &x, y, PszCalcEnvVar(app, static_cast<EnvType>(app.lpui->GlobalPD.iPlanetVar), app.lpui->GlobalPD.iPlanMin).data(), 0, fPrint);"
+      },
+      {
+        "path": "src/ui/popup.cpp",
+        "function": "PtDisplayPlanetStateInfo",
+        "parent_line": 607,
+        "parent_call": "PszCalcEnvVar(app, static_cast<EnvType>(app.lpui->GlobalPD.iPlanetVar), app.lpui->GlobalPD.iPlanMax)",
+        "lifetime": "Temporary owned array lives through the synchronous copy, comparison, formatting or drawing expression.",
+        "line": 607,
+        "current_call_line": "DxStreamTextOut(hdc, &x, y, PszCalcEnvVar(app, static_cast<EnvType>(app.lpui->GlobalPD.iPlanetVar), app.lpui->GlobalPD.iPlanMax).data(), 0, fPrint);"
+      },
+      {
+        "path": "src/ui/popup.cpp",
+        "function": "PtDisplayPlanetStateInfo",
+        "parent_line": 640,
+        "parent_call": "PszCalcEnvVar(app, static_cast<EnvType>(app.lpui->GlobalPD.iPlanetVar), iNewVal)",
+        "lifetime": "Temporary owned array lives through the synchronous copy, comparison, formatting or drawing expression.",
+        "line": 640,
+        "current_call_line": "WrapTextOut(app, hdc, &x, &y, PszCalcEnvVar(app, static_cast<EnvType>(app.lpui->GlobalPD.iPlanetVar), iNewVal).data(), 0, 4, xMax - 4, nullptr, 0, fPrint);"
+      },
+      {
+        "path": "src/ui/produceui.cpp",
+        "function": "DrawProductionDlg",
+        "parent_line": 567,
+        "parent_call": "PszProductionETA(app, &app.state.sel.pl, app.state.lpplProdGlob, static_cast<ProdItemType>(LOWORD(lSel)), nullptr, nullptr)",
+        "lifetime": "Named production ETA array feeds the bounded completion-label tail; removed empty pointer-identity branch.",
+        "line": 568,
+        "current_call_line": "szDisplayLabel = PszProductionETA(app, &app.state.sel.pl, app.state.lpplProdGlob, static_cast<ProdItemType>(LOWORD(lSel)), nullptr, nullptr);"
+      },
+      {
+        "path": "src/ui/produceui.cpp",
+        "function": "FillProdSrcLB",
+        "parent_line": 602,
+        "parent_call": "PszNameProdItem(app, app.state.pProdGlob + i)",
+        "lifetime": "Named function-local array owns the text through all uses of the existing pointer local.",
+        "line": 603,
+        "current_call_line": "szDisplayLabel = PszNameProdItem(app, app.state.pProdGlob + i);"
+      },
+      {
+        "path": "src/ui/raceui.cpp",
+        "function": "DrawRace2",
+        "parent_line": 539,
+        "parent_call": "PszCalcEnvVar(app, static_cast<EnvType>(i), app.state.vplr.rgEnvVarMin[i])",
+        "lifetime": "Named function-local array owns the text through all uses of the existing pointer local.",
+        "line": 540,
+        "current_call_line": "szDisplayLabel = PszCalcEnvVar(app, static_cast<EnvType>(i), app.state.vplr.rgEnvVarMin[i]);"
+      },
+      {
+        "path": "src/ui/raceui.cpp",
+        "function": "DrawRace2",
+        "parent_line": 543,
+        "parent_call": "PszCalcEnvVar(app, static_cast<EnvType>(i), app.state.vplr.rgEnvVarMax[i])",
+        "lifetime": "Named function-local array owns the text through all uses of the existing pointer local.",
+        "line": 545,
+        "current_call_line": "szDisplayLabel = PszCalcEnvVar(app, static_cast<EnvType>(i), app.state.vplr.rgEnvVarMax[i]);"
+      },
+      {
+        "path": "src/ui/reportui.cpp",
+        "function": "DrawReportItem",
+        "parent_line": 1417,
+        "parent_call": "PszGetETA(app, hdc, lpfl, nullptr)",
+        "lifetime": "Named function-local array owns the text through all uses of the existing pointer local.",
+        "line": 1418,
+        "current_call_line": "szDisplayLabel = PszGetETA(app, hdc, lpfl, nullptr);"
+      },
+      {
+        "path": "src/ui/reportui.cpp",
+        "function": "ICompReport",
+        "parent_line": 2010,
+        "parent_call": "PszGetETA(app, nullptr, lpfl1, &i1)",
+        "lifetime": "Numeric-only caller consumes the existing out-parameter; owned label is discarded and producer work effects remain.",
+        "line": 2012,
+        "current_call_line": "PszGetETA(app, nullptr, lpfl1, &i1);"
+      },
+      {
+        "path": "src/ui/reportui.cpp",
+        "function": "ICompReport",
+        "parent_line": 2011,
+        "parent_call": "PszGetETA(app, nullptr, lpfl2, &i2)",
+        "lifetime": "Numeric-only caller consumes the existing out-parameter; owned label is discarded and producer work effects remain.",
+        "line": 2013,
+        "current_call_line": "PszGetETA(app, nullptr, lpfl2, &i2);"
+      },
+      {
+        "path": "src/ui/scan.cpp",
+        "function": "FSelectSz",
+        "parent_line": 2809,
+        "parent_call": "PszGetCompressedPlanet(app, app.state.rgidPlan[ipl])",
+        "lifetime": "Temporary owned array lives through the synchronous copy, comparison, formatting or drawing expression.",
+        "line": 2809,
+        "current_call_line": "for (ipl = 0; ipl < app.state.game.cPlanMax && strcmpi(PszGetCompressedPlanet(app, app.state.rgidPlan[ipl]).data(), szName) != 0; ipl++) {"
+      },
+      {
+        "path": "src/ui/scan.cpp",
+        "function": "FSelectSz",
+        "parent_line": 2810,
+        "parent_call": "PszGetCompressedPlanet(app, app.state.rgidPlan[ipl])",
+        "lifetime": "Temporary owned array lives through the synchronous copy, comparison, formatting or drawing expression.",
+        "line": 2810,
+        "current_call_line": "if (iplPartial == -1 && strnicmp(PszGetCompressedPlanet(app, app.state.rgidPlan[ipl]).data(), szName, std::strlen(szName)) == 0) {"
+      }
+    ],
+    "verification": {
+      "batch": "L05z owned compressed-planet, encoded-fleet, environment, production and ETA labels",
+      "debug_build": "Pass, no warnings. Release SDL regression and host builds pass. Compiler/source policy covers 158 owned sources, 159 variants and 161 standalone headers in both orders; exact raw-copy inventory passes.",
+      "desktop": "153/153, including actual label/message/report/UI consumers, production witnesses, all 29 leak checks and available SDL tutorial checkpoints.",
+      "host_units": "28/28 in Release, including the new planet-byte, production-label and fleet-ETA reference cases.",
+      "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+      "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+      "windows": "Strict MinGW compilation passes all 147 production units and four affected ordinary test units. Rebuilt Windows utilities (11), utility-generation (17), encoding (10) and reports (5) pass under Wine: 43 cases total. Actual native Windows SDL and Linux final qualification remain pending.",
+      "sanitizers": "Native macOS Debug ASan/UBSan execution passes all four affected utility, utility-generation, encoding and report executables. Includes the 999-name byte reference, owned-value retention, production ETA/queue/upgrade branches and direct environment-message work expansion. Focused execution, not whole-suite sanitizer qualification.",
+      "planet_reference": "Independent ordered text/planets.txt bytes, capitalized only after spaces/hyphens, hash with little-endian IDs and terminators to 0xc3e09344f0183f56. All 999 decoded names match before and after migration; maximum 18 bytes fits the retained 19-byte result/cache budget. Wrapped index and a valid Unicode synthetic cache hit preserve bytes and leave work text unchanged.",
+      "characterization": "The parent implementation passed Unknown/Never/Skipped/As Needed, open-ended/single/plural/ranged production years, empty/nonempty queue markers, Unicode ship/starbase names, upgrade/downgrade/equal/free-design labels and encoded-fleet labels. Fleet ETA references retain numeric counts, Never=>32000 and no-ETA=>0, including the exact trailing-space dash sentinel and unchanged work text on the no-ETA path. Final owned arrays survive subsequent lookups and scratch overwrite; environment text still supports \\E|\\w.",
+      "interfaces": "Eight getters now return initialized owned arrays: compressed planet names retain 19 bytes; the other seven retain the existing 360-byte work-label budget. All 34 production calls are accounted for; five numeric-only calls retain their existing out-parameter use and discard the owned label. The production completion field consumes its owned result and the obsolete empty pointer-identity branch is removed. No raw-result compatibility overload remains.",
+      "effects": "Existing cache/work writes, ETA count outputs, formatter grammar, gravity arithmetic, labels/trailing spaces, queue markers, hull/part indexes, upgrade rules, HDC coloring and report comparison order remain. The void queue UI helper explicitly stages its owned result into its existing work destination. No allocation or saved-state layout change.",
+      "inventory": "Raw-copy counts remain 256 migrated sites, 52 initial application sites pending and 58 lexical spellings including genuine SDK declarations/definitions. Twelve completed copy-ledger roles now identify owned returns and retained current work effects instead of promising a future ownership migration.",
+      "baseline": "Behavior-neutral: native/frozen-original baseline bytes and unit goldens unchanged. No scenario/checkpoint moved and no regression export required. Game rules, record sizes, element widths, wire bytes, RNG, qsort16 ties and binary64 boundaries remain.",
+      "remaining": "Message formatting/decompression and version scratch text, const interfaces and stable borrowed-name review, remaining text/path copies and wrapper formatting, L06 numeric/service results and Milestone D, and L08 final inventory/platform qualification remain active.",
+      "receipts": "dist/verification/live-cpp/l05z/"
     }
   }
 }

@@ -109,6 +109,7 @@ static void test_PlayerName_text_contract(void) {
 }
 
 static void test_FleetName_utf8_boundary(void) {
+    std::array<char, 360> szDisplayLabel{};
     std::array<char, 360> szObjectName{};
 #ifdef STARS_UI_SDL
     APPSESSION &app = ui::app;
@@ -129,7 +130,8 @@ static void test_FleetName_utf8_boundary(void) {
     strcpy(app.state.rglpshdef[0][0].hul.szClass, pszName);
     lpfl = LpflStarsTestAddFleet(app, 0, idPlanetDeepSpace, 0, 1);
     lpfl->rgcsh[1] = 1;
-    psz = PszFleetNameFromWord(app, 0x2000);
+    szDisplayLabel = PszFleetNameFromWord(app, 0x2000);
+    psz = szDisplayLabel.data();
     TEST_CHECK(FUtf8Valid(psz, strlen(psz)));
     TEST_CHECK(strncmp(psz, "AAAAAAAAAAAAAAAAAAAAAAAAAAA+", 28) == 0);
     szObjectName = PszGetFleetName(app, lpfl->id);

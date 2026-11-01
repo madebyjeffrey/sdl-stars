@@ -106,7 +106,8 @@
         "recent-file-whole-path-admission-before-shared-effects",
         "owned-location-and-distance-values",
         "complete-owned-planet-caption-capacity-repair",
-        "owned-planet-fleet-and-thing-name-values"
+        "owned-planet-fleet-and-thing-name-values",
+        "owned-compressed-planet-encoded-fleet-environment-production-and-ETA-labels"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -485,6 +486,24 @@
           "baseline": "Behavior-neutral: native/frozen-original baseline bytes and unit goldens unchanged. No scenario/checkpoint moved; no regression export required. Game rules, record sizes, element widths, wire bytes, RNG, tie order and binary64 boundaries remain.",
           "remaining": "Other scratch services (including PszFleetNameFromWord and compressed-planet lookup), remaining L05 copies/const/wrapper formatting, L06 service interfaces/Milestone D and L08 inventory/final qualification remain active.",
           "receipts": "dist/verification/live-cpp/l05y/"
+        },
+        {
+          "batch": "L05z owned compressed-planet, encoded-fleet, environment, production and ETA labels",
+          "debug_build": "Pass, no warnings. Release SDL regression and host builds pass. Compiler/source policy covers 158 owned sources, 159 variants and 161 standalone headers in both orders; exact raw-copy inventory passes.",
+          "desktop": "153/153, including actual label/message/report/UI consumers, production witnesses, all 29 leak checks and available SDL tutorial checkpoints.",
+          "host_units": "28/28 in Release, including the new planet-byte, production-label and fleet-ETA reference cases.",
+          "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+          "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+          "windows": "Strict MinGW compilation passes all 147 production units and four affected ordinary test units. Rebuilt Windows utilities (11), utility-generation (17), encoding (10) and reports (5) pass under Wine: 43 cases total. Actual native Windows SDL and Linux final qualification remain pending.",
+          "sanitizers": "Native macOS Debug ASan/UBSan execution passes all four affected utility, utility-generation, encoding and report executables. Includes the 999-name byte reference, owned-value retention, production ETA/queue/upgrade branches and direct environment-message work expansion. Focused execution, not whole-suite sanitizer qualification.",
+          "planet_reference": "Independent ordered text/planets.txt bytes, capitalized only after spaces/hyphens, hash with little-endian IDs and terminators to 0xc3e09344f0183f56. All 999 decoded names match before and after migration; maximum 18 bytes fits the retained 19-byte result/cache budget. Wrapped index and a valid Unicode synthetic cache hit preserve bytes and leave work text unchanged.",
+          "characterization": "The parent implementation passed Unknown/Never/Skipped/As Needed, open-ended/single/plural/ranged production years, empty/nonempty queue markers, Unicode ship/starbase names, upgrade/downgrade/equal/free-design labels and encoded-fleet labels. Fleet ETA references retain numeric counts, Never=>32000 and no-ETA=>0, including the exact trailing-space dash sentinel and unchanged work text on the no-ETA path. Final owned arrays survive subsequent lookups and scratch overwrite; environment text still supports \\E|\\w.",
+          "interfaces": "Eight getters now return initialized owned arrays: compressed planet names retain 19 bytes; the other seven retain the existing 360-byte work-label budget. All 34 production calls are accounted for; five numeric-only calls retain their existing out-parameter use and discard the owned label. The production completion field consumes its owned result and the obsolete empty pointer-identity branch is removed. No raw-result compatibility overload remains.",
+          "effects": "Existing cache/work writes, ETA count outputs, formatter grammar, gravity arithmetic, labels/trailing spaces, queue markers, hull/part indexes, upgrade rules, HDC coloring and report comparison order remain. The void queue UI helper explicitly stages its owned result into its existing work destination. No allocation or saved-state layout change.",
+          "inventory": "Raw-copy counts remain 256 migrated sites, 52 initial application sites pending and 58 lexical spellings including genuine SDK declarations/definitions. Twelve completed copy-ledger roles now identify owned returns and retained current work effects instead of promising a future ownership migration.",
+          "baseline": "Behavior-neutral: native/frozen-original baseline bytes and unit goldens unchanged. No scenario/checkpoint moved and no regression export required. Game rules, record sizes, element widths, wire bytes, RNG, qsort16 ties and binary64 boundaries remain.",
+          "remaining": "Message formatting/decompression and version scratch text, const interfaces and stable borrowed-name review, remaining text/path copies and wrapper formatting, L06 numeric/service results and Milestone D, and L08 final inventory/platform qualification remain active.",
+          "receipts": "dist/verification/live-cpp/l05z/"
         }
       ],
       "bounded_formatting": {
@@ -696,6 +715,22 @@
           "PszGetThingName -> array<char,360>"
         ],
         "production_calls": 78,
+        "evidence": "docs/CPP-LIVE-OWNED-TEXT.json"
+      },
+      "display_labels": {
+        "status": "complete; verified",
+        "parent": "a05df9a5",
+        "interfaces": [
+          "PszGetCompressedPlanet -> array<char,19>",
+          "PszFleetNameFromWord -> array<char,360>",
+          "PszCalcEnvVar -> array<char,360>",
+          "PszCalcGravity -> array<char,360>",
+          "PszProductionETA -> array<char,360>",
+          "PszNameProdItem -> array<char,360>",
+          "PszProdQueueTop -> array<char,360>",
+          "PszGetETA -> array<char,360>"
+        ],
+        "production_calls": 34,
         "evidence": "docs/CPP-LIVE-OWNED-TEXT.json"
       }
     },

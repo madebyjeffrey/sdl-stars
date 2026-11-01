@@ -492,7 +492,41 @@ static void test_LocationText_contract(void) {
 
 }
 
-TEST_LIST = {{"location and distance text preserve branches and work expansion", test_LocationText_contract}, {"definition lines retain whitespace and delimiter grammar", test_PszGetLine_contract}, {"file copy uses full size and rejects unavailable metadata", test_Copy_size_result}, {"numeric parser preserves grammar, capacity and partial assignment", test_CParseNumbers_contract}, {"numeric text retains widths, signs, grouping and scaled boundaries", test_NumberText_boundaries},
+// Independent reference: all ordered source names in text/planets.txt,
+// capitalized after space/hyphen, hashed with little-endian IDs and NULs.
+static void test_PlanetName_bytes(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    std::uint64_t uHash = 14695981039346656037ULL;
+    TEST_ASSERT(FStarsTestInit(app));
+    app.state.iLastGet = -1;
+    for (std::int16_t id = 0; id < cPlanetName; id++) {
+        const auto szPlanet = PszGetCompressedPlanet(app, id);
+        const auto *psz = szPlanet.data();
+        TEST_CHECK(std::strlen(psz) < sizeof(app.state.szLastGet));
+        for (std::uint8_t b : {static_cast<std::uint8_t>(id), static_cast<std::uint8_t>(id >> 8)})
+            uHash = (uHash ^ b) * 1099511628211ULL;
+        for (std::size_t i = 0; i <= std::strlen(psz); i++)
+            uHash = (uHash ^ static_cast<std::uint8_t>(psz[i])) * 1099511628211ULL;
+        TEST_CHECK(std::string_view(app.state.szLastGet) == psz);
+    }
+    TEST_CHECK(uHash == 0xc3e09344f0183f56ULL);
+    const auto szFirst = PszGetCompressedPlanet(app, 0);
+    TEST_CHECK(std::string_view(PszGetCompressedPlanet(app, cPlanetName + 1).data()) == "14 Coli");
+    CchCopyUtf8Prefix(std::span{app.state.szLastGet}, "Cache-\xce\xa9");
+    CchCopyUtf8Prefix(std::span{app.state.szWork}, "untouched");
+    app.state.iLastGet = 42;
+    TEST_CHECK(std::string_view(PszGetCompressedPlanet(app, 42).data()) == "Cache-\xce\xa9");
+    TEST_CHECK(std::string_view(app.state.szWork) == "untouched");
+    app.state.iLastGet = -1;
+    TEST_CHECK(std::string_view(szFirst.data()) == "007");
+}
+
+TEST_LIST = {{"all compressed planet names match source bytes and cache behavior", test_PlanetName_bytes}, {"location and distance text preserve branches and work expansion", test_LocationText_contract}, {"definition lines retain whitespace and delimiter grammar", test_PszGetLine_contract}, {"file copy uses full size and rejects unavailable metadata", test_Copy_size_result}, {"numeric parser preserves grammar, capacity and partial assignment", test_CParseNumbers_contract}, {"numeric text retains widths, signs, grouping and scaled boundaries", test_NumberText_boundaries},
              {"numeric text values survive subsequent lookups", test_NumberText_owned},
              {"Roman numerals retain all int16 values within actual capacity", test_IntToRoman_bounded},
              {"XorFileBuf retains RHS-before-destination evaluation", test_XorFileBuf_seed_alias_order},

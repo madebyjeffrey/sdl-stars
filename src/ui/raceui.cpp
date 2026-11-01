@@ -494,6 +494,7 @@ INT_PTR  RaceWizardDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
 }
 
 void DrawRace2(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
+    std::array<char, 360> szDisplayLabel{};
     std::int16_t iPit;
     std::int16_t bt;
     std::int16_t iMax;
@@ -536,11 +537,13 @@ void DrawRace2(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
                 cch = TextIO().pfnCchGetString(app, idsN2, std::span{szT});
                 CtrTextOut(hdc, xRLabel, app.lpui->vrgrcRCW[5 * i + 2].top + 1 + app.state.dyArial8, szT, cch);
             } else {
-                psz = PszCalcEnvVar(app, static_cast<EnvType>(i), app.state.vplr.rgEnvVarMin[i]);
+                szDisplayLabel = PszCalcEnvVar(app, static_cast<EnvType>(i), app.state.vplr.rgEnvVarMin[i]);
+                psz = szDisplayLabel.data();
                 CtrTextOut(hdc, xRLabel, app.lpui->vrgrcRCW[5 * i + 2].top + 1, psz, 0);
                 cch = TextIO().pfnCchGetString(app, idsTo2, std::span{szT});
                 CtrTextOut(hdc, xRLabel, app.lpui->vrgrcRCW[5 * i + 2].top + 1 + app.state.dyArial8, szT, cch);
-                psz = PszCalcEnvVar(app, static_cast<EnvType>(i), app.state.vplr.rgEnvVarMax[i]);
+                szDisplayLabel = PszCalcEnvVar(app, static_cast<EnvType>(i), app.state.vplr.rgEnvVarMax[i]);
+                psz = szDisplayLabel.data();
                 CtrTextOut(hdc, xRLabel, app.lpui->vrgrcRCW[5 * i + 2].top + 1 + app.state.dyArial8 * 2, psz, 0);
             }
             if (iDraw == -1) {

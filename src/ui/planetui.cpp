@@ -543,6 +543,7 @@ void DrawPlanetStats(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
 }
 
 void DrawPlanetStarbase(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
+    std::array<char, 19> szPlanetName{};
     std::array<char, cchCatalogText> szCatalogPsz{};
     std::int16_t  fTwo;
     std::int16_t  dxRight;
@@ -675,7 +676,8 @@ void DrawPlanetStarbase(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
             if (app.state.sel.pl.idFling == 0) {
                 c = TextIO().pfnCchGetString(app, idsNone4, std::span{app.state.szWork});
             } else {
-                psz = PszGetCompressedPlanet(app, app.state.rgidPlan[app.state.sel.pl.idFling - 1]);
+                szPlanetName = PszGetCompressedPlanet(app, app.state.rgidPlan[app.state.sel.pl.idFling - 1]);
+                psz = szPlanetName.data();
                 c = 0;
                 CchCopyUtf8Prefix(std::span{app.state.szWork}, psz);
             }
@@ -737,6 +739,8 @@ void DrawMassWarpGauge(APPSESSION &app, HDC hdc, RECT *prc, std::int16_t iBest, 
 }
 
 void DrawPlanetProduction(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
+    std::array<char, 19> szPlanetName{};
+    std::array<char, 360> szDisplayLabel{};
     std::int16_t swp;
     std::int16_t dxRight;
     std::int16_t yTop;
@@ -794,7 +798,8 @@ void DrawPlanetProduction(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
             c = 0;
             app.state.szWork[0] = 0;
         } else {
-            psz = PszProductionETA(app, ppl, nullptr, static_cast<ProdItemType>(iSel), nullptr, nullptr);
+            szDisplayLabel = PszProductionETA(app, ppl, nullptr, static_cast<ProdItemType>(iSel), nullptr, nullptr);
+            psz = szDisplayLabel.data();
             c = std::strlen(psz);
         }
         if (c != 0) {
@@ -803,7 +808,7 @@ void DrawPlanetProduction(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
             win32::TextOutA(hdc, xLeft, yTop, szT, cch);
             dxRight = xRight - xLeft - LOWORD(GetTextExtent(hdc, szT, cch));
             win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
-            RightTextOut(app, hdc, xRight, yTop, app.state.szWork, c, dxRight);
+            RightTextOut(app, hdc, xRight, yTop, psz, c, dxRight);
         } else {
             RightTextOut(app, hdc, xRight, yTop, app.state.szWork, 0, xRight - xLeft);
         }
@@ -815,7 +820,8 @@ void DrawPlanetProduction(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
         if (app.state.sel.pl.idRoute == 0) {
             c = TextIO().pfnCchGetString(app, idsNone4, std::span{app.state.szWork});
         } else {
-            psz = PszGetCompressedPlanet(app, app.state.rgidPlan[app.state.sel.pl.idRoute - 1]);
+            szPlanetName = PszGetCompressedPlanet(app, app.state.rgidPlan[app.state.sel.pl.idRoute - 1]);
+            psz = szPlanetName.data();
             c = 0;
             CchCopyUtf8Prefix(std::span{app.state.szWork}, psz);
         }
@@ -1772,6 +1778,7 @@ void FillShipDD(APPSESSION &app, std::int16_t idSkip) {
 }
 
 void FillPlanetProdLB(APPSESSION &app, HWND hwnd, PLPROD *lpplprod, PLANET *lppl) {
+    std::array<char, 360> szDisplayLabel{};
     std::array<char, cchCatalogText> szCatalogPsz{};
     std::int32_t rgwtMin[4];
     std::int16_t i;
@@ -1782,7 +1789,8 @@ void FillPlanetProdLB(APPSESSION &app, HWND hwnd, PLPROD *lpplprod, PLANET *lppl
     /* Given a planet, leave its queue's first item in szWork; see
        PszProdQueueTop. */
     if (lppl) {
-        PszProdQueueTop(app, lppl, lpplprod);
+        szDisplayLabel = PszProdQueueTop(app, lppl, lpplprod);
+        CchCopyUtf8Prefix(std::span{app.state.szWork}, szDisplayLabel.data());
         return;
     }
     lppl = &app.state.sel.pl;

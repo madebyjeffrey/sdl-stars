@@ -856,7 +856,7 @@ std::uint16_t WFromLpfl(APPSESSION &app, FLEET *lpfl) {
     return w;
 }
 
-char *PszFleetNameFromWord(APPSESSION &app, std::uint16_t w) {
+std::array<char, 360> PszFleetNameFromWord(APPSESSION &app, std::uint16_t w) {
     std::array<char, cchCatalogText> szCatalogLpsz{};
     char   *lpsz;
     char    szShdef[34];
@@ -880,17 +880,19 @@ char *PszFleetNameFromWord(APPSESSION &app, std::uint16_t w) {
         lpsz = szShdef;
     }
     CchSprintf(app.state.szWork, "%s #%d", lpsz, (w & 0x1ff) + 1);
-    return app.state.szWork;
+    return SzLocationLabel(app.state.szWork);
 }
 
 std::array<char, 360> PszGetPlanetName(APPSESSION &app, std::int16_t id) {
+    std::array<char, 19> szPlanetName{};
     std::int16_t fInOrbit;
     char   *psz;
 
     fInOrbit = id & 0x8000;
     id &= 0x7fff;
     id = app.state.rgidPlan[id];
-    psz = PszGetCompressedPlanet(app, id);
+    szPlanetName = PszGetCompressedPlanet(app, id);
+    psz = szPlanetName.data();
     if (fInOrbit) {
         CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsOrbitingS).data(), psz);
     } else {

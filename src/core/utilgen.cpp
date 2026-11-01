@@ -172,7 +172,8 @@ void XorFileBuf(APPSESSION &app, char *rgb, std::int16_t cb) {
 
 int ICompLong(APPSESSION &, std::int32_t *pl1, std::int32_t *pl2) { return static_cast<std::int16_t>((*pl1 - *pl2)); }
 
-char *PszGetCompressedPlanet(APPSESSION &app, std::int16_t id) {
+std::array<char, 19> PszGetCompressedPlanet(APPSESSION &app, std::int16_t id) {
+    std::array<char, 19> szResult{};
     std::int16_t  fCap;
     std::int16_t  iOffset;
     std::int16_t  fHigh;
@@ -190,7 +191,8 @@ char *PszGetCompressedPlanet(APPSESSION &app, std::int16_t id) {
         id %= cPlanetName;
     }
     if (id == app.state.iLastGet) {
-        return app.state.szLastGet;
+        CchCopyUtf8Prefix(std::span{szResult}, app.state.szLastGet);
+        return szResult;
     }
     iChunk = id >> 6;
     iOffset = id & 0x3f;
@@ -231,7 +233,8 @@ char *PszGetCompressedPlanet(APPSESSION &app, std::int16_t id) {
         }
     }
     *pszOut = 0;
-    return app.state.szLastGet;
+    CchCopyUtf8Prefix(std::span{szResult}, app.state.szLastGet);
+    return szResult;
 }
 
 void OutputFileString(const char *szFile, std::string_view sz) {

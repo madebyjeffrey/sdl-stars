@@ -89,6 +89,7 @@ static void TestEncoding(void) {
 }
 
 static void TestEnvironmentText(void) {
+    std::array<char, 360> szDisplayLabel{};
 #ifdef STARS_UI_SDL
     APPSESSION &app = ui::app;
 #else
@@ -96,16 +97,24 @@ static void TestEnvironmentText(void) {
 #endif
     COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
     const char *psz;
+    std::int16_t rgParams[1] = {static_cast<std::int16_t>(Temperature << 8 | 50)};
+    const auto szTemperature = PszCalcEnvVar(app, Temperature, 0);
+    const auto szGravity = PszCalcGravity(app, 50);
     for (int16_t i = 0; i <= 100; i++) {
-        psz = PszCalcEnvVar(app, Temperature, i);
+        szDisplayLabel = PszCalcEnvVar(app, Temperature, i);
+        psz = szDisplayLabel.data();
         TEST_CHECK(FUtf8Valid(psz, strlen(psz)));
         TEST_CHECK(!strcmp(psz + strlen(psz) - 3, "ºC"));
     }
-    TEST_CHECK(!strcmp(PszCalcEnvVar(app, Temperature, 0), "-200ºC"));
-    TEST_CHECK(!strcmp(PszCalcEnvVar(app, Temperature, 50), "0ºC"));
-    TEST_CHECK(!strcmp(PszCalcEnvVar(app, Temperature, 100), "200ºC"));
-    TEST_CHECK(!strcmp(PszCalcEnvVar(app, Gravity, 50), "1.00g"));
-    TEST_CHECK(!strcmp(PszCalcEnvVar(app, Radiation, 50), "50mR"));
+    TEST_CHECK(!strcmp(PszCalcEnvVar(app, Temperature, 0).data(), "-200ºC"));
+    TEST_CHECK(!strcmp(PszCalcEnvVar(app, Temperature, 50).data(), "0ºC"));
+    TEST_CHECK(!strcmp(PszCalcEnvVar(app, Temperature, 100).data(), "200ºC"));
+    TEST_CHECK(!strcmp(PszCalcEnvVar(app, Gravity, 50).data(), "1.00g"));
+    TEST_CHECK(!strcmp(PszCalcEnvVar(app, Radiation, 50).data(), "50mR"));
+    CchCopyUtf8Prefix(std::span{app.state.szWork}, "changed");
+    TEST_CHECK(std::string_view(szTemperature.data()) == "-200ºC");
+    TEST_CHECK(std::string_view(szGravity.data()) == "1.00g");
+    TEST_CHECK(std::string_view(PszFormatString(app, "\\E|\\w", rgParams)) == "0ºC|0ºC");
 }
 
 static void TestDisplayCopyBounds(void) {

@@ -39,7 +39,7 @@ std::int16_t  FLookupOrbitingXfer(APPSESSION &app, std::int16_t idPlanet, std::i
 std::array<char, 360> PszGetThingName(APPSESSION &app, std::int16_t id);
 std::array<char, 360> PszGetFleetName(APPSESSION &app, std::int16_t id);
 std::uint16_t WFromLpfl(APPSESSION &app, FLEET *lpfl);
-char    *PszFleetNameFromWord(APPSESSION &app, std::uint16_t w);
+std::array<char, 360> PszFleetNameFromWord(APPSESSION &app, std::uint16_t w);
 std::array<char, 360> PszGetPlanetName(APPSESSION &app, std::int16_t id);
 std::int16_t  IflFromLpfl(APPSESSION &app, FLEET *lpfl);
 std::int16_t  FDeleteFleet(APPSESSION &app, std::int16_t idFleet, GrobjClass grobjSel, std::int16_t idSel);

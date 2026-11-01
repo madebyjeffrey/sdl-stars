@@ -182,7 +182,14 @@ void FinishProduction(APPSESSION &app, std::int16_t fWrite) {
     return;
 }
 
-char *PszNameProdItem(APPSESSION &app, PROD *lpprod) {
+// Preserve the session work text while callers retain an independent label.
+static std::array<char, 360> SzProductionLabel(std::string_view sz) {
+    std::array<char, 360> szResult{};
+    CchCopyUtf8Prefix(std::span{szResult}, sz);
+    return szResult;
+}
+
+std::array<char, 360> PszNameProdItem(APPSESSION &app, PROD *lpprod) {
     std::uint32_t iItem;
     std::int16_t  iDelta;
 
@@ -193,27 +200,27 @@ char *PszNameProdItem(APPSESSION &app, PROD *lpprod) {
             if (app.state.rglpshdefSB[app.state.idPlayer][iItem].fFree) {
             LBogus:
                 app.state.szWork[0] = 0;
-                return app.state.szWork;
+                return SzProductionLabel(app.state.szWork);
             }
             CchCopyUtf8Prefix(std::span{app.state.szWork}, app.state.rglpshdefSB[app.state.idPlayer][iItem].hul.szClass);
             if (!app.state.sel.pl.fStarbase) {
-                return app.state.szWork;
+                return SzProductionLabel(app.state.szWork);
             }
             iDelta = app.state.rglpshdefSB[app.state.idPlayer][app.state.sel.pl.isb].hul.ihuldef - app.state.rglpshdefSB[app.state.idPlayer][iItem].hul.ihuldef;
             if (iDelta > 0) {
                 CchAppendUtf8Prefix(std::span{app.state.szWork}, " (downgrade)");
-                return app.state.szWork;
+                return SzProductionLabel(app.state.szWork);
             }
             if (iDelta >= 0) {
-                return app.state.szWork;
+                return SzProductionLabel(app.state.szWork);
             }
             CchAppendUtf8Prefix(std::span{app.state.szWork}, " (upgrade)");
-            return app.state.szWork;
+            return SzProductionLabel(app.state.szWork);
         } else {
             if (app.state.rgshdef[iItem].fFree)
                 goto LBogus;
             CchCopyUtf8Prefix(std::span{app.state.szWork}, app.state.rgshdef[iItem].hul.szClass);
-            return app.state.szWork;
+            return SzProductionLabel(app.state.szWork);
         }
     }
     if (iItem >= iobjPlanetaryScannerFirst && iItem <= iobjPlanetaryScannerLast) {
@@ -223,7 +230,7 @@ char *PszNameProdItem(APPSESSION &app, PROD *lpprod) {
     } else {
         TextIO().pfnCchGetString(app, static_cast<StringId>(idsMines + LOWORD(iItem)), std::span{app.state.szWork});
     }
-    return app.state.szWork;
+    return SzProductionLabel(app.state.szWork);
 }
 
 void GetProductionCosts(APPSESSION &app, PLANET *lppl, PROD *lpprod, std::uint32_t *rgCost, std::int16_t iplr, std::int16_t fOnlyOne) {

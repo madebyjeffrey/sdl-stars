@@ -2806,8 +2806,8 @@ std::int16_t FSelectSz(APPSESSION &app, char *szName) {
 
     iplPartial = -1;
     scan.iwp = iwpNone;
-    for (ipl = 0; ipl < app.state.game.cPlanMax && strcmpi(PszGetCompressedPlanet(app, app.state.rgidPlan[ipl]), szName) != 0; ipl++) {
-        if (iplPartial == -1 && strnicmp(PszGetCompressedPlanet(app, app.state.rgidPlan[ipl]), szName, std::strlen(szName)) == 0) {
+    for (ipl = 0; ipl < app.state.game.cPlanMax && strcmpi(PszGetCompressedPlanet(app, app.state.rgidPlan[ipl]).data(), szName) != 0; ipl++) {
+        if (iplPartial == -1 && strnicmp(PszGetCompressedPlanet(app, app.state.rgidPlan[ipl]).data(), szName, std::strlen(szName)) == 0) {
             iplPartial = ipl;
         }
     }

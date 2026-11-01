@@ -282,6 +282,7 @@ static char *PchAppendMessageText(APPSESSION &app, char *pch, const char *psz) {
 }
 
 char *PszFormatString(APPSESSION &app, const char *pszFormat, std::int16_t *pParamsReal) {
+    std::array<char, 360> szDisplayLabel{};
     std::array<char, 360> szObjectName{};
     std::array<char, cchCatalogText> szCatalogPchT{};
     std::array<char, 50> szPlayerName{};
@@ -345,7 +346,8 @@ char *PszFormatString(APPSESSION &app, const char *pszFormat, std::int16_t *pPar
                 pchT = app.state.rgszPlanetAttr[*pParams];
                 goto FinishString;
             case 'E':
-                pchT = PszCalcEnvVar(app, static_cast<EnvType>(static_cast<std::uint16_t>(*pParams) >> 8 & 0xff & 0xff), *pParams & 0xff);
+                szDisplayLabel = PszCalcEnvVar(app, static_cast<EnvType>(static_cast<std::uint16_t>(*pParams) >> 8 & 0xff & 0xff), *pParams & 0xff);
+                pchT = szDisplayLabel.data();
                 goto FinishString;
             case 'I':
                 szCatalogPchT = TextIO().pfnCompressed(app, static_cast<StringId>(idsDecreased + *pParams));
@@ -433,7 +435,8 @@ char *PszFormatString(APPSESSION &app, const char *pszFormat, std::int16_t *pPar
             case 'X':
                 goto DoNothing;
             case 'F':
-                pchT = PszFleetNameFromWord(app, *pParams);
+                szDisplayLabel = PszFleetNameFromWord(app, *pParams);
+                pchT = szDisplayLabel.data();
                 goto FinishString;
             case 's':
             DoFleet:

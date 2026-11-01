@@ -5,13 +5,13 @@
 #include <cstdint>
 
 std::int16_t FGetBestDefensePart(APPSESSION &app, PART *ppart);
-char   *PszProductionETA(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod, ProdItemType iItem, std::int16_t *etaFirst, std::int16_t *etaLast);
+std::array<char, 360> PszProductionETA(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod, ProdItemType iItem, std::int16_t *etaFirst, std::int16_t *etaLast);
 void    ChangeMainObjSel(APPSESSION &app, GrobjClass grobjNew, std::int16_t iObjSel);
 void    SelectAdjPlanet(APPSESSION &app, std::int16_t dInc, std::int16_t idPlanet);
 std::int16_t IdFindAdjStarbase(APPSESSION &app, std::int16_t idPlanet, std::int16_t fNext);
 std::int16_t IBestTerraform(APPSESSION &app, PLANET *lppl, std::int16_t fHelp);
-char   *PszCalcEnvVar(APPSESSION &app, EnvType iEnv, std::int16_t iVar);
-char   *PszCalcGravity(APPSESSION &app, std::int16_t iGravity);
+std::array<char, 360> PszCalcEnvVar(APPSESSION &app, EnvType iEnv, std::int16_t iVar);
+std::array<char, 360> PszCalcGravity(APPSESSION &app, std::int16_t iGravity);
 std::int16_t PctPlanetCapacity(APPSESSION &app, PLANET *lppl);
 std::int16_t PctPlanetOptValue(APPSESSION &app, PLANET *lppl, std::int16_t iPlr);
 std::int16_t PctPlanetDesirability(APPSESSION &app, PLANET *lppl, std::int16_t iPlr);
@@ -34,7 +34,7 @@ void    UninhabitPlanet(APPSESSION &app, PLANET *lppl);
 std::int16_t PctCloakFromHuldef(APPSESSION &app, HUL *lphul, std::int16_t iplr, std::int16_t *ppctSteal);
 
 std::int16_t FProdItemLine(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod, std::int16_t iprod, std::int16_t fShowNever, std::span<char> szLine);
-char   *PszProdQueueTop(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod);
+std::array<char, 360> PszProdQueueTop(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod);
 
 
 #endif

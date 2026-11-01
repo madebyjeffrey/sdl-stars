@@ -65,7 +65,7 @@
       "operation": "strcpy",
       "original_call": "std::strcpy(app.state.szWork, psz)",
       "destination_span": "std::span{app.state.szWork}",
-      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+      "role": "Bounded session-work staging retains current message/UI effects; the public label result now owns independent text. See docs/CPP-LIVE-OWNED-TEXT.json."
     },
     {
       "path": "src/core/planet.cpp",
@@ -75,7 +75,7 @@
       "operation": "strcpy",
       "original_call": "std::strcpy(app.state.szWork, szLine)",
       "destination_span": "std::span{app.state.szWork}",
-      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+      "role": "Bounded session-work staging retains current message/UI effects; the public label result now owns independent text. See docs/CPP-LIVE-OWNED-TEXT.json."
     },
     {
       "path": "src/core/produce.cpp",
@@ -85,7 +85,7 @@
       "operation": "strcpy",
       "original_call": "std::strcpy(app.state.szWork, app.state.rglpshdefSB[app.state.idPlayer][iItem].hul.szClass)",
       "destination_span": "std::span{app.state.szWork}",
-      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+      "role": "Bounded session-work staging retains current message/UI effects; the public label result now owns independent text. See docs/CPP-LIVE-OWNED-TEXT.json."
     },
     {
       "path": "src/core/produce.cpp",
@@ -95,7 +95,7 @@
       "operation": "strcat",
       "original_call": "std::strcat(app.state.szWork, \" (downgrade)\")",
       "destination_span": "std::span{app.state.szWork}",
-      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+      "role": "Bounded session-work staging retains current message/UI effects; the public label result now owns independent text. See docs/CPP-LIVE-OWNED-TEXT.json."
     },
     {
       "path": "src/core/produce.cpp",
@@ -105,7 +105,7 @@
       "operation": "strcat",
       "original_call": "std::strcat(app.state.szWork, \" (upgrade)\")",
       "destination_span": "std::span{app.state.szWork}",
-      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+      "role": "Bounded session-work staging retains current message/UI effects; the public label result now owns independent text. See docs/CPP-LIVE-OWNED-TEXT.json."
     },
     {
       "path": "src/core/produce.cpp",
@@ -115,7 +115,7 @@
       "operation": "strcpy",
       "original_call": "std::strcpy(app.state.szWork, app.state.rgshdef[iItem].hul.szClass)",
       "destination_span": "std::span{app.state.szWork}",
-      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+      "role": "Bounded session-work staging retains current message/UI effects; the public label result now owns independent text. See docs/CPP-LIVE-OWNED-TEXT.json."
     },
     {
       "path": "src/core/produce.cpp",
@@ -125,7 +125,7 @@
       "operation": "strcpy",
       "original_call": "std::strcpy(app.state.szWork, LpplanetaryFromId(LOWORD(iItem) - iobjPlanetaryScannerFirst)->szName)",
       "destination_span": "std::span{app.state.szWork}",
-      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+      "role": "Bounded session-work staging retains current message/UI effects; the public label result now owns independent text. See docs/CPP-LIVE-OWNED-TEXT.json."
     },
     {
       "path": "src/core/report.cpp",
@@ -686,7 +686,7 @@
       "operation": "strcpy",
       "original_call": "std::strcpy(app.state.szWork, TextIO().pfnCompressed(app, idsWormhole))",
       "destination_span": "std::span{app.state.szWork}",
-      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+      "role": "Bounded session-work staging retains current message/UI effects; the public label result now owns independent text. See docs/CPP-LIVE-OWNED-TEXT.json."
     },
     {
       "path": "src/core/util.cpp",
@@ -696,7 +696,7 @@
       "operation": "strcpy",
       "original_call": "std::strcpy(app.state.szWork, TextIO().pfnCompressed(app, idsMysteryTrader))",
       "destination_span": "std::span{app.state.szWork}",
-      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+      "role": "Bounded session-work staging retains current message/UI effects; the public label result now owns independent text. See docs/CPP-LIVE-OWNED-TEXT.json."
     },
     {
       "path": "src/core/util.cpp",
@@ -706,7 +706,7 @@
       "operation": "strcpy",
       "original_call": "std::strcpy(app.state.szWork, TextIO().pfnCompressed(app, idsMysteryObject))",
       "destination_span": "std::span{app.state.szWork}",
-      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+      "role": "Bounded session-work staging retains current message/UI effects; the public label result now owns independent text. See docs/CPP-LIVE-OWNED-TEXT.json."
     },
     {
       "path": "src/core/util.cpp",
@@ -736,7 +736,7 @@
       "operation": "strcpy",
       "original_call": "std::strcpy(app.state.szWork, psz)",
       "destination_span": "std::span{app.state.szWork}",
-      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+      "role": "Bounded session-work staging retains current message/UI effects; the public label result now owns independent text. See docs/CPP-LIVE-OWNED-TEXT.json."
     },
     {
       "path": "src/core/util.cpp",
@@ -746,7 +746,7 @@
       "operation": "strcpy",
       "original_call": "std::strcpy(app.state.szWork, TextIO().pfnCompressed(app, idsDeepSpace))",
       "destination_span": "std::span{app.state.szWork}",
-      "role": "Shared display scratch or its actual tail span; retain existing pointer identity and invalidation behavior until owned-text migration."
+      "role": "Bounded session-work staging retains current message/UI effects; the public label result now owns independent text. See docs/CPP-LIVE-OWNED-TEXT.json."
     },
     {
       "path": "src/ui/buildui.cpp",

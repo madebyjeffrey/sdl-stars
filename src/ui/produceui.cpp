@@ -501,6 +501,7 @@ void InitializeProductionDlg(APPSESSION &app, HWND hwnd) {
 }
 
 void DrawProductionDlg(APPSESSION &app, HWND hwnd, HDC hdc, RECT *prc, std::int16_t iDraw) {
+    std::array<char, 360> szDisplayLabel{};
     std::int32_t lSel;
     std::int16_t iSrc;
     std::int16_t idc;
@@ -564,9 +565,8 @@ void DrawProductionDlg(APPSESSION &app, HWND hwnd, HDC hdc, RECT *prc, std::int1
                 rc.bottom += static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2;
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
                 c = win32::wsprintfA(szT, TextIO().pfnCompressed(app, idsDDoneCompletion).data(), prod.pct);
-                if (PszProductionETA(app, &app.state.sel.pl, app.state.lpplProdGlob, static_cast<ProdItemType>(LOWORD(lSel)), nullptr, nullptr) != app.state.szWork) {
-                }
-                CchCopyUtf8Prefix(std::span{szT}.subspan(static_cast<std::size_t>(c)), app.state.szWork);
+                szDisplayLabel = PszProductionETA(app, &app.state.sel.pl, app.state.lpplProdGlob, static_cast<ProdItemType>(LOWORD(lSel)), nullptr, nullptr);
+                CchCopyUtf8Prefix(std::span{szT}.subspan(static_cast<std::size_t>(c)), szDisplayLabel.data());
                 win32::TextOutA(hdc, rc.left - 20, rc.bottom, szT, std::strlen(szT));
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
             }
@@ -589,6 +589,7 @@ void DrawProductionDlg(APPSESSION &app, HWND hwnd, HDC hdc, RECT *prc, std::int1
 }
 
 void FillProdSrcLB(APPSESSION &app, HWND hwndLB, std::int16_t mdFill) {
+    std::array<char, 360> szDisplayLabel{};
     char    szT[80];
     std::int16_t i;
     char   *psz;
@@ -599,7 +600,8 @@ void FillProdSrcLB(APPSESSION &app, HWND hwndLB, std::int16_t mdFill) {
     ControlIO().pfnSendMessage(hwndLB, win32::LB_RESETCONTENT, 0, 0);
     for (i = 0; i < app.state.cProdGlob; i++) {
         if (app.state.pProdGlob[i].cItem > 0) {
-            psz = PszNameProdItem(app, app.state.pProdGlob + i);
+            szDisplayLabel = PszNameProdItem(app, app.state.pProdGlob + i);
+            psz = szDisplayLabel.data();
             CchCopyUtf8Prefix(std::span{szT}.subspan(6), psz);
             if (app.state.pProdGlob[i].grobj == grobjFleet) {
                 szT[0] = app.state.pProdGlob[i].iItem < iobjPacketGerm ? 42 : 35;
