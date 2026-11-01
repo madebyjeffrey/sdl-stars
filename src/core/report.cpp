@@ -490,7 +490,7 @@ void DumpPlanets(APPSESSION &app) {
                             szForm[1] = 0;
                         } else {
                             i = lppl->iWarpFling + 4;
-                            CchCopyUtf8Prefix(std::span{szForm}.subspan(1), TextIO().pfnPlanetName(app, lppl->idFling - 1));
+                            CchCopyUtf8Prefix(std::span{szForm}.subspan(1), TextIO().pfnPlanetName(app, lppl->idFling - 1).data());
                         }
                         RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm))));
                         CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, i).data());
@@ -498,7 +498,7 @@ void DumpPlanets(APPSESSION &app) {
                         if (lppl->idRoute == 0) {
                             szForm[1] = 0;
                         } else {
-                            CchCopyUtf8Prefix(std::span{szForm}.subspan(1), TextIO().pfnPlanetName(app, lppl->idRoute - 1));
+                            CchCopyUtf8Prefix(std::span{szForm}.subspan(1), TextIO().pfnPlanetName(app, lppl->idRoute - 1).data());
                         }
                         RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm))));
                         if (lppl->fStarbase) {
@@ -552,6 +552,7 @@ DisplayStatus:
 }
 
 void DumpFleets(APPSESSION &app) {
+    std::array<char, 360> szObjectName{};
     std::int16_t  iplr;
     StringId ids;
     char     szFile[256];
@@ -604,7 +605,8 @@ void DumpFleets(APPSESSION &app) {
                 if (!app.state.rglpfl[ifl])
                     break;
                 app.state.idPlayer = iplrNone;
-                psz = PszGetFleetName(app, lpfl->id);
+                szObjectName = PszGetFleetName(app, lpfl->id);
+                psz = szObjectName.data();
                 app.state.idPlayer = iplr;
                 RgToStream(app, std::as_bytes(std::span{psz, std::strlen(psz)}));
                 szForm[0] = '\t';
@@ -615,7 +617,8 @@ void DumpFleets(APPSESSION &app) {
                 if (lpfl->idPlanet == idPlanetDeepSpace) {
                     cch = 1;
                 } else {
-                    psz = TextIO().pfnPlanetName(app, lpfl->idPlanet);
+                    szObjectName = TextIO().pfnPlanetName(app, lpfl->idPlanet);
+                    psz = szObjectName.data();
                     CchCopyUtf8Prefix(std::span{szForm}.subspan(1), psz);
                     cch = std::strlen(psz) + 1;
                 }

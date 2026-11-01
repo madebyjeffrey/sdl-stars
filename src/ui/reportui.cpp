@@ -1167,6 +1167,7 @@ std::int16_t DxReportColHdr(APPSESSION &app, ReportType irpt, std::int16_t iCol,
 }
 
 void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::int16_t irow, std::int16_t icol) {
+    std::array<char, 360> szObjectName{};
     std::array<char, 360> szReportText{};
     std::uint8_t *lpbd;
     char     szT[100];
@@ -1212,7 +1213,8 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
             if (lppl->idRoute == 0) {
                 psz = app.state.szDblDash;
             } else {
-                psz = TextIO().pfnPlanetName(app, lppl->idRoute - 1);
+                szObjectName = TextIO().pfnPlanetName(app, lppl->idRoute - 1);
+                psz = szObjectName.data();
             }
             win32::ExtTextOutA(hdc, prc->left, prc->top, win32::ETO_CLIPPED, prc, psz, std::strlen(psz), nullptr);
             break;
@@ -1220,7 +1222,8 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
             if (lppl->idFling == 0) {
                 psz = app.state.szDblDash;
             } else {
-                psz = TextIO().pfnPlanetName(app, lppl->idFling - 1);
+                szObjectName = TextIO().pfnPlanetName(app, lppl->idFling - 1);
+                psz = szObjectName.data();
             }
             win32::ExtTextOutA(hdc, prc->left, prc->top, win32::ETO_CLIPPED, prc, psz, std::strlen(psz), nullptr);
             break;
@@ -1228,7 +1231,8 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
             if (app.state.sel.grobj == grobjPlanet && app.state.sel.pl.id == lppl->id) {
                 win32::SetTextColor(hdc, 127);
             }
-            psz = TextIO().pfnPlanetName(app, lppl->id);
+            szObjectName = TextIO().pfnPlanetName(app, lppl->id);
+            psz = szObjectName.data();
             win32::ExtTextOutA(hdc, prc->left, prc->top, win32::ETO_CLIPPED, prc, psz, std::strlen(psz), nullptr);
             if (!lppl->fStarbase)
                 break;
@@ -1382,12 +1386,14 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
             if (app.state.sel.grobj == grobjFleet && app.state.sel.fl.id == lpfl->id) {
                 win32::SetTextColor(hdc, 127);
             }
-            psz = PszGetFleetName(app, lpfl->id);
+            szObjectName = PszGetFleetName(app, lpfl->id);
+            psz = szObjectName.data();
             win32::ExtTextOutA(hdc, prc->left, prc->top, win32::ETO_CLIPPED, prc, psz, std::strlen(psz), nullptr);
             break;
         case colFleetLocation:
             if (lpfl->idPlanet != idPlanetDeepSpace) {
-                psz = TextIO().pfnPlanetName(app, lpfl->idPlanet);
+                szObjectName = TextIO().pfnPlanetName(app, lpfl->idPlanet);
+                psz = szObjectName.data();
             } else {
                 psz = szT;
                 win32::wsprintfA(szT, TextIO().pfnCompressed(app, idsSpaceDD).data(), lpfl->pt.x, lpfl->pt.y);
@@ -1470,7 +1476,8 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
         switch (icol) {
         case colBattleLocation:
             if (BdvFromLp(app, lpbd).idPlanet() != idPlanetNone) {
-                psz = TextIO().pfnPlanetName(app, BdvFromLp(app, lpbd).idPlanet());
+                szObjectName = TextIO().pfnPlanetName(app, BdvFromLp(app, lpbd).idPlanet());
+                psz = szObjectName.data();
             } else {
                 psz = szT;
                 win32::wsprintfA(szT, TextIO().pfnCompressed(app, idsSpaceDD).data(), BdvFromLp(app, lpbd).pt().x(), BdvFromLp(app, lpbd).pt().y());
@@ -1548,12 +1555,14 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
                 if (app.state.sel.scan.grobj == grobjFleet && app.state.rglpfl[app.state.sel.scan.ifl]->id == lpfl->id) {
                     win32::SetTextColor(hdc, 127);
                 }
-                psz = PszGetFleetName(app, lpfl->id);
+                szObjectName = PszGetFleetName(app, lpfl->id);
+                psz = szObjectName.data();
                 win32::ExtTextOutA(hdc, prc->left, prc->top, win32::ETO_CLIPPED, prc, psz, std::strlen(psz), nullptr);
                 break;
             case colEnemyFleetLocation:
                 if (lpfl->idPlanet != idPlanetDeepSpace) {
-                    psz = TextIO().pfnPlanetName(app, lpfl->idPlanet);
+                    szObjectName = TextIO().pfnPlanetName(app, lpfl->idPlanet);
+                    psz = szObjectName.data();
                 } else {
                     psz = szT;
                     win32::wsprintfA(szT, TextIO().pfnCompressed(app, idsSpaceDD).data(), lpfl->pt.x, lpfl->pt.y);
@@ -1734,6 +1743,7 @@ void SortReportCache(APPSESSION &app, ReportType irpt, std::int16_t icol) {
 }
 
 int ICompReport(APPSESSION &app, std::uint16_t *pid1, std::uint16_t *pid2) {
+    std::array<char, 360> szObjectName{};
     std::array<char, 360> szReportText{};
     char         szT[80];
     std::int32_t      l2;
@@ -1805,9 +1815,11 @@ TryTier2:
                 iRet = -1;
                 break;
             }
-            psz = TextIO().pfnPlanetName(app, lppl1->idRoute - 1);
+            szObjectName = TextIO().pfnPlanetName(app, lppl1->idRoute - 1);
+            psz = szObjectName.data();
             CchCopyUtf8Prefix(std::span{szT}, psz);
-            psz = TextIO().pfnPlanetName(app, lppl2->idRoute - 1);
+            szObjectName = TextIO().pfnPlanetName(app, lppl2->idRoute - 1);
+            psz = szObjectName.data();
             iRet = std::strcmp(szT, psz);
             break;
         case colPlanetDriverDest:
@@ -1823,15 +1835,19 @@ TryTier2:
                 iRet = -1;
                 break;
             }
-            psz = TextIO().pfnPlanetName(app, lppl1->idFling - 1);
+            szObjectName = TextIO().pfnPlanetName(app, lppl1->idFling - 1);
+            psz = szObjectName.data();
             CchCopyUtf8Prefix(std::span{szT}, psz);
-            psz = TextIO().pfnPlanetName(app, lppl2->idFling - 1);
+            szObjectName = TextIO().pfnPlanetName(app, lppl2->idFling - 1);
+            psz = szObjectName.data();
             iRet = std::strcmp(szT, psz);
             break;
         case colPlanetName:
-            psz = TextIO().pfnPlanetName(app, lppl1->id);
+            szObjectName = TextIO().pfnPlanetName(app, lppl1->id);
+            psz = szObjectName.data();
             CchCopyUtf8Prefix(std::span{szT}, psz);
-            psz = TextIO().pfnPlanetName(app, lppl2->id);
+            szObjectName = TextIO().pfnPlanetName(app, lppl2->id);
+            psz = szObjectName.data();
             iRet = std::strcmp(szT, psz);
             break;
         case colPlanetProduction:
@@ -1948,20 +1964,24 @@ TryTier2:
             break;
         switch (icolSort) {
         case colFleetName:
-            psz = PszGetFleetName(app, lpfl1->id);
+            szObjectName = PszGetFleetName(app, lpfl1->id);
+            psz = szObjectName.data();
             CchCopyUtf8Prefix(std::span{szT}, psz);
-            psz = PszGetFleetName(app, lpfl2->id);
+            szObjectName = PszGetFleetName(app, lpfl2->id);
+            psz = szObjectName.data();
             iRet = std::strcmp(szT, psz);
             break;
         case colFleetLocation:
             if (lpfl1->idPlanet != idPlanetDeepSpace) {
-                psz = TextIO().pfnPlanetName(app, lpfl1->idPlanet);
+                szObjectName = TextIO().pfnPlanetName(app, lpfl1->idPlanet);
+                psz = szObjectName.data();
                 CchCopyUtf8Prefix(std::span{szT}, psz);
             } else {
                 win32::wsprintfA(szT, TextIO().pfnCompressed(app, idsSpaceDD).data(), lpfl1->pt.x, lpfl1->pt.y);
             }
             if (lpfl2->idPlanet != idPlanetDeepSpace) {
-                psz = TextIO().pfnPlanetName(app, lpfl2->idPlanet);
+                szObjectName = TextIO().pfnPlanetName(app, lpfl2->idPlanet);
+                psz = szObjectName.data();
             } else {
                 win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsSpaceDD).data(), lpfl2->pt.x, lpfl2->pt.y);
                 psz = app.state.szWork;
@@ -2088,13 +2108,15 @@ TryTier2:
         switch (icolSort) {
         case colBattleLocation:
             if (BdvFromLp(app, lpbd1).idPlanet() != idPlanetNone) {
-                psz = TextIO().pfnPlanetName(app, BdvFromLp(app, lpbd1).idPlanet());
+                szObjectName = TextIO().pfnPlanetName(app, BdvFromLp(app, lpbd1).idPlanet());
+                psz = szObjectName.data();
                 CchCopyUtf8Prefix(std::span{szT}, psz);
             } else {
                 win32::wsprintfA(szT, TextIO().pfnCompressed(app, idsSpaceDD).data(), BdvFromLp(app, lpbd1).pt().x(), BdvFromLp(app, lpbd1).pt().y());
             }
             if (BdvFromLp(app, lpbd2).idPlanet() != idPlanetNone) {
-                psz = TextIO().pfnPlanetName(app, BdvFromLp(app, lpbd2).idPlanet());
+                szObjectName = TextIO().pfnPlanetName(app, BdvFromLp(app, lpbd2).idPlanet());
+                psz = szObjectName.data();
             } else {
                 win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsSpaceDD).data(), BdvFromLp(app, lpbd2).pt().x(), BdvFromLp(app, lpbd2).pt().y());
                 psz = app.state.szWork;
@@ -2167,20 +2189,24 @@ TryTier2:
         if (static_cast<std::uint16_t>(icolSort) <= colEnemyFleetUtility) {
             switch (icolSort) {
             case colEnemyFleetName:
-                psz = PszGetFleetName(app, lpfl1->id);
+                szObjectName = PszGetFleetName(app, lpfl1->id);
+                psz = szObjectName.data();
                 CchCopyUtf8Prefix(std::span{szT}, psz);
-                psz = PszGetFleetName(app, lpfl2->id);
+                szObjectName = PszGetFleetName(app, lpfl2->id);
+                psz = szObjectName.data();
                 iRet = std::strcmp(szT, psz);
                 break;
             case colEnemyFleetLocation:
                 if (lpfl1->idPlanet != idPlanetDeepSpace) {
-                    psz = TextIO().pfnPlanetName(app, lpfl1->idPlanet);
+                    szObjectName = TextIO().pfnPlanetName(app, lpfl1->idPlanet);
+                    psz = szObjectName.data();
                     CchCopyUtf8Prefix(std::span{szT}, psz);
                 } else {
                     win32::wsprintfA(szT, TextIO().pfnCompressed(app, idsSpaceDD).data(), lpfl1->pt.x, lpfl1->pt.y);
                 }
                 if (lpfl2->idPlanet != idPlanetDeepSpace) {
-                    psz = TextIO().pfnPlanetName(app, lpfl2->idPlanet);
+                    szObjectName = TextIO().pfnPlanetName(app, lpfl2->idPlanet);
+                    psz = szObjectName.data();
                 } else {
                     win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsSpaceDD).data(), lpfl2->pt.x, lpfl2->pt.y);
                     psz = app.state.szWork;

@@ -839,6 +839,7 @@ void DrawPlanetProduction(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
 }
 
 void DrawPlanShipBitmap(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
+    std::array<char, 360> szObjectName{};
     std::int16_t yTop;
     std::int16_t dy;
     std::int16_t xRight;
@@ -851,12 +852,14 @@ void DrawPlanShipBitmap(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
     RECT    rc;
 
     if (app.state.sel.grobj == grobjPlanet) {
-        psz = TextIO().pfnPlanetName(app, obj.ppl()->id);
+        szObjectName = TextIO().pfnPlanetName(app, obj.ppl()->id);
+        psz = szObjectName.data();
         i = obj.ppl()->id;
         i += 8;
         iOffset = i % 28;
     } else {
-        psz = PszGetFleetName(app, obj.pfl()->id);
+        szObjectName = PszGetFleetName(app, obj.pfl()->id);
+        psz = szObjectName.data();
     }
     if (ptile->fFixCtls) {
         for (i = 4; i <= 6; i++) {
@@ -1703,19 +1706,21 @@ void DrawPlanShip(APPSESSION &app, HDC hdc, TileBits grbit) {
 }
 
 void SetPlanetTitleBar(APPSESSION &app, HWND hwnd) {
+    std::array<char, 360> szObjectName{};
     std::array<char, cchCatalogText> szCatalogPsz{};
     std::array<char, cchCatalogText + 360> szTitle{};
     std::array<char, 360> szPlanet{};
     char *psz;
 
     if (app.state.sel.grobj == grobjPlanet) {
-        CchCopyUtf8Prefix(std::span{szPlanet}, TextIO().pfnPlanetName(app, app.state.sel.pl.id));
+        szPlanet = TextIO().pfnPlanetName(app, app.state.sel.pl.id);
         // The caption holds the complete bounded prefix and planet name.
         TextIO().pfnCchGetString(app, idsPlanet2, std::span{szTitle}.first(cchCatalogText));
         FAppendUtf8(std::span{szTitle}, szPlanet.data());
         psz = szTitle.data();
     } else if (app.state.sel.grobj == grobjFleet) {
-        psz = PszGetFleetName(app, app.state.sel.fl.id);
+        szObjectName = PszGetFleetName(app, app.state.sel.fl.id);
+        psz = szObjectName.data();
     } else {
         szCatalogPsz = TextIO().pfnCompressed(app, idsPlanetView);
         psz = szCatalogPsz.data();
@@ -1725,6 +1730,7 @@ void SetPlanetTitleBar(APPSESSION &app, HWND hwnd) {
 }
 
 void FillShipDD(APPSESSION &app, std::int16_t idSkip) {
+    std::array<char, 360> szObjectName{};
     THING  *lpthMac;
     std::int16_t i;
     THING  *lpth;
@@ -1743,7 +1749,8 @@ void FillShipDD(APPSESSION &app, std::int16_t idSkip) {
             break;
         if ((idSkip == idflNone && app.state.sel.id == lpfl->idPlanet) ||
             (idSkip != idflNone && lpfl->id != idSkip && lpfl->pt.x == app.state.sel.fl.pt.x && lpfl->pt.y == app.state.sel.fl.pt.y)) {
-            PszGetFleetName(app, lpfl->id);
+            szObjectName = PszGetFleetName(app, lpfl->id);
+            CchCopyUtf8Prefix(std::span{app.state.szWork}, szObjectName.data());
             std::memmove(&app.state.szWork[1], app.state.szWork, 50);
             app.state.szWork[0] = lpfl->iPlayer == app.state.idPlayer ? 32 : 120;
             ControlIO().pfnSendMessage(app.lpui->hwndShipDD, win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(app.state.szWork));
@@ -1753,7 +1760,8 @@ void FillShipDD(APPSESSION &app, std::int16_t idSkip) {
     lpthMac = app.state.lpThings + app.state.cThing;
     for (; lpth < lpthMac; lpth++) {
         if (lpth->ith() == ithMineralPacket && lpth->pt().x() == ptSel.x && lpth->pt().y() == ptSel.y) {
-            PszGetThingName(app, lpth->idFull());
+            szObjectName = PszGetThingName(app, lpth->idFull());
+            CchCopyUtf8Prefix(std::span{app.state.szWork}, szObjectName.data());
             std::memmove(&app.state.szWork[1], app.state.szWork, 50);
             app.state.szWork[0] = lpth->iplr() == app.state.idPlayer ? 32 : 120;
             ControlIO().pfnSendMessage(app.lpui->hwndShipDD, win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(app.state.szWork));

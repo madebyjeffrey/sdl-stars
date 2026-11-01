@@ -142,6 +142,7 @@ void InvalidateMineralBars(APPSESSION &app) {
 }
 
 void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
+    std::array<char, 360> szObjectName{};
     std::array<char, cchCatalogText> szCatalogPsz{};
     std::array<char, cchCatalogText> szCatalogPszT{};
     PLANET     pl;
@@ -405,7 +406,8 @@ void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
                 win32::TextOutA(hdc, xLeft, yTop, app.state.szWork, c);
                 yTop += app.state.dyArial8 + 2;
                 TextIO().pfnCchGetString(app, idsDestination, std::span{szT});
-                psz = TextIO().pfnPlanetName(app, lpth->thp().idPlanet());
+                szObjectName = TextIO().pfnPlanetName(app, lpth->thp().idPlanet());
+                psz = szObjectName.data();
                 CchAppendUtf8Prefix(std::span{szT}, psz);
                 win32::TextOutA(hdc, xLeft, yTop, szT, std::strlen(szT));
             }
@@ -1162,6 +1164,7 @@ void MineClick(APPSESSION &app, std::int16_t x, std::int16_t y, std::int16_t msg
 }
 
 void SetMineralTitleBar(APPSESSION &app, HWND hwnd) {
+    std::array<char, 360> szObjectName{};
     char       szDeepSpace[40];
     char       szSummary[40];
     std::int16_t    fVisCB;
@@ -1175,19 +1178,25 @@ void SetMineralTitleBar(APPSESSION &app, HWND hwnd) {
     grobj = app.state.sel.scan.grobj == grobjOther ? app.state.sel.scan.grobjFull : app.state.sel.scan.grobj;
     if (grobj & grobjPlanet) {
         if (app.state.sel.scan.idpl != idplNone) {
-            psz = TextIO().pfnPlanetName(app, app.state.sel.scan.idpl);
+            szObjectName = TextIO().pfnPlanetName(app, app.state.sel.scan.idpl);
+            CchCopyUtf8Prefix(std::span{app.state.szWork}, szObjectName.data());
+            psz = app.state.szWork;
             std::strcat(psz, szSummary);
         }
     } else if (grobj & grobjFleet) {
         if (app.state.sel.scan.ifl != iflNone) {
-            psz = PszGetFleetName(app, app.state.rglpfl[app.state.sel.scan.ifl]->id);
+            szObjectName = PszGetFleetName(app, app.state.rglpfl[app.state.sel.scan.ifl]->id);
+            CchCopyUtf8Prefix(std::span{app.state.szWork}, szObjectName.data());
+            psz = app.state.szWork;
             std::strcat(psz, szSummary);
         }
     } else if (!(grobj & grobjThing)) {
         psz = szDeepSpace;
     } else if (app.state.sel.scan.ith != ithNone) {
         fVisCB = 1;
-        psz = PszGetThingName(app, app.state.lpThings[app.state.sel.scan.ith].idFull());
+        szObjectName = PszGetThingName(app, app.state.lpThings[app.state.sel.scan.ith].idFull());
+        CchCopyUtf8Prefix(std::span{app.state.szWork}, szObjectName.data());
+        psz = app.state.szWork;
         std::strcat(psz, szSummary);
     }
     CchCopyUtf8Prefix(std::span{app.lpui->szMineralTitle}, psz);

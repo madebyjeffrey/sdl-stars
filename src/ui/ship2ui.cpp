@@ -295,6 +295,7 @@ INT_PTR  RenameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
 }
 
 INT_PTR  MergeFleetsDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+    std::array<char, 360> szObjectName{};
     APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
 
     std::int16_t i;
@@ -306,7 +307,8 @@ INT_PTR  MergeFleetsDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     case win32::WM_INITDIALOG:
         ControlIO().pfnStickyDlgPos(hwnd, &app.lpui->ptStickyMergeFleetsDlg, 1);
         for (i = 0; i < app.state.vcflMerge; i++) {
-            psz = PszGetFleetName(app, app.state.rglpfl[app.state.vrgiflMerge[i]]->id);
+            szObjectName = PszGetFleetName(app, app.state.rglpfl[app.state.vrgiflMerge[i]]->id);
+            psz = szObjectName.data();
             CchCopyUtf8Prefix(std::span{szT}, psz);
             if (app.state.rglpfl[app.state.vrgiflMerge[i]]->cord > 1) {
                 CchAppendUtf8Prefix(std::span{szT}, " *");

@@ -109,6 +109,7 @@ static void test_PlayerName_text_contract(void) {
 }
 
 static void test_FleetName_utf8_boundary(void) {
+    std::array<char, 360> szObjectName{};
 #ifdef STARS_UI_SDL
     APPSESSION &app = ui::app;
 #else
@@ -131,7 +132,8 @@ static void test_FleetName_utf8_boundary(void) {
     psz = PszFleetNameFromWord(app, 0x2000);
     TEST_CHECK(FUtf8Valid(psz, strlen(psz)));
     TEST_CHECK(strncmp(psz, "AAAAAAAAAAAAAAAAAAAAAAAAAAA+", 28) == 0);
-    psz = PszGetFleetName(app, lpfl->id);
+    szObjectName = PszGetFleetName(app, lpfl->id);
+    psz = szObjectName.data();
     TEST_CHECK(FUtf8Valid(psz, strlen(psz)));
 }
 
@@ -389,7 +391,78 @@ static void test_TransferStuff_restores_borrowed_frame_on_lookup_failure(void) {
 }
 #endif
 
+static std::string SzObjectNameBytes(const std::array<char, 360> &sz) { return sz.data(); }
+static void test_ObjectName_contract(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    FLEET fl{};
+    FLEET *rgpfl[1] = {&fl};
+    FLEET **rglpflSav;
+    THING th{};
+    THING *lpthSav;
+    std::int16_t cFleetSav, cThingSav;
+    std::int16_t rgParams[1]{};
+    std::uint16_t cPlayer0Sav, cPlayer1Sav;
+    TEST_ASSERT(FStarsTestInit(app));
+    app.state.rgidPlan[0] = 0;
+    const auto szPlanet = PszGetPlanetName(app, 0);
+    TEST_CHECK(SzObjectNameBytes(PszGetPlanetName(app, 0)) == "007");
+    TEST_CHECK(SzObjectNameBytes(PszGetPlanetName(app, static_cast<std::int16_t>(0x8000))) == "Orbiting 007");
+    TEST_CHECK(std::string_view(app.state.szWork) == "Orbiting 007");
+    TEST_CHECK(std::string_view(PszFormatString(app, "\\p|\\w", rgParams)) == "007|007");
+    app.state.idPlayer = 0;
+    CchCopyUtf8Prefix(std::span{app.state.rgplr[1].szName}, "Race-\xce\xa9");
+    TEST_CHECK(SzObjectNameBytes(PszGetFleetName(app, 0)) == "Fleet #1");
+    TEST_CHECK(SzObjectNameBytes(PszGetFleetName(app, 512)) == "Race-\xce\xa9 Fleet #1");
+    rglpflSav = app.state.rglpfl; cFleetSav = app.state.cFleet;
+    cPlayer0Sav = app.state.rgplr[0].cFleet; cPlayer1Sav = app.state.rgplr[1].cFleet;
+    app.state.rglpfl = rgpfl; app.state.cFleet = 1; app.state.rgplr[0].cFleet = 1;
+    auto szCustom = std::to_array("Scout-\xce\xa9");
+    fl.lpszName = szCustom.data();
+    TEST_CHECK(SzObjectNameBytes(PszGetFleetName(app, 0)) == "Scout-\xce\xa9");
+    fl.id = 512; fl.iPlayer = 1;
+    app.state.rgplr[0].cFleet = 0; app.state.rgplr[1].cFleet = 1;
+    TEST_CHECK(SzObjectNameBytes(PszGetFleetName(app, 512)) == "Race-\xce\xa9 Scout-\xce\xa9");
+    TEST_CHECK(std::string_view(app.state.szWork) == "Race-\xce\xa9 Scout-\xce\xa9");
+    const auto szFleet = PszGetFleetName(app, 512);
+    rgParams[0] = 512;
+    TEST_CHECK(std::string_view(PszFormatString(app, "\\s|\\w", rgParams)) == "Race-\xce\xa9 Scout-\xce\xa9|Race-\xce\xa9 Scout-\xce\xa9");
+    app.state.rglpfl = rglpflSav; app.state.cFleet = cFleetSav;
+    app.state.rgplr[0].cFleet = cPlayer0Sav; app.state.rgplr[1].cFleet = cPlayer1Sav;
+    struct CASE { std::uint16_t ith, iWarp, iplr; const char *psz; };
+    const CASE rgCases[] = {
+        {ithMinefield, 0, 0, "Standard Mine Field"}, {ithMinefield, 0, 1, "Race-\xce\xa9 Standard Mine Field"},
+        {ithMineralPacket, 0, 0, "Salvage "}, {ithMineralPacket, 1, 0, "Mineral Packet"},
+        {ithMineralPacket, 1, 1, "Race-\xce\xa9 Mineral Packet"}, {ithWormhole, 0, 0, "Wormhole"},
+        {ithMysteryTrader, 0, 0, "Mystery Trader"}, {7, 0, 0, ""}
+    };
+    lpthSav = app.state.lpThings; cThingSav = app.state.cThing;
+    app.state.lpThings = &th; app.state.cThing = 1;
+    for (const auto &cs : rgCases) {
+        th = THING{}; th.SetIth(cs.ith); th.SetIplr(cs.iplr);
+        if (cs.ith == ithMineralPacket) th.thp().SetIWarp(cs.iWarp);
+        TEST_CHECK(SzObjectNameBytes(PszGetThingName(app, static_cast<std::int16_t>(th.idFull()))) == cs.psz);
+        TEST_MSG("thing %d, warp %d, player %d: expected [%s], got [%s]", cs.ith, cs.iWarp, cs.iplr, cs.psz, app.state.szWork);
+        TEST_CHECK(std::string_view(app.state.szWork) == cs.psz);
+    }
+    TEST_CHECK(SzObjectNameBytes(PszGetThingName(app, static_cast<std::int16_t>(th.idFull() + 1))).empty());
+    th.SetIth(ithWormhole);
+    const auto szThing = PszGetThingName(app, static_cast<std::int16_t>(th.idFull()));
+    rgParams[0] = static_cast<std::int16_t>(th.idFull());
+    TEST_CHECK(std::string_view(PszFormatString(app, "\\g|\\w", rgParams)) == "Wormhole|Wormhole");
+    CchCopyUtf8Prefix(std::span{app.state.szWork}, "scratch changed");
+    TEST_CHECK(std::string_view(szPlanet.data()) == "007");
+    TEST_CHECK(std::string_view(szFleet.data()) == "Race-\xce\xa9 Scout-\xce\xa9");
+    TEST_CHECK(std::string_view(szThing.data()) == "Wormhole");
+    app.state.lpThings = lpthSav; app.state.cThing = cThingSav;
+}
+
 TEST_LIST = {
+    {"object names retain planet, fleet, thing and work-buffer behavior", test_ObjectName_contract},
     {"hull-name values retain duplicate ordinals and UTF-8 byte budgets", test_DecorateHullName_owned},
     {"player-name values survive other lookups and scratch formatting", test_PlayerName_owned_results},
     {"player-name values retain grammar and UTF-8 byte budgets", test_PlayerName_text_contract},

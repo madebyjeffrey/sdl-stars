@@ -105,7 +105,8 @@
         "fixed-library-name-modal-and-suggestion-views",
         "recent-file-whole-path-admission-before-shared-effects",
         "owned-location-and-distance-values",
-        "complete-owned-planet-caption-capacity-repair"
+        "complete-owned-planet-caption-capacity-repair",
+        "owned-planet-fleet-and-thing-name-values"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -467,6 +468,23 @@
           "baseline": "Intentional caption memory-safety repair documented in CHANGELOG.md and ROADMAP.md. Native baseline regenerated after all readers completed and compared: 519 matches. No scenario/checkpoint moved; preserved 592 regeneration-only fixture differences, leaving native/frozen-original baseline bytes and unit goldens unchanged. Game rules, records, RNG, tie order, binary64 and host results remain.",
           "remaining": "Planet/fleet/thing scratch-return interfaces and their other consumers, remaining L05 copies/const/scratch/wrapper formatting, L06 services/Milestone D and L08 final qualification remain active.",
           "receipts": "dist/verification/live-cpp/l05x/"
+        },
+        {
+          "batch": "L05y owned planet, fleet and thing name values",
+          "debug_build": "Pass, no warnings. Release SDL regression and host builds pass. Compiler/source policy covers 158 owned sources, 159 variants and 161 standalone headers in both orders; exact raw-copy inventory passes.",
+          "desktop": "153/153, including all 29 leak checks, actual message/report/UI consumers, lifecycle provider and available SDL tutorial checkpoints. Final added direct message-work assertions also pass in the focused utility test.",
+          "host_units": "28/28 in Release; final direct message-work assertions pass in the rebuilt host utility test.",
+          "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+          "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+          "windows": "Strict MinGW compilation passes 147/147 owned production units and four affected actual test/provider units. Final utility test compiles again with its added message-work assertions. Rebuilt Windows utility (11), utility-generation (16) and report (3) cases pass under Wine, 30 total. Actual native Windows SDL and Linux final qualification remain pending.",
+          "sanitizers": "Native macOS Debug ASan/UBSan build passes the actual utility, utility-generation and native-file-UI executables (3/3). Final added direct planet/fleet/thing message-work assertions also pass in the rebuilt sanitized utility executable. This is focused sanitizer execution, not whole-suite sanitizer qualification.",
+          "characterization": "Before migration, the actual utility test passed exact planet/orbit, missing/self/foreign fleet, Unicode custom fleet, self/foreign minefield, salvage trailing-space, self/foreign packet, wormhole, trader and rejected unknown/missing-object expectations. Final test retains those vectors and checks all three owned values survive later lookups and scratch overwrite. Direct message grammar vectors \\p|\\w, \\s|\\w and \\g|\\w preserve the generated name in the following work expansion.",
+          "interfaces": "PszGetPlanetName, PszGetFleetName and PszGetThingName return initialized independent 360-byte arrays. All 78 production calls migrate; TEXTIO follows the exact type and all three actual name providers return matching owned arrays. Existing pointer locals borrow named owners; immediate consumers borrow only through the full expression; location delegation returns the owned array directly. No compatibility pointer overload remains.",
+          "effects": "Keep existing shared-work writes for current message and UI consumers. Explicit session-workspace staging preserves the existing dropdown byte-prefix edits and three mineral-summary appends. Owner prefixes, orbit flag, UTF-8 budgets, missing-object behavior, formatter expressions, report comparison/copy order and qsort16 boundaries remain. No allocation or record-layout change.",
+          "inventory": "Raw-copy inventory remains 256 migrated sites, 52 initial application sites pending and 58 lexical spellings including SDK declarations/definitions. This batch migrates ownership, without claiming the remaining mineral-title appends or scanner tail bounds are fixed.",
+          "baseline": "Behavior-neutral: native/frozen-original baseline bytes and unit goldens unchanged. No scenario/checkpoint moved; no regression export required. Game rules, record sizes, element widths, wire bytes, RNG, tie order and binary64 boundaries remain.",
+          "remaining": "Other scratch services (including PszFleetNameFromWord and compressed-planet lookup), remaining L05 copies/const/wrapper formatting, L06 service interfaces/Milestone D and L08 inventory/final qualification remain active.",
+          "receipts": "dist/verification/live-cpp/l05y/"
         }
       ],
       "bounded_formatting": {
@@ -668,6 +686,17 @@
         "evidence": "docs/CPP-LIVE-TEXT-COPIES.json",
         "sites": 1,
         "interface": "Complete bounded owned planet title; a name snapshot survives prefix lookup and the output holds both full service capacities."
+      },
+      "object_names": {
+        "status": "complete; verified",
+        "parent": "9af376ec",
+        "interfaces": [
+          "PszGetPlanetName -> array<char,360>",
+          "PszGetFleetName -> array<char,360>",
+          "PszGetThingName -> array<char,360>"
+        ],
+        "production_calls": 78,
+        "evidence": "docs/CPP-LIVE-OWNED-TEXT.json"
       }
     },
     {

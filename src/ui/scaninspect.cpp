@@ -59,7 +59,7 @@ BOOL FCaptureScanner(APPSESSION &app, SCANSNAPSHOT *lpsnap) {
         lppl = LpplFromId(app, static_cast<std::int16_t>(i));
         lpobj->iPlayer = lppl ? lppl->iPlayer : iplrNone;
         lpobj->det = lppl ? lppl->det : 0;
-        CchSprintf(lpobj->szName, "%s", TextIO().pfnPlanetName(app, static_cast<std::int16_t>(i)));
+        CchSprintf(lpobj->szName, "%s", TextIO().pfnPlanetName(app, static_cast<std::int16_t>(i)).data());
         ScanObjectPosition(app, lpsnap, lpobj, app.state.rgptPlan[i]);
         lpobj->fScanSelected = app.state.sel.scan.grobj == grobjPlanet && app.state.sel.scan.idpl == static_cast<std::int16_t>(i);
         lpobj->fMainSelected = app.state.sel.grobj == grobjPlanet && app.state.sel.id == static_cast<std::int16_t>(i);
@@ -70,7 +70,7 @@ BOOL FCaptureScanner(APPSESSION &app, SCANSNAPSHOT *lpsnap) {
         lpobj = &lpsnap->rgobj[lpsnap->cObject++];
         lpobj->grType = grobjFleet; lpobj->id = static_cast<std::uint16_t>(lpfl->id); lpobj->ith = ithNone;
         lpobj->iPlayer = lpfl->iPlayer; lpobj->det = lpfl->det;
-        CchSprintf(lpobj->szName, "%s", PszGetFleetName(app, lpfl->id));
+        CchSprintf(lpobj->szName, "%s", PszGetFleetName(app, lpfl->id).data());
         ScanObjectPosition(app, lpsnap, lpobj, lpfl->pt);
         lpobj->fScanSelected = app.state.sel.scan.grobj == grobjFleet && app.state.sel.scan.ifl == static_cast<std::int16_t>(i);
         lpobj->fMainSelected = app.state.sel.grobj == grobjFleet && app.state.sel.id == lpfl->id;
@@ -82,7 +82,7 @@ BOOL FCaptureScanner(APPSESSION &app, SCANSNAPSHOT *lpsnap) {
         lpobj = &lpsnap->rgobj[lpsnap->cObject++];
         lpobj->grType = grobjThing; lpobj->id = lpth->idFull(); lpobj->ith = lpth->ith();
         lpobj->iPlayer = lpth->iplr(); lpobj->det = 0;
-        CchSprintf(lpobj->szName, "%s", PszGetThingName(app, lpth->idFull()));
+        CchSprintf(lpobj->szName, "%s", PszGetThingName(app, lpth->idFull()).data());
         ScanObjectPosition(app, lpsnap, lpobj, lpth->pt());
         lpobj->fScanSelected = app.state.sel.scan.grobj == grobjThing && app.state.sel.scan.ith == static_cast<std::int16_t>(i);
         lpobj->fFiltered = (app.lpui->grbitScan & grbitScanViewMask) == scanViewNoPlayerInfo;

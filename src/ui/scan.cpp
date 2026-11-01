@@ -438,6 +438,7 @@ LRESULT  ScannerWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 }
 
 std::int16_t DrawScanner(APPSESSION &app, HDC hdc, RECT *prc) {
+    std::array<char, 360> szObjectName{};
     std::int16_t  xOff;
     std::int16_t  dExpand;
     HPEN     hpenSav;
@@ -968,7 +969,8 @@ std::int16_t DrawScanner(APPSESSION &app, HDC hdc, RECT *prc) {
             }
             if ((app.lpui->grbitScan & grbitScanPlanetNames) && app.state.iScanZoom >= zoom75 && app.state.rgptPlan[i].x >= xMin - 50 && app.state.rgptPlan[i].x < xMax + 50 &&
                 app.state.rgptPlan[i].y >= yMin - 20 && app.state.rgptPlan[i].y < yMax + 20) {
-                TextIO().pfnPlanetName(app, i);
+                szObjectName = TextIO().pfnPlanetName(app, i);
+                CchCopyUtf8Prefix(std::span{app.state.szWork}, szObjectName.data());
                 if (app.lpui->grbitScan & grbitScanPlayerColors) {
                     lppl = LpplFromId(app, i);
                     if (lppl && lppl->iPlayer != iplrNone) {
@@ -1836,6 +1838,7 @@ void DrawShipScanPath(APPSESSION &app, HDC hdc, std::int16_t fShow) {
 }
 
 void DrawScannerSBar(APPSESSION &app, HDC hdc, RECT *prc, SBAR *psbar, std::int16_t fFullRedraw) {
+    std::array<char, 360> szObjectName{};
     std::int16_t    fhdc;
     COLORREF   crText;
     POINT16    pt2;
@@ -1956,11 +1959,14 @@ void DrawScannerSBar(APPSESSION &app, HDC hdc, RECT *prc, SBAR *psbar, std::int1
         if (psbar && psbar->psz) {
             CchCopyUtf8Prefix(std::span{app.state.szWork}, psbar->psz);
         } else if (grReal & 1) {
-            TextIO().pfnPlanetName(app, !psbar ? app.state.sel.scan.idpl : psbar->id);
+            szObjectName = TextIO().pfnPlanetName(app, !psbar ? app.state.sel.scan.idpl : psbar->id);
+            CchCopyUtf8Prefix(std::span{app.state.szWork}, szObjectName.data());
         } else if (grReal & 2) {
-            PszGetFleetName(app, !psbar ? app.state.rglpfl[app.state.sel.scan.ifl]->id : psbar->id);
+            szObjectName = PszGetFleetName(app, !psbar ? app.state.rglpfl[app.state.sel.scan.ifl]->id : psbar->id);
+            CchCopyUtf8Prefix(std::span{app.state.szWork}, szObjectName.data());
         } else if (grReal & 8) {
-            PszGetThingName(app, !psbar ? app.state.lpThings[app.state.sel.scan.ith].idFull() : psbar->id);
+            szObjectName = PszGetThingName(app, !psbar ? app.state.lpThings[app.state.sel.scan.ith].idFull() : psbar->id);
+            CchCopyUtf8Prefix(std::span{app.state.szWork}, szObjectName.data());
         } else if (grReal == 0 && grobj == grobjOther) {
             TextIO().pfnCchGetString(app, idsDeepSpaceWaypoint, std::span{app.state.szWork});
         } else {
@@ -2856,7 +2862,7 @@ LNotAFleetId:
         lpfl = app.state.rglpfl[ifl];
         if (!app.state.rglpfl[ifl])
             break;
-        if (strcmpi(PszGetFleetName(app, lpfl->id), szName) == 0)
+        if (strcmpi(PszGetFleetName(app, lpfl->id).data(), szName) == 0)
             goto LFoundFleetId;
     }
     if (iplPartial == -1) {

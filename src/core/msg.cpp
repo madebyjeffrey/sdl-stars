@@ -282,6 +282,7 @@ static char *PchAppendMessageText(APPSESSION &app, char *pch, const char *psz) {
 }
 
 char *PszFormatString(APPSESSION &app, const char *pszFormat, std::int16_t *pParamsReal) {
+    std::array<char, 360> szObjectName{};
     std::array<char, cchCatalogText> szCatalogPchT{};
     std::array<char, 50> szPlayerName{};
     std::array<char, 360> szLocation{};
@@ -422,7 +423,8 @@ char *PszFormatString(APPSESSION &app, const char *pszFormat, std::int16_t *pPar
                 break;
             case 'p':
             DoPlanet:
-                pchT = TextIO().pfnPlanetName(app, *pParams);
+                szObjectName = TextIO().pfnPlanetName(app, *pParams);
+                pchT = szObjectName.data();
             FinishString:
                 pch = PchAppendMessageText(app, pch, pchT);
             DoNothing:
@@ -436,7 +438,8 @@ char *PszFormatString(APPSESSION &app, const char *pszFormat, std::int16_t *pPar
             case 's':
             DoFleet:
                 w = *pParams | 0x8000;
-                pchT = PszGetFleetName(app, w);
+                szObjectName = PszGetFleetName(app, w);
+                pchT = szObjectName.data();
                 goto FinishString;
             case 'j':
                 szCatalogPchT = TextIO().pfnCompressed(app, static_cast<StringId>(idsEnergy + *pParams));
@@ -453,7 +456,8 @@ char *PszFormatString(APPSESSION &app, const char *pszFormat, std::int16_t *pPar
                 break;
             case 'g':
             LThingName:
-                pchT = PszGetThingName(app, *pParams);
+                szObjectName = PszGetThingName(app, *pParams);
+                pchT = szObjectName.data();
                 goto FinishString;
             case 'G':
                 w = *pParams;

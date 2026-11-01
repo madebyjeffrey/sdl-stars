@@ -481,7 +481,7 @@ void InitializeProductionDlg(APPSESSION &app, HWND hwnd) {
     PROD   *lpprod;
 
     iSel = -1;
-    win32::wsprintfA(rgch, TextIO().pfnCompressed(app, idsProductionQueueS).data(), TextIO().pfnPlanetName(app, app.state.sel.pl.id));
+    win32::wsprintfA(rgch, TextIO().pfnCompressed(app, idsProductionQueueS).data(), TextIO().pfnPlanetName(app, app.state.sel.pl.id).data());
     ControlIO().pfnSetWindowText(hwnd, rgch);
     ControlIO().pfnFillProdSrcLB(app, ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_AVAILABLE_ITEMS), -1);
     ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_AVAILABLE_ITEMS), win32::LB_SETCURSEL, 0, 0);

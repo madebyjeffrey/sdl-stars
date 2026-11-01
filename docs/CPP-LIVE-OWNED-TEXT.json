@@ -1,6 +1,6 @@
 {
   "parent": "00f055c5",
-  "status": "Player, catalog, report, hull and numeric text values migrated; other shared scratch text and const interfaces remain active.",
+  "status": "Player, catalog, report, hull, numeric, location/distance and planet/fleet/thing values migrated; other shared scratch text and const interfaces remain active.",
   "player_names": {
     "implementation": "PszPlayerName returns std::array<char, 50> by value with initialized storage; the previous 50-byte label budget and grammar remain. No heap allocation or shared-work-buffer return.",
     "provider": "TEXTIO uses the real return type; its actual transport-presets witness provider returns the same value type without a generic scalar adapter.",
@@ -3790,7 +3790,7 @@
     },
     "lifetimes": "Message expansion, report labels, ship orders, fleet rendering and scanner captions consume actual owned values. Named arrays retain text through existing pointer locals; immediate drawing/formatting calls borrow only until return.",
     "effects": "Keep existing work-buffer writes for message \\w expansion, object-name delegation, catalog bytes, coordinate formatting and distance rounding. No allocation or record layout change.",
-    "remaining": "The underlying planet/fleet/thing name services and other shared scratch interfaces remain active; scanner destination-tail bounds remain pending.",
+    "remaining": "Underlying planet/fleet/thing names now return owned values under object_names; other scratch interfaces and scanner destination-tail bounds remain active.",
     "verification": {
       "batch": "L05w owned location and distance values",
       "debug_build": "Pass, no warnings. Release SDL regression and host builds pass. Compiler/source policy covers 158 owned sources, 159 variants and 161 standalone headers in both orders; maintained raw-copy spellings pass.",
@@ -3806,6 +3806,740 @@
       "baseline": "Behavior-neutral: native/frozen-original baseline bytes and unit goldens unchanged. No scenario/checkpoint moved; no regression export required. Game rules, record layouts, RNG, tie order and binary64 boundaries remain.",
       "remaining": "Underlying planet/fleet/thing scratch-return interfaces, scanner tail capacity, other L05 path/text/const/wrapper formatting, L06 service interfaces/Milestone D and L08 final qualification remain active.",
       "receipts": "dist/verification/live-cpp/l05w/"
+    }
+  },
+  "object_names": {
+    "status": "complete; verified",
+    "parent": "9af376ec",
+    "interfaces": [
+      "PszGetPlanetName -> array<char,360>",
+      "PszGetFleetName -> array<char,360>",
+      "PszGetThingName -> array<char,360>"
+    ],
+    "production_calls": 78,
+    "providers": "TEXTIO derives the exact owned return type; lifecycle, location and native-file-UI providers return independent 360-byte arrays.",
+    "effects": "Existing work-buffer writes remain for message work expansion and explicit workspace consumers. Names, UTF-8 budgets, ownership prefixes, orbit flags, missing-object behavior and all formatter expressions stay unchanged. No allocation, record layout or compatibility overload is added.",
+    "remaining": "Other scratch services (including PszFleetNameFromWord and compressed-planet lookup), const text interfaces, scanner destination-tail bounds and the three mineral-summary appends remain pending.",
+    "calls": [
+      {
+        "path": "src/core/msg.cpp",
+        "function": "PszFormatString",
+        "lifetime": "Named function-local array retains the result through all uses of the existing pointer local.",
+        "parent_line": 425,
+        "parent_call": "TextIO().pfnPlanetName(app, *pParams)",
+        "line": 426,
+        "current_call_line": "szObjectName = TextIO().pfnPlanetName(app, *pParams);"
+      },
+      {
+        "path": "src/core/msg.cpp",
+        "function": "PszFormatString",
+        "lifetime": "Named function-local array retains the result through all uses of the existing pointer local.",
+        "parent_line": 439,
+        "parent_call": "PszGetFleetName(app, w)",
+        "line": 441,
+        "current_call_line": "szObjectName = PszGetFleetName(app, w);"
+      },
+      {
+        "path": "src/core/msg.cpp",
+        "function": "PszFormatString",
+        "lifetime": "Named function-local array retains the result through all uses of the existing pointer local.",
+        "parent_line": 456,
+        "parent_call": "PszGetThingName(app, *pParams)",
+        "line": 459,
+        "current_call_line": "szObjectName = PszGetThingName(app, *pParams);"
+      },
+      {
+        "path": "src/core/report.cpp",
+        "function": "DumpPlanets",
+        "lifetime": "Temporary owned array survives the synchronous consumer through the full expression.",
+        "parent_line": 493,
+        "parent_call": "TextIO().pfnPlanetName(app, lppl->idFling - 1)",
+        "line": 493,
+        "current_call_line": "CchCopyUtf8Prefix(std::span{szForm}.subspan(1), TextIO().pfnPlanetName(app, lppl->idFling - 1).data());"
+      },
+      {
+        "path": "src/core/report.cpp",
+        "function": "DumpPlanets",
+        "lifetime": "Temporary owned array survives the synchronous consumer through the full expression.",
+        "parent_line": 501,
+        "parent_call": "TextIO().pfnPlanetName(app, lppl->idRoute - 1)",
+        "line": 501,
+        "current_call_line": "CchCopyUtf8Prefix(std::span{szForm}.subspan(1), TextIO().pfnPlanetName(app, lppl->idRoute - 1).data());"
+      },
+      {
+        "path": "src/core/report.cpp",
+        "function": "DumpFleets",
+        "lifetime": "Named function-local array retains the result through all uses of the existing pointer local.",
+        "parent_line": 607,
+        "parent_call": "PszGetFleetName(app, lpfl->id)",
+        "line": 608,
+        "current_call_line": "szObjectName = PszGetFleetName(app, lpfl->id);"
+      },
+      {
+        "path": "src/core/report.cpp",
+        "function": "DumpFleets",
+        "lifetime": "Named function-local array retains the result through all uses of the existing pointer local.",
+        "parent_line": 618,
+        "parent_call": "TextIO().pfnPlanetName(app, lpfl->idPlanet)",
+        "line": 620,
+        "current_call_line": "szObjectName = TextIO().pfnPlanetName(app, lpfl->idPlanet);"
+      },
+      {
+        "path": "src/core/util.cpp",
+        "function": "PszGetLocName",
+        "lifetime": "Owned array returned directly by value to the location caller.",
+        "parent_line": 1210,
+        "parent_call": "TextIO().pfnPlanetName(app, id)",
+        "line": 1210,
+        "current_call_line": "return TextIO().pfnPlanetName(app, id);"
+      },
+      {
+        "path": "src/core/util.cpp",
+        "function": "PszGetLocName",
+        "lifetime": "Owned array returned directly by value to the location caller.",
+        "parent_line": 1212,
+        "parent_call": "PszGetFleetName(app, id)",
+        "line": 1212,
+        "current_call_line": "return PszGetFleetName(app, id);"
+      },
+      {
+        "path": "src/core/util.cpp",
+        "function": "PszGetLocName",
+        "lifetime": "Owned array returned directly by value to the location caller.",
+        "parent_line": 1214,
+        "parent_call": "PszGetThingName(app, id)",
+        "line": 1214,
+        "current_call_line": "return PszGetThingName(app, id);"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "function": "CommandHandler",
+        "lifetime": "Temporary owned array survives the synchronous consumer through the full expression.",
+        "parent_line": 1186,
+        "parent_call": "TextIO().pfnPlanetName(app, i)",
+        "line": 1186,
+        "current_call_line": "CtrTextOut(pd.hDC, LOWORD(x), LOWORD(y) + 14, TextIO().pfnPlanetName(app, i).data(), 0);"
+      },
+      {
+        "path": "src/ui/mineui.cpp",
+        "function": "DrawMineSurvey",
+        "lifetime": "Named function-local array retains the result through all uses of the existing pointer local.",
+        "parent_line": 408,
+        "parent_call": "TextIO().pfnPlanetName(app, lpth->thp().idPlanet())",
+        "line": 409,
+        "current_call_line": "szObjectName = TextIO().pfnPlanetName(app, lpth->thp().idPlanet());"
+      },
+      {
+        "path": "src/ui/mineui.cpp",
+        "function": "SetMineralTitleBar",
+        "lifetime": "Explicit session-workspace staging preserves the existing title append and work-buffer effect.",
+        "parent_line": 1178,
+        "parent_call": "TextIO().pfnPlanetName(app, app.state.sel.scan.idpl)",
+        "line": 1181,
+        "current_call_line": "szObjectName = TextIO().pfnPlanetName(app, app.state.sel.scan.idpl);"
+      },
+      {
+        "path": "src/ui/mineui.cpp",
+        "function": "SetMineralTitleBar",
+        "lifetime": "Explicit session-workspace staging preserves the existing title append and work-buffer effect.",
+        "parent_line": 1183,
+        "parent_call": "PszGetFleetName(app, app.state.rglpfl[app.state.sel.scan.ifl]->id)",
+        "line": 1188,
+        "current_call_line": "szObjectName = PszGetFleetName(app, app.state.rglpfl[app.state.sel.scan.ifl]->id);"
+      },
+      {
+        "path": "src/ui/mineui.cpp",
+        "function": "SetMineralTitleBar",
+        "lifetime": "Explicit session-workspace staging preserves the existing title append and work-buffer effect.",
+        "parent_line": 1190,
+        "parent_call": "PszGetThingName(app, app.state.lpThings[app.state.sel.scan.ith].idFull())",
+        "line": 1197,
+        "current_call_line": "szObjectName = PszGetThingName(app, app.state.lpThings[app.state.sel.scan.ith].idFull());"
+      },
+      {
+        "path": "src/ui/planetui.cpp",
+        "function": "DrawPlanShipBitmap",
+        "lifetime": "Named function-local array retains the result through all uses of the existing pointer local.",
+        "parent_line": 854,
+        "parent_call": "TextIO().pfnPlanetName(app, obj.ppl()->id)",
+        "line": 855,
+        "current_call_line": "szObjectName = TextIO().pfnPlanetName(app, obj.ppl()->id);"
+      },
+      {
+        "path": "src/ui/planetui.cpp",
+        "function": "DrawPlanShipBitmap",
+        "lifetime": "Named function-local array retains the result through all uses of the existing pointer local.",
+        "parent_line": 859,
+        "parent_call": "PszGetFleetName(app, obj.pfl()->id)",
+        "line": 861,
+        "current_call_line": "szObjectName = PszGetFleetName(app, obj.pfl()->id);"
+      },
+      {
+        "path": "src/ui/planetui.cpp",
+        "function": "SetPlanetTitleBar",
+        "lifetime": "Named planet array retains text through catalog prefix lookup and caption construction.",
+        "parent_line": 1712,
+        "parent_call": "TextIO().pfnPlanetName(app, app.state.sel.pl.id)",
+        "line": 1716,
+        "current_call_line": "szPlanet = TextIO().pfnPlanetName(app, app.state.sel.pl.id);"
+      },
+      {
+        "path": "src/ui/planetui.cpp",
+        "function": "SetPlanetTitleBar",
+        "lifetime": "Named function-local array retains the result through all uses of the existing pointer local.",
+        "parent_line": 1718,
+        "parent_call": "PszGetFleetName(app, app.state.sel.fl.id)",
+        "line": 1722,
+        "current_call_line": "szObjectName = PszGetFleetName(app, app.state.sel.fl.id);"
+      },
+      {
+        "path": "src/ui/planetui.cpp",
+        "function": "FillShipDD",
+        "lifetime": "Explicit session-workspace staging preserves the existing byte-prefix edits and synchronous UI consumption.",
+        "parent_line": 1746,
+        "parent_call": "PszGetFleetName(app, lpfl->id)",
+        "line": 1752,
+        "current_call_line": "szObjectName = PszGetFleetName(app, lpfl->id);"
+      },
+      {
+        "path": "src/ui/planetui.cpp",
+        "function": "FillShipDD",
+        "lifetime": "Explicit session-workspace staging preserves the existing byte-prefix edits and synchronous UI consumption.",
+        "parent_line": 1756,
+        "parent_call": "PszGetThingName(app, lpth->idFull())",
+        "line": 1763,
+        "current_call_line": "szObjectName = PszGetThingName(app, lpth->idFull());"
+      },
+      {
+        "path": "src/ui/popup.cpp",
+        "function": "DrawPopup",
+        "lifetime": "Named function-local array retains the result through all uses of the existing pointer local.",
+        "parent_line": 202,
+        "parent_call": "TextIO().pfnPlanetName(app, app.state.sel.scan.idpl)",
+        "line": 203,
+        "current_call_line": "szObjectName = TextIO().pfnPlanetName(app, app.state.sel.scan.idpl);"
+      },
+      {
+        "path": "src/ui/popup.cpp",
+        "function": "Popup",
+        "lifetime": "Named function-local array retains the result through all uses of the existing pointer local.",
+        "parent_line": 341,
+        "parent_call": "TextIO().pfnPlanetName(app, app.state.sel.scan.idpl)",
+        "line": 344,
+        "current_call_line": "szObjectName = TextIO().pfnPlanetName(app, app.state.sel.scan.idpl);"
+      },
+      {
+        "path": "src/ui/popup.cpp",
+        "function": "PopupMenu",
+        "lifetime": "Named function-local array retains the result through all uses of the existing pointer local.",
+        "parent_line": 434,
+        "parent_call": "PszGetThingName(app, LOWORD(rgids[i]))",
+        "line": 439,
+        "current_call_line": "szObjectName = PszGetThingName(app, LOWORD(rgids[i]));"
+      },
+      {
+        "path": "src/ui/popup.cpp",
+        "function": "PopupMenu",
+        "lifetime": "Named function-local array retains the result through all uses of the existing pointer local.",
+        "parent_line": 436,
+        "parent_call": "PszGetFleetName(app, LOWORD(rgids[i]) | 0x8000)",
+        "line": 442,
+        "current_call_line": "szObjectName = PszGetFleetName(app, LOWORD(rgids[i]) | 0x8000);"
+      },
+      {
+        "path": "src/ui/popup.cpp",
+        "function": "PopupMenu",
+        "lifetime": "Named function-local array retains the result through all uses of the existing pointer local.",
+        "parent_line": 438,
+        "parent_call": "TextIO().pfnPlanetName(app, LOWORD(rgids[i]))",
+        "line": 445,
+        "current_call_line": "szObjectName = TextIO().pfnPlanetName(app, LOWORD(rgids[i]));"
+      },
+      {
+        "path": "src/ui/popup.cpp",
+        "function": "PtDisplayPlanetStateInfo",
+        "lifetime": "Temporary owned array survives the synchronous consumer through the full expression.",
+        "parent_line": 586,
+        "parent_call": "TextIO().pfnPlanetName(app, app.lpui->GlobalPD.idPlanet)",
+        "line": 594,
+        "current_call_line": "DxStreamTextOut(hdc, &x, y, TextIO().pfnPlanetName(app, app.lpui->GlobalPD.idPlanet).data(), 0, fPrint);"
+      },
+      {
+        "path": "src/ui/popup.cpp",
+        "function": "PtDisplayPlanetPopInfo",
+        "lifetime": "Temporary owned array survives the synchronous consumer through the full expression.",
+        "parent_line": 691,
+        "parent_call": "TextIO().pfnPlanetName(app, app.lpui->GlobalPD.idPlanet)",
+        "line": 700,
+        "current_call_line": "DxStreamTextOut(hdc, &x, y, TextIO().pfnPlanetName(app, app.lpui->GlobalPD.idPlanet).data(), 0, fPrint);"
+      },
+      {
+        "path": "src/ui/popup.cpp",
+        "function": "PtDisplayPlanetPopInfo",
+        "lifetime": "Temporary owned array survives the synchronous consumer through the full expression.",
+        "parent_line": 705,
+        "parent_call": "TextIO().pfnPlanetName(app, app.lpui->GlobalPD.idPlanet)",
+        "line": 714,
+        "current_call_line": "DxStreamTextOut(hdc, &x, y, TextIO().pfnPlanetName(app, app.lpui->GlobalPD.idPlanet).data(), 0, fPrint);"
+      },
+      {
+        "path": "src/ui/popup.cpp",
+        "function": "PtDisplayPlanetPopInfo",
+        "lifetime": "Temporary owned array survives the synchronous consumer through the full expression.",
+        "parent_line": 722,
+        "parent_call": "TextIO().pfnPlanetName(app, app.lpui->GlobalPD.idPlanet)",
+        "line": 731,
+        "current_call_line": "DxStreamTextOut(hdc, &x, y, TextIO().pfnPlanetName(app, app.lpui->GlobalPD.idPlanet).data(), 0, fPrint);"
+      },
+      {
+        "path": "src/ui/popup.cpp",
+        "function": "PtDisplayPlanetPopInfo",
+        "lifetime": "Temporary owned array survives the synchronous consumer through the full expression.",
+        "parent_line": 737,
+        "parent_call": "TextIO().pfnPlanetName(app, app.lpui->GlobalPD.idPlanet)",
+        "line": 746,
+        "current_call_line": "DxStreamTextOut(hdc, &x, y, TextIO().pfnPlanetName(app, app.lpui->GlobalPD.idPlanet).data(), 0, fPrint);"
+      },
+      {
+        "path": "src/ui/popup.cpp",
+        "function": "PtDisplayPlanetPopInfo",
+        "lifetime": "Temporary owned array survives the synchronous consumer through the full expression.",
+        "parent_line": 757,
+        "parent_call": "TextIO().pfnPlanetName(app, app.lpui->GlobalPD.idPlanet)",
+        "line": 766,
+        "current_call_line": "DxStreamTextOut(hdc, &x, y, TextIO().pfnPlanetName(app, app.lpui->GlobalPD.idPlanet).data(), 0, fPrint);"
+      },
+      {
+        "path": "src/ui/popup.cpp",
+        "function": "PtDisplayPlanetPopInfo",
+        "lifetime": "Temporary owned array survives the synchronous consumer through the full expression.",
+        "parent_line": 774,
+        "parent_call": "TextIO().pfnPlanetName(app, app.lpui->GlobalPD.idPlanet)",
+        "line": 783,
+        "current_call_line": "DxStreamTextOut(hdc, &x, y, TextIO().pfnPlanetName(app, app.lpui->GlobalPD.idPlanet).data(), 0, fPrint);"
+      },
+      {
+        "path": "src/ui/popup.cpp",
+        "function": "PtDisplayPlanetPopInfo",
+        "lifetime": "Named function-local array retains the result through all uses of the existing pointer local.",
+        "parent_line": 800,
+        "parent_call": "TextIO().pfnPlanetName(app, pl.id)",
+        "line": 809,
+        "current_call_line": "szObjectName = TextIO().pfnPlanetName(app, pl.id);"
+      },
+      {
+        "path": "src/ui/popup.cpp",
+        "function": "PtDisplayPlanetPopInfo",
+        "lifetime": "Named function-local array retains the result through all uses of the existing pointer local.",
+        "parent_line": 819,
+        "parent_call": "TextIO().pfnPlanetName(app, pl.id)",
+        "line": 829,
+        "current_call_line": "szObjectName = TextIO().pfnPlanetName(app, pl.id);"
+      },
+      {
+        "path": "src/ui/popup.cpp",
+        "function": "PtDisplayFactoryMineInfo",
+        "lifetime": "Named function-local array retains the result through all uses of the existing pointer local.",
+        "parent_line": 984,
+        "parent_call": "TextIO().pfnPlanetName(app, app.lpui->GlobalPD.idPlan)",
+        "line": 996,
+        "current_call_line": "szObjectName = TextIO().pfnPlanetName(app, app.lpui->GlobalPD.idPlan);"
+      },
+      {
+        "path": "src/ui/popup.cpp",
+        "function": "PtDisplayResourceInfo",
+        "lifetime": "Named function-local array retains the result through all uses of the existing pointer local.",
+        "parent_line": 1051,
+        "parent_call": "TextIO().pfnPlanetName(app, app.lpui->GlobalPD.idPlanet)",
+        "line": 1065,
+        "current_call_line": "szObjectName = TextIO().pfnPlanetName(app, app.lpui->GlobalPD.idPlanet);"
+      },
+      {
+        "path": "src/ui/produceui.cpp",
+        "function": "InitializeProductionDlg",
+        "lifetime": "Temporary owned array survives the synchronous consumer through the full expression.",
+        "parent_line": 484,
+        "parent_call": "TextIO().pfnPlanetName(app, app.state.sel.pl.id)",
+        "line": 484,
+        "current_call_line": "win32::wsprintfA(rgch, TextIO().pfnCompressed(app, idsProductionQueueS).data(), TextIO().pfnPlanetName(app, app.state.sel.pl.id).data());"
+      },
+      {
+        "path": "src/ui/reportui.cpp",
+        "function": "DrawReportItem",
+        "lifetime": "Named function-local array retains the result through all uses of the existing pointer local.",
+        "parent_line": 1215,
+        "parent_call": "TextIO().pfnPlanetName(app, lppl->idRoute - 1)",
+        "line": 1216,
+        "current_call_line": "szObjectName = TextIO().pfnPlanetName(app, lppl->idRoute - 1);"
+      },
+      {
+        "path": "src/ui/reportui.cpp",
+        "function": "DrawReportItem",
+        "lifetime": "Named function-local array retains the result through all uses of the existing pointer local.",
+        "parent_line": 1223,
+        "parent_call": "TextIO().pfnPlanetName(app, lppl->idFling - 1)",
+        "line": 1225,
+        "current_call_line": "szObjectName = TextIO().pfnPlanetName(app, lppl->idFling - 1);"
+      },
+      {
+        "path": "src/ui/reportui.cpp",
+        "function": "DrawReportItem",
+        "lifetime": "Named function-local array retains the result through all uses of the existing pointer local.",
+        "parent_line": 1231,
+        "parent_call": "TextIO().pfnPlanetName(app, lppl->id)",
+        "line": 1234,
+        "current_call_line": "szObjectName = TextIO().pfnPlanetName(app, lppl->id);"
+      },
+      {
+        "path": "src/ui/reportui.cpp",
+        "function": "DrawReportItem",
+        "lifetime": "Named function-local array retains the result through all uses of the existing pointer local.",
+        "parent_line": 1385,
+        "parent_call": "PszGetFleetName(app, lpfl->id)",
+        "line": 1389,
+        "current_call_line": "szObjectName = PszGetFleetName(app, lpfl->id);"
+      },
+      {
+        "path": "src/ui/reportui.cpp",
+        "function": "DrawReportItem",
+        "lifetime": "Named function-local array retains the result through all uses of the existing pointer local.",
+        "parent_line": 1390,
+        "parent_call": "TextIO().pfnPlanetName(app, lpfl->idPlanet)",
+        "line": 1395,
+        "current_call_line": "szObjectName = TextIO().pfnPlanetName(app, lpfl->idPlanet);"
+      },
+      {
+        "path": "src/ui/reportui.cpp",
+        "function": "DrawReportItem",
+        "lifetime": "Named function-local array retains the result through all uses of the existing pointer local.",
+        "parent_line": 1473,
+        "parent_call": "TextIO().pfnPlanetName(app, BdvFromLp(app, lpbd).idPlanet())",
+        "line": 1479,
+        "current_call_line": "szObjectName = TextIO().pfnPlanetName(app, BdvFromLp(app, lpbd).idPlanet());"
+      },
+      {
+        "path": "src/ui/reportui.cpp",
+        "function": "DrawReportItem",
+        "lifetime": "Named function-local array retains the result through all uses of the existing pointer local.",
+        "parent_line": 1551,
+        "parent_call": "PszGetFleetName(app, lpfl->id)",
+        "line": 1558,
+        "current_call_line": "szObjectName = PszGetFleetName(app, lpfl->id);"
+      },
+      {
+        "path": "src/ui/reportui.cpp",
+        "function": "DrawReportItem",
+        "lifetime": "Named function-local array retains the result through all uses of the existing pointer local.",
+        "parent_line": 1556,
+        "parent_call": "TextIO().pfnPlanetName(app, lpfl->idPlanet)",
+        "line": 1564,
+        "current_call_line": "szObjectName = TextIO().pfnPlanetName(app, lpfl->idPlanet);"
+      },
+      {
+        "path": "src/ui/reportui.cpp",
+        "function": "ICompReport",
+        "lifetime": "Named function-local array retains the result through all uses of the existing pointer local.",
+        "parent_line": 1808,
+        "parent_call": "TextIO().pfnPlanetName(app, lppl1->idRoute - 1)",
+        "line": 1818,
+        "current_call_line": "szObjectName = TextIO().pfnPlanetName(app, lppl1->idRoute - 1);"
+      },
+      {
+        "path": "src/ui/reportui.cpp",
+        "function": "ICompReport",
+        "lifetime": "Named function-local array retains the result through all uses of the existing pointer local.",
+        "parent_line": 1810,
+        "parent_call": "TextIO().pfnPlanetName(app, lppl2->idRoute - 1)",
+        "line": 1821,
+        "current_call_line": "szObjectName = TextIO().pfnPlanetName(app, lppl2->idRoute - 1);"
+      },
+      {
+        "path": "src/ui/reportui.cpp",
+        "function": "ICompReport",
+        "lifetime": "Named function-local array retains the result through all uses of the existing pointer local.",
+        "parent_line": 1826,
+        "parent_call": "TextIO().pfnPlanetName(app, lppl1->idFling - 1)",
+        "line": 1838,
+        "current_call_line": "szObjectName = TextIO().pfnPlanetName(app, lppl1->idFling - 1);"
+      },
+      {
+        "path": "src/ui/reportui.cpp",
+        "function": "ICompReport",
+        "lifetime": "Named function-local array retains the result through all uses of the existing pointer local.",
+        "parent_line": 1828,
+        "parent_call": "TextIO().pfnPlanetName(app, lppl2->idFling - 1)",
+        "line": 1841,
+        "current_call_line": "szObjectName = TextIO().pfnPlanetName(app, lppl2->idFling - 1);"
+      },
+      {
+        "path": "src/ui/reportui.cpp",
+        "function": "ICompReport",
+        "lifetime": "Named function-local array retains the result through all uses of the existing pointer local.",
+        "parent_line": 1832,
+        "parent_call": "TextIO().pfnPlanetName(app, lppl1->id)",
+        "line": 1846,
+        "current_call_line": "szObjectName = TextIO().pfnPlanetName(app, lppl1->id);"
+      },
+      {
+        "path": "src/ui/reportui.cpp",
+        "function": "ICompReport",
+        "lifetime": "Named function-local array retains the result through all uses of the existing pointer local.",
+        "parent_line": 1834,
+        "parent_call": "TextIO().pfnPlanetName(app, lppl2->id)",
+        "line": 1849,
+        "current_call_line": "szObjectName = TextIO().pfnPlanetName(app, lppl2->id);"
+      },
+      {
+        "path": "src/ui/reportui.cpp",
+        "function": "ICompReport",
+        "lifetime": "Named function-local array retains the result through all uses of the existing pointer local.",
+        "parent_line": 1951,
+        "parent_call": "PszGetFleetName(app, lpfl1->id)",
+        "line": 1967,
+        "current_call_line": "szObjectName = PszGetFleetName(app, lpfl1->id);"
+      },
+      {
+        "path": "src/ui/reportui.cpp",
+        "function": "ICompReport",
+        "lifetime": "Named function-local array retains the result through all uses of the existing pointer local.",
+        "parent_line": 1953,
+        "parent_call": "PszGetFleetName(app, lpfl2->id)",
+        "line": 1970,
+        "current_call_line": "szObjectName = PszGetFleetName(app, lpfl2->id);"
+      },
+      {
+        "path": "src/ui/reportui.cpp",
+        "function": "ICompReport",
+        "lifetime": "Named function-local array retains the result through all uses of the existing pointer local.",
+        "parent_line": 1958,
+        "parent_call": "TextIO().pfnPlanetName(app, lpfl1->idPlanet)",
+        "line": 1976,
+        "current_call_line": "szObjectName = TextIO().pfnPlanetName(app, lpfl1->idPlanet);"
+      },
+      {
+        "path": "src/ui/reportui.cpp",
+        "function": "ICompReport",
+        "lifetime": "Named function-local array retains the result through all uses of the existing pointer local.",
+        "parent_line": 1964,
+        "parent_call": "TextIO().pfnPlanetName(app, lpfl2->idPlanet)",
+        "line": 1983,
+        "current_call_line": "szObjectName = TextIO().pfnPlanetName(app, lpfl2->idPlanet);"
+      },
+      {
+        "path": "src/ui/reportui.cpp",
+        "function": "ICompReport",
+        "lifetime": "Named function-local array retains the result through all uses of the existing pointer local.",
+        "parent_line": 2091,
+        "parent_call": "TextIO().pfnPlanetName(app, BdvFromLp(app, lpbd1).idPlanet())",
+        "line": 2111,
+        "current_call_line": "szObjectName = TextIO().pfnPlanetName(app, BdvFromLp(app, lpbd1).idPlanet());"
+      },
+      {
+        "path": "src/ui/reportui.cpp",
+        "function": "ICompReport",
+        "lifetime": "Named function-local array retains the result through all uses of the existing pointer local.",
+        "parent_line": 2097,
+        "parent_call": "TextIO().pfnPlanetName(app, BdvFromLp(app, lpbd2).idPlanet())",
+        "line": 2118,
+        "current_call_line": "szObjectName = TextIO().pfnPlanetName(app, BdvFromLp(app, lpbd2).idPlanet());"
+      },
+      {
+        "path": "src/ui/reportui.cpp",
+        "function": "ICompReport",
+        "lifetime": "Named function-local array retains the result through all uses of the existing pointer local.",
+        "parent_line": 2170,
+        "parent_call": "PszGetFleetName(app, lpfl1->id)",
+        "line": 2192,
+        "current_call_line": "szObjectName = PszGetFleetName(app, lpfl1->id);"
+      },
+      {
+        "path": "src/ui/reportui.cpp",
+        "function": "ICompReport",
+        "lifetime": "Named function-local array retains the result through all uses of the existing pointer local.",
+        "parent_line": 2172,
+        "parent_call": "PszGetFleetName(app, lpfl2->id)",
+        "line": 2195,
+        "current_call_line": "szObjectName = PszGetFleetName(app, lpfl2->id);"
+      },
+      {
+        "path": "src/ui/reportui.cpp",
+        "function": "ICompReport",
+        "lifetime": "Named function-local array retains the result through all uses of the existing pointer local.",
+        "parent_line": 2177,
+        "parent_call": "TextIO().pfnPlanetName(app, lpfl1->idPlanet)",
+        "line": 2201,
+        "current_call_line": "szObjectName = TextIO().pfnPlanetName(app, lpfl1->idPlanet);"
+      },
+      {
+        "path": "src/ui/reportui.cpp",
+        "function": "ICompReport",
+        "lifetime": "Named function-local array retains the result through all uses of the existing pointer local.",
+        "parent_line": 2183,
+        "parent_call": "TextIO().pfnPlanetName(app, lpfl2->idPlanet)",
+        "line": 2208,
+        "current_call_line": "szObjectName = TextIO().pfnPlanetName(app, lpfl2->idPlanet);"
+      },
+      {
+        "path": "src/ui/scan.cpp",
+        "function": "DrawScanner",
+        "lifetime": "Explicit session-workspace staging preserves the existing byte-prefix edits and synchronous UI consumption.",
+        "parent_line": 971,
+        "parent_call": "TextIO().pfnPlanetName(app, i)",
+        "line": 972,
+        "current_call_line": "szObjectName = TextIO().pfnPlanetName(app, i);"
+      },
+      {
+        "path": "src/ui/scan.cpp",
+        "function": "DrawScannerSBar",
+        "lifetime": "Explicit session-workspace staging preserves the existing byte-prefix edits and synchronous UI consumption.",
+        "parent_line": 1959,
+        "parent_call": "TextIO().pfnPlanetName(app, !psbar ? app.state.sel.scan.idpl : psbar->id)",
+        "line": 1962,
+        "current_call_line": "szObjectName = TextIO().pfnPlanetName(app, !psbar ? app.state.sel.scan.idpl : psbar->id);"
+      },
+      {
+        "path": "src/ui/scan.cpp",
+        "function": "DrawScannerSBar",
+        "lifetime": "Explicit session-workspace staging preserves the existing byte-prefix edits and synchronous UI consumption.",
+        "parent_line": 1961,
+        "parent_call": "PszGetFleetName(app, !psbar ? app.state.rglpfl[app.state.sel.scan.ifl]->id : psbar->id)",
+        "line": 1965,
+        "current_call_line": "szObjectName = PszGetFleetName(app, !psbar ? app.state.rglpfl[app.state.sel.scan.ifl]->id : psbar->id);"
+      },
+      {
+        "path": "src/ui/scan.cpp",
+        "function": "DrawScannerSBar",
+        "lifetime": "Explicit session-workspace staging preserves the existing byte-prefix edits and synchronous UI consumption.",
+        "parent_line": 1963,
+        "parent_call": "PszGetThingName(app, !psbar ? app.state.lpThings[app.state.sel.scan.ith].idFull() : psbar->id)",
+        "line": 1968,
+        "current_call_line": "szObjectName = PszGetThingName(app, !psbar ? app.state.lpThings[app.state.sel.scan.ith].idFull() : psbar->id);"
+      },
+      {
+        "path": "src/ui/scan.cpp",
+        "function": "FSelectSz",
+        "lifetime": "Temporary owned array survives the synchronous consumer through the full expression.",
+        "parent_line": 2859,
+        "parent_call": "PszGetFleetName(app, lpfl->id)",
+        "line": 2865,
+        "current_call_line": "if (strcmpi(PszGetFleetName(app, lpfl->id).data(), szName) == 0)"
+      },
+      {
+        "path": "src/ui/scaninspect.cpp",
+        "function": "FCaptureScanner",
+        "lifetime": "Temporary owned array survives the synchronous consumer through the full expression.",
+        "parent_line": 62,
+        "parent_call": "TextIO().pfnPlanetName(app, static_cast<std::int16_t>(i))",
+        "line": 62,
+        "current_call_line": "CchSprintf(lpobj->szName, \"%s\", TextIO().pfnPlanetName(app, static_cast<std::int16_t>(i)).data());"
+      },
+      {
+        "path": "src/ui/scaninspect.cpp",
+        "function": "FCaptureScanner",
+        "lifetime": "Temporary owned array survives the synchronous consumer through the full expression.",
+        "parent_line": 73,
+        "parent_call": "PszGetFleetName(app, lpfl->id)",
+        "line": 73,
+        "current_call_line": "CchSprintf(lpobj->szName, \"%s\", PszGetFleetName(app, lpfl->id).data());"
+      },
+      {
+        "path": "src/ui/scaninspect.cpp",
+        "function": "FCaptureScanner",
+        "lifetime": "Temporary owned array survives the synchronous consumer through the full expression.",
+        "parent_line": 85,
+        "parent_call": "PszGetThingName(app, lpth->idFull())",
+        "line": 85,
+        "current_call_line": "CchSprintf(lpobj->szName, \"%s\", PszGetThingName(app, lpth->idFull()).data());"
+      },
+      {
+        "path": "src/ui/ship2ui.cpp",
+        "function": "MergeFleetsDlg",
+        "lifetime": "Named function-local array retains the result through all uses of the existing pointer local.",
+        "parent_line": 309,
+        "parent_call": "PszGetFleetName(app, app.state.rglpfl[app.state.vrgiflMerge[i]]->id)",
+        "line": 310,
+        "current_call_line": "szObjectName = PszGetFleetName(app, app.state.rglpfl[app.state.vrgiflMerge[i]]->id);"
+      },
+      {
+        "path": "src/ui/shipui.cpp",
+        "function": "DrawShipPlanet",
+        "lifetime": "Named function-local array retains the result through all uses of the existing pointer local.",
+        "parent_line": 520,
+        "parent_call": "TextIO().pfnPlanetName(app, obj.pfl()->idPlanet | 0x8000)",
+        "line": 521,
+        "current_call_line": "szObjectName = TextIO().pfnPlanetName(app, obj.pfl()->idPlanet | 0x8000);"
+      },
+      {
+        "path": "src/ui/shipui.cpp",
+        "function": "ShipCommandProc",
+        "lifetime": "Temporary owned array survives the synchronous consumer through the full expression.",
+        "parent_line": 782,
+        "parent_call": "PszGetFleetName(app, app.state.sel.fl.id)",
+        "line": 784,
+        "current_call_line": "CchSprintf(szFleetName, \"%s\", PszGetFleetName(app, app.state.sel.fl.id).data());"
+      },
+      {
+        "path": "src/ui/shipui.cpp",
+        "function": "ShipCommandProc",
+        "lifetime": "Temporary owned array survives the synchronous consumer through the full expression.",
+        "parent_line": 787,
+        "parent_call": "PszGetFleetName(app, app.state.sel.fl.id)",
+        "line": 789,
+        "current_call_line": "if (std::strcmp(szT, PszGetFleetName(app, app.state.sel.fl.id).data()) != 0 &&"
+      },
+      {
+        "path": "src/ui/shipui.cpp",
+        "function": "DrawThingXferSide",
+        "lifetime": "Temporary owned array survives the synchronous consumer through the full expression.",
+        "parent_line": 1719,
+        "parent_call": "PszGetThingName(app, pth->idFull())",
+        "line": 1721,
+        "current_call_line": "RcCtrTextOut(app, hdc, &rc, PszGetThingName(app, pth->idFull()).data(), 0);"
+      },
+      {
+        "path": "src/ui/shipui.cpp",
+        "function": "DrawFleetCargoXferSide",
+        "lifetime": "Temporary owned array survives the synchronous consumer through the full expression.",
+        "parent_line": 1780,
+        "parent_call": "PszGetFleetName(app, fl.id)",
+        "line": 1782,
+        "current_call_line": "RcCtrTextOut(app, hdc, &rc, PszGetFleetName(app, fl.id).data(), 0);"
+      },
+      {
+        "path": "src/ui/shipui.cpp",
+        "function": "DrawFleetShipsXferSide",
+        "lifetime": "Temporary owned array survives the synchronous consumer through the full expression.",
+        "parent_line": 1870,
+        "parent_call": "PszGetFleetName(app, fl.id)",
+        "line": 1872,
+        "current_call_line": "RcCtrTextOut(app, hdc, &rc, PszGetFleetName(app, fl.id).data(), 0);"
+      },
+      {
+        "path": "src/ui/shipui.cpp",
+        "function": "DrawPlanetXferSide",
+        "lifetime": "Named function-local array retains the result through all uses of the existing pointer local.",
+        "parent_line": 1923,
+        "parent_call": "TextIO().pfnPlanetName(app, pl.id)",
+        "line": 1926,
+        "current_call_line": "szObjectName = TextIO().pfnPlanetName(app, pl.id);"
+      }
+    ],
+    "verification": {
+      "batch": "L05y owned planet, fleet and thing name values",
+      "debug_build": "Pass, no warnings. Release SDL regression and host builds pass. Compiler/source policy covers 158 owned sources, 159 variants and 161 standalone headers in both orders; exact raw-copy inventory passes.",
+      "desktop": "153/153, including all 29 leak checks, actual message/report/UI consumers, lifecycle provider and available SDL tutorial checkpoints. Final added direct message-work assertions also pass in the focused utility test.",
+      "host_units": "28/28 in Release; final direct message-work assertions pass in the rebuilt host utility test.",
+      "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+      "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+      "windows": "Strict MinGW compilation passes 147/147 owned production units and four affected actual test/provider units. Final utility test compiles again with its added message-work assertions. Rebuilt Windows utility (11), utility-generation (16) and report (3) cases pass under Wine, 30 total. Actual native Windows SDL and Linux final qualification remain pending.",
+      "sanitizers": "Native macOS Debug ASan/UBSan build passes the actual utility, utility-generation and native-file-UI executables (3/3). Final added direct planet/fleet/thing message-work assertions also pass in the rebuilt sanitized utility executable. This is focused sanitizer execution, not whole-suite sanitizer qualification.",
+      "characterization": "Before migration, the actual utility test passed exact planet/orbit, missing/self/foreign fleet, Unicode custom fleet, self/foreign minefield, salvage trailing-space, self/foreign packet, wormhole, trader and rejected unknown/missing-object expectations. Final test retains those vectors and checks all three owned values survive later lookups and scratch overwrite. Direct message grammar vectors \\p|\\w, \\s|\\w and \\g|\\w preserve the generated name in the following work expansion.",
+      "interfaces": "PszGetPlanetName, PszGetFleetName and PszGetThingName return initialized independent 360-byte arrays. All 78 production calls migrate; TEXTIO follows the exact type and all three actual name providers return matching owned arrays. Existing pointer locals borrow named owners; immediate consumers borrow only through the full expression; location delegation returns the owned array directly. No compatibility pointer overload remains.",
+      "effects": "Keep existing shared-work writes for current message and UI consumers. Explicit session-workspace staging preserves the existing dropdown byte-prefix edits and three mineral-summary appends. Owner prefixes, orbit flag, UTF-8 budgets, missing-object behavior, formatter expressions, report comparison/copy order and qsort16 boundaries remain. No allocation or record-layout change.",
+      "inventory": "Raw-copy inventory remains 256 migrated sites, 52 initial application sites pending and 58 lexical spellings including SDK declarations/definitions. This batch migrates ownership, without claiming the remaining mineral-title appends or scanner tail bounds are fixed.",
+      "baseline": "Behavior-neutral: native/frozen-original baseline bytes and unit goldens unchanged. No scenario/checkpoint moved; no regression export required. Game rules, record sizes, element widths, wire bytes, RNG, tie order and binary64 boundaries remain.",
+      "remaining": "Other scratch services (including PszFleetNameFromWord and compressed-planet lookup), remaining L05 copies/const/wrapper formatting, L06 service interfaces/Milestone D and L08 inventory/final qualification remain active.",
+      "receipts": "dist/verification/live-cpp/l05y/"
     }
   }
 }

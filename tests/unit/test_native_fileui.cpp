@@ -72,10 +72,12 @@ static void TestLibraryNameDialog(void) {
 }
 
 static std::string szPlanetTitleName, szPlanetTitleCaptured;
-static char *PszPlanetTitleName(APPSESSION &app, std::int16_t id) {
+static std::array<char, 360> PszPlanetTitleName(APPSESSION &app, std::int16_t id) {
+    std::array<char, 360> szResult{};
     TEST_CHECK(id == 0);
     CchCopyUtf8(std::span{app.state.szWork}, szPlanetTitleName);
-    return app.state.szWork;
+    CchCopyUtf8Prefix(std::span{szResult}, app.state.szWork);
+    return szResult;
 }
 static std::int16_t CchPlanetTitlePrefix(APPSESSION &, StringId id, std::span<char> out) {
     TEST_CHECK(id == idsPlanet2);

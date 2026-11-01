@@ -1183,7 +1183,7 @@ void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
                             y = static_cast<std::int32_t>((static_cast<std::int32_t>((y * dSize)) / app.state.dGal)) + dMargin + yOff;
                             DrawPlanetPrintDot(pd.hDC, LOWORD(x), LOWORD(y), 0);
                             if (app.lpui->grbitScan & grbitScanPlanetNames) {
-                                CtrTextOut(pd.hDC, LOWORD(x), LOWORD(y) + 14, TextIO().pfnPlanetName(app, i), 0);
+                                CtrTextOut(pd.hDC, LOWORD(x), LOWORD(y) + 14, TextIO().pfnPlanetName(app, i).data(), 0);
                             }
                         }
                         if (hfontSav) {

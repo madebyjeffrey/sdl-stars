@@ -504,6 +504,7 @@ void DrawShipWayPtOrders(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
 }
 
 void DrawShipPlanet(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
+    std::array<char, 360> szObjectName{};
     std::array<char, cchCatalogText> szCatalogPsz{};
     std::int16_t yTop;
     std::int16_t dy;
@@ -517,7 +518,8 @@ void DrawShipPlanet(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
     THING  *lpthMac;
 
     if (obj.pfl()->idPlanet != idPlanetDeepSpace) {
-        psz = TextIO().pfnPlanetName(app, obj.pfl()->idPlanet | 0x8000);
+        szObjectName = TextIO().pfnPlanetName(app, obj.pfl()->idPlanet | 0x8000);
+        psz = szObjectName.data();
     } else {
         szCatalogPsz = TextIO().pfnCompressed(app, idsDeepSpace2);
         psz = szCatalogPsz.data();
@@ -779,12 +781,12 @@ void ShipCommandProc(APPSESSION &app, HWND hwnd, WPARAM wParam, LPARAM lParam) {
     } else if (reinterpret_cast<HWND>(lParam) == app.lpui->rghwndBtn[5] && HIWORD(wParam) == 0) {
         PresentationIO().pfnSelectFleet(app, 1, 0);
     } else if (reinterpret_cast<HWND>(lParam) == app.lpui->rghwndBtn[6] && HIWORD(wParam) == 0) {
-        CchSprintf(szFleetName, "%s", PszGetFleetName(app, app.state.sel.fl.id));
+        CchSprintf(szFleetName, "%s", PszGetFleetName(app, app.state.sel.fl.id).data());
         CchCopyUtf8Prefix(std::span{app.state.szWork}, szFleetName);
         ControlIO().pfnStickyDlgPos(hwnd, &app.lpui->ptStickyRenameDlg, 0);
         if (ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_RENAME), app.lpui->hwndFrame, RenameDlg, 0) != 0) {
             CchCopyUtf8Prefix(std::span{szT}, app.state.szWork);
-            if (std::strcmp(szT, PszGetFleetName(app, app.state.sel.fl.id)) != 0 &&
+            if (std::strcmp(szT, PszGetFleetName(app, app.state.sel.fl.id).data()) != 0 &&
                 LogChangeName(app, grobjFleet, app.state.sel.fl.id, szT)) {
                 PresentationIO().pfnInvalidateReport(app, rptFleets, 1);
                 FillOrdersLB(app);
@@ -1716,7 +1718,7 @@ void DrawThingXferSide(APPSESSION &app, HDC hdc, RECT *prc, THING *pth, MineralT
         _Draw3dFrame(app, hdc, &rc, 0);
     }
     if (iSupply == SupplyAll) {
-        RcCtrTextOut(app, hdc, &rc, PszGetThingName(app, pth->idFull()), 0);
+        RcCtrTextOut(app, hdc, &rc, PszGetThingName(app, pth->idFull()).data(), 0);
     }
     xLeft = prc->left + 4;
     xRight = prc->right - 4;
@@ -1777,7 +1779,7 @@ void DrawFleetCargoXferSide(APPSESSION &app, HDC hdc, RECT *prc, FLEET *pfl, Min
         _Draw3dFrame(app, hdc, &rc, 0);
     }
     if (iSupply == SupplyAll) {
-        RcCtrTextOut(app, hdc, &rc, PszGetFleetName(app, fl.id), 0);
+        RcCtrTextOut(app, hdc, &rc, PszGetFleetName(app, fl.id).data(), 0);
     }
     xLeft = prc->left + 4;
     xRight = prc->right - 4;
@@ -1867,7 +1869,7 @@ void DrawFleetShipsXferSide(APPSESSION &app, HDC hdc, RECT *prc, FLEET *pfl, Min
         _Draw3dFrame(app, hdc, &rc, 0);
     }
     if (iSupply == SupplyAll) {
-        RcCtrTextOut(app, hdc, &rc, PszGetFleetName(app, fl.id), 0);
+        RcCtrTextOut(app, hdc, &rc, PszGetFleetName(app, fl.id).data(), 0);
     }
     xLeft = prc->right - 4 - app.lpui->dxMaxMineralQuan - 2;
     xRight = xLeft + app.lpui->dxMaxMineralQuan;
@@ -1896,6 +1898,7 @@ void DrawFleetShipsXferSide(APPSESSION &app, HDC hdc, RECT *prc, FLEET *pfl, Min
 }
 
 void DrawPlanetXferSide(APPSESSION &app, HDC hdc, RECT *prc, PLANET *ppl, MineralType iSupply) {
+    std::array<char, 360> szObjectName{};
     std::array<char, cchCatalogText> szCatalogPsz{};
     PLANET  pl;
     std::int16_t yTop;
@@ -1920,7 +1923,8 @@ void DrawPlanetXferSide(APPSESSION &app, HDC hdc, RECT *prc, PLANET *ppl, Minera
     if (iSupply == SupplyAll) {
         _Draw3dFrame(app, hdc, &rc, 0);
         if (pl.id != idplNone) {
-            psz = TextIO().pfnPlanetName(app, pl.id);
+            szObjectName = TextIO().pfnPlanetName(app, pl.id);
+            psz = szObjectName.data();
         } else {
             szCatalogPsz = TextIO().pfnCompressed(app, idsDeepSpace);
             psz = szCatalogPsz.data();

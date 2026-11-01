@@ -743,14 +743,22 @@ std::int16_t FLookupOrbitingXfer(APPSESSION &app, std::int16_t idPlanet, std::in
     return 0;
 }
 
-char *PszGetThingName(APPSESSION &app, std::int16_t id) {
+// Keep the work-buffer effects used by later message \w fields, while callers
+// retain an independent value through subsequent lookups or drawing.
+static std::array<char, 360> SzLocationLabel(std::string_view sz) {
+    std::array<char, 360> szResult{};
+    CchCopyUtf8Prefix(std::span{szResult}, sz);
+    return szResult;
+}
+
+std::array<char, 360> PszGetThingName(APPSESSION &app, std::int16_t id) {
     THING *lpth;
     char   szPlr[54];
 
     lpth = LpthFromId(app, id);
     if (!lpth) {
         app.state.szWork[0] = 0;
-        return app.state.szWork;
+        return SzLocationLabel(app.state.szWork);
     }
     switch (lpth->ith()) {
     case ithMinefield:
@@ -764,7 +772,7 @@ char *PszGetThingName(APPSESSION &app, std::int16_t id) {
     case ithMineralPacket:
         if (lpth->thp().iWarp() == 0) {
             TextIO().pfnCchGetString(app, idsSalvage, std::span{app.state.szWork});
-            return app.state.szWork;
+            return SzLocationLabel(app.state.szWork);
         }
         if (lpth->iplr() != app.state.idPlayer) {
             CchSprintf(szPlr, "%s ", TextIO().pfnPlayerName(app, lpth->iplr(), 0, 0, 0, 0, nullptr));
@@ -782,10 +790,10 @@ char *PszGetThingName(APPSESSION &app, std::int16_t id) {
     default:
         CchCopyUtf8Prefix(std::span{app.state.szWork}, TextIO().pfnCompressed(app, idsMysteryObject).data());
     }
-    return app.state.szWork;
+    return SzLocationLabel(app.state.szWork);
 }
 
-char *PszGetFleetName(APPSESSION &app, std::int16_t id) {
+std::array<char, 360> PszGetFleetName(APPSESSION &app, std::int16_t id) {
     std::array<char, cchCatalogText> szCatalogLpsz{};
     std::int16_t cshdef;
     std::int16_t iplr;
@@ -832,7 +840,7 @@ char *PszGetFleetName(APPSESSION &app, std::int16_t id) {
         }
         CchSprintf(app.state.szWork, "%s%s #%d", szPlr, lpsz, ifl + 1);
     }
-    return app.state.szWork;
+    return SzLocationLabel(app.state.szWork);
 }
 
 std::uint16_t WFromLpfl(APPSESSION &app, FLEET *lpfl) {
@@ -875,7 +883,7 @@ char *PszFleetNameFromWord(APPSESSION &app, std::uint16_t w) {
     return app.state.szWork;
 }
 
-char *PszGetPlanetName(APPSESSION &app, std::int16_t id) {
+std::array<char, 360> PszGetPlanetName(APPSESSION &app, std::int16_t id) {
     std::int16_t fInOrbit;
     char   *psz;
 
@@ -888,7 +896,7 @@ char *PszGetPlanetName(APPSESSION &app, std::int16_t id) {
     } else {
         CchCopyUtf8Prefix(std::span{app.state.szWork}, psz);
     }
-    return app.state.szWork;
+    return SzLocationLabel(app.state.szWork);
 }
 
 std::int16_t IflFromLpfl(APPSESSION &app, FLEET *lpfl) {
@@ -1195,23 +1203,15 @@ std::int16_t FFleetSplitAll(APPSESSION &app, FLEET *pfl) {
     return 0;
 }
 
-// Keep the work-buffer effects used by later message \w fields, while callers
-// retain an independent value through subsequent lookups or drawing.
-static std::array<char, 360> SzLocationLabel(std::string_view sz) {
-    std::array<char, 360> szResult{};
-    CchCopyUtf8Prefix(std::span{szResult}, sz);
-    return szResult;
-}
-
 std::array<char, 360> PszGetLocName(APPSESSION &app, GrobjClass grobj, std::int16_t id, std::int16_t x, std::int16_t y) {
     if (id == -1)
         goto NoObj;
     if (grobj == grobjPlanet)
-        return SzLocationLabel(TextIO().pfnPlanetName(app, id));
+        return TextIO().pfnPlanetName(app, id);
     if (grobj == grobjFleet)
-        return SzLocationLabel(PszGetFleetName(app, id));
+        return PszGetFleetName(app, id);
     if (grobj == grobjThing)
-        return SzLocationLabel(PszGetThingName(app, id));
+        return PszGetThingName(app, id);
 NoObj:
     if (x == -1 && y == -1) {
         CchCopyUtf8Prefix(std::span{app.state.szWork}, TextIO().pfnCompressed(app, idsDeepSpace).data());
