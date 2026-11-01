@@ -80,7 +80,6 @@ using HLOCAL = HANDLE;
 using WNDPROC = LRESULT (*)(HWND, UINT, WPARAM, LPARAM);
 using DLGPROC = INT_PTR (*)(HWND, UINT, WPARAM, LPARAM);
 // The remaining Win16 procedure instances all hold dialog callbacks.
-using FARPROC = DLGPROC;
 using TIMERPROC = void (*)(HWND, UINT, UINT_PTR, DWORD);
 using LPOFNHOOKPROC = UINT_PTR (*)(HWND, UINT, WPARAM, LPARAM);
 using LPPRINTHOOKPROC = UINT_PTR (*)(HWND, UINT, WPARAM, LPARAM);

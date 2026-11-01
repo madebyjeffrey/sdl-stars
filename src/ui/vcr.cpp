@@ -11,11 +11,9 @@
 #include "alert_io.h"
 
 void BattleVCR(APPSESSION &app, std::int16_t iBattle) {
-    FARPROC  lpProc;
     HB      *lphb;
     std::uint8_t  cTokAlloc;
 
-    lpProc = nullptr;
     app.lpui->viStepVCRCur = -1;
     app.state.gd.fVCRTimer = 0;
     if (app.state.gd.mdScreenSize >= 2) {
@@ -51,15 +49,12 @@ void BattleVCR(APPSESSION &app, std::int16_t iBattle) {
         if (app.state.gd.fTutorial) {
             PresentationIO().pfnTutor(app);
         }
-        lpProc = (VCRDlg);
-        ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_VCR), app.lpui->hwndFrame, lpProc, 0);
+        ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_VCR), app.lpui->hwndFrame, VCRDlg, 0);
 
     } catch (const StarsError &) {
         AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMemory, nullptr), win32::MB_ICONHAND);
     }
 LCleanup:
-    if (lpProc) {
-    }
     if (app.state.vrgtok) {
         HeapIO().pfnFree(app, app.state.vrgtok, htMisc);
     }

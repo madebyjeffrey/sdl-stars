@@ -35,11 +35,9 @@ INT_PTR  AskSaveDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
 }
 
 void PromptSaveGame(APPSESSION &app) {
-    FARPROC lpProc;
     std::int16_t fRet;
 
-    lpProc = (DesktopChoiceIO().pfnAskSaveDialog);
-    fRet = ControlIO().pfnDialogBox(app.lpui->hInst, !app.state.game.fSinglePlr ? win32::MAKEINTRESOURCE(IDD_SAVE_TURN1) : win32::MAKEINTRESOURCE(IDD_SAVE_TURN2), app.lpui->hwndFrame, lpProc, 0);
+    fRet = ControlIO().pfnDialogBox(app.lpui->hInst, !app.state.game.fSinglePlr ? win32::MAKEINTRESOURCE(IDD_SAVE_TURN1) : win32::MAKEINTRESOURCE(IDD_SAVE_TURN2), app.lpui->hwndFrame, DesktopChoiceIO().pfnAskSaveDialog, 0);
     if (fRet == 1 || fRet == -1) {
         app.state.gd.fSubmit = fRet == -1;
         FWriteLogFile(app, app.state.szBase, app.state.idPlayer);
@@ -49,14 +47,12 @@ void PromptSaveGame(APPSESSION &app) {
 }
 
 std::int16_t FCanLeaveCurrentGame(APPSESSION &app) {
-    FARPROC lpProc;
     std::int16_t fRet;
     std::int16_t fSubmitSav;
 
     if (app.state.idPlayer == iplrNone || !app.state.game.fDirty) return 1;
-    lpProc = (DesktopChoiceIO().pfnAskSaveDialog);
     fRet = ControlIO().pfnDialogBox(app.lpui->hInst, !app.state.game.fSinglePlr ? win32::MAKEINTRESOURCE(IDD_SAVE_TURN1) : win32::MAKEINTRESOURCE(IDD_SAVE_TURN2),
-                     app.lpui->hwndFrame, lpProc, 0);
+                     app.lpui->hwndFrame, DesktopChoiceIO().pfnAskSaveDialog, 0);
     if (fRet == 0 || fRet == -2) return 0;
     if (fRet == 1 || fRet == -1) {
         fSubmitSav = app.state.gd.fSubmit;

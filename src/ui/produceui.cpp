@@ -12,7 +12,6 @@
 #include "alert_io.h"
 
 std::int16_t ChangeProduction(APPSESSION &app, std::int16_t fClear) {
-    FARPROC  lpProcProd;
     PROD     rgprod[64];
     std::int16_t  fSuccess;
     StarsRecoveryScope scopeRecovery;
@@ -23,8 +22,7 @@ std::int16_t ChangeProduction(APPSESSION &app, std::int16_t fClear) {
         }
         ProductionIO().pfnInitialize(app, rgprod);
         app.lpui->fDlgUp = 1;
-        lpProcProd = (ProductionDlg);
-        fSuccess = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_PRODUCTION), app.lpui->hwndFrame, lpProcProd, 0);
+        fSuccess = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_PRODUCTION), app.lpui->hwndFrame, ProductionDlg, 0);
         app.lpui->hwndProdDlg = nullptr;
         app.lpui->fDlgUp = 0;
 LWriteProdQ:
@@ -630,7 +628,6 @@ INT_PTR  ZipProdDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     char       *pszT;
     RECT        rcGBox;
     std::int16_t     cch;
-    FARPROC     lpProc;
     std::int16_t     cpq;
 
     switch (message) {
@@ -736,10 +733,9 @@ INT_PTR  ZipProdDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 } else {
                     win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsCustomD), app.lpui->iResTechNow);
                 }
-                lpProc = (RenameZipDlg);
                 if (app.lpui->iResTechNow == Energy)
                     goto LDontRename;
-                if (ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_RENAME), app.lpui->hwndFrame, lpProc, 0) != 0) {
+                if (ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_RENAME), app.lpui->hwndFrame, RenameZipDlg, 0) != 0) {
                     if (app.state.szWork[0] == 0) {
                         win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsCustomD), app.lpui->iResTechNow);
                     }
@@ -839,11 +835,9 @@ std::int16_t IProductionPresetSlot(APPSESSION &app, std::int16_t i) {
 
 void CustomizeProductionPresets(APPSESSION &app, HWND hwnd) {
     ZIPPRODQ rgzp[4];
-    FARPROC lpProc;
     std::int16_t fRet;
             std::memcpy(rgzp, app.state.vrgZipProd, 160);
-            lpProc = (ZipProdDlg);
-            fRet = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_ZIP_PROD), hwnd, lpProc, 0);
+            fRet = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_ZIP_PROD), hwnd, ZipProdDlg, 0);
             if (fRet)
                 return;
             std::memcpy(app.state.vrgZipProd, rgzp, 160);

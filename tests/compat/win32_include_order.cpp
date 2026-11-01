@@ -19,7 +19,7 @@ static INT_PTR  TestDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 }
 
 int FTestIncludeOrder(void) {
-    FARPROC lpfnDlgProc = TestDlgProc;
+    DLGPROC lpfnDlgProc = TestDlgProc;
     WPARAM wParam = (WPARAM)UINT64_C(0x123456789abcdef0);
     LPARAM lParam = (LPARAM)UINT64_C(0x76543210fedcba98);
 

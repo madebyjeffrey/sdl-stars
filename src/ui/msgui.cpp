@@ -40,7 +40,6 @@ LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     MSGPLR     *lpmsgplr;
     THING      *lpth;
     SCAN        scan;
-    FARPROC     lpProc;
     std::int16_t     fRet;
 
     switch (message) {

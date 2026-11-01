@@ -1181,11 +1181,9 @@ INT_PTR  NewPasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
 }
 
 std::int16_t FPromptLegacyRacePassword(APPSESSION &app, char *szPassword) {
-    FARPROC lpProc;
     std::int16_t fRet;
 
-    lpProc = (NewPasswordDlg);
-    fRet = static_cast<std::int16_t>(ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_NEW_PASSWORD), app.lpui->hwndFrame, lpProc, reinterpret_cast<LPARAM>(szPassword)));
+    fRet = static_cast<std::int16_t>(ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_NEW_PASSWORD), app.lpui->hwndFrame, NewPasswordDlg, reinterpret_cast<LPARAM>(szPassword)));
     return fRet > 0;
 }
 
@@ -1346,11 +1344,9 @@ std::int16_t IdAlertBox(const char *sz, std::int16_t mbType) { return CompatChoi
 // PromptPassword asks for the password of the file FCheckPassword is
 // checking.
 std::int16_t PromptPassword(APPSESSION &app) {
-    FARPROC lpProc;
     std::int16_t fRet;
 
-    lpProc = (PasswordDlg);
-    fRet = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_PASSWORD), !app.lpui->hwndTitle ? app.lpui->hwndFrame : app.lpui->hwndTitle, lpProc, 0);
+    fRet = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_PASSWORD), !app.lpui->hwndTitle ? app.lpui->hwndFrame : app.lpui->hwndTitle, PasswordDlg, 0);
     return fRet;
 }
 

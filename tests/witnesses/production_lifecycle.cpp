@@ -193,7 +193,7 @@ static void TestInvalidateRect(HWND hwnd, RECT *r, int erase) {
         }                                                                                                                                                      \
     } while (0)
 
-static intptr_t TestLUiDialogBox(HINSTANCE instance, LPCSTR resource, HWND parent, FARPROC proc) {
+static intptr_t TestLUiDialogBox(HINSTANCE instance, LPCSTR resource, HWND parent, DLGPROC proc) {
     APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
 
     assert(instance == app.lpui->hInst && resource == win32::MAKEINTRESOURCE(IDD_PRODUCTION) && parent == app.lpui->hwndFrame && proc == ProductionDlg && app.lpui->fDlgUp);

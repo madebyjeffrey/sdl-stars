@@ -40,7 +40,6 @@ static std::int16_t AddNewGameLibraryRace(APPSESSION &, void *lpData, const char
 void NewGameWizard(APPSESSION &app, HWND hwnd, std::int16_t fReadOnly) {
     std::int16_t iStepMaxSoFar;
     std::int16_t mdRet;
-    FARPROC lpProc;
     std::int16_t fIdleSav;
     std::int16_t rgplrbmp[16];
     std::int16_t i;
@@ -99,8 +98,7 @@ void NewGameWizard(APPSESSION &app, HWND hwnd, std::int16_t fReadOnly) {
         }
     }
 Step1:
-    lpProc = (NewGameDlg);
-    mdRet = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_NEW_GAME_1), hwnd, lpProc, reinterpret_cast<LPARAM>(szFile));
+    mdRet = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_NEW_GAME_1), hwnd, NewGameDlg, reinterpret_cast<LPARAM>(szFile));
     if (mdRet <= 0) {
     Cancel:
         if (!app.state.fRCWReadOnly) {
@@ -113,8 +111,7 @@ Step1:
     if (mdRet == 3)
         goto Finish;
 Step2:
-    lpProc = (NewGameDlg2);
-    mdRet = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_NEW_GAME_2), hwnd, lpProc, reinterpret_cast<LPARAM>(szFile));
+    mdRet = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_NEW_GAME_2), hwnd, NewGameDlg2, reinterpret_cast<LPARAM>(szFile));
     if (mdRet <= 0)
         goto Cancel;
     if (iStepMaxSoFar < 1) {
@@ -125,8 +122,7 @@ Step2:
         goto Step1;
     if (mdRet == 3)
         goto Finish;
-    lpProc = (NewGameDlg3);
-    mdRet = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_NEW_GAME_3), hwnd, lpProc, reinterpret_cast<LPARAM>(szFile));
+    mdRet = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_NEW_GAME_3), hwnd, NewGameDlg3, reinterpret_cast<LPARAM>(szFile));
     if (mdRet <= 0)
         goto Cancel;
     if (iStepMaxSoFar < 2) {

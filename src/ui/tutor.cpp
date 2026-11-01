@@ -32,7 +32,6 @@ INT_PTR  TutorDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
 
     HMENU   hmenu;
     RECT    rc;
-    FARPROC lpProc;
     std::int16_t fRet;
 
     switch (message) {
@@ -54,8 +53,7 @@ INT_PTR  TutorDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     case win32::WM_COMMAND:
         switch (LOWORD(wParam)) {
         case IDC_TUTOR_PANIC:
-            lpProc = (PanicDlg);
-            fRet = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_PANIC), hwnd, lpProc, 0);
+            fRet = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_PANIC), hwnd, PanicDlg, 0);
             if (!fRet) {
                 return 0;
             }
@@ -205,11 +203,7 @@ void StartTutor(APPSESSION &app, std::int16_t fRestart) {
     if (!app.state.gd.fTutorial) {
         app.state.tutor = {};
         if (!app.lpui->lpfnTutorDlgProc) {
-            app.lpui->lpfnTutorDlgProc = (TutorDlg);
-            if (!app.lpui->lpfnTutorDlgProc) {
-                AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMemory, nullptr), win32::MB_ICONHAND);
-                return;
-            }
+            app.lpui->lpfnTutorDlgProc = TutorDlg;
         }
         app.state.gd.fTutorial = 1;
         SaveGameState(app);

@@ -149,7 +149,6 @@ INT_PTR  NewPlanNameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
 INT_PTR  BattlePlansDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
 
-    FARPROC lpProc;
     std::int16_t idc;
     std::int16_t i;
     std::int16_t fRet;
@@ -294,8 +293,7 @@ INT_PTR  BattlePlansDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         case IDC_RENAME:
         LRename:
             ControlIO().pfnStickyDlgPos(hwnd, &app.lpui->ptStickyBattlePlansDlg, 0);
-            lpProc = (NewPlanNameDlg);
-            fRet = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_RENAME), app.lpui->hwndFrame, lpProc, 0);
+            fRet = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_RENAME), app.lpui->hwndFrame, NewPlanNameDlg, 0);
             ControlIO().pfnSetFocus(hwnd);
             if (fRet) {
                 app.state.rglpbtlplan[app.state.idPlayer][app.lpui->iPlanSelDlg] = app.lpui->btlplan;

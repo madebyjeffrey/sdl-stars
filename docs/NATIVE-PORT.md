@@ -156,6 +156,11 @@ detail in [WIN16-PARITY.md](WIN16-PARITY.md).
   libraries' internally owned files remain outside this service. The game's
   heaps (`memory.cpp`) retain their `calloc`/`realloc` allocation geometry under an
   explicit chain owner and C++20 typed lifetime operations.
+- **Callbacks:** dialog calls pass their concrete callback directly. The generic
+  `FARPROC` alias and instance-style temporary/cleanup ceremony are gone. The
+  browser, gauge and tutorial configuration slots use `DLGPROC`; their existing
+  initialization phases, lazy tutorial default and ability to select a callback
+  remain. These are native function pointers, with no thunk allocation or release.
 - **Formatting and rounding** (`native.cpp`): the game code formats with
   `CchSprintf`, which reads `%ld` as 32 bits like Win32 `wsprintf` (the
   string table passes `int32_t` to `%ld`; `long` is 64 bits on 64-bit POSIX)

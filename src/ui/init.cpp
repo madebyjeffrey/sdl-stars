@@ -152,9 +152,9 @@ std::int16_t FCreateStuff(APPSESSION &app) {
     app.lpui->lpfnFakeEditProc = (FakeEditProc);
     app.lpui->lpfnFakeListProc = (FakeListProc);
     app.lpui->lpfnHostTimerProc = (HostTimerProc);
-    app.lpui->lpfnBrowserDlgProc = (BrowserDlg);
+    app.lpui->lpfnBrowserDlgProc = BrowserDlg;
     app.lpui->lpfnReportDlgProc = (ReportDlg);
-    app.lpui->lpfnGaugeDlgProc = (ProgressGaugeDlg);
+    app.lpui->lpfnGaugeDlgProc = ProgressGaugeDlg;
     app.lpui->lpb2k = LpAlloc<std::uint8_t>(app, 0x800, htPerm);
     app.lpui->vlprgidMisc = LpAlloc<std::uint16_t>(app, 0x800, htPerm);
     InitGameStuff(app);

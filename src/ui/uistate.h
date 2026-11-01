@@ -21,9 +21,9 @@ struct APPUISTATE {
     alignas(std::max_align_t) COLORREF       crWindow = 0;
     alignas(std::max_align_t) COLORREF       crWindowText = 0;
     alignas(std::max_align_t) ControlId      rgidRaceBtn[5] = {IDCANCEL, IDC_BACK, IDC_NEXT, IDC_FINISH, IDC_HELP};
-    alignas(std::max_align_t) FARPROC        lpfnBrowserDlgProc = nullptr;
-    alignas(std::max_align_t) FARPROC        lpfnGaugeDlgProc = nullptr;
-    alignas(std::max_align_t) FARPROC        lpfnTutorDlgProc = nullptr;
+    alignas(std::max_align_t) DLGPROC        lpfnBrowserDlgProc = nullptr;
+    alignas(std::max_align_t) DLGPROC        lpfnGaugeDlgProc = nullptr;
+    alignas(std::max_align_t) DLGPROC        lpfnTutorDlgProc = nullptr;
     alignas(std::max_align_t) FRAMESTUFF     vfs = {};
     alignas(std::max_align_t) GrbitScan      grbitScan = static_cast<GrbitScan>(0);
     alignas(std::max_align_t) HACCEL         hAccel = nullptr;

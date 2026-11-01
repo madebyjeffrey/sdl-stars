@@ -198,7 +198,6 @@ INT_PTR  About(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     HDC     hdc;
     std::int16_t i;
     HWND    hwndCtl;
-    FARPROC lpProc;
 
     switch (message) {
     case win32::WM_INITDIALOG:

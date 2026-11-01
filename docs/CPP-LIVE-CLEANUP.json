@@ -107,7 +107,18 @@
           "windows": "146/146 strict owned application/wrapper syntax checks; final report.cpp syntax rechecked after removing redundant literal-size casts. Compilation evidence only.",
           "correction": "Previously unchecked 1024-byte writes now bounded by actual destination capacity; valid fitting output, numeric formats, UTF-8 boundaries and 1024-byte ceiling preserved.",
           "baseline": "Unchanged; no checkpoint moved. Wire layouts, IDs, catalogs and canonical models unchanged.",
-          "receipts": "dist/verification/live-cpp/l05b/"
+          "receipts": "dist/verification/live-cpp/l05b/",
+          "linux_ci": {
+            "run": 41280074000,
+            "commit": "d46c6f3d",
+            "status": "success",
+            "jobs": [
+              "host units",
+              "resource ownership ASan/UBSan/LSan",
+              "linked C++20 witnesses"
+            ],
+            "full_platform_jobs": "Skipped by default opt-in policy."
+          }
         },
         {
           "batch": "L05c catalog destination capacity repair",
@@ -150,10 +161,10 @@
       "id": "L07",
       "status": "active",
       "completed_substeps": [
-        "typed-generated-help-api"
+        "typed-generated-help-api",
+        "obsolete-callback-instance-scaffolding"
       ],
       "pending_substeps": [
-        "obsolete-callback-instance-scaffolding",
         "embedded-resource-release-ceremony"
       ],
       "help_api": {
@@ -172,8 +183,36 @@
           "host": "No core/host source or interface changed; L05c host qualification remains current.",
           "baseline": "Unchanged. No archive, rendered asset, ID, catalog, wire layout or canonical model changed.",
           "receipts": "dist/verification/live-cpp/l07a/"
+        },
+        {
+          "batch": "L07b typed direct callbacks",
+          "debug_build": "Pass, no warnings; standalone headers in both orders, include-order callback width and archived observer named bindings compile. Native UI callback configuration fields keep their exact underlying type and layout.",
+          "desktop": "152/152; includes dialog/wizard/quit flows, tutorial, providers, callback faults, 29 leaks and ownership checks.",
+          "native_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped reference inputs.",
+          "windows": "146/146 strict owned units; final init/tutor files 2/2; migrated lifecycle provider and include-order test 2/2. Compilation evidence only.",
+          "host": "No game logic or host interface changed; L05c host results remain current.",
+          "baseline": "Unchanged; wire layouts, catalog/data bytes, IDs and canonical models unchanged.",
+          "receipts": "dist/verification/live-cpp/l07b/"
         }
-      ]
+      ],
+      "callbacks": {
+        "status": "complete; verified",
+        "removed_alias": "FARPROC = DLGPROC",
+        "removed_local_declarations": 23,
+        "removed_assignments": 38,
+        "direct_uses": 37,
+        "unreachable_cleanup": "VCR empty callback cleanup and impossible null test after assigning TutorDlg.",
+        "retained": "Three APPUISTATE callback configuration slots now use the actual DLGPROC type. Preserve initialization timing, lazy/default or selected callback state, field names and native layout; no instance/thunk is allocated. Other native WNDPROC/TIMERPROC registration slots remain typed configuration.",
+        "evaluation": "Concrete function addresses have no evaluation effects. DesktopChoiceIO and ControlIO getters only return scoped provider references; passing the selected callback directly preserves supported dispatch.",
+        "enforcement": "Owned source forbids FARPROC, MakeProcInstance and FreeProcInstance spellings.",
+        "providers": "Production-lifecycle and include-order tests use the actual DLGPROC type."
+      },
+      "resource_review": {
+        "status": "corrections pending, separate commits",
+        "tutorial": "LoadResource/LockResource borrows module bytes. GlobalUnlock calls LpMemory, fails with ERROR_INVALID_HANDLE and clobbers prior error state; FreeResource does nothing. Remove this heap-release ceremony in an intentional error-state fix.",
+        "title": "HdibLoadBigResource allocates a writable GMEM_FIXED copy. WM_DESTROY currently calls the no-op FreeResource and clears its only application reference, retaining the allocation until runtime shutdown. Replace with the actual matched heap release in its own bug-fix commit.",
+        "foreign_api": "Keep genuine SDK-compatible FreeResource behavior and real GlobalAlloc/GlobalLock/GlobalUnlock/GlobalFree contracts for owned native storage."
+      }
     },
     {
       "id": "L08",

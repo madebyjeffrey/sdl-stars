@@ -204,7 +204,6 @@ LRESULT  FrameWndProc(APPSESSION &app, HWND hwnd, UINT msg, WPARAM wParam, LPARA
     HPALETTE     hpalSav;
     TEXTMETRIC   tm;
     POINT16      pt;
-    FARPROC      lpProc;
     std::int16_t      fRet;
     std::int16_t      fErrSav;
     std::int16_t      idCur;
@@ -900,7 +899,6 @@ void RestoreSelection(APPSESSION &app) {
 void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
     POINT16  pt;
     HMENU    hmenu;
-    FARPROC  lpProc;
     std::int16_t  dy;
     char     szExt[4];
     std::int16_t  dx;
@@ -955,8 +953,7 @@ void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
     } else {
         switch (LOWORD(wParam)) {
         case IDM_HELP_ABOUT:
-            lpProc = (About);
-            ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_ABOUT), hwnd, lpProc, 0);
+            ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_ABOUT), hwnd, About, 0);
             break;
         case IDM_FILE_EXIT:
             ControlIO().pfnSendMessage(hwnd, win32::WM_CLOSE, 0, 0);
@@ -1040,8 +1037,7 @@ void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
         case IDM_FILE_PRINT_MAP:
             if (app.state.idPlayer == iplrNone)
                 break;
-            lpProc = (PrintMapDlg);
-            fRet = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_PRINT_MAP), app.lpui->hwndFrame, lpProc, 0);
+            fRet = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_PRINT_MAP), app.lpui->hwndFrame, PrintMapDlg, 0);
             if (!fRet)
                 break;
             cPageX = app.lpui->vrgcPrintMapPage[0];
@@ -1217,15 +1213,13 @@ LPrintMapCleanup:
         case IDM_VIEW_FIND2:
             if (app.state.idPlayer == iplrNone)
                 break;
-            lpProc = (FindDlg);
-            fRet = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_FIND), hwnd, lpProc, 0);
+            fRet = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_FIND), hwnd, FindDlg, 0);
             break;
         case IDM_GAME_SCORE:
         case IDM_GAME_SCORE2:
             if (app.state.idPlayer == iplrNone)
                 break;
-            lpProc = (ScoreXDlg);
-            fRet = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_SCORE), hwnd, lpProc, 0);
+            fRet = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_SCORE), hwnd, ScoreXDlg, 0);
             break;
         case IDM_FILE_HOST_GAME:
             if (!app.state.game.fSinglePlr &&
@@ -1548,8 +1542,7 @@ LPrintMapCleanup:
         case IDM_GAME_RESEARCH2:
             if (app.state.game.lid == 0 || app.state.idPlayer == iplrNone)
                 break;
-            lpProc = (ResearchDlg);
-            fRet = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_RESEARCH), app.lpui->hwndFrame, lpProc, 0);
+            fRet = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_RESEARCH), app.lpui->hwndFrame, ResearchDlg, 0);
             if (!fRet || app.state.sel.grobj != grobjPlanet)
                 break;
             if (app.state.sel.pl.lpplprod) {
@@ -1561,15 +1554,13 @@ LPrintMapCleanup:
         case IDM_GAME_BATTLE_PLANS2:
             if (app.state.game.lid == 0 || app.state.idPlayer == iplrNone)
                 break;
-            lpProc = (BattlePlansDlg);
-            ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_BATTLE_PLANS), app.lpui->hwndFrame, lpProc, 0);
+            ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_BATTLE_PLANS), app.lpui->hwndFrame, BattlePlansDlg, 0);
             break;
         case IDM_GAME_RELATIONS:
         case IDM_GAME_RELATIONS2:
             if (app.state.game.lid == 0 || app.state.idPlayer == iplrNone || app.state.game.fSinglePlr)
                 break;
-            lpProc = (RelationsDlg);
-            ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_RELATIONS), app.lpui->hwndFrame, lpProc, 0);
+            ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_RELATIONS), app.lpui->hwndFrame, RelationsDlg, 0);
             break;
         case IDM_RACE_EDIT1:
         case IDM_RACE_EDIT2:
@@ -1607,8 +1598,7 @@ LPrintMapCleanup:
         case IDM_CMD_CHANGE_PASSWORD:
             if (app.state.game.lid == 0 || app.state.idPlayer == iplrNone || ((app.state.game.fSinglePlr && app.state.lSaltCur <= 0) || !FCheckPassword(app)))
                 break;
-            lpProc = (NewPasswordDlg);
-            fRet = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_NEW_PASSWORD), app.lpui->hwndFrame, lpProc, 0);
+            fRet = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_NEW_PASSWORD), app.lpui->hwndFrame, NewPasswordDlg, 0);
             break;
         case IDM_SCAN_ZOOM_0:
         case IDM_SCAN_ZOOM_1:
@@ -1825,7 +1815,6 @@ LGotFileName:
 }
 
 void BringUpHostDlg(APPSESSION &app) {
-    FARPROC lpProc;
     std::int16_t fRet;
     HCURSOR hcurSav;
 
@@ -1841,8 +1830,7 @@ void BringUpHostDlg(APPSESSION &app) {
         goto LAutoMode;
     }
 Top:
-    lpProc = (HostModeDialog);
-    fRet = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_HOST_MODE), app.lpui->hwndFrame, lpProc, 0);
+    fRet = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_HOST_MODE), app.lpui->hwndFrame, HostModeDialog, 0);
     if (fRet == -1) {
     LAutoMode:
         ui::ShowWindow(app.lpui->hwndFrame, win32::SW_SHOWMINIMIZED);
@@ -1961,7 +1949,6 @@ void DrawHostDialog2(APPSESSION &app, HWND hwnd, HDC hdcIn) {
 INT_PTR  HostModeDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
 
-    FARPROC     lpProc;
     std::int16_t     fRet;
     RECT        rc;
     std::int16_t     mf;
@@ -2117,13 +2104,11 @@ INT_PTR  HostModeDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         case IDC_HOST_PASSWORD:
             if (!FCheckPassword(app))
                 break;
-            lpProc = (NewPasswordDlg);
-            fRet = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_NEW_PASSWORD), hwnd, lpProc, 0);
+            fRet = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_NEW_PASSWORD), hwnd, NewPasswordDlg, 0);
             ControlIO().pfnSetFocus(hwnd);
             return fRet;
         case 1029:
-            lpProc = (HostOptionsDialog);
-            fRet = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_HOST_OPTIONS), hwnd, lpProc, 0);
+            fRet = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_HOST_OPTIONS), hwnd, HostOptionsDialog, 0);
             ControlIO().pfnSetFocus(hwnd);
             if (fRet && !app.state.gd.fReadOnly) {
                 ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_HOST_AUTO_GENERATE), app.state.gd.fAllAis == 0 && (app.lpui->vtimer.fAutoGenWhenIn || app.lpui->vtimer.mdForce != 0));

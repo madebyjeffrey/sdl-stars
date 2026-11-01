@@ -743,7 +743,6 @@ void DrawFleetComp(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
 
 void ShipCommandProc(APPSESSION &app, HWND hwnd, WPARAM wParam, LPARAM lParam) {
     std::int16_t fPercent;
-    FARPROC lpProc;
     std::int32_t lSel;
     XFER    xf;
     char    szT[34];
@@ -769,8 +768,7 @@ void ShipCommandProc(APPSESSION &app, HWND hwnd, WPARAM wParam, LPARAM lParam) {
         CchSprintf(szFleetName, "%s", PszGetFleetName(app, app.state.sel.fl.id));
         std::strcpy(app.state.szWork, szFleetName);
         ControlIO().pfnStickyDlgPos(hwnd, &app.lpui->ptStickyRenameDlg, 0);
-        lpProc = (RenameDlg);
-        if (ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_RENAME), app.lpui->hwndFrame, lpProc, 0) != 0) {
+        if (ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_RENAME), app.lpui->hwndFrame, RenameDlg, 0) != 0) {
             std::strcpy(szT, app.state.szWork);
             if (std::strcmp(szT, PszGetFleetName(app, app.state.sel.fl.id)) != 0) {
                 LogChangeName(app, grobjFleet, app.state.sel.fl.id, szT);
@@ -820,8 +818,7 @@ void ShipCommandProc(APPSESSION &app, HWND hwnd, WPARAM wParam, LPARAM lParam) {
             lSel = ControlIO().pfnSendMessage(app.lpui->hwndBattleDD, win32::CB_GETCURSEL, 0, 0);
             if (lSel != -1) {
                 if (lSel == 0) {
-                    lpProc = (BattlePlansDlg);
-                    lSel = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_BATTLE_PLANS), app.lpui->hwndFrame, lpProc, 0);
+                    lSel = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_BATTLE_PLANS), app.lpui->hwndFrame, BattlePlansDlg, 0);
                     app.state.sel.fl.iplan = lSel;
                 } else {
                     app.state.sel.fl.iplan = lSel - 1;
@@ -874,8 +871,7 @@ void ShipCommandProc(APPSESSION &app, HWND hwnd, WPARAM wParam, LPARAM lParam) {
             }
         }
         lpfl = nullptr;
-        lpProc = (MergeFleetsDlg);
-        if (ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_MERGE_FLEETS), app.lpui->hwndFrame, lpProc, 0) != 0) {
+        if (ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_MERGE_FLEETS), app.lpui->hwndFrame, MergeFleetsDlg, 0) != 0) {
             for (ifl = 0; ifl < app.state.vcflMerge; ifl++) {
                 if (app.state.vrgiflMerge[ifl] != iflNone) {
                     if (app.state.rglpfl[app.state.vrgiflMerge[ifl]]->id == app.state.sel.fl.id) {
@@ -1170,7 +1166,6 @@ void DrawFleetBitmap(APPSESSION &app, FLEET *lpfl, HDC hdc, std::int16_t x, std:
 
 std::int16_t TransferStuff(APPSESSION &app, std::int16_t id1, GrobjClass grobj1, std::int16_t id2, GrobjClass grobj2, MdXfer mdXfer) {
     XFER    xfer[2];
-    FARPROC lpProcXfer;
     std::int16_t rgValidHull[16];
     std::int32_t lPopPrev;
     std::int16_t iDelFleet;
@@ -1228,8 +1223,7 @@ std::int16_t TransferStuff(APPSESSION &app, std::int16_t id1, GrobjClass grobj1,
     if (app.state.gd.fTutorial) {
         PresentationIO().pfnTutor(app);
     }
-    lpProcXfer = (TransferDlg);
-    fSuccess = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_TRANSFER), app.lpui->hwndFrame, lpProcXfer, 0);
+    fSuccess = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_TRANSFER), app.lpui->hwndFrame, TransferDlg, 0);
     if (fSuccess) {
         iDelFleet = -1;
         if (mdXfer == mdXferShips) {
@@ -2521,7 +2515,6 @@ void FillBattleDD(APPSESSION &app, std::int16_t iSel) {
 
 void ApplyTransportPresetPopup(APPSESSION &app, POINT16 pt) {
     std::int16_t i,cMax,iSkip,fRet;
-    FARPROC lpProc;
     char sz255[2];
     const char *rgszZip[11];
     ZIPORDER rgzo[4];
@@ -2545,8 +2538,7 @@ void ApplyTransportPresetPopup(APPSESSION &app, POINT16 pt) {
             i = ControlIO().pfnPopupMenu(app, app.lpui->hwndPlanet, pt.x, pt.y, cMax, nullptr, rgszZip, -1, 1);
             if (i == cMax - 1) {
                 std::memcpy(rgzo, app.state.vrgZip, 96);
-                lpProc = (ZipOrderDlg);
-                fRet = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_ZIP_PROD), app.lpui->hwndFrame, lpProc, 0);
+                fRet = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_ZIP_PROD), app.lpui->hwndFrame, ZipOrderDlg, 0);
                 if (!fRet) {
                     std::memcpy(app.state.vrgZip, rgzo, 96);
                 }

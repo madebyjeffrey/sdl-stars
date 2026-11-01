@@ -20,7 +20,6 @@ INT_PTR  ZipOrderDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     RECT           rcGBox;
     std::int16_t        cch;
     std::int16_t        xCtr;
-    FARPROC        lpProc;
 
     switch (message) {
     case win32::WM_INITDIALOG:
@@ -127,8 +126,7 @@ INT_PTR  ZipOrderDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 } else {
                     win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsCustomD), app.lpui->iResTechNow);
                 }
-                lpProc = (RenameZipDlg);
-                if (ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_RENAME), app.lpui->hwndFrame, lpProc, 0) != 0) {
+                if (ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_RENAME), app.lpui->hwndFrame, RenameZipDlg, 0) != 0) {
                     if (app.state.szWork[0] == 0) {
                         win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsCustomD), app.lpui->iResTechNow);
                     }

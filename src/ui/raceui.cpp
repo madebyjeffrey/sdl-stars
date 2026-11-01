@@ -14,7 +14,6 @@
 
 std::int16_t RaceCreationWizard(APPSESSION &app, HWND hwndParent, std::int16_t fReadOnly, std::int16_t fDontWrite) {
     WizardButton mdRet;
-    FARPROC      lpProc;
     RECT         rgrcStack[17];
     std::int16_t      cpts;
     std::int16_t      fResult;
@@ -26,16 +25,14 @@ std::int16_t RaceCreationWizard(APPSESSION &app, HWND hwndParent, std::int16_t f
     fSequence = StarsCompatBeginDialogSequence(hwndParent);
 Step1:
     app.lpui->iPanelActive = rwPageRace;
-    lpProc = (RaceWizardDlg1);
-    mdRet = static_cast<WizardButton>(ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_RACE_WIZARD_1), app.lpui->hwndRaceParent, lpProc, 0));
+    mdRet = static_cast<WizardButton>(ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_RACE_WIZARD_1), app.lpui->hwndRaceParent, RaceWizardDlg1, 0));
     if (mdRet == wizCancel || mdRet == static_cast<WizardButton>(-1))
         goto LCancel;
     if (mdRet == wizFinish)
         goto Finish;
 Step2:
     app.lpui->iPanelActive = rwPagePrimaryTrait;
-    lpProc = (RaceWizardDlg4);
-    mdRet = static_cast<WizardButton>(ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_RACE_WIZARD_4), app.lpui->hwndRaceParent, lpProc, 0));
+    mdRet = static_cast<WizardButton>(ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_RACE_WIZARD_4), app.lpui->hwndRaceParent, RaceWizardDlg4, 0));
     if (mdRet == wizCancel || mdRet == static_cast<WizardButton>(-1))
         goto LCancel;
     if (mdRet == wizBack)
@@ -44,8 +41,7 @@ Step2:
         goto Finish;
 Step3:
     app.lpui->iPanelActive = rwPageLesserTraits;
-    lpProc = (RaceWizardDlg5);
-    mdRet = static_cast<WizardButton>(ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_RACE_WIZARD_5), app.lpui->hwndRaceParent, lpProc, 0));
+    mdRet = static_cast<WizardButton>(ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_RACE_WIZARD_5), app.lpui->hwndRaceParent, RaceWizardDlg5, 0));
     if (mdRet == wizCancel || mdRet == static_cast<WizardButton>(-1))
         goto LCancel;
     if (mdRet == wizBack)
@@ -54,8 +50,7 @@ Step3:
         goto Finish;
 Step4:
     app.lpui->iPanelActive = rwPageHabitability;
-    lpProc = (RaceWizardDlg2);
-    mdRet = static_cast<WizardButton>(ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_RACE_WIZARD_2), app.lpui->hwndRaceParent, lpProc, 0));
+    mdRet = static_cast<WizardButton>(ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_RACE_WIZARD_2), app.lpui->hwndRaceParent, RaceWizardDlg2, 0));
     if (mdRet == wizCancel || mdRet == static_cast<WizardButton>(-1))
         goto LCancel;
     if (mdRet == wizBack)
@@ -64,8 +59,7 @@ Step4:
         goto Finish;
 Step5:
     app.lpui->iPanelActive = rwPageEconomy;
-    lpProc = (RaceWizardDlg3);
-    mdRet = static_cast<WizardButton>(ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_RACE_WIZARD_3), app.lpui->hwndRaceParent, lpProc, 0));
+    mdRet = static_cast<WizardButton>(ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_RACE_WIZARD_3), app.lpui->hwndRaceParent, RaceWizardDlg3, 0));
     if (mdRet == wizCancel || mdRet == static_cast<WizardButton>(-1))
         goto LCancel;
     if (mdRet == wizBack)
@@ -74,8 +68,7 @@ Step5:
         goto Finish;
 Step6:
     app.lpui->iPanelActive = rwPageResearch;
-    lpProc = (RaceWizardDlg6);
-    mdRet = static_cast<WizardButton>(ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_RACE_WIZARD_6), app.lpui->hwndRaceParent, lpProc, 0));
+    mdRet = static_cast<WizardButton>(ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_RACE_WIZARD_6), app.lpui->hwndRaceParent, RaceWizardDlg6, 0));
     if (mdRet == wizCancel || mdRet == static_cast<WizardButton>(-1))
         goto LCancel;
     if (mdRet == wizBack)

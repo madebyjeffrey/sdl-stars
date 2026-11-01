@@ -12,7 +12,6 @@
 #include "alert_io.h"
 
 std::int16_t ShipBuilder(APPSESSION &app, POINT16 ptDlgSize) {
-    FARPROC lpProcSlot;
     std::int16_t fSuccess;
 
     app.lpui->ptslotGlob = ptDlgSize;
@@ -21,8 +20,7 @@ std::int16_t ShipBuilder(APPSESSION &app, POINT16 ptDlgSize) {
     }
     app.state.fStarbaseMode = 0;
     app.lpui->lpshdefBuild = NthValidShdef(app, 0);
-    lpProcSlot = (SlotDlg);
-    fSuccess = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_SLOT), app.lpui->hwndFrame, lpProcSlot, 0);
+    fSuccess = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_SLOT), app.lpui->hwndFrame, SlotDlg, 0);
     if (app.state.sel.grobj == grobjPlanet && app.state.sel.pl.lpplprod) {
         ControlIO().pfnFillPlanetProdLB(app, app.lpui->hwndPlanetProdLB, app.state.sel.pl.lpplprod, nullptr);
     }
