@@ -71,7 +71,7 @@ static BOOL FLoadProfile(const char *pszPath, COMPATPROFILE **lplp) {
     });
 
     *lplp = nullptr;
-    fp = io.pfnOpen(pszPath, "rb");
+    fp = io.pfnOpen(pszPath, NATIVEFILEMODE::read);
     if (!fp) {
         win32::SetLastError(DwProfileError());
         return errno == ENOENT;

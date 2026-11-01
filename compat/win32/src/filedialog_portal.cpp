@@ -252,7 +252,7 @@ int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFol
         if (xid != 0) std::snprintf(szParent, sizeof(szParent), "x11:%llx", static_cast<unsigned long long>(xid));
     }
     pszParent = pszWaylandParent ? pszWaylandParent : szParent;
-    lpRandom = PfNativeOpen("/dev/urandom", "rb");
+    lpRandom = PfNativeOpen("/dev/urandom", NATIVEFILEMODE::read);
     randomOwner.reset(lpRandom);
     if (!lpRandom) goto done;
     if (CReadNative(std::span{rgbToken}, lpRandom) != sizeof(rgbToken)) { randomOwner.reset(); goto done; }

@@ -42,7 +42,7 @@ static std::int16_t FReadHostIni(APPSESSION &app, const char *szFile) {
     long  cb;
     NATIVEFILE *pf;
 
-    pf = PfOpenNativeFile(szFile, "rb");
+    pf = PfOpenNativeFile(szFile, NATIVEFILEMODE::read);
     if (!pf) {
         return 0;
     }

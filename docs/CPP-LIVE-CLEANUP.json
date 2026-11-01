@@ -444,11 +444,12 @@
         "scoped-seek-origins-and-actual-provider-migration",
         "physical-record-stream-spans",
         "readonly-record-payload-spans-and-scratch-capacity-validation",
-        "typed-element-streams-and-concrete-byte-providers"
+        "typed-element-streams-and-concrete-byte-providers",
+        "scoped-native-stream-modes-and-actual-open-providers"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
-        "typed-native-file-modes-and-results",
+        "remaining-native-file-path-results",
         "typed-file-selection-Milestone-D",
         "memory-record-source-bounds-and-batch-input-audit"
       ],
@@ -546,6 +547,20 @@
           "baseline": "Behavior-neutral. No regression baseline or frozen original fixture changed; no scenario/checkpoint moved. Record layouts, element widths, wire bytes, UTF-8 limits, RNG, canonical models and unit goldens unchanged; no regression export required.",
           "remaining": "Memory-source/batch audits, stream modes, paths/results, text-writer boundary and Milestone D remain active; L05 text work and L08 final qualification remain open.",
           "receipts": "dist/verification/live-cpp/l06f/"
+        },
+        {
+          "batch": "L06g scoped binary stream modes and actual open providers",
+          "debug_build": "Pass; no warnings; compiler/source policy passes for 158 owned sources, 159 compiled variants and 161 standalone headers in both orders.",
+          "desktop": "153/153, including actual library/profile open providers, all 29 leak checks and available SDL tutorial checkpoints.",
+          "host_units": "28/28",
+          "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+          "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+          "windows": "147/147 owned production units and 13 selected test units compile with strict MinGW; inspector and Windows chooser-flow fixtures also compile with peer wrapper flags. Actual Windows file tests (3), encoding tests (8), recovery tests (12) and the standalone file-service contract pass under Wine. Native Windows desktop and actual Linux final qualification remain pending.",
+          "characterization": "Before migrating production, both host Release and the Windows contract under Wine passed append/update initial EOF, seek/read/append-write behavior, exclusive failure preserving bytes, missing read/update rejection, exclusive read/write creation, append-update creation and invalid-mode-before-path error precedence. The same cases pass with enum modes.",
+          "interfaces": "All 90 calls/bridge/provider invocations use scoped modes, including 81 existing and nine pre-migration reference calls (29 production and 61 test invocations). Three provider invocations and two actual open callbacks share the typed interface. No raw string-mode overload or mode parser remains; all 505 tracked live source/header/include files were searched, including inc and Objective-C++ files.",
+          "baseline": "Behavior-neutral; no native or frozen original baseline, unit golden, record/element width, game logic, wire bytes, RNG or canonical model changed. No scenario/checkpoint moved; no regression export required.",
+          "remaining": "Memory-source/batch audits, file/path results, text-writer boundary and Milestone D remain active. L05 remaining text work and L08 final qualification remain open.",
+          "receipts": "dist/verification/live-cpp/l06g/"
         }
       ],
       "roman_output": {
@@ -559,14 +574,14 @@
         "current_call_sites": 26,
         "pre_existing_call_sites": 19,
         "interface": "Named typed access/sharing/options replace all three positional-integer open interfaces; small-token opens return token/missing as one value. Old integer-mode and missing-output overloads removed.",
-        "pending": "Remaining stream mode strings, path/results and file-selection interfaces remain open."
+        "pending": "Remaining file/path result and file-selection interfaces remain open."
       },
       "file_bytes_and_seek": {
         "status": "complete; verified",
         "evidence": "docs/CPP-LIVE-FILE-SERVICES.json",
         "parent_call_expressions": 98,
         "interfaces": "Six native/token byte functions use spans and optional counts; every seek-origin interface and actual held-lock read provider uses the typed contract. Old overloads removed.",
-        "pending": "Native stream mode strings, other file/path results, text-writer boundary and Milestone D remain."
+        "pending": "Other file/path results, text-writer boundary and Milestone D remain."
       },
       "record_streams": {
         "status": "complete; verified",
@@ -591,6 +606,13 @@
         "pre_existing_calls": 59,
         "actual_provider_callbacks": 4,
         "interface": "Typed element spans derive widths/counts; concrete byte-span providers retain partial-transfer effects. Old pointer/size/count overloads removed."
+      },
+      "stream_modes": {
+        "status": "complete; verified",
+        "evidence": "docs/CPP-LIVE-FILE-SERVICES.json",
+        "invocations": 90,
+        "pre_existing_invocations": 81,
+        "interface": "Scoped binary modes through both native stream opens and actual library/profile providers; old mode strings and parser removed."
       }
     },
     {

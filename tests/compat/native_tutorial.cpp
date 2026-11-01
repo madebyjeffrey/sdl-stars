@@ -105,14 +105,14 @@ static BOOL FSaveState(APPSESSION &app, const char *pszName) {
 
     snprintf(szPath, sizeof(szPath), "%s-hierarchy.json", pszName);
     if (!StarsCompatCaptureHierarchy(&snap)) return 0;
-    lpfile = PfNativeOpen(szPath, "w");
+    lpfile = PfNativeOpen(szPath, NATIVEFILEMODE::writeTruncate);
     fResult = lpfile && StarsCompatWriteHierarchy(&snap, lpfile);
     if (lpfile && ICloseNativeFile(lpfile)) fResult = 0;
     StarsCompatFreeHierarchy(&snap);
     if (!fResult || !win32::IsWindow(app.lpui->hwndScanner)) return fResult;
     snprintf(szPath, sizeof(szPath), "%s-map.json", pszName);
     if (!FCaptureScanner(app, &scan)) return 0;
-    lpfile = PfNativeOpen(szPath, "w");
+    lpfile = PfNativeOpen(szPath, NATIVEFILEMODE::writeTruncate);
     fResult = lpfile && FWriteScannerSnapshot(&scan, lpfile);
     if (lpfile && ICloseNativeFile(lpfile)) fResult = 0;
     FreeScannerSnapshot(&scan);
@@ -318,7 +318,7 @@ static BOOL FSaveOrders(APPSESSION &app, const char *pszPath) {
     PROD prod;
     SHDEF *lpshdef;
     int i, j, k, cWritten = 0;
-    lpfile = PfNativeOpen(pszPath, "w");
+    lpfile = PfNativeOpen(pszPath, NATIVEFILEMODE::writeTruncate);
     if (!lpfile) return 0;
     CchNativePrintf(lpfile, "{\"schema\":1,\"turn\":%u,\"turnDone\":%d,\"research\":[%u,%u,%d],\"scannerMode\":%u,\"nextMessage\":%d,\"filteredFactories\":%s,\"filteredMines\":%s,\"filteredUnloads\":%s,\"filteredMiningLoads\":%s,\"filteredDismantles\":%s,\"ownedFleetCount\":%u,\"fleets\":[",
             app.state.game.turn, app.state.tutor.fTurnDone, app.state.rgplr[0].iTechNow(), app.state.rgplr[0].iTechNext(), app.state.rgplr[0].pctResearch, app.lpui->grbitScan & grbitScanViewMask, IMsgNext(app, 0),
@@ -399,7 +399,7 @@ static BOOL FSaveEnemyDesign(APPSESSION &app) {
     for (ishdef = 0; ishdef < 16; ishdef++)
         if (lpfl->rgcsh[ishdef] != 0 && &app.state.rglpshdef[lpfl->iPlayer][ishdef] == app.lpui->GlobalPD.lpshdef) break;
     if (ishdef == 16) return 0;
-    lpfile = PfNativeOpen("enemy-design.json", "w");
+    lpfile = PfNativeOpen("enemy-design.json", NATIVEFILEMODE::writeTruncate);
     if (!lpfile) return 0;
     CchNativePrintf(lpfile, "{\"fleet\":%d,\"player\":%u,\"design\":%d,\"hideCounts\":%s,\"summary\":%s,\"showDamage\":%s,\"token\":%s}\n",
             lpfl->id, lpfl->iPlayer, ishdef, app.lpui->GlobalPD.fHideCounts ? "true" : "false",
@@ -417,7 +417,7 @@ static BOOL FSaveTutorialPopup(APPSESSION &app, const char *pszPath, BOOL fResea
         if (app.lpui->GlobalPD.grPopup != grPopupComponent || app.lpui->GlobalPD.part.hs.grhst != hstTerra ||
             app.lpui->GlobalPD.part.hs.iItem != iterraRadiationTerraform7) return 0;
     } else if (app.lpui->GlobalPD.grPopup != grPopupPlanetEnv || app.lpui->GlobalPD.idPlanet != 5 || app.lpui->GlobalPD.iPlanetVar != 2) return 0;
-    lpfile = PfNativeOpen(pszPath, "w");
+    lpfile = PfNativeOpen(pszPath, NATIVEFILEMODE::writeTruncate);
     if (!lpfile) return 0;
     if (fResearch) CchNativePrintf(lpfile, "{\"type\":%d,\"kind\":%u,\"item\":%u}\n",
                            app.lpui->GlobalPD.grPopup, app.lpui->GlobalPD.part.hs.grhst, app.lpui->GlobalPD.part.hs.iItem);
@@ -431,7 +431,7 @@ static BOOL FSaveBattle(APPSESSION &app, const char *pszPath) {
     NATIVEFILE *lpfile;
     int fError;
     if (!app.lpui->vlpbdVCR || !app.state.vrgtok) return 0;
-    lpfile = PfNativeOpen(pszPath, "w");
+    lpfile = PfNativeOpen(pszPath, NATIVEFILEMODE::writeTruncate);
     if (!lpfile) return 0;
     CchNativePrintf(lpfile, "{\"battle\":%u,\"tokens\":%u,\"step\":%d,\"lastStep\":%d,\"playing\":%s}\n",
             BdvFromLp(app, app.lpui->vlpbdVCR).id(), BdvFromLp(app, app.lpui->vlpbdVCR).ctok(), app.lpui->viStepVCRCur, app.lpui->vcStepVCR, app.state.gd.fVCRTimer ? "true" : "false");
@@ -446,7 +446,7 @@ static BOOL FSaveSalvage(APPSESSION &app) {
     if (app.state.sel.scan.grobj != grobjThing || app.state.sel.scan.ith < 0 || app.state.sel.scan.ith >= app.state.cThing) return 0;
     lpth = &app.state.lpThings[app.state.sel.scan.ith];
     if (lpth->ith() != ithMineralPacket || lpth->thp().iWarp() != 0) return 0;
-    lpfile = PfNativeOpen("salvage.json", "w");
+    lpfile = PfNativeOpen("salvage.json", NATIVEFILEMODE::writeTruncate);
     if (!lpfile) return 0;
     CchNativePrintf(lpfile, "{\"id\":%u,\"position\":[%d,%d],\"minerals\":[%d,%d,%d]}\n",
             lpth->idFull(), lpth->pt().x(), lpth->pt().y(), lpth->thp().rgwtMin(0), lpth->thp().rgwtMin(1), lpth->thp().rgwtMin(2));
@@ -458,7 +458,7 @@ static BOOL FSaveReport(APPSESSION &app, const char *pszPath) {
     NATIVEFILE *lpfile;
     int i, fError;
     if (!win32::IsWindow(app.lpui->hwndReportDlg) || !app.lpui->vprptCur || app.lpui->vprptCur->irpt != rptPlanets) return 0;
-    lpfile = PfNativeOpen(pszPath, "w");
+    lpfile = PfNativeOpen(pszPath, NATIVEFILEMODE::writeTruncate);
     if (!lpfile) return 0;
     CchNativePrintf(lpfile, "{\"turn\":%u,\"type\":%u,\"column\":%d,\"subsort\":%d,\"ascending\":%s,\"planetIds\":[",
             app.state.game.turn, app.lpui->vprptCur->irpt, app.lpui->vprptCur->icolSort, app.lpui->vprptCur->iSubsort, app.lpui->vprptCur->fAscending ? "true" : "false");
@@ -2968,12 +2968,12 @@ int main(int argc, char **argv) {
     fScouting = fMining || !strcmp(argv[1], "--scouting");
     fTwoYears = fScouting || !strcmp(argv[1], "--two-years");
     fFirstYear = fTwoYears || !strcmp(argv[1], "--first-year");
-    lpEvents = PfNativeOpen("events.jsonl", "w");
+    lpEvents = PfNativeOpen("events.jsonl", NATIVEFILEMODE::writeTruncate);
     if (!lpEvents) return 1;
     setvbuf(stdout, NULL, _IONBF, 0);
     nResult = ui::WinMain(win32::GetModuleHandleA(NULL), NULL, szCommand, win32::SW_SHOWNORMAL);
     if (idTimer) win32::KillTimer(NULL, idTimer);
-    lpfile = PfNativeOpen("result.json", "w");
+    lpfile = PfNativeOpen("result.json", NATIVEFILEMODE::writeTruncate);
     if (lpfile) {
         CchNativePrintf(lpfile, "{\"scenario\":\"%s\",\"status\":\"%s\",\"fullTutorial\":false,\"actions\":%d,\"pages\":%d,\"rejectedGenerate\":%s,\"detail\":\"%s\"}\n",
                 fMergeCycle ? "merge-cycle" : fReportCycle ? "report-cycle" : fAutomationCycle ? "automation-cycle" : fDesignCycle ? "design-cycle" : fTerraformCycle ? "terraform-cycle" : fBattleCycle ? "battle-cycle" : fProdTemplates ? "production-templates" : fOxygenColony ? "oxygen-colonization" : fResearchCycle ? "research-cycle" : fFleetSplit ? "fleet-split" : fExpansion ? "expansion" : fTransportCycle ? "transport-cycle" : fSecondColonization ? "second-colonization" : fColonizerProduction ? "colonizer-production" : fLogistics ? "logistics" : fColonization ? "colonization" : fMining ? "mining" : fScouting ? "scouting" : fTwoYears ? "two-years" : fFirstYear ? "first-year" : "smoke", fPassed && nResult == 0 ? (fFirstYear ? "partial" : "passed") : "failed",

@@ -212,7 +212,7 @@ NATIVEFILE *PfNativeOpenFlags(const char *psz, NATIVEFILEOPENOPTIONS nfo) {
 #ifdef _WIN32
         native = native || (share & 0x70) != 0;
 #endif
-        // C++17 has no exclusive-create mode, live descriptor identity, sharing
+        // C++20 streams have no exclusive-create mode, live descriptor identity, sharing
         // flags, write-only nontruncating mode or handle-based fsync/truncation.
         native = native || exclusive || (access == 2 && !truncate) || (create && !truncate) || (truncate && !create);
         if (native) {
@@ -249,12 +249,37 @@ NATIVEFILE *PfNativeOpenFlags(const char *psz, NATIVEFILEOPENOPTIONS nfo) {
         return pf.release();
     });
 }
-NATIVEFILE *PfNativeOpen(const char *psz, const char *mode) {
-    if (!mode || !*mode) { errno = EINVAL; return nullptr; }
-    unsigned access = *mode == 'r' ? 1 : *mode == 'w' || *mode == 'a' ? 2 : 0;
-    if (access == 0) { errno = EINVAL; return nullptr; }
-    if (std::strchr(mode, '+')) access = 3;
-    if (*mode == 'a') {
+NATIVEFILE *PfNativeOpen(const char *psz, NATIVEFILEMODE mode) {
+    NATIVEFILEOPENOPTIONS nfo;
+    bool fAppend = false;
+    unsigned access;
+
+    switch (mode) {
+    case NATIVEFILEMODE::read:
+        break;
+    case NATIVEFILEMODE::readWrite:
+        nfo.mdAccess = NATIVEFILEACCESS::readWrite;
+        break;
+    case NATIVEFILEMODE::writeTruncate:
+    case NATIVEFILEMODE::readWriteTruncate:
+    case NATIVEFILEMODE::writeExclusive:
+    case NATIVEFILEMODE::readWriteExclusive:
+        nfo.mdAccess = mode == NATIVEFILEMODE::readWriteTruncate || mode == NATIVEFILEMODE::readWriteExclusive ?
+            NATIVEFILEACCESS::readWrite : NATIVEFILEACCESS::write;
+        nfo.fCreate = nfo.fTruncate = true;
+        nfo.fExclusive = mode == NATIVEFILEMODE::writeExclusive || mode == NATIVEFILEMODE::readWriteExclusive;
+        break;
+    case NATIVEFILEMODE::writeAppend:
+    case NATIVEFILEMODE::readWriteAppend:
+        nfo.mdAccess = mode == NATIVEFILEMODE::readWriteAppend ? NATIVEFILEACCESS::readWrite : NATIVEFILEACCESS::write;
+        fAppend = true;
+        break;
+    default:
+        errno = EINVAL;
+        return nullptr;
+    }
+    if (fAppend) {
+        access = static_cast<unsigned>(nfo.mdAccess);
         if (!FPath(psz)) return nullptr;
         return FileCall<NATIVEFILE *>(nullptr, nullptr, [&]() -> NATIVEFILE * {
             auto pf = std::make_unique<NATIVEFILE>();
@@ -268,8 +293,7 @@ NATIVEFILE *PfNativeOpen(const char *psz, const char *mode) {
             return pf.release();
         });
     }
-    NATIVEFILE *pf = PfNativeOpenFlags(psz, {.mdAccess = static_cast<NATIVEFILEACCESS>(access), .fCreate = *mode != 'r', .fTruncate = *mode == 'w', .fExclusive = std::strchr(mode, 'x') != nullptr});
-    return pf;
+    return PfNativeOpenFlags(psz, nfo);
 }
 int ICloseNativeFile(NATIVEFILE *pf) {
     if (!pf) { errno = EBADF; return -1; }

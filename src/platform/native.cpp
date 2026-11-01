@@ -242,4 +242,4 @@ std::int16_t FNativePathInfo(const char *psz, std::int16_t *pfDirectory, std::in
     *pfLink = info.fLink;
     return 1;
 }
-NATIVEFILE *PfOpenNativeFile(const char *psz, const char *pszMode) { return PfNativeOpen(psz, pszMode); }
+NATIVEFILE *PfOpenNativeFile(const char *psz, NATIVEFILEMODE mode) { return PfNativeOpen(psz, mode); }

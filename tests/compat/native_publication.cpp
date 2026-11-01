@@ -28,7 +28,7 @@ static int IRename(const char *pszOld, const char *pszNew, int fReplace, int fSy
     return 19;
 }
 static int FWrite(const char *psz, const char *pszText) {
-    NATIVEFILE *pf = PfNativeOpen(psz, "wb");
+    NATIVEFILE *pf = PfNativeOpen(psz, NATIVEFILEMODE::writeTruncate);
     int         fWritten;
     if (!pf)
         return 0;
@@ -82,7 +82,7 @@ int main() {
     CHECK(FWrite(szOld, "first") && RenameNativeFile(szOld, szNew) == 0);
     CHECK(FWrite(szOld, "new") && FWrite(szNew, "old"));
     CHECK(ReplaceNativeFile(szOld, szNew) == 0);
-    pf = PfNativeOpen(szNew, "rb");
+    pf = PfNativeOpen(szNew, NATIVEFILEMODE::read);
     CHECK(pf && CbReadNativeFile(pf, std::as_writable_bytes(std::span{rgb}).first(static_cast<std::size_t>(sizeof(rgb)))) == 3 && !std::memcmp(rgb, "new", 3));
     CHECK(ICloseNativeFile(pf) == 0 && RemoveNativeFile(szNew) == 0);
     CHECK(FFilesystemRemove(szDirectory));

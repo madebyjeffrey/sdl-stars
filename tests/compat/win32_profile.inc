@@ -71,7 +71,7 @@ static int TestUtf8Profile(void) {
     CHECK(WritePrivateProfileStringA("Letters", "B", "value", szPath));
     CHECK(GetPrivateProfileStringA("Letters", NULL, "", sz, 3, szPath) == 1);
     CHECK(!strcmp(sz, "A") && sz[1] == 0 && sz[2] == 0);
-    fp = PfNativeOpen(szPath, "rb"); CHECK(fp);
+    fp = PfNativeOpen(szPath, NATIVEFILEMODE::read); CHECK(fp);
     CHECK(CReadNative(std::span{sz}.first(3), fp) == 3 && !memcmp(sz, "\xef\xbb\xbf", 3));
     CHECK(ICloseNativeFile(fp) == 0 && FFilesystemRemove(szPath));
     CHECK(FFilesystemRemove(szTemp));

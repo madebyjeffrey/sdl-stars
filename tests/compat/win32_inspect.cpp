@@ -143,7 +143,7 @@ int main(int argc, char **argv) {
     ISeekNativeFile(lpfile, 0, NATIVESEEKORIGIN::begin); cb = CReadNative(std::span{sz}.first(sizeof(sz) - 1), lpfile); sz[cb] = 0; ICloseNativeFile(lpfile);
     CHECK(strstr(sz, "\\\"quote\\\"") && strstr(sz, "\\\\") && strstr(sz, "\\u000d\\u000a"));
     CHECK(strstr(sz, "\342\202\254") && strstr(sz, "[password]") && !strstr(sz, "secret"));
-    if (argc == 2) { lpfile = PfNativeOpen(argv[1], "wb"); CHECK(lpfile && StarsCompatWriteHierarchy(&snap, lpfile)); CHECK(ICloseNativeFile(lpfile) == 0); }
+    if (argc == 2) { lpfile = PfNativeOpen(argv[1], NATIVEFILEMODE::writeTruncate); CHECK(lpfile && StarsCompatWriteHierarchy(&snap, lpfile)); CHECK(ICloseNativeFile(lpfile) == 0); }
     win32::ReleaseCapture();
     hwndViewer = StarsCompatShowInspector(); CHECK(hwndViewer && win32::IsWindowVisible(hwndViewer));
     idViewer = StarsCompatWindowId(hwndViewer);

@@ -81,7 +81,7 @@ int     RemoveNativePath(const char *psz);
 int     ReplaceNativeFile(const char *pszOld, const char *pszNew);
 std::int64_t LNativeTime(void);
 int     RenameNativeFile(const char *pszOld, const char *pszNew);
-NATIVEFILE *PfOpenNativeFile(const char *psz, const char *pszMode);
+NATIVEFILE *PfOpenNativeFile(const char *psz, NATIVEFILEMODE mode);
 
 // File names: the directory separator.
 #ifdef _WIN32

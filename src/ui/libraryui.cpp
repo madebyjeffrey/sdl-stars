@@ -499,7 +499,7 @@ static std::int16_t FWriteLibraryMetadataValues(const char *pszDir, const char *
 
     cch = CchSnprintf(std::span{szFile, sizeof(szFile)}, "%s%s.library.tmp", pszDir, szDirSep);
     if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szFile)) return 0;
-    pf = PfOpenNativeFile(szFile, "wb");
+    pf = PfOpenNativeFile(szFile, NATIVEFILEMODE::writeTruncate);
     if (!pf) return 0;
     fWritten = CchNativePrintf(pf, "2\n%s\n%d\n%lld\n%s\n", pszName, iplr, lPlayed, pszExchangeName) > 0;
     fClosed = ICloseNativeFile(pf) == 0;
@@ -542,7 +542,7 @@ static std::int16_t FCompleteGeneratedFile(APPSESSION &app, const char *pszFile,
     long cbFile, ib;
     std::int16_t fComplete;
 
-    pf = PfOpenNativeFile(pszFile, "rb");
+    pf = PfOpenNativeFile(pszFile, NATIVEFILEMODE::read);
     if (!pf) return 0;
     fComplete = 0;
     if (ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::end) != 0 || (cbFile = LNativePosition(pf)) < 22 || ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin) != 0) goto LDone;
@@ -590,9 +590,9 @@ static std::int16_t FCopyNativeFile(const char *pszSource, const char *pszTarget
     NATIVEFILE *pfSource, *pfTarget;
     int fOkay;
 
-    pfSource = PfOpenNativeFile(pszSource, "rb");
+    pfSource = PfOpenNativeFile(pszSource, NATIVEFILEMODE::read);
     if (!pfSource) return 0;
-    pfTarget = PfOpenNativeFile(pszTarget, "wb");
+    pfTarget = PfOpenNativeFile(pszTarget, NATIVEFILEMODE::writeTruncate);
     if (!pfTarget) { ICloseNativeFile(pfSource); return 0; }
     fOkay = FCopyNativeFileContents(pfSource, pfTarget);
     if (!fOkay) RemoveNativeFile(pszTarget);
@@ -604,9 +604,9 @@ std::int16_t FCopyNativeFileExclusive(const char *pszSource, const char *pszTarg
     int iErrno;
     int fOkay;
 
-    pfSource = LibraryFileIO().pfnOpen(pszSource, "rb");
+    pfSource = LibraryFileIO().pfnOpen(pszSource, NATIVEFILEMODE::read);
     if (!pfSource) return 0;
-    pfTarget = LibraryFileIO().pfnOpen(pszTarget, "wbx");
+    pfTarget = LibraryFileIO().pfnOpen(pszTarget, NATIVEFILEMODE::writeExclusive);
     if (!pfTarget) {
         iErrno = errno;
         LibraryFileIO().pfnClose(pfSource);
@@ -691,7 +691,7 @@ static std::int16_t FReadManagedRace(APPSESSION &app, char *pszPath, PLAYER *ppl
     std::int16_t fSilentSav = app.state.fFileErrSilent, fOkay, fDirectory, fLink;
 
     if (!FNativePathInfo(pszPath, &fDirectory, &fLink) || fDirectory || fLink) return 0;
-    pf = PfOpenNativeFile(pszPath, "rb");
+    pf = PfOpenNativeFile(pszPath, NATIVEFILEMODE::read);
     if (!pf) return 0;
     // Browsing versions must never trigger legacy conversion/password dialogs.
     fOkay = FReadLibraryHdr(pf, &hdr) && hdr.rt == rtBOF && hdr.cb == cbWireBof &&
@@ -1108,7 +1108,7 @@ std::int16_t FExportLibraryOrders(APPSESSION &app, HWND hwnd, const char *pszTar
     }
     SetSzWorkFromDt(app, dtHist, app.state.idPlayer);
     CchSnprintf(std::span{szSourceHist, sizeof(szSourceHist)}, "%s", app.state.szWork);
-    pf = PfOpenNativeFile(szSourceHist, "rb");
+    pf = PfOpenNativeFile(szSourceHist, NATIVEFILEMODE::read);
     fHistoryExists = pf != nullptr;
     if (pf) ICloseNativeFile(pf);
     else if (errno != ENOENT) fSaved = 0;
@@ -1275,7 +1275,7 @@ std::int16_t FInspectImportFile(const char *pszFile, DtFileType dt, int iplr,
     long ib;
     std::int16_t fComplete;
 
-    pf = PfOpenNativeFile(pszFile, "rb");
+    pf = PfOpenNativeFile(pszFile, NATIVEFILEMODE::read);
     if (!pf) return 0;
     fComplete = 0;
     if (ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::end) != 0 || (cbFile = LNativePosition(pf)) < 22 || ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin) != 0) goto LDone;
@@ -1361,7 +1361,7 @@ static std::int16_t FReadLibraryMetadata(const char *pszDirectory, char *pszName
     std::int16_t fRead;
     cch = CchSnprintf(std::span{szFile, sizeof(szFile)}, "%s%s.library", pszDirectory, szDirSep);
     if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szFile)) return 0;
-    pf = PfOpenNativeFile(szFile, "rb");
+    pf = PfOpenNativeFile(szFile, NATIVEFILEMODE::read);
     if (!pf) return 0;
     fRead = CNativeScan(pf, "%d\n", &iVersion) == 1 && PszGetNativeLine(szLine, sizeof(szLine), pf);
     if (fRead) {
@@ -1812,7 +1812,7 @@ static std::int16_t FindLibraryTurnMatch(APPSESSION &app, void *lpData, const ch
     std::int16_t fMulti;
     if (!FPortableLibraryName(app, pszName)) return 1;
     CchSnprintf(std::span{szMetadata, sizeof(szMetadata)}, "%s%s%s%s.library", szLibraryRoot, szDirSep, pszName, szDirSep);
-    pf = PfOpenNativeFile(szMetadata, "rb");
+    pf = PfOpenNativeFile(szMetadata, NATIVEFILEMODE::read);
     if (!pf) return 1;
     ICloseNativeFile(pf);
     CchSnprintf(std::span{szUniverse, sizeof(szUniverse)}, "%s%s%s%s%s.xy", szLibraryRoot, szDirSep, pszName, szDirSep, pszName);
@@ -1873,8 +1873,8 @@ static std::int16_t FFilesEqual(const char *pszLeft, const char *pszRight) {
     char rgbLeft[4096], rgbRight[4096];
     std::size_t cbLeft, cbRight;
     std::int16_t fEqual = 1;
-    pfLeft = PfOpenNativeFile(pszLeft, "rb");
-    pfRight = PfOpenNativeFile(pszRight, "rb");
+    pfLeft = PfOpenNativeFile(pszLeft, NATIVEFILEMODE::read);
+    pfRight = PfOpenNativeFile(pszRight, NATIVEFILEMODE::read);
     if (!pfLeft || !pfRight) { fEqual = 0; goto LDone; }
     do {
         cbLeft = CReadNative(std::span{rgbLeft}, pfLeft);
@@ -1941,7 +1941,7 @@ static std::int16_t FImportSubsequentTurn(APPSESSION &app, HWND hwnd, const char
     }
     cch = CchSnprintf(std::span{szTarget, sizeof(szTarget)}, "%s%s%s%s%s.m%d", szLibraryRoot, szDirSep, lm.szSelected, szDirSep, lm.szSelected, iplr + 1);
     if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szTarget)) return 0;
-    pf = PfOpenNativeFile(szTarget, "rb");
+    pf = PfOpenNativeFile(szTarget, NATIVEFILEMODE::read);
     fHasTurn = pf != nullptr;
     if (pf) ICloseNativeFile(pf);
     else if (errno != ENOENT) {
@@ -2033,7 +2033,7 @@ std::int16_t FImportDesktopFile(APPSESSION &app, HWND hwnd, const char *pszSourc
         pszSource = szChosen;
     }
     fRace = 0;
-    pf = PfOpenNativeFile(pszSource, "rb");
+    pf = PfOpenNativeFile(pszSource, NATIVEFILEMODE::read);
     if (pf) {
         fRace = FReadLibraryHdr(pf, &hdr) && hdr.rt == rtBOF && hdr.cb == cbWireBof &&
                 FReadLibraryBof(pf, &rtbof) && !std::memcmp(rtbof.rgid, "J3J3", 4) && rtbof.dt == dtRace;
@@ -2392,7 +2392,7 @@ static std::int16_t FInspectImportPlayer(APPSESSION &app, const char *pszUnivers
     std::int32_t lSeed1, lSeed2;
     std::int16_t fRead;
 
-    pf = PfOpenNativeFile(pszUniverse, "rb");
+    pf = PfOpenNativeFile(pszUniverse, NATIVEFILEMODE::read);
     if (!pf) return 0;
     fRead = FReadLibraryHdr(pf, &hdr) && hdr.rt == rtBOF && hdr.cb == cbWireBof &&
             FReadLibraryBof(pf, &rtbof) &&
@@ -2748,7 +2748,7 @@ static std::int16_t ListLibraryHostGame(APPSESSION &app, void *lpList, const cha
 
     if (!FPortableLibraryName(app, pszName)) return 1;
     CchSnprintf(std::span{szMetadata, sizeof(szMetadata)}, "%s%s%s%s.library", szLibraryRoot, szDirSep, pszName, szDirSep);
-    pf = PfOpenNativeFile(szMetadata, "rb");
+    pf = PfOpenNativeFile(szMetadata, NATIVEFILEMODE::read);
     if (!pf) return 1;
     ICloseNativeFile(pf);
     CchSnprintf(std::span{szHost, sizeof(szHost)}, "%s%s%s%s%s.hst", szLibraryRoot, szDirSep, pszName, szDirSep, pszName);
@@ -2775,7 +2775,7 @@ static std::int16_t FindContinueLibraryGame(APPSESSION &app, void *lpData, const
 
     if (!FPortableLibraryName(app, pszName)) return 1;
     CchSnprintf(std::span{szFile, sizeof(szFile)}, "%s%s%s%s.library", szLibraryRoot, szDirSep, pszName, szDirSep);
-    pf = PfOpenNativeFile(szFile, "rb");
+    pf = PfOpenNativeFile(szFile, NATIVEFILEMODE::read);
     if (!pf) return 1;
     iVersion = 0;
     iPlayer = -1;

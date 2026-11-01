@@ -54,7 +54,7 @@ BOOL StarsTest_FNativeSaveFileName(OPENFILENAME *lpof) {
 }
 
 static BOOL FEqualFiles(const char *pszLeft, const char *pszRight) {
-    NATIVEFILE *pfLeft = PfOpenNativeFile(pszLeft, "rb"), *pfRight = PfOpenNativeFile(pszRight, "rb");
+    NATIVEFILE *pfLeft = PfOpenNativeFile(pszLeft, NATIVEFILEMODE::read), *pfRight = PfOpenNativeFile(pszRight, NATIVEFILEMODE::read);
     unsigned char rgbLeft[4096], rgbRight[4096];
     size_t cbLeft, cbRight;
     BOOL fEqual = pfLeft && pfRight;
@@ -70,7 +70,7 @@ LDone:
     return fEqual;
 }
 static BOOL FCopyFile(const char *pszSource, const char *pszTarget) {
-    NATIVEFILE *pfSource = PfOpenNativeFile(pszSource, "rb"), *pfTarget = PfOpenNativeFile(pszTarget, "wb");
+    NATIVEFILE *pfSource = PfOpenNativeFile(pszSource, NATIVEFILEMODE::read), *pfTarget = PfOpenNativeFile(pszTarget, NATIVEFILEMODE::writeTruncate);
     unsigned char rgb[4096];
     size_t cb;
     BOOL fCopied = pfSource && pfTarget;

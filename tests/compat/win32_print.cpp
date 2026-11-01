@@ -44,7 +44,7 @@ static int InitPrinter(PRINTDLG *lp, const char *pszFile) {
 }
 static void FreePrinter(PRINTDLG *lp) { win32::DeleteDC(lp->hDC); win32::GlobalFree(lp->hDevMode); win32::GlobalFree(lp->hDevNames); }
 static int FPrefix(const char *pszFile, const char *psz) {
-    NATIVEFILE *lp = PfNativeOpen(pszFile, "rb");
+    NATIVEFILE *lp = PfNativeOpen(pszFile, NATIVEFILEMODE::read);
     char sz[16] = {};
     size_t cb = strlen(psz), cbRead;
     if (!lp) return 0;
@@ -114,7 +114,7 @@ int main(int argc, char **argv) {
     CHECK(win32::Escape(pd.hDC, win32::GETPHYSPAGESIZE, 0, NULL, &pt) == 1 && pt.x == 2550 && pt.y == 3300);
     CHECK(win32::Escape(pd.hDC, win32::QUERYESCSUPPORT, sizeof(query), (char *)&query, NULL) == 1);
     CHECK(win32::Escape(pd.hDC, win32::ENDDOC, 0, NULL, NULL) == win32::SP_ERROR);
-    lpfile = PfNativeOpen(szPages, "wb"); CHECK(lpfile); CchNativePrintf(lpfile, "%s", "sentinel"); ICloseNativeFile(lpfile);
+    lpfile = PfNativeOpen(szPages, NATIVEFILEMODE::writeTruncate); CHECK(lpfile); CchNativePrintf(lpfile, "%s", "sentinel"); ICloseNativeFile(lpfile);
     CHECK(win32::Escape(pd.hDC, win32::STARTDOC, 9, "Page test", NULL) > 0);
     CHECK(FPrefix(szPages, "sentinel"));
     hbr = win32::CreateSolidBrush(win32::RGB(255, 0, 0)); CHECK(hbr); rc = (RECT){100, 100, 500, 400}; CHECK(win32::FillRect(pd.hDC, &rc, hbr)); win32::DeleteObject(hbr);
@@ -135,7 +135,7 @@ int main(int argc, char **argv) {
     CHECK(!win32::SelectObject(pd.hDC, hbmp)); CHECK(win32::DeleteObject(hbmp)); CHECK(win32::DeleteDC(hdcOther));
     CHECK(win32::Escape(pd.hDC, 99999, 0, NULL, NULL) == 0); FreePrinter(&pd);
     CHECK(InitPrinter(&pd, szAbort));
-    lpfile = PfNativeOpen(szAbort, "wb"); CHECK(lpfile); CchNativePrintf(lpfile, "%s", "sentinel"); ICloseNativeFile(lpfile);
+    lpfile = PfNativeOpen(szAbort, NATIVEFILEMODE::writeTruncate); CHECK(lpfile); CchNativePrintf(lpfile, "%s", "sentinel"); ICloseNativeFile(lpfile);
     CHECK(win32::Escape(pd.hDC, win32::STARTDOC, 5, "Abort", NULL) > 0); CHECK(win32::Escape(pd.hDC, win32::NEWFRAME, 0, NULL, NULL) == 1);
     CHECK(win32::Escape(pd.hDC, win32::ABORTDOC, 0, NULL, NULL) == 1 && FPrefix(szAbort, "sentinel"));
     CHECK(win32::Escape(pd.hDC, win32::STARTDOC, 5, "Abort", NULL) > 0); FreePrinter(&pd); CHECK(FPrefix(szAbort, "sentinel"));
@@ -161,7 +161,7 @@ int main(int argc, char **argv) {
     CHECK(cViewer == 4); win32::DestroyWindow(hwndOwner);
 #ifndef _WIN32
     // CUPS queue submission is a Unix path; Windows uses the PDF backend.
-    lpfile = PfNativeOpen(szMock, "wb"); CHECK(lpfile);
+    lpfile = PfNativeOpen(szMock, NATIVEFILEMODE::writeTruncate); CHECK(lpfile);
     CchNativePrintf(lpfile, "%s", "#!/bin/sh\nprintf '%s\\n' \"$@\" > \"$STARS_TEST_PRINT_LOG\"\nfor szPdf do :; done\ncp -- \"$szPdf\" \"$STARS_TEST_PRINT_CAPTURE\"\nexit \"${STARS_TEST_PRINT_EXIT:-0}\"\n");
     ICloseNativeFile(lpfile); CHECK(chmod(szMock, 0700) == 0);
     snprintf(szPath, sizeof(szPath), "%s:%s", pszDir, pszOldPath ? pszOldPath : "/usr/bin:/bin");
@@ -169,13 +169,13 @@ int main(int argc, char **argv) {
     SDL_setenv_unsafe("STARS_SDL_PRINTER", "QA printer;false", 1);
     CHECK(InitPrinter(&pd, NULL)); CHECK(win32::Escape(pd.hDC, win32::STARTDOC, 5, "Spool", NULL) > 0);
     CHECK(win32::Escape(pd.hDC, win32::NEWFRAME, 0, NULL, NULL) == 1); CHECK(win32::Escape(pd.hDC, win32::ENDDOC, 0, NULL, NULL) == 1); FreePrinter(&pd);
-    CHECK(FPrefix(szCapture, "%PDF-")); lpfile = PfNativeOpen(szLog, "rb"); CHECK(lpfile);
+    CHECK(FPrefix(szCapture, "%PDF-")); lpfile = PfNativeOpen(szLog, NATIVEFILEMODE::read); CHECK(lpfile);
     CHECK(PszGetNativeLine(szArg, sizeof(szArg), lpfile) && strcmp(szArg, "-d\n") == 0);
     CHECK(PszGetNativeLine(szArg, sizeof(szArg), lpfile) && strcmp(szArg, "QA printer;false\n") == 0); ICloseNativeFile(lpfile);
     SDL_setenv_unsafe("STARS_TEST_PRINT_EXIT", "1", 1);
     CHECK(InitPrinter(&pd, NULL)); CHECK(win32::Escape(pd.hDC, win32::STARTDOC, 4, "Fail", NULL) > 0);
     CHECK(win32::Escape(pd.hDC, win32::ENDDOC, 0, NULL, NULL) == win32::SP_ERROR && win32::GetLastError() == win32::ERROR_WRITE_FAULT);
-    lpfile = PfNativeOpen(szLog, "rb"); CHECK(lpfile); szRetained[0] = 0;
+    lpfile = PfNativeOpen(szLog, NATIVEFILEMODE::read); CHECK(lpfile); szRetained[0] = 0;
     while (PszGetNativeLine(szArg, sizeof(szArg), lpfile)) strcpy(szRetained, szArg);
     ICloseNativeFile(lpfile); szRetained[strcspn(szRetained, "\r\n")] = 0;
     CHECK(FPrefix(szRetained, "%PDF-")); FreePrinter(&pd); CHECK(FPrefix(szRetained, "%PDF-")); CHECK(IUnlinkNativePath(szRetained) == 0);

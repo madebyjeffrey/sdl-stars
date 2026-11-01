@@ -23,6 +23,12 @@ struct NATIVEFILEINFO {
 };
 
 enum class NATIVESEEKORIGIN : std::uint8_t { begin = 0, current = 1, end = 2 };
+// read/readWrite require an existing file; other modes create missing files.
+// Truncate replaces bytes; append writes at EOF; exclusive refuses an existing file.
+enum class NATIVEFILEMODE : std::uint8_t {
+    read, readWrite, writeTruncate, readWriteTruncate,
+    writeAppend, readWriteAppend, writeExclusive, readWriteExclusive
+};
 enum class NATIVEFILEACCESS : std::uint8_t { read = 1, write = 2, readWrite = 3 };
 enum class NATIVEFILESHARE : std::uint8_t { compatible = 0, exclusive = 0x10, denyWrite = 0x20, denyRead = 0x30, denyNone = 0x40 };
 struct NATIVEFILEOPENOPTIONS {
@@ -38,7 +44,7 @@ struct NATIVEFILEOPENRESULT {
 // Strict UTF-8 paths; binary bytes are never decoded or translated. All service
 // functions contain exceptions and report failures through return values/errno.
 // Native access is required for live identity, exclusive creation and durable IO.
-NATIVEFILE *PfNativeOpen(const char *psz, const char *pszMode);
+NATIVEFILE *PfNativeOpen(const char *psz, NATIVEFILEMODE mode);
 NATIVEFILE *PfNativeOpenFlags(const char *psz, NATIVEFILEOPENOPTIONS nfo);
 NATIVEFILE *PfNativeCreateTemp(char *pszTemplate);
 NATIVEFILE *PfNativeTemporary(void);

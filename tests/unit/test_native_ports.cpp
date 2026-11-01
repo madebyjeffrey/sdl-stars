@@ -551,7 +551,7 @@ static void TestApplicationUiSessionClose(void) {
     TEST_ASSERT(FStarsTestInit(app));
     TEST_ASSERT(FStarsTestDir("session-cleanup",szDir,sizeof(szDir)));
     CchSnprintf(std::span{szPath, sizeof(szPath)},"%s%ssession.dat",szDir,szDirSep);
-    NATIVEFILE *pf = PfNativeOpen(szPath,"wb");
+    NATIVEFILE *pf = PfNativeOpen(szPath, NATIVEFILEMODE::writeTruncate);
     TEST_ASSERT(pf);
     TEST_ASSERT(CWriteNative(std::span{"x"}.first(1), pf) == 1 && ICloseNativeFile(pf) == 0);
     const auto nfr = HfNativeOpenLegacy(szPath, {.mdShare = NATIVEFILESHARE::denyNone});

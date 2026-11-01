@@ -54,7 +54,7 @@ int main(void) {
     CHECK(PszNativeCwd(szCwd, sizeof(szCwd)));
     CHECK(SDL_strlcpy(szChosen, szCwd, sizeof(szChosen)) < sizeof(szChosen));
     CHECK(SDL_strlcat(szChosen, "/\xce\xa9.m1", sizeof(szChosen)) < sizeof(szChosen));
-    lpfile = PfNativeOpen(szChosen, "wb"); CHECK(lpfile && ICloseNativeFile(lpfile) == 0);
+    lpfile = PfNativeOpen(szChosen, NATIVEFILEMODE::writeTruncate); CHECK(lpfile && ICloseNativeFile(lpfile) == 0);
     wc.lpfnWndProc = win32::DefWindowProcA; wc.lpszClassName = "WindowsNativePickerFlow";
     CHECK(win32::RegisterClassA(&wc));
     hwndOwner = win32::CreateWindowExA(0, wc.lpszClassName, "Owner", win32::WS_OVERLAPPEDWINDOW, 0, 0, 400, 300, NULL, NULL, NULL, NULL);

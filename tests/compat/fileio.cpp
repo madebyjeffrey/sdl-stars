@@ -34,31 +34,51 @@ int main(void) {
         CHECK(PBindNativeFileSession(previous) == &session);
         // The remaining token is released by the actual session destructor.
     }
-    NATIVEFILE *pf = PfNativeOpen(path,"r+b");
+    NATIVEFILE *pf = PfNativeOpen(path, NATIVEFILEMODE::readWrite);
     CHECK(pf && CbNativeFile(pf) == 6 && LNativePosition(pf) == 0);
     CHECK(CReadNative(std::span{rgwOut}, pf) == 3 && !memcmp(rgwOut,rgb,6) && FNativeStreamEof(pf) && !FNativeStreamError(pf));
     CHECK(CbNativeFile(pf) == 6 && LNativePosition(pf) == 6 && FNativeStreamEof(pf));
     CHECK(ISeekNativeFile(pf, 2, NATIVESEEKORIGIN::begin)==0 && !FNativeStreamEof(pf));
     CHECK(ChPutNativeFile(42,pf)==42 && ISeekNativeFile(pf, 2, NATIVESEEKORIGIN::begin)==0 && ChGetNativeFile(pf)==42);
     CHECK(ICloseNativeFile(pf)==0);
-    errno=0;CHECK(!PfNativeOpen(path,"wbx") && errno==EEXIST);
+    errno=0;CHECK(!PfNativeOpen(path, NATIVEFILEMODE::writeExclusive) && errno==EEXIST);
     errno=0;CHECK(!PfNativeOpenFlags(path, {.mdAccess = static_cast<NATIVEFILEACCESS>(0)}) && errno==EINVAL);
     pf=PfNativeOpenFlags(path, {.mdAccess = NATIVEFILEACCESS::write, .fNative = true});CHECK(pf);
     CHECK(CbWriteNativeFile(pf, std::as_bytes(std::span{"Z"}).first(1))==1 && CbNativeFile(pf)==6);
     CHECK(LSeekNativeFile(pf, 2, NATIVESEEKORIGIN::begin)==2 && ITruncateNativeFile(pf,2)==0 && CbNativeFile(pf)==2);
     CHECK(LSeekNativeFile(pf, 8, NATIVESEEKORIGIN::begin)==8 && ITruncateNativeFile(pf,8)==0 && CbNativeFile(pf)==8);
     uint64_t dev,ino;CHECK(FNativeFileIdentity(pf,NULL,&dev,&ino));CHECK(ICloseNativeFile(pf)==0);
-    pf=PfNativeOpen(path,"rb");CHECK(pf && CReadNative(std::span{out}.first(8), pf)==8 && out[0]=='Z' && !out[7]);CHECK(ICloseNativeFile(pf)==0);
-    pf=PfNativeOpen(path,"ab");CHECK(pf && ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin)==0 && ChPutNativeFile('A',pf)=='A' && ICloseNativeFile(pf)==0);
+    pf=PfNativeOpen(path, NATIVEFILEMODE::read);CHECK(pf && CReadNative(std::span{out}.first(8), pf)==8 && out[0]=='Z' && !out[7]);CHECK(ICloseNativeFile(pf)==0);
+    pf=PfNativeOpen(path, NATIVEFILEMODE::writeAppend);CHECK(pf && ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin)==0 && ChPutNativeFile('A',pf)=='A' && ICloseNativeFile(pf)==0);
     CHECK(IGetNativeFileInfo(path,&info,1)==0 && info.cb==9 && info.fRegular);
-    pf=PfNativeOpen(path,"rb");CHECK(pf && ISeekNativeFile(pf, 8, NATIVESEEKORIGIN::begin)==0 && ChGetNativeFile(pf)=='A');CHECK(ICloseNativeFile(pf)==0);
+    pf=PfNativeOpen(path, NATIVEFILEMODE::read);CHECK(pf && ISeekNativeFile(pf, 8, NATIVESEEKORIGIN::begin)==0 && ChGetNativeFile(pf)=='A');CHECK(ICloseNativeFile(pf)==0);
+    // Open policies preserve creation, truncation, append positioning and
+    // update access, including failed exclusive opens leaving bytes intact.
+    snprintf(other,sizeof(other),"%s/modes",dir);
+    pf=PfNativeOpen(other, NATIVEFILEMODE::readWriteTruncate);CHECK(pf && CbNativeFile(pf)==0 && LNativePosition(pf)==0);
+    CHECK(CWriteNative(std::span{"ab"}.first(2),pf)==2 && ISeekNativeFile(pf,0,NATIVESEEKORIGIN::begin)==0 && ChGetNativeFile(pf)=='a');
+    CHECK(ICloseNativeFile(pf)==0);
+    pf=PfNativeOpen(other, NATIVEFILEMODE::readWriteAppend);CHECK(pf && LNativePosition(pf)==2);
+    CHECK(ISeekNativeFile(pf,0,NATIVESEEKORIGIN::begin)==0 && ChGetNativeFile(pf)=='a');
+    CHECK(ChPutNativeFile('Z',pf)=='Z' && CbNativeFile(pf)==3 && ICloseNativeFile(pf)==0);
+    errno=0;CHECK(!PfNativeOpen(other, NATIVEFILEMODE::readWriteExclusive) && errno==EEXIST);
+    pf=PfNativeOpen(other, NATIVEFILEMODE::read);CHECK(pf && CbNativeFile(pf)==3 && CReadNative(std::span{out}.first(3),pf)==3 && !memcmp(out,"abZ",3));
+    CHECK(ICloseNativeFile(pf)==0 && IUnlinkNativePath(other)==0);
+    errno=0;CHECK(!PfNativeOpen(other, NATIVEFILEMODE::read) && errno==ENOENT);
+    errno=0;CHECK(!PfNativeOpen(other, NATIVEFILEMODE::readWrite) && errno==ENOENT);
+    pf=PfNativeOpen(other, NATIVEFILEMODE::readWriteExclusive);CHECK(pf && CbNativeFile(pf)==0);
+    CHECK(CWriteNative(std::span{"cd"}.first(2),pf)==2 && ISeekNativeFile(pf,0,NATIVESEEKORIGIN::begin)==0 && ChGetNativeFile(pf)=='c');
+    CHECK(ICloseNativeFile(pf)==0 && IUnlinkNativePath(other)==0);
+    pf=PfNativeOpen(other, NATIVEFILEMODE::readWriteAppend);CHECK(pf && CbNativeFile(pf)==0 && LNativePosition(pf)==0 && ChPutNativeFile('A',pf)=='A');
+    CHECK(ICloseNativeFile(pf)==0 && IUnlinkNativePath(other)==0);
+    errno=0;CHECK(!PfNativeOpen("\xff", static_cast<NATIVEFILEMODE>(255)) && errno==EINVAL);
     snprintf(other,sizeof(other),"%s/renamed",dir);
     CHECK(IRenameNativePath(path,other,1,0)==0);
     NATIVEDIR *pd=PdirNativeOpen(dir);CHECK(pd);int found=0;const char *entry;
     while((entry=PszNativeReadDir(pd)))if(!strcmp(entry,"renamed"))found++;
     CHECK(found==1 && !errno && !PszNativeReadDir(pd) && !errno && ICloseNativeDir(pd)==0);
     CHECK(IRemoveNativePath(other,0)==0 && IRemoveNativePath(dir,1)==0);
-    errno=0;CHECK(!PfNativeOpen("\xff","rb") && errno==EILSEQ);
+    errno=0;CHECK(!PfNativeOpen("\xff", NATIVEFILEMODE::read) && errno==EILSEQ);
     pf=PfNativeTemporary();CHECK(pf && CchNativePrintf(pf,"2\nname\n7\n1234567890123\nnext\n")>0 && ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin)==0);
     int version,player;long long played;char line[64];
     CHECK(CNativeScan(pf,"%d\n",&version)==1 && version==2 && PszGetNativeLine(line,sizeof(line),pf) && !strcmp(line,"name\n"));

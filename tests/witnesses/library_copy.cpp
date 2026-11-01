@@ -7,9 +7,9 @@
 #include "win.h"
 static int         faults;
 static NATIVEFILE *copySource, *copyTarget;
-static NATIVEFILE *copyOpen(const char *path, const char *mode) {
+static NATIVEFILE *copyOpen(const char *path, NATIVEFILEMODE mode) {
     NATIVEFILE *f = PfOpenNativeFile(path, mode);
-    if (!strcmp(mode, "rb"))
+    if (mode == NATIVEFILEMODE::read)
         copySource = f;
     else
         copyTarget = f;

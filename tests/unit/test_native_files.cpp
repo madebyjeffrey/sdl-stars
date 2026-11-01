@@ -57,7 +57,7 @@ static void TestNativeFiles(void) {
     snprintf(szMeta, sizeof(szMeta), "%s%s\xe6\x9d\xb1\xe4\xba\xac.meta", szDir, szDirSep);
     snprintf(szMetaTemp, sizeof(szMetaTemp), "%s%s\xce\xa9.tmp", szDir, szDirSep);
     {
-        NATIVEFILE *pf = PfOpenNativeFile(szMetaTemp, "wb");
+        NATIVEFILE *pf = PfOpenNativeFile(szMetaTemp, NATIVEFILEMODE::writeTruncate);
         TEST_ASSERT(pf);
         TEST_CHECK(CWriteNative(std::span{"metadata"}.first(8), pf) == 8 && ICloseNativeFile(pf) == 0);
     }

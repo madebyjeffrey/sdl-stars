@@ -35,9 +35,9 @@ static BOOL FTestCopyFile(const char *pszSource, const char *pszTarget) {
     unsigned char rgb[4096];
     size_t cb;
     BOOL fOkay;
-    pfSource = PfNativeOpen(pszSource, "rb");
+    pfSource = PfNativeOpen(pszSource, NATIVEFILEMODE::read);
     if (!pfSource) return 0;
-    pfTarget = PfNativeOpen(pszTarget, "wb");
+    pfTarget = PfNativeOpen(pszTarget, NATIVEFILEMODE::writeTruncate);
     if (!pfTarget) { ICloseNativeFile(pfSource); return 0; }
     fOkay = 1;
     while ((cb = CReadNative(std::span{rgb}, pfSource)) != 0)
@@ -52,7 +52,7 @@ static BOOL FTestWriteFile(const char *pszFile, const char *pszText) {
     NATIVEFILE *pf;
     size_t cbText = strlen(pszText);
     BOOL fOkay;
-    pf = PfNativeOpen(pszFile, "wb");
+    pf = PfNativeOpen(pszFile, NATIVEFILEMODE::writeTruncate);
     if (!pf) return 0;
     fOkay = CWriteNative(std::span{pszText, cbText}, pf) == cbText;
     if (ICloseNativeFile(pf) != 0) fOkay = 0;
@@ -64,9 +64,9 @@ static BOOL FTestFilesEqual(const char *pszFile1, const char *pszFile2) {
     unsigned char rgb1[4096], rgb2[4096];
     size_t cb1, cb2;
     BOOL fEqual;
-    pfFile1 = PfNativeOpen(pszFile1, "rb");
+    pfFile1 = PfNativeOpen(pszFile1, NATIVEFILEMODE::read);
     if (!pfFile1) return 0;
-    pfFile2 = PfNativeOpen(pszFile2, "rb");
+    pfFile2 = PfNativeOpen(pszFile2, NATIVEFILEMODE::read);
     if (!pfFile2) { ICloseNativeFile(pfFile1); return 0; }
     fEqual = 1;
     do {
@@ -86,7 +86,7 @@ static BOOL FTestReadLibraryMetadata(const char *pszFile, int *piVersion, char *
     NATIVEFILE *pf;
     int cchNameRead, cchExchangeRead;
     BOOL fRead;
-    pf = PfNativeOpen(pszFile, "rb");
+    pf = PfNativeOpen(pszFile, NATIVEFILEMODE::read);
     if (!pf) return 0;
     fRead = CNativeScan(pf, "%d\n", piVersion) == 1 && PszGetNativeLine(pszName, (int)cchName, pf) &&
             CNativeScan(pf, "%d\n%lld\n", piplr, plPlayed) == 2 &&
@@ -111,7 +111,7 @@ static BOOL FTestLibraryTimestamp(APPSESSION &app, long long *plPlayed) {
     if (!pch) return 0;
     *pch = 0;
     CchSnprintf(std::span{szFile, sizeof(szFile)}, "%s%s.library", szDir, szDirSep);
-    pf = PfNativeOpen(szFile, "rb");
+    pf = PfNativeOpen(szFile, NATIVEFILEMODE::read);
     if (!pf) return 0;
     if (CNativeScan(pf, "%d\n", &iVersion) != 1 || !PszGetNativeLine(szMetadataName, sizeof(szMetadataName), pf) ||
         CNativeScan(pf, "%d\n%lld", &iPlayer, plPlayed) != 2) {
@@ -386,7 +386,7 @@ static BOOL FCheckMapInspection(APPSESSION &app) {
     if (!strstr(szExport, "\xc3\xa9\xe2\x82\xac") || !strstr(szExport, "\\u000d\\u000a")) goto LDone;
     memcpy(fresh.rgobj[0].szName, szNameSav, sizeof(szNameSav));
     if (pszCapture) {
-        lpfile = PfNativeOpen(pszCapture, "wb");
+        lpfile = PfNativeOpen(pszCapture, NATIVEFILEMODE::writeTruncate);
         if (!lpfile) goto LDone;
         if (!FWriteScannerSnapshot(&fresh, lpfile)) { ICloseNativeFile(lpfile); goto LDone; }
         if (ICloseNativeFile(lpfile) != 0) goto LDone;
@@ -1677,9 +1677,9 @@ static BOOL FCopyOrderWithByteChange(const char *pszSource, const char *pszTarge
     long ib;
     BOOL fChanged, fOkay;
 
-    pfSource = PfNativeOpen(pszSource, "rb");
+    pfSource = PfNativeOpen(pszSource, NATIVEFILEMODE::read);
     if (!pfSource) return 0;
-    pfTarget = PfNativeOpen(pszTarget, "wb");
+    pfTarget = PfNativeOpen(pszTarget, NATIVEFILEMODE::writeTruncate);
     if (!pfTarget) { ICloseNativeFile(pfSource); return 0; }
     fChanged = 0;
     fOkay = 1;

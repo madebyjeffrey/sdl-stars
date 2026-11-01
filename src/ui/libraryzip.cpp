@@ -152,7 +152,7 @@ static std::int16_t FWriteZipEntry(NATIVEFILE *pfZip, const char *pszRoot, ZIPEN
     if (CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", pszRoot, szDirSep, pze->pszName) <= 0 ||
         !FNativeFileSize(szPath, &cb) || cb < 0 || cb > UINT32_MAX || cbName > UINT16_MAX ||
         static_cast<std::uint64_t>(LNativePosition(pfZip)) > UINT32_MAX) return 0;
-    pf = PfOpenNativeFile(szPath, "rb");
+    pf = PfOpenNativeFile(szPath, NATIVEFILEMODE::read);
     if (!pf) return 0;
     rgbData = static_cast<std::uint8_t *>(SDL_malloc(cb ? static_cast<std::size_t>(cb) : 1));
     if (!rgbData) return 0;
@@ -193,7 +193,7 @@ std::int16_t FZipLibraryDirectory(APPSESSION &app, const char *pszDirectory, con
     for (i = 0; i < 1000; i++) {
         cchTemp = CchSnprintf(std::span{szTemp, sizeof(szTemp)}, "%s.tmp.%u", pszArchive, idZipTemp++);
         if (cchTemp <= 0 || static_cast<std::size_t>(cchTemp) >= sizeof(szTemp)) goto done;
-        pf = PfOpenNativeFile(szTemp, "wbx");
+        pf = PfOpenNativeFile(szTemp, NATIVEFILEMODE::writeExclusive);
         if (pf) break;
         if (!FNativeFileSize(szTemp, &cbExisting)) goto done;
     }
@@ -247,7 +247,7 @@ static std::int16_t FZipMakeParents(const char *pszRoot, const char *pszName, ch
 std::int16_t FUnzipLibraryArchive(const char *pszArchive, const char *pszDirectory) {
     std::uint8_t rgbTail[65557], rgbCentral[ZIP_CENTRAL_HEADER_SIZE], rgbLocal[ZIP_LOCAL_HEADER_SIZE];
     std::uint8_t *rgbLocalName = nullptr, *rgbCompressed = nullptr, *rgbData = nullptr;
-    NATIVEFILE *pf = PfOpenNativeFile(pszArchive, "rb");
+    NATIVEFILE *pf = PfOpenNativeFile(pszArchive, NATIVEFILEMODE::read);
     NATIVEFILE *pfOutput = nullptr;
     std::int64_t archiveSize;
     long tailOffset, eocd = -1, centralOffset, lNext;
@@ -340,7 +340,7 @@ std::int16_t FUnzipLibraryArchive(const char *pszArchive, const char *pszDirecto
         if (static_cast<std::uint32_t>(crc32(0, rgbData, zc.cbUncompressed)) != zc.dwCrc ||
             !FZipMakeParents(pszDirectory, szName, szOutput, sizeof(szOutput)) ||
             FNativeFileSize(szOutput, &cbExisting)) goto done;
-        pfOutput = PfOpenNativeFile(szOutput, "wbx");
+        pfOutput = PfOpenNativeFile(szOutput, NATIVEFILEMODE::writeExclusive);
         fWrite = pfOutput && CWriteNative(std::span{rgbData, zc.cbUncompressed}, pfOutput) == zc.cbUncompressed;
         if (pfOutput && ICloseNativeFile(pfOutput) != 0) fWrite = 0;
         pfOutput = nullptr;

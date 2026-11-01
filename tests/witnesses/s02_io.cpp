@@ -17,13 +17,13 @@ static char               szDirectory[4096], szFixture[8192];
 static std::int16_t GetString(APPSESSION &, StringId id, std::span<char> out) {
     return static_cast<std::int16_t>(CchCopyUtf8(out, id == static_cast<StringId>(1) ? "A" : "k"));
 }
-static NATIVEFILE *OpenFixture(const char *, const char *) {
+static NATIVEFILE *OpenFixture(const char *, NATIVEFILEMODE) {
     NATIVEFILE *pf;
     if (!loadOK) {
         errno = EACCES;
         return nullptr;
     }
-    pf = PfNativeOpen(szFixture, "wb");
+    pf = PfNativeOpen(szFixture, NATIVEFILEMODE::writeTruncate);
     if (!pf)
         return nullptr;
     for (unsigned i = 0; fixture[i]; i++)
@@ -33,7 +33,7 @@ static NATIVEFILE *OpenFixture(const char *, const char *) {
         }
     if (ICloseNativeFile(pf) != 0)
         return nullptr;
-    return PfNativeOpen(szFixture, "rb");
+    return PfNativeOpen(szFixture, NATIVEFILEMODE::read);
 }
 #define CHECK(x)                                                                                                                                               \
     do {                                                                                                                                                       \

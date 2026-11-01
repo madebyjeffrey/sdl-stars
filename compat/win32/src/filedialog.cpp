@@ -219,7 +219,7 @@ static int IAcceptFilePath(HWND hwnd, COMPATFILEDIALOG *lp, LPCSTR pszName) {
     }
     // Probe read access without modifying a selected file or creating a new one.
     if (!lp->fSave && fExists) {
-        lpfile = PfNativeOpen(szParent, "rb");
+        lpfile = PfNativeOpen(szParent, NATIVEFILEMODE::read);
         if (!lpfile) { FileError(hwnd, "The selected file cannot be read."); return 0; }
         ICloseNativeFile(lpfile);
     }

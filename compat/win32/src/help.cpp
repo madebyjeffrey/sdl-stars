@@ -37,7 +37,7 @@ static BOOL FHelpAssets(const char *pszDirectory) {
         }
     }
     std::snprintf(szFile, sizeof(szFile), "%s/complete.stamp", pszDirectory);
-    lpFile = PfNativeOpen(szFile, "rb");
+    lpFile = PfNativeOpen(szFile, NATIVEFILEMODE::read);
     if (!lpFile) {
         win32::SetLastError(win32::ERROR_ACCESS_DENIED);
         return 0;
@@ -62,7 +62,7 @@ static char *PszHelpDocument(const char *pszDirectory, const char *pszPage) {
 
     cch = std::snprintf(szSource, sizeof(szSource), "%s/offline.html", pszDirectory);
     if (cch < 0 || static_cast<std::size_t>(cch) >= sizeof(szSource)) goto fail;
-    lpSource = PfNativeOpen(szSource, "rb");
+    lpSource = PfNativeOpen(szSource, NATIVEFILEMODE::read);
     sourceOwner.reset(lpSource);
     pszBody = static_cast<char *>((std::malloc(static_cast<std::size_t>(STARS_HELP_BUNDLE_SIZE) + 1)));
     bodyOwner.reset(pszBody);

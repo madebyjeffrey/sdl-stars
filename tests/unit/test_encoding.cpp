@@ -198,16 +198,16 @@ static void TestInvalidDefinition(void) {
     TEST_ASSERT(FStarsTestInit(app));
     TEST_ASSERT(FStarsTestDir("utf8_invalid_definition", szDir, sizeof(szDir)));
     snprintf(szFile, sizeof(szFile), "%s%sbad.def", szDir, szDirSep);
-    pf = PfNativeOpen(szFile, "wb"); TEST_ASSERT(pf);
+    pf = PfNativeOpen(szFile, NATIVEFILEMODE::writeTruncate); TEST_ASSERT(pf);
     IPutNativeString("\xe9\r\n", pf); ICloseNativeFile(pf);
     TEST_CHECK(!GenNewGameFromFile(app, szFile));
     TEST_CHECK(!FStarsRecoveryActive() && app.state.lpbDefUni == NULL);
-    pf = PfNativeOpen(szFile, "wb"); TEST_ASSERT(pf);
+    pf = PfNativeOpen(szFile, NATIVEFILEMODE::writeTruncate); TEST_ASSERT(pf);
     IPutNativeString("Title\r\n\xff\r\n", pf); ICloseNativeFile(pf);
     TEST_CHECK(!GenNewGameFromFile(app, szFile));
     TEST_CHECK(app.state.idsFileError == idsUniverseCreationFileAppearsInvalid);
     TEST_CHECK(!FStarsRecoveryActive() && app.state.lpbDefUni == NULL);
-    pf = PfNativeOpen(szFile, "wb"); TEST_ASSERT(pf);
+    pf = PfNativeOpen(szFile, NATIVEFILEMODE::writeTruncate); TEST_ASSERT(pf);
     IPutNativeString("Title\r\n", pf);
     memset(szPadding, 'a', sizeof(szPadding));
     for (i = 0; i < 64; i++) TEST_CHECK(CWriteNative(std::span{szPadding}, pf) == sizeof(szPadding));
@@ -215,7 +215,7 @@ static void TestInvalidDefinition(void) {
     TEST_CHECK(!GenNewGameFromFile(app, szFile));
     TEST_CHECK(app.state.idsFileError == idsUniverseCreationFileAppearsInvalid);
     TEST_CHECK(!FStarsRecoveryActive() && app.state.lpbDefUni == NULL);
-    pf = PfNativeOpen(szFile, "wb"); TEST_ASSERT(pf);
+    pf = PfNativeOpen(szFile, NATIVEFILEMODE::writeTruncate); TEST_ASSERT(pf);
     TEST_CHECK(CWriteNative(std::span{"Title\0hidden\r\n"}.first(14), pf) == 14); ICloseNativeFile(pf);
     TEST_CHECK(!GenNewGameFromFile(app, szFile));
     TEST_CHECK(app.state.idsFileError == idsUniverseCreationFileAppearsInvalid);
