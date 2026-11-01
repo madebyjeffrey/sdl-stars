@@ -73,7 +73,7 @@ int main(int argc, char **argv) try {
     char **rgpsz = RgpszNativeArguments(&argc);
     int nResult;
 
-    (void)argv;
+    static_cast<void>(argv);
     if (!rgpsz) return 2;
     NATIVEOWNER<char *, std::free> arguments(rgpsz);
     nResult = ICompatMain(argc, rgpsz);

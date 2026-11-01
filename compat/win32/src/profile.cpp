@@ -140,10 +140,10 @@ static char *SzProfilePath(LPCSTR pszFile) {
     pszDir = PszCompatEnvironment("LOCALAPPDATA");
     if (pszDir && *pszDir) {
         cb = std::strlen(pszDir) + std::strlen(pszFile) + 8;
-        sz = (char *)std::malloc(cb);
+        sz = static_cast<char *>(std::malloc(cb));
         if (sz) std::snprintf(sz, cb, "%s/stars/%s", pszDir, pszFile);
     } else sz = strdup(pszFile);
-    (void)pszHome;
+    static_cast<void>(pszHome);
 #else
     if (pszDir && *pszDir == '/') {
         cb = std::strlen(pszDir) + std::strlen(pszFile) + 8;

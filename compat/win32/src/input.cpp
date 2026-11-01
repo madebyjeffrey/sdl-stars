@@ -61,7 +61,7 @@ static void InputModifiers(SDL_Keymod mod) {
 }
 
 static BOOL FInputPoint(float fx, float fy, int *lpx, int *lpy) {
-    if (!isfinite(fx) || !isfinite(fy) || static_cast<double>(fx) < INT32_MIN || static_cast<double>(fx) > INT32_MAX ||
+    if (!std::isfinite(fx) || !std::isfinite(fy) || static_cast<double>(fx) < INT32_MIN || static_cast<double>(fx) > INT32_MAX ||
         static_cast<double>(fy) < INT32_MIN || static_cast<double>(fy) > INT32_MAX) return 0;
     *lpx = static_cast<int>(fx); *lpy = static_cast<int>(fy);
     return 1;
@@ -125,7 +125,7 @@ BOOL win32::GetCursorPos(LPPOINT lppt) {
     if (!pszDriver || (std::strcmp(pszDriver, "x11") != 0 && std::strcmp(pszDriver, "cocoa") != 0 &&
                        std::strcmp(pszDriver, "windows") != 0)) { win32::SetLastError(win32::ERROR_NOT_SUPPORTED); return 0; }
     CompatInputIO().pfnGetGlobalMouseState(&x, &y);
-    if (!isfinite(x) || !isfinite(y) || static_cast<double>(x) < INT32_MIN || static_cast<double>(x) > INT32_MAX ||
+    if (!std::isfinite(x) || !std::isfinite(y) || static_cast<double>(x) < INT32_MIN || static_cast<double>(x) > INT32_MAX ||
         static_cast<double>(y) < INT32_MIN || static_cast<double>(y) > INT32_MAX) return 0;
     lppt->x = static_cast<LONG>(x); lppt->y = static_cast<LONG>(y);
     return 1;
@@ -308,7 +308,7 @@ static WPARAM WMouseModifiers(WPARAM buttons) {
 
 static void PostCompatWheel(HWND hwnd, UINT msg, float dWheel, double *lpdRem, WPARAM buttons) {
     int d, delta;
-    if (!isfinite(dWheel) || std::fabs(static_cast<double>(dWheel)) > INT32_MAX / static_cast<double>(win32::WHEEL_DELTA)) return;
+    if (!std::isfinite(dWheel) || std::fabs(static_cast<double>(dWheel)) > INT32_MAX / static_cast<double>(win32::WHEEL_DELTA)) return;
     *lpdRem += static_cast<double>(dWheel) * win32::WHEEL_DELTA;
     if (*lpdRem < INT32_MIN || *lpdRem > INT32_MAX) { *lpdRem = 0; return; }
     d = static_cast<int>(*lpdRem);

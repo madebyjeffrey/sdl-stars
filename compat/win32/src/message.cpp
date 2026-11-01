@@ -3,6 +3,7 @@
  * Stars adaptation: real filters, synchronous sends and no fallback window routing.
  */
 #include "internal.h"
+#include <cstring>
 #include "message_alloc_io.h"
 #include <stars_compat.h>
 #include <cstdlib>

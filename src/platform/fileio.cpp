@@ -469,7 +469,7 @@ int ICreateNativeDirectory(const char *psz, unsigned md) {
     if (!FPath(psz)) return -1;
     return FileCall(nullptr, -1, [&] {
 #ifdef _WIN32
-        (void)md;
+        static_cast<void>(md);
 #else
         // Private profile directories must have their mode at creation, with
         // umask applied; a later permissions() call creates an exposure window.

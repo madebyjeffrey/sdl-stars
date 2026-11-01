@@ -27,7 +27,7 @@ char *PszCompatFileUri(const char *pszPath) {
         if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') ||
             (ch >= '0' && ch <= '9') || std::strchr("/-._~", ch)
 #ifdef _WIN32
-            || (ch == ':' && lpch == (const unsigned char *)pszAbsolute + 1)
+            || (ch == ':' && lpch == reinterpret_cast<const unsigned char *>(pszAbsolute) + 1)
 #endif
         ) *lpchOut++ = static_cast<char>(ch);
         else { *lpchOut++ = '%'; *lpchOut++ = rgchHex[ch >> 4]; *lpchOut++ = rgchHex[ch & 15]; }
