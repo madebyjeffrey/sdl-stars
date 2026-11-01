@@ -1157,7 +1157,7 @@ INT_PTR  NewPasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                         AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsNativeLegacyRacePasswordRequired).data(), win32::MB_ICONHAND);
                         break;
                     }
-                    std::strcpy(reinterpret_cast<char *>(win32::GetWindowLongPtrA(hwnd, win32::DWLP_USER)), szPass);
+                    CchCopyUtf8(std::span{*reinterpret_cast<std::array<char, 16> *>(win32::GetWindowLongPtrA(hwnd, win32::DWLP_USER))}, szPass);
                 } else if (app.state.idPlayer != iplrNone) {
                     WriteMemPassword(app, lSalt);
                 } else {
@@ -1180,11 +1180,13 @@ INT_PTR  NewPasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     return 0;
 }
 
-std::int16_t FPromptLegacyRacePassword(APPSESSION &app, char *szPassword) {
+std::optional<std::array<char, 16>> FPromptLegacyRacePassword(APPSESSION &app) {
+    std::array<char, 16> szPassword{};
     std::int16_t fRet;
 
-    fRet = static_cast<std::int16_t>(ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_NEW_PASSWORD), app.lpui->hwndFrame, NewPasswordDlg, reinterpret_cast<LPARAM>(szPassword)));
-    return fRet > 0;
+    fRet = static_cast<std::int16_t>(ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_NEW_PASSWORD), app.lpui->hwndFrame, NewPasswordDlg, reinterpret_cast<LPARAM>(&szPassword)));
+    if (fRet > 0) return szPassword;
+    return std::nullopt;
 }
 
 void ShowProgressGauge(APPSESSION &app) {

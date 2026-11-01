@@ -533,12 +533,13 @@ int16_t StarsTest_PromptPassword(APPSESSION &app) {
            PszCompatEnvironment("STARS_CLIENT_EXPORT_GAME") ? 1 : PromptPassword(app);
 }
 
-int16_t StarsTest_FPromptLegacyRacePassword(APPSESSION &app, char *szPassword) {
-    if (!fTestLegacyRaceImport) return FPromptLegacyRacePassword(app, szPassword);
+std::optional<std::array<char, 16>> StarsTest_FPromptLegacyRacePassword(APPSESSION &app) {
+    if (!fTestLegacyRaceImport) return FPromptLegacyRacePassword(app);
     cLegacyRacePasswords++;
-    if (!fAcceptLegacyRacePassword) return 0;
-    strcpy(szPassword, "new-\xc3\xa9");
-    return 1;
+    if (!fAcceptLegacyRacePassword) return std::nullopt;
+    std::array<char, 16> szPassword{};
+    CchCopyUtf8(std::span{szPassword}, "new-\xc3\xa9");
+    return szPassword;
 }
 
 BOOL StarsTest_FNativeOpenFileName(OPENFILENAMEA *lpof) {

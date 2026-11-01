@@ -9,11 +9,15 @@
 #include <cstdint>
 #include <cstddef>
 #include <span>
+#include <array>
+#include <optional>
 
 // Messages and questions.
 std::int16_t IdAlertBox(const char *sz, std::int16_t mbType);
 std::int16_t PromptPassword(APPSESSION &app);
-std::int16_t FPromptLegacyRacePassword(APPSESSION &app, char *szPassword);
+// A replacement contains at most 15 UTF-8 bytes and its NUL. No value means
+// cancellation or dialog failure; the caller owns an accepted password.
+std::optional<std::array<char, 16>> FPromptLegacyRacePassword(APPSESSION &app);
 void    PromptSaveGame(APPSESSION &app);
 
 // Progress during turn generation and universe creation.

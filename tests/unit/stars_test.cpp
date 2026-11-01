@@ -23,12 +23,11 @@ int16_t fStarsTestAcceptLegacyRacePassword;
 int16_t cStarsTestLegacyRacePasswordPrompt;
 char szStarsTestLegacyRacePassword[16];
 
-int16_t FStarsTestPromptLegacyRacePassword(APPSESSION &, char *szPassword) {
+std::optional<std::array<char, 16>> FStarsTestPromptLegacyRacePassword(APPSESSION &) {
     cStarsTestLegacyRacePasswordPrompt++;
     if (!fStarsTestAcceptLegacyRacePassword)
-        return 0;
-    strcpy(szPassword, szStarsTestLegacyRacePassword);
-    return 1;
+        return std::nullopt;
+    return std::to_array(szStarsTestLegacyRacePassword);
 }
 
 // FStarsTestAlert records a message box and gives the answer that lets the

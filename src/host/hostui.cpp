@@ -6,19 +6,18 @@
 // questions get the cautious answer.
 
 #ifdef STARS_TEST_GOLDEN_DIR
-std::int16_t FStarsTestPromptLegacyRacePassword(APPSESSION &app, char *szPassword);
+std::optional<std::array<char, 16>> FStarsTestPromptLegacyRacePassword(APPSESSION &app);
 #endif
 
 // PromptPassword refuses: a host takes a file's password with -p.
 std::int16_t PromptPassword(APPSESSION &) { return 0; }
 
 // The host has no interactive UI for replacing a legacy race password.
-std::int16_t FPromptLegacyRacePassword([[maybe_unused]] APPSESSION &app, char *szPassword) {
+std::optional<std::array<char, 16>> FPromptLegacyRacePassword([[maybe_unused]] APPSESSION &app) {
 #ifdef STARS_TEST_GOLDEN_DIR
-    return FStarsTestPromptLegacyRacePassword(app, szPassword);
+    return FStarsTestPromptLegacyRacePassword(app);
 #else
-    static_cast<void>(szPassword);
-    return 0;
+    return std::nullopt;
 #endif
 }
 

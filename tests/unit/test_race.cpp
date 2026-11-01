@@ -5,6 +5,7 @@
 #endif
 #include "callbackcontext.h"
 #include <array>
+#include <string_view>
 [[maybe_unused]] static char szTestLiteral2[] = "New-race-pass";
 [[maybe_unused]] static char szTestLiteral3[] = "Replacement";
 [[maybe_unused]] static char szTestLiteral4[] = "Shortened-race";
@@ -19,6 +20,7 @@
 #ifdef STARS_UI_SDL
 #include <stars_compat.h>
 #include <SDL3/SDL_clipboard.h>
+#include "control_io.h"
 #endif
 
 static int16_t FWriteLegacyRaceFixture(APPSESSION &app, char *szFile, int16_t verMinor, const char *szName, const char *szNames,
@@ -442,6 +444,49 @@ static void test_ReadRtPlr_bounds_record_lengths(void) {
 }
 
 #ifdef STARS_UI_SDL
+static INT_PTR idLegacyPasswordDialog;
+static const char *pszLegacyPasswordDialog;
+static INT_PTR LegacyPasswordDialog(HINSTANCE hinst, LPCSTR pszTemplate, HWND hwndParent, DLGPROC lpfn, LPARAM lParam) {
+    HWND hwnd;
+
+    if (idLegacyPasswordDialog < 0) return idLegacyPasswordDialog;
+    hwnd = ui::CreateDialog(hinst, pszTemplate, hwndParent, lpfn, lParam);
+    TEST_CHECK(hwnd != nullptr);
+    if (!hwnd) return -1;
+    if (idLegacyPasswordDialog > 0) {
+        TEST_CHECK(ui::SetWindowText(win32::GetDlgItem(hwnd, IDC_EDIT1), pszLegacyPasswordDialog));
+        TEST_CHECK(ui::SetWindowText(win32::GetDlgItem(hwnd, IDC_PASSWORD_CONFIRM), pszLegacyPasswordDialog));
+    }
+    ui::SendMessage(hwnd, win32::WM_COMMAND, win32::MAKEWPARAM(idLegacyPasswordDialog > 0 ? IDOK : IDCANCEL, win32::BN_CLICKED), 0);
+    ui::DestroyWindow(hwnd);
+    return idLegacyPasswordDialog;
+}
+
+static void test_LegacyPassword_owned_result(void) {
+    APPSESSION &app = ui::app;
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    TEST_ASSERT(FStarsTestInit(app));
+    CONTROLIO control;
+    control.pfnDialogBox = LegacyPasswordDialog;
+    CONTROLIOSCOPE controlScope(control);
+    idLegacyPasswordDialog = 1;
+    pszLegacyPasswordDialog = "1234567890123\xc3\xa9";
+    const auto szFirst = FPromptLegacyRacePassword(app);
+    TEST_ASSERT(szFirst);
+    TEST_CHECK(std::string_view(szFirst->data()) == pszLegacyPasswordDialog);
+    TEST_CHECK(szFirst->back() == 0);
+    idLegacyPasswordDialog = 0;
+    TEST_CHECK(!FPromptLegacyRacePassword(app));
+    idLegacyPasswordDialog = -1;
+    TEST_CHECK(!FPromptLegacyRacePassword(app));
+    idLegacyPasswordDialog = 1;
+    pszLegacyPasswordDialog = "new-\xc3\xa9";
+    const auto szSecond = FPromptLegacyRacePassword(app);
+    TEST_ASSERT(szSecond);
+    TEST_CHECK(std::string_view(szSecond->data()) == pszLegacyPasswordDialog);
+    TEST_CHECK(std::string_view(szFirst->data()) == "1234567890123\xc3\xa9");
+}
+
 static void test_NewPasswordDlg_utf8_limit(void) {
 #ifdef STARS_UI_SDL
     APPSESSION &app = ui::app;
@@ -454,7 +499,7 @@ static void test_NewPasswordDlg_utf8_limit(void) {
     HWND hwndEdit;
     HWND hwndOrdinary;
     char szPass[20];
-    char szReplacement[16] = "";
+    std::array<char, 16> szReplacement{};
     const char *pszTooLong = "1234567890123456";
     const char *pszUnicodeTooLong = "\xf0\x9f\x98\x80\xf0\x9f\x98\x80\xf0\x9f\x98\x80\xf0\x9f\x98\x80";
     const char *pszExact = "1234567890123\xc3\xa9";
@@ -526,16 +571,16 @@ static void test_NewPasswordDlg_utf8_limit(void) {
     TEST_CHECK(win32::GetWindowTextA(hwndOrdinary, szPass, sizeof(szPass)) == 15);
     TEST_CHECK(!StarsCompatTextInputRejected(hwndOrdinary));
     hwndEdit = ui::CreateDialog(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_NEW_PASSWORD), NULL, NewPasswordDlg,
-                                  (LPARAM)szReplacement);
+                                  reinterpret_cast<LPARAM>(&szReplacement));
     TEST_ASSERT(hwndEdit != NULL);
     TEST_ASSERT(ui::SetWindowText(win32::GetDlgItem(hwndEdit, IDC_EDIT1), pszExact));
     TEST_ASSERT(ui::SetWindowText(win32::GetDlgItem(hwndEdit, IDC_PASSWORD_CONFIRM), pszExact));
     ui::SendMessage(hwndEdit, win32::WM_COMMAND, win32::MAKEWPARAM(IDOK, win32::BN_CLICKED), (LPARAM)win32::GetDlgItem(hwndEdit, IDOK));
-    TEST_CHECK(strcmp(szReplacement, pszExact) == 0);
+    TEST_CHECK(strcmp(szReplacement.data(), pszExact) == 0);
     ui::DestroyWindow(hwndEdit);
     szReplacement[0] = 0;
     hwndEdit = ui::CreateDialog(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_NEW_PASSWORD), NULL, NewPasswordDlg,
-                                  (LPARAM)szReplacement);
+                                  reinterpret_cast<LPARAM>(&szReplacement));
     TEST_ASSERT(hwndEdit != NULL);
     cStarsTestAlert = 0;
     ui::SendMessage(hwndEdit, win32::WM_COMMAND, win32::MAKEWPARAM(IDOK, win32::BN_CLICKED), (LPARAM)win32::GetDlgItem(hwndEdit, IDOK));
@@ -641,6 +686,7 @@ TEST_LIST = {{"race checksum uses the fixed 192-byte wire image", test_IRaceChec
              {"IRaceChecksum ignores stale name bytes", test_IRaceChecksum_ignores_stale_name_bytes},
              {"ReadRtPlr bounds record lengths", test_ReadRtPlr_bounds_record_lengths},
 #ifdef STARS_UI_SDL
+             {"legacy password prompt returns owned text or cancellation", test_LegacyPassword_owned_result},
              {"NewPasswordDlg keeps Unicode passwords within the login limit", test_NewPasswordDlg_utf8_limit},
              {"RaceWizardDlg1 Custom clears the random-race bit", test_RaceWizardDlg1_custom_clears_random},
              {"RaceWizardDlg2 paints habitat bars", test_RaceWizardDlg2_paints_habitat},

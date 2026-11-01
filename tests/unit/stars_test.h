@@ -36,7 +36,7 @@ extern int16_t iStarsTestAlertResponse;
 extern int16_t fStarsTestAcceptLegacyRacePassword;
 extern int16_t cStarsTestLegacyRacePasswordPrompt;
 extern char szStarsTestLegacyRacePassword[16];
-int16_t FStarsTestPromptLegacyRacePassword(APPSESSION &app, char *szPassword);
+std::optional<std::array<char, 16>> FStarsTestPromptLegacyRacePassword(APPSESSION &app);
 
 // FStarsTestInit prepares the game state WinMain sets up before it creates
 // windows: on Windows and SDL the instance, brushes and fonts (FCreateStuff),

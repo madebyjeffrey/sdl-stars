@@ -604,7 +604,6 @@ std::int16_t FWasRaceFile(APPSESSION &app, char *szFile, std::int16_t fChkPass) 
     std::int16_t  fPlural;
     std::int16_t  fConvert;
     std::int16_t  fProtected;
-    char     szPassword[16];
     std::uint16_t icksum;
     char    *pch;
 
@@ -645,13 +644,14 @@ std::int16_t FWasRaceFile(APPSESSION &app, char *szFile, std::int16_t fChkPass) 
                                 goto LBadFile;
                             }
                             if (fProtected) {
-                                if (!PlayerChoiceIO().pfnFPromptLegacyRacePassword(app, szPassword)) {
+                                const auto szPassword = PlayerChoiceIO().pfnFPromptLegacyRacePassword(app);
+                                if (!szPassword) {
                                     idsError = -1;
                                     fRet = -1;
                                     goto LBadFile;
                                 }
-                                plr.lSalt = LSaltFromSz(szPassword);
-                                CchCopyUtf8(std::span{app.state.szRacePass}, szPassword);
+                                plr.lSalt = LSaltFromSz(szPassword->data());
+                                CchCopyUtf8(std::span{app.state.szRacePass}, szPassword->data());
                             }
                             lSaltSav = app.state.lSaltCur;
                             app.state.lSaltCur = plr.lSalt;

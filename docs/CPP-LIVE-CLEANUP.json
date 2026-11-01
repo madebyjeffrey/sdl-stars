@@ -98,7 +98,8 @@
         "owned-hull-label-and-bounded-roman-numerals",
         "owned-numeric-text-values",
         "scaled-numeric-rounding-overflow-repair",
-        "bounded-fitting-race-password-report-save-and-host-copies"
+        "bounded-fitting-race-password-report-save-and-host-copies",
+        "owned-legacy-race-password-result"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -345,6 +346,21 @@
           "baseline": "Behavior-neutral; native/frozen-original baselines and unit goldens unchanged. No scenario/checkpoint moved, no regression export required.",
           "remaining": "L05 remaining copies/const text/shared scratch results, L06 other service interfaces and Milestone D, and L08 final reconciliation/platform qualification remain active.",
           "receipts": "dist/verification/live-cpp/l05s/"
+        },
+        {
+          "batch": "L06s owned legacy-race replacement password result",
+          "debug_build": "Pass; no warnings. Compiler/source policy covers 158 owned sources, 159 variants and 161 standalone headers in both orders. Updated raw-copy inventory passes.",
+          "desktop": "153/153, including all 29 leak checks and available SDL tutorial checkpoints. The final race-test declaration adjustment is rebuilt and the actual SDL race executable passes again.",
+          "host_units": "28/28 in Release",
+          "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+          "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+          "windows": "147/147 owned production units and three actual consumer/support units pass strict MinGW syntax. Final race test also passes a repeated strict compile after its declaration adjustment. Actual Windows host and race executable build; all seven Windows race cases pass under Wine. Native Windows desktop and actual Linux final qualification remain pending.",
+          "interface": "FPromptLegacyRacePassword(APPSESSION &) -> optional<array<char,16>> removes the implicit-capacity char* output. The synchronous modal operation owns its result through NewPasswordDlg; accepted text copies through the actual array span and returns by value without allocation. Desktop, host, PLAYERCHOICEIO and actual unit/client-startup providers use the same result contract.",
+          "tests": "A new SDL case drives the real NewPasswordDlg callback through a scoped modal provider, verifies exact 15-byte UTF-8 accepted text/NUL, maps cancellation and negative dialog failure to no value, and proves a returned password survives later prompts. Existing paste-limit, multibyte rejection, mismatch, empty-password and protected-race import/confirmation/hash/save checks remain and pass.",
+          "inventory": "One erased-capacity password copy retired. 200 migrated sites; 108 initial application copies remain, with 114 lexical raw spellings including SDK declarations/definitions.",
+          "baseline": "Behavior-neutral: UTF-8 limits, prompt/confirmation order, password hashes, cancellation, file publication, record widths/layouts, game/RNG/rounding and all baseline/golden bytes remain unchanged. No scenario/checkpoint moved; no regression export required.",
+          "remaining": "Other L05 copies/const text/scratch results, L06 service interfaces and Milestone D, and L08 final reconciliation/platform qualification remain active.",
+          "receipts": "dist/verification/live-cpp/l06s/"
         }
       ],
       "bounded_formatting": {
@@ -409,8 +425,8 @@
         "temperature_commit": "03d8b039",
         "windows_host_test_configuration_commit": "09bb4477",
         "policy": "Actual array/tail spans; complete terminated UTF-8 prefixes; overlapping views supported. Paths/record staging keep separate strict contracts.",
-        "remaining_initial_sites": 109,
-        "remaining_lexical_spellings": 115,
+        "remaining_initial_sites": 108,
+        "remaining_lexical_spellings": 114,
         "inventory_scope": "The initial copy inventory and the current lexical policy differ: the latter also includes SDK declaration/definition spellings. Both remain explicitly accounted for.",
         "enforcement": "The manifest checks exact remaining raw-copy spellings and multiplicities. New or removed raw sites require updating the maintained inventory; migrated sites cannot silently be reintroduced."
       },
@@ -496,6 +512,11 @@
         "evidence": "docs/CPP-LIVE-TEXT-COPIES.json",
         "sites": 11,
         "interfaces": "Strict whole UTF-8 append and destination spans replace nine proven-fitting text sites; fixed-array bounded byte joining replaces two host strcat sites while preserving admission/encoding behavior."
+      },
+      "legacy_race_password": {
+        "status": "complete; verified",
+        "sites": 1,
+        "interface": "NewPasswordDlg copies accepted replacement text into the actual owned 16-byte result span; no erased-capacity char* output remains."
       }
     },
     {
@@ -524,7 +545,8 @@
         "bounded-batch-filename-lines-and-strict-path-admission",
         "full-optional-token-size-and-owned-batch-source-indices",
         "all-token-size-callers-use-optional-full-width-results",
-        "readonly-definition-line-views-and-local-owned-bytes"
+        "readonly-definition-line-views-and-local-owned-bytes",
+        "owned-legacy-race-password-result"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -804,6 +826,21 @@
           "baseline": "Behavior-neutral for game behavior and valid IO. Parent/new world comparisons and both 519-checkpoint suites match. Native/frozen-original baseline bytes, unit goldens, saved widths/layouts, game rules, RNG, qsort order, binary64 boundaries and canonical models remain unchanged. No scenario/checkpoint moved; no regression export required.",
           "remaining": "Other buffer/service interfaces, Milestone D, remaining L05 copies/const text/scratch results and L08 final qualification remain active.",
           "receipts": "dist/verification/live-cpp/l06r/"
+        },
+        {
+          "batch": "L06s owned legacy-race replacement password result",
+          "debug_build": "Pass; no warnings. Compiler/source policy covers 158 owned sources, 159 variants and 161 standalone headers in both orders. Updated raw-copy inventory passes.",
+          "desktop": "153/153, including all 29 leak checks and available SDL tutorial checkpoints. The final race-test declaration adjustment is rebuilt and the actual SDL race executable passes again.",
+          "host_units": "28/28 in Release",
+          "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+          "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+          "windows": "147/147 owned production units and three actual consumer/support units pass strict MinGW syntax. Final race test also passes a repeated strict compile after its declaration adjustment. Actual Windows host and race executable build; all seven Windows race cases pass under Wine. Native Windows desktop and actual Linux final qualification remain pending.",
+          "interface": "FPromptLegacyRacePassword(APPSESSION &) -> optional<array<char,16>> removes the implicit-capacity char* output. The synchronous modal operation owns its result through NewPasswordDlg; accepted text copies through the actual array span and returns by value without allocation. Desktop, host, PLAYERCHOICEIO and actual unit/client-startup providers use the same result contract.",
+          "tests": "A new SDL case drives the real NewPasswordDlg callback through a scoped modal provider, verifies exact 15-byte UTF-8 accepted text/NUL, maps cancellation and negative dialog failure to no value, and proves a returned password survives later prompts. Existing paste-limit, multibyte rejection, mismatch, empty-password and protected-race import/confirmation/hash/save checks remain and pass.",
+          "inventory": "One erased-capacity password copy retired. 200 migrated sites; 108 initial application copies remain, with 114 lexical raw spellings including SDK declarations/definitions.",
+          "baseline": "Behavior-neutral: UTF-8 limits, prompt/confirmation order, password hashes, cancellation, file publication, record widths/layouts, game/RNG/rounding and all baseline/golden bytes remain unchanged. No scenario/checkpoint moved; no regression export required.",
+          "remaining": "Other L05 copies/const text/scratch results, L06 service interfaces and Milestone D, and L08 final reconciliation/platform qualification remain active.",
+          "receipts": "dist/verification/live-cpp/l06s/"
         }
       ],
       "roman_output": {
@@ -920,6 +957,13 @@
         "status": "complete; verified",
         "evidence": "docs/CPP-LIVE-FILE-SERVICES.json",
         "interface": "Readonly bounded line cursor/results and local owned definition bytes; actual consumers and cleanup fixtures migrated."
+      },
+      "legacy_race_password": {
+        "status": "complete; verified",
+        "parent": "54c16be9",
+        "interface": "FPromptLegacyRacePassword(APPSESSION &) returns optional<array<char,16>>. Accepted text is owned by the caller; cancellation/dialog failure returns no value. The synchronous modal callback writes only through an actual result-array span.",
+        "providers": "Desktop and SDL-free host implementations, PLAYERCHOICEIO, unit-test and client-startup providers use the value contract. The raw char* output interface is removed.",
+        "behavior": "Existing 15-byte UTF-8 admission, empty-password rejection, confirmation/hash, prompt order and file publication remain. No allocation is added."
       }
     },
     {

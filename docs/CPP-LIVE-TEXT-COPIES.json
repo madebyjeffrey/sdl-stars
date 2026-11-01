@@ -1,6 +1,6 @@
 {
   "migration_parent": "d3d3724c",
-  "status": "199 migrated sites complete; remaining text work active",
+  "status": "200 migrated sites complete; remaining text work active",
   "contracts": {
     "display": "Write a terminated complete UTF-8 prefix into the actual destination span; preserve fitting bytes. Views borrow synchronously and overlapping copies use memmove.",
     "append": "Scan only inside the destination span for its NUL. An unterminated nonempty destination is cleared and zero bytes are appended.",
@@ -1963,6 +1963,16 @@
       "original_call": "std::strcat(szCmdLine, argv[i])",
       "destination_span": "std::ranges::copy(szArgument, std::span{szCmdLine}.subspan(cchCmdLine).begin())",
       "role": "Copy the exact CRT argument bytes without early UTF-8 filtering or allocation, update the bounded cursor and terminate once. Preserve parser diagnostics and native argv release order."
+    },
+    {
+      "path": "src/ui/utilgenui.cpp",
+      "scope": "NewPasswordDlg",
+      "baseline_line": 1160,
+      "migration_parent": "54c16be9",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(reinterpret_cast<char *>(win32::GetWindowLongPtrA(hwnd, win32::DWLP_USER)), szPass)",
+      "destination_span": "std::span{*reinterpret_cast<std::array<char, 16> *>(win32::GetWindowLongPtrA(hwnd, win32::DWLP_USER))}",
+      "role": "The modal operation owns a concrete 16-byte result through the callback. Accepted nonempty passwords retain the existing 15-byte UTF-8 limit and hash/confirmation behavior; the caller receives the array by value."
     }
   ],
   "remaining_spelling_scope": "Lexical raw-copy spellings, including SDK declarations/definitions; comments/literals excluded with the manifest lexer. Exact counts prevent new raw sites during the remaining migration.",
@@ -2500,13 +2510,6 @@
       "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
     },
     {
-      "path": "src/ui/utilgenui.cpp",
-      "normalized_call": "std::strcpy(reinterpret_cast<char*>(win32::GetWindowLongPtrA(hwnd,win32::DWLP_USER)),szPass)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
       "path": "src/ui/vcr.cpp",
       "normalized_call": "std::strcpy(psz,app.state.szWork)",
       "count": 1,
@@ -2742,6 +2745,24 @@
       "baseline": "Behavior-neutral; native/frozen-original baselines and unit goldens unchanged. No scenario/checkpoint moved, no regression export required.",
       "remaining": "L05 remaining copies/const text/shared scratch results, L06 other service interfaces and Milestone D, and L08 final reconciliation/platform qualification remain active.",
       "receipts": "dist/verification/live-cpp/l05s/"
+    }
+  },
+  "owned_legacy_race_password": {
+    "status": "complete; verified",
+    "verification": {
+      "batch": "L06s owned legacy-race replacement password result",
+      "debug_build": "Pass; no warnings. Compiler/source policy covers 158 owned sources, 159 variants and 161 standalone headers in both orders. Updated raw-copy inventory passes.",
+      "desktop": "153/153, including all 29 leak checks and available SDL tutorial checkpoints. The final race-test declaration adjustment is rebuilt and the actual SDL race executable passes again.",
+      "host_units": "28/28 in Release",
+      "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+      "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+      "windows": "147/147 owned production units and three actual consumer/support units pass strict MinGW syntax. Final race test also passes a repeated strict compile after its declaration adjustment. Actual Windows host and race executable build; all seven Windows race cases pass under Wine. Native Windows desktop and actual Linux final qualification remain pending.",
+      "interface": "FPromptLegacyRacePassword(APPSESSION &) -> optional<array<char,16>> removes the implicit-capacity char* output. The synchronous modal operation owns its result through NewPasswordDlg; accepted text copies through the actual array span and returns by value without allocation. Desktop, host, PLAYERCHOICEIO and actual unit/client-startup providers use the same result contract.",
+      "tests": "A new SDL case drives the real NewPasswordDlg callback through a scoped modal provider, verifies exact 15-byte UTF-8 accepted text/NUL, maps cancellation and negative dialog failure to no value, and proves a returned password survives later prompts. Existing paste-limit, multibyte rejection, mismatch, empty-password and protected-race import/confirmation/hash/save checks remain and pass.",
+      "inventory": "One erased-capacity password copy retired. 200 migrated sites; 108 initial application copies remain, with 114 lexical raw spellings including SDK declarations/definitions.",
+      "baseline": "Behavior-neutral: UTF-8 limits, prompt/confirmation order, password hashes, cancellation, file publication, record widths/layouts, game/RNG/rounding and all baseline/golden bytes remain unchanged. No scenario/checkpoint moved; no regression export required.",
+      "remaining": "Other L05 copies/const text/scratch results, L06 service interfaces and Milestone D, and L08 final reconciliation/platform qualification remain active.",
+      "receipts": "dist/verification/live-cpp/l06s/"
     }
   }
 }
