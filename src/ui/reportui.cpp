@@ -266,7 +266,7 @@ LRESULT  ReportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         win32::GetWindowRect(hwnd, &rc);
         app.lpui->vprptCur->ptSize.x = rc.right - rc.left;
         app.lpui->vprptCur->ptSize.y = rc.bottom - rc.top;
-        app.lpui->hwndReportDlg = 0;
+        app.lpui->hwndReportDlg = nullptr;
         app.lpui->fBrowserValid = 0;
         hmenu = GetASubMenu(app, app.lpui->hwndFrame, menuReport);
         switch (app.lpui->vprptCur->irpt) {
@@ -283,7 +283,7 @@ LRESULT  ReportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             idm = static_cast<MessageId>(2305);
         }
         win32::CheckMenuItem(hmenu, idm, win32::MF_UNCHECKED);
-        app.lpui->vprptCur = 0;
+        app.lpui->vprptCur = nullptr;
         if (app.state.gd.fTutorial) {
             PresentationIO().pfnTutor(app);
         }
@@ -511,7 +511,7 @@ INT_PTR  ScoreXDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             ControlIO().pfnStickyDlgPos(hwnd, &app.lpui->ptStickyScoreXDlg, 0);
             ControlIO().pfnEndDialog(hwnd, i);
             app.lpui->fInScoreDialog = 0;
-            app.lpui->hwndScoreXDlg = 0;
+            app.lpui->hwndScoreXDlg = nullptr;
             if (app.state.gd.fTutorial) {
                 PresentationIO().pfnTutor(app);
             }
@@ -2354,7 +2354,7 @@ void ReportColumnPopup(APPSESSION &app, POINT16 pt, std::int16_t icol, std::int1
         if (rgsz[i][0] != 0) {
             psz[i] = rgsz[i];
         } else {
-            psz[i] = 0;
+            psz[i] = nullptr;
         }
     }
     iRet = ControlIO().pfnPopupMenu(app, app.lpui->hwndReportDlg, pt.x, pt.y, cItems, nullptr, psz, -1, fRightBtn);
@@ -2430,7 +2430,7 @@ void InvalidateReport(APPSESSION &app, ReportType irpt, std::int16_t fReload) {
             SortReportCache(app, app.lpui->vprptCur->irpt, app.lpui->vprptCur->icolSort);
         }
         if (fClearRpt) {
-            app.lpui->vprptCur = 0;
+            app.lpui->vprptCur = nullptr;
         } else if (fResetRpt) {
             app.lpui->vprptCur = prptSav;
             app.lpui->vlprgidRep = lprgidSav;

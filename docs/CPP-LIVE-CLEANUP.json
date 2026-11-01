@@ -49,7 +49,13 @@
     },
     {
       "id": "L03",
-      "status": "pending"
+      "status": "complete",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json",
+      "typed_initialization_sites": 169,
+      "retained_byte_ranges": 1,
+      "compiler_confirmed_null_pointers": 240,
+      "compiler_enforcement": "-Wzero-as-null-pointer-constant is mandatory; object byte resets require an exact live inventory entry with a technical reason.",
+      "pointer_truth_tests": "Twelve newly converted pointer comparisons use bare truth tests, preserving the repository style and single evaluation."
     },
     {
       "id": "L04",
@@ -1641,7 +1647,8 @@
       "path": "compat/win32/src/dialog_template.cpp",
       "line": 49,
       "code": "memset(lpdlg, 0, sizeof(*lpdlg));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "c_header",
@@ -1678,7 +1685,8 @@
       "path": "compat/win32/src/dib.cpp",
       "line": 21,
       "code": "memset(lpdib, 0, sizeof(*lpdib));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "c_header",
@@ -1948,7 +1956,8 @@
       "path": "compat/win32/src/edit.cpp",
       "line": 459,
       "code": "if (fPassword) memset(pszComp, '*', cchComp);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "c_header",
@@ -2100,7 +2109,8 @@
       "path": "compat/win32/src/file.cpp",
       "line": 85,
       "code": "memset(lpof, 0, sizeof(*lpof));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "unbounded_copy",
@@ -3875,42 +3885,48 @@
       "path": "compat/win32/src/input.cpp",
       "line": 30,
       "code": "memset(rgbInput, 0, sizeof(rgbInput)); memset(rgbRead, 0, sizeof(rgbRead));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "compat/win32/src/input.cpp",
       "line": 30,
       "code": "memset(rgbInput, 0, sizeof(rgbInput)); memset(rgbRead, 0, sizeof(rgbRead));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "compat/win32/src/input.cpp",
       "line": 31,
       "code": "memset(rgbRecent, 0, sizeof(rgbRecent)); memset(rgbAsync, 0, sizeof(rgbAsync));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "compat/win32/src/input.cpp",
       "line": 31,
       "code": "memset(rgbRecent, 0, sizeof(rgbRecent)); memset(rgbAsync, 0, sizeof(rgbAsync));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "compat/win32/src/input.cpp",
       "line": 34,
       "code": "memset(rghwndClick, 0, sizeof(rghwndClick)); memset(rgcClick, 0, sizeof(rgcClick));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "compat/win32/src/input.cpp",
       "line": 34,
       "code": "memset(rghwndClick, 0, sizeof(rghwndClick)); memset(rgcClick, 0, sizeof(rgcClick));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "c_header",
@@ -4074,7 +4090,8 @@
       "path": "compat/win32/src/inspect.cpp",
       "line": 113,
       "code": "memset(lpsnap, 0, sizeof(*lpsnap));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "c_header",
@@ -4328,14 +4345,16 @@
       "path": "compat/win32/src/list.cpp",
       "line": 80,
       "code": "memset(&ds, 0, sizeof(ds)); ds.CtlType = hwnd->lpcombo ? win32::ODT_COMBOBOX : win32::ODT_LISTBOX; ds.CtlID = (UINT)hwnd->idChild;",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "compat/win32/src/list.cpp",
       "line": 345,
       "code": "memset(&ms, 0, sizeof(ms)); ms.CtlType = win32::ODT_LISTBOX; ms.CtlID = (UINT)lpwin->idChild; ms.itemHeight = (UINT)lp->cyItem;",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "unbounded_copy",
@@ -4499,7 +4518,8 @@
       "path": "compat/win32/src/memory.cpp",
       "line": 206,
       "code": "memset(rgb + lp->cb, 0, cb - lp->cb);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "c_header",
@@ -5879,14 +5899,16 @@
       "path": "compat/win32/src/paint.cpp",
       "line": 803,
       "code": "memset(lpps, 0, sizeof(*lpps));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "compat/win32/src/paint.cpp",
       "line": 1963,
       "code": "memset(rgb, 0, cbRow);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "unbounded_copy",
@@ -6364,7 +6386,8 @@
       "path": "compat/win32/src/profile.cpp",
       "line": 220,
       "code": "memset(szResult + cchOut, 0, cchMax - cchOut);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "c_header",
@@ -7813,14 +7836,16 @@
       "path": "compat/win32/src/window.cpp",
       "line": 227,
       "code": "memset(lpmsg, 0, sizeof(*lpmsg));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "compat/win32/src/window.cpp",
       "line": 566,
       "code": "memset(&cs, 0, sizeof(cs));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "c_header",
@@ -7948,77 +7973,88 @@
       "path": "src/core/ai.cpp",
       "line": 37,
       "code": "memset(app.state.vlpbAiPlanet, 0, app.state.game.cPlanMax * 16);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/ai.cpp",
       "line": 159,
       "code": "memset(rgRecycleShdef, 0, 16);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/ai.cpp",
       "line": 177,
       "code": "memset(rgRecycleSBShdef, 0, 16);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/ai.cpp",
       "line": 180,
       "code": "memset(rgRecycleSBShdef, 0, 16);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/ai.cpp",
       "line": 183,
       "code": "memset(rgRecycleSBShdef, 0, 16);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/ai.cpp",
       "line": 424,
       "code": "memset(&ord, 0, sizeof(ORDER));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/ai.cpp",
       "line": 437,
       "code": "memset(&ord, 0, sizeof(ORDER));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/ai.cpp",
       "line": 916,
       "code": "memset(rgRecycleShdef, 0, 16);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/ai.cpp",
       "line": 1201,
       "code": "memset(&ord, 0, sizeof(ORDER));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/ai.cpp",
       "line": 1263,
       "code": "memset(&ord, 0, sizeof(ORDER));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/ai.cpp",
       "line": 1309,
       "code": "memset(&ord, 0, sizeof(ORDER));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "c_header",
@@ -8152,21 +8188,24 @@
       "path": "src/core/ai2.cpp",
       "line": 111,
       "code": "memset(rgRecycleShdef, 0, 16);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/ai2.cpp",
       "line": 276,
       "code": "memset(&ord, 0, sizeof(ORDER));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/ai2.cpp",
       "line": 652,
       "code": "memset(&ord, 0, sizeof(ORDER));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "c_header",
@@ -8258,42 +8297,48 @@
       "path": "src/core/ai3.cpp",
       "line": 116,
       "code": "memset(rgRecycleShdef, 0, 16);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/ai3.cpp",
       "line": 153,
       "code": "memset(rgSplitShdef, 0, 16);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/ai3.cpp",
       "line": 156,
       "code": "memset(rgSplitShdef, 0, 16);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/ai3.cpp",
       "line": 159,
       "code": "memset(rgSplitShdef, 0, 16);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/ai3.cpp",
       "line": 163,
       "code": "memset(rgSplitShdef, 0, 16);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/ai3.cpp",
       "line": 935,
       "code": "memset(&ord, 0, sizeof(ORDER));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "c_header",
@@ -8371,56 +8416,64 @@
       "path": "src/core/ai4.cpp",
       "line": 67,
       "code": "memset(app.state.vlpbAiData, 0, 0x2000);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/ai4.cpp",
       "line": 103,
       "code": "memset(rgRecycleShdef, 0, 16);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/ai4.cpp",
       "line": 145,
       "code": "memset(rgRecycleSBShdef, 0, 16);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/ai4.cpp",
       "line": 148,
       "code": "memset(rgRecycleSBShdef, 0, 16);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/ai4.cpp",
       "line": 151,
       "code": "memset(rgRecycleSBShdef, 0, 16);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/ai4.cpp",
       "line": 157,
       "code": "memset(lpciPlanTemp, 0, app.state.game.cPlanMax * cbWireCyberInfo);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/ai4.cpp",
       "line": 1027,
       "code": "memset(&ord, 0, sizeof(ORDER));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/ai4.cpp",
       "line": 1069,
       "code": "memset(&ord, 0, sizeof(ORDER));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "c_header",
@@ -8638,56 +8691,64 @@
       "path": "src/core/aiutil.cpp",
       "line": 27,
       "code": "memset(&shdef, 0, sizeof(SHDEF));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/aiutil.cpp",
       "line": 116,
       "code": "memset(rgfBmpUsed, 0, 8);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/aiutil.cpp",
       "line": 246,
       "code": "memset(&ord, 0, sizeof(ORDER));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/aiutil.cpp",
       "line": 264,
       "code": "memset(&ord, 0, sizeof(ORDER));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/aiutil.cpp",
       "line": 675,
       "code": "memset(&ord, 0, sizeof(ORDER));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/aiutil.cpp",
       "line": 962,
       "code": "memset(&ord, 0, sizeof(ORDER));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/aiutil.cpp",
       "line": 1167,
       "code": "memset(app.state.lpplProdGlob->rgprod(), 0, 4);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/aiutil.cpp",
       "line": 1835,
       "code": "memset(&ord, 0, sizeof(ORDER));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "c_header",
@@ -8842,91 +8903,104 @@
       "path": "src/core/battle.cpp",
       "line": 298,
       "code": "memset(rggrfAttack, 0, 32);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/battle.cpp",
       "line": 299,
       "code": "memset(rgcsh, 0, 64);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/battle.cpp",
       "line": 458,
       "code": "memset(rgctok, 0, 16);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/battle.cpp",
       "line": 955,
       "code": "memset(mpiplrdibrc, 255, 16);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/battle.cpp",
       "line": 961,
       "code": "memset(rgfTorp, 0, 16);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/battle.cpp",
       "line": 1972,
       "code": "memset(&flDead, 0, sizeof(FLEET));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/battle.cpp",
       "line": 2082,
       "code": "memset(app.state.lpbBattleCur, 0, 8);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/battle.cpp",
       "line": 2315,
       "code": "memset(rgPlrLosses, 0, 0x200);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/battle.cpp",
       "line": 2317,
       "code": "memset(rgfInit, 0, 64);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/battle.cpp",
       "line": 2318,
       "code": "memset(app.state.vrgtok, 0, 256 * sizeof(TOK));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/battle.cpp",
       "line": 2322,
       "code": "memset(app.state.rgTechBattle, 0, 6);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/battle.cpp",
       "line": 2323,
       "code": "memset(app.state.rgTechTrader, 0, 13);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/battle.cpp",
       "line": 2581,
       "code": "memset(rgcfl, 0, 16);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "c_header",
@@ -9124,42 +9198,48 @@
       "path": "src/core/create.cpp",
       "line": 174,
       "code": "memset(grUsed, 0, 128);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/create.cpp",
       "line": 190,
       "code": "memset(app.state.lpPlanets, 0, cPlanMax * sizeof(PLANET));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/create.cpp",
       "line": 574,
       "code": "memset(lpshdef + 4, 0, 6 * sizeof(SHDEF));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/create.cpp",
       "line": 619,
       "code": "memset(lpshdef, 0, 16 * sizeof(SHDEF));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/create.cpp",
       "line": 1011,
       "code": "memset(&app.state.game, 0, sizeof(GAME));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/create.cpp",
       "line": 1353,
       "code": "memset(&app.state.game, 0, sizeof(GAME));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "unbounded_copy",
@@ -9469,77 +9549,88 @@
       "path": "src/core/file.cpp",
       "line": 52,
       "code": "memset(&shdef, 0, sizeof(SHDEF));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/file.cpp",
       "line": 109,
       "code": "memset(pplr, 0, sizeof(PLAYER));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/file.cpp",
       "line": 221,
       "code": "memset(app.state.rgplr, 0, app.state.game.cPlayer * 192);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/file.cpp",
       "line": 381,
       "code": "memset(app.state.lpThings, 0, app.state.cThingAlloc * sizeof(THING));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/file.cpp",
       "line": 616,
       "code": "memset(app.state.vlprgScoreX, 0, app.state.game.cPlayer * sizeof(SCOREX));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/file.cpp",
       "line": 665,
       "code": "memset(app.state.lpThings, 0, app.state.cThingAlloc * sizeof(THING));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/file.cpp",
       "line": 687,
       "code": "memset(lpth, 0, sizeof(THING));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/file.cpp",
       "line": 863,
       "code": "memset(lppl, 0, sizeof(PLANET));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/file.cpp",
       "line": 1028,
       "code": "memset(lpfl, 0, sizeof(FLEET));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/file.cpp",
       "line": 1035,
       "code": "memset(lpfl->lpplord->rgord(), 0, (lpfl->cord + 1) * 18);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/file.cpp",
       "line": 1039,
       "code": "memset(app.state.rgbCur, 0, 18);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "unbounded_copy",
@@ -9731,21 +9822,24 @@
       "path": "src/core/log.cpp",
       "line": 351,
       "code": "memset(&lxNew, 0, sizeof(LOGXFER));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/log.cpp",
       "line": 901,
       "code": "memset(lpxfCur, 0, sizeof(XFERFULL));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/log.cpp",
       "line": 1345,
       "code": "memset(rtlh.rgbUnused, 0, sizeof(rtlh.rgbUnused));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "unbounded_copy",
@@ -9858,14 +9952,16 @@
       "path": "src/core/memory.cpp",
       "line": 110,
       "code": "memset(static_cast<std::byte *>(hmem) + cbCur, 0, cbGrow);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/memory.cpp",
       "line": 377,
       "code": "std::memset(storage.data(), 0, sizeof(ORDER));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "c_header",
@@ -9972,14 +10068,16 @@
       "path": "src/core/msg.cpp",
       "line": 675,
       "code": "memset(app.state.bitfMsgSent, 0, 49);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/msg.cpp",
       "line": 676,
       "code": "memset(app.state.bitfMsgFiltered, 0, 49);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "unbounded_copy",
@@ -10094,7 +10192,8 @@
       "path": "src/core/produce.cpp",
       "line": 39,
       "code": "memset(rgprod, 0, 64 * sizeof(PROD));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "unbounded_copy",
@@ -10151,21 +10250,24 @@
       "path": "src/core/race.cpp",
       "line": 496,
       "code": "memset(plr.szName + cch, 0, sizeof(plr.szName) - cch);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/race.cpp",
       "line": 498,
       "code": "memset(plr.szNames + cch, 0, sizeof(plr.szNames) - cch);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/race.cpp",
       "line": 538,
       "code": "memset(pplr, 0, sizeof(PLAYER));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "unbounded_copy",
@@ -10945,28 +11047,32 @@
       "path": "src/core/save.cpp",
       "line": 226,
       "code": "memset(lpord + 1, 0, sizeof(ORDER));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/save.cpp",
       "line": 331,
       "code": "memset(&plrT.idPlanetHome, 0, (uint8_t *)&plrT.szName - (uint8_t *)&plrT.idPlanetHome);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/save.cpp",
       "line": 651,
       "code": "memset(rgb, 0, 80);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/save.cpp",
       "line": 957,
       "code": "memset(&rtbof, 0, sizeof(rtbof));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "unbounded_copy",
@@ -11079,21 +11185,24 @@
       "path": "src/core/ship.cpp",
       "line": 256,
       "code": "memset(&xfer.pl(), 0, sizeof(PLANET));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/ship.cpp",
       "line": 765,
       "code": "memset(&rgflCur[i], 0, sizeof(FLEET));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/ship.cpp",
       "line": 936,
       "code": "memset(&flDead, 0, sizeof(FLEET));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "c_header",
@@ -11115,14 +11224,16 @@
       "path": "src/core/ship2.cpp",
       "line": 33,
       "code": "memset(rgpct, 0, 32);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/ship2.cpp",
       "line": 67,
       "code": "memset(&flDead, 0, sizeof(FLEET));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "c_header",
@@ -11973,7 +12084,8 @@
       "path": "src/core/thing.cpp",
       "line": 16,
       "code": "memset(&thNew, 0, sizeof(THING));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "c_header",
@@ -12100,42 +12212,48 @@
       "path": "src/core/turn.cpp",
       "line": 93,
       "code": "memset(app.state.vrgPlanResExtra, 0, app.state.game.cPlanMax * 2);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/turn.cpp",
       "line": 96,
       "code": "memset(app.state.vrgiplrPopScore, 0xff, app.state.game.cPlanMax * sizeof(int16_t));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/turn.cpp",
       "line": 305,
       "code": "memset(rgfNoXFile, 0, 16);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/turn.cpp",
       "line": 443,
       "code": "memset(app.state.vrgPlanResExtra, 0, app.state.game.cPlanMax * 2);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/turn.cpp",
       "line": 1478,
       "code": "memset(&flDead, 0, sizeof(FLEET));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/turn.cpp",
       "line": 1881,
       "code": "memset(&flDead, 0, sizeof(FLEET));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "unbounded_copy",
@@ -12283,49 +12401,56 @@
       "path": "src/core/turn2.cpp",
       "line": 328,
       "code": "memset(pprodPartial, 0, sizeof(PROD));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/turn2.cpp",
       "line": 800,
       "code": "memset(rgcCol, 0, 64);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/turn2.cpp",
       "line": 801,
       "code": "memset(rgcPower, 0, 64);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/turn2.cpp",
       "line": 912,
       "code": "memset(app.state.rgTechBattle, 0, 6);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/turn2.cpp",
       "line": 913,
       "code": "memset(app.state.rgTechTrader, 0, 13);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/turn2.cpp",
       "line": 937,
       "code": "memset(&prod, 0, sizeof(PROD));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/turn2.cpp",
       "line": 1601,
       "code": "memset(rgcCond, 0, 16);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "unbounded_copy",
@@ -12480,14 +12605,16 @@
       "path": "src/core/turn3.cpp",
       "line": 550,
       "code": "memset(app.state.rgTechBattle, 0, 6);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/turn3.cpp",
       "line": 551,
       "code": "memset(app.state.rgTechTrader, 0, 13);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "c_header",
@@ -12650,28 +12777,32 @@
       "path": "src/core/util.cpp",
       "line": 1021,
       "code": "memset(lpfl, 0, sizeof(FLEET));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/util.cpp",
       "line": 1088,
       "code": "memset(rgdp, 0, 64);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/util.cpp",
       "line": 1089,
       "code": "memset(rgcshDamaged, 0, 32);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/core/util.cpp",
       "line": 1930,
       "code": "memset(&score, 0, sizeof(SCORE));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "unbounded_copy",
@@ -13727,14 +13858,16 @@
       "path": "src/ui/buildui.cpp",
       "line": 477,
       "code": "memset(lpshdef, 0, sizeof(SHDEF));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/ui/buildui.cpp",
       "line": 480,
       "code": "memset(lpshdef->hul.rghs, 0, 64);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "unbounded_copy",
@@ -13917,21 +14050,24 @@
       "path": "src/ui/createui.cpp",
       "line": 66,
       "code": "memset(rgszLibraryRaceNew, 0, sizeof(rgszLibraryRaceNew));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/ui/createui.cpp",
       "line": 67,
       "code": "memset(app.state.vrgplrTypeNew, 0, 16);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/ui/createui.cpp",
       "line": 70,
       "code": "memset(&app.state.game, 0, sizeof(GAME));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "unbounded_copy",
@@ -14649,119 +14785,136 @@
       "path": "src/ui/libraryui.cpp",
       "line": 968,
       "code": "memset(&ofn, 0, sizeof(ofn));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/ui/libraryui.cpp",
       "line": 969,
       "code": "memset(szTarget, 0, sizeof(szTarget));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/ui/libraryui.cpp",
       "line": 1039,
       "code": "memset(&ofn, 0, sizeof(ofn));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/ui/libraryui.cpp",
       "line": 1040,
       "code": "memset(szTarget, 0, sizeof(szTarget));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/ui/libraryui.cpp",
       "line": 1182,
       "code": "memset(&ofn, 0, sizeof(ofn));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/ui/libraryui.cpp",
       "line": 1183,
       "code": "memset(szSource, 0, sizeof(szSource));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/ui/libraryui.cpp",
       "line": 1673,
       "code": "memset(&ofn, 0, sizeof(ofn));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/ui/libraryui.cpp",
       "line": 1674,
       "code": "memset(szZipName, 0, sizeof(szZipName));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/ui/libraryui.cpp",
       "line": 1723,
       "code": "memset(&le, 0, sizeof(le));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/ui/libraryui.cpp",
       "line": 1730,
       "code": "memset(&li, 0, sizeof(li));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/ui/libraryui.cpp",
       "line": 1924,
       "code": "memset(&lm, 0, sizeof(lm));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/ui/libraryui.cpp",
       "line": 1995,
       "code": "memset(&ofn, 0, sizeof(ofn));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/ui/libraryui.cpp",
       "line": 1996,
       "code": "memset(pszChosen, 0, cchChosen);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/ui/libraryui.cpp",
       "line": 2112,
       "code": "memset(&li, 0, sizeof(li));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/ui/libraryui.cpp",
       "line": 2424,
       "code": "memset(&ofn, 0, sizeof(ofn));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/ui/libraryui.cpp",
       "line": 2425,
       "code": "memset(szChosen, 0, sizeof(szChosen));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/ui/libraryui.cpp",
       "line": 2808,
       "code": "memset(&continueLibrary, 0, sizeof(continueLibrary));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "unbounded_copy",
@@ -15091,7 +15244,8 @@
       "path": "src/ui/libraryzip.cpp",
       "line": 331,
       "code": "memset(&zs, 0, sizeof(zs));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "unbounded_copy",
@@ -15891,14 +16045,16 @@
       "path": "src/ui/mdi.cpp",
       "line": 1049,
       "code": "memset(&pd, 0, sizeof(PRINTDLG));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/ui/mdi.cpp",
       "line": 1751,
       "code": "memset(&ofn, 0, sizeof(OPENFILENAME));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "unbounded_copy",
@@ -17101,14 +17257,16 @@
       "path": "src/ui/preferencesui.cpp",
       "line": 13,
       "code": "memset(app.state.vrgZip, 0, 96);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/ui/preferencesui.cpp",
       "line": 46,
       "code": "memset(app.state.vrgZipProd, 0, 200);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "unbounded_copy",
@@ -17354,7 +17512,8 @@
       "path": "src/ui/produceui.cpp",
       "line": 371,
       "code": "memset(lpplprodT->rgprod(), 0, cMax * 4);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "unbounded_copy",
@@ -17572,35 +17731,40 @@
       "path": "src/ui/raceui.cpp",
       "line": 332,
       "code": "memset(app.state.vplr.szName, 0, 32);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/ui/raceui.cpp",
       "line": 334,
       "code": "memset(app.state.vplr.szNames, 0, 32);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/ui/raceui.cpp",
       "line": 340,
       "code": "memset(app.state.vplr.szName, 0, 32);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/ui/raceui.cpp",
       "line": 343,
       "code": "memset(app.state.vplr.szNames, 0, 32);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/ui/raceui.cpp",
       "line": 1442,
       "code": "memset(&ofn, 0, sizeof(OPENFILENAME));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "unbounded_copy",
@@ -19066,21 +19230,24 @@
       "path": "src/ui/scan.cpp",
       "line": 931,
       "code": "memset(rgWhatsHere, 0, 999);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/ui/scan.cpp",
       "line": 1758,
       "code": "memset(rgDup, 0, app.state.sel.fl.cord * 2);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/ui/scan.cpp",
       "line": 2401,
       "code": "memset((uint8_t *)lpord - 10, 0, 10);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "unbounded_copy",
@@ -19221,7 +19388,8 @@
       "path": "src/ui/scaninspect.cpp",
       "line": 105,
       "code": "memset(&scan, 0, sizeof(scan)); scan.idpl = idplNone; scan.ifl = iflNone; scan.ith = ithNone; scan.iwp = iwpNone;",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "c_header",
@@ -19849,7 +20017,8 @@
       "path": "src/ui/shipui.cpp",
       "line": 930,
       "code": "memset((uint8_t *)&app.state.sel.fl.lpplord->rgord()[app.state.sel.iwpAct] + 8, 0, 10);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "unbounded_copy",
@@ -19990,14 +20159,16 @@
       "path": "src/ui/stars.cpp",
       "line": 24,
       "code": "memset(&app.state.tutor, 0, sizeof(TUTOR));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/ui/stars.cpp",
       "line": 25,
       "code": "memset(&app.lpui->vtimer, 0, sizeof(TIMER));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "c_header",
@@ -20252,21 +20423,24 @@
       "path": "src/ui/tutor.cpp",
       "line": 206,
       "code": "memset(&app.state.tutor, 0, sizeof(TUTOR));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/ui/tutor.cpp",
       "line": 251,
       "code": "memset((uint8_t *)(ZIPPRODQ *)app.state.vrgZipProd + 14, 0, 26);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "byte_initialization",
       "path": "src/ui/tutor.cpp",
       "line": 357,
       "code": "memset(&app.state.tutor, 0, sizeof(TUTOR));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "unbounded_copy",
@@ -20506,7 +20680,8 @@
       "path": "src/ui/utilgenui.cpp",
       "line": 1328,
       "code": "memset(plf, 0, sizeof(LOGFONT));",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "unbounded_copy",
@@ -20802,7 +20977,8 @@
       "path": "src/ui/vcr.cpp",
       "line": 601,
       "code": "memset(rgfSeen, 0, 0x100);",
-      "disposition": "pending"
+      "disposition": "reviewed-L03",
+      "evidence": "docs/CPP-LIVE-INITIALIZATION.json"
     },
     {
       "kind": "unbounded_copy",
@@ -20930,6 +21106,29 @@
       "canonical_models": "unchanged",
       "baseline": "unchanged",
       "receipts": "dist/verification/live-cpp/l01b/"
+    },
+    {
+      "batch": "L03",
+      "debug_build": "pass; no warnings; old-style casts and integer null pointer constants are errors",
+      "desktop": "151/151; includes 29 leak checks and available tutorial smoke",
+      "host": "27/27",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "windows_syntax": "146 owned application/wrapper translation units; four initially rejected units pass after targeted portability repairs. Twelve units with final subobject/truth-test changes pass again. SDK/process and Windows wrapper chooser adapters also pass. Syntax qualification, not native execution.",
+      "wire_inventory": "259 unchanged frozen measurements; 46 record names",
+      "canonical_models": "unchanged",
+      "baseline": "unchanged",
+      "receipts": "dist/verification/live-cpp/l03/"
     }
   ],
   "generators": [

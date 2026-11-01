@@ -1,4 +1,5 @@
 #include "win.h"
+#include <algorithm>
 #include "appstate.h"
 #include "callbackcontext.h"
 #include "uistate.h"
@@ -63,11 +64,11 @@ void NewGameWizard(APPSESSION &app, HWND hwnd, std::int16_t fReadOnly) {
     app.lpui->vrgplrNew = rgplrLocal;
     app.lpui->vrgszFileNew = szFileLocal;
     app.lpui->vcplrNew = 0;
-    std::memset(rgszLibraryRaceNew, 0, sizeof(rgszLibraryRaceNew));
-    std::memset(app.state.vrgplrTypeNew, 0, 16);
+    for (auto &sz : rgszLibraryRaceNew) std::ranges::fill(sz, char{});
+    std::ranges::fill(app.state.vrgplrTypeNew, 0);
     if (!fReadOnly) {
         gameT = app.state.game;
-        std::memset(&app.state.game, 0, sizeof(GAME));
+        app.state.game = {};
         app.state.game.cPlanMax = gameT.cPlanMax;
         app.state.game.cPlayer = gameT.cPlayer;
         lvlAi = lvlAiStandard;
@@ -248,7 +249,7 @@ Finish:
     if (!app.lpui->fFreeingTitle) {
         app.lpui->fFreeingTitle = 1;
         ControlIO().pfnDestroyWindow(app.lpui->hwndTitle);
-        app.lpui->hwndTitle = 0;
+        app.lpui->hwndTitle = nullptr;
         ui::ShowWindow(app.lpui->hwndFrame, win32::SW_SHOW);
     }
     if (!FFinishLibraryGame(app, hwnd, GenerateWorld(app, 0))) {

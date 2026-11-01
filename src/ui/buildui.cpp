@@ -1,4 +1,5 @@
 #include "win.h"
+#include <algorithm>
 #include "appstate.h"
 #include "callbackcontext.h"
 #include "uistate.h"
@@ -474,10 +475,10 @@ INT_PTR  SlotDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                     } else {
                         lpshdef = &app.state.rgshdef[i];
                     }
-                    std::memset(lpshdef, 0, sizeof(SHDEF));
+                    *lpshdef = {};
                     lpshdef->hul = PartQueryIO().pfnHull(j)->hul;
                     lpshdef->det = detAll;
-                    std::memset(lpshdef->hul.rghs, 0, 64);
+                    std::fill_n(lpshdef->hul.rghs, 16, HS{});
                 }
                 win32::CheckRadioButton(hwnd, IDC_DESIGNER_EXISTING, IDC_DESIGNER_COMPONENTS, IDC_DESIGNER_EXISTING);
                 lpshdef->turn = app.state.game.turn;
@@ -597,7 +598,7 @@ INT_PTR  SlotDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             } else {
                 SetBuildSelection(app, -2);
                 ControlIO().pfnStickyDlgPos(hwnd, &app.lpui->ptStickySlotDlg, 0);
-                app.lpui->hwndSlotDlg = 0;
+                app.lpui->hwndSlotDlg = nullptr;
                 ControlIO().pfnEndDialog(hwnd, LOWORD(wParam) == IDOK);
                 if (app.state.gd.fTutorial) {
                     PresentationIO().pfnTutor(app);

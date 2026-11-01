@@ -430,7 +430,7 @@ void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
             yTop += static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2;
             c = TextIO().pfnCchGetString(app, idsDestination2, app.state.szWork);
             RightTextOut(app, hdc, xLeft - 4, yTop, app.state.szWork, c, 0);
-            if ((1 << app.state.idPlayer & lpth->thw().grbitPlrTrav()) && (lpthDest = LpthFromId(app, lpth->thw().idPartner())) != 0) {
+            if ((1 << app.state.idPlayer & lpth->thw().grbitPlrTrav()) && (lpthDest = LpthFromId(app, lpth->thw().idPartner()))) {
                 c = win32::wsprintfA(app.state.szWork, szT, lpthDest->pt().x(), lpthDest->pt().y());
             } else {
                 c = TextIO().pfnCchGetString(app, idsUnknown2, app.state.szWork);

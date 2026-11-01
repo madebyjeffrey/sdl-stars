@@ -88,7 +88,7 @@ LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         win32::FillRect(reinterpret_cast<HDC>(wParam), &rc, app.lpui->hbrButtonFace);
         return 1;
     case win32::WM_SETCURSOR:
-        hcs = 0;
+        hcs = nullptr;
         GetCursorPos16(&pt);
         ScreenToClient16(hwnd, &pt);
         if (HtMsgBox(app, pt) == htMsgNone)
@@ -712,7 +712,7 @@ void SetMsgTitle(APPSESSION &app, HWND hwnd) {
                             app.lpui->vptMsg.y = mb.rgParam[1];
                         }
                     } else if (mb.wGoto < 0) {
-                        if (LpflFromId(app, app.lpui->idMsgObj) != 0) {
+                        if (LpflFromId(app, app.lpui->idMsgObj)) {
                             app.lpui->mdMsgObj = mdMsgObjFleet;
                         } else {
                             app.lpui->mdMsgObj = mdMsgObjNone;

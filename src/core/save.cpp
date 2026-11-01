@@ -1,4 +1,5 @@
 #include "common.h"
+#include <algorithm>
 #include "appstate.h"
 #include "text_io.h"
 #include "turn_io.h"
@@ -223,7 +224,7 @@ std::int16_t FWriteDataFile(APPSESSION &app, char *pszFileBase, std::int16_t iPl
                                 std::memmove(lpord + 2, lpord + 1, (lpfl->cord - 1) * sizeof(ORDER));
                             }
                             if (lpfl->cord == 1) {
-                                std::memset(lpord + 1, 0, sizeof(ORDER));
+                                lpord[1] = {};
                                 lpord[1].fValidTask = 1;
                                 lpord[1].grTask = grTaskPatrol;
                                 lpord[1].tptl() = lpord->tptl();
@@ -648,7 +649,7 @@ void WritePlanet(APPSESSION &app, PLANET *lppl, RecordType rt, std::int16_t fHis
     std::int16_t  i;
     std::uint8_t *pb;
 
-    std::memset(rgb, 0, 80);
+    std::fill_n(rgb, 80, 0);
     PpvFromPrefix(rgb, sizeof(rgb)).SetId(lppl->id);
     PpvFromPrefix(rgb, sizeof(rgb)).SetIPlayer(lppl->iPlayer);
     PpvFromPrefix(rgb, sizeof(rgb)).SetDet(lppl->det);
@@ -954,7 +955,7 @@ static void WriteRtBof(APPSESSION &app, const RTBOF &rtbof) {
 void WriteBOF(APPSESSION &app, std::int16_t iPlayer, std::int16_t dt, std::int16_t fMulti) {
     RTBOF rtbof;
 
-    std::memset(&rtbof, 0, sizeof(rtbof));
+    rtbof = {};
     std::strncpy(rtbof.rgid, "J3J3", 4);
     rtbof.lidGame = app.state.game.lid;
     rtbof.wGen = app.state.game.wGen;

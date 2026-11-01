@@ -1,4 +1,5 @@
 #include "common.h"
+#include <algorithm>
 #include "appstate.h"
 #include "text_io.h"
 #include "heap_io.h"
@@ -49,7 +50,7 @@ std::int16_t FReadShDef(APPSESSION &app, const std::uint8_t *lprt, SHDEF *lpshde
     PART     part;
     std::size_t   ibName;
 
-    std::memset(&shdef, 0, sizeof(SHDEF));
+    shdef = {};
 
     if (!FDecodeShDefFixed(std::as_bytes(std::span(lprt, cb)), shdef, ibName) ||
         shdef.hul.ihuldef > ihuldefDeathStart || cb <= ibName) return 0;
@@ -106,7 +107,7 @@ void ReadRtPlr(APPSESSION &app, PLAYER *pplr, std::uint8_t *pbIn, std::size_t cb
     std::int16_t iOff;
     std::size_t cbRead;
 
-    std::memset(pplr, 0, sizeof(PLAYER));
+    *pplr = {};
     if (cb < cbWirePlayerPartial) goto invalid;
     // A full record stores a relation count where rgmdRelation begins, then
     // that many relations; a partial one stops before idPlanetHome.
@@ -218,7 +219,7 @@ std::int16_t FLoadGame(APPSESSION &app, const char *pszFileName, const char *psz
             iPlayer--;
         }
         ResetMessages(app);
-        std::memset(app.state.rgplr, 0, app.state.game.cPlayer * 192);
+        std::fill_n(app.state.rgplr, app.state.game.cPlayer, PLAYER{});
         ResetHb(app, htShips);
         app.state.idPlayer = iPlayer;
         fSilentSav = app.state.fFileErrSilent;
@@ -378,7 +379,7 @@ std::int16_t FLoadGame(APPSESSION &app, const char *pszFileName, const char *psz
                 app.state.lpThings = LpAlloc<THING>(app, app.state.cThingAlloc * sizeof(THING), htThings);
                 if (!app.state.lpThings)
                     goto CorruptHist;
-                std::memset(app.state.lpThings, 0, app.state.cThingAlloc * sizeof(THING));
+                std::fill_n(app.state.lpThings, app.state.cThingAlloc, THING{});
                 RecordIO().pfnReadRt(app);
                 for (i = 0, lpth = app.state.lpThings; i < app.state.cThing; i++, lpth++) {
                     if (app.state.hdrCur.rt != rtThing)
@@ -613,7 +614,7 @@ LNextTurn:
         }
         if (!app.state.vlprgScoreX) {
             app.state.vlprgScoreX = LpAlloc<SCOREX>(app, app.state.game.cPlayer * sizeof(SCOREX), htMisc);
-            std::memset(app.state.vlprgScoreX, 0, app.state.game.cPlayer * sizeof(SCOREX));
+            std::fill_n(app.state.vlprgScoreX, app.state.game.cPlayer, SCOREX{});
         }
         while (app.state.hdrCur.rt == rtScore) {
             iplr = static_cast<std::uint8_t>(app.state.rgbCur[0]) & 31;
@@ -662,7 +663,7 @@ LNextTurn:
                 app.state.lpThings = LpAlloc<THING>(app, app.state.cThingAlloc * sizeof(THING), htThings);
                 if (!app.state.lpThings)
                     goto LError;
-                std::memset(app.state.lpThings, 0, app.state.cThingAlloc * sizeof(THING));
+                std::fill_n(app.state.lpThings, app.state.cThingAlloc, THING{});
             }
             RecordIO().pfnReadRt(app);
             lpth = app.state.lpThings;
@@ -684,7 +685,7 @@ LNextTurn:
                     }
                     if (j < app.state.cThing) {
                         std::memmove(lpth + 1, lpth, (app.state.cThing - j) * sizeof(THING));
-                        std::memset(lpth, 0, sizeof(THING));
+                        *lpth = {};
                     }
                 }
                 app.state.cThing++;
@@ -860,7 +861,7 @@ std::int16_t FReadPlanet(APPSESSION &app, std::int16_t iPlayer, PLANET *lppl, st
 
     fFirstYear = 0;
     if (!fPreInited) {
-        std::memset(lppl, 0, sizeof(PLANET));
+        *lppl = {};
     }
     if (fHistory || iPlayer == iplrNone) {
         lppl->fFirstYear = PpvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).fFirstYear();
@@ -1025,18 +1026,18 @@ std::int16_t FReadFleet(APPSESSION &app, FLEET *lpfl) {
     std::int16_t   i = 0;
     char      szT[33];
 
-    std::memset(lpfl, 0, sizeof(FLEET));
+    *lpfl = {};
     if (!FDecodeRtFleet(std::as_bytes(std::span(app.state.rgbCur)), *lpfl, app.state.hdrCur.rt == rtFleetA, i)) goto Corrupt;
     if (lpfl->det < detAll) {
         RecordIO().pfnReadRt(app);
         return 1;
     }
     lpfl->lpplord = LpplAlloc<PLORD>(app, 18, lpfl->cord + 1, htOrd);
-    std::memset(lpfl->lpplord->rgord(), 0, (lpfl->cord + 1) * 18);
+    std::fill_n(lpfl->lpplord->rgord(), lpfl->cord + 1, ORDER{});
     cord = lpfl->cord;
     lpord = lpfl->lpplord->rgord();
     for (; cord != 0; cord--) {
-        std::memset(app.state.rgbCur, 0, 18);
+        std::fill_n(app.state.rgbCur, 18, 0);
         RecordIO().pfnReadRt(app);
         if (app.state.hdrCur.rt != rtOrderA && app.state.hdrCur.rt != rtOrderB)
             goto Corrupt;

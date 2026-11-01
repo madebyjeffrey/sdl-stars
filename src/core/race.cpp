@@ -1,4 +1,5 @@
 #include "common.h"
+#include <algorithm>
 #include "appstate.h"
 #include "text_io.h"
 #include "planet_query_io.h"
@@ -493,9 +494,9 @@ std::uint16_t IRaceChecksum(PLAYER *pplr) {
        checksum when loaded. */
     plr = *pplr;
     cch = strnlen(plr.szName, sizeof(plr.szName));
-    std::memset(plr.szName + cch, 0, sizeof(plr.szName) - cch);
+    std::fill_n(plr.szName + cch, sizeof(plr.szName) - cch, 0);
     cch = strnlen(plr.szNames, sizeof(plr.szNames));
-    std::memset(plr.szNames + cch, 0, sizeof(plr.szNames) - cch);
+    std::fill_n(plr.szNames + cch, sizeof(plr.szNames) - cch, 0);
     FEncodePlayer(plr, rgb);
     NATIVEBYTEREADER input(rgb);
     cs = 96;
@@ -535,7 +536,7 @@ static std::int16_t FReadLegacyRacePlayer(APPSESSION &app, PLAYER *pplr, const s
     std::int16_t iOff;
     std::size_t cbRead;
 
-    std::memset(pplr, 0, sizeof(PLAYER));
+    *pplr = {};
     if (cb < cbWirePlayerPartial) return 0;
     if ((lpb[6] & 7) == detAll) {
         iOff = cbWirePlayerPrefix;

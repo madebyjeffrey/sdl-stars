@@ -77,7 +77,7 @@ static void RevealList(HWND hwnd, int i) {
 static void DeleteNotice(HWND hwnd, UINT i, LPARAM lData) {
     DELETEITEMSTRUCT ds;
     if (!FOwnerList(hwnd) || !win32::IsWindow(hwnd->hwndParent)) return;
-    std::memset(&ds, 0, sizeof(ds)); ds.CtlType = hwnd->lpcombo ? win32::ODT_COMBOBOX : win32::ODT_LISTBOX; ds.CtlID = static_cast<UINT>(hwnd->idChild);
+    ds = {}; ds.CtlType = hwnd->lpcombo ? win32::ODT_COMBOBOX : win32::ODT_LISTBOX; ds.CtlID = static_cast<UINT>(hwnd->idChild);
     ds.itemID = i; ds.hwndItem = hwnd; ds.itemData = static_cast<ULONG_PTR>(lData);
     win32::SendMessageA(hwnd->hwndParent, win32::WM_DELETEITEM, static_cast<WPARAM>(hwnd->idChild), reinterpret_cast<LPARAM>(&ds));
 }
@@ -342,7 +342,7 @@ LRESULT  CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         hdc = win32::GetDC(hwnd);
         if (hdc) { if (win32::GetTextMetricsA(hdc, &tm)) lp->cyItem = StarsMax(1, tm.tmHeight); win32::ReleaseDC(hwnd, hdc); }
         if (lpwin->dwStyle & win32::LBS_OWNERDRAWFIXED) {
-            std::memset(&ms, 0, sizeof(ms)); ms.CtlType = win32::ODT_LISTBOX; ms.CtlID = static_cast<UINT>(lpwin->idChild); ms.itemHeight = static_cast<UINT>(lp->cyItem);
+            ms = {}; ms.CtlType = win32::ODT_LISTBOX; ms.CtlID = static_cast<UINT>(lpwin->idChild); ms.itemHeight = static_cast<UINT>(lp->cyItem);
             win32::SendMessageA(lpwin->hwndParent, win32::WM_MEASUREITEM, static_cast<WPARAM>(lpwin->idChild), reinterpret_cast<LPARAM>(&ms));
             if (!win32::IsWindow(hwnd)) return -1;
             if (ms.itemHeight != 0 && ms.itemHeight <= INT_MAX) lp->cyItem = static_cast<int>(ms.itemHeight);

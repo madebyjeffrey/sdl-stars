@@ -107,7 +107,7 @@ HB *LphbReAlloc(APPSESSION &app, HB *lphb) {
         StarsThrowError(starsErrorMemory, idsMemory);
     }
     hmem = std::memmove(hmem, hmem, static_cast<std::size_t>(cbCur) + cbGrow);
-    std::memset(static_cast<std::byte *>(hmem) + cbCur, 0, cbGrow);
+    std::fill_n(static_cast<std::byte *>(hmem) + cbCur, cbGrow, std::byte{});
     lphbNew = static_cast<HB *>(std::memmove(hmem, hmem, sizeof(HB)));
     lphbNew->hmem = hmem;
     *plphb = lphbNew;
@@ -374,7 +374,7 @@ bool FApplyOrderBytes(APPSESSION &app, PLORD *lpplord, std::int16_t iord, const 
     static_assert(sizeof(ORDER) == cbWireOrder);
     if (fZero) {
         if (storage.size() < sizeof(ORDER)) return false;
-        std::memset(storage.data(), 0, sizeof(ORDER));
+        std::ranges::fill(storage.first(sizeof(ORDER)), std::byte{});
     }
     if (cbCopy > storage.size()) return false;
     // Wire records and the order heap are separate storage. A native temporary

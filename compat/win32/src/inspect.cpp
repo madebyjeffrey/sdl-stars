@@ -110,7 +110,7 @@ void StarsCompatFreeHierarchy(STARSCOMPATSNAPSHOT *lpsnap) {
         SDL_free(lpsnap->rgWindow[i].pszText);
     }
     SDL_free(lpsnap->rgWindow);
-    std::memset(lpsnap, 0, sizeof(*lpsnap));
+    *lpsnap = {};
 }
 
 BOOL StarsCompatCaptureHierarchy(STARSCOMPATSNAPSHOT *lpsnap) {

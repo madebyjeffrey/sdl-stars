@@ -1,7 +1,7 @@
 # Maintained C++ and independent-reference policy
 
 Owned production uses ISO C++20 (`.cpp`) or Objective-C++20 (`.mm`), extensions
-off, with `-Wpedantic -Wold-style-cast -Werror` in every actual compile variant. Native AppKit
+off, with `-Wpedantic -Wold-style-cast -Wzero-as-null-pointer-constant -Werror` in every actual compile variant. Native AppKit
 sources retain ARC/blocks and CMake's `-x objective-c++` driver spelling for `.mm`;
 that is not permission to force a C source into C++. Ordinary tests consume the
 same application headers and linked production targets. No function redirection,
@@ -13,7 +13,10 @@ language forcing, weakened diagnostics, symbol substitution, state doubles and
 private production clones. Application headers compile independently before and
 after standard-library headers. Owned code and generators use C++ standard
 headers and `std::` qualification for standard types and functions; actual SDK,
-SDL, POSIX and other foreign headers keep their native declarations. The SDL-free host checks core/platform headers;
+SDL, POSIX and other foreign headers keep their native declarations. Integer
+null pointer constants are compiler errors. Ordinary state resets use typed
+initialization/fill; the manifest accepts object byte resets only at the
+reasoned sites in `CPP-LIVE-INITIALIZATION.json`. The SDL-free host checks core/platform headers;
 the desktop additionally checks UI/wrapper headers. Core uses only a forward UI
 state type and receives the application owner explicitly.
 

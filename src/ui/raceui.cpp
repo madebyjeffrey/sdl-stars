@@ -1,4 +1,5 @@
 #include "win.h"
+#include <algorithm>
 #include "appstate.h"
 #include "callbackcontext.h"
 #include "uistate.h"
@@ -329,18 +330,18 @@ INT_PTR  RaceWizardDlg1(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             return 1;
         }
         if (HIWORD(wParam) == 0 && LOWORD(wParam) >= IDC_RACE_HUMANOID && LOWORD(wParam) <= IDC_RACE_CUSTOM) {
-            std::memset(app.state.vplr.szName, 0, 32);
+            std::ranges::fill(app.state.vplr.szName, 0);
             win32::GetDlgItemTextA(hwnd, IDC_RACE_NAME, app.state.vplr.szName, 32);
-            std::memset(app.state.vplr.szNames, 0, 32);
+            std::ranges::fill(app.state.vplr.szNames, 0);
             win32::GetDlgItemTextA(hwnd, IDC_RACE_PLURAL_NAME, app.state.vplr.szNames, 32);
             win32::GetDlgItemTextA(hwnd, LOWORD(wParam), szBuf, 32);
             for (i = 0; i < 7 && std::strcmp(app.state.vplr.szName, TextIO().pfnCompressed(app, static_cast<StringId>(idsHumanoid + i))) != 0; i++) {
             }
             if (i < 7 && LOWORD(wParam) < IDC_RACE_CUSTOM) {
-                std::memset(app.state.vplr.szName, 0, 32);
+                std::ranges::fill(app.state.vplr.szName, 0);
                 TextIO().pfnCchGetString(app, static_cast<StringId>(idsHumanoid + LOWORD(wParam) - IDC_RACE_HUMANOID), app.state.vplr.szName);
                 win32::SetDlgItemTextA(hwnd, IDC_RACE_NAME, app.state.vplr.szName);
-                std::memset(app.state.vplr.szNames, 0, 32);
+                std::ranges::fill(app.state.vplr.szNames, 0);
                 psz = TextIO().pfnPlayerName(app, 0, 1, 1, 0, 0, &app.state.vplr);
                 std::strcpy(app.state.vplr.szNames, psz);
                 win32::SetDlgItemTextA(hwnd, IDC_RACE_PLURAL_NAME, app.state.vplr.szNames);
@@ -720,7 +721,7 @@ std::int16_t FTrackRaceDlg2(APPSESSION &app, HWND hwnd, POINT16 pt, std::int16_t
     }
     dWidth = 0;
     dShift = 0;
-    psz = 0;
+    psz = nullptr;
     if (irc == 15) {
         dShift = 1;
         bt = 160;
@@ -1439,7 +1440,7 @@ std::int16_t FSaveRace(APPSESSION &app, char *szFileSuggest, PLAYER *pplr) {
             szFilter[i] = 0;
         }
     }
-    std::memset(&ofn, 0, sizeof(OPENFILENAME));
+    ofn = {};
     ofn.lStructSize = sizeof(OPENFILENAME);
     ofn.hwndOwner = app.lpui->hwndRaceParent;
     ofn.lpstrFilter = szFilter;

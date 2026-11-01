@@ -1,4 +1,5 @@
 #include "common.h"
+#include <algorithm>
 #include "appstate.h"
 #include "fleet_query_io.h"
 #include "production_io.h"
@@ -34,7 +35,7 @@ void DoAiTurn(APPSESSION &app, std::int16_t iPlayer, std::uint16_t wMdPlr) {
     }
     if (!app.state.vlpbAiPlanet || !app.state.vlpbAiData || !app.state.vrglpplAi)
         goto Cleanup;
-    std::memset(app.state.vlpbAiPlanet, 0, app.state.game.cPlanMax * 16);
+    std::fill_n(app.state.vlpbAiPlanet, app.state.game.cPlanMax * 16, 0);
     ComputeShdefPowers(app);
     MarkPlanetsUnderAttack(app);
     IncreaseAIMinefieldSizes(app);
@@ -156,7 +157,7 @@ void DoRobotoidAiTurn(APPSESSION &app, PROD *rgprod) {
     }
     app.state.vrgAiArmadaPotency[2] = j;
     app.state.vrgAiArmadaPotency[3] = 3 >= j / 2 - 1 ? j / 2 - 1 : 3;
-    std::memset(rgRecycleShdef, 0, 16);
+    std::ranges::fill(rgRecycleShdef, 0);
     if (app.state.game.turn < 120) {
         cRecyclePeriod = 50;
     } else {
@@ -174,13 +175,13 @@ void DoRobotoidAiTurn(APPSESSION &app, PROD *rgprod) {
     CheckAiShdefStatus(app, 6, 7, static_cast<std::uint32_t>((3 * cRecyclePeriod)) / 2, &iLatestBattle, rgRecycleShdef);
     if (app.state.game.turn > 80) {
         SplitOutShdefs(app, rgRecycleShdef);
-        std::memset(rgRecycleSBShdef, 0, 16);
+        std::ranges::fill(rgRecycleSBShdef, 0);
         rgRecycleSBShdef[0] = 2;
         SplitOutShdefs(app, rgRecycleSBShdef);
-        std::memset(rgRecycleSBShdef, 0, 16);
+        std::ranges::fill(rgRecycleSBShdef, 0);
         rgRecycleSBShdef[1] = 2;
         SplitOutShdefs(app, rgRecycleSBShdef);
-        std::memset(rgRecycleSBShdef, 0, 16);
+        std::ranges::fill(rgRecycleSBShdef, 0);
         rgRecycleSBShdef[13] = 2;
         rgRecycleSBShdef[12] = 2;
         rgRecycleSBShdef[11] = 2;
@@ -421,7 +422,7 @@ void DoRobotoidAiTurn(APPSESSION &app, PROD *rgprod) {
                     lpplDrop = LpplFromId(app, lpfl->idPlanet);
                     if (lpplDrop && lpplDrop->iPlayer != iplrNone && lpplDrop->iPlayer != app.state.idPlayer && lpfl->rgwtMin[3] > 0 &&
                         RaceQueryIO().pfnStat(&app.state.rgplr[lpplDrop->iPlayer], rsMajorAdv) != raMacintosh) {
-                        std::memset(&ord, 0, sizeof(ORDER));
+                        ord = {};
                         ord.pt = app.state.rgptPlan[lpplDrop->id];
                         ord.id = lpplDrop->id;
                         ord.grobj = grobjPlanet;
@@ -434,7 +435,7 @@ void DoRobotoidAiTurn(APPSESSION &app, PROD *rgprod) {
                         lpplDrop = LpplFindClosestEnum(app, lpplDrop, FEnumOurStarbase);
                         if (!lpplDrop)
                             continue;
-                        std::memset(&ord, 0, sizeof(ORDER));
+                        ord = {};
                         ord.id = lpplDrop->id;
                         ord.grobj = grobjPlanet;
                         ord.pt = app.state.rgptPlan[lpplDrop->id];
@@ -913,7 +914,7 @@ void DoTurinDroneAiTurn(APPSESSION &app, PROD *rgprod) {
     }
     app.state.vrgAiArmadaPotency[2] = j;
     app.state.vrgAiArmadaPotency[3] = 3 >= j / 2 - 1 ? j / 2 - 1 : 3;
-    std::memset(rgRecycleShdef, 0, 16);
+    std::ranges::fill(rgRecycleShdef, 0);
     if (app.state.game.turn < 120) {
         cRecyclePeriod = 50;
     } else {
@@ -1198,7 +1199,7 @@ void DoTurinDroneAiTurn(APPSESSION &app, PROD *rgprod) {
                         continue;
                     if (app.state.vlpbAiPlanet[idPlanDst * 16 + 3] != 0 && lpfl->rgwtMin[3] > 0 && RaceQueryIO().pfnStat(&app.state.rgplr[lppl->iPlayer], rsMajorAdv) != raMacintosh &&
                         !lppl->fStarbase) {
-                        std::memset(&ord, 0, sizeof(ORDER));
+                        ord = {};
                         ord.pt = app.state.rgptPlan[idPlanDst];
                         ord.grobj = grobjPlanet;
                         ord.id = idPlanDst;
@@ -1260,7 +1261,7 @@ void DoTurinDroneAiTurn(APPSESSION &app, PROD *rgprod) {
             lppl = LpplFindBestEnum(app, &app.state.sel.pl, FEnumCalcMinerDest);
             if (!lppl)
                 continue;
-            std::memset(&ord, 0, sizeof(ORDER));
+            ord = {};
             ord.id = lppl->id;
             ord.grobj = grobjPlanet;
             ord.pt = app.state.rgptPlan[lppl->id];
@@ -1306,7 +1307,7 @@ void DoTurinDroneAiTurn(APPSESSION &app, PROD *rgprod) {
                 lpplDest = LpplFindClosestEnum(app, lppl, FEnumCalcColonistDrop);
                 if (lpplDest) {
                     app.state.vlpbAiPlanet[lpplDest->id * 16 + 10] = app.state.vlpbAiPlanet[lpplDest->id * 16 + 0xa] | 0x80;
-                    std::memset(&ord, 0, sizeof(ORDER));
+                    ord = {};
                     ord.id = lpplDest->id;
                     ord.grobj = grobjPlanet;
                     ord.pt = app.state.rgptPlan[lpplDest->id];

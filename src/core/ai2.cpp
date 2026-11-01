@@ -1,4 +1,5 @@
 #include "common.h"
+#include <algorithm>
 #include "appstate.h"
 #include "fleet_query_io.h"
 #include "production_io.h"
@@ -108,7 +109,7 @@ void DoAutomitronAiTurn(APPSESSION &app, PROD *rgprod) {
     }
     app.state.vrgAiArmadaPotency[2] = j;
     app.state.vrgAiArmadaPotency[3] = 3 >= j / 2 - 1 ? j / 2 - 1 : 3;
-    std::memset(rgRecycleShdef, 0, 16);
+    std::ranges::fill(rgRecycleShdef, 0);
     if (app.state.game.turn < 120) {
         cRecyclePeriod = 50;
     } else {
@@ -273,7 +274,7 @@ void DoAutomitronAiTurn(APPSESSION &app, PROD *rgprod) {
                 if (lppl && (lppl->iPlayer == iplrNone || lppl->iPlayer == app.state.idPlayer))
                     continue;
                 if (app.state.vlpbAiPlanet[idPlanDst * 16 + 3] != 0 && lpfl->rgwtMin[3] > 0 && RaceQueryIO().pfnStat(&app.state.rgplr[lppl->iPlayer], rsMajorAdv) != raMacintosh) {
-                    std::memset(&ord, 0, sizeof(ORDER));
+                    ord = {};
                     ord.pt = app.state.rgptPlan[idPlanDst];
                     ord.grobj = grobjPlanet;
                     ord.id = idPlanDst;
@@ -649,7 +650,7 @@ void DoRototillAiTurn(APPSESSION &app, PROD *rgprod) {
                 if (lppl && (lppl->iPlayer == iplrNone || lppl->iPlayer == app.state.idPlayer))
                     continue;
                 if (app.state.vlpbAiPlanet[idPlanDst * 16 + 3] != 0 && lpfl->rgwtMin[3] > 0 && RaceQueryIO().pfnStat(&app.state.rgplr[lppl->iPlayer], rsMajorAdv) != raMacintosh) {
-                    std::memset(&ord, 0, sizeof(ORDER));
+                    ord = {};
                     ord.pt = app.state.rgptPlan[idPlanDst];
                     ord.grobj = grobjPlanet;
                     ord.id = idPlanDst;

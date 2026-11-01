@@ -1,4 +1,5 @@
 #include "win.h"
+#include <algorithm>
 #include "appstate.h"
 #include "callbackcontext.h"
 #include "uistate.h"
@@ -966,8 +967,8 @@ std::int16_t FExportLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName,
     if (!FInitRaceLibrary() || !FPortableRaceFilename(app, pszName)) return 0;
     CchSnprintf(szSource, sizeof(szSource), "%s%s%s", szRaceLibraryRoot, szDirSep, pszName);
     if (!pszTarget) {
-        std::memset(&ofn, 0, sizeof(ofn));
-        std::memset(szTarget, 0, sizeof(szTarget));
+        ofn = {};
+        std::ranges::fill(szTarget, 0);
         CchSnprintf(szTarget, sizeof(szTarget), "%s", pszName);
         ofn.lStructSize = sizeof(ofn);
         ofn.hwndOwner = hwnd;
@@ -1037,8 +1038,8 @@ std::int16_t FExportLibraryOrders(APPSESSION &app, HWND hwnd, const char *pszTar
     cch = CchSnprintf(szSuggested, sizeof(szSuggested), "%s.x%d", pszLibraryName, app.state.idPlayer + 1);
     if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szSuggested)) return 0;
     if (!pszTarget) {
-        std::memset(&ofn, 0, sizeof(ofn));
-        std::memset(szTarget, 0, sizeof(szTarget));
+        ofn = {};
+        std::ranges::fill(szTarget, 0);
         CchSnprintf(szTarget, sizeof(szTarget), "%s", szSuggested);
         cch = CchSnprintf(szFilter, sizeof(szFilter), TextIO().pfnCompressed(app, idsLibraryOrdersExportFilter),
                           app.state.idPlayer + 1, app.state.idPlayer + 1);
@@ -1180,8 +1181,8 @@ std::int16_t FImportLibraryRace(APPSESSION &app, HWND hwnd, const char *pszSourc
     std::int16_t fValid;
     std::int16_t fLegacy;
     if (!pszSource) {
-        std::memset(&ofn, 0, sizeof(ofn));
-        std::memset(szSource, 0, sizeof(szSource));
+        ofn = {};
+        std::ranges::fill(szSource, 0);
         ofn.lStructSize = sizeof(ofn);
         ofn.hwndOwner = hwnd;
         GetLibraryFileFilter(app, idsLibraryRaceFilesFilter, szFilter);
@@ -1671,8 +1672,8 @@ std::int16_t FExportLibraryGame(APPSESSION &app, HWND hwnd, const char *pszName,
                                  TextIO().pfnCompressed(app, idsLibraryExportGameTitle), win32::MB_YESNOCANCEL | win32::MB_ICONQUESTION | win32::MB_TASKMODAL);
             if (iChoice == IDCANCEL) return 0;
             if (iChoice == win32::IDYES) {
-                std::memset(&ofn, 0, sizeof(ofn));
-                std::memset(szZipName, 0, sizeof(szZipName));
+                ofn = {};
+                std::ranges::fill(szZipName, 0);
                 CchSnprintf(szZipName, sizeof(szZipName), "%s.zip", pszName);
                 ofn.lStructSize = sizeof(ofn);
                 ofn.hwndOwner = hwnd;
@@ -1721,14 +1722,14 @@ LZipFail:
     if (!CreateLibraryExportStage(szStage, sizeof(szStage), pszTarget)) goto LFail;
     if (std::strlen(szStage) + std::strlen(pszName) + sizeof("/backup.999/.m16") > sizeof(szStage)) goto LStageFail;
 
-    std::memset(&le, 0, sizeof(le));
+    le = {};
     le.pszSource = szSource;
     le.pszTarget = szStage;
     le.pszStem = pszName;
     if (!FNativeEnumerateDirectory(app, szSource, CopyGameExportEntry, &le) || le.fBad ||
         !le.fSawXY || !le.fSawPlayable) goto LStageFail;
 
-    std::memset(&li, 0, sizeof(li));
+    li = {};
     li.pszSource = szSource;
     li.pszTarget = szStage;
     li.pszStem = pszName;
@@ -1922,7 +1923,7 @@ static std::int16_t FImportSubsequentTurn(APPSESSION &app, HWND hwnd, const char
         AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryTurnInvalid), win32::MB_ICONEXCLAMATION);
         return 0;
     }
-    std::memset(&lm, 0, sizeof(lm));
+    lm = {};
     lm.lidGame = lidGame;
     if (!FNativeEnumerateDirectory(app, szLibraryRoot, FindLibraryTurnMatch, &lm)) return 0;
     if (lm.cMatches == 0) return -1;
@@ -1993,8 +1994,8 @@ static std::int16_t FChooseLibraryImportFile(APPSESSION &app, HWND hwnd, char *p
     OPENFILENAME ofn;
     char szTitle[256], szFilter[128], *pch;
 
-    std::memset(&ofn, 0, sizeof(ofn));
-    std::memset(pszChosen, 0, cchChosen);
+    ofn = {};
+    std::fill_n(pszChosen, cchChosen, 0);
     TextIO().pfnCchGetString(app, idsStarsGameFilesMHstRStars, szFilter);
     pch = std::strstr(szFilter, "*.M*;");
     if (pch) {
@@ -2110,7 +2111,7 @@ std::int16_t FImportLibraryGame(APPSESSION &app, HWND hwnd, const char *pszSourc
         szStem[pch - pchName] = 0;
     }
     if (!FInitLibrary()) return 0;
-    std::memset(&li, 0, sizeof(li));
+    li = {};
     li.pszStem = szStem;
     li.pszSource = szDir;
     li.fValid = 0;
@@ -2422,8 +2423,8 @@ std::int16_t FImportLibraryOrders(APPSESSION &app, HWND hwnd, const char *pszSou
     LRESULT i;
 
     if (!pszSource) {
-        std::memset(&ofn, 0, sizeof(ofn));
-        std::memset(szChosen, 0, sizeof(szChosen));
+        ofn = {};
+        std::ranges::fill(szChosen, 0);
         std::strcpy(szFilter, TextIO().pfnCompressed(app, idsLibraryOrdersImportFilter));
         for (pch = szFilter; *pch; pch++) if (*pch == '|') *pch = 0;
         ofn.lStructSize = sizeof(ofn);
@@ -2806,7 +2807,7 @@ static std::int16_t FindContinueLibraryGame(APPSESSION &app, void *lpData, const
 
 static std::int16_t FFindContinueLibraryGame(APPSESSION &app) {
     if (win32::GetPrivateProfileIntA("Library", "ContinueDeleted", 0, TextIO().pfnCompressed(app, idsStarsIni))) return 0;
-    std::memset(&continueLibrary, 0, sizeof(continueLibrary));
+    continueLibrary = {};
     continueLibrary.iPlayer = -1;
     return FInitLibrary() && FNativeEnumerateDirectory(app, szLibraryRoot, FindContinueLibraryGame, &continueLibrary) &&
            continueLibrary.fFound;

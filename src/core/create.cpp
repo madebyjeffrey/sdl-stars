@@ -1,4 +1,5 @@
 #include "common.h"
+#include <algorithm>
 #include "appstate.h"
 #include "text_io.h"
 #include "turn_io.h"
@@ -171,7 +172,7 @@ std::int16_t GenerateWorld(APPSESSION &app, std::int16_t fBatchMode) {
         }
         qsort16(app, app.state.rgptPlan, cPlanMax, sizeof(POINT16), reinterpret_cast<APPQSORTCOMPARE>(ICompLong));
     }
-    std::memset(grUsed, 0, 128);
+    std::ranges::fill(grUsed, 0);
     for (i = 0; i < cPlanMax; i++) {
         dx = RandomIO().pfnRandom(app, cPlanetName);
         while (grUsed[dx >> 3] & app.state.bitTbl[dx & 7]) {
@@ -187,7 +188,7 @@ std::int16_t GenerateWorld(APPSESSION &app, std::int16_t fBatchMode) {
     StarsRecoveryScope scopeRecovery;
     try {
         app.state.lpPlanets = LpAlloc<PLANET>(app, cPlanMax * sizeof(PLANET), htPlanets);
-        std::memset(app.state.lpPlanets, 0, cPlanMax * sizeof(PLANET));
+        std::fill_n(app.state.lpPlanets, cPlanMax, PLANET{});
         i = 0;
         lppl = app.state.lpPlanets;
         while (i < cPlanMax) {
@@ -571,7 +572,7 @@ RetryAll:
             app.state.rgplr[i].cshdefSB = 1;
             lpshdef = LpAlloc<SHDEF>(app, 10 * sizeof(SHDEF), htShips);
             std::memmove(lpshdef, LpshdefSBT(), 4 * sizeof(SHDEF));
-            std::memset(lpshdef + 4, 0, 6 * sizeof(SHDEF));
+            std::fill_n(lpshdef + 4, 6, SHDEF{});
             lpshdef->cBuilt = 1;
             lpshdef->cExist = 1;
             app.state.rglpshdefSB[i] = lpshdef;
@@ -616,7 +617,7 @@ RetryAll:
         for (i = 0; i < app.state.game.cPlayer; i++) {
             app.state.idPlayer = i;
             lpshdef = LpAlloc<SHDEF>(app, 16 * sizeof(SHDEF), htShips);
-            std::memset(lpshdef, 0, 16 * sizeof(SHDEF));
+            std::fill_n(lpshdef, 16, SHDEF{});
             for (j = 0; j < 16; j++) {
                 lpshdef[j].fFree = 1;
             }
@@ -1008,7 +1009,7 @@ std::int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
             *pchT = 0;
             TurnLog(app, idsGeneratingYearD);
         }
-        std::memset(&app.state.game, 0, sizeof(GAME));
+        app.state.game = {};
         RecordIO().pfnStreamOpen(app, pszFile, mdRead);
         cbFile = CbFileSize(app.state.hf);
         if (cbFile < 0 || cbFile >= 16000) {
@@ -1350,7 +1351,7 @@ LError:
 void CreateTutorWorld(APPSESSION &app) {
     std::int16_t i;
 
-    std::memset(&app.state.game, 0, sizeof(GAME));
+    app.state.game = {};
     app.state.game.cPlayer = 2;
     app.state.game.fTutorial = 1;
     app.state.game.mdDensity = densitySparse;

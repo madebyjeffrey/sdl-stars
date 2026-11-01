@@ -1,4 +1,5 @@
 #include "common.h"
+#include <algorithm>
 #include "appstate.h"
 #include "text_io.h"
 #include "presentation_io.h"
@@ -672,8 +673,8 @@ void ResetMessages(APPSESSION &app) {
     app.state.iMsgCur = imsgNone;
     app.state.cMsg = 0;
     app.state.iMsgSendCur = 0;
-    std::memset(app.state.bitfMsgSent, 0, 49);
-    std::memset(app.state.bitfMsgFiltered, 0, 49);
+    std::ranges::fill(app.state.bitfMsgSent, 0);
+    std::ranges::fill(app.state.bitfMsgFiltered, 0);
     app.state.vlpmsgplrIn = nullptr;
     app.state.vlpmsgplrOut = nullptr;
     app.state.vcmsgplrIn = 0;

@@ -113,7 +113,7 @@ INT_PTR  ZipOrderDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             switch (LOWORD(wParam)) {
             case IDOK:
             case IDCANCEL:
-                app.lpui->hwndZipOrderDlg = 0;
+                app.lpui->hwndZipOrderDlg = nullptr;
                 ControlIO().pfnStickyDlgPos(hwnd, &app.lpui->ptStickyZipOrderDlg, 0);
                 ControlIO().pfnEndDialog(hwnd, LOWORD(wParam) == IDOK);
                 if (app.state.gd.fTutorial) {

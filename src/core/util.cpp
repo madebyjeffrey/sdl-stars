@@ -1,4 +1,5 @@
 #include "common.h"
+#include <algorithm>
 #include "appstate.h"
 #include "text_io.h"
 #include "fleet_query_io.h"
@@ -1018,7 +1019,7 @@ FLEET *LpflNew(APPSESSION &app, std::int16_t iPlr, std::int16_t idPl) {
     app.state.rglpfl[i] = lpfl = LpAlloc<FLEET>(app, sizeof(FLEET), htFleets);
     app.state.cFleet++;
     app.state.rgplr[iPlr].cFleet++;
-    std::memset(lpfl, 0, sizeof(FLEET));
+    *lpfl = {};
     lpfl->SetIfl(iflPrev + 1);
     lpfl->iPlayer = iPlr;
     lpfl->SetIplr(iPlr);
@@ -1085,8 +1086,8 @@ std::int16_t FFleetMergeAll(APPSESSION &app, FLEET *pfl) {
     lpflMerge = nullptr;
     cflMerge = 0;
     fCshOverflow = 0;
-    std::memset(rgdp, 0, 64);
-    std::memset(rgcshDamaged, 0, 32);
+    std::ranges::fill(rgdp, 0);
+    std::ranges::fill(rgcshDamaged, 0);
     iplr = pfl->iPlayer;
     for (i = 0; i < app.state.vcflMerge; i++) {
         if (app.state.vrgiflMerge[i] != iflNone) {
@@ -1927,7 +1928,7 @@ std::int32_t CalcPlayerScore(APPSESSION &app, std::int16_t iPlr, SCORE *pscore) 
     std::int16_t rgType[16];
     PLANET  pl;
 
-    std::memset(&score, 0, sizeof(SCORE));
+    score = {};
     lppl = app.state.lpPlanets;
     lpplMac = app.state.lpPlanets + app.state.cPlanet;
     for (; lppl < lpplMac; lppl++) {

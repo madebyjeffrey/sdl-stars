@@ -910,7 +910,7 @@ void ShipCommandProc(APPSESSION &app, HWND hwnd, WPARAM wParam, LPARAM lParam) {
             if (app.lpui->grbitScan & grbitScanFleetPaths) {
                 ControlIO().pfnInvalidateRect(app.lpui->hwndScanner, nullptr, 1);
             }
-            app.state.vrgiflMerge = 0;
+            app.state.vrgiflMerge = nullptr;
             app.state.vcflMerge = 0;
             if (app.state.gd.fTutorial) {
                 PresentationIO().pfnTutor(app);
@@ -927,7 +927,7 @@ void ShipCommandProc(APPSESSION &app, HWND hwnd, WPARAM wParam, LPARAM lParam) {
                     ControlIO().pfnInvalidateRect(app.lpui->hwndMine, nullptr, 1);
                 }
                 app.state.sel.fl.lpplord->rgord()[app.state.sel.iwpAct].grTask = LOWORD(lSel);
-                std::memset(reinterpret_cast<std::uint8_t *>(&app.state.sel.fl.lpplord->rgord()[app.state.sel.iwpAct]) + 8, 0, 10);
+                app.state.sel.fl.lpplord->rgord()[app.state.sel.iwpAct].txp = {};
                 switch (LOWORD(lSel)) {
                 case 7:
                     app.state.sel.fl.lpplord->rgord()[app.state.sel.iwpAct].tptl().iDist = 0;

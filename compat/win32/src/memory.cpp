@@ -1,4 +1,5 @@
 #include "locking.h"
+#include <algorithm>
 /* Fixed pointers and movable heap handles stay distinct from immutable resources. */
 #include "internal.h"
 #include <cstdlib>
@@ -203,7 +204,7 @@ HGLOBAL win32::GlobalReAlloc(HGLOBAL h, SIZE_T cb, UINT flags) {
     rgb = static_cast<BYTE *>((std::realloc(lp->rgb, cb ? cb : 1)));
     if (!rgb) { win32::SetLastError(win32::ERROR_NOT_ENOUGH_MEMORY); goto LReturn; }
     if ((flags & win32::GMEM_ZEROINIT) && cb > lp->cb)
-        std::memset(rgb + lp->cb, 0, cb - lp->cb);
+        std::fill_n(rgb + lp->cb, cb - lp->cb, 0);
     lp->rgb = rgb; lp->cb = cb;
     if (!lp->fMoveable) lp->h = rgb;
     hRet = lp->h;

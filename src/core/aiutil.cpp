@@ -1,4 +1,5 @@
 #include "common.h"
+#include <algorithm>
 #include "appstate.h"
 #include "fleet_query_io.h"
 #include "text_io.h"
@@ -24,7 +25,7 @@ std::int16_t FCreateAiShdef(APPSESSION &app, std::int16_t ishdef, HulDef ihul, s
     PART     part;
     SHDEF    shdef;
 
-    std::memset(&shdef, 0, sizeof(SHDEF));
+    shdef = {};
     if (FLookupPartX(app, &part, ishdef < 0 ? 0x400 : 0x4000, ihul) != mdPartAvailAvailable) {
         return 0;
     }
@@ -113,7 +114,7 @@ void PickANameAndBmp(APPSESSION &app, SHDEF *pshdef, StringId ids, std::int16_t 
     std::int16_t rgfBmpUsed[4];
     std::int16_t ishdef;
 
-    std::memset(rgfBmpUsed, 0, 8);
+    std::ranges::fill(rgfBmpUsed, 0);
     if (pshdef->ishdef >= 16) {
         for (ishdef = 0; ishdef < 10; ishdef++) {
             if (!app.state.rglpshdefSB[app.state.idPlayer][ishdef].fFree && app.state.rglpshdefSB[app.state.idPlayer][ishdef].hul.ihuldef == pshdef->hul.ihuldef) {
@@ -243,7 +244,7 @@ std::int16_t FColonizeAiFleet(APPSESSION &app, FLEET *lpfl, std::int16_t idPlane
     ORDER ord;
 
     ChangeMainObjSel(app, grobjFleet, lpfl->id);
-    std::memset(&ord, 0, sizeof(ORDER));
+    ord = {};
     ord.pt = app.state.rgptPlan[idPlanet];
     ord.grobj = grobjPlanet;
     ord.id = idPlanet;
@@ -261,7 +262,7 @@ std::int16_t FGotoWormholeAiFleet(APPSESSION &app, FLEET *lpfl, THING *lpthWorm)
     ORDER ord;
 
     ChangeMainObjSel(app, grobjFleet, lpfl->id);
-    std::memset(&ord, 0, sizeof(ORDER));
+    ord = {};
     ord.pt = lpthWorm->pt();
     ord.grobj = grobjThing;
     ord.id = lpthWorm->idFull();
@@ -672,7 +673,7 @@ std::int16_t IdTargetAttack(APPSESSION &app, FLEET *lpfl, FLEET *lpflAtk, FLEET 
     lpflT = lpflEnemy;
     lDistBest = 1000000;
     pt = lpfl->pt;
-    std::memset(&ord, 0, sizeof(ORDER));
+    ord = {};
     for (; lpflT; lpflT = lpflT->lpflNext) {
         if (fOnlyHumans && app.state.rgplr[lpflT->iPlayer].fAi)
             goto NextTarg;
@@ -959,7 +960,7 @@ std::int16_t IdTargetFreighter(APPSESSION &app, FLEET *lpflFr, PLANET *lpplHome)
     if (idBest == idplNone) {
         return idplNone;
     }
-    std::memset(&ord, 0, sizeof(ORDER));
+    ord = {};
     if (lpthBest) {
         ord.grobj = grobjThing;
         ord.pt = lpthBest->pt();
@@ -1164,7 +1165,7 @@ void AddItemToQueue(APPSESSION &app, std::uint16_t iItem, std::uint16_t cItem, G
             case addItemFront:
                 iprod = 0;
                 std::memmove(&app.state.lpplProdGlob->rgprod()[1], app.state.lpplProdGlob->rgprod(), app.state.lpplProdGlob->iprodMac * sizeof(PROD));
-                std::memset(app.state.lpplProdGlob->rgprod(), 0, 4);
+                std::fill_n(app.state.lpplProdGlob->rgprod(), 1, PROD{});
             }
             app.state.lpplProdGlob->rgprod()[iprod].cItem = cItem;
             app.state.lpplProdGlob->rgprod()[iprod].iItem = iItem;
@@ -1832,7 +1833,7 @@ std::int16_t IdTargetScout(APPSESSION &app, FLEET *lpfl, FLEET *lpflAtk, FLEET *
     lpflT = lpflEnemy;
     lDistBest = 1000000;
     pt = lpfl->pt;
-    std::memset(&ord, 0, sizeof(ORDER));
+    ord = {};
     if (!FFleetMightHaveTeeth(app, lpfl))
         goto LFindPlanet;
     for (; lpflT; lpflT = lpflT->lpflNext) {

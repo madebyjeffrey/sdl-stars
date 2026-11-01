@@ -150,9 +150,9 @@ void CloseGameWindows(APPSESSION &app) {
     }
     if (app.lpui->hwndPopup) {
         ControlIO().pfnDestroyWindow(app.lpui->hwndPopup);
-        app.lpui->hwndPopup = 0;
+        app.lpui->hwndPopup = nullptr;
     }
-    app.lpui->hwndActive = 0;
+    app.lpui->hwndActive = nullptr;
     app.lpui->fOrdersVis = 0;
     app.lpui->dxPlanetProdLB = 0;
     app.lpui->dxOrderED = 0;

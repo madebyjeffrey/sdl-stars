@@ -1,5 +1,6 @@
 /* UTF-8 edit controls retain byte offsets at the game-to-UI boundary. */
 #include "internal.h"
+#include <algorithm>
 #include "choice_io.h"
 #include <stars_compat.h>
 #include <climits>
@@ -456,7 +457,7 @@ static void PaintEdit(HWND hwnd) {
         UINT cchComp = static_cast<UINT>(std::strlen(hwnd->pszEditComposition));
         char *pszComp = SDL_strdup(hwnd->pszEditComposition);
         if (pszComp) {
-            if (fPassword) std::memset(pszComp, '*', cchComp);
+            if (fPassword) std::fill_n(pszComp, cchComp, '*');
             cx = CxEdit(hdc, pszComp, cchComp, 0);
             win32::SetRect(&rcSel, cxCaret, yCaret, cxCaret + cx, yCaret + cy);
             hbr = win32::CreateSolidBrush(crBk); win32::FillRect(hdc, &rcSel, hbr); win32::DeleteObject(hbr);

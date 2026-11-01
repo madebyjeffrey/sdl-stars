@@ -34804,5 +34804,10 @@
     "src/core/report.cpp": "read-only output bytes; remove redundant const removal in L05/L06",
     "src/ui/mdi.cpp": "callee text constness; migrate in L05",
     "src/ui/raceui.cpp": "callee text constness; migrate in L05"
+  },
+  "subsequent_platform_verification": {
+    "linux_ci_initial": "41275569451 rejected earlier constants and uncovered Linux thread/X11 casts; corrected in 1fa964b0 and 1024a8e6. Fetched SDL headers are system dependency inputs; owned flags remain strict.",
+    "windows_expanded": "146 owned application/wrapper translation units, including Windows conditional branches: 142 initial, 4 pass after remaining casts and explicit <cstring>/std::isfinite fixes in b4af28cb. Isolated SDK/process and Windows wrapper adapters also pass.",
+    "void_casts": "Three platform-only discarded-value casts use static_cast<void>; the old-style-cast warning intentionally does not diagnose these."
   }
 }

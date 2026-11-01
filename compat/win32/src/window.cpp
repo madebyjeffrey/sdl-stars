@@ -224,7 +224,7 @@ BOOL CompatPeekPaint(LPMSG lpmsg, HWND hwnd, UINT msgMin, UINT msgMax) {
         if (!lpwin->fAlive || !win32::IsWindowVisible(lpwin) || !lpwin->fUpdate || lpwin->hdcPaint ||
             (hwnd && hwnd != lpwin && !win32::IsChild(hwnd, lpwin)))
             continue;
-        std::memset(lpmsg, 0, sizeof(*lpmsg));
+        *lpmsg = {};
         lpmsg->hwnd = lpwin;
         lpmsg->message = win32::WM_PAINT;
         lpmsg->time = win32::GetTickCount();
@@ -563,7 +563,7 @@ HWND win32::CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
              lp = lp->hwndZNext) hwndAfter = lp;
         InsertCompatZ(lpwin, hwndAfter);
     }
-    std::memset(&cs, 0, sizeof(cs));
+    cs = {};
     cs.lpCreateParams = lpParam;
     cs.hInstance = hInstance;
     cs.hwndParent = hwndParent;

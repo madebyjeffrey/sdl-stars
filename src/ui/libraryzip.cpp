@@ -106,7 +106,7 @@ static std::int16_t FCollectZipFiles(APPSESSION &app, void *lpData, const char *
     ZIPFILES *pz = static_cast<ZIPFILES *>(lpData);
     char szPath[512], *pszRelative;
     std::int16_t fDir, fLink;
-    ZIPFILES zfChild = {0};
+    ZIPFILES zfChild = {nullptr};
     int i;
     std::size_t cbName;
     NATIVECLEANUPSCOPE childFiles([&]() noexcept {
@@ -173,7 +173,7 @@ static std::int16_t FWriteZipEntry(NATIVEFILE *pfZip, const char *pszRoot, ZIPEN
 }
 
 std::int16_t FZipLibraryDirectory(APPSESSION &app, const char *pszDirectory, const char *pszArchive) {
-    ZIPFILES zf = {0};
+    ZIPFILES zf = {nullptr};
     ZIPENTRY *rgzentry = nullptr;
     char szTemp[512] = "";
     NATIVEFILE *pf = nullptr;
@@ -328,7 +328,7 @@ std::int16_t FUnzipLibraryArchive(const char *pszArchive, const char *pszDirecto
             if (zc.cbCompressed != zc.cbUncompressed) goto done;
             std::memcpy(rgbData, rgbCompressed, zc.cbUncompressed);
         } else {
-            std::memset(&zs, 0, sizeof(zs));
+            zs = {};
             zs.next_in = rgbCompressed; zs.avail_in = zc.cbCompressed;
             zs.next_out = rgbData; zs.avail_out = zc.cbUncompressed;
             if (inflateInit2(&zs, -MAX_WBITS) != Z_OK) goto done;

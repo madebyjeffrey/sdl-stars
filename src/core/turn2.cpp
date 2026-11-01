@@ -1,4 +1,5 @@
 #include "common.h"
+#include <algorithm>
 #include "appstate.h"
 #include "colony_io.h"
 #include "turn_io.h"
@@ -325,7 +326,7 @@ std::int16_t CBuildProdItem(APPSESSION &app, PLANET *lppl, PROD *lpprod, PROD *p
             if (cCanBuild == lMinNeeded)
                 continue;
             if (rgRes[3] > 0 && pprodPartial) {
-                std::memset(pprodPartial, 0, sizeof(PROD));
+                *pprodPartial = {};
                 pprodPartial->grobj = grobjPlanet;
                 pprodPartial->iItem = mdIdleAlchemy;
                 pprodPartial->cItem = 1;
@@ -797,8 +798,8 @@ void DropColonists(APPSESSION &app) {
         lpcdMax = app.state.lpcd + app.state.cColDrop;
         for (; lpcdCur < lpcdMax; lpcdCur++) {
             if (lpcdCur->idPlanetDst != idplNone && lpcdCur->cColonist != 0) {
-                std::memset(rgcCol, 0, 64);
-                std::memset(rgcPower, 0, 64);
+                std::ranges::fill(rgcCol, 0);
+                std::ranges::fill(rgcPower, 0);
                 cPowerTot = 0;
                 cColTot = 0;
                 idPlanet = lpcdCur->idPlanetDst;
@@ -909,8 +910,8 @@ void DropColonists(APPSESSION &app) {
                         }
                         TurnIO().pfnMessage(app, iplrOldOwner, idmHaveAttackedFirstRateStormTroopersThough, static_cast<MsgGoto>(pl.id), iMax | 0x30, pl.id, LOWORD(rgcCol[iMax]),
                                     HIWORD(rgcCol[iMax]), 0, 0, 0);
-                        std::memset(app.state.rgTechBattle, 0, 6);
-                        std::memset(app.state.rgTechTrader, 0, 13);
+                        std::ranges::fill(app.state.rgTechBattle, 0);
+                        std::ranges::fill(app.state.rgTechTrader, 0);
                         for (i = 0; i < 6; i++) {
                             app.state.rgTechBattle[i] = app.state.rgplr[iplrOldOwner].rgTech[i];
                         }
@@ -934,7 +935,7 @@ void DropColonists(APPSESSION &app) {
                         pl.fNoResearch = app.state.rgplr[iMax].zpq1.fNoResearch;
                         if (cpq > 0) {
                             pl.lpplprod = LpplAlloc<PLPROD>(app, 4, app.state.rgplr[iMax].zpq1.cpq, htOrd);
-                            std::memset(&prod, 0, sizeof(PROD));
+                            prod = {};
                             prod.grobj = grobjPlanet;
                             iDst = 0;
                             for (ipq = 0; ipq < cpq; ipq++) {
@@ -1598,7 +1599,7 @@ void UpdatePlayerScores(APPSESSION &app) {
     lScore2nd = 0;
     lScoreTot = 0;
     app.state.gd.fGameOverMan = 0;
-    std::memset(rgcCond, 0, 16);
+    std::ranges::fill(rgcCond, 0);
     for (i = 0; i < app.state.game.cPlayer; i++) {
         rglScore[i] = CalcPlayerScore(app, i, &score);
         app.state.vlprgScoreX[i].score = score;

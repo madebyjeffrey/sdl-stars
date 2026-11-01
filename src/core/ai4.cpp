@@ -1,4 +1,5 @@
 #include "common.h"
+#include <algorithm>
 #include "appstate.h"
 #include "fleet_query_io.h"
 #include "production_io.h"
@@ -64,7 +65,7 @@ void DoCyberAiTurn(APPSESSION &app, PROD *rgprod) {
     cFlDestroyers = 0;
     lpiHistSize = app.state.vlpbAiData;
     if (AivFromLp(app, lpiHistSize).value() == 2) {
-        std::memset(app.state.vlpbAiData, 0, 0x2000);
+        std::fill_n(app.state.vlpbAiData, 0x2000, 0);
         AivFromLp(app, lpiHistSize).SetValue(app.state.game.cPlanMax * 2 + 2);
     }
     app.state.fMarkedPlanets = 0;
@@ -100,7 +101,7 @@ void DoCyberAiTurn(APPSESSION &app, PROD *rgprod) {
     }
     app.state.vrgAiCyberArmadaPotency[2] = j;
     app.state.vrgAiCyberArmadaPotency[3] = 3 >= j / 2 - 1 ? j / 2 - 1 : 3;
-    std::memset(rgRecycleShdef, 0, 16);
+    std::ranges::fill(rgRecycleShdef, 0);
     if (app.state.game.turn < 120) {
         cRecyclePeriod = 50;
     } else {
@@ -142,19 +143,19 @@ void DoCyberAiTurn(APPSESSION &app, PROD *rgprod) {
     cExistColony = app.state.rgshdef[1].cExist;
     if (app.state.game.turn > 80) {
         SplitOutShdefs(app, rgRecycleShdef);
-        std::memset(rgRecycleSBShdef, 0, 16);
+        std::ranges::fill(rgRecycleSBShdef, 0);
         rgRecycleSBShdef[0] = 2;
         SplitOutShdefs(app, rgRecycleSBShdef);
-        std::memset(rgRecycleSBShdef, 0, 16);
+        std::ranges::fill(rgRecycleSBShdef, 0);
         rgRecycleSBShdef[1] = 2;
         SplitOutShdefs(app, rgRecycleSBShdef);
-        std::memset(rgRecycleSBShdef, 0, 16);
+        std::ranges::fill(rgRecycleSBShdef, 0);
         rgRecycleSBShdef[3] = 2;
         rgRecycleSBShdef[2] = 2;
         SplitOutShdefs(app, rgRecycleSBShdef);
     }
     lpciPlanTemp = app.state.vlpbAiData + dOffsetPlanTemp;
-    std::memset(lpciPlanTemp, 0, app.state.game.cPlanMax * cbWireCyberInfo);
+    std::fill_n(lpciPlanTemp, app.state.game.cPlanMax * cbWireCyberInfo, 0);
     lppl = app.state.lpPlanets;
     lpplMac = app.state.lpPlanets + app.state.cPlanet;
     for (; lppl < lpplMac; lppl++) {
@@ -414,7 +415,7 @@ void DoCyberAiTurn(APPSESSION &app, PROD *rgprod) {
                         CivFromLp(app, lpciPlan).SetFBltColony(0);
                     }
                     if (lppl->rgwtMin[3] > 2000 && !app.state.rgshdef[2].fFree && cExistCargo < 50 && CtvFromLp(app, lpciPlanTemp).cIdleFreighters() < 1 &&
-                        LpplFindClosestEnum(app, lppl, FEnumDropOffStage2) != 0) {
+                        LpplFindClosestEnum(app, lppl, FEnumDropOffStage2)) {
                         AddItemToQueue(app, iLatestCargo, 1, grobjFleet, addItemEnd);
                         fWrite = 1;
                     }
@@ -1024,7 +1025,7 @@ void DoCyberFreighter(APPSESSION &app, FLEET *lpfl, std::uint8_t *lpciPlanTemp) 
     } else if (lpplCur->iPlayer != iplrNone && RaceQueryIO().pfnStat(&app.state.rgplr[lpplCur->iPlayer], rsMajorAdv) != raMacintosh && !lpplCur->fStarbase) {
         FleetQueryIO().pfnLookup(app, lpfl->id, &app.state.sel.fl);
         idPlanDst = lpplCur->id;
-        std::memset(&ord, 0, sizeof(ORDER));
+        ord = {};
         ord.pt = app.state.rgptPlan[idPlanDst];
         ord.grobj = grobjPlanet;
         ord.id = idPlanDst;
@@ -1066,7 +1067,7 @@ void DoCyberFreighter(APPSESSION &app, FLEET *lpfl, std::uint8_t *lpciPlanTemp) 
     }
 LTarget:
     if (lpplDst) {
-        std::memset(&ord, 0, sizeof(ORDER));
+        ord = {};
         ord.pt = app.state.rgptPlan[lpplDst->id];
         ord.grobj = grobjPlanet;
         ord.id = lpplDst->id;

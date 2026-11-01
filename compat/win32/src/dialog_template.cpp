@@ -46,7 +46,7 @@ void CompatFreeDialogTemplate(COMPATDLGTEMPLATE *lpdlg) {
     }
     std::free(lpdlg->rgItems); std::free(lpdlg->pszMenu); std::free(lpdlg->pszClass);
     std::free(lpdlg->pszTitle); std::free(lpdlg->pszFont);
-    std::memset(lpdlg, 0, sizeof(*lpdlg));
+    *lpdlg = {};
 }
 BOOL FCompatDialogTemplate(const BYTE *rgb, std::size_t cb, COMPATDLGTEMPLATE *lpdlg) {
     COMPATDLGTEMPLATE dlg = {};

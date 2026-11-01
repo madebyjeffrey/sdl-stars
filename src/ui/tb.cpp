@@ -608,7 +608,7 @@ LRESULT  TooltipWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         app.lpui->hwndTooltip = hwnd;
         break;
     case win32::WM_DESTROY:
-        app.lpui->hwndTooltip = 0;
+        app.lpui->hwndTooltip = nullptr;
         if (app.lpui->vidTimerTooltip != -1) {
             win32::KillTimer(hwnd, app.lpui->vidTimerTooltip);
             app.lpui->vidTimerTooltip = -1;

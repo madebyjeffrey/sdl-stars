@@ -1,4 +1,5 @@
 #include "preferencesui.h"
+#include <algorithm>
 #include "appstate.h"
 #include "uistate.h"
 #include "profile_text_io.h"
@@ -10,7 +11,7 @@ void ReadIniPresets(APPSESSION &app, char *szIniFile) {
     char    szSection[16], szEntry[16], *psz;
 
     TextIO().pfnCchGetString(app, idsZiporders, szSection);
-    std::memset(app.state.vrgZip, 0, 96);
+    std::fill_n(app.state.vrgZip, 4, ZIPORDER{});
     for (i = 0; i < 4; i++) {
         std::strcpy(szEntry, szSection);
         psz = &szEntry[std::strlen(szEntry)];
@@ -43,7 +44,7 @@ void ReadIniPresets(APPSESSION &app, char *szIniFile) {
             }
         }
     }
-    std::memset(app.state.vrgZipProd, 0, 200);
+    std::fill_n(app.state.vrgZipProd, 5, ZIPPRODQ{});
     for (i = 0; i < 5; i++) {
         std::strcpy(szEntry, szSection);
         psz = &szEntry[std::strlen(szEntry)];

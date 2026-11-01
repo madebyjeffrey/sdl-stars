@@ -13,6 +13,7 @@ for addition, reason in [
     (' -x c++', 'Owned production source has a language override'),
     (' -Wno-error=pedantic', 'Owned production source disables strict diagnostics'),
     (' -Wno-old-style-cast', 'Owned production source disables strict diagnostics'),
+    (' -Wno-zero-as-null-pointer-constant', 'Owned production source disables strict diagnostics'),
     (' -DRandom=StarsTest_Random', 'Test symbol substitution'),
     (' -DSTARS_TEST_STATE_DOUBLE=1', 'Test symbol substitution'),
     (' -o stars_core-test-0123456789abcdef.dir/planet.cpp.o', 'Private production test clone'),

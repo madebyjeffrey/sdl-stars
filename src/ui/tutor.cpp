@@ -77,7 +77,7 @@ INT_PTR  TutorDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         }
     case win32::WM_DESTROY:
         ControlIO().pfnStickyDlgPos(hwnd, &app.lpui->ptStickyTutorDlg, 0);
-        app.state.tutor.hwnd = 0;
+        app.state.tutor.hwnd = nullptr;
         hmenu = GetASubMenu(app, app.lpui->hwndFrame, menuHelp);
         win32::CheckMenuItem(hmenu, IDM_HELP_TUTORIAL, win32::MF_UNCHECKED);
         ControlIO().pfnEndDialog(hwnd, 1);
@@ -203,7 +203,7 @@ void StartTutor(APPSESSION &app, std::int16_t fRestart) {
     std::int16_t cch;
 
     if (!app.state.gd.fTutorial) {
-        std::memset(&app.state.tutor, 0, sizeof(TUTOR));
+        app.state.tutor = {};
         if (!app.lpui->lpfnTutorDlgProc) {
             app.lpui->lpfnTutorDlgProc = (TutorDlg);
             if (!app.lpui->lpfnTutorDlgProc) {
@@ -216,7 +216,7 @@ void StartTutor(APPSESSION &app, std::int16_t fRestart) {
         if (!app.lpui->fFreeingTitle) {
             app.lpui->fFreeingTitle = 1;
             ControlIO().pfnDestroyWindow(app.lpui->hwndTitle);
-            app.lpui->hwndTitle = 0;
+            app.lpui->hwndTitle = nullptr;
             ui::ShowWindow(app.lpui->hwndFrame, win32::SW_SHOW);
         }
         app.lpui->grbitScan = static_cast<GrbitScan>(grbitScanCoverage | grbitScanMineFields | grbitScanFleetPaths | grbitScanPlanetNames);
@@ -248,7 +248,7 @@ void StartTutor(APPSESSION &app, std::int16_t fRestart) {
             }
             if (app.state.game.lid == 0) {
                 CreateTutorWorld(app);
-                std::memset(reinterpret_cast<std::uint8_t *>(reinterpret_cast<ZIPPRODQ *>(app.state.vrgZipProd)) + 14, 0, 26);
+                app.state.vrgZipProd[0].SetZpq1({});
                 app.state.vrgZipProd[0].fValid = 1;
                 app.state.gd.fChgZipProd = 1;
             }
@@ -257,7 +257,7 @@ void StartTutor(APPSESSION &app, std::int16_t fRestart) {
             if (!app.lpui->fFreeingTitle) {
                 app.lpui->fFreeingTitle = 1;
                 ControlIO().pfnDestroyWindow(app.lpui->hwndTitle);
-                app.lpui->hwndTitle = 0;
+                app.lpui->hwndTitle = nullptr;
             }
             ui::ShowWindow(app.lpui->hwndFrame, win32::SW_SHOW);
         }
@@ -354,7 +354,7 @@ void EndTutor(APPSESSION &app, std::int16_t fClose) {
         } else {
             app.state.tutor.fFreeing = 1;
         }
-        std::memset(&app.state.tutor, 0, sizeof(TUTOR));
+        app.state.tutor = {};
         Randomize2(app, win32::GetTickCount());
     }
     return;
@@ -1685,7 +1685,7 @@ std::int16_t FTutorTaskDone(APPSESSION &app) {
                 app.state.tutor.idh = idhTransport;
                 return 0;
             }
-            if (LpflFromId(app, 2) == 0) {
+            if (!LpflFromId(app, 2)) {
                 app.state.tutor.fProgress = 0;
                 return 1;
             }
@@ -1923,7 +1923,7 @@ std::int16_t FTutorTaskDone(APPSESSION &app) {
                 app.state.tutor.idtBold = idtReadMessageGotoArmedProbe92;
                 return 0;
             }
-            if (LpflFromId(app, 12) == 0 || LpflFromId(app, 12)->fDead) {
+            if (!LpflFromId(app, 12) || LpflFromId(app, 12)->fDead) {
                 return 1;
             }
             if (!FCheckCargo(app, LpflFromId(app, 12), 0, 0, 0, 630)) {
@@ -1936,7 +1936,7 @@ std::int16_t FTutorTaskDone(APPSESSION &app) {
             }
             return 1;
         case idtWeWantMergeNewTeamstersOtherFleet:
-            if (LpflFromId(app, 12) != 0) {
+            if (LpflFromId(app, 12)) {
                 if (!FCheckSelection(app, grobjFleet, 11)) {
                     app.state.tutor.idtBold = idtSelectTeamster12PressMergeButtonFleet;
                 } else if (!app.state.vrgiflMerge) {

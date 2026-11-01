@@ -998,7 +998,7 @@ HGLOBAL HdibLoadBigResource(APPSESSION &app, BitmapId idb) {
     BITMAPCOREHEADER bc;
 
     hrsrc = win32::FindResourceA(app.lpui->hInst, win32::MAKEINTRESOURCE(idb), win32::MAKEINTRESOURCE(2));
-    if (hrsrc == 0) {
+    if (!hrsrc) {
         return nullptr;
     }
     hres = win32::LoadResource(app.lpui->hInst, hrsrc);
@@ -1201,7 +1201,7 @@ void ShowProgressGauge(APPSESSION &app) {
 void HideProgressGauge(APPSESSION &app) {
     if (app.lpui->hwndProgressGauge) {
         ControlIO().pfnDestroyWindow(app.lpui->hwndProgressGauge);
-        app.lpui->hwndProgressGauge = 0;
+        app.lpui->hwndProgressGauge = nullptr;
     }
     return;
 }
@@ -1325,7 +1325,7 @@ HFONT HfontPrinterCreate(APPSESSION &app, HDC hdc, std::int16_t iSize, std::int1
 
     plf = static_cast<LOGFONT *>(win32::LocalAlloc(64, sizeof(LOGFONT)));
     plfOwner.reset(plf);
-    std::memset(plf, 0, sizeof(LOGFONT));
+    *plf = {};
     plf->lfHeight = -win32::MulDiv(iSize, win32::GetDeviceCaps(hdc, win32::LOGPIXELSY), 72);
     std::strcpy(plf->lfFaceName, app.lpui->rgszArial[1]);
     hfontNew = win32::CreateFontIndirectA(plf);

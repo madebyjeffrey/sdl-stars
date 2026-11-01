@@ -3,6 +3,7 @@
  * No native-sized state in this module reaches game files.
  */
 #include "internal.h"
+#include <algorithm>
 #include "display_io.h"
 #include "input_io.h"
 #include "render_io.h"
@@ -800,7 +801,7 @@ HDC win32::BeginPaint(HWND hwnd, LPPAINTSTRUCT lpps) {
     hdc = HdcNew(hwnd, 1);
     if (!hdc)
         return nullptr;
-    std::memset(lpps, 0, sizeof(*lpps));
+    *lpps = {};
     lpps->hdc = hdc;
     lpps->rcPaint = lpwin->fUpdate ? lpwin->rcUpdate : RECT{};
     LpDC(hdc)->rcClip = lpps->rcPaint;
@@ -1960,7 +1961,7 @@ int win32::GetDIBits(HDC hdc, HBITMAP hbm, UINT iStart, UINT cLines, LPVOID lpBi
     cCopy = (((cLines) < (static_cast<UINT>(lpsurface->h) - iStart)) ? (cLines) : (static_cast<UINT>(lpsurface->h) - iStart));
     for (i = 0; i < cCopy; i++) {
         rgb = static_cast<BYTE *>(lpBits) + static_cast<std::size_t>(i) * cbRow;
-        std::memset(rgb, 0, cbRow);
+        std::fill_n(rgb, cbRow, 0);
         y = fTopDown ? static_cast<int>((iStart + i)) : lpsurface->h - 1 - static_cast<int>((iStart + i));
         for (x = 0; x < lpsurface->w; x++) {
             cr = CrSurfacePixel(lpsurface, x, y);

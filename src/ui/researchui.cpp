@@ -640,7 +640,7 @@ INT_PTR  BrowserDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         return 1;
     case win32::WM_DESTROY:
         ControlIO().pfnStickyDlgPos(hwnd, &app.lpui->ptStickyBrowserDlg, 0);
-        app.lpui->hwndBrowser = 0;
+        app.lpui->hwndBrowser = nullptr;
         app.lpui->fBrowserValid = 0;
         hmenu = GetASubMenu(app, app.lpui->hwndFrame, menuHelp);
         win32::CheckMenuItem(hmenu, IDM_VIEW_BROWSER_TOGGLE2, win32::MF_UNCHECKED);
@@ -649,7 +649,7 @@ INT_PTR  BrowserDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         switch (LOWORD(wParam)) {
         case IDCANCEL:
             ControlIO().pfnStickyDlgPos(hwnd, &app.lpui->ptStickyBrowserDlg, 0);
-            app.lpui->hwndBrowser = 0;
+            app.lpui->hwndBrowser = nullptr;
             app.lpui->fBrowserValid = 0;
             hmenu = GetASubMenu(app, app.lpui->hwndFrame, menuHelp);
             win32::CheckMenuItem(hmenu, IDM_VIEW_BROWSER_TOGGLE2, win32::MF_UNCHECKED);

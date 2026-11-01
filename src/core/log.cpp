@@ -1,4 +1,5 @@
 #include "common.h"
+#include <algorithm>
 #include "appstate.h"
 #include "fleet_query_io.h"
 #include "text_io.h"
@@ -348,7 +349,7 @@ void LogChangeThing(APPSESSION &app, THING *lpth, THING *pthNew) {
 
     fChg = 0;
     if (!app.state.gd.fGeneratingTurn) {
-        std::memset(&lxNew, 0, sizeof(LOGXFER));
+        lxNew = {};
         lxNew.id = pthNew->idFull();
         lxNew.grobj = grobjThing;
         for (i = 0; i < 3; i++) {
@@ -725,7 +726,7 @@ std::int16_t FRunLogRecord(APPSESSION &app, RecordType rt, std::int16_t cb, std:
         if (cb < static_cast<std::int16_t>(cbWireChangeName) ||
             !FReadUserString(app, lpb + cbWireChangeName, cb - cbWireChangeName, szT, 32, nullptr)) return 0;
         NATIVEBYTEREADER(std::as_bytes(std::span(lpb, 2))).FReadI16Le(id);
-        if ((lpfl = LpflFromId(app, id)) == 0) return 0;
+        if (!(lpfl = LpflFromId(app, id))) return 0;
         if (lpfl->lpszName) HeapIO().pfnFree(app, lpfl->lpszName, htString);
         lpfl->lpszName = nullptr;
         if (*szT) {
@@ -898,7 +899,7 @@ std::int16_t FRunLogRecord(APPSESSION &app, RecordType rt, std::int16_t cb, std:
                                     }
                                     if (lpxfCur == lpxfMax) {
                                         app.state.cXferFull++;
-                                        std::memset(lpxfCur, 0, sizeof(XFERFULL));
+                                        *lpxfCur = {};
                                         lpxfCur->id1 = CxvFromPrefix(lpb, 2).id1();
                                         lpxfCur->id2 = CxvFromPrefix(lpb, 4).id2();
                                     }
@@ -961,7 +962,7 @@ std::int16_t FRunLogRecord(APPSESSION &app, RecordType rt, std::int16_t cb, std:
             return 0;
         }
         if (rt == rtLogFleetSplit) {
-            if (LpflNewSplit(app, &rgxf[0].fl()) != 0)
+            if (LpflNewSplit(app, &rgxf[0].fl()))
                 break;
             return 0;
         }
@@ -1342,7 +1343,7 @@ std::int16_t FWriteLogFile(APPSESSION &app, char *pszFileBase, std::int16_t iPla
     try {
         rtlh.cbLog = app.state.imemLogCur;
         /* Preserve the unused 15-byte metadata area in the orders-file header. */
-        std::memset(rtlh.rgbUnused, 0, sizeof(rtlh.rgbUnused));
+        std::ranges::fill(rtlh.rgbUnused, 0);
         FEncodeLogHdr(rtlh, std::as_writable_bytes(std::span(rgbLogHdr)));
         RecordIO().pfnWriteRt(app, static_cast<RecordType>(9), cbWireLogHdr, rgbLogHdr);
         for (; iCur < app.state.imemLogCur; iCur += HdvFromPrefix(lprts).cb() + 2) {

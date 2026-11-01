@@ -110,7 +110,7 @@ LRESULT  PlanetWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         win32::EndPaint(hwnd, &ps);
         break;
     case win32::WM_SETCURSOR:
-        hcs = 0;
+        hcs = nullptr;
         GetCursorPos16(&pt);
         ScreenToClient16(hwnd, &pt);
         ControlIO().pfnGetClientRect(hwnd, &rc);
@@ -1631,7 +1631,7 @@ void DrawPlanShip(APPSESSION &app, HDC hdc, TileBits grbit) {
     RECT     rc;
 
     fDC = 0;
-    objNull.SetPfl(0);
+    objNull.SetPfl(nullptr);
     if (app.state.sel.id == -1) {
         for (i = 0; i < 13; i++) {
             ui::ShowWindow(app.lpui->rghwndBtn[i], win32::SW_HIDE);

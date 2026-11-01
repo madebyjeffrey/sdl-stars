@@ -43,7 +43,7 @@ std::int16_t FCreateStuff(APPSESSION &app) {
     app.lpui->hbrRadar = HbrGet(app, 127);
     app.lpui->hbrPurple = HbrGet(app, 8323199);
     app.lpui->hbrTooltip = HbrGet(app, 10485759);
-    app.lpui->hbrRadarNear = 0;
+    app.lpui->hbrRadarNear = nullptr;
     app.lpui->rghbrMineral[0] = HbrGet(app, 16711680);
     app.lpui->rghbrMineral[1] = HbrGet(app, 32512);
     app.lpui->rghbrMineral[2] = HbrGet(app, 0xffff);
@@ -73,7 +73,7 @@ std::int16_t FCreateStuff(APPSESSION &app) {
     app.lpui->hpenEnemy = win32::CreatePen(0, 1, 0xff);
     app.lpui->hpenMassPath = win32::CreatePen(2, 1, 8355711);
     app.lpui->hpenRadar = win32::CreatePen(0, 1, 127);
-    app.lpui->hpenRadarNear = 0;
+    app.lpui->hpenRadarNear = nullptr;
     app.lpui->hpenDkBlue = win32::CreatePen(0, 1, 8323072);
     app.lpui->hpenYellow = win32::CreatePen(0, 1, 0xffff);
     app.lpui->hpenDkYellow = win32::CreatePen(0, 1, 32639);

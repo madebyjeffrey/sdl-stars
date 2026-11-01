@@ -620,7 +620,7 @@ void DumpFleets(APPSESSION &app) {
                     szForm[1] = 0;
                 }
                 RgToStream(app, szForm, std::strlen(szForm));
-                if (app.state.rglpbtlplan[lpfl->iplr()] != 0) {
+                if (app.state.rglpbtlplan[lpfl->iplr()]) {
                     std::strcpy(&szForm[1], app.state.rglpbtlplan[lpfl->iplr()][lpfl->iplan].szName);
                 } else {
                     szForm[1] = 0;

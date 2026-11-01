@@ -1,4 +1,5 @@
 #include "win.h"
+#include <algorithm>
 #include "appstate.h"
 #include "callbackcontext.h"
 #include "uistate.h"
@@ -498,7 +499,7 @@ INT_PTR  VCRDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         }
         break;
     case win32::WM_DESTROY:
-        app.lpui->hwndVCRDlg = 0;
+        app.lpui->hwndVCRDlg = nullptr;
         break;
     }
     return 0;
@@ -598,7 +599,7 @@ void DrawVCR(APPSESSION &app, HDC hdc, std::int16_t iStart, std::int16_t iEnd) {
     }
     hbrSav = static_cast<HBRUSH>(win32::SelectObject(hdc, app.lpui->hbrButtonFace));
     bkMode = win32::SetBkMode(hdc, win32::TRANSPARENT);
-    std::memset(rgfSeen, 0, 0x100);
+    std::ranges::fill(rgfSeen, 0);
     ControlIO().pfnGetClientRect(app.lpui->hwndVCRDlg, &rc);
     if (iStart == -2) {
         win32::PatBlt(hdc, app.lpui->dxyVCRBoard + 10, 0, rc.right - app.lpui->dxyVCRBoard - 10, app.lpui->dxyVCRBoard + 8, win32::PATCOPY);

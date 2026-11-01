@@ -1,4 +1,5 @@
 #include "win.h"
+#include <algorithm>
 #include "appstate.h"
 #include "callbackcontext.h"
 #include "uistate.h"
@@ -513,8 +514,8 @@ std::int16_t DrawScanner(APPSESSION &app, HDC hdc, RECT *prc) {
     COLORREF cr;
 
     mdScanBase = static_cast<ScanView>(app.lpui->grbitScan & grbitScanViewMask);
-    hdcScreen = 0;
-    hbmpScreen = 0;
+    hdcScreen = nullptr;
+    hbmpScreen = nullptr;
     if (!app.state.rglpfl || app.state.gd.fNoScannerDraw || app.state.gd.fGeneratingTurn) {
         return 0;
     }
@@ -928,7 +929,7 @@ std::int16_t DrawScanner(APPSESSION &app, HDC hdc, RECT *prc) {
     win32::SelectClipRgn(hdc, app.lpui->hrgnHuge);
     ControlIO().pfnGetClientRect(app.lpui->hwndScanner, &rc);
     win32::ExcludeClipRect(hdc, 0, rc.bottom - app.lpui->dySBar, rc.right, rc.bottom);
-    std::memset(rgWhatsHere, 0, 999);
+    std::ranges::fill(rgWhatsHere, 0);
     switch (app.state.iScanZoom) {
     default:
         break;
@@ -1755,7 +1756,7 @@ void DrawShipScanPath(APPSESSION &app, HDC hdc, std::int16_t fShow) {
             goto LDrawPath;
         }
         if (app.state.sel.grobj == grobjFleet && app.state.sel.fl.cord > 1) {
-            std::memset(rgDup, 0, app.state.sel.fl.cord * 2);
+            std::fill_n(rgDup, app.state.sel.fl.cord, 0);
             lpord1 = app.state.sel.fl.lpplord->rgord();
             pt = lpord1->pt;
             i = 1;
@@ -2398,7 +2399,7 @@ std::int16_t FAddWayPoint(APPSESSION &app, POINT16 ptIn, SCAN *pscan) {
     RedrawScanSel(app, nullptr, 0);
     FleetQueryIO().pfnLookup(app, idWriteBack, &app.state.sel.fl);
     if (lpord[-1].grTask == grTaskLayMines && lpord[-1].tsell().iPlrX == 5) {
-        std::memset(reinterpret_cast<std::uint8_t *>(lpord) - 10, 0, 10);
+        lpord[-1].txp = {};
         lpord[-1].grTask = grTaskNone;
         FleetQueryIO().pfnLookup(app, idWriteBack, &app.state.sel.fl);
     }
@@ -2532,13 +2533,13 @@ std::int16_t FHandleWayPointDrag(APPSESSION &app, POINT16 pt) {
                 default:
                     sbar.id = scan.iwp;
                 }
-                sbar.psz = 0;
+                sbar.psz = nullptr;
             }
             sbar.pt = rgpt[0];
             sbar.grbit = scan.grobj;
             LogicalToScan(app, rgpt);
             DrawScanXorLines(app, hdc, rgpt, cpt);
-            sbar.pscan = 0;
+            sbar.pscan = nullptr;
             DrawScannerSBar(app, hdc, nullptr, &sbar, 0);
 
         DoNext:
@@ -2974,7 +2975,7 @@ std::int16_t FHandleMeasuringTape(APPSESSION &app, SCAN *pscan, POINT16 pt) {
                 } else {
                     sbar.id = scan.iwp;
                 }
-                sbar.psz = 0;
+                sbar.psz = nullptr;
             }
             sbar.pt = ptLogical;
             sbar.grbit = scan.grobj;

@@ -253,7 +253,7 @@ std::int32_t ChgCargo(APPSESSION &app, GrobjClass grobj, std::int16_t id, Minera
             PlanetQueryIO().pfnLookup(app, id, &xfer.pl());
             ppl = &xfer.pl();
         } else {
-            std::memset(&xfer.pl(), 0, sizeof(PLANET));
+            xfer.pl() = {};
             ppl = &xfer.pl();
         }
         if (iSupply <= Fuel) {
@@ -762,7 +762,7 @@ void FleetTransferCargoBalance(APPSESSION &app, FLEET *pflNew1, FLEET *pflNew2) 
     for (i = 0; i < 2; i++) {
         if (rgpflNew[i]->fDead) {
             fDeadFleet = 1;
-            std::memset(&rgflCur[i], 0, sizeof(FLEET));
+            rgflCur[i] = {};
             rgflCur[i].iPlayer = iplr;
         } else {
             FleetQueryIO().pfnLookup(app, rgpflNew[i]->id, &rgflCur[i]);
@@ -933,7 +933,7 @@ void DestroyAllIshdef(APPSESSION &app, std::int16_t ishdef, std::int16_t iplr) {
         for (lpfl = *app.state.rglpfl, i = 0; i < app.state.cFleet; lpfl = app.state.rglpfl[i]) {
             if (lpfl->iPlayer != iplr || lpfl->rgcsh[ishdef] <= 0)
                 goto IncrementI;
-            std::memset(&flDead, 0, sizeof(FLEET));
+            flDead = {};
             cKill = lpfl->rgcsh[ishdef];
             cDel += cKill;
             for (j = 0; j < 16 && (j == ishdef || lpfl->rgcsh[j] == 0); j++) {

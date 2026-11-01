@@ -1,4 +1,5 @@
 #include "common.h"
+#include <algorithm>
 #include "appstate.h"
 #include "fleet_query_io.h"
 #include "production_io.h"
@@ -113,7 +114,7 @@ void DoMacintiAiTurn(APPSESSION &app, PROD *rgprod) {
     }
     app.state.vrgAiArmadaPotency[2] = j;
     app.state.vrgAiArmadaPotency[3] = 3 >= j / 2 - 1 ? j / 2 - 1 : 3;
-    std::memset(rgRecycleShdef, 0, 16);
+    std::ranges::fill(rgRecycleShdef, 0);
     if (app.state.game.turn < 120) {
         cRecyclePeriod = 50;
     } else {
@@ -150,17 +151,17 @@ void DoMacintiAiTurn(APPSESSION &app, PROD *rgprod) {
     CheckAiShdefStatus(app, 5, ishLastBattle, cRecyclePeriod, &iLatestBattle, rgRecycleShdef);
     if (app.state.game.turn > 80) {
         SplitOutShdefs(app, rgRecycleShdef);
-        std::memset(rgSplitShdef, 0, 16);
+        std::ranges::fill(rgSplitShdef, 0);
         rgSplitShdef[0] = 2;
         SplitOutShdefs(app, rgSplitShdef);
-        std::memset(rgSplitShdef, 0, 16);
+        std::ranges::fill(rgSplitShdef, 0);
         rgSplitShdef[1] = 2;
         SplitOutShdefs(app, rgSplitShdef);
-        std::memset(rgSplitShdef, 0, 16);
+        std::ranges::fill(rgSplitShdef, 0);
         rgSplitShdef[15] = 2;
         rgSplitShdef[14] = 2;
         SplitOutShdefs(app, rgSplitShdef);
-        std::memset(rgSplitShdef, 0, 16);
+        std::ranges::fill(rgSplitShdef, 0);
         rgSplitShdef[11] = 2;
         rgSplitShdef[10] = 2;
         SplitOutShdefs(app, rgSplitShdef);
@@ -399,7 +400,7 @@ void DoMacintiAiTurn(APPSESSION &app, PROD *rgprod) {
                         id = lppl->id;
                         if (cFlArmadas > 110 && RandomIO().pfnRandom(app, 3) == 0)
                             goto LAddBombers;
-                        for (ifl = 0; ifl < app.state.cFleet && (lpfl = app.state.rglpfl[ifl]) != 0; ifl++) {
+                        for (ifl = 0; ifl < app.state.cFleet && (lpfl = app.state.rglpfl[ifl]); ifl++) {
                             if (lpfl->idPlanet != id || lpfl->iPlayer != app.state.idPlayer)
                                 continue;
                             if (!FPotentMacWarFleet(app, lpfl, nullptr))
@@ -932,7 +933,7 @@ std::int16_t IdTargetMacFreighter(APPSESSION &app, FLEET *lpfl) {
     FleetQueryIO().pfnLookup(app, lpfl->id, &app.state.sel.fl);
     app.state.vlpbAiPlanet[lpplBest->id * 16 + 14] = app.state.vlpbAiPlanet[lpplBest->id * 16 + 0xe] | 1;
 LMoveToLpplBest:
-    std::memset(&ord, 0, sizeof(ORDER));
+    ord = {};
     ord.grobj = grobjPlanet;
     ord.pt = app.state.rgptPlan[lpplBest->id];
     ord.id = lpplBest->id;

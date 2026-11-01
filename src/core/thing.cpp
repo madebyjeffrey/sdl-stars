@@ -13,7 +13,7 @@ THING *LpthNew(APPSESSION &app, std::int16_t iplr, ThingType ith) {
     if (app.state.cThing >= 4050) {
         return nullptr;
     }
-    std::memset(&thNew, 0, sizeof(THING));
+    thNew = {};
     thNew.SetIplr(iplr);
     thNew.SetIth(ith);
     lpth = app.state.lpThings;

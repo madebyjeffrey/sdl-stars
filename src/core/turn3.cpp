@@ -1,4 +1,5 @@
 #include "common.h"
+#include <algorithm>
 #include "appstate.h"
 #include "turn_io.h"
 #include "production_io.h"
@@ -547,8 +548,8 @@ void SatisfyOrders(APPSESSION &app, std::int16_t iPass) {
                     }
                     fColonize = 0;
                     csh = 0;
-                    std::memset(app.state.rgTechBattle, 0, 6);
-                    std::memset(app.state.rgTechTrader, 0, 13);
+                    std::ranges::fill(app.state.rgTechBattle, 0);
+                    std::ranges::fill(app.state.rgTechTrader, 0);
                     for (i = 0; i < 16; i++) {
                         if (lpfl->rgcsh[i] > 0) {
                             csh += lpfl->rgcsh[i];

@@ -38,8 +38,8 @@ for row in rows:
         assert not re.search(r"(?:^|\s)-x\s", command.replace("-x objective-c++", "") if path.suffix == ".mm" else command), f"Owned production source has a language override: {path}"
         standards = re.findall(r"-std=(\S+)", command)
         assert standards and standards[-1] in ("c++20", "c++2a"), f"Owned production source lacks ISO C++20: {path}"
-        assert "-Wpedantic" in command and "-Wold-style-cast" in command and "-Werror" in command, f"Owned production source lacks strict diagnostics: {path}"
-        assert not re.search(r"-fpermissive|-Wno-(?:missing-field-initializers|missing-braces|pedantic|old-style-cast)|-Wno-error(?:=pedantic|=old-style-cast)?(?:\s|$)", command), f"Owned production source disables strict diagnostics: {path}"
+        assert "-Wpedantic" in command and "-Wold-style-cast" in command and "-Wzero-as-null-pointer-constant" in command and "-Werror" in command, f"Owned production source lacks strict diagnostics: {path}"
+        assert not re.search(r"-fpermissive|-Wno-(?:missing-field-initializers|missing-braces|pedantic|old-style-cast|zero-as-null-pointer-constant)|-Wno-error(?:=pedantic|=old-style-cast|=zero-as-null-pointer-constant)?(?:\s|$)", command), f"Owned production source disables strict diagnostics: {path}"
         count += 1
         production.add(path)
     elif name.startswith("tests/"):
@@ -75,6 +75,13 @@ actual_headers = {str(Path(row["file"]).resolve()) for row in rows
                   if Path(row["file"]).resolve().parent == manifest.parent / "header-checks"}
 assert actual_headers == expected_headers, f"Standalone header compile inventory differs: missing={sorted(expected_headers - actual_headers)}, unexpected={sorted(actual_headers - expected_headers)}"
 
+# Ordinary state uses typed initialization. Exact byte redaction remains
+# enumerated with its live technical reason, rather than a directory exception.
+initialization = json.loads((root / "docs/CPP-LIVE-INITIALIZATION.json").read_text())
+byte_resets = {(entry["path"], re.sub(r"\s+", "", entry["code"]))
+               for entry in initialization["initialization_sites"]
+               if entry["disposition"] == "retained-byte-range" and entry.get("reason")}
+
 for directory in ("src", "compat/win32/include", "compat/win32/src"):
     for path in (root / directory).rglob("*"):
         if path.suffix not in (".h", ".c", ".cpp", ".m", ".mm"):
@@ -88,6 +95,9 @@ for directory in ("src", "compat/win32/include", "compat/win32/src"):
         code = re.sub(r'//[^\n]*|/\*[\s\S]*?\*/|R"(?P<delimiter>[^ ()\\\t\r\n]*)\([\s\S]*?\)(?P=delimiter)"|"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'', ' ', text)
         assert not re.search(r"\bNULL\b", code), f"Owned null spelling must use nullptr: {path}"
         assert not re.search(r"\btypedef\b", code), f"Owned type aliases must use C++ declarations: {path}"
+        for reset in re.finditer(r"\b(?:std::)?memset\s*\(", code):
+            statement = code[reset.start():].split(";", 1)[0]
+            assert (path.relative_to(root).as_posix(), re.sub(r"\s+", "", statement)) in byte_resets, f"Uninventoried object byte reset; use typed initialization or record its exact byte contract: {path}"
         assert not re.search(r"#\s*include\s*<(?:assert|ctype|errno|fenv|float|inttypes|limits|locale|math|setjmp|signal|stdarg|stddef|stdint|stdio|stdlib|string|time|uchar|wchar|wctype)\.h>", text), f"Owned standard headers must use C++ spellings: {path}"
         assert not re.search(r"(?<![\w:])(?:u?int(?:8|16|32|64)_t|u?intptr_t|u?intmax_t|size_t|ptrdiff_t|max_align_t|FILE|fpos_t|va_list|time_t|clock_t)\b", code), f"Owned standard types must use std qualification: {path}"
         assert not re.search(r"#\s*define\s+(?:min|max)\s*\(", text), f"Owned min/max macro remains: {path}"

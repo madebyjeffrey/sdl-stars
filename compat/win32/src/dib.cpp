@@ -18,7 +18,7 @@ static BOOL FCompatDibInfo(const BITMAPINFOHEADER &bi, const BYTE *rgb, std::siz
     if (bi.biWidth > 16384 || bi.biHeight > 16384 || bi.biHeight < -16384 ||
         static_cast<std::uint64_t>(bi.biWidth) * static_cast<std::uint64_t>((bi.biHeight < 0 ? -bi.biHeight : bi.biHeight)) > UINT64_C(67108864))
         return SDL_SetError("DIB exceeds the initial 16384-axis / 64M-pixel limit");
-    std::memset(lpdib, 0, sizeof(*lpdib));
+    *lpdib = {};
     lpdib->cx = bi.biWidth;
     lpdib->cy = bi.biHeight < 0 ? -bi.biHeight : bi.biHeight;
     lpdib->fTopDown = bi.biHeight < 0;

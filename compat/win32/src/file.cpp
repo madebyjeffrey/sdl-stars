@@ -82,7 +82,7 @@ HFILE win32::OpenFile(LPCSTR pszFile, LPOFSTRUCT lpof, UINT flags) {
     }
     if (!FUtf8Valid(szPath, std::strlen(szPath))) { dwError = win32::ERROR_INVALID_PARAMETER; goto LReturn; }
     if (std::strlen(szPath) >= sizeof(lpof->szPathName)) { dwError = win32::ERROR_FILENAME_EXCED_RANGE; goto LReturn; }
-    std::memset(lpof, 0, sizeof(*lpof));
+    *lpof = {};
     lpof->cBytes = sizeof(*lpof); lpof->fFixedDisk = 1;
     std::strcpy(lpof->szPathName, szPath);
     if (flags & win32::OF_PARSE) return 0;

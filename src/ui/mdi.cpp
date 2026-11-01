@@ -36,7 +36,7 @@ std::int16_t InitMDIApp(APPSESSION &app) {
     }
     wc.style = 523;
     wc.lpfnWndProc = MessageWndProc;
-    wc.hIcon = 0;
+    wc.hIcon = nullptr;
     wc.lpszMenuName = nullptr;
     wc.hbrBackground = static_cast<HBRUSH>(win32::GetStockObject(win32::LTGRAY_BRUSH));
     wc.lpszClassName = app.lpui->szMessage;
@@ -67,7 +67,7 @@ std::int16_t InitMDIApp(APPSESSION &app) {
     wc.style = 0x200;
     wc.lpfnWndProc = PlanetWndProc;
     wc.hbrBackground = static_cast<HBRUSH>(win32::GetStockObject(win32::LTGRAY_BRUSH));
-    wc.hIcon = 0;
+    wc.hIcon = nullptr;
     wc.lpszClassName = app.lpui->szPlanet;
     if (win32::RegisterClassA(&wc) == 0) {
         return 0;
@@ -78,7 +78,7 @@ std::int16_t InitMDIApp(APPSESSION &app) {
     wc.style = 2560;
     wc.lpfnWndProc = PopupWndProc;
     wc.hbrBackground = static_cast<HBRUSH>(win32::GetStockObject(win32::WHITE_BRUSH));
-    wc.hIcon = 0;
+    wc.hIcon = nullptr;
     wc.lpszClassName = app.lpui->szPopup;
     if (win32::RegisterClassA(&wc) == 0) {
         return 0;
@@ -86,7 +86,7 @@ std::int16_t InitMDIApp(APPSESSION &app) {
     wc.style = 2560;
     wc.lpfnWndProc = TooltipWndProc;
     wc.hbrBackground = static_cast<HBRUSH>(win32::GetStockObject(win32::WHITE_BRUSH));
-    wc.hIcon = 0;
+    wc.hIcon = nullptr;
     wc.lpszClassName = app.lpui->szTooltip;
     if (win32::RegisterClassA(&wc) == 0) {
         return 0;
@@ -94,7 +94,7 @@ std::int16_t InitMDIApp(APPSESSION &app) {
     wc.style = 0x200;
     wc.lpfnWndProc = BrowserWndProc;
     wc.hbrBackground = static_cast<HBRUSH>(win32::GetStockObject(win32::LTGRAY_BRUSH));
-    wc.hIcon = 0;
+    wc.hIcon = nullptr;
     wc.lpszClassName = app.lpui->szBrowser;
     if (win32::RegisterClassA(&wc) == 0) {
         return 0;
@@ -104,7 +104,7 @@ std::int16_t InitMDIApp(APPSESSION &app) {
     wc.cbClsExtra = 0;
     wc.cbWndExtra = 0;
     wc.hInstance = app.lpui->hInst;
-    wc.hIcon = 0;
+    wc.hIcon = nullptr;
     wc.hCursor = win32::LoadCursorA(nullptr, win32::MAKEINTRESOURCE(32512));
     wc.hbrBackground = static_cast<HBRUSH>(win32::GetStockObject(win32::BLACK_BRUSH));
     wc.lpszMenuName = nullptr;
@@ -117,7 +117,7 @@ std::int16_t InitMDIApp(APPSESSION &app) {
     wc.cbClsExtra = 0;
     wc.cbWndExtra = 0;
     wc.hInstance = app.lpui->hInst;
-    wc.hIcon = 0;
+    wc.hIcon = nullptr;
     wc.hCursor = win32::LoadCursorA(nullptr, win32::MAKEINTRESOURCE(32512));
     wc.hbrBackground = static_cast<HBRUSH>(win32::GetStockObject(win32::LTGRAY_BRUSH));
     wc.lpszMenuName = nullptr;
@@ -550,7 +550,7 @@ LRESULT  FrameWndProc(APPSESSION &app, HWND hwnd, UINT msg, WPARAM wParam, LPARA
         win32::EndPaint(hwnd, &ps);
         return 0;
     case win32::WM_SETCURSOR:
-        hcs = 0;
+        hcs = nullptr;
         if (win32::IsIconic(hwnd) != 0)
             goto Default;
         GetCursorPos16(&pt);
@@ -811,7 +811,7 @@ HCURSOR HcrsFromFrameWindowPt(APPSESSION &app, POINT16 pt, std::int16_t *pgrSel)
     std::int16_t fInHBar1;
     std::int16_t fInVBar;
 
-    hcs = 0;
+    hcs = nullptr;
     fInVBar = pt.x >= app.lpui->vfs.xTop && pt.x < app.lpui->vfs.xTop + 8;
     fInHBar1 = pt.x < app.lpui->vfs.xTop + 8 && pt.y >= app.lpui->vfs.y1 && pt.y < app.lpui->vfs.y1 + 8;
     switch (app.lpui->iWindowLayout) {
@@ -847,7 +847,7 @@ void RestoreSelection(APPSESSION &app) {
 
     if (app.state.ini.idPlayer == app.state.idPlayer && app.state.ini.lid == app.state.game.lid) {
         if (app.state.ini.grobjSel == 2) {
-            if (LpflFromId(app, app.state.ini.iObjSel) != 0) {
+            if (LpflFromId(app, app.state.ini.iObjSel)) {
                 PresentationIO().pfnSelectFleet(app, 0, app.state.ini.iObjSel);
                 app.state.ini.grobjSel = 0;
             } else {
@@ -1046,7 +1046,7 @@ void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
                 break;
             cPageX = app.lpui->vrgcPrintMapPage[0];
             cPageY = app.lpui->vrgcPrintMapPage[1];
-            std::memset(&pd, 0, sizeof(PRINTDLG));
+            pd = {};
             pd.lStructSize = sizeof(PRINTDLG);
             pd.Flags = win32::PD_RETURNDC | win32::PD_RETURNDEFAULT;
             if (win32::PrintDlgA(&pd) != 0) {
@@ -1115,7 +1115,7 @@ void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
                         if (hfontPrint) {
                             hfontSav = static_cast<HFONT>(win32::SelectObject(pd.hDC, hfontPrint));
                         } else {
-                            hfontSav = 0;
+                            hfontSav = nullptr;
                         }
                         y = ptLegendA.y + yOff;
                         cch = TextIO().pfnCchGetString(app, idsStarsUniverseMap, app.state.szWork);
@@ -1748,7 +1748,7 @@ std::int16_t FOpenGame(APPSESSION &app, HWND hwnd, std::int16_t fRaceOnly) {
             szFilter[i] = 0;
         }
     }
-    std::memset(&ofn, 0, sizeof(OPENFILENAME));
+    ofn = {};
     ofn.lStructSize = sizeof(OPENFILENAME);
     ofn.hwndOwner = hwnd;
     ofn.lpstrFilter = szFilter;
@@ -2701,7 +2701,7 @@ LRESULT  TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         if (app.lpui->vhdibTitle) {
             win32::GlobalUnlock(app.lpui->vhdibTitle);
             win32::FreeResource(app.lpui->vhdibTitle);
-            app.lpui->vhdibTitle = 0;
+            app.lpui->vhdibTitle = nullptr;
         }
         if (app.lpui->fFreeingTitle)
             goto Default;
@@ -2731,7 +2731,7 @@ LRESULT  TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             if (!app.lpui->fFreeingTitle) {
                 app.lpui->fFreeingTitle = 1;
                 ControlIO().pfnDestroyWindow(app.lpui->hwndTitle);
-                app.lpui->hwndTitle = 0;
+                app.lpui->hwndTitle = nullptr;
             }
             ui::ShowWindow(app.lpui->hwndFrame, win32::SW_SHOW);
             break;
@@ -2811,7 +2811,7 @@ LRESULT  TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 if (!app.lpui->fFreeingTitle) {
                     app.lpui->fFreeingTitle = 1;
                     ControlIO().pfnDestroyWindow(app.lpui->hwndTitle);
-                    app.lpui->hwndTitle = 0;
+                    app.lpui->hwndTitle = nullptr;
                 }
                 if (app.state.idPlayer != iplrNone) {
                     ui::ShowWindow(app.lpui->hwndFrame, win32::SW_SHOW);
@@ -2935,7 +2935,7 @@ std::int16_t FinishOpenGame(APPSESSION &app) {
         if (app.lpui->hwndTitle && !app.lpui->fFreeingTitle) {
             app.lpui->fFreeingTitle = 1;
             ControlIO().pfnDestroyWindow(app.lpui->hwndTitle);
-            app.lpui->hwndTitle = 0;
+            app.lpui->hwndTitle = nullptr;
         }
         ControlIO().pfnBringUpHostDlg(app);
         return 0;

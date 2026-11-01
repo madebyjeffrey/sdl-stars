@@ -1,4 +1,5 @@
 #include "locking.h"
+#include <algorithm>
 #include "ownership.h"
 /* File-backed UTF-8 profiles. Preserve unrelated lines when updating settings. */
 #include <windows.h>
@@ -217,7 +218,7 @@ DWORD win32::GetPrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR p
             std::memcpy(szResult + cchOut, psz, cchCopy);
             cchOut += cchCopy;
             if (cchCopy < cch || cchOut + 1 >= cchMax) {
-                std::memset(szResult + cchOut, 0, cchMax - cchOut);
+                std::fill_n(szResult + cchOut, cchMax - cchOut, 0);
                 cchOut = cchMax - 2; break;
             }
             szResult[cchOut++] = 0;

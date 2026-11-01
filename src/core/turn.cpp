@@ -1,4 +1,5 @@
 #include "common.h"
+#include <algorithm>
 #include "appstate.h"
 #include "text_io.h"
 #include "colony_io.h"
@@ -90,10 +91,10 @@ std::int16_t FGenerateTurn(APPSESSION &app) {
         app.state.lpcd = LpAlloc<COLDROP>(app, 1000 * sizeof(COLDROP), htMisc);
         app.state.lpxf = LpAlloc<XFERFULL>(app, 1000 * sizeof(XFERFULL), htMisc);
         app.state.vrgPlanResExtra = LpAlloc<std::uint16_t>(app, app.state.game.cPlanMax * 2, htMisc);
-        std::memset(app.state.vrgPlanResExtra, 0, app.state.game.cPlanMax * 2);
+        std::fill_n(app.state.vrgPlanResExtra, app.state.game.cPlanMax, 0);
         app.state.vrgwtPopScore = LpAlloc<std::int32_t>(app, app.state.game.cPlanMax * sizeof(std::int32_t), htMisc);
         app.state.vrgiplrPopScore = LpAlloc<std::int16_t>(app, app.state.game.cPlanMax * sizeof(std::int16_t), htMisc);
-        std::memset(app.state.vrgiplrPopScore, 0xff, app.state.game.cPlanMax * sizeof(std::int16_t));
+        std::fill_n(app.state.vrgiplrPopScore, app.state.game.cPlanMax, std::int16_t{-1});
         UpdateProgressGauge(app, static_cast<ProgressStep>(370));
         app.state.cColDrop = 0;
         app.state.cXferFull = 0;
@@ -302,7 +303,7 @@ std::int16_t FGenerateTurn(APPSESSION &app) {
         }
         j = 856;
         fDone = 0;
-        std::memset(rgfNoXFile, 0, 16);
+        std::ranges::fill(rgfNoXFile, 0);
         i = 0;
         while (!fDone) {
             UpdateProgressGauge(app, static_cast<ProgressStep>(j));
@@ -440,7 +441,7 @@ void VerifyTurns(APPSESSION &app) {
     app.state.lpcd = LpAlloc<COLDROP>(app, 1000 * sizeof(COLDROP), htMisc);
     app.state.lpxf = LpAlloc<XFERFULL>(app, 1000 * sizeof(XFERFULL), htMisc);
     app.state.vrgPlanResExtra = LpAlloc<std::uint16_t>(app, app.state.game.cPlanMax * 2, htMisc);
-    std::memset(app.state.vrgPlanResExtra, 0, app.state.game.cPlanMax * 2);
+    std::fill_n(app.state.vrgPlanResExtra, app.state.game.cPlanMax, 0);
     app.state.cColDrop = 0;
     app.state.cXferFull = 0;
     app.state.imemMsgCur = 0;
@@ -1475,7 +1476,7 @@ void MoveFleets(APPSESSION &app) {
                                     flSrc = *lpfl;
                                     fDead = 1;
                                     cKillTot = 0;
-                                    std::memset(&flDead, 0, sizeof(FLEET));
+                                    flDead = {};
                                     for (ish = 0; ish < 16; ish++) {
                                         if (flSrc.rgcsh[ish] != 0) {
                                             if (app.state.rglpshdef[lpfl->iPlayer][ish].hul.rghs[0].iItem == iengineInterspace10 ||
@@ -1878,7 +1879,7 @@ LHitSkip1:
             dmgExtra = 0;
         }
         flSrc = *lpfl;
-        std::memset(&flDead, 0, sizeof(FLEET));
+        flDead = {};
         flDead.iPlayer = flSrc.iPlayer;
         flDead.fDead = 1;
         flDead.det = detAll;

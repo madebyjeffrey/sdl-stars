@@ -1,4 +1,5 @@
 #include "common.h"
+#include <algorithm>
 #include "appstate.h"
 #include "presentation_io.h"
 #include "production_io.h"
@@ -36,7 +37,7 @@ void InitProduction(APPSESSION &app, PROD *rgprod) {
     app.state.lpplProdGlob->iprodMac = i;
     app.state.cProdGlob = 0;
     app.state.pProdGlob = rgprod;
-    std::memset(rgprod, 0, 64 * sizeof(PROD));
+    std::fill_n(rgprod, 64, PROD{});
     if (app.state.sel.pl.fStarbase && PartQueryIO().pfnHull(app.state.rglpshdefSB[app.state.idPlayer][app.state.sel.pl.isb].hul.ihuldef)->hul.wtCargoMax != 0) {
         for (i = 0; i < 16; i++) {
             if (!app.state.rgshdef[i].fFree && !app.state.rgshdef[i].fGift) {

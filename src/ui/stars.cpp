@@ -21,8 +21,8 @@ static int IStarsMain(APPSESSION &app, HINSTANCE hInstance, HINSTANCE hPrevInsta
     app.lpui->hInst = hInstance;
     app.state.szBase[0] = 0;
     app.state.ini.SetWFlags(0);
-    std::memset(&app.state.tutor, 0, sizeof(TUTOR));
-    std::memset(&app.lpui->vtimer, 0, sizeof(TIMER));
+    app.state.tutor = {};
+    app.lpui->vtimer = {};
     app.lpui->vtimer.fAutoGenWhenIn = 1;
     if (!hPrevInstance && InitMDIApp(app) == 0) {
         AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableInitializeStars, nullptr), win32::MB_ICONHAND);

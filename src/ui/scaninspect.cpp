@@ -102,7 +102,7 @@ BOOL FSelectScannerObject(APPSESSION &app, const SCANSNAPSHOT *lpsnap, std::uint
     std::int16_t i;
     POINT16 pt;
     if (!lpsnap || !FScannerReady(app) || lpsnap->lidGame != app.state.game.lid || lpsnap->turn != app.state.game.turn || lpsnap->idPlayer != app.state.idPlayer) return 0;
-    std::memset(&scan, 0, sizeof(scan)); scan.idpl = idplNone; scan.ifl = iflNone; scan.ith = ithNone; scan.iwp = iwpNone;
+    scan = {}; scan.idpl = idplNone; scan.ifl = iflNone; scan.ith = ithNone; scan.iwp = iwpNone;
     if (grType == grobjPlanet) {
         if (id >= static_cast<std::uint16_t>(app.state.game.cPlanMax)) return 0;
         scan.idpl = static_cast<std::int16_t>(id); pt = app.state.rgptPlan[id];

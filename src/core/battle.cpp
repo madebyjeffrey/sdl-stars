@@ -1,4 +1,5 @@
 #include "common.h"
+#include <algorithm>
 #include "appstate.h"
 #include "text_io.h"
 #include "turn_io.h"
@@ -295,8 +296,8 @@ std::int16_t CplrBattle(APPSESSION &app, FLEET *lpfl, std::uint16_t *rggrfAttack
     app.state.grfMissed = 0;
     cflTotal = 0;
     *pgrfSpectator = 0;
-    std::memset(rggrfAttack, 0, 32);
-    std::memset(rgcsh, 0, 64);
+    std::fill_n(rggrfAttack, 16, 0);
+    std::ranges::fill(rgcsh, 0);
     if (lpfl->idPlanet != idPlanetDeepSpace) {
         lppl = LpplFromId(app, lpfl->idPlanet);
         if (lppl->fStarbase) {
@@ -455,7 +456,7 @@ std::int16_t CplrBattle(APPSESSION &app, FLEET *lpfl, std::uint16_t *rggrfAttack
         if (iplrStarbase != iplrNone && (1 << iplrStarbase & grfPlayer)) {
             ctokNew++;
         }
-        std::memset(rgctok, 0, 16);
+        std::ranges::fill(rgctok, 0);
         do {
             if (lpflCur->fInclude) {
                 ctokFleet = 0;
@@ -952,13 +953,13 @@ void InitializeBoard(APPSESSION &app, FLEET *lpfl, std::int16_t ibrc, std::uint1
     fDampeningField = 0;
     lpwtCargoCur = app.state.vlpwtCargo;
     ishdef = 0;
-    std::memset(mpiplrdibrc, 255, 16);
+    std::ranges::fill(mpiplrdibrc, 255);
     for (iplr = 0; iplr < app.state.game.cPlayer; iplr++) {
         if (1 << iplr & grfPlayer) {
             mpiplrdibrc[iplr] = ishdef++;
         }
     }
-    std::memset(rgfTorp, 0, 16);
+    std::ranges::fill(rgfTorp, 0);
     lpflCur = lpfl;
     ptok = app.state.vrgtok;
     if (lpfl->idPlanet != idPlanetDeepSpace) {
@@ -1969,7 +1970,7 @@ void KillShips(APPSESSION &app, TOK *ptok, std::int16_t cshKill, std::int16_t is
             MarkTechsSeen(app, &LpshdefFromTok(app, ptok)->hul, ptok->iplr);
         }
         flSrc = *lpfl;
-        std::memset(&flDead, 0, sizeof(FLEET));
+        flDead = {};
         csh = lpfl->rgcsh[ishdef] - cshKill;
         flDead.rgcsh[ishdef] = cshKill;
         flSrc.rgcsh[ishdef] = csh;
@@ -2079,7 +2080,7 @@ std::int16_t FDamageTok(APPSESSION &app, TOK *ptok, std::int16_t itok, std::int3
     std::uint16_t  pctDpNew;
 
     dp = *pdpBeam;
-    std::memset(app.state.lpbBattleCur, 0, 8);
+    std::fill_n(app.state.lpbBattleCur, 8, 0);
     BkvFromPrefix(app.state.lpbBattleCur).SetItok(itok);
     BkvFromPrefix(app.state.lpbBattleCur).SetGrfWeapon(grfWeapon);
     if (ptok->dpShield != 0) {
@@ -2312,15 +2313,15 @@ std::int16_t FDoCoolBattle(APPSESSION &app, FLEET *lpfl, std::int16_t cplr, std:
     }
     lpbSav = app.state.lpbBattleCur;
     app.state.lpbBattleCur = app.state.lpbBattleT;
-    std::memset(rgPlrLosses, 0, 0x200);
+    std::ranges::fill(rgPlrLosses, 0);
     app.state.vrgPlrLosses = rgPlrLosses;
-    std::memset(rgfInit, 0, 64);
-    std::memset(app.state.vrgtok, 0, 256 * sizeof(TOK));
+    std::ranges::fill(rgfInit, 0);
+    std::fill_n(app.state.vrgtok, 256, TOK{});
     app.state.vctok = 0;
     lpbtldata = static_cast<std::uint8_t *>(app.state.lpbBattleCur);
     app.state.lpbBattleCur += 14;
-    std::memset(app.state.rgTechBattle, 0, 6);
-    std::memset(app.state.rgTechTrader, 0, 13);
+    std::ranges::fill(app.state.rgTechBattle, 0);
+    std::ranges::fill(app.state.rgTechTrader, 0);
     app.state.lpthBattle = nullptr;
     cShdefsInvolved = 0;
     cShipsInvolved = 0;
@@ -2578,7 +2579,7 @@ void SendBattleMessages(APPSESSION &app, FLEET *lpflBtl, std::int16_t cplr, std:
 
     iplrStarbase = iplrNone;
     lppl = nullptr;
-    std::memset(rgcfl, 0, 16);
+    std::ranges::fill(rgcfl, 0);
     if (lpflBtl->idPlanet != idPlanetDeepSpace) {
         x = -1;
         y = lpflBtl->idPlanet;
@@ -2629,8 +2630,8 @@ void SendBattleMessages(APPSESSION &app, FLEET *lpflBtl, std::int16_t cplr, std:
             if (cplr != 2)
                 goto CommonCountingCode;
             if (cShipsInvolved == 2) {
-                pwThem = 0;
-                pwUs = 0;
+                pwThem = nullptr;
+                pwUs = nullptr;
                 pw = rgPlrLosses;
                 for (i = 0; i < 16; i++) {
                     j = 0;
@@ -2679,8 +2680,8 @@ void SendBattleMessages(APPSESSION &app, FLEET *lpflBtl, std::int16_t cplr, std:
                 continue;
             }
             if (cShdefsInvolved == 2) {
-                pwThem = 0;
-                pwUs = 0;
+                pwThem = nullptr;
+                pwUs = nullptr;
                 pw = rgPlrLosses;
                 for (i = 0; i < 16; i++) {
                     j = 0;

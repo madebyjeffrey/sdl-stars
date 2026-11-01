@@ -1,4 +1,5 @@
 #include "common.h"
+#include <algorithm>
 #include "appstate.h"
 #include "turn_io.h"
 #include "colony_io.h"
@@ -30,7 +31,7 @@ std::int16_t FStargateJump(APPSESSION &app, FLEET *lpfl, std::int16_t isbsSrc, s
     cshdef = 0;
     cshKill = 0;
     cshOrig = 0;
-    std::memset(rgpct, 0, 32);
+    std::ranges::fill(rgpct, 0);
     flSrc = *lpfl;
     if (flSrc.lpplord->rgord()[1].grobj == grobjPlanet) {
         id = flSrc.lpplord->rgord()[1].id;
@@ -64,7 +65,7 @@ std::int16_t FStargateJump(APPSESSION &app, FLEET *lpfl, std::int16_t isbsSrc, s
         TurnIO().pfnMessage(app, flSrc.iPlayer, idmHeedlessDangerAttemptedUseStargateReachFleet, static_cast<MsgGoto>(flSrc.id | 0x8000), flSrc.id, flSrc.idPlanet, id, 0, 0, 0, 0);
         return 0;
     }
-    std::memset(&flDead, 0, sizeof(FLEET));
+    flDead = {};
     for (ishdef = 0; ishdef < 16; ishdef++) {
         if (flSrc.rgcsh[ishdef] != 0 && rgpct[ishdef] != 0) {
             if (rgpct[ishdef] == 100) {

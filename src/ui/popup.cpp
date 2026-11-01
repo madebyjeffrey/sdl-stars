@@ -25,7 +25,7 @@ LRESULT  PopupWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     case win32::WM_DESTROY:
         // Native close paths do not pass through the mouse-release handler.
         if (app.lpui->hwndPopup == hwnd) {
-            app.lpui->hwndPopup = 0;
+            app.lpui->hwndPopup = nullptr;
             app.lpui->GlobalPD.grPopup = static_cast<GrPopupType>(0);
         }
         return 0;
@@ -51,7 +51,7 @@ LRESULT  PopupWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             return 0;
         }
         ControlIO().pfnDestroyWindow(app.lpui->hwndPopup);
-        app.lpui->hwndPopup = 0;
+        app.lpui->hwndPopup = nullptr;
         app.lpui->GlobalPD.grPopup = static_cast<GrPopupType>(0);
         win32::ReleaseCapture();
         if (!app.state.gd.fTutorial) {
@@ -402,7 +402,7 @@ std::int16_t PopupMenu(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16_t 
     std::int16_t fChecked;
     std::int16_t fCheckedCur;
 
-    hmenuSub = 0;
+    hmenuSub = nullptr;
     pt.x = x;
     pt.y = y;
     ClientToScreen16(hwnd, &pt);

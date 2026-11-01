@@ -1,4 +1,5 @@
 #include "win.h"
+#include <algorithm>
 #include "appstate.h"
 #include "callbackcontext.h"
 #include "uistate.h"
@@ -24,7 +25,7 @@ std::int16_t ChangeProduction(APPSESSION &app, std::int16_t fClear) {
         app.lpui->fDlgUp = 1;
         lpProcProd = (ProductionDlg);
         fSuccess = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_PRODUCTION), app.lpui->hwndFrame, lpProcProd, 0);
-        app.lpui->hwndProdDlg = 0;
+        app.lpui->hwndProdDlg = nullptr;
         app.lpui->fDlgUp = 0;
 LWriteProdQ:
         FinishProduction(app, fSuccess);
@@ -40,7 +41,7 @@ LWriteProdQ:
         if (app.lpui->hwndProdDlg) {
             ControlIO().pfnEndDialog(app.lpui->hwndProdDlg, 0);
         }
-        app.lpui->hwndProdDlg = 0;
+        app.lpui->hwndProdDlg = nullptr;
         app.lpui->fDlgUp = 0;
         AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsThereIsntEnoughFreeMemoryModifyProduction, nullptr), win32::MB_ICONHAND);
         return 0;
@@ -196,7 +197,7 @@ INT_PTR  ProductionDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         ProdCommandHandler(app, hwnd, 0x816, cMax);
         break;
     case win32::WM_SETCURSOR:
-        hcs = 0;
+        hcs = nullptr;
         GetCursorPos16(&pt);
         ScreenToClient16(hwnd, &pt);
         if (win32::PtInRect(&app.lpui->rcProdDiamond, PointFrom16(pt)) == 0)
@@ -368,7 +369,7 @@ void ProdCommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam, LPARAM lParam
                 cMax = 1;
             }
             lpplprodT = LpplAlloc<PLPROD>(app, 4, cMax, htOrd);
-            std::memset(lpplprodT->rgprod(), 0, cMax * 4);
+            std::fill_n(lpplprodT->rgprod(), cMax, PROD{});
             iDst = 0;
             for (iSrc = 0; iSrc < app.state.lpplProdGlob->iprodMac; iSrc++) {
                 if (app.state.lpplProdGlob->rgprod()[iSrc].grobj != grobjPlanet || app.state.lpplProdGlob->rgprod()[iSrc].iItem >= mdIdleFactory) {
@@ -424,7 +425,7 @@ void ProdCommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam, LPARAM lParam
         goto RedrawText;
     case IDOK:
     case IDCANCEL:
-        app.lpui->hwndProdDlg = 0;
+        app.lpui->hwndProdDlg = nullptr;
         ControlIO().pfnStickyDlgPos(hwnd, &app.lpui->ptStickyProduceDlg, 0);
         ControlIO().pfnEndDialog(hwnd, LOWORD(wParam) == IDOK);
         break;

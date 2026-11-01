@@ -3,6 +3,7 @@
  * Stars adaptation: exact window IDs, per-window buttons and normal focus loss.
  */
 #include "internal.h"
+#include <algorithm>
 #include "input_io.h"
 #include <stars_compat.h>
 #include <cmath>
@@ -27,11 +28,11 @@ BOOL win32::SetKeyboardState(BYTE *rgb) {
     return 1;
 }
 void CompatResetInput(void) {
-    std::memset(rgbInput, 0, sizeof(rgbInput)); std::memset(rgbRead, 0, sizeof(rgbRead));
-    std::memset(rgbRecent, 0, sizeof(rgbRecent)); std::memset(rgbAsync, 0, sizeof(rgbAsync));
+    std::ranges::fill(rgbInput, 0); std::ranges::fill(rgbRead, 0);
+    std::ranges::fill(rgbRecent, 0); std::ranges::fill(rgbAsync, 0);
     fCursor = fInputKeys = 0;
     hwndCursor = nullptr;
-    std::memset(rghwndClick, 0, sizeof(rghwndClick)); std::memset(rgcClick, 0, sizeof(rgcClick));
+    std::ranges::fill(rghwndClick, nullptr); std::ranges::fill(rgcClick, 0);
 }
 
 SHORT win32::GetKeyState(int vk) {
