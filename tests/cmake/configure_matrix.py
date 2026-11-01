@@ -12,6 +12,10 @@ import sys
 ROOT = Path(__file__).resolve().parents[2]
 
 
+def sdk_reference_name(path):
+    return 'test_' + path.stem + ('' if path.stem.endswith('_reference') else '_reference')
+
+
 def assert_sdk_registry(references, expected):
     assert references == expected, f'SDK registry differs: missing={sorted(expected - references)}, unexpected={sorted(references - expected)}'
 
@@ -64,7 +68,7 @@ def main():
     inventory = json.loads((ROOT / 'tests/reference/sdk/diagnostics.json').read_text())
     diagnostics = {row['test'] for row in inventory['diagnostics']}
     assert len(diagnostics) == 19
-    expected_references = {'test_' + path.stem + '_reference'
+    expected_references = {sdk_reference_name(path)
                            for path in (ROOT / 'tests/reference/sdk').glob('*.c')}
     expected_entries = {'tests/reference/sdk/' + path.stem + '.c'
                         for path in (ROOT / 'tests/reference/sdk').glob('*.c')}
