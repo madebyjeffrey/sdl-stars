@@ -2540,7 +2540,7 @@ char *SzVersion(APPSESSION &app) {
     return app.state.szWork;
 }
 
-std::int16_t CchGetETA(APPSESSION &app, HDC hdc, FLEET *lpfl, char *sz, std::int16_t iwp, std::int16_t fSmall) {
+std::int16_t CchGetETA(APPSESSION &app, HDC hdc, FLEET *lpfl, std::span<char> sz, std::int16_t iwp, std::int16_t fSmall) {
     std::int16_t  iWarp;
     double   dbl;
     ORDER   *lpord;
@@ -2551,6 +2551,7 @@ std::int16_t CchGetETA(APPSESSION &app, HDC hdc, FLEET *lpfl, char *sz, std::int
     std::int16_t  cYears;
     StringId ids;
 
+    if (sz.empty()) return 0;
     cYears = 0;
     lpord = lpfl->lpplord->rgord();
     i = 0;
@@ -2583,7 +2584,7 @@ std::int16_t CchGetETA(APPSESSION &app, HDC hdc, FLEET *lpfl, char *sz, std::int
             if (hdc) {
                 SetHdcTextColor(hdc, 0xff);
             }
-            c = TextIO().pfnCchGetString(app, idsNever, sz);
+            c = TextIO().pfnCchGetString(app, idsNever, sz.data());
             return c;
         }
         if (iSpeed < 0) {
@@ -2597,7 +2598,7 @@ std::int16_t CchGetETA(APPSESSION &app, HDC hdc, FLEET *lpfl, char *sz, std::int
             } else {
                 ids = idsUncertain;
             }
-            c = TextIO().pfnCchGetString(app, ids, sz);
+            c = TextIO().pfnCchGetString(app, ids, sz.data());
             return c;
         }
         if (iSpeed >= static_cast<std::int16_t>(LOWORD(static_cast<std::int32_t>(dbl)))) {
@@ -2610,7 +2611,7 @@ std::int16_t CchGetETA(APPSESSION &app, HDC hdc, FLEET *lpfl, char *sz, std::int
         lpord++;
     }
     c = CchSprintf(sz, TextIO().pfnCompressed(app, !fSmall ? idsDYear : idsDy), cYears);
-    if (cYears != 1 && !fSmall) {
+    if (cYears != 1 && !fSmall && static_cast<std::size_t>(c) + 1 < sz.size()) {
         sz[c++] = 's';
     }
     return c;

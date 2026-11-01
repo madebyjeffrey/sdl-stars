@@ -725,7 +725,7 @@ void DrawNewGame2(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
                 TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, nullptr);
                 if (!app.state.rgplr[i].fDead)
                     goto DisplayName;
-                win32::wsprintfA(&app.state.szWork[std::strlen(app.state.szWork)], " (%s)", TextIO().pfnCompressed(app, idsDeceased));
+                win32::wsprintfA(std::span{app.state.szWork}.subspan(static_cast<std::size_t>(std::strlen(app.state.szWork))), " (%s)", TextIO().pfnCompressed(app, idsDeceased));
                 win32::SetTextColor(hdc, 127);
                 goto DisplayName;
             }

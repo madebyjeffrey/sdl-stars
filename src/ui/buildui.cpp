@@ -1077,7 +1077,7 @@ void DrawBuildSelComp(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
                 if (!fPlural) {
                     i += TextIO().pfnCchGetString(app, idsOne, &app.state.szWork[i]);
                 } else {
-                    i += win32::wsprintfA(&app.state.szWork[i], "%d ", hsHul.cItem);
+                    i += win32::wsprintfA(std::span{app.state.szWork}.subspan(static_cast<std::size_t>(i)), "%d ", hsHul.cItem);
                 }
                 grhst = hsHul.grhst;
                 while (grhst != 0) {
@@ -1623,7 +1623,7 @@ void FillBuildDD(APPSESSION &app, HWND hwndDD, MdBuild md) {
                         if (!lpshdef[j].fFree) {
                             if (TextIO().pfnPlayerName(app, i, 1, 0, 0, 0, nullptr) != app.state.szWork) {
                             }
-                            win32::wsprintfA(&app.state.szWork[std::strlen(app.state.szWork)], " %s", lpshdef[j].hul.szClass);
+                            win32::wsprintfA(std::span{app.state.szWork}.subspan(static_cast<std::size_t>(std::strlen(app.state.szWork))), " %s", lpshdef[j].hul.szClass);
                             ControlIO().pfnSendMessage(hwndDD, win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(app.state.szWork));
                         }
                     }

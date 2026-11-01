@@ -118,7 +118,7 @@ void DrawPopup(APPSESSION &app, HWND hwnd, HDC hdc) {
         if (app.lpui->GlobalPD.rgi[3] > 0) {
             c = win32::wsprintfA(app.state.szWork, app.state.PCTLD, app.lpui->GlobalPD.rgi[3]);
             if (app.lpui->GlobalPD.rgi[1] != 0) {
-                c += win32::wsprintfA(&app.state.szWork[c], TextIO().pfnCompressed(app, app.lpui->GlobalPD.rgi[3] < 30 ? idsN30 : idsHw));
+                c += win32::wsprintfA(std::span{app.state.szWork}.subspan(static_cast<std::size_t>(c)), TextIO().pfnCompressed(app, app.lpui->GlobalPD.rgi[3] < 30 ? idsN30 : idsHw));
             }
         } else {
             c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsUnknown2));

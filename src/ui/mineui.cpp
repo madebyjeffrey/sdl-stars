@@ -578,7 +578,7 @@ void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
                     std::strcpy(app.state.szWork, szT);
                     c = std::strlen(szT);
                     if (l > 0) {
-                        c += win32::wsprintfA(&app.state.szWork[c], TextIO().pfnCompressed(app, idsCLd00), 177, l);
+                        c += win32::wsprintfA(std::span{app.state.szWork}.subspan(static_cast<std::size_t>(c)), TextIO().pfnCompressed(app, idsCLd00), 177, l);
                     } else {
                         c += TextIO().pfnCchGetString(app, idsMsg1264, &app.state.szWork[c]);
                     }

@@ -383,7 +383,7 @@ void DumpPlanets(APPSESSION &app) {
                     cch = std::strlen(szForm);
                 }
                 RgToStream(app, szForm, cch);
-                CchSprintf(&szForm[1], "%d", app.state.game.turn - lppl->turn);
+                CchSprintf(std::span{szForm}.subspan(1), "%d", app.state.game.turn - lppl->turn);
                 RgToStream(app, szForm, std::strlen(szForm));
                 szForm[1] = 0;
                 if (lppl->det == detAll) {
@@ -397,7 +397,7 @@ void DumpPlanets(APPSESSION &app) {
                     szForm[1] = 0;
                 } else {
                     i = PlanetQueryIO().pfnDesirability(app, lppl, app.state.idPlayer);
-                    CchSprintf(&szForm[1], app.state.PCTDPCTPCT, i);
+                    CchSprintf(std::span{szForm}.subspan(1), app.state.PCTDPCTPCT, i);
                 }
                 RgToStream(app, szForm, std::strlen(szForm));
                 szForm[1] = 0;
@@ -409,14 +409,14 @@ void DumpPlanets(APPSESSION &app) {
                 if (lppl->det == detAll) {
                     CalcPctSurvive(app, lppl, &pct, nullptr);
                     pct = static_cast<float>((static_cast<double>(1.0) - pct));
-                    CchSprintf(&szForm[1], "%ld\t%ld\t%d.%d%%", static_cast<std::int32_t>(lppl->cMines), static_cast<std::int32_t>(lppl->cFactories), LOWORD(static_cast<std::int32_t>((static_cast<double>(pct) * 100))),
+                    CchSprintf(std::span{szForm}.subspan(1), "%ld\t%ld\t%d.%d%%", static_cast<std::int32_t>(lppl->cMines), static_cast<std::int32_t>(lppl->cFactories), LOWORD(static_cast<std::int32_t>((static_cast<double>(pct) * 100))),
                                LOWORD(static_cast<std::int32_t>(((pct - static_cast<double>(static_cast<std::int16_t>(LOWORD(static_cast<std::int32_t>((static_cast<double>(pct) * 100))))) / 100.0) * 10000))));
                 } else {
                     szForm[2] = '\t';
                     szForm[1] = '\t';
                     szForm[3] = 0;
                     if (app.state.gd.fPerPlayerDumps && lppl->uDefGuess != 0) {
-                        cch = CchSprintf(&szForm[3], "%d%%", lppl->uDefGuess * 6 + 3);
+                        cch = CchSprintf(std::span{szForm}.subspan(3), "%d%%", lppl->uDefGuess * 6 + 3);
                         szForm[cch + 3] = 0;
                     }
                 }

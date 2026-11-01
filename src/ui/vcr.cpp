@@ -767,7 +767,7 @@ void DrawVCR(APPSESSION &app, HDC hdc, std::int16_t iStart, std::int16_t iEnd) {
                     c = std::strlen(app.state.szWork);
                 }
                 if (cshT != 0) {
-                    c += win32::wsprintfA(&app.state.szWork[c], " (-%d)", cshT);
+                    c += win32::wsprintfA(std::span{app.state.szWork}.subspan(static_cast<std::size_t>(c)), " (-%d)", cshT);
                 }
                 win32::SetTextColor(hdc, 8323072);
                 win32::TextOutA(hdc, x, y, app.state.szWork, c);
@@ -1159,7 +1159,7 @@ std::int16_t PopupVCRMenu(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16
             } else {
                 lpshdef = app.state.rglpshdef[app.state.vrgtok[i].iplr] + app.state.vrgtok[i].ishdef;
             }
-            cch += win32::wsprintfA(&app.state.szWork[cch], " %s * %d", lpshdef->hul.szClass, app.state.vrgtok[i].csh);
+            cch += win32::wsprintfA(std::span{app.state.szWork}.subspan(static_cast<std::size_t>(cch)), " %s * %d", lpshdef->hul.szClass, app.state.vrgtok[i].csh);
             if (fAttack && BevFromLp(app, app.lpui->vlpbrVCR).ctok() > 0 && app.lpui->viStepVCRCur >= 0) {
                 cKilled = 0;
                 for (j = 0; j < BevFromLp(app, app.lpui->vlpbrVCR).ctok(); j++) {
@@ -1168,7 +1168,7 @@ std::int16_t PopupVCRMenu(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16
                     }
                 }
                 if (cKilled > 0) {
-                    cch += win32::wsprintfA(&app.state.szWork[cch], " (-%d)", cKilled);
+                    cch += win32::wsprintfA(std::span{app.state.szWork}.subspan(static_cast<std::size_t>(cch)), " (-%d)", cKilled);
                 }
             }
             if (psz + (cch + 1) >= &rgch[1535] || c >= 40)

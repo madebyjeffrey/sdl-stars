@@ -136,6 +136,16 @@ static void TestFormattedTextBounds(void) {
     memcpy(szFormat + 1022, "\xc3\xa9z", 4);
     TEST_CHECK(CchSprintf(sz, "%s", szFormat) == 1022);
     TEST_CHECK(strlen(sz) == 1022 && FUtf8Valid(sz, strlen(sz)));
+    char rgch[12];
+    memset(rgch, '!', sizeof(rgch));
+    TEST_CHECK(CchSprintf(std::span{rgch}.subspan(2, 5), "%s", "ab\xc3\xa9z") == 4);
+    TEST_CHECK(!strcmp(rgch + 2, "ab\xc3\xa9") && rgch[1] == '!' && rgch[7] == '!');
+    memset(rgch, '!', sizeof(rgch));
+    TEST_CHECK(CchSprintf(std::span{rgch}.subspan(2, 4), "%s", "ab\xc3\xa9z") == 2);
+    TEST_CHECK(!strcmp(rgch + 2, "ab") && rgch[1] == '!' && rgch[6] == '!');
+    TEST_CHECK(CchSprintf(std::span{rgch}.subspan(2, 1), "%d", 12345) == 0 && rgch[2] == 0 && rgch[3] == 'b');
+    rgch[2] = '!';
+    TEST_CHECK(CchSprintf(std::span<char>{}, "%d", 12345) == 0 && rgch[2] == '!');
 }
 
 #ifdef STARS_UI_SDL

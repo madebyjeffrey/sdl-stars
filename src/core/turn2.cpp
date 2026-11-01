@@ -1757,9 +1757,9 @@ void CreateBackupDir(APPSESSION &app) {
     if (app.state.vcBackupDirs <= 1) {
         std::strcpy(pchT, "backup");
     } else if (app.state.vcBackupDirs <= 99) {
-        CchSprintf(pchT, "backup%d", static_cast<std::uint32_t>(app.state.game.turn) % app.state.vcBackupDirs);
+        CchSprintf(std::span{app.state.szBackup}.subspan(static_cast<std::size_t>(pchT - app.state.szBackup)), "backup%d", static_cast<std::uint32_t>(app.state.game.turn) % app.state.vcBackupDirs);
     } else {
-        CchSprintf(pchT, "backup.%03d", static_cast<std::uint32_t>(app.state.game.turn) % app.state.vcBackupDirs);
+        CchSprintf(std::span{app.state.szBackup}.subspan(static_cast<std::size_t>(pchT - app.state.szBackup)), "backup.%03d", static_cast<std::uint32_t>(app.state.game.turn) % app.state.vcBackupDirs);
     }
     MakeDir(app.state.szBackup);
     std::strcat(app.state.szBackup, szDirSep);

@@ -77,6 +77,6 @@ std::int16_t  ScanToPt(APPSESSION &app, std::int16_t d);
 char    *SzVersion(APPSESSION &app);
 void     ChangeScanSel(APPSESSION &app, SCAN *pscan, std::int16_t fValidScan);
 std::int16_t  FFindSomethingAndSelectIt(APPSESSION &app);
-std::int16_t  CchGetETA(APPSESSION &app, HDC hdc, FLEET *lpfl, char *sz, std::int16_t iwp, std::int16_t fSmall);
+std::int16_t  CchGetETA(APPSESSION &app, HDC hdc, FLEET *lpfl, std::span<char> sz, std::int16_t iwp, std::int16_t fSmall);
 
 #endif

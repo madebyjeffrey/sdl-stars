@@ -71,7 +71,8 @@
       "id": "L05",
       "status": "active",
       "completed_substeps": [
-        "typed-metadata-scan-destinations"
+        "typed-metadata-scan-destinations",
+        "formatter-destination-capacities"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -94,8 +95,27 @@
           "windows": "Strict MinGW syntax: fileio.cpp and libraryui.cpp pass. Compilation evidence only.",
           "baseline": "Unchanged; no game rules, catalogs, wire layouts or canonical models changed.",
           "receipts": "dist/verification/live-cpp/l05a/"
+        },
+        {
+          "batch": "L05b formatter destination capacity repair",
+          "debug_build": "Pass; no warnings; headers in both include orders.",
+          "desktop": "151/151 full existing suite; additionally activated portable services vectors on macOS/Windows and passed win32_services including new span/UTF-8 sentinel cases (152 total maintained desktop tests).",
+          "host_units": "27/27",
+          "native_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped reference inputs.",
+          "host_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped reference inputs.",
+          "windows": "146/146 strict owned application/wrapper syntax checks; final report.cpp syntax rechecked after removing redundant literal-size casts. Compilation evidence only.",
+          "correction": "Previously unchecked 1024-byte writes now bounded by actual destination capacity; valid fitting output, numeric formats, UTF-8 boundaries and 1024-byte ceiling preserved.",
+          "baseline": "Unchanged; no checkpoint moved. Wire layouts, IDs, catalogs and canonical models unchanged.",
+          "receipts": "dist/verification/live-cpp/l05b/"
         }
-      ]
+      ],
+      "bounded_formatting": {
+        "status": "complete; verified",
+        "correction": "CchSprintf and owned SDL wsprintfA honor actual destination capacity, preserving the existing 1024-byte ceiling and complete UTF-8 prefixes.",
+        "pointer_callers": 26,
+        "capacity_sources": "Fixed array extents/tail subspans; production-line and ETA helpers receive caller spans; message scratch uses its actual 0x800-byte arena allocation.",
+        "pending": "Catalog-copy destinations, strcpy/strcat, typed format arguments and borrowed scratch results remain open."
+      }
     },
     {
       "id": "L06",
@@ -13270,35 +13290,35 @@
       "path": "src/platform/fileio.cpp",
       "line": 397,
       "code": "va_list args; va_start(args, fmt);",
-      "disposition": "pending"
+      "disposition": "typed-integer-field-pack-and-span-L05a"
     },
     {
       "kind": "varargs",
       "path": "src/platform/fileio.cpp",
       "line": 397,
       "code": "va_list args; va_start(args, fmt);",
-      "disposition": "pending"
+      "disposition": "typed-integer-field-pack-and-span-L05a"
     },
     {
       "kind": "varargs",
       "path": "src/platform/fileio.cpp",
       "line": 423,
       "code": "if (wide) *va_arg(args, long long *) = value; else *va_arg(args, int *) = static_cast<int>(value);",
-      "disposition": "pending"
+      "disposition": "typed-integer-field-pack-and-span-L05a"
     },
     {
       "kind": "varargs",
       "path": "src/platform/fileio.cpp",
       "line": 423,
       "code": "if (wide) *va_arg(args, long long *) = value; else *va_arg(args, int *) = static_cast<int>(value);",
-      "disposition": "pending"
+      "disposition": "typed-integer-field-pack-and-span-L05a"
     },
     {
       "kind": "varargs",
       "path": "src/platform/fileio.cpp",
       "line": 426,
       "code": "va_end(args);",
-      "disposition": "pending"
+      "disposition": "typed-integer-field-pack-and-span-L05a"
     },
     {
       "kind": "typedef",

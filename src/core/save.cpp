@@ -919,7 +919,7 @@ void SetSzWorkFromDt(APPSESSION &app, DtFileType dt, std::int16_t iPlayer) {
     case dtLog:
     case dtTurn:
     case dtHist:
-        CchSprintf(&app.state.szWork[c], "%c%d", dt == dtLog ? 120 : dt == dtHist ? 104 : 109, iPlayer + 1);
+        CchSprintf(std::span{app.state.szWork}.subspan(static_cast<std::size_t>(c)), "%c%d", dt == dtLog ? 120 : dt == dtHist ? 104 : 109, iPlayer + 1);
     }
     return;
 }

@@ -5,6 +5,7 @@
 #include <SDL3/SDL.h>
 #include <io.h>
 #include <direct.h>
+#include <algorithm>
 #include <cctype>
 #include <cerrno>
 #include <climits>
@@ -57,15 +58,16 @@ LPSTR win32::lstrcpyA(LPSTR pszDest, LPCSTR pszSource) {
 int win32::lstrlenA(LPCSTR psz) { return psz ? static_cast<int>(std::strlen(psz)) : 0; }
 int win32::lstrcmpiA(LPCSTR psz1, LPCSTR psz2) { return strcasecmp(psz1, psz2); }
 
-int win32::wsprintfA(LPSTR pszDest, LPCSTR pszFormat, ...) {
+int win32::wsprintfA(std::span<char> pszDest, LPCSTR pszFormat, ...) {
     char szFormat[1024];
     const char *psz = pszFormat, *pszStart;
     std::size_t cch = 0;
     int cchResult;
     char chLength, chType;
     std::va_list args;
+    const std::size_t cb = std::min(pszDest.size(), std::size_t{1024});
 
-    if (!pszDest || !pszFormat) return 0;
+    if (pszDest.empty() || !pszFormat) return 0;
     while (*psz && cch < sizeof(szFormat) - 1) {
         if (*psz != '%') { szFormat[cch++] = *psz++; continue; }
         szFormat[cch++] = *psz++;
@@ -96,11 +98,11 @@ int win32::wsprintfA(LPSTR pszDest, LPCSTR pszFormat, ...) {
     if (*psz) goto LInvalid;
     szFormat[cch] = 0;
     va_start(args, pszFormat);
-    cchResult = std::vsnprintf(pszDest, 1024, szFormat, args);
+    cchResult = std::vsnprintf(pszDest.data(), cb, szFormat, args);
     va_end(args);
     if (cchResult < 0) { pszDest[0] = 0; return 0; }
-    if (cchResult > 1023) {
-        cchResult = static_cast<int>(CchUtf8Prefix(pszDest, 1023));
+    if (static_cast<std::size_t>(cchResult) >= cb) {
+        cchResult = static_cast<int>(CchUtf8Prefix(std::string_view(pszDest.data(), cb - 1), cb - 1));
         pszDest[cchResult] = 0;
     }
     return cchResult;

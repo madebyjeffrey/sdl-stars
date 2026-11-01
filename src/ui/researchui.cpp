@@ -1465,7 +1465,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, std::int16_t dx, std::int16_
                 }
                 if (dmgFloor > 0) {
                     TextIO().pfnCchGetString(app, dmgFloor == 999 ? idsSmartBombsStrictlyAdditiveHaveMinimumKill : idsIfPlanetHasDefensesBombGuaranteedKill, app.state.szWork);
-                    c += win32::wsprintfA(&szT[c], app.state.szWork, 100 * dmgFloor);
+                    c += win32::wsprintfA(std::span{szT}.subspan(static_cast<std::size_t>(c)), app.state.szWork, 100 * dmgFloor);
                 }
                 std::strcpy(app.state.szWork, szT);
             }
@@ -1812,7 +1812,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, std::int16_t dx, std::int16_
             case iminingRoboMiniMiner:
             case iminingAlienMiner:
                 c = TextIO().pfnCchGetString(app, idsModuleContainsRobotsCapableMining, app.state.szWork);
-                c += win32::wsprintfA(&app.state.szWork[c], app.state.PCTD, ppart->pmining()->grAbility);
+                c += win32::wsprintfA(std::span{app.state.szWork}.subspan(static_cast<std::size_t>(c)), app.state.PCTD, ppart->pmining()->grAbility);
                 c += TextIO().pfnCchGetString(app, idsKtEachMineralDependingConcentrationUninhabitedPl, &app.state.szWork[c]);
                 if (ppart->hs.iItem != iminingAlienMiner)
                     break;

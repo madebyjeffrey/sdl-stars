@@ -6,6 +6,7 @@
 
 #include "wincompat_types.h"
 #include "wincompat_structs.h"
+#include <span>
 
 namespace win32 {
 WINBOOL AppendMenuA(HMENU hMenu,UINT uFlags,UINT_PTR uIDNewItem,LPCSTR lpNewItem);
@@ -208,7 +209,7 @@ LPSTR lstrcatA (LPSTR lpString1, LPCSTR lpString2);
 int lstrcmpiA (LPCSTR lpString1, LPCSTR lpString2);
 LPSTR lstrcpyA (LPSTR lpString1, LPCSTR lpString2);
 int lstrlenA (LPCSTR lpString);
-int wsprintfA(LPSTR,LPCSTR,...);
+int wsprintfA(std::span<char>,LPCSTR,...);
 
 BOOL SetKeyboardState(BYTE *rgb);
 HACCEL CreateAcceleratorTableA(LPACCEL rgaccel, int c);

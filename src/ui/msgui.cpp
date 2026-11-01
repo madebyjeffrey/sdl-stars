@@ -197,10 +197,10 @@ LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 }
                 if (TextIO().pfnCchGetString(app, idsSCC, szT) >= 32) {
                 }
-                cch = win32::wsprintfA(reinterpret_cast<LPSTR>(app.lpui->lpb2k), szT, TextIO().pfnPlayerName(app, lpmsgplr->iPlrFrom, 1, 1, 1, 0, nullptr), 13, 10);
+                cch = win32::wsprintfA(std::span{reinterpret_cast<char *>(app.lpui->lpb2k), std::size_t{0x800}}, szT, TextIO().pfnPlayerName(app, lpmsgplr->iPlrFrom, 1, 1, 1, 0, nullptr), 13, 10);
                 if (TextIO().pfnCchGetString(app, idsSCC2, szT) >= 32) {
                 }
-                cch += win32::wsprintfA(reinterpret_cast<LPSTR>(app.lpui->lpb2k) + cch, szT,
+                cch += win32::wsprintfA(std::span{reinterpret_cast<char *>(app.lpui->lpb2k), std::size_t{0x800}}.subspan(static_cast<std::size_t>(cch)), szT,
                                 lpmsgplr->iPlrTo == 0 ? TextIO().pfnCompressed(app, idsEverybody) : TextIO().pfnPlayerName(app, lpmsgplr->iPlrTo - 1, 1, 1, 1, 0, nullptr),
                                 13, 10);
                 if (lpmsgplr->cLen >= 0) {

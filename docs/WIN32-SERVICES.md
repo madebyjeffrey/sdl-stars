@@ -11,7 +11,8 @@ are also implemented; they are counted separately from the Win32 percentage.
   decimal and hexadecimal values, field widths, precision, alignment and
   `h`/`l` numeric modifiers. The translation keeps Win32 `LONG` arguments at
   32 bits even on Linux's LP64 ABI. Output is capped at 1,023 bytes plus its
-  terminator; as on Windows, the caller must supply enough destination space.
+  terminator, further bounded by the actual destination span. The owned C++
+  API takes arrays or explicit spans; tail slices carry their remaining space.
   Wide strings, pointer/64-bit modifiers, floating point and other format
   extensions are rejected. This is the application's subset, not a complete
   printf or Unicode implementation.

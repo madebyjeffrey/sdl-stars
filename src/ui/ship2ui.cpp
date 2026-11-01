@@ -369,6 +369,6 @@ void FormatTransportPresetAction(APPSESSION &app, std::int16_t i) {
                 iAction = static_cast<XferActionType>(app.state.vrgZip[app.lpui->iResTechNow].txp.rgia[i].iAction());
                 cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsAction + static_cast<int>(iAction)), app.state.szWork);
                 if (app.state.szWork[cch - 1] == '.') {
-                    win32::wsprintfA(&app.state.szWork[cch - 3], " %dkT", app.state.vrgZip[app.lpui->iResTechNow].txp.rgia[i].cQuan());
+                    win32::wsprintfA(std::span{app.state.szWork}.subspan(static_cast<std::size_t>(cch - 3)), " %dkT", app.state.vrgZip[app.lpui->iResTechNow].txp.rgia[i].cQuan());
                 }
 }

@@ -986,7 +986,7 @@ std::int16_t PctCloakFromHuldef(APPSESSION &app, HUL *lphul, std::int16_t iplr, 
 // lists it: a schedule mark, the count and the name. An item that will
 // never be built is marked '&' if fShowNever is set, or is left out
 // (FALSE). PszNameProdItem names the item in szWork.
-std::int16_t FProdItemLine(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod, std::int16_t iprod, std::int16_t fShowNever, char *szLine) {
+std::int16_t FProdItemLine(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod, std::int16_t iprod, std::int16_t fShowNever, std::span<char> szLine) {
     char    ch;
     std::int16_t cItem;
     char   *psz;
@@ -994,6 +994,10 @@ std::int16_t FProdItemLine(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod, std:
     std::int16_t etaLast;
     std::int16_t etaFirst;
 
+    if (szLine.size() < 7) {
+        if (!szLine.empty()) szLine[0] = 0;
+        return 0;
+    }
     lpprod = &lpplprod->rgprod()[iprod];
     psz = PszNameProdItem(app, lpprod);
     ResearchIO().pfnEstimate(app, lppl, lpplprod, static_cast<ProdItemType>(iprod), &etaFirst, &etaLast);

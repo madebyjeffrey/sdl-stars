@@ -498,7 +498,7 @@ void ExecuteButton(APPSESSION &app, ToolbarButton itb, std::int16_t fDown) {
         c = 0;
         for (i = 0; i < 9; i++) {
             rgid[c] = static_cast<std::uint32_t>((app.state.iScanZoom + 4 == i));
-            win32::wsprintfA(&app.state.szWork[i * 8], app.state.PCTDPCTPCT, vrgpctZoom[i]);
+            win32::wsprintfA(std::span{app.state.szWork}.subspan(static_cast<std::size_t>(i * 8)), app.state.PCTDPCTPCT, vrgpctZoom[i]);
             rgszScan[c++] = &app.state.szWork[i * 8];
         }
         pt = PtToolbarMenu(app, itb);

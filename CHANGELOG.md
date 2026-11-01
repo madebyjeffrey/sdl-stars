@@ -6,6 +6,12 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `CchSprintf` and the SDL `wsprintfA` now receive each destination's actual
+  capacity. Previously both allowed 1,024 output bytes even for smaller stack
+  buffers or slices. Short destinations now receive a terminated, complete
+  UTF-8 prefix, and empty destinations are left untouched. Output that fits,
+  file records and host results are unchanged.
+
 - `ClickToolbar` honors unhandled dropdowns and completes their ordinary button
   action on mouse release. Previously `TBDDRET_NODEFAULT` suppressed the action,
   while `TBDDRET_TREATPRESSED` sent it on mouse down. `TbWndProc` now returns

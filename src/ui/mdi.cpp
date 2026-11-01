@@ -146,7 +146,7 @@ void CreateChildWindows(APPSESSION &app) {
         cch = CchUtf8Prefix(psz, 8);
         std::memcpy(szGame, psz, cch); szGame[cch] = 0;
         for (psz = szGame; *psz; psz++) if (*psz >= 'A' && *psz <= 'Z') *psz += 'a' - 'A';
-        win32::wsprintfA(&szGame[std::strlen(szGame)], ".m%d", app.state.idPlayer + 1);
+        win32::wsprintfA(std::span{szGame}.subspan(static_cast<std::size_t>(std::strlen(szGame))), ".m%d", app.state.idPlayer + 1);
         CchCopyUtf8(szNameUtf8, sizeof(szNameUtf8), app.state.game.szName, std::strlen(app.state.game.szName));
         psz = TextIO().pfnPlayerName(app, app.state.idPlayer, 0, 1, 0, 0, nullptr);
         CchCopyUtf8(szPlayerUtf8, sizeof(szPlayerUtf8), psz, std::strlen(psz));

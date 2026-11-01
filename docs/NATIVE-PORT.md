@@ -159,8 +159,10 @@ detail in [WIN16-PARITY.md](WIN16-PARITY.md).
 - **Formatting and rounding** (`native.cpp`): the game code formats with
   `CchSprintf`, which reads `%ld` as 32 bits like Win32 `wsprintf` (the
   string table passes `int32_t` to `%ld`; `long` is 64 bits on 64-bit POSIX)
-  and, like `wsprintf`, writes at most 1024 bytes,
-  and rounds with `LMulDiv`, which matches Win32 `MulDiv`. Every format in
+  and writes at most the destination span's capacity or 1024 bytes, including
+  its terminator. SDL `wsprintfA` carries the same explicit capacity. Both
+  retain complete UTF-8 code points when truncating. `LMulDiv` rounds like
+  Win32 `MulDiv`. Every format in
   the string table formats the same through both.
 - **Platforms:** the game code (`common.h`) builds without Windows headers;
   `stars-host` links it alone. Both host and client use binary64 `double`,

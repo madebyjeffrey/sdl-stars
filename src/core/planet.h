@@ -33,7 +33,7 @@ std::int16_t FCanTerraformLppl(APPSESSION &app, PLANET *lppl, std::int16_t *rgEn
 void    UninhabitPlanet(APPSESSION &app, PLANET *lppl);
 std::int16_t PctCloakFromHuldef(APPSESSION &app, HUL *lphul, std::int16_t iplr, std::int16_t *ppctSteal);
 
-std::int16_t FProdItemLine(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod, std::int16_t iprod, std::int16_t fShowNever, char *szLine);
+std::int16_t FProdItemLine(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod, std::int16_t iprod, std::int16_t fShowNever, std::span<char> szLine);
 char   *PszProdQueueTop(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod);
 
 

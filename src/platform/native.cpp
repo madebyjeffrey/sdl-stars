@@ -1,6 +1,7 @@
 #include "common.h"
 #include "ownership.h"
 
+#include <algorithm>
 #include <cstdarg>
 #include <cerrno>
 #include <ctime>
@@ -85,9 +86,9 @@ void qsort16(APPSESSION &app, void *base, std::size_t count, std::size_t width, 
 
 // CchSprintf drops the l from each %ld, %li, %lu, %lx or %lX in szFormat
 // before formatting, since its arguments are 32-bit. Like wsprintf, it
-// writes at most 1024 bytes, the terminator included, and returns the
-// characters it wrote.
-int CchSprintf(char *sz, const char *szFormat, ...) {
+// writes at most the destination size or 1024 bytes, the terminator included,
+// and returns the characters it wrote.
+int CchSprintf(std::span<char> sz, const char *szFormat, ...) {
     char        szFmtSmall[256];
     char       *szFmt;
     std::size_t      cbFmt;
@@ -96,6 +97,9 @@ int CchSprintf(char *sz, const char *szFormat, ...) {
     int         cch;
     std::va_list     args;
     NATIVEOWNER<char, std::free> format;
+    const std::size_t cb = std::min(sz.size(), std::size_t{1024});
+
+    if (sz.empty()) return 0;
 
     // Dropping l only shortens the format, so a copy its size holds it.
     cbFmt = std::strlen(szFormat) + 1;
@@ -124,15 +128,15 @@ int CchSprintf(char *sz, const char *szFormat, ...) {
     }
     *pchOut = 0;
     va_start(args, szFormat);
-    cch = std::vsnprintf(sz, 1024, szFmt, args);
+    cch = std::vsnprintf(sz.data(), cb, szFmt, args);
     va_end(args);
     format.reset();
     if (cch < 0) {
         sz[0] = 0;
         return 0;
     }
-    if (cch >= 1024) {
-        cch = static_cast<int>(CchUtf8Prefix(sz, 1023));
+    if (static_cast<std::size_t>(cch) >= cb) {
+        cch = static_cast<int>(CchUtf8Prefix(std::string_view(sz.data(), cb - 1), cb - 1));
         sz[cch] = 0;
     }
     return cch;

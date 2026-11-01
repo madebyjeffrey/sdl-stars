@@ -105,7 +105,7 @@ std::int16_t FSzPrefixNoCase(const char *sz1, const char *sz2, std::int16_t cch)
  * int32_t values to %ld. CchSprintf formats like wsprintf with l read as 32
  * bits on every platform. LMulDiv rounds like Win32 MulDiv.
  */
-int     CchSprintf(char *sz, const char *szFormat, ...);
+int     CchSprintf(std::span<char> sz, const char *szFormat, ...);
 // Bounded native formatting uses standard C widths and reports truncation.
 int     CchSnprintf(char *psz, std::size_t cb, const char *pszFormat, ...);
 std::int32_t LMulDiv(std::int32_t lNumber, std::int32_t lNumerator, std::int32_t lDenominator);

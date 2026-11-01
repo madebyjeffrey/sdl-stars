@@ -232,6 +232,16 @@ sentinel (-1). Host part lookup has no player race or technology restrictions.
 when writing an empty EOF record. `PtToScan` replaces negative signed shifts
 with multiplication, preserving scanner scaling and rounding.
 
+## Formatter destination capacity — fixed on develop
+
+`CchSprintf` and SDL `wsprintfA` passed a constant 1024-byte capacity to the
+CRT even when a caller supplied a smaller array or a tail slice. Both now take
+destination spans. The production-line and ETA helpers carry their caller's
+capacity, and array-tail calls retain only the actual remaining capacity.
+Undersized-output tests check adjacent sentinel bytes, empty and one-byte
+destinations, and truncation within a multibyte UTF-8 code point. Output that
+fits, saved records and host results are unchanged.
+
 ## Habitat-page stack corruption — fixed on main
 
 `raceui.c`: `DrawRace2` copied `idsCanExpect1DPlanetsWillHabitable`

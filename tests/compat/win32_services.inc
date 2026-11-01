@@ -52,6 +52,19 @@ int main(void) {
     CHECK(!strcmp(sz, "[  0012][ab   ][0x2a][1]"));
     CHECK(wsprintfA(sz, "%.3s %hd %lu", "fleet", (SHORT)-1, (DWORD)UINT32_MAX) > 0);
     CHECK(!strcmp(sz, "fle -1 4294967295"));
+#ifdef STARS_UI_SDL
+    // The owned C++ interface carries capacity; SDK comparisons above fit.
+    char rgch[12];
+    memset(rgch, '!', sizeof(rgch));
+    CHECK(wsprintfA(std::span{rgch}.subspan(2, 5), "%s", "ab\xc3\xa9z") == 4);
+    CHECK(!strcmp(rgch + 2, "ab\xc3\xa9") && rgch[1] == '!' && rgch[7] == '!');
+    memset(rgch, '!', sizeof(rgch));
+    CHECK(wsprintfA(std::span{rgch}.subspan(2, 4), "%s", "ab\xc3\xa9z") == 2);
+    CHECK(!strcmp(rgch + 2, "ab") && rgch[1] == '!' && rgch[6] == '!');
+    CHECK(wsprintfA(std::span{rgch}.subspan(2, 1), "%d", 12345) == 0 && rgch[2] == 0 && rgch[3] == 'b');
+    rgch[2] = '!';
+    CHECK(wsprintfA(std::span<char>{}, "%d", 12345) == 0 && rgch[2] == '!');
+#endif
     CHECK(_stricmp("Fleet", "FLEET") == 0 && _stricmp("a", "b") < 0);
     CHECK(_strnicmp("Fleet one", "FLEET two", 5) == 0);
     CHECK(_strnicmp("a", "b", 0) == 0);
