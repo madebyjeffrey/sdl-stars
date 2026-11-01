@@ -978,7 +978,7 @@ std::int16_t CreateStartupShip(APPSESSION &app, std::int16_t iplr, std::int16_t 
     return ishdef;
 }
 
-std::int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
+std::int16_t GenNewGameFromFile(APPSESSION &app, std::string_view pszFile) {
     std::int32_t rgl[10];
     std::int16_t cPlr;
     std::int16_t rgplrbmp[16];
@@ -991,27 +991,39 @@ std::int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
     std::int16_t j;
     std::string_view lpb;
     std::string lpbDef;
+    std::string szFile;
+    std::size_t ich;
+    std::size_t ichDir;
+    std::size_t cchBase;
     std::int16_t cb;
     std::optional<std::int64_t> cbFile;
-    char   *pchT;
     AiRace  idAi;
     std::int16_t lvlAi;
 
     fSuccess = 0;
-    std::strcpy(app.state.szWork, pszFile);
     StarsRecoveryScope scopeRecovery;
     try {
+        ich = pszFile.rfind('.');
+        ichDir = pszFile.rfind(chDirSep);
+        cchBase = ich != std::string_view::npos && (ichDir == std::string_view::npos || ich > ichDir) ? ich : pszFile.size();
+        if (pszFile.empty() || !FUtf8Valid(pszFile) || (app.state.ini.fLogging && cchBase >= sizeof(app.state.szBase))) {
+            FileError(app, idsUniverseCreationFileAppearsInvalid);
+            return 0;
+        }
+        try {
+            // Logging overwrites both shared buffers; the open needs the original filename.
+            szFile.assign(pszFile);
+        } catch (const std::bad_alloc &) {
+            AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMemory, {}).data(), win32::MB_ICONHAND);
+            StarsThrowError(starsErrorMemory, idsMemory);
+        }
+        CchCopyUtf8Prefix(std::span{app.state.szWork}, szFile);
         if (app.state.ini.fLogging) {
-            /* NATIVE: the host passes szBase itself; see FLoadGame. */
-            if (pszFile != app.state.szBase) {
-                std::strcpy(app.state.szBase, pszFile);
-            }
-            pchT = std::strrchr(app.state.szBase, 46);
-            *pchT = 0;
+            CchCopyUtf8(std::span{app.state.szBase}, std::string_view{szFile}.substr(0, cchBase));
             TurnLog(app, idsGeneratingYearD);
         }
         app.state.game = {};
-        RecordIO().pfnStreamOpen(app, pszFile, mdRead);
+        RecordIO().pfnStreamOpen(app, szFile.c_str(), mdRead);
         cbFile = CbFileSize(app.state.hf);
         if (!cbFile || *cbFile >= 16000) {
             FileError(app, idsUniverseCreationFileAppearsInvalid);

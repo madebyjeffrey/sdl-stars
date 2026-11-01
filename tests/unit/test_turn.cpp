@@ -9,6 +9,139 @@
 #include "record_io.h"
 #include <vector>
 
+static std::string szDefinitionOpened;
+static void CaptureDefinitionFile(APPSESSION &, const char *psz, MdOpenFlags) {
+    szDefinitionOpened = psz;
+    StarsThrowError(starsErrorFile, idsCantOpenFile);
+}
+
+static void test_DefinitionFilename_logging(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    char szDir[cbTestPath];
+
+    TEST_ASSERT(FStarsTestInit(app));
+    TEST_ASSERT(FStarsTestDir("definition-input", szDir, sizeof(szDir)));
+    std::string szFile = std::string(szDir) + chDirSep + "source-Ω.def";
+    RECORDIO io = RecordIO();
+    io.pfnStreamOpen = CaptureDefinitionFile;
+    RECORDIOSCOPE recordScope(io);
+    app.state.ini.fLogging = 1;
+    for (const auto iStorage : {0, 1, 2}) {
+        char *psz = szFile.data();
+        if (iStorage == 1) {
+            TEST_ASSERT(CchCopyUtf8(std::span{app.state.szBase}, szFile) >= 0);
+            psz = app.state.szBase;
+        } else if (iStorage == 2) {
+            TEST_ASSERT(CchCopyUtf8(std::span{app.state.szWork}, szFile) >= 0);
+            psz = app.state.szWork;
+        }
+        szDefinitionOpened.clear();
+        TEST_CHECK(!GenNewGameFromFile(app, psz));
+        TEST_ASSERT_(szDefinitionOpened == szFile, "opened %s instead of %s", szDefinitionOpened.c_str(), szFile.c_str());
+        TEST_CHECK(app.state.hf == -1 && !FStarsRecoveryActive() && !FStarsErrorPending());
+    }
+    const std::string szGuarded = szFile + "!";
+    szDefinitionOpened.clear();
+    TEST_CHECK(!GenNewGameFromFile(app, std::string_view{szGuarded.data(), szFile.size()}));
+    TEST_CHECK(szDefinitionOpened == szFile);
+    for (const auto &szName : {std::string("source"), std::string("with.dot") + chDirSep + "source"}) {
+        szFile = std::string(szDir) + chDirSep + szName;
+        szDefinitionOpened.clear();
+        TEST_CHECK(!GenNewGameFromFile(app, szFile));
+        TEST_CHECK(szDefinitionOpened == szFile && std::string_view(app.state.szBase) == szFile);
+    }
+    const std::string szDirectory = std::string(szDir) + chDirSep;
+    std::string szMaxBase = szDirectory + "éééééééééééééééé";
+    TEST_ASSERT(szMaxBase.size() < 255);
+    szMaxBase.append(255 - szMaxBase.size(), 'a');
+    szDefinitionOpened.clear();
+    TEST_CHECK(!GenNewGameFromFile(app, szMaxBase + ".def"));
+    TEST_CHECK(szDefinitionOpened == szMaxBase + ".def" && std::string_view(app.state.szBase) == szMaxBase);
+    TEST_CHECK(FFileExists((szMaxBase + ".log").c_str()));
+    TEST_CHECK(RemoveNativeFile((szMaxBase + ".log").c_str()) == 0);
+    std::string szLong = std::string(szDir) + chDirSep;
+    for (int i = 0; i < 200; ++i) szLong += "東";
+    szLong += ".def";
+    app.state.ini.fLogging = 0;
+    szDefinitionOpened.clear();
+    TEST_CHECK(!GenNewGameFromFile(app, szLong));
+    TEST_CHECK(szDefinitionOpened == szLong);
+    TEST_CHECK(std::strlen(app.state.szWork) < sizeof(app.state.szWork) && FUtf8Valid(app.state.szWork));
+    TEST_CHECK(szLong.starts_with(app.state.szWork));
+    app.state.ini.fLogging = 1;
+    const std::string szOversizeBase(256, 'a');
+    const std::array<std::string_view, 4> rgszBad = {std::string_view{}, "\xff", std::string_view{"a\0b.def", 7}, szOversizeBase};
+    for (const auto sz : rgszBad) {
+        app.state.game.turn = 73;
+        TEST_ASSERT(CchCopyUtf8(std::span{app.state.szWork}, "unchanged") >= 0);
+        const std::string szBaseBefore = app.state.szBase;
+        szDefinitionOpened.clear();
+        TEST_CHECK(!GenNewGameFromFile(app, sz));
+        TEST_CHECK(szDefinitionOpened.empty() && app.state.game.turn == 73);
+        TEST_CHECK(std::string_view(app.state.szWork) == "unchanged" && std::string_view(app.state.szBase) == szBaseBefore);
+        TEST_CHECK(app.state.idsFileError == idsUniverseCreationFileAppearsInvalid);
+        TEST_CHECK(app.state.hf == -1 && !FStarsRecoveryActive() && !FStarsErrorPending());
+    }
+}
+
+static void test_DefinitionCreation_logging(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    char szDir[cbTestPath];
+
+    TEST_ASSERT(FStarsTestInit(app));
+    TEST_ASSERT(FStarsTestDir("definition-create", szDir, sizeof(szDir)));
+    TEST_ASSERT(FStarsTestNewGame(app, szDir, 12345, nullptr, 0));
+    const std::string szBase = app.state.szBase;
+    const std::string szFile = szBase + ".def";
+    const std::string szNoExt = std::string(szDir) + chDirSep + "source";
+    std::string szDefinition;
+    {
+        NATIVEFILEOWNER lpfile(PfNativeOpen(szFile.c_str(), NATIVEFILEMODE::read), ICloseNativeFile);
+        TEST_ASSERT(lpfile);
+        const auto cb = CbNativeFile(lpfile.get());
+        TEST_ASSERT(cb >= 0 && cb < 16000);
+        szDefinition.resize(static_cast<std::size_t>(cb));
+        TEST_ASSERT(CbReadNativeFile(lpfile.get(), std::as_writable_bytes(std::span{szDefinition})) == szDefinition.size());
+    }
+    {
+        NATIVEFILEOWNER lpfile(PfNativeOpen(szNoExt.c_str(), NATIVEFILEMODE::writeTruncate), ICloseNativeFile);
+        TEST_ASSERT(lpfile && CbWriteNativeFile(lpfile.get(), std::as_bytes(std::span{szDefinition})) == szDefinition.size());
+    }
+    app.state.ini.fLogging = 1;
+    for (const auto iStorage : {0, 1, 2, 3}) {
+        const auto &szSource = iStorage == 3 ? szNoExt : szFile;
+        std::string_view psz = szSource;
+        if (iStorage == 1) {
+            TEST_ASSERT(CchCopyUtf8(std::span{app.state.szBase}, szSource) >= 0);
+            psz = app.state.szBase;
+        } else if (iStorage == 2) {
+            TEST_ASSERT(CchCopyUtf8(std::span{app.state.szWork}, szSource) >= 0);
+            psz = app.state.szWork;
+        }
+        TEST_ASSERT(GenNewGameFromFile(app, psz));
+        TEST_CHECK(std::string_view(app.state.szBase) == szBase);
+        NATIVEFILEOWNER lpfile(PfNativeOpen(szSource.c_str(), NATIVEFILEMODE::read), ICloseNativeFile);
+        TEST_ASSERT(lpfile);
+        std::string szAfter(szDefinition.size(), '\0');
+        TEST_CHECK(CbReadNativeFile(lpfile.get(), std::as_writable_bytes(std::span{szAfter})) == szAfter.size() && szAfter == szDefinition);
+        lpfile.reset();
+        TEST_ASSERT(FStarsTestLoadHost(app));
+        TEST_CHECK(app.state.game.turn == 0 && std::string_view(app.state.game.szName) == "Unit Test");
+        TEST_CHECK(app.state.hf == -1 && !FStarsRecoveryActive() && !FStarsErrorPending());
+        DestroyCurGame(app);
+    }
+}
+
 static void OpenClosedBatchSource(APPSESSION &app, const char *psz, MdOpenFlags md) {
     StreamOpen(app, psz, md);
     StreamClose(app);
@@ -431,6 +564,8 @@ static void test_MoveThings_trader_without_retargeting_moves(void) {
 }
 
 TEST_LIST = {{"batch command iterates owned LF paths and stops on invalid names", test_BatchRun_games}, {"batch input preserves names and full file sizes", test_BatchInput_contract}, {"MoveThings trader without retargeting moves", test_MoveThings_trader_without_retargeting_moves},
+             {"definition filename survives logging and shared-buffer aliases", test_DefinitionFilename_logging},
+             {"definition creation succeeds with logging and the command-line basename", test_DefinitionCreation_logging},
              {"generate one turn", test_generate_one_turn},
              {"generate backs up an unsubmitted turn", test_generate_backs_up_unsubmitted_turn},
              {"generate preserves full UTF-8 backup paths", test_generate_backup_path_capacity},

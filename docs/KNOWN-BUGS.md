@@ -17,6 +17,21 @@ J/JRC3/JRC4 fix claims below come from the supplied list and are not independent
 verified release history. See [WIN16-PARITY.md](WIN16-PARITY.md) for native changes
 and [ROADMAP.md](ROADMAP.md) for the post-tag work.
 
+## Definition filename changed by logging — fixed on develop
+
+`GenNewGameFromFile` borrowed its input from the caller, then reused `szBase`
+and `szWork` for logging before opening that input. The command-line caller
+passes `szBase`, so removing its extension changed the filename being opened.
+A work-buffer input could likewise become version text. The actual parent
+tests capture the shortened filename and fail a complete game-creation case.
+The function now accepts a sized readonly view and owns a snapshot before
+logging. Its display prefix is independent of the complete I/O filename;
+logging stems must fit their actual field. Extensionless names are admitted
+without a null-pointer write, and directory dots are kept in the path.
+Tests cover the three input owners, bounded slices, invalid text, long inputs,
+actual creation/reload and unchanged definition bytes. Saved widths, game
+rules and native regression checkpoints remain unchanged.
+
 ## Report-file path capacity — fixed on develop
 
 `ClearFile` and `OutputSz` staged report filenames in 256-byte arrays even

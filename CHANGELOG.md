@@ -6,6 +6,14 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `GenNewGameFromFile` now owns its source filename before logging changes
+  shared buffers. With logging enabled, the command-line basename could lose
+  its extension before the open, and a work-buffer input could become version
+  text. Creation now opens the original complete UTF-8 filename, including
+  extensionless names. Malformed paths and logging basenames exceeding their
+  storage are rejected before staging. Definition contents, saved layouts and
+  game rules remain unchanged. No native regression scenario or checkpoint moved.
+
 - `ClearFile` and `OutputSz` now form complete report filenames within a
   capacity derived from the basename and extension limits. Their former
   256-byte arrays could overflow while clearing a report or truncate the path

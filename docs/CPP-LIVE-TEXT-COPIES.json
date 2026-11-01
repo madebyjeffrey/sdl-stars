@@ -1,6 +1,6 @@
 {
   "migration_parent": "d3d3724c",
-  "status": "297 copy migrations recorded; live text work remains active",
+  "status": "299 copy migrations recorded; live text work remains active",
   "contracts": {
     "display": "Write a terminated complete UTF-8 prefix into the actual destination span; preserve fitting bytes. Views borrow synchronously and overlapping copies use memmove.",
     "append": "Scan only inside the destination span for its NUL. An unterminated nonempty destination is cleared and zero bytes are appended.",
@@ -2943,24 +2943,30 @@
       "original_call": "strcat(szFile, app.state.mpdtsz[dt])",
       "destination_owner": "REPORTFILEPATH: a returned optional std::array sized from sizeof(APPGAMESTATE::szBase), a dot and the longest immutable extension",
       "role": "Intentional report-path capacity repair. One bounded builder admits the whole terminated UTF-8 basename and extension for ClearFile and OutputSz, preserving their different existing extension policies without truncating paths. Stack ownership avoids adding allocations to memory-error reporting."
+    },
+    {
+      "path": "src/core/create.cpp",
+      "scope": "GenNewGameFromFile",
+      "baseline_line": 999,
+      "migration_parent": "60215fc6",
+      "operation": "strcpy",
+      "original_call": "strcpy(app.state.szWork, pszFile)",
+      "destination_owner": "Owned std::string snapshot of the readonly filename input; display work buffer receives a bounded prefix, logging basename receives its admitted whole UTF-8 stem",
+      "role": "Intentional filename lifetime/admission repair: logging may overwrite both shared buffers before opening. Preserve the original filename for StreamOpen, accept explicit slices, reject malformed/embedded-NUL inputs and logging stems exceeding the actual basename field before filename staging, game reset or source I/O. Extensionless input remains intact and directory dots do not become filename extensions. Allocation failure enters existing StarsError cleanup."
+    },
+    {
+      "path": "src/core/create.cpp",
+      "scope": "GenNewGameFromFile",
+      "baseline_line": 1005,
+      "migration_parent": "60215fc6",
+      "operation": "strcpy",
+      "original_call": "strcpy(app.state.szBase, pszFile)",
+      "destination_owner": "Owned std::string snapshot of the readonly filename input; display work buffer receives a bounded prefix, logging basename receives its admitted whole UTF-8 stem",
+      "role": "Intentional filename lifetime/admission repair: logging may overwrite both shared buffers before opening. Preserve the original filename for StreamOpen, accept explicit slices, reject malformed/embedded-NUL inputs and logging stems exceeding the actual basename field before filename staging, game reset or source I/O. Extensionless input remains intact and directory dots do not become filename extensions. Allocation failure enters existing StarsError cleanup."
     }
   ],
   "remaining_spelling_scope": "Lexical raw-copy spellings, including SDK declarations/definitions; comments/literals excluded with the manifest lexer. Exact counts prevent new raw sites during the remaining migration.",
   "remaining_raw_spellings": [
-    {
-      "path": "src/core/create.cpp",
-      "normalized_call": "std::strcpy(app.state.szBase,pszFile)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/core/create.cpp",
-      "normalized_call": "std::strcpy(app.state.szWork,pszFile)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
     {
       "path": "src/core/file.cpp",
       "normalized_call": "std::strcpy(app.state.szBase,pszFileName)",
@@ -3337,7 +3343,7 @@
     }
   },
   "owned_backup_paths": {
-    "status": "complete; locally verified; final native Windows/Linux platform qualification pending",
+    "status": "complete; native Windows/Linux qualified at60215fc6",
     "parent": "17ca8390",
     "sites": 9,
     "reproduction": "The actual parent Debug ASan/UBSan turn executable rejects index 257 outside char[256] in FGenerateTurn at turn.cpp:283 for a valid 250-byte UTF-8 basename.",
@@ -3372,12 +3378,13 @@
       }
     },
     "windows_fixture_correction": {
-      "status": "fixture corrected and locally verified; full native Windows/Linux qualification pending",
+      "status": "complete; native Windows/Linux qualified at60215fc6",
       "evidence": "docs/CPP-LIVE-CLEANUP.json: L08.windows_backup_directory_fixture"
-    }
+    },
+    "platform_qualification": "docs/CPP-LIVE-CLEANUP.json: L08.last_full_platform_qualification"
   },
   "report_file_paths": {
-    "status": "complete; locally verified; final native Windows/Linux platform qualification pending",
+    "status": "complete; native Windows/Linux qualified at60215fc6",
     "parent": "087dc5cd",
     "sites": 3,
     "reproduction": "Actual parent ASan reports a two-byte strcat stack overflow past ClearFile szFile[256] for a valid 255-byte UTF-8 basename. The actual parent OutputSz test fails because its complete .log path is absent at the same basename limit.",
@@ -3407,6 +3414,39 @@
         "src/core/util.cpp": "fe0db1d9e3c678e147b246fc993ac8ac627c75685d705c68d644d764cf1362fe",
         "src/core/util.h": "12224654d2e6d812522891b95b407571c1f9aca5ad78623a4fb4138ca82b8aec",
         "tests/unit/test_util.cpp": "055e0d29816c7dfefb020501cfc06a050c1f7642cc2fb5abd707626ac8a1c82e"
+      }
+    },
+    "platform_qualification": "docs/CPP-LIVE-CLEANUP.json: L08.last_full_platform_qualification"
+  },
+  "definition_filename_owner": {
+    "status": "complete; locally verified; final native Windows/Linux qualification pending",
+    "parent": "60215fc6",
+    "sites": 2,
+    "reproduction": "The actual parent sanitizer-built turn executable first observes an external input control, then captures source-Omega instead of source-Omega.def for the shared basename. A separate actual creation case fails when passing the same command-line basename with logging enabled.",
+    "repair": "GenNewGameFromFile takes std::string_view and snapshots an owned filename before logging can change Work/Base. StreamOpen uses the owned full filename. Valid display text is bounded independently; logger stems require the complete actual 256-byte basename field. Empty/malformed/NUL input and oversized logger stems fail before input staging, game reset or source I/O. Existing ordinary parsing, shared-buffer effects and record/game rules remain.",
+    "remaining": "9 live raw-copy calls, other filename/ownership interfaces, scratch/borrowed storage, wrapper formatting, Milestone D and final current-source/platform qualification remain active.",
+    "verification": {
+      "batch": "L05ah owned definition-file input and logging lifetime repair",
+      "parent": "60215fc63638d2267e97040ad7df72fad3895182",
+      "status": "complete; locally verified; final native Windows/Linux qualification pending",
+      "reproduction": "Actual parent Debug ASan/UBSan turn executable passes the external-input control, then captures source-Omega instead of source-Omega.def when the argument aliases szBase. A separate actual game-creation case fails with logging enabled and the command-line basename. Both parent assertions fail before any dangerous oversized input is tested.",
+      "repair": "GenNewGameFromFile borrows std::string_view and owns an exact std::string snapshot before logging changes either shared buffer. StreamOpen receives the complete owned filename. Work receives an independent bounded UTF-8 display prefix. Logging derives only the filename extension, keeping directory dots and accepting extensionless names; its complete stem must fit the existing 255-byte basename field. Empty, malformed, embedded-NUL input and oversized logger stems are rejected with the existing file error before filename staging, game reset or source I/O. Snapshot allocation failures enter the existing nested memory alert/StarsError recovery. Normal definition parsing, source-byte preservation, game rules, wire widths, RNG and floating/tie boundaries remain.",
+      "interface": "One production FRunCmdLine call plus eleven existing test/helper call sites consume the readonly filename header. The result remains the existing zero/one int16 flag; broader primitive/result audits remain open.",
+      "debug_build": "Pass, no warnings. Source/compiler policy: 158 owned sources, 159 variants, 161 standalone headers in both orders; exact raw-copy inventory passes.",
+      "desktop": "154/154 including 29 leak checks, actual new input/create cases, linked witnesses, file/library workflows and available SDL tutorial checkpoints.",
+      "host_units": "29/29 Release host tests.",
+      "sanitizers": "Actual Debug ASan/UBSan turn executable passes all 11 cases twice consecutively.",
+      "windows": "All 147 production units pass strict MinGW syntax: 145 pass initially; two unchanged zlib consumers pass after supplying the missing portable Homebrew zlib/zconf headers to the local cross harness. The actual rebuilt Windows host turn, encoding and race executables pass 32 isolated cases under Wine (11+14+7). Full native Windows/Linux execution of this new batch remains pending.",
+      "tests": "Capture the actual StreamOpen argument across external/Base/Work storage and a nonterminated slice. Check extensionless/dotted-directory names, an exact 255-byte logger stem with 259-byte source/report filenames, full forwarding beyond Work capacity and complete UTF-8 display truncation. Reject empty, invalid UTF-8, embedded NUL and oversized logger stems before resets/open callbacks. Actually recreate/reload a game through external/Base/Work and extensionless inputs, checking turn/title and byte-identical source definitions.",
+      "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+      "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+      "baseline": "592 baseline files byte-identical after restoring 592 regeneration-only file changes; all 519 checkpoints match and none moved. Native baseline fully exported and compared; all native bytes are restored and frozen original fixtures untouched.",
+      "inventory": "Two actual raw-copy calls retired; 9 remain. The migration ledger contains 299 records. Other ownership/path/buffer interfaces, scratch/borrowed storage, wrapper formatting, typed file-selection Milestone D and final current-source/platform audit remain open.",
+      "receipts": "dist/verification/live-cpp/l05ah/",
+      "source_sha256": {
+        "src/core/create.cpp": "e3e5d80d49a383dd5d841a08d29544c975c6ed5e8be81173e0c4852032ce9759",
+        "src/core/create.h": "773446a42e32eb96bcfadd7b23596e4aa917bc52bde5addb6c37972e0b416f99",
+        "tests/unit/test_turn.cpp": "7220233027c9b791114042bfa86a0110a83cb1d4e7ca3ee632742b9883495feb"
       }
     }
   }

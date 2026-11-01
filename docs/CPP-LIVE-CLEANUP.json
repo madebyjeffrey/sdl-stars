@@ -115,7 +115,8 @@
         "bounded-ship-clone-name-field-repair",
         "unused-unbounded-Win32-string-shims-retired",
         "owned-backup-path-capacity-repair",
-        "bounded-complete-report-file-paths"
+        "bounded-complete-report-file-paths",
+        "owned-definition-filename-input"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -649,6 +650,30 @@
             "src/core/util.h": "12224654d2e6d812522891b95b407571c1f9aca5ad78623a4fb4138ca82b8aec",
             "tests/unit/test_util.cpp": "055e0d29816c7dfefb020501cfc06a050c1f7642cc2fb5abd707626ac8a1c82e"
           }
+        },
+        {
+          "batch": "L05ah owned definition-file input and logging lifetime repair",
+          "parent": "60215fc63638d2267e97040ad7df72fad3895182",
+          "status": "complete; locally verified; final native Windows/Linux qualification pending",
+          "reproduction": "Actual parent Debug ASan/UBSan turn executable passes the external-input control, then captures source-Omega instead of source-Omega.def when the argument aliases szBase. A separate actual game-creation case fails with logging enabled and the command-line basename. Both parent assertions fail before any dangerous oversized input is tested.",
+          "repair": "GenNewGameFromFile borrows std::string_view and owns an exact std::string snapshot before logging changes either shared buffer. StreamOpen receives the complete owned filename. Work receives an independent bounded UTF-8 display prefix. Logging derives only the filename extension, keeping directory dots and accepting extensionless names; its complete stem must fit the existing 255-byte basename field. Empty, malformed, embedded-NUL input and oversized logger stems are rejected with the existing file error before filename staging, game reset or source I/O. Snapshot allocation failures enter the existing nested memory alert/StarsError recovery. Normal definition parsing, source-byte preservation, game rules, wire widths, RNG and floating/tie boundaries remain.",
+          "interface": "One production FRunCmdLine call plus eleven existing test/helper call sites consume the readonly filename header. The result remains the existing zero/one int16 flag; broader primitive/result audits remain open.",
+          "debug_build": "Pass, no warnings. Source/compiler policy: 158 owned sources, 159 variants, 161 standalone headers in both orders; exact raw-copy inventory passes.",
+          "desktop": "154/154 including 29 leak checks, actual new input/create cases, linked witnesses, file/library workflows and available SDL tutorial checkpoints.",
+          "host_units": "29/29 Release host tests.",
+          "sanitizers": "Actual Debug ASan/UBSan turn executable passes all 11 cases twice consecutively.",
+          "windows": "All 147 production units pass strict MinGW syntax: 145 pass initially; two unchanged zlib consumers pass after supplying the missing portable Homebrew zlib/zconf headers to the local cross harness. The actual rebuilt Windows host turn, encoding and race executables pass 32 isolated cases under Wine (11+14+7). Full native Windows/Linux execution of this new batch remains pending.",
+          "tests": "Capture the actual StreamOpen argument across external/Base/Work storage and a nonterminated slice. Check extensionless/dotted-directory names, an exact 255-byte logger stem with 259-byte source/report filenames, full forwarding beyond Work capacity and complete UTF-8 display truncation. Reject empty, invalid UTF-8, embedded NUL and oversized logger stems before resets/open callbacks. Actually recreate/reload a game through external/Base/Work and extensionless inputs, checking turn/title and byte-identical source definitions.",
+          "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+          "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+          "baseline": "592 baseline files byte-identical after restoring 592 regeneration-only file changes; all 519 checkpoints match and none moved. Native baseline fully exported and compared; all native bytes are restored and frozen original fixtures untouched.",
+          "inventory": "Two actual raw-copy calls retired; 9 remain. The migration ledger contains 299 records. Other ownership/path/buffer interfaces, scratch/borrowed storage, wrapper formatting, typed file-selection Milestone D and final current-source/platform audit remain open.",
+          "receipts": "dist/verification/live-cpp/l05ah/",
+          "source_sha256": {
+            "src/core/create.cpp": "e3e5d80d49a383dd5d841a08d29544c975c6ed5e8be81173e0c4852032ce9759",
+            "src/core/create.h": "773446a42e32eb96bcfadd7b23596e4aa917bc52bde5addb6c37972e0b416f99",
+            "tests/unit/test_turn.cpp": "7220233027c9b791114042bfa86a0110a83cb1d4e7ca3ee632742b9883495feb"
+          }
         }
       ],
       "bounded_formatting": {
@@ -919,13 +944,18 @@
         "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
       },
       "owned_backup_paths": {
-        "status": "complete; locally verified; final native Windows/Linux platform qualification pending",
+        "status": "complete; native Windows/Linux qualified at60215fc6",
         "sites": 9,
         "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
       },
       "report_file_paths": {
-        "status": "complete; locally verified; final native Windows/Linux platform qualification pending",
+        "status": "complete; native Windows/Linux qualified at60215fc6",
         "sites": 3,
+        "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
+      },
+      "definition_filename_owner": {
+        "status": "complete; locally verified; final native Windows/Linux qualification pending",
+        "sites": 2,
         "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
       }
     },
@@ -964,7 +994,8 @@
         "fixed-ship-clone-name-field-view",
         "bounded-mutable-text-fitting-view",
         "owned-backup-directory-result",
-        "readonly-sized-report-text"
+        "readonly-sized-report-text",
+        "readonly-sized-definition-filename-input"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -1501,13 +1532,18 @@
         "evidence": "docs/CPP-LIVE-OWNED-TEXT.json"
       },
       "owned_backup_directory": {
-        "status": "complete; locally verified; final native Windows/Linux platform qualification pending",
+        "status": "complete; native Windows/Linux qualified at60215fc6",
         "interface": "CreateBackupDir returns a complete std::string; the one production consumer owns its path rather than reading session scratch.",
         "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
       },
       "report_text_view": {
-        "status": "complete; locally verified; final native Windows/Linux platform qualification pending",
+        "status": "complete; native Windows/Linux qualified at60215fc6",
         "interface": "OutputSz borrows std::string_view through all four production calls; the actual test passes a nonterminated Unicode slice with an adjacent guard.",
+        "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
+      },
+      "definition_filename_view": {
+        "status": "complete; locally verified; final native Windows/Linux qualification pending",
+        "interface": "GenNewGameFromFile(APPSESSION&, std::string_view pszFile); one production command-line caller plus eleven existing test/helper call sites consume the new header.",
         "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
       }
     },
@@ -1711,21 +1747,22 @@
         "qualified_run": 41348836830
       },
       "last_full_platform_qualification": {
-        "head": "2bbd5afa8a639c0a46d04ccf8ad0dcf969ce2b5d",
-        "run": 41348836830,
-        "status": "all five jobs successful",
-        "linux_desktop": "156/156 including actual portal",
-        "windows_desktop": "134/134 including corrected Unicode printer and clone-name field cases",
+        "run_id": 41357206253,
+        "head": "60215fc63638d2267e97040ad7df72fad3895182",
+        "url": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41357206253",
+        "status": "success; all five jobs complete",
+        "linux_desktop": "156/156",
+        "windows_sdl": "134/134",
         "linux_host": "29/29",
         "resource_sanitizers": "45/45",
-        "independent_witnesses": "job successful",
-        "SDK_matrix": "21 contracts pass with no failed contracts in each SDK/both matrix variant; diagnostic-only differences remain explicit",
-        "scope": "Qualifies parent 2bbd5afa, including the MakeNewName fix and CI deadline. Does not qualify the subsequent fitter/API retirement; final revision still requires platform qualification."
+        "independent_witnesses": "success",
+        "sdk_matrix": "sdk and both modes each pass21 contracts; no failed contracts. All18 diagnostic-only failures remain explicit.",
+        "scope": "Qualifies changes through60215fc6, including the report-path repair and corrected backup-directory fixture. Does not qualify the newer definition-input change."
       },
       "windows_backup_directory_fixture": {
         "batch": "L05ag native Windows backup-directory fixture qualification",
         "parent": "fef58be402b5147ccf71db880d3e997f70840e39",
-        "status": "fixture corrected and locally verified; full native Windows/Linux qualification pending",
+        "status": "complete; native Windows/Linux qualified at60215fc6",
         "failed_platform_run": {
           "id": 41353956286,
           "head": "087dc5cdbc93cc22f541d78f2840beb703793e13",
@@ -1761,7 +1798,8 @@
         "cleanup": "Task-only diagnostic source/workflow, original native results and Wine comparison are preserved under dist/verification/live-cpp/l05ag/probe/. Both local and remote diagnostic branch references are removed; develop never switched branches. No diagnostic code or workflow change is added to develop.",
         "remaining": "11 actual raw-copy calls, remaining path/buffer/ownership work, typed file-selection Milestone D and final complete-state audit/platform qualification remain open.",
         "receipts": "dist/verification/live-cpp/l05ag/",
-        "test_sha256": "122b1cf1e1ebff402da0126f46fd268a653b86a0f194770430aeb2baa178a55a"
+        "test_sha256": "122b1cf1e1ebff402da0126f46fd268a653b86a0f194770430aeb2baa178a55a",
+        "qualified_by": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41357206253"
       }
     }
   ],
@@ -11098,14 +11136,16 @@
       "path": "src/core/create.cpp",
       "line": 999,
       "code": "strcpy(app.state.szWork, pszFile);",
-      "disposition": "pending"
+      "disposition": "owned-definition-filename-input-L05ah",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/create.cpp",
       "line": 1005,
       "code": "strcpy(app.state.szBase, pszFile);",
-      "disposition": "pending"
+      "disposition": "owned-definition-filename-input-L05ah",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",

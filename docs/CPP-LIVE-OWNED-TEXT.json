@@ -6485,5 +6485,12 @@
     ],
     "ownership": "Synchronous borrowing; all actual production inputs remain live and stable across the existing version-header lookup. The input may be a nonterminated slice. Existing diagnostic text staging and work-buffer side effects remain for the separate storage audit.",
     "verification": "docs/CPP-LIVE-TEXT-COPIES.json: report_file_paths.verification"
+  },
+  "definition_filename_input": {
+    "status": "complete; locally verified; final native Windows/Linux qualification pending",
+    "interface": "GenNewGameFromFile(APPSESSION&, std::string_view pszFile)",
+    "owner": "Local std::string snapshot, taken before any shared filename/display staging or logging. The full filename is passed synchronously to StreamOpen; no view escapes.",
+    "limits": "Filename validation is whole UTF-8 without NUL. Display prefix capacity is independent from I/O. Logging still requires its whole stem to fit the existing 255-byte session basename; that storage limitation remains part of the broader path/storage audit.",
+    "verification": "docs/CPP-LIVE-TEXT-COPIES.json: definition_filename_owner.verification"
   }
 }
