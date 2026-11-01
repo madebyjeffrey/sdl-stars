@@ -104,7 +104,8 @@
         "bounded-library-MDI-MRU-SDK-and-ZIP-path-copies",
         "fixed-library-name-modal-and-suggestion-views",
         "recent-file-whole-path-admission-before-shared-effects",
-        "owned-location-and-distance-values"
+        "owned-location-and-distance-values",
+        "complete-owned-planet-caption-capacity-repair"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -450,6 +451,22 @@
           "baseline": "Behavior-neutral: native/frozen-original baseline bytes and unit goldens unchanged. No scenario/checkpoint moved; no regression export required. Game rules, record layouts, RNG, tie order and binary64 boundaries remain.",
           "remaining": "Underlying planet/fleet/thing scratch-return interfaces, scanner tail capacity, other L05 path/text/const/wrapper formatting, L06 service interfaces/Milestone D and L08 final qualification remain active.",
           "receipts": "dist/verification/live-cpp/l05w/"
+        },
+        {
+          "batch": "L05x SetPlanetTitleBar complete caption capacity repair",
+          "debug_build": "Pass, no warnings. Release SDL regression and host builds pass. Source policy covers 158 owned sources, 159 variants and 161 standalone headers in both orders; exact raw-copy inventory passes.",
+          "desktop": "153/153, including the new actual title-builder boundary case, all 29 leak checks, UI workflows and available SDL tutorial checkpoints.",
+          "host_units": "28/28 in Release",
+          "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+          "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+          "windows": "Strict MinGW compilation passes 147/147 owned production units and three real affected UI/workflow consumers. Compilation evidence only; native Windows SDL and Linux final qualification remain pending.",
+          "reproduction": "A fresh native macOS Debug build with STARS_ENABLE_SANITIZERS=ON runs the actual SetPlanetTitleBar. ASan reports a 32-byte strcat write beyond its szTitle[30] at planetui.cpp:1713 for the 31-byte UTF-8 name. This is an executed stack-overflow reproduction, not only a source inference.",
+          "sanitizers": "After repair, the same ASan/UBSan native-file-UI executable passes all three cases, including complete short, 31-byte Unicode and maximum 359-byte name captions plus the unchanged generic Planet View branch. The provider writes the actual work buffer; checks preserve those source bytes and valid UTF-8. The earlier library dialog and native caption/password-field cases also pass. This is focused sanitizer qualification, not a claim about the whole suite.",
+          "repair": "Snapshot the bounded planet name before prefix lookup, reserve the prefix's catalog-sized portion and append the whole name into actual owned title storage. cchCatalogText=256; name capacity=360; title capacity=616. Maximum prefix/name payload is 614 bytes plus NUL, which fits without clipping or allocation. Keep lookup order, source work effects, fleet/generic branches and stored field widths.",
+          "inventory": "One application lstrcatA caller retired. 256 migrated sites; 52 initial application copy sites remain. Lexical raw spellings total 58, including SDK declarations/definitions.",
+          "baseline": "Intentional caption memory-safety repair documented in CHANGELOG.md and ROADMAP.md. Native baseline regenerated after all readers completed and compared: 519 matches. No scenario/checkpoint moved; preserved 592 regeneration-only fixture differences, leaving native/frozen-original baseline bytes and unit goldens unchanged. Game rules, records, RNG, tie order, binary64 and host results remain.",
+          "remaining": "Planet/fleet/thing scratch-return interfaces and their other consumers, remaining L05 copies/const/scratch/wrapper formatting, L06 services/Milestone D and L08 final qualification remain active.",
+          "receipts": "dist/verification/live-cpp/l05x/"
         }
       ],
       "bounded_formatting": {
@@ -514,8 +531,8 @@
         "temperature_commit": "03d8b039",
         "windows_host_test_configuration_commit": "09bb4477",
         "policy": "Actual array/tail spans; complete terminated UTF-8 prefixes; overlapping views supported. Paths/record staging keep separate strict contracts.",
-        "remaining_initial_sites": 53,
-        "remaining_lexical_spellings": 59,
+        "remaining_initial_sites": 52,
+        "remaining_lexical_spellings": 58,
         "inventory_scope": "The initial copy inventory and the current lexical policy differ: the latter also includes SDK declaration/definition spellings. Both remain explicitly accounted for.",
         "enforcement": "The manifest checks exact remaining raw-copy spellings and multiplicities. New or removed raw sites require updating the maintained inventory; migrated sites cannot silently be reintroduced."
       },
@@ -645,6 +662,12 @@
           "location": 7,
           "distance": 2
         }
+      },
+      "planet_title_capacity": {
+        "status": "complete; verified",
+        "evidence": "docs/CPP-LIVE-TEXT-COPIES.json",
+        "sites": 1,
+        "interface": "Complete bounded owned planet title; a name snapshot survives prefix lookup and the output holds both full service capacities."
       }
     },
     {

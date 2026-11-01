@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `SetPlanetTitleBar` now keeps the complete planet caption in bounded owned
+  storage. Its former 30-byte local buffer overflowed when a valid UTF-8 planet
+  name and the `Planet ` prefix exceeded that capacity. Planet names, stored
+  field sizes, fleet captions, file formats and host turn results are unchanged.
+
 - `AddMRUFile` now validates the complete UTF-8 recent-file path within its
   256-byte row before changing the list or writing preferences. The unbounded
   basename/extension join could overrun its local buffer, and malformed text

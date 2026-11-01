@@ -7,9 +7,12 @@
 #include "callbackcontext.h"
 #include "control_io.h"
 #include "librarypublication.h"
+#include "planetui.h"
+#include "text_io.h"
 #include <algorithm>
 #include <array>
 #include <string_view>
+#include <string>
 
 static void TestTextBoundaries(void) {
     HWND hwnd, hwndEdit;
@@ -68,6 +71,52 @@ static void TestLibraryNameDialog(void) {
     StarsCompatProcessExit();
 }
 
-TEST_LIST = {{"library-name dialog preserves accepted text and cancelled storage", TestLibraryNameDialog},
+static std::string szPlanetTitleName, szPlanetTitleCaptured;
+static char *PszPlanetTitleName(APPSESSION &app, std::int16_t id) {
+    TEST_CHECK(id == 0);
+    CchCopyUtf8(std::span{app.state.szWork}, szPlanetTitleName);
+    return app.state.szWork;
+}
+static std::int16_t CchPlanetTitlePrefix(APPSESSION &, StringId id, std::span<char> out) {
+    TEST_CHECK(id == idsPlanet2);
+    return static_cast<std::int16_t>(CchCopyUtf8(out, "Planet "));
+}
+static std::array<char, cchCatalogText> SzPlanetTitleCatalog(APPSESSION &, StringId id) {
+    TEST_CHECK(id == idsPlanetView);
+    std::array<char, cchCatalogText> sz{};
+    CchCopyUtf8(std::span{sz}, "Planet View");
+    return sz;
+}
+static BOOL CapturePlanetTitle(HWND hwnd, const char *psz) {
+    TEST_CHECK(!hwnd);
+    szPlanetTitleCaptured = psz;
+    return 1;
+}
+static void TestPlanetTitleCapacity(void) {
+    APPSESSION &app = ui::app;
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    TEXTIO text;
+    text.pfnPlanetName = PszPlanetTitleName;
+    text.pfnCchGetString = CchPlanetTitlePrefix;
+    text.pfnCompressed = SzPlanetTitleCatalog;
+    TEXTIOSCOPE textScope(text);
+    CONTROLIO control;
+    control.pfnSetWindowText = CapturePlanetTitle;
+    CONTROLIOSCOPE controlScope(control);
+    app.state.sel.grobj = grobjPlanet;
+    app.state.sel.pl.id = 0;
+    for (const auto &sz : {std::string("Alba"), std::string(29, 'A') + "\xc3\xa9", std::string(359, 'Z')}) {
+        szPlanetTitleName = sz;
+        SetPlanetTitleBar(app, nullptr);
+        TEST_CHECK(szPlanetTitleCaptured == "Planet " + sz);
+        TEST_CHECK(std::string_view(app.state.szWork) == sz);
+        TEST_CHECK(FUtf8Valid(szPlanetTitleCaptured));
+    }
+    app.state.sel.grobj = grobjNone;
+    SetPlanetTitleBar(app, nullptr);
+    TEST_CHECK(szPlanetTitleCaptured == "Planet View");
+}
+
+TEST_LIST = {{"planet title retains complete UTF-8 names beyond its former local buffer", TestPlanetTitleCapacity}, {"library-name dialog preserves accepted text and cancelled storage", TestLibraryNameDialog},
              {"native path captions and UTF-8 password fields", TestTextBoundaries},
              {NULL, NULL}};

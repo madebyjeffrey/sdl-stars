@@ -1704,14 +1704,16 @@ void DrawPlanShip(APPSESSION &app, HDC hdc, TileBits grbit) {
 
 void SetPlanetTitleBar(APPSESSION &app, HWND hwnd) {
     std::array<char, cchCatalogText> szCatalogPsz{};
-    char  szTitle[30];
+    std::array<char, cchCatalogText + 360> szTitle{};
+    std::array<char, 360> szPlanet{};
     char *psz;
 
     if (app.state.sel.grobj == grobjPlanet) {
-        psz = TextIO().pfnPlanetName(app, app.state.sel.pl.id);
-        TextIO().pfnCchGetString(app, idsPlanet2, std::span{szTitle});
-        win32::lstrcatA(szTitle, psz);
-        psz = szTitle;
+        CchCopyUtf8Prefix(std::span{szPlanet}, TextIO().pfnPlanetName(app, app.state.sel.pl.id));
+        // The caption holds the complete bounded prefix and planet name.
+        TextIO().pfnCchGetString(app, idsPlanet2, std::span{szTitle}.first(cchCatalogText));
+        FAppendUtf8(std::span{szTitle}, szPlanet.data());
+        psz = szTitle.data();
     } else if (app.state.sel.grobj == grobjFleet) {
         psz = PszGetFleetName(app, app.state.sel.fl.id);
     } else {

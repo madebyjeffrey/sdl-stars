@@ -1,6 +1,6 @@
 {
   "migration_parent": "d3d3724c",
-  "status": "255 migrated sites complete; remaining text work active",
+  "status": "256 migrated sites complete; remaining text work active",
   "contracts": {
     "display": "Write a terminated complete UTF-8 prefix into the actual destination span; preserve fitting bytes. Views borrow synchronously and overlapping copies use memmove.",
     "append": "Scan only inside the destination span for its NUL. An unterminated nonempty destination is cleared and zero bytes are appended.",
@@ -2523,6 +2523,16 @@
       "original_call": "std::strcat(szT, pszExt)",
       "destination_span": "FAppendUtf8(std::span{szT}, pszExt)",
       "role": "Build the whole UTF-8 filename/dot/extension within the actual 256-byte path before MRU lookup, row mutation or profile publication. Reject any malformed or over-capacity component without clipping or changing shared state."
+    },
+    {
+      "path": "src/ui/planetui.cpp",
+      "scope": "SetPlanetTitleBar",
+      "baseline_line": 1713,
+      "migration_parent": "194a5293",
+      "operation": "lstrcatA",
+      "original_call": "win32::lstrcatA(szTitle, psz)",
+      "destination_span": "FAppendUtf8(std::span{szTitle}, szPlanet.data())",
+      "role": "A bounded 360-byte owned name snapshot survives prefix lookup. The title owns cchCatalogText + 360 bytes and the prefix lookup uses only its catalog-sized span, so the entire prefix/name/NUL fits without clipping. Fixes the actual 30-byte stack overflow reproduced by AddressSanitizer."
     }
   ],
   "remaining_spelling_scope": "Lexical raw-copy spellings, including SDK declarations/definitions; comments/literals excluded with the manifest lexer. Exact counts prevent new raw sites during the remaining migration.",
@@ -2691,13 +2701,6 @@
     {
       "path": "src/ui/msgui.cpp",
       "normalized_call": "std::strcpy(reinterpret_cast<char*>(app.lpui->lpb2k)+cch,reinterpret_cast<constchar*>(lpmsgplr->rgbMsg()))",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/planetui.cpp",
-      "normalized_call": "lstrcatA(szTitle,psz)",
       "count": 1,
       "status": "pending",
       "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
@@ -3059,6 +3062,29 @@
       "baseline": "Intentional UI preference-admission change, documented in CHANGELOG.md and ROADMAP.md. Full native baseline regenerated and compared after every reader completed: 519 matches. No scenario or checkpoint moved; preserved 592 regeneration-only fixture byte differences, leaving native/frozen-original baseline bytes and unit goldens unchanged. Saved layouts/widths, game rules, RNG, tie order, binary64 and host results remain unchanged.",
       "remaining": "Other L05 path/text/const/scratch/wrapper formatting work, L06 service interfaces and Milestone D, and L08 final reconciliation/platform qualification remain active.",
       "receipts": "dist/verification/live-cpp/l05v/"
+    }
+  },
+  "planet_title_capacity": {
+    "status": "complete; verified",
+    "parent": "194a5293",
+    "sites": 1,
+    "reproduction": "ASan reports a 32-byte strcat write beyond szTitle[30] in the actual SetPlanetTitleBar for a valid 31-byte UTF-8 name.",
+    "repair": "Compose the bounded catalog prefix and a separate owned 360-byte name in a cchCatalogText + 360 title span. Keep lookup order, source work-buffer effects and all other caption branches.",
+    "verification": {
+      "batch": "L05x SetPlanetTitleBar complete caption capacity repair",
+      "debug_build": "Pass, no warnings. Release SDL regression and host builds pass. Source policy covers 158 owned sources, 159 variants and 161 standalone headers in both orders; exact raw-copy inventory passes.",
+      "desktop": "153/153, including the new actual title-builder boundary case, all 29 leak checks, UI workflows and available SDL tutorial checkpoints.",
+      "host_units": "28/28 in Release",
+      "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+      "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+      "windows": "Strict MinGW compilation passes 147/147 owned production units and three real affected UI/workflow consumers. Compilation evidence only; native Windows SDL and Linux final qualification remain pending.",
+      "reproduction": "A fresh native macOS Debug build with STARS_ENABLE_SANITIZERS=ON runs the actual SetPlanetTitleBar. ASan reports a 32-byte strcat write beyond its szTitle[30] at planetui.cpp:1713 for the 31-byte UTF-8 name. This is an executed stack-overflow reproduction, not only a source inference.",
+      "sanitizers": "After repair, the same ASan/UBSan native-file-UI executable passes all three cases, including complete short, 31-byte Unicode and maximum 359-byte name captions plus the unchanged generic Planet View branch. The provider writes the actual work buffer; checks preserve those source bytes and valid UTF-8. The earlier library dialog and native caption/password-field cases also pass. This is focused sanitizer qualification, not a claim about the whole suite.",
+      "repair": "Snapshot the bounded planet name before prefix lookup, reserve the prefix's catalog-sized portion and append the whole name into actual owned title storage. cchCatalogText=256; name capacity=360; title capacity=616. Maximum prefix/name payload is 614 bytes plus NUL, which fits without clipping or allocation. Keep lookup order, source work effects, fleet/generic branches and stored field widths.",
+      "inventory": "One application lstrcatA caller retired. 256 migrated sites; 52 initial application copy sites remain. Lexical raw spellings total 58, including SDK declarations/definitions.",
+      "baseline": "Intentional caption memory-safety repair documented in CHANGELOG.md and ROADMAP.md. Native baseline regenerated after all readers completed and compared: 519 matches. No scenario/checkpoint moved; preserved 592 regeneration-only fixture differences, leaving native/frozen-original baseline bytes and unit goldens unchanged. Game rules, records, RNG, tie order, binary64 and host results remain.",
+      "remaining": "Planet/fleet/thing scratch-return interfaces and their other consumers, remaining L05 copies/const/scratch/wrapper formatting, L06 services/Milestone D and L08 final qualification remain active.",
+      "receipts": "dist/verification/live-cpp/l05x/"
     }
   }
 }
