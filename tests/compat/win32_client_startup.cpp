@@ -2882,6 +2882,9 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
                 int16_t iResearch = (app.state.rgplr[app.state.idPlayer].iTechNow() + 1) % 6;
                 PLANET *lpPlanetsBefore = app.state.lpPlanets;
                 if (pszFailure) {
+                    // This startup timer also runs inside the research modal
+                    // loop. Let its workflow timer finish before starting again.
+                    if (iWorkflow != 0) return;
                     if (!FRunWorkflow(app, 1, iResearch)) goto LDone;
                     SetSzWorkFromDt(app, !strcmp(pszFailure, "orders") ? dtLog : dtHist, app.state.idPlayer);
                     strcpy(szBlocked, app.state.szWork);
