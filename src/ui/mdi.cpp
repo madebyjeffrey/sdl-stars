@@ -998,7 +998,7 @@ void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
             if ((app.state.gd.fTutorial && !FAskKillTutor(app)) || !app.lpui->vrgszMRU || app.lpui->vrgszMRU[(LOWORD(wParam) - 4300) * 256] == 0)
                 break;
             iplrOld = app.state.idPlayer;
-            std::strcpy(szT, app.lpui->vrgszMRU + 256 * (LOWORD(wParam) - 4300));
+            CchCopyUtf8(std::span{szT}, app.lpui->vrgszMRU + 256 * (LOWORD(wParam) - 4300));
             psz = std::strrchr(szT, 46);
             if (psz) {
                 if (!FIsManagedLibraryGameFile(szT)) {
@@ -1011,7 +1011,7 @@ void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
                 if (!FFileExists(szT)) goto LShowMissingRecent;
                 app.state.ini.fStartupFile = 1;
                 DestroyCurGame(app);
-                std::strcpy(app.state.szBase, szT);
+                CchCopyUtf8(std::span{app.state.szBase}, szT);
                 if (FOpenGame(app, hwnd, 0) <= 0)
                     break;
                 InitializeMenu(app, nullptr);
@@ -1025,7 +1025,7 @@ void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
                 break;
             }
         LShowMissingRecent:
-            std::strcpy(app.state.szWork, szT);
+            CchCopyUtf8(std::span{app.state.szWork}, szT);
             AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsCantOpenFile, nullptr), win32::MB_ICONHAND);
             break;
         case IDM_RACE_CREATE:
@@ -1274,8 +1274,8 @@ LPrintMapCleanup:
                         AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, static_cast<StringId>(app.state.idsFileError), nullptr), win32::MB_ICONHAND);
                         break;
                     }
-                    std::strcpy(app.state.szWork, app.state.szBase);
-                    std::strcat(app.state.szWork, ".x1");
+                    CchCopyUtf8(std::span{app.state.szWork}, app.state.szBase);
+                    FAppendUtf8(std::span{app.state.szWork}, ".x1");
                     RemoveNativeFile(app.state.szWork);
                     RecordIO().pfnDirtyGame(app, 0);
                     ShowProgressGauge(app);
@@ -1672,7 +1672,7 @@ void InitializeMenu(APPSESSION &app, HMENU hmenu) {
         app.state.szWork[0] = '&';
         app.state.szWork[1] = i + '1';
         app.state.szWork[2] = ' ';
-        std::strcpy(&app.state.szWork[3], app.lpui->vrgszMRU + 256 * i);
+        CchCopyUtf8(std::span{app.state.szWork}.subspan(3), app.lpui->vrgszMRU + 256 * i);
         win32::InsertMenuA(hmenuSub, i + 9, win32::MF_BYPOSITION, i + 4300, app.state.szWork);
     }
     win32::EnableMenuItem(hmenu, 106, app.state.szBase[0] != 0 && !app.state.game.fSinglePlr ? win32::MF_ENABLED : win32::MF_GRAYED | win32::MF_DISABLED);
@@ -1722,7 +1722,7 @@ std::int16_t FOpenGame(APPSESSION &app, HWND hwnd, std::int16_t fRaceOnly) {
     std::int16_t      fRet;
 
     if (app.state.ini.fStartupFile) {
-        std::strcpy(szFile, app.state.szBase);
+        CchCopyUtf8(std::span{szFile}, app.state.szBase);
         pch = std::strrchr(app.state.szBase, chDirSep);
         if (pch)
             *pch = 0;
@@ -1782,7 +1782,7 @@ LGotFileName:
     }
     szFile[ofn.nFileExtension - 1] = 0;
     DestroyCurGame(app);
-    std::strcpy(app.state.szBase, szFile);
+    CchCopyUtf8(std::span{app.state.szBase}, szFile);
     if (!FLoadGame(app, szFile, &szFile[ofn.nFileExtension])) {
         if (app.state.ini.fStartupFile) {
             app.state.ini.SetWFlags(0);

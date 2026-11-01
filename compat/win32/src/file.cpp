@@ -75,10 +75,10 @@ HFILE win32::OpenFile(LPCSTR pszFile, LPOFSTRUCT lpof, UINT flags) {
 #endif
     ) {
         if (std::strlen(pszFile) >= sizeof(szPath)) { dwError = win32::ERROR_FILENAME_EXCED_RANGE; goto LReturn; }
-        std::strcpy(szPath, pszFile);
+        CchCopyUtf8(std::span{szPath}, pszFile);
     } else {
         if (!CchNativeCwd(std::span{szCwd})) { dwError = DwFileError(); goto LReturn; }
-        if (std::snprintf(szPath, sizeof(szPath), "%s/%s", szCwd, pszFile) >= static_cast<int>(sizeof(szPath))) {
+        if (CchCopyUtf8(std::span{szPath}, szCwd) < 0 || !FAppendUtf8(std::span{szPath}, "/") || !FAppendUtf8(std::span{szPath}, pszFile)) {
             dwError = win32::ERROR_FILENAME_EXCED_RANGE; goto LReturn;
         }
     }
@@ -86,7 +86,7 @@ HFILE win32::OpenFile(LPCSTR pszFile, LPOFSTRUCT lpof, UINT flags) {
     if (std::strlen(szPath) >= sizeof(lpof->szPathName)) { dwError = win32::ERROR_FILENAME_EXCED_RANGE; goto LReturn; }
     *lpof = {};
     lpof->cBytes = sizeof(*lpof); lpof->fFixedDisk = 1;
-    std::strcpy(lpof->szPathName, szPath);
+    CchCopyUtf8(std::span{lpof->szPathName}, szPath);
     if (flags & win32::OF_PARSE) return 0;
     grAccess = flags & win32::OF_CREATE ? 3 : (flags & 3) == win32::OF_READ ? 1 : (flags & 3) == win32::OF_WRITE ? 2 : 3;
     grShare = share == win32::OF_SHARE_EXCLUSIVE ? 0 : share == win32::OF_SHARE_DENY_WRITE ? 1 : share == win32::OF_SHARE_DENY_READ ? 2 : 3;

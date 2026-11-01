@@ -236,7 +236,7 @@ static std::int16_t FZipMakeParents(const char *pszRoot, const char *pszName, ch
     std::size_t i, cchBase = std::strlen(pszRoot) + std::strlen(szDirSep);
     cch = CchSnprintf(std::span{szFile, cbFile}, "%s%s%s", pszRoot, szDirSep, pszName);
     if (cch <= 0 || static_cast<std::size_t>(cch) >= cbFile || static_cast<std::size_t>(cch) >= sizeof(szPath)) return 0;
-    std::strcpy(szPath, szFile);
+    CchCopyUtf8(std::span{szPath}, szFile);
     for (i = cchBase; i < static_cast<std::size_t>(cch); i++) if (szPath[i] == '/' || szPath[i] == '\\') {
         ch = szPath[i]; szPath[i] = 0;
         if (!FNativeDirectoryExists(szPath) && CreateNativeDir(szPath) != 0) return 0;

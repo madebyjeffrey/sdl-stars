@@ -144,6 +144,16 @@ int main(void) {
     CHECK(app.state.ini.fStartupFile && app.state.szBase == szLong);
     CHECK(memory[0] == szLong && memory[0][255] == 0 && memory[8][0] == 0);
     reset(app);
+    const std::string szBase = std::string(250, 'x') + "\xc3\xa9";
+    const std::string szRecent = szBase + ".m1";
+    AddMRUFile(app, szBase.c_str(), "m1");
+    CHECK(attempts == 9 && memory[0] == szRecent && memory[0][255] == 0 && disk[0] == szRecent && strcmp(memory[8], "hhhh") == 0);
+    reset(app);
+    strcpy(memory[0], szRecent.c_str());
+    under[2] = 1;
+    CHECK(FDeleteLibraryGameRecentPaths(app, "unused"));
+    CHECK(memory[0] == szRecent && disk[0] == szRecent && strcmp(memory[2], "dddd") == 0 && memory[8][0] == 0);
+    reset(app);
     strcpy(memory[0], "a.m1");
     AddMRUFile(app, const_cast<char *>("A"), const_cast<char *>("M1"));
     CHECK(attempts == 0 && strcmp(memory[0], "a.m1") == 0);

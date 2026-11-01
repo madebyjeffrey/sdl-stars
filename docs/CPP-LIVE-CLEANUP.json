@@ -100,12 +100,14 @@
         "scaled-numeric-rounding-overflow-repair",
         "bounded-fitting-race-password-report-save-and-host-copies",
         "owned-legacy-race-password-result",
-        "bounded-ui-preset-roster-label-and-path-copies"
+        "bounded-ui-preset-roster-label-and-path-copies",
+        "bounded-library-MDI-MRU-SDK-and-ZIP-path-copies"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
         "const-text-interfaces",
-        "other-shared-scratch-text-results"
+        "other-shared-scratch-text-results",
+        "remaining-wrapper-formatting-callers"
       ],
       "metadata_scan": {
         "interface": "Typed integer field pack and span; no C varargs or va_arg.",
@@ -378,6 +380,24 @@
           "baseline": "Behavior-neutral. Native/frozen-original baselines, unit goldens, file widths/layouts, game rules, RNG, tie order and binary64 boundaries remain unchanged. No scenario/checkpoint moved; no regression export required.",
           "remaining": "Remaining L05 copies/const text/shared scratch results, L06 service interfaces and Milestone D, and L08 reconciliation/platform qualification remain active.",
           "receipts": "dist/verification/live-cpp/l05t/"
+        },
+        {
+          "batch": "L05u thirty bounded library, MDI and SDK path copies",
+          "debug_build": "Pass, no warnings. Release SDL regression and host builds pass. Compiler/source policy covers 158 owned sources, 159 variants and 161 standalone headers in both orders; exact remaining raw-copy spellings pass.",
+          "desktop": "153/153, including all 29 leak checks, linked state witnesses, actual library import/version/continue/recent-file/file workflows, file-guard recovery and available SDL tutorial checkpoints.",
+          "host_units": "28/28 in Release",
+          "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+          "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+          "windows": "147/147 owned production units and four actual affected consumer/witness units pass strict MinGW syntax. The independent native-SDK file reference also passes MinGW C11 with -Wall -Wextra -Werror. These are compilation checks; actual native Windows SDL and Linux final qualification remain pending.",
+          "fixture_correction": "Initial Windows test syntax found a stale positional PfNativeOpenFlags call in the Windows/SDL-only file fixture. Focused commit 0e0912b9 corrects it to equivalent typed options; final compilation is 4/4 and shared SDK expectations are unchanged. The optional stars-compat-file target is not configured in this modern macOS preset; its syntax checks do not claim runtime qualification.",
+          "characterization": "Before production edits, the linked state witness passes full 255-byte UTF-8 recent-file promotion/profile writes and library-removal compaction. The final suite reruns it, including previous Unicode startup/last-row checks and profile-write failure ordering.",
+          "relative_file_runtime": "The configured real file/dispatch guard executable also passes with ./relative from a short temporary working directory. It creates and reads the Unicode-suffixed relative file through OpenFile, retries after an injected held-lock failure, and completes profile/modal/shutdown cleanup. An initial prefix without a directory component stopped in the test-only directory_iterator(empty parent); the explicit ./relative prefix meets that fixture requirement. No production failure was inferred from that harness invocation.",
+          "scope": "Sixteen library filename/metadata/MRU/import copies, eight MDI path/menu copies, three MRU row operations, two OpenFile copies and one ZIP-parent copy now use actual destination spans. Whole fitting UTF-8/path bytes and unused tails remain; two externally supplied import paths retain their original byte/validation/diagnostic order through preceding length admission and NUL-inclusive bounded range copies.",
+          "relative_join": "OpenFile also replaces a raw snprintf relative-path join with whole-span copy/append of cwd, slash and name. It retains slash spelling, UTF-8/path validation order, filename-range errors, OFSTRUCT commit, sharing, LastError and no new allocation. Oversize output never clips into a published path.",
+          "inventory": "250 migrated sites; 58 initial application copy sites remain. The lexical raw-spelling allowlist totals 64, including SDK declarations/definitions.",
+          "baseline": "Behavior-neutral. Native/frozen-original baseline bytes, unit goldens, record widths/layouts, game rules, RNG, tie order and binary64 boundaries remain unchanged. No scenario/checkpoint moved; no regression export required.",
+          "remaining": "Erased-capacity library dialog output, other path/message/scratch/const-text interfaces, remaining wrapper formatting callers, L06 service interfaces and Milestone D, and L08 final qualification remain active.",
+          "receipts": "dist/verification/live-cpp/l05u/"
         }
       ],
       "bounded_formatting": {
@@ -442,8 +462,8 @@
         "temperature_commit": "03d8b039",
         "windows_host_test_configuration_commit": "09bb4477",
         "policy": "Actual array/tail spans; complete terminated UTF-8 prefixes; overlapping views supported. Paths/record staging keep separate strict contracts.",
-        "remaining_initial_sites": 88,
-        "remaining_lexical_spellings": 94,
+        "remaining_initial_sites": 58,
+        "remaining_lexical_spellings": 64,
         "inventory_scope": "The initial copy inventory and the current lexical policy differ: the latter also includes SDK declaration/definition spellings. Both remain explicitly accounted for.",
         "enforcement": "The manifest checks exact remaining raw-copy spellings and multiplicities. New or removed raw sites require updating the maintained inventory; migrated sites cannot silently be reintroduced."
       },
@@ -541,6 +561,13 @@
         "evidence": "docs/CPP-LIVE-TEXT-COPIES.json",
         "sites": 20,
         "interfaces": "Actual array/tail/row spans, strict fitting text copies/append and typed complete key formatting preserve valid path, password, roster, preset and label bytes."
+      },
+      "bounded_library_path_copies": {
+        "status": "complete; verified",
+        "parent": "d07b3fd2",
+        "sites": 30,
+        "evidence": "docs/CPP-LIVE-TEXT-COPIES.json",
+        "interfaces": "Whole array/tail/MRU-row spans for fitting copies; length-admitted byte copying preserves import validation order. OpenFile relative joining uses strict whole-span operations with the existing filename-range error."
       }
     },
     {

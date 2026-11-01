@@ -1,6 +1,6 @@
 {
   "migration_parent": "d3d3724c",
-  "status": "220 migrated sites complete; remaining text work active",
+  "status": "250 migrated sites complete; remaining text work active",
   "contracts": {
     "display": "Write a terminated complete UTF-8 prefix into the actual destination span; preserve fitting bytes. Views borrow synchronously and overlapping copies use memmove.",
     "append": "Scan only inside the destination span for its NUL. An unterminated nonempty destination is cleared and zero bytes are appended.",
@@ -2173,6 +2173,306 @@
       "original_call": "std::strcpy(&sz[4], part.pcom().szName())",
       "destination_span": "CchCopyUtf8(std::span{sz}.subspan(4), part.pcom().szName())",
       "role": "The selected component/hull name comes from a 32-byte catalog field; the 200-byte list row leaves 196 bytes after its four-byte selection prefix."
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "scope": "SuggestLibraryName",
+      "baseline_line": 310,
+      "migration_parent": "d07b3fd2",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szOriginal, pszName)",
+      "destination_span": "CchCopyUtf8(std::span{szOriginal}, pszName)",
+      "role": "Actual callers supply validated local/global 256-byte name arrays; the local snapshot has the same width. Suggestion suffix and UTF-8 boundary rules remain."
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "scope": "FChooseLibraryGameName",
+      "baseline_line": 440,
+      "migration_parent": "d07b3fd2",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szLibraryName, TextIO().pfnCompressed(app, idsLibraryDefaultGameName).data())",
+      "destination_span": "CchCopyUtf8(std::span{szLibraryName}, TextIO().pfnCompressed(app, idsLibraryDefaultGameName).data())",
+      "role": "The canonical default Game is four bytes and fits the actual 256-byte library-name array; portable-name validation and reservation order remain."
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "scope": "FindRaceVersion",
+      "baseline_line": 760,
+      "migration_parent": "d07b3fd2",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(prv->szLatest, pszName)",
+      "destination_span": "CchCopyUtf8(std::span{prv->szLatest}, pszName)",
+      "role": "FNativeEnumerateDirectory admits UTF-8 entries and FPortableRaceFilename requires fewer than 240 bytes; the actual latest-version field has 256 bytes."
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "scope": "FindRaceVersion",
+      "baseline_line": 764,
+      "migration_parent": "d07b3fd2",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(prv->szSame, pszName)",
+      "destination_span": "CchCopyUtf8(std::span{prv->szSame}, pszName)",
+      "role": "The same validated under-240-byte race filename fits this actual 256-byte field. Version ordering and equality rules remain."
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "scope": "FSaveCurrentLibraryRace",
+      "baseline_line": 813,
+      "migration_parent": "d07b3fd2",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szName, rv.szSame)",
+      "destination_span": "CchCopyUtf8(std::span{szName}, rv.szSame)",
+      "role": "The saved same-version cache and local filename both have 256 bytes; reuse and publication behavior remain."
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "scope": "FImportLibraryRace",
+      "baseline_line": 1202,
+      "migration_parent": "d07b3fd2",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szSource, pszSource)",
+      "destination_span": "std::ranges::copy_n(pszSource, std::strlen(pszSource) + 1, std::span{szSource}.begin())",
+      "role": "The preceding strlen < 512 admission bounds the NUL-inclusive byte copy into the actual array. Preserve invalid input bytes for the existing native path validator and diagnostic order; no early UTF-8 filtering."
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "scope": "FImportLibraryGame",
+      "baseline_line": 2062,
+      "migration_parent": "d07b3fd2",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szSource, pszSource)",
+      "destination_span": "std::ranges::copy_n(pszSource, std::strlen(pszSource) + 1, std::span{szSource}.begin())",
+      "role": "The preceding strlen < 512 admission bounds the NUL-inclusive byte copy. Native path validation still receives the exact selected bytes and owns any encoding failure."
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "scope": "FImportLibraryGame",
+      "baseline_line": 2091,
+      "migration_parent": "d07b3fd2",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szDir, szSource)",
+      "destination_span": "CchCopyUtf8(std::span{szDir}, szSource)",
+      "role": "A successfully validated native source directory and its snapshot each have 512 bytes; subsequent universe enumeration and joins retain whole bytes."
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "scope": "FImportLibraryGame",
+      "baseline_line": 2111,
+      "migration_parent": "d07b3fd2",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szDir, \".\")",
+      "destination_span": "CchCopyUtf8(std::span{szDir}, \".\")",
+      "role": "The one-byte relative-directory literal plus NUL fits the actual 512-byte array."
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "scope": "FImportLibraryGame",
+      "baseline_line": 2130,
+      "migration_parent": "d07b3fd2",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szLibraryExchangeName, szStem)",
+      "destination_span": "CchCopyUtf8(std::span{szLibraryExchangeName}, szStem)",
+      "role": "Validated source stem and exchange-name arrays both have 256 bytes. Preserve the original exchange basename before publication."
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "scope": "FDeleteLibraryGameRecentPaths",
+      "baseline_line": 2337,
+      "migration_parent": "d07b3fd2",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(rgpszRecent[j], rgpszRecent[i])",
+      "destination_span": "CchCopyUtf8(std::span{rgpszRecent[j]}, rgpszRecent[i])",
+      "role": "Compact terminated 256-byte local recent-file rows without changing order, unused tails or the special Continue behavior."
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "scope": "FDeleteLibraryGameRecentPaths",
+      "baseline_line": 2347,
+      "migration_parent": "d07b3fd2",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.lpui->vrgszMRU + 256 * i, rgpszRecent[i])",
+      "destination_span": "CchCopyUtf8(std::span{app.lpui->vrgszMRU, std::size_t{2304}}.subspan(256 * i, 256), rgpszRecent[i])",
+      "role": "Publish each 256-byte row into the actual nine-row 2304-byte arena. Preserve copy-before-profile-write and partial failure effects."
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "scope": "FImportLibraryOrders",
+      "baseline_line": 2437,
+      "migration_parent": "d07b3fd2",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szFilter, TextIO().pfnCompressed(app, idsLibraryOrdersImportFilter).data())",
+      "destination_span": "CchCopyUtf8(std::span{szFilter}, TextIO().pfnCompressed(app, idsLibraryOrdersImportFilter).data())",
+      "role": "The canonical 35-byte orders filter fits the actual 128-byte array. Subsequent separator-to-NUL conversion retains ordered filters and double-NUL termination."
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "scope": "FindContinueLibraryGame",
+      "baseline_line": 2807,
+      "migration_parent": "d07b3fd2",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(plc->szName, pszName)",
+      "destination_span": "CchCopyUtf8(std::span{plc->szName}, pszName)",
+      "role": "Directory enumeration validates UTF-8 and FPortableLibraryName admits the candidate before the actual 256-byte Continue-name snapshot."
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "scope": "FContinueLibraryGame",
+      "baseline_line": 3083,
+      "migration_parent": "d07b3fd2",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.szBase, szFile)",
+      "destination_span": "CchCopyUtf8(std::span{app.state.szBase}, szFile)",
+      "role": "FPortableLibraryName requires root + twice name bytes + 18 < 256 for every stored Continue candidate. The generated player-turn path has fewer suffix bytes and fits the actual 256-byte base."
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "scope": "RememberLibraryGame",
+      "baseline_line": 3179,
+      "migration_parent": "d07b3fd2",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szDir, app.state.szBase)",
+      "destination_span": "CchCopyUtf8(std::span{szDir}, app.state.szBase)",
+      "role": "The current validated base and local directory snapshot both have 256 bytes. Metadata and remembered exchange basename order remain."
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "scope": "CommandHandler",
+      "baseline_line": 1001,
+      "migration_parent": "d07b3fd2",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szT, app.lpui->vrgszMRU + 256 * (LOWORD(wParam) - 4300))",
+      "destination_span": "CchCopyUtf8(std::span{szT}, app.lpui->vrgszMRU + 256 * (LOWORD(wParam) - 4300))",
+      "role": "The admitted MRU command selects a terminated 256-byte row; the local path has the same width. Import/open/missing-file decisions remain."
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "scope": "CommandHandler",
+      "baseline_line": 1014,
+      "migration_parent": "d07b3fd2",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.szBase, szT)",
+      "destination_span": "CchCopyUtf8(std::span{app.state.szBase}, szT)",
+      "role": "The selected 256-byte local path fits the same-width base; preserve destruction/open ordering."
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "scope": "CommandHandler",
+      "baseline_line": 1028,
+      "migration_parent": "d07b3fd2",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.szWork, szT)",
+      "destination_span": "CchCopyUtf8(std::span{app.state.szWork}, szT)",
+      "role": "The 256-byte local recent path fits the 360-byte error/work array; preserve exact diagnostic bytes."
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "scope": "CommandHandler",
+      "baseline_line": 1277,
+      "migration_parent": "d07b3fd2",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.szWork, app.state.szBase)",
+      "destination_span": "CchCopyUtf8(std::span{app.state.szWork}, app.state.szBase)",
+      "role": "The maximum 255-byte validated base fits the actual 360-byte work array before tutorial-order cleanup."
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "scope": "CommandHandler",
+      "baseline_line": 1278,
+      "migration_parent": "d07b3fd2",
+      "operation": "strcat",
+      "original_call": "std::strcat(app.state.szWork, \".x1\")",
+      "destination_span": "FAppendUtf8(std::span{app.state.szWork}, \".x1\")",
+      "role": "Base plus three-byte .x1 suffix and NUL needs at most 259 bytes within the 360-byte work array; no path clipping."
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "scope": "InitializeMenu",
+      "baseline_line": 1675,
+      "migration_parent": "d07b3fd2",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(&app.state.szWork[3], app.lpui->vrgszMRU + 256 * i)",
+      "destination_span": "CchCopyUtf8(std::span{app.state.szWork}.subspan(3), app.lpui->vrgszMRU + 256 * i)",
+      "role": "Keep the three-byte accelerator prefix; a terminated 256-byte recent row fits the actual remaining 357-byte menu-text tail."
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "scope": "FOpenGame",
+      "baseline_line": 1725,
+      "migration_parent": "d07b3fd2",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szFile, app.state.szBase)",
+      "destination_span": "CchCopyUtf8(std::span{szFile}, app.state.szBase)",
+      "role": "The local chooser path and current base both have 256 bytes; extension parsing and startup state remain."
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "scope": "FOpenGame",
+      "baseline_line": 1785,
+      "migration_parent": "d07b3fd2",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.szBase, szFile)",
+      "destination_span": "CchCopyUtf8(std::span{app.state.szBase}, szFile)",
+      "role": "The admitted 256-byte chooser path fits the same-width base after its extension is split. Preserve subsequent load and failure behavior."
+    },
+    {
+      "path": "src/ui/fileui.cpp",
+      "scope": "AddMRUFile",
+      "baseline_line": 120,
+      "migration_parent": "d07b3fd2",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.lpui->vrgszMRU + 256 * i, app.lpui->vrgszMRU + 256 * (i - 1))",
+      "destination_span": "CchCopyUtf8(std::span{app.lpui->vrgszMRU, std::size_t{2304}}.subspan(256 * i, 256), app.lpui->vrgszMRU + 256 * (i - 1))",
+      "role": "Shift terminated recent-file rows backward within the actual nine-row arena. Preserve the existing search limit, row order and unused tail bytes."
+    },
+    {
+      "path": "src/ui/fileui.cpp",
+      "scope": "AddMRUFile",
+      "baseline_line": 122,
+      "migration_parent": "d07b3fd2",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.lpui->vrgszMRU, szT)",
+      "destination_span": "CchCopyUtf8(std::span{app.lpui->vrgszMRU, std::size_t{2304}}.first(256), szT)",
+      "role": "Publish the constructed terminated path into the actual first 256-byte recent-file row. Earlier basename/extension construction remains separately tracked."
+    },
+    {
+      "path": "src/ui/fileui.cpp",
+      "scope": "AddMRUFile",
+      "baseline_line": 129,
+      "migration_parent": "d07b3fd2",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szT, app.lpui->vrgszMRU + 256 * i)",
+      "destination_span": "CchCopyUtf8(std::span{szT}, app.lpui->vrgszMRU + 256 * i)",
+      "role": "Snapshot a 256-byte recent-file row into the same-width local value before each existing profile write; keep copy/publication order."
+    },
+    {
+      "path": "compat/win32/src/file.cpp",
+      "scope": "win32::OpenFile",
+      "baseline_line": 78,
+      "migration_parent": "d07b3fd2",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szPath, pszFile)",
+      "destination_span": "CchCopyUtf8(std::span{szPath}, pszFile)",
+      "role": "Existing UTF-8 validation and strlen < sizeof(szPath) admission precede the absolute path copy. Preserve parse/reopen, path spelling and LastError behavior."
+    },
+    {
+      "path": "compat/win32/src/file.cpp",
+      "scope": "win32::OpenFile",
+      "baseline_line": 89,
+      "migration_parent": "d07b3fd2",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(lpof->szPathName, szPath)",
+      "destination_span": "CchCopyUtf8(std::span{lpof->szPathName}, szPath)",
+      "role": "The existing explicit UTF-8/OFSTRUCT field-capacity checks precede zeroing and publication into the actual SDK-shaped path field; error and sharing semantics remain."
+    },
+    {
+      "path": "src/ui/libraryzip.cpp",
+      "scope": "FZipMakeParents",
+      "baseline_line": 239,
+      "migration_parent": "d07b3fd2",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szPath, szFile)",
+      "destination_span": "CchCopyUtf8(std::span{szPath}, szFile)",
+      "role": "The preceding full formatting count must fit both caller storage and the actual 512-byte parent-path array. Keep whole path bytes and directory creation order."
     }
   ],
   "remaining_spelling_scope": "Lexical raw-copy spellings, including SDK declarations/definitions; comments/literals excluded with the manifest lexer. Exact counts prevent new raw sites during the remaining migration.",
@@ -2333,63 +2633,7 @@
     },
     {
       "path": "src/ui/fileui.cpp",
-      "normalized_call": "std::strcpy(app.lpui->vrgszMRU+256*i,app.lpui->vrgszMRU+256*(i-1))",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/fileui.cpp",
-      "normalized_call": "std::strcpy(app.lpui->vrgszMRU,szT)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/fileui.cpp",
-      "normalized_call": "std::strcpy(szT,app.lpui->vrgszMRU+256*i)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/fileui.cpp",
       "normalized_call": "std::strcpy(szT,pszFileName)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/libraryui.cpp",
-      "normalized_call": "std::strcpy(app.lpui->vrgszMRU+256*i,rgpszRecent[i])",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/libraryui.cpp",
-      "normalized_call": "std::strcpy(app.state.szBase,szFile)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/libraryui.cpp",
-      "normalized_call": "std::strcpy(plc->szName,pszName)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/libraryui.cpp",
-      "normalized_call": "std::strcpy(prv->szLatest,pszName)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/libraryui.cpp",
-      "normalized_call": "std::strcpy(prv->szSame,pszName)",
       "count": 1,
       "status": "pending",
       "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
@@ -2402,97 +2646,6 @@
       "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
     },
     {
-      "path": "src/ui/libraryui.cpp",
-      "normalized_call": "std::strcpy(rgpszRecent[j],rgpszRecent[i])",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/libraryui.cpp",
-      "normalized_call": "std::strcpy(szDir,)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/libraryui.cpp",
-      "normalized_call": "std::strcpy(szDir,app.state.szBase)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/libraryui.cpp",
-      "normalized_call": "std::strcpy(szDir,szSource)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/libraryui.cpp",
-      "normalized_call": "std::strcpy(szFilter,TextIO().pfnCompressed(app,idsLibraryOrdersImportFilter).data())",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/libraryui.cpp",
-      "normalized_call": "std::strcpy(szLibraryExchangeName,szStem)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/libraryui.cpp",
-      "normalized_call": "std::strcpy(szLibraryName,TextIO().pfnCompressed(app,idsLibraryDefaultGameName).data())",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/libraryui.cpp",
-      "normalized_call": "std::strcpy(szName,rv.szSame)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/libraryui.cpp",
-      "normalized_call": "std::strcpy(szOriginal,pszName)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/libraryui.cpp",
-      "normalized_call": "std::strcpy(szSource,pszSource)",
-      "count": 2,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/libraryzip.cpp",
-      "normalized_call": "std::strcpy(szPath,szFile)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/mdi.cpp",
-      "normalized_call": "std::strcat(app.state.szWork,)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/mdi.cpp",
-      "normalized_call": "std::strcpy(&app.state.szWork[3],app.lpui->vrgszMRU+256*i)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
       "path": "src/ui/mdi.cpp",
       "normalized_call": "std::strcpy(app.state.szBase,app.state.szWork)",
       "count": 1,
@@ -2501,49 +2654,7 @@
     },
     {
       "path": "src/ui/mdi.cpp",
-      "normalized_call": "std::strcpy(app.state.szBase,szFile)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/mdi.cpp",
-      "normalized_call": "std::strcpy(app.state.szBase,szT)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/mdi.cpp",
-      "normalized_call": "std::strcpy(app.state.szWork,app.state.szBase)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/mdi.cpp",
-      "normalized_call": "std::strcpy(app.state.szWork,szT)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/mdi.cpp",
-      "normalized_call": "std::strcpy(szFile,app.state.szBase)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/mdi.cpp",
       "normalized_call": "std::strcpy(szFile,app.state.szWork)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/mdi.cpp",
-      "normalized_call": "std::strcpy(szT,app.lpui->vrgszMRU+256*(LOWORD(wParam)-4300))",
       "count": 1,
       "status": "pending",
       "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
@@ -2610,20 +2721,6 @@
       "count": 1,
       "status": "SDK-boundary review",
       "role": "SDK-shaped declarations/definitions or caller-provisioned message/string buffer; retain only where the current ABI contract requires it."
-    },
-    {
-      "path": "compat/win32/src/file.cpp",
-      "normalized_call": "std::strcpy(lpof->szPathName,szPath)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "compat/win32/src/file.cpp",
-      "normalized_call": "std::strcpy(szPath,pszFile)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
     },
     {
       "path": "compat/win32/src/filedialog.cpp",
@@ -2867,6 +2964,32 @@
       "baseline": "Behavior-neutral. Native/frozen-original baselines, unit goldens, file widths/layouts, game rules, RNG, tie order and binary64 boundaries remain unchanged. No scenario/checkpoint moved; no regression export required.",
       "remaining": "Remaining L05 copies/const text/shared scratch results, L06 service interfaces and Milestone D, and L08 reconciliation/platform qualification remain active.",
       "receipts": "dist/verification/live-cpp/l05t/"
+    }
+  },
+  "bounded_library_path_copies": {
+    "status": "complete; verified",
+    "parent": "d07b3fd2",
+    "sites": 30,
+    "interfaces": "Actual array/tail/MRU-row spans replace proven-fitting library/MDI/SDK path copies. Import source bytes use their existing length admission and a bounded NUL-inclusive byte copy, retaining later validation/diagnostics.",
+    "retained": "Erased-capacity library-name dialog output, potentially oversize constructed path copies and remaining shared-scratch/message services still require migration.",
+    "relative_path_join": "OpenFile replaces its raw snprintf join with strict whole-span copy/append of cwd, slash and supplied name. Overflow returns the same filename-range error before OFSTRUCT/handle publication, without adding allocation or changing slash/normalization policy.",
+    "verification": {
+      "batch": "L05u thirty bounded library, MDI and SDK path copies",
+      "debug_build": "Pass, no warnings. Release SDL regression and host builds pass. Compiler/source policy covers 158 owned sources, 159 variants and 161 standalone headers in both orders; exact remaining raw-copy spellings pass.",
+      "desktop": "153/153, including all 29 leak checks, linked state witnesses, actual library import/version/continue/recent-file/file workflows, file-guard recovery and available SDL tutorial checkpoints.",
+      "host_units": "28/28 in Release",
+      "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+      "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+      "windows": "147/147 owned production units and four actual affected consumer/witness units pass strict MinGW syntax. The independent native-SDK file reference also passes MinGW C11 with -Wall -Wextra -Werror. These are compilation checks; actual native Windows SDL and Linux final qualification remain pending.",
+      "fixture_correction": "Initial Windows test syntax found a stale positional PfNativeOpenFlags call in the Windows/SDL-only file fixture. Focused commit 0e0912b9 corrects it to equivalent typed options; final compilation is 4/4 and shared SDK expectations are unchanged. The optional stars-compat-file target is not configured in this modern macOS preset; its syntax checks do not claim runtime qualification.",
+      "characterization": "Before production edits, the linked state witness passes full 255-byte UTF-8 recent-file promotion/profile writes and library-removal compaction. The final suite reruns it, including previous Unicode startup/last-row checks and profile-write failure ordering.",
+      "relative_file_runtime": "The configured real file/dispatch guard executable also passes with ./relative from a short temporary working directory. It creates and reads the Unicode-suffixed relative file through OpenFile, retries after an injected held-lock failure, and completes profile/modal/shutdown cleanup. An initial prefix without a directory component stopped in the test-only directory_iterator(empty parent); the explicit ./relative prefix meets that fixture requirement. No production failure was inferred from that harness invocation.",
+      "scope": "Sixteen library filename/metadata/MRU/import copies, eight MDI path/menu copies, three MRU row operations, two OpenFile copies and one ZIP-parent copy now use actual destination spans. Whole fitting UTF-8/path bytes and unused tails remain; two externally supplied import paths retain their original byte/validation/diagnostic order through preceding length admission and NUL-inclusive bounded range copies.",
+      "relative_join": "OpenFile also replaces a raw snprintf relative-path join with whole-span copy/append of cwd, slash and name. It retains slash spelling, UTF-8/path validation order, filename-range errors, OFSTRUCT commit, sharing, LastError and no new allocation. Oversize output never clips into a published path.",
+      "inventory": "250 migrated sites; 58 initial application copy sites remain. The lexical raw-spelling allowlist totals 64, including SDK declarations/definitions.",
+      "baseline": "Behavior-neutral. Native/frozen-original baseline bytes, unit goldens, record widths/layouts, game rules, RNG, tie order and binary64 boundaries remain unchanged. No scenario/checkpoint moved; no regression export required.",
+      "remaining": "Erased-capacity library dialog output, other path/message/scratch/const-text interfaces, remaining wrapper formatting callers, L06 service interfaces and Milestone D, and L08 final qualification remain active.",
+      "receipts": "dist/verification/live-cpp/l05u/"
     }
   }
 }

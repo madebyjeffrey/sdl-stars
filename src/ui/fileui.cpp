@@ -117,16 +117,16 @@ void AddMRUFile(APPSESSION &app, const char *pszFileName, const char *pszExt) {
         for (i = 1; i < 8 && _stricmp(szT, app.lpui->vrgszMRU + 256 * i) != 0; i++) {
         }
         for (; i >= 1; i--) {
-            std::strcpy(app.lpui->vrgszMRU + 256 * i, app.lpui->vrgszMRU + 256 * (i - 1));
+            CchCopyUtf8(std::span{app.lpui->vrgszMRU, std::size_t{2304}}.subspan(256 * i, 256), app.lpui->vrgszMRU + 256 * (i - 1));
         }
-        std::strcpy(app.lpui->vrgszMRU, szT);
+        CchCopyUtf8(std::span{app.lpui->vrgszMRU, std::size_t{2304}}.first(256), szT);
         TextIO().pfnCchGetString(app, idsStarsIni, std::span{szIniFile});
         TextIO().pfnCchGetString(app, idsFiles, std::span{szSection});
         TextIO().pfnCchGetString(app, idsFile1, std::span{szEntry});
         psz = &szEntry[std::strlen(szEntry) - 1];
         for (i = 0; i < 9; i++) {
             *psz = i + '1';
-            std::strcpy(szT, app.lpui->vrgszMRU + 256 * i);
+            CchCopyUtf8(std::span{szT}, app.lpui->vrgszMRU + 256 * i);
             ProfileTextIO().pfnWriteString(szSection, szEntry, szT, szIniFile);
         }
     }
