@@ -10,7 +10,7 @@
 #ifdef STARS_UI_SDL
 #include "fileio.h"
 static BOOL FFixtureTruncate(const char *psz, int64_t cb) {
-    NATIVEFILE *pf = PfNativeOpenFlags(psz, 3, OF_SHARE_DENY_NONE, 0, 0, 0, 1);
+    NATIVEFILE *pf = PfNativeOpenFlags(psz, {.mdAccess = NATIVEFILEACCESS::readWrite, .mdShare = NATIVEFILESHARE::denyNone, .fNative = true});
     BOOL fOkay;
     if (!pf) return 0;
     fOkay = ITruncateNativeFile(pf, cb) == 0;

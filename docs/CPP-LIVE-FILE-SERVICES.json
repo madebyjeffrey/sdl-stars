@@ -35,6 +35,13 @@
       "baseline": "Behavior-neutral for existing calls. No regression baseline, frozen original fixture, unit golden, 16-bit MdOpenFlags/token storage, wire layout, RNG or canonical model changed. No scenario/checkpoint moved and no regression export required.",
       "remaining": "Byte/element-count buffers, integer seek origins, stream-mode strings, remaining file/path result interfaces and Milestone D remain active.",
       "receipts": "dist/verification/live-cpp/l06b/"
+    },
+    "windows_file_fixture": {
+      "status": "typed caller corrected; Windows compilation verified",
+      "discovery": "The actual Windows SDL win32_file.cpp consumer still used positional PfNativeOpenFlags arguments inside the shared fixture's Windows/SDL-only truncation helper. The preceding source inventory missed that excluded branch.",
+      "mapping": "readWrite, denyNone, native=true; create/truncate/exclusive remain false, matching the original arguments. Shared SDK expectations and its independent C branch remain unchanged.",
+      "verification": "Strict MinGW syntax passes the actual Windows SDL test translation unit; independent native-SDK win32_file.c also passes MinGW C11 with -Wall -Wextra -Werror. Actual native Windows SDL runtime remains a final qualification item.",
+      "receipts": "dist/verification/live-cpp/l05u/stars-live-l05u-windows-file-fixture-syntax.log and stars-live-l05u-independent-sdk-file-syntax.log"
     }
   },
   "parent_source_lines": [
