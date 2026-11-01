@@ -29,12 +29,12 @@ BOOL FSaveProfile(COMPATPROFILE *lp, const char *pszPath, const PROFILEIO &io) {
     NATIVECLEANUPSCOPE releaseProfile([&]() noexcept {
         if (fp) io.pfnClose(std::exchange(fp, nullptr));
         if (!fRet && fTemporary) io.pfnUnlink(szTemp);
-        free(szTemp);
+        std::free(szTemp);
     });
 
-    szTemp = static_cast<char *>(io.pfnAllocate(strlen(pszPath) + 12));
+    szTemp = static_cast<char *>(io.pfnAllocate(std::strlen(pszPath) + 12));
     if (!szTemp) { win32::SetLastError(win32::ERROR_NOT_ENOUGH_MEMORY); return 0; }
-    snprintf(szTemp, strlen(pszPath) + 12, "%s.XXXXXX", pszPath);
+    std::snprintf(szTemp, std::strlen(pszPath) + 12, "%s.XXXXXX", pszPath);
     fp = io.pfnCreateTemp(szTemp);
     if (!fp) { win32::SetLastError(DwProfileError()); goto LReturn; }
     fTemporary = 1;
@@ -44,7 +44,7 @@ BOOL FSaveProfile(COMPATPROFILE *lp, const char *pszPath, const PROFILEIO &io) {
     if (io.pfnWrite("\xef\xbb\xbf", 1, 3, fp) != 3) { io.pfnClose(std::exchange(fp, nullptr)); goto LReturn; }
     for (; lp; lp = lp->lpNext) {
         if (io.pfnPutString(lp->szRaw, fp) == EOF) break;
-        if (lp->lpNext && *lp->szRaw && lp->szRaw[strlen(lp->szRaw) - 1] != '\n')
+        if (lp->lpNext && *lp->szRaw && lp->szRaw[std::strlen(lp->szRaw) - 1] != '\n')
             if (io.pfnPutChar('\n', fp) == EOF) break;
     }
     if (lp || io.pfnFlush(fp) != 0 || io.pfnSync(fp) != 0) {

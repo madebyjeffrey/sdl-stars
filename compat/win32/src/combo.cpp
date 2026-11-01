@@ -1,9 +1,9 @@
 /* Editable and fixed-height string combos, with independent owned popup windows. */
 #include "internal.h"
 #include "cleanup.h"
-#include <limits.h>
-#include <stdlib.h>
-#include <string.h>
+#include <climits>
+#include <cstdlib>
+#include <cstring>
 
 static BOOL FCombo(HWND hwnd, COMPATCOMBO *lp) { return win32::IsWindow(hwnd) && hwnd->lpcombo.get() == lp; }
 static void SelectCombo(HWND hwnd, int i, BOOL fUser);
@@ -28,7 +28,7 @@ static void NotifyCombo(HWND hwnd, UINT code) {
 static char *PszComboItem(HWND hwnd, int i) {
     LRESULT cch = CompatListProc(hwnd, win32::LB_GETTEXTLEN, i, 0);
     char *psz;
-    if (cch < 0 || static_cast<UINT_PTR>(cch) >= SIZE_MAX || !(psz = static_cast<char *>((SDL_malloc(static_cast<size_t>(cch) + 1))))) return nullptr;
+    if (cch < 0 || static_cast<UINT_PTR>(cch) >= SIZE_MAX || !(psz = static_cast<char *>((SDL_malloc(static_cast<std::size_t>(cch) + 1))))) return nullptr;
     if (CompatListProc(hwnd, win32::LB_GETTEXT, i, reinterpret_cast<LPARAM>(psz)) < 0) { SDL_free(psz); return nullptr; }
     return psz;
 }
@@ -84,11 +84,11 @@ static BOOL FComboDropRect(HWND hwnd, RECT *lprc) {
     int cyItem, c, cxScreen, cyScreen, cy;
     if (!win32::GetWindowRect(hwnd, &rc)) return 0;
     c = static_cast<int>(CompatListProc(hwnd, win32::LB_GETCOUNT, 0, 0)); cyItem = static_cast<int>(CompatListProc(hwnd, win32::LB_GETITEMHEIGHT, 0, 0));
-    cy = static_cast<int>((((static_cast<int64_t>(lp->cyDrop)) < (static_cast<int64_t>(StarsMax(1, c)) * cyItem + 2)) ? (static_cast<int64_t>(lp->cyDrop)) : (static_cast<int64_t>(StarsMax(1, c)) * cyItem + 2)));
+    cy = static_cast<int>((((static_cast<std::int64_t>(lp->cyDrop)) < (static_cast<std::int64_t>(StarsMax(1, c)) * cyItem + 2)) ? (static_cast<std::int64_t>(lp->cyDrop)) : (static_cast<std::int64_t>(StarsMax(1, c)) * cyItem + 2)));
     cxScreen = win32::GetSystemMetrics(win32::SM_CXSCREEN); cyScreen = win32::GetSystemMetrics(win32::SM_CYSCREEN);
     lprc->left = rc.left; lprc->right = rc.left + StarsMax(rc.right - rc.left, lp->cxDrop);
     if (cxScreen > 0 && lprc->right > cxScreen) win32::OffsetRect(lprc, cxScreen - lprc->right, 0);
-    lprc->top = cyScreen > 0 && static_cast<int64_t>(rc.bottom) + cy > cyScreen ? rc.top - cy : rc.bottom;
+    lprc->top = cyScreen > 0 && static_cast<std::int64_t>(rc.bottom) + cy > cyScreen ? rc.top - cy : rc.bottom;
     lprc->bottom = lprc->top + cy;
     return 1;
 }
@@ -338,8 +338,8 @@ LRESULT  CompatComboProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
                                           2, 2, StarsMax(0, rc.right - 22), StarsMax(1, rc.bottom - 4), hwnd, reinterpret_cast<HMENU>(1), lpwin->lpclass->wc.hInstance, nullptr);
             if (!hwndEdit || !FCombo(hwnd, lp)) return -1;
             lp->hwndEdit = hwndEdit;
-            fn = win32::GetWindowLongPtrA(lp->hwndEdit, win32::GWLP_WNDPROC); memcpy(&lp->lpfnEdit, &fn, sizeof(fn));
-            lpfn = ComboEditProc; memcpy(&fn, &lpfn, sizeof(fn)); win32::SetWindowLongPtrA(lp->hwndEdit, win32::GWLP_WNDPROC, fn);
+            fn = win32::GetWindowLongPtrA(lp->hwndEdit, win32::GWLP_WNDPROC); std::memcpy(&lp->lpfnEdit, &fn, sizeof(fn));
+            lpfn = ComboEditProc; std::memcpy(&fn, &lpfn, sizeof(fn)); win32::SetWindowLongPtrA(lp->hwndEdit, win32::GWLP_WNDPROC, fn);
         }
         return 0;
     case win32::WM_DESTROY: CloseCombo(hwnd, 0, 0); return CompatListProc(hwnd, win32::WM_DESTROY, w, l);
@@ -355,7 +355,7 @@ LRESULT  CompatComboProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         if (lp->hwndEdit) return win32::SendMessageA(lp->hwndEdit, msg, w, l);
         psz = PszComboItem(hwnd, static_cast<int>(CompatListProc(hwnd, win32::LB_GETCURSEL, 0, 0)));
         result = psz ? static_cast<LRESULT>(SDL_strlen(psz)) : 0;
-        if (msg == win32::WM_GETTEXT) { result = w && l && psz ? static_cast<LRESULT>(CchUtf8Prefix(psz, static_cast<size_t>(w) - 1)) : 0; if (w && l) { if (result) memcpy(reinterpret_cast<char *>(l), psz, static_cast<size_t>(result)); (reinterpret_cast<char *>(l))[result] = 0; } }
+        if (msg == win32::WM_GETTEXT) { result = w && l && psz ? static_cast<LRESULT>(CchUtf8Prefix(psz, static_cast<std::size_t>(w) - 1)) : 0; if (w && l) { if (result) std::memcpy(reinterpret_cast<char *>(l), psz, static_cast<std::size_t>(result)); (reinterpret_cast<char *>(l))[result] = 0; } }
         SDL_free(psz); return result;
     case win32::WM_SETTEXT: {
         if (!lp->hwndEdit) return 0;

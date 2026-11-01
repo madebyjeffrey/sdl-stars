@@ -11,7 +11,7 @@ struct PLANETPANE {
     HWND hwndContent;
     int x, y, dxContent, dyContent, dxOuter, dyOuter;
     int idSelection, grobjSelection;
-    int16_t dWheel;
+    std::int16_t dWheel;
     BOOL fRefitting, fPending;
 };
 
@@ -92,7 +92,7 @@ LRESULT  PlanetPaneWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam
 
     switch (message) {
     case win32::WM_CREATE: {
-        NATIVEOWNER<PLANETPANE, std::free> pane(static_cast<PLANETPANE *>(calloc(1, sizeof(*lp))));
+        NATIVEOWNER<PLANETPANE, std::free> pane(static_cast<PLANETPANE *>(std::calloc(1, sizeof(*lp))));
         lp = pane.get();
         if (!lp) return -1;
         win32::SetWindowLongPtrA(hwnd, win32::GWLP_USERDATA, reinterpret_cast<LONG_PTR>(lp));
@@ -124,7 +124,7 @@ LRESULT  PlanetPaneWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam
     case win32::WM_MOUSEWHEEL:
     case win32::WM_MOUSEHWHEEL:
         if (!lp) return 0;
-        c = CWheelNotches(&lp->dWheel, static_cast<int16_t>(HIWORD(wParam)));
+        c = CWheelNotches(&lp->dWheel, static_cast<std::int16_t>(HIWORD(wParam)));
         if (c == 0) return 0;
         ControlIO().pfnGetClientRect(hwnd, &rc);
         d = StarsMax(1, app.state.dyArial8 + 4);

@@ -5,13 +5,13 @@
 #include <SDL3/SDL.h>
 #include <io.h>
 #include <direct.h>
-#include <ctype.h>
-#include <errno.h>
-#include <limits.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cctype>
+#include <cerrno>
+#include <climits>
+#include <cstdarg>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <strings.h>
 #include <sys/stat.h>
 #ifdef __APPLE__
@@ -19,12 +19,12 @@
 #elif !defined(_WIN32)
 #include <sys/syscall.h>
 #endif
-#include <time.h>
+#include <ctime>
 #include <unistd.h>
 
 int win32::MulDiv(int nNumber, int nNumerator, int nDenominator) {
-    int64_t lProduct = static_cast<int64_t>(nNumber) * nNumerator;
-    int64_t lDenominator = nDenominator, lResult;
+    std::int64_t lProduct = static_cast<std::int64_t>(nNumber) * nNumerator;
+    std::int64_t lDenominator = nDenominator, lResult;
     BOOL fNegative;
 
     if (nDenominator == 0)
@@ -42,28 +42,28 @@ DWORD win32::GetCurrentThreadId(void) {
 #ifdef _WIN32
     return (DWORD)SDL_GetCurrentThreadID();
 #elif defined(__APPLE__)
-    uint64_t id;
+    std::uint64_t id;
     return pthread_threadid_np(nullptr, &id) == 0 ? static_cast<DWORD>(id) : 0;
 #else
     return (DWORD)syscall(SYS_gettid);
 #endif
 }
 
-LPSTR win32::lstrcatA(LPSTR pszDest, LPCSTR pszSource) { return strcat(pszDest, pszSource); }
+LPSTR win32::lstrcatA(LPSTR pszDest, LPCSTR pszSource) { return std::strcat(pszDest, pszSource); }
 LPSTR win32::lstrcpyA(LPSTR pszDest, LPCSTR pszSource) {
     if (!pszDest || !pszSource) return nullptr;
-    return strcpy(pszDest, pszSource);
+    return std::strcpy(pszDest, pszSource);
 }
-int win32::lstrlenA(LPCSTR psz) { return psz ? static_cast<int>(strlen(psz)) : 0; }
+int win32::lstrlenA(LPCSTR psz) { return psz ? static_cast<int>(std::strlen(psz)) : 0; }
 int win32::lstrcmpiA(LPCSTR psz1, LPCSTR psz2) { return strcasecmp(psz1, psz2); }
 
 int win32::wsprintfA(LPSTR pszDest, LPCSTR pszFormat, ...) {
     char szFormat[1024];
     const char *psz = pszFormat, *pszStart;
-    size_t cch = 0;
+    std::size_t cch = 0;
     int cchResult;
     char chLength, chType;
-    va_list args;
+    std::va_list args;
 
     if (!pszDest || !pszFormat) return 0;
     while (*psz && cch < sizeof(szFormat) - 1) {
@@ -76,27 +76,27 @@ int win32::wsprintfA(LPSTR pszDest, LPCSTR pszFormat, ...) {
         }
         pszStart = psz;
         while (*psz == '-' || *psz == '#' || *psz == '0') psz++;
-        while (isdigit(static_cast<unsigned char>(*psz))) psz++;
+        while (std::isdigit(static_cast<unsigned char>(*psz))) psz++;
         if (*psz == '.') {
             psz++;
-            while (isdigit(static_cast<unsigned char>(*psz))) psz++;
+            while (std::isdigit(static_cast<unsigned char>(*psz))) psz++;
         }
-        if (cch + static_cast<size_t>((psz - pszStart)) + 2 >= sizeof(szFormat)) goto LInvalid;
-        memcpy(szFormat + cch, pszStart, static_cast<size_t>((psz - pszStart)));
-        cch += static_cast<size_t>((psz - pszStart));
+        if (cch + static_cast<std::size_t>((psz - pszStart)) + 2 >= sizeof(szFormat)) goto LInvalid;
+        std::memcpy(szFormat + cch, pszStart, static_cast<std::size_t>((psz - pszStart)));
+        cch += static_cast<std::size_t>((psz - pszStart));
         chLength = 0;
         if (*psz == 'h' || *psz == 'l') chLength = *psz++;
         chType = *psz;
-        if (!chType || !strchr("diuxXcs", chType)) goto LInvalid;
+        if (!chType || !std::strchr("diuxXcs", chType)) goto LInvalid;
         // Win32 LONG is 32-bit even when this process uses Linux's LP64 ABI.
         if (chLength == 'l' && (chType == 'c' || chType == 's')) goto LInvalid;
-        if (chLength == 'h' && strchr("diuxX", chType)) szFormat[cch++] = 'h';
+        if (chLength == 'h' && std::strchr("diuxX", chType)) szFormat[cch++] = 'h';
         szFormat[cch++] = *psz++;
     }
     if (*psz) goto LInvalid;
     szFormat[cch] = 0;
     va_start(args, pszFormat);
-    cchResult = vsnprintf(pszDest, 1024, szFormat, args);
+    cchResult = std::vsnprintf(pszDest, 1024, szFormat, args);
     va_end(args);
     if (cchResult < 0) { pszDest[0] = 0; return 0; }
     if (cchResult > 1023) {
@@ -115,12 +115,12 @@ int _access(const char *pszPath, int mdAccess) { return IAccessNativePath(pszPat
 int _mkdir(const char *pszPath) { return ICreateNativeDirectory(pszPath, 0777); }
 char *_getcwd(char *pszPath, int cchPath) {
     if (cchPath <= 0) { errno = EINVAL; return nullptr; }
-    return PszNativeCwd(pszPath, static_cast<size_t>(cchPath));
+    return PszNativeCwd(pszPath, static_cast<std::size_t>(cchPath));
 }
 int _stricmp(const char *psz1, const char *psz2) { return strcasecmp(psz1, psz2); }
-int _strnicmp(const char *psz1, const char *psz2, size_t cb) { return strncasecmp(psz1, psz2, cb); }
+int _strnicmp(const char *psz1, const char *psz2, std::size_t cb) { return strncasecmp(psz1, psz2, cb); }
 int strcmpi(const char *psz1, const char *psz2) { return _stricmp(psz1, psz2); }
-int strnicmp(const char *psz1, const char *psz2, size_t cb) { return _strnicmp(psz1, psz2, cb); }
+int strnicmp(const char *psz1, const char *psz2, std::size_t cb) { return _strnicmp(psz1, psz2, cb); }
 char *_strlwr(char *sz) {
     char *psz;
     for (psz = sz; *psz; psz++) if (*psz >= 'A' && *psz <= 'Z') *psz += 'a' - 'A';
@@ -129,11 +129,11 @@ char *_strlwr(char *sz) {
 char *strlwr(char *sz) { return _strlwr(sz); }
 
 static char *SzTime(char *sz, const char *pszFormat) {
-    time_t tmNow = time(nullptr);
-    struct tm tmLocal;
+    std::time_t tmNow = std::time(nullptr);
+    struct std::tm tmLocal;
 
     if (!sz) { errno = EINVAL; return nullptr; }
-    if (!localtime_r(&tmNow, &tmLocal) || strftime(sz, 9, pszFormat, &tmLocal) == 0) {
+    if (!localtime_r(&tmNow, &tmLocal) || std::strftime(sz, 9, pszFormat, &tmLocal) == 0) {
         sz[0] = 0;
         return nullptr;
     }

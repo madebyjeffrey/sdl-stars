@@ -123,7 +123,7 @@ for path in paths:
     for match in re.finditer(r"\b(?:struct|union)\s*\{", text):
         end = close(text, text.index("{", match.start()), "{", "}")
         site("anonymous-aggregate", match.start(), end)
-    for match in re.finditer(r"(?m)^\s*(?:extern\s+)?(?!return\b)[A-Za-z_]\w*\s+([A-Za-z_]\w*)\s*\[\s*0\s*\]\s*;", text):
+    for match in re.finditer(r"(?m)^\s*(?:extern\s+)?(?!return\b)(?:std::)?[A-Za-z_]\w*\s+([A-Za-z_]\w*)\s*\[\s*0\s*\]\s*;", text):
         # All owned zero-tail declarations currently live in structs.h. A new
         # declaration anywhere else fails until its lifetime/width is reviewed.
         if name in ("src/ui/globalsui.cpp", "src/ui/globalsui.h") and match[1] == "_ctype":

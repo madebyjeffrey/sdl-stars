@@ -211,7 +211,7 @@ def CppAssignments(value, path, key, where, indent="        "):
                        for i, v in enumerate(value))
     literal = CValue(key, value, where, [], path)
     if isinstance(value, str) and key.startswith("sz"):
-        return (indent + "for (size_t i = 0; i < sizeof({0}); ++i) {1}[i] = {0}[i];\n").format(literal, path)
+        return (indent + "for (std::size_t i = 0; i < sizeof({0}); ++i) {1}[i] = {0}[i];\n").format(literal, path)
     return indent + "{0} = static_cast<std::remove_reference_t<decltype({0})>>({1});\n".format(path, literal)
 
 
@@ -347,7 +347,7 @@ def LoadRecipes(table, chs, rgaip):
 
 
 def EnumStart(name, underlying):
-    return ["enum {} : {} {{".format(name, underlying)]
+    return ["enum {} : {} {{".format(name, "std::" + underlying)]
 
 
 def Generate(outdir):
@@ -356,7 +356,7 @@ def Generate(outdir):
         "// The part, hull, starting design and AI enums, included by enums.h.",
         "#ifndef STARS_DATAIDS_H",
         "#define STARS_DATAIDS_H",
-        '#include <stdint.h>',
+        '#include <cstdint>',
         "",
     ]
     body = ["// " + GENERATED.format("*.yaml"), '#include <type_traits>', '#include "common.h"', ""]
@@ -421,7 +421,7 @@ def Generate(outdir):
     for name, tries in prefs:
         for ibit, iItem, cItem, part in tries:
             lines.append("    /* {} */ {{.ibit = {}, .iItem = {}, .cItem = {}, .fRandom = 0}},".format(part, ibit, iItem, cItem))
-    body.append("uint8_t {}[{}] = {{{}}};\n".format(PREFERENCES["counts"], len(prefs), ", ".join(str(len(t)) for _, t in prefs)))
+    body.append("std::uint8_t {}[{}] = {{{}}};\n".format(PREFERENCES["counts"], len(prefs), ", ".join(str(len(t)) for _, t in prefs)))
     body.append("AIPART {}[{}] = {{\n{}\n}};\n".format(PREFERENCES["array"], max(len(lines), PREFERENCES["size"]), "\n".join(lines)))
     rgaip = {name for name, _ in prefs}
     orders = LoadResearch(RESEARCH)
@@ -429,7 +429,7 @@ def Generate(outdir):
     for array in RESEARCH["arrays"]:
         header.append("    c{} = {},".format(array[len("vrg"):], len(orders[array])))
         items = ", ".join("({} << 5) | {}".format(field, level) for field, level in orders[array])
-        body.append("uint8_t {}[{}] = {{{}}};\n".format(array, len(orders[array]), items))
+        body.append("std::uint8_t {}[{}] = {{{}}};\n".format(array, len(orders[array]), items))
     header += ["};", ""]
     for table in RECIPES:
         recipes = LoadRecipes(table, chs, rgaip)
@@ -448,13 +448,13 @@ def Generate(outdir):
             header.append("enum {}Index {{".format(table["enum"]))
             header += ["    i{} = {},".format(name, i) for i, (name, _) in enumerate(recipes)]
             header += ["};", ""]
-        body.append("uint8_t {}[{}] = {{\n{}\n}};\n".format(table["array"], max(ib, table["size"]), "\n".join(lines)))
+        body.append("std::uint8_t {}[{}] = {{\n{}\n}};\n".format(table["array"], max(ib, table["size"]), "\n".join(lines)))
         if table.get("ish"):
             if table["ishType"] == "uint8_t" and rgib[-1] > 255:
                 raise DataError("data/{}: offsets pass 255, beyond {}'s uint8_t".format(table["file"], table["ish"]))
-            body.append("{} {}[{}] = {{{}}};\n".format(table["ishType"], table["ish"], len(recipes), ", ".join(name for name, _ in recipes)))
+            body.append("{} {}[{}] = {{{}}};\n".format("std::uint8_t" if table["ishType"] == "uint8_t" else table["ishType"], table["ish"], len(recipes), ", ".join(name for name, _ in recipes)))
     header += ["#endif", ""]
-    body = [re.sub(r"^(\w+ \w+\[)", r"constinit \1", row) for row in body]
+    body = [re.sub(r"^((?:std::)?\w+ \w+\[)", r"constinit \1", row) for row in body]
     body += asserts + [""]
     os.makedirs(outdir, exist_ok=True)
     for name, text in (("dataids.h", "\n".join(header)), ("data_tables.cpp", "\n".join(body))):

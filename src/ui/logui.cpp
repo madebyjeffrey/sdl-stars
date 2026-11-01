@@ -4,12 +4,12 @@
 #include "text_io.h"
 #include "record_io.h"
 
-int16_t FWriteTutorialMFile(APPSESSION &app, int16_t iTurn) {
+std::int16_t FWriteTutorialMFile(APPSESSION &app, std::int16_t iTurn) {
     HRSRC    hrsrc;
     char     szT[30];
     HGLOBAL  hres;
-    int16_t  cch;
-    int16_t  cSkip;
+    std::int16_t  cch;
+    std::int16_t  cSkip;
 
     cSkip = iTurn;
     StarsRecoveryScope scopeRecovery;
@@ -25,7 +25,7 @@ int16_t FWriteTutorialMFile(APPSESSION &app, int16_t iTurn) {
         BailOut:
             return 0;
         }
-        app.state.vlpMemStream = static_cast<uint8_t *>(win32::LockResource(hres));
+        app.state.vlpMemStream = static_cast<std::uint8_t *>(win32::LockResource(hres));
         if (!app.state.vlpMemStream)
             goto BailOut;
         if (cSkip >= *app.state.vlpMemStream) {
@@ -41,7 +41,7 @@ int16_t FWriteTutorialMFile(APPSESSION &app, int16_t iTurn) {
             } while (HdvFromPrefix(app.state.vlpMemStream).rt() != rtBOF);
         }
         cch = TextIO().pfnCchGetString(app, idsTutorial, szT);
-        strcpy(&szT[cch], iTurn == 37 ? ".hst" : ".m1");
+        std::strcpy(&szT[cch], iTurn == 37 ? ".hst" : ".m1");
         RecordIO().pfnStreamOpen(app, szT, mdCreate);
         do {
             RgToStream(app, app.state.vlpMemStream, HdvFromPrefix(app.state.vlpMemStream).cb() + 2);
@@ -69,7 +69,7 @@ int16_t FWriteTutorialMFile(APPSESSION &app, int16_t iTurn) {
 // LpbLoadTutorLog returns the tutorial's recorded orders for the player,
 // kept in the program's resources, or NULL. FLoadLogFile replays them. The
 // resource stays loaded for the life of the program.
-uint8_t *LpbLoadTutorLog(APPSESSION &app) {
+std::uint8_t *LpbLoadTutorLog(APPSESSION &app) {
     HRSRC   hrsrc;
     HGLOBAL hres;
 
@@ -78,5 +78,5 @@ uint8_t *LpbLoadTutorLog(APPSESSION &app) {
     if (!hres) {
         return nullptr;
     }
-    return static_cast<uint8_t *>(win32::LockResource(hres));
+    return static_cast<std::uint8_t *>(win32::LockResource(hres));
 }

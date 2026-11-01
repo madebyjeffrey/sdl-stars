@@ -1,6 +1,6 @@
 /* Classic control behavior for the source-level SDL UI. Fonts remain caller-owned. */
 #include "internal.h"
-#include <stdlib.h>
+#include <cstdlib>
 
 DWORD win32::GetSysColor(int i) {
     static const COLORREF rgcr[] = {
@@ -51,7 +51,7 @@ BOOL win32::CheckRadioButton(HWND hwnd, int idFirst, int idLast, int idCheck) {
     int c = 0, i = 0, id;
     if (!LpCompatWindow(hwnd) || idFirst > idLast) return 0;
     for (lp = win32::GetWindow(hwnd, win32::GW_CHILD); lp; lp = win32::GetWindow(lp, win32::GW_HWNDNEXT)) c++;
-    rghwnd = static_cast<HWND *>((calloc(c ? static_cast<size_t>(c) : 1, sizeof(*rghwnd))));
+    rghwnd = static_cast<HWND *>((std::calloc(c ? static_cast<std::size_t>(c) : 1, sizeof(*rghwnd))));
     if (!rghwnd) return 0;
     for (lp = win32::GetWindow(hwnd, win32::GW_CHILD); lp; lp = win32::GetWindow(lp, win32::GW_HWNDNEXT)) rghwnd[i++] = lp;
     for (i = 0; i < c; i++) {
@@ -60,7 +60,7 @@ BOOL win32::CheckRadioButton(HWND hwnd, int idFirst, int idLast, int idCheck) {
         id = win32::GetDlgCtrlID(lp);
         if (id >= idFirst && id <= idLast) win32::SendMessageA(lp, win32::BM_SETCHECK, id == idCheck, 0);
     }
-    free(rghwnd);
+    std::free(rghwnd);
     return 1;
 }
 
@@ -106,7 +106,7 @@ static void ClickControl(HWND hwnd) {
 
 static BOOL FControlPoint(HWND hwnd, LPARAM l) {
     RECT rc;
-    POINT pt = {static_cast<int16_t>(LOWORD(l)), static_cast<int16_t>(HIWORD(l))};
+    POINT pt = {static_cast<std::int16_t>(LOWORD(l)), static_cast<std::int16_t>(HIWORD(l))};
     return win32::GetClientRect(hwnd, &rc) && win32::PtInRect(&rc, pt);
 }
 

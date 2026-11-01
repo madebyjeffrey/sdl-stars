@@ -1,7 +1,7 @@
 /* Asynchronous alert tones; the SDL device supplies desktop audio routing. */
 #include "internal.h"
 #include "audio_io.h"
-#include <math.h>
+#include <cmath>
 
 struct COMPATAUDIO {
     NATIVEOWNER<SDL_AudioStream, SDL_DestroyAudioStream> lpAlert;
@@ -39,7 +39,7 @@ BOOL win32::MessageBeep(UINT type) {
         hz = type == win32::MB_ICONHAND ? 220 : type == win32::MB_ICONEXCLAMATION ? 440 : type == win32::MB_ICONASTERISK ? 1047 : 880;
         if (type == win32::MB_ICONQUESTION) hz = i < 1764 ? 660 : 880;
         envelope = (((1.0) < (static_cast<double>(i) / 110)) ? (1.0) : (static_cast<double>(i) / 110)) * (((1.0) < (static_cast<double>((3527 - i)) / 220)) ? (1.0) : (static_cast<double>((3527 - i)) / 220));
-        rgSamples[i] = static_cast<float>((0.15 * envelope * sin(i * hz * (6.283185307179586 / 22050))));
+        rgSamples[i] = static_cast<float>((0.15 * envelope * std::sin(i * hz * (6.283185307179586 / 22050))));
     }
     // A new alert replaces the previous one instead of accumulating stale sounds.
     if (!SDL_ClearAudioStream(audio.lpAlert.get()) || !CompatAudioIO().pfnPutAudioStreamData(audio.lpAlert.get(), rgSamples, sizeof(rgSamples)) ||

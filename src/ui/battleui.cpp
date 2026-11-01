@@ -9,7 +9,7 @@
 INT_PTR  RelationsDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
 
-    int16_t     i;
+    std::int16_t     i;
     RECT        rc;
     HDC         hdc;
     PAINTSTRUCT ps;
@@ -150,11 +150,11 @@ INT_PTR  BattlePlansDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
 
     FARPROC lpProc;
-    int16_t idc;
-    int16_t i;
-    int16_t fRet;
+    std::int16_t idc;
+    std::int16_t i;
+    std::int16_t fRet;
     RECT    rc;
-    int16_t cLen;
+    std::int16_t cLen;
 
     switch (message) {
     case win32::WM_INITDIALOG:
@@ -318,10 +318,10 @@ INT_PTR  BattlePlansDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 app.lpui->fDirtyPlan = 0;
             }
             app.lpui->iPlanSelDlg = app.state.rgcbtlplan[app.state.idPlayer]++;
-            cLen = strlen(app.lpui->btlplan.szName);
+            cLen = std::strlen(app.lpui->btlplan.szName);
             if (cLen <= 27) {
-                if (app.lpui->btlplan.szName[cLen - 1] != ')' || isdigit(app.lpui->btlplan.szName[cLen - 2]) == 0 || app.lpui->btlplan.szName[cLen - 3] != '(') {
-                    strcpy(&app.lpui->btlplan.szName[cLen], " (2)");
+                if (app.lpui->btlplan.szName[cLen - 1] != ')' || std::isdigit(app.lpui->btlplan.szName[cLen - 2]) == 0 || app.lpui->btlplan.szName[cLen - 3] != '(') {
+                    std::strcpy(&app.lpui->btlplan.szName[cLen], " (2)");
                 } else if (app.lpui->btlplan.szName[cLen - 2] == '9') {
                     app.lpui->btlplan.szName[cLen - 2] = '0';
                 } else {

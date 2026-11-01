@@ -15,14 +15,14 @@
 
 static int IStarsMain(APPSESSION &app, HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) try {
     win32::MSG      msg;
-    uint32_t lSeed;
-    int16_t  fSeed;
+    std::uint32_t lSeed;
+    std::int16_t  fSeed;
 
     app.lpui->hInst = hInstance;
     app.state.szBase[0] = 0;
     app.state.ini.SetWFlags(0);
-    memset(&app.state.tutor, 0, sizeof(TUTOR));
-    memset(&app.lpui->vtimer, 0, sizeof(TIMER));
+    std::memset(&app.state.tutor, 0, sizeof(TUTOR));
+    std::memset(&app.lpui->vtimer, 0, sizeof(TIMER));
     app.lpui->vtimer.fAutoGenWhenIn = 1;
     if (!hPrevInstance && InitMDIApp(app) == 0) {
         AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableInitializeStars, nullptr), win32::MB_ICONHAND);
@@ -68,7 +68,7 @@ static int IStarsMain(APPSESSION &app, HINSTANCE hInstance, HINSTANCE hPrevInsta
     CloseScannerInspector();
     ClosePlanetPane(app);
     FreeStuff(app);
-    return static_cast<int16_t>(msg.wParam);
+    return static_cast<std::int16_t>(msg.wParam);
 } catch (const StarsError &error) {
     StarsPrimaryErrorScope primary;
     try {
@@ -87,7 +87,7 @@ static int IStarsMain(APPSESSION &app, HINSTANCE hInstance, HINSTANCE hPrevInsta
     return 2;
 }
 
-int16_t FGetSystemColors(APPSESSION &app) {
+std::int16_t FGetSystemColors(APPSESSION &app) {
     HDC         hdc;
     BITMAPINFO *lpbi;
 
@@ -196,7 +196,7 @@ INT_PTR  About(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     APPUISTATE &uiState = *app.lpui;
     RECT    rc;
     HDC     hdc;
-    int16_t i;
+    std::int16_t i;
     HWND    hwndCtl;
     FARPROC lpProc;
 
@@ -269,7 +269,7 @@ INT_PTR  About(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     return 0;
 }
 
-int16_t FHandleChar(APPSESSION &app, HWND hwnd, uint16_t ch, int32_t lParam) {
+std::int16_t FHandleChar(APPSESSION &app, HWND hwnd, std::uint16_t ch, std::int32_t lParam) {
     HWND hwndF;
 
     if ((app.lpui->hwndScanner && (ch == 43 || ch == 45)) || (ch == 118 || ch == 86)) {
@@ -282,15 +282,15 @@ int16_t FHandleChar(APPSESSION &app, HWND hwnd, uint16_t ch, int32_t lParam) {
     return 0;
 }
 
-int16_t FHandleKey(APPSESSION &app, HWND hwnd, int16_t iMsg, int16_t iKey, uint32_t dw) {
+std::int16_t FHandleKey(APPSESSION &app, HWND hwnd, std::int16_t iMsg, std::int16_t iKey, std::uint32_t dw) {
     HWND          hwndF;
     POINT16       pt;
     HWND          hwndOver;
-    int16_t       i;
+    std::int16_t       i;
     ToolbarButton itb;
-    uint16_t      md;
-    int16_t       iWarp;
-    int16_t       iwp;
+    std::uint16_t      md;
+    std::int16_t       iWarp;
+    std::int16_t       iwp;
 
     if (iMsg == win32::WM_KEYDOWN) {
         if (iKey == win32::VK_ESCAPE && app.lpui->hwndBrowser && win32::GetActiveWindow() == app.lpui->hwndBrowser) {

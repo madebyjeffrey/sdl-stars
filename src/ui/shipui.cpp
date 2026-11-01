@@ -16,23 +16,23 @@
 #include "ownership.h"
 
 void DrawShipOrders(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
-    int16_t swp;
-    int16_t dxRight;
-    int16_t iWarp;
-    int16_t yTop;
+    std::int16_t swp;
+    std::int16_t dxRight;
+    std::int16_t iWarp;
+    std::int16_t yTop;
     POINT16 pt;
     RECT    rcT;
-    int16_t dWrong;
-    int32_t lTot;
-    int16_t c;
+    std::int16_t dWrong;
+    std::int32_t lTot;
+    std::int16_t c;
     FLEET  *pfl;
-    int16_t xRight;
-    int16_t iScanActual;
+    std::int16_t xRight;
+    std::int16_t iScanActual;
     RECT    rcGauge;
     const char *psz;
-    int16_t xLeft;
+    std::int16_t xLeft;
     ORDER   ord;
-    int32_t l;
+    std::int32_t l;
     RECT    rc;
 
     pfl = obj.pfl();
@@ -180,36 +180,36 @@ void DrawShipOrders(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
 }
 
 void DrawShipWayPtOrders(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
-    int16_t  dxKt;
-    int16_t  dxT;
-    int16_t  swp;
-    int16_t  dxRight;
-    int16_t  yTop;
-    int16_t  yTopMsg;
+    std::int16_t  dxKt;
+    std::int16_t  dxT;
+    std::int16_t  swp;
+    std::int16_t  dxRight;
+    std::int16_t  yTop;
+    std::int16_t  yTopMsg;
     StringId ids;
-    int16_t  edWid;
+    std::int16_t  edWid;
     PLANET  *lppl;
     ORDER   *lpord;
     FLEET   *pfl;
-    int16_t  i;
-    int16_t  fActive;
-    int16_t  xRight;
+    std::int16_t  i;
+    std::int16_t  fActive;
+    std::int16_t  xRight;
     TaskType grtask;
     char     szT[8];
-    int16_t  yBot;
-    int16_t  dxRight2;
+    std::int16_t  yBot;
+    std::int16_t  dxRight2;
     const char    *psz;
-    int16_t  cch;
-    int16_t  xLeft;
-    int32_t  l;
+    std::int16_t  cch;
+    std::int16_t  xLeft;
+    std::int32_t  l;
     RECT     rc;
     RECT     rcT;
     char    *pszT;
-    int16_t  j;
-    int32_t  cMine;
-    int16_t  dyCur;
-    int16_t  c;
-    int32_t  rgl[4];
+    std::int16_t  j;
+    std::int32_t  cMine;
+    std::int16_t  dyCur;
+    std::int16_t  c;
+    std::int32_t  rgl[4];
 
     if (ptile->fFixCtls) {
         for (i = 0; i < 3; i++) {
@@ -268,10 +268,10 @@ void DrawShipWayPtOrders(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
             case grTaskPatrol:
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
                 psz = TextIO().pfnCompressed(app, idsWarpFactor);
-                cch = strlen(psz);
+                cch = std::strlen(psz);
                 dxT = LOWORD(GetTextExtent(hdc, psz, cch)) + 2;
                 psz = TextIO().pfnCompressed(app, idsIntercept);
-                cch = strlen(psz);
+                cch = std::strlen(psz);
                 win32::SetRect(&rc, xLeft, yTop + 4, xLeft + dxT, yBot);
                 win32::FillRect(hdc, &rc, app.lpui->hbrButtonFace);
                 win32::DrawTextA(hdc, psz, cch, &rc, win32::DT_NOPREFIX);
@@ -314,7 +314,7 @@ void DrawShipWayPtOrders(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
             win32::SetRect(&rcT, xLeft - dxT - 2, yTop, xRight - 1, yTop + app.state.dyArial8);
             win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
             psz = TextIO().pfnCompressed(app, idsWarpFactor);
-            cch = strlen(psz);
+            cch = std::strlen(psz);
             win32::DrawTextA(hdc, psz, cch, &rcT, win32::DT_NOPREFIX);
             rcT.left += dxT + 2;
             app.lpui->rgrcRef[18] = rcT;
@@ -337,7 +337,7 @@ void DrawShipWayPtOrders(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
         if (grtask == grTaskXfer) {
             dxKt = 0;
             for (i = 0; i < 5; i++) {
-                if (static_cast<int16_t>(LOWORD(GetTextExtent(hdc, app.state.vrgszUnits[i], 2))) > dxKt) {
+                if (static_cast<std::int16_t>(LOWORD(GetTextExtent(hdc, app.state.vrgszUnits[i], 2))) > dxKt) {
                     dxKt = LOWORD(GetTextExtent(hdc, app.state.vrgszUnits[i], 2));
                 }
             }
@@ -393,7 +393,7 @@ void DrawShipWayPtOrders(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
             win32::SetTextColor(hdc, 127);
             win32::SetRect(&rc, xLeft, yTopMsg, xRight, yBot + 2);
             win32::SelectObject(hdc, app.lpui->rghfontArial7[0]);
-            win32::DrawTextA(hdc, psz, strlen(psz), &rc, win32::DT_WORDBREAK | win32::DT_NOPREFIX);
+            win32::DrawTextA(hdc, psz, std::strlen(psz), &rc, win32::DT_WORDBREAK | win32::DT_NOPREFIX);
             win32::SetTextColor(hdc, app.lpui->crButtonText);
             break;
         case grTaskLayMines:
@@ -437,7 +437,7 @@ void DrawShipWayPtOrders(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
             win32::SetTextColor(hdc, ids == idsNoteShipsFleetWillDismantledProvideSupplies ? app.lpui->crButtonText : 127);
             win32::SetRect(&rc, xLeft, yTopMsg, xRight, yBot + 2);
             win32::SelectObject(hdc, app.lpui->rghfontArial7[0]);
-            win32::DrawTextA(hdc, psz, strlen(psz), &rc, win32::DT_WORDBREAK | win32::DT_NOPREFIX);
+            win32::DrawTextA(hdc, psz, std::strlen(psz), &rc, win32::DT_WORDBREAK | win32::DT_NOPREFIX);
             win32::SetTextColor(hdc, app.lpui->crButtonText);
             break;
         case grTaskMine:
@@ -482,7 +482,7 @@ void DrawShipWayPtOrders(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
             win32::SetTextColor(hdc, ids == 229 ? app.lpui->crButtonText : 127);
             psz = TextIO().pfnCompressed(app, ids);
             win32::SetRect(&rc, xLeft, yTopMsg, xRight, yBot + 2);
-            win32::DrawTextA(hdc, psz, strlen(psz), &rc, win32::DT_WORDBREAK | win32::DT_NOPREFIX);
+            win32::DrawTextA(hdc, psz, std::strlen(psz), &rc, win32::DT_WORDBREAK | win32::DT_NOPREFIX);
         DoneMine:
             win32::SetTextColor(hdc, app.lpui->crButtonText);
         }
@@ -492,13 +492,13 @@ void DrawShipWayPtOrders(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
 }
 
 void DrawShipPlanet(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
-    int16_t yTop;
-    int16_t dy;
-    int16_t i;
-    int16_t xRight;
+    std::int16_t yTop;
+    std::int16_t dy;
+    std::int16_t i;
+    std::int16_t xRight;
     char   *psz;
-    int16_t dx;
-    int16_t xLeft;
+    std::int16_t dx;
+    std::int16_t xLeft;
     RECT    rc;
     THING  *lpth;
     THING  *lpthMac;
@@ -520,7 +520,7 @@ void DrawShipPlanet(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
         xLeft = rc.left + 4;
         xRight = rc.right - 4;
         yTop = (!app.state.gd.fSmallTileMode ? 4 : 1) + rc.top;
-        dx = static_cast<int16_t>((xRight - xLeft - 16)) / 3;
+        dx = static_cast<std::int16_t>((xRight - xLeft - 16)) / 3;
         dy = 3 * app.state.dyArial8 >> 1;
         ControlIO().pfnEnableWindow(app.lpui->rghwndBtn[3], obj.pfl()->idPlanet != idPlanetDeepSpace && app.state.sel.pl.iPlayer == app.state.idPlayer);
         ControlIO().pfnSetWindowText(app.lpui->rghwndBtn[7], TextIO().pfnCompressed(app, obj.pfl()->idPlanet == idPlanetDeepSpace ? idsJettison2 : idsXFer));
@@ -547,16 +547,16 @@ void DrawShipPlanet(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
 }
 
 void DrawShipCargo(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
-    int16_t dxRight;
-    int32_t l2;
-    int16_t yTop;
-    int16_t i;
-    int16_t c;
+    std::int16_t dxRight;
+    std::int32_t l2;
+    std::int16_t yTop;
+    std::int16_t i;
+    std::int16_t c;
     FLEET  *pfl;
-    int16_t xRight;
+    std::int16_t xRight;
     RECT    rcGauge;
-    int16_t xLeft;
-    int32_t l;
+    std::int16_t xLeft;
+    std::int32_t l;
     RECT    rc;
 
     pfl = obj.pfl();
@@ -624,20 +624,20 @@ void DrawShipCargo(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
 }
 
 void DrawFleetComp(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
-    int32_t cBoat;
-    int16_t swp;
-    int16_t dxRight;
-    int16_t yTop;
+    std::int32_t cBoat;
+    std::int16_t swp;
+    std::int16_t dxRight;
+    std::int16_t yTop;
     RECT    rcT;
-    int16_t dyWrong;
-    int16_t c;
-    int16_t i;
+    std::int16_t dyWrong;
+    std::int16_t c;
+    std::int16_t i;
     FLEET  *pfl;
-    int16_t xStart;
-    int16_t xRight;
-    int16_t dxLabel;
-    int16_t xLeft;
-    int32_t l;
+    std::int16_t xStart;
+    std::int16_t xRight;
+    std::int16_t dxLabel;
+    std::int16_t xLeft;
+    std::int32_t l;
     RECT    rc;
 
     pfl = obj.pfl();
@@ -722,7 +722,7 @@ void DrawFleetComp(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
         }
         yTop += app.state.dyArial8 + 2 - app.state.gd.fSmallTileMode;
         xStart = xLeft;
-        c = static_cast<int16_t>((xRight - xLeft - 10)) / 3;
+        c = static_cast<std::int16_t>((xRight - xLeft - 10)) / 3;
         i = 8;
         while (i <= 10) {
             ControlIO().pfnSetWindowPos(app.lpui->rghwndBtn[i], nullptr, xStart, yTop, c, (app.state.dyArial8 >> 1) + app.state.dyArial8, win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
@@ -742,19 +742,19 @@ void DrawFleetComp(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
 }
 
 void ShipCommandProc(APPSESSION &app, HWND hwnd, WPARAM wParam, LPARAM lParam) {
-    int16_t fPercent;
+    std::int16_t fPercent;
     FARPROC lpProc;
-    int32_t lSel;
+    std::int32_t lSel;
     XFER    xf;
     char    szT[34];
     char    szFleetName[80];
-    int16_t ishdef;
-    int16_t grbit;
-    int16_t ifl;
+    std::int16_t ishdef;
+    std::int16_t grbit;
+    std::int16_t ifl;
     FLEET  *lpfl;
-    int16_t rgifl[512];
-    int16_t ish;
-    int16_t ishPrimary;
+    std::int16_t rgifl[512];
+    std::int16_t ish;
+    std::int16_t ishPrimary;
     FLEET  *lpflBest;
 
     fPercent = 0;
@@ -767,12 +767,12 @@ void ShipCommandProc(APPSESSION &app, HWND hwnd, WPARAM wParam, LPARAM lParam) {
         PresentationIO().pfnSelectFleet(app, 1, 0);
     } else if (reinterpret_cast<HWND>(lParam) == app.lpui->rghwndBtn[6] && HIWORD(wParam) == 0) {
         CchSprintf(szFleetName, "%s", PszGetFleetName(app, app.state.sel.fl.id));
-        strcpy(app.state.szWork, szFleetName);
+        std::strcpy(app.state.szWork, szFleetName);
         ControlIO().pfnStickyDlgPos(hwnd, &app.lpui->ptStickyRenameDlg, 0);
         lpProc = (RenameDlg);
         if (ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_RENAME), app.lpui->hwndFrame, lpProc, 0) != 0) {
-            strcpy(szT, app.state.szWork);
-            if (strcmp(szT, PszGetFleetName(app, app.state.sel.fl.id)) != 0) {
+            std::strcpy(szT, app.state.szWork);
+            if (std::strcmp(szT, PszGetFleetName(app, app.state.sel.fl.id)) != 0) {
                 LogChangeName(app, grobjFleet, app.state.sel.fl.id, szT);
                 PresentationIO().pfnInvalidateReport(app, rptFleets, 1);
                 FillOrdersLB(app);
@@ -927,7 +927,7 @@ void ShipCommandProc(APPSESSION &app, HWND hwnd, WPARAM wParam, LPARAM lParam) {
                     ControlIO().pfnInvalidateRect(app.lpui->hwndMine, nullptr, 1);
                 }
                 app.state.sel.fl.lpplord->rgord()[app.state.sel.iwpAct].grTask = LOWORD(lSel);
-                memset(reinterpret_cast<uint8_t *>(&app.state.sel.fl.lpplord->rgord()[app.state.sel.iwpAct]) + 8, 0, 10);
+                std::memset(reinterpret_cast<std::uint8_t *>(&app.state.sel.fl.lpplord->rgord()[app.state.sel.iwpAct]) + 8, 0, 10);
                 switch (LOWORD(lSel)) {
                 case 7:
                     app.state.sel.fl.lpplord->rgord()[app.state.sel.iwpAct].tptl().iDist = 0;
@@ -1010,15 +1010,15 @@ void ShipCommandProc(APPSESSION &app, HWND hwnd, WPARAM wParam, LPARAM lParam) {
     return;
 }
 
-void DrawFleetGauge(APPSESSION &app, HDC hdc, RECT *prc, FLEET *lpfl, int16_t grbit) {
+void DrawFleetGauge(APPSESSION &app, HDC hdc, RECT *prc, FLEET *lpfl, std::int16_t grbit) {
     HBRUSH  rghbr[5];
-    int32_t lMax;
-    int16_t c;
-    int16_t i;
-    int32_t rgSize[5];
-    int16_t iMode;
-    int16_t cSections;
-    int32_t l;
+    std::int32_t lMax;
+    std::int16_t c;
+    std::int16_t i;
+    std::int32_t rgSize[5];
+    std::int16_t iMode;
+    std::int16_t cSections;
+    std::int32_t l;
 
     if (!lpfl) {
         lpfl = &app.state.sel.fl;
@@ -1052,7 +1052,7 @@ void DrawFleetGauge(APPSESSION &app, HDC hdc, RECT *prc, FLEET *lpfl, int16_t gr
             break;
         case 7:
             lMax = 10;
-            rgSize[0] = static_cast<uint32_t>(app.state.sel.fl.lpplord->rgord()[app.state.sel.iwpAct].tsell().iPlrX);
+            rgSize[0] = static_cast<std::uint32_t>(app.state.sel.fl.lpplord->rgord()[app.state.sel.iwpAct].tsell().iPlrX);
             if (rgSize[0] > 10 || (rgSize[0] == 10 && IFindIdealWarp(app, &app.state.sel.fl, 0) < 10)) {
                 rghbr[0] = app.lpui->rghbrMineral[2];
             } else {
@@ -1086,22 +1086,22 @@ void DrawFleetGauge(APPSESSION &app, HDC hdc, RECT *prc, FLEET *lpfl, int16_t gr
         c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsLdLdkt), l, lMax);
     }
     l = GetTextExtent(hdc, app.state.szWork, c);
-    if (static_cast<int16_t>(LOWORD(l)) < prc->right - prc->left - 3) {
+    if (static_cast<std::int16_t>(LOWORD(l)) < prc->right - prc->left - 3) {
         RcCtrTextOut(app, hdc, prc, app.state.szWork, c);
     }
     win32::SetBkMode(hdc, iMode);
     return;
 }
 
-void DrawFleetBitmap(APPSESSION &app, FLEET *lpfl, HDC hdc, int16_t x, int16_t y, int16_t fFrame, int16_t ibmp, int16_t cDiff, int16_t fShrink, int16_t ibmpRace, int16_t csh) {
-    int16_t dxyPlus;
-    int16_t yCur;
-    int16_t c;
-    int16_t i;
-    int16_t dxy;
-    int16_t dx;
-    int16_t xCur;
-    int16_t dxyPlusWidth;
+void DrawFleetBitmap(APPSESSION &app, FLEET *lpfl, HDC hdc, std::int16_t x, std::int16_t y, std::int16_t fFrame, std::int16_t ibmp, std::int16_t cDiff, std::int16_t fShrink, std::int16_t ibmpRace, std::int16_t csh) {
+    std::int16_t dxyPlus;
+    std::int16_t yCur;
+    std::int16_t c;
+    std::int16_t i;
+    std::int16_t dxy;
+    std::int16_t dx;
+    std::int16_t xCur;
+    std::int16_t dxyPlusWidth;
     HBRUSH  hbrSav;
 
     if (fFrame) {
@@ -1149,8 +1149,8 @@ void DrawFleetBitmap(APPSESSION &app, FLEET *lpfl, HDC hdc, int16_t x, int16_t y
         for (i = 0; i < cDiff; i++) {
             xCur = ((i & 1) ^ ((i & 2) == 2)) == 0 ? x + 2 : x + dxy - 2 - dxyPlus;
             yCur = !(i & 2) ? y + 2 : y + dxy - 2 - dxyPlus;
-            win32::PatBlt(hdc, xCur, static_cast<int16_t>((dxyPlus - 1)) / 2 + yCur, dxyPlus, dxyPlusWidth, win32::WHITENESS);
-            win32::PatBlt(hdc, static_cast<int16_t>((dxyPlus - 1)) / 2 + xCur, yCur, dxyPlusWidth, dxyPlus, win32::WHITENESS);
+            win32::PatBlt(hdc, xCur, static_cast<std::int16_t>((dxyPlus - 1)) / 2 + yCur, dxyPlus, dxyPlusWidth, win32::WHITENESS);
+            win32::PatBlt(hdc, static_cast<std::int16_t>((dxyPlus - 1)) / 2 + xCur, yCur, dxyPlusWidth, dxyPlus, win32::WHITENESS);
         }
     } else {
         win32::SelectObject(hdc, app.lpui->rghfontArial7[0]);
@@ -1168,17 +1168,17 @@ void DrawFleetBitmap(APPSESSION &app, FLEET *lpfl, HDC hdc, int16_t x, int16_t y
     return;
 }
 
-int16_t TransferStuff(APPSESSION &app, int16_t id1, GrobjClass grobj1, int16_t id2, GrobjClass grobj2, MdXfer mdXfer) {
+std::int16_t TransferStuff(APPSESSION &app, std::int16_t id1, GrobjClass grobj1, std::int16_t id2, GrobjClass grobj2, MdXfer mdXfer) {
     XFER    xfer[2];
     FARPROC lpProcXfer;
-    int16_t rgValidHull[16];
-    int32_t lPopPrev;
-    int16_t iDelFleet;
-    int16_t i;
+    std::int16_t rgValidHull[16];
+    std::int32_t lPopPrev;
+    std::int16_t iDelFleet;
+    std::int16_t i;
     FLEET  *lpfl;
-    int16_t fSuccess;
-    int16_t grbit;
-    int16_t j;
+    std::int16_t fSuccess;
+    std::int16_t grbit;
+    std::int16_t j;
     BTN     rgbtn[32];
     POINT16 pt;
     RECT    rc;
@@ -1211,7 +1211,7 @@ int16_t TransferStuff(APPSESSION &app, int16_t id1, GrobjClass grobj1, int16_t i
             for (j = 0; j < 4; j++) {
                 xfer[i].pl().rgwtMin[j] = 0;
             }
-            EnumLogRts(app, reinterpret_cast<int16_t (*)(APPSESSION &, void *, int16_t, int16_t, void *, int16_t)>(FEnumCalcJettison), &xfer[i].pl(), id1);
+            EnumLogRts(app, reinterpret_cast<std::int16_t (*)(APPSESSION &, void *, std::int16_t, std::int16_t, void *, std::int16_t)>(FEnumCalcJettison), &xfer[i].pl(), id1);
         }
     }
     if (mdXfer == mdXferShips) {
@@ -1317,12 +1317,12 @@ INT_PTR  TransferDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
 
     HDC         hdc;
-    int16_t     dyMore;
+    std::int16_t     dyMore;
     PAINTSTRUCT ps;
     POINT16     pt;
     HWND        hwndBtn;
     RECT        rcBtn;
-    int16_t     dx;
+    std::int16_t     dx;
     RECT        rc;
 
     switch (message) {
@@ -1393,7 +1393,7 @@ INT_PTR  TransferDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             }
             return 1;
         case IDC_HELP:
-            win32::WinHelpA(hwnd, app.lpui->szHelpFile, win32::HELP_CONTEXT, static_cast<uint32_t>((app.lpui->mdXferDlg == mdXferShips ? 1080 : 1075)));
+            win32::WinHelpA(hwnd, app.lpui->szHelpFile, win32::HELP_CONTEXT, static_cast<std::uint32_t>((app.lpui->mdXferDlg == mdXferShips ? 1080 : 1075)));
             return 1;
         }
         /* fallthrough */
@@ -1402,17 +1402,17 @@ INT_PTR  TransferDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     }
 }
 
-int16_t FTrackXfer(APPSESSION &app, HWND hwnd, int16_t x, int16_t y, int16_t fkb) {
+std::int16_t FTrackXfer(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16_t y, std::int16_t fkb) {
     POINT16 ptOld;
     POINT16 pt;
-    int32_t dChg;
+    std::int32_t dChg;
     BTNT    btnt;
-    int32_t cCur;
-    int16_t i;
-    int16_t iBtn;
-    int16_t iVal;
+    std::int32_t cCur;
+    std::int16_t i;
+    std::int16_t iBtn;
+    std::int16_t iVal;
     BTN     btn;
-    int32_t cNew;
+    std::int32_t cNew;
     RECT    rc, rcBtn;
 
     ControlIO().pfnGetClientRect(hwnd, &rc);
@@ -1420,7 +1420,7 @@ int16_t FTrackXfer(APPSESSION &app, HWND hwnd, int16_t x, int16_t y, int16_t fkb
     pt.y = y;
     for (i = 0; i < app.lpui->crgbtnXfer; i++) {
         /* NATIVE: Packed BTN arrays can misalign their Win32 RECT members. */
-        memcpy(&rcBtn, &app.lpui->rgbtnXfer[i].rc, sizeof(rcBtn));
+        std::memcpy(&rcBtn, &app.lpui->rgbtnXfer[i].rc, sizeof(rcBtn));
         if (!(app.lpui->rgbtnXfer[i].bt & 4) && win32::PtInRect(&rcBtn, PointFrom16(pt))) break;
     }
     if (i == app.lpui->crgbtnXfer) {
@@ -1445,13 +1445,13 @@ int16_t FTrackXfer(APPSESSION &app, HWND hwnd, int16_t x, int16_t y, int16_t fkb
             if (pt.x != ptOld.x || pt.y != ptOld.y) {
                 ptOld = pt;
                 if (btn.iSide == 1 && app.state.pxfer[1].grobj == grobjThing) {
-                    cNew = static_cast<uint32_t>((app.state.pxfer[1].th().thp().wtMax() * 10));
+                    cNew = static_cast<std::uint32_t>((app.state.pxfer[1].th().thp().wtMax() * 10));
                 } else if (iVal == 4) {
                     cNew = ProductionIO().pfnFleetStat(app, &app.state.pxfer[btn.iSide].fl(), 1);
                 } else {
                     cNew = ProductionIO().pfnFleetStat(app, &app.state.pxfer[btn.iSide].fl(), 2);
                 }
-                cNew = static_cast<int32_t>((static_cast<int16_t>((pt.x - btn.rc.left)) * cNew)) / static_cast<int16_t>((btn.rc.right - btn.rc.left - 2));
+                cNew = static_cast<std::int32_t>((static_cast<std::int16_t>((pt.x - btn.rc.left)) * cNew)) / static_cast<std::int16_t>((btn.rc.right - btn.rc.left - 2));
                 cCur = ChgCargo(app, app.state.pxfer[btn.iSide].grobj, app.state.pxfer[btn.iSide].id, static_cast<MineralType>(iVal), 0, app.state.pxfer[btn.iSide].LpvCargo(app.state.pxfer[btn.iSide].grobj));
                 dChg = cNew - cCur;
                 if (XferSupply(app, static_cast<MineralType>(iVal), btn.iSide == 0 ? dChg : -dChg) != 0) {
@@ -1463,7 +1463,7 @@ int16_t FTrackXfer(APPSESSION &app, HWND hwnd, int16_t x, int16_t y, int16_t fkb
     } else {
         InitBtnTrack(&btnt, hwnd, nullptr, &btn.rc, btn.bt, 80, 0, 0, nullptr);
         if (fkb & 8) {
-            dChg = static_cast<uint32_t>((!(fkb & 4) ? 100 : 1000));
+            dChg = static_cast<std::uint32_t>((!(fkb & 4) ? 100 : 1000));
         } else if (fkb & 4) {
             dChg = 10;
         } else {
@@ -1471,7 +1471,7 @@ int16_t FTrackXfer(APPSESSION &app, HWND hwnd, int16_t x, int16_t y, int16_t fkb
         }
         while (FTrackBtn(app, &btnt)) {
             if (app.lpui->mdXferDlg == mdXferShips) {
-                i = static_cast<int16_t>(LOWORD(dChg)) < app.state.pxfer[btn.iSide == 0].fl().rgcsh[iVal] ? LOWORD(dChg) : app.state.pxfer[btn.iSide == 0].fl().rgcsh[iVal];
+                i = static_cast<std::int16_t>(LOWORD(dChg)) < app.state.pxfer[btn.iSide == 0].fl().rgcsh[iVal] ? LOWORD(dChg) : app.state.pxfer[btn.iSide == 0].fl().rgcsh[iVal];
                 if (i != 0) {
                     if (app.state.pxfer[btn.iSide].fl().rgcsh[iVal] >= 32766 - i) {
                         i = 1;
@@ -1492,11 +1492,11 @@ FinishUp:
 }
 
 void UpdateXferBtns(APPSESSION &app) {
-    int16_t iSide;
-    int16_t i;
-    int16_t iLastButton;
-    int16_t iVal;
-    int32_t lLeft;
+    std::int16_t iSide;
+    std::int16_t i;
+    std::int16_t iLastButton;
+    std::int16_t iVal;
+    std::int32_t lLeft;
 
     iLastButton = app.lpui->mdXferDlg == mdXferShips ? app.lpui->cXferValidHulls * 2 : 4;
     for (i = 0; i < app.lpui->crgbtnXfer; i++) {
@@ -1533,9 +1533,9 @@ void UpdateXferBtns(APPSESSION &app) {
 
 void DrawXferDlg(APPSESSION &app, HWND hwnd, HDC hdc, RECT *prc, MineralType iSupply) {
     RECT    rgrc[2];
-    int16_t fCreatedDC;
-    int16_t i;
-    int16_t dxCtr;
+    std::int16_t fCreatedDC;
+    std::int16_t i;
+    std::int16_t dxCtr;
 
     fCreatedDC = 0;
     if (!hdc) {
@@ -1590,17 +1590,17 @@ void GetXferLeftRightRcs(APPSESSION &app, RECT *prcWhole, RECT *prcLeft, RECT *p
     return;
 }
 
-int16_t FSetupXferBtns(APPSESSION &app, RECT *prc) {
-    int16_t cBtn;
-    int16_t iMax;
-    int16_t dy;
-    int16_t iMin;
-    int16_t i;
-    int16_t fThingXfer;
-    int16_t j;
-    int16_t dxCtr;
+std::int16_t FSetupXferBtns(APPSESSION &app, RECT *prc) {
+    std::int16_t cBtn;
+    std::int16_t iMax;
+    std::int16_t dy;
+    std::int16_t iMin;
+    std::int16_t i;
+    std::int16_t fThingXfer;
+    std::int16_t j;
+    std::int16_t dxCtr;
     RECT    rcRight;
-    int16_t dxLabels;
+    std::int16_t dxLabels;
     RECT    rcBtn;
     RECT    rcLeft;
     RECT    rc;
@@ -1685,12 +1685,12 @@ NoGauges:
 }
 
 void DrawThingXferSide(APPSESSION &app, HDC hdc, RECT *prc, THING *pth, MineralType iSupply) {
-    int16_t yTop;
-    int16_t i;
-    int16_t xRight;
-    int16_t dxLabels;
+    std::int16_t yTop;
+    std::int16_t i;
+    std::int16_t xRight;
+    std::int16_t dxLabels;
     RECT    rcGauge;
-    int16_t xLeft;
+    std::int16_t xLeft;
     RECT    rc;
 
     dxLabels = 75;
@@ -1740,17 +1740,17 @@ void DrawThingXferSide(APPSESSION &app, HDC hdc, RECT *prc, THING *pth, MineralT
 }
 
 void DrawFleetCargoXferSide(APPSESSION &app, HDC hdc, RECT *prc, FLEET *pfl, MineralType iSupply) {
-    int16_t yTop;
-    int16_t fOtherPlr;
-    int16_t c;
-    int16_t i;
-    int16_t xRight;
+    std::int16_t yTop;
+    std::int16_t fOtherPlr;
+    std::int16_t c;
+    std::int16_t i;
+    std::int16_t xRight;
     FLEET   fl;
-    int16_t dxLabels;
+    std::int16_t dxLabels;
     RECT    rcGauge;
-    int16_t xLeft;
+    std::int16_t xLeft;
     RECT    rc;
-    int16_t iMap;
+    std::int16_t iMap;
 
     fOtherPlr = pfl->iPlayer != app.state.idPlayer;
     dxLabels = 75;
@@ -1835,13 +1835,13 @@ void DrawFleetCargoXferSide(APPSESSION &app, HDC hdc, RECT *prc, FLEET *pfl, Min
 }
 
 void DrawFleetShipsXferSide(APPSESSION &app, HDC hdc, RECT *prc, FLEET *pfl, MineralType iSupply) {
-    int16_t yTop;
-    int16_t fOtherPlr;
-    int16_t c;
-    int16_t i;
-    int16_t xRight;
+    std::int16_t yTop;
+    std::int16_t fOtherPlr;
+    std::int16_t c;
+    std::int16_t i;
+    std::int16_t xRight;
     FLEET   fl;
-    int16_t xLeft;
+    std::int16_t xLeft;
     RECT    rc;
 
     fOtherPlr = pfl->iPlayer != app.state.idPlayer;
@@ -1889,12 +1889,12 @@ void DrawFleetShipsXferSide(APPSESSION &app, HDC hdc, RECT *prc, FLEET *pfl, Min
 
 void DrawPlanetXferSide(APPSESSION &app, HDC hdc, RECT *prc, PLANET *ppl, MineralType iSupply) {
     PLANET  pl;
-    int16_t yTop;
-    int16_t c;
-    int16_t i;
-    int16_t xRight;
+    std::int16_t yTop;
+    std::int16_t c;
+    std::int16_t i;
+    std::int16_t xRight;
     char   *psz;
-    int16_t xLeft;
+    std::int16_t xLeft;
     RECT    rc;
 
     pl = *ppl;
@@ -1956,36 +1956,36 @@ void DrawPlanetXferSide(APPSESSION &app, HDC hdc, RECT *prc, PLANET *ppl, Minera
     return;
 }
 
-HCURSOR ClickInShipOrders(APPSESSION &app, POINT16 pt, int16_t sks, int16_t fCursor, int16_t fRightBtn) {
-    int32_t    lCur;
+HCURSOR ClickInShipOrders(APPSESSION &app, POINT16 pt, std::int16_t sks, std::int16_t fCursor, std::int16_t fRightBtn) {
+    std::int32_t    lCur;
     HDC        hdc;
     PLANET     pl;
-    int16_t    iWarp;
+    std::int16_t    iWarp;
     POINT16    ptOld;
-    int16_t    idPlan;
-    int32_t    lMax;
-    int32_t    lSel;
-    int16_t    iSkip;
-    int32_t    xRnd;
-    int16_t    grbit;
+    std::int16_t    idPlan;
+    std::int32_t    lMax;
+    std::int32_t    lSel;
+    std::int16_t    iSkip;
+    std::int32_t    xRnd;
+    std::int16_t    grbit;
     XFER       xf;
-    int32_t    lNew;
-    int16_t    irc;
-    int32_t    dx;
-    int32_t    lTempMin;
-    int16_t    fFirst;
-    int16_t    fTwoMAs;
-    int32_t    lTempMax;
-    int16_t    i;
-    int16_t    fSep;
-    int16_t    c;
+    std::int32_t    lNew;
+    std::int16_t    irc;
+    std::int32_t    dx;
+    std::int32_t    lTempMin;
+    std::int16_t    fFirst;
+    std::int16_t    fTwoMAs;
+    std::int32_t    lTempMax;
+    std::int16_t    i;
+    std::int16_t    fSep;
+    std::int16_t    c;
     ORDER     *lpord;
     THING     *lpth;
     FLEET     *lpfl;
-    int32_t   *rgid;
-    int32_t    idFirst;
-    int32_t    idSel;
-    int16_t    iChecked;
+    std::int32_t   *rgid;
+    std::int32_t    idFirst;
+    std::int32_t    idSel;
+    std::int16_t    iChecked;
     THING     *lpthMac;
     SCAN       scan;
 
@@ -2016,7 +2016,7 @@ HCURSOR ClickInShipOrders(APPSESSION &app, POINT16 pt, int16_t sks, int16_t fCur
                and a separator. The original stopped at 100 entries, so
                objects past them couldn't be targeted (target list
                overload). */
-            rgid = LpAlloc<int32_t>(app, (app.state.cFleet + app.state.cThing + 3) * sizeof(int32_t), htMisc);
+            rgid = LpAlloc<std::int32_t>(app, (app.state.cFleet + app.state.cThing + 3) * sizeof(std::int32_t), htMisc);
             if (scan.idpl != idplNone) {
                 rgid[0] = scan.idpl;
             } else {
@@ -2050,7 +2050,7 @@ HCURSOR ClickInShipOrders(APPSESSION &app, POINT16 pt, int16_t sks, int16_t fCur
                         rgid[c++] = -1;
                         fSep = 1;
                     }
-                    rgid[c++] = static_cast<uint32_t>(static_cast<uint16_t>(lpth->idFull())) | 0x20000000;
+                    rgid[c++] = static_cast<std::uint32_t>(static_cast<std::uint16_t>(lpth->idFull())) | 0x20000000;
                 }
             }
             i = ControlIO().pfnPopupMenu(app, app.lpui->hwndPlanet, pt.x, pt.y, c, rgid, nullptr, iChecked, 1);
@@ -2098,8 +2098,8 @@ HCURSOR ClickInShipOrders(APPSESSION &app, POINT16 pt, int16_t sks, int16_t fCur
         } else if (win32::PtInRect(&app.lpui->rgrcRef[15], PointFrom16(pt)) != 0) {
             irc = 15;
             iWarp = ColonyIO().pfnWarp(app, &app.state.sel.pl, &fTwoMAs);
-            lTempMax = static_cast<int16_t>((iWarp - 1));
-            lMax = static_cast<int16_t>((iWarp - 1));
+            lTempMax = static_cast<std::int16_t>((iWarp - 1));
+            lMax = static_cast<std::int16_t>((iWarp - 1));
             lTempMin = 1;
             lCur = app.state.sel.pl.iWarpFling;
         } else if (win32::PtInRect(&app.lpui->rgrcRef[1], PointFrom16(pt)) != 0) {
@@ -2165,7 +2165,7 @@ HCURSOR ClickInShipOrders(APPSESSION &app, POINT16 pt, int16_t sks, int16_t fCur
                 irc = 18;
                 lTempMax = 10;
                 lMax = 10;
-                lCur = static_cast<uint32_t>(app.state.sel.fl.lpplord->rgord()[app.state.sel.iwpAct].tsell().iPlrX);
+                lCur = static_cast<std::uint32_t>(app.state.sel.fl.lpplord->rgord()[app.state.sel.iwpAct].tsell().iPlrX);
                 grbit = 7;
             }
         }
@@ -2176,8 +2176,8 @@ HCURSOR ClickInShipOrders(APPSESSION &app, POINT16 pt, int16_t sks, int16_t fCur
     if (fCursor) {
         return app.lpui->hcurHand;
     }
-    dx = static_cast<int16_t>((app.lpui->rgrcRef[irc].right - app.lpui->rgrcRef[irc].left - 2));
-    xRnd = static_cast<int32_t>((dx / (lMax + 1))) >> 1;
+    dx = static_cast<std::int16_t>((app.lpui->rgrcRef[irc].right - app.lpui->rgrcRef[irc].left - 2));
+    xRnd = static_cast<std::int32_t>((dx / (lMax + 1))) >> 1;
     hdc = win32::GetDC(app.lpui->hwndPlanet);
     win32::SetCapture(app.lpui->hwndPlanet);
     ptOld.y = -1;
@@ -2189,7 +2189,7 @@ HCURSOR ClickInShipOrders(APPSESSION &app, POINT16 pt, int16_t sks, int16_t fCur
         fFirst = 0;
         if (pt.x != ptOld.x || pt.y != ptOld.y) {
             ptOld = pt;
-            lNew = static_cast<int32_t>((static_cast<int32_t>(((static_cast<int16_t>((pt.x - app.lpui->rgrcRef[irc].left)) + xRnd) * lMax)) / dx));
+            lNew = static_cast<std::int32_t>((static_cast<std::int32_t>(((static_cast<std::int16_t>((pt.x - app.lpui->rgrcRef[irc].left)) + xRnd) * lMax)) / dx));
             if (lTempMin > (lNew < lTempMax ? lNew : lTempMax)) {
                 lNew = lTempMin;
             } else if (lNew >= lTempMax) {
@@ -2254,15 +2254,15 @@ HCURSOR ClickInShipOrders(APPSESSION &app, POINT16 pt, int16_t sks, int16_t fCur
         PlanetQueryIO().pfnLookup(app, idWriteBack, &app.state.sel.pl);
     }
     win32::ReleaseCapture();
-    return reinterpret_cast<HCURSOR>(static_cast<uintptr_t>(win32::ReleaseDC(app.lpui->hwndPlanet, hdc)));
+    return reinterpret_cast<HCURSOR>(static_cast<std::uintptr_t>(win32::ReleaseDC(app.lpui->hwndPlanet, hdc)));
 }
 
-void DeleteCurWayPoint(APPSESSION &app, int16_t fBackup) {
+void DeleteCurWayPoint(APPSESSION &app, std::int16_t fBackup) {
     POINT16 pt;
     POINT16 rgpt[3];
-    int16_t cpt;
+    std::int16_t cpt;
     SCAN    scan;
-    int16_t ipt;
+    std::int16_t ipt;
     RECT    rc;
 
     if (app.state.sel.fl.cord < 2 || app.state.sel.iwpAct == 0) {
@@ -2279,14 +2279,14 @@ void DeleteCurWayPoint(APPSESSION &app, int16_t fBackup) {
             }
         }
         RedrawScanSel(app, nullptr, 0);
-        memmove(&app.state.sel.fl.lpplord->rgord()[app.state.sel.iwpAct], &app.state.sel.fl.lpplord->rgord()[app.state.sel.iwpAct + 1], (app.state.sel.fl.cord - app.state.sel.iwpAct - 1) * sizeof(ORDER));
+        std::memmove(&app.state.sel.fl.lpplord->rgord()[app.state.sel.iwpAct], &app.state.sel.fl.lpplord->rgord()[app.state.sel.iwpAct + 1], (app.state.sel.fl.cord - app.state.sel.iwpAct - 1) * sizeof(ORDER));
         app.state.sel.fl.cord--;
         app.state.sel.fl.lpplord->iordMac--;
         app.state.sel.iwpAct--;
         if (app.state.sel.iwpAct < app.state.sel.fl.cord - 1) {
             pt = app.state.sel.fl.lpplord->rgord()[app.state.sel.iwpAct].pt;
             if (pt.x == app.state.sel.fl.lpplord->rgord()[app.state.sel.iwpAct + 1].pt.x && pt.y == app.state.sel.fl.lpplord->rgord()[app.state.sel.iwpAct + 1].pt.y) {
-                memmove(&app.state.sel.fl.lpplord->rgord()[app.state.sel.iwpAct + 1], &app.state.sel.fl.lpplord->rgord()[app.state.sel.iwpAct + 2], (app.state.sel.fl.cord - app.state.sel.iwpAct - 2) * sizeof(ORDER));
+                std::memmove(&app.state.sel.fl.lpplord->rgord()[app.state.sel.iwpAct + 1], &app.state.sel.fl.lpplord->rgord()[app.state.sel.iwpAct + 2], (app.state.sel.fl.cord - app.state.sel.iwpAct - 2) * sizeof(ORDER));
                 app.state.sel.fl.cord--;
                 app.state.sel.fl.lpplord->iordMac--;
             }
@@ -2319,11 +2319,11 @@ LRESULT  FakeEditProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     return 0;
 }
 
-void SetFleetDropDownSel(APPSESSION &app, int16_t id) {
-    int16_t idSkip;
-    int16_t i;
+void SetFleetDropDownSel(APPSESSION &app, std::int16_t id) {
+    std::int16_t idSkip;
+    std::int16_t i;
     FLEET  *lpfl;
-    int16_t iOffset;
+    std::int16_t iOffset;
 
     iOffset = 0;
     idSkip = app.state.sel.grobj == grobjFleet ? app.state.sel.fl.id : idflNone;
@@ -2339,14 +2339,14 @@ void SetFleetDropDownSel(APPSESSION &app, int16_t id) {
 }
 
 void FillFleetCompLB(APPSESSION &app) {
-    int16_t i;
-    int32_t pctDmg;
+    std::int16_t i;
+    std::int32_t pctDmg;
 
     ControlIO().pfnSendMessage(app.lpui->hwndFleetCompLB, win32::LB_RESETCONTENT, 0, 0);
     for (i = 0; i < 16; i++) {
         if (app.state.sel.fl.rgcsh[i] > 0) {
-            pctDmg = static_cast<int32_t>((static_cast<uint32_t>((app.state.sel.fl.rgdv[i].pctSh() * app.state.sel.fl.rgdv[i].pctDp())) + 250)) / 500;
-            win32::wsprintfA(app.state.szWork, "%c%c%5d%s", pctDmg == 0 ? 81 : 80, pctDmg == 0 ? 32 : static_cast<int16_t>(static_cast<int8_t>(LOBYTE(LOWORD(pctDmg)))), app.state.sel.fl.rgcsh[i],
+            pctDmg = static_cast<std::int32_t>((static_cast<std::uint32_t>((app.state.sel.fl.rgdv[i].pctSh() * app.state.sel.fl.rgdv[i].pctDp())) + 250)) / 500;
+            win32::wsprintfA(app.state.szWork, "%c%c%5d%s", pctDmg == 0 ? 81 : 80, pctDmg == 0 ? 32 : static_cast<std::int16_t>(static_cast<std::int8_t>(LOBYTE(LOWORD(pctDmg)))), app.state.sel.fl.rgcsh[i],
                      app.state.rgshdef[i].hul.szClass);
             ControlIO().pfnSendMessage(app.lpui->hwndFleetCompLB, win32::LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(app.state.szWork));
         }
@@ -2355,7 +2355,7 @@ void FillFleetCompLB(APPSESSION &app) {
 }
 
 void FillOrdersLB(APPSESSION &app) {
-    int16_t i;
+    std::int16_t i;
     char   *psz;
     ORDER   ord;
 
@@ -2372,7 +2372,7 @@ void FillOrdersLB(APPSESSION &app) {
     return;
 }
 
-void SetOrdersLbSel(APPSESSION &app, int16_t iSel) {
+void SetOrdersLbSel(APPSESSION &app, std::int16_t iSel) {
     ControlIO().pfnSendMessage(app.lpui->hwndShipLB, win32::LB_SETCURSEL, iSel, 0);
     if (iSel > (!app.state.gd.fSmallTileMode ? 2 : 1)) {
         ControlIO().pfnSendMessage(app.lpui->hwndShipLB, win32::LB_SETTOPINDEX, iSel - (!app.state.gd.fSmallTileMode ? 2 : 1), 0);
@@ -2382,13 +2382,13 @@ void SetOrdersLbSel(APPSESSION &app, int16_t iSel) {
     return;
 }
 
-void UpdateOrdersDDs(APPSESSION &app, int16_t iLevel) {
-    int32_t rglSel[3];
-    int16_t iMin;
-    int16_t i;
+void UpdateOrdersDDs(APPSESSION &app, std::int16_t iLevel) {
+    std::int32_t rglSel[3];
+    std::int16_t iMin;
+    std::int16_t i;
     char   *psz;
-    int16_t iSel;
-    int16_t iMax;
+    std::int16_t iSel;
+    std::int16_t iMax;
     char    szT[80];
 
     iSel = -1;
@@ -2409,7 +2409,7 @@ void UpdateOrdersDDs(APPSESSION &app, int16_t iLevel) {
                 } else {
                     iMin = i - 1;
                 }
-                strcpy(&app.state.szWork[1], app.state.rgszMinerals[iMin]);
+                std::strcpy(&app.state.szWork[1], app.state.rgszMinerals[iMin]);
                 if (app.state.sel.fl.lpplord->rgord()[app.state.sel.iwpAct].txp.rgia[iMin].iAction() != iActionNone) {
                     app.state.szWork[0] = '*';
                     if (iSel == -1) {
@@ -2443,7 +2443,7 @@ void UpdateOrdersDDs(APPSESSION &app, int16_t iLevel) {
             for (i = 0; i < app.state.game.cPlayer; i++) {
                 if (i != app.state.idPlayer) {
                     psz = TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, nullptr);
-                    strcpy(&szT[1], psz);
+                    std::strcpy(&szT[1], psz);
                     ControlIO().pfnSendMessage(app.lpui->rghwndOrderDD[1], win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(szT));
                 }
             }
@@ -2505,14 +2505,14 @@ void UpdateOrdersDDs(APPSESSION &app, int16_t iLevel) {
     return;
 }
 
-void FillBattleDD(APPSESSION &app, int16_t iSel) {
-    int16_t i;
+void FillBattleDD(APPSESSION &app, std::int16_t iSel) {
+    std::int16_t i;
 
     ControlIO().pfnSendMessage(app.lpui->hwndBattleDD, win32::CB_RESETCONTENT, 0, 0);
     TextIO().pfnCchGetString(app, idsBattlePlans, app.state.szWork);
     ControlIO().pfnSendMessage(app.lpui->hwndBattleDD, win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(app.state.szWork));
     for (i = 0; i < app.state.rgcbtlplan[app.state.idPlayer]; i++) {
-        strcpy(app.state.szWork, app.state.rglpbtlplan[app.state.idPlayer][i].szName);
+        std::strcpy(app.state.szWork, app.state.rglpbtlplan[app.state.idPlayer][i].szName);
         ControlIO().pfnSendMessage(app.lpui->hwndBattleDD, win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(app.state.szWork));
     }
     ControlIO().pfnSendMessage(app.lpui->hwndBattleDD, win32::CB_SETCURSEL, iSel, 0);
@@ -2520,7 +2520,7 @@ void FillBattleDD(APPSESSION &app, int16_t iSel) {
 }
 
 void ApplyTransportPresetPopup(APPSESSION &app, POINT16 pt) {
-    int16_t i,cMax,iSkip,fRet;
+    std::int16_t i,cMax,iSkip,fRet;
     FARPROC lpProc;
     char sz255[2];
     const char *rgszZip[11];
@@ -2544,11 +2544,11 @@ void ApplyTransportPresetPopup(APPSESSION &app, POINT16 pt) {
             rgszZip[cMax++] = TextIO().pfnCompressed(app, idsCustomize);
             i = ControlIO().pfnPopupMenu(app, app.lpui->hwndPlanet, pt.x, pt.y, cMax, nullptr, rgszZip, -1, 1);
             if (i == cMax - 1) {
-                memcpy(rgzo, app.state.vrgZip, 96);
+                std::memcpy(rgzo, app.state.vrgZip, 96);
                 lpProc = (ZipOrderDlg);
                 fRet = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_ZIP_PROD), app.lpui->hwndFrame, lpProc, 0);
                 if (!fRet) {
-                    memcpy(app.state.vrgZip, rgzo, 96);
+                    std::memcpy(app.state.vrgZip, rgzo, 96);
                 }
             } else if (i > 4) {
                 i -= 4;
@@ -2601,15 +2601,15 @@ void ApplyTransportPresetPopup(APPSESSION &app, POINT16 pt) {
 }
 
 void ChangeTransportAmount(APPSESSION &app) {
-    int32_t lSel,lMin;
-    int16_t iInit,i,fPercent=0;
+    std::int32_t lSel,lMin;
+    std::int16_t iInit,i,fPercent=0;
     char rgb[8];
         lSel = ControlIO().pfnSendMessage(app.lpui->rghwndOrderDD[2], win32::CB_GETCURSEL, 0, 0);
         if (lSel == 5 || lSel == 6) {
             fPercent = 1;
         }
         ControlIO().pfnGetWindowText(app.lpui->hwndOrderED, rgb, 8);
-        iInit = atoi(rgb);
+        iInit = std::atoi(rgb);
         i = 0 <= iInit ? iInit : 0;
         if (fPercent) {
             i = 100 >= i ? i : 100;
@@ -2632,7 +2632,7 @@ void ChangeTransportAmount(APPSESSION &app) {
 }
 
 void ChangeTransportAction(APPSESSION &app) {
-    int32_t lSel,lMin;
+    std::int32_t lSel,lMin;
             lSel = ControlIO().pfnSendMessage(app.lpui->rghwndOrderDD[2], win32::CB_GETCURSEL, 0, 0);
             lMin = ControlIO().pfnSendMessage(app.lpui->rghwndOrderDD[1], win32::CB_GETCURSEL, 0, 0);
             if (lMin == 0) {
@@ -2646,9 +2646,9 @@ void ChangeTransportAction(APPSESSION &app) {
             ControlIO().pfnDrawPlanShip(app, nullptr, tileStarbaseOrWaypoint);
 }
 
-int16_t FTransportQuantityActive(int32_t l, int16_t *pi) {
-    int16_t i=*pi;
-    int16_t fActive;
+std::int16_t FTransportQuantityActive(std::int32_t l, std::int16_t *pi) {
+    std::int16_t i=*pi;
+    std::int16_t fActive;
             fActive = 1;
             switch (l) {
             case 0:

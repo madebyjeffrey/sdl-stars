@@ -4,12 +4,12 @@
 #include "time_io.h"
 #include "ownership.h"
 #include <cairo-pdf.h>
-#include <errno.h>
-#include <limits.h>
+#include <cerrno>
+#include <climits>
 #include <new>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <unistd.h>
 
 struct COMPATPRINT {
@@ -49,16 +49,16 @@ int ICompatPrinterCaps(COMPATPRINT *lp, int index) {
 }
 static HGLOBAL HglobPrintNames(COMPATPRINT *lp) {
     const char *pszDriver = "Stars SDL3/Cairo", *pszDevice = lp->fSpool ? lp->szPrinter : "Stars PDF", *pszPort = lp->fSpool ? "CUPS:" : "FILE:";
-    size_t cb = sizeof(DEVNAMES) + strlen(pszDriver) + strlen(pszDevice) + strlen(pszPort) + 3;
+    std::size_t cb = sizeof(DEVNAMES) + std::strlen(pszDriver) + std::strlen(pszDevice) + std::strlen(pszPort) + 3;
     HGLOBAL h = win32::GlobalAlloc(win32::GMEM_MOVEABLE | win32::GMEM_ZEROINIT, cb);
     DEVNAMES *lpn;
     char *psz;
     if (!h) return nullptr;
     lpn = static_cast<DEVNAMES *>((win32::GlobalLock(h))); if (!lpn) { win32::GlobalFree(h); return nullptr; }
     psz = reinterpret_cast<char *>(lpn) + sizeof(*lpn);
-    lpn->wDriverOffset = static_cast<WORD>((psz - reinterpret_cast<char *>(lpn))); strcpy(psz, pszDriver); psz += strlen(psz) + 1;
-    lpn->wDeviceOffset = static_cast<WORD>((psz - reinterpret_cast<char *>(lpn))); strcpy(psz, pszDevice); psz += strlen(psz) + 1;
-    lpn->wOutputOffset = static_cast<WORD>((psz - reinterpret_cast<char *>(lpn))); strcpy(psz, pszPort); lpn->wDefault = 1;
+    lpn->wDriverOffset = static_cast<WORD>((psz - reinterpret_cast<char *>(lpn))); std::strcpy(psz, pszDriver); psz += std::strlen(psz) + 1;
+    lpn->wDeviceOffset = static_cast<WORD>((psz - reinterpret_cast<char *>(lpn))); std::strcpy(psz, pszDevice); psz += std::strlen(psz) + 1;
+    lpn->wOutputOffset = static_cast<WORD>((psz - reinterpret_cast<char *>(lpn))); std::strcpy(psz, pszPort); lpn->wDefault = 1;
     win32::GlobalUnlock(h); return h;
 }
 BOOL win32::PrintDlgA(LPPRINTDLGA lppd) {
@@ -89,11 +89,11 @@ BOOL win32::PrintDlgA(LPPRINTDLGA lppd) {
     }
     lp->cx = lp->cxPhysical - 150; lp->cy = lp->cyPhysical - 150;
     if (pszPrinter && *pszPrinter && SDL_strcasecmp(pszPrinter, "pdf") != 0) {
-        if (!FUtf8Valid(pszPrinter, strlen(pszPrinter))) { win32::SetLastError(win32::ERROR_INVALID_PARAMETER); goto fail; }
+        if (!FUtf8Valid(pszPrinter, std::strlen(pszPrinter))) { win32::SetLastError(win32::ERROR_INVALID_PARAMETER); goto fail; }
         if (SDL_strlcpy(lp->szPrinter, pszPrinter, sizeof(lp->szPrinter)) >= sizeof(lp->szPrinter)) { win32::SetLastError(win32::ERROR_INVALID_PARAMETER); goto fail; }
         lp->fSpool = 1;
     }
-    if (pszFile && *pszFile && (!FUtf8Valid(pszFile, strlen(pszFile)) ||
+    if (pszFile && *pszFile && (!FUtf8Valid(pszFile, std::strlen(pszFile)) ||
         SDL_strlcpy(lp->szTarget, pszFile, sizeof(lp->szTarget)) >= sizeof(lp->szTarget))) {
         win32::SetLastError(win32::ERROR_INVALID_PARAMETER); goto fail;
     }
@@ -129,8 +129,8 @@ static int StartPrint(COMPATPRINT *lp, int cb, LPCSTR pszTitle) {
     OPENFILENAMEA ofn = {};
     char szFile[PATH_MAX] = "Stars map.pdf";
     if (lp->fActive || cb < 0 || cb > 4096 || (cb != 0 && !pszTitle)) { win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return win32::SP_ERROR; }
-    if (cb != 0 && !FUtf8Valid(pszTitle, static_cast<size_t>(cb))) { win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return win32::SP_ERROR; }
-    if (cb) memcpy(lp->szTitle, pszTitle, cb);
+    if (cb != 0 && !FUtf8Valid(pszTitle, static_cast<std::size_t>(cb))) { win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return win32::SP_ERROR; }
+    if (cb) std::memcpy(lp->szTitle, pszTitle, cb);
     lp->szTitle[cb] = 0;
     if (!lp->fSpool && !*lp->szTarget) {
         ofn.lStructSize = sizeof(ofn); ofn.hwndOwner = win32::IsWindow(lp->hwndOwner) ? lp->hwndOwner : nullptr;
@@ -138,11 +138,11 @@ static int StartPrint(COMPATPRINT *lp, int cb, LPCSTR pszTitle) {
         ofn.lpstrFilter = "PDF documents\0*.pdf\0"; ofn.nFilterIndex = 1; ofn.lpstrDefExt = "pdf";
         ofn.lpstrTitle = "Print to PDF"; ofn.Flags = win32::OFN_HIDEREADONLY | win32::OFN_PATHMUSTEXIST | win32::OFN_NOREADONLYRETURN | win32::OFN_OVERWRITEPROMPT | win32::OFN_NOCHANGEDIR;
         if (!win32::GetSaveFileNameA(&ofn)) return win32::CommDlgExtendedError() ? win32::SP_ERROR : win32::SP_APPABORT;
-        strcpy(lp->szTarget, szFile);
+        std::strcpy(lp->szTarget, szFile);
     }
     lp->fKeep = 0;
-    if (lp->fSpool) strcpy(lp->szTemp, "/tmp/stars-print-XXXXXX");
-    else if (snprintf(lp->szTemp, sizeof(lp->szTemp), "%s.tmp-XXXXXX", lp->szTarget) >= static_cast<int>(sizeof(lp->szTemp))) {
+    if (lp->fSpool) std::strcpy(lp->szTemp, "/tmp/stars-print-XXXXXX");
+    else if (std::snprintf(lp->szTemp, sizeof(lp->szTemp), "%s.tmp-XXXXXX", lp->szTarget) >= static_cast<int>(sizeof(lp->szTemp))) {
         lp->szTemp[0] = 0; win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return win32::SP_ERROR;
     }
     lp->lpfile.reset(PfNativeCreateTemp(lp->szTemp));
@@ -187,7 +187,7 @@ static BOOL FPrintMarked(SDL_Surface *lpSurface) {
     const BYTE *rgb;
     int x, y;
     for (y = 0; y < lpSurface->h; y++) {
-        rgb = static_cast<BYTE *>(lpSurface->pixels) + static_cast<size_t>(y) * lpSurface->pitch;
+        rgb = static_cast<BYTE *>(lpSurface->pixels) + static_cast<std::size_t>(y) * lpSurface->pitch;
         for (x = 0; x < lpSurface->w; x++, rgb += 4) if (rgb[0] != 255 || rgb[1] != 255 || rgb[2] != 255) return 1;
     }
     return 0;
@@ -198,9 +198,9 @@ static BOOL FSubmitPrint(COMPATPRINT *lp) {
     SDL_Process *lpProcess;
     Uint64 ticks;
     int cArgs = 0, code = -1;
-    snprintf(szCopies, sizeof(szCopies), "%d", lp->cCopies);
+    std::snprintf(szCopies, sizeof(szCopies), "%d", lp->cCopies);
     rgArgs[cArgs++] = "lp";
-    if (strcmp(lp->szPrinter, "default") != 0) { rgArgs[cArgs++] = "-d"; rgArgs[cArgs++] = lp->szPrinter; }
+    if (std::strcmp(lp->szPrinter, "default") != 0) { rgArgs[cArgs++] = "-d"; rgArgs[cArgs++] = lp->szPrinter; }
     rgArgs[cArgs++] = "-n"; rgArgs[cArgs++] = szCopies;
     rgArgs[cArgs++] = "-t"; rgArgs[cArgs++] = lp->szTitle;
     rgArgs[cArgs++] = "-o"; rgArgs[cArgs++] = lp->idPaper == win32::DMPAPER_A4 ? "media=A4" : "media=Letter";
@@ -224,7 +224,7 @@ static int IEscapePrinter(COMPATPRINT *lp, HDC hdc, int idEscape, int cb, LPCSTR
     BOOL fOk;
     if (idEscape == win32::QUERYESCSUPPORT) {
         if (!pszIn || cb < static_cast<int>(sizeof(int))) return 0;
-        memcpy(&id, pszIn, sizeof(id));
+        std::memcpy(&id, pszIn, sizeof(id));
         return id == win32::STARTDOC || id == win32::NEWFRAME || id == win32::ENDDOC || id == win32::ABORTDOC || id == win32::QUERYESCSUPPORT || id == win32::GETPHYSPAGESIZE || id == win32::GETPRINTINGOFFSET;
     }
     if (idEscape == win32::GETPHYSPAGESIZE || idEscape == win32::GETPRINTINGOFFSET) {
@@ -268,11 +268,11 @@ static int IEscapePrinter(COMPATPRINT *lp, HDC hdc, int idEscape, int cb, LPCSTR
             char szMessage[PATH_MAX + 160];
             HWND hwndOwner = win32::IsWindow(lp->hwndOwner) ? lp->hwndOwner : nullptr;
             char *pszAbsolute = PszCanonicalNativePath(lp->szTarget, nullptr, 0);
-            snprintf(szMessage, sizeof(szMessage), "The PDF was saved, but its viewer could not be opened.\n\nOpen this file in a PDF viewer to print it:\n%s", pszAbsolute ? pszAbsolute : lp->szTarget);
+            std::snprintf(szMessage, sizeof(szMessage), "The PDF was saved, but its viewer could not be opened.\n\nOpen this file in a PDF viewer to print it:\n%s", pszAbsolute ? pszAbsolute : lp->szTarget);
             SDL_Log("%s", szMessage);
             CompatExternalIO().pfnShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "PDF saved", szMessage,
                                      hwndOwner ? hwndOwner->lpWindow.get() : nullptr);
-            free(pszAbsolute);
+            std::free(pszAbsolute);
         }
     }
     return 1;

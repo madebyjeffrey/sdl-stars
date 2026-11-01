@@ -1,8 +1,8 @@
 /* Accelerator handles own copied entries; module-loaded tables are cached. */
 #include "internal.h"
-#include <limits.h>
-#include <stdlib.h>
-#include <string.h>
+#include <climits>
+#include <cstdlib>
+#include <cstring>
 
 struct win32::HACCEL__ {
     BOOL fAlive;
@@ -21,12 +21,12 @@ static HACCEL LpAccel(HACCEL haccel) {
 }
 HACCEL win32::CreateAcceleratorTableA(LPACCEL rgaccel, int c) {
     HACCEL lp;
-    if (!SDL_IsMainThread() || !rgaccel || c <= 0 || static_cast<size_t>(c) > SIZE_MAX / sizeof(ACCEL)) return nullptr;
-    lp = static_cast<HACCEL>((calloc(1, sizeof(*lp))));
+    if (!SDL_IsMainThread() || !rgaccel || c <= 0 || static_cast<std::size_t>(c) > SIZE_MAX / sizeof(ACCEL)) return nullptr;
+    lp = static_cast<HACCEL>((std::calloc(1, sizeof(*lp))));
     if (!lp) return nullptr;
-    lp->rg = static_cast<ACCEL *>((malloc(static_cast<size_t>(c) * sizeof(ACCEL))));
-    if (!lp->rg) { free(lp); return nullptr; }
-    memcpy(lp->rg, rgaccel, static_cast<size_t>(c) * sizeof(ACCEL));
+    lp->rg = static_cast<ACCEL *>((std::malloc(static_cast<std::size_t>(c) * sizeof(ACCEL))));
+    if (!lp->rg) { std::free(lp); return nullptr; }
+    std::memcpy(lp->rg, rgaccel, static_cast<std::size_t>(c) * sizeof(ACCEL));
     lp->c = c; lp->fAlive = 1; lp->hnext = haccels; haccels = lp;
     return lp;
 }
@@ -44,7 +44,7 @@ BOOL win32::DestroyAcceleratorTable(HACCEL haccel) {
     HACCEL lp = LpAccel(haccel);
     if (!lp) return 0;
     if (lp->hrsrc) return 1; // Module-loaded tables live until module shutdown.
-    lp->fAlive = 0; free(lp->rg); lp->rg = nullptr;
+    lp->fAlive = 0; std::free(lp->rg); lp->rg = nullptr;
     return 1;
 }
 HACCEL win32::LoadAcceleratorsA(HINSTANCE hInstance, LPCSTR pszName) {
@@ -58,17 +58,17 @@ HACCEL win32::LoadAcceleratorsA(HINSTANCE hInstance, LPCSTR pszName) {
     if (!rgb || cb == 0 || cb % 8 || cb / 8 > INT_MAX) return nullptr;
     for (lp = haccels; lp; lp = lp->hnext) if (lp->hrsrc == hrsrc) return lp;
     c = static_cast<int>((cb / 8));
-    rg = static_cast<ACCEL *>((calloc(static_cast<size_t>(c), sizeof(*rg))));
+    rg = static_cast<ACCEL *>((std::calloc(static_cast<std::size_t>(c), sizeof(*rg))));
     if (!rg) return nullptr;
     for (i = 0; i < c; i++) {
         flags = static_cast<WORD>((rgb[i * 8] | (rgb[i * 8 + 1] << 8)));
-        if ((flags & ~0x9f) || ((flags & 0x80) != (i == c - 1 ? 0x80 : 0))) { free(rg); return nullptr; }
+        if ((flags & ~0x9f) || ((flags & 0x80) != (i == c - 1 ? 0x80 : 0))) { std::free(rg); return nullptr; }
         rg[i].fVirt = static_cast<BYTE>((flags & ~0x80));
         rg[i].key = static_cast<WORD>((rgb[i * 8 + 2] | (rgb[i * 8 + 3] << 8)));
         rg[i].cmd = static_cast<WORD>((rgb[i * 8 + 4] | (rgb[i * 8 + 5] << 8)));
     }
     lp = win32::CreateAcceleratorTableA(rg, c);
-    free(rg);
+    std::free(rg);
     if (lp) lp->hrsrc = hrsrc;
     return lp;
 }
@@ -107,6 +107,6 @@ int win32::TranslateAcceleratorA(HWND hwnd, HACCEL haccel, LPMSG lpmsg) {
 }
 void CompatShutdownAccelerators(void) {
     HACCEL lp, next;
-    for (lp = haccels; lp; lp = next) { next = lp->hnext; free(lp->rg); free(lp); }
+    for (lp = haccels; lp; lp = next) { next = lp->hnext; std::free(lp->rg); std::free(lp); }
     haccels = nullptr;
 }

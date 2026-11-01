@@ -1,7 +1,7 @@
 /* Resource-backed dialogs share the existing window, control and message paths. */
 #include "cleanup.h"
 #include <stars_compat.h>
-#include <string.h>
+#include <cstring>
 
 struct COMPATDLGCREATE { DLGPROC lpfn; HFONT hfont; int cxUnit, cyUnit; BOOL fModal; };
 
@@ -152,7 +152,7 @@ static HWND HwndCreateDialog(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGPRO
         win32::MapDialogRect(hwnd, &rc);
         hwndChild = win32::CreateWindowExA(lpitem->dwExStyle, pszClass, pszTitle, lpitem->dwStyle,
                                    rc.left, rc.top, rc.right, rc.bottom,
-                                   hwnd, reinterpret_cast<HMENU>(static_cast<INT_PTR>(static_cast<int16_t>(lpitem->id))), hinst, nullptr);
+                                   hwnd, reinterpret_cast<HMENU>(static_cast<INT_PTR>(static_cast<std::int16_t>(lpitem->id))), hinst, nullptr);
         if (!hwndChild || !win32::IsWindow(hwnd) || (!fModal && FStarsErrorPending())) goto fail;
         win32::SendMessageA(hwndChild, win32::WM_SETFONT, reinterpret_cast<WPARAM>(hwnd->hfontDialog), 0);
         if (!win32::IsWindow(hwnd) || (!fModal && FStarsErrorPending())) goto fail;

@@ -6,31 +6,31 @@
 #include "race_query_io.h"
 #include "random_io.h"
 
-int16_t FStargateJump(APPSESSION &app, FLEET *lpfl, int16_t isbsSrc, int16_t isbsDst, int16_t dDist) {
-    int16_t   dpPerShdefNew;
-    int16_t   dpShdef;
+std::int16_t FStargateJump(APPSESSION &app, FLEET *lpfl, std::int16_t isbsSrc, std::int16_t isbsDst, std::int16_t dDist) {
+    std::int16_t   dpPerShdefNew;
+    std::int16_t   dpShdef;
     POINT16   pt;
-    int16_t   id;
+    std::int16_t   id;
     FLEET     flSrc;
-    int16_t   cshT;
-    uint8_t   pctKill;
-    int16_t   i;
-    int32_t   cshOrig;
+    std::int16_t   cshT;
+    std::uint8_t   pctKill;
+    std::int16_t   i;
+    std::int32_t   cshOrig;
     MessageId idm;
-    int32_t   cshKill;
-    int16_t   pct;
-    int16_t   rgpct[16];
-    int16_t   cshdef;
-    int16_t   ishdef;
-    int32_t   dp;
-    int16_t   dpPerShdefOld;
-    int16_t   cshDamagedOld;
+    std::int32_t   cshKill;
+    std::int16_t   pct;
+    std::int16_t   rgpct[16];
+    std::int16_t   cshdef;
+    std::int16_t   ishdef;
+    std::int32_t   dp;
+    std::int16_t   dpPerShdefOld;
+    std::int16_t   cshDamagedOld;
     FLEET     flDead;
 
     cshdef = 0;
     cshKill = 0;
     cshOrig = 0;
-    memset(rgpct, 0, 32);
+    std::memset(rgpct, 0, 32);
     flSrc = *lpfl;
     if (flSrc.lpplord->rgord()[1].grobj == grobjPlanet) {
         id = flSrc.lpplord->rgord()[1].id;
@@ -64,7 +64,7 @@ int16_t FStargateJump(APPSESSION &app, FLEET *lpfl, int16_t isbsSrc, int16_t isb
         TurnIO().pfnMessage(app, flSrc.iPlayer, idmHeedlessDangerAttemptedUseStargateReachFleet, static_cast<MsgGoto>(flSrc.id | 0x8000), flSrc.id, flSrc.idPlanet, id, 0, 0, 0, 0);
         return 0;
     }
-    memset(&flDead, 0, sizeof(FLEET));
+    std::memset(&flDead, 0, sizeof(FLEET));
     for (ishdef = 0; ishdef < 16; ishdef++) {
         if (flSrc.rgcsh[ishdef] != 0 && rgpct[ishdef] != 0) {
             if (rgpct[ishdef] == 100) {
@@ -81,7 +81,7 @@ int16_t FStargateJump(APPSESSION &app, FLEET *lpfl, int16_t isbsSrc, int16_t isb
                 }
                 dpShdef = app.state.rglpshdef[lpfl->iPlayer][ishdef].hul.dp;
                 if (flSrc.rgdv[ishdef].dp != 0) {
-                    cshDamagedOld = LOWORD(static_cast<int32_t>((cshT * static_cast<int16_t>(flSrc.rgdv[ishdef].pctSh()))) / 100);
+                    cshDamagedOld = LOWORD(static_cast<std::int32_t>((cshT * static_cast<std::int16_t>(flSrc.rgdv[ishdef].pctSh()))) / 100);
                     if (cshDamagedOld == 0) {
                         cshDamagedOld = 1;
                     }
@@ -92,23 +92,23 @@ int16_t FStargateJump(APPSESSION &app, FLEET *lpfl, int16_t isbsSrc, int16_t isb
                     for (i = 0; i < flSrc.rgcsh[ishdef]; i++) {
                         if (RandomIO().pfnRandom(app, 100) < pctKill) {
                             cshT--;
-                            if (cshDamagedOld != 0 && static_cast<uint16_t>(RandomIO().pfnRandom(app, 500)) < flSrc.rgdv[ishdef].pctDp()) {
+                            if (cshDamagedOld != 0 && static_cast<std::uint16_t>(RandomIO().pfnRandom(app, 500)) < flSrc.rgdv[ishdef].pctDp()) {
                                 cshDamagedOld--;
                             }
                         }
                     }
-                    cshKill += static_cast<int16_t>((flSrc.rgcsh[ishdef] - cshT));
+                    cshKill += static_cast<std::int16_t>((flSrc.rgcsh[ishdef] - cshT));
                 }
                 if (cshT != 0) {
                     if (flSrc.rgdv[ishdef].dp != 0) {
-                        dpPerShdefOld = LOWORD(static_cast<int32_t>((dpShdef * static_cast<int16_t>(flSrc.rgdv[ishdef].pctDp()))) / 500);
+                        dpPerShdefOld = LOWORD(static_cast<std::int32_t>((dpShdef * static_cast<std::int16_t>(flSrc.rgdv[ishdef].pctDp()))) / 500);
                         if (dpPerShdefOld == 0) {
                             dpPerShdefOld = 1;
                         }
                     } else {
                         dpPerShdefOld = 0;
                     }
-                    dpPerShdefNew = LOWORD(static_cast<int32_t>((dpShdef * rgpct[ishdef])) / 100);
+                    dpPerShdefNew = LOWORD(static_cast<std::int32_t>((dpShdef * rgpct[ishdef])) / 100);
                     if (dpPerShdefNew == 0) {
                         dpPerShdefNew = 1;
                     }
@@ -117,8 +117,8 @@ int16_t FStargateJump(APPSESSION &app, FLEET *lpfl, int16_t isbsSrc, int16_t isb
                         cshT -= cshDamagedOld;
                     }
                     if (cshT != 0) {
-                        dp = static_cast<uint32_t>((dpPerShdefNew * cshT)) + static_cast<uint32_t>((dpPerShdefOld * cshDamagedOld));
-                        pct = LOWORD(static_cast<int32_t>((static_cast<int32_t>((dp / cshT)) * 500 / dpShdef)));
+                        dp = static_cast<std::uint32_t>((dpPerShdefNew * cshT)) + static_cast<std::uint32_t>((dpPerShdefOld * cshDamagedOld));
+                        pct = LOWORD(static_cast<std::int32_t>((static_cast<std::int32_t>((dp / cshT)) * 500 / dpShdef)));
                         if (pct == 0) {
                             pct = 1;
                         }
@@ -142,9 +142,9 @@ int16_t FStargateJump(APPSESSION &app, FLEET *lpfl, int16_t isbsSrc, int16_t isb
             TurnIO().pfnMessage(app, lpfl->iPlayer, idmUsedStargateReachLosingUnbelievableShipsJump, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, lpfl->idPlanet, id, LOWORD(cshKill),
                         HIWORD(cshKill), 0, 0);
         } else {
-            if (cshKill < static_cast<int32_t>((cshOrig >> 2))) {
+            if (cshKill < static_cast<std::int32_t>((cshOrig >> 2))) {
                 idm = idmUsedStargateReachLosingShipsTreacherousVoid;
-            } else if (cshKill > static_cast<int32_t>((cshOrig >> 1))) {
+            } else if (cshKill > static_cast<std::int32_t>((cshOrig >> 1))) {
                 idm = idmUsedStargateReachUnfortunatelyLosingShipsGreat;
             } else {
                 idm = idmUsedStargateReachLosingShipsUnforgivingVoid;
@@ -160,12 +160,12 @@ int16_t FStargateJump(APPSESSION &app, FLEET *lpfl, int16_t isbsSrc, int16_t isb
     return 1;
 }
 
-int16_t MdCalcStargateDamage(APPSESSION &app, int16_t isbsSrc, int16_t isbsDst, int16_t dDist, int16_t wt, int16_t *ppctDmg) {
-    int32_t dBaseDistance;
+std::int16_t MdCalcStargateDamage(APPSESSION &app, std::int16_t isbsSrc, std::int16_t isbsDst, std::int16_t dDist, std::int16_t wt, std::int16_t *ppctDmg) {
+    std::int32_t dBaseDistance;
     PART    partDst;
     PART    partSrc;
-    int32_t pctSurviveT;
-    int32_t pctSurvive;
+    std::int32_t pctSurviveT;
+    std::int32_t pctSurvive;
 
     pctSurvive = 10000;
     partDst.hs.grhst = hstSpecialSB;
@@ -178,31 +178,31 @@ int16_t MdCalcStargateDamage(APPSESSION &app, int16_t isbsSrc, int16_t isbsDst, 
     if (dBaseDistance == -1) {
         dBaseDistance = 8000;
     }
-    if (static_cast<int32_t>(dDist) > static_cast<int32_t>(static_cast<uint32_t>((dBaseDistance * 5)))) {
+    if (static_cast<std::int32_t>(dDist) > static_cast<std::int32_t>(static_cast<std::uint32_t>((dBaseDistance * 5)))) {
         return -1;
     }
-    if ((partSrc.pspecialsb()->grAbility > 0 && static_cast<int32_t>(wt) > static_cast<int32_t>(static_cast<uint32_t>((partSrc.pspecialsb()->grAbility * 5)))) ||
-        (partDst.pspecialsb()->grAbility > 0 && static_cast<int32_t>(wt) > static_cast<int32_t>(static_cast<uint32_t>((partDst.pspecialsb()->grAbility * 5))))) {
+    if ((partSrc.pspecialsb()->grAbility > 0 && static_cast<std::int32_t>(wt) > static_cast<std::int32_t>(static_cast<std::uint32_t>((partSrc.pspecialsb()->grAbility * 5)))) ||
+        (partDst.pspecialsb()->grAbility > 0 && static_cast<std::int32_t>(wt) > static_cast<std::int32_t>(static_cast<std::uint32_t>((partDst.pspecialsb()->grAbility * 5))))) {
         return -2;
     }
     if (dDist > dBaseDistance) {
-        pctSurvive = static_cast<int32_t>((static_cast<int32_t>(((static_cast<uint32_t>((dBaseDistance * 5)) - dDist) * 2500)) / dBaseDistance));
+        pctSurvive = static_cast<std::int32_t>((static_cast<std::int32_t>(((static_cast<std::uint32_t>((dBaseDistance * 5)) - dDist) * 2500)) / dBaseDistance));
         if (pctSurvive <= 0)
             goto TotalDeath;
     }
     if (wt > partSrc.pspecialsb()->grAbility && partSrc.pspecialsb()->grAbility > 0) {
-        pctSurviveT = static_cast<int32_t>((static_cast<int32_t>(((static_cast<uint32_t>((partSrc.pspecialsb()->grAbility * 5)) - wt) * 2500)) / partSrc.pspecialsb()->grAbility));
+        pctSurviveT = static_cast<std::int32_t>((static_cast<std::int32_t>(((static_cast<std::uint32_t>((partSrc.pspecialsb()->grAbility * 5)) - wt) * 2500)) / partSrc.pspecialsb()->grAbility));
         if (pctSurviveT <= 0)
             goto TotalDeath;
-        pctSurvive = static_cast<int32_t>((pctSurvive * pctSurviveT)) / 10000;
+        pctSurvive = static_cast<std::int32_t>((pctSurvive * pctSurviveT)) / 10000;
     }
     if (wt > partDst.pspecialsb()->grAbility && partDst.pspecialsb()->grAbility > 0) {
-        pctSurviveT = static_cast<int32_t>((static_cast<int32_t>(((static_cast<uint32_t>((partDst.pspecialsb()->grAbility * 5)) - wt) * 2500)) / partDst.pspecialsb()->grAbility));
+        pctSurviveT = static_cast<std::int32_t>((static_cast<std::int32_t>(((static_cast<std::uint32_t>((partDst.pspecialsb()->grAbility * 5)) - wt) * 2500)) / partDst.pspecialsb()->grAbility));
         if (pctSurviveT <= 0)
             goto TotalDeath;
-        pctSurvive = static_cast<int32_t>((pctSurvive * pctSurviveT)) / 10000;
+        pctSurvive = static_cast<std::int32_t>((pctSurvive * pctSurviveT)) / 10000;
     }
-    *ppctDmg = LOWORD(static_cast<int32_t>(((10000 - pctSurvive) / 100)));
+    *ppctDmg = LOWORD(static_cast<std::int32_t>(((10000 - pctSurvive) / 100)));
     return 1;
 TotalDeath:
     *ppctDmg = 100;
@@ -210,10 +210,10 @@ TotalDeath:
 }
 
 void KillUsedWaypoints(APPSESSION &app) {
-    int16_t j;
-    int16_t i;
+    std::int16_t j;
+    std::int16_t i;
     FLEET  *lpfl;
-    int16_t fRep;
+    std::int16_t fRep;
     PLANET *lppl;
 
     if (app.state.cFleet > 0) {
@@ -291,11 +291,11 @@ void KillUsedWaypoints(APPSESSION &app) {
 }
 
 void NoAutoTrackFleet(APPSESSION &app, FLEET *lpflTarget) {
-    int16_t iplr;
-    int16_t idTarget;
-    int16_t i;
+    std::int16_t iplr;
+    std::int16_t idTarget;
+    std::int16_t i;
     ORDER  *lpord;
-    int16_t ifl;
+    std::int16_t ifl;
     FLEET  *lpfl;
 
     iplr = lpflTarget->iPlayer;
@@ -321,19 +321,19 @@ void NoAutoTrackFleet(APPSESSION &app, FLEET *lpflTarget) {
 }
 
 void AutoRouteFleet(APPSESSION &app, FLEET *lpfl, PLANET *lppl) {
-    int32_t dTravel;
-    int16_t iWarp;
-    int16_t pctDmg;
-    int16_t wt;
-    int32_t cTurns;
-    int16_t i;
+    std::int32_t dTravel;
+    std::int16_t iWarp;
+    std::int16_t pctDmg;
+    std::int16_t wt;
+    std::int32_t cTurns;
+    std::int16_t i;
     ORDER  *lpord;
     PLANET *lpplRoute;
-    int16_t isbsDst;
-    int16_t wtBig;
-    int16_t ishdef;
-    int16_t ishdefBig;
-    int16_t isbsSrc;
+    std::int16_t isbsDst;
+    std::int16_t wtBig;
+    std::int16_t ishdef;
+    std::int16_t ishdefBig;
+    std::int16_t isbsSrc;
 
     lpfl->cord = 2;
     lpfl->lpplord->iordMac = 2;
@@ -345,7 +345,7 @@ void AutoRouteFleet(APPSESSION &app, FLEET *lpfl, PLANET *lppl) {
     lpord->pt = app.state.rgptPlan[lppl->idRoute - 1];
     lpord->fValidTask = 1;
     iWarp = IFindIdealWarp(app, lpfl, 0);
-    dTravel = static_cast<int32_t>((static_cast<double>(DGetDistance(lpfl->pt.x, lpfl->pt.y, lpord->pt.x, lpord->pt.y)) + 0.999));
+    dTravel = static_cast<std::int32_t>((static_cast<double>(DGetDistance(lpfl->pt.x, lpfl->pt.y, lpord->pt.x, lpord->pt.y)) + 0.999));
     if (lppl->iPlayer == lpplRoute->iPlayer && lppl->fStarbase && lpplRoute->fStarbase) {
         isbsDst = IStargateFromLppl(app, lpplRoute);
         isbsSrc = IStargateFromLppl(app, lppl);
@@ -375,10 +375,10 @@ void AutoRouteFleet(APPSESSION &app, FLEET *lpfl, PLANET *lppl) {
         }
     }
     if (iWarp < 11 && iWarp != 0) {
-        cTurns = static_cast<int32_t>((static_cast<int32_t>((dTravel / iWarp)) / iWarp));
+        cTurns = static_cast<std::int32_t>((static_cast<std::int32_t>((dTravel / iWarp)) / iWarp));
         while (iWarp > 2) {
             iWarp--;
-            if (static_cast<int32_t>((static_cast<int32_t>((dTravel / iWarp)) / iWarp)) > cTurns) {
+            if (static_cast<std::int32_t>((static_cast<std::int32_t>((dTravel / iWarp)) / iWarp)) > cTurns) {
                 iWarp++;
                 break;
             }
@@ -390,9 +390,9 @@ void AutoRouteFleet(APPSESSION &app, FLEET *lpfl, PLANET *lppl) {
     return;
 }
 
-int16_t FColonizer(APPSESSION &app, FLEET *lpfl) {
-    int16_t i;
-    int32_t l;
+std::int16_t FColonizer(APPSESSION &app, FLEET *lpfl) {
+    std::int16_t i;
+    std::int32_t l;
 
     for (i = 0; i < 16; i++) {
         if (lpfl->rgcsh[i] != 0) {
@@ -405,9 +405,9 @@ int16_t FColonizer(APPSESSION &app, FLEET *lpfl) {
     return 0;
 }
 
-int16_t FScout(APPSESSION &app, FLEET *lpfl) {
-    int16_t i;
-    int32_t l;
+std::int16_t FScout(APPSESSION &app, FLEET *lpfl) {
+    std::int16_t i;
+    std::int32_t l;
 
     for (i = 0; i < 16; i++) {
         if (lpfl->rgcsh[i] != 0) {
@@ -421,11 +421,11 @@ int16_t FScout(APPSESSION &app, FLEET *lpfl) {
 }
 
 void AutoFleetOrder(APPSESSION &app, FLEET *lpfl, PLANET *lppl) {
-    int32_t cMine;
-    int16_t ifl;
+    std::int32_t cMine;
+    std::int16_t ifl;
     ORDER  *lpord;
     FLEET  *lpflT;
-    int16_t fFoundFleet;
+    std::int16_t fFoundFleet;
 
     fFoundFleet = 0;
     lpord = lpfl->lpplord->rgord();
@@ -461,14 +461,14 @@ void AutoFleetOrder(APPSESSION &app, FLEET *lpfl, PLANET *lppl) {
     return;
 }
 
-int32_t CMineFromLpfl(APPSESSION &app, FLEET *lpfl) {
-    int32_t cMine;
-    int16_t j;
-    int16_t i;
+std::int32_t CMineFromLpfl(APPSESSION &app, FLEET *lpfl) {
+    std::int32_t cMine;
+    std::int16_t j;
+    std::int16_t i;
     HUL    *lphuldef;
     PART    part;
-    int32_t cMineTot;
-    int16_t chs;
+    std::int32_t cMineTot;
+    std::int16_t chs;
     HS     *lphs;
 
     cMineTot = 0;
@@ -483,12 +483,12 @@ int32_t CMineFromLpfl(APPSESSION &app, FLEET *lpfl) {
                 if (lphs->grhst == hstMining && lphs->iItem >= iminingRoboMidgetMiner && lphs->iItem <= iminingAlienMiner) {
                     part.hs = *lphs;
                     PartQueryIO().pfnLookup(app, &part);
-                    cMine += static_cast<uint32_t>((lphs->cItem * part.pmining()->grAbility));
+                    cMine += static_cast<std::uint32_t>((lphs->cItem * part.pmining()->grAbility));
                 }
                 j++;
                 lphs++;
             }
-            cMineTot += static_cast<uint32_t>((cMine * lpfl->rgcsh[i]));
+            cMineTot += static_cast<std::uint32_t>((cMine * lpfl->rgcsh[i]));
         }
     }
     if (cMineTot < 4000) {
@@ -497,13 +497,13 @@ int32_t CMineFromLpfl(APPSESSION &app, FLEET *lpfl) {
     return 4000;
 }
 
-int32_t PctTerraFromLpfl(APPSESSION &app, FLEET *lpfl) {
-    int16_t j;
-    int32_t pctTot;
-    int16_t i;
-    int32_t pct;
+std::int32_t PctTerraFromLpfl(APPSESSION &app, FLEET *lpfl) {
+    std::int16_t j;
+    std::int32_t pctTot;
+    std::int16_t i;
+    std::int32_t pct;
     HUL    *lphuldef;
-    int16_t chs;
+    std::int16_t chs;
     HS     *lphs;
 
     pctTot = 0;
@@ -521,22 +521,22 @@ int32_t PctTerraFromLpfl(APPSESSION &app, FLEET *lpfl) {
                 j++;
                 lphs++;
             }
-            pctTot += static_cast<uint32_t>((pct * lpfl->rgcsh[i]));
+            pctTot += static_cast<std::uint32_t>((pct * lpfl->rgcsh[i]));
         }
     }
     return pctTot;
 }
 
-int32_t CLayMinesFromLpfl(APPSESSION &app, FLEET *lpfl, MineFieldType iType, int16_t ishdef) {
-    uint16_t iMin;
-    uint16_t iMax;
-    int32_t  cMine;
-    int16_t  j;
-    int16_t  i;
+std::int32_t CLayMinesFromLpfl(APPSESSION &app, FLEET *lpfl, MineFieldType iType, std::int16_t ishdef) {
+    std::uint16_t iMin;
+    std::uint16_t iMax;
+    std::int32_t  cMine;
+    std::int16_t  j;
+    std::int16_t  i;
     HUL     *lphul;
     PART     part;
-    int32_t  cMineTot;
-    int16_t  chs;
+    std::int32_t  cMineTot;
+    std::int16_t  chs;
     HS      *lphs;
 
     cMineTot = 0;
@@ -569,37 +569,37 @@ int32_t CLayMinesFromLpfl(APPSESSION &app, FLEET *lpfl, MineFieldType iType, int
                 if (lphs->grhst == hstMines && lphs->iItem >= iMin && lphs->iItem <= iMax) {
                     part.hs = *lphs;
                     PartQueryIO().pfnLookup(app, &part);
-                    cMine += static_cast<uint32_t>((lphs->cItem * part.pmines()->grAbility));
-                } else if (static_cast<int16_t>(iType) <= mineStandard && lphs->grhst == hstBeam && lphs->iItem == ibeamMultiContainedMunition) {
-                    cMine += static_cast<int32_t>((lphs->cItem * 4));
+                    cMine += static_cast<std::uint32_t>((lphs->cItem * part.pmines()->grAbility));
+                } else if (static_cast<std::int16_t>(iType) <= mineStandard && lphs->grhst == hstBeam && lphs->iItem == ibeamMultiContainedMunition) {
+                    cMine += static_cast<std::int32_t>((lphs->cItem * 4));
                 }
                 j++;
                 lphs++;
             }
             if (lphul->ihuldef == ihuldefMiniMineLayer || lphul->ihuldef == ihuldefSuperMineLayer) {
-                cMine = static_cast<int32_t>((cMine * 2));
+                cMine = static_cast<std::int32_t>((cMine * 2));
             }
-            cMineTot += static_cast<uint32_t>((cMine * lpfl->rgcsh[i]));
+            cMineTot += static_cast<std::uint32_t>((cMine * lpfl->rgcsh[i]));
         }
     }
     if (cMineTot > 10000000 || cMineTot < 0) {
         return 100000000;
     }
-    return static_cast<uint32_t>((cMineTot * 10));
+    return static_cast<std::uint32_t>((cMineTot * 10));
 }
 
-int32_t CMineSweepFromLpfl(APPSESSION &app, FLEET *lpfl) {
-    int32_t lPowTot;
-    int16_t i;
+std::int32_t CMineSweepFromLpfl(APPSESSION &app, FLEET *lpfl) {
+    std::int32_t lPowTot;
+    std::int16_t i;
     HUL    *lphul;
-    int32_t lPow;
+    std::int32_t lPow;
 
     lPowTot = 0;
     for (i = 0; i < 16; i++) {
         if (lpfl->rgcsh[i] > 0) {
             lphul = &app.state.rglpshdef[lpfl->iPlayer][i].hul;
             lPow = CMineSweepFromLphul(app, lphul);
-            lPowTot += static_cast<uint32_t>((lPow * lpfl->rgcsh[i]));
+            lPowTot += static_cast<std::uint32_t>((lPow * lpfl->rgcsh[i]));
         }
     }
     if (lPowTot <= 0) {
@@ -608,16 +608,16 @@ int32_t CMineSweepFromLpfl(APPSESSION &app, FLEET *lpfl) {
     return lPowTot;
 }
 
-int32_t CMineSweepFromLphul(APPSESSION &app, HUL *lphul) {
-    int16_t chs;
+std::int32_t CMineSweepFromLphul(APPSESSION &app, HUL *lphul) {
+    std::int16_t chs;
     HS     *lphs;
-    int32_t lRange;
-    int16_t j;
-    int16_t fStarbase;
-    int32_t lPow;
+    std::int32_t lRange;
+    std::int16_t j;
+    std::int16_t fStarbase;
+    std::int32_t lPow;
     PART    part;
 
-    fStarbase = static_cast<int16_t>(lphul->ihuldef) >= ihuldefOrbitalFort;
+    fStarbase = static_cast<std::int16_t>(lphul->ihuldef) >= ihuldefOrbitalFort;
     chs = lphul->chs;
     lPow = 0;
     for (j = 0, lphs = lphul->rghs; j < chs; j++, lphs++) {
@@ -634,7 +634,7 @@ int32_t CMineSweepFromLphul(APPSESSION &app, HUL *lphul) {
             if (fStarbase) {
                 lRange++;
             }
-            lPow += static_cast<uint32_t>((static_cast<uint32_t>((static_cast<uint32_t>((lRange * lRange)) * lphs->cItem)) * part.pbeam()->dp));
+            lPow += static_cast<std::uint32_t>((static_cast<std::uint32_t>((static_cast<std::uint32_t>((lRange * lRange)) * lphs->cItem)) * part.pbeam()->dp));
         }
     }
     if (lPow <= 0) {
@@ -643,19 +643,19 @@ int32_t CMineSweepFromLphul(APPSESSION &app, HUL *lphul) {
     return lPow;
 }
 
-int16_t PctCloakFromLpfl(APPSESSION &app, FLEET *lpfl) {
-    int16_t j;
+std::int16_t PctCloakFromLpfl(APPSESSION &app, FLEET *lpfl) {
+    std::int16_t j;
     double  dcPts;
     double  dwtFleet;
-    int16_t i;
-    int32_t cPtsCur;
-    int16_t fUseFloat;
+    std::int16_t i;
+    std::int32_t cPtsCur;
+    std::int16_t fUseFloat;
     HUL    *lphul;
-    int32_t wtFleet;
-    int16_t cScore;
-    int32_t cPts;
-    int32_t wtFleetCur;
-    int16_t chs;
+    std::int32_t wtFleet;
+    std::int16_t cScore;
+    std::int32_t cPts;
+    std::int32_t wtFleetCur;
+    std::int16_t chs;
     HS     *lphs;
 
     wtFleet = 0;
@@ -667,7 +667,7 @@ int16_t PctCloakFromLpfl(APPSESSION &app, FLEET *lpfl) {
         if (lpfl->rgcsh[i] > 0) {
             lphul = &app.state.rglpshdef[lpfl->iPlayer][i].hul;
             chs = lphul->chs;
-            wtFleetCur = static_cast<uint32_t>((lpfl->rgcsh[i] * static_cast<uint32_t>(lphul->wtEmpty)));
+            wtFleetCur = static_cast<std::uint32_t>((lpfl->rgcsh[i] * static_cast<std::uint32_t>(lphul->wtEmpty)));
             cPtsCur = 0;
             if (RaceQueryIO().pfnStat(&app.state.rgplr[lpfl->iPlayer], rsMajorAdv) == raStealth) {
                 cPtsCur += 300;
@@ -688,7 +688,7 @@ int16_t PctCloakFromLpfl(APPSESSION &app, FLEET *lpfl) {
                 if (fUseFloat) {
                     dcPts = static_cast<double>((dcPts + static_cast<double>(cPtsCur) * wtFleetCur));
                 } else {
-                    cPts += static_cast<uint32_t>((cPtsCur * wtFleetCur));
+                    cPts += static_cast<std::uint32_t>((cPtsCur * wtFleetCur));
                 }
             }
             if (fUseFloat) {
@@ -713,9 +713,9 @@ int16_t PctCloakFromLpfl(APPSESSION &app, FLEET *lpfl) {
         }
     }
     if (fUseFloat) {
-        cPts = static_cast<int32_t>((static_cast<double>(dcPts) / dwtFleet));
+        cPts = static_cast<std::int32_t>((static_cast<double>(dcPts) / dwtFleet));
     } else {
-        cPts = static_cast<int32_t>((cPts / wtFleet));
+        cPts = static_cast<std::int32_t>((cPts / wtFleet));
     }
     if (cPts < 0) {
         return 0;
@@ -742,8 +742,8 @@ int16_t PctCloakFromLpfl(APPSESSION &app, FLEET *lpfl) {
     return 98;
 }
 
-int16_t CPtsCloakFromLphs(APPSESSION &app, HS *lphs) {
-    int16_t cPts;
+std::int16_t CPtsCloakFromLphs(APPSESSION &app, HS *lphs) {
+    std::int16_t cPts;
     PART    part;
 
     cPts = 0;
@@ -811,10 +811,10 @@ int16_t CPtsCloakFromLphs(APPSESSION &app, HS *lphs) {
     return cPts;
 }
 
-void MarkTechsSeen(APPSESSION &app, HUL *lphul, int16_t iplr) {
-    int16_t iplrSav;
-    int16_t iTech;
-    int16_t ihs;
+void MarkTechsSeen(APPSESSION &app, HUL *lphul, std::int16_t iplr) {
+    std::int16_t iplrSav;
+    std::int16_t iTech;
+    std::int16_t ihs;
     PART    part;
 
     iplrSav = app.state.idPlayer;
@@ -823,14 +823,14 @@ void MarkTechsSeen(APPSESSION &app, HUL *lphul, int16_t iplr) {
     part.hs.iItem = lphul->ihuldef;
     PartQueryIO().pfnLookup(app, &part);
     for (iTech = 0; iTech < 6; iTech++) {
-        app.state.rgTechBattle[iTech] = static_cast<int16_t>(app.state.rgTechBattle[iTech]) <= part.phul()->rgTech[iTech] ? part.phul()->rgTech[iTech] : app.state.rgTechBattle[iTech];
+        app.state.rgTechBattle[iTech] = static_cast<std::int16_t>(app.state.rgTechBattle[iTech]) <= part.phul()->rgTech[iTech] ? part.phul()->rgTech[iTech] : app.state.rgTechBattle[iTech];
     }
     for (ihs = 0; ihs < lphul->chs; ihs++) {
         if (lphul->rghs[ihs].cItem != 0) {
             part.hs = lphul->rghs[ihs];
             PartQueryIO().pfnLookup(app, &part);
             for (iTech = 0; iTech < 6; iTech++) {
-                app.state.rgTechBattle[iTech] = static_cast<int16_t>(app.state.rgTechBattle[iTech]) <= part.pcom().rgTech()[iTech] ? part.pcom().rgTech()[iTech] : app.state.rgTechBattle[iTech];
+                app.state.rgTechBattle[iTech] = static_cast<std::int16_t>(app.state.rgTechBattle[iTech]) <= part.pcom().rgTech()[iTech] ? part.pcom().rgTech()[iTech] : app.state.rgTechBattle[iTech];
             }
             iTech = -1;
             switch (part.hs.grhst) {

@@ -2,7 +2,7 @@
 #define STARS_DECOMPILED_MSGUI_H
 
 #include "win.h"
-#include <stdint.h>
+#include <cstdint>
 #include <windows.h>
 
 LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);

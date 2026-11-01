@@ -2,8 +2,8 @@
 #include "cleanup.h"
 #include <new>
 #include <stars_compat.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstring>
 
 struct COMPATMSGBOX {
     LPCSTR pszText;
@@ -174,7 +174,7 @@ int win32::MessageBoxA(HWND hwndOwner, LPCSTR pszText, LPCSTR pszCaption, UINT t
     COMPATMSGBOX box = {};
     HWND hwnd = nullptr, hwndRoot = nullptr, hwndFocus = nullptr, lpwin, hwndButton;
     HWND *rghwnd = nullptr;
-    size_t cDisabled = 0, iDisabled, cTop = 0;
+    std::size_t cDisabled = 0, iDisabled, cTop = 0;
     HDC hdc;
     HGDIOBJ hold;
     LOGFONTA lf = {};
@@ -202,7 +202,7 @@ int win32::MessageBoxA(HWND hwndOwner, LPCSTR pszText, LPCSTR pszCaption, UINT t
     if (!pszText) pszText = "";
     if (SDL_strnlen(pszText, 65537) > 65536) { win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return 0; }
     box.pszText = pszText; box.type = type; box.format = win32::DT_WORDBREAK | win32::DT_NOPREFIX | (type & win32::MB_RIGHT ? win32::DT_RIGHT : win32::DT_LEFT);
-    memcpy(box.rgid, rgrid[type & 0xf], sizeof(box.rgid));
+    std::memcpy(box.rgid, rgrid[type & 0xf], sizeof(box.rgid));
     for (i = 0; i < 3 && box.rgid[i] != 0; i++) { box.cButtons++; if (box.rgid[i] == win32::IDCANCEL) box.idCancel = win32::IDCANCEL; }
     if (box.cButtons == 1) box.idCancel = win32::IDOK;
     box.iDefault = (type >> 8) & 3;

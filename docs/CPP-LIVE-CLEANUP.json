@@ -18,15 +18,22 @@
   "stages": [
     {
       "id": "L01",
-      "status": "active",
+      "status": "complete",
       "completed_substeps": [
         "pointer-null-values",
         "struct-and-using-declarations",
-        "resource-generator-null-values"
-      ],
-      "pending_substeps": [
+        "resource-generator-null-values",
         "cpp-standard-headers-and-qualification"
-      ]
+      ],
+      "pending_substeps": [],
+      "qualification": {
+        "native_translation_units": 148,
+        "compiler_parse_errors": 0,
+        "compiler_references": 1588,
+        "platform_only_calls": 56,
+        "headers": 201,
+        "function_overloads": "Existing standard functions qualified; no math expression or operation boundary changed."
+      }
     },
     {
       "id": "L02",
@@ -120,14 +127,16 @@
       "path": "compat/win32/include/direct.h",
       "line": 3,
       "code": "#include <stddef.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/include/io.h",
       "line": 3,
       "code": "#include <stddef.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "typedef",
@@ -148,21 +157,24 @@
       "path": "compat/win32/include/stars_compat.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/include/stars_compat.h",
       "line": 6,
       "code": "#include <stdio.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/include/wincompat_constants.h",
       "line": 7,
       "code": "#include <limits.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "typedef",
@@ -778,14 +790,16 @@
       "path": "compat/win32/include/wincompat_types.h",
       "line": 8,
       "code": "#include <stddef.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/include/wincompat_types.h",
       "line": 9,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -932,21 +946,24 @@
       "path": "compat/win32/src/accelerator.cpp",
       "line": 3,
       "code": "#include <limits.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/accelerator.cpp",
       "line": 4,
       "code": "#include <stdlib.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/accelerator.cpp",
       "line": 5,
       "code": "#include <string.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -967,7 +984,8 @@
       "path": "compat/win32/src/audio.cpp",
       "line": 4,
       "code": "#include <math.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -1142,21 +1160,24 @@
       "path": "compat/win32/src/combo.cpp",
       "line": 4,
       "code": "#include <limits.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/combo.cpp",
       "line": 5,
       "code": "#include <stdlib.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/combo.cpp",
       "line": 6,
       "code": "#include <string.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -1296,7 +1317,8 @@
       "path": "compat/win32/src/control.cpp",
       "line": 3,
       "code": "#include <stdlib.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -1541,7 +1563,8 @@
       "path": "compat/win32/src/dialog.cpp",
       "line": 4,
       "code": "#include <string.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "allocation",
@@ -1625,14 +1648,16 @@
       "path": "compat/win32/src/dialog_template.cpp",
       "line": 3,
       "code": "#include <stdlib.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/dialog_template.cpp",
       "line": 4,
       "code": "#include <string.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -1660,14 +1685,16 @@
       "path": "compat/win32/src/dib.cpp",
       "line": 5,
       "code": "#include <limits.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/dib.cpp",
       "line": 6,
       "code": "#include <string.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -1730,14 +1757,16 @@
       "path": "compat/win32/src/document.cpp",
       "line": 4,
       "code": "#include <stdlib.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/document.cpp",
       "line": 5,
       "code": "#include <string.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -1926,21 +1955,24 @@
       "path": "compat/win32/src/edit.cpp",
       "line": 5,
       "code": "#include <limits.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/edit.cpp",
       "line": 6,
       "code": "#include <stdlib.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/edit.cpp",
       "line": 7,
       "code": "#include <string.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -1961,14 +1993,16 @@
       "path": "compat/win32/src/entry.cpp",
       "line": 5,
       "code": "#include <stdio.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/entry.cpp",
       "line": 7,
       "code": "#include <string.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -2087,35 +2121,40 @@
       "path": "compat/win32/src/file.cpp",
       "line": 5,
       "code": "#include <errno.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/file.cpp",
       "line": 7,
       "code": "#include <limits.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/file.cpp",
       "line": 8,
       "code": "#include <stdio.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/file.cpp",
       "line": 9,
       "code": "#include <stdlib.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/file.cpp",
       "line": 10,
       "code": "#include <string.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -2423,35 +2462,40 @@
       "path": "compat/win32/src/filedialog.cpp",
       "line": 7,
       "code": "#include <errno.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/filedialog.cpp",
       "line": 8,
       "code": "#include <limits.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/filedialog.cpp",
       "line": 9,
       "code": "#include <stdio.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/filedialog.cpp",
       "line": 10,
       "code": "#include <stdlib.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/filedialog.cpp",
       "line": 11,
       "code": "#include <string.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "typedef",
@@ -2514,21 +2558,24 @@
       "path": "compat/win32/src/filedialog_cocoa.cpp",
       "line": 3,
       "code": "#include <stdlib.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/filedialog_cocoa.cpp",
       "line": 4,
       "code": "#include <string.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/filedialog_cocoa.mm",
       "line": 5,
       "code": "#include <string.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "typedef",
@@ -2542,7 +2589,8 @@
       "path": "compat/win32/src/filedialog_cocoa_bridge.h",
       "line": 3,
       "code": "#include <stddef.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -2745,28 +2793,32 @@
       "path": "compat/win32/src/filedialog_portal.cpp",
       "line": 6,
       "code": "#include <limits.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/filedialog_portal.cpp",
       "line": 7,
       "code": "#include <stdio.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/filedialog_portal.cpp",
       "line": 8,
       "code": "#include <stdlib.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/filedialog_portal.cpp",
       "line": 9,
       "code": "#include <string.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -2815,7 +2867,8 @@
       "path": "compat/win32/src/filedialog_windows.cpp",
       "line": 4,
       "code": "#include <stdlib.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "typedef",
@@ -2829,7 +2882,8 @@
       "path": "compat/win32/src/filedialog_windows_bridge.h",
       "line": 3,
       "code": "#include <stddef.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -3074,14 +3128,16 @@
       "path": "compat/win32/src/filedialog_windows_sdk.cpp",
       "line": 14,
       "code": "#include <stdlib.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/filedialog_windows_sdk.cpp",
       "line": 15,
       "code": "#include <string.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -3242,21 +3298,24 @@
       "path": "compat/win32/src/font.cpp",
       "line": 7,
       "code": "#include <limits.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/font.cpp",
       "line": 10,
       "code": "#include <stdlib.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/font.cpp",
       "line": 11,
       "code": "#include <string.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -3361,35 +3420,40 @@
       "path": "compat/win32/src/help.cpp",
       "line": 5,
       "code": "#include <errno.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/help.cpp",
       "line": 6,
       "code": "#include <limits.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/help.cpp",
       "line": 7,
       "code": "#include <stdio.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/help.cpp",
       "line": 8,
       "code": "#include <stdlib.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/help.cpp",
       "line": 9,
       "code": "#include <string.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -3690,14 +3754,16 @@
       "path": "compat/win32/src/image.cpp",
       "line": 8,
       "code": "#include <stdlib.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/image.cpp",
       "line": 9,
       "code": "#include <string.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -3851,21 +3917,24 @@
       "path": "compat/win32/src/input.cpp",
       "line": 8,
       "code": "#include <math.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/input.cpp",
       "line": 9,
       "code": "#include <stdlib.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/input.cpp",
       "line": 10,
       "code": "#include <string.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -4012,14 +4081,16 @@
       "path": "compat/win32/src/inspect.cpp",
       "line": 5,
       "code": "#include <inttypes.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/inspect.cpp",
       "line": 6,
       "code": "#include <string.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "typedef",
@@ -4278,21 +4349,24 @@
       "path": "compat/win32/src/list.cpp",
       "line": 4,
       "code": "#include <limits.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/list.cpp",
       "line": 5,
       "code": "#include <stdlib.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/list.cpp",
       "line": 6,
       "code": "#include <string.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -4432,14 +4506,16 @@
       "path": "compat/win32/src/memory.cpp",
       "line": 4,
       "code": "#include <stdlib.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/memory.cpp",
       "line": 5,
       "code": "#include <string.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -4775,21 +4851,24 @@
       "path": "compat/win32/src/menu.cpp",
       "line": 4,
       "code": "#include <limits.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/menu.cpp",
       "line": 7,
       "code": "#include <stdlib.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/menu.cpp",
       "line": 8,
       "code": "#include <string.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -4852,7 +4931,8 @@
       "path": "compat/win32/src/message.cpp",
       "line": 8,
       "code": "#include <stdlib.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -4964,14 +5044,16 @@
       "path": "compat/win32/src/messagebox.cpp",
       "line": 5,
       "code": "#include <stdlib.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/messagebox.cpp",
       "line": 6,
       "code": "#include <string.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -5818,28 +5900,32 @@
       "path": "compat/win32/src/paint.cpp",
       "line": 11,
       "code": "#include <limits.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/paint.cpp",
       "line": 12,
       "code": "#include <math.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/paint.cpp",
       "line": 14,
       "code": "#include <stdlib.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/paint.cpp",
       "line": 15,
       "code": "#include <string.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -5986,35 +6072,40 @@
       "path": "compat/win32/src/print.cpp",
       "line": 7,
       "code": "#include <errno.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/print.cpp",
       "line": 8,
       "code": "#include <limits.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/print.cpp",
       "line": 10,
       "code": "#include <stdio.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/print.cpp",
       "line": 11,
       "code": "#include <stdlib.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/print.cpp",
       "line": 12,
       "code": "#include <string.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -6280,35 +6371,40 @@
       "path": "compat/win32/src/profile.cpp",
       "line": 5,
       "code": "#include <ctype.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/profile.cpp",
       "line": 6,
       "code": "#include <errno.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/profile.cpp",
       "line": 7,
       "code": "#include <stdio.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/profile.cpp",
       "line": 8,
       "code": "#include <stdlib.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/profile.cpp",
       "line": 9,
       "code": "#include <string.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "typedef",
@@ -6490,7 +6586,8 @@
       "path": "compat/win32/src/resource.cpp",
       "line": 3,
       "code": "#include <stdlib.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -6658,7 +6755,8 @@
       "path": "compat/win32/src/scroll.cpp",
       "line": 4,
       "code": "#include <limits.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -6749,70 +6847,80 @@
       "path": "compat/win32/src/services.cpp",
       "line": 8,
       "code": "#include <ctype.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/services.cpp",
       "line": 9,
       "code": "#include <errno.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/services.cpp",
       "line": 10,
       "code": "#include <limits.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/services.cpp",
       "line": 11,
       "code": "#include <stdarg.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/services.cpp",
       "line": 12,
       "code": "#include <stdio.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/services.cpp",
       "line": 13,
       "code": "#include <stdlib.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/services.cpp",
       "line": 14,
       "code": "#include <string.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/services.cpp",
       "line": 22,
       "code": "#include <time.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/session.cpp",
       "line": 3,
       "code": "#include <stdio.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/system.cpp",
       "line": 4,
       "code": "#include <limits.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -6868,14 +6976,16 @@
       "path": "compat/win32/src/timer.cpp",
       "line": 4,
       "code": "#include <limits.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/timer.cpp",
       "line": 5,
       "code": "#include <stdlib.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -7085,14 +7195,16 @@
       "path": "compat/win32/src/toolbar.cpp",
       "line": 4,
       "code": "#include <stdlib.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/toolbar.cpp",
       "line": 5,
       "code": "#include <string.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -7715,14 +7827,16 @@
       "path": "compat/win32/src/window.cpp",
       "line": 11,
       "code": "#include <stdlib.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "compat/win32/src/window.cpp",
       "line": 13,
       "code": "#include <string.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -7911,7 +8025,8 @@
       "path": "src/core/ai.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -8058,7 +8173,8 @@
       "path": "src/core/ai2.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -8184,7 +8300,8 @@
       "path": "src/core/ai3.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -8310,7 +8427,8 @@
       "path": "src/core/ai4.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -8576,7 +8694,8 @@
       "path": "src/core/aiutil.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -8814,7 +8933,8 @@
       "path": "src/core/battle.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -8849,7 +8969,8 @@
       "path": "src/core/build.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "typedef",
@@ -8870,49 +8991,56 @@
       "path": "src/core/common.h",
       "line": 6,
       "code": "#include <stddef.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "src/core/common.h",
       "line": 7,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "src/core/common.h",
       "line": 8,
       "code": "#include <stdio.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "src/core/common.h",
       "line": 10,
       "code": "#include <ctype.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "src/core/common.h",
       "line": 11,
       "code": "#include <math.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "src/core/common.h",
       "line": 12,
       "code": "#include <string.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "src/core/common.h",
       "line": 13,
       "code": "#include <time.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -9080,14 +9208,16 @@
       "path": "src/core/create.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "src/core/enums.h",
       "line": 4,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -9437,21 +9567,24 @@
       "path": "src/core/file.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "src/core/file.h",
       "line": 6,
       "code": "#include <stddef.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "src/core/globals.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -9647,7 +9780,8 @@
       "path": "src/core/log.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -9738,14 +9872,16 @@
       "path": "src/core/memory.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "src/core/mine.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -9871,14 +10007,16 @@
       "path": "src/core/msg.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "src/core/parts.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -9913,7 +10051,8 @@
       "path": "src/core/planet.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -9997,7 +10136,8 @@
       "path": "src/core/produce.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -10060,7 +10200,8 @@
       "path": "src/core/race.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -10690,7 +10831,8 @@
       "path": "src/core/report.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -10704,7 +10846,8 @@
       "path": "src/core/research.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -10900,7 +11043,8 @@
       "path": "src/core/save.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -10956,7 +11100,8 @@
       "path": "src/core/ship.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -10984,14 +11129,16 @@
       "path": "src/core/ship2.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "src/core/strings.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "typedef",
@@ -11796,14 +11943,16 @@
       "path": "src/core/structs.h",
       "line": 6,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "src/core/taskviews.h",
       "line": 4,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -11831,7 +11980,8 @@
       "path": "src/core/thing.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -12048,7 +12198,8 @@
       "path": "src/core/turn.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -12202,7 +12353,8 @@
       "path": "src/core/turn2.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -12342,14 +12494,16 @@
       "path": "src/core/turn3.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "src/core/ui.h",
       "line": 9,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -12650,7 +12804,8 @@
       "path": "src/core/util.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -12671,7 +12826,8 @@
       "path": "src/core/utilgen.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -12713,28 +12869,32 @@
       "path": "src/platform/encoding.cpp",
       "line": 2,
       "code": "#include <string.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "src/platform/encoding.h",
       "line": 3,
       "code": "#include <stddef.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "src/platform/encoding.h",
       "line": 4,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "src/platform/errors.h",
       "line": 3,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "allocation",
@@ -12853,21 +13013,24 @@
       "path": "src/platform/fileio.h",
       "line": 3,
       "code": "#include <stddef.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "src/platform/fileio.h",
       "line": 4,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "src/platform/filesystem.h",
       "line": 3,
       "code": "#include <stddef.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -12937,21 +13100,24 @@
       "path": "src/platform/native.cpp",
       "line": 4,
       "code": "#include <stdarg.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "src/platform/native.cpp",
       "line": 5,
       "code": "#include <errno.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "src/platform/native.cpp",
       "line": 6,
       "code": "#include <time.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "typedef",
@@ -12972,35 +13138,40 @@
       "path": "src/platform/native.h",
       "line": 9,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "src/platform/native.h",
       "line": 10,
       "code": "#include <limits.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "src/platform/native.h",
       "line": 11,
       "code": "#include <stdlib.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "src/platform/native.h",
       "line": 12,
       "code": "#include <stdio.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "src/platform/native_process.h",
       "line": 3,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -13154,7 +13325,8 @@
       "path": "src/platform/value.h",
       "line": 4,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "typedef",
@@ -13182,7 +13354,8 @@
       "path": "src/platform/windowtypes.h",
       "line": 3,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -13224,7 +13397,8 @@
       "path": "src/ui/battleui.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -13623,7 +13797,8 @@
       "path": "src/ui/buildui.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -13826,7 +14001,8 @@
       "path": "src/ui/createui.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -13889,7 +14065,8 @@
       "path": "src/ui/fileui.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -13980,14 +14157,16 @@
       "path": "src/ui/init.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "src/ui/libraryfiles.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "typedef",
@@ -14785,7 +14964,8 @@
       "path": "src/ui/libraryui.cpp",
       "line": 22,
       "code": "#include <errno.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -14925,7 +15105,8 @@
       "path": "src/ui/libraryzip.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -14960,7 +15141,8 @@
       "path": "src/ui/logui.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -15828,7 +16010,8 @@
       "path": "src/ui/mdi.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -16003,7 +16186,8 @@
       "path": "src/ui/mineui.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -16206,7 +16390,8 @@
       "path": "src/ui/msgui.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -16220,7 +16405,8 @@
       "path": "src/ui/nativeui.h",
       "line": 8,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -16738,7 +16924,8 @@
       "path": "src/ui/planetui.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -16906,7 +17093,8 @@
       "path": "src/ui/popup.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "byte_initialization",
@@ -16997,7 +17185,8 @@
       "path": "src/ui/preferencesui.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -17214,7 +17403,8 @@
       "path": "src/ui/produceui.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -17452,7 +17642,8 @@
       "path": "src/ui/raceui.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -17991,7 +18182,8 @@
       "path": "src/ui/reportui.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -18292,7 +18484,8 @@
       "path": "src/ui/researchui.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -18915,7 +19108,8 @@
       "path": "src/ui/scan.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -19034,7 +19228,8 @@
       "path": "src/ui/scaninspect.cpp",
       "line": 9,
       "code": "#include <stdlib.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "typedef",
@@ -19055,21 +19250,24 @@
       "path": "src/ui/scaninspect.h",
       "line": 7,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "src/ui/scaninspect.h",
       "line": 8,
       "code": "#include <stdio.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "src/ui/sessionrestore.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -19139,7 +19337,8 @@
       "path": "src/ui/ship2ui.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -19692,7 +19891,8 @@
       "path": "src/ui/shipui.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -19804,7 +20004,8 @@
       "path": "src/ui/stars.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -19979,14 +20180,16 @@
       "path": "src/ui/tb.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "src/ui/thingui.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -20091,14 +20294,16 @@
       "path": "src/ui/tutor.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "c_header",
       "path": "src/ui/tutor2.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -20336,7 +20541,8 @@
       "path": "src/ui/utilgenui.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -20399,7 +20605,8 @@
       "path": "src/ui/utilui.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     },
     {
       "kind": "null",
@@ -20644,7 +20851,8 @@
       "path": "src/ui/vcr.h",
       "line": 5,
       "code": "#include <stdint.h>",
-      "disposition": "pending"
+      "disposition": "resolved",
+      "replacement": "C++ standard header and std-qualified declarations/calls"
     }
   ],
   "verification": [
@@ -20699,6 +20907,29 @@
       "canonical_models": "unchanged",
       "baseline": "unchanged",
       "receipts": "dist/verification/live-cpp/l02/"
+    },
+    {
+      "batch": "L01b",
+      "debug_build": "pass; no warnings; 160 standalone headers in both include orders",
+      "desktop": "151/151; includes 29 leak checks and available tutorial smoke",
+      "host": "27/27",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "windows_syntax": "94/94 core/UI/host/platform units; isolated chooser/process adapters also pass after explicitly including <cwchar> for wide string functions",
+      "wire_inventory": "259 unchanged frozen measurements; 46 record names",
+      "canonical_models": "unchanged",
+      "baseline": "unchanged",
+      "receipts": "dist/verification/live-cpp/l01b/"
     }
   ],
   "generators": [

@@ -2,11 +2,11 @@
 #include "ownership.h"
 /* File-backed UTF-8 profiles. Preserve unrelated lines when updating settings. */
 #include <windows.h>
-#include <ctype.h>
-#include <errno.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cctype>
+#include <cerrno>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <strings.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -22,31 +22,31 @@ static void FreeProfile(COMPATPROFILE *lp) {
     COMPATPROFILE *lpNext;
     while (lp) {
         lpNext = lp->lpNext;
-        free(lp->szRaw); free(lp->szParsed); free(lp);
+        std::free(lp->szRaw); std::free(lp->szParsed); std::free(lp);
         lp = lpNext;
     }
 }
 
 static char *PszTrimProfile(char *psz) {
     char *pszEnd;
-    while (*psz && isspace(static_cast<unsigned char>(*psz))) psz++;
-    pszEnd = psz + strlen(psz);
-    while (pszEnd > psz && isspace(static_cast<unsigned char>(pszEnd[-1]))) *--pszEnd = 0;
+    while (*psz && std::isspace(static_cast<unsigned char>(*psz))) psz++;
+    pszEnd = psz + std::strlen(psz);
+    while (pszEnd > psz && std::isspace(static_cast<unsigned char>(pszEnd[-1]))) *--pszEnd = 0;
     return psz;
 }
 
 static COMPATPROFILE *LpProfileLine(const char *pszRaw) {
-    COMPATPROFILE *lp = static_cast<COMPATPROFILE *>(calloc(1, sizeof(*lp)));
+    COMPATPROFILE *lp = static_cast<COMPATPROFILE *>(std::calloc(1, sizeof(*lp)));
     char *psz, *pszEnd;
 
     if (!lp) return nullptr;
     lp->szRaw = strdup(pszRaw); lp->szParsed = strdup(pszRaw);
     if (!lp->szRaw || !lp->szParsed) { FreeProfile(lp); return nullptr; }
     psz = PszTrimProfile(lp->szParsed);
-    if (*psz == '[' && (pszEnd = strchr(psz + 1, ']'))) {
+    if (*psz == '[' && (pszEnd = std::strchr(psz + 1, ']'))) {
         *pszEnd = 0;
         lp->pszSection = PszTrimProfile(psz + 1);
-    } else if (*psz && *psz != ';' && (pszEnd = strchr(psz, '='))) {
+    } else if (*psz && *psz != ';' && (pszEnd = std::strchr(psz, '='))) {
         *pszEnd = 0;
         lp->pszKey = PszTrimProfile(psz);
         lp->pszValue = PszTrimProfile(pszEnd + 1);
@@ -58,12 +58,12 @@ static BOOL FLoadProfile(const char *pszPath, COMPATPROFILE **lplp) {
     const PROFILEIO &io = ProfileIO();
     NATIVEFILE *fp = nullptr;
     char *sz = nullptr;
-    size_t cb = 0, cbTotal = 0;
+    std::size_t cb = 0, cbTotal = 0;
     ssize_t cbLine;
     COMPATPROFILE **lplpNext = lplp;
     BOOL fRet = 0;
     NATIVECLEANUPSCOPE releaseProfile([&]() noexcept {
-        free(sz);
+        std::free(sz);
         if (fp) io.pfnClose(fp);
         if (!fRet) { FreeProfile(*lplp); *lplp = nullptr; }
     });
@@ -75,12 +75,12 @@ static BOOL FLoadProfile(const char *pszPath, COMPATPROFILE **lplp) {
         return errno == ENOENT;
     }
     while ((cbLine = io.pfnReadLine(&sz, &cb, fp)) >= 0) {
-        cbTotal += static_cast<size_t>(cbLine);
-        if (cbTotal > 8 * 1024 * 1024 || !FUtf8Valid(sz, static_cast<size_t>(cbLine))) {
+        cbTotal += static_cast<std::size_t>(cbLine);
+        if (cbTotal > 8 * 1024 * 1024 || !FUtf8Valid(sz, static_cast<std::size_t>(cbLine))) {
             win32::SetLastError(win32::ERROR_BAD_FORMAT); goto LReturn;
         }
-        if (cbTotal == static_cast<size_t>(cbLine) && cbLine >= 3 && !memcmp(sz, "\xef\xbb\xbf", 3))
-            memmove(sz, sz + 3, static_cast<size_t>(cbLine) - 2);
+        if (cbTotal == static_cast<std::size_t>(cbLine) && cbLine >= 3 && !std::memcmp(sz, "\xef\xbb\xbf", 3))
+            std::memmove(sz, sz + 3, static_cast<std::size_t>(cbLine) - 2);
         *lplpNext = LpProfileLine(sz);
         if (!*lplpNext) { win32::SetLastError(win32::ERROR_NOT_ENOUGH_MEMORY); goto LReturn; }
         lplpNext = &(*lplpNext)->lpNext;
@@ -105,9 +105,9 @@ static COMPATPROFILE *LpProfileKey(COMPATPROFILE *lp, LPCSTR pszKey) {
     return nullptr;
 }
 
-static const char *PszProfileValue(COMPATPROFILE *lp, size_t *pcch) {
+static const char *PszProfileValue(COMPATPROFILE *lp, std::size_t *pcch) {
     const char *psz = lp->pszValue;
-    *pcch = strlen(psz);
+    *pcch = std::strlen(psz);
     if (*pcch >= 2 && (psz[0] == '\'' || psz[0] == '"') && psz[*pcch - 1] == psz[0]) {
         psz++; *pcch -= 2;
     }
@@ -117,21 +117,21 @@ static const char *PszProfileValue(COMPATPROFILE *lp, size_t *pcch) {
 static char *SzProfilePath(LPCSTR pszFile) {
     const char *pszDir, *pszHome;
     char *sz;
-    size_t cb;
+    std::size_t cb;
 
     if (!pszFile || !*pszFile) { win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return nullptr; }
     // Explicit paths remain literal. Bare settings names use the user config directory.
-    if (strchr(pszFile, '/')
+    if (std::strchr(pszFile, '/')
 #ifdef _WIN32
-        || strchr(pszFile, '\\') || strchr(pszFile, ':')
+        || std::strchr(pszFile, '\\') || std::strchr(pszFile, ':')
 #endif
     ) { sz = strdup(pszFile); goto LReturn; }
     pszDir = PszCompatEnvironment("STARS_PROFILE_DIR");
     if (!pszDir || !*pszDir) pszDir = PszCompatEnvironment("STARS_SETTINGS_DIR");
     if (pszDir && *pszDir) {
-        cb = strlen(pszDir) + strlen(pszFile) + 2;
-        sz = static_cast<char *>((malloc(cb)));
-        if (sz) snprintf(sz, cb, "%s/%s", pszDir, pszFile);
+        cb = std::strlen(pszDir) + std::strlen(pszFile) + 2;
+        sz = static_cast<char *>((std::malloc(cb)));
+        if (sz) std::snprintf(sz, cb, "%s/%s", pszDir, pszFile);
         goto LReturn;
     }
     pszDir = PszCompatEnvironment("XDG_CONFIG_HOME");
@@ -139,27 +139,27 @@ static char *SzProfilePath(LPCSTR pszFile) {
 #ifdef _WIN32
     pszDir = PszCompatEnvironment("LOCALAPPDATA");
     if (pszDir && *pszDir) {
-        cb = strlen(pszDir) + strlen(pszFile) + 8;
-        sz = (char *)malloc(cb);
-        if (sz) snprintf(sz, cb, "%s/stars/%s", pszDir, pszFile);
+        cb = std::strlen(pszDir) + std::strlen(pszFile) + 8;
+        sz = (char *)std::malloc(cb);
+        if (sz) std::snprintf(sz, cb, "%s/stars/%s", pszDir, pszFile);
     } else sz = strdup(pszFile);
     (void)pszHome;
 #else
     if (pszDir && *pszDir == '/') {
-        cb = strlen(pszDir) + strlen(pszFile) + 8;
-        sz = static_cast<char *>((malloc(cb)));
-        if (sz) snprintf(sz, cb, "%s/stars/%s", pszDir, pszFile);
+        cb = std::strlen(pszDir) + std::strlen(pszFile) + 8;
+        sz = static_cast<char *>((std::malloc(cb)));
+        if (sz) std::snprintf(sz, cb, "%s/stars/%s", pszDir, pszFile);
     } else if (pszHome && *pszHome == '/') {
-        cb = strlen(pszHome) + strlen(pszFile) + 16;
-        sz = static_cast<char *>((malloc(cb)));
-        if (sz) snprintf(sz, cb, "%s/.config/stars/%s", pszHome, pszFile);
+        cb = std::strlen(pszHome) + std::strlen(pszFile) + 16;
+        sz = static_cast<char *>((std::malloc(cb)));
+        if (sz) std::snprintf(sz, cb, "%s/.config/stars/%s", pszHome, pszFile);
     } else {
         sz = strdup(pszFile);
     }
 #endif
 LReturn:
     if (!sz) win32::SetLastError(win32::ERROR_NOT_ENOUGH_MEMORY);
-    else if (!FUtf8Valid(sz, strlen(sz))) { free(sz); sz = nullptr; win32::SetLastError(win32::ERROR_INVALID_PARAMETER); }
+    else if (!FUtf8Valid(sz, std::strlen(sz))) { std::free(sz); sz = nullptr; win32::SetLastError(win32::ERROR_INVALID_PARAMETER); }
     return sz;
 }
 
@@ -191,10 +191,10 @@ DWORD win32::GetPrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR p
     char *szPath = nullptr;
     COMPATPROFILE *lpAll = nullptr, *lp, *lpKey;
     const char *psz;
-    size_t cch, cchOut = 0, cchCopy;
+    std::size_t cch, cchOut = 0, cchCopy;
     BOOL fMulti = !pszSection || !pszKey;
     std::unique_lock lockProfile(fProfileLock, std::defer_lock);
-    NATIVECLEANUPSCOPE releaseProfile([&]() noexcept { FreeProfile(lpAll); free(szPath); });
+    NATIVECLEANUPSCOPE releaseProfile([&]() noexcept { FreeProfile(lpAll); std::free(szPath); });
 
     if (!szResult || cchMax == 0) return 0;
     szResult[0] = 0;
@@ -210,14 +210,14 @@ DWORD win32::GetPrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR p
             if (pszSection && lp->pszSection) break;
             psz = pszSection ? lp->pszKey : lp->pszSection;
             if (!psz || !*psz) continue;
-            cch = strlen(psz);
+            cch = std::strlen(psz);
             if (cchMax < 2) break;
             if (cchOut > cchMax - 2) { cchOut = cchMax - 2; break; }
             cchCopy = CchUtf8Prefix(psz, cch < cchMax - 2 - cchOut ? cch : cchMax - 2 - cchOut);
-            memcpy(szResult + cchOut, psz, cchCopy);
+            std::memcpy(szResult + cchOut, psz, cchCopy);
             cchOut += cchCopy;
             if (cchCopy < cch || cchOut + 1 >= cchMax) {
-                memset(szResult + cchOut, 0, cchMax - cchOut);
+                std::memset(szResult + cchOut, 0, cchMax - cchOut);
                 cchOut = cchMax - 2; break;
             }
             szResult[cchOut++] = 0;
@@ -230,11 +230,11 @@ DWORD win32::GetPrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR p
         if (lpKey) psz = PszProfileValue(lpKey, &cch);
         else {
             psz = pszDefault ? pszDefault : "";
-            cch = strlen(psz);
+            cch = std::strlen(psz);
             while (cch != 0 && psz[cch - 1] == ' ') cch--;
         }
         cchOut = CchUtf8Prefix(psz, cch < cchMax - 1 ? cch : cchMax - 1);
-        memcpy(szResult, psz, cchOut); szResult[cchOut] = 0;
+        std::memcpy(szResult, psz, cchOut); szResult[cchOut] = 0;
     }
     releaseProfile.Close();
     lockProfile.unlock();
@@ -248,7 +248,7 @@ UINT win32::GetPrivateProfileIntA(LPCSTR pszSection, LPCSTR pszKey, INT nDefault
 
     if (ProfileTextIO().pfnReadString(pszSection, pszKey, "", sz, sizeof(sz), pszFile) == 0)
         return static_cast<UINT>(nDefault);
-    while (isspace(static_cast<unsigned char>(*psz))) psz++;
+    while (std::isspace(static_cast<unsigned char>(*psz))) psz++;
     if (*psz == '+' || *psz == '-') { fNegative = *psz == '-'; psz++; }
     if (psz[0] == '0' && (psz[1] == 'x' || psz[1] == 'X')) { radix = 16; psz += 2; }
     for (; *psz; psz++) {
@@ -267,16 +267,16 @@ BOOL win32::WritePrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR 
     COMPATPROFILE *lpAll = nullptr, *lpSection, *lpKey, *lpNew, *lp;
     COMPATPROFILE **lplp;
     BOOL fRet = 0;
-    size_t cb;
+    std::size_t cb;
     std::unique_lock lockProfile(fProfileLock, std::defer_lock);
-    NATIVECLEANUPSCOPE releaseProfile([&]() noexcept { free(szLine); free(szPath); FreeProfile(lpAll); });
+    NATIVECLEANUPSCOPE releaseProfile([&]() noexcept { std::free(szLine); std::free(szPath); FreeProfile(lpAll); });
 
     if (!pszSection && !pszKey && !pszValue) return 0; // No cache to flush.
-    if (!pszSection || !FUtf8Valid(pszSection, strlen(pszSection)) ||
-        (pszKey && !FUtf8Valid(pszKey, strlen(pszKey))) ||
-        (pszValue && !FUtf8Valid(pszValue, strlen(pszValue))) || !*pszSection || strchr(pszSection, '\n') || strchr(pszSection, '\r') ||
-        strchr(pszSection, ']') || (pszKey && (strchr(pszKey, '=') || strchr(pszKey, '\n') || strchr(pszKey, '\r'))) ||
-        (pszValue && (strchr(pszValue, '\n') || strchr(pszValue, '\r')))) {
+    if (!pszSection || !FUtf8Valid(pszSection, std::strlen(pszSection)) ||
+        (pszKey && !FUtf8Valid(pszKey, std::strlen(pszKey))) ||
+        (pszValue && !FUtf8Valid(pszValue, std::strlen(pszValue))) || !*pszSection || std::strchr(pszSection, '\n') || std::strchr(pszSection, '\r') ||
+        std::strchr(pszSection, ']') || (pszKey && (std::strchr(pszKey, '=') || std::strchr(pszKey, '\n') || std::strchr(pszKey, '\r'))) ||
+        (pszValue && (std::strchr(pszValue, '\n') || std::strchr(pszValue, '\r')))) {
         win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return 0;
     }
     szPath = SzProfilePath(pszFile);
@@ -293,20 +293,20 @@ BOOL win32::WritePrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR 
         } while (!pszKey && *lplp && !(*lplp)->pszSection);
     } else {
         if (!lpSection) {
-            cb = strlen(pszSection) + 4;
-            szLine = static_cast<char *>((malloc(cb)));
+            cb = std::strlen(pszSection) + 4;
+            szLine = static_cast<char *>((std::malloc(cb)));
             if (!szLine) goto LMemory;
-            snprintf(szLine, cb, "[%s]\n", pszSection);
+            std::snprintf(szLine, cb, "[%s]\n", pszSection);
             lpSection = LpProfileLine(szLine);
-            free(szLine); szLine = nullptr;
+            std::free(szLine); szLine = nullptr;
             if (!lpSection) goto LMemory;
             for (lplp = &lpAll; *lplp; lplp = &(*lplp)->lpNext) {}
             *lplp = lpSection;
         }
-        cb = strlen(pszKey) + strlen(pszValue) + 3;
-        szLine = static_cast<char *>((malloc(cb)));
+        cb = std::strlen(pszKey) + std::strlen(pszValue) + 3;
+        szLine = static_cast<char *>((std::malloc(cb)));
         if (!szLine) goto LMemory;
-        snprintf(szLine, cb, "%s=%s\n", pszKey, pszValue);
+        std::snprintf(szLine, cb, "%s=%s\n", pszKey, pszValue);
         lpNew = LpProfileLine(szLine);
         if (!lpNew) goto LMemory;
         for (lplp = &lpSection->lpNext; *lplp && !(*lplp)->pszSection && *lplp != lpKey; lplp = &(*lplp)->lpNext) {}
@@ -315,7 +315,7 @@ BOOL win32::WritePrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR 
         } else lpNew->lpNext = *lplp;
         *lplp = lpNew;
     }
-    if (!strchr(pszFile, '/') && !FMakeProfileDir(szPath)) goto LReturn;
+    if (!std::strchr(pszFile, '/') && !FMakeProfileDir(szPath)) goto LReturn;
     fRet = FSaveProfile(lpAll, szPath);
     goto LReturn;
 LMemory:

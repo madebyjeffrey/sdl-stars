@@ -66,7 +66,7 @@ LRESULT  PopupWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     }
 }
 
-int16_t FIsPopupHullType(APPSESSION &app, int16_t ishdef) {
+std::int16_t FIsPopupHullType(APPSESSION &app, std::int16_t ishdef) {
     HullCategory imd;
 
     if (app.lpui->GlobalPD.grbit == 0 || app.lpui->GlobalPD.grbit == 0xff) {
@@ -79,18 +79,18 @@ int16_t FIsPopupHullType(APPSESSION &app, int16_t ishdef) {
 void DrawPopup(APPSESSION &app, HWND hwnd, HDC hdc) {
     COLORREF crBack;
     char     szT[80];
-    int16_t  yCur;
-    int16_t  i;
-    int16_t  c;
-    int16_t  bkMode;
+    std::int16_t  yCur;
+    std::int16_t  i;
+    std::int16_t  c;
+    std::int16_t  bkMode;
     HFONT    hfontSav;
     char    *psz;
-    int16_t  dx;
+    std::int16_t  dx;
     COLORREF crFore;
     RECT     rc;
     char    *lpsz;
-    int16_t  csh;
-    int16_t  dpT;
+    std::int16_t  csh;
+    std::int16_t  dpT;
     char     szTB[40];
 
     crBack = win32::SetBkColor(hdc, 0xffffff);
@@ -105,13 +105,13 @@ void DrawPopup(APPSESSION &app, HWND hwnd, HDC hdc) {
         CtrTextOut(hdc, rc.right >> 1, 4, app.state.rgszMinerals[app.lpui->GlobalPD.rgi[0]], 0);
         win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
         psz = TextIO().pfnCompressed(app, idsMineralConcentration);
-        dx = LOWORD(GetTextExtent(hdc, psz, strlen(psz))) + 4;
+        dx = LOWORD(GetTextExtent(hdc, psz, std::strlen(psz))) + 4;
         RightTextOut(app, hdc, dx, app.state.dyArial8 + 4, TextIO().pfnCompressed(app, idsSurface), 0, 0);
         if (app.lpui->GlobalPD.rgi[2] >= 0) {
             c = win32::wsprintfA(app.state.szWork, "%ldkT", app.lpui->GlobalPD.rgi[2]);
         } else {
-            strcpy(app.state.szWork, TextIO().pfnCompressed(app, idsUnknown2));
-            c = strlen(app.state.szWork);
+            std::strcpy(app.state.szWork, TextIO().pfnCompressed(app, idsUnknown2));
+            c = std::strlen(app.state.szWork);
         }
         win32::TextOutA(hdc, dx, app.state.dyArial8 + 4, app.state.szWork, c);
         RightTextOut(app, hdc, dx, app.state.dyArial8 * 2 + 4, TextIO().pfnCompressed(app, idsMineralConcentration), 0, 0);
@@ -165,16 +165,16 @@ void DrawPopup(APPSESSION &app, HWND hwnd, HDC hdc) {
                 }
                 DecorateHullName(app, app.lpui->GlobalPD.lpfl->iplr(), i, szTB);
                 lpsz = szTB;
-                win32::TextOutA(hdc, 4, yCur, lpsz, strlen(lpsz));
+                win32::TextOutA(hdc, 4, yCur, lpsz, std::strlen(lpsz));
                 c = win32::wsprintfA(app.state.szWork, app.state.PCTD, app.lpui->GlobalPD.lpfl->rgcsh[i]);
                 RightTextOut(app, hdc, rc.right - 4 - app.lpui->GlobalPD.dxDamage, yCur, app.state.szWork, c, 0);
                 if (app.lpui->GlobalPD.fRedDamage && app.lpui->GlobalPD.lpfl->rgdv[i].dp != 0) {
                     csh = app.lpui->GlobalPD.lpfl->rgcsh[i];
-                    csh = LOWORD(static_cast<int32_t>((static_cast<uint32_t>((app.lpui->GlobalPD.lpfl->rgdv[i].dp & 0x7f)) * csh)) / 0x64);
+                    csh = LOWORD(static_cast<std::int32_t>((static_cast<std::uint32_t>((app.lpui->GlobalPD.lpfl->rgdv[i].dp & 0x7f)) * csh)) / 0x64);
                     if (csh <= 0) {
                         csh = 1;
                     }
-                    dpT = static_cast<uint32_t>((app.lpui->GlobalPD.lpfl->rgdv[i].dp >> 7 & 0x1ff)) / 5;
+                    dpT = static_cast<std::uint32_t>((app.lpui->GlobalPD.lpfl->rgdv[i].dp >> 7 & 0x1ff)) / 5;
                     if (dpT == 0) {
                         dpT = 1;
                     }
@@ -190,15 +190,15 @@ void DrawPopup(APPSESSION &app, HWND hwnd, HDC hdc) {
         break;
     case grPopupUnknownObj:
         psz = TextIO().pfnCompressed(app, idsPlanet);
-        dx = LOWORD(GetTextExtent(hdc, psz, strlen(psz))) + 4;
+        dx = LOWORD(GetTextExtent(hdc, psz, std::strlen(psz))) + 4;
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-        RightTextOut(app, hdc, dx, 4, psz, strlen(psz), 0);
+        RightTextOut(app, hdc, dx, 4, psz, std::strlen(psz), 0);
         RightTextOut(app, hdc, dx, app.state.dyArial8 + 4, TextIO().pfnCompressed(app, idsId), 0, 0);
         RightTextOut(app, hdc, dx, app.state.dyArial8 * 2 + 4, TextIO().pfnCompressed(app, idsX), 0, 0);
         RightTextOut(app, hdc, dx, 3 * app.state.dyArial8 + 4, TextIO().pfnCompressed(app, idsY), 0, 0);
         psz = TextIO().pfnPlanetName(app, app.state.sel.scan.idpl);
         win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
-        win32::TextOutA(hdc, dx, 4, psz, strlen(psz));
+        win32::TextOutA(hdc, dx, 4, psz, std::strlen(psz));
         c = win32::wsprintfA(app.state.szWork, app.state.PCTD, app.state.sel.scan.idpl + 1);
         win32::TextOutA(hdc, dx, app.state.dyArial8 + 4, app.state.szWork, c);
         c = win32::wsprintfA(app.state.szWork, app.state.PCTD, app.state.sel.scan.pt.x);
@@ -229,13 +229,13 @@ void DrawPopup(APPSESSION &app, HWND hwnd, HDC hdc) {
         break;
     case grPopupShdef:
     case grPopupShdefSB:
-        app.state.fStarbaseMode = static_cast<int16_t>(app.lpui->GlobalPD.lpshdef->hul.ihuldef) >= ihuldefOrbitalFort;
+        app.state.fStarbaseMode = static_cast<std::int16_t>(app.lpui->GlobalPD.lpshdef->hul.ihuldef) >= ihuldefOrbitalFort;
         DrawSlotDlg(app, hwnd, hdc, &rc, -1);
         rc.top = app.state.dyArial8 + 306;
         rc.left += 6;
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
         win32::SetBkMode(hdc, win32::TRANSPARENT);
-        strcpy(app.state.szWork, app.lpui->GlobalPD.lpshdef->hul.szClass);
+        std::strcpy(app.state.szWork, app.lpui->GlobalPD.lpshdef->hul.szClass);
         CtrTextOut(hdc, ((rc.right - 0x4c) >> 1) + 0x4c, 6, app.state.szWork, 0);
         DrawBuildSelHull(app, hwnd, hdc, -1, &rc);
     }
@@ -246,24 +246,24 @@ void DrawPopup(APPSESSION &app, HWND hwnd, HDC hdc) {
     return;
 }
 
-void Popup(APPSESSION &app, HWND hwnd, int16_t x, int16_t y) {
+void Popup(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16_t y) {
     HDC     hdc;
     POINT16 pt;
-    int16_t dy;
-    int16_t i;
-    int16_t c;
+    std::int16_t dy;
+    std::int16_t i;
+    std::int16_t c;
     HFONT   hfontSav;
     char   *psz;
-    int16_t dx;
+    std::int16_t dx;
     POINT16 ptT;
-    int16_t dx2;
-    int16_t dxDamage;
-    int16_t dxL;
+    std::int16_t dx2;
+    std::int16_t dxDamage;
+    std::int16_t dxL;
     char   *lpsz;
-    int16_t dxR;
+    std::int16_t dxR;
     char    szTB[40];
-    int16_t dxName;
-    int16_t dxCoord;
+    std::int16_t dxName;
+    std::int16_t dxCoord;
 
     pt.x = x;
     pt.y = y;
@@ -275,7 +275,7 @@ void Popup(APPSESSION &app, HWND hwnd, int16_t x, int16_t y) {
         break;
     case grPopupMineral:
         psz = TextIO().pfnCompressed(app, idsMineralConcentration0000000kt);
-        dx = LOWORD(GetTextExtent(hdc, psz, strlen(psz))) + 8;
+        dx = LOWORD(GetTextExtent(hdc, psz, std::strlen(psz))) + 8;
         dy = 3 * app.state.dyArial8 + 8;
         if (app.lpui->GlobalPD.rgi[4] < 0)
             break;
@@ -284,7 +284,7 @@ void Popup(APPSESSION &app, HWND hwnd, int16_t x, int16_t y) {
     case grPopupPlayer:
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
         psz = TextIO().pfnPlayerName(app, app.lpui->GlobalPD.iPlayer, 1, 1, 1, 0, nullptr);
-        dx = LOWORD(GetTextExtent(hdc, psz, strlen(psz))) + 8;
+        dx = LOWORD(GetTextExtent(hdc, psz, std::strlen(psz))) + 8;
         dx2 = LOWORD(GetTextExtent(hdc, "Player #16", 10)) + 8;
         if (dx2 > dx) {
             dx = dx2;
@@ -297,27 +297,27 @@ void Popup(APPSESSION &app, HWND hwnd, int16_t x, int16_t y) {
         dy = app.state.dyArial8 + 8;
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
         psz = TextIO().pfnCompressed(app, idsShipName);
-        dxL = LOWORD(GetTextExtent(hdc, psz, strlen(psz)));
+        dxL = LOWORD(GetTextExtent(hdc, psz, std::strlen(psz)));
         win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
         for (i = 0; i < 16; i++) {
             if (app.lpui->GlobalPD.lpfl->rgcsh[i] > 0 && (app.lpui->GlobalPD.grbit == 0 || FIsPopupHullType(app, i))) {
                 dy += app.state.dyArial8;
                 DecorateHullName(app, app.lpui->GlobalPD.lpfl->iplr(), i, szTB);
                 lpsz = szTB;
-                dx = LOWORD(GetTextExtent(hdc, lpsz, strlen(lpsz)));
+                dx = LOWORD(GetTextExtent(hdc, lpsz, std::strlen(lpsz)));
                 dxL = dxL <= dx ? dx : dxL;
                 c = win32::wsprintfA(app.state.szWork, app.state.PCTD, app.lpui->GlobalPD.lpfl->rgcsh[i]);
                 dx = LOWORD(GetTextExtent(hdc, app.state.szWork, c));
                 dxR = dxR <= dx ? dx : dxR;
                 if (app.lpui->GlobalPD.fRedDamage && (app.lpui->GlobalPD.lpfl->rgdv[i].dp >> 7 & 0x1ff) && dxDamage == 0) {
                     psz = TextIO().pfnCompressed(app, idsN9999999);
-                    dxDamage = LOWORD(GetTextExtent(hdc, psz, strlen(psz))) + 4;
+                    dxDamage = LOWORD(GetTextExtent(hdc, psz, std::strlen(psz))) + 4;
                 }
             }
         }
         if (dy == app.state.dyArial8 + 8) {
             psz = TextIO().pfnCompressed(app, idsShipName);
-            dxL = LOWORD(GetTextExtent(hdc, psz, strlen(psz)));
+            dxL = LOWORD(GetTextExtent(hdc, psz, std::strlen(psz)));
         }
         app.lpui->GlobalPD.dxDamage = dxDamage;
         dx = dxL + dxR + 16 + dxDamage;
@@ -326,10 +326,10 @@ void Popup(APPSESSION &app, HWND hwnd, int16_t x, int16_t y) {
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
         dy = app.state.dyArial8 * 4 + 8;
         psz = TextIO().pfnCompressed(app, idsPlanet);
-        dx = LOWORD(GetTextExtent(hdc, psz, strlen(psz))) + 8;
+        dx = LOWORD(GetTextExtent(hdc, psz, std::strlen(psz))) + 8;
         psz = TextIO().pfnPlanetName(app, app.state.sel.scan.idpl);
         win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
-        dxName = LOWORD(GetTextExtent(hdc, psz, strlen(psz)));
+        dxName = LOWORD(GetTextExtent(hdc, psz, std::strlen(psz)));
         dxCoord = LOWORD(GetTextExtent(hdc, TextIO().pfnCompressed(app, idsN9999), 4));
         dx += dxName <= dxCoord ? dxCoord : dxName;
         break;
@@ -388,19 +388,19 @@ void Popup(APPSESSION &app, HWND hwnd, int16_t x, int16_t y) {
     return;
 }
 
-int16_t PopupMenu(APPSESSION &app, HWND hwnd, int16_t x, int16_t y, int16_t cString, int32_t *rgids, const char *const *rgsz, int16_t iChecked, int16_t fRightBtn) {
+std::int16_t PopupMenu(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16_t y, std::int16_t cString, std::int32_t *rgids, const char *const *rgsz, std::int16_t iChecked, std::int16_t fRightBtn) {
     const char *pszTitle;
-    int16_t tpm;
+    std::int16_t tpm;
     POINT16 pt;
-    int16_t i;
+    std::int16_t i;
     char    szTemp[128];
     HMENU   hmenuSub;
     HMENU   hmenuPopup;
     char   *pszT;
     const char   *psz;
     win32::MSG     msg;
-    int16_t fChecked;
-    int16_t fCheckedCur;
+    std::int16_t fChecked;
+    std::int16_t fCheckedCur;
 
     hmenuSub = 0;
     pt.x = x;
@@ -491,19 +491,19 @@ int16_t PopupMenu(APPSESSION &app, HWND hwnd, int16_t x, int16_t y, int16_t cStr
     return app.lpui->iPopMenuSel;
 }
 
-POINT16 PtDisplayPlanetStateInfo(APPSESSION &app, HDC hdc, int16_t fPrint) {
+POINT16 PtDisplayPlanetStateInfo(APPSESSION &app, HDC hdc, std::int16_t fPrint) {
     POINT16  pt;
-    int16_t  y;
-    int16_t  xMax;
-    int16_t  cch;
-    int16_t  x;
-    int16_t  iNewVal;
+    std::int16_t  y;
+    std::int16_t  xMax;
+    std::int16_t  cch;
+    std::int16_t  x;
+    std::int16_t  iNewVal;
     PLANET  *lppl;
-    int16_t  pctDesireOld;
-    int16_t  pctDesire;
-    int16_t  iValSav;
+    std::int16_t  pctDesireOld;
+    std::int16_t  pctDesire;
+    std::int16_t  iValSav;
     StringId ids;
-    int16_t  dChg;
+    std::int16_t  dChg;
     char     szOut[90];
 
     y = 4;
@@ -632,7 +632,7 @@ POINT16 PtDisplayPlanetStateInfo(APPSESSION &app, HDC hdc, int16_t fPrint) {
         } else if (app.lpui->GlobalPD.iPlanVal > app.lpui->GlobalPD.iPlrMax) {
             dChg = app.lpui->GlobalPD.iPlanVal - app.lpui->GlobalPD.iPlrMax;
         } else {
-            dChg = -abs(app.lpui->GlobalPD.iPlanVal - app.lpui->GlobalPD.iPlrVal);
+            dChg = -std::abs(app.lpui->GlobalPD.iPlanVal - app.lpui->GlobalPD.iPlrVal);
         }
         if (dChg < 0) {
             dChg = -dChg;
@@ -653,18 +653,18 @@ POINT16 PtDisplayPlanetStateInfo(APPSESSION &app, HDC hdc, int16_t fPrint) {
     return pt;
 }
 
-POINT16 PtDisplayPlanetPopInfo(APPSESSION &app, HDC hdc, int16_t fPrint) {
+POINT16 PtDisplayPlanetPopInfo(APPSESSION &app, HDC hdc, std::int16_t fPrint) {
     PLANET  pl;
     char    szT[150];
     POINT16 pt;
-    int16_t y;
-    int16_t xMax;
-    int16_t c;
+    std::int16_t y;
+    std::int16_t xMax;
+    std::int16_t c;
     char   *psz;
-    int32_t lMax;
-    int16_t pctDesire;
-    int16_t x;
-    int32_t lPopChg;
+    std::int32_t lMax;
+    std::int16_t pctDesire;
+    std::int16_t x;
+    std::int32_t lPopChg;
 
     y = 4;
     xMax = 4;
@@ -724,7 +724,7 @@ POINT16 PtDisplayPlanetPopInfo(APPSESSION &app, HDC hdc, int16_t fPrint) {
         win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
         DxStreamTextOut(hdc, &x, y, TextIO().pfnCompressed(app, idsWillKillOffApproximately), 0, fPrint);
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-        c = win32::wsprintfA(app.state.szWork, app.state.PCTDXPCTDPCTPCT, static_cast<int16_t>(-pctDesire) / 10, static_cast<int16_t>(-pctDesire) % 10);
+        c = win32::wsprintfA(app.state.szWork, app.state.PCTDXPCTDPCTPCT, static_cast<std::int16_t>(-pctDesire) / 10, static_cast<std::int16_t>(-pctDesire) % 10);
         DxStreamTextOut(hdc, &x, y, app.state.szWork, c, fPrint);
         win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
         DxStreamTextOut(hdc, &x, y, TextIO().pfnCompressed(app, idsOf), 0, fPrint);
@@ -820,12 +820,12 @@ AfterDesire:
     return pt;
 }
 
-POINT16 PtDisplayZipOrdInfo(APPSESSION &app, HDC hdc, int16_t xCtr, int16_t fPrint) {
+POINT16 PtDisplayZipOrdInfo(APPSESSION &app, HDC hdc, std::int16_t xCtr, std::int16_t fPrint) {
     POINT16 pt;
-    int16_t y;
-    int16_t xMax;
+    std::int16_t y;
+    std::int16_t xMax;
     char   *psz;
-    int16_t x;
+    std::int16_t x;
 
     y = 4;
     xMax = 4;
@@ -833,7 +833,7 @@ POINT16 PtDisplayZipOrdInfo(APPSESSION &app, HDC hdc, int16_t xCtr, int16_t fPri
     win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
     if (fPrint) {
         psz = TextIO().pfnCompressed(app, idsZipord);
-        CtrTextOut(hdc, xCtr, y, psz, strlen(psz));
+        CtrTextOut(hdc, xCtr, y, psz, std::strlen(psz));
     }
     y += app.state.dyArial8;
     win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
@@ -902,19 +902,19 @@ POINT16 PtDisplayZipOrdInfo(APPSESSION &app, HDC hdc, int16_t xCtr, int16_t fPri
     return pt;
 }
 
-POINT16 PtDisplayFactoryMineInfo(APPSESSION &app, HDC hdc, int16_t dx, int16_t fPrint) {
+POINT16 PtDisplayFactoryMineInfo(APPSESSION &app, HDC hdc, std::int16_t dx, std::int16_t fPrint) {
     const char *pszTypes;
     char     szT[40];
     POINT16  pt;
     StringId ids;
     const char *pszType;
-    int16_t  y;
-    int16_t  xMax;
-    int16_t  i;
-    int16_t  c;
+    std::int16_t  y;
+    std::int16_t  xMax;
+    std::int16_t  i;
+    std::int16_t  c;
     char    *psz;
-    int16_t  cnt;
-    int16_t  x;
+    std::int16_t  cnt;
+    std::int16_t  x;
 
     ids = idsHave;
     dx -= 8;
@@ -978,16 +978,16 @@ LDone:
     return pt;
 }
 
-POINT16 PtDisplayResourceInfo(APPSESSION &app, HDC hdc, int16_t dx, int16_t fPrint) {
-    int16_t  iMax;
+POINT16 PtDisplayResourceInfo(APPSESSION &app, HDC hdc, std::int16_t dx, std::int16_t fPrint) {
+    std::int16_t  iMax;
     POINT16  pt;
     StringId ids;
-    int16_t  y;
-    int16_t  xMax;
-    int16_t  i;
+    std::int16_t  y;
+    std::int16_t  xMax;
+    std::int16_t  i;
     char    *psz;
-    int16_t  cnt;
-    int16_t  x;
+    std::int16_t  cnt;
+    std::int16_t  x;
 
     iMax = (RaceQueryIO().pfnStat(&app.state.rgplr[app.state.idPlayer], rsMajorAdv) == raMacintosh) + 8;
     ids = idsGenerates;
@@ -998,7 +998,7 @@ POINT16 PtDisplayResourceInfo(APPSESSION &app, HDC hdc, int16_t dx, int16_t fPri
     win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
     if (fPrint) {
         psz = TextIO().pfnCompressed(app, idsResourceInfo);
-        CtrTextOut(hdc, dx >> 1, y, psz, strlen(psz));
+        CtrTextOut(hdc, dx >> 1, y, psz, std::strlen(psz));
     }
     y += app.state.dyArial8 + 4;
     for (i = 0; i <= iMax; i++) {
@@ -1044,11 +1044,11 @@ OutOfFor:
     return pt;
 }
 
-POINT16 PtDisplayString(APPSESSION &app, HDC hdc, int16_t dx, int16_t fPrint) {
+POINT16 PtDisplayString(APPSESSION &app, HDC hdc, std::int16_t dx, std::int16_t fPrint) {
     POINT16 pt;
-    int16_t y;
-    int16_t xMax;
-    int16_t x;
+    std::int16_t y;
+    std::int16_t xMax;
+    std::int16_t x;
 
     dx -= 8;
     xMax = 4;

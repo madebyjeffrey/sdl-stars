@@ -1,6 +1,6 @@
 #ifndef STARS_ERRORS_H
 #define STARS_ERRORS_H
-#include <stdint.h>
+#include <cstdint>
 #include <type_traits>
 int FStarsRecoveryActive(void);
 int FStarsErrorPending(void);
@@ -9,7 +9,7 @@ int FStarsErrorPending(void);
 enum StarsErrorKind { starsErrorMemory, starsErrorFile };
 struct StarsError {
     StarsErrorKind mdError;
-    uint16_t ids;
+    std::uint16_t ids;
 };
 
 // A scope records whether validation has an enclosing recovery operation;
@@ -33,7 +33,7 @@ public:
     StarsPrimaryErrorScope &operator=(const StarsPrimaryErrorScope &) = delete;
 };
 
-[[noreturn]] void StarsThrowError(StarsErrorKind mdError, uint16_t ids);
+[[noreturn]] void StarsThrowError(StarsErrorKind mdError, std::uint16_t ids);
 void StarsCapturePendingError() noexcept;
 void StarsRethrowPendingError();
 

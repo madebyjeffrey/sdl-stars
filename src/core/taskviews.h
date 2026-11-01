@@ -1,14 +1,14 @@
 #ifndef STARS_TASKVIEWS_H
 #define STARS_TASKVIEWS_H
 
-#include <stdint.h>
+#include <cstdint>
 #include <type_traits>
 
 // These call-scoped aliases refer to real task words. They carry no storage in
 // ORDER and copy values on assignment, never reference bindings.
 template<class T>
 struct NATIVETASKLAYMINESVIEW {
-    static_assert(std::is_same_v<std::remove_const_t<T>, uint16_t>);
+    static_assert(std::is_same_v<std::remove_const_t<T>, std::uint16_t>);
     T &cTime;
     T &cTimeOld;
     NATIVETASKLAYMINESVIEW(T &cTime, T &cTimeOld) noexcept : cTime(cTime), cTimeOld(cTimeOld) {}
@@ -23,8 +23,8 @@ struct NATIVETASKLAYMINESVIEW {
 private:
     template<class U>
     NATIVETASKLAYMINESVIEW &Assign(const NATIVETASKLAYMINESVIEW<U> &other) noexcept {
-        uint16_t cTimeNew = other.cTime;
-        uint16_t cTimeOldNew = other.cTimeOld;
+        std::uint16_t cTimeNew = other.cTime;
+        std::uint16_t cTimeOldNew = other.cTimeOld;
         cTime = cTimeNew;
         cTimeOld = cTimeOldNew;
         return *this;
@@ -33,7 +33,7 @@ private:
 
 template<class T>
 struct NATIVETASKPATROLVIEW {
-    static_assert(std::is_same_v<std::remove_const_t<T>, uint16_t>);
+    static_assert(std::is_same_v<std::remove_const_t<T>, std::uint16_t>);
     T &iWarp;
     T &iDist;
     NATIVETASKPATROLVIEW(T &iWarp, T &iDist) noexcept : iWarp(iWarp), iDist(iDist) {}
@@ -48,8 +48,8 @@ struct NATIVETASKPATROLVIEW {
 private:
     template<class U>
     NATIVETASKPATROLVIEW &Assign(const NATIVETASKPATROLVIEW<U> &other) noexcept {
-        uint16_t iWarpNew = other.iWarp;
-        uint16_t iDistNew = other.iDist;
+        std::uint16_t iWarpNew = other.iWarp;
+        std::uint16_t iDistNew = other.iDist;
         iWarp = iWarpNew;
         iDist = iDistNew;
         return *this;
@@ -58,7 +58,7 @@ private:
 
 template<class T>
 struct NATIVETASKSELLVIEW {
-    static_assert(std::is_same_v<std::remove_const_t<T>, uint16_t>);
+    static_assert(std::is_same_v<std::remove_const_t<T>, std::uint16_t>);
     T &iPlrX;
     NATIVETASKSELLVIEW(T &iPlrX) noexcept : iPlrX(iPlrX) {}
     NATIVETASKSELLVIEW(const NATIVETASKSELLVIEW &) = default;
@@ -72,7 +72,7 @@ struct NATIVETASKSELLVIEW {
 private:
     template<class U>
     NATIVETASKSELLVIEW &Assign(const NATIVETASKSELLVIEW<U> &other) noexcept {
-        uint16_t iPlrXNew = other.iPlrX;
+        std::uint16_t iPlrXNew = other.iPlrX;
         iPlrX = iPlrXNew;
         return *this;
     }

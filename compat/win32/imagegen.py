@@ -73,14 +73,14 @@ def generate(root, output):
         name = 'nullptr' if isinstance(identity, int) else f'"{identity}"'
         ordinal = identity if isinstance(identity, int) else 0
         source += [f'    {{{name}, {ordinal}, rgbImageResource{i}, sizeof(rgbImageResource{i}), {type_}}},']
-    source += ['};', 'constinit const size_t cCompatImageResources = sizeof(rgCompatImageResources) / sizeof(rgCompatImageResources[0]);']
+    source += ['};', 'constinit const std::size_t cCompatImageResources = sizeof(rgCompatImageResources) / sizeof(rgCompatImageResources[0]);']
     source += ['/* Desktop identity is separate from the original in-game icon resources. */']
     for condition, filename in (('#ifdef __APPLE__', 'stars-app-macos.png'), ('#else', 'stars-app.png')):
         app_icon = (root / 'res/icons' / filename).read_bytes()
         source += [condition, 'constinit const BYTE rgbCompatAppIcon[] = {']
         source += ['    ' + ','.join(f'0x{x:02x}' for x in app_icon[j:j+32]) + ',' for j in range(0, len(app_icon), 32)]
         source += ['};']
-    source += ['#endif', 'constinit const size_t cbCompatAppIcon = sizeof(rgbCompatAppIcon);']
+    source += ['#endif', 'constinit const std::size_t cbCompatAppIcon = sizeof(rgbCompatAppIcon);']
     for i, (_, _, _, data) in enumerate(images):
         manifest += [f'static const BYTE rgbImageExpected{i}[] = {{']
         manifest += ['    ' + ','.join(f'0x{x:02x}' for x in data[j:j+32]) + ',' for j in range(0, len(data), 32)]

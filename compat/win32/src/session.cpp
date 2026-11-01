@@ -1,6 +1,6 @@
 /* Desktop logoff is an explicit platform difference, not a successful no-op. */
 #include <wincompat_calls.h>
-#include <stdio.h>
+#include <cstdio>
 
 BOOL win32::ExitWindowsEx(UINT uFlags, DWORD dwReason) {
     static_cast<void>(uFlags);
@@ -11,7 +11,7 @@ BOOL win32::ExitWindowsEx(UINT uFlags, DWORD dwReason) {
 
 BOOL ui::RequestQuit(int nExit) {
     if (!win32::ExitWindowsEx(win32::EWX_LOGOFF, UINT32_MAX)) {
-        fprintf(stderr, "stars-sdl: desktop logoff is unsupported; exiting Stars only\n");
+        std::fprintf(stderr, "stars-sdl: desktop logoff is unsupported; exiting Stars only\n");
         win32::PostQuitMessage(nExit);
         return 0;
     }

@@ -9,9 +9,9 @@
 #include "part_query_io.h"
 #include "race_query_io.h"
 
-int16_t FGetBestDefensePart(APPSESSION &app, PART *ppart) {
-    int16_t fRet;
-    int16_t i;
+std::int16_t FGetBestDefensePart(APPSESSION &app, PART *ppart) {
+    std::int16_t fRet;
+    std::int16_t i;
     PART    part;
 
     fRet = 1;
@@ -33,10 +33,10 @@ int16_t FGetBestDefensePart(APPSESSION &app, PART *ppart) {
     return fRet;
 }
 
-char *PszProductionETA(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod, ProdItemType iItem, int16_t *etaFirst, int16_t *etaLast) {
-    int16_t  iTurnEnd;
-    int16_t  iTurnBegin;
-    int16_t  c;
+char *PszProductionETA(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod, ProdItemType iItem, std::int16_t *etaFirst, std::int16_t *etaLast) {
+    std::int16_t  iTurnEnd;
+    std::int16_t  iTurnBegin;
+    std::int16_t  c;
     StringId ids;
 
     if (!lpplprod) {
@@ -44,7 +44,7 @@ char *PszProductionETA(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod, ProdItem
     }
     ResearchIO().pfnEstimate(app, lppl, lpplprod, iItem, &iTurnBegin, &iTurnEnd);
     if (iTurnBegin == 100) {
-        if (lpplprod && lpplprod->iprodMac > static_cast<int16_t>(iItem) && lpplprod->rgprod()[iItem].grobj == grobjPlanet && lpplprod->rgprod()[iItem].iItem < mdIdleFactory) {
+        if (lpplprod && lpplprod->iprodMac > static_cast<std::int16_t>(iItem) && lpplprod->rgprod()[iItem].grobj == grobjPlanet && lpplprod->rgprod()[iItem].iItem < mdIdleFactory) {
             ids = idsUnknown2;
         } else {
             ids = idsNever;
@@ -77,10 +77,10 @@ char *PszProductionETA(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod, ProdItem
     return app.state.szWork;
 }
 
-void ChangeMainObjSel(APPSESSION &app, GrobjClass grobjNew, int16_t iObjSel) {
-    int16_t fSameType;
-    int16_t idSkip;
-    int16_t i;
+void ChangeMainObjSel(APPSESSION &app, GrobjClass grobjNew, std::int16_t iObjSel) {
+    std::int16_t fSameType;
+    std::int16_t idSkip;
+    std::int16_t i;
     FLEET  *lpfl;
 
     idSkip = idflNone;
@@ -137,12 +137,12 @@ void ChangeMainObjSel(APPSESSION &app, GrobjClass grobjNew, int16_t iObjSel) {
     return;
 }
 
-void SelectAdjPlanet(APPSESSION &app, int16_t dInc, int16_t idPlanet) {
+void SelectAdjPlanet(APPSESSION &app, std::int16_t dInc, std::int16_t idPlanet) {
     PLANET *lpPlT;
-    int16_t i;
+    std::int16_t i;
     PLANET *lpPl;
     SCAN    scan;
-    int16_t fWrap;
+    std::int16_t fWrap;
 
     fWrap = 0;
     if (app.state.cPlanet > 0 && idPlanet != idplNone) {
@@ -192,13 +192,13 @@ void SelectAdjPlanet(APPSESSION &app, int16_t dInc, int16_t idPlanet) {
     return;
 }
 
-int16_t IdFindAdjStarbase(APPSESSION &app, int16_t idPlanet, int16_t fNext) {
+std::int16_t IdFindAdjStarbase(APPSESSION &app, std::int16_t idPlanet, std::int16_t fNext) {
     PLANET *lpplMac;
-    int16_t idLast;
-    int16_t idFirst;
+    std::int16_t idLast;
+    std::int16_t idFirst;
     PLANET *lppl;
-    int16_t idAfter;
-    int16_t idBefore;
+    std::int16_t idAfter;
+    std::int16_t idBefore;
 
     idLast = idplNone;
     idFirst = idplNone;
@@ -233,19 +233,19 @@ int16_t IdFindAdjStarbase(APPSESSION &app, int16_t idPlanet, int16_t fNext) {
     return idBefore;
 }
 
-int16_t IBestTerraform(APPSESSION &app, PLANET *lppl, int16_t fHelp) {
-    int16_t iSave;
-    int16_t iBest;
-    int16_t rgMax[3];
-    int16_t pctT;
-    int16_t i;
-    int16_t iPlr;
-    int16_t iEnv;
-    int16_t pctCur;
-    int16_t rgMin[3];
-    int16_t rgpctBest[3];
-    int16_t rgCost[3];
-    int16_t iPlrSav;
+std::int16_t IBestTerraform(APPSESSION &app, PLANET *lppl, std::int16_t fHelp) {
+    std::int16_t iSave;
+    std::int16_t iBest;
+    std::int16_t rgMax[3];
+    std::int16_t pctT;
+    std::int16_t i;
+    std::int16_t iPlr;
+    std::int16_t iEnv;
+    std::int16_t pctCur;
+    std::int16_t rgMin[3];
+    std::int16_t rgpctBest[3];
+    std::int16_t rgCost[3];
+    std::int16_t iPlrSav;
 
     iPlrSav = app.state.idPlayer;
     iPlr = lppl->iPlayer;
@@ -273,7 +273,7 @@ int16_t IBestTerraform(APPSESSION &app, PLANET *lppl, int16_t fHelp) {
         if (pctT < 0) {
             pctT = -pctT;
         }
-        rgpctBest[i] = static_cast<int16_t>((100 * pctT)) / abs(iSave - iEnv) + 1;
+        rgpctBest[i] = static_cast<std::int16_t>((100 * pctT)) / std::abs(iSave - iEnv) + 1;
         lppl->rgEnvVar[i] = iSave;
     }
     iSave = 0;
@@ -291,7 +291,7 @@ int16_t IBestTerraform(APPSESSION &app, PLANET *lppl, int16_t fHelp) {
     return iBest;
 }
 
-char *PszCalcEnvVar(APPSESSION &app, EnvType iEnv, int16_t iVar) {
+char *PszCalcEnvVar(APPSESSION &app, EnvType iEnv, std::int16_t iVar) {
     switch (iEnv) {
     case Gravity:
     default:
@@ -305,11 +305,11 @@ char *PszCalcEnvVar(APPSESSION &app, EnvType iEnv, int16_t iVar) {
     return app.state.szWork;
 }
 
-char *PszCalcGravity(APPSESSION &app, int16_t iGravity) {
-    int16_t d;
-    int16_t iVal;
+char *PszCalcGravity(APPSESSION &app, std::int16_t iGravity) {
+    std::int16_t d;
+    std::int16_t iVal;
 
-    d = abs(iGravity - 50);
+    d = std::abs(iGravity - 50);
     if (d <= 25) {
         iVal = d * 4 + 100;
     } else {
@@ -322,29 +322,29 @@ char *PszCalcGravity(APPSESSION &app, int16_t iGravity) {
     return app.state.szWork;
 }
 
-int16_t PctPlanetCapacity(APPSESSION &app, PLANET *lppl) {
-    int32_t pctCap;
-    int32_t lPopMax;
+std::int16_t PctPlanetCapacity(APPSESSION &app, PLANET *lppl) {
+    std::int32_t pctCap;
+    std::int32_t lPopMax;
 
     lPopMax = CalcPlanetMaxPop(app, lppl->id, app.state.idPlayer);
     if (lPopMax <= 0) {
         return 0;
     }
-    pctCap = static_cast<int32_t>((static_cast<int32_t>((static_cast<uint32_t>((lppl->rgwtMin[3] * 100)) + static_cast<int32_t>((lPopMax / 2)))) / lPopMax));
+    pctCap = static_cast<std::int32_t>((static_cast<std::int32_t>((static_cast<std::uint32_t>((lppl->rgwtMin[3] * 100)) + static_cast<std::int32_t>((lPopMax / 2)))) / lPopMax));
     if (pctCap >= 1000) {
         pctCap = 999;
     }
     return LOWORD(pctCap);
 }
 
-int16_t PctPlanetOptValue(APPSESSION &app, PLANET *lppl, int16_t iPlr) {
-    int16_t rgMax[3];
-    int16_t i;
-    int16_t rgMin[3];
-    int16_t pctDesire;
-    int16_t rgCost[3];
-    int16_t rgiValSav[3];
-    int16_t iNewVal;
+std::int16_t PctPlanetOptValue(APPSESSION &app, PLANET *lppl, std::int16_t iPlr) {
+    std::int16_t rgMax[3];
+    std::int16_t i;
+    std::int16_t rgMin[3];
+    std::int16_t pctDesire;
+    std::int16_t rgCost[3];
+    std::int16_t rgiValSav[3];
+    std::int16_t iNewVal;
 
     if (!ColonyIO().pfnCanTerraform(app, lppl, rgMin, rgMax, rgCost, 1)) {
         return PlanetQueryIO().pfnDesirability(app, lppl, iPlr);
@@ -372,18 +372,18 @@ int16_t PctPlanetOptValue(APPSESSION &app, PLANET *lppl, int16_t iPlr) {
     return pctDesire;
 }
 
-int16_t PctPlanetDesirability(APPSESSION &app, PLANET *lppl, int16_t iPlr) {
-    int16_t iMin;
-    int16_t d;
-    int16_t iMax;
-    int32_t pctNeg;
-    int16_t iPref;
-    int16_t i;
-    int16_t dPenalty;
-    int32_t pctPos;
-    int16_t pctVar;
-    int16_t iPlanet;
-    int32_t pctMod;
+std::int16_t PctPlanetDesirability(APPSESSION &app, PLANET *lppl, std::int16_t iPlr) {
+    std::int16_t iMin;
+    std::int16_t d;
+    std::int16_t iMax;
+    std::int32_t pctNeg;
+    std::int16_t iPref;
+    std::int16_t i;
+    std::int16_t dPenalty;
+    std::int32_t pctPos;
+    std::int16_t pctVar;
+    std::int16_t iPlanet;
+    std::int32_t pctMod;
 
     pctPos = 0;
     pctNeg = 0;
@@ -396,7 +396,7 @@ int16_t PctPlanetDesirability(APPSESSION &app, PLANET *lppl, int16_t iPlr) {
         if (iMax < 0) {
             pctPos += 10000;
         } else if (iPlanet >= iMin && iPlanet <= iMax) {
-            pctVar = abs(iPlanet - iPref) * 100;
+            pctVar = std::abs(iPlanet - iPref) * 100;
             if (iPlanet < iPref) {
                 d = iPref - iMin;
                 pctVar /= d;
@@ -407,30 +407,30 @@ int16_t PctPlanetDesirability(APPSESSION &app, PLANET *lppl, int16_t iPlr) {
                 dPenalty = (iPlanet - iPref) * 2 - d;
             }
             pctVar = 100 - pctVar;
-            pctPos += static_cast<uint32_t>((pctVar * pctVar));
+            pctPos += static_cast<std::uint32_t>((pctVar * pctVar));
             if (dPenalty > 0) {
-                pctMod = static_cast<uint32_t>((pctMod * static_cast<int16_t>((d * 2 - dPenalty))));
-                pctMod = static_cast<int32_t>((pctMod / static_cast<int16_t>((d * 2))));
+                pctMod = static_cast<std::uint32_t>((pctMod * static_cast<std::int16_t>((d * 2 - dPenalty))));
+                pctMod = static_cast<std::int32_t>((pctMod / static_cast<std::int16_t>((d * 2))));
             }
         } else if (iPlanet < iMin) {
-            pctNeg += 15 >= iMin - iPlanet ? static_cast<int16_t>((iMin - iPlanet)) : 15;
+            pctNeg += 15 >= iMin - iPlanet ? static_cast<std::int16_t>((iMin - iPlanet)) : 15;
         } else {
-            pctNeg += 15 >= iPlanet - iMax ? static_cast<int16_t>((iPlanet - iMax)) : 15;
+            pctNeg += 15 >= iPlanet - iMax ? static_cast<std::int16_t>((iPlanet - iMax)) : 15;
         }
     }
     if (pctNeg != 0) {
         return -LOWORD(pctNeg);
     }
-    pctPos = static_cast<int32_t>((static_cast<double>(sqrt(static_cast<double>((static_cast<double>(pctPos) / 3.0)))) + 0.9));
-    pctPos = static_cast<int32_t>((pctPos * pctMod)) / 10000;
+    pctPos = static_cast<std::int32_t>((static_cast<double>(std::sqrt(static_cast<double>((static_cast<double>(pctPos) / 3.0)))) + 0.9));
+    pctPos = static_cast<std::int32_t>((pctPos * pctMod)) / 10000;
     return LOWORD(pctPos);
 }
 
-int32_t CalcPlanetMaxPop(APPSESSION &app, int16_t idpl, int16_t iplr) {
+std::int32_t CalcPlanetMaxPop(APPSESSION &app, std::int16_t idpl, std::int16_t iplr) {
     PLANET  pl;
-    int32_t lMaxPop;
-    int32_t pctDesire;
-    int16_t ihuldef;
+    std::int32_t lMaxPop;
+    std::int32_t pctDesire;
+    std::int16_t ihuldef;
 
     PlanetQueryIO().pfnLookup(app, idpl, &pl);
     if (RaceQueryIO().pfnStat(&app.state.rgplr[iplr], rsMajorAdv) == raMacintosh) {
@@ -444,28 +444,28 @@ int32_t CalcPlanetMaxPop(APPSESSION &app, int16_t idpl, int16_t iplr) {
         if (pctDesire < 5) {
             lMaxPop = 500;
         } else {
-            lMaxPop = static_cast<uint32_t>((pctDesire * 100));
+            lMaxPop = static_cast<std::uint32_t>((pctDesire * 100));
         }
         if (RaceQueryIO().pfnStat(&app.state.rgplr[iplr], rsMajorAdv) == raCheapCol) {
-            lMaxPop -= static_cast<int32_t>((lMaxPop / 2));
+            lMaxPop -= static_cast<std::int32_t>((lMaxPop / 2));
         } else if (RaceQueryIO().pfnStat(&app.state.rgplr[iplr], rsMajorAdv) == raNone) {
-            lMaxPop += static_cast<int32_t>((lMaxPop / 5));
+            lMaxPop += static_cast<std::int32_t>((lMaxPop / 5));
         }
     }
     if (RaceQueryIO().pfnGrbit(&app.state.rgplr[iplr], ibitRaceOBRM) != 0) {
-        lMaxPop += static_cast<int32_t>((lMaxPop / 10));
+        lMaxPop += static_cast<std::int32_t>((lMaxPop / 10));
     }
     return lMaxPop;
 }
 
-int16_t CMaxMines(APPSESSION &app, PLANET *lppl, int16_t iplr) {
-    int32_t cMax;
-    int32_t lPopMax;
-    int16_t iEff;
+std::int16_t CMaxMines(APPSESSION &app, PLANET *lppl, std::int16_t iplr) {
+    std::int32_t cMax;
+    std::int32_t lPopMax;
+    std::int16_t iEff;
 
     lPopMax = CalcPlanetMaxPop(app, lppl->id, iplr);
     iEff = RaceQueryIO().pfnStat(&app.state.rgplr[iplr], rsMineOperate);
-    cMax = static_cast<int32_t>((lPopMax * iEff)) / 100;
+    cMax = static_cast<std::int32_t>((lPopMax * iEff)) / 100;
     if (cMax < 10) {
         cMax = 10;
     }
@@ -475,11 +475,11 @@ int16_t CMaxMines(APPSESSION &app, PLANET *lppl, int16_t iplr) {
     return LOWORD(cMax);
 }
 
-int16_t CMaxOperableMines(APPSESSION &app, PLANET *lppl, int16_t iplr, int16_t fNextYear) {
-    int16_t cMax;
-    int32_t cCur;
-    int32_t lPop;
-    int16_t iEff;
+std::int16_t CMaxOperableMines(APPSESSION &app, PLANET *lppl, std::int16_t iplr, std::int16_t fNextYear) {
+    std::int16_t cMax;
+    std::int32_t cCur;
+    std::int32_t lPop;
+    std::int16_t iEff;
 
     cMax = ColonyIO().pfnMaxMines(app, lppl, iplr);
     iEff = RaceQueryIO().pfnStat(&app.state.rgplr[iplr], rsMineOperate);
@@ -487,7 +487,7 @@ int16_t CMaxOperableMines(APPSESSION &app, PLANET *lppl, int16_t iplr, int16_t f
     if (fNextYear) {
         lPop += PlanetQueryIO().pfnGrowth(app, lppl, 0);
     }
-    cCur = static_cast<int32_t>((lPop * iEff)) / 100;
+    cCur = static_cast<std::int32_t>((lPop * iEff)) / 100;
     cMax = cMax < cCur ? cMax : LOWORD(cCur);
     if (cMax <= 0) {
         cMax = 1;
@@ -500,22 +500,22 @@ int16_t CMaxOperableMines(APPSESSION &app, PLANET *lppl, int16_t iplr, int16_t f
 
 // Keep the expression and its existing integer conversion separate from the
 // optional diagnostic receipt. The observer cannot substitute a numeric value.
-int32_t LFromPlanetValue(double dValue) {
+std::int32_t LFromPlanetValue(double dValue) {
     if (PlanetQueryIO().pfnTruncate) PlanetQueryIO().pfnTruncate(dValue);
-    return static_cast<int32_t>(dValue);
+    return static_cast<std::int32_t>(dValue);
 }
 
-int16_t CMinesOperating(APPSESSION &app, PLANET *lppl) {
-    int16_t iplr;
-    int16_t cMinesOp;
-    int16_t cMines;
+std::int16_t CMinesOperating(APPSESSION &app, PLANET *lppl) {
+    std::int16_t iplr;
+    std::int16_t cMinesOp;
+    std::int16_t cMines;
 
     iplr = lppl->iPlayer;
     if (iplr == iplrNone) {
         return 0;
     }
     if (RaceQueryIO().pfnStat(&app.state.rgplr[iplr], rsMajorAdv) == raMacintosh) {
-        return LOWORD(LFromPlanetValue(sqrt(static_cast<double>(lppl->rgwtMin[3]))));
+        return LOWORD(LFromPlanetValue(std::sqrt(static_cast<double>(lppl->rgwtMin[3]))));
     }
     cMines = lppl->cMines;
     cMinesOp = ColonyIO().pfnOperableMines(app, lppl, lppl->iPlayer, 0);
@@ -525,10 +525,10 @@ int16_t CMinesOperating(APPSESSION &app, PLANET *lppl) {
     return cMines;
 }
 
-int16_t CFactoriesOperating(APPSESSION &app, PLANET *lppl) {
-    int16_t iplr;
-    int16_t cFacts;
-    int16_t cFactsOp;
+std::int16_t CFactoriesOperating(APPSESSION &app, PLANET *lppl) {
+    std::int16_t iplr;
+    std::int16_t cFacts;
+    std::int16_t cFactsOp;
 
     iplr = lppl->iPlayer;
     if (iplr == iplrNone) {
@@ -545,14 +545,14 @@ int16_t CFactoriesOperating(APPSESSION &app, PLANET *lppl) {
     return cFacts;
 }
 
-int16_t CMaxFactories(APPSESSION &app, PLANET *lppl, int16_t iplr) {
-    int32_t cMax;
-    int32_t lPopMax;
-    int16_t iEff;
+std::int16_t CMaxFactories(APPSESSION &app, PLANET *lppl, std::int16_t iplr) {
+    std::int32_t cMax;
+    std::int32_t lPopMax;
+    std::int16_t iEff;
 
     lPopMax = CalcPlanetMaxPop(app, lppl->id, iplr);
     iEff = RaceQueryIO().pfnStat(&app.state.rgplr[iplr], rsFactOperate);
-    cMax = static_cast<int32_t>((lPopMax * iEff)) / 100;
+    cMax = static_cast<std::int32_t>((lPopMax * iEff)) / 100;
     if (cMax < 10) {
         cMax = 10;
     }
@@ -562,11 +562,11 @@ int16_t CMaxFactories(APPSESSION &app, PLANET *lppl, int16_t iplr) {
     return LOWORD(cMax);
 }
 
-int16_t CMaxOperableFactories(APPSESSION &app, PLANET *lppl, int16_t iplr, int16_t fNextYear) {
-    int16_t cMax;
-    int32_t cCur;
-    int32_t lPop;
-    int16_t iEff;
+std::int16_t CMaxOperableFactories(APPSESSION &app, PLANET *lppl, std::int16_t iplr, std::int16_t fNextYear) {
+    std::int16_t cMax;
+    std::int32_t cCur;
+    std::int32_t lPop;
+    std::int16_t iEff;
 
     cMax = ColonyIO().pfnMaxFactories(app, lppl, iplr);
     iEff = RaceQueryIO().pfnStat(&app.state.rgplr[iplr], rsFactOperate);
@@ -574,7 +574,7 @@ int16_t CMaxOperableFactories(APPSESSION &app, PLANET *lppl, int16_t iplr, int16
     if (fNextYear) {
         lPop += PlanetQueryIO().pfnGrowth(app, lppl, 0);
     }
-    cCur = static_cast<int32_t>((lPop * iEff)) / 100;
+    cCur = static_cast<std::int32_t>((lPop * iEff)) / 100;
     cMax = cMax < cCur ? cMax : LOWORD(cCur);
     if (cMax <= 0) {
         cMax = 1;
@@ -585,9 +585,9 @@ int16_t CMaxOperableFactories(APPSESSION &app, PLANET *lppl, int16_t iplr, int16
     return cMax;
 }
 
-int16_t CMaxDefenses(APPSESSION &app, PLANET *lppl, int16_t iplr) {
-    int16_t cMax;
-    int16_t pctDesire;
+std::int16_t CMaxDefenses(APPSESSION &app, PLANET *lppl, std::int16_t iplr) {
+    std::int16_t cMax;
+    std::int16_t pctDesire;
 
     pctDesire = PlanetQueryIO().pfnDesirability(app, lppl, iplr);
     cMax = 100 < (10 <= pctDesire * 4 ? pctDesire * 4 : 10) ? 100 : 10 > pctDesire * 4 ? 10 : pctDesire * 4;
@@ -597,35 +597,35 @@ int16_t CMaxDefenses(APPSESSION &app, PLANET *lppl, int16_t iplr) {
     return cMax;
 }
 
-int16_t CMaxOperableDefenses(APPSESSION &app, PLANET *lppl, int16_t iplr, int16_t fNextYear) {
-    int16_t cMax;
-    int32_t cCur;
-    int32_t lPop;
+std::int16_t CMaxOperableDefenses(APPSESSION &app, PLANET *lppl, std::int16_t iplr, std::int16_t fNextYear) {
+    std::int16_t cMax;
+    std::int32_t cCur;
+    std::int32_t lPop;
 
     cMax = ColonyIO().pfnMaxDefenses(app, lppl, iplr);
     lPop = lppl->rgwtMin[3];
     if (fNextYear) {
         lPop += PlanetQueryIO().pfnGrowth(app, lppl, 0);
     }
-    cCur = static_cast<int32_t>(((lPop + 24) / 25));
+    cCur = static_cast<std::int32_t>(((lPop + 24) / 25));
     if (cCur > 1000) {
         cCur = 1000;
     }
-    cMax = cMax >= static_cast<int16_t>(LOWORD(cCur)) ? LOWORD(cCur) : cMax;
+    cMax = cMax >= static_cast<std::int16_t>(LOWORD(cCur)) ? LOWORD(cCur) : cMax;
     if (RaceQueryIO().pfnStat(&app.state.rgplr[iplr], rsMajorAdv) == raMacintosh) {
         cMax = 0;
     }
     return cMax;
 }
 
-int16_t CResourcesAtPlanet(APPSESSION &app, PLANET *lppl, int16_t iplr) {
-    int16_t cRes;
-    int32_t lPop;
-    int16_t cFact;
-    int32_t lPopMax;
-    int16_t iEff;
-    int16_t pctVal;
-    int16_t iEnergy;
+std::int16_t CResourcesAtPlanet(APPSESSION &app, PLANET *lppl, std::int16_t iplr) {
+    std::int16_t cRes;
+    std::int32_t lPop;
+    std::int16_t cFact;
+    std::int32_t lPopMax;
+    std::int16_t iEff;
+    std::int16_t pctVal;
+    std::int16_t iEnergy;
 
     if (lppl->rgwtMin[3] == 0) {
         return 0;
@@ -634,9 +634,9 @@ int16_t CResourcesAtPlanet(APPSESSION &app, PLANET *lppl, int16_t iplr) {
     lPop = lppl->rgwtMin[3];
     lPopMax = CalcPlanetMaxPop(app, lppl->id, iplr);
     if (lPop > lPopMax) {
-        lPop = static_cast<int32_t>(((lPop - lPopMax) / 2)) + lPopMax;
-        if (lPop > static_cast<int32_t>((lPopMax * 2))) {
-            lPop = static_cast<int32_t>((lPopMax * 2));
+        lPop = static_cast<std::int32_t>(((lPop - lPopMax) / 2)) + lPopMax;
+        if (lPop > static_cast<std::int32_t>((lPopMax * 2))) {
+            lPop = static_cast<std::int32_t>((lPopMax * 2));
         }
     }
     if (RaceQueryIO().pfnStat(&app.state.rgplr[iplr], rsMajorAdv) == raMacintosh) {
@@ -648,16 +648,16 @@ int16_t CResourcesAtPlanet(APPSESSION &app, PLANET *lppl, int16_t iplr) {
         if (pctVal < 25) {
             pctVal = 25;
         }
-        cRes = LOWORD(LFromPlanetValue(static_cast<double>(sqrt(static_cast<double>((static_cast<double>(lPop) * iEnergy / iEff)))) * pctVal / 10 + 0.999));
+        cRes = LOWORD(LFromPlanetValue(static_cast<double>(std::sqrt(static_cast<double>((static_cast<double>(lPop) * iEnergy / iEff)))) * pctVal / 10 + 0.999));
         goto LFinishUp;
     }
-    cRes = LOWORD(static_cast<int32_t>((lPop / iEff)));
+    cRes = LOWORD(static_cast<std::int32_t>((lPop / iEff)));
     cFact = ColonyIO().pfnOperableFactories(app, lppl, iplr, 0);
-    if (static_cast<int32_t>(lppl->cFactories) < cFact) {
+    if (static_cast<std::int32_t>(lppl->cFactories) < cFact) {
         cFact = lppl->cFactories;
     }
     iEff = RaceQueryIO().pfnStat(&app.state.rgplr[iplr], rsFactProd);
-    cRes += LOWORD(static_cast<int32_t>((static_cast<uint32_t>((cFact * iEff)) + 9)) / 10);
+    cRes += LOWORD(static_cast<std::int32_t>((static_cast<std::uint32_t>((cFact * iEff)) + 9)) / 10);
 LFinishUp:
     if (cRes == 0) {
         cRes = 1;
@@ -665,12 +665,12 @@ LFinishUp:
     return cRes;
 }
 
-int16_t IWarpMAFromLppl(APPSESSION &app, PLANET *lppl, int16_t *pfTwo) {
-    int16_t fTwo;
-    int16_t iWarp;
-    int16_t i;
+std::int16_t IWarpMAFromLppl(APPSESSION &app, PLANET *lppl, std::int16_t *pfTwo) {
+    std::int16_t fTwo;
+    std::int16_t iWarp;
+    std::int16_t i;
     HUL    *lphul;
-    int16_t iNew;
+    std::int16_t iNew;
 
     iWarp = 0;
     fTwo = 0;
@@ -702,8 +702,8 @@ int16_t IWarpMAFromLppl(APPSESSION &app, PLANET *lppl, int16_t *pfTwo) {
     return iWarp;
 }
 
-int16_t StargateRangeFromLppl(APPSESSION &app, PLANET *lppl, int16_t iplr, int16_t ish) {
-    int16_t i;
+std::int16_t StargateRangeFromLppl(APPSESSION &app, PLANET *lppl, std::int16_t iplr, std::int16_t ish) {
+    std::int16_t i;
     HUL    *lphul;
     PART    part;
 
@@ -729,7 +729,7 @@ int16_t StargateRangeFromLppl(APPSESSION &app, PLANET *lppl, int16_t iplr, int16
     return 0;
 }
 
-int16_t FProdIsTerra(PROD *lpprod) {
+std::int16_t FProdIsTerra(PROD *lpprod) {
     if (lpprod->grobj == grobjPlanet) {
         switch (lpprod->iItem) {
         case mdIdleTerraform:
@@ -741,12 +741,12 @@ int16_t FProdIsTerra(PROD *lpprod) {
     return 0;
 }
 
-int16_t IpctCanTerraformLppl(APPSESSION &app, PLANET *lppl) {
-    int16_t rgMax[3];
-    int16_t i;
-    int16_t rgMin[3];
-    int16_t rgCost[3];
-    int16_t ipct;
+std::int16_t IpctCanTerraformLppl(APPSESSION &app, PLANET *lppl) {
+    std::int16_t rgMax[3];
+    std::int16_t i;
+    std::int16_t rgMin[3];
+    std::int16_t rgCost[3];
+    std::int16_t ipct;
 
     if (!ColonyIO().pfnCanTerraform(app, lppl, rgMin, rgMax, rgCost, 1)) {
         return 0;
@@ -763,16 +763,16 @@ int16_t IpctCanTerraformLppl(APPSESSION &app, PLANET *lppl) {
     return ipct;
 }
 
-int16_t FCanTerraformLppl(APPSESSION &app, PLANET *lppl, int16_t *rgEnvMin, int16_t *rgEnvMax, int16_t *rgEnvCost, int16_t fHelp) {
-    int16_t fRet;
-    int16_t i;
-    int16_t rgMove[3];
-    int16_t iPlrSav;
+std::int16_t FCanTerraformLppl(APPSESSION &app, PLANET *lppl, std::int16_t *rgEnvMin, std::int16_t *rgEnvMax, std::int16_t *rgEnvCost, std::int16_t fHelp) {
+    std::int16_t fRet;
+    std::int16_t i;
+    std::int16_t rgMove[3];
+    std::int16_t iPlrSav;
     PART    part;
-    int16_t dMin;
-    int16_t dMax;
-    int16_t dCur;
-    int16_t ienvIdeal;
+    std::int16_t dMin;
+    std::int16_t dMax;
+    std::int16_t dCur;
+    std::int16_t ienvIdeal;
 
     iPlrSav = app.state.idPlayer;
     if (app.state.idPlayer == iplrNone) {
@@ -864,14 +864,14 @@ int16_t FCanTerraformLppl(APPSESSION &app, PLANET *lppl, int16_t *rgEnvMin, int1
                 }
             } else {
                 ienvIdeal = app.state.rgplr[app.state.idPlayer].rgEnvVar[i];
-                dCur = abs(lppl->rgEnvVar[i] - ienvIdeal);
+                dCur = std::abs(lppl->rgEnvVar[i] - ienvIdeal);
                 if (rgEnvMin[i] != envNone) {
-                    dMin = abs(rgEnvMin[i] - ienvIdeal);
+                    dMin = std::abs(rgEnvMin[i] - ienvIdeal);
                 } else {
                     dMin = 0;
                 }
                 if (rgEnvMax[i] != envNone) {
-                    dMax = abs(rgEnvMax[i] - ienvIdeal);
+                    dMax = std::abs(rgEnvMax[i] - ienvIdeal);
                 } else {
                     dMax = 0;
                 }
@@ -896,7 +896,7 @@ int16_t FCanTerraformLppl(APPSESSION &app, PLANET *lppl, int16_t *rgEnvMin, int1
 }
 
 void UninhabitPlanet(APPSESSION &app, PLANET *lppl) {
-    int16_t i;
+    std::int16_t i;
 
     if (lppl->iPlayer >= 0 && RaceQueryIO().pfnStat(&app.state.rgplr[lppl->iPlayer], rsMajorAdv) == raTerra) {
         for (i = 0; i < 3; i++) {
@@ -918,16 +918,16 @@ void UninhabitPlanet(APPSESSION &app, PLANET *lppl) {
     return;
 }
 
-int16_t PctCloakFromHuldef(APPSESSION &app, HUL *lphul, int16_t iplr, int16_t *ppctSteal) {
-    int16_t chs;
+std::int16_t PctCloakFromHuldef(APPSESSION &app, HUL *lphul, std::int16_t iplr, std::int16_t *ppctSteal) {
+    std::int16_t chs;
     HS     *lphs;
-    int32_t cPts;
-    int16_t cScore;
-    int16_t j;
+    std::int32_t cPts;
+    std::int16_t cScore;
+    std::int16_t j;
 
     cPts = 0;
     chs = lphul->chs;
-    if (iplr != iplrNone && static_cast<int16_t>(lphul->ihuldef) >= ihuldefOrbitalFort && RaceQueryIO().pfnGrbit(&app.state.rgplr[iplr], ibitRaceISB) != 0) {
+    if (iplr != iplrNone && static_cast<std::int16_t>(lphul->ihuldef) >= ihuldefOrbitalFort && RaceQueryIO().pfnGrbit(&app.state.rgplr[iplr], ibitRaceISB) != 0) {
         cPts = 40;
     } else {
         cPts = 0;
@@ -986,13 +986,13 @@ int16_t PctCloakFromHuldef(APPSESSION &app, HUL *lphul, int16_t iplr, int16_t *p
 // lists it: a schedule mark, the count and the name. An item that will
 // never be built is marked '&' if fShowNever is set, or is left out
 // (FALSE). PszNameProdItem names the item in szWork.
-int16_t FProdItemLine(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod, int16_t iprod, int16_t fShowNever, char *szLine) {
+std::int16_t FProdItemLine(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod, std::int16_t iprod, std::int16_t fShowNever, char *szLine) {
     char    ch;
-    int16_t cItem;
+    std::int16_t cItem;
     char   *psz;
     PROD   *lpprod;
-    int16_t etaLast;
-    int16_t etaFirst;
+    std::int16_t etaLast;
+    std::int16_t etaFirst;
 
     lpprod = &lpplprod->rgprod()[iprod];
     psz = PszNameProdItem(app, lpprod);
@@ -1036,7 +1036,7 @@ int16_t FProdItemLine(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod, int16_t i
 char *PszProdQueueTop(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod) {
     char    szLine[80];
     char   *psz;
-    int16_t i;
+    std::int16_t i;
 
     if (!lpplprod) {
         lpplprod = lppl->lpplprod;
@@ -1044,13 +1044,13 @@ char *PszProdQueueTop(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod) {
     if (!lpplprod || lpplprod->iprodMac == 0) {
         psz = TextIO().pfnCompressed(app, idsQueueEmpty);
         if (psz != app.state.szWork) {
-            strcpy(app.state.szWork, psz);
+            std::strcpy(app.state.szWork, psz);
         }
     }
     if (lpplprod) {
         for (i = 0; i < lpplprod->iprodMac; i++) {
             if (FProdItemLine(app, lppl, lpplprod, i, 0, szLine)) {
-                strcpy(app.state.szWork, szLine);
+                std::strcpy(app.state.szWork, szLine);
                 return app.state.szWork;
             }
         }

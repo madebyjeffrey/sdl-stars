@@ -35,11 +35,11 @@ char    vrgTBBtn[29] = {tbNormalView,
                         tbEnemyClassFilterMenu,
                         tbSeparator,
                         tbZoomMenu};
-int16_t vrgpctZoom[9] = {25, 38, 50, 75, 100, 125, 150, 200, 400};
+std::int16_t vrgpctZoom[9] = {25, 38, 50, 75, 100, 125, 150, 200, 400};
 
 static void SyncToolbar(APPSESSION &app, HWND hwnd) {
     HWND hwndButtons = ControlIO().pfnGetDlgItem(hwnd, IDC_STARS_TOOLBAR);
-    int16_t itb;
+    std::int16_t itb;
 
     for (itb = tbNormalView; itb <= tbShipCounts; itb++) {
         ControlIO().pfnSendMessage(hwndButtons, win32::TB_CHECKBUTTON, IDC_STARS_TOOLBUTTON_FIRST + itb, FIsButtonDown(app, static_cast<ToolbarButton>(itb)));
@@ -59,7 +59,7 @@ LRESULT  TbWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     HDC           hdcMem;
     NMTOOLBAR    *lpnm;
     ToolbarButton itb;
-    int16_t       i, j, c, pct, iSel;
+    std::int16_t       i, j, c, pct, iSel;
     int           iRadar;
     RECT          rc;
     PAINTSTRUCT   ps;
@@ -103,7 +103,7 @@ LRESULT  TbWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         if (ControlIO().pfnSendMessage(hwndButtons, win32::TB_ADDBITMAP, 18, reinterpret_cast<LPARAM>(&add)) < 0) return -1;
         c = 0; iRadar = -1;
         for (i = 0; i < 29; i++) {
-            itb = static_cast<ToolbarButton>(static_cast<int8_t>(vrgTBBtn[i]));
+            itb = static_cast<ToolbarButton>(static_cast<std::int8_t>(vrgTBBtn[i]));
             if (itb == tbShipDesignFilterMenu || itb == tbEnemyClassFilterMenu) continue;
             rgbtn[c].fsState = win32::TBSTATE_ENABLED;
             rgbtn[c].idCommand = IDC_STARS_TOOLBUTTON_FIRST + itb;
@@ -203,19 +203,19 @@ void DrawToolbar(APPSESSION &app, HDC hdc, RECT *prc) {
     SyncToolbar(app, app.lpui->hwndTb);
 }
 
-void DrawBitmapButton(APPSESSION &app, HDC hdc, POINT16 pt, ToolbarButton ibtn, int16_t fDown) {
+void DrawBitmapButton(APPSESSION &app, HDC hdc, POINT16 pt, ToolbarButton ibtn, std::int16_t fDown) {
     static_cast<void>(hdc); static_cast<void>(pt);
     ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(app.lpui->hwndTb, IDC_STARS_TOOLBAR), win32::TB_CHECKBUTTON, IDC_STARS_TOOLBUTTON_FIRST + ibtn, fDown);
 }
 
-int16_t ItbFromPpt(APPSESSION &app, POINT16 *ppt) {
-    int16_t i;
+std::int16_t ItbFromPpt(APPSESSION &app, POINT16 *ppt) {
+    std::int16_t i;
     HWND hwndButtons = ControlIO().pfnGetDlgItem(app.lpui->hwndTb, IDC_STARS_TOOLBAR);
     POINT pt = {ppt->x, ppt->y - 2};
     RECT rc;
     TBBUTTON btn;
 
-    i = static_cast<int16_t>(ControlIO().pfnSendMessage(hwndButtons, win32::TB_HITTEST, 0, reinterpret_cast<LPARAM>(&pt)));
+    i = static_cast<std::int16_t>(ControlIO().pfnSendMessage(hwndButtons, win32::TB_HITTEST, 0, reinterpret_cast<LPARAM>(&pt)));
     if (i < 0) {
         i = -i - 1;
     }
@@ -227,7 +227,7 @@ int16_t ItbFromPpt(APPSESSION &app, POINT16 *ppt) {
     return -1;
 }
 
-int16_t DxOfBtn(APPSESSION &app, ToolbarButton itb) {
+std::int16_t DxOfBtn(APPSESSION &app, ToolbarButton itb) {
     if (itb >= tbNormalView) {
         if (itb != tbShipDesignFilterMenu && itb != tbEnemyClassFilterMenu) {
             return 29;
@@ -249,7 +249,7 @@ int16_t DxOfBtn(APPSESSION &app, ToolbarButton itb) {
     }
 }
 
-int16_t FIsButtonDown(APPSESSION &app, ToolbarButton itb) {
+std::int16_t FIsButtonDown(APPSESSION &app, ToolbarButton itb) {
     switch (itb) {
     default:
         break;
@@ -300,17 +300,17 @@ static POINT16 PtToolbarMenu(APPSESSION &app, ToolbarButton itb) {
     return PointTo16(pt);
 }
 
-void ExecuteButton(APPSESSION &app, ToolbarButton itb, int16_t fDown) {
-    uint16_t grbitNew;
+void ExecuteButton(APPSESSION &app, ToolbarButton itb, std::int16_t fDown) {
+    std::uint16_t grbitNew;
     POINT16  pt;
     char    *rgszScan[12];
-    int16_t  c;
-    int16_t  i;
-    uint16_t grbit;
-    int32_t  rgid[12];
-    int16_t  iSel;
-    uint16_t grbitSh;
-    int16_t  ish;
+    std::int16_t  c;
+    std::int16_t  i;
+    std::uint16_t grbit;
+    std::int32_t  rgid[12];
+    std::int16_t  iSel;
+    std::uint16_t grbitSh;
+    std::int16_t  ish;
 
     app.state.gd.fChgScanner = 1;
     switch (itb) {
@@ -362,9 +362,9 @@ void ExecuteButton(APPSESSION &app, ToolbarButton itb, int16_t fDown) {
         }
         for (i = idsMineFields; i <= idsMineFields2; i++) {
             if (i == idsMineFields) {
-                rgid[c] = static_cast<uint32_t>((app.lpui->grbitScanMines == 15));
+                rgid[c] = static_cast<std::uint32_t>((app.lpui->grbitScanMines == 15));
             } else {
-                rgid[c] = static_cast<uint32_t>((app.lpui->grbitScanMines == 0));
+                rgid[c] = static_cast<std::uint32_t>((app.lpui->grbitScanMines == 0));
             }
             TextIO().pfnCchGetString(app, static_cast<StringId>(i), &app.state.szWork[(i - idsMineFields) * 30 + 160]);
             rgszScan[c++] = &app.state.szWork[(i - idsMineFields) * 30 + 160];
@@ -374,7 +374,7 @@ void ExecuteButton(APPSESSION &app, ToolbarButton itb, int16_t fDown) {
         app.state.szWork[251] = 0;
         rgszScan[c++] = &app.state.szWork[250];
         for (i = 0; i < 4; i++) {
-            rgid[c] = static_cast<uint32_t>(((1 << i & app.lpui->grbitScanMines) != 0));
+            rgid[c] = static_cast<std::uint32_t>(((1 << i & app.lpui->grbitScanMines) != 0));
             TextIO().pfnCchGetString(app, static_cast<StringId>(idsMineFields3 + i), &app.state.szWork[i * 30]);
             rgszScan[c++] = &app.state.szWork[i * 30];
         }
@@ -412,7 +412,7 @@ void ExecuteButton(APPSESSION &app, ToolbarButton itb, int16_t fDown) {
         grbitSh = 1;
         while (ish < 16) {
             if (!app.state.rgshdef[ish].fFree) {
-                rgid[c] = static_cast<uint32_t>(((grbitSh & app.lpui->grbitScanShip) != 0));
+                rgid[c] = static_cast<std::uint32_t>(((grbitSh & app.lpui->grbitScanShip) != 0));
                 rgszScan[c++] = app.state.rgshdef[ish].hul.szClass;
             }
             ish++;
@@ -464,7 +464,7 @@ void ExecuteButton(APPSESSION &app, ToolbarButton itb, int16_t fDown) {
         app.state.szWork[301] = 0;
         rgszScan[c++] = &app.state.szWork[300];
         for (i = 0; i < 8; i++) {
-            rgid[c] = static_cast<uint32_t>(((1 << i & app.lpui->grbitScanEShip) != 0));
+            rgid[c] = static_cast<std::uint32_t>(((1 << i & app.lpui->grbitScanEShip) != 0));
             TextIO().pfnCchGetString(app, static_cast<StringId>(idsColony + i), &app.state.szWork[i * 25]);
             rgszScan[c++] = &app.state.szWork[i * 25];
         }
@@ -497,7 +497,7 @@ void ExecuteButton(APPSESSION &app, ToolbarButton itb, int16_t fDown) {
     case tbZoomMenu:
         c = 0;
         for (i = 0; i < 9; i++) {
-            rgid[c] = static_cast<uint32_t>((app.state.iScanZoom + 4 == i));
+            rgid[c] = static_cast<std::uint32_t>((app.state.iScanZoom + 4 == i));
             win32::wsprintfA(&app.state.szWork[i * 8], app.state.PCTDPCTPCT, vrgpctZoom[i]);
             rgszScan[c++] = &app.state.szWork[i * 8];
         }
@@ -518,8 +518,8 @@ void ExecuteButton(APPSESSION &app, ToolbarButton itb, int16_t fDown) {
     }
 }
 
-void TerminateToolbarFocus(APPSESSION &app, int16_t fCancel) {
-    int16_t pct;
+void TerminateToolbarFocus(APPSESSION &app, std::int16_t fCancel) {
+    std::int16_t pct;
     char   *psz;
 
     app.state.gd.fChgScanner = 1;
@@ -541,7 +541,7 @@ void TerminateToolbarFocus(APPSESSION &app, int16_t fCancel) {
     } else if (pct > 100) {
         pct = 100;
     }
-    ControlIO().pfnSendMessage(app.lpui->hwndTBRadar, win32::CB_SETCURSEL, static_cast<int16_t>((100 - pct)) / 10, 0);
+    ControlIO().pfnSendMessage(app.lpui->hwndTBRadar, win32::CB_SETCURSEL, static_cast<std::int16_t>((100 - pct)) / 10, 0);
     win32::wsprintfA(app.state.szWork, app.state.PCTDPCTPCT, pct);
     ControlIO().pfnSetWindowText(app.lpui->hwndTBRadar, app.state.szWork);
     if (pct != app.lpui->vpctRadarView) {
@@ -559,12 +559,12 @@ void TerminateToolbarFocus(APPSESSION &app, int16_t fCancel) {
 void ShowTooltip(APPSESSION &app, StringId ids, RECT *prc) {
     HDC     hdc;
     HFONT   hfontSav;
-    int16_t fVisCur;
-    int16_t cch;
-    int16_t fShowNow;
+    std::int16_t fVisCur;
+    std::int16_t cch;
+    std::int16_t fShowNow;
 
     fVisCur = app.lpui->hwndTooltip && win32::IsWindowVisible(app.lpui->hwndTooltip) != 0;
-    if (static_cast<int16_t>(ids) < idsUniverseDefinitionFileSeemsMissingCorrupt || !prc) {
+    if (static_cast<std::int16_t>(ids) < idsUniverseDefinitionFileSeemsMissingCorrupt || !prc) {
         if (app.lpui->hwndTooltip) {
             ControlIO().pfnDestroyWindow(app.lpui->hwndTooltip);
         }
@@ -600,8 +600,8 @@ LRESULT  TooltipWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     POINT16     pt;
     PAINTSTRUCT ps;
     RECT        rc;
-    int16_t     bkSav;
-    int16_t     cch;
+    std::int16_t     bkSav;
+    std::int16_t     cch;
 
     switch (msg) {
     case win32::WM_CREATE:

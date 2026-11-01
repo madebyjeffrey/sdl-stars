@@ -14,7 +14,7 @@ struct COMPATPROFILE {
 // ReadLine belongs to loading; the other effects belong to saving. Close and
 // Unlink run during noexcept cleanup and must not throw. Allocations use free().
 struct PROFILEIO {
-    void *(*pfnAllocate)(size_t) = std::malloc;
+    void *(*pfnAllocate)(std::size_t) = std::malloc;
     decltype(&PfNativeOpen) pfnOpen = PfNativeOpen;
     decltype(&CbGetNativeLine) pfnReadLine = CbGetNativeLine;
     decltype(&PfNativeCreateTemp) pfnCreateTemp = PfNativeCreateTemp;

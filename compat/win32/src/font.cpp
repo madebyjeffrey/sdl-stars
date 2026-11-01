@@ -4,11 +4,11 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include <fontconfig/fontconfig.h>
-#include <limits.h>
+#include <climits>
 #include <new>
 #include <utility>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstring>
 #include <strings.h>
 
 struct COMPATGLYPH {
@@ -53,12 +53,12 @@ static COMPATGLYPH *LpLoadGlyph(COMPATFONT *lpfont, FT_Face face, DWORD ch, COMP
     lp->y = lpfont->tm.tmAscent - face->glyph->bitmap_top;
     lp->dx = static_cast<int>(((face->glyph->advance.x + 32) >> 6));
     if (lp->cx && lp->cy) {
-        lp->rgb.reset(static_cast<BYTE *>(malloc(static_cast<size_t>(lp->cx) * lp->cy)));
+        lp->rgb.reset(static_cast<BYTE *>(std::malloc(static_cast<std::size_t>(lp->cx) * lp->cy)));
         if (!lp->rgb) return nullptr;
         for (y = 0; y < lp->cy; y++) {
-            rgbRow = lpbm->buffer + (lpbm->pitch >= 0 ? y : lp->cy - 1 - y) * abs(lpbm->pitch);
+            rgbRow = lpbm->buffer + (lpbm->pitch >= 0 ? y : lp->cy - 1 - y) * std::abs(lpbm->pitch);
             for (x = 0; x < lp->cx; x++)
-                lp->rgb[static_cast<size_t>(y) * lp->cx + x] = lpbm->pixel_mode == FT_PIXEL_MODE_MONO ?
+                lp->rgb[static_cast<std::size_t>(y) * lp->cx + x] = lpbm->pixel_mode == FT_PIXEL_MODE_MONO ?
                     (rgbRow[x / 8] & (0x80 >> (x % 8)) ? 255 : 0) :
                     lpbm->pixel_mode == FT_PIXEL_MODE_BGRA ? rgbRow[x * 4 + 3] : rgbRow[x];
         }
@@ -174,10 +174,10 @@ static COMPATFONT *LpNewFontRaster(const LOGFONTA *lplf, int cMax) {
     NATIVEOWNER<COMPATFONT, FreeCompatFont> lpfontOwner;
     NATIVEOWNER<FcPattern, FcPatternDestroy> lppatternOwner, lpmatchOwner;
 
-    if (!lplf || static_cast<int64_t>(lplf->lfHeight) < -cMax || lplf->lfHeight > cMax ||
+    if (!lplf || static_cast<std::int64_t>(lplf->lfHeight) < -cMax || lplf->lfHeight > cMax ||
         lplf->lfWidth < 0 || lplf->lfWidth > cMax ||
-        !memchr(lplf->lfFaceName, 0, sizeof(lplf->lfFaceName)) ||
-        !FUtf8Valid(lplf->lfFaceName, strlen(lplf->lfFaceName))) return nullptr;
+        !std::memchr(lplf->lfFaceName, 0, sizeof(lplf->lfFaceName)) ||
+        !FUtf8Valid(lplf->lfFaceName, std::strlen(lplf->lfFaceName))) return nullptr;
     if (!library) {
         iFaceError = FT_Init_FreeType(&libraryNew);
         libraryOwner.reset(libraryNew);
@@ -189,13 +189,13 @@ static COMPATFONT *LpNewFontRaster(const LOGFONTA *lplf, int cMax) {
     if (!lpfont) return nullptr;
     lpfont->library = library;
     lpfont->lf = *lplf; lpfont->lf.lfFaceName[win32::LF_FACESIZE - 1] = 0;
-    strcpy(szFamily, lpfont->lf.lfFaceName);
+    std::strcpy(szFamily, lpfont->lf.lfFaceName);
     fBold = lplf->lfWeight >= 600;
     fItalic = lplf->lfItalic;
     // The game stores styled face names rather than setting LOGFONT style flags.
-    psz = strstr(szFamily, " Bold");
-    if (psz) { *psz = 0; fBold = 1; fItalic |= strstr(psz + 1, "Italic") != nullptr; }
-    else if ((psz = strstr(szFamily, " Italic"))) { *psz = 0; fItalic = 1; }
+    psz = std::strstr(szFamily, " Bold");
+    if (psz) { *psz = 0; fBold = 1; fItalic |= std::strstr(psz + 1, "Italic") != nullptr; }
+    else if ((psz = std::strstr(szFamily, " Italic"))) { *psz = 0; fItalic = 1; }
     i = -1;
     if (!*szFamily || !strcasecmp(szFamily, "Arial") || !strcasecmp(szFamily, "Liberation Sans") ||
         !strcasecmp(szFamily, "sans-serif") || !strcasecmp(szFamily, "Tahoma") || !strcasecmp(szFamily, "MS Sans Serif")) i = 0;
@@ -226,7 +226,7 @@ static COMPATFONT *LpNewFontRaster(const LOGFONTA *lplf, int cMax) {
     cHeight = lplf->lfHeight < 0 ? -lplf->lfHeight : lplf->lfHeight;
     if (cHeight == 0) cHeight = 16;
     if (lplf->lfHeight > 0 && lpfont->face->ascender - lpfont->face->descender > 0)
-        cHeight = static_cast<int>((static_cast<int64_t>(cHeight) * lpfont->face->units_per_EM /
+        cHeight = static_cast<int>((static_cast<std::int64_t>(cHeight) * lpfont->face->units_per_EM /
                        (lpfont->face->ascender - lpfont->face->descender)));
     if (FT_Set_Pixel_Sizes(lpfont->face.get(), 0, cHeight > 0 ? static_cast<unsigned>(cHeight) : 1)) goto LFail;
     lpfont->tm.tmAscent = static_cast<LONG>(((lpfont->face->size->metrics.ascender + 63) >> 6));
@@ -248,7 +248,7 @@ static COMPATFONT *LpNewFontRaster(const LOGFONTA *lplf, int cMax) {
     }
     lpfont->tm.tmAveCharWidth = (cWidth + 26) / 52;
     if (lplf->lfWidth && lpfont->tm.tmAveCharWidth) {
-        matrix.xx = static_cast<FT_Fixed>((static_cast<int64_t>(lplf->lfWidth) * 65536 / lpfont->tm.tmAveCharWidth));
+        matrix.xx = static_cast<FT_Fixed>((static_cast<std::int64_t>(lplf->lfWidth) * 65536 / lpfont->tm.tmAveCharWidth));
         FT_Set_Transform(lpfont->face.get(), &matrix, nullptr);
         for (i = 0; i < 256; i++) lpfont->rgglyph[i] = COMPATGLYPH{};
         lpfont->tm.tmAveCharWidth = lplf->lfWidth;
@@ -278,18 +278,18 @@ BOOL FCompatFontMetrics(COMPATFONT *lpfont, LPTEXTMETRICA lptm) {
 }
 
 BOOL FCompatFontDraw(COMPATFONT *lpfont, LPCSTR psz, int cch, const INT *rgdx,
-                    void (*pfn)(void *, int64_t, int64_t, BYTE), void *lpv) {
+                    void (*pfn)(void *, std::int64_t, std::int64_t, BYTE), void *lpv) {
     return FCompatFontDrawScaled(lpfont, psz, cch, rgdx, 1, pfn, lpv);
 }
 
 BOOL FCompatFontSizeUtf8(COMPATFONT *lpfont, LPCSTR psz, int cch, LPSIZE lpsize) {
     int i = 0, c;
-    uint32_t ch;
-    int64_t dx = 0;
+    std::uint32_t ch;
+    std::int64_t dx = 0;
     COMPATGLYPH *lp;
     if (!lpfont || !lpsize || cch < 0 || cch > 1024 * 1024 || (!psz && cch != 0)) return 0;
     while (i < cch) {
-        c = CbUtf8Char(psz + i, static_cast<size_t>((cch - i)), &ch);
+        c = CbUtf8Char(psz + i, static_cast<std::size_t>((cch - i)), &ch);
         if (c == 0) return 0;
         lp = LpGlyphUtf8(lpfont, ch); if (!lp) return 0;
         dx += lp->dx; i += c;
@@ -300,32 +300,32 @@ BOOL FCompatFontSizeUtf8(COMPATFONT *lpfont, LPCSTR psz, int cch, LPSIZE lpsize)
 }
 
 BOOL FCompatFontDrawUtf8(COMPATFONT *lpfont, LPCSTR psz, int cch,
-                        void (*pfn)(void *, int64_t, int64_t, BYTE), void *lpv) {
+                        void (*pfn)(void *, std::int64_t, std::int64_t, BYTE), void *lpv) {
     int i = 0, c, x, y;
-    uint32_t ch;
-    int64_t dx = 0;
+    std::uint32_t ch;
+    std::int64_t dx = 0;
     SIZE size;
     COMPATGLYPH *lp;
     if (!FCompatFontSizeUtf8(lpfont, psz, cch, &size)) return 0;
     while (i < cch) {
-        c = CbUtf8Char(psz + i, static_cast<size_t>((cch - i)), &ch);
+        c = CbUtf8Char(psz + i, static_cast<std::size_t>((cch - i)), &ch);
         if (c == 0) return 0;
         lp = LpGlyphUtf8(lpfont, ch); if (!lp) return 0;
         for (y = 0; y < lp->cy; y++) for (x = 0; x < lp->cx; x++)
-            if (lp->rgb[static_cast<size_t>(y) * lp->cx + x]) pfn(lpv, dx + lp->x + x, lp->y + y, lp->rgb[static_cast<size_t>(y) * lp->cx + x]);
+            if (lp->rgb[static_cast<std::size_t>(y) * lp->cx + x]) pfn(lpv, dx + lp->x + x, lp->y + y, lp->rgb[static_cast<std::size_t>(y) * lp->cx + x]);
         dx += lp->dx; i += c;
     }
     return 1;
 }
 
 BOOL FCompatFontDrawScaled(COMPATFONT *lpfont, LPCSTR psz, int cch, const INT *rgdx, int iScale,
-                          void (*pfn)(void *, int64_t, int64_t, BYTE), void *lpv) {
+                          void (*pfn)(void *, std::int64_t, std::int64_t, BYTE), void *lpv) {
     LOGFONTA lf;
     SIZE size;
     COMPATGLYPH *lp, *lpRaster;
     int i = 0, c, j, x, y;
     DWORD ch;
-    int64_t dx = 0;
+    std::int64_t dx = 0;
 
     if (iScale < 1 || iScale > 4 || !FCompatFontSizeUtf8(lpfont, psz, cch, &size)) return 0;
     if (cch == 0) return 1;
@@ -339,16 +339,16 @@ BOOL FCompatFontDrawScaled(COMPATFONT *lpfont, LPCSTR psz, int cch, const INT *r
         if (!lpfont->lpScaled) return 0;
     }
     while (i < cch) {
-        c = CbUtf8Char(psz + i, static_cast<size_t>((cch - i)), &ch);
+        c = CbUtf8Char(psz + i, static_cast<std::size_t>((cch - i)), &ch);
         if (c == 0) return 0;
         lp = LpGlyphUtf8(lpfont, ch);
         lpRaster = iScale == 1 ? lp : LpGlyphUtf8(lpfont->lpScaled.get(), ch);
         if (!lp || !lpRaster) return 0;
         for (y = 0; y < lpRaster->cy; y++) for (x = 0; x < lpRaster->cx; x++)
-            if (lpRaster->rgb[static_cast<size_t>(y) * lpRaster->cx + x])
+            if (lpRaster->rgb[static_cast<std::size_t>(y) * lpRaster->cx + x])
                 pfn(lpv, dx * iScale + lpRaster->x + x,
                     lpfont->tm.tmAscent * iScale - (iScale == 1 ? lpfont : lpfont->lpScaled.get())->tm.tmAscent + lpRaster->y + y,
-                    lpRaster->rgb[static_cast<size_t>(y) * lpRaster->cx + x]);
+                    lpRaster->rgb[static_cast<std::size_t>(y) * lpRaster->cx + x]);
         // Keep logical advances and baselines: Retina rasterization must not reflow the UI.
         if (rgdx) for (j = 0; j < c; j++) dx += rgdx[i + j];
         else dx += lp->dx;

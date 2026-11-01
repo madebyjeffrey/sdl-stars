@@ -16,7 +16,7 @@ StarsPrimaryErrorScope::StarsPrimaryErrorScope(bool fPrimary) noexcept : fPrimar
 }
 StarsPrimaryErrorScope::~StarsPrimaryErrorScope() noexcept { if (fPrimary) --cPrimaryErrors; }
 
-void StarsThrowError(StarsErrorKind mdError, uint16_t ids) { throw StarsError{mdError, ids}; }
+void StarsThrowError(StarsErrorKind mdError, std::uint16_t ids) { throw StarsError{mdError, ids}; }
 void StarsCapturePendingError() noexcept {
     // An in-flight C++ exception is already the primary failure. A callback
     // caught from its cleanup must not leave a secondary error for later delivery.

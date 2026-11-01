@@ -2,9 +2,9 @@
 #include "internal.h"
 #include "choice_io.h"
 #include <stars_compat.h>
-#include <limits.h>
-#include <stdlib.h>
-#include <string.h>
+#include <climits>
+#include <cstdlib>
+#include <cstring>
 
 enum { editUndoSeparate, editUndoTyping, editUndoBackspace, editUndoDelete, editUndoReplace };
 
@@ -20,17 +20,17 @@ void CompatEditComposition(HWND hwnd, const char *pszUtf, int ich, int cch) {
     static_cast<void>(ich); static_cast<void>(cch);
     if (!win32::IsWindow(hwnd) || hwnd->iControl != 3 || (hwnd->dwStyle & win32::ES_READONLY)) return;
     if (!pszUtf) pszUtf = "";
-    if (!FUtf8Valid(pszUtf, strlen(pszUtf)) || !(psz = SDL_strdup(pszUtf))) return;
+    if (!FUtf8Valid(pszUtf, std::strlen(pszUtf)) || !(psz = SDL_strdup(pszUtf))) return;
     SDL_free(hwnd->pszEditComposition); hwnd->pszEditComposition = psz;
     hwnd->ichComposition = hwnd->cchComposition = 0;
     win32::InvalidateRect(hwnd, nullptr, 1);
 }
 
-static UINT CchEdit(HWND hwnd) { return static_cast<UINT>(strlen(hwnd->pszTitle)); }
+static UINT CchEdit(HWND hwnd) { return static_cast<UINT>(std::strlen(hwnd->pszTitle)); }
 
 static UINT IchEditBoundary(HWND hwnd, UINT ich) {
     UINT i = 0, next, cch = CchEdit(hwnd);
-    uint32_t ch;
+    std::uint32_t ch;
     int c;
     ich = StarsMin(ich, cch);
     while (i < ich) {
@@ -44,7 +44,7 @@ static UINT IchEditBoundary(HWND hwnd, UINT ich) {
 
 static UINT IchEditNext(HWND hwnd, UINT ich) {
     UINT cch = CchEdit(hwnd);
-    uint32_t ch;
+    std::uint32_t ch;
     int c;
     if (ich >= cch) return cch;
     c = CbUtf8Char(hwnd->pszTitle + ich, cch - ich, &ch);
@@ -97,7 +97,7 @@ static void NormalizeEditCase(HWND hwnd) {
 
 static void ReplaceEdit(HWND hwnd, LPCSTR psz, BOOL fUser, BOOL fUndo, UINT iUndoAction) {
     UINT ichFirst = StarsMin(hwnd->ichAnchor, hwnd->ichCaret), ichLast = StarsMax(hwnd->ichAnchor, hwnd->ichCaret);
-    size_t cchOld = CchEdit(hwnd), cch = strlen(psz), cchBase = cchOld - (ichLast - ichFirst), i;
+    std::size_t cchOld = CchEdit(hwnd), cch = std::strlen(psz), cchBase = cchOld - (ichLast - ichFirst), i;
     char *pszNew, *pszUndo = nullptr;
     BOOL fLimit, fGroup;
     fGroup = iUndoAction != editUndoSeparate && hwnd->pszEditUndo &&
@@ -111,7 +111,7 @@ static void ReplaceEdit(HWND hwnd, LPCSTR psz, BOOL fUser, BOOL fUndo, UINT iUnd
         (ichFirst == hwnd->ichUndoPosition || ichLast == hwnd->ichUndoPosition)) fGroup = 1;
     if (hwnd->pszEditUndo && iUndoAction == editUndoTyping && hwnd->iEditUndoAction == editUndoReplace &&
         ichFirst == ichLast && ichFirst == hwnd->ichTypingEnd) fGroup = 1;
-    if (!FUtf8Valid(psz, strlen(psz))) {
+    if (!FUtf8Valid(psz, std::strlen(psz))) {
         hwnd->fEditInputRejected = 1;
         return;
     }
@@ -137,9 +137,9 @@ static void ReplaceEdit(HWND hwnd, LPCSTR psz, BOOL fUser, BOOL fUndo, UINT iUnd
     if (fUndo && !fGroup && !(pszUndo = SDL_strdup(hwnd->pszTitle))) {
         SDL_free(pszNew); NotifyEdit(hwnd, win32::EN_ERRSPACE); return;
     }
-    memcpy(pszNew, hwnd->pszTitle, ichFirst);
-    memcpy(pszNew + ichFirst, psz, cch);
-    memcpy(pszNew + ichFirst + cch, hwnd->pszTitle + ichLast, cchOld - ichLast + 1);
+    std::memcpy(pszNew, hwnd->pszTitle, ichFirst);
+    std::memcpy(pszNew + ichFirst, psz, cch);
+    std::memcpy(pszNew + ichFirst + cch, hwnd->pszTitle + ichLast, cchOld - ichLast + 1);
     for (i = ichFirst; i < ichFirst + cch; i++) {
         if (hwnd->dwStyle & win32::ES_UPPERCASE) pszNew[i] = static_cast<char>(ChEditCase(static_cast<BYTE>(pszNew[i]), 1));
         else if (hwnd->dwStyle & win32::ES_LOWERCASE) pszNew[i] = static_cast<char>(ChEditCase(static_cast<BYTE>(pszNew[i]), 0));
@@ -194,11 +194,11 @@ static BOOL CopyEdit(HWND hwnd) {
     UINT ichFirst = StarsMin(hwnd->ichAnchor, hwnd->ichCaret), ichLast = StarsMax(hwnd->ichAnchor, hwnd->ichCaret);
     char *psz;
     BOOL fOk;
-    size_t cch = ichLast - ichFirst;
+    std::size_t cch = ichLast - ichFirst;
     if (ichFirst == ichLast || (hwnd->dwStyle & win32::ES_PASSWORD)) return 0;
     psz = static_cast<char *>((SDL_malloc(cch + 1)));
     if (!psz) return 0;
-    memcpy(psz, hwnd->pszTitle + ichFirst, cch); psz[cch] = 0;
+    std::memcpy(psz, hwnd->pszTitle + ichFirst, cch); psz[cch] = 0;
     fOk = SDL_SetClipboardText(psz);
     SDL_free(psz);
     return fOk;
@@ -209,11 +209,11 @@ static void PasteEdit(HWND hwnd) {
     if (hwnd->dwStyle & win32::ES_READONLY) return;
     pszUtf = SDL_GetClipboardText();
     if (!pszUtf) return;
-    if (!FUtf8Valid(pszUtf, strlen(pszUtf))) {
+    if (!FUtf8Valid(pszUtf, std::strlen(pszUtf))) {
         hwnd->fEditInputRejected = 1;
         SDL_free(pszUtf); return;
     }
-    pch = strpbrk(pszUtf, "\r\n");
+    pch = std::strpbrk(pszUtf, "\r\n");
     if (pch && !(hwnd->dwStyle & win32::ES_MULTILINE)) *pch = 0;
     ReplaceEdit(hwnd, pszUtf, 1, 1, editUndoSeparate);
     SDL_free(pszUtf);
@@ -341,8 +341,8 @@ static void ScrollEdit(HWND hwnd, int dx, int dy) {
     RECT rc;
     int cy = CyEdit(hwnd), cLine = static_cast<int>(IEditLine(hwnd, CchEdit(hwnd))) + 1;
     EditFormat(hwnd, &rc);
-    hwnd->yEditScroll = static_cast<int>((((static_cast<int64_t>(0)) > ((((static_cast<int64_t>((((0) > (cLine - (((1) > ((rc.bottom - rc.top) / cy)) ? (1) : ((rc.bottom - rc.top) / cy)))) ? (0) : (cLine - (((1) > ((rc.bottom - rc.top) / cy)) ? (1) : ((rc.bottom - rc.top) / cy))))) * cy) < (static_cast<int64_t>(hwnd->yEditScroll) + static_cast<int64_t>(dy) * cy)) ? (static_cast<int64_t>((((0) > (cLine - (((1) > ((rc.bottom - rc.top) / cy)) ? (1) : ((rc.bottom - rc.top) / cy)))) ? (0) : (cLine - (((1) > ((rc.bottom - rc.top) / cy)) ? (1) : ((rc.bottom - rc.top) / cy))))) * cy) : (static_cast<int64_t>(hwnd->yEditScroll) + static_cast<int64_t>(dy) * cy)))) ? (static_cast<int64_t>(0)) : ((((static_cast<int64_t>((((0) > (cLine - (((1) > ((rc.bottom - rc.top) / cy)) ? (1) : ((rc.bottom - rc.top) / cy)))) ? (0) : (cLine - (((1) > ((rc.bottom - rc.top) / cy)) ? (1) : ((rc.bottom - rc.top) / cy))))) * cy) < (static_cast<int64_t>(hwnd->yEditScroll) + static_cast<int64_t>(dy) * cy)) ? (static_cast<int64_t>((((0) > (cLine - (((1) > ((rc.bottom - rc.top) / cy)) ? (1) : ((rc.bottom - rc.top) / cy)))) ? (0) : (cLine - (((1) > ((rc.bottom - rc.top) / cy)) ? (1) : ((rc.bottom - rc.top) / cy))))) * cy) : (static_cast<int64_t>(hwnd->yEditScroll) + static_cast<int64_t>(dy) * cy)))));
-    hwnd->xEditScroll = static_cast<int>((((static_cast<int64_t>(INT_MAX)) < ((((static_cast<int64_t>(0)) > (static_cast<int64_t>(hwnd->xEditScroll) + static_cast<int64_t>(dx) * 8)) ? (static_cast<int64_t>(0)) : (static_cast<int64_t>(hwnd->xEditScroll) + static_cast<int64_t>(dx) * 8)))) ? (static_cast<int64_t>(INT_MAX)) : ((((static_cast<int64_t>(0)) > (static_cast<int64_t>(hwnd->xEditScroll) + static_cast<int64_t>(dx) * 8)) ? (static_cast<int64_t>(0)) : (static_cast<int64_t>(hwnd->xEditScroll) + static_cast<int64_t>(dx) * 8)))));
+    hwnd->yEditScroll = static_cast<int>((((static_cast<std::int64_t>(0)) > ((((static_cast<std::int64_t>((((0) > (cLine - (((1) > ((rc.bottom - rc.top) / cy)) ? (1) : ((rc.bottom - rc.top) / cy)))) ? (0) : (cLine - (((1) > ((rc.bottom - rc.top) / cy)) ? (1) : ((rc.bottom - rc.top) / cy))))) * cy) < (static_cast<std::int64_t>(hwnd->yEditScroll) + static_cast<std::int64_t>(dy) * cy)) ? (static_cast<std::int64_t>((((0) > (cLine - (((1) > ((rc.bottom - rc.top) / cy)) ? (1) : ((rc.bottom - rc.top) / cy)))) ? (0) : (cLine - (((1) > ((rc.bottom - rc.top) / cy)) ? (1) : ((rc.bottom - rc.top) / cy))))) * cy) : (static_cast<std::int64_t>(hwnd->yEditScroll) + static_cast<std::int64_t>(dy) * cy)))) ? (static_cast<std::int64_t>(0)) : ((((static_cast<std::int64_t>((((0) > (cLine - (((1) > ((rc.bottom - rc.top) / cy)) ? (1) : ((rc.bottom - rc.top) / cy)))) ? (0) : (cLine - (((1) > ((rc.bottom - rc.top) / cy)) ? (1) : ((rc.bottom - rc.top) / cy))))) * cy) < (static_cast<std::int64_t>(hwnd->yEditScroll) + static_cast<std::int64_t>(dy) * cy)) ? (static_cast<std::int64_t>((((0) > (cLine - (((1) > ((rc.bottom - rc.top) / cy)) ? (1) : ((rc.bottom - rc.top) / cy)))) ? (0) : (cLine - (((1) > ((rc.bottom - rc.top) / cy)) ? (1) : ((rc.bottom - rc.top) / cy))))) * cy) : (static_cast<std::int64_t>(hwnd->yEditScroll) + static_cast<std::int64_t>(dy) * cy)))));
+    hwnd->xEditScroll = static_cast<int>((((static_cast<std::int64_t>(INT_MAX)) < ((((static_cast<std::int64_t>(0)) > (static_cast<std::int64_t>(hwnd->xEditScroll) + static_cast<std::int64_t>(dx) * 8)) ? (static_cast<std::int64_t>(0)) : (static_cast<std::int64_t>(hwnd->xEditScroll) + static_cast<std::int64_t>(dx) * 8)))) ? (static_cast<std::int64_t>(INT_MAX)) : ((((static_cast<std::int64_t>(0)) > (static_cast<std::int64_t>(hwnd->xEditScroll) + static_cast<std::int64_t>(dx) * 8)) ? (static_cast<std::int64_t>(0)) : (static_cast<std::int64_t>(hwnd->xEditScroll) + static_cast<std::int64_t>(dx) * 8)))));
     hwnd->fEditManualScroll = 1;
     SyncEditScroll(hwnd);
     if (!win32::IsWindow(hwnd)) return;
@@ -453,10 +453,10 @@ static void PaintEdit(HWND hwnd) {
         y += cy;
     }
     if (fFocus && hwnd->pszEditComposition && *hwnd->pszEditComposition) {
-        UINT cchComp = static_cast<UINT>(strlen(hwnd->pszEditComposition));
+        UINT cchComp = static_cast<UINT>(std::strlen(hwnd->pszEditComposition));
         char *pszComp = SDL_strdup(hwnd->pszEditComposition);
         if (pszComp) {
-            if (fPassword) memset(pszComp, '*', cchComp);
+            if (fPassword) std::memset(pszComp, '*', cchComp);
             cx = CxEdit(hdc, pszComp, cchComp, 0);
             win32::SetRect(&rcSel, cxCaret, yCaret, cxCaret + cx, yCaret + cy);
             hbr = win32::CreateSolidBrush(crBk); win32::FillRect(hdc, &rcSel, hbr); win32::DeleteObject(hbr);
@@ -481,8 +481,8 @@ static UINT IchEditPoint(HWND hwnd, LPARAM l) {
     HFONT hfontOld = nullptr;
     TEXTMETRICA tm;
     UINT ich = 0, ichEnd, cch = CchEdit(hwnd);
-    int x = static_cast<int16_t>(LOWORD(l)) + hwnd->xEditScroll;
-    int y = static_cast<int16_t>(HIWORD(l)) + hwnd->yEditScroll, cx, cxPrev = 0;
+    int x = static_cast<std::int16_t>(LOWORD(l)) + hwnd->xEditScroll;
+    int y = static_cast<std::int16_t>(HIWORD(l)) + hwnd->yEditScroll, cx, cxPrev = 0;
     RECT rc;
     if (!hdc) return hwnd->ichCaret;
     if (hwnd->hfontControl) hfontOld = static_cast<HFONT>(win32::SelectObject(hdc, hwnd->hfontControl));
@@ -511,7 +511,7 @@ static UINT IchEditPoint(HWND hwnd, LPARAM l) {
 
 static void EditContextMenu(HWND hwnd, LPARAM l) {
     HMENU hmenu;
-    POINT pt = {static_cast<int16_t>(LOWORD(l)), static_cast<int16_t>(HIWORD(l))};
+    POINT pt = {static_cast<std::int16_t>(LOWORD(l)), static_cast<std::int16_t>(HIWORD(l))};
     BOOL fSelection = hwnd->ichAnchor != hwnd->ichCaret;
     BOOL fWrite = !(hwnd->dwStyle & win32::ES_READONLY), fCopy = fSelection && !(hwnd->dwStyle & win32::ES_PASSWORD);
     UINT id;
@@ -636,9 +636,9 @@ LRESULT  CompatEditProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     case win32::EM_GETLINE:
         ich = IchEditLine(hwnd, static_cast<UINT>(w));
         if (!l || ich == UINT_MAX) return 0;
-        memcpy(&cchMax, reinterpret_cast<void *>(l), sizeof(cchMax));
+        std::memcpy(&cchMax, reinterpret_cast<void *>(l), sizeof(cchMax));
         cLine = static_cast<UINT>(CchUtf8Prefix(lp->pszTitle + ich, (((cchMax) < (IchLineEnd(hwnd, ich) - ich)) ? (cchMax) : (IchLineEnd(hwnd, ich) - ich))));
-        memcpy(reinterpret_cast<void *>(l), lp->pszTitle + ich, cLine); return cLine;
+        std::memcpy(reinterpret_cast<void *>(l), lp->pszTitle + ich, cLine); return cLine;
     case win32::WM_SETTEXT:
         result = win32::DefWindowProcA(hwnd, msg, w, l ? l : reinterpret_cast<LPARAM>(""));
         if (result) {
@@ -652,7 +652,7 @@ LRESULT  CompatEditProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         return result;
     case win32::WM_RBUTTONUP:
         {
-            POINT pt = {static_cast<int16_t>(LOWORD(l)), static_cast<int16_t>(HIWORD(l))};
+            POINT pt = {static_cast<std::int16_t>(LOWORD(l)), static_cast<std::int16_t>(HIWORD(l))};
             win32::ClientToScreen(hwnd, &pt); EditContextMenu(hwnd, win32::MAKELPARAM(pt.x, pt.y));
         }
         return 0;

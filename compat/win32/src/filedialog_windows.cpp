@@ -1,7 +1,7 @@
 #include "filedialog_backend.h"
 #include "windows_chooser_io.h"
 #include "filedialog_windows_bridge.h"
-#include <stdlib.h>
+#include <cstdlib>
 
 static int FPumpWindowsChooser(void *lpv) {
     HWND hwndOwner = static_cast<HWND>(lpv);
@@ -18,13 +18,13 @@ static int FPumpWindowsChooser(void *lpv) {
 
 int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFolder,
                      LPCSTR pszName, const COMPATFILEFILTER *rgfilter, int cFilter,
-                     int *lpiFilter, char *pszPath, size_t cbPath) {
+                     int *lpiFilter, char *pszPath, std::size_t cbPath) {
     WINDOWSFILEFILTER *rg = nullptr;
     void *lpWindow = nullptr;
     int i, iResult;
 
     if (cFilter != 0) {
-        rg = static_cast<WINDOWSFILEFILTER *>(calloc(static_cast<size_t>(cFilter), sizeof(*rg)));
+        rg = static_cast<WINDOWSFILEFILTER *>(std::calloc(static_cast<std::size_t>(cFilter), sizeof(*rg)));
         if (!rg) return -1;
         for (i = 0; i < cFilter; i++) {
             rg[i].pszName = rgfilter[i].pszName;
@@ -35,6 +35,6 @@ int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFol
         lpWindow = SDL_GetPointerProperty(SDL_GetWindowProperties(hwndOwner->lpWindow.get()), SDL_PROP_WINDOW_WIN32_HWND_POINTER, nullptr);
     iResult = WindowsChooserIO().pfnIChooseWindowsFile(lpWindow, fSave, pszTitle, pszFolder, pszName, rg, cFilter,
                                 lpiFilter, pszPath, cbPath, FPumpWindowsChooser, hwndOwner);
-    free(rg);
+    std::free(rg);
     return iResult;
 }

@@ -11,12 +11,12 @@
 #include "ownership.h"
 #include <stars_compat.h>
 
-int16_t RaceCreationWizard(APPSESSION &app, HWND hwndParent, int16_t fReadOnly, int16_t fDontWrite) {
+std::int16_t RaceCreationWizard(APPSESSION &app, HWND hwndParent, std::int16_t fReadOnly, std::int16_t fDontWrite) {
     WizardButton mdRet;
     FARPROC      lpProc;
     RECT         rgrcStack[17];
-    int16_t      cpts;
-    int16_t      fResult;
+    std::int16_t      cpts;
+    std::int16_t      fResult;
     BOOL         fSequence;
 
     app.lpui->vrgrcRCW = rgrcStack;
@@ -129,25 +129,25 @@ LDone:
 INT_PTR  RaceWizardDlg1(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
 
-    int16_t     i;
+    std::int16_t     i;
     RECT        rc;
-    int16_t     iPlrBmp;
+    std::int16_t     iPlrBmp;
     HWND        hwndCB;
     char       *psz;
     POINT16     pt;
     HDC         hdc;
     BTNT        btnt;
-    int16_t     bt;
+    std::int16_t     bt;
     RECT       *prc;
-    int16_t     iDir;
-    int16_t     iCur;
-    int16_t     iOffset;
+    std::int16_t     iDir;
+    std::int16_t     iCur;
+    std::int16_t     iOffset;
     PLAYER     *pplr;
     PAINTSTRUCT ps;
-    int16_t     j;
-    int16_t     cch;
+    std::int16_t     j;
+    std::int16_t     cch;
     RECT        rcGBox;
-    int16_t     k;
+    std::int16_t     k;
     char        szBuf[32];
 
     switch (message) {
@@ -168,7 +168,7 @@ INT_PTR  RaceWizardDlg1(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 app.state.vplr.iPlrBmp = vrgplrDef[i].iPlrBmp;
                 std::byte rgb[cbWirePlayer], rgbDef[cbWirePlayer];
                 FEncodePlayer(app.state.vplr, rgb); FEncodePlayer(vrgplrDef[i], rgbDef);
-                if (memcmp(rgb, rgbDef, ibWirePlayerNames) == 0)
+                if (std::memcmp(rgb, rgbDef, ibWirePlayerNames) == 0)
                     break;
             }
             app.state.vplr.iPlrBmp = iPlrBmp;
@@ -222,7 +222,7 @@ INT_PTR  RaceWizardDlg1(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         win32::RealizePalette(hdc);
         InitBtnTrack(&btnt, hwnd, nullptr, prc, bt, 80, 0, 0, nullptr);
         while (FTrackBtn(app, &btnt)) {
-            iCur = static_cast<int16_t>((iCur + 32 + iDir)) % 32;
+            iCur = static_cast<std::int16_t>((iCur + 32 + iDir)) % 32;
             DibBlt(hdc, app.lpui->rgrcBuildSpin[0].left - 2, app.lpui->rgrcBuildSpin[0].top - 35, 32, 32, app.lpui->hdibRaces, (iCur & 7) * 0x20, (3 - (iCur >> 3)) * 0x20, 32, 32, 13369376);
         }
         app.state.vplr.iPlrBmp = iCur;
@@ -329,20 +329,20 @@ INT_PTR  RaceWizardDlg1(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             return 1;
         }
         if (HIWORD(wParam) == 0 && LOWORD(wParam) >= IDC_RACE_HUMANOID && LOWORD(wParam) <= IDC_RACE_CUSTOM) {
-            memset(app.state.vplr.szName, 0, 32);
+            std::memset(app.state.vplr.szName, 0, 32);
             win32::GetDlgItemTextA(hwnd, IDC_RACE_NAME, app.state.vplr.szName, 32);
-            memset(app.state.vplr.szNames, 0, 32);
+            std::memset(app.state.vplr.szNames, 0, 32);
             win32::GetDlgItemTextA(hwnd, IDC_RACE_PLURAL_NAME, app.state.vplr.szNames, 32);
             win32::GetDlgItemTextA(hwnd, LOWORD(wParam), szBuf, 32);
-            for (i = 0; i < 7 && strcmp(app.state.vplr.szName, TextIO().pfnCompressed(app, static_cast<StringId>(idsHumanoid + i))) != 0; i++) {
+            for (i = 0; i < 7 && std::strcmp(app.state.vplr.szName, TextIO().pfnCompressed(app, static_cast<StringId>(idsHumanoid + i))) != 0; i++) {
             }
             if (i < 7 && LOWORD(wParam) < IDC_RACE_CUSTOM) {
-                memset(app.state.vplr.szName, 0, 32);
+                std::memset(app.state.vplr.szName, 0, 32);
                 TextIO().pfnCchGetString(app, static_cast<StringId>(idsHumanoid + LOWORD(wParam) - IDC_RACE_HUMANOID), app.state.vplr.szName);
                 win32::SetDlgItemTextA(hwnd, IDC_RACE_NAME, app.state.vplr.szName);
-                memset(app.state.vplr.szNames, 0, 32);
+                std::memset(app.state.vplr.szNames, 0, 32);
                 psz = TextIO().pfnPlayerName(app, 0, 1, 1, 0, 0, &app.state.vplr);
-                strcpy(app.state.vplr.szNames, psz);
+                std::strcpy(app.state.vplr.szNames, psz);
                 win32::SetDlgItemTextA(hwnd, IDC_RACE_PLURAL_NAME, app.state.vplr.szNames);
             }
             if (LOWORD(wParam) <= IDC_RACE_RANDOM) {
@@ -370,19 +370,19 @@ INT_PTR  RaceWizardDlg1(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
 INT_PTR  RaceWizardDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
 
-    int16_t     i;
+    std::int16_t     i;
     RECT        rc;
     HDC         hdc;
-    int16_t     yTop;
-    int16_t     dy;
-    int16_t     dxMiddle;
-    int16_t     dxLabel;
-    int16_t     cch;
+    std::int16_t     yTop;
+    std::int16_t     dy;
+    std::int16_t     dxMiddle;
+    std::int16_t     dxLabel;
+    std::int16_t     cch;
     char        szTemp[20];
     HFONT       hfontSav;
     PAINTSTRUCT ps;
     POINT16     pt;
-    int16_t     iVar;
+    std::int16_t     iVar;
 
     switch (message) {
     case win32::WM_INITDIALOG:
@@ -395,7 +395,7 @@ INT_PTR  RaceWizardDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         dxLabel = LOWORD(GetTextExtent(hdc, szTemp, cch)) + 10;
         dxMiddle = LOWORD(GetTextExtent(hdc, "200mR", 5)) + 10;
         dxMiddle = rc.right - dxLabel - dxMiddle;
-        dy = static_cast<int16_t>((3 * app.state.dyArial8)) / 2;
+        dy = static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2;
         yTop = 3 * app.state.dyArial8;
         win32::SetRect(app.lpui->vrgrcRCW, dxLabel, yTop, dxLabel + dy, yTop + dy);
         win32::SetRect(app.lpui->vrgrcRCW + 1, dxLabel + dy + 6, yTop, dxLabel + dxMiddle - dy - 6, yTop + dy);
@@ -495,26 +495,26 @@ INT_PTR  RaceWizardDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     return 0;
 }
 
-void DrawRace2(APPSESSION &app, HWND hwnd, HDC hdc, int16_t iDraw) {
-    int16_t iPit;
-    int16_t bt;
-    int16_t iMax;
+void DrawRace2(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
+    std::int16_t iPit;
+    std::int16_t bt;
+    std::int16_t iMax;
     char    szT[32];
-    int16_t dy;
-    int16_t iMin;
-    int16_t bkMode;
-    int16_t fCreatedDC;
-    int16_t xRLabel;
-    int16_t i;
-    int16_t iMod;
+    std::int16_t dy;
+    std::int16_t iMin;
+    std::int16_t bkMode;
+    std::int16_t fCreatedDC;
+    std::int16_t xRLabel;
+    std::int16_t i;
+    std::int16_t iMod;
     char   *psz;
-    int16_t dx;
-    int16_t cch;
-    int16_t bt1;
+    std::int16_t dx;
+    std::int16_t cch;
+    std::int16_t bt1;
     RECT    rc;
-    int32_t l2;
-    int16_t iStore;
-    int32_t l;
+    std::int32_t l2;
+    std::int16_t iStore;
+    std::int32_t l;
 
     fCreatedDC = 0;
     bt1 = !app.state.fRCWReadOnly ? 0 : 4;
@@ -526,7 +526,7 @@ void DrawRace2(APPSESSION &app, HWND hwnd, HDC hdc, int16_t iDraw) {
     DrawRaceAdvantagePoints(app, hdc, &rc, nullptr);
     bkMode = win32::SetBkMode(hdc, win32::TRANSPARENT);
     win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-    xRLabel = static_cast<int16_t>((rc.right - app.lpui->vrgrcRCW[2].right)) / 2 + app.lpui->vrgrcRCW[2].right;
+    xRLabel = static_cast<std::int16_t>((rc.right - app.lpui->vrgrcRCW[2].right)) / 2 + app.lpui->vrgrcRCW[2].right;
     for (i = 0; i < 3; i++) {
         if (1 << i & iDraw) {
             if (iDraw != -1) {
@@ -605,9 +605,9 @@ void DrawRace2(APPSESSION &app, HWND hwnd, HDC hdc, int16_t iDraw) {
         l = 1;
         for (i = 0; i < 3; i++) {
             if (app.state.vplr.rgEnvVarMax[i] < 0 || app.state.vplr.rgEnvVarMax[i] - app.state.vplr.rgEnvVarMin[i] == 100) {
-                l = static_cast<uint32_t>((l * 100));
+                l = static_cast<std::uint32_t>((l * 100));
             } else if (i == 2) {
-                l = static_cast<uint32_t>((l * static_cast<int16_t>((app.state.vplr.rgEnvVarMax[i] - app.state.vplr.rgEnvVarMin[i]))));
+                l = static_cast<std::uint32_t>((l * static_cast<std::int16_t>((app.state.vplr.rgEnvVarMax[i] - app.state.vplr.rgEnvVarMin[i]))));
             } else {
                 l2 = 0;
                 for (iStore = app.state.vplr.rgEnvVarMin[i]; iStore <= app.state.vplr.rgEnvVarMax[i]; iStore++) {
@@ -616,16 +616,16 @@ void DrawRace2(APPSESSION &app, HWND hwnd, HDC hdc, int16_t iDraw) {
                     } else if (iStore < 90) {
                         l2 += 10;
                     } else {
-                        l2 += static_cast<int16_t>((100 - iStore));
+                        l2 += static_cast<std::int16_t>((100 - iStore));
                     }
                 }
-                l = static_cast<int32_t>((l * l2)) / 9;
+                l = static_cast<std::int32_t>((l * l2)) / 9;
             }
         }
         if (l < 1) {
             l = 1;
         }
-        l2 = static_cast<int32_t>(((static_cast<int32_t>((l >> 1)) + 0xf4240) / l));
+        l2 = static_cast<std::int32_t>(((static_cast<std::int32_t>((l >> 1)) + 0xf4240) / l));
         iStore = LOWORD(l2);
         if (l == 1000000) {
             iStore = 0;
@@ -655,8 +655,8 @@ void DrawRace2(APPSESSION &app, HWND hwnd, HDC hdc, int16_t iDraw) {
     return;
 }
 
-int16_t IrcRaceDlgHitTest(APPSESSION &app, POINT16 pt) {
-    int16_t i;
+std::int16_t IrcRaceDlgHitTest(APPSESSION &app, POINT16 pt) {
+    std::int16_t i;
 
     if (app.state.fRCWReadOnly) {
         return -1;
@@ -672,18 +672,18 @@ int16_t IrcRaceDlgHitTest(APPSESSION &app, POINT16 pt) {
     return -1;
 }
 
-int16_t FTrackRaceDlg2(APPSESSION &app, HWND hwnd, POINT16 pt, int16_t kbd) {
+std::int16_t FTrackRaceDlg2(APPSESSION &app, HWND hwnd, POINT16 pt, std::int16_t kbd) {
     BTNT    btnt;
-    int16_t bt;
-    int16_t dShift;
-    int8_t  iMax;
-    int8_t  iMin;
-    int16_t i;
-    int16_t irc;
-    int16_t iMod;
+    std::int16_t bt;
+    std::int16_t dShift;
+    std::int8_t  iMax;
+    std::int8_t  iMin;
+    std::int16_t i;
+    std::int16_t irc;
+    std::int16_t iMod;
     const char *psz;
-    int16_t dWidth;
-    int16_t dx;
+    std::int16_t dWidth;
+    std::int16_t dx;
 
     irc = IrcRaceDlgHitTest(app, pt);
     if (irc < 0) {
@@ -694,7 +694,7 @@ int16_t FTrackRaceDlg2(APPSESSION &app, HWND hwnd, POINT16 pt, int16_t kbd) {
     if (iMod == 1 && irc < 15) {
         win32::SetCapture(hwnd);
         win32::SetCursor(app.lpui->hcurCloseGrab);
-        dWidth = static_cast<int16_t>((app.state.vplr.rgEnvVarMax[i] - app.state.vplr.rgEnvVarMin[i])) / 2;
+        dWidth = static_cast<std::int16_t>((app.state.vplr.rgEnvVarMax[i] - app.state.vplr.rgEnvVarMin[i])) / 2;
         while (FGetMouseMove(&pt)) {
             if (pt.x < app.lpui->vrgrcRCW[irc].left) {
                 pt.x = app.lpui->vrgrcRCW[irc].left;
@@ -711,7 +711,7 @@ int16_t FTrackRaceDlg2(APPSESSION &app, HWND hwnd, POINT16 pt, int16_t kbd) {
             if (app.state.vplr.rgEnvVarMax[i] != dShift + dWidth) {
                 app.state.vplr.rgEnvVarMin[i] = dShift - dWidth;
                 app.state.vplr.rgEnvVarMax[i] = dShift + dWidth;
-                app.state.vplr.rgEnvVar[i] = app.state.vplr.rgEnvVarMin[i] + static_cast<int16_t>((app.state.vplr.rgEnvVarMax[i] - app.state.vplr.rgEnvVarMin[i])) / 2;
+                app.state.vplr.rgEnvVar[i] = app.state.vplr.rgEnvVarMin[i] + static_cast<std::int16_t>((app.state.vplr.rgEnvVarMax[i] - app.state.vplr.rgEnvVarMin[i])) / 2;
                 DrawRace2(app, hwnd, nullptr, 1 << i);
             }
         }
@@ -781,13 +781,13 @@ int16_t FTrackRaceDlg2(APPSESSION &app, HWND hwnd, POINT16 pt, int16_t kbd) {
             if (app.state.vplr.rgEnvVarMin[i] != iMin || app.state.vplr.rgEnvVarMax[i] != iMax) {
                 app.state.vplr.rgEnvVarMin[i] = iMin;
                 app.state.vplr.rgEnvVarMax[i] = iMax;
-                app.state.vplr.rgEnvVar[i] = app.state.vplr.rgEnvVarMin[i] + static_cast<int16_t>((app.state.vplr.rgEnvVarMax[i] - app.state.vplr.rgEnvVarMin[i])) / 2;
+                app.state.vplr.rgEnvVar[i] = app.state.vplr.rgEnvVarMin[i] + static_cast<std::int16_t>((app.state.vplr.rgEnvVarMax[i] - app.state.vplr.rgEnvVarMin[i])) / 2;
                 DrawRace2(app, hwnd, btnt.hdc, 1 << i);
             }
         }
     }
     if (irc < 15) {
-        app.state.vplr.rgEnvVar[i] = app.state.vplr.rgEnvVarMin[i] + static_cast<int16_t>((app.state.vplr.rgEnvVarMax[i] - app.state.vplr.rgEnvVarMin[i])) / 2;
+        app.state.vplr.rgEnvVar[i] = app.state.vplr.rgEnvVarMin[i] + static_cast<std::int16_t>((app.state.vplr.rgEnvVarMax[i] - app.state.vplr.rgEnvVarMin[i])) / 2;
     }
     return 1;
 }
@@ -795,7 +795,7 @@ int16_t FTrackRaceDlg2(APPSESSION &app, HWND hwnd, POINT16 pt, int16_t kbd) {
 INT_PTR  RaceWizardDlg3(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
 
-    int16_t     i;
+    std::int16_t     i;
     RECT        rc;
     POINT16     pt;
     HDC         hdc;
@@ -864,22 +864,22 @@ INT_PTR  RaceWizardDlg3(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     return 0;
 }
 
-void DrawRace3(APPSESSION &app, HWND hwnd, HDC hdc, int16_t iDraw) {
-    int16_t  dxItem;
+void DrawRace3(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
+    std::int16_t  dxItem;
     StringId idsT;
-    int16_t  fMacintosh;
-    int16_t  yTop;
-    int16_t  bt;
+    std::int16_t  fMacintosh;
+    std::int16_t  yTop;
+    std::int16_t  bt;
     StringId ids;
     COLORREF crBkSav;
-    int16_t  bkMode;
-    int16_t  fCreatedDC;
-    int16_t  dxkT;
-    int16_t  i;
-    int16_t  irc;
-    int16_t  dxDig;
-    int16_t  dx;
-    int16_t  cch;
+    std::int16_t  bkMode;
+    std::int16_t  fCreatedDC;
+    std::int16_t  dxkT;
+    std::int16_t  i;
+    std::int16_t  irc;
+    std::int16_t  dxDig;
+    std::int16_t  dx;
+    std::int16_t  cch;
     RECT     rc;
 
     fCreatedDC = 0;
@@ -907,9 +907,9 @@ void DrawRace3(APPSESSION &app, HWND hwnd, HDC hdc, int16_t iDraw) {
         }
         if (i == 4) {
             if (iDraw == -1) {
-                ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_RACE_FACTORY_GERMANIUM_DISCOUNT), nullptr, 6, yTop, rc.right - 12, static_cast<int16_t>((3 * app.state.dyArial8)) / 2, win32::SWP_NOZORDER);
+                ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_RACE_FACTORY_GERMANIUM_DISCOUNT), nullptr, 6, yTop, rc.right - 12, static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2, win32::SWP_NOZORDER);
             }
-            yTop += static_cast<int16_t>((5 * app.state.dyArial8)) / 2;
+            yTop += static_cast<std::int16_t>((5 * app.state.dyArial8)) / 2;
         }
         if (fMacintosh && ids == idsOneResourceGeneratedEachYearEvery) {
             idsT = idsAnnualResourcesPlanetValueSqrtPopulationEnergy;
@@ -922,14 +922,14 @@ void DrawRace3(APPSESSION &app, HWND hwnd, HDC hdc, int16_t iDraw) {
             win32::TextOutA(hdc, 6, yTop, app.state.szWork, cch);
         }
         dx = LOWORD(GetTextExtent(hdc, app.state.szWork, cch)) + 6;
-        dxItem = abs(rgRW3Width[i]) * dxDig;
+        dxItem = std::abs(rgRW3Width[i]) * dxDig;
         win32::wsprintfA(app.state.szWork, app.state.PCTD, RaceQueryIO().pfnStat(&app.state.vplr, static_cast<RaceStat>(rgRW3IStat[i])));
         if (rgRW3Width[i] < 0 && (i > 0 || !fMacintosh)) {
             dxItem += dxkT;
             if (i == 0) {
-                strcat(app.state.szWork, "00");
+                std::strcat(app.state.szWork, "00");
             } else {
-                strcat(app.state.szWork, "kT");
+                std::strcat(app.state.szWork, "kT");
             }
         }
         dx += dxItem;
@@ -957,7 +957,7 @@ void DrawRace3(APPSESSION &app, HWND hwnd, HDC hdc, int16_t iDraw) {
         }
         ids = static_cast<StringId>(ids + 1);
         irc += 2;
-        yTop += static_cast<int16_t>(((rgRW3Spacing[i] + 1) * app.state.dyArial8)) / 2;
+        yTop += static_cast<std::int16_t>(((rgRW3Spacing[i] + 1) * app.state.dyArial8)) / 2;
     }
     if (fMacintosh) {
         app.lpui->crcRCW = 2;
@@ -972,14 +972,14 @@ void DrawRace3(APPSESSION &app, HWND hwnd, HDC hdc, int16_t iDraw) {
     return;
 }
 
-int16_t FTrackRaceDlg3(APPSESSION &app, HWND hwnd, POINT16 pt, int16_t kbd) {
+std::int16_t FTrackRaceDlg3(APPSESSION &app, HWND hwnd, POINT16 pt, std::int16_t kbd) {
     BTNT    btnt;
-    int16_t bt;
-    int16_t dShift;
-    int16_t i;
-    int16_t irc;
-    int16_t iMod;
-    int16_t iStat;
+    std::int16_t bt;
+    std::int16_t dShift;
+    std::int16_t i;
+    std::int16_t irc;
+    std::int16_t iMod;
+    std::int16_t iStat;
 
     irc = IrcRaceDlgHitTest(app, pt);
     if (irc < 0) {
@@ -1010,13 +1010,13 @@ int16_t FTrackRaceDlg3(APPSESSION &app, HWND hwnd, POINT16 pt, int16_t kbd) {
 INT_PTR  RaceWizardDlg4(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
 
-    int16_t     i;
+    std::int16_t     i;
     RECT        rc;
     HDC         hdc;
     char        szT[600];
     StringId    ids;
     PAINTSTRUCT ps;
-    int16_t     cch;
+    std::int16_t     cch;
     RECT        rcGBox;
 
     switch (message) {
@@ -1123,12 +1123,12 @@ INT_PTR  RaceWizardDlg4(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
 INT_PTR  RaceWizardDlg5(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
 
-    int16_t     i;
+    std::int16_t     i;
     RECT        rc;
     HWND        hwndCtl;
     HDC         hdc;
     PAINTSTRUCT ps;
-    int16_t     cch;
+    std::int16_t     cch;
     RECT        rcGBox;
 
     switch (message) {
@@ -1215,11 +1215,11 @@ INT_PTR  RaceWizardDlg5(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
 INT_PTR  RaceWizardDlg6(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
 
-    int16_t     i;
+    std::int16_t     i;
     RECT        rc;
     HDC         hdc;
     PAINTSTRUCT ps;
-    int16_t     cch;
+    std::int16_t     cch;
     RECT        rcGBox;
 
     switch (message) {
@@ -1310,9 +1310,9 @@ void InvalidateAdvPtsRect(APPSESSION &app, HWND hwnd) {
     HDC        hdc;
     TEXTMETRIC tm;
     LOGFONT   *plf;
-    int16_t    dyBig;
+    std::int16_t    dyBig;
     HFONT      hfont;
-    int16_t    dx;
+    std::int16_t    dx;
     RECT       rc;
     HFONT      hfontSav;
 
@@ -1320,7 +1320,7 @@ void InvalidateAdvPtsRect(APPSESSION &app, HWND hwnd) {
     plfOwner.reset(plf);
     hdc = win32::GetDC(hwnd);
     plf->lfHeight = -24;
-    strcpy(plf->lfFaceName, app.lpui->rgszArial[1]);
+    std::strcpy(plf->lfFaceName, app.lpui->rgszArial[1]);
     hfont = win32::CreateFontIndirectA(plf);
     hfontSav = static_cast<HFONT>(win32::SelectObject(hdc, hfont));
     win32::GetTextMetricsA(hdc, &tm);
@@ -1342,15 +1342,15 @@ void DrawRaceAdvantagePoints(APPSESSION &app, HDC hdc, RECT *prc, PLAYER *pplr) 
     TEXTMETRIC tm;
     LOGFONT   *plf;
     COLORREF   crBkSav;
-    int16_t    bkMode;
-    int16_t    dyBig;
+    std::int16_t    bkMode;
+    std::int16_t    dyBig;
     char       szAdvantage[32];
-    int16_t    c;
+    std::int16_t    c;
     COLORREF   crSav;
     HFONT      hfont;
-    int16_t    dx;
-    int16_t    iPts;
-    int16_t    cch;
+    std::int16_t    dx;
+    std::int16_t    iPts;
+    std::int16_t    cch;
     RECT       rc;
     HFONT      hfontSav;
 
@@ -1399,36 +1399,36 @@ void DrawRaceAdvantagePoints(APPSESSION &app, HDC hdc, RECT *prc, PLAYER *pplr) 
 static char szRaceFileSuggest[256];
 
 void SetSzRaceFile(APPSESSION &app, const char *pszFile) {
-    size_t cch = CchUtf8Prefix(pszFile, sizeof(app.state.szRaceFile) - 1);
-    size_t cchSuggest = CchUtf8Prefix(pszFile, sizeof(szRaceFileSuggest) - 1);
+    std::size_t cch = CchUtf8Prefix(pszFile, sizeof(app.state.szRaceFile) - 1);
+    std::size_t cchSuggest = CchUtf8Prefix(pszFile, sizeof(szRaceFileSuggest) - 1);
 
     /* Full native paths belong to UI storage; the original cache keeps its size. */
-    memcpy(szRaceFileSuggest, pszFile, cchSuggest);
+    std::memcpy(szRaceFileSuggest, pszFile, cchSuggest);
     szRaceFileSuggest[cchSuggest] = 0;
-    memcpy(app.state.szRaceFile, pszFile, cch);
+    std::memcpy(app.state.szRaceFile, pszFile, cch);
     app.state.szRaceFile[cch] = 0;
 }
 
-int16_t FConfirmLegacyRaceNames(APPSESSION &app, char *szName, char *szNames) {
+std::int16_t FConfirmLegacyRaceNames(APPSESSION &app, char *szName, char *szNames) {
     char szPrompt[256];
 
     CchSprintf(szPrompt, TextIO().pfnCompressed(app, idsNativeLegacyRaceNameShortened), szName, szNames);
     return AlertIO().pfnAlertSz(app, szPrompt, win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_TASKMODAL) == win32::IDYES;
 }
 
-int16_t FSaveRace(APPSESSION &app, char *szFileSuggest, PLAYER *pplr) {
-    uint16_t     icksum;
+std::int16_t FSaveRace(APPSESSION &app, char *szFileSuggest, PLAYER *pplr) {
+    std::uint16_t     icksum;
     char         szFileTitle[256];
     char         szDirName[256];
     char         szFilter[256];
-    uint16_t     i;
+    std::uint16_t     i;
     char         szFile[256];
     OPENFILENAME ofn;
 
     if (szFileSuggest == app.state.szRaceFile && app.state.szRaceFile[0] && szRaceFileSuggest[0] &&
-        strncmp(app.state.szRaceFile, szRaceFileSuggest, strlen(app.state.szRaceFile)) == 0) szFileSuggest = szRaceFileSuggest;
+        std::strncmp(app.state.szRaceFile, szRaceFileSuggest, std::strlen(app.state.szRaceFile)) == 0) szFileSuggest = szRaceFileSuggest;
     if (szFileSuggest) {
-        strcpy(szFile, szFileSuggest);
+        std::strcpy(szFile, szFileSuggest);
     } else {
         szFile[0] = 0;
     }
@@ -1439,7 +1439,7 @@ int16_t FSaveRace(APPSESSION &app, char *szFileSuggest, PLAYER *pplr) {
             szFilter[i] = 0;
         }
     }
-    memset(&ofn, 0, sizeof(OPENFILENAME));
+    std::memset(&ofn, 0, sizeof(OPENFILENAME));
     ofn.lStructSize = sizeof(OPENFILENAME);
     ofn.hwndOwner = app.lpui->hwndRaceParent;
     ofn.lpstrFilter = szFilter;
@@ -1466,9 +1466,9 @@ int16_t FSaveRace(APPSESSION &app, char *szFileSuggest, PLAYER *pplr) {
     return 0;
 }
 
-void SetRCWTitle(APPSESSION &app, HWND hwnd, int16_t iStep) {
+void SetRCWTitle(APPSESSION &app, HWND hwnd, std::int16_t iStep) {
     char    szBuf[50];
-    int16_t cch;
+    std::int16_t cch;
 
     cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsCustomRaceWizardStepD6 + app.state.fRCWReadOnly), szBuf);
     cch = win32::wsprintfA(app.state.szWork, szBuf, iStep);

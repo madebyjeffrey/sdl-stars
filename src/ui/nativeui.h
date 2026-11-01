@@ -5,7 +5,7 @@
 #include "../platform/native.h"
 // The Windows interface's native port helpers. See docs/NATIVE-PORT.md.
 
-#include <stdint.h>
+#include <cstdint>
 #include <windows.h>
 
 // PointFrom16 widens a Stars point to a Win32 point.
@@ -16,7 +16,7 @@ static inline POINT PointFrom16(POINT16 pt) {
 
 // PointTo16 narrows a Win32 point to a Stars point.
 static inline POINT16 PointTo16(POINT pt) {
-    POINT16 out = {static_cast<int16_t>(pt.x), static_cast<int16_t>(pt.y)};
+    POINT16 out = {static_cast<std::int16_t>(pt.x), static_cast<std::int16_t>(pt.y)};
     return out;
 }
 
@@ -68,8 +68,8 @@ LRESULT  FrameWndProcDeferred(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 // FRouteMouseWheel sends wheel messages to the window under the cursor,
 // CWheelNotches gathers wheel deltas into notches and CWheelLines gives the
 // lines a notch scrolls (see nativeui.c).
-int16_t FRouteMouseWheel(win32::MSG *pmsg);
-int16_t CWheelNotches(int16_t *pdWheel, int16_t dWheel);
-int16_t CWheelLines(int16_t cPage);
+std::int16_t FRouteMouseWheel(win32::MSG *pmsg);
+std::int16_t CWheelNotches(std::int16_t *pdWheel, std::int16_t dWheel);
+std::int16_t CWheelLines(std::int16_t cPage);
 
 #endif

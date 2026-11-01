@@ -2,10 +2,10 @@
 #define STARS_DECOMPILED_MINE_H
 
 #include "common.h"
-#include <stdint.h>
+#include <cstdint>
 
-void    GetMineFieldCounts(APPSESSION &app, uint16_t id, int16_t *pithm, int16_t *pcthm);
-int16_t FOtherStuffAtScanSel(APPSESSION &app);
-void    EstMineralsMined(APPSESSION &app, PLANET *lppl, int32_t *plQuan, int32_t cMines, int16_t fApply);
+void    GetMineFieldCounts(APPSESSION &app, std::uint16_t id, std::int16_t *pithm, std::int16_t *pcthm);
+std::int16_t FOtherStuffAtScanSel(APPSESSION &app);
+void    EstMineralsMined(APPSESSION &app, PLANET *lppl, std::int32_t *plQuan, std::int32_t cMines, std::int16_t fApply);
 
 #endif

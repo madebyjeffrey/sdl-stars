@@ -11,7 +11,7 @@ template<class A, class B> constexpr LPARAM MAKELPARAM(A lo, B hi) {
     return static_cast<LPARAM>(static_cast<DWORD>(MAKELONG(lo, hi)));
 }
 template<class T> inline LPSTR MAKEINTRESOURCE(T id) {
-    return reinterpret_cast<LPSTR>(static_cast<uintptr_t>(static_cast<WORD>(id)));
+    return reinterpret_cast<LPSTR>(static_cast<std::uintptr_t>(static_cast<WORD>(id)));
 }
 template<class R, class G, class B> constexpr COLORREF RGB(R r, G g, B b) {
     return static_cast<COLORREF>(static_cast<BYTE>(r) |

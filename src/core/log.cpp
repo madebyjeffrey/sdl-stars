@@ -9,21 +9,21 @@
 #include "alert_io.h"
 #include "record_io.h"
 
-void WriteMemResearch(APPSESSION &app, int16_t wResearch) {
-    uint8_t rgb[cbWireResearch];
+void WriteMemResearch(APPSESSION &app, std::int16_t wResearch) {
+    std::uint8_t rgb[cbWireResearch];
 
     NATIVEBYTEWRITER(std::as_writable_bytes(std::span(rgb))).FWriteI16Le(wResearch);
     WriteMemRt(app, rtLogResearch, cbWireResearch, rgb);
 }
 
-void WriteMemPassword(APPSESSION &app, int32_t lSalt) {
-    uint8_t rgb[cbWirePassword];
+void WriteMemPassword(APPSESSION &app, std::int32_t lSalt) {
+    std::uint8_t rgb[cbWirePassword];
 
     NATIVEBYTEWRITER(std::as_writable_bytes(std::span(rgb))).FWriteI32Le(lSalt);
     WriteMemRt(app, rtChgPassword, cbWirePassword, rgb);
 }
 
-void LogSplitFleet(APPSESSION &app, int16_t id) {
+void LogSplitFleet(APPSESSION &app, std::int16_t id) {
     std::byte rgb[cbWireFleetId];
     if (app.state.gd.fGeneratingTurn) {
         LpflFromId(app, id)->SetFCompChg(1);
@@ -34,12 +34,12 @@ void LogSplitFleet(APPSESSION &app, int16_t id) {
     return;
 }
 
-void LogMergeFleet(APPSESSION &app, int16_t id) {
-    uint16_t idCur;
-    int16_t  i;
-    uint16_t rgid[512];
+void LogMergeFleet(APPSESSION &app, std::int16_t id) {
+    std::uint16_t idCur;
+    std::int16_t  i;
+    std::uint16_t rgid[512];
     std::byte rgb[512 * cbWireFleetId];
-    int16_t  j;
+    std::int16_t  j;
 
     if (!app.state.gd.fGeneratingTurn) {
         i = 0;
@@ -62,8 +62,8 @@ void LogMergeFleet(APPSESSION &app, int16_t id) {
 }
 
 void LogChangeShDef(APPSESSION &app, SHDEF *lpshdefNew) {
-    uint8_t  rgb[149];
-    uint8_t *pb;
+    std::uint8_t  rgb[149];
+    std::uint8_t *pb;
     RTCHGSHDEF rtchg{};
 
     if (!app.state.gd.fGeneratingTurn) {
@@ -89,11 +89,11 @@ void LogChangeShDef(APPSESSION &app, SHDEF *lpshdefNew) {
     return;
 }
 
-void LogChangeName(APPSESSION &app, GrobjClass grobj, int16_t id, char *szName) {
+void LogChangeName(APPSESSION &app, GrobjClass grobj, std::int16_t id, char *szName) {
     FLEET    *lpfl;
-    int16_t   cOut;
+    std::int16_t   cOut;
     RTCHGNAME rtchgname;
-    uint8_t rgbName[cbWireChangeName + 33];
+    std::uint8_t rgbName[cbWireChangeName + 33];
 
     lpfl = LpflFromId(app, id);
     if (lpfl) {
@@ -106,21 +106,21 @@ void LogChangeName(APPSESSION &app, GrobjClass grobj, int16_t id, char *szName) 
             cOut = 1;
             lpfl->lpszName = nullptr;
         } else {
-            cOut = strlen(szName);
-            lpfl->lpszName = LpAlloc<char>(app, strlen(szName) + 1, htString);
-            strcpy(lpfl->lpszName, szName);
+            cOut = std::strlen(szName);
+            lpfl->lpszName = LpAlloc<char>(app, std::strlen(szName) + 1, htString);
+            std::strcpy(lpfl->lpszName, szName);
             if (FCompressUserString(app, szName, reinterpret_cast<char *>(&rtchgname.rgb[1]), &cOut)) {
                 rtchgname.rgb[0] = cOut;
             } else {
                 rtchgname.rgb[0] = 0;
-                strcpy(reinterpret_cast<char *>(&rtchgname.rgb[1]), szName);
+                std::strcpy(reinterpret_cast<char *>(&rtchgname.rgb[1]), szName);
                 cOut++;
             }
         }
         rtchgname.grobj = grobj;
         rtchgname.id = id;
         FEncodeChangeNamePrefix(rtchgname, std::as_writable_bytes(std::span(rgbName)).first(cbWireChangeName));
-        memcpy(rgbName + cbWireChangeName, rtchgname.rgb, cOut + 1);
+        std::memcpy(rgbName + cbWireChangeName, rtchgname.rgb, cOut + 1);
         WriteMemRt(app, rtLogFleetName, cOut + 5, rgbName);
         if (app.state.gd.fTutorial) {
             PresentationIO().pfnTutor(app);
@@ -130,16 +130,16 @@ void LogChangeName(APPSESSION &app, GrobjClass grobj, int16_t id, char *szName) 
 }
 
 void LogChangeFleet(APPSESSION &app, FLEET *pfl, FLEET *pflNew) {
-    int16_t   d;
-    int16_t   i;
-    int16_t   fChg;
+    std::int16_t   d;
+    std::int16_t   i;
+    std::int16_t   fChg;
     LOGXFERF  lxfNew;
     LOGXFER   lxNew;
     RTWAYPT   rtwp;
     RTSHIPINT rtsi;
-    int16_t   iordNew;
-    int16_t   iordOld;
-    int16_t   cbWp;
+    std::int16_t   iordNew;
+    std::int16_t   iordOld;
+    std::int16_t   cbWp;
     char     *pbWp;
     HDR       hdr;
     RTWAYPT rtwpPrev{};
@@ -199,7 +199,7 @@ void LogChangeFleet(APPSESSION &app, FLEET *pfl, FLEET *pflNew) {
     }
     d = pflNew->cord - pfl->cord;
     for (iordOld = 0;
-         iordOld < pfl->cord && iordOld < pflNew->cord && memcmp(&pfl->lpplord->rgord()[iordOld], &pflNew->lpplord->rgord()[iordOld], sizeof(ORDER)) == 0;
+         iordOld < pfl->cord && iordOld < pflNew->cord && std::memcmp(&pfl->lpplord->rgord()[iordOld], &pflNew->lpplord->rgord()[iordOld], sizeof(ORDER)) == 0;
          iordOld++) {
     }
     iordNew = iordOld;
@@ -228,7 +228,7 @@ void LogChangeFleet(APPSESSION &app, FLEET *pfl, FLEET *pflNew) {
         goto NextTest;
     } else {
         cbWp = 22;
-        if (FGetPrevLogRt(app, &hdr, reinterpret_cast<uint8_t *>(app.state.rgbCur)) && hdr.rt == rtLogFleetOrderUpdate &&
+        if (FGetPrevLogRt(app, &hdr, reinterpret_cast<std::uint8_t *>(app.state.rgbCur)) && hdr.rt == rtLogFleetOrderUpdate &&
             FDecodeRtWayptPrefix(std::as_bytes(std::span(app.state.rgbCur)), rtwpPrev) && rtwpPrev.id == pflNew->id && rtwpPrev.iWaypt == iordNew) {
             app.state.imemLogCur = app.state.imemLogPrev;
         }
@@ -249,7 +249,7 @@ NextTest:
 void LogChangeRelations(APPSESSION &app) {
     HDR hdr;
 
-    if (FGetPrevLogRt(app, &hdr, reinterpret_cast<uint8_t *>(app.state.rgbCur)) && hdr.rt == rtLogRelations) {
+    if (FGetPrevLogRt(app, &hdr, reinterpret_cast<std::uint8_t *>(app.state.rgbCur)) && hdr.rt == rtLogRelations) {
         app.state.imemLogCur = app.state.imemLogPrev;
     }
     WriteMemRt(app, rtLogRelations, app.state.game.cPlayer, app.state.rgplr[app.state.idPlayer].rgmdRelation);
@@ -270,8 +270,8 @@ void LogChangeBtlplan(APPSESSION &app, BTLPLAN *pbtlplan) {
 }
 
 void LogChangePlanet(APPSESSION &app, PLANET *ppl, PLANET *pplNew) {
-    int16_t i;
-    int16_t fChg;
+    std::int16_t i;
+    std::int16_t fChg;
     HDR     hdr;
     LOGXFER lxNew;
     RTCHGPRODQ rtcpq{};
@@ -316,8 +316,8 @@ void LogChangePlanet(APPSESSION &app, PLANET *ppl, PLANET *pplNew) {
                 NATIVEBYTEWRITER(rgbProdId).FWriteI16Le(lxNew.id);
                 WriteMemRt(app, rtLogPlanetProdQ, cbWireChgProdQ, rgbProdId);
             } else if (pplNew->lpplprod && (!ppl->lpplprod || ppl->lpplprod->iprodMac != pplNew->lpplprod->iprodMac ||
-                                            memcmp(ppl->lpplprod->rgprod(), pplNew->lpplprod->rgprod(), ppl->lpplprod->iprodMac * 4) != 0)) {
-                if (FGetPrevLogRt(app, &hdr, reinterpret_cast<uint8_t *>(app.state.rgbCur)) && hdr.rt == rtLogPlanetProdQ &&
+                                            std::memcmp(ppl->lpplprod->rgprod(), pplNew->lpplprod->rgprod(), ppl->lpplprod->iprodMac * 4) != 0)) {
+                if (FGetPrevLogRt(app, &hdr, reinterpret_cast<std::uint8_t *>(app.state.rgbCur)) && hdr.rt == rtLogPlanetProdQ &&
                     FDecodeRtChgProdQ(std::as_bytes(std::span(app.state.rgbCur)), rtcpq) && rtcpq.id == ppl->id) {
                     app.state.imemLogCur = app.state.imemLogPrev;
                 }
@@ -326,7 +326,7 @@ void LogChangePlanet(APPSESSION &app, PLANET *ppl, PLANET *pplNew) {
                                  std::as_writable_bytes(std::span(app.state.rgbCur)).subspan(cbWireChgProdQ));
                 WriteMemRt(app, rtLogPlanetProdQ, pplNew->lpplprod->iprodMac * 4 + 2, app.state.rgbCur);
             }
-            if (static_cast<uint32_t>(ppl->fNoResearch) != pplNew->fNoResearch || ppl->idFling != pplNew->idFling || ppl->iWarpFling != pplNew->iWarpFling ||
+            if (static_cast<std::uint32_t>(ppl->fNoResearch) != pplNew->fNoResearch || ppl->idFling != pplNew->idFling || ppl->iWarpFling != pplNew->iWarpFling ||
                 ppl->idRoute != pplNew->idRoute) {
                 routing.id = pplNew->id;
                 routing.fNoResearch = pplNew->fNoResearch;
@@ -342,18 +342,18 @@ void LogChangePlanet(APPSESSION &app, PLANET *ppl, PLANET *pplNew) {
 }
 
 void LogChangeThing(APPSESSION &app, THING *lpth, THING *pthNew) {
-    int16_t i;
-    int16_t fChg;
+    std::int16_t i;
+    std::int16_t fChg;
     LOGXFER lxNew;
 
     fChg = 0;
     if (!app.state.gd.fGeneratingTurn) {
-        memset(&lxNew, 0, sizeof(LOGXFER));
+        std::memset(&lxNew, 0, sizeof(LOGXFER));
         lxNew.id = pthNew->idFull();
         lxNew.grobj = grobjThing;
         for (i = 0; i < 3; i++) {
-            lxNew.rgdItem[i] = static_cast<int16_t>((pthNew->thp().rgwtMin(i) - lpth->thp().rgwtMin(i)));
-            if (static_cast<int16_t>((pthNew->thp().rgwtMin(i) - lpth->thp().rgwtMin(i))) != 0) {
+            lxNew.rgdItem[i] = static_cast<std::int16_t>((pthNew->thp().rgwtMin(i) - lpth->thp().rgwtMin(i)));
+            if (static_cast<std::int16_t>((pthNew->thp().rgwtMin(i) - lpth->thp().rgwtMin(i))) != 0) {
                 fChg = 1;
             }
         }
@@ -371,19 +371,19 @@ void LogChangeThing(APPSESSION &app, THING *lpth, THING *pthNew) {
 }
 
 void LogMakeValidXfer(APPSESSION &app, LOGXFER *plx1, LOGXFER *plx2) {
-    int32_t  rgQuan[5];
-    uint8_t  *prt;
-    int16_t  iOff;
-    uint8_t *prtl;
-    int16_t  rt;
-    int16_t  i;
-    uint8_t  rgbuf[28];
+    std::int32_t  rgQuan[5];
+    std::uint8_t  *prt;
+    std::int16_t  iOff;
+    std::uint8_t *prtl;
+    std::int16_t  rt;
+    std::int16_t  i;
+    std::uint8_t  rgbuf[28];
     RTXFER transfer{};
-    int16_t  grbit;
-    uint8_t *prtx;
-    int16_t  grFlag;
-    int32_t  iBiggest;
-    int16_t  cb;
+    std::int16_t  grbit;
+    std::uint8_t *prtx;
+    std::int16_t  grFlag;
+    std::int32_t  iBiggest;
+    std::int16_t  cb;
 
     iBiggest = 0;
     grbit = 0;
@@ -397,7 +397,7 @@ void LogMakeValidXfer(APPSESSION &app, LOGXFER *plx1, LOGXFER *plx2) {
     case rtLogCargoXfer8:
     case rtLogCargoXfer16:
     case rtLogCargoXfer32:
-        prt = static_cast<uint8_t *>((app.state.lpLog + (app.state.imemLogCur + -app.state.hdrPrev.cb)));
+        prt = static_cast<std::uint8_t *>((app.state.lpLog + (app.state.imemLogCur + -app.state.hdrPrev.cb)));
         break;
     default:
         prt = nullptr;
@@ -409,13 +409,13 @@ void LogMakeValidXfer(APPSESSION &app, LOGXFER *plx1, LOGXFER *plx2) {
         case rtLogCargoXfer8:
             for (i = 0; i < 5; i++) {
                 if (1 << i & grbit) {
-                    rgQuan[i] = static_cast<int16_t>(CxvFromPrefix(prt, 6 + (iOff + 1) * 1).cQuan8(iOff));
+                    rgQuan[i] = static_cast<std::int16_t>(CxvFromPrefix(prt, 6 + (iOff + 1) * 1).cQuan8(iOff));
                     iOff++;
                 }
             }
             break;
         case rtLogCargoXfer16:
-            prtx = static_cast<uint8_t *>(prt);
+            prtx = static_cast<std::uint8_t *>(prt);
             for (i = 0; i < 5; i++) {
                 if (1 << i & grbit) {
                     rgQuan[i] = CxvFromPrefix(prtx, 6 + (iOff + 1) * 2).cQuan16(iOff);
@@ -424,7 +424,7 @@ void LogMakeValidXfer(APPSESSION &app, LOGXFER *plx1, LOGXFER *plx2) {
             }
             break;
         case rtLogCargoXfer32:
-            prtl = static_cast<uint8_t *>(prt);
+            prtl = static_cast<std::uint8_t *>(prt);
             for (i = 0; i < 5; i++) {
                 if (1 << i & grbit) {
                     rgQuan[i] = CxvFromPrefix(prtl, 6 + (iOff + 1) * 4).cQuan32(iOff);
@@ -438,8 +438,8 @@ void LogMakeValidXfer(APPSESSION &app, LOGXFER *plx1, LOGXFER *plx2) {
     grbit = 0;
     while (i < 5) {
         rgQuan[i] += plx1->rgdItem[i];
-        if (iBiggest <= labs(rgQuan[i])) {
-            iBiggest = labs(rgQuan[i]);
+        if (iBiggest <= std::labs(rgQuan[i])) {
+            iBiggest = std::labs(rgQuan[i]);
         }
         if (rgQuan[i] != 0) {
             grbit |= grFlag;
@@ -448,7 +448,7 @@ void LogMakeValidXfer(APPSESSION &app, LOGXFER *plx1, LOGXFER *plx2) {
         grFlag *= 2;
     }
     if (grbit != 0) {
-        prt = reinterpret_cast<uint8_t *>(rgbuf);
+        prt = reinterpret_cast<std::uint8_t *>(rgbuf);
         transfer.grobj1 = plx1->grobj & 0xf;
         transfer.grobj2 = plx2->grobj & 0xf;
         transfer.id1 = plx1->id;
@@ -467,7 +467,7 @@ void LogMakeValidXfer(APPSESSION &app, LOGXFER *plx1, LOGXFER *plx2) {
             }
         } else if (iBiggest <= 32767) {
             rt = 2;
-            prtx = reinterpret_cast<uint8_t *>(rgbuf);
+            prtx = reinterpret_cast<std::uint8_t *>(rgbuf);
             for (i = 0; i < 5; i++) {
                 if (rgQuan[i] != 0) {
                     CxvFromPrefix(prtx, 6 + (iOff + 1) * 2).SetCQuan16(iOff++, LOWORD(rgQuan[i]));
@@ -476,7 +476,7 @@ void LogMakeValidXfer(APPSESSION &app, LOGXFER *plx1, LOGXFER *plx2) {
             }
         } else {
             rt = 25;
-            prtl = reinterpret_cast<uint8_t *>(rgbuf);
+            prtl = reinterpret_cast<std::uint8_t *>(rgbuf);
             for (i = 0; i < 5; i++) {
                 if (rgQuan[i] != 0) {
                     CxvFromPrefix(prtl, 6 + (iOff + 1) * 4).SetCQuan32(iOff++, rgQuan[i]);
@@ -491,12 +491,12 @@ void LogMakeValidXfer(APPSESSION &app, LOGXFER *plx1, LOGXFER *plx2) {
 
 void LogMakeValidXferf(APPSESSION &app, LOGXFERF *plxf1, LOGXFERF *plxf2) {
     RTXFERF rtxf{};
-    int16_t  iOff;
-    int16_t  i;
+    std::int16_t  iOff;
+    std::int16_t  i;
     char     rgbuf[41];
-    uint16_t grbit;
-    int16_t  grFlag;
-    int16_t  cb;
+    std::uint16_t grbit;
+    std::int16_t  grFlag;
+    std::int16_t  cb;
 
     grbit = 0;
     grFlag = 1;
@@ -536,9 +536,9 @@ void CancelMemRt(APPSESSION &app, RecordType rt) {
     return;
 }
 
-static void WriteMemRtCore(APPSESSION &app, RecordType rt, int16_t cb, void *rg, bool fZipProd) {
+static void WriteMemRtCore(APPSESSION &app, RecordType rt, std::int16_t cb, void *rg, bool fZipProd) {
     HDR      hdr;
-    uint8_t *lpv;
+    std::uint8_t *lpv;
 
     if (!app.state.fLogOff) {
         if (app.state.imemLogCur + cb + 2 > 32000) {
@@ -558,9 +558,9 @@ static void WriteMemRtCore(APPSESSION &app, RecordType rt, int16_t cb, void *rg,
                 std::byte rgb[5 * cbWireZipProdQ];
                 for (int i = 0; i < 5; i++) FEncodeZipProdQ(app.state.vrgZipProd[i], std::span(rgb).subspan(i * cbWireZipProdQ));
                 assert(static_cast<std::size_t>(cb) <= sizeof(rgb) - 14);
-                memcpy(lpv + 2, rgb + 14, cb);
+                std::memcpy(lpv + 2, rgb + 14, cb);
             } else {
-                memcpy(lpv + 2, rg, cb);
+                std::memcpy(lpv + 2, rg, cb);
             }
         }
         app.state.imemLogCur += cb + 2;
@@ -571,15 +571,15 @@ static void WriteMemRtCore(APPSESSION &app, RecordType rt, int16_t cb, void *rg,
     return;
 }
 
-void WriteMemRt(APPSESSION &app, RecordType rt, int16_t cb, void *rg) {
+void WriteMemRt(APPSESSION &app, RecordType rt, std::int16_t cb, void *rg) {
     WriteMemRtCore(app, rt, cb, rg, false);
 }
 
-void WriteMemZpqRt(APPSESSION &app, int16_t cb) {
+void WriteMemZpqRt(APPSESSION &app, std::int16_t cb) {
     WriteMemRtCore(app, rtLogPlayerZpq1, cb, nullptr, true);
 }
 
-void DirtyGame(APPSESSION &app, int16_t fDirty) {
+void DirtyGame(APPSESSION &app, std::int16_t fDirty) {
     if (fDirty != app.state.game.fDirty) {
         app.state.game.fDirty = fDirty;
         if (!app.state.fAi) {
@@ -589,8 +589,8 @@ void DirtyGame(APPSESSION &app, int16_t fDirty) {
     return;
 }
 
-int16_t FGetPrevLogRt(APPSESSION &app, HDR *phdr, uint8_t *pb) {
-    uint8_t *lpv;
+std::int16_t FGetPrevLogRt(APPSESSION &app, HDR *phdr, std::uint8_t *pb) {
+    std::uint8_t *lpv;
 
     if (app.state.imemLogPrev == -1) {
         return 0;
@@ -598,16 +598,16 @@ int16_t FGetPrevLogRt(APPSESSION &app, HDR *phdr, uint8_t *pb) {
     lpv = app.state.lpLog + app.state.imemLogPrev;
     FDecodeHdr(std::as_bytes(std::span(lpv, cbWireHdr)), *phdr);
     if (phdr->cb > 0) {
-        memcpy(pb, lpv + 2, phdr->cb);
+        std::memcpy(pb, lpv + 2, phdr->cb);
     }
     return 1;
 }
 
-int16_t FRunLogFile(APPSESSION &app) {
-    int16_t fLogOld;
-    int16_t fRet;
-    int16_t iCur;
-    uint8_t *lprts;
+std::int16_t FRunLogFile(APPSESSION &app) {
+    std::int16_t fLogOld;
+    std::int16_t fRet;
+    std::int16_t iCur;
+    std::uint8_t *lprts;
 
     iCur = 0;
     fRet = 1;
@@ -625,37 +625,37 @@ int16_t FRunLogFile(APPSESSION &app) {
     return fRet;
 }
 
-int16_t FRunLogRecord(APPSESSION &app, RecordType rt, int16_t cb, uint8_t *lpb) {
-    int16_t   fExtra;
-    int32_t   cXfer;
+std::int16_t FRunLogRecord(APPSESSION &app, RecordType rt, std::int16_t cb, std::uint8_t *lpb) {
+    std::int16_t   fExtra;
+    std::int32_t   cXfer;
     XFERFULL *lpxfCur;
     PLANET   *lppl;
-    int32_t   rgcXfer[5];
+    std::int32_t   rgcXfer[5];
     XFER      rgxf[2];
     FLEET    *lpfl;
-    int16_t   ifl;
-    int16_t   i;
-    uint16_t  grbit;
-    int16_t   rgifl[512];
+    std::int16_t   ifl;
+    std::int16_t   i;
+    std::uint16_t  grbit;
+    std::int16_t   rgifl[512];
     SHDEF    *lpshdef;
-    int16_t   iPass;
-    int16_t   iLook;
+    std::int16_t   iPass;
+    std::int16_t   iLook;
     PLANET   *lpplMac;
-    int8_t    ch;
-    int32_t   l;
+    std::int8_t    ch;
+    std::int32_t   l;
     char      szT[33];
     THING    *lpth;
-    int16_t   id;
-    int16_t   iColDrop;
+    std::int16_t   id;
+    std::int16_t   iColDrop;
     COLDROP  *lpcdT;
     XFERFULL *lpxfMax;
     MessageId idm;
     RTCHGPRODQ rtcpq{};
     PROD prod{};
-    int16_t iordLog, grTaskLog;
-    uint16_t wOrderLog;
+    std::int16_t iordLog, grTaskLog;
+    std::uint16_t wOrderLog;
     RTCHGSHDEF rtchgshdef{};
-    int16_t idFleet, cShipXfer;
+    std::int16_t idFleet, cShipXfer;
 
     lpxfCur = nullptr;
     switch (rt) {
@@ -672,7 +672,7 @@ int16_t FRunLogRecord(APPSESSION &app, RecordType rt, int16_t cb, uint8_t *lpb) 
         for (; lppl < lpplMac && lppl->id != rtcpq.id; lppl++) {
         }
         if (lppl != lpplMac && lppl->iPlayer == app.state.idPlayer) {
-            i = static_cast<uint32_t>((cb - 2)) / 4;
+            i = static_cast<std::uint32_t>((cb - 2)) / 4;
             if (i > 0) {
                 if (!lppl->lpplprod) {
                     lppl->lpplprod = LpplAlloc<PLPROD>(app, 4, i + 2, htOrd);
@@ -708,29 +708,29 @@ int16_t FRunLogRecord(APPSESSION &app, RecordType rt, int16_t cb, uint8_t *lpb) 
         }
         return 0;
     case rtLogRelations:
-        memcpy(app.state.rgplr[app.state.idPlayer].rgmdRelation, lpb, app.state.game.cPlayer);
+        std::memcpy(app.state.rgplr[app.state.idPlayer].rgmdRelation, lpb, app.state.game.cPlayer);
         break;
     case rtLogPlayerZpq1:
         if (app.state.gd.fGeneratingTurn) {
-            if (static_cast<uint16_t>(cb) > 26) {
+            if (static_cast<std::uint16_t>(cb) > 26) {
                 return 0;
             }
             std::byte rgb[cbWireZipProdQ1];
             FEncodeZipProdQ1(app.state.rgplr[app.state.idPlayer].zpq1, rgb);
-            if (cb != 0) memcpy(rgb, lpb, cb);
+            if (cb != 0) std::memcpy(rgb, lpb, cb);
             FDecodeZipProdQ1(rgb, app.state.rgplr[app.state.idPlayer].zpq1);
         }
         break;
     case rtLogFleetName:
-        if (cb < static_cast<int16_t>(cbWireChangeName) ||
+        if (cb < static_cast<std::int16_t>(cbWireChangeName) ||
             !FReadUserString(app, lpb + cbWireChangeName, cb - cbWireChangeName, szT, 32, nullptr)) return 0;
         NATIVEBYTEREADER(std::as_bytes(std::span(lpb, 2))).FReadI16Le(id);
         if ((lpfl = LpflFromId(app, id)) == 0) return 0;
         if (lpfl->lpszName) HeapIO().pfnFree(app, lpfl->lpszName, htString);
         lpfl->lpszName = nullptr;
         if (*szT) {
-            lpfl->lpszName = LpAlloc<char>(app, strlen(szT) + 1, htString);
-            strcpy(lpfl->lpszName, szT);
+            lpfl->lpszName = LpAlloc<char>(app, std::strlen(szT) + 1, htString);
+            std::strcpy(lpfl->lpszName, szT);
         }
         break;
     case rtThing:
@@ -741,7 +741,7 @@ int16_t FRunLogRecord(APPSESSION &app, RecordType rt, int16_t cb, uint8_t *lpb) 
         { const auto fDetonateForThing = (LtvFromPrefix(lpb, 4).fDetonate()); auto &thForThing = *(lpth); thForThing.thm().SetFDetonate(fDetonateForThing); }
         break;
     case rtLogShDef:
-        if (cb < static_cast<int16_t>(cbWireChgShDef)) return 0;
+        if (cb < static_cast<std::int16_t>(cbWireChgShDef)) return 0;
         FDecodeRtChgShDefPrefix(std::as_bytes(std::span(lpb, cbWireChgShDef)), rtchgshdef);
         i = rtchgshdef.ishdef;
         iLook = rtchgshdef.iPlr;
@@ -768,7 +768,7 @@ int16_t FRunLogRecord(APPSESSION &app, RecordType rt, int16_t cb, uint8_t *lpb) 
         for (; lppl < lpplMac; lppl++) {
             if (lppl->iPlayer == app.state.idPlayer && lppl->lpplprod) {
                 for (iPass = 0; iPass < lppl->lpplprod->iprodMac; iPass++) {
-                    if (lppl->lpplprod->rgprod()[iPass].grobj == grobjFleet && lppl->lpplprod->rgprod()[iPass].iItem == static_cast<uint32_t>(i)) {
+                    if (lppl->lpplprod->rgprod()[iPass].grobj == grobjFleet && lppl->lpplprod->rgprod()[iPass].iItem == static_cast<std::uint32_t>(i)) {
                         lppl->lpplprod->rgprod()[iPass].pct = 0;
                     }
                 }
@@ -822,7 +822,7 @@ int16_t FRunLogRecord(APPSESSION &app, RecordType rt, int16_t cb, uint8_t *lpb) 
         for (i = 0, iLook = 0; i < 5; i++, grbit >>= 1) {
             if (grbit & 1) {
                 if (rt == rtLogCargoXfer8) {
-                    rgcXfer[i] = static_cast<int16_t>(CxvFromPrefix(lpb, 6 + (iLook + 1) * 1).cQuan8(iLook));
+                    rgcXfer[i] = static_cast<std::int16_t>(CxvFromPrefix(lpb, 6 + (iLook + 1) * 1).cQuan8(iLook));
                 } else if (rt == rtLogCargoXfer16) {
                     rgcXfer[i] = CxvFromPrefix(lpb, 6 + (iLook + 1) * 2).cQuan16(iLook);
                 } else {
@@ -894,11 +894,11 @@ int16_t FRunLogRecord(APPSESSION &app, RecordType rt, int16_t cb, uint8_t *lpb) 
                                 if (iPass == 1)
                                     goto StealCargo;
                                 if (!lpxfCur) {
-                                    for (lpxfCur = app.state.lpxf; lpxfCur < lpxfMax && memcmp(lpxfCur, lpb, 5) != 0; lpxfCur++) {
+                                    for (lpxfCur = app.state.lpxf; lpxfCur < lpxfMax && std::memcmp(lpxfCur, lpb, 5) != 0; lpxfCur++) {
                                     }
                                     if (lpxfCur == lpxfMax) {
                                         app.state.cXferFull++;
-                                        memset(lpxfCur, 0, sizeof(XFERFULL));
+                                        std::memset(lpxfCur, 0, sizeof(XFERFULL));
                                         lpxfCur->id1 = CxvFromPrefix(lpb, 2).id1();
                                         lpxfCur->id2 = CxvFromPrefix(lpb, 4).id2();
                                     }
@@ -978,7 +978,7 @@ int16_t FRunLogRecord(APPSESSION &app, RecordType rt, int16_t cb, uint8_t *lpb) 
                 }
             }
         } else {
-            for (i = 0; i < static_cast<uint32_t>(cb) / 2; i++) {
+            for (i = 0; i < static_cast<std::uint32_t>(cb) / 2; i++) {
                 for (ifl = 0; ifl < app.state.cFleet; ifl++) {
                     lpfl = app.state.rglpfl[ifl];
                     if (!app.state.rglpfl[ifl])
@@ -1017,17 +1017,17 @@ int16_t FRunLogRecord(APPSESSION &app, RecordType rt, int16_t cb, uint8_t *lpb) 
                     cXfer = cShipXfer;
                     if ((iPass == 0 && cXfer < 0) || (iPass == 1 && cXfer >= 0)) {
                         if (rgxf[0].fl().rgcsh[i] + cXfer < 0) {
-                            cXfer = static_cast<int16_t>(-rgxf[0].fl().rgcsh[i]);
-                        } else if (static_cast<int16_t>((32766 - rgxf[0].fl().rgcsh[i])) <= cXfer) {
-                            cXfer = static_cast<int16_t>((32766 - rgxf[0].fl().rgcsh[i] - 1));
+                            cXfer = static_cast<std::int16_t>(-rgxf[0].fl().rgcsh[i]);
+                        } else if (static_cast<std::int16_t>((32766 - rgxf[0].fl().rgcsh[i])) <= cXfer) {
+                            cXfer = static_cast<std::int16_t>((32766 - rgxf[0].fl().rgcsh[i] - 1));
                         }
                         rgxf[0].fl().rgcsh[i] += LOWORD(cXfer);
                     }
                     if ((iPass == 0 && cXfer >= 0) || (iPass == 1 && cXfer < 0)) {
                         if (rgxf[1].fl().rgcsh[i] - cXfer < 0) {
                             cXfer = rgxf[1].fl().rgcsh[i];
-                        } else if (static_cast<int16_t>((32766 - rgxf[1].fl().rgcsh[i])) <= -cXfer) {
-                            cXfer = static_cast<int16_t>(-(32766 - rgxf[1].fl().rgcsh[i] - 1));
+                        } else if (static_cast<std::int16_t>((32766 - rgxf[1].fl().rgcsh[i])) <= -cXfer) {
+                            cXfer = static_cast<std::int16_t>(-(32766 - rgxf[1].fl().rgcsh[i] - 1));
                         }
                         rgxf[1].fl().rgcsh[i] -= LOWORD(cXfer);
                     }
@@ -1059,7 +1059,7 @@ int16_t FRunLogRecord(APPSESSION &app, RecordType rt, int16_t cb, uint8_t *lpb) 
         if (iLook >= lpfl->cord) return 0;
         fExtra = (wOrderLog & 0x8000) != 0;
         if (fExtra && iLook + 1 >= lpfl->cord) return 0;
-        memmove(&lpfl->lpplord->rgord()[iLook], &lpfl->lpplord->rgord()[iLook + fExtra + 1], (lpfl->cord - iLook - fExtra - 1) * sizeof(ORDER));
+        std::memmove(&lpfl->lpplord->rgord()[iLook], &lpfl->lpplord->rgord()[iLook + fExtra + 1], (lpfl->cord - iLook - fExtra - 1) * sizeof(ORDER));
         lpfl->cord -= fExtra + 1;
         lpfl->lpplord->iordMac -= fExtra + 1;
         break;
@@ -1071,8 +1071,8 @@ int16_t FRunLogRecord(APPSESSION &app, RecordType rt, int16_t cb, uint8_t *lpb) 
         if (lpfl->cord == lpfl->lpplord->iordMax) {
             lpfl->lpplord = LpplReAlloc(app, lpfl->lpplord, lpfl->cord + 3);
         }
-        memmove(&lpfl->lpplord->rgord()[iordLog + 1], &lpfl->lpplord->rgord()[iordLog], (lpfl->cord - iordLog) * sizeof(ORDER));
-        if (!FApplyOrderBytes(app, lpfl->lpplord, iordLog, lpb + cbWireWaypt, cb, static_cast<uint16_t>(cb) < cbWireWaypt + cbWireOrder)) return 0;
+        std::memmove(&lpfl->lpplord->rgord()[iordLog + 1], &lpfl->lpplord->rgord()[iordLog], (lpfl->cord - iordLog) * sizeof(ORDER));
+        if (!FApplyOrderBytes(app, lpfl->lpplord, iordLog, lpb + cbWireWaypt, cb, static_cast<std::uint16_t>(cb) < cbWireWaypt + cbWireOrder)) return 0;
         lpfl->cord++;
         lpfl->lpplord->iordMac++;
         break;
@@ -1081,7 +1081,7 @@ int16_t FRunLogRecord(APPSESSION &app, RecordType rt, int16_t cb, uint8_t *lpb) 
         if (!(lpfl = LpflFromId(app, id)) || lpfl->cord < 0) return 0;
         NATIVEBYTEREADER(std::as_bytes(std::span(lpb + 2, 2))).FReadI16Le(iLook);
         if (iLook >= lpfl->cord) return 0;
-        if (!FApplyOrderBytes(app, lpfl->lpplord, iLook, lpb + cbWireWaypt, cb, static_cast<uint16_t>(cb) < cbWireWaypt + cbWireOrder)) return 0;
+        if (!FApplyOrderBytes(app, lpfl->lpplord, iLook, lpb + cbWireWaypt, cb, static_cast<std::uint16_t>(cb) < cbWireWaypt + cbWireOrder)) return 0;
         break;
     case rtBtlPlan:
         if (cb < 2) return 0;
@@ -1157,13 +1157,13 @@ int16_t FRunLogRecord(APPSESSION &app, RecordType rt, int16_t cb, uint8_t *lpb) 
     return 1;
 }
 
-int16_t FLoadLogFile(APPSESSION &app, char *pszLog) {
-    int16_t  fRet;
-    int16_t  cbLog;
-    int16_t  iCur;
+std::int16_t FLoadLogFile(APPSESSION &app, char *pszLog) {
+    std::int16_t  fRet;
+    std::int16_t  cbLog;
+    std::int16_t  iCur;
     MSGPLR  *lpmp;
     MSGPLR **lppmp;
-    int16_t  cSkip;
+    std::int16_t  cSkip;
 
     fRet = 1;
     app.state.imemLogCur = 0;
@@ -1223,7 +1223,7 @@ int16_t FLoadLogFile(APPSESSION &app, char *pszLog) {
         for (iCur = 0; iCur < cbLog; iCur += app.state.hdrCur.cb + 2) {
             RecordIO().pfnReadRt(app);
             FEncodeHdr(app.state.hdrCur, std::as_writable_bytes(std::span(app.state.lpLog + iCur, cbWireHdr)));
-            memmove(app.state.lpLog + (2 + iCur), app.state.rgbCur, app.state.hdrCur.cb);
+            std::memmove(app.state.lpLog + (2 + iCur), app.state.rgbCur, app.state.hdrCur.cb);
         }
         RecordIO().pfnReadRt(app);
         for (lppmp = &app.state.vlpmsgplrOut; *lppmp; lppmp = &(*lppmp)->lpmsgplrNext) {
@@ -1262,10 +1262,10 @@ Done:
     }
 }
 
-int16_t FCheckLogFile(APPSESSION &app, int16_t iplr, int16_t *pfError) {
-    int16_t  fRet;
-    int16_t  cbLog;
-    int16_t  iCur;
+std::int16_t FCheckLogFile(APPSESSION &app, std::int16_t iplr, std::int16_t *pfError) {
+    std::int16_t  fRet;
+    std::int16_t  cbLog;
+    std::int16_t  iCur;
 
     fRet = 1;
     app.state.imemLogCur = 0;
@@ -1307,13 +1307,13 @@ Done:
     }
 }
 
-int16_t FWriteLogFile(APPSESSION &app, char *pszFileBase, int16_t iPlayer) {
-    int16_t  iCur;
-    uint8_t *lprts;
+std::int16_t FWriteLogFile(APPSESSION &app, char *pszFileBase, std::int16_t iPlayer) {
+    std::int16_t  iCur;
+    std::uint8_t *lprts;
     RTLOGHDR rtlh;
-    uint8_t rgbLogHdr[cbWireLogHdr];
+    std::uint8_t rgbLogHdr[cbWireLogHdr];
     MSGPLR  *lpmp;
-    int16_t  cb;
+    std::int16_t  cb;
 
     iCur = 0;
     if (iPlayer == app.state.idPlayer && !app.state.rgplr[iPlayer].fAi && app.state.hdrPrev.rt != rtLogPlayerZpq1) {
@@ -1325,14 +1325,14 @@ int16_t FWriteLogFile(APPSESSION &app, char *pszFileBase, int16_t iPlayer) {
         // player storage. Preserve that physical image rather than clamp to 26.
         assert(static_cast<std::size_t>(cb) <= sizeof(rgbZip) - 14);
         assert(static_cast<std::size_t>(iPlayer) * cbWirePlayer + 86 + cb <= sizeof(rgbPlayer));
-        if (memcmp(rgbPlayer + iPlayer * cbWirePlayer + 86, rgbZip + 14, cb) != 0) {
+        if (std::memcmp(rgbPlayer + iPlayer * cbWirePlayer + 86, rgbZip + 14, cb) != 0) {
             WriteMemZpqRt(app, cb);
         }
     }
     /* NATIVE: callers pass szBase itself, and strcpy onto itself is
        undefined. */
     if (pszFileBase != app.state.szBase) {
-        strcpy(app.state.szBase, pszFileBase);
+        std::strcpy(app.state.szBase, pszFileBase);
     }
     if (!RecordIO().pfnFCreateFile(app, dtLog, iPlayer, nullptr)) {
         AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableCreateLogFile, nullptr), win32::MB_ICONHAND);
@@ -1342,7 +1342,7 @@ int16_t FWriteLogFile(APPSESSION &app, char *pszFileBase, int16_t iPlayer) {
     try {
         rtlh.cbLog = app.state.imemLogCur;
         /* Preserve the unused 15-byte metadata area in the orders-file header. */
-        memset(rtlh.rgbUnused, 0, sizeof(rtlh.rgbUnused));
+        std::memset(rtlh.rgbUnused, 0, sizeof(rtlh.rgbUnused));
         FEncodeLogHdr(rtlh, std::as_writable_bytes(std::span(rgbLogHdr)));
         RecordIO().pfnWriteRt(app, static_cast<RecordType>(9), cbWireLogHdr, rgbLogHdr);
         for (; iCur < app.state.imemLogCur; iCur += HdvFromPrefix(lprts).cb() + 2) {
@@ -1366,15 +1366,15 @@ int16_t FWriteLogFile(APPSESSION &app, char *pszFileBase, int16_t iPlayer) {
     }
 }
 
-int16_t FWriteHistFile(APPSESSION &app, int16_t iPlayer) {
+std::int16_t FWriteHistFile(APPSESSION &app, std::int16_t iPlayer) {
     PLANET   *lppl;
-    int16_t   i;
-    uint16_t  cTurnBase;
+    std::int16_t   i;
+    std::uint16_t  cTurnBase;
     SHDEF    *lpshdef;
-    int16_t   j;
+    std::int16_t   j;
     RTHISTHDR rthh;
     std::byte rgbHistHdr[cbWireHistHdr];
-    uint8_t  *lpb;
+    std::uint8_t  *lpb;
 
     if (!RecordIO().pfnFCreateFile(app, dtHist, iPlayer, nullptr)) {
         AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableCreateHistoryFile, nullptr), win32::MB_ICONHAND);
@@ -1451,11 +1451,11 @@ int16_t FWriteHistFile(APPSESSION &app, int16_t iPlayer) {
     }
 }
 
-void EnumLogRts(APPSESSION &app, int16_t (*pfn)(APPSESSION &, void *, int16_t, int16_t, void *, int16_t), void *lpPass, int16_t iPass) {
-    int16_t fLogOld;
-    int16_t fRet;
-    int16_t iCur;
-    uint8_t *lprts;
+void EnumLogRts(APPSESSION &app, std::int16_t (*pfn)(APPSESSION &, void *, std::int16_t, std::int16_t, void *, std::int16_t), void *lpPass, std::int16_t iPass) {
+    std::int16_t fLogOld;
+    std::int16_t fRet;
+    std::int16_t iCur;
+    std::uint8_t *lprts;
 
     iCur = 0;
     fRet = 1;

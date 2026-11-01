@@ -8,18 +8,18 @@
 #include "random_io.h"
 #include "record_io.h"
 
-int16_t rgRacePrimaryTrait[10] = {40, 95, 45, 10, -100, -150, 120, 180, 90, -66};
+std::int16_t rgRacePrimaryTrait[10] = {40, 95, 45, 10, -100, -150, 120, 180, 90, -66};
 char    rgRW3Spacing[7] = {4, 3, 3, 3, 3, 3, 3};
-int16_t rgRaceAdvDisPts[14] = {-235, -25, -159, -201, 40, -240, -155, 160, 240, 255, 325, 180, 70, 30};
+std::int16_t rgRaceAdvDisPts[14] = {-235, -25, -159, -201, 40, -240, -155, 160, 240, 255, 325, 180, 70, 30};
 char    rgRW3IStat[7] = {0, 1, 2, 3, 4, 5, 6};
-int16_t rgRaceDisEnvPts[6] = {150, 330, 540, 780, 1050, 1380};
+std::int16_t rgRaceDisEnvPts[6] = {150, 330, 540, 780, 1050, 1380};
 char    rgRW3Width[7] = {-2, 2, 2, 2, -2, 2, 2};
 char    rgRaceStatMax[16] = {25, 15, 25, 25, 25, 15, 25, 6, 2, 2, 2, 2, 2, 2, 9};
 char    rgRaceStatMin[16] = {7, 5, 5, 5, 5, 2, 5};
 
-int16_t GetRaceStat(PLAYER *pplr, RaceStat iStat) { return pplr->rgAttr[iStat]; }
+std::int16_t GetRaceStat(PLAYER *pplr, RaceStat iStat) { return pplr->rgAttr[iStat]; }
 
-int16_t SetRaceStat(PLAYER *pplr, RaceStat iStat, int16_t iVal) {
+std::int16_t SetRaceStat(PLAYER *pplr, RaceStat iStat, std::int16_t iVal) {
     if (iVal < rgRaceStatMin[iStat]) {
         iVal = rgRaceStatMin[iStat];
     }
@@ -30,15 +30,15 @@ int16_t SetRaceStat(PLAYER *pplr, RaceStat iStat, int16_t iVal) {
     return iVal;
 }
 
-int16_t GetRaceGrbit(PLAYER *pplr, RaceGrbit ibit) {
+std::int16_t GetRaceGrbit(PLAYER *pplr, RaceGrbit ibit) {
     if (UINT32_C(1) << ibit & pplr->grbitAttr) {
         return 1;
     }
     return 0;
 }
 
-void SetRaceGrbit(PLAYER *pplr, RaceGrbit ibit, int16_t fSet) {
-    uint32_t grMask;
+void SetRaceGrbit(PLAYER *pplr, RaceGrbit ibit, std::int16_t fSet) {
+    std::uint32_t grMask;
 
     grMask = UINT32_C(1) << ibit;
     if (fSet) {
@@ -50,7 +50,7 @@ void SetRaceGrbit(PLAYER *pplr, RaceGrbit ibit, int16_t fSet) {
 }
 
 void BoundsCheckPlayer(PLAYER *pplr) {
-    int16_t i;
+    std::int16_t i;
 
     for (i = 0; i < 3; i++) {
         if (pplr->rgEnvVarMin[i] == envImmune) {
@@ -76,8 +76,8 @@ void BoundsCheckPlayer(PLAYER *pplr) {
                 pplr->rgEnvVarMax[i] = pplr->rgEnvVarMin[i];
                 pplr->fHacker = 1;
             }
-            if (pplr->rgEnvVar[i] != pplr->rgEnvVarMin[i] + static_cast<int16_t>((pplr->rgEnvVarMax[i] - pplr->rgEnvVarMin[i])) / 2) {
-                pplr->rgEnvVar[i] = pplr->rgEnvVarMin[i] + static_cast<int16_t>((pplr->rgEnvVarMax[i] - pplr->rgEnvVarMin[i])) / 2;
+            if (pplr->rgEnvVar[i] != pplr->rgEnvVarMin[i] + static_cast<std::int16_t>((pplr->rgEnvVarMax[i] - pplr->rgEnvVarMin[i])) / 2) {
+                pplr->rgEnvVar[i] = pplr->rgEnvVarMin[i] + static_cast<std::int16_t>((pplr->rgEnvVarMax[i] - pplr->rgEnvVarMin[i])) / 2;
                 pplr->fHacker = 1;
             }
         }
@@ -99,25 +99,25 @@ void BoundsCheckPlayer(PLAYER *pplr) {
     return;
 }
 
-int16_t CAdvantagePoints(APPSESSION &app, PLAYER *pplr) {
-    int16_t       pctGrowth;
-    int16_t       iSpread;
-    int32_t       cPoints;
-    int16_t       cBad;
-    int16_t       cCur;
-    int16_t       i;
-    int16_t       rgi[3];
-    int16_t       cGood;
-    int32_t       lInnate;
+std::int16_t CAdvantagePoints(APPSESSION &app, PLAYER *pplr) {
+    std::int16_t       pctGrowth;
+    std::int16_t       iSpread;
+    std::int32_t       cPoints;
+    std::int16_t       cBad;
+    std::int16_t       cCur;
+    std::int16_t       i;
+    std::int16_t       rgi[3];
+    std::int16_t       cGood;
+    std::int32_t       lInnate;
     RaceAttribute raMajor;
-    int16_t       cOperate;
-    int16_t       cProduce;
+    std::int16_t       cOperate;
+    std::int16_t       cProduce;
 
     cPoints = 0;
     cPoints = 1650;
     BoundsCheckPlayer(pplr);
     raMajor = static_cast<RaceAttribute>(RaceQueryIO().pfnStat(pplr, rsMajorAdv));
-    lInnate = static_cast<int32_t>((LInnateRaceHabitability(app, pplr) / 2000));
+    lInnate = static_cast<std::int32_t>((LInnateRaceHabitability(app, pplr) / 2000));
     iSpread = 1 > (20 >= pplr->pctIdealGrowth ? pplr->pctIdealGrowth : 20) ? 1 : 20 < pplr->pctIdealGrowth ? 20 : pplr->pctIdealGrowth;
     if (iSpread != pplr->pctIdealGrowth) {
         iSpread = 1;
@@ -126,7 +126,7 @@ int16_t CAdvantagePoints(APPSESSION &app, PLAYER *pplr) {
     }
     pctGrowth = iSpread;
     if (iSpread <= 5) {
-        cPoints += static_cast<uint32_t>((static_cast<int16_t>((6 - iSpread)) * 4200));
+        cPoints += static_cast<std::uint32_t>((static_cast<std::int16_t>((6 - iSpread)) * 4200));
     } else if (iSpread > 13) {
         if (iSpread < 20) {
             iSpread = (iSpread - 13) * 3 + 21;
@@ -149,12 +149,12 @@ int16_t CAdvantagePoints(APPSESSION &app, PLAYER *pplr) {
         }
         iSpread = (iSpread - 5) * 2 + 5;
     }
-    lInnate = static_cast<int32_t>((lInnate * iSpread)) / 24;
+    lInnate = static_cast<std::int32_t>((lInnate * iSpread)) / 24;
     cPoints -= lInnate;
     cGood = 0;
     for (i = 0; i < 3; i++) {
         if (pplr->rgEnvVar[i] >= 0) {
-            cPoints += static_cast<int16_t>((abs(pplr->rgEnvVar[i] - 50) * 4));
+            cPoints += static_cast<std::int16_t>((std::abs(pplr->rgEnvVar[i] - 50) * 4));
         } else {
             cGood++;
         }
@@ -169,9 +169,9 @@ int16_t CAdvantagePoints(APPSESSION &app, PLAYER *pplr) {
         cProduce = 1 <= cProduce - 9 ? cProduce - 9 : 1;
         cProduce = (raMajor == raCheapCol ? 3 : 2) * cProduce;
         if (cGood >= 2) {
-            cPoints -= static_cast<int32_t>((static_cast<uint32_t>((cOperate * cProduce)) * pctGrowth)) / 2;
+            cPoints -= static_cast<std::int32_t>((static_cast<std::uint32_t>((cOperate * cProduce)) * pctGrowth)) / 2;
         } else {
-            cPoints -= static_cast<int32_t>((static_cast<uint32_t>((cOperate * cProduce)) * pctGrowth)) / 9;
+            cPoints -= static_cast<std::int32_t>((static_cast<std::uint32_t>((cOperate * cProduce)) * pctGrowth)) / 9;
         }
     }
     i = RaceQueryIO().pfnStat(pplr, rsResGen);
@@ -183,7 +183,7 @@ int16_t CAdvantagePoints(APPSESSION &app, PLAYER *pplr) {
     } else if (i == 9) {
         cPoints -= 600;
     } else if (i > 10) {
-        cPoints += static_cast<int16_t>(((i - 10) * 120));
+        cPoints += static_cast<std::int16_t>(((i - 10) * 120));
     }
     if (raMajor != raMacintosh) {
         rgi[0] = 10 - RaceQueryIO().pfnStat(pplr, rsFactProd);
@@ -206,7 +206,7 @@ int16_t CAdvantagePoints(APPSESSION &app, PLAYER *pplr) {
             cCur += 35 * rgi[2];
         }
         if (cCur > 700) {
-            cCur = static_cast<int16_t>((cCur - 700)) / 3 + 700;
+            cCur = static_cast<std::int16_t>((cCur - 700)) / 3 + 700;
         }
         if (rgi[2] <= -7) {
             if (rgi[2] >= -11) {
@@ -261,13 +261,13 @@ int16_t CAdvantagePoints(APPSESSION &app, PLAYER *pplr) {
         }
     }
     if (cBad + cGood > 4) {
-        cPoints -= static_cast<int16_t>(((cBad + cGood) * 10 * (cBad + cGood - 4)));
+        cPoints -= static_cast<std::int16_t>(((cBad + cGood) * 10 * (cBad + cGood - 4)));
     }
     if (cGood - cBad > 3) {
-        cPoints -= static_cast<int16_t>(((cGood - cBad - 3) * 60));
+        cPoints -= static_cast<std::int16_t>(((cGood - cBad - 3) * 60));
     }
     if (cBad - cGood > 3) {
-        cPoints -= static_cast<int16_t>(((cBad - cGood - 3) * 40));
+        cPoints -= static_cast<std::int16_t>(((cBad - cGood - 3) * 40));
     }
     if (RaceQueryIO().pfnGrbit(pplr, ibitRaceNoAdvScanner) != 0) {
         switch (raMajor) {
@@ -288,7 +288,7 @@ int16_t CAdvantagePoints(APPSESSION &app, PLAYER *pplr) {
         cCur += RaceQueryIO().pfnStat(pplr, static_cast<RaceStat>(i)) - 1;
     }
     if (cCur > 0) {
-        cPoints -= static_cast<int16_t>((cCur * cCur * 130));
+        cPoints -= static_cast<std::int16_t>((cCur * cCur * 130));
         if (cCur == 6) {
             cPoints += 1430;
         } else if (cCur == 5) {
@@ -306,29 +306,29 @@ int16_t CAdvantagePoints(APPSESSION &app, PLAYER *pplr) {
     if (raMajor == raMacintosh && RaceQueryIO().pfnStat(pplr, rsTechBonus1) == 2) {
         cPoints -= 100;
     }
-    return LOWORD(static_cast<int32_t>((cPoints / 3)));
+    return LOWORD(static_cast<std::int32_t>((cPoints / 3)));
 }
 
-int32_t LInnateRaceHabitability(APPSESSION &app, PLAYER *pplr) {
-    int16_t iTry;
+std::int32_t LInnateRaceHabitability(APPSESSION &app, PLAYER *pplr) {
+    std::int16_t iTry;
     PLANET  pl;
     double  l2;
-    int16_t rgSteps[3];
+    std::int16_t rgSteps[3];
     PLAYER  plrT;
-    int16_t rgDelta[3];
-    int16_t fTotalTerra;
-    int16_t rgInc[3];
-    int16_t i;
-    int16_t iTerra;
-    int16_t j;
-    int32_t l1;
-    int16_t rgBase[3];
+    std::int16_t rgDelta[3];
+    std::int16_t fTotalTerra;
+    std::int16_t rgInc[3];
+    std::int16_t i;
+    std::int16_t iTerra;
+    std::int16_t j;
+    std::int32_t l1;
+    std::int16_t rgBase[3];
     double  l3;
-    int16_t iDelta;
-    int32_t pctDesire;
-    int16_t k;
+    std::int16_t iDelta;
+    std::int32_t pctDesire;
+    std::int16_t k;
     double  lInnate;
-    int16_t pctTerra;
+    std::int16_t pctTerra;
 
     plrT = app.state.rgplr[0];
     lInnate = static_cast<double>(0);
@@ -377,11 +377,11 @@ int32_t LInnateRaceHabitability(APPSESSION &app, PLAYER *pplr) {
             if (i == 0 || rgSteps[0] <= 1) {
                 iTry = rgBase[0];
             } else {
-                iTry = static_cast<int16_t>((i * rgInc[0])) / (rgSteps[0] - 1) + rgBase[0];
+                iTry = static_cast<std::int16_t>((i * rgInc[0])) / (rgSteps[0] - 1) + rgBase[0];
             }
             if (iTerra != 0 && pplr->rgEnvVar[0] >= 0) {
                 iDelta = pplr->rgEnvVar[0] - iTry;
-                if (abs(iDelta) <= pctTerra) {
+                if (std::abs(iDelta) <= pctTerra) {
                     iDelta = 0;
                 } else if (iDelta < 0) {
                     iDelta += pctTerra;
@@ -397,11 +397,11 @@ int32_t LInnateRaceHabitability(APPSESSION &app, PLAYER *pplr) {
                 if (j == 0 || rgSteps[1] <= 1) {
                     iTry = rgBase[1];
                 } else {
-                    iTry = static_cast<int16_t>((j * rgInc[1])) / (rgSteps[1] - 1) + rgBase[1];
+                    iTry = static_cast<std::int16_t>((j * rgInc[1])) / (rgSteps[1] - 1) + rgBase[1];
                 }
                 if (iTerra != 0 && pplr->rgEnvVar[1] >= 0) {
                     iDelta = pplr->rgEnvVar[1] - iTry;
-                    if (abs(iDelta) <= pctTerra) {
+                    if (std::abs(iDelta) <= pctTerra) {
                         iDelta = 0;
                     } else if (iDelta < 0) {
                         iDelta += pctTerra;
@@ -417,11 +417,11 @@ int32_t LInnateRaceHabitability(APPSESSION &app, PLAYER *pplr) {
                     if (k == 0 || rgSteps[2] <= 1) {
                         iTry = rgBase[2];
                     } else {
-                        iTry = static_cast<int16_t>((k * rgInc[2])) / (rgSteps[2] - 1) + rgBase[2];
+                        iTry = static_cast<std::int16_t>((k * rgInc[2])) / (rgSteps[2] - 1) + rgBase[2];
                     }
                     if (iTerra != 0 && pplr->rgEnvVar[2] >= 0) {
                         iDelta = pplr->rgEnvVar[2] - iTry;
-                        if (abs(iDelta) <= pctTerra) {
+                        if (std::abs(iDelta) <= pctTerra) {
                             iDelta = 0;
                         } else if (iDelta < 0) {
                             iDelta += pctTerra;
@@ -435,25 +435,25 @@ int32_t LInnateRaceHabitability(APPSESSION &app, PLAYER *pplr) {
                     pctDesire = PlanetQueryIO().pfnDesirability(app, &pl, 0);
                     iDelta = rgDelta[0] + rgDelta[1] + rgDelta[2];
                     if (iDelta > pctTerra) {
-                        pctDesire -= static_cast<int16_t>((iDelta - pctTerra));
+                        pctDesire -= static_cast<std::int16_t>((iDelta - pctTerra));
                         if (pctDesire < 0) {
                             pctDesire = 0;
                         }
                     }
-                    pctDesire = static_cast<uint32_t>((pctDesire * pctDesire));
+                    pctDesire = static_cast<std::uint32_t>((pctDesire * pctDesire));
                     if (iTerra == 0) {
-                        pctDesire = static_cast<uint32_t>((pctDesire * 7));
+                        pctDesire = static_cast<std::uint32_t>((pctDesire * 7));
                     } else if (iTerra == 1) {
-                        pctDesire = static_cast<uint32_t>((pctDesire * 5));
+                        pctDesire = static_cast<std::uint32_t>((pctDesire * 5));
                     } else {
-                        pctDesire = static_cast<uint32_t>((pctDesire * 6));
+                        pctDesire = static_cast<std::uint32_t>((pctDesire * 6));
                     }
                     l1 += pctDesire;
                 }
                 if (pplr->rgEnvVar[2] >= 0) {
-                    l1 = static_cast<int32_t>((l1 * rgInc[2])) / 100;
+                    l1 = static_cast<std::int32_t>((l1 * rgInc[2])) / 100;
                 } else {
-                    l1 = static_cast<uint32_t>((l1 * 11));
+                    l1 = static_cast<std::uint32_t>((l1 * 11));
                 }
                 l2 = static_cast<double>((static_cast<double>(l1) + l2));
             }
@@ -474,16 +474,16 @@ int32_t LInnateRaceHabitability(APPSESSION &app, PLAYER *pplr) {
     if (pplr != app.state.rgplr) {
         app.state.rgplr[0] = plrT;
     }
-    return static_cast<int32_t>((static_cast<double>(lInnate) / 10.0 + 0.5));
+    return static_cast<std::int32_t>((static_cast<double>(lInnate) / 10.0 + 0.5));
 }
 
-uint16_t IRaceChecksum(PLAYER *pplr) {
-    uint16_t  ick;
+std::uint16_t IRaceChecksum(PLAYER *pplr) {
+    std::uint16_t  ick;
     std::byte rgb[cbWirePlayer];
-    uint16_t w;
-    int16_t   i;
-    int16_t   cs;
-    size_t    cch;
+    std::uint16_t w;
+    std::int16_t   i;
+    std::int16_t   cs;
+    std::size_t    cch;
     PLAYER    plr;
 
     /* Checksum the names as ReadRtPlr restores them, zeroed after the
@@ -493,9 +493,9 @@ uint16_t IRaceChecksum(PLAYER *pplr) {
        checksum when loaded. */
     plr = *pplr;
     cch = strnlen(plr.szName, sizeof(plr.szName));
-    memset(plr.szName + cch, 0, sizeof(plr.szName) - cch);
+    std::memset(plr.szName + cch, 0, sizeof(plr.szName) - cch);
     cch = strnlen(plr.szNames, sizeof(plr.szNames));
-    memset(plr.szNames + cch, 0, sizeof(plr.szNames) - cch);
+    std::memset(plr.szNames + cch, 0, sizeof(plr.szNames) - cch);
     FEncodePlayer(plr, rgb);
     NATIVEBYTEREADER input(rgb);
     cs = 96;
@@ -507,106 +507,106 @@ uint16_t IRaceChecksum(PLAYER *pplr) {
     return ick;
 }
 
-static int16_t FReadLegacyRaceString(APPSESSION &app, const uint8_t *lpb, size_t cb, char *szRaw, size_t cchMax, size_t *pcbRead) {
-    const uint8_t *lpbEnd;
-    size_t cch;
-    int16_t cOut;
+static std::int16_t FReadLegacyRaceString(APPSESSION &app, const std::uint8_t *lpb, std::size_t cb, char *szRaw, std::size_t cchMax, std::size_t *pcbRead) {
+    const std::uint8_t *lpbEnd;
+    std::size_t cch;
+    std::int16_t cOut;
 
     szRaw[0] = 0;
     if (cb == 0 || cchMax != 32) return 0;
     if (lpb[0] == 0) {
-        lpbEnd = static_cast<const uint8_t *>(memchr(lpb + 1, 0, cb - 1));
+        lpbEnd = static_cast<const std::uint8_t *>(std::memchr(lpb + 1, 0, cb - 1));
         if (!lpbEnd) return 0;
-        cch = static_cast<size_t>((lpbEnd - lpb - 1));
+        cch = static_cast<std::size_t>((lpbEnd - lpb - 1));
         if (cch >= cchMax) return 0;
-        memcpy(szRaw, lpb + 1, cch);
+        std::memcpy(szRaw, lpb + 1, cch);
         szRaw[cch] = 0;
         if (pcbRead) *pcbRead = cch + 2;
     } else {
         if (lpb[0] > cb - 1) return 0;
-        cOut = static_cast<int16_t>(cchMax) - 1;
+        cOut = static_cast<std::int16_t>(cchMax) - 1;
         if (!FDecompressUserStringBytes(app, const_cast<char *>(reinterpret_cast<const char*>(lpb)) + 1, lpb[0], szRaw, &cOut)) return 0;
-        if (pcbRead) *pcbRead = static_cast<size_t>(lpb[0]) + 1;
+        if (pcbRead) *pcbRead = static_cast<std::size_t>(lpb[0]) + 1;
     }
     return 1;
 }
 
-static int16_t FReadLegacyRacePlayer(APPSESSION &app, PLAYER *pplr, const uint8_t *lpb, size_t cb, int16_t fPlural) {
-    int16_t iOff;
-    size_t cbRead;
+static std::int16_t FReadLegacyRacePlayer(APPSESSION &app, PLAYER *pplr, const std::uint8_t *lpb, std::size_t cb, std::int16_t fPlural) {
+    std::int16_t iOff;
+    std::size_t cbRead;
 
-    memset(pplr, 0, sizeof(PLAYER));
+    std::memset(pplr, 0, sizeof(PLAYER));
     if (cb < cbWirePlayerPartial) return 0;
     if ((lpb[6] & 7) == detAll) {
         iOff = cbWirePlayerPrefix;
-        if (cb <= static_cast<size_t>(iOff) || lpb[iOff] > sizeof(pplr->rgmdRelation) ||
-            lpb[iOff] > cb - static_cast<size_t>(iOff) - 1) return 0;
+        if (cb <= static_cast<std::size_t>(iOff) || lpb[iOff] > sizeof(pplr->rgmdRelation) ||
+            lpb[iOff] > cb - static_cast<std::size_t>(iOff) - 1) return 0;
         FDecodePlayer(std::as_bytes(std::span(lpb, cb)), *pplr, iOff);
-        memmove(pplr->rgmdRelation, lpb + iOff + 1, lpb[iOff]);
+        std::memmove(pplr->rgmdRelation, lpb + iOff + 1, lpb[iOff]);
         iOff += lpb[iOff] + 1;
     } else {
         iOff = cbWirePlayerPartial;
         FDecodePlayer(std::as_bytes(std::span(lpb, cb)), *pplr, iOff);
     }
-    if (!FReadLegacyRaceString(app, lpb + iOff, cb - static_cast<size_t>(iOff), pplr->szName, sizeof(pplr->szName), &cbRead)) return 0;
-    iOff += static_cast<int16_t>(cbRead);
+    if (!FReadLegacyRaceString(app, lpb + iOff, cb - static_cast<std::size_t>(iOff), pplr->szName, sizeof(pplr->szName), &cbRead)) return 0;
+    iOff += static_cast<std::int16_t>(cbRead);
     if (fPlural) {
-        if (!FReadLegacyRaceString(app, lpb + iOff, cb - static_cast<size_t>(iOff), pplr->szNames, sizeof(pplr->szNames), &cbRead)) return 0;
-        iOff += static_cast<int16_t>(cbRead);
+        if (!FReadLegacyRaceString(app, lpb + iOff, cb - static_cast<std::size_t>(iOff), pplr->szNames, sizeof(pplr->szNames), &cbRead)) return 0;
+        iOff += static_cast<std::int16_t>(cbRead);
     }
-    if (static_cast<size_t>(iOff) != cb) return 0;
+    if (static_cast<std::size_t>(iOff) != cb) return 0;
     pplr->fLearned = 0;
     return 1;
 }
 
-static int16_t FConvertLegacyRaceNames(APPSESSION &app, PLAYER *pplr, int16_t fPlural) {
+static std::int16_t FConvertLegacyRaceNames(APPSESSION &app, PLAYER *pplr, std::int16_t fPlural) {
     char szName[96];
     char szNames[96];
-    size_t cbName;
-    size_t cbNames;
-    size_t cbKeep;
-    int16_t fShortened;
+    std::size_t cbName;
+    std::size_t cbNames;
+    std::size_t cbKeep;
+    std::int16_t fShortened;
 
-    if (CchCp1252ToUtf8(std::span(szName), std::as_bytes(std::span(pplr->szName, strlen(pplr->szName)))) < 0) return 0;
+    if (CchCp1252ToUtf8(std::span(szName), std::as_bytes(std::span(pplr->szName, std::strlen(pplr->szName)))) < 0) return 0;
     if (fPlural) {
-        if (CchCp1252ToUtf8(std::span(szNames), std::as_bytes(std::span(pplr->szNames, strlen(pplr->szNames)))) < 0) return 0;
+        if (CchCp1252ToUtf8(std::span(szNames), std::as_bytes(std::span(pplr->szNames, std::strlen(pplr->szNames)))) < 0) return 0;
     } else {
-        cbName = strlen(szName);
+        cbName = std::strlen(szName);
         if (cbName + 1 >= sizeof(szNames)) return 0;
-        memcpy(szNames, szName, cbName);
+        std::memcpy(szNames, szName, cbName);
         szNames[cbName] = 's';
         szNames[cbName + 1] = 0;
     }
-    cbName = strlen(szName);
-    cbNames = strlen(szNames);
+    cbName = std::strlen(szName);
+    cbNames = std::strlen(szNames);
     fShortened = cbName >= sizeof(pplr->szName) || cbNames >= sizeof(pplr->szNames);
     if (fShortened) {
         cbKeep = CchUtf8Prefix(szName, sizeof(pplr->szName) - 1);
-        memmove(pplr->szName, szName, cbKeep);
+        std::memmove(pplr->szName, szName, cbKeep);
         pplr->szName[cbKeep] = 0;
         cbKeep = CchUtf8Prefix(szNames, sizeof(pplr->szNames) - 1);
-        memmove(pplr->szNames, szNames, cbKeep);
+        std::memmove(pplr->szNames, szNames, cbKeep);
         pplr->szNames[cbKeep] = 0;
         if (!FConfirmLegacyRaceNames(app, pplr->szName, pplr->szNames)) return -1;
     } else {
-        memcpy(pplr->szName, szName, cbName + 1);
-        memcpy(pplr->szNames, szNames, cbNames + 1);
+        std::memcpy(pplr->szName, szName, cbName + 1);
+        std::memcpy(pplr->szNames, szNames, cbNames + 1);
     }
     return 1;
 }
 
-int16_t FWasRaceFile(APPSESSION &app, char *szFile, int16_t fChkPass) {
-    int16_t  idsError;
-    int32_t  lSaltSav;
+std::int16_t FWasRaceFile(APPSESSION &app, char *szFile, std::int16_t fChkPass) {
+    std::int16_t  idsError;
+    std::int32_t  lSaltSav;
     PLAYER   plr;
-    int16_t  fRet;
-    int16_t  fSav;
-    int16_t  fLegacy;
-    int16_t  fPlural;
-    int16_t  fConvert;
-    int16_t  fProtected;
+    std::int16_t  fRet;
+    std::int16_t  fSav;
+    std::int16_t  fLegacy;
+    std::int16_t  fPlural;
+    std::int16_t  fConvert;
+    std::int16_t  fProtected;
     char     szPassword[16];
-    uint16_t icksum;
+    std::uint16_t icksum;
     char    *pch;
 
     idsError = -1;
@@ -632,9 +632,9 @@ int16_t FWasRaceFile(APPSESSION &app, char *szFile, int16_t fChkPass) {
                     if (app.state.hdrCur.rt == rtPlr) {
                         idsError = idsGameFileAppearsCorruptUnableLoadFile;
                         if (fLegacy) {
-                            if (!FReadLegacyRacePlayer(app, &plr, reinterpret_cast<const uint8_t *>(app.state.rgbCur), app.state.hdrCur.cb, fPlural)) goto LBadFile;
+                            if (!FReadLegacyRacePlayer(app, &plr, reinterpret_cast<const std::uint8_t *>(app.state.rgbCur), app.state.hdrCur.cb, fPlural)) goto LBadFile;
                         } else {
-                            ReadRtPlr(app, &plr, reinterpret_cast<uint8_t *>(app.state.rgbCur), app.state.hdrCur.cb);
+                            ReadRtPlr(app, &plr, reinterpret_cast<std::uint8_t *>(app.state.rgbCur), app.state.hdrCur.cb);
                         }
                         RecordIO().pfnReadRt(app);
                         icksum = IRaceChecksum(&plr);
@@ -652,7 +652,7 @@ int16_t FWasRaceFile(APPSESSION &app, char *szFile, int16_t fChkPass) {
                                     goto LBadFile;
                                 }
                                 plr.lSalt = LSaltFromSz(szPassword);
-                                strcpy(app.state.szRacePass, szPassword);
+                                std::strcpy(app.state.szRacePass, szPassword);
                             }
                             lSaltSav = app.state.lSaltCur;
                             app.state.lSaltCur = plr.lSalt;
@@ -664,7 +664,7 @@ int16_t FWasRaceFile(APPSESSION &app, char *szFile, int16_t fChkPass) {
                                 app.state.lSaltCur = lSaltSav;
                                 if (!fProtected) {
                                     if (!fLegacy && plr.lSalt != 0) {
-                                        strcpy(app.state.szRacePass, app.state.szPassLast);
+                                        std::strcpy(app.state.szRacePass, app.state.szPassLast);
                                     } else {
                                         app.state.szRacePass[0] = 0;
                                     }
@@ -675,7 +675,7 @@ int16_t FWasRaceFile(APPSESSION &app, char *szFile, int16_t fChkPass) {
                                    after it when a universe definition names a
                                    race by path. Keep the file name, as the race
                                    dialogs do. */
-                                pch = strrchr(szFile, chDirSep);
+                                pch = std::strrchr(szFile, chDirSep);
                                 SetSzRaceFile(app, pch ? pch + 1 : szFile);
                                 RecordIO().pfnStreamClose(app);
                                 app.state.fFileErrSilent = fSav;
@@ -695,7 +695,7 @@ LBadFile:
     if (!app.state.fFileErrSilent && idsError != -1) {
         /* NATIVE: GenNewGameFromFile passes szWork itself; see FLoadGame. */
         if (szFile != app.state.szWork) {
-            strcpy(app.state.szWork, szFile);
+            std::strcpy(app.state.szWork, szFile);
         }
         AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, static_cast<StringId>(idsError), nullptr), win32::MB_ICONHAND);
     }
@@ -704,14 +704,14 @@ LBadFile:
 }
 
 void CreateRandomRace(APPSESSION &app, PLAYER *pplr) {
-    int16_t cPts;
-    int16_t i;
-    int16_t cPass;
-    int16_t j;
-    int16_t iVal;
-    int16_t dAwayNew;
-    int16_t dAwayCur;
-    int16_t k;
+    std::int16_t cPts;
+    std::int16_t i;
+    std::int16_t cPass;
+    std::int16_t j;
+    std::int16_t iVal;
+    std::int16_t dAwayNew;
+    std::int16_t dAwayCur;
+    std::int16_t k;
     PLAYER  plrT;
 
     pplr->szNames[0] = 0;
@@ -794,7 +794,7 @@ void CreateRandomRace(APPSESSION &app, PLAYER *pplr) {
             pplr->rgAttr[i] = rgRaceStatMin[i] + RandomIO().pfnRandom(app, rgRaceStatMax[i] + 1 - rgRaceStatMin[i]);
         }
     }
-    if (strcmp(pplr->szName, TextIO().pfnCompressed(app, idsRandom2)) == 0) {
+    if (std::strcmp(pplr->szName, TextIO().pfnCompressed(app, idsRandom2)) == 0) {
         TextIO().pfnCchGetString(app, static_cast<StringId>(idsBerserker + RandomIO().pfnRandom(app, 24)), pplr->szName);
     }
     cPts = CAdvantagePoints(app, pplr);
@@ -804,7 +804,7 @@ void CreateRandomRace(APPSESSION &app, PLAYER *pplr) {
             if (cPass++ > 250) {
                 plrT = *pplr;
                 *pplr = vrgplrDef[0];
-                strcpy(pplr->szName, plrT.szName);
+                std::strcpy(pplr->szName, plrT.szName);
                 break;
             }
             iVal = RandomIO().pfnRandom(app, 10);
@@ -902,7 +902,7 @@ void CreateRandomRace(APPSESSION &app, PLAYER *pplr) {
     return;
 }
 
-int16_t PctTrueMaxGrowth(APPSESSION &app, int16_t iplr) {
+std::int16_t PctTrueMaxGrowth(APPSESSION &app, std::int16_t iplr) {
     if (RaceQueryIO().pfnStat(&app.state.rgplr[iplr], rsMajorAdv) == raCheapCol) {
         return app.state.rgplr[iplr].pctIdealGrowth * 2;
     }

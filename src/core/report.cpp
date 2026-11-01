@@ -9,10 +9,10 @@
 #include "capacity_io.h"
 #include "record_io.h"
 
-uint16_t mpicolgrbitBU[12] = {255, 255, 255, 255, 255, 255, 255, 8, 16, 32, 64, 128};
+std::uint16_t mpicolgrbitBU[12] = {255, 255, 255, 255, 255, 255, 255, 8, 16, 32, 64, 128};
 
 const char *PszGetDestName(APPSESSION &app, FLEET *lpfl, HDC hdc) {
-    int16_t i;
+    std::int16_t i;
     ORDER   ord;
 
     ord = lpfl->lpplord->rgord()[0];
@@ -51,8 +51,8 @@ LNoDest:
     return app.state.szDblDash;
 }
 
-int16_t FDestIsWP0(FLEET *lpfl) {
-    int16_t i;
+std::int16_t FDestIsWP0(FLEET *lpfl) {
+    std::int16_t i;
     ORDER   ord;
 
     ord = lpfl->lpplord->rgord()[0];
@@ -81,10 +81,10 @@ int16_t FDestIsWP0(FLEET *lpfl) {
     return 1;
 }
 
-const char *PszGetETA(APPSESSION &app, HDC hdc, FLEET *lpfl, int16_t *pcYears) {
+const char *PszGetETA(APPSESSION &app, HDC hdc, FLEET *lpfl, std::int16_t *pcYears) {
     POINT16 pt;
-    int16_t c;
-    int16_t i;
+    std::int16_t c;
+    std::int16_t i;
     ORDER   ord;
     char   *psz;
 
@@ -135,14 +135,14 @@ LNoETA:
     return app.state.szDblDash;
 }
 
-const char *PszGetTaskName(APPSESSION &app, FLEET *lpfl, int16_t *picr) {
-    int16_t        icr;
+const char *PszGetTaskName(APPSESSION &app, FLEET *lpfl, std::int16_t *picr) {
+    std::int16_t        icr;
     StringId       ids;
     XferActionType opOrd;
-    int16_t        iZip;
-    int16_t        i;
+    std::int16_t        iZip;
+    std::int16_t        i;
     ORDER          ord;
-    int16_t        fPercent;
+    std::int16_t        fPercent;
     char          *psz;
 
     icr = -1;
@@ -173,7 +173,7 @@ LShowTask:
         switch (ord.grTask) {
         case grTaskXfer:
             for (i = 0; i < 4; i++) {
-                if (app.state.vrgZip[i].fValid && memcmp(&app.state.vrgZip[i], &ord.txp, 10) == 0)
+                if (app.state.vrgZip[i].fValid && std::memcmp(&app.state.vrgZip[i], &ord.txp, 10) == 0)
                     return app.state.vrgZip[i].szName;
             }
             ids = idsAction;
@@ -208,7 +208,7 @@ LShowTask:
             }
             for (i = 4; i >= 0; i--) {
                 opOrd = static_cast<XferActionType>(ord.txp.rgia[i].iAction());
-                if (idsAction + static_cast<int>(opOrd) > static_cast<int16_t>(ids)) {
+                if (idsAction + static_cast<int>(opOrd) > static_cast<std::int16_t>(ids)) {
                     ids = static_cast<StringId>(idsAction + static_cast<int>(opOrd));
                     icr = i;
                 }
@@ -236,7 +236,7 @@ LShowTask:
             case iActionSetAmount:
             case iActionSetWaypoint:
                 psz = TextIO().pfnCompressed(app, ids);
-                psz[strlen(psz) - 3] = 0;
+                psz[std::strlen(psz) - 3] = 0;
                 if (fPercent) {
                     CchSprintf(app.state.szWork, "%s %d%%", psz, ord.txp.rgia[icr].cQuan());
                 } else {
@@ -270,11 +270,11 @@ LShowTask:
 
 void DumpUniverse(APPSESSION &app) {
     StringId ids;
-    int16_t  i;
-    int16_t  fOpen;
-    int16_t  fSuccess;
-    int16_t  fSilentSav;
-    int16_t  cch;
+    std::int16_t  i;
+    std::int16_t  fOpen;
+    std::int16_t  fSuccess;
+    std::int16_t  fSilentSav;
+    std::int16_t  cch;
 
     fSilentSav = app.state.fFileErrSilent;
     fSuccess = 1;
@@ -322,16 +322,16 @@ void DumpPlanets(APPSESSION &app) {
     PLANET  *lppl;
     char     szFile[256];
     char     szForm[256];
-    int16_t  j;
-    int16_t  i;
-    int16_t  fOpen;
-    int16_t  fSuccess;
-    int16_t  fSilentSav;
+    std::int16_t  j;
+    std::int16_t  i;
+    std::int16_t  fOpen;
+    std::int16_t  fSuccess;
+    std::int16_t  fSilentSav;
     char    *psz;
-    int16_t  cch;
-    int32_t  l;
+    std::int16_t  cch;
+    std::int32_t  l;
     float    pct;
-    int32_t  rgl[4];
+    std::int32_t  rgl[4];
     PART     part;
 
     fSilentSav = app.state.fFileErrSilent;
@@ -367,50 +367,50 @@ void DumpPlanets(APPSESSION &app) {
             lppl = app.state.lpPlanets;
             lpplMac = app.state.lpPlanets + app.state.cPlanet;
             for (; lppl < lpplMac; lppl++) {
-                strcpy(szForm, PszGetCompressedPlanet(app, app.state.rgidPlan[lppl->id]));
-                RgToStream(app, szForm, strlen(szForm));
+                std::strcpy(szForm, PszGetCompressedPlanet(app, app.state.rgidPlan[lppl->id]));
+                RgToStream(app, szForm, std::strlen(szForm));
                 szForm[0] = '\t';
                 if (lppl->iPlayer == iplrNone) {
                     RgToStream(app, szForm, 1);
                 } else {
-                    strcpy(&szForm[1], TextIO().pfnPlayerName(app, lppl->iPlayer, 1, 0, 0, 0, nullptr));
-                    RgToStream(app, szForm, strlen(szForm));
+                    std::strcpy(&szForm[1], TextIO().pfnPlayerName(app, lppl->iPlayer, 1, 0, 0, 0, nullptr));
+                    RgToStream(app, szForm, std::strlen(szForm));
                 }
                 if (lppl->iPlayer == iplrNone || !lppl->fStarbase) {
                     cch = 1;
                 } else {
-                    strcpy(&szForm[1], app.state.rglpshdefSB[lppl->iPlayer][lppl->isb].hul.szClass);
-                    cch = strlen(szForm);
+                    std::strcpy(&szForm[1], app.state.rglpshdefSB[lppl->iPlayer][lppl->isb].hul.szClass);
+                    cch = std::strlen(szForm);
                 }
                 RgToStream(app, szForm, cch);
                 CchSprintf(&szForm[1], "%d", app.state.game.turn - lppl->turn);
-                RgToStream(app, szForm, strlen(szForm));
+                RgToStream(app, szForm, std::strlen(szForm));
                 szForm[1] = 0;
                 if (lppl->det == detAll) {
-                    strcpy(&szForm[1], PszFromLong(app, static_cast<uint32_t>((lppl->rgwtMin[3] * 100)), nullptr));
+                    std::strcpy(&szForm[1], PszFromLong(app, static_cast<std::uint32_t>((lppl->rgwtMin[3] * 100)), nullptr));
                 } else if (lppl->iPlayer != iplrNone && lppl->det >= detSome) {
-                    l = static_cast<uint32_t>((lppl->uPopGuess * 400));
-                    strcpy(&szForm[1], PszFromLong(app, l, nullptr));
+                    l = static_cast<std::uint32_t>((lppl->uPopGuess * 400));
+                    std::strcpy(&szForm[1], PszFromLong(app, l, nullptr));
                 }
-                RgToStream(app, szForm, strlen(szForm));
+                RgToStream(app, szForm, std::strlen(szForm));
                 if (lppl->det < detSome) {
                     szForm[1] = 0;
                 } else {
                     i = PlanetQueryIO().pfnDesirability(app, lppl, app.state.idPlayer);
                     CchSprintf(&szForm[1], app.state.PCTDPCTPCT, i);
                 }
-                RgToStream(app, szForm, strlen(szForm));
+                RgToStream(app, szForm, std::strlen(szForm));
                 szForm[1] = 0;
                 if (lppl->det == detAll) {
                     PszProdQueueTop(app, lppl, nullptr);
-                    strcpy(&szForm[1], app.state.szWork);
+                    std::strcpy(&szForm[1], app.state.szWork);
                 }
-                RgToStream(app, szForm, strlen(szForm));
+                RgToStream(app, szForm, std::strlen(szForm));
                 if (lppl->det == detAll) {
                     CalcPctSurvive(app, lppl, &pct, nullptr);
                     pct = static_cast<float>((static_cast<double>(1.0) - pct));
-                    CchSprintf(&szForm[1], "%ld\t%ld\t%d.%d%%", static_cast<int32_t>(lppl->cMines), static_cast<int32_t>(lppl->cFactories), LOWORD(static_cast<int32_t>((static_cast<double>(pct) * 100))),
-                               LOWORD(static_cast<int32_t>(((pct - static_cast<double>(static_cast<int16_t>(LOWORD(static_cast<int32_t>((static_cast<double>(pct) * 100))))) / 100.0) * 10000))));
+                    CchSprintf(&szForm[1], "%ld\t%ld\t%d.%d%%", static_cast<std::int32_t>(lppl->cMines), static_cast<std::int32_t>(lppl->cFactories), LOWORD(static_cast<std::int32_t>((static_cast<double>(pct) * 100))),
+                               LOWORD(static_cast<std::int32_t>(((pct - static_cast<double>(static_cast<std::int16_t>(LOWORD(static_cast<std::int32_t>((static_cast<double>(pct) * 100))))) / 100.0) * 10000))));
                 } else {
                     szForm[2] = '\t';
                     szForm[1] = '\t';
@@ -420,48 +420,48 @@ void DumpPlanets(APPSESSION &app) {
                         szForm[cch + 3] = 0;
                     }
                 }
-                RgToStream(app, szForm, strlen(szForm));
+                RgToStream(app, szForm, std::strlen(szForm));
                 szForm[1] = 0;
                 for (i = 0; i < 3; i++) {
                     if (lppl->det >= detSome) {
-                        strcpy(&szForm[1], PszFromLong(app, lppl->rgwtMin[i], nullptr));
+                        std::strcpy(&szForm[1], PszFromLong(app, lppl->rgwtMin[i], nullptr));
                     }
-                    RgToStream(app, szForm, strlen(szForm));
+                    RgToStream(app, szForm, std::strlen(szForm));
                 }
                 szForm[1] = 0;
                 for (i = 0; i < 3; i++) {
                     if (lppl->det >= detMore) {
                         ColonyIO().pfnEstimateMining(app, lppl, rgl, -1, 0);
-                        strcpy(&szForm[1], PszFromLong(app, rgl[i], nullptr));
+                        std::strcpy(&szForm[1], PszFromLong(app, rgl[i], nullptr));
                     }
-                    RgToStream(app, szForm, strlen(szForm));
+                    RgToStream(app, szForm, std::strlen(szForm));
                 }
                 szForm[1] = 0;
                 for (i = 0; i < 3; i++) {
                     if (lppl->det >= detSome) {
-                        strcpy(&szForm[1], PszFromInt(app, lppl->rgMinConc[i], nullptr));
+                        std::strcpy(&szForm[1], PszFromInt(app, lppl->rgMinConc[i], nullptr));
                     }
-                    RgToStream(app, szForm, strlen(szForm));
+                    RgToStream(app, szForm, std::strlen(szForm));
                 }
                 if (lppl->det == detAll) {
-                    strcpy(&szForm[1], PszFromInt(app, ResearchIO().pfnResources(app, lppl, app.state.idPlayer), nullptr));
+                    std::strcpy(&szForm[1], PszFromInt(app, ResearchIO().pfnResources(app, lppl, app.state.idPlayer), nullptr));
                 } else {
                     szForm[1] = 0;
                 }
-                RgToStream(app, szForm, strlen(szForm));
+                RgToStream(app, szForm, std::strlen(szForm));
                 if (app.state.gd.fPerPlayerDumps) {
                     if (lppl->det >= detSome) {
                         for (i = 0; i < 3; i++) {
-                            strcpy(&szForm[1], PszCalcEnvVar(app, static_cast<EnvType>(i), lppl->rgEnvVar[i]));
-                            RgToStream(app, szForm, strlen(szForm));
+                            std::strcpy(&szForm[1], PszCalcEnvVar(app, static_cast<EnvType>(i), lppl->rgEnvVar[i]));
+                            RgToStream(app, szForm, std::strlen(szForm));
                         }
                         for (i = 0; i < 3; i++) {
-                            strcpy(&szForm[1], PszCalcEnvVar(app, static_cast<EnvType>(i), lppl->rgEnvVarOrig[i]));
-                            RgToStream(app, szForm, strlen(szForm));
+                            std::strcpy(&szForm[1], PszCalcEnvVar(app, static_cast<EnvType>(i), lppl->rgEnvVarOrig[i]));
+                            RgToStream(app, szForm, std::strlen(szForm));
                         }
-                        strcpy(&szForm[1], PszFromInt(app, PctPlanetOptValue(app, lppl, app.state.idPlayer), nullptr));
-                        strcat(&szForm[1], "%");
-                        RgToStream(app, szForm, strlen(szForm));
+                        std::strcpy(&szForm[1], PszFromInt(app, PctPlanetOptValue(app, lppl, app.state.idPlayer), nullptr));
+                        std::strcat(&szForm[1], "%");
+                        RgToStream(app, szForm, std::strlen(szForm));
                     } else {
                         szForm[1] = 0;
                         for (i = 0; i < 7; i++) {
@@ -469,38 +469,38 @@ void DumpPlanets(APPSESSION &app) {
                         }
                     }
                     if (lppl->det == detAll) {
-                        strcpy(&szForm[1], PszFromInt(app, CapacityIO().pfnPctPlanetCapacity(app, lppl), nullptr));
-                        RgToStream(app, szForm, strlen(szForm));
-                        strcpy(&szForm[1], PszFromInt(app, GetPlanetScannerRange(app, lppl, &i), nullptr));
-                        RgToStream(app, szForm, strlen(szForm));
-                        strcpy(&szForm[1], PszFromInt(app, i, nullptr));
-                        RgToStream(app, szForm, strlen(szForm));
+                        std::strcpy(&szForm[1], PszFromInt(app, CapacityIO().pfnPctPlanetCapacity(app, lppl), nullptr));
+                        RgToStream(app, szForm, std::strlen(szForm));
+                        std::strcpy(&szForm[1], PszFromInt(app, GetPlanetScannerRange(app, lppl, &i), nullptr));
+                        RgToStream(app, szForm, std::strlen(szForm));
+                        std::strcpy(&szForm[1], PszFromInt(app, i, nullptr));
+                        RgToStream(app, szForm, std::strlen(szForm));
                         if (lppl->idFling == 0) {
                             i = 0;
                             szForm[1] = 0;
                         } else {
                             i = lppl->iWarpFling + 4;
-                            strcpy(&szForm[1], TextIO().pfnPlanetName(app, lppl->idFling - 1));
+                            std::strcpy(&szForm[1], TextIO().pfnPlanetName(app, lppl->idFling - 1));
                         }
-                        RgToStream(app, szForm, strlen(szForm));
-                        strcpy(&szForm[1], PszFromInt(app, i, nullptr));
-                        RgToStream(app, szForm, strlen(szForm));
+                        RgToStream(app, szForm, std::strlen(szForm));
+                        std::strcpy(&szForm[1], PszFromInt(app, i, nullptr));
+                        RgToStream(app, szForm, std::strlen(szForm));
                         if (lppl->idRoute == 0) {
                             szForm[1] = 0;
                         } else {
-                            strcpy(&szForm[1], TextIO().pfnPlanetName(app, lppl->idRoute - 1));
+                            std::strcpy(&szForm[1], TextIO().pfnPlanetName(app, lppl->idRoute - 1));
                         }
-                        RgToStream(app, szForm, strlen(szForm));
+                        RgToStream(app, szForm, std::strlen(szForm));
                         if (lppl->fStarbase) {
                             i = IStargateFromLppl(app, lppl);
                             if (i != -1) {
                                 part.hs.grhst = hstSpecialSB;
                                 part.hs.iItem = i;
                                 PartQueryIO().pfnLookup(app, &part);
-                                strcpy(&szForm[1], PszFromInt(app, part.pspecialsb()->grAbility2, nullptr));
-                                RgToStream(app, szForm, strlen(szForm));
-                                strcpy(&szForm[1], PszFromInt(app, part.pspecialsb()->grAbility, nullptr));
-                                RgToStream(app, szForm, strlen(szForm));
+                                std::strcpy(&szForm[1], PszFromInt(app, part.pspecialsb()->grAbility2, nullptr));
+                                RgToStream(app, szForm, std::strlen(szForm));
+                                std::strcpy(&szForm[1], PszFromInt(app, part.pspecialsb()->grAbility, nullptr));
+                                RgToStream(app, szForm, std::strlen(szForm));
                             }
                         } else {
                             i = -1;
@@ -513,8 +513,8 @@ void DumpPlanets(APPSESSION &app) {
                         } else {
                             i = 0;
                         }
-                        strcpy(&szForm[1], PszFromInt(app, i, nullptr));
-                        RgToStream(app, szForm, strlen(szForm));
+                        std::strcpy(&szForm[1], PszFromInt(app, i, nullptr));
+                        RgToStream(app, szForm, std::strlen(szForm));
                     }
                 }
                 RgToStream(app, app.state.szCRLF, 2);
@@ -542,20 +542,20 @@ DisplayStatus:
 }
 
 void DumpFleets(APPSESSION &app) {
-    int16_t  iplr;
+    std::int16_t  iplr;
     StringId ids;
     char     szFile[256];
     char     szForm[256];
-    int16_t  ifl;
+    std::int16_t  ifl;
     FLEET   *lpfl;
-    int16_t  j;
-    int16_t  i;
-    int16_t  fOpen;
-    int16_t  fSuccess;
-    int16_t  fSilentSav;
+    std::int16_t  j;
+    std::int16_t  i;
+    std::int16_t  fOpen;
+    std::int16_t  fSuccess;
+    std::int16_t  fSilentSav;
     char    *psz;
-    int16_t  cch;
-    int32_t  l;
+    std::int16_t  cch;
+    std::int32_t  l;
 
     fSilentSav = app.state.fFileErrSilent;
     fSuccess = 1;
@@ -596,56 +596,56 @@ void DumpFleets(APPSESSION &app) {
                 app.state.idPlayer = iplrNone;
                 psz = PszGetFleetName(app, lpfl->id);
                 app.state.idPlayer = iplr;
-                RgToStream(app, psz, strlen(psz));
+                RgToStream(app, psz, std::strlen(psz));
                 szForm[0] = '\t';
-                strcpy(&szForm[1], PszFromInt(app, lpfl->pt.x, nullptr));
-                RgToStream(app, szForm, strlen(szForm));
-                strcpy(&szForm[1], PszFromInt(app, lpfl->pt.y, nullptr));
-                RgToStream(app, szForm, strlen(szForm));
+                std::strcpy(&szForm[1], PszFromInt(app, lpfl->pt.x, nullptr));
+                RgToStream(app, szForm, std::strlen(szForm));
+                std::strcpy(&szForm[1], PszFromInt(app, lpfl->pt.y, nullptr));
+                RgToStream(app, szForm, std::strlen(szForm));
                 if (lpfl->idPlanet == idPlanetDeepSpace) {
                     cch = 1;
                 } else {
                     psz = TextIO().pfnPlanetName(app, lpfl->idPlanet);
-                    strcpy(&szForm[1], psz);
-                    cch = strlen(psz) + 1;
+                    std::strcpy(&szForm[1], psz);
+                    cch = std::strlen(psz) + 1;
                 }
                 RgToStream(app, szForm, cch);
                 if (lpfl->det == detAll) {
-                    strcpy(&szForm[1], PszGetDestName(app, lpfl, nullptr));
+                    std::strcpy(&szForm[1], PszGetDestName(app, lpfl, nullptr));
                 } else if (app.state.gd.fPerPlayerDumps && lpfl->det < detAll && lpfl->fdirValid()) {
-                    strcpy(&szForm[1], PszFromInt(app, lpfl->dirFltX(), nullptr));
-                    strcat(szForm, ".");
-                    strcat(szForm, PszFromInt(app, lpfl->dirFltY(), nullptr));
+                    std::strcpy(&szForm[1], PszFromInt(app, lpfl->dirFltX(), nullptr));
+                    std::strcat(szForm, ".");
+                    std::strcat(szForm, PszFromInt(app, lpfl->dirFltY(), nullptr));
                 } else {
                     szForm[1] = 0;
                 }
-                RgToStream(app, szForm, strlen(szForm));
+                RgToStream(app, szForm, std::strlen(szForm));
                 if (app.state.rglpbtlplan[lpfl->iplr()] != 0) {
-                    strcpy(&szForm[1], app.state.rglpbtlplan[lpfl->iplr()][lpfl->iplan].szName);
+                    std::strcpy(&szForm[1], app.state.rglpbtlplan[lpfl->iplr()][lpfl->iplan].szName);
                 } else {
                     szForm[1] = 0;
                 }
-                RgToStream(app, szForm, strlen(szForm));
+                RgToStream(app, szForm, std::strlen(szForm));
                 l = 0;
                 for (i = 0; i < 16; i++) {
                     l += lpfl->rgcsh[i];
                 }
-                strcpy(&szForm[1], PszFromLong(app, l, nullptr));
-                RgToStream(app, szForm, strlen(szForm));
+                std::strcpy(&szForm[1], PszFromLong(app, l, nullptr));
+                RgToStream(app, szForm, std::strlen(szForm));
                 for (i = 0; i < 5; i++) {
-                    strcpy(&szForm[1], PszFromLong(app, lpfl->rgwtMin[i], nullptr));
-                    RgToStream(app, szForm, strlen(szForm));
+                    std::strcpy(&szForm[1], PszFromLong(app, lpfl->rgwtMin[i], nullptr));
+                    RgToStream(app, szForm, std::strlen(szForm));
                 }
                 if (app.state.gd.fPerPlayerDumps) {
-                    strcpy(&szForm[1], PszFromInt(app, lpfl->iPlayer + 1, nullptr));
-                    RgToStream(app, szForm, strlen(szForm));
+                    std::strcpy(&szForm[1], PszFromInt(app, lpfl->iPlayer + 1, nullptr));
+                    RgToStream(app, szForm, std::strlen(szForm));
                     if (lpfl->cord > 1) {
-                        strcpy(&szForm[1], PszGetETA(app, nullptr, lpfl, nullptr));
+                        std::strcpy(&szForm[1], PszGetETA(app, nullptr, lpfl, nullptr));
                     } else {
                         szForm[1] = '0';
                         szForm[2] = 0;
                     }
-                    RgToStream(app, szForm, strlen(szForm));
+                    RgToStream(app, szForm, std::strlen(szForm));
                     if (lpfl->cord >= 2) {
                         i = lpfl->lpplord->rgord()[1].iWarp;
                     } else if (lpfl->det < detAll && lpfl->fdirValid()) {
@@ -653,34 +653,34 @@ void DumpFleets(APPSESSION &app) {
                     } else {
                         i = 0;
                     }
-                    strcpy(&szForm[1], PszFromInt(app, i, nullptr));
-                    RgToStream(app, szForm, strlen(szForm));
-                    strcpy(&szForm[1], PszFromLong(app, WtFromLpfl(app, lpfl), nullptr));
-                    RgToStream(app, szForm, strlen(szForm));
-                    strcpy(&szForm[1], PszFromInt(app, PctCloakFromLpfl(app, lpfl), nullptr));
-                    RgToStream(app, szForm, strlen(szForm));
+                    std::strcpy(&szForm[1], PszFromInt(app, i, nullptr));
+                    RgToStream(app, szForm, std::strlen(szForm));
+                    std::strcpy(&szForm[1], PszFromLong(app, WtFromLpfl(app, lpfl), nullptr));
+                    RgToStream(app, szForm, std::strlen(szForm));
+                    std::strcpy(&szForm[1], PszFromInt(app, PctCloakFromLpfl(app, lpfl), nullptr));
+                    RgToStream(app, szForm, std::strlen(szForm));
                     j = GetFleetScannerRange(app, lpfl, &i, nullptr, nullptr);
                     if (j == -1) {
                         j = 0;
                     }
-                    strcpy(&szForm[1], PszFromInt(app, j, nullptr));
-                    RgToStream(app, szForm, strlen(szForm));
-                    strcpy(&szForm[1], PszFromInt(app, i, nullptr));
-                    RgToStream(app, szForm, strlen(szForm));
+                    std::strcpy(&szForm[1], PszFromInt(app, j, nullptr));
+                    RgToStream(app, szForm, std::strlen(szForm));
+                    std::strcpy(&szForm[1], PszFromInt(app, i, nullptr));
+                    RgToStream(app, szForm, std::strlen(szForm));
                     if (lpfl->det == detAll) {
-                        strcpy(&szForm[1], PszGetTaskName(app, lpfl, &i));
+                        std::strcpy(&szForm[1], PszGetTaskName(app, lpfl, &i));
                     } else {
                         szForm[1] = 0;
                     }
-                    RgToStream(app, szForm, strlen(szForm));
-                    strcpy(&szForm[1], PszFromLong(app, ColonyIO().pfnFleetMining(app, lpfl), nullptr));
-                    RgToStream(app, szForm, strlen(szForm));
-                    strcpy(&szForm[1], PszFromLong(app, CMineSweepFromLpfl(app, lpfl), nullptr));
-                    RgToStream(app, szForm, strlen(szForm));
-                    strcpy(&szForm[1], PszFromLong(app, CLayMinesFromLpfl(app, lpfl, mineAll, ishdefAll), nullptr));
-                    RgToStream(app, szForm, strlen(szForm));
-                    strcpy(&szForm[1], PszFromLong(app, PctTerraFromLpfl(app, lpfl), nullptr));
-                    RgToStream(app, szForm, strlen(szForm));
+                    RgToStream(app, szForm, std::strlen(szForm));
+                    std::strcpy(&szForm[1], PszFromLong(app, ColonyIO().pfnFleetMining(app, lpfl), nullptr));
+                    RgToStream(app, szForm, std::strlen(szForm));
+                    std::strcpy(&szForm[1], PszFromLong(app, CMineSweepFromLpfl(app, lpfl), nullptr));
+                    RgToStream(app, szForm, std::strlen(szForm));
+                    std::strcpy(&szForm[1], PszFromLong(app, CLayMinesFromLpfl(app, lpfl, mineAll, ishdefAll), nullptr));
+                    RgToStream(app, szForm, std::strlen(szForm));
+                    std::strcpy(&szForm[1], PszFromLong(app, PctTerraFromLpfl(app, lpfl), nullptr));
+                    RgToStream(app, szForm, std::strlen(szForm));
                     l = 0;
                     for (i = 0; i < 16; i++) {
                         if (lpfl->rgcsh[i] != 0) {
@@ -690,8 +690,8 @@ void DumpFleets(APPSESSION &app) {
                             }
                         }
                     }
-                    strcpy(&szForm[1], PszFromLong(app, l, nullptr));
-                    RgToStream(app, szForm, strlen(szForm));
+                    std::strcpy(&szForm[1], PszFromLong(app, l, nullptr));
+                    RgToStream(app, szForm, std::strlen(szForm));
                     for (j = 2; j < 6; j++) {
                         l = 0;
                         for (i = 0; i < 16; i++) {
@@ -699,8 +699,8 @@ void DumpFleets(APPSESSION &app) {
                                 l += lpfl->rgcsh[i];
                             }
                         }
-                        strcpy(&szForm[1], PszFromLong(app, l, nullptr));
-                        RgToStream(app, szForm, strlen(szForm));
+                        std::strcpy(&szForm[1], PszFromLong(app, l, nullptr));
+                        RgToStream(app, szForm, std::strlen(szForm));
                     }
                 }
                 RgToStream(app, app.state.szCRLF, 2);
@@ -731,20 +731,20 @@ DisplayStatus:
 // from the player turn file it names (szBase), as the Windows game does
 // when it opens the file (FOpenGame): universe, then planets, then fleets.
 // It returns FALSE if the file isn't a player's turn file it can load.
-int16_t FDumpCmdLineGame(APPSESSION &app) {
+std::int16_t FDumpCmdLineGame(APPSESSION &app) {
     char  szFile[256];
     char *pchDot;
     char *pchDir;
 
-    strcpy(szFile, app.state.szBase);
-    pchDot = strrchr(szFile, '.');
-    pchDir = strrchr(szFile, chDirSep);
+    std::strcpy(szFile, app.state.szBase);
+    pchDot = std::strrchr(szFile, '.');
+    pchDir = std::strrchr(szFile, chDirSep);
     if (!pchDot || (pchDir && pchDir > pchDot)) {
         return 0;
     }
     *pchDot = 0;
     DestroyCurGame(app);
-    strcpy(app.state.szBase, szFile);
+    std::strcpy(app.state.szBase, szFile);
     app.state.fFileErrSilent = 1;
     if (!FLoadGame(app, szFile, pchDot + 1)) {
         return 0;

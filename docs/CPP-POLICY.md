@@ -11,7 +11,9 @@ private production clone, surrogate state definition or session locator is allow
 and standalone-header target enforce it. Negative manifest cases reject GNU mode,
 language forcing, weakened diagnostics, symbol substitution, state doubles and
 private production clones. Application headers compile independently before and
-after standard-library headers. The SDL-free host checks core/platform headers;
+after standard-library headers. Owned code and generators use C++ standard
+headers and `std::` qualification for standard types and functions; actual SDK,
+SDL, POSIX and other foreign headers keep their native declarations. The SDL-free host checks core/platform headers;
 the desktop additionally checks UI/wrapper headers. Core uses only a forward UI
 state type and receives the application owner explicitly.
 

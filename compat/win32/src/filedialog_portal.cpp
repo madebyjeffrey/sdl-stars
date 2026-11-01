@@ -3,10 +3,10 @@
 #include "input_io.h"
 #include "time_io.h"
 #include <dbus/dbus.h>
-#include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <climits>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 
 constexpr char PORTAL_SERVICE[] = "org.freedesktop.portal.Desktop";
 constexpr char PORTAL_PATH[] = "/org/freedesktop/portal/desktop";
@@ -39,7 +39,7 @@ static BOOL FOption(DBusMessageIter *lpOptions, LPCSTR pszKey, LPCSTR pszType,
 static BOOL FFolderOption(DBusMessageIter *lpOptions, LPCSTR pszFolder) {
     DBusMessageIter entry, value, bytes;
     const char *pszKey = "current_folder";
-    int cb = static_cast<int>(strlen(pszFolder)) + 1;
+    int cb = static_cast<int>(std::strlen(pszFolder)) + 1;
     return dbus_message_iter_open_container(lpOptions, DBUS_TYPE_DICT_ENTRY, nullptr, &entry) &&
            dbus_message_iter_append_basic(&entry, DBUS_TYPE_STRING, &pszKey) &&
            dbus_message_iter_open_container(&entry, DBUS_TYPE_VARIANT, "ay", &value) &&
@@ -50,13 +50,13 @@ static BOOL FFolderOption(DBusMessageIter *lpOptions, LPCSTR pszFolder) {
            dbus_message_iter_close_container(lpOptions, &entry);
 }
 static char *PszPortalLabel(LPCSTR psz) {
-    return FUtf8Valid(psz, strlen(psz)) ? SDL_strdup(psz) : nullptr;
+    return FUtf8Valid(psz, std::strlen(psz)) ? SDL_strdup(psz) : nullptr;
 }
 static BOOL FFilter(DBusMessageIter *lpIter, const COMPATFILEFILTER *lpFilter) {
     DBusMessageIter filter, patterns, item;
     const char *psz, *pszEnd;
     char *pszLabel, *pszPatternUtf, szPattern[16385];
-    size_t i, c;
+    std::size_t i, c;
     dbus_uint32_t kind = 0;
     BOOL fOk = 0;
     pszLabel = PszPortalLabel(lpFilter->pszName);
@@ -66,10 +66,10 @@ static BOOL FFilter(DBusMessageIter *lpIter, const COMPATFILEFILTER *lpFilter) {
         !dbus_message_iter_append_basic(&filter, DBUS_TYPE_STRING, &pszLabel) ||
         !dbus_message_iter_open_container(&filter, DBUS_TYPE_ARRAY, "(us)", &patterns)) goto done;
     for (psz = pszPatternUtf; *psz; psz = *pszEnd ? pszEnd + 1 : pszEnd) {
-        pszEnd = strchr(psz, ';'); if (!pszEnd) pszEnd = psz + strlen(psz);
+        pszEnd = std::strchr(psz, ';'); if (!pszEnd) pszEnd = psz + std::strlen(psz);
         c = 0;
-        if (pszEnd - psz == 3 && memcmp(psz, "*.*", 3) == 0) szPattern[c++] = '*';
-        else for (i = 0; i < static_cast<size_t>(pszEnd - psz); i++) {
+        if (pszEnd - psz == 3 && std::memcmp(psz, "*.*", 3) == 0) szPattern[c++] = '*';
+        else for (i = 0; i < static_cast<std::size_t>(pszEnd - psz); i++) {
             if ((psz[i] >= 'a' && psz[i] <= 'z') || (psz[i] >= 'A' && psz[i] <= 'Z')) {
                 szPattern[c++] = '['; szPattern[c++] = static_cast<char>(SDL_tolower(static_cast<unsigned char>(psz[i])));
                 szPattern[c++] = static_cast<char>(SDL_toupper(static_cast<unsigned char>(psz[i]))); szPattern[c++] = ']';
@@ -114,13 +114,13 @@ static int IHex(char ch) {
     if (ch >= 'A' && ch <= 'F') return ch - 'A' + 10;
     return -1;
 }
-static BOOL FUriPath(LPCSTR pszUri, char *pszPath, size_t cbPath) {
-    size_t c = 0;
+static BOOL FUriPath(LPCSTR pszUri, char *pszPath, std::size_t cbPath) {
+    std::size_t c = 0;
     int hi, lo;
     unsigned char ch;
-    if (strncmp(pszUri, "file://", 7) != 0) return 0;
+    if (std::strncmp(pszUri, "file://", 7) != 0) return 0;
     pszUri += 7;
-    if (strncmp(pszUri, "localhost/", 10) == 0) pszUri += 9;
+    if (std::strncmp(pszUri, "localhost/", 10) == 0) pszUri += 9;
     if (*pszUri != '/') return 0;
     while (*pszUri) {
         if (*pszUri == '?' || *pszUri == '#') return 0;
@@ -136,7 +136,7 @@ static BOOL FUriPath(LPCSTR pszUri, char *pszPath, size_t cbPath) {
     pszPath[c] = 0; return 1;
 }
 static int IResponse(DBusMessage *lpMessage, const COMPATFILEFILTER *rgfilter, int cFilter,
-                     int *lpiFilter, char *pszPath, size_t cbPath) {
+                     int *lpiFilter, char *pszPath, std::size_t cbPath) {
     DBusMessageIter args, results, entry, value, uris, filter;
     dbus_uint32_t response;
     const char *pszKey, *pszUri, *pszName;
@@ -151,7 +151,7 @@ static int IResponse(DBusMessage *lpMessage, const COMPATFILEFILTER *rgfilter, i
     while (dbus_message_iter_get_arg_type(&results) == DBUS_TYPE_DICT_ENTRY) {
         dbus_message_iter_recurse(&results, &entry); dbus_message_iter_get_basic(&entry, &pszKey);
         dbus_message_iter_next(&entry); dbus_message_iter_recurse(&entry, &value);
-        if (strcmp(pszKey, "uris") == 0) {
+        if (std::strcmp(pszKey, "uris") == 0) {
             if (fUri || dbus_message_iter_get_arg_type(&value) != DBUS_TYPE_ARRAY ||
                 dbus_message_iter_get_element_type(&value) != DBUS_TYPE_STRING) return -1;
             dbus_message_iter_recurse(&value, &uris);
@@ -159,14 +159,14 @@ static int IResponse(DBusMessage *lpMessage, const COMPATFILEFILTER *rgfilter, i
             dbus_message_iter_get_basic(&uris, &pszUri);
             if (!FUriPath(pszUri, pszPath, cbPath) || dbus_message_iter_next(&uris)) return -1;
             fUri = 1;
-        } else if (strcmp(pszKey, "current_filter") == 0) {
+        } else if (std::strcmp(pszKey, "current_filter") == 0) {
             if (dbus_message_iter_get_arg_type(&value) != DBUS_TYPE_STRUCT) return -1;
             dbus_message_iter_recurse(&value, &filter);
             if (dbus_message_iter_get_arg_type(&filter) != DBUS_TYPE_STRING) return -1;
             dbus_message_iter_get_basic(&filter, &pszName);
             for (i = 0; i < cFilter; i++) {
                 pszLabel = PszPortalLabel(rgfilter[i].pszName); if (!pszLabel) return -1;
-                if (strcmp(pszName, pszLabel) == 0) { *lpiFilter = i; SDL_free(pszLabel); break; }
+                if (std::strcmp(pszName, pszLabel) == 0) { *lpiFilter = i; SDL_free(pszLabel); break; }
                 SDL_free(pszLabel);
             }
         }
@@ -186,7 +186,7 @@ static BOOL FPumpChooser(HWND hwndOwner) {
 }
 int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFolder,
                      LPCSTR pszName, const COMPATFILEFILTER *rgfilter, int cFilter,
-                     int *lpiFilter, char *pszPath, size_t cbPath) {
+                     int *lpiFilter, char *pszPath, std::size_t cbPath) {
     DBusConnection *lpBus = nullptr;
     DBusMessage *lpCall = nullptr, *lpReply = nullptr, *lpMessage, *lpClose;
     DBusPendingCall *lpPending = nullptr;
@@ -221,7 +221,7 @@ int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFol
         /* SDL exports xdg-foreign asynchronously. Copy the handle before the
            modal pump, which may destroy its window and property storage. */
         nsStart = CompatTimeIO().pfnGetTicks();
-        while (strcmp(CompatInputIO().pfnGetCurrentVideoDriver(), "wayland") == 0 &&
+        while (std::strcmp(CompatInputIO().pfnGetCurrentVideoDriver(), "wayland") == 0 &&
                !SDL_GetStringProperty(props, SDL_PROP_WINDOW_WAYLAND_XDG_TOPLEVEL_EXPORT_HANDLE_STRING, nullptr) &&
                CompatTimeIO().pfnGetTicks() - nsStart < 1000) {
             if (!FPumpChooser(hwndOwner)) { iResult = 0; goto done; }
@@ -230,20 +230,20 @@ int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFol
         pszHandle = SDL_GetStringProperty(props, SDL_PROP_WINDOW_WAYLAND_XDG_TOPLEVEL_EXPORT_HANDLE_STRING, nullptr);
         if (pszHandle && *pszHandle && SDL_asprintf(&pszWaylandParent, "wayland:%s", pszHandle) < 0) goto done;
         xid = SDL_GetNumberProperty(props, SDL_PROP_WINDOW_X11_WINDOW_NUMBER, 0);
-        if (xid != 0) snprintf(szParent, sizeof(szParent), "x11:%llx", (unsigned long long)xid);
+        if (xid != 0) std::snprintf(szParent, sizeof(szParent), "x11:%llx", (unsigned long long)xid);
     }
     pszParent = pszWaylandParent ? pszWaylandParent : szParent;
     lpRandom = PfNativeOpen("/dev/urandom", "rb");
     if (!lpRandom) goto done;
     if (CReadNative(rgbToken, 1, sizeof(rgbToken), lpRandom) != sizeof(rgbToken)) { ICloseNativeFile(lpRandom); goto done; }
     ICloseNativeFile(lpRandom);
-    strcpy(szToken, "stars_");
-    for (i = 0; i < 16; i++) snprintf(szToken + 6 + i * 2, 3, "%02x", rgbToken[i]);
+    std::strcpy(szToken, "stars_");
+    for (i = 0; i < 16; i++) std::snprintf(szToken + 6 + i * 2, 3, "%02x", rgbToken[i]);
     pszUnique = dbus_bus_get_unique_name(lpBus);
-    if (!pszUnique || strlen(pszUnique) >= sizeof(szSender)) goto done;
-    strcpy(szSender, pszUnique + 1);
+    if (!pszUnique || std::strlen(pszUnique) >= sizeof(szSender)) goto done;
+    std::strcpy(szSender, pszUnique + 1);
     for (i = 0; szSender[i]; i++) if (szSender[i] == '.') szSender[i] = '_';
-    snprintf(szRequest, sizeof(szRequest), "%s/request/%s/%s", PORTAL_PATH, szSender, szToken);
+    std::snprintf(szRequest, sizeof(szRequest), "%s/request/%s/%s", PORTAL_PATH, szSender, szToken);
     pszRequest = strdup(szRequest); if (!pszRequest) goto done;
     if (!dbus_validate_utf8(pszName, &error)) goto done;
     pszTitleUtf = PszPortalLabel(pszTitle); if (!pszTitleUtf) goto done;
@@ -272,7 +272,7 @@ int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFol
     if (!lpReply || dbus_message_get_type(lpReply) == DBUS_MESSAGE_TYPE_ERROR ||
         !dbus_message_get_args(lpReply, &error, DBUS_TYPE_OBJECT_PATH, &pszHandle, DBUS_TYPE_INVALID)) goto done;
     if (!dbus_message_get_sender(lpReply)) goto done;
-    free(pszRequest); pszRequest = strdup(pszHandle); pszSender = strdup(dbus_message_get_sender(lpReply));
+    std::free(pszRequest); pszRequest = strdup(pszHandle); pszSender = strdup(dbus_message_get_sender(lpReply));
     if (!pszRequest || !pszSender) goto done;
     for (;;) {
         if (!FPumpChooser(hwndOwner)) { iResult = 0; break; }
@@ -304,6 +304,6 @@ done:
     for (i = 0; i < responses.cMessage; i++) if (responses.rgMessage[i]) dbus_message_unref(responses.rgMessage[i]);
     if (fFilter) dbus_connection_remove_filter(lpBus, SavePortalResponse, &responses);
     if (lpBus) { dbus_connection_flush(lpBus); dbus_connection_close(lpBus); dbus_connection_unref(lpBus); }
-    SDL_free(pszTitleUtf); SDL_free(pszWaylandParent); free(pszRequest); free(pszSender);
+    SDL_free(pszTitleUtf); SDL_free(pszWaylandParent); std::free(pszRequest); std::free(pszSender);
     return iResult;
 }

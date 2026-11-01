@@ -13,43 +13,43 @@
 char mpishdefishTutor[6] = {3, 4, 9, 6, 7, 14};
 
 // The length marker and raw terminator must both belong to this record.
-int16_t FReadUserString(APPSESSION &app, const uint8_t *lpb, size_t cb, char *psz, size_t cchMax, size_t *pcbRead) {
-    const uint8_t *lpbEnd;
-    size_t cch;
-    int16_t cOut;
+std::int16_t FReadUserString(APPSESSION &app, const std::uint8_t *lpb, std::size_t cb, char *psz, std::size_t cchMax, std::size_t *pcbRead) {
+    const std::uint8_t *lpbEnd;
+    std::size_t cch;
+    std::int16_t cOut;
 
     if (cchMax == 0) return 0;
     psz[0] = 0;
     if (cb == 0 || cchMax > 1024) return 0;
     if (*lpb == 0) {
-        lpbEnd = static_cast<const uint8_t *>(memchr(lpb + 1, 0, StarsMin(cb - 1, cchMax)));
+        lpbEnd = static_cast<const std::uint8_t *>(std::memchr(lpb + 1, 0, StarsMin(cb - 1, cchMax)));
         if (!lpbEnd) return 0;
-        cch = static_cast<size_t>((lpbEnd - lpb - 1));
+        cch = static_cast<std::size_t>((lpbEnd - lpb - 1));
         if (CchCopyUtf8(psz, cchMax, reinterpret_cast<const char *>(lpb) + 1, cch) < 0) return 0;
         if (pcbRead) *pcbRead = cch + 2;
     } else {
         if (*lpb > cb - 1) return 0;
-        cOut = static_cast<int16_t>(cchMax) - 1;
+        cOut = static_cast<std::int16_t>(cchMax) - 1;
         if (!FDecompressUserString(app, const_cast<char *>(reinterpret_cast<const char*>(lpb)) + 1, *lpb, psz, &cOut)) return 0;
-        if (pcbRead) *pcbRead = static_cast<size_t>(*lpb) + 1;
+        if (pcbRead) *pcbRead = static_cast<std::size_t>(*lpb) + 1;
     }
     return 1;
 }
 
-int16_t FReadShDef(APPSESSION &app, const uint8_t *lprt, SHDEF *lpshdef, int16_t iplrLoad, size_t cb) {
+std::int16_t FReadShDef(APPSESSION &app, const std::uint8_t *lprt, SHDEF *lpshdef, std::int16_t iplrLoad, std::size_t cb) {
     SHDEF    shdef;
-    const uint8_t *lpb;
-    int16_t  ishdef;
-    int16_t  iFirst;
-    int16_t  fOkay;
+    const std::uint8_t *lpb;
+    std::int16_t  ishdef;
+    std::int16_t  iFirst;
+    std::int16_t  fOkay;
     HUL     *lphulBase;
-    uint32_t wt;
-    int16_t  c;
+    std::uint32_t wt;
+    std::int16_t  c;
     HUL     *lphul;
     PART     part;
-    size_t   ibName;
+    std::size_t   ibName;
 
-    memset(&shdef, 0, sizeof(SHDEF));
+    std::memset(&shdef, 0, sizeof(SHDEF));
 
     if (!FDecodeShDefFixed(std::as_bytes(std::span(lprt, cb)), shdef, ibName) ||
         shdef.hul.ihuldef > ihuldefDeathStart || cb <= ibName) return 0;
@@ -58,7 +58,7 @@ int16_t FReadShDef(APPSESSION &app, const uint8_t *lprt, SHDEF *lpshdef, int16_t
     if (shdef.hul.ibmp < iFirst || shdef.hul.ibmp >= iFirst + 4) {
         shdef.hul.ibmp = (shdef.hul.ibmp & 3) | iFirst;
     }
-    if (!FReadUserString(app, lpb, cb - static_cast<size_t>((lpb - lprt)), shdef.hul.szClass,
+    if (!FReadUserString(app, lpb, cb - static_cast<std::size_t>((lpb - lprt)), shdef.hul.szClass,
                          sizeof(shdef.hul.szClass), nullptr)) return 0;
     ishdef = shdef.ishdef;
     if (ishdef >= 16) {
@@ -75,7 +75,7 @@ int16_t FReadShDef(APPSESSION &app, const uint8_t *lprt, SHDEF *lpshdef, int16_t
     if (lpshdef[ishdef].det == detAll) {
         lphul = &lpshdef[ishdef].hul;
         lphulBase = &PartQueryIO().pfnHull(lphul->ihuldef)->hul;
-        wt = static_cast<uint32_t>(lphulBase->wtEmpty);
+        wt = static_cast<std::uint32_t>(lphulBase->wtEmpty);
         for (c = 0; c < lphul->chs; c++) {
             if (lphul->rghs[c].cItem > 0) {
                 part.hs = lphul->rghs[c];
@@ -86,7 +86,7 @@ int16_t FReadShDef(APPSESSION &app, const uint8_t *lprt, SHDEF *lpshdef, int16_t
                 if (!(part.hs.grhst & lphulBase->rghs[c].grhst) || ((fOkay > 1 && !shdef.fGift) || part.hs.cItem > lphulBase->rghs[c].cItem)) {
                     lphul->rghs[c].cItem = 0;
                 }
-                wt += static_cast<uint32_t>((part.pcom().cMass() * lphul->rghs[c].cItem));
+                wt += static_cast<std::uint32_t>((part.pcom().cMass() * lphul->rghs[c].cItem));
             }
             if (c == 0 && lphul->rghs[0].cItem == 0 && lphulBase->rghs[0].grhst == hstEngine) {
                 lphul->rghs[0].grhst = hstEngine;
@@ -94,7 +94,7 @@ int16_t FReadShDef(APPSESSION &app, const uint8_t *lprt, SHDEF *lpshdef, int16_t
                 lphul->rghs[0].cItem = lphulBase->rghs[0].cItem;
                 part.hs = lphul->rghs[0];
                 PartQueryIO().pfnLookup(app, &part);
-                wt += static_cast<uint32_t>((part.pcom().cMass() * lphul->rghs[0].cItem));
+                wt += static_cast<std::uint32_t>((part.pcom().cMass() * lphul->rghs[0].cItem));
             }
         }
         lphul->wtEmpty = LOWORD(wt);
@@ -102,27 +102,27 @@ int16_t FReadShDef(APPSESSION &app, const uint8_t *lprt, SHDEF *lpshdef, int16_t
     return 1;
 }
 
-void ReadRtPlr(APPSESSION &app, PLAYER *pplr, uint8_t *pbIn, size_t cb) {
-    int16_t iOff;
-    size_t cbRead;
+void ReadRtPlr(APPSESSION &app, PLAYER *pplr, std::uint8_t *pbIn, std::size_t cb) {
+    std::int16_t iOff;
+    std::size_t cbRead;
 
-    memset(pplr, 0, sizeof(PLAYER));
+    std::memset(pplr, 0, sizeof(PLAYER));
     if (cb < cbWirePlayerPartial) goto invalid;
     // A full record stores a relation count where rgmdRelation begins, then
     // that many relations; a partial one stops before idPlanetHome.
     if (PlvFromPrefix(pbIn, cb).det() == detAll) {
         iOff = cbWirePlayerPrefix;
-        if (cb <= static_cast<size_t>(iOff) || pbIn[iOff] > cb - iOff - 1) goto invalid;
+        if (cb <= static_cast<std::size_t>(iOff) || pbIn[iOff] > cb - iOff - 1) goto invalid;
         FDecodePlayer(std::as_bytes(std::span(pbIn, cb)), *pplr, iOff);
         // Keep a corrupt count from overrunning rgmdRelation; skip the rest.
-        memmove(pplr->rgmdRelation, pbIn + iOff + 1, (((pbIn[iOff]) < (sizeof(pplr->rgmdRelation))) ? (pbIn[iOff]) : (sizeof(pplr->rgmdRelation))));
+        std::memmove(pplr->rgmdRelation, pbIn + iOff + 1, (((pbIn[iOff]) < (sizeof(pplr->rgmdRelation))) ? (pbIn[iOff]) : (sizeof(pplr->rgmdRelation))));
         iOff += pbIn[iOff] + 1;
     } else {
         iOff = cbWirePlayerPartial;
         FDecodePlayer(std::as_bytes(std::span(pbIn, cb)), *pplr, iOff);
     }
     if (!FReadUserString(app, pbIn + iOff, cb - iOff, pplr->szName, sizeof(pplr->szName), &cbRead)) goto invalid;
-    iOff += static_cast<int16_t>(cbRead);
+    iOff += static_cast<std::int16_t>(cbRead);
     if (!FReadUserString(app, pbIn + iOff, cb - iOff, pplr->szNames, sizeof(pplr->szNames), nullptr)) goto invalid;
     pplr->fLearned = 0;
     return;
@@ -131,41 +131,41 @@ invalid:
     if (FStarsRecoveryActive()) StarsThrowError(starsErrorFile, app.state.idsFileError);
 }
 
-int16_t FLoadGame(APPSESSION &app, const char *pszFileName, const char *pszExt) {
-    int16_t  iplrSav;
-    int16_t  cPlanetHist;
+std::int16_t FLoadGame(APPSESSION &app, const char *pszFileName, const char *pszExt) {
+    std::int16_t  iplrSav;
+    std::int16_t  cPlanetHist;
     STARPACK sp;
     std::byte rgbStarpack[cbWireStarpack];
-    int16_t  cPlanetAlloc;
-    int16_t  fHaveHistoryData;
-    int16_t  fSilentSav;
+    std::int16_t  cPlanetAlloc;
+    std::int16_t  fHaveHistoryData;
+    std::int16_t  fSilentSav;
     PLANET  *lppl;
-    int16_t  i;
+    std::int16_t  i;
     THING   *lpth;
     FLEET   *lpfl;
-    int16_t  cturn;
+    std::int16_t  cturn;
     THING   *lpthMac;
-    int16_t  iPlayer;
-    int16_t  j;
+    std::int16_t  iPlayer;
+    std::int16_t  j;
     PLANET  *lpplMac;
-    int16_t  dt;
-    int16_t  grf;
-    int16_t  x;
-    int16_t  iplr;
+    std::int16_t  dt;
+    std::int16_t  grf;
+    std::int16_t  x;
+    std::int16_t  iplr;
     SCOREX   sx;
-    int16_t  isx;
-    uint16_t turnCur;
-    uint8_t *lpb;
-    int16_t  cThingFile;
-    int16_t  fHist;
-    int16_t  iP;
-    int16_t  fWorking;
-    int16_t  iprod;
-    int16_t  iFirst;
-    int16_t  iLast;
+    std::int16_t  isx;
+    std::uint16_t turnCur;
+    std::uint8_t *lpb;
+    std::int16_t  cThingFile;
+    std::int16_t  fHist;
+    std::int16_t  iP;
+    std::int16_t  fWorking;
+    std::int16_t  iprod;
+    std::int16_t  iFirst;
+    std::int16_t  iLast;
     PROD    *lpprod;
-    int16_t  iWarp;
-    int16_t  fTwo;
+    std::int16_t  iWarp;
+    std::int16_t  fTwo;
     RTHISTHDR rthh;
     HB      *lphb; /* NATIVE: recover the Win16 heap-relative offset. */
 
@@ -174,7 +174,7 @@ int16_t FLoadGame(APPSESSION &app, const char *pszFileName, const char *pszExt) 
     /* NATIVE: callers often pass szBase itself, and strcpy onto itself is
        undefined. */
     if (pszFileName != app.state.szBase) {
-        strcpy(app.state.szBase, pszFileName);
+        std::strcpy(app.state.szBase, pszFileName);
     }
     app.state.gd.fFleetLinkValid = 0;
     StarsRecoveryScope scopeRecovery;
@@ -189,7 +189,7 @@ int16_t FLoadGame(APPSESSION &app, const char *pszFileName, const char *pszExt) 
         }
         FDecodeGame(std::as_bytes(std::span(app.state.rgbCur)), app.state.game);
         if (strnlen(app.state.game.szName, sizeof(app.state.game.szName)) == sizeof(app.state.game.szName) ||
-            !FUtf8Valid(app.state.game.szName, strlen(app.state.game.szName))) goto XYCorrupt;
+            !FUtf8Valid(app.state.game.szName, std::strlen(app.state.game.szName))) goto XYCorrupt;
         app.state.game.fDirty = 0;
         app.state.dGal = 400 * app.state.game.mdSize + 400;
         app.state.dGalInv = app.state.dGal + 2000;
@@ -214,11 +214,11 @@ int16_t FLoadGame(APPSESSION &app, const char *pszFileName, const char *pszExt) 
         } else {
             dt = 3;
             grf |= 0x3000;
-            iPlayer = atoi(pszExt + 1);
+            iPlayer = std::atoi(pszExt + 1);
             iPlayer--;
         }
         ResetMessages(app);
-        memset(app.state.rgplr, 0, app.state.game.cPlayer * 192);
+        std::memset(app.state.rgplr, 0, app.state.game.cPlayer * 192);
         ResetHb(app, htShips);
         app.state.idPlayer = iPlayer;
         fSilentSav = app.state.fFileErrSilent;
@@ -254,14 +254,14 @@ int16_t FLoadGame(APPSESSION &app, const char *pszFileName, const char *pszExt) 
                 RecordIO().pfnReadRt(app);
             }
             if (app.state.hdrCur.rt == rtMsgFilt) {
-                if (app.state.hdrCur.cb > static_cast<uint16_t>(app.state.cbbitfMsg))
+                if (app.state.hdrCur.cb > static_cast<std::uint16_t>(app.state.cbbitfMsg))
                     goto CorruptHist;
-                memcpy(app.state.bitfMsgFiltered, app.state.rgbCur, app.state.hdrCur.cb);
+                std::memcpy(app.state.bitfMsgFiltered, app.state.rgbCur, app.state.hdrCur.cb);
                 RecordIO().pfnReadRt(app);
             }
             while (app.state.hdrCur.rt == rtPlr) {
                 i = PlvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).iPlayer();
-                ReadRtPlr(app, &app.state.rgplr[i], reinterpret_cast<uint8_t *>(app.state.rgbCur), app.state.hdrCur.cb);
+                ReadRtPlr(app, &app.state.rgplr[i], reinterpret_cast<std::uint8_t *>(app.state.rgbCur), app.state.hdrCur.cb);
                 app.state.rgplr[i].cPlanet = 0;
                 app.state.rgplr[i].cFleet = 0;
                 RecordIO().pfnReadRt(app);
@@ -285,7 +285,7 @@ int16_t FLoadGame(APPSESSION &app, const char *pszFileName, const char *pszExt) 
                 } else {
                     app.state.idPlayer = iplrNone;
                 }
-                if (!FReadShDef(app, reinterpret_cast<const uint8_t *>(app.state.rgbCur), app.state.rglpshdef[i], iplrSav, app.state.hdrCur.cb))
+                if (!FReadShDef(app, reinterpret_cast<const std::uint8_t *>(app.state.rgbCur), app.state.rglpshdef[i], iplrSav, app.state.hdrCur.cb))
                     goto CorruptHist;
                 app.state.idPlayer = iplrSav;
                 app.state.rgplr[i].cShDef--;
@@ -310,14 +310,14 @@ int16_t FLoadGame(APPSESSION &app, const char *pszFileName, const char *pszExt) 
                 } else {
                     app.state.idPlayer = iplrNone;
                 }
-                if (!FReadShDef(app, reinterpret_cast<const uint8_t *>(app.state.rgbCur), app.state.rglpshdefSB[i], iplrSav, app.state.hdrCur.cb))
+                if (!FReadShDef(app, reinterpret_cast<const std::uint8_t *>(app.state.rgbCur), app.state.rglpshdefSB[i], iplrSav, app.state.hdrCur.cb))
                     goto CorruptHist;
                 app.state.idPlayer = iplrSav;
                 app.state.rgplr[i].cshdefSB += 15;
                 RecordIO().pfnReadRt(app);
             }
             while (app.state.hdrCur.rt == rtScore) {
-                iplr = static_cast<uint8_t>(app.state.rgbCur[0]) & 31;
+                iplr = static_cast<std::uint8_t>(app.state.rgbCur[0]) & 31;
                 FDecodeScoreX(std::as_bytes(std::span(app.state.rgbCur)), sx);
                 if (!app.state.rgsxPlr[iplr]) {
                     app.state.rgsxPlr[iplr] = LpAlloc<SCOREX>(app, 101 * sizeof(SCOREX), htMisc);
@@ -336,11 +336,11 @@ int16_t FLoadGame(APPSESSION &app, const char *pszFileName, const char *pszExt) 
                             app.state.rgcsxPlr[iplr]++;
                         }
                     } else if (app.state.rgcsxPlr[iplr] < 101) {
-                        memmove(app.state.rgsxPlr[iplr] + (isx + 1), app.state.rgsxPlr[iplr] + isx, (app.state.rgcsxPlr[iplr] - isx) * sizeof(SCOREX));
+                        std::memmove(app.state.rgsxPlr[iplr] + (isx + 1), app.state.rgsxPlr[iplr] + isx, (app.state.rgcsxPlr[iplr] - isx) * sizeof(SCOREX));
                         app.state.rgcsxPlr[iplr]++;
                     } else if (isx > 0) {
                         if (isx > 1) {
-                            memmove(app.state.rgsxPlr[iplr], app.state.rgsxPlr[iplr] + 1, (isx - 1) * sizeof(SCOREX));
+                            std::memmove(app.state.rgsxPlr[iplr], app.state.rgsxPlr[iplr] + 1, (isx - 1) * sizeof(SCOREX));
                         }
                         isx--;
                     }
@@ -353,13 +353,13 @@ int16_t FLoadGame(APPSESSION &app, const char *pszFileName, const char *pszExt) 
             if (app.state.hdrCur.rt == rtAiData) {
                 if (app.state.rgplr[app.state.idPlayer].fAi) {
                     if (!app.state.vlpbAiData) {
-                        app.state.vlpbAiData = LpAlloc<uint8_t>(app, 8096, htMisc);
+                        app.state.vlpbAiData = LpAlloc<std::uint8_t>(app, 8096, htMisc);
                         if (!app.state.vlpbAiData)
                             goto CorruptHist;
                     }
                     lpb = app.state.vlpbAiData;
                     while (app.state.hdrCur.rt == rtAiData) {
-                        memmove(lpb, app.state.rgbCur, app.state.hdrCur.cb);
+                        std::memmove(lpb, app.state.rgbCur, app.state.hdrCur.cb);
                         lpb += app.state.hdrCur.cb;
                         RecordIO().pfnReadRt(app);
                     }
@@ -370,7 +370,7 @@ int16_t FLoadGame(APPSESSION &app, const char *pszFileName, const char *pszExt) 
                 }
             }
             if (app.state.hdrCur.rt == rtThing) {
-                app.state.cThing = std::bit_cast<int16_t>(WFromStreamBytes(app.state.rgbCur));
+                app.state.cThing = std::bit_cast<std::int16_t>(WFromStreamBytes(app.state.rgbCur));
                 app.state.cThingAlloc = app.state.cThing + 10;
                 if (app.state.cThingAlloc > 4050) {
                     app.state.cThingAlloc = 4050;
@@ -378,7 +378,7 @@ int16_t FLoadGame(APPSESSION &app, const char *pszFileName, const char *pszExt) 
                 app.state.lpThings = LpAlloc<THING>(app, app.state.cThingAlloc * sizeof(THING), htThings);
                 if (!app.state.lpThings)
                     goto CorruptHist;
-                memset(app.state.lpThings, 0, app.state.cThingAlloc * sizeof(THING));
+                std::memset(app.state.lpThings, 0, app.state.cThingAlloc * sizeof(THING));
                 RecordIO().pfnReadRt(app);
                 for (i = 0, lpth = app.state.lpThings; i < app.state.cThing; i++, lpth++) {
                     if (app.state.hdrCur.rt != rtThing)
@@ -412,17 +412,17 @@ LNextTurn:
         while (app.state.hdrCur.rt == rtBtlData || app.state.hdrCur.rt == rtContinue) {
             if (app.state.hdrCur.rt != rtContinue) {
                 if (!app.state.lpbBattleLog) {
-                    app.state.lpbBattleLog = LpAlloc<uint8_t>(app, 0xffc8, htBattle);
+                    app.state.lpbBattleLog = LpAlloc<std::uint8_t>(app, 0xffc8, htBattle);
                     app.state.lpbBattleCur = app.state.lpbBattleLog;
                 }
                 /* NATIVE: Win16 offsets include its 16-byte HB, not native address bits. */
                 lphb = LphbFromLpHt(app, app.state.lpbBattleCur, htBattle);
-                if (0xffc8 - static_cast<uint32_t>((app.state.lpbBattleCur - reinterpret_cast<uint8_t *>(lphb) - sizeof(HB) + 16)) < static_cast<uint32_t>(NATIVEBATTLEDATAVIEW(std::as_writable_bytes(std::span(app.state.rgbCur)), 0).cbData())) {
+                if (0xffc8 - static_cast<std::uint32_t>((app.state.lpbBattleCur - reinterpret_cast<std::uint8_t *>(lphb) - sizeof(HB) + 16)) < static_cast<std::uint32_t>(NATIVEBATTLEDATAVIEW(std::as_writable_bytes(std::span(app.state.rgbCur)), 0).cbData())) {
                     RawStore16(app.state.lpbBattleCur, 0xffff);
-                    app.state.lpbBattleCur = LpAlloc<uint8_t>(app, 0xffc8, htBattle);
+                    app.state.lpbBattleCur = LpAlloc<std::uint8_t>(app, 0xffc8, htBattle);
                 }
             }
-            memmove(app.state.lpbBattleCur, app.state.rgbCur, app.state.hdrCur.cb);
+            std::memmove(app.state.lpbBattleCur, app.state.rgbCur, app.state.hdrCur.cb);
             app.state.lpbBattleCur += app.state.hdrCur.cb;
             RecordIO().pfnReadRt(app);
         }
@@ -434,7 +434,7 @@ LNextTurn:
         }
         while (app.state.hdrCur.rt == rtPlr) {
             i = PlvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).iPlayer();
-            ReadRtPlr(app, &app.state.rgplr[i], reinterpret_cast<uint8_t *>(app.state.rgbCur), app.state.hdrCur.cb);
+            ReadRtPlr(app, &app.state.rgplr[i], reinterpret_cast<std::uint8_t *>(app.state.rgbCur), app.state.hdrCur.cb);
             app.state.cPlanet += app.state.rgplr[i].cPlanet;
             app.state.rgplr[i].cPlanet = 0;
             app.state.cFleet += app.state.rgplr[i].cFleet;
@@ -484,7 +484,7 @@ LNextTurn:
                     lppl = app.state.lpPlanets + j;
                 }
                 if (j < cPlanetHist) {
-                    memmove(lppl + 1, lppl, (cPlanetHist - j) * sizeof(PLANET));
+                    std::memmove(lppl + 1, lppl, (cPlanetHist - j) * sizeof(PLANET));
                 }
                 cPlanetHist++;
             }
@@ -543,7 +543,7 @@ LNextTurn:
                     app.state.idPlayer = iplrSav;
                     goto Corrupt;
                 }
-                if (!FReadShDef(app, reinterpret_cast<const uint8_t *>(app.state.rgbCur), app.state.rglpshdef[i], iplrSav, app.state.hdrCur.cb))
+                if (!FReadShDef(app, reinterpret_cast<const std::uint8_t *>(app.state.rgbCur), app.state.rglpshdef[i], iplrSav, app.state.hdrCur.cb))
                     goto Corrupt;
                 RecordIO().pfnReadRt(app);
             }
@@ -585,12 +585,12 @@ LNextTurn:
                 } else if (i != app.state.idPlayer) {
                     app.state.idPlayer = iplrNone;
                 }
-                for (j = 0; j < static_cast<int16_t>(app.state.rgplr[i].cshdefSB); j++) {
+                for (j = 0; j < static_cast<std::int16_t>(app.state.rgplr[i].cshdefSB); j++) {
                     if (app.state.hdrCur.rt != rtShDef) {
                         app.state.idPlayer = iplrSav;
                         goto Corrupt;
                     }
-                    if (!FReadShDef(app, reinterpret_cast<const uint8_t *>(app.state.rgbCur), app.state.rglpshdefSB[i], iplrSav, app.state.hdrCur.cb))
+                    if (!FReadShDef(app, reinterpret_cast<const std::uint8_t *>(app.state.rgbCur), app.state.rglpshdefSB[i], iplrSav, app.state.hdrCur.cb))
                         goto Corrupt;
                     RecordIO().pfnReadRt(app);
                 }
@@ -613,10 +613,10 @@ LNextTurn:
         }
         if (!app.state.vlprgScoreX) {
             app.state.vlprgScoreX = LpAlloc<SCOREX>(app, app.state.game.cPlayer * sizeof(SCOREX), htMisc);
-            memset(app.state.vlprgScoreX, 0, app.state.game.cPlayer * sizeof(SCOREX));
+            std::memset(app.state.vlprgScoreX, 0, app.state.game.cPlayer * sizeof(SCOREX));
         }
         while (app.state.hdrCur.rt == rtScore) {
-            iplr = static_cast<uint8_t>(app.state.rgbCur[0]) & 31;
+            iplr = static_cast<std::uint8_t>(app.state.rgbCur[0]) & 31;
             FDecodeScoreX(std::as_bytes(std::span(app.state.rgbCur)), app.state.vlprgScoreX[iplr]);
             if (!app.state.rgsxPlr[iplr]) {
                 app.state.rgsxPlr[iplr] = LpAlloc<SCOREX>(app, 101 * sizeof(SCOREX), htMisc);
@@ -635,11 +635,11 @@ LNextTurn:
                         app.state.rgcsxPlr[iplr]++;
                     }
                 } else if (app.state.rgcsxPlr[iplr] < 101) {
-                    memmove(app.state.rgsxPlr[iplr] + (isx + 1), app.state.rgsxPlr[iplr] + isx, (app.state.rgcsxPlr[iplr] - isx) * sizeof(SCOREX));
+                    std::memmove(app.state.rgsxPlr[iplr] + (isx + 1), app.state.rgsxPlr[iplr] + isx, (app.state.rgcsxPlr[iplr] - isx) * sizeof(SCOREX));
                     app.state.rgcsxPlr[iplr]++;
                 } else if (isx > 0) {
                     if (isx > 1) {
-                        memmove(app.state.rgsxPlr[iplr], app.state.rgsxPlr[iplr] + 1, (isx - 1) * sizeof(SCOREX));
+                        std::memmove(app.state.rgsxPlr[iplr], app.state.rgsxPlr[iplr] + 1, (isx - 1) * sizeof(SCOREX));
                     }
                     isx--;
                 }
@@ -656,13 +656,13 @@ LNextTurn:
         }
         if (app.state.hdrCur.rt == rtThing) {
             fHist = app.state.cThing > 0;
-            cThingFile = std::bit_cast<int16_t>(WFromStreamBytes(app.state.rgbCur));
+            cThingFile = std::bit_cast<std::int16_t>(WFromStreamBytes(app.state.rgbCur));
             app.state.cThingAlloc = 10 <= cThingFile ? cThingFile : 10;
             if (!app.state.lpThings) {
                 app.state.lpThings = LpAlloc<THING>(app, app.state.cThingAlloc * sizeof(THING), htThings);
                 if (!app.state.lpThings)
                     goto LError;
-                memset(app.state.lpThings, 0, app.state.cThingAlloc * sizeof(THING));
+                std::memset(app.state.lpThings, 0, app.state.cThingAlloc * sizeof(THING));
             }
             RecordIO().pfnReadRt(app);
             lpth = app.state.lpThings;
@@ -683,8 +683,8 @@ LNextTurn:
                         lpth = app.state.lpThings + j;
                     }
                     if (j < app.state.cThing) {
-                        memmove(lpth + 1, lpth, (app.state.cThing - j) * sizeof(THING));
-                        memset(lpth, 0, sizeof(THING));
+                        std::memmove(lpth + 1, lpth, (app.state.cThing - j) * sizeof(THING));
+                        std::memset(lpth, 0, sizeof(THING));
                     }
                 }
                 app.state.cThing++;
@@ -710,7 +710,7 @@ LNextTurn:
             if (!app.state.rglpbtlplan[iP]) {
                 app.state.rglpbtlplan[iP] = LpAlloc<BTLPLAN>(app, 16 * sizeof(BTLPLAN), htShips);
             }
-            if (!UnpackBattlePlan(app, reinterpret_cast<uint8_t *>(app.state.rgbCur), app.state.rglpbtlplan[iP] + app.state.rgcbtlplan[iP], app.state.rgcbtlplan[iP], app.state.hdrCur.cb)) goto Corrupt;
+            if (!UnpackBattlePlan(app, reinterpret_cast<std::uint8_t *>(app.state.rgbCur), app.state.rglpbtlplan[iP] + app.state.rgcbtlplan[iP], app.state.rgcbtlplan[iP], app.state.hdrCur.cb)) goto Corrupt;
             app.state.rgcbtlplan[iP]++;
             RecordIO().pfnReadRt(app);
         }
@@ -848,19 +848,19 @@ LError:
 
 }
 
-int16_t FReadPlanet(APPSESSION &app, int16_t iPlayer, PLANET *lppl, int16_t fHistory, int16_t fPreInited) {
-    int16_t   fFirstYear;
-    int16_t   fRouting;
-    uint8_t   bMask;
-    int16_t   i;
-    uint8_t  *pb;
+std::int16_t FReadPlanet(APPSESSION &app, std::int16_t iPlayer, PLANET *lppl, std::int16_t fHistory, std::int16_t fPreInited) {
+    std::int16_t   fFirstYear;
+    std::int16_t   fRouting;
+    std::uint8_t   bMask;
+    std::int16_t   i;
+    std::uint8_t  *pb;
     MessageId idm;
-    int16_t   pctOpt;
-    int16_t   pct;
+    std::int16_t   pctOpt;
+    std::int16_t   pct;
 
     fFirstYear = 0;
     if (!fPreInited) {
-        memset(lppl, 0, sizeof(PLANET));
+        std::memset(lppl, 0, sizeof(PLANET));
     }
     if (fHistory || iPlayer == iplrNone) {
         lppl->fFirstYear = PpvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).fFirstYear();
@@ -889,7 +889,7 @@ int16_t FReadPlanet(APPSESSION &app, int16_t iPlayer, PLANET *lppl, int16_t fHis
     if (!fHistory) {
         lppl->turn = app.state.game.turn;
     }
-    pb = reinterpret_cast<uint8_t *>(app.state.rgbCur) + cbWirePlanet;
+    pb = reinterpret_cast<std::uint8_t *>(app.state.rgbCur) + cbWirePlanet;
     if (PpvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).det() >= detSome) {
         bMask = *pb;
         pb++;
@@ -944,10 +944,10 @@ int16_t FReadPlanet(APPSESSION &app, int16_t iPlayer, PLANET *lppl, int16_t fHis
                     lppl->rgwtMin[i] = 0;
                     break;
                 case 1:
-                    lppl->rgwtMin[i] = static_cast<uint32_t>(*pb++);
+                    lppl->rgwtMin[i] = static_cast<std::uint32_t>(*pb++);
                     break;
                 case 2:
-                    lppl->rgwtMin[i] = static_cast<uint32_t>(WFromStreamBytes(pb));
+                    lppl->rgwtMin[i] = static_cast<std::uint32_t>(WFromStreamBytes(pb));
                     pb += 2;
                     break;
                 case 3:
@@ -961,8 +961,8 @@ int16_t FReadPlanet(APPSESSION &app, int16_t iPlayer, PLANET *lppl, int16_t fHis
         if (app.state.hdrCur.rt == rtPlanetB)
             goto LFinishBRecord;
         if (PpvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).fIncImp() != 0) {
-            std::array<uint8_t, 8> rgbImp;
-            memmove(rgbImp.data(), pb, 8);
+            std::array<std::uint8_t, 8> rgbImp;
+            std::memmove(rgbImp.data(), pb, 8);
             lppl->SetRgbImp(rgbImp);
             pb += 8;
         } else {
@@ -1013,30 +1013,30 @@ LFinishBRecord:
                     idm = idmHaveFoundNewPlanetWhichUnfortunatelyHabitable;
                 }
             }
-            FSendPlrMsg2XGen(app, 0, idm, static_cast<MsgGoto>(lppl->id), abs(pct), lppl->id);
+            FSendPlrMsg2XGen(app, 0, idm, static_cast<MsgGoto>(lppl->id), std::abs(pct), lppl->id);
         }
     }
     return 1;
 }
 
-int16_t FReadFleet(APPSESSION &app, FLEET *lpfl) {
-    int16_t   cord;
+std::int16_t FReadFleet(APPSESSION &app, FLEET *lpfl) {
+    std::int16_t   cord;
     ORDER    *lpord;
-    int16_t   i = 0;
+    std::int16_t   i = 0;
     char      szT[33];
 
-    memset(lpfl, 0, sizeof(FLEET));
+    std::memset(lpfl, 0, sizeof(FLEET));
     if (!FDecodeRtFleet(std::as_bytes(std::span(app.state.rgbCur)), *lpfl, app.state.hdrCur.rt == rtFleetA, i)) goto Corrupt;
     if (lpfl->det < detAll) {
         RecordIO().pfnReadRt(app);
         return 1;
     }
     lpfl->lpplord = LpplAlloc<PLORD>(app, 18, lpfl->cord + 1, htOrd);
-    memset(lpfl->lpplord->rgord(), 0, (lpfl->cord + 1) * 18);
+    std::memset(lpfl->lpplord->rgord(), 0, (lpfl->cord + 1) * 18);
     cord = lpfl->cord;
     lpord = lpfl->lpplord->rgord();
     for (; cord != 0; cord--) {
-        memset(app.state.rgbCur, 0, 18);
+        std::memset(app.state.rgbCur, 0, 18);
         RecordIO().pfnReadRt(app);
         if (app.state.hdrCur.rt != rtOrderA && app.state.hdrCur.rt != rtOrderB)
             goto Corrupt;
@@ -1059,9 +1059,9 @@ int16_t FReadFleet(APPSESSION &app, FLEET *lpfl) {
     }
     RecordIO().pfnReadRt(app);
     if (app.state.hdrCur.rt == rtString) {
-        if (!FReadUserString(app, reinterpret_cast<uint8_t *>(app.state.rgbCur), app.state.hdrCur.cb, szT, 32, nullptr)) goto Corrupt;
-        lpfl->lpszName = LpAlloc<char>(app, strlen(szT) + 1, htString);
-        strcpy(lpfl->lpszName, szT);
+        if (!FReadUserString(app, reinterpret_cast<std::uint8_t *>(app.state.rgbCur), app.state.hdrCur.cb, szT, 32, nullptr)) goto Corrupt;
+        lpfl->lpszName = LpAlloc<char>(app, std::strlen(szT) + 1, htString);
+        std::strcpy(lpfl->lpszName, szT);
         RecordIO().pfnReadRt(app);
     } else {
         lpfl->lpszName = nullptr;
@@ -1072,13 +1072,13 @@ Corrupt:
     return 0;
 }
 
-int16_t UnpackBattlePlan(APPSESSION &app, uint8_t *lpb, BTLPLAN *lpbtlplan, int16_t iplan, size_t cb) {
+std::int16_t UnpackBattlePlan(APPSESSION &app, std::uint8_t *lpb, BTLPLAN *lpbtlplan, std::int16_t iplan, std::size_t cb) {
     char szName[32];
 
     if (cb < 4) goto invalid;
     if (!FReadUserString(app, lpb + 4, cb - 4, szName, sizeof(szName), nullptr)) goto invalid;
     FDecodeBattlePlanPrefix(std::as_bytes(std::span(lpb, cbWireBattlePlan)), *lpbtlplan);
-    strcpy(lpbtlplan->szName, szName);
+    std::strcpy(lpbtlplan->szName, szName);
     lpbtlplan->iplan = iplan;
     return 1;
 invalid:
@@ -1088,27 +1088,27 @@ invalid:
 }
 
 void UpdateBattleRecords(APPSESSION &app) {
-    uint8_t *lpbd;
-    uint8_t *lpbr;
-    int16_t   cKill;
+    std::uint8_t *lpbd;
+    std::uint8_t *lpbr;
+    std::int16_t   cKill;
     HB       *lphb;
     BTLREC26 br26{};
-    int16_t   itok;
+    std::int16_t   itok;
 
     lphb = app.state.rglphb[11];
     if (lphb) {
-        lpbd = static_cast<uint8_t *>((reinterpret_cast<uint8_t *>(lphb) + (sizeof(HB) + 2)));
+        lpbd = static_cast<std::uint8_t *>((reinterpret_cast<std::uint8_t *>(lphb) + (sizeof(HB) + 2)));
         while (1) {
             if (BdvFromLp(app, lpbd).id() == 0xffff) {
                 lphb = lphb->lphbNext;
                 if (!lphb || lphb->ibTop <= sizeof(HB))
                     break;
-                lpbd = static_cast<uint8_t *>((reinterpret_cast<uint8_t *>(lphb) + (sizeof(HB) + 2)));
+                lpbd = static_cast<std::uint8_t *>((reinterpret_cast<std::uint8_t *>(lphb) + (sizeof(HB) + 2)));
             } else {
                 if (BdvFromLp(app, lpbd).cbData() == 0)
                     break;
                 lpbr = BdvFromLp(app, lpbd).FirstEvent();
-                lpbd = static_cast<uint8_t *>((static_cast<uint8_t *>(lpbd) + BdvFromLp(app, lpbd).cbData()));
+                lpbd = static_cast<std::uint8_t *>((static_cast<std::uint8_t *>(lpbd) + BdvFromLp(app, lpbd).cbData()));
                 while (lpbr < lpbd) {
                     FDecodeBattleRecord26(std::as_bytes(BevFromLp(app, lpbr).Rgb()), br26);
                     cKill = br26.ctok;
@@ -1124,7 +1124,7 @@ void UpdateBattleRecords(APPSESSION &app) {
 }
 
 void DestroyCurGame(APPSESSION &app) {
-    int16_t i;
+    std::int16_t i;
 
     if (app.state.gd.fSendMsgMode) {
         FFinishPlrMsgEntry(app, 0);
@@ -1219,18 +1219,18 @@ void FileError(APPSESSION &app, StringId ids) {
     return;
 }
 
-void GetFileStatus(APPSESSION &app, int16_t dt, int16_t iPlayer) {
+void GetFileStatus(APPSESSION &app, std::int16_t dt, std::int16_t iPlayer) {
     SetSzWorkFromDt(app, static_cast<DtFileType>(dt), iPlayer);
     app.state.gd.fReadOnly = FFileReadOnly(app.state.szWork);
     return;
 }
 
-int16_t FOpenFile(APPSESSION &app, DtFileType dt, int16_t iPlayer, int16_t md) {
+std::int16_t FOpenFile(APPSESSION &app, DtFileType dt, std::int16_t iPlayer, std::int16_t md) {
     RTBOF    rtbof;
     StringId ids;
-    int16_t  fCheckMulti;
-    int16_t  fRewind;
-    int16_t  fSilentSav;
+    std::int16_t  fCheckMulti;
+    std::int16_t  fRewind;
+    std::int16_t  fSilentSav;
 
     fSilentSav = app.state.fFileErrSilent;
     ids = idsCantOpenFile;
@@ -1321,10 +1321,10 @@ LBadFile:
     }
 }
 
-int16_t FNewTurnAvail(APPSESSION &app, int16_t idPlayer) {
-    uint16_t wGenOld;
-    uint16_t turnOld;
-    int16_t  fNew;
+std::int16_t FNewTurnAvail(APPSESSION &app, std::int16_t idPlayer) {
+    std::uint16_t wGenOld;
+    std::uint16_t turnOld;
+    std::int16_t  fNew;
 
     turnOld = app.state.game.turn;
     wGenOld = app.state.game.wGen;
@@ -1340,12 +1340,12 @@ int16_t FNewTurnAvail(APPSESSION &app, int16_t idPlayer) {
     return fNew;
 }
 
-int16_t FCheckFile(APPSESSION &app, DtFileType dt, int16_t iPlayer, MdMark md) {
-    int16_t  fReturn;
-    int16_t  fOpened;
-    uint16_t wGenOld;
-    int16_t  f;
-    int16_t  fErrSav;
+std::int16_t FCheckFile(APPSESSION &app, DtFileType dt, std::int16_t iPlayer, MdMark md) {
+    std::int16_t  fReturn;
+    std::int16_t  fOpened;
+    std::uint16_t wGenOld;
+    std::int16_t  f;
+    std::int16_t  fErrSav;
 
     fErrSav = app.state.fFileErrSilent;
     wGenOld = app.state.game.wGen;
@@ -1402,11 +1402,11 @@ int16_t FCheckFile(APPSESSION &app, DtFileType dt, int16_t iPlayer, MdMark md) {
 // unread byte retains the old global header on a zero/one-byte read failure.
 static void ReadRtHeader(APPSESSION &app) {
     std::byte rgb[cbWireHdr];
-    int32_t cb;
+    std::int32_t cb;
 
     FEncodeHdr(app.state.hdrCur, rgb);
     if (app.state.vlpMemStream) {
-        memcpy(rgb, app.state.vlpMemStream, cbWireHdr);
+        std::memcpy(rgb, app.state.vlpMemStream, cbWireHdr);
         app.state.vlpMemStream += cbWireHdr;
         cb = cbWireHdr;
     } else {
@@ -1438,7 +1438,7 @@ void ReadRt(APPSESSION &app) {
     return;
 }
 
-int16_t FBadFileError(StringId ids) {
+std::int16_t FBadFileError(StringId ids) {
     switch (ids) {
     case idsUniverseDefinitionFileSeemsMissingCorrupt:
     case idsPlayerLogFileAppearsCorruptUnableLoad:
@@ -1454,10 +1454,10 @@ int16_t FBadFileError(StringId ids) {
 }
 
 void StreamOpen(APPSESSION &app, const char *szFile, MdOpenFlags mdOpen) {
-    uint32_t dwTick;
-    int16_t  fMissing;
-    int16_t  fNoErr;
-    uint32_t dwTickCur;
+    std::uint32_t dwTick;
+    std::int16_t  fMissing;
+    std::int16_t  fNoErr;
+    std::uint32_t dwTickCur;
 
     dwTick = 0;
     fNoErr = (mdOpen & 0x4000) != 0;
@@ -1492,10 +1492,10 @@ void StreamClose(APPSESSION &app) {
     return;
 }
 
-void RgFromStream(APPSESSION &app, void *rg, uint16_t cb) {
+void RgFromStream(APPSESSION &app, void *rg, std::uint16_t cb) {
     if (cb != 0) {
         if (app.state.vlpMemStream) {
-            memcpy(rg, app.state.vlpMemStream, cb);
+            std::memcpy(rg, app.state.vlpMemStream, cb);
             app.state.vlpMemStream += cb;
         } else if (CbReadFile(app.state.hf, rg, cb) != cb) {
             FileError(app, idsGameFileAppearsCorruptUnableLoadFile);

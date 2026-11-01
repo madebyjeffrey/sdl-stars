@@ -9,39 +9,39 @@
 #include "part_query_io.h"
 #include "record_io.h"
 
-static int16_t dWheelMessages;
+static std::int16_t dWheelMessages;
 
 LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
 
     HDC         hdc;
-    int16_t     i;
+    std::int16_t     i;
     char       *psz;
     PAINTSTRUCT ps;
-    int16_t     dy;
-    int16_t     dx;
+    std::int16_t     dy;
+    std::int16_t     dx;
     RECT        rc;
     POINT16     pt;
     HCURSOR     hcs;
     HtMsgType   ht;
-    int16_t     fSet;
+    std::int16_t     fSet;
     MessageId   idm;
     MSGPLR     *lpmp;
     MSGPLR     *lpmpSrc;
     char       *lpsz;
     HBRUSH      hbrSav;
     COLORREF    crFore;
-    int16_t     dxMax;
+    std::int16_t     dxMax;
     COLORREF    crBack;
     RECT        rcActual;
-    int16_t     cch;
-    int16_t     iMode;
+    std::int16_t     cch;
+    std::int16_t     iMode;
     char        szT[32];
     MSGPLR     *lpmsgplr;
     THING      *lpth;
     SCAN        scan;
     FARPROC     lpProc;
-    int16_t     fRet;
+    std::int16_t     fRet;
 
     switch (message) {
     case win32::WM_CREATE:
@@ -171,10 +171,10 @@ LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         _Draw3dFrame(app, hdc, &app.lpui->rcMsgTitle, 0);
         crFore = win32::SetTextColor(hdc, app.lpui->crButtonText);
         crBack = win32::SetBkColor(hdc, app.lpui->crButtonFace);
-        cch = strlen(app.lpui->szMsgTitle);
+        cch = std::strlen(app.lpui->szMsgTitle);
         dxMax = app.lpui->rcMsgTitle.right - app.lpui->rcMsgTitle.left - 48;
-        while (cch > 0 && static_cast<int16_t>(LOWORD(GetTextExtent(hdc, app.lpui->szMsgTitle, cch))) > dxMax) {
-            cch = static_cast<int16_t>(CchUtf8Prefix(app.lpui->szMsgTitle, cch - 1));
+        while (cch > 0 && static_cast<std::int16_t>(LOWORD(GetTextExtent(hdc, app.lpui->szMsgTitle, cch))) > dxMax) {
+            cch = static_cast<std::int16_t>(CchUtf8Prefix(app.lpui->szMsgTitle, cch - 1));
         }
         RcCtrTextOut(app, hdc, &app.lpui->rcMsgTitle, app.lpui->szMsgTitle, cch);
         DecorateMsgTitleBar(app, hdc, &app.lpui->rcMsgTitle);
@@ -207,7 +207,7 @@ LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                     i = 1000;
                     FDecompressUserString(app, reinterpret_cast<char *>(lpmsgplr->rgbMsg()), lpmsgplr->cLen, reinterpret_cast<char *>(app.lpui->lpb2k) + cch, &i);
                 } else {
-                    strcpy(reinterpret_cast<char *>(app.lpui->lpb2k) + cch, reinterpret_cast<const char *>(lpmsgplr->rgbMsg()));
+                    std::strcpy(reinterpret_cast<char *>(app.lpui->lpb2k) + cch, reinterpret_cast<const char *>(lpmsgplr->rgbMsg()));
                 }
                 lpsz = reinterpret_cast<char *>(app.lpui->lpb2k);
             } else {
@@ -230,10 +230,10 @@ LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             }
             win32::SetTextColor(hdc, app.lpui->crButtonText);
             rcActual = rc;
-            win32::DrawTextA(hdc, lpsz, strlen(lpsz), &rcActual, win32::DT_WORDBREAK | win32::DT_CALCRECT | win32::DT_NOPREFIX);
+            win32::DrawTextA(hdc, lpsz, std::strlen(lpsz), &rcActual, win32::DT_WORDBREAK | win32::DT_CALCRECT | win32::DT_NOPREFIX);
             if (rcActual.bottom <= rc.bottom && rcActual.right <= rc.right) {
                 ui::ShowWindow(app.lpui->hwndMsgScroll, win32::SW_HIDE);
-                win32::DrawTextA(hdc, lpsz, strlen(lpsz), &rc, win32::DT_WORDBREAK | win32::DT_NOPREFIX);
+                win32::DrawTextA(hdc, lpsz, std::strlen(lpsz), &rc, win32::DT_WORDBREAK | win32::DT_NOPREFIX);
             } else {
                 ControlIO().pfnSetWindowText(app.lpui->hwndMsgScroll, lpsz);
                 ExpandRc(&rc, 4, 4);
@@ -253,7 +253,7 @@ LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         break;
     case win32::WM_MOUSEWHEEL:
         if (app.state.gd.fSendMsgMode || (LOWORD(wParam) & (win32::MK_CONTROL | win32::MK_SHIFT))) return 0;
-        i = CWheelNotches(&dWheelMessages, static_cast<int16_t>(HIWORD(wParam)));
+        i = CWheelNotches(&dWheelMessages, static_cast<std::int16_t>(HIWORD(wParam)));
         while (i > 0) { ControlIO().pfnSendMessage(hwnd, win32::WM_KEYDOWN, win32::VK_UP, 1); i--; }
         while (i < 0) { ControlIO().pfnSendMessage(hwnd, win32::WM_KEYDOWN, win32::VK_DOWN, 1); i++; }
         return 0;
@@ -278,7 +278,7 @@ LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         case '+':
             goto CheckBox;
         case '-':
-            for (i = 0; static_cast<uint16_t>(i) < 49 && (app.state.bitfMsgSent[i] & app.state.bitfMsgFiltered[i]) == 0; i++) {
+            for (i = 0; static_cast<std::uint16_t>(i) < 49 && (app.state.bitfMsgSent[i] & app.state.bitfMsgFiltered[i]) == 0; i++) {
             }
             if (i != 49)
                 goto ZoomBox;
@@ -431,18 +431,18 @@ LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
 }
 
 void DecorateMsgTitleBar(APPSESSION &app, HDC hdc, RECT *prc) {
-    int16_t   xDst;
-    int16_t   ySrcMask;
+    std::int16_t   xDst;
+    std::int16_t   ySrcMask;
     HBRUSH    hbrSav;
     HBITMAP   hbmpSav;
-    int16_t   dySrc;
-    int16_t   i;
+    std::int16_t   dySrc;
+    std::int16_t   i;
     HDC       hdcMem;
     MessageId idm;
-    int16_t   ySrc;
-    int16_t   yDst;
-    int16_t   dxSrc;
-    int16_t   xyStart;
+    std::int16_t   ySrc;
+    std::int16_t   yDst;
+    std::int16_t   dxSrc;
+    std::int16_t   xyStart;
     COLORREF  crBkSav;
     COLORREF  crTextSav;
 
@@ -450,7 +450,7 @@ void DecorateMsgTitleBar(APPSESSION &app, HDC hdc, RECT *prc) {
     hbmpSav = static_cast<HBITMAP>(win32::SelectObject(hdcMem, app.lpui->hbmpMono));
     if (app.state.gd.fSendMsgMode)
         goto Cleanup;
-    xyStart = static_cast<int16_t>((prc->bottom - prc->top - 11)) / 2 + prc->top;
+    xyStart = static_cast<std::int16_t>((prc->bottom - prc->top - 11)) / 2 + prc->top;
     if (app.state.iMsgCur < 0 || app.state.iMsgCur >= app.state.cMsg)
         goto DoMinMax;
     idm = static_cast<MessageId>(PresentationIO().pfnMessageId(app, app.state.iMsgCur));
@@ -475,7 +475,7 @@ void DecorateMsgTitleBar(APPSESSION &app, HDC hdc, RECT *prc) {
     hbmpSav = static_cast<HBITMAP>(win32::SelectObject(hdcMem, app.lpui->hbmpMsg));
     win32::BitBlt(hdc, xDst, yDst, dxSrc, dySrc, hdcMem, 0, ySrc, win32::SRCPAINT);
 DoMinMax:
-    for (i = 0; static_cast<uint16_t>(i) < 49 && (app.state.bitfMsgSent[i] & app.state.bitfMsgFiltered[i]) == 0; i++) {
+    for (i = 0; static_cast<std::uint16_t>(i) < 49 && (app.state.bitfMsgSent[i] & app.state.bitfMsgFiltered[i]) == 0; i++) {
     }
     if (i == 49) {
         app.state.fViewFilteredMsg = 0;
@@ -494,7 +494,7 @@ DoMinMax:
     win32::SelectObject(hdc, app.lpui->hbrButtonHilite);
     win32::PatBlt(hdc, xDst + 1, prc->top, 1, prc->bottom - prc->top, win32::PATCOPY);
     win32::SelectObject(hdc, hbrSav);
-    yDst = static_cast<int16_t>((prc->bottom - prc->top - 15)) / 2 + prc->top;
+    yDst = static_cast<std::int16_t>((prc->bottom - prc->top - 15)) / 2 + prc->top;
     xDst = prc->right - (prc->bottom - yDst);
     win32::SelectObject(hdcMem, app.lpui->hbmpMono);
     win32::BitBlt(hdc, xDst, yDst, 15, 15, hdcMem, 0, ySrcMask, win32::SRCAND);
@@ -506,7 +506,7 @@ Cleanup:
     if (!app.state.game.fSinglePlr) {
         win32::SelectObject(hdcMem, app.lpui->hbmpMsg);
         xDst = prc->right - 45;
-        yDst = static_cast<int16_t>((prc->bottom - prc->top - 7)) / 2 + prc->top;
+        yDst = static_cast<std::int16_t>((prc->bottom - prc->top - 7)) / 2 + prc->top;
         win32::PatBlt(hdc, xDst - 1, yDst - 1, 17, 11, win32::BLACKNESS);
         win32::BitBlt(hdc, xDst, yDst, 15, 9, hdcMem, 0, 56, win32::SRCCOPY);
     }
@@ -516,14 +516,14 @@ Cleanup:
 }
 
 HtMsgType HtMsgBox(APPSESSION &app, POINT16 pt) {
-    int16_t i;
+    std::int16_t i;
 
     if (win32::PtInRect(&app.lpui->rcMsgTitle, PointFrom16(pt)) != 0) {
         if (pt.x < app.lpui->rcMsgTitle.bottom - app.lpui->rcMsgTitle.top + app.lpui->rcMsgTitle.left && app.state.iMsgCur >= 0 && app.state.iMsgCur < app.state.cMsg && !app.state.gd.fSendMsgMode) {
             return htMsgCurrent;
         }
         if (pt.x >= app.lpui->rcMsgTitle.right - (app.lpui->rcMsgTitle.bottom - app.lpui->rcMsgTitle.top) && !app.state.gd.fSendMsgMode) {
-            for (i = 0; static_cast<uint16_t>(i) < 49 && (app.state.bitfMsgSent[i] & app.state.bitfMsgFiltered[i]) == 0; i++) {
+            for (i = 0; static_cast<std::uint16_t>(i) < 49 && (app.state.bitfMsgSent[i] & app.state.bitfMsgFiltered[i]) == 0; i++) {
             }
             if (i != 49) {
                 return htMsgZoom;
@@ -535,14 +535,14 @@ HtMsgType HtMsgBox(APPSESSION &app, POINT16 pt) {
     return htMsgNone;
 }
 
-int16_t FFinishPlrMsgEntry(APPSESSION &app, int16_t dInc) {
-    uint8_t *lpbMsg;
-    int16_t  i;
-    int16_t  cbNew;
-    int16_t  iPlrTo;
+std::int16_t FFinishPlrMsgEntry(APPSESSION &app, std::int16_t dInc) {
+    std::uint8_t *lpbMsg;
+    std::int16_t  i;
+    std::int16_t  cbNew;
+    std::int16_t  iPlrTo;
     MSGPLR  *lpmpCur;
     MSGPLR **lpmpPrev;
-    int16_t  cb;
+    std::int16_t  cb;
 
     lpmpPrev = &app.state.vlpmsgplrOut;
     i = app.state.iMsgSendCur;
@@ -581,10 +581,10 @@ int16_t FFinishPlrMsgEntry(APPSESSION &app, int16_t dInc) {
         cb = -cb - 1;
         lpbMsg = app.lpui->lpb2k;
     }
-    cbNew = abs(cb) + 12;
+    cbNew = std::abs(cb) + 12;
     iPlrTo = LOWORD(ControlIO().pfnSendMessage(app.lpui->hwndMsgDrop, win32::CB_GETCURSEL, 0, 0));
     if (lpmpCur) {
-        if (cb != lpmpCur->cLen || lpmpCur->iPlrTo != iPlrTo || memcmp(lpmpCur->rgbMsg(), lpbMsg, abs(cb)) != 0) {
+        if (cb != lpmpCur->cLen || lpmpCur->iPlrTo != iPlrTo || std::memcmp(lpmpCur->rgbMsg(), lpbMsg, std::abs(cb)) != 0) {
             RecordIO().pfnDirtyGame(app, 1);
         }
         lpmpCur = LpmsgplrReAlloc(app, lpmpCur, cbNew + (sizeof(MSGPLR) - 12));
@@ -599,7 +599,7 @@ int16_t FFinishPlrMsgEntry(APPSESSION &app, int16_t dInc) {
     lpmpCur->iPlrFrom = app.state.idPlayer;
     lpmpCur->iPlrTo = iPlrTo;
     lpmpCur->cLen = cb;
-    memmove(lpmpCur->rgbMsg(), lpbMsg, abs(cb));
+    std::memmove(lpmpCur->rgbMsg(), lpbMsg, std::abs(cb));
     app.state.iMsgSendCur += dInc;
     if (app.state.iMsgSendCur < 0) {
         app.state.iMsgSendCur = 0;
@@ -608,12 +608,12 @@ int16_t FFinishPlrMsgEntry(APPSESSION &app, int16_t dInc) {
 }
 
 void SetMsgTitle(APPSESSION &app, HWND hwnd) {
-    int16_t cMsgTot;
-    int16_t i;
+    std::int16_t cMsgTot;
+    std::int16_t i;
     MSGBIG  mb;
     char    ch;
     char    szT[80];
-    int16_t sw;
+    std::int16_t sw;
     MSGPLR *lpmp;
     RECT    rc;
 
@@ -731,7 +731,7 @@ void SetMsgTitle(APPSESSION &app, HWND hwnd) {
         }
         ControlIO().pfnEnableWindow(app.lpui->rghwndMsgBtn[1], app.lpui->mdMsgObj != mdMsgObjNone);
     FinishUp:
-        strcpy(app.lpui->szMsgTitle, app.state.szWork);
+        std::strcpy(app.lpui->szMsgTitle, app.state.szWork);
         ControlIO().pfnInvalidateRect(app.lpui->hwndMessage, &app.lpui->rcMsgTitle, 1);
     }
     return;

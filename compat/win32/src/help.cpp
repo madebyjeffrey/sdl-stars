@@ -2,11 +2,11 @@
 #include "internal.h"
 #include "path_io.h"
 #include <SDL3/SDL.h>
-#include <errno.h>
-#include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cerrno>
+#include <climits>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <strings.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -20,14 +20,14 @@
 static BOOL FHelpAssets(const char *pszDirectory) {
     char szFile[PATH_MAX], szStamp[66];
     NATIVEFILEINFO st;
-    size_t i;
+    std::size_t i;
     int cch;
     NATIVEFILE *lpFile;
     BOOL fStamp;
 
     for (i = 0; i < sizeof(rgHelpFile) / sizeof(rgHelpFile[0]); i++) {
-        cch = snprintf(szFile, sizeof(szFile), "%s/%s", pszDirectory, rgHelpFile[i]);
-        if (cch < 0 || static_cast<size_t>(cch) >= sizeof(szFile)) {
+        cch = std::snprintf(szFile, sizeof(szFile), "%s/%s", pszDirectory, rgHelpFile[i]);
+        if (cch < 0 || static_cast<std::size_t>(cch) >= sizeof(szFile)) {
             win32::SetLastError(win32::ERROR_FILENAME_EXCED_RANGE);
             return 0;
         }
@@ -36,13 +36,13 @@ static BOOL FHelpAssets(const char *pszDirectory) {
             return 0;
         }
     }
-    snprintf(szFile, sizeof(szFile), "%s/complete.stamp", pszDirectory);
+    std::snprintf(szFile, sizeof(szFile), "%s/complete.stamp", pszDirectory);
     lpFile = PfNativeOpen(szFile, "rb");
     if (!lpFile) {
         win32::SetLastError(win32::ERROR_ACCESS_DENIED);
         return 0;
     }
-    fStamp = PszGetNativeLine(szStamp, sizeof(szStamp), lpFile) && !strcmp(szStamp, STARS_HELP_SHA "\n");
+    fStamp = PszGetNativeLine(szStamp, sizeof(szStamp), lpFile) && !std::strcmp(szStamp, STARS_HELP_SHA "\n");
     ICloseNativeFile(lpFile);
     if (!fStamp) win32::SetLastError(win32::ERROR_BAD_FORMAT);
     return fStamp;
@@ -53,38 +53,38 @@ static char *PszHelpDocument(const char *pszDirectory, const char *pszPage) {
     char szSource[PATH_MAX], szTarget[PATH_MAX], szTemp[PATH_MAX];
     char *pszBase, *pszBody = nullptr, *pszMarker, *pszResult = nullptr;
     NATIVEFILE *lpSource = nullptr, *lpTarget = nullptr;
-    size_t cbPrefix, cbRead;
+    std::size_t cbPrefix, cbRead;
     int cch;
     BOOL fOk;
 
-    cch = snprintf(szSource, sizeof(szSource), "%s/offline.html", pszDirectory);
-    if (cch < 0 || static_cast<size_t>(cch) >= sizeof(szSource)) goto fail;
+    cch = std::snprintf(szSource, sizeof(szSource), "%s/offline.html", pszDirectory);
+    if (cch < 0 || static_cast<std::size_t>(cch) >= sizeof(szSource)) goto fail;
     lpSource = PfNativeOpen(szSource, "rb");
-    pszBody = static_cast<char *>((malloc(static_cast<size_t>(STARS_HELP_BUNDLE_SIZE) + 1)));
+    pszBody = static_cast<char *>((std::malloc(static_cast<std::size_t>(STARS_HELP_BUNDLE_SIZE) + 1)));
     if (!lpSource || !pszBody) goto fail;
     cbRead = CReadNative(pszBody, 1, STARS_HELP_BUNDLE_SIZE, lpSource);
     fOk = cbRead == STARS_HELP_BUNDLE_SIZE && !FNativeStreamError(lpSource) && ChGetNativeFile(lpSource) == EOF;
     ICloseNativeFile(lpSource); lpSource = nullptr;
-    if (!fOk || static_cast<uint32_t>(crc32(0, reinterpret_cast<const BYTE *>(pszBody), static_cast<uInt>(cbRead))) != STARS_HELP_BUNDLE_CRC) {
+    if (!fOk || static_cast<std::uint32_t>(crc32(0, reinterpret_cast<const BYTE *>(pszBody), static_cast<uInt>(cbRead))) != STARS_HELP_BUNDLE_CRC) {
         win32::SetLastError(win32::ERROR_BAD_FORMAT); goto done;
     }
     pszBody[cbRead] = 0;
-    pszMarker = strstr(pszBody, szMarker);
-    if (!pszMarker || strstr(pszMarker + sizeof(szMarker) - 1, szMarker)) {
+    pszMarker = std::strstr(pszBody, szMarker);
+    if (!pszMarker || std::strstr(pszMarker + sizeof(szMarker) - 1, szMarker)) {
         win32::SetLastError(win32::ERROR_BAD_FORMAT); goto done;
     }
     // Put the requested context inside the exported file: OpenFile portals
     // receive a descriptor and cannot carry a browser URL fragment with it.
     pszBase = CompatPathIO().pfnGetPrefPath("stars", "help");
     if (!pszBase) goto fail;
-    cch = snprintf(szTarget, sizeof(szTarget), "%sguide-%08x-%s", pszBase, STARS_HELP_BUNDLE_CRC, pszPage);
+    cch = std::snprintf(szTarget, sizeof(szTarget), "%sguide-%08x-%s", pszBase, STARS_HELP_BUNDLE_CRC, pszPage);
     SDL_free(pszBase);
-    if (cch < 0 || static_cast<size_t>(cch) >= sizeof(szTarget)) goto fail;
-    cch = snprintf(szTemp, sizeof(szTemp), "%s.tmp-XXXXXX", szTarget);
-    if (cch < 0 || static_cast<size_t>(cch) >= sizeof(szTemp)) goto fail;
+    if (cch < 0 || static_cast<std::size_t>(cch) >= sizeof(szTarget)) goto fail;
+    cch = std::snprintf(szTemp, sizeof(szTemp), "%s.tmp-XXXXXX", szTarget);
+    if (cch < 0 || static_cast<std::size_t>(cch) >= sizeof(szTemp)) goto fail;
     lpTarget = PfNativeCreateTemp(szTemp);
     if (!lpTarget) goto fail;
-    cbPrefix = static_cast<size_t>((pszMarker - pszBody));
+    cbPrefix = static_cast<std::size_t>((pszMarker - pszBody));
     fOk = CWriteNative(pszBody, 1, cbPrefix, lpTarget) == cbPrefix &&
           IPutNativeString(pszPage, lpTarget) >= 0 &&
           CWriteNative(pszMarker + sizeof(szMarker) - 1, 1, cbRead - cbPrefix - sizeof(szMarker) + 1, lpTarget) == cbRead - cbPrefix - sizeof(szMarker) + 1;
@@ -99,7 +99,7 @@ fail:
     win32::SetLastError(win32::ERROR_ACCESS_DENIED);
 done:
     if (lpSource) ICloseNativeFile(lpSource);
-    free(pszBody);
+    std::free(pszBody);
     return pszResult;
 }
 
@@ -107,7 +107,7 @@ BOOL win32::WinHelpA(HWND hWndMain, LPCSTR pszHelp, UINT uCommand, ULONG_PTR dwD
     const char *pszBase, *pszName, *pszPage = nullptr;
     char szDirectory[PATH_MAX];
     char *pszDirectory, *pszDocument;
-    size_t i;
+    std::size_t i;
     int cch;
     BOOL fLaunched;
 
@@ -116,13 +116,13 @@ BOOL win32::WinHelpA(HWND hWndMain, LPCSTR pszHelp, UINT uCommand, ULONG_PTR dwD
         win32::SetLastError(win32::ERROR_NOT_SUPPORTED);
         return 0;
     }
-    if (!pszHelp || !*pszHelp || strlen(pszHelp) >= PATH_MAX) {
+    if (!pszHelp || !*pszHelp || std::strlen(pszHelp) >= PATH_MAX) {
         win32::SetLastError(win32::ERROR_INVALID_PARAMETER);
         return 0;
     }
-    pszName = strrchr(pszHelp, '/');
+    pszName = std::strrchr(pszHelp, '/');
     pszName = pszName ? pszName + 1 : pszHelp;
-    if (strcasecmp(pszName, "stars-help.html") || strchr(pszHelp, '\\') || strchr(pszHelp, '/')) {
+    if (strcasecmp(pszName, "stars-help.html") || std::strchr(pszHelp, '\\') || std::strchr(pszHelp, '/')) {
         win32::SetLastError(win32::ERROR_NOT_SUPPORTED);
         return 0;
     }
@@ -130,7 +130,7 @@ BOOL win32::WinHelpA(HWND hWndMain, LPCSTR pszHelp, UINT uCommand, ULONG_PTR dwD
         pszPage = STARS_HELP_CONTENTS;
     } else if (dwData <= UINT32_MAX) {
         for (i = 0; i < sizeof(rgHelpContext) / sizeof(rgHelpContext[0]); i++) {
-            if (rgHelpContext[i].idh == static_cast<uint32_t>(dwData)) {
+            if (rgHelpContext[i].idh == static_cast<std::uint32_t>(dwData)) {
                 pszPage = rgHelpContext[i].pszPage;
                 break;
             }
@@ -146,15 +146,15 @@ BOOL win32::WinHelpA(HWND hWndMain, LPCSTR pszHelp, UINT uCommand, ULONG_PTR dwD
         return 0;
     }
     // The packaged UTF-8 guide is authoritative; the HLP archive is not loaded.
-    cch = snprintf(szDirectory, sizeof(szDirectory), "%s../help", pszBase);
-    if (cch < 0 || static_cast<size_t>(cch) >= sizeof(szDirectory)) {
+    cch = std::snprintf(szDirectory, sizeof(szDirectory), "%s../help", pszBase);
+    if (cch < 0 || static_cast<std::size_t>(cch) >= sizeof(szDirectory)) {
         win32::SetLastError(win32::ERROR_FILENAME_EXCED_RANGE);
         return 0;
     }
     pszDirectory = PszCanonicalNativePath(szDirectory, nullptr, 0);
     if (!pszDirectory) {
-        cch = snprintf(szDirectory, sizeof(szDirectory), "%s%s/help", pszBase, STARS_INSTALLED_DATA);
-        if (cch < 0 || static_cast<size_t>(cch) >= sizeof(szDirectory)) {
+        cch = std::snprintf(szDirectory, sizeof(szDirectory), "%s%s/help", pszBase, STARS_INSTALLED_DATA);
+        if (cch < 0 || static_cast<std::size_t>(cch) >= sizeof(szDirectory)) {
             win32::SetLastError(win32::ERROR_FILENAME_EXCED_RANGE);
             return 0;
         }
@@ -165,14 +165,14 @@ BOOL win32::WinHelpA(HWND hWndMain, LPCSTR pszHelp, UINT uCommand, ULONG_PTR dwD
         }
     }
     if (!FHelpAssets(pszDirectory)) {
-        free(pszDirectory);
+        std::free(pszDirectory);
         return 0;
     }
     pszDocument = PszHelpDocument(pszDirectory, pszPage);
-    free(pszDirectory);
+    std::free(pszDirectory);
     if (!pszDocument) return 0;
     fLaunched = FCompatOpenDocument(pszDocument);
-    free(pszDocument);
+    std::free(pszDocument);
     win32::SetLastError(fLaunched ? win32::NO_ERROR : win32::ERROR_GEN_FAILURE);
     return fLaunched;
 }

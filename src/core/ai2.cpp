@@ -8,9 +8,9 @@
 #include "random_io.h"
 
 void DoMaidAiTurn(APPSESSION &app, PROD *rgprod) {
-    int32_t rgResCost[4];
-    int32_t rgResAvail[4];
-    int16_t iroCur;
+    std::int32_t rgResCost[4];
+    std::int32_t rgResAvail[4];
+    std::int16_t iroCur;
 
     iroCur = IroEnsureAi(app, nullptr, 0, nullptr, app.state.game.turn >= 20 ? 15 : 0);
     app.state.fMarkedPlanets = 0;
@@ -19,9 +19,9 @@ void DoMaidAiTurn(APPSESSION &app, PROD *rgprod) {
     return;
 }
 
-int16_t FPotentISWarFleet(APPSESSION &app, FLEET *lpfl, int16_t iPotency) {
-    int16_t ish;
-    int16_t cEquiv;
+std::int16_t FPotentISWarFleet(APPSESSION &app, FLEET *lpfl, std::int16_t iPotency) {
+    std::int16_t ish;
+    std::int16_t cEquiv;
 
     cEquiv = 0;
     for (ish = 11; ish <= 12; ish++) {
@@ -40,43 +40,43 @@ int16_t FPotentISWarFleet(APPSESSION &app, FLEET *lpfl, int16_t iPotency) {
 }
 
 void DoAutomitronAiTurn(APPSESSION &app, PROD *rgprod) {
-    int16_t  cExistCargo;
-    uint16_t rgCosts[4];
-    int32_t  rgResCost[4];
-    int16_t  iLatestCruiser;
-    int32_t  rgResAvail[4];
+    std::int16_t  cExistCargo;
+    std::uint16_t rgCosts[4];
+    std::int32_t  rgResCost[4];
+    std::int16_t  iLatestCruiser;
+    std::int32_t  rgResAvail[4];
     FLEET   *lpflEnemy;
     ORDER    ord;
-    uint8_t  rgRecycleShdef[16];
+    std::uint8_t  rgRecycleShdef[16];
     PLANET  *lpplDest;
-    int16_t  cplNegative;
+    std::int16_t  cplNegative;
     THING   *lpthWorm;
-    int16_t  cFr;
-    int16_t  idPlanDst;
-    int16_t  cplBadGuy;
+    std::int16_t  cFr;
+    std::int16_t  idPlanDst;
+    std::int16_t  cplBadGuy;
     PLANET  *lpplMac;
     PLANET  *lppl;
     PLANET  *lpplHome;
     FLEET   *lpfl;
-    int16_t  ifl;
-    int16_t  i;
-    int16_t  cRes;
-    int16_t  iroCur;
+    std::int16_t  ifl;
+    std::int16_t  i;
+    std::int16_t  cRes;
+    std::int16_t  iroCur;
     FLEET   *lpflT;
     FLEET   *lpflAttack;
-    uint8_t  b;
-    int16_t  ishdefSBLatest;
-    uint16_t cRecyclePeriod;
-    uint16_t cplanCol;
-    int16_t  iLatestCargo;
-    int16_t  iLatestBomber;
-    int16_t  j;
-    int16_t  iLatestBattle;
-    int32_t  l;
+    std::uint8_t  b;
+    std::int16_t  ishdefSBLatest;
+    std::uint16_t cRecyclePeriod;
+    std::uint16_t cplanCol;
+    std::int16_t  iLatestCargo;
+    std::int16_t  iLatestBomber;
+    std::int16_t  j;
+    std::int16_t  iLatestBattle;
+    std::int32_t  l;
     PROD    *lpprod;
-    int16_t  fWrite;
-    int16_t  iPlanet;
-    int16_t  id;
+    std::int16_t  fWrite;
+    std::int16_t  iPlanet;
+    std::int16_t  id;
 
     iPlanet = app.state.rgplr[app.state.idPlayer].idPlanetHome;
     cplBadGuy = 0;
@@ -92,23 +92,23 @@ void DoAutomitronAiTurn(APPSESSION &app, PROD *rgprod) {
     }
     j = 3;
     if (app.state.game.turn > 130) {
-        j += static_cast<uint32_t>((app.state.game.turn - 120)) / 20;
+        j += static_cast<std::uint32_t>((app.state.game.turn - 120)) / 20;
     }
     if (j > 50) {
         j = 50;
     }
     app.state.vrgAiArmadaPotency[0] = j;
-    app.state.vrgAiArmadaPotency[1] = static_cast<int16_t>((j & 0xff)) / 2;
+    app.state.vrgAiArmadaPotency[1] = static_cast<std::int16_t>((j & 0xff)) / 2;
     j = 6;
     if (app.state.game.turn > 115) {
-        j += static_cast<uint32_t>((app.state.game.turn - 100)) / 22;
+        j += static_cast<std::uint32_t>((app.state.game.turn - 100)) / 22;
     }
     if (j > 12) {
         j = 12;
     }
     app.state.vrgAiArmadaPotency[2] = j;
     app.state.vrgAiArmadaPotency[3] = 3 >= j / 2 - 1 ? j / 2 - 1 : 3;
-    memset(rgRecycleShdef, 0, 16);
+    std::memset(rgRecycleShdef, 0, 16);
     if (app.state.game.turn < 120) {
         cRecyclePeriod = 50;
     } else {
@@ -157,7 +157,7 @@ void DoAutomitronAiTurn(APPSESSION &app, PROD *rgprod) {
                 cFr = app.state.rgplr[app.state.idPlayer].cPlanet / 10 <= AhvFromLp(app, app.state.vlpbAiData).cStarbase() * 2 ? AhvFromLp(app, app.state.vlpbAiData).cStarbase() * 2
                                                                                             : app.state.rgplr[app.state.idPlayer].cPlanet / 10;
                 if (app.state.rgplr[app.state.idPlayer].rgTech[2] >= 5 && iLatestCargo != ishdefNone &&
-                    (cExistCargo < cFr || (cExistCargo < static_cast<int16_t>((10 * cFr)) / 7 && RandomIO().pfnRandom(app, 4) == 0))) {
+                    (cExistCargo < cFr || (cExistCargo < static_cast<std::int16_t>((10 * cFr)) / 7 && RandomIO().pfnRandom(app, 4) == 0))) {
                     AddItemToQueue(app, iLatestCargo, 1, grobjFleet, addItemEnd);
                     fWrite = 1;
                 }
@@ -165,7 +165,7 @@ void DoAutomitronAiTurn(APPSESSION &app, PROD *rgprod) {
                     AddItemToQueue(app, 1, 1, grobjFleet, addItemEnd);
                     fWrite = 1;
                 }
-                l = static_cast<uint32_t>((lppl->rgwtMin[3] * PctTrueMaxGrowth(app, app.state.idPlayer)));
+                l = static_cast<std::uint32_t>((lppl->rgwtMin[3] * PctTrueMaxGrowth(app, app.state.idPlayer)));
                 cRes = ResearchIO().pfnResources(app, lppl, app.state.idPlayer);
                 if (!app.state.rgshdef[6].fFree && RandomIO().pfnRandom(app, 3) == 0) {
                     id = lppl->id;
@@ -199,7 +199,7 @@ void DoAutomitronAiTurn(APPSESSION &app, PROD *rgprod) {
                         }
                     }
                 }
-                if (iLatestCruiser != ishdefNone && app.state.rgshdef[iLatestCruiser].cExist < static_cast<uint32_t>((app.state.game.cPlanMax / 12 + 8))) {
+                if (iLatestCruiser != ishdefNone && app.state.rgshdef[iLatestCruiser].cExist < static_cast<std::uint32_t>((app.state.game.cPlanMax / 12 + 8))) {
                     GetResourcesAvailable(app, lppl, rgResAvail);
                     GetProdQCost(app, lppl, rgResCost);
                     for (i = 0; i < 4; i++) {
@@ -210,7 +210,7 @@ void DoAutomitronAiTurn(APPSESSION &app, PROD *rgprod) {
                     for (i = 0; i < 5; i++) {
                         GetTrueHullCost(app.state.idPlayer, &app.state.rgshdef[iLatestCruiser].hul, rgCosts);
                         for (j = 0; j < 4; j++) {
-                            rgResAvail[j] -= static_cast<uint32_t>(rgCosts[j]);
+                            rgResAvail[j] -= static_cast<std::uint32_t>(rgCosts[j]);
                             if (rgResAvail[j] < 0)
                                 goto FinishProd;
                         }
@@ -218,7 +218,7 @@ void DoAutomitronAiTurn(APPSESSION &app, PROD *rgprod) {
                         AddItemToQueue(app, iLatestCruiser, 1, grobjFleet, addItemEnd);
                     }
                 }
-                if (iLatestBattle != ishdefNone && app.state.rgshdef[iLatestBattle].cExist < static_cast<uint32_t>((app.state.game.cPlanMax / 24 + 4))) {
+                if (iLatestBattle != ishdefNone && app.state.rgshdef[iLatestBattle].cExist < static_cast<std::uint32_t>((app.state.game.cPlanMax / 24 + 4))) {
                     GetResourcesAvailable(app, lppl, rgResAvail);
                     GetProdQCost(app, lppl, rgResCost);
                     for (i = 0; i < 4; i++) {
@@ -229,7 +229,7 @@ void DoAutomitronAiTurn(APPSESSION &app, PROD *rgprod) {
                     for (i = 0; i < 5; i++) {
                         GetTrueHullCost(app.state.idPlayer, &app.state.rgshdef[iLatestBattle].hul, rgCosts);
                         for (j = 0; j < 4; j++) {
-                            rgResAvail[j] -= static_cast<uint32_t>(rgCosts[j]);
+                            rgResAvail[j] -= static_cast<std::uint32_t>(rgCosts[j]);
                             if (rgResAvail[j] < 0)
                                 goto FinishProd;
                         }
@@ -273,7 +273,7 @@ void DoAutomitronAiTurn(APPSESSION &app, PROD *rgprod) {
                 if (lppl && (lppl->iPlayer == iplrNone || lppl->iPlayer == app.state.idPlayer))
                     continue;
                 if (app.state.vlpbAiPlanet[idPlanDst * 16 + 3] != 0 && lpfl->rgwtMin[3] > 0 && RaceQueryIO().pfnStat(&app.state.rgplr[lppl->iPlayer], rsMajorAdv) != raMacintosh) {
-                    memset(&ord, 0, sizeof(ORDER));
+                    std::memset(&ord, 0, sizeof(ORDER));
                     ord.pt = app.state.rgptPlan[idPlanDst];
                     ord.grobj = grobjPlanet;
                     ord.id = idPlanDst;
@@ -451,19 +451,19 @@ BestSpeed:
     return;
 }
 
-void EnsureISShdefs(APPSESSION &app, int16_t iroCur) {
+void EnsureISShdefs(APPSESSION &app, std::int16_t iroCur) {
     SHDEF   shdef;
-    int16_t i;
+    std::int16_t i;
 
     if (app.state.rgshdef[4].fFree && app.state.rgplr[app.state.idPlayer].rgTech[2] >= 5) {
-        FCreateAiShdef(app, 4, ihuldefMediumFreighter, static_cast<uint8_t *>(&vrgISAip[isRecipeMediumFreighter]));
+        FCreateAiShdef(app, 4, ihuldefMediumFreighter, static_cast<std::uint8_t *>(&vrgISAip[isRecipeMediumFreighter]));
     }
     if (app.state.rgshdef[5].fFree && app.state.rgplr[app.state.idPlayer].rgTech[2] >= 7) {
-        FCreateAiShdef(app, 5, ihuldefSuperFreighter, static_cast<uint8_t *>(&vrgISAip[isRecipeSuperFreighter]));
+        FCreateAiShdef(app, 5, ihuldefSuperFreighter, static_cast<std::uint8_t *>(&vrgISAip[isRecipeSuperFreighter]));
     }
     if (app.state.rgshdef[14].fFree && app.state.rgplr[app.state.idPlayer].rgTech[1] >= 5 && app.state.rgplr[app.state.idPlayer].rgTech[4] >= 6 && app.state.rgplr[app.state.idPlayer].rgTech[3] >= 4 &&
         app.state.rgplr[app.state.idPlayer].rgTech[2] >= 5) {
-        for (i = 0; i < 4 && FCreateAiShdef(app, 14, ihuldefDestroyer, static_cast<uint8_t *>(&vrgISAip[vrgISIshAip[iisRecipeDestroyerTorpedo + RandomIO().pfnRandom(app, 1)]])) == 0; i++) {
+        for (i = 0; i < 4 && FCreateAiShdef(app, 14, ihuldefDestroyer, static_cast<std::uint8_t *>(&vrgISAip[vrgISIshAip[iisRecipeDestroyerTorpedo + RandomIO().pfnRandom(app, 1)]])) == 0; i++) {
         }
     }
     if (app.state.rgshdef[1].fFree || app.state.rgshdef[1].cExist == 0) {
@@ -472,7 +472,7 @@ void EnsureISShdefs(APPSESSION &app, int16_t iroCur) {
             shdef.fFree = 1;
             FChangeAiShdef(app, &shdef, 1);
         }
-        FCreateAiShdef(app, 1, ihuldefMediumFreighter, static_cast<uint8_t *>(&vrgISAip[isRecipeColonizingMediumFreighter]));
+        FCreateAiShdef(app, 1, ihuldefMediumFreighter, static_cast<std::uint8_t *>(&vrgISAip[isRecipeColonizingMediumFreighter]));
     }
     if (app.state.rgshdef[0].fFree || app.state.rgshdef[0].cExist == 0) {
         if (!app.state.rgshdef[0].fFree) {
@@ -480,56 +480,56 @@ void EnsureISShdefs(APPSESSION &app, int16_t iroCur) {
             shdef.fFree = 1;
             FChangeAiShdef(app, &shdef, 0);
         }
-        FCreateAiShdef(app, 0, ihuldefScout, static_cast<uint8_t *>(&vrgISAip[isRecipeScoutStreamingBeam]));
+        FCreateAiShdef(app, 0, ihuldefScout, static_cast<std::uint8_t *>(&vrgISAip[isRecipeScoutStreamingBeam]));
     }
     if (app.state.rgshdef[6].fFree && app.state.rgplr[app.state.idPlayer].rgTech[3] >= 4 && app.state.rgplr[app.state.idPlayer].rgTech[2] >= 5 && app.state.rgplr[app.state.idPlayer].rgTech[5] >= 6) {
-        FCreateAiShdef(app, 6, ihuldefPrivateer, static_cast<uint8_t *>(&vrgISAip[isRecipePrivateerMineLayer]));
+        FCreateAiShdef(app, 6, ihuldefPrivateer, static_cast<std::uint8_t *>(&vrgISAip[isRecipePrivateerMineLayer]));
     }
     if (app.state.rgshdef[2].fFree && app.state.rgplr[app.state.idPlayer].rgTech[1] >= 8 && app.state.rgplr[app.state.idPlayer].rgTech[4] >= 7 && app.state.rgplr[app.state.idPlayer].rgTech[3] >= 6 &&
         app.state.rgplr[app.state.idPlayer].rgTech[2] >= 7) {
-        FCreateAiShdef(app, 2, ihuldefB17Bomber, static_cast<uint8_t *>(&vrgISAip[isRecipeB17Bomber]));
+        FCreateAiShdef(app, 2, ihuldefB17Bomber, static_cast<std::uint8_t *>(&vrgISAip[isRecipeB17Bomber]));
     }
     if (app.state.rgshdef[3].fFree && app.state.rgplr[app.state.idPlayer].rgTech[1] >= 11 && app.state.rgplr[app.state.idPlayer].rgTech[4] >= 12 && app.state.rgplr[app.state.idPlayer].rgTech[3] >= 15 &&
         app.state.rgplr[app.state.idPlayer].rgTech[2] >= 9) {
-        FCreateAiShdef(app, 3, ihuldefB52Bomber, static_cast<uint8_t *>(&vrgISAip[isRecipeB52Bomber]));
+        FCreateAiShdef(app, 3, ihuldefB52Bomber, static_cast<std::uint8_t *>(&vrgISAip[isRecipeB52Bomber]));
     }
     if (app.state.rgshdef[9].fFree && app.state.rgplr[app.state.idPlayer].rgTech[1] >= 5 && app.state.rgplr[app.state.idPlayer].rgTech[4] >= 6 && app.state.rgplr[app.state.idPlayer].rgTech[3] >= 13 &&
         app.state.rgplr[app.state.idPlayer].rgTech[2] >= 7) {
-        for (i = 0; i < 5 && FCreateAiShdef(app, 9, ihuldefBattleship, static_cast<uint8_t *>(&vrgISAip[vrgISIshAip[iisRecipeBattleshipBeamA + RandomIO().pfnRandom(app, 4)]])) == 0; i++) {
+        for (i = 0; i < 5 && FCreateAiShdef(app, 9, ihuldefBattleship, static_cast<std::uint8_t *>(&vrgISAip[vrgISIshAip[iisRecipeBattleshipBeamA + RandomIO().pfnRandom(app, 4)]])) == 0; i++) {
         }
     }
     return;
 }
 
 void DoRototillAiTurn(APPSESSION &app, PROD *rgprod) {
-    int32_t  rgResCost[4];
-    int32_t  rgResAvail[4];
+    std::int32_t  rgResCost[4];
+    std::int32_t  rgResAvail[4];
     FLEET   *lpflEnemy;
     ORDER    ord;
     PLANET  *lpplDest;
-    int16_t  cplNegative;
+    std::int16_t  cplNegative;
     THING   *lpthWorm;
-    int16_t  fColonyShipInQueue;
-    int16_t  idPlanDst;
-    int16_t  cplBadGuy;
+    std::int16_t  fColonyShipInQueue;
+    std::int16_t  idPlanDst;
+    std::int16_t  cplBadGuy;
     PLANET  *lpplMac;
     PLANET  *lppl;
     PLANET  *lpplHome;
     FLEET   *lpfl;
-    int16_t  ifl;
-    int16_t  i;
-    int16_t  iroCur;
+    std::int16_t  ifl;
+    std::int16_t  i;
+    std::int16_t  iroCur;
     FLEET   *lpflT;
     FLEET   *lpflAttack;
-    uint8_t  b;
-    int16_t  ishdefSBLatest;
-    int16_t  fBomberInQueue;
-    uint16_t cplanCol;
-    int16_t  j;
+    std::uint8_t  b;
+    std::int16_t  ishdefSBLatest;
+    std::int16_t  fBomberInQueue;
+    std::uint16_t cplanCol;
+    std::int16_t  j;
     PROD    *lpprod;
-    int16_t  fWrite;
-    int16_t  iPlanet;
-    uint8_t  bT;
+    std::int16_t  fWrite;
+    std::int16_t  iPlanet;
+    std::uint8_t  bT;
 
     iPlanet = app.state.rgplr[app.state.idPlayer].idPlanetHome;
     cplBadGuy = 0;
@@ -556,7 +556,7 @@ void DoRototillAiTurn(APPSESSION &app, PROD *rgprod) {
                 if (lppl->rgMinConc[i] > 66) {
                     bT = 75;
                 } else {
-                    bT = static_cast<int16_t>(lppl->rgMinConc[i]) / 2;
+                    bT = static_cast<std::int16_t>(lppl->rgMinConc[i]) / 2;
                 }
                 b += bT;
             }
@@ -589,7 +589,7 @@ void DoRototillAiTurn(APPSESSION &app, PROD *rgprod) {
                 if (app.state.game.turn == 0) {
                     AddItemToQueue(app, 0, 1, grobjFleet, addItemEnd);
                     AddItemToQueue(app, 0, 1, grobjFleet, addItemEnd);
-                } else if (!fColonyShipInQueue && (app.state.rgshdef[1].cExist == 0 || app.state.rgshdef[1].cExist + 1 < static_cast<uint32_t>(cplanCol))) {
+                } else if (!fColonyShipInQueue && (app.state.rgshdef[1].cExist == 0 || app.state.rgshdef[1].cExist + 1 < static_cast<std::uint32_t>(cplanCol))) {
                     fColonyShipInQueue = 1;
                     AddItemToQueue(app, 1, 1, grobjFleet, addItemEnd);
                     fWrite = 1;
@@ -649,7 +649,7 @@ void DoRototillAiTurn(APPSESSION &app, PROD *rgprod) {
                 if (lppl && (lppl->iPlayer == iplrNone || lppl->iPlayer == app.state.idPlayer))
                     continue;
                 if (app.state.vlpbAiPlanet[idPlanDst * 16 + 3] != 0 && lpfl->rgwtMin[3] > 0 && RaceQueryIO().pfnStat(&app.state.rgplr[lppl->iPlayer], rsMajorAdv) != raMacintosh) {
-                    memset(&ord, 0, sizeof(ORDER));
+                    std::memset(&ord, 0, sizeof(ORDER));
                     ord.pt = app.state.rgptPlan[idPlanDst];
                     ord.grobj = grobjPlanet;
                     ord.id = idPlanDst;
@@ -831,4 +831,4 @@ BestSpeed:
     return;
 }
 
-void EnsureCAShdefs(int16_t iroCur) { return; }
+void EnsureCAShdefs(std::int16_t iroCur) { return; }

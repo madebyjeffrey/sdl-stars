@@ -1,24 +1,24 @@
 #ifndef STARS_VALUE_H
 #define STARS_VALUE_H
 #include <type_traits>
-#include <stdint.h>
+#include <cstdint>
 
 // By-value scalar arguments also accept the original packed bit-field expressions.
-template<class T> constexpr uintptr_t UlpValueBits(T value) {
+template<class T> constexpr std::uintptr_t UlpValueBits(T value) {
     if constexpr (std::is_pointer_v<T>)
-        return reinterpret_cast<uintptr_t>(value);
+        return reinterpret_cast<std::uintptr_t>(value);
     else if constexpr (std::is_null_pointer_v<T>)
         return 0;
     else
-        return static_cast<uintptr_t>(value);
+        return static_cast<std::uintptr_t>(value);
 }
-template<class T> constexpr uint16_t LOWORD(T value) { return static_cast<uint16_t>(UlpValueBits(value)); }
-template<class T> constexpr uint16_t HIWORD(T value) { return static_cast<uint16_t>(UlpValueBits(value) >> 16); }
-template<class T> constexpr uint8_t LOBYTE(T value) { return static_cast<uint8_t>(UlpValueBits(value)); }
-template<class T> constexpr uint8_t HIBYTE(T value) { return static_cast<uint8_t>(UlpValueBits(value) >> 8); }
-template<class A, class B> constexpr int32_t MAKELONG(A lo, B hi) {
-    return static_cast<int32_t>(static_cast<uint32_t>(LOWORD(lo)) |
-                                (static_cast<uint32_t>(LOWORD(hi)) << 16));
+template<class T> constexpr std::uint16_t LOWORD(T value) { return static_cast<std::uint16_t>(UlpValueBits(value)); }
+template<class T> constexpr std::uint16_t HIWORD(T value) { return static_cast<std::uint16_t>(UlpValueBits(value) >> 16); }
+template<class T> constexpr std::uint8_t LOBYTE(T value) { return static_cast<std::uint8_t>(UlpValueBits(value)); }
+template<class T> constexpr std::uint8_t HIBYTE(T value) { return static_cast<std::uint8_t>(UlpValueBits(value) >> 8); }
+template<class A, class B> constexpr std::int32_t MAKELONG(A lo, B hi) {
+    return static_cast<std::int32_t>(static_cast<std::uint32_t>(LOWORD(lo)) |
+                                (static_cast<std::uint32_t>(LOWORD(hi)) << 16));
 }
 
 // Preserve the conditional operator's usual conversions for mixed scalar types.

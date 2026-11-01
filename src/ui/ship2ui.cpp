@@ -11,15 +11,15 @@ INT_PTR  ZipOrderDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
 
     HDC            hdc;
-    int16_t        i;
+    std::int16_t        i;
     PAINTSTRUCT    ps;
     RECT           rc;
     HWND           hwndRad;
     char          *psz;
     char          *pszT;
     RECT           rcGBox;
-    int16_t        cch;
-    int16_t        xCtr;
+    std::int16_t        cch;
+    std::int16_t        xCtr;
     FARPROC        lpProc;
 
     switch (message) {
@@ -95,7 +95,7 @@ INT_PTR  ZipOrderDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 RightTextOut(app, hdc, xCtr, rcGBox.top, app.state.rgszMinerals[i], 0, 0);
                 win32::SetTextColor(hdc, 0);
                 FormatTransportPresetAction(app, i);
-                win32::TextOutA(hdc, xCtr + 6, rcGBox.top, app.state.szWork, strlen(app.state.szWork));
+                win32::TextOutA(hdc, xCtr + 6, rcGBox.top, app.state.szWork, std::strlen(app.state.szWork));
                 rcGBox.top += app.state.dyArial8;
             }
         } else {
@@ -123,7 +123,7 @@ INT_PTR  ZipOrderDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             case IDC_IMPORT:
             case IDC_RENAME:
                 if (app.state.vrgZip[app.lpui->iResTechNow].fValid) {
-                    strcpy(app.state.szWork, app.state.vrgZip[app.lpui->iResTechNow].szName);
+                    std::strcpy(app.state.szWork, app.state.vrgZip[app.lpui->iResTechNow].szName);
                 } else {
                     win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsCustomD), app.lpui->iResTechNow);
                 }
@@ -132,7 +132,7 @@ INT_PTR  ZipOrderDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                     if (app.state.szWork[0] == 0) {
                         win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsCustomD), app.lpui->iResTechNow);
                     }
-                    strcpy(app.state.vrgZip[app.lpui->iResTechNow].szName, app.state.szWork);
+                    std::strcpy(app.state.vrgZip[app.lpui->iResTechNow].szName, app.state.szWork);
                     pszT = &app.state.szWork[64];
                     psz = app.state.szWork;
                     while (*psz != 0) {
@@ -168,8 +168,8 @@ INT_PTR  ZipOrderDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     return 0;
 }
 
-void EnableZipBtns(APPSESSION &app, HWND hwnd, int16_t iSel) {
-    int16_t fEnabled;
+void EnableZipBtns(APPSESSION &app, HWND hwnd, std::int16_t iSel) {
+    std::int16_t fEnabled;
 
     fEnabled = app.state.vrgZip[iSel].fValid;
     ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_DELETE), fEnabled);
@@ -223,7 +223,7 @@ INT_PTR  RenameZipDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             ControlIO().pfnEndDialog(hwnd, LOWORD(wParam) == IDOK);
             return 1;
         case IDC_HELP:
-            win32::WinHelpA(hwnd, app.lpui->szHelpFile, win32::HELP_CONTEXT, static_cast<uint32_t>((!app.lpui->hwndZipOrderDlg ? 1106 : 3103)));
+            win32::WinHelpA(hwnd, app.lpui->szHelpFile, win32::HELP_CONTEXT, static_cast<std::uint32_t>((!app.lpui->hwndZipOrderDlg ? 1106 : 3103)));
             return 1;
         }
     }
@@ -234,7 +234,7 @@ INT_PTR  RenameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
 
     RECT    rc;
-    int32_t lSel;
+    std::int32_t lSel;
 
     switch (message) {
     case win32::WM_INITDIALOG:
@@ -278,7 +278,7 @@ INT_PTR  RenameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 lSel = ControlIO().pfnSendMessage(reinterpret_cast<HWND>(lParam), win32::EM_GETSEL, 0, 0);
                 if (!FStringFitsScreen(app, app.state.szWork, 160)) {
                     ControlIO().pfnSetWindowText(reinterpret_cast<HWND>(lParam), app.state.szWork);
-                    ControlIO().pfnSendMessage(reinterpret_cast<HWND>(lParam), win32::EM_SETSEL, LOWORD(lSel), static_cast<int16_t>(HIWORD(lSel)));
+                    ControlIO().pfnSendMessage(reinterpret_cast<HWND>(lParam), win32::EM_SETSEL, LOWORD(lSel), static_cast<std::int16_t>(HIWORD(lSel)));
                 }
                 app.lpui->fInEditUpdate = 0;
                 break;
@@ -297,7 +297,7 @@ INT_PTR  RenameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
 INT_PTR  MergeFleetsDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
 
-    int16_t i;
+    std::int16_t i;
     RECT    rc;
     char    szT[80];
     char   *psz;
@@ -307,9 +307,9 @@ INT_PTR  MergeFleetsDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         ControlIO().pfnStickyDlgPos(hwnd, &app.lpui->ptStickyMergeFleetsDlg, 1);
         for (i = 0; i < app.state.vcflMerge; i++) {
             psz = PszGetFleetName(app, app.state.rglpfl[app.state.vrgiflMerge[i]]->id);
-            strcpy(szT, psz);
+            std::strcpy(szT, psz);
             if (app.state.rglpfl[app.state.vrgiflMerge[i]]->cord > 1) {
-                strcat(szT, " *");
+                std::strcat(szT, " *");
             }
             ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_MERGE_FLEETS_LIST), win32::LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(szT));
             ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_MERGE_FLEETS_LIST), win32::LB_SETSEL, app.state.vcflMerge == 2 || app.state.rglpfl[app.state.vrgiflMerge[i]]->id == app.state.sel.fl.id, i);
@@ -363,8 +363,8 @@ INT_PTR  MergeFleetsDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     return 0;
 }
 
-void FormatTransportPresetAction(APPSESSION &app, int16_t i) {
-    int16_t cch;
+void FormatTransportPresetAction(APPSESSION &app, std::int16_t i) {
+    std::int16_t cch;
     XferActionType iAction;
                 iAction = static_cast<XferActionType>(app.state.vrgZip[app.lpui->iResTechNow].txp.rgia[i].iAction());
                 cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsAction + static_cast<int>(iAction)), app.state.szWork);

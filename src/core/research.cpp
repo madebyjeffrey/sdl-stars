@@ -3,42 +3,42 @@
 #include "research_io.h"
 #include "race_query_io.h"
 
-uint16_t rggrbitBrParts[17] = {6655, 8, 16, 64, 2048, 1, 4096, 256, 128, 512, 32768, 2, 4, 16384, 1024, 8192, 32};
-int32_t  rglTechCost[27] = {0,     50,    80,    130,   210,   340,   550,   890,   1440,  2330,  3770,  6100,  9870, 13850,
+std::uint16_t rggrbitBrParts[17] = {6655, 8, 16, 64, 2048, 1, 4096, 256, 128, 512, 32768, 2, 4, 16384, 1024, 8192, 32};
+std::int32_t  rglTechCost[27] = {0,     50,    80,    130,   210,   340,   550,   890,   1440,  2330,  3770,  6100,  9870, 13850,
                             18040, 22440, 27050, 31870, 36900, 42140, 47590, 53250, 59120, 65200, 71490, 77990, 84700};
 
-int32_t GetTechLevelCost(APPSESSION &app, TechFieldType iTech, int16_t iLevel, int16_t iplr) {
-    int32_t lCost;
-    int16_t i;
-    int16_t cTech;
+std::int32_t GetTechLevelCost(APPSESSION &app, TechFieldType iTech, std::int16_t iLevel, std::int16_t iplr) {
+    std::int32_t lCost;
+    std::int16_t i;
+    std::int16_t cTech;
 
     cTech = 0;
     for (i = 0; i < 6; i++) {
         cTech += app.state.rgplr[iplr].rgTech[i];
     }
-    lCost = static_cast<int16_t>((10 * cTech)) + rglTechCost[iLevel];
+    lCost = static_cast<std::int16_t>((10 * cTech)) + rglTechCost[iLevel];
     i = RaceQueryIO().pfnStat(&app.state.rgplr[iplr], static_cast<RaceStat>(iTech + 8)) - 1;
     if (i != 0) {
         if (i < 0) {
-            lCost += lCost - static_cast<int32_t>((lCost >> 2));
+            lCost += lCost - static_cast<std::int32_t>((lCost >> 2));
         } else {
-            lCost = static_cast<int32_t>((lCost / 2));
+            lCost = static_cast<std::int32_t>((lCost / 2));
         }
     }
     if (app.state.game.fSlowTech) {
-        lCost = static_cast<int32_t>((lCost * 2));
+        lCost = static_cast<std::int32_t>((lCost * 2));
     }
     return lCost;
 }
 
-int32_t ProjectedResearchSpending(APPSESSION &app, int32_t pct) {
-    int32_t lRes;
+std::int32_t ProjectedResearchSpending(APPSESSION &app, std::int32_t pct) {
+    std::int32_t lRes;
     PLANET *lppl;
-    int16_t cRes;
-    int32_t lSpend;
+    std::int16_t cRes;
+    std::int32_t lSpend;
     PLANET *lpplMac;
     char    pctSav;
-    int16_t cBogus;
+    std::int16_t cBogus;
 
     lSpend = 0;
     pctSav = app.state.rgplr[app.state.idPlayer].pctResearch;
@@ -60,14 +60,14 @@ int32_t ProjectedResearchSpending(APPSESSION &app, int32_t pct) {
     return lSpend;
 }
 
-int32_t CostOfDevelopingItem(APPSESSION &app, char *rgTech) {
-    int32_t lSpent;
+std::int32_t CostOfDevelopingItem(APPSESSION &app, char *rgTech) {
+    std::int32_t lSpent;
     char   *pTech;
     char    rgTechSav[6];
-    int32_t lCost;
-    int16_t fUnreachable;
-    int16_t i;
-    int32_t lCur;
+    std::int32_t lCost;
+    std::int16_t fUnreachable;
+    std::int16_t i;
+    std::int32_t lCur;
 
     fUnreachable = 0;
     lCost = 0;
@@ -82,7 +82,7 @@ int32_t CostOfDevelopingItem(APPSESSION &app, char *rgTech) {
         if (rgTech[i] > pTech[i]) {
             lSpent = app.state.rgplr[app.state.idPlayer].rgResSpent[i];
             if (app.state.game.fSlowTech) {
-                lSpent = static_cast<int32_t>((lSpent * 2));
+                lSpent = static_cast<std::int32_t>((lSpent * 2));
             }
             lCur = -lSpent;
             while (rgTech[i] > pTech[i]) {
@@ -98,8 +98,8 @@ int32_t CostOfDevelopingItem(APPSESSION &app, char *rgTech) {
     return lCost;
 }
 
-int16_t FShouldPartBeHidden(APPSESSION &app, PART *ppart) {
-    int16_t     iItem;
+std::int16_t FShouldPartBeHidden(APPSESSION &app, PART *ppart) {
+    std::int16_t     iItem;
     GrbitTrader grbitTrader;
 
     if (app.state.idPlayer == iplrNone) {

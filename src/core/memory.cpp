@@ -19,31 +19,31 @@ void NATIVEGAMEHEAPS::Close() noexcept {
     }
 }
 
-uint16_t CbHeapAlign(HeapType ht) {
+std::uint16_t CbHeapAlign(HeapType ht) {
     /* NATIVE: ordinary heaps also hold native pointer arrays. Battle records
        are walked and written using their original two-byte boundaries. */
-    return ht == htBattle ? 2 : alignof(max_align_t);
+    return ht == htBattle ? 2 : alignof(std::max_align_t);
 }
 
-uint16_t CbHbHeader(HeapType ht) {
-    uint16_t cbAlign = CbHeapAlign(ht);
+std::uint16_t CbHbHeader(HeapType ht) {
+    std::uint16_t cbAlign = CbHeapAlign(ht);
 
     return ht == htBattle ? sizeof(HB) :
         ((sizeof(HB) + 2 + cbAlign - 1) / cbAlign) * cbAlign - 2;
 }
 
-uint16_t CbHeapItem(APPSESSION &app, uint16_t cb, HeapType ht) {
-    uint32_t cbAlign = CbHeapAlign(ht);
-    uint32_t cbItem = (static_cast<uint32_t>(cb) + 2 + cbAlign - 1) / cbAlign * cbAlign;
+std::uint16_t CbHeapItem(APPSESSION &app, std::uint16_t cb, HeapType ht) {
+    std::uint32_t cbAlign = CbHeapAlign(ht);
+    std::uint32_t cbItem = (static_cast<std::uint32_t>(cb) + 2 + cbAlign - 1) / cbAlign * cbAlign;
 
-    if (cbItem > static_cast<uint32_t>(UINT16_MAX - CbHbHeader(ht))) {
+    if (cbItem > static_cast<std::uint32_t>(UINT16_MAX - CbHbHeader(ht))) {
         AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMemory, nullptr), win32::MB_ICONHAND);
         StarsThrowError(starsErrorMemory, idsMemory);
     }
     return cbItem;
 }
 
-HB *LphbAlloc(APPSESSION &app, uint16_t cb, HeapType ht) {
+HB *LphbAlloc(APPSESSION &app, std::uint16_t cb, HeapType ht) {
     void *hmem;
     HB   *lphb;
 
@@ -53,7 +53,7 @@ HB *LphbAlloc(APPSESSION &app, uint16_t cb, HeapType ht) {
         cb = app.state.mphtcbAlloc[ht];
     }
     /* NATIVE: the original locked a zero-filled GlobalAlloc block. */
-    hmem = calloc(1, cb);
+    hmem = std::calloc(1, cb);
     if (!hmem) {
         AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMemory, nullptr), win32::MB_ICONHAND);
         StarsThrowError(starsErrorMemory, idsMemory);
@@ -77,8 +77,8 @@ HB *LphbReAlloc(APPSESSION &app, HB *lphb) {
     HB      *lphbT;
     HB      *lphbNew;
     HB     **plphb;
-    uint16_t cbCur;
-    uint16_t cbGrow;
+    std::uint16_t cbCur;
+    std::uint16_t cbGrow;
 
     if (!lphb) {
         return nullptr;
@@ -88,7 +88,7 @@ HB *LphbReAlloc(APPSESSION &app, HB *lphb) {
     cbGrow = app.state.mphtcbAlloc[lphb->ht];
     if (cbCur >= 0xffdc)
         goto LReAllocOOM;
-    if (cbCur > static_cast<uint16_t>((0xffdc - cbGrow))) {
+    if (cbCur > static_cast<std::uint16_t>((0xffdc - cbGrow))) {
         cbGrow = 0xffdc - cbCur;
     }
     // Keep the stable link slot before realloc invalidates the old address.
@@ -100,14 +100,14 @@ HB *LphbReAlloc(APPSESSION &app, HB *lphb) {
         plphb = &lphbT->lphbNext;
     }
     /* NATIVE: GlobalReAlloc zero-filled the bytes it added. */
-    hmem = realloc(hmem, static_cast<size_t>((lphb->cbBlock + cbGrow)));
+    hmem = std::realloc(hmem, static_cast<std::size_t>((lphb->cbBlock + cbGrow)));
     if (!hmem) {
     LReAllocOOM:
         AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMemory, nullptr), win32::MB_ICONHAND);
         StarsThrowError(starsErrorMemory, idsMemory);
     }
     hmem = std::memmove(hmem, hmem, static_cast<std::size_t>(cbCur) + cbGrow);
-    memset(static_cast<std::byte *>(hmem) + cbCur, 0, cbGrow);
+    std::memset(static_cast<std::byte *>(hmem) + cbCur, 0, cbGrow);
     lphbNew = static_cast<HB *>(std::memmove(hmem, hmem, sizeof(HB)));
     lphbNew->hmem = hmem;
     *plphb = lphbNew;
@@ -132,7 +132,7 @@ void FreeHb(APPSESSION &app, HB *lphb) noexcept {
         for (; lphb; lphb = lphbNext) {
             lphbNext = lphb->lphbNext;
             hmem = lphb->hmem;
-            free(hmem);
+            std::free(hmem);
         }
     }
     return;
@@ -149,9 +149,9 @@ void ResetHb(APPSESSION &app, HeapType ht) {
     return;
 }
 
-void *LpAlloc(APPSESSION &app, uint16_t cb, HeapType ht) {
-    int16_t  fFree;
-    uint16_t cbItem;
+void *LpAlloc(APPSESSION &app, std::uint16_t cb, HeapType ht) {
+    std::int16_t  fFree;
+    std::uint16_t cbItem;
     std::byte *lpbPrev;
     std::byte *lpbTop;
     HB      *lphb;
@@ -186,7 +186,7 @@ void *LpAlloc(APPSESSION &app, uint16_t cb, HeapType ht) {
             }
             cbItem = lpb - lpbPrev - 2;
             RawStore16(lpbPrev, cbItem | 1);
-            if (static_cast<uint16_t>((cbItem + 2)) >= cb) {
+            if (static_cast<std::uint16_t>((cbItem + 2)) >= cb) {
                 RawStore16(lpbPrev, RawLoad16(lpbPrev) & 0xfffe);
                 lpbPrev += 2;
                 lphb->cbFree -= cbItem + 2;
@@ -200,10 +200,10 @@ void *LpAlloc(APPSESSION &app, uint16_t cb, HeapType ht) {
 HB *LphbFromLpHt(APPSESSION &app, void *lp, HeapType ht) {
     HB *lphb;
 
-    if (static_cast<int16_t>(ht) < htOrd || static_cast<int16_t>(ht) >= htCount) {
+    if (static_cast<std::int16_t>(ht) < htOrd || static_cast<std::int16_t>(ht) >= htCount) {
         return nullptr;
     }
-    for (lphb = app.state.rglphb[ht]; lphb && (reinterpret_cast<uintptr_t>(lp) <= reinterpret_cast<uintptr_t>(lphb->hmem) || reinterpret_cast<uintptr_t>(lp) - reinterpret_cast<uintptr_t>(lphb->hmem) >= lphb->cbBlock); lphb = lphb->lphbNext) {
+    for (lphb = app.state.rglphb[ht]; lphb && (reinterpret_cast<std::uintptr_t>(lp) <= reinterpret_cast<std::uintptr_t>(lphb->hmem) || reinterpret_cast<std::uintptr_t>(lp) - reinterpret_cast<std::uintptr_t>(lphb->hmem) >= lphb->cbBlock); lphb = lphb->lphbNext) {
     }
     if (!lphb) {
         return nullptr;
@@ -211,16 +211,16 @@ HB *LphbFromLpHt(APPSESSION &app, void *lp, HeapType ht) {
     return lphb;
 }
 
-void *LpReAlloc(APPSESSION &app, void *lp, uint16_t cb, HeapType ht) {
+void *LpReAlloc(APPSESSION &app, void *lp, std::uint16_t cb, HeapType ht) {
     void    *lpNew;
     HB      *lphb;
-    uint16_t cbCur;
-    uint16_t cbGrow;
+    std::uint16_t cbCur;
+    std::uint16_t cbGrow;
     std::byte *lpb;
 
     lphb = LphbFromLpHt(app, lp, ht);
     lpb = static_cast<std::byte *>(lphb->hmem) +
-          (reinterpret_cast<uintptr_t>(lp) - reinterpret_cast<uintptr_t>(lphb->hmem));
+          (reinterpret_cast<std::uintptr_t>(lp) - reinterpret_cast<std::uintptr_t>(lphb->hmem));
     cbCur = RawLoad16(lpb - 2);
     cb = CbHeapItem(app, cb, ht) - 2;
     cbGrow = cb - cbCur;
@@ -240,7 +240,7 @@ LGrewHeap:
         goto LGrewHeap;
     } else {
         lpNew = HeapIO().pfnAllocate(app, cb, ht);
-        memcpy(lpNew, lpb, cbCur);
+        std::memcpy(lpNew, lpb, cbCur);
         HeapIO().pfnFree(app, lp, ht);
         lp = lpNew;
     }
@@ -248,14 +248,14 @@ LGrewHeap:
 }
 
 void FreeLp(APPSESSION &app, void *lp, HeapType ht) {
-    uint16_t cbFree;
+    std::uint16_t cbFree;
     HB      *lphb;
     std::byte *lpb;
 
     if (lp) {
         lphb = LphbFromLpHt(app, lp, ht);
         lpb = static_cast<std::byte *>(lphb->hmem) +
-              (reinterpret_cast<uintptr_t>(lp) - reinterpret_cast<uintptr_t>(lphb->hmem));
+              (reinterpret_cast<std::uintptr_t>(lp) - reinterpret_cast<std::uintptr_t>(lphb->hmem));
         cbFree = RawLoad16(lpb - 2) + 2;
         RawStore16(lpb - 2, RawLoad16(lpb - 2) | 1);
         lphb->cbFree += cbFree;
@@ -267,13 +267,13 @@ void FreeLp(APPSESSION &app, void *lp, HeapType ht) {
     return;
 }
 
-PL *LpplReAlloc(APPSESSION &app, PL *lppl, uint16_t cAlloc) {
+PL *LpplReAlloc(APPSESSION &app, PL *lppl, std::uint16_t cAlloc) {
     lppl = LpReAlloc<PL>(app, lppl, lppl->cbItem * cAlloc + 4, static_cast<HeapType>(lppl->ht));
     lppl->iMax = cAlloc;
     return lppl;
 }
 
-PL *LpplAlloc(APPSESSION &app, uint16_t cbItem, uint16_t cAlloc, HeapType ht) {
+PL *LpplAlloc(APPSESSION &app, std::uint16_t cbItem, std::uint16_t cAlloc, HeapType ht) {
     PL *lppl;
 
     lppl = LpAlloc<PL>(app, cbItem * cAlloc + 4, ht);
@@ -295,14 +295,14 @@ void FreePl(APPSESSION &app, PL *lppl) {
 // The same pool allocation and four-byte prefix are retained, but callers now
 // receive a PLPROD header and an actual PROD array instead of aliasing a PL.
 template<>
-PLPROD *LpplAlloc<PLPROD>(APPSESSION &app, uint16_t cbItem, uint16_t cAlloc, HeapType ht) {
+PLPROD *LpplAlloc<PLPROD>(APPSESSION &app, std::uint16_t cbItem, std::uint16_t cAlloc, HeapType ht) {
     PL *lppl;
 
     lppl = LpplAlloc(app, cbItem, cAlloc, ht);
     return LpStartPl<PLPROD, PROD>(lppl, HeapIO().pfnExtent(app, lppl));
 }
 
-PLPROD *LpplReAlloc(APPSESSION &app, PLPROD *lppl, uint16_t cAlloc) {
+PLPROD *LpplReAlloc(APPSESSION &app, PLPROD *lppl, std::uint16_t cAlloc) {
     void *lp;
 
     lp = HeapIO().pfnResize(app, lppl, lppl->cbItem * cAlloc + 4, static_cast<HeapType>(lppl->ht));
@@ -315,11 +315,11 @@ void FreePl(APPSESSION &app, PLPROD *lppl) {
     if (lppl) HeapIO().pfnFree(app, lppl, static_cast<HeapType>(lppl->ht));
 }
 
-uint16_t CbPlSlot(APPSESSION &app, const void *lp) {
+std::uint16_t CbPlSlot(APPSESSION &app, const void *lp) {
     for (int i = htOrd; i < htCount; i++) {
         HB *lphb = LphbFromLpHt(app, const_cast<void *>(lp), static_cast<HeapType>(i));
         if (lphb) {
-            std::size_t ib = reinterpret_cast<uintptr_t>(lp) - reinterpret_cast<uintptr_t>(lphb->hmem);
+            std::size_t ib = reinterpret_cast<std::uintptr_t>(lp) - reinterpret_cast<std::uintptr_t>(lphb->hmem);
             return RawLoad16(static_cast<const std::byte *>(lphb->hmem) + ib - 2);
         }
     }
@@ -328,14 +328,14 @@ uint16_t CbPlSlot(APPSESSION &app, const void *lp) {
 }
 
 template<>
-PLORD *LpplAlloc<PLORD>(APPSESSION &app, uint16_t cbItem, uint16_t cAlloc, HeapType ht) {
+PLORD *LpplAlloc<PLORD>(APPSESSION &app, std::uint16_t cbItem, std::uint16_t cAlloc, HeapType ht) {
     PL *lppl;
 
     lppl = LpplAlloc(app, cbItem, cAlloc, ht);
     return LpStartPl<PLORD, ORDER>(lppl, HeapIO().pfnExtent(app, lppl));
 }
 
-PLORD *LpplReAlloc(APPSESSION &app, PLORD *lppl, uint16_t cAlloc) {
+PLORD *LpplReAlloc(APPSESSION &app, PLORD *lppl, std::uint16_t cAlloc) {
     void *lp;
 
     lp = HeapIO().pfnResize(app, lppl, lppl->cbItem * cAlloc + 4, static_cast<HeapType>(lppl->ht));
@@ -352,21 +352,21 @@ void FreePl(APPSESSION &app, PLORD *lppl) {
 // index. Borrow the owning allocation, not an invented ORDER at that offset.
 // Logical admission remains in the caller; out-of-allocation copies are outside
 // the original defined domain. No view survives this callback-free operation.
-static std::span<std::byte> RgbOrderStorage(APPSESSION &app, PLORD *lpplord, int16_t iord, int16_t ibExtra) {
+static std::span<std::byte> RgbOrderStorage(APPSESSION &app, PLORD *lpplord, std::int16_t iord, std::int16_t ibExtra) {
     HB *lphb;
-    int64_t ib;
+    std::int64_t ib;
 
     lphb = LphbFromLpHt(app, lpplord, htOrd);
     if (!lphb) return {};
-    ib = static_cast<int64_t>(reinterpret_cast<uintptr_t>(lpplord) - reinterpret_cast<uintptr_t>(lphb->hmem)) +
-         4 + static_cast<int64_t>(iord) * static_cast<int64_t>(sizeof(ORDER)) + ibExtra;
-    if (ib < 0 || static_cast<uint64_t>(ib) > lphb->cbBlock) return {};
+    ib = static_cast<std::int64_t>(reinterpret_cast<std::uintptr_t>(lpplord) - reinterpret_cast<std::uintptr_t>(lphb->hmem)) +
+         4 + static_cast<std::int64_t>(iord) * static_cast<std::int64_t>(sizeof(ORDER)) + ibExtra;
+    if (ib < 0 || static_cast<std::uint64_t>(ib) > lphb->cbBlock) return {};
     return std::span(static_cast<std::byte *>(lphb->hmem), lphb->cbBlock).subspan(static_cast<std::size_t>(ib));
 }
 
-bool FApplyOrderBytes(APPSESSION &app, PLORD *lpplord, int16_t iord, const uint8_t *rgb, int16_t cb, bool fZero) {
+bool FApplyOrderBytes(APPSESSION &app, PLORD *lpplord, std::int16_t iord, const std::uint8_t *rgb, std::int16_t cb, bool fZero) {
     std::span<std::byte> storage = RgbOrderStorage(app, lpplord, iord, 0);
-    std::size_t cbCopy = static_cast<std::size_t>(cb - static_cast<int16_t>(cbWireWaypt));
+    std::size_t cbCopy = static_cast<std::size_t>(cb - static_cast<std::int16_t>(cbWireWaypt));
     std::size_t ib = 0;
     std::size_t cbChunk, cbNative;
     ORDER ord{};
@@ -393,16 +393,16 @@ bool FApplyOrderBytes(APPSESSION &app, PLORD *lpplord, int16_t iord, const uint8
     return true;
 }
 
-bool FSetOrderTask(APPSESSION &app, PLORD *lpplord, int16_t iord, int16_t grTask) {
-    std::span<std::byte> storage = RgbOrderStorage(app, lpplord, iord, cbWireOrderHeader - sizeof(uint16_t));
+bool FSetOrderTask(APPSESSION &app, PLORD *lpplord, std::int16_t iord, std::int16_t grTask) {
+    std::span<std::byte> storage = RgbOrderStorage(app, lpplord, iord, cbWireOrderHeader - sizeof(std::uint16_t));
     ORDER ord{};
-    auto rgbNative = std::as_writable_bytes(std::span(&ord, 1)).subspan(cbWireOrderHeader - sizeof(uint16_t), sizeof(uint16_t));
+    auto rgbNative = std::as_writable_bytes(std::span(&ord, 1)).subspan(cbWireOrderHeader - sizeof(std::uint16_t), sizeof(std::uint16_t));
 
     static_assert(offsetof(ORDER, txp) == cbWireOrderHeader);
-    if (storage.size() < sizeof(uint16_t)) return false;
-    std::memcpy(rgbNative.data(), storage.data(), sizeof(uint16_t));
+    if (storage.size() < sizeof(std::uint16_t)) return false;
+    std::memcpy(rgbNative.data(), storage.data(), sizeof(std::uint16_t));
     ord.grTask = grTask;
-    std::memcpy(storage.data(), rgbNative.data(), sizeof(uint16_t));
+    std::memcpy(storage.data(), rgbNative.data(), sizeof(std::uint16_t));
     return true;
 }
 
@@ -410,17 +410,17 @@ bool FSetOrderTask(APPSESSION &app, PLORD *lpplord, int16_t iord, int16_t grTask
 // packed event or token object lives there. End positions remain valid bounds.
 static NATIVEBYTEWINDOW BbwFromLpHt(APPSESSION &app, void *lp, HeapType ht) noexcept {
     HB *lphb;
-    uintptr_t p, base;
+    std::uintptr_t p, base;
 
     if (!lp) return {};
-    p = reinterpret_cast<uintptr_t>(lp);
+    p = reinterpret_cast<std::uintptr_t>(lp);
     for (lphb = app.state.rglphb[ht]; lphb; lphb = lphb->lphbNext) {
-        base = reinterpret_cast<uintptr_t>(lphb->hmem);
+        base = reinterpret_cast<std::uintptr_t>(lphb->hmem);
         if (p >= base && p - base < lphb->cbBlock)
             return {std::span(static_cast<std::byte *>(lphb->hmem), lphb->cbBlock), static_cast<std::ptrdiff_t>(p - base)};
     }
     for (lphb = app.state.rglphb[ht]; lphb; lphb = lphb->lphbNext) {
-        base = reinterpret_cast<uintptr_t>(lphb->hmem);
+        base = reinterpret_cast<std::uintptr_t>(lphb->hmem);
         if (p >= base && p - base == lphb->cbBlock)
             return {std::span(static_cast<std::byte *>(lphb->hmem), lphb->cbBlock), static_cast<std::ptrdiff_t>(p - base)};
     }
@@ -432,19 +432,19 @@ NATIVEBYTEWINDOW BbwFromLp(APPSESSION &app, void *lp) noexcept { return BbwFromL
 NATIVEBYTEWINDOW AbwFromLp(APPSESSION &app, void *lp) noexcept { return BbwFromLpHt(app, lp, htMisc); }
 NATIVEBYTEWINDOW TbwFromLp(APPSESSION &app, void *lp) noexcept { return BbwFromLpHt(app, lp, htThings); }
 
-void CopyThingBytes(APPSESSION &app, THING *pth, const void *rgb, uint16_t cb) noexcept {
+void CopyThingBytes(APPSESSION &app, THING *pth, const void *rgb, std::uint16_t cb) noexcept {
     auto storage = TbwFromLp(app, pth).Rgb();
     assert(cb <= storage.size());
     std::memcpy(storage.data(), rgb, cb);
 }
 
-MSGPLR *LpmsgplrAlloc(APPSESSION &app, uint16_t cb) {
+MSGPLR *LpmsgplrAlloc(APPSESSION &app, std::uint16_t cb) {
     void *lp = HeapIO().pfnAllocate(app, cb, htPlrMsg);
-    return LpStartPl<MSGPLR, uint8_t>(lp, HeapIO().pfnExtent(app, lp));
+    return LpStartPl<MSGPLR, std::uint8_t>(lp, HeapIO().pfnExtent(app, lp));
 }
-MSGPLR *LpmsgplrReAlloc(APPSESSION &app, MSGPLR *lpmp, uint16_t cb) {
+MSGPLR *LpmsgplrReAlloc(APPSESSION &app, MSGPLR *lpmp, std::uint16_t cb) {
     void *lp = HeapIO().pfnResize(app, lpmp, cb, htPlrMsg);
-    return LpStartPl<MSGPLR, uint8_t>(lp, HeapIO().pfnExtent(app, lp));
+    return LpStartPl<MSGPLR, std::uint8_t>(lp, HeapIO().pfnExtent(app, lp));
 }
 
 NATIVEBYTEWINDOW MbwFromLp(APPSESSION &app, void *lp) noexcept { return BbwFromLpHt(app, lp, htMsg); }

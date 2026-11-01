@@ -18,7 +18,7 @@
 
 char rgTOWidth[2][2] = {{-3}, {2, 1}};
 
-int16_t InitMDIApp(APPSESSION &app) {
+std::int16_t InitMDIApp(APPSESSION &app) {
     WNDCLASS wc;
 
     wc.style = 11;
@@ -131,31 +131,31 @@ int16_t InitMDIApp(APPSESSION &app) {
 void CreateChildWindows(APPSESSION &app) {
     char    szData[512];
     char    szNameUtf8[128], szPlayerUtf8[256];
-    size_t  cch;
+    std::size_t  cch;
     POINT16 pt;
     char   *psz;
     char    szGame[15];
 
     if (app.state.idPlayer != iplrNone) {
-        psz = strrchr(app.state.szBase, chDirSep);
+        psz = std::strrchr(app.state.szBase, chDirSep);
 #ifdef _WIN32
-        if (!psz) psz = strrchr(app.state.szBase, '/');
-        if (!psz) psz = strrchr(app.state.szBase, ':');
+        if (!psz) psz = std::strrchr(app.state.szBase, '/');
+        if (!psz) psz = std::strrchr(app.state.szBase, ':');
 #endif
         psz = psz ? psz + 1 : app.state.szBase;
         cch = CchUtf8Prefix(psz, 8);
-        memcpy(szGame, psz, cch); szGame[cch] = 0;
+        std::memcpy(szGame, psz, cch); szGame[cch] = 0;
         for (psz = szGame; *psz; psz++) if (*psz >= 'A' && *psz <= 'Z') *psz += 'a' - 'A';
-        win32::wsprintfA(&szGame[strlen(szGame)], ".m%d", app.state.idPlayer + 1);
-        CchCopyUtf8(szNameUtf8, sizeof(szNameUtf8), app.state.game.szName, strlen(app.state.game.szName));
+        win32::wsprintfA(&szGame[std::strlen(szGame)], ".m%d", app.state.idPlayer + 1);
+        CchCopyUtf8(szNameUtf8, sizeof(szNameUtf8), app.state.game.szName, std::strlen(app.state.game.szName));
         psz = TextIO().pfnPlayerName(app, app.state.idPlayer, 0, 1, 0, 0, nullptr);
-        CchCopyUtf8(szPlayerUtf8, sizeof(szPlayerUtf8), psz, strlen(psz));
-        snprintf(szData, sizeof(szData), "Stars! -- %s -- %s -- %s", szNameUtf8, szPlayerUtf8, szGame);
+        CchCopyUtf8(szPlayerUtf8, sizeof(szPlayerUtf8), psz, std::strlen(psz));
+        std::snprintf(szData, sizeof(szData), "Stars! -- %s -- %s -- %s", szNameUtf8, szPlayerUtf8, szGame);
     } else {
         TextIO().pfnCchGetString(app, idsStarsSHostMode, app.state.szWork);
         win32::wsprintfA(szData, app.state.szWork, app.state.game.szName);
-        CchCopyUtf8(szNameUtf8, sizeof(szNameUtf8), szData, strlen(szData));
-        strcpy(szData, szNameUtf8);
+        CchCopyUtf8(szNameUtf8, sizeof(szNameUtf8), szData, std::strlen(szData));
+        std::strcpy(szData, szNameUtf8);
     }
     FSetNativeWindowTitle(app.lpui->hwndFrame, szData);
     if (app.state.idPlayer != iplrNone) {
@@ -200,28 +200,28 @@ void PostOpenGame(APPSESSION &app) {
 
 LRESULT  FrameWndProc(APPSESSION &app, HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     HDC          hdc;
-    int16_t      i;
+    std::int16_t      i;
     HPALETTE     hpalSav;
     TEXTMETRIC   tm;
     POINT16      pt;
     FARPROC      lpProc;
-    int16_t      fRet;
-    int16_t      fErrSav;
-    int16_t      idCur;
-    int16_t      id;
-    uint16_t     uTimerIdOld;
+    std::int16_t      fRet;
+    std::int16_t      fErrSav;
+    std::int16_t      idCur;
+    std::int16_t      id;
+    std::uint16_t     uTimerIdOld;
     char         szExt[4];
-    int16_t      iOffset;
-    int16_t      idPlanet;
+    std::int16_t      iOffset;
+    std::int16_t      idPlanet;
     RECT         rc;
     RECT         rc2;
     PAINTSTRUCT  ps;
-    int16_t      yOffset;
+    std::int16_t      yOffset;
     HBRUSH       hbrSav;
     HCURSOR      hcs;
     POINT16      ptOld;
     PaneSplitter grSel;
-    int16_t      grSelRaw;
+    std::int16_t      grSelRaw;
     POINT16      ptAct;
     POINT16      ptD;
     POINT16      ptStart;
@@ -646,19 +646,19 @@ LRESULT  FrameWndProc(APPSESSION &app, HWND hwnd, UINT msg, WPARAM wParam, LPARA
 }
 
 POINT16 InvertPaneBorder(APPSESSION &app, HDC hdc, PaneSplitter grSel, POINT16 dpt, POINT16 *pdptPrev) {
-    int16_t notMin;
-    int16_t dChg;
+    std::int16_t notMin;
+    std::int16_t dChg;
     POINT16 dptT;
     POINT16 dptPrev;
-    int16_t dyAboveMinCur;
+    std::int16_t dyAboveMinCur;
     POINT16 dptOld;
-    int16_t dyMsgCur;
-    int16_t dyMinAboveH2;
-    int16_t dyPlanMin;
-    int16_t dxScanMin;
-    int16_t x;
+    std::int16_t dyMsgCur;
+    std::int16_t dyMinAboveH2;
+    std::int16_t dyPlanMin;
+    std::int16_t dxScanMin;
+    std::int16_t x;
     POINT16 pt;
-    int16_t dyMin;
+    std::int16_t dyMin;
 
     dptOld = dpt;
     if (pdptPrev && grSel != splitVertical) {
@@ -751,10 +751,10 @@ POINT16 InvertPaneBorder(APPSESSION &app, HDC hdc, PaneSplitter grSel, POINT16 d
         dpt = dptT;
     }
     // Splitter values can combine the three boundary bits.
-    switch (static_cast<uint16_t>(grSel)) {
+    switch (static_cast<std::uint16_t>(grSel)) {
     default:
         dpt.y = 0;
-        if (!pdptPrev || abs(dptPrev.x) >= 6) {
+        if (!pdptPrev || std::abs(dptPrev.x) >= 6) {
             if (pdptPrev) {
                 win32::PatBlt(hdc, app.lpui->vfs.xTop + dpt.x - dptPrev.x + 1, 0, 6, app.lpui->vfs.dy, win32::PATINVERT);
             }
@@ -805,11 +805,11 @@ POINT16 InvertPaneBorder(APPSESSION &app, HDC hdc, PaneSplitter grSel, POINT16 d
     return dpt;
 }
 
-HCURSOR HcrsFromFrameWindowPt(APPSESSION &app, POINT16 pt, int16_t *pgrSel) {
+HCURSOR HcrsFromFrameWindowPt(APPSESSION &app, POINT16 pt, std::int16_t *pgrSel) {
     HCURSOR hcs;
-    int16_t fInHBar2;
-    int16_t fInHBar1;
-    int16_t fInVBar;
+    std::int16_t fInHBar2;
+    std::int16_t fInHBar1;
+    std::int16_t fInVBar;
 
     hcs = 0;
     fInVBar = pt.x >= app.lpui->vfs.xTop && pt.x < app.lpui->vfs.xTop + 8;
@@ -901,54 +901,54 @@ void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
     POINT16  pt;
     HMENU    hmenu;
     FARPROC  lpProc;
-    int16_t  dy;
+    std::int16_t  dy;
     char     szExt[4];
-    int16_t  dx;
-    int16_t  fRet;
+    std::int16_t  dx;
+    std::int16_t  fRet;
     RECT     rc;
-    int16_t  iplrOld;
+    std::int16_t  iplrOld;
     char    *psz;
     char     szT[256];
-    int16_t  cPageX;
+    std::int16_t  cPageX;
     PLANET  *lpplMac;
     PLANET  *lppl;
-    int16_t  i;
+    std::int16_t  i;
     PRINTDLG pd;
     int      iPrintResult;
-    int16_t  cPageY;
-    int16_t  xPage;
-    int16_t  dxMax;
-    int16_t  dxDPI;
-    int16_t  dyPrintTiny;
-    int16_t  dMargin;
-    int16_t  y;
-    int32_t  ldx;
+    std::int16_t  cPageY;
+    std::int16_t  xPage;
+    std::int16_t  dxMax;
+    std::int16_t  dxDPI;
+    std::int16_t  dyPrintTiny;
+    std::int16_t  dMargin;
+    std::int16_t  y;
+    std::int32_t  ldx;
     HFONT    hfontPrintTiny;
     HFONT    hfontPrint;
     POINT16  ptLegendB;
     POINT16  ptLegendA;
-    int16_t  dyPrint;
-    int16_t  dyMax;
+    std::int16_t  dyPrint;
+    std::int16_t  dyMax;
     HFONT    hfontSav;
-    int16_t  dSize;
-    int16_t  yPage;
-    int16_t  cch;
-    int32_t  ldy;
-    int16_t  dyDPI;
-    int16_t  yOff;
-    int16_t  xOff;
-    int32_t  x;
-    int16_t  idCur;
+    std::int16_t  dSize;
+    std::int16_t  yPage;
+    std::int16_t  cch;
+    std::int32_t  ldy;
+    std::int16_t  dyDPI;
+    std::int16_t  yOff;
+    std::int16_t  xOff;
+    std::int32_t  x;
+    std::int16_t  idCur;
     HCURSOR  hcurSav;
     HCURSOR  hcurT;
-    uint32_t dwTickCur;
-    uint32_t dwTickBase;
-    int16_t  mf;
+    std::uint32_t dwTickCur;
+    std::uint32_t dwTickBase;
+    std::int16_t  mf;
     StringId ids;
-    int16_t  cObj;
-    int16_t  ifl;
+    std::int16_t  cObj;
+    std::int16_t  ifl;
     FLEET   *lpfl;
-    int16_t  id;
+    std::int16_t  id;
 
     if (LOWORD(wParam) >= IDM_POPUP_BASE && LOWORD(wParam) < 15100) {
         app.lpui->iPopMenuSel = LOWORD(wParam) - 15000;
@@ -997,8 +997,8 @@ void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
             if ((app.state.gd.fTutorial && !FAskKillTutor(app)) || !app.lpui->vrgszMRU || app.lpui->vrgszMRU[(LOWORD(wParam) - 4300) * 256] == 0)
                 break;
             iplrOld = app.state.idPlayer;
-            strcpy(szT, app.lpui->vrgszMRU + 256 * (LOWORD(wParam) - 4300));
-            psz = strrchr(szT, 46);
+            std::strcpy(szT, app.lpui->vrgszMRU + 256 * (LOWORD(wParam) - 4300));
+            psz = std::strrchr(szT, 46);
             if (psz) {
                 if (!FIsManagedLibraryGameFile(szT)) {
                     if (FImportDesktopFile(app, hwnd, szT) && app.lpui->hwndTitle) {
@@ -1010,7 +1010,7 @@ void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
                 if (!FFileExists(szT)) goto LShowMissingRecent;
                 app.state.ini.fStartupFile = 1;
                 DestroyCurGame(app);
-                strcpy(app.state.szBase, szT);
+                std::strcpy(app.state.szBase, szT);
                 if (FOpenGame(app, hwnd, 0) <= 0)
                     break;
                 InitializeMenu(app, nullptr);
@@ -1024,7 +1024,7 @@ void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
                 break;
             }
         LShowMissingRecent:
-            strcpy(app.state.szWork, szT);
+            std::strcpy(app.state.szWork, szT);
             AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsCantOpenFile, nullptr), win32::MB_ICONHAND);
             break;
         case IDM_RACE_CREATE:
@@ -1046,7 +1046,7 @@ void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
                 break;
             cPageX = app.lpui->vrgcPrintMapPage[0];
             cPageY = app.lpui->vrgcPrintMapPage[1];
-            memset(&pd, 0, sizeof(PRINTDLG));
+            std::memset(&pd, 0, sizeof(PRINTDLG));
             pd.lStructSize = sizeof(PRINTDLG);
             pd.Flags = win32::PD_RETURNDC | win32::PD_RETURNDEFAULT;
             if (win32::PrintDlgA(&pd) != 0) {
@@ -1074,8 +1074,8 @@ void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
                     cPageX = cPageY;
                     cPageY = i;
                 }
-                ldx = static_cast<uint32_t>((dxMax * cPageX));
-                ldy = static_cast<uint32_t>((dyMax * cPageY));
+                ldx = static_cast<std::uint32_t>((dxMax * cPageX));
+                ldy = static_cast<std::uint32_t>((dyMax * cPageY));
                 if (ldx > 32000) {
                     ldx = 32000;
                 }
@@ -1092,8 +1092,8 @@ void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
                     ptLegendB.x = dSize / 2;
                     ptLegendB.y = ptLegendA.y;
                 } else {
-                    if (ldx - static_cast<int16_t>((static_cast<int16_t>((3 * dxDPI)) / 2)) < ldy) {
-                        ldy = ldx - static_cast<int16_t>((static_cast<int16_t>((3 * dxDPI)) / 2));
+                    if (ldx - static_cast<std::int16_t>((static_cast<std::int16_t>((3 * dxDPI)) / 2)) < ldy) {
+                        ldy = ldx - static_cast<std::int16_t>((static_cast<std::int16_t>((3 * dxDPI)) / 2));
                     }
                     dSize = LOWORD(ldy);
                     ptLegendA.x = dSize + dMargin;
@@ -1121,10 +1121,10 @@ void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
                         cch = TextIO().pfnCchGetString(app, idsStarsUniverseMap, app.state.szWork);
                         win32::TextOutA(pd.hDC, ptLegendA.x + xOff, y, app.state.szWork, cch);
                         y += dyPrint;
-                        win32::TextOutA(pd.hDC, ptLegendA.x + xOff, y, app.state.game.szName, strlen(app.state.game.szName));
+                        win32::TextOutA(pd.hDC, ptLegendA.x + xOff, y, app.state.game.szName, std::strlen(app.state.game.szName));
                         y += dyPrint;
                         psz = TextIO().pfnPlayerName(app, app.state.idPlayer, 1, 1, 1, 0, nullptr);
-                        win32::TextOutA(pd.hDC, ptLegendA.x + xOff, y, psz, strlen(psz));
+                        win32::TextOutA(pd.hDC, ptLegendA.x + xOff, y, psz, std::strlen(psz));
                         y += dyPrint;
                         cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsYearD), app.state.game.turn + 2400);
                         win32::TextOutA(pd.hDC, ptLegendA.x + xOff, y, app.state.szWork, cch);
@@ -1139,15 +1139,15 @@ void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
                             if (hfontPrintTiny) {
                                 win32::SelectObject(pd.hDC, hfontPrintTiny);
                             }
-                            CtrTextOut(pd.hDC, ptLegendB.x + xOff, static_cast<int16_t>((3 * dyPrint)) / 2 + y - dyPrintTiny / 2, "|", 1);
-                            CtrTextOut(pd.hDC, ptLegendB.x + xOff, static_cast<int16_t>((5 * dyPrint)) / 2 + y - dyPrintTiny / 2, "+", 1);
-                            CtrTextOut(pd.hDC, ptLegendB.x + xOff, static_cast<int16_t>((9 * dyPrint)) / 2 + y + 8 - dyPrintTiny, "2", 1);
+                            CtrTextOut(pd.hDC, ptLegendB.x + xOff, static_cast<std::int16_t>((3 * dyPrint)) / 2 + y - dyPrintTiny / 2, "|", 1);
+                            CtrTextOut(pd.hDC, ptLegendB.x + xOff, static_cast<std::int16_t>((5 * dyPrint)) / 2 + y - dyPrintTiny / 2, "+", 1);
+                            CtrTextOut(pd.hDC, ptLegendB.x + xOff, static_cast<std::int16_t>((9 * dyPrint)) / 2 + y + 8 - dyPrintTiny, "2", 1);
                             if (hfontPrint) {
                                 win32::SelectObject(pd.hDC, hfontPrint);
                             }
                             DrawPlanetPrintDot(pd.hDC, ptLegendB.x + xOff, y - 4 + dyPrint / 2, 1);
-                            DrawPlanetPrintDot(pd.hDC, ptLegendB.x + xOff, y - 4 + static_cast<int16_t>((7 * dyPrint)) / 2, 0);
-                            DrawPlanetPrintDot(pd.hDC, ptLegendB.x + xOff, static_cast<int16_t>((9 * dyPrint)) / 2 + y + 8, 0);
+                            DrawPlanetPrintDot(pd.hDC, ptLegendB.x + xOff, y - 4 + static_cast<std::int16_t>((7 * dyPrint)) / 2, 0);
+                            DrawPlanetPrintDot(pd.hDC, ptLegendB.x + xOff, static_cast<std::int16_t>((9 * dyPrint)) / 2 + y + 8, 0);
                         }
                         if ((app.lpui->grbitScan & grbitScanViewMask) != 5) {
                             if (hfontPrintTiny) {
@@ -1156,10 +1156,10 @@ void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
                             lppl = app.state.lpPlanets;
                             lpplMac = app.state.lpPlanets + app.state.cPlanet;
                             for (; lppl < lpplMac; lppl++) {
-                                x = static_cast<int16_t>((app.state.rgptPlan[lppl->id].x - 1000));
-                                y = static_cast<int16_t>((app.state.dGalInv - 1000 - app.state.rgptPlan[lppl->id].y));
-                                x = static_cast<int32_t>((static_cast<int32_t>((x * dSize)) / app.state.dGal)) + dMargin + xOff;
-                                y = static_cast<int32_t>((static_cast<int32_t>((y * dSize)) / app.state.dGal)) + dMargin + yOff;
+                                x = static_cast<std::int16_t>((app.state.rgptPlan[lppl->id].x - 1000));
+                                y = static_cast<std::int16_t>((app.state.dGalInv - 1000 - app.state.rgptPlan[lppl->id].y));
+                                x = static_cast<std::int32_t>((static_cast<std::int32_t>((x * dSize)) / app.state.dGal)) + dMargin + xOff;
+                                y = static_cast<std::int32_t>((static_cast<std::int32_t>((y * dSize)) / app.state.dGal)) + dMargin + yOff;
                                 if (lppl->iPlayer == app.state.idPlayer) {
                                     if (lppl->fStarbase) {
                                         CtrTextOut(pd.hDC, LOWORD(x), LOWORD(y) + 4 - dyPrintTiny,
@@ -1176,10 +1176,10 @@ void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
                             win32::SelectObject(pd.hDC, hfontPrint);
                         }
                         for (i = 0; i < app.state.game.cPlanMax; i++) {
-                            x = static_cast<int16_t>((app.state.rgptPlan[i].x - 1000));
-                            y = static_cast<int16_t>((app.state.dGalInv - 1000 - app.state.rgptPlan[i].y));
-                            x = static_cast<int32_t>((static_cast<int32_t>((x * dSize)) / app.state.dGal)) + dMargin + xOff;
-                            y = static_cast<int32_t>((static_cast<int32_t>((y * dSize)) / app.state.dGal)) + dMargin + yOff;
+                            x = static_cast<std::int16_t>((app.state.rgptPlan[i].x - 1000));
+                            y = static_cast<std::int16_t>((app.state.dGalInv - 1000 - app.state.rgptPlan[i].y));
+                            x = static_cast<std::int32_t>((static_cast<std::int32_t>((x * dSize)) / app.state.dGal)) + dMargin + xOff;
+                            y = static_cast<std::int32_t>((static_cast<std::int32_t>((y * dSize)) / app.state.dGal)) + dMargin + yOff;
                             DrawPlanetPrintDot(pd.hDC, LOWORD(x), LOWORD(y), 0);
                             if (app.lpui->grbitScan & grbitScanPlanetNames) {
                                 CtrTextOut(pd.hDC, LOWORD(x), LOWORD(y) + 14, TextIO().pfnPlanetName(app, i), 0);
@@ -1275,8 +1275,8 @@ LPrintMapCleanup:
                         AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, static_cast<StringId>(app.state.idsFileError), nullptr), win32::MB_ICONHAND);
                         break;
                     }
-                    strcpy(app.state.szWork, app.state.szBase);
-                    strcat(app.state.szWork, ".x1");
+                    std::strcpy(app.state.szWork, app.state.szBase);
+                    std::strcat(app.state.szWork, ".x1");
                     RemoveNativeFile(app.state.szWork);
                     RecordIO().pfnDirtyGame(app, 0);
                     ShowProgressGauge(app);
@@ -1441,7 +1441,7 @@ LPrintMapCleanup:
             }
         case IDM_HELP_CONTEXT_13002:
         case IDM_HELP_INTRO:
-            win32::WinHelpA(hwnd, app.lpui->szHelpFile, win32::HELP_CONTEXT, static_cast<uint32_t>((LOWORD(wParam) == IDM_HELP_INTRO ? 4501 : 13002)));
+            win32::WinHelpA(hwnd, app.lpui->szHelpFile, win32::HELP_CONTEXT, static_cast<std::uint32_t>((LOWORD(wParam) == IDM_HELP_INTRO ? 4501 : 13002)));
             break;
         case IDM_HELP_CONTENTS:
         case IDM_HELP_CONTENTS2:
@@ -1536,7 +1536,7 @@ LPrintMapCleanup:
                 break;
             WriteIniSettings(app);
             DestroyCurGame(app);
-            strcpy(app.state.szBase, app.state.szWork);
+            std::strcpy(app.state.szBase, app.state.szWork);
             app.state.ini.grobjSel = 0;
             app.state.ini.iObjSel = 0;
             app.state.ini.idPlayer = iplrNone;
@@ -1661,8 +1661,8 @@ LPrintMapCleanup:
 }
 
 void InitializeMenu(APPSESSION &app, HMENU hmenu) {
-    int16_t cMenu;
-    int16_t i;
+    std::int16_t cMenu;
+    std::int16_t i;
     HMENU   hmenuSub;
 
     if (!hmenu) {
@@ -1676,7 +1676,7 @@ void InitializeMenu(APPSESSION &app, HMENU hmenu) {
         app.state.szWork[0] = '&';
         app.state.szWork[1] = i + '1';
         app.state.szWork[2] = ' ';
-        strcpy(&app.state.szWork[3], app.lpui->vrgszMRU + 256 * i);
+        std::strcpy(&app.state.szWork[3], app.lpui->vrgszMRU + 256 * i);
         win32::InsertMenuA(hmenuSub, i + 9, win32::MF_BYPOSITION, i + 4300, app.state.szWork);
     }
     win32::EnableMenuItem(hmenu, 106, app.state.szBase[0] != 0 && !app.state.game.fSinglePlr ? win32::MF_ENABLED : win32::MF_GRAYED | win32::MF_DISABLED);
@@ -1707,7 +1707,7 @@ void InitializeMenu(APPSESSION &app, HMENU hmenu) {
 }
 
 HMENU GetASubMenu(APPSESSION &app, HWND hwnd, MainMenu iMenu) {
-    int16_t fChildMenu;
+    std::int16_t fChildMenu;
     HMENU   hmenu;
 
     fChildMenu = app.lpui->hwndActive && win32::IsZoomed(app.lpui->hwndActive) != 0;
@@ -1716,25 +1716,25 @@ HMENU GetASubMenu(APPSESSION &app, HWND hwnd, MainMenu iMenu) {
     return hmenu;
 }
 
-int16_t FOpenGame(APPSESSION &app, HWND hwnd, int16_t fRaceOnly) {
+std::int16_t FOpenGame(APPSESSION &app, HWND hwnd, std::int16_t fRaceOnly) {
     OPENFILENAME ofn;
-    uint16_t     i;
+    std::uint16_t     i;
     char         szFile[256];
     char        *pch;
     char         szFileTitle[256];
     char         szFilter[256];
-    int16_t      fRet;
+    std::int16_t      fRet;
 
     if (app.state.ini.fStartupFile) {
-        strcpy(szFile, app.state.szBase);
-        pch = strrchr(app.state.szBase, chDirSep);
+        std::strcpy(szFile, app.state.szBase);
+        pch = std::strrchr(app.state.szBase, chDirSep);
         if (pch)
             *pch = 0;
-        pch = strrchr(szFile, 46);
+        pch = std::strrchr(szFile, 46);
         if (!pch) {
             SetSzWorkFromDt(app, dtHost, iplrNone);
-            strcpy(szFile, app.state.szWork);
-            pch = strrchr(szFile, 46);
+            std::strcpy(szFile, app.state.szWork);
+            pch = std::strrchr(szFile, 46);
         }
         ofn.nFileExtension = pch - szFile + 1;
         ofn.nFileOffset = 0;
@@ -1748,7 +1748,7 @@ int16_t FOpenGame(APPSESSION &app, HWND hwnd, int16_t fRaceOnly) {
             szFilter[i] = 0;
         }
     }
-    memset(&ofn, 0, sizeof(OPENFILENAME));
+    std::memset(&ofn, 0, sizeof(OPENFILENAME));
     ofn.lStructSize = sizeof(OPENFILENAME);
     ofn.hwndOwner = hwnd;
     ofn.lpstrFilter = szFilter;
@@ -1768,7 +1768,7 @@ LGotFileName:
     if (fRaceOnly) {
         if (fRet > 0) {
             if (!FIsManagedLibraryRaceFile(szFile)) return FImportLibraryRace(app, hwnd, szFile);
-            pch = szFile + strlen(szFile);
+            pch = szFile + std::strlen(szFile);
             while (pch > szFile && pch[-1] != '/' && pch[-1] != '\\') pch--;
             return FLoadLibraryRace(app, hwnd, pch);
         }
@@ -1786,7 +1786,7 @@ LGotFileName:
     }
     szFile[ofn.nFileExtension - 1] = 0;
     DestroyCurGame(app);
-    strcpy(app.state.szBase, szFile);
+    std::strcpy(app.state.szBase, szFile);
     if (!FLoadGame(app, szFile, &szFile[ofn.nFileExtension])) {
         if (app.state.ini.fStartupFile) {
             app.state.ini.SetWFlags(0);
@@ -1797,10 +1797,10 @@ LGotFileName:
     if (app.state.ini.fStartupFile) {
         app.state.fFileErrSilent = 0;
         app.state.ini.fStartupFile = 0;
-        pch = strrchr(szFile, chDirSep);
+        pch = std::strrchr(szFile, chDirSep);
         if (pch) {
             i = pch - szFile;
-            strncpy(app.lpui->szDirName, szFile, i);
+            std::strncpy(app.lpui->szDirName, szFile, i);
             app.lpui->szDirName[i] = 0;
         }
         if (app.state.idPlayer == iplrNone && !app.state.ini.fGen) {
@@ -1826,7 +1826,7 @@ LGotFileName:
 
 void BringUpHostDlg(APPSESSION &app) {
     FARPROC lpProc;
-    int16_t fRet;
+    std::int16_t fRet;
     HCURSOR hcurSav;
 
     if (!app.state.gd.fHostMode) {
@@ -1882,18 +1882,18 @@ Top:
 }
 
 void DrawHostDialog2(APPSESSION &app, HWND hwnd, HDC hdcIn) {
-    uint32_t dsec;
+    std::uint32_t dsec;
     HDC      hdc;
-    uint16_t dhour;
-    int16_t  bkMode;
-    int16_t  yCur;
-    int16_t  i;
-    uint16_t dmin;
-    int16_t  dday;
-    int16_t  cch;
+    std::uint16_t dhour;
+    std::int16_t  bkMode;
+    std::int16_t  yCur;
+    std::int16_t  i;
+    std::uint16_t dmin;
+    std::int16_t  dday;
+    std::int16_t  cch;
     RECT     rcDiamond;
     COLORREF crBackSav;
-    int16_t  x;
+    std::int16_t  x;
     char     szStat[30];
 
     if (hdcIn) {
@@ -1919,7 +1919,7 @@ void DrawHostDialog2(APPSESSION &app, HWND hwnd, HDC hdcIn) {
             cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsSS), TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, nullptr), szStat);
         }
         if (app.state.rgplr[i].fHacker) {
-            strcat(app.state.szWork, " - HACKER");
+            std::strcat(app.state.szWork, " - HACKER");
             cch += 9;
         }
         win32::TextOutA(hdc, x + 4, yCur, app.state.szWork, cch);
@@ -1929,21 +1929,21 @@ void DrawHostDialog2(APPSESSION &app, HWND hwnd, HDC hdcIn) {
     }
     cch = win32::wsprintfA(app.state.szWork, app.state.PCTD, app.state.game.turn + 2401);
     ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_HOST_NEXT_YEAR_TEXT), app.state.szWork);
-    dsec = static_cast<uint32_t>(((win32::GetTickCount() - app.state.ctickLast) / 1000));
+    dsec = static_cast<std::uint32_t>(((win32::GetTickCount() - app.state.ctickLast) / 1000));
     if (dsec < 60) {
         cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDSeconds), LOWORD(dsec));
     } else {
-        dmin = LOWORD(static_cast<uint32_t>((dsec / 60)));
-        dsec -= static_cast<uint32_t>((60 * dmin));
+        dmin = LOWORD(static_cast<std::uint32_t>((dsec / 60)));
+        dsec -= static_cast<std::uint32_t>((60 * dmin));
         if (dmin < 60) {
             cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsD02d), dmin, LOWORD(dsec));
         } else {
-            dhour = static_cast<uint32_t>(dmin) / 60;
+            dhour = static_cast<std::uint32_t>(dmin) / 60;
             dmin -= 60 * dhour;
             if (dhour < 24) {
                 cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsD02d02d), dhour, dmin, LOWORD(dsec));
             } else {
-                dday = static_cast<uint32_t>(dhour) / 24;
+                dday = static_cast<std::uint32_t>(dhour) / 24;
                 dhour -= dday * 24;
                 cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDDaysD02d02d), dday, dhour, dmin, LOWORD(dsec));
             }
@@ -1962,15 +1962,15 @@ INT_PTR  HostModeDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
 
     FARPROC     lpProc;
-    int16_t     fRet;
+    std::int16_t     fRet;
     RECT        rc;
-    int16_t     mf;
+    std::int16_t     mf;
     POINT16     pt;
-    int16_t     tpm;
-    int16_t     i;
-    int16_t     iRet;
-    int16_t     iSel;
-    int16_t     iDiamond;
+    std::int16_t     tpm;
+    std::int16_t     i;
+    std::int16_t     iRet;
+    std::int16_t     iSel;
+    std::int16_t     iDiamond;
     HMENU       hmenuPopup;
     win32::MSG         msg;
     HDC         hdc;
@@ -2020,8 +2020,8 @@ INT_PTR  HostModeDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         ScreenToClient16(hwnd, &pt);
         if (pt.x < 6 || pt.x >= app.state.dyArial8 + 7 || pt.y < 48)
             break;
-        iDiamond = static_cast<int16_t>((pt.y - 48)) / (app.state.dyArial8 + 4);
-        if (iDiamond >= app.state.game.cPlayer || static_cast<int16_t>((pt.y - 48)) % (app.state.dyArial8 + 4) >= app.state.dyArial8 + 1)
+        iDiamond = static_cast<std::int16_t>((pt.y - 48)) / (app.state.dyArial8 + 4);
+        if (iDiamond >= app.state.game.cPlayer || static_cast<std::int16_t>((pt.y - 48)) % (app.state.dyArial8 + 4) >= app.state.dyArial8 + 1)
             break;
         if (message == win32::WM_SETCURSOR) {
             win32::SetCursor(app.lpui->hcurHand);
@@ -2186,16 +2186,16 @@ INT_PTR  HostOptionsDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam
     return 0;
 }
 
-void DrawHostOptions(HWND hwnd, HDC hdc, int16_t iDraw) { return; }
+void DrawHostOptions(HWND hwnd, HDC hdc, std::int16_t iDraw) { return; }
 
 void  HostTimerProc(HWND hwnd, UINT msg, UINT_PTR idTimer, DWORD dwTime) {
     APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
 
     HWND    hwndT;
     char    szExt[4];
-    int16_t cOut;
-    int16_t fSav;
-    int16_t idCur;
+    std::int16_t cOut;
+    std::int16_t fSav;
+    std::int16_t idCur;
     HCURSOR hcurSav;
 
     if (!app.lpui->fProcessingTimer) {
@@ -2235,9 +2235,9 @@ void  HostTimerProc(HWND hwnd, UINT msg, UINT_PTR idTimer, DWORD dwTime) {
         }
         win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsHostModeDPlayer), cOut);
         if (cOut != 1) {
-            strcat(app.state.szWork, "s");
+            std::strcat(app.state.szWork, "s");
         }
-        strcat(app.state.szWork, TextIO().pfnCompressed(app, idsOut));
+        std::strcat(app.state.szWork, TextIO().pfnCompressed(app, idsOut));
         ControlIO().pfnSetWindowText(app.lpui->hwndFrame, app.state.szWork);
     RedrawText:
         hwndT = win32::GetWindow(app.lpui->hwndFrame, win32::GW_HWNDPREV);
@@ -2295,16 +2295,16 @@ void SetWindowIniString(APPSESSION &app, char *sz, HWND hwnd) {
 }
 
 void WriteIniSettings(APPSESSION &app) {
-    int16_t  ctile;
+    std::int16_t  ctile;
     char     szPd[3];
     TILE    *rgtile;
-    int16_t  i;
-    int16_t  iPass;
+    std::int16_t  i;
+    std::int16_t  iPass;
     char     szEntry[16];
     char     szIniFile[16];
     char    *psz;
     char     szSection[16];
-    uint16_t iCol;
+    std::uint16_t iCol;
     char     ch;
 
     szPd[0] = '%';
@@ -2406,7 +2406,7 @@ void WriteIniSettings(APPSESSION &app) {
     case grobjOther:
         ch = 'E';
     }
-    win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsCCD), ch, static_cast<int16_t>(static_cast<int8_t>(LOBYTE(app.state.idPlayer + 66))), app.state.sel.id);
+    win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsCCD), ch, static_cast<std::int16_t>(static_cast<std::int8_t>(LOBYTE(app.state.idPlayer + 66))), app.state.sel.id);
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
     TextIO().pfnCchGetString(app, idsMessage, szEntry);
     win32::wsprintfA(app.state.szWork, app.state.PCTD, app.state.iMsgCur);
@@ -2510,15 +2510,15 @@ void WriteIniSettings(APPSESSION &app) {
 }
 
 void RefitFrameChildren(APPSESSION &app) {
-    int16_t dyMsg;
+    std::int16_t dyMsg;
     HMENU   hmenu;
-    int16_t i;
-    int16_t dyMinMin;
-    int16_t dyMsgMin;
-    int16_t dyMin;
-    int16_t dyT;
-    int16_t dyTot;
-    int16_t yScanner;
+    std::int16_t i;
+    std::int16_t dyMinMin;
+    std::int16_t dyMsgMin;
+    std::int16_t dyMin;
+    std::int16_t dyT;
+    std::int16_t dyTot;
+    std::int16_t yScanner;
 
     if (app.lpui->hwndFrame && win32::IsIconic(app.lpui->hwndFrame) == 0) {
         switch (app.lpui->iWindowLayout) {
@@ -2615,13 +2615,13 @@ LRESULT  TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
     NATIVEOWNER<LOGFONT, win32::LocalFree> plfOwner;
     HDC         hdc;
-    int16_t     i;
+    std::int16_t     i;
     HPALETTE    hpalSav;
     RECT        rc;
-    int16_t     dy;
-    int16_t     dxGap;
-    int16_t     dx;
-    int16_t     xCur;
+    std::int16_t     dy;
+    std::int16_t     dxGap;
+    std::int16_t     dx;
+    std::int16_t     xCur;
     char       *psz;
     char        szRaceName[256];
     PAINTSTRUCT ps;
@@ -2632,13 +2632,13 @@ LRESULT  TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     HFONT       hfont;
     HFONT       hfontSav;
     HWND        hwndButton;
-    int16_t     idButton;
-    int16_t     fIdleSav;
+    std::int16_t     idButton;
+    std::int16_t     fIdleSav;
 
     switch (msg) {
     case win32::WM_CREATE:
-        if (getenv("STARS_DEBUG_LIBRARY_STARTUP"))
-            fprintf(stderr, "[DEBUG-library-startup] TitleWndProc WM_CREATE begin hwnd=%p visible=%d\n",
+        if (std::getenv("STARS_DEBUG_LIBRARY_STARTUP"))
+            std::fprintf(stderr, "[DEBUG-library-startup] TitleWndProc WM_CREATE begin hwnd=%p visible=%d\n",
                     static_cast<void *>(hwnd), win32::IsWindowVisible(hwnd));
         if (app.lpui->vcScreenColors >= 8) {
             app.lpui->vhdibTitle = HdibLoadBigResource(app, IDDIB_SPLASH);
@@ -2650,12 +2650,12 @@ LRESULT  TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         dx = (((120) < ((rc.right - 48) / 5 - 12)) ? (120) : ((rc.right - 48) / 5 - 12));
         dxGap = (rc.right - 5 * dx) / 6;
         xCur = dxGap;
-        dy = rc.bottom <= 500 ? app.state.dyArial8 * 2 : static_cast<int16_t>((5 * app.state.dyArial8)) / 2;
+        dy = rc.bottom <= 500 ? app.state.dyArial8 * 2 : static_cast<std::int16_t>((5 * app.state.dyArial8)) / 2;
         for (i = 0; i < 5; i++) {
             idButton = i == 3 ? IDC_LIBRARY_TUTORIAL : i == 4 ? 3 : i;
             psz = TextIO().pfnCompressed(app, static_cast<StringId>(i == 3 ? idsLibraryStartTutorial : idsNewGame + idButton));
-            hwndButton = ui::CreateWindowEx(0, "BUTTON", psz, win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP, xCur, rc.bottom - dy - static_cast<int16_t>((5 * app.state.dyArial8)) / 2, dx, dy, hwnd,
-                                      reinterpret_cast<HMENU>(static_cast<uintptr_t>(idButton)), app.lpui->hInst, nullptr);
+            hwndButton = ui::CreateWindowEx(0, "BUTTON", psz, win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP, xCur, rc.bottom - dy - static_cast<std::int16_t>((5 * app.state.dyArial8)) / 2, dx, dy, hwnd,
+                                      reinterpret_cast<HMENU>(static_cast<std::uintptr_t>(idButton)), app.lpui->hInst, nullptr);
             if (i != 3) app.lpui->rghwndBtnSplash[idButton] = hwndButton;
             if (i == 2 && (app.state.szBase[0] == 0 || !FFileExists(app.state.szBase))) {
                 ControlIO().pfnEnableWindow(app.lpui->rghwndBtnSplash[2], 0);
@@ -2667,8 +2667,8 @@ LRESULT  TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         }
         InitLibraryGames(app, hwnd, &rc);
         InitLibraryRaces(app, hwnd, &rc);
-        if (getenv("STARS_DEBUG_LIBRARY_STARTUP"))
-            fprintf(stderr, "[DEBUG-library-startup] TitleWndProc library initialized visible=%d\n", win32::IsWindowVisible(hwnd));
+        if (std::getenv("STARS_DEBUG_LIBRARY_STARTUP"))
+            std::fprintf(stderr, "[DEBUG-library-startup] TitleWndProc library initialized visible=%d\n", win32::IsWindowVisible(hwnd));
         ControlIO().pfnSetWindowText(app.lpui->rghwndBtnSplash[1], TextIO().pfnCompressed(app, idsLibraryOpenGame));
         // Paint while the native window is hidden: startup cleanup can delay
         // the first queued WM_PAINT after CreateWindow makes it visible.
@@ -2878,15 +2878,15 @@ LRESULT  TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             rc.bottom = 0;
             dx = rcWnd.right;
             DrawABunchOfStars(app, hdc, &rcWnd);
-            plf->lfHeight = static_cast<int16_t>(-rcWnd.bottom) / 3;
-            strcpy(plf->lfFaceName, app.lpui->rgszArial[3]);
+            plf->lfHeight = static_cast<std::int16_t>(-rcWnd.bottom) / 3;
+            std::strcpy(plf->lfFaceName, app.lpui->rgszArial[3]);
             hfont = win32::CreateFontIndirectA(plf);
             win32::SetTextColor(hdc, 10158235);
             if (hfont) {
                 hfontSav = static_cast<HFONT>(win32::SelectObject(hdc, hfont));
                 win32::SetBkMode(hdc, win32::TRANSPARENT);
                 rcT = rcWnd;
-                rcT.bottom = static_cast<int16_t>((3 * rcT.bottom)) / 4;
+                rcT.bottom = static_cast<std::int16_t>((3 * rcT.bottom)) / 4;
                 RcCtrTextOut(app, hdc, &rcT, "Stars!", 6);
                 win32::SelectObject(hdc, hfontSav);
                 win32::DeleteObject(hfont);
@@ -2897,9 +2897,9 @@ LRESULT  TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         SzVersion(app);
         win32::GetWindowRect(app.lpui->rghwndBtnSplash[0], &rcT);
         win32::MapWindowPoints(nullptr, hwnd, reinterpret_cast<POINT *>(&rcT), 2);
-        rcWnd.top = rcT.top - static_cast<int16_t>((9 * app.state.dyArial8)) / 2;
-        rcWnd.bottom = static_cast<int16_t>((3 * app.state.dyArial8)) / 2 + rcWnd.top;
-        RcCtrTextOut(app, hdc, &rcWnd, app.state.szWork, strlen(app.state.szWork));
+        rcWnd.top = rcT.top - static_cast<std::int16_t>((9 * app.state.dyArial8)) / 2;
+        rcWnd.bottom = static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2 + rcWnd.top;
+        RcCtrTextOut(app, hdc, &rcWnd, app.state.szWork, std::strlen(app.state.szWork));
         win32::EndPaint(hwnd, &ps);
         plfOwner.reset();
         break;
@@ -2922,7 +2922,7 @@ void RestoreGameWindows(APPSESSION &app) {
     return;
 }
 
-int16_t FinishOpenGame(APPSESSION &app) {
+std::int16_t FinishOpenGame(APPSESSION &app) {
     GrobjClass grobjIni;
     if (app.state.idPlayer != iplrNone) {
         grobjIni = static_cast<GrobjClass>(app.state.ini.grobjSel);

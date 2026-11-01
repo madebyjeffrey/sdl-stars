@@ -13,25 +13,25 @@
 #include "race_query_io.h"
 #include "alert_io.h"
 
-uint32_t rgcrScanMine[3] = {16711680, 65535, 255};
-int16_t  vrgPopRad[19] = {25, 50, 100, 200, 400, 800, 1000, 1500, 2250, 3000, 4000, 5000, 6000, 7500, 9000, 11000, 14000, 18000, 25000};
+std::uint32_t rgcrScanMine[3] = {16711680, 65535, 255};
+std::int16_t  vrgPopRad[19] = {25, 50, 100, 200, 400, 800, 1000, 1500, 2250, 3000, 4000, 5000, 6000, 7500, 9000, 11000, 14000, 18000, 25000};
 
 // Wheel deltas short of a notch, for zooming and sideways scrolling.
-static int16_t dWheelZoom;
-static int16_t dWheelScroll;
+static std::int16_t dWheelZoom;
+static std::int16_t dWheelScroll;
 
 // Dragging the scanner with the left button pans it. fPanDown is set while
 // a plain left press may still become a pan, fPanning once it has. The
 // drag is measured from ptPan, where the scanner's top was xPanTop, yPanTop.
-static int16_t fPanDown;
-static int16_t fPanning;
+static std::int16_t fPanDown;
+static std::int16_t fPanning;
 static POINT16 ptPan;
-static int16_t xPanTop;
-static int16_t yPanTop;
+static std::int16_t xPanTop;
+static std::int16_t yPanTop;
 
 // FAltDown tells whether Alt is down; Wine's Mac driver sends Alt for Cmd.
 // Alt+click (Cmd+click) adds a waypoint at the fastest useful speed.
-static int16_t FAltDown(void) { return ControlIO().pfnGetKeyState(win32::VK_MENU) < 0; }
+static std::int16_t FAltDown(void) { return ControlIO().pfnGetKeyState(win32::VK_MENU) < 0; }
 
 LRESULT  ScannerWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
@@ -42,25 +42,25 @@ LRESULT  ScannerWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     RECT        rc;
     ScanZoom    iScanNew;
     HPEN        hpenSav;
-    int16_t     iRopSav;
-    int16_t     i;
-    uint32_t    tick;
+    std::int16_t     iRopSav;
+    std::int16_t     i;
+    std::uint32_t    tick;
     PLANET      plT;
-    int16_t     fChgScan;
+    std::int16_t     fChgScan;
     SCAN        scan;
-    int16_t     c;
+    std::int16_t     c;
     THING      *lpth;
     FLEET      *lpfl;
-    int16_t     fSep;
-    int32_t    *rgid;
-    int32_t     idSel;
-    int16_t     iChecked;
-    int16_t     iSel;
+    std::int16_t     fSep;
+    std::int32_t    *rgid;
+    std::int32_t     idSel;
+    std::int16_t     iChecked;
+    std::int16_t     iSel;
     THING      *lpthMac;
-    int16_t     id;
-    int16_t     d;
-    int16_t     dy;
-    int16_t     dx;
+    std::int16_t     id;
+    std::int16_t     d;
+    std::int16_t     dy;
+    std::int16_t     dx;
 
     switch (msg) {
     case win32::WM_MDIACTIVATE:
@@ -204,7 +204,7 @@ LRESULT  ScannerWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             /* Room for every fleet and thing here, a planet and a separator.
                The original stopped at 100 entries, so objects past them
                couldn't be picked (target list overload). */
-            rgid = LpAlloc<int32_t>(app, (app.state.cFleet + app.state.cThing + 3) * sizeof(int32_t), htMisc);
+            rgid = LpAlloc<std::int32_t>(app, (app.state.cFleet + app.state.cThing + 3) * sizeof(std::int32_t), htMisc);
             if (scan.grobjFull & grobjPlanet) {
                 rgid[0] = scan.idpl;
                 rgid[1] = -1;
@@ -238,7 +238,7 @@ LRESULT  ScannerWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                         rgid[c++] = -1;
                         fSep = 1;
                     }
-                    rgid[c++] = static_cast<uint32_t>(static_cast<uint16_t>(lpth->idFull())) | 0x20000000;
+                    rgid[c++] = static_cast<std::uint32_t>(static_cast<std::uint16_t>(lpth->idFull())) | 0x20000000;
                 }
             }
             LogicalToScan(app, &pt);
@@ -262,7 +262,7 @@ LRESULT  ScannerWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 lpthMac = app.state.lpThings + app.state.cThing;
                 for (; lpth < lpthMac && lpth->idFull() != LOWORD(idSel); lpth++) {
                 }
-                scan.ith = static_cast<int16_t>((reinterpret_cast<uint8_t *>(lpth) - reinterpret_cast<uint8_t *>(app.state.lpThings))) / 18;
+                scan.ith = static_cast<std::int16_t>((reinterpret_cast<std::uint8_t *>(lpth) - reinterpret_cast<std::uint8_t *>(app.state.lpThings))) / 18;
             } else {
                 scan.grobj = grobjPlanet;
             }
@@ -317,7 +317,7 @@ LRESULT  ScannerWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         pt.x = static_cast<short>(LOWORD(lParam));
         pt.y = static_cast<short>(HIWORD(lParam));
         if (!fPanning) {
-            if (abs(pt.x - ptPan.x) < win32::GetSystemMetrics(win32::SM_CXDRAG) && abs(pt.y - ptPan.y) < win32::GetSystemMetrics(win32::SM_CYDRAG))
+            if (std::abs(pt.x - ptPan.x) < win32::GetSystemMetrics(win32::SM_CXDRAG) && std::abs(pt.y - ptPan.y) < win32::GetSystemMetrics(win32::SM_CYDRAG))
                 break;
             fPanning = 1;
             xPanTop = app.lpui->xScanTop;
@@ -436,80 +436,80 @@ LRESULT  ScannerWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     return 0;
 }
 
-int16_t DrawScanner(APPSESSION &app, HDC hdc, RECT *prc) {
-    int16_t  xOff;
-    int16_t  dExpand;
+std::int16_t DrawScanner(APPSESSION &app, HDC hdc, RECT *prc) {
+    std::int16_t  xOff;
+    std::int16_t  dExpand;
     HPEN     hpenSav;
     FLEET   *lpflT;
-    int16_t  j;
-    int16_t  yTop;
-    int16_t  xMax;
+    std::int16_t  j;
+    std::int16_t  yTop;
+    std::int16_t  xMax;
     POINT16  pt;
-    int16_t  id;
+    std::int16_t  id;
     COLORREF crFore;
-    int16_t  iBkPrev;
+    std::int16_t  iBkPrev;
     POINT16  ptD;
     PLANET  *lpplMac;
-    int16_t  yBmp;
-    int16_t  dy;
+    std::int16_t  yBmp;
+    std::int16_t  dy;
     HBITMAP  hbmpXSav;
     HBITMAP  hbmpScreen;
-    int16_t  id2;
+    std::int16_t  id2;
     HDC      hdcScreen;
     PLANET  *lppl;
-    int16_t  yMax;
+    std::int16_t  yMax;
     char     rgWhatsHere[999];
     HDC      hdcMem;
     THING   *lpth;
     FLEET   *lpfl;
-    int16_t  i;
-    int16_t  xMin;
+    std::int16_t  i;
+    std::int16_t  xMin;
     HBITMAP  hbmpSav;
-    int16_t  iord;
+    std::int16_t  iord;
     RECT     rcClip;
-    int16_t  yOff;
+    std::int16_t  yOff;
     RECT     rcDraw;
-    int16_t  dRange;
-    int16_t  idP;
+    std::int16_t  dRange;
+    std::int16_t  idP;
     POINT16  ptO;
-    int16_t  fSelected;
-    int16_t  fMA;
-    int16_t  fStarbase;
+    std::int16_t  fSelected;
+    std::int16_t  fMA;
+    std::int16_t  fStarbase;
     POINT16  ptSelMain;
     THING   *lpthMac;
-    int16_t  fStargate;
+    std::int16_t  fStargate;
     ScanView mdScanBase;
-    int16_t  yMin;
-    int16_t  dx;
+    std::int16_t  yMin;
+    std::int16_t  dx;
     HBRUSH   hbrSav;
-    int16_t  xLeft;
-    int16_t  fDoDraw;
+    std::int16_t  xLeft;
+    std::int16_t  fDoDraw;
     POINT16  ptOrigin;
     RECT     rc;
-    int32_t  l;
+    std::int32_t  l;
     COLORREF crBack;
-    int16_t  rgy[250];
-    int16_t  fPlanetScanner;
-    int16_t  rgx[250];
-    int16_t  rgrad[250];
+    std::int16_t  rgy[250];
+    std::int16_t  fPlanetScanner;
+    std::int16_t  rgx[250];
+    std::int16_t  rgrad[250];
     DRAWCIR  dc;
-    int16_t  dPlanRange;
-    int16_t  dThingRange;
-    int16_t  ropSav;
-    int16_t  fDetonating;
+    std::int16_t  dPlanRange;
+    std::int16_t  dThingRange;
+    std::int16_t  ropSav;
+    std::int16_t  fDetonating;
     POINT16  pt2;
     THING   *lpthDest;
     HBITMAP  hbmpTrSav;
-    int16_t  fTerra;
-    int16_t  dRad;
-    int16_t  pctDesire;
+    std::int16_t  fTerra;
+    std::int16_t  dRad;
+    std::int16_t  pctDesire;
     HBRUSH   hbr;
-    int16_t  iOff;
-    int16_t  xOut;
-    int16_t  fConc;
-    int16_t  yOut;
-    int16_t  iRel;
-    int32_t  lPop;
+    std::int16_t  iOff;
+    std::int16_t  xOut;
+    std::int16_t  fConc;
+    std::int16_t  yOut;
+    std::int16_t  iRel;
+    std::int32_t  lPop;
     COLORREF cr;
 
     mdScanBase = static_cast<ScanView>(app.lpui->grbitScan & grbitScanViewMask);
@@ -524,8 +524,8 @@ int16_t DrawScanner(APPSESSION &app, HDC hdc, RECT *prc) {
     ptOrigin.y = PtToScan(app, 0xfa0 - app.lpui->yScanTop) & 7;
     ControlIO().pfnGetClientRect(app.lpui->hwndScanner, &rc);
     win32::ExcludeClipRect(hdc, 0, rc.bottom - app.lpui->dySBar, rc.right, rc.bottom);
-    l = static_cast<int16_t>((prc->right - prc->left));
-    l = static_cast<uint32_t>((l * static_cast<int16_t>((prc->bottom - prc->top))));
+    l = static_cast<std::int16_t>((prc->right - prc->left));
+    l = static_cast<std::uint32_t>((l * static_cast<std::int16_t>((prc->bottom - prc->top))));
     if (l < 48000) {
         hdcMem = win32::CreateCompatibleDC(hdc);
         if (hdcMem) {
@@ -788,7 +788,7 @@ int16_t DrawScanner(APPSESSION &app, HDC hdc, RECT *prc) {
                                 }
                                 if (lpth->thm().fDetonate() == fDetonating) {
                                     pt = lpth->pt();
-                                    dRange = LOWORD(static_cast<int32_t>(sqrt(static_cast<double>(lpth->thm().cMines()))));
+                                    dRange = LOWORD(static_cast<std::int32_t>(std::sqrt(static_cast<double>(lpth->thm().cMines()))));
                                     rc.left = PtToScan(app, xOff + pt.x - dRange);
                                     rc.top = PtToScan(app, yOff - pt.y - dRange);
                                     rc.right = PtToScan(app, xOff + pt.x + dRange);
@@ -825,7 +825,7 @@ int16_t DrawScanner(APPSESSION &app, HDC hdc, RECT *prc) {
                 win32::SelectObject(hdc, app.lpui->rghbrPat[lpth->thm().iType()]);
                 win32::SetTextColor(hdc, 16776960);
                 pt = lpth->pt();
-                dRange = LOWORD(static_cast<int32_t>(sqrt(static_cast<double>(lpth->thm().cMines()))));
+                dRange = LOWORD(static_cast<std::int32_t>(std::sqrt(static_cast<double>(lpth->thm().cMines()))));
                 rc.left = PtToScan(app, xOff + pt.x - dRange);
                 rc.top = PtToScan(app, yOff - pt.y - dRange);
                 rc.right = PtToScan(app, xOff + pt.x + dRange);
@@ -928,7 +928,7 @@ int16_t DrawScanner(APPSESSION &app, HDC hdc, RECT *prc) {
     win32::SelectClipRgn(hdc, app.lpui->hrgnHuge);
     ControlIO().pfnGetClientRect(app.lpui->hwndScanner, &rc);
     win32::ExcludeClipRect(hdc, 0, rc.bottom - app.lpui->dySBar, rc.right, rc.bottom);
-    memset(rgWhatsHere, 0, 999);
+    std::memset(rgWhatsHere, 0, 999);
     switch (app.state.iScanZoom) {
     default:
         break;
@@ -1035,7 +1035,7 @@ int16_t DrawScanner(APPSESSION &app, HDC hdc, RECT *prc) {
                     if (pctDesire >= 0) {
                         dRad = pctDesire / 11 + 2;
                     } else {
-                        dRad = static_cast<int16_t>(-pctDesire) / 5 + 2;
+                        dRad = static_cast<std::int16_t>(-pctDesire) / 5 + 2;
                     }
                     if (dRad > 10) {
                         dRad = 10;
@@ -1086,19 +1086,19 @@ int16_t DrawScanner(APPSESSION &app, HDC hdc, RECT *prc) {
                     win32::PatBlt(hdc, xOut - 2, yOut - app.lpui->vrgScanPO[iOff][2] + 1, 1, app.lpui->vrgScanPO[iOff][2], win32::PATCOPY);
                     for (j = 0; j < 3; j++) {
                         if (fConc) {
-                            l = static_cast<int16_t>((static_cast<int16_t>(lppl->rgMinConc[j]) / 5));
+                            l = static_cast<std::int16_t>((static_cast<std::int16_t>(lppl->rgMinConc[j]) / 5));
                             if (l > 20) {
                                 l = 20;
                             }
                         } else {
                             l = lppl->rgwtMin[j];
-                            l = static_cast<int32_t>(((static_cast<int16_t>((app.lpui->cMinGrafMax / 40)) + l) / static_cast<int16_t>((app.lpui->cMinGrafMax / 20))));
+                            l = static_cast<std::int32_t>(((static_cast<std::int16_t>((app.lpui->cMinGrafMax / 40)) + l) / static_cast<std::int16_t>((app.lpui->cMinGrafMax / 20))));
                             if (l > 20) {
                                 l = 20;
                             }
                         }
                         if (iOff != 0) {
-                            l = static_cast<int32_t>((l / 2));
+                            l = static_cast<std::int32_t>((l / 2));
                         }
                         if (l > 0) {
                             win32::SelectObject(hdc, app.lpui->rghbrMineral[j]);
@@ -1114,7 +1114,7 @@ int16_t DrawScanner(APPSESSION &app, HDC hdc, RECT *prc) {
                         if (lppl->iPlayer == app.state.idPlayer) {
                             lPop = lppl->rgwtMin[3];
                         } else {
-                            lPop = static_cast<int32_t>((lppl->uPopGuess * 4));
+                            lPop = static_cast<std::int32_t>((lppl->uPopGuess * 4));
                         }
                         for (dRad = 0; dRad < 19 && vrgPopRad[dRad] <= lPop; dRad++) {
                         }
@@ -1299,14 +1299,14 @@ int16_t DrawScanner(APPSESSION &app, HDC hdc, RECT *prc) {
     return 0;
 }
 
-void DrawScanFleetCount(APPSESSION &app, FLEET *lpfl, int16_t x, int16_t y, HDC hdc, HDC hdcMem) {
-    int32_t  l2;
-    int16_t  f999;
+void DrawScanFleetCount(APPSESSION &app, FLEET *lpfl, std::int16_t x, std::int16_t y, HDC hdc, HDC hdcMem) {
+    std::int32_t  l2;
+    std::int16_t  f999;
     COLORREF cr;
     FLEET   *lpflWalk;
-    int16_t  iPlr;
+    std::int16_t  iPlr;
     HBITMAP  hbmpSav;
-    int32_t  l;
+    std::int32_t  l;
 
     lpflWalk = lpfl;
     iPlr = !(app.lpui->grbitScan & grbitScanPlayerColors) ? -2 : -1;
@@ -1346,28 +1346,28 @@ void DrawScanFleetCount(APPSESSION &app, FLEET *lpfl, int16_t x, int16_t y, HDC 
         f999 = 1;
         x -= 5;
         if (cr != 0xffffff) {
-            win32::BitBlt(hdc, x, y, 4, 7, hdcMem, static_cast<int16_t>(LOWORD(l)) / 100 * 4, 0, 2229030);
+            win32::BitBlt(hdc, x, y, 4, 7, hdcMem, static_cast<std::int16_t>(LOWORD(l)) / 100 * 4, 0, 2229030);
             win32::SetTextColor(hdc, cr);
         }
-        win32::BitBlt(hdc, x, y, 4, 7, hdcMem, static_cast<int16_t>(LOWORD(l)) / 100 * 4, 0, win32::SRCPAINT);
+        win32::BitBlt(hdc, x, y, 4, 7, hdcMem, static_cast<std::int16_t>(LOWORD(l)) / 100 * 4, 0, win32::SRCPAINT);
         if (cr != 0xffffff) {
             win32::SetTextColor(hdc, 0xffffff);
         }
         x += 8;
-        l = static_cast<int32_t>((l % 100));
+        l = static_cast<std::int32_t>((l % 100));
     }
     if (l > 9 || f999) {
         x -= 3;
         if (cr != 0xffffff) {
-            win32::BitBlt(hdc, x, y, 4, 7, hdcMem, static_cast<int16_t>(LOWORD(l)) / 10 * 4, 0, 2229030);
+            win32::BitBlt(hdc, x, y, 4, 7, hdcMem, static_cast<std::int16_t>(LOWORD(l)) / 10 * 4, 0, 2229030);
             win32::SetTextColor(hdc, cr);
         }
-        win32::BitBlt(hdc, x, y, 4, 7, hdcMem, static_cast<int16_t>(LOWORD(l)) / 10 * 4, 0, win32::SRCPAINT);
+        win32::BitBlt(hdc, x, y, 4, 7, hdcMem, static_cast<std::int16_t>(LOWORD(l)) / 10 * 4, 0, win32::SRCPAINT);
         if (cr != 0xffffff) {
             win32::SetTextColor(hdc, 0xffffff);
         }
         x += 5;
-        l = static_cast<int32_t>((l % 10));
+        l = static_cast<std::int32_t>((l % 10));
     }
     if (cr != 0xffffff) {
         win32::BitBlt(hdc, x, y, 4, 7, hdcMem, LOWORD(l) * 4, 0, 2229030);
@@ -1381,11 +1381,11 @@ void DrawScanFleetCount(APPSESSION &app, FLEET *lpfl, int16_t x, int16_t y, HDC 
     return;
 }
 
-int32_t CShipsScanVis(APPSESSION &app, FLEET *lpfl) {
-    int16_t  j;
-    int32_t  csh;
-    int16_t  k;
-    uint16_t grbitSh;
+std::int32_t CShipsScanVis(APPSESSION &app, FLEET *lpfl) {
+    std::int16_t  j;
+    std::int32_t  csh;
+    std::int16_t  k;
+    std::uint16_t grbitSh;
 
     csh = 0;
     if (app.lpui->grbitScan & grbitScanIdleFleets) {
@@ -1429,18 +1429,18 @@ int32_t CShipsScanVis(APPSESSION &app, FLEET *lpfl) {
 }
 
 void DrawRadarCircle(DRAWCIR *pdc, RECT *prc) {
-    int16_t  y2;
-    int32_t  r2;
+    std::int16_t  y2;
+    std::int32_t  r2;
     COLORREF crSav;
-    int16_t  dy;
-    int16_t  y;
-    int16_t  iFree;
-    int16_t  i;
-    int16_t  dx;
-    int16_t  x2;
-    int16_t  rad;
-    int32_t  l;
-    int16_t  x;
+    std::int16_t  dy;
+    std::int16_t  y;
+    std::int16_t  iFree;
+    std::int16_t  i;
+    std::int16_t  dx;
+    std::int16_t  x2;
+    std::int16_t  rad;
+    std::int32_t  l;
+    std::int16_t  x;
     RECT     rc;
 
     if (!prc || (!pdc->fCovered && win32::IntersectRect(&rc, prc, &pdc->rcClip) != 0)) {
@@ -1448,13 +1448,13 @@ void DrawRadarCircle(DRAWCIR *pdc, RECT *prc) {
             rad = (prc->right - prc->left) >> 1;
             x = prc->left + rad;
             y = prc->top + rad;
-            r2 = static_cast<uint32_t>((rad * rad));
+            r2 = static_cast<std::uint32_t>((rad * rad));
             for (i = 0; i < 4; i++) {
                 x2 = i >= 2 ? pdc->rcClip.right : pdc->rcClip.left;
                 y2 = !(i & 1) ? pdc->rcClip.bottom : pdc->rcClip.top;
                 dx = x2 - x;
                 dy = y2 - y;
-                if (dx > r2 || dy > r2 || static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy)) > r2)
+                if (dx > r2 || dy > r2 || static_cast<std::uint32_t>((dx * dx)) + static_cast<std::uint32_t>((dy * dy)) > r2)
                     break;
             }
             if (i == 4) {
@@ -1482,14 +1482,14 @@ void DrawRadarCircle(DRAWCIR *pdc, RECT *prc) {
                         y2 = pdc->rgy[i];
                         dx = x - x2;
                         dy = y - y2;
-                        l = static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy));
+                        l = static_cast<std::uint32_t>((dx * dx)) + static_cast<std::uint32_t>((dy * dy));
                         if (pdc->rgrad[i] < rad) {
-                            if (static_cast<double>(sqrt(static_cast<double>(l))) + pdc->rgrad[i] <= static_cast<double>(rad)) {
+                            if (static_cast<double>(std::sqrt(static_cast<double>(l))) + pdc->rgrad[i] <= static_cast<double>(rad)) {
                                 pdc->rgrad[i] = 0;
                                 iFree = i;
                             }
                         } else if (pdc->rgrad[i] > rad) {
-                            if (static_cast<double>(sqrt(static_cast<double>(l))) + rad <= static_cast<double>(pdc->rgrad[i])) {
+                            if (static_cast<double>(std::sqrt(static_cast<double>(l))) + rad <= static_cast<double>(pdc->rgrad[i])) {
                                 return;
                             }
                         } else if (x2 == x && y2 == y) {
@@ -1541,7 +1541,7 @@ void DrawRadarCircle(DRAWCIR *pdc, RECT *prc) {
 // closer than 6 pixels are left out. It leaves the pen at ptTo. The path is
 // drawn with R2_XORPEN, so drawing it again erases the ticks too; each tick
 // is two halves that skip the path's own pixel, which XOR would clear.
-static void DrawPathYearTicks(APPSESSION &app, HDC hdc, POINT16 ptFrom, POINT16 ptTo, int16_t iWarp) {
+static void DrawPathYearTicks(APPSESSION &app, HDC hdc, POINT16 ptFrom, POINT16 ptTo, std::int16_t iWarp) {
     POINT16 ptA;
     POINT16 ptB;
     POINT16 pt;
@@ -1549,9 +1549,9 @@ static void DrawPathYearTicks(APPSESSION &app, HDC hdc, POINT16 ptFrom, POINT16 
     double  dScan;
     double  dxTick;
     double  dyTick;
-    int16_t dYear;
-    int16_t i;
-    int16_t iSide;
+    std::int16_t dYear;
+    std::int16_t i;
+    std::int16_t iSide;
 
     ptA = ptFrom;
     LogicalToScan(app, &ptA);
@@ -1559,18 +1559,18 @@ static void DrawPathYearTicks(APPSESSION &app, HDC hdc, POINT16 ptFrom, POINT16 
     LogicalToScan(app, &ptB);
     if (iWarp >= 1 && iWarp <= 10) {
         dYear = iWarp * iWarp;
-        dLeg = hypot(ptTo.x - ptFrom.x, ptTo.y - ptFrom.y);
-        dScan = hypot(ptB.x - ptA.x, ptB.y - ptA.y);
+        dLeg = std::hypot(ptTo.x - ptFrom.x, ptTo.y - ptFrom.y);
+        dScan = std::hypot(ptB.x - ptA.x, ptB.y - ptA.y);
         if (dLeg > dYear && dScan * dYear / dLeg >= 6) {
             // A unit step across the leg on screen.
             dxTick = -(ptB.y - ptA.y) / dScan;
             dyTick = (ptB.x - ptA.x) / dScan;
             for (i = 1; i * dYear < dLeg; i++) {
-                pt.x = static_cast<int16_t>(floor(ptA.x + (ptB.x - ptA.x) * i * dYear / dLeg + 0.5));
-                pt.y = static_cast<int16_t>(floor(ptA.y + (ptB.y - ptA.y) * i * dYear / dLeg + 0.5));
+                pt.x = static_cast<std::int16_t>(std::floor(ptA.x + (ptB.x - ptA.x) * i * dYear / dLeg + 0.5));
+                pt.y = static_cast<std::int16_t>(std::floor(ptA.y + (ptB.y - ptA.y) * i * dYear / dLeg + 0.5));
                 for (iSide = -1; iSide <= 1; iSide += 2) {
-                    win32::MoveToEx(hdc, pt.x + static_cast<int16_t>(floor(iSide * dxTick + 0.5)), pt.y + static_cast<int16_t>(floor(iSide * dyTick + 0.5)), nullptr);
-                    win32::LineTo(hdc, pt.x + static_cast<int16_t>(floor(iSide * 4 * dxTick + 0.5)), pt.y + static_cast<int16_t>(floor(iSide * 4 * dyTick + 0.5)));
+                    win32::MoveToEx(hdc, pt.x + static_cast<std::int16_t>(std::floor(iSide * dxTick + 0.5)), pt.y + static_cast<std::int16_t>(std::floor(iSide * dyTick + 0.5)), nullptr);
+                    win32::LineTo(hdc, pt.x + static_cast<std::int16_t>(std::floor(iSide * 4 * dxTick + 0.5)), pt.y + static_cast<std::int16_t>(std::floor(iSide * 4 * dyTick + 0.5)));
                 }
             }
         }
@@ -1581,8 +1581,8 @@ static void DrawPathYearTicks(APPSESSION &app, HDC hdc, POINT16 ptFrom, POINT16 
 // SetScanPathWarp sets the warp of the selected fleet's waypoint iwp. Its
 // path's year ticks depend on the warp, so a path on screen is erased
 // first and drawn again after.
-void SetScanPathWarp(APPSESSION &app, int16_t iwp, int16_t iWarp) {
-    int16_t fVis;
+void SetScanPathWarp(APPSESSION &app, std::int16_t iwp, std::int16_t iWarp) {
+    std::int16_t fVis;
 
     fVis = app.lpui->fOrdersVis;
     if (fVis) {
@@ -1595,33 +1595,33 @@ void SetScanPathWarp(APPSESSION &app, int16_t iwp, int16_t iWarp) {
     return;
 }
 
-void DrawShipScanPath(APPSESSION &app, HDC hdc, int16_t fShow) {
+void DrawShipScanPath(APPSESSION &app, HDC hdc, std::int16_t fShow) {
     ORDER  *lpord2;
-    int16_t rgDup[87];
-    int16_t j;
+    std::int16_t rgDup[87];
+    std::int16_t j;
     HPEN    hpenSav;
     POINT16 pt2;
     POINT16 pt;
-    int16_t iRopSav;
-    int16_t dy;
+    std::int16_t iRopSav;
+    std::int16_t dy;
     ORDER  *lpord1;
     POINT16 ptCur;
     FLEET  *lpfl;
-    int16_t i;
-    int16_t fHdc;
-    int32_t lWarp2;
-    int16_t dRad;
-    int16_t dx;
+    std::int16_t i;
+    std::int16_t fHdc;
+    std::int32_t lWarp2;
+    std::int16_t dRad;
+    std::int16_t dx;
     RECT    rc;
     THING  *lpth;
     double  dAngle;
     POINT16 rgptArrow[2];
-    int16_t dx5;
+    std::int16_t dx5;
     POINT16 ptTick;
-    int16_t dy5;
+    std::int16_t dy5;
     double  m;
-    int16_t id;
-    int16_t fDoneRoute;
+    std::int16_t id;
+    std::int16_t fDoneRoute;
 
     fHdc = 0;
     if ((app.state.sel.grobj == grobjFleet || app.state.sel.scan.grobj == grobjFleet || app.state.sel.scan.grobj == grobjThing ||
@@ -1644,10 +1644,10 @@ void DrawShipScanPath(APPSESSION &app, HDC hdc, int16_t fShow) {
                     goto LNextCheck;
                 dx = app.state.rgptPlan[lpth->thp().idPlanet()].x - ptCur.x;
                 dy = app.state.rgptPlan[lpth->thp().idPlanet()].y - ptCur.y;
-                lWarp2 = static_cast<uint32_t>((lpth->thp().iWarp() + 4));
+                lWarp2 = static_cast<std::uint32_t>((lpth->thp().iWarp() + 4));
             }
             if (dx != 0 || dy != 0) {
-                lWarp2 = static_cast<uint32_t>((lWarp2 * static_cast<uint32_t>((lWarp2 * 5))));
+                lWarp2 = static_cast<std::uint32_t>((lWarp2 * static_cast<std::uint32_t>((lWarp2 * 5))));
                 lpfl = nullptr;
                 goto LCommonLineCode;
             }
@@ -1663,7 +1663,7 @@ void DrawShipScanPath(APPSESSION &app, HDC hdc, int16_t fShow) {
         dy = lpfl->dirFltY() - 127;
         if (dx == 0 && dy == 0)
             goto LNoObjPath;
-        lWarp2 = static_cast<uint32_t>((lpfl->iwarpFlt() * lpfl->iwarpFlt() * 5));
+        lWarp2 = static_cast<std::uint32_t>((lpfl->iwarpFlt() * lpfl->iwarpFlt() * 5));
     LCommonLineCode:
         ControlIO().pfnGetClientRect(app.lpui->hwndScanner, &rc);
         win32::ExcludeClipRect(hdc, rc.left, rc.bottom - app.lpui->dySBar, rc.right, rc.bottom);
@@ -1673,13 +1673,13 @@ void DrawShipScanPath(APPSESSION &app, HDC hdc, int16_t fShow) {
             dx5 = 0;
             dy5 = dy >= 0 ? LOWORD(lWarp2) : -LOWORD(lWarp2);
         } else {
-            lWarp2 = static_cast<uint32_t>((lWarp2 * lWarp2));
+            lWarp2 = static_cast<std::uint32_t>((lWarp2 * lWarp2));
             m = static_cast<double>((static_cast<double>(dy) / dx));
-            dx5 = LOWORD(static_cast<int32_t>(sqrt(static_cast<double>((lWarp2 / (static_cast<double>(m) * m + 1))))));
+            dx5 = LOWORD(static_cast<std::int32_t>(std::sqrt(static_cast<double>((lWarp2 / (static_cast<double>(m) * m + 1))))));
             if (dx < 0) {
                 dx5 = -dx5;
             }
-            dy5 = LOWORD(static_cast<int32_t>((static_cast<int32_t>((dx5 * dy)) / dx)));
+            dy5 = LOWORD(static_cast<std::int32_t>((static_cast<std::int32_t>((dx5 * dy)) / dx)));
         }
         LogicalToScan(app, &ptCur);
         dx5 = PtToScan(app, dx5);
@@ -1690,21 +1690,21 @@ void DrawShipScanPath(APPSESSION &app, HDC hdc, int16_t fShow) {
             ptTick.x = 0;
             ptTick.y = dx >= 0 ? 4 : -4;
         } else {
-            m = static_cast<double>((static_cast<double>(static_cast<int16_t>(-dx)) / dy));
-            ptTick.x = LOWORD(static_cast<int32_t>(sqrt(static_cast<double>((24.0 / (static_cast<double>(m) * m + 1))))));
+            m = static_cast<double>((static_cast<double>(static_cast<std::int16_t>(-dx)) / dy));
+            ptTick.x = LOWORD(static_cast<std::int32_t>(std::sqrt(static_cast<double>((24.0 / (static_cast<double>(m) * m + 1))))));
             if (ptTick.x == 0) {
                 ptTick.y = dy >= 0 ? 4 : -4;
             } else {
                 if (dx > 0) {
                     ptTick.x = -ptTick.x;
                 }
-                ptTick.y = LOWORD(static_cast<int32_t>((static_cast<int32_t>((ptTick.x * dx)) / dy)));
+                ptTick.y = LOWORD(static_cast<std::int32_t>((static_cast<std::int32_t>((ptTick.x * dx)) / dy)));
             }
         }
-        dAngle = static_cast<double>((static_cast<double>(atan2(static_cast<double>(static_cast<int16_t>(-dy)), static_cast<double>(static_cast<int16_t>(-dx)))) - 0.7853982));
+        dAngle = static_cast<double>((static_cast<double>(std::atan2(static_cast<double>(static_cast<std::int16_t>(-dy)), static_cast<double>(static_cast<std::int16_t>(-dx)))) - 0.7853982));
         for (i = 0; i < 2; i++) {
-            rgptArrow[i].x = LOWORD(static_cast<int32_t>((static_cast<double>(5) * cos(dAngle) + 0.5)));
-            rgptArrow[i].y = LOWORD(static_cast<int32_t>((static_cast<double>(5) * sin(dAngle) + 0.5)));
+            rgptArrow[i].x = LOWORD(static_cast<std::int32_t>((static_cast<double>(5) * std::cos(dAngle) + 0.5)));
+            rgptArrow[i].y = LOWORD(static_cast<std::int32_t>((static_cast<double>(5) * std::sin(dAngle) + 0.5)));
             dAngle = static_cast<double>((static_cast<double>(dAngle) + 1.5707964));
         }
         j = -5;
@@ -1712,8 +1712,8 @@ void DrawShipScanPath(APPSESSION &app, HDC hdc, int16_t fShow) {
             if (i == 0) {
                 j = 5;
             } else {
-                pt.x = LOWORD(static_cast<int32_t>(((static_cast<int32_t>((static_cast<uint32_t>((dx5 * i)) * 2)) + j) / 10))) + ptCur.x;
-                pt.y = LOWORD(static_cast<int32_t>(((static_cast<int32_t>((static_cast<uint32_t>((dy5 * i)) * 2)) + j) / 10))) + ptCur.y;
+                pt.x = LOWORD(static_cast<std::int32_t>(((static_cast<std::int32_t>((static_cast<std::uint32_t>((dx5 * i)) * 2)) + j) / 10))) + ptCur.x;
+                pt.y = LOWORD(static_cast<std::int32_t>(((static_cast<std::int32_t>((static_cast<std::uint32_t>((dy5 * i)) * 2)) + j) / 10))) + ptCur.y;
                 if (i > 0) {
                     for (j = 0; j < 2; j++) {
                         win32::MoveToEx(hdc, pt.x + rgptArrow[j].x, pt.y - rgptArrow[j].y, nullptr);
@@ -1755,7 +1755,7 @@ void DrawShipScanPath(APPSESSION &app, HDC hdc, int16_t fShow) {
             goto LDrawPath;
         }
         if (app.state.sel.grobj == grobjFleet && app.state.sel.fl.cord > 1) {
-            memset(rgDup, 0, app.state.sel.fl.cord * 2);
+            std::memset(rgDup, 0, app.state.sel.fl.cord * 2);
             lpord1 = app.state.sel.fl.lpplord->rgord();
             pt = lpord1->pt;
             i = 1;
@@ -1834,23 +1834,23 @@ void DrawShipScanPath(APPSESSION &app, HDC hdc, int16_t fShow) {
     return;
 }
 
-void DrawScannerSBar(APPSESSION &app, HDC hdc, RECT *prc, SBAR *psbar, int16_t fFullRedraw) {
-    int16_t    fhdc;
+void DrawScannerSBar(APPSESSION &app, HDC hdc, RECT *prc, SBAR *psbar, std::int16_t fFullRedraw) {
+    std::int16_t    fhdc;
     COLORREF   crText;
     POINT16    pt2;
-    int16_t    id;
+    std::int16_t    id;
     POINT16    pt;
-    int16_t    grReal;
-    int16_t    iBkPrev;
-    int16_t    c;
+    std::int16_t    grReal;
+    std::int16_t    iBkPrev;
+    std::int16_t    c;
     COLORREF   crBk;
-    int16_t    dxHole;
+    std::int16_t    dxHole;
     HFONT      hfontSav;
     RECT       rcClip;
     char      *psz;
     HBRUSH     hbrSav;
-    int16_t    fDoName;
-    int32_t    l;
+    std::int16_t    fDoName;
+    std::int32_t    l;
     GrobjClass grobj;
     RECT       rcT;
     RECT       rc;
@@ -1953,7 +1953,7 @@ void DrawScannerSBar(APPSESSION &app, HDC hdc, RECT *prc, SBAR *psbar, int16_t f
         ExpandRc(&rcClip, -2, -2);
         grReal = grobj == grobjOther ? app.state.sel.scan.grobjFull : grobj;
         if (psbar && psbar->psz) {
-            strcpy(app.state.szWork, psbar->psz);
+            std::strcpy(app.state.szWork, psbar->psz);
         } else if (grReal & 1) {
             TextIO().pfnPlanetName(app, !psbar ? app.state.sel.scan.idpl : psbar->id);
         } else if (grReal & 2) {
@@ -1993,15 +1993,15 @@ void DrawScannerSBar(APPSESSION &app, HDC hdc, RECT *prc, SBAR *psbar, int16_t f
             pt2.x = -1;
         }
         if (pt.x != -1 && pt2.x != -1 && (pt.x != pt2.x || pt.y != pt2.y)) {
-            strcpy(szBuf, PszGetDistance(app, pt.x, pt.y, pt2.x, pt2.y));
+            std::strcpy(szBuf, PszGetDistance(app, pt.x, pt.y, pt2.x, pt2.y));
             for (psz = szBuf; *psz != ' '; psz++) {
             }
             TextIO().pfnCchGetString(app, static_cast<StringId>(idsLy + (rc.right >= 350)), psz + 1);
             if (!psbar || !psbar->pscan) {
-                TextIO().pfnCchGetString(app, idsFrom, psz + strlen(psz));
-                strcat(psz + 8, PszGetLocName(app, app.state.sel.grobj, app.state.sel.id, pt2.x, pt2.y));
+                TextIO().pfnCchGetString(app, idsFrom, psz + std::strlen(psz));
+                std::strcat(psz + 8, PszGetLocName(app, app.state.sel.grobj, app.state.sel.id, pt2.x, pt2.y));
             }
-            win32::ExtTextOutA(hdc, rcT.left + 3, rcT.top + 2, win32::ETO_CLIPPED, &rcClip, szBuf, strlen(szBuf), nullptr);
+            win32::ExtTextOutA(hdc, rcT.left + 3, rcT.top + 2, win32::ETO_CLIPPED, &rcClip, szBuf, std::strlen(szBuf), nullptr);
         }
         win32::SelectObject(hdc, hbrSav);
         win32::SetBkMode(hdc, iBkPrev);
@@ -2015,9 +2015,9 @@ void DrawScannerSBar(APPSESSION &app, HDC hdc, RECT *prc, SBAR *psbar, int16_t f
     return;
 }
 
-void DrawLockLight(APPSESSION &app, HDC hdc, RECT *prc, int16_t fFullRedraw) {
-    int16_t dy;
-    int16_t dx;
+void DrawLockLight(APPSESSION &app, HDC hdc, RECT *prc, std::int16_t fFullRedraw) {
+    std::int16_t dy;
+    std::int16_t dx;
     RECT    rc;
 
     dx = prc->right - prc->left;
@@ -2038,10 +2038,10 @@ void DrawLockLight(APPSESSION &app, HDC hdc, RECT *prc, int16_t fFullRedraw) {
 }
 
 void SetScanScrollBars(APPSESSION &app, HWND hwnd) {
-    int16_t xMax;
-    int16_t dy;
-    int16_t yMax;
-    int16_t dx;
+    std::int16_t xMax;
+    std::int16_t dy;
+    std::int16_t yMax;
+    std::int16_t dx;
     RECT    rc;
     SCROLLINFO si = {sizeof(si), win32::SIF_RANGE | win32::SIF_PAGE | win32::SIF_POS, 1000, 0, 0, 0, 0};
 
@@ -2063,7 +2063,7 @@ void SetScanScrollBars(APPSESSION &app, HWND hwnd) {
         si.nPos = app.lpui->yScanTop;
         win32::SetScrollInfo(hwnd, win32::SB_VERT, &si, 1);
         if (app.lpui->fInScrollSet) {
-            app.lpui->dScanPage = static_cast<int16_t>((dx >= dy ? dy : dx)) / 3 & 0xfffc;
+            app.lpui->dScanPage = static_cast<std::int16_t>((dx >= dy ? dy : dx)) / 3 & 0xfffc;
             app.lpui->dScanInc = (app.lpui->dScanPage / 8 + 2) & 0xfffc;
             app.lpui->fInScrollSet = 0;
         }
@@ -2071,12 +2071,12 @@ void SetScanScrollBars(APPSESSION &app, HWND hwnd) {
     return;
 }
 
-void ScrollScanner(APPSESSION &app, int16_t dx, int16_t dy) {
+void ScrollScanner(APPSESSION &app, std::int16_t dx, std::int16_t dy) {
     HDC     hdc;
     RECT    rcUpd;
     RECT    rcUpd2;
     RECT    rc;
-    int16_t fPending;
+    std::int16_t fPending;
 
     if ((dx != 0 || dy != 0) && win32::IsWindowVisible(app.lpui->hwndScanner) != 0 && !app.state.gd.fNoScannerDraw) {
         hdc = win32::GetDC(app.lpui->hwndScanner);
@@ -2087,7 +2087,7 @@ void ScrollScanner(APPSESSION &app, int16_t dx, int16_t dy) {
         // A wheel zoom invalidates the whole scanner, and a trackpad's next
         // scroll comes before its WM_PAINT. Redraw the map instead.
         fPending = win32::GetUpdateRect(app.lpui->hwndScanner, nullptr, 0) != 0;
-        if (abs(dx) > rc.right >> 1 || abs(dy) > rc.bottom >> 1 || app.lpui->fDlgUp || app.lpui->hwndBrowser || fPending) {
+        if (std::abs(dx) > rc.right >> 1 || std::abs(dy) > rc.bottom >> 1 || app.lpui->fDlgUp || app.lpui->hwndBrowser || fPending) {
             DrawScanner(app, hdc, &rc);
             if (fPending) {
                 rc.bottom -= app.lpui->dySBar;
@@ -2132,16 +2132,16 @@ void ScrollScanner(APPSESSION &app, int16_t dx, int16_t dy) {
     return;
 }
 
-void RedrawScanSel(APPSESSION &app, HDC hdc, int16_t fVis) {
-    int16_t sel_grobj;
-    int16_t fhdc;
-    int16_t dOff;
+void RedrawScanSel(APPSESSION &app, HDC hdc, std::int16_t fVis) {
+    std::int16_t sel_grobj;
+    std::int16_t fhdc;
+    std::int16_t dOff;
     POINT16 pt;
-    int16_t sel_id;
-    int16_t fNoSelRedraw;
+    std::int16_t sel_id;
+    std::int16_t fNoSelRedraw;
     SCAN    sel_scan;
     RECT    rc;
-    int16_t sel_grobjFull;
+    std::int16_t sel_grobjFull;
 
     fhdc = 0;
     sel_id = app.state.sel.id;
@@ -2196,10 +2196,10 @@ void RedrawScanSel(APPSESSION &app, HDC hdc, int16_t fVis) {
     return;
 }
 
-int16_t FEnsurePointOnScreen(APPSESSION &app, POINT16 pt, int16_t fScroll) {
-    int16_t cy;
-    int16_t fFix;
-    int16_t cx;
+std::int16_t FEnsurePointOnScreen(APPSESSION &app, POINT16 pt, std::int16_t fScroll) {
+    std::int16_t cy;
+    std::int16_t fFix;
+    std::int16_t cx;
     POINT16 ptCtr;
     RECT    rc;
 
@@ -2231,13 +2231,13 @@ int16_t FEnsurePointOnScreen(APPSESSION &app, POINT16 pt, int16_t fScroll) {
     return 0;
 }
 
-void CtrPointScan(APPSESSION &app, POINT16 pt, int16_t fScroll) {
-    int16_t dxCur;
-    int16_t cy;
-    int16_t y;
-    int16_t cx;
-    int16_t dyCur;
-    int16_t x;
+void CtrPointScan(APPSESSION &app, POINT16 pt, std::int16_t fScroll) {
+    std::int16_t dxCur;
+    std::int16_t cy;
+    std::int16_t y;
+    std::int16_t cx;
+    std::int16_t dyCur;
+    std::int16_t x;
     RECT    rc;
 
     x = pt.x;
@@ -2313,16 +2313,16 @@ void ScanToLogical(APPSESSION &app, POINT16 *ppt) {
     return;
 }
 
-int16_t FAddWayPoint(APPSESSION &app, POINT16 ptIn, SCAN *pscan) {
+std::int16_t FAddWayPoint(APPSESSION &app, POINT16 ptIn, SCAN *pscan) {
     HDC     hdc;
-    int16_t id;
-    int16_t dy;
+    std::int16_t id;
+    std::int16_t dy;
     ORDER  *lpord;
-    int16_t lDist;
+    std::int16_t lDist;
     POINT16 rgpt[3];
-    int16_t dx;
-    int16_t cpt;
-    int16_t ipt;
+    std::int16_t dx;
+    std::int16_t cpt;
+    std::int16_t ipt;
     RECT    rc;
 
     if (app.state.sel.fl.cord == 87) {
@@ -2344,7 +2344,7 @@ int16_t FAddWayPoint(APPSESSION &app, POINT16 ptIn, SCAN *pscan) {
     dx = ptIn.x - pscan->pt.x;
     dy = ptIn.y - pscan->pt.y;
     lDist = ScanToPt(app, 20);
-    if (static_cast<int32_t>((static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy)))) > static_cast<int16_t>((lDist * lDist))) {
+    if (static_cast<std::int32_t>((static_cast<std::uint32_t>((dx * dx)) + static_cast<std::uint32_t>((dy * dy)))) > static_cast<std::int16_t>((lDist * lDist))) {
         pscan->grobjFull = grobjOther;
         pscan->grobj = grobjOther;
         pscan->idpl = idplNone;
@@ -2368,7 +2368,7 @@ int16_t FAddWayPoint(APPSESSION &app, POINT16 ptIn, SCAN *pscan) {
         lpord++;
     }
     if (app.state.sel.iwpAct != app.state.sel.fl.cord - 1) {
-        memmove(lpord + 1, lpord, (app.state.sel.fl.cord - app.state.sel.iwpAct - 1) * sizeof(ORDER));
+        std::memmove(lpord + 1, lpord, (app.state.sel.fl.cord - app.state.sel.iwpAct - 1) * sizeof(ORDER));
     }
     *lpord = *(lpord - 1);
     lpord->pt = pscan->pt;
@@ -2398,7 +2398,7 @@ int16_t FAddWayPoint(APPSESSION &app, POINT16 ptIn, SCAN *pscan) {
     RedrawScanSel(app, nullptr, 0);
     FleetQueryIO().pfnLookup(app, idWriteBack, &app.state.sel.fl);
     if (lpord[-1].grTask == grTaskLayMines && lpord[-1].tsell().iPlrX == 5) {
-        memset(reinterpret_cast<uint8_t *>(lpord) - 10, 0, 10);
+        std::memset(reinterpret_cast<std::uint8_t *>(lpord) - 10, 0, 10);
         lpord[-1].grTask = grTaskNone;
         FleetQueryIO().pfnLookup(app, idWriteBack, &app.state.sel.fl);
     }
@@ -2414,9 +2414,9 @@ int16_t FAddWayPoint(APPSESSION &app, POINT16 ptIn, SCAN *pscan) {
     return 1;
 }
 
-int16_t FNearAWayPoint(APPSESSION &app, POINT16 pt, int16_t fLogical) {
+std::int16_t FNearAWayPoint(APPSESSION &app, POINT16 pt, std::int16_t fLogical) {
     ORDER  *lpord;
-    int16_t i;
+    std::int16_t i;
     SCAN    scan;
 
     if (app.state.sel.grobj != grobjFleet) {
@@ -2445,27 +2445,27 @@ int16_t FNearAWayPoint(APPSESSION &app, POINT16 pt, int16_t fLogical) {
     return 0;
 }
 
-int16_t FHandleWayPointDrag(APPSESSION &app, POINT16 pt) {
-    int16_t fChg;
+std::int16_t FHandleWayPointDrag(APPSESSION &app, POINT16 pt) {
+    std::int16_t fChg;
     HDC     hdc;
     HPEN    hpenSav;
     SBAR    sbar;
-    int16_t fMarker;
+    std::int16_t fMarker;
     char    szDeepSpace[40];
-    int16_t fDup;
-    int16_t grTypeIn;
+    std::int16_t fDup;
+    std::int16_t grTypeIn;
     HCURSOR hcurSav;
     ORDER  *lpord;
-    int16_t i;
+    std::int16_t i;
     POINT16 ptLogical;
     POINT16 ptNext;
-    int16_t fDel;
+    std::int16_t fDel;
     POINT16 rgpt[4];
     POINT16 ptNew;
-    int16_t cpt;
+    std::int16_t cpt;
     POINT16 ptPrev;
     SCAN    scan;
-    int16_t fFirst;
+    std::int16_t fFirst;
     RECT    rc;
 
     fFirst = 1;
@@ -2652,10 +2652,10 @@ Done:
     return fChg;
 }
 
-void DrawScanXorLines(APPSESSION &app, HDC hdc, POINT16 *rgpt, int16_t cpt) {
+void DrawScanXorLines(APPSESSION &app, HDC hdc, POINT16 *rgpt, std::int16_t cpt) {
     HPEN    hpenSav;
-    int16_t iRopSav;
-    int16_t i;
+    std::int16_t iRopSav;
+    std::int16_t i;
     RECT    rc;
 
     ControlIO().pfnGetClientRect(app.lpui->hwndScanner, &rc);
@@ -2682,7 +2682,7 @@ void DrawScanXorLines(APPSESSION &app, HDC hdc, POINT16 *rgpt, int16_t cpt) {
     return;
 }
 
-int16_t SetScanWp(APPSESSION &app, int16_t iNew) {
+std::int16_t SetScanWp(APPSESSION &app, std::int16_t iNew) {
     SCAN scan;
 
     if (iNew == app.state.sel.iwpAct) {
@@ -2694,10 +2694,10 @@ int16_t SetScanWp(APPSESSION &app, int16_t iNew) {
     return iNew;
 }
 
-int16_t FGetNextObjHere(APPSESSION &app, SCAN *pscan, int16_t fOnlyOurs) {
+std::int16_t FGetNextObjHere(APPSESSION &app, SCAN *pscan, std::int16_t fOnlyOurs) {
     FLEET  *lpfl;
-    int16_t i;
-    int16_t fFound;
+    std::int16_t i;
+    std::int16_t fFound;
 
     fFound = app.state.sel.grobj != grobjFleet;
     for (i = 0; i < app.state.cFleet; i++) {
@@ -2787,20 +2787,20 @@ INT_PTR  FindDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     return 0;
 }
 
-int16_t FSelectSz(APPSESSION &app, char *szName) {
+std::int16_t FSelectSz(APPSESSION &app, char *szName) {
     char   *pch;
-    int16_t ifl;
+    std::int16_t ifl;
     FLEET  *lpfl;
-    int16_t ipl;
-    int16_t cch;
+    std::int16_t ipl;
+    std::int16_t cch;
     char    szT[20];
-    int16_t iplPartial;
+    std::int16_t iplPartial;
     SCAN    scan;
 
     iplPartial = -1;
     scan.iwp = iwpNone;
     for (ipl = 0; ipl < app.state.game.cPlanMax && strcmpi(PszGetCompressedPlanet(app, app.state.rgidPlan[ipl]), szName) != 0; ipl++) {
-        if (iplPartial == -1 && strnicmp(PszGetCompressedPlanet(app, app.state.rgidPlan[ipl]), szName, strlen(szName)) == 0) {
+        if (iplPartial == -1 && strnicmp(PszGetCompressedPlanet(app, app.state.rgidPlan[ipl]), szName, std::strlen(szName)) == 0) {
             iplPartial = ipl;
         }
     }
@@ -2830,7 +2830,7 @@ GoWithPartial:
     if (*pch >= '1' && *pch <= '9') {
         ifl = *pch - '0';
         pch++;
-        while (isdigit(*pch) != 0) {
+        while (std::isdigit(*pch) != 0) {
             ifl = 10 * ifl + *pch - '0';
             pch++;
             if (ifl > 512)
@@ -2866,8 +2866,8 @@ LNotAFleetId:
 }
 
 void GetScanFleetOrientation(APPSESSION &app, FLEET *lpfl, POINT16 *ppt, POINT16 *pptD) {
-    int16_t dy;
-    int16_t dx;
+    std::int16_t dy;
+    std::int16_t dx;
 
     if (lpfl->iPlayer == app.state.idPlayer) {
         if (lpfl->cord <= 1 || lpfl->lpplord->rgord()[1].iWarp == 0) {
@@ -2887,17 +2887,17 @@ void GetScanFleetOrientation(APPSESSION &app, FLEET *lpfl, POINT16 *ppt, POINT16
     return;
 }
 
-void GetDxDyOrientation(APPSESSION &app, int16_t dx, int16_t dy, POINT16 *ppt, POINT16 *pptD) {
+void GetDxDyOrientation(APPSESSION &app, std::int16_t dx, std::int16_t dy, POINT16 *ppt, POINT16 *pptD) {
     double  dbl;
-    int16_t iBmp;
+    std::int16_t iBmp;
 
     iBmp = 0;
     if (dx == 0 && dy == 0)
         goto LFinishUp;
 
-    dbl = static_cast<double>(((static_cast<double>(atan2(static_cast<double>(dy), static_cast<double>(dx))) + 3.1415927) * 4.0 / 3.141592654 + 0.5));
-    iBmp = 8 - (LOWORD(static_cast<int32_t>(dbl)) & 7);
-    iBmp = (8 - (LOWORD(static_cast<int32_t>(dbl)) & 7) + 1) & 7;
+    dbl = static_cast<double>(((static_cast<double>(std::atan2(static_cast<double>(dy), static_cast<double>(dx))) + 3.1415927) * 4.0 / 3.141592654 + 0.5));
+    iBmp = 8 - (LOWORD(static_cast<std::int32_t>(dbl)) & 7);
+    iBmp = (8 - (LOWORD(static_cast<std::int32_t>(dbl)) & 7) + 1) & 7;
 
 LFinishUp:
     pptD->x = pptD->y = app.state.iScanZoom < zoom100 ? 7 : 9;
@@ -2910,18 +2910,18 @@ LFinishUp:
     return;
 }
 
-int16_t FHandleMeasuringTape(APPSESSION &app, SCAN *pscan, POINT16 pt) {
+std::int16_t FHandleMeasuringTape(APPSESSION &app, SCAN *pscan, POINT16 pt) {
     HDC     hdc;
     HPEN    hpenSav;
     SBAR    sbar;
     POINT16 ptLogLast;
-    int16_t grTypeIn;
+    std::int16_t grTypeIn;
     POINT16 ptLogical;
     POINT16 ptBase;
-    int16_t iropSav;
+    std::int16_t iropSav;
     POINT16 ptNew;
     char    szT[20];
-    int16_t fVirgin;
+    std::int16_t fVirgin;
     SCAN    scan;
     RECT    rc;
 
@@ -2951,7 +2951,7 @@ int16_t FHandleMeasuringTape(APPSESSION &app, SCAN *pscan, POINT16 pt) {
             ptNew = ptLogical;
             LogicalToScan(app, &ptNew);
             if (fVirgin) {
-                if (abs(ptLogical.x - ptLogLast.x) < 3 && abs(ptLogical.y - ptLogLast.y) < 3)
+                if (std::abs(ptLogical.x - ptLogLast.x) < 3 && std::abs(ptLogical.y - ptLogLast.y) < 3)
                     continue;
                 fVirgin = 0;
             } else {
@@ -3000,24 +3000,24 @@ int16_t FHandleMeasuringTape(APPSESSION &app, SCAN *pscan, POINT16 pt) {
 
 // ShowScanSel draws (fVis 1) or erases (0, or -1 to leave the main
 // selection's marker) the scanner's selection markers.
-void ShowScanSel(APPSESSION &app, int16_t fVis) {
+void ShowScanSel(APPSESSION &app, std::int16_t fVis) {
     RedrawScanSel(app, nullptr, fVis);
     return;
 }
 
 // ShowScanSelChange redraws the scanner, orders and mineral views after
 // ChangeScanSel moved the scanner selection from *pscanOld to *pscan.
-void ShowScanSelChange(APPSESSION &app, SCAN *pscanOld, SCAN *pscan, int16_t fChgWp) {
-    int16_t fMineFieldSel;
+void ShowScanSelChange(APPSESSION &app, SCAN *pscanOld, SCAN *pscan, std::int16_t fChgWp) {
+    std::int16_t fMineFieldSel;
     RECT    rcMine;
-    int16_t iRad;
+    std::int16_t iRad;
     HDC     hdc;
     POINT16 ptTL; /* NATIVE: RECT corners are 32-bit; LogicalToScan takes POINT16 */
     POINT16 ptBR;
 
     fMineFieldSel = pscanOld->grobj == grobjThing && app.state.lpThings[pscanOld->ith].ith() == ithMinefield;
     if (fMineFieldSel) {
-        iRad = LOWORD(static_cast<int32_t>((static_cast<double>(sqrt(static_cast<double>(app.state.lpThings[pscanOld->ith].thm().cMines()))) + 1.0)));
+        iRad = LOWORD(static_cast<std::int32_t>((static_cast<double>(std::sqrt(static_cast<double>(app.state.lpThings[pscanOld->ith].thm().cMines()))) + 1.0)));
         rcMine.left = app.state.lpThings[pscanOld->ith].pt().x();
         rcMine.top = app.state.lpThings[pscanOld->ith].pt().y();
         rcMine.right = rcMine.left + iRad;
@@ -3057,7 +3057,7 @@ void ShowScanSelChange(APPSESSION &app, SCAN *pscanOld, SCAN *pscan, int16_t fCh
     }
     fMineFieldSel = app.state.sel.scan.grobj == grobjThing && app.state.lpThings[app.state.sel.scan.ith].ith() == ithMinefield;
     if (fMineFieldSel) {
-        iRad = LOWORD(static_cast<int32_t>((static_cast<double>(sqrt(static_cast<double>(app.state.lpThings[app.state.sel.scan.ith].thm().cMines()))) + 1.0)));
+        iRad = LOWORD(static_cast<std::int32_t>((static_cast<double>(std::sqrt(static_cast<double>(app.state.lpThings[app.state.sel.scan.ith].thm().cMines()))) + 1.0)));
         rcMine.left = app.state.lpThings[app.state.sel.scan.ith].pt().x();
         rcMine.top = app.state.lpThings[app.state.sel.scan.ith].pt().y();
         rcMine.right = rcMine.left + iRad;

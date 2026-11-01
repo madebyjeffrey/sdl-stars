@@ -2,16 +2,16 @@
 #include "appstate.h"
 
 char *PszGetCompressedString(APPSESSION &app, StringId ids) {
-    int16_t  iChunk;
-    uint8_t *pchLen;
-    int16_t  iBuild;
-    int16_t  iNibble;
-    int16_t  i;
-    int16_t  iLen;
-    uint8_t *pch;
+    std::int16_t  iChunk;
+    std::uint8_t *pchLen;
+    std::int16_t  iBuild;
+    std::int16_t  iNibble;
+    std::int16_t  i;
+    std::int16_t  iLen;
+    std::uint8_t *pch;
     char    *pszOut;
-    int16_t  iOffset;
-    int16_t  fHigh;
+    std::int16_t  iOffset;
+    std::int16_t  fHigh;
 
     iNibble = 0;
     if (ids == app.state.iLastStrGet) {
@@ -19,7 +19,7 @@ char *PszGetCompressedString(APPSESSION &app, StringId ids) {
     }
     iChunk = ids >> 6;
     iOffset = ids & 0x3f;
-    pch = reinterpret_cast<uint8_t *>(&aSTRCmpr[aiSTRChunkOffset[iChunk]]);
+    pch = reinterpret_cast<std::uint8_t *>(&aSTRCmpr[aiSTRChunkOffset[iChunk]]);
     pchLen = &acSTR[iChunk * 64];
     i = 0;
     while (i < iOffset) {

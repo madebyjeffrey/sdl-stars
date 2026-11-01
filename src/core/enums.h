@@ -1,12 +1,12 @@
 #ifndef STARS_DECOMPILED_ENUMS_H
 #define STARS_DECOMPILED_ENUMS_H
 
-#include <stdint.h>
+#include <cstdint>
 
-enum HeapType : uint16_t {
+enum HeapType : std::uint16_t {
     htOrd = 0, htString, htMsg, htPlanets, htLog, htFleets, htMisc, htShips, htPlrMsg, htPerm, htThings, htBattle, htCount };
 
-enum AiLevel : uint16_t {
+enum AiLevel : std::uint16_t {
     lvlAiEasy = 0,
     lvlAiStandard = 1,
     lvlAiTough = 2,
@@ -14,7 +14,7 @@ enum AiLevel : uint16_t {
     lvlAiRandom = 4,
 };
 
-enum DetType : uint16_t {
+enum DetType : std::uint16_t {
     detNone = 0,
     detMinimal = 1,
     detObscure = 2,
@@ -23,7 +23,7 @@ enum DetType : uint16_t {
     detAll = 7,
 };
 
-enum MineralType : int16_t {
+enum MineralType : std::int16_t {
     SupplyButtonsOnly = -2, // transfer dialog: redraw only the buttons
     SupplyAll = -1,         // transfer dialog: redraw every cargo row
     Ironium = 0,
@@ -34,13 +34,13 @@ enum MineralType : int16_t {
     Fuel = 4,
 };
 
-enum EnvType : uint16_t {
+enum EnvType : std::uint16_t {
     Gravity = 0,
     Temperature = 1,
     Radiation = 2,
 };
 
-enum TechFieldType : uint16_t {
+enum TechFieldType : std::uint16_t {
     Energy = 0,
     Weapons = 1,
     Propulsion = 2,
@@ -50,7 +50,7 @@ enum TechFieldType : uint16_t {
     TechFieldCount = 6,
 };
 
-enum BattleUnitFlags : uint16_t {
+enum BattleUnitFlags : std::uint16_t {
     grBuOurUnits = 0x0001,
     grBuTheirUnits = 0x0002,
     grBuIncludeSb = 0x0004,
@@ -63,7 +63,7 @@ enum BattleUnitFlags : uint16_t {
     grBuClassAll = 0x00F8,
 };
 
-enum AttackWho : uint16_t {
+enum AttackWho : std::uint16_t {
     iplrAttackNobody = 0,
     iplrAttackEnemies = 1,
     iplrAttackNeutralsEnemies = 2,
@@ -71,7 +71,7 @@ enum AttackWho : uint16_t {
     iplrAttackPlayer = 4,
 };
 
-enum mdProdStat : uint16_t {
+enum mdProdStat : std::uint16_t {
     mdProdStatComplete = 0,
     mdProdStatCompleteAuto = 1,
     mdProdStatSkippedAuto = 2,
@@ -82,7 +82,7 @@ enum mdProdStat : uint16_t {
     mdProdStatBlockedSame = 7,
 };
 
-enum mdPartAvail : int16_t {
+enum mdPartAvail : std::int16_t {
     mdPartAvailRestricted = -1,
     mdPartAvailInvalid = 0,
     mdPartAvailAvailable = 1,
@@ -90,7 +90,7 @@ enum mdPartAvail : int16_t {
     mdPartAvailOtherTech = 99,
 };
 
-enum GrPopupType : uint16_t {
+enum GrPopupType : std::uint16_t {
     grPopupMineral = 1,
     grPopupPlayer = 2,
     grPopupFleet = 3,
@@ -108,7 +108,7 @@ enum GrPopupType : uint16_t {
     grPopupShdefBuild = 15,
 };
 
-enum HtMineType : uint16_t {
+enum HtMineType : std::uint16_t {
     htMineNone = 0,
     htMineMineralConc1 = 1,
     htMineMineralConc2 = 2,
@@ -126,14 +126,14 @@ enum HtMineType : uint16_t {
     htMineMinefieldType = 14,
 };
 
-enum HtMsgType : uint16_t {
+enum HtMsgType : std::uint16_t {
     htMsgNone = 0,
     htMsgCurrent = 1,
     htMsgZoom = 2,
     htMsgMode = 3,
 };
 
-enum DtFileType : uint16_t {
+enum DtFileType : std::uint16_t {
     dtXY = 0,
     dtLog = 1,
     dtHost = 2,
@@ -142,7 +142,7 @@ enum DtFileType : uint16_t {
     dtRace = 5,
 };
 
-enum RaceGrbit : uint16_t {
+enum RaceGrbit : std::uint16_t {
     ibitRaceIFE = 0x00,
     ibitRaceTT = 0x01,
     ibitRaceARM = 0x02,
@@ -165,7 +165,7 @@ enum RaceGrbit : uint16_t {
 
 // RaceTraitBits is a race's grbitAttr: one bit per RaceGrbit index, the
 // lesser racial traits and the other per-race switches.
-enum RaceTraitBits : uint32_t {
+enum RaceTraitBits : std::uint32_t {
     grbitRaceIFE = 0x00000001,
     grbitRaceTT = 0x00000002,
     grbitRaceARM = 0x00000004,
@@ -185,7 +185,7 @@ enum RaceTraitBits : uint32_t {
     grbitRaceCheapFact = 0x80000000,
 };
 
-enum RaceStat : uint16_t {
+enum RaceStat : std::uint16_t {
     rsResGen = 0,
     rsFactProd = 1,
     rsFactBuild = 2,
@@ -203,7 +203,7 @@ enum RaceStat : uint16_t {
     rsMajorAdv = 14,
 };
 
-enum RaceAttribute : uint16_t {
+enum RaceAttribute : std::uint16_t {
     raCheapCol = 0,
     raStealth = 1,
     raAttack = 2,
@@ -217,7 +217,7 @@ enum RaceAttribute : uint16_t {
     raMax = 10,
 };
 
-enum GrobjClass : uint16_t {
+enum GrobjClass : std::uint16_t {
     grobjNone = 0x0,
     grobjPlanet = 0x1,
     grobjFleet = 0x2,
@@ -229,7 +229,7 @@ enum GrobjClass : uint16_t {
     mdRecurseMask = mdNoRecurse | mdExact,
 };
 
-enum HullSlotType : uint16_t {
+enum HullSlotType : std::uint16_t {
     hstNone = 0x0000,
     hstEngine = 0x0001,
     hstScanner = 0x0002,
@@ -269,14 +269,14 @@ enum HullSlotType : uint16_t {
 
 
 
-enum ThingType : uint16_t {
+enum ThingType : std::uint16_t {
     ithMinefield = 0,
     ithMineralPacket = 1,
     ithWormhole = 2,
     ithMysteryTrader = 3,
 };
 
-enum MdBuild : uint16_t {
+enum MdBuild : std::uint16_t {
     mdBuildShdef = 0,
     mdBuildHuldef = 1,
     mdBuildEnemyShdef = 2,
@@ -284,13 +284,13 @@ enum MdBuild : uint16_t {
     mdBuildEdit = 4,
 };
 
-enum MdXfer : int16_t {
+enum MdXfer : std::int16_t {
     mdXferNone = -1,
     mdXferCargo = 0,
     mdXferShips = 1,
 };
 
-enum ProdItemType : uint16_t {
+enum ProdItemType : std::uint16_t {
     iobjMine = 0,
     iobjFactory = 1,
     iobjDefense = 2,
@@ -325,56 +325,56 @@ enum ProdItemType : uint16_t {
     iobjUnknown = 31,
 };
 
-enum PlayerSentinel : int16_t {
+enum PlayerSentinel : std::int16_t {
     iplrNone = -1,
 };
 
-enum FleetLocationSentinel : int16_t {
+enum FleetLocationSentinel : std::int16_t {
     idPlanetDeepSpace = -1,
 };
 
-enum PlanetIdSentinel : int16_t {
+enum PlanetIdSentinel : std::int16_t {
     idplNone = -1,
 };
 
-enum FleetIdSentinel : int16_t {
+enum FleetIdSentinel : std::int16_t {
     idflNone = -1,
 };
 
-enum ScanSelSentinel : int16_t {
+enum ScanSelSentinel : std::int16_t {
     iflNone = -1,
     iwpNone = -1,
     ithNone = -1,
 };
 
-enum LookupRequest : int16_t {
+enum LookupRequest : std::int16_t {
     idWriteBack = -1,
 };
 
-enum ShipDesignSentinel : int16_t {
+enum ShipDesignSentinel : std::int16_t {
     ishdefNone = -1,
     ishdefAll = -1,
 };
 
-enum MessageIndexSentinel : int16_t {
+enum MessageIndexSentinel : std::int16_t {
     imsgNone = -1,
 };
 
-enum EnvironmentValueSentinel : int16_t {
+enum EnvironmentValueSentinel : std::int16_t {
     envImmune = -1,
     envNone = -1,
 };
 
-enum ProdScheduleRequest : uint16_t {
+enum ProdScheduleRequest : std::uint16_t {
     iprodEstimateResearchResources = 0xffff,
 };
 
-enum TutorCheckSentinel : uint16_t {
+enum TutorCheckSentinel : std::uint16_t {
     iWarpAny = 0xffff,
     iDistAny = 0xffff,
 };
 
-enum TutorAnySentinel : int16_t {
+enum TutorAnySentinel : std::int16_t {
     mdScanAny = -1,
     iZoomAny = -1,
     iCategoryAny = -1,
@@ -383,7 +383,7 @@ enum TutorAnySentinel : int16_t {
     imsgAny = -1,
 };
 
-enum BattleRecordSentinel : uint16_t {
+enum BattleRecordSentinel : std::uint16_t {
     idPlanetNone = 0xffff,
 };
 
@@ -400,7 +400,7 @@ enum MessageIdSentinel {
     idmNone = 0xffff,
 };
 
-enum GrStat : uint16_t {
+enum GrStat : std::uint16_t {
     grStatFuel = 1,
     grStatCargo = 2,
 
@@ -416,7 +416,7 @@ enum iengineSentinel {
     iengineNone = 0xffff,
 };
 
-enum GrbitTrader : uint16_t {
+enum GrbitTrader : std::uint16_t {
     grbitTraderNone = 0x0000,
     grbitTraderCargo = 0x0001,
     grbitTraderSpecial = 0x0002,
@@ -434,7 +434,7 @@ enum GrbitTrader : uint16_t {
     grbitTraderAll = 0x1fff,
 };
 
-enum LookupResult : int16_t {
+enum LookupResult : std::int16_t {
     LookupInvalid = 0,     // “out of range” / not a valid part id in group
     LookupDisallowed = -1, // disallowed for race/trait/other rule
     LookupOk = 1,          // meets tech reqs (original CheckTechRequirements == 1)
@@ -442,7 +442,7 @@ enum LookupResult : int16_t {
     LookupNeedMany = 99    // multiple tech deficits
 };
 
-enum RecordType : uint16_t {
+enum RecordType : std::uint16_t {
     /*
      * NOTE: Stars! file records encode a 6-bit "record type" (rt) plus a 10-bit
      * byte count (cb) in a 16-bit header word.
@@ -499,7 +499,7 @@ enum RecordType : uint16_t {
     rtMax = 47                /* one past highest observed (0x2d) */
 };
 
-enum DialogId : uint16_t {
+enum DialogId : std::uint16_t {
     /* ship / fleet */
     IDD_MERGE_FLEETS = 82, /* MergeFleetsDlg */
     IDD_TRANSFER = 91,     /* TransferDlg */
@@ -560,20 +560,20 @@ enum DialogId : uint16_t {
 };
 
 // AboutControl names the controls of the About dialog.
-enum AboutControl : uint16_t {
+enum AboutControl : std::uint16_t {
     IDC_ABOUT_ORDER_INFO = 118,
     IDC_ABOUT_DEMO_TEXT = 1025,
     IDC_ABOUT_CREDITS_TEXT = 1055,
 };
 
 // PrintMapControl names the controls of the Print Map dialog.
-enum PrintMapControl : uint16_t {
+enum PrintMapControl : std::uint16_t {
     IDC_PRINT_MAP_PAGES_X = 268,
     IDC_PRINT_MAP_PAGES_Y = 269,
 };
 
 // SimpleNewGameControl names the controls of the simple New Game dialog.
-enum SimpleNewGameControl : uint16_t {
+enum SimpleNewGameControl : std::uint16_t {
     IDC_SIMPLE_NEW_GAME_EASY = 200,
     IDC_SIMPLE_NEW_GAME_STANDARD = 201,
     IDC_SIMPLE_NEW_GAME_HARDER = 202,
@@ -589,7 +589,7 @@ enum SimpleNewGameControl : uint16_t {
 };
 
 // NewGame1Control names the controls of the first advanced New Game wizard page.
-enum NewGame1Control : uint16_t {
+enum NewGame1Control : std::uint16_t {
     IDC_NEW_GAME_TINY = 1000,
     IDC_NEW_GAME_SMALL = 1001,
     IDC_NEW_GAME_MEDIUM = 1002,
@@ -614,7 +614,7 @@ enum NewGame1Control : uint16_t {
 };
 
 // NewGame3Control names the controls of the victory conditions New Game wizard page; the tech level checkbox covers both tech conditions.
-enum NewGame3Control : uint16_t {
+enum NewGame3Control : std::uint16_t {
     IDC_VC_OWNS_PLANETS = 291,
     IDC_VC_TECH_LEVEL = 292,
     IDC_VC_SCORE = 293,
@@ -625,7 +625,7 @@ enum NewGame3Control : uint16_t {
 };
 
 // VcrControl names the controls of the battle VCR dialog.
-enum VcrControl : uint16_t {
+enum VcrControl : std::uint16_t {
     IDC_VCR_REW_ALL = 161,
     IDC_VCR_REW = 162,
     IDC_VCR_PLAY_PAUSE = 163,
@@ -634,7 +634,7 @@ enum VcrControl : uint16_t {
 };
 
 // HostModeControl names the controls of the host mode dialog.
-enum HostModeControl : uint16_t {
+enum HostModeControl : std::uint16_t {
     IDC_HOST_GENERATE_NOW = 1031,
     IDC_HOST_AUTO_GENERATE = 1032,
     IDC_HOST_GAME_NAME_TEXT = 1033,
@@ -645,7 +645,7 @@ enum HostModeControl : uint16_t {
 };
 
 // HostOptionsControl names the controls of the auto generate options dialog; the second and third force generate options have no caption in the template.
-enum HostOptionsControl : uint16_t {
+enum HostOptionsControl : std::uint16_t {
     IDC_AUTOGEN_WHEN_ALL_IN = 1027,
     IDC_FORCE_GEN_NEVER = 2066,
     IDC_FORCE_GEN_OPTION_2 = 2067,
@@ -653,7 +653,7 @@ enum HostOptionsControl : uint16_t {
 };
 
 // SlotControl names the controls of the ship designer dialog.
-enum SlotControl : uint16_t {
+enum SlotControl : std::uint16_t {
     IDC_DESIGNER_COMPONENT_LIST = 2060,
     IDC_DESIGNER_SHIPS = 2064,
     IDC_DESIGNER_STARBASES = 2065,
@@ -664,7 +664,7 @@ enum SlotControl : uint16_t {
 };
 
 // RaceWizard1Control names the controls of the race wizard name and race page.
-enum RaceWizard1Control : uint16_t {
+enum RaceWizard1Control : std::uint16_t {
     IDC_RACE_NAME = 268,
     IDC_RACE_PASSWORD = 269,
     IDC_RACE_HUMANOID = 271,
@@ -679,19 +679,19 @@ enum RaceWizard1Control : uint16_t {
 };
 
 // RaceWizard2Control names the controls of the race wizard habitability page.
-enum RaceWizard2Control : uint16_t {
+enum RaceWizard2Control : std::uint16_t {
     IDC_IMMUNE_TO_GRAVITY = 291,
     IDC_IMMUNE_TO_TEMPERATURE = 292,
     IDC_IMMUNE_TO_RADIATION = 293,
 };
 
 // RaceWizard3Control names the controls of the race wizard economy page.
-enum RaceWizard3Control : uint16_t {
+enum RaceWizard3Control : std::uint16_t {
     IDC_RACE_FACTORY_GERMANIUM_DISCOUNT = 291,
 };
 
 // RaceWizard4Control names the controls of the race wizard primary racial trait page.
-enum RaceWizard4Control : uint16_t {
+enum RaceWizard4Control : std::uint16_t {
     IDC_RACE_HYPER_EXPANSION = 271,
     IDC_RACE_SUPER_STEALTH = 272,
     IDC_RACE_WAR_MONGER = 273,
@@ -705,7 +705,7 @@ enum RaceWizard4Control : uint16_t {
 };
 
 // RaceWizard5Control names the controls of the race wizard lesser racial trait page, in RaceGrbit order.
-enum RaceWizard5Control : uint16_t {
+enum RaceWizard5Control : std::uint16_t {
     IDC_RACE_IMPROVED_FUEL_EFFICIENCY = 291,
     IDC_RACE_TOTAL_TERRAFORMING = 292,
     IDC_RACE_ADVANCED_REMOTE_MINING = 293,
@@ -723,7 +723,7 @@ enum RaceWizard5Control : uint16_t {
 };
 
 // RaceWizard6Control names the controls of the race wizard research cost page.
-enum RaceWizard6Control : uint16_t {
+enum RaceWizard6Control : std::uint16_t {
     IDC_RACE_ENERGY_COST_EXTRA = 271,
     IDC_RACE_ENERGY_COST_STANDARD = 272,
     IDC_RACE_ENERGY_COST_LESS = 273,
@@ -746,7 +746,7 @@ enum RaceWizard6Control : uint16_t {
 };
 
 // ProductionControl names the controls of the production queue dialog.
-enum ProductionControl : uint16_t {
+enum ProductionControl : std::uint16_t {
     IDC_PRODUCTION_RESEARCH_LEFTOVERS_ONLY = 139,
     IDC_PRODUCTION_AVAILABLE_ITEMS = 1046,
     IDC_PRODUCTION_QUEUE = 1047,
@@ -758,14 +758,14 @@ enum ProductionControl : uint16_t {
 };
 
 // MergeFleetsControl names the controls of the merge fleets dialog.
-enum MergeFleetsControl : uint16_t {
+enum MergeFleetsControl : std::uint16_t {
     IDC_MERGE_FLEETS_LIST = 81,
     IDC_MERGE_FLEETS_SELECT_ALL = 2040,
     IDC_MERGE_FLEETS_UNSELECT_ALL = 2041,
 };
 
 // BattlePlansControl names the controls of the battle plans dialog.
-enum BattlePlansControl : uint16_t {
+enum BattlePlansControl : std::uint16_t {
     IDC_BATTLE_PLAN_COPY = 1052,
     IDC_BATTLE_PLAN_DUMP_CARGO = 1053,
     IDC_BATTLE_PLAN_SELECT = 1054,
@@ -776,7 +776,7 @@ enum BattlePlansControl : uint16_t {
 };
 
 // RelationsControl names the controls of the player relations dialog.
-enum RelationsControl : uint16_t {
+enum RelationsControl : std::uint16_t {
     IDC_RELATIONS_PLAYER_LIST = 2003,
     IDC_RELATIONS_NEUTRAL = 2004,
     IDC_RELATIONS_FRIEND = 2005,
@@ -784,7 +784,7 @@ enum RelationsControl : uint16_t {
 };
 
 // ResearchControl names the controls of the research dialog.
-enum ResearchControl : uint16_t {
+enum ResearchControl : std::uint16_t {
     IDC_RESEARCH_ENERGY = 1073,
     IDC_RESEARCH_WEAPONS = 1074,
     IDC_RESEARCH_PROPULSION = 1075,
@@ -795,7 +795,7 @@ enum ResearchControl : uint16_t {
 };
 
 // ZipProdControl names the controls of the production template dialog.
-enum ZipProdControl : uint16_t {
+enum ZipProdControl : std::uint16_t {
     IDC_ZIP_PROD_QUEUE = 1047,
     IDC_ZIP_PROD_PRESET_1 = 1073,
     IDC_ZIP_PROD_PRESET_2 = 1074,
@@ -804,39 +804,39 @@ enum ZipProdControl : uint16_t {
 };
 
 // GaugeControl names the controls of the progress gauge dialog.
-enum GaugeControl : uint16_t {
+enum GaugeControl : std::uint16_t {
     IDC_GAUGE_TEXT = 1071,
 };
 
 // BrowserControl names the controls of the technology browser dialog.
-enum BrowserControl : uint16_t {
+enum BrowserControl : std::uint16_t {
     IDC_BROWSER_AVAILABLE_ONLY = 266,
     IDC_BROWSER_COMPONENT_CATEGORY = 267,
 };
 
 // TutorControl names the controls of the tutorial dialog.
-enum TutorControl : uint16_t {
+enum TutorControl : std::uint16_t {
     IDC_TUTOR_HINT = 118,
     IDC_TUTOR_PANIC = 2503,
 };
 
 // PanicControl names the controls of the tutorial panic dialog.
-enum PanicControl : uint16_t {
+enum PanicControl : std::uint16_t {
     IDC_PANIC_REDO_TURN = 2505,
     IDC_PANIC_COMPLETE_TURN = 2506,
 };
 
 // NewPasswordControl names the controls of the new password dialog.
-enum NewPasswordControl : uint16_t {
+enum NewPasswordControl : std::uint16_t {
     IDC_PASSWORD_CONFIRM = 269,
 };
 
 // ScoreControl names the controls of the score dialog.
-enum ScoreControl : uint16_t {
+enum ScoreControl : std::uint16_t {
     IDC_SCORE_SWITCH = 198,
 };
 
-enum ControlId : uint16_t {
+enum ControlId : std::uint16_t {
     // Controls shared by several dialogs with the same meaning; a dialog's
     // own controls are in its dialog_controls enum.
     IDOK = 1,
@@ -992,7 +992,7 @@ enum ControlId : uint16_t {
 
 /* Numeric cursor resources, named after the hcur globals they load into;
  * the others are named (SCANNERCUR, ...). */
-enum CursorId : uint16_t {
+enum CursorId : std::uint16_t {
     IDC_NO_WAY = 121,
     IDC_TRASH_CAN = 122,
     IDC_RESIZE_WE = 258,
@@ -1004,7 +1004,7 @@ enum CursorId : uint16_t {
 
 /* Numeric bitmap resources; the others are named (CARGOBMP, ...). IDB_ ones
  * are loaded with LoadBitmap, IDDIB_ ones as DIBs through FindResource. */
-enum BitmapId : uint16_t {
+enum BitmapId : std::uint16_t {
     IDDIB_PLAYER_ICONS_TINY = 79,
     IDDIB_PLAYER_ICONS_SMALL = 80,
     IDDIB_THING_ICONS = 87,
@@ -1040,13 +1040,13 @@ enum BitmapId : uint16_t {
     IDDIB_NUM_DESIGNS_PLATE = 1079,
 };
 
-enum AcceleratorId : uint16_t {
+enum AcceleratorId : std::uint16_t {
     IDA_MAIN = 116,
     IDA_TITLE = 1080,
 };
 
 /* Tutorial game files, each stored as its own custom resource type. */
-enum TutorialResourceId : uint16_t {
+enum TutorialResourceId : std::uint16_t {
     RT_TUTORIAL_HST = 10000,
     IDR_TUTORIAL_HST = 10001,
     RT_TUTORIAL_M1 = 10002,
@@ -1055,7 +1055,7 @@ enum TutorialResourceId : uint16_t {
     IDR_TUTORIAL_M2 = 10005,
 };
 
-enum VictoryCondition : uint16_t {
+enum VictoryCondition : std::uint16_t {
     vcOwnsPercentPlanets = 0,     /* "Owns % of all planets." */
     vcAttainsTechLevel = 1,       /* "Attains Tech X in Y fields." (level) */
     vcAttainsTechFields = 2,      /* number of tech fields */
@@ -1068,7 +1068,7 @@ enum VictoryCondition : uint16_t {
     vcMinYearsBeforeWin = 9       /* "At least X years must pass before a winner is declared." */
 };
 
-enum MdOpenFlags : uint16_t {
+enum MdOpenFlags : std::uint16_t {
     /* access + share combinations */
     mdRead = 0x0020,      /* OF_READ | OF_SHARE_DENY_WRITE */
     mdReadWrite = 0x0012, /* OF_READWRITE | OF_SHARE_EXCLUSIVE */
@@ -1080,7 +1080,7 @@ enum MdOpenFlags : uint16_t {
     mdNoOpenErr = 0x4000,
 };
 
-enum TaskType : uint16_t {
+enum TaskType : std::uint16_t {
     grTaskNone = 0,
     grTaskXfer = 1, /* transport / transfer cargo */
     grTaskColonize = 2,
@@ -1094,7 +1094,7 @@ enum TaskType : uint16_t {
     grTaskAny = 0xffff,
 };
 
-enum XferActionType : uint16_t {
+enum XferActionType : std::uint16_t {
     iActionNone = 0, /* implicit / cleared */
 
     iActionLoadAll = 1,     /* "Load All Available"        */
@@ -1109,7 +1109,7 @@ enum XferActionType : uint16_t {
     /* iActionLoadOptimal is encoded via iActionLoadDunnage + fuel path */
 };
 
-enum MdTarget : uint16_t {
+enum MdTarget : std::uint16_t {
     mdTargetNone = 0,              /* "None/Disengage" */
     mdTargetAny = 1,               /* "Any" */
     mdTargetStarbase = 2,          /* "Starbase" */
@@ -1120,7 +1120,7 @@ enum MdTarget : uint16_t {
     mdTargetFreighters = 7,        /* "Freighters" */
 };
 
-enum BattleTactic : uint16_t {
+enum BattleTactic : std::uint16_t {
     mdTacticDisengage = 0,             /* "Disengage" */
     mdTacticDisengageIfChallenged = 1, /* "Disengage if challenged" */
     mdTacticMinDamageToSelf = 2,       /* "Minimize damage to self" */
@@ -1129,7 +1129,7 @@ enum BattleTactic : uint16_t {
     mdTacticMaxDamage = 5,             /* "Maximize damage" */
 };
 
-enum GrfWeapon : uint16_t {
+enum GrfWeapon : std::uint16_t {
     bitFBeamLow = 0x0001,
     bitFBeamHigh = 0x0002,
     bitFTorp = 0x0004,
@@ -1164,13 +1164,13 @@ enum AiStarbaseRecipeSentinel {
 };
 
 // Squared packet attack distance thresholds for one or two mass drivers.
-enum AiPacketDistanceSquared : uint16_t {
+enum AiPacketDistanceSquared : std::uint16_t {
     aiPacketDistanceSquaredSingleMassDriver = 7056,
     aiPacketDistanceSquaredTwoMassDrivers = 50625,
 };
 
 // AiRace identifies a computer player's race and the AI routine that plays it.
-enum AiRace : uint16_t {
+enum AiRace : std::uint16_t {
     idAiRobotoid = 0,
     idAiTurinDrone = 1,
     idAiAutomitron = 2,
@@ -1182,7 +1182,7 @@ enum AiRace : uint16_t {
 };
 
 // MineFieldType is a minefield's kind.
-enum MineFieldType : uint16_t {
+enum MineFieldType : std::uint16_t {
     mineStandard = 0,
     mineHeavy = 1,
     mineSpeedBump = 2,
@@ -1191,7 +1191,7 @@ enum MineFieldType : uint16_t {
 };
 
 // ScanView is the scanner's view mode, the low nibble of grbitScan.
-enum ScanView : uint16_t {
+enum ScanView : std::uint16_t {
     scanViewNormal = 0,
     scanViewSurfaceMinerals = 1,
     scanViewMineralConc = 2,
@@ -1202,7 +1202,7 @@ enum ScanView : uint16_t {
 
 // GrbitScan holds the scanner's overlay and filter toggles above the view mode
 // in grbitScan.
-enum GrbitScan : uint16_t {
+enum GrbitScan : std::uint16_t {
     grbitScanViewMask = 0x000f, // ScanView
     grbitScanAddWaypoints = 0x0010,
     grbitScanCoverage = 0x0020,
@@ -1219,7 +1219,7 @@ enum GrbitScan : uint16_t {
 
 // ToolbarButton is a scanner toolbar button; the negative values are layout
 // entries of vrgTBBtn.
-enum ToolbarButton : int16_t {
+enum ToolbarButton : std::int16_t {
     tbScannerRange = -3, // scanner range readout
     tbSpacer = -2,
     tbSeparator = -1,
@@ -1244,7 +1244,7 @@ enum ToolbarButton : int16_t {
 };
 
 // UniverseSize is the galaxy size; its width is 400 * (size + 1) light years.
-enum UniverseSize : uint16_t {
+enum UniverseSize : std::uint16_t {
     sizeTiny = 0,
     sizeSmall = 1,
     sizeMedium = 2,
@@ -1253,7 +1253,7 @@ enum UniverseSize : uint16_t {
 };
 
 // UniverseDensity is the galaxy's planet density.
-enum UniverseDensity : uint16_t {
+enum UniverseDensity : std::uint16_t {
     densitySparse = 0,
     densityNormal = 1,
     densityDense = 2,
@@ -1261,7 +1261,7 @@ enum UniverseDensity : uint16_t {
 };
 
 // StartDistance is the distance between players' homeworlds.
-enum StartDistance : uint16_t {
+enum StartDistance : std::uint16_t {
     startDistClose = 0,
     startDistModerate = 1,
     startDistFarther = 2,
@@ -1271,7 +1271,7 @@ enum StartDistance : uint16_t {
 // MsgGoto is a message's goto target: a planet id (>= 0), a fleet id, a
 // battle id | 0x4000, a part as 0xc000 | (hst bit << 8) | iItem, or one of
 // these.
-enum MsgGoto : int16_t {
+enum MsgGoto : std::int16_t {
     gotoBattleReport = -7,
     gotoThing = -6, // the thing id is the message's first parameter
     gotoScore = -4,
@@ -1283,7 +1283,7 @@ enum MsgGoto : int16_t {
 };
 
 // MdMsgObj is what the message window's goto button opens.
-enum MdMsgObj : uint16_t {
+enum MdMsgObj : std::uint16_t {
     mdMsgObjNone = 0,
     mdMsgObjPlanet = 1,
     mdMsgObjFleet = 2,
@@ -1299,7 +1299,7 @@ enum MdMsgObj : uint16_t {
 
 // TileBits selects the planet or fleet detail tiles DrawPlanShip draws. A bit
 // shared by both tile sets is named for both.
-enum TileBits : uint16_t {
+enum TileBits : std::uint16_t {
     tileMineralsOrCargo = 0x0001,
     tileShipList = 0x0004,
     tilePlanetStats = 0x0008,
@@ -1314,7 +1314,7 @@ enum TileBits : uint16_t {
 };
 
 // ReportType is a report dialog's report.
-enum ReportType : uint16_t {
+enum ReportType : std::uint16_t {
     rptPlanets = 0,
     rptFleets = 1,
     rptEnemyFleets = 2,
@@ -1322,7 +1322,7 @@ enum ReportType : uint16_t {
 };
 
 // PlanetReportColumn is a column of the planet report.
-enum PlanetReportColumn : uint16_t {
+enum PlanetReportColumn : std::uint16_t {
     colPlanetName = 0,
     colPlanetStarbase = 1,
     colPlanetPopulation = 2,
@@ -1342,7 +1342,7 @@ enum PlanetReportColumn : uint16_t {
 };
 
 // FleetReportColumn is a column of the fleet report.
-enum FleetReportColumn : uint16_t {
+enum FleetReportColumn : std::uint16_t {
     colFleetName = 0,
     colFleetId = 1,
     colFleetLocation = 2,
@@ -1359,7 +1359,7 @@ enum FleetReportColumn : uint16_t {
 };
 
 // EnemyFleetReportColumn is a column of the other players' fleet report.
-enum EnemyFleetReportColumn : uint16_t {
+enum EnemyFleetReportColumn : std::uint16_t {
     colEnemyFleetName = 0,
     colEnemyFleetId = 1,
     colEnemyFleetLocation = 2,
@@ -1376,7 +1376,7 @@ enum EnemyFleetReportColumn : uint16_t {
 };
 
 // BattleReportColumn is a column of the battle report.
-enum BattleReportColumn : uint16_t {
+enum BattleReportColumn : std::uint16_t {
     colBattleLocation = 0,
     colBattleStarbase = 1,
     colBattleSides = 2,
@@ -1396,14 +1396,14 @@ enum BattleReportColumn : uint16_t {
 };
 
 // WindowLayout is the main window layout, chosen by screen size.
-enum WindowLayout : uint16_t {
+enum WindowLayout : std::uint16_t {
     layoutLarge = 0,
     layoutMedium = 1,
     layoutSmall = 2,
 };
 
 // ScanZoom is the scanner zoom level.
-enum ScanZoom : int16_t {
+enum ScanZoom : std::int16_t {
     zoom25 = -4,
     zoom38 = -3,
     zoom50 = -2,
@@ -1416,7 +1416,7 @@ enum ScanZoom : int16_t {
 };
 
 // MdMark is the turn-file flag FMarkFile sets and FCheckFile tests.
-enum MdMark : uint16_t {
+enum MdMark : std::uint16_t {
     mdMarkInUse = 1,
     mdMarkDone = 2,
     mdMarkMulti = 4,
@@ -1424,7 +1424,7 @@ enum MdMark : uint16_t {
 };
 
 // HostTimer is the job of the host-mode timer.
-enum HostTimer : uint16_t {
+enum HostTimer : std::uint16_t {
     hostTimerAutoGen = 13,   // poll for turns to generate
     hostTimerWaitTurn = 14,  // wait for the next turn after submitting
     hostTimerTurnReady = 15, // flash the window when a new turn is ready
@@ -1432,20 +1432,20 @@ enum HostTimer : uint16_t {
 
 // ProgressStep is an UpdateProgressGauge argument that advances the gauge
 // instead of setting it.
-enum ProgressStep : int16_t {
+enum ProgressStep : std::int16_t {
     progressStep1 = -927,
     progressStep4 = -926,
 };
 
 // AddItemMode is where AddItemToQueue puts an item in the production queue.
-enum AddItemMode : uint16_t {
+enum AddItemMode : std::uint16_t {
     addItemFront = 0,
     addItemEnd = 1,
     addItemReplace = 2, // clear the queue first
 };
 
 // MainMenu is a top-level menu's position in the frame menu bar.
-enum MainMenu : uint16_t {
+enum MainMenu : std::uint16_t {
     menuFile = 0,
     menuView = 1,
     menuTurn = 2,
@@ -1456,7 +1456,7 @@ enum MainMenu : uint16_t {
 
 // TutorShipBuilderAction is the ship designer button FTutorialEnabledShipBuilder
 // checks against the tutorial's current step.
-enum TutorShipBuilderAction : uint16_t {
+enum TutorShipBuilderAction : std::uint16_t {
     tutsbDelete = 0,
     tutsbCopy = 1,
     tutsbEdit = 2,
@@ -1468,7 +1468,7 @@ enum TutorShipBuilderAction : uint16_t {
 // selects it: the [MAP] numbers of the help file's |CTXOMAP, named by topic
 // title. Many share their number with the dialog control they explain.
 // Generated by scripts/hlp-context-enum.py.
-enum HelpContextId : uint16_t {
+enum HelpContextId : std::uint16_t {
     idhStarsPlayersGuideContents = 1,                         // Stars! Player's Guide - Contents
     idhIntroductionAndPlayerSupport = 2,                      // Introduction and Player Support
     idhTheStarsScreen = 3,                                    // The Stars! Screen
@@ -1887,7 +1887,7 @@ enum HelpContextId : uint16_t {
 // HullCategory is a hull's role, as the fleet and battle reports group
 // ships: unarmed hulls are colony ships, freighters, miners and fuel
 // transports.
-enum HullCategory : uint16_t {
+enum HullCategory : std::uint16_t {
     hullCatColony = 0,
     hullCatFreighter = 1,
     hullCatScout = 2,   // scout, frigate, destroyer
@@ -1899,7 +1899,7 @@ enum HullCategory : uint16_t {
 };
 
 // HullAttack is how a hull fights; battle code treats any nonzero value as armed.
-enum HullAttack : uint16_t {
+enum HullAttack : std::uint16_t {
     hullAttackNone = 0,
     hullAttackLight = 1, // scout, frigate, destroyer, privateer
     hullAttackHeavy = 2, // cruisers and up, rogue, galleon, Nubian, morphs
@@ -1907,14 +1907,14 @@ enum HullAttack : uint16_t {
 };
 
 // BeamAbility is a beam weapon's grfAbilities.
-enum BeamAbility : uint16_t {
+enum BeamAbility : std::uint16_t {
     beamSapper = 0x0001,  // damages shields only
     beamGatling = 0x0002, // hits every target in range
 };
 
 // EngineAbility is a special engine's grfAbilities, which selects its
 // description and restrictions.
-enum EngineAbility : uint16_t {
+enum EngineAbility : std::uint16_t {
     engineAbilityNone = 0,
     engineSettlersDelight = 1,   // mini-colonizer hulls only
     engineRadiatingRamScoop = 2, // radiation kills colonists
@@ -1925,7 +1925,7 @@ enum EngineAbility : uint16_t {
 };
 
 // ScannerAbility is a scanner's grfAbilities.
-enum ScannerAbility : uint16_t {
+enum ScannerAbility : std::uint16_t {
     scannerAbilityNone = 0,
     scannerPenetrating50 = 1,
     scannerPenetrating100 = 2,
@@ -1934,14 +1934,14 @@ enum ScannerAbility : uint16_t {
 };
 
 // PaneSplitter is the set of frame splitter bars a point is on.
-enum PaneSplitter : uint16_t {
+enum PaneSplitter : std::uint16_t {
     splitVertical = 0x0001, // between the left panes and the scanner
     splitMessages = 0x0002, // below the messages pane
     splitLower = 0x0004,    // the second horizontal bar
 };
 
 // RaceWizardPage is the race wizard page shown, in wizard order.
-enum RaceWizardPage : int16_t {
+enum RaceWizardPage : std::int16_t {
     rwPageNone = -1,
     rwPageRace = 1,         // IDD_RACE_WIZARD_1
     rwPagePrimaryTrait = 2, // IDD_RACE_WIZARD_4
@@ -1953,7 +1953,7 @@ enum RaceWizardPage : int16_t {
 
 // WizardButton is a wizard page's result: the index of the button pressed
 // in rgidRaceBtn.
-enum WizardButton : uint16_t {
+enum WizardButton : std::uint16_t {
     wizCancel = 0,
     wizBack = 1,
     wizNext = 2,
@@ -1963,7 +1963,7 @@ enum WizardButton : uint16_t {
 
 // PacketDecay is how many warps a mineral packet was flung over its
 // driver's rating, and so how fast it decays.
-enum PacketDecay : uint16_t {
+enum PacketDecay : std::uint16_t {
     decayNone = 0,
     decay10Pct = 1,
     decay25Pct = 2,
@@ -1972,7 +1972,7 @@ enum PacketDecay : uint16_t {
 
 // CompassDir is a direction on the map, counterclockwise from east; y
 // grows southward.
-enum CompassDir : uint16_t {
+enum CompassDir : std::uint16_t {
     dirEast = 0,
     dirNorthEast = 1,
     dirNorth = 2,

@@ -2,7 +2,7 @@
 #define STARS_DECOMPILED_PARTS_H
 
 #include "common.h"
-#include <stdint.h>
+#include <cstdint>
 
 extern SHDEF     rgshdefSBT[];
 extern BEAM      rgbeam[];
@@ -24,15 +24,15 @@ extern SPECIAL   rgspecialE[];
 extern MINES     rgmines[];
 
 HULDEF    *LphuldefSBFromId(isbhull id);
-HULDEF    *LphuldefFromId(int16_t id);
-ENGINE    *LpengineFromId(int16_t id);
-SCANNER   *LpscannerFromId(int16_t id);
+HULDEF    *LphuldefFromId(std::int16_t id);
+ENGINE    *LpengineFromId(std::int16_t id);
+SCANNER   *LpscannerFromId(std::int16_t id);
 SHDEF     *LpshdefT();
 SHDEF     *LpshdefSBT();
-PLANETARY *LpplanetaryFromId(int16_t id);
-int16_t    FLookupPartX(APPSESSION &app, PART *ppart, uint16_t grhst, uint16_t iItem);
-int16_t    FLookupPart(APPSESSION &app, PART *ppart);
+PLANETARY *LpplanetaryFromId(std::int16_t id);
+std::int16_t    FLookupPartX(APPSESSION &app, PART *ppart, std::uint16_t grhst, std::uint16_t iItem);
+std::int16_t    FLookupPart(APPSESSION &app, PART *ppart);
 void       LookupBestPlanetaryScanner(APPSESSION &app, PART *ppart);
-int16_t    TechStatus(APPSESSION &app, char *rgTech);
+std::int16_t    TechStatus(APPSESSION &app, char *rgTech);
 
 #endif

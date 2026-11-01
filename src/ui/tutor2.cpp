@@ -1,25 +1,25 @@
 #include "win.h"
 #include "uistate.h"
 
-int16_t CchTutorString(APPSESSION &app, char *pchOut, TutorId idt) {
-    int16_t  iOffset;
-    int16_t  fHigh;
-    int16_t  iChunk;
-    uint8_t *pchLen;
-    int16_t  iBuild;
-    int16_t  iNibble;
-    int16_t  i;
+std::int16_t CchTutorString(APPSESSION &app, char *pchOut, TutorId idt) {
+    std::int16_t  iOffset;
+    std::int16_t  fHigh;
+    std::int16_t  iChunk;
+    std::uint8_t *pchLen;
+    std::int16_t  iBuild;
+    std::int16_t  iNibble;
+    std::int16_t  i;
     char    *pszOut;
-    int16_t  iLen;
-    uint8_t *pch;
+    std::int16_t  iLen;
+    std::uint8_t *pch;
 
     iNibble = 0;
     if (idt == app.lpui->iLastTutGet) {
-        return strlen(pchOut);
+        return std::strlen(pchOut);
     }
     iChunk = idt >> 6;
     iOffset = idt & 0x3f;
-    pch = reinterpret_cast<uint8_t *>(&aTUTCmpr[aiTUTChunkOffset[iChunk]]);
+    pch = reinterpret_cast<std::uint8_t *>(&aTUTCmpr[aiTUTChunkOffset[iChunk]]);
     pchLen = &acTUT[iChunk * 64];
     i = 0;
     while (i < iOffset) {

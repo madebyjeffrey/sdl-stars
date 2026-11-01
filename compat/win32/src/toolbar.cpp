@@ -1,8 +1,8 @@
 /* Narrow common-control toolbar contracts used by the native Stars UI. */
 #include "internal.h"
 #include <commctrl.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstring>
 
 struct COMPATTOOLBUTTON { TBBUTTON btn; RECT rc; char *psz; };
 struct COMPATTOOLBITMAP { HBITMAP hbmp; int iFirst, c; };
@@ -19,7 +19,7 @@ struct COMPATTOOLBAR {
     ~COMPATTOOLBAR() noexcept {
         for (int i = 0; i < c; i++) SDL_free(rgbtn[i].psz);
         for (int i = 0; i < cbmp; i++) win32::DeleteObject(rgbmp[i].hbmp);
-        free(rgbtn); free(rgbmp);
+        std::free(rgbtn); std::free(rgbmp);
     }
 };
 
@@ -76,14 +76,14 @@ static int HitToolbar(COMPATTOOLBAR *lp, POINT pt) {
     return -lp->c - 1;
 }
 
-static BOOL AddButtons(HWND hwnd, int iInsert, size_t c, const TBBUTTON *rgbtn) {
+static BOOL AddButtons(HWND hwnd, int iInsert, std::size_t c, const TBBUTTON *rgbtn) {
     auto lptoolbarKeep = hwnd->lptoolbar;
     COMPATTOOLBAR *lp = lptoolbarKeep.get();
     COMPATTOOLBUTTON *rgNew;
-    size_t i;
+    std::size_t i;
     if (!rgbtn || iInsert < 0 || iInsert > lp->c || c > 4096 || c + lp->c > 4096 ||
         lp->cbButton != sizeof(TBBUTTON)) return 0;
-    rgNew = static_cast<COMPATTOOLBUTTON *>((calloc(c + static_cast<size_t>(lp->c) + 1, sizeof(*rgNew))));
+    rgNew = static_cast<COMPATTOOLBUTTON *>((std::calloc(c + static_cast<std::size_t>(lp->c) + 1, sizeof(*rgNew))));
     if (!rgNew) return 0;
     for (i = 0; i < c; i++) {
         rgNew[iInsert + i].btn = rgbtn[i];
@@ -96,11 +96,11 @@ static BOOL AddButtons(HWND hwnd, int iInsert, size_t c, const TBBUTTON *rgbtn) 
     }
     if (i != c) {
         for (i = 0; i < c; i++) SDL_free(rgNew[iInsert + i].psz);
-        free(rgNew); return 0;
+        std::free(rgNew); return 0;
     }
-    if (iInsert != 0) memcpy(rgNew, lp->rgbtn, static_cast<size_t>(iInsert) * sizeof(*rgNew));
-    if (lp->c != iInsert) memcpy(rgNew + iInsert + c, lp->rgbtn + iInsert, static_cast<size_t>((lp->c - iInsert)) * sizeof(*rgNew));
-    free(lp->rgbtn); lp->rgbtn = rgNew; lp->c += static_cast<int>(c);
+    if (iInsert != 0) std::memcpy(rgNew, lp->rgbtn, static_cast<std::size_t>(iInsert) * sizeof(*rgNew));
+    if (lp->c != iInsert) std::memcpy(rgNew + iInsert + c, lp->rgbtn + iInsert, static_cast<std::size_t>((lp->c - iInsert)) * sizeof(*rgNew));
+    std::free(lp->rgbtn); lp->rgbtn = rgNew; lp->c += static_cast<int>(c);
     lp->iDown = lp->iHot = -1;
     HideTip(hwnd); LayoutToolbar(hwnd);
     return 1;
@@ -134,7 +134,7 @@ static int AddBitmap(HWND hwnd, int c, const TBADDBITMAP *lpadd) {
     win32::DeleteDC(hsrc); win32::DeleteDC(hdst);
     if (lpadd->hInst) win32::DeleteObject(hbmp);
     if (!fCopy) { if (hcopy) win32::DeleteObject(hcopy); return -1; }
-    rgbmp = static_cast<COMPATTOOLBITMAP *>((realloc(lp->rgbmp, static_cast<size_t>((lp->cbmp + 1)) * sizeof(*rgbmp))));
+    rgbmp = static_cast<COMPATTOOLBITMAP *>((std::realloc(lp->rgbmp, static_cast<std::size_t>((lp->cbmp + 1)) * sizeof(*rgbmp))));
     if (!rgbmp) { win32::DeleteObject(hcopy); return -1; }
     lp->rgbmp = rgbmp; iFirst = lp->cImage;
     lp->rgbmp[lp->cbmp++] = COMPATTOOLBITMAP{hcopy, iFirst, c}; lp->cImage += c;
@@ -280,7 +280,7 @@ static void ShowToolbarTip(HWND hwnd) {
     win32::MapWindowPoints(hwnd, nullptr, reinterpret_cast<POINT *>(&rc), 2);
     if (!win32::GetCursorPos(&pt) || !win32::PtInRect(&rc, pt)) { HideTip(hwnd); lp->iHot = -1; return; }
     if (win32::IsWindowVisible(lp->hwndTip) || !lpbtn->psz || !*lpbtn->psz) return;
-    hdc = win32::GetDC(hwnd); win32::GetTextExtentPoint32A(hdc, lpbtn->psz, static_cast<int>(strlen(lpbtn->psz)), &size); win32::ReleaseDC(hwnd, hdc);
+    hdc = win32::GetDC(hwnd); win32::GetTextExtentPoint32A(hdc, lpbtn->psz, static_cast<int>(std::strlen(lpbtn->psz)), &size); win32::ReleaseDC(hwnd, hdc);
     hwndRoot = HwndCompatRoot(hwnd); win32::GetWindowRect(hwndRoot, &rcRoot);
     x = (((rcRoot.left) > (StarsMin(rc.left, rcRoot.right - size.cx - 6))) ? (rcRoot.left) : (StarsMin(rc.left, rcRoot.right - size.cx - 6))); y = rc.bottom + 2;
     if (y + size.cy + 6 > rcRoot.bottom) y = StarsMax(rcRoot.top, rc.top - size.cy - 8);
@@ -297,7 +297,7 @@ static void ShowToolbarTip(HWND hwnd) {
 LRESULT  CompatToolbarProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     auto lptoolbarKeep = hwnd->lptoolbar;
     COMPATTOOLBAR *lp = lptoolbarKeep.get();
-    POINT pt = {static_cast<int16_t>(LOWORD(l)), static_cast<int16_t>(HIWORD(l))};
+    POINT pt = {static_cast<std::int16_t>(LOWORD(l)), static_cast<std::int16_t>(HIWORD(l))};
     int i, j, id, step;
     BYTE mask;
     BOOL fDrop;
@@ -327,11 +327,11 @@ LRESULT  CompatToolbarProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     case win32::WM_PAINT: PaintToolbar(hwnd); return 0;
     case win32::WM_ERASEBKGND: return 1;
     case win32::TB_BUTTONSTRUCTSIZE: lp->cbButton = static_cast<UINT>(w); return 0;
-    case win32::TB_ADDBUTTONSA: return AddButtons(hwnd, lp->c, static_cast<size_t>(w), reinterpret_cast<const TBBUTTON *>(l));
+    case win32::TB_ADDBUTTONSA: return AddButtons(hwnd, lp->c, static_cast<std::size_t>(w), reinterpret_cast<const TBBUTTON *>(l));
     case win32::TB_INSERTBUTTONA: return AddButtons(hwnd, (((static_cast<int>(w)) < (lp->c)) ? (static_cast<int>(w)) : (lp->c)), 1, reinterpret_cast<const TBBUTTON *>(l));
     case win32::TB_DELETEBUTTON:
         i = static_cast<int>(w); if (i < 0 || i >= lp->c) return 0;
-        SDL_free(lp->rgbtn[i].psz); memmove(lp->rgbtn + i, lp->rgbtn + i + 1, static_cast<size_t>((lp->c - i - 1)) * sizeof(*lp->rgbtn));
+        SDL_free(lp->rgbtn[i].psz); std::memmove(lp->rgbtn + i, lp->rgbtn + i + 1, static_cast<std::size_t>((lp->c - i - 1)) * sizeof(*lp->rgbtn));
         lp->c--; lp->iDown = lp->iHot = -1; HideTip(hwnd); LayoutToolbar(hwnd); return 1;
     case win32::TB_BUTTONCOUNT: return lp->c;
     case win32::TB_COMMANDTOINDEX: return IndexButton(lp, static_cast<int>(w));
@@ -369,8 +369,8 @@ LRESULT  CompatToolbarProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         if (msg == win32::TB_GETBITMAP) return lp->rgbtn[i].btn.iBitmap;
         if (msg == win32::TB_GETBUTTONTEXTA) {
             if (!lp->rgbtn[i].psz) return -1;
-            if (l) strcpy(reinterpret_cast<char *>(l), lp->rgbtn[i].psz);
-            return static_cast<LRESULT>(strlen(lp->rgbtn[i].psz));
+            if (l) std::strcpy(reinterpret_cast<char *>(l), lp->rgbtn[i].psz);
+            return static_cast<LRESULT>(std::strlen(lp->rgbtn[i].psz));
         }
         if (lp->rgbtn[i].btn.fsState != static_cast<BYTE>(l)) {
             lp->rgbtn[i].btn.fsState = static_cast<BYTE>(l); LayoutToolbar(hwnd);

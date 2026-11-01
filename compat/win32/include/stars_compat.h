@@ -2,8 +2,8 @@
 #define STARS_COMPAT_H
 
 #include <windows.h>
-#include <stdint.h>
-#include <stdio.h>
+#include <cstdint>
+#include <cstdio>
 #include "fileio.h"
 #include "messagepayload.h"
 /* Keep one native window and its completed frame across same-sized modal
@@ -25,7 +25,7 @@ BOOL StarsCompatSetWindowAlertSounds(HWND hwnd, BOOL fEnable);
  * Password text is redacted. Initialize snapshots to zero; free before reuse.
  */
 struct STARSCOMPATWINDOW {
-    uint64_t id, idParent, idOwner;
+    std::uint64_t id, idParent, idOwner;
     LONG_PTR idControl;
     DWORD dwStyle, dwExStyle;
     UINT iControl;
@@ -36,16 +36,16 @@ struct STARSCOMPATWINDOW {
 };
 struct STARSCOMPATSNAPSHOT {
     STARSCOMPATWINDOW *rgWindow;
-    size_t cWindow;
+    std::size_t cWindow;
 };
 BOOL StarsCompatCaptureHierarchy(STARSCOMPATSNAPSHOT *lpsnap);
 void StarsCompatFreeHierarchy(STARSCOMPATSNAPSHOT *lpsnap);
 /* JSON uses UTF-8 text and decimal strings for IDs, to preserve 64-bit values. */
 BOOL StarsCompatWriteHierarchy(const STARSCOMPATSNAPSHOT *lpsnap, NATIVEFILE *lpfile);
-uint64_t StarsCompatWindowId(HWND hwnd);
-HWND StarsCompatResolveWindow(uint64_t id);
+std::uint64_t StarsCompatWindowId(HWND hwnd);
+HWND StarsCompatResolveWindow(std::uint64_t id);
 /* Unique immediate child; zero means absent or ambiguous. NULL class matches any. */
-uint64_t StarsCompatFindControl(uint64_t idParent, LONG_PTR idControl, LPCSTR pszClass);
+std::uint64_t StarsCompatFindControl(std::uint64_t idParent, LONG_PTR idControl, LPCSTR pszClass);
 /* Modeless, read-only viewer. Ctrl+Shift+F12 opens/refreshes it in the SDL client. */
 HWND StarsCompatShowInspector(void);
 /* Optional application-owned semantic object viewer; NULL removes the button. */
@@ -66,7 +66,7 @@ BOOL StarsCompatPostMessageAsync(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
  * wParam is an opaque delivery token; borrow its payload only during dispatch.
  * Destroying the target, dropping delivery or shutting down releases the payload.
  */
-BOOL StarsCompatPostOwnedMessageAsync(uint64_t idWindow, UINT msg, STARSCOMPATPAYLOAD payload, LPARAM lParam);
+BOOL StarsCompatPostOwnedMessageAsync(std::uint64_t idWindow, UINT msg, STARSCOMPATPAYLOAD payload, LPARAM lParam);
 void *PvCompatMessagePayload(WPARAM id) noexcept;
 
 /* Stop native callbacks, timers and windows without calling window procedures.

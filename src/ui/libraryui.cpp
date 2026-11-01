@@ -19,7 +19,7 @@
 #include "ownership.h"
 #include <stars_compat.h>
 #include <SDL3/SDL.h>
-#include <errno.h>
+#include <cerrno>
 #include "libraryzip.h"
 
 /* Desktop metadata is deliberately outside the legacy game records. A folder
@@ -35,18 +35,18 @@ static char szRaceLibraryTemp[512];
 struct LIBRARYGAMELISTITEM {
     char szName[256];
     int iplr;
-    uint16_t grfPlayers;
-    uint16_t rgturn[16];
+    std::uint16_t grfPlayers;
+    std::uint16_t rgturn[16];
 };
 static NATIVEARRAYOWNER<LIBRARYGAMELISTITEM, SDL_free> rgLibraryGameList;
 static int cLibraryGameList;
 static int cLibraryGameListMax;
-static uint32_t idRaceStage;
-static int16_t fRaceLibraryNameDialog;
-static int16_t fNewLibraryRace;
-static uint32_t idLibraryExportStage;
-static uint32_t idLibraryZipStage;
-static int16_t fHostLibraryView;
+static std::uint32_t idRaceStage;
+static std::int16_t fRaceLibraryNameDialog;
+static std::int16_t fNewLibraryRace;
+static std::uint32_t idLibraryExportStage;
+static std::uint32_t idLibraryZipStage;
+static std::int16_t fHostLibraryView;
 static const char *pszRaceLibraryNameOverride;
 
 struct LibraryContinue {
@@ -54,23 +54,23 @@ struct LibraryContinue {
     int iPlayer;
     int iYear;
     long long lPlayed;
-    int16_t fFound;
-    int16_t fTurnAvailable;
+    std::int16_t fFound;
+    std::int16_t fTurnAvailable;
 };
 using LIBRARYCONTINUE = LibraryContinue;
 
 static LIBRARYCONTINUE continueLibrary;
-static int16_t FFindContinueLibraryGame(APPSESSION &app);
-static int16_t FCopyNativeFile(const char *pszSource, const char *pszTarget);
-static int16_t FSelectedLibraryGameName(HWND hwnd, char *pszName, size_t cchName);
+static std::int16_t FFindContinueLibraryGame(APPSESSION &app);
+static std::int16_t FCopyNativeFile(const char *pszSource, const char *pszTarget);
+static std::int16_t FSelectedLibraryGameName(HWND hwnd, char *pszName, std::size_t cchName);
 static void *PvLibraryFolderContext(HWND hwnd) {
-    const uint64_t id = StarsCompatWindowId(hwnd);
+    const std::uint64_t id = StarsCompatWindowId(hwnd);
     // SDL carries one pointer-sized opaque value; no window pointer outlives UI.
-    return id <= UINTPTR_MAX ? reinterpret_cast<void *>(static_cast<uintptr_t>(id)) : nullptr;
+    return id <= UINTPTR_MAX ? reinterpret_cast<void *>(static_cast<std::uintptr_t>(id)) : nullptr;
 }
 
 static void SDLCALL LibraryExportFolderSelected(void *lpData, const char * const *rgpszPath, int iFilter) noexcept;
-static int16_t FWriteLibraryMetadataValues(const char *pszDir, const char *pszName, int iplr,
+static std::int16_t FWriteLibraryMetadataValues(const char *pszDir, const char *pszName, int iplr,
                                            long long lPlayed, const char *pszExchangeName);
 
 struct RACESTATE {
@@ -78,36 +78,36 @@ struct RACESTATE {
     char szPass[sizeof(APPGAMESTATE::szRacePass)];
     char szFile[sizeof(APPGAMESTATE::szRaceFile)];
     char szPath[sizeof(szRaceLibraryPath)];
-    int16_t fNew;
+    std::int16_t fNew;
 };
 
 struct LIBRARYNAMECHECK {
     const char *pszDirectory;
     const char *pszName;
-    int16_t fFound;
+    std::int16_t fFound;
 };
 
 static void SaveRaceState(APPSESSION &app, RACESTATE *prs) {
     prs->plr = app.state.vplr;
     prs->fNew = fNewLibraryRace;
-    memcpy(prs->szPass, app.state.szRacePass, sizeof(prs->szPass));
-    memcpy(prs->szFile, app.state.szRaceFile, sizeof(prs->szFile));
-    memcpy(prs->szPath, szRaceLibraryPath, sizeof(prs->szPath));
+    std::memcpy(prs->szPass, app.state.szRacePass, sizeof(prs->szPass));
+    std::memcpy(prs->szFile, app.state.szRaceFile, sizeof(prs->szFile));
+    std::memcpy(prs->szPath, szRaceLibraryPath, sizeof(prs->szPath));
 }
 
-static void RestoreRaceState(APPSESSION &app, const RACESTATE *prs, int16_t fRestoreRace, int16_t fRestorePath) {
+static void RestoreRaceState(APPSESSION &app, const RACESTATE *prs, std::int16_t fRestoreRace, std::int16_t fRestorePath) {
     if (fRestoreRace) {
         app.state.vplr = prs->plr;
-        memcpy(app.state.szRacePass, prs->szPass, sizeof(prs->szPass));
-        memcpy(app.state.szRaceFile, prs->szFile, sizeof(prs->szFile));
+        std::memcpy(app.state.szRacePass, prs->szPass, sizeof(prs->szPass));
+        std::memcpy(app.state.szRaceFile, prs->szFile, sizeof(prs->szFile));
     }
     if (fRestorePath) {
-        memcpy(szRaceLibraryPath, prs->szPath, sizeof(prs->szPath));
+        std::memcpy(szRaceLibraryPath, prs->szPath, sizeof(prs->szPath));
         fNewLibraryRace = prs->fNew;
     }
 }
 
-static int16_t FindLibraryName(APPSESSION &, void *lpData, const char *pszFile) {
+static std::int16_t FindLibraryName(APPSESSION &, void *lpData, const char *pszFile) {
     LIBRARYNAMECHECK *plnc = static_cast<LIBRARYNAMECHECK *>(lpData);
     if (!SDL_strcasecmp(plnc->pszName, pszFile)) {
         plnc->fFound = 1;
@@ -116,7 +116,7 @@ static int16_t FindLibraryName(APPSESSION &, void *lpData, const char *pszFile) 
     return 1;
 }
 
-int16_t FLibraryNameAvailable(APPSESSION &app, const char *pszDirectory, const char *pszName) {
+std::int16_t FLibraryNameAvailable(APPSESSION &app, const char *pszDirectory, const char *pszName) {
     LIBRARYNAMECHECK lnc;
     lnc.pszDirectory = pszDirectory;
     lnc.pszName = pszName;
@@ -125,16 +125,16 @@ int16_t FLibraryNameAvailable(APPSESSION &app, const char *pszDirectory, const c
     return !lnc.fFound;
 }
 
-static int16_t FRaceLibraryNameAvailable(APPSESSION &app, const char *pszName) {
+static std::int16_t FRaceLibraryNameAvailable(APPSESSION &app, const char *pszName) {
     return FLibraryNameAvailable(app, szRaceLibraryRoot, pszName);
 }
 
-static int16_t FPortableRaceFilename(APPSESSION &app, const char *pszName) {
+static std::int16_t FPortableRaceFilename(APPSESSION &app, const char *pszName) {
     const unsigned char *pch;
     char szDevice[256];
-    size_t cch = strlen(pszName);
-    size_t i;
-    const char *pchExt = strrchr(pszName, '.');
+    std::size_t cch = std::strlen(pszName);
+    std::size_t i;
+    const char *pchExt = std::strrchr(pszName, '.');
     const char *pchDigit;
     if (!pchExt || pchExt == pszName || SDL_tolower(pchExt[1]) != 'r' || !pchExt[2] ||
         pchExt[2] == '0' || pchExt[2] < '1' || pchExt[2] > '9' || cch >= 240 || pszName[0] == ' ' || pszName[0] == '.' ||
@@ -149,15 +149,15 @@ static int16_t FPortableRaceFilename(APPSESSION &app, const char *pszName) {
          szDevice[3] >= '1' && szDevice[3] <= '9')) return 0;
     for (pchDigit = pchExt + 3; *pchDigit; pchDigit++)
         if (*pchDigit < '0' || *pchDigit > '9') return 0;
-    if (strlen(pchExt + 2) > 3) return 0;
+    if (std::strlen(pchExt + 2) > 3) return 0;
     for (pch = reinterpret_cast<const unsigned char *>(pszName); *pch; pch++)
-        if (*pch < 32 || *pch == 127 || strchr("<>:\"/\\|?*", *pch)) return 0;
-    if (strlen(szRaceLibraryRoot) + cch + 2 >= sizeof(app.state.szBase)) return 0;
+        if (*pch < 32 || *pch == 127 || std::strchr("<>:\"/\\|?*", *pch)) return 0;
+    if (std::strlen(szRaceLibraryRoot) + cch + 2 >= sizeof(app.state.szBase)) return 0;
     return 1;
 }
 
 /* The Windows CRT environment uses its code page; SDL supplies UTF-8 paths. */
-static int16_t FInitRaceLibrary(void) {
+static std::int16_t FInitRaceLibrary(void) {
     const char *pszOverride = SDL_getenv("STARS_LIBRARY_DIR");
     const char *pszSettings = SDL_getenv("STARS_SETTINGS_DIR");
     char *pszRoot = pszOverride || pszSettings ? nullptr : CompatPathIO().pfnGetPrefPath("", "Stars!");
@@ -171,21 +171,21 @@ static int16_t FInitRaceLibrary(void) {
     return cch > 0 && cch < static_cast<int>(sizeof(szRaceLibraryRoot)) && FEnsureNativeDir(szRaceLibraryRoot);
 }
 
-static int16_t FCreateRaceStagePath(char *pszDirectory, size_t cchDirectory,
-                                    char *pszFile, size_t cchFile) {
-    uint32_t dwTick = DwTickCount();
+static std::int16_t FCreateRaceStagePath(char *pszDirectory, std::size_t cchDirectory,
+                                    char *pszFile, std::size_t cchFile) {
+    std::uint32_t dwTick = DwTickCount();
     int i;
     int cch;
     for (i = 0; i < 1000; i++) {
         cch = CchSnprintf(pszDirectory, cchDirectory, "%s%s.stars-race-stage-%u-%u",
                           szRaceLibraryRoot, szDirSep, dwTick, idRaceStage++);
-        if (cch <= 0 || static_cast<size_t>(cch) >= cchDirectory) return 0;
+        if (cch <= 0 || static_cast<std::size_t>(cch) >= cchDirectory) return 0;
         if (CreateNativeDir(pszDirectory) != 0) {
             if (FNativeDirectoryExists(pszDirectory)) continue;
             return 0;
         }
         cch = CchSnprintf(pszFile, cchFile, "%s%sdesign.r1", pszDirectory, szDirSep);
-        if (cch <= 0 || static_cast<size_t>(cch) >= cchFile) {
+        if (cch <= 0 || static_cast<std::size_t>(cch) >= cchFile) {
             RemoveNativePath(pszDirectory);
             return 0;
         }
@@ -196,12 +196,12 @@ static int16_t FCreateRaceStagePath(char *pszDirectory, size_t cchDirectory,
 
 static void SuggestRaceFilename(APPSESSION &app, char *pszName) {
     char szStem[240];
-    const char *pch = strrchr(pszName, '.');
-    size_t cchStem = pch ? static_cast<size_t>((pch - pszName)) : strlen(pszName);
+    const char *pch = std::strrchr(pszName, '.');
+    std::size_t cchStem = pch ? static_cast<std::size_t>((pch - pszName)) : std::strlen(pszName);
     int i;
     if (cchStem >= sizeof(szStem)) cchStem = sizeof(szStem) - 1;
     cchStem = CchUtf8Prefix(pszName, cchStem);
-    memcpy(szStem, pszName, cchStem);
+    std::memcpy(szStem, pszName, cchStem);
     szStem[cchStem] = 0;
     for (i = 1; i < 1000; i++) {
         CchSnprintf(pszName, 256, "%s.r%d", szStem, i);
@@ -210,7 +210,7 @@ static void SuggestRaceFilename(APPSESSION &app, char *pszName) {
     pszName[0] = 0;
 }
 
-static int16_t FFormatLibraryFamilyPath(char *pszPath, size_t cchPath, const char *pszDirectory,
+static std::int16_t FFormatLibraryFamilyPath(char *pszPath, std::size_t cchPath, const char *pszDirectory,
                                         const char *pszName, DtFileType dt, int iplr) {
     const char *pszExtension;
     int cch;
@@ -220,10 +220,10 @@ static int16_t FFormatLibraryFamilyPath(char *pszPath, size_t cchPath, const cha
     if (dt == dtXY || dt == dtHost)
         cch = CchSnprintf(pszPath, cchPath, "%s%s%s.%s", pszDirectory, szDirSep, pszName, pszExtension);
     else cch = CchSnprintf(pszPath, cchPath, "%s%s%s.%s%d", pszDirectory, szDirSep, pszName, pszExtension, iplr + 1);
-    return cch > 0 && static_cast<size_t>(cch) < cchPath;
+    return cch > 0 && static_cast<std::size_t>(cch) < cchPath;
 }
 
-static int16_t FInitLibrary(void) {
+static std::int16_t FInitLibrary(void) {
     const char *pszOverride;
     const char *pszSettings;
     char *pszRoot;
@@ -241,14 +241,14 @@ static int16_t FInitLibrary(void) {
     return cch > 0 && cch < static_cast<int>(sizeof(szLibraryRoot)) && FEnsureNativeDir(szLibraryRoot);
 }
 
-int16_t FPathUnderLibrary(const char *pszRoot, const char *pszFile) {
-    size_t cchRoot, cchFile;
+std::int16_t FPathUnderLibrary(const char *pszRoot, const char *pszFile) {
+    std::size_t cchRoot, cchFile;
 #ifdef _WIN32
-    size_t ich;
+    std::size_t ich;
 #endif
     if (!pszRoot || !pszFile) return 0;
-    cchRoot = strlen(pszRoot);
-    cchFile = strlen(pszFile);
+    cchRoot = std::strlen(pszRoot);
+    cchFile = std::strlen(pszFile);
     if (cchRoot == 0 || cchFile <= cchRoot) return 0;
 #ifdef _WIN32
     /* Pickers return '/', while library joins and Windows arguments may use '\\'. */
@@ -259,36 +259,36 @@ int16_t FPathUnderLibrary(const char *pszRoot, const char *pszFile) {
     }
     return pszFile[cchRoot] == '/' || pszFile[cchRoot] == '\\';
 #else
-    return memcmp(pszRoot, pszFile, cchRoot) == 0 && pszFile[cchRoot] == '/';
+    return std::memcmp(pszRoot, pszFile, cchRoot) == 0 && pszFile[cchRoot] == '/';
 #endif
 }
 
 static char *PchLibrarySeparator(char *pszPath) {
-    char *pch = strrchr(pszPath, chDirSep);
+    char *pch = std::strrchr(pszPath, chDirSep);
 #ifdef _WIN32
-    char *pchSlash = strrchr(pszPath, '/');
+    char *pchSlash = std::strrchr(pszPath, '/');
     if (pchSlash && (!pch || pchSlash > pch)) pch = pchSlash;
 #endif
     return pch;
 }
 
-int16_t FIsManagedLibraryGameFile(const char *pszFile) {
+std::int16_t FIsManagedLibraryGameFile(const char *pszFile) {
     return FInitLibrary() && LibraryPathIO().pfnUnder(szLibraryRoot, pszFile);
 }
 
-int16_t FIsManagedLibraryRaceFile(const char *pszFile) {
+std::int16_t FIsManagedLibraryRaceFile(const char *pszFile) {
     return FInitRaceLibrary() && LibraryPathIO().pfnUnder(szRaceLibraryRoot, pszFile);
 }
 
-static int16_t FPortableLibraryName(APPSESSION &app, const char *pszName) {
+static std::int16_t FPortableLibraryName(APPSESSION &app, const char *pszName) {
     const unsigned char *pch;
     char szDevice[256];
-    size_t cch, i;
+    std::size_t cch, i;
 
-    cch = strlen(pszName);
+    cch = std::strlen(pszName);
     if (cch == 0 || cch >= sizeof(szDevice) || pszName[0] == ' ' || pszName[0] == '.' || pszName[cch - 1] == ' ' || pszName[cch - 1] == '.') return 0;
     for (pch = reinterpret_cast<const unsigned char *>(pszName); *pch; pch++)
-        if (*pch < 32 || *pch == 127 || strchr("<>:\"/\\|?*", *pch)) return 0;
+        if (*pch < 32 || *pch == 127 || std::strchr("<>:\"/\\|?*", *pch)) return 0;
     /* Windows reserves these stems even when followed by an extension. */
     for (i = 0; i < cch && pszName[i] != '.'; i++) szDevice[i] = pszName[i];
     szDevice[i] = 0;
@@ -298,19 +298,19 @@ static int16_t FPortableLibraryName(APPSESSION &app, const char *pszName) {
         (i == 4 && (!SDL_strncasecmp(szDevice, "COM", 3) || !SDL_strncasecmp(szDevice, "LPT", 3)) &&
          szDevice[3] >= '1' && szDevice[3] <= '9')) return 0;
     /* Longest backup path: root/name/backup.999/name.m16 plus NUL. */
-    return strlen(szLibraryRoot) + 2 * cch + 18 < sizeof(app.state.szBase);
+    return std::strlen(szLibraryRoot) + 2 * cch + 18 < sizeof(app.state.szBase);
 }
 
-static void SuggestLibraryName(APPSESSION &app, char *pszName, int16_t fRevision) {
+static void SuggestLibraryName(APPSESSION &app, char *pszName, std::int16_t fRevision) {
     char szOriginal[256];
     char szSuffix[32];
     int i, cch, cchMax;
 
-    strcpy(szOriginal, pszName);
-    cchMax = (static_cast<int>(sizeof(app.state.szBase)) - static_cast<int>(strlen(szLibraryRoot)) - 19) / 2;
+    std::strcpy(szOriginal, pszName);
+    cchMax = (static_cast<int>(sizeof(app.state.szBase)) - static_cast<int>(std::strlen(szLibraryRoot)) - 19) / 2;
     for (i = 2; i < 10000 && !FLibraryNameAvailable(app, szLibraryRoot, pszName); i++) {
         CchSnprintf(szSuffix, sizeof(szSuffix), fRevision ? TextIO().pfnCompressed(app, idsLibraryGameRevisionSuffix) : " (%d)", i);
-        cch = (((static_cast<int>(strlen(szOriginal))) < ((((0) > (cchMax - static_cast<int>(strlen(szSuffix)))) ? (0) : (cchMax - static_cast<int>(strlen(szSuffix)))))) ? (static_cast<int>(strlen(szOriginal))) : ((((0) > (cchMax - static_cast<int>(strlen(szSuffix)))) ? (0) : (cchMax - static_cast<int>(strlen(szSuffix))))));
+        cch = (((static_cast<int>(std::strlen(szOriginal))) < ((((0) > (cchMax - static_cast<int>(std::strlen(szSuffix)))) ? (0) : (cchMax - static_cast<int>(std::strlen(szSuffix)))))) ? (static_cast<int>(std::strlen(szOriginal))) : ((((0) > (cchMax - static_cast<int>(std::strlen(szSuffix)))) ? (0) : (cchMax - static_cast<int>(std::strlen(szSuffix))))));
         /* A shortened suggestion must not split a UTF-8 character. */
         while (cch > 0 && (static_cast<unsigned char>(szOriginal[cch]) & 0xc0) == 0x80) cch--;
         CchSnprintf(pszName, 256, "%.*s%s", cch, szOriginal, szSuffix);
@@ -318,15 +318,15 @@ static void SuggestLibraryName(APPSESSION &app, char *pszName, int16_t fRevision
 }
 
 static void GetGameLibraryName(APPSESSION &app, const char *pszName, char *pszNameOut) {
-    size_t i, cch;
-    int cchMax = (static_cast<int>(sizeof(app.state.szBase)) - static_cast<int>(strlen(szLibraryRoot)) - 19) / 2;
+    std::size_t i, cch;
+    int cchMax = (static_cast<int>(sizeof(app.state.szBase)) - static_cast<int>(std::strlen(szLibraryRoot)) - 19) / 2;
 
     CchCopyUtf8(pszNameOut, 256, pszName, CchUtf8Prefix(pszName, cchMax));
     for (i = 0; pszNameOut[i]; i++)
-        if (static_cast<unsigned char>(pszNameOut[i]) < 32 || pszNameOut[i] == 127 || strchr("<>:\"/\\|?*", pszNameOut[i])) pszNameOut[i] = '_';
-    cch = strlen(pszNameOut);
+        if (static_cast<unsigned char>(pszNameOut[i]) < 32 || pszNameOut[i] == 127 || std::strchr("<>:\"/\\|?*", pszNameOut[i])) pszNameOut[i] = '_';
+    cch = std::strlen(pszNameOut);
     while (cch != 0 && (pszNameOut[cch - 1] == ' ' || pszNameOut[cch - 1] == '.')) pszNameOut[--cch] = 0;
-    while (pszNameOut[0] == ' ' || pszNameOut[0] == '.') memmove(pszNameOut, pszNameOut + 1, strlen(pszNameOut));
+    while (pszNameOut[0] == ' ' || pszNameOut[0] == '.') std::memmove(pszNameOut, pszNameOut + 1, std::strlen(pszNameOut));
     // The game loader treats the last period as a file extension.
     for (i = 0; pszNameOut[i]; i++) if (pszNameOut[i] == '.') pszNameOut[i] = '_';
     if (!pszNameOut[0]) {
@@ -336,7 +336,7 @@ static void GetGameLibraryName(APPSESSION &app, const char *pszName, char *pszNa
     if (!FPortableLibraryName(app, pszNameOut)) {
         // Reserved device names need a prefix; leave the stored game title intact.
         pszNameOut[CchUtf8Prefix(pszNameOut, StarsMax(0, cchMax - 1))] = 0;
-        memmove(pszNameOut + 1, pszNameOut, strlen(pszNameOut) + 1);
+        std::memmove(pszNameOut + 1, pszNameOut, std::strlen(pszNameOut) + 1);
         pszNameOut[0] = '_';
     }
 }
@@ -400,7 +400,7 @@ INT_PTR  LibraryNameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 win32::SetDlgItemTextA(hwnd, IDC_EDIT1, szName);
                 ids = idsLibraryNameTaken;
             } else {
-                strcpy(pszName, szName);
+                std::strcpy(pszName, szName);
                 ControlIO().pfnEndDialog(hwnd, 1);
                 return 1;
             }
@@ -410,31 +410,31 @@ INT_PTR  LibraryNameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             win32::SetDlgItemTextA(hwnd, IDC_EDIT1, szName);
             ids = idsLibraryNameTaken;
         } else {
-            strcpy(pszName, szName);
+            std::strcpy(pszName, szName);
             ControlIO().pfnEndDialog(hwnd, 1);
             return 1;
         }
         /* Each lookup reuses szLastStrGet; retain the body before fetching the caption. */
-        strcpy(szMessage, TextIO().pfnCompressed(app, ids));
+        std::strcpy(szMessage, TextIO().pfnCompressed(app, ids));
         CompatChoiceIO().pfnMessageBoxA(hwnd, szMessage, TextIO().pfnCompressed(app, idsLibraryGames), win32::MB_OK | win32::MB_ICONEXCLAMATION);
         return 1;
     }
     return 0;
 }
 
-int16_t FChooseLibraryGameName(APPSESSION &app, HWND hwnd, char *pszFile, const char *pszName) {
+std::int16_t FChooseLibraryGameName(APPSESSION &app, HWND hwnd, char *pszFile, const char *pszName) {
     char *pch;
     char szMessage[256];
 
-    if (!FInitLibrary() || strlen(szLibraryRoot) + 20 >= sizeof(app.state.szBase)) goto LFail;
+    if (!FInitLibrary() || std::strlen(szLibraryRoot) + 20 >= sizeof(app.state.szBase)) goto LFail;
     szLibraryExchangeName[0] = 0;
     if (pszName) GetGameLibraryName(app, pszName, szLibraryName);
     else {
-        pch = strrchr(pszFile, chDirSep);
+        pch = std::strrchr(pszFile, chDirSep);
         CchSnprintf(szLibraryName, sizeof(szLibraryName), "%s", pch ? pch + 1 : pszFile);
-        pch = strrchr(szLibraryName, '.');
+        pch = std::strrchr(szLibraryName, '.');
         if (pch) *pch = 0;
-        if (!FPortableLibraryName(app, szLibraryName)) strcpy(szLibraryName, TextIO().pfnCompressed(app, idsLibraryDefaultGameName));
+        if (!FPortableLibraryName(app, szLibraryName)) std::strcpy(szLibraryName, TextIO().pfnCompressed(app, idsLibraryDefaultGameName));
     }
     if (pszName) {
         if (!FLibraryNameAvailable(app, szLibraryRoot, szLibraryName)) {
@@ -456,12 +456,12 @@ int16_t FChooseLibraryGameName(APPSESSION &app, HWND hwnd, char *pszFile, const 
     CchSnprintf(pszFile, 256, "%s%s%s.xy", szLibraryPending, szDirSep, szLibraryName);
     return 1;
 LFail:
-    strcpy(szMessage, TextIO().pfnCompressed(app, idsLibraryStorageFailed));
+    std::strcpy(szMessage, TextIO().pfnCompressed(app, idsLibraryStorageFailed));
     CompatChoiceIO().pfnMessageBoxA(hwnd, szMessage, TextIO().pfnCompressed(app, idsLibraryGames), win32::MB_OK | win32::MB_ICONHAND);
     return 0;
 }
 
-static int16_t FChooseLibraryRaceName(APPSESSION &app, HWND hwnd, const char *pszSuggested, char *pszPath, size_t cchPath) {
+static std::int16_t FChooseLibraryRaceName(APPSESSION &app, HWND hwnd, const char *pszSuggested, char *pszPath, std::size_t cchPath) {
     char szMessage[256];
     if (!FInitRaceLibrary()) return 0;
     CchSnprintf(szRaceLibraryName, sizeof(szRaceLibraryName), "%s", pszSuggested);
@@ -476,40 +476,40 @@ static int16_t FChooseLibraryRaceName(APPSESSION &app, HWND hwnd, const char *ps
     fRaceLibraryNameDialog = 0;
     if (CchSnprintf(pszPath, cchPath, "%s%s%s", szRaceLibraryRoot, szDirSep, szRaceLibraryName) <= 0 ||
         !FRaceLibraryNameAvailable(app, szRaceLibraryName)) {
-        strcpy(szMessage, TextIO().pfnCompressed(app, idsLibraryStorageFailed));
+        std::strcpy(szMessage, TextIO().pfnCompressed(app, idsLibraryStorageFailed));
         CompatChoiceIO().pfnMessageBoxA(hwnd, szMessage, TextIO().pfnCompressed(app, idsLibraryGames), win32::MB_OK | win32::MB_ICONHAND);
         return 0;
     }
     return 1;
 }
 
-int16_t FWriteLibraryMetadata(const char *pszDir, const char *pszName, int iplr) {
+std::int16_t FWriteLibraryMetadata(const char *pszDir, const char *pszName, int iplr) {
     return FWriteLibraryMetadataValues(pszDir, pszName, iplr, static_cast<long long>(LNativeTime()),
                                        szLibraryExchangeName[0] ? szLibraryExchangeName : pszName);
 }
 
-static int16_t FWriteLibraryMetadataValues(const char *pszDir, const char *pszName, int iplr,
+static std::int16_t FWriteLibraryMetadataValues(const char *pszDir, const char *pszName, int iplr,
                                            long long lPlayed, const char *pszExchangeName) {
     char szFile[256], szTemp[256];
     NATIVEFILE *pf;
     int fWritten, fClosed, cch;
 
     cch = CchSnprintf(szFile, sizeof(szFile), "%s%s.library.tmp", pszDir, szDirSep);
-    if (cch <= 0 || static_cast<size_t>(cch) >= sizeof(szFile)) return 0;
+    if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szFile)) return 0;
     pf = PfOpenNativeFile(szFile, "wb");
     if (!pf) return 0;
     fWritten = CchNativePrintf(pf, "2\n%s\n%d\n%lld\n%s\n", pszName, iplr, lPlayed, pszExchangeName) > 0;
     fClosed = ICloseNativeFile(pf) == 0;
     if (!fWritten || !fClosed) { RemoveNativeFile(szFile); return 0; }
     cch = CchSnprintf(szFile, sizeof(szFile), "%s%s.library", pszDir, szDirSep);
-    if (cch <= 0 || static_cast<size_t>(cch) >= sizeof(szFile)) return 0;
+    if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szFile)) return 0;
     /* Publish complete metadata, preserving the previous session on failure. */
     cch = CchSnprintf(szTemp, sizeof(szTemp), "%s%s.library.tmp", pszDir, szDirSep);
-    if (cch <= 0 || static_cast<size_t>(cch) >= sizeof(szTemp)) return 0;
+    if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szTemp)) return 0;
     return ReplaceNativeFile(szTemp, szFile) == 0;
 }
 
-static int16_t RemovePendingFile(APPSESSION &, void *lpUnused, const char *pszFile) {
+static std::int16_t RemovePendingFile(APPSESSION &, void *lpUnused, const char *pszFile) {
     char szFile[256];
     static_cast<void>(lpUnused);
     CchSnprintf(szFile, sizeof(szFile), "%s%s%s", szLibraryPending, szDirSep, pszFile);
@@ -518,13 +518,13 @@ static int16_t RemovePendingFile(APPSESSION &, void *lpUnused, const char *pszFi
     return 1;
 }
 
-static int16_t FReadLibraryHdr(NATIVEFILE *pf, HDR *phdr) {
+static std::int16_t FReadLibraryHdr(NATIVEFILE *pf, HDR *phdr) {
     std::byte rgb[cbWireHdr];
 
     return CReadNative(rgb, cbWireHdr, 1, pf) == 1 && FDecodeHdr(rgb, *phdr);
 }
 
-static int16_t FReadLibraryBof(NATIVEFILE *pf, RTBOF *pbof) {
+static std::int16_t FReadLibraryBof(NATIVEFILE *pf, RTBOF *pbof) {
     std::byte rgb[cbWireBof];
 
     return CReadNative(rgb, cbWireBof, 1, pf) == 1 && FDecodeBof(rgb, *pbof);
@@ -532,19 +532,19 @@ static int16_t FReadLibraryBof(NATIVEFILE *pf, RTBOF *pbof) {
 
 /* GenerateWorld's original companion-write loop ignores writer return values.
  * Verify complete record framing without replacing the loaded player state. */
-static int16_t FCompleteGeneratedFile(APPSESSION &app, const char *pszFile, DtFileType dt, int iplr) {
+static std::int16_t FCompleteGeneratedFile(APPSESSION &app, const char *pszFile, DtFileType dt, int iplr) {
     NATIVEFILE *pf;
     HDR hdr;
     RTBOF rtbof;
     long cbFile, ib;
-    int16_t fComplete;
+    std::int16_t fComplete;
 
     pf = PfOpenNativeFile(pszFile, "rb");
     if (!pf) return 0;
     fComplete = 0;
     if (ISeekNativeFile(pf, 0, SEEK_END) != 0 || (cbFile = LNativePosition(pf)) < 22 || ISeekNativeFile(pf, 0, SEEK_SET) != 0) goto LDone;
     if (!FReadLibraryHdr(pf, &hdr) || hdr.rt != rtBOF || hdr.cb != 16 ||
-        !FReadLibraryBof(pf, &rtbof) || memcmp(rtbof.rgid, "J3J3", 4) ||
+        !FReadLibraryBof(pf, &rtbof) || std::memcmp(rtbof.rgid, "J3J3", 4) ||
         rtbof.lidGame != app.state.game.lid || rtbof.turn != app.state.game.turn || rtbof.dt != dt || rtbof.iPlayer != iplr) goto LDone;
     /* XY stores raw four-byte star packs between its GAME and EOF records. */
     if (dt == dtXY) {
@@ -568,9 +568,9 @@ LDone:
 
 
 
-int16_t FCopyNativeFileContents(NATIVEFILE *pfSource, NATIVEFILE *pfTarget) {
+std::int16_t FCopyNativeFileContents(NATIVEFILE *pfSource, NATIVEFILE *pfTarget) {
     char rgb[8192];
-    size_t cb;
+    std::size_t cb;
     int fOkay;
 
     fOkay = 1;
@@ -583,7 +583,7 @@ int16_t FCopyNativeFileContents(NATIVEFILE *pfSource, NATIVEFILE *pfTarget) {
     return fOkay;
 }
 
-static int16_t FCopyNativeFile(const char *pszSource, const char *pszTarget) {
+static std::int16_t FCopyNativeFile(const char *pszSource, const char *pszTarget) {
     NATIVEFILE *pfSource, *pfTarget;
     int fOkay;
 
@@ -596,7 +596,7 @@ static int16_t FCopyNativeFile(const char *pszSource, const char *pszTarget) {
     return fOkay;
 }
 
-int16_t FCopyNativeFileExclusive(const char *pszSource, const char *pszTarget) {
+std::int16_t FCopyNativeFileExclusive(const char *pszSource, const char *pszTarget) {
     NATIVEFILE *pfSource, *pfTarget;
     int iErrno;
     int fOkay;
@@ -615,21 +615,21 @@ int16_t FCopyNativeFileExclusive(const char *pszSource, const char *pszTarget) {
     return fOkay;
 }
 
-static int16_t FCopyRaceExport(const char *pszSource, const char *pszTarget,
-                               char *pszTemp, size_t cchTemp) {
+static std::int16_t FCopyRaceExport(const char *pszSource, const char *pszTarget,
+                               char *pszTemp, std::size_t cchTemp) {
     const char *pchSlash;
-    size_t cchDirectory;
-    uint32_t dwTick;
+    std::size_t cchDirectory;
+    std::uint32_t dwTick;
     int i, cch;
 
-    pchSlash = strrchr(pszTarget, chDirSep);
-    cchDirectory = pchSlash ? static_cast<size_t>((pchSlash - pszTarget)) + 1 : 0;
+    pchSlash = std::strrchr(pszTarget, chDirSep);
+    cchDirectory = pchSlash ? static_cast<std::size_t>((pchSlash - pszTarget)) + 1 : 0;
     if (cchDirectory > INT_MAX) return 0;
     dwTick = DwTickCount();
     for (i = 0; i < 1000; i++) {
         cch = CchSnprintf(pszTemp, cchTemp, "%.*s.stars-race-export-%u-%u.tmp",
                           static_cast<int>(cchDirectory), pszTarget, dwTick, idRaceStage++);
-        if (cch <= 0 || static_cast<size_t>(cch) >= cchTemp) return 0;
+        if (cch <= 0 || static_cast<std::size_t>(cch) >= cchTemp) return 0;
         errno = 0;
         if (FCopyNativeFileExclusive(pszSource, pszTemp)) return 1;
         if (errno != EEXIST) return 0;
@@ -637,11 +637,11 @@ static int16_t FCopyRaceExport(const char *pszSource, const char *pszTarget,
     return 0;
 }
 
-int16_t FSaveLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName, PLAYER *pplr) {
+std::int16_t FSaveLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName, PLAYER *pplr) {
     char szPath[512];
     char szTempDir[512];
-    uint16_t icksum;
-    int16_t fOkay;
+    std::uint16_t icksum;
+    std::int16_t fOkay;
     if (!FInitRaceLibrary() || !FPortableRaceFilename(app, pszName)) return 0;
     CchSnprintf(szPath, sizeof(szPath), "%s%s%s", szRaceLibraryRoot, szDirSep, pszName);
     if (!FCreateRaceStagePath(szTempDir, sizeof(szTempDir), szRaceLibraryTemp, sizeof(szRaceLibraryTemp))) return 0;
@@ -670,29 +670,29 @@ int16_t FSaveLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName, PLAYER
 
 /* Compare the complete persisted design, including credentials, rather than
  * its collision-prone checksum or unused bytes after name terminators. */
-static int16_t FSameLibraryRace(const PLAYER *pplrLeft, const PLAYER *pplrRight) {
+static std::int16_t FSameLibraryRace(const PLAYER *pplrLeft, const PLAYER *pplrRight) {
     PLAYER plrLeft = *pplrLeft, plrRight = *pplrRight;
     std::byte rgbLeft[cbWirePlayer], rgbRight[cbWirePlayer];
     plrLeft.fLearned = plrRight.fLearned = 0;
     FEncodePlayer(plrLeft, rgbLeft); FEncodePlayer(plrRight, rgbRight);
-    return !memcmp(rgbLeft, rgbRight, ibWirePlayerNames) &&
-           !strcmp(plrLeft.szName, plrRight.szName) && !strcmp(plrLeft.szNames, plrRight.szNames);
+    return !std::memcmp(rgbLeft, rgbRight, ibWirePlayerNames) &&
+           !std::strcmp(plrLeft.szName, plrRight.szName) && !std::strcmp(plrLeft.szNames, plrRight.szNames);
 }
 
-static int16_t FReadManagedRace(APPSESSION &app, char *pszPath, PLAYER *pplr) {
+static std::int16_t FReadManagedRace(APPSESSION &app, char *pszPath, PLAYER *pplr) {
     NATIVEFILE *pf;
     HDR hdr;
     RTBOF bof;
     RACESTATE rsSav;
-    uint16_t wVersSav = app.state.wVersFile;
-    int16_t fSilentSav = app.state.fFileErrSilent, fOkay, fDirectory, fLink;
+    std::uint16_t wVersSav = app.state.wVersFile;
+    std::int16_t fSilentSav = app.state.fFileErrSilent, fOkay, fDirectory, fLink;
 
     if (!FNativePathInfo(pszPath, &fDirectory, &fLink) || fDirectory || fLink) return 0;
     pf = PfOpenNativeFile(pszPath, "rb");
     if (!pf) return 0;
     // Browsing versions must never trigger legacy conversion/password dialogs.
     fOkay = FReadLibraryHdr(pf, &hdr) && hdr.rt == rtBOF && hdr.cb == cbWireBof &&
-            FReadLibraryBof(pf, &bof) && !memcmp(bof.rgid, "J3J3", 4) &&
+            FReadLibraryBof(pf, &bof) && !std::memcmp(bof.rgid, "J3J3", 4) &&
             bof.verMajor == 2 && bof.verMinor == 85 && bof.dt == dtRace;
     ICloseNativeFile(pf);
     if (!fOkay) return 0;
@@ -715,35 +715,35 @@ struct RACEVERSIONS {
 };
 
 static void GetRaceLibraryStem(APPSESSION &app, const char *pszName, char *pszStem) {
-    size_t i, cch;
+    std::size_t i, cch;
     char szTest[256];
 
     CchSnprintf(pszStem, 240, "%s", pszName);
     for (i = 0; pszStem[i]; i++)
-        if (static_cast<unsigned char>(pszStem[i]) < 32 || pszStem[i] == 127 || strchr("<>:\"/\\|?*", pszStem[i])) pszStem[i] = '_';
-    cch = strlen(pszStem);
+        if (static_cast<unsigned char>(pszStem[i]) < 32 || pszStem[i] == 127 || std::strchr("<>:\"/\\|?*", pszStem[i])) pszStem[i] = '_';
+    cch = std::strlen(pszStem);
     while (cch != 0 && (pszStem[cch - 1] == ' ' || pszStem[cch - 1] == '.')) pszStem[--cch] = 0;
-    while (pszStem[0] == ' ' || pszStem[0] == '.') memmove(pszStem, pszStem + 1, strlen(pszStem));
+    while (pszStem[0] == ' ' || pszStem[0] == '.') std::memmove(pszStem, pszStem + 1, std::strlen(pszStem));
     if (!pszStem[0]) CchSnprintf(pszStem, 240, "%s", TextIO().pfnCompressed(app, idsLibraryDefaultRaceName));
     CchSnprintf(szTest, sizeof(szTest), "%s.r1", pszStem);
     if (!FPortableRaceFilename(app, szTest)) {
         // Prefix reserved device names without altering the in-game race name.
-        memmove(pszStem + 1, pszStem, strlen(pszStem) + 1);
+        std::memmove(pszStem + 1, pszStem, std::strlen(pszStem) + 1);
         pszStem[0] = '_';
     }
 }
 
-static int16_t FindRaceVersion(APPSESSION &app, void *lpData, const char *pszName) {
+static std::int16_t FindRaceVersion(APPSESSION &app, void *lpData, const char *pszName) {
     RACEVERSIONS *prv = static_cast<RACEVERSIONS *>(lpData);
-    const char *pch = strrchr(pszName, '.');
+    const char *pch = std::strrchr(pszName, '.');
     char szPath[512];
     PLAYER plr;
     int iVersion;
-    size_t cch = strlen(prv->szStem);
+    std::size_t cch = std::strlen(prv->szStem);
 
     if (!pch || !FPortableRaceFilename(app, pszName)) return 1;
-    iVersion = atoi(pch + 2);
-    if (static_cast<size_t>((pch - pszName)) == cch && !SDL_strncasecmp(pszName, prv->szStem, cch))
+    iVersion = std::atoi(pch + 2);
+    if (static_cast<std::size_t>((pch - pszName)) == cch && !SDL_strncasecmp(pszName, prv->szStem, cch))
         prv->iMax = StarsMax(prv->iMax, iVersion);
     CchSnprintf(szPath, sizeof(szPath), "%s%s%s", szRaceLibraryRoot, szDirSep, pszName);
     if (!FReadManagedRace(app, szPath, &plr)) return 1;
@@ -753,11 +753,11 @@ static int16_t FindRaceVersion(APPSESSION &app, void *lpData, const char *pszNam
     prv->iMax = StarsMax(prv->iMax, iVersion);
     if (iVersion > prv->iLatest || (iVersion == prv->iLatest && SDL_strcasecmp(pszName, prv->szLatest) < 0)) {
         prv->iLatest = iVersion;
-        strcpy(prv->szLatest, pszName);
+        std::strcpy(prv->szLatest, pszName);
     }
     if (iVersion > prv->iSame && FSameLibraryRace(prv->pplr, &plr)) {
         prv->iSame = iVersion;
-        strcpy(prv->szSame, pszName);
+        std::strcpy(prv->szSame, pszName);
     }
     return 1;
 }
@@ -786,7 +786,7 @@ INT_PTR  LibraryRaceSaveDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
     return 0;
 }
 
-int16_t FSaveCurrentLibraryRace(APPSESSION &app, HWND hwnd, PLAYER *pplr) {
+std::int16_t FSaveCurrentLibraryRace(APPSESSION &app, HWND hwnd, PLAYER *pplr) {
     RACEVERSIONS rv = {0};
     RACESTATE rsSav;
     PLAYER plr;
@@ -806,7 +806,7 @@ int16_t FSaveCurrentLibraryRace(APPSESSION &app, HWND hwnd, PLAYER *pplr) {
         if (FSameLibraryRace(pplr, &plr)) goto LReuse;
     }
     if (rv.szSame[0]) {
-        strcpy(szName, rv.szSame);
+        std::strcpy(szName, rv.szSame);
         goto LReuse;
     }
     iChoice = pszExisting[0] ? static_cast<int>(ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_LIBRARY_RACE_SAVE), hwnd,
@@ -834,14 +834,14 @@ LFail:
     return 0;
 }
 
-int16_t FHasCurrentLibraryRace(void) {
+std::int16_t FHasCurrentLibraryRace(void) {
     return fNewLibraryRace || szRaceLibraryPath[0] != 0;
 }
 
-int16_t FLoadLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName) {
+std::int16_t FLoadLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName) {
     char szPath[512];
     RACESTATE rsSav;
-    int16_t fResult;
+    std::int16_t fResult;
     if (!FInitRaceLibrary() || !FPortableRaceFilename(app, pszName)) return 0;
     CchSnprintf(szPath, sizeof(szPath), "%s%s%s", szRaceLibraryRoot, szDirSep, pszName);
     SaveRaceState(app, &rsSav);
@@ -858,16 +858,16 @@ int16_t FLoadLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName) {
 }
 
 const char *PszCurrentLibraryRaceName(void) {
-    const char *pch = strrchr(szRaceLibraryPath, chDirSep);
+    const char *pch = std::strrchr(szRaceLibraryPath, chDirSep);
     return pch ? pch + 1 : szRaceLibraryPath;
 }
 
 /* The new-game roster owns a filename for each design. Bind only this edit
  * to that destination; a previously imported design is not its save target. */
-int16_t FCustomizeLibraryRace(APPSESSION &app, HWND hwnd, char *pszName) {
+std::int16_t FCustomizeLibraryRace(APPSESSION &app, HWND hwnd, char *pszName) {
     RACESTATE rsSav;
     char szPath[512];
-    int16_t fResult;
+    std::int16_t fResult;
 
     SaveRaceState(app, &rsSav);
     if (pszName[0]) {
@@ -887,16 +887,16 @@ int16_t FCustomizeLibraryRace(APPSESSION &app, HWND hwnd, char *pszName) {
     return fResult;
 }
 
-int16_t FBeginLibraryRace(APPSESSION &app, HWND hwnd) {
+std::int16_t FBeginLibraryRace(APPSESSION &app, HWND hwnd) {
     RACESTATE rsSav;
-    int16_t fResult;
+    std::int16_t fResult;
     SaveRaceState(app, &rsSav);
     if (!FInitRaceLibrary()) return 0;
     szRaceLibraryPath[0] = 0;
     fNewLibraryRace = 1;
     app.state.vplr = vrgplrDef[0];
-    strcpy(app.state.vplr.szName, TextIO().pfnCompressed(app, idsHumanoid));
-    strcpy(app.state.vplr.szNames, TextIO().pfnCompressed(app, idsLibraryHumanoids));
+    std::strcpy(app.state.vplr.szName, TextIO().pfnCompressed(app, idsHumanoid));
+    std::strcpy(app.state.vplr.szNames, TextIO().pfnCompressed(app, idsLibraryHumanoids));
     app.state.szRacePass[0] = 0;
     SetSzRaceFile(app, "");
     fResult = RaceCreationWizard(app, hwnd, 0, 0);
@@ -907,9 +907,9 @@ int16_t FBeginLibraryRace(APPSESSION &app, HWND hwnd) {
     return fResult;
 }
 
-int16_t FEditLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName) {
+std::int16_t FEditLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName) {
     RACESTATE rsSav;
-    int16_t fResult;
+    std::int16_t fResult;
     SaveRaceState(app, &rsSav);
     if (!FLoadLibraryRace(app, hwnd, pszName)) return 0;
     fResult = RaceCreationWizard(app, hwnd, 0, 0);
@@ -917,7 +917,7 @@ int16_t FEditLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName) {
     return fResult;
 }
 
-int16_t FDuplicateLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName) {
+std::int16_t FDuplicateLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName) {
     char szSource[512], szName[256], szPath[512] = "";
     const char *pch;
     RACESTATE rsSav;
@@ -929,7 +929,7 @@ int16_t FDuplicateLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName) {
         return 0;
     }
     CchSnprintf(szName, sizeof(szName), "%s", pszName);
-    pch = strrchr(szName, '.');
+    pch = std::strrchr(szName, '.');
     if (pch) szName[pch - szName] = 0;
     SuggestRaceFilename(app, szName);
     if (!szName[0] || CchSnprintf(szPath, sizeof(szPath), "%s%s%s", szRaceLibraryRoot, szDirSep, szName) <= 0) {
@@ -959,15 +959,15 @@ static void GetLibraryFileFilter(APPSESSION &app, StringId ids, char *pszFilter)
     for (pch = pszFilter; *pch; pch++) if (*pch == '|') *pch = 0;
 }
 
-int16_t FExportLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName, const char *pszTarget) {
+std::int16_t FExportLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName, const char *pszTarget) {
     OPENFILENAME ofn;
     char szSource[512], szTarget[512], szTemp[512], szValidate[512], szFilter[128];
     RACESTATE rsSav;
     if (!FInitRaceLibrary() || !FPortableRaceFilename(app, pszName)) return 0;
     CchSnprintf(szSource, sizeof(szSource), "%s%s%s", szRaceLibraryRoot, szDirSep, pszName);
     if (!pszTarget) {
-        memset(&ofn, 0, sizeof(ofn));
-        memset(szTarget, 0, sizeof(szTarget));
+        std::memset(&ofn, 0, sizeof(ofn));
+        std::memset(szTarget, 0, sizeof(szTarget));
         CchSnprintf(szTarget, sizeof(szTarget), "%s", pszName);
         ofn.lStructSize = sizeof(ofn);
         ofn.hwndOwner = hwnd;
@@ -1001,7 +1001,7 @@ int16_t FExportLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName, cons
     return 1;
 }
 
-int16_t FExportLibraryOrders(APPSESSION &app, HWND hwnd, const char *pszTarget) {
+std::int16_t FExportLibraryOrders(APPSESSION &app, HWND hwnd, const char *pszTarget) {
     OPENFILENAME ofn;
     char szBaseSav[sizeof(app.state.szBase)], szBaseStem[sizeof(app.state.szBase)], szName[256], szSuggested[256], szTarget[512], szFilter[64];
     char szStageBase[sizeof(app.state.szBase)], szStage[sizeof(app.state.szBase)], szStageHist[sizeof(app.state.szBase)];
@@ -1011,10 +1011,10 @@ int16_t FExportLibraryOrders(APPSESSION &app, HWND hwnd, const char *pszTarget) 
     const char *pszLibraryName;
     StringId idsSaveError;
     NATIVEFILE *pf;
-    uint32_t dwTick;
-    int64_t cbTarget;
+    std::uint32_t dwTick;
+    std::int64_t cbTarget;
     int cch;
-    int16_t fSubmitSav, fSaved, fDirtySav, fHistoryExists, fHistoryReplaced, fHistoryBackup;
+    std::int16_t fSubmitSav, fSaved, fDirtySav, fHistoryExists, fHistoryReplaced, fHistoryBackup;
 
     if (!FInitLibrary() || !app.state.lpPlanets || app.state.game.lid == 0 || app.state.idPlayer == iplrNone || app.state.idPlayer < 0 || app.state.idPlayer >= 16) return 0;
     if (!LibraryPathIO().pfnUnder(szLibraryRoot, app.state.szBase)) return 0;
@@ -1031,18 +1031,18 @@ int16_t FExportLibraryOrders(APPSESSION &app, HWND hwnd, const char *pszTarget) 
 #endif
         ) pchSlash--;
         cch = CchSnprintf(szName, sizeof(szName), "%.*s", static_cast<int>((pch - pchSlash)), pchSlash);
-        if (cch <= 0 || static_cast<size_t>(cch) >= sizeof(szName)) return 0;
+        if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szName)) return 0;
         pszLibraryName = szName;
     }
     cch = CchSnprintf(szSuggested, sizeof(szSuggested), "%s.x%d", pszLibraryName, app.state.idPlayer + 1);
-    if (cch <= 0 || static_cast<size_t>(cch) >= sizeof(szSuggested)) return 0;
+    if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szSuggested)) return 0;
     if (!pszTarget) {
-        memset(&ofn, 0, sizeof(ofn));
-        memset(szTarget, 0, sizeof(szTarget));
+        std::memset(&ofn, 0, sizeof(ofn));
+        std::memset(szTarget, 0, sizeof(szTarget));
         CchSnprintf(szTarget, sizeof(szTarget), "%s", szSuggested);
         cch = CchSnprintf(szFilter, sizeof(szFilter), TextIO().pfnCompressed(app, idsLibraryOrdersExportFilter),
                           app.state.idPlayer + 1, app.state.idPlayer + 1);
-        if (cch <= 0 || static_cast<size_t>(cch) + 2 >= sizeof(szFilter)) return 0;
+        if (cch <= 0 || static_cast<std::size_t>(cch) + 2 >= sizeof(szFilter)) return 0;
         for (pch = szFilter; *pch; pch++) if (*pch == '|') *pch = 0;
         szFilter[cch + 1] = 0;
         ofn.lStructSize = sizeof(ofn);
@@ -1058,16 +1058,16 @@ int16_t FExportLibraryOrders(APPSESSION &app, HWND hwnd, const char *pszTarget) 
         pszTarget = szTarget;
     }
 
-    if (strlen(pszTarget) >= sizeof(szTarget)) return 0;
+    if (std::strlen(pszTarget) >= sizeof(szTarget)) return 0;
     if (pszTarget != szTarget) CchSnprintf(szTarget, sizeof(szTarget), "%s", pszTarget);
-    pchSlash = strrchr(szTarget, '/');
-    pch = strrchr(szTarget, '\\');
+    pchSlash = std::strrchr(szTarget, '/');
+    pch = std::strrchr(szTarget, '\\');
     if (pch && (!pchSlash || pch > pchSlash)) pchSlash = pch;
-    pch = strrchr(szTarget, '.');
+    pch = std::strrchr(szTarget, '.');
     if (pch && (!pchSlash || pch > pchSlash)) *pch = 0;
     if (!szTarget[0]) return 0;
-    cch = CchSnprintf(szTarget + strlen(szTarget), sizeof(szTarget) - strlen(szTarget), ".x%d", app.state.idPlayer + 1);
-    if (cch <= 0 || static_cast<size_t>(cch) >= sizeof(szTarget) - strlen(szTarget)) return 0;
+    cch = CchSnprintf(szTarget + std::strlen(szTarget), sizeof(szTarget) - std::strlen(szTarget), ".x%d", app.state.idPlayer + 1);
+    if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szTarget) - std::strlen(szTarget)) return 0;
 
     /* Confirm the actual orders path after correcting the chooser's extension. */
     if (FNativeFileSize(szTarget, &cbTarget)) {
@@ -1085,18 +1085,18 @@ int16_t FExportLibraryOrders(APPSESSION &app, HWND hwnd, const char *pszTarget) 
     fHistoryReplaced = 0;
     fHistoryBackup = 0;
     dwTick = DwTickCount();
-    pch = strrchr(szBaseStem, '.');
+    pch = std::strrchr(szBaseStem, '.');
     pchSlash = PchLibrarySeparator(szBaseStem);
     if (pch && (!pchSlash || pch > pchSlash)) *pch = 0;
     cch = CchSnprintf(szStageBase, sizeof(szStageBase), "%s_exportstage_%u.m%d", szBaseStem, dwTick, app.state.idPlayer + 1);
-    if (cch <= 0 || static_cast<size_t>(cch) >= sizeof(szStageBase)) return 0;
+    if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szStageBase)) return 0;
     /* FWriteLogFile creates its destination directly, so save to a sibling first. */
     fSaved = FWriteLogFile(app, szStageBase, app.state.idPlayer);
     CchSnprintf(app.state.szBase, sizeof(app.state.szBase), "%s", szBaseSav);
     cch = CchSnprintf(szStage, sizeof(szStage), "%s_exportstage_%u.x%d", szBaseStem, dwTick, app.state.idPlayer + 1);
-    if (cch <= 0 || static_cast<size_t>(cch) >= sizeof(szStage)) fSaved = 0;
+    if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szStage)) fSaved = 0;
     cch = CchSnprintf(szStageHist, sizeof(szStageHist), "%s_exportstage_%u.h%d", szBaseStem, dwTick, app.state.idPlayer + 1);
-    if (cch <= 0 || static_cast<size_t>(cch) >= sizeof(szStageHist)) fSaved = 0;
+    if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szStageHist)) fSaved = 0;
     if (fSaved) {
         CchSnprintf(app.state.szBase, sizeof(app.state.szBase), "%s", szStageBase);
         fSaved = FWriteHistFile(app, app.state.idPlayer);
@@ -1110,7 +1110,7 @@ int16_t FExportLibraryOrders(APPSESSION &app, HWND hwnd, const char *pszTarget) 
     else if (errno != ENOENT) fSaved = 0;
     cch = CchSnprintf(szPreviousHist, sizeof(szPreviousHist), "%s_exportprevious_%u.h%d",
                       szBaseStem, dwTick, app.state.idPlayer + 1);
-    if (cch <= 0 || static_cast<size_t>(cch) >= sizeof(szPreviousHist)) fSaved = 0;
+    if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szPreviousHist)) fSaved = 0;
     if (!fSaved) {
         idsSaveError = idsLibraryOrdersSaveFailed;
         goto LSaveFailed;
@@ -1156,9 +1156,9 @@ LSaveFailed:
     return 0;
 }
 
-int16_t FDeleteLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName) {
+std::int16_t FDeleteLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName) {
     char szPath[512], szMessage[320];
-    int64_t cbFile;
+    std::int64_t cbFile;
     if (!FInitRaceLibrary() || !FPortableRaceFilename(app, pszName)) return 0;
     CchSnprintf(szPath, sizeof(szPath), "%s%s%s", szRaceLibraryRoot, szDirSep, pszName);
     if (!FNativeFileSize(szPath, &cbFile) || cbFile <= 0) return 0;
@@ -1168,20 +1168,20 @@ int16_t FDeleteLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName) {
         AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryRaceDeleteFailed), win32::MB_ICONHAND);
         return 0;
     }
-    if (!strcmp(szRaceLibraryPath, szPath)) szRaceLibraryPath[0] = 0;
+    if (!std::strcmp(szRaceLibraryPath, szPath)) szRaceLibraryPath[0] = 0;
     return 1;
 }
 
-int16_t FImportLibraryRace(APPSESSION &app, HWND hwnd, const char *pszSource) {
+std::int16_t FImportLibraryRace(APPSESSION &app, HWND hwnd, const char *pszSource) {
     OPENFILENAME ofn;
     char szSource[512], szName[256], szStem[256], szPath[512], szStage[512], szStageDir[512], szFilter[128];
     char *pch, *pchSlash, *pchExt;
     RACESTATE rsSav;
-    int16_t fValid;
-    int16_t fLegacy;
+    std::int16_t fValid;
+    std::int16_t fLegacy;
     if (!pszSource) {
-        memset(&ofn, 0, sizeof(ofn));
-        memset(szSource, 0, sizeof(szSource));
+        std::memset(&ofn, 0, sizeof(ofn));
+        std::memset(szSource, 0, sizeof(szSource));
         ofn.lStructSize = sizeof(ofn);
         ofn.hwndOwner = hwnd;
         GetLibraryFileFilter(app, idsLibraryRaceFilesFilter, szFilter);
@@ -1193,8 +1193,8 @@ int16_t FImportLibraryRace(APPSESSION &app, HWND hwnd, const char *pszSource) {
         if (!DesktopChoiceIO().pfnFNativeOpenFileName(&ofn)) return 0;
         pszSource = szSource;
     }
-    if (strlen(pszSource) >= sizeof(szSource)) return 0;
-    if (pszSource != szSource) strcpy(szSource, pszSource);
+    if (std::strlen(pszSource) >= sizeof(szSource)) return 0;
+    if (pszSource != szSource) std::strcpy(szSource, pszSource);
     SaveRaceState(app, &rsSav);
     fValid = FWasRaceFile(app, szSource, 1);
     if (fValid <= 0) {
@@ -1202,12 +1202,12 @@ int16_t FImportLibraryRace(APPSESSION &app, HWND hwnd, const char *pszSource) {
         return 0;
     }
     fLegacy = VerMinor(app.state.wVersFile) < 85;
-    pchSlash = strrchr(szSource, '/');
-    pch = strrchr(szSource, '\\');
+    pchSlash = std::strrchr(szSource, '/');
+    pch = std::strrchr(szSource, '\\');
     if (pch && (!pchSlash || pch > pchSlash)) pchSlash = pch;
     pch = pchSlash ? pchSlash + 1 : szSource;
     CchSnprintf(szStem, sizeof(szStem), "%s", pch);
-    pchExt = strrchr(szStem, '.');
+    pchExt = std::strrchr(szStem, '.');
     if (pchExt) *pchExt = 0;
     CchSnprintf(szName, sizeof(szName), "%s.r1", szStem);
     if (pszRaceLibraryNameOverride) {
@@ -1234,25 +1234,25 @@ int16_t FImportLibraryRace(APPSESSION &app, HWND hwnd, const char *pszSource) {
         goto LRestore;
     }
     CchSnprintf(szRaceLibraryPath, sizeof(szRaceLibraryPath), "%s", szPath);
-    SetSzRaceFile(app, strrchr(szPath, chDirSep) + 1);
+    SetSzRaceFile(app, std::strrchr(szPath, chDirSep) + 1);
     return 1;
 LRestore:
     RestoreRaceState(app, &rsSav, 1, 1);
     return 0;
 }
 
-int16_t FImportLibraryRaceAs(APPSESSION &app, HWND hwnd, const char *pszSource, const char *pszName) {
-    int16_t fResult;
+std::int16_t FImportLibraryRaceAs(APPSESSION &app, HWND hwnd, const char *pszSource, const char *pszName) {
+    std::int16_t fResult;
     pszRaceLibraryNameOverride = pszName;
     fResult = FImportLibraryRace(app, hwnd, pszSource);
     pszRaceLibraryNameOverride = nullptr;
     return fResult;
 }
 
-int16_t FImportLibraryRaceAndEdit(APPSESSION &app, HWND hwnd, const char *pszSource) {
+std::int16_t FImportLibraryRaceAndEdit(APPSESSION &app, HWND hwnd, const char *pszSource) {
     const char *pszName;
     if (!FImportLibraryRace(app, hwnd, pszSource)) return 0;
-    pszName = strrchr(szRaceLibraryPath, chDirSep);
+    pszName = std::strrchr(szRaceLibraryPath, chDirSep);
     if (pszName) pszName++;
     else pszName = szRaceLibraryPath;
     /* Import remains successful when the user cancels customization. */
@@ -1262,26 +1262,26 @@ int16_t FImportLibraryRaceAndEdit(APPSESSION &app, HWND hwnd, const char *pszSou
 
 /* Inspect record framing and BOF metadata without calling FOpenFile, which
  * binds validation to the active game globals. */
-int16_t FInspectImportFile(const char *pszFile, DtFileType dt, int iplr,
-                                 int32_t *plidGame, uint16_t *pturn, uint16_t *pwGen, int16_t *pfMulti) {
+std::int16_t FInspectImportFile(const char *pszFile, DtFileType dt, int iplr,
+                                 std::int32_t *plidGame, std::uint16_t *pturn, std::uint16_t *pwGen, std::int16_t *pfMulti) {
     NATIVEFILE *pf;
     HDR hdr;
     RTBOF rtbof;
-    int64_t cbFile;
+    std::int64_t cbFile;
     long ib;
-    int16_t fComplete;
+    std::int16_t fComplete;
 
     pf = PfOpenNativeFile(pszFile, "rb");
     if (!pf) return 0;
     fComplete = 0;
     if (ISeekNativeFile(pf, 0, SEEK_END) != 0 || (cbFile = LNativePosition(pf)) < 22 || ISeekNativeFile(pf, 0, SEEK_SET) != 0) goto LDone;
     if (!FReadLibraryHdr(pf, &hdr) || hdr.rt != rtBOF || hdr.cb != cbWireBof ||
-        !FReadLibraryBof(pf, &rtbof) || memcmp(rtbof.rgid, "J3J3", 4) ||
+        !FReadLibraryBof(pf, &rtbof) || std::memcmp(rtbof.rgid, "J3J3", 4) ||
         rtbof.verMajor != 2 || rtbof.verMinor != 85 || rtbof.dt != dt ||
         rtbof.iPlayer != iplr || rtbof.lidGame == 0) goto LDone;
     if (dt == dtXY) {
-        uint32_t cPlanets;
-        if (cbFile < 88 || (cbFile - 88) % 4 != 0 || (cPlanets = static_cast<uint32_t>(((cbFile - 88) / 4))) > 999 ||
+        std::uint32_t cPlanets;
+        if (cbFile < 88 || (cbFile - 88) % 4 != 0 || (cPlanets = static_cast<std::uint32_t>(((cbFile - 88) / 4))) > 999 ||
             ISeekNativeFile(pf, 18, SEEK_SET) != 0 || !FReadLibraryHdr(pf, &hdr) || hdr.rt != rtGame || hdr.cb != 64 ||
             ISeekNativeFile(pf, -4, SEEK_END) != 0 || !FReadLibraryHdr(pf, &hdr) || hdr.rt != rtEOF || hdr.cb != 2) goto LDone;
         fComplete = 1;
@@ -1310,7 +1310,7 @@ int16_t FInspectImportFile(const char *pszFile, DtFileType dt, int iplr,
         if (pwGen) *pwGen = rtbof.wGen;
         *pfMulti = rtbof.fMulti;
         if (rtbof.fMulti) {
-            uint16_t turnFinal;
+            std::uint16_t turnFinal;
             if (cbFile < 4 || ISeekNativeFile(pf, -2, SEEK_END) != 0 || CReadNative(&turnFinal, 2, 1, pf) != 1) fComplete = 0;
             else if (pturn) *pturn = turnFinal;
         }
@@ -1320,8 +1320,8 @@ LDone:
     return fComplete;
 }
 
-static int16_t FImportFamilyMember(const char *pszName, const char *pszStem, int *piplr, DtFileType *pdt) {
-    size_t cch = strlen(pszStem);
+static std::int16_t FImportFamilyMember(const char *pszName, const char *pszStem, int *piplr, DtFileType *pdt) {
+    std::size_t cch = std::strlen(pszStem);
     const char *pszExt;
     int iplrFamily;
     if (SDL_strncasecmp(pszName, pszStem, cch) || pszName[cch] != '.') return 0;
@@ -1345,41 +1345,41 @@ struct LIBRARYGAMECOPY {
     const char *pszTarget;
     const char *pszSourceName;
     const char *pszTargetName;
-    int16_t fBad;
+    std::int16_t fBad;
 };
 
-static int16_t FReadLibraryMetadata(const char *pszDirectory, char *pszName, size_t cchName,
+static std::int16_t FReadLibraryMetadata(const char *pszDirectory, char *pszName, std::size_t cchName,
                                     int *piplr, long long *plPlayed,
-                                    char *pszExchangeName, size_t cchExchange) {
+                                    char *pszExchangeName, std::size_t cchExchange) {
     char szFile[512], szLine[256];
     NATIVEFILE *pf;
     int iVersion, cchText, cch;
-    int16_t fRead;
+    std::int16_t fRead;
     cch = CchSnprintf(szFile, sizeof(szFile), "%s%s.library", pszDirectory, szDirSep);
-    if (cch <= 0 || static_cast<size_t>(cch) >= sizeof(szFile)) return 0;
+    if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szFile)) return 0;
     pf = PfOpenNativeFile(szFile, "rb");
     if (!pf) return 0;
     fRead = CNativeScan(pf, "%d\n", &iVersion) == 1 && PszGetNativeLine(szLine, sizeof(szLine), pf);
     if (fRead) {
-        szLine[strcspn(szLine, "\r\n")] = 0;
+        szLine[std::strcspn(szLine, "\r\n")] = 0;
         cchText = CchSnprintf(pszName, cchName, "%s", szLine);
-        fRead = cchText > 0 && static_cast<size_t>(cchText) < cchName &&
+        fRead = cchText > 0 && static_cast<std::size_t>(cchText) < cchName &&
                 CNativeScan(pf, "%d\n%lld\n", piplr, plPlayed) == 2;
     }
     if (fRead && iVersion == 2 && PszGetNativeLine(szLine, sizeof(szLine), pf)) {
-        szLine[strcspn(szLine, "\r\n")] = 0;
+        szLine[std::strcspn(szLine, "\r\n")] = 0;
         cchText = CchSnprintf(pszExchangeName, cchExchange, "%s", szLine);
-        fRead = cchText > 0 && static_cast<size_t>(cchText) < cchExchange;
+        fRead = cchText > 0 && static_cast<std::size_t>(cchText) < cchExchange;
     } else if (fRead && iVersion == 1) {
         cchText = CchSnprintf(pszExchangeName, cchExchange, "%s", pszName);
-        fRead = cchText > 0 && static_cast<size_t>(cchText) < cchExchange;
+        fRead = cchText > 0 && static_cast<std::size_t>(cchText) < cchExchange;
     } else fRead = 0;
     ICloseNativeFile(pf);
     return fRead && (iVersion == 1 || iVersion == 2) && *pszName &&
            *piplr >= -1 && *piplr < 16 && *plPlayed >= 0 && *pszExchangeName;
 }
 
-static int16_t FLibraryNameAvailableExcept(APPSESSION &app, const char *pszName, const char *pszExcept) {
+static std::int16_t FLibraryNameAvailableExcept(APPSESSION &app, const char *pszName, const char *pszExcept) {
     LIBRARYNAMECHECK lnc;
     lnc.pszDirectory = szLibraryRoot;
     lnc.pszName = pszName;
@@ -1389,18 +1389,18 @@ static int16_t FLibraryNameAvailableExcept(APPSESSION &app, const char *pszName,
     return !lnc.fFound;
 }
 
-static int16_t FCopyLibraryGameEntry(APPSESSION &app, void *lpData, const char *pszName) {
+static std::int16_t FCopyLibraryGameEntry(APPSESSION &app, void *lpData, const char *pszName) {
     LIBRARYGAMECOPY *plgc = static_cast<LIBRARYGAMECOPY *>(lpData);
     char szSource[512], szTarget[512];
     const char *pszTargetFile;
     LIBRARYGAMECOPY lgb;
     int iplr;
     int cch;
-    int16_t fDirectory, fLink;
+    std::int16_t fDirectory, fLink;
     DtFileType dt;
-    if (!strcmp(pszName, ".") || !strcmp(pszName, "..")) return 1;
+    if (!std::strcmp(pszName, ".") || !std::strcmp(pszName, "..")) return 1;
     cch = CchSnprintf(szSource, sizeof(szSource), "%s%s%s", plgc->pszSource, szDirSep, pszName);
-    if (cch <= 0 || static_cast<size_t>(cch) >= sizeof(szSource)) { plgc->fBad = 1; return 0; }
+    if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szSource)) { plgc->fBad = 1; return 0; }
     if (!FNativePathInfo(szSource, &fDirectory, &fLink) || fLink) {
         plgc->fBad = 1;
         return 0;
@@ -1409,7 +1409,7 @@ static int16_t FCopyLibraryGameEntry(APPSESSION &app, void *lpData, const char *
         /* Rename removes the original tree after publication, so every directory
          * must survive staging, including backup, backupN and sidecar folders. */
         cch = CchSnprintf(szTarget, sizeof(szTarget), "%s%s%s", plgc->pszTarget, szDirSep, pszName);
-        if (cch <= 0 || static_cast<size_t>(cch) >= sizeof(szTarget)) { plgc->fBad = 1; return 0; }
+        if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szTarget)) { plgc->fBad = 1; return 0; }
         if (!FLibraryNameAvailable(app, plgc->pszTarget, pszName) ||
             CreateNativeDir(szTarget) != 0) { plgc->fBad = 1; return 0; }
         /* Backup files use the original basename family, with unrelated sidecars retained verbatim. */
@@ -1430,21 +1430,21 @@ static int16_t FCopyLibraryGameEntry(APPSESSION &app, void *lpData, const char *
     } else if (SDL_strcasecmp(pszName, ".library") && SDL_strcasecmp(pszName, ".library.tmp")) {
         /* Optional external universe definitions and other sidecars keep their own names. */
         cch = CchSnprintf(szTarget, sizeof(szTarget), "%s%s%s", plgc->pszTarget, szDirSep, pszName);
-        if (cch <= 0 || static_cast<size_t>(cch) >= sizeof(szTarget)) { plgc->fBad = 1; return 0; }
+        if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szTarget)) { plgc->fBad = 1; return 0; }
     } else return 1;
     /* Renamed family members and unchanged sidecars can map to the same name.
      * Reject portable case collisions and never truncate an earlier staged file. */
-    pszTargetFile = strrchr(szTarget, chDirSep);
+    pszTargetFile = std::strrchr(szTarget, chDirSep);
     if (!pszTargetFile || !FLibraryNameAvailable(app, plgc->pszTarget, pszTargetFile + 1) ||
         !FCopyNativeFileExclusive(szSource, szTarget)) { plgc->fBad = 1; return 0; }
     return 1;
 }
 
-static int16_t FBackupDirectoryName(const char *pszName) {
-    size_t cch = strlen(pszName);
-    size_t i;
+static std::int16_t FBackupDirectoryName(const char *pszName) {
+    std::size_t cch = std::strlen(pszName);
+    std::size_t i;
 
-    if (strncmp(pszName, "backup", 6)) return 0;
+    if (std::strncmp(pszName, "backup", 6)) return 0;
     if (cch == 6) return 1;
     if (cch == 7 || cch == 8) i = 6;
     else if (cch == 10 && pszName[6] == '.') i = 7;
@@ -1453,18 +1453,18 @@ static int16_t FBackupDirectoryName(const char *pszName) {
     return 1;
 }
 
-int16_t CopyImportEntry(APPSESSION &, void *lpData, const char *pszName) {
+std::int16_t CopyImportEntry(APPSESSION &, void *lpData, const char *pszName) {
     LIBRARYIMPORT *pli = static_cast<LIBRARYIMPORT *>(lpData);
     char szSource[512], szTarget[512];
     int iplr;
     DtFileType dt;
-    int32_t lidGame;
-    uint16_t turn;
-    int16_t fMulti;
-    uint16_t wGen;
+    std::int32_t lidGame;
+    std::uint16_t turn;
+    std::int16_t fMulti;
+    std::uint16_t wGen;
 
     if (!FImportFamilyMember(pszName, pli->pszStem, &iplr, &dt)) {
-        size_t cch = strlen(pli->pszStem);
+        std::size_t cch = std::strlen(pli->pszStem);
         if (!SDL_strncasecmp(pszName, pli->pszStem, cch) && pszName[cch] == '.' &&
             (SDL_tolower(pszName[cch + 1]) == 'm' || SDL_tolower(pszName[cch + 1]) == 'h' || SDL_tolower(pszName[cch + 1]) == 'x')) pli->fBad = 1;
         if (FBackupDirectoryName(pszName)) pli->fBackup = 1;
@@ -1493,7 +1493,7 @@ int16_t CopyImportEntry(APPSESSION &, void *lpData, const char *pszName) {
         if ((pli->lidGame && lidGame != pli->lidGame) || iplr >= 16 || (pli->grfPlayers & (1U << iplr))) { pli->fBad = 1; return 1; }
         if (!pli->lidGame) pli->lidGame = lidGame;
         pli->grfPlayers |= 1U << iplr;
-        pli->rgturn[iplr] = static_cast<int16_t>(turn);
+        pli->rgturn[iplr] = static_cast<std::int16_t>(turn);
     } else if (dt == dtHost || dt == dtHist || dt == dtLog) {
         if (pli->lidGame && lidGame != pli->lidGame) { pli->fBad = 1; return 1; }
         if (!pli->lidGame) pli->lidGame = lidGame;
@@ -1511,10 +1511,10 @@ struct LIBRARYBACKUP {
     const char *pszStem;
     const char *pszName;
     const char *pszBackup;
-    int16_t fBad;
+    std::int16_t fBad;
 };
 
-static int16_t CopyBackupEntry(APPSESSION &, void *lpData, const char *pszName) {
+static std::int16_t CopyBackupEntry(APPSESSION &, void *lpData, const char *pszName) {
     LIBRARYBACKUP *plb = static_cast<LIBRARYBACKUP *>(lpData);
     int iplr;
     DtFileType dt;
@@ -1530,7 +1530,7 @@ static int16_t CopyBackupEntry(APPSESSION &, void *lpData, const char *pszName) 
     return 1;
 }
 
-int16_t CopyBackupDirectory(APPSESSION &app, void *lpData, const char *pszName) {
+std::int16_t CopyBackupDirectory(APPSESSION &app, void *lpData, const char *pszName) {
     LIBRARYIMPORT *pli = static_cast<LIBRARYIMPORT *>(lpData);
     LIBRARYBACKUP lb;
     char szSource[512], szTarget[512];
@@ -1549,14 +1549,14 @@ int16_t CopyBackupDirectory(APPSESSION &app, void *lpData, const char *pszName) 
     return 1;
 }
 
-static int16_t RemoveImportChild(APPSESSION &, void *lpData, const char *pszFile) {
+static std::int16_t RemoveImportChild(APPSESSION &, void *lpData, const char *pszFile) {
     char szFile[512];
     CchSnprintf(szFile, sizeof(szFile), "%s%s%s", static_cast<char *>(lpData), szDirSep, pszFile);
     RemoveNativePath(szFile);
     return 1;
 }
 
-int16_t RemoveImportFile(APPSESSION &app, void *lpData, const char *pszFile) {
+std::int16_t RemoveImportFile(APPSESSION &app, void *lpData, const char *pszFile) {
     char szFile[512];
     const char *pszRoot = static_cast<const char *>(lpData);
     CchSnprintf(szFile, sizeof(szFile), "%s%s%s", pszRoot, szDirSep, pszFile);
@@ -1567,9 +1567,9 @@ int16_t RemoveImportFile(APPSESSION &app, void *lpData, const char *pszFile) {
     return 1;
 }
 
-static int16_t RemoveImportTreeEntry(APPSESSION &app, void *lpData, const char *pszFile) {
+static std::int16_t RemoveImportTreeEntry(APPSESSION &app, void *lpData, const char *pszFile) {
     char szPath[512];
-    int16_t fDirectory, fLink;
+    std::int16_t fDirectory, fLink;
     if (CchSnprintf(szPath, sizeof(szPath), "%s%s%s", static_cast<const char *>(lpData), szDirSep, pszFile) <= 0 ||
         !FNativePathInfo(szPath, &fDirectory, &fLink)) return 0;
     if (fDirectory && !fLink) {
@@ -1578,17 +1578,17 @@ static int16_t RemoveImportTreeEntry(APPSESSION &app, void *lpData, const char *
     return RemoveNativePath(szPath) == 0;
 }
 
-static int16_t FPathIsZip(const char *pszPath) {
-    const char *pch = strrchr(pszPath, '.');
+static std::int16_t FPathIsZip(const char *pszPath) {
+    const char *pch = std::strrchr(pszPath, '.');
     return pch && !SDL_strcasecmp(pch, ".zip");
 }
 
-static int16_t FCreateLibraryZipStage(char *pszStage, size_t cchStage, const char *pszPurpose) {
+static std::int16_t FCreateLibraryZipStage(char *pszStage, std::size_t cchStage, const char *pszPurpose) {
     int i, cch;
     for (i = 0; i < 1000; i++) {
         cch = CchSnprintf(pszStage, cchStage, "%s%s.%s.%u-%u", szLibraryRoot, szDirSep,
                           pszPurpose, DwTickCount(), idLibraryZipStage++);
-        if (cch <= 0 || static_cast<size_t>(cch) >= cchStage) return 0;
+        if (cch <= 0 || static_cast<std::size_t>(cch) >= cchStage) return 0;
         if (CreateNativeDir(pszStage) == 0) return 1;
         if (!FNativeDirectoryExists(pszStage)) return 0;
     }
@@ -1599,22 +1599,22 @@ struct LIBRARYEXPORT {
     const char *pszSource;
     const char *pszTarget;
     const char *pszStem;
-    int16_t fBad;
-    int16_t fSawXY;
-    int16_t fSawPlayable;
+    std::int16_t fBad;
+    std::int16_t fSawXY;
+    std::int16_t fSawPlayable;
 };
 
-static int16_t CopyGameExportEntry(APPSESSION &, void *lpData, const char *pszName) {
+static std::int16_t CopyGameExportEntry(APPSESSION &, void *lpData, const char *pszName) {
     LIBRARYEXPORT *ple = static_cast<LIBRARYEXPORT *>(lpData);
     int iplr;
     DtFileType dt;
     char szSource[512], szTarget[512];
-    size_t cchStem = strlen(ple->pszStem);
+    std::size_t cchStem = std::strlen(ple->pszStem);
 
     if (!FImportFamilyMember(pszName, ple->pszStem, &iplr, &dt)) {
         /* A malformed companion should not silently make an incomplete export. */
         if (!SDL_strncasecmp(pszName, ple->pszStem, cchStem) && pszName[cchStem] == '.' &&
-            strchr("mMhHxX", pszName[cchStem + 1])) ple->fBad = 1;
+            std::strchr("mMhHxX", pszName[cchStem + 1])) ple->fBad = 1;
         return 1;
     }
     CchSnprintf(szSource, sizeof(szSource), "%s%s%s", ple->pszSource, szDirSep, pszName);
@@ -1625,14 +1625,14 @@ static int16_t CopyGameExportEntry(APPSESSION &, void *lpData, const char *pszNa
     return 1;
 }
 
-static int16_t CreateLibraryExportStage(char *pszDirectory, size_t cchDirectory,
+static std::int16_t CreateLibraryExportStage(char *pszDirectory, std::size_t cchDirectory,
                                         const char *pszParent) {
-    uint32_t dwTick = DwTickCount();
+    std::uint32_t dwTick = DwTickCount();
     int i, cch;
     for (i = 0; i < 1000; i++) {
         cch = CchSnprintf(pszDirectory, cchDirectory, "%s%s.stars-game-export-%u-%u",
                           pszParent, szDirSep, dwTick, idLibraryExportStage++);
-        if (cch <= 0 || static_cast<size_t>(cch) >= cchDirectory) return 0;
+        if (cch <= 0 || static_cast<std::size_t>(cch) >= cchDirectory) return 0;
         if (CreateNativeDir(pszDirectory) == 0) return 1;
         if (!FNativeDirectoryExists(pszDirectory)) return 0;
     }
@@ -1642,10 +1642,10 @@ static int16_t CreateLibraryExportStage(char *pszDirectory, size_t cchDirectory,
 struct LIBRARYEXPORTMOVE {
     const char *pszSource;
     const char *pszTarget;
-    int16_t fBad;
+    std::int16_t fBad;
 };
 
-static int16_t MoveGameExportEntry(APPSESSION &, void *lpData, const char *pszName) {
+static std::int16_t MoveGameExportEntry(APPSESSION &, void *lpData, const char *pszName) {
     LIBRARYEXPORTMOVE *plem = static_cast<LIBRARYEXPORTMOVE *>(lpData);
     char szSource[512], szTarget[512];
     CchSnprintf(szSource, sizeof(szSource), "%s%s%s", plem->pszSource, szDirSep, pszName);
@@ -1654,7 +1654,7 @@ static int16_t MoveGameExportEntry(APPSESSION &, void *lpData, const char *pszNa
     return 1;
 }
 
-int16_t FExportLibraryGame(APPSESSION &app, HWND hwnd, const char *pszName, const char *pszTarget) {
+std::int16_t FExportLibraryGame(APPSESSION &app, HWND hwnd, const char *pszName, const char *pszTarget) {
     LIBRARYIMPORT li;
     LIBRARYEXPORT le;
     LIBRARYEXPORTMOVE lem;
@@ -1662,17 +1662,17 @@ int16_t FExportLibraryGame(APPSESSION &app, HWND hwnd, const char *pszName, cons
     char szSource[512], szDestination[512], szStage[512];
     char szZipName[512], szZipStage[512], szZipGame[512], szFilter[128], szMessage[256];
     int cch, iChoice;
-    int16_t fZipStage;
+    std::int16_t fZipStage;
 
     if (!pszTarget) {
-        if (!getenv("STARS_CLIENT_EXPORT_GAME")) {
+        if (!std::getenv("STARS_CLIENT_EXPORT_GAME")) {
             TextIO().pfnCchGetString(app, idsLibraryExportZipPrompt, szMessage);
             iChoice = CompatChoiceIO().pfnMessageBoxA(hwnd, szMessage,
                                  TextIO().pfnCompressed(app, idsLibraryExportGameTitle), win32::MB_YESNOCANCEL | win32::MB_ICONQUESTION | win32::MB_TASKMODAL);
             if (iChoice == IDCANCEL) return 0;
             if (iChoice == win32::IDYES) {
-                memset(&ofn, 0, sizeof(ofn));
-                memset(szZipName, 0, sizeof(szZipName));
+                std::memset(&ofn, 0, sizeof(ofn));
+                std::memset(szZipName, 0, sizeof(szZipName));
                 CchSnprintf(szZipName, sizeof(szZipName), "%s.zip", pszName);
                 ofn.lStructSize = sizeof(ofn);
                 ofn.hwndOwner = hwnd;
@@ -1691,16 +1691,16 @@ int16_t FExportLibraryGame(APPSESSION &app, HWND hwnd, const char *pszName, cons
     }
     if (!FInitLibrary() || !FPortableLibraryName(app, pszName)) return 0;
     cch = CchSnprintf(szSource, sizeof(szSource), "%s%s%s", szLibraryRoot, szDirSep, pszName);
-    if (cch <= 0 || static_cast<size_t>(cch) >= sizeof(szSource) || !FNativeDirectoryExists(szSource)) return 0;
+    if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szSource) || !FNativeDirectoryExists(szSource)) return 0;
     if (FPathIsZip(pszTarget)) {
-        if (SDL_strncasecmp(pszTarget, szSource, strlen(szSource)) == 0 &&
-            (pszTarget[strlen(szSource)] == 0 || pszTarget[strlen(szSource)] == '/' ||
-             pszTarget[strlen(szSource)] == '\\')) goto LFail;
+        if (SDL_strncasecmp(pszTarget, szSource, std::strlen(szSource)) == 0 &&
+            (pszTarget[std::strlen(szSource)] == 0 || pszTarget[std::strlen(szSource)] == '/' ||
+             pszTarget[std::strlen(szSource)] == '\\')) goto LFail;
         fZipStage = FCreateLibraryZipStage(szZipStage, sizeof(szZipStage), "zip-exporting");
         if (!fZipStage) goto LFail;
         if (!FExportLibraryGame(app, hwnd, pszName, szZipStage)) goto LZipFail;
         cch = CchSnprintf(szZipGame, sizeof(szZipGame), "%s%s%s", szZipStage, szDirSep, pszName);
-        if (cch <= 0 || static_cast<size_t>(cch) >= sizeof(szZipGame) || !FZipLibraryDirectory(app, szZipGame, pszTarget)) goto LZipFail;
+        if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szZipGame) || !FZipLibraryDirectory(app, szZipGame, pszTarget)) goto LZipFail;
         FNativeEnumerateDirectory(app, szZipGame, RemoveImportTreeEntry, szZipGame);
         RemoveNativePath(szZipGame);
         RemoveNativePath(szZipStage);
@@ -1710,25 +1710,25 @@ LZipFail:
         RemoveNativePath(szZipStage);
         goto LFail;
     }
-    if (SDL_strncasecmp(pszTarget, szSource, strlen(szSource)) == 0 &&
-        (pszTarget[strlen(szSource)] == 0 || pszTarget[strlen(szSource)] == '/' ||
-         pszTarget[strlen(szSource)] == '\\')) goto LFail;
+    if (SDL_strncasecmp(pszTarget, szSource, std::strlen(szSource)) == 0 &&
+        (pszTarget[std::strlen(szSource)] == 0 || pszTarget[std::strlen(szSource)] == '/' ||
+         pszTarget[std::strlen(szSource)] == '\\')) goto LFail;
     cch = CchSnprintf(szDestination, sizeof(szDestination), "%s%s%s", pszTarget, szDirSep, pszName);
-    if (cch <= 0 || static_cast<size_t>(cch) >= sizeof(szDestination) || FNativeDirectoryExists(szDestination)) goto LFail;
+    if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szDestination) || FNativeDirectoryExists(szDestination)) goto LFail;
     /* The loader and backup writer keep complete paths in szBase. Check the
      * longest companion before copying, rather than truncating child paths. */
-    if (strlen(szDestination) + strlen(pszName) + sizeof("/backup.999/.m16") > sizeof(app.state.szBase)) goto LFail;
+    if (std::strlen(szDestination) + std::strlen(pszName) + sizeof("/backup.999/.m16") > sizeof(app.state.szBase)) goto LFail;
     if (!CreateLibraryExportStage(szStage, sizeof(szStage), pszTarget)) goto LFail;
-    if (strlen(szStage) + strlen(pszName) + sizeof("/backup.999/.m16") > sizeof(szStage)) goto LStageFail;
+    if (std::strlen(szStage) + std::strlen(pszName) + sizeof("/backup.999/.m16") > sizeof(szStage)) goto LStageFail;
 
-    memset(&le, 0, sizeof(le));
+    std::memset(&le, 0, sizeof(le));
     le.pszSource = szSource;
     le.pszTarget = szStage;
     le.pszStem = pszName;
     if (!FNativeEnumerateDirectory(app, szSource, CopyGameExportEntry, &le) || le.fBad ||
         !le.fSawXY || !le.fSawPlayable) goto LStageFail;
 
-    memset(&li, 0, sizeof(li));
+    std::memset(&li, 0, sizeof(li));
     li.pszSource = szSource;
     li.pszTarget = szStage;
     li.pszStem = pszName;
@@ -1759,13 +1759,13 @@ static void SDLCALL LibraryExportFolderSelected(void *lpData, const char * const
     try {
         if (!rgpszPath || !rgpszPath[0]) return;
         STARSCOMPATPAYLOAD path(SDL_strdup(rgpszPath[0]), {[](void *pv) noexcept { SDL_free(pv); }});
-        StarsCompatPostOwnedMessageAsync(reinterpret_cast<uintptr_t>(lpData), WM_STARS_EXPORT_FOLDER, std::move(path), 0);
+        StarsCompatPostOwnedMessageAsync(reinterpret_cast<std::uintptr_t>(lpData), WM_STARS_EXPORT_FOLDER, std::move(path), 0);
     } catch (...) {
         // The foreign dialog boundary cannot propagate a C++ failure.
     }
 }
 
-int16_t FExportSelectedLibraryGame(APPSESSION &app, HWND hwnd, const char *pszTarget) {
+std::int16_t FExportSelectedLibraryGame(APPSESSION &app, HWND hwnd, const char *pszTarget) {
     char szDir[512];
     char szName[256];
     if (!FSelectedLibraryGameName(hwnd, szName, sizeof(szName))) return 0;
@@ -1781,31 +1781,31 @@ void ShowLibraryExportFolderPicker(HWND hwnd) {
     CompatFolderIO().pfnShowOpenFolderDialog(LibraryExportFolderSelected, PvLibraryFolderContext(hwnd), nullptr, nullptr, 0);
 }
 
-static int16_t FindImportUniverse(APPSESSION &, void *lpData, const char *pszName) {
+static std::int16_t FindImportUniverse(APPSESSION &, void *lpData, const char *pszName) {
     char *pszStem = static_cast<char *>(lpData);
-    const char *pch = strrchr(pszName, '.');
+    const char *pch = std::strrchr(pszName, '.');
     if (!pch || SDL_strcasecmp(pch, ".xy")) return 1;
     if (pszStem[0]) { pszStem[0] = '!'; return 1; }
-    if (static_cast<size_t>((pch - pszName)) >= 256) { pszStem[0] = '!'; return 1; }
-    memcpy(pszStem, pszName, pch - pszName);
+    if (static_cast<std::size_t>((pch - pszName)) >= 256) { pszStem[0] = '!'; return 1; }
+    std::memcpy(pszStem, pszName, pch - pszName);
     pszStem[pch - pszName] = 0;
     return 1;
 }
 
 struct LIBRARYTURNMATCH {
-    int32_t lidGame;
+    std::int32_t lidGame;
     int cMatches;
     char rgszName[64][256];
     char szSelected[256];
 };
 
-static int16_t FindLibraryTurnMatch(APPSESSION &app, void *lpData, const char *pszName) {
+static std::int16_t FindLibraryTurnMatch(APPSESSION &app, void *lpData, const char *pszName) {
     LIBRARYTURNMATCH *plm = static_cast<LIBRARYTURNMATCH *>(lpData);
     char szUniverse[512], szMetadata[512];
     NATIVEFILE *pf;
-    int32_t lidGame;
-    uint16_t turn;
-    int16_t fMulti;
+    std::int32_t lidGame;
+    std::uint16_t turn;
+    std::int16_t fMulti;
     if (!FPortableLibraryName(app, pszName)) return 1;
     CchSnprintf(szMetadata, sizeof(szMetadata), "%s%s%s%s.library", szLibraryRoot, szDirSep, pszName, szDirSep);
     pf = PfOpenNativeFile(szMetadata, "rb");
@@ -1864,18 +1864,18 @@ INT_PTR  LibraryTurnConflictDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
     return 0;
 }
 
-static int16_t FFilesEqual(const char *pszLeft, const char *pszRight) {
+static std::int16_t FFilesEqual(const char *pszLeft, const char *pszRight) {
     NATIVEFILE *pfLeft, *pfRight;
     char rgbLeft[4096], rgbRight[4096];
-    size_t cbLeft, cbRight;
-    int16_t fEqual = 1;
+    std::size_t cbLeft, cbRight;
+    std::int16_t fEqual = 1;
     pfLeft = PfOpenNativeFile(pszLeft, "rb");
     pfRight = PfOpenNativeFile(pszRight, "rb");
     if (!pfLeft || !pfRight) { fEqual = 0; goto LDone; }
     do {
         cbLeft = CReadNative(rgbLeft, 1, sizeof(rgbLeft), pfLeft);
         cbRight = CReadNative(rgbRight, 1, sizeof(rgbRight), pfRight);
-        if (cbLeft != cbRight || memcmp(rgbLeft, rgbRight, cbLeft)) { fEqual = 0; break; }
+        if (cbLeft != cbRight || std::memcmp(rgbLeft, rgbRight, cbLeft)) { fEqual = 0; break; }
     } while (cbLeft != 0);
     if (FNativeStreamError(pfLeft) || FNativeStreamError(pfRight)) fEqual = 0;
 LDone:
@@ -1884,33 +1884,33 @@ LDone:
     return fEqual;
 }
 
-int16_t FReplaceConflictingLibraryTurn(APPSESSION &app, const LIBRARYPATHS &paths, HWND hwnd, const char *pszName,
+std::int16_t FReplaceConflictingLibraryTurn(APPSESSION &app, const LIBRARYPATHS &paths, HWND hwnd, const char *pszName,
                                              const char *pszSource, const char *pszTarget,
-                                             int iplr, int32_t lidGame, uint16_t turn);
-int16_t FImportConflictingTurnAsCopy(APPSESSION &app, const LIBRARYPATHS &paths, HWND hwnd, const char *pszName,
+                                             int iplr, std::int32_t lidGame, std::uint16_t turn);
+std::int16_t FImportConflictingTurnAsCopy(APPSESSION &app, const LIBRARYPATHS &paths, HWND hwnd, const char *pszName,
                                             const char *pszSource, int iplr,
-                                            int32_t lidGame, uint16_t turn);
+                                            std::int32_t lidGame, std::uint16_t turn);
 
-static int16_t FInspectImportPlayer(APPSESSION &app, const char *pszUniverse, int iplr);
+static std::int16_t FInspectImportPlayer(APPSESSION &app, const char *pszUniverse, int iplr);
 
-static int16_t FImportSubsequentTurn(APPSESSION &app, HWND hwnd, const char *pszSource) {
+static std::int16_t FImportSubsequentTurn(APPSESSION &app, HWND hwnd, const char *pszSource) {
     char szUniverse[512], szTarget[512];
     const char *pszFile, *pszExt, *pchSlash;
     LIBRARYTURNMATCH lm;
-    int32_t lidGame, lidCurrent;
-    uint16_t turn, turnCurrent;
-    int16_t fMulti, fMultiCurrent;
+    std::int32_t lidGame, lidCurrent;
+    std::uint16_t turn, turnCurrent;
+    std::int16_t fMulti, fMultiCurrent;
     INT_PTR iChoice;
     int iplr;
-    int16_t fHasTurn, fDirectory, fLink;
+    std::int16_t fHasTurn, fDirectory, fLink;
     NATIVEFILE *pf;
     int cch;
 
-    pszFile = strrchr(pszSource, '/');
-    pchSlash = strrchr(pszSource, '\\');
+    pszFile = std::strrchr(pszSource, '/');
+    pchSlash = std::strrchr(pszSource, '\\');
     if (pchSlash && (!pszFile || pchSlash > pszFile)) pszFile = pchSlash;
     pszFile = pszFile ? pszFile + 1 : pszSource;
-    pszExt = strrchr(pszFile, '.');
+    pszExt = std::strrchr(pszFile, '.');
     if (!pszExt || (SDL_tolower(pszExt[1]) != 'm' && SDL_tolower(pszExt[1]) != 'M') ||
         pszExt[2] < '1' || pszExt[2] > '9' || (pszExt[3] && (pszExt[3] < '0' || pszExt[3] > '9')) ||
         (pszExt[3] && pszExt[4])) return 0;
@@ -1922,7 +1922,7 @@ static int16_t FImportSubsequentTurn(APPSESSION &app, HWND hwnd, const char *psz
         AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryTurnInvalid), win32::MB_ICONEXCLAMATION);
         return 0;
     }
-    memset(&lm, 0, sizeof(lm));
+    std::memset(&lm, 0, sizeof(lm));
     lm.lidGame = lidGame;
     if (!FNativeEnumerateDirectory(app, szLibraryRoot, FindLibraryTurnMatch, &lm)) return 0;
     if (lm.cMatches == 0) return -1;
@@ -1936,7 +1936,7 @@ static int16_t FImportSubsequentTurn(APPSESSION &app, HWND hwnd, const char *psz
         return 0;
     }
     cch = CchSnprintf(szTarget, sizeof(szTarget), "%s%s%s%s%s.m%d", szLibraryRoot, szDirSep, lm.szSelected, szDirSep, lm.szSelected, iplr + 1);
-    if (cch <= 0 || static_cast<size_t>(cch) >= sizeof(szTarget)) return 0;
+    if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szTarget)) return 0;
     pf = PfOpenNativeFile(szTarget, "rb");
     fHasTurn = pf != nullptr;
     if (pf) ICloseNativeFile(pf);
@@ -1955,7 +1955,7 @@ static int16_t FImportSubsequentTurn(APPSESSION &app, HWND hwnd, const char *psz
          * player and must not replace a dangling link or unreadable entry. */
         cch = CchSnprintf(szUniverse, sizeof(szUniverse), "%s%s%s%s%s.xy",
                           szLibraryRoot, szDirSep, lm.szSelected, szDirSep, lm.szSelected);
-        if (cch <= 0 || static_cast<size_t>(cch) >= sizeof(szUniverse)) return 0;
+        if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szUniverse)) return 0;
         if (FNativePathInfo(szTarget, &fDirectory, &fLink) || !FInspectImportPlayer(app, szUniverse, iplr)) {
             AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryTurnPlayerInvalid), win32::MB_ICONEXCLAMATION);
             return 0;
@@ -1979,7 +1979,7 @@ static void SDLCALL LibraryImportFolderSelected(void *lpData, const char * const
     try {
         if (!rgpszPath || !rgpszPath[0]) return;
         STARSCOMPATPAYLOAD path(SDL_strdup(rgpszPath[0]), {[](void *pv) noexcept { SDL_free(pv); }});
-        StarsCompatPostOwnedMessageAsync(reinterpret_cast<uintptr_t>(lpData), WM_STARS_IMPORT_FOLDER, std::move(path), 0);
+        StarsCompatPostOwnedMessageAsync(reinterpret_cast<std::uintptr_t>(lpData), WM_STARS_IMPORT_FOLDER, std::move(path), 0);
     } catch (...) {
         // The foreign dialog boundary cannot propagate a C++ failure.
     }
@@ -1989,17 +1989,17 @@ void ShowLibraryImportFolderPicker(HWND hwnd) {
     CompatFolderIO().pfnShowOpenFolderDialog(LibraryImportFolderSelected, PvLibraryFolderContext(hwnd), nullptr, nullptr, 0);
 }
 
-static int16_t FChooseLibraryImportFile(APPSESSION &app, HWND hwnd, char *pszChosen, size_t cchChosen) {
+static std::int16_t FChooseLibraryImportFile(APPSESSION &app, HWND hwnd, char *pszChosen, std::size_t cchChosen) {
     OPENFILENAME ofn;
     char szTitle[256], szFilter[128], *pch;
 
-    memset(&ofn, 0, sizeof(ofn));
-    memset(pszChosen, 0, cchChosen);
+    std::memset(&ofn, 0, sizeof(ofn));
+    std::memset(pszChosen, 0, cchChosen);
     TextIO().pfnCchGetString(app, idsStarsGameFilesMHstRStars, szFilter);
-    pch = strstr(szFilter, "*.M*;");
+    pch = std::strstr(szFilter, "*.M*;");
     if (pch) {
-        memmove(pch + 11, pch, strlen(pch) + 1);
-        memcpy(pch, "*.ZIP;*.XY;", 11);
+        std::memmove(pch + 11, pch, std::strlen(pch) + 1);
+        std::memcpy(pch, "*.ZIP;*.XY;", 11);
     }
     for (pch = szFilter; *pch; pch++) if (*pch == '|') *pch = 0;
     ofn.lStructSize = sizeof(ofn);
@@ -2017,12 +2017,12 @@ static int16_t FChooseLibraryImportFile(APPSESSION &app, HWND hwnd, char *pszCho
 
 /* Choose the workflow from the BOF type, leaving complete validation and
  * source-preserving publication to the corresponding importer. */
-int16_t FImportDesktopFile(APPSESSION &app, HWND hwnd, const char *pszSource) {
+std::int16_t FImportDesktopFile(APPSESSION &app, HWND hwnd, const char *pszSource) {
     char szChosen[512];
     NATIVEFILE *pf;
     HDR hdr;
     RTBOF rtbof;
-    int16_t fRace;
+    std::int16_t fRace;
 
     if (!pszSource) {
         if (!FChooseLibraryImportFile(app, hwnd, szChosen, sizeof(szChosen))) return 0;
@@ -2032,27 +2032,27 @@ int16_t FImportDesktopFile(APPSESSION &app, HWND hwnd, const char *pszSource) {
     pf = PfOpenNativeFile(pszSource, "rb");
     if (pf) {
         fRace = FReadLibraryHdr(pf, &hdr) && hdr.rt == rtBOF && hdr.cb == cbWireBof &&
-                FReadLibraryBof(pf, &rtbof) && !memcmp(rtbof.rgid, "J3J3", 4) && rtbof.dt == dtRace;
+                FReadLibraryBof(pf, &rtbof) && !std::memcmp(rtbof.rgid, "J3J3", 4) && rtbof.dt == dtRace;
         ICloseNativeFile(pf);
     }
     return fRace ? FImportLibraryRaceAndEdit(app, hwnd, pszSource) : FImportLibraryGame(app, hwnd, pszSource);
 }
 
-int16_t FImportLibraryGame(APPSESSION &app, HWND hwnd, const char *pszSource) {
+std::int16_t FImportLibraryGame(APPSESSION &app, HWND hwnd, const char *pszSource) {
     char szChosen[512];
     char szSource[512], szDir[512], szStem[256], *pch, *pchSlash, *pchName;
     char szZipStage[512];
     LIBRARYIMPORT li;
     int cchDir;
-    int64_t cbSource;
-    int16_t fImported, iZipResult;
+    std::int64_t cbSource;
+    std::int16_t fImported, iZipResult;
 
     if (!pszSource) {
         if (!FChooseLibraryImportFile(app, hwnd, szChosen, sizeof(szChosen))) return 0;
         pszSource = szChosen;
     }
-    if (strlen(pszSource) >= sizeof(szSource)) return 0;
-    strcpy(szSource, pszSource);
+    if (std::strlen(pszSource) >= sizeof(szSource)) return 0;
+    std::strcpy(szSource, pszSource);
     /* Validate the selected path before either standalone-turn or family import. */
     if (!FNativeDirectoryExists(szSource) &&
         (!FNativeFileSize(szSource, &cbSource) || cbSource <= 0)) goto LInvalidSource;
@@ -2075,13 +2075,13 @@ int16_t FImportLibraryGame(APPSESSION &app, HWND hwnd, const char *pszSource) {
         RemoveNativePath(szZipStage);
         return fImported;
     }
-    if (strrchr(pszSource, '.') && SDL_tolower(strrchr(pszSource, '.')[1]) == 'm') {
+    if (std::strrchr(pszSource, '.') && SDL_tolower(std::strrchr(pszSource, '.')[1]) == 'm') {
         if (!FInitLibrary()) return 0;
         fImported = FImportSubsequentTurn(app, hwnd, pszSource);
         if (fImported >= 0) return fImported;
     }
     if (FNativeDirectoryExists(szSource)) {
-        strcpy(szDir, szSource);
+        std::strcpy(szDir, szSource);
         szStem[0] = 0;
         FNativeEnumerateDirectory(app, szDir, FindImportUniverse, szStem);
         if (!szStem[0] || szStem[0] == '!') {
@@ -2089,28 +2089,28 @@ int16_t FImportLibraryGame(APPSESSION &app, HWND hwnd, const char *pszSource) {
             return 0;
         }
         CchSnprintf(szSource, sizeof(szSource), "%s%s%s.xy", szDir, szDirSep, szStem);
-        pchSlash = strrchr(szSource, chDirSep);
+        pchSlash = std::strrchr(szSource, chDirSep);
     } else {
-        pchSlash = strrchr(szSource, '/');
-        pch = strrchr(szSource, '\\');
+        pchSlash = std::strrchr(szSource, '/');
+        pch = std::strrchr(szSource, '\\');
         if (pch && (!pchSlash || pch > pchSlash)) pchSlash = pch;
         if (pchSlash) {
             cchDir = static_cast<int>((pchSlash - szSource));
             if (cchDir == 0) cchDir = 1;
-            memcpy(szDir, szSource, cchDir);
+            std::memcpy(szDir, szSource, cchDir);
             szDir[cchDir] = 0;
             pchName = pchSlash + 1;
         } else {
-            strcpy(szDir, ".");
+            std::strcpy(szDir, ".");
             pchName = szSource;
         }
-        pch = strrchr(pchName, '.');
-        if (!pch || pch == pchName || static_cast<size_t>((pch - pchName)) >= sizeof(szStem)) goto LInvalidSource;
-        memcpy(szStem, pchName, pch - pchName);
+        pch = std::strrchr(pchName, '.');
+        if (!pch || pch == pchName || static_cast<std::size_t>((pch - pchName)) >= sizeof(szStem)) goto LInvalidSource;
+        std::memcpy(szStem, pchName, pch - pchName);
         szStem[pch - pchName] = 0;
     }
     if (!FInitLibrary()) return 0;
-    memset(&li, 0, sizeof(li));
+    std::memset(&li, 0, sizeof(li));
     li.pszStem = szStem;
     li.pszSource = szDir;
     li.fValid = 0;
@@ -2120,7 +2120,7 @@ int16_t FImportLibraryGame(APPSESSION &app, HWND hwnd, const char *pszSource) {
         return 0;
     }
     if (!FChooseLibraryGameName(app, hwnd, szSource, nullptr)) return 0;
-    strcpy(szLibraryExchangeName, szStem);
+    std::strcpy(szLibraryExchangeName, szStem);
     return FPublishImportedLibraryGame(app, {szLibraryRoot,szLibraryPending,szLibraryName},li,szDir);
 LInvalidSource:
     CchSnprintf(app.state.szWork, sizeof(app.state.szWork), "%s", szSource);
@@ -2130,17 +2130,17 @@ LInvalidSource:
 
 struct LIBRARYGAMEREMOVE {
     const char *pszDirectory;
-    int16_t fFailed;
+    std::int16_t fFailed;
 };
 
-int16_t RemoveLibraryGameTree(APPSESSION &app, const char *pszDirectory);
+std::int16_t RemoveLibraryGameTree(APPSESSION &app, const char *pszDirectory);
 
-static int16_t RemoveLibraryGameEntry(APPSESSION &app, void *lpData, const char *pszName) {
+static std::int16_t RemoveLibraryGameEntry(APPSESSION &app, void *lpData, const char *pszName) {
     LIBRARYGAMEREMOVE *plgr = static_cast<LIBRARYGAMEREMOVE *>(lpData);
     char szPath[512];
-    int16_t fDirectory, fLink;
+    std::int16_t fDirectory, fLink;
     int cch = CchSnprintf(szPath, sizeof(szPath), "%s%s%s", plgr->pszDirectory, szDirSep, pszName);
-    if (cch <= 0 || static_cast<size_t>(cch) >= sizeof(szPath) || !FNativePathInfo(szPath, &fDirectory, &fLink)) {
+    if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szPath) || !FNativePathInfo(szPath, &fDirectory, &fLink)) {
         plgr->fFailed = 1;
         return 0;
     }
@@ -2159,9 +2159,9 @@ static int16_t RemoveLibraryGameEntry(APPSESSION &app, void *lpData, const char 
     return 1;
 }
 
-int16_t RemoveLibraryGameTree(APPSESSION &app, const char *pszDirectory) {
+std::int16_t RemoveLibraryGameTree(APPSESSION &app, const char *pszDirectory) {
     LIBRARYGAMEREMOVE lgr;
-    int16_t fDirectory, fLink;
+    std::int16_t fDirectory, fLink;
     if (!FNativePathInfo(pszDirectory, &fDirectory, &fLink)) return 0;
     if (fDirectory && !fLink) {
         lgr.pszDirectory = pszDirectory;
@@ -2171,12 +2171,12 @@ int16_t RemoveLibraryGameTree(APPSESSION &app, const char *pszDirectory) {
     return RemoveNativePath(pszDirectory) == 0;
 }
 
-int16_t FCreateLibraryGameStage(APPSESSION &app, const char *pszSource, const char *pszSourceName,
+std::int16_t FCreateLibraryGameStage(APPSESSION &app, const char *pszSource, const char *pszSourceName,
                                        const char *pszTargetName, const char *pszStage,
                                        int iplr, long long lPlayed, const char *pszExchangeName) {
     LIBRARYGAMECOPY lgc;
     char szSourceUniverse[512];
-    int64_t cbFile;
+    std::int64_t cbFile;
     int cch;
     lgc.pszSource = pszSource;
     lgc.pszTarget = pszStage;
@@ -2184,89 +2184,89 @@ int16_t FCreateLibraryGameStage(APPSESSION &app, const char *pszSource, const ch
     lgc.pszTargetName = pszTargetName;
     lgc.fBad = 0;
     cch = CchSnprintf(szSourceUniverse, sizeof(szSourceUniverse), "%s%s%s.xy", pszSource, szDirSep, pszSourceName);
-    if (cch <= 0 || static_cast<size_t>(cch) >= sizeof(szSourceUniverse)) return 0;
+    if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szSourceUniverse)) return 0;
     if (!FNativeFileSize(szSourceUniverse, &cbFile) || cbFile <= 0 ||
         !FNativeEnumerateDirectory(app, pszSource, FCopyLibraryGameEntry, &lgc) || lgc.fBad ||
         !FWriteLibraryMetadataValues(pszStage, pszTargetName, iplr, lPlayed, pszExchangeName)) return 0;
     return 1;
 }
 
-int16_t FCreateLibraryGameStagePath(char *pszStage, size_t cchStage) {
-    uint32_t dwTick = DwTickCount();
+std::int16_t FCreateLibraryGameStagePath(char *pszStage, std::size_t cchStage) {
+    std::uint32_t dwTick = DwTickCount();
     int i, cch;
     for (i = 0; i < 1000; i++) {
         cch = CchSnprintf(pszStage, cchStage, "%s%s.stars-game-stage-%u-%u",
                           szLibraryRoot, szDirSep, dwTick, i);
-        if (cch <= 0 || static_cast<size_t>(cch) >= cchStage) return 0;
+        if (cch <= 0 || static_cast<std::size_t>(cch) >= cchStage) return 0;
         if (CreateNativeDir(pszStage) == 0) return 1;
         if (!FNativeDirectoryExists(pszStage)) return 0;
     }
     return 0;
 }
 
-int16_t FCreateLibraryGameHoldPath(char *pszHold, size_t cchHold) {
-    int64_t cbExisting;
-    uint32_t dwTick = DwTickCount();
+std::int16_t FCreateLibraryGameHoldPath(char *pszHold, std::size_t cchHold) {
+    std::int64_t cbExisting;
+    std::uint32_t dwTick = DwTickCount();
     int i, cch;
     for (i = 0; i < 1000; i++) {
         cch = CchSnprintf(pszHold, cchHold, "%s%s.stars-game-old-%u-%u",
                           szLibraryRoot, szDirSep, dwTick, i);
-        if (cch <= 0 || static_cast<size_t>(cch) >= cchHold) return 0;
+        if (cch <= 0 || static_cast<std::size_t>(cch) >= cchHold) return 0;
         if (!FNativeDirectoryExists(pszHold) && !FNativeFileSize(pszHold, &cbExisting)) return 1;
     }
     return 0;
 }
 
-int16_t FValidManagedLibraryGame(APPSESSION &app, const char *pszName, char *pszDirectory,
+std::int16_t FValidManagedLibraryGame(APPSESSION &app, const char *pszName, char *pszDirectory,
                                         int *piplr, long long *plPlayed,
-                                        char *pszExchangeName, size_t cchExchange) {
+                                        char *pszExchangeName, std::size_t cchExchange) {
     char szMetadataName[256];
     int cchDirectory;
-    int16_t fDirectory, fLink;
+    std::int16_t fDirectory, fLink;
     if (!pszName || !FInitLibrary() || !FPortableLibraryName(app, pszName) ||
         (cchDirectory = CchSnprintf(pszDirectory, 512, "%s%s%s", szLibraryRoot, szDirSep, pszName)) <= 0 ||
-        static_cast<size_t>(cchDirectory) >= 512 ||
+        static_cast<std::size_t>(cchDirectory) >= 512 ||
         !FNativePathInfo(pszDirectory, &fDirectory, &fLink) || !fDirectory || fLink ||
         !FReadLibraryMetadata(pszDirectory, szMetadataName, sizeof(szMetadataName), piplr,
                               plPlayed, pszExchangeName, cchExchange)) return 0;
     return !SDL_strcasecmp(szMetadataName, pszName);
 }
 
-int16_t FDuplicateLibraryGame(APPSESSION &app, HWND hwnd, const char *pszName, const char *pszCopyName) {
+std::int16_t FDuplicateLibraryGame(APPSESSION &app, HWND hwnd, const char *pszName, const char *pszCopyName) {
     char szSource[512], szStage[512], szTarget[512], szExchangeName[256], szMessage[256];
     int iplr;
     int cchTarget;
     long long lPlayed;
-    int16_t fResult = 0;
+    std::int16_t fResult = 0;
     static_cast<void>(hwnd);
     if (!pszCopyName || !FValidManagedLibraryGame(app, pszName, szSource, &iplr, &lPlayed,
                                                   szExchangeName, sizeof(szExchangeName)) ||
         !FPortableLibraryName(app, pszCopyName) || !FLibraryNameAvailableExcept(app, pszCopyName, nullptr) ||
         (cchTarget = CchSnprintf(szTarget, sizeof(szTarget), "%s%s%s", szLibraryRoot, szDirSep, pszCopyName)) <= 0 ||
-        static_cast<size_t>(cchTarget) >= sizeof(szTarget) || strlen(szLibraryRoot) + 2 * strlen(pszCopyName) + 18 >= sizeof(app.state.szBase) ||
+        static_cast<std::size_t>(cchTarget) >= sizeof(szTarget) || std::strlen(szLibraryRoot) + 2 * std::strlen(pszCopyName) + 18 >= sizeof(app.state.szBase) ||
         !FCreateLibraryGameStagePath(szStage, sizeof(szStage))) return 0;
     if (FCreateLibraryGameStage(app, szSource, pszName, pszCopyName, szStage, -1, 0, szExchangeName) &&
         RenameNativeFile(szStage, szTarget) == 0) fResult = 1;
     if (!fResult) {
         RemoveLibraryGameTree(app, szStage);
-        strcpy(szMessage, TextIO().pfnCompressed(app, idsLibraryStorageFailed));
+        std::strcpy(szMessage, TextIO().pfnCompressed(app, idsLibraryStorageFailed));
         CompatChoiceIO().pfnMessageBoxA(win32::IsWindow(hwnd) ? hwnd : app.lpui->hwndFrame, szMessage, TextIO().pfnCompressed(app, idsLibraryGames), win32::MB_OK | win32::MB_ICONHAND);
     }
     return fResult;
 }
 
-int16_t FRenameLibraryGame(APPSESSION &app, HWND hwnd, const char *pszName, const char *pszNewName) {
+std::int16_t FRenameLibraryGame(APPSESSION &app, HWND hwnd, const char *pszName, const char *pszNewName) {
     char szSource[512], szStage[512], szTarget[512], szHold[512], szExchangeName[256], szMessage[768];
     int iplr;
     long long lPlayed;
-    int16_t fResult = 0, fHeld = 0, fRestoreFailed = 0, fHoldCleanupFailed = 0;
+    std::int16_t fResult = 0, fHeld = 0, fRestoreFailed = 0, fHoldCleanupFailed = 0;
     int cchTarget;
     static_cast<void>(hwnd);
     if (!pszNewName || !FValidManagedLibraryGame(app, pszName, szSource, &iplr, &lPlayed,
                                                  szExchangeName, sizeof(szExchangeName)) ||
         !FPortableLibraryName(app, pszNewName) || !FLibraryNameAvailableExcept(app, pszNewName, pszName) ||
         (cchTarget = CchSnprintf(szTarget, sizeof(szTarget), "%s%s%s", szLibraryRoot, szDirSep, pszNewName)) <= 0 ||
-        static_cast<size_t>(cchTarget) >= sizeof(szTarget) || strlen(szLibraryRoot) + 2 * strlen(pszNewName) + 18 >= sizeof(app.state.szBase) ||
+        static_cast<std::size_t>(cchTarget) >= sizeof(szTarget) || std::strlen(szLibraryRoot) + 2 * std::strlen(pszNewName) + 18 >= sizeof(app.state.szBase) ||
         !FCreateLibraryGameStagePath(szStage, sizeof(szStage))) return 0;
     if (!FCreateLibraryGameStage(app, szSource, pszName, pszNewName, szStage, iplr, lPlayed, szExchangeName) ||
         !FCreateLibraryGameHoldPath(szHold, sizeof(szHold)) || RenameNativeFile(szSource, szHold) != 0) goto LDone;
@@ -2289,30 +2289,30 @@ LDone:
         if (fRestoreFailed) {
             cchTarget = CchSnprintf(szMessage, sizeof(szMessage),
                                     TextIO().pfnCompressed(app, idsLibraryRenameFailedOriginalAt), szHold);
-            if (cchTarget <= 0 || static_cast<size_t>(cchTarget) >= sizeof(szMessage)) strcpy(szMessage, TextIO().pfnCompressed(app, idsLibraryStorageFailed));
-        } else strcpy(szMessage, TextIO().pfnCompressed(app, idsLibraryStorageFailed));
+            if (cchTarget <= 0 || static_cast<std::size_t>(cchTarget) >= sizeof(szMessage)) std::strcpy(szMessage, TextIO().pfnCompressed(app, idsLibraryStorageFailed));
+        } else std::strcpy(szMessage, TextIO().pfnCompressed(app, idsLibraryStorageFailed));
         CompatChoiceIO().pfnMessageBoxA(win32::IsWindow(hwnd) ? hwnd : app.lpui->hwndFrame, szMessage, TextIO().pfnCompressed(app, idsLibraryGames), win32::MB_OK | win32::MB_ICONHAND);
     } else if (fHoldCleanupFailed) {
         cchTarget = CchSnprintf(szMessage, sizeof(szMessage),
                                 TextIO().pfnCompressed(app, idsLibraryRenameSucceededCleanupPath), szHold);
-        if (cchTarget <= 0 || static_cast<size_t>(cchTarget) >= sizeof(szMessage)) strcpy(szMessage, TextIO().pfnCompressed(app, idsLibraryStorageFailed));
+        if (cchTarget <= 0 || static_cast<std::size_t>(cchTarget) >= sizeof(szMessage)) std::strcpy(szMessage, TextIO().pfnCompressed(app, idsLibraryStorageFailed));
         CompatChoiceIO().pfnMessageBoxA(win32::IsWindow(hwnd) ? hwnd : app.lpui->hwndFrame, szMessage, TextIO().pfnCompressed(app, idsLibraryGames), win32::MB_OK | win32::MB_ICONEXCLAMATION);
     }
     return fResult;
 }
 
-int16_t FDeleteLibraryGameRecentPaths(APPSESSION &app, const char *pszDirectory) {
+std::int16_t FDeleteLibraryGameRecentPaths(APPSESSION &app, const char *pszDirectory) {
     char szIniFile[32], szSection[16], szEntry[16], szPath[512];
     char rgpszRecent[9][256];
     const char *pszRecent;
     int i, j, cch;
-    int16_t fContinueRemoved = 0;
+    std::int16_t fContinueRemoved = 0;
 
     if (!app.lpui->vrgszMRU) return 1;
     for (i = 0; i < 9; i++) {
         pszRecent = app.lpui->vrgszMRU + 256 * i;
         cch = CchSnprintf(szPath, sizeof(szPath), "%s", pszRecent);
-        if (cch < 0 || static_cast<size_t>(cch) >= sizeof(szPath)) return 0;
+        if (cch < 0 || static_cast<std::size_t>(cch) >= sizeof(szPath)) return 0;
         if (LibraryPathIO().pfnUnder(pszDirectory, szPath)) {
             rgpszRecent[i][0] = 0;
             if (i == 0) fContinueRemoved = 1;
@@ -2324,7 +2324,7 @@ int16_t FDeleteLibraryGameRecentPaths(APPSESSION &app, const char *pszDirectory)
     if (!fContinueRemoved) {
         for (i = 0, j = 0; i < 9; i++) {
             if (!rgpszRecent[i][0]) continue;
-            if (i != j) strcpy(rgpszRecent[j], rgpszRecent[i]);
+            if (i != j) std::strcpy(rgpszRecent[j], rgpszRecent[i]);
             j++;
         }
         while (j < 9) rgpszRecent[j++][0] = 0;
@@ -2333,34 +2333,34 @@ int16_t FDeleteLibraryGameRecentPaths(APPSESSION &app, const char *pszDirectory)
     TextIO().pfnCchGetString(app, idsFiles, szSection);
     TextIO().pfnCchGetString(app, idsFile1, szEntry);
     for (i = 0; i < 9; i++) {
-        szEntry[strlen(szEntry) - 1] = static_cast<char>(('1' + i));
-        strcpy(app.lpui->vrgszMRU + 256 * i, rgpszRecent[i]);
+        szEntry[std::strlen(szEntry) - 1] = static_cast<char>(('1' + i));
+        std::strcpy(app.lpui->vrgszMRU + 256 * i, rgpszRecent[i]);
         if (!ProfileTextIO().pfnWriteString(szSection, szEntry, rgpszRecent[i], szIniFile)) return 0;
     }
     if (fContinueRemoved && !ProfileTextIO().pfnWriteString(szSection, "File1", "", szIniFile)) return 0;
     return 1;
 }
 
-int16_t FDeleteLibraryGame(APPSESSION &app, HWND hwnd, const char *pszName) {
+std::int16_t FDeleteLibraryGame(APPSESSION &app, HWND hwnd, const char *pszName) {
     char szDirectory[512], szMetadata[512], szMessage[512], szMetadataName[256];
     char szExchangeName[256];
     int iplr;
     long long lPlayed;
     int cch;
-    int16_t fContinueTarget;
+    std::int16_t fContinueTarget;
 
     if (!FInitLibrary() || !FPortableLibraryName(app, pszName)) return 0;
     cch = CchSnprintf(szDirectory, sizeof(szDirectory), "%s%s%s", szLibraryRoot, szDirSep, pszName);
-    if (cch <= 0 || static_cast<size_t>(cch) >= sizeof(szDirectory)) return 0;
+    if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szDirectory)) return 0;
     cch = CchSnprintf(szMetadata, sizeof(szMetadata), "%s%s.library", szDirectory, szDirSep);
-    if (cch <= 0 || static_cast<size_t>(cch) >= sizeof(szMetadata) ||
+    if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szMetadata) ||
         !FReadLibraryMetadata(szDirectory, szMetadataName, sizeof(szMetadataName), &iplr, &lPlayed,
-                              szExchangeName, sizeof(szExchangeName)) || strcmp(szMetadataName, pszName)) return 0;
+                              szExchangeName, sizeof(szExchangeName)) || std::strcmp(szMetadataName, pszName)) return 0;
     cch = CchSnprintf(szMessage, sizeof(szMessage), TextIO().pfnCompressed(app, idsLibraryDeleteGamePrompt), pszName);
-    if (cch <= 0 || static_cast<size_t>(cch) >= sizeof(szMessage)) return 0;
+    if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szMessage)) return 0;
     if (CompatChoiceIO().pfnMessageBoxA(hwnd, szMessage, TextIO().pfnCompressed(app, idsLibraryGames),
                    win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_TASKMODAL) != win32::IDYES) return 0;
-    fContinueTarget = FFindContinueLibraryGame(app) && !strcmp(continueLibrary.szName, pszName);
+    fContinueTarget = FFindContinueLibraryGame(app) && !std::strcmp(continueLibrary.szName, pszName);
     if (!RemoveLibraryGameTree(app, szDirectory)) {
         AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryDeleteGameFailed), win32::MB_ICONHAND);
         return 0;
@@ -2373,20 +2373,20 @@ int16_t FDeleteLibraryGame(APPSESSION &app, HWND hwnd, const char *pszName) {
     return 1;
 }
 
-int16_t FDeleteSelectedLibraryGame(APPSESSION &app, HWND hwnd) {
+std::int16_t FDeleteSelectedLibraryGame(APPSESSION &app, HWND hwnd) {
     char szName[256];
     if (!FSelectedLibraryGameName(hwnd, szName, sizeof(szName))) return 0;
     return FDeleteLibraryGame(app, hwnd, szName);
 }
 
-static int16_t FInspectImportPlayer(APPSESSION &app, const char *pszUniverse, int iplr) {
+static std::int16_t FInspectImportPlayer(APPSESSION &app, const char *pszUniverse, int iplr) {
     NATIVEFILE *pf;
     HDR hdr;
     RTBOF rtbof;
     GAME gameImport;
-    uint8_t rgbGame[cbWireGame];
-    int32_t lSeed1, lSeed2;
-    int16_t fRead;
+    std::uint8_t rgbGame[cbWireGame];
+    std::int32_t lSeed1, lSeed2;
+    std::int16_t fRead;
 
     pf = PfOpenNativeFile(pszUniverse, "rb");
     if (!pf) return 0;
@@ -2406,25 +2406,25 @@ static int16_t FInspectImportPlayer(APPSESSION &app, const char *pszUniverse, in
            iplr >= 0 && iplr < gameImport.cPlayer;
 }
 
-int16_t FImportLibraryOrders(APPSESSION &app, HWND hwnd, const char *pszSource) {
+std::int16_t FImportLibraryOrders(APPSESSION &app, HWND hwnd, const char *pszSource) {
     OPENFILENAME ofn;
     char szChosen[512], szFilter[128], szName[256];
     char szHost[512], szUniverse[512], szTarget[512], szStage[512], szMessage[512];
     const char *pszFile, *pszExt, *pchSlash;
     char *pch;
-    int32_t lidHost, lidUniverse, lidOrders;
-    uint16_t turnHost, turnOrders, wGenHost, wGenOrders;
-    int16_t fMulti;
+    std::int32_t lidHost, lidUniverse, lidOrders;
+    std::uint16_t turnHost, turnOrders, wGenHost, wGenOrders;
+    std::int16_t fMulti;
     int iplr, cch;
-    int64_t cbFile;
-    uint32_t dwTick;
+    std::int64_t cbFile;
+    std::uint32_t dwTick;
     HWND hwndList;
     LRESULT i;
 
     if (!pszSource) {
-        memset(&ofn, 0, sizeof(ofn));
-        memset(szChosen, 0, sizeof(szChosen));
-        strcpy(szFilter, TextIO().pfnCompressed(app, idsLibraryOrdersImportFilter));
+        std::memset(&ofn, 0, sizeof(ofn));
+        std::memset(szChosen, 0, sizeof(szChosen));
+        std::strcpy(szFilter, TextIO().pfnCompressed(app, idsLibraryOrdersImportFilter));
         for (pch = szFilter; *pch; pch++) if (*pch == '|') *pch = 0;
         ofn.lStructSize = sizeof(ofn);
         ofn.hwndOwner = hwnd;
@@ -2444,11 +2444,11 @@ int16_t FImportLibraryOrders(APPSESSION &app, HWND hwnd, const char *pszSource) 
         return 0;
     }
     ControlIO().pfnSendMessage(hwndList, win32::LB_GETTEXT, i, reinterpret_cast<LPARAM>(szName));
-    pszFile = strrchr(pszSource, '/');
-    pchSlash = strrchr(pszSource, '\\');
+    pszFile = std::strrchr(pszSource, '/');
+    pchSlash = std::strrchr(pszSource, '\\');
     if (pchSlash && (!pszFile || pchSlash > pszFile)) pszFile = pchSlash;
     pszFile = pszFile ? pszFile + 1 : pszSource;
-    pszExt = strrchr(pszFile, '.');
+    pszExt = std::strrchr(pszFile, '.');
     if (!pszExt || SDL_tolower(pszExt[1]) != 'x' || pszExt[2] < '1' || pszExt[2] > '9' ||
         (pszExt[3] && (pszExt[3] < '0' || pszExt[3] > '9')) || (pszExt[3] && pszExt[4])) {
         AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryOrdersChooseFile), win32::MB_ICONEXCLAMATION);
@@ -2462,9 +2462,9 @@ int16_t FImportLibraryOrders(APPSESSION &app, HWND hwnd, const char *pszSource) 
         return 0;
     }
     cch = CchSnprintf(szHost, sizeof(szHost), "%s%s%s%s%s.hst", szLibraryRoot, szDirSep, szName, szDirSep, szName);
-    if (cch <= 0 || static_cast<size_t>(cch) >= sizeof(szHost)) return 0;
+    if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szHost)) return 0;
     cch = CchSnprintf(szUniverse, sizeof(szUniverse), "%s%s%s%s%s.xy", szLibraryRoot, szDirSep, szName, szDirSep, szName);
-    if (cch <= 0 || static_cast<size_t>(cch) >= sizeof(szUniverse)) return 0;
+    if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szUniverse)) return 0;
     if (!FInspectImportFile(szHost, dtHost, iplrNone, &lidHost, &turnHost, &wGenHost, &fMulti) ||
         !FInspectImportFile(szUniverse, dtXY, iplrNone, &lidUniverse, nullptr, nullptr, &fMulti) ||
         lidHost != lidUniverse || lidOrders != lidHost || turnOrders != turnHost || wGenOrders != wGenHost ||
@@ -2474,17 +2474,17 @@ int16_t FImportLibraryOrders(APPSESSION &app, HWND hwnd, const char *pszSource) 
     }
     cch = CchSnprintf(szTarget, sizeof(szTarget), "%s%s%s%s%s.x%d", szLibraryRoot, szDirSep,
                       szName, szDirSep, szName, iplr + 1);
-    if (cch <= 0 || static_cast<size_t>(cch) >= sizeof(szTarget)) return 0;
+    if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szTarget)) return 0;
     if (FNativeFileSize(szTarget, &cbFile)) {
         if (FFilesEqual(pszSource, szTarget)) return 1;
         cch = CchSnprintf(szMessage, sizeof(szMessage),
                           TextIO().pfnCompressed(app, idsLibraryOrdersReplacePrompt), iplr + 1, szName);
-        if (cch <= 0 || static_cast<size_t>(cch) >= sizeof(szMessage)) return 0;
+        if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szMessage)) return 0;
         if (AlertIO().pfnAlertSz(app, szMessage, win32::MB_YESNO | win32::MB_ICONQUESTION) != win32::IDYES) return 0;
     }
     dwTick = DwTickCount();
     cch = CchSnprintf(szStage, sizeof(szStage), "%s.importing.%u", szTarget, dwTick);
-    if (cch <= 0 || static_cast<size_t>(cch) >= sizeof(szStage)) return 0;
+    if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szStage)) return 0;
     if (!FCopyNativeFileExclusive(pszSource, szStage) ||
         !FInspectImportFile(szStage, dtLog, iplr, &lidOrders, &turnOrders, &wGenOrders, &fMulti) ||
         lidOrders != lidHost || turnOrders != turnHost || wGenOrders != wGenHost) {
@@ -2502,21 +2502,21 @@ int16_t FImportLibraryOrders(APPSESSION &app, HWND hwnd, const char *pszSource) 
 }
 
 
-static int16_t FCopyOptionalConflictFile(const char *pszSource, const char *pszTarget) {
-    int64_t cbFile;
+static std::int16_t FCopyOptionalConflictFile(const char *pszSource, const char *pszTarget) {
+    std::int64_t cbFile;
     if (FNativeFileSize(pszSource, &cbFile)) return FCopyNativeFileExclusive(pszSource, pszTarget);
     return errno == ENOENT;
 }
 
-int16_t FBackupConflictingPlayerFiles(const char *pszDirectory, const char *pszName,
-                                             int iplr, char *pszBackup, size_t cchBackup) {
+std::int16_t FBackupConflictingPlayerFiles(const char *pszDirectory, const char *pszName,
+                                             int iplr, char *pszBackup, std::size_t cchBackup) {
     char szSource[512], szTarget[512], szExt[8];
     int i, cch;
-    int16_t fDirectory, fLink;
+    std::int16_t fDirectory, fLink;
 
     for (i = 0; i < 1000; i++) {
         cch = CchSnprintf(pszBackup, cchBackup, "%s%sbackup.%03d", pszDirectory, szDirSep, i);
-        if (cch <= 0 || static_cast<size_t>(cch) >= cchBackup) return 0;
+        if (cch <= 0 || static_cast<std::size_t>(cch) >= cchBackup) return 0;
         if (FNativePathInfo(pszBackup, &fDirectory, &fLink)) continue;
         if (CreateNativeDir(pszBackup) == 0) break;
         if (!FNativeDirectoryExists(pszBackup)) return 0;
@@ -2525,36 +2525,36 @@ int16_t FBackupConflictingPlayerFiles(const char *pszDirectory, const char *pszN
 
     CchSnprintf(szExt, sizeof(szExt), "m%d", iplr + 1);
     cch = CchSnprintf(szSource, sizeof(szSource), "%s%s%s.%s", pszDirectory, szDirSep, pszName, szExt);
-    if (cch <= 0 || static_cast<size_t>(cch) >= sizeof(szSource)) return 0;
+    if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szSource)) return 0;
     cch = CchSnprintf(szTarget, sizeof(szTarget), "%s%s%s.%s", pszBackup, szDirSep, pszName, szExt);
-    if (cch <= 0 || static_cast<size_t>(cch) >= sizeof(szTarget) || !FCopyOptionalConflictFile(szSource, szTarget)) return 0;
+    if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szTarget) || !FCopyOptionalConflictFile(szSource, szTarget)) return 0;
 
     CchSnprintf(szExt, sizeof(szExt), "x%d", iplr + 1);
     cch = CchSnprintf(szSource, sizeof(szSource), "%s%s%s.%s", pszDirectory, szDirSep, pszName, szExt);
-    if (cch <= 0 || static_cast<size_t>(cch) >= sizeof(szSource)) return 0;
+    if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szSource)) return 0;
     cch = CchSnprintf(szTarget, sizeof(szTarget), "%s%s%s.%s", pszBackup, szDirSep, pszName, szExt);
-    if (cch <= 0 || static_cast<size_t>(cch) >= sizeof(szTarget) || !FCopyOptionalConflictFile(szSource, szTarget)) return 0;
+    if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szTarget) || !FCopyOptionalConflictFile(szSource, szTarget)) return 0;
 
     CchSnprintf(szExt, sizeof(szExt), "h%d", iplr + 1);
     cch = CchSnprintf(szSource, sizeof(szSource), "%s%s%s.%s", pszDirectory, szDirSep, pszName, szExt);
-    if (cch <= 0 || static_cast<size_t>(cch) >= sizeof(szSource)) return 0;
+    if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szSource)) return 0;
     cch = CchSnprintf(szTarget, sizeof(szTarget), "%s%s%s.%s", pszBackup, szDirSep, pszName, szExt);
-    return cch > 0 && static_cast<size_t>(cch) < sizeof(szTarget) && FCopyOptionalConflictFile(szSource, szTarget);
+    return cch > 0 && static_cast<std::size_t>(cch) < sizeof(szTarget) && FCopyOptionalConflictFile(szSource, szTarget);
 }
 
-int16_t FStageConflictingTurn(const char *pszStage, const char *pszName,
+std::int16_t FStageConflictingTurn(const char *pszStage, const char *pszName,
                                      const char *pszSource, int iplr,
-                                     int32_t lidGame, uint16_t turn) {
+                                     std::int32_t lidGame, std::uint16_t turn) {
     char szTarget[512], szIncoming[512];
-    int32_t lidStaged;
-    uint16_t turnStaged, wGenStaged;
-    int16_t fMultiStaged;
+    std::int32_t lidStaged;
+    std::uint16_t turnStaged, wGenStaged;
+    std::int16_t fMultiStaged;
     int cch;
 
     cch = CchSnprintf(szTarget, sizeof(szTarget), "%s%s%s.m%d", pszStage, szDirSep, pszName, iplr + 1);
-    if (cch <= 0 || static_cast<size_t>(cch) >= sizeof(szTarget)) return 0;
+    if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szTarget)) return 0;
     cch = CchSnprintf(szIncoming, sizeof(szIncoming), "%s.incoming.%u", szTarget, DwTickCount());
-    if (cch <= 0 || static_cast<size_t>(cch) >= sizeof(szIncoming)) return 0;
+    if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szIncoming)) return 0;
     if (!FCopyNativeFileExclusive(pszSource, szIncoming) ||
         !FInspectImportFile(szIncoming, dtTurn, iplr, &lidStaged, &turnStaged, &wGenStaged, &fMultiStaged) ||
         lidStaged != lidGame || turnStaged != turn || ReplaceNativeFile(szIncoming, szTarget) != 0) {
@@ -2564,7 +2564,7 @@ int16_t FStageConflictingTurn(const char *pszStage, const char *pszName,
     return 1;
 }
 
-int16_t FChooseSeparateCopyName(APPSESSION &app, HWND hwnd, const char *pszName) {
+std::int16_t FChooseSeparateCopyName(APPSESSION &app, HWND hwnd, const char *pszName) {
     if (!FInitLibrary()) return 0;
     CchSnprintf(szLibraryName, sizeof(szLibraryName), "%s", pszName);
     SuggestLibraryName(app, szLibraryName, 0);
@@ -2573,18 +2573,18 @@ int16_t FChooseSeparateCopyName(APPSESSION &app, HWND hwnd, const char *pszName)
     return FPortableLibraryName(app, szLibraryName) && FLibraryNameAvailable(app, szLibraryRoot, szLibraryName);
 }
 
-int16_t FReplaceConflictingLibraryTurn(APPSESSION &app, const LIBRARYPATHS &paths, HWND hwnd, const char *pszName,
+std::int16_t FReplaceConflictingLibraryTurn(APPSESSION &app, const LIBRARYPATHS &paths, HWND hwnd, const char *pszName,
                                              const char *pszSource, const char *pszTarget,
-                                             int iplr, int32_t lidGame, uint16_t turn) {
+                                             int iplr, std::int32_t lidGame, std::uint16_t turn) {
     char szDirectory[512], szStage[512], szHold[512], szBackup[512], szExchangeName[256];
     char szMessage[768];
     int iRemembered;
     long long lPlayed;
-    int16_t fHeld = 0, fRestoreFailed = 0, fCleanupFailed = 0;
+    std::int16_t fHeld = 0, fRestoreFailed = 0, fCleanupFailed = 0;
     int cch;
 
     cch = LibraryPublicationIO().pfnCchSnprintf(szDirectory, sizeof(szDirectory), "%s%s%s", paths.szLibraryRoot, szDirSep, pszName);
-    if (cch <= 0 || static_cast<size_t>(cch) >= sizeof(szDirectory) ||
+    if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szDirectory) ||
         !LibraryPublicationIO().pfnFValidManagedLibraryGame(app, pszName, szDirectory, &iRemembered, &lPlayed,
                                   szExchangeName, sizeof(szExchangeName)) ||
         !LibraryPublicationIO().pfnFCreateLibraryGameStagePath(szStage, sizeof(szStage))) return 0;
@@ -2624,20 +2624,20 @@ LDone:
     return 0;
 }
 
-int16_t FImportConflictingTurnAsCopy(APPSESSION &app, const LIBRARYPATHS &paths, HWND hwnd, const char *pszName,
+std::int16_t FImportConflictingTurnAsCopy(APPSESSION &app, const LIBRARYPATHS &paths, HWND hwnd, const char *pszName,
                                             const char *pszSource, int iplr,
-                                            int32_t lidGame, uint16_t turn) {
+                                            std::int32_t lidGame, std::uint16_t turn) {
     char szDirectory[512], szStage[512], szTarget[512], szExchangeName[256];
     int iRemembered, cch;
     long long lPlayed;
 
     cch = LibraryPublicationIO().pfnCchSnprintf(szDirectory, sizeof(szDirectory), "%s%s%s", paths.szLibraryRoot, szDirSep, pszName);
-    if (cch <= 0 || static_cast<size_t>(cch) >= sizeof(szDirectory) ||
+    if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szDirectory) ||
         !LibraryPublicationIO().pfnFValidManagedLibraryGame(app, pszName, szDirectory, &iRemembered, &lPlayed,
                                   szExchangeName, sizeof(szExchangeName)) ||
         !LibraryPublicationIO().pfnFChooseSeparateCopyName(app, hwnd, pszName)) return 0;
     cch = LibraryPublicationIO().pfnCchSnprintf(szTarget, sizeof(szTarget), "%s%s%s", paths.szLibraryRoot, szDirSep, paths.szLibraryName);
-    if (cch <= 0 || static_cast<size_t>(cch) >= sizeof(szTarget) ||
+    if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szTarget) ||
         !LibraryPublicationIO().pfnFLibraryNameAvailable(app, paths.szLibraryRoot, paths.szLibraryName) ||
         LibraryPublicationIO().pfnPathLength(paths.szLibraryRoot) + 2 * LibraryPublicationIO().pfnPathLength(paths.szLibraryName) + 18 >= sizeof(app.state.szBase) ||
         !LibraryPublicationIO().pfnFCreateLibraryGameStagePath(szStage, sizeof(szStage))) return 0;
@@ -2654,7 +2654,7 @@ int16_t FImportConflictingTurnAsCopy(APPSESSION &app, const LIBRARYPATHS &paths,
     return 1;
 }
 
-int16_t FFinishLibraryGame(APPSESSION &app, HWND hwnd, int16_t fGenerated) {
+std::int16_t FFinishLibraryGame(APPSESSION &app, HWND hwnd, std::int16_t fGenerated) {
     char szFile[256], szMessage[256];
     int i;
 
@@ -2669,23 +2669,23 @@ int16_t FFinishLibraryGame(APPSESSION &app, HWND hwnd, int16_t fGenerated) {
     if (!fGenerated) {
         FNativeEnumerateDirectory(app, szLibraryPending, RemovePendingFile, nullptr);
         RemoveNativePath(szLibraryPending);
-        strcpy(szMessage, TextIO().pfnCompressed(app, idsLibraryStorageFailed));
+        std::strcpy(szMessage, TextIO().pfnCompressed(app, idsLibraryStorageFailed));
         CompatChoiceIO().pfnMessageBoxA(win32::IsWindow(hwnd) ? hwnd : app.lpui->hwndFrame, szMessage, TextIO().pfnCompressed(app, idsLibraryGames), win32::MB_OK | win32::MB_ICONHAND);
     }
     szLibraryPending[0] = 0;
     return fGenerated;
 }
 
-static int16_t FAddLibraryGameListItem(HWND hwndList, const char *pszName, int iplr,
-                                       uint16_t grfPlayers, const uint16_t *rgturn) {
+static std::int16_t FAddLibraryGameListItem(HWND hwndList, const char *pszName, int iplr,
+                                       std::uint16_t grfPlayers, const std::uint16_t *rgturn) {
     LRESULT i;
     int cNew;
     LIBRARYGAMELISTITEM *rgNew;
     if (cLibraryGameList == cLibraryGameListMax) {
         cNew = cLibraryGameListMax ? cLibraryGameListMax * 2 : 32;
-        rgNew = static_cast<LIBRARYGAMELISTITEM *>(SDL_realloc(rgLibraryGameList.get(), static_cast<size_t>(cNew) * sizeof(*rgNew)));
+        rgNew = static_cast<LIBRARYGAMELISTITEM *>(SDL_realloc(rgLibraryGameList.get(), static_cast<std::size_t>(cNew) * sizeof(*rgNew)));
         if (!rgNew) return 0;
-        rgNew = LpStartHeapArray<LIBRARYGAMELISTITEM>(rgNew,static_cast<size_t>(cNew) * sizeof(*rgNew));
+        rgNew = LpStartHeapArray<LIBRARYGAMELISTITEM>(rgNew,static_cast<std::size_t>(cNew) * sizeof(*rgNew));
         rgLibraryGameList.release();
         rgLibraryGameList.reset(rgNew);
         cLibraryGameListMax = cNew;
@@ -2696,7 +2696,7 @@ static int16_t FAddLibraryGameListItem(HWND hwndList, const char *pszName, int i
                 sizeof(rgLibraryGameList[cLibraryGameList].szName), "%s", pszName);
     rgLibraryGameList[cLibraryGameList].iplr = iplr;
     rgLibraryGameList[cLibraryGameList].grfPlayers = grfPlayers;
-    memcpy(rgLibraryGameList[cLibraryGameList].rgturn, rgturn, sizeof(rgLibraryGameList[cLibraryGameList].rgturn));
+    std::memcpy(rgLibraryGameList[cLibraryGameList].rgturn, rgturn, sizeof(rgLibraryGameList[cLibraryGameList].rgturn));
     ControlIO().pfnSendMessage(hwndList, win32::LB_SETITEMDATA, i, cLibraryGameList++);
     return 1;
 }
@@ -2707,19 +2707,19 @@ static void ClearLibraryGameList(void) {
     cLibraryGameListMax = 0;
 }
 
-static int16_t ListLibraryGame(APPSESSION &app, void *lpList, const char *pszName) {
+static std::int16_t ListLibraryGame(APPSESSION &app, void *lpList, const char *pszName) {
     char szFile[256], szDirectory[256], szMetadataName[256], szExchangeName[256];
     int iplr, iplrSaved, cch;
-    int64_t cbFile;
+    std::int64_t cbFile;
     long long lPlayed;
-    int32_t lidGame;
-    uint16_t turn;
-    uint16_t grfPlayers = 0, rgturn[16] = {0};
-    int16_t fMulti;
+    std::int32_t lidGame;
+    std::uint16_t turn;
+    std::uint16_t grfPlayers = 0, rgturn[16] = {0};
+    std::int16_t fMulti;
 
     if (!FPortableLibraryName(app, pszName)) return 1;
     cch = CchSnprintf(szDirectory, sizeof(szDirectory), "%s%s%s", szLibraryRoot, szDirSep, pszName);
-    if (cch <= 0 || static_cast<size_t>(cch) >= sizeof(szDirectory) ||
+    if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szDirectory) ||
         !FReadLibraryMetadata(szDirectory, szMetadataName, sizeof(szMetadataName), &iplrSaved, &lPlayed,
                               szExchangeName, sizeof(szExchangeName))) return 1;
     CchSnprintf(szFile, sizeof(szFile), "%s%s%s%s%s.xy", szLibraryRoot, szDirSep, pszName, szDirSep, pszName);
@@ -2728,19 +2728,19 @@ static int16_t ListLibraryGame(APPSESSION &app, void *lpList, const char *pszNam
         CchSnprintf(szFile, sizeof(szFile), "%s%s%s%s%s.m%d", szLibraryRoot, szDirSep, pszName, szDirSep, pszName, iplr + 1);
         if (!FNativeFileSize(szFile, &cbFile) || cbFile <= 0 ||
             !FInspectImportFile(szFile, dtTurn, iplr, &lidGame, &turn, nullptr, &fMulti)) continue;
-        grfPlayers |= static_cast<uint16_t>((1u << iplr));
+        grfPlayers |= static_cast<std::uint16_t>((1u << iplr));
         rgturn[iplr] = turn;
     }
     return !grfPlayers || FAddLibraryGameListItem(static_cast<HWND>(lpList), pszName, iplrSaved, grfPlayers, rgturn);
 }
 
-static int16_t ListLibraryHostGame(APPSESSION &app, void *lpList, const char *pszName) {
+static std::int16_t ListLibraryHostGame(APPSESSION &app, void *lpList, const char *pszName) {
     char szHost[512], szUniverse[512], szMetadata[512];
     NATIVEFILE *pf;
-    int64_t cbFile;
-    int32_t lidHost, lidUniverse;
-    uint16_t turnHost;
-    int16_t fMulti;
+    std::int64_t cbFile;
+    std::int32_t lidHost, lidUniverse;
+    std::uint16_t turnHost;
+    std::int16_t fMulti;
     LRESULT i;
 
     if (!FPortableLibraryName(app, pszName)) return 1;
@@ -2758,17 +2758,17 @@ static int16_t ListLibraryHostGame(APPSESSION &app, void *lpList, const char *ps
     return i != win32::LB_ERR && i != win32::LB_ERRSPACE;
 }
 
-static int16_t FindContinueLibraryGame(APPSESSION &app, void *lpData, const char *pszName) {
+static std::int16_t FindContinueLibraryGame(APPSESSION &app, void *lpData, const char *pszName) {
     LIBRARYCONTINUE *plc = static_cast<LIBRARYCONTINUE *>(lpData);
     char szFile[512], szMetadataName[256];
     NATIVEFILE *pf;
     int iVersion, iPlayer;
     long long lPlayed;
-    int32_t lidGame;
-    uint16_t turn;
-    int16_t fMulti;
+    std::int32_t lidGame;
+    std::uint16_t turn;
+    std::int16_t fMulti;
     int iYear;
-    int16_t fTurnAvailable;
+    std::int16_t fTurnAvailable;
 
     if (!FPortableLibraryName(app, pszName)) return 1;
     CchSnprintf(szFile, sizeof(szFile), "%s%s%s%s.library", szLibraryRoot, szDirSep, pszName, szDirSep);
@@ -2783,7 +2783,7 @@ static int16_t FindContinueLibraryGame(APPSESSION &app, void *lpData, const char
         return 1;
     }
     ICloseNativeFile(pf);
-    szMetadataName[strcspn(szMetadataName, "\r\n")] = 0;
+    szMetadataName[std::strcspn(szMetadataName, "\r\n")] = 0;
     if ((iVersion != 1 && iVersion != 2) || _stricmp(szMetadataName, pszName) ||
         iPlayer < 0 || iPlayer >= 16 || (plc->fFound && lPlayed <= plc->lPlayed)) return 1;
 
@@ -2795,7 +2795,7 @@ static int16_t FindContinueLibraryGame(APPSESSION &app, void *lpData, const char
         iYear = turn + 2400;
         fTurnAvailable = 1;
     }
-    strcpy(plc->szName, pszName);
+    std::strcpy(plc->szName, pszName);
     plc->iPlayer = iPlayer;
     plc->iYear = iYear;
     plc->lPlayed = lPlayed;
@@ -2804,9 +2804,9 @@ static int16_t FindContinueLibraryGame(APPSESSION &app, void *lpData, const char
     return 1;
 }
 
-static int16_t FFindContinueLibraryGame(APPSESSION &app) {
+static std::int16_t FFindContinueLibraryGame(APPSESSION &app) {
     if (win32::GetPrivateProfileIntA("Library", "ContinueDeleted", 0, TextIO().pfnCompressed(app, idsStarsIni))) return 0;
-    memset(&continueLibrary, 0, sizeof(continueLibrary));
+    std::memset(&continueLibrary, 0, sizeof(continueLibrary));
     continueLibrary.iPlayer = -1;
     return FInitLibrary() && FNativeEnumerateDirectory(app, szLibraryRoot, FindContinueLibraryGame, &continueLibrary) &&
            continueLibrary.fFound;
@@ -2818,54 +2818,54 @@ void InitLibraryGames(APPSESSION &app, HWND hwnd, const RECT *lprc) {
 
     StarsCompatSetWindowAlertSounds(hwnd, 0);
     fHostLibraryView = 0;
-    if (getenv("STARS_DEBUG_LIBRARY_STARTUP"))
-        fprintf(stderr, "[DEBUG-library-startup] InitLibraryGames begin hwnd=%p\n", static_cast<void *>(hwnd));
+    if (std::getenv("STARS_DEBUG_LIBRARY_STARTUP"))
+        std::fprintf(stderr, "[DEBUG-library-startup] InitLibraryGames begin hwnd=%p\n", static_cast<void *>(hwnd));
     y = StarsMax(50, lprc->bottom - 360);
     ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsLibraryGames), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
                  24, y - 22, 58, 18, hwnd,
-                 reinterpret_cast<HMENU>(static_cast<uintptr_t>(IDC_LIBRARY_GAMES_VIEW)), app.lpui->hInst, nullptr);
+                 reinterpret_cast<HMENU>(static_cast<std::uintptr_t>(IDC_LIBRARY_GAMES_VIEW)), app.lpui->hInst, nullptr);
     ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsLibraryHostGames), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
                  86, y - 22, 82, 18, hwnd,
-                 reinterpret_cast<HMENU>(static_cast<uintptr_t>(IDC_LIBRARY_HOST_VIEW)), app.lpui->hInst, nullptr);
+                 reinterpret_cast<HMENU>(static_cast<std::uintptr_t>(IDC_LIBRARY_HOST_VIEW)), app.lpui->hInst, nullptr);
     ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsLibraryImportGame), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
                  lprc->right - 128, y - 22, 104, 18, hwnd,
-                 reinterpret_cast<HMENU>(static_cast<uintptr_t>(IDC_LIBRARY_IMPORT)), app.lpui->hInst, nullptr);
+                 reinterpret_cast<HMENU>(static_cast<std::uintptr_t>(IDC_LIBRARY_IMPORT)), app.lpui->hInst, nullptr);
     ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsLibraryImportFolder), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
                  lprc->right - 240, y - 22, 104, 18, hwnd,
-                 reinterpret_cast<HMENU>(static_cast<uintptr_t>(IDC_LIBRARY_IMPORT_FOLDER)), app.lpui->hInst, nullptr);
+                 reinterpret_cast<HMENU>(static_cast<std::uintptr_t>(IDC_LIBRARY_IMPORT_FOLDER)), app.lpui->hInst, nullptr);
     ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsLibraryImportOrders), win32::WS_CHILD | win32::WS_TABSTOP,
                  lprc->right - 128, y - 22, 104, 18, hwnd,
-                 reinterpret_cast<HMENU>(static_cast<uintptr_t>(IDC_LIBRARY_IMPORT_ORDERS)), app.lpui->hInst, nullptr);
+                 reinterpret_cast<HMENU>(static_cast<std::uintptr_t>(IDC_LIBRARY_IMPORT_ORDERS)), app.lpui->hInst, nullptr);
     ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsLibraryExportGame), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
                  lprc->right - 464, y - 22, 96, 18, hwnd,
-                 reinterpret_cast<HMENU>(static_cast<uintptr_t>(IDC_LIBRARY_GAME_EXPORT)), app.lpui->hInst, nullptr);
+                 reinterpret_cast<HMENU>(static_cast<std::uintptr_t>(IDC_LIBRARY_GAME_EXPORT)), app.lpui->hInst, nullptr);
     ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsLibraryDuplicate), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
                  lprc->right - 304, y - 22, 60, 18, hwnd,
-                 reinterpret_cast<HMENU>(static_cast<uintptr_t>(IDC_LIBRARY_DUPLICATE)), app.lpui->hInst, nullptr);
+                 reinterpret_cast<HMENU>(static_cast<std::uintptr_t>(IDC_LIBRARY_DUPLICATE)), app.lpui->hInst, nullptr);
     ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsRename), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
                  lprc->right - 360, y - 22, 52, 18, hwnd,
-                 reinterpret_cast<HMENU>(static_cast<uintptr_t>(IDC_LIBRARY_RENAME)), app.lpui->hInst, nullptr);
+                 reinterpret_cast<HMENU>(static_cast<std::uintptr_t>(IDC_LIBRARY_RENAME)), app.lpui->hInst, nullptr);
     ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsDelete), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
                  lprc->right - 524, y - 22, 56, 18, hwnd,
-                 reinterpret_cast<HMENU>(static_cast<uintptr_t>(IDC_LIBRARY_GAME_DELETE)), app.lpui->hInst, nullptr);
+                 reinterpret_cast<HMENU>(static_cast<std::uintptr_t>(IDC_LIBRARY_GAME_DELETE)), app.lpui->hInst, nullptr);
     ui::CreateWindowEx(0, "LISTBOX", "", win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_BORDER | win32::WS_TABSTOP | win32::WS_VSCROLL | win32::LBS_NOTIFY | win32::LBS_SORT,
-                 24, y, lprc->right - 48, 90, hwnd, reinterpret_cast<HMENU>(static_cast<uintptr_t>(IDC_LIBRARY_GAMES)), app.lpui->hInst, nullptr);
+                 24, y, lprc->right - 48, 90, hwnd, reinterpret_cast<HMENU>(static_cast<std::uintptr_t>(IDC_LIBRARY_GAMES)), app.lpui->hInst, nullptr);
     ui::CreateWindowEx(0, "LISTBOX", "", win32::WS_CHILD | win32::WS_BORDER | win32::WS_TABSTOP | win32::WS_VSCROLL | win32::LBS_NOTIFY | win32::LBS_SORT,
-                 24, y, lprc->right - 48, 90, hwnd, reinterpret_cast<HMENU>(static_cast<uintptr_t>(IDC_LIBRARY_HOST_GAMES)), app.lpui->hInst, nullptr);
+                 24, y, lprc->right - 48, 90, hwnd, reinterpret_cast<HMENU>(static_cast<std::uintptr_t>(IDC_LIBRARY_HOST_GAMES)), app.lpui->hInst, nullptr);
     ui::CreateWindowEx(0, "STATIC", TextIO().pfnCompressed(app, idsLibraryPlayerSelect), win32::WS_CHILD | win32::WS_VISIBLE,
-                 24, y + 100, 66, 18, hwnd, reinterpret_cast<HMENU>(static_cast<uintptr_t>(IDC_LIBRARY_PLAYER_LABEL)), app.lpui->hInst, nullptr);
+                 24, y + 100, 66, 18, hwnd, reinterpret_cast<HMENU>(static_cast<std::uintptr_t>(IDC_LIBRARY_PLAYER_LABEL)), app.lpui->hInst, nullptr);
     ui::CreateWindowEx(0, "COMBOBOX", "", win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP | win32::WS_VSCROLL | win32::CBS_DROPDOWNLIST,
                  94, y + 96, StarsMin(280, lprc->right - 118), 160, hwnd,
-                 reinterpret_cast<HMENU>(static_cast<uintptr_t>(IDC_LIBRARY_PLAYERS)), app.lpui->hInst, nullptr);
+                 reinterpret_cast<HMENU>(static_cast<std::uintptr_t>(IDC_LIBRARY_PLAYERS)), app.lpui->hInst, nullptr);
     ui::CreateWindowEx(0, "STATIC", "", win32::WS_CHILD | win32::WS_VISIBLE,
                  24, y + 122, lprc->right - 48, 18, hwnd,
-                 reinterpret_cast<HMENU>(static_cast<uintptr_t>(IDC_LIBRARY_CONTINUE_DETAILS)), app.lpui->hInst, nullptr);
+                 reinterpret_cast<HMENU>(static_cast<std::uintptr_t>(IDC_LIBRARY_CONTINUE_DETAILS)), app.lpui->hInst, nullptr);
     ui::ShowWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_LIBRARY_IMPORT_ORDERS), win32::SW_HIDE);
     ui::ShowWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_LIBRARY_HOST_GAMES), win32::SW_HIDE);
     RefreshLibraryGames(app, hwnd);
     RefreshLibraryHostGames(app, hwnd);
-    if (getenv("STARS_DEBUG_LIBRARY_STARTUP"))
-        fprintf(stderr, "[DEBUG-library-startup] InitLibraryGames end elapsed=%llu ms\n",
+    if (std::getenv("STARS_DEBUG_LIBRARY_STARTUP"))
+        std::fprintf(stderr, "[DEBUG-library-startup] InitLibraryGames end elapsed=%llu ms\n",
                 static_cast<unsigned long long>((CompatTimeIO().pfnGetTicks() - msStart)));
 }
 
@@ -2874,23 +2874,23 @@ struct LIBRARYRACEENUM {
     void *lpData;
 };
 
-static int16_t EnumLibraryRace(APPSESSION &app, void *lpData, const char *pszName) {
+static std::int16_t EnumLibraryRace(APPSESSION &app, void *lpData, const char *pszName) {
     LIBRARYRACEENUM *plre = static_cast<LIBRARYRACEENUM *>(lpData);
     char szPath[512];
-    int64_t cbFile;
+    std::int64_t cbFile;
     if (!FPortableRaceFilename(app, pszName)) return 1;
     CchSnprintf(szPath, sizeof(szPath), "%s%s%s", szRaceLibraryRoot, szDirSep, pszName);
     if (!FNativeFileSize(szPath, &cbFile) || cbFile <= 0) return 1;
     return plre->pfnEntry(app, plre->lpData, pszName);
 }
 
-int16_t FEnumerateLibraryRaces(APPSESSION &app, FNativeDirectoryEntryProc pfnEntry, void *lpData) {
+std::int16_t FEnumerateLibraryRaces(APPSESSION &app, FNativeDirectoryEntryProc pfnEntry, void *lpData) {
     LIBRARYRACEENUM lre = {pfnEntry, lpData};
 
     return FInitRaceLibrary() && FNativeEnumerateDirectory(app, szRaceLibraryRoot, EnumLibraryRace, &lre);
 }
 
-static int16_t ListLibraryRace(APPSESSION &, void *lpList, const char *pszName) {
+static std::int16_t ListLibraryRace(APPSESSION &, void *lpList, const char *pszName) {
     LRESULT i;
 
     i = ControlIO().pfnSendMessage(static_cast<HWND>(lpList), win32::LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(pszName));
@@ -2902,19 +2902,19 @@ void InitLibraryRaces(APPSESSION &app, HWND hwnd, const RECT *lprc) {
     ui::CreateWindowEx(0, "STATIC", TextIO().pfnCompressed(app, idsLibraryRaceDesigns), win32::WS_CHILD | win32::WS_VISIBLE, 24, y - 18, 160, 18,
                  hwnd, nullptr, app.lpui->hInst, nullptr);
     ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsLibraryNew), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
-                 lprc->right - 436, y - 20, 48, 18, hwnd, reinterpret_cast<HMENU>(static_cast<uintptr_t>(IDC_LIBRARY_RACE_NEW)), app.lpui->hInst, nullptr);
+                 lprc->right - 436, y - 20, 48, 18, hwnd, reinterpret_cast<HMENU>(static_cast<std::uintptr_t>(IDC_LIBRARY_RACE_NEW)), app.lpui->hInst, nullptr);
     ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsLibraryEdit), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
-                 lprc->right - 384, y - 20, 48, 18, hwnd, reinterpret_cast<HMENU>(static_cast<uintptr_t>(IDC_LIBRARY_RACE_EDIT)), app.lpui->hInst, nullptr);
+                 lprc->right - 384, y - 20, 48, 18, hwnd, reinterpret_cast<HMENU>(static_cast<std::uintptr_t>(IDC_LIBRARY_RACE_EDIT)), app.lpui->hInst, nullptr);
     ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsLibraryDuplicate), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
-                 lprc->right - 332, y - 20, 62, 18, hwnd, reinterpret_cast<HMENU>(static_cast<uintptr_t>(IDC_LIBRARY_RACE_DUPLICATE)), app.lpui->hInst, nullptr);
+                 lprc->right - 332, y - 20, 62, 18, hwnd, reinterpret_cast<HMENU>(static_cast<std::uintptr_t>(IDC_LIBRARY_RACE_DUPLICATE)), app.lpui->hInst, nullptr);
     ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsLibraryExport), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
-                 lprc->right - 266, y - 20, 48, 18, hwnd, reinterpret_cast<HMENU>(static_cast<uintptr_t>(IDC_LIBRARY_RACE_EXPORT)), app.lpui->hInst, nullptr);
+                 lprc->right - 266, y - 20, 48, 18, hwnd, reinterpret_cast<HMENU>(static_cast<std::uintptr_t>(IDC_LIBRARY_RACE_EXPORT)), app.lpui->hInst, nullptr);
     ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsDelete), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
-                 lprc->right - 214, y - 20, 56, 18, hwnd, reinterpret_cast<HMENU>(static_cast<uintptr_t>(IDC_LIBRARY_RACE_DELETE)), app.lpui->hInst, nullptr);
+                 lprc->right - 214, y - 20, 56, 18, hwnd, reinterpret_cast<HMENU>(static_cast<std::uintptr_t>(IDC_LIBRARY_RACE_DELETE)), app.lpui->hInst, nullptr);
     ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, idsLibraryImport), win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
-                 lprc->right - 152, y - 20, 112, 18, hwnd, reinterpret_cast<HMENU>(static_cast<uintptr_t>(IDC_LIBRARY_RACE_IMPORT)), app.lpui->hInst, nullptr);
+                 lprc->right - 152, y - 20, 112, 18, hwnd, reinterpret_cast<HMENU>(static_cast<std::uintptr_t>(IDC_LIBRARY_RACE_IMPORT)), app.lpui->hInst, nullptr);
     ui::CreateWindowEx(0, "LISTBOX", "", win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_BORDER | win32::WS_TABSTOP | win32::WS_VSCROLL | win32::LBS_NOTIFY | win32::LBS_SORT,
-                 24, y, lprc->right - 48, 80, hwnd, reinterpret_cast<HMENU>(static_cast<uintptr_t>(IDC_LIBRARY_RACES)), app.lpui->hInst, nullptr);
+                 24, y, lprc->right - 48, 80, hwnd, reinterpret_cast<HMENU>(static_cast<std::uintptr_t>(IDC_LIBRARY_RACES)), app.lpui->hInst, nullptr);
     RefreshLibraryRaces(app, hwnd);
 }
 
@@ -2930,7 +2930,7 @@ void RefreshLibraryRaces(APPSESSION &app, HWND hwnd) {
     ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_LIBRARY_RACE_DELETE), ControlIO().pfnSendMessage(hwndList, win32::LB_GETCOUNT, 0, 0) > 0);
 }
 
-int16_t FSelectLibraryRace(HWND hwnd, char *pszName) {
+std::int16_t FSelectLibraryRace(HWND hwnd, char *pszName) {
     HWND hwndList = ControlIO().pfnGetDlgItem(hwnd, IDC_LIBRARY_RACES);
     LRESULT i = ControlIO().pfnSendMessage(hwndList, win32::LB_GETCURSEL, 0, 0);
     if (i == win32::LB_ERR) return 0;
@@ -2970,10 +2970,10 @@ void RefreshLibraryPlayers(APPSESSION &app, HWND hwnd) {
 void RefreshLibraryGames(APPSESSION &app, HWND hwnd) {
     HWND hwndList;
     char szLabel[320], szSelected[256] = "";
-    int16_t fLibrary;
-    int16_t fEnumerated;
-    int16_t fHasGames;
-    int16_t fContinue;
+    std::int16_t fLibrary;
+    std::int16_t fEnumerated;
+    std::int16_t fHasGames;
+    std::int16_t fContinue;
     LRESULT iContinue, iSelected, iPlayer, iItem;
     hwndList = ControlIO().pfnGetDlgItem(hwnd, IDC_LIBRARY_GAMES);
     if (!hwndList) return;
@@ -3029,7 +3029,7 @@ void RefreshLibraryGames(APPSESSION &app, HWND hwnd) {
 
 void RefreshLibraryHostGames(APPSESSION &app, HWND hwnd) {
     HWND hwndList = ControlIO().pfnGetDlgItem(hwnd, IDC_LIBRARY_HOST_GAMES);
-    int16_t fHasGames;
+    std::int16_t fHasGames;
     if (!hwndList) return;
     ControlIO().pfnSendMessage(hwndList, win32::LB_RESETCONTENT, 0, 0);
     if (FInitLibrary()) FNativeEnumerateDirectory(app, szLibraryRoot, ListLibraryHostGame, hwndList);
@@ -3044,7 +3044,7 @@ void RefreshLibraryHostGames(APPSESSION &app, HWND hwnd) {
     }
 }
 
-void SelectLibraryView(APPSESSION &app, HWND hwnd, int16_t fHost) {
+void SelectLibraryView(APPSESSION &app, HWND hwnd, std::int16_t fHost) {
     HWND hwndGames = ControlIO().pfnGetDlgItem(hwnd, IDC_LIBRARY_GAMES);
     HWND hwndHost = ControlIO().pfnGetDlgItem(hwnd, IDC_LIBRARY_HOST_GAMES);
     fHostLibraryView = fHost;
@@ -3059,19 +3059,19 @@ void SelectLibraryView(APPSESSION &app, HWND hwnd, int16_t fHost) {
     else RefreshLibraryGames(app, hwnd);
 }
 
-int16_t FContinueLibraryGame(APPSESSION &app, HWND hwnd) {
+std::int16_t FContinueLibraryGame(APPSESSION &app, HWND hwnd) {
     HWND hwndList = ControlIO().pfnGetDlgItem(hwnd, IDC_LIBRARY_GAMES);
     char szFile[512];
     LRESULT i;
-    int32_t lidGame;
-    uint16_t turn;
-    int16_t fMulti;
+    std::int32_t lidGame;
+    std::uint16_t turn;
+    std::int16_t fMulti;
 
     if (!FFindContinueLibraryGame(app)) return 0;
     CchSnprintf(szFile, sizeof(szFile), "%s%s%s%s%s.m%d", szLibraryRoot, szDirSep,
                 continueLibrary.szName, szDirSep, continueLibrary.szName, continueLibrary.iPlayer + 1);
     if (FInspectImportFile(szFile, dtTurn, continueLibrary.iPlayer, &lidGame, &turn, nullptr, &fMulti)) {
-        strcpy(app.state.szBase, szFile);
+        std::strcpy(app.state.szBase, szFile);
         app.state.ini.fStartupFile = 1;
         return 1;
     }
@@ -3089,7 +3089,7 @@ int16_t FContinueLibraryGame(APPSESSION &app, HWND hwnd) {
     return 0;
 }
 
-int16_t FSelectLibraryGame(APPSESSION &app, HWND hwnd) {
+std::int16_t FSelectLibraryGame(APPSESSION &app, HWND hwnd) {
     HWND hwndList;
     LRESULT i, iItem, iPlayer;
 
@@ -3110,7 +3110,7 @@ int16_t FSelectLibraryGame(APPSESSION &app, HWND hwnd) {
     return 1;
 }
 
-int16_t FSelectLibraryHostGame(APPSESSION &app, HWND hwnd) {
+std::int16_t FSelectLibraryHostGame(APPSESSION &app, HWND hwnd) {
     HWND hwndList = ControlIO().pfnGetDlgItem(hwnd, IDC_LIBRARY_HOST_GAMES);
     LRESULT i = ControlIO().pfnSendMessage(hwndList, win32::LB_GETCURSEL, 0, 0);
     char szName[256];
@@ -3119,12 +3119,12 @@ int16_t FSelectLibraryHostGame(APPSESSION &app, HWND hwnd) {
     ControlIO().pfnSendMessage(hwndList, win32::LB_GETTEXT, i, reinterpret_cast<LPARAM>(szName));
     cch = CchSnprintf(app.state.szBase, sizeof(app.state.szBase), "%s%s%s%s%s.hst", szLibraryRoot, szDirSep,
                       szName, szDirSep, szName);
-    if (cch <= 0 || static_cast<size_t>(cch) >= sizeof(app.state.szBase)) return 0;
+    if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(app.state.szBase)) return 0;
     app.state.ini.fStartupFile = 1;
     return 1;
 }
 
-static int16_t FSelectedLibraryGameName(HWND hwnd, char *pszName, size_t cchName) {
+static std::int16_t FSelectedLibraryGameName(HWND hwnd, char *pszName, std::size_t cchName) {
     HWND hwndList = ControlIO().pfnGetDlgItem(hwnd, fHostLibraryView ? IDC_LIBRARY_HOST_GAMES : IDC_LIBRARY_GAMES);
     LRESULT i, iItem;
     int cch;
@@ -3132,19 +3132,19 @@ static int16_t FSelectedLibraryGameName(HWND hwnd, char *pszName, size_t cchName
     if (i == win32::LB_ERR) return 0;
     if (fHostLibraryView) {
         cch = static_cast<int>(ControlIO().pfnSendMessage(hwndList, win32::LB_GETTEXTLEN, i, 0));
-        if (cch <= 0 || static_cast<size_t>(cch) >= cchName) return 0;
+        if (cch <= 0 || static_cast<std::size_t>(cch) >= cchName) return 0;
         return ControlIO().pfnSendMessage(hwndList, win32::LB_GETTEXT, i, reinterpret_cast<LPARAM>(pszName)) == cch;
     }
     iItem = ControlIO().pfnSendMessage(hwndList, win32::LB_GETITEMDATA, i, 0);
     if (iItem < 0 || iItem >= cLibraryGameList) return 0;
     cch = CchSnprintf(pszName, cchName, "%s", rgLibraryGameList[iItem].szName);
-    return cch > 0 && static_cast<size_t>(cch) < cchName;
+    return cch > 0 && static_cast<std::size_t>(cch) < cchName;
 }
 
-static int16_t FChooseLibraryGameActionName(APPSESSION &app, HWND hwnd, const char *pszCurrentName, char *pszNewName) {
+static std::int16_t FChooseLibraryGameActionName(APPSESSION &app, HWND hwnd, const char *pszCurrentName, char *pszNewName) {
     int cch;
     cch = CchSnprintf(szLibraryName, sizeof(szLibraryName), "%s", pszCurrentName);
-    if (cch <= 0 || static_cast<size_t>(cch) >= sizeof(szLibraryName)) return 0;
+    if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szLibraryName)) return 0;
     SuggestLibraryName(app, szLibraryName, 0);
     if (!szLibraryName[0] || ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_LIBRARY_NAME), hwnd,
                                            LibraryNameDlg, reinterpret_cast<LPARAM>(szLibraryName)) != 1) return 0;
@@ -3152,7 +3152,7 @@ static int16_t FChooseLibraryGameActionName(APPSESSION &app, HWND hwnd, const ch
     return cch > 0 && cch < 256;
 }
 
-int16_t FActOnSelectedLibraryGame(APPSESSION &app, HWND hwnd, int16_t fRename) {
+std::int16_t FActOnSelectedLibraryGame(APPSESSION &app, HWND hwnd, std::int16_t fRename) {
     char szName[256], szNewName[256];
     if (!FSelectedLibraryGameName(hwnd, szName, sizeof(szName)) ||
         !FChooseLibraryGameActionName(app, hwnd, szName, szNewName)) return 0;
@@ -3167,7 +3167,7 @@ void RememberLibraryGame(APPSESSION &app) {
     long long lPlayed;
 
     if (!FInitLibrary() || !LibraryPathIO().pfnUnder(szLibraryRoot, app.state.szBase)) return;
-    strcpy(szDir, app.state.szBase);
+    std::strcpy(szDir, app.state.szBase);
     pch = PchLibrarySeparator(szDir);
     if (!pch) return;
     *pch = 0;
@@ -3191,24 +3191,24 @@ void CloseLibraryUiSession() noexcept {
     continueLibrary = LIBRARYCONTINUE{};
 }
 
-int16_t FPublishSubsequentTurn(APPSESSION &app, const LIBRARYPATHS &paths, HWND hwnd, const char *pszSource,
+std::int16_t FPublishSubsequentTurn(APPSESSION &app, const LIBRARYPATHS &paths, HWND hwnd, const char *pszSource,
                                   const char *szTarget, const char *pszName, int iplr,
-                                  int32_t lidGame, uint16_t turn, int16_t fHasTurn) {
+                                  std::int32_t lidGame, std::uint16_t turn, std::int16_t fHasTurn) {
     char szOrders[512],szStage[512],szPrevious[512],szMessage[1024];
     int cch;
-    int32_t lidCurrent;
-    uint16_t turnCurrent;
-    int16_t fMultiCurrent,fHasOrders;
-    int64_t cbFile;
-    uint32_t dwTick;
+    std::int32_t lidCurrent;
+    std::uint16_t turnCurrent;
+    std::int16_t fMultiCurrent,fHasOrders;
+    std::int64_t cbFile;
+    std::uint32_t dwTick;
     cch = LibraryPublicationIO().pfnCchSnprintf(szOrders, sizeof(szOrders), "%s%s%s%s%s.x%d", paths.szLibraryRoot, szDirSep, pszName, szDirSep, pszName, iplr + 1);
-    if (cch <= 0 || static_cast<size_t>(cch) >= sizeof(szOrders)) return 0;
+    if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szOrders)) return 0;
     dwTick = LibraryPublicationIO().pfnDwTickCount();
     szStage[0] = 0;
     cch = LibraryPublicationIO().pfnCchSnprintf(szStage, sizeof(szStage), "%s.importing.%u", szTarget, dwTick);
-    if (cch <= 0 || static_cast<size_t>(cch) >= sizeof(szStage)) return 0;
+    if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szStage)) return 0;
     cch = LibraryPublicationIO().pfnCchSnprintf(szPrevious, sizeof(szPrevious), "%s.previous.%u", szTarget, dwTick);
-    if (cch <= 0 || static_cast<size_t>(cch) >= sizeof(szPrevious)) return 0;
+    if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szPrevious)) return 0;
     if (!LibraryPublicationIO().pfnFCopyNativeFileExclusive(pszSource, szStage) ||
         !LibraryPublicationIO().pfnFInspectImportFile(szStage, dtTurn, iplr, &lidCurrent, &turnCurrent, nullptr, &fMultiCurrent) ||
         lidCurrent != lidGame || turnCurrent != turn) {
@@ -3254,7 +3254,7 @@ int16_t FPublishSubsequentTurn(APPSESSION &app, const LIBRARYPATHS &paths, HWND 
     return 1;
 }
 
-int16_t FPublishImportedLibraryGame(APPSESSION &app, const LIBRARYPATHS &paths, LIBRARYIMPORT &li, const char *szDir) {
+std::int16_t FPublishImportedLibraryGame(APPSESSION &app, const LIBRARYPATHS &paths, LIBRARYIMPORT &li, const char *szDir) {
     char szStage[256];
     LibraryPublicationIO().pfnCchSnprintf(szStage, sizeof(szStage), "%s%s.importing.%lld", paths.szLibraryRoot, szDirSep, static_cast<long long>(LibraryPublicationIO().pfnLNativeTime()));
     if (LibraryPublicationIO().pfnCreateNativeDir(szStage) != 0) {
@@ -3268,7 +3268,7 @@ int16_t FPublishImportedLibraryGame(APPSESSION &app, const LIBRARYPATHS &paths, 
     if (!LibraryPublicationIO().pfnFNativeEnumerateDirectory(app, szDir, CopyImportEntry, &li) || li.fBad ||
         !LibraryPublicationIO().pfnFNativeEnumerateDirectory(app, szDir, CopyBackupDirectory, &li) || li.fBad ||
         !LibraryPublicationIO().pfnFWriteLibraryMetadata(szStage, paths.szLibraryName,
-                               li.grfPlayers ? static_cast<int16_t>(__builtin_ctz(li.grfPlayers)) : iplrNone) ||
+                               li.grfPlayers ? static_cast<std::int16_t>(__builtin_ctz(li.grfPlayers)) : iplrNone) ||
         RemoveNativePath(paths.szLibraryPending) != 0 || RenameNativeFile(szStage, paths.szLibraryPending) != 0) {
         LibraryPublicationIO().pfnFNativeEnumerateDirectory(app, szStage, RemoveImportFile, szStage);
         RemoveNativePath(szStage);

@@ -2,7 +2,7 @@
 #import <AppKit/AppKit.h>
 #include "filedialog_cocoa_bridge.h"
 #include "../../../src/platform/errors.h"
-#include <string.h>
+#include <cstring>
 
 @interface StarsFilePanelDelegate : NSObject <NSOpenSavePanelDelegate>
 @property(nonatomic, strong) NSArray<NSString *> *rgPatterns;
@@ -30,7 +30,7 @@
 
 int IChooseCocoaFile(void *lpWindow, int fSave, const char *pszTitle, const char *pszFolder,
                      const char *pszName, const COCOAFILEFILTER *rgfilter, int cFilter,
-                     int *lpiFilter, char *pszPath, size_t cbPath,
+                     int *lpiFilter, char *pszPath, std::size_t cbPath,
                      int (*pfnPump)(void *), void *lpv) {
     @autoreleasepool {
         NSSavePanel *panel = fSave ? [NSSavePanel savePanel] : [NSOpenPanel openPanel];
@@ -79,8 +79,8 @@ int IChooseCocoaFile(void *lpWindow, int fSave, const char *pszTitle, const char
         }
         if (fCanceled || result != NSModalResponseOK) return 0;
         const char *path = panel.URL.fileSystemRepresentation;
-        if (!path || strlen(path) >= cbPath) return -1;
-        memcpy(pszPath, path, strlen(path) + 1);
+        if (!path || std::strlen(path) >= cbPath) return -1;
+        std::memcpy(pszPath, path, std::strlen(path) + 1);
         if (cFilter != 0) *lpiFilter = static_cast<int>(delegate.iFilter);
         return 1;
     }

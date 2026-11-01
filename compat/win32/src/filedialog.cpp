@@ -4,11 +4,11 @@
 #include "chooser_io.h"
 #include "cleanup.h"
 #include <dirent.h>
-#include <errno.h>
-#include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cerrno>
+#include <climits>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -32,7 +32,7 @@ struct COMPATFILEDIALOG {
     COMPATFILEFILTER rgfilter[MAX_FILE_FILTERS];
     int cFilter, iFilter;
     COMPATFILEENTRY *rgentry;
-    size_t cEntry;
+    std::size_t cEntry;
     char *rgpszHistory[MAX_FILE_HISTORY];
     int cHistory;
     BOOL fHidden;
@@ -42,9 +42,9 @@ static thread_local DWORD dwDialogError;
 DWORD win32::CommDlgExtendedError(void) { return dwDialogError; }
 void CompatSetDialogError(DWORD dw) { dwDialogError = dw; }
 
-static BOOL FFilePattern(LPCSTR psz, LPCSTR pszPattern, size_t cpat) {
+static BOOL FFilePattern(LPCSTR psz, LPCSTR pszPattern, std::size_t cpat) {
     LPCSTR pszStar = nullptr, pszRetry = nullptr, pszEnd = pszPattern + cpat;
-    if (cpat == 3 && memcmp(pszPattern, "*.*", 3) == 0) return 1;
+    if (cpat == 3 && std::memcmp(pszPattern, "*.*", 3) == 0) return 1;
     while (*psz) {
         if (pszPattern < pszEnd && (*pszPattern == '?' || SDL_tolower(static_cast<unsigned char>(*pszPattern)) == SDL_tolower(static_cast<unsigned char>(*psz)))) { pszPattern++; psz++; }
         else if (pszPattern < pszEnd && *pszPattern == '*') { pszStar = ++pszPattern; pszRetry = psz; }
@@ -59,16 +59,16 @@ static BOOL FFileFilter(COMPATFILEDIALOG *lp, LPCSTR psz) {
     if (lp->cFilter == 0) return 1;
     pszPattern = lp->rgfilter[lp->iFilter].pszPattern;
     while (*pszPattern) {
-        pszNext = strchr(pszPattern, ';'); if (!pszNext) pszNext = pszPattern + strlen(pszPattern);
-        if (FFilePattern(psz, pszPattern, static_cast<size_t>((pszNext - pszPattern)))) return 1;
+        pszNext = std::strchr(pszPattern, ';'); if (!pszNext) pszNext = pszPattern + std::strlen(pszPattern);
+        if (FFilePattern(psz, pszPattern, static_cast<std::size_t>((pszNext - pszPattern)))) return 1;
         pszPattern = *pszNext ? pszNext + 1 : pszNext;
     }
     return 0;
 }
 static void FreeFileEntries(COMPATFILEDIALOG *lp) {
-    size_t i;
-    for (i = 0; i < lp->cEntry; i++) free(lp->rgentry[i].psz);
-    free(lp->rgentry); lp->rgentry = nullptr; lp->cEntry = 0;
+    std::size_t i;
+    for (i = 0; i < lp->cEntry; i++) std::free(lp->rgentry[i].psz);
+    std::free(lp->rgentry); lp->rgentry = nullptr; lp->cEntry = 0;
 }
 static int CmpFileEntry(const void *a, const void *b) {
     const COMPATFILEENTRY *lpa = static_cast<const COMPATFILEENTRY *>((a)), *lpb = static_cast<const COMPATFILEENTRY *>((b));
@@ -88,14 +88,14 @@ static BOOL FJoinFile(char *pszOut, LPCSTR pszDir, LPCSTR pszName) {
     ) {
         if (SDL_strlcpy(pszOut, pszName, PATH_MAX) >= PATH_MAX) return 0;
     } else {
-        cch = snprintf(pszOut, PATH_MAX, "%s%s%s", pszDir, strcmp(pszDir, "/") == 0 ? "" : "/", pszName);
+        cch = std::snprintf(pszOut, PATH_MAX, "%s%s%s", pszDir, std::strcmp(pszDir, "/") == 0 ? "" : "/", pszName);
         if (cch < 0 || cch >= PATH_MAX) return 0;
     }
 #ifdef _WIN32
     // The browser splits paths with '/', including native suggestions and input.
     for (pch = pszOut; *pch; pch++) if (*pch == '\\') *pch = '/';
 #endif
-    return FUtf8Valid(pszOut, strlen(pszOut));
+    return FUtf8Valid(pszOut, std::strlen(pszOut));
 }
 static void FileError(HWND hwnd, LPCSTR psz) { CompatChoiceIO().pfnMessageBoxA(hwnd, psz, "File selection", win32::MB_OK | win32::MB_ICONEXCLAMATION); }
 static BOOL FRefreshFiles(HWND hwnd, COMPATFILEDIALOG *lp) {
@@ -104,7 +104,7 @@ static BOOL FRefreshFiles(HWND hwnd, COMPATFILEDIALOG *lp) {
     NATIVEFILEINFO st;
     char szPath[PATH_MAX], szLabel[PATH_MAX + 4];
     COMPATFILEENTRY *rg;
-    size_t i;
+    std::size_t i;
     LRESULT iEntry;
     HWND hwndList = win32::GetDlgItem(hwnd, ID_FILE_LIST);
     lpdir = PdirNativeOpen(lp->szDir);
@@ -113,15 +113,15 @@ static BOOL FRefreshFiles(HWND hwnd, COMPATFILEDIALOG *lp) {
     for (;;) {
         errno = 0; pszEntry = PszNativeReadDir(lpdir);
         if (!pszEntry) { if (errno != 0) lp->dwError = win32::CDERR_INITIALIZATION; break; }
-        if (!FUtf8Valid(pszEntry, strlen(pszEntry))) {
+        if (!FUtf8Valid(pszEntry, std::strlen(pszEntry))) {
             FileError(hwnd, "A filename in this directory cannot be represented losslessly in UTF-8.");
             continue;
         }
-        if (strcmp(pszEntry, ".") == 0 || strcmp(pszEntry, "..") == 0) continue;
+        if (std::strcmp(pszEntry, ".") == 0 || std::strcmp(pszEntry, "..") == 0) continue;
         if (!lp->fHidden && pszEntry[0] == '.') continue;
         if (!FJoinFile(szPath, lp->szDir, pszEntry) || IGetNativeFileInfo(szPath, &st, 1) != 0) continue;
         if (!st.fDirectory && (!st.fRegular || !FFileFilter(lp, pszEntry))) continue;
-        rg = static_cast<COMPATFILEENTRY *>((realloc(lp->rgentry, (lp->cEntry + 1) * sizeof(*rg))));
+        rg = static_cast<COMPATFILEENTRY *>((std::realloc(lp->rgentry, (lp->cEntry + 1) * sizeof(*rg))));
         if (!rg) { lp->dwError = win32::CDERR_MEMALLOCFAILURE; break; }
         lp->rgentry = rg;
         rg[lp->cEntry].psz = strdup(pszEntry); rg[lp->cEntry].fDir = st.fDirectory;
@@ -130,10 +130,10 @@ static BOOL FRefreshFiles(HWND hwnd, COMPATFILEDIALOG *lp) {
     }
     ICloseNativeDir(lpdir);
     if (lp->dwError) { win32::EndDialog(hwnd, 0); return 0; }
-    if (lp->cEntry > 1) qsort(lp->rgentry, lp->cEntry, sizeof(*lp->rgentry), CmpFileEntry);
+    if (lp->cEntry > 1) std::qsort(lp->rgentry, lp->cEntry, sizeof(*lp->rgentry), CmpFileEntry);
     win32::SendMessageA(hwndList, win32::LB_RESETCONTENT, 0, 0);
     for (i = 0; i < lp->cEntry; i++) {
-        snprintf(szLabel, sizeof(szLabel), lp->rgentry[i].fDir ? "[%s]" : "%s", lp->rgentry[i].psz);
+        std::snprintf(szLabel, sizeof(szLabel), lp->rgentry[i].fDir ? "[%s]" : "%s", lp->rgentry[i].psz);
         iEntry = win32::SendMessageA(hwndList, win32::LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(szLabel));
         if (iEntry < 0 || win32::SendMessageA(hwndList, win32::LB_SETITEMDATA, static_cast<WPARAM>(iEntry), static_cast<LPARAM>(i)) == win32::LB_ERR) {
             lp->dwError = win32::CDERR_MEMALLOCFAILURE; win32::EndDialog(hwnd, 0); return 0;
@@ -149,26 +149,26 @@ static BOOL FChangeFileDirectory(HWND hwnd, COMPATFILEDIALOG *lp, LPCSTR psz, BO
     if (!FJoinFile(szPath, lp->szDir, psz) || !PszCanonicalNativePath(szPath, szReal, sizeof(szReal)) || IGetNativeFileInfo(szReal, &st, 1) != 0 || !st.fDirectory) {
         FileError(hwnd, "The directory does not exist."); return 0;
     }
-    if (!FUtf8Valid(szReal, strlen(szReal))) {
+    if (!FUtf8Valid(szReal, std::strlen(szReal))) {
         FileError(hwnd, "The directory cannot be represented losslessly in UTF-8."); return 0;
     }
-    if (strcmp(szReal, lp->szDir) == 0) {
+    if (std::strcmp(szReal, lp->szDir) == 0) {
         win32::SetWindowTextA(win32::GetDlgItem(hwnd, ID_FILE_PATH), lp->szDir); return 1;
     }
     if (fHistory) {
         pszPrevious = strdup(lp->szDir);
         if (!pszPrevious) { FileError(hwnd, "There is not enough memory to navigate."); return 0; }
     }
-    strcpy(szOld, lp->szDir); strcpy(lp->szDir, szReal);
+    std::strcpy(szOld, lp->szDir); std::strcpy(lp->szDir, szReal);
     if (!FRefreshFiles(hwnd, lp)) {
-        strcpy(lp->szDir, szOld); free(pszPrevious);
+        std::strcpy(lp->szDir, szOld); std::free(pszPrevious);
         if (win32::IsWindow(hwnd)) win32::SetWindowTextA(win32::GetDlgItem(hwnd, ID_FILE_PATH), lp->szDir);
         return 0;
     }
     if (pszPrevious) {
         if (lp->cHistory == MAX_FILE_HISTORY) {
-            free(lp->rgpszHistory[0]);
-            memmove(lp->rgpszHistory, lp->rgpszHistory + 1, (MAX_FILE_HISTORY - 1) * sizeof(char *));
+            std::free(lp->rgpszHistory[0]);
+            std::memmove(lp->rgpszHistory, lp->rgpszHistory + 1, (MAX_FILE_HISTORY - 1) * sizeof(char *));
             lp->cHistory--;
         }
         lp->rgpszHistory[lp->cHistory++] = pszPrevious;
@@ -181,28 +181,28 @@ static int IAcceptFilePath(HWND hwnd, COMPATFILEDIALOG *lp, LPCSTR pszName) {
     char *pszBase, *pszExt;
     const char *pszDef = lp->lpof->lpstrDefExt;
     NATIVEFILEINFO st, stParent;
-    size_t cch;
+    std::size_t cch;
     BOOL fExists;
     NATIVEFILE *lpfile;
     if (!*pszName) return 0;
     if (!FJoinFile(szPath, lp->szDir, pszName)) { FileError(hwnd, "The filename is too long."); return 0; }
     if (IGetNativeFileInfo(szPath, &st, 1) == 0 && st.fDirectory) return 2;
-    pszBase = strrchr(szPath, '/'); pszBase = pszBase ? pszBase + 1 : szPath;
-    pszExt = strrchr(pszBase, '.');
+    pszBase = std::strrchr(szPath, '/'); pszBase = pszBase ? pszBase + 1 : szPath;
+    pszExt = std::strrchr(pszBase, '.');
     if (!pszExt && pszDef && *pszDef) {
-        cch = strlen(szPath);
-        if (!FUtf8Valid(pszDef, strlen(pszDef))) { FileError(hwnd, "The extension is invalid UTF-8."); return 0; }
-        if (snprintf(szPath + cch, sizeof(szPath) - cch, ".%.*s", static_cast<int>(CchUtf8Prefix(pszDef, 3)), pszDef) >= static_cast<int>((sizeof(szPath) - cch))) {
+        cch = std::strlen(szPath);
+        if (!FUtf8Valid(pszDef, std::strlen(pszDef))) { FileError(hwnd, "The extension is invalid UTF-8."); return 0; }
+        if (std::snprintf(szPath + cch, sizeof(szPath) - cch, ".%.*s", static_cast<int>(CchUtf8Prefix(pszDef, 3)), pszDef) >= static_cast<int>((sizeof(szPath) - cch))) {
             FileError(hwnd, "The filename is too long."); return 0;
         }
     }
-    strcpy(szParent, szPath); pszBase = strrchr(szParent, '/');
-    if (!pszBase || !pszBase[1] || strpbrk(pszBase + 1, "*?")) { FileError(hwnd, "Enter a valid filename."); return 0; }
+    std::strcpy(szParent, szPath); pszBase = std::strrchr(szParent, '/');
+    if (!pszBase || !pszBase[1] || std::strpbrk(pszBase + 1, "*?")) { FileError(hwnd, "Enter a valid filename."); return 0; }
     if (pszBase == szParent) pszBase[1] = 0; else *pszBase = 0;
     if (!PszCanonicalNativePath(szParent, szReal, sizeof(szReal)) || IGetNativeFileInfo(szReal, &stParent, 1) != 0 || !stParent.fDirectory) {
         FileError(hwnd, "The destination directory does not exist."); return 0;
     }
-    pszBase = strrchr(szPath, '/') + 1;
+    pszBase = std::strrchr(szPath, '/') + 1;
     if (!FJoinFile(szParent, szReal, pszBase)) { FileError(hwnd, "The filename is too long."); return 0; }
     fExists = IGetNativeFileInfo(szParent, &st, 1) == 0;
     if (fExists && !st.fRegular) { FileError(hwnd, "Select a regular file."); return 0; }
@@ -222,11 +222,11 @@ static int IAcceptFilePath(HWND hwnd, COMPATFILEDIALOG *lp, LPCSTR pszName) {
     if (lp->fSave && fExists && (lp->lpof->Flags & win32::OFN_OVERWRITEPROMPT) &&
         CompatChoiceIO().pfnMessageBoxA(hwnd, "This file already exists. Replace it?", "Confirm save", win32::MB_YESNO | win32::MB_ICONEXCLAMATION | win32::MB_DEFBUTTON2) != win32::IDYES) return 0;
     if (hwnd && !win32::IsWindow(hwnd)) return 0;
-    strcpy(lp->szResult, szParent);
-    cch = strlen(lp->szResult) + 1;
+    std::strcpy(lp->szResult, szParent);
+    cch = std::strlen(lp->szResult) + 1;
     if (cch > lp->lpof->nMaxFile) {
         lp->dwError = win32::FNERR_BUFFERTOOSMALL;
-        if (lp->lpof->nMaxFile >= sizeof(WORD)) { WORD required = static_cast<WORD>(StarsMin(cch, UINT16_MAX)); memcpy(lp->lpof->lpstrFile, &required, sizeof(required)); }
+        if (lp->lpof->nMaxFile >= sizeof(WORD)) { WORD required = static_cast<WORD>(StarsMin(cch, UINT16_MAX)); std::memcpy(lp->lpof->lpstrFile, &required, sizeof(required)); }
         return -1;
     }
     return 1;
@@ -262,7 +262,7 @@ static INT_PTR  FolderDialogProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     }
     if (msg == win32::WM_COMMAND && LOWORD(w) == win32::IDOK && pszName) {
         win32::GetWindowTextA(win32::GetDlgItem(hwnd, ID_FILE_NAME), pszName, PATH_MAX);
-        if (!*pszName || strchr(pszName, '/') || strcmp(pszName, ".") == 0 || strcmp(pszName, "..") == 0) {
+        if (!*pszName || std::strchr(pszName, '/') || std::strcmp(pszName, ".") == 0 || std::strcmp(pszName, "..") == 0) {
             FileError(hwnd, "Enter a folder name without a path."); return 1;
         }
         win32::EndDialog(hwnd, win32::IDOK); return 1;
@@ -342,7 +342,7 @@ static INT_PTR  FileDialogProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     case ID_FILE_NEW: NewFileFolder(hwnd, lp); return 1;
     case ID_FILE_BACK:
         if (lp->cHistory != 0 && FChangeFileDirectory(hwnd, lp, lp->rgpszHistory[lp->cHistory - 1], 0)) {
-            free(lp->rgpszHistory[--lp->cHistory]);
+            std::free(lp->rgpszHistory[--lp->cHistory]);
             win32::EnableWindow(win32::GetDlgItem(hwnd, ID_FILE_BACK), lp->cHistory != 0);
         }
         return 1;
@@ -368,7 +368,7 @@ static INT_PTR  FileDialogProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         if (HIWORD(w) != win32::LBN_SELCHANGE && HIWORD(w) != win32::LBN_DBLCLK) return 1;
         i = win32::SendDlgItemMessageA(hwnd, ID_FILE_LIST, win32::LB_GETCURSEL, 0, 0);
         data = i == win32::LB_ERR ? win32::LB_ERR : win32::SendDlgItemMessageA(hwnd, ID_FILE_LIST, win32::LB_GETITEMDATA, static_cast<WPARAM>(i), 0);
-        if (data < 0 || static_cast<size_t>(data) >= lp->cEntry) return 1;
+        if (data < 0 || static_cast<std::size_t>(data) >= lp->cEntry) return 1;
         if (!lp->rgentry[data].fDir) win32::SetWindowTextA(win32::GetDlgItem(hwnd, ID_FILE_NAME), lp->rgentry[data].psz);
         if (HIWORD(w) == win32::LBN_DBLCLK) {
             if (lp->rgentry[data].fDir) FChangeFileDirectory(hwnd, lp, lp->rgentry[data].psz, 1);
@@ -391,15 +391,15 @@ static void RememberFileSelection(COMPATFILEDIALOG *lp, LPCSTR pszPath, char *ps
     NATIVEFILEINFO st;
     /* A validation error or declined overwrite must not reset navigation. */
     if (IGetNativeFileInfo(pszPath, &st, 1) == 0 && st.fDirectory) {
-        if (PszCanonicalNativePath(pszPath, szReal, sizeof(szReal))) { strcpy(lp->szDir, szReal); pszName[0] = 0; }
+        if (PszCanonicalNativePath(pszPath, szReal, sizeof(szReal))) { std::strcpy(lp->szDir, szReal); pszName[0] = 0; }
         return;
     }
     SDL_strlcpy(szParent, pszPath, sizeof(szParent));
-    pch = strrchr(szParent, '/');
+    pch = std::strrchr(szParent, '/');
     if (!pch) return;
     SDL_strlcpy(pszName, pch + 1, PATH_MAX);
     if (pch == szParent) pch[1] = 0; else *pch = 0;
-    if (PszCanonicalNativePath(szParent, szReal, sizeof(szReal)) && IGetNativeFileInfo(szReal, &st, 1) == 0 && st.fDirectory) strcpy(lp->szDir, szReal);
+    if (PszCanonicalNativePath(szParent, szReal, sizeof(szReal)) && IGetNativeFileInfo(szReal, &st, 1) == 0 && st.fDirectory) std::strcpy(lp->szDir, szReal);
 }
 #endif
 static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
@@ -415,8 +415,8 @@ static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
                     win32::OFN_NOREADONLYRETURN | win32::OFN_NOCHANGEDIR | win32::OFN_EXPLORER | win32::OFN_EXTENSIONDIFFERENT;
     COMPATCLEANUPSCOPE freeBuffers([&] {
         FreeFileEntries(&dlg);
-        for (i = 0; i < dlg.cHistory; i++) free(dlg.rgpszHistory[i]);
-        for (i = 0; i < dlg.cFilter; i++) { free(dlg.rgfilter[i].pszName); free(dlg.rgfilter[i].pszPattern); }
+        for (i = 0; i < dlg.cHistory; i++) std::free(dlg.rgpszHistory[i]);
+        for (i = 0; i < dlg.cFilter; i++) { std::free(dlg.rgfilter[i].pszName); std::free(dlg.rgfilter[i].pszPattern); }
     });
     COMPATCLEANUPSCOPE restoreFocus([&] { if (fRestoreFocus && win32::IsWindow(hwndFocus) && win32::IsWindowEnabled(hwndFocus)) win32::SetFocus(hwndFocus); });
     COMPATCLEANUPSCOPE nativeCounter([&] { if (fNative && win32::IsWindow(hwndRoot)) hwndRoot->cNativeFileDialogs--; });
@@ -425,20 +425,20 @@ static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
     dwDialogError = 0;
     if (FStarsErrorPending()) return 0;
     if (!lpof || lpof->lStructSize != sizeof(*lpof)) { dwDialogError = win32::CDERR_STRUCTSIZE; return 0; }
-    if (!lpof->lpstrFile || lpof->nMaxFile == 0 || !memchr(lpof->lpstrFile, 0, lpof->nMaxFile)) {
+    if (!lpof->lpstrFile || lpof->nMaxFile == 0 || !std::memchr(lpof->lpstrFile, 0, lpof->nMaxFile)) {
         dwDialogError = win32::FNERR_INVALIDFILENAME; return 0;
     }
-    if (!FUtf8Valid(lpof->lpstrFile, strlen(lpof->lpstrFile)) ||
-        (lpof->lpstrInitialDir && !FUtf8Valid(lpof->lpstrInitialDir, strlen(lpof->lpstrInitialDir)))) {
+    if (!FUtf8Valid(lpof->lpstrFile, std::strlen(lpof->lpstrFile)) ||
+        (lpof->lpstrInitialDir && !FUtf8Valid(lpof->lpstrInitialDir, std::strlen(lpof->lpstrInitialDir)))) {
         dwDialogError = win32::FNERR_INVALIDFILENAME; return 0;
     }
     if ((lpof->Flags & ~grFlagsAllowed) || lpof->lpstrCustomFilter || lpof->lpfnHook || lpof->FlagsEx ||
         !SDL_IsMainThread() || !FCompatVideo()) { dwDialogError = win32::CDERR_INITIALIZATION; win32::SetLastError(win32::ERROR_NOT_SUPPORTED); return 0; }
     if (lpof->hwndOwner && !win32::IsWindow(lpof->hwndOwner)) { dwDialogError = win32::CDERR_INITIALIZATION; win32::SetLastError(win32::ERROR_INVALID_WINDOW_HANDLE); return 0; }
     dlg.lpof = lpof; dlg.fSave = fSave;
-    for (psz = lpof->lpstrFilter; psz && *psz; psz = pszPattern + strlen(pszPattern) + 1) {
+    for (psz = lpof->lpstrFilter; psz && *psz; psz = pszPattern + std::strlen(pszPattern) + 1) {
         if (dlg.cFilter == MAX_FILE_FILTERS || SDL_strnlen(psz, 4097) > 4096) { dlg.dwError = win32::CDERR_INITIALIZATION; goto done; }
-        pszPattern = psz + strlen(psz) + 1;
+        pszPattern = psz + std::strlen(psz) + 1;
         if (!*pszPattern || SDL_strnlen(pszPattern, 4097) > 4096) { dlg.dwError = win32::CDERR_INITIALIZATION; goto done; }
         dlg.rgfilter[dlg.cFilter].pszName = strdup(psz); dlg.rgfilter[dlg.cFilter].pszPattern = strdup(pszPattern);
         dlg.cFilter++;
@@ -446,26 +446,26 @@ static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
     }
     dlg.iFilter = lpof->nFilterIndex > 0 && lpof->nFilterIndex <= static_cast<DWORD>(dlg.cFilter) ? static_cast<int>(lpof->nFilterIndex) - 1 : 0;
     if (!PszNativeCwd(szCwd, sizeof(szCwd))) { dlg.dwError = win32::CDERR_INITIALIZATION; goto done; }
-    if (!FUtf8Valid(szCwd, strlen(szCwd))) { dlg.dwError = win32::FNERR_INVALIDFILENAME; goto done; }
-    strcpy(dlg.szDir, szCwd); szInitial[0] = 0;
+    if (!FUtf8Valid(szCwd, std::strlen(szCwd))) { dlg.dwError = win32::FNERR_INVALIDFILENAME; goto done; }
+    std::strcpy(dlg.szDir, szCwd); szInitial[0] = 0;
     if (lpof->lpstrInitialDir && *lpof->lpstrInitialDir) {
         NATIVEFILEINFO st;
         if (!FJoinFile(szPath, szCwd, lpof->lpstrInitialDir) || !PszCanonicalNativePath(szPath, dlg.szDir, sizeof(dlg.szDir)) ||
-            IGetNativeFileInfo(dlg.szDir, &st, 1) != 0 || !st.fDirectory) strcpy(dlg.szDir, szCwd);
+            IGetNativeFileInfo(dlg.szDir, &st, 1) != 0 || !st.fDirectory) std::strcpy(dlg.szDir, szCwd);
     }
     if (*lpof->lpstrFile) {
         if (!FJoinFile(szPath, dlg.szDir, lpof->lpstrFile)) { dlg.dwError = win32::FNERR_INVALIDFILENAME; goto done; }
-        pch = strrchr(szPath, '/');
+        pch = std::strrchr(szPath, '/');
         if (pch) {
             SDL_strlcpy(szInitial, pch + 1, sizeof(szInitial));
             if (pch == szPath) pch[1] = 0; else *pch = 0;
             if (!PszCanonicalNativePath(szPath, dlg.szDir, sizeof(dlg.szDir))) { dlg.dwError = win32::FNERR_INVALIDFILENAME; goto done; }
         }
     }
-    if (!FUtf8Valid(dlg.szDir, strlen(dlg.szDir))) { dlg.dwError = win32::FNERR_INVALIDFILENAME; goto done; }
+    if (!FUtf8Valid(dlg.szDir, std::strlen(dlg.szDir))) { dlg.dwError = win32::FNERR_INVALIDFILENAME; goto done; }
     hwndFocus = win32::GetFocus(); hwndRoot = lpof->hwndOwner ? HwndCompatRoot(lpof->hwndOwner) : nullptr; fRestoreFocus = 1;
 #if defined(STARS_FILE_DIALOG_PORTAL) || defined(STARS_FILE_DIALOG_COCOA) || defined(STARS_FILE_DIALOG_WINDOWS)
-    fNative = !PszCompatEnvironment("STARS_FILE_DIALOG_BACKEND") || strcmp(PszCompatEnvironment("STARS_FILE_DIALOG_BACKEND"), "compat") != 0;
+    fNative = !PszCompatEnvironment("STARS_FILE_DIALOG_BACKEND") || std::strcmp(PszCompatEnvironment("STARS_FILE_DIALOG_BACKEND"), "compat") != 0;
     if (fNative && hwndRoot) hwndRoot->cNativeFileDialogs++;
 #endif
     fEnable = hwndRoot && win32::IsWindowEnabled(hwndRoot);
@@ -540,15 +540,15 @@ static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
 selected:
 #endif
     {
-        strcpy(szPath, dlg.szResult); pch = strrchr(szPath, '/');
+        std::strcpy(szPath, dlg.szResult); pch = std::strrchr(szPath, '/');
         if (pch == szPath) pch[1] = 0; else *pch = 0;
         if (!(lpof->Flags & win32::OFN_NOCHANGEDIR) && IChangeNativeCwd(szPath) != 0) { dlg.dwError = win32::CDERR_INITIALIZATION; goto restore; }
-        strcpy(lpof->lpstrFile, dlg.szResult);
-        pch = strrchr(dlg.szResult, '/') + 1;
+        std::strcpy(lpof->lpstrFile, dlg.szResult);
+        pch = std::strrchr(dlg.szResult, '/') + 1;
         lpof->nFileOffset = static_cast<WORD>((pch - dlg.szResult));
         if (lpof->lpstrFileTitle && lpof->nMaxFileTitle)
             CchCopyUtf8(lpof->lpstrFileTitle, lpof->nMaxFileTitle, pch, CchUtf8Prefix(pch, lpof->nMaxFileTitle - 1));
-        pch = strrchr(pch, '.'); lpof->nFileExtension = pch ? static_cast<WORD>((pch - dlg.szResult + 1)) : 0;
+        pch = std::strrchr(pch, '.'); lpof->nFileExtension = pch ? static_cast<WORD>((pch - dlg.szResult + 1)) : 0;
         lpof->nFilterIndex = dlg.cFilter ? static_cast<DWORD>(dlg.iFilter) + 1 : 0;
         lpof->Flags &= ~win32::OFN_EXTENSIONDIFFERENT;
         if (lpof->lpstrDefExt && *lpof->lpstrDefExt && (!pch || SDL_strcasecmp(pch + 1, lpof->lpstrDefExt) != 0)) lpof->Flags |= win32::OFN_EXTENSIONDIFFERENT;

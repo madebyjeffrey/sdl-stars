@@ -60,7 +60,7 @@ LRESULT  FrameWndProcDeferred(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
  */
 
 // FIsComboBox tells whether hwnd is a combo box.
-static int16_t FIsComboBox(HWND hwnd) {
+static std::int16_t FIsComboBox(HWND hwnd) {
     char szClass[16];
 
     return hwnd && win32::GetClassNameA(hwnd, szClass, sizeof(szClass)) && win32::lstrcmpiA(szClass, "ComboBox") == 0;
@@ -68,7 +68,7 @@ static int16_t FIsComboBox(HWND hwnd) {
 
 // FRouteMouseWheel points a wheel message at the window under the cursor.
 // It returns FALSE when the message should be dropped.
-int16_t FRouteMouseWheel(win32::MSG *pmsg) {
+std::int16_t FRouteMouseWheel(win32::MSG *pmsg) {
     POINT pt;
     HWND  hwnd;
 
@@ -90,22 +90,22 @@ int16_t FRouteMouseWheel(win32::MSG *pmsg) {
 // CWheelNotches adds a wheel delta to *pdWheel and returns the whole notches
 // (WHEEL_DELTA each) gathered, keeping the remainder. Touchpads and fine
 // wheels send part notches. A change of direction starts over.
-int16_t CWheelNotches(int16_t *pdWheel, int16_t dWheel) {
-    int32_t d;
-    int16_t c;
+std::int16_t CWheelNotches(std::int16_t *pdWheel, std::int16_t dWheel) {
+    std::int32_t d;
+    std::int16_t c;
 
     d = *pdWheel;
     if ((d < 0 && dWheel > 0) || (d > 0 && dWheel < 0))
         d = 0;
     d += dWheel;
-    c = static_cast<int16_t>((d / win32::WHEEL_DELTA));
-    *pdWheel = static_cast<int16_t>((d - c * win32::WHEEL_DELTA));
+    c = static_cast<std::int16_t>((d / win32::WHEEL_DELTA));
+    *pdWheel = static_cast<std::int16_t>((d - c * win32::WHEEL_DELTA));
     return c;
 }
 
 // CWheelLines returns how many lines a wheel notch scrolls, from the
 // player's mouse settings, or cPage when they scroll a page a notch.
-int16_t CWheelLines(int16_t cPage) {
+std::int16_t CWheelLines(std::int16_t cPage) {
     UINT cLines;
 
     if (cPage < 1) {
@@ -115,7 +115,7 @@ int16_t CWheelLines(int16_t cPage) {
         cLines = 3;
     if (cLines == win32::WHEEL_PAGESCROLL || cLines > static_cast<UINT>(cPage))
         return cPage;
-    return static_cast<int16_t>(cLines);
+    return static_cast<std::int16_t>(cLines);
 }
 
 

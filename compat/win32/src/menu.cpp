@@ -1,11 +1,11 @@
 #include "display_io.h"
 #include "cleanup.h"
 #include "ownership.h"
-#include <limits.h>
+#include <climits>
 #include <new>
 #include <utility>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstring>
 
 struct COMPATMENUITEM {
     UINT flags;
@@ -90,7 +90,7 @@ BOOL win32::InsertMenuA(HMENU hmenu, UINT pos, UINT flags, UINT_PTR id, LPCSTR p
     else if (!LpItem(lp, pos, 0, &lp, &i)) return 0;
     if (flags & win32::MF_SEPARATOR) flags = win32::MF_SEPARATOR | win32::MF_DISABLED | win32::MF_GRAYED;
     else {
-        if (psz && !FUtf8Valid(psz, strlen(psz))) return 0;
+        if (psz && !FUtf8Valid(psz, std::strlen(psz))) return 0;
         if (flags & win32::MF_POPUP) {
             hsub = LpMenu(reinterpret_cast<HMENU>(id));
             if (!hsub || hsub->hparent || hsub->hwndOwner) return 0;
@@ -101,8 +101,8 @@ BOOL win32::InsertMenuA(HMENU hmenu, UINT pos, UINT flags, UINT_PTR id, LPCSTR p
         item.psz.reset(SDL_strdup(psz ? psz : ""));
         if (!item.psz) return 0;
     }
-    if (lp->citem == INT_MAX || static_cast<size_t>(lp->citem) + 1 > SIZE_MAX / sizeof(COMPATMENUITEM)) return 0;
-    rg.reset(new (std::nothrow) COMPATMENUITEM[static_cast<size_t>(lp->citem) + 1]{});
+    if (lp->citem == INT_MAX || static_cast<std::size_t>(lp->citem) + 1 > SIZE_MAX / sizeof(COMPATMENUITEM)) return 0;
+    rg.reset(new (std::nothrow) COMPATMENUITEM[static_cast<std::size_t>(lp->citem) + 1]{});
     if (!rg) return 0;
     item.id = id; item.flags = flags & ~win32::MF_BYPOSITION; item.hsub = hsub;
     // Finish all allocations before moving installed labels or submenu links.
@@ -178,14 +178,14 @@ UINT win32::GetMenuState(HMENU hmenu, UINT id, UINT flags) {
 int win32::GetMenuStringA(HMENU hmenu, UINT id, LPSTR psz, int cch, UINT flags) {
     HMENU lp;
     COMPATMENUITEM *lpitem;
-    size_t c;
+    std::size_t c;
     int i;
     lpitem = LpItem(hmenu, id, flags, &lp, &i);
     if (!lpitem || !lpitem->psz) { if (psz && cch > 0) psz[0] = 0; return 0; }
-    c = strlen(lpitem->psz.get());
-    if (!psz || cch <= 0) return static_cast<int>((((c) < (static_cast<size_t>(INT_MAX))) ? (c) : (static_cast<size_t>(INT_MAX))));
-    c = CchUtf8Prefix(lpitem->psz.get(), static_cast<size_t>(cch) - 1);
-    memcpy(psz, lpitem->psz.get(), c); psz[c] = 0;
+    c = std::strlen(lpitem->psz.get());
+    if (!psz || cch <= 0) return static_cast<int>((((c) < (static_cast<std::size_t>(INT_MAX))) ? (c) : (static_cast<std::size_t>(INT_MAX))));
+    c = CchUtf8Prefix(lpitem->psz.get(), static_cast<std::size_t>(cch) - 1);
+    std::memcpy(psz, lpitem->psz.get(), c); psz[c] = 0;
     return static_cast<int>(c);
 }
 void CompatShutdownMenus(void) {
@@ -213,12 +213,12 @@ int CyCompatMenuBar(HWND hwnd) {
     RECT *rgrc, rc;
     TEXTMETRICA tm = {};
     int cx, cy, x = 0, y = 0, dx, i;
-    NATIVEOWNER<RECT, free> rgrcOwner;
+    NATIVEOWNER<RECT, std::free> rgrcOwner;
 
     if (!hwnd || hwnd->hwndParent || !(lp = LpMenu(hwnd->hmenu)) || lp->citem == 0) return 0;
     if (!SDL_GetWindowSize(hwnd->lpWindow.get(), &cx, &cy)) return 0;
     if (!hwnd->fMenuLayoutDirty && hwnd->cxMenu == cx) return hwnd->cyMenu;
-    rgrcOwner.reset(static_cast<RECT *>(calloc(static_cast<size_t>(lp->citem), sizeof(*rgrc)))); rgrc = rgrcOwner.get();
+    rgrcOwner.reset(static_cast<RECT *>(std::calloc(static_cast<std::size_t>(lp->citem), sizeof(*rgrc)))); rgrc = rgrcOwner.get();
     if (!rgrc) return 0;
     hdc = win32::GetDC(nullptr);
     if (!hdc) return 0;
@@ -400,7 +400,7 @@ static void PopupPaint(COMPATPOPUP *lppop) {
         NATIVEOWNER<char, SDL_free> pszOwner(SDL_strdup(lp->rgitem[i].psz ? lp->rgitem[i].psz.get() : ""));
         psz = pszOwner.get();
         if (!psz) continue;
-        pszTab = strchr(psz, '\t');
+        pszTab = std::strchr(psz, '\t');
         if (pszTab) *pszTab++ = 0;
         text = rc; text.left += 24; text.right -= 24;
         win32::DrawTextA(hdc, psz, -1, &text, win32::DT_SINGLELINE | win32::DT_VCENTER);
@@ -440,7 +440,7 @@ static BOOL OpenPopup(COMPATTRACK *lpt, HMENU hmenu, int x, int y, int iParent) 
     SDL_Point point = {x, y};
     int i, cyRow, cx = 80, cy = 2, dy;
     RECT rcParent;
-    int64_t xWide = x, yWide = y;
+    std::int64_t xWide = x, yWide = y;
     WNDCLASSA wc = {};
     if (lpt->cLevel >= 64) return 0;
     if (!(lpt->flags & win32::TPM_NONOTIFY))
@@ -450,7 +450,7 @@ static BOOL OpenPopup(COMPATTRACK *lpt, HMENU hmenu, int x, int y, int iParent) 
     lppop = &lpt->rgpopup[lpt->cLevel];
     *lppop = COMPATPOPUP{};
     lppop->lptrack = lpt; lppop->hmenu = lp; lppop->iSel = -1; lppop->cItem = lp->citem;
-    lppop->rgrc.reset(static_cast<RECT *>(calloc(static_cast<size_t>(lp->citem), sizeof(RECT))));
+    lppop->rgrc.reset(static_cast<RECT *>(std::calloc(static_cast<std::size_t>(lp->citem), sizeof(RECT))));
     if (!lppop->rgrc) return 0;
     hdc = win32::GetDC(nullptr);
     if (!hdc) { lppop->rgrc.reset(); return 0; }
@@ -458,7 +458,7 @@ static BOOL OpenPopup(COMPATTRACK *lpt, HMENU hmenu, int x, int y, int iParent) 
     win32::GetTextMetricsA(hdc, &tm); cyRow = StarsMax(20, tm.tmHeight + 8);
     for (i = 0; i < lp->citem; i++) {
         size.cx = 0;
-        if (lp->rgitem[i].psz && !win32::GetTextExtentPoint32A(hdc, lp->rgitem[i].psz.get(), static_cast<int>(strlen(lp->rgitem[i].psz.get())), &size)) break;
+        if (lp->rgitem[i].psz && !win32::GetTextExtentPoint32A(hdc, lp->rgitem[i].psz.get(), static_cast<int>(std::strlen(lp->rgitem[i].psz.get())), &size)) break;
         if (size.cx > 8100 || cy > 32000 - cyRow) break;
         cx = StarsMax(cx, size.cx + 72);
         dy = lp->rgitem[i].flags & win32::MF_SEPARATOR ? 8 : cyRow;
@@ -475,10 +475,10 @@ static BOOL OpenPopup(COMPATTRACK *lpt, HMENU hmenu, int x, int y, int iParent) 
         else if (lpt->flags & win32::TPM_VCENTERALIGN) yWide -= cy / 2;
     }
     if (CompatDisplayIO().pfnGetDisplayUsableBounds(SDL_GetDisplayForPoint(&point), &bounds)) {
-        if (lpt->cLevel > 0 && xWide + cx > static_cast<int64_t>(bounds.x) + bounds.w &&
-            win32::GetWindowRect(lpt->rgpopup[lpt->cLevel - 1].hwnd, &rcParent)) xWide = static_cast<int64_t>(rcParent.left) - cx + 2;
-        xWide = (((static_cast<int64_t>(bounds.x)) > ((((xWide) < (static_cast<int64_t>(bounds.x) + StarsMax(0, bounds.w - cx))) ? (xWide) : (static_cast<int64_t>(bounds.x) + StarsMax(0, bounds.w - cx))))) ? (static_cast<int64_t>(bounds.x)) : ((((xWide) < (static_cast<int64_t>(bounds.x) + StarsMax(0, bounds.w - cx))) ? (xWide) : (static_cast<int64_t>(bounds.x) + StarsMax(0, bounds.w - cx)))));
-        yWide = (((static_cast<int64_t>(bounds.y)) > ((((yWide) < (static_cast<int64_t>(bounds.y) + StarsMax(0, bounds.h - cy))) ? (yWide) : (static_cast<int64_t>(bounds.y) + StarsMax(0, bounds.h - cy))))) ? (static_cast<int64_t>(bounds.y)) : ((((yWide) < (static_cast<int64_t>(bounds.y) + StarsMax(0, bounds.h - cy))) ? (yWide) : (static_cast<int64_t>(bounds.y) + StarsMax(0, bounds.h - cy)))));
+        if (lpt->cLevel > 0 && xWide + cx > static_cast<std::int64_t>(bounds.x) + bounds.w &&
+            win32::GetWindowRect(lpt->rgpopup[lpt->cLevel - 1].hwnd, &rcParent)) xWide = static_cast<std::int64_t>(rcParent.left) - cx + 2;
+        xWide = (((static_cast<std::int64_t>(bounds.x)) > ((((xWide) < (static_cast<std::int64_t>(bounds.x) + StarsMax(0, bounds.w - cx))) ? (xWide) : (static_cast<std::int64_t>(bounds.x) + StarsMax(0, bounds.w - cx))))) ? (static_cast<std::int64_t>(bounds.x)) : ((((xWide) < (static_cast<std::int64_t>(bounds.x) + StarsMax(0, bounds.w - cx))) ? (xWide) : (static_cast<std::int64_t>(bounds.x) + StarsMax(0, bounds.w - cx)))));
+        yWide = (((static_cast<std::int64_t>(bounds.y)) > ((((yWide) < (static_cast<std::int64_t>(bounds.y) + StarsMax(0, bounds.h - cy))) ? (yWide) : (static_cast<std::int64_t>(bounds.y) + StarsMax(0, bounds.h - cy))))) ? (static_cast<std::int64_t>(bounds.y)) : ((((yWide) < (static_cast<std::int64_t>(bounds.y) + StarsMax(0, bounds.h - cy))) ? (yWide) : (static_cast<std::int64_t>(bounds.y) + StarsMax(0, bounds.h - cy)))));
     }
     if (xWide < INT_MIN || xWide > INT_MAX || yWide < INT_MIN || yWide > INT_MAX) {
         lppop->rgrc.reset(); return 0;

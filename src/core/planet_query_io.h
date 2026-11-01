@@ -20,5 +20,5 @@ class PLANETQUERYIOSCOPE {
     PLANETQUERYIOSCOPE &operator=(const PLANETQUERYIOSCOPE &) = delete;
 };
 // Existing binary64-to-int32 boundary; inputs must be representable.
-int32_t LFromPlanetValue(double dValue);
+std::int32_t LFromPlanetValue(double dValue);
 #endif

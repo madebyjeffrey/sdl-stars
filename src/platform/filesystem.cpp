@@ -14,7 +14,7 @@ static bool FPathValid(const char *pszPath) {
     return pszPath && *pszPath && FUtf8Valid(pszPath, std::strlen(pszPath));
 }
 
-static bool FCopyPath(const fs::path &pth, char *pszOut, size_t cbOut) {
+static bool FCopyPath(const fs::path &pth, char *pszOut, std::size_t cbOut) {
     std::string sz = SzFromUtf8(pth.generic_u8string());
     if (sz.size() >= cbOut || !FUtf8Valid(sz.data(), sz.size()))
         return false;
@@ -22,7 +22,7 @@ static bool FCopyPath(const fs::path &pth, char *pszOut, size_t cbOut) {
     return true;
 }
 
-int FFilesystemTempDir(char *pszOut, size_t cbOut) {
+int FFilesystemTempDir(char *pszOut, std::size_t cbOut) {
     if (!pszOut || cbOut == 0)
         return 0;
     *pszOut = 0;
@@ -63,7 +63,7 @@ int FFilesystemCreateDirectory(const char *pszPath) {
     }
 }
 
-int FFilesystemCanonicalPath(const char *pszPath, char *pszOut, size_t cbOut) {
+int FFilesystemCanonicalPath(const char *pszPath, char *pszOut, std::size_t cbOut) {
     if (!pszOut || cbOut == 0)
         return 0;
     *pszOut = 0;

@@ -5,7 +5,7 @@
 #include "internal.h"
 #include "message_alloc_io.h"
 #include <stars_compat.h>
-#include <stdlib.h>
+#include <cstdlib>
 #include "ownership.h"
 #include "locking.h"
 #include <atomic>
@@ -25,7 +25,7 @@ struct COMPATMESSAGE {
 
 static COMPATMESSAGE *lpFirst, *lpLast;
 static void FreeMessage(COMPATMESSAGE *lp) noexcept {
-    if (lp) { lp->~COMPATMESSAGE(); free(lp); }
+    if (lp) { lp->~COMPATMESSAGE(); std::free(lp); }
 }
 using COMPATMESSAGEOWNER = NATIVEOWNER<COMPATMESSAGE, FreeMessage>;
 static COMPATMESSAGE *lpPending, *lpDispatchPayload;
@@ -104,32 +104,32 @@ BOOL win32::PostMessageA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
 struct COMPATASYNCPOST {
     HWND hwnd = nullptr;
-    uint64_t idWindow = 0;
+    std::uint64_t idWindow = 0;
     UINT msg = 0;
     WPARAM wParam = 0;
     LPARAM lParam = 0;
     STARSCOMPATPAYLOAD payload;
     std::atomic<unsigned> cRef{2}; // Producer and registry; SDL only borrows.
-    uintptr_t id = 0;
+    std::uintptr_t id = 0;
     COMPATASYNCPOST *lpNext = nullptr;
 };
 
 static NATIVEFLAGLOCK lockPosts;
 static COMPATASYNCPOST *lpPosts;
 static bool fAcceptPosts = true;
-static uintptr_t idPostNext = 1;
+static std::uintptr_t idPostNext = 1;
 static WPARAM idPayloadNext = 1;
 
 static void ReleasePost(COMPATASYNCPOST *lp) noexcept {
     if (lp->cRef.fetch_sub(1, std::memory_order_acq_rel) == 1) {
         lp->~COMPATASYNCPOST();
-        free(lp);
+        std::free(lp);
     }
 }
 
 using COMPATASYNCOWNER = NATIVEOWNER<COMPATASYNCPOST, ReleasePost>;
 
-static COMPATASYNCOWNER TakePost(const void *pv, uintptr_t id) noexcept {
+static COMPATASYNCOWNER TakePost(const void *pv, std::uintptr_t id) noexcept {
     std::unique_lock guard(lockPosts);
     for (auto **link = &lpPosts; *link; link = &(*link)->lpNext) {
         auto *lp = *link;
@@ -161,7 +161,7 @@ void CompatStopAsyncMessages() noexcept {
     }
 }
 
-static BOOL PostOwnedMessage(uint64_t idWindow, UINT msg, STARSCOMPATPAYLOAD payload, LPARAM lParam) {
+static BOOL PostOwnedMessage(std::uint64_t idWindow, UINT msg, STARSCOMPATPAYLOAD payload, LPARAM lParam) {
     {
         std::unique_lock guard(lockPosts);
         if (!fAcceptPosts) return 0;
@@ -210,7 +210,7 @@ BOOL StarsCompatPostMessageAsync(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
     return PushAsyncPost(lp);
 }
 
-BOOL StarsCompatPostOwnedMessageAsync(uint64_t idWindow, UINT msg, STARSCOMPATPAYLOAD payload, LPARAM lParam) {
+BOOL StarsCompatPostOwnedMessageAsync(std::uint64_t idWindow, UINT msg, STARSCOMPATPAYLOAD payload, LPARAM lParam) {
     if (SDL_IsMainThread()) return PostOwnedMessage(idWindow, msg, std::move(payload), lParam);
     if (!payload) return 0;
     void *pv = CompatMessageAllocIO().pfnAllocate(sizeof(COMPATASYNCPOST));
@@ -222,7 +222,7 @@ BOOL StarsCompatPostOwnedMessageAsync(uint64_t idWindow, UINT msg, STARSCOMPATPA
 }
 
 void CompatConsumeAsyncMessage(const SDL_Event *event) {
-    auto post = TakePost(event->user.data1, reinterpret_cast<uintptr_t>(event->user.data2));
+    auto post = TakePost(event->user.data1, reinterpret_cast<std::uintptr_t>(event->user.data2));
     if (!post) return; // Canceled/stale SDL events never dereference their old data.
     auto *lp = post.get();
     if (lp->payload) PostOwnedMessage(lp->idWindow, lp->msg, std::move(lp->payload), lp->lParam);
@@ -422,7 +422,7 @@ BOOL win32::TranslateMessage(const win32::MSG *lpmsg) {
 
 LRESULT win32::DefWindowProcA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     HWND lpwin = LpCompatWindow(hwnd);
-    size_t cch;
+    std::size_t cch;
     const char *psz;
     char *pszNew;
 
@@ -502,7 +502,7 @@ LRESULT win32::DefWindowProcA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         win32::DestroyWindow(hwnd);
         return 0;
     case win32::WM_SETTEXT:
-        if (!lParam || !FUtf8Valid(reinterpret_cast<const char *>(lParam), strlen(reinterpret_cast<const char *>(lParam))) ||
+        if (!lParam || !FUtf8Valid(reinterpret_cast<const char *>(lParam), std::strlen(reinterpret_cast<const char *>(lParam))) ||
             !(pszNew = SDL_strdup(reinterpret_cast<const char *>(lParam)))) return 0;
         if (lpwin->lpWindow.get() && !FCompatNativeTitle(lpwin->lpWindow.get(), pszNew)) {
             SDL_free(pszNew);
@@ -515,8 +515,8 @@ LRESULT win32::DefWindowProcA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         if (!lParam || wParam == 0)
             return 0;
         psz = lpwin->pszTitle;
-        cch = CchUtf8Prefix(psz, static_cast<size_t>(wParam) - 1);
-        memcpy(reinterpret_cast<char *>(lParam), psz, cch); (reinterpret_cast<char *>(lParam))[cch] = 0;
+        cch = CchUtf8Prefix(psz, static_cast<std::size_t>(wParam) - 1);
+        std::memcpy(reinterpret_cast<char *>(lParam), psz, cch); (reinterpret_cast<char *>(lParam))[cch] = 0;
         return static_cast<LRESULT>(cch);
     case win32::WM_GETTEXTLENGTH:
         return static_cast<LRESULT>(SDL_strlen(lpwin->pszTitle));

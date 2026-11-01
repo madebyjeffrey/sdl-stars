@@ -4,13 +4,13 @@
 #include "player_choice_io.h"
 #include "record_io.h"
 
-int16_t rgPrimes[128] = {3,   5,   7,   11,  13,  17,  19,  23,  29,  31,  37,  41,  43,  47,  53,  59,  61,  67,  71,  73,  79,  83,  89,  97,  101, 103,
+std::int16_t rgPrimes[128] = {3,   5,   7,   11,  13,  17,  19,  23,  29,  31,  37,  41,  43,  47,  53,  59,  61,  67,  71,  73,  79,  83,  89,  97,  101, 103,
                          107, 109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193, 197, 199, 211, 223, 227, 229, 233, 239, 241,
                          251, 257, 263, 279, 271, 277, 281, 283, 293, 307, 311, 313, 317, 331, 337, 347, 349, 353, 359, 367, 373, 379, 383, 389, 397, 401,
                          409, 419, 421, 431, 433, 439, 443, 449, 457, 461, 463, 467, 479, 487, 491, 499, 503, 509, 521, 523, 541, 547, 557, 563, 569, 571,
                          577, 587, 593, 599, 601, 607, 613, 617, 619, 631, 641, 643, 647, 653, 659, 661, 673, 677, 683, 691, 701, 709, 719, 727};
 
-void PushRandom(APPSESSION &app, int32_t lNew1, int32_t lNew2) {
+void PushRandom(APPSESSION &app, std::int32_t lNew1, std::int32_t lNew2) {
     app.state.rglRandStack[app.state.cRandStack][0] = app.state.lRandSeed1;
     app.state.rglRandStack[app.state.cRandStack][1] = app.state.lRandSeed2;
     app.state.cRandStack++;
@@ -26,12 +26,12 @@ void PopRandom(APPSESSION &app) {
     return;
 }
 
-void Randomize(APPSESSION &app, uint32_t dw) {
-    int16_t a;
-    int16_t b;
+void Randomize(APPSESSION &app, std::uint32_t dw) {
+    std::int16_t a;
+    std::int16_t b;
 
     a = LOWORD(dw) & 0x3f;
-    b = LOWORD(static_cast<uint32_t>((dw >> 6))) & 0x3f;
+    b = LOWORD(static_cast<std::uint32_t>((dw >> 6))) & 0x3f;
     if (a == b) {
         b = (b + 1) & 0x3f;
     }
@@ -40,12 +40,12 @@ void Randomize(APPSESSION &app, uint32_t dw) {
     return;
 }
 
-void Randomize2(APPSESSION &app, uint32_t dw) {
-    int16_t a;
-    int16_t b;
+void Randomize2(APPSESSION &app, std::uint32_t dw) {
+    std::int16_t a;
+    std::int16_t b;
 
     a = LOWORD(dw) & 0x7f;
-    b = LOWORD(static_cast<uint32_t>((dw >> 7))) & 0x7f;
+    b = LOWORD(static_cast<std::uint32_t>((dw >> 7))) & 0x7f;
     a ^= 0x35;
     b ^= 0x5c;
     if (a == b) {
@@ -56,21 +56,21 @@ void Randomize2(APPSESSION &app, uint32_t dw) {
     return;
 }
 
-int16_t Random(APPSESSION &app, int16_t c) {
-    int32_t z;
-    int32_t s1;
-    int32_t k;
-    int32_t s2;
+std::int16_t Random(APPSESSION &app, std::int16_t c) {
+    std::int32_t z;
+    std::int32_t s1;
+    std::int32_t k;
+    std::int32_t s2;
 
     s1 = app.state.lRandSeed1;
     s2 = app.state.lRandSeed2;
-    k = static_cast<int32_t>((s1 / 53668));
-    s1 = static_cast<uint32_t>(((s1 - static_cast<uint32_t>((k * 53668))) * 0x9c4e)) - static_cast<uint32_t>((k * 12211));
+    k = static_cast<std::int32_t>((s1 / 53668));
+    s1 = static_cast<std::uint32_t>(((s1 - static_cast<std::uint32_t>((k * 53668))) * 0x9c4e)) - static_cast<std::uint32_t>((k * 12211));
     if (s1 < 0) {
         s1 += 2147483563;
     }
-    k = static_cast<int32_t>((s2 / 52774));
-    s2 = static_cast<uint32_t>(((s2 - static_cast<uint32_t>((k * 52774))) * 0x9ef4)) - static_cast<uint32_t>((k * 3791));
+    k = static_cast<std::int32_t>((s2 / 52774));
+    s2 = static_cast<std::uint32_t>(((s2 - static_cast<std::uint32_t>((k * 52774))) * 0x9ef4)) - static_cast<std::uint32_t>((k * 3791));
     if (s2 < 0) {
         s2 += 2147483399;
     }
@@ -83,24 +83,24 @@ int16_t Random(APPSESSION &app, int16_t c) {
     if (c <= 0) {
         return 0;
     }
-    return LOWORD(static_cast<uint32_t>((static_cast<uint32_t>(z) % c)));
+    return LOWORD(static_cast<std::uint32_t>((static_cast<std::uint32_t>(z) % c)));
 }
 
-void GetFileSeeds(APPSESSION &app, int32_t *pl1, int32_t *pl2) {
+void GetFileSeeds(APPSESSION &app, std::int32_t *pl1, std::int32_t *pl2) {
     *pl1 = app.state.lFileSeed1;
     *pl2 = app.state.lFileSeed2;
     return;
 }
 
-void SetFileSeeds(APPSESSION &app, int32_t l1, int32_t l2) {
+void SetFileSeeds(APPSESSION &app, std::int32_t l1, std::int32_t l2) {
     app.state.lFileSeed1 = l1;
     app.state.lFileSeed2 = l2;
     return;
 }
 
-void SetFileXorStream(APPSESSION &app, int32_t lid, int16_t lSalt, int16_t turn, int16_t iPlayer, int16_t fCrippled) {
-    int16_t a;
-    int16_t b;
+void SetFileXorStream(APPSESSION &app, std::int32_t lid, std::int16_t lSalt, std::int16_t turn, std::int16_t iPlayer, std::int16_t fCrippled) {
+    std::int16_t a;
+    std::int16_t b;
 
     a = lSalt & 0x1f;
     b = lSalt >> 5 & 0x1f;
@@ -118,20 +118,20 @@ void SetFileXorStream(APPSESSION &app, int32_t lid, int16_t lSalt, int16_t turn,
     return;
 }
 
-int32_t LGetNextFileXor(APPSESSION &app) {
-    int32_t s1;
-    int32_t k;
-    int32_t s2;
+std::int32_t LGetNextFileXor(APPSESSION &app) {
+    std::int32_t s1;
+    std::int32_t k;
+    std::int32_t s2;
 
     s1 = app.state.lFileSeed1;
     s2 = app.state.lFileSeed2;
-    k = static_cast<int32_t>((s1 / 53668));
-    s1 = static_cast<uint32_t>(((s1 - static_cast<uint32_t>((k * 53668))) * 0x9c4e)) - static_cast<uint32_t>((k * 12211));
+    k = static_cast<std::int32_t>((s1 / 53668));
+    s1 = static_cast<std::uint32_t>(((s1 - static_cast<std::uint32_t>((k * 53668))) * 0x9c4e)) - static_cast<std::uint32_t>((k * 12211));
     if (s1 < 0) {
         s1 += 2147483563;
     }
-    k = static_cast<int32_t>((s2 / 52774));
-    s2 = static_cast<uint32_t>(((s2 - static_cast<uint32_t>((k * 52774))) * 0x9ef4)) - static_cast<uint32_t>((k * 3791));
+    k = static_cast<std::int32_t>((s2 / 52774));
+    s2 = static_cast<std::uint32_t>(((s2 - static_cast<std::uint32_t>((k * 52774))) * 0x9ef4)) - static_cast<std::uint32_t>((k * 3791));
     if (s2 < 0) {
         s2 += 2147483399;
     }
@@ -140,11 +140,11 @@ int32_t LGetNextFileXor(APPSESSION &app) {
     return s1 - s2;
 }
 
-void XorFileBuf(APPSESSION &app, char *rgb, int16_t cb) {
+void XorFileBuf(APPSESSION &app, char *rgb, std::int16_t cb) {
     char    *plMac;
     char    *pl;
-    int32_t  lPrev;
-    uint32_t ul;
+    std::int32_t  lPrev;
+    std::uint32_t ul;
     char    *pch;
 
     lPrev = 0;
@@ -153,7 +153,7 @@ void XorFileBuf(APPSESSION &app, char *rgb, int16_t cb) {
     for (; pl < plMac; pl += 4) {
         lPrev = LGetNextFileXor(app);
         NATIVEBYTEREADER(std::as_bytes(std::span(pl, 4))).FReadU32Le(ul);
-        ul ^= static_cast<uint32_t>(lPrev);
+        ul ^= static_cast<std::uint32_t>(lPrev);
         NATIVEBYTEWRITER(std::as_writable_bytes(std::span(pl, 4))).FWriteU32Le(ul);
     }
     cb &= 3;
@@ -161,28 +161,28 @@ void XorFileBuf(APPSESSION &app, char *rgb, int16_t cb) {
         pch = static_cast<char *>(pl);
         lPrev = LGetNextFileXor(app);
         while (cb-- != 0) {
-            *pch ^= static_cast<int16_t>(static_cast<int8_t>(LOBYTE(LOWORD(lPrev) & 0xff)));
-            lPrev = static_cast<int32_t>((lPrev >> 8));
+            *pch ^= static_cast<std::int16_t>(static_cast<std::int8_t>(LOBYTE(LOWORD(lPrev) & 0xff)));
+            lPrev = static_cast<std::int32_t>((lPrev >> 8));
             pch++;
         }
     }
     return;
 }
 
-int ICompLong(APPSESSION &, int32_t *pl1, int32_t *pl2) { return static_cast<int16_t>((*pl1 - *pl2)); }
+int ICompLong(APPSESSION &, std::int32_t *pl1, std::int32_t *pl2) { return static_cast<std::int16_t>((*pl1 - *pl2)); }
 
-char *PszGetCompressedPlanet(APPSESSION &app, int16_t id) {
-    int16_t  fCap;
-    int16_t  iOffset;
-    int16_t  fHigh;
-    int16_t  iChunk;
-    int16_t  i;
-    int16_t  iBuild;
-    int16_t  iNibble;
-    uint8_t *pchLen;
+char *PszGetCompressedPlanet(APPSESSION &app, std::int16_t id) {
+    std::int16_t  fCap;
+    std::int16_t  iOffset;
+    std::int16_t  fHigh;
+    std::int16_t  iChunk;
+    std::int16_t  i;
+    std::int16_t  iBuild;
+    std::int16_t  iNibble;
+    std::uint8_t *pchLen;
     char    *pszOut;
-    uint8_t *pch;
-    int16_t  iLen;
+    std::uint8_t *pch;
+    std::int16_t  iLen;
 
     iNibble = 0;
     if (id >= cPlanetName) {
@@ -193,7 +193,7 @@ char *PszGetCompressedPlanet(APPSESSION &app, int16_t id) {
     }
     iChunk = id >> 6;
     iOffset = id & 0x3f;
-    pch = reinterpret_cast<uint8_t *>(&aPNCmpr[aiPNChunkOffset[iChunk]]);
+    pch = reinterpret_cast<std::uint8_t *>(&aPNCmpr[aiPNChunkOffset[iChunk]]);
     pchLen = &acPN[iChunk * 64];
     i = 0;
     while (i < iOffset) {
@@ -234,9 +234,9 @@ char *PszGetCompressedPlanet(APPSESSION &app, int16_t id) {
 }
 
 void OutputFileString(const char *szFile, const char *sz) {
-    int16_t  fMissing;
-    uint16_t w;
-    int16_t  hf;
+    std::int16_t  fMissing;
+    std::uint16_t w;
+    std::int16_t  hf;
 
     w = 2;
     if (!FFileExists(szFile)) {
@@ -245,7 +245,7 @@ void OutputFileString(const char *szFile, const char *sz) {
     hf = HfOpenFile(szFile, w, &fMissing);
     if (hf != -1) {
         LSeekFile(hf, 0, 2);
-        CbWriteFile(hf, sz, strlen(sz));
+        CbWriteFile(hf, sz, std::strlen(sz));
         CloseFile(hf);
     }
     return;
@@ -253,12 +253,12 @@ void OutputFileString(const char *szFile, const char *sz) {
 
 void StarsCopyFile(APPSESSION &app, const char *szSrc, const char *szDst) {
     char     rgb[2048];
-    int16_t  fMissing;
-    int16_t  hfDst;
-    int32_t  cb;
+    std::int16_t  fMissing;
+    std::int16_t  hfDst;
+    std::int32_t  cb;
 
     hfDst = -1;
-    StarsRestore<int16_t> restoreSilent(app.state.fFileErrSilent);
+    StarsRestore<std::int16_t> restoreSilent(app.state.fFileErrSilent);
     StarsFileGuard closeDestination(hfDst);
     StarsRecoveryScope scopeRecovery;
     app.state.fFileErrSilent = 1;
@@ -283,7 +283,7 @@ LStreamError:
     return;
 }
 
-int16_t AlertSz(APPSESSION &app, const char *sz, int16_t mbType) {
+std::int16_t AlertSz(APPSESSION &app, const char *sz, std::int16_t mbType) {
     char szT[256];
 
     if (app.state.ini.fValidate || (app.state.ini.fLogging && app.state.ini.fGen)) {
@@ -294,7 +294,7 @@ int16_t AlertSz(APPSESSION &app, const char *sz, int16_t mbType) {
     return IdAlertBox(sz, mbType);
 }
 
-int16_t CchGetString(APPSESSION &app, StringId ids, char *psz) {
+std::int16_t CchGetString(APPSESSION &app, StringId ids, char *psz) {
     char *pszT;
     char *pszTT;
 
@@ -307,8 +307,8 @@ int16_t CchGetString(APPSESSION &app, StringId ids, char *psz) {
     return psz - pszTT;
 }
 
-char *PszFromInt(APPSESSION &app, int16_t i, int16_t *pcch) {
-    int16_t cch;
+char *PszFromInt(APPSESSION &app, std::int16_t i, std::int16_t *pcch) {
+    std::int16_t cch;
 
     cch = CchSprintf(app.state.szFormatNumber, app.state.PCTD, i);
     if (pcch) {
@@ -317,8 +317,8 @@ char *PszFromInt(APPSESSION &app, int16_t i, int16_t *pcch) {
     return app.state.szFormatNumber;
 }
 
-char *PszFromLong(APPSESSION &app, int32_t l, int16_t *pcch) {
-    int16_t cch;
+char *PszFromLong(APPSESSION &app, std::int32_t l, std::int16_t *pcch) {
+    std::int16_t cch;
 
     cch = CchSprintf(app.state.szFormatNumber, app.state.PCTLD, l);
     /* The original tested *pcch, reading through the report dumps' NULL. */
@@ -328,20 +328,20 @@ char *PszFromLong(APPSESSION &app, int32_t l, int16_t *pcch) {
     return app.state.szFormatNumber;
 }
 
-char *PszFromLongK(APPSESSION &app, int32_t l, int16_t *pcch) {
-    int16_t fExtraLarge;
-    int16_t fLarge;
+char *PszFromLongK(APPSESSION &app, std::int32_t l, std::int16_t *pcch) {
+    std::int16_t fExtraLarge;
+    std::int16_t fLarge;
     char   *psz;
 
     fLarge = l >= 10000;
     fExtraLarge = l >= 1000000;
     if (fExtraLarge) {
-        l = static_cast<int32_t>(((l + 500000) / 0xf4240));
+        l = static_cast<std::int32_t>(((l + 500000) / 0xf4240));
         if (l > 999) {
             l = 999;
         }
     } else if (fLarge) {
-        l = static_cast<int32_t>(((l + 500) / 1000));
+        l = static_cast<std::int32_t>(((l + 500) / 1000));
         if (l > 999) {
             l = 999;
         }
@@ -355,10 +355,10 @@ char *PszFromLongK(APPSESSION &app, int32_t l, int16_t *pcch) {
     return psz;
 }
 
-int16_t CommaFormatLong(APPSESSION &app, char *psz, int32_t l) {
+std::int16_t CommaFormatLong(APPSESSION &app, char *psz, std::int32_t l) {
     char    rgch[15];
-    int16_t c;
-    int16_t cSkip;
+    std::int16_t c;
+    std::int16_t cSkip;
     char   *pchOut;
     char   *pch;
 
@@ -385,12 +385,12 @@ int16_t CommaFormatLong(APPSESSION &app, char *psz, int32_t l) {
     return pchOut - psz;
 }
 
-void BoundPoints(RECT *prc, POINT16 *rgpt, int16_t cpt) {
-    int16_t ipt;
-    int16_t xMax;
-    int16_t yMax;
-    int16_t xMin;
-    int16_t yMin;
+void BoundPoints(RECT *prc, POINT16 *rgpt, std::int16_t cpt) {
+    std::int16_t ipt;
+    std::int16_t xMax;
+    std::int16_t yMax;
+    std::int16_t xMin;
+    std::int16_t yMin;
 
     xMax = rgpt->x;
     xMin = rgpt->x;
@@ -409,12 +409,12 @@ void BoundPoints(RECT *prc, POINT16 *rgpt, int16_t cpt) {
     return;
 }
 
-int16_t FCompressUserString(APPSESSION &app, const char *szIn, char *szOut, int16_t *pcOut) {
-    int16_t fHalf;
+std::int16_t FCompressUserString(APPSESSION &app, const char *szIn, char *szOut, std::int16_t *pcOut) {
+    std::int16_t fHalf;
     char    szWork[1024];
-    int16_t iNyb;
+    std::int16_t iNyb;
     char   *pchOut;
-    int16_t cNyb;
+    std::int16_t cNyb;
 
     fHalf = 0;
     pchOut = szWork;
@@ -450,19 +450,19 @@ int16_t FCompressUserString(APPSESSION &app, const char *szIn, char *szOut, int1
         return 0;
     }
     *pcOut = pchOut - szWork;
-    memcpy(szOut, szWork, *pcOut);
+    std::memcpy(szOut, szWork, *pcOut);
     return 1;
 }
 
-static int16_t FDecompressUserStringInternal(APPSESSION &app, const char *szIn, int16_t cIn, char *szOut, int16_t *pcOut, int16_t fUtf8) {
-    int16_t fHalf;
+static std::int16_t FDecompressUserStringInternal(APPSESSION &app, const char *szIn, std::int16_t cIn, char *szOut, std::int16_t *pcOut, std::int16_t fUtf8) {
+    std::int16_t fHalf;
     char    szWork[1024];
-    int16_t iNyb;
+    std::int16_t iNyb;
     char   *pchOut;
 
     fHalf = 0;
     pchOut = szWork;
-    if (cIn < 0 || *pcOut < 0 || *pcOut >= static_cast<int16_t>(sizeof(szWork))) goto invalid;
+    if (cIn < 0 || *pcOut < 0 || *pcOut >= static_cast<std::int16_t>(sizeof(szWork))) goto invalid;
     while (cIn > 0) {
         if (fHalf) {
             iNyb = *szIn & 0xf;
@@ -503,24 +503,24 @@ static int16_t FDecompressUserStringInternal(APPSESSION &app, const char *szIn, 
         }
     }
     *pchOut = 0;
-    if (memchr(szWork, 0, static_cast<size_t>((pchOut - szWork))) != nullptr) goto invalid;
-    if (fUtf8 && !FUtf8Valid(szWork, static_cast<size_t>((pchOut - szWork)))) goto invalid;
-    strcpy(szOut, szWork);
+    if (std::memchr(szWork, 0, static_cast<std::size_t>((pchOut - szWork))) != nullptr) goto invalid;
+    if (fUtf8 && !FUtf8Valid(szWork, static_cast<std::size_t>((pchOut - szWork)))) goto invalid;
+    std::strcpy(szOut, szWork);
     return 1;
 invalid:
     szOut[0] = 0;
     return 0;
 }
 
-int16_t FDecompressUserString(APPSESSION &app, const char *szIn, int16_t cIn, char *szOut, int16_t *pcOut) {
+std::int16_t FDecompressUserString(APPSESSION &app, const char *szIn, std::int16_t cIn, char *szOut, std::int16_t *pcOut) {
     return FDecompressUserStringInternal(app, szIn, cIn, szOut, pcOut, 1);
 }
 
-int16_t FDecompressUserStringBytes(APPSESSION &app, const char *szIn, int16_t cIn, char *szOut, int16_t *pcOut) {
+std::int16_t FDecompressUserStringBytes(APPSESSION &app, const char *szIn, std::int16_t cIn, char *szOut, std::int16_t *pcOut) {
     return FDecompressUserStringInternal(app, szIn, cIn, szOut, pcOut, 0);
 }
 
-int16_t NybbleFromCh(APPSESSION &app, uint8_t ch) {
+std::int16_t NybbleFromCh(APPSESSION &app, std::uint8_t ch) {
     char *pch;
 
     if (ch >= 97 && ch <= 122) {
@@ -541,16 +541,16 @@ int16_t NybbleFromCh(APPSESSION &app, uint8_t ch) {
     if (ch >= 54 && ch <= 57) {
         return (ch - 0x36) << 4 | 0xd;
     }
-    pch = strchr(app.state.rgchcomp, ch);
+    pch = std::strchr(app.state.rgchcomp, ch);
     if (pch) {
         return (pch - app.state.rgchcomp + 4) << 4 | 0xe;
     }
     return ch << 4 | 0xf;
 }
 
-char ChFromNybble(APPSESSION &app, int16_t nyb) {
-    int16_t iPage;
-    int16_t iVal;
+char ChFromNybble(APPSESSION &app, std::int16_t nyb) {
+    std::int16_t iPage;
+    std::int16_t iVal;
 
     if (nyb < 11) {
         return app.state.rgchcompstrlower[nyb];
@@ -572,36 +572,36 @@ char ChFromNybble(APPSESSION &app, int16_t nyb) {
     return app.state.rgchcompstrlower[iVal - 25];
 }
 
-int16_t FIntersectCircleLine(POINT16 ptL1, POINT16 ptL2, POINT16 ptC, int32_t r2, int16_t dMax, int16_t *pdStart, int16_t *pdEnd) {
-    int32_t dyT;
-    int32_t dxdy;
-    int16_t dCtr;
-    int32_t dy2;
-    int32_t dy;
-    int32_t yI;
-    int32_t dyI;
-    int32_t dxT;
-    int32_t lT;
-    int32_t dx2;
-    int16_t dOff;
-    int32_t dx;
-    int32_t dxI;
-    int32_t xI;
-    int32_t r2I;
+std::int16_t FIntersectCircleLine(POINT16 ptL1, POINT16 ptL2, POINT16 ptC, std::int32_t r2, std::int16_t dMax, std::int16_t *pdStart, std::int16_t *pdEnd) {
+    std::int32_t dyT;
+    std::int32_t dxdy;
+    std::int16_t dCtr;
+    std::int32_t dy2;
+    std::int32_t dy;
+    std::int32_t yI;
+    std::int32_t dyI;
+    std::int32_t dxT;
+    std::int32_t lT;
+    std::int32_t dx2;
+    std::int16_t dOff;
+    std::int32_t dx;
+    std::int32_t dxI;
+    std::int32_t xI;
+    std::int32_t r2I;
 
-    dx = static_cast<int16_t>((ptL2.x - ptL1.x));
-    dy = static_cast<int16_t>((ptL2.y - ptL1.y));
-    dxdy = static_cast<uint32_t>((dx * dy));
-    dx2 = static_cast<uint32_t>((dx * dx));
-    dy2 = static_cast<uint32_t>((dy * dy));
+    dx = static_cast<std::int16_t>((ptL2.x - ptL1.x));
+    dy = static_cast<std::int16_t>((ptL2.y - ptL1.y));
+    dxdy = static_cast<std::uint32_t>((dx * dy));
+    dx2 = static_cast<std::uint32_t>((dx * dx));
+    dy2 = static_cast<std::uint32_t>((dy * dy));
     if (dxdy > 500000 || dx2 > 500000 || dy2 > 500000) {
-        dxI = static_cast<double>(((static_cast<double>(dxdy) * static_cast<int16_t>((ptC.y - ptL1.y)) + static_cast<double>(dx2) * ptC.x + static_cast<double>(dy2) * ptL1.x) / (dx2 + dy2)));
-        xI = static_cast<int32_t>(dxI);
+        dxI = static_cast<double>(((static_cast<double>(dxdy) * static_cast<std::int16_t>((ptC.y - ptL1.y)) + static_cast<double>(dx2) * ptC.x + static_cast<double>(dy2) * ptL1.x) / (dx2 + dy2)));
+        xI = static_cast<std::int32_t>(dxI);
     } else {
-        xI = static_cast<int32_t>((static_cast<int32_t>((static_cast<uint32_t>((dxdy * static_cast<int16_t>((ptC.y - ptL1.y)))) + static_cast<uint32_t>((dx2 * ptC.x)) + static_cast<uint32_t>((dy2 * ptL1.x)))) / (dx2 + dy2)));
+        xI = static_cast<std::int32_t>((static_cast<std::int32_t>((static_cast<std::uint32_t>((dxdy * static_cast<std::int16_t>((ptC.y - ptL1.y)))) + static_cast<std::uint32_t>((dx2 * ptC.x)) + static_cast<std::uint32_t>((dy2 * ptL1.x)))) / (dx2 + dy2)));
     }
     if (dx != 0) {
-        yI = ptL1.y + static_cast<int32_t>((static_cast<int32_t>(((xI - ptL1.x) * dy)) / dx));
+        yI = ptL1.y + static_cast<std::int32_t>((static_cast<std::int32_t>(((xI - ptL1.x) * dy)) / dx));
     } else {
         /* A vertical route's closest point is level with the field's center.
            The original used ptL1.y, measuring from the route's start. */
@@ -609,19 +609,19 @@ int16_t FIntersectCircleLine(POINT16 ptL1, POINT16 ptL2, POINT16 ptC, int32_t r2
     }
     dxI = xI - ptC.x;
     dyI = yI - ptC.y;
-    r2I = static_cast<uint32_t>((dxI * dxI)) + static_cast<uint32_t>((dyI * dyI));
+    r2I = static_cast<std::uint32_t>((dxI * dxI)) + static_cast<std::uint32_t>((dyI * dyI));
     if (r2 <= r2I) {
         return 0;
     }
     dxT = xI - ptL1.x;
     dyT = yI - ptL1.y;
-    lT = static_cast<uint32_t>((dxT * dxT)) + static_cast<uint32_t>((dyT * dyT));
-    dCtr = LOWORD(static_cast<int32_t>(sqrt(static_cast<double>(lT))));
+    lT = static_cast<std::uint32_t>((dxT * dxT)) + static_cast<std::uint32_t>((dyT * dyT));
+    dCtr = LOWORD(static_cast<std::int32_t>(std::sqrt(static_cast<double>(lT))));
     lT = r2 - r2I;
     if (lT <= 0) {
         return 0;
     }
-    dOff = LOWORD(static_cast<int32_t>(sqrt(static_cast<double>(lT))));
+    dOff = LOWORD(static_cast<std::int32_t>(std::sqrt(static_cast<double>(lT))));
     if (ptL1.x < ptL2.x) {
         if (xI < ptL1.x) {
             dCtr = -dCtr;
@@ -645,7 +645,7 @@ int16_t FIntersectCircleLine(POINT16 ptL1, POINT16 ptL2, POINT16 ptC, int32_t r2
     return 1;
 }
 
-void IntToRoman(int16_t i, char *pszOut) {
+void IntToRoman(std::int16_t i, char *pszOut) {
     if (i <= 0) {
         *pszOut = 0;
     } else {
@@ -672,8 +672,8 @@ void IntToRoman(int16_t i, char *pszOut) {
     return;
 }
 
-int16_t FCheckPassword(APPSESSION &app) {
-    int32_t lSaltDef;
+std::int16_t FCheckPassword(APPSESSION &app) {
+    std::int32_t lSaltDef;
 
     if (app.state.lSaltCur == 0 || app.state.lSaltLast == app.state.lSaltCur || app.state.fAi) {
         return 1;
@@ -690,8 +690,8 @@ int16_t FCheckPassword(APPSESSION &app) {
     return PlayerChoiceIO().pfnPromptPassword(app);
 }
 
-int32_t LSaltFromSz(const char *psz) {
-    int32_t lSalt;
+std::int32_t LSaltFromSz(const char *psz) {
+    std::int32_t lSalt;
 
     lSalt = 0;
     if (*psz == 0) {
@@ -699,10 +699,10 @@ int32_t LSaltFromSz(const char *psz) {
     }
     while (*psz != 0) {
         // Original x86 arithmetic wraps at 32 bits and treats bytes as signed.
-        lSalt = static_cast<int32_t>((static_cast<uint32_t>(lSalt) + static_cast<uint32_t>(static_cast<int32_t>(static_cast<int16_t>(*psz)))));
+        lSalt = static_cast<std::int32_t>((static_cast<std::uint32_t>(lSalt) + static_cast<std::uint32_t>(static_cast<std::int32_t>(static_cast<std::int16_t>(*psz)))));
         psz++;
         if (*psz != 0) {
-            lSalt = static_cast<int32_t>((static_cast<uint32_t>(lSalt) * static_cast<uint32_t>(static_cast<int32_t>(static_cast<int16_t>(*psz)))));
+            lSalt = static_cast<std::int32_t>((static_cast<std::uint32_t>(lSalt) * static_cast<std::uint32_t>(static_cast<std::int32_t>(static_cast<std::int16_t>(*psz)))));
             psz++;
         }
     }
@@ -712,13 +712,13 @@ int32_t LSaltFromSz(const char *psz) {
     return lSalt;
 }
 
-int32_t LDistance2(POINT16 pt1, POINT16 pt2) {
-    int32_t dy;
-    int32_t dx;
+std::int32_t LDistance2(POINT16 pt1, POINT16 pt2) {
+    std::int32_t dy;
+    std::int32_t dx;
 
-    dx = static_cast<int16_t>((pt1.x - pt2.x));
-    dy = static_cast<int16_t>((pt1.y - pt2.y));
-    return static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy));
+    dx = static_cast<std::int16_t>((pt1.x - pt2.x));
+    dy = static_cast<std::int16_t>((pt1.y - pt2.y));
+    return static_cast<std::uint32_t>((dx * dx)) + static_cast<std::uint32_t>((dy * dy));
 }
 
 char *PszGetLine(char **ppszBeg) {
@@ -739,10 +739,10 @@ char *PszGetLine(char **ppszBeg) {
     return pszStart;
 }
 
-int16_t CParseNumbers(char *psz, int32_t *pl, int16_t cMax) {
-    int16_t iRead;
-    int16_t fValid;
-    int32_t lNum;
+std::int16_t CParseNumbers(char *psz, std::int32_t *pl, std::int16_t cMax) {
+    std::int16_t iRead;
+    std::int16_t fValid;
+    std::int32_t lNum;
 
     iRead = 0;
     lNum = 0;
@@ -753,7 +753,7 @@ int16_t CParseNumbers(char *psz, int32_t *pl, int16_t cMax) {
         }
         if (*psz != ' ') {
             fValid = 1;
-            lNum = static_cast<uint32_t>((lNum * 10)) + static_cast<int16_t>((*psz - '0'));
+            lNum = static_cast<std::uint32_t>((lNum * 10)) + static_cast<std::int16_t>((*psz - '0'));
         } else if (fValid) {
             pl[iRead++] = lNum;
             lNum = 0;

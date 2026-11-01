@@ -10,12 +10,12 @@
 #include "random_io.h"
 #include "record_io.h"
 
-int16_t vrgvcMax[10] = {16, 18, 4, 19, 28, 49, 29, 87, 7, 47};
+std::int16_t vrgvcMax[10] = {16, 18, 4, 19, 28, 49, 29, 87, 7, 47};
 char    rgNG3Width[9][2] = {{-3}, {2, 1}, {5}, {-3}, {3}, {3}, {3}, {1}, {3}};
-uint8_t vrgWormholeMin[5] = {0, 1, 1, 3, 4};
-uint8_t vrgWormholeVar[5] = {3, 3, 5, 4, 5};
+std::uint8_t vrgWormholeMin[5] = {0, 1, 1, 3, 4};
+std::uint8_t vrgWormholeVar[5] = {3, 3, 5, 4, 5};
 
-void InitBattlePlan(APPSESSION &app, BTLPLAN *lpbtlplan, int16_t iplan, int16_t iplr) {
+void InitBattlePlan(APPSESSION &app, BTLPLAN *lpbtlplan, std::int16_t iplan, std::int16_t iplr) {
     *lpbtlplan = rgbtlplanT[iplan];
     lpbtlplan->iplr = iplr;
     if (app.state.game.fSinglePlr && iplan == 0) {
@@ -24,64 +24,64 @@ void InitBattlePlan(APPSESSION &app, BTLPLAN *lpbtlplan, int16_t iplan, int16_t 
     return;
 }
 
-int16_t GenerateWorld(APPSESSION &app, int16_t fBatchMode) {
-    int32_t      *pl;
-    int16_t       iBest;
-    int16_t       cKill;
+std::int16_t GenerateWorld(APPSESSION &app, std::int16_t fBatchMode) {
+    std::int32_t      *pl;
+    std::int16_t       iBest;
+    std::int16_t       cKill;
     char          grUsed[128];
     POINT16      *ppt;
     RaceAttribute raMajor;
-    int16_t       k;
+    std::int16_t       k;
     POINT16       pt;
-    int16_t       fFound;
-    int16_t       iMax;
+    std::int16_t       fFound;
+    std::int16_t       iMax;
     STARPACK      starpack;
     std::byte     rgbGame[cbWireGame];
     std::byte     rgbStarpack[cbWireStarpack];
-    int16_t       dy;
-    int16_t       dGalMinSq;
-    int16_t       iLow;
+    std::int16_t       dy;
+    std::int16_t       dGalMinSq;
+    std::int16_t       iLow;
     PLANET       *lppl;
-    int16_t       iMin;
-    int16_t       i;
-    int16_t       xOld;
-    int16_t       iplrSingle;
+    std::int16_t       iMin;
+    std::int16_t       i;
+    std::int16_t       xOld;
+    std::int16_t       iplrSingle;
     POINT16      *pptMax;
-    int16_t       dMin;
-    int16_t       ktLeft;
+    std::int16_t       dMin;
+    std::int16_t       ktLeft;
     SHDEF        *lpshdef;
-    int32_t       lDistMax2;
-    int32_t       lDistIdeal2;
-    int16_t       rgi[16];
-    int16_t       iNewLine;
-    uint8_t      *pb;
-    int16_t       dMax;
-    int32_t       lDistMin2;
-    int16_t       j;
-    int16_t       cPlanMax;
-    int16_t       dx;
-    int16_t       cKillMax;
+    std::int32_t       lDistMax2;
+    std::int32_t       lDistIdeal2;
+    std::int16_t       rgi[16];
+    std::int16_t       iNewLine;
+    std::uint8_t      *pb;
+    std::int16_t       dMax;
+    std::int32_t       lDistMin2;
+    std::int16_t       j;
+    std::int16_t       cPlanMax;
+    std::int16_t       dx;
+    std::int16_t       cKillMax;
     POINT16      *pptT;
-    int32_t       lBest;
-    int32_t       l;
-    int16_t       iT;
-    int16_t       jj;
-    int16_t       iTechMin;
-    int16_t       pct10;
-    int16_t       idHome;
-    int16_t       ishRet;
+    std::int32_t       lBest;
+    std::int32_t       l;
+    std::int16_t       iT;
+    std::int16_t       jj;
+    std::int16_t       iTechMin;
+    std::int16_t       pct10;
+    std::int16_t       idHome;
+    std::int16_t       ishRet;
     PART          part;
-    int16_t       cFit;
+    std::int16_t       cFit;
     PLANET       *lpplClosest;
     POINT16       ptHome;
     PLANET       *lpplPicked;
-    int32_t       lDistCur2;
+    std::int32_t       lDistCur2;
     HS           *lphs;
-    int16_t       chs;
-    int16_t       cTry;
-    int16_t       rgTry[5];
+    std::int16_t       chs;
+    std::int16_t       cTry;
+    std::int16_t       rgTry[5];
     THING        *lpth;
-    uint16_t      idLast;
+    std::uint16_t      idLast;
     THING        *lpthLast;
     char          szExt[4];
 
@@ -89,9 +89,9 @@ int16_t GenerateWorld(APPSESSION &app, int16_t fBatchMode) {
     cKill = 0;
     app.state.dGal = 400 * app.state.game.mdSize + 400;
     app.state.dGalInv = app.state.dGal + 2000;
-    cPlanMax = LOWORD(static_cast<int32_t>((app.state.dGal * app.state.dGal)) / 5000);
+    cPlanMax = LOWORD(static_cast<std::int32_t>((app.state.dGal * app.state.dGal)) / 5000);
     cPlanMax += cPlanMax / 4 * (app.state.game.mdDensity - 1);
-    if (static_cast<int16_t>(app.state.game.mdDensity) >= densityPacked) {
+    if (static_cast<std::int16_t>(app.state.game.mdDensity) >= densityPacked) {
         cPlanMax += cPlanMax / 4;
     }
     cPlanMax = cPlanMax >= 999 ? 999 : cPlanMax;
@@ -110,7 +110,7 @@ int16_t GenerateWorld(APPSESSION &app, int16_t fBatchMode) {
             pptT = ppt + 1;
             iNewLine = ppt->x + app.state.dGalMinDist;
             for (; pptT < pptMax && pptT->x <= iNewLine; pptT++) {
-                dy = abs(ppt->y - pptT->y);
+                dy = std::abs(ppt->y - pptT->y);
                 if (dy <= app.state.dGalMinDist) {
                     dx = ppt->x - pptT->x;
                     if (dx * dx + dy * dy <= dGalMinSq) {
@@ -146,7 +146,7 @@ int16_t GenerateWorld(APPSESSION &app, int16_t fBatchMode) {
                 if (k != j) {
                     dx = pt.x - app.state.rgptPlan[k].x;
                     dy = pt.y - app.state.rgptPlan[k].y;
-                    l = static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy));
+                    l = static_cast<std::uint32_t>((dx * dx)) + static_cast<std::uint32_t>((dy * dy));
                     if (l < lBest) {
                         lBest = l;
                         iBest = k;
@@ -155,23 +155,23 @@ int16_t GenerateWorld(APPSESSION &app, int16_t fBatchMode) {
             }
             if (lBest > 144) {
                 if (lBest > 1600) {
-                    app.state.rgptPlan[j].x = static_cast<int16_t>((app.state.rgptPlan[iBest].x * 2 + app.state.rgptPlan[j].x)) / 3;
-                    app.state.rgptPlan[j].y = static_cast<int16_t>((app.state.rgptPlan[iBest].y * 2 + app.state.rgptPlan[j].y)) / 3;
+                    app.state.rgptPlan[j].x = static_cast<std::int16_t>((app.state.rgptPlan[iBest].x * 2 + app.state.rgptPlan[j].x)) / 3;
+                    app.state.rgptPlan[j].y = static_cast<std::int16_t>((app.state.rgptPlan[iBest].y * 2 + app.state.rgptPlan[j].y)) / 3;
                 } else if (lBest > 625) {
-                    app.state.rgptPlan[j].x = static_cast<int16_t>((app.state.rgptPlan[j].x + app.state.rgptPlan[iBest].x)) / 2;
-                    app.state.rgptPlan[j].y = static_cast<int16_t>((app.state.rgptPlan[j].y + app.state.rgptPlan[iBest].y)) / 2;
+                    app.state.rgptPlan[j].x = static_cast<std::int16_t>((app.state.rgptPlan[j].x + app.state.rgptPlan[iBest].x)) / 2;
+                    app.state.rgptPlan[j].y = static_cast<std::int16_t>((app.state.rgptPlan[j].y + app.state.rgptPlan[iBest].y)) / 2;
                 } else if (lBest > 324) {
-                    app.state.rgptPlan[j].x = static_cast<int16_t>((app.state.rgptPlan[j].x * 2 + app.state.rgptPlan[iBest].x)) / 3;
-                    app.state.rgptPlan[j].y = static_cast<int16_t>((app.state.rgptPlan[j].y * 2 + app.state.rgptPlan[iBest].y)) / 3;
+                    app.state.rgptPlan[j].x = static_cast<std::int16_t>((app.state.rgptPlan[j].x * 2 + app.state.rgptPlan[iBest].x)) / 3;
+                    app.state.rgptPlan[j].y = static_cast<std::int16_t>((app.state.rgptPlan[j].y * 2 + app.state.rgptPlan[iBest].y)) / 3;
                 } else {
-                    app.state.rgptPlan[j].x = static_cast<int16_t>((app.state.rgptPlan[j].x * 4 + app.state.rgptPlan[iBest].x)) / 5;
-                    app.state.rgptPlan[j].y = static_cast<int16_t>((app.state.rgptPlan[j].y * 4 + app.state.rgptPlan[iBest].y)) / 5;
+                    app.state.rgptPlan[j].x = static_cast<std::int16_t>((app.state.rgptPlan[j].x * 4 + app.state.rgptPlan[iBest].x)) / 5;
+                    app.state.rgptPlan[j].y = static_cast<std::int16_t>((app.state.rgptPlan[j].y * 4 + app.state.rgptPlan[iBest].y)) / 5;
                 }
             }
         }
         qsort16(app, app.state.rgptPlan, cPlanMax, sizeof(POINT16), reinterpret_cast<APPQSORTCOMPARE>(ICompLong));
     }
-    memset(grUsed, 0, 128);
+    std::memset(grUsed, 0, 128);
     for (i = 0; i < cPlanMax; i++) {
         dx = RandomIO().pfnRandom(app, cPlanetName);
         while (grUsed[dx >> 3] & app.state.bitTbl[dx & 7]) {
@@ -187,7 +187,7 @@ int16_t GenerateWorld(APPSESSION &app, int16_t fBatchMode) {
     StarsRecoveryScope scopeRecovery;
     try {
         app.state.lpPlanets = LpAlloc<PLANET>(app, cPlanMax * sizeof(PLANET), htPlanets);
-        memset(app.state.lpPlanets, 0, cPlanMax * sizeof(PLANET));
+        std::memset(app.state.lpPlanets, 0, cPlanMax * sizeof(PLANET));
         i = 0;
         lppl = app.state.lpPlanets;
         while (i < cPlanMax) {
@@ -196,7 +196,7 @@ int16_t GenerateWorld(APPSESSION &app, int16_t fBatchMode) {
             lppl->det = detAll;
             lppl->iScanner = 31;
             if (!app.state.game.fNoRandom) {
-                lppl->fArtifact = static_cast<uint32_t>((RandomIO().pfnRandom(app, 3) == 0)) & 1;
+                lppl->fArtifact = static_cast<std::uint32_t>((RandomIO().pfnRandom(app, 3) == 0)) & 1;
             }
             lppl->rgEnvVar[0] = RandomIO().pfnRandom(app, 90) + 1;
             lppl->rgEnvVar[0] += RandomIO().pfnRandom(app, 10);
@@ -256,28 +256,28 @@ int16_t GenerateWorld(APPSESSION &app, int16_t fBatchMode) {
             lppl++;
         }
         for (j = 0; j < 3; j++) {
-            app.state.lpPlanets->rgwtMin[j] = static_cast<int16_t>((RandomIO().pfnRandom(app, app.state.lpPlanets->rgMinConc[j] * 10) + 10));
+            app.state.lpPlanets->rgwtMin[j] = static_cast<std::int16_t>((RandomIO().pfnRandom(app, app.state.lpPlanets->rgMinConc[j] * 10) + 10));
             if (app.state.lpPlanets->rgwtMin[j] < 200) {
-                app.state.lpPlanets->rgwtMin[j] += static_cast<int16_t>((RandomIO().pfnRandom(app, 150) + 155));
+                app.state.lpPlanets->rgwtMin[j] += static_cast<std::int16_t>((RandomIO().pfnRandom(app, 150) + 155));
             }
             if (app.state.game.fBBSPlay) {
-                app.state.lpPlanets->rgwtMin[j] += static_cast<int32_t>((app.state.lpPlanets->rgwtMin[j] / 4));
+                app.state.lpPlanets->rgwtMin[j] += static_cast<std::int32_t>((app.state.lpPlanets->rgwtMin[j] / 4));
             }
         }
-        l = static_cast<uint32_t>((app.state.dGal * 6));
-        lDistIdeal2 = static_cast<int32_t>((static_cast<int32_t>((app.state.dGal * app.state.dGal)) / app.state.game.cPlayer)) - l;
+        l = static_cast<std::uint32_t>((app.state.dGal * 6));
+        lDistIdeal2 = static_cast<std::int32_t>((static_cast<std::int32_t>((app.state.dGal * app.state.dGal)) / app.state.game.cPlayer)) - l;
         if (lDistIdeal2 < 0) {
             lDistIdeal2 = 0;
         } else {
-            lDistIdeal2 = static_cast<int32_t>((lDistIdeal2 * 9)) / 10;
+            lDistIdeal2 = static_cast<std::int32_t>((lDistIdeal2 * 9)) / 10;
         }
-        lDistIdeal2 = static_cast<int32_t>((lDistIdeal2 * static_cast<int16_t>(app.state.game.mdStartDist))) / 3 + l;
-        lDistMin2 = static_cast<int32_t>((lDistIdeal2 * 9)) / 10;
-        lDistMax2 = static_cast<int32_t>((lDistIdeal2 * 7)) / 6;
+        lDistIdeal2 = static_cast<std::int32_t>((lDistIdeal2 * static_cast<std::int16_t>(app.state.game.mdStartDist))) / 3 + l;
+        lDistMin2 = static_cast<std::int32_t>((lDistIdeal2 * 9)) / 10;
+        lDistMax2 = static_cast<std::int32_t>((lDistIdeal2 * 7)) / 6;
 RetryAll:
         lBest = 100000000;
         dMin = app.state.dGal / 4 + 1000;
-        dMax = static_cast<int16_t>((3 * app.state.dGal)) / 4 + 1000;
+        dMax = static_cast<std::int16_t>((3 * app.state.dGal)) / 4 + 1000;
         for (i = 0; i < 50; i++) {
             rgi[0] = RandomIO().pfnRandom(app, cPlanMax);
             pt = app.state.rgptPlan[rgi[0]];
@@ -297,7 +297,7 @@ RetryAll:
             }
             if (dx == 0 && dy == 0)
                 break;
-            l = static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy));
+            l = static_cast<std::uint32_t>((dx * dx)) + static_cast<std::uint32_t>((dy * dy));
             if (l < lBest) {
                 lBest = l;
                 iBest = rgi[0];
@@ -325,7 +325,7 @@ RetryAll:
                     for (k = 0; k < i; k++) {
                         dx = pt.x - app.state.rgptPlan[rgi[k]].x;
                         dy = pt.y - app.state.rgptPlan[rgi[k]].y;
-                        l = static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy));
+                        l = static_cast<std::uint32_t>((dx * dx)) + static_cast<std::uint32_t>((dy * dy));
                         if (l <= 0 || l < lDistMin2)
                             break;
                         if (l <= lDistMax2) {
@@ -350,7 +350,7 @@ RetryAll:
                         for (k = 0; k < i; k++) {
                             dx = pt.x - app.state.rgptPlan[rgi[k]].x;
                             dy = pt.y - app.state.rgptPlan[rgi[k]].y;
-                            l = static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy));
+                            l = static_cast<std::uint32_t>((dx * dx)) + static_cast<std::uint32_t>((dy * dy));
                             if (l <= 0 || l < lDistMin2)
                                 break;
                             if (l <= lDistMax2) {
@@ -362,8 +362,8 @@ RetryAll:
                     }
                 }
                 if (iBest == rgi[i]) {
-                    lDistMin2 -= static_cast<int32_t>((lDistIdeal2 / 35));
-                    lDistMax2 += static_cast<int32_t>((lDistIdeal2 / 35));
+                    lDistMin2 -= static_cast<std::int32_t>((lDistIdeal2 / 35));
+                    lDistMax2 += static_cast<std::int32_t>((lDistIdeal2 / 35));
                     goto RetryAll;
                 }
             }
@@ -451,7 +451,7 @@ RetryAll:
             } else {
                 app.state.lpPlanets[iMin].rgwtMin[3] = 250;
             }
-            app.state.lpPlanets[iMin].SetUGuesses((app.state.lpPlanets[iMin].uGuesses() & 0xf000) | (static_cast<uint32_t>(LOWORD(app.state.lpPlanets[iMin].rgwtMin[3])) / 4 & 0xfff));
+            app.state.lpPlanets[iMin].SetUGuesses((app.state.lpPlanets[iMin].uGuesses() & 0xf000) | (static_cast<std::uint32_t>(LOWORD(app.state.lpPlanets[iMin].rgwtMin[3])) / 4 & 0xfff));
             for (j = 0; j < 3; j++) {
                 app.state.lpPlanets[iMin].rgwtMin[j] = app.state.lpPlanets->rgwtMin[j];
                 if (app.state.gd.fTutorial) {
@@ -470,13 +470,13 @@ RetryAll:
             if (app.state.rgplr[i].fAi) {
                 iT = 50;
                 if (app.state.rgplr[i].lvlAi >= lvlAiExpert) {
-                    app.state.lpPlanets[iMin].rgwtMin[3] += static_cast<int32_t>((app.state.lpPlanets[iMin].rgwtMin[3] / 10));
+                    app.state.lpPlanets[iMin].rgwtMin[3] += static_cast<std::int32_t>((app.state.lpPlanets[iMin].rgwtMin[3] / 10));
                 }
             }
             if (app.state.game.fBBSPlay) {
                 pct10 = PctTrueMaxGrowth(app, i) * 2 + 10;
-                app.state.lpPlanets[iMin].rgwtMin[3] = static_cast<uint32_t>((app.state.lpPlanets[iMin].rgwtMin[3] * pct10));
-                app.state.lpPlanets[iMin].rgwtMin[3] = static_cast<int32_t>((app.state.lpPlanets[iMin].rgwtMin[3] / 10));
+                app.state.lpPlanets[iMin].rgwtMin[3] = static_cast<std::uint32_t>((app.state.lpPlanets[iMin].rgwtMin[3] * pct10));
+                app.state.lpPlanets[iMin].rgwtMin[3] = static_cast<std::int32_t>((app.state.lpPlanets[iMin].rgwtMin[3] / 10));
                 app.state.lpPlanets[iMin].uPopGuess <<= 2;
             }
             j = RaceQueryIO().pfnStat(&app.state.rgplr[i], rsUseLeftover);
@@ -496,7 +496,7 @@ RetryAll:
                 } else {
                     iLow = 2;
                 }
-                pl[iLow] += static_cast<int16_t>(((ktLeft >> 2) + (ktLeft & 3)));
+                pl[iLow] += static_cast<std::int16_t>(((ktLeft >> 2) + (ktLeft & 3)));
                 ktLeft >>= 2;
                 for (j = 0; j < 3; j++) {
                     pl[j] += ktLeft;
@@ -514,12 +514,12 @@ RetryAll:
                 pb = app.state.lpPlanets[iMin].rgMinConc;
                 iLow = 0;
                 for (j = 0; j < 3; j++) {
-                    if (static_cast<int16_t>(pb[j]) < pb[iLow]) {
+                    if (static_cast<std::int16_t>(pb[j]) < pb[iLow]) {
                         iLow = j;
                     }
                 }
                 pb[iLow] += ktLeft;
-                ktLeft = static_cast<int16_t>((ktLeft + 1)) / 2;
+                ktLeft = static_cast<std::int16_t>((ktLeft + 1)) / 2;
                 for (j = 0; j < 3; j++) {
                     pb[j] += ktLeft;
                 }
@@ -531,7 +531,7 @@ RetryAll:
                 app.state.lpPlanets[iMin].cFactories += iT / 5;
                 break;
             case 4:
-                app.state.lpPlanets[iMin].cDefenses += static_cast<int16_t>((iT + 5)) / 10;
+                app.state.lpPlanets[iMin].cDefenses += static_cast<std::int16_t>((iT + 5)) / 10;
             }
             if (RaceQueryIO().pfnStat(&app.state.rgplr[i], rsMajorAdv) == raMacintosh) {
                 app.state.lpPlanets[iMin].cMines = 0;
@@ -543,19 +543,19 @@ RetryAll:
             if (app.state.rgplr[i].rgEnvVarMax[0] == envImmune) {
                 iT = RandomIO().pfnRandom(app, 99) + 1;
             } else {
-                iT = app.state.rgplr[i].rgEnvVarMin[0] + static_cast<int16_t>((app.state.rgplr[i].rgEnvVarMax[0] - app.state.rgplr[i].rgEnvVarMin[0])) / 2;
+                iT = app.state.rgplr[i].rgEnvVarMin[0] + static_cast<std::int16_t>((app.state.rgplr[i].rgEnvVarMax[0] - app.state.rgplr[i].rgEnvVarMin[0])) / 2;
             }
             app.state.lpPlanets[iMin].rgEnvVar[0] = app.state.lpPlanets[iMin].rgEnvVarOrig[0] = iT;
             if (app.state.rgplr[i].rgEnvVarMax[1] == envImmune) {
                 iT = RandomIO().pfnRandom(app, 99) + 1;
             } else {
-                iT = app.state.rgplr[i].rgEnvVarMin[1] + static_cast<int16_t>((app.state.rgplr[i].rgEnvVarMax[1] - app.state.rgplr[i].rgEnvVarMin[1])) / 2;
+                iT = app.state.rgplr[i].rgEnvVarMin[1] + static_cast<std::int16_t>((app.state.rgplr[i].rgEnvVarMax[1] - app.state.rgplr[i].rgEnvVarMin[1])) / 2;
             }
             app.state.lpPlanets[iMin].rgEnvVar[1] = app.state.lpPlanets[iMin].rgEnvVarOrig[1] = iT;
             if (app.state.rgplr[i].rgEnvVarMax[2] == envImmune) {
                 iT = RandomIO().pfnRandom(app, 99) + 1;
             } else {
-                iT = app.state.rgplr[i].rgEnvVarMin[2] + static_cast<int16_t>((app.state.rgplr[i].rgEnvVarMax[2] - app.state.rgplr[i].rgEnvVarMin[2])) / 2;
+                iT = app.state.rgplr[i].rgEnvVarMin[2] + static_cast<std::int16_t>((app.state.rgplr[i].rgEnvVarMax[2] - app.state.rgplr[i].rgEnvVarMin[2])) / 2;
             }
             app.state.lpPlanets[iMin].rgEnvVar[2] = app.state.lpPlanets[iMin].rgEnvVarOrig[2] = iT;
             if (!app.state.rgplr[i].fAi) {
@@ -570,8 +570,8 @@ RetryAll:
             }
             app.state.rgplr[i].cshdefSB = 1;
             lpshdef = LpAlloc<SHDEF>(app, 10 * sizeof(SHDEF), htShips);
-            memmove(lpshdef, LpshdefSBT(), 4 * sizeof(SHDEF));
-            memset(lpshdef + 4, 0, 6 * sizeof(SHDEF));
+            std::memmove(lpshdef, LpshdefSBT(), 4 * sizeof(SHDEF));
+            std::memset(lpshdef + 4, 0, 6 * sizeof(SHDEF));
             lpshdef->cBuilt = 1;
             lpshdef->cExist = 1;
             app.state.rglpshdefSB[i] = lpshdef;
@@ -581,7 +581,7 @@ RetryAll:
             if (RaceQueryIO().pfnStat(&app.state.rgplr[i], rsMajorAdv) == raMassAccel) {
                 lpshdef->hul.rghs[0].iItem = ispecialSBMassDriver5;
                 lpshdef->hul.rghs[0].cItem = 1;
-                if (static_cast<int16_t>(app.state.game.mdSize) > sizeTiny) {
+                if (static_cast<std::int16_t>(app.state.game.mdSize) > sizeTiny) {
                     lpshdef[1].fFree = 0;
                     app.state.rgplr[i].cshdefSB++;
                     lpshdef[1].cExist = 1;
@@ -590,7 +590,7 @@ RetryAll:
             } else if (RaceQueryIO().pfnStat(&app.state.rgplr[i], rsMajorAdv) == raStargate && !app.state.game.fTutorial) {
                 lpshdef->hul.rghs[0].iItem = ispecialSBStargate100250;
                 lpshdef->hul.rghs[0].cItem = 1;
-                if (static_cast<int16_t>(app.state.game.mdSize) > sizeTiny) {
+                if (static_cast<std::int16_t>(app.state.game.mdSize) > sizeTiny) {
                     lpshdef[1] = lpshdef[2];
                     lpshdef[1].ishdef = 17;
                     lpshdef[1].fFree = 0;
@@ -616,7 +616,7 @@ RetryAll:
         for (i = 0; i < app.state.game.cPlayer; i++) {
             app.state.idPlayer = i;
             lpshdef = LpAlloc<SHDEF>(app, 16 * sizeof(SHDEF), htShips);
-            memset(lpshdef, 0, 16 * sizeof(SHDEF));
+            std::memset(lpshdef, 0, 16 * sizeof(SHDEF));
             for (j = 0; j < 16; j++) {
                 lpshdef[j].fFree = 1;
             }
@@ -672,20 +672,20 @@ RetryAll:
             } else if (raMajor == raStargate) {
                 CreateStartupShip(app, i, idHome, 7, 1);
                 CreateStartupShip(app, i, idHome, 8, 1);
-                if (static_cast<int16_t>(app.state.game.mdSize) > sizeTiny)
+                if (static_cast<std::int16_t>(app.state.game.mdSize) > sizeTiny)
                     goto LGive2ndPlanet;
-            } else if (raMajor == raMassAccel && static_cast<int16_t>(app.state.game.mdSize) > sizeTiny) {
+            } else if (raMajor == raMassAccel && static_cast<std::int16_t>(app.state.game.mdSize) > sizeTiny) {
             LGive2ndPlanet:
                 lpplPicked = nullptr;
                 lpplClosest = nullptr;
                 ptHome = app.state.rgptPlan[idHome];
                 cFit = 0;
-                lDistMin2 = static_cast<int32_t>((app.state.dGal * 15)) / 100;
-                lDistMin2 = static_cast<uint32_t>((lDistMin2 * lDistMin2));
-                lDistMax2 = static_cast<int32_t>((app.state.dGal * 23)) / 100;
-                lDistMax2 = static_cast<uint32_t>((lDistMax2 * lDistMax2));
-                lDistIdeal2 = static_cast<int32_t>((app.state.dGal * 20)) / 100;
-                lDistIdeal2 = static_cast<uint32_t>((lDistIdeal2 * lDistIdeal2));
+                lDistMin2 = static_cast<std::int32_t>((app.state.dGal * 15)) / 100;
+                lDistMin2 = static_cast<std::uint32_t>((lDistMin2 * lDistMin2));
+                lDistMax2 = static_cast<std::int32_t>((app.state.dGal * 23)) / 100;
+                lDistMax2 = static_cast<std::uint32_t>((lDistMax2 * lDistMax2));
+                lDistIdeal2 = static_cast<std::int32_t>((app.state.dGal * 20)) / 100;
+                lDistIdeal2 = static_cast<std::uint32_t>((lDistIdeal2 * lDistIdeal2));
                 lBest = 10000000;
                 pptMax = &app.state.rgptPlan[cPlanMax];
                 ppt = app.state.rgptPlan;
@@ -694,7 +694,7 @@ RetryAll:
                     if (lppl->iPlayer == iplrNone) {
                         dx = ppt->x - ptHome.x;
                         dy = ppt->y - ptHome.y;
-                        lDistCur2 = static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy));
+                        lDistCur2 = static_cast<std::uint32_t>((dx * dx)) + static_cast<std::uint32_t>((dy * dy));
                         if (lDistCur2 >= lDistMin2 && lDistCur2 <= lDistMax2) {
                             cFit++;
                             if (RandomIO().pfnRandom(app, cFit) == 0) {
@@ -730,14 +730,14 @@ RetryAll:
                 lpplPicked->fArtifact = 0;
                 lpplPicked->cFactories = 4;
                 lpplPicked->cMines = 10;
-                lpplPicked->rgwtMin[3] = static_cast<int32_t>((app.state.lpPlanets[idHome].rgwtMin[3] * 2)) / 5;
-                lpplPicked->uPopGuess = static_cast<uint32_t>(LOWORD(lpplPicked->rgwtMin[3])) / 4;
+                lpplPicked->rgwtMin[3] = static_cast<std::int32_t>((app.state.lpPlanets[idHome].rgwtMin[3] * 2)) / 5;
+                lpplPicked->uPopGuess = static_cast<std::uint32_t>(LOWORD(lpplPicked->rgwtMin[3])) / 4;
                 for (j = 0; j < 3; j++) {
-                    lpplPicked->rgwtMin[j] = static_cast<int16_t>((RandomIO().pfnRandom(app, 200) + 100));
+                    lpplPicked->rgwtMin[j] = static_cast<std::int16_t>((RandomIO().pfnRandom(app, 200) + 100));
                 }
                 lpplPicked->iScanner = 0;
-                app.state.lpPlanets[idHome].rgwtMin[3] = static_cast<int32_t>((app.state.lpPlanets[idHome].rgwtMin[3] * 4)) / 5;
-                app.state.lpPlanets[idHome].SetUGuesses((app.state.lpPlanets[idHome].uGuesses() & 0xf000) | (static_cast<uint32_t>(LOWORD(app.state.lpPlanets[idHome].rgwtMin[3])) / 4 & 0xfff));
+                app.state.lpPlanets[idHome].rgwtMin[3] = static_cast<std::int32_t>((app.state.lpPlanets[idHome].rgwtMin[3] * 4)) / 5;
+                app.state.lpPlanets[idHome].SetUGuesses((app.state.lpPlanets[idHome].uGuesses() & 0xf000) | (static_cast<std::uint32_t>(LOWORD(app.state.lpPlanets[idHome].rgwtMin[3])) / 4 & 0xfff));
                 CreateStartupShip(app, i, lpplPicked->id, 0, 0);
             } else if (raMajor == raNone) {
                 CreateStartupShip(app, i, idHome, app.state.rgplr[i].rgTech[3] < 4 ? 6 : 8, 1);
@@ -957,13 +957,13 @@ RetryAll:
     }
 }
 
-int16_t CreateStartupShip(APPSESSION &app, int16_t iplr, int16_t idPlanet, int16_t ishdef, int16_t fAddShdef) {
-    int16_t ishMac;
+std::int16_t CreateStartupShip(APPSESSION &app, std::int16_t iplr, std::int16_t idPlanet, std::int16_t ishdef, std::int16_t fAddShdef) {
+    std::int16_t ishMac;
     FLEET  *lpfl;
 
     if (fAddShdef) {
-        ishMac = static_cast<int16_t>(static_cast<int8_t>(app.state.rgplr[iplr].cShDef++));
-        memmove(app.state.rglpshdef[iplr] + ishMac, LpshdefT() + ishdef, sizeof(SHDEF));
+        ishMac = static_cast<std::int16_t>(static_cast<std::int8_t>(app.state.rgplr[iplr].cShDef++));
+        std::memmove(app.state.rglpshdef[iplr] + ishMac, LpshdefT() + ishdef, sizeof(SHDEF));
         app.state.rglpshdef[iplr][ishMac].ishdef = ishMac;
         ishdef = ishMac;
     }
@@ -976,46 +976,46 @@ int16_t CreateStartupShip(APPSESSION &app, int16_t iplr, int16_t idPlanet, int16
     return ishdef;
 }
 
-int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
-    int32_t rgl[10];
-    int16_t cPlr;
-    int16_t rgplrbmp[16];
-    int16_t cNum;
-    int16_t c;
-    int16_t i;
-    int16_t fSuccess;
-    int16_t fReadRace;
+std::int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
+    std::int32_t rgl[10];
+    std::int16_t cPlr;
+    std::int16_t rgplrbmp[16];
+    std::int16_t cNum;
+    std::int16_t c;
+    std::int16_t i;
+    std::int16_t fSuccess;
+    std::int16_t fReadRace;
     char   *lpbStart;
-    int16_t j;
+    std::int16_t j;
     char   *lpb;
     char   *lpbDef;
-    int16_t cb;
-    int32_t cbFile;
+    std::int16_t cb;
+    std::int32_t cbFile;
     char   *pchT;
     AiRace  idAi;
-    int16_t lvlAi;
+    std::int16_t lvlAi;
 
     fSuccess = 0;
-    strcpy(app.state.szWork, pszFile);
+    std::strcpy(app.state.szWork, pszFile);
     StarsRecoveryScope scopeRecovery;
     try {
         if (app.state.ini.fLogging) {
             /* NATIVE: the host passes szBase itself; see FLoadGame. */
             if (pszFile != app.state.szBase) {
-                strcpy(app.state.szBase, pszFile);
+                std::strcpy(app.state.szBase, pszFile);
             }
-            pchT = strrchr(app.state.szBase, 46);
+            pchT = std::strrchr(app.state.szBase, 46);
             *pchT = 0;
             TurnLog(app, idsGeneratingYearD);
         }
-        memset(&app.state.game, 0, sizeof(GAME));
+        std::memset(&app.state.game, 0, sizeof(GAME));
         RecordIO().pfnStreamOpen(app, pszFile, mdRead);
         cbFile = CbFileSize(app.state.hf);
         if (cbFile < 0 || cbFile >= 16000) {
             FileError(app, idsUniverseCreationFileAppearsInvalid);
             goto LError;
         }
-        cb = static_cast<int16_t>(cbFile);
+        cb = static_cast<std::int16_t>(cbFile);
         lpbDef = LpAlloc<char>(app, cb + 1, htPerm);
         app.state.lpbDefMac = lpbDef + cb;
         RgFromStream(app, lpbDef, cb);
@@ -1026,13 +1026,13 @@ int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
             goto LError;
         }
         lpb = lpbDef;
-        if (cb >= 3 && !memcmp(lpb, "\xef\xbb\xbf", 3)) lpb += 3;
+        if (cb >= 3 && !std::memcmp(lpb, "\xef\xbb\xbf", 3)) lpb += 3;
         lpbStart = PszGetLine(&lpb);
-        if (*lpbStart == 0 || strlen(lpbStart) > 31) {
+        if (*lpbStart == 0 || std::strlen(lpbStart) > 31) {
             AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsIllegalGameTitle, nullptr), win32::MB_ICONHAND);
             goto LError;
         }
-        if (CchCopyUtf8(app.state.game.szName, sizeof(app.state.game.szName), lpbStart, strlen(lpbStart)) < 0) {
+        if (CchCopyUtf8(app.state.game.szName, sizeof(app.state.game.szName), lpbStart, std::strlen(lpbStart)) < 0) {
             FileError(app, idsGameFileAppearsCorruptUnableLoadFile);
             goto LError;
         }
@@ -1112,7 +1112,7 @@ int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
             lpbStart = PszGetLine(&lpb);
             if (lpb >= app.state.lpbDefMac)
                 goto LUniDefShort;
-            if (strlen(lpbStart) >= sizeof(app.state.szWork)) {
+            if (std::strlen(lpbStart) >= sizeof(app.state.szWork)) {
                 FileError(app, idsUniverseCreationFileAppearsInvalid);
                 goto LError;
             }
@@ -1120,8 +1120,8 @@ int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
                 cNum = CParseNumbers(lpbStart + 1, rgl, 2);
                 idAi = static_cast<AiRace>(LOWORD(rgl[0]));
                 lvlAi = LOWORD(rgl[1]);
-                if (cNum < 2 || static_cast<int16_t>(idAi) < idAiRobotoid || static_cast<int16_t>(idAi) > idAiRandom || lvlAi < 0 || lvlAi > 4) {
-                    strcpy(app.state.szWork, lpbStart);
+                if (cNum < 2 || static_cast<std::int16_t>(idAi) < idAiRobotoid || static_cast<std::int16_t>(idAi) > idAiRandom || lvlAi < 0 || lvlAi > 4) {
+                    std::strcpy(app.state.szWork, lpbStart);
                     goto LCantGetRace;
                 }
                 if (lvlAi == 0) {
@@ -1139,7 +1139,7 @@ int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
                 app.state.rgplr[i].idAi = idAi;
                 app.state.rgplr[i].lvlAi = lvlAi;
             } else {
-                strcpy(app.state.szWork, lpbStart);
+                std::strcpy(app.state.szWork, lpbStart);
                 fReadRace = FWasRaceFile(app, app.state.szWork, 0);
                 if (fReadRace != 1) {
                 LCantGetRace:
@@ -1166,7 +1166,7 @@ int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
             if (cNum < 2 || rgl[1] < 20 || rgl[1] > 100)
                 goto LBadDefVc;
             SetVCCheck(&app.state.game, vcOwnsPercentPlanets, 1);
-            SetVCVal(app, &app.state.game, vcOwnsPercentPlanets, static_cast<int16_t>((LOWORD(rgl[1]) - 20)) / 5);
+            SetVCVal(app, &app.state.game, vcOwnsPercentPlanets, static_cast<std::int16_t>((LOWORD(rgl[1]) - 20)) / 5);
         }
         lpbStart = PszGetLine(&lpb);
         cNum = CParseNumbers(lpbStart, rgl, 3);
@@ -1194,7 +1194,7 @@ int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
             if (cNum < 2 || rgl[1] < 1000 || rgl[1] > 20000)
                 goto LBadDefVc;
             SetVCCheck(&app.state.game, vcExceedsScore, 1);
-            SetVCVal(app, &app.state.game, vcExceedsScore, static_cast<int16_t>((LOWORD(rgl[1]) - 1000)) / 1000);
+            SetVCVal(app, &app.state.game, vcExceedsScore, static_cast<std::int16_t>((LOWORD(rgl[1]) - 1000)) / 1000);
         }
         lpbStart = PszGetLine(&lpb);
         cNum = CParseNumbers(lpbStart, rgl, 2);
@@ -1207,7 +1207,7 @@ int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
             if (cNum < 2 || rgl[1] < 20 || rgl[1] > 300)
                 goto LBadDefVc;
             SetVCCheck(&app.state.game, vcExceedsSecondPlaceBy, 1);
-            SetVCVal(app, &app.state.game, vcExceedsSecondPlaceBy, static_cast<int16_t>((LOWORD(rgl[1]) - 20)) / 10);
+            SetVCVal(app, &app.state.game, vcExceedsSecondPlaceBy, static_cast<std::int16_t>((LOWORD(rgl[1]) - 20)) / 10);
         }
         lpbStart = PszGetLine(&lpb);
         cNum = CParseNumbers(lpbStart, rgl, 2);
@@ -1220,7 +1220,7 @@ int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
             if (cNum < 2 || rgl[1] < 10 || rgl[1] > 500)
                 goto LBadDefVc;
             SetVCCheck(&app.state.game, vcProductionCapacity, 1);
-            SetVCVal(app, &app.state.game, vcProductionCapacity, static_cast<int16_t>((LOWORD(rgl[1]) - 10)) / 10);
+            SetVCVal(app, &app.state.game, vcProductionCapacity, static_cast<std::int16_t>((LOWORD(rgl[1]) - 10)) / 10);
         }
         lpbStart = PszGetLine(&lpb);
         cNum = CParseNumbers(lpbStart, rgl, 2);
@@ -1233,7 +1233,7 @@ int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
             if (cNum < 2 || rgl[1] < 10 || rgl[1] > 300)
                 goto LBadDefVc;
             SetVCCheck(&app.state.game, vcOwnsCapitalShips, 1);
-            SetVCVal(app, &app.state.game, vcOwnsCapitalShips, static_cast<int16_t>((LOWORD(rgl[1]) - 10)) / 10);
+            SetVCVal(app, &app.state.game, vcOwnsCapitalShips, static_cast<std::int16_t>((LOWORD(rgl[1]) - 10)) / 10);
         }
         lpbStart = PszGetLine(&lpb);
         cNum = CParseNumbers(lpbStart, rgl, 2);
@@ -1246,7 +1246,7 @@ int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
             if (cNum < 2 || rgl[1] < 30 || rgl[1] > 900)
                 goto LBadDefVc;
             SetVCCheck(&app.state.game, vcHighestScoreAfterYears, 1);
-            SetVCVal(app, &app.state.game, vcHighestScoreAfterYears, static_cast<int16_t>((LOWORD(rgl[1]) - 30)) / 10);
+            SetVCVal(app, &app.state.game, vcHighestScoreAfterYears, static_cast<std::int16_t>((LOWORD(rgl[1]) - 30)) / 10);
         }
         lpbStart = PszGetLine(&lpb);
         cNum = CParseNumbers(lpbStart, rgl, 2);
@@ -1259,14 +1259,14 @@ int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
             if (cNum < 2 || rgl[1] < 30 || rgl[1] > 500)
                 goto LBadDefVc;
             SetVCVal(app, &app.state.game, vcMeetsNumCriteria, LOWORD(rgl[0]));
-            SetVCVal(app, &app.state.game, vcMinYearsBeforeWin, static_cast<int16_t>((LOWORD(rgl[1]) - 30)) / 10);
+            SetVCVal(app, &app.state.game, vcMinYearsBeforeWin, static_cast<std::int16_t>((LOWORD(rgl[1]) - 30)) / 10);
         }
         lpbStart = PszGetLine(&lpb);
-        lpb = lpbStart + (-1 + strlen(lpbStart));
+        lpb = lpbStart + (-1 + std::strlen(lpbStart));
         if (lpb - lpbStart >= 3 && *lpb == 'y' && lpb[-1] == 'x' && lpb[-2] == '.') {
             lpb[-2] = 0;
         }
-        if (CchCopyUtf8(app.state.szBase, sizeof(app.state.szBase), lpbStart, strlen(lpbStart)) < 0) {
+        if (CchCopyUtf8(app.state.szBase, sizeof(app.state.szBase), lpbStart, std::strlen(lpbStart)) < 0) {
             FileError(app, idsUniverseCreationFileAppearsInvalid);
             goto LError;
         }
@@ -1284,12 +1284,12 @@ int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
             }
         }
         for (i = 1; i < app.state.game.cPlayer; i++) {
-            for (j = 0; j < i && strcmp(app.state.rgplr[i].szName, app.state.rgplr[j].szName) != 0; j++) {
+            for (j = 0; j < i && std::strcmp(app.state.rgplr[i].szName, app.state.rgplr[j].szName) != 0; j++) {
             }
             if (j < i) {
                 c = RandomIO().pfnRandom(app, 24);
                 while (1) {
-                    for (j = 0; j < app.state.game.cPlayer && strcmp(app.state.rgplr[j].szName, TextIO().pfnCompressed(app, static_cast<StringId>(idsBerserker + c))) != 0; j++) {
+                    for (j = 0; j < app.state.game.cPlayer && std::strcmp(app.state.rgplr[j].szName, TextIO().pfnCompressed(app, static_cast<StringId>(idsBerserker + c))) != 0; j++) {
                     }
                     if (j == app.state.game.cPlayer)
                         break;
@@ -1299,8 +1299,8 @@ int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
                     }
                 }
                 TextIO().pfnCchGetString(app, static_cast<StringId>(idsBerserker + c), app.state.rgplr[i].szName);
-                strcpy(app.state.rgplr[i].szNames, app.state.rgplr[i].szName);
-                strcat(app.state.rgplr[i].szNames, "s");
+                std::strcpy(app.state.rgplr[i].szNames, app.state.rgplr[i].szName);
+                std::strcat(app.state.rgplr[i].szNames, "s");
             }
         }
         for (i = 0; i < app.state.game.cPlayer; i++) {
@@ -1348,9 +1348,9 @@ LError:
 }
 
 void CreateTutorWorld(APPSESSION &app) {
-    int16_t i;
+    std::int16_t i;
 
-    memset(&app.state.game, 0, sizeof(GAME));
+    std::memset(&app.state.game, 0, sizeof(GAME));
     app.state.game.cPlayer = 2;
     app.state.game.fTutorial = 1;
     app.state.game.mdDensity = densitySparse;
@@ -1382,10 +1382,10 @@ void CreateTutorWorld(APPSESSION &app) {
     return;
 }
 
-void InitNewGamePlr(APPSESSION &app, int16_t iStepMaxSoFar, AiLevel lvlAi) {
-    int16_t i;
-    int16_t c;
-    uint8_t ch;
+void InitNewGamePlr(APPSESSION &app, std::int16_t iStepMaxSoFar, AiLevel lvlAi) {
+    std::int16_t i;
+    std::int16_t c;
+    std::uint8_t ch;
 
     if (iStepMaxSoFar < 2 && !app.state.fRCWReadOnly) {
         SetVCVal(app, &app.state.game, vcMinYearsBeforeWin, app.state.game.mdSize * 2);
@@ -1403,7 +1403,7 @@ void InitNewGamePlr(APPSESSION &app, int16_t iStepMaxSoFar, AiLevel lvlAi) {
                     app.state.game.cPlayer = 5;
                     break;
                 }
-                if (static_cast<int16_t>(lvlAi) >= lvlAiTough && RandomIO().pfnRandom(app, 6 - lvlAi) == 0) {
+                if (static_cast<std::int16_t>(lvlAi) >= lvlAiTough && RandomIO().pfnRandom(app, 6 - lvlAi) == 0) {
                     app.state.game.cPlayer = 4;
                     break;
                 }
@@ -1418,11 +1418,11 @@ void InitNewGamePlr(APPSESSION &app, int16_t iStepMaxSoFar, AiLevel lvlAi) {
                     app.state.game.cPlayer = 5;
                     break;
                 }
-                if (static_cast<int16_t>(lvlAi) >= lvlAiTough && RandomIO().pfnRandom(app, 7 - lvlAi) == 0) {
+                if (static_cast<std::int16_t>(lvlAi) >= lvlAiTough && RandomIO().pfnRandom(app, 7 - lvlAi) == 0) {
                     app.state.game.cPlayer = 8;
                     break;
                 }
-                if (static_cast<int16_t>(lvlAi) >= lvlAiTough && RandomIO().pfnRandom(app, 7 - lvlAi) == 0) {
+                if (static_cast<std::int16_t>(lvlAi) >= lvlAiTough && RandomIO().pfnRandom(app, 7 - lvlAi) == 0) {
                     app.state.game.cPlayer = 6;
                     break;
                 }
@@ -1437,11 +1437,11 @@ void InitNewGamePlr(APPSESSION &app, int16_t iStepMaxSoFar, AiLevel lvlAi) {
                     app.state.game.cPlayer = 10 - RandomIO().pfnRandom(app, 2);
                     break;
                 }
-                if (static_cast<int16_t>(lvlAi) >= lvlAiTough && RandomIO().pfnRandom(app, 7 - lvlAi) == 0) {
+                if (static_cast<std::int16_t>(lvlAi) >= lvlAiTough && RandomIO().pfnRandom(app, 7 - lvlAi) == 0) {
                     app.state.game.cPlayer = 13;
                     break;
                 }
-                if (static_cast<int16_t>(lvlAi) >= lvlAiTough && RandomIO().pfnRandom(app, 7 - lvlAi) == 0) {
+                if (static_cast<std::int16_t>(lvlAi) >= lvlAiTough && RandomIO().pfnRandom(app, 7 - lvlAi) == 0) {
                     app.state.game.cPlayer = 11;
                     break;
                 }
@@ -1450,9 +1450,9 @@ void InitNewGamePlr(APPSESSION &app, int16_t iStepMaxSoFar, AiLevel lvlAi) {
             case sizeHuge:
                 if (lvlAi == lvlAiExpert && RandomIO().pfnRandom(app, 10) == 0) {
                     app.state.game.cPlayer = 13 - RandomIO().pfnRandom(app, 3);
-                } else if (static_cast<int16_t>(lvlAi) >= lvlAiTough && RandomIO().pfnRandom(app, 9 - lvlAi) == 0) {
+                } else if (static_cast<std::int16_t>(lvlAi) >= lvlAiTough && RandomIO().pfnRandom(app, 9 - lvlAi) == 0) {
                     app.state.game.cPlayer = 14;
-                } else if (static_cast<int16_t>(lvlAi) >= lvlAiTough && RandomIO().pfnRandom(app, 7 - lvlAi) == 0) {
+                } else if (static_cast<std::int16_t>(lvlAi) >= lvlAiTough && RandomIO().pfnRandom(app, 7 - lvlAi) == 0) {
                     app.state.game.cPlayer = 15;
                 } else {
                     app.state.game.cPlayer = 16;
@@ -1464,11 +1464,11 @@ void InitNewGamePlr(APPSESSION &app, int16_t iStepMaxSoFar, AiLevel lvlAi) {
                 break;
             case lvlAiEasy:
                 while (i < app.state.game.cPlayer) {
-                    if (i < static_cast<int16_t>((app.state.game.cPlayer + 1)) / 3 + 1) {
+                    if (i < static_cast<std::int16_t>((app.state.game.cPlayer + 1)) / 3 + 1) {
                         app.state.vrgplrTypeNew[i++] = 11;
-                    } else if (i < static_cast<int16_t>(((app.state.game.cPlayer + 1) * 2)) / 3 + 1) {
+                    } else if (i < static_cast<std::int16_t>(((app.state.game.cPlayer + 1) * 2)) / 3 + 1) {
                         app.state.vrgplrTypeNew[i++] = 15;
-                    } else if (i < static_cast<int16_t>(((app.state.game.cPlayer + 1) * 5)) / 6 + 1) {
+                    } else if (i < static_cast<std::int16_t>(((app.state.game.cPlayer + 1) * 5)) / 6 + 1) {
                         app.state.vrgplrTypeNew[i++] = 7;
                     } else {
                         app.state.vrgplrTypeNew[i++] = 27;
@@ -1477,15 +1477,15 @@ void InitNewGamePlr(APPSESSION &app, int16_t iStepMaxSoFar, AiLevel lvlAi) {
                 break;
             case lvlAiStandard:
                 while (i < app.state.game.cPlayer) {
-                    if (i < static_cast<int16_t>(((app.state.game.cPlayer + 5) * 2)) / 7 + 1) {
+                    if (i < static_cast<std::int16_t>(((app.state.game.cPlayer + 5) * 2)) / 7 + 1) {
                         app.state.vrgplrTypeNew[i++] = 39;
-                    } else if (i < static_cast<int16_t>(((app.state.game.cPlayer - 1) * 3 + 6)) / 7 + 1) {
+                    } else if (i < static_cast<std::int16_t>(((app.state.game.cPlayer - 1) * 3 + 6)) / 7 + 1) {
                         app.state.vrgplrTypeNew[i++] = 35;
-                    } else if (i < static_cast<int16_t>(((app.state.game.cPlayer - 1) * 4 + 6)) / 7 + 1) {
+                    } else if (i < static_cast<std::int16_t>(((app.state.game.cPlayer - 1) * 4 + 6)) / 7 + 1) {
                         app.state.vrgplrTypeNew[i++] = 43;
-                    } else if (i < static_cast<int16_t>(((app.state.game.cPlayer - 1) * 5 + 6)) / 7 + 1) {
+                    } else if (i < static_cast<std::int16_t>(((app.state.game.cPlayer - 1) * 5 + 6)) / 7 + 1) {
                         app.state.vrgplrTypeNew[i++] = 47;
-                    } else if (i < static_cast<int16_t>(((app.state.game.cPlayer - 1) * 6 + 6)) / 7 + 1) {
+                    } else if (i < static_cast<std::int16_t>(((app.state.game.cPlayer - 1) * 6 + 6)) / 7 + 1) {
                         app.state.vrgplrTypeNew[i++] = 51;
                     } else {
                         app.state.vrgplrTypeNew[i++] = 155;
@@ -1494,15 +1494,15 @@ void InitNewGamePlr(APPSESSION &app, int16_t iStepMaxSoFar, AiLevel lvlAi) {
                 break;
             case lvlAiTough:
                 while (i < app.state.game.cPlayer) {
-                    if (i < static_cast<int16_t>(((app.state.game.cPlayer + 5) * 2)) / 7 + 1) {
+                    if (i < static_cast<std::int16_t>(((app.state.game.cPlayer + 5) * 2)) / 7 + 1) {
                         app.state.vrgplrTypeNew[i++] = 83;
-                    } else if (i < static_cast<int16_t>(((app.state.game.cPlayer - 1) * 3 + 6)) / 7 + 1) {
+                    } else if (i < static_cast<std::int16_t>(((app.state.game.cPlayer - 1) * 3 + 6)) / 7 + 1) {
                         app.state.vrgplrTypeNew[i++] = 71;
-                    } else if (i < static_cast<int16_t>(((app.state.game.cPlayer - 1) * 4 + 6)) / 7 + 1) {
+                    } else if (i < static_cast<std::int16_t>(((app.state.game.cPlayer - 1) * 4 + 6)) / 7 + 1) {
                         app.state.vrgplrTypeNew[i++] = 67;
-                    } else if (i < static_cast<int16_t>(((app.state.game.cPlayer - 1) * 5 + 6)) / 7 + 1) {
+                    } else if (i < static_cast<std::int16_t>(((app.state.game.cPlayer - 1) * 5 + 6)) / 7 + 1) {
                         app.state.vrgplrTypeNew[i++] = 87;
-                    } else if (i < static_cast<int16_t>(((app.state.game.cPlayer - 1) * 6 + 6)) / 7 + 1) {
+                    } else if (i < static_cast<std::int16_t>(((app.state.game.cPlayer - 1) * 6 + 6)) / 7 + 1) {
                         app.state.vrgplrTypeNew[i++] = 91;
                     } else {
                         app.state.vrgplrTypeNew[i++] = 155;
@@ -1511,11 +1511,11 @@ void InitNewGamePlr(APPSESSION &app, int16_t iStepMaxSoFar, AiLevel lvlAi) {
                 break;
             case lvlAiExpert:
                 while (i < app.state.game.cPlayer) {
-                    if (i < static_cast<int16_t>((app.state.game.cPlayer + 1)) / 3 + 1) {
+                    if (i < static_cast<std::int16_t>((app.state.game.cPlayer + 1)) / 3 + 1) {
                         app.state.vrgplrTypeNew[i++] = 99;
-                    } else if (i < static_cast<int16_t>(((app.state.game.cPlayer - 1) * 6 + 11)) / 12 + 1) {
+                    } else if (i < static_cast<std::int16_t>(((app.state.game.cPlayer - 1) * 6 + 11)) / 12 + 1) {
                         app.state.vrgplrTypeNew[i++] = 119;
-                    } else if (i < static_cast<int16_t>(((app.state.game.cPlayer - 1) * 5 + 5)) / 6 + 1) {
+                    } else if (i < static_cast<std::int16_t>(((app.state.game.cPlayer - 1) * 5 + 5)) / 6 + 1) {
                         app.state.vrgplrTypeNew[i++] = 115;
                     } else {
                         app.state.vrgplrTypeNew[i++] = 123;
@@ -1537,20 +1537,20 @@ void InitNewGame3() { return; }
 
 PLAYER *LpplrComp(AiRace idAi, AiLevel lvlAi) { return &vrgplrComp[idAi][lvlAi]; }
 
-void SetVCCheck(GAME *pgame, VictoryCondition vc, int16_t fChecked) {
+void SetVCCheck(GAME *pgame, VictoryCondition vc, std::int16_t fChecked) {
     pgame->rgvc[vc] = (pgame->rgvc[vc] & 0x7f) | (!fChecked ? 0 : 0x80);
     return;
 }
 
-int16_t GetVCCheck(GAME *pgame, VictoryCondition vc) {
+std::int16_t GetVCCheck(GAME *pgame, VictoryCondition vc) {
     if (pgame->rgvc[vc] & 0x80) {
         return 1;
     }
     return 0;
 }
 
-int16_t SetVCVal(APPSESSION &app, GAME *pgame, VictoryCondition vc, int16_t val) {
-    int16_t cur;
+std::int16_t SetVCVal(APPSESSION &app, GAME *pgame, VictoryCondition vc, std::int16_t val) {
+    std::int16_t cur;
 
     if (val < 0) {
         val = 0;
@@ -1568,10 +1568,10 @@ int16_t SetVCVal(APPSESSION &app, GAME *pgame, VictoryCondition vc, int16_t val)
     return val;
 }
 
-int16_t GetVCVal(APPSESSION &app, GAME *pgame, VictoryCondition vc, int16_t fRaw) {
-    int16_t c;
-    int16_t i;
-    int16_t val;
+std::int16_t GetVCVal(APPSESSION &app, GAME *pgame, VictoryCondition vc, std::int16_t fRaw) {
+    std::int16_t c;
+    std::int16_t i;
+    std::int16_t val;
 
     val = pgame->rgvc[vc] & 0x7f;
     if (fRaw) {

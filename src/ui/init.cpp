@@ -8,14 +8,14 @@
 #include "uistate.h"
 #include <stars_compat.h>
 
-uint8_t rgPalGray[20] = {10, 20, 30, 40, 61, 71, 81, 92, 112, 122, 133, 143, 161, 171, 182, 193, 215, 225, 235, 245};
+std::uint8_t rgPalGray[20] = {10, 20, 30, 40, 61, 71, 81, 92, 112, 122, 133, 143, 161, 171, 182, 193, 215, 225, 235, 245};
 
-int16_t FCreateStuff(APPSESSION &app) {
-    int16_t fFailed;
-    int16_t dy;
-    int16_t i;
+std::int16_t FCreateStuff(APPSESSION &app) {
+    std::int16_t fFailed;
+    std::int16_t dy;
+    std::int16_t i;
     HBITMAP hbmp;
-    int16_t dx;
+    std::int16_t dx;
 
     BeginAppUiSession(app);
     fFailed = 0;
@@ -155,8 +155,8 @@ int16_t FCreateStuff(APPSESSION &app) {
     app.lpui->lpfnBrowserDlgProc = (BrowserDlg);
     app.lpui->lpfnReportDlgProc = (ReportDlg);
     app.lpui->lpfnGaugeDlgProc = (ProgressGaugeDlg);
-    app.lpui->lpb2k = LpAlloc<uint8_t>(app, 0x800, htPerm);
-    app.lpui->vlprgidMisc = LpAlloc<uint16_t>(app, 0x800, htPerm);
+    app.lpui->lpb2k = LpAlloc<std::uint8_t>(app, 0x800, htPerm);
+    app.lpui->vlprgidMisc = LpAlloc<std::uint16_t>(app, 0x800, htPerm);
     InitGameStuff(app);
     if (fFailed || !app.lpui->hbmpScanner || !app.lpui->hbmpUnknownPlanet || !app.lpui->hbmpBackBld || !app.lpui->hdibRaces || !app.lpui->hdibRacesT || !app.lpui->hdibRacesX || !app.lpui->hbmpMono || !app.lpui->hbmpScanShip || !app.lpui->hbmpMsg ||
         !app.lpui->hiconHost || !app.lpui->hiconStars || !app.lpui->hiconWait) {
@@ -166,13 +166,13 @@ int16_t FCreateStuff(APPSESSION &app) {
     return 1;
 }
 
-int16_t FCreateFonts(APPSESSION &app, HDC hdc) {
+std::int16_t FCreateFonts(APPSESSION &app, HDC hdc) {
     NATIVEOWNER<LOGFONT, win32::LocalFree> plfOwner;
-    int16_t    i;
+    std::int16_t    i;
     LOGFONT   *plf;
     HFONT      hfontSav;
     TEXTMETRIC tm;
-    int32_t    l;
+    std::int32_t    l;
 
     plf = static_cast<LOGFONT *>(win32::LocalAlloc(64, sizeof(LOGFONT)));
     plfOwner.reset(plf);
@@ -183,20 +183,20 @@ int16_t FCreateFonts(APPSESSION &app, HDC hdc) {
     }
     plf->lfHeight = -win32::MulDiv(10, win32::GetDeviceCaps(hdc, win32::LOGPIXELSY), 72);
     for (i = 0; i < 2; i++) {
-        strcpy(plf->lfFaceName, app.lpui->rgszArial[i]);
+        std::strcpy(plf->lfFaceName, app.lpui->rgszArial[i]);
         app.lpui->rghfontArial10[i] = win32::CreateFontIndirectA(plf);
     }
-    strcpy(plf->lfFaceName, app.lpui->rgszArial[0]);
+    std::strcpy(plf->lfFaceName, app.lpui->rgszArial[0]);
     plf->lfHeight = -win32::MulDiv(6, win32::GetDeviceCaps(hdc, win32::LOGPIXELSY), 72);
     app.lpui->rghfontArial6[0] = win32::CreateFontIndirectA(plf);
     plf->lfHeight = -win32::MulDiv(7, win32::GetDeviceCaps(hdc, win32::LOGPIXELSY), 72);
     app.lpui->rghfontArial7[0] = win32::CreateFontIndirectA(plf);
     plf->lfHeight = -win32::MulDiv(8, win32::GetDeviceCaps(hdc, win32::LOGPIXELSY), 72);
     for (i = 0; i < 4; i++) {
-        strcpy(plf->lfFaceName, app.lpui->rgszArial[i]);
+        std::strcpy(plf->lfFaceName, app.lpui->rgszArial[i]);
         app.lpui->rghfontArial8[i] = win32::CreateFontIndirectA(plf);
     }
-    strcpy(plf->lfFaceName, app.lpui->rgszArial[1]);
+    std::strcpy(plf->lfFaceName, app.lpui->rgszArial[1]);
     plf->lfEscapement = 3150;
     app.lpui->rghfontArial8[4] = win32::CreateFontIndirectA(plf);
     hfontSav = static_cast<HFONT>(win32::SelectObject(hdc, app.lpui->rghfontArial8[0]));
@@ -219,7 +219,7 @@ int16_t FCreateFonts(APPSESSION &app, HDC hdc) {
 }
 
 #ifdef __APPLE__
-static int16_t FSetMacMenuShortcut(HMENU hmenu, UINT id, const ACCEL *lpaccel) {
+static std::int16_t FSetMacMenuShortcut(HMENU hmenu, UINT id, const ACCEL *lpaccel) {
     char szItem[128], szLabel[160];
     char *pszTab;
     int i, cch;
@@ -229,11 +229,11 @@ static int16_t FSetMacMenuShortcut(HMENU hmenu, UINT id, const ACCEL *lpaccel) {
         if (win32::GetMenuItemID(hmenu, i) != id) continue;
         if (win32::GetMenuStringA(hmenu, i, nullptr, 0, win32::MF_BYPOSITION) >= static_cast<int>(sizeof(szItem))) return 0;
         if (win32::GetMenuStringA(hmenu, i, szItem, sizeof(szItem), win32::MF_BYPOSITION) == 0) return 0;
-        pszTab = strchr(szItem, '\t');
+        pszTab = std::strchr(szItem, '\t');
         if (pszTab) *pszTab = 0;
         cch = CchSnprintf(szLabel, sizeof(szLabel), "%s\tCmd+%s%c", szItem,
                          lpaccel->fVirt & win32::FSHIFT ? "Shift+" : "", lpaccel->key);
-        if (cch <= 0 || static_cast<size_t>(cch) >= sizeof(szLabel)) return 0;
+        if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szLabel)) return 0;
         mf = win32::GetMenuState(hmenu, i, win32::MF_BYPOSITION) & (win32::MF_CHECKED | win32::MF_DISABLED | win32::MF_GRAYED);
         if (!win32::InsertMenuA(hmenu, i, win32::MF_BYPOSITION | mf, id, szLabel)) return 0;
         return win32::RemoveMenu(hmenu, i + 1, win32::MF_BYPOSITION);
@@ -241,7 +241,7 @@ static int16_t FSetMacMenuShortcut(HMENU hmenu, UINT id, const ACCEL *lpaccel) {
     return 0;
 }
 
-static int16_t FInitMacShortcuts(APPSESSION &app, HWND hwnd) {
+static std::int16_t FInitMacShortcuts(APPSESSION &app, HWND hwnd) {
     static const struct {
         UINT idMenu;
         ACCEL accel;
@@ -264,10 +264,10 @@ static int16_t FInitMacShortcuts(APPSESSION &app, HWND hwnd) {
     HACCEL hmain, htitle;
     HMENU hmenu, hsub;
     int c, i, j;
-    size_t ikey;
+    std::size_t ikey;
 
     c = win32::CopyAcceleratorTableA(app.lpui->hAccel, nullptr, 0);
-    if (c <= 0 || static_cast<size_t>(c) + sizeof(rgkey) / sizeof(rgkey[0]) > sizeof(rgaccel) / sizeof(rgaccel[0]) ||
+    if (c <= 0 || static_cast<std::size_t>(c) + sizeof(rgkey) / sizeof(rgkey[0]) > sizeof(rgaccel) / sizeof(rgaccel[0]) ||
         win32::CopyAcceleratorTableA(app.lpui->hAccel, rgaccel, c) != c) return 0;
     hmenu = win32::GetMenu(hwnd);
     if (!hmenu || win32::GetMenuItemCount(hmenu) <= 0) return 0;
@@ -291,8 +291,8 @@ static int16_t FInitMacShortcuts(APPSESSION &app, HWND hwnd) {
 }
 #endif
 
-int16_t InitInstance(APPSESSION &app, int16_t nCmdShow) {
-    int16_t sw;
+std::int16_t InitInstance(APPSESSION &app, std::int16_t nCmdShow) {
+    std::int16_t sw;
     RECT    rc;
 
 
@@ -334,12 +334,12 @@ int16_t InitInstance(APPSESSION &app, int16_t nCmdShow) {
 }
 
 void InitTiles(APPSESSION &app) {
-    int16_t  yTop;
-    int16_t  ctile;
+    std::int16_t  yTop;
+    std::int16_t  ctile;
     TILE    *rgtile;
-    int16_t  i;
-    int16_t  iPass;
-    uint16_t iCol;
+    std::int16_t  i;
+    std::int16_t  iPass;
+    std::uint16_t iCol;
 
     iPass = 2;
     rgtile = app.lpui->rgtilePlanet;
@@ -369,17 +369,17 @@ void InitTiles(APPSESSION &app) {
 }
 
 void GetIniWinRc(APPSESSION &app, char *szSection, char *szIniFile, StringId ids, WN *pwn) {
-    int16_t fInitalized;
-    int16_t fMinimized;
-    int16_t fMaximized;
+    std::int16_t fInitalized;
+    std::int16_t fMinimized;
+    std::int16_t fMaximized;
     char    szEntry[16];
-    int16_t cch;
+    std::int16_t cch;
     RECT    rc;
-    int16_t j;
+    std::int16_t j;
     char   *pch;
-    int16_t i;
-    int16_t fNeg;
-    int16_t rg[4];
+    std::int16_t i;
+    std::int16_t fNeg;
+    std::int16_t rg[4];
 
     TextIO().pfnCchGetString(app, ids, szEntry);
     cch = ProfileTextIO().pfnReadString(szSection, szEntry, "X", app.state.szWork, 20, szIniFile);
@@ -426,14 +426,14 @@ void GetIniWinRc(APPSESSION &app, char *szSection, char *szIniFile, StringId ids
 }
 
 void ReadIniSettings(APPSESSION &app) {
-    uint16_t uDateCur;
-    int16_t  i;
+    std::uint16_t uDateCur;
+    std::int16_t  i;
     char     szEntry[16];
     WN       wnT;
     char     szIniFile[16];
-    uint16_t w;
+    std::uint16_t w;
     char     szSection[16];
-    int16_t  cch;
+    std::int16_t  cch;
 
     app.state.ini.fGen = 0;
     app.state.ini.fTry = 0;
@@ -476,8 +476,8 @@ void ReadIniSettings(APPSESSION &app) {
     }
     TextIO().pfnCchGetString(app, idsLayout, szEntry);
     app.lpui->iWindowLayout = static_cast<WindowLayout>(win32::GetPrivateProfileIntA(szSection, szEntry, 1, szIniFile));
-    app.lpui->iWindowLayout = 2 < (layoutLarge <= static_cast<int16_t>(app.lpui->iWindowLayout) ? app.lpui->iWindowLayout : 0) ? layoutSmall
-                    : layoutLarge > static_cast<int16_t>(app.lpui->iWindowLayout)                          ? layoutLarge
+    app.lpui->iWindowLayout = 2 < (layoutLarge <= static_cast<std::int16_t>(app.lpui->iWindowLayout) ? app.lpui->iWindowLayout : 0) ? layoutSmall
+                    : layoutLarge > static_cast<std::int16_t>(app.lpui->iWindowLayout)                          ? layoutLarge
                                                                                     : app.lpui->iWindowLayout;
     TextIO().pfnCchGetString(app, idsStyle1width, szEntry);
     app.lpui->vfs.dxPlanWant = win32::GetPrivateProfileIntA(szSection, szEntry, 396, szIniFile);
@@ -577,28 +577,28 @@ void ReadIniSettings(APPSESSION &app) {
         app.state.vcBackupDirs = 1;
     }
     TextIO().pfnCchGetString(app, idsReportplanfld, szEntry);
-    app.state.vrptPlanet.grbitVisible = static_cast<uint32_t>(win32::GetPrivateProfileIntA(szSection, szEntry, -1, szIniFile));
+    app.state.vrptPlanet.grbitVisible = static_cast<std::uint32_t>(win32::GetPrivateProfileIntA(szSection, szEntry, -1, szIniFile));
     TextIO().pfnCchGetString(app, idsReportplansort, szEntry);
     i = win32::GetPrivateProfileIntA(szSection, szEntry, 0, szIniFile);
     app.state.vrptPlanet.fAscending = (i & 0x100) != 0;
     i &= 0xff;
     app.state.vrptPlanet.icolSort = i;
     TextIO().pfnCchGetString(app, idsReportfleetfld, szEntry);
-    app.state.vrptFleet.grbitVisible = static_cast<uint32_t>(win32::GetPrivateProfileIntA(szSection, szEntry, -1, szIniFile));
+    app.state.vrptFleet.grbitVisible = static_cast<std::uint32_t>(win32::GetPrivateProfileIntA(szSection, szEntry, -1, szIniFile));
     TextIO().pfnCchGetString(app, idsReportfleetsort, szEntry);
     i = win32::GetPrivateProfileIntA(szSection, szEntry, 0, szIniFile);
     app.state.vrptFleet.fAscending = (i & 0x100) != 0;
     i &= 0xff;
     app.state.vrptFleet.icolSort = i;
     TextIO().pfnCchGetString(app, idsReportefleetfld, szEntry);
-    app.state.vrptEFleet.grbitVisible = static_cast<uint32_t>(win32::GetPrivateProfileIntA(szSection, szEntry, -1, szIniFile));
+    app.state.vrptEFleet.grbitVisible = static_cast<std::uint32_t>(win32::GetPrivateProfileIntA(szSection, szEntry, -1, szIniFile));
     TextIO().pfnCchGetString(app, idsReportefltsort, szEntry);
     i = win32::GetPrivateProfileIntA(szSection, szEntry, 0, szIniFile);
     app.state.vrptEFleet.fAscending = (i & 0x100) != 0;
     i &= 0xff;
     app.state.vrptEFleet.icolSort = i;
     TextIO().pfnCchGetString(app, idsReportbtlfld, szEntry);
-    app.state.vrptBattle.grbitVisible = static_cast<uint32_t>(win32::GetPrivateProfileIntA(szSection, szEntry, -1, szIniFile));
+    app.state.vrptBattle.grbitVisible = static_cast<std::uint32_t>(win32::GetPrivateProfileIntA(szSection, szEntry, -1, szIniFile));
     TextIO().pfnCchGetString(app, idsReportbtlsort, szEntry);
     i = win32::GetPrivateProfileIntA(szSection, szEntry, 0, szIniFile);
     app.state.vrptBattle.fAscending = (i & 0x100) != 0;
@@ -615,33 +615,33 @@ void ReadIniSettings(APPSESSION &app) {
     _strdate(app.state.szWork);
     app.state.szWork[5] = 0;
     app.state.szWork[2] = 0;
-    uDateCur = atoi(&app.state.szWork[3]) + atoi(app.state.szWork) * 31 + atoi(&app.state.szWork[6]) * 31 * 12;
+    uDateCur = std::atoi(&app.state.szWork[3]) + std::atoi(app.state.szWork) * 31 + std::atoi(&app.state.szWork[6]) * 31 * 12;
     TextIO().pfnCchGetString(app, idsHistoryinfo, szEntry);
     app.lpui->uDateInstalled = win32::GetPrivateProfileIntA(szSection, szEntry, -1, szIniFile);
     if (uDateCur < app.lpui->uDateInstalled) {
         app.lpui->uDateInstalled = uDateCur;
     }
-    app.state.gd.fTrialPeriodOver = uDateCur >= static_cast<uint16_t>((app.lpui->uDateInstalled + 21));
+    app.state.gd.fTrialPeriodOver = uDateCur >= static_cast<std::uint16_t>((app.lpui->uDateInstalled + 21));
     TextIO().pfnCchGetString(app, idsFonts, szSection);
     for (i = 0; i < 4; i++) {
         TextIO().pfnCchGetString(app, static_cast<StringId>(idsArial + i), szEntry);
         ProfileTextIO().pfnReadString(szSection, szEntry, "", app.state.szWork, 80, szIniFile);
-        cch = strlen(app.state.szWork);
+        cch = std::strlen(app.state.szWork);
         if (cch >= 5 && cch <= 31) {
-            strcpy(app.lpui->rgszArial[i], app.state.szWork);
+            std::strcpy(app.lpui->rgszArial[i], app.state.szWork);
         }
     }
     ReadIniPresets(app, szIniFile);
     return;
 }
 
-void ReadIniTileSettings(char *pszFormat, TILE *rgtile, int16_t ctile) {
+void ReadIniTileSettings(char *pszFormat, TILE *rgtile, std::int16_t ctile) {
     TILE     tile;
-    int16_t  fPopped;
-    int16_t  i;
-    int16_t  iTile;
-    uint16_t iCol;
-    uint16_t iBit;
+    std::int16_t  fPopped;
+    std::int16_t  i;
+    std::int16_t  iTile;
+    std::uint16_t iCol;
+    std::uint16_t iBit;
 
     iCol = 0;
     iTile = 0;
@@ -652,13 +652,13 @@ void ReadIniTileSettings(char *pszFormat, TILE *rgtile, int16_t ctile) {
             }
             goto DoNext;
         }
-        if (isalpha(static_cast<unsigned char>(*pszFormat)) == 0)
+        if (std::isalpha(static_cast<unsigned char>(*pszFormat)) == 0)
             goto DoNext;
         // C classification functions return any nonzero mask, but the saved
         // expansion state is stored in a one-bit field.
-        fPopped = isupper(static_cast<unsigned char>(*pszFormat)) != 0;
+        fPopped = std::isupper(static_cast<unsigned char>(*pszFormat)) != 0;
         iBit = !fPopped ? *pszFormat - 'a' : *pszFormat - 'A';
-        if (static_cast<int16_t>(iBit) < 0)
+        if (static_cast<std::int16_t>(iBit) < 0)
             goto DoNext;
         for (i = iTile; i < ctile && rgtile[i].id != iBit; i++) {
         }

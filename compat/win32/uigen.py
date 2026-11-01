@@ -215,7 +215,7 @@ def generate(root, output):
         ident = f'MAKEINTRESOURCE({n})' if isinstance(n, int) else f'"{n}"'
         source += [f'    {{{name}, {number}, rgbUIResource{i}, sizeof(rgbUIResource{i}), {t}}},']
         manifest += [f'    {{{ident}, MAKEINTRESOURCE({t}), rgbUIResource{i}, sizeof(rgbUIResource{i})}},']
-    source += ['};', 'constinit const size_t cCompatUIResources = sizeof(rgCompatUIResources) / sizeof(rgCompatUIResources[0]);']
+    source += ['};', 'constinit const std::size_t cCompatUIResources = sizeof(rgCompatUIResources) / sizeof(rgCompatUIResources[0]);']
     manifest += ['};']
     (output / 'ui_resources.cpp').write_text('\n'.join(source) + '\n')
     (output / 'ui_manifest.h').write_text('\n'.join(manifest) + '\n')

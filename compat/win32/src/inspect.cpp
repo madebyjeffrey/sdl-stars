@@ -2,11 +2,11 @@
 #include "internal.h"
 #include <stars_compat.h>
 #include <commctrl.h>
-#include <inttypes.h>
-#include <string.h>
+#include <cinttypes>
+#include <cstring>
 #include "inspect_styles.h"
 
-static uint64_t idInspector;
+static std::uint64_t idInspector;
 static HWND (*pfnObjectInspector)(void);
 void StarsCompatSetObjectInspector(HWND (*pfnShow)(void)) {
     if (SDL_IsMainThread()) pfnObjectInspector = pfnShow;
@@ -14,14 +14,14 @@ void StarsCompatSetObjectInspector(HWND (*pfnShow)(void)) {
 static BOOL fInspectorClass;
 static STARSCOMPATSNAPSHOT snapInspector;
 
-static void AppendStyle(char *psz, size_t cb, const char *pszName) {
+static void AppendStyle(char *psz, std::size_t cb, const char *pszName) {
     if (*psz) SDL_strlcat(psz, " | ", cb);
     SDL_strlcat(psz, pszName, cb);
 }
 
-template<size_t c>
-static void DecodeStyles(char *psz, size_t cb, DWORD *lpdw, const STYLEFIELD (&rg)[c]) {
-    size_t i;
+template<std::size_t c>
+static void DecodeStyles(char *psz, std::size_t cb, DWORD *lpdw, const STYLEFIELD (&rg)[c]) {
+    std::size_t i;
     DWORD dwFields = 0, dwOriginal = *lpdw;
     for (i = 0; i < c; i++) {
         if (!(dwFields & rg[i].dwMask) && (dwOriginal & rg[i].dwMask) == rg[i].dwValue) {
@@ -32,7 +32,7 @@ static void DecodeStyles(char *psz, size_t cb, DWORD *lpdw, const STYLEFIELD (&r
     *lpdw &= ~dwFields;
 }
 
-static void FormatStyles(const STARSCOMPATWINDOW *lp, BOOL fExtended, char *psz, size_t cb) {
+static void FormatStyles(const STARSCOMPATWINDOW *lp, BOOL fExtended, char *psz, std::size_t cb) {
     DWORD dw = fExtended ? lp->dwExStyle : lp->dwStyle;
     char szUnknown[32];
     *psz = 0;
@@ -63,7 +63,7 @@ static void FormatStyles(const STARSCOMPATWINDOW *lp, BOOL fExtended, char *psz,
         }
     }
     if (dw) {
-        snprintf(szUnknown, sizeof(szUnknown), "0x%08x", static_cast<unsigned>(dw));
+        std::snprintf(szUnknown, sizeof(szUnknown), "0x%08x", static_cast<unsigned>(dw));
         AppendStyle(psz, cb, szUnknown);
     }
     if (!*psz) SDL_strlcpy(psz, "0", cb);
@@ -74,14 +74,14 @@ static const char *PszControlKind(UINT iControl) {
     return iControl < SDL_arraysize(rgpsz) ? rgpsz[iControl] : "unknown";
 }
 
-uint64_t StarsCompatWindowId(HWND hwnd) {
+std::uint64_t StarsCompatWindowId(HWND hwnd) {
     HWND lpwin;
     if (!SDL_IsMainThread()) return 0;
     lpwin = LpCompatWindow(hwnd);
     return lpwin && !lpwin->fDestroying ? lpwin->idInspect : 0;
 }
 
-HWND StarsCompatResolveWindow(uint64_t id) {
+HWND StarsCompatResolveWindow(std::uint64_t id) {
     HWND lpwin;
     if (!SDL_IsMainThread() || id == 0) return nullptr;
     for (lpwin = HwndCompatRegistry(); lpwin; lpwin = lpwin->lpNext)
@@ -89,9 +89,9 @@ HWND StarsCompatResolveWindow(uint64_t id) {
     return nullptr;
 }
 
-uint64_t StarsCompatFindControl(uint64_t idParent, LONG_PTR idControl, LPCSTR pszClass) {
+std::uint64_t StarsCompatFindControl(std::uint64_t idParent, LONG_PTR idControl, LPCSTR pszClass) {
     HWND hwndParent = StarsCompatResolveWindow(idParent), lpwin;
-    uint64_t id = 0;
+    std::uint64_t id = 0;
     if (!hwndParent) return 0;
     for (lpwin = hwndParent->hwndFirstChild; lpwin; lpwin = lpwin->hwndZNext)
         if (lpwin->fAlive && !lpwin->fDestroying && lpwin->idChild == idControl &&
@@ -103,20 +103,20 @@ uint64_t StarsCompatFindControl(uint64_t idParent, LONG_PTR idControl, LPCSTR ps
 }
 
 void StarsCompatFreeHierarchy(STARSCOMPATSNAPSHOT *lpsnap) {
-    size_t i;
+    std::size_t i;
     if (!lpsnap) return;
     for (i = 0; i < lpsnap->cWindow; i++) {
         SDL_free(lpsnap->rgWindow[i].pszClass);
         SDL_free(lpsnap->rgWindow[i].pszText);
     }
     SDL_free(lpsnap->rgWindow);
-    memset(lpsnap, 0, sizeof(*lpsnap));
+    std::memset(lpsnap, 0, sizeof(*lpsnap));
 }
 
 BOOL StarsCompatCaptureHierarchy(STARSCOMPATSNAPSHOT *lpsnap) {
     HWND lpwin;
     STARSCOMPATWINDOW *lpitem;
-    size_t c = 0, i;
+    std::size_t c = 0, i;
     if (!SDL_IsMainThread() || !lpsnap || lpsnap->rgWindow || lpsnap->cWindow != 0) return 0;
     for (lpwin = HwndCompatRegistry(); lpwin; lpwin = lpwin->lpNext)
         if (lpwin->fAlive && !lpwin->fDestroying) c++;
@@ -156,7 +156,7 @@ static BOOL FWriteString(NATIVEFILE *lpfile, const char *psz, BOOL fUtf8) {
     const BYTE *lpch = reinterpret_cast<const BYTE *>(psz);
     char rgb[4], *lpEnd;
     DWORD ch;
-    size_t cb = strlen(psz);
+    std::size_t cb = std::strlen(psz);
     int c;
     static_cast<void>(fUtf8);
     if (ChPutNativeFile('"', lpfile) == EOF) return 0;
@@ -170,14 +170,14 @@ static BOOL FWriteString(NATIVEFILE *lpfile, const char *psz, BOOL fUtf8) {
             if (CchNativePrintf(lpfile, "\\u%04x", static_cast<unsigned>(ch)) < 0) return 0;
         } else {
             lpEnd = SDL_UCS4ToUTF8(ch, rgb);
-            if (CWriteNative(rgb, 1, static_cast<size_t>((lpEnd - rgb)), lpfile) != static_cast<size_t>((lpEnd - rgb))) return 0;
+            if (CWriteNative(rgb, 1, static_cast<std::size_t>((lpEnd - rgb)), lpfile) != static_cast<std::size_t>((lpEnd - rgb))) return 0;
         }
     }
     return ChPutNativeFile('"', lpfile) != EOF;
 }
 
 BOOL StarsCompatWriteHierarchy(const STARSCOMPATSNAPSHOT *lpsnap, NATIVEFILE *lpfile) {
-    size_t i;
+    std::size_t i;
     const STARSCOMPATWINDOW *lp;
     char szStyle[2048], szExStyle[2048];
     if (!lpsnap || !lpfile || (lpsnap->cWindow != 0 && !lpsnap->rgWindow)) return 0;
@@ -191,7 +191,7 @@ BOOL StarsCompatWriteHierarchy(const STARSCOMPATSNAPSHOT *lpsnap, NATIVEFILE *lp
                     "\",\"style\":%u,\"exStyle\":%u,\"controlKind\":%u,\"dialog\":%s,"
                     "\"visible\":%s,\"enabled\":%s,\"focused\":%s,\"captured\":%s,"
                     "\"windowRect\":[%d,%d,%d,%d],\"clientRect\":[%d,%d,%d,%d],\"class\":",
-                    i != 0 ? ",\n" : "", lp->id, lp->idParent, lp->idOwner, static_cast<intptr_t>(lp->idControl),
+                    i != 0 ? ",\n" : "", lp->id, lp->idParent, lp->idOwner, static_cast<std::intptr_t>(lp->idControl),
                     static_cast<unsigned>(lp->dwStyle), static_cast<unsigned>(lp->dwExStyle), lp->iControl,
                     lp->fDialog ? "true" : "false", lp->fVisible ? "true" : "false",
                     lp->fEnabled ? "true" : "false", lp->fFocused ? "true" : "false", lp->fCaptured ? "true" : "false",
@@ -213,21 +213,21 @@ static void InspectDetails(HWND hwnd) {
     const STARSCOMPATWINDOW *lp;
     char *psz;
     char szStyle[2048], szExStyle[2048];
-    size_t cb;
+    std::size_t cb;
     if (i == win32::LB_ERR) return;
     iItem = win32::SendMessageA(hwndList, win32::LB_GETITEMDATA, static_cast<WPARAM>(i), 0);
-    if (iItem < 0 || static_cast<size_t>(iItem) >= snapInspector.cWindow) return;
+    if (iItem < 0 || static_cast<std::size_t>(iItem) >= snapInspector.cWindow) return;
     lp = &snapInspector.rgWindow[iItem];
     FormatStyles(lp, 0, szStyle, sizeof(szStyle));
     FormatStyles(lp, 1, szExStyle, sizeof(szExStyle));
-    cb = strlen(lp->pszClass) + strlen(lp->pszText) + strlen(szStyle) + strlen(szExStyle);
+    cb = std::strlen(lp->pszClass) + std::strlen(lp->pszText) + std::strlen(szStyle) + std::strlen(szExStyle);
     if (cb > SIZE_MAX - 640 || !(psz = static_cast<char *>((SDL_malloc(cb + 640))))) return;
-    snprintf(psz, cb + 640,
+    std::snprintf(psz, cb + 640,
         "ID: %" PRIu64 "\r\nParent: %" PRIu64 "\r\nOwner: %" PRIu64 "\r\nControl ID: %" PRIdPTR
         "\r\nClass: %s\r\nControl kind: %u (%s)\r\nDialog: %d\r\nVisible: %d\r\nEnabled: %d\r\nFocus: %d"
         "\r\nCapture: %d\r\nStyle: 0x%08x\r\n%s\r\nExStyle: 0x%08x\r\n%s"
         "\r\nWindow: %d,%d - %d,%d\r\nClient: %d,%d - %d,%d\r\n\r\nText:\r\n%s",
-        lp->id, lp->idParent, lp->idOwner, static_cast<intptr_t>(lp->idControl), lp->pszClass, lp->iControl,
+        lp->id, lp->idParent, lp->idOwner, static_cast<std::intptr_t>(lp->idControl), lp->pszClass, lp->iControl,
         PszControlKind(lp->iControl),
         lp->fDialog, lp->fVisible, lp->fEnabled, lp->fFocused, lp->fCaptured,
         static_cast<unsigned>(lp->dwStyle), szStyle, static_cast<unsigned>(lp->dwExStyle), szExStyle,
@@ -237,26 +237,26 @@ static void InspectDetails(HWND hwnd) {
     SDL_free(psz);
 }
 
-static void InspectRows(HWND hwndList, uint64_t idParent, int cDepth) {
-    size_t i;
+static void InspectRows(HWND hwndList, std::uint64_t idParent, int cDepth) {
+    std::size_t i;
     int iRow;
     char sz[512], szText[180], *lpch, *pszUtf;
-    size_t cb, cch;
+    std::size_t cb, cch;
     const STARSCOMPATWINDOW *lp;
     if (cDepth >= 64) return;
     for (i = 0; i < snapInspector.cWindow; i++) {
         lp = &snapInspector.rgWindow[i];
         if (lp->idParent != idParent) continue;
-        cb = strlen(lp->pszText);
+        cb = std::strlen(lp->pszText);
         if (cb > (SIZE_MAX - 1) / 3) continue;
         pszUtf = static_cast<char *>((SDL_malloc(cb * 3 + 1)));
         if (!pszUtf) continue;
-        memcpy(pszUtf, lp->pszText, cb + 1);
+        std::memcpy(pszUtf, lp->pszText, cb + 1);
         cch = CchUtf8Prefix(pszUtf, sizeof(szText) - 1);
-        memcpy(szText, pszUtf, cch); szText[cch] = 0; SDL_free(pszUtf);
+        std::memcpy(szText, pszUtf, cch); szText[cch] = 0; SDL_free(pszUtf);
         for (lpch = szText; *lpch; lpch++) if (*lpch == '\r' || *lpch == '\n' || *lpch == '\t') *lpch = ' ';
-        snprintf(sz, sizeof(sz), "%*s[%" PRIu64 "] %s #%" PRIdPTR " %s%s", cDepth * 2, "",
-                 lp->id, lp->pszClass, static_cast<intptr_t>(lp->idControl), szText, lp->fVisible ? "" : " (hidden)");
+        std::snprintf(sz, sizeof(sz), "%*s[%" PRIu64 "] %s #%" PRIdPTR " %s%s", cDepth * 2, "",
+                 lp->id, lp->pszClass, static_cast<std::intptr_t>(lp->idControl), szText, lp->fVisible ? "" : " (hidden)");
         iRow = static_cast<int>(win32::SendMessageA(hwndList, win32::LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(sz)));
         if (iRow >= 0) win32::SendMessageA(hwndList, win32::LB_SETITEMDATA, static_cast<WPARAM>(iRow), static_cast<LPARAM>(i));
         InspectRows(hwndList, lp->id, cDepth + 1);

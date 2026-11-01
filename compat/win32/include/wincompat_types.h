@@ -5,25 +5,25 @@
 #error The Stars compatibility headers require narrow-character UI builds
 #endif
 
-#include <stddef.h>
-#include <stdint.h>
+#include <cstddef>
+#include <cstdint>
 #include "windowtypes.h"
 #include "ui_values.h"
 // Match Win32 LLP64 on Linux LP64; never use native long for LONG/DWORD.
 
-using BOOL = int32_t;
-using WINBOOL = int32_t;
-using LONG = int32_t;
-using DWORD = uint32_t;
-using ULONG = uint32_t;
-using UINT = uint32_t;
-using COLORREF = uint32_t;
-using INT = int32_t;
-using WORD = uint16_t;
-using ATOM = uint16_t;
-using WCHAR = uint16_t;
-using SHORT = int16_t;
-using BYTE = uint8_t;
+using BOOL = std::int32_t;
+using WINBOOL = std::int32_t;
+using LONG = std::int32_t;
+using DWORD = std::uint32_t;
+using ULONG = std::uint32_t;
+using UINT = std::uint32_t;
+using COLORREF = std::uint32_t;
+using INT = std::int32_t;
+using WORD = std::uint16_t;
+using ATOM = std::uint16_t;
+using WCHAR = std::uint16_t;
+using SHORT = std::int16_t;
+using BYTE = std::uint8_t;
 using CHAR = char;
 using LPVOID = void*;
 using PVOID = void*;
@@ -36,15 +36,15 @@ using LPCCH = const char*;
 using LPWORD = WORD*;
 using LPDWORD = DWORD*;
 using LPBOOL = BOOL*;
-using INT_PTR = intptr_t;
-using LONG_PTR = intptr_t;
-using LPARAM = intptr_t;
-using LRESULT = intptr_t;
-using UINT_PTR = uintptr_t;
-using ULONG_PTR = uintptr_t;
-using DWORD_PTR = uintptr_t;
-using WPARAM = uintptr_t;
-using SIZE_T = size_t;
+using INT_PTR = std::intptr_t;
+using LONG_PTR = std::intptr_t;
+using LPARAM = std::intptr_t;
+using LRESULT = std::intptr_t;
+using UINT_PTR = std::uintptr_t;
+using ULONG_PTR = std::uintptr_t;
+using DWORD_PTR = std::uintptr_t;
+using WPARAM = std::uintptr_t;
+using SIZE_T = std::size_t;
 using HFILE = int;
 
 namespace win32 {

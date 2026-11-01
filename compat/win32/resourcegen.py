@@ -50,7 +50,7 @@ def generate(root, output):
         name = 'nullptr' if isinstance(identity, int) else f'"{identity}"'
         number = identity if isinstance(identity, int) else 0
         source.append(f'    {{{name}, {number}, rgbResource{i}, sizeof(rgbResource{i}), 2}},')
-    source += ['};', 'constinit const size_t cCompatResources = sizeof(rgCompatResources) / sizeof(rgCompatResources[0]);']
+    source += ['};', 'constinit const std::size_t cCompatResources = sizeof(rgCompatResources) / sizeof(rgCompatResources[0]);']
     (output / 'bitmap_resources.cpp').write_text('\n'.join(source) + '\n')
     (output / 'bitmap_manifest.h').write_text('\n'.join(manifest) + '\n')
 

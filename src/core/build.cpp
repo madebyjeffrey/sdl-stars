@@ -15,11 +15,11 @@ HullSlotType rghstCat[14] = {hstWeapon, hstSpecialEM, hstArmor,  hstBeam,     hs
 StringId     rgidsCat[14] = {idsWeapons2,     idsDevices,  idsArmor3,   idsBeamWeapons, idsBombs,      idsEngines,   idsMineLayers,
                              idsMiningRobots, idsScanners, idsShields3, idsElectrical,  idsMechanical, idsTorpedoes, idsOrbital};
 
-int16_t PctJammerFromHul(APPSESSION &app, HUL *lphul) {
-    int32_t pctJam;
-    int16_t ihs;
-    int16_t i;
-    int32_t pctHit;
+std::int16_t PctJammerFromHul(APPSESSION &app, HUL *lphul) {
+    std::int32_t pctJam;
+    std::int16_t ihs;
+    std::int16_t i;
+    std::int32_t pctHit;
     PART    part;
 
     pctHit = 10000;
@@ -28,7 +28,7 @@ int16_t PctJammerFromHul(APPSESSION &app, HUL *lphul) {
         if (part.hs.grhst == hstSpecialE) {
             if (part.hs.iItem >= ispecialEJammer10 && part.hs.iItem <= ispecialEJammer50) {
                 PartQueryIO().pfnLookup(app, &part);
-                pctJam = static_cast<int16_t>((100 - part.pspecial()->grAbility));
+                pctJam = static_cast<std::int16_t>((100 - part.pspecial()->grAbility));
             } else if (part.hs.iItem == ispecialEMultiFunctionPod) {
                 pctJam = 90;
             } else {
@@ -45,17 +45,17 @@ int16_t PctJammerFromHul(APPSESSION &app, HUL *lphul) {
         }
         if (pctJam < 100) {
             for (i = part.hs.cItem; i > 0; i--) {
-                pctHit = static_cast<uint32_t>((pctHit * pctJam));
-                pctHit = static_cast<int32_t>((pctHit / 100));
+                pctHit = static_cast<std::uint32_t>((pctHit * pctJam));
+                pctHit = static_cast<std::int32_t>((pctHit / 100));
             }
         }
     }
     if (pctHit < 100) {
         pctHit = 100;
     }
-    pctJam = static_cast<int16_t>((100 - static_cast<int16_t>((LOWORD(pctHit) + 50)) / 100));
-    if (static_cast<int16_t>(lphul->ihuldef) > ihuldefOrbitalFort) {
-        pctJam -= static_cast<int32_t>((pctJam / 4));
+    pctJam = static_cast<std::int16_t>((100 - static_cast<std::int16_t>((LOWORD(pctHit) + 50)) / 100));
+    if (static_cast<std::int16_t>(lphul->ihuldef) > ihuldefOrbitalFort) {
+        pctJam -= static_cast<std::int32_t>((pctJam / 4));
     }
     if (pctJam > 95) {
         pctJam = 95;
@@ -63,8 +63,8 @@ int16_t PctJammerFromHul(APPSESSION &app, HUL *lphul) {
     return LOWORD(pctJam);
 }
 
-SHDEF *NthValidShdef(APPSESSION &app, int16_t n) {
-    int16_t i;
+SHDEF *NthValidShdef(APPSESSION &app, std::int16_t n) {
+    std::int16_t i;
 
     if (app.state.fStarbaseMode) {
         for (i = 0; i < 10; i++) {
@@ -82,9 +82,9 @@ SHDEF *NthValidShdef(APPSESSION &app, int16_t n) {
     return nullptr;
 }
 
-SHDEF *NthValidEnemyShdef(APPSESSION &app, int16_t n) {
-    int16_t i;
-    int16_t j;
+SHDEF *NthValidEnemyShdef(APPSESSION &app, std::int16_t n) {
+    std::int16_t i;
+    std::int16_t j;
 
     if (app.state.fStarbaseMode) {
         for (i = 0; i < app.state.game.cPlayer; i++) {
@@ -111,8 +111,8 @@ SHDEF *NthValidEnemyShdef(APPSESSION &app, int16_t n) {
 }
 
 void KillQueuedMassPackets(APPSESSION &app, PLANET *lppl) {
-    int16_t iprod;
-    int16_t iDst;
+    std::int16_t iprod;
+    std::int16_t iDst;
     PROD   *lpprod;
 
     if (lppl->lpplprod && lppl->lpplprod->iprodMac != 0) {
@@ -144,8 +144,8 @@ void KillQueuedMassPackets(APPSESSION &app, PLANET *lppl) {
 }
 
 void KillQueuedShips(APPSESSION &app, PLANET *lppl) {
-    int16_t iprod;
-    int16_t iDst;
+    std::int16_t iprod;
+    std::int16_t iDst;
     PROD   *lpprod;
 
     if (lppl->lpplprod && lppl->lpplprod->iprodMac != 0) {

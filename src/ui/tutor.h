@@ -2,7 +2,7 @@
 #define STARS_DECOMPILED_TUTOR_H
 
 #include "win.h"
-#include <stdint.h>
+#include <cstdint>
 #include <windows.h>
 
 extern ITEMACTION rgiaUnloadAllCol[5];
@@ -13,36 +13,36 @@ extern ZIPPRODQ1  rgzpqTut[2];
 
 INT_PTR  TutorDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 INT_PTR  PanicDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
-void             ShowTutor(APPSESSION &app, int16_t fShow);
+void             ShowTutor(APPSESSION &app, std::int16_t fShow);
 void             DrawTutorText(APPSESSION &app, HWND hwnd);
-void             StartTutor(APPSESSION &app, int16_t fRestart);
-void             EndTutor(APPSESSION &app, int16_t fClose);
+void             StartTutor(APPSESSION &app, std::int16_t fRestart);
+void             EndTutor(APPSESSION &app, std::int16_t fClose);
 void             SaveGameState(APPSESSION &app);
 void             RestoreGameState(APPSESSION &app);
-int16_t          FAskKillTutor(APPSESSION &app);
-int16_t          FTutorTaskDone(APPSESSION &app);
-int16_t          FCheckZip(APPSESSION &app, int16_t iZip, ITEMACTION *lpiaGoal, StringId ids);
-int16_t          FCheckTemplate(APPSESSION &app, int16_t iTemplate);
+std::int16_t          FAskKillTutor(APPSESSION &app);
+std::int16_t          FTutorTaskDone(APPSESSION &app);
+std::int16_t          FCheckZip(APPSESSION &app, std::int16_t iZip, ITEMACTION *lpiaGoal, StringId ids);
+std::int16_t          FCheckTemplate(APPSESSION &app, std::int16_t iTemplate);
 void             TutorError(APPSESSION &app, StringId idsError);
-int16_t          FCheckScanner(APPSESSION &app, int16_t md, int16_t iZoom);
-int16_t          FCheckFleetName(APPSESSION &app, int16_t id, StringId ids);
-int16_t          FCheckSummary(APPSESSION &app, GrobjClass grobj, int16_t id);
-int16_t          FCheckSelection(APPSESSION &app, GrobjClass grobj, int16_t id);
-int16_t          FCheckMessages(APPSESSION &app, int16_t imsg, MessageId idm, int16_t fFilter);
-int16_t          FCheckResearch(APPSESSION &app, TechFieldType iTech, TechFieldType iTechNext, int16_t pct);
-int16_t          FCheckFleetWP(APPSESSION &app, uint16_t ifl, int16_t iord, GrobjClass grobj, int16_t id, TaskType grTask, uint16_t iWarp);
-int16_t          FCheckPlanetRoute(APPSESSION &app, int16_t idpl, int16_t idplRoute);
-int16_t          FCheckLayingWP(APPSESSION &app, uint16_t ifl, int16_t iord, int16_t id, int16_t iYears);
-int16_t          FCheckColonizeWP(APPSESSION &app, uint16_t ifl, int16_t id, uint16_t iWarp);
-int16_t          FCheckPatrolWP(APPSESSION &app, uint16_t ifl, int16_t iord, int16_t id, uint16_t iWarp, uint16_t iPlan, uint16_t iDist);
-int16_t          FCheckXferWP(APPSESSION &app, uint16_t ifl, int16_t iord, int16_t id, uint16_t iWarp, ITEMACTION *lpiaGoal);
-int16_t          FCheckQueue(APPSESSION &app, int16_t ipl, int16_t iprod, GrobjClass grobj, uint16_t iItem, uint16_t cItem, uint16_t fNoResearch);
-int16_t FCheckBtlPlan(APPSESSION &app, int16_t ibp, uint16_t imdTarget, int16_t fSpread, int16_t fBomb, int16_t fDump, uint16_t mdUnarmed, uint16_t mdScout, uint16_t mdWar,
-                      uint16_t mdBomber);
-int16_t FCheckCargo(APPSESSION &app, FLEET *lpfl, int16_t wtMin1, int16_t wtMin2, int16_t wtMin3, int16_t wtColonists);
-int16_t FCheckBuilderPart(APPSESSION &app, int16_t iSlot, HS *phs, uint16_t cInit);
-int16_t FCheckShipBuilder(APPSESSION &app, int16_t iCategory, int16_t iShip);
-int16_t FTutorialEnabledShipBuilder(APPSESSION &app, TutorShipBuilderAction itutsbAction);
-int16_t FOKMergeDialog(APPSESSION &app);
+std::int16_t          FCheckScanner(APPSESSION &app, std::int16_t md, std::int16_t iZoom);
+std::int16_t          FCheckFleetName(APPSESSION &app, std::int16_t id, StringId ids);
+std::int16_t          FCheckSummary(APPSESSION &app, GrobjClass grobj, std::int16_t id);
+std::int16_t          FCheckSelection(APPSESSION &app, GrobjClass grobj, std::int16_t id);
+std::int16_t          FCheckMessages(APPSESSION &app, std::int16_t imsg, MessageId idm, std::int16_t fFilter);
+std::int16_t          FCheckResearch(APPSESSION &app, TechFieldType iTech, TechFieldType iTechNext, std::int16_t pct);
+std::int16_t          FCheckFleetWP(APPSESSION &app, std::uint16_t ifl, std::int16_t iord, GrobjClass grobj, std::int16_t id, TaskType grTask, std::uint16_t iWarp);
+std::int16_t          FCheckPlanetRoute(APPSESSION &app, std::int16_t idpl, std::int16_t idplRoute);
+std::int16_t          FCheckLayingWP(APPSESSION &app, std::uint16_t ifl, std::int16_t iord, std::int16_t id, std::int16_t iYears);
+std::int16_t          FCheckColonizeWP(APPSESSION &app, std::uint16_t ifl, std::int16_t id, std::uint16_t iWarp);
+std::int16_t          FCheckPatrolWP(APPSESSION &app, std::uint16_t ifl, std::int16_t iord, std::int16_t id, std::uint16_t iWarp, std::uint16_t iPlan, std::uint16_t iDist);
+std::int16_t          FCheckXferWP(APPSESSION &app, std::uint16_t ifl, std::int16_t iord, std::int16_t id, std::uint16_t iWarp, ITEMACTION *lpiaGoal);
+std::int16_t          FCheckQueue(APPSESSION &app, std::int16_t ipl, std::int16_t iprod, GrobjClass grobj, std::uint16_t iItem, std::uint16_t cItem, std::uint16_t fNoResearch);
+std::int16_t FCheckBtlPlan(APPSESSION &app, std::int16_t ibp, std::uint16_t imdTarget, std::int16_t fSpread, std::int16_t fBomb, std::int16_t fDump, std::uint16_t mdUnarmed, std::uint16_t mdScout, std::uint16_t mdWar,
+                      std::uint16_t mdBomber);
+std::int16_t FCheckCargo(APPSESSION &app, FLEET *lpfl, std::int16_t wtMin1, std::int16_t wtMin2, std::int16_t wtMin3, std::int16_t wtColonists);
+std::int16_t FCheckBuilderPart(APPSESSION &app, std::int16_t iSlot, HS *phs, std::uint16_t cInit);
+std::int16_t FCheckShipBuilder(APPSESSION &app, std::int16_t iCategory, std::int16_t iShip);
+std::int16_t FTutorialEnabledShipBuilder(APPSESSION &app, TutorShipBuilderAction itutsbAction);
+std::int16_t FOKMergeDialog(APPSESSION &app);
 
 #endif

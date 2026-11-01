@@ -14,7 +14,7 @@ INT_PTR  RandomSeedDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
     char     szValue[33];
     char    *pch;
-    uint32_t dw;
+    std::uint32_t dw;
     RECT     rc;
 
     switch (message) {
@@ -44,8 +44,8 @@ INT_PTR  RandomSeedDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 win32::GetDlgItemTextA(hwnd, IDC_EDIT1, szValue, 32);
                 pch = szValue;
                 dw = 0;
-                for (; isdigit(*pch) != 0; pch++) {
-                    dw = static_cast<uint32_t>((dw * 10)) + static_cast<int16_t>((*pch - '0'));
+                for (; std::isdigit(*pch) != 0; pch++) {
+                    dw = static_cast<std::uint32_t>((dw * 10)) + static_cast<std::int16_t>((*pch - '0'));
                 }
                 if (dw == 0) {
                     return 1;
@@ -60,8 +60,8 @@ INT_PTR  RandomSeedDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     return 0;
 }
 
-void CtrTextOut(HDC hdc, int16_t x, int16_t y, const char *psz, int16_t cLen) {
-    int16_t dx;
+void CtrTextOut(HDC hdc, std::int16_t x, std::int16_t y, const char *psz, std::int16_t cLen) {
+    std::int16_t dx;
 
     if (cLen == 0) {
         cLen = win32::lstrlenA(psz);
@@ -71,8 +71,8 @@ void CtrTextOut(HDC hdc, int16_t x, int16_t y, const char *psz, int16_t cLen) {
     return;
 }
 
-int16_t DxStreamTextOut(HDC hdc, int16_t *px, int16_t y, const char *psz, int16_t cLen, int16_t fPrint) {
-    int16_t dx;
+std::int16_t DxStreamTextOut(HDC hdc, std::int16_t *px, std::int16_t y, const char *psz, std::int16_t cLen, std::int16_t fPrint) {
+    std::int16_t dx;
 
     if (cLen == 0) {
         cLen = win32::lstrlenA(psz);
@@ -85,19 +85,19 @@ int16_t DxStreamTextOut(HDC hdc, int16_t *px, int16_t y, const char *psz, int16_
     return dx;
 }
 
-void WrapTextOut(APPSESSION &app, HDC hdc, int16_t *px, int16_t *py, const char *psz, int16_t cLen, int16_t xLeft, int16_t dxWidth, int16_t *pxMax, int16_t fNewLine, int16_t fPrint) {
-    int16_t dxRemain;
+void WrapTextOut(APPSESSION &app, HDC hdc, std::int16_t *px, std::int16_t *py, const char *psz, std::int16_t cLen, std::int16_t xLeft, std::int16_t dxWidth, std::int16_t *pxMax, std::int16_t fNewLine, std::int16_t fPrint) {
+    std::int16_t dxRemain;
     const char   *pchEnd;
-    int16_t fItFit;
-    int16_t xRight;
-    int16_t dx;
+    std::int16_t fItFit;
+    std::int16_t xRight;
+    std::int16_t dx;
     const char   *pchStart;
     const char   *pch;
 
     xRight = xLeft + dxWidth;
     dxRemain = dxWidth - (*px - xLeft);
     if (cLen == 0) {
-        cLen = strlen(psz);
+        cLen = std::strlen(psz);
     }
     if (fNewLine) {
         *py += app.state.dyArial8;
@@ -173,10 +173,10 @@ void ChopTrailingSpaces(const char *pBeg, const char **ppEnd) {
     return;
 }
 
-void RcCtrTextOut(APPSESSION &app, HDC hdc, RECT *prc, const char *psz, int16_t cLen) {
-    int16_t y;
-    int16_t x;
-    int32_t l;
+void RcCtrTextOut(APPSESSION &app, HDC hdc, RECT *prc, const char *psz, std::int16_t cLen) {
+    std::int16_t y;
+    std::int16_t x;
+    std::int32_t l;
 
     if (cLen == -1) {
         win32::FillRect(hdc, prc, app.lpui->hbrButtonFace);
@@ -186,19 +186,19 @@ void RcCtrTextOut(APPSESSION &app, HDC hdc, RECT *prc, const char *psz, int16_t 
         cLen = win32::lstrlenA(psz);
     }
     l = GetTextExtent(hdc, psz, cLen);
-    x = static_cast<int16_t>((prc->right - prc->left - LOWORD(l))) / 2 + prc->left;
-    y = static_cast<int16_t>((prc->bottom - prc->top - HIWORD(l))) / 2 + prc->top;
+    x = static_cast<std::int16_t>((prc->right - prc->left - LOWORD(l))) / 2 + prc->left;
+    y = static_cast<std::int16_t>((prc->bottom - prc->top - HIWORD(l))) / 2 + prc->top;
     win32::TextOutA(hdc, x, y, psz, cLen);
     return;
 }
 
-void RightTextOut(APPSESSION &app, HDC hdc, int16_t x, int16_t y, char *psz, int16_t cLen, int16_t dxErase) {
+void RightTextOut(APPSESSION &app, HDC hdc, std::int16_t x, std::int16_t y, char *psz, std::int16_t cLen, std::int16_t dxErase) {
     if (cLen == -1) cLen = TextIO().pfnCchGetString(app, idsNone2, psz);
     RightTextOut(app, hdc, x, y, static_cast<const char *>(psz), cLen, dxErase);
 }
 
-void RightTextOut(APPSESSION &app, HDC hdc, int16_t x, int16_t y, const char *psz, int16_t cLen, int16_t dxErase) {
-    int16_t dx;
+void RightTextOut(APPSESSION &app, HDC hdc, std::int16_t x, std::int16_t y, const char *psz, std::int16_t cLen, std::int16_t dxErase) {
+    std::int16_t dx;
     RECT    rc;
 
     if (cLen == -1) {
@@ -222,30 +222,30 @@ void RightTextOut(APPSESSION &app, HDC hdc, int16_t x, int16_t y, const char *ps
     return;
 }
 
-void DiaganolTextOut(APPSESSION &app, HDC hdc, RECT *prc, const char *psz, int16_t cLen) {
+void DiaganolTextOut(APPSESSION &app, HDC hdc, RECT *prc, const char *psz, std::int16_t cLen) {
     NATIVEOWNER<LOGFONT, win32::LocalFree> plfOwner;
     double   angle;
     HFONT    hfont;
-    int16_t  dxFlat;
-    int16_t  yStart;
-    int16_t  dy;
+    std::int16_t  dxFlat;
+    std::int16_t  yStart;
+    std::int16_t  dy;
     double   dcos;
-    int16_t  dyText;
-    int16_t  xStart;
-    int16_t  dyEstFont;
-    int16_t  dxText;
+    std::int16_t  dyText;
+    std::int16_t  xStart;
+    std::int16_t  dyEstFont;
+    std::int16_t  dxText;
     LOGFONT *plf;
     double   dsin;
     HFONT    hfontSav;
-    int16_t  dx;
-    int16_t  dyFlat;
+    std::int16_t  dx;
+    std::int16_t  dyFlat;
     double   rotate;
-    int32_t  l;
-    int16_t  dHtX;
-    int16_t  dHtY;
+    std::int32_t  l;
+    std::int16_t  dHtX;
+    std::int16_t  dHtY;
 
     if (cLen == 0) {
-        cLen = strlen(psz);
+        cLen = std::strlen(psz);
     }
     dx = prc->right - prc->left;
     dy = prc->bottom - prc->top;
@@ -253,7 +253,7 @@ void DiaganolTextOut(APPSESSION &app, HDC hdc, RECT *prc, const char *psz, int16
         plf = static_cast<LOGFONT *>(win32::LocalAlloc(64, sizeof(LOGFONT)));
         plfOwner.reset(plf);
         plf->lfWeight = 900;
-        strcpy(plf->lfFaceName, app.lpui->rgszArial[1]);
+        std::strcpy(plf->lfFaceName, app.lpui->rgszArial[1]);
         plf->lfHeight = -(dx <= dy ? dy : dx);
     TryAgain:
         if (plf->lfHeight > -5)
@@ -261,21 +261,21 @@ void DiaganolTextOut(APPSESSION &app, HDC hdc, RECT *prc, const char *psz, int16
 
         dyEstFont = win32::MulDiv(111, -plf->lfHeight, 100);
         if (dy < dyEstFont) {
-            plf->lfHeight += 2 <= static_cast<int16_t>((dyEstFont - dy)) / 2 ? static_cast<int16_t>((dyEstFont - dy)) / 2 : 2;
+            plf->lfHeight += 2 <= static_cast<std::int16_t>((dyEstFont - dy)) / 2 ? static_cast<std::int16_t>((dyEstFont - dy)) / 2 : 2;
             goto TryAgain;
         }
-        angle = static_cast<double>(atan2(static_cast<double>(static_cast<int16_t>((dy - dyEstFont))), static_cast<double>(dx)));
+        angle = static_cast<double>(std::atan2(static_cast<double>(static_cast<std::int16_t>((dy - dyEstFont))), static_cast<double>(dx)));
         rotate = static_cast<double>((static_cast<double>(angle) / 3.141592654 * 1800.0 + 0.5));
-        plf->lfEscapement = LOWORD(static_cast<int32_t>(rotate));
+        plf->lfEscapement = LOWORD(static_cast<std::int32_t>(rotate));
         hfont = win32::CreateFontIndirectA(plf);
         hfontSav = static_cast<HFONT>(win32::SelectObject(hdc, hfont));
         l = GetTextExtent(hdc, psz, cLen);
         dxText = LOWORD(l);
         dyText = HIWORD(l);
-        dsin = static_cast<double>(sin(angle));
-        dcos = static_cast<double>(cos(angle));
-        dxFlat = LOWORD(static_cast<int32_t>((static_cast<double>(dcos) * dxText + static_cast<double>(dsin) * dyText)));
-        dyFlat = LOWORD(static_cast<int32_t>((static_cast<double>(dsin) * dxText + static_cast<double>(dcos) * dyText)));
+        dsin = static_cast<double>(std::sin(angle));
+        dcos = static_cast<double>(std::cos(angle));
+        dxFlat = LOWORD(static_cast<std::int32_t>((static_cast<double>(dcos) * dxText + static_cast<double>(dsin) * dyText)));
+        dyFlat = LOWORD(static_cast<std::int32_t>((static_cast<double>(dsin) * dxText + static_cast<double>(dcos) * dyText)));
         if (dxFlat + 8 > dx || dyFlat + 8 > dy) {
             win32::SelectObject(hdc, hfontSav);
             win32::DeleteObject(hfont);
@@ -294,8 +294,8 @@ void DiaganolTextOut(APPSESSION &app, HDC hdc, RECT *prc, const char *psz, int16
             plf->lfHeight += (((2) > (StarsMax(dHtX, dHtY) - plf->lfHeight)) ? (2) : (StarsMax(dHtX, dHtY) - plf->lfHeight)) + 1;
             goto TryAgain;
         }
-        xStart = static_cast<int16_t>((dx - dxFlat)) / 2 + prc->left;
-        yStart = prc->bottom - static_cast<int16_t>((dy - dyFlat)) / 2 - LOWORD(static_cast<int32_t>((static_cast<double>(dcos) * dyText)));
+        xStart = static_cast<std::int16_t>((dx - dxFlat)) / 2 + prc->left;
+        yStart = prc->bottom - static_cast<std::int16_t>((dy - dyFlat)) / 2 - LOWORD(static_cast<std::int32_t>((static_cast<double>(dcos) * dyText)));
         win32::TextOutA(hdc, xStart, yStart, psz, cLen);
         win32::SelectObject(hdc, hfontSav);
         win32::DeleteObject(hfont);
@@ -306,7 +306,7 @@ void DiaganolTextOut(APPSESSION &app, HDC hdc, RECT *prc, const char *psz, int16
     return;
 }
 
-void ExpandRc(RECT *prc, int16_t dx, int16_t dy) {
+void ExpandRc(RECT *prc, std::int16_t dx, std::int16_t dy) {
     prc->left -= dx;
     prc->right += dx;
     prc->top -= dy;
@@ -314,7 +314,7 @@ void ExpandRc(RECT *prc, int16_t dx, int16_t dy) {
     return;
 }
 
-void OffsetRc(RECT *prc, int16_t dx, int16_t dy) {
+void OffsetRc(RECT *prc, std::int16_t dx, std::int16_t dy) {
     prc->left += dx;
     prc->right += dx;
     prc->top += dy;
@@ -322,7 +322,7 @@ void OffsetRc(RECT *prc, int16_t dx, int16_t dy) {
     return;
 }
 
-void StickyDlgPos(HWND hwnd, POINT16 *ppt, int16_t fInit) {
+void StickyDlgPos(HWND hwnd, POINT16 *ppt, std::int16_t fInit) {
     POINT16 ptScreenMax;
     RECT    rc;
 
@@ -356,11 +356,11 @@ void StickyDlgPos(HWND hwnd, POINT16 *ppt, int16_t fInit) {
     return;
 }
 
-int32_t LDrawGauge(APPSESSION &app, HDC hdc, RECT *prc, int16_t cSegs, int32_t *rgSize, HBRUSH *rghbr, int32_t cTot) {
-    int16_t fHuge;
-    int16_t i;
-    int32_t lSum;
-    int32_t dx;
+std::int32_t LDrawGauge(APPSESSION &app, HDC hdc, RECT *prc, std::int16_t cSegs, std::int32_t *rgSize, HBRUSH *rghbr, std::int32_t cTot) {
+    std::int16_t fHuge;
+    std::int16_t i;
+    std::int32_t lSum;
+    std::int32_t dx;
     RECT    rc;
 
     lSum = 0;
@@ -372,16 +372,16 @@ int32_t LDrawGauge(APPSESSION &app, HDC hdc, RECT *prc, int16_t cSegs, int32_t *
 
     fHuge = cTot >= 10000000;
     if (fHuge) {
-        cTot = static_cast<int32_t>((cTot / 1000));
+        cTot = static_cast<std::int32_t>((cTot / 1000));
     }
-    dx = static_cast<int16_t>((rc.right - rc.left));
+    dx = static_cast<std::int16_t>((rc.right - rc.left));
     for (i = 0; i < cSegs; i++) {
         if (!fHuge) {
             lSum += rgSize[i];
         } else {
-            lSum += static_cast<int32_t>((rgSize[i] / 1000));
+            lSum += static_cast<std::int32_t>((rgSize[i] / 1000));
         }
-        rc.right = prc->left + 1 + LOWORD(static_cast<int32_t>((static_cast<int32_t>((dx * lSum)) / cTot)));
+        rc.right = prc->left + 1 + LOWORD(static_cast<std::int32_t>((static_cast<std::int32_t>((dx * lSum)) / cTot)));
         if (rc.right > rc.left) {
             win32::FillRect(hdc, &rc, rghbr[i]);
         }
@@ -394,14 +394,14 @@ FinRet:
         win32::FillRect(hdc, &rc, app.lpui->hbrButtonFace);
     }
     if (fHuge) {
-        lSum = static_cast<uint32_t>((lSum * 1000));
+        lSum = static_cast<std::uint32_t>((lSum * 1000));
     }
     return lSum;
 }
 
-void _Draw3dFrame(APPSESSION &app, HDC hdc, RECT *prc, int16_t fErase) {
-    int16_t dy;
-    int16_t dx;
+void _Draw3dFrame(APPSESSION &app, HDC hdc, RECT *prc, std::int16_t fErase) {
+    std::int16_t dy;
+    std::int16_t dx;
     HBRUSH  hbrSav;
     RECT    rc;
 
@@ -433,7 +433,7 @@ void _Draw3dFrame(APPSESSION &app, HDC hdc, RECT *prc, int16_t fErase) {
     return;
 }
 
-void InitBtnTrack(BTNT *pbtnt, HWND hwnd, HDC hdc, RECT *prc, int16_t btf, int16_t dTimer, int16_t fInitDown, int16_t fNoEndRedraw, const char *szText) {
+void InitBtnTrack(BTNT *pbtnt, HWND hwnd, HDC hdc, RECT *prc, std::int16_t btf, std::int16_t dTimer, std::int16_t fInitDown, std::int16_t fNoEndRedraw, const char *szText) {
     pbtnt->hwnd = hwnd;
     pbtnt->fCreatedDC = hdc == nullptr;
     if (!hdc) {
@@ -441,7 +441,7 @@ void InitBtnTrack(BTNT *pbtnt, HWND hwnd, HDC hdc, RECT *prc, int16_t btf, int16
     }
     pbtnt->hdc = hdc;
     /* NATIVE: BTN rectangles can start on a two-byte boundary. */
-    memcpy(&pbtnt->rc, prc, sizeof(pbtnt->rc));
+    std::memcpy(&pbtnt->rc, prc, sizeof(pbtnt->rc));
     pbtnt->btf = btf;
     pbtnt->dTimer = dTimer;
     pbtnt->fFirst = 1;
@@ -452,22 +452,22 @@ void InitBtnTrack(BTNT *pbtnt, HWND hwnd, HDC hdc, RECT *prc, int16_t btf, int16
     return;
 }
 
-int16_t FTrackBtn(APPSESSION &app, BTNT *pbtnt) {
+std::int16_t FTrackBtn(APPSESSION &app, BTNT *pbtnt) {
     POINT16 pt;
-    int16_t fInBtn;
-    int32_t ticksNew;
+    std::int16_t fInBtn;
+    std::int32_t ticksNew;
     RECT    rc;
 
     if (pbtnt->fFirst) {
         win32::SetCapture(pbtnt->hwnd);
         DrawBtn(app, pbtnt->hdc, &pbtnt->rc, pbtnt->btf, pbtnt->fDown ^ pbtnt->fInitDown, pbtnt->szText);
-        pbtnt->lTicks = win32::GetTickCount() + static_cast<int16_t>((3 * pbtnt->dTimer));
+        pbtnt->lTicks = win32::GetTickCount() + static_cast<std::int16_t>((3 * pbtnt->dTimer));
         pbtnt->fFirst = 0;
         return 1;
     }
     pt.x = pbtnt->rc.left;
     pt.y = pbtnt->rc.top;
-    memcpy(&rc, &pbtnt->rc, sizeof(rc));
+    std::memcpy(&rc, &pbtnt->rc, sizeof(rc));
     while (FGetMouseMove(&pt)) {
         fInBtn = win32::PtInRect(&rc, PointFrom16(pt));
         if (fInBtn != pbtnt->fDown) {
@@ -492,31 +492,31 @@ int16_t FTrackBtn(APPSESSION &app, BTNT *pbtnt) {
     return 0;
 }
 
-void DrawBtn(APPSESSION &app, HDC hdc, RECT *prc, int16_t bt, int16_t fDown, const char *szText) {
-    int32_t  dxFace;
-    int16_t  ipt;
-    int16_t  dyOffset;
-    int16_t  d;
-    int16_t  fBar;
-    int16_t  fDisabled;
-    int16_t  dxOffset;
-    int16_t  dy;
-    int16_t  fNoShaft;
-    int16_t  y;
+void DrawBtn(APPSESSION &app, HDC hdc, RECT *prc, std::int16_t bt, std::int16_t fDown, const char *szText) {
+    std::int32_t  dxFace;
+    std::int16_t  ipt;
+    std::int16_t  dyOffset;
+    std::int16_t  d;
+    std::int16_t  fBar;
+    std::int16_t  fDisabled;
+    std::int16_t  dxOffset;
+    std::int16_t  dy;
+    std::int16_t  fNoShaft;
+    std::int16_t  y;
     POINT16  rgptDraw[6];
     HBRUSH   hbrCur;
     COLORREF crSav;
-    int16_t  dx;
+    std::int16_t  dx;
     HBRUSH   hbrSav;
-    int16_t  cpt;
-    int16_t  x;
+    std::int16_t  cpt;
+    std::int16_t  x;
     RECT     rc, rcButton;
-    int16_t  dxyT;
-    int16_t  bkMode;
+    std::int16_t  dxyT;
+    std::int16_t  bkMode;
     HFONT    hfontSav;
 
     /* NATIVE: Packed BTN/BTNT storage does not guarantee RECT alignment. */
-    memcpy(&rcButton, prc, sizeof(rcButton));
+    std::memcpy(&rcButton, prc, sizeof(rcButton));
     prc = &rcButton;
     fDisabled = bt & 4;
     rc = *prc;
@@ -527,7 +527,7 @@ void DrawBtn(APPSESSION &app, HDC hdc, RECT *prc, int16_t bt, int16_t fDown, con
     }
     dx = rc.right - rc.left - 1;
     dy = rc.bottom - rc.top - 1;
-    dxFace = static_cast<int16_t>((prc->right - prc->left)) - 5;
+    dxFace = static_cast<std::int16_t>((prc->right - prc->left)) - 5;
     win32::SelectObject(hdc, !fDown ? app.lpui->hbrButtonHilite : app.lpui->hbrButtonShadow);
     win32::PatBlt(hdc, rc.left, rc.top, dx, 1, win32::PATCOPY);
     win32::PatBlt(hdc, rc.left, rc.top, 1, dy, win32::PATCOPY);
@@ -549,12 +549,12 @@ void DrawBtn(APPSESSION &app, HDC hdc, RECT *prc, int16_t bt, int16_t fDown, con
         bt &= 3;
         if (fNoShaft) {
             cpt = 3;
-            memcpy(rgptDraw, app.lpui->rgptTriangle, cpt * 4);
+            std::memcpy(rgptDraw, app.lpui->rgptTriangle, cpt * 4);
             dx = 8;
             dy = 4;
         } else {
             cpt = 5;
-            memcpy(rgptDraw, app.lpui->rgptArrow, cpt * 4);
+            std::memcpy(rgptDraw, app.lpui->rgptArrow, cpt * 4);
             dx = 6;
             dy = 6;
         }
@@ -569,14 +569,14 @@ void DrawBtn(APPSESSION &app, HDC hdc, RECT *prc, int16_t bt, int16_t fDown, con
         }
         for (ipt = 0; ipt < cpt; ipt++) {
             if (rgptDraw[ipt].x >= 0) {
-                rgptDraw[ipt].x = LOWORD(static_cast<int32_t>((rgptDraw[ipt].x * dxFace)) / 11);
+                rgptDraw[ipt].x = LOWORD(static_cast<std::int32_t>((rgptDraw[ipt].x * dxFace)) / 11);
             } else {
                 rgptDraw[ipt].x = rgptDraw[0].x * 2 - rgptDraw[-rgptDraw[ipt].x].x;
             }
-            rgptDraw[ipt].y = LOWORD(static_cast<int32_t>((rgptDraw[ipt].y * dxFace)) / 11);
+            rgptDraw[ipt].y = LOWORD(static_cast<std::int32_t>((rgptDraw[ipt].y * dxFace)) / 11);
         }
-        dx = LOWORD(static_cast<int32_t>((dx * dxFace)) / 11);
-        dy = LOWORD(static_cast<int32_t>((dy * dxFace)) / 11);
+        dx = LOWORD(static_cast<std::int32_t>((dx * dxFace)) / 11);
+        dy = LOWORD(static_cast<std::int32_t>((dy * dxFace)) / 11);
         dxOffset = ((prc->right - prc->left - dx) >> 1) + fDown;
         dyOffset = ((prc->bottom - prc->top - dy) >> 1) + fDown;
         if (bt == 2 || bt == 3) {
@@ -669,7 +669,7 @@ void DrawBtn(APPSESSION &app, HDC hdc, RECT *prc, int16_t bt, int16_t fDown, con
     return;
 }
 
-int16_t FGetMouseMove(POINT16 *ppt) {
+std::int16_t FGetMouseMove(POINT16 *ppt) {
     win32::MSG msg;
 
     while (ui::PeekMessage(&msg, nullptr, 0, 0, 1)) {
@@ -685,7 +685,7 @@ int16_t FGetMouseMove(POINT16 *ppt) {
     return 1;
 }
 
-int16_t FGetRMouseMove(POINT16 *ppt) {
+std::int16_t FGetRMouseMove(POINT16 *ppt) {
     win32::MSG msg;
 
     while (ui::PeekMessage(&msg, nullptr, 0, 0, 1)) {
@@ -703,8 +703,8 @@ int16_t FGetRMouseMove(POINT16 *ppt) {
 
 void DrawFuzzyBorder(APPSESSION &app, HDC hdc, RECT *prc) {
     COLORREF crBack;
-    int16_t  dy;
-    int16_t  dx;
+    std::int16_t  dy;
+    std::int16_t  dx;
     HBRUSH   hbrSav;
     COLORREF crFore;
 
@@ -723,19 +723,19 @@ void DrawFuzzyBorder(APPSESSION &app, HDC hdc, RECT *prc) {
     return;
 }
 
-int16_t FStringFitsScreen(APPSESSION &app, char *lpsz, int16_t dxMax) {
+std::int16_t FStringFitsScreen(APPSESSION &app, char *lpsz, std::int16_t dxMax) {
     HDC     hdc;
-    int16_t c;
-    int16_t fFit;
+    std::int16_t c;
+    std::int16_t fFit;
     HFONT   hfontSav;
 
     fFit = 1;
     hdc = win32::GetDC(app.lpui->hwndFrame);
-    c = strlen(lpsz);
+    c = std::strlen(lpsz);
     hfontSav = static_cast<HFONT>(win32::SelectObject(hdc, app.lpui->rghfontArial8[0]));
-    while (c > 0 && LOWORD(GetTextExtent(hdc, lpsz, c)) > static_cast<uint16_t>(dxMax)) {
+    while (c > 0 && LOWORD(GetTextExtent(hdc, lpsz, c)) > static_cast<std::uint16_t>(dxMax)) {
         fFit = 0;
-        c = static_cast<int16_t>(CchUtf8Prefix(lpsz, c - 1));
+        c = static_cast<std::int16_t>(CchUtf8Prefix(lpsz, c - 1));
         lpsz[c] = 0;
     }
     win32::SelectObject(hdc, hfontSav);
@@ -744,8 +744,8 @@ int16_t FStringFitsScreen(APPSESSION &app, char *lpsz, int16_t dxMax) {
 }
 
 HBRUSH HbrGet(APPSESSION &app, COLORREF cr) {
-    int16_t iFree;
-    int16_t i;
+    std::int16_t iFree;
+    std::int16_t i;
     HBRUSH  hbr;
 
     iFree = -1;
@@ -774,7 +774,7 @@ HBRUSH HbrGet(APPSESSION &app, COLORREF cr) {
 }
 
 void FreeHbr(APPSESSION &app, HBRUSH hbr) {
-    int16_t i;
+    std::int16_t i;
 
     for (i = 0; i < app.lpui->chbrCache; i++) {
         if (app.lpui->rghbrCacheUse[i] > 0 && hbr == app.lpui->rghbrCache[i]) {
@@ -790,8 +790,8 @@ void FreeHbr(APPSESSION &app, HBRUSH hbr) {
     goto DeleteBrush;
 }
 
-uint16_t DibNumColors(void *pv) {
-    int16_t           bits;
+std::uint16_t DibNumColors(void *pv) {
+    std::int16_t           bits;
     BITMAPCOREHEADER *lpbc;
     BITMAPINFOHEADER *lpbi;
     BITMAPINFOHEADER bi;
@@ -800,13 +800,13 @@ uint16_t DibNumColors(void *pv) {
     lpbi = &bi;
     lpbc = &bc;
     if (RawLoad32(pv) != 12) {
-        memcpy(lpbi, pv, sizeof(bi));
+        std::memcpy(lpbi, pv, sizeof(bi));
         if (lpbi->biClrUsed != 0) {
             return LOWORD(lpbi->biClrUsed);
         }
         bits = lpbi->biBitCount;
     } else {
-        memcpy(lpbc, pv, sizeof(bc));
+        std::memcpy(lpbc, pv, sizeof(bc));
         bits = lpbc->bcBitCount;
     }
     switch (bits) {
@@ -824,9 +824,9 @@ uint16_t DibNumColors(void *pv) {
 HPALETTE HpalFromDib(HGLOBAL hdib) {
     NATIVEOWNER<LOGPALETTE, win32::LocalFree> ppalOwner;
     HPALETTE          hpal;
-    int16_t           cColors;
-    int16_t           i;
-    uint8_t           bT;
+    std::int16_t           cColors;
+    std::int16_t           i;
+    std::uint8_t           bT;
     char             *lpb;
     BITMAPINFOHEADER *lpbi;
     LOGPALETTE       *ppal;
@@ -845,7 +845,7 @@ HPALETTE HpalFromDib(HGLOBAL hdib) {
     ppalOwner.reset(ppal);
     ppal->palNumEntries = cColors;
     ppal->palVersion = 768;
-    memcpy(ppal->palPalEntry, lpb + 40, cColors * 4);
+    std::memcpy(ppal->palPalEntry, lpb + 40, cColors * 4);
     for (i = 0; i < cColors; i++) {
         bT = ppal->palPalEntry[i].peRed;
         ppal->palPalEntry[i].peRed = ppal->palPalEntry[i].peBlue;
@@ -860,8 +860,8 @@ HPALETTE HpalFromDib(HGLOBAL hdib) {
 HPALETTE HpalBlackReserved() {
     NATIVEOWNER<LOGPALETTE, win32::LocalFree> ppalOwner;
     HPALETTE    hpal;
-    int16_t     cColors;
-    int16_t     i;
+    std::int16_t     cColors;
+    std::int16_t     i;
     LOGPALETTE *ppal;
 
     cColors = 256;
@@ -880,8 +880,8 @@ HPALETTE HpalBlackReserved() {
     return hpal;
 }
 
-uint16_t PaletteSize(void *pv) {
-    uint16_t          NumColors;
+std::uint16_t PaletteSize(void *pv) {
+    std::uint16_t          NumColors;
     BITMAPINFOHEADER *lpbi;
 
     lpbi = static_cast<BITMAPINFOHEADER *>(pv);
@@ -892,7 +892,7 @@ uint16_t PaletteSize(void *pv) {
     return NumColors * 4;
 }
 
-int16_t DibBlt(HDC hdc, int16_t x0, int16_t y0, int16_t dx, int16_t dy, HGLOBAL hdib, int16_t x1, int16_t y1, int16_t dxSrc, int16_t dySrc, int32_t rop) {
+std::int16_t DibBlt(HDC hdc, std::int16_t x0, std::int16_t y0, std::int16_t dx, std::int16_t dy, HGLOBAL hdib, std::int16_t x1, std::int16_t y1, std::int16_t dxSrc, std::int16_t dySrc, std::int32_t rop) {
     char             *pBuf;
     BITMAPINFOHEADER *lpbi;
 
@@ -909,10 +909,10 @@ int16_t DibBlt(HDC hdc, int16_t x0, int16_t y0, int16_t dx, int16_t dy, HGLOBAL 
     return 1;
 }
 
-HGLOBAL DibFromBitmap(HBITMAP hbm, uint32_t biStyle, uint16_t biBits, HPALETTE hpal) {
+HGLOBAL DibFromBitmap(HBITMAP hbm, std::uint32_t biStyle, std::uint16_t biBits, HPALETTE hpal) {
     HDC               hdc = nullptr;
     HGLOBAL           h;
-    uint32_t          dwLen;
+    std::uint32_t          dwLen;
     BITMAP            bm;
     BITMAPINFOHEADER  bi;
     HGLOBAL           hdib;
@@ -949,7 +949,7 @@ HGLOBAL DibFromBitmap(HBITMAP hbm, uint32_t biStyle, uint16_t biBits, HPALETTE h
     bi.biYPelsPerMeter = 0;
     bi.biClrUsed = 0;
     bi.biClrImportant = 0;
-    dwLen = static_cast<uint32_t>(PaletteSize(&bi)) + bi.biSize;
+    dwLen = static_cast<std::uint32_t>(PaletteSize(&bi)) + bi.biSize;
     hdc = win32::GetDC(nullptr);
     hpal = win32::SelectPalette(hdc, hpal, 0);
     win32::RealizePalette(hdc);
@@ -964,19 +964,19 @@ HGLOBAL DibFromBitmap(HBITMAP hbm, uint32_t biStyle, uint16_t biBits, HPALETTE h
     bi = *lpbi;
     win32::GlobalUnlock(hdib); fLocked = false;
     if (bi.biSizeImage == 0) {
-        bi.biSizeImage = static_cast<uint32_t>((static_cast<int32_t>((static_cast<uint32_t>(((static_cast<uint32_t>((bm.bmWidth * static_cast<uint32_t>(biBits))) + 31) / 32)) * 4)) * bm.bmHeight));
+        bi.biSizeImage = static_cast<std::uint32_t>((static_cast<std::int32_t>((static_cast<std::uint32_t>(((static_cast<std::uint32_t>((bm.bmWidth * static_cast<std::uint32_t>(biBits))) + 31) / 32)) * 4)) * bm.bmHeight));
         if (biStyle != 0) {
-            bi.biSizeImage = static_cast<uint32_t>((static_cast<uint32_t>((bi.biSizeImage * 3)) / 2));
+            bi.biSizeImage = static_cast<std::uint32_t>((static_cast<std::uint32_t>((bi.biSizeImage * 3)) / 2));
         }
     }
-    dwLen = static_cast<uint32_t>(PaletteSize(&bi)) + bi.biSize + bi.biSizeImage;
+    dwLen = static_cast<std::uint32_t>(PaletteSize(&bi)) + bi.biSize + bi.biSizeImage;
     h = win32::GlobalReAlloc(hdib, dwLen, 0);
     if (h) {
         dib.release();
         hdib = h;
         dib.reset(hdib);
         lpbi = static_cast<BITMAPINFOHEADER *>(win32::GlobalLock(hdib)); fLocked = lpbi != nullptr;
-        if (win32::GetDIBits(hdc, hbm, 0, LOWORD(bi.biHeight), reinterpret_cast<uint8_t *>(lpbi) + LOWORD(lpbi->biSize) + PaletteSize(lpbi), reinterpret_cast<BITMAPINFO *>(lpbi), 0) == 0) {
+        if (win32::GetDIBits(hdc, hbm, 0, LOWORD(bi.biHeight), reinterpret_cast<std::uint8_t *>(lpbi) + LOWORD(lpbi->biSize) + PaletteSize(lpbi), reinterpret_cast<BITMAPINFO *>(lpbi), 0) == 0) {
             win32::GlobalUnlock(hdib); fLocked = false;
             return nullptr;
         }
@@ -992,8 +992,8 @@ HGLOBAL HdibLoadBigResource(APPSESSION &app, BitmapId idb) {
     HGLOBAL  hres;
     char    *lpstr;
     HGLOBAL  hdib;
-    uint32_t cb;
-    uint32_t cbHeader;
+    std::uint32_t cb;
+    std::uint32_t cbHeader;
     BITMAPINFOHEADER bi;
     BITMAPCOREHEADER bc;
 
@@ -1015,15 +1015,15 @@ HGLOBAL HdibLoadBigResource(APPSESSION &app, BitmapId idb) {
     if (!hdib) {
         return nullptr;
     }
-    memcpy(static_cast<char *>(hdib), lpstr, cb);
+    std::memcpy(static_cast<char *>(hdib), lpstr, cb);
     // Embedded bytes become actual native GDI headers in the writable copy.
     // Incomplete/unknown resource prefixes retain their prior copied bytes.
     const auto rgb = std::as_bytes(std::span(lpstr, cb));
     if (NATIVEBYTEREADER(rgb).FReadU32Le(cbHeader)) {
         if (cbHeader == cbWireDibCoreHeader) {
-            if (FDecodeDibCoreHeader(rgb, bc)) memcpy(hdib, &bc, sizeof(bc));
+            if (FDecodeDibCoreHeader(rgb, bc)) std::memcpy(hdib, &bc, sizeof(bc));
         } else if (FDecodeDibHeader(rgb, bi)) {
-            memcpy(hdib, &bi, sizeof(bi));
+            std::memcpy(hdib, &bi, sizeof(bi));
         }
     }
     return hdib;
@@ -1034,7 +1034,7 @@ INT_PTR  PasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
 
     char    szPass[60];
     RECT    rc;
-    int32_t lSalt;
+    std::int32_t lSalt;
 
     switch (message) {
     case win32::WM_INITDIALOG:
@@ -1070,7 +1070,7 @@ INT_PTR  PasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 if (lSalt == app.state.lSaltCur) {
                     if (!app.state.gd.fHotSeat) {
                         app.state.lSaltLast = app.state.lSaltCur;
-                        strcpy(app.state.szPassLast, szPass);
+                        std::strcpy(app.state.szPassLast, szPass);
                     }
                 } else {
                     app.lpui->vcPasswordFailures++;
@@ -1097,8 +1097,8 @@ INT_PTR  NewPasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     char    szPass[20];
     char    szPassConfirm[20];
     RECT    rc;
-    int32_t lSalt2;
-    int32_t lSalt;
+    std::int32_t lSalt2;
+    std::int32_t lSalt;
 
     switch (message) {
     case win32::WM_INITDIALOG:
@@ -1157,7 +1157,7 @@ INT_PTR  NewPasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                         AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsNativeLegacyRacePasswordRequired), win32::MB_ICONHAND);
                         break;
                     }
-                    strcpy(reinterpret_cast<char *>(win32::GetWindowLongPtrA(hwnd, win32::DWLP_USER)), szPass);
+                    std::strcpy(reinterpret_cast<char *>(win32::GetWindowLongPtrA(hwnd, win32::DWLP_USER)), szPass);
                 } else if (app.state.idPlayer != iplrNone) {
                     WriteMemPassword(app, lSalt);
                 } else {
@@ -1180,12 +1180,12 @@ INT_PTR  NewPasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     return 0;
 }
 
-int16_t FPromptLegacyRacePassword(APPSESSION &app, char *szPassword) {
+std::int16_t FPromptLegacyRacePassword(APPSESSION &app, char *szPassword) {
     FARPROC lpProc;
-    int16_t fRet;
+    std::int16_t fRet;
 
     lpProc = (NewPasswordDlg);
-    fRet = static_cast<int16_t>(ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_NEW_PASSWORD), app.lpui->hwndFrame, lpProc, reinterpret_cast<LPARAM>(szPassword)));
+    fRet = static_cast<std::int16_t>(ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_NEW_PASSWORD), app.lpui->hwndFrame, lpProc, reinterpret_cast<LPARAM>(szPassword)));
     return fRet > 0;
 }
 
@@ -1212,9 +1212,9 @@ INT_PTR  ProgressGaugeDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     HDC         hdc;
     PAINTSTRUCT ps;
     RECT        rc;
-    int16_t     dy;
+    std::int16_t     dy;
     char       *psz;
-    int16_t     dx;
+    std::int16_t     dx;
 
     switch (message) {
     case win32::WM_INITDIALOG:
@@ -1252,14 +1252,14 @@ INT_PTR  ProgressGaugeDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
-void DrawProgressGauge(APPSESSION &app, HDC hdcOrig, int16_t fFull, int16_t iNumOnly) {
+void DrawProgressGauge(APPSESSION &app, HDC hdcOrig, std::int16_t fFull, std::int16_t iNumOnly) {
     HDC     hdc;
-    int16_t dy;
-    int16_t fNumOnly;
-    int16_t dx2;
-    int16_t dx;
+    std::int16_t dy;
+    std::int16_t fNumOnly;
+    std::int16_t dx2;
+    std::int16_t dx;
     RECT    rc;
-    int16_t c;
+    std::int16_t c;
     char    szT[8];
 
     fNumOnly = iNumOnly > 0;
@@ -1316,7 +1316,7 @@ void DrawProgressGauge(APPSESSION &app, HDC hdcOrig, int16_t fFull, int16_t iNum
     return;
 }
 
-HFONT HfontPrinterCreate(APPSESSION &app, HDC hdc, int16_t iSize, int16_t *pdyFont) {
+HFONT HfontPrinterCreate(APPSESSION &app, HDC hdc, std::int16_t iSize, std::int16_t *pdyFont) {
     NATIVEOWNER<LOGFONT, win32::LocalFree> plfOwner;
     HFONT      hfontNew;
     LOGFONT   *plf;
@@ -1325,9 +1325,9 @@ HFONT HfontPrinterCreate(APPSESSION &app, HDC hdc, int16_t iSize, int16_t *pdyFo
 
     plf = static_cast<LOGFONT *>(win32::LocalAlloc(64, sizeof(LOGFONT)));
     plfOwner.reset(plf);
-    memset(plf, 0, sizeof(LOGFONT));
+    std::memset(plf, 0, sizeof(LOGFONT));
     plf->lfHeight = -win32::MulDiv(iSize, win32::GetDeviceCaps(hdc, win32::LOGPIXELSY), 72);
-    strcpy(plf->lfFaceName, app.lpui->rgszArial[1]);
+    std::strcpy(plf->lfFaceName, app.lpui->rgszArial[1]);
     hfontNew = win32::CreateFontIndirectA(plf);
     if (pdyFont && hfontNew) {
         hfontSav = static_cast<HFONT>(win32::SelectObject(hdc, hfontNew));
@@ -1341,13 +1341,13 @@ HFONT HfontPrinterCreate(APPSESSION &app, HDC hdc, int16_t iSize, int16_t *pdyFo
 
 // IdAlertBox shows an AlertSz message in a message box and returns the
 // button the player chose.
-int16_t IdAlertBox(const char *sz, int16_t mbType) { return CompatChoiceIO().pfnMessageBoxA(win32::GetFocus(), sz, "Stars!", mbType); }
+std::int16_t IdAlertBox(const char *sz, std::int16_t mbType) { return CompatChoiceIO().pfnMessageBoxA(win32::GetFocus(), sz, "Stars!", mbType); }
 
 // PromptPassword asks for the password of the file FCheckPassword is
 // checking.
-int16_t PromptPassword(APPSESSION &app) {
+std::int16_t PromptPassword(APPSESSION &app) {
     FARPROC lpProc;
-    int16_t fRet;
+    std::int16_t fRet;
 
     lpProc = (PasswordDlg);
     fRet = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_PASSWORD), !app.lpui->hwndTitle ? app.lpui->hwndFrame : app.lpui->hwndTitle, lpProc, 0);
@@ -1355,7 +1355,7 @@ int16_t PromptPassword(APPSESSION &app) {
 }
 
 void UpdateProgressGauge(APPSESSION &app, ProgressStep pctX10) {
-    int16_t iNum;
+    std::int16_t iNum;
 
     if (app.lpui->hwndProgressGauge) {
         iNum = 0;

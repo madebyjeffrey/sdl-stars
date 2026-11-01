@@ -5,31 +5,31 @@
 
 HULDEF *LphuldefSBFromId(isbhull id) { return &rghuldefSB[id]; }
 
-HULDEF *LphuldefFromId(int16_t id) {
+HULDEF *LphuldefFromId(std::int16_t id) {
     if (id >= ihuldefOrbitalFort) {
         return LphuldefSBFromId(static_cast<isbhull>(id - ihuldefOrbitalFort));
     }
     return &rghuldef[id];
 }
 
-ENGINE *LpengineFromId(int16_t id) { return &rgengine[id]; }
+ENGINE *LpengineFromId(std::int16_t id) { return &rgengine[id]; }
 
-SCANNER *LpscannerFromId(int16_t id) { return &rgscanner[id]; }
+SCANNER *LpscannerFromId(std::int16_t id) { return &rgscanner[id]; }
 
 SHDEF *LpshdefT() { return rgshdefT; }
 
 SHDEF *LpshdefSBT() { return rgshdefSBT; }
 
-PLANETARY *LpplanetaryFromId(int16_t id) { return &rgplanetary[id]; }
+PLANETARY *LpplanetaryFromId(std::int16_t id) { return &rgplanetary[id]; }
 
-int16_t FLookupPartX(APPSESSION &app, PART *ppart, uint16_t grhst, uint16_t iItem) {
+std::int16_t FLookupPartX(APPSESSION &app, PART *ppart, std::uint16_t grhst, std::uint16_t iItem) {
     ppart->hs.grhst = static_cast<HullSlotType>(grhst);
     ppart->hs.iItem = iItem;
     ppart->hs.cItem = 0;
     return PartQueryIO().pfnLookup(app, ppart);
 }
 
-int16_t FLookupPart(APPSESSION &app, PART *ppart) {
+std::int16_t FLookupPart(APPSESSION &app, PART *ppart) {
     RaceAttribute raMajor;
     HS            hs;
 
@@ -403,11 +403,11 @@ void LookupBestPlanetaryScanner(APPSESSION &app, PART *ppart) {
     return;
 }
 
-int16_t TechStatus(APPSESSION &app, char *rgTech) {
-    int16_t fInAWhile;
-    int16_t i;
-    int16_t fAlmost;
-    int16_t cMiss;
+std::int16_t TechStatus(APPSESSION &app, char *rgTech) {
+    std::int16_t fInAWhile;
+    std::int16_t i;
+    std::int16_t fAlmost;
+    std::int16_t cMiss;
 
     cMiss = 0;
     fAlmost = 0;

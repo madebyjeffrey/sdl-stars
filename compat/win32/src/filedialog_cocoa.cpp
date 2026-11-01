@@ -1,10 +1,10 @@
 #include "filedialog_backend.h"
 #include "filedialog_cocoa_bridge.h"
-#include <stdlib.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstring>
 
 static char *PszCocoaLabelUtf8(LPCSTR psz) {
-    return FUtf8Valid(psz, strlen(psz)) ? SDL_strdup(psz) : nullptr;
+    return FUtf8Valid(psz, std::strlen(psz)) ? SDL_strdup(psz) : nullptr;
 }
 static int FPumpCocoaChooser(void *lpv) {
     HWND hwndOwner = static_cast<HWND>((lpv));
@@ -19,7 +19,7 @@ static int FPumpCocoaChooser(void *lpv) {
 }
 int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFolder,
                      LPCSTR pszName, const COMPATFILEFILTER *rgfilter, int cFilter,
-                     int *lpiFilter, char *pszPath, size_t cbPath) {
+                     int *lpiFilter, char *pszPath, std::size_t cbPath) {
     COCOAFILEFILTER *rg = nullptr;
     char *pszTitleUtf;
     void *lpWindow = nullptr;
@@ -27,7 +27,7 @@ int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFol
     pszTitleUtf = PszCocoaLabelUtf8(pszTitle);
     if (!pszTitleUtf) return -1;
     if (cFilter != 0) {
-        rg = static_cast<COCOAFILEFILTER *>((calloc(static_cast<size_t>(cFilter), sizeof(*rg)))); if (!rg) goto done;
+        rg = static_cast<COCOAFILEFILTER *>((std::calloc(static_cast<std::size_t>(cFilter), sizeof(*rg)))); if (!rg) goto done;
         for (i = 0; i < cFilter; i++) {
             rg[i].pszName = PszCocoaLabelUtf8(rgfilter[i].pszName);
             rg[i].pszPattern = PszCocoaLabelUtf8(rgfilter[i].pszPattern);
@@ -40,5 +40,5 @@ int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFol
                              lpiFilter, pszPath, cbPath, FPumpCocoaChooser, hwndOwner);
 done:
     if (rg) for (i = 0; i < cFilter; i++) { SDL_free(const_cast<void *>(reinterpret_cast<const void*>(rg[i].pszName))); SDL_free(const_cast<void *>(reinterpret_cast<const void*>(rg[i].pszPattern))); }
-    free(rg); SDL_free(pszTitleUtf); return iResult;
+    std::free(rg); SDL_free(pszTitleUtf); return iResult;
 }

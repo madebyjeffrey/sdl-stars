@@ -2,7 +2,7 @@
 #define STARS_SESSION_RESTORE_H
 
 class APPSESSION;
-#include <stdint.h>
+#include <cstdint>
 void    RestoreGameWindows(APPSESSION &app);
-int16_t FinishOpenGame(APPSESSION &app);
+std::int16_t FinishOpenGame(APPSESSION &app);
 #endif

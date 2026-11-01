@@ -7,7 +7,7 @@
 #include "part_query_io.h"
 #include "race_query_io.h"
 
-int16_t FCanSplit(APPSESSION &app, int32_t cBoat) {
+std::int16_t FCanSplit(APPSESSION &app, std::int32_t cBoat) {
     if (app.state.rgplr[app.state.idPlayer].cFleet == 0x200) {
         return 0;
     }
@@ -17,7 +17,7 @@ int16_t FCanSplit(APPSESSION &app, int32_t cBoat) {
     return 0;
 }
 
-int16_t FCanSplitAll(APPSESSION &app, int32_t cBoat) {
+std::int16_t FCanSplitAll(APPSESSION &app, std::int32_t cBoat) {
     if (cBoat - 1 + app.state.rgplr[app.state.idPlayer].cFleet > 0x200) {
         return 0;
     }
@@ -27,12 +27,12 @@ int16_t FCanSplitAll(APPSESSION &app, int32_t cBoat) {
     return 0;
 }
 
-int16_t FCanMerge(APPSESSION &app, FLEET *pfl) {
-    int16_t i;
+std::int16_t FCanMerge(APPSESSION &app, FLEET *pfl) {
+    std::int16_t i;
     FLEET  *lpfl;
-    int32_t csh;
-    int16_t cfl;
-    int16_t ishdef;
+    std::int32_t csh;
+    std::int16_t cfl;
+    std::int16_t ishdef;
 
     cfl = 0;
     csh = 0;
@@ -47,18 +47,18 @@ int16_t FCanMerge(APPSESSION &app, FLEET *pfl) {
             }
         }
     }
-    if (cfl == 1 || csh > static_cast<int32_t>(static_cast<uint32_t>((32766 - (app.state.rgplr[pfl->iPlayer].cFleet - 1))))) {
+    if (cfl == 1 || csh > static_cast<std::int32_t>(static_cast<std::uint32_t>((32766 - (app.state.rgplr[pfl->iPlayer].cFleet - 1))))) {
         return 0;
     }
     return 1;
 }
 
-void SelectAdjFleet(APPSESSION &app, int16_t dInc, int16_t idFleet) {
+void SelectAdjFleet(APPSESSION &app, std::int16_t dInc, std::int16_t idFleet) {
     POINT16 pt;
-    int16_t idOld;
-    int16_t i;
+    std::int16_t idOld;
+    std::int16_t i;
     FLEET  *lpfl;
-    int16_t idNew;
+    std::int16_t idNew;
     FLEET  *lpflT;
     SCAN    scan;
 
@@ -86,10 +86,10 @@ void SelectAdjFleet(APPSESSION &app, int16_t dInc, int16_t idFleet) {
             goto FinishUp;
         } else {
             if (dInc != 0) {
-                for (i = 0; i < static_cast<int16_t>(app.state.rgplr[app.state.idPlayer].cFleet) && app.state.rglpfl[app.state.vlprgidFleet[i]]->id != idFleet; i++) {
+                for (i = 0; i < static_cast<std::int16_t>(app.state.rgplr[app.state.idPlayer].cFleet) && app.state.rglpfl[app.state.vlprgidFleet[i]]->id != idFleet; i++) {
                 }
                 i += dInc;
-                if (i >= static_cast<int16_t>(app.state.rgplr[app.state.idPlayer].cFleet)) {
+                if (i >= static_cast<std::int16_t>(app.state.rgplr[app.state.idPlayer].cFleet)) {
                     i = 0;
                 } else if (i < 0) {
                     i = app.state.rgplr[app.state.idPlayer].cFleet - 1;
@@ -117,9 +117,9 @@ void SelectAdjFleet(APPSESSION &app, int16_t dInc, int16_t idFleet) {
     return;
 }
 
-int32_t LGetFleetStat(APPSESSION &app, FLEET *lpfl, int16_t grStat) {
-    int16_t i;
-    int32_t l;
+std::int32_t LGetFleetStat(APPSESSION &app, FLEET *lpfl, std::int16_t grStat) {
+    std::int16_t i;
+    std::int32_t l;
 
     l = 0;
     if (lpfl->det != detAll) {
@@ -127,15 +127,15 @@ int32_t LGetFleetStat(APPSESSION &app, FLEET *lpfl, int16_t grStat) {
     }
     for (i = 0; i < 16; i++) {
         if (lpfl->rgcsh[i] != 0) {
-            l += static_cast<uint32_t>((lpfl->rgcsh[i] * WtMaxShdefStat(app.state.rglpshdef[lpfl->iPlayer] + i, grStat)));
+            l += static_cast<std::uint32_t>((lpfl->rgcsh[i] * WtMaxShdefStat(app.state.rglpshdef[lpfl->iPlayer] + i, grStat)));
         }
     }
     return l;
 }
 
-int16_t WtMaxShdefStat(SHDEF *lpshdef, int16_t grStat) {
-    int16_t wt;
-    int16_t j;
+std::int16_t WtMaxShdefStat(SHDEF *lpshdef, std::int16_t grStat) {
+    std::int16_t wt;
+    std::int16_t j;
     HUL    *lphul;
 
     lphul = &lpshdef->hul;
@@ -177,17 +177,17 @@ int16_t WtMaxShdefStat(SHDEF *lpshdef, int16_t grStat) {
     return wt;
 }
 
-int16_t FEnumCalcJettison(APPSESSION &app, void *lprt, RecordType rt, int16_t cb, PLANET *lppl, int16_t iFleet) {
+std::int16_t FEnumCalcJettison(APPSESSION &app, void *lprt, RecordType rt, std::int16_t cb, PLANET *lppl, std::int16_t iFleet) {
     POINT16  pt;
-    int16_t  i;
-    int16_t  grbit;
+    std::int16_t  i;
+    std::int16_t  grbit;
     FLEET    fl;
-    int16_t  j;
-    uint8_t *prtxferx;
-    uint8_t  *prtxfer;
+    std::int16_t  j;
+    std::uint8_t *prtxferx;
+    std::uint8_t  *prtxfer;
 
     if (rt == rtLogCargoXfer8 || rt == rtLogCargoXfer16) {
-        prtxfer = static_cast<uint8_t *>(lprt);
+        prtxfer = static_cast<std::uint8_t *>(lprt);
         if (CxvFromPrefix(prtxfer, 5).grobj1() != grobjFleet || CxvFromPrefix(prtxfer, 5).grobj2() != grobjOther) {
             return 1;
         }
@@ -203,14 +203,14 @@ int16_t FEnumCalcJettison(APPSESSION &app, void *lprt, RecordType rt, int16_t cb
         }
         grbit = CxvFromPrefix(prtxfer, 6).grbitItems();
         if (rt == rtLogCargoXfer16) {
-            prtxferx = static_cast<uint8_t *>(lprt);
+            prtxferx = static_cast<std::uint8_t *>(lprt);
         }
         j = 0;
         i = 0;
         while (i < 5) {
             if (grbit & 1) {
                 if (rt == rtLogCargoXfer8) {
-                    lppl->rgwtMin[i] -= static_cast<int16_t>(CxvFromPrefix(prtxfer, 6 + (j + 1)).cQuan8(j));
+                    lppl->rgwtMin[i] -= static_cast<std::int16_t>(CxvFromPrefix(prtxfer, 6 + (j + 1)).cQuan8(j));
                 } else {
                     lppl->rgwtMin[i] -= CxvFromPrefix(prtxferx, 6 + (j + 1) * 2).cQuan16(j);
                 }
@@ -223,9 +223,9 @@ int16_t FEnumCalcJettison(APPSESSION &app, void *lprt, RecordType rt, int16_t cb
     return 1;
 }
 
-int32_t GetCargoFree(APPSESSION &app, FLEET *lpfl) {
-    int32_t cHave;
-    int16_t i;
+std::int32_t GetCargoFree(APPSESSION &app, FLEET *lpfl) {
+    std::int32_t cHave;
+    std::int16_t i;
 
     cHave = 0;
     for (i = 0; i <= 3; i++) {
@@ -234,15 +234,15 @@ int32_t GetCargoFree(APPSESSION &app, FLEET *lpfl) {
     return ProductionIO().pfnFleetStat(app, lpfl, 2) - cHave;
 }
 
-int32_t GetFuelFree(APPSESSION &app, FLEET *lpfl) { return ProductionIO().pfnFleetStat(app, lpfl, 1) - lpfl->rgwtMin[4]; }
+std::int32_t GetFuelFree(APPSESSION &app, FLEET *lpfl) { return ProductionIO().pfnFleetStat(app, lpfl, 1) - lpfl->rgwtMin[4]; }
 
-int32_t ChgCargo(APPSESSION &app, GrobjClass grobj, int16_t id, MineralType iSupply, int32_t dChg, void *pobj) {
+std::int32_t ChgCargo(APPSESSION &app, GrobjClass grobj, std::int16_t id, MineralType iSupply, std::int32_t dChg, void *pobj) {
     THING  *pth;
     XFER    xfer;
-    int16_t i;
+    std::int16_t i;
     FLEET  *pfl;
     PLANET *ppl;
-    int32_t wtFree;
+    std::int32_t wtFree;
 
     switch (grobj) {
     case grobjPlanet:
@@ -253,7 +253,7 @@ int32_t ChgCargo(APPSESSION &app, GrobjClass grobj, int16_t id, MineralType iSup
             PlanetQueryIO().pfnLookup(app, id, &xfer.pl());
             ppl = &xfer.pl();
         } else {
-            memset(&xfer.pl(), 0, sizeof(PLANET));
+            std::memset(&xfer.pl(), 0, sizeof(PLANET));
             ppl = &xfer.pl();
         }
         if (iSupply <= Fuel) {
@@ -287,9 +287,9 @@ int32_t ChgCargo(APPSESSION &app, GrobjClass grobj, int16_t id, MineralType iSup
                 return pth->thp().rgwtMin(iSupply);
             }
             if (pth->thp().rgwtMin(iSupply) + dChg < 0) {
-                dChg = static_cast<int16_t>(-pth->thp().rgwtMin(iSupply));
+                dChg = static_cast<std::int16_t>(-pth->thp().rgwtMin(iSupply));
             }
-            wtFree = static_cast<uint32_t>((pth->thp().wtMax() * 10));
+            wtFree = static_cast<std::uint32_t>((pth->thp().wtMax() * 10));
             for (i = 0; i < 3; i++) {
                 wtFree -= pth->thp().rgwtMin(i);
             }
@@ -335,10 +335,10 @@ int32_t ChgCargo(APPSESSION &app, GrobjClass grobj, int16_t id, MineralType iSup
     return dChg;
 }
 
-int32_t XferSupply(APPSESSION &app, MineralType iSupply, int32_t cQuan) {
-    int16_t iSrc;
-    int32_t dChg;
-    int32_t cAvailable;
+std::int32_t XferSupply(APPSESSION &app, MineralType iSupply, std::int32_t cQuan) {
+    std::int16_t iSrc;
+    std::int32_t dChg;
+    std::int32_t cAvailable;
 
     if (cQuan == 0) {
         return 0;
@@ -361,7 +361,7 @@ int32_t XferSupply(APPSESSION &app, MineralType iSupply, int32_t cQuan) {
     return dChg;
 }
 
-void DeleteWpFar(FLEET *lpfl, int16_t iDel, int16_t fRecycle) {
+void DeleteWpFar(FLEET *lpfl, std::int16_t iDel, std::int16_t fRecycle) {
     ORDER ord;
 
     if (fRecycle) {
@@ -373,7 +373,7 @@ void DeleteWpFar(FLEET *lpfl, int16_t iDel, int16_t fRecycle) {
             ord = lpfl->lpplord->rgord()[iDel];
         }
     }
-    memmove(&lpfl->lpplord->rgord()[iDel], &lpfl->lpplord->rgord()[iDel + 1], (lpfl->cord - iDel - 1) * sizeof(ORDER));
+    std::memmove(&lpfl->lpplord->rgord()[iDel], &lpfl->lpplord->rgord()[iDel + 1], (lpfl->cord - iDel - 1) * sizeof(ORDER));
     if (fRecycle) {
         lpfl->lpplord->rgord()[lpfl->cord - 1] = ord;
     } else {
@@ -383,21 +383,21 @@ void DeleteWpFar(FLEET *lpfl, int16_t iDel, int16_t fRecycle) {
     return;
 }
 
-int32_t EstFuelUse(APPSESSION &app, FLEET *lpfl, int16_t iOrd, int16_t iWarp, int32_t dTravel, int16_t fRangeOnly) {
-    int32_t iEffNext;
-    int32_t lT;
-    int16_t fEfficient;
+std::int32_t EstFuelUse(APPSESSION &app, FLEET *lpfl, std::int16_t iOrd, std::int16_t iWarp, std::int32_t dTravel, std::int16_t fRangeOnly) {
+    std::int32_t iEffNext;
+    std::int32_t lT;
+    std::int16_t fEfficient;
     double  d;
-    int32_t iEffCur;
-    int32_t wtCargoT;
-    int32_t lFuel;
+    std::int32_t iEffCur;
+    std::int32_t wtCargoT;
+    std::int32_t lFuel;
     ORDER  *lpord;
-    int16_t i;
+    std::int16_t i;
     SHDEF  *lpshdef;
-    int32_t wtCargo;
-    int16_t j;
-    int32_t wtMass;
-    int32_t rgieff[16];
+    std::int32_t wtCargo;
+    std::int16_t j;
+    std::int32_t wtMass;
+    std::int32_t rgieff[16];
 
     iEffCur = 0;
     app.state.gd.fRadiatingEngine = 0;
@@ -415,7 +415,7 @@ int32_t EstFuelUse(APPSESSION &app, FLEET *lpfl, int16_t iOrd, int16_t iWarp, in
             }
             rgieff[i] = LpengineFromId(lpshdef->hul.rghs[j].iItem)->rgcFuelUsed[iWarp];
             if (fEfficient) {
-                rgieff[i] -= static_cast<int32_t>((rgieff[i] * 15)) / 100;
+                rgieff[i] -= static_cast<std::int32_t>((rgieff[i] * 15)) / 100;
             }
             if (lpshdef->hul.rghs[j].iItem == iengineRadiatingHydroRamScoop) {
                 app.state.gd.fRadiatingEngine = 1;
@@ -432,7 +432,7 @@ int32_t EstFuelUse(APPSESSION &app, FLEET *lpfl, int16_t iOrd, int16_t iWarp, in
         } else {
             lpord = &lpfl->lpplord->rgord()[iOrd];
             d = DGetDistance(lpord->pt.x, lpord->pt.y, lpord[1].pt.x, lpord[1].pt.y);
-            dTravel = static_cast<int16_t>(LOWORD(static_cast<int32_t>((static_cast<double>(d) + 0.9999))));
+            dTravel = static_cast<std::int16_t>(LOWORD(static_cast<std::int32_t>((static_cast<double>(d) + 0.9999))));
         }
     }
     lFuel = 0;
@@ -441,19 +441,19 @@ int32_t EstFuelUse(APPSESSION &app, FLEET *lpfl, int16_t iOrd, int16_t iWarp, in
         for (i = 0; i < 16; i++) {
             if (lpfl->rgcsh[i] > 0) {
                 if (rgieff[i] == iEffCur) {
-                    if (wtCargo < static_cast<int32_t>(static_cast<uint32_t>((lpfl->rgcsh[i] * WtMaxShdefStat(app.state.rglpshdef[lpfl->iPlayer] + i, 2))))) {
+                    if (wtCargo < static_cast<std::int32_t>(static_cast<std::uint32_t>((lpfl->rgcsh[i] * WtMaxShdefStat(app.state.rglpshdef[lpfl->iPlayer] + i, 2))))) {
                         wtCargoT = wtCargo;
                     } else {
-                        wtCargoT = static_cast<uint32_t>((lpfl->rgcsh[i] * static_cast<int16_t>(WtMaxShdefStat(app.state.rglpshdef[lpfl->iPlayer] + i, 2))));
+                        wtCargoT = static_cast<std::uint32_t>((lpfl->rgcsh[i] * static_cast<std::int16_t>(WtMaxShdefStat(app.state.rglpshdef[lpfl->iPlayer] + i, 2))));
                     }
                     wtCargo -= wtCargoT;
                     if (rgieff[i] > 0) {
-                        wtMass = static_cast<uint32_t>((lpfl->rgcsh[i] * static_cast<uint32_t>(app.state.rglpshdef[lpfl->iPlayer][i].hul.wtEmpty))) + wtCargoT;
-                        lT = static_cast<uint32_t>((iEffCur * dTravel));
+                        wtMass = static_cast<std::uint32_t>((lpfl->rgcsh[i] * static_cast<std::uint32_t>(app.state.rglpshdef[lpfl->iPlayer][i].hul.wtEmpty))) + wtCargoT;
+                        lT = static_cast<std::uint32_t>((iEffCur * dTravel));
                         if (wtMass < 200 || (lT < 500000 && wtMass < 4000) || (lT < 100000 && wtMass < 20000)) {
-                            lFuel += static_cast<int32_t>((wtMass * lT)) / 2000;
+                            lFuel += static_cast<std::int32_t>((wtMass * lT)) / 2000;
                         } else {
-                            lFuel = static_cast<int32_t>((static_cast<double>(lT) * wtMass / 2000.0)) + lFuel;
+                            lFuel = static_cast<std::int32_t>((static_cast<double>(lT) * wtMass / 2000.0)) + lFuel;
                         }
                     }
                 } else if (rgieff[i] > iEffCur && rgieff[i] < iEffNext) {
@@ -468,23 +468,23 @@ int32_t EstFuelUse(APPSESSION &app, FLEET *lpfl, int16_t iOrd, int16_t iWarp, in
     if (!fRangeOnly) {
         lFuel += 9;
     }
-    lFuel = static_cast<int32_t>((lFuel / 10));
+    lFuel = static_cast<std::int32_t>((lFuel / 10));
     if (fRangeOnly) {
         if (lFuel == 0) {
             lFuel = 1000000000;
         } else if (lFuel > 100000) {
-            lFuel = static_cast<int32_t>((lpfl->rgwtMin[4] / static_cast<int32_t>((lFuel / 1000))));
+            lFuel = static_cast<std::int32_t>((lpfl->rgwtMin[4] / static_cast<std::int32_t>((lFuel / 1000))));
         } else {
-            lFuel = static_cast<int32_t>((static_cast<int32_t>((lpfl->rgwtMin[4] * 1000)) / lFuel));
+            lFuel = static_cast<std::int32_t>((static_cast<std::int32_t>((lpfl->rgwtMin[4] * 1000)) / lFuel));
         }
     }
     return lFuel;
 }
 
-int16_t IFindIdealWarp(APPSESSION &app, FLEET *lpfl, int16_t fIgnoreScoops) {
-    int16_t i;
-    int16_t j;
-    int16_t iWorst;
+std::int16_t IFindIdealWarp(APPSESSION &app, FLEET *lpfl, std::int16_t fIgnoreScoops) {
+    std::int16_t i;
+    std::int16_t j;
+    std::int16_t iWorst;
     ENGINE *lpengine;
 
     iWorst = 10;
@@ -534,21 +534,21 @@ int16_t IFindIdealWarp(APPSESSION &app, FLEET *lpfl, int16_t fIgnoreScoops) {
 
 // IWarpForWaypoint is IWarpBestForWaypoint's body. fFastest asks for the
 // speed colonizers get, as IWarpFastestForWaypoint does.
-static int16_t IWarpForWaypoint(APPSESSION &app, FLEET *lpfl, ORDER *lpord, int16_t fFastest) {
-    int32_t lFuel;
-    int16_t iWarp;
-    int16_t cTravel;
-    int16_t iwp;
-    int16_t lDist;
-    int16_t cSpeed;
-    int16_t fGoFlatOutAi;
-    int16_t fGoFlatOut;
-    int16_t iWarpAi;
-    int16_t iWarpSav;
-    int16_t j;
-    int16_t i;
+static std::int16_t IWarpForWaypoint(APPSESSION &app, FLEET *lpfl, ORDER *lpord, std::int16_t fFastest) {
+    std::int32_t lFuel;
+    std::int16_t iWarp;
+    std::int16_t cTravel;
+    std::int16_t iwp;
+    std::int16_t lDist;
+    std::int16_t cSpeed;
+    std::int16_t fGoFlatOutAi;
+    std::int16_t fGoFlatOut;
+    std::int16_t iWarpAi;
+    std::int16_t iWarpSav;
+    std::int16_t j;
+    std::int16_t i;
     PLANET *lppl;
-    int16_t iWarpOld;
+    std::int16_t iWarpOld;
     SCAN    scan;
 
     iWarpSav = lpord->iWarp;
@@ -592,10 +592,10 @@ static int16_t IWarpForWaypoint(APPSESSION &app, FLEET *lpfl, ORDER *lpord, int1
             lppl = nullptr;
         }
         if (!fGoFlatOut && (!lppl || (lppl->iPlayer != iplrNone && lppl->iPlayer != app.state.idPlayer))) {
-            if (iwp > 1 && lpord[-1].iWarp > static_cast<uint16_t>(iWarp) && lpord[-1].iWarp <= 10) {
+            if (iwp > 1 && lpord[-1].iWarp > static_cast<std::uint16_t>(iWarp) && lpord[-1].iWarp <= 10) {
                 iWarp = lpord[-1].iWarp;
             }
-            if (LFuelUseToWaypoint(app, lpfl, iwp, 1) >= static_cast<int32_t>((ProductionIO().pfnFleetStat(app, lpfl, 1) / 10)) || lpfl->rgwtMin[4] < static_cast<int32_t>((ProductionIO().pfnFleetStat(app, lpfl, 1) * 7)) / 10)
+            if (LFuelUseToWaypoint(app, lpfl, iwp, 1) >= static_cast<std::int32_t>((ProductionIO().pfnFleetStat(app, lpfl, 1) / 10)) || lpfl->rgwtMin[4] < static_cast<std::int32_t>((ProductionIO().pfnFleetStat(app, lpfl, 1) * 7)) / 10)
                 goto LOptimizeSpeed;
             iWarp++;
             goto LTryLimitedSpeed;
@@ -612,7 +612,7 @@ static int16_t IWarpForWaypoint(APPSESSION &app, FLEET *lpfl, ORDER *lpord, int1
             if (lFuel > lpfl->rgwtMin[4])
                 goto LDecWarp;
             if (((lppl && lppl->fStarbase && lppl->iPlayer == app.state.idPlayer && PartQueryIO().pfnHull(app.state.rglpshdefSB[app.state.idPlayer][lppl->isb].hul.ihuldef)->hul.wtCargoMax != 0) ||
-                 lFuel <= static_cast<int32_t>((lpfl->rgwtMin[4] / 2)) || fGoFlatOut))
+                 lFuel <= static_cast<std::int32_t>((lpfl->rgwtMin[4] / 2)) || fGoFlatOut))
                 break;
         LDecWarp:
             iWarp--;
@@ -624,15 +624,15 @@ static int16_t IWarpForWaypoint(APPSESSION &app, FLEET *lpfl, ORDER *lpord, int1
     }
 LOptimizeSpeed:
     if (iWarp > 1 && lpord->grobj != grobjFleet) {
-        lDist = LOWORD(static_cast<int32_t>(DGetDistance(lpord->pt.x, lpord->pt.y, lpord[-1].pt.x, lpord[-1].pt.y)));
+        lDist = LOWORD(static_cast<std::int32_t>(DGetDistance(lpord->pt.x, lpord->pt.y, lpord[-1].pt.x, lpord[-1].pt.y)));
         cSpeed = iWarp * iWarp;
-        cTravel = static_cast<int16_t>((iWarp * iWarp + lDist - 1)) / cSpeed;
+        cTravel = static_cast<std::int16_t>((iWarp * iWarp + lDist - 1)) / cSpeed;
         do {
             iWarp--;
             if (iWarp <= 1)
                 break;
             cSpeed = iWarp * iWarp;
-        } while (cTravel == static_cast<int16_t>((lDist + cSpeed - 1)) / cSpeed);
+        } while (cTravel == static_cast<std::int16_t>((lDist + cSpeed - 1)) / cSpeed);
         iWarp++;
     } else {
         cTravel = 2;
@@ -648,29 +648,29 @@ LOptimizeSpeed:
 
 // IWarpBestForWaypoint picks the warp for the leg to lpord, a waypoint of
 // lpfl's orders.
-int16_t IWarpBestForWaypoint(APPSESSION &app, FLEET *lpfl, ORDER *lpord) { return IWarpForWaypoint(app, lpfl, lpord, 0); }
+std::int16_t IWarpBestForWaypoint(APPSESSION &app, FLEET *lpfl, ORDER *lpord) { return IWarpForWaypoint(app, lpfl, lpord, 0); }
 
 // IWarpFastestForWaypoint picks the warp a colonizing fleet gets for the
 // leg to lpord: the fastest up to warp 9 whose fuel to lpord fits the
 // tank, then the slowest that arrives as soon. Players set colonize tasks
 // on scouts to get it; the scanner gives it to Alt+clicked waypoints.
-int16_t IWarpFastestForWaypoint(APPSESSION &app, FLEET *lpfl, ORDER *lpord) { return IWarpForWaypoint(app, lpfl, lpord, 1); }
+std::int16_t IWarpFastestForWaypoint(APPSESSION &app, FLEET *lpfl, ORDER *lpord) { return IWarpForWaypoint(app, lpfl, lpord, 1); }
 
-int32_t LFuelUseToWaypoint(APPSESSION &app, FLEET *lpfl, int16_t iwp, int16_t fMaxCargo) {
-    int32_t lCur;
-    int16_t iWarp;
-    int16_t dist;
+std::int32_t LFuelUseToWaypoint(APPSESSION &app, FLEET *lpfl, std::int16_t iwp, std::int16_t fMaxCargo) {
+    std::int32_t lCur;
+    std::int16_t iWarp;
+    std::int16_t dist;
     PLANET *lppl;
-    int16_t i;
-    int32_t lTot;
+    std::int16_t i;
+    std::int32_t lTot;
     ORDER  *lpord;
-    int16_t cYears;
+    std::int16_t cYears;
     SHDEF  *lpshdef;
-    int16_t j;
+    std::int16_t j;
     double  dbl;
-    int32_t l;
-    int32_t lOneYearUse;
-    int32_t lFuelGain;
+    std::int32_t l;
+    std::int32_t lOneYearUse;
+    std::int32_t lFuelGain;
 
     lTot = 0;
     lCur = 0;
@@ -679,27 +679,27 @@ int32_t LFuelUseToWaypoint(APPSESSION &app, FLEET *lpfl, int16_t iwp, int16_t fM
         iWarp = lpord[i + 1].iWarp;
         if (iWarp > 0 && iWarp < 11) {
             dbl = static_cast<double>((static_cast<double>(DGetDistance(lpord[i].pt.x, lpord[i].pt.y, lpord[i + 1].pt.x, lpord[i + 1].pt.y)) + 0.99999));
-            dist = LOWORD(static_cast<int32_t>(dbl));
+            dist = LOWORD(static_cast<std::int32_t>(dbl));
             dbl = static_cast<double>((static_cast<double>(dbl) / iWarp / iWarp));
-            cYears = LOWORD(static_cast<int32_t>((static_cast<double>(dbl) + 0.9999)));
+            cYears = LOWORD(static_cast<std::int32_t>((static_cast<double>(dbl) + 0.9999)));
             l = EstFuelUse(app, lpfl, i, iWarp, -1, 0);
         } else {
             cYears = 1;
             l = 0;
         }
         if (cYears > 1) {
-            lOneYearUse = EstFuelUse(app, lpfl, i, iWarp, static_cast<int16_t>((iWarp * iWarp)), 0);
-            lFuelGain = static_cast<uint32_t>((lOneYearUse * static_cast<int16_t>((cYears - 1))));
-            lFuelGain += EstFuelUse(app, lpfl, i, iWarp, static_cast<int16_t>((dist - iWarp * iWarp * (cYears - 1))), 0);
+            lOneYearUse = EstFuelUse(app, lpfl, i, iWarp, static_cast<std::int16_t>((iWarp * iWarp)), 0);
+            lFuelGain = static_cast<std::uint32_t>((lOneYearUse * static_cast<std::int16_t>((cYears - 1))));
+            lFuelGain += EstFuelUse(app, lpfl, i, iWarp, static_cast<std::int16_t>((dist - iWarp * iWarp * (cYears - 1))), 0);
             if (lFuelGain > l) {
                 l = lFuelGain;
             }
-            lFuelGain = LCalcFuelGainFromRamScoops(app, lpfl, iWarp, static_cast<int16_t>((iWarp * iWarp)));
+            lFuelGain = LCalcFuelGainFromRamScoops(app, lpfl, iWarp, static_cast<std::int16_t>((iWarp * iWarp)));
             for (j = 0; j < 16; j++) {
                 if (lpfl->rgcsh[j] != 0) {
                     lpshdef = app.state.rglpshdef[app.state.idPlayer] + j;
                     if (lpshdef->hul.ihuldef == ihuldefFuelTransport || lpshdef->hul.ihuldef == ihuldefSuperFuelXport) {
-                        lFuelGain += static_cast<uint32_t>((lpfl->rgcsh[j] * 200));
+                        lFuelGain += static_cast<std::uint32_t>((lpfl->rgcsh[j] * 200));
                     }
                 }
             }
@@ -707,7 +707,7 @@ int32_t LFuelUseToWaypoint(APPSESSION &app, FLEET *lpfl, int16_t iwp, int16_t fM
                 if (lOneYearUse <= lFuelGain) {
                     l = lOneYearUse;
                 } else {
-                    lOneYearUse = static_cast<uint32_t>(((lOneYearUse - lFuelGain) * static_cast<int16_t>((cYears - 1)))) + lOneYearUse;
+                    lOneYearUse = static_cast<std::uint32_t>(((lOneYearUse - lFuelGain) * static_cast<std::int16_t>((cYears - 1)))) + lOneYearUse;
                     if (lOneYearUse < l) {
                         l = lOneYearUse;
                     }
@@ -729,31 +729,31 @@ int32_t LFuelUseToWaypoint(APPSESSION &app, FLEET *lpfl, int16_t iwp, int16_t fM
 }
 
 void FleetTransferCargoBalance(APPSESSION &app, FLEET *pflNew1, FLEET *pflNew2) {
-    int16_t iplr;
-    int32_t rgCargoCapLoss[2];
-    int32_t wtCargoXfer;
-    int16_t fDeadFleet;
-    int32_t wtCargoTot;
-    int16_t rgrgcshLoss[2][16];
-    int32_t rgrgCargoDelta[2][5];
-    int32_t rgFuelCapacity[2];
+    std::int16_t iplr;
+    std::int32_t rgCargoCapLoss[2];
+    std::int32_t wtCargoXfer;
+    std::int16_t fDeadFleet;
+    std::int32_t wtCargoTot;
+    std::int16_t rgrgcshLoss[2][16];
+    std::int32_t rgrgCargoDelta[2][5];
+    std::int32_t rgFuelCapacity[2];
     FLEET  *rgpflNew[2];
-    int16_t wtCargoMax;
-    int16_t wtFuelMax;
-    int16_t i;
-    int32_t lChg;
-    int32_t rgFuelCapLoss[2];
+    std::int16_t wtCargoMax;
+    std::int16_t wtFuelMax;
+    std::int16_t i;
+    std::int32_t lChg;
+    std::int32_t rgFuelCapLoss[2];
     FLEET   rgflCur[2];
-    int16_t j;
+    std::int16_t j;
     SHDEF  *lpshdef;
-    int32_t rgCargoCapacity[2];
-    int16_t ishdef;
-    int32_t l;
-    int32_t cshDmgDst;
-    int32_t cshDmgSrc;
-    int16_t iSrc;
-    int32_t pctNew;
-    int32_t cshDmgMoved;
+    std::int32_t rgCargoCapacity[2];
+    std::int16_t ishdef;
+    std::int32_t l;
+    std::int32_t cshDmgDst;
+    std::int32_t cshDmgSrc;
+    std::int16_t iSrc;
+    std::int32_t pctNew;
+    std::int32_t cshDmgMoved;
 
     fDeadFleet = 0;
     rgpflNew[0] = pflNew1;
@@ -762,7 +762,7 @@ void FleetTransferCargoBalance(APPSESSION &app, FLEET *pflNew1, FLEET *pflNew2) 
     for (i = 0; i < 2; i++) {
         if (rgpflNew[i]->fDead) {
             fDeadFleet = 1;
-            memset(&rgflCur[i], 0, sizeof(FLEET));
+            std::memset(&rgflCur[i], 0, sizeof(FLEET));
             rgflCur[i].iPlayer = iplr;
         } else {
             FleetQueryIO().pfnLookup(app, rgpflNew[i]->id, &rgflCur[i]);
@@ -783,23 +783,23 @@ void FleetTransferCargoBalance(APPSESSION &app, FLEET *pflNew1, FLEET *pflNew2) 
             for (i = 0; i < 2; i++) {
                 rgrgcshLoss[i][ishdef] = rgflCur[i].rgcsh[ishdef] - rgpflNew[i]->rgcsh[ishdef];
                 if (rgflCur[i].rgcsh[ishdef] != 0) {
-                    rgFuelCapacity[i] += static_cast<uint32_t>((rgflCur[i].rgcsh[ishdef] * wtFuelMax));
-                    rgCargoCapacity[i] += static_cast<uint32_t>((rgflCur[i].rgcsh[ishdef] * wtCargoMax));
+                    rgFuelCapacity[i] += static_cast<std::uint32_t>((rgflCur[i].rgcsh[ishdef] * wtFuelMax));
+                    rgCargoCapacity[i] += static_cast<std::uint32_t>((rgflCur[i].rgcsh[ishdef] * wtCargoMax));
                     if (rgrgcshLoss[i][ishdef] > 0) {
-                        rgFuelCapLoss[i] += static_cast<uint32_t>((rgrgcshLoss[i][ishdef] * wtFuelMax));
-                        rgCargoCapLoss[i] += static_cast<uint32_t>((rgrgcshLoss[i][ishdef] * wtCargoMax));
+                        rgFuelCapLoss[i] += static_cast<std::uint32_t>((rgrgcshLoss[i][ishdef] * wtFuelMax));
+                        rgCargoCapLoss[i] += static_cast<std::uint32_t>((rgrgcshLoss[i][ishdef] * wtCargoMax));
                     }
                 }
             }
             if (!fDeadFleet && rgrgcshLoss[0][ishdef] == -rgrgcshLoss[1][ishdef] && rgrgcshLoss[0][ishdef] != 0) {
                 iSrc = rgrgcshLoss[0][ishdef] < 0;
                 if (rgflCur[iSrc].rgcsh[ishdef] > 0) {
-                    cshDmgSrc = static_cast<int32_t>((rgflCur[iSrc].rgdv[ishdef].pctSh() * rgflCur[iSrc].rgcsh[ishdef])) / 100;
+                    cshDmgSrc = static_cast<std::int32_t>((rgflCur[iSrc].rgdv[ishdef].pctSh() * rgflCur[iSrc].rgcsh[ishdef])) / 100;
                 } else {
                     cshDmgSrc = 0;
                 }
                 if (rgflCur[iSrc == 0].rgcsh[ishdef] > 0) {
-                    cshDmgDst = static_cast<int32_t>((rgflCur[iSrc == 0].rgdv[ishdef].pctSh() * rgflCur[iSrc == 0].rgcsh[ishdef])) / 100;
+                    cshDmgDst = static_cast<std::int32_t>((rgflCur[iSrc == 0].rgdv[ishdef].pctSh() * rgflCur[iSrc == 0].rgcsh[ishdef])) / 100;
                 } else {
                     cshDmgDst = 0;
                 }
@@ -809,17 +809,17 @@ void FleetTransferCargoBalance(APPSESSION &app, FLEET *pflNew1, FLEET *pflNew2) 
                     } else {
                         cshDmgMoved = cshDmgSrc;
                     }
-                    pctNew = static_cast<int32_t>((static_cast<int32_t>((static_cast<uint32_t>((cshDmgDst * rgflCur[iSrc == 0].rgdv[ishdef].pctDp())) +
-                                                 static_cast<uint32_t>((cshDmgMoved * rgflCur[iSrc].rgdv[ishdef].pctDp())) + rgpflNew[iSrc == 0]->rgcsh[ishdef] - 1)) /
+                    pctNew = static_cast<std::int32_t>((static_cast<std::int32_t>((static_cast<std::uint32_t>((cshDmgDst * rgflCur[iSrc == 0].rgdv[ishdef].pctDp())) +
+                                                 static_cast<std::uint32_t>((cshDmgMoved * rgflCur[iSrc].rgdv[ishdef].pctDp())) + rgpflNew[iSrc == 0]->rgcsh[ishdef] - 1)) /
                                        rgpflNew[iSrc == 0]->rgcsh[ishdef]));
                     rgpflNew[iSrc == 0]->rgdv[ishdef].dp = rgpflNew[iSrc == 0]->rgdv[ishdef].pctSh() | (LOWORD(pctNew) & 0x1ff) * 0x80;
-                    pctNew = static_cast<int32_t>((static_cast<int32_t>((static_cast<uint32_t>(((cshDmgDst + cshDmgMoved) * 100)) + rgpflNew[iSrc == 0]->rgcsh[ishdef] - 1)) /
+                    pctNew = static_cast<std::int32_t>((static_cast<std::int32_t>((static_cast<std::uint32_t>(((cshDmgDst + cshDmgMoved) * 100)) + rgpflNew[iSrc == 0]->rgcsh[ishdef] - 1)) /
                                        rgpflNew[iSrc == 0]->rgcsh[ishdef]));
                     rgpflNew[iSrc == 0]->rgdv[ishdef].dp = (rgpflNew[iSrc == 0]->rgdv[ishdef].dp & 0xff80) | (LOWORD(pctNew) & 0x7f);
                     if (cshDmgMoved == cshDmgSrc) {
                         rgpflNew[iSrc]->rgdv[ishdef].dp = 0;
                     } else {
-                        pctNew = static_cast<int32_t>((static_cast<int32_t>((static_cast<uint32_t>(((cshDmgSrc - cshDmgMoved) * 100)) + rgpflNew[iSrc]->rgcsh[ishdef] - 1)) /
+                        pctNew = static_cast<std::int32_t>((static_cast<std::int32_t>((static_cast<std::uint32_t>(((cshDmgSrc - cshDmgMoved) * 100)) + rgpflNew[iSrc]->rgcsh[ishdef] - 1)) /
                                            rgpflNew[iSrc]->rgcsh[ishdef]));
                         rgpflNew[iSrc]->rgdv[ishdef].SetPctSh(LOWORD(pctNew));
                     }
@@ -830,17 +830,17 @@ void FleetTransferCargoBalance(APPSESSION &app, FLEET *pflNew1, FLEET *pflNew2) 
                         cshDmgMoved = cshDmgSrc;
                     }
                     rgpflNew[iSrc == 0]->rgdv[ishdef].dp = rgpflNew[iSrc == 0]->rgdv[ishdef].pctSh() | (rgpflNew[iSrc]->rgdv[ishdef].pctDp() & 0x1ff) * 0x80;
-                    pctNew = static_cast<int32_t>((static_cast<int32_t>((static_cast<uint32_t>((cshDmgMoved * 100)) + rgpflNew[iSrc == 0]->rgcsh[ishdef] - 1)) / rgpflNew[iSrc == 0]->rgcsh[ishdef]));
+                    pctNew = static_cast<std::int32_t>((static_cast<std::int32_t>((static_cast<std::uint32_t>((cshDmgMoved * 100)) + rgpflNew[iSrc == 0]->rgcsh[ishdef] - 1)) / rgpflNew[iSrc == 0]->rgcsh[ishdef]));
                     rgpflNew[iSrc == 0]->rgdv[ishdef].dp = (rgpflNew[iSrc == 0]->rgdv[ishdef].dp & 0xff80) | (LOWORD(pctNew) & 0x7f);
                     if (cshDmgMoved == cshDmgSrc) {
                         rgpflNew[iSrc]->rgdv[ishdef].dp = 0;
                     } else {
-                        pctNew = static_cast<int32_t>((static_cast<int32_t>((static_cast<uint32_t>(((cshDmgSrc - cshDmgMoved) * 100)) + rgpflNew[iSrc]->rgcsh[ishdef] - 1)) /
+                        pctNew = static_cast<std::int32_t>((static_cast<std::int32_t>((static_cast<std::uint32_t>(((cshDmgSrc - cshDmgMoved) * 100)) + rgpflNew[iSrc]->rgcsh[ishdef] - 1)) /
                                            rgpflNew[iSrc]->rgcsh[ishdef]));
                         rgpflNew[iSrc]->rgdv[ishdef].SetPctSh(LOWORD(pctNew));
                     }
                 } else if (cshDmgDst != 0) {
-                    pctNew = static_cast<int32_t>((static_cast<int32_t>((static_cast<uint32_t>((cshDmgDst * 100)) + rgpflNew[iSrc == 0]->rgcsh[ishdef] - 1)) / rgpflNew[iSrc == 0]->rgcsh[ishdef]));
+                    pctNew = static_cast<std::int32_t>((static_cast<std::int32_t>((static_cast<std::uint32_t>((cshDmgDst * 100)) + rgpflNew[iSrc == 0]->rgcsh[ishdef] - 1)) / rgpflNew[iSrc == 0]->rgcsh[ishdef]));
                     rgpflNew[iSrc == 0]->rgdv[ishdef].dp = (rgpflNew[iSrc == 0]->rgdv[ishdef].dp & 0xff80) | (LOWORD(pctNew) & 0x7f);
                 } else {
                     rgpflNew[iSrc == 0]->rgdv[ishdef].dp = rgpflNew[iSrc == 0]->rgdv[ishdef].dp & 0xff80;
@@ -851,9 +851,9 @@ void FleetTransferCargoBalance(APPSESSION &app, FLEET *pflNew1, FLEET *pflNew2) 
     for (i = 0; i < 2; i++) {
         if (rgFuelCapacity[i] != 0) {
             if (rgpflNew[i]->rgwtMin[4] > 45000 || rgFuelCapLoss[i] > 45000) {
-                lChg = static_cast<int32_t>((static_cast<double>(rgpflNew[i]->rgwtMin[4]) * rgFuelCapLoss[i] / rgFuelCapacity[i]));
+                lChg = static_cast<std::int32_t>((static_cast<double>(rgpflNew[i]->rgwtMin[4]) * rgFuelCapLoss[i] / rgFuelCapacity[i]));
             } else {
-                lChg = static_cast<int32_t>((static_cast<int32_t>((rgpflNew[i]->rgwtMin[4] * rgFuelCapLoss[i])) / rgFuelCapacity[i]));
+                lChg = static_cast<std::int32_t>((static_cast<std::int32_t>((rgpflNew[i]->rgwtMin[4] * rgFuelCapLoss[i])) / rgFuelCapacity[i]));
             }
             rgrgCargoDelta[i][4] -= lChg;
         }
@@ -863,17 +863,17 @@ void FleetTransferCargoBalance(APPSESSION &app, FLEET *pflNew1, FLEET *pflNew2) 
                 wtCargoTot += rgpflNew[i]->rgwtMin[j];
             }
             if (wtCargoTot > 45000 || rgCargoCapLoss[i] > 45000) {
-                wtCargoXfer = static_cast<int32_t>((static_cast<double>(wtCargoTot) * rgCargoCapLoss[i] / rgCargoCapacity[i]));
+                wtCargoXfer = static_cast<std::int32_t>((static_cast<double>(wtCargoTot) * rgCargoCapLoss[i] / rgCargoCapacity[i]));
             } else {
-                wtCargoXfer = static_cast<int32_t>((static_cast<int32_t>((wtCargoTot * rgCargoCapLoss[i])) / rgCargoCapacity[i]));
+                wtCargoXfer = static_cast<std::int32_t>((static_cast<std::int32_t>((wtCargoTot * rgCargoCapLoss[i])) / rgCargoCapacity[i]));
             }
             lChg = wtCargoXfer;
             if (wtCargoXfer != 0 && wtCargoTot != 0) {
                 for (j = 0; j <= 3; j++) {
                     if (rgpflNew[i]->rgwtMin[j] > 45000 || wtCargoXfer > 45000) {
-                        l = static_cast<int32_t>((static_cast<double>(rgpflNew[i]->rgwtMin[j]) * wtCargoXfer / wtCargoTot));
+                        l = static_cast<std::int32_t>((static_cast<double>(rgpflNew[i]->rgwtMin[j]) * wtCargoXfer / wtCargoTot));
                     } else {
-                        l = static_cast<int32_t>((static_cast<int32_t>((rgpflNew[i]->rgwtMin[j] * wtCargoXfer)) / wtCargoTot));
+                        l = static_cast<std::int32_t>((static_cast<std::int32_t>((rgpflNew[i]->rgwtMin[j] * wtCargoXfer)) / wtCargoTot));
                     }
                     l = l < lChg ? l : lChg;
                     rgrgCargoDelta[i][j] -= l;
@@ -899,7 +899,7 @@ void FleetTransferCargoBalance(APPSESSION &app, FLEET *pflNew1, FLEET *pflNew2) 
     return;
 }
 
-void DestroyAllIshdefSB(APPSESSION &app, int16_t ishdefSB, int16_t iplr) {
+void DestroyAllIshdefSB(APPSESSION &app, std::int16_t ishdefSB, std::int16_t iplr) {
     PLANET *lppl;
     PLANET *lpplMac;
 
@@ -915,14 +915,14 @@ void DestroyAllIshdefSB(APPSESSION &app, int16_t ishdefSB, int16_t iplr) {
     return;
 }
 
-void DestroyAllIshdef(APPSESSION &app, int16_t ishdef, int16_t iplr) {
+void DestroyAllIshdef(APPSESSION &app, std::int16_t ishdef, std::int16_t iplr) {
     FLEET   flDead;
-    int16_t cKill;
+    std::int16_t cKill;
     FLEET  *lpfl;
-    int16_t i;
-    int16_t grbit;
-    int16_t j;
-    int16_t cDel;
+    std::int16_t i;
+    std::int16_t grbit;
+    std::int16_t j;
+    std::int16_t cDel;
     FLEET   flNew;
 
     cDel = 0;
@@ -933,7 +933,7 @@ void DestroyAllIshdef(APPSESSION &app, int16_t ishdef, int16_t iplr) {
         for (lpfl = *app.state.rglpfl, i = 0; i < app.state.cFleet; lpfl = app.state.rglpfl[i]) {
             if (lpfl->iPlayer != iplr || lpfl->rgcsh[ishdef] <= 0)
                 goto IncrementI;
-            memset(&flDead, 0, sizeof(FLEET));
+            std::memset(&flDead, 0, sizeof(FLEET));
             cKill = lpfl->rgcsh[ishdef];
             cDel += cKill;
             for (j = 0; j < 16 && (j == ishdef || lpfl->rgcsh[j] == 0); j++) {
@@ -969,10 +969,10 @@ void DestroyAllIshdef(APPSESSION &app, int16_t ishdef, int16_t iplr) {
     return;
 }
 
-void RemoveIshdefFromAllQueues(APPSESSION &app, int16_t ishdef, int16_t fSpaceDocks) {
-    int16_t iprod;
+void RemoveIshdefFromAllQueues(APPSESSION &app, std::int16_t ishdef, std::int16_t fSpaceDocks) {
+    std::int16_t iprod;
     PLANET *lppl;
-    int16_t iDst;
+    std::int16_t iDst;
     PLANET *lpplMac;
     PROD   *lpprod;
 
@@ -985,7 +985,7 @@ void RemoveIshdefFromAllQueues(APPSESSION &app, int16_t ishdef, int16_t fSpaceDo
             iprod = 0;
             lpprod = lppl->lpplprod->rgprod();
             while (iprod < lppl->lpplprod->iprodMac) {
-                if (lpprod->grobj != grobjFleet || lpprod->iItem != static_cast<uint32_t>(ishdef)) {
+                if (lpprod->grobj != grobjFleet || lpprod->iItem != static_cast<std::uint32_t>(ishdef)) {
                     if (iDst != iprod) {
                         lppl->lpplprod->rgprod()[iDst] = *lpprod;
                     }
@@ -1009,10 +1009,10 @@ void RemoveIshdefFromAllQueues(APPSESSION &app, int16_t ishdef, int16_t fSpaceDo
     return;
 }
 
-int16_t CshQueued(APPSESSION &app, int16_t ishdef, int16_t *pfProgress, int16_t fSpaceDocks) {
-    int16_t iprod;
+std::int16_t CshQueued(APPSESSION &app, std::int16_t ishdef, std::int16_t *pfProgress, std::int16_t fSpaceDocks) {
+    std::int16_t iprod;
     PLANET *lppl;
-    int16_t csh;
+    std::int16_t csh;
     PLANET *lpplMac;
     PROD   *lpprod;
 
@@ -1026,7 +1026,7 @@ int16_t CshQueued(APPSESSION &app, int16_t ishdef, int16_t *pfProgress, int16_t 
             iprod = 0;
             lpprod = lppl->lpplprod->rgprod();
             while (iprod < lppl->lpplprod->iprodMac) {
-                if (lpprod->grobj == grobjFleet && lpprod->iItem == static_cast<uint32_t>(ishdef)) {
+                if (lpprod->grobj == grobjFleet && lpprod->iItem == static_cast<std::uint32_t>(ishdef)) {
                     csh += lpprod->cItem;
                     if (lpprod->pct != 0) {
                         *pfProgress = 1;
@@ -1040,11 +1040,11 @@ int16_t CshQueued(APPSESSION &app, int16_t ishdef, int16_t *pfProgress, int16_t 
     return csh;
 }
 
-void Merge2Fleets(APPSESSION &app, FLEET *lpflDst, FLEET *lpflDel, int16_t fNoDelete) {
+void Merge2Fleets(APPSESSION &app, FLEET *lpflDst, FLEET *lpflDel, std::int16_t fNoDelete) {
     FLEET   rgfl[2];
-    int16_t i;
-    int16_t csh;
-    int16_t fLeft;
+    std::int16_t i;
+    std::int16_t csh;
+    std::int16_t fLeft;
 
     rgfl[0] = *lpflDst;
     rgfl[1] = *lpflDel;
@@ -1085,12 +1085,12 @@ void Merge2Fleets(APPSESSION &app, FLEET *lpflDst, FLEET *lpflDel, int16_t fNoDe
 }
 
 void FleetOrdersChangeTarget(APPSESSION &app, FLEET *lpflOld) {
-    int16_t    id;
+    std::int16_t    id;
     POINT16    pt;
-    int16_t    fChg;
+    std::int16_t    fChg;
     FLEET     *lpfl;
-    int16_t    iord;
-    int16_t    iflMac;
+    std::int16_t    iord;
+    std::int16_t    iflMac;
     SCAN       scan;
     GrobjClass grobj;
 
@@ -1128,10 +1128,10 @@ void FleetOrdersChangeTarget(APPSESSION &app, FLEET *lpflOld) {
     return;
 }
 
-void GetTruePartCost(APPSESSION &app, int16_t iPlayer, PART *ppart, uint16_t *rgCost) {
-    int16_t  cExcess;
-    int16_t  cCur;
-    int16_t  i;
+void GetTruePartCost(APPSESSION &app, std::int16_t iPlayer, PART *ppart, std::uint16_t *rgCost) {
+    std::int16_t  cExcess;
+    std::int16_t  cCur;
+    std::int16_t  i;
     NATIVEPARTCOMMONVIEW lpcom;
 
     lpcom = ppart->pcom();
@@ -1215,7 +1215,7 @@ void GetTruePartCost(APPSESSION &app, int16_t iPlayer, PART *ppart, uint16_t *rg
                     /* fallthrough */
                 default:
                     if (ppart->hs.grhst == hstTerra && RaceQueryIO().pfnStat(&app.state.rgplr[iPlayer], rsMajorAdv) == raTerra) {
-                        rgCost[3] = static_cast<uint32_t>(rgCost[3]) / 2;
+                        rgCost[3] = static_cast<std::uint32_t>(rgCost[3]) / 2;
                     } else if (ppart->hs.grhst == hstEngine && RaceQueryIO().pfnGrbit(&app.state.rgplr[iPlayer], ibitRaceCheapEngines) != 0) {
                         for (i = 0; i < 4; i++) {
                             rgCost[i] -= rgCost[i] >> 1;

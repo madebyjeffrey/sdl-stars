@@ -88,6 +88,8 @@ for directory in ("src", "compat/win32/include", "compat/win32/src"):
         code = re.sub(r'//[^\n]*|/\*[\s\S]*?\*/|R"(?P<delimiter>[^ ()\\\t\r\n]*)\([\s\S]*?\)(?P=delimiter)"|"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'', ' ', text)
         assert not re.search(r"\bNULL\b", code), f"Owned null spelling must use nullptr: {path}"
         assert not re.search(r"\btypedef\b", code), f"Owned type aliases must use C++ declarations: {path}"
+        assert not re.search(r"#\s*include\s*<(?:assert|ctype|errno|fenv|float|inttypes|limits|locale|math|setjmp|signal|stdarg|stddef|stdint|stdio|stdlib|string|time|uchar|wchar|wctype)\.h>", text), f"Owned standard headers must use C++ spellings: {path}"
+        assert not re.search(r"(?<![\w:])(?:u?int(?:8|16|32|64)_t|u?intptr_t|u?intmax_t|size_t|ptrdiff_t|max_align_t|FILE|fpos_t|va_list|time_t|clock_t)\b", code), f"Owned standard types must use std qualification: {path}"
         assert not re.search(r"#\s*define\s+(?:min|max)\s*\(", text), f"Owned min/max macro remains: {path}"
         assert not re.search(r'\(\s*(?:char\s*\*|LPSTR|PSTR)\s*\)\s*"', text), f"Mutable string-literal cast remains: {path}"
         assert not re.search(r'const_cast\s*<\s*char\s*\*\s*>\s*\(\s*"', text), f"Mutable string-literal cast remains: {path}"

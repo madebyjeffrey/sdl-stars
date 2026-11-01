@@ -40,27 +40,27 @@ public:
     const void *Lpv() const noexcept { return lpv; }
     friend bool operator==(NATIVEPARTCOMMONVIEW a, NATIVEPARTCOMMONVIEW b) noexcept { return a.lpv == b.lpv; }
     friend bool operator==(NATIVEPARTCOMMONVIEW a, const void *b) noexcept { return a.lpv == b; }
-    int8_t *rgTech() const noexcept { return Visit([](auto &item) { return item.rgTech; }); }
+    std::int8_t *rgTech() const noexcept { return Visit([](auto &item) { return item.rgTech; }); }
     char *szName() const noexcept {
         return Visit([](auto &item) {
             if constexpr (std::is_same_v<std::remove_cvref_t<decltype(item)>, HUL>) return item.szClass;
             else return item.szName;
         });
     }
-    int16_t cMass() const noexcept {
-        return Visit([](auto &item) -> int16_t {
-            if constexpr (std::is_same_v<std::remove_cvref_t<decltype(item)>, HUL>) return std::bit_cast<int16_t>(uint16_t{item.wtEmpty});
+    std::int16_t cMass() const noexcept {
+        return Visit([](auto &item) -> std::int16_t {
+            if constexpr (std::is_same_v<std::remove_cvref_t<decltype(item)>, HUL>) return std::bit_cast<std::int16_t>(std::uint16_t{item.wtEmpty});
             else return item.cMass;
         });
     }
-    uint16_t resCost() const noexcept { return Visit([](auto &item) { return item.resCost; }); }
-    int16_t rgwtOreCost(int i) const noexcept {
-        return Visit([i](auto &item) -> int16_t {
-            if constexpr (std::is_same_v<std::remove_cvref_t<decltype(item)>, HUL>) return std::bit_cast<int16_t>(uint16_t{item.rgwtOreCost[i]});
+    std::uint16_t resCost() const noexcept { return Visit([](auto &item) { return item.resCost; }); }
+    std::int16_t rgwtOreCost(int i) const noexcept {
+        return Visit([i](auto &item) -> std::int16_t {
+            if constexpr (std::is_same_v<std::remove_cvref_t<decltype(item)>, HUL>) return std::bit_cast<std::int16_t>(std::uint16_t{item.rgwtOreCost[i]});
             else return item.rgwtOreCost[i];
         });
     }
-    int16_t ibmp() const noexcept { return Visit([](auto &item) { return item.ibmp; }); }
+    std::int16_t ibmp() const noexcept { return Visit([](auto &item) { return item.ibmp; }); }
 };
 
 inline NATIVEPARTCOMMONVIEW PART::pcom() const noexcept { return {lpv, ppk}; }

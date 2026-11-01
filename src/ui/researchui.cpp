@@ -13,22 +13,22 @@ INT_PTR  ResearchDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
 
     HDC         hdc;
-    int16_t     y;
-    int16_t     i;
+    std::int16_t     y;
+    std::int16_t     i;
     PAINTSTRUCT ps;
-    int16_t     dx;
+    std::int16_t     dx;
     RECT        rc;
     HWND        hwndRad;
-    int16_t     dxCurrent;
+    std::int16_t     dxCurrent;
     PLANET     *lppl;
-    int16_t     c;
+    std::int16_t     c;
     PLANET     *lpplMac;
     HFONT       hfontSav;
     char       *psz;
     RECT        rcWindow;
     POINT16     pt;
-    int16_t     iResTechNext;
-    int16_t     fChg;
+    std::int16_t     iResTechNext;
+    std::int16_t     fChg;
 
     switch (message) {
     case win32::WM_INITDIALOG:
@@ -54,8 +54,8 @@ INT_PTR  ResearchDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         y = app.state.dyArial8 * 4 - (app.state.dyArial8 >> 1) + 1;
         for (i = 1073; i <= 1078; i++) {
             hwndRad = ControlIO().pfnGetDlgItem(hwnd, i);
-            ControlIO().pfnSetWindowPos(hwndRad, nullptr, 16, y, app.lpui->dxResRadio, static_cast<int16_t>((3 * app.state.dyArial8)) / 2, win32::SWP_NOZORDER | win32::SWP_SHOWWINDOW);
-            y += static_cast<int16_t>((3 * app.state.dyArial8)) / 2;
+            ControlIO().pfnSetWindowPos(hwndRad, nullptr, 16, y, app.lpui->dxResRadio, static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2, win32::SWP_NOZORDER | win32::SWP_SHOWWINDOW);
+            y += static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2;
         }
         hwndRad = ControlIO().pfnGetDlgItem(hwnd, IDC_RESEARCH_NEXT_FIELD);
         for (i = 0; i <= 7; i++) {
@@ -82,9 +82,9 @@ INT_PTR  ResearchDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         dx = LOWORD(GetTextExtent(hdc, TextIO().pfnCompressed(app, idsN9999992), 7));
         app.lpui->dxResRight += dx + 48;
         y += 10 * app.state.dyArial8;
-        ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDCANCEL), nullptr, app.lpui->dxResLeft + app.lpui->dxResRight - 152, y - static_cast<int16_t>((3 * app.state.dyArial8)) / 2 - 8, 70, static_cast<int16_t>((3 * app.state.dyArial8)) / 2,
+        ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDCANCEL), nullptr, app.lpui->dxResLeft + app.lpui->dxResRight - 152, y - static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2 - 8, 70, static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2,
                      win32::SWP_NOZORDER | win32::SWP_SHOWWINDOW);
-        ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_HELP), nullptr, app.lpui->dxResLeft + app.lpui->dxResRight - 76, y - static_cast<int16_t>((3 * app.state.dyArial8)) / 2 - 8, 70, static_cast<int16_t>((3 * app.state.dyArial8)) / 2,
+        ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_HELP), nullptr, app.lpui->dxResLeft + app.lpui->dxResRight - 76, y - static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2 - 8, 70, static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2,
                      win32::SWP_NOZORDER | win32::SWP_SHOWWINDOW);
         win32::GetWindowRect(hwnd, &rcWindow);
         ControlIO().pfnGetClientRect(hwnd, &rc);
@@ -190,33 +190,33 @@ INT_PTR  ResearchDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     return 0;
 }
 
-void DrawResearchDlg(APPSESSION &app, HWND hwnd, HDC hdc, RECT *prc, int16_t grbitDraw) {
-    int16_t      dxCurrent;
+void DrawResearchDlg(APPSESSION &app, HWND hwnd, HDC hdc, RECT *prc, std::int16_t grbitDraw) {
+    std::int16_t      dxCurrent;
     char         szTemp[60];
     RECT         rcT;
-    int16_t      iMax;
-    int16_t      iTechSav;
-    int16_t      iter;
-    int16_t      fCreatedDC;
+    std::int16_t      iMax;
+    std::int16_t      iTechSav;
+    std::int16_t      iter;
+    std::int16_t      fCreatedDC;
     mdPartAvail  mdAvail;
-    int16_t      i;
-    int16_t      c;
+    std::int16_t      i;
+    std::int16_t      c;
     HullSlotType grbitCur;
     COLORREF     crBackSav;
     COLORREF     crForeSav;
     HFONT        hfontSav;
-    int16_t      xNum;
-    int16_t      xCtr;
-    int16_t      dx;
+    std::int16_t      xNum;
+    std::int16_t      xCtr;
+    std::int16_t      dx;
     char         szTemp2[60];
     PART         part;
-    int32_t      l;
-    int16_t      iMin;
+    std::int32_t      l;
+    std::int16_t      iMin;
     RECT         rc;
-    int32_t      lSpent;
+    std::int32_t      lSpent;
     HBRUSH       hbrSav;
-    int32_t      lRBEffective;
-    int16_t      cch;
+    std::int32_t      lRBEffective;
+    std::int16_t      cch;
 
     fCreatedDC = 0;
     if (!hdc) {
@@ -252,11 +252,11 @@ void DrawResearchDlg(APPSESSION &app, HWND hwnd, HDC hdc, RECT *prc, int16_t grb
     for (i = 0; i < 6; i++) {
         c = win32::wsprintfA(app.state.szWork, app.state.PCTD, app.state.rgplr[app.state.idPlayer].rgTech[i]);
         CtrTextOut(hdc, xCtr, rc.top, app.state.szWork, c);
-        rc.top += static_cast<int16_t>((3 * app.state.dyArial8)) / 2;
+        rc.top += static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2;
     }
 
 DrawComingAttractions:
-    win32::SetRect(&rc, 8, static_cast<int16_t>((3 * app.state.dyArial8)) / 2 + rc.bottom, app.lpui->dxResLeft - 8, prc->bottom - 8);
+    win32::SetRect(&rc, 8, static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2 + rc.bottom, app.lpui->dxResLeft - 8, prc->bottom - 8);
     if ((grbitDraw & 4) && !(grbitDraw & 3)) {
         ExpandRc(&rc, -6, -(app.state.dyArial8 >> 1));
         rc.top += app.state.dyArial8 >> 1;
@@ -301,8 +301,8 @@ DrawComingAttractions:
                             rc.top += app.state.dyArial8;
                             if (rc.top + app.state.dyArial8 > rc.bottom)
                                 goto TooManyToFinish;
-                            strcpy(app.state.szWork, part.pcom().szName());
-                            win32::TextOutA(hdc, rc.left + 8, rc.top, app.state.szWork, strlen(app.state.szWork));
+                            std::strcpy(app.state.szWork, part.pcom().szName());
+                            win32::TextOutA(hdc, rc.left + 8, rc.top, app.state.szWork, std::strlen(app.state.szWork));
                             if (app.lpui->cFutureTech < 8) {
                                 app.lpui->rghsFutureTech[app.lpui->cFutureTech++] = part.hs;
                             }
@@ -318,7 +318,7 @@ DrawComingAttractions:
     }
 
 DrawRightSide:
-    win32::SetRect(&rc, app.lpui->dxResLeft + 8, app.state.dyArial8, app.lpui->dxResLeft + app.lpui->dxResRight - 8, static_cast<int16_t>((14 * app.state.dyArial8)) / 2 + app.state.dyArial8);
+    win32::SetRect(&rc, app.lpui->dxResLeft + 8, app.state.dyArial8, app.lpui->dxResLeft + app.lpui->dxResRight - 8, static_cast<std::int16_t>((14 * app.state.dyArial8)) / 2 + app.state.dyArial8);
     xCtr = rc.left + 8 + app.lpui->dxResStrRight;
     xNum = LOWORD(GetTextExtent(hdc, "999999", 6)) + xCtr;
     if ((grbitDraw & 4) && !(grbitDraw & 3)) {
@@ -336,12 +336,12 @@ DrawRightSide:
         l = ResearchIO().pfnTechCost(app, app.lpui->iResTechNow, app.state.rgplr[app.state.idPlayer].rgTech[app.lpui->iResTechNow] + 1, app.state.idPlayer);
         lSpent = app.state.rgplr[app.state.idPlayer].rgResSpent[app.lpui->iResTechNow];
         if (app.state.game.fSlowTech) {
-            lSpent = static_cast<int32_t>((lSpent * 2));
+            lSpent = static_cast<std::int32_t>((lSpent * 2));
         }
         l = 0 <= l - lSpent ? l - lSpent : 0;
     }
     if ((grbitDraw & 0x200) && !(grbitDraw & 0xf)) {
-        rc.top += static_cast<int16_t>((3 * app.state.dyArial8)) / 2 * 2 + app.state.dyArial8;
+        rc.top += static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2 * 2 + app.state.dyArial8;
         hbrSav = static_cast<HBRUSH>(win32::SelectObject(hdc, app.lpui->hbrButtonFace));
         win32::PatBlt(hdc, xCtr, rc.top, xNum - xCtr, app.state.dyArial8, win32::PATCOPY);
         win32::SelectObject(hdc, hbrSav);
@@ -355,7 +355,7 @@ DrawRightSide:
         TextIO().pfnCchGetString(app, idsSTechLevelD, szTemp2);
         c = win32::wsprintfA(app.state.szWork, szTemp2, szTemp, app.state.rgplr[app.state.idPlayer].rgTech[app.lpui->iResTechNow] + 1);
         RightTextOut(app, hdc, xCtr, rc.top, app.state.szWork, c, 0);
-        rc.top += static_cast<int16_t>((3 * app.state.dyArial8)) / 2;
+        rc.top += static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2;
         RightTextOut(app, hdc, xCtr, rc.top, TextIO().pfnCompressed(app, idsResourcesNeededComplete), 0, 0);
         if (l == -1) {
             c = TextIO().pfnCchGetString(app, idsMaxed, app.state.szWork);
@@ -363,7 +363,7 @@ DrawRightSide:
             c = win32::wsprintfA(app.state.szWork, app.state.PCTLD, l);
         }
         win32::TextOutA(hdc, xCtr, rc.top, app.state.szWork, c);
-        rc.top += static_cast<int16_t>((3 * app.state.dyArial8)) / 2;
+        rc.top += static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2;
         RightTextOut(app, hdc, xCtr, rc.top, TextIO().pfnCompressed(app, idsEstimatedTimeCompletion), 0, 0);
     }
 DrawYearComplete:
@@ -379,9 +379,9 @@ DrawYearComplete:
     } else {
         lRBEffective = app.lpui->lResBudget;
         if (RaceQueryIO().pfnGrbit(&app.state.rgplr[app.state.idPlayer], ibitRaceGeneralizedResearch) != 0) {
-            lRBEffective -= static_cast<int32_t>((lRBEffective >> 1));
+            lRBEffective -= static_cast<std::int32_t>((lRBEffective >> 1));
         }
-        l = static_cast<int32_t>(((l + lRBEffective - 1) / lRBEffective));
+        l = static_cast<std::int32_t>(((l + lRBEffective - 1) / lRBEffective));
     PrintYear:
         c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsLdYearC), l, l == 1 ? 32 : 115);
         win32::TextOutA(hdc, xCtr, rc.top, app.state.szWork, c);
@@ -395,7 +395,7 @@ DrawYearComplete:
     }
 
 DrawResourceAlloc:
-    rc.top = static_cast<int16_t>((3 * app.state.dyArial8)) / 2 + rc.bottom;
+    rc.top = static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2 + rc.bottom;
     rc.bottom = app.state.dyArial8 * 8 + rc.top;
     if (!(grbitDraw & 0x400))
         goto DrawAnnualRes;
@@ -414,7 +414,7 @@ DrawAnnualRes:
     RightTextOut(app, hdc, xNum, rc.top, app.state.szWork, c, 0);
 
 DrawTotalSpent:
-    rc.top += static_cast<int16_t>((3 * app.state.dyArial8)) / 2;
+    rc.top += static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2;
     if (!(grbitDraw & 0x1000))
         goto DrawBudget;
 
@@ -423,7 +423,7 @@ DrawTotalSpent:
     RightTextOut(app, hdc, xNum, rc.top, app.state.szWork, c, 0);
 
 DrawBudget:
-    rc.top += static_cast<int16_t>((3 * app.state.dyArial8)) / 2;
+    rc.top += static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2;
     dx = 0;
     if (grbitDraw & 0x2000) {
         RightTextOut(app, hdc, xCtr, rc.top, TextIO().pfnCompressed(app, idsResourcesBudgetedResearch), 0, 0);
@@ -449,7 +449,7 @@ DrawResPct:
     DrawBtn(app, hdc, &app.lpui->rcSpinBot, 161, 0, nullptr);
 
 DrawProjBudg:
-    rc.top += static_cast<int16_t>((3 * app.state.dyArial8)) / 2;
+    rc.top += static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2;
     if ((grbitDraw & 0x4000) && !(grbitDraw & 0xf))
         goto DrawProjBudgData;
 
@@ -492,12 +492,12 @@ CleanUp:
     return;
 }
 
-int16_t FTrackResearchDlg(APPSESSION &app, HWND hwnd, int16_t x, int16_t y, int16_t fkb) {
-    int16_t bt;
+std::int16_t FTrackResearchDlg(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16_t y, std::int16_t fkb) {
+    std::int16_t bt;
     POINT16 pt;
-    int16_t dChg;
-    int16_t i;
-    int16_t cNew;
+    std::int16_t dChg;
+    std::int16_t i;
+    std::int16_t cNew;
     RECT   *prc;
     BTNT    btnt;
     RECT    rc;
@@ -514,7 +514,7 @@ int16_t FTrackResearchDlg(APPSESSION &app, HWND hwnd, int16_t x, int16_t y, int1
         bt = 161;
     } else {
         if (y >= app.lpui->yTopFutureTech && y < app.lpui->cFutureTech * app.state.dyArial8 + app.lpui->yTopFutureTech && x > 12 && x < app.lpui->dxResLeft - 12) {
-            i = static_cast<int16_t>((y - app.lpui->yTopFutureTech)) / app.state.dyArial8;
+            i = static_cast<std::int16_t>((y - app.lpui->yTopFutureTech)) / app.state.dyArial8;
             app.lpui->GlobalPD.part.hs = app.lpui->rghsFutureTech[i];
             PartQueryIO().pfnLookup(app, &app.lpui->GlobalPD.part);
             app.lpui->GlobalPD.grPopup = grPopupComponent;
@@ -523,7 +523,7 @@ int16_t FTrackResearchDlg(APPSESSION &app, HWND hwnd, int16_t x, int16_t y, int1
         }
         if (app.lpui->yTopTechNote != -1 && y >= app.lpui->yTopTechNote && y < 3 * app.state.dyArial8 + app.lpui->yTopTechNote && x > app.lpui->dxResLeft) {
             if (RaceQueryIO().pfnGrbit(&app.state.rgplr[app.state.idPlayer], ibitRaceGeneralizedResearch) != 0 &&
-                (y < static_cast<int16_t>((3 * app.state.dyArial8)) / 2 + app.lpui->yTopTechNote || RaceQueryIO().pfnGrbit(&app.state.rgplr[app.state.idPlayer], ibitRaceBleedingEdgeTech) == 0)) {
+                (y < static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2 + app.lpui->yTopTechNote || RaceQueryIO().pfnGrbit(&app.state.rgplr[app.state.idPlayer], ibitRaceBleedingEdgeTech) == 0)) {
                 i = idsRaceTakesHolisticApproachResearchHalfResources;
             } else {
                 i = idsNewTechsInitiallyCostTwiceMuchBuild;
@@ -564,21 +564,21 @@ INT_PTR  BrowserDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
 
     HDC         hdc;
     HMENU       hmenu;
-    int16_t     i;
-    int16_t     c;
+    std::int16_t     i;
+    std::int16_t     c;
     PAINTSTRUCT ps;
     HFONT       hfontSav;
-    int16_t     dx;
+    std::int16_t     dx;
     RECT        rc;
     HWND        hwndDD;
-    int32_t     lSel;
+    std::int32_t     lSel;
     mdPartAvail md;
-    int16_t     fShowAll;
-    int16_t     fAllHsts;
-    uint16_t    iItemStart;
-    int16_t     iStart;
-    int16_t     cIter;
-    int16_t     iOff;
+    std::int16_t     fShowAll;
+    std::int16_t     fAllHsts;
+    std::uint16_t    iItemStart;
+    std::int16_t     iStart;
+    std::int16_t     cIter;
+    std::int16_t     iOff;
 
     switch (message) {
     case win32::WM_INITDIALOG:
@@ -592,13 +592,13 @@ INT_PTR  BrowserDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         hwndDD = ControlIO().pfnGetDlgItem(hwnd, IDC_BROWSER_COMPONENT_CATEGORY);
         c = win32::GetDlgItemTextA(hwnd, IDC_BACK, app.state.szWork, 80);
         dx = LOWORD(GetTextExtent(hdc, app.state.szWork, c)) + 14;
-        ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_BACK), nullptr, 6, 6, dx, static_cast<int16_t>((3 * app.state.dyArial8)) / 2, win32::SWP_NOZORDER);
-        ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_NEXT), nullptr, (app.state.dyArial8 <= 14 ? 0 : 40) + 350 - dx, 6, dx, static_cast<int16_t>((3 * app.state.dyArial8)) / 2, win32::SWP_NOZORDER);
+        ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_BACK), nullptr, 6, 6, dx, static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2, win32::SWP_NOZORDER);
+        ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_NEXT), nullptr, (app.state.dyArial8 <= 14 ? 0 : 40) + 350 - dx, 6, dx, static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2, win32::SWP_NOZORDER);
         ControlIO().pfnSetWindowPos(hwndDD, nullptr, dx + 12, 6, (app.state.dyArial8 <= 14 ? 0 : 40) + 344 - dx * 2 - 12, 18 * app.state.dyArial8, win32::SWP_NOZORDER);
         ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDCANCEL), nullptr, (app.state.dyArial8 <= 14 ? 0 : 40) + 350 - dx,
-                     app.lpui->dyArial10 + 72 + 12 * app.state.dyArial8 + 6 + static_cast<int16_t>((3 * app.state.dyArial8)) / 2 + 18, dx, static_cast<int16_t>((3 * app.state.dyArial8)) / 2, win32::SWP_NOZORDER);
-        ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_BROWSER_AVAILABLE_ONLY), nullptr, 6, app.lpui->dyArial10 + 72 + 12 * app.state.dyArial8 + 6 + static_cast<int16_t>((3 * app.state.dyArial8)) / 2 + 18,
-                     (app.state.dyArial8 <= 14 ? 0 : 40) + 344 - dx, static_cast<int16_t>((3 * app.state.dyArial8)) / 2, win32::SWP_NOZORDER);
+                     app.lpui->dyArial10 + 72 + 12 * app.state.dyArial8 + 6 + static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2 + 18, dx, static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2, win32::SWP_NOZORDER);
+        ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_BROWSER_AVAILABLE_ONLY), nullptr, 6, app.lpui->dyArial10 + 72 + 12 * app.state.dyArial8 + 6 + static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2 + 18,
+                     (app.state.dyArial8 <= 14 ? 0 : 40) + 344 - dx, static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2, win32::SWP_NOZORDER);
         win32::SelectObject(hdc, hfontSav);
         win32::ReleaseDC(hwnd, hdc);
         if (!app.lpui->fBrowserValid) {
@@ -606,7 +606,7 @@ INT_PTR  BrowserDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             app.lpui->vpartBrowser.hs.iItem = 0;
         }
         PartQueryIO().pfnLookup(app, &app.lpui->vpartBrowser);
-        app.lpui->hwndBrowserChild = ui::CreateWindowEx(0, app.lpui->szBrowser, nullptr, win32::WS_CHILD | win32::WS_VISIBLE, 6, static_cast<int16_t>((3 * app.state.dyArial8)) / 2 + 12, (app.state.dyArial8 <= 14 ? 0 : 40) + 344,
+        app.lpui->hwndBrowserChild = ui::CreateWindowEx(0, app.lpui->szBrowser, nullptr, win32::WS_CHILD | win32::WS_VISIBLE, 6, static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2 + 12, (app.state.dyArial8 <= 14 ? 0 : 40) + 344,
                                         app.lpui->dyArial10 + 72 + 12 * app.state.dyArial8 + 6, hwnd, nullptr, app.lpui->hInst, nullptr);
         for (i = idsAll; i <= idsTorpedoes; i++) {
             ControlIO().pfnSendMessage(hwndDD, win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(TextIO().pfnCompressed(app, static_cast<StringId>(i))));
@@ -753,7 +753,7 @@ LRESULT  BrowserWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
 
     HDC         hdc;
     POINT16     pt;
-    int16_t     i;
+    std::int16_t     i;
     PAINTSTRUCT ps;
     RECT        rc;
 
@@ -804,54 +804,54 @@ LRESULT  BrowserWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     }
 }
 
-void DisplayComponentInfo(APPSESSION &app, HDC hdc, int16_t dx, int16_t dy, PART *ppart) {
-    uint16_t rgCosts[4];
+void DisplayComponentInfo(APPSESSION &app, HDC hdc, std::int16_t dx, std::int16_t dy, PART *ppart) {
+    std::uint16_t rgCosts[4];
     StringId idsT;
     StringId ids;
-    int16_t  dxStr;
-    int16_t  c;
-    int16_t  yText;
-    int16_t  i;
-    int16_t  yCur;
-    int16_t  fReq;
-    int16_t  yStart;
-    int16_t  xNum;
-    int16_t  xText;
+    std::int16_t  dxStr;
+    std::int16_t  c;
+    std::int16_t  yText;
+    std::int16_t  i;
+    std::int16_t  yCur;
+    std::int16_t  fReq;
+    std::int16_t  yStart;
+    std::int16_t  xNum;
+    std::int16_t  xText;
     RECT     rcData;
-    int32_t  l;
-    int16_t  dxT;
+    std::int32_t  l;
+    std::int16_t  dxT;
     char     rgch[2];
-    int16_t  dyPct;
-    int16_t  dxDigit;
-    int16_t  yBase;
-    int16_t  y;
-    int16_t  dxWarp;
-    int16_t  pct;
-    int16_t  fWarp10;
-    int16_t  iEff;
+    std::int16_t  dyPct;
+    std::int16_t  dxDigit;
+    std::int16_t  yBase;
+    std::int16_t  y;
+    std::int16_t  dxWarp;
+    std::int16_t  pct;
+    std::int16_t  fWarp10;
+    std::int16_t  iEff;
     COLORREF crFore;
-    int16_t  cch;
-    int16_t  x;
+    std::int16_t  cch;
+    std::int16_t  x;
     HPEN     hpenSav;
     COLORREF crBack;
     HBRUSH   hbrSav;
-    int16_t  pctT;
+    std::int16_t  pctT;
     char     szT[256];
-    int16_t  dyText;
+    std::int16_t  dyText;
     char    *psz;
-    int16_t  dmgFloor;
-    int16_t  dmgMin;
-    int16_t  dmgShipRam;
-    int16_t  iWarp;
-    int16_t  dmgShip;
-    int16_t  pctHit;
-    int16_t  dxLabel;
-    int16_t  dmgMinRam;
-    int32_t  lpct;
-    int16_t  xBase;
-    int16_t  dxQuan;
+    std::int16_t  dmgFloor;
+    std::int16_t  dmgMin;
+    std::int16_t  dmgShipRam;
+    std::int16_t  iWarp;
+    std::int16_t  dmgShip;
+    std::int16_t  pctHit;
+    std::int16_t  dxLabel;
+    std::int16_t  dmgMinRam;
+    std::int32_t  lpct;
+    std::int16_t  xBase;
+    std::int16_t  dxQuan;
     char     ch;
-    int32_t  ldelta;
+    std::int32_t  ldelta;
     RECT     rcT;
 
     win32::SelectObject(hdc, app.lpui->hbrButtonShadow);
@@ -868,7 +868,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, int16_t dx, int16_t dy, PART
         DiaganolTextOut(app, hdc, &rcData, app.state.szWork, c);
     } else {
         win32::SelectObject(hdc, app.lpui->rghfontArial10[1]);
-        strcpy(app.state.szWork, ppart->pcom().szName());
+        std::strcpy(app.state.szWork, ppart->pcom().szName());
         CtrTextOut(hdc, dx >> 1, 3, app.state.szWork, 0);
         if (ppart->hs.grhst == hstHull || ppart->hs.grhst == hstSBHull) {
             DrawFleetBitmap(app, nullptr, hdc, 5, app.lpui->dyArial10 + 5, 0, ppart->pcom().ibmp(), 0, 0, -1, 0);
@@ -916,7 +916,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, int16_t dx, int16_t dy, PART
             l = CostOfDevelopingItem(app, reinterpret_cast<char *>(ppart->pcom().rgTech()));
         }
         if (l > 99999) {
-            c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsCostLdk), static_cast<int32_t>(((l + 500) / 1000)));
+            c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsCostLdk), static_cast<std::int32_t>(((l + 500) / 1000)));
             win32::TextOutA(hdc, 5, yCur + app.state.dyArial8 + 4, app.state.szWork, c);
         } else if (l > 0) {
             c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsCostLd), l);
@@ -999,8 +999,8 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, int16_t dx, int16_t dy, PART
             rcData.top += app.state.dyArial8;
             c = TextIO().pfnCchGetString(app, idsWarp, app.state.szWork);
             dxStr = LOWORD(GetTextExtent(hdc, app.state.szWork, c));
-            dxWarp = static_cast<int16_t>((rcData.right - rcData.left - dxStr - 8)) / 10;
-            dyPct = static_cast<int16_t>((rcData.bottom - rcData.top - app.state.dyArial8 - 8)) / 6;
+            dxWarp = static_cast<std::int16_t>((rcData.right - rcData.left - dxStr - 8)) / 10;
+            dyPct = static_cast<std::int16_t>((rcData.bottom - rcData.top - app.state.dyArial8 - 8)) / 6;
             win32::PatBlt(hdc, rcData.left + dxStr + 6, rcData.top, 1, rcData.bottom - rcData.top - app.state.dyArial8 - 4, win32::BLACKNESS);
             win32::PatBlt(hdc, rcData.left + dxStr + 6, rcData.bottom - app.state.dyArial8 - 4, rcData.right - rcData.left - dxStr - 6, 1, win32::BLACKNESS);
             x = rcData.left + dxStr;
@@ -1077,11 +1077,11 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, int16_t dx, int16_t dy, PART
                 }
                 if (pct != 25) {
                     pctT = win32::MulDiv(iEff - (pct >> 1), 100, pct >> 1);
-                    y -= static_cast<int16_t>((pctT * dyPct)) / 100;
+                    y -= static_cast<std::int16_t>((pctT * dyPct)) / 100;
                 } else if (iEff == 0) {
                     y--;
                 } else {
-                    y -= (((1) > (static_cast<int16_t>((iEff * 4 * dyPct)) / 100)) ? (1) : (static_cast<int16_t>((iEff * 4 * dyPct)) / 100));
+                    y -= (((1) > (static_cast<std::int16_t>((iEff * 4 * dyPct)) / 100)) ? (1) : (static_cast<std::int16_t>((iEff * 4 * dyPct)) / 100));
                 }
                 if (i == 0) {
                     win32::MoveToEx(hdc, x, y, nullptr);
@@ -1151,7 +1151,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, int16_t dx, int16_t dy, PART
             break;
         case hstHull:
             ExpandRc(&rcData, -4, -4);
-            xText = static_cast<int16_t>((rcData.right - rcData.left)) / 2 + rcData.left;
+            xText = static_cast<std::int16_t>((rcData.right - rcData.left)) / 2 + rcData.left;
             idsT = idsFuelCapacity;
             switch (ppart->hs.iItem) {
             case ihuldefMiniColonyShip:
@@ -1212,7 +1212,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, int16_t dx, int16_t dy, PART
                 win32::TextOutA(hdc, xText, rcData.top, app.state.szWork, c);
                 i++;
                 idsT = static_cast<StringId>(idsT + 1);
-                rcData.top += static_cast<int16_t>((3 * app.state.dyArial8)) / 2;
+                rcData.top += static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2;
             }
             switch (ppart->hs.iItem) {
             case ihuldefFuelTransport:
@@ -1257,7 +1257,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, int16_t dx, int16_t dy, PART
                 WrapTextOut(app, hdc, &xText, &yText, app.state.szWork, c, rcData.left, rcData.right - rcData.left, nullptr, 0, 1);
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
                 yText = 3 * app.state.dyArial8 + rcData.top;
-                xText = static_cast<int16_t>((rcData.right - rcData.left)) / 2 + rcData.left;
+                xText = static_cast<std::int16_t>((rcData.right - rcData.left)) / 2 + rcData.left;
                 c = TextIO().pfnCchGetString(app, idsDockCapacity2, app.state.szWork);
                 RightTextOut(app, hdc, xText, yText, app.state.szWork, c, 0);
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
@@ -1272,8 +1272,8 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, int16_t dx, int16_t dy, PART
                 WrapTextOut(app, hdc, &xText, &yText, app.state.szWork, c, rcData.left, rcData.right - rcData.left, nullptr, 0, 1);
                 yText = 3 * app.state.dyArial8 + rcData.top;
             }
-            yText += static_cast<int16_t>((3 * app.state.dyArial8)) / 2;
-            xText = static_cast<int16_t>((rcData.right - rcData.left)) / 2 + rcData.left;
+            yText += static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2;
+            xText = static_cast<std::int16_t>((rcData.right - rcData.left)) / 2 + rcData.left;
             i = 0;
             while (i < 2) {
                 c = TextIO().pfnCchGetString(app, idsT, app.state.szWork);
@@ -1288,7 +1288,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, int16_t dx, int16_t dy, PART
                 win32::TextOutA(hdc, xText, yText, app.state.szWork, c);
                 i++;
                 idsT = static_cast<StringId>(idsT + 1);
-                yText += static_cast<int16_t>((3 * app.state.dyArial8)) / 2;
+                yText += static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2;
             }
             break;
         case hstShield:
@@ -1349,7 +1349,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, int16_t dx, int16_t dy, PART
 
         case hstBeam:
             ExpandRc(&rcData, -4, -4);
-            xText = static_cast<int16_t>((rcData.right - rcData.left)) / 3 + rcData.left;
+            xText = static_cast<std::int16_t>((rcData.right - rcData.left)) / 3 + rcData.left;
             yText = rcData.top;
             c = TextIO().pfnCchGetString(app, idsPower, app.state.szWork);
             win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
@@ -1371,7 +1371,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, int16_t dx, int16_t dy, PART
             win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
             c = win32::wsprintfA(app.state.szWork, app.state.PCTD, ppart->pbeam()->init);
             win32::TextOutA(hdc, xText, yText, app.state.szWork, c);
-            yText += static_cast<int16_t>((3 * app.state.dyArial8)) / 2;
+            yText += static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2;
             rcData.top = yText;
             if (ppart->pbeam()->grfAbilities != 0) {
                 win32::SelectObject(hdc, app.lpui->rghfontArial7[0]);
@@ -1405,7 +1405,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, int16_t dx, int16_t dy, PART
             break;
         case hstTorp:
             ExpandRc(&rcData, -4, -4);
-            xText = static_cast<int16_t>((rcData.right - rcData.left)) / 3 + rcData.left;
+            xText = static_cast<std::int16_t>((rcData.right - rcData.left)) / 3 + rcData.left;
             yText = rcData.top;
             c = TextIO().pfnCchGetString(app, idsPower, app.state.szWork);
             win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
@@ -1434,7 +1434,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, int16_t dx, int16_t dy, PART
             win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
             c = win32::wsprintfA(app.state.szWork, app.state.PCTD, ppart->ptorp()->dHitChance);
             win32::TextOutA(hdc, xText, yText, app.state.szWork, c);
-            yText += static_cast<int16_t>((3 * app.state.dyArial8)) / 2;
+            yText += static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2;
             if (ppart->hs.iItem == itorpAntiMatterTorpedo) {
                 ids = idsOriginPartUnknown;
                 break;
@@ -1467,7 +1467,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, int16_t dx, int16_t dy, PART
                     TextIO().pfnCchGetString(app, dmgFloor == 999 ? idsSmartBombsStrictlyAdditiveHaveMinimumKill : idsIfPlanetHasDefensesBombGuaranteedKill, app.state.szWork);
                     c += win32::wsprintfA(&szT[c], app.state.szWork, 100 * dmgFloor);
                 }
-                strcpy(app.state.szWork, szT);
+                std::strcpy(app.state.szWork, szT);
             }
             WrapTextOut(app, hdc, &xText, &yText, app.state.szWork, c, rcData.left, rcData.right - rcData.left, nullptr, 0, 1);
             xText = rcData.left;
@@ -1649,7 +1649,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, int16_t dx, int16_t dy, PART
             c = TextIO().pfnCchGetString(app, idsT, app.state.szWork);
             WrapTextOut(app, hdc, &xText, &yText, app.state.szWork, c, rcData.left, rcData.right - rcData.left, nullptr, 0, 1);
             xText = rcData.left;
-            yText += static_cast<int16_t>((3 * app.state.dyArial8)) / 2;
+            yText += static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2;
             if (idsT != idsAllowsFleetsWithoutCargoJumpAnyOther) {
                 if (idsT == idsAllowsPlanetsFlingMineralPacketsOtherPlanets) {
                     win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
@@ -1837,7 +1837,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, int16_t dx, int16_t dy, PART
                 c = win32::wsprintfA(app.state.szWork, szT, ppart->pterra()->grAbility);
             } else {
                 c = TextIO().pfnCchGetString(app, idsAllowsModifyPlanetsSDOriginalValue, szT);
-                c = win32::wsprintfA(app.state.szWork, szT, app.state.rgszPlanetAttr[static_cast<int16_t>((ppart->hs.iItem - 8)) / 4], ppart->pterra()->grAbility);
+                c = win32::wsprintfA(app.state.szWork, szT, app.state.rgszPlanetAttr[static_cast<std::int16_t>((ppart->hs.iItem - 8)) / 4], ppart->pterra()->grAbility);
             }
             if (c <= 0)
                 break;
@@ -1858,8 +1858,8 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, int16_t dx, int16_t dy, PART
                 rcData.top += app.state.dyArial8;
                 cch = TextIO().pfnCchGetString(app, idsNum, szT);
                 dxStr = LOWORD(GetTextExtent(hdc, szT, cch));
-                dxQuan = static_cast<int16_t>((rcData.right - rcData.left - dxStr - 10)) / 5;
-                dyPct = static_cast<int16_t>((rcData.bottom - rcData.top - app.state.dyArial8 - 8)) / 5;
+                dxQuan = static_cast<std::int16_t>((rcData.right - rcData.left - dxStr - 10)) / 5;
+                dyPct = static_cast<std::int16_t>((rcData.bottom - rcData.top - app.state.dyArial8 - 8)) / 5;
                 win32::PatBlt(hdc, rcData.left + dxStr + 6, rcData.top, 1, rcData.bottom - rcData.top - app.state.dyArial8 - 4, win32::BLACKNESS);
                 win32::PatBlt(hdc, rcData.left + dxStr + 6, rcData.bottom - app.state.dyArial8 - 4, rcData.right - rcData.left - dxStr - 6, 1, win32::BLACKNESS);
                 x = rcData.left + dxStr;
@@ -1880,13 +1880,13 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, int16_t dx, int16_t dy, PART
                     y += dyPct;
                 }
                 y = rcData.bottom - app.state.dyArial8;
-                RightTextOut(app, hdc, x, y, szT, strlen(szT), 0);
+                RightTextOut(app, hdc, x, y, szT, std::strlen(szT), 0);
                 x += 6;
                 dxDigit = LOWORD(GetTextExtent(hdc, "0", 1));
                 ch = '0';
                 for (i = 0; i <= 5; i++) {
                     cch = win32::wsprintfA(app.state.szWork, app.state.PCTD, 20 * i);
-                    win32::TextOutA(hdc, x - (i == 0 ? dxDigit >> 1 : i == 5 ? static_cast<int16_t>((3 * dxDigit)) / 2 : dxDigit), y, app.state.szWork, cch);
+                    win32::TextOutA(hdc, x - (i == 0 ? dxDigit >> 1 : i == 5 ? static_cast<std::int16_t>((3 * dxDigit)) / 2 : dxDigit), y, app.state.szWork, cch);
                     if (i > 0) {
                         win32::PatBlt(hdc, x, y - 6, 1, 5, win32::BLACKNESS);
                     }
@@ -1896,21 +1896,21 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, int16_t dx, int16_t dy, PART
                 hpenSav = static_cast<HPEN>(win32::SelectObject(hdc, app.lpui->hpenDkBlue));
                 xBase = rcData.left + dxStr + 6;
                 yBase = rcData.bottom - app.state.dyArial8 - 4;
-                ldelta = static_cast<int16_t>((1000 - ppart->pplanetary()->grAbility));
+                ldelta = static_cast<std::int16_t>((1000 - ppart->pplanetary()->grAbility));
                 for (c = 0; c < 2; c++) {
                     lpct = 1000000;
                     for (i = 0; i <= 100; i++) {
                         x = win32::MulDiv(i, dxQuan, 20) + xBase;
                         y = yBase;
-                        y -= LOWORD(static_cast<int32_t>(((1000000 - lpct) * dyPct)) / 0x30d40);
-                        lpct = static_cast<int32_t>((lpct * ldelta)) / 1000;
+                        y -= LOWORD(static_cast<std::int32_t>(((1000000 - lpct) * dyPct)) / 0x30d40);
+                        lpct = static_cast<std::int32_t>((lpct * ldelta)) / 1000;
                         if (i == 0) {
                             win32::MoveToEx(hdc, x, y, nullptr);
                         } else {
                             win32::LineTo(hdc, x, y);
                         }
                     }
-                    ldelta = static_cast<int16_t>((1000 - ppart->pplanetary()->grAbility / 2));
+                    ldelta = static_cast<std::int16_t>((1000 - ppart->pplanetary()->grAbility / 2));
                     win32::SelectObject(hdc, app.lpui->hpenRadar);
                 }
                 win32::SelectObject(hdc, hpenSav);
@@ -1923,11 +1923,11 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, int16_t dx, int16_t dy, PART
             } else if (ppart->hs.iItem >= iplanetaryViewer50 && ppart->hs.iItem <= iplanetarySnooper620X) {
                 i = ppart->pplanetary()->grAbility;
                 c = TextIO().pfnCchGetString(app, idsEnemyFleetsOrbitingPlanetCanDetectedD, szT);
-                c = win32::wsprintfA(app.state.szWork, szT, abs(i));
+                c = win32::wsprintfA(app.state.szWork, szT, std::abs(i));
                 if (i < 0) {
                     WrapTextOut(app, hdc, &xText, &yText, app.state.szWork, c, rcData.left, rcData.right - rcData.left, nullptr, 0, 1);
                     xText = rcData.left;
-                    yText += static_cast<int16_t>((3 * app.state.dyArial8)) / 2;
+                    yText += static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2;
                     c = TextIO().pfnCchGetString(app, idsScannerCanDeterminePlanetsBasicStatsDistance, szT);
                     c = win32::wsprintfA(app.state.szWork, szT, -i >> 1);
                     ids = idsScannerWillUnavailableIfHaveLesserRacial;

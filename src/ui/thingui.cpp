@@ -2,21 +2,21 @@
 #include "appstate.h"
 #include "uistate.h"
 
-void DrawThingGauge(APPSESSION &app, HDC hdc, RECT *prc, THING *lpth, int16_t md) {
-    int16_t iMode;
-    int16_t cSections;
-    int16_t fDisabled;
+void DrawThingGauge(APPSESSION &app, HDC hdc, RECT *prc, THING *lpth, std::int16_t md) {
+    std::int16_t iMode;
+    std::int16_t cSections;
+    std::int16_t fDisabled;
     HBRUSH  rghbr[5];
-    int16_t c;
-    int16_t i;
-    int32_t rgSize[5];
-    int32_t lMax;
-    int32_t l;
+    std::int16_t c;
+    std::int16_t i;
+    std::int32_t rgSize[5];
+    std::int32_t lMax;
+    std::int32_t l;
 
     fDisabled = 0;
     win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
     cSections = 1;
-    lMax = static_cast<uint32_t>((lpth->thp().wtMax() * 10));
+    lMax = static_cast<std::uint32_t>((lpth->thp().wtMax() * 10));
     if (md < 0 || md > 4) {
         if (md == 5) {
             for (i = 0; i < 3; i++) {
@@ -44,7 +44,7 @@ void DrawThingGauge(APPSESSION &app, HDC hdc, RECT *prc, THING *lpth, int16_t md
         c = win32::wsprintfA(app.state.szWork, "%ld of %ldkT", l, lMax);
     }
     l = GetTextExtent(hdc, app.state.szWork, c);
-    if (static_cast<int16_t>(LOWORD(l)) < prc->right - prc->left - 3) {
+    if (static_cast<std::int16_t>(LOWORD(l)) < prc->right - prc->left - 3) {
         RcCtrTextOut(app, hdc, prc, app.state.szWork, c);
     }
     win32::SetBkMode(hdc, iMode);

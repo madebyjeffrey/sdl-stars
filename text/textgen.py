@@ -212,7 +212,7 @@ def WriteIfChanged(path, text):
 
 
 def EnumStart(name, underlying):
-    return ["enum {} : {} {{".format(name, underlying)]
+    return ["enum {} : {} {{".format(name, "std::" + underlying)]
 
 
 def Generate(outdir):
@@ -221,7 +221,7 @@ def Generate(outdir):
         "// The IDs of the game's text, included by enums.h.",
         "#ifndef STARS_TEXTIDS_H",
         "#define STARS_TEXTIDS_H",
-        '#include <stdint.h>',
+        '#include <cstdint>',
         "",
     ]
     outputs = {}
@@ -244,9 +244,9 @@ def Generate(outdir):
             for row in rows:
                 rgcArgs[row.id] = row.args
             body.append("constinit " + FormatArray("char rgcMsgArgs[{}]".format(cTable), rgcArgs))
-        body.append("constinit " + FormatArray("uint8_t ac{}[{}]".format(tag, cTable), rgcLen))
+        body.append("constinit " + FormatArray("std::uint8_t ac{}[{}]".format(tag, cTable), rgcLen))
         body.append("constinit " + FormatArray("char a{}Cmpr[{}]".format(tag, len(rgb)), [Signed(b) for b in rgb]))
-        body.append("constinit " + FormatArray("int16_t ai{}ChunkOffset[{}]".format(tag, len(rgiChunk)), rgiChunk))
+        body.append("constinit " + FormatArray("std::int16_t ai{}ChunkOffset[{}]".format(tag, len(rgiChunk)), rgiChunk))
         body.append("constinit " + FormatArray("char rg{}LookupTable[{}]".format(tag, len(lookup)), [Signed(b) for b in lookup]))
         outputs[output] = "\n".join(body)
     header += ["#endif", ""]

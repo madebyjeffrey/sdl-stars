@@ -2,12 +2,12 @@
 #include "file_read.h"
 /* Legacy HFILE adapters use owned C++ file tokens, never arbitrary integer fds. */
 #include "internal.h"
-#include <errno.h>
+#include <cerrno>
 #include <fcntl.h>
-#include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <climits>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -19,7 +19,7 @@ struct COMPATFILE {
     HFILE hf;
     NATIVEFILE *pf;
     UINT grAccess, grShare;
-    uint64_t dev, ino;
+    std::uint64_t dev, ino;
     struct COMPATFILE *lpNext;
 };
 
@@ -54,12 +54,12 @@ HFILE win32::OpenFile(LPCSTR pszFile, LPOFSTRUCT lpof, UINT flags) {
     NATIVEFILE *pf = nullptr;
     HFILE hf = win32::HFILE_ERROR;
     DWORD dwError = win32::NO_ERROR;
-    uint64_t dev, ino;
+    std::uint64_t dev, ino;
     std::unique_lock lockFiles(fFileLock, std::defer_lock);
 
     if (!lpof) { win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return win32::HFILE_ERROR; }
     if (flags & win32::OF_REOPEN) pszFile = lpof->szPathName;
-    if (!pszFile || !*pszFile || !FUtf8Valid(pszFile, strlen(pszFile)) || (flags & 3) == 3 ||
+    if (!pszFile || !*pszFile || !FUtf8Valid(pszFile, std::strlen(pszFile)) || (flags & 3) == 3 ||
         (share != win32::OF_SHARE_COMPAT && share != win32::OF_SHARE_EXCLUSIVE && share != win32::OF_SHARE_DENY_WRITE &&
          share != win32::OF_SHARE_DENY_READ && share != win32::OF_SHARE_DENY_NONE)) {
         dwError = win32::ERROR_INVALID_PARAMETER; goto LReturn;
@@ -72,19 +72,19 @@ HFILE win32::OpenFile(LPCSTR pszFile, LPOFSTRUCT lpof, UINT flags) {
         || *pszFile == '\\' || (pszFile[0] && pszFile[1] == ':')
 #endif
     ) {
-        if (strlen(pszFile) >= sizeof(szPath)) { dwError = win32::ERROR_FILENAME_EXCED_RANGE; goto LReturn; }
-        strcpy(szPath, pszFile);
+        if (std::strlen(pszFile) >= sizeof(szPath)) { dwError = win32::ERROR_FILENAME_EXCED_RANGE; goto LReturn; }
+        std::strcpy(szPath, pszFile);
     } else {
         if (!PszNativeCwd(szCwd, sizeof(szCwd))) { dwError = DwFileError(); goto LReturn; }
-        if (snprintf(szPath, sizeof(szPath), "%s/%s", szCwd, pszFile) >= static_cast<int>(sizeof(szPath))) {
+        if (std::snprintf(szPath, sizeof(szPath), "%s/%s", szCwd, pszFile) >= static_cast<int>(sizeof(szPath))) {
             dwError = win32::ERROR_FILENAME_EXCED_RANGE; goto LReturn;
         }
     }
-    if (!FUtf8Valid(szPath, strlen(szPath))) { dwError = win32::ERROR_INVALID_PARAMETER; goto LReturn; }
-    if (strlen(szPath) >= sizeof(lpof->szPathName)) { dwError = win32::ERROR_FILENAME_EXCED_RANGE; goto LReturn; }
-    memset(lpof, 0, sizeof(*lpof));
+    if (!FUtf8Valid(szPath, std::strlen(szPath))) { dwError = win32::ERROR_INVALID_PARAMETER; goto LReturn; }
+    if (std::strlen(szPath) >= sizeof(lpof->szPathName)) { dwError = win32::ERROR_FILENAME_EXCED_RANGE; goto LReturn; }
+    std::memset(lpof, 0, sizeof(*lpof));
     lpof->cBytes = sizeof(*lpof); lpof->fFixedDisk = 1;
-    strcpy(lpof->szPathName, szPath);
+    std::strcpy(lpof->szPathName, szPath);
     if (flags & win32::OF_PARSE) return 0;
     grAccess = flags & win32::OF_CREATE ? 3 : (flags & 3) == win32::OF_READ ? 1 : (flags & 3) == win32::OF_WRITE ? 2 : 3;
     grShare = share == win32::OF_SHARE_EXCLUSIVE ? 0 : share == win32::OF_SHARE_DENY_WRITE ? 1 : share == win32::OF_SHARE_DENY_READ ? 2 : 3;
@@ -111,7 +111,7 @@ HFILE win32::OpenFile(LPCSTR pszFile, LPOFSTRUCT lpof, UINT flags) {
         }
     if ((flags & win32::OF_CREATE) && ITruncateNativeFile(pf, 0) != 0) { dwError = DwFileError(); goto LUnlock; }
     if (flags & win32::OF_EXIST) { hf = 1; goto LUnlock; }
-    lpNew = static_cast<COMPATFILE *>((calloc(1, sizeof(*lpNew))));
+    lpNew = static_cast<COMPATFILE *>((std::calloc(1, sizeof(*lpNew))));
     if (!lpNew) { dwError = win32::ERROR_NOT_ENOUGH_MEMORY; goto LUnlock; }
     for (hf = 3; hf <= INT16_MAX && LpFile(hf); hf++) {}
     if (hf > INT16_MAX) { hf = win32::HFILE_ERROR; dwError = win32::ERROR_TOO_MANY_OPEN_FILES; goto LUnlock; }
@@ -120,7 +120,7 @@ HFILE win32::OpenFile(LPCSTR pszFile, LPOFSTRUCT lpof, UINT flags) {
     lpNew->lpNext = lpFiles; lpFiles = lpNew; lpNew = nullptr; pf = nullptr;
 LUnlock:
     if (pf) ICloseNativeFile(pf);
-    free(lpNew);
+    std::free(lpNew);
     lockFiles.unlock();
 LReturn:
     lpof->nErrCode = static_cast<WORD>(dwError);
@@ -141,7 +141,7 @@ HFILE win32::_lclose(HFILE hf) {
         *lplp = lp->lpNext;
         if (ICloseNativeFile(lp->pf) == 0) ret = 0;
         else win32::SetLastError(DwFileError());
-        free(lp); break;
+        std::free(lp); break;
     }
     if (!fFound) win32::SetLastError(win32::ERROR_INVALID_HANDLE);
     lockFiles.unlock();
@@ -150,7 +150,7 @@ HFILE win32::_lclose(HFILE hf) {
 
 LONG win32::_llseek(HFILE hf, LONG offset, int origin) {
     COMPATFILE *lp;
-    int64_t pos = -1;
+    std::int64_t pos = -1;
 
     std::unique_lock lockFiles(fFileLock); lp = LpFile(hf);
     if (lp) {
@@ -184,7 +184,7 @@ UINT win32::_lread(HFILE hf, LPVOID rgb, UINT cb) {
 UINT win32::_lwrite(HFILE hf, LPCCH rgb, UINT cb) {
     COMPATFILE *lp;
     ssize_t cbWrite = -1;
-    int64_t pos;
+    std::int64_t pos;
 
     std::unique_lock lockFiles(fFileLock); lp = LpFile(hf);
     if (lp) {
@@ -205,15 +205,15 @@ UINT win32::_lwrite(HFILE hf, LPCCH rgb, UINT cb) {
 
 DWORD win32::GetFileSize(HANDLE h, LPDWORD lpdwHigh) {
     COMPATFILE *lp;
-    int64_t cb;
+    std::int64_t cb;
     DWORD dw = win32::INVALID_FILE_SIZE;
     INT_PTR id = reinterpret_cast<INT_PTR>(h);
 
     std::unique_lock lockFiles(fFileLock);
     lp = id >= 0 && id <= INT_MAX ? LpFile(static_cast<HFILE>(id)) : nullptr;
     if (lp && (cb = CbNativeFile(lp->pf)) >= 0) {
-        dw = static_cast<DWORD>(static_cast<uint64_t>(cb));
-        if (lpdwHigh) *lpdwHigh = static_cast<DWORD>((static_cast<uint64_t>(cb) >> 32));
+        dw = static_cast<DWORD>(static_cast<std::uint64_t>(cb));
+        if (lpdwHigh) *lpdwHigh = static_cast<DWORD>((static_cast<std::uint64_t>(cb) >> 32));
         win32::SetLastError(win32::NO_ERROR);
     } else if (lp) win32::SetLastError(DwFileError());
     else win32::SetLastError(win32::ERROR_INVALID_HANDLE);
@@ -226,7 +226,7 @@ void CompatShutdownFiles(void) {
     std::unique_lock lockFiles(fFileLock);
     while (lpFiles) {
         lp = lpFiles; lpFiles = lp->lpNext;
-        ICloseNativeFile(lp->pf); free(lp);
+        ICloseNativeFile(lp->pf); std::free(lp);
     }
     lockFiles.unlock();
 }

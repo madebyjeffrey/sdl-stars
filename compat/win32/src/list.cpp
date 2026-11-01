@@ -1,9 +1,9 @@
 /* String list boxes, including the fixed-height owner drawing used by Stars. */
 #include "internal.h"
 #include "time_io.h"
-#include <limits.h>
-#include <stdlib.h>
-#include <string.h>
+#include <climits>
+#include <cstdlib>
+#include <cstring>
 
 struct COMPATLISTITEM { char *psz; LPARAM lData; BOOL fSelected; };
 struct COMPATLIST {
@@ -77,7 +77,7 @@ static void RevealList(HWND hwnd, int i) {
 static void DeleteNotice(HWND hwnd, UINT i, LPARAM lData) {
     DELETEITEMSTRUCT ds;
     if (!FOwnerList(hwnd) || !win32::IsWindow(hwnd->hwndParent)) return;
-    memset(&ds, 0, sizeof(ds)); ds.CtlType = hwnd->lpcombo ? win32::ODT_COMBOBOX : win32::ODT_LISTBOX; ds.CtlID = static_cast<UINT>(hwnd->idChild);
+    std::memset(&ds, 0, sizeof(ds)); ds.CtlType = hwnd->lpcombo ? win32::ODT_COMBOBOX : win32::ODT_LISTBOX; ds.CtlID = static_cast<UINT>(hwnd->idChild);
     ds.itemID = i; ds.hwndItem = hwnd; ds.itemData = static_cast<ULONG_PTR>(lData);
     win32::SendMessageA(hwnd->hwndParent, win32::WM_DELETEITEM, static_cast<WPARAM>(hwnd->idChild), reinterpret_cast<LPARAM>(&ds));
 }
@@ -106,18 +106,18 @@ static LRESULT AddList(HWND hwnd, int i, LPCSTR psz) {
     COMPATLISTITEM *rg;
     char *pszNew;
     int cAlloc;
-    if (!psz || !FUtf8Valid(psz, strlen(psz)) || lp->cItem == INT_MAX) return win32::LB_ERR;
+    if (!psz || !FUtf8Valid(psz, std::strlen(psz)) || lp->cItem == INT_MAX) return win32::LB_ERR;
     pszNew = SDL_strdup(psz);
     if (!pszNew) return win32::LB_ERRSPACE;
     if (lp->cItem == lp->cAlloc) {
         cAlloc = lp->cAlloc > (INT_MAX - 16) / 2 ? INT_MAX : lp->cAlloc * 2 + 16;
-        if (static_cast<size_t>(cAlloc) > SIZE_MAX / sizeof(*rg)) { SDL_free(pszNew); return win32::LB_ERRSPACE; }
-        rg = static_cast<COMPATLISTITEM *>((SDL_realloc(lp->rgitem, static_cast<size_t>(cAlloc) * sizeof(*rg))));
+        if (static_cast<std::size_t>(cAlloc) > SIZE_MAX / sizeof(*rg)) { SDL_free(pszNew); return win32::LB_ERRSPACE; }
+        rg = static_cast<COMPATLISTITEM *>((SDL_realloc(lp->rgitem, static_cast<std::size_t>(cAlloc) * sizeof(*rg))));
         if (!rg) { SDL_free(pszNew); return win32::LB_ERRSPACE; }
         lp->rgitem = rg; lp->cAlloc = cAlloc;
     }
     if (i < 0 || i > lp->cItem) i = lp->cItem;
-    memmove(lp->rgitem + i + 1, lp->rgitem + i, static_cast<size_t>((lp->cItem - i)) * sizeof(*lp->rgitem));
+    std::memmove(lp->rgitem + i + 1, lp->rgitem + i, static_cast<std::size_t>((lp->cItem - i)) * sizeof(*lp->rgitem));
     lp->rgitem[i] = COMPATLISTITEM{pszNew, 0, 0}; lp->cItem++; lp->nMutation++;
     if (lp->iSel >= i) lp->iSel++;
     if (lp->cItem > 1 && lp->iCaret >= i) lp->iCaret++;
@@ -179,7 +179,7 @@ static void DragList(HWND hwnd, LPARAM l) {
     auto lplistKeep = hwnd->lplist;
     COMPATLIST *lp = lplistKeep.get();
     RECT rc;
-    int y = static_cast<int16_t>(HIWORD(l)), i, j, iFirst, iLast;
+    int y = static_cast<std::int16_t>(HIWORD(l)), i, j, iFirst, iLast;
     if (lp->cItem == 0 || !win32::GetClientRect(hwnd, &rc)) return;
     if (y < 0) lp->iTop = StarsMax(0, lp->iTop - 1);
     else if (y >= rc.bottom) lp->iTop++;
@@ -218,7 +218,7 @@ static void DrawListSelection(HWND hwnd, int iOld) {
     HDC hdc;
     RECT rc, rcItem;
     int rgi[2] = {iOld, lp->iSel}, j, i;
-    int64_t y;
+    std::int64_t y;
     unsigned n = lp->nMutation;
     if (FMulti(hwnd) || !FOwnerList(hwnd) || hwnd->lpcombo || iOld == lp->iSel ||
         !win32::IsWindowVisible(hwnd) || !win32::GetClientRect(hwnd, &rc)) return;
@@ -229,7 +229,7 @@ static void DrawListSelection(HWND hwnd, int iOld) {
     for (j = 0; j < 2; j++) {
         i = rgi[j];
         if (i < 0 || i >= lp->cItem) continue;
-        y = static_cast<int64_t>((i - lp->iTop)) * lp->cyItem;
+        y = static_cast<std::int64_t>((i - lp->iTop)) * lp->cyItem;
         if (y >= rc.bottom || y + lp->cyItem <= 0) continue;
         win32::SetRect(&rcItem, -lp->xOffset, static_cast<int>(y), StarsMax(rc.right, lp->cxExtent) - lp->xOffset,
                 static_cast<int>(StarsMin(y + lp->cyItem, INT_MAX)));
@@ -245,7 +245,7 @@ static void DrawListFocus(HWND hwnd, BOOL fFocus) {
     HDC hdc;
     RECT rc, rcItem;
     int i = lp->cItem != 0 ? lp->iCaret : -1;
-    int64_t y = i >= 0 ? static_cast<int64_t>((i - lp->iTop)) * lp->cyItem : 0;
+    std::int64_t y = i >= 0 ? static_cast<std::int64_t>((i - lp->iTop)) * lp->cyItem : 0;
     if (!FOwnerList(hwnd) || hwnd->lpcombo || !win32::IsWindowVisible(hwnd) || !win32::GetClientRect(hwnd, &rc) ||
         y >= rc.bottom || y + lp->cyItem <= 0) return;
     hdc = win32::GetDC(hwnd); if (!hdc) return;
@@ -321,7 +321,7 @@ LRESULT  CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     RECT rc;
     int i = static_cast<int>(w), j, c, iNext, cyBar, cy;
     WINDOWPOS *lpwp;
-    int64_t yItem;
+    std::int64_t yItem;
     LPARAM lData;
     if (!lpwin) return 0;
     lplistKeep = lpwin->lplist;
@@ -342,7 +342,7 @@ LRESULT  CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         hdc = win32::GetDC(hwnd);
         if (hdc) { if (win32::GetTextMetricsA(hdc, &tm)) lp->cyItem = StarsMax(1, tm.tmHeight); win32::ReleaseDC(hwnd, hdc); }
         if (lpwin->dwStyle & win32::LBS_OWNERDRAWFIXED) {
-            memset(&ms, 0, sizeof(ms)); ms.CtlType = win32::ODT_LISTBOX; ms.CtlID = static_cast<UINT>(lpwin->idChild); ms.itemHeight = static_cast<UINT>(lp->cyItem);
+            std::memset(&ms, 0, sizeof(ms)); ms.CtlType = win32::ODT_LISTBOX; ms.CtlID = static_cast<UINT>(lpwin->idChild); ms.itemHeight = static_cast<UINT>(lp->cyItem);
             win32::SendMessageA(lpwin->hwndParent, win32::WM_MEASUREITEM, static_cast<WPARAM>(lpwin->idChild), reinterpret_cast<LPARAM>(&ms));
             if (!win32::IsWindow(hwnd)) return -1;
             if (ms.itemHeight != 0 && ms.itemHeight <= INT_MAX) lp->cyItem = static_cast<int>(ms.itemHeight);
@@ -372,7 +372,7 @@ LRESULT  CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     case win32::LB_DELETESTRING:
         if (i < 0 || i >= lp->cItem) return win32::LB_ERR;
         lData = lp->rgitem[i].lData; SDL_free(lp->rgitem[i].psz);
-        memmove(lp->rgitem + i, lp->rgitem + i + 1, static_cast<size_t>((lp->cItem - i - 1)) * sizeof(*lp->rgitem));
+        std::memmove(lp->rgitem + i, lp->rgitem + i + 1, static_cast<std::size_t>((lp->cItem - i - 1)) * sizeof(*lp->rgitem));
         lp->cItem--; lp->nMutation++;
         if (lp->iSel == i) lp->iSel = -1; else if (lp->iSel > i) lp->iSel--;
         if (lp->iAnchor == i) lp->iAnchor = -1; else if (lp->iAnchor > i) lp->iAnchor--;
@@ -380,10 +380,10 @@ LRESULT  CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         ClampList(hwnd); c = lp->cItem; DeleteNotice(hwnd, static_cast<UINT>(i), lData); return c;
     case win32::LB_RESETCONTENT: ResetList(hwnd); return 0;
     case win32::LB_GETCOUNT: return lp->cItem;
-    case win32::LB_GETTEXTLEN: return i >= 0 && i < lp->cItem ? static_cast<LRESULT>(strlen(lp->rgitem[i].psz)) : win32::LB_ERR;
+    case win32::LB_GETTEXTLEN: return i >= 0 && i < lp->cItem ? static_cast<LRESULT>(std::strlen(lp->rgitem[i].psz)) : win32::LB_ERR;
     case win32::LB_GETTEXT:
         if (i < 0 || i >= lp->cItem || !l) return win32::LB_ERR;
-        strcpy(reinterpret_cast<LPSTR>(l), lp->rgitem[i].psz); return static_cast<LRESULT>(strlen(lp->rgitem[i].psz));
+        std::strcpy(reinterpret_cast<LPSTR>(l), lp->rgitem[i].psz); return static_cast<LRESULT>(std::strlen(lp->rgitem[i].psz));
     case win32::LB_GETITEMDATA: return i >= 0 && i < lp->cItem ? lp->rgitem[i].lData : win32::LB_ERR;
     case win32::LB_SETITEMDATA:
         if (i < -1 || i >= lp->cItem) return win32::LB_ERR;
@@ -424,7 +424,7 @@ LRESULT  CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     case win32::LB_GETITEMRECT:
         if (i < 0 || i >= lp->cItem || !l) return win32::LB_ERR;
         win32::GetClientRect(hwnd, &rc);
-        yItem = static_cast<int64_t>((i - lp->iTop)) * lp->cyItem;
+        yItem = static_cast<std::int64_t>((i - lp->iTop)) * lp->cyItem;
         if (yItem < INT_MIN || yItem + lp->cyItem > INT_MAX) return win32::LB_ERR;
         win32::SetRect(reinterpret_cast<LPRECT>(l), 0, static_cast<int>(yItem), rc.right, static_cast<int>((yItem + lp->cyItem))); return 1;
     case win32::LB_SETCARETINDEX:
@@ -435,9 +435,9 @@ LRESULT  CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         if (!l || lp->cItem == 0) return win32::LB_ERR;
         if (i < -1 || i >= lp->cItem) i = -1;
         for (j = 1; j <= lp->cItem; j++) {
-            iNext = static_cast<int>(((static_cast<int64_t>(i) + j) % lp->cItem));
+            iNext = static_cast<int>(((static_cast<std::int64_t>(i) + j) % lp->cItem));
             if ((msg == win32::LB_FINDSTRINGEXACT ? SDL_strcasecmp(lp->rgitem[iNext].psz, reinterpret_cast<LPCSTR>(l)) :
-                 SDL_strncasecmp(lp->rgitem[iNext].psz, reinterpret_cast<LPCSTR>(l), strlen(reinterpret_cast<LPCSTR>(l)))) == 0) return iNext;
+                 SDL_strncasecmp(lp->rgitem[iNext].psz, reinterpret_cast<LPCSTR>(l), std::strlen(reinterpret_cast<LPCSTR>(l)))) == 0) return iNext;
         }
         return win32::LB_ERR;
     case win32::WM_GETDLGCODE: return win32::DLGC_WANTARROWS | win32::DLGC_WANTCHARS;
@@ -461,11 +461,11 @@ LRESULT  CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         return 0;
     case win32::WM_LBUTTONDOWN: case win32::WM_LBUTTONDBLCLK:
         win32::SetFocus(hwnd); if (!win32::IsWindow(hwnd)) return 0;
-        i = lp->iTop + static_cast<int16_t>(HIWORD(l)) / lp->cyItem;
-        if (static_cast<int16_t>(HIWORD(l)) < 0) return 0;
+        i = lp->iTop + static_cast<std::int16_t>(HIWORD(l)) / lp->cyItem;
+        if (static_cast<std::int16_t>(HIWORD(l)) < 0) return 0;
         SDL_free(lp->rgSelectedDrag); lp->rgSelectedDrag = nullptr; lp->cSelectedDrag = 0;
         if ((lpwin->dwStyle & win32::LBS_EXTENDEDSEL) && (w & win32::MK_CONTROL) && lp->cItem != 0) {
-            lp->rgSelectedDrag = static_cast<BYTE *>((SDL_malloc(static_cast<size_t>(lp->cItem))));
+            lp->rgSelectedDrag = static_cast<BYTE *>((SDL_malloc(static_cast<std::size_t>(lp->cItem))));
             if (lp->rgSelectedDrag) {
                 lp->cSelectedDrag = lp->cItem;
                 for (j = 0; j < lp->cItem; j++) lp->rgSelectedDrag[j] = static_cast<BYTE>(lp->rgitem[j].fSelected);
@@ -516,7 +516,7 @@ LRESULT  CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         return 0;
     case win32::WM_CHAR:
         if (w < 32 || w > 255 || lp->cItem == 0) return 0;
-        c = static_cast<int>(strlen(lp->szSearch));
+        c = static_cast<int>(std::strlen(lp->szSearch));
         if (CompatTimeIO().pfnGetTicks() - lp->msSearch > 1000 || c >= static_cast<int>(sizeof(lp->szSearch)) - 1 ||
             (c == 1 && static_cast<BYTE>(lp->szSearch[0]) == static_cast<BYTE>(w))) c = 0;
         lp->szSearch[c] = static_cast<char>(w); lp->szSearch[c + 1] = 0; lp->msSearch = CompatTimeIO().pfnGetTicks();
@@ -552,7 +552,7 @@ LRESULT  CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         }
         ClampList(hwnd); return 0;
     case win32::WM_MOUSEWHEEL:
-        lp->iTop = static_cast<int>((((static_cast<int64_t>(INT_MAX)) < ((((static_cast<int64_t>(0)) > (static_cast<int64_t>(lp->iTop) - static_cast<int16_t>(HIWORD(w)) / win32::WHEEL_DELTA * 3)) ? (static_cast<int64_t>(0)) : (static_cast<int64_t>(lp->iTop) - static_cast<int16_t>(HIWORD(w)) / win32::WHEEL_DELTA * 3)))) ? (static_cast<int64_t>(INT_MAX)) : ((((static_cast<int64_t>(0)) > (static_cast<int64_t>(lp->iTop) - static_cast<int16_t>(HIWORD(w)) / win32::WHEEL_DELTA * 3)) ? (static_cast<int64_t>(0)) : (static_cast<int64_t>(lp->iTop) - static_cast<int16_t>(HIWORD(w)) / win32::WHEEL_DELTA * 3)))));
+        lp->iTop = static_cast<int>((((static_cast<std::int64_t>(INT_MAX)) < ((((static_cast<std::int64_t>(0)) > (static_cast<std::int64_t>(lp->iTop) - static_cast<std::int16_t>(HIWORD(w)) / win32::WHEEL_DELTA * 3)) ? (static_cast<std::int64_t>(0)) : (static_cast<std::int64_t>(lp->iTop) - static_cast<std::int16_t>(HIWORD(w)) / win32::WHEEL_DELTA * 3)))) ? (static_cast<std::int64_t>(INT_MAX)) : ((((static_cast<std::int64_t>(0)) > (static_cast<std::int64_t>(lp->iTop) - static_cast<std::int16_t>(HIWORD(w)) / win32::WHEEL_DELTA * 3)) ? (static_cast<std::int64_t>(0)) : (static_cast<std::int64_t>(lp->iTop) - static_cast<std::int16_t>(HIWORD(w)) / win32::WHEEL_DELTA * 3)))));
         ClampList(hwnd); return 0;
     default: return win32::DefWindowProcA(hwnd, msg, w, l);
     }

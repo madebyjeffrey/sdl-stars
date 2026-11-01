@@ -33,7 +33,7 @@ INT_PTR  TutorDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     HMENU   hmenu;
     RECT    rc;
     FARPROC lpProc;
-    int16_t fRet;
+    std::int16_t fRet;
 
     switch (message) {
     case win32::WM_INITDIALOG:
@@ -70,7 +70,7 @@ INT_PTR  TutorDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             }
             return 1;
         case IDC_TUTOR_HINT:
-            win32::WinHelpA(hwnd, app.lpui->szHelpFile, win32::HELP_CONTEXT, static_cast<int16_t>(app.state.tutor.idh));
+            win32::WinHelpA(hwnd, app.lpui->szHelpFile, win32::HELP_CONTEXT, static_cast<std::int16_t>(app.state.tutor.idh));
             return 1;
         default:
             return 0;
@@ -116,7 +116,7 @@ INT_PTR  PanicDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             ControlIO().pfnEndDialog(hwnd, 0);
             return 1;
         case IDC_HELP:
-            win32::WinHelpA(hwnd, app.lpui->szHelpFile, win32::HELP_CONTEXT, static_cast<int16_t>(app.state.tutor.idh));
+            win32::WinHelpA(hwnd, app.lpui->szHelpFile, win32::HELP_CONTEXT, static_cast<std::int16_t>(app.state.tutor.idh));
             return 1;
         case IDC_PANIC_REDO_TURN:
         case IDC_PANIC_COMPLETE_TURN:
@@ -128,7 +128,7 @@ INT_PTR  PanicDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     return 0;
 }
 
-void ShowTutor(APPSESSION &app, int16_t fShow) {
+void ShowTutor(APPSESSION &app, std::int16_t fShow) {
     if (app.state.tutor.hwnd) {
         // Instruction updates call this while the tutor is already visible;
         // activating it again takes focus from the control the player is using.
@@ -141,12 +141,12 @@ void ShowTutor(APPSESSION &app, int16_t fShow) {
 
 void DrawTutorText(APPSESSION &app, HWND hwnd) {
     HDC         hdc;
-    int16_t     yTop;
-    int16_t     fPara;
+    std::int16_t     yTop;
+    std::int16_t     fPara;
     PAINTSTRUCT ps;
-    int16_t     didt;
-    int16_t     xLeft;
-    int16_t     cch;
+    std::int16_t     didt;
+    std::int16_t     xLeft;
+    std::int16_t     cch;
     char        rgch[256];
     RECT        rcBtn;
     RECT        rc;
@@ -160,9 +160,9 @@ void DrawTutorText(APPSESSION &app, HWND hwnd) {
     win32::ScreenToClient(hwnd, reinterpret_cast<POINT *>(&rc));
     win32::ScreenToClient(hwnd, reinterpret_cast<POINT *>(&rc.right));
     rc.top += app.state.dyArial8 * 2;
-    rc.bottom -= static_cast<int16_t>((app.state.dyArial8 * 2)) / 3;
-    rc.left += static_cast<int16_t>((app.state.dyArial8 * 2)) / 3;
-    rc.right -= static_cast<int16_t>((app.state.dyArial8 * 2)) / 3;
+    rc.bottom -= static_cast<std::int16_t>((app.state.dyArial8 * 2)) / 3;
+    rc.left += static_cast<std::int16_t>((app.state.dyArial8 * 2)) / 3;
+    rc.right -= static_cast<std::int16_t>((app.state.dyArial8 * 2)) / 3;
     win32::SelectObject(hdc, app.lpui->hbrButtonShadow);
     win32::PatBlt(hdc, rc.left, rc.top, rc.right - rc.left, 1, win32::PATCOPY);
     win32::PatBlt(hdc, rc.left, rc.top, 1, rc.bottom - rc.top, win32::PATCOPY);
@@ -177,7 +177,7 @@ void DrawTutorText(APPSESSION &app, HWND hwnd) {
         cch = CchTutorString(app, rgch, static_cast<TutorId>(app.state.tutor.idt + didt));
         if (cch == 1)
             break;
-        fPara = isupper(rgch[0]);
+        fPara = std::isupper(rgch[0]);
         if (fPara) {
             xLeft = rc.left;
             if (didt != 0) {
@@ -198,12 +198,12 @@ void DrawTutorText(APPSESSION &app, HWND hwnd) {
     return;
 }
 
-void StartTutor(APPSESSION &app, int16_t fRestart) {
-    int16_t cx;
-    int16_t cch;
+void StartTutor(APPSESSION &app, std::int16_t fRestart) {
+    std::int16_t cx;
+    std::int16_t cch;
 
     if (!app.state.gd.fTutorial) {
-        memset(&app.state.tutor, 0, sizeof(TUTOR));
+        std::memset(&app.state.tutor, 0, sizeof(TUTOR));
         if (!app.lpui->lpfnTutorDlgProc) {
             app.lpui->lpfnTutorDlgProc = (TutorDlg);
             if (!app.lpui->lpfnTutorDlgProc) {
@@ -233,11 +233,11 @@ void StartTutor(APPSESSION &app, int16_t fRestart) {
         if (app.state.game.lid == 0) {
             cch = TextIO().pfnCchGetString(app, idsTutorial, app.state.szBase);
             if (!fRestart) {
-                strcat(app.state.szBase, ".xy");
+                std::strcat(app.state.szBase, ".xy");
                 if (FFileExists(app.state.szBase) &&
                     AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsTutorialHasRunBeforeWouldLikeDestroy, nullptr), win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_TASKMODAL) != win32::IDYES) {
                     app.state.szBase[cch] = 0;
-                    strcat(app.state.szBase, ".m1");
+                    std::strcat(app.state.szBase, ".m1");
                     app.state.ini.fStartupFile = 1;
                     if (FOpenGame(app, app.lpui->hwndFrame, 0) > 0) {
                         CreateChildWindows(app);
@@ -248,7 +248,7 @@ void StartTutor(APPSESSION &app, int16_t fRestart) {
             }
             if (app.state.game.lid == 0) {
                 CreateTutorWorld(app);
-                memset(reinterpret_cast<uint8_t *>(reinterpret_cast<ZIPPRODQ *>(app.state.vrgZipProd)) + 14, 0, 26);
+                std::memset(reinterpret_cast<std::uint8_t *>(reinterpret_cast<ZIPPRODQ *>(app.state.vrgZipProd)) + 14, 0, 26);
                 app.state.vrgZipProd[0].fValid = 1;
                 app.state.gd.fChgZipProd = 1;
             }
@@ -291,9 +291,9 @@ void StartTutor(APPSESSION &app, int16_t fRestart) {
 
 void AdvanceTutor(APPSESSION &app) {
     char    szTitle[50];
-    int16_t fRedraw;
-    int16_t idtT;
-    int16_t fTaskDone;
+    std::int16_t fRedraw;
+    std::int16_t idtT;
+    std::int16_t fTaskDone;
     RECT    rc;
 
     fRedraw = 0;
@@ -320,7 +320,7 @@ void AdvanceTutor(APPSESSION &app) {
     } else {
         app.state.tutor.idh = static_cast<HelpContextId>(3510);
     }
-    if (static_cast<int16_t>(app.state.tutor.idt) >= 640 || app.state.tutor.fTutorDone) {
+    if (static_cast<std::int16_t>(app.state.tutor.idt) >= 640 || app.state.tutor.fTutorDone) {
         if (app.state.tutor.idsError != 522) {
             TutorError(app, idsTutorialFinishedCanContinuePlayGameStart);
         }
@@ -331,7 +331,7 @@ void AdvanceTutor(APPSESSION &app) {
         return;
     }
 LUpdatePage:
-    win32::wsprintfA(szTitle, TextIO().pfnCompressed(app, idsStarsTutorPageD80), static_cast<int16_t>(app.state.tutor.idt) / 8 + 1);
+    win32::wsprintfA(szTitle, TextIO().pfnCompressed(app, idsStarsTutorPageD80), static_cast<std::int16_t>(app.state.tutor.idt) / 8 + 1);
     ControlIO().pfnSetWindowText(app.state.tutor.hwnd, szTitle);
     ShowTutor(app, 1);
     win32::GetWindowRect(app.state.tutor.hwnd, &rc);
@@ -342,7 +342,7 @@ LUpdatePage:
     return;
 }
 
-void EndTutor(APPSESSION &app, int16_t fClose) {
+void EndTutor(APPSESSION &app, std::int16_t fClose) {
     if (app.state.gd.fTutorial) {
         app.state.gd.fTutorial = 0;
         if (app.state.tutor.hwnd) {
@@ -354,7 +354,7 @@ void EndTutor(APPSESSION &app, int16_t fClose) {
         } else {
             app.state.tutor.fFreeing = 1;
         }
-        memset(&app.state.tutor, 0, sizeof(TUTOR));
+        std::memset(&app.state.tutor, 0, sizeof(TUTOR));
         Randomize2(app, win32::GetTickCount());
     }
     return;
@@ -413,7 +413,7 @@ void RestoreGameState(APPSESSION &app) {
     return;
 }
 
-int16_t FAskKillTutor(APPSESSION &app) {
+std::int16_t FAskKillTutor(APPSESSION &app) {
     if (app.state.game.turn >= 30 || AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsCurrentlyRunningStarsTutorialDoWantExit, nullptr), win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_TASKMODAL) == win32::IDYES) {
         EndTutor(app, 1);
         return 1;
@@ -421,7 +421,7 @@ int16_t FAskKillTutor(APPSESSION &app) {
     return 0;
 }
 
-int16_t FTutorTaskDone(APPSESSION &app) {
+std::int16_t FTutorTaskDone(APPSESSION &app) {
     HS hs1;
     HS hs;
     HS hs2;
@@ -2239,11 +2239,11 @@ int16_t FTutorTaskDone(APPSESSION &app) {
     }
 }
 
-int16_t FCheckZip(APPSESSION &app, int16_t iZip, ITEMACTION *lpiaGoal, StringId ids) {
+std::int16_t FCheckZip(APPSESSION &app, std::int16_t iZip, ITEMACTION *lpiaGoal, StringId ids) {
     ITEMACTION *piaCur;
-    int16_t     i;
+    std::int16_t     i;
     char        szT[33];
-    int16_t     idhSav;
+    std::int16_t     idhSav;
 
     idhSav = app.state.tutor.idh;
     app.state.tutor.idh = idhCustomZipOrdersDialog;
@@ -2258,7 +2258,7 @@ int16_t FCheckZip(APPSESSION &app, int16_t iZip, ITEMACTION *lpiaGoal, StringId 
             lpiaGoal++;
         }
         TextIO().pfnCchGetString(app, ids, szT);
-        strcpy(app.state.vrgZip[iZip].szName, szT);
+        std::strcpy(app.state.vrgZip[iZip].szName, szT);
         return 1;
     }
     if (!app.state.vrgZip[iZip].fValid) {
@@ -2287,8 +2287,8 @@ int16_t FCheckZip(APPSESSION &app, int16_t iZip, ITEMACTION *lpiaGoal, StringId 
     return 0;
 }
 
-int16_t FCheckTemplate(APPSESSION &app, int16_t iTemplate) {
-    int16_t i;
+std::int16_t FCheckTemplate(APPSESSION &app, std::int16_t iTemplate) {
+    std::int16_t i;
 
     app.state.tutor.idh = idhProductionTemplates;
     if (app.state.tutor.fAutoComplete) {
@@ -2326,8 +2326,8 @@ void TutorError(APPSESSION &app, StringId idsError) {
     return;
 }
 
-int16_t FCheckScanner(APPSESSION &app, int16_t md, int16_t iZoom) {
-    int16_t idhSav;
+std::int16_t FCheckScanner(APPSESSION &app, std::int16_t md, std::int16_t iZoom) {
+    std::int16_t idhSav;
 
     idhSav = app.state.tutor.idh;
     if (app.state.tutor.fAutoComplete) {
@@ -2351,10 +2351,10 @@ int16_t FCheckScanner(APPSESSION &app, int16_t md, int16_t iZoom) {
     return 1;
 }
 
-int16_t FCheckFleetName(APPSESSION &app, int16_t id, StringId ids) {
+std::int16_t FCheckFleetName(APPSESSION &app, std::int16_t id, StringId ids) {
     FLEET  *lpfl;
     char    szT[33];
-    int16_t idhSav;
+    std::int16_t idhSav;
 
     idhSav = app.state.tutor.idh;
     app.state.tutor.idh = idhNamingFleets;
@@ -2381,8 +2381,8 @@ int16_t FCheckFleetName(APPSESSION &app, int16_t id, StringId ids) {
     return 0;
 }
 
-int16_t FCheckSummary(APPSESSION &app, GrobjClass grobj, int16_t id) {
-    int16_t fRet;
+std::int16_t FCheckSummary(APPSESSION &app, GrobjClass grobj, std::int16_t id) {
+    std::int16_t fRet;
 
     if (app.state.gd.fGeneratingTurn) {
         return 1;
@@ -2414,9 +2414,9 @@ int16_t FCheckSummary(APPSESSION &app, GrobjClass grobj, int16_t id) {
     return fRet;
 }
 
-int16_t FCheckSelection(APPSESSION &app, GrobjClass grobj, int16_t id) {
-    int16_t fRet;
-    int16_t idhSav;
+std::int16_t FCheckSelection(APPSESSION &app, GrobjClass grobj, std::int16_t id) {
+    std::int16_t fRet;
+    std::int16_t idhSav;
 
     idhSav = app.state.tutor.idh;
     if (app.state.tutor.fAutoComplete || app.state.gd.fGeneratingTurn) {
@@ -2443,8 +2443,8 @@ int16_t FCheckSelection(APPSESSION &app, GrobjClass grobj, int16_t id) {
     return fRet;
 }
 
-int16_t FCheckMessages(APPSESSION &app, int16_t imsg, MessageId idm, int16_t fFilter) {
-    int16_t idhSav;
+std::int16_t FCheckMessages(APPSESSION &app, std::int16_t imsg, MessageId idm, std::int16_t fFilter) {
+    std::int16_t idhSav;
 
     idhSav = app.state.tutor.idh;
     if (app.state.gd.fGeneratingTurn) {
@@ -2474,7 +2474,7 @@ int16_t FCheckMessages(APPSESSION &app, int16_t imsg, MessageId idm, int16_t fFi
     return 1;
 }
 
-int16_t FCheckResearch(APPSESSION &app, TechFieldType iTech, TechFieldType iTechNext, int16_t pct) {
+std::int16_t FCheckResearch(APPSESSION &app, TechFieldType iTech, TechFieldType iTechNext, std::int16_t pct) {
     if (app.state.rgplr[0].iTechNow() == iTech && app.state.rgplr[0].iTechNext() == iTechNext && app.state.rgplr[0].pctResearch == pct) {
         return 1;
     }
@@ -2482,12 +2482,12 @@ int16_t FCheckResearch(APPSESSION &app, TechFieldType iTech, TechFieldType iTech
     return 0;
 }
 
-int16_t FCheckFleetWP(APPSESSION &app, uint16_t ifl, int16_t iord, GrobjClass grobj, int16_t id, TaskType grTask, uint16_t iWarp) {
+std::int16_t FCheckFleetWP(APPSESSION &app, std::uint16_t ifl, std::int16_t iord, GrobjClass grobj, std::int16_t id, TaskType grTask, std::uint16_t iWarp) {
     ORDER   ord;
-    int16_t fRet;
+    std::int16_t fRet;
     FLEET  *lpfl;
-    int16_t idh;
-    int16_t idhSav;
+    std::int16_t idh;
+    std::int16_t idhSav;
 
     fRet = 0;
     idhSav = app.state.tutor.idh;
@@ -2526,9 +2526,9 @@ LReturn:
     return fRet;
 }
 
-int16_t FCheckPlanetRoute(APPSESSION &app, int16_t idpl, int16_t idplRoute) {
+std::int16_t FCheckPlanetRoute(APPSESSION &app, std::int16_t idpl, std::int16_t idplRoute) {
     PLANET *lppl;
-    int16_t idhSav;
+    std::int16_t idhSav;
 
     idhSav = app.state.tutor.idh;
     lppl = LpplFromId(app, idpl);
@@ -2543,9 +2543,9 @@ int16_t FCheckPlanetRoute(APPSESSION &app, int16_t idpl, int16_t idplRoute) {
     return 1;
 }
 
-int16_t FCheckLayingWP(APPSESSION &app, uint16_t ifl, int16_t iord, int16_t id, int16_t iYears) {
+std::int16_t FCheckLayingWP(APPSESSION &app, std::uint16_t ifl, std::int16_t iord, std::int16_t id, std::int16_t iYears) {
     FLEET     *lpfl;
-    int16_t    idhSav;
+    std::int16_t    idhSav;
     GrobjClass grobj;
 
     idhSav = app.state.tutor.idh;
@@ -2565,11 +2565,11 @@ int16_t FCheckLayingWP(APPSESSION &app, uint16_t ifl, int16_t iord, int16_t id, 
     return 1;
 }
 
-int16_t FCheckColonizeWP(APPSESSION &app, uint16_t ifl, int16_t id, uint16_t iWarp) {
-    int16_t ish;
+std::int16_t FCheckColonizeWP(APPSESSION &app, std::uint16_t ifl, std::int16_t id, std::uint16_t iWarp) {
+    std::int16_t ish;
     FLEET  *lpfl;
-    int16_t csh;
-    int16_t idhSav;
+    std::int16_t csh;
+    std::int16_t idhSav;
 
     idhSav = app.state.tutor.idh;
     lpfl = LpflFromId(app, ifl);
@@ -2591,9 +2591,9 @@ int16_t FCheckColonizeWP(APPSESSION &app, uint16_t ifl, int16_t id, uint16_t iWa
     return 0;
 }
 
-int16_t FCheckPatrolWP(APPSESSION &app, uint16_t ifl, int16_t iord, int16_t id, uint16_t iWarp, uint16_t iPlan, uint16_t iDist) {
+std::int16_t FCheckPatrolWP(APPSESSION &app, std::uint16_t ifl, std::int16_t iord, std::int16_t id, std::uint16_t iWarp, std::uint16_t iPlan, std::uint16_t iDist) {
     FLEET     *lpfl;
-    int16_t    idhSav;
+    std::int16_t    idhSav;
     GrobjClass grobj;
 
     idhSav = app.state.tutor.idh;
@@ -2614,15 +2614,15 @@ int16_t FCheckPatrolWP(APPSESSION &app, uint16_t ifl, int16_t iord, int16_t id, 
     return 1;
 }
 
-int16_t FCheckXferWP(APPSESSION &app, uint16_t ifl, int16_t iord, int16_t id, uint16_t iWarp, ITEMACTION *lpiaGoal) {
+std::int16_t FCheckXferWP(APPSESSION &app, std::uint16_t ifl, std::int16_t iord, std::int16_t id, std::uint16_t iWarp, ITEMACTION *lpiaGoal) {
     ORDER       ord;
-    int16_t     fRet;
+    std::int16_t     fRet;
     ITEMACTION *piaCur;
-    int16_t     i;
+    std::int16_t     i;
     FLEET      *lpfl;
-    int16_t     idh;
+    std::int16_t     idh;
     GrobjClass  grobj;
-    int16_t     idhSav;
+    std::int16_t     idhSav;
 
     fRet = 0;
     idhSav = app.state.tutor.idh;
@@ -2668,12 +2668,12 @@ LReturn:
     return fRet;
 }
 
-int16_t FCheckQueue(APPSESSION &app, int16_t ipl, int16_t iprod, GrobjClass grobj, uint16_t iItem, uint16_t cItem, uint16_t fNoResearch) {
-    int16_t fRet;
+std::int16_t FCheckQueue(APPSESSION &app, std::int16_t ipl, std::int16_t iprod, GrobjClass grobj, std::uint16_t iItem, std::uint16_t cItem, std::uint16_t fNoResearch) {
+    std::int16_t fRet;
     PLANET *lppl;
     PROD    prod;
-    int16_t idh;
-    int16_t idhSav;
+    std::int16_t idh;
+    std::int16_t idhSav;
 
     idhSav = app.state.tutor.idh;
     fRet = 0;
@@ -2686,11 +2686,11 @@ int16_t FCheckQueue(APPSESSION &app, int16_t ipl, int16_t iprod, GrobjClass grob
     if (!lppl || !lppl->lpplprod || lppl->lpplprod->iprodMac <= iprod)
         goto LReturn;
     prod = lppl->lpplprod->rgprod()[iprod];
-    if (prod.grobj != static_cast<uint32_t>(grobj) || prod.iItem != static_cast<uint32_t>(iItem)) {
+    if (prod.grobj != static_cast<std::uint32_t>(grobj) || prod.iItem != static_cast<std::uint32_t>(iItem)) {
         TutorError(app, idsTutorialProductionQueueDoesContainRequestedItem);
-    } else if (prod.cItem != static_cast<uint32_t>(cItem)) {
+    } else if (prod.cItem != static_cast<std::uint32_t>(cItem)) {
         TutorError(app, idsTutorialProductionQueueDoesContainRightCount);
-    } else if (fNoResearch != 0xffff && lppl->fNoResearch != static_cast<uint32_t>(fNoResearch)) {
+    } else if (fNoResearch != 0xffff && lppl->fNoResearch != static_cast<std::uint32_t>(fNoResearch)) {
         TutorError(app, idsTutorialContributeLeftoverCheckboxProductionQueu);
     } else {
         fRet = 1;
@@ -2706,10 +2706,10 @@ LReturn:
     return fRet;
 }
 
-int16_t FCheckBtlPlan(APPSESSION &app, int16_t ibp, uint16_t imdTarget, int16_t fSpread, int16_t fBomb, int16_t fDump, uint16_t mdUnarmed, uint16_t mdScout, uint16_t mdWar,
-                      uint16_t mdBomber) {
+std::int16_t FCheckBtlPlan(APPSESSION &app, std::int16_t ibp, std::uint16_t imdTarget, std::int16_t fSpread, std::int16_t fBomb, std::int16_t fDump, std::uint16_t mdUnarmed, std::uint16_t mdScout, std::uint16_t mdWar,
+                      std::uint16_t mdBomber) {
     BTLPLAN *lpbtlplan;
-    int16_t  idhSav;
+    std::int16_t  idhSav;
 
     idhSav = app.state.tutor.idh;
     app.state.tutor.idh = idhChangingTheContentsOfABattlePlan;
@@ -2721,10 +2721,10 @@ int16_t FCheckBtlPlan(APPSESSION &app, int16_t ibp, uint16_t imdTarget, int16_t 
     return 1;
 }
 
-int16_t FCheckCargo(APPSESSION &app, FLEET *lpfl, int16_t wtMin1, int16_t wtMin2, int16_t wtMin3, int16_t wtColonists) {
-    int16_t fRet;
-    int16_t idh;
-    int16_t idhSav;
+std::int16_t FCheckCargo(APPSESSION &app, FLEET *lpfl, std::int16_t wtMin1, std::int16_t wtMin2, std::int16_t wtMin3, std::int16_t wtColonists) {
+    std::int16_t fRet;
+    std::int16_t idh;
+    std::int16_t idhSav;
 
     idhSav = app.state.tutor.idh;
     fRet = 0;
@@ -2751,9 +2751,9 @@ LReturn:
     return fRet;
 }
 
-int16_t FCheckBuilderPart(APPSESSION &app, int16_t iSlot, HS *phs, uint16_t cInit) {
-    uint16_t cItemAct;
-    int16_t  idhSav;
+std::int16_t FCheckBuilderPart(APPSESSION &app, std::int16_t iSlot, HS *phs, std::uint16_t cInit) {
+    std::uint16_t cItemAct;
+    std::int16_t  idhSav;
 
     idhSav = app.state.tutor.idh;
     if (!app.lpui->hwndSlotDlg) {
@@ -2789,9 +2789,9 @@ int16_t FCheckBuilderPart(APPSESSION &app, int16_t iSlot, HS *phs, uint16_t cIni
     return 1;
 }
 
-int16_t FCheckShipBuilder(APPSESSION &app, int16_t iCategory, int16_t iShip) {
-    int16_t iSel;
-    int16_t idhSav;
+std::int16_t FCheckShipBuilder(APPSESSION &app, std::int16_t iCategory, std::int16_t iShip) {
+    std::int16_t iSel;
+    std::int16_t idhSav;
 
     idhSav = app.state.tutor.idh;
     app.state.tutor.idh = idhShipDesigner;
@@ -2809,7 +2809,7 @@ int16_t FCheckShipBuilder(APPSESSION &app, int16_t iCategory, int16_t iShip) {
     return 0;
 }
 
-int16_t FTutorialEnabledShipBuilder(APPSESSION &app, TutorShipBuilderAction itutsbAction) {
+std::int16_t FTutorialEnabledShipBuilder(APPSESSION &app, TutorShipBuilderAction itutsbAction) {
     HS hs2;
     HS hs3;
     HS hs;
@@ -3022,7 +3022,7 @@ int16_t FTutorialEnabledShipBuilder(APPSESSION &app, TutorShipBuilderAction itut
     }
 }
 
-int16_t FOKMergeDialog(APPSESSION &app) {
+std::int16_t FOKMergeDialog(APPSESSION &app) {
     if (app.state.game.turn != 23) {
         if (app.state.game.turn != 27) {
             TutorError(app, idsTutorialHaventAskedMergeAnyFleetsYear);

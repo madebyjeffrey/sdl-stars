@@ -3,30 +3,30 @@
 
 class APPSESSION;
 
-#include <stddef.h>
-#include <stdint.h>
-#include <stdio.h>
+#include <cstddef>
+#include <cstdint>
+#include <cstdio>
 
-#include <ctype.h>
-#include <math.h>
-#include <string.h>
-#include <time.h>
+#include <cctype>
+#include <cmath>
+#include <cstring>
+#include <ctime>
 #include "errors.h"
 
 // Raw Win16 storage is byte-addressed and may be unaligned, so scalar
 // accesses through it copy bytes instead of dereferencing a cast pointer.
-static inline uint16_t RawLoad16(const void *p) {
-    uint16_t v;
-    memcpy(&v, p, sizeof v);
+static inline std::uint16_t RawLoad16(const void *p) {
+    std::uint16_t v;
+    std::memcpy(&v, p, sizeof v);
     return v;
 }
-static inline uint32_t RawLoad32(const void *p) {
-    uint32_t v;
-    memcpy(&v, p, sizeof v);
+static inline std::uint32_t RawLoad32(const void *p) {
+    std::uint32_t v;
+    std::memcpy(&v, p, sizeof v);
     return v;
 }
-static inline void RawStore16(void *p, uint16_t v) { memcpy(p, &v, sizeof v); }
-static inline void RawStore32(void *p, uint32_t v) { memcpy(p, &v, sizeof v); }
+static inline void RawStore16(void *p, std::uint16_t v) { std::memcpy(p, &v, sizeof v); }
+static inline void RawStore32(void *p, std::uint32_t v) { std::memcpy(p, &v, sizeof v); }
 
 #include "enums.h"
 #include "native.h"

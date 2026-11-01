@@ -2,15 +2,15 @@
 #define STARS_DECOMPILED_STARS_H
 
 #include "win.h"
-#include <stdint.h>
+#include <cstdint>
 #include <windows.h>
 
 namespace ui { int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow); }
-int16_t          IPlrAlsoCheater(int16_t iplr);
-int16_t          FGetSystemColors(APPSESSION &app);
+std::int16_t          IPlrAlsoCheater(std::int16_t iplr);
+std::int16_t          FGetSystemColors(APPSESSION &app);
 void             FreeStuff(APPSESSION &app) noexcept;
 INT_PTR  About(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
-int16_t          FHandleChar(APPSESSION &app, HWND hwnd, uint16_t ch, int32_t lParam);
-int16_t          FHandleKey(APPSESSION &app, HWND hwnd, int16_t iMsg, int16_t iKey, uint32_t dw);
+std::int16_t          FHandleChar(APPSESSION &app, HWND hwnd, std::uint16_t ch, std::int32_t lParam);
+std::int16_t          FHandleKey(APPSESSION &app, HWND hwnd, std::int16_t iMsg, std::int16_t iKey, std::uint32_t dw);
 
 #endif

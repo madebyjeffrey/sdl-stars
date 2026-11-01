@@ -7,70 +7,70 @@
 #include "research_io.h"
 #include "race_query_io.h"
 
-void SatisfyOrders(APPSESSION &app, int16_t iPass) {
-    int16_t        fMining;
-    int32_t        amountWP;
+void SatisfyOrders(APPSESSION &app, std::int16_t iPass) {
+    std::int16_t        fMining;
+    std::int32_t        amountWP;
     XferActionType action;
     PLANET         pl;
-    int32_t        l2;
-    int16_t        j;
-    int32_t        amount;
-    int16_t        iflWP;
-    int16_t        fSentBadFleetXfer;
-    int16_t        ifltcur;
+    std::int32_t        l2;
+    std::int16_t        j;
+    std::int32_t        amount;
+    std::int16_t        iflWP;
+    std::int16_t        fSentBadFleetXfer;
+    std::int16_t        ifltcur;
     FLEET         *lpfl;
-    int16_t        fAtPlanet;
+    std::int16_t        fAtPlanet;
     MessageId      idm;
-    int16_t        iLoad;
-    uint16_t       xWP;
-    int16_t        fOptFuel;
-    int16_t        fStealing;
+    std::int16_t        iLoad;
+    std::uint16_t       xWP;
+    std::int16_t        fOptFuel;
+    std::int16_t        fStealing;
     FLEET         *lpflWP;
-    int16_t        fHasPermission;
-    int16_t        fFulfilled;
+    std::int16_t        fHasPermission;
+    std::int16_t        fFulfilled;
     ORDER          ord;
-    int16_t        fFueling;
-    int32_t        wtOptimalFuel;
-    int16_t        fDunnage;
-    int32_t        amountEdit;
-    int32_t        l;
-    int16_t        fDone;
-    uint16_t       idWP;
+    std::int16_t        fFueling;
+    std::int32_t        wtOptimalFuel;
+    std::int16_t        fDunnage;
+    std::int32_t        amountEdit;
+    std::int32_t        l;
+    std::int16_t        fDone;
+    std::uint16_t       idWP;
     THING         *lpthWP;
-    int32_t        cFuel2;
-    int32_t        iExcess;
-    int32_t        lMaxFuel;
-    int32_t        wtFuelOrig;
-    int32_t        lT;
-    uint16_t       iGoto;
+    std::int32_t        cFuel2;
+    std::int32_t        iExcess;
+    std::int32_t        lMaxFuel;
+    std::int32_t        wtFuelOrig;
+    std::int32_t        lT;
+    std::uint16_t       iGoto;
     SHDEF         *lpshdefT;
-    int32_t        lXferMinerals;
-    int16_t        i;
-    int32_t        lAmt;
+    std::int32_t        lXferMinerals;
+    std::int16_t        i;
+    std::int32_t        lAmt;
     SHDEF          shdefT;
-    int16_t        csh;
-    int16_t        fBleeding;
-    int32_t        lResUltimate;
-    int16_t        fUltimate;
-    int16_t        fColonize;
-    int32_t        rgwt[3];
-    int32_t        cMine;
+    std::int16_t        csh;
+    std::int16_t        fBleeding;
+    std::int32_t        lResUltimate;
+    std::int16_t        fUltimate;
+    std::int16_t        fColonize;
+    std::int32_t        rgwt[3];
+    std::int32_t        cMine;
     PLANET        *lppl;
-    int32_t        rglQuan[4];
+    std::int32_t        rglQuan[4];
     FLEET         *lpflDest;
-    int16_t        ishLastFree;
-    int16_t        rgishMap[16];
-    int16_t        ishMatch;
-    int16_t        ish;
+    std::int16_t        ishLastFree;
+    std::int16_t        rgishMap[16];
+    std::int16_t        ishMatch;
+    std::int16_t        ish;
     FLEET         *lpflNew;
-    int16_t        iplrDest;
+    std::int16_t        iplrDest;
     SHDEF         *lpshdefDest;
     THING         *lpthMac;
-    int32_t        dy;
+    std::int32_t        dy;
     THING         *lpthBest;
     THING         *lpth;
-    int32_t        lBest;
-    int32_t        dx;
+    std::int32_t        lBest;
+    std::int32_t        dx;
 
     if (app.state.cFleet > 0) {
         for (ifltcur = 0; ifltcur < app.state.cFleet; ifltcur++) {
@@ -206,9 +206,9 @@ void SatisfyOrders(APPSESSION &app, int16_t iPass) {
                                 }
                                 amount = StarsMin(2000000, amount);
                                 if (amount < 65536) {
-                                    amountEdit = static_cast<uint32_t>((static_cast<uint32_t>((amount * ord.txp.rgia[j].cQuan())) / 100));
+                                    amountEdit = static_cast<std::uint32_t>((static_cast<std::uint32_t>((amount * ord.txp.rgia[j].cQuan())) / 100));
                                 } else {
-                                    amountEdit = static_cast<uint32_t>((static_cast<int32_t>((amount / 100)) * ord.txp.rgia[j].cQuan()));
+                                    amountEdit = static_cast<std::uint32_t>((static_cast<std::int32_t>((amount / 100)) * ord.txp.rgia[j].cQuan()));
                                 }
                                 amountEdit -= lpfl->rgwtMin[j];
                                 if (amountEdit < 0) {
@@ -386,7 +386,7 @@ void SatisfyOrders(APPSESSION &app, int16_t iPass) {
                                 continue;
                             case iActionUnloadAll:
                             case iActionUnloadExact:
-                                amount = (((static_cast<uint32_t>(lpfl->rgwtMin[j])) < (static_cast<uint32_t>(amountEdit))) ? (static_cast<uint32_t>(lpfl->rgwtMin[j])) : (static_cast<uint32_t>(amountEdit)));
+                                amount = (((static_cast<std::uint32_t>(lpfl->rgwtMin[j])) < (static_cast<std::uint32_t>(amountEdit))) ? (static_cast<std::uint32_t>(lpfl->rgwtMin[j])) : (static_cast<std::uint32_t>(amountEdit)));
                             Unload:
                                 if (iLoad != 0)
                                     continue;
@@ -406,7 +406,7 @@ void SatisfyOrders(APPSESSION &app, int16_t iPass) {
                                         goto LCantDrop;
                                     }
                                     FQueueColonistDrop(app, lpfl, &pl, amount);
-                                } else if (j == 3 && ord.grobj == grobjFleet && lpfl->iPlayer != (static_cast<uint16_t>(ord.id) >> 9 & 0xf)) {
+                                } else if (j == 3 && ord.grobj == grobjFleet && lpfl->iPlayer != (static_cast<std::uint16_t>(ord.id) >> 9 & 0xf)) {
                                     idm = idmAllowedTransferColonistsAnotherPlayer;
                                     goto LCantDrop;
                                 } else if (ord.grobj == grobjFleet && app.state.rgplr[lpflWP->iPlayer].rgmdRelation[lpfl->iPlayer] == 2) {
@@ -492,7 +492,7 @@ void SatisfyOrders(APPSESSION &app, int16_t iPass) {
                                     TurnIO().pfnMessage(app, lpfl->iPlayer, idmHasLoaded, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, LOWORD(l), HIWORD(l), 4, xWP, idWP, 0);
                                 } else if (l < 0) {
                                     TurnIO().pfnMessage(app, lpfl->iPlayer, idmHasUnloaded, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, -LOWORD(l),
-                                                LOWORD(static_cast<uint32_t>((static_cast<uint32_t>(-l) >> 0x10))), 4, xWP, idWP, 0);
+                                                LOWORD(static_cast<std::uint32_t>((static_cast<std::uint32_t>(-l) >> 0x10))), 4, xWP, idWP, 0);
                                 }
                             }
                         }
@@ -547,8 +547,8 @@ void SatisfyOrders(APPSESSION &app, int16_t iPass) {
                     }
                     fColonize = 0;
                     csh = 0;
-                    memset(app.state.rgTechBattle, 0, 6);
-                    memset(app.state.rgTechTrader, 0, 13);
+                    std::memset(app.state.rgTechBattle, 0, 6);
+                    std::memset(app.state.rgTechTrader, 0, 13);
                     for (i = 0; i < 16; i++) {
                         if (lpfl->rgcsh[i] > 0) {
                             csh += lpfl->rgcsh[i];
@@ -582,27 +582,27 @@ void SatisfyOrders(APPSESSION &app, int16_t iPass) {
                                     } else {
                                         lpshdefT = app.state.rglpshdef[lpfl->iPlayer] + j;
                                     }
-                                    lT = static_cast<uint32_t>((lpfl->rgcsh[j] * static_cast<uint32_t>(lpshdefT->hul.rgwtOreCost[i])));
+                                    lT = static_cast<std::uint32_t>((lpfl->rgcsh[j] * static_cast<std::uint32_t>(lpshdefT->hul.rgwtOreCost[i])));
                                     if (lpshdefT->fGift) {
-                                        lT = static_cast<int32_t>((lT / 4));
+                                        lT = static_cast<std::int32_t>((lT / 4));
                                     }
                                     lAmt += lT;
                                 }
                             }
                             if (ord.grTask == grTaskColonize) {
-                                lAmt = static_cast<int32_t>((lAmt * 3)) / 4;
+                                lAmt = static_cast<std::int32_t>((lAmt * 3)) / 4;
                             } else if (pl.id == idplNone) {
-                                lAmt = static_cast<int32_t>((lAmt / 3));
+                                lAmt = static_cast<std::int32_t>((lAmt / 3));
                             } else if (pl.fStarbase) {
                                 if (fUltimate) {
-                                    lAmt = static_cast<int32_t>((lAmt * 9)) / 10;
+                                    lAmt = static_cast<std::int32_t>((lAmt * 9)) / 10;
                                 } else {
-                                    lAmt = static_cast<int32_t>((lAmt * 4)) / 5;
+                                    lAmt = static_cast<std::int32_t>((lAmt * 4)) / 5;
                                 }
                             } else if (fUltimate) {
-                                lAmt = static_cast<int32_t>((lAmt * 9)) / 20;
+                                lAmt = static_cast<std::int32_t>((lAmt * 9)) / 20;
                             } else {
-                                lAmt = static_cast<int32_t>((lAmt / 3));
+                                lAmt = static_cast<std::int32_t>((lAmt / 3));
                             }
                             lAmt += lpfl->rgwtMin[i];
                             lXferMinerals += lAmt;
@@ -624,9 +624,9 @@ void SatisfyOrders(APPSESSION &app, int16_t iPass) {
                                     } else {
                                         lpshdefT = app.state.rglpshdef[lpfl->iPlayer] + j;
                                     }
-                                    lT = static_cast<uint32_t>((lpfl->rgcsh[j] * static_cast<uint32_t>(lpshdefT->hul.resCost)));
+                                    lT = static_cast<std::uint32_t>((lpfl->rgcsh[j] * static_cast<std::uint32_t>(lpshdefT->hul.resCost)));
                                     if (lpshdefT->fGift) {
-                                        lT = static_cast<int32_t>((lT / 4));
+                                        lT = static_cast<std::int32_t>((lT / 4));
                                     }
                                     lResUltimate += lT;
                                 }
@@ -637,7 +637,7 @@ void SatisfyOrders(APPSESSION &app, int16_t iPass) {
                             app.state.vrgPlanResExtra[pl.id] = app.state.vrgPlanResExtra[pl.id] + LOWORD(lResUltimate);
                             if (lResUltimate > 0 && pl.iPlayer != iplrNone) {
                                 lAmt = ResearchIO().pfnResources(app, &pl, pl.iPlayer);
-                                lResUltimate = static_cast<int32_t>((static_cast<int32_t>((lResUltimate * lAmt)) / (lResUltimate + lAmt)));
+                                lResUltimate = static_cast<std::int32_t>((static_cast<std::int32_t>((lResUltimate * lAmt)) / (lResUltimate + lAmt)));
                             }
                             idm = static_cast<MessageId>(idmHasDismantledKtMineralsWhichHaveDeposited2 + pl.fStarbase);
                             TurnIO().pfnMessage(app, lpfl->iPlayer, idm, static_cast<MsgGoto>(iGoto), WFromLpfl(app, lpfl), LOWORD(lXferMinerals), HIWORD(lXferMinerals), pl.id, LOWORD(lResUltimate),
@@ -858,7 +858,7 @@ void SatisfyOrders(APPSESSION &app, int16_t iPass) {
                             cMine = CLayMinesFromLpfl(app, lpfl, static_cast<MineFieldType>(j), ishdefAll);
                             if (cMine != 0) {
                                 if (!lpfl->fHereAllTurn) {
-                                    cMine = static_cast<int32_t>((cMine / 2));
+                                    cMine = static_cast<std::int32_t>((cMine / 2));
                                 }
                                 lpthBest = nullptr;
                                 lBest = 10000000;
@@ -866,9 +866,9 @@ void SatisfyOrders(APPSESSION &app, int16_t iPass) {
                                 lpthMac = app.state.lpThings + app.state.cThing;
                                 for (; lpth < lpthMac; lpth++) {
                                     if (lpth->iplr() == lpfl->iPlayer && lpth->ith() == ithMinefield && lpth->thm().iType() == j) {
-                                        dx = static_cast<int16_t>((lpfl->pt.x - lpth->pt().x()));
-                                        dy = static_cast<int16_t>((lpfl->pt.y - lpth->pt().y()));
-                                        l = static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy));
+                                        dx = static_cast<std::int16_t>((lpfl->pt.x - lpth->pt().x()));
+                                        dy = static_cast<std::int16_t>((lpfl->pt.y - lpth->pt().y()));
+                                        l = static_cast<std::uint32_t>((dx * dx)) + static_cast<std::uint32_t>((dy * dy));
                                         if (lpth->thm().cMines() >= l && l < lBest) {
                                             lBest = l;
                                             lpthBest = lpth;
@@ -876,9 +876,9 @@ void SatisfyOrders(APPSESSION &app, int16_t iPass) {
                                     }
                                 }
                                 if (lpthBest && lpthBest->thm().cMines() < 1000000) {
-                                    { const auto xForThing = (LOWORD(static_cast<int32_t>((static_cast<int32_t>((static_cast<uint32_t>((lpthBest->pt().x() * lpthBest->thm().cMines())) + static_cast<uint32_t>((lpfl->pt.x * cMine)))) /
+                                    { const auto xForThing = (LOWORD(static_cast<std::int32_t>((static_cast<std::int32_t>((static_cast<std::uint32_t>((lpthBest->pt().x() * lpthBest->thm().cMines())) + static_cast<std::uint32_t>((lpfl->pt.x * cMine)))) /
                                                          (cMine + lpthBest->thm().cMines()))))); auto &thForThing = *(lpthBest); thForThing.pt().SetX(xForThing); }
-                                    { const auto yForThing = (LOWORD(static_cast<int32_t>((static_cast<int32_t>((static_cast<uint32_t>((lpthBest->pt().y() * lpthBest->thm().cMines())) + static_cast<uint32_t>((lpfl->pt.y * cMine)))) /
+                                    { const auto yForThing = (LOWORD(static_cast<std::int32_t>((static_cast<std::int32_t>((static_cast<std::uint32_t>((lpthBest->pt().y() * lpthBest->thm().cMines())) + static_cast<std::uint32_t>((lpfl->pt.y * cMine)))) /
                                                          (cMine + lpthBest->thm().cMines()))))); auto &thForThing = *(lpthBest); thForThing.pt().SetY(yForThing); }
                                     lpthBest->thm().SetCMines(lpthBest->thm().cMines() + cMine);
                                     idm = idmHasIncreasedMinefieldMines;

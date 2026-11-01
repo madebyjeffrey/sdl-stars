@@ -2,27 +2,27 @@
 #define STARS_DECOMPILED_RACE_H
 
 #include "common.h"
-#include <stdint.h>
+#include <cstdint>
 
-extern int16_t rgRacePrimaryTrait[10];
+extern std::int16_t rgRacePrimaryTrait[10];
 extern char    rgRW3Spacing[7];
-extern int16_t rgRaceAdvDisPts[14];
+extern std::int16_t rgRaceAdvDisPts[14];
 extern char    rgRW3IStat[7];
-extern int16_t rgRaceDisEnvPts[6];
+extern std::int16_t rgRaceDisEnvPts[6];
 extern char    rgRW3Width[7];
 extern char    rgRaceStatMax[16];
 extern char    rgRaceStatMin[16];
 
-int16_t  GetRaceStat(PLAYER *pplr, RaceStat iStat);
-int16_t  SetRaceStat(PLAYER *pplr, RaceStat iStat, int16_t iVal);
-int16_t  GetRaceGrbit(PLAYER *pplr, RaceGrbit ibit);
-void     SetRaceGrbit(PLAYER *pplr, RaceGrbit ibit, int16_t fSet);
+std::int16_t  GetRaceStat(PLAYER *pplr, RaceStat iStat);
+std::int16_t  SetRaceStat(PLAYER *pplr, RaceStat iStat, std::int16_t iVal);
+std::int16_t  GetRaceGrbit(PLAYER *pplr, RaceGrbit ibit);
+void     SetRaceGrbit(PLAYER *pplr, RaceGrbit ibit, std::int16_t fSet);
 void     BoundsCheckPlayer(PLAYER *pplr);
-int16_t  CAdvantagePoints(APPSESSION &app, PLAYER *pplr);
-int32_t  LInnateRaceHabitability(APPSESSION &app, PLAYER *pplr);
-uint16_t IRaceChecksum(PLAYER *pplr);
+std::int16_t  CAdvantagePoints(APPSESSION &app, PLAYER *pplr);
+std::int32_t  LInnateRaceHabitability(APPSESSION &app, PLAYER *pplr);
+std::uint16_t IRaceChecksum(PLAYER *pplr);
 void     CreateRandomRace(APPSESSION &app, PLAYER *pplr);
-int16_t  PctTrueMaxGrowth(APPSESSION &app, int16_t iplr);
-int16_t  FWasRaceFile(APPSESSION &app, char *szFile, int16_t fChkPass);
+std::int16_t  PctTrueMaxGrowth(APPSESSION &app, std::int16_t iplr);
+std::int16_t  FWasRaceFile(APPSESSION &app, char *szFile, std::int16_t fChkPass);
 
 #endif

@@ -40,19 +40,19 @@ struct COMPATCOMBO {
     BOOL fDropped, fOpening, fClosing, fSync, fExtended, fSizing;
 };
 struct COMPATSCROLL { int iMin, iMax, iPos; UINT cPage; BOOL fDisable; };
-struct COMPATFONTDATA { const BYTE *rgb; size_t cb; };
+struct COMPATFONTDATA { const BYTE *rgb; std::size_t cb; };
 extern const COMPATFONTDATA rgCompatFontData[12];
 COMPATFONT *LpNewCompatFont(const LOGFONTA *lplf);
 void FreeCompatFont(COMPATFONT *lpfont) noexcept;
 BOOL FCompatFontSize(COMPATFONT *lpfont, LPCSTR psz, int cch, LPSIZE lpsize);
 BOOL FCompatFontMetrics(COMPATFONT *lpfont, LPTEXTMETRICA lptm);
 BOOL FCompatFontDraw(COMPATFONT *lpfont, LPCSTR psz, int cch, const INT *rgdx,
-                    void (*pfn)(void *, int64_t, int64_t, BYTE), void *lpv);
+                    void (*pfn)(void *, std::int64_t, std::int64_t, BYTE), void *lpv);
 BOOL FCompatFontSizeUtf8(COMPATFONT *lpfont, LPCSTR psz, int cch, LPSIZE lpsize);
 BOOL FCompatFontDrawUtf8(COMPATFONT *lpfont, LPCSTR psz, int cch,
-                        void (*pfn)(void *, int64_t, int64_t, BYTE), void *lpv);
+                        void (*pfn)(void *, std::int64_t, std::int64_t, BYTE), void *lpv);
 BOOL FCompatFontDrawScaled(COMPATFONT *lpfont, LPCSTR psz, int cch, const INT *rgdx, int iScale,
-                          void (*pfn)(void *, int64_t, int64_t, BYTE), void *lpv);
+                          void (*pfn)(void *, std::int64_t, std::int64_t, BYTE), void *lpv);
 void CompatShutdownFonts(void);
 
 struct COMPATCLASS {
@@ -74,7 +74,7 @@ struct win32::HWND__ {
     COMPATCLASS *lpclass;
     NATIVEOWNER<SDL_Window, FreeCompatWindow> lpWindow;
     SDL_WindowID id;
-    uint64_t idInspect;
+    std::uint64_t idInspect;
     WNDPROC lpfnWndProc;
     void *lpvCallbackContext;
     LONG_PTR lUserData, idChild;
@@ -141,7 +141,7 @@ struct win32::HWND__ {
     NATIVEOWNER<SDL_Texture, FreeCompatTexture> lpTexture;
     RECT rcUpdate;
     NATIVEARRAYOWNER<RECT, std::free> rgrcUpdate;
-    size_t crcUpdate;
+    std::size_t crcUpdate;
     BOOL fUpdate, fErase;
     HDC hdcPaint;
     struct win32::HWND__ *lpNext;
@@ -151,16 +151,16 @@ struct COMPATRESOURCE {
     const char *pszName;
     WORD id;
     const BYTE *rgb;
-    size_t cb;
+    std::size_t cb;
     WORD type;
 };
 
 extern const COMPATRESOURCE rgCompatResources[];
-extern const size_t cCompatResources;
+extern const std::size_t cCompatResources;
 extern const COMPATRESOURCE rgCompatUIResources[];
-extern const size_t cCompatUIResources;
+extern const std::size_t cCompatUIResources;
 extern const COMPATRESOURCE rgCompatImageResources[];
-extern const size_t cCompatImageResources;
+extern const std::size_t cCompatImageResources;
 // Keep resource member types identical when a test substitutes an SDL call.
 void FreeCompatCursor(SDL_Cursor *lp) noexcept;
 
@@ -175,19 +175,19 @@ struct COMPATIMAGE {
     struct COMPATIMAGE *lpNext;
 };
 COMPATIMAGE *LpCompatImage(HICON hicon);
-HICON HiconCompatResource(const BYTE *rgb, size_t cb, BOOL fCursor);
+HICON HiconCompatResource(const BYTE *rgb, std::size_t cb, BOOL fCursor);
 HBITMAP HbmpCompatSurface(SDL_Surface *lpSurface, BOOL fMono);
 void CompatSetWindowIcon(SDL_Window *lpWindow, HICON hicon);
 extern const BYTE rgbCompatAppIcon[];
-extern const size_t cbCompatAppIcon;
+extern const std::size_t cbCompatAppIcon;
 void CompatShutdownImages(void);
 void CompatCursorPoint(HWND hwnd, int x, int y);
 void CompatCursorLeave(HWND hwnd);
 void CompatDrawCursor(HWND hwnd, SDL_Surface *lpSurface);
-HMENU HmenuCompatTemplate(const BYTE *rgb, size_t cb);
+HMENU HmenuCompatTemplate(const BYTE *rgb, std::size_t cb);
 struct COMPATDLGITEM {
     DWORD dwStyle, dwExStyle;
-    int16_t x, y, cx, cy;
+    std::int16_t x, y, cx, cy;
     WORD id, idClass, idTitle;
     char *pszClass, *pszTitle;
     const BYTE *rgbCreate;
@@ -195,12 +195,12 @@ struct COMPATDLGITEM {
 };
 struct COMPATDLGTEMPLATE {
     DWORD dwStyle, dwExStyle;
-    int16_t x, y, cx, cy;
+    std::int16_t x, y, cx, cy;
     WORD cItems, idMenu, idClass, cPoints;
     char *pszMenu, *pszClass, *pszTitle, *pszFont;
     COMPATDLGITEM *rgItems;
 };
-BOOL FCompatDialogTemplate(const BYTE *rgb, size_t cb, COMPATDLGTEMPLATE *lpdlg);
+BOOL FCompatDialogTemplate(const BYTE *rgb, std::size_t cb, COMPATDLGTEMPLATE *lpdlg);
 void CompatFreeDialogTemplate(COMPATDLGTEMPLATE *lpdlg);
 LRESULT  CompatDialogProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
 void CompatDestroyDialog(HWND hwnd);
@@ -216,15 +216,15 @@ void CompatShutdownAudio(void) noexcept;
 struct COMPATDIB {
     int cx, cy, cBits, cColors;
     BOOL fTopDown;
-    size_t cbRow, cbBits, cbInfo;
+    std::size_t cbRow, cbBits, cbInfo;
     COLORREF rgcr[256];
     const BYTE *lpBits;
 };
 
-BOOL FCompatDib(const void *lpInfo, size_t cbInfo, const void *lpBits, size_t cbBits, COMPATDIB *lpdib);
-BOOL FCompatNativeDib(const void *lpInfo, size_t cbInfo, const void *lpBits, size_t cbBits, COMPATDIB *lpdib);
+BOOL FCompatDib(const void *lpInfo, std::size_t cbInfo, const void *lpBits, std::size_t cbBits, COMPATDIB *lpdib);
+BOOL FCompatNativeDib(const void *lpInfo, std::size_t cbInfo, const void *lpBits, std::size_t cbBits, COMPATDIB *lpdib);
 SDL_Surface *LpCompatDibSurface(const COMPATDIB *lpdib);
-HBITMAP HbmpCompatResource(const BYTE *rgb, size_t cb);
+HBITMAP HbmpCompatResource(const BYTE *rgb, std::size_t cb);
 
 BOOL FCompatControlClass(LPCSTR pszClass, HINSTANCE hInstance);
 BOOL FCompatVideo(void);

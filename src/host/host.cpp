@@ -20,8 +20,8 @@
 // stderr and questions get the cautious answer. hostui.c has the rest of
 // ui.h.
 
-int16_t IdAlertBox(const char *sz, int16_t mbType) {
-    fprintf(stderr, "stars-host: %s\n", sz);
+std::int16_t IdAlertBox(const char *sz, std::int16_t mbType) {
+    std::fprintf(stderr, "stars-host: %s\n", sz);
     switch (mbType & 0x000f) {
     case win32::MB_OKCANCEL:
         return IDCANCEL;
@@ -37,7 +37,7 @@ int16_t IdAlertBox(const char *sz, int16_t mbType) {
 // ReadIniSettings does for the Windows game: logging, the default
 // password, per-player dump files, host names in -v output and the number
 // of backup directories.
-static int16_t FReadHostIni(APPSESSION &app, const char *szFile) {
+static std::int16_t FReadHostIni(APPSESSION &app, const char *szFile) {
     char *pszText;
     long  cb;
     NATIVEFILE *pf;
@@ -50,15 +50,15 @@ static int16_t FReadHostIni(APPSESSION &app, const char *szFile) {
     ISeekNativeFile(pf, 0, SEEK_END);
     cb = LNativePosition(pf);
     ISeekNativeFile(pf, 0, SEEK_SET);
-    NATIVEOWNER<char, std::free> text(static_cast<char *>(malloc(static_cast<size_t>(cb) + 1)));
+    NATIVEOWNER<char, std::free> text(static_cast<char *>(std::malloc(static_cast<std::size_t>(cb) + 1)));
     pszText = text.get();
-    if (!pszText || CReadNative(pszText, 1, static_cast<size_t>(cb), pf) != static_cast<size_t>(cb)) {
+    if (!pszText || CReadNative(pszText, 1, static_cast<std::size_t>(cb), pf) != static_cast<std::size_t>(cb)) {
         return 0;
     }
     ICloseNativeFile(file.Release());
     pszText[cb] = 0;
-    if (!FUtf8Valid(pszText, static_cast<size_t>(cb))) return 0;
-    if (cb >= 3 && !memcmp(pszText, "\xef\xbb\xbf", 3)) memmove(pszText, pszText + 3, static_cast<size_t>(cb) - 2);
+    if (!FUtf8Valid(pszText, static_cast<std::size_t>(cb))) return 0;
+    if (cb >= 3 && !std::memcmp(pszText, "\xef\xbb\xbf", 3)) std::memmove(pszText, pszText + 3, static_cast<std::size_t>(cb) - 2);
     app.state.ini.fLogging = LIniInt(app, pszText, idsFiles, idsLogging, 0) != 0;
     if (!FIniValue(app, pszText, idsMisc, idsDefaultpassword, app.state.vszDefPass, 16)) {
         app.state.vszDefPass[0] = 0;
@@ -77,8 +77,8 @@ int main(int argc, char *argv[]) try {
     COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
     NATIVECLEANUPSCOPE session([&app]() noexcept { app.Close(); });
     char     szCmdLine[1024];
-    int16_t  fSeed;
-    uint32_t lSeed;
+    std::int16_t  fSeed;
+    std::uint32_t lSeed;
     int      i;
     char    *szIniPath;
 #ifdef _WIN32
@@ -88,13 +88,13 @@ int main(int argc, char *argv[]) try {
     app.BindFiles();
 #ifdef _WIN32
     rgpszNative = RgpszNativeArguments(&argc);
-    if (!rgpszNative) { fprintf(stderr, "stars-host: invalid Windows command line\n"); return 2; }
+    if (!rgpszNative) { std::fprintf(stderr, "stars-host: invalid Windows command line\n"); return 2; }
     NATIVEOWNER<char *, std::free> nativeArguments(rgpszNative);
     argv = rgpszNative;
 #endif
     // ParseCmdLine reads each letter after a '-' as a switch.
-    if (argc == 2 && strcmp(argv[1], "--version") == 0) {
-        printf("stars-host %s\n", STARS_VERSION_DISPLAY);
+    if (argc == 2 && std::strcmp(argv[1], "--version") == 0) {
+        std::printf("stars-host %s\n", STARS_VERSION_DISPLAY);
 #ifdef _WIN32
         nativeArguments.reset();
 #endif
@@ -104,7 +104,7 @@ int main(int argc, char *argv[]) try {
     // own; ParseCmdLine reads the rest.
     szIniPath = nullptr;
     for (i = 1; i + 1 < argc; i++) {
-        if (strcmp(argv[i], "--ini") == 0) {
+        if (std::strcmp(argv[i], "--ini") == 0) {
             szIniPath = argv[i + 1];
             for (; i + 2 < argc; i++) {
                 argv[i] = argv[i + 2];
@@ -117,24 +117,24 @@ int main(int argc, char *argv[]) try {
     // can't hold spaces, as in the Windows game.
     szCmdLine[0] = 0;
     for (i = 1; i < argc; i++) {
-        if (strlen(szCmdLine) + strlen(argv[i]) + 2 > sizeof(szCmdLine)) {
-            fprintf(stderr, "stars-host: command line too long\n");
+        if (std::strlen(szCmdLine) + std::strlen(argv[i]) + 2 > sizeof(szCmdLine)) {
+            std::fprintf(stderr, "stars-host: command line too long\n");
 #ifdef _WIN32
             nativeArguments.reset();
 #endif
             return 2;
         }
         if (i > 1) {
-            strcat(szCmdLine, " ");
+            std::strcat(szCmdLine, " ");
         }
-        strcat(szCmdLine, argv[i]);
+        std::strcat(szCmdLine, argv[i]);
     }
     app.state.szBase[0] = 0;
     app.state.ini.SetWFlags(0);
     app.state.ini.idPlayer = iplrNone;
     InitGameStuff(app);
     if (szIniPath && !FReadHostIni(app, szIniPath)) {
-        fprintf(stderr, "stars-host: can't read %s\n", szIniPath);
+        std::fprintf(stderr, "stars-host: can't read %s\n", szIniPath);
 #ifdef _WIN32
         nativeArguments.reset();
 #endif
@@ -148,7 +148,7 @@ int main(int argc, char *argv[]) try {
     if (!ParseCmdLine(app, szCmdLine, &fSeed, &lSeed)) return 2;
     Randomize2(app, fSeed ? lSeed : DwTickCount());
     if (!app.state.ini.fCmdLine) {
-        fprintf(
+        std::fprintf(
             stderr,
             "usage: stars-host --version | [--ini stars.ini] [-s<seed>] [-p<password>] [-l] (-a game.def | -v game.hst | -g[n] [-t] game.hst | -b batchfile | "
             "-d[m][p][f] game.mN)\n");
@@ -159,20 +159,20 @@ int main(int argc, char *argv[]) try {
     if (!FRunCmdLine(app)) {
         if (app.state.ini.fDumpMap || app.state.ini.fDumpPlanets || app.state.ini.fDumpFleets) {
             if (!FDumpCmdLineGame(app)) {
-                fprintf(stderr, "stars-host: -d needs a player's turn file (game.m1 and the like)\n");
+                std::fprintf(stderr, "stars-host: -d needs a player's turn file (game.m1 and the like)\n");
                 return 2;
             }
             return app.state.vretExitValue;
         }
-        fprintf(stderr, "stars-host: nothing to do; -w and opening a game need the Windows game\n");
+        std::fprintf(stderr, "stars-host: nothing to do; -w and opening a game need the Windows game\n");
         return 2;
     }
     return app.state.vretExitValue;
 } catch (const StarsError &error) {
-    fprintf(stderr, "stars-host: %s failure (message %u)\n",
+    std::fprintf(stderr, "stars-host: %s failure (message %u)\n",
             error.mdError == starsErrorMemory ? "memory" : "file", static_cast<unsigned>(error.ids));
     return 2;
 } catch (...) {
-    fprintf(stderr, "stars-host: unexpected operation failure\n");
+    std::fprintf(stderr, "stars-host: unexpected operation failure\n");
     return 2;
 }

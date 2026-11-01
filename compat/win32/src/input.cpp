@@ -5,9 +5,9 @@
 #include "internal.h"
 #include "input_io.h"
 #include <stars_compat.h>
-#include <math.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cmath>
+#include <cstdlib>
+#include <cstring>
 
 static HWND hwndCapture, rghwndClick[3];
 static unsigned int rgcClick[3];
@@ -17,21 +17,21 @@ static HWND hwndCursor;
 static BOOL fCursor, fInputKeys;
 
 void CompatCopyInput(BYTE *rgb, LPPOINT lppt) {
-    memcpy(rgb, rgbInput, sizeof(rgbInput));
+    std::memcpy(rgb, rgbInput, sizeof(rgbInput));
     if (fCursor) *lppt = ptCursor;
 }
-void CompatReadInput(const BYTE *rgb) { memcpy(rgbRead, rgb, sizeof(rgbRead)); }
+void CompatReadInput(const BYTE *rgb) { std::memcpy(rgbRead, rgb, sizeof(rgbRead)); }
 BOOL win32::SetKeyboardState(BYTE *rgb) {
     if (!SDL_IsMainThread() || !rgb) return 0;
     CompatReadInput(rgb);
     return 1;
 }
 void CompatResetInput(void) {
-    memset(rgbInput, 0, sizeof(rgbInput)); memset(rgbRead, 0, sizeof(rgbRead));
-    memset(rgbRecent, 0, sizeof(rgbRecent)); memset(rgbAsync, 0, sizeof(rgbAsync));
+    std::memset(rgbInput, 0, sizeof(rgbInput)); std::memset(rgbRead, 0, sizeof(rgbRead));
+    std::memset(rgbRecent, 0, sizeof(rgbRecent)); std::memset(rgbAsync, 0, sizeof(rgbAsync));
     fCursor = fInputKeys = 0;
     hwndCursor = nullptr;
-    memset(rghwndClick, 0, sizeof(rghwndClick)); memset(rgcClick, 0, sizeof(rgcClick));
+    std::memset(rghwndClick, 0, sizeof(rghwndClick)); std::memset(rgcClick, 0, sizeof(rgcClick));
 }
 
 SHORT win32::GetKeyState(int vk) {
@@ -100,12 +100,12 @@ BOOL win32::GetCursorPos(LPPOINT lppt) {
         return 0;
     }
     pszDriver = CompatInputIO().pfnGetCurrentVideoDriver();
-    if (pszDriver && strcmp(pszDriver, "dummy") == 0) {
+    if (pszDriver && std::strcmp(pszDriver, "dummy") == 0) {
         if (!fCursor) { win32::SetLastError(win32::ERROR_NOT_SUPPORTED); return 0; }
         *lppt = ptCursor;
         return 1;
     }
-    if (pszDriver && strcmp(pszDriver, "wayland") == 0) {
+    if (pszDriver && std::strcmp(pszDriver, "wayland") == 0) {
         lpWindow = SDL_GetMouseFocus();
         hwnd = lpWindow ? LpCompatWindowFromId(SDL_GetWindowID(lpWindow)) : nullptr;
         if (hwnd) {
@@ -122,8 +122,8 @@ BOOL win32::GetCursorPos(LPPOINT lppt) {
         win32::SetLastError(win32::ERROR_NOT_SUPPORTED);
         return 0;
     }
-    if (!pszDriver || (strcmp(pszDriver, "x11") != 0 && strcmp(pszDriver, "cocoa") != 0 &&
-                       strcmp(pszDriver, "windows") != 0)) { win32::SetLastError(win32::ERROR_NOT_SUPPORTED); return 0; }
+    if (!pszDriver || (std::strcmp(pszDriver, "x11") != 0 && std::strcmp(pszDriver, "cocoa") != 0 &&
+                       std::strcmp(pszDriver, "windows") != 0)) { win32::SetLastError(win32::ERROR_NOT_SUPPORTED); return 0; }
     CompatInputIO().pfnGetGlobalMouseState(&x, &y);
     if (!isfinite(x) || !isfinite(y) || static_cast<double>(x) < INT32_MIN || static_cast<double>(x) > INT32_MAX ||
         static_cast<double>(y) < INT32_MIN || static_cast<double>(y) > INT32_MAX) return 0;
@@ -184,7 +184,7 @@ void CompatTextInput(HWND hwnd, const char *pszText) {
     const char *psz = pszText;
     DWORD ch;
     if (!win32::IsWindow(hwnd)) return;
-    if (!FUtf8Valid(pszText, strlen(pszText))) {
+    if (!FUtf8Valid(pszText, std::strlen(pszText))) {
         hwnd->fEditInputRejected = 1;
         SDL_SetError("Text input is malformed UTF-8");
         return;
@@ -284,7 +284,7 @@ SHORT win32::GetAsyncKeyState(int vk) {
     rgb[win32::VK_SHIFT] |= rgb[win32::VK_LSHIFT] | rgb[win32::VK_RSHIFT];
     rgb[win32::VK_CONTROL] |= rgb[win32::VK_LCONTROL] | rgb[win32::VK_RCONTROL];
     rgb[win32::VK_MENU] |= rgb[win32::VK_LMENU] | rgb[win32::VK_RMENU];
-    buttons = CompatInputIO().pfnGetCurrentVideoDriver() && !strcmp(CompatInputIO().pfnGetCurrentVideoDriver(), "wayland") ?
+    buttons = CompatInputIO().pfnGetCurrentVideoDriver() && !std::strcmp(CompatInputIO().pfnGetCurrentVideoDriver(), "wayland") ?
               SDL_GetMouseState(nullptr, nullptr) : CompatInputIO().pfnGetGlobalMouseState(nullptr, nullptr);
     rgb[win32::VK_LBUTTON] = (buttons & SDL_BUTTON_LMASK) ? 0x80 : 0;
     rgb[win32::VK_RBUTTON] = (buttons & SDL_BUTTON_RMASK) ? 0x80 : 0;
@@ -308,7 +308,7 @@ static WPARAM WMouseModifiers(WPARAM buttons) {
 
 static void PostCompatWheel(HWND hwnd, UINT msg, float dWheel, double *lpdRem, WPARAM buttons) {
     int d, delta;
-    if (!isfinite(dWheel) || fabs(static_cast<double>(dWheel)) > INT32_MAX / static_cast<double>(win32::WHEEL_DELTA)) return;
+    if (!isfinite(dWheel) || std::fabs(static_cast<double>(dWheel)) > INT32_MAX / static_cast<double>(win32::WHEEL_DELTA)) return;
     *lpdRem += static_cast<double>(dWheel) * win32::WHEEL_DELTA;
     if (*lpdRem < INT32_MIN || *lpdRem > INT32_MAX) { *lpdRem = 0; return; }
     d = static_cast<int>(*lpdRem);

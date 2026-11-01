@@ -36,7 +36,7 @@ INT_PTR  AskSaveDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
 
 void PromptSaveGame(APPSESSION &app) {
     FARPROC lpProc;
-    int16_t fRet;
+    std::int16_t fRet;
 
     lpProc = (DesktopChoiceIO().pfnAskSaveDialog);
     fRet = ControlIO().pfnDialogBox(app.lpui->hInst, !app.state.game.fSinglePlr ? win32::MAKEINTRESOURCE(IDD_SAVE_TURN1) : win32::MAKEINTRESOURCE(IDD_SAVE_TURN2), app.lpui->hwndFrame, lpProc, 0);
@@ -48,10 +48,10 @@ void PromptSaveGame(APPSESSION &app) {
     return;
 }
 
-int16_t FCanLeaveCurrentGame(APPSESSION &app) {
+std::int16_t FCanLeaveCurrentGame(APPSESSION &app) {
     FARPROC lpProc;
-    int16_t fRet;
-    int16_t fSubmitSav;
+    std::int16_t fRet;
+    std::int16_t fSubmitSav;
 
     if (app.state.idPlayer == iplrNone || !app.state.game.fDirty) return 1;
     lpProc = (DesktopChoiceIO().pfnAskSaveDialog);
@@ -92,8 +92,8 @@ void ShowTitleScreen(APPSESSION &app) {
         x = rcWork.left + (rcWork.right - rcWork.left - dx) / 2;
         y = rcWork.top + (rcWork.bottom - rcWork.top - dy) / 2;
         app.lpui->hwndTitle = ui::CreateWindowEx(0, app.lpui->szTitle, "Stars!", dwStyle | win32::WS_VISIBLE, x, y, dx, dy, app.lpui->hwndFrame, nullptr, app.lpui->hInst, nullptr);
-        if (getenv("STARS_DEBUG_LIBRARY_STARTUP"))
-            fprintf(stderr, "[DEBUG-library-startup] ShowTitleScreen CreateWindow returned title=%p valid=%d visible=%d\n",
+        if (std::getenv("STARS_DEBUG_LIBRARY_STARTUP"))
+            std::fprintf(stderr, "[DEBUG-library-startup] ShowTitleScreen CreateWindow returned title=%p valid=%d visible=%d\n",
                     static_cast<void *>(app.lpui->hwndTitle), win32::IsWindow(app.lpui->hwndTitle), win32::IsWindowVisible(app.lpui->hwndTitle));
         app.lpui->fFreeingTitle = 0;
         ui::ShowWindow(app.lpui->hwndFrame, win32::SW_HIDE);
@@ -104,7 +104,7 @@ void ShowTitleScreen(APPSESSION &app) {
 // AddMRUFile puts a game the player opened at the top of the File menu's
 // recent files and saves the list to stars.ini.
 void AddMRUFile(APPSESSION &app, const char *pszFileName, const char *pszExt) {
-    int16_t i;
+    std::int16_t i;
     char    szT[256];
     char    szIniFile[16];
     char    szSection[16];
@@ -114,23 +114,23 @@ void AddMRUFile(APPSESSION &app, const char *pszFileName, const char *pszExt) {
     if (!app.lpui->vrgszMRU) {
         return;
     }
-    strcpy(szT, pszFileName);
-    strcat(szT, ".");
-    strcat(szT, pszExt);
+    std::strcpy(szT, pszFileName);
+    std::strcat(szT, ".");
+    std::strcat(szT, pszExt);
     if (_stricmp(szT, app.lpui->vrgszMRU) != 0) {
         for (i = 1; i < 8 && _stricmp(szT, app.lpui->vrgszMRU + 256 * i) != 0; i++) {
         }
         for (; i >= 1; i--) {
-            strcpy(app.lpui->vrgszMRU + 256 * i, app.lpui->vrgszMRU + 256 * (i - 1));
+            std::strcpy(app.lpui->vrgszMRU + 256 * i, app.lpui->vrgszMRU + 256 * (i - 1));
         }
-        strcpy(app.lpui->vrgszMRU, szT);
+        std::strcpy(app.lpui->vrgszMRU, szT);
         TextIO().pfnCchGetString(app, idsStarsIni, szIniFile);
         TextIO().pfnCchGetString(app, idsFiles, szSection);
         TextIO().pfnCchGetString(app, idsFile1, szEntry);
-        psz = &szEntry[strlen(szEntry) - 1];
+        psz = &szEntry[std::strlen(szEntry) - 1];
         for (i = 0; i < 9; i++) {
             *psz = i + '1';
-            strcpy(szT, app.lpui->vrgszMRU + 256 * i);
+            std::strcpy(szT, app.lpui->vrgszMRU + 256 * i);
             ProfileTextIO().pfnWriteString(szSection, szEntry, szT, szIniFile);
         }
     }
@@ -140,7 +140,7 @@ void AddMRUFile(APPSESSION &app, const char *pszFileName, const char *pszExt) {
 // CloseGameWindows closes the windows that show the game DestroyCurGame
 // is unloading and resets the tile layout.
 void CloseGameWindows(APPSESSION &app) {
-    int16_t i;
+    std::int16_t i;
 
     if (app.lpui->hwndBrowser) {
         ControlIO().pfnDestroyWindow(app.lpui->hwndBrowser);

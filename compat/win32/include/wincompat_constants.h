@@ -4,7 +4,7 @@
 #include "wincompat_types.h"
 #include "wincompat_values.h"
 #include <cerrno>
-#include <limits.h>
+#include <climits>
 
 // Some POSIX headers reserve this spelling for a different flag.
 #ifdef FSHIFT

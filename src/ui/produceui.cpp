@@ -10,10 +10,10 @@
 #include "race_query_io.h"
 #include "alert_io.h"
 
-int16_t ChangeProduction(APPSESSION &app, int16_t fClear) {
+std::int16_t ChangeProduction(APPSESSION &app, std::int16_t fClear) {
     FARPROC  lpProcProd;
     PROD     rgprod[64];
-    int16_t  fSuccess;
+    std::int16_t  fSuccess;
     StarsRecoveryScope scopeRecovery;
     try {
         if (fClear) {
@@ -53,18 +53,18 @@ INT_PTR  ProductionDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     HDC                hdc;
     PAINTSTRUCT        ps;
     RECT               rc;
-    int16_t            dxPBtn;
-    int16_t            dy;
+    std::int16_t            dxPBtn;
+    std::int16_t            dy;
     RECT               rcT;
-    int16_t            i;
-    int16_t            xCtr;
-    int16_t            dx;
-    int16_t            dyLB;
-    int16_t            rgidProdBtns[10];
+    std::int16_t            i;
+    std::int16_t            xCtr;
+    std::int16_t            dx;
+    std::int16_t            dyLB;
+    std::int16_t            rgidProdBtns[10];
     DRAWITEMSTRUCT    *lpdis;
     MEASUREITEMSTRUCT *lpmis;
     POINT16            pt;
-    int16_t            cMax;
+    std::int16_t            cMax;
     char               sz255[2];
     char              *rgszZip[6];
     HCURSOR            hcs;
@@ -96,25 +96,25 @@ INT_PTR  ProductionDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         ControlIO().pfnSetWindowPos(hwnd, nullptr, 0, 0, dx, dy, win32::SWP_NOMOVE | win32::SWP_NOZORDER);
         ControlIO().pfnGetClientRect(hwnd, &rc);
         xCtr = rc.right >> 1;
-        dyLB = rc.bottom - static_cast<int16_t>((17 * app.state.dyArial8)) / 2 - 24;
-        rc.left = static_cast<int16_t>((11 * rc.right)) / 20 + 16;
-        dxPBtn = static_cast<int16_t>((rc.right - rc.left)) / 4;
-        rc.bottom -= static_cast<int16_t>((3 * app.state.dyArial8)) / 2 + 6;
-        ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_RESEARCH_LEFTOVERS_ONLY), nullptr, 6, rc.bottom, rc.left - 12, static_cast<int16_t>((3 * app.state.dyArial8)) / 2, win32::SWP_NOZORDER);
+        dyLB = rc.bottom - static_cast<std::int16_t>((17 * app.state.dyArial8)) / 2 - 24;
+        rc.left = static_cast<std::int16_t>((11 * rc.right)) / 20 + 16;
+        dxPBtn = static_cast<std::int16_t>((rc.right - rc.left)) / 4;
+        rc.bottom -= static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2 + 6;
+        ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_RESEARCH_LEFTOVERS_ONLY), nullptr, 6, rc.bottom, rc.left - 12, static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2, win32::SWP_NOZORDER);
         for (i = 0; i < 4; i++) {
-            ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, rgidProdBtns[i]), nullptr, rc.left, rc.bottom, dxPBtn - 6, static_cast<int16_t>((3 * app.state.dyArial8)) / 2, win32::SWP_NOZORDER);
+            ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, rgidProdBtns[i]), nullptr, rc.left, rc.bottom, dxPBtn - 6, static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2, win32::SWP_NOZORDER);
             rc.left += dxPBtn;
         }
         dxPBtn += 24;
         rc.left = xCtr - ((dxPBtn - 6) >> 1);
-        dy = static_cast<int16_t>((dyLB - 9 * app.state.dyArial8)) / 5 + static_cast<int16_t>((3 * app.state.dyArial8)) / 2 - 3;
+        dy = static_cast<std::int16_t>((dyLB - 9 * app.state.dyArial8)) / 5 + static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2 - 3;
         rc.top = 8;
         if (dy > 50) {
-            rc.top += static_cast<int16_t>(((dy - 50) * 5)) / 2;
+            rc.top += static_cast<std::int16_t>(((dy - 50) * 5)) / 2;
             dy = 50;
         }
         for (i = 4; i < 10; i++) {
-            ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, rgidProdBtns[i]), nullptr, rc.left, rc.top, dxPBtn - 6, static_cast<int16_t>((3 * app.state.dyArial8)) / 2, win32::SWP_NOZORDER);
+            ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, rgidProdBtns[i]), nullptr, rc.left, rc.top, dxPBtn - 6, static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2, win32::SWP_NOZORDER);
             rc.top += dy;
         }
         ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_AVAILABLE_ITEMS), nullptr, 6, 6, rc.left - 12, dyLB, win32::SWP_NOZORDER);
@@ -216,19 +216,19 @@ INT_PTR  ProductionDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
 }
 
 void ProdCommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam, LPARAM lParam) {
-    int32_t lSel;
-    int16_t iSrc;
+    std::int32_t lSel;
+    std::int16_t iSrc;
     HWND    hwndLB;
-    int16_t c;
-    int16_t iDst;
+    std::int16_t c;
+    std::int16_t iDst;
     PROD    prodLast;
-    int16_t ipl;
-    int16_t fRefillSrc;
-    int16_t iMac;
+    std::int16_t ipl;
+    std::int16_t fRefillSrc;
+    std::int16_t iMac;
     RECT    rc;
     PROD   *lpprod;
     PROD    prod;
-    int16_t cMax;
+    std::int16_t cMax;
     PLPROD *lpplprodT;
 
     switch (LOWORD(wParam)) {
@@ -242,12 +242,12 @@ void ProdCommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam, LPARAM lParam
         prod = app.state.pProdGlob[iSrc];
         if (ControlIO().pfnGetAsyncKeyState(win32::VK_CONTROL) & 0xfffe) {
             if (ControlIO().pfnGetAsyncKeyState(win32::VK_SHIFT) & 0xfffe) {
-                prod.cItem = LOWORD(prod.cItem < 1020 ? static_cast<uint32_t>(prod.cItem) : 1020);
+                prod.cItem = LOWORD(prod.cItem < 1020 ? static_cast<std::uint32_t>(prod.cItem) : 1020);
             } else {
-                prod.cItem = LOWORD(prod.cItem < 100 ? static_cast<uint32_t>(prod.cItem) : 100);
+                prod.cItem = LOWORD(prod.cItem < 100 ? static_cast<std::uint32_t>(prod.cItem) : 100);
             }
         } else if (ControlIO().pfnGetAsyncKeyState(win32::VK_SHIFT) & 0xfffe) {
-            prod.cItem = LOWORD(prod.cItem < 10 ? static_cast<uint32_t>(prod.cItem) : 10);
+            prod.cItem = LOWORD(prod.cItem < 10 ? static_cast<std::uint32_t>(prod.cItem) : 10);
         } else {
             prod.cItem = 1;
         }
@@ -267,7 +267,7 @@ void ProdCommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam, LPARAM lParam
         if (iDst < iMac) {
             if (iDst >= 0) {
                 prodLast = app.state.lpplProdGlob->rgprod()[iDst];
-                if (static_cast<uint32_t>(prodLast.iItem) == prod.iItem && static_cast<uint32_t>(prodLast.grobj) == prod.grobj) {
+                if (static_cast<std::uint32_t>(prodLast.iItem) == prod.iItem && static_cast<std::uint32_t>(prodLast.grobj) == prod.grobj) {
                 RingItUp:
                     app.state.lpplProdGlob->rgprod()[iDst].cItem = StarsMin(1020, app.state.lpplProdGlob->rgprod()[iDst].cItem + prod.cItem);
                     if (app.state.lpplProdGlob->rgprod()[iDst].cItem > 1 && app.state.lpplProdGlob->rgprod()[iDst].iItem == iobjAlchemy &&
@@ -280,7 +280,7 @@ void ProdCommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam, LPARAM lParam
             iDst++;
             if (iDst < iMac) {
                 prodLast = app.state.lpplProdGlob->rgprod()[iDst];
-                if (static_cast<uint32_t>(prodLast.iItem) == prod.iItem && static_cast<uint32_t>(prodLast.grobj) == prod.grobj)
+                if (static_cast<std::uint32_t>(prodLast.iItem) == prod.iItem && static_cast<std::uint32_t>(prodLast.grobj) == prod.grobj)
                     goto RingItUp;
             }
         }
@@ -292,7 +292,7 @@ void ProdCommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam, LPARAM lParam
             app.state.lpplProdGlob = LpplReAlloc(app, app.state.lpplProdGlob, iMac + 4);
         }
         if (iDst != iMac) {
-            memmove(&app.state.lpplProdGlob->rgprod()[iDst + 1], &app.state.lpplProdGlob->rgprod()[iDst], (iMac - iDst) * 4);
+            std::memmove(&app.state.lpplProdGlob->rgprod()[iDst + 1], &app.state.lpplProdGlob->rgprod()[iDst], (iMac - iDst) * 4);
         }
         app.state.lpplProdGlob->rgprod()[iDst] = prod;
         app.state.lpplProdGlob->iprodMac++;
@@ -311,7 +311,7 @@ void ProdCommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam, LPARAM lParam
         iMac = app.state.lpplProdGlob->iprodMac;
         lSel--;
         prod = app.state.lpplProdGlob->rgprod()[lSel];
-        for (iSrc = 0; iSrc < app.state.cProdGlob && (static_cast<uint32_t>(app.state.pProdGlob[iSrc].grobj) != prod.grobj || static_cast<uint32_t>(app.state.pProdGlob[iSrc].iItem) != prod.iItem); iSrc++) {
+        for (iSrc = 0; iSrc < app.state.cProdGlob && (static_cast<std::uint32_t>(app.state.pProdGlob[iSrc].grobj) != prod.grobj || static_cast<std::uint32_t>(app.state.pProdGlob[iSrc].iItem) != prod.iItem); iSrc++) {
         }
         fRefillSrc = app.state.pProdGlob[iSrc].cItem == 0;
         if (ControlIO().pfnGetAsyncKeyState(win32::VK_CONTROL) & 0xfffe) {
@@ -328,14 +328,14 @@ void ProdCommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam, LPARAM lParam
         if (prod.grobj == grobjPlanet && prod.iItem == iobjAlchemy) {
             c = 1020;
         }
-        c = c >= static_cast<int32_t>(prod.cItem) ? prod.cItem : c;
+        c = c >= static_cast<std::int32_t>(prod.cItem) ? prod.cItem : c;
         if (app.state.pProdGlob[iSrc].cItem != 0x3ff) {
             app.state.pProdGlob[iSrc].cItem += c;
         }
         app.state.lpplProdGlob->rgprod()[lSel].cItem -= c;
         if (app.state.lpplProdGlob->rgprod()[lSel].cItem == 0) {
-            if (static_cast<int32_t>((lSel + 1)) < iMac) {
-                memmove(&app.state.lpplProdGlob->rgprod()[lSel], &app.state.lpplProdGlob->rgprod()[lSel + 1], (iMac - LOWORD(lSel) - 1) * sizeof(PROD));
+            if (static_cast<std::int32_t>((lSel + 1)) < iMac) {
+                std::memmove(&app.state.lpplProdGlob->rgprod()[lSel], &app.state.lpplProdGlob->rgprod()[lSel + 1], (iMac - LOWORD(lSel) - 1) * sizeof(PROD));
             } else {
                 lSel--;
             }
@@ -354,7 +354,7 @@ void ProdCommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam, LPARAM lParam
         ipl = 0;
         lpprod = app.state.lpplProdGlob->rgprod();
         while (ipl < app.state.lpplProdGlob->iprodMac) {
-            for (iSrc = 0; iSrc < app.state.cProdGlob && (static_cast<uint32_t>(app.state.pProdGlob[iSrc].grobj) != lpprod->grobj || static_cast<uint32_t>(app.state.pProdGlob[iSrc].iItem) != lpprod->iItem); iSrc++) {
+            for (iSrc = 0; iSrc < app.state.cProdGlob && (static_cast<std::uint32_t>(app.state.pProdGlob[iSrc].grobj) != lpprod->grobj || static_cast<std::uint32_t>(app.state.pProdGlob[iSrc].iItem) != lpprod->iItem); iSrc++) {
             }
             if (app.state.pProdGlob[iSrc].cItem != 0x3ff) {
                 app.state.pProdGlob[iSrc].cItem += lpprod->cItem;
@@ -368,7 +368,7 @@ void ProdCommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam, LPARAM lParam
                 cMax = 1;
             }
             lpplprodT = LpplAlloc<PLPROD>(app, 4, cMax, htOrd);
-            memset(lpplprodT->rgprod(), 0, cMax * 4);
+            std::memset(lpplprodT->rgprod(), 0, cMax * 4);
             iDst = 0;
             for (iSrc = 0; iSrc < app.state.lpplProdGlob->iprodMac; iSrc++) {
                 if (app.state.lpplProdGlob->rgprod()[iSrc].grobj != grobjPlanet || app.state.lpplProdGlob->rgprod()[iSrc].iItem >= mdIdleFactory) {
@@ -475,8 +475,8 @@ void ProdCommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam, LPARAM lParam
 
 void InitializeProductionDlg(APPSESSION &app, HWND hwnd) {
     char    rgch[86];
-    int16_t i;
-    int16_t iSel;
+    std::int16_t i;
+    std::int16_t iSel;
     PROD   *lpprod;
 
     iSel = -1;
@@ -499,16 +499,16 @@ void InitializeProductionDlg(APPSESSION &app, HWND hwnd) {
     return;
 }
 
-void DrawProductionDlg(APPSESSION &app, HWND hwnd, HDC hdc, RECT *prc, int16_t iDraw) {
-    int32_t lSel;
-    int16_t iSrc;
-    int16_t idc;
-    int16_t fCreatedDC;
-    int16_t i;
-    int16_t c;
-    int32_t rgCost[4];
-    int16_t dxkT;
-    int16_t k;
+void DrawProductionDlg(APPSESSION &app, HWND hwnd, HDC hdc, RECT *prc, std::int16_t iDraw) {
+    std::int32_t lSel;
+    std::int16_t iSrc;
+    std::int16_t idc;
+    std::int16_t fCreatedDC;
+    std::int16_t i;
+    std::int16_t c;
+    std::int32_t rgCost[4];
+    std::int16_t dxkT;
+    std::int16_t k;
     RECT    rc;
     PROD    prod;
     char    szT[100];
@@ -538,7 +538,7 @@ void DrawProductionDlg(APPSESSION &app, HWND hwnd, HDC hdc, RECT *prc, int16_t i
                 lSel--;
                 prod = app.state.lpplProdGlob->rgprod()[lSel];
             }
-            ProductionIO().pfnQuote(app, &app.state.sel.pl, &prod, reinterpret_cast<uint32_t *>(rgCost), app.state.idPlayer, 0);
+            ProductionIO().pfnQuote(app, &app.state.sel.pl, &prod, reinterpret_cast<std::uint32_t *>(rgCost), app.state.idPlayer, 0);
             rc.bottom = app.lpui->yTopFutureTech + 4;
             win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
             c = TextIO().pfnCchGetString(app, idsRequiredMinerals, app.state.szWork);
@@ -560,19 +560,19 @@ void DrawProductionDlg(APPSESSION &app, HWND hwnd, HDC hdc, RECT *prc, int16_t i
                 }
             }
             if (i != 0) {
-                rc.bottom += static_cast<int16_t>((3 * app.state.dyArial8)) / 2;
+                rc.bottom += static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2;
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
                 c = win32::wsprintfA(szT, TextIO().pfnCompressed(app, idsDDoneCompletion), prod.pct);
                 if (PszProductionETA(app, &app.state.sel.pl, app.state.lpplProdGlob, static_cast<ProdItemType>(LOWORD(lSel)), nullptr, nullptr) != app.state.szWork) {
                 }
-                strcpy(&szT[c], app.state.szWork);
-                win32::TextOutA(hdc, rc.left - 20, rc.bottom, szT, strlen(szT));
+                std::strcpy(&szT[c], app.state.szWork);
+                win32::TextOutA(hdc, rc.left - 20, rc.bottom, szT, std::strlen(szT));
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
             }
         }
     }
     ControlIO().pfnGetClientRect(hwnd, &rc);
-    rc.top = rc.bottom - (static_cast<int16_t>((5 * app.state.dyArial8)) / 2 + 12);
+    rc.top = rc.bottom - (static_cast<std::int16_t>((5 * app.state.dyArial8)) / 2 + 12);
     rc.bottom = (app.state.dyArial8 | 1) + rc.top;
     rc.left = 6;
     rc.right = rc.left + app.state.dyArial8;
@@ -587,9 +587,9 @@ void DrawProductionDlg(APPSESSION &app, HWND hwnd, HDC hdc, RECT *prc, int16_t i
     return;
 }
 
-void FillProdSrcLB(APPSESSION &app, HWND hwndLB, int16_t mdFill) {
+void FillProdSrcLB(APPSESSION &app, HWND hwndLB, std::int16_t mdFill) {
     char    szT[80];
-    int16_t i;
+    std::int16_t i;
     char   *psz;
 
     for (i = 0; i < 6; i++) {
@@ -599,12 +599,12 @@ void FillProdSrcLB(APPSESSION &app, HWND hwndLB, int16_t mdFill) {
     for (i = 0; i < app.state.cProdGlob; i++) {
         if (app.state.pProdGlob[i].cItem > 0) {
             psz = PszNameProdItem(app, app.state.pProdGlob + i);
-            strcpy(&szT[6], psz);
+            std::strcpy(&szT[6], psz);
             if (app.state.pProdGlob[i].grobj == grobjFleet) {
                 szT[0] = app.state.pProdGlob[i].iItem < iobjPacketGerm ? 42 : 35;
             } else if (app.state.pProdGlob[i].iItem < mdIdleFactory) {
                 szT[0] = 'I';
-                strcat(&szT[6], " (Auto Build)");
+                std::strcat(&szT[6], " (Auto Build)");
             } else {
                 szT[0] = ' ';
             }
@@ -619,18 +619,18 @@ INT_PTR  ZipProdDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
 
     HDC         hdc;
     PAINTSTRUCT ps;
-    int16_t     i;
-    int16_t     iBase;
+    std::int16_t     i;
+    std::int16_t     iBase;
     RECT        rc;
-    int16_t     dy;
+    std::int16_t     dy;
     RECT        rc2;
     HWND        hwndRad;
     char       *psz;
     char       *pszT;
     RECT        rcGBox;
-    int16_t     cch;
+    std::int16_t     cch;
     FARPROC     lpProc;
-    int16_t     cpq;
+    std::int16_t     cpq;
 
     switch (message) {
     case win32::WM_INITDIALOG:
@@ -731,7 +731,7 @@ INT_PTR  ZipProdDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             case IDC_IMPORT:
             case IDC_RENAME:
                 if (app.state.vrgZipProd[app.lpui->iResTechNow].fValid) {
-                    strcpy(app.state.szWork, app.state.vrgZipProd[app.lpui->iResTechNow].szName);
+                    std::strcpy(app.state.szWork, app.state.vrgZipProd[app.lpui->iResTechNow].szName);
                 } else {
                     win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsCustomD), app.lpui->iResTechNow);
                 }
@@ -742,7 +742,7 @@ INT_PTR  ZipProdDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                     if (app.state.szWork[0] == 0) {
                         win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsCustomD), app.lpui->iResTechNow);
                     }
-                    strcpy(app.state.vrgZipProd[app.lpui->iResTechNow].szName, app.state.szWork);
+                    std::strcpy(app.state.vrgZipProd[app.lpui->iResTechNow].szName, app.state.szWork);
                     pszT = &app.state.szWork[64];
                     psz = app.state.szWork;
                     while (*psz != 0) {
@@ -790,8 +790,8 @@ INT_PTR  ZipProdDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     return 0;
 }
 
-void EnableZipProdBtns(APPSESSION &app, HWND hwnd, int16_t iSel) {
-    int16_t fEnabled;
+void EnableZipProdBtns(APPSESSION &app, HWND hwnd, std::int16_t iSel) {
+    std::int16_t fEnabled;
 
     fEnabled = app.state.vrgZipProd[iSel].fValid != 0 && iSel > 0;
     ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_DELETE), fEnabled);
@@ -800,7 +800,7 @@ void EnableZipProdBtns(APPSESSION &app, HWND hwnd, int16_t iSel) {
 }
 
 void FillZipProdLB(APPSESSION &app, HWND hwndDlg, ZIPPRODQ *pzpq) {
-    int16_t i;
+    std::int16_t i;
     HWND    hwndLB;
     char    szAuto[40];
     char    szFormat[15];
@@ -819,7 +819,7 @@ void FillZipProdLB(APPSESSION &app, HWND hwndDlg, ZIPPRODQ *pzpq) {
         for (i = 0; i < pzpq->cpq; i++) {
             TextIO().pfnCchGetString(app, static_cast<StringId>(idsMines + pzpq->rgpq[i].mdIdle()), szAuto);
             if (pzpq->rgpq[i].cQuan() == 1 || pzpq->rgpq[i].mdIdle() == iobjAlchemy) {
-                strcpy(app.state.szWork, szAuto);
+                std::strcpy(app.state.szWork, szAuto);
             } else {
                 win32::wsprintfA(app.state.szWork, szFormat, szAuto, pzpq->rgpq[i].cQuan());
             }
@@ -829,8 +829,8 @@ void FillZipProdLB(APPSESSION &app, HWND hwndDlg, ZIPPRODQ *pzpq) {
     return;
 }
 
-int16_t IProductionPresetSlot(APPSESSION &app, int16_t i) {
-    int16_t cMax;
+std::int16_t IProductionPresetSlot(APPSESSION &app, std::int16_t i) {
+    std::int16_t cMax;
         for (cMax = 0; cMax < 4 && (!app.state.vrgZipProd[cMax].fValid || i-- != 0); cMax++) {
         }
     return cMax;
@@ -839,12 +839,12 @@ int16_t IProductionPresetSlot(APPSESSION &app, int16_t i) {
 void CustomizeProductionPresets(APPSESSION &app, HWND hwnd) {
     ZIPPRODQ rgzp[4];
     FARPROC lpProc;
-    int16_t fRet;
-            memcpy(rgzp, app.state.vrgZipProd, 160);
+    std::int16_t fRet;
+            std::memcpy(rgzp, app.state.vrgZipProd, 160);
             lpProc = (ZipProdDlg);
             fRet = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_ZIP_PROD), hwnd, lpProc, 0);
             if (fRet)
                 return;
-            memcpy(app.state.vrgZipProd, rgzp, 160);
+            std::memcpy(app.state.vrgZipProd, rgzp, 160);
             return;
 }

@@ -4,16 +4,16 @@
 #include "production_io.h"
 #include "random_io.h"
 
-THING *LpthNew(APPSESSION &app, int16_t iplr, ThingType ith) {
-    int16_t iItem;
-    int16_t i;
+THING *LpthNew(APPSESSION &app, std::int16_t iplr, ThingType ith) {
+    std::int16_t iItem;
+    std::int16_t i;
     THING  *lpth;
     THING   thNew;
 
     if (app.state.cThing >= 4050) {
         return nullptr;
     }
-    memset(&thNew, 0, sizeof(THING));
+    std::memset(&thNew, 0, sizeof(THING));
     thNew.SetIplr(iplr);
     thNew.SetIth(ith);
     lpth = app.state.lpThings;
@@ -45,35 +45,35 @@ THING *LpthNew(APPSESSION &app, int16_t iplr, ThingType ith) {
         lpth = app.state.lpThings + i;
     }
     if (i < app.state.cThing) {
-        memmove(lpth + 1, lpth, (app.state.cThing - i) * sizeof(THING));
+        std::memmove(lpth + 1, lpth, (app.state.cThing - i) * sizeof(THING));
     }
     app.state.cThing++;
-    memcpy(lpth, &thNew, sizeof(THING));
+    std::memcpy(lpth, &thNew, sizeof(THING));
     return lpth;
 }
 
 void FreeLpth(APPSESSION &app, THING *lpth) {
     if (lpth < app.state.lpThings + (app.state.cThing - 1)) {
-        memmove(lpth, lpth + 1, (app.state.cThing - static_cast<int16_t>((reinterpret_cast<uint8_t *>(lpth) - reinterpret_cast<uint8_t *>(app.state.lpThings))) / 18 - 1) * sizeof(THING));
+        std::memmove(lpth, lpth + 1, (app.state.cThing - static_cast<std::int16_t>((reinterpret_cast<std::uint8_t *>(lpth) - reinterpret_cast<std::uint8_t *>(app.state.lpThings))) / 18 - 1) * sizeof(THING));
     }
     app.state.cThing--;
     return;
 }
 
-int16_t CPlanetsInCircle(APPSESSION &app, POINT16 pt, int32_t r2) {
-    int16_t  xStart;
+std::int16_t CPlanetsInCircle(APPSESSION &app, POINT16 pt, std::int32_t r2) {
+    std::int16_t  xStart;
     POINT16 *ppt;
-    int16_t  yEnd;
-    int16_t  dy;
+    std::int16_t  yEnd;
+    std::int16_t  dy;
     POINT16 *pptEnd;
-    int16_t  yStart;
-    int16_t  i;
-    int16_t  r;
-    int16_t  cPl;
-    int16_t  dx;
-    int16_t  xEnd;
+    std::int16_t  yStart;
+    std::int16_t  i;
+    std::int16_t  r;
+    std::int16_t  cPl;
+    std::int16_t  dx;
+    std::int16_t  xEnd;
 
-    r = LOWORD(static_cast<int32_t>((static_cast<double>(sqrt(static_cast<double>(r2))) + 0.9999)));
+    r = LOWORD(static_cast<std::int32_t>((static_cast<double>(std::sqrt(static_cast<double>(r2))) + 0.9999)));
     xStart = pt.x - r;
     xEnd = pt.x + r;
     yStart = pt.y - r;
@@ -81,7 +81,7 @@ int16_t CPlanetsInCircle(APPSESSION &app, POINT16 pt, int32_t r2) {
     cPl = 0;
     pptEnd = &app.state.rgptPlan[app.state.game.cPlanMax];
     dx = app.state.rgptPlan[app.state.game.cPlanMax - 1].x - app.state.rgptPlan[0].x;
-    i = LOWORD(static_cast<int32_t>((static_cast<int32_t>((static_cast<int16_t>((pt.x - app.state.rgptPlan[0].x)) * app.state.game.cPlanMax)) / dx)));
+    i = LOWORD(static_cast<std::int32_t>((static_cast<std::int32_t>((static_cast<std::int16_t>((pt.x - app.state.rgptPlan[0].x)) * app.state.game.cPlanMax)) / dx)));
     if (i >= app.state.game.cPlanMax) {
         i = app.state.game.cPlanMax - 1;
     }
@@ -94,7 +94,7 @@ int16_t CPlanetsInCircle(APPSESSION &app, POINT16 pt, int32_t r2) {
         if (ppt->x >= xStart && ppt->y >= yStart && ppt->y <= yEnd) {
             dx = ppt->x - pt.x;
             dy = ppt->y - pt.y;
-            if (static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy)) <= r2) {
+            if (static_cast<std::uint32_t>((dx * dx)) + static_cast<std::uint32_t>((dy * dy)) <= r2) {
                 cPl++;
             }
         }
@@ -102,18 +102,18 @@ int16_t CPlanetsInCircle(APPSESSION &app, POINT16 pt, int32_t r2) {
     return cPl;
 }
 
-int16_t IValidateWormholePos(APPSESSION &app, THING *lpthWorm) {
-    int16_t iRet;
+std::int16_t IValidateWormholePos(APPSESSION &app, THING *lpthWorm) {
+    std::int16_t iRet;
     POINT16 pt;
-    int32_t dy;
+    std::int32_t dy;
     THING  *lpthMac;
     FLEET  *lpfl;
-    int16_t ifl;
-    int16_t i;
+    std::int16_t ifl;
+    std::int16_t i;
     THING  *lpth;
-    int16_t dUni;
-    int32_t dx;
-    int32_t l;
+    std::int16_t dUni;
+    std::int32_t dx;
+    std::int32_t l;
 
     iRet = 0;
     dUni = 400 * app.state.game.mdSize + 1400;
@@ -151,9 +151,9 @@ int16_t IValidateWormholePos(APPSESSION &app, THING *lpthWorm) {
     lpthMac = app.state.lpThings + app.state.cThing;
     for (; lpth < lpthMac; lpth++) {
         if (lpth->ith() == ithWormhole && lpth != lpthWorm) {
-            dx = static_cast<int16_t>((pt.x - lpth->pt().x()));
-            dy = static_cast<int16_t>((pt.y - lpth->pt().y()));
-            l = static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy));
+            dx = static_cast<std::int16_t>((pt.x - lpth->pt().x()));
+            dy = static_cast<std::int16_t>((pt.y - lpth->pt().y()));
+            l = static_cast<std::uint32_t>((dx * dx)) + static_cast<std::uint32_t>((dy * dy));
             if (lpth->idFull() == lpthWorm->thw().idPartner()) {
                 if (l < 4900) {
                     if (l < 25) {
@@ -180,9 +180,9 @@ int16_t IValidateWormholePos(APPSESSION &app, THING *lpthWorm) {
         }
     }
     for (i = 0; i < app.state.game.cPlanMax; i++) {
-        dx = static_cast<int16_t>((pt.x - app.state.rgptPlan[i].x));
-        dy = static_cast<int16_t>((pt.y - app.state.rgptPlan[i].y));
-        l = static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy));
+        dx = static_cast<std::int16_t>((pt.x - app.state.rgptPlan[i].x));
+        dy = static_cast<std::int16_t>((pt.y - app.state.rgptPlan[i].y));
+        l = static_cast<std::uint32_t>((dx * dx)) + static_cast<std::uint32_t>((dy * dy));
         if (l < 784) {
             if (l < 25) {
                 iRet |= 8;
@@ -198,10 +198,10 @@ int16_t IValidateWormholePos(APPSESSION &app, THING *lpthWorm) {
     return iRet;
 }
 
-int16_t PctWormholeMoves(THING *lpth) {
-    int16_t pct;
+std::int16_t PctWormholeMoves(THING *lpth) {
+    std::int16_t pct;
 
-    pct = static_cast<int16_t>(lpth->thw().cLastMove()) / 5;
+    pct = static_cast<std::int16_t>(lpth->thw().cLastMove()) / 5;
     pct -= 2 - lpth->thw().iStable();
     if (pct < 0) {
         pct = 0;
@@ -211,43 +211,43 @@ int16_t PctWormholeMoves(THING *lpth) {
     return pct;
 }
 
-void DoThingInteractions(APPSESSION &app, int16_t fPostMove) {
-    int32_t     wtThreshhold;
-    uint16_t    grbitPlrTrader;
-    int16_t     iplr;
-    int32_t     wtMin;
+void DoThingInteractions(APPSESSION &app, std::int16_t fPostMove) {
+    std::int32_t     wtThreshhold;
+    std::uint16_t    grbitPlrTrader;
+    std::int16_t     iplr;
+    std::int32_t     wtMin;
     POINT16     pt;
-    int16_t     iplrSav;
-    uint8_t     rgTech[6];
-    int32_t     wtNext;
-    int32_t     dy;
+    std::int16_t     iplrSav;
+    std::uint8_t     rgTech[6];
+    std::int32_t     wtNext;
+    std::int32_t     dy;
     THING      *lpthMac;
     PLANET     *lpplMac;
     PLANET     *lppl;
-    int16_t     i;
-    int16_t     ifl;
+    std::int16_t     i;
+    std::int16_t     ifl;
     FLEET      *lpfl;
     THING      *lpth;
     MessageId   idm;
-    int16_t     cPlrTrueMaxTech;
-    int32_t     dx;
-    int16_t     fMaxTech;
-    int32_t     l;
-    int32_t     cTech;
-    int16_t     iLowest;
-    int16_t     cTechCur;
-    int32_t     lSpent;
-    int16_t     iGoto;
+    std::int16_t     cPlrTrueMaxTech;
+    std::int32_t     dx;
+    std::int16_t     fMaxTech;
+    std::int32_t     l;
+    std::int32_t     cTech;
+    std::int16_t     iLowest;
+    std::int16_t     cTechCur;
+    std::int32_t     lSpent;
+    std::int16_t     iGoto;
     GrbitTrader grbitTrader;
-    int16_t     cTry;
-    int16_t     iOffset;
-    int16_t     ish;
+    std::int16_t     cTry;
+    std::int16_t     iOffset;
+    std::int16_t     ish;
     SHDEF       shdef;
     SHDEF      *lpshdefDest;
     FLEET      *lpflNew;
-    int16_t     cGive;
-    int16_t     iLvl;
-    int16_t     iPass;
+    std::int16_t     cGive;
+    std::int16_t     iLvl;
+    std::int16_t     iPass;
 
     if (fPostMove) {
         lpth = app.state.lpThings;
@@ -290,7 +290,7 @@ void DoThingInteractions(APPSESSION &app, int16_t fPostMove) {
                                         continue;
                                     } else {
                                         cTechCur = 0;
-                                        cTech = static_cast<int32_t>(((wtMin - 5000) / 1200)) + 6;
+                                        cTech = static_cast<std::int32_t>(((wtMin - 5000) / 1200)) + 6;
                                         for (i = 0; i < 6; i++) {
                                             cTechCur += app.state.rgplr[lpfl->iPlayer].rgTech[i];
                                         }
@@ -329,14 +329,14 @@ void DoThingInteractions(APPSESSION &app, int16_t fPostMove) {
                                             if (app.state.rgplr[iplr].rgTech[iLowest] >= cPlrTrueMaxTech)
                                                 break;
                                         LGiveITech:
-                                            memcpy(rgTech, app.state.rgplr[iplr].rgTech, 6);
+                                            std::memcpy(rgTech, app.state.rgplr[iplr].rgTech, 6);
                                             rgTech[iLowest]++;
                                             iplrSav = app.state.idPlayer;
                                             app.state.idPlayer = iplr;
                                             wtNext = CostOfDevelopingItem(app, reinterpret_cast<char *>(rgTech));
                                             app.state.idPlayer = iplrSav;
                                             lSpent = app.state.rgplr[iplr].rgResSpent[iLowest];
-                                            lSpent = static_cast<int32_t>((lSpent * 2));
+                                            lSpent = static_cast<std::int32_t>((lSpent * 2));
                                             if (wtNext > 0) {
                                                 lSpent += wtNext;
                                             }
@@ -364,7 +364,7 @@ void DoThingInteractions(APPSESSION &app, int16_t fPostMove) {
                                         if (iOffset >= 1) {
                                             iOffset = RandomIO().pfnRandom(app, 2) + 1;
                                         }
-                                        memmove(&shdef, LpshdefT() + (iOffset + 19), sizeof(SHDEF));
+                                        std::memmove(&shdef, LpshdefT() + (iOffset + 19), sizeof(SHDEF));
                                         ish = IshFindSimilarDesign(app, &shdef.hul, iplr);
                                         if (ish < 0) {
                                             do {
@@ -382,7 +382,7 @@ void DoThingInteractions(APPSESSION &app, int16_t fPostMove) {
                                             cGive = 1;
                                         }
                                         if (app.state.game.turn > 100 && !app.state.game.fSinglePlr) {
-                                            cGive += RandomIO().pfnRandom(app, static_cast<uint32_t>(app.state.game.turn) / 100 + 1);
+                                            cGive += RandomIO().pfnRandom(app, static_cast<std::uint32_t>(app.state.game.turn) / 100 + 1);
                                         }
                                         if (cGive > 5) {
                                             cGive = 5;
@@ -419,7 +419,7 @@ void DoThingInteractions(APPSESSION &app, int16_t fPostMove) {
                                         continue;
                                     }
                                 } else {
-                                    idm = static_cast<MessageId>(IdmGiveTraderPart(app, grbitTrader, iplr, reinterpret_cast<uint16_t *>(&iGoto)));
+                                    idm = static_cast<MessageId>(IdmGiveTraderPart(app, grbitTrader, iplr, reinterpret_cast<std::uint16_t *>(&iGoto)));
                                     TurnIO().pfnMessage2(app, lpfl->iplr(), idm, static_cast<MsgGoto>(iGoto), WFromLpfl(app, lpfl), 0);
                                 }
                             }
@@ -431,18 +431,18 @@ void DoThingInteractions(APPSESSION &app, int16_t fPostMove) {
                 for (; lppl < lpplMac; lppl++) {
                     if (lppl->iPlayer != iplrNone && lppl->fStarbase && app.state.rgplr[lppl->iPlayer].fAi && app.state.rgplr[lppl->iPlayer].lvlAi >= lvlAiTough &&
                         !(1 << lppl->iPlayer & lpth->tht().grbitPlr())) {
-                        dx = static_cast<int16_t>((app.state.rgptPlan[lppl->id].x - pt.x));
+                        dx = static_cast<std::int16_t>((app.state.rgptPlan[lppl->id].x - pt.x));
                         if (dx > 100)
                             break;
-                        dy = static_cast<int16_t>((app.state.rgptPlan[lppl->id].y - pt.y));
-                        l = static_cast<uint32_t>((dx * dx)) + static_cast<uint32_t>((dy * dy));
+                        dy = static_cast<std::int16_t>((app.state.rgptPlan[lppl->id].y - pt.y));
+                        l = static_cast<std::uint32_t>((dx * dx)) + static_cast<std::uint32_t>((dy * dy));
                         if (l <= 10000) {
                             wtNext = 0;
                             for (i = 0; i < 3; i++) {
                                 wtNext += lppl->rgwtMin[i];
                             }
                             iplr = lppl->iPlayer;
-                            wtThreshhold = static_cast<uint32_t>((app.state.rgplr[iplr].lvlAi == lvlAiTough ? 3500 : 5000));
+                            wtThreshhold = static_cast<std::uint32_t>((app.state.rgplr[iplr].lvlAi == lvlAiTough ? 3500 : 5000));
                             if (wtNext >= wtThreshhold) {
                                 if (lpth->tht().grbitTrader() == grbitTraderNone)
                                     goto LAutoTech;
@@ -490,8 +490,8 @@ void DoThingInteractions(APPSESSION &app, int16_t fPostMove) {
     return;
 }
 
-int16_t IdmGiveTraderPart(APPSESSION &app, GrbitTrader grbitTrader, int16_t iplr, uint16_t *piGoto) {
-    uint16_t  iGoto;
+std::int16_t IdmGiveTraderPart(APPSESSION &app, GrbitTrader grbitTrader, std::int16_t iplr, std::uint16_t *piGoto) {
+    std::uint16_t  iGoto;
     MessageId idm;
 
     app.state.rgplr[iplr].grbitTrader = static_cast<GrbitTrader>(app.state.rgplr[iplr].grbitTrader | grbitTrader);

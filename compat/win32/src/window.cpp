@@ -8,14 +8,14 @@
 #include "window_io.h"
 #include "cleanup.h"
 #include <stars_compat.h>
-#include <stdlib.h>
+#include <cstdlib>
 #include <new>
-#include <string.h>
+#include <cstring>
 
 static COMPATCLASS *lpClasses;
 static HWND lpWindows, hwndFocus, hwndActive, hwndFirstTop;
 static unsigned int atomNext = 1;
-static uint64_t idInspectNext;
+static std::uint64_t idInspectNext;
 static BOOL fVideoOwned, fShutdown, fResizeWatch, fLiveResize;
 static BOOL fDialogSequence;
 static HWND hwndSequenceOwner;
@@ -49,11 +49,11 @@ static void DestroySequenceWindow(void) {
 }
 
 static char *PszNativeTitle(LPCSTR pszTitle) {
-    return FUtf8Valid(pszTitle, strlen(pszTitle)) ? SDL_strdup(pszTitle) : nullptr;
+    return FUtf8Valid(pszTitle, std::strlen(pszTitle)) ? SDL_strdup(pszTitle) : nullptr;
 }
 
 BOOL FCompatNativeTitle(SDL_Window *lpWindow, LPCSTR pszTitle) {
-    if (!FUtf8Valid(pszTitle, strlen(pszTitle))) return 0;
+    if (!FUtf8Valid(pszTitle, std::strlen(pszTitle))) return 0;
     if (SDL_GetWindowFlags(lpWindow) & (SDL_WINDOW_POPUP_MENU | SDL_WINDOW_TOOLTIP)) return 1;
     return CompatWindowIO().pfnSetWindowTitle(lpWindow, pszTitle);
 }
@@ -64,13 +64,13 @@ BOOL StarsCompatSetWindowTitleUtf8(HWND hwnd, const char *psz) {
 
 static BOOL FNativePositionable(SDL_Window *lpWindow) {
     const char *pszDriver = CompatInputIO().pfnGetCurrentVideoDriver();
-    return !pszDriver || strcmp(pszDriver, "wayland") ||
+    return !pszDriver || std::strcmp(pszDriver, "wayland") ||
            (SDL_GetWindowFlags(lpWindow) & (SDL_WINDOW_POPUP_MENU | SDL_WINDOW_TOOLTIP));
 }
 
 static BOOL FNativePosition(SDL_Window *lpWindow, int *lpx, int *lpy) {
     int x, y;
-    int64_t xWide = 0, yWide = 0;
+    std::int64_t xWide = 0, yWide = 0;
 
     do {
         // Wayland has no desktop origin for toplevels. Use an owner-local
@@ -224,7 +224,7 @@ BOOL CompatPeekPaint(LPMSG lpmsg, HWND hwnd, UINT msgMin, UINT msgMax) {
         if (!lpwin->fAlive || !win32::IsWindowVisible(lpwin) || !lpwin->fUpdate || lpwin->hdcPaint ||
             (hwnd && hwnd != lpwin && !win32::IsChild(hwnd, lpwin)))
             continue;
-        memset(lpmsg, 0, sizeof(*lpmsg));
+        std::memset(lpmsg, 0, sizeof(*lpmsg));
         lpmsg->hwnd = lpwin;
         lpmsg->message = win32::WM_PAINT;
         lpmsg->time = win32::GetTickCount();
@@ -252,7 +252,7 @@ ATOM win32::RegisterClassA(const WNDCLASSA *lpwc) {
 
     if (!SDL_IsMainThread() || fShutdown || !lpwc || !lpwc->lpfnWndProc ||
         reinterpret_cast<UINT_PTR>(lpwc->lpszClassName) <= UINT16_MAX ||
-        !FUtf8Valid(lpwc->lpszClassName, strlen(lpwc->lpszClassName)) ||
+        !FUtf8Valid(lpwc->lpszClassName, std::strlen(lpwc->lpszClassName)) ||
         lpwc->cbWndExtra < 0 || lpwc->cbClsExtra < 0 || atomNext > UINT16_MAX)
         return 0;
     if (LpFindClass(lpwc->lpszClassName, lpwc->hInstance)) {
@@ -267,7 +267,7 @@ ATOM win32::RegisterClassA(const WNDCLASSA *lpwc) {
     if (reinterpret_cast<UINT_PTR>(lpwc->lpszMenuName) > UINT16_MAX)
         lpclass->pszMenu.reset(SDL_strdup(lpwc->lpszMenuName));
     if (lpwc->cbClsExtra != 0)
-        lpclass->rgbExtra.reset(static_cast<BYTE *>(calloc(1, static_cast<size_t>(lpwc->cbClsExtra))));
+        lpclass->rgbExtra.reset(static_cast<BYTE *>(std::calloc(1, static_cast<std::size_t>(lpwc->cbClsExtra))));
     if (!lpclass->pszClass || (reinterpret_cast<UINT_PTR>(lpwc->lpszMenuName) > UINT16_MAX && !lpclass->pszMenu) ||
         (lpwc->cbClsExtra != 0 && !lpclass->rgbExtra)) {
         delete lpclass;
@@ -357,7 +357,7 @@ static void DestroyCompatWindow(HWND lpwin, BOOL fDestroyMessage, BOOL fNotify) 
     lpwin->pszEditUndo = nullptr;
     if (lpwin->lpWindow) SDL_StopTextInput(lpwin->lpWindow.get());
     lpwin->lpWindow.reset();
-    free(lpwin->rgbExtra);
+    std::free(lpwin->rgbExtra);
     lpwin->rgbExtra = nullptr;
     SDL_free(lpwin->pszTitle);
     lpwin->pszTitle = nullptr;
@@ -397,7 +397,7 @@ HWND win32::CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
     RECT rcClient, rcWindow;
     LRESULT lr;
 
-    if (pszTitle && !FUtf8Valid(pszTitle, strlen(pszTitle))) {
+    if (pszTitle && !FUtf8Valid(pszTitle, std::strlen(pszTitle))) {
         SDL_SetError("Window text is invalid UTF-8");
         return nullptr;
     }
@@ -445,21 +445,21 @@ HWND win32::CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
     if (!lpwin)
         return nullptr;
     if (lpclass->wc.cbWndExtra != 0)
-        lpwin->rgbExtra = static_cast<BYTE *>((calloc(1, static_cast<size_t>(lpclass->wc.cbWndExtra))));
+        lpwin->rgbExtra = static_cast<BYTE *>((std::calloc(1, static_cast<std::size_t>(lpclass->wc.cbWndExtra))));
     if (lpclass->wc.cbWndExtra != 0 && !lpwin->rgbExtra) {
         delete lpwin;
         return nullptr;
     }
     lpwin->pszTitle = SDL_strdup(pszTitle ? pszTitle : "");
     if (!lpwin->pszTitle) {
-        free(lpwin->rgbExtra);
+        std::free(lpwin->rgbExtra);
         delete lpwin;
         return nullptr;
     }
     if (fChild) {
-        if (static_cast<int64_t>(x) + dx > INT32_MAX || static_cast<int64_t>(y) + dy > INT32_MAX) {
+        if (static_cast<std::int64_t>(x) + dx > INT32_MAX || static_cast<std::int64_t>(y) + dy > INT32_MAX) {
             SDL_free(lpwin->pszTitle);
-            free(lpwin->rgbExtra);
+            std::free(lpwin->rgbExtra);
             delete lpwin;
             return nullptr;
         }
@@ -474,7 +474,7 @@ HWND win32::CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
         if (dwExStyle & win32::WS_EX_TOPMOST) flags |= SDL_WINDOW_ALWAYS_ON_TOP;
         if ((dwExStyle & win32::WS_EX_NOACTIVATE) || (dwStyle & win32::WS_DISABLED)) flags |= SDL_WINDOW_NOT_FOCUSABLE;
         if (fDialogSequence && lpSequenceWindow.get() && lpwin->hwndOwner == hwndSequenceOwner &&
-            reinterpret_cast<UINT_PTR>(pszClass) > UINT16_MAX && !strcmp(pszClass, "#32770") &&
+            reinterpret_cast<UINT_PTR>(pszClass) > UINT16_MAX && !std::strcmp(pszClass, "#32770") &&
             SDL_GetWindowSize(lpSequenceWindow.get(), &cxReuse, &cyReuse) && cxReuse == dx && cyReuse == dy &&
             (SDL_GetWindowFlags(lpSequenceWindow.get()) & (SDL_WINDOW_BORDERLESS | SDL_WINDOW_RESIZABLE |
              SDL_WINDOW_ALWAYS_ON_TOP | SDL_WINDOW_NOT_FOCUSABLE)) ==
@@ -489,22 +489,22 @@ HWND win32::CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
             lpwin->fDeferPresent = fReuse = 1;
         } else {
             if (lpSequenceWindow.get() && lpwin->hwndOwner == hwndSequenceOwner &&
-                reinterpret_cast<UINT_PTR>(pszClass) > UINT16_MAX && !strcmp(pszClass, "#32770")) {
+                reinterpret_cast<UINT_PTR>(pszClass) > UINT16_MAX && !std::strcmp(pszClass, "#32770")) {
                 DestroySequenceWindow();
             }
             // Menus, combo lists and tooltips need compositor popup roles so
             // their placement remains relative to the owner without focus loss.
             fNativePopup = lpwin->hwndOwner && reinterpret_cast<UINT_PTR>(pszClass) > UINT16_MAX &&
-                (!strcmp(pszClass, "StarsCompatPopup") || !strcmp(pszClass, "StarsComboPopup") ||
-                 !strcmp(pszClass, "starstt") || !strcmp(pszClass, "starspopup") ||
-                 !strcmp(pszClass, "StarsCompatToolbarTip")) &&
-                strcmp(CompatInputIO().pfnGetCurrentVideoDriver(), "dummy") != 0;
-            if (fNativePopup) flags |= !strcmp(pszClass, "starstt") || !strcmp(pszClass, "starspopup") ||
-                !strcmp(pszClass, "StarsCompatToolbarTip") ?
+                (!std::strcmp(pszClass, "StarsCompatPopup") || !std::strcmp(pszClass, "StarsComboPopup") ||
+                 !std::strcmp(pszClass, "starstt") || !std::strcmp(pszClass, "starspopup") ||
+                 !std::strcmp(pszClass, "StarsCompatToolbarTip")) &&
+                std::strcmp(CompatInputIO().pfnGetCurrentVideoDriver(), "dummy") != 0;
+            if (fNativePopup) flags |= !std::strcmp(pszClass, "starstt") || !std::strcmp(pszClass, "starspopup") ||
+                !std::strcmp(pszClass, "StarsCompatToolbarTip") ?
                 SDL_WINDOW_TOOLTIP : SDL_WINDOW_POPUP_MENU;
             // Cocoa otherwise gives the unpainted popup view an opaque black
             // backing before the renderer's first drawable reaches the screen.
-            if (fNativePopup && !strcmp(CompatInputIO().pfnGetCurrentVideoDriver(), "cocoa")) flags |= SDL_WINDOW_TRANSPARENT;
+            if (fNativePopup && !std::strcmp(CompatInputIO().pfnGetCurrentVideoDriver(), "cocoa")) flags |= SDL_WINDOW_TRANSPARENT;
             // Native captions and control text share the same UTF-8 representation.
             pszNative = fNativePopup ? nullptr : PszNativeTitle(lpwin->pszTitle);
             if (fNativePopup && win32::GetWindowRect(lpwin->hwndOwner, &rcOwner))
@@ -527,16 +527,16 @@ HWND win32::CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
              !SDL_SetWindowFullscreen(lpwin->lpWindow.get(), true)) ||
             (!fReuse && !fNativePopup && lpwin->hwndOwner && lpwin->hwndOwner->lpWindow.get() &&
              ((SDL_GetWindowFlags(lpwin->hwndOwner->lpWindow.get()) & SDL_WINDOW_FULLSCREEN) ||
-              (reinterpret_cast<UINT_PTR>(pszClass) > UINT16_MAX && !strcmp(pszClass, "#32770"))) &&
+              (reinterpret_cast<UINT_PTR>(pszClass) > UINT16_MAX && !std::strcmp(pszClass, "#32770"))) &&
              // Native dialogs need a transient parent even when the owner is windowed.
              // The dummy driver has no native window hierarchy; HWND ownership
              // still applies there, but SDL_SetWindowParent is unsupported.
-             strcmp(CompatInputIO().pfnGetCurrentVideoDriver(), "dummy") != 0 &&
+             std::strcmp(CompatInputIO().pfnGetCurrentVideoDriver(), "dummy") != 0 &&
              !SDL_SetWindowParent(lpwin->lpWindow.get(), lpwin->hwndOwner->lpWindow.get()))) {
             CompatDestroyPaint(lpwin);
             lpwin->lpWindow.reset();
             SDL_free(lpwin->pszTitle);
-            free(lpwin->rgbExtra);
+            std::free(lpwin->rgbExtra);
             delete lpwin;
             return nullptr;
         }
@@ -563,7 +563,7 @@ HWND win32::CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
              lp = lp->hwndZNext) hwndAfter = lp;
         InsertCompatZ(lpwin, hwndAfter);
     }
-    memset(&cs, 0, sizeof(cs));
+    std::memset(&cs, 0, sizeof(cs));
     cs.lpCreateParams = lpParam;
     cs.hInstance = hInstance;
     cs.hwndParent = hwndParent;
@@ -650,12 +650,12 @@ LONG_PTR win32::GetWindowLongPtrA(HWND hwnd, int ib) {
     if (!lpwin)
         return 0;
     if (lpwin->fDialog && ib == win32::DWLP_MSGRESULT) return lpwin->lDlgMsgResult;
-    if (lpwin->fDialog && ib == win32::DWLP_DLGPROC) { memcpy(&l, &lpwin->lpfnDlg, sizeof(l)); return l; }
+    if (lpwin->fDialog && ib == win32::DWLP_DLGPROC) { std::memcpy(&l, &lpwin->lpfnDlg, sizeof(l)); return l; }
     if (ib == win32::GWLP_USERDATA)
         return lpwin->lUserData;
     if (ib == win32::GWLP_WNDPROC) {
         static_assert(sizeof(l) == sizeof(lpwin->lpfnWndProc), "native callback width");
-        memcpy(&l, &lpwin->lpfnWndProc, sizeof(l));
+        std::memcpy(&l, &lpwin->lpfnWndProc, sizeof(l));
         return l;
     }
     if (ib == win32::GWLP_ID)
@@ -667,7 +667,7 @@ LONG_PTR win32::GetWindowLongPtrA(HWND hwnd, int ib) {
     if (ib == win32::GWL_EXSTYLE)
         return static_cast<LONG>(lpwin->dwExStyle);
     if (ib >= 0 && ib <= lpwin->lpclass->wc.cbWndExtra - static_cast<int>(sizeof(l))) {
-        memcpy(&l, lpwin->rgbExtra + ib, sizeof(l));
+        std::memcpy(&l, lpwin->rgbExtra + ib, sizeof(l));
         return l;
     }
     SDL_SetError("Unsupported or out-of-bounds window data index");
@@ -683,7 +683,7 @@ LONG_PTR win32::SetWindowLongPtrA(HWND hwnd, int ib, LONG_PTR lNew) {
         return 0;
     if (lpwin->fDialog && ib == win32::DWLP_MSGRESULT) { lOld = lpwin->lDlgMsgResult; lpwin->lDlgMsgResult = lNew; return lOld; }
     if (lpwin->fDialog && ib == win32::DWLP_DLGPROC) {
-        memcpy(&lOld, &lpwin->lpfnDlg, sizeof(lOld)); memcpy(&lpwin->lpfnDlg, &lNew, sizeof(lNew)); return lOld;
+        std::memcpy(&lOld, &lpwin->lpfnDlg, sizeof(lOld)); std::memcpy(&lpwin->lpfnDlg, &lNew, sizeof(lNew)); return lOld;
     }
     if (ib == win32::GWLP_USERDATA) {
         lOld = lpwin->lUserData;
@@ -696,7 +696,7 @@ LONG_PTR win32::SetWindowLongPtrA(HWND hwnd, int ib, LONG_PTR lNew) {
         return lOld;
     }
     if (ib == win32::GWLP_WNDPROC) {
-        memcpy(&lpfn, &lNew, sizeof(lpfn));
+        std::memcpy(&lpfn, &lNew, sizeof(lpfn));
         if (!lpfn)
             return 0;
         lOld = win32::GetWindowLongPtrA(hwnd, ib);
@@ -704,8 +704,8 @@ LONG_PTR win32::SetWindowLongPtrA(HWND hwnd, int ib, LONG_PTR lNew) {
         return lOld;
     }
     if (ib >= 0 && ib <= lpwin->lpclass->wc.cbWndExtra - static_cast<int>(sizeof(lNew))) {
-        memcpy(&lOld, lpwin->rgbExtra + ib, sizeof(lOld));
-        memcpy(lpwin->rgbExtra + ib, &lNew, sizeof(lNew));
+        std::memcpy(&lOld, lpwin->rgbExtra + ib, sizeof(lOld));
+        std::memcpy(lpwin->rgbExtra + ib, &lNew, sizeof(lNew));
         return lOld;
     }
     SDL_SetError("Unsupported or out-of-bounds window data index");
@@ -755,7 +755,7 @@ BOOL win32::GetWindowPlacement(HWND hwnd, WINDOWPLACEMENT *lpwndpl) {
     WINDOWPLACEMENT wndpl = {};
     SDL_Rect rcDisplay, rcWork;
     SDL_DisplayID idDisplay;
-    int64_t dx, dy, xLeft, xRight, yTop, yBottom;
+    std::int64_t dx, dy, xLeft, xRight, yTop, yBottom;
     if (!lpwin) { win32::SetLastError(win32::ERROR_INVALID_WINDOW_HANDLE); return 0; }
     // Stars retains the Win16 length value 22 while using our native ABI.
     if (!lpwndpl || (lpwndpl->length != sizeof(wndpl) && lpwndpl->length != 22)) {
@@ -771,12 +771,12 @@ BOOL win32::GetWindowPlacement(HWND hwnd, WINDOWPLACEMENT *lpwndpl) {
         idDisplay = SDL_GetDisplayForWindow(lpwin->lpWindow.get());
         if (!idDisplay || !CompatDisplayIO().pfnGetDisplayBounds(idDisplay, &rcDisplay) ||
             !CompatDisplayIO().pfnGetDisplayUsableBounds(idDisplay, &rcWork)) return 0;
-        dx = static_cast<int64_t>(rcWork.x) - rcDisplay.x;
-        dy = static_cast<int64_t>(rcWork.y) - rcDisplay.y;
-        xLeft = static_cast<int64_t>(wndpl.rcNormalPosition.left) - dx;
-        xRight = static_cast<int64_t>(wndpl.rcNormalPosition.right) - dx;
-        yTop = static_cast<int64_t>(wndpl.rcNormalPosition.top) - dy;
-        yBottom = static_cast<int64_t>(wndpl.rcNormalPosition.bottom) - dy;
+        dx = static_cast<std::int64_t>(rcWork.x) - rcDisplay.x;
+        dy = static_cast<std::int64_t>(rcWork.y) - rcDisplay.y;
+        xLeft = static_cast<std::int64_t>(wndpl.rcNormalPosition.left) - dx;
+        xRight = static_cast<std::int64_t>(wndpl.rcNormalPosition.right) - dx;
+        yTop = static_cast<std::int64_t>(wndpl.rcNormalPosition.top) - dy;
+        yBottom = static_cast<std::int64_t>(wndpl.rcNormalPosition.bottom) - dy;
         if (xLeft < INT32_MIN || xLeft > INT32_MAX || xRight < INT32_MIN || xRight > INT32_MAX ||
             yTop < INT32_MIN || yTop > INT32_MAX || yBottom < INT32_MIN || yBottom > INT32_MAX) {
             win32::SetLastError(win32::ERROR_ARITHMETIC_OVERFLOW); return 0;
@@ -814,7 +814,7 @@ static BOOL ShowCompatWindow(HWND hwnd, int sw, BOOL fRedraw, BOOL fNotify) {
         sw = static_cast<int>(lpwin->swInitial);
         // The headless driver cannot maximize/minimize a native window. Keep
         // the deferred startup show visible so client workflows can run there.
-        if (!strcmp(CompatInputIO().pfnGetCurrentVideoDriver(), "dummy") &&
+        if (!std::strcmp(CompatInputIO().pfnGetCurrentVideoDriver(), "dummy") &&
             (sw == win32::SW_SHOWMAXIMIZED || sw == win32::SW_SHOWMINIMIZED)) sw = win32::SW_SHOWNORMAL;
     }
     swOld = lpwin->swState;
@@ -1072,7 +1072,7 @@ BOOL win32::SetWindowPos(HWND hwnd, HWND hwndAfter, int x, int y, int dx, int dy
     if (wp.flags & win32::SWP_NOSIZE) { wp.cx = wpOld.cx; wp.cy = wpOld.cy; }
     if (wp.cx < 0) wp.cx = 0;
     if (wp.cy < 0) wp.cy = 0;
-    if (static_cast<int64_t>(wp.x) + wp.cx > INT32_MAX || static_cast<int64_t>(wp.y) + wp.cy > INT32_MAX) {
+    if (static_cast<std::int64_t>(wp.x) + wp.cx > INT32_MAX || static_cast<std::int64_t>(wp.y) + wp.cy > INT32_MAX) {
         win32::SetLastError(win32::ERROR_INVALID_PARAMETER);
         return 0;
     }
@@ -1140,12 +1140,12 @@ int win32::GetWindowTextA(HWND hwnd, LPSTR psz, int cchMax) {
 
 int win32::GetClassNameA(HWND hwnd, LPSTR psz, int cchMax) {
     HWND lpwin = LpCompatWindow(hwnd);
-    size_t cch;
+    std::size_t cch;
 
     if (!lpwin || !psz || cchMax <= 0)
         return 0;
-    cch = CchUtf8Prefix(lpwin->lpclass->pszClass.get(), static_cast<size_t>(cchMax) - 1);
-    memcpy(psz, lpwin->lpclass->pszClass.get(), cch); psz[cch] = 0;
+    cch = CchUtf8Prefix(lpwin->lpclass->pszClass.get(), static_cast<std::size_t>(cchMax) - 1);
+    std::memcpy(psz, lpwin->lpclass->pszClass.get(), cch); psz[cch] = 0;
     return static_cast<int>(cch);
 }
 
@@ -1207,7 +1207,7 @@ BOOL win32::GetClientRect(HWND hwnd, LPRECT lprc) {
     return 1;
 }
 
-static BOOL FClientOrigin(HWND hwnd, int64_t *lpx, int64_t *lpy) {
+static BOOL FClientOrigin(HWND hwnd, std::int64_t *lpx, std::int64_t *lpy) {
     HWND lpwin = LpCompatWindow(hwnd);
     int x, y;
     if (!lpwin) return 0;
@@ -1223,10 +1223,10 @@ static BOOL FClientOrigin(HWND hwnd, int64_t *lpx, int64_t *lpy) {
 }
 
 static BOOL FConvertPoint(HWND hwnd, LPPOINT lppt, BOOL fToScreen) {
-    int64_t x, y;
+    std::int64_t x, y;
     if (!lppt || !FClientOrigin(hwnd, &x, &y)) return 0;
-    x = static_cast<int64_t>(lppt->x) + (fToScreen ? x : -x);
-    y = static_cast<int64_t>(lppt->y) + (fToScreen ? y : -y);
+    x = static_cast<std::int64_t>(lppt->x) + (fToScreen ? x : -x);
+    y = static_cast<std::int64_t>(lppt->y) + (fToScreen ? y : -y);
     if (x < INT32_MIN || x > INT32_MAX || y < INT32_MIN || y > INT32_MAX) return 0;
     lppt->x = static_cast<LONG>(x); lppt->y = static_cast<LONG>(y);
     return 1;
@@ -1236,7 +1236,7 @@ BOOL win32::ClientToScreen(HWND hwnd, LPPOINT lppt) { return FConvertPoint(hwnd,
 BOOL win32::ScreenToClient(HWND hwnd, LPPOINT lppt) { return FConvertPoint(hwnd, lppt, 0); }
 
 int win32::MapWindowPoints(HWND hwndFrom, HWND hwndTo, LPPOINT rgpt, UINT cpt) {
-    int64_t xFrom = 0, yFrom = 0, xTo = 0, yTo = 0, dx, dy, x, y;
+    std::int64_t xFrom = 0, yFrom = 0, xTo = 0, yTo = 0, dx, dy, x, y;
     UINT i;
     if (!SDL_IsMainThread() || (cpt != 0 && !rgpt)) {
         win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return 0;
@@ -1248,18 +1248,18 @@ int win32::MapWindowPoints(HWND hwndFrom, HWND hwndTo, LPPOINT rgpt, UINT cpt) {
     dx = xFrom - xTo; dy = yFrom - yTo;
     /* Validate every coordinate before writing: a failed array mapping is atomic. */
     for (i = 0; i < cpt; i++) {
-        x = static_cast<int64_t>(rgpt[i].x) + dx; y = static_cast<int64_t>(rgpt[i].y) + dy;
+        x = static_cast<std::int64_t>(rgpt[i].x) + dx; y = static_cast<std::int64_t>(rgpt[i].y) + dy;
         if (x < INT32_MIN || x > INT32_MAX || y < INT32_MIN || y > INT32_MAX) {
             win32::SetLastError(win32::ERROR_ARITHMETIC_OVERFLOW); return 0;
         }
     }
-    for (i = 0; i < cpt; i++) { rgpt[i].x = static_cast<LONG>((static_cast<int64_t>(rgpt[i].x) + dx)); rgpt[i].y = static_cast<LONG>((static_cast<int64_t>(rgpt[i].y) + dy)); }
-    return static_cast<int>(static_cast<int32_t>(MAKELONG(static_cast<WORD>(dx), static_cast<WORD>(dy))));
+    for (i = 0; i < cpt; i++) { rgpt[i].x = static_cast<LONG>((static_cast<std::int64_t>(rgpt[i].x) + dx)); rgpt[i].y = static_cast<LONG>((static_cast<std::int64_t>(rgpt[i].y) + dy)); }
+    return static_cast<int>(static_cast<std::int32_t>(MAKELONG(static_cast<WORD>(dx), static_cast<WORD>(dy))));
 }
 
 BOOL win32::GetWindowRect(HWND hwnd, LPRECT lprc) {
     RECT rc;
-    int64_t x, y;
+    std::int64_t x, y;
     if (!lprc || !CompatGetSurfaceRect(hwnd, &rc) || !FClientOrigin(hwnd, &x, &y)) return 0;
     y -= CyCompatMenuBar(hwnd); rc.bottom += CyCompatMenuBar(hwnd);
     if (x < INT32_MIN || y < INT32_MIN || x + rc.right > INT32_MAX || y + rc.bottom > INT32_MAX)
@@ -1367,7 +1367,7 @@ HWND win32::WindowFromPoint(POINT pt) {
     POINT ptClient;
     if (!SDL_IsMainThread()) return nullptr;
     pszDriver = CompatInputIO().pfnGetCurrentVideoDriver();
-    if (pszDriver && !strcmp(pszDriver, "wayland")) hwndPointer = HwndCompatPointerRoot();
+    if (pszDriver && !std::strcmp(pszDriver, "wayland")) hwndPointer = HwndCompatPointerRoot();
     for (hwnd = hwndFirstTop; hwnd; hwnd = hwnd->hwndZNext) {
         // Owner-local coordinates cannot distinguish independent Wayland roots.
         // Route pointer queries through the surface that supplied the event.

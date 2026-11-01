@@ -10,17 +10,17 @@
 #include "alert_io.h"
 #include "random_io.h"
 
-uint8_t rgbrcStart[136] = {68,  65,  88,  20,  136, 129, 17,  136, 129, 24,  20,  134, 65,  72,  130, 65,  88,  130, 23,  134, 19,  17,  81,
+std::uint8_t rgbrcStart[136] = {68,  65,  88,  20,  136, 129, 17,  136, 129, 24,  20,  134, 65,  72,  130, 65,  88,  130, 23,  134, 19,  17,  81,
                            130, 134, 104, 40,  21,  49,  97,  131, 134, 104, 56,  22,  19,  49,  104, 131, 22,  97,  56,  134, 19,  68,  18,
                            21,  24,  65,  72,  84,  113, 120, 131, 134, 49,  104, 131, 22,  97,  56,  134, 19,  67,  54,  102, 65,  88,  130,
                            23,  134, 19,  97,  56,  33,  132, 21,  120, 17,  49,  81,  113, 19,  21,  23,  56,  88,  131, 133, 135, 68,  17,
                            49,  81,  113, 130, 132, 134, 136, 104, 72,  40,  23,  21,  19,  17,  49,  81,  113, 130, 132, 134, 136, 104, 72,
                            40,  23,  21,  19,  68,  17,  49,  81,  113, 130, 132, 134, 136, 104, 72,  40,  23,  21,  19,  51,  102};
 
-int16_t FDeleteBattlePlan(APPSESSION &app, int16_t iplan, int16_t fWarn) {
-    int16_t fFoundBigger;
-    int16_t iflMac;
-    int16_t i;
+std::int16_t FDeleteBattlePlan(APPSESSION &app, std::int16_t iplan, std::int16_t fWarn) {
+    std::int16_t fFoundBigger;
+    std::int16_t iflMac;
+    std::int16_t i;
     FLEET  *lpfl;
 
     fFoundBigger = 0;
@@ -32,8 +32,8 @@ LCommit:
         if (lpfl->iPlayer >= app.state.idPlayer) {
             if (lpfl->iPlayer > app.state.idPlayer)
                 break;
-            if (lpfl->iplan >= static_cast<uint16_t>(iplan)) {
-                if (lpfl->iplan > static_cast<uint16_t>(iplan)) {
+            if (lpfl->iplan >= static_cast<std::uint16_t>(iplan)) {
+                if (lpfl->iplan > static_cast<std::uint16_t>(iplan)) {
                     if (!fWarn) {
                         lpfl->iplan--;
                     } else {
@@ -62,10 +62,10 @@ LCommit:
     return 1;
 }
 
-int16_t FFleetHasBombs(APPSESSION &app, FLEET *lpfl) {
+std::int16_t FFleetHasBombs(APPSESSION &app, FLEET *lpfl) {
     HUL       *lphul;
     HullAttack imd;
-    int16_t    ishdef;
+    std::int16_t    ishdef;
 
     for (ishdef = 0; ishdef < 16; ishdef++) {
         if (lpfl->rgcsh[ishdef] != 0) {
@@ -79,9 +79,9 @@ int16_t FFleetHasBombs(APPSESSION &app, FLEET *lpfl) {
     return 0;
 }
 
-int16_t FHullHasBombs(HUL *lphul) {
+std::int16_t FHullHasBombs(HUL *lphul) {
     HS     *lphs;
-    int16_t ihs;
+    std::int16_t ihs;
 
     lphs = lphul->rghs;
     ihs = 0;
@@ -101,8 +101,8 @@ int16_t FHullHasBombs(HUL *lphul) {
     return 0;
 }
 
-int16_t FFleetHasTeeth(APPSESSION &app, FLEET *lpfl) {
-    int16_t ishdef;
+std::int16_t FFleetHasTeeth(APPSESSION &app, FLEET *lpfl) {
+    std::int16_t ishdef;
 
     for (ishdef = 0; ishdef < 16; ishdef++) {
         if (lpfl->rgcsh[ishdef] != 0 && FHullHasTeeth(&app.state.rglpshdef[lpfl->iplr()][ishdef].hul) && app.state.rglpshdef[lpfl->iplr()][ishdef].det == detAll) {
@@ -112,9 +112,9 @@ int16_t FFleetHasTeeth(APPSESSION &app, FLEET *lpfl) {
     return 0;
 }
 
-int16_t FHullHasTeeth(HUL *lphul) {
+std::int16_t FHullHasTeeth(HUL *lphul) {
     HS     *lphs;
-    int16_t ihs;
+    std::int16_t ihs;
 
     lphs = lphul->rghs;
     ihs = 0;
@@ -128,17 +128,17 @@ int16_t FHullHasTeeth(HUL *lphul) {
     return 0;
 }
 
-int16_t FFuelTanker(SHDEF *lpshdef) {
+std::int16_t FFuelTanker(SHDEF *lpshdef) {
     if (lpshdef->hul.ihuldef == ihuldefFuelTransport || lpshdef->hul.ihuldef == ihuldefSuperFuelXport) {
         return 1;
     }
     return 0;
 }
 
-void CheckTarget(APPSESSION &app, TOK *ptok, FLEET *lpfl, int16_t ishdef) {
-    int16_t  iplr;
+void CheckTarget(APPSESSION &app, TOK *ptok, FLEET *lpfl, std::int16_t ishdef) {
+    std::int16_t  iplr;
     BTLPLAN *lpbtlplan;
-    int16_t  ibp;
+    std::int16_t  ibp;
     SHDEF   *lpshdef;
 
     iplr = lpfl->iplr();
@@ -169,10 +169,10 @@ void CheckTarget(APPSESSION &app, TOK *ptok, FLEET *lpfl, int16_t ishdef) {
     return;
 }
 
-int16_t FDumpCargo(APPSESSION &app, FLEET *lpfl) {
+std::int16_t FDumpCargo(APPSESSION &app, FLEET *lpfl) {
     POINT16 pt;
     PLANET *lppl;
-    int16_t i;
+    std::int16_t i;
 
     for (i = 0; i <= 2 && lpfl->rgwtMin[i] == 0; i++) {
     }
@@ -197,10 +197,10 @@ int16_t FDumpCargo(APPSESSION &app, FLEET *lpfl) {
     return 1;
 }
 
-void DropSalvage(APPSESSION &app, THING **plpth, int32_t *rgwtMinerals, int16_t iplr, POINT16 *ppt) {
-    int32_t wtTotal;
-    int32_t wt;
-    int16_t i;
+void DropSalvage(APPSESSION &app, THING **plpth, std::int32_t *rgwtMinerals, std::int16_t iplr, POINT16 *ppt) {
+    std::int32_t wtTotal;
+    std::int32_t wt;
+    std::int16_t i;
     THING  *lpth;
 
     lpth = *plpth;
@@ -239,8 +239,8 @@ void DropSalvage(APPSESSION &app, THING **plpth, int32_t *rgwtMinerals, int16_t 
     lpth->thp().SetFMoved(1);
     while (wtTotal > 0) {
         for (i = 0; i < 3; i++) {
-            if (static_cast<uint32_t>((lpth->thp().wtMax() * 10)) + rgwtMinerals[i] > 30000) {
-                wt = 30000 - static_cast<uint32_t>((lpth->thp().wtMax() * 10));
+            if (static_cast<std::uint32_t>((lpth->thp().wtMax() * 10)) + rgwtMinerals[i] > 30000) {
+                wt = 30000 - static_cast<std::uint32_t>((lpth->thp().wtMax() * 10));
                 wtTotal -= wt;
                 lpth->thp().SetWtMax(3000);
                 { const auto rgwtMinForThing = +(LOWORD(wt)); auto &thForThing = *(lpth); thForThing.thp().SetRgwtMin(i, thForThing.thp().rgwtMin(i) + rgwtMinForThing); }
@@ -267,26 +267,26 @@ void DropSalvage(APPSESSION &app, THING **plpth, int32_t *rgwtMinerals, int16_t 
     return;
 }
 
-int16_t CplrBattle(APPSESSION &app, FLEET *lpfl, uint16_t *rggrfAttack, uint16_t *pgrfPlayer, uint16_t *pgrfSpectator) {
-    int16_t   iplrStarbase;
+std::int16_t CplrBattle(APPSESSION &app, FLEET *lpfl, std::uint16_t *rggrfAttack, std::uint16_t *pgrfPlayer, std::uint16_t *pgrfSpectator) {
+    std::int16_t   iplrStarbase;
     FLEET    *lpflCur;
-    int32_t   rgcsh[16];
-    uint16_t  grPlr;
-    int16_t   iplrCur;
+    std::int32_t   rgcsh[16];
+    std::uint16_t  grPlr;
+    std::int16_t   iplrCur;
     PLANET   *lppl;
-    int16_t   cplr;
-    int16_t   i;
-    int16_t   mdRel;
-    uint8_t   rgctok[16];
-    int16_t   fChange;
+    std::int16_t   cplr;
+    std::int16_t   i;
+    std::int16_t   mdRel;
+    std::uint8_t   rgctok[16];
+    std::int16_t   fChange;
     AttackWho iplrAttack;
-    int16_t   fAttack;
-    int16_t   cshdef;
-    int16_t   ishdef;
-    int16_t   cflTotal;
-    uint16_t  grfPlayer;
-    int16_t   ctokNew;
-    int16_t   ctokFleet;
+    std::int16_t   fAttack;
+    std::int16_t   cshdef;
+    std::int16_t   ishdef;
+    std::int16_t   cflTotal;
+    std::uint16_t  grfPlayer;
+    std::int16_t   ctokNew;
+    std::int16_t   ctokFleet;
 
     fAttack = 0;
     iplrStarbase = iplrNone;
@@ -295,8 +295,8 @@ int16_t CplrBattle(APPSESSION &app, FLEET *lpfl, uint16_t *rggrfAttack, uint16_t
     app.state.grfMissed = 0;
     cflTotal = 0;
     *pgrfSpectator = 0;
-    memset(rggrfAttack, 0, 32);
-    memset(rgcsh, 0, 64);
+    std::memset(rggrfAttack, 0, 32);
+    std::memset(rgcsh, 0, 64);
     if (lpfl->idPlanet != idPlanetDeepSpace) {
         lppl = LpplFromId(app, lpfl->idPlanet);
         if (lppl->fStarbase) {
@@ -455,7 +455,7 @@ int16_t CplrBattle(APPSESSION &app, FLEET *lpfl, uint16_t *rggrfAttack, uint16_t
         if (iplrStarbase != iplrNone && (1 << iplrStarbase & grfPlayer)) {
             ctokNew++;
         }
-        memset(rgctok, 0, 16);
+        std::memset(rgctok, 0, 16);
         do {
             if (lpflCur->fInclude) {
                 ctokFleet = 0;
@@ -505,17 +505,17 @@ int16_t CplrBattle(APPSESSION &app, FLEET *lpfl, uint16_t *rggrfAttack, uint16_t
     return cplr;
 }
 
-int16_t SpdOfShip(APPSESSION &app, FLEET *lpfl, int16_t ishdef, TOK *ptok, int16_t fDumpCargo, SHDEF *lpshdef) {
-    int32_t  wtCargoFleetMax;
-    int16_t  spd;
-    int16_t  iWarp;
-    uint16_t wt;
-    int16_t  cHalfThruster;
-    int16_t  cThruster;
-    int32_t  wtFleetCargo;
-    int16_t  j;
-    int16_t  cEngineT;
-    uint16_t wtCargoShdefMax;
+std::int16_t SpdOfShip(APPSESSION &app, FLEET *lpfl, std::int16_t ishdef, TOK *ptok, std::int16_t fDumpCargo, SHDEF *lpshdef) {
+    std::int32_t  wtCargoFleetMax;
+    std::int16_t  spd;
+    std::int16_t  iWarp;
+    std::uint16_t wt;
+    std::int16_t  cHalfThruster;
+    std::int16_t  cThruster;
+    std::int32_t  wtFleetCargo;
+    std::int16_t  j;
+    std::int16_t  cEngineT;
+    std::uint16_t wtCargoShdefMax;
     iengine  iEngine;
     ENGINE  *lpengine;
 
@@ -558,7 +558,7 @@ int16_t SpdOfShip(APPSESSION &app, FLEET *lpfl, int16_t ishdef, TOK *ptok, int16
             }
         }
     }
-    cThruster += static_cast<int16_t>((cHalfThruster + 1)) / 2;
+    cThruster += static_cast<std::int16_t>((cHalfThruster + 1)) / 2;
     if (iEngine == static_cast<iengine>(iengineNone) || cEngineT == 0) {
         return 0;
     }
@@ -585,7 +585,7 @@ int16_t SpdOfShip(APPSESSION &app, FLEET *lpfl, int16_t ishdef, TOK *ptok, int16
         if (wtCargoShdefMax != 0) {
             wtCargoFleetMax = ProductionIO().pfnFleetStat(app, lpfl, 2);
             wtFleetCargo = lpfl->rgwtMin[0] + lpfl->rgwtMin[1] + lpfl->rgwtMin[2] + lpfl->rgwtMin[3];
-            wtFleetCargo = static_cast<int32_t>((static_cast<int32_t>((wtFleetCargo * static_cast<uint32_t>(wtCargoShdefMax))) / wtCargoFleetMax));
+            wtFleetCargo = static_cast<std::int32_t>((static_cast<std::int32_t>((wtFleetCargo * static_cast<std::uint32_t>(wtCargoShdefMax))) / wtCargoFleetMax));
             wt += LOWORD(wtFleetCargo);
         } else {
             fDumpCargo = 0;
@@ -598,7 +598,7 @@ int16_t SpdOfShip(APPSESSION &app, FLEET *lpfl, int16_t ishdef, TOK *ptok, int16
     if (ptok) {
         ptok->wt = wt;
     }
-    spd -= static_cast<uint32_t>((static_cast<uint32_t>(wt) / 70)) / lpshdef->hul.rghs[0].cItem;
+    spd -= static_cast<std::uint32_t>((static_cast<std::uint32_t>(wt) / 70)) / lpshdef->hul.rghs[0].cItem;
     if (0 > (8 >= spd ? spd : 8)) {
         spd = 0;
     } else if (8 < spd) {
@@ -614,9 +614,9 @@ SHDEF *LpshdefFromTok(APPSESSION &app, TOK *ptok) {
     return app.state.rglpshdef[ptok->iplr] + ptok->ishdef;
 }
 
-int16_t FCanKillTok(APPSESSION &app, TOK *ptok1, TOK *ptok2) {
-    int32_t lp1;
-    int32_t lp2;
+std::int16_t FCanKillTok(APPSESSION &app, TOK *ptok1, TOK *ptok2) {
+    std::int32_t lp1;
+    std::int32_t lp2;
 
     lp1 = LpshdefFromTok(app, ptok1)->lPower;
     lp2 = LpshdefFromTok(app, ptok2)->lPower;
@@ -632,18 +632,18 @@ int16_t FCanKillTok(APPSESSION &app, TOK *ptok1, TOK *ptok2) {
     return 0;
 }
 
-void DoBattles(APPSESSION &app, int16_t fPostMovement) {
-    int16_t  cplr;
-    int16_t  ifl;
+void DoBattles(APPSESSION &app, std::int16_t fPostMovement) {
+    std::int16_t  cplr;
+    std::int16_t  ifl;
     FLEET   *lpfl;
-    uint16_t grfSpectator;
-    uint16_t grfPlayer;
-    uint16_t rggrfAttack[16];
+    std::uint16_t grfSpectator;
+    std::uint16_t grfPlayer;
+    std::uint16_t rggrfAttack[16];
 
     LinkFleets(app, fPostMovement);
     static_assert(std::is_trivially_default_constructible_v<TOK> && std::is_trivially_destructible_v<TOK>);
     app.state.vrgtok = LpAlloc<TOK>(app, 256 * sizeof(TOK), htMisc);
-    app.state.vlpwtCargo = LpAlloc<uint16_t>(app, 0x200, htMisc);
+    app.state.vlpwtCargo = LpAlloc<std::uint16_t>(app, 0x200, htMisc);
     for (ifl = 0; ifl < app.state.cFleet; ifl++) {
         lpfl = app.state.rglpfl[ifl];
         if (!app.state.rglpfl[ifl])
@@ -672,12 +672,12 @@ void DoBattles(APPSESSION &app, int16_t fPostMovement) {
 }
 
 void RegenShield(APPSESSION &app, TOK *ptok) {
-    int32_t dpNew;
-    int32_t dpOrig;
+    std::int32_t dpNew;
+    std::int32_t dpOrig;
 
     dpOrig = DpShieldOfShdef(app, LpshdefFromTok(app, ptok), ptok->iplr);
     if (ptok->dpShield != 0) {
-        dpNew = static_cast<uint32_t>(ptok->dpShield) + static_cast<int32_t>((dpOrig / 10));
+        dpNew = static_cast<std::uint32_t>(ptok->dpShield) + static_cast<std::int32_t>((dpOrig / 10));
         if (dpNew > dpOrig) {
             dpNew = dpOrig;
         }
@@ -686,13 +686,13 @@ void RegenShield(APPSESSION &app, TOK *ptok) {
     return;
 }
 
-int16_t InitFromHuldef(APPSESSION &app, HUL *lphul, int16_t *ppctBC) {
-    int16_t ihs;
-    int16_t i;
-    int16_t pct;
-    int16_t initBase;
-    int16_t cbc;
-    int16_t pctBC;
+std::int16_t InitFromHuldef(APPSESSION &app, HUL *lphul, std::int16_t *ppctBC) {
+    std::int16_t ihs;
+    std::int16_t i;
+    std::int16_t pct;
+    std::int16_t initBase;
+    std::int16_t cbc;
+    std::int16_t pctBC;
     PART    part;
 
     pct = 0;
@@ -704,8 +704,8 @@ int16_t InitFromHuldef(APPSESSION &app, HUL *lphul, int16_t *ppctBC) {
             if (!(part.hs.grhst & hstSpecialE)) {
                 if ((part.hs.grhst & hstBeam) && part.hs.iItem == ibeamMultiContainedMunition) {
                     pctBC = 10;
-                    for (i = 0; i < static_cast<int16_t>(part.hs.cItem); i++) {
-                        pct += static_cast<int16_t>(((100 - pct) * pctBC)) / 100;
+                    for (i = 0; i < static_cast<std::int16_t>(part.hs.cItem); i++) {
+                        pct += static_cast<std::int16_t>(((100 - pct) * pctBC)) / 100;
                     }
                 }
             } else {
@@ -718,8 +718,8 @@ int16_t InitFromHuldef(APPSESSION &app, HUL *lphul, int16_t *ppctBC) {
                     PartQueryIO().pfnLookup(app, &part);
                     cbc += (part.hs.iItem - 4) * part.hs.cItem;
                     pctBC = part.pspecial()->grAbility;
-                    for (i = 0; i < static_cast<int16_t>(part.hs.cItem); i++) {
-                        pct += static_cast<int16_t>(((100 - pct) * pctBC)) / 100;
+                    for (i = 0; i < static_cast<std::int16_t>(part.hs.cItem); i++) {
+                        pct += static_cast<std::int16_t>(((100 - pct) * pctBC)) / 100;
                     }
                 }
             }
@@ -737,7 +737,7 @@ int16_t InitFromHuldef(APPSESSION &app, HUL *lphul, int16_t *ppctBC) {
 
 void CheckInitiative(APPSESSION &app, TOK *ptok) {
     SHDEF  *lpshdef;
-    int16_t pctBC;
+    std::int16_t pctBC;
 
     lpshdef = LpshdefFromTok(app, ptok);
     app.state.idPlayer = ptok->iplr;
@@ -747,23 +747,23 @@ void CheckInitiative(APPSESSION &app, TOK *ptok) {
     return;
 }
 
-void CheckWeapons(APPSESSION &app, TOK *ptok, int16_t *pfDampeningField, uint8_t *pinit) {
-    int16_t pctJam;
-    int32_t ldp;
-    int32_t pctBeamDef;
-    int16_t ihs;
-    int16_t initMac;
-    int16_t init;
-    int16_t dxyMax;
-    int16_t i;
-    int32_t pctCap;
-    int16_t initMin;
-    int32_t pctHit;
+void CheckWeapons(APPSESSION &app, TOK *ptok, std::int16_t *pfDampeningField, std::uint8_t *pinit) {
+    std::int16_t pctJam;
+    std::int32_t ldp;
+    std::int32_t pctBeamDef;
+    std::int16_t ihs;
+    std::int16_t initMac;
+    std::int16_t init;
+    std::int16_t dxyMax;
+    std::int16_t i;
+    std::int32_t pctCap;
+    std::int16_t initMin;
+    std::int32_t pctHit;
     SHDEF  *lpshdef;
-    int16_t dxyLim;
-    int16_t initBase;
+    std::int16_t dxyLim;
+    std::int16_t initBase;
     HUL    *lphul;
-    int16_t dxyPart;
+    std::int16_t dxyPart;
     PART    part;
 
     pctCap = 1000;
@@ -823,7 +823,7 @@ void CheckWeapons(APPSESSION &app, TOK *ptok, int16_t *pfDampeningField, uint8_t
                     PartQueryIO().pfnLookup(app, &part);
                     app.state.idPlayer = iplrNone;
                     for (i = part.hs.cItem; i > 0; i--) {
-                        pctCap = static_cast<int32_t>((pctCap * (part.pspecial()->grAbility + 100))) / 100;
+                        pctCap = static_cast<std::int32_t>((pctCap * (part.pspecial()->grAbility + 100))) / 100;
                     }
                 }
                 break;
@@ -834,7 +834,7 @@ void CheckWeapons(APPSESSION &app, TOK *ptok, int16_t *pfDampeningField, uint8_t
                 PartQueryIO().pfnLookup(app, &part);
                 app.state.idPlayer = iplrNone;
                 for (i = part.hs.cItem; i > 0; i--) {
-                    pctBeamDef = static_cast<int32_t>((pctBeamDef * (100 - part.pspecial()->grAbility))) / 100;
+                    pctBeamDef = static_cast<std::int32_t>((pctBeamDef * (100 - part.pspecial()->grAbility))) / 100;
                 }
                 break;
             case hstMining:
@@ -861,8 +861,8 @@ void CheckWeapons(APPSESSION &app, TOK *ptok, int16_t *pfDampeningField, uint8_t
             }
             if (pctJam < 100) {
                 for (i = part.hs.cItem; i > 0; i--) {
-                    pctHit = static_cast<uint32_t>((pctHit * pctJam));
-                    pctHit = static_cast<int32_t>((pctHit / 100));
+                    pctHit = static_cast<std::uint32_t>((pctHit * pctJam));
+                    pctHit = static_cast<std::int32_t>((pctHit / 100));
                 }
             }
             if (dxyPart != -1) {
@@ -894,7 +894,7 @@ void CheckWeapons(APPSESSION &app, TOK *ptok, int16_t *pfDampeningField, uint8_t
         ptok->pctJam = 0;
     }
     if (ptok->grobj == grobjPlanet) {
-        ptok->pctJam -= static_cast<int16_t>(ptok->pctJam) / 4;
+        ptok->pctJam -= static_cast<std::int16_t>(ptok->pctJam) / 4;
     }
     if (pctCap != 1000) {
         if (pctCap > 2550) {
@@ -917,8 +917,8 @@ void CheckWeapons(APPSESSION &app, TOK *ptok, int16_t *pfDampeningField, uint8_t
 
 void RandomizeTokOrder(APPSESSION &app) {
     TOK     tok;
-    int16_t itokSwap;
-    int16_t itok;
+    std::int16_t itokSwap;
+    std::int16_t itok;
 
     itokSwap = -1;
     for (itok = 0; itok < app.state.vctok; itok++) {
@@ -932,33 +932,33 @@ void RandomizeTokOrder(APPSESSION &app) {
     return;
 }
 
-void InitializeBoard(APPSESSION &app, FLEET *lpfl, int16_t ibrc, uint16_t grfPlayer, uint8_t *pinit, int16_t *pinitMin, int16_t *pinitMac) {
-    int16_t   iplr;
+void InitializeBoard(APPSESSION &app, FLEET *lpfl, std::int16_t ibrc, std::uint16_t grfPlayer, std::uint8_t *pinit, std::int16_t *pinitMin, std::int16_t *pinitMac) {
+    std::int16_t   iplr;
     FLEET    *lpflCur;
     TOK      *ptok;
-    int16_t   initMac;
+    std::int16_t   initMac;
     PLANET   *lppl;
-    int16_t   fDampeningField;
-    int16_t   initMin;
-    uint16_t *lpwtCargoCur;
+    std::int16_t   fDampeningField;
+    std::int16_t   initMin;
+    std::uint16_t *lpwtCargoCur;
     TOK      *ptokT;
-    uint8_t   mpiplrdibrc[16];
-    int16_t   fDumpCargo;
-    int16_t   ishdef;
-    uint8_t   rgfTorp[16];
+    std::uint8_t   mpiplrdibrc[16];
+    std::int16_t   fDumpCargo;
+    std::int16_t   ishdef;
+    std::uint8_t   rgfTorp[16];
 
     initMin = -1;
     initMac = -1;
     fDampeningField = 0;
     lpwtCargoCur = app.state.vlpwtCargo;
     ishdef = 0;
-    memset(mpiplrdibrc, 255, 16);
+    std::memset(mpiplrdibrc, 255, 16);
     for (iplr = 0; iplr < app.state.game.cPlayer; iplr++) {
         if (1 << iplr & grfPlayer) {
             mpiplrdibrc[iplr] = ishdef++;
         }
     }
-    memset(rgfTorp, 0, 16);
+    std::memset(rgfTorp, 0, 16);
     lpflCur = lpfl;
     ptok = app.state.vrgtok;
     if (lpfl->idPlanet != idPlanetDeepSpace) {
@@ -1015,7 +1015,7 @@ void InitializeBoard(APPSESSION &app, FLEET *lpfl, int16_t ibrc, uint16_t grfPla
                         CheckTarget(app, ptok, lpflCur, ishdef);
                         ptok->spd = SpdOfShip(app, lpflCur, ishdef, ptok, fDumpCargo, nullptr);
                         ptok++;
-                        if (static_cast<int16_t>((ptok - app.state.vrgtok)) > 0xff)
+                        if (static_cast<std::int16_t>((ptok - app.state.vrgtok)) > 0xff)
                             goto LTooManyTokens;
                     }
                 }
@@ -1024,7 +1024,7 @@ void InitializeBoard(APPSESSION &app, FLEET *lpfl, int16_t ibrc, uint16_t grfPla
         lpflCur = lpflCur->lpflNext;
     } while (lpflCur != lpfl);
 LTooManyTokens:
-    app.state.vctok = static_cast<int16_t>((ptok - app.state.vrgtok));
+    app.state.vctok = static_cast<std::int16_t>((ptok - app.state.vrgtok));
     RandomizeTokOrder(app);
     for (ptokT = app.state.vrgtok; ptokT < ptok; ptokT++) {
         ptokT->fMoved = 1;
@@ -1050,38 +1050,38 @@ LTooManyTokens:
     return;
 }
 
-int16_t DzFromBrcBrc(uint8_t brc1, uint8_t brc2) {
-    int16_t dy;
-    int16_t dx;
+std::int16_t DzFromBrcBrc(std::uint8_t brc1, std::uint8_t brc2) {
+    std::int16_t dy;
+    std::int16_t dx;
 
     dx = (brc1 & 0xf) - (brc2 & 0xf);
-    dx = abs(dx);
+    dx = std::abs(dx);
     dy = (brc1 >> 4) - (brc2 >> 4);
-    dy = abs(dy);
+    dy = std::abs(dy);
     if (dx > dy) {
         return dx;
     }
     return dy;
 }
 
-int32_t DpFromPtokBrcToBrc(APPSESSION &app, TOK *ptok, uint8_t brcSrc, uint8_t brcTarget, TOK *ptokTarget, int16_t fProximity) {
-    int16_t dz;
-    int32_t dpMax;
-    int32_t dpShdef;
-    int16_t ihs;
-    int32_t cTorpBase;
-    int32_t dpTotal;
-    int16_t fOutOfRange;
-    int32_t dRange;
+std::int32_t DpFromPtokBrcToBrc(APPSESSION &app, TOK *ptok, std::uint8_t brcSrc, std::uint8_t brcTarget, TOK *ptokTarget, std::int16_t fProximity) {
+    std::int16_t dz;
+    std::int32_t dpMax;
+    std::int32_t dpShdef;
+    std::int16_t ihs;
+    std::int32_t cTorpBase;
+    std::int32_t dpTotal;
+    std::int16_t fOutOfRange;
+    std::int32_t dRange;
     HUL    *lphul;
-    int32_t cTorpHit;
-    int32_t dp;
+    std::int32_t cTorpHit;
+    std::int32_t dp;
     PART    part;
-    int32_t dpShieldsLeft;
+    std::int32_t dpShieldsLeft;
 
     dz = DzFromBrcBrc(brcSrc, brcTarget);
     dpTotal = 0;
-    if (!fProximity && dz > static_cast<int16_t>(ptok->dxyLim)) {
+    if (!fProximity && dz > static_cast<std::int16_t>(ptok->dxyLim)) {
         return 0;
     }
     lphul = &LpshdefFromTok(app, ptok)->hul;
@@ -1091,21 +1091,21 @@ int32_t DpFromPtokBrcToBrc(APPSESSION &app, TOK *ptok, uint8_t brcSrc, uint8_t b
             app.state.idPlayer = ptok->iplr;
             PartQueryIO().pfnLookup(app, &part);
             app.state.idPlayer = iplrNone;
-            dRange = static_cast<int16_t>(((ptok->grobj == grobjPlanet) + part.pbeam()->dRangeMax));
+            dRange = static_cast<std::int16_t>(((ptok->grobj == grobjPlanet) + part.pbeam()->dRangeMax));
             fOutOfRange = dRange < dz;
             if (!fOutOfRange || fProximity) {
-                dp = static_cast<uint32_t>((part.pbeam()->dp * part.hs.cItem));
+                dp = static_cast<std::uint32_t>((part.pbeam()->dp * part.hs.cItem));
                 if (part.hs.grhst != hstBeam) {
                     if (part.hs.grhst == hstTorp) {
-                        cTorpBase = static_cast<uint32_t>((static_cast<uint32_t>((part.hs.cItem * static_cast<uint32_t>(ptok->csh))) * 200));
+                        cTorpBase = static_cast<std::uint32_t>((static_cast<std::uint32_t>((part.hs.cItem * static_cast<std::uint32_t>(ptok->csh))) * 200));
                         cTorpHit = CTorpHit(app, cTorpBase, ptokTarget, part.ptorp()->dHitChance, ptok->pctBC);
-                        dp = static_cast<int32_t>((part.ptorp()->dp * cTorpHit)) / 200;
+                        dp = static_cast<std::int32_t>((part.ptorp()->dp * cTorpHit)) / 200;
                         if (ptokTarget->dpShield > 0) {
-                            dp += static_cast<int32_t>(((cTorpBase - cTorpHit) * part.ptorp()->dp)) / 1600;
+                            dp += static_cast<std::int32_t>(((cTorpBase - cTorpHit) * part.ptorp()->dp)) / 1600;
                         }
                         if (fOutOfRange) {
-                            dp = static_cast<int32_t>((dp / (static_cast<int16_t>((dz + 10)) - dRange)));
-                            if (dp < static_cast<int16_t>(part.hs.cItem)) {
+                            dp = static_cast<std::int32_t>((dp / (static_cast<std::int16_t>((dz + 10)) - dRange)));
+                            if (dp < static_cast<std::int16_t>(part.hs.cItem)) {
                                 dp = part.hs.cItem;
                             }
                         }
@@ -1113,35 +1113,35 @@ int32_t DpFromPtokBrcToBrc(APPSESSION &app, TOK *ptok, uint8_t brcSrc, uint8_t b
                     }
                 } else {
                     if (ptok->pctCap != 0) {
-                        dp = static_cast<int32_t>((dp * static_cast<int16_t>(ptok->pctCap))) / 100;
+                        dp = static_cast<std::int32_t>((dp * static_cast<std::int16_t>(ptok->pctCap))) / 100;
                     }
                     if (dz > 0 && dRange > 0) {
-                        dp -= static_cast<int32_t>((static_cast<int32_t>((dp * dz)) / 10 / dRange));
+                        dp -= static_cast<std::int32_t>((static_cast<std::int32_t>((dp * dz)) / 10 / dRange));
                     }
                     if (ptokTarget->pctBeamDef < 100) {
-                        dp = static_cast<int32_t>((dp * static_cast<int16_t>(ptokTarget->pctBeamDef))) / 100;
+                        dp = static_cast<std::int32_t>((dp * static_cast<std::int16_t>(ptokTarget->pctBeamDef))) / 100;
                     }
                     if (part.pbeam()->grfAbilities & beamSapper) {
-                        dpShieldsLeft = static_cast<uint32_t>((static_cast<uint32_t>(ptokTarget->dpShield) * static_cast<uint32_t>(ptok->csh)));
+                        dpShieldsLeft = static_cast<std::uint32_t>((static_cast<std::uint32_t>(ptokTarget->dpShield) * static_cast<std::uint32_t>(ptok->csh)));
                         if (dp > dpShieldsLeft) {
                             dp = dpShieldsLeft;
                         }
                     }
                     if (fOutOfRange) {
-                        dp = static_cast<int32_t>((dp / (static_cast<int16_t>((dz + 10)) - dRange)));
-                        if (dp < static_cast<int16_t>(part.hs.cItem)) {
+                        dp = static_cast<std::int32_t>((dp / (static_cast<std::int16_t>((dz + 10)) - dRange)));
+                        if (dp < static_cast<std::int16_t>(part.hs.cItem)) {
                             dp = part.hs.cItem;
                         }
                     }
-                    dpTotal += static_cast<uint32_t>((dp * static_cast<uint32_t>(ptok->csh)));
+                    dpTotal += static_cast<std::uint32_t>((dp * static_cast<std::uint32_t>(ptok->csh)));
                 }
             }
         }
     }
-    dpShdef = static_cast<uint32_t>(LpshdefFromTok(app, ptokTarget)->hul.dp);
-    dpMax = static_cast<uint32_t>(((static_cast<uint32_t>(ptokTarget->dpShield) + dpShdef) * static_cast<uint32_t>(ptokTarget->csh)));
+    dpShdef = static_cast<std::uint32_t>(LpshdefFromTok(app, ptokTarget)->hul.dp);
+    dpMax = static_cast<std::uint32_t>(((static_cast<std::uint32_t>(ptokTarget->dpShield) + dpShdef) * static_cast<std::uint32_t>(ptokTarget->csh)));
     if (ptokTarget->dv.dp != 0 && dpMax > 0) {
-        dpMax -= static_cast<int32_t>((static_cast<int32_t>((static_cast<int32_t>((dpShdef * ptokTarget->dv.pctDp())) / 10 * ptokTarget->dv.pctSh())) / 10 * static_cast<uint32_t>(ptokTarget->csh))) / 500;
+        dpMax -= static_cast<std::int32_t>((static_cast<std::int32_t>((static_cast<std::int32_t>((dpShdef * ptokTarget->dv.pctDp())) / 10 * ptokTarget->dv.pctSh())) / 10 * static_cast<std::uint32_t>(ptokTarget->csh))) / 500;
         if (dpMax <= 0) {
             dpMax = 1;
         }
@@ -1152,18 +1152,18 @@ int32_t DpFromPtokBrcToBrc(APPSESSION &app, TOK *ptok, uint8_t brcSrc, uint8_t b
     return dpTotal;
 }
 
-int16_t DzMoveRangeToConsider(APPSESSION &app, TOK *ptok, uint16_t grfAttack, uint8_t *pbrc) {
-    int16_t  dzNonSapper;
-    uint8_t  dz;
-    int16_t  iplr;
+std::int16_t DzMoveRangeToConsider(APPSESSION &app, TOK *ptok, std::uint16_t grfAttack, std::uint8_t *pbrc) {
+    std::int16_t  dzNonSapper;
+    std::uint8_t  dz;
+    std::int16_t  iplr;
     MdTarget mdTarget;
-    uint8_t  dzBest;
-    int16_t  itokLook;
-    int16_t  iplrTarget;
+    std::uint8_t  dzBest;
+    std::int16_t  itokLook;
+    std::int16_t  iplrTarget;
     TOK     *ptokTarget;
-    int16_t  dzMax;
-    uint8_t  brcCur;
-    int16_t  ihs;
+    std::int16_t  dzMax;
+    std::uint8_t  brcCur;
+    std::int16_t  ihs;
     SHDEF   *lpshdef;
     HUL     *lphul;
     PART     part;
@@ -1204,11 +1204,11 @@ int16_t DzMoveRangeToConsider(APPSESSION &app, TOK *ptok, uint16_t grfAttack, ui
             if (ptokTarget->dMovesLeft >= ptok->dMovesLeft) {
                 dz++;
             }
-            if (dz <= dzMax && (ptokTarget->dpShield > 0 || dzNonSapper == ptok->dxyLim || dz <= static_cast<uint16_t>((dzNonSapper + ptok->dMovesLeft)))) {
+            if (dz <= dzMax && (ptokTarget->dpShield > 0 || dzNonSapper == ptok->dxyLim || dz <= static_cast<std::uint16_t>((dzNonSapper + ptok->dMovesLeft)))) {
                 *pbrc = 0xff;
                 return ptok->dMovesLeft;
             }
-            if (static_cast<int16_t>(dz) < dzBest && DpFromPtokBrcToBrc(app, ptok, 0, 0, ptokTarget, 0) > 0) {
+            if (static_cast<std::int16_t>(dz) < dzBest && DpFromPtokBrcToBrc(app, ptok, 0, 0, ptokTarget, 0) > 0) {
                 dzBest = dz;
                 *pbrc = ptokTarget->brc;
             }
@@ -1219,12 +1219,12 @@ int16_t DzMoveRangeToConsider(APPSESSION &app, TOK *ptok, uint16_t grfAttack, ui
     return 1;
 }
 
-int16_t FDoesPrimaryTargetTypeExist(APPSESSION &app, TOK *ptok, uint16_t grfAttack) {
+std::int16_t FDoesPrimaryTargetTypeExist(APPSESSION &app, TOK *ptok, std::uint16_t grfAttack) {
     MdTarget mdTarget;
-    int16_t  iplr;
-    int16_t  iplrLook;
+    std::int16_t  iplr;
+    std::int16_t  iplrLook;
     TOK      tok;
-    int16_t  itokLook;
+    std::int16_t  itokLook;
 
     iplr = ptok->iplr;
     mdTarget = static_cast<MdTarget>(ptok->mdTarget1);
@@ -1275,7 +1275,7 @@ int16_t FDoesPrimaryTargetTypeExist(APPSESSION &app, TOK *ptok, uint16_t grfAtta
     return 0;
 }
 
-int16_t FIsTargetOfMdTarget(TOK *ptok, MdTarget mdTarget) {
+std::int16_t FIsTargetOfMdTarget(TOK *ptok, MdTarget mdTarget) {
     if (mdTarget <= mdTargetFreighters) {
         switch (mdTarget) {
         case mdTargetNone:
@@ -1313,36 +1313,36 @@ int16_t FIsTargetOfMdTarget(TOK *ptok, MdTarget mdTarget) {
     return 0;
 }
 
-int32_t ScoreGuessBattleDamage(APPSESSION &app, TOK *ptokSrc, uint8_t brc, int16_t fPrimary, uint16_t grfAttack) {
-    int16_t iBest;
-    int16_t dMoves;
-    int16_t rgy[2];
+std::int32_t ScoreGuessBattleDamage(APPSESSION &app, TOK *ptokSrc, std::uint8_t brc, std::int16_t fPrimary, std::uint16_t grfAttack) {
+    std::int16_t iBest;
+    std::int16_t dMoves;
+    std::int16_t rgy[2];
     TOK    *ptok;
-    int16_t yEnemy;
-    int16_t dzEnemy;
-    int32_t dpGivenBest;
-    int32_t dpTakenBest;
-    int16_t y;
-    int32_t dpTakenTotal;
-    int32_t dpGivenCur;
-    int16_t i;
-    int16_t xEnemy;
-    int16_t yCur;
-    int32_t dpTaken;
-    int32_t scoreThemBest;
-    int32_t scoreThem;
-    int16_t dzCur;
-    int16_t rgx[2];
-    uint8_t brcEnemy;
-    int32_t dpGiven;
-    int16_t dMax;
-    int32_t scoreUs;
-    uint8_t iplrSrc;
-    int16_t fWeAttack;
-    int16_t xCur;
-    int16_t x;
-    int16_t dMin;
-    int16_t itok;
+    std::int16_t yEnemy;
+    std::int16_t dzEnemy;
+    std::int32_t dpGivenBest;
+    std::int32_t dpTakenBest;
+    std::int16_t y;
+    std::int32_t dpTakenTotal;
+    std::int32_t dpGivenCur;
+    std::int16_t i;
+    std::int16_t xEnemy;
+    std::int16_t yCur;
+    std::int32_t dpTaken;
+    std::int32_t scoreThemBest;
+    std::int32_t scoreThem;
+    std::int16_t dzCur;
+    std::int16_t rgx[2];
+    std::uint8_t brcEnemy;
+    std::int32_t dpGiven;
+    std::int16_t dMax;
+    std::int32_t scoreUs;
+    std::uint8_t iplrSrc;
+    std::int16_t fWeAttack;
+    std::int16_t xCur;
+    std::int16_t x;
+    std::int16_t dMin;
+    std::int16_t itok;
 
     iplrSrc = ptokSrc->iplr;
     xCur = ptokSrc->brc & 0xf;
@@ -1405,8 +1405,8 @@ int32_t ScoreGuessBattleDamage(APPSESSION &app, TOK *ptokSrc, uint8_t brc, int16
     return scoreUs;
 }
 
-int32_t ScoreFromGiveAndTakeAndTactic(int32_t dpGive, int32_t dpTake, BattleTactic mdTactic) {
-    int32_t score;
+std::int32_t ScoreFromGiveAndTakeAndTactic(std::int32_t dpGive, std::int32_t dpTake, BattleTactic mdTactic) {
+    std::int32_t score;
 
     switch (mdTactic) {
     default:
@@ -1421,7 +1421,7 @@ int32_t ScoreFromGiveAndTakeAndTactic(int32_t dpGive, int32_t dpTake, BattleTact
     case mdTacticMaxDamageRatio:
         score = -dpGive;
         if (score != 0) {
-            score = static_cast<int32_t>((static_cast<int32_t>((score * 100)) / (dpTake + 1)));
+            score = static_cast<std::int32_t>((static_cast<std::int32_t>((score * 100)) / (dpTake + 1)));
             if (score >= 0) {
                 score = -1;
             }
@@ -1432,34 +1432,34 @@ int32_t ScoreFromGiveAndTakeAndTactic(int32_t dpGive, int32_t dpTake, BattleTact
     }
 }
 
-int16_t DxyMoveTokTo(APPSESSION &app, TOK *ptok, int16_t spdMove, uint16_t grfAttack) {
-    uint16_t     iplr;
-    int16_t      xMax;
-    int16_t      dz;
-    int32_t      scoreBest;
-    uint8_t      brc;
-    int32_t      rgscoreNear[3][3];
-    int32_t      score;
-    int16_t      cBest;
-    int16_t      yMin;
-    int16_t      dy;
+std::int16_t DxyMoveTokTo(APPSESSION &app, TOK *ptok, std::int16_t spdMove, std::uint16_t grfAttack) {
+    std::uint16_t     iplr;
+    std::int16_t      xMax;
+    std::int16_t      dz;
+    std::int32_t      scoreBest;
+    std::uint8_t      brc;
+    std::int32_t      rgscoreNear[3][3];
+    std::int32_t      score;
+    std::int16_t      cBest;
+    std::int16_t      yMin;
+    std::int16_t      dy;
     BattleTactic mdTactic;
-    int16_t      y;
-    uint8_t      brcOOR;
-    int16_t      i;
-    int16_t      yCur;
-    uint8_t      brcBest;
-    int16_t      dzAwayBest;
-    int16_t      yMax;
-    int16_t      dx;
-    int16_t      xCur;
-    int16_t      fPrimary;
-    int32_t      dp;
-    int16_t      dzAway;
-    int16_t      x;
-    int32_t      lLow;
-    int16_t      cLow;
-    int16_t      fXMajor;
+    std::int16_t      y;
+    std::uint8_t      brcOOR;
+    std::int16_t      i;
+    std::int16_t      yCur;
+    std::uint8_t      brcBest;
+    std::int16_t      dzAwayBest;
+    std::int16_t      yMax;
+    std::int16_t      dx;
+    std::int16_t      xCur;
+    std::int16_t      fPrimary;
+    std::int32_t      dp;
+    std::int16_t      dzAway;
+    std::int16_t      x;
+    std::int32_t      lLow;
+    std::int16_t      cLow;
+    std::int16_t      fXMajor;
     POINT16      rgptDeltas[2];
 
     iplr = ptok->iplr;
@@ -1498,8 +1498,8 @@ int16_t DxyMoveTokTo(APPSESSION &app, TOK *ptok, int16_t spdMove, uint16_t grfAt
             brc = (y & 0xf) << 4 | (x & 0xf);
             dx = xCur - x;
             dy = yCur - y;
-            dx = abs(dx);
-            dy = abs(dy);
+            dx = std::abs(dx);
+            dy = std::abs(dy);
             score = ScoreGuessBattleDamage(app, ptok, brc, fPrimary, grfAttack);
             if (mdTactic == mdTacticDisengage) {
                 for (i = 0; i < app.state.vctok; i++) {
@@ -1538,7 +1538,7 @@ int16_t DxyMoveTokTo(APPSESSION &app, TOK *ptok, int16_t spdMove, uint16_t grfAt
     if (dzAway > 1) {
         dx = (brcBest & 0xf) - xCur;
         dy = (brcBest >> 4) - yCur;
-        if (abs(dx) == abs(dy)) {
+        if (std::abs(dx) == std::abs(dy)) {
             if (dx > 0) {
                 xCur++;
             } else {
@@ -1588,7 +1588,7 @@ int16_t DxyMoveTokTo(APPSESSION &app, TOK *ptok, int16_t spdMove, uint16_t grfAt
             }
             yCur += i - 1;
         } else {
-            fXMajor = abs(dx) > abs(dy);
+            fXMajor = std::abs(dx) > std::abs(dy);
             dx = dx <= 0 ? 0 : 2;
             dy = dy <= 0 ? 0 : 2;
             rgptDeltas[0].x = dx;
@@ -1600,7 +1600,7 @@ int16_t DxyMoveTokTo(APPSESSION &app, TOK *ptok, int16_t spdMove, uint16_t grfAt
                 rgptDeltas[1].x = 1;
                 rgptDeltas[1].y = dy;
             }
-            if (rgscoreNear[rgptDeltas[0].x][rgptDeltas[0].y] < static_cast<int32_t>(rgscoreNear[rgptDeltas[1].x][rgptDeltas[1].y]) ||
+            if (rgscoreNear[rgptDeltas[0].x][rgptDeltas[0].y] < static_cast<std::int32_t>(rgscoreNear[rgptDeltas[1].x][rgptDeltas[1].y]) ||
                 (rgscoreNear[rgptDeltas[0].x][rgptDeltas[0].y] == rgscoreNear[rgptDeltas[1].x][rgptDeltas[1].y] && RandomIO().pfnRandom(app, 2) == 0)) {
                 i = 0;
             } else {
@@ -1622,16 +1622,16 @@ LReturnDxy:
     return 1;
 }
 
-int32_t CTorpHit(APPSESSION &app, int32_t cTorpBase, TOK *ptok, int16_t pctBase, int16_t pctBC) {
-    int32_t pctJam;
-    int16_t i;
-    int32_t pctHit;
-    int32_t cTorpHit;
+std::int32_t CTorpHit(APPSESSION &app, std::int32_t cTorpBase, TOK *ptok, std::int16_t pctBase, std::int16_t pctBC) {
+    std::int32_t pctJam;
+    std::int16_t i;
+    std::int32_t pctHit;
+    std::int32_t cTorpHit;
 
     if (cTorpBase == 0 || pctBase == 0) {
         return 0;
     }
-    pctJam = static_cast<uint32_t>(ptok->pctJam);
+    pctJam = static_cast<std::uint32_t>(ptok->pctJam);
     if (pctJam != 0 && pctBC != 0) {
         pctJam -= pctBC;
         if (pctJam < 0) {
@@ -1642,9 +1642,9 @@ int32_t CTorpHit(APPSESSION &app, int32_t cTorpBase, TOK *ptok, int16_t pctBase,
         }
     }
     if (pctBC != 0) {
-        pctHit = 100 - static_cast<int32_t>(((100 - pctBase) * static_cast<int16_t>((100 - pctBC)))) / 100;
+        pctHit = 100 - static_cast<std::int32_t>(((100 - pctBase) * static_cast<std::int16_t>((100 - pctBC)))) / 100;
     } else if (pctJam != 0) {
-        pctHit = static_cast<int32_t>((pctBase * (100 - pctJam))) / 100;
+        pctHit = static_cast<std::int32_t>((pctBase * (100 - pctJam))) / 100;
     } else {
         pctHit = pctBase;
     }
@@ -1655,11 +1655,11 @@ int32_t CTorpHit(APPSESSION &app, int32_t cTorpBase, TOK *ptok, int16_t pctBase,
         return cTorpBase;
     }
     if (cTorpBase > 200) {
-        cTorpHit = static_cast<int32_t>((cTorpBase * pctHit)) / 100;
+        cTorpHit = static_cast<std::int32_t>((cTorpBase * pctHit)) / 100;
     } else {
         cTorpHit = 0;
         for (i = 0; i < cTorpBase; i++) {
-            if (RandomIO().pfnRandom(app, 100) < static_cast<int16_t>(LOWORD(pctHit))) {
+            if (RandomIO().pfnRandom(app, 100) < static_cast<std::int16_t>(LOWORD(pctHit))) {
                 cTorpHit++;
             }
         }
@@ -1667,47 +1667,47 @@ int32_t CTorpHit(APPSESSION &app, int32_t cTorpBase, TOK *ptok, int16_t pctBase,
     return cTorpHit;
 }
 
-int16_t FAttack(APPSESSION &app, int16_t itokAttacker, int16_t init, uint8_t *lpbtlrec, uint16_t grfAttack) {
-    int32_t   dpShieldLeft;
-    int16_t   dz;
+std::int16_t FAttack(APPSESSION &app, std::int16_t itokAttacker, std::int16_t init, std::uint8_t *lpbtlrec, std::uint16_t grfAttack) {
+    std::int32_t   dpShieldLeft;
+    std::int16_t   dz;
     SHDEF    *lpshdefE;
-    int32_t   dpArmorLeft;
-    int32_t   dpSingle;
-    int32_t   scoreBest;
+    std::int32_t   dpArmorLeft;
+    std::int32_t   dpSingle;
+    std::int32_t   scoreBest;
     TOK      *ptok;
-    int16_t   ctokDamaged;
-    int16_t   itokTarget;
-    int32_t   dpMain;
-    int32_t   score;
-    int16_t   fSetItok;
-    int16_t   dxRangeCur;
-    int16_t   ihs;
-    int32_t   cTorpMiss;
-    int32_t   cTorpFire;
-    int32_t   cTorpsLeft;
-    int16_t   i;
-    int32_t   cTorpBase;
+    std::int16_t   ctokDamaged;
+    std::int16_t   itokTarget;
+    std::int32_t   dpMain;
+    std::int32_t   score;
+    std::int16_t   fSetItok;
+    std::int16_t   dxRangeCur;
+    std::int16_t   ihs;
+    std::int32_t   cTorpMiss;
+    std::int32_t   cTorpFire;
+    std::int32_t   cTorpsLeft;
+    std::int16_t   i;
+    std::int32_t   cTorpBase;
     GrfWeapon grfWeapon;
-    int16_t   cItem;
-    int32_t   pctHit;
+    std::int16_t   cItem;
+    std::int32_t   pctHit;
     TOK      *ptokTarget;
     SHDEF    *lpshdef;
-    int32_t   lValue;
-    int32_t   dpT;
+    std::int32_t   lValue;
+    std::int32_t   dpT;
     HUL      *lphul;
-    int32_t   cTorpHit;
-    int16_t   fPrimary;
-    int32_t   dp;
-    int16_t   itok;
-    int32_t   dpCol;
+    std::int32_t   cTorpHit;
+    std::int16_t   fPrimary;
+    std::int32_t   dp;
+    std::int16_t   itok;
+    std::int32_t   dpCol;
     TOK      *ptokE;
     PART      part;
-    int32_t   nds;
-    int16_t   fCapMissile;
-    int32_t   nts;
-    int32_t   ntk;
-    int32_t   dpShieldCur;
-    int32_t   dpHitArmor;
+    std::int32_t   nds;
+    std::int16_t   fCapMissile;
+    std::int32_t   nts;
+    std::int32_t   ntk;
+    std::int32_t   dpShieldCur;
+    std::int32_t   dpHitArmor;
 
     dxRangeCur = 0;
     fSetItok = 0;
@@ -1730,14 +1730,14 @@ int16_t FAttack(APPSESSION &app, int16_t itokAttacker, int16_t init, uint8_t *lp
             if (i == init) {
                 dxRangeCur = (ptok->grobj == grobjPlanet) + part.pbeam()->dRangeMax;
                 if (part.hs.grhst == hstBeam && (part.pbeam()->grfAbilities & beamGatling)) {
-                    dp = static_cast<uint32_t>((static_cast<uint32_t>((part.pbeam()->dp * cItem)) * static_cast<uint32_t>(ptok->csh)));
+                    dp = static_cast<std::uint32_t>((static_cast<std::uint32_t>((part.pbeam()->dp * cItem)) * static_cast<std::uint32_t>(ptok->csh)));
                     if (part.pbeam()->dp >= 200) {
                         grfWeapon = bitFBeamHigh;
                     } else {
                         grfWeapon = bitFBeamLow;
                     }
                     if (ptok->pctCap != 0) {
-                        dp = static_cast<int32_t>((dp * static_cast<int16_t>(ptok->pctCap))) / 100;
+                        dp = static_cast<std::int32_t>((dp * static_cast<std::int16_t>(ptok->pctCap))) / 100;
                     }
                     dpT = dp;
                     ptokE = app.state.vrgtok;
@@ -1746,7 +1746,7 @@ int16_t FAttack(APPSESSION &app, int16_t itokAttacker, int16_t init, uint8_t *lp
                             DzFromBrcBrc(ptokE->brc, ptok->brc) <= dxRangeCur &&
                             (FIsTargetOfMdTarget(ptokE, static_cast<MdTarget>(ptok->mdTarget1)) || FIsTargetOfMdTarget(ptokE, static_cast<MdTarget>(ptok->mdTarget2)))) {
                             if (ptokE->pctBeamDef < 100) {
-                                dp = static_cast<int32_t>((dp * static_cast<int16_t>(ptokE->pctBeamDef))) / 100;
+                                dp = static_cast<std::int32_t>((dp * static_cast<std::int16_t>(ptokE->pctBeamDef))) / 100;
                             }
                             if (FDamageTok(app, ptokE, itok, &dp, 0, grfWeapon, part.pbeam()->grfAbilities & beamSapper, nullptr)) {
                                 if (!fSetItok) {
@@ -1761,11 +1761,11 @@ int16_t FAttack(APPSESSION &app, int16_t itokAttacker, int16_t init, uint8_t *lp
                     }
                 } else {
                     if (part.hs.grhst == hstBeam) {
-                        dpMain = static_cast<uint32_t>((static_cast<uint32_t>((part.pbeam()->dp * cItem)) * static_cast<uint32_t>(ptok->csh)));
+                        dpMain = static_cast<std::uint32_t>((static_cast<std::uint32_t>((part.pbeam()->dp * cItem)) * static_cast<std::uint32_t>(ptok->csh)));
                         cTorpsLeft = 0;
                     } else {
                         dpMain = 0;
-                        cTorpsLeft = static_cast<uint32_t>((cItem * static_cast<uint32_t>(ptok->csh)));
+                        cTorpsLeft = static_cast<std::uint32_t>((cItem * static_cast<std::uint32_t>(ptok->csh)));
                     }
                 LFindAnotherTarget:
                     for (fPrimary = 1; fPrimary >= 0; fPrimary--) {
@@ -1777,61 +1777,61 @@ int16_t FAttack(APPSESSION &app, int16_t itokAttacker, int16_t init, uint8_t *lp
                                 DzFromBrcBrc(ptokE->brc, ptok->brc) <= dxRangeCur &&
                                 FIsTargetOfMdTarget(ptokE, static_cast<MdTarget>(!fPrimary ? ptok->mdTarget2 : ptok->mdTarget1))) {
                                 lpshdefE = LpshdefFromTok(app, ptokE);
-                                lValue = static_cast<uint32_t>(((static_cast<uint32_t>(lpshdefE->hul.resCost) + static_cast<uint32_t>(lpshdefE->hul.rgwtOreCost[1])) * static_cast<uint32_t>(ptokE->csh)));
+                                lValue = static_cast<std::uint32_t>(((static_cast<std::uint32_t>(lpshdefE->hul.resCost) + static_cast<std::uint32_t>(lpshdefE->hul.rgwtOreCost[1])) * static_cast<std::uint32_t>(ptokE->csh)));
                                 if (lValue < 100000) {
-                                    lValue = static_cast<uint32_t>((lValue * 100));
+                                    lValue = static_cast<std::uint32_t>((lValue * 100));
                                 } else {
                                     lValue = 10000000;
                                 }
-                                dpSingle = static_cast<uint32_t>(lpshdefE->hul.dp);
-                                dpShieldLeft = static_cast<uint32_t>((static_cast<uint32_t>(ptokE->dpShield) * static_cast<uint32_t>(ptokE->csh)));
-                                dpArmorLeft = static_cast<uint32_t>((dpSingle * static_cast<uint32_t>(ptokE->csh)));
+                                dpSingle = static_cast<std::uint32_t>(lpshdefE->hul.dp);
+                                dpShieldLeft = static_cast<std::uint32_t>((static_cast<std::uint32_t>(ptokE->dpShield) * static_cast<std::uint32_t>(ptokE->csh)));
+                                dpArmorLeft = static_cast<std::uint32_t>((dpSingle * static_cast<std::uint32_t>(ptokE->csh)));
                                 if (ptokE->dv.dp != 0) {
                                     dpArmorLeft -=
-                                        static_cast<int32_t>((static_cast<int32_t>((static_cast<int32_t>((dpSingle * ptokE->dv.pctDp())) / 10 * ptokE->dv.pctSh())) / 10 * static_cast<uint32_t>(ptokE->csh))) / 500;
+                                        static_cast<std::int32_t>((static_cast<std::int32_t>((static_cast<std::int32_t>((dpSingle * ptokE->dv.pctDp())) / 10 * ptokE->dv.pctSh())) / 10 * static_cast<std::uint32_t>(ptokE->csh))) / 500;
                                 }
                                 if (dpArmorLeft <= 0) {
                                     dpArmorLeft = 1;
                                 }
                                 if (part.hs.grhst == hstBeam || part.hs.grhst != hstTorp) {
                                     if (ptokE->pctBeamDef < 100) {
-                                        lValue = static_cast<int32_t>((lValue * static_cast<uint32_t>(ptokE->pctBeamDef))) / 100;
+                                        lValue = static_cast<std::int32_t>((lValue * static_cast<std::uint32_t>(ptokE->pctBeamDef))) / 100;
                                     }
                                     if (part.pbeam()->grfAbilities & beamSapper) {
                                         if (dpShieldLeft <= 0) {
                                             score = 0;
                                         } else {
-                                            score = static_cast<int32_t>((static_cast<int32_t>((static_cast<uint32_t>((lValue * 100)) + dpShieldLeft - 1)) / dpShieldLeft));
+                                            score = static_cast<std::int32_t>((static_cast<std::int32_t>((static_cast<std::uint32_t>((lValue * 100)) + dpShieldLeft - 1)) / dpShieldLeft));
                                         }
                                     } else {
-                                        score = static_cast<int32_t>((static_cast<int32_t>((lValue * 100)) / (dpArmorLeft + dpShieldLeft + 1)));
+                                        score = static_cast<std::int32_t>((static_cast<std::int32_t>((lValue * 100)) / (dpArmorLeft + dpShieldLeft + 1)));
                                         if (score <= 0) {
                                             score = 1;
                                         }
                                     }
                                 } else {
                                     pctHit = part.ptorp()->dHitChance;
-                                    if (static_cast<int16_t>(ptok->pctBC) >= ptokE->pctJam) {
-                                        pctHit += static_cast<int32_t>(((100 - pctHit) * static_cast<int16_t>((ptok->pctBC - ptokE->pctJam)))) / 100;
+                                    if (static_cast<std::int16_t>(ptok->pctBC) >= ptokE->pctJam) {
+                                        pctHit += static_cast<std::int32_t>(((100 - pctHit) * static_cast<std::int16_t>((ptok->pctBC - ptokE->pctJam)))) / 100;
                                     } else {
-                                        pctHit -= static_cast<int32_t>((pctHit * static_cast<int16_t>((ptokE->pctJam - ptok->pctBC)))) / 100;
+                                        pctHit -= static_cast<std::int32_t>((pctHit * static_cast<std::int16_t>((ptokE->pctJam - ptok->pctBC)))) / 100;
                                     }
                                     if (pctHit > 0) {
                                         fCapMissile = part.hs.iItem >= itorpJihadMissile && part.hs.iItem <= itorpArmageddonMissile;
                                         if (dpArmorLeft < 100000) {
-                                            nts = static_cast<int32_t>((static_cast<int32_t>((static_cast<uint32_t>((dpArmorLeft * 100)) * 2)) / pctHit));
+                                            nts = static_cast<std::int32_t>((static_cast<std::int32_t>((static_cast<std::uint32_t>((dpArmorLeft * 100)) * 2)) / pctHit));
                                         } else {
-                                            nts = static_cast<uint32_t>((static_cast<int32_t>((dpArmorLeft / pctHit)) * 200));
+                                            nts = static_cast<std::uint32_t>((static_cast<std::int32_t>((dpArmorLeft / pctHit)) * 200));
                                         }
                                         if (dpShieldLeft < 100000) {
-                                            nds = static_cast<int32_t>((dpShieldLeft * 100)) / (static_cast<int32_t>((pctHit / 2)) + static_cast<int32_t>(((100 - pctHit) / 8)));
+                                            nds = static_cast<std::int32_t>((dpShieldLeft * 100)) / (static_cast<std::int32_t>((pctHit / 2)) + static_cast<std::int32_t>(((100 - pctHit) / 8)));
                                         } else {
-                                            nds = static_cast<uint32_t>((static_cast<int32_t>((dpShieldLeft / (static_cast<int32_t>((pctHit / 2)) + static_cast<int32_t>(((100 - pctHit) / 8))))) * 100));
+                                            nds = static_cast<std::uint32_t>((static_cast<std::int32_t>((dpShieldLeft / (static_cast<std::int32_t>((pctHit / 2)) + static_cast<std::int32_t>(((100 - pctHit) / 8))))) * 100));
                                         }
-                                        ntk = static_cast<int32_t>(((dpArmorLeft - static_cast<int32_t>((nds * pctHit)) / 200) * 100)) / static_cast<int32_t>((pctHit * static_cast<int16_t>((fCapMissile + 1))));
+                                        ntk = static_cast<std::int32_t>(((dpArmorLeft - static_cast<std::int32_t>((nds * pctHit)) / 200) * 100)) / static_cast<std::int32_t>((pctHit * static_cast<std::int16_t>((fCapMissile + 1))));
                                         score = nts < nds + ntk ? nts : nds + ntk;
                                         if (score > 0) {
-                                            score = static_cast<int32_t>((lValue / score));
+                                            score = static_cast<std::int32_t>((lValue / score));
                                             if (score <= 0) {
                                                 score = 1;
                                             }
@@ -1859,13 +1859,13 @@ int16_t FAttack(APPSESSION &app, int16_t itokAttacker, int16_t init, uint8_t *lp
                     if (part.hs.grhst == hstBeam) {
                         dp = dpMain;
                         if (ptok->pctCap != 0) {
-                            dp = static_cast<int32_t>((dp * static_cast<int16_t>(ptok->pctCap))) / 100;
+                            dp = static_cast<std::int32_t>((dp * static_cast<std::int16_t>(ptok->pctCap))) / 100;
                         }
                         if (ptokTarget->pctBeamDef < 100) {
-                            dp = static_cast<int32_t>((dp * static_cast<int16_t>(ptokTarget->pctBeamDef))) / 100;
+                            dp = static_cast<std::int32_t>((dp * static_cast<std::int16_t>(ptokTarget->pctBeamDef))) / 100;
                         }
                         if (dz > 0 && part.pbeam()->dRangeMax > 0) {
-                            dp = static_cast<int32_t>((dp * (100 - static_cast<int32_t>((static_cast<int32_t>((dz * 10)) / part.pbeam()->dRangeMax))))) / 100;
+                            dp = static_cast<std::int32_t>((dp * (100 - static_cast<std::int32_t>((static_cast<std::int32_t>((dz * 10)) / part.pbeam()->dRangeMax))))) / 100;
                         }
                         if (part.pbeam()->dp >= 200) {
                             grfWeapon = bitFBeamHigh;
@@ -1882,9 +1882,9 @@ int16_t FAttack(APPSESSION &app, int16_t itokAttacker, int16_t init, uint8_t *lp
                         }
                         if (dp > 0 && dpT > 0) {
                             if (dpMain < 65536 && dp < 65536) {
-                                lValue = static_cast<int32_t>((static_cast<int32_t>((dpMain * dp)) / dpT));
+                                lValue = static_cast<std::int32_t>((static_cast<std::int32_t>((dpMain * dp)) / dpT));
                             } else {
-                                lValue = static_cast<int32_t>((static_cast<double>(dpMain) * dp / dpT));
+                                lValue = static_cast<std::int32_t>((static_cast<double>(dpMain) * dp / dpT));
                             }
                             dpMain = dpMain - 1 < lValue ? dpMain - 1 : lValue;
                         } else {
@@ -1895,35 +1895,35 @@ int16_t FAttack(APPSESSION &app, int16_t itokAttacker, int16_t init, uint8_t *lp
                         cTorpBase = cTorpsLeft;
                         cTorpHit = CTorpHit(app, cTorpBase, ptokTarget, part.ptorp()->dHitChance, ptok->pctBC);
                         lpshdefE = LpshdefFromTok(app, ptokTarget);
-                        dpSingle = static_cast<uint32_t>(lpshdefE->hul.dp);
-                        dpShieldLeft = static_cast<uint32_t>((static_cast<uint32_t>(ptokTarget->dpShield) * static_cast<uint32_t>(ptokTarget->csh)));
-                        dpArmorLeft = static_cast<uint32_t>((dpSingle * static_cast<uint32_t>(ptokTarget->csh)));
+                        dpSingle = static_cast<std::uint32_t>(lpshdefE->hul.dp);
+                        dpShieldLeft = static_cast<std::uint32_t>((static_cast<std::uint32_t>(ptokTarget->dpShield) * static_cast<std::uint32_t>(ptokTarget->csh)));
+                        dpArmorLeft = static_cast<std::uint32_t>((dpSingle * static_cast<std::uint32_t>(ptokTarget->csh)));
                         if (ptokTarget->dv.dp != 0) {
                             dpArmorLeft -=
-                                static_cast<int32_t>((static_cast<int32_t>((static_cast<int32_t>((dpSingle * ptokTarget->dv.pctDp())) / 10 * ptokTarget->dv.pctSh())) / 10 * static_cast<uint32_t>(ptokTarget->csh))) /
+                                static_cast<std::int32_t>((static_cast<std::int32_t>((static_cast<std::int32_t>((dpSingle * ptokTarget->dv.pctDp())) / 10 * ptokTarget->dv.pctSh())) / 10 * static_cast<std::uint32_t>(ptokTarget->csh))) /
                                 500;
                         }
                         dp = part.ptorp()->dp;
                         if (part.hs.iItem >= itorpJihadMissile && part.hs.iItem <= itorpArmageddonMissile) {
                             if (dpShieldLeft <= 0) {
-                                dp = static_cast<int32_t>((dp * 2));
+                                dp = static_cast<std::int32_t>((dp * 2));
                             }
                             grfWeapon = static_cast<GrfWeapon>(grfWeapon | bitFMissile);
                         }
                         i = ptokTarget->csh;
-                        if (i >= cTorpBase || static_cast<int32_t>(static_cast<uint32_t>((cTorpHit * dp))) <= dpArmorLeft) {
+                        if (i >= cTorpBase || static_cast<std::int32_t>(static_cast<std::uint32_t>((cTorpHit * dp))) <= dpArmorLeft) {
                             cTorpFire = cTorpHit;
                             cTorpMiss = cTorpBase - cTorpHit;
                         } else {
                             for (; i <= cTorpBase; i++) {
-                                cTorpFire = static_cast<int32_t>((static_cast<int32_t>((static_cast<uint32_t>((i * cTorpHit)) + cTorpBase - 1)) / cTorpBase));
+                                cTorpFire = static_cast<std::int32_t>((static_cast<std::int32_t>((static_cast<std::uint32_t>((i * cTorpHit)) + cTorpBase - 1)) / cTorpBase));
                                 cTorpMiss = i - cTorpFire;
-                                dpShieldCur = dpShieldLeft - static_cast<int32_t>((cTorpMiss * dp)) / 8;
+                                dpShieldCur = dpShieldLeft - static_cast<std::int32_t>((cTorpMiss * dp)) / 8;
                                 if (dpShieldCur < 0) {
                                     dpShieldCur = 0;
                                 }
-                                dpShieldCur -= static_cast<int32_t>((cTorpFire * dp)) / 2;
-                                dpHitArmor = static_cast<int32_t>((cTorpFire * dp)) / 2;
+                                dpShieldCur -= static_cast<std::int32_t>((cTorpFire * dp)) / 2;
+                                dpHitArmor = static_cast<std::int32_t>((cTorpFire * dp)) / 2;
                                 if (dpShieldCur < 0) {
                                     dpHitArmor -= dpShieldCur;
                                 }
@@ -1931,11 +1931,11 @@ int16_t FAttack(APPSESSION &app, int16_t itokAttacker, int16_t init, uint8_t *lp
                                     break;
                             }
                         }
-                        dpCol = static_cast<int32_t>((cTorpMiss * dp)) / 8;
+                        dpCol = static_cast<std::int32_t>((cTorpMiss * dp)) / 8;
                         if (dpCol > 0 && FDamageTok(app, ptokTarget, itokTarget, &dpCol, 0, static_cast<GrfWeapon>(grfWeapon | bitFDeflected), 1, nullptr)) {
                             ctokDamaged++;
                         }
-                        dpT = static_cast<int32_t>((cTorpFire * dp)) / 2;
+                        dpT = static_cast<std::int32_t>((cTorpFire * dp)) / 2;
                         cTorpBase = cTorpFire + cTorpMiss;
                         FDamageTok(app, ptokTarget, itokTarget, &dpT, dpT, grfWeapon, 0, &cTorpBase);
                         ctokDamaged++;
@@ -1958,18 +1958,18 @@ int16_t FAttack(APPSESSION &app, int16_t itokAttacker, int16_t init, uint8_t *lp
     return 0;
 }
 
-void KillShips(APPSESSION &app, TOK *ptok, int16_t cshKill, int16_t ishdef, FLEET *lpfl, int16_t fFallout) {
+void KillShips(APPSESSION &app, TOK *ptok, std::int16_t cshKill, std::int16_t ishdef, FLEET *lpfl, std::int16_t fFallout) {
     FLEET   flDead;
-    int16_t i;
+    std::int16_t i;
     FLEET   flSrc;
-    int16_t csh;
+    std::int16_t csh;
 
     if (cshKill != 0) {
         if (fFallout) {
             MarkTechsSeen(app, &LpshdefFromTok(app, ptok)->hul, ptok->iplr);
         }
         flSrc = *lpfl;
-        memset(&flDead, 0, sizeof(FLEET));
+        std::memset(&flDead, 0, sizeof(FLEET));
         csh = lpfl->rgcsh[ishdef] - cshKill;
         flDead.rgcsh[ishdef] = cshKill;
         flSrc.rgcsh[ishdef] = csh;
@@ -2007,13 +2007,13 @@ void KillShips(APPSESSION &app, TOK *ptok, int16_t cshKill, int16_t ishdef, FLEE
 }
 
 void CreateSalvage(APPSESSION &app, FLEET *pfl, THING **plpth) {
-    int32_t wtTotal;
+    std::int32_t wtTotal;
     SHDEF  *lpshdefT;
     PLANET *lppl;
-    int16_t i;
-    int32_t rgwtMinerals[3];
-    int16_t j;
-    int16_t fBleeding;
+    std::int16_t i;
+    std::int32_t rgwtMinerals[3];
+    std::int16_t j;
+    std::int16_t fBleeding;
     SHDEF   shdefT;
 
     fBleeding = RaceQueryIO().pfnGrbit(&app.state.rgplr[pfl->iPlayer], ibitRaceBleedingEdgeTech);
@@ -2035,18 +2035,18 @@ void CreateSalvage(APPSESSION &app, FLEET *pfl, THING **plpth) {
                 } else {
                     lpshdefT = app.state.rglpshdef[pfl->iPlayer] + j;
                 }
-                rgwtMinerals[i] += static_cast<int32_t>((pfl->rgcsh[j] * static_cast<uint32_t>(lpshdefT->hul.rgwtOreCost[i]))) / 3;
+                rgwtMinerals[i] += static_cast<std::int32_t>((pfl->rgcsh[j] * static_cast<std::uint32_t>(lpshdefT->hul.rgwtOreCost[i]))) / 3;
             }
         }
         rgwtMinerals[i] += pfl->rgwtMin[i];
         if (lppl) {
-            lppl->rgwtMin[i] += static_cast<int32_t>((rgwtMinerals[i] * static_cast<uint32_t>((!lppl->fStarbase ? 5 : 8)))) / 10;
+            lppl->rgwtMin[i] += static_cast<std::int32_t>((rgwtMinerals[i] * static_cast<std::uint32_t>((!lppl->fStarbase ? 5 : 8)))) / 10;
         }
     }
     if (!lppl) {
         wtTotal = 0;
         for (i = 0; i <= 2; i++) {
-            rgwtMinerals[i] -= static_cast<int32_t>((rgwtMinerals[i] >> 2));
+            rgwtMinerals[i] -= static_cast<std::int32_t>((rgwtMinerals[i] >> 2));
             wtTotal += rgwtMinerals[i];
         }
         if (wtTotal != 0) {
@@ -2058,38 +2058,38 @@ void CreateSalvage(APPSESSION &app, FLEET *pfl, THING **plpth) {
     return;
 }
 
-int16_t FDamageTok(APPSESSION &app, TOK *ptok, int16_t itok, int32_t *pdpBeam, int32_t dpTorp, GrfWeapon grfWeapon, int16_t fShieldsOnly, int32_t *pcTorp) {
-    int16_t   pctSh;
+std::int16_t FDamageTok(APPSESSION &app, TOK *ptok, std::int16_t itok, std::int32_t *pdpBeam, std::int32_t dpTorp, GrfWeapon grfWeapon, std::int16_t fShieldsOnly, std::int32_t *pcTorp) {
+    std::int16_t   pctSh;
     DV        dv;
-    uint16_t *pwLosses;
-    int16_t   cshOrigDamaged;
-    int32_t   dpShdef;
-    int32_t   ddpOrig;
-    int32_t   dpOrig;
+    std::uint16_t *pwLosses;
+    std::int16_t   cshOrigDamaged;
+    std::int32_t   dpShdef;
+    std::int32_t   ddpOrig;
+    std::int32_t   dpOrig;
     PLANET   *lppl;
-    int16_t   i;
-    int16_t   cshOrig;
+    std::int16_t   i;
+    std::int16_t   cshOrig;
     FLEET    *lpfl;
-    int32_t   cKillMax;
-    int16_t   csh;
-    int32_t   dpT;
-    int16_t   pctDp;
-    int16_t   ishdef;
-    int32_t   dp;
-    uint16_t  pctDpNew;
+    std::int32_t   cKillMax;
+    std::int16_t   csh;
+    std::int32_t   dpT;
+    std::int16_t   pctDp;
+    std::int16_t   ishdef;
+    std::int32_t   dp;
+    std::uint16_t  pctDpNew;
 
     dp = *pdpBeam;
-    memset(app.state.lpbBattleCur, 0, 8);
+    std::memset(app.state.lpbBattleCur, 0, 8);
     BkvFromPrefix(app.state.lpbBattleCur).SetItok(itok);
     BkvFromPrefix(app.state.lpbBattleCur).SetGrfWeapon(grfWeapon);
     if (ptok->dpShield != 0) {
-        dpOrig = static_cast<uint32_t>(ptok->dpShield);
-        dpT = static_cast<uint32_t>(ptok->dpShield) - dpOrig;
-        dpOrig = static_cast<uint32_t>((dpOrig * static_cast<uint32_t>(ptok->csh)));
+        dpOrig = static_cast<std::uint32_t>(ptok->dpShield);
+        dpT = static_cast<std::uint32_t>(ptok->dpShield) - dpOrig;
+        dpOrig = static_cast<std::uint32_t>((dpOrig * static_cast<std::uint32_t>(ptok->csh)));
         if (dpOrig > dp) {
             dpOrig -= dp;
             BkvFromPrefix(app.state.lpbBattleCur).SetDpShield(WPackLong(dp));
-            ptok->dpShield = LOWORD(static_cast<int32_t>((dpOrig / static_cast<int32_t>(ptok->csh)))) + LOWORD(dpT);
+            ptok->dpShield = LOWORD(static_cast<std::int32_t>((dpOrig / static_cast<std::int32_t>(ptok->csh)))) + LOWORD(dpT);
             dp = 0;
         } else {
             dp -= dpOrig;
@@ -2115,13 +2115,13 @@ int16_t FDamageTok(APPSESSION &app, TOK *ptok, int16_t itok, int32_t *pdpBeam, i
     }
     dp += dpTorp;
     ishdef = ptok->ishdef;
-    dpShdef = static_cast<uint32_t>(LpshdefFromTok(app, ptok)->hul.dp);
+    dpShdef = static_cast<std::uint32_t>(LpshdefFromTok(app, ptok)->hul.dp);
     dv.dp = ptok->dv.dp;
     if (ptok->grobj == grobjPlanet) {
         lppl = LpplFromId(app, ptok->id);
         cKillMax--;
         if (dv.pctDp() != 0) {
-            dp += static_cast<int32_t>((dpShdef * dv.pctDp())) / 500;
+            dp += static_cast<std::int32_t>((dpShdef * dv.pctDp())) / 500;
         }
         if (dp >= dpShdef) {
             BkvFromPrefix(app.state.lpbBattleCur).dv().SetPctDp(500);
@@ -2135,9 +2135,9 @@ int16_t FDamageTok(APPSESSION &app, TOK *ptok, int16_t itok, int32_t *pdpBeam, i
                 ProductionIO().pfnKillPackets(app, lppl);
             }
         } else {
-            pctDpNew = LOWORD(static_cast<int32_t>((static_cast<int32_t>((dp * 500)) / dpShdef)));
+            pctDpNew = LOWORD(static_cast<std::int32_t>((static_cast<std::int32_t>((dp * 500)) / dpShdef)));
             if (lppl->pctDp != pctDpNew) {
-                lppl->pctDp = LOWORD(static_cast<int32_t>((static_cast<int32_t>((dp * 500)) / dpShdef)));
+                lppl->pctDp = LOWORD(static_cast<std::int32_t>((static_cast<std::int32_t>((dp * 500)) / dpShdef)));
             } else {
                 lppl->pctDp++;
             }
@@ -2161,11 +2161,11 @@ int16_t FDamageTok(APPSESSION &app, TOK *ptok, int16_t itok, int32_t *pdpBeam, i
     csh = ptok->csh;
     cshOrig = csh;
     if (dv.pctDp() != 0) {
-        cshOrigDamaged = LOWORD(static_cast<int32_t>((csh * dv.pctSh())) / 100);
+        cshOrigDamaged = LOWORD(static_cast<std::int32_t>((csh * dv.pctSh())) / 100);
         if (cshOrigDamaged == 0) {
             cshOrigDamaged = 1;
         }
-        ddpOrig = static_cast<int32_t>((dpShdef * dv.pctDp())) / 500;
+        ddpOrig = static_cast<std::int32_t>((dpShdef * dv.pctDp())) / 500;
         if (ddpOrig == 0) {
             ddpOrig = 1;
         }
@@ -2204,19 +2204,19 @@ int16_t FDamageTok(APPSESSION &app, TOK *ptok, int16_t itok, int32_t *pdpBeam, i
     }
     if (dp != 0 && csh != 0) {
         if (cshOrigDamaged != 0) {
-            dp += static_cast<uint32_t>((ddpOrig * cshOrigDamaged)) + csh - 1;
+            dp += static_cast<std::uint32_t>((ddpOrig * cshOrigDamaged)) + csh - 1;
         }
-        dp = static_cast<int32_t>((dp / csh));
+        dp = static_cast<std::int32_t>((dp / csh));
         if (dp == 0) {
             dp = 1;
         }
-        pctDp = LOWORD(static_cast<int32_t>((static_cast<int32_t>((static_cast<uint32_t>((dp * 500)) + dpShdef - 1)) / dpShdef)));
+        pctDp = LOWORD(static_cast<std::int32_t>((static_cast<std::int32_t>((static_cast<std::uint32_t>((dp * 500)) + dpShdef - 1)) / dpShdef)));
         if (pctDp == 0) {
             pctDp = 1;
         }
         pctSh = 100;
     } else if (cshOrigDamaged != 0) {
-        pctSh = LOWORD(static_cast<int32_t>((static_cast<int32_t>((static_cast<uint32_t>((cshOrigDamaged * 100)) + csh - 1)) / csh)));
+        pctSh = LOWORD(static_cast<std::int32_t>((static_cast<std::int32_t>((static_cast<std::uint32_t>((cshOrigDamaged * 100)) + csh - 1)) / csh)));
         pctDp = ptok->dv.pctDp();
     } else {
         pctSh = 0;
@@ -2250,10 +2250,10 @@ int16_t FDamageTok(APPSESSION &app, TOK *ptok, int16_t itok, int32_t *pdpBeam, i
     return 1;
 }
 
-int16_t DxyFromSpdRound(uint16_t spd, int16_t iRound) {
-    int16_t dxy;
+std::int16_t DxyFromSpdRound(std::uint16_t spd, std::int16_t iRound) {
+    std::int16_t dxy;
 
-    dxy = static_cast<uint32_t>((spd + 2)) / 4;
+    dxy = static_cast<std::uint32_t>((spd + 2)) / 4;
     switch (spd & 3) {
     case 0:
         dxy += (iRound & 1) == 0;
@@ -2267,36 +2267,36 @@ int16_t DxyFromSpdRound(uint16_t spd, int16_t iRound) {
     return dxy;
 }
 
-int16_t FDoCoolBattle(APPSESSION &app, FLEET *lpfl, int16_t cplr, uint16_t *rggrfAttack, uint16_t grfPlayer, uint16_t grfSpectator) {
-    int16_t  cShipsInvolved;
+std::int16_t FDoCoolBattle(APPSESSION &app, FLEET *lpfl, std::int16_t cplr, std::uint16_t *rggrfAttack, std::uint16_t grfPlayer, std::uint16_t grfSpectator) {
+    std::int16_t  cShipsInvolved;
     TOK     *ptok;
-    uint16_t wt;
-    int16_t  cShdefsInvolved;
-    uint8_t *lpbSav;
-    int16_t  initMac;
-    int16_t  init;
-    uint16_t wtT;
-    uint16_t grplrLeft;
-    int16_t  i;
-    int16_t  j;
-    int16_t  initMin;
-    uint8_t *lpbtlrec;
-    int16_t  iRound;
+    std::uint16_t wt;
+    std::int16_t  cShdefsInvolved;
+    std::uint8_t *lpbSav;
+    std::int16_t  initMac;
+    std::int16_t  init;
+    std::uint16_t wtT;
+    std::uint16_t grplrLeft;
+    std::int16_t  i;
+    std::int16_t  j;
+    std::int16_t  initMin;
+    std::uint8_t *lpbtlrec;
+    std::int16_t  iRound;
     FLEET   *lpflT;
-    uint16_t brcOrig;
-    uint8_t *lpbtldata;
-    uint8_t  rgfInit[64];
-    uint16_t rgPlrLosses[256];
-    uint16_t wtNext;
-    int16_t  itok;
+    std::uint16_t brcOrig;
+    std::uint8_t *lpbtldata;
+    std::uint8_t  rgfInit[64];
+    std::uint16_t rgPlrLosses[256];
+    std::uint16_t wtNext;
+    std::int16_t  itok;
     PLANET  *lppl;
-    int32_t  lwt;
+    std::int32_t  lwt;
     HB      *lphb; /* NATIVE: recover the Win16 heap-relative offset. */
 
     if (!app.state.lpbBattleLog) {
         StarsRecoveryScope scopeRecovery;
         try {
-            app.state.lpbBattleLog = LpAlloc<uint8_t>(app, 0xffc8, htBattle);
+            app.state.lpbBattleLog = LpAlloc<std::uint8_t>(app, 0xffc8, htBattle);
             app.state.lpbBattleCur = app.state.lpbBattleLog;
         } catch (const StarsError &) {
             return -1;
@@ -2305,22 +2305,22 @@ int16_t FDoCoolBattle(APPSESSION &app, FLEET *lpfl, int16_t cplr, uint16_t *rggr
     if (!app.state.lpbBattleT) {
         StarsRecoveryScope scopeRecovery;
         try {
-            app.state.lpbBattleT = LpAlloc<uint8_t>(app, 0xffc8, htBattle);
+            app.state.lpbBattleT = LpAlloc<std::uint8_t>(app, 0xffc8, htBattle);
         } catch (const StarsError &) {
             return -1;
         }
     }
     lpbSav = app.state.lpbBattleCur;
     app.state.lpbBattleCur = app.state.lpbBattleT;
-    memset(rgPlrLosses, 0, 0x200);
+    std::memset(rgPlrLosses, 0, 0x200);
     app.state.vrgPlrLosses = rgPlrLosses;
-    memset(rgfInit, 0, 64);
-    memset(app.state.vrgtok, 0, 256 * sizeof(TOK));
+    std::memset(rgfInit, 0, 64);
+    std::memset(app.state.vrgtok, 0, 256 * sizeof(TOK));
     app.state.vctok = 0;
-    lpbtldata = static_cast<uint8_t *>(app.state.lpbBattleCur);
+    lpbtldata = static_cast<std::uint8_t *>(app.state.lpbBattleCur);
     app.state.lpbBattleCur += 14;
-    memset(app.state.rgTechBattle, 0, 6);
-    memset(app.state.rgTechTrader, 0, 13);
+    std::memset(app.state.rgTechBattle, 0, 6);
+    std::memset(app.state.rgTechTrader, 0, 13);
     app.state.lpthBattle = nullptr;
     cShdefsInvolved = 0;
     cShipsInvolved = 0;
@@ -2352,7 +2352,7 @@ int16_t FDoCoolBattle(APPSESSION &app, FLEET *lpfl, int16_t cplr, uint16_t *rggr
             lppl->fNoHeal = 1;
         }
     }
-    InitializeBoard(app, lpfl, static_cast<int16_t>(((cplr - 1) * cplr)) / 2, grfPlayer, rgfInit, &initMin, &initMac);
+    InitializeBoard(app, lpfl, static_cast<std::int16_t>(((cplr - 1) * cplr)) / 2, grfPlayer, rgfInit, &initMin, &initMac);
     BdvFromPrefix(lpbtldata).SetCplr(cplr);
     BdvFromPrefix(lpbtldata).SetCtok(app.state.vctok);
     BdvFromPrefix(lpbtldata).SetIdPlanet(lpfl->idPlanet);
@@ -2396,16 +2396,16 @@ int16_t FDoCoolBattle(APPSESSION &app, FLEET *lpfl, int16_t cplr, uint16_t *rggr
                     } else {
                         lwt = ptok->dwt;
                         lwt -= 7;
-                        lwt = static_cast<int32_t>((lwt * 2));
-                        lwt = static_cast<uint32_t>(ptok->wt) + static_cast<int32_t>((static_cast<uint32_t>(ptok->wt) * lwt)) / 100;
+                        lwt = static_cast<std::int32_t>((lwt * 2));
+                        lwt = static_cast<std::uint32_t>(ptok->wt) + static_cast<std::int32_t>((static_cast<std::uint32_t>(ptok->wt) * lwt)) / 100;
                         wtT = LOWORD(lwt);
                         if (wtT > wtNext && wtT < wt && DxyFromSpdRound(ptok->spd, iRound) != 0) {
                             wtNext = wtT;
                         }
                         if (wtT == wt) {
                             i--;
-                            if (static_cast<int16_t>(ptok->dMovesLeft) >= j) {
-                                lpbtlrec = static_cast<uint8_t *>(app.state.lpbBattleCur);
+                            if (static_cast<std::int16_t>(ptok->dMovesLeft) >= j) {
+                                lpbtlrec = static_cast<std::uint8_t *>(app.state.lpbBattleCur);
                                 app.state.lpbBattleCur += 6;
                                 BevFromPrefix(lpbtlrec).SetItok(itok);
                                 BevFromPrefix(lpbtlrec).SetCtok(0);
@@ -2464,7 +2464,7 @@ int16_t FDoCoolBattle(APPSESSION &app, FLEET *lpfl, int16_t cplr, uint16_t *rggr
                             break;
                         ptok = app.state.vrgtok + itok;
                         if (ptok->fActive) {
-                            lpbtlrec = static_cast<uint8_t *>(app.state.lpbBattleCur);
+                            lpbtlrec = static_cast<std::uint8_t *>(app.state.lpbBattleCur);
                             app.state.lpbBattleCur += 6;
                             BevFromPrefix(lpbtlrec).SetItok(itok);
                             BevFromPrefix(lpbtlrec).SetCtok(0);
@@ -2485,27 +2485,27 @@ int16_t FDoCoolBattle(APPSESSION &app, FLEET *lpfl, int16_t cplr, uint16_t *rggr
         if (!((grplrLeft - 1) & grplrLeft))
             break;
     }
-    BdvFromPrefix(lpbtldata).SetCbData(app.state.lpbBattleCur - static_cast<uint8_t *>(lpbtldata));
+    BdvFromPrefix(lpbtldata).SetCbData(app.state.lpbBattleCur - static_cast<std::uint8_t *>(lpbtldata));
     SendBattleMessages(app, lpfl, cplr, BdvFromPrefix(lpbtldata).id(), rgPlrLosses, grfPlayer, cShipsInvolved, cShdefsInvolved, grfSpectator);
     BdvFromPrefix(lpbtldata).SetGrfPlr(grfPlayer);
     /* NATIVE: Win16 offsets include its 16-byte HB, not native address bits. */
     lphb = LphbFromLpHt(app, lpbSav, htBattle);
-    if (0xffc8 - static_cast<uint32_t>((lpbSav - reinterpret_cast<uint8_t *>(lphb) - sizeof(HB) + 16)) < static_cast<uint32_t>(BdvFromPrefix(lpbtldata).cbData())) {
+    if (0xffc8 - static_cast<std::uint32_t>((lpbSav - reinterpret_cast<std::uint8_t *>(lphb) - sizeof(HB) + 16)) < static_cast<std::uint32_t>(BdvFromPrefix(lpbtldata).cbData())) {
         RawStore16(lpbSav, 0xffff);
         app.state.lpbBattleT = nullptr;
     } else {
-        memmove(lpbSav, lpbtldata, BdvFromPrefix(lpbtldata).cbData());
+        std::memmove(lpbSav, lpbtldata, BdvFromPrefix(lpbtldata).cbData());
         app.state.lpbBattleCur = lpbSav + BdvFromPrefix(lpbtldata).cbData();
     }
     return 1;
 }
 
-int16_t ITechLearnATech(APPSESSION &app, int16_t iplr, int16_t x, int16_t y, MessageId idm, uint16_t *piGoto) {
-    uint16_t iGoto;
-    int16_t  fBattle;
-    int16_t  i;
-    int16_t  iTech;
-    int32_t  l;
+std::int16_t ITechLearnATech(APPSESSION &app, std::int16_t iplr, std::int16_t x, std::int16_t y, MessageId idm, std::uint16_t *piGoto) {
+    std::uint16_t iGoto;
+    std::int16_t  fBattle;
+    std::int16_t  i;
+    std::int16_t  iTech;
+    std::int32_t  l;
 
     fBattle = idm != static_cast<MessageId>(idmNone);
     if (app.state.rgplr[iplr].fLearned || RandomIO().pfnRandom(app, 100) < 50) {
@@ -2533,12 +2533,12 @@ int16_t ITechLearnATech(APPSESSION &app, int16_t iplr, int16_t x, int16_t y, Mes
         if (app.state.rgplr[iplr].rgTech[iTech] < app.state.rgTechBattle[iTech]) {
             l = ResearchIO().pfnTechCost(app, static_cast<TechFieldType>(iTech), app.state.rgplr[iplr].rgTech[iTech] + 1, iplr);
             if (app.state.game.fSlowTech) {
-                l = static_cast<int32_t>((l >> 1));
+                l = static_cast<std::int32_t>((l >> 1));
             }
             app.state.rgplr[iplr].rgResSpent[iTech] += l;
             if (fBattle) {
                 if (app.state.game.fSlowTech) {
-                    l = static_cast<int32_t>((l * 2));
+                    l = static_cast<std::int32_t>((l * 2));
                 }
                 TurnIO().pfnMessage(app, iplr, idm, gotoResearch, x, y, iTech, LOWORD(l), HIWORD(l), 0, 0);
             } else if (piGoto) {
@@ -2551,34 +2551,34 @@ int16_t ITechLearnATech(APPSESSION &app, int16_t iplr, int16_t x, int16_t y, Mes
     return 0;
 }
 
-void SendBattleMessages(APPSESSION &app, FLEET *lpflBtl, int16_t cplr, int16_t idBtl, uint16_t *rgPlrLosses, int16_t grfPlayer, int16_t cShipsInvolved, int16_t cShdefsInvolved,
-                        uint16_t grfSpectator) {
-    int16_t   iplrStarbase;
-    int16_t   iplr;
-    uint8_t   rgcfl[16];
-    int32_t   lpopStarbase;
-    uint16_t *pw;
-    int16_t   isb;
+void SendBattleMessages(APPSESSION &app, FLEET *lpflBtl, std::int16_t cplr, std::int16_t idBtl, std::uint16_t *rgPlrLosses, std::int16_t grfPlayer, std::int16_t cShipsInvolved, std::int16_t cShdefsInvolved,
+                        std::uint16_t grfSpectator) {
+    std::int16_t   iplrStarbase;
+    std::int16_t   iplr;
+    std::uint8_t   rgcfl[16];
+    std::int32_t   lpopStarbase;
+    std::uint16_t *pw;
+    std::int16_t   isb;
     PLANET   *lppl;
-    uint16_t *pwThem;
-    int16_t   fAlive;
-    int16_t   cUs;
-    int16_t   y;
+    std::uint16_t *pwThem;
+    std::int16_t   fAlive;
+    std::int16_t   cUs;
+    std::int16_t   y;
     FLEET    *lpfl;
-    int16_t   cThemDead;
-    int16_t   i;
+    std::int16_t   cThemDead;
+    std::int16_t   i;
     MessageId idm;
-    int16_t   j;
+    std::int16_t   j;
     FLEET    *lpflT;
-    int16_t   cUsDead;
-    int16_t   iThem;
-    uint16_t *pwUs;
-    int16_t   cThem;
-    int16_t   x;
+    std::int16_t   cUsDead;
+    std::int16_t   iThem;
+    std::uint16_t *pwUs;
+    std::int16_t   cThem;
+    std::int16_t   x;
 
     iplrStarbase = iplrNone;
     lppl = nullptr;
-    memset(rgcfl, 0, 16);
+    std::memset(rgcfl, 0, 16);
     if (lpflBtl->idPlanet != idPlanetDeepSpace) {
         x = -1;
         y = lpflBtl->idPlanet;
@@ -2661,13 +2661,13 @@ void SendBattleMessages(APPSESSION &app, FLEET *lpflBtl, int16_t cplr, int16_t i
                     idm = idmBattleTookPlaceDestroyedTakingDamage;
                 }
                 if (pwUs) {
-                    i = (reinterpret_cast<uint8_t *>(pwUs) - reinterpret_cast<uint8_t *>(rgPlrLosses)) >> 1;
+                    i = (reinterpret_cast<std::uint8_t *>(pwUs) - reinterpret_cast<std::uint8_t *>(rgPlrLosses)) >> 1;
                     i = (i & 0xf0) << 1 | (i & 0xf);
                 } else {
                     i = iplrStarbase << 5 | (isb + 0x10);
                 }
                 if (pwThem) {
-                    j = (reinterpret_cast<uint8_t *>(pwThem) - reinterpret_cast<uint8_t *>(rgPlrLosses)) >> 1;
+                    j = (reinterpret_cast<std::uint8_t *>(pwThem) - reinterpret_cast<std::uint8_t *>(rgPlrLosses)) >> 1;
                     j = (j & 0xf0) << 1 | (j & 0xf);
                 } else {
                     j = iplrStarbase << 5 | (isb + 0x10);
@@ -2724,21 +2724,21 @@ void SendBattleMessages(APPSESSION &app, FLEET *lpflBtl, int16_t cplr, int16_t i
                 do {
                     if (!lpfl->fDead) {
                         if (lpfl->iPlayer == iplr && pwUs) {
-                            cUs += lpfl->rgcsh[((reinterpret_cast<uint8_t *>(pwUs) - reinterpret_cast<uint8_t *>(rgPlrLosses)) >> 1) - (lpfl->iPlayer << 4)];
+                            cUs += lpfl->rgcsh[((reinterpret_cast<std::uint8_t *>(pwUs) - reinterpret_cast<std::uint8_t *>(rgPlrLosses)) >> 1) - (lpfl->iPlayer << 4)];
                         } else if (pwThem) {
-                            cThem += lpfl->rgcsh[((reinterpret_cast<uint8_t *>(pwThem) - reinterpret_cast<uint8_t *>(rgPlrLosses)) >> 1) - (lpfl->iPlayer << 4)];
+                            cThem += lpfl->rgcsh[((reinterpret_cast<std::uint8_t *>(pwThem) - reinterpret_cast<std::uint8_t *>(rgPlrLosses)) >> 1) - (lpfl->iPlayer << 4)];
                         }
                     }
                     lpfl = lpfl->lpflNext;
                 } while (lpfl != lpflBtl && lpfl);
                 if (pwUs) {
-                    i = (reinterpret_cast<uint8_t *>(pwUs) - reinterpret_cast<uint8_t *>(rgPlrLosses)) >> 1;
+                    i = (reinterpret_cast<std::uint8_t *>(pwUs) - reinterpret_cast<std::uint8_t *>(rgPlrLosses)) >> 1;
                     i = (i & 0xf0) << 1 | (i & 0xf);
                 } else {
                     i = iplrStarbase << 5 | (isb + 0x10);
                 }
                 if (pwThem) {
-                    j = (reinterpret_cast<uint8_t *>(pwThem) - reinterpret_cast<uint8_t *>(rgPlrLosses)) >> 1;
+                    j = (reinterpret_cast<std::uint8_t *>(pwThem) - reinterpret_cast<std::uint8_t *>(rgPlrLosses)) >> 1;
                     j = (j & 0xf0) << 1 | (j & 0xf);
                 } else {
                     j = iplrStarbase << 5 | (isb + 0x10);
@@ -2806,7 +2806,7 @@ void SendBattleMessages(APPSESSION &app, FLEET *lpflBtl, int16_t cplr, int16_t i
                     if ((iThem & 0xf) == iplrStarbase) {
                         j = iplrStarbase << 5 | (isb + 0x10);
                     } else {
-                        j = (reinterpret_cast<uint8_t *>(pwThem) - reinterpret_cast<uint8_t *>(rgPlrLosses)) >> 1;
+                        j = (reinterpret_cast<std::uint8_t *>(pwThem) - reinterpret_cast<std::uint8_t *>(rgPlrLosses)) >> 1;
                         j = (j & 0xf0) << 1 | (j & 0xf);
                     }
                 }
@@ -2814,7 +2814,7 @@ void SendBattleMessages(APPSESSION &app, FLEET *lpflBtl, int16_t cplr, int16_t i
                     if (iplr == iplrStarbase) {
                         i = iplrStarbase << 5 | (isb + 0x10);
                     } else {
-                        i = (reinterpret_cast<uint8_t *>(pwUs) - reinterpret_cast<uint8_t *>(rgPlrLosses)) >> 1;
+                        i = (reinterpret_cast<std::uint8_t *>(pwUs) - reinterpret_cast<std::uint8_t *>(rgPlrLosses)) >> 1;
                         i = (i & 0xf0) << 1 | (i & 0xf);
                     }
                 }
@@ -2913,9 +2913,9 @@ void SendBattleMessages(APPSESSION &app, FLEET *lpflBtl, int16_t cplr, int16_t i
     return;
 }
 
-int16_t FAttackPlayer(APPSESSION &app, FLEET *lpfl, int16_t iplr) {
-    int16_t iplrCur;
-    int16_t iplrT;
+std::int16_t FAttackPlayer(APPSESSION &app, FLEET *lpfl, std::int16_t iplr) {
+    std::int16_t iplrCur;
+    std::int16_t iplrT;
 
     iplrCur = lpfl->iPlayer;
     iplrT = app.state.rglpbtlplan[iplrCur][lpfl->iplan].iplrAttack;
@@ -2944,29 +2944,29 @@ int16_t FAttackPlayer(APPSESSION &app, FLEET *lpfl, int16_t iplr) {
 
 void DoBombing(APPSESSION &app) {
     MessageId idmDst;
-    int32_t   modKill;
-    int16_t   fMulti;
-    int32_t   cKillPeople;
-    int32_t   dmgBombBldg;
-    int32_t   cKillPeopleS;
-    int32_t   cKillMine;
-    int32_t   dmgBombFloor;
+    std::int32_t   modKill;
+    std::int16_t   fMulti;
+    std::int32_t   cKillPeople;
+    std::int32_t   dmgBombBldg;
+    std::int32_t   cKillPeopleS;
+    std::int32_t   cKillMine;
+    std::int32_t   dmgBombFloor;
     MessageId idmSrc;
-    int32_t   cKillDefenses;
-    int32_t   cKillFact;
-    int32_t   pctTerra;
+    std::int32_t   cKillDefenses;
+    std::int32_t   cKillFact;
+    std::int32_t   pctTerra;
     PLANET   *lppl;
-    int16_t   ifl;
+    std::int16_t   ifl;
     FLEET    *lpfl;
-    int32_t   cPPE;
-    int32_t   dmgBombPeople;
+    std::int32_t   cPPE;
+    std::int32_t   dmgBombPeople;
     float     pctSmart;
     float     pctSuccess;
-    int32_t   dmgPeopleSmart;
+    std::int32_t   dmgPeopleSmart;
     double    pctSuccessHalf;
-    int16_t   pctTot;
-    int16_t   dChg;
-    int16_t   i;
+    std::int16_t   pctTot;
+    std::int16_t   dChg;
+    std::int16_t   i;
 
     for (ifl = 0; ifl < app.state.cFleet; ifl++) {
         lpfl = app.state.rglpfl[ifl];
@@ -2979,58 +2979,58 @@ void DoBombing(APPSESSION &app) {
                 CalcPctSurvive(app, lppl, &pctSuccess, &pctSmart);
                 if (static_cast<double>(pctSuccess) < static_cast<double>(1.0)) {
                     if (dmgBombPeople > 0) {
-                        dmgBombPeople = static_cast<int32_t>((static_cast<double>(dmgBombPeople) * pctSuccess + 0.5));
+                        dmgBombPeople = static_cast<std::int32_t>((static_cast<double>(dmgBombPeople) * pctSuccess + 0.5));
                     }
                     if (dmgBombFloor > 0) {
-                        dmgBombFloor = static_cast<int32_t>((static_cast<double>(dmgBombFloor) * pctSuccess + 0.5));
+                        dmgBombFloor = static_cast<std::int32_t>((static_cast<double>(dmgBombFloor) * pctSuccess + 0.5));
                     }
                     if (dmgPeopleSmart > 0) {
-                        dmgPeopleSmart = static_cast<int32_t>((static_cast<double>(dmgPeopleSmart) * pctSmart + 0.5));
+                        dmgPeopleSmart = static_cast<std::int32_t>((static_cast<double>(dmgPeopleSmart) * pctSmart + 0.5));
                     }
                     if (dmgBombBldg > 0) {
                         pctSuccessHalf = static_cast<double>((1.0 - (static_cast<double>(1.0) - pctSuccess) / 2.0));
-                        dmgBombBldg = static_cast<int32_t>((static_cast<double>(dmgBombBldg) * pctSuccessHalf + 0.5));
+                        dmgBombBldg = static_cast<std::int32_t>((static_cast<double>(dmgBombBldg) * pctSuccessHalf + 0.5));
                     }
                 }
-                cPPE = lppl->cMines + lppl->cFactories + static_cast<uint32_t>(lppl->cDefenses);
+                cPPE = lppl->cMines + lppl->cFactories + static_cast<std::uint32_t>(lppl->cDefenses);
                 cKillDefenses = 0;
                 cKillPeople = 0;
                 cKillMine = 0;
                 cKillFact = 0;
                 if (dmgBombBldg > 0 && cPPE > 0) {
-                    cKillFact = static_cast<uint32_t>((lppl->cFactories * dmgBombBldg));
-                    modKill = static_cast<int32_t>((cKillFact % cPPE));
-                    cKillFact = static_cast<int32_t>((cKillFact / cPPE));
+                    cKillFact = static_cast<std::uint32_t>((lppl->cFactories * dmgBombBldg));
+                    modKill = static_cast<std::int32_t>((cKillFact % cPPE));
+                    cKillFact = static_cast<std::int32_t>((cKillFact / cPPE));
                     if (modKill > 0) {
-                        cKillFact += static_cast<uint32_t>((RandomIO().pfnRandom(app, LOWORD(cPPE)) < modKill));
+                        cKillFact += static_cast<std::uint32_t>((RandomIO().pfnRandom(app, LOWORD(cPPE)) < modKill));
                     }
-                    if (cKillFact > static_cast<int32_t>(lppl->cFactories)) {
+                    if (cKillFact > static_cast<std::int32_t>(lppl->cFactories)) {
                         cKillFact = lppl->cFactories;
                     }
-                    cKillDefenses = static_cast<uint32_t>((lppl->cDefenses * dmgBombBldg));
-                    modKill = static_cast<int32_t>((cKillDefenses % cPPE));
-                    cKillDefenses = static_cast<int32_t>((cKillDefenses / cPPE));
+                    cKillDefenses = static_cast<std::uint32_t>((lppl->cDefenses * dmgBombBldg));
+                    modKill = static_cast<std::int32_t>((cKillDefenses % cPPE));
+                    cKillDefenses = static_cast<std::int32_t>((cKillDefenses / cPPE));
                     if (modKill > 0) {
-                        cKillDefenses += static_cast<uint32_t>((RandomIO().pfnRandom(app, LOWORD(cPPE)) < modKill));
+                        cKillDefenses += static_cast<std::uint32_t>((RandomIO().pfnRandom(app, LOWORD(cPPE)) < modKill));
                     }
-                    if (cKillDefenses > static_cast<int32_t>(lppl->cDefenses)) {
+                    if (cKillDefenses > static_cast<std::int32_t>(lppl->cDefenses)) {
                         cKillDefenses = lppl->cDefenses;
                     }
                     cKillMine = dmgBombBldg - (cKillFact + cKillDefenses);
-                    if (cKillMine > static_cast<int32_t>(lppl->cMines)) {
+                    if (cKillMine > static_cast<std::int32_t>(lppl->cMines)) {
                         cKillMine = lppl->cMines;
                     }
                 }
                 if ((dmgBombPeople > 0 || dmgBombFloor > 0 || dmgPeopleSmart > 0) && lppl->rgwtMin[3] > 0) {
-                    cKillPeopleS = static_cast<int32_t>((lppl->rgwtMin[3] * dmgPeopleSmart)) / 1000;
+                    cKillPeopleS = static_cast<std::int32_t>((lppl->rgwtMin[3] * dmgPeopleSmart)) / 1000;
                     if (cKillPeopleS >= lppl->rgwtMin[3]) {
                         cKillPeopleS = lppl->rgwtMin[3] - 1;
                     }
-                    cKillPeople = static_cast<uint32_t>(((lppl->rgwtMin[3] - cKillPeopleS) * dmgBombPeople));
-                    modKill = static_cast<int32_t>((cKillPeople % 1000));
-                    cKillPeople = static_cast<int32_t>((cKillPeople / 1000));
+                    cKillPeople = static_cast<std::uint32_t>(((lppl->rgwtMin[3] - cKillPeopleS) * dmgBombPeople));
+                    modKill = static_cast<std::int32_t>((cKillPeople % 1000));
+                    cKillPeople = static_cast<std::int32_t>((cKillPeople / 1000));
                     if (modKill > 0) {
-                        cKillPeople += static_cast<uint32_t>((RandomIO().pfnRandom(app, 1000) <= modKill));
+                        cKillPeople += static_cast<std::uint32_t>((RandomIO().pfnRandom(app, 1000) <= modKill));
                     }
                     cKillPeople += cKillPeopleS;
                     if (dmgBombPeople > 0 && cKillPeople <= 0) {
@@ -3057,7 +3057,7 @@ void DoBombing(APPSESSION &app) {
                 }
                 if (pctTerra > 0) {
                     pctTot = 0;
-                    pctTerra -= static_cast<int32_t>(((static_cast<double>(1.0) - pctSuccess) * pctTerra / 2));
+                    pctTerra -= static_cast<std::int32_t>(((static_cast<double>(1.0) - pctSuccess) * pctTerra / 2));
                     if (pctTerra > 500) {
                         pctTerra = 500;
                     }
@@ -3070,7 +3070,7 @@ void DoBombing(APPSESSION &app) {
                             lppl->rgEnvVar[i] -= dChg;
                             pctTot += dChg;
                         } else if (dChg < 0) {
-                            if (static_cast<int16_t>(-dChg) >= pctTerra) {
+                            if (static_cast<std::int16_t>(-dChg) >= pctTerra) {
                                 dChg = -LOWORD(pctTerra);
                             }
                             lppl->rgEnvVar[i] -= dChg;
@@ -3107,9 +3107,9 @@ void DoBombing(APPSESSION &app) {
                             idmSrc = static_cast<MessageId>(idmSrc + 5);
                             idmDst = static_cast<MessageId>(idmDst + 5);
                             TurnIO().pfnMessage(app, lpfl->iPlayer, idmSrc, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, lppl->id, LOWORD(cKillPeople), LOWORD(cPPE),
-                                        static_cast<int32_t>(((static_cast<double>(1.0) - pctSuccess) * 10000)), 0, 0);
+                                        static_cast<std::int32_t>(((static_cast<double>(1.0) - pctSuccess) * 10000)), 0, 0);
                             TurnIO().pfnMessage(app, lppl->iPlayer, idmDst, static_cast<MsgGoto>(lppl->id), lpfl->id, lppl->id, LOWORD(cKillPeople), LOWORD(cPPE),
-                                        static_cast<int32_t>(((static_cast<double>(1.0) - pctSuccess) * 10000)), 0, 0);
+                                        static_cast<std::int32_t>(((static_cast<double>(1.0) - pctSuccess) * 10000)), 0, 0);
                         }
                     } else {
                         idmSrc = static_cast<MessageId>(idmSrc - 2);
@@ -3121,8 +3121,8 @@ void DoBombing(APPSESSION &app) {
                             idmSrc = static_cast<MessageId>(idmSrc + 5);
                             idmDst = static_cast<MessageId>(idmDst + 5);
                             TurnIO().pfnMessage(app, lpfl->iPlayer, idmSrc, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, lppl->id, LOWORD(cPPE),
-                                        static_cast<int32_t>(((static_cast<double>(1.0) - pctSuccess) * 10000)), 0, 0, 0);
-                            TurnIO().pfnMessage(app, lppl->iPlayer, idmDst, static_cast<MsgGoto>(lppl->id), lpfl->id, lppl->id, LOWORD(cPPE), static_cast<int32_t>(((static_cast<double>(1.0) - pctSuccess) * 10000)),
+                                        static_cast<std::int32_t>(((static_cast<double>(1.0) - pctSuccess) * 10000)), 0, 0, 0);
+                            TurnIO().pfnMessage(app, lppl->iPlayer, idmDst, static_cast<MsgGoto>(lppl->id), lpfl->id, lppl->id, LOWORD(cPPE), static_cast<std::int32_t>(((static_cast<double>(1.0) - pctSuccess) * 10000)),
                                         0, 0, 0);
                         }
                     }
@@ -3146,28 +3146,28 @@ void DoBombing(APPSESSION &app) {
     return;
 }
 
-int16_t CBattles(APPSESSION &app) {
-    uint8_t *lpbd;
+std::int16_t CBattles(APPSESSION &app) {
+    std::uint8_t *lpbd;
     HB      *lphb;
-    int16_t  cBattles;
+    std::int16_t  cBattles;
 
     cBattles = 0;
     lphb = app.state.rglphb[11];
     if (!lphb) {
         return 0;
     }
-    lpbd = static_cast<uint8_t *>((reinterpret_cast<uint8_t *>(lphb) + (sizeof(HB) + 2)));
+    lpbd = static_cast<std::uint8_t *>((reinterpret_cast<std::uint8_t *>(lphb) + (sizeof(HB) + 2)));
     while (1) {
         if (BdvFromLp(app, lpbd).id() == 0xffff) {
             lphb = lphb->lphbNext;
             if (!lphb || lphb->ibTop <= sizeof(HB))
                 break;
-            lpbd = static_cast<uint8_t *>((reinterpret_cast<uint8_t *>(lphb) + (sizeof(HB) + 2)));
+            lpbd = static_cast<std::uint8_t *>((reinterpret_cast<std::uint8_t *>(lphb) + (sizeof(HB) + 2)));
         } else {
             if (BdvFromLp(app, lpbd).cbData() == 0) {
                 return cBattles;
             }
-            lpbd = static_cast<uint8_t *>((static_cast<uint8_t *>(lpbd) + BdvFromLp(app, lpbd).cbData()));
+            lpbd = static_cast<std::uint8_t *>((static_cast<std::uint8_t *>(lpbd) + BdvFromLp(app, lpbd).cbData()));
             cBattles++;
         }
     }
