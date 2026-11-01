@@ -1,6 +1,15 @@
 #include "acutest.h"
 #include "stars_test.h"
 #include <stars_compat.h>
+#include <SDL3/SDL_stdinc.h>
+#include "appstate.h"
+#include "uistate.h"
+#include "callbackcontext.h"
+#include "control_io.h"
+#include "librarypublication.h"
+#include <algorithm>
+#include <array>
+#include <string_view>
 
 static void TestTextBoundaries(void) {
     HWND hwnd, hwndEdit;
@@ -18,5 +27,47 @@ static void TestTextBoundaries(void) {
     TEST_CHECK(ui::DestroyWindow(hwnd));
     StarsCompatProcessExit();
 }
-TEST_LIST = {{"native path captions and UTF-8 password fields", TestTextBoundaries},
+static INT_PTR idLibraryNameDialog;
+static INT_PTR ProbeLibraryNameDialog(HINSTANCE hinst, LPCSTR pszTemplate, HWND hwndParent, DLGPROC lpfn, LPARAM lParam) {
+    HWND hwnd;
+    const auto rgchName = *reinterpret_cast<std::span<char, 256> *>(lParam);
+    std::array<char, 256> rgchBefore;
+    std::ranges::copy(rgchName, rgchBefore.begin());
+    TEST_CHECK(std::string_view(rgchName.data()) == "Before");
+    if (idLibraryNameDialog < 0) return idLibraryNameDialog;
+    hwnd = ui::CreateDialog(hinst, pszTemplate, hwndParent, lpfn, lParam);
+    TEST_CHECK(hwnd != nullptr);
+    if (!hwnd) return -1;
+    TEST_CHECK(std::string_view(rgchName.data()) == "Before");
+    TEST_CHECK(ui::SetWindowText(win32::GetDlgItem(hwnd, IDC_EDIT1), "Choice-\xc3\xa9"));
+    ui::SendMessage(hwnd, win32::WM_COMMAND, win32::MAKEWPARAM(idLibraryNameDialog > 0 ? IDOK : IDCANCEL, win32::BN_CLICKED), 0);
+    if (idLibraryNameDialog > 0) {
+        TEST_CHECK(std::string_view(rgchName.data()) == "Choice-\xc3\xa9");
+        TEST_CHECK(std::equal(rgchName.begin() + 10, rgchName.end(), rgchBefore.begin() + 10));
+    } else TEST_CHECK(std::ranges::equal(rgchName, rgchBefore));
+    ui::DestroyWindow(hwnd);
+    return idLibraryNameDialog;
+}
+
+static void TestLibraryNameDialog(void) {
+    APPSESSION &app = ui::app;
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    char szDir[cbTestPath];
+    TEST_ASSERT(FStarsTestInit(app));
+    TEST_ASSERT(FStarsTestDir("library_name_dialog", szDir, sizeof(szDir)));
+    TEST_ASSERT(SDL_SetEnvironmentVariable(SDL_GetEnvironment(), "STARS_LIBRARY_DIR", szDir, true));
+    CONTROLIO control;
+    control.pfnDialogBox = ProbeLibraryNameDialog;
+    CONTROLIOSCOPE controlScope(control);
+    idLibraryNameDialog = 0;
+    TEST_CHECK(!FChooseSeparateCopyName(app, nullptr, "Before"));
+    idLibraryNameDialog = 1;
+    TEST_CHECK(FChooseSeparateCopyName(app, nullptr, "Before"));
+    idLibraryNameDialog = -1;
+    TEST_CHECK(!FChooseSeparateCopyName(app, nullptr, "Before"));
+    StarsCompatProcessExit();
+}
+
+TEST_LIST = {{"library-name dialog preserves accepted text and cancelled storage", TestLibraryNameDialog},
+             {"native path captions and UTF-8 password fields", TestTextBoundaries},
              {NULL, NULL}};

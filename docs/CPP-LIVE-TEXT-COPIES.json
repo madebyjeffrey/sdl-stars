@@ -1,6 +1,6 @@
 {
   "migration_parent": "d3d3724c",
-  "status": "250 migrated sites complete; remaining text work active",
+  "status": "252 migrated sites complete; remaining text work active",
   "contracts": {
     "display": "Write a terminated complete UTF-8 prefix into the actual destination span; preserve fitting bytes. Views borrow synchronously and overlapping copies use memmove.",
     "append": "Scan only inside the destination span for its NUL. An unterminated nonempty destination is cleared and zero bytes are appended.",
@@ -2473,6 +2473,26 @@
       "original_call": "std::strcpy(szPath, szFile)",
       "destination_span": "CchCopyUtf8(std::span{szPath}, szFile)",
       "role": "The preceding full formatting count must fit both caller storage and the actual 512-byte parent-path array. Keep whole path bytes and directory creation order."
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "scope": "LibraryNameDlg",
+      "baseline_line": 407,
+      "migration_parent": "b620c310",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(pszName, szName)",
+      "destination_span": "*pszName",
+      "role": "Race name acceptance copies through the modal caller's actual fixed 256-byte span. The view lives until the synchronous dialog closes; existing portable-name/availability decisions precede copying, and cancellation leaves all destination bytes unchanged."
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "scope": "LibraryNameDlg",
+      "baseline_line": 417,
+      "migration_parent": "b620c310",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(pszName, szName)",
+      "destination_span": "*pszName",
+      "role": "Game name acceptance copies through the modal caller's actual fixed 256-byte span. The view lives until the synchronous dialog closes; existing portable-name/availability decisions precede copying, and cancellation leaves all destination bytes unchanged."
     }
   ],
   "remaining_spelling_scope": "Lexical raw-copy spellings, including SDK declarations/definitions; comments/literals excluded with the manifest lexer. Exact counts prevent new raw sites during the remaining migration.",
@@ -2635,13 +2655,6 @@
       "path": "src/ui/fileui.cpp",
       "normalized_call": "std::strcpy(szT,pszFileName)",
       "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/libraryui.cpp",
-      "normalized_call": "std::strcpy(pszName,szName)",
-      "count": 2,
       "status": "pending",
       "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
     },
@@ -2990,6 +3003,29 @@
       "baseline": "Behavior-neutral. Native/frozen-original baseline bytes, unit goldens, record widths/layouts, game rules, RNG, tie order and binary64 boundaries remain unchanged. No scenario/checkpoint moved; no regression export required.",
       "remaining": "Erased-capacity library dialog output, other path/message/scratch/const-text interfaces, remaining wrapper formatting callers, L06 service interfaces and Milestone D, and L08 final qualification remain active.",
       "receipts": "dist/verification/live-cpp/l05u/"
+    }
+  },
+  "library_name_views": {
+    "status": "complete; verified",
+    "parent": "b620c310",
+    "sites": 2,
+    "interfaces": "All four modal name callers pass a fixed 256-byte view through one synchronous adapter; the SDK callback retrieves that typed view. Both suggestion helpers and game-name sanitization also carry fixed destination spans instead of reconstructing 256 from char*.",
+    "verification": {
+      "batch": "L06t fixed library-name modal and suggestion destination views",
+      "debug_build": "Pass, no warnings. Release SDL regression and Release host builds pass. Source policy covers 158 owned sources, 159 compiled variants and 161 standalone headers in both orders; updated raw-copy inventory passes.",
+      "desktop": "153/153, including the new actual library-name dialog characterization, existing game/race naming/import/version/rename/duplicate/conflict workflows, all 29 leak checks and available SDL tutorial checkpoints.",
+      "host_units": "28/28 in Release",
+      "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+      "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+      "windows": "Strict MinGW compilation passes all 147 owned production units and three affected real test consumers (native-file UI, startup and file workflow). Compilation evidence only; actual native Windows SDL and Linux final qualification remain pending.",
+      "characterization": "The same new actual UI test passes before and after migration. A scoped modal provider invokes the real LibraryNameDlg, accepts a Unicode name, preserves every destination byte on cancellation, maps dialog failure to the existing false result, and checks unused tail bytes after acceptance. Its temporary library root stays inside the isolated test process/work directory. Only the provider ABI decoder changes for the new view handoff.",
+      "interface": "All four game/race/import/rename modal call sites pass their actual fixed 256-byte spans through IdPromptLibraryName. Its stack view remains live across the synchronous DialogBox call and callback/window cleanup. LibraryNameDlg retains that typed view through the SDK opaque parameter and copies accepted text into it; two erased-capacity strcpy sites are removed.",
+      "helpers": "SuggestRaceFilename (three calls), SuggestLibraryName (five calls) and GetGameLibraryName (one call) now accept actual fixed destination spans. Formatting and strict copying consume those spans directly; their former char* reconstruction of the 256-byte capacity is removed. Existing function, local, field and parameter names remain.",
+      "behavior": "Preserve current game/race mode state, sanitization and reserved names, UTF-8 byte-boundary shortening, collision/revision rules, confirmation, cancellation/failure, modal lifetime and publication order. No allocation, saved layout/width, game logic, RNG or rounding change is introduced.",
+      "inventory": "252 migrated sites; 56 initial application copy sites remain. The lexical raw-spelling allowlist totals 62, including SDK declarations/definitions.",
+      "baseline": "Behavior-neutral. Native/frozen-original baseline bytes and unit goldens remain unchanged. No scenario/checkpoint moved; no regression export required.",
+      "remaining": "Public library path/result handoffs, other L05 text/const/scratch/wrapper formatting and L06 service interfaces, Milestone D and L08 final reconciliation/platform qualification remain active.",
+      "receipts": "dist/verification/live-cpp/l06t/"
     }
   }
 }

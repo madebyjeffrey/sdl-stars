@@ -195,18 +195,18 @@ static std::int16_t FCreateRaceStagePath(char *pszDirectory, std::size_t cchDire
     return 0;
 }
 
-static void SuggestRaceFilename(APPSESSION &app, char *pszName) {
+static void SuggestRaceFilename(APPSESSION &app, std::span<char, 256> pszName) {
     char szStem[240];
-    const char *pch = std::strrchr(pszName, '.');
-    std::size_t cchStem = pch ? static_cast<std::size_t>((pch - pszName)) : std::strlen(pszName);
+    const char *pch = std::strrchr(pszName.data(), '.');
+    std::size_t cchStem = pch ? static_cast<std::size_t>((pch - pszName.data())) : std::strlen(pszName.data());
     int i;
     if (cchStem >= sizeof(szStem)) cchStem = sizeof(szStem) - 1;
-    cchStem = CchUtf8Prefix(pszName, cchStem);
-    std::memcpy(szStem, pszName, cchStem);
+    cchStem = CchUtf8Prefix(pszName.data(), cchStem);
+    std::memcpy(szStem, pszName.data(), cchStem);
     szStem[cchStem] = 0;
     for (i = 1; i < 1000; i++) {
-        CchSnprintf(std::span{pszName, 256}, "%s.r%d", szStem, i);
-        if (FRaceLibraryNameAvailable(app, pszName)) return;
+        CchSnprintf(pszName, "%s.r%d", szStem, i);
+        if (FRaceLibraryNameAvailable(app, pszName.data())) return;
     }
     pszName[0] = 0;
 }
@@ -302,44 +302,44 @@ static std::int16_t FPortableLibraryName(APPSESSION &app, const char *pszName) {
     return std::strlen(szLibraryRoot) + 2 * cch + 18 < sizeof(app.state.szBase);
 }
 
-static void SuggestLibraryName(APPSESSION &app, char *pszName, std::int16_t fRevision) {
+static void SuggestLibraryName(APPSESSION &app, std::span<char, 256> pszName, std::int16_t fRevision) {
     char szOriginal[256];
     char szSuffix[32];
     int i, cch, cchMax;
 
-    CchCopyUtf8(std::span{szOriginal}, pszName);
+    CchCopyUtf8(std::span{szOriginal}, pszName.data());
     cchMax = (static_cast<int>(sizeof(app.state.szBase)) - static_cast<int>(std::strlen(szLibraryRoot)) - 19) / 2;
-    for (i = 2; i < 10000 && !FLibraryNameAvailable(app, szLibraryRoot, pszName); i++) {
+    for (i = 2; i < 10000 && !FLibraryNameAvailable(app, szLibraryRoot, pszName.data()); i++) {
         CchSnprintf(std::span{szSuffix, sizeof(szSuffix)}, fRevision ? TextIO().pfnCompressed(app, idsLibraryGameRevisionSuffix).data() : " (%d)", i);
         cch = (((static_cast<int>(std::strlen(szOriginal))) < ((((0) > (cchMax - static_cast<int>(std::strlen(szSuffix)))) ? (0) : (cchMax - static_cast<int>(std::strlen(szSuffix)))))) ? (static_cast<int>(std::strlen(szOriginal))) : ((((0) > (cchMax - static_cast<int>(std::strlen(szSuffix)))) ? (0) : (cchMax - static_cast<int>(std::strlen(szSuffix))))));
         /* A shortened suggestion must not split a UTF-8 character. */
         while (cch > 0 && (static_cast<unsigned char>(szOriginal[cch]) & 0xc0) == 0x80) cch--;
-        CchSnprintf(std::span{pszName, 256}, "%.*s%s", cch, szOriginal, szSuffix);
+        CchSnprintf(pszName, "%.*s%s", cch, szOriginal, szSuffix);
     }
 }
 
-static void GetGameLibraryName(APPSESSION &app, const char *pszName, char *pszNameOut) {
+static void GetGameLibraryName(APPSESSION &app, const char *pszName, std::span<char, 256> pszNameOut) {
     std::array<char, cchCatalogText> szCatalogPszName{};
     std::size_t i, cch;
     int cchMax = (static_cast<int>(sizeof(app.state.szBase)) - static_cast<int>(std::strlen(szLibraryRoot)) - 19) / 2;
 
-    CchCopyUtf8(pszNameOut, 256, pszName, CchUtf8Prefix(pszName, cchMax));
+    CchCopyUtf8(pszNameOut, std::string_view(pszName, CchUtf8Prefix(pszName, cchMax)));
     for (i = 0; pszNameOut[i]; i++)
         if (static_cast<unsigned char>(pszNameOut[i]) < 32 || pszNameOut[i] == 127 || std::strchr("<>:\"/\\|?*", pszNameOut[i])) pszNameOut[i] = '_';
-    cch = std::strlen(pszNameOut);
+    cch = std::strlen(pszNameOut.data());
     while (cch != 0 && (pszNameOut[cch - 1] == ' ' || pszNameOut[cch - 1] == '.')) pszNameOut[--cch] = 0;
-    while (pszNameOut[0] == ' ' || pszNameOut[0] == '.') std::memmove(pszNameOut, pszNameOut + 1, std::strlen(pszNameOut));
+    while (pszNameOut[0] == ' ' || pszNameOut[0] == '.') std::memmove(pszNameOut.data(), pszNameOut.data() + 1, std::strlen(pszNameOut.data()));
     // The game loader treats the last period as a file extension.
     for (i = 0; pszNameOut[i]; i++) if (pszNameOut[i] == '.') pszNameOut[i] = '_';
     if (!pszNameOut[0]) {
         szCatalogPszName = TextIO().pfnCompressed(app, idsLibraryDefaultGameName);
         pszName = szCatalogPszName.data();
-        CchCopyUtf8(pszNameOut, 256, pszName, CchUtf8Prefix(pszName, cchMax));
+        CchCopyUtf8(pszNameOut, std::string_view(pszName, CchUtf8Prefix(pszName, cchMax)));
     }
-    if (!FPortableLibraryName(app, pszNameOut)) {
+    if (!FPortableLibraryName(app, pszNameOut.data())) {
         // Reserved device names need a prefix; leave the stored game title intact.
-        pszNameOut[CchUtf8Prefix(pszNameOut, StarsMax(0, cchMax - 1))] = 0;
-        std::memmove(pszNameOut + 1, pszNameOut, std::strlen(pszNameOut) + 1);
+        pszNameOut[CchUtf8Prefix(pszNameOut.data(), StarsMax(0, cchMax - 1))] = 0;
+        std::memmove(pszNameOut.data() + 1, pszNameOut.data(), std::strlen(pszNameOut.data()) + 1);
         pszNameOut[0] = '_';
     }
 }
@@ -370,7 +370,7 @@ INT_PTR  LibraryGameRevisionDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
 
 INT_PTR  LibraryNameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
-    char *pszName;
+    std::span<char, 256> *pszName;
     char szName[256];
     std::array<char, cchCatalogText> szMessage{};
     StringId ids;
@@ -390,31 +390,31 @@ INT_PTR  LibraryNameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         ControlIO().pfnSetWindowPos(hwnd, nullptr, x, y, 0, 0, win32::SWP_NOSIZE | win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
         win32::SetWindowLongPtrA(hwnd, win32::DWLP_USER, lParam);
         ui::SendDlgItemMessage(hwnd, IDC_EDIT1, win32::EM_LIMITTEXT, 255, 0);
-        win32::SetDlgItemTextA(hwnd, IDC_EDIT1, reinterpret_cast<char *>(lParam));
+        win32::SetDlgItemTextA(hwnd, IDC_EDIT1, reinterpret_cast<std::span<char, 256> *>(lParam)->data());
         return 1;
     case win32::WM_COMMAND:
         if (LOWORD(wParam) == IDCANCEL) { ControlIO().pfnEndDialog(hwnd, 0); return 1; }
         if (LOWORD(wParam) != IDOK) break;
-        pszName = reinterpret_cast<char *>(win32::GetWindowLongPtrA(hwnd, win32::DWLP_USER));
+        pszName = reinterpret_cast<std::span<char, 256> *>(win32::GetWindowLongPtrA(hwnd, win32::DWLP_USER));
         win32::GetDlgItemTextA(hwnd, IDC_EDIT1, szName, sizeof(szName));
         if (fRaceLibraryNameDialog) {
             if (!FPortableRaceFilename(app, szName)) ids = idsLibraryInvalidName;
             else if (!FRaceLibraryNameAvailable(app, szName)) {
-                SuggestRaceFilename(app, szName);
+                SuggestRaceFilename(app, std::span{szName});
                 win32::SetDlgItemTextA(hwnd, IDC_EDIT1, szName);
                 ids = idsLibraryNameTaken;
             } else {
-                std::strcpy(pszName, szName);
+                CchCopyUtf8(*pszName, szName);
                 ControlIO().pfnEndDialog(hwnd, 1);
                 return 1;
             }
         } else if (!FPortableLibraryName(app, szName)) ids = idsLibraryInvalidName;
         else if (!FLibraryNameAvailable(app, szLibraryRoot, szName)) {
-            SuggestLibraryName(app, szName, 0);
+            SuggestLibraryName(app, std::span{szName}, 0);
             win32::SetDlgItemTextA(hwnd, IDC_EDIT1, szName);
             ids = idsLibraryNameTaken;
         } else {
-            std::strcpy(pszName, szName);
+            CchCopyUtf8(*pszName, szName);
             ControlIO().pfnEndDialog(hwnd, 1);
             return 1;
         }
@@ -425,13 +425,19 @@ INT_PTR  LibraryNameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     return 0;
 }
 
+static INT_PTR IdPromptLibraryName(APPSESSION &app, HWND hwnd, std::span<char, 256> rgchName) {
+    // The synchronous modal call borrows this view until its window closes.
+    return ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_LIBRARY_NAME), hwnd,
+                                    LibraryNameDlg, reinterpret_cast<LPARAM>(&rgchName));
+}
+
 std::int16_t FChooseLibraryGameName(APPSESSION &app, HWND hwnd, char *pszFile, const char *pszName) {
     char *pch;
     char szMessage[256];
 
     if (!FInitLibrary() || std::strlen(szLibraryRoot) + 20 >= sizeof(app.state.szBase)) goto LFail;
     szLibraryExchangeName[0] = 0;
-    if (pszName) GetGameLibraryName(app, pszName, szLibraryName);
+    if (pszName) GetGameLibraryName(app, pszName, std::span{szLibraryName});
     else {
         pch = std::strrchr(pszFile, chDirSep);
         CchSnprintf(std::span{szLibraryName, sizeof(szLibraryName)}, "%s", pch ? pch + 1 : pszFile);
@@ -441,13 +447,13 @@ std::int16_t FChooseLibraryGameName(APPSESSION &app, HWND hwnd, char *pszFile, c
     }
     if (pszName) {
         if (!FLibraryNameAvailable(app, szLibraryRoot, szLibraryName)) {
-            SuggestLibraryName(app, szLibraryName, 1);
+            SuggestLibraryName(app, std::span{szLibraryName}, 1);
             if (ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_LIBRARY_GAME_REVISION), hwnd,
                                LibraryGameRevisionDlg, reinterpret_cast<LPARAM>(szLibraryName)) != 1) return 0;
         }
     } else {
-        SuggestLibraryName(app, szLibraryName, 0);
-        if (ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_LIBRARY_NAME), hwnd, LibraryNameDlg, reinterpret_cast<LPARAM>(szLibraryName)) != 1) return 0;
+        SuggestLibraryName(app, std::span{szLibraryName}, 0);
+        if (IdPromptLibraryName(app, hwnd, std::span{szLibraryName}) != 1) return 0;
     }
     if (!FPortableLibraryName(app, szLibraryName)) goto LFail;
     CchSnprintf(std::span{szLibraryPending, sizeof(szLibraryPending)}, "%s%s%s", szLibraryRoot, szDirSep, szLibraryName);
@@ -468,11 +474,10 @@ static std::int16_t FChooseLibraryRaceName(APPSESSION &app, HWND hwnd, const cha
     char szMessage[256];
     if (!FInitRaceLibrary()) return 0;
     CchSnprintf(std::span{szRaceLibraryName, sizeof(szRaceLibraryName)}, "%s", pszSuggested);
-    SuggestRaceFilename(app, szRaceLibraryName);
+    SuggestRaceFilename(app, std::span{szRaceLibraryName});
     if (!szRaceLibraryName[0]) return 0;
     fRaceLibraryNameDialog = 1;
-    if (ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_LIBRARY_NAME), hwnd, LibraryNameDlg,
-                       reinterpret_cast<LPARAM>(szRaceLibraryName)) != 1) {
+    if (IdPromptLibraryName(app, hwnd, std::span{szRaceLibraryName}) != 1) {
         fRaceLibraryNameDialog = 0;
         return 0;
     }
@@ -935,7 +940,7 @@ std::int16_t FDuplicateLibraryRace(APPSESSION &app, HWND hwnd, const char *pszNa
     CchSnprintf(std::span{szName, sizeof(szName)}, "%s", pszName);
     pch = std::strrchr(szName, '.');
     if (pch) szName[pch - szName] = 0;
-    SuggestRaceFilename(app, szName);
+    SuggestRaceFilename(app, std::span{szName});
     if (!szName[0] || CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", szRaceLibraryRoot, szDirSep, szName) <= 0) {
         RestoreRaceState(app, &rsSav, 1, 1);
         if (win32::IsWindow(hwnd)) AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryRaceDuplicateFailed).data(), win32::MB_ICONEXCLAMATION);
@@ -2577,9 +2582,8 @@ std::int16_t FStageConflictingTurn(const char *pszStage, const char *pszName,
 std::int16_t FChooseSeparateCopyName(APPSESSION &app, HWND hwnd, const char *pszName) {
     if (!FInitLibrary()) return 0;
     CchSnprintf(std::span{szLibraryName, sizeof(szLibraryName)}, "%s", pszName);
-    SuggestLibraryName(app, szLibraryName, 0);
-    if (ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_LIBRARY_NAME), hwnd,
-                       LibraryNameDlg, reinterpret_cast<LPARAM>(szLibraryName)) != 1) return 0;
+    SuggestLibraryName(app, std::span{szLibraryName}, 0);
+    if (IdPromptLibraryName(app, hwnd, std::span{szLibraryName}) != 1) return 0;
     return FPortableLibraryName(app, szLibraryName) && FLibraryNameAvailable(app, szLibraryRoot, szLibraryName);
 }
 
@@ -3154,9 +3158,8 @@ static std::int16_t FChooseLibraryGameActionName(APPSESSION &app, HWND hwnd, con
     int cch;
     cch = CchSnprintf(std::span{szLibraryName, sizeof(szLibraryName)}, "%s", pszCurrentName);
     if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szLibraryName)) return 0;
-    SuggestLibraryName(app, szLibraryName, 0);
-    if (!szLibraryName[0] || ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_LIBRARY_NAME), hwnd,
-                                           LibraryNameDlg, reinterpret_cast<LPARAM>(szLibraryName)) != 1) return 0;
+    SuggestLibraryName(app, std::span{szLibraryName}, 0);
+    if (!szLibraryName[0] || IdPromptLibraryName(app, hwnd, std::span{szLibraryName}) != 1) return 0;
     cch = CchSnprintf(std::span{pszNewName, 256}, "%s", szLibraryName);
     return cch > 0 && cch < 256;
 }

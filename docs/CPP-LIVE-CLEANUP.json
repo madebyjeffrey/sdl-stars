@@ -101,7 +101,8 @@
         "bounded-fitting-race-password-report-save-and-host-copies",
         "owned-legacy-race-password-result",
         "bounded-ui-preset-roster-label-and-path-copies",
-        "bounded-library-MDI-MRU-SDK-and-ZIP-path-copies"
+        "bounded-library-MDI-MRU-SDK-and-ZIP-path-copies",
+        "fixed-library-name-modal-and-suggestion-views"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -398,6 +399,23 @@
           "baseline": "Behavior-neutral. Native/frozen-original baseline bytes, unit goldens, record widths/layouts, game rules, RNG, tie order and binary64 boundaries remain unchanged. No scenario/checkpoint moved; no regression export required.",
           "remaining": "Erased-capacity library dialog output, other path/message/scratch/const-text interfaces, remaining wrapper formatting callers, L06 service interfaces and Milestone D, and L08 final qualification remain active.",
           "receipts": "dist/verification/live-cpp/l05u/"
+        },
+        {
+          "batch": "L06t fixed library-name modal and suggestion destination views",
+          "debug_build": "Pass, no warnings. Release SDL regression and Release host builds pass. Source policy covers 158 owned sources, 159 compiled variants and 161 standalone headers in both orders; updated raw-copy inventory passes.",
+          "desktop": "153/153, including the new actual library-name dialog characterization, existing game/race naming/import/version/rename/duplicate/conflict workflows, all 29 leak checks and available SDL tutorial checkpoints.",
+          "host_units": "28/28 in Release",
+          "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+          "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+          "windows": "Strict MinGW compilation passes all 147 owned production units and three affected real test consumers (native-file UI, startup and file workflow). Compilation evidence only; actual native Windows SDL and Linux final qualification remain pending.",
+          "characterization": "The same new actual UI test passes before and after migration. A scoped modal provider invokes the real LibraryNameDlg, accepts a Unicode name, preserves every destination byte on cancellation, maps dialog failure to the existing false result, and checks unused tail bytes after acceptance. Its temporary library root stays inside the isolated test process/work directory. Only the provider ABI decoder changes for the new view handoff.",
+          "interface": "All four game/race/import/rename modal call sites pass their actual fixed 256-byte spans through IdPromptLibraryName. Its stack view remains live across the synchronous DialogBox call and callback/window cleanup. LibraryNameDlg retains that typed view through the SDK opaque parameter and copies accepted text into it; two erased-capacity strcpy sites are removed.",
+          "helpers": "SuggestRaceFilename (three calls), SuggestLibraryName (five calls) and GetGameLibraryName (one call) now accept actual fixed destination spans. Formatting and strict copying consume those spans directly; their former char* reconstruction of the 256-byte capacity is removed. Existing function, local, field and parameter names remain.",
+          "behavior": "Preserve current game/race mode state, sanitization and reserved names, UTF-8 byte-boundary shortening, collision/revision rules, confirmation, cancellation/failure, modal lifetime and publication order. No allocation, saved layout/width, game logic, RNG or rounding change is introduced.",
+          "inventory": "252 migrated sites; 56 initial application copy sites remain. The lexical raw-spelling allowlist totals 62, including SDK declarations/definitions.",
+          "baseline": "Behavior-neutral. Native/frozen-original baseline bytes and unit goldens remain unchanged. No scenario/checkpoint moved; no regression export required.",
+          "remaining": "Public library path/result handoffs, other L05 text/const/scratch/wrapper formatting and L06 service interfaces, Milestone D and L08 final reconciliation/platform qualification remain active.",
+          "receipts": "dist/verification/live-cpp/l06t/"
         }
       ],
       "bounded_formatting": {
@@ -462,8 +480,8 @@
         "temperature_commit": "03d8b039",
         "windows_host_test_configuration_commit": "09bb4477",
         "policy": "Actual array/tail spans; complete terminated UTF-8 prefixes; overlapping views supported. Paths/record staging keep separate strict contracts.",
-        "remaining_initial_sites": 58,
-        "remaining_lexical_spellings": 64,
+        "remaining_initial_sites": 56,
+        "remaining_lexical_spellings": 62,
         "inventory_scope": "The initial copy inventory and the current lexical policy differ: the latter also includes SDK declaration/definition spellings. Both remain explicitly accounted for.",
         "enforcement": "The manifest checks exact remaining raw-copy spellings and multiplicities. New or removed raw sites require updating the maintained inventory; migrated sites cannot silently be reintroduced."
       },
@@ -568,6 +586,13 @@
         "sites": 30,
         "evidence": "docs/CPP-LIVE-TEXT-COPIES.json",
         "interfaces": "Whole array/tail/MRU-row spans for fitting copies; length-admitted byte copying preserves import validation order. OpenFile relative joining uses strict whole-span operations with the existing filename-range error."
+      },
+      "library_name_views": {
+        "status": "complete; verified",
+        "parent": "b620c310",
+        "evidence": "docs/CPP-LIVE-TEXT-COPIES.json",
+        "interfaces": "LibraryNameDlg receives the actual fixed 256-byte span from four synchronous modal callers through IdPromptLibraryName. SuggestRaceFilename, SuggestLibraryName and GetGameLibraryName receive fixed destination spans; char* capacity reconstruction is removed from these helpers.",
+        "behavior": "Existing game/race mode state, name sanitization, UTF-8 boundary shortening, collision retries, cancellation, callback/window lifetime and publication remain."
       }
     },
     {
@@ -597,7 +622,8 @@
         "full-optional-token-size-and-owned-batch-source-indices",
         "all-token-size-callers-use-optional-full-width-results",
         "readonly-definition-line-views-and-local-owned-bytes",
-        "owned-legacy-race-password-result"
+        "owned-legacy-race-password-result",
+        "fixed-library-name-modal-and-suggestion-views"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -892,6 +918,23 @@
           "baseline": "Behavior-neutral: UTF-8 limits, prompt/confirmation order, password hashes, cancellation, file publication, record widths/layouts, game/RNG/rounding and all baseline/golden bytes remain unchanged. No scenario/checkpoint moved; no regression export required.",
           "remaining": "Other L05 copies/const text/scratch results, L06 service interfaces and Milestone D, and L08 final reconciliation/platform qualification remain active.",
           "receipts": "dist/verification/live-cpp/l06s/"
+        },
+        {
+          "batch": "L06t fixed library-name modal and suggestion destination views",
+          "debug_build": "Pass, no warnings. Release SDL regression and Release host builds pass. Source policy covers 158 owned sources, 159 compiled variants and 161 standalone headers in both orders; updated raw-copy inventory passes.",
+          "desktop": "153/153, including the new actual library-name dialog characterization, existing game/race naming/import/version/rename/duplicate/conflict workflows, all 29 leak checks and available SDL tutorial checkpoints.",
+          "host_units": "28/28 in Release",
+          "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+          "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+          "windows": "Strict MinGW compilation passes all 147 owned production units and three affected real test consumers (native-file UI, startup and file workflow). Compilation evidence only; actual native Windows SDL and Linux final qualification remain pending.",
+          "characterization": "The same new actual UI test passes before and after migration. A scoped modal provider invokes the real LibraryNameDlg, accepts a Unicode name, preserves every destination byte on cancellation, maps dialog failure to the existing false result, and checks unused tail bytes after acceptance. Its temporary library root stays inside the isolated test process/work directory. Only the provider ABI decoder changes for the new view handoff.",
+          "interface": "All four game/race/import/rename modal call sites pass their actual fixed 256-byte spans through IdPromptLibraryName. Its stack view remains live across the synchronous DialogBox call and callback/window cleanup. LibraryNameDlg retains that typed view through the SDK opaque parameter and copies accepted text into it; two erased-capacity strcpy sites are removed.",
+          "helpers": "SuggestRaceFilename (three calls), SuggestLibraryName (five calls) and GetGameLibraryName (one call) now accept actual fixed destination spans. Formatting and strict copying consume those spans directly; their former char* reconstruction of the 256-byte capacity is removed. Existing function, local, field and parameter names remain.",
+          "behavior": "Preserve current game/race mode state, sanitization and reserved names, UTF-8 byte-boundary shortening, collision/revision rules, confirmation, cancellation/failure, modal lifetime and publication order. No allocation, saved layout/width, game logic, RNG or rounding change is introduced.",
+          "inventory": "252 migrated sites; 56 initial application copy sites remain. The lexical raw-spelling allowlist totals 62, including SDK declarations/definitions.",
+          "baseline": "Behavior-neutral. Native/frozen-original baseline bytes and unit goldens remain unchanged. No scenario/checkpoint moved; no regression export required.",
+          "remaining": "Public library path/result handoffs, other L05 text/const/scratch/wrapper formatting and L06 service interfaces, Milestone D and L08 final reconciliation/platform qualification remain active.",
+          "receipts": "dist/verification/live-cpp/l06t/"
         }
       ],
       "roman_output": {
@@ -1015,6 +1058,13 @@
         "interface": "FPromptLegacyRacePassword(APPSESSION &) returns optional<array<char,16>>. Accepted text is owned by the caller; cancellation/dialog failure returns no value. The synchronous modal callback writes only through an actual result-array span.",
         "providers": "Desktop and SDL-free host implementations, PLAYERCHOICEIO, unit-test and client-startup providers use the value contract. The raw char* output interface is removed.",
         "behavior": "Existing 15-byte UTF-8 admission, empty-password rejection, confirmation/hash, prompt order and file publication remain. No allocation is added."
+      },
+      "library_name_views": {
+        "status": "complete; verified",
+        "parent": "b620c310",
+        "evidence": "docs/CPP-LIVE-TEXT-COPIES.json",
+        "interfaces": "LibraryNameDlg receives the actual fixed 256-byte span from four synchronous modal callers through IdPromptLibraryName. SuggestRaceFilename, SuggestLibraryName and GetGameLibraryName receive fixed destination spans; char* capacity reconstruction is removed from these helpers.",
+        "behavior": "Existing game/race mode state, name sanitization, UTF-8 boundary shortening, collision retries, cancellation, callback/window lifetime and publication remain."
       }
     },
     {
