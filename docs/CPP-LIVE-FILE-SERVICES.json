@@ -1,6 +1,6 @@
 {
   "parent": "c7f5e933",
-  "status": "File-service migration active; open options/results, native/token byte spans/counts and scoped seek origins complete and verified.",
+  "status": "File-service migration active; open, native/token byte IO, seek origins and record-stream spans complete and verified.",
   "open": {
     "status": "complete; verified",
     "interfaces": [
@@ -365,11 +365,12 @@
     }
   ],
   "pending": {
-    "byte_io": "Raw element-count CReadNative/CWriteNative and record RgFromStream/RgToStream remain to receive physical spans/count results and actual caller migration.",
+    "byte_io": "Record stream RgFromStream/RgToStream physical ranges implemented; WriteRt/RECORDIO payloads and raw element-count CReadNative/CWriteNative interfaces remain.",
     "seek": "Scoped seek origins complete; existing position-result widths and native/SDK error mappings are retained.",
     "stream_open": "Native stream mode strings and remaining file/path result/out-parameter interfaces remain; OutputFileString still has the explicit old uint16_t write-count boundary pending focused repair.",
     "selection": "Milestone D remains open; no picker backend or user workflow was changed by this batch.",
-    "qualification": "Final complete-state inventory, Debug/Release and actual platform qualification remain required."
+    "qualification": "Final complete-state inventory, Debug/Release and actual platform qualification remain required.",
+    "memory_sources": "Memory-backed record source pointers still need bounds/cursor ownership. Batch file lowword/signed sizing and filename-copy loops remain a separate audit; this batch preserves their existing allocation/read count."
   },
   "byte_and_seek": {
     "parent": "b68995b3",
@@ -1487,6 +1488,614 @@
       "baseline": "Behavior-neutral for existing callers: partial effects, binary bytes, EOF/error state, retries, flush timing, callback publication and Windows empty-write paths preserved. Native and frozen original baselines, unit goldens, record widths, RNG and canonical models unchanged. No semantic scenario/checkpoint moved; no export required.",
       "remaining": "Record/element-count buffers, stream mode strings, file/path result interfaces, the explicitly retained text-writer count boundary and Milestone D remain active.",
       "receipts": "dist/verification/live-cpp/l06c/"
+    }
+  },
+  "record_streams": {
+    "parent": "9a2b3e6d",
+    "status": "complete; verified",
+    "interfaces": [
+      "RgFromStream(APPSESSION &, span<byte>)",
+      "RgToStream(APPSESSION &, span<const byte>)"
+    ],
+    "calls": 72,
+    "pre_existing_calls": 68,
+    "pre_migration_characterization_calls": 4,
+    "contract": "The functions still throw the existing StarsError on a short/failed nonempty file operation. Empty ranges perform no IO, including no Windows zero-write truncation, and do not advance the memory cursor. Memory-backed reads copy the exact requested bytes and advance by the same amount. Partial header/data publication and alert ordering are unchanged.",
+    "capacities": "Local/state arrays carry their actual extent and logical prefix. Universe-definition input uses its exact cb+1 allocation after the existing size check. Batch input uses the same uint16_t request as its arena allocation. Tutorial writes use the SizeofResource extent plus record offset/length. Report literals and fields retain exact lengths without NUL; two mutable/void literal casts are removed.",
+    "wire_contract": "The two-byte header, fixed record widths, XOR/seed order, and physical 1024-byte payload whose ten-bit header wraps are unchanged. No new record-length rejection or baseline movement is intended.",
+    "characterization": "Before migration the actual memory/file helpers passed sentinel-protected binary copies, cursor advancement, empty memory ranges and empty writes preserving file size/position. Those assertions are migrated to the span signatures alongside the existing short-read, partial-header callback and 1024-byte framing cases.",
+    "remaining": "WriteRt and its actual RECORDIO providers still use a separate payload pointer/length. CReadNative/CWriteNative element interfaces, memory-source cursor bounds and batch-file sizing/path parsing remain to migrate or audit. No source-bound guarantee is inferred from only bounding the destination.",
+    "call_sites": [
+      {
+        "path": "src/ui/logui.cpp",
+        "parent_line": 45,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, app.state.vlpMemStream, HdvFromPrefix(app.state.vlpMemStream).cb() + 2)",
+        "span": "rgbResource.subspan(ib, static_cast<std::size_t>(HdvFromPrefix(app.state.vlpMemStream).cb() + 2))",
+        "capacity_source": "Tutorial resource view uses SizeofResource as the physical extent and the current record offset/length."
+      },
+      {
+        "path": "src/core/turn.cpp",
+        "parent_line": 583,
+        "function": "RgFromStream",
+        "original_call": "RgFromStream(app, app.state.lpchBatch, cb)",
+        "span": "std::as_writable_bytes(std::span{app.state.lpchBatch, static_cast<std::uint16_t>(cb)})",
+        "capacity_source": "Exact byte request passed to LpAlloc<char>, preserving its existing uint16_t conversion. Batch input sizing/parser validation remains a separate audit item."
+      },
+      {
+        "path": "src/core/save.cpp",
+        "parent_line": 1108,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, rgbHdr, cbWireHdr)",
+        "span": "std::as_bytes(std::span{rgbHdr}).first(static_cast<std::size_t>(cbWireHdr))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/save.cpp",
+        "parent_line": 1109,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, app.state.rgbCur, cb)",
+        "span": "std::as_bytes(std::span{app.state.rgbCur}).first(static_cast<std::size_t>(cb))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 302,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, const_cast<void *>(reinterpret_cast<const void*>(\"#\\tX\\tY\\tName\\r\\n\")), 12)",
+        "span": "std::as_bytes(std::span{\"#\\tX\\tY\\tName\\r\\n\"}).first(12)",
+        "capacity_source": "Known literal extent, excluding its NUL; obsolete mutable/void casts removed."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 305,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, app.state.szWork, cch)",
+        "span": "std::as_bytes(std::span{app.state.szWork}).first(static_cast<std::size_t>(cch))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 372,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, cch)",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(cch))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 374,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, app.state.szCRLF, 2)",
+        "span": "std::as_bytes(std::span{app.state.szCRLF}).first(static_cast<std::size_t>(2))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 381,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, std::strlen(szForm))",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm)))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 384,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, 1)",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(1))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 387,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, std::strlen(szForm))",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm)))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 395,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, cch)",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(cch))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 397,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, std::strlen(szForm))",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm)))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 405,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, std::strlen(szForm))",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm)))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 412,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, std::strlen(szForm))",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm)))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 418,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, std::strlen(szForm))",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm)))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 433,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, std::strlen(szForm))",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm)))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 439,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, std::strlen(szForm))",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm)))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 447,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, std::strlen(szForm))",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm)))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 454,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, std::strlen(szForm))",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm)))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 461,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, std::strlen(szForm))",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm)))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 466,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, std::strlen(szForm))",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm)))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 470,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, std::strlen(szForm))",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm)))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 474,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, std::strlen(szForm))",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm)))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 478,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, 1)",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(1))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 483,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, std::strlen(szForm))",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm)))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 485,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, std::strlen(szForm))",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm)))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 487,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, std::strlen(szForm))",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm)))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 495,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, std::strlen(szForm))",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm)))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 497,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, std::strlen(szForm))",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm)))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 503,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, std::strlen(szForm))",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm)))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 511,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, std::strlen(szForm))",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm)))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 513,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, std::strlen(szForm))",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm)))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 519,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, const_cast<void *>(reinterpret_cast<const void*>(\"\\t0\\t0\")), 4)",
+        "span": "std::as_bytes(std::span{\"\\t0\\t0\"}).first(4)",
+        "capacity_source": "Known literal extent, excluding its NUL; obsolete mutable/void casts removed."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 527,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, std::strlen(szForm))",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm)))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 530,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, app.state.szCRLF, 2)",
+        "span": "std::as_bytes(std::span{app.state.szCRLF}).first(static_cast<std::size_t>(2))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 596,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, cch)",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(cch))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 598,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, app.state.szCRLF, 2)",
+        "span": "std::as_bytes(std::span{app.state.szCRLF}).first(static_cast<std::size_t>(2))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 609,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, psz, std::strlen(psz))",
+        "span": "std::as_bytes(std::span{psz, std::strlen(psz)})",
+        "capacity_source": "Synchronously borrowed fleet-name text; count is its existing NUL-terminated payload length, never guessed capacity."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 612,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, std::strlen(szForm))",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm)))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 614,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, std::strlen(szForm))",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm)))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 622,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, cch)",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(cch))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 632,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, std::strlen(szForm))",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm)))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 638,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, std::strlen(szForm))",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm)))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 644,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, std::strlen(szForm))",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm)))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 647,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, std::strlen(szForm))",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm)))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 651,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, std::strlen(szForm))",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm)))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 658,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, std::strlen(szForm))",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm)))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 667,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, std::strlen(szForm))",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm)))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 669,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, std::strlen(szForm))",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm)))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 671,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, std::strlen(szForm))",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm)))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 677,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, std::strlen(szForm))",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm)))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 679,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, std::strlen(szForm))",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm)))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 685,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, std::strlen(szForm))",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm)))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 687,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, std::strlen(szForm))",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm)))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 689,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, std::strlen(szForm))",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm)))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 691,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, std::strlen(szForm))",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm)))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 693,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, std::strlen(szForm))",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm)))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 704,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, std::strlen(szForm))",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm)))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 713,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, szForm, std::strlen(szForm))",
+        "span": "std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm)))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/report.cpp",
+        "parent_line": 716,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, app.state.szCRLF, 2)",
+        "span": "std::as_bytes(std::span{app.state.szCRLF}).first(static_cast<std::size_t>(2))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/utilgen.cpp",
+        "parent_line": 270,
+        "function": "RgFromStream",
+        "original_call": "RgFromStream(app, rgb, 0x800)",
+        "span": "std::as_writable_bytes(std::span{rgb}).first(static_cast<std::size_t>(0x800))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/utilgen.cpp",
+        "parent_line": 275,
+        "function": "RgFromStream",
+        "original_call": "RgFromStream(app, rgb, LOWORD(cb))",
+        "span": "std::as_writable_bytes(std::span{rgb}).first(static_cast<std::size_t>(LOWORD(cb)))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/file.cpp",
+        "parent_line": 195,
+        "function": "RgFromStream",
+        "original_call": "RgFromStream(app, rgbStarpack, cbWireStarpack)",
+        "span": "std::as_writable_bytes(std::span{rgbStarpack}).first(static_cast<std::size_t>(cbWireStarpack))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/file.cpp",
+        "parent_line": 1424,
+        "function": "RgFromStream",
+        "original_call": "RgFromStream(app, app.state.rgbCur, app.state.hdrCur.cb)",
+        "span": "std::as_writable_bytes(std::span{app.state.rgbCur}).first(static_cast<std::size_t>(app.state.hdrCur.cb))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/create.cpp",
+        "parent_line": 927,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, rgbStarpack, cbWireStarpack)",
+        "span": "std::as_bytes(std::span{rgbStarpack}).first(static_cast<std::size_t>(cbWireStarpack))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      },
+      {
+        "path": "src/core/create.cpp",
+        "parent_line": 1022,
+        "function": "RgFromStream",
+        "original_call": "RgFromStream(app, lpbDef, cb)",
+        "span": "std::as_writable_bytes(std::span{lpbDef, static_cast<std::size_t>(cb) + 1}).first(static_cast<std::size_t>(cb))",
+        "capacity_source": "Exact cb+1 arena allocation after the existing 16000-byte file-size check; preserve trailing NUL space."
+      },
+      {
+        "path": "tests/unit/test_exceptions.cpp",
+        "parent_line": 56,
+        "function": "RgFromStream",
+        "original_call": "RgFromStream(app, destination + 1, 3)",
+        "span": "std::as_writable_bytes(std::span{destination}).subspan(1, 3)",
+        "capacity_source": "Reference test destination tail with sentinels."
+      },
+      {
+        "path": "tests/unit/test_exceptions.cpp",
+        "parent_line": 59,
+        "function": "RgFromStream",
+        "original_call": "RgFromStream(app, nullptr, 0)",
+        "span": "std::span<std::byte>{}",
+        "capacity_source": "Empty range keeps the old no-I/O/no-cursor-change behavior."
+      },
+      {
+        "path": "tests/unit/test_exceptions.cpp",
+        "parent_line": 67,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, \"abcdef\", 6)",
+        "span": "std::as_bytes(std::span{\"abcdef\"}).first(6)",
+        "capacity_source": "Reference payload excludes NUL."
+      },
+      {
+        "path": "tests/unit/test_exceptions.cpp",
+        "parent_line": 69,
+        "function": "RgToStream",
+        "original_call": "RgToStream(app, nullptr, 0)",
+        "span": "std::span<const std::byte>{}",
+        "capacity_source": "Empty range keeps the old no-I/O/no-cursor-change behavior."
+      },
+      {
+        "path": "tests/unit/test_exceptions.cpp",
+        "parent_line": 100,
+        "function": "RgFromStream",
+        "original_call": "RgFromStream(app, rgb, sizeof(rgb))",
+        "span": "std::as_writable_bytes(std::span{rgb}).first(static_cast<std::size_t>(sizeof(rgb)))",
+        "capacity_source": "Actual local/state array with the existing logical prefix length."
+      }
+    ],
+    "verification": {
+      "batch": "L06d physical record-stream byte spans",
+      "debug_build": "Pass; no new warnings; header include orders and compiler/source policy pass.",
+      "desktop": "153/153, including available SDL tutorial checkpoints, actual resource/file workflows and all 29 leak checks.",
+      "host_units": "28/28",
+      "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+      "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+      "windows": "All 147 owned production units and the changed recovery-test unit pass strict MinGW syntax. Actual Windows recovery/framing tests (11 cases) and report tests (3 cases, including exact dump goldens) pass under Wine. Native Windows desktop and actual Linux qualification remain pending.",
+      "reference": "The new memory/file range checks passed against the old pointer/count implementation before migration, then use the actual span APIs. Sentinel bytes, binary payload, memory cursor advancement and empty read/write size/position are unchanged. Existing short-read recovery, partial-header callback publication and physical 1024-byte/header-wrap tests remain passing.",
+      "callers": "68 existing plus four reference-test calls migrated, across fixed arrays, exact arena allocations, borrowed report text and SizeofResource-bounded tutorial records. Two obsolete mutable/void literal casts removed; old raw pointer/count overloads removed.",
+      "baseline": "Behavior-neutral for existing calls. Byte counts, framing, record widths, XOR/seed order, partial effects, empty-operation skips, native/original baselines, unit goldens and canonical models unchanged. No semantic scenario/checkpoint moved; no export required.",
+      "remaining": "WriteRt/RECORDIO payloads, element-count streams, memory-source bounds, batch-input sizing/parsing, native stream modes, paths/results, text-writer boundary and Milestone D remain active.",
+      "receipts": "dist/verification/live-cpp/l06d/"
     }
   }
 }

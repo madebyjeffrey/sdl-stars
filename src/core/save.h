@@ -28,7 +28,7 @@ void    WriteRt(APPSESSION &app, RecordType rt, std::int16_t cb, void *rg);
 void    WriteRtEof(APPSESSION &app, std::uint16_t w);
 void    WriteRtThing(APPSESSION &app, const THING *pth);
 void    WriteRtScore(APPSESSION &app, const SCOREX *psx);
-void    RgToStream(APPSESSION &app, const void *rg, std::uint16_t cb);
+void    RgToStream(APPSESSION &app, std::span<const std::byte> rg);
 void    SetVisiblePlanFleet(APPSESSION &app, std::int16_t iPlr);
 void    SetVisPFInit(APPSESSION &app, std::int16_t iPlr);
 void    SetVisPFFleets(APPSESSION &app, std::int16_t iPlr);

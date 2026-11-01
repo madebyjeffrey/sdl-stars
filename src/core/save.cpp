@@ -1105,13 +1105,13 @@ void WriteRt(APPSESSION &app, RecordType rt, std::int16_t cb, void *rg) {
     hdr.cb = cb;
     hdr.rt = rt;
     FEncodeHdr(hdr, rgbHdr);
-    RgToStream(app, rgbHdr, cbWireHdr);
-    RgToStream(app, app.state.rgbCur, cb);
+    RgToStream(app, std::as_bytes(std::span{rgbHdr}).first(static_cast<std::size_t>(cbWireHdr)));
+    RgToStream(app, std::as_bytes(std::span{app.state.rgbCur}).first(static_cast<std::size_t>(cb)));
     return;
 }
 
-void RgToStream(APPSESSION &app, const void *rg, std::uint16_t cb) {
-    if (cb != 0 && CbWriteFile(app.state.hf, std::span{static_cast<const std::byte *>(rg), static_cast<std::size_t>(cb)}) != cb) {
+void RgToStream(APPSESSION &app, std::span<const std::byte> rg) {
+    if (!rg.empty() && CbWriteFile(app.state.hf, rg) != rg.size()) {
         AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsErrorWritingFile, nullptr), win32::MB_ICONHAND);
         StarsThrowError(starsErrorFile, idsErrorWritingFile);
     }

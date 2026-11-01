@@ -924,7 +924,7 @@ RetryAll:
             dx = app.state.rgptPlan[i].x - xOld;
             starpack.dx = dx;
             FEncodeStarpack(starpack, rgbStarpack);
-            RgToStream(app, rgbStarpack, cbWireStarpack);
+            RgToStream(app, std::as_bytes(std::span{rgbStarpack}).first(static_cast<std::size_t>(cbWireStarpack)));
             xOld = app.state.rgptPlan[i].x;
         }
         i = app.state.game.cPlayer;
@@ -1019,7 +1019,7 @@ std::int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
         cb = static_cast<std::int16_t>(cbFile);
         lpbDef = LpAlloc<char>(app, cb + 1, htPerm);
         app.state.lpbDefMac = lpbDef + cb;
-        RgFromStream(app, lpbDef, cb);
+        RgFromStream(app, std::as_writable_bytes(std::span{lpbDef, static_cast<std::size_t>(cb) + 1}).first(static_cast<std::size_t>(cb)));
         RecordIO().pfnStreamClose(app);
         lpbDef[cb] = 0;
         if (!FUtf8Valid(lpbDef, cb)) {

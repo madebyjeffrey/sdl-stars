@@ -37,6 +37,41 @@ static void TestFileFailureUnwinds(void) {
     }
 }
 
+static void TestRecordStreamRanges(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    uint8_t source[] = {0, 0xff, 'x', 0x80};
+    uint8_t destination[6];
+    char szDir[cbTestPath], szFile[cbTestPath + 64];
+
+    TEST_ASSERT(FStarsTestInit(app));
+    memset(destination, 0xa5, sizeof(destination));
+    {
+        StarsRestore<uint8_t *> restoreMemory(app.state.vlpMemStream);
+        app.state.vlpMemStream = source;
+        RgFromStream(app, std::as_writable_bytes(std::span{destination}).subspan(1, 3));
+        TEST_CHECK(!memcmp(destination + 1, source, 3) && destination[0] == 0xa5 && destination[4] == 0xa5);
+        TEST_CHECK(app.state.vlpMemStream == source + 3);
+        RgFromStream(app, std::span<std::byte>{});
+        TEST_CHECK(app.state.vlpMemStream == source + 3);
+    }
+    TEST_ASSERT(FStarsTestDir("record-stream-ranges", szDir, sizeof(szDir)));
+    CchSnprintf(std::span{szFile}, "%s%sranges.dat", szDir, szDirSep);
+    StreamOpen(app, szFile, mdCreate);
+    {
+        StarsFileGuard closeStream(app.state.hf);
+        RgToStream(app, std::as_bytes(std::span{"abcdef"}).first(6));
+        TEST_CHECK(LSeekFile(app.state.hf, 2, NATIVESEEKORIGIN::begin) == 2);
+        RgToStream(app, std::span<const std::byte>{});
+        TEST_CHECK(CbFileSize(app.state.hf) == 6 && LSeekFile(app.state.hf, 0, NATIVESEEKORIGIN::current) == 2);
+    }
+    TEST_CHECK(RemoveNativeFile(szFile) == 0);
+}
+
 static void TestShortReadClosesStream(void) {
 #ifdef STARS_UI_SDL
     APPSESSION &app = ui::app;
@@ -62,7 +97,7 @@ static void TestShortReadClosesStream(void) {
         StarsFileGuard closeStream(app.state.hf);
         app.state.fFileErrSilent = 1;
         StreamOpen(app, szFile, mdRead);
-        RgFromStream(app, rgb, sizeof(rgb));
+        RgFromStream(app, std::as_writable_bytes(std::span{rgb}).first(static_cast<std::size_t>(sizeof(rgb))));
         TEST_CHECK(0);
     } catch (const StarsError &error) {
         TEST_CHECK(error.mdError == starsErrorFile);
@@ -274,7 +309,7 @@ static void TestCleanupKeepsHandledPrimary(void) {
     TEST_CHECK(fCaught && !FStarsErrorPending());
 }
 
-TEST_LIST = {{"cleanup retains a primary failure already being handled", TestCleanupKeepsHandledPrimary},{"BOF signed fields retain encryption seed inputs", TestBofSignedEncryptionFields},
+TEST_LIST = {{"record stream ranges retain bytes, cursors and zero-length effects", TestRecordStreamRanges}, {"cleanup retains a primary failure already being handled", TestCleanupKeepsHandledPrimary},{"BOF signed fields retain encryption seed inputs", TestBofSignedEncryptionFields},
              {"record failures publish partial bytes before alert callbacks", TestPartialRecordPublication},
              {"record headers retain explicit framing and wrapping", TestRecordFramingBytes},
              {"file failure restores scope and flags", TestFileFailureUnwinds},

@@ -29,7 +29,7 @@ void    ReadRt(APPSESSION &app);
 std::int16_t FBadFileError(StringId ids);
 void    StreamOpen(APPSESSION &app, const char *szFile, MdOpenFlags mdOpen);
 void    StreamClose(APPSESSION &app);
-void    RgFromStream(APPSESSION &app, void *rg, std::uint16_t cb);
+void    RgFromStream(APPSESSION &app, std::span<std::byte> rg);
 
 
 #endif

@@ -5,6 +5,8 @@
 #include "record_io.h"
 
 std::int16_t FWriteTutorialMFile(APPSESSION &app, std::int16_t iTurn) {
+    std::span<const std::byte> rgbResource;
+    std::size_t ib;
     HRSRC    hrsrc;
     char     szT[30];
     HGLOBAL  hres;
@@ -28,6 +30,7 @@ std::int16_t FWriteTutorialMFile(APPSESSION &app, std::int16_t iTurn) {
         app.state.vlpMemStream = static_cast<std::uint8_t *>(win32::LockResource(hres));
         if (!app.state.vlpMemStream)
             goto BailOut;
+        rgbResource = std::as_bytes(std::span{app.state.vlpMemStream, static_cast<std::size_t>(win32::SizeofResource(app.lpui->hInst, hrsrc))});
         if (cSkip >= *app.state.vlpMemStream) {
             app.state.vlpMemStream = nullptr;
             return 2;
@@ -42,7 +45,8 @@ std::int16_t FWriteTutorialMFile(APPSESSION &app, std::int16_t iTurn) {
         std::strcpy(&szT[cch], iTurn == 37 ? ".hst" : ".m1");
         RecordIO().pfnStreamOpen(app, szT, mdCreate);
         do {
-            RgToStream(app, app.state.vlpMemStream, HdvFromPrefix(app.state.vlpMemStream).cb() + 2);
+            ib = static_cast<std::size_t>(reinterpret_cast<const std::byte *>(app.state.vlpMemStream) - rgbResource.data());
+            RgToStream(app, rgbResource.subspan(ib, static_cast<std::size_t>(HdvFromPrefix(app.state.vlpMemStream).cb() + 2)));
             app.state.vlpMemStream += 2 + HdvFromPrefix(app.state.vlpMemStream).cb();
         } while (HdvFromPrefix(app.state.vlpMemStream).rt() != rtBOF);
         RecordIO().pfnStreamClose(app);

@@ -244,8 +244,12 @@ detail in [WIN16-PARITY.md](WIN16-PARITY.md).
   return optional counts; zero-byte success, partial transfers, stream state,
   flush timing and Windows empty-write behavior remain explicit. Seek origins
   are scoped enums through every internal caller. SDK adapters retain raw
-  pointer validation, LastError and integer ABI mapping. Record/element buffers,
-  stream modes, paths, the text-writer boundary and chooser interfaces remain.
+  pointer validation, LastError and integer ABI mapping. Record stream helpers
+  also take physical byte spans; arrays, exact arena allocations and tutorial
+  resource extents supply their ranges. Empty operations still skip IO/cursor
+  changes, and short reads retain their existing exceptions and partial effects.
+  WriteRt/element buffers, memory-source/batch-input audits, stream modes, paths,
+  the text-writer boundary and chooser interfaces remain.
 - **Platforms:** the game code (`common.h`) builds without Windows headers;
   `stars-host` links it alone. Both host and client use binary64 `double`,
   with contraction and fast-math disabled. The migration's intentional turn

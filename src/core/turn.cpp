@@ -580,7 +580,7 @@ std::int16_t FSetUpBatchProcessing(APPSESSION &app) {
         RecordIO().pfnStreamOpen(app, app.state.szBase, mdRead);
         cb = LOWORD(CbFileSize(app.state.hf));
         app.state.lpchBatch = LpAlloc<char>(app, cb, htPerm);
-        RgFromStream(app, app.state.lpchBatch, cb);
+        RgFromStream(app, std::as_writable_bytes(std::span{app.state.lpchBatch, static_cast<std::uint16_t>(cb)}));
         app.state.lpchBatchMac = app.state.lpchBatch + cb;
         pch = app.state.szBase;
         while (*app.state.lpchBatch != '\n' && app.state.lpchBatch != app.state.lpchBatchMac) {

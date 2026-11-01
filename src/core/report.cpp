@@ -299,10 +299,10 @@ void DumpUniverse(APPSESSION &app) {
             CchSprintf(app.state.szWork, "%s.map", app.state.szBase);
             RecordIO().pfnStreamOpen(app, app.state.szWork, mdCreate);
             fOpen = 1;
-            RgToStream(app, const_cast<void *>(reinterpret_cast<const void*>("#\tX\tY\tName\r\n")), 12);
+            RgToStream(app, std::as_bytes(std::span{"#\tX\tY\tName\r\n"}).first(12));
             for (i = 0; i < app.state.game.cPlanMax; i++) {
                 cch = CchSprintf(app.state.szWork, "%d\t%d\t%d\t%s\r\n", i + 1, app.state.rgptPlan[i].x, app.state.rgptPlan[i].y, PszGetCompressedPlanet(app, app.state.rgidPlan[i]));
-                RgToStream(app, app.state.szWork, cch);
+                RgToStream(app, std::as_bytes(std::span{app.state.szWork}).first(static_cast<std::size_t>(cch)));
             }
             RecordIO().pfnStreamClose(app);
         } catch (const StarsError &) {
@@ -369,22 +369,22 @@ void DumpPlanets(APPSESSION &app) {
                         *psz = '\t';
                     }
                 }
-                RgToStream(app, szForm, cch);
+                RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(cch)));
                 if (i == j - 1) {
-                    RgToStream(app, app.state.szCRLF, 2);
+                    RgToStream(app, std::as_bytes(std::span{app.state.szCRLF}).first(static_cast<std::size_t>(2)));
                 }
             }
             lppl = app.state.lpPlanets;
             lpplMac = app.state.lpPlanets + app.state.cPlanet;
             for (; lppl < lpplMac; lppl++) {
                 CchCopyUtf8Prefix(std::span{szForm}, PszGetCompressedPlanet(app, app.state.rgidPlan[lppl->id]));
-                RgToStream(app, szForm, std::strlen(szForm));
+                RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm))));
                 szForm[0] = '\t';
                 if (lppl->iPlayer == iplrNone) {
-                    RgToStream(app, szForm, 1);
+                    RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(1)));
                 } else {
                     CchCopyUtf8Prefix(std::span{szForm}.subspan(1), TextIO().pfnPlayerName(app, lppl->iPlayer, 1, 0, 0, 0, nullptr).data());
-                    RgToStream(app, szForm, std::strlen(szForm));
+                    RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm))));
                 }
                 if (lppl->iPlayer == iplrNone || !lppl->fStarbase) {
                     cch = 1;
@@ -392,9 +392,9 @@ void DumpPlanets(APPSESSION &app) {
                     CchCopyUtf8Prefix(std::span{szForm}.subspan(1), app.state.rglpshdefSB[lppl->iPlayer][lppl->isb].hul.szClass);
                     cch = std::strlen(szForm);
                 }
-                RgToStream(app, szForm, cch);
+                RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(cch)));
                 CchSprintf(std::span{szForm}.subspan(1), "%d", app.state.game.turn - lppl->turn);
-                RgToStream(app, szForm, std::strlen(szForm));
+                RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm))));
                 szForm[1] = 0;
                 if (lppl->det == detAll) {
                     CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromLong(app, static_cast<std::uint32_t>((lppl->rgwtMin[3] * 100))).data());
@@ -402,20 +402,20 @@ void DumpPlanets(APPSESSION &app) {
                     l = static_cast<std::uint32_t>((lppl->uPopGuess * 400));
                     CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromLong(app, l).data());
                 }
-                RgToStream(app, szForm, std::strlen(szForm));
+                RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm))));
                 if (lppl->det < detSome) {
                     szForm[1] = 0;
                 } else {
                     i = PlanetQueryIO().pfnDesirability(app, lppl, app.state.idPlayer);
                     CchSprintf(std::span{szForm}.subspan(1), app.state.PCTDPCTPCT, i);
                 }
-                RgToStream(app, szForm, std::strlen(szForm));
+                RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm))));
                 szForm[1] = 0;
                 if (lppl->det == detAll) {
                     PszProdQueueTop(app, lppl, nullptr);
                     CchCopyUtf8Prefix(std::span{szForm}.subspan(1), app.state.szWork);
                 }
-                RgToStream(app, szForm, std::strlen(szForm));
+                RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm))));
                 if (lppl->det == detAll) {
                     CalcPctSurvive(app, lppl, &pct, nullptr);
                     pct = static_cast<float>((static_cast<double>(1.0) - pct));
@@ -430,13 +430,13 @@ void DumpPlanets(APPSESSION &app) {
                         szForm[cch + 3] = 0;
                     }
                 }
-                RgToStream(app, szForm, std::strlen(szForm));
+                RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm))));
                 szForm[1] = 0;
                 for (i = 0; i < 3; i++) {
                     if (lppl->det >= detSome) {
                         CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromLong(app, lppl->rgwtMin[i]).data());
                     }
-                    RgToStream(app, szForm, std::strlen(szForm));
+                    RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm))));
                 }
                 szForm[1] = 0;
                 for (i = 0; i < 3; i++) {
@@ -444,47 +444,47 @@ void DumpPlanets(APPSESSION &app) {
                         ColonyIO().pfnEstimateMining(app, lppl, rgl, -1, 0);
                         CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromLong(app, rgl[i]).data());
                     }
-                    RgToStream(app, szForm, std::strlen(szForm));
+                    RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm))));
                 }
                 szForm[1] = 0;
                 for (i = 0; i < 3; i++) {
                     if (lppl->det >= detSome) {
                         CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, lppl->rgMinConc[i]).data());
                     }
-                    RgToStream(app, szForm, std::strlen(szForm));
+                    RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm))));
                 }
                 if (lppl->det == detAll) {
                     CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, ResearchIO().pfnResources(app, lppl, app.state.idPlayer)).data());
                 } else {
                     szForm[1] = 0;
                 }
-                RgToStream(app, szForm, std::strlen(szForm));
+                RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm))));
                 if (app.state.gd.fPerPlayerDumps) {
                     if (lppl->det >= detSome) {
                         for (i = 0; i < 3; i++) {
                             CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszCalcEnvVar(app, static_cast<EnvType>(i), lppl->rgEnvVar[i]));
-                            RgToStream(app, szForm, std::strlen(szForm));
+                            RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm))));
                         }
                         for (i = 0; i < 3; i++) {
                             CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszCalcEnvVar(app, static_cast<EnvType>(i), lppl->rgEnvVarOrig[i]));
-                            RgToStream(app, szForm, std::strlen(szForm));
+                            RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm))));
                         }
                         CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, PctPlanetOptValue(app, lppl, app.state.idPlayer)).data());
                         CchAppendUtf8Prefix(std::span{szForm}.subspan(1), "%");
-                        RgToStream(app, szForm, std::strlen(szForm));
+                        RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm))));
                     } else {
                         szForm[1] = 0;
                         for (i = 0; i < 7; i++) {
-                            RgToStream(app, szForm, 1);
+                            RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(1)));
                         }
                     }
                     if (lppl->det == detAll) {
                         CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, CapacityIO().pfnPctPlanetCapacity(app, lppl)).data());
-                        RgToStream(app, szForm, std::strlen(szForm));
+                        RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm))));
                         CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, GetPlanetScannerRange(app, lppl, &i)).data());
-                        RgToStream(app, szForm, std::strlen(szForm));
+                        RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm))));
                         CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, i).data());
-                        RgToStream(app, szForm, std::strlen(szForm));
+                        RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm))));
                         if (lppl->idFling == 0) {
                             i = 0;
                             szForm[1] = 0;
@@ -492,15 +492,15 @@ void DumpPlanets(APPSESSION &app) {
                             i = lppl->iWarpFling + 4;
                             CchCopyUtf8Prefix(std::span{szForm}.subspan(1), TextIO().pfnPlanetName(app, lppl->idFling - 1));
                         }
-                        RgToStream(app, szForm, std::strlen(szForm));
+                        RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm))));
                         CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, i).data());
-                        RgToStream(app, szForm, std::strlen(szForm));
+                        RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm))));
                         if (lppl->idRoute == 0) {
                             szForm[1] = 0;
                         } else {
                             CchCopyUtf8Prefix(std::span{szForm}.subspan(1), TextIO().pfnPlanetName(app, lppl->idRoute - 1));
                         }
-                        RgToStream(app, szForm, std::strlen(szForm));
+                        RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm))));
                         if (lppl->fStarbase) {
                             i = IStargateFromLppl(app, lppl);
                             if (i != -1) {
@@ -508,15 +508,15 @@ void DumpPlanets(APPSESSION &app) {
                                 part.hs.iItem = i;
                                 PartQueryIO().pfnLookup(app, &part);
                                 CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, part.pspecialsb()->grAbility2).data());
-                                RgToStream(app, szForm, std::strlen(szForm));
+                                RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm))));
                                 CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, part.pspecialsb()->grAbility).data());
-                                RgToStream(app, szForm, std::strlen(szForm));
+                                RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm))));
                             }
                         } else {
                             i = -1;
                         }
                         if (i == -1) {
-                            RgToStream(app, const_cast<void *>(reinterpret_cast<const void*>("\t0\t0")), 4);
+                            RgToStream(app, std::as_bytes(std::span{"\t0\t0"}).first(4));
                         }
                         if (lppl->fStarbase) {
                             i = lppl->pctDp;
@@ -524,10 +524,10 @@ void DumpPlanets(APPSESSION &app) {
                             i = 0;
                         }
                         CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, i).data());
-                        RgToStream(app, szForm, std::strlen(szForm));
+                        RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm))));
                     }
                 }
-                RgToStream(app, app.state.szCRLF, 2);
+                RgToStream(app, std::as_bytes(std::span{app.state.szCRLF}).first(static_cast<std::size_t>(2)));
             }
             RecordIO().pfnStreamClose(app);
         } catch (const StarsError &) {
@@ -593,9 +593,9 @@ void DumpFleets(APPSESSION &app) {
                         *psz = '\t';
                     }
                 }
-                RgToStream(app, szForm, cch);
+                RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(cch)));
                 if (i == j - 1) {
-                    RgToStream(app, app.state.szCRLF, 2);
+                    RgToStream(app, std::as_bytes(std::span{app.state.szCRLF}).first(static_cast<std::size_t>(2)));
                 }
             }
             iplr = app.state.idPlayer;
@@ -606,12 +606,12 @@ void DumpFleets(APPSESSION &app) {
                 app.state.idPlayer = iplrNone;
                 psz = PszGetFleetName(app, lpfl->id);
                 app.state.idPlayer = iplr;
-                RgToStream(app, psz, std::strlen(psz));
+                RgToStream(app, std::as_bytes(std::span{psz, std::strlen(psz)}));
                 szForm[0] = '\t';
                 CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, lpfl->pt.x).data());
-                RgToStream(app, szForm, std::strlen(szForm));
+                RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm))));
                 CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, lpfl->pt.y).data());
-                RgToStream(app, szForm, std::strlen(szForm));
+                RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm))));
                 if (lpfl->idPlanet == idPlanetDeepSpace) {
                     cch = 1;
                 } else {
@@ -619,7 +619,7 @@ void DumpFleets(APPSESSION &app) {
                     CchCopyUtf8Prefix(std::span{szForm}.subspan(1), psz);
                     cch = std::strlen(psz) + 1;
                 }
-                RgToStream(app, szForm, cch);
+                RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(cch)));
                 if (lpfl->det == detAll) {
                     CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszGetDestName(app, lpfl, nullptr).data());
                 } else if (app.state.gd.fPerPlayerDumps && lpfl->det < detAll && lpfl->fdirValid()) {
@@ -629,33 +629,33 @@ void DumpFleets(APPSESSION &app) {
                 } else {
                     szForm[1] = 0;
                 }
-                RgToStream(app, szForm, std::strlen(szForm));
+                RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm))));
                 if (app.state.rglpbtlplan[lpfl->iplr()]) {
                     CchCopyUtf8Prefix(std::span{szForm}.subspan(1), app.state.rglpbtlplan[lpfl->iplr()][lpfl->iplan].szName);
                 } else {
                     szForm[1] = 0;
                 }
-                RgToStream(app, szForm, std::strlen(szForm));
+                RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm))));
                 l = 0;
                 for (i = 0; i < 16; i++) {
                     l += lpfl->rgcsh[i];
                 }
                 CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromLong(app, l).data());
-                RgToStream(app, szForm, std::strlen(szForm));
+                RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm))));
                 for (i = 0; i < 5; i++) {
                     CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromLong(app, lpfl->rgwtMin[i]).data());
-                    RgToStream(app, szForm, std::strlen(szForm));
+                    RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm))));
                 }
                 if (app.state.gd.fPerPlayerDumps) {
                     CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, lpfl->iPlayer + 1).data());
-                    RgToStream(app, szForm, std::strlen(szForm));
+                    RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm))));
                     if (lpfl->cord > 1) {
                         CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszGetETA(app, nullptr, lpfl, nullptr));
                     } else {
                         szForm[1] = '0';
                         szForm[2] = 0;
                     }
-                    RgToStream(app, szForm, std::strlen(szForm));
+                    RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm))));
                     if (lpfl->cord >= 2) {
                         i = lpfl->lpplord->rgord()[1].iWarp;
                     } else if (lpfl->det < detAll && lpfl->fdirValid()) {
@@ -664,33 +664,33 @@ void DumpFleets(APPSESSION &app) {
                         i = 0;
                     }
                     CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, i).data());
-                    RgToStream(app, szForm, std::strlen(szForm));
+                    RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm))));
                     CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromLong(app, WtFromLpfl(app, lpfl)).data());
-                    RgToStream(app, szForm, std::strlen(szForm));
+                    RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm))));
                     CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, PctCloakFromLpfl(app, lpfl)).data());
-                    RgToStream(app, szForm, std::strlen(szForm));
+                    RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm))));
                     j = GetFleetScannerRange(app, lpfl, &i, nullptr, nullptr);
                     if (j == -1) {
                         j = 0;
                     }
                     CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, j).data());
-                    RgToStream(app, szForm, std::strlen(szForm));
+                    RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm))));
                     CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, i).data());
-                    RgToStream(app, szForm, std::strlen(szForm));
+                    RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm))));
                     if (lpfl->det == detAll) {
                         CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszGetTaskName(app, lpfl, &i).data());
                     } else {
                         szForm[1] = 0;
                     }
-                    RgToStream(app, szForm, std::strlen(szForm));
+                    RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm))));
                     CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromLong(app, ColonyIO().pfnFleetMining(app, lpfl)).data());
-                    RgToStream(app, szForm, std::strlen(szForm));
+                    RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm))));
                     CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromLong(app, CMineSweepFromLpfl(app, lpfl)).data());
-                    RgToStream(app, szForm, std::strlen(szForm));
+                    RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm))));
                     CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromLong(app, CLayMinesFromLpfl(app, lpfl, mineAll, ishdefAll)).data());
-                    RgToStream(app, szForm, std::strlen(szForm));
+                    RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm))));
                     CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromLong(app, PctTerraFromLpfl(app, lpfl)).data());
-                    RgToStream(app, szForm, std::strlen(szForm));
+                    RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm))));
                     l = 0;
                     for (i = 0; i < 16; i++) {
                         if (lpfl->rgcsh[i] != 0) {
@@ -701,7 +701,7 @@ void DumpFleets(APPSESSION &app) {
                         }
                     }
                     CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromLong(app, l).data());
-                    RgToStream(app, szForm, std::strlen(szForm));
+                    RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm))));
                     for (j = 2; j < 6; j++) {
                         l = 0;
                         for (i = 0; i < 16; i++) {
@@ -710,10 +710,10 @@ void DumpFleets(APPSESSION &app) {
                             }
                         }
                         CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromLong(app, l).data());
-                        RgToStream(app, szForm, std::strlen(szForm));
+                        RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(std::strlen(szForm))));
                     }
                 }
-                RgToStream(app, app.state.szCRLF, 2);
+                RgToStream(app, std::as_bytes(std::span{app.state.szCRLF}).first(static_cast<std::size_t>(2)));
             }
             RecordIO().pfnStreamClose(app);
         } catch (const StarsError &) {

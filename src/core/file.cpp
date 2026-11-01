@@ -192,7 +192,7 @@ std::int16_t FLoadGame(APPSESSION &app, const char *pszFileName, const char *psz
         app.state.dGalInv = app.state.dGal + 2000;
         x = 1000;
         for (i = 0; i < app.state.game.cPlanMax; i++) {
-            RgFromStream(app, rgbStarpack, cbWireStarpack);
+            RgFromStream(app, std::as_writable_bytes(std::span{rgbStarpack}).first(static_cast<std::size_t>(cbWireStarpack)));
             FDecodeStarpack(rgbStarpack, sp);
             x += sp.dx;
             app.state.rgptPlan[i].x = x;
@@ -1421,7 +1421,7 @@ static void ReadRtHeader(APPSESSION &app) {
 void ReadRt(APPSESSION &app) {
     ReadRtHeader(app);
     if (app.state.hdrCur.cb != 0) {
-        RgFromStream(app, app.state.rgbCur, app.state.hdrCur.cb);
+        RgFromStream(app, std::as_writable_bytes(std::span{app.state.rgbCur}).first(static_cast<std::size_t>(app.state.hdrCur.cb)));
     }
     if (app.state.hdrCur.rt == rtBOF) {
         if (app.state.hdrCur.cb != cbWireBof) {
@@ -1506,12 +1506,12 @@ void StreamClose(APPSESSION &app) {
     return;
 }
 
-void RgFromStream(APPSESSION &app, void *rg, std::uint16_t cb) {
-    if (cb != 0) {
+void RgFromStream(APPSESSION &app, std::span<std::byte> rg) {
+    if (!rg.empty()) {
         if (app.state.vlpMemStream) {
-            std::memcpy(rg, app.state.vlpMemStream, cb);
-            app.state.vlpMemStream += cb;
-        } else if (CbReadFile(app.state.hf, std::span{static_cast<std::byte *>(rg), static_cast<std::size_t>(cb)}) != cb) {
+            std::memcpy(rg.data(), app.state.vlpMemStream, rg.size());
+            app.state.vlpMemStream += rg.size();
+        } else if (CbReadFile(app.state.hf, rg) != rg.size()) {
             FileError(app, idsGameFileAppearsCorruptUnableLoadFile);
             StarsThrowError(starsErrorFile, app.state.idsFileError);
         }

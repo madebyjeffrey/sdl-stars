@@ -267,12 +267,12 @@ void StarsCopyFile(APPSESSION &app, const char *szSrc, const char *szDst) {
         if (hfDst == -1)
             goto LStreamError;
         for (cb = CbFileSize(app.state.hf); cb > 2048; cb -= 2048) {
-            RgFromStream(app, rgb, 0x800);
+            RgFromStream(app, std::as_writable_bytes(std::span{rgb}).first(static_cast<std::size_t>(0x800)));
             if (CbWriteFile(hfDst, std::as_bytes(std::span{rgb}).first(static_cast<std::size_t>(0x800))) != 0x800)
                 goto LStreamError;
         }
         if (cb != 0) {
-            RgFromStream(app, rgb, LOWORD(cb));
+            RgFromStream(app, std::as_writable_bytes(std::span{rgb}).first(static_cast<std::size_t>(LOWORD(cb))));
             CbWriteFile(hfDst, std::as_bytes(std::span{rgb}).first(static_cast<std::size_t>(LOWORD(cb))));
         }
     } catch (const StarsError &) {

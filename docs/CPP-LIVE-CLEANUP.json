@@ -441,12 +441,14 @@
         "numeric-values-without-output-or-count-pointers",
         "typed-file-open-options-and-result-values",
         "native-and-token-byte-spans-and-optional-counts",
-        "scoped-seek-origins-and-actual-provider-migration"
+        "scoped-seek-origins-and-actual-provider-migration",
+        "physical-record-stream-spans"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
         "typed-native-file-modes-and-results",
-        "typed-file-selection-Milestone-D"
+        "typed-file-selection-Milestone-D",
+        "memory-record-source-bounds-and-batch-input-audit"
       ],
       "user_string_codecs": {
         "status": "complete; verified",
@@ -498,6 +500,20 @@
           "baseline": "Behavior-neutral for existing callers: partial effects, binary bytes, EOF/error state, retries, flush timing, callback publication and Windows empty-write paths preserved. Native and frozen original baselines, unit goldens, record widths, RNG and canonical models unchanged. No semantic scenario/checkpoint moved; no export required.",
           "remaining": "Record/element-count buffers, stream mode strings, file/path result interfaces, the explicitly retained text-writer count boundary and Milestone D remain active.",
           "receipts": "dist/verification/live-cpp/l06c/"
+        },
+        {
+          "batch": "L06d physical record-stream byte spans",
+          "debug_build": "Pass; no new warnings; header include orders and compiler/source policy pass.",
+          "desktop": "153/153, including available SDL tutorial checkpoints, actual resource/file workflows and all 29 leak checks.",
+          "host_units": "28/28",
+          "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+          "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+          "windows": "All 147 owned production units and the changed recovery-test unit pass strict MinGW syntax. Actual Windows recovery/framing tests (11 cases) and report tests (3 cases, including exact dump goldens) pass under Wine. Native Windows desktop and actual Linux qualification remain pending.",
+          "reference": "The new memory/file range checks passed against the old pointer/count implementation before migration, then use the actual span APIs. Sentinel bytes, binary payload, memory cursor advancement and empty read/write size/position are unchanged. Existing short-read recovery, partial-header callback publication and physical 1024-byte/header-wrap tests remain passing.",
+          "callers": "68 existing plus four reference-test calls migrated, across fixed arrays, exact arena allocations, borrowed report text and SizeofResource-bounded tutorial records. Two obsolete mutable/void literal casts removed; old raw pointer/count overloads removed.",
+          "baseline": "Behavior-neutral for existing calls. Byte counts, framing, record widths, XOR/seed order, partial effects, empty-operation skips, native/original baselines, unit goldens and canonical models unchanged. No semantic scenario/checkpoint moved; no export required.",
+          "remaining": "WriteRt/RECORDIO payloads, element-count streams, memory-source bounds, batch-input sizing/parsing, native stream modes, paths/results, text-writer boundary and Milestone D remain active.",
+          "receipts": "dist/verification/live-cpp/l06d/"
         }
       ],
       "roman_output": {
@@ -519,6 +535,14 @@
         "parent_call_expressions": 98,
         "interfaces": "Six native/token byte functions use spans and optional counts; every seek-origin interface and actual held-lock read provider uses the typed contract. Old overloads removed.",
         "pending": "Element-count and record-stream buffers, native stream mode strings, other file/path results, text-writer boundary and Milestone D remain."
+      },
+      "record_streams": {
+        "status": "complete; verified",
+        "evidence": "docs/CPP-LIVE-FILE-SERVICES.json",
+        "call_sites": 72,
+        "pre_existing_calls": 68,
+        "interface": "RgFromStream/RgToStream accept actual byte spans and preserve exception/zero-range contracts; old pointer/count overloads removed.",
+        "remaining": "WriteRt/RECORDIO payloads, raw element-count streams, memory source bounds and batch input sizing/parsing remain."
       }
     },
     {
