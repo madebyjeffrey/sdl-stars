@@ -2,6 +2,8 @@
 #include "appstate.h"
 #ifdef STARS_UI_SDL
 #include "uistate.h"
+#include "control_io.h"
+#include "reportui.h"
 #endif
 #include "callbackcontext.h"
 [[maybe_unused]] static char szTestLiteral1[] = "\x5cw \x5ci \x5cu";
@@ -63,6 +65,49 @@ static void TestEnvironmentText(void) {
     TEST_CHECK(!strcmp(PszCalcEnvVar(app, Temperature, 100), "200ºC"));
     TEST_CHECK(!strcmp(PszCalcEnvVar(app, Gravity, 50), "1.00g"));
     TEST_CHECK(!strcmp(PszCalcEnvVar(app, Radiation, 50), "50mR"));
+}
+
+static void TestDisplayCopyBounds(void) {
+    const char szText[] = "ab\xc3\xa9\xf0\x9f\x98\x80z";
+    const size_t rgcch[] = {0, 0, 1, 2, 2, 4, 4, 4, 4, 8, 9, 9, 9};
+    char rgb[16], expected[16];
+    size_t cb, cch, cchBefore;
+    for (cb = 0; cb < std::size(rgcch); cb++) {
+        memset(rgb, '!', sizeof(rgb));
+        memset(expected, '!', sizeof(expected));
+        TEST_CHECK(CchCopyUtf8Prefix(std::span{rgb}.subspan(2, cb), szText) == rgcch[cb]);
+        if (cb != 0) {
+            memcpy(expected + 2, szText, rgcch[cb]);
+            expected[2 + rgcch[cb]] = 0;
+        }
+        TEST_CHECK(!memcmp(rgb, expected, sizeof(rgb)));
+        memset(rgb, '!', sizeof(rgb));
+        memset(expected, '!', sizeof(expected));
+        cchBefore = CchCopyUtf8Prefix(std::span{rgb}.subspan(2, cb), "Q");
+        TEST_CHECK(cchBefore == (cb >= 2 ? 1u : 0u));
+        cch = rgcch[cb - cchBefore];
+        TEST_CHECK(CchAppendUtf8Prefix(std::span{rgb}.subspan(2, cb), szText) == cch);
+        if (cb != 0) {
+            if (cchBefore != 0) expected[2] = 'Q';
+            memcpy(expected + 2 + cchBefore, szText, cch);
+            expected[2 + cchBefore + cch] = 0;
+            TEST_CHECK(FUtf8Valid(rgb + 2, cchBefore + cch));
+        }
+        TEST_CHECK(!memcmp(rgb, expected, sizeof(rgb)));
+    }
+    const char rgch[] = {'a', 'b', '\xc3', '\xa9'};
+    TEST_CHECK(CchCopyUtf8Prefix(rgb, std::string_view(rgch, sizeof(rgch))) == 4 && !strcmp(rgb, "ab\xc3\xa9"));
+    TEST_CHECK(CchCopyUtf8Prefix(rgb, "ab\xffz") == 2 && !strcmp(rgb, "ab"));
+    TEST_CHECK(CchCopyUtf8Prefix(rgb, std::string_view("a\0b", 3)) == 1 && !strcmp(rgb, "a"));
+    strcpy(rgb, "ab\xc3\xa9z");
+    TEST_CHECK(CchCopyUtf8Prefix(std::span{rgb}.subspan(1), std::string_view(rgb, 5)) == 5 && !strcmp(rgb, "aab\xc3\xa9z"));
+    strcpy(rgb, "abc");
+    TEST_CHECK(CchAppendUtf8Prefix(rgb, std::string_view(rgb, 3)) == 3 && !strcmp(rgb, "abcabc"));
+    memset(rgb, '!', sizeof(rgb));
+    TEST_CHECK(CchAppendUtf8Prefix(std::span{rgb}.subspan(2, 4), "x") == 0 && rgb[2] == 0);
+    TEST_CHECK(rgb[1] == '!' && rgb[3] == '!' && rgb[5] == '!' && rgb[6] == '!');
+    TEST_CHECK(CchCopyUtf8Prefix(std::span<char>{}, std::string_view{}) == 0);
+    TEST_CHECK(CchAppendUtf8Prefix(std::span<char>{}, std::string_view{}) == 0);
 }
 
 static void TestPasswords(void) {
@@ -199,6 +244,44 @@ static void TestFormattedTextBounds(void) {
 }
 
 #ifdef STARS_UI_SDL
+static int cHistoryMenus;
+static int16_t CchHistoryCatalog(APPSESSION &, StringId ids, std::span<char> sz) {
+    static const char szLong[] = "\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9"
+                                 "\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9 ";
+    return static_cast<int16_t>(CchCopyUtf8Prefix(sz, ids == idsHistory ? "History " : szLong));
+}
+static int16_t CheckHistoryRows(APPSESSION &app, HWND, int16_t, int16_t, int16_t cString, int32_t *,
+                                const char *const *rgsz, int16_t, int16_t) {
+    TEST_CHECK(cString == 8);
+    for (int i = 0; i < cString; i++) {
+        TEST_CHECK(rgsz[i] == app.state.szWork + i * 40);
+        TEST_CHECK(strlen(rgsz[i]) == 36 && FUtf8Valid(rgsz[i], 36));
+        TEST_CHECK(!strncmp(rgsz[i], "History ", 8));
+        TEST_CHECK(rgsz[i][39] == '!');
+    }
+    cHistoryMenus++;
+    return -1;
+}
+static void TestHistoryRows(void) {
+    APPSESSION &app = ui::app;
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    TEST_ASSERT(FStarsTestInit(app));
+    TEXTIO text;
+    text.pfnCchGetString = CchHistoryCatalog;
+    TEXTIOSCOPE textScope(text);
+    CONTROLIO control;
+    control.pfnPopupMenu = CheckHistoryRows;
+    CONTROLIOSCOPE controlScope(control);
+    app.lpui->dyArial10 = 20;
+    app.state.dyArial8 = 10;
+    app.state.gd.fScoreVictory = 2;
+    memset(app.state.szWork, '!', sizeof(app.state.szWork));
+    cHistoryMenus = 0;
+    ScoreXDlg(nullptr, win32::WM_LBUTTONDOWN, 0, 5 << 16);
+    TEST_CHECK(cHistoryMenus == 1);
+    for (size_t i = 320; i < sizeof(app.state.szWork); i++) TEST_CHECK(app.state.szWork[i] == '!');
+}
+
 static void TestScannerSnapshotUtf8(void) {
     SCANSNAPSHOT snap = {};
     char sz[2048];
@@ -226,7 +309,9 @@ static void TestScannerSnapshotUtf8(void) {
 
 TEST_LIST = {{"formatted text stays bounded and preserves UTF-8", TestFormattedTextBounds},
              {"environment labels contain UTF-8 units", TestEnvironmentText},
+             {"display copy and append preserve byte limits and UTF-8", TestDisplayCopyBounds},
 #ifdef STARS_UI_SDL
+             {"history menu labels stay within their logical rows", TestHistoryRows},
              {"scanner snapshots preserve UTF-8 and reject malformed names", TestScannerSnapshotUtf8},
 #endif
              {"invalid UTF-8 definition cleans up the error handler", TestInvalidDefinition},

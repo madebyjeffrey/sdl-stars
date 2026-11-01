@@ -1,4 +1,5 @@
 #include "encoding.h"
+#include <algorithm>
 #include <cstring>
 
 int CbUtf8Char(const char *psz, std::size_t cb, std::uint32_t *lpch) {
@@ -54,6 +55,24 @@ int CchCopyUtf8(char *pszOut, std::size_t cbOut, const char *psz, std::size_t cb
     std::memmove(pszOut, psz, cb);
     pszOut[cb] = 0;
     return static_cast<int>(cb);
+}
+
+std::size_t CchCopyUtf8Prefix(std::span<char> rgchOut, std::string_view sz) {
+    std::size_t cch;
+    if (rgchOut.empty()) return 0;
+    cch = CchUtf8Prefix(sz, rgchOut.size() - 1);
+    if (cch != 0) std::memmove(rgchOut.data(), sz.data(), cch);
+    rgchOut[cch] = 0;
+    return cch;
+}
+
+std::size_t CchAppendUtf8Prefix(std::span<char> rgchOut, std::string_view sz) {
+    const auto pchEnd = std::find(rgchOut.begin(), rgchOut.end(), 0);
+    if (pchEnd == rgchOut.end()) {
+        if (!rgchOut.empty()) rgchOut[0] = 0;
+        return 0;
+    }
+    return CchCopyUtf8Prefix(rgchOut.subspan(static_cast<std::size_t>(pchEnd - rgchOut.begin())), sz);
 }
 
 int CchCp1252ToUtf8(char *pszOut, std::size_t cbOut, const unsigned char *rgb, std::size_t cb) {

@@ -490,9 +490,9 @@ INT_PTR  ScoreXDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         }
         cchHistory = TextIO().pfnCchGetString(app, idsHistory, std::span{szT});
         for (i = 0; i < 8; i++) {
-            std::strcpy(&app.state.szWork[i * 40], szT);
+            CchCopyUtf8Prefix(std::span{app.state.szWork}.subspan(static_cast<std::size_t>(i) * 40, 40), szT);
             psz = &app.state.szWork[i * 40 + cchHistory];
-            cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsPlanets + i), std::span{app.state.szWork}.subspan(static_cast<std::size_t>(psz - app.state.szWork)));
+            cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsPlanets + i), std::span{app.state.szWork}.subspan(static_cast<std::size_t>(i) * 40, 40).subspan(static_cast<std::size_t>(cchHistory)));
             if (cch > 0) psz[CchUtf8Prefix(std::string_view(psz, cch), cch - 1)] = 0;
             rgid[c] = static_cast<std::uint32_t>((app.state.gd.iCurGraph == i));
             rgszScan[c++] = &app.state.szWork[i * 40];

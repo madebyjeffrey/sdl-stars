@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `ScoreXDlg` keeps each history-menu heading within its 40-byte row.
+  Previously the catalog append could use the rest of the shared work buffer
+  and overwrite the next heading. Long labels now retain a complete UTF-8
+  prefix; fitting labels, file records and host results are unchanged.
+
 - `PszCalcEnvVar` now emits the temperature unit `ºC` as UTF-8. Previously
   it inserted the single byte `0xBA`, which was invalid application text and
   could lose its suffix during UTF-8 copying or drawing. The live planet-report

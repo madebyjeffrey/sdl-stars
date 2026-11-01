@@ -13,6 +13,12 @@ int CchCp1252ToUtf8(char *pszOut, std::size_t cbOut, const unsigned char *rgb, s
 int CchUtf16leToUtf8(char *pszOut, std::size_t cbOut, const unsigned char *rgb, std::size_t cch);
 int CbUtf8Char(const char *psz, std::size_t cb, std::uint32_t *lpch);
 std::size_t CchUtf8Prefix(const char *psz, std::size_t cchMax);
+// Display/fixed-label copies write a terminated complete UTF-8 prefix and
+// return bytes copied/appended. These are not strict path/record operations.
+// An empty span is untouched; appending to an unterminated span clears it.
+// Views are borrowed for this call only and may overlap the destination.
+std::size_t CchCopyUtf8Prefix(std::span<char> rgchOut, std::string_view sz);
+std::size_t CchAppendUtf8Prefix(std::span<char> rgchOut, std::string_view sz);
 
 // Views borrow only for this call. They can describe a non-NUL-terminated
 // slice; text still rejects embedded NUL and output capacity includes its NUL.

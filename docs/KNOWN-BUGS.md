@@ -249,6 +249,15 @@ now clears the borrowed stream without heap-release calls. A resource-skip and
 injected disk-full test cover the error state and subsequent stream selection.
 Recorded tutorial bytes, save records and host results are unchanged.
 
+## History-menu row capacity — fixed on develop
+
+`ScoreXDlg` divides the shared work buffer into eight 40-byte history labels,
+but its catalog append received all bytes remaining in the buffer. An oversized
+column label could cross its row and the next row could overwrite its terminator.
+Both the copy and catalog append now use the logical row span. The actual menu
+builder is tested with long multibyte labels, row-end sentinels and the unused
+tail of the work buffer. Fitting labels, save records and host results are unchanged.
+
 ## Temperature-label encoding — fixed on develop
 
 `PszCalcEnvVar` used `%c` with 186 for the `º` in a temperature unit,
