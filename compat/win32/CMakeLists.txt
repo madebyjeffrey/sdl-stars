@@ -1,6 +1,7 @@
 add_library(stars_win32_headers INTERFACE)
 target_include_directories(stars_win32_headers BEFORE INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_compile_definitions(stars_win32_headers INTERFACE STARS_UI_SDL=1)
+target_link_libraries(stars_win32_headers INTERFACE stars_format)
 
 
 

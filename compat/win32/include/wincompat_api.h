@@ -6,6 +6,7 @@
 
 #include "wincompat_types.h"
 #include "wincompat_structs.h"
+#include "nativeformat.h"
 #include <span>
 
 namespace win32 {
@@ -209,7 +210,12 @@ LPSTR lstrcatA (LPSTR lpString1, LPCSTR lpString2);
 int lstrcmpiA (LPCSTR lpString1, LPCSTR lpString2);
 LPSTR lstrcpyA (LPSTR lpString1, LPCSTR lpString2);
 int lstrlenA (LPCSTR lpString);
-int wsprintfA(std::span<char>,LPCSTR,...);
+int wsprintfAFields(std::span<char>, LPCSTR, std::span<const NATIVEFORMATARG>);
+template<class... ARGS>
+int wsprintfA(std::span<char> sz, LPCSTR pszFormat, ARGS... args) {
+    const std::array<NATIVEFORMATARG, sizeof...(ARGS)> rgArgs = {NATIVEFORMATARG{args}...};
+    return wsprintfAFields(sz, pszFormat, rgArgs);
+}
 
 BOOL SetKeyboardState(BYTE *rgb);
 HACCEL CreateAcceleratorTableA(LPACCEL rgaccel, int c);

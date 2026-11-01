@@ -153,6 +153,13 @@ static void TestFormattedTextBounds(void) {
     TEST_CHECK(CchSprintf(std::span{rgch}.subspan(2, 1), "%d", 12345) == 0 && rgch[2] == 0 && rgch[3] == 'b');
     rgch[2] = '!';
     TEST_CHECK(CchSprintf(std::span<char>{}, "%d", 12345) == 0 && rgch[2] == '!');
+    TEST_CHECK(CchSprintf(sz, "%ld|%lu|%08lx|%hd|%.2f", std::int32_t{INT32_MIN}, std::uint32_t{UINT32_MAX},
+                         std::uint32_t{0x89abcdef}, -1, 3.25) == 39);
+    TEST_CHECK(!strcmp(sz, "-2147483648|4294967295|89abcdef|-1|3.25"));
+    struct { signed int c : 5; unsigned int u : 5; } bits = {-3, 29};
+    TEST_CHECK(CchSprintf(sz, "%d %u", bits.c, bits.u) == 5 && !strcmp(sz, "-3 29"));
+    errno = 0;
+    TEST_CHECK(CchSprintf(sz, "%d") == 0 && sz[0] == 0 && errno == EINVAL);
     TEXTIO io;
     io.pfnCompressed = PszTestCatalog;
     TEXTIOSCOPE textScope(io);

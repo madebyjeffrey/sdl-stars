@@ -1,6 +1,11 @@
 #ifndef STARS_NATIVEFORMAT_H
 #define STARS_NATIVEFORMAT_H
 
+// The Win32 facade can be included inside a caller's packed record scope.
+// These transient argument values always use the formatter's native layout.
+#pragma pack(push)
+#pragma pack()
+
 #include <algorithm>
 #include <array>
 #include <cstdint>
@@ -79,4 +84,5 @@ struct NATIVEFORMATTER {
     }
 };
 
+#pragma pack(pop)
 #endif

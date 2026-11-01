@@ -2,7 +2,6 @@
 #include "ownership.h"
 
 #include <algorithm>
-#include <cstdarg>
 #include <cerrno>
 #include <ctime>
 
@@ -88,14 +87,13 @@ void qsort16(APPSESSION &app, void *base, std::size_t count, std::size_t width, 
 // before formatting, since its arguments are 32-bit. Like wsprintf, it
 // writes at most the destination size or 1024 bytes, the terminator included,
 // and returns the characters it wrote.
-int CchSprintf(std::span<char> sz, const char *szFormat, ...) {
+int CchSprintfFields(std::span<char> sz, const char *szFormat, std::span<const NATIVEFORMATARG> args) {
     char        szFmtSmall[256];
     char       *szFmt;
     std::size_t      cbFmt;
     const char *pchIn;
     char       *pchOut;
     int         cch;
-    std::va_list     args;
     NATIVEOWNER<char, std::free> format;
     const std::size_t cb = std::min(sz.size(), std::size_t{1024});
 
@@ -127,9 +125,7 @@ int CchSprintf(std::span<char> sz, const char *szFormat, ...) {
         }
     }
     *pchOut = 0;
-    va_start(args, szFormat);
-    cch = std::vsnprintf(sz.data(), cb, szFmt, args);
-    va_end(args);
+    cch = CchFormatNative(sz.first(cb), szFmt, args);
     format.reset();
     if (cch < 0) {
         sz[0] = 0;

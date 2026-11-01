@@ -100,7 +100,8 @@ for directory in ("src", "compat/win32/include", "compat/win32/src"):
         code = re.sub(r'//[^\n]*|/\*[\s\S]*?\*/|R"(?P<delimiter>[^ ()\\\t\r\n]*)\([\s\S]*?\)(?P=delimiter)"|"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'', ' ', text)
         assert not re.search(r"\bNULL\b", code), f"Owned null spelling must use nullptr: {path}"
         assert not re.search(r"\btypedef\b", code), f"Owned type aliases must use C++ declarations: {path}"
-        assert not re.search(r"\b(?:CchSnprintf|CchNativePrintf)\s*\([^;{}]*,\s*\.\.\.\s*\)", code), f"Native formatting must use typed arguments: {path}"
+        assert not re.search(r"\b(?:CchSnprintf|CchNativePrintf|CchSprintf|wsprintfA)\s*\([^;{}]*,\s*\.\.\.\s*\)", code), f"Native formatting must use typed arguments: {path}"
+        assert not re.search(r"\b(?:va_list|va_start|va_copy|va_arg|va_end)\b", code), f"Owned interfaces must use typed argument lists: {path}"
         assert not re.search(r"\b(?:FARPROC|MakeProcInstance|FreeProcInstance)\b", code), f"Use typed callbacks without Win16 instance wrappers: {path}"
         if path.is_relative_to(root / "src") and not path.is_relative_to(root / "src/platform"):
             assert not re.search(r"\bFreeResource\s*\(", code), f"Borrow module bytes; release owned heap copies with their allocator: {path}"

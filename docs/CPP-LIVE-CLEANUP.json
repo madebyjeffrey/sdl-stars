@@ -75,11 +75,11 @@
         "formatter-destination-capacities",
         "catalog-copy-destination-capacities-and-typed-providers",
         "typed-bounded-native-formatting",
-        "typed-native-stream-formatting"
+        "typed-native-stream-formatting",
+        "typed-legacy-width-formatting"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
-        "typed-formatting",
         "catalog-and-player-name-owned-text",
         "const-text-interfaces"
       ],
@@ -154,9 +154,32 @@
           "native_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped reference inputs.",
           "host_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped reference inputs.",
           "windows": "Strict MinGW syntax passes fileio.cpp and both production caller units libraryui.cpp/scaninspect.cpp, plus the changed actual fileio contract test. Expanded standalone formatter reference test builds optimized with -Werror and passes under Wine.",
-          "linux_ci": "Reference test portability correction published as 7b99c40e; run 41285363107 still running at local batch completion. Linux qualification remains pending.",
+          "linux_ci": {
+            "run": 41285570991,
+            "commit": "02a8a721",
+            "status": "success",
+            "jobs": [
+              "host units",
+              "resource ownership ASan/UBSan/LSan",
+              "linked C++20 witnesses"
+            ],
+            "full_platform_jobs": "Skipped by default opt-in policy."
+          },
           "baseline": "Unchanged; no wire layouts, catalog bytes, IDs or canonical models changed.",
           "receipts": "dist/verification/live-cpp/l05e/"
+        },
+        {
+          "batch": "L05f typed legacy-width formatting",
+          "debug_build": "Pass; no new warnings; standalone headers in both orders and first Win32 include inside caller packing. Public header target propagates its formatter dependency.",
+          "desktop": "153/153; existing SDK/service vectors, core formats, packed fields, malformed/missing typed values, native argument/span alignment, LastError, UTF-8 sentinel limits, all ownership/leak checks, linked witnesses and available tutorial.",
+          "host_units": "28/28",
+          "native_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped reference inputs. Final run uses the final packing guard.",
+          "host_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped reference inputs. Final run uses the final packing guard.",
+          "windows": "147/147 strict owned application/wrapper syntax before final packing guard; final native.cpp/services.cpp/nativeformat.cpp and changed type-isolation/encoding/services tests also pass. Final packed type-isolation and startup-driver checks each pass separately. Compilation evidence only.",
+          "native_inventory": "54 translation units, zero compiler errors, 1373 text call sites; refreshed inventory identifies 252 strcpy and 53 strcat sites for the next stage.",
+          "test_driver": "Initial full suite had one 45-second new-game timeout: CheckStartup re-entered the active failed-save research workflow and reset its timer state. Separate test-only guard prevents restarting that workflow. The same full -j6 collection then passed all 153 assertions; no timeout or expectation weakened.",
+          "baseline": "Unchanged; no catalog bytes, IDs, wire layouts or canonical models changed.",
+          "receipts": "dist/verification/live-cpp/l05f/"
         }
       ],
       "bounded_formatting": {
@@ -164,7 +187,7 @@
         "correction": "CchSprintf and owned SDL wsprintfA honor actual destination capacity, preserving the existing 1024-byte ceiling and complete UTF-8 prefixes.",
         "pointer_callers": 26,
         "capacity_sources": "Fixed array extents/tail subspans; production-line and ETA helpers receive caller spans; message scratch uses its actual 0x800-byte arena allocation.",
-        "pending": "strcpy/strcat, remaining legacy-width typed format arguments and borrowed scratch results remain open."
+        "pending": "strcpy/strcat and borrowed scratch results remain open."
       },
       "catalog_destinations": {
         "status": "complete; verified",
@@ -187,13 +210,13 @@
         "lifetimes": "Arguments are taken by value at the public template boundary for packed bitfields, then borrowed by a synchronous typed span. Existing argument evaluation order and scratch getter behavior are unchanged by call syntax.",
         "tests": "CRT reference byte/count/sentinel comparisons at 129 capacities per conversion case after 7b99c40e; signed/unsigned extrema, length modifiers, flags/stars, floats/wide text/pointers, binary NUL, typed count destinations, non-NUL views, packed fields and invalid lists.",
         "fortified_crt": "Typed %n destinations use read-only CRT measuring formats, avoiding writable-format fortification while retaining native count conversion.",
-        "remaining": "CchSprintf/wsprintfA normalizers still need typed argument migration; strcpy/strcat and owned scratch results remain pending.",
+        "remaining": "strcpy/strcat, owned catalog/player-name results and const text interfaces remain pending.",
         "linux_portability": {
           "initial_run": 41285172950,
           "diagnosis": "GNU 13 fortified -Wformat-truncation rejected the reference comparison whose maximum tested capacity 80 was smaller than its 84-byte output. Production formatter compilation passed.",
           "correction": "7b99c40e expands the reference capacity loop to 0..128 and sentinel arrays to 136 bytes, including fitting buffers and retaining every smaller truncation case. No suppression or weakened expectation.",
           "rerun": 41285363107,
-          "status": "running"
+          "status": "Corrected Linux host job passed. Other jobs cancelled when superseded by the stream batch run 41285570991."
         }
       },
       "typed_stream_formatting": {
@@ -202,6 +225,13 @@
         "effects": "Preserves 2048-byte stack buffer, required count, binary NULs and measured second pass for long output. Stream writes start only after successful formatting; second-pass allocation failures stay contained in FileCall.",
         "widths": "Each integer is converted to the format-specified native C width, including 32-bit application values passed to native long conversions.",
         "tests": "Actual temporary streams cover >3KB output, native integer widths, binary NUL, count destinations in both paths, byte counts/readback and invalid argument lists that leave the stream unchanged."
+      },
+      "legacy_typed_formatting": {
+        "status": "complete; verified",
+        "interfaces": "CchSprintf and owned SDL wsprintfA take typed C++ value packs; their concrete field functions receive the same typed value span as the native formatter. No C varargs remain in owned production.",
+        "contracts": "Keep the existing two format normalizers, 32-bit legacy long conversions, 1024-byte output ceiling, destination bounds, complete UTF-8 clipping and written-count/error returns. SDK C comparison declarations remain independent.",
+        "tests": "Actual core helper and SDL service vectors cover 32-bit signed/unsigned extrema, packed bitfields, malformed/missing values, LastError, UTF-8 truncation and sentinel boundaries; existing shared SDK vectors unchanged.",
+        "packing": "Transient format values and their standard-library types use native packing even when the Win32 header is first included in a packed-record scope; independent type-isolation checks verify native argument/span alignment and caller packing restoration. Header consumers inherit the concrete formatter dependency."
       }
     },
     {
@@ -7217,21 +7247,21 @@
       "path": "compat/win32/src/services.cpp",
       "line": 66,
       "code": "va_list args;",
-      "disposition": "pending"
+      "disposition": "typed-legacy-format-value-pack-and-span-L05f"
     },
     {
       "kind": "varargs",
       "path": "compat/win32/src/services.cpp",
       "line": 98,
       "code": "va_start(args, pszFormat);",
-      "disposition": "pending"
+      "disposition": "typed-legacy-format-value-pack-and-span-L05f"
     },
     {
       "kind": "varargs",
       "path": "compat/win32/src/services.cpp",
       "line": 100,
       "code": "va_end(args);",
-      "disposition": "pending"
+      "disposition": "typed-legacy-format-value-pack-and-span-L05f"
     },
     {
       "kind": "c_header",
@@ -13580,21 +13610,21 @@
       "path": "src/platform/native.cpp",
       "line": 97,
       "code": "va_list     args;",
-      "disposition": "pending"
+      "disposition": "typed-legacy-format-value-pack-and-span-L05f"
     },
     {
       "kind": "varargs",
       "path": "src/platform/native.cpp",
       "line": 126,
       "code": "va_start(args, szFormat);",
-      "disposition": "pending"
+      "disposition": "typed-legacy-format-value-pack-and-span-L05f"
     },
     {
       "kind": "varargs",
       "path": "src/platform/native.cpp",
       "line": 128,
       "code": "va_end(args);",
-      "disposition": "pending"
+      "disposition": "typed-legacy-format-value-pack-and-span-L05f"
     },
     {
       "kind": "varargs",

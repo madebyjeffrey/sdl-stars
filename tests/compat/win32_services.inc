@@ -64,6 +64,13 @@ int main(void) {
     CHECK(wsprintfA(std::span{rgch}.subspan(2, 1), "%d", 12345) == 0 && rgch[2] == 0 && rgch[3] == 'b');
     rgch[2] = '!';
     CHECK(wsprintfA(std::span<char>{}, "%d", 12345) == 0 && rgch[2] == '!');
+    struct { signed int c : 5; unsigned int u : 5; } bits = {-3, 29};
+    CHECK(wsprintfA(sz, "%ld %lu", bits.c, bits.u) == 5 && !strcmp(sz, "-3 29"));
+    SetLastError(0x4321);
+    CHECK(wsprintfA(sz, "%f", 1.0) == 0 && sz[0] == 0 && GetLastError() == ERROR_INVALID_PARAMETER);
+    SetLastError(0x4321);
+    errno = 0;
+    CHECK(wsprintfA(sz, "%d") == 0 && sz[0] == 0 && errno == EINVAL && GetLastError() == 0x4321);
 #endif
     CHECK(_stricmp("Fleet", "FLEET") == 0 && _stricmp("a", "b") < 0);
     CHECK(_strnicmp("Fleet one", "FLEET two", 5) == 0);

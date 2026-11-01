@@ -643,7 +643,9 @@
       "path": "src/platform/native.cpp",
       "scope": "CchSprintf",
       "owner": "format owner",
-      "reason": "The private CRT-format adapter already scopes its optional normalized-format buffer. Keep its original malloc choice and null-on-failure delivery; the typed/bounded formatting replacement is L05."
+      "reason": "The typed legacy-format normalizer scopes its optional normalized-format buffer. Preserve its original malloc choice and zero-result/empty-output allocation failure delivery; the C++ public facade remains CchSprintf.",
+      "current_scope": "CchSprintfFields",
+      "migration": "L05f typed format arguments; original scope retained as the L04 source-parent identity."
     },
     {
       "id": "92",
@@ -2449,7 +2451,9 @@
       "code": "std::malloc(cbFmt)",
       "normalized_call": "std::malloc(cbFmt)",
       "compiler_context": true,
-      "contract": "91"
+      "contract": "91",
+      "current_scope": "CchSprintfFields",
+      "migration": "L05f typed format arguments; original scope retained as the L04 source-parent identity."
     },
     {
       "path": "src/platform/native_windows.cpp",
