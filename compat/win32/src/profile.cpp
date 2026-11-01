@@ -40,9 +40,10 @@ static COMPATPROFILE *LpProfileLine(const char *pszRaw) {
     COMPATPROFILE *lp = static_cast<COMPATPROFILE *>(std::calloc(1, sizeof(*lp)));
     char *psz, *pszEnd;
 
+    NATIVEOWNER<COMPATPROFILE, FreeProfile> profileOwner(lp);
     if (!lp) return nullptr;
     lp->szRaw = strdup(pszRaw); lp->szParsed = strdup(pszRaw);
-    if (!lp->szRaw || !lp->szParsed) { FreeProfile(lp); return nullptr; }
+    if (!lp->szRaw || !lp->szParsed) return nullptr;
     psz = PszTrimProfile(lp->szParsed);
     if (*psz == '[' && (pszEnd = std::strchr(psz + 1, ']'))) {
         *pszEnd = 0;
@@ -52,7 +53,7 @@ static COMPATPROFILE *LpProfileLine(const char *pszRaw) {
         lp->pszKey = PszTrimProfile(psz);
         lp->pszValue = PszTrimProfile(pszEnd + 1);
     }
-    return lp;
+    return profileOwner.release();
 }
 
 static BOOL FLoadProfile(const char *pszPath, COMPATPROFILE **lplp) {

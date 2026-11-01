@@ -52,6 +52,7 @@ BOOL win32::CheckRadioButton(HWND hwnd, int idFirst, int idLast, int idCheck) {
     if (!LpCompatWindow(hwnd) || idFirst > idLast) return 0;
     for (lp = win32::GetWindow(hwnd, win32::GW_CHILD); lp; lp = win32::GetWindow(lp, win32::GW_HWNDNEXT)) c++;
     rghwnd = static_cast<HWND *>((std::calloc(c ? static_cast<std::size_t>(c) : 1, sizeof(*rghwnd))));
+    NATIVEARRAYOWNER<HWND, std::free> rghwndOwner(rghwnd);
     if (!rghwnd) return 0;
     for (lp = win32::GetWindow(hwnd, win32::GW_CHILD); lp; lp = win32::GetWindow(lp, win32::GW_HWNDNEXT)) rghwnd[i++] = lp;
     for (i = 0; i < c; i++) {
@@ -60,7 +61,6 @@ BOOL win32::CheckRadioButton(HWND hwnd, int idFirst, int idLast, int idCheck) {
         id = win32::GetDlgCtrlID(lp);
         if (id >= idFirst && id <= idLast) win32::SendMessageA(lp, win32::BM_SETCHECK, id == idCheck, 0);
     }
-    std::free(rghwnd);
     return 1;
 }
 

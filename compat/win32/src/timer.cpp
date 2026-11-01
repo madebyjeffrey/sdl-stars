@@ -39,13 +39,14 @@ UINT_PTR win32::SetTimer(HWND hwnd, UINT_PTR id, UINT cMillis, TIMERPROC lpfn) {
     lp = LpTimer(hwnd, id);
     if (!lp) {
         lp = static_cast<COMPATTIMER *>((std::calloc(1, sizeof(*lp))));
+        NATIVEOWNER<COMPATTIMER, std::free> timerOwner(lp);
         if (!lp) { win32::SetLastError(win32::ERROR_NOT_ENOUGH_MEMORY); return 0; }
         lp->hwnd = hwnd;
         if (!hwnd) {
             do { id = idTimerNext++; } while (id == 0 || LpTimer(nullptr, id));
         }
         lp->id = id;
-        lp->lpNext = lpTimers; lpTimers = lp;
+        lp->lpNext = lpTimers; lpTimers = timerOwner.release();
     }
     lp->cMillis = (((win32::USER_TIMER_MINIMUM) > (StarsMin(cMillis, win32::USER_TIMER_MAXIMUM))) ? (win32::USER_TIMER_MINIMUM) : (StarsMin(cMillis, win32::USER_TIMER_MAXIMUM)));
     lp->msDue = CompatTimeIO().pfnGetTicks() + lp->cMillis;

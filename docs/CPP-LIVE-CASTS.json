@@ -34797,7 +34797,7 @@
     "src/ui/libraryui.cpp:258"
   ],
   "temporary_const_removal_review": {
-    "compat/win32/src/filedialog_cocoa.cpp": "temporary label ownership; migrate in L04",
+    "compat/win32/src/filedialog_cocoa.cpp": "resolved in L04: matched SDL owners hold mutable UTF-8 storage while the bridge borrows const labels; no const removal remains.",
     "compat/win32/src/resource.cpp": "SDK-compatible opaque resource tags and mutable LPVOID result; high-level consumers migrate to const borrowing in L07",
     "src/core/file.cpp": "read-only decoder input; remove redundant const removal in L05",
     "src/core/race.cpp": "read-only decoder input; remove redundant const removal in L05",

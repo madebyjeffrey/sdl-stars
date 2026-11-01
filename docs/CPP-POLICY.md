@@ -16,7 +16,10 @@ headers and `std::` qualification for standard types and functions; actual SDK,
 SDL, POSIX and other foreign headers keep their native declarations. Integer
 null pointer constants are compiler errors. Ordinary state resets use typed
 initialization/fill; the manifest accepts object byte resets only at the
-reasoned sites in `CPP-LIVE-INITIALIZATION.json`. The SDL-free host checks core/platform headers;
+reasoned sites in `CPP-LIVE-INITIALIZATION.json`. Raw CRT/POSIX/SDL heap calls
+require a specific owner and live lifetime contract in `CPP-LIVE-OWNERSHIP.json`;
+new calls do not inherit a directory exception. Native/SDK allocation choice and
+nonthrowing failure delivery remain explicit at these boundaries. The SDL-free host checks core/platform headers;
 the desktop additionally checks UI/wrapper headers. Core uses only a forward UI
 state type and receives the application owner explicitly.
 

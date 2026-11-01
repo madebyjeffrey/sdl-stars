@@ -108,17 +108,18 @@ static LRESULT AddList(HWND hwnd, int i, LPCSTR psz) {
     int cAlloc;
     if (!psz || !FUtf8Valid(psz, std::strlen(psz)) || lp->cItem == INT_MAX) return win32::LB_ERR;
     pszNew = SDL_strdup(psz);
+    NATIVEOWNER<char, SDL_free> pszOwner(pszNew);
     if (!pszNew) return win32::LB_ERRSPACE;
     if (lp->cItem == lp->cAlloc) {
         cAlloc = lp->cAlloc > (INT_MAX - 16) / 2 ? INT_MAX : lp->cAlloc * 2 + 16;
-        if (static_cast<std::size_t>(cAlloc) > SIZE_MAX / sizeof(*rg)) { SDL_free(pszNew); return win32::LB_ERRSPACE; }
+        if (static_cast<std::size_t>(cAlloc) > SIZE_MAX / sizeof(*rg)) return win32::LB_ERRSPACE;
         rg = static_cast<COMPATLISTITEM *>((SDL_realloc(lp->rgitem, static_cast<std::size_t>(cAlloc) * sizeof(*rg))));
-        if (!rg) { SDL_free(pszNew); return win32::LB_ERRSPACE; }
+        if (!rg) return win32::LB_ERRSPACE;
         lp->rgitem = rg; lp->cAlloc = cAlloc;
     }
     if (i < 0 || i > lp->cItem) i = lp->cItem;
     std::memmove(lp->rgitem + i + 1, lp->rgitem + i, static_cast<std::size_t>((lp->cItem - i)) * sizeof(*lp->rgitem));
-    lp->rgitem[i] = COMPATLISTITEM{pszNew, 0, 0}; lp->cItem++; lp->nMutation++;
+    lp->rgitem[i] = COMPATLISTITEM{pszOwner.release(), 0, 0}; lp->cItem++; lp->nMutation++;
     if (lp->iSel >= i) lp->iSel++;
     if (lp->cItem > 1 && lp->iCaret >= i) lp->iCaret++;
     if (lp->iAnchor >= i) lp->iAnchor++;

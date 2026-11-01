@@ -2,6 +2,11 @@
 #include "filedialog_cocoa_bridge.h"
 #include <cstdlib>
 #include <cstring>
+#include <array>
+
+struct COCOAFILTERTEXT {
+    NATIVEOWNER<char, SDL_free> pszName, pszPattern;
+};
 
 static char *PszCocoaLabelUtf8(LPCSTR psz) {
     return FUtf8Valid(psz, std::strlen(psz)) ? SDL_strdup(psz) : nullptr;
@@ -24,13 +29,23 @@ int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFol
     char *pszTitleUtf;
     void *lpWindow = nullptr;
     int i, iResult = -1;
+    NATIVEOWNER<char, SDL_free> titleOwner;
+    NATIVEARRAYOWNER<COCOAFILEFILTER, std::free> rgOwner;
+    std::array<COCOAFILTERTEXT, cCompatFileFiltersMax> rgText;
+    if (cFilter < 0 || cFilter > cCompatFileFiltersMax) return -1;
     pszTitleUtf = PszCocoaLabelUtf8(pszTitle);
+    titleOwner.reset(pszTitleUtf);
     if (!pszTitleUtf) return -1;
     if (cFilter != 0) {
-        rg = static_cast<COCOAFILEFILTER *>((std::calloc(static_cast<std::size_t>(cFilter), sizeof(*rg)))); if (!rg) goto done;
+        rg = static_cast<COCOAFILEFILTER *>((std::calloc(static_cast<std::size_t>(cFilter), sizeof(*rg))));
+        rgOwner.reset(rg);
+        if (!rg) goto done;
+
         for (i = 0; i < cFilter; i++) {
-            rg[i].pszName = PszCocoaLabelUtf8(rgfilter[i].pszName);
-            rg[i].pszPattern = PszCocoaLabelUtf8(rgfilter[i].pszPattern);
+            rgText[i].pszName.reset(PszCocoaLabelUtf8(rgfilter[i].pszName));
+            rgText[i].pszPattern.reset(PszCocoaLabelUtf8(rgfilter[i].pszPattern));
+            rg[i].pszName = rgText[i].pszName.get();
+            rg[i].pszPattern = rgText[i].pszPattern.get();
             if (!rg[i].pszName || !rg[i].pszPattern) goto done;
         }
     }
@@ -39,6 +54,5 @@ int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFol
     iResult = IChooseCocoaFile(lpWindow, fSave, pszTitleUtf, pszFolder, pszName, rg, cFilter,
                              lpiFilter, pszPath, cbPath, FPumpCocoaChooser, hwndOwner);
 done:
-    if (rg) for (i = 0; i < cFilter; i++) { SDL_free(const_cast<void *>(reinterpret_cast<const void*>(rg[i].pszName))); SDL_free(const_cast<void *>(reinterpret_cast<const void*>(rg[i].pszPattern))); }
-    std::free(rg); SDL_free(pszTitleUtf); return iResult;
+    return iResult;
 }

@@ -100,6 +100,7 @@ static void ReplaceEdit(HWND hwnd, LPCSTR psz, BOOL fUser, BOOL fUndo, UINT iUnd
     UINT ichFirst = StarsMin(hwnd->ichAnchor, hwnd->ichCaret), ichLast = StarsMax(hwnd->ichAnchor, hwnd->ichCaret);
     std::size_t cchOld = CchEdit(hwnd), cch = std::strlen(psz), cchBase = cchOld - (ichLast - ichFirst), i;
     char *pszNew, *pszUndo = nullptr;
+    NATIVEOWNER<char, SDL_free> newOwner, undoOwner;
     BOOL fLimit, fGroup;
     fGroup = iUndoAction != editUndoSeparate && hwnd->pszEditUndo &&
              iUndoAction == hwnd->iEditUndoAction &&
@@ -134,10 +135,12 @@ static void ReplaceEdit(HWND hwnd, LPCSTR psz, BOOL fUser, BOOL fUndo, UINT iUnd
     }
     if (cchBase > INT_MAX || cch > INT_MAX - cchBase) return;
     pszNew = static_cast<char *>((SDL_malloc(cchBase + cch + 1)));
+    newOwner.reset(pszNew);
     if (!pszNew) { NotifyEdit(hwnd, win32::EN_ERRSPACE); return; }
     if (fUndo && !fGroup && !(pszUndo = SDL_strdup(hwnd->pszTitle))) {
-        SDL_free(pszNew); NotifyEdit(hwnd, win32::EN_ERRSPACE); return;
+        newOwner.reset(); NotifyEdit(hwnd, win32::EN_ERRSPACE); return;
     }
+    undoOwner.reset(pszUndo);
     std::memcpy(pszNew, hwnd->pszTitle, ichFirst);
     std::memcpy(pszNew + ichFirst, psz, cch);
     std::memcpy(pszNew + ichFirst + cch, hwnd->pszTitle + ichLast, cchOld - ichLast + 1);
@@ -146,7 +149,7 @@ static void ReplaceEdit(HWND hwnd, LPCSTR psz, BOOL fUser, BOOL fUndo, UINT iUnd
         else if (hwnd->dwStyle & win32::ES_LOWERCASE) pszNew[i] = static_cast<char>(ChEditCase(static_cast<BYTE>(pszNew[i]), 0));
     }
     if (!fGroup) {
-        EmptyEditUndo(hwnd); hwnd->pszEditUndo = pszUndo;
+        EmptyEditUndo(hwnd); hwnd->pszEditUndo = undoOwner.release();
         hwnd->ichUndoPosition = ichFirst;
         hwnd->cchUndoBefore = ichLast - ichFirst; hwnd->cchUndoAfter = static_cast<UINT>(cch);
     } else {
@@ -157,7 +160,7 @@ static void ReplaceEdit(HWND hwnd, LPCSTR psz, BOOL fUser, BOOL fUndo, UINT iUnd
     hwnd->iEditUndoAction = iUndoAction;
     hwnd->ichTypingEnd = ichFirst + static_cast<UINT>(cch);
     hwnd->fEditManualScroll = 0;
-    SDL_free(hwnd->pszTitle); hwnd->pszTitle = pszNew;
+    SDL_free(hwnd->pszTitle); hwnd->pszTitle = newOwner.release();
     hwnd->ichAnchor = hwnd->ichCaret = ichFirst + static_cast<UINT>(cch);
     hwnd->fModified = 1;
     if (fLimit) NotifyEdit(hwnd, win32::EN_MAXTEXT);
@@ -198,10 +201,10 @@ static BOOL CopyEdit(HWND hwnd) {
     std::size_t cch = ichLast - ichFirst;
     if (ichFirst == ichLast || (hwnd->dwStyle & win32::ES_PASSWORD)) return 0;
     psz = static_cast<char *>((SDL_malloc(cch + 1)));
+    NATIVEOWNER<char, SDL_free> pszOwner(psz);
     if (!psz) return 0;
     std::memcpy(psz, hwnd->pszTitle + ichFirst, cch); psz[cch] = 0;
     fOk = SDL_SetClipboardText(psz);
-    SDL_free(psz);
     return fOk;
 }
 
@@ -209,15 +212,15 @@ static void PasteEdit(HWND hwnd) {
     char *pszUtf, *pch;
     if (hwnd->dwStyle & win32::ES_READONLY) return;
     pszUtf = SDL_GetClipboardText();
+    NATIVEOWNER<char, SDL_free> textOwner(pszUtf);
     if (!pszUtf) return;
     if (!FUtf8Valid(pszUtf, std::strlen(pszUtf))) {
         hwnd->fEditInputRejected = 1;
-        SDL_free(pszUtf); return;
+        return;
     }
     pch = std::strpbrk(pszUtf, "\r\n");
     if (pch && !(hwnd->dwStyle & win32::ES_MULTILINE)) *pch = 0;
     ReplaceEdit(hwnd, pszUtf, 1, 1, editUndoSeparate);
-    SDL_free(pszUtf);
 }
 
 static void EditFormat(HWND hwnd, RECT *lprc) {
@@ -392,6 +395,7 @@ static void PaintEdit(HWND hwnd) {
     BOOL fPassword = (hwnd->dwStyle & win32::ES_PASSWORD) != 0, fFocus = win32::GetFocus() == hwnd;
     COLORREF crText, crBk;
     char *pszDisplay;
+    NATIVEOWNER<char, SDL_free> displayOwner;
     if (!hdc) return;
     win32::GetClientRect(hwnd, &rc);
     win32::SetTextColor(hdc, win32::GetSysColor(win32::IsWindowEnabled(hwnd) ? win32::COLOR_WINDOWTEXT : win32::COLOR_GRAYTEXT));
@@ -409,6 +413,7 @@ static void PaintEdit(HWND hwnd) {
     y = yCaret = format.top;
     win32::GetTextMetricsA(hdc, &tm); cy = StarsMax(1, tm.tmHeight);
     cch = CchEdit(hwnd); pszDisplay = SDL_strdup(hwnd->pszTitle);
+    displayOwner.reset(pszDisplay);
     if (!pszDisplay) goto done;
     if (fPassword) for (i = 0; i < cch; i++) if (pszDisplay[i] != '\r' && pszDisplay[i] != '\n') pszDisplay[i] = '*';
     ichFirst = StarsMin(hwnd->ichAnchor, hwnd->ichCaret); ichLast = StarsMax(hwnd->ichAnchor, hwnd->ichCaret);
@@ -428,7 +433,7 @@ static void PaintEdit(HWND hwnd) {
     if ((hwnd->dwStyle & win32::ES_MULTILINE) && (hwnd->dwStyle & (win32::ES_AUTOHSCROLL | win32::WS_HSCROLL))) cxShift = hwnd->xEditScroll;
     hwnd->xEditScroll = cxShift;
     SyncEditScroll(hwnd);
-    if (!win32::IsWindow(hwnd)) { SDL_free(pszDisplay); return; }
+    if (!win32::IsWindow(hwnd)) return;
     for (ich = 0; ich <= cch; ich = ichNext) {
         ichEnd = hwnd->dwStyle & win32::ES_MULTILINE ? IchLineEnd(hwnd, ich) : cch;
         ichNext = ichEnd;
@@ -456,6 +461,7 @@ static void PaintEdit(HWND hwnd) {
     if (fFocus && hwnd->pszEditComposition && *hwnd->pszEditComposition) {
         UINT cchComp = static_cast<UINT>(std::strlen(hwnd->pszEditComposition));
         char *pszComp = SDL_strdup(hwnd->pszEditComposition);
+        NATIVEOWNER<char, SDL_free> compositionOwner(pszComp);
         if (pszComp) {
             if (fPassword) std::fill_n(pszComp, cchComp, '*');
             cx = CxEdit(hdc, pszComp, cchComp, 0);
@@ -463,14 +469,13 @@ static void PaintEdit(HWND hwnd) {
             hbr = win32::CreateSolidBrush(crBk); win32::FillRect(hdc, &rcSel, hbr); win32::DeleteObject(hbr);
             win32::TextOutA(hdc, cxCaret, yCaret, pszComp, static_cast<int>(cchComp));
             win32::MoveToEx(hdc, cxCaret, yCaret + cy - 1, nullptr); win32::LineTo(hdc, cxCaret + cx, yCaret + cy - 1);
-            SDL_free(pszComp);
         }
     } else if (fFocus && hwnd->fEditCaret && ichFirst == ichLast) {
         HPEN hpenOld = static_cast<HPEN>(win32::SelectObject(hdc, win32::GetStockObject(win32::BLACK_PEN)));
         win32::MoveToEx(hdc, cxCaret, yCaret, nullptr); win32::LineTo(hdc, cxCaret, yCaret + cy);
         win32::SelectObject(hdc, hpenOld);
     }
-    SDL_free(pszDisplay);
+    displayOwner.reset();
 done:
     if (hfontOld) win32::SelectObject(hdc, hfontOld);
     if (hbrOwn) win32::DeleteObject(hbrOwn);

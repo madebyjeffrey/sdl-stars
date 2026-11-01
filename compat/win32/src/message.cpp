@@ -502,16 +502,17 @@ LRESULT win32::DefWindowProcA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case win32::WM_CLOSE:
         win32::DestroyWindow(hwnd);
         return 0;
-    case win32::WM_SETTEXT:
+    case win32::WM_SETTEXT: {
         if (!lParam || !FUtf8Valid(reinterpret_cast<const char *>(lParam), std::strlen(reinterpret_cast<const char *>(lParam))) ||
             !(pszNew = SDL_strdup(reinterpret_cast<const char *>(lParam)))) return 0;
+        NATIVEOWNER<char, SDL_free> pszOwner(pszNew);
         if (lpwin->lpWindow.get() && !FCompatNativeTitle(lpwin->lpWindow.get(), pszNew)) {
-            SDL_free(pszNew);
             return 0;
         }
         SDL_free(lpwin->pszTitle);
-        lpwin->pszTitle = pszNew;
+        lpwin->pszTitle = pszOwner.release();
         return 1;
+    }
     case win32::WM_GETTEXT:
         if (!lParam || wParam == 0)
             return 0;

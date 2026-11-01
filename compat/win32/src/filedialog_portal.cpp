@@ -61,7 +61,8 @@ static BOOL FFilter(DBusMessageIter *lpIter, const COMPATFILEFILTER *lpFilter) {
     BOOL fOk = 0;
     pszLabel = PszPortalLabel(lpFilter->pszName);
     pszPatternUtf = PszPortalLabel(lpFilter->pszPattern);
-    if (!pszLabel || !pszPatternUtf) { SDL_free(pszLabel); SDL_free(pszPatternUtf); return 0; }
+    NATIVEOWNER<char, SDL_free> labelOwner(pszLabel), patternOwner(pszPatternUtf);
+    if (!pszLabel || !pszPatternUtf) return 0;
     if (!dbus_message_iter_open_container(lpIter, DBUS_TYPE_STRUCT, nullptr, &filter) ||
         !dbus_message_iter_append_basic(&filter, DBUS_TYPE_STRING, &pszLabel) ||
         !dbus_message_iter_open_container(&filter, DBUS_TYPE_ARRAY, "(us)", &patterns)) goto done;
@@ -86,7 +87,7 @@ static BOOL FFilter(DBusMessageIter *lpIter, const COMPATFILEFILTER *lpFilter) {
     }
     fOk = dbus_message_iter_close_container(&filter, &patterns) && dbus_message_iter_close_container(lpIter, &filter);
 done:
-    SDL_free(pszLabel); SDL_free(pszPatternUtf); return fOk;
+    return fOk;
 }
 static BOOL FFilterOptions(DBusMessageIter *lpOptions, const COMPATFILEFILTER *rgfilter, int cFilter, int iFilter) {
     DBusMessageIter entry, value, filters;
@@ -165,9 +166,10 @@ static int IResponse(DBusMessage *lpMessage, const COMPATFILEFILTER *rgfilter, i
             if (dbus_message_iter_get_arg_type(&filter) != DBUS_TYPE_STRING) return -1;
             dbus_message_iter_get_basic(&filter, &pszName);
             for (i = 0; i < cFilter; i++) {
-                pszLabel = PszPortalLabel(rgfilter[i].pszName); if (!pszLabel) return -1;
-                if (std::strcmp(pszName, pszLabel) == 0) { *lpiFilter = i; SDL_free(pszLabel); break; }
-                SDL_free(pszLabel);
+                pszLabel = PszPortalLabel(rgfilter[i].pszName);
+                NATIVEOWNER<char, SDL_free> labelOwner(pszLabel);
+                if (!pszLabel) return -1;
+                if (std::strcmp(pszName, pszLabel) == 0) { *lpiFilter = i; break; }
             }
         }
         dbus_message_iter_next(&results);
@@ -196,6 +198,7 @@ int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFol
     const char *pszParent, *pszHandle = nullptr;
     char szParent[64] = "", szToken[64], szRequest[512], szSender[256];
     NATIVEFILE *lpRandom;
+    NATIVEOWNER<NATIVEFILE, ICloseNativeFile> randomOwner;
     unsigned char rgbToken[16];
     const char *pszUnique;
     char *pszTitleUtf = nullptr, *pszRequest = nullptr, *pszSender = nullptr, *pszWaylandParent = nullptr;
@@ -209,6 +212,22 @@ int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFol
     Sint64 xid;
 
     dbus_error_init(&error);
+    NATIVECLEANUPSCOPE portalOwner([&]() noexcept {
+        if (lpBus && pszRequest && iResult != 1) {
+            lpClose = dbus_message_new_method_call(PORTAL_SERVICE, pszRequest, PORTAL_REQUEST, "Close");
+            if (lpClose) { dbus_message_set_no_reply(lpClose, 1); dbus_connection_send(lpBus, lpClose, nullptr); dbus_message_unref(lpClose); }
+        }
+        if (dbus_error_is_set(&error)) SDL_SetError("File chooser portal: %s", error.message);
+        else if (iResult < 0) SDL_SetError("File chooser portal failed or returned an invalid result");
+        dbus_error_free(&error);
+        if (lpPending) { dbus_pending_call_cancel(lpPending); dbus_pending_call_unref(lpPending); }
+        if (lpReply) dbus_message_unref(lpReply);
+        if (lpCall) dbus_message_unref(lpCall);
+        for (i = 0; i < responses.cMessage; i++) if (responses.rgMessage[i]) dbus_message_unref(responses.rgMessage[i]);
+        if (fFilter) dbus_connection_remove_filter(lpBus, SavePortalResponse, &responses);
+        if (lpBus) { dbus_connection_flush(lpBus); dbus_connection_close(lpBus); dbus_connection_unref(lpBus); }
+        SDL_free(pszTitleUtf); SDL_free(pszWaylandParent); std::free(pszRequest); std::free(pszSender);
+    });
     lpBus = dbus_bus_get_private(DBUS_BUS_SESSION, &error);
     if (!lpBus) goto done;
     dbus_connection_set_exit_on_disconnect(lpBus, 0);
@@ -234,9 +253,10 @@ int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFol
     }
     pszParent = pszWaylandParent ? pszWaylandParent : szParent;
     lpRandom = PfNativeOpen("/dev/urandom", "rb");
+    randomOwner.reset(lpRandom);
     if (!lpRandom) goto done;
-    if (CReadNative(rgbToken, 1, sizeof(rgbToken), lpRandom) != sizeof(rgbToken)) { ICloseNativeFile(lpRandom); goto done; }
-    ICloseNativeFile(lpRandom);
+    if (CReadNative(rgbToken, 1, sizeof(rgbToken), lpRandom) != sizeof(rgbToken)) { randomOwner.reset(); goto done; }
+    randomOwner.reset();
     std::strcpy(szToken, "stars_");
     for (i = 0; i < 16; i++) std::snprintf(szToken + 6 + i * 2, 3, "%02x", rgbToken[i]);
     pszUnique = dbus_bus_get_unique_name(lpBus);
@@ -291,19 +311,5 @@ int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFol
         }
     }
 done:
-    if (lpBus && pszRequest && iResult != 1) {
-        lpClose = dbus_message_new_method_call(PORTAL_SERVICE, pszRequest, PORTAL_REQUEST, "Close");
-        if (lpClose) { dbus_message_set_no_reply(lpClose, 1); dbus_connection_send(lpBus, lpClose, nullptr); dbus_message_unref(lpClose); }
-    }
-    if (dbus_error_is_set(&error)) SDL_SetError("File chooser portal: %s", error.message);
-    else if (iResult < 0) SDL_SetError("File chooser portal failed or returned an invalid result");
-    dbus_error_free(&error);
-    if (lpPending) { dbus_pending_call_cancel(lpPending); dbus_pending_call_unref(lpPending); }
-    if (lpReply) dbus_message_unref(lpReply);
-    if (lpCall) dbus_message_unref(lpCall);
-    for (i = 0; i < responses.cMessage; i++) if (responses.rgMessage[i]) dbus_message_unref(responses.rgMessage[i]);
-    if (fFilter) dbus_connection_remove_filter(lpBus, SavePortalResponse, &responses);
-    if (lpBus) { dbus_connection_flush(lpBus); dbus_connection_close(lpBus); dbus_connection_unref(lpBus); }
-    SDL_free(pszTitleUtf); SDL_free(pszWaylandParent); std::free(pszRequest); std::free(pszSender);
     return iResult;
 }

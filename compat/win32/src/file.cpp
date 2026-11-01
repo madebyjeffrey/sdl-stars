@@ -56,6 +56,8 @@ HFILE win32::OpenFile(LPCSTR pszFile, LPOFSTRUCT lpof, UINT flags) {
     DWORD dwError = win32::NO_ERROR;
     std::uint64_t dev, ino;
     std::unique_lock lockFiles(fFileLock, std::defer_lock);
+    NATIVEOWNER<COMPATFILE, std::free> fileOwner;
+    NATIVEOWNER<NATIVEFILE, ICloseNativeFile> nativeFileOwner;
 
     if (!lpof) { win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return win32::HFILE_ERROR; }
     if (flags & win32::OF_REOPEN) pszFile = lpof->szPathName;
@@ -101,6 +103,7 @@ HFILE win32::OpenFile(LPCSTR pszFile, LPOFSTRUCT lpof, UINT flags) {
     }
     // Check sharing before truncating an existing file.
     pf = PfNativeOpenFlags(szPath, grAccess, 0, (flags & win32::OF_CREATE) != 0, 0, 0, 1);
+    nativeFileOwner.reset(pf);
     if (!pf || IGetNativeOpenInfo(pf, &st) != 0) { dwError = DwFileError(); goto LUnlock; }
     if (!st.fRegular) { dwError = win32::ERROR_ACCESS_DENIED; goto LUnlock; }
     if (!FNativeFileIdentity(pf, nullptr, &dev, &ino)) { dwError = win32::ERROR_ACCESS_DENIED; goto LUnlock; }
@@ -112,15 +115,16 @@ HFILE win32::OpenFile(LPCSTR pszFile, LPOFSTRUCT lpof, UINT flags) {
     if ((flags & win32::OF_CREATE) && ITruncateNativeFile(pf, 0) != 0) { dwError = DwFileError(); goto LUnlock; }
     if (flags & win32::OF_EXIST) { hf = 1; goto LUnlock; }
     lpNew = static_cast<COMPATFILE *>((std::calloc(1, sizeof(*lpNew))));
+    fileOwner.reset(lpNew);
     if (!lpNew) { dwError = win32::ERROR_NOT_ENOUGH_MEMORY; goto LUnlock; }
     for (hf = 3; hf <= INT16_MAX && LpFile(hf); hf++) {}
     if (hf > INT16_MAX) { hf = win32::HFILE_ERROR; dwError = win32::ERROR_TOO_MANY_OPEN_FILES; goto LUnlock; }
-    lpNew->hf = hf; lpNew->pf = pf; lpNew->dev = dev; lpNew->ino = ino;
+    lpNew->hf = hf; lpNew->pf = nativeFileOwner.release(); lpNew->dev = dev; lpNew->ino = ino;
     lpNew->grAccess = grAccess; lpNew->grShare = grShare;
-    lpNew->lpNext = lpFiles; lpFiles = lpNew; lpNew = nullptr; pf = nullptr;
+    lpNew->lpNext = lpFiles; lpFiles = fileOwner.release(); lpNew = nullptr; pf = nullptr;
 LUnlock:
-    if (pf) ICloseNativeFile(pf);
-    std::free(lpNew);
+    nativeFileOwner.reset();
+    fileOwner.reset();
     lockFiles.unlock();
 LReturn:
     lpof->nErrCode = static_cast<WORD>(dwError);

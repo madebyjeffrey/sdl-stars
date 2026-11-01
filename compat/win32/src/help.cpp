@@ -56,15 +56,20 @@ static char *PszHelpDocument(const char *pszDirectory, const char *pszPage) {
     std::size_t cbPrefix, cbRead;
     int cch;
     BOOL fOk;
+    NATIVEOWNER<char, std::free> bodyOwner;
+    NATIVEOWNER<char, SDL_free> baseOwner;
+    NATIVEOWNER<NATIVEFILE, ICloseNativeFile> sourceOwner, targetOwner;
 
     cch = std::snprintf(szSource, sizeof(szSource), "%s/offline.html", pszDirectory);
     if (cch < 0 || static_cast<std::size_t>(cch) >= sizeof(szSource)) goto fail;
     lpSource = PfNativeOpen(szSource, "rb");
+    sourceOwner.reset(lpSource);
     pszBody = static_cast<char *>((std::malloc(static_cast<std::size_t>(STARS_HELP_BUNDLE_SIZE) + 1)));
+    bodyOwner.reset(pszBody);
     if (!lpSource || !pszBody) goto fail;
     cbRead = CReadNative(pszBody, 1, STARS_HELP_BUNDLE_SIZE, lpSource);
     fOk = cbRead == STARS_HELP_BUNDLE_SIZE && !FNativeStreamError(lpSource) && ChGetNativeFile(lpSource) == EOF;
-    ICloseNativeFile(lpSource); lpSource = nullptr;
+    sourceOwner.reset(); lpSource = nullptr;
     if (!fOk || static_cast<std::uint32_t>(crc32(0, reinterpret_cast<const BYTE *>(pszBody), static_cast<uInt>(cbRead))) != STARS_HELP_BUNDLE_CRC) {
         win32::SetLastError(win32::ERROR_BAD_FORMAT); goto done;
     }
@@ -76,20 +81,22 @@ static char *PszHelpDocument(const char *pszDirectory, const char *pszPage) {
     // Put the requested context inside the exported file: OpenFile portals
     // receive a descriptor and cannot carry a browser URL fragment with it.
     pszBase = CompatPathIO().pfnGetPrefPath("stars", "help");
+    baseOwner.reset(pszBase);
     if (!pszBase) goto fail;
     cch = std::snprintf(szTarget, sizeof(szTarget), "%sguide-%08x-%s", pszBase, STARS_HELP_BUNDLE_CRC, pszPage);
-    SDL_free(pszBase);
+    baseOwner.reset();
     if (cch < 0 || static_cast<std::size_t>(cch) >= sizeof(szTarget)) goto fail;
     cch = std::snprintf(szTemp, sizeof(szTemp), "%s.tmp-XXXXXX", szTarget);
     if (cch < 0 || static_cast<std::size_t>(cch) >= sizeof(szTemp)) goto fail;
     lpTarget = PfNativeCreateTemp(szTemp);
+    targetOwner.reset(lpTarget);
     if (!lpTarget) goto fail;
     cbPrefix = static_cast<std::size_t>((pszMarker - pszBody));
     fOk = CWriteNative(pszBody, 1, cbPrefix, lpTarget) == cbPrefix &&
           IPutNativeString(pszPage, lpTarget) >= 0 &&
           CWriteNative(pszMarker + sizeof(szMarker) - 1, 1, cbRead - cbPrefix - sizeof(szMarker) + 1, lpTarget) == cbRead - cbPrefix - sizeof(szMarker) + 1;
     if (IFlushNativeFile(lpTarget) || ISyncNativeFile(lpTarget)) fOk = 0;
-    if (ICloseNativeFile(lpTarget)) fOk = 0;
+    if (ICloseNativeFile(targetOwner.release())) fOk = 0;
     lpTarget = nullptr;
     if (!fOk || IRenameNativePath(szTemp, szTarget, 1, 1)) { IUnlinkNativePath(szTemp); goto fail; }
     pszResult = strdup(szTarget);
@@ -98,8 +105,6 @@ static char *PszHelpDocument(const char *pszDirectory, const char *pszPage) {
 fail:
     win32::SetLastError(win32::ERROR_ACCESS_DENIED);
 done:
-    if (lpSource) ICloseNativeFile(lpSource);
-    std::free(pszBody);
     return pszResult;
 }
 
@@ -164,15 +169,14 @@ BOOL win32::WinHelpA(HWND hWndMain, LPCSTR pszHelp, UINT uCommand, ULONG_PTR dwD
             return 0;
         }
     }
-    if (!FHelpAssets(pszDirectory)) {
-        std::free(pszDirectory);
-        return 0;
-    }
+    NATIVEOWNER<char, std::free> directoryOwner(pszDirectory);
+    if (!FHelpAssets(pszDirectory)) return 0;
     pszDocument = PszHelpDocument(pszDirectory, pszPage);
-    std::free(pszDirectory);
+    NATIVEOWNER<char, std::free> documentOwner(pszDocument);
+    directoryOwner.reset();
     if (!pszDocument) return 0;
     fLaunched = FCompatOpenDocument(pszDocument);
-    std::free(pszDocument);
+    documentOwner.reset();
     win32::SetLastError(fLaunched ? win32::NO_ERROR : win32::ERROR_GEN_FAILURE);
     return fLaunched;
 }

@@ -1,5 +1,6 @@
 /* Narrow common-control toolbar contracts used by the native Stars UI. */
 #include "internal.h"
+#include "cleanup.h"
 #include <commctrl.h>
 #include <cstdlib>
 #include <cstring>
@@ -79,8 +80,13 @@ static int HitToolbar(COMPATTOOLBAR *lp, POINT pt) {
 static BOOL AddButtons(HWND hwnd, int iInsert, std::size_t c, const TBBUTTON *rgbtn) {
     auto lptoolbarKeep = hwnd->lptoolbar;
     COMPATTOOLBAR *lp = lptoolbarKeep.get();
-    COMPATTOOLBUTTON *rgNew;
+    COMPATTOOLBUTTON *rgNew = nullptr;
     std::size_t i;
+    NATIVECLEANUPSCOPE buttonsOwner([&]() noexcept {
+        if (!rgNew) return;
+        for (i = 0; i < c; i++) SDL_free(rgNew[iInsert + i].psz);
+        std::free(rgNew);
+    });
     if (!rgbtn || iInsert < 0 || iInsert > lp->c || c > 4096 || c + lp->c > 4096 ||
         lp->cbButton != sizeof(TBBUTTON)) return 0;
     rgNew = static_cast<COMPATTOOLBUTTON *>((std::calloc(c + static_cast<std::size_t>(lp->c) + 1, sizeof(*rgNew))));
@@ -94,13 +100,10 @@ static BOOL AddButtons(HWND hwnd, int iInsert, std::size_t c, const TBBUTTON *rg
             rgNew[iInsert + i].btn.iString = reinterpret_cast<INT_PTR>(rgNew[iInsert + i].psz);
         } else if (rgbtn[i].iString > 0) break;
     }
-    if (i != c) {
-        for (i = 0; i < c; i++) SDL_free(rgNew[iInsert + i].psz);
-        std::free(rgNew); return 0;
-    }
+    if (i != c) return 0;
     if (iInsert != 0) std::memcpy(rgNew, lp->rgbtn, static_cast<std::size_t>(iInsert) * sizeof(*rgNew));
     if (lp->c != iInsert) std::memcpy(rgNew + iInsert + c, lp->rgbtn + iInsert, static_cast<std::size_t>((lp->c - iInsert)) * sizeof(*rgNew));
-    std::free(lp->rgbtn); lp->rgbtn = rgNew; lp->c += static_cast<int>(c);
+    std::free(lp->rgbtn); lp->rgbtn = rgNew; rgNew = nullptr; lp->c += static_cast<int>(c);
     lp->iDown = lp->iHot = -1;
     HideTip(hwnd); LayoutToolbar(hwnd);
     return 1;
@@ -117,27 +120,32 @@ static int AddBitmap(HWND hwnd, int c, const TBADDBITMAP *lpadd) {
     BOOL fCopy;
     if (!lpadd || c <= 0 || c > 4096 || c > 4096 - lp->cImage) return -1;
     hbmp = lpadd->hInst ? win32::LoadBitmapA(lpadd->hInst, reinterpret_cast<LPCSTR>(lpadd->nID)) : reinterpret_cast<HBITMAP>(lpadd->nID);
+    COMPATCLEANUPSCOPE sourceBitmapOwner([&] { if (lpadd->hInst && hbmp) win32::DeleteObject(hbmp); });
     if (!hbmp || !win32::GetObjectA(hbmp, sizeof(bm), &bm) || bm.bmHeight < lp->cyBitmap ||
         bm.bmWidth / lp->cxBitmap < c) {
-        if (lpadd->hInst && hbmp) win32::DeleteObject(hbmp);
         return -1;
     }
-    hsrc = win32::CreateCompatibleDC(nullptr); hdst = win32::CreateCompatibleDC(nullptr);
+    hsrc = win32::CreateCompatibleDC(nullptr);
+    COMPATCLEANUPSCOPE sourceDcOwner([&] { if (hsrc) win32::DeleteDC(hsrc); });
+    hdst = win32::CreateCompatibleDC(nullptr);
+    COMPATCLEANUPSCOPE targetDcOwner([&] { if (hdst) win32::DeleteDC(hdst); });
     hOldSrc = static_cast<HBITMAP>(win32::SelectObject(hsrc, hbmp));
+    COMPATCLEANUPSCOPE sourceSelection([&] { if (hOldSrc) win32::SelectObject(hsrc, hOldSrc); });
     // A fresh memory DC contains a monochrome bitmap. Match the selected
     // source instead, or the copied toolbar icons lose all their colors.
     hcopy = win32::CreateCompatibleBitmap(hsrc, bm.bmWidth, bm.bmHeight);
+    COMPATCLEANUPSCOPE copyOwner([&] { if (hcopy) win32::DeleteObject(hcopy); });
     hOldDst = static_cast<HBITMAP>(win32::SelectObject(hdst, hcopy));
+    COMPATCLEANUPSCOPE targetSelection([&] { if (hOldDst) win32::SelectObject(hdst, hOldDst); });
     fCopy = hsrc && hdst && hcopy && win32::BitBlt(hdst, 0, 0, bm.bmWidth, bm.bmHeight, hsrc, 0, 0, win32::SRCCOPY);
-    if (hOldSrc) win32::SelectObject(hsrc, hOldSrc);
-    if (hOldDst) win32::SelectObject(hdst, hOldDst);
-    win32::DeleteDC(hsrc); win32::DeleteDC(hdst);
-    if (lpadd->hInst) win32::DeleteObject(hbmp);
-    if (!fCopy) { if (hcopy) win32::DeleteObject(hcopy); return -1; }
+    sourceSelection.Close(); targetSelection.Close();
+    sourceDcOwner.Close(); targetDcOwner.Close(); sourceBitmapOwner.Close();
+    if (!fCopy) return -1;
     rgbmp = static_cast<COMPATTOOLBITMAP *>((std::realloc(lp->rgbmp, static_cast<std::size_t>((lp->cbmp + 1)) * sizeof(*rgbmp))));
-    if (!rgbmp) { win32::DeleteObject(hcopy); return -1; }
+    if (!rgbmp) return -1;
     lp->rgbmp = rgbmp; iFirst = lp->cImage;
     lp->rgbmp[lp->cbmp++] = COMPATTOOLBITMAP{hcopy, iFirst, c}; lp->cImage += c;
+    copyOwner.Release();
     win32::InvalidateRect(hwnd, nullptr, 1);
     return iFirst;
 }

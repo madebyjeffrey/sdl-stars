@@ -23,11 +23,14 @@ HACCEL win32::CreateAcceleratorTableA(LPACCEL rgaccel, int c) {
     HACCEL lp;
     if (!SDL_IsMainThread() || !rgaccel || c <= 0 || static_cast<std::size_t>(c) > SIZE_MAX / sizeof(ACCEL)) return nullptr;
     lp = static_cast<HACCEL>((std::calloc(1, sizeof(*lp))));
+    NATIVEOWNER<win32::HACCEL__, std::free> lpOwner(lp);
     if (!lp) return nullptr;
     lp->rg = static_cast<ACCEL *>((std::malloc(static_cast<std::size_t>(c) * sizeof(ACCEL))));
-    if (!lp->rg) { std::free(lp); return nullptr; }
+    NATIVEARRAYOWNER<ACCEL, std::free> rgOwner(lp->rg);
+    if (!lp->rg) return nullptr;
     std::memcpy(lp->rg, rgaccel, static_cast<std::size_t>(c) * sizeof(ACCEL));
-    lp->c = c; lp->fAlive = 1; lp->hnext = haccels; haccels = lp;
+    lp->c = c; lp->fAlive = 1; lp->hnext = haccels; haccels = lpOwner.release();
+    rgOwner.release();
     return lp;
 }
 int win32::CopyAcceleratorTableA(HACCEL haccel, LPACCEL rgaccel, int c) {
@@ -59,16 +62,16 @@ HACCEL win32::LoadAcceleratorsA(HINSTANCE hInstance, LPCSTR pszName) {
     for (lp = haccels; lp; lp = lp->hnext) if (lp->hrsrc == hrsrc) return lp;
     c = static_cast<int>((cb / 8));
     rg = static_cast<ACCEL *>((std::calloc(static_cast<std::size_t>(c), sizeof(*rg))));
+    NATIVEARRAYOWNER<ACCEL, std::free> rgOwner(rg);
     if (!rg) return nullptr;
     for (i = 0; i < c; i++) {
         flags = static_cast<WORD>((rgb[i * 8] | (rgb[i * 8 + 1] << 8)));
-        if ((flags & ~0x9f) || ((flags & 0x80) != (i == c - 1 ? 0x80 : 0))) { std::free(rg); return nullptr; }
+        if ((flags & ~0x9f) || ((flags & 0x80) != (i == c - 1 ? 0x80 : 0))) return nullptr;
         rg[i].fVirt = static_cast<BYTE>((flags & ~0x80));
         rg[i].key = static_cast<WORD>((rgb[i * 8 + 2] | (rgb[i * 8 + 3] << 8)));
         rg[i].cmd = static_cast<WORD>((rgb[i * 8 + 4] | (rgb[i * 8 + 5] << 8)));
     }
     lp = win32::CreateAcceleratorTableA(rg, c);
-    std::free(rg);
     if (lp) lp->hrsrc = hrsrc;
     return lp;
 }

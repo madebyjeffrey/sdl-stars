@@ -20,11 +20,13 @@ int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFol
                      LPCSTR pszName, const COMPATFILEFILTER *rgfilter, int cFilter,
                      int *lpiFilter, char *pszPath, std::size_t cbPath) {
     WINDOWSFILEFILTER *rg = nullptr;
+    NATIVEARRAYOWNER<WINDOWSFILEFILTER, std::free> rgOwner;
     void *lpWindow = nullptr;
     int i, iResult;
 
     if (cFilter != 0) {
         rg = static_cast<WINDOWSFILEFILTER *>(std::calloc(static_cast<std::size_t>(cFilter), sizeof(*rg)));
+        rgOwner.reset(rg);
         if (!rg) return -1;
         for (i = 0; i < cFilter; i++) {
             rg[i].pszName = rgfilter[i].pszName;
@@ -35,6 +37,5 @@ int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFol
         lpWindow = SDL_GetPointerProperty(SDL_GetWindowProperties(hwndOwner->lpWindow.get()), SDL_PROP_WINDOW_WIN32_HWND_POINTER, nullptr);
     iResult = WindowsChooserIO().pfnIChooseWindowsFile(lpWindow, fSave, pszTitle, pszFolder, pszName, rg, cFilter,
                                 lpiFilter, pszPath, cbPath, FPumpWindowsChooser, hwndOwner);
-    std::free(rg);
     return iResult;
 }

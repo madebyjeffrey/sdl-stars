@@ -59,7 +59,13 @@
     },
     {
       "id": "L04",
-      "status": "pending"
+      "status": "complete",
+      "approach": "Retain already-correct concrete owners and matched allocators. Add missing owners to all reviewed temporary buffers, replaceable native slots, protocol resources, history and publication boundaries; preserve allocator choice and nonthrowing failure delivery.",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json",
+      "reviewed_heap_sites": 203,
+      "specific_function_contracts": 103,
+      "native_compiler_translation_units": 32,
+      "native_compiler_errors": 0
     },
     {
       "id": "L05",
@@ -889,63 +895,72 @@
       "path": "compat/win32/src/accelerator.cpp",
       "line": 25,
       "code": "lp = (HACCEL)(calloc(1, sizeof(*lp)));",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/accelerator.cpp",
       "line": 27,
       "code": "lp->rg = (ACCEL *)(malloc((size_t)c * sizeof(ACCEL)));",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/accelerator.cpp",
       "line": 28,
       "code": "if (!lp->rg) { free(lp); return NULL; }",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/accelerator.cpp",
       "line": 47,
       "code": "lp->fAlive = 0; free(lp->rg); lp->rg = NULL;",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/accelerator.cpp",
       "line": 61,
       "code": "rg = (ACCEL *)(calloc((size_t)c, sizeof(*rg)));",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/accelerator.cpp",
       "line": 65,
       "code": "if ((flags & ~0x9f) || ((flags & 0x80) != (i == c - 1 ? 0x80 : 0))) { free(rg); return NULL; }",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/accelerator.cpp",
       "line": 71,
       "code": "free(rg);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/accelerator.cpp",
       "line": 110,
       "code": "for (lp = haccels; lp; lp = next) { next = lp->hnext; free(lp->rg); free(lp); }",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/accelerator.cpp",
       "line": 110,
       "code": "for (lp = haccels; lp; lp = next) { next = lp->hnext; free(lp->rg); free(lp); }",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "c_header",
@@ -1309,14 +1324,16 @@
       "path": "compat/win32/src/control.cpp",
       "line": 54,
       "code": "rghwnd = (HWND *)(calloc(c ? (size_t)c : 1, sizeof(*rghwnd)));",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/control.cpp",
       "line": 63,
       "code": "free(rghwnd);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "c_header",
@@ -1577,70 +1594,80 @@
       "path": "compat/win32/src/dialog_template.cpp",
       "line": 35,
       "code": "psz = (char *)(malloc(cch * 3 + 1));",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/dialog_template.cpp",
       "line": 37,
       "code": "if (CchUtf16leToUtf8(psz, cch * 3 + 1, rgb + ibStart, cch) < 0) { free(psz); return 0; }",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/dialog_template.cpp",
       "line": 45,
       "code": "free(lpdlg->rgItems[i].pszClass); free(lpdlg->rgItems[i].pszTitle);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/dialog_template.cpp",
       "line": 45,
       "code": "free(lpdlg->rgItems[i].pszClass); free(lpdlg->rgItems[i].pszTitle);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/dialog_template.cpp",
       "line": 47,
       "code": "free(lpdlg->rgItems); free(lpdlg->pszMenu); free(lpdlg->pszClass);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/dialog_template.cpp",
       "line": 47,
       "code": "free(lpdlg->rgItems); free(lpdlg->pszMenu); free(lpdlg->pszClass);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/dialog_template.cpp",
       "line": 47,
       "code": "free(lpdlg->rgItems); free(lpdlg->pszMenu); free(lpdlg->pszClass);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/dialog_template.cpp",
       "line": 48,
       "code": "free(lpdlg->pszTitle); free(lpdlg->pszFont);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/dialog_template.cpp",
       "line": 48,
       "code": "free(lpdlg->pszTitle); free(lpdlg->pszFont);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/dialog_template.cpp",
       "line": 70,
       "code": "if (dlg.cItems && !(dlg.rgItems = (COMPATDLGITEM *)(calloc(dlg.cItems, sizeof(*dlg.rgItems))))) goto fail;",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "byte_initialization",
@@ -1730,35 +1757,40 @@
       "path": "compat/win32/src/document.cpp",
       "line": 15,
       "code": "pszUri = (char *)(malloc(strlen(pszAbsolute) * 3 + 9));",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/document.cpp",
       "line": 16,
       "code": "if (!pszUri) { free(pszAbsolute); return NULL; }",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/document.cpp",
       "line": 35,
       "code": "*lpchOut = 0; free(pszAbsolute);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/document.cpp",
       "line": 47,
       "code": "if (fEventsOwned && !SDL_InitSubSystem(SDL_INIT_EVENTS)) { free(pszUri); return 0; }",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/document.cpp",
       "line": 50,
       "code": "free(pszUri);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "c_header",
@@ -2081,28 +2113,32 @@
       "path": "compat/win32/src/file.cpp",
       "line": 114,
       "code": "lpNew = (COMPATFILE *)(calloc(1, sizeof(*lpNew)));",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/file.cpp",
       "line": 123,
       "code": "free(lpNew);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/file.cpp",
       "line": 144,
       "code": "free(lp); break;",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/file.cpp",
       "line": 229,
       "code": "ICloseNativeFile(lp->pf); free(lp);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "byte_initialization",
@@ -2332,63 +2368,72 @@
       "path": "compat/win32/src/filedialog.cpp",
       "line": 70,
       "code": "for (i = 0; i < lp->cEntry; i++) free(lp->rgentry[i].psz);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/filedialog.cpp",
       "line": 71,
       "code": "free(lp->rgentry); lp->rgentry = NULL; lp->cEntry = 0;",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/filedialog.cpp",
       "line": 124,
       "code": "rg = (COMPATFILEENTRY *)(realloc(lp->rgentry, (lp->cEntry + 1) * sizeof(*rg)));",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/filedialog.cpp",
       "line": 164,
       "code": "strcpy(lp->szDir, szOld); free(pszPrevious);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/filedialog.cpp",
       "line": 170,
       "code": "free(lp->rgpszHistory[0]);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/filedialog.cpp",
       "line": 345,
       "code": "free(lp->rgpszHistory[--lp->cHistory]);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/filedialog.cpp",
       "line": 418,
       "code": "for (i = 0; i < dlg.cHistory; i++) free(dlg.rgpszHistory[i]);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/filedialog.cpp",
       "line": 419,
       "code": "for (i = 0; i < dlg.cFilter; i++) { free(dlg.rgfilter[i].pszName); free(dlg.rgfilter[i].pszPattern); }",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/filedialog.cpp",
       "line": 419,
       "code": "for (i = 0; i < dlg.cFilter; i++) { free(dlg.rgfilter[i].pszName); free(dlg.rgfilter[i].pszPattern); }",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "unbounded_copy",
@@ -2554,14 +2599,16 @@
       "path": "compat/win32/src/filedialog_cocoa.cpp",
       "line": 30,
       "code": "rg = (COCOAFILEFILTER *)(calloc((size_t)cFilter, sizeof(*rg))); if (!rg) goto done;",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/filedialog_cocoa.cpp",
       "line": 43,
       "code": "free(rg); SDL_free(pszTitleUtf); return iResult;",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "c_header",
@@ -2768,21 +2815,24 @@
       "path": "compat/win32/src/filedialog_portal.cpp",
       "line": 275,
       "code": "free(pszRequest); pszRequest = strdup(pszHandle); pszSender = strdup(dbus_message_get_sender(lpReply));",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/filedialog_portal.cpp",
       "line": 307,
       "code": "SDL_free(pszTitleUtf); SDL_free(pszWaylandParent); free(pszRequest); free(pszSender);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/filedialog_portal.cpp",
       "line": 307,
       "code": "SDL_free(pszTitleUtf); SDL_free(pszWaylandParent); free(pszRequest); free(pszSender);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "unbounded_copy",
@@ -2863,14 +2913,16 @@
       "path": "compat/win32/src/filedialog_windows.cpp",
       "line": 27,
       "code": "rg = (WINDOWSFILEFILTER *)calloc((size_t)cFilter, sizeof(*rg));",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/filedialog_windows.cpp",
       "line": 38,
       "code": "free(rg);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "c_header",
@@ -3019,112 +3071,128 @@
       "path": "compat/win32/src/filedialog_windows_sdk.cpp",
       "line": 31,
       "code": "pwsz = (wchar_t *)malloc((size_t)cch * sizeof(*pwsz));",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/filedialog_windows_sdk.cpp",
       "line": 75,
       "code": "pwszFile = (wchar_t *)calloc(32768, sizeof(*pwszFile));",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/filedialog_windows_sdk.cpp",
       "line": 77,
       "code": "pwszCwd = cchCwd != 0 ? (wchar_t *)malloc((size_t)cchCwd * sizeof(*pwszCwd)) : NULL;",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/filedialog_windows_sdk.cpp",
       "line": 84,
       "code": "if (!pwszLabel || !pwszPattern) { free(pwszLabel); free(pwszPattern); goto done; }",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/filedialog_windows_sdk.cpp",
       "line": 84,
       "code": "if (!pwszLabel || !pwszPattern) { free(pwszLabel); free(pwszPattern); goto done; }",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/filedialog_windows_sdk.cpp",
       "line": 87,
       "code": "wchar_t *pwszNew = (wchar_t *)realloc(pwszFilter, (cchFilter + cchLabel + cchPattern) * sizeof(*pwszFilter));",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/filedialog_windows_sdk.cpp",
       "line": 88,
       "code": "if (!pwszNew) { free(pwszLabel); free(pwszPattern); goto done; }",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/filedialog_windows_sdk.cpp",
       "line": 88,
       "code": "if (!pwszNew) { free(pwszLabel); free(pwszPattern); goto done; }",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/filedialog_windows_sdk.cpp",
       "line": 95,
       "code": "free(pwszLabel); free(pwszPattern);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/filedialog_windows_sdk.cpp",
       "line": 95,
       "code": "free(pwszLabel); free(pwszPattern);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/filedialog_windows_sdk.cpp",
       "line": 119,
       "code": "free(pwszTitle); free(pwszFolder); free(pwszName); free(pwszFilter); free(pwszFile); free(pwszCwd);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/filedialog_windows_sdk.cpp",
       "line": 119,
       "code": "free(pwszTitle); free(pwszFolder); free(pwszName); free(pwszFilter); free(pwszFile); free(pwszCwd);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/filedialog_windows_sdk.cpp",
       "line": 119,
       "code": "free(pwszTitle); free(pwszFolder); free(pwszName); free(pwszFilter); free(pwszFile); free(pwszCwd);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/filedialog_windows_sdk.cpp",
       "line": 119,
       "code": "free(pwszTitle); free(pwszFolder); free(pwszName); free(pwszFilter); free(pwszFile); free(pwszCwd);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/filedialog_windows_sdk.cpp",
       "line": 119,
       "code": "free(pwszTitle); free(pwszFolder); free(pwszName); free(pwszFilter); free(pwszFile); free(pwszCwd);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/filedialog_windows_sdk.cpp",
       "line": 119,
       "code": "free(pwszTitle); free(pwszFolder); free(pwszName); free(pwszFilter); free(pwszFile); free(pwszCwd);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "unbounded_copy",
@@ -3294,7 +3362,8 @@
       "path": "compat/win32/src/font.cpp",
       "line": 56,
       "code": "lp->rgb.reset((BYTE *)malloc((size_t)lp->cx * lp->cy));",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "unbounded_copy",
@@ -3395,35 +3464,40 @@
       "path": "compat/win32/src/help.cpp",
       "line": 63,
       "code": "pszBody = (char *)(malloc((size_t)STARS_HELP_BUNDLE_SIZE + 1));",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/help.cpp",
       "line": 102,
       "code": "free(pszBody);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/help.cpp",
       "line": 168,
       "code": "free(pszDirectory);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/help.cpp",
       "line": 172,
       "code": "free(pszDirectory);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/help.cpp",
       "line": 175,
       "code": "free(pszDocument);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "c_header",
@@ -3743,21 +3817,24 @@
       "path": "compat/win32/src/image.cpp",
       "line": 69,
       "code": "rgbAndOwner.reset((BYTE *)malloc((size_t)dib.cx * dib.cy)); rgAnd = rgbAndOwner.get();",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/image.cpp",
       "line": 149,
       "code": "rgbAndOwner.reset((BYTE *)malloc(cb)); rgAnd = rgbAndOwner.get();",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/image.cpp",
       "line": 208,
       "code": "lpmaskOwner.reset((BYTE *)calloc(2, cb)); rg = lpmaskOwner.get();",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "c_header",
@@ -4469,49 +4546,56 @@
       "path": "compat/win32/src/memory.cpp",
       "line": 20,
       "code": "free(lp->rgb);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/memory.cpp",
       "line": 21,
       "code": "free(lp);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/memory.cpp",
       "line": 61,
       "code": "lp = (COMPATMEMORY *)(calloc(1, sizeof(*lp)));",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/memory.cpp",
       "line": 70,
       "code": "lp->rgb = (BYTE *)(flags & win32::GMEM_ZEROINIT ? calloc(1, cb ? cb : 1) : malloc(cb ? cb : 1));",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/memory.cpp",
       "line": 70,
       "code": "lp->rgb = (BYTE *)(flags & win32::GMEM_ZEROINIT ? calloc(1, cb ? cb : 1) : malloc(cb ? cb : 1));",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/memory.cpp",
       "line": 194,
       "code": "free(lp->rgb); lp->rgb = NULL; lp->cb = 0;",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/memory.cpp",
       "line": 203,
       "code": "rgb = (BYTE *)(realloc(lp->rgb, cb ? cb : 1));",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "byte_initialization",
@@ -4857,14 +4941,16 @@
       "path": "compat/win32/src/menu.cpp",
       "line": 221,
       "code": "rgrcOwner.reset((RECT *)calloc((size_t)lp->citem, sizeof(*rgrc))); rgrc = rgrcOwner.get();",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/menu.cpp",
       "line": 452,
       "code": "lppop->rgrc.reset((RECT *)calloc((size_t)lp->citem, sizeof(RECT)));",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "c_header",
@@ -4937,14 +5023,16 @@
       "path": "compat/win32/src/message.cpp",
       "line": 28,
       "code": "if (lp) { lp->~COMPATMESSAGE(); free(lp); }",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/message.cpp",
       "line": 126,
       "code": "free(lp);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "c_header",
@@ -5731,168 +5819,192 @@
       "path": "compat/win32/src/paint.cpp",
       "line": 193,
       "code": "rgpeOwner.reset((PALETTEENTRY *)malloc((size_t)lppal->palNumEntries * sizeof(*rgpe))); rgpe = rgpeOwner.get();",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/paint.cpp",
       "line": 714,
       "code": "rgrc = (RECT *)(realloc(*lprgrc, (*lpcrc + 1) * sizeof(*rgrc)));",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/paint.cpp",
       "line": 763,
       "code": "rgrc = (RECT *)(malloc(hwnd->crcUpdate * sizeof(*rgrc)));",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/paint.cpp",
       "line": 847,
       "code": "if (!FSubtractUpdate(&rgrc, &crc, lpwin->rgrcUpdate[i], lprc)) { free(rgrc); return 0; }",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/paint.cpp",
       "line": 946,
       "code": "rgrc = (RECT *)(malloc(sizeof(*rgrc)));",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/paint.cpp",
       "line": 989,
       "code": "rgrc = (RECT *)(crcSrc ? malloc(crcSrc * 4 * sizeof(*rgrc)) : NULL);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/paint.cpp",
       "line": 1284,
       "code": "rgcr = (COLORREF *)(malloc(cPixels * sizeof(*rgcr)));",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/paint.cpp",
       "line": 1311,
       "code": "free(rgcr);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/paint.cpp",
       "line": 1389,
       "code": "free(rgrc); win32::SetLastError(win32::ERROR_NOT_ENOUGH_MEMORY); return 0;",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/paint.cpp",
       "line": 1592,
       "code": "el.rgb = (BYTE *)(calloc(cb, 1));",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/paint.cpp",
       "line": 1593,
       "code": "el.rglLeft = (int64_t *)(malloc((size_t)(el.rc.bottom - el.rc.top) * sizeof(*el.rglLeft)));",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/paint.cpp",
       "line": 1594,
       "code": "el.rglRight = (int64_t *)(malloc((size_t)(el.rc.bottom - el.rc.top) * sizeof(*el.rglRight)));",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/paint.cpp",
       "line": 1596,
       "code": "free(el.rgb); free(el.rglLeft); free(el.rglRight); return 0;",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/paint.cpp",
       "line": 1596,
       "code": "free(el.rgb); free(el.rglLeft); free(el.rglRight); return 0;",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/paint.cpp",
       "line": 1596,
       "code": "free(el.rgb); free(el.rglLeft); free(el.rglRight); return 0;",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/paint.cpp",
       "line": 1608,
       "code": "free(el.rgb); free(el.rglLeft); free(el.rglRight);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/paint.cpp",
       "line": 1608,
       "code": "free(el.rgb); free(el.rglLeft); free(el.rglRight);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/paint.cpp",
       "line": 1608,
       "code": "free(el.rgb); free(el.rglLeft); free(el.rglRight);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/paint.cpp",
       "line": 1795,
       "code": "sz = (char *)(malloc((size_t)cch * 8 + 1)); rgUnderline = (BYTE *)(calloc((size_t)cch * 8 + 1, 1));",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/paint.cpp",
       "line": 1795,
       "code": "sz = (char *)(malloc((size_t)cch * 8 + 1)); rgUnderline = (BYTE *)(calloc((size_t)cch * 8 + 1, 1));",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/paint.cpp",
       "line": 1796,
       "code": "rgline = (COMPATTEXTLINE *)(malloc(((size_t)cch * 8 + 1) * sizeof(*rgline)));",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/paint.cpp",
       "line": 1883,
       "code": "free(sz); free(rgUnderline); free(rgline);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/paint.cpp",
       "line": 1883,
       "code": "free(sz); free(rgUnderline); free(rgline);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/paint.cpp",
       "line": 1883,
       "code": "free(sz); free(rgUnderline); free(rgline);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "byte_initialization",
@@ -6052,7 +6164,8 @@
       "path": "compat/win32/src/print.cpp",
       "line": 275,
       "code": "free(pszAbsolute);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "unbounded_copy",
@@ -6274,112 +6387,128 @@
       "path": "compat/win32/src/profile.cpp",
       "line": 25,
       "code": "free(lp->szRaw); free(lp->szParsed); free(lp);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/profile.cpp",
       "line": 25,
       "code": "free(lp->szRaw); free(lp->szParsed); free(lp);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/profile.cpp",
       "line": 25,
       "code": "free(lp->szRaw); free(lp->szParsed); free(lp);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/profile.cpp",
       "line": 39,
       "code": "COMPATPROFILE *lp = (COMPATPROFILE *)calloc(1, sizeof(*lp));",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/profile.cpp",
       "line": 66,
       "code": "free(sz);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/profile.cpp",
       "line": 133,
       "code": "sz = (char *)(malloc(cb));",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/profile.cpp",
       "line": 143,
       "code": "sz = (char *)malloc(cb);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/profile.cpp",
       "line": 150,
       "code": "sz = (char *)(malloc(cb));",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/profile.cpp",
       "line": 154,
       "code": "sz = (char *)(malloc(cb));",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/profile.cpp",
       "line": 162,
       "code": "else if (!FUtf8Valid(sz, strlen(sz))) { free(sz); sz = NULL; win32::SetLastError(win32::ERROR_INVALID_PARAMETER); }",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/profile.cpp",
       "line": 197,
       "code": "NATIVECLEANUPSCOPE releaseProfile([&]() noexcept { FreeProfile(lpAll); free(szPath); });",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/profile.cpp",
       "line": 272,
       "code": "NATIVECLEANUPSCOPE releaseProfile([&]() noexcept { free(szLine); free(szPath); FreeProfile(lpAll); });",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/profile.cpp",
       "line": 272,
       "code": "NATIVECLEANUPSCOPE releaseProfile([&]() noexcept { free(szLine); free(szPath); FreeProfile(lpAll); });",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/profile.cpp",
       "line": 297,
       "code": "szLine = (char *)(malloc(cb));",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/profile.cpp",
       "line": 301,
       "code": "free(szLine); szLine = NULL;",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/profile.cpp",
       "line": 307,
       "code": "szLine = (char *)(malloc(cb));",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "byte_initialization",
@@ -6455,7 +6584,8 @@
       "path": "compat/win32/src/profile_save.cpp",
       "line": 32,
       "code": "free(szTemp);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "null",
@@ -6581,28 +6711,32 @@
       "path": "compat/win32/src/resource.cpp",
       "line": 118,
       "code": "psz = (char *)(malloc(cch * 3 + 1));",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/resource.cpp",
       "line": 120,
       "code": "if (CchUtf16leToUtf8(psz, cch * 3 + 1, rgb + ibText, cch) < 0) { free(psz); goto fail; }",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/resource.cpp",
       "line": 126,
       "code": "free(psz);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/resource.cpp",
       "line": 129,
       "code": "free(psz);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "c_header",
@@ -6971,28 +7105,32 @@
       "path": "compat/win32/src/timer.cpp",
       "line": 41,
       "code": "lp = (COMPATTIMER *)(calloc(1, sizeof(*lp)));",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/timer.cpp",
       "line": 64,
       "code": "*lplp = lp->lpNext; free(lp);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/timer.cpp",
       "line": 113,
       "code": "if (lp->hwnd == hwnd) { *lplp = lp->lpNext; free(lp); }",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/timer.cpp",
       "line": 120,
       "code": "while (lpTimers) { lp = lpTimers; lpTimers = lp->lpNext; free(lp); }",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "c_header",
@@ -7169,42 +7307,48 @@
       "path": "compat/win32/src/toolbar.cpp",
       "line": 22,
       "code": "free(rgbtn); free(rgbmp);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/toolbar.cpp",
       "line": 22,
       "code": "free(rgbtn); free(rgbmp);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/toolbar.cpp",
       "line": 86,
       "code": "rgNew = (COMPATTOOLBUTTON *)(calloc(c + (size_t)lp->c + 1, sizeof(*rgNew)));",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/toolbar.cpp",
       "line": 99,
       "code": "free(rgNew); return 0;",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/toolbar.cpp",
       "line": 103,
       "code": "free(lp->rgbtn); lp->rgbtn = rgNew; lp->c += (int)c;",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/toolbar.cpp",
       "line": 137,
       "code": "rgbmp = (COMPATTOOLBITMAP *)(realloc(lp->rgbmp, (size_t)(lp->cbmp + 1) * sizeof(*rgbmp)));",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "unbounded_copy",
@@ -7794,42 +7938,48 @@
       "path": "compat/win32/src/window.cpp",
       "line": 270,
       "code": "lpclass->rgbExtra.reset((BYTE *)calloc(1, (size_t)lpwc->cbClsExtra));",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/window.cpp",
       "line": 360,
       "code": "free(lpwin->rgbExtra);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/window.cpp",
       "line": 448,
       "code": "lpwin->rgbExtra = (BYTE *)(calloc(1, (size_t)lpclass->wc.cbWndExtra));",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/window.cpp",
       "line": 455,
       "code": "free(lpwin->rgbExtra);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/window.cpp",
       "line": 462,
       "code": "free(lpwin->rgbExtra);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "compat/win32/src/window.cpp",
       "line": 539,
       "code": "free(lpwin->rgbExtra);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "byte_initialization",
@@ -9931,21 +10081,24 @@
       "path": "src/core/memory.cpp",
       "line": 56,
       "code": "hmem = calloc(1, cb);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "src/core/memory.cpp",
       "line": 103,
       "code": "hmem = realloc(hmem, (size_t)(lphb->cbBlock + cbGrow));",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "src/core/memory.cpp",
       "line": 135,
       "code": "free(hmem);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "byte_initialization",
@@ -12972,7 +13125,8 @@
       "path": "src/host/host.cpp",
       "line": 53,
       "code": "NATIVEOWNER<char, std::free> text(static_cast<char *>(malloc((size_t)cb + 1)));",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "unbounded_copy",
@@ -13032,14 +13186,16 @@
       "path": "src/platform/fileio.cpp",
       "line": 366,
       "code": "char *psz = static_cast<char *>(std::realloc(*ppsz, next));",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "src/platform/fileio.cpp",
       "line": 533,
       "code": "if (!out) { out = static_cast<char *>(std::malloc(text.size() + 1)); if (!out) return nullptr; }",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "varargs",
@@ -13182,7 +13338,8 @@
       "path": "src/platform/native.cpp",
       "line": 102,
       "code": "szFmt = cbFmt <= sizeof(szFmtSmall) ? szFmtSmall : (char *)malloc(cbFmt);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "varargs",
@@ -13442,14 +13599,16 @@
       "path": "src/platform/native_windows.cpp",
       "line": 19,
       "code": "if (cb == 0 || !(psz = (char *)malloc(cb))) return NULL;",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "allocation",
       "path": "src/platform/native_windows.cpp",
       "line": 40,
       "code": "rgpsz = (char **)malloc(cb);",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "c_header",
@@ -16646,7 +16805,8 @@
       "path": "src/ui/planetpaneui.cpp",
       "line": 95,
       "code": "NATIVEOWNER<PLANETPANE, std::free> pane(static_cast<PLANETPANE *>(calloc(1, sizeof(*lp))));",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "null",
@@ -19381,7 +19541,8 @@
       "path": "src/ui/scaninspect.cpp",
       "line": 48,
       "code": "lpsnap->rgobj.reset(static_cast<SCANOBJECT *>(calloc(c, sizeof(*lpobj))));",
-      "disposition": "pending"
+      "disposition": "reviewed-L04",
+      "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
       "kind": "byte_initialization",
@@ -21129,6 +21290,30 @@
       "canonical_models": "unchanged",
       "baseline": "unchanged",
       "receipts": "dist/verification/live-cpp/l03/"
+    },
+    {
+      "batch": "L01-L03 Linux continuation",
+      "workflow": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41276748524",
+      "head": "d930156e",
+      "result": "success: Linux host units, resource ownership ASan/UBSan/LSan, linked independent C++ witnesses; optional full Linux/Windows jobs remain opt-in."
+    },
+    {
+      "batch": "L04",
+      "debug_build": "pass; no warnings; all standalone headers in both orders",
+      "desktop": "151/151; includes 29 leak checks, ownership/callback failures, available tutorial smoke and linked witnesses",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host": "no host/core source or header changed; L03 host qualification remains current",
+      "windows_syntax": "146/146 owned application/wrapper units; final two changed units pass again; isolated SDK/process and Windows wrapper chooser adapters also pass. Syntax qualification, not native execution.",
+      "native_compiler_inventory": "32 translation units; zero parse errors; 179 compiler-located heap calls plus 24 explicitly recorded platform-only calls",
+      "wire_inventory": "259 unchanged frozen measurements; 46 record names",
+      "canonical_models": "unchanged",
+      "baseline": "unchanged",
+      "receipts": "dist/verification/live-cpp/l04/"
     }
   ],
   "generators": [

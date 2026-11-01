@@ -33,9 +33,10 @@ static BOOL FDlgField(const BYTE *rgb, std::size_t cb, std::size_t *lpib, WORD *
         if (!FDlgWord(rgb, cb, lpib, &w)) return 0;
     }
     psz = static_cast<char *>((std::malloc(cch * 3 + 1)));
+    NATIVEOWNER<char, std::free> pszOwner(psz);
     if (!psz) return 0;
-    if (CchUtf16leToUtf8(psz, cch * 3 + 1, rgb + ibStart, cch) < 0) { std::free(psz); return 0; }
-    *lppsz = psz;
+    if (CchUtf16leToUtf8(psz, cch * 3 + 1, rgb + ibStart, cch) < 0) return 0;
+    *lppsz = pszOwner.release();
     return 1;
 }
 void CompatFreeDialogTemplate(COMPATDLGTEMPLATE *lpdlg) {
@@ -53,6 +54,7 @@ BOOL FCompatDialogTemplate(const BYTE *rgb, std::size_t cb, COMPATDLGTEMPLATE *l
     COMPATDLGITEM *lpitem;
     std::size_t ib = 0;
     WORD i, idFont = 0;
+    NATIVECLEANUPSCOPE dlgOwner([&]() noexcept { CompatFreeDialogTemplate(&dlg); });
     if (!rgb || !lpdlg || (cb >= 4 && rgb[2] == 255 && rgb[3] == 255) ||
         !FDlgDword(rgb, cb, &ib, &dlg.dwStyle) ||
         !FDlgDword(rgb, cb, &ib, &dlg.dwExStyle) ||
@@ -85,7 +87,7 @@ BOOL FCompatDialogTemplate(const BYTE *rgb, std::size_t cb, COMPATDLGTEMPLATE *l
     }
     if (ib > cb || cb - ib > 3) goto fail;
     while (ib < cb) if (rgb[ib++]) goto fail;
-    *lpdlg = dlg; return 1;
+    *lpdlg = dlg; dlg = {}; return 1;
 fail:
-    CompatFreeDialogTemplate(&dlg); return 0;
+    return 0;
 }

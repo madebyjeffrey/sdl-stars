@@ -1,0 +1,2817 @@
+{
+  "source_parent": "d930156e",
+  "scope": [
+    "src",
+    "compat/win32/include",
+    "compat/win32/src"
+  ],
+  "native_compiler_translation_units": 32,
+  "native_compiler_errors": 0,
+  "contracts": [
+    {
+      "id": "1",
+      "path": "compat/win32/src/accelerator.cpp",
+      "scope": "CreateAcceleratorTableA",
+      "owner": "lpOwner and rgOwner -> haccels runtime registry",
+      "reason": "Keep the two nonthrowing CRT allocations and copy every caller ACCEL byte; publish both allocations only after construction succeeds. Stable handle tokens persist through logical destruction."
+    },
+    {
+      "id": "2",
+      "path": "compat/win32/src/accelerator.cpp",
+      "scope": "DestroyAcceleratorTable",
+      "owner": "haccels registry; CompatShutdownAccelerators during runtime teardown",
+      "reason": "Destroy releases the copied table while retaining a stale-handle token; runtime shutdown releases each remaining payload and token exactly once. Module resource tables remain cached until teardown."
+    },
+    {
+      "id": "3",
+      "path": "compat/win32/src/accelerator.cpp",
+      "scope": "LoadAcceleratorsA",
+      "owner": "rgOwner",
+      "reason": "The resource decoder owns its calloc-initialized native ACCEL staging array until CreateAcceleratorTableA copies it; every rejection and callback unwind releases the staging allocation."
+    },
+    {
+      "id": "4",
+      "path": "compat/win32/src/accelerator.cpp",
+      "scope": "CompatShutdownAccelerators",
+      "owner": "haccels registry; CompatShutdownAccelerators during runtime teardown",
+      "reason": "Destroy releases the copied table while retaining a stale-handle token; runtime shutdown releases each remaining payload and token exactly once. Module resource tables remain cached until teardown."
+    },
+    {
+      "id": "5",
+      "path": "compat/win32/src/combo.cpp",
+      "scope": "PszComboItem",
+      "owner": "pszOwner -> caller pszOwner",
+      "reason": "A native list-text buffer transfers into the caller owner. Every production caller now owns it across edit/draw callbacks; failed text retrieval releases it locally."
+    },
+    {
+      "id": "6",
+      "path": "compat/win32/src/control.cpp",
+      "scope": "CheckRadioButton",
+      "owner": "rghwndOwner",
+      "reason": "Snapshot child tokens before synchronous notifications can mutate the hierarchy; retain the existing calloc failure return and free through a matched CRT owner."
+    },
+    {
+      "id": "7",
+      "path": "compat/win32/src/dialog_template.cpp",
+      "scope": "FDlgField",
+      "owner": "pszOwner -> decoded template",
+      "reason": "The UTF-16 resource decoder allocates its exact UTF-8 output capacity and transfers it only after valid conversion. The template scope owns transferred strings."
+    },
+    {
+      "id": "8",
+      "path": "compat/win32/src/dialog_template.cpp",
+      "scope": "CompatFreeDialogTemplate",
+      "owner": "decoded template owner/deleter",
+      "reason": "This releases real decoded strings/items and clears the descriptor. It is a matched deallocator for a decoder aggregate, not resource-unlock ceremony."
+    },
+    {
+      "id": "9",
+      "path": "compat/win32/src/dialog_template.cpp",
+      "scope": "FCompatDialogTemplate",
+      "owner": "dlgOwner -> caller template cleanup scope",
+      "reason": "The binary resource decoder owns every partially built field and item allocation; successful publication clears the local descriptor before its cleanup scope runs."
+    },
+    {
+      "id": "10",
+      "path": "compat/win32/src/document.cpp",
+      "scope": "PszCompatFileUri",
+      "owner": "absolute owner and uri owner -> returned URI owner",
+      "reason": "Native path and URI buffers use the existing matched CRT allocator. URI construction holds both owners and transfers the completed URI; launch also scopes its SDL event reference."
+    },
+    {
+      "id": "11",
+      "path": "compat/win32/src/edit.cpp",
+      "scope": "CompatEditComposition",
+      "owner": "live window composition/undo fields; DestroyCompatWindow",
+      "reason": "These persistent UTF-8 editing buffers belong to the window. Replacement, focus loss and teardown release their SDL allocations at the existing logical lifetime boundaries."
+    },
+    {
+      "id": "12",
+      "path": "compat/win32/src/edit.cpp",
+      "scope": "EmptyEditUndo",
+      "owner": "live window composition/undo fields; DestroyCompatWindow",
+      "reason": "These persistent UTF-8 editing buffers belong to the window. Replacement, focus loss and teardown release their SDL allocations at the existing logical lifetime boundaries."
+    },
+    {
+      "id": "13",
+      "path": "compat/win32/src/edit.cpp",
+      "scope": "ReplaceEdit",
+      "owner": "newOwner and undoOwner -> window fields",
+      "reason": "Staged edit and undo text stays owned across all rejection paths, then transfers at publication before notifications. Keep SDL allocation choice, byte budgets and EN_ERRSPACE timing."
+    },
+    {
+      "id": "14",
+      "path": "compat/win32/src/edit.cpp",
+      "scope": "CopyEdit",
+      "owner": "pszOwner",
+      "reason": "The temporary clipboard byte string is owned across SDL clipboard submission and every return."
+    },
+    {
+      "id": "15",
+      "path": "compat/win32/src/edit.cpp",
+      "scope": "PaintEdit",
+      "owner": "displayOwner and compositionOwner",
+      "reason": "Copied display/composition text stays alive across paint, scroll and application callbacks, including window destruction and exceptions. Deallocation uses SDL_free."
+    },
+    {
+      "id": "16",
+      "path": "compat/win32/src/edit.cpp",
+      "scope": "CompatEditProc",
+      "owner": "live window composition/undo fields; DestroyCompatWindow",
+      "reason": "These persistent UTF-8 editing buffers belong to the window. Replacement, focus loss and teardown release their SDL allocations at the existing logical lifetime boundaries."
+    },
+    {
+      "id": "17",
+      "path": "compat/win32/src/file.cpp",
+      "scope": "OpenFile",
+      "owner": "fileOwner and nativeFileOwner -> lpFiles registry",
+      "reason": "The foreign OpenFile adapter stages a token node and native stream under separate owners, preserving sharing/truncation checks and publication order; uncommitted objects close before the lock is released."
+    },
+    {
+      "id": "18",
+      "path": "compat/win32/src/file.cpp",
+      "scope": "_lclose",
+      "owner": "lpFiles runtime registry",
+      "reason": "Token removal and runtime teardown release real registered streams/nodes. Native descriptors remain inside the file service; error-reporting close operations stay explicit."
+    },
+    {
+      "id": "19",
+      "path": "compat/win32/src/file.cpp",
+      "scope": "CompatShutdownFiles",
+      "owner": "lpFiles runtime registry",
+      "reason": "Token removal and runtime teardown release real registered streams/nodes. Native descriptors remain inside the file service; error-reporting close operations stay explicit."
+    },
+    {
+      "id": "20",
+      "path": "compat/win32/src/filedialog.cpp",
+      "scope": "FreeFileEntries",
+      "owner": "dlg freeBuffers scope",
+      "reason": "The browser owns this byte-swappable entry/name collection. It retains CRT realloc and qsort geometry; replacing entries cannot strand the collection on modal unwind."
+    },
+    {
+      "id": "21",
+      "path": "compat/win32/src/filedialog.cpp",
+      "scope": "FRefreshFiles",
+      "owner": "dlg freeBuffers scope and directoryOwner",
+      "reason": "New entries are appended to the dialog-owned collection. The directory is scoped across invalid-name prompts and enumeration failures; realloc publication and existing entry counts stay unchanged."
+    },
+    {
+      "id": "22",
+      "path": "compat/win32/src/filedialog.cpp",
+      "scope": "FChangeFileDirectory",
+      "owner": "previousOwner -> rgpszHistory array of owners",
+      "reason": "Navigation snapshots the old path under a matched owner, rolls back before failure notifications, and moves ownership into bounded history only after refresh succeeds."
+    },
+    {
+      "id": "23",
+      "path": "compat/win32/src/filedialog.cpp",
+      "scope": "FFileDialog",
+      "owner": "freeBuffers; owned history; modal cleanup scopes",
+      "reason": "The shared modal operation owns parsed filter allocations and entry storage while it pumps callbacks. History has move-only bounded owners; callback-capable window/focus cleanup remains in COMPATCLEANUPSCOPE."
+    },
+    {
+      "id": "24",
+      "path": "compat/win32/src/filedialog_cocoa.cpp",
+      "scope": "PszCocoaLabelUtf8",
+      "owner": "titleOwner or rgText filter owners",
+      "reason": "Validated UTF-8 SDL allocations transfer into concrete owners; the AppKit bridge receives readonly borrowed labels, so deallocation no longer removes constness."
+    },
+    {
+      "id": "25",
+      "path": "compat/win32/src/filedialog_cocoa.cpp",
+      "scope": "ICompatChooseFile",
+      "owner": "rgOwner and fixed rgText owner array",
+      "reason": "Keep the bridge record calloc allocation and SDL label allocator. The shared 64-filter limit permits stack-held label owners without adding an allocation or changing allocation-failure delivery."
+    },
+    {
+      "id": "26",
+      "path": "compat/win32/src/filedialog_portal.cpp",
+      "scope": "PszPortalLabel",
+      "owner": "labelOwner/patternOwner or portalOwner",
+      "reason": "The libdbus adapter transfers SDL UTF-8 label allocations into matched owners. libdbus borrows their char pointers only during message construction/comparison."
+    },
+    {
+      "id": "27",
+      "path": "compat/win32/src/filedialog_portal.cpp",
+      "scope": "ICompatChooseFile",
+      "owner": "portalOwner; randomOwner",
+      "reason": "The private connection, response references, pending call, request path and all native text buffers are one scoped protocol operation. Cleanup sends Close on cancellation/failure, removes the filter before its stack context dies, then releases each native allocation."
+    },
+    {
+      "id": "28",
+      "path": "compat/win32/src/filedialog_windows.cpp",
+      "scope": "ICompatChooseFile",
+      "owner": "rgOwner",
+      "reason": "A matched CRT owner holds the SDK bridge filter records throughout modal dispatch and cleanup; the bridge only borrows the labels."
+    },
+    {
+      "id": "29",
+      "path": "compat/win32/src/filedialog_windows_sdk.cpp",
+      "scope": "LpwszChooserText",
+      "owner": "chooserText or loop label/pattern owner",
+      "reason": "The isolated native SDK adapter owns malloc-backed UTF-16 conversion output until its request or per-filter scope releases it."
+    },
+    {
+      "id": "30",
+      "path": "compat/win32/src/filedialog_windows_sdk.cpp",
+      "scope": "IChooseWindowsFile",
+      "owner": "chooserText scope and labelOwner/patternOwner",
+      "reason": "The native SDK requires mutable UTF-16 buffers and an OPENFILENAME filter block. Scope the replaceable realloc slot and every fixed buffer, keeping native allocation/error/CWD behavior and cleanup before pending callback failure delivery."
+    },
+    {
+      "id": "31",
+      "path": "compat/win32/src/font.cpp",
+      "scope": "LpLoadGlyph",
+      "owner": "glyph rgb owner",
+      "reason": "FreeType supplies a borrowed raster; the owned glyph cache retains its copied byte coverage under a matched CRT owner with the same null-on-allocation-failure behavior."
+    },
+    {
+      "id": "32",
+      "path": "compat/win32/src/help.cpp",
+      "scope": "PszHelpDocument",
+      "owner": "bodyOwner/baseOwner/sourceOwner/targetOwner -> caller documentOwner",
+      "reason": "The guide adapter owns body, native path and streams while checking CRC and committing its temporary file. Completed path publication transfers ownership; errors cannot strand scratch memory or streams."
+    },
+    {
+      "id": "33",
+      "path": "compat/win32/src/image.cpp",
+      "scope": "HiconCompatResource",
+      "owner": "rgbAndOwner/lpmaskOwner and persistent cursor/icon owners",
+      "reason": "Binary icon/cursor masks use native byte buffers with explicit sizes and matched CRT release. Their owners already bracket decoding, copying and publication into the native object registry."
+    },
+    {
+      "id": "34",
+      "path": "compat/win32/src/image.cpp",
+      "scope": "CopyIcon",
+      "owner": "rgbAndOwner/lpmaskOwner and persistent cursor/icon owners",
+      "reason": "Binary icon/cursor masks use native byte buffers with explicit sizes and matched CRT release. Their owners already bracket decoding, copying and publication into the native object registry."
+    },
+    {
+      "id": "35",
+      "path": "compat/win32/src/image.cpp",
+      "scope": "FNativeCursor",
+      "owner": "rgbAndOwner/lpmaskOwner and persistent cursor/icon owners",
+      "reason": "Binary icon/cursor masks use native byte buffers with explicit sizes and matched CRT release. Their owners already bracket decoding, copying and publication into the native object registry."
+    },
+    {
+      "id": "36",
+      "path": "compat/win32/src/inspect.cpp",
+      "scope": "StarsCompatFreeHierarchy",
+      "owner": "captured hierarchy allocation deleter",
+      "reason": "Captured rows and copied UTF-8 strings have a real SDL allocator contract. The same descriptor can be a borrowed writer input, so only capture owners call this deallocator; it cannot be a universal owning aggregate destructor."
+    },
+    {
+      "id": "37",
+      "path": "compat/win32/src/inspect.cpp",
+      "scope": "StarsCompatCaptureHierarchy",
+      "owner": "caller snapshot owner -> inspector lifetime or caller release",
+      "reason": "The capture service allocates copied rows/strings without invoking application procedures and releases partial results on failure. Refresh now scopes the unpublished result and clears it at ownership transfer."
+    },
+    {
+      "id": "38",
+      "path": "compat/win32/src/inspect.cpp",
+      "scope": "InspectDetails",
+      "owner": "pszOwner",
+      "reason": "Copied inspector display strings stay owned across control messages, recursive row insertion and callback failure; retain the existing SDL allocation and UTF-8 capacity checks."
+    },
+    {
+      "id": "39",
+      "path": "compat/win32/src/inspect.cpp",
+      "scope": "InspectRows",
+      "owner": "pszOwner",
+      "reason": "Copied inspector display strings stay owned across control messages, recursive row insertion and callback failure; retain the existing SDL allocation and UTF-8 capacity checks."
+    },
+    {
+      "id": "40",
+      "path": "compat/win32/src/list.cpp",
+      "scope": "~COMPATLIST",
+      "owner": "shared COMPATLIST owner and explicit logical item/drag lifetime",
+      "reason": "Persistent list text, selection bytes and entries are held by the shared control owner across callbacks. Item deletion and drag/focus transitions release actual storage at their existing notification boundaries."
+    },
+    {
+      "id": "41",
+      "path": "compat/win32/src/list.cpp",
+      "scope": "ResetList",
+      "owner": "rgKeep custom array owner",
+      "reason": "Detach the old list before callbacks; the typed custom owner retains every remaining entry/string if deletion notification fails, and already-freed strings are nulled before that notification."
+    },
+    {
+      "id": "42",
+      "path": "compat/win32/src/list.cpp",
+      "scope": "AddList",
+      "owner": "pszOwner -> shared list collection",
+      "reason": "Keep new text owned until entry publication. SDL realloc extends the byte-swappable native list array; a failed growth returns LB_ERRSPACE without losing either allocation."
+    },
+    {
+      "id": "43",
+      "path": "compat/win32/src/list.cpp",
+      "scope": "EndListDrag",
+      "owner": "shared COMPATLIST owner and explicit logical item/drag lifetime",
+      "reason": "Persistent list text, selection bytes and entries are held by the shared control owner across callbacks. Item deletion and drag/focus transitions release actual storage at their existing notification boundaries."
+    },
+    {
+      "id": "44",
+      "path": "compat/win32/src/list.cpp",
+      "scope": "CompatListProc",
+      "owner": "shared COMPATLIST owner and explicit logical item/drag lifetime",
+      "reason": "Persistent list text, selection bytes and entries are held by the shared control owner across callbacks. Item deletion and drag/focus transitions release actual storage at their existing notification boundaries."
+    },
+    {
+      "id": "45",
+      "path": "compat/win32/src/memory.cpp",
+      "scope": "FreeMemoryBlock",
+      "owner": "COMPATMEMORYOWNER registry and block owner",
+      "reason": "This is the compatibility allocator itself: stable fixed pointers, tagged movable handles, lock counts, caller byte extents and GMEM_ZEROINIT are current API contracts. Retain its matched CRT allocate/reallocate/free primitives inside this implementation."
+    },
+    {
+      "id": "46",
+      "path": "compat/win32/src/memory.cpp",
+      "scope": "GlobalAlloc",
+      "owner": "COMPATMEMORYOWNER registry and block owner",
+      "reason": "This is the compatibility allocator itself: stable fixed pointers, tagged movable handles, lock counts, caller byte extents and GMEM_ZEROINIT are current API contracts. Retain its matched CRT allocate/reallocate/free primitives inside this implementation."
+    },
+    {
+      "id": "47",
+      "path": "compat/win32/src/memory.cpp",
+      "scope": "GlobalReAlloc",
+      "owner": "COMPATMEMORYOWNER registry and block owner",
+      "reason": "This is the compatibility allocator itself: stable fixed pointers, tagged movable handles, lock counts, caller byte extents and GMEM_ZEROINIT are current API contracts. Retain its matched CRT allocate/reallocate/free primitives inside this implementation."
+    },
+    {
+      "id": "48",
+      "path": "compat/win32/src/menu.cpp",
+      "scope": "InsertMenuA",
+      "owner": "menu item owner, pszOwner, rgrcOwner and popup rgrc owner",
+      "reason": "These existing concrete owners retain copied UTF-8 items and layout arrays across menu notifications and rendering. Keep allocator choice and native popup geometry; selected/borrowed handles are never adopted."
+    },
+    {
+      "id": "49",
+      "path": "compat/win32/src/menu.cpp",
+      "scope": "CyCompatMenuBar",
+      "owner": "menu item owner, pszOwner, rgrcOwner and popup rgrc owner",
+      "reason": "These existing concrete owners retain copied UTF-8 items and layout arrays across menu notifications and rendering. Keep allocator choice and native popup geometry; selected/borrowed handles are never adopted."
+    },
+    {
+      "id": "50",
+      "path": "compat/win32/src/menu.cpp",
+      "scope": "PopupPaint",
+      "owner": "menu item owner, pszOwner, rgrcOwner and popup rgrc owner",
+      "reason": "These existing concrete owners retain copied UTF-8 items and layout arrays across menu notifications and rendering. Keep allocator choice and native popup geometry; selected/borrowed handles are never adopted."
+    },
+    {
+      "id": "51",
+      "path": "compat/win32/src/menu.cpp",
+      "scope": "OpenPopup",
+      "owner": "menu item owner, pszOwner, rgrcOwner and popup rgrc owner",
+      "reason": "These existing concrete owners retain copied UTF-8 items and layout arrays across menu notifications and rendering. Keep allocator choice and native popup geometry; selected/borrowed handles are never adopted."
+    },
+    {
+      "id": "52",
+      "path": "compat/win32/src/message.cpp",
+      "scope": "FreeMessage",
+      "owner": "message object and posted-payload registry owners",
+      "reason": "These are the matched primitive releases for placement-constructed queued messages and accepted async-post nodes. Destruction/transfer is governed by the queue/runtime ownership protocol."
+    },
+    {
+      "id": "53",
+      "path": "compat/win32/src/message.cpp",
+      "scope": "ReleasePost",
+      "owner": "message object and posted-payload registry owners",
+      "reason": "These are the matched primitive releases for placement-constructed queued messages and accepted async-post nodes. Destruction/transfer is governed by the queue/runtime ownership protocol."
+    },
+    {
+      "id": "54",
+      "path": "compat/win32/src/message.cpp",
+      "scope": "DefWindowProcA",
+      "owner": "pszOwner -> live window title",
+      "reason": "Native title validation holds the proposed SDL string under an owner until both native update and logical publication succeed; failed native updates release the proposal."
+    },
+    {
+      "id": "55",
+      "path": "compat/win32/src/paint.cpp",
+      "scope": "CreatePalette",
+      "owner": "rgpeOwner -> palette object",
+      "reason": "Copy the caller palette representation under a matched owner before publishing it into the native object pool."
+    },
+    {
+      "id": "56",
+      "path": "compat/win32/src/paint.cpp",
+      "scope": "FAddUpdate",
+      "owner": "caller owner of replaceable RECT slot",
+      "reason": "This bounded low-level region grower uses realloc so its caller must own the replaceable slot. Validate/scroll use cleanup scopes; invalidation republishes the relocated pointer into the window owner before further work."
+    },
+    {
+      "id": "57",
+      "path": "compat/win32/src/paint.cpp",
+      "scope": "FPaintClip",
+      "owner": "rgrcOwner -> device-context region/paint owner",
+      "reason": "Native RECT staging arrays stay owned until clipping is fully computed and then move into the device context. Preserve allocation-failure and existing region geometry."
+    },
+    {
+      "id": "58",
+      "path": "compat/win32/src/paint.cpp",
+      "scope": "ValidateRect",
+      "owner": "updateOwner replaceable-slot scope -> window update owner",
+      "reason": "A scoped slot owner follows every realloc result and relinquishes only after SetUpdate consumes the array. Failure and callback unwind release unpublished rectangles; scroll copy order and pixel arithmetic are unchanged."
+    },
+    {
+      "id": "59",
+      "path": "compat/win32/src/paint.cpp",
+      "scope": "SelectClipRgn",
+      "owner": "rgrcOwner -> device-context region/paint owner",
+      "reason": "Native RECT staging arrays stay owned until clipping is fully computed and then move into the device context. Preserve allocation-failure and existing region geometry."
+    },
+    {
+      "id": "60",
+      "path": "compat/win32/src/paint.cpp",
+      "scope": "IClipRect",
+      "owner": "rgrcOwner -> device-context region/paint owner",
+      "reason": "Native RECT staging arrays stay owned until clipping is fully computed and then move into the device context. Preserve allocation-failure and existing region geometry."
+    },
+    {
+      "id": "61",
+      "path": "compat/win32/src/paint.cpp",
+      "scope": "BitBlt",
+      "owner": "rgcrOwner",
+      "reason": "Overlapping source pixels are captured before any destination write. The scratch raster owner retains the existing allocator and exact element count without changing raster operations."
+    },
+    {
+      "id": "62",
+      "path": "compat/win32/src/paint.cpp",
+      "scope": "ScrollWindow",
+      "owner": "updateOwner replaceable-slot scope -> window update owner",
+      "reason": "A scoped slot owner follows every realloc result and relinquishes only after SetUpdate consumes the array. Failure and callback unwind release unpublished rectangles; scroll copy order and pixel arithmetic are unchanged."
+    },
+    {
+      "id": "63",
+      "path": "compat/win32/src/paint.cpp",
+      "scope": "Ellipse",
+      "owner": "COMPATELLIPSE rgb/rglLeft/rglRight owners",
+      "reason": "The bounded clipped raster mask and edge arrays are concrete owners. Existing allocation order, wide accumulator, pixel boundaries and failure returns are unchanged."
+    },
+    {
+      "id": "64",
+      "path": "compat/win32/src/paint.cpp",
+      "scope": "DrawTextA",
+      "owner": "szOwner, rgUnderlineOwner, rglineOwner",
+      "reason": "Formatting/line-layout scratch arrays stay owned through all early exits and drawing calls. Keep allocation sizes, byte-based underline storage and layout arithmetic."
+    },
+    {
+      "id": "65",
+      "path": "compat/win32/src/profile.cpp",
+      "scope": "FreeProfile",
+      "owner": "profile aggregate deleter",
+      "reason": "Release actual raw/parsed line allocations and nodes from a scoped parsed-profile chain. Parsed field pointers borrow their node buffers; they are not separately allocated."
+    },
+    {
+      "id": "66",
+      "path": "compat/win32/src/profile.cpp",
+      "scope": "LpProfileLine",
+      "owner": "profileOwner -> scoped parsed-profile chain",
+      "reason": "The line factory owns its partially allocated node and both string copies; publication releases the factory owner only after parsing succeeds."
+    },
+    {
+      "id": "67",
+      "path": "compat/win32/src/profile.cpp",
+      "scope": "FLoadProfile",
+      "owner": "releaseProfile replaceable-slot scope",
+      "reason": "The getline-style native read adapter may replace the line slot. Its scope closes the stream, frees the latest slot and rolls back an unpublished parsed chain on every failure."
+    },
+    {
+      "id": "68",
+      "path": "compat/win32/src/profile.cpp",
+      "scope": "SzProfilePath",
+      "owner": "caller releaseProfile owner",
+      "reason": "The profile path factory returns a single validated CRT allocation. Both production profile operations scope that result together with their parsed chain and line slot."
+    },
+    {
+      "id": "69",
+      "path": "compat/win32/src/profile.cpp",
+      "scope": "GetPrivateProfileStringA",
+      "owner": "releaseProfile scope",
+      "reason": "Native profile operations retain path, replaceable temporary line and parsed chain owners under the registry lock; Close releases them before unlocking, preserving error and partial-write behavior."
+    },
+    {
+      "id": "70",
+      "path": "compat/win32/src/profile.cpp",
+      "scope": "WritePrivateProfileStringA",
+      "owner": "releaseProfile scope",
+      "reason": "Native profile operations retain path, replaceable temporary line and parsed chain owners under the registry lock; Close releases them before unlocking, preserving error and partial-write behavior."
+    },
+    {
+      "id": "71",
+      "path": "compat/win32/src/profile_save.cpp",
+      "scope": "FSaveProfile",
+      "owner": "releaseTemp scope",
+      "reason": "The durable profile writer owns the temporary path and stream while preserving replace/sync semantics; the existing scoped cleanup releases the matched path allocation."
+    },
+    {
+      "id": "72",
+      "path": "compat/win32/src/resource.cpp",
+      "scope": "HmenuTemplateItems",
+      "owner": "pszOwner and native menu hierarchy",
+      "reason": "Decoded UTF-8 labels stay owned until AppendMenu copies them. Rejected or interrupted decoding releases the label while the native menu failure path destroys the hierarchy."
+    },
+    {
+      "id": "73",
+      "path": "compat/win32/src/timer.cpp",
+      "scope": "SetTimer",
+      "owner": "timerOwner -> lpTimers registry",
+      "reason": "A newly allocated native timer node remains scoped until it is linked into the runtime registry. Preserve stable timer IDs, native failure returns and publication before tick-provider effects."
+    },
+    {
+      "id": "74",
+      "path": "compat/win32/src/timer.cpp",
+      "scope": "KillTimer",
+      "owner": "lpTimers runtime registry",
+      "reason": "These releases implement real logical timer removal and runtime teardown. Queued messages carry IDs rather than owning these node pointers, so native registry removal remains explicit."
+    },
+    {
+      "id": "75",
+      "path": "compat/win32/src/timer.cpp",
+      "scope": "CompatPurgeTimers",
+      "owner": "lpTimers runtime registry",
+      "reason": "These releases implement real logical timer removal and runtime teardown. Queued messages carry IDs rather than owning these node pointers, so native registry removal remains explicit."
+    },
+    {
+      "id": "76",
+      "path": "compat/win32/src/timer.cpp",
+      "scope": "CompatClearTimers",
+      "owner": "lpTimers runtime registry",
+      "reason": "These releases implement real logical timer removal and runtime teardown. Queued messages carry IDs rather than owning these node pointers, so native registry removal remains explicit."
+    },
+    {
+      "id": "77",
+      "path": "compat/win32/src/toolbar.cpp",
+      "scope": "~COMPATTOOLBAR",
+      "owner": "shared COMPATTOOLBAR owner",
+      "reason": "The shared control owner retains byte-swappable button/bitmap records and each copied SDL label; logical deletion and destruction release their real allocations and owned GDI handles."
+    },
+    {
+      "id": "78",
+      "path": "compat/win32/src/toolbar.cpp",
+      "scope": "AddButtons",
+      "owner": "buttonsOwner -> shared toolbar collection",
+      "reason": "The temporary calloc array owns only newly copied labels until all inputs validate; old labels transfer with the unchanged byte copies, then publication clears the temporary slot owner before callbacks."
+    },
+    {
+      "id": "79",
+      "path": "compat/win32/src/toolbar.cpp",
+      "scope": "AddBitmap",
+      "owner": "copyOwner -> shared toolbar bitmap collection",
+      "reason": "Keep realloc inside the native bitmap registry. New callback-safe scopes restore selected objects and close both DCs/source bitmap before publishing the copied bitmap; failure cannot strand it."
+    },
+    {
+      "id": "80",
+      "path": "compat/win32/src/toolbar.cpp",
+      "scope": "CompatToolbarProc",
+      "owner": "shared COMPATTOOLBAR owner",
+      "reason": "The shared control owner retains byte-swappable button/bitmap records and each copied SDL label; logical deletion and destruction release their real allocations and owned GDI handles."
+    },
+    {
+      "id": "81",
+      "path": "compat/win32/src/window.cpp",
+      "scope": "PszNativeTitle",
+      "owner": "titleOwner in CreateWindowExA",
+      "reason": "The native caption adapter transfers a validated SDL UTF-8 string into a scope spanning native window/popup creation."
+    },
+    {
+      "id": "82",
+      "path": "compat/win32/src/window.cpp",
+      "scope": "RegisterClassA",
+      "owner": "registered class string and rgbExtra owners",
+      "reason": "The existing class owner holds copied native names and arbitrary class-extra bytes. Keep exact zeroed byte extents and SDL/CRT allocator matching."
+    },
+    {
+      "id": "83",
+      "path": "compat/win32/src/window.cpp",
+      "scope": "DestroyCompatWindow",
+      "owner": "live window control/title/undo owners",
+      "reason": "Window-owned persistent strings close at logical destruction, while stable tombstone tokens remain for stale-handle validation until runtime shutdown. The extra-byte field is now a concrete array owner reset at the same boundary."
+    },
+    {
+      "id": "84",
+      "path": "compat/win32/src/window.cpp",
+      "scope": "CreateWindowExA",
+      "owner": "window rgbExtra owner; titleOwner; window construction/runtime owner",
+      "reason": "Arbitrary SDK extra bytes retain calloc/zero/failure semantics under a concrete owner. Native caption scratch is scoped; title/control fields transfer into the registered window lifetime."
+    },
+    {
+      "id": "85",
+      "path": "src/core/memory.cpp",
+      "scope": "LphbAlloc",
+      "owner": "NATIVEGAMEHEAPS and typed arena lifetime operations",
+      "reason": "This is the stable game allocator, not temporary application storage. Preserve aligned headers, rounded spare bytes, pointer stability, allocation-failure delivery and implicit-lifetime boundaries; primitives remain private to the allocator."
+    },
+    {
+      "id": "86",
+      "path": "src/core/memory.cpp",
+      "scope": "LphbReAlloc",
+      "owner": "NATIVEGAMEHEAPS and typed arena lifetime operations",
+      "reason": "This is the stable game allocator, not temporary application storage. Preserve aligned headers, rounded spare bytes, pointer stability, allocation-failure delivery and implicit-lifetime boundaries; primitives remain private to the allocator."
+    },
+    {
+      "id": "87",
+      "path": "src/core/memory.cpp",
+      "scope": "FreeHb",
+      "owner": "NATIVEGAMEHEAPS and typed arena lifetime operations",
+      "reason": "This is the stable game allocator, not temporary application storage. Preserve aligned headers, rounded spare bytes, pointer stability, allocation-failure delivery and implicit-lifetime boundaries; primitives remain private to the allocator."
+    },
+    {
+      "id": "88",
+      "path": "src/host/host.cpp",
+      "scope": "FReadHostIni",
+      "owner": "text owner",
+      "reason": "This file-loader byte staging buffer already has a matched concrete owner. Retain its malloc allocation choice, exact file-size capacity and failure return while validating UTF-8 before parsing."
+    },
+    {
+      "id": "89",
+      "path": "src/platform/fileio.cpp",
+      "scope": "CbGetNativeLine",
+      "owner": "caller replaceable-slot owner",
+      "reason": "The private file service implements a getline-compatible allocation protocol; all production callers scope the replaceable slot. Typed service migration is tracked separately in L06."
+    },
+    {
+      "id": "90",
+      "path": "src/platform/fileio.cpp",
+      "scope": "CopyNativePath",
+      "owner": "caller-provided span or returned path owner",
+      "reason": "The native path adapter either fills caller storage or transfers its single CRT allocation into an explicit caller owner. Preserve its allocator/error contract; stronger public result types belong to L06."
+    },
+    {
+      "id": "91",
+      "path": "src/platform/native.cpp",
+      "scope": "CchSprintf",
+      "owner": "format owner",
+      "reason": "The private CRT-format adapter already scopes its optional normalized-format buffer. Keep its original malloc choice and null-on-failure delivery; the typed/bounded formatting replacement is L05."
+    },
+    {
+      "id": "92",
+      "path": "src/platform/native_windows.cpp",
+      "scope": "PszNativeCommandLine",
+      "owner": "command/arguments and native SDK wideArguments owners -> entry owner",
+      "reason": "The isolated Windows process adapter retains matched native UTF-16/UTF-8 allocations and the contiguous mutable argv block; entry code immediately owns transferred results. No descriptor or pointer reaches a save record."
+    },
+    {
+      "id": "93",
+      "path": "src/platform/native_windows.cpp",
+      "scope": "RgpszNativeArguments",
+      "owner": "command/arguments and native SDK wideArguments owners -> entry owner",
+      "reason": "The isolated Windows process adapter retains matched native UTF-16/UTF-8 allocations and the contiguous mutable argv block; entry code immediately owns transferred results. No descriptor or pointer reaches a save record."
+    },
+    {
+      "id": "94",
+      "path": "src/ui/libraryui.cpp",
+      "scope": "LibraryExportFolderSelected",
+      "owner": "move-only STARSCOMPATPAYLOAD",
+      "reason": "Foreign folder callbacks immediately place the SDL path copy in an owning posted payload; rejection, stale target and successful delivery consume the same owner."
+    },
+    {
+      "id": "95",
+      "path": "src/ui/libraryui.cpp",
+      "scope": "LibraryImportFolderSelected",
+      "owner": "move-only STARSCOMPATPAYLOAD",
+      "reason": "Foreign folder callbacks immediately place the SDL path copy in an owning posted payload; rejection, stale target and successful delivery consume the same owner."
+    },
+    {
+      "id": "96",
+      "path": "src/ui/libraryui.cpp",
+      "scope": "FAddLibraryGameListItem",
+      "owner": "rgLibraryGameList owner",
+      "reason": "The replaceable SDL slot is republished into the existing typed array owner before notifications; native row widths and callback-stable logical IDs stay unchanged."
+    },
+    {
+      "id": "97",
+      "path": "src/ui/libraryzip.cpp",
+      "scope": "FZipEnsureCapacity",
+      "owner": "parent ZIPFILES scope; childFiles and relative owners",
+      "reason": "The archive collector owns replaceable SDL name slots and staged child results. Borrowed traversal contexts do not outlive their scoped parents; successful append explicitly transfers a relative-name owner."
+    },
+    {
+      "id": "98",
+      "path": "src/ui/libraryzip.cpp",
+      "scope": "FCollectZipFiles",
+      "owner": "parent ZIPFILES scope; childFiles and relative owners",
+      "reason": "The archive collector owns replaceable SDL name slots and staged child results. Borrowed traversal contexts do not outlive their scoped parents; successful append explicitly transfers a relative-name owner."
+    },
+    {
+      "id": "99",
+      "path": "src/ui/libraryzip.cpp",
+      "scope": "FWriteZipEntry",
+      "owner": "entry/archive cleanup scopes",
+      "reason": "These existing concrete scopes own native streams, temporary paths, ZIP names and binary inflate/write buffers. Retain SDL allocator matching, durable commit/error behavior and exact ZIP byte/CRC operations."
+    },
+    {
+      "id": "100",
+      "path": "src/ui/libraryzip.cpp",
+      "scope": "FZipLibraryDirectory",
+      "owner": "entry/archive cleanup scopes",
+      "reason": "These existing concrete scopes own native streams, temporary paths, ZIP names and binary inflate/write buffers. Retain SDL allocator matching, durable commit/error behavior and exact ZIP byte/CRC operations."
+    },
+    {
+      "id": "101",
+      "path": "src/ui/libraryzip.cpp",
+      "scope": "FUnzipLibraryArchive",
+      "owner": "entry/archive cleanup scopes",
+      "reason": "These existing concrete scopes own native streams, temporary paths, ZIP names and binary inflate/write buffers. Retain SDL allocator matching, durable commit/error behavior and exact ZIP byte/CRC operations."
+    },
+    {
+      "id": "102",
+      "path": "src/ui/planetpaneui.cpp",
+      "scope": "PlanetPaneWndProc",
+      "owner": "pane owner -> window userdata -> pane owner on WM_DESTROY",
+      "reason": "The callback payload already has a matched concrete owner across publication/removal. Keep its calloc allocation choice, null-on-failure behavior and stable native userdata pointer."
+    },
+    {
+      "id": "103",
+      "path": "src/ui/scaninspect.cpp",
+      "scope": "FCaptureScanner",
+      "owner": "SCANSNAPSHOT rgobj array owner",
+      "reason": "The copied player-client row array already has a concrete matched owner. Retain calloc/zero and allocation-failure behavior; no original object pointer or game wire layout is published."
+    }
+  ],
+  "sites": [
+    {
+      "path": "compat/win32/src/accelerator.cpp",
+      "line": 25,
+      "scope": "CreateAcceleratorTableA",
+      "operation": "calloc",
+      "code": "std::calloc(1, sizeof(*lp))",
+      "normalized_call": "std::calloc(1,sizeof(*lp))",
+      "compiler_context": true,
+      "contract": "1"
+    },
+    {
+      "path": "compat/win32/src/accelerator.cpp",
+      "line": 28,
+      "scope": "CreateAcceleratorTableA",
+      "operation": "malloc",
+      "code": "std::malloc(static_cast<std::size_t>(c) * sizeof(ACCEL))",
+      "normalized_call": "std::malloc(static_cast<std::size_t>(c)*sizeof(ACCEL))",
+      "compiler_context": true,
+      "contract": "1"
+    },
+    {
+      "path": "compat/win32/src/accelerator.cpp",
+      "line": 50,
+      "scope": "DestroyAcceleratorTable",
+      "operation": "free",
+      "code": "std::free(lp->rg)",
+      "normalized_call": "std::free(lp->rg)",
+      "compiler_context": true,
+      "contract": "2"
+    },
+    {
+      "path": "compat/win32/src/accelerator.cpp",
+      "line": 64,
+      "scope": "LoadAcceleratorsA",
+      "operation": "calloc",
+      "code": "std::calloc(static_cast<std::size_t>(c), sizeof(*rg))",
+      "normalized_call": "std::calloc(static_cast<std::size_t>(c),sizeof(*rg))",
+      "compiler_context": true,
+      "contract": "3"
+    },
+    {
+      "path": "compat/win32/src/accelerator.cpp",
+      "line": 113,
+      "scope": "CompatShutdownAccelerators",
+      "operation": "free",
+      "code": "std::free(lp->rg)",
+      "normalized_call": "std::free(lp->rg)",
+      "compiler_context": true,
+      "contract": "4"
+    },
+    {
+      "path": "compat/win32/src/accelerator.cpp",
+      "line": 113,
+      "scope": "CompatShutdownAccelerators",
+      "operation": "free",
+      "code": "std::free(lp)",
+      "normalized_call": "std::free(lp)",
+      "compiler_context": true,
+      "contract": "4"
+    },
+    {
+      "path": "compat/win32/src/combo.cpp",
+      "line": 31,
+      "scope": "PszComboItem",
+      "operation": "SDL_malloc",
+      "code": "SDL_malloc(static_cast<std::size_t>(cch) + 1)",
+      "normalized_call": "SDL_malloc(static_cast<std::size_t>(cch)+1)",
+      "compiler_context": true,
+      "contract": "5"
+    },
+    {
+      "path": "compat/win32/src/control.cpp",
+      "line": 54,
+      "scope": "CheckRadioButton",
+      "operation": "calloc",
+      "code": "std::calloc(c ? static_cast<std::size_t>(c) : 1, sizeof(*rghwnd))",
+      "normalized_call": "std::calloc(c?static_cast<std::size_t>(c):1,sizeof(*rghwnd))",
+      "compiler_context": true,
+      "contract": "6"
+    },
+    {
+      "path": "compat/win32/src/dialog_template.cpp",
+      "line": 35,
+      "scope": "FDlgField",
+      "operation": "malloc",
+      "code": "std::malloc(cch * 3 + 1)",
+      "normalized_call": "std::malloc(cch*3+1)",
+      "compiler_context": true,
+      "contract": "7"
+    },
+    {
+      "path": "compat/win32/src/dialog_template.cpp",
+      "line": 46,
+      "scope": "CompatFreeDialogTemplate",
+      "operation": "free",
+      "code": "std::free(lpdlg->rgItems[i].pszClass)",
+      "normalized_call": "std::free(lpdlg->rgItems[i].pszClass)",
+      "compiler_context": true,
+      "contract": "8"
+    },
+    {
+      "path": "compat/win32/src/dialog_template.cpp",
+      "line": 46,
+      "scope": "CompatFreeDialogTemplate",
+      "operation": "free",
+      "code": "std::free(lpdlg->rgItems[i].pszTitle)",
+      "normalized_call": "std::free(lpdlg->rgItems[i].pszTitle)",
+      "compiler_context": true,
+      "contract": "8"
+    },
+    {
+      "path": "compat/win32/src/dialog_template.cpp",
+      "line": 48,
+      "scope": "CompatFreeDialogTemplate",
+      "operation": "free",
+      "code": "std::free(lpdlg->rgItems)",
+      "normalized_call": "std::free(lpdlg->rgItems)",
+      "compiler_context": true,
+      "contract": "8"
+    },
+    {
+      "path": "compat/win32/src/dialog_template.cpp",
+      "line": 48,
+      "scope": "CompatFreeDialogTemplate",
+      "operation": "free",
+      "code": "std::free(lpdlg->pszMenu)",
+      "normalized_call": "std::free(lpdlg->pszMenu)",
+      "compiler_context": true,
+      "contract": "8"
+    },
+    {
+      "path": "compat/win32/src/dialog_template.cpp",
+      "line": 48,
+      "scope": "CompatFreeDialogTemplate",
+      "operation": "free",
+      "code": "std::free(lpdlg->pszClass)",
+      "normalized_call": "std::free(lpdlg->pszClass)",
+      "compiler_context": true,
+      "contract": "8"
+    },
+    {
+      "path": "compat/win32/src/dialog_template.cpp",
+      "line": 49,
+      "scope": "CompatFreeDialogTemplate",
+      "operation": "free",
+      "code": "std::free(lpdlg->pszTitle)",
+      "normalized_call": "std::free(lpdlg->pszTitle)",
+      "compiler_context": true,
+      "contract": "8"
+    },
+    {
+      "path": "compat/win32/src/dialog_template.cpp",
+      "line": 49,
+      "scope": "CompatFreeDialogTemplate",
+      "operation": "free",
+      "code": "std::free(lpdlg->pszFont)",
+      "normalized_call": "std::free(lpdlg->pszFont)",
+      "compiler_context": true,
+      "contract": "8"
+    },
+    {
+      "path": "compat/win32/src/dialog_template.cpp",
+      "line": 72,
+      "scope": "FCompatDialogTemplate",
+      "operation": "calloc",
+      "code": "std::calloc(dlg.cItems, sizeof(*dlg.rgItems))",
+      "normalized_call": "std::calloc(dlg.cItems,sizeof(*dlg.rgItems))",
+      "compiler_context": true,
+      "contract": "9"
+    },
+    {
+      "path": "compat/win32/src/document.cpp",
+      "line": 16,
+      "scope": "PszCompatFileUri",
+      "operation": "malloc",
+      "code": "std::malloc(std::strlen(pszAbsolute) * 3 + 9)",
+      "normalized_call": "std::malloc(std::strlen(pszAbsolute)*3+9)",
+      "compiler_context": true,
+      "contract": "10"
+    },
+    {
+      "path": "compat/win32/src/edit.cpp",
+      "line": 24,
+      "scope": "CompatEditComposition",
+      "operation": "SDL_strdup",
+      "code": "SDL_strdup(pszUtf)",
+      "normalized_call": "SDL_strdup(pszUtf)",
+      "compiler_context": true,
+      "contract": "11"
+    },
+    {
+      "path": "compat/win32/src/edit.cpp",
+      "line": 25,
+      "scope": "CompatEditComposition",
+      "operation": "SDL_free",
+      "code": "SDL_free(hwnd->pszEditComposition)",
+      "normalized_call": "SDL_free(hwnd->pszEditComposition)",
+      "compiler_context": true,
+      "contract": "11"
+    },
+    {
+      "path": "compat/win32/src/edit.cpp",
+      "line": 81,
+      "scope": "EmptyEditUndo",
+      "operation": "SDL_free",
+      "code": "SDL_free(hwnd->pszEditUndo)",
+      "normalized_call": "SDL_free(hwnd->pszEditUndo)",
+      "compiler_context": true,
+      "contract": "12"
+    },
+    {
+      "path": "compat/win32/src/edit.cpp",
+      "line": 137,
+      "scope": "ReplaceEdit",
+      "operation": "SDL_malloc",
+      "code": "SDL_malloc(cchBase + cch + 1)",
+      "normalized_call": "SDL_malloc(cchBase+cch+1)",
+      "compiler_context": true,
+      "contract": "13"
+    },
+    {
+      "path": "compat/win32/src/edit.cpp",
+      "line": 140,
+      "scope": "ReplaceEdit",
+      "operation": "SDL_strdup",
+      "code": "SDL_strdup(hwnd->pszTitle)",
+      "normalized_call": "SDL_strdup(hwnd->pszTitle)",
+      "compiler_context": true,
+      "contract": "13"
+    },
+    {
+      "path": "compat/win32/src/edit.cpp",
+      "line": 163,
+      "scope": "ReplaceEdit",
+      "operation": "SDL_free",
+      "code": "SDL_free(hwnd->pszTitle)",
+      "normalized_call": "SDL_free(hwnd->pszTitle)",
+      "compiler_context": true,
+      "contract": "13"
+    },
+    {
+      "path": "compat/win32/src/edit.cpp",
+      "line": 203,
+      "scope": "CopyEdit",
+      "operation": "SDL_malloc",
+      "code": "SDL_malloc(cch + 1)",
+      "normalized_call": "SDL_malloc(cch+1)",
+      "compiler_context": true,
+      "contract": "14"
+    },
+    {
+      "path": "compat/win32/src/edit.cpp",
+      "line": 415,
+      "scope": "PaintEdit",
+      "operation": "SDL_strdup",
+      "code": "SDL_strdup(hwnd->pszTitle)",
+      "normalized_call": "SDL_strdup(hwnd->pszTitle)",
+      "compiler_context": true,
+      "contract": "15"
+    },
+    {
+      "path": "compat/win32/src/edit.cpp",
+      "line": 463,
+      "scope": "PaintEdit",
+      "operation": "SDL_strdup",
+      "code": "SDL_strdup(hwnd->pszEditComposition)",
+      "normalized_call": "SDL_strdup(hwnd->pszEditComposition)",
+      "compiler_context": true,
+      "contract": "15"
+    },
+    {
+      "path": "compat/win32/src/edit.cpp",
+      "line": 674,
+      "scope": "CompatEditProc",
+      "operation": "SDL_free",
+      "code": "SDL_free(lp->pszEditComposition)",
+      "normalized_call": "SDL_free(lp->pszEditComposition)",
+      "compiler_context": true,
+      "contract": "16"
+    },
+    {
+      "path": "compat/win32/src/file.cpp",
+      "line": 117,
+      "scope": "OpenFile",
+      "operation": "calloc",
+      "code": "std::calloc(1, sizeof(*lpNew))",
+      "normalized_call": "std::calloc(1,sizeof(*lpNew))",
+      "compiler_context": true,
+      "contract": "17"
+    },
+    {
+      "path": "compat/win32/src/file.cpp",
+      "line": 148,
+      "scope": "_lclose",
+      "operation": "free",
+      "code": "std::free(lp)",
+      "normalized_call": "std::free(lp)",
+      "compiler_context": true,
+      "contract": "18"
+    },
+    {
+      "path": "compat/win32/src/file.cpp",
+      "line": 233,
+      "scope": "CompatShutdownFiles",
+      "operation": "free",
+      "code": "std::free(lp)",
+      "normalized_call": "std::free(lp)",
+      "compiler_context": true,
+      "contract": "19"
+    },
+    {
+      "path": "compat/win32/src/filedialog.cpp",
+      "line": 72,
+      "scope": "FreeFileEntries",
+      "operation": "free",
+      "code": "std::free(lp->rgentry[i].psz)",
+      "normalized_call": "std::free(lp->rgentry[i].psz)",
+      "compiler_context": true,
+      "contract": "20"
+    },
+    {
+      "path": "compat/win32/src/filedialog.cpp",
+      "line": 73,
+      "scope": "FreeFileEntries",
+      "operation": "free",
+      "code": "std::free(lp->rgentry)",
+      "normalized_call": "std::free(lp->rgentry)",
+      "compiler_context": true,
+      "contract": "20"
+    },
+    {
+      "path": "compat/win32/src/filedialog.cpp",
+      "line": 127,
+      "scope": "FRefreshFiles",
+      "operation": "realloc",
+      "code": "std::realloc(lp->rgentry, (lp->cEntry + 1) * sizeof(*rg))",
+      "normalized_call": "std::realloc(lp->rgentry,(lp->cEntry+1)*sizeof(*rg))",
+      "compiler_context": true,
+      "contract": "21"
+    },
+    {
+      "path": "compat/win32/src/filedialog.cpp",
+      "line": 130,
+      "scope": "FRefreshFiles",
+      "operation": "strdup",
+      "code": "strdup(pszEntry)",
+      "normalized_call": "strdup(pszEntry)",
+      "compiler_context": true,
+      "contract": "21"
+    },
+    {
+      "path": "compat/win32/src/filedialog.cpp",
+      "line": 163,
+      "scope": "FChangeFileDirectory",
+      "operation": "strdup",
+      "code": "strdup(lp->szDir)",
+      "normalized_call": "strdup(lp->szDir)",
+      "compiler_context": true,
+      "contract": "22"
+    },
+    {
+      "path": "compat/win32/src/filedialog.cpp",
+      "line": 423,
+      "scope": "FFileDialog",
+      "operation": "free",
+      "code": "std::free(dlg.rgfilter[i].pszName)",
+      "normalized_call": "std::free(dlg.rgfilter[i].pszName)",
+      "compiler_context": true,
+      "contract": "23"
+    },
+    {
+      "path": "compat/win32/src/filedialog.cpp",
+      "line": 423,
+      "scope": "FFileDialog",
+      "operation": "free",
+      "code": "std::free(dlg.rgfilter[i].pszPattern)",
+      "normalized_call": "std::free(dlg.rgfilter[i].pszPattern)",
+      "compiler_context": true,
+      "contract": "23"
+    },
+    {
+      "path": "compat/win32/src/filedialog.cpp",
+      "line": 447,
+      "scope": "FFileDialog",
+      "operation": "strdup",
+      "code": "strdup(psz)",
+      "normalized_call": "strdup(psz)",
+      "compiler_context": true,
+      "contract": "23"
+    },
+    {
+      "path": "compat/win32/src/filedialog.cpp",
+      "line": 447,
+      "scope": "FFileDialog",
+      "operation": "strdup",
+      "code": "strdup(pszPattern)",
+      "normalized_call": "strdup(pszPattern)",
+      "compiler_context": true,
+      "contract": "23"
+    },
+    {
+      "path": "compat/win32/src/filedialog_cocoa.cpp",
+      "line": 12,
+      "scope": "PszCocoaLabelUtf8",
+      "operation": "SDL_strdup",
+      "code": "SDL_strdup(psz)",
+      "normalized_call": "SDL_strdup(psz)",
+      "compiler_context": true,
+      "contract": "24"
+    },
+    {
+      "path": "compat/win32/src/filedialog_cocoa.cpp",
+      "line": 40,
+      "scope": "ICompatChooseFile",
+      "operation": "calloc",
+      "code": "std::calloc(static_cast<std::size_t>(cFilter), sizeof(*rg))",
+      "normalized_call": "std::calloc(static_cast<std::size_t>(cFilter),sizeof(*rg))",
+      "compiler_context": true,
+      "contract": "25"
+    },
+    {
+      "path": "compat/win32/src/filedialog_portal.cpp",
+      "line": 53,
+      "scope": "PszPortalLabel",
+      "operation": "SDL_strdup",
+      "code": "SDL_strdup(psz)",
+      "normalized_call": "SDL_strdup(psz)",
+      "compiler_context": false,
+      "contract": "26"
+    },
+    {
+      "path": "compat/win32/src/filedialog_portal.cpp",
+      "line": 229,
+      "scope": "ICompatChooseFile",
+      "operation": "SDL_free",
+      "code": "SDL_free(pszTitleUtf)",
+      "normalized_call": "SDL_free(pszTitleUtf)",
+      "compiler_context": false,
+      "contract": "27"
+    },
+    {
+      "path": "compat/win32/src/filedialog_portal.cpp",
+      "line": 229,
+      "scope": "ICompatChooseFile",
+      "operation": "SDL_free",
+      "code": "SDL_free(pszWaylandParent)",
+      "normalized_call": "SDL_free(pszWaylandParent)",
+      "compiler_context": false,
+      "contract": "27"
+    },
+    {
+      "path": "compat/win32/src/filedialog_portal.cpp",
+      "line": 229,
+      "scope": "ICompatChooseFile",
+      "operation": "free",
+      "code": "std::free(pszRequest)",
+      "normalized_call": "std::free(pszRequest)",
+      "compiler_context": false,
+      "contract": "27"
+    },
+    {
+      "path": "compat/win32/src/filedialog_portal.cpp",
+      "line": 229,
+      "scope": "ICompatChooseFile",
+      "operation": "free",
+      "code": "std::free(pszSender)",
+      "normalized_call": "std::free(pszSender)",
+      "compiler_context": false,
+      "contract": "27"
+    },
+    {
+      "path": "compat/win32/src/filedialog_portal.cpp",
+      "line": 267,
+      "scope": "ICompatChooseFile",
+      "operation": "strdup",
+      "code": "strdup(szRequest)",
+      "normalized_call": "strdup(szRequest)",
+      "compiler_context": false,
+      "contract": "27"
+    },
+    {
+      "path": "compat/win32/src/filedialog_portal.cpp",
+      "line": 295,
+      "scope": "ICompatChooseFile",
+      "operation": "free",
+      "code": "std::free(pszRequest)",
+      "normalized_call": "std::free(pszRequest)",
+      "compiler_context": false,
+      "contract": "27"
+    },
+    {
+      "path": "compat/win32/src/filedialog_portal.cpp",
+      "line": 295,
+      "scope": "ICompatChooseFile",
+      "operation": "strdup",
+      "code": "strdup(pszHandle)",
+      "normalized_call": "strdup(pszHandle)",
+      "compiler_context": false,
+      "contract": "27"
+    },
+    {
+      "path": "compat/win32/src/filedialog_portal.cpp",
+      "line": 295,
+      "scope": "ICompatChooseFile",
+      "operation": "strdup",
+      "code": "strdup(dbus_message_get_sender(lpReply))",
+      "normalized_call": "strdup(dbus_message_get_sender(lpReply))",
+      "compiler_context": false,
+      "contract": "27"
+    },
+    {
+      "path": "compat/win32/src/filedialog_windows.cpp",
+      "line": 28,
+      "scope": "ICompatChooseFile",
+      "operation": "calloc",
+      "code": "std::calloc(static_cast<std::size_t>(cFilter), sizeof(*rg))",
+      "normalized_call": "std::calloc(static_cast<std::size_t>(cFilter),sizeof(*rg))",
+      "compiler_context": false,
+      "contract": "28"
+    },
+    {
+      "path": "compat/win32/src/filedialog_windows_sdk.cpp",
+      "line": 33,
+      "scope": "LpwszChooserText",
+      "operation": "malloc",
+      "code": "std::malloc(static_cast<std::size_t>(cch) * sizeof(*pwsz))",
+      "normalized_call": "std::malloc(static_cast<std::size_t>(cch)*sizeof(*pwsz))",
+      "compiler_context": false,
+      "contract": "29"
+    },
+    {
+      "path": "compat/win32/src/filedialog_windows_sdk.cpp",
+      "line": 74,
+      "scope": "IChooseWindowsFile",
+      "operation": "free",
+      "code": "std::free(pwszTitle)",
+      "normalized_call": "std::free(pwszTitle)",
+      "compiler_context": false,
+      "contract": "30"
+    },
+    {
+      "path": "compat/win32/src/filedialog_windows_sdk.cpp",
+      "line": 74,
+      "scope": "IChooseWindowsFile",
+      "operation": "free",
+      "code": "std::free(pwszFolder)",
+      "normalized_call": "std::free(pwszFolder)",
+      "compiler_context": false,
+      "contract": "30"
+    },
+    {
+      "path": "compat/win32/src/filedialog_windows_sdk.cpp",
+      "line": 74,
+      "scope": "IChooseWindowsFile",
+      "operation": "free",
+      "code": "std::free(pwszName)",
+      "normalized_call": "std::free(pwszName)",
+      "compiler_context": false,
+      "contract": "30"
+    },
+    {
+      "path": "compat/win32/src/filedialog_windows_sdk.cpp",
+      "line": 75,
+      "scope": "IChooseWindowsFile",
+      "operation": "free",
+      "code": "std::free(pwszFilter)",
+      "normalized_call": "std::free(pwszFilter)",
+      "compiler_context": false,
+      "contract": "30"
+    },
+    {
+      "path": "compat/win32/src/filedialog_windows_sdk.cpp",
+      "line": 75,
+      "scope": "IChooseWindowsFile",
+      "operation": "free",
+      "code": "std::free(pwszFile)",
+      "normalized_call": "std::free(pwszFile)",
+      "compiler_context": false,
+      "contract": "30"
+    },
+    {
+      "path": "compat/win32/src/filedialog_windows_sdk.cpp",
+      "line": 75,
+      "scope": "IChooseWindowsFile",
+      "operation": "free",
+      "code": "std::free(pwszCwd)",
+      "normalized_call": "std::free(pwszCwd)",
+      "compiler_context": false,
+      "contract": "30"
+    },
+    {
+      "path": "compat/win32/src/filedialog_windows_sdk.cpp",
+      "line": 81,
+      "scope": "IChooseWindowsFile",
+      "operation": "calloc",
+      "code": "std::calloc(32768, sizeof(*pwszFile))",
+      "normalized_call": "std::calloc(32768,sizeof(*pwszFile))",
+      "compiler_context": false,
+      "contract": "30"
+    },
+    {
+      "path": "compat/win32/src/filedialog_windows_sdk.cpp",
+      "line": 83,
+      "scope": "IChooseWindowsFile",
+      "operation": "malloc",
+      "code": "std::malloc(static_cast<std::size_t>(cchCwd) * sizeof(*pwszCwd))",
+      "normalized_call": "std::malloc(static_cast<std::size_t>(cchCwd)*sizeof(*pwszCwd))",
+      "compiler_context": false,
+      "contract": "30"
+    },
+    {
+      "path": "compat/win32/src/filedialog_windows_sdk.cpp",
+      "line": 94,
+      "scope": "IChooseWindowsFile",
+      "operation": "realloc",
+      "code": "std::realloc(pwszFilter, (cchFilter + cchLabel + cchPattern) * sizeof(*pwszFilter))",
+      "normalized_call": "std::realloc(pwszFilter,(cchFilter+cchLabel+cchPattern)*sizeof(*pwszFilter))",
+      "compiler_context": false,
+      "contract": "30"
+    },
+    {
+      "path": "compat/win32/src/font.cpp",
+      "line": 56,
+      "scope": "LpLoadGlyph",
+      "operation": "malloc",
+      "code": "std::malloc(static_cast<std::size_t>(lp->cx) * lp->cy)",
+      "normalized_call": "std::malloc(static_cast<std::size_t>(lp->cx)*lp->cy)",
+      "compiler_context": true,
+      "contract": "31"
+    },
+    {
+      "path": "compat/win32/src/help.cpp",
+      "line": 67,
+      "scope": "PszHelpDocument",
+      "operation": "malloc",
+      "code": "std::malloc(static_cast<std::size_t>(STARS_HELP_BUNDLE_SIZE) + 1)",
+      "normalized_call": "std::malloc(static_cast<std::size_t>(STARS_HELP_BUNDLE_SIZE)+1)",
+      "compiler_context": true,
+      "contract": "32"
+    },
+    {
+      "path": "compat/win32/src/help.cpp",
+      "line": 102,
+      "scope": "PszHelpDocument",
+      "operation": "strdup",
+      "code": "strdup(szTarget)",
+      "normalized_call": "strdup(szTarget)",
+      "compiler_context": true,
+      "contract": "32"
+    },
+    {
+      "path": "compat/win32/src/image.cpp",
+      "line": 69,
+      "scope": "HiconCompatResource",
+      "operation": "malloc",
+      "code": "std::malloc(static_cast<std::size_t>(dib.cx) * dib.cy)",
+      "normalized_call": "std::malloc(static_cast<std::size_t>(dib.cx)*dib.cy)",
+      "compiler_context": true,
+      "contract": "33"
+    },
+    {
+      "path": "compat/win32/src/image.cpp",
+      "line": 149,
+      "scope": "CopyIcon",
+      "operation": "malloc",
+      "code": "std::malloc(cb)",
+      "normalized_call": "std::malloc(cb)",
+      "compiler_context": true,
+      "contract": "34"
+    },
+    {
+      "path": "compat/win32/src/image.cpp",
+      "line": 208,
+      "scope": "FNativeCursor",
+      "operation": "calloc",
+      "code": "std::calloc(2, cb)",
+      "normalized_call": "std::calloc(2,cb)",
+      "compiler_context": true,
+      "contract": "35"
+    },
+    {
+      "path": "compat/win32/src/inspect.cpp",
+      "line": 110,
+      "scope": "StarsCompatFreeHierarchy",
+      "operation": "SDL_free",
+      "code": "SDL_free(lpsnap->rgWindow[i].pszClass)",
+      "normalized_call": "SDL_free(lpsnap->rgWindow[i].pszClass)",
+      "compiler_context": true,
+      "contract": "36"
+    },
+    {
+      "path": "compat/win32/src/inspect.cpp",
+      "line": 111,
+      "scope": "StarsCompatFreeHierarchy",
+      "operation": "SDL_free",
+      "code": "SDL_free(lpsnap->rgWindow[i].pszText)",
+      "normalized_call": "SDL_free(lpsnap->rgWindow[i].pszText)",
+      "compiler_context": true,
+      "contract": "36"
+    },
+    {
+      "path": "compat/win32/src/inspect.cpp",
+      "line": 113,
+      "scope": "StarsCompatFreeHierarchy",
+      "operation": "SDL_free",
+      "code": "SDL_free(lpsnap->rgWindow)",
+      "normalized_call": "SDL_free(lpsnap->rgWindow)",
+      "compiler_context": true,
+      "contract": "36"
+    },
+    {
+      "path": "compat/win32/src/inspect.cpp",
+      "line": 126,
+      "scope": "StarsCompatCaptureHierarchy",
+      "operation": "SDL_calloc",
+      "code": "SDL_calloc(c, sizeof(*lpitem))",
+      "normalized_call": "SDL_calloc(c,sizeof(*lpitem))",
+      "compiler_context": true,
+      "contract": "37"
+    },
+    {
+      "path": "compat/win32/src/inspect.cpp",
+      "line": 144,
+      "scope": "StarsCompatCaptureHierarchy",
+      "operation": "SDL_strdup",
+      "code": "SDL_strdup(lpwin->lpclass->pszClass.get())",
+      "normalized_call": "SDL_strdup(lpwin->lpclass->pszClass.get())",
+      "compiler_context": true,
+      "contract": "37"
+    },
+    {
+      "path": "compat/win32/src/inspect.cpp",
+      "line": 145,
+      "scope": "StarsCompatCaptureHierarchy",
+      "operation": "SDL_strdup",
+      "code": "SDL_strdup(lpwin->iControl == 3 && (lpwin->dwStyle & win32::ES_PASSWORD) ?\n                                    \"[password]\" : lpwin->pszTitle)",
+      "normalized_call": "SDL_strdup(lpwin->iControl==3&&(lpwin->dwStyle&win32::ES_PASSWORD)?:lpwin->pszTitle)",
+      "compiler_context": true,
+      "contract": "37"
+    },
+    {
+      "path": "compat/win32/src/inspect.cpp",
+      "line": 225,
+      "scope": "InspectDetails",
+      "operation": "SDL_malloc",
+      "code": "SDL_malloc(cb + 640)",
+      "normalized_call": "SDL_malloc(cb+640)",
+      "compiler_context": true,
+      "contract": "38"
+    },
+    {
+      "path": "compat/win32/src/inspect.cpp",
+      "line": 253,
+      "scope": "InspectRows",
+      "operation": "SDL_malloc",
+      "code": "SDL_malloc(cb * 3 + 1)",
+      "normalized_call": "SDL_malloc(cb*3+1)",
+      "compiler_context": true,
+      "contract": "39"
+    },
+    {
+      "path": "compat/win32/src/list.cpp",
+      "line": 23,
+      "scope": "~COMPATLIST",
+      "operation": "SDL_free",
+      "code": "SDL_free(rgitem[i].psz)",
+      "normalized_call": "SDL_free(rgitem[i].psz)",
+      "compiler_context": true,
+      "contract": "40"
+    },
+    {
+      "path": "compat/win32/src/list.cpp",
+      "line": 24,
+      "scope": "~COMPATLIST",
+      "operation": "SDL_free",
+      "code": "SDL_free(rgSelectedDrag)",
+      "normalized_call": "SDL_free(rgSelectedDrag)",
+      "compiler_context": true,
+      "contract": "40"
+    },
+    {
+      "path": "compat/win32/src/list.cpp",
+      "line": 25,
+      "scope": "~COMPATLIST",
+      "operation": "SDL_free",
+      "code": "SDL_free(rgitem)",
+      "normalized_call": "SDL_free(rgitem)",
+      "compiler_context": true,
+      "contract": "40"
+    },
+    {
+      "path": "compat/win32/src/list.cpp",
+      "line": 91,
+      "scope": "ResetList",
+      "operation": "SDL_free",
+      "code": "SDL_free(rg[i].psz)",
+      "normalized_call": "SDL_free(rg[i].psz)",
+      "compiler_context": true,
+      "contract": "41"
+    },
+    {
+      "path": "compat/win32/src/list.cpp",
+      "line": 92,
+      "scope": "ResetList",
+      "operation": "SDL_free",
+      "code": "SDL_free(rg)",
+      "normalized_call": "SDL_free(rg)",
+      "compiler_context": true,
+      "contract": "41"
+    },
+    {
+      "path": "compat/win32/src/list.cpp",
+      "line": 99,
+      "scope": "ResetList",
+      "operation": "SDL_free",
+      "code": "SDL_free(rg[i].psz)",
+      "normalized_call": "SDL_free(rg[i].psz)",
+      "compiler_context": true,
+      "contract": "41"
+    },
+    {
+      "path": "compat/win32/src/list.cpp",
+      "line": 110,
+      "scope": "AddList",
+      "operation": "SDL_strdup",
+      "code": "SDL_strdup(psz)",
+      "normalized_call": "SDL_strdup(psz)",
+      "compiler_context": true,
+      "contract": "42"
+    },
+    {
+      "path": "compat/win32/src/list.cpp",
+      "line": 116,
+      "scope": "AddList",
+      "operation": "SDL_realloc",
+      "code": "SDL_realloc(lp->rgitem, static_cast<std::size_t>(cAlloc) * sizeof(*rg))",
+      "normalized_call": "SDL_realloc(lp->rgitem,static_cast<std::size_t>(cAlloc)*sizeof(*rg))",
+      "compiler_context": true,
+      "contract": "42"
+    },
+    {
+      "path": "compat/win32/src/list.cpp",
+      "line": 175,
+      "scope": "EndListDrag",
+      "operation": "SDL_free",
+      "code": "SDL_free(lp->rgSelectedDrag)",
+      "normalized_call": "SDL_free(lp->rgSelectedDrag)",
+      "compiler_context": true,
+      "contract": "43"
+    },
+    {
+      "path": "compat/win32/src/list.cpp",
+      "line": 375,
+      "scope": "CompatListProc",
+      "operation": "SDL_free",
+      "code": "SDL_free(lp->rgitem[i].psz)",
+      "normalized_call": "SDL_free(lp->rgitem[i].psz)",
+      "compiler_context": true,
+      "contract": "44"
+    },
+    {
+      "path": "compat/win32/src/list.cpp",
+      "line": 467,
+      "scope": "CompatListProc",
+      "operation": "SDL_free",
+      "code": "SDL_free(lp->rgSelectedDrag)",
+      "normalized_call": "SDL_free(lp->rgSelectedDrag)",
+      "compiler_context": true,
+      "contract": "44"
+    },
+    {
+      "path": "compat/win32/src/list.cpp",
+      "line": 469,
+      "scope": "CompatListProc",
+      "operation": "SDL_malloc",
+      "code": "SDL_malloc(static_cast<std::size_t>(lp->cItem))",
+      "normalized_call": "SDL_malloc(static_cast<std::size_t>(lp->cItem))",
+      "compiler_context": true,
+      "contract": "44"
+    },
+    {
+      "path": "compat/win32/src/memory.cpp",
+      "line": 21,
+      "scope": "FreeMemoryBlock",
+      "operation": "free",
+      "code": "std::free(lp->rgb)",
+      "normalized_call": "std::free(lp->rgb)",
+      "compiler_context": true,
+      "contract": "45"
+    },
+    {
+      "path": "compat/win32/src/memory.cpp",
+      "line": 22,
+      "scope": "FreeMemoryBlock",
+      "operation": "free",
+      "code": "std::free(lp)",
+      "normalized_call": "std::free(lp)",
+      "compiler_context": true,
+      "contract": "45"
+    },
+    {
+      "path": "compat/win32/src/memory.cpp",
+      "line": 62,
+      "scope": "GlobalAlloc",
+      "operation": "calloc",
+      "code": "std::calloc(1, sizeof(*lp))",
+      "normalized_call": "std::calloc(1,sizeof(*lp))",
+      "compiler_context": true,
+      "contract": "46"
+    },
+    {
+      "path": "compat/win32/src/memory.cpp",
+      "line": 71,
+      "scope": "GlobalAlloc",
+      "operation": "calloc",
+      "code": "std::calloc(1, cb ? cb : 1)",
+      "normalized_call": "std::calloc(1,cb?cb:1)",
+      "compiler_context": true,
+      "contract": "46"
+    },
+    {
+      "path": "compat/win32/src/memory.cpp",
+      "line": 71,
+      "scope": "GlobalAlloc",
+      "operation": "malloc",
+      "code": "std::malloc(cb ? cb : 1)",
+      "normalized_call": "std::malloc(cb?cb:1)",
+      "compiler_context": true,
+      "contract": "46"
+    },
+    {
+      "path": "compat/win32/src/memory.cpp",
+      "line": 195,
+      "scope": "GlobalReAlloc",
+      "operation": "free",
+      "code": "std::free(lp->rgb)",
+      "normalized_call": "std::free(lp->rgb)",
+      "compiler_context": true,
+      "contract": "47"
+    },
+    {
+      "path": "compat/win32/src/memory.cpp",
+      "line": 204,
+      "scope": "GlobalReAlloc",
+      "operation": "realloc",
+      "code": "std::realloc(lp->rgb, cb ? cb : 1)",
+      "normalized_call": "std::realloc(lp->rgb,cb?cb:1)",
+      "compiler_context": true,
+      "contract": "47"
+    },
+    {
+      "path": "compat/win32/src/menu.cpp",
+      "line": 101,
+      "scope": "InsertMenuA",
+      "operation": "SDL_strdup",
+      "code": "SDL_strdup(psz ? psz : \"\")",
+      "normalized_call": "SDL_strdup(psz?psz:)",
+      "compiler_context": true,
+      "contract": "48"
+    },
+    {
+      "path": "compat/win32/src/menu.cpp",
+      "line": 221,
+      "scope": "CyCompatMenuBar",
+      "operation": "calloc",
+      "code": "std::calloc(static_cast<std::size_t>(lp->citem), sizeof(*rgrc))",
+      "normalized_call": "std::calloc(static_cast<std::size_t>(lp->citem),sizeof(*rgrc))",
+      "compiler_context": true,
+      "contract": "49"
+    },
+    {
+      "path": "compat/win32/src/menu.cpp",
+      "line": 400,
+      "scope": "PopupPaint",
+      "operation": "SDL_strdup",
+      "code": "SDL_strdup(lp->rgitem[i].psz ? lp->rgitem[i].psz.get() : \"\")",
+      "normalized_call": "SDL_strdup(lp->rgitem[i].psz?lp->rgitem[i].psz.get():)",
+      "compiler_context": true,
+      "contract": "50"
+    },
+    {
+      "path": "compat/win32/src/menu.cpp",
+      "line": 453,
+      "scope": "OpenPopup",
+      "operation": "calloc",
+      "code": "std::calloc(static_cast<std::size_t>(lp->citem), sizeof(RECT))",
+      "normalized_call": "std::calloc(static_cast<std::size_t>(lp->citem),sizeof(RECT))",
+      "compiler_context": true,
+      "contract": "51"
+    },
+    {
+      "path": "compat/win32/src/message.cpp",
+      "line": 29,
+      "scope": "FreeMessage",
+      "operation": "free",
+      "code": "std::free(lp)",
+      "normalized_call": "std::free(lp)",
+      "compiler_context": true,
+      "contract": "52"
+    },
+    {
+      "path": "compat/win32/src/message.cpp",
+      "line": 127,
+      "scope": "ReleasePost",
+      "operation": "free",
+      "code": "std::free(lp)",
+      "normalized_call": "std::free(lp)",
+      "compiler_context": true,
+      "contract": "53"
+    },
+    {
+      "path": "compat/win32/src/message.cpp",
+      "line": 507,
+      "scope": "DefWindowProcA",
+      "operation": "SDL_strdup",
+      "code": "SDL_strdup(reinterpret_cast<const char *>(lParam))",
+      "normalized_call": "SDL_strdup(reinterpret_cast<constchar*>(lParam))",
+      "compiler_context": true,
+      "contract": "54"
+    },
+    {
+      "path": "compat/win32/src/message.cpp",
+      "line": 512,
+      "scope": "DefWindowProcA",
+      "operation": "SDL_free",
+      "code": "SDL_free(lpwin->pszTitle)",
+      "normalized_call": "SDL_free(lpwin->pszTitle)",
+      "compiler_context": true,
+      "contract": "54"
+    },
+    {
+      "path": "compat/win32/src/paint.cpp",
+      "line": 194,
+      "scope": "CreatePalette",
+      "operation": "malloc",
+      "code": "std::malloc(static_cast<std::size_t>(lppal->palNumEntries) * sizeof(*rgpe))",
+      "normalized_call": "std::malloc(static_cast<std::size_t>(lppal->palNumEntries)*sizeof(*rgpe))",
+      "compiler_context": true,
+      "contract": "55"
+    },
+    {
+      "path": "compat/win32/src/paint.cpp",
+      "line": 715,
+      "scope": "FAddUpdate",
+      "operation": "realloc",
+      "code": "std::realloc(*lprgrc, (*lpcrc + 1) * sizeof(*rgrc))",
+      "normalized_call": "std::realloc(*lprgrc,(*lpcrc+1)*sizeof(*rgrc))",
+      "compiler_context": true,
+      "contract": "56"
+    },
+    {
+      "path": "compat/win32/src/paint.cpp",
+      "line": 765,
+      "scope": "FPaintClip",
+      "operation": "malloc",
+      "code": "std::malloc(hwnd->crcUpdate * sizeof(*rgrc))",
+      "normalized_call": "std::malloc(hwnd->crcUpdate*sizeof(*rgrc))",
+      "compiler_context": true,
+      "contract": "57"
+    },
+    {
+      "path": "compat/win32/src/paint.cpp",
+      "line": 848,
+      "scope": "ValidateRect",
+      "operation": "free",
+      "code": "std::free(rgrc)",
+      "normalized_call": "std::free(rgrc)",
+      "compiler_context": true,
+      "contract": "58"
+    },
+    {
+      "path": "compat/win32/src/paint.cpp",
+      "line": 951,
+      "scope": "SelectClipRgn",
+      "operation": "malloc",
+      "code": "std::malloc(sizeof(*rgrc))",
+      "normalized_call": "std::malloc(sizeof(*rgrc))",
+      "compiler_context": true,
+      "contract": "59"
+    },
+    {
+      "path": "compat/win32/src/paint.cpp",
+      "line": 995,
+      "scope": "IClipRect",
+      "operation": "malloc",
+      "code": "std::malloc(crcSrc * 4 * sizeof(*rgrc))",
+      "normalized_call": "std::malloc(crcSrc*4*sizeof(*rgrc))",
+      "compiler_context": true,
+      "contract": "60"
+    },
+    {
+      "path": "compat/win32/src/paint.cpp",
+      "line": 1292,
+      "scope": "BitBlt",
+      "operation": "malloc",
+      "code": "std::malloc(cPixels * sizeof(*rgcr))",
+      "normalized_call": "std::malloc(cPixels*sizeof(*rgcr))",
+      "compiler_context": true,
+      "contract": "61"
+    },
+    {
+      "path": "compat/win32/src/paint.cpp",
+      "line": 1333,
+      "scope": "ScrollWindow",
+      "operation": "free",
+      "code": "std::free(rgrc)",
+      "normalized_call": "std::free(rgrc)",
+      "compiler_context": true,
+      "contract": "62"
+    },
+    {
+      "path": "compat/win32/src/paint.cpp",
+      "line": 1601,
+      "scope": "Ellipse",
+      "operation": "calloc",
+      "code": "std::calloc(cb, 1)",
+      "normalized_call": "std::calloc(cb,1)",
+      "compiler_context": true,
+      "contract": "63"
+    },
+    {
+      "path": "compat/win32/src/paint.cpp",
+      "line": 1602,
+      "scope": "Ellipse",
+      "operation": "malloc",
+      "code": "std::malloc(static_cast<std::size_t>(el.rc.bottom - el.rc.top) * sizeof(std::int64_t))",
+      "normalized_call": "std::malloc(static_cast<std::size_t>(el.rc.bottom-el.rc.top)*sizeof(std::int64_t))",
+      "compiler_context": true,
+      "contract": "63"
+    },
+    {
+      "path": "compat/win32/src/paint.cpp",
+      "line": 1603,
+      "scope": "Ellipse",
+      "operation": "malloc",
+      "code": "std::malloc(static_cast<std::size_t>(el.rc.bottom - el.rc.top) * sizeof(std::int64_t))",
+      "normalized_call": "std::malloc(static_cast<std::size_t>(el.rc.bottom-el.rc.top)*sizeof(std::int64_t))",
+      "compiler_context": true,
+      "contract": "63"
+    },
+    {
+      "path": "compat/win32/src/paint.cpp",
+      "line": 1804,
+      "scope": "DrawTextA",
+      "operation": "malloc",
+      "code": "std::malloc(static_cast<std::size_t>(cch) * 8 + 1)",
+      "normalized_call": "std::malloc(static_cast<std::size_t>(cch)*8+1)",
+      "compiler_context": true,
+      "contract": "64"
+    },
+    {
+      "path": "compat/win32/src/paint.cpp",
+      "line": 1804,
+      "scope": "DrawTextA",
+      "operation": "calloc",
+      "code": "std::calloc(static_cast<std::size_t>(cch) * 8 + 1, 1)",
+      "normalized_call": "std::calloc(static_cast<std::size_t>(cch)*8+1,1)",
+      "compiler_context": true,
+      "contract": "64"
+    },
+    {
+      "path": "compat/win32/src/paint.cpp",
+      "line": 1805,
+      "scope": "DrawTextA",
+      "operation": "malloc",
+      "code": "std::malloc((static_cast<std::size_t>(cch) * 8 + 1) * sizeof(*rgline))",
+      "normalized_call": "std::malloc((static_cast<std::size_t>(cch)*8+1)*sizeof(*rgline))",
+      "compiler_context": true,
+      "contract": "64"
+    },
+    {
+      "path": "compat/win32/src/profile.cpp",
+      "line": 26,
+      "scope": "FreeProfile",
+      "operation": "free",
+      "code": "std::free(lp->szRaw)",
+      "normalized_call": "std::free(lp->szRaw)",
+      "compiler_context": true,
+      "contract": "65"
+    },
+    {
+      "path": "compat/win32/src/profile.cpp",
+      "line": 26,
+      "scope": "FreeProfile",
+      "operation": "free",
+      "code": "std::free(lp->szParsed)",
+      "normalized_call": "std::free(lp->szParsed)",
+      "compiler_context": true,
+      "contract": "65"
+    },
+    {
+      "path": "compat/win32/src/profile.cpp",
+      "line": 26,
+      "scope": "FreeProfile",
+      "operation": "free",
+      "code": "std::free(lp)",
+      "normalized_call": "std::free(lp)",
+      "compiler_context": true,
+      "contract": "65"
+    },
+    {
+      "path": "compat/win32/src/profile.cpp",
+      "line": 40,
+      "scope": "LpProfileLine",
+      "operation": "calloc",
+      "code": "std::calloc(1, sizeof(*lp))",
+      "normalized_call": "std::calloc(1,sizeof(*lp))",
+      "compiler_context": true,
+      "contract": "66"
+    },
+    {
+      "path": "compat/win32/src/profile.cpp",
+      "line": 45,
+      "scope": "LpProfileLine",
+      "operation": "strdup",
+      "code": "strdup(pszRaw)",
+      "normalized_call": "strdup(pszRaw)",
+      "compiler_context": true,
+      "contract": "66"
+    },
+    {
+      "path": "compat/win32/src/profile.cpp",
+      "line": 45,
+      "scope": "LpProfileLine",
+      "operation": "strdup",
+      "code": "strdup(pszRaw)",
+      "normalized_call": "strdup(pszRaw)",
+      "compiler_context": true,
+      "contract": "66"
+    },
+    {
+      "path": "compat/win32/src/profile.cpp",
+      "line": 68,
+      "scope": "FLoadProfile",
+      "operation": "free",
+      "code": "std::free(sz)",
+      "normalized_call": "std::free(sz)",
+      "compiler_context": true,
+      "contract": "67"
+    },
+    {
+      "path": "compat/win32/src/profile.cpp",
+      "line": 130,
+      "scope": "SzProfilePath",
+      "operation": "strdup",
+      "code": "strdup(pszFile)",
+      "normalized_call": "strdup(pszFile)",
+      "compiler_context": true,
+      "contract": "68"
+    },
+    {
+      "path": "compat/win32/src/profile.cpp",
+      "line": 135,
+      "scope": "SzProfilePath",
+      "operation": "malloc",
+      "code": "std::malloc(cb)",
+      "normalized_call": "std::malloc(cb)",
+      "compiler_context": true,
+      "contract": "68"
+    },
+    {
+      "path": "compat/win32/src/profile.cpp",
+      "line": 145,
+      "scope": "SzProfilePath",
+      "operation": "malloc",
+      "code": "std::malloc(cb)",
+      "normalized_call": "std::malloc(cb)",
+      "compiler_context": false,
+      "contract": "68"
+    },
+    {
+      "path": "compat/win32/src/profile.cpp",
+      "line": 147,
+      "scope": "SzProfilePath",
+      "operation": "strdup",
+      "code": "strdup(pszFile)",
+      "normalized_call": "strdup(pszFile)",
+      "compiler_context": false,
+      "contract": "68"
+    },
+    {
+      "path": "compat/win32/src/profile.cpp",
+      "line": 152,
+      "scope": "SzProfilePath",
+      "operation": "malloc",
+      "code": "std::malloc(cb)",
+      "normalized_call": "std::malloc(cb)",
+      "compiler_context": true,
+      "contract": "68"
+    },
+    {
+      "path": "compat/win32/src/profile.cpp",
+      "line": 156,
+      "scope": "SzProfilePath",
+      "operation": "malloc",
+      "code": "std::malloc(cb)",
+      "normalized_call": "std::malloc(cb)",
+      "compiler_context": true,
+      "contract": "68"
+    },
+    {
+      "path": "compat/win32/src/profile.cpp",
+      "line": 159,
+      "scope": "SzProfilePath",
+      "operation": "strdup",
+      "code": "strdup(pszFile)",
+      "normalized_call": "strdup(pszFile)",
+      "compiler_context": true,
+      "contract": "68"
+    },
+    {
+      "path": "compat/win32/src/profile.cpp",
+      "line": 164,
+      "scope": "SzProfilePath",
+      "operation": "free",
+      "code": "std::free(sz)",
+      "normalized_call": "std::free(sz)",
+      "compiler_context": true,
+      "contract": "68"
+    },
+    {
+      "path": "compat/win32/src/profile.cpp",
+      "line": 199,
+      "scope": "GetPrivateProfileStringA",
+      "operation": "free",
+      "code": "std::free(szPath)",
+      "normalized_call": "std::free(szPath)",
+      "compiler_context": true,
+      "contract": "69"
+    },
+    {
+      "path": "compat/win32/src/profile.cpp",
+      "line": 274,
+      "scope": "WritePrivateProfileStringA",
+      "operation": "free",
+      "code": "std::free(szLine)",
+      "normalized_call": "std::free(szLine)",
+      "compiler_context": true,
+      "contract": "70"
+    },
+    {
+      "path": "compat/win32/src/profile.cpp",
+      "line": 274,
+      "scope": "WritePrivateProfileStringA",
+      "operation": "free",
+      "code": "std::free(szPath)",
+      "normalized_call": "std::free(szPath)",
+      "compiler_context": true,
+      "contract": "70"
+    },
+    {
+      "path": "compat/win32/src/profile.cpp",
+      "line": 299,
+      "scope": "WritePrivateProfileStringA",
+      "operation": "malloc",
+      "code": "std::malloc(cb)",
+      "normalized_call": "std::malloc(cb)",
+      "compiler_context": true,
+      "contract": "70"
+    },
+    {
+      "path": "compat/win32/src/profile.cpp",
+      "line": 303,
+      "scope": "WritePrivateProfileStringA",
+      "operation": "free",
+      "code": "std::free(szLine)",
+      "normalized_call": "std::free(szLine)",
+      "compiler_context": true,
+      "contract": "70"
+    },
+    {
+      "path": "compat/win32/src/profile.cpp",
+      "line": 309,
+      "scope": "WritePrivateProfileStringA",
+      "operation": "malloc",
+      "code": "std::malloc(cb)",
+      "normalized_call": "std::malloc(cb)",
+      "compiler_context": true,
+      "contract": "70"
+    },
+    {
+      "path": "compat/win32/src/profile_save.cpp",
+      "line": 32,
+      "scope": "FSaveProfile",
+      "operation": "free",
+      "code": "std::free(szTemp)",
+      "normalized_call": "std::free(szTemp)",
+      "compiler_context": true,
+      "contract": "71"
+    },
+    {
+      "path": "compat/win32/src/resource.cpp",
+      "line": 119,
+      "scope": "HmenuTemplateItems",
+      "operation": "malloc",
+      "code": "std::malloc(cch * 3 + 1)",
+      "normalized_call": "std::malloc(cch*3+1)",
+      "compiler_context": true,
+      "contract": "72"
+    },
+    {
+      "path": "compat/win32/src/timer.cpp",
+      "line": 41,
+      "scope": "SetTimer",
+      "operation": "calloc",
+      "code": "std::calloc(1, sizeof(*lp))",
+      "normalized_call": "std::calloc(1,sizeof(*lp))",
+      "compiler_context": true,
+      "contract": "73"
+    },
+    {
+      "path": "compat/win32/src/timer.cpp",
+      "line": 65,
+      "scope": "KillTimer",
+      "operation": "free",
+      "code": "std::free(lp)",
+      "normalized_call": "std::free(lp)",
+      "compiler_context": true,
+      "contract": "74"
+    },
+    {
+      "path": "compat/win32/src/timer.cpp",
+      "line": 114,
+      "scope": "CompatPurgeTimers",
+      "operation": "free",
+      "code": "std::free(lp)",
+      "normalized_call": "std::free(lp)",
+      "compiler_context": true,
+      "contract": "75"
+    },
+    {
+      "path": "compat/win32/src/timer.cpp",
+      "line": 121,
+      "scope": "CompatClearTimers",
+      "operation": "free",
+      "code": "std::free(lp)",
+      "normalized_call": "std::free(lp)",
+      "compiler_context": true,
+      "contract": "76"
+    },
+    {
+      "path": "compat/win32/src/toolbar.cpp",
+      "line": 21,
+      "scope": "~COMPATTOOLBAR",
+      "operation": "SDL_free",
+      "code": "SDL_free(rgbtn[i].psz)",
+      "normalized_call": "SDL_free(rgbtn[i].psz)",
+      "compiler_context": true,
+      "contract": "77"
+    },
+    {
+      "path": "compat/win32/src/toolbar.cpp",
+      "line": 23,
+      "scope": "~COMPATTOOLBAR",
+      "operation": "free",
+      "code": "std::free(rgbtn)",
+      "normalized_call": "std::free(rgbtn)",
+      "compiler_context": true,
+      "contract": "77"
+    },
+    {
+      "path": "compat/win32/src/toolbar.cpp",
+      "line": 23,
+      "scope": "~COMPATTOOLBAR",
+      "operation": "free",
+      "code": "std::free(rgbmp)",
+      "normalized_call": "std::free(rgbmp)",
+      "compiler_context": true,
+      "contract": "77"
+    },
+    {
+      "path": "compat/win32/src/toolbar.cpp",
+      "line": 87,
+      "scope": "AddButtons",
+      "operation": "SDL_free",
+      "code": "SDL_free(rgNew[iInsert + i].psz)",
+      "normalized_call": "SDL_free(rgNew[iInsert+i].psz)",
+      "compiler_context": true,
+      "contract": "78"
+    },
+    {
+      "path": "compat/win32/src/toolbar.cpp",
+      "line": 88,
+      "scope": "AddButtons",
+      "operation": "free",
+      "code": "std::free(rgNew)",
+      "normalized_call": "std::free(rgNew)",
+      "compiler_context": true,
+      "contract": "78"
+    },
+    {
+      "path": "compat/win32/src/toolbar.cpp",
+      "line": 92,
+      "scope": "AddButtons",
+      "operation": "calloc",
+      "code": "std::calloc(c + static_cast<std::size_t>(lp->c) + 1, sizeof(*rgNew))",
+      "normalized_call": "std::calloc(c+static_cast<std::size_t>(lp->c)+1,sizeof(*rgNew))",
+      "compiler_context": true,
+      "contract": "78"
+    },
+    {
+      "path": "compat/win32/src/toolbar.cpp",
+      "line": 98,
+      "scope": "AddButtons",
+      "operation": "SDL_strdup",
+      "code": "SDL_strdup(reinterpret_cast<const char *>(rgbtn[i].iString))",
+      "normalized_call": "SDL_strdup(reinterpret_cast<constchar*>(rgbtn[i].iString))",
+      "compiler_context": true,
+      "contract": "78"
+    },
+    {
+      "path": "compat/win32/src/toolbar.cpp",
+      "line": 106,
+      "scope": "AddButtons",
+      "operation": "free",
+      "code": "std::free(lp->rgbtn)",
+      "normalized_call": "std::free(lp->rgbtn)",
+      "compiler_context": true,
+      "contract": "78"
+    },
+    {
+      "path": "compat/win32/src/toolbar.cpp",
+      "line": 144,
+      "scope": "AddBitmap",
+      "operation": "realloc",
+      "code": "std::realloc(lp->rgbmp, static_cast<std::size_t>((lp->cbmp + 1)) * sizeof(*rgbmp))",
+      "normalized_call": "std::realloc(lp->rgbmp,static_cast<std::size_t>((lp->cbmp+1))*sizeof(*rgbmp))",
+      "compiler_context": true,
+      "contract": "79"
+    },
+    {
+      "path": "compat/win32/src/toolbar.cpp",
+      "line": 342,
+      "scope": "CompatToolbarProc",
+      "operation": "SDL_free",
+      "code": "SDL_free(lp->rgbtn[i].psz)",
+      "normalized_call": "SDL_free(lp->rgbtn[i].psz)",
+      "compiler_context": true,
+      "contract": "80"
+    },
+    {
+      "path": "compat/win32/src/window.cpp",
+      "line": 52,
+      "scope": "PszNativeTitle",
+      "operation": "SDL_strdup",
+      "code": "SDL_strdup(pszTitle)",
+      "normalized_call": "SDL_strdup(pszTitle)",
+      "compiler_context": true,
+      "contract": "81"
+    },
+    {
+      "path": "compat/win32/src/window.cpp",
+      "line": 266,
+      "scope": "RegisterClassA",
+      "operation": "SDL_strdup",
+      "code": "SDL_strdup(lpwc->lpszClassName)",
+      "normalized_call": "SDL_strdup(lpwc->lpszClassName)",
+      "compiler_context": true,
+      "contract": "82"
+    },
+    {
+      "path": "compat/win32/src/window.cpp",
+      "line": 268,
+      "scope": "RegisterClassA",
+      "operation": "SDL_strdup",
+      "code": "SDL_strdup(lpwc->lpszMenuName)",
+      "normalized_call": "SDL_strdup(lpwc->lpszMenuName)",
+      "compiler_context": true,
+      "contract": "82"
+    },
+    {
+      "path": "compat/win32/src/window.cpp",
+      "line": 270,
+      "scope": "RegisterClassA",
+      "operation": "calloc",
+      "code": "std::calloc(1, static_cast<std::size_t>(lpwc->cbClsExtra))",
+      "normalized_call": "std::calloc(1,static_cast<std::size_t>(lpwc->cbClsExtra))",
+      "compiler_context": true,
+      "contract": "82"
+    },
+    {
+      "path": "compat/win32/src/window.cpp",
+      "line": 355,
+      "scope": "DestroyCompatWindow",
+      "operation": "SDL_free",
+      "code": "SDL_free(lpwin->pszEditComposition)",
+      "normalized_call": "SDL_free(lpwin->pszEditComposition)",
+      "compiler_context": true,
+      "contract": "83"
+    },
+    {
+      "path": "compat/win32/src/window.cpp",
+      "line": 356,
+      "scope": "DestroyCompatWindow",
+      "operation": "SDL_free",
+      "code": "SDL_free(lpwin->pszEditUndo)",
+      "normalized_call": "SDL_free(lpwin->pszEditUndo)",
+      "compiler_context": true,
+      "contract": "83"
+    },
+    {
+      "path": "compat/win32/src/window.cpp",
+      "line": 361,
+      "scope": "DestroyCompatWindow",
+      "operation": "SDL_free",
+      "code": "SDL_free(lpwin->pszTitle)",
+      "normalized_call": "SDL_free(lpwin->pszTitle)",
+      "compiler_context": true,
+      "contract": "83"
+    },
+    {
+      "path": "compat/win32/src/window.cpp",
+      "line": 447,
+      "scope": "CreateWindowExA",
+      "operation": "calloc",
+      "code": "std::calloc(1, static_cast<std::size_t>(lpclass->wc.cbWndExtra))",
+      "normalized_call": "std::calloc(1,static_cast<std::size_t>(lpclass->wc.cbWndExtra))",
+      "compiler_context": true,
+      "contract": "84"
+    },
+    {
+      "path": "compat/win32/src/window.cpp",
+      "line": 452,
+      "scope": "CreateWindowExA",
+      "operation": "SDL_strdup",
+      "code": "SDL_strdup(pszTitle ? pszTitle : \"\")",
+      "normalized_call": "SDL_strdup(pszTitle?pszTitle:)",
+      "compiler_context": true,
+      "contract": "84"
+    },
+    {
+      "path": "compat/win32/src/window.cpp",
+      "line": 460,
+      "scope": "CreateWindowExA",
+      "operation": "SDL_free",
+      "code": "SDL_free(lpwin->pszTitle)",
+      "normalized_call": "SDL_free(lpwin->pszTitle)",
+      "compiler_context": true,
+      "contract": "84"
+    },
+    {
+      "path": "compat/win32/src/window.cpp",
+      "line": 537,
+      "scope": "CreateWindowExA",
+      "operation": "SDL_free",
+      "code": "SDL_free(lpwin->pszTitle)",
+      "normalized_call": "SDL_free(lpwin->pszTitle)",
+      "compiler_context": true,
+      "contract": "84"
+    },
+    {
+      "path": "src/core/memory.cpp",
+      "line": 56,
+      "scope": "LphbAlloc",
+      "operation": "calloc",
+      "code": "std::calloc(1, cb)",
+      "normalized_call": "std::calloc(1,cb)",
+      "compiler_context": true,
+      "contract": "85"
+    },
+    {
+      "path": "src/core/memory.cpp",
+      "line": 103,
+      "scope": "LphbReAlloc",
+      "operation": "realloc",
+      "code": "std::realloc(hmem, static_cast<std::size_t>((lphb->cbBlock + cbGrow)))",
+      "normalized_call": "std::realloc(hmem,static_cast<std::size_t>((lphb->cbBlock+cbGrow)))",
+      "compiler_context": true,
+      "contract": "86"
+    },
+    {
+      "path": "src/core/memory.cpp",
+      "line": 135,
+      "scope": "FreeHb",
+      "operation": "free",
+      "code": "std::free(hmem)",
+      "normalized_call": "std::free(hmem)",
+      "compiler_context": true,
+      "contract": "87"
+    },
+    {
+      "path": "src/host/host.cpp",
+      "line": 53,
+      "scope": "FReadHostIni",
+      "operation": "malloc",
+      "code": "std::malloc(static_cast<std::size_t>(cb) + 1)",
+      "normalized_call": "std::malloc(static_cast<std::size_t>(cb)+1)",
+      "compiler_context": true,
+      "contract": "88"
+    },
+    {
+      "path": "src/platform/fileio.cpp",
+      "line": 366,
+      "scope": "CbGetNativeLine",
+      "operation": "realloc",
+      "code": "std::realloc(*ppsz, next)",
+      "normalized_call": "std::realloc(*ppsz,next)",
+      "compiler_context": true,
+      "contract": "89"
+    },
+    {
+      "path": "src/platform/fileio.cpp",
+      "line": 533,
+      "scope": "CopyNativePath",
+      "operation": "malloc",
+      "code": "std::malloc(text.size() + 1)",
+      "normalized_call": "std::malloc(text.size()+1)",
+      "compiler_context": true,
+      "contract": "90"
+    },
+    {
+      "path": "src/platform/native.cpp",
+      "line": 102,
+      "scope": "CchSprintf",
+      "operation": "malloc",
+      "code": "std::malloc(cbFmt)",
+      "normalized_call": "std::malloc(cbFmt)",
+      "compiler_context": true,
+      "contract": "91"
+    },
+    {
+      "path": "src/platform/native_windows.cpp",
+      "line": 19,
+      "scope": "PszNativeCommandLine",
+      "operation": "malloc",
+      "code": "std::malloc(cb)",
+      "normalized_call": "std::malloc(cb)",
+      "compiler_context": false,
+      "contract": "92"
+    },
+    {
+      "path": "src/platform/native_windows.cpp",
+      "line": 40,
+      "scope": "RgpszNativeArguments",
+      "operation": "malloc",
+      "code": "std::malloc(cb)",
+      "normalized_call": "std::malloc(cb)",
+      "compiler_context": false,
+      "contract": "93"
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "line": 1762,
+      "scope": "LibraryExportFolderSelected",
+      "operation": "SDL_strdup",
+      "code": "SDL_strdup(rgpszPath[0])",
+      "normalized_call": "SDL_strdup(rgpszPath[0])",
+      "compiler_context": true,
+      "contract": "94"
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "line": 1762,
+      "scope": "LibraryExportFolderSelected",
+      "operation": "SDL_free",
+      "code": "SDL_free(pv)",
+      "normalized_call": "SDL_free(pv)",
+      "compiler_context": true,
+      "contract": "94"
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "line": 1982,
+      "scope": "LibraryImportFolderSelected",
+      "operation": "SDL_strdup",
+      "code": "SDL_strdup(rgpszPath[0])",
+      "normalized_call": "SDL_strdup(rgpszPath[0])",
+      "compiler_context": true,
+      "contract": "95"
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "line": 1982,
+      "scope": "LibraryImportFolderSelected",
+      "operation": "SDL_free",
+      "code": "SDL_free(pv)",
+      "normalized_call": "SDL_free(pv)",
+      "compiler_context": true,
+      "contract": "95"
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "line": 2687,
+      "scope": "FAddLibraryGameListItem",
+      "operation": "SDL_realloc",
+      "code": "SDL_realloc(rgLibraryGameList.get(), static_cast<std::size_t>(cNew) * sizeof(*rgNew))",
+      "normalized_call": "SDL_realloc(rgLibraryGameList.get(),static_cast<std::size_t>(cNew)*sizeof(*rgNew))",
+      "compiler_context": true,
+      "contract": "96"
+    },
+    {
+      "path": "src/ui/libraryzip.cpp",
+      "line": 98,
+      "scope": "FZipEnsureCapacity",
+      "operation": "SDL_realloc",
+      "code": "SDL_realloc(pz->rgpsz, static_cast<std::size_t>(cCapacity) * sizeof(*rgpszFiles))",
+      "normalized_call": "SDL_realloc(pz->rgpsz,static_cast<std::size_t>(cCapacity)*sizeof(*rgpszFiles))",
+      "compiler_context": true,
+      "contract": "97"
+    },
+    {
+      "path": "src/ui/libraryzip.cpp",
+      "line": 113,
+      "scope": "FCollectZipFiles",
+      "operation": "SDL_free",
+      "code": "SDL_free(zfChild.rgpsz[j])",
+      "normalized_call": "SDL_free(zfChild.rgpsz[j])",
+      "compiler_context": true,
+      "contract": "98"
+    },
+    {
+      "path": "src/ui/libraryzip.cpp",
+      "line": 114,
+      "scope": "FCollectZipFiles",
+      "operation": "SDL_free",
+      "code": "SDL_free(zfChild.rgpsz)",
+      "normalized_call": "SDL_free(zfChild.rgpsz)",
+      "compiler_context": true,
+      "contract": "98"
+    },
+    {
+      "path": "src/ui/libraryzip.cpp",
+      "line": 125,
+      "scope": "FCollectZipFiles",
+      "operation": "SDL_malloc",
+      "code": "SDL_malloc(cbName)",
+      "normalized_call": "SDL_malloc(cbName)",
+      "compiler_context": true,
+      "contract": "98"
+    },
+    {
+      "path": "src/ui/libraryzip.cpp",
+      "line": 136,
+      "scope": "FCollectZipFiles",
+      "operation": "SDL_strdup",
+      "code": "SDL_strdup(pszName)",
+      "normalized_call": "SDL_strdup(pszName)",
+      "compiler_context": true,
+      "contract": "98"
+    },
+    {
+      "path": "src/ui/libraryzip.cpp",
+      "line": 150,
+      "scope": "FWriteZipEntry",
+      "operation": "SDL_free",
+      "code": "SDL_free(rgbData)",
+      "normalized_call": "SDL_free(rgbData)",
+      "compiler_context": true,
+      "contract": "99"
+    },
+    {
+      "path": "src/ui/libraryzip.cpp",
+      "line": 157,
+      "scope": "FWriteZipEntry",
+      "operation": "SDL_malloc",
+      "code": "SDL_malloc(cb ? static_cast<std::size_t>(cb) : 1)",
+      "normalized_call": "SDL_malloc(cb?static_cast<std::size_t>(cb):1)",
+      "compiler_context": true,
+      "contract": "99"
+    },
+    {
+      "path": "src/ui/libraryzip.cpp",
+      "line": 188,
+      "scope": "FZipLibraryDirectory",
+      "operation": "SDL_free",
+      "code": "SDL_free(zf.rgpsz[i])",
+      "normalized_call": "SDL_free(zf.rgpsz[i])",
+      "compiler_context": true,
+      "contract": "100"
+    },
+    {
+      "path": "src/ui/libraryzip.cpp",
+      "line": 188,
+      "scope": "FZipLibraryDirectory",
+      "operation": "SDL_free",
+      "code": "SDL_free(rgzentry[i].pszName)",
+      "normalized_call": "SDL_free(rgzentry[i].pszName)",
+      "compiler_context": true,
+      "contract": "100"
+    },
+    {
+      "path": "src/ui/libraryzip.cpp",
+      "line": 189,
+      "scope": "FZipLibraryDirectory",
+      "operation": "SDL_free",
+      "code": "SDL_free(zf.rgpsz)",
+      "normalized_call": "SDL_free(zf.rgpsz)",
+      "compiler_context": true,
+      "contract": "100"
+    },
+    {
+      "path": "src/ui/libraryzip.cpp",
+      "line": 189,
+      "scope": "FZipLibraryDirectory",
+      "operation": "SDL_free",
+      "code": "SDL_free(rgzentry)",
+      "normalized_call": "SDL_free(rgzentry)",
+      "compiler_context": true,
+      "contract": "100"
+    },
+    {
+      "path": "src/ui/libraryzip.cpp",
+      "line": 201,
+      "scope": "FZipLibraryDirectory",
+      "operation": "SDL_calloc",
+      "code": "SDL_calloc(zf.c ? static_cast<std::size_t>(zf.c) : 1, sizeof(*rgzentry))",
+      "normalized_call": "SDL_calloc(zf.c?static_cast<std::size_t>(zf.c):1,sizeof(*rgzentry))",
+      "compiler_context": true,
+      "contract": "100"
+    },
+    {
+      "path": "src/ui/libraryzip.cpp",
+      "line": 205,
+      "scope": "FZipLibraryDirectory",
+      "operation": "SDL_strdup",
+      "code": "SDL_strdup(zf.rgpsz[i])",
+      "normalized_call": "SDL_strdup(zf.rgpsz[i])",
+      "compiler_context": true,
+      "contract": "100"
+    },
+    {
+      "path": "src/ui/libraryzip.cpp",
+      "line": 266,
+      "scope": "FUnzipLibraryArchive",
+      "operation": "SDL_free",
+      "code": "SDL_free(rgbLocalName)",
+      "normalized_call": "SDL_free(rgbLocalName)",
+      "compiler_context": true,
+      "contract": "101"
+    },
+    {
+      "path": "src/ui/libraryzip.cpp",
+      "line": 266,
+      "scope": "FUnzipLibraryArchive",
+      "operation": "SDL_free",
+      "code": "SDL_free(rgbCompressed)",
+      "normalized_call": "SDL_free(rgbCompressed)",
+      "compiler_context": true,
+      "contract": "101"
+    },
+    {
+      "path": "src/ui/libraryzip.cpp",
+      "line": 266,
+      "scope": "FUnzipLibraryArchive",
+      "operation": "SDL_free",
+      "code": "SDL_free(rgbData)",
+      "normalized_call": "SDL_free(rgbData)",
+      "compiler_context": true,
+      "contract": "101"
+    },
+    {
+      "path": "src/ui/libraryzip.cpp",
+      "line": 310,
+      "scope": "FUnzipLibraryArchive",
+      "operation": "SDL_malloc",
+      "code": "SDL_malloc(wLocalNameLength ? wLocalNameLength : 1)",
+      "normalized_call": "SDL_malloc(wLocalNameLength?wLocalNameLength:1)",
+      "compiler_context": true,
+      "contract": "101"
+    },
+    {
+      "path": "src/ui/libraryzip.cpp",
+      "line": 315,
+      "scope": "FUnzipLibraryArchive",
+      "operation": "SDL_free",
+      "code": "SDL_free(rgbLocalName)",
+      "normalized_call": "SDL_free(rgbLocalName)",
+      "compiler_context": true,
+      "contract": "101"
+    },
+    {
+      "path": "src/ui/libraryzip.cpp",
+      "line": 324,
+      "scope": "FUnzipLibraryArchive",
+      "operation": "SDL_malloc",
+      "code": "SDL_malloc(zc.cbCompressed ? zc.cbCompressed : 1)",
+      "normalized_call": "SDL_malloc(zc.cbCompressed?zc.cbCompressed:1)",
+      "compiler_context": true,
+      "contract": "101"
+    },
+    {
+      "path": "src/ui/libraryzip.cpp",
+      "line": 325,
+      "scope": "FUnzipLibraryArchive",
+      "operation": "SDL_malloc",
+      "code": "SDL_malloc(zc.cbUncompressed ? zc.cbUncompressed : 1)",
+      "normalized_call": "SDL_malloc(zc.cbUncompressed?zc.cbUncompressed:1)",
+      "compiler_context": true,
+      "contract": "101"
+    },
+    {
+      "path": "src/ui/libraryzip.cpp",
+      "line": 348,
+      "scope": "FUnzipLibraryArchive",
+      "operation": "SDL_free",
+      "code": "SDL_free(rgbCompressed)",
+      "normalized_call": "SDL_free(rgbCompressed)",
+      "compiler_context": true,
+      "contract": "101"
+    },
+    {
+      "path": "src/ui/libraryzip.cpp",
+      "line": 348,
+      "scope": "FUnzipLibraryArchive",
+      "operation": "SDL_free",
+      "code": "SDL_free(rgbData)",
+      "normalized_call": "SDL_free(rgbData)",
+      "compiler_context": true,
+      "contract": "101"
+    },
+    {
+      "path": "src/ui/planetpaneui.cpp",
+      "line": 95,
+      "scope": "PlanetPaneWndProc",
+      "operation": "calloc",
+      "code": "std::calloc(1, sizeof(*lp))",
+      "normalized_call": "std::calloc(1,sizeof(*lp))",
+      "compiler_context": true,
+      "contract": "102"
+    },
+    {
+      "path": "src/ui/scaninspect.cpp",
+      "line": 48,
+      "scope": "FCaptureScanner",
+      "operation": "calloc",
+      "code": "std::calloc(c, sizeof(*lpobj))",
+      "normalized_call": "std::calloc(c,sizeof(*lpobj))",
+      "compiler_context": true,
+      "contract": "103"
+    }
+  ],
+  "foreign_result_owners": [
+    {
+      "path": "compat/win32/src/system.cpp",
+      "scope": "FVirtualRect",
+      "owner": "rgidOwner",
+      "contract": "SDL display-array results stay owned across bounds-provider callbacks and all failure returns."
+    },
+    {
+      "path": "compat/win32/src/edit.cpp",
+      "scope": "PasteEdit",
+      "owner": "textOwner",
+      "contract": "SDL clipboard results stay owned through UTF-8 validation, edit callbacks and early rejection."
+    },
+    {
+      "path": "compat/win32/src/document.cpp",
+      "scope": "FCompatOpenDocument",
+      "owner": "uri owner and events cleanup scope",
+      "contract": "Owned native URI and this scope's SDL event reference close even when launch fails."
+    },
+    {
+      "path": "compat/win32/src/help.cpp",
+      "scope": "WinHelpA",
+      "owner": "directoryOwner and documentOwner",
+      "contract": "Matched native path results stay owned across guide validation and document-launch callbacks."
+    },
+    {
+      "path": "compat/win32/src/inspect.cpp",
+      "scope": "RefreshInspector",
+      "owner": "snapshotOwner -> snapInspector",
+      "contract": "Unpublished captured rows are scoped; exchange clears the source when ownership moves into the inspector lifetime."
+    }
+  ],
+  "verification": [
+    {
+      "batch": "L04",
+      "debug_build": "pass; no warnings; all standalone headers in both orders",
+      "desktop": "151/151; includes 29 leak checks, ownership/callback failures, available tutorial smoke and linked witnesses",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host": "no host/core source or header changed; L03 host qualification remains current",
+      "windows_syntax": "146/146 owned application/wrapper units; final two changed units pass again; isolated SDK/process and Windows wrapper chooser adapters also pass. Syntax qualification, not native execution.",
+      "native_compiler_inventory": "32 translation units; zero parse errors; 179 compiler-located heap calls plus 24 explicitly recorded platform-only calls",
+      "wire_inventory": "259 unchanged frozen measurements; 46 record names",
+      "canonical_models": "unchanged",
+      "baseline": "unchanged",
+      "receipts": "dist/verification/live-cpp/l04/"
+    }
+  ]
+}

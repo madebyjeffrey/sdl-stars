@@ -16,6 +16,7 @@ WINDOWSCHOOSERIOSCOPE::~WINDOWSCHOOSERIOSCOPE() noexcept { lpIO = lpPrev; }
 #include <cwchar>
 #include "filedialog_windows_bridge.h"
 #include "../../../src/platform/errors.h"
+#include "../../../src/platform/ownership.h"
 
 struct WINDOWSCHOOSER {
     int (*pfnPump)(void *);
@@ -69,6 +70,10 @@ int IChooseWindowsFile(void *lpWindow, int fSave, const char *pszTitle, const ch
     DWORD cchCwd, dwError;
     int i, cb, iResult = -1;
     BOOL fSelected;
+    NATIVECLEANUPSCOPE chooserText([&]() noexcept {
+        std::free(pwszTitle); std::free(pwszFolder); std::free(pwszName);
+        std::free(pwszFilter); std::free(pwszFile); std::free(pwszCwd);
+    });
 
     pwszTitle = LpwszChooserText(pszTitle, CP_UTF8);
     pwszFolder = LpwszChooserText(pszFolder, CP_UTF8);
@@ -82,18 +87,18 @@ int IChooseWindowsFile(void *lpWindow, int fSave, const char *pszTitle, const ch
     for (i = 0; i < cFilter; i++) {
         pwszLabel = LpwszChooserText(rgfilter[i].pszName, CP_UTF8);
         pwszPattern = LpwszChooserText(rgfilter[i].pszPattern, CP_UTF8);
-        if (!pwszLabel || !pwszPattern) { std::free(pwszLabel); std::free(pwszPattern); goto done; }
+        NATIVEOWNER<wchar_t, std::free> labelOwner(pwszLabel), patternOwner(pwszPattern);
+        if (!pwszLabel || !pwszPattern) goto done;
         cchLabel = std::wcslen(pwszLabel) + 1; cchPattern = std::wcslen(pwszPattern) + 1;
         {
             wchar_t *pwszNew = static_cast<wchar_t *>(std::realloc(pwszFilter, (cchFilter + cchLabel + cchPattern) * sizeof(*pwszFilter)));
-            if (!pwszNew) { std::free(pwszLabel); std::free(pwszPattern); goto done; }
+            if (!pwszNew) goto done;
             pwszFilter = pwszNew;
         }
         std::memcpy(pwszFilter + cchFilter - 1, pwszLabel, cchLabel * sizeof(*pwszFilter));
         std::memcpy(pwszFilter + cchFilter - 1 + cchLabel, pwszPattern, cchPattern * sizeof(*pwszFilter));
         cchFilter += cchLabel + cchPattern;
         pwszFilter[cchFilter - 1] = 0;
-        std::free(pwszLabel); std::free(pwszPattern);
     }
     of.lStructSize = sizeof(of); of.hwndOwner = static_cast<HWND>(lpWindow);
     of.lpstrTitle = pwszTitle; of.lpstrInitialDir = pwszFolder;
@@ -117,6 +122,5 @@ int IChooseWindowsFile(void *lpWindow, int fSave, const char *pszTitle, const ch
     if (of.nFilterIndex > 0 && of.nFilterIndex <= static_cast<DWORD>(cFilter)) *lpiFilter = static_cast<int>(of.nFilterIndex) - 1;
     iResult = 1;
 done:
-    std::free(pwszTitle); std::free(pwszFolder); std::free(pwszName); std::free(pwszFilter); std::free(pwszFile); std::free(pwszCwd);
     return iResult;
 }

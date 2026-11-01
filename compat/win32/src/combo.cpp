@@ -29,8 +29,9 @@ static char *PszComboItem(HWND hwnd, int i) {
     LRESULT cch = CompatListProc(hwnd, win32::LB_GETTEXTLEN, i, 0);
     char *psz;
     if (cch < 0 || static_cast<UINT_PTR>(cch) >= SIZE_MAX || !(psz = static_cast<char *>((SDL_malloc(static_cast<std::size_t>(cch) + 1))))) return nullptr;
-    if (CompatListProc(hwnd, win32::LB_GETTEXT, i, reinterpret_cast<LPARAM>(psz)) < 0) { SDL_free(psz); return nullptr; }
-    return psz;
+    NATIVEOWNER<char, SDL_free> pszOwner(psz);
+    if (CompatListProc(hwnd, win32::LB_GETTEXT, i, reinterpret_cast<LPARAM>(psz)) < 0) return nullptr;
+    return pszOwner.release();
 }
 static void SyncCombo(HWND hwnd) {
     auto lpcomboKeep = hwnd->lpcombo;
@@ -40,7 +41,8 @@ static void SyncCombo(HWND hwnd) {
     if (lp->hwndEdit && !lp->fSync) {
         StarsRestore<BOOL> restoreSync(lp->fSync);
         psz = PszComboItem(hwnd, i); lp->fSync = 1;
-        win32::SetWindowTextA(lp->hwndEdit, psz ? psz : ""); SDL_free(psz);
+        NATIVEOWNER<char, SDL_free> pszOwner(psz);
+        win32::SetWindowTextA(lp->hwndEdit, psz ? psz : ""); pszOwner.reset();
         if (!FCombo(hwnd, lp)) return;
         if (i >= 0) win32::SendMessageA(lp->hwndEdit, win32::EM_SETSEL, 0, -1);
         if (!FCombo(hwnd, lp)) return;
@@ -190,7 +192,8 @@ static BOOL DrawComboItem(HWND hwnd, HDC hdc, const RECT *lprc, int i, BOOL fSel
     win32::SetTextColor(hdc, win32::GetSysColor(!win32::IsWindowEnabled(hwnd) ? win32::COLOR_GRAYTEXT : fSelected ? win32::COLOR_HIGHLIGHTTEXT : win32::COLOR_WINDOWTEXT));
     win32::SetBkMode(hdc, win32::TRANSPARENT); rc.left += 2;
     psz = PszComboItem(hwnd, i);
-    if (psz) { win32::DrawTextA(hdc, psz, -1, &rc, win32::DT_SINGLELINE | win32::DT_VCENTER | win32::DT_NOPREFIX); SDL_free(psz); }
+    NATIVEOWNER<char, SDL_free> pszOwner(psz);
+    if (psz) win32::DrawTextA(hdc, psz, -1, &rc, win32::DT_SINGLELINE | win32::DT_VCENTER | win32::DT_NOPREFIX);
     return 1;
 }
 static void PaintCombo(HWND hwnd, HWND hwndPaint, BOOL fPopup) {
@@ -351,12 +354,14 @@ LRESULT  CompatComboProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     case win32::WM_PAINT: PaintCombo(hwnd, hwnd, 0); return 0;
     case win32::WM_ERASEBKGND: return 1;
     case win32::WM_GETDLGCODE: return win32::DLGC_WANTARROWS | win32::DLGC_WANTCHARS | (lp->fDropped ? win32::DLGC_WANTALLKEYS : 0);
-    case win32::WM_GETTEXT: case win32::WM_GETTEXTLENGTH:
+    case win32::WM_GETTEXT: case win32::WM_GETTEXTLENGTH: {
         if (lp->hwndEdit) return win32::SendMessageA(lp->hwndEdit, msg, w, l);
         psz = PszComboItem(hwnd, static_cast<int>(CompatListProc(hwnd, win32::LB_GETCURSEL, 0, 0)));
+        NATIVEOWNER<char, SDL_free> pszOwner(psz);
         result = psz ? static_cast<LRESULT>(SDL_strlen(psz)) : 0;
         if (msg == win32::WM_GETTEXT) { result = w && l && psz ? static_cast<LRESULT>(CchUtf8Prefix(psz, static_cast<std::size_t>(w) - 1)) : 0; if (w && l) { if (result) std::memcpy(reinterpret_cast<char *>(l), psz, static_cast<std::size_t>(result)); (reinterpret_cast<char *>(l))[result] = 0; } }
-        SDL_free(psz); return result;
+        return result;
+    }
     case win32::WM_SETTEXT: {
         if (!lp->hwndEdit) return 0;
         StarsRestore<BOOL> restoreSync(lp->fSync);

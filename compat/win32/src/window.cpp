@@ -357,8 +357,7 @@ static void DestroyCompatWindow(HWND lpwin, BOOL fDestroyMessage, BOOL fNotify) 
     lpwin->pszEditUndo = nullptr;
     if (lpwin->lpWindow) SDL_StopTextInput(lpwin->lpWindow.get());
     lpwin->lpWindow.reset();
-    std::free(lpwin->rgbExtra);
-    lpwin->rgbExtra = nullptr;
+    lpwin->rgbExtra.reset();
     SDL_free(lpwin->pszTitle);
     lpwin->pszTitle = nullptr;
     UnlinkCompatZ(lpwin);
@@ -445,21 +444,21 @@ HWND win32::CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
     if (!lpwin)
         return nullptr;
     if (lpclass->wc.cbWndExtra != 0)
-        lpwin->rgbExtra = static_cast<BYTE *>((std::calloc(1, static_cast<std::size_t>(lpclass->wc.cbWndExtra))));
+        lpwin->rgbExtra.reset(static_cast<BYTE *>(std::calloc(1, static_cast<std::size_t>(lpclass->wc.cbWndExtra))));
     if (lpclass->wc.cbWndExtra != 0 && !lpwin->rgbExtra) {
         delete lpwin;
         return nullptr;
     }
     lpwin->pszTitle = SDL_strdup(pszTitle ? pszTitle : "");
     if (!lpwin->pszTitle) {
-        std::free(lpwin->rgbExtra);
+        lpwin->rgbExtra.reset();
         delete lpwin;
         return nullptr;
     }
     if (fChild) {
         if (static_cast<std::int64_t>(x) + dx > INT32_MAX || static_cast<std::int64_t>(y) + dy > INT32_MAX) {
             SDL_free(lpwin->pszTitle);
-            std::free(lpwin->rgbExtra);
+            lpwin->rgbExtra.reset();
             delete lpwin;
             return nullptr;
         }
@@ -507,12 +506,12 @@ HWND win32::CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
             if (fNativePopup && !std::strcmp(CompatInputIO().pfnGetCurrentVideoDriver(), "cocoa")) flags |= SDL_WINDOW_TRANSPARENT;
             // Native captions and control text share the same UTF-8 representation.
             pszNative = fNativePopup ? nullptr : PszNativeTitle(lpwin->pszTitle);
+            NATIVEOWNER<char, SDL_free> titleOwner(pszNative);
             if (fNativePopup && win32::GetWindowRect(lpwin->hwndOwner, &rcOwner))
                 lpwin->lpWindow.reset(SDL_CreatePopupWindow(lpwin->hwndOwner->lpWindow.get(),
                     x - rcOwner.left, y - rcOwner.top, StarsMax(1, dx), StarsMax(1, dy), flags));
             else if (pszNative && !fNativePopup)
                 lpwin->lpWindow.reset(SDL_CreateWindow(pszNative, StarsMax(1, dx), StarsMax(1, dy), flags));
-            SDL_free(pszNative);
         }
         if (!lpwin->lpWindow.get() ||
             (!fReuse && !fNativePopup && FNativePositionable(lpwin->lpWindow.get()) && !SDL_SetWindowPosition(lpwin->lpWindow.get(),
@@ -536,7 +535,7 @@ HWND win32::CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
             CompatDestroyPaint(lpwin);
             lpwin->lpWindow.reset();
             SDL_free(lpwin->pszTitle);
-            std::free(lpwin->rgbExtra);
+            lpwin->rgbExtra.reset();
             delete lpwin;
             return nullptr;
         }
@@ -667,7 +666,7 @@ LONG_PTR win32::GetWindowLongPtrA(HWND hwnd, int ib) {
     if (ib == win32::GWL_EXSTYLE)
         return static_cast<LONG>(lpwin->dwExStyle);
     if (ib >= 0 && ib <= lpwin->lpclass->wc.cbWndExtra - static_cast<int>(sizeof(l))) {
-        std::memcpy(&l, lpwin->rgbExtra + ib, sizeof(l));
+        std::memcpy(&l, lpwin->rgbExtra.get() + ib, sizeof(l));
         return l;
     }
     SDL_SetError("Unsupported or out-of-bounds window data index");
@@ -704,8 +703,8 @@ LONG_PTR win32::SetWindowLongPtrA(HWND hwnd, int ib, LONG_PTR lNew) {
         return lOld;
     }
     if (ib >= 0 && ib <= lpwin->lpclass->wc.cbWndExtra - static_cast<int>(sizeof(lNew))) {
-        std::memcpy(&lOld, lpwin->rgbExtra + ib, sizeof(lOld));
-        std::memcpy(lpwin->rgbExtra + ib, &lNew, sizeof(lNew));
+        std::memcpy(&lOld, lpwin->rgbExtra.get() + ib, sizeof(lOld));
+        std::memcpy(lpwin->rgbExtra.get() + ib, &lNew, sizeof(lNew));
         return lOld;
     }
     SDL_SetError("Unsupported or out-of-bounds window data index");

@@ -89,7 +89,7 @@ struct win32::HWND__ {
     BOOL fZeroX, fZeroY;
     RECT rcChild;
     char *pszTitle;
-    BYTE *rgbExtra;
+    NATIVEARRAYOWNER<BYTE, std::free> rgbExtra;
     DWORD dwStyle, dwExStyle;
     UINT iControl, bstCheck;
     BOOL fPressed, fTracking, fSpace;

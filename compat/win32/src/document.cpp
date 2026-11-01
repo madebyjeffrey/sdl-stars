@@ -11,9 +11,11 @@ char *PszCompatFileUri(const char *pszPath) {
     unsigned char ch;
 
     pszAbsolute = PszCanonicalNativePath(pszPath, nullptr, 0);
+    NATIVEOWNER<char, std::free> absolute(pszAbsolute);
     if (!pszAbsolute) return nullptr;
     pszUri = static_cast<char *>((std::malloc(std::strlen(pszAbsolute) * 3 + 9)));
-    if (!pszUri) { std::free(pszAbsolute); return nullptr; }
+    NATIVEOWNER<char, std::free> uri(pszUri);
+    if (!pszUri) return nullptr;
     std::memcpy(pszUri, "file://", 7); lpchOut = pszUri + 7;
 #ifdef _WIN32
     if (pszAbsolute[1] == ':') *lpchOut++ = '/';
@@ -32,21 +34,21 @@ char *PszCompatFileUri(const char *pszPath) {
         ) *lpchOut++ = static_cast<char>(ch);
         else { *lpchOut++ = '%'; *lpchOut++ = rgchHex[ch >> 4]; *lpchOut++ = rgchHex[ch & 15]; }
     }
-    *lpchOut = 0; std::free(pszAbsolute);
-    return pszUri;
+    *lpchOut = 0;
+    return uri.release();
 }
 
 BOOL FCompatOpenDocument(const char *pszPath) {
     char *pszUri = PszCompatFileUri(pszPath);
     BOOL fOpened, fEventsOwned;
+    NATIVEOWNER<char, std::free> uri(pszUri);
 
     if (!pszUri) return 0;
     // A standalone help launch has no windows yet. Initialize SDL's platform
     // services so its Linux OpenFile portal is available before SDL_OpenURL.
     fEventsOwned = !(SDL_WasInit(SDL_INIT_EVENTS) & SDL_INIT_EVENTS);
-    if (fEventsOwned && !SDL_InitSubSystem(SDL_INIT_EVENTS)) { std::free(pszUri); return 0; }
+    if (fEventsOwned && !SDL_InitSubSystem(SDL_INIT_EVENTS)) return 0;
+    NATIVECLEANUPSCOPE events([&]() noexcept { if (fEventsOwned) SDL_QuitSubSystem(SDL_INIT_EVENTS); });
     fOpened = CompatExternalIO().pfnOpenURL(pszUri);
-    if (fEventsOwned) SDL_QuitSubSystem(SDL_INIT_EVENTS);
-    std::free(pszUri);
     return fOpened;
 }

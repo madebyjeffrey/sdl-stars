@@ -23,13 +23,14 @@ static BOOL FVirtualRect(LPRECT lprc, int *lpc) {
     BOOL fOk = 1;
     if (!FCompatVideo()) return 0;
     rgid = CompatDisplayIO().pfnGetDisplays(&c);
-    if (!rgid || c <= 0) { SDL_free(rgid); return 0; }
+    NATIVEARRAYOWNER<SDL_DisplayID, SDL_free> rgidOwner(rgid);
+    if (!rgid || c <= 0) return 0;
     for (i = 0; i < c; i++) {
         if (!CompatDisplayIO().pfnGetDisplayBounds(rgid[i], &rc) || rc.w <= 0 || rc.h <= 0) { fOk = 0; break; }
         xMin = StarsMin(xMin, rc.x); yMin = StarsMin(yMin, rc.y);
         xMax = (((xMax) > (static_cast<std::int64_t>(rc.x) + rc.w)) ? (xMax) : (static_cast<std::int64_t>(rc.x) + rc.w)); yMax = (((yMax) > (static_cast<std::int64_t>(rc.y) + rc.h)) ? (yMax) : (static_cast<std::int64_t>(rc.y) + rc.h));
     }
-    SDL_free(rgid);
+    rgidOwner.reset();
     if (!fOk || xMax > INT_MAX || yMax > INT_MAX || xMax - xMin > INT_MAX || yMax - yMin > INT_MAX) return 0;
     win32::SetRect(lprc, static_cast<int>(xMin), static_cast<int>(yMin), static_cast<int>(xMax), static_cast<int>(yMax)); *lpc = c;
     return 1;

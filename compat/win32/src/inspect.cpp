@@ -1,5 +1,6 @@
 /* Logical-window inspection for the native UI and in-process tutorial harness. */
 #include "internal.h"
+#include <utility>
 #include <stars_compat.h>
 #include <commctrl.h>
 #include <cinttypes>
@@ -222,6 +223,7 @@ static void InspectDetails(HWND hwnd) {
     FormatStyles(lp, 1, szExStyle, sizeof(szExStyle));
     cb = std::strlen(lp->pszClass) + std::strlen(lp->pszText) + std::strlen(szStyle) + std::strlen(szExStyle);
     if (cb > SIZE_MAX - 640 || !(psz = static_cast<char *>((SDL_malloc(cb + 640))))) return;
+    NATIVEOWNER<char, SDL_free> pszOwner(psz);
     std::snprintf(psz, cb + 640,
         "ID: %" PRIu64 "\r\nParent: %" PRIu64 "\r\nOwner: %" PRIu64 "\r\nControl ID: %" PRIdPTR
         "\r\nClass: %s\r\nControl kind: %u (%s)\r\nDialog: %d\r\nVisible: %d\r\nEnabled: %d\r\nFocus: %d"
@@ -234,7 +236,6 @@ static void InspectDetails(HWND hwnd) {
         lp->rcWindow.left, lp->rcWindow.top, lp->rcWindow.right, lp->rcWindow.bottom,
         lp->rcClient.left, lp->rcClient.top, lp->rcClient.right, lp->rcClient.bottom, lp->pszText);
     win32::SetWindowTextA(win32::GetDlgItem(hwnd, 2), psz);
-    SDL_free(psz);
 }
 
 static void InspectRows(HWND hwndList, std::uint64_t idParent, int cDepth) {
@@ -250,10 +251,11 @@ static void InspectRows(HWND hwndList, std::uint64_t idParent, int cDepth) {
         cb = std::strlen(lp->pszText);
         if (cb > (SIZE_MAX - 1) / 3) continue;
         pszUtf = static_cast<char *>((SDL_malloc(cb * 3 + 1)));
+        NATIVEOWNER<char, SDL_free> pszOwner(pszUtf);
         if (!pszUtf) continue;
         std::memcpy(pszUtf, lp->pszText, cb + 1);
         cch = CchUtf8Prefix(pszUtf, sizeof(szText) - 1);
-        std::memcpy(szText, pszUtf, cch); szText[cch] = 0; SDL_free(pszUtf);
+        std::memcpy(szText, pszUtf, cch); szText[cch] = 0; pszOwner.reset();
         for (lpch = szText; *lpch; lpch++) if (*lpch == '\r' || *lpch == '\n' || *lpch == '\t') *lpch = ' ';
         std::snprintf(sz, sizeof(sz), "%*s[%" PRIu64 "] %s #%" PRIdPTR " %s%s", cDepth * 2, "",
                  lp->id, lp->pszClass, static_cast<std::intptr_t>(lp->idControl), szText, lp->fVisible ? "" : " (hidden)");
@@ -266,10 +268,11 @@ static void InspectRows(HWND hwndList, std::uint64_t idParent, int cDepth) {
 static BOOL RefreshInspector(HWND hwnd) {
     STARSCOMPATSNAPSHOT snap = {};
     HWND hwndList = win32::GetDlgItem(hwnd, 1);
+    NATIVECLEANUPSCOPE snapshotOwner([&]() noexcept { if (snap.rgWindow) StarsCompatFreeHierarchy(&snap); });
     if (!StarsCompatCaptureHierarchy(&snap)) return 0;
     win32::SendMessageA(hwndList, win32::LB_RESETCONTENT, 0, 0);
     StarsCompatFreeHierarchy(&snapInspector);
-    snapInspector = snap;
+    snapInspector = std::exchange(snap, STARSCOMPATSNAPSHOT{});
     InspectRows(hwndList, 0, 0);
     win32::SendMessageA(hwndList, win32::LB_SETCURSEL, 0, 0);
     InspectDetails(hwnd);

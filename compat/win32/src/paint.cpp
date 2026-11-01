@@ -760,12 +760,14 @@ BOOL win32::InvalidateRect(HWND hwnd, const RECT *lprc, BOOL fErase) {
 
 static BOOL FPaintClip(HDC lpdc, HWND hwnd) {
     RECT *rgrc = nullptr;
+    NATIVEARRAYOWNER<RECT, std::free> rgrcOwner;
     if (hwnd->crcUpdate != 0) {
         rgrc = static_cast<RECT *>((std::malloc(hwnd->crcUpdate * sizeof(*rgrc))));
+        rgrcOwner.reset(rgrc);
         if (!rgrc) return 0;
         std::memcpy(rgrc, hwnd->rgrcUpdate.get(), hwnd->crcUpdate * sizeof(*rgrc));
     }
-    lpdc->rgrcPaint.reset(rgrc); lpdc->crcPaint = hwnd->crcUpdate;
+    lpdc->rgrcPaint = std::move(rgrcOwner); lpdc->crcPaint = hwnd->crcUpdate;
     lpdc->fPaint = 1; lpdc->fClip = 1; lpdc->rcClip = hwnd->rcUpdate;
     return 1;
 }
@@ -843,10 +845,11 @@ BOOL win32::ValidateRect(HWND hwnd, const RECT *lprc) {
     HWND lpwin = LpCompatWindow(hwnd);
     RECT *rgrc = nullptr;
     std::size_t crc = 0, i;
+    NATIVECLEANUPSCOPE updateOwner([&]() noexcept { std::free(rgrc); });
     if (!lpwin) return 0;
     if (lprc) for (i = 0; i < lpwin->crcUpdate; i++)
-        if (!FSubtractUpdate(&rgrc, &crc, lpwin->rgrcUpdate[i], lprc)) { std::free(rgrc); return 0; }
-    SetUpdate(lpwin, rgrc, crc);
+        if (!FSubtractUpdate(&rgrc, &crc, lpwin->rgrcUpdate[i], lprc)) return 0;
+    SetUpdate(lpwin, rgrc, crc); rgrc = nullptr;
     return 1;
 }
 
@@ -941,14 +944,16 @@ int win32::SelectClipRgn(HDC hdc, HRGN hrgn) {
     COMPATOBJECT *lpobj = hrgn ? LpObject(static_cast<HGDIOBJ>(hrgn)) : nullptr;
     RECT *rgrc = nullptr;
     std::size_t crc = 0;
+    NATIVEARRAYOWNER<RECT, std::free> rgrcOwner;
 
     if (!lpdc || (hrgn && (!lpobj || lpobj->iKind != objRegion))) return win32::ERROR;
     if (lpobj && lpobj->rcRegion.left < lpobj->rcRegion.right && lpobj->rcRegion.top < lpobj->rcRegion.bottom) {
         rgrc = static_cast<RECT *>((std::malloc(sizeof(*rgrc))));
+        rgrcOwner.reset(rgrc);
         if (!rgrc) return win32::ERROR;
         *rgrc = lpobj->rcRegion; crc = 1;
     }
-    lpdc->rgrcRegion.reset(rgrc); lpdc->crcRegion = crc;
+    lpdc->rgrcRegion = std::move(rgrcOwner); lpdc->crcRegion = crc;
     lpdc->fRegion = hrgn != nullptr;
     return hrgn ? IRegionKind(crc) : win32::SIMPLEREGION;
 }
@@ -988,6 +993,7 @@ static int IClipRect(HDC hdc, int left, int top, int right, int bottom, BOOL fEx
     } else { rgsrc = lpdc->rgrcRegion.get(); crcSrc = lpdc->crcRegion; }
     if (crcSrc > SIZE_MAX / (4 * sizeof(*rgrc))) return win32::ERROR;
     rgrc = static_cast<RECT *>((crcSrc ? std::malloc(crcSrc * 4 * sizeof(*rgrc)) : nullptr));
+    NATIVEARRAYOWNER<RECT, std::free> rgrcOwner(rgrc);
     if (crcSrc != 0 && !rgrc) return win32::ERROR;
     for (i = 0; i < crcSrc; i++) {
         rc = rgsrc[i];
@@ -1003,7 +1009,7 @@ static int IClipRect(HDC hdc, int left, int top, int right, int bottom, BOOL fEx
         }
     }
     MergeRegion(rgrc, &crc);
-    lpdc->rgrcRegion.reset(rgrc); lpdc->crcRegion = crc; lpdc->fRegion = 1;
+    lpdc->rgrcRegion = std::move(rgrcOwner); lpdc->crcRegion = crc; lpdc->fRegion = 1;
     return IRegionKind(crc);
 }
 
@@ -1247,6 +1253,7 @@ BOOL win32::BitBlt(HDC hdc, int x, int y, int cx, int cy, HDC hdcSrc, int xSrc, 
     std::size_t cPixels, i;
     int iScale, iScaleSrc = 1, ixPixel, iyPixel;
     COLORREF *rgcr = nullptr, crSource, crPattern, crDest;
+    NATIVEARRAYOWNER<COLORREF, std::free> rgcrOwner;
 
     if (!lpdc || cx <= 0 || cy <= 0 || (dwRop & UINT32_C(0xff000000)) || !FClip(lpdc, &rcClip))
         return 0;
@@ -1283,6 +1290,7 @@ BOOL win32::BitBlt(HDC hdc, int x, int y, int cx, int cy, HDC hdcSrc, int xSrc, 
     if (fSource) {
         // Capture before writing: overlapping blits must not feed updated pixels back.
         rgcr = static_cast<COLORREF *>((std::malloc(cPixels * sizeof(*rgcr))));
+        rgcrOwner.reset(rgcr);
         if (!rgcr)
             return 0;
         i = 0;
@@ -1309,7 +1317,6 @@ BOOL win32::BitBlt(HDC hdc, int x, int y, int cx, int cy, HDC hdcSrc, int xSrc, 
                         CrRop(rop, crPattern, crSource, crDest));
         }
     }
-    std::free(rgcr);
     return 1;
 }
 
@@ -1323,6 +1330,7 @@ BOOL win32::ScrollWindow(HWND hwnd, int dx, int dy, const RECT *lprc, const RECT
     int y, yFirst, yLast, dRow, iScale;
     std::size_t cbRow;
     BOOL fErase, fCopy, fArea;
+    NATIVECLEANUPSCOPE updateOwner([&]() noexcept { std::free(rgrc); });
     if (!lpwin || lpwin->fDestroying || !win32::GetClientRect(hwnd, &rcClient)) {
         win32::SetLastError(win32::ERROR_INVALID_WINDOW_HANDLE); return 0;
     }
@@ -1387,7 +1395,7 @@ MoveChildren:
     if (fArea) FCompatPresent(hwnd);
     return 1;
 Fail:
-    std::free(rgrc); win32::SetLastError(win32::ERROR_NOT_ENOUGH_MEMORY); return 0;
+    updateOwner.Close(); win32::SetLastError(win32::ERROR_NOT_ENOUGH_MEMORY); return 0;
 }
 
 
@@ -1523,8 +1531,8 @@ BOOL win32::Rectangle(HDC hdc, int left, int top, int right, int bottom) {
 struct COMPATELLIPSE {
     RECT rc;
     int cx;
-    BYTE *rgb;
-    std::int64_t *rglLeft, *rglRight;
+    NATIVEARRAYOWNER<BYTE, std::free> rgb;
+    NATIVEARRAYOWNER<std::int64_t, std::free> rglLeft, rglRight;
 };
 
 static void EllipsePoint(COMPATELLIPSE *lp, std::int64_t x, std::int64_t y) {
@@ -1590,12 +1598,10 @@ BOOL win32::Ellipse(HDC hdc, int left, int top, int right, int bottom) {
     el.cx = el.rc.right - el.rc.left;
     if (static_cast<std::size_t>(el.cx) > SIZE_MAX / static_cast<std::size_t>((el.rc.bottom - el.rc.top))) return 0;
     cb = static_cast<std::size_t>(el.cx) * static_cast<std::size_t>((el.rc.bottom - el.rc.top));
-    el.rgb = static_cast<BYTE *>((std::calloc(cb, 1)));
-    el.rglLeft = static_cast<std::int64_t *>((std::malloc(static_cast<std::size_t>((el.rc.bottom - el.rc.top)) * sizeof(*el.rglLeft))));
-    el.rglRight = static_cast<std::int64_t *>((std::malloc(static_cast<std::size_t>((el.rc.bottom - el.rc.top)) * sizeof(*el.rglRight))));
-    if (!el.rgb || !el.rglLeft || !el.rglRight) {
-        std::free(el.rgb); std::free(el.rglLeft); std::free(el.rglRight); return 0;
-    }
+    el.rgb.reset(static_cast<BYTE *>(std::calloc(cb, 1)));
+    el.rglLeft.reset(static_cast<std::int64_t *>(std::malloc(static_cast<std::size_t>(el.rc.bottom - el.rc.top) * sizeof(std::int64_t))));
+    el.rglRight.reset(static_cast<std::int64_t *>(std::malloc(static_cast<std::size_t>(el.rc.bottom - el.rc.top) * sizeof(std::int64_t))));
+    if (!el.rgb || !el.rglLeft || !el.rglRight) return 0;
     for (y = el.rc.top; y < el.rc.bottom; y++) {
         el.rglLeft[y - el.rc.top] = INT64_MAX; el.rglRight[y - el.rc.top] = INT64_MIN;
     }
@@ -1606,7 +1612,6 @@ BOOL win32::Ellipse(HDC hdc, int left, int top, int right, int bottom) {
         else if (!lpdc->lpbrush->fNull && x >= el.rglLeft[i] && x <= el.rglRight[i])
             ShapePixel(lpdc, &el.rc, x, y, CrBrush(lpdc, lpdc->lpbrush, x, y));
     }
-    std::free(el.rgb); std::free(el.rglLeft); std::free(el.rglRight);
     return 1;
 }
 
@@ -1779,6 +1784,9 @@ int win32::DrawTextA(HDC hdc, LPCSTR psz, int cch, LPRECT lprc, UINT flags) {
     char *sz = nullptr;
     BYTE *rgUnderline = nullptr;
     COMPATTEXTLINE *rgline = nullptr;
+    NATIVEARRAYOWNER<char, std::free> szOwner;
+    NATIVEARRAYOWNER<BYTE, std::free> rgUnderlineOwner;
+    NATIVEARRAYOWNER<COMPATTEXTLINE, std::free> rglineOwner;
     TEXTMETRICA tm;
     SIZE size;
     RECT rcOld;
@@ -1795,6 +1803,7 @@ int win32::DrawTextA(HDC hdc, LPCSTR psz, int cch, LPRECT lprc, UINT flags) {
     if (cch == 0) { if (flags & win32::DT_CALCRECT) lprc->bottom = lprc->top; return 0; }
     sz = static_cast<char *>((std::malloc(static_cast<std::size_t>(cch) * 8 + 1))); rgUnderline = static_cast<BYTE *>((std::calloc(static_cast<std::size_t>(cch) * 8 + 1, 1)));
     rgline = static_cast<COMPATTEXTLINE *>((std::malloc((static_cast<std::size_t>(cch) * 8 + 1) * sizeof(*rgline))));
+    szOwner.reset(sz); rgUnderlineOwner.reset(rgUnderline); rglineOwner.reset(rgline);
     if (!sz || !rgUnderline || !rgline) goto LReturn;
     for (i = 0; i < cch; i++) {
         if (!(flags & win32::DT_NOPREFIX) && psz[i] == '&') {
@@ -1881,7 +1890,6 @@ LNextLine:
     }
     lpdc->rcClip = rcOld; lpdc->fClip = fOldClip;
 LReturn:
-    std::free(sz); std::free(rgUnderline); std::free(rgline);
     return nReturn;
 }
 
