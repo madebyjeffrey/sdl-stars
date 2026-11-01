@@ -651,7 +651,7 @@ std::int16_t FWasRaceFile(APPSESSION &app, char *szFile, std::int16_t fChkPass) 
                                     goto LBadFile;
                                 }
                                 plr.lSalt = LSaltFromSz(szPassword);
-                                std::strcpy(app.state.szRacePass, szPassword);
+                                CchCopyUtf8(std::span{app.state.szRacePass}, szPassword);
                             }
                             lSaltSav = app.state.lSaltCur;
                             app.state.lSaltCur = plr.lSalt;
@@ -663,7 +663,7 @@ std::int16_t FWasRaceFile(APPSESSION &app, char *szFile, std::int16_t fChkPass) 
                                 app.state.lSaltCur = lSaltSav;
                                 if (!fProtected) {
                                     if (!fLegacy && plr.lSalt != 0) {
-                                        std::strcpy(app.state.szRacePass, app.state.szPassLast);
+                                        CchCopyUtf8(std::span{app.state.szRacePass}, app.state.szPassLast);
                                     } else {
                                         app.state.szRacePass[0] = 0;
                                     }
@@ -803,7 +803,7 @@ void CreateRandomRace(APPSESSION &app, PLAYER *pplr) {
             if (cPass++ > 250) {
                 plrT = *pplr;
                 *pplr = vrgplrDef[0];
-                std::strcpy(pplr->szName, plrT.szName);
+                CchCopyUtf8(std::span{pplr->szName}, plrT.szName);
                 break;
             }
             iVal = RandomIO().pfnRandom(app, 10);

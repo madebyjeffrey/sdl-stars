@@ -1298,8 +1298,8 @@ std::int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
                     }
                 }
                 TextIO().pfnCchGetString(app, static_cast<StringId>(idsBerserker + c), std::span{app.state.rgplr[i].szName});
-                std::strcpy(app.state.rgplr[i].szNames, app.state.rgplr[i].szName);
-                std::strcat(app.state.rgplr[i].szNames, "s");
+                CchCopyUtf8(std::span{app.state.rgplr[i].szNames}, app.state.rgplr[i].szName);
+                FAppendUtf8(std::span{app.state.rgplr[i].szNames}, "s");
             }
         }
         for (i = 0; i < app.state.game.cPlayer; i++) {

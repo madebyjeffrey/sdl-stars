@@ -20,6 +20,11 @@ std::size_t CchUtf8Prefix(const char *psz, std::size_t cchMax);
 std::size_t CchCopyUtf8Prefix(std::span<char> rgchOut, std::string_view sz);
 std::size_t CchAppendUtf8Prefix(std::span<char> rgchOut, std::string_view sz);
 
+// Append whole valid UTF-8 text within the destination's NUL-inclusive span.
+// Both the existing prefix and input must be valid. Failure leaves every byte
+// unchanged; input may overlap the destination, and an empty span cannot succeed.
+bool FAppendUtf8(std::span<char> rgchOut, std::string_view sz);
+
 // Views borrow only for this call. They can describe a non-NUL-terminated
 // slice; text still rejects embedded NUL and output capacity includes its NUL.
 inline int FUtf8Valid(std::string_view sz) { return FUtf8Valid(sz.data(), sz.size()); }

@@ -222,6 +222,41 @@ static void TestInvalidDefinition(void) {
     TEST_CHECK(!FStarsRecoveryActive() && app.state.hf == -1);
 }
 
+static void TestStrictAppend(void) {
+    struct CASE {
+        std::string_view szPrefix, szSuffix;
+        std::size_t cch;
+        bool fSuccess;
+        std::string_view szExpected;
+    };
+    const CASE rgCases[] = {
+        {"", "", 1, true, ""}, {"a", "\xce\xa9", 4, true, "a\xce\xa9"},
+        {"a", "\xce\xa9", 3, false, ""}, {"\xce\xa9", "b", 4, true, "\xce\xa9" "b"},
+        {"a", "", 2, true, "a"}, {"a", "x", 2, false, ""}, {"", "x", 0, false, ""},
+        {"ab", "", 2, false, ""}, {"\xff", "x", 4, false, ""}, {"a", "\xff", 4, false, ""},
+        {"a", std::string_view("x\0y", 3), 8, false, ""}, {"a", "\xe2\x82", 8, false, ""},
+        {"", "\xce\xa9", 3, true, "\xce\xa9"}
+    };
+    for (const auto &cs : rgCases) {
+        std::array<char, 16> rgch;
+        rgch.fill('#');
+        auto out = std::span{rgch}.subspan(1, cs.cch);
+        std::ranges::copy(cs.szPrefix.substr(0, out.size()), out.begin());
+        if (cs.szPrefix.size() < out.size()) out[cs.szPrefix.size()] = 0;
+        const auto before = rgch;
+        TEST_CHECK(FAppendUtf8(out, cs.szSuffix) == cs.fSuccess);
+        TEST_CHECK(rgch.front() == '#' && rgch[cs.cch + 1] == '#');
+        if (cs.fSuccess) {
+            const auto pch = std::find(out.begin(), out.end(), 0);
+            TEST_CHECK(pch != out.end());
+            if (pch != out.end()) TEST_CHECK(std::string_view(out.data(), static_cast<std::size_t>(pch - out.begin())) == cs.szExpected);
+        } else TEST_CHECK(rgch == before);
+    }
+    std::array<char, 8> rgch{'a', 'b', 0, 'c', 'd', 'e', '#', '#'};
+    TEST_CHECK(FAppendUtf8(std::span{rgch}.first(6), std::string_view(rgch.data() + 3, 3)));
+    TEST_CHECK(std::string_view(rgch.data(), 5) == "abcde" && rgch[5] == 0 && rgch[6] == '#');
+}
+
 static void TestDefinitionLineVariants(void) {
 #ifdef STARS_UI_SDL
     APPSESSION &app = ui::app;
@@ -413,7 +448,7 @@ static void TestScannerSnapshotUtf8(void) {
 }
 #endif
 
-TEST_LIST = {{"definition line variants preserve creation and source bytes", TestDefinitionLineVariants}, {"formatted text stays bounded and preserves UTF-8", TestFormattedTextBounds},
+TEST_LIST = {{"strict UTF-8 append fits atomically within its span", TestStrictAppend}, {"definition line variants preserve creation and source bytes", TestDefinitionLineVariants}, {"formatted text stays bounded and preserves UTF-8", TestFormattedTextBounds},
              {"catalog values survive subsequent lookups", TestCatalogOwnership},
              {"decoded catalog matches every source byte", TestCatalogBytes},
              {"environment labels contain UTF-8 units", TestEnvironmentText},

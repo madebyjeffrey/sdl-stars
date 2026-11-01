@@ -1,4 +1,7 @@
 #include "common.h"
+#include <algorithm>
+#include <array>
+#include <string_view>
 #include "appstate.h"
 #ifdef STARS_UI_SDL
 #include "uistate.h"
@@ -76,7 +79,8 @@ int main(int argc, char *argv[]) try {
     APPSESSION &app = host::app;
     COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
     NATIVECLEANUPSCOPE session([&app]() noexcept { app.Close(); });
-    char     szCmdLine[1024];
+    std::array<char, 1024> szCmdLine{};
+    std::size_t cchCmdLine;
     std::int16_t  fSeed;
     std::uint32_t lSeed;
     int      i;
@@ -115,9 +119,10 @@ int main(int argc, char *argv[]) try {
     }
     // ParseCmdLine reads one string, as WinMain received it. File names
     // can't hold spaces, as in the Windows game.
-    szCmdLine[0] = 0;
+    cchCmdLine = 0;
     for (i = 1; i < argc; i++) {
-        if (std::strlen(szCmdLine) + std::strlen(argv[i]) + 2 > sizeof(szCmdLine)) {
+        const std::string_view szArgument(argv[i]);
+        if (cchCmdLine + 2 > szCmdLine.size() || szArgument.size() > szCmdLine.size() - cchCmdLine - 2) {
             std::fprintf(stderr, "stars-host: command line too long\n");
 #ifdef _WIN32
             nativeArguments.reset();
@@ -125,9 +130,11 @@ int main(int argc, char *argv[]) try {
             return 2;
         }
         if (i > 1) {
-            std::strcat(szCmdLine, " ");
+            szCmdLine[cchCmdLine++] = ' ';
         }
-        std::strcat(szCmdLine, argv[i]);
+        std::ranges::copy(szArgument, std::span{szCmdLine}.subspan(cchCmdLine).begin());
+        cchCmdLine += szArgument.size();
+        szCmdLine[cchCmdLine] = 0;
     }
     app.state.szBase[0] = 0;
     app.state.ini.SetWFlags(0);
@@ -145,7 +152,7 @@ int main(int argc, char *argv[]) try {
 #endif
     fSeed = 0;
     lSeed = 0;
-    if (!ParseCmdLine(app, szCmdLine, &fSeed, &lSeed)) return 2;
+    if (!ParseCmdLine(app, szCmdLine.data(), &fSeed, &lSeed)) return 2;
     Randomize2(app, fSeed ? lSeed : DwTickCount());
     if (!app.state.ini.fCmdLine) {
         std::fprintf(

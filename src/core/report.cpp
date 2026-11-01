@@ -746,7 +746,7 @@ std::int16_t FDumpCmdLineGame(APPSESSION &app) {
     char *pchDot;
     char *pchDir;
 
-    std::strcpy(szFile, app.state.szBase);
+    CchCopyUtf8(std::span{szFile}, app.state.szBase);
     pchDot = std::strrchr(szFile, '.');
     pchDir = std::strrchr(szFile, chDirSep);
     if (!pchDot || (pchDir && pchDir > pchDot)) {
@@ -754,7 +754,7 @@ std::int16_t FDumpCmdLineGame(APPSESSION &app) {
     }
     *pchDot = 0;
     DestroyCurGame(app);
-    std::strcpy(app.state.szBase, szFile);
+    CchCopyUtf8(std::span{app.state.szBase}, szFile);
     app.state.fFileErrSilent = 1;
     if (!FLoadGame(app, szFile, pchDot + 1)) {
         return 0;

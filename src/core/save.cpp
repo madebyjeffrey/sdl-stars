@@ -902,10 +902,10 @@ void SetSzWorkFromDt(APPSESSION &app, DtFileType dt, std::int16_t iPlayer) {
     switch (dt) {
     case dtXY:
     default:
-        std::strcat(app.state.szWork, "xy");
+        FAppendUtf8(std::span{app.state.szWork}, "xy");
         break;
     case dtHost:
-        std::strcat(app.state.szWork, "hst");
+        FAppendUtf8(std::span{app.state.szWork}, "hst");
         break;
     case dtLog:
     case dtTurn:

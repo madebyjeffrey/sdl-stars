@@ -97,7 +97,8 @@
         "fleet-rename-admission-and-owned-replacement",
         "owned-hull-label-and-bounded-roman-numerals",
         "owned-numeric-text-values",
-        "scaled-numeric-rounding-overflow-repair"
+        "scaled-numeric-rounding-overflow-repair",
+        "bounded-fitting-race-password-report-save-and-host-copies"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -328,6 +329,22 @@
           "scope": "Only the intermediate addition uses int64_t; the input/local remains int32_t and the same division/clamp/LOWORD boundaries follow. No floating arithmetic, stored widths, RNG, records, normal label bytes or host results changed.",
           "baseline": "Ran regression-export after every fixture reader reached terminal completion. No semantic scenario or checkpoint moved. Restored generated game-ID/salt/checkpoint-hash churn and accepted unused storage, leaving native and frozen original baselines and unit goldens unchanged.",
           "receipts": "dist/verification/live-cpp/l05n/"
+        },
+        {
+          "batch": "L05s bounded fitting race, report, save and host copies",
+          "debug_build": "Pass; no warnings. Source policy covers 158 owned C++20 sources, 159 compiled variants and 161 standalone headers in both orders. Exact raw-copy inventory enforcement passes.",
+          "desktop": "153/153, including all 29 leak checks and available SDL tutorial checkpoints.",
+          "host_units": "28/28",
+          "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+          "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+          "windows": "147/147 owned production units and five changed/consumer test units compile with strict MinGW. Windows host and actual five test executables build. Wine cases all pass: encoding 10, race 7, turn 7, save 23, report 3. Actual native Windows desktop and Linux final qualification remain pending.",
+          "append_contract": "Whole UTF-8 append uses a destination span and readonly view. Thirteen fixed vectors plus an overlapping-copy case cover exact capacity, multibyte boundaries, empty/unterminated buffers, invalid input/prefix and byte-for-byte unchanged failure with guards.",
+          "host_characterization": "Eleven parent/new CLI comparisons match exact exit status, stdout and stderr, including empty arguments, 1024-byte admission boundaries, Unicode and raw invalid POSIX argument bytes. The reserve-two rule, separators, parser error delivery and native argv lifetime remain.",
+          "scope": "Nine proven-fitting UTF-8 text sites now use actual spans and strict whole-text append/copy; two host strcat sites use a fixed array, bounded byte cursor and exact byte copy. No new allocation, clipping, record widths, hashing, game logic or RNG changes.",
+          "inventory": "199 migrated sites; 109 initial application copy sites remain. The lexical raw-spelling allowlist totals 115, including SDK declarations/definitions.",
+          "baseline": "Behavior-neutral; native/frozen-original baselines and unit goldens unchanged. No scenario/checkpoint moved, no regression export required.",
+          "remaining": "L05 remaining copies/const text/shared scratch results, L06 other service interfaces and Milestone D, and L08 final reconciliation/platform qualification remain active.",
+          "receipts": "dist/verification/live-cpp/l05s/"
         }
       ],
       "bounded_formatting": {
@@ -392,8 +409,8 @@
         "temperature_commit": "03d8b039",
         "windows_host_test_configuration_commit": "09bb4477",
         "policy": "Actual array/tail spans; complete terminated UTF-8 prefixes; overlapping views supported. Paths/record staging keep separate strict contracts.",
-        "remaining_initial_sites": 122,
-        "remaining_lexical_spellings": 128,
+        "remaining_initial_sites": 109,
+        "remaining_lexical_spellings": 115,
         "inventory_scope": "The initial copy inventory and the current lexical policy differ: the latter also includes SDK declaration/definition spellings. Both remain explicitly accounted for.",
         "enforcement": "The manifest checks exact remaining raw-copy spellings and multiplicities. New or removed raw sites require updating the maintained inventory; migrated sites cannot silently be reintroduced."
       },
@@ -473,6 +490,12 @@
         "status": "complete; verified",
         "evidence": "docs/CPP-LIVE-FILE-SERVICES.json",
         "interface": "Readonly bounded input lines and strict work/title/base spans; two initial raw line copies retired."
+      },
+      "bounded_fitting_copies": {
+        "status": "complete; verified",
+        "evidence": "docs/CPP-LIVE-TEXT-COPIES.json",
+        "sites": 11,
+        "interfaces": "Strict whole UTF-8 append and destination spans replace nine proven-fitting text sites; fixed-array bounded byte joining replaces two host strcat sites while preserving admission/encoding behavior."
       }
     },
     {

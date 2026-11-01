@@ -1,6 +1,6 @@
 {
   "migration_parent": "d3d3724c",
-  "status": "188 migrated sites complete; remaining text work active",
+  "status": "199 migrated sites complete; remaining text work active",
   "contracts": {
     "display": "Write a terminated complete UTF-8 prefix into the actual destination span; preserve fitting bytes. Views borrow synchronously and overlapping copies use memmove.",
     "append": "Scan only inside the destination span for its NUL. An unterminated nonempty destination is cleared and zero bytes are appended.",
@@ -1853,24 +1853,120 @@
       "original_call": "std::strcpy(app.state.szWork, lpbStart)",
       "destination_span": "std::span{app.state.szWork}",
       "role": "Definition line views borrow local owned bytes; the existing UTF-8/full-line length checks precede strict copying into the actual work-path span."
+    },
+    {
+      "path": "src/core/save.cpp",
+      "scope": "SetSzWorkFromDt",
+      "baseline_line": 905,
+      "migration_parent": "b5db3bbd",
+      "operation": "strcat",
+      "original_call": "std::strcat(app.state.szWork, \"xy\")",
+      "destination_span": "FAppendUtf8(std::span{app.state.szWork}, \"xy\")",
+      "role": "The formatted 255-byte maximum base plus dot and a two-byte suffix fits the 360-byte work buffer; strict append preserves whole UTF-8 bytes."
+    },
+    {
+      "path": "src/core/save.cpp",
+      "scope": "SetSzWorkFromDt",
+      "baseline_line": 908,
+      "migration_parent": "b5db3bbd",
+      "operation": "strcat",
+      "original_call": "std::strcat(app.state.szWork, \"hst\")",
+      "destination_span": "FAppendUtf8(std::span{app.state.szWork}, \"hst\")",
+      "role": "The formatted 255-byte maximum base plus dot and a three-byte suffix fits the 360-byte work buffer; no clipping or format-mode changes."
+    },
+    {
+      "path": "src/core/create.cpp",
+      "scope": "GenNewGameFromFile",
+      "baseline_line": 1301,
+      "migration_parent": "b5db3bbd",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.rgplr[i].szNames, app.state.rgplr[i].szName)",
+      "destination_span": "CchCopyUtf8(std::span{app.state.rgplr[i].szNames}, app.state.rgplr[i].szName)",
+      "role": "The selected generated catalog name has at most nine bytes and a terminator; the same 32-byte plural field receives its exact bytes."
+    },
+    {
+      "path": "src/core/create.cpp",
+      "scope": "GenNewGameFromFile",
+      "baseline_line": 1302,
+      "migration_parent": "b5db3bbd",
+      "operation": "strcat",
+      "original_call": "std::strcat(app.state.rgplr[i].szNames, \"s\")",
+      "destination_span": "FAppendUtf8(std::span{app.state.rgplr[i].szNames}, \"s\")",
+      "role": "All 24 generated-name entries fit with ASCII s and NUL within the unchanged 32-byte field. The lookup, uniqueness loop and RNG sequence remain."
+    },
+    {
+      "path": "src/core/race.cpp",
+      "scope": "FWasRaceFile",
+      "baseline_line": 654,
+      "migration_parent": "b5db3bbd",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.szRacePass, szPassword)",
+      "destination_span": "CchCopyUtf8(std::span{app.state.szRacePass}, szPassword)",
+      "role": "Accepted replacement passwords obey the existing 15-byte UTF-8 budget; both source and destination are 16-byte fields. Hashing and confirmation precede the same copy."
+    },
+    {
+      "path": "src/core/race.cpp",
+      "scope": "FWasRaceFile",
+      "baseline_line": 666,
+      "migration_parent": "b5db3bbd",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.szRacePass, app.state.szPassLast)",
+      "destination_span": "CchCopyUtf8(std::span{app.state.szRacePass}, app.state.szPassLast)",
+      "role": "The existing validated last-password field and race-password field both hold 15 UTF-8 bytes plus NUL. No stored password width or salt behavior changes."
+    },
+    {
+      "path": "src/core/race.cpp",
+      "scope": "CreateRandomRace",
+      "baseline_line": 806,
+      "migration_parent": "b5db3bbd",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(pplr->szName, plrT.szName)",
+      "destination_span": "CchCopyUtf8(std::span{pplr->szName}, plrT.szName)",
+      "role": "Restore only the terminated validated name into the same-width 32-byte field after the existing 250-pass fallback. Unused tail bytes and all RNG/stat decisions remain."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "FDumpCmdLineGame",
+      "baseline_line": 749,
+      "migration_parent": "b5db3bbd",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(szFile, app.state.szBase)",
+      "destination_span": "CchCopyUtf8(std::span{szFile}, app.state.szBase)",
+      "role": "Both arrays have 256 bytes. Retain exact validated base/extension bytes and existing separator/dot policy; source remains NUL-terminated."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "scope": "FDumpCmdLineGame",
+      "baseline_line": 757,
+      "migration_parent": "b5db3bbd",
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.szBase, szFile)",
+      "destination_span": "CchCopyUtf8(std::span{app.state.szBase}, szFile)",
+      "role": "After splitting its extension, the local 256-byte path fits back into the same-width base field. Load/dump order and filename spelling remain."
+    },
+    {
+      "path": "src/host/host.cpp",
+      "scope": "main",
+      "baseline_line": 128,
+      "migration_parent": "b5db3bbd",
+      "operation": "strcat",
+      "original_call": "std::strcat(szCmdLine, \" \")",
+      "destination_span": "szCmdLine[cchCmdLine++] = ' '",
+      "role": "Preserve one separator per argument after the first in the same 1024-byte budget, including empty arguments. Cursor arithmetic is bounded by the original two-byte reserve rule."
+    },
+    {
+      "path": "src/host/host.cpp",
+      "scope": "main",
+      "baseline_line": 130,
+      "migration_parent": "b5db3bbd",
+      "operation": "strcat",
+      "original_call": "std::strcat(szCmdLine, argv[i])",
+      "destination_span": "std::ranges::copy(szArgument, std::span{szCmdLine}.subspan(cchCmdLine).begin())",
+      "role": "Copy the exact CRT argument bytes without early UTF-8 filtering or allocation, update the bounded cursor and terminate once. Preserve parser diagnostics and native argv release order."
     }
   ],
   "remaining_spelling_scope": "Lexical raw-copy spellings, including SDK declarations/definitions; comments/literals excluded with the manifest lexer. Exact counts prevent new raw sites during the remaining migration.",
   "remaining_raw_spellings": [
-    {
-      "path": "src/core/create.cpp",
-      "normalized_call": "std::strcat(app.state.rgplr[i].szNames,)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/core/create.cpp",
-      "normalized_call": "std::strcpy(app.state.rgplr[i].szNames,app.state.rgplr[i].szName)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
     {
       "path": "src/core/create.cpp",
       "normalized_call": "std::strcpy(app.state.szBase,pszFile)",
@@ -1901,50 +1997,8 @@
     },
     {
       "path": "src/core/race.cpp",
-      "normalized_call": "std::strcpy(app.state.szRacePass,app.state.szPassLast)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/core/race.cpp",
-      "normalized_call": "std::strcpy(app.state.szRacePass,szPassword)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/core/race.cpp",
       "normalized_call": "std::strcpy(app.state.szWork,szFile)",
       "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/core/race.cpp",
-      "normalized_call": "std::strcpy(pplr->szName,plrT.szName)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/core/report.cpp",
-      "normalized_call": "std::strcpy(app.state.szBase,szFile)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/core/report.cpp",
-      "normalized_call": "std::strcpy(szFile,app.state.szBase)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/core/save.cpp",
-      "normalized_call": "std::strcat(app.state.szWork,)",
-      "count": 2,
       "status": "pending",
       "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
     },
@@ -2028,20 +2082,6 @@
     {
       "path": "src/core/util.cpp",
       "normalized_call": "std::strcpy(szFile,app.state.szBase)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/host/host.cpp",
-      "normalized_call": "std::strcat(szCmdLine,)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/host/host.cpp",
-      "normalized_call": "std::strcat(szCmdLine,argv[i])",
       "count": 1,
       "status": "pending",
       "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
@@ -2661,5 +2701,47 @@
     "text": "At most 31 UTF-8 bytes with a terminator inside the provided source span. Raw fields retain marker zero plus NUL; compressed fields retain the existing 31-byte codec budget.",
     "output": "Ship-design encoding accepts an actual byte span and returns an optional byte count. Failed encoding leaves the destination unchanged. Stream publication and pure encoding are separate operations.",
     "callers": "Real log, race, library and save callers plus actual test consumers migrate; old raw-pointer/cursor overloads removed. No production player-record caller used external storage."
+  },
+  "bounded_fitting_copies": {
+    "status": "complete; verified",
+    "parent": "b5db3bbd",
+    "sites": 11,
+    "generated_race_names": {
+      "entries": 24,
+      "maximum_utf8_bytes": 9,
+      "plural_field_capacity": 32
+    },
+    "save_suffix_capacity": {
+      "base_capacity": 256,
+      "work_capacity": 360,
+      "maximum_base_dot_suffix_bytes": 259
+    },
+    "password_fields": {
+      "source_capacity": 16,
+      "destination_capacity": 16,
+      "validated_payload_limit": 15
+    },
+    "report_fields": {
+      "source_capacity": 256,
+      "destination_capacity": 256
+    },
+    "host_arguments": "A fixed 1024-byte std::array and bounded byte cursor preserve exact argv bytes, separator placement, NUL and the existing reserve-two admission rule. No allocation or early UTF-8 normalization is introduced.",
+    "strict_append": "FAppendUtf8 takes a destination span and readonly view, validates both complete strings and whole capacity, permits overlap and leaves all bytes unchanged on failure. It does not clip path/record text.",
+    "verification": {
+      "batch": "L05s bounded fitting race, report, save and host copies",
+      "debug_build": "Pass; no warnings. Source policy covers 158 owned C++20 sources, 159 compiled variants and 161 standalone headers in both orders. Exact raw-copy inventory enforcement passes.",
+      "desktop": "153/153, including all 29 leak checks and available SDL tutorial checkpoints.",
+      "host_units": "28/28",
+      "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+      "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+      "windows": "147/147 owned production units and five changed/consumer test units compile with strict MinGW. Windows host and actual five test executables build. Wine cases all pass: encoding 10, race 7, turn 7, save 23, report 3. Actual native Windows desktop and Linux final qualification remain pending.",
+      "append_contract": "Whole UTF-8 append uses a destination span and readonly view. Thirteen fixed vectors plus an overlapping-copy case cover exact capacity, multibyte boundaries, empty/unterminated buffers, invalid input/prefix and byte-for-byte unchanged failure with guards.",
+      "host_characterization": "Eleven parent/new CLI comparisons match exact exit status, stdout and stderr, including empty arguments, 1024-byte admission boundaries, Unicode and raw invalid POSIX argument bytes. The reserve-two rule, separators, parser error delivery and native argv lifetime remain.",
+      "scope": "Nine proven-fitting UTF-8 text sites now use actual spans and strict whole-text append/copy; two host strcat sites use a fixed array, bounded byte cursor and exact byte copy. No new allocation, clipping, record widths, hashing, game logic or RNG changes.",
+      "inventory": "199 migrated sites; 109 initial application copy sites remain. The lexical raw-spelling allowlist totals 115, including SDK declarations/definitions.",
+      "baseline": "Behavior-neutral; native/frozen-original baselines and unit goldens unchanged. No scenario/checkpoint moved, no regression export required.",
+      "remaining": "L05 remaining copies/const text/shared scratch results, L06 other service interfaces and Milestone D, and L08 final reconciliation/platform qualification remain active.",
+      "receipts": "dist/verification/live-cpp/l05s/"
+    }
   }
 }

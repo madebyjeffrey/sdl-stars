@@ -57,6 +57,18 @@ int CchCopyUtf8(char *pszOut, std::size_t cbOut, const char *psz, std::size_t cb
     return static_cast<int>(cb);
 }
 
+bool FAppendUtf8(std::span<char> rgchOut, std::string_view sz) {
+    const auto pchEnd = std::find(rgchOut.begin(), rgchOut.end(), 0);
+    std::size_t cch;
+
+    if (pchEnd == rgchOut.end()) return false;
+    cch = static_cast<std::size_t>(pchEnd - rgchOut.begin());
+    if (!FUtf8Valid(std::string_view(rgchOut.data(), cch)) || !FUtf8Valid(sz) || sz.size() >= rgchOut.size() - cch) return false;
+    if (!sz.empty()) std::memmove(rgchOut.data() + cch, sz.data(), sz.size());
+    rgchOut[cch + sz.size()] = 0;
+    return true;
+}
+
 std::size_t CchCopyUtf8Prefix(std::span<char> rgchOut, std::string_view sz) {
     std::size_t cch;
     if (rgchOut.empty()) return 0;
