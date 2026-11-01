@@ -337,7 +337,7 @@ static void TestScannerSnapshotUtf8(void) {
     snap.cObject = 1;
     pf = PfNativeTemporary(); TEST_ASSERT(pf);
     TEST_ASSERT(FWriteScannerSnapshot(&snap, pf));
-    ISeekNativeFile(pf, 0, 0); cb = CReadNative(sz, 1, sizeof(sz) - 1, pf); sz[cb] = 0;
+    ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin); cb = CReadNative(sz, 1, sizeof(sz) - 1, pf); sz[cb] = 0;
     TEST_CHECK(FUtf8Valid(sz, cb));
     TEST_CHECK(strstr(sz, psz) != NULL && strstr(sz, "\\u000d\\u000a") != NULL);
     strcpy(obj.szName, "\xff");

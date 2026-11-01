@@ -11,14 +11,14 @@
 static bool fFailRead, fCleanupFailure, fMenuFailure;
 static int cNested, cDepthErrors, cProfileLines = -1, cReads;
 static bool fFailProfileWrite;
-int64_t CbReadGuardFile(NATIVEFILE *pf, void *rgb, size_t cb) {
+std::optional<std::size_t> CbReadGuardFile(NATIVEFILE *pf, std::span<std::byte> rgb) {
     cReads++;
     if (fFailRead) {
         COMPATFILEREADSCOPE nested(CbReadNativeFile);
         fFailRead = false;
         StarsThrowError(starsErrorFile, 417);
     }
-    return CbReadNativeFile(pf, rgb, cb);
+    return CbReadNativeFile(pf, rgb);
 }
 int64_t CbReadGuardLine(char **ppsz, size_t *pcb, NATIVEFILE *pf) {
     int64_t cb = CbGetNativeLine(ppsz, pcb, pf);

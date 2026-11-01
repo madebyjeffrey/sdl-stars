@@ -58,11 +58,10 @@ void qsort16(APPSESSION &app, void *base, std::size_t count, std::size_t width, 
 // The registry owns successful tokens; failure returns hf == -1 and reports
 // missing only for ENOENT. The result is transient, never a saved record.
 [[nodiscard]] NATIVEFILEOPENRESULT HfOpenFile(const char *szFile, NATIVEFILEOPENOPTIONS nfo);
-std::int32_t CbReadFile(std::int16_t hf, void *rg, std::uint16_t cb);
-std::int32_t CbWriteFile(std::int16_t hf, const void *rg, std::uint16_t cb);
-// LSeekFile moves like _llseek: iOrigin 0 from the start, 1 from the
-// current position, 2 from the end. It returns the new position.
-std::int32_t LSeekFile(std::int16_t hf, std::int32_t l, std::int16_t iOrigin);
+std::optional<std::size_t> CbReadFile(std::int16_t hf, std::span<std::byte> rg);
+std::optional<std::size_t> CbWriteFile(std::int16_t hf, std::span<const std::byte> rg);
+// Seek from the named origin and return the new position.
+std::int32_t LSeekFile(std::int16_t hf, std::int32_t l, NATIVESEEKORIGIN iOrigin);
 std::int32_t CbFileSize(std::int16_t hf);
 void    CloseFile(std::int16_t hf);
 std::int16_t FFileExists(const char *szFile);

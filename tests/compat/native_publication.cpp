@@ -83,7 +83,7 @@ int main() {
     CHECK(FWrite(szOld, "new") && FWrite(szNew, "old"));
     CHECK(ReplaceNativeFile(szOld, szNew) == 0);
     pf = PfNativeOpen(szNew, "rb");
-    CHECK(pf && CbReadNativeFile(pf, rgb, sizeof(rgb)) == 3 && !std::memcmp(rgb, "new", 3));
+    CHECK(pf && CbReadNativeFile(pf, std::as_writable_bytes(std::span{rgb}).first(static_cast<std::size_t>(sizeof(rgb)))) == 3 && !std::memcmp(rgb, "new", 3));
     CHECK(ICloseNativeFile(pf) == 0 && RemoveNativeFile(szNew) == 0);
     CHECK(FFilesystemRemove(szDirectory));
     std::puts("Publication effects: exact flags/results, snapshots, nesting, failure/retry, thread isolation and real UTF-8 filesystem delegation passed");

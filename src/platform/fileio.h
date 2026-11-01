@@ -1,5 +1,10 @@
 #ifndef STARS_FILEIO_H
 #define STARS_FILEIO_H
+// Native service values and standard-library types must keep native layout
+// when included from a caller's packed record scope.
+#pragma pack(push)
+#pragma pack()
+#include <optional>
 #include <cstddef>
 #include <cstdint>
 #include <array>
@@ -16,6 +21,7 @@ struct NATIVEFILEINFO {
     int fDirectory, fRegular, fLink;
 };
 
+enum class NATIVESEEKORIGIN : std::uint8_t { begin = 0, current = 1, end = 2 };
 enum class NATIVEFILEACCESS : std::uint8_t { read = 1, write = 2, readWrite = 3 };
 enum class NATIVEFILESHARE : std::uint8_t { compatible = 0, exclusive = 0x10, denyWrite = 0x20, denyRead = 0x30, denyNone = 0x40 };
 struct NATIVEFILEOPENOPTIONS {
@@ -36,12 +42,14 @@ NATIVEFILE *PfNativeOpenFlags(const char *psz, NATIVEFILEOPENOPTIONS nfo);
 NATIVEFILE *PfNativeCreateTemp(char *pszTemplate);
 NATIVEFILE *PfNativeTemporary(void);
 int ICloseNativeFile(NATIVEFILE *pf);
-std::int64_t CbReadNativeFile(NATIVEFILE *pf, void *rgb, std::size_t cb);
-std::int64_t CbWriteNativeFile(NATIVEFILE *pf, const void *rgb, std::size_t cb);
+// A present count includes successful zero-byte IO; nullopt reports failure
+// through errno. Partial counts and stream error/EOF state remain observable.
+std::optional<std::size_t> CbReadNativeFile(NATIVEFILE *pf, std::span<std::byte> rgb);
+std::optional<std::size_t> CbWriteNativeFile(NATIVEFILE *pf, std::span<const std::byte> rgb);
 std::size_t CReadNative(void *rgb, std::size_t cb, std::size_t c, NATIVEFILE *pf);
 std::size_t CWriteNative(const void *rgb, std::size_t cb, std::size_t c, NATIVEFILE *pf);
-std::int64_t LSeekNativeFile(NATIVEFILE *pf, std::int64_t ib, int iOrigin);
-int ISeekNativeFile(NATIVEFILE *pf, std::int64_t ib, int iOrigin);
+std::int64_t LSeekNativeFile(NATIVEFILE *pf, std::int64_t ib, NATIVESEEKORIGIN iOrigin);
+int ISeekNativeFile(NATIVEFILE *pf, std::int64_t ib, NATIVESEEKORIGIN iOrigin);
 std::int64_t LNativePosition(NATIVEFILE *pf);
 std::int64_t CbNativeFile(NATIVEFILE *pf);
 int ITruncateNativeFile(NATIVEFILE *pf, std::int64_t cb);
@@ -91,9 +99,9 @@ int ICloseNativeDir(NATIVEDIR *pdir);
 
 // Small owned tokens keep native pointers/descriptors out of game storage.
 [[nodiscard]] NATIVEFILEOPENRESULT HfNativeOpenLegacy(const char *psz, NATIVEFILEOPENOPTIONS nfo);
-std::int32_t CbNativeReadLegacy(std::int16_t hf, void *rgb, std::uint16_t cb);
-std::int32_t CbNativeWriteLegacy(std::int16_t hf, const void *rgb, std::uint16_t cb);
-std::int32_t LNativeSeekLegacy(std::int16_t hf, std::int32_t ib, std::int16_t iOrigin);
+std::optional<std::size_t> CbNativeReadLegacy(std::int16_t hf, std::span<std::byte> rgb);
+std::optional<std::size_t> CbNativeWriteLegacy(std::int16_t hf, std::span<const std::byte> rgb);
+std::int32_t LNativeSeekLegacy(std::int16_t hf, std::int32_t ib, NATIVESEEKORIGIN iOrigin);
 std::int32_t CbNativeSizeLegacy(std::int16_t hf);
 void CloseNativeLegacy(std::int16_t hf);
 
@@ -116,4 +124,5 @@ public:
     StarsNativeDirGuard(const StarsNativeDirGuard &) = delete;
     StarsNativeDirGuard &operator=(const StarsNativeDirGuard &) = delete;
 };
+#pragma pack(pop)
 #endif

@@ -1,6 +1,6 @@
 {
   "parent": "c7f5e933",
-  "status": "File-service migration active; open options/results complete and verified.",
+  "status": "File-service migration active; open options/results, native/token byte spans/counts and scoped seek origins complete and verified.",
   "open": {
     "status": "complete; verified",
     "interfaces": [
@@ -365,10 +365,1128 @@
     }
   ],
   "pending": {
-    "byte_io": "CbReadFile/CbWriteFile, lower byte operations and element-count stream interfaces still need spans/results and actual caller migration.",
-    "seek": "Integer seek origins still need a scoped enum through native/token helpers and all callers.",
-    "stream_open": "Native stream mode strings and remaining file/path result/out-parameter interfaces still need typed contracts. Paths remain strict UTF-8, without truncation.",
+    "byte_io": "Raw element-count CReadNative/CWriteNative and record RgFromStream/RgToStream remain to receive physical spans/count results and actual caller migration.",
+    "seek": "Scoped seek origins complete; existing position-result widths and native/SDK error mappings are retained.",
+    "stream_open": "Native stream mode strings and remaining file/path result/out-parameter interfaces remain; OutputFileString still has the explicit old uint16_t write-count boundary pending focused repair.",
     "selection": "Milestone D remains open; no picker backend or user workflow was changed by this batch.",
     "qualification": "Final complete-state inventory, Debug/Release and actual platform qualification remain required."
+  },
+  "byte_and_seek": {
+    "parent": "b68995b3",
+    "status": "complete; verified",
+    "byte_interfaces": [
+      "CbReadNativeFile/CbWriteNativeFile: byte spans -> optional<size_t>",
+      "CbNativeReadLegacy/CbNativeWriteLegacy: byte spans -> optional<size_t>",
+      "CbReadFile/CbWriteFile: byte spans -> optional<size_t>"
+    ],
+    "seek_interfaces": [
+      "LSeekNativeFile/ISeekNativeFile",
+      "LNativeSeekLegacy/LSeekFile",
+      "NATIVEFILE::Seek"
+    ],
+    "result_contract": "A present count, including zero, reports transferred bytes; nullopt reports a failed operation through errno. Positive partial counts and persistent stream error/EOF state remain separately observable. No all-or-nothing write promise is added.",
+    "capacities": "Real fixed arrays and their tails become byte spans; the SDK preserves null-pointer checks before forming views. Record-stream and raw element APIs still bridge their existing caller-supplied ranges pending physical-span migration.",
+    "provider": "The actual COMPATFILEREADSCOPE provider and held-lock exception witness receive/return the same span/optional-count types. No old raw-pointer provider adapter remains. SDK _lread/_lwrite map optional results back to their unchanged native counts/LastError/EINTR contract.",
+    "seek_contract": "Scoped NATIVESEEKORIGIN is carried through core, host, ZIP/library, metadata, SDK and test consumers. Integers exist only at the actual OS/SDK boundary; SDK invalid origins are rejected before conversion. The token helper retains its existing fallback-to-end behavior for a forced nonstandard origin. Existing 32/64-bit position and overflow rules remain.",
+    "layout": "fileio.h gives transient standard-library/service values native packing and restores caller packing. The actual packed Win32 include fixture checks optional-count and native metadata alignment and packing restoration. No saved record uses these values.",
+    "reference_checks": "Before migration the actual native/token functions passed byte/count/sentinel checks, explicit EOF observation, size queries preserving EOF, current/end/begin seeks, invalid native origins and POSIX empty-write effects. After migration the same checks use spans/results; the zero-write test also covers both native and buffered backends.",
+    "initial_test_corrections": "A first reference assertion incorrectly expected every short native-descriptor read to set EOF; corrected it to perform a further read that returns zero at EOF, retaining prefix/sentinel checks. A Windows test initially used a buffered stream while expecting native truncation; expanded it to require native truncation and buffered ENOTSUP, preserving existing implementation behavior. A missed SDK pointer span extent was corrected before final compilation.",
+    "call_inventory_scope": "98 listed direct expressions across ten native/token byte/seek functions, plus the actual SDK read-provider invocation. Concrete file Read/Write/Seek member handoffs also use spans or the scoped origin.",
+    "parent_calls": [
+      {
+        "path": "src/ui/libraryui.cpp",
+        "line": 548,
+        "function": "ISeekNativeFile",
+        "call": "ISeekNativeFile(pf, 0, SEEK_END)",
+        "args": [
+          "pf",
+          "0",
+          "NATIVESEEKORIGIN::end"
+        ]
+      },
+      {
+        "path": "src/ui/libraryui.cpp",
+        "line": 548,
+        "function": "ISeekNativeFile",
+        "call": "ISeekNativeFile(pf, 0, SEEK_SET)",
+        "args": [
+          "pf",
+          "0",
+          "NATIVESEEKORIGIN::begin"
+        ]
+      },
+      {
+        "path": "src/ui/libraryui.cpp",
+        "line": 554,
+        "function": "ISeekNativeFile",
+        "call": "ISeekNativeFile(pf, -4, SEEK_END)",
+        "args": [
+          "pf",
+          "-4",
+          "NATIVESEEKORIGIN::end"
+        ]
+      },
+      {
+        "path": "src/ui/libraryui.cpp",
+        "line": 565,
+        "function": "ISeekNativeFile",
+        "call": "ISeekNativeFile(pf, hdr.cb, SEEK_CUR)",
+        "args": [
+          "pf",
+          "hdr.cb",
+          "NATIVESEEKORIGIN::current"
+        ]
+      },
+      {
+        "path": "src/ui/libraryui.cpp",
+        "line": 1281,
+        "function": "ISeekNativeFile",
+        "call": "ISeekNativeFile(pf, 0, SEEK_END)",
+        "args": [
+          "pf",
+          "0",
+          "NATIVESEEKORIGIN::end"
+        ]
+      },
+      {
+        "path": "src/ui/libraryui.cpp",
+        "line": 1281,
+        "function": "ISeekNativeFile",
+        "call": "ISeekNativeFile(pf, 0, SEEK_SET)",
+        "args": [
+          "pf",
+          "0",
+          "NATIVESEEKORIGIN::begin"
+        ]
+      },
+      {
+        "path": "src/ui/libraryui.cpp",
+        "line": 1289,
+        "function": "ISeekNativeFile",
+        "call": "ISeekNativeFile(pf, 18, SEEK_SET)",
+        "args": [
+          "pf",
+          "18",
+          "NATIVESEEKORIGIN::begin"
+        ]
+      },
+      {
+        "path": "src/ui/libraryui.cpp",
+        "line": 1290,
+        "function": "ISeekNativeFile",
+        "call": "ISeekNativeFile(pf, -4, SEEK_END)",
+        "args": [
+          "pf",
+          "-4",
+          "NATIVESEEKORIGIN::end"
+        ]
+      },
+      {
+        "path": "src/ui/libraryui.cpp",
+        "line": 1309,
+        "function": "ISeekNativeFile",
+        "call": "ISeekNativeFile(pf, hdr.cb, SEEK_CUR)",
+        "args": [
+          "pf",
+          "hdr.cb",
+          "NATIVESEEKORIGIN::current"
+        ]
+      },
+      {
+        "path": "src/ui/libraryui.cpp",
+        "line": 1318,
+        "function": "ISeekNativeFile",
+        "call": "ISeekNativeFile(pf, -2, SEEK_END)",
+        "args": [
+          "pf",
+          "-2",
+          "NATIVESEEKORIGIN::end"
+        ]
+      },
+      {
+        "path": "src/ui/libraryzip.cpp",
+        "line": 272,
+        "function": "ISeekNativeFile",
+        "call": "ISeekNativeFile(pf, tailOffset, SEEK_SET)",
+        "args": [
+          "pf",
+          "tailOffset",
+          "NATIVESEEKORIGIN::begin"
+        ]
+      },
+      {
+        "path": "src/ui/libraryzip.cpp",
+        "line": 276,
+        "function": "ISeekNativeFile",
+        "call": "ISeekNativeFile(pf, eocd + 4, SEEK_SET)",
+        "args": [
+          "pf",
+          "eocd + 4",
+          "NATIVESEEKORIGIN::begin"
+        ]
+      },
+      {
+        "path": "src/ui/libraryzip.cpp",
+        "line": 284,
+        "function": "ISeekNativeFile",
+        "call": "ISeekNativeFile(pf, centralOffset, SEEK_SET)",
+        "args": [
+          "pf",
+          "centralOffset",
+          "NATIVESEEKORIGIN::begin"
+        ]
+      },
+      {
+        "path": "src/ui/libraryzip.cpp",
+        "line": 304,
+        "function": "ISeekNativeFile",
+        "call": "ISeekNativeFile(pf, zc.dwLocalOffset, SEEK_SET)",
+        "args": [
+          "pf",
+          "zc.dwLocalOffset",
+          "NATIVESEEKORIGIN::begin"
+        ]
+      },
+      {
+        "path": "src/ui/libraryzip.cpp",
+        "line": 313,
+        "function": "ISeekNativeFile",
+        "call": "ISeekNativeFile(pf, wLocalExtraLength, SEEK_CUR)",
+        "args": [
+          "pf",
+          "wLocalExtraLength",
+          "NATIVESEEKORIGIN::current"
+        ]
+      },
+      {
+        "path": "src/ui/libraryzip.cpp",
+        "line": 320,
+        "function": "ISeekNativeFile",
+        "call": "ISeekNativeFile(pf, lNext, SEEK_SET)",
+        "args": [
+          "pf",
+          "lNext",
+          "NATIVESEEKORIGIN::begin"
+        ]
+      },
+      {
+        "path": "src/ui/libraryzip.cpp",
+        "line": 349,
+        "function": "ISeekNativeFile",
+        "call": "ISeekNativeFile(pf, lNext, SEEK_SET)",
+        "args": [
+          "pf",
+          "lNext",
+          "NATIVESEEKORIGIN::begin"
+        ]
+      },
+      {
+        "path": "src/core/save.cpp",
+        "line": 1043,
+        "function": "LSeekFile",
+        "call": "LSeekFile(app.state.hf, static_cast<std::int16_t>(-(app.state.hdrCur.cb + 2)), 1)",
+        "args": [
+          "app.state.hf",
+          "static_cast<std::int16_t>(-(app.state.hdrCur.cb + 2))",
+          "NATIVESEEKORIGIN::current"
+        ]
+      },
+      {
+        "path": "src/core/save.cpp",
+        "line": 1052,
+        "function": "LSeekFile",
+        "call": "LSeekFile(app.state.hf, 0, 0)",
+        "args": [
+          "app.state.hf",
+          "0",
+          "NATIVESEEKORIGIN::begin"
+        ]
+      },
+      {
+        "path": "src/core/save.cpp",
+        "line": 1058,
+        "function": "LSeekFile",
+        "call": "LSeekFile(app.state.hf, 0, 2)",
+        "args": [
+          "app.state.hf",
+          "0",
+          "NATIVESEEKORIGIN::end"
+        ]
+      },
+      {
+        "path": "src/core/save.cpp",
+        "line": 1114,
+        "function": "CbWriteFile",
+        "call": "CbWriteFile(app.state.hf, rg, cb)",
+        "args": [
+          "app.state.hf",
+          "rg",
+          "cb"
+        ]
+      },
+      {
+        "path": "src/core/utilgen.cpp",
+        "line": 247,
+        "function": "LSeekFile",
+        "call": "LSeekFile(hf, 0, 2)",
+        "args": [
+          "hf",
+          "0",
+          "NATIVESEEKORIGIN::end"
+        ]
+      },
+      {
+        "path": "src/core/utilgen.cpp",
+        "line": 248,
+        "function": "CbWriteFile",
+        "call": "CbWriteFile(hf, sz, std::strlen(sz))",
+        "args": [
+          "hf",
+          "sz",
+          "std::strlen(sz)"
+        ]
+      },
+      {
+        "path": "src/core/utilgen.cpp",
+        "line": 271,
+        "function": "CbWriteFile",
+        "call": "CbWriteFile(hfDst, rgb, 0x800)",
+        "args": [
+          "hfDst",
+          "rgb",
+          "0x800"
+        ]
+      },
+      {
+        "path": "src/core/utilgen.cpp",
+        "line": 276,
+        "function": "CbWriteFile",
+        "call": "CbWriteFile(hfDst, rgb, LOWORD(cb))",
+        "args": [
+          "hfDst",
+          "rgb",
+          "LOWORD(cb)"
+        ]
+      },
+      {
+        "path": "src/core/file.cpp",
+        "line": 720,
+        "function": "LSeekFile",
+        "call": "LSeekFile(app.state.hf, 0, 1)",
+        "args": [
+          "app.state.hf",
+          "0",
+          "NATIVESEEKORIGIN::current"
+        ]
+      },
+      {
+        "path": "src/core/file.cpp",
+        "line": 1270,
+        "function": "LSeekFile",
+        "call": "LSeekFile(app.state.hf, -4, 2)",
+        "args": [
+          "app.state.hf",
+          "-4",
+          "NATIVESEEKORIGIN::end"
+        ]
+      },
+      {
+        "path": "src/core/file.cpp",
+        "line": 1304,
+        "function": "LSeekFile",
+        "call": "LSeekFile(app.state.hf, 0, 0)",
+        "args": [
+          "app.state.hf",
+          "0",
+          "NATIVESEEKORIGIN::begin"
+        ]
+      },
+      {
+        "path": "src/core/file.cpp",
+        "line": 1410,
+        "function": "CbReadFile",
+        "call": "CbReadFile(app.state.hf, rgb, cbWireHdr)",
+        "args": [
+          "app.state.hf",
+          "rgb",
+          "cbWireHdr"
+        ]
+      },
+      {
+        "path": "src/core/file.cpp",
+        "line": 1512,
+        "function": "CbReadFile",
+        "call": "CbReadFile(app.state.hf, rg, cb)",
+        "args": [
+          "app.state.hf",
+          "rg",
+          "cb"
+        ]
+      },
+      {
+        "path": "src/host/host.cpp",
+        "line": 50,
+        "function": "ISeekNativeFile",
+        "call": "ISeekNativeFile(pf, 0, SEEK_END)",
+        "args": [
+          "pf",
+          "0",
+          "NATIVESEEKORIGIN::end"
+        ]
+      },
+      {
+        "path": "src/host/host.cpp",
+        "line": 52,
+        "function": "ISeekNativeFile",
+        "call": "ISeekNativeFile(pf, 0, SEEK_SET)",
+        "args": [
+          "pf",
+          "0",
+          "NATIVESEEKORIGIN::begin"
+        ]
+      },
+      {
+        "path": "src/platform/fileio.cpp",
+        "line": 293,
+        "function": "CbReadNativeFile",
+        "call": "CbReadNativeFile(pf, static_cast<char *>(rgb) + total, requested - total)",
+        "args": [
+          "pf",
+          "static_cast<char *>(rgb) + total",
+          "requested - total"
+        ]
+      },
+      {
+        "path": "src/platform/fileio.cpp",
+        "line": 306,
+        "function": "CbWriteNativeFile",
+        "call": "CbWriteNativeFile(pf, static_cast<const char *>(rgb) + total, requested - total)",
+        "args": [
+          "pf",
+          "static_cast<const char *>(rgb) + total",
+          "requested - total"
+        ]
+      },
+      {
+        "path": "src/platform/fileio.cpp",
+        "line": 317,
+        "function": "LSeekNativeFile",
+        "call": "LSeekNativeFile(pf, ib, origin)",
+        "args": [
+          "pf",
+          "ib",
+          "origin"
+        ]
+      },
+      {
+        "path": "src/platform/fileio.cpp",
+        "line": 400,
+        "function": "LSeekNativeFile",
+        "call": "LSeekNativeFile(pf, -1, 1)",
+        "args": [
+          "pf",
+          "-1",
+          "NATIVESEEKORIGIN::current"
+        ]
+      },
+      {
+        "path": "src/platform/fileio.cpp",
+        "line": 421,
+        "function": "LSeekNativeFile",
+        "call": "LSeekNativeFile(pf, -1, 1)",
+        "args": [
+          "pf",
+          "-1",
+          "NATIVESEEKORIGIN::current"
+        ]
+      },
+      {
+        "path": "src/platform/fileio.cpp",
+        "line": 716,
+        "function": "CbReadNativeFile",
+        "call": "CbReadNativeFile(LegacyFile(hf), rgb, cb)",
+        "args": [
+          "LegacyFile(hf)",
+          "rgb",
+          "cb"
+        ]
+      },
+      {
+        "path": "src/platform/fileio.cpp",
+        "line": 725,
+        "function": "CbWriteNativeFile",
+        "call": "CbWriteNativeFile(pf, rgb, cb)",
+        "args": [
+          "pf",
+          "rgb",
+          "cb"
+        ]
+      },
+      {
+        "path": "src/platform/fileio.cpp",
+        "line": 735,
+        "function": "LSeekNativeFile",
+        "call": "LSeekNativeFile(LegacyFile(hf), ib, origin == 0 ? 0 : origin == 1 ? 1 : 2)",
+        "args": [
+          "LegacyFile(hf)",
+          "ib",
+          "origin == NATIVESEEKORIGIN::begin ? NATIVESEEKORIGIN::begin : origin == NATIVESEEKORIGIN::current ? NATIVESEEKORIGIN::current : NATIVESEEKORIGIN::end"
+        ]
+      },
+      {
+        "path": "src/platform/native.cpp",
+        "line": 205,
+        "function": "CbNativeReadLegacy",
+        "call": "CbNativeReadLegacy(hf, rg, cb)",
+        "args": [
+          "hf",
+          "rg",
+          "cb"
+        ]
+      },
+      {
+        "path": "src/platform/native.cpp",
+        "line": 206,
+        "function": "CbNativeWriteLegacy",
+        "call": "CbNativeWriteLegacy(hf, rg, cb)",
+        "args": [
+          "hf",
+          "rg",
+          "cb"
+        ]
+      },
+      {
+        "path": "src/platform/native.cpp",
+        "line": 207,
+        "function": "LNativeSeekLegacy",
+        "call": "LNativeSeekLegacy(hf, l, iOrigin)",
+        "args": [
+          "hf",
+          "l",
+          "iOrigin"
+        ]
+      },
+      {
+        "path": "compat/win32/src/file.cpp",
+        "line": 163,
+        "function": "LSeekNativeFile",
+        "call": "LSeekNativeFile(lp->pf, offset, origin)",
+        "args": [
+          "lp->pf",
+          "offset",
+          "static_cast<NATIVESEEKORIGIN>(origin)"
+        ]
+      },
+      {
+        "path": "compat/win32/src/file.cpp",
+        "line": 202,
+        "function": "CbWriteNativeFile",
+        "call": "CbWriteNativeFile(lp->pf, rgb, cb)",
+        "args": [
+          "lp->pf",
+          "rgb",
+          "cb"
+        ]
+      },
+      {
+        "path": "tests/unit/test_encoding.cpp",
+        "line": 340,
+        "function": "ISeekNativeFile",
+        "call": "ISeekNativeFile(pf, 0, 0)",
+        "args": [
+          "pf",
+          "0",
+          "NATIVESEEKORIGIN::begin"
+        ]
+      },
+      {
+        "path": "tests/unit/test_exceptions.cpp",
+        "line": 57,
+        "function": "CbWriteFile",
+        "call": "CbWriteFile(hfWrite, rgb, 1)",
+        "args": [
+          "hfWrite",
+          "rgb",
+          "1"
+        ]
+      },
+      {
+        "path": "tests/unit/test_exceptions.cpp",
+        "line": 107,
+        "function": "CbWriteFile",
+        "call": "CbWriteFile(hfWrite, rgbFile, cb)",
+        "args": [
+          "hfWrite",
+          "rgbFile",
+          "cb"
+        ]
+      },
+      {
+        "path": "tests/unit/test_exceptions.cpp",
+        "line": 156,
+        "function": "CbReadFile",
+        "call": "CbReadFile(hfRead, written, sizeof(written))",
+        "args": [
+          "hfRead",
+          "written",
+          "sizeof(written)"
+        ]
+      },
+      {
+        "path": "tests/unit/test_exceptions.cpp",
+        "line": 168,
+        "function": "CbReadFile",
+        "call": "CbReadFile(hfRead, written, sizeof(written))",
+        "args": [
+          "hfRead",
+          "written",
+          "sizeof(written)"
+        ]
+      },
+      {
+        "path": "tests/unit/test_native_ports.cpp",
+        "line": 580,
+        "function": "CbNativeReadLegacy",
+        "call": "CbNativeReadLegacy(hfSession,&ch,1)",
+        "args": [
+          "hfSession",
+          "&ch",
+          "1"
+        ]
+      },
+      {
+        "path": "tests/unit/test_native_files.cpp",
+        "line": 46,
+        "function": "CbWriteFile",
+        "call": "CbWriteFile(hfFile, (void *)(\"abcdef\"), 6)",
+        "args": [
+          "hfFile",
+          "(void *)(\"abcdef\")",
+          "6"
+        ]
+      },
+      {
+        "path": "tests/unit/test_native_files.cpp",
+        "line": 47,
+        "function": "LSeekFile",
+        "call": "LSeekFile(hfFile, 2, 0)",
+        "args": [
+          "hfFile",
+          "2",
+          "NATIVESEEKORIGIN::begin"
+        ]
+      },
+      {
+        "path": "tests/unit/test_native_files.cpp",
+        "line": 47,
+        "function": "CbReadFile",
+        "call": "CbReadFile(hfFile, rgb, 4)",
+        "args": [
+          "hfFile",
+          "rgb",
+          "4"
+        ]
+      },
+      {
+        "path": "tests/unit/test_native_files.cpp",
+        "line": 75,
+        "function": "CbWriteFile",
+        "call": "CbWriteFile(hfFile, (void *)(\"Z\"), 1)",
+        "args": [
+          "hfFile",
+          "(void *)(\"Z\")",
+          "1"
+        ]
+      },
+      {
+        "path": "tests/unit/test_native_files.cpp",
+        "line": 108,
+        "function": "CbWriteFile",
+        "call": "CbWriteFile(hfFile, \"abcdef\", 6)",
+        "args": [
+          "hfFile",
+          "\"abcdef\"",
+          "6"
+        ]
+      },
+      {
+        "path": "tests/unit/test_native_files.cpp",
+        "line": 113,
+        "function": "CbReadFile",
+        "call": "CbReadFile(hfFile, rgb, 6)",
+        "args": [
+          "hfFile",
+          "rgb",
+          "6"
+        ]
+      },
+      {
+        "path": "tests/unit/test_native_files.cpp",
+        "line": 115,
+        "function": "CbWriteFile",
+        "call": "CbWriteFile(hfFile, \"!\", 1)",
+        "args": [
+          "hfFile",
+          "\"!\"",
+          "1"
+        ]
+      },
+      {
+        "path": "tests/unit/test_native_files.cpp",
+        "line": 120,
+        "function": "CbWriteFile",
+        "call": "CbWriteFile(hfFile, \"Z\", 1)",
+        "args": [
+          "hfFile",
+          "\"Z\"",
+          "1"
+        ]
+      },
+      {
+        "path": "tests/unit/test_native_files.cpp",
+        "line": 126,
+        "function": "CbReadFile",
+        "call": "CbReadFile(hfFile, rgb, 8)",
+        "args": [
+          "hfFile",
+          "rgb",
+          "8"
+        ]
+      },
+      {
+        "path": "tests/unit/test_native_files.cpp",
+        "line": 138,
+        "function": "CbReadFile",
+        "call": "CbReadFile(hfFile, rgb, 3)",
+        "args": [
+          "hfFile",
+          "rgb",
+          "3"
+        ]
+      },
+      {
+        "path": "tests/unit/test_native_files.cpp",
+        "line": 157,
+        "function": "CbWriteFile",
+        "call": "CbWriteFile(nfr.hf, \"abcdef\", 6)",
+        "args": [
+          "nfr.hf",
+          "\"abcdef\"",
+          "6"
+        ]
+      },
+      {
+        "path": "tests/unit/test_native_files.cpp",
+        "line": 157,
+        "function": "LSeekFile",
+        "call": "LSeekFile(nfr.hf, 2, 0)",
+        "args": [
+          "nfr.hf",
+          "2",
+          "NATIVESEEKORIGIN::begin"
+        ]
+      },
+      {
+        "path": "tests/unit/test_native_files.cpp",
+        "line": 158,
+        "function": "CbWriteFile",
+        "call": "CbWriteFile(nfr.hf, nullptr, 0)",
+        "args": [
+          "nfr.hf",
+          "nullptr",
+          "0"
+        ]
+      },
+      {
+        "path": "tests/unit/test_native_files.cpp",
+        "line": 164,
+        "function": "LSeekFile",
+        "call": "LSeekFile(nfr.hf, 0, 1)",
+        "args": [
+          "nfr.hf",
+          "0",
+          "NATIVESEEKORIGIN::current"
+        ]
+      },
+      {
+        "path": "tests/compat/guard_ownership.cpp",
+        "line": 21,
+        "function": "CbReadNativeFile",
+        "call": "CbReadNativeFile(pf, rgb, cb)",
+        "args": [
+          "pf",
+          "rgb",
+          "cb"
+        ]
+      },
+      {
+        "path": "tests/compat/win32_inspect.cpp",
+        "line": 71,
+        "function": "ISeekNativeFile",
+        "call": "ISeekNativeFile(lpfile, 0, 0)",
+        "args": [
+          "lpfile",
+          "0",
+          "NATIVESEEKORIGIN::begin"
+        ]
+      },
+      {
+        "path": "tests/compat/win32_inspect.cpp",
+        "line": 143,
+        "function": "ISeekNativeFile",
+        "call": "ISeekNativeFile(lpfile, 0, 0)",
+        "args": [
+          "lpfile",
+          "0",
+          "NATIVESEEKORIGIN::begin"
+        ]
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "line": 27,
+        "function": "CbNativeReadLegacy",
+        "call": "CbNativeReadLegacy(hf, &ch, 1)",
+        "args": [
+          "hf",
+          "&ch",
+          "1"
+        ]
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "line": 30,
+        "function": "CbNativeReadLegacy",
+        "call": "CbNativeReadLegacy(hf, &ch, 1)",
+        "args": [
+          "hf",
+          "&ch",
+          "1"
+        ]
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "line": 40,
+        "function": "ISeekNativeFile",
+        "call": "ISeekNativeFile(pf,2,0)",
+        "args": [
+          "pf",
+          "2",
+          "NATIVESEEKORIGIN::begin"
+        ]
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "line": 41,
+        "function": "ISeekNativeFile",
+        "call": "ISeekNativeFile(pf,2,0)",
+        "args": [
+          "pf",
+          "2",
+          "NATIVESEEKORIGIN::begin"
+        ]
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "line": 46,
+        "function": "CbWriteNativeFile",
+        "call": "CbWriteNativeFile(pf,\"Z\",1)",
+        "args": [
+          "pf",
+          "\"Z\"",
+          "1"
+        ]
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "line": 47,
+        "function": "LSeekNativeFile",
+        "call": "LSeekNativeFile(pf,2,0)",
+        "args": [
+          "pf",
+          "2",
+          "NATIVESEEKORIGIN::begin"
+        ]
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "line": 48,
+        "function": "LSeekNativeFile",
+        "call": "LSeekNativeFile(pf,8,0)",
+        "args": [
+          "pf",
+          "8",
+          "NATIVESEEKORIGIN::begin"
+        ]
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "line": 51,
+        "function": "ISeekNativeFile",
+        "call": "ISeekNativeFile(pf,0,0)",
+        "args": [
+          "pf",
+          "0",
+          "NATIVESEEKORIGIN::begin"
+        ]
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "line": 53,
+        "function": "ISeekNativeFile",
+        "call": "ISeekNativeFile(pf,8,0)",
+        "args": [
+          "pf",
+          "8",
+          "NATIVESEEKORIGIN::begin"
+        ]
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "line": 61,
+        "function": "ISeekNativeFile",
+        "call": "ISeekNativeFile(pf,0,0)",
+        "args": [
+          "pf",
+          "0",
+          "NATIVESEEKORIGIN::begin"
+        ]
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "line": 70,
+        "function": "CbWriteNativeFile",
+        "call": "CbWriteNativeFile(pf,\"abcd\",4)",
+        "args": [
+          "pf",
+          "\"abcd\"",
+          "4"
+        ]
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "line": 70,
+        "function": "LSeekNativeFile",
+        "call": "LSeekNativeFile(pf,-2,2)",
+        "args": [
+          "pf",
+          "-2",
+          "NATIVESEEKORIGIN::end"
+        ]
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "line": 72,
+        "function": "CbReadNativeFile",
+        "call": "CbReadNativeFile(pf,bytes+1,4)",
+        "args": [
+          "pf",
+          "bytes+1",
+          "4"
+        ]
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "line": 73,
+        "function": "CbReadNativeFile",
+        "call": "CbReadNativeFile(pf,bytes+3,1)",
+        "args": [
+          "pf",
+          "bytes+3",
+          "1"
+        ]
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "line": 75,
+        "function": "CbReadNativeFile",
+        "call": "CbReadNativeFile(pf,bytes,0)",
+        "args": [
+          "pf",
+          "bytes",
+          "0"
+        ]
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "line": 76,
+        "function": "LSeekNativeFile",
+        "call": "LSeekNativeFile(pf,-1,1)",
+        "args": [
+          "pf",
+          "-1",
+          "NATIVESEEKORIGIN::current"
+        ]
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "line": 77,
+        "function": "LSeekNativeFile",
+        "call": "LSeekNativeFile(pf,0,3)",
+        "args": [
+          "pf",
+          "0",
+          "static_cast<NATIVESEEKORIGIN>(3)"
+        ]
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "line": 78,
+        "function": "LSeekNativeFile",
+        "call": "LSeekNativeFile(pf,0,0)",
+        "args": [
+          "pf",
+          "0",
+          "NATIVESEEKORIGIN::begin"
+        ]
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "line": 78,
+        "function": "CbWriteNativeFile",
+        "call": "CbWriteNativeFile(pf,bytes,0)",
+        "args": [
+          "pf",
+          "bytes",
+          "0"
+        ]
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "line": 80,
+        "function": "CbReadNativeFile",
+        "call": "CbReadNativeFile(nullptr,bytes,0)",
+        "args": [
+          "nullptr",
+          "bytes",
+          "0"
+        ]
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "line": 91,
+        "function": "ISeekNativeFile",
+        "call": "ISeekNativeFile(pf,0,0)",
+        "args": [
+          "pf",
+          "0",
+          "NATIVESEEKORIGIN::begin"
+        ]
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "line": 102,
+        "function": "ISeekNativeFile",
+        "call": "ISeekNativeFile(pf,0,0)",
+        "args": [
+          "pf",
+          "0",
+          "NATIVESEEKORIGIN::begin"
+        ]
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "line": 105,
+        "function": "ISeekNativeFile",
+        "call": "ISeekNativeFile(pf,0,0)",
+        "args": [
+          "pf",
+          "0",
+          "NATIVESEEKORIGIN::begin"
+        ]
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "line": 109,
+        "function": "ISeekNativeFile",
+        "call": "ISeekNativeFile(pf,0,0)",
+        "args": [
+          "pf",
+          "0",
+          "NATIVESEEKORIGIN::begin"
+        ]
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "line": 113,
+        "function": "ISeekNativeFile",
+        "call": "ISeekNativeFile(pf,0,0)",
+        "args": [
+          "pf",
+          "0",
+          "NATIVESEEKORIGIN::begin"
+        ]
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "line": 118,
+        "function": "ISeekNativeFile",
+        "call": "ISeekNativeFile(pf,0,0)",
+        "args": [
+          "pf",
+          "0",
+          "NATIVESEEKORIGIN::begin"
+        ]
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "line": 120,
+        "function": "ISeekNativeFile",
+        "call": "ISeekNativeFile(pf,0,0)",
+        "args": [
+          "pf",
+          "0",
+          "NATIVESEEKORIGIN::begin"
+        ]
+      },
+      {
+        "path": "tests/compat/native_publication.cpp",
+        "line": 86,
+        "function": "CbReadNativeFile",
+        "call": "CbReadNativeFile(pf, rgb, sizeof(rgb))",
+        "args": [
+          "pf",
+          "rgb",
+          "sizeof(rgb)"
+        ]
+      },
+      {
+        "path": "tests/compat/win32_utf8.cpp",
+        "line": 146,
+        "function": "ISeekNativeFile",
+        "call": "ISeekNativeFile(pf, 0, 0)",
+        "args": [
+          "pf",
+          "0",
+          "NATIVESEEKORIGIN::begin"
+        ]
+      },
+      {
+        "path": "tests/compat/win32_client_startup.cpp",
+        "line": 385,
+        "function": "ISeekNativeFile",
+        "call": "ISeekNativeFile(lpfile, 0, 0)",
+        "args": [
+          "lpfile",
+          "0",
+          "NATIVESEEKORIGIN::begin"
+        ]
+      }
+    ],
+    "remaining_text_writer": "OutputFileString explicitly retains its old uint16_t byte-count conversion for this behavior-neutral batch. Its two owned call sites use a 256-byte staging array; removing the generic helper's larger-input wrap remains a separate focused boundary repair.",
+    "verification": {
+      "batch": "L06c native/token byte spans and optional counts; scoped seek origins",
+      "debug_build": "Pass; no new warnings. Packed Win32 header fixture checks native optional-count/metadata alignment and caller-packing restoration. Source policy and standalone headers in both orders pass.",
+      "desktop": "153/153 against final source, including actual file/library/ZIP/guard-provider workflows, all 29 leak checks and available SDL tutorial checkpoints.",
+      "host_units": "28/28 against final source.",
+      "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors and skipped reference inputs.",
+      "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors and skipped reference inputs.",
+      "windows": "All 147 owned production units and all 11 changed test/fixture units pass strict MinGW syntax, including the Linux-only inspection fixture compiled with the peer SDL test flags. Final native-file/type-isolation tests were rechecked after expanding backend coverage. Actual Windows native-file tests (3 cases), recovery tests (10 cases) and standalone byte/seek file-service contract pass under Wine. Native Windows desktop and actual Linux qualification remain pending.",
+      "reference": "Before migration the native/token characterization target and file-service contract passed against the original pointer/count and integer-origin functions. Final tests preserve their byte/count/sentinel/EOF/seek assertions using spans/results and additionally cover both native and buffered empty writes.",
+      "corrections": "Corrected an initial EOF assumption by issuing a read that returns zero; native descriptor short reads need not set EOF immediately. Expanded the Windows zero-write assertion to distinguish native truncation from buffered ENOTSUP. A missed SDK span extent was fixed before the final build. No implementation behavior was changed to satisfy those characterization corrections.",
+      "interfaces": "Six byte functions take physical byte spans and return optional counts, with present zero distinct from failure. All four seek-origin interfaces and the concrete file methods are typed. Actual held-lock read provider uses the same signature; old buffer/count and integer-origin overloads removed.",
+      "baseline": "Behavior-neutral for existing callers: partial effects, binary bytes, EOF/error state, retries, flush timing, callback publication and Windows empty-write paths preserved. Native and frozen original baselines, unit goldens, record widths, RNG and canonical models unchanged. No semantic scenario/checkpoint moved; no export required.",
+      "remaining": "Record/element-count buffers, stream mode strings, file/path result interfaces, the explicitly retained text-writer count boundary and Milestone D remain active.",
+      "receipts": "dist/verification/live-cpp/l06c/"
+    }
   }
 }

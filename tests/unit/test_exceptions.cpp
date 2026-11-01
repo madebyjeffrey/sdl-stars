@@ -54,7 +54,7 @@ static void TestShortReadClosesStream(void) {
     snprintf(szFile, sizeof(szFile), "%s%sone-byte", szDir, szDirSep);
     hfWrite = HfOpenFile(szFile, {.mdAccess = NATIVEFILEACCESS::readWrite, .mdShare = NATIVEFILESHARE::exclusive, .fCreate = true, .fTruncate = true}).hf;
     TEST_ASSERT(hfWrite != -1);
-    TEST_ASSERT(CbWriteFile(hfWrite, rgb, 1) == 1);
+    TEST_ASSERT(CbWriteFile(hfWrite, std::as_bytes(std::span{rgb}).first(static_cast<std::size_t>(1))) == 1);
     CloseFile(hfWrite);
     try {
         StarsRecoveryScope scopeRecovery;
@@ -104,7 +104,7 @@ static void TestPartialRecordPublication() {
     for (int cb : rgcb) {
         hfWrite = HfOpenFile(szFile, {.mdAccess = NATIVEFILEACCESS::readWrite, .mdShare = NATIVEFILESHARE::exclusive, .fCreate = true, .fTruncate = true}).hf;
         TEST_ASSERT(hfWrite != -1);
-        if (cb != 0) TEST_ASSERT(CbWriteFile(hfWrite, rgbFile, cb) == cb);
+        if (cb != 0) TEST_ASSERT(CbWriteFile(hfWrite, std::as_bytes(std::span{rgbFile}).first(static_cast<std::size_t>(cb))) == cb);
         CloseFile(hfWrite);
         app.state.hdrCur.cb = 0x155; app.state.hdrCur.rt = 0x2a;
         memset(app.state.rgbCur, 0xa5, sizeof(app.state.rgbCur));
@@ -153,7 +153,7 @@ static void TestRecordFramingBytes() {
     StreamClose(app);
     hfRead = HfOpenFile(szFile, {.mdShare = NATIVEFILESHARE::denyWrite}).hf;
     TEST_ASSERT(hfRead != -1);
-    TEST_CHECK(CbReadFile(hfRead, written, sizeof(written)) == sizeof(written));
+    TEST_CHECK(CbReadFile(hfRead, std::as_writable_bytes(std::span{written}).first(static_cast<std::size_t>(sizeof(written)))) == sizeof(written));
     CloseFile(hfRead);
     TEST_CHECK(written[0] == 0 && written[1] == 0 && !memcmp(written + 2, rgb, sizeof(rgb)));
     app.state.vlpMemStream = stream;
@@ -165,7 +165,7 @@ static void TestRecordFramingBytes() {
     StreamClose(app);
     hfRead = HfOpenFile(szFile, {.mdShare = NATIVEFILESHARE::denyWrite}).hf;
     TEST_ASSERT(hfRead != -1);
-    TEST_CHECK(CbReadFile(hfRead, written, sizeof(written)) == 4);
+    TEST_CHECK(CbReadFile(hfRead, std::as_writable_bytes(std::span{written}).first(static_cast<std::size_t>(sizeof(written)))) == 4);
     CloseFile(hfRead);
     TEST_CHECK(written[0] == 2 && written[1] == 0 && written[2] == 0xff && written[3] == 0x80);
     TEST_CHECK(WFromStreamBytes(written + 2) == 0x80ff);

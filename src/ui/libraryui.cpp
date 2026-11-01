@@ -545,13 +545,13 @@ static std::int16_t FCompleteGeneratedFile(APPSESSION &app, const char *pszFile,
     pf = PfOpenNativeFile(pszFile, "rb");
     if (!pf) return 0;
     fComplete = 0;
-    if (ISeekNativeFile(pf, 0, SEEK_END) != 0 || (cbFile = LNativePosition(pf)) < 22 || ISeekNativeFile(pf, 0, SEEK_SET) != 0) goto LDone;
+    if (ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::end) != 0 || (cbFile = LNativePosition(pf)) < 22 || ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin) != 0) goto LDone;
     if (!FReadLibraryHdr(pf, &hdr) || hdr.rt != rtBOF || hdr.cb != 16 ||
         !FReadLibraryBof(pf, &rtbof) || std::memcmp(rtbof.rgid, "J3J3", 4) ||
         rtbof.lidGame != app.state.game.lid || rtbof.turn != app.state.game.turn || rtbof.dt != dt || rtbof.iPlayer != iplr) goto LDone;
     /* XY stores raw four-byte star packs between its GAME and EOF records. */
     if (dt == dtXY) {
-        if (cbFile != 18 + 66 + 4L * app.state.game.cPlanMax + 4 || ISeekNativeFile(pf, -4, SEEK_END) != 0) goto LDone;
+        if (cbFile != 18 + 66 + 4L * app.state.game.cPlanMax + 4 || ISeekNativeFile(pf, -4, NATIVESEEKORIGIN::end) != 0) goto LDone;
         fComplete = FReadLibraryHdr(pf, &hdr) && hdr.rt == rtEOF && hdr.cb == 2;
         goto LDone;
     }
@@ -562,7 +562,7 @@ static std::int16_t FCompleteGeneratedFile(APPSESSION &app, const char *pszFile,
             fComplete = hdr.cb == 2 && ib + hdr.cb == cbFile;
             break;
         }
-        if (ISeekNativeFile(pf, hdr.cb, SEEK_CUR) != 0) break;
+        if (ISeekNativeFile(pf, hdr.cb, NATIVESEEKORIGIN::current) != 0) break;
     }
 LDone:
     ICloseNativeFile(pf);
@@ -1278,7 +1278,7 @@ std::int16_t FInspectImportFile(const char *pszFile, DtFileType dt, int iplr,
     pf = PfOpenNativeFile(pszFile, "rb");
     if (!pf) return 0;
     fComplete = 0;
-    if (ISeekNativeFile(pf, 0, SEEK_END) != 0 || (cbFile = LNativePosition(pf)) < 22 || ISeekNativeFile(pf, 0, SEEK_SET) != 0) goto LDone;
+    if (ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::end) != 0 || (cbFile = LNativePosition(pf)) < 22 || ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin) != 0) goto LDone;
     if (!FReadLibraryHdr(pf, &hdr) || hdr.rt != rtBOF || hdr.cb != cbWireBof ||
         !FReadLibraryBof(pf, &rtbof) || std::memcmp(rtbof.rgid, "J3J3", 4) ||
         rtbof.verMajor != 2 || rtbof.verMinor != 85 || rtbof.dt != dt ||
@@ -1286,8 +1286,8 @@ std::int16_t FInspectImportFile(const char *pszFile, DtFileType dt, int iplr,
     if (dt == dtXY) {
         std::uint32_t cPlanets;
         if (cbFile < 88 || (cbFile - 88) % 4 != 0 || (cPlanets = static_cast<std::uint32_t>(((cbFile - 88) / 4))) > 999 ||
-            ISeekNativeFile(pf, 18, SEEK_SET) != 0 || !FReadLibraryHdr(pf, &hdr) || hdr.rt != rtGame || hdr.cb != 64 ||
-            ISeekNativeFile(pf, -4, SEEK_END) != 0 || !FReadLibraryHdr(pf, &hdr) || hdr.rt != rtEOF || hdr.cb != 2) goto LDone;
+            ISeekNativeFile(pf, 18, NATIVESEEKORIGIN::begin) != 0 || !FReadLibraryHdr(pf, &hdr) || hdr.rt != rtGame || hdr.cb != 64 ||
+            ISeekNativeFile(pf, -4, NATIVESEEKORIGIN::end) != 0 || !FReadLibraryHdr(pf, &hdr) || hdr.rt != rtEOF || hdr.cb != 2) goto LDone;
         fComplete = 1;
         *plidGame = rtbof.lidGame;
         if (pturn) *pturn = rtbof.turn;
@@ -1306,7 +1306,7 @@ std::int16_t FInspectImportFile(const char *pszFile, DtFileType dt, int iplr,
             fComplete = 1;
             break;
         }
-        if (ISeekNativeFile(pf, hdr.cb, SEEK_CUR) != 0) break;
+        if (ISeekNativeFile(pf, hdr.cb, NATIVESEEKORIGIN::current) != 0) break;
     }
     if (fComplete) {
         *plidGame = rtbof.lidGame;
@@ -1315,7 +1315,7 @@ std::int16_t FInspectImportFile(const char *pszFile, DtFileType dt, int iplr,
         *pfMulti = rtbof.fMulti;
         if (rtbof.fMulti) {
             std::uint16_t turnFinal;
-            if (cbFile < 4 || ISeekNativeFile(pf, -2, SEEK_END) != 0 || CReadNative(&turnFinal, 2, 1, pf) != 1) fComplete = 0;
+            if (cbFile < 4 || ISeekNativeFile(pf, -2, NATIVESEEKORIGIN::end) != 0 || CReadNative(&turnFinal, 2, 1, pf) != 1) fComplete = 0;
             else if (pturn) *pturn = turnFinal;
         }
     }

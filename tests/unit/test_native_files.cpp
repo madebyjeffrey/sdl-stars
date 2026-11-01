@@ -43,8 +43,8 @@ static void TestNativeFiles(void) {
     nfr = HfOpenFile(szFile, {.mdAccess = NATIVEFILEACCESS::readWrite, .mdShare = NATIVEFILESHARE::exclusive, .fCreate = true, .fTruncate = true});
     hfFile = nfr.hf; fMissing = nfr.fMissing;
     TEST_ASSERT(hfFile != -1 && !fMissing);
-    TEST_CHECK(CbWriteFile(hfFile, (void *)("abcdef"), 6) == 6 && CbFileSize(hfFile) == 6);
-    TEST_CHECK(LSeekFile(hfFile, 2, 0) == 2 && CbReadFile(hfFile, rgb, 4) == 4 && memcmp(rgb, "cdef", 4) == 0);
+    TEST_CHECK(CbWriteFile(hfFile, std::as_bytes(std::span{"abcdef"}).first(6)) == 6 && CbFileSize(hfFile) == 6);
+    TEST_CHECK(LSeekFile(hfFile, 2, NATIVESEEKORIGIN::begin) == 2 && CbReadFile(hfFile, std::as_writable_bytes(std::span{rgb}).first(static_cast<std::size_t>(4))) == 4 && memcmp(rgb, "cdef", 4) == 0);
     CloseFile(hfFile);
     TEST_CHECK(FFileExists(szFile) && !FFileReadOnly(szFile));
     TEST_CHECK(FNativeFileSize(szFile, &cbNativeFile) && cbNativeFile == 6);
@@ -72,7 +72,7 @@ static void TestNativeFiles(void) {
     nfr = HfOpenFile(szFile, {.mdAccess = NATIVEFILEACCESS::readWrite, .mdShare = NATIVEFILESHARE::exclusive, .fCreate = true, .fTruncate = true});
     hfFile = nfr.hf; fMissing = nfr.fMissing;
     TEST_ASSERT(hfFile != -1);
-    TEST_CHECK(CbWriteFile(hfFile, (void *)("Z"), 1) == 1); CloseFile(hfFile);
+    TEST_CHECK(CbWriteFile(hfFile, std::as_bytes(std::span{"Z"}).first(1)) == 1); CloseFile(hfFile);
     TEST_CHECK(FFileExists(szFile) && RemoveNativeFile(szFile) == 0);
     nfr = HfOpenFile(szTestLiteral1, {.mdShare = NATIVEFILESHARE::denyWrite});
     TEST_CHECK(nfr.hf == -1 && !nfr.fMissing && errno == EILSEQ);
@@ -105,25 +105,25 @@ static void TestNativeOpenModes(void) {
     nfr = HfOpenFile(szFile, {.mdAccess = NATIVEFILEACCESS::readWrite, .mdShare = NATIVEFILESHARE::exclusive, .fCreate = true, .fTruncate = true});
     hfFile = nfr.hf; fMissing = nfr.fMissing;
     TEST_ASSERT(hfFile >= 3 && !fMissing);
-    TEST_CHECK(CbWriteFile(hfFile, "abcdef", 6) == 6);
+    TEST_CHECK(CbWriteFile(hfFile, std::as_bytes(std::span{"abcdef"}).first(6)) == 6);
     CloseFile(hfFile);
     nfr = HfOpenFile(szFile, {.mdShare = NATIVEFILESHARE::denyWrite});
     hfFile = nfr.hf; fMissing = nfr.fMissing;
     TEST_ASSERT(hfFile >= 3 && !fMissing);
-    TEST_CHECK(CbReadFile(hfFile, rgb, 6) == 6 && !memcmp(rgb, "abcdef", 6));
+    TEST_CHECK(CbReadFile(hfFile, std::as_writable_bytes(std::span{rgb}).first(static_cast<std::size_t>(6))) == 6 && !memcmp(rgb, "abcdef", 6));
     errno = 0;
-    TEST_CHECK(CbWriteFile(hfFile, "!", 1) == -1 && errno == EBADF);
+    TEST_CHECK(!CbWriteFile(hfFile, std::as_bytes(std::span{"!"}).first(1)) && errno == EBADF);
     CloseFile(hfFile);
     nfr = HfOpenFile(szFile, {.mdAccess = NATIVEFILEACCESS::readWrite, .mdShare = NATIVEFILESHARE::exclusive});
     hfFile = nfr.hf; fMissing = nfr.fMissing;
     TEST_ASSERT(hfFile >= 3 && !fMissing);
-    TEST_CHECK(CbFileSize(hfFile) == 6 && CbWriteFile(hfFile, "Z", 1) == 1);
+    TEST_CHECK(CbFileSize(hfFile) == 6 && CbWriteFile(hfFile, std::as_bytes(std::span{"Z"}).first(1)) == 1);
     CloseFile(hfFile);
     OutputFileString(szFile, "gh");
     nfr = HfOpenFile(szFile, {.mdShare = NATIVEFILESHARE::denyWrite});
     hfFile = nfr.hf; fMissing = nfr.fMissing;
     TEST_ASSERT(hfFile >= 3 && !fMissing);
-    TEST_CHECK(CbFileSize(hfFile) == 8 && CbReadFile(hfFile, rgb, 8) == 8 && !memcmp(rgb, "Zbcdefgh", 8));
+    TEST_CHECK(CbFileSize(hfFile) == 8 && CbReadFile(hfFile, std::as_writable_bytes(std::span{rgb}).first(static_cast<std::size_t>(8))) == 8 && !memcmp(rgb, "Zbcdefgh", 8));
     CloseFile(hfFile);
     nfr = HfOpenFile(szFile, {.mdAccess = NATIVEFILEACCESS::readWrite, .mdShare = NATIVEFILESHARE::exclusive, .fCreate = true, .fTruncate = true});
     hfFile = nfr.hf; fMissing = nfr.fMissing;
@@ -135,8 +135,41 @@ static void TestNativeOpenModes(void) {
     nfr = HfOpenFile(szFile, {.mdShare = NATIVEFILESHARE::denyWrite});
     hfFile = nfr.hf; fMissing = nfr.fMissing;
     TEST_ASSERT(hfFile >= 3 && !fMissing);
-    TEST_CHECK(CbReadFile(hfFile, rgb, 3) == 3 && !memcmp(rgb, "new", 3));
+    TEST_CHECK(CbReadFile(hfFile, std::as_writable_bytes(std::span{rgb}).first(static_cast<std::size_t>(3))) == 3 && !memcmp(rgb, "new", 3));
     CloseFile(hfFile);
     TEST_CHECK(RemoveNativeFile(szFile) == 0);
 }
-TEST_LIST = {{"native token read/update/create/append policies", TestNativeOpenModes}, {"native Unicode paths, backups and long Windows paths", TestNativeFiles}, {NULL, NULL}};
+static void TestNativeEmptyWrites(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    char szDir[cbTestPath], szFile[cbTestPath + 64];
+
+    TEST_ASSERT(FStarsTestInit(app));
+    TEST_ASSERT(FStarsTestDir("native-empty-write", szDir, sizeof(szDir)));
+    CchSnprintf(std::span{szFile}, "%s%sempty.dat", szDir, szDirSep);
+    for (bool fNative : {false, true}) {
+        const auto nfo = NATIVEFILEOPENOPTIONS{.mdAccess = NATIVEFILEACCESS::readWrite, .fCreate = true, .fTruncate = true, .fNative = fNative};
+        const auto nfr = HfOpenFile(szFile, nfo);
+        TEST_ASSERT(nfr.hf >= 3);
+        TEST_CHECK(CbWriteFile(nfr.hf, std::as_bytes(std::span{"abcdef"}).first(6)) == 6 && LSeekFile(nfr.hf, 2, NATIVESEEKORIGIN::begin) == 2);
+        errno = 0;
+        const auto cbEmpty = CbWriteFile(nfr.hf, std::span<const std::byte>{});
+#ifdef _WIN32
+        if (fNative) {
+            TEST_CHECK(cbEmpty == 0 && CbFileSize(nfr.hf) == 2);
+        } else {
+            TEST_CHECK(!cbEmpty && errno == ENOTSUP && CbFileSize(nfr.hf) == 6);
+        }
+#else
+        TEST_CHECK(cbEmpty == 0 && CbFileSize(nfr.hf) == 6);
+#endif
+        TEST_CHECK(LSeekFile(nfr.hf, 0, NATIVESEEKORIGIN::current) == 2);
+        CloseFile(nfr.hf);
+        TEST_CHECK(RemoveNativeFile(szFile) == 0);
+    }
+}
+TEST_LIST = {{"native empty writes retain platform truncation semantics", TestNativeEmptyWrites}, {"native token read/update/create/append policies", TestNativeOpenModes}, {"native Unicode paths, backups and long Windows paths", TestNativeFiles}, {NULL, NULL}};

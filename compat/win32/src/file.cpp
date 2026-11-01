@@ -160,7 +160,7 @@ LONG win32::_llseek(HFILE hf, LONG offset, int origin) {
     if (lp) {
         if (origin < 0 || origin > 2) win32::SetLastError(win32::ERROR_INVALID_PARAMETER);
         else {
-            pos = LSeekNativeFile(lp->pf, offset, origin);
+            pos = LSeekNativeFile(lp->pf, offset, static_cast<NATIVESEEKORIGIN>(origin));
             if (pos < 0) win32::SetLastError(DwFileError());
         }
     }
@@ -171,14 +171,16 @@ LONG win32::_llseek(HFILE hf, LONG offset, int origin) {
 UINT win32::_lread(HFILE hf, LPVOID rgb, UINT cb) {
     COMPATFILE *lp;
     ssize_t cbRead = -1;
+    std::optional<std::size_t> cbNative;
 
     std::unique_lock lockFiles(fFileLock); lp = LpFile(hf);
     if (lp) {
         if (!(lp->grAccess & 1)) win32::SetLastError(win32::ERROR_ACCESS_DENIED);
         else if (!rgb && cb != 0) win32::SetLastError(win32::ERROR_INVALID_PARAMETER);
         else {
-            do { cbRead = pfnReadFile(lp->pf, rgb, cb); } while (cbRead < 0 && errno == EINTR);
-            if (cbRead < 0) win32::SetLastError(DwFileError());
+            do { cbNative = pfnReadFile(lp->pf, std::span{static_cast<std::byte *>(rgb), static_cast<std::size_t>(cb)}); } while (!cbNative && errno == EINTR);
+            if (cbNative) cbRead = static_cast<ssize_t>(*cbNative);
+            else win32::SetLastError(DwFileError());
         }
     }
     lockFiles.unlock();
@@ -188,6 +190,7 @@ UINT win32::_lread(HFILE hf, LPVOID rgb, UINT cb) {
 UINT win32::_lwrite(HFILE hf, LPCCH rgb, UINT cb) {
     COMPATFILE *lp;
     ssize_t cbWrite = -1;
+    std::optional<std::size_t> cbNative;
     std::int64_t pos;
 
     std::unique_lock lockFiles(fFileLock); lp = LpFile(hf);
@@ -199,8 +202,9 @@ UINT win32::_lwrite(HFILE hf, LPCCH rgb, UINT cb) {
             if (pos >= 0 && ITruncateNativeFile(lp->pf, pos) == 0) cbWrite = 0;
             else win32::SetLastError(DwFileError());
         } else {
-            do { cbWrite = CbWriteNativeFile(lp->pf, rgb, cb); } while (cbWrite < 0 && errno == EINTR);
-            if (cbWrite < 0) win32::SetLastError(DwFileError());
+            do { cbNative = CbWriteNativeFile(lp->pf, std::as_bytes(std::span{rgb, static_cast<std::size_t>(cb)})); } while (!cbNative && errno == EINTR);
+            if (cbNative) cbWrite = static_cast<ssize_t>(*cbNative);
+            else win32::SetLastError(DwFileError());
         }
     }
     lockFiles.unlock();

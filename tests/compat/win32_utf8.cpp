@@ -143,7 +143,7 @@ int main(void) {
     CHECK(fFound && FFilesystemTempDir(szSnapshotDir, sizeof(szSnapshotDir)));
     CHECK(snprintf(szSnapshotPath, sizeof(szSnapshotPath), "%s/hierarchy.json", szSnapshotDir) < (int)sizeof(szSnapshotPath));
     CHECK((pf = PfNativeOpen(szSnapshotPath, "w+b")) && StarsCompatWriteHierarchy(&snap, pf));
-    ISeekNativeFile(pf, 0, 0); cb = CReadNative(szJson, 1, sizeof(szJson) - 1, pf); szJson[cb] = 0;
+    ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin); cb = CReadNative(szJson, 1, sizeof(szJson) - 1, pf); szJson[cb] = 0;
     CHECK(strstr(szJson, psz));
     CHECK(ICloseNativeFile(pf) == 0 && FFilesystemRemove(szSnapshotPath) && FFilesystemRemove(szSnapshotDir));
     StarsCompatFreeHierarchy(&snap);

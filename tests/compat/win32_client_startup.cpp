@@ -382,7 +382,7 @@ static BOOL FCheckMapInspection(APPSESSION &app) {
     lpfile = PfNativeTemporary();
     if (!lpfile) goto LDone;
     if (!FWriteScannerSnapshot(&fresh, lpfile)) { ICloseNativeFile(lpfile); goto LDone; }
-    ISeekNativeFile(lpfile, 0, 0); cb = CReadNative(szExport, 1, sizeof(szExport) - 1, lpfile); szExport[cb] = 0; ICloseNativeFile(lpfile);
+    ISeekNativeFile(lpfile, 0, NATIVESEEKORIGIN::begin); cb = CReadNative(szExport, 1, sizeof(szExport) - 1, lpfile); szExport[cb] = 0; ICloseNativeFile(lpfile);
     if (!strstr(szExport, "\xc3\xa9\xe2\x82\xac") || !strstr(szExport, "\\u000d\\u000a")) goto LDone;
     memcpy(fresh.rgobj[0].szName, szNameSav, sizeof(szNameSav));
     if (pszCapture) {

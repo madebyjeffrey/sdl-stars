@@ -97,22 +97,23 @@ struct NATIVEFILE {
         mdLast = md;
         return true;
     }
-    std::int64_t Read(void *rgb, std::size_t cb) {
+    std::int64_t Read(std::span<std::byte> rgb) {
+        const std::size_t cb = rgb.size();
         std::int64_t got;
         std::uint64_t errorsBefore = cErrors;
         if (!(grfAccess & 1)) return Fail(EBADF);
         if (cb > static_cast<std::size_t>(std::numeric_limits<std::streamsize>::max())) return Fail(EINVAL);
         if (fd >= 0) {
 #ifdef _WIN32
-            got = _read(fd, rgb, static_cast<unsigned>((std::min)(cb, static_cast<std::size_t>(INT_MAX))));
+            got = _read(fd, rgb.data(), static_cast<unsigned>((std::min)(cb, static_cast<std::size_t>(INT_MAX))));
 #else
-            got = read(fd, rgb, cb);
+            got = read(fd, rgb.data(), cb);
 #endif
             if (got < 0) return Fail(errno);
         } else {
             if (!Position(1)) return -1;
             errno = 0;
-            stm.read(static_cast<char *>(rgb), static_cast<std::streamsize>(cb));
+            stm.read(reinterpret_cast<char *>(rgb.data()), static_cast<std::streamsize>(cb));
             got = stm.gcount();
             if (stm.bad() || (static_cast<std::uint64_t>(got) < cb && errno != 0)) {
                 Fail(errno ? errno : EIO); if (got == 0) return -1;
@@ -122,40 +123,41 @@ struct NATIVEFILE {
         if (cErrors == errorsBefore && (fd >= 0 ? got == 0 && cb != 0 : stm.eof())) fEof = true;
         return got;
     }
-    std::int64_t Write(const void *rgb, std::size_t cb) {
+    std::int64_t Write(std::span<const std::byte> rgb) {
+        const std::size_t cb = rgb.size();
         std::int64_t put;
         if (!(grfAccess & 2)) return Fail(EBADF);
         if (cb > static_cast<std::size_t>(std::numeric_limits<std::streamsize>::max())) return Fail(EINVAL);
         if (fd >= 0) {
 #ifdef _WIN32
-            put = _write(fd, rgb, static_cast<unsigned>((std::min)(cb, static_cast<std::size_t>(INT_MAX))));
+            put = _write(fd, rgb.data(), static_cast<unsigned>((std::min)(cb, static_cast<std::size_t>(INT_MAX))));
 #else
-            put = write(fd, rgb, cb);
+            put = write(fd, rgb.data(), cb);
 #endif
             if (put < 0) return Fail(errno);
         } else {
             if (!Position(2)) return -1;
             errno = 0;
-            put = stm.rdbuf()->sputn(static_cast<const char *>(rgb), static_cast<std::streamsize>(cb));
+            put = stm.rdbuf()->sputn(reinterpret_cast<const char *>(rgb.data()), static_cast<std::streamsize>(cb));
             if (static_cast<std::uint64_t>(put) < cb) Fail(errno ? errno : EIO);
         }
         ib += put;
         if (fAppend) ib = static_cast<std::int64_t>(stm.tellp());
         return put;
     }
-    std::int64_t Seek(std::int64_t off, int origin) {
+    std::int64_t Seek(std::int64_t off, NATIVESEEKORIGIN origin) {
         std::int64_t pos;
-        if (origin < 0 || origin > 2) return Fail(EINVAL);
+        if (origin != NATIVESEEKORIGIN::begin && origin != NATIVESEEKORIGIN::current && origin != NATIVESEEKORIGIN::end) return Fail(EINVAL);
         if (fd >= 0) {
 #ifdef _WIN32
-            pos = _lseeki64(fd, off, origin);
+            pos = _lseeki64(fd, off, static_cast<int>(origin));
 #else
-            pos = lseek(fd, off, origin);
+            pos = lseek(fd, off, static_cast<int>(origin));
 #endif
             if (pos < 0) return Fail(errno);
         } else {
-            auto dir = origin == 0 ? std::ios::beg : origin == 1 ? std::ios::cur : std::ios::end;
-            if (origin == 1) {
+            auto dir = origin == NATIVESEEKORIGIN::begin ? std::ios::beg : origin == NATIVESEEKORIGIN::current ? std::ios::cur : std::ios::end;
+            if (origin == NATIVESEEKORIGIN::current) {
                 if ((off > 0 && ib > INT64_MAX - off) || (off < 0 && ib < INT64_MIN - off)) return Fail(EOVERFLOW);
                 off += ib; dir = std::ios::beg;
             }
@@ -179,8 +181,8 @@ struct NATIVEFILE {
         std::int64_t saved = ib;
         bool eofSaved = fEof;
         if (Flush() != 0) return -1;
-        std::int64_t cb = Seek(0, 2);
-        if (cb < 0 || Seek(saved, 0) < 0) return -1;
+        std::int64_t cb = Seek(0, NATIVESEEKORIGIN::end);
+        if (cb < 0 || Seek(saved, NATIVESEEKORIGIN::begin) < 0) return -1;
         fEof = eofSaved;
         return cb;
     }
@@ -262,7 +264,7 @@ NATIVEFILE *PfNativeOpen(const char *psz, const char *mode) {
             pf->stm.imbue(std::locale::classic());
             errno = 0; pf->stm.open(pf->pth, md);
             if (!pf->stm.is_open()) { if (!errno) errno = EIO; return nullptr; }
-            if (pf->Seek(0, 2) < 0) return nullptr;
+            if (pf->Seek(0, NATIVESEEKORIGIN::end) < 0) return nullptr;
             return pf.release();
         });
     }
@@ -275,24 +277,34 @@ int ICloseNativeFile(NATIVEFILE *pf) {
     delete pf;
     return ret;
 }
-std::int64_t CbReadNativeFile(NATIVEFILE *pf, void *rgb, std::size_t cb) {
-    if (!pf || (!rgb && cb != 0)) { errno = EBADF; return -1; }
-    return FileCall<std::int64_t>(pf, -1, [&] { return pf->Read(rgb, cb); });
+std::optional<std::size_t> CbReadNativeFile(NATIVEFILE *pf, std::span<std::byte> rgb) {
+    if (!pf) { errno = EBADF; return std::nullopt; }
+    return FileCall<std::optional<std::size_t>>(pf, std::nullopt, [&]() -> std::optional<std::size_t> {
+        const auto cb = pf->Read(rgb);
+        if (cb < 0) return std::nullopt;
+        return static_cast<std::size_t>(cb);
+    });
 }
-std::int64_t CbWriteNativeFile(NATIVEFILE *pf, const void *rgb, std::size_t cb) {
-    if (!pf || (!rgb && cb != 0)) { errno = EBADF; return -1; }
-    return FileCall<std::int64_t>(pf, -1, [&] { return pf->Write(rgb, cb); });
+std::optional<std::size_t> CbWriteNativeFile(NATIVEFILE *pf, std::span<const std::byte> rgb) {
+    if (!pf) { errno = EBADF; return std::nullopt; }
+    return FileCall<std::optional<std::size_t>>(pf, std::nullopt, [&]() -> std::optional<std::size_t> {
+        const auto cb = pf->Write(rgb);
+        if (cb < 0) return std::nullopt;
+        return static_cast<std::size_t>(cb);
+    });
 }
+
 std::size_t CReadNative(void *rgb, std::size_t cb, std::size_t c, NATIVEFILE *pf) {
     if (!pf || cb == 0 || c == 0) return 0;
     if (c > SIZE_MAX / cb) { pf->Fail(EOVERFLOW); return 0; }
     if (pf->fEof) return 0;
+    if (!rgb) { errno = EBADF; return 0; }
     std::size_t total = 0, requested = cb * c;
     while (total < requested && !pf->fEof) {
         std::uint64_t errorsBefore = pf->cErrors;
-        std::int64_t got = CbReadNativeFile(pf, static_cast<char *>(rgb) + total, requested - total);
-        if (got <= 0) break;
-        total += static_cast<std::size_t>(got);
+        const auto got = CbReadNativeFile(pf, std::span{static_cast<std::byte *>(rgb), requested}.subspan(total));
+        if (!got || *got == 0) break;
+        total += *got;
         if (pf->cErrors != errorsBefore) break;
     }
     return total / cb;
@@ -300,21 +312,22 @@ std::size_t CReadNative(void *rgb, std::size_t cb, std::size_t c, NATIVEFILE *pf
 std::size_t CWriteNative(const void *rgb, std::size_t cb, std::size_t c, NATIVEFILE *pf) {
     if (!pf || cb == 0 || c == 0) return 0;
     if (c > SIZE_MAX / cb) { pf->Fail(EOVERFLOW); return 0; }
+    if (!rgb) { errno = EBADF; return 0; }
     std::size_t total = 0, requested = cb * c;
     while (total < requested) {
         std::uint64_t errorsBefore = pf->cErrors;
-        std::int64_t put = CbWriteNativeFile(pf, static_cast<const char *>(rgb) + total, requested - total);
-        if (put <= 0) break;
-        total += static_cast<std::size_t>(put);
+        const auto put = CbWriteNativeFile(pf, std::span{static_cast<const std::byte *>(rgb), requested}.subspan(total));
+        if (!put || *put == 0) break;
+        total += *put;
         if (pf->cErrors != errorsBefore) break;
     }
     return total / cb;
 }
-std::int64_t LSeekNativeFile(NATIVEFILE *pf, std::int64_t ib, int origin) {
+std::int64_t LSeekNativeFile(NATIVEFILE *pf, std::int64_t ib, NATIVESEEKORIGIN origin) {
     if (!pf) { errno = EBADF; return -1; }
     return FileCall<std::int64_t>(pf, -1, [&] { return pf->Seek(ib, origin); });
 }
-int ISeekNativeFile(NATIVEFILE *pf, std::int64_t ib, int origin) { return LSeekNativeFile(pf, ib, origin) < 0 ? -1 : 0; }
+int ISeekNativeFile(NATIVEFILE *pf, std::int64_t ib, NATIVESEEKORIGIN origin) { return LSeekNativeFile(pf, ib, origin) < 0 ? -1 : 0; }
 std::int64_t LNativePosition(NATIVEFILE *pf) { if (!pf) { errno = EBADF; return -1; } return pf->ib; }
 std::int64_t CbNativeFile(NATIVEFILE *pf) {
     if (!pf) { errno = EBADF; return -1; }
@@ -397,7 +410,7 @@ int CNativeScanFields(NATIVEFILE *pf, const char *fmt, std::span<const NATIVEINT
         if (std::isspace(static_cast<unsigned char>(*fmt))) {
             while (*fmt && std::isspace(static_cast<unsigned char>(*fmt))) ++fmt;
             while ((ch = ChGetNativeFile(pf)) != EOF && std::isspace(static_cast<unsigned char>(ch))) {}
-            if (ch != EOF) LSeekNativeFile(pf, -1, 1);
+            if (ch != EOF) LSeekNativeFile(pf, -1, NATIVESEEKORIGIN::current);
             continue;
         }
         bool wide;
@@ -418,7 +431,7 @@ int CNativeScanFields(NATIVEFILE *pf, const char *fmt, std::span<const NATIVEINT
             if (n + 1 >= sizeof(token)) { pf->Fail(ERANGE); break; }
             token[n++] = static_cast<char>(ch); ch = ChGetNativeFile(pf);
         }
-        if (ch != EOF) LSeekNativeFile(pf, -1, 1);
+        if (ch != EOF) LSeekNativeFile(pf, -1, NATIVESEEKORIGIN::current);
         token[n] = 0;
         char *end; errno = 0;
         long long value = std::strtoll(token, &end, 10);
@@ -710,29 +723,32 @@ NATIVEFILEOPENRESULT HfNativeOpenLegacy(const char *psz, NATIVEFILEOPENOPTIONS n
     });
 }
 
-std::int32_t CbNativeReadLegacy(std::int16_t hf, void *rgb, std::uint16_t cb) {
-    return FileCall<std::int32_t>(nullptr, -1, [&]() -> std::int32_t {
+std::optional<std::size_t> CbNativeReadLegacy(std::int16_t hf, std::span<std::byte> rgb) {
+    return FileCall<std::optional<std::size_t>>(nullptr, std::nullopt, [&]() -> std::optional<std::size_t> {
     std::lock_guard<std::mutex> guard(Files().lock);
-    return static_cast<std::int32_t>(CbReadNativeFile(LegacyFile(hf), rgb, cb));
+    return CbReadNativeFile(LegacyFile(hf), rgb);
     });
 }
-std::int32_t CbNativeWriteLegacy(std::int16_t hf, const void *rgb, std::uint16_t cb) {
-    return FileCall<std::int32_t>(nullptr, -1, [&]() -> std::int32_t {
+std::optional<std::size_t> CbNativeWriteLegacy(std::int16_t hf, std::span<const std::byte> rgb) {
+    return FileCall<std::optional<std::size_t>>(nullptr, std::nullopt, [&]() -> std::optional<std::size_t> {
     std::lock_guard<std::mutex> guard(Files().lock); NATIVEFILE *pf = LegacyFile(hf);
 #ifdef _WIN32
-    if (cb == 0) return pf ? ITruncateNativeFile(pf, LNativePosition(pf)) : -1;
+    if (rgb.empty()) {
+        if (!pf || ITruncateNativeFile(pf, LNativePosition(pf)) < 0) return std::nullopt;
+        return 0;
+    }
 #endif
-    std::int64_t put = CbWriteNativeFile(pf, rgb, cb);
-    // Legacy raw writes report disk errors immediately, rather than deferring
-    // a buffered stream failure to the old void CloseFile interface.
-    if (put >= 0 && IFlushNativeFile(pf) != 0) return -1;
-    return static_cast<std::int32_t>(put);
+    const auto put = CbWriteNativeFile(pf, rgb);
+    // Token writes report disk errors before the void CloseFile interface.
+    if (put && IFlushNativeFile(pf) != 0) return std::nullopt;
+    return put;
     });
 }
-std::int32_t LNativeSeekLegacy(std::int16_t hf, std::int32_t ib, std::int16_t origin) {
+
+std::int32_t LNativeSeekLegacy(std::int16_t hf, std::int32_t ib, NATIVESEEKORIGIN origin) {
     return FileCall<std::int32_t>(nullptr, -1, [&]() -> std::int32_t {
     std::lock_guard<std::mutex> guard(Files().lock);
-    std::int64_t pos = LSeekNativeFile(LegacyFile(hf), ib, origin == 0 ? 0 : origin == 1 ? 1 : 2);
+    std::int64_t pos = LSeekNativeFile(LegacyFile(hf), ib, origin == NATIVESEEKORIGIN::begin ? NATIVESEEKORIGIN::begin : origin == NATIVESEEKORIGIN::current ? NATIVESEEKORIGIN::current : NATIVESEEKORIGIN::end);
 #ifdef _WIN32
     if (pos > INT32_MAX) return -1;
 #endif

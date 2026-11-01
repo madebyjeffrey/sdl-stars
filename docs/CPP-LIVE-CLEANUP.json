@@ -439,7 +439,9 @@
         "user-string-codec-spans-and-optional-counts",
         "bounded-roman-numeral-output",
         "numeric-values-without-output-or-count-pointers",
-        "typed-file-open-options-and-result-values"
+        "typed-file-open-options-and-result-values",
+        "native-and-token-byte-spans-and-optional-counts",
+        "scoped-seek-origins-and-actual-provider-migration"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -481,6 +483,21 @@
           "baseline": "Behavior-neutral for existing calls. No regression baseline, frozen original fixture, unit golden, 16-bit MdOpenFlags/token storage, wire layout, RNG or canonical model changed. No scenario/checkpoint moved and no regression export required.",
           "remaining": "Byte/element-count buffers, integer seek origins, stream-mode strings, remaining file/path result interfaces and Milestone D remain active.",
           "receipts": "dist/verification/live-cpp/l06b/"
+        },
+        {
+          "batch": "L06c native/token byte spans and optional counts; scoped seek origins",
+          "debug_build": "Pass; no new warnings. Packed Win32 header fixture checks native optional-count/metadata alignment and caller-packing restoration. Source policy and standalone headers in both orders pass.",
+          "desktop": "153/153 against final source, including actual file/library/ZIP/guard-provider workflows, all 29 leak checks and available SDL tutorial checkpoints.",
+          "host_units": "28/28 against final source.",
+          "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors and skipped reference inputs.",
+          "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors and skipped reference inputs.",
+          "windows": "All 147 owned production units and all 11 changed test/fixture units pass strict MinGW syntax, including the Linux-only inspection fixture compiled with the peer SDL test flags. Final native-file/type-isolation tests were rechecked after expanding backend coverage. Actual Windows native-file tests (3 cases), recovery tests (10 cases) and standalone byte/seek file-service contract pass under Wine. Native Windows desktop and actual Linux qualification remain pending.",
+          "reference": "Before migration the native/token characterization target and file-service contract passed against the original pointer/count and integer-origin functions. Final tests preserve their byte/count/sentinel/EOF/seek assertions using spans/results and additionally cover both native and buffered empty writes.",
+          "corrections": "Corrected an initial EOF assumption by issuing a read that returns zero; native descriptor short reads need not set EOF immediately. Expanded the Windows zero-write assertion to distinguish native truncation from buffered ENOTSUP. A missed SDK span extent was fixed before the final build. No implementation behavior was changed to satisfy those characterization corrections.",
+          "interfaces": "Six byte functions take physical byte spans and return optional counts, with present zero distinct from failure. All four seek-origin interfaces and the concrete file methods are typed. Actual held-lock read provider uses the same signature; old buffer/count and integer-origin overloads removed.",
+          "baseline": "Behavior-neutral for existing callers: partial effects, binary bytes, EOF/error state, retries, flush timing, callback publication and Windows empty-write paths preserved. Native and frozen original baselines, unit goldens, record widths, RNG and canonical models unchanged. No semantic scenario/checkpoint moved; no export required.",
+          "remaining": "Record/element-count buffers, stream mode strings, file/path result interfaces, the explicitly retained text-writer count boundary and Milestone D remain active.",
+          "receipts": "dist/verification/live-cpp/l06c/"
         }
       ],
       "roman_output": {
@@ -495,6 +512,13 @@
         "pre_existing_call_sites": 19,
         "interface": "Named typed access/sharing/options replace all three positional-integer open interfaces; small-token opens return token/missing as one value. Old integer-mode and missing-output overloads removed.",
         "pending": "Remaining stream mode strings, byte buffers, seeks, path/results and file-selection interfaces remain open."
+      },
+      "file_bytes_and_seek": {
+        "status": "complete; verified",
+        "evidence": "docs/CPP-LIVE-FILE-SERVICES.json",
+        "parent_call_expressions": 98,
+        "interfaces": "Six native/token byte functions use spans and optional counts; every seek-origin interface and actual held-lock read provider uses the typed contract. Old overloads removed.",
+        "pending": "Element-count and record-stream buffers, native stream mode strings, other file/path results, text-writer boundary and Milestone D remain."
       }
     },
     {

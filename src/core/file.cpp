@@ -717,7 +717,7 @@ LNextTurn:
             AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsGameFileAppearsCorruptUnableLoadFile, nullptr), win32::MB_ICONHAND);
             goto LError;
         }
-        if (CbFileSize(app.state.hf) != LSeekFile(app.state.hf, 0, 1)) {
+        if (CbFileSize(app.state.hf) != LSeekFile(app.state.hf, 0, NATIVESEEKORIGIN::current)) {
             RecordIO().pfnReadRt(app);
             if (app.state.hdrCur.rt == rtBOF) {
                 app.state.game.turn = BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).turn();
@@ -1267,7 +1267,7 @@ std::int16_t FOpenFile(APPSESSION &app, DtFileType dt, std::int16_t iPlayer, std
             }
             if (dt != dtHist) {
                 if (fCheckMulti && rtbof.fMulti) {
-                    LSeekFile(app.state.hf, -4, 2);
+                    LSeekFile(app.state.hf, -4, NATIVESEEKORIGIN::end);
                     RecordIO().pfnReadRt(app);
                     if (app.state.hdrCur.rt != rtEOF && app.state.hdrCur.cb != 2)
                         goto LBadFile;
@@ -1301,7 +1301,7 @@ std::int16_t FOpenFile(APPSESSION &app, DtFileType dt, std::int16_t iPlayer, std
             }
         }
         if (fRewind) {
-            LSeekFile(app.state.hf, 0, 0);
+            LSeekFile(app.state.hf, 0, NATIVESEEKORIGIN::begin);
             RecordIO().pfnReadRt(app);
         }
         app.state.wVersFile = rtbof.wVersion();
@@ -1400,6 +1400,7 @@ std::int16_t FCheckFile(APPSESSION &app, DtFileType dt, std::int16_t iPlayer, Md
 static void ReadRtHeader(APPSESSION &app) {
     std::byte rgb[cbWireHdr];
     std::int32_t cb;
+    std::optional<std::size_t> cbRead;
 
     FEncodeHdr(app.state.hdrCur, rgb);
     if (app.state.vlpMemStream) {
@@ -1407,7 +1408,8 @@ static void ReadRtHeader(APPSESSION &app) {
         app.state.vlpMemStream += cbWireHdr;
         cb = cbWireHdr;
     } else {
-        cb = CbReadFile(app.state.hf, rgb, cbWireHdr);
+        cbRead = CbReadFile(app.state.hf, std::as_writable_bytes(std::span{rgb}).first(static_cast<std::size_t>(cbWireHdr)));
+        cb = cbRead ? static_cast<std::int32_t>(*cbRead) : -1;
     }
     FDecodeHdr(rgb, app.state.hdrCur);
     if (cb != cbWireHdr) {
@@ -1509,7 +1511,7 @@ void RgFromStream(APPSESSION &app, void *rg, std::uint16_t cb) {
         if (app.state.vlpMemStream) {
             std::memcpy(rg, app.state.vlpMemStream, cb);
             app.state.vlpMemStream += cb;
-        } else if (CbReadFile(app.state.hf, rg, cb) != cb) {
+        } else if (CbReadFile(app.state.hf, std::span{static_cast<std::byte *>(rg), static_cast<std::size_t>(cb)}) != cb) {
             FileError(app, idsGameFileAppearsCorruptUnableLoadFile);
             StarsThrowError(starsErrorFile, app.state.idsFileError);
         }

@@ -1040,7 +1040,7 @@ std::int16_t FMarkFile(APPSESSION &app, DtFileType dt, std::int16_t iPlayer, MdM
                     PlvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).SetIdAi(idAiMaid);
                 }
                 PlvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).SetLSalt(~PlvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).lSalt());
-                LSeekFile(app.state.hf, static_cast<std::int16_t>(-(app.state.hdrCur.cb + 2)), 1);
+                LSeekFile(app.state.hf, static_cast<std::int16_t>(-(app.state.hdrCur.cb + 2)), NATIVESEEKORIGIN::current);
                 SetFileSeeds(app, lSeedSav1, lSeedSav2);
                 RecordIO().pfnWriteRt(app, rtPlr, app.state.hdrCur.cb, app.state.rgbCur);
                 fChange = dt == dtTurn;
@@ -1049,13 +1049,13 @@ std::int16_t FMarkFile(APPSESSION &app, DtFileType dt, std::int16_t iPlayer, MdM
             break;
         }
         if (fChange) {
-            LSeekFile(app.state.hf, 0, 0);
+            LSeekFile(app.state.hf, 0, NATIVESEEKORIGIN::begin);
             WriteRtBof(app, rtbof);
         }
         fSuccess = 1;
 LBadFile:
         if ((dt & 0x2000) && fSuccess) {
-            LSeekFile(app.state.hf, 0, 2);
+            LSeekFile(app.state.hf, 0, NATIVESEEKORIGIN::end);
         } else {
             RecordIO().pfnStreamClose(app);
         }
@@ -1111,7 +1111,7 @@ void WriteRt(APPSESSION &app, RecordType rt, std::int16_t cb, void *rg) {
 }
 
 void RgToStream(APPSESSION &app, const void *rg, std::uint16_t cb) {
-    if (cb != 0 && CbWriteFile(app.state.hf, rg, cb) != cb) {
+    if (cb != 0 && CbWriteFile(app.state.hf, std::span{static_cast<const std::byte *>(rg), static_cast<std::size_t>(cb)}) != cb) {
         AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsErrorWritingFile, nullptr), win32::MB_ICONHAND);
         StarsThrowError(starsErrorFile, idsErrorWritingFile);
     }

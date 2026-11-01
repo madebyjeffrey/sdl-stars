@@ -244,8 +244,8 @@ void OutputFileString(const char *szFile, const char *sz) {
     }
     hf = HfOpenFile(szFile, w).hf;
     if (hf != -1) {
-        LSeekFile(hf, 0, 2);
-        CbWriteFile(hf, sz, std::strlen(sz));
+        LSeekFile(hf, 0, NATIVESEEKORIGIN::end);
+        CbWriteFile(hf, std::as_bytes(std::span{sz, static_cast<std::uint16_t>(std::strlen(sz))}));
         CloseFile(hf);
     }
     return;
@@ -268,12 +268,12 @@ void StarsCopyFile(APPSESSION &app, const char *szSrc, const char *szDst) {
             goto LStreamError;
         for (cb = CbFileSize(app.state.hf); cb > 2048; cb -= 2048) {
             RgFromStream(app, rgb, 0x800);
-            if (CbWriteFile(hfDst, rgb, 0x800) != 0x800)
+            if (CbWriteFile(hfDst, std::as_bytes(std::span{rgb}).first(static_cast<std::size_t>(0x800))) != 0x800)
                 goto LStreamError;
         }
         if (cb != 0) {
             RgFromStream(app, rgb, LOWORD(cb));
-            CbWriteFile(hfDst, rgb, LOWORD(cb));
+            CbWriteFile(hfDst, std::as_bytes(std::span{rgb}).first(static_cast<std::size_t>(LOWORD(cb))));
         }
     } catch (const StarsError &) {
     }

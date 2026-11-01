@@ -202,9 +202,9 @@ std::int64_t LNativeTime(void) { return static_cast<std::int64_t>(std::time(null
 NATIVEFILEOPENRESULT HfOpenFile(const char *szFile, NATIVEFILEOPENOPTIONS nfo) {
     return HfNativeOpenLegacy(szFile, nfo);
 }
-std::int32_t CbReadFile(std::int16_t hf, void *rg, std::uint16_t cb) { return CbNativeReadLegacy(hf, rg, cb); }
-std::int32_t CbWriteFile(std::int16_t hf, const void *rg, std::uint16_t cb) { return CbNativeWriteLegacy(hf, rg, cb); }
-std::int32_t LSeekFile(std::int16_t hf, std::int32_t l, std::int16_t iOrigin) { return LNativeSeekLegacy(hf, l, iOrigin); }
+std::optional<std::size_t> CbReadFile(std::int16_t hf, std::span<std::byte> rg) { return CbNativeReadLegacy(hf, rg); }
+std::optional<std::size_t> CbWriteFile(std::int16_t hf, std::span<const std::byte> rg) { return CbNativeWriteLegacy(hf, rg); }
+std::int32_t LSeekFile(std::int16_t hf, std::int32_t l, NATIVESEEKORIGIN iOrigin) { return LNativeSeekLegacy(hf, l, iOrigin); }
 std::int32_t CbFileSize(std::int16_t hf) { return CbNativeSizeLegacy(hf); }
 void CloseFile(std::int16_t hf) { CloseNativeLegacy(hf); }
 std::int16_t FFileExists(const char *szFile) { return IAccessNativePath(szFile, 0) == 0; }

@@ -47,9 +47,9 @@ static std::int16_t FReadHostIni(APPSESSION &app, const char *szFile) {
         return 0;
     }
     StarsNativeFileGuard file(pf);
-    ISeekNativeFile(pf, 0, SEEK_END);
+    ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::end);
     cb = LNativePosition(pf);
-    ISeekNativeFile(pf, 0, SEEK_SET);
+    ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin);
     NATIVEOWNER<char, std::free> text(static_cast<char *>(std::malloc(static_cast<std::size_t>(cb) + 1)));
     pszText = text.get();
     if (!pszText || CReadNative(pszText, 1, static_cast<std::size_t>(cb), pf) != static_cast<std::size_t>(cb)) {

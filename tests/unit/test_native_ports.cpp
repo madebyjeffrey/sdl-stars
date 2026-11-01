@@ -577,7 +577,7 @@ static void TestApplicationUiSessionClose(void) {
     app.BindFiles();
     char ch = 0;
     errno = 0;
-    TEST_CHECK(CbNativeReadLegacy(hfSession,&ch,1) == -1 && errno == EBADF);
+    TEST_CHECK(!CbNativeReadLegacy(hfSession, std::as_writable_bytes(std::span{&ch, 1})) && errno == EBADF);
     FreeStuff(app);
     TEST_CHECK(CCompatMemoryBlocks() == 0 && cSessionPayloadReleased == cReleased+1);
     TEST_ASSERT(FStarsTestInit(app));

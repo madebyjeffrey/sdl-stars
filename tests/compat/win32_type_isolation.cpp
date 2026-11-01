@@ -1,12 +1,15 @@
 #include <SDL3/SDL.h>
 #pragma pack(push, 2)
 #include <windows.h>
+#include "fileio.h"
 struct FORMATPACKCHECK { char ch; int value; };
 static_assert(offsetof(FORMATPACKCHECK, value) == 2, "wrapper headers restore caller packing");
 #pragma pack(pop)
 #include <wincompat_calls.h>
 #include <type_traits>
 
+static_assert(alignof(std::optional<std::size_t>) >= alignof(std::size_t), "file counts retain native alignment");
+static_assert(alignof(NATIVEFILEINFO) >= alignof(std::int64_t), "native file metadata retains native alignment");
 static_assert(alignof(NATIVEFORMATARG) >= alignof(long double), "typed format arguments retain native alignment");
 static_assert(alignof(std::span<char>) >= alignof(char *), "format argument spans retain native alignment");
 

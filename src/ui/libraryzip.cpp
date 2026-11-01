@@ -269,11 +269,11 @@ std::int16_t FUnzipLibraryArchive(const char *pszArchive, const char *pszDirecto
     });
     if (!pf || !FNativeFileSize(pszArchive, &archiveSize) || archiveSize < ZIP_EOCD_SIZE) goto done;
     tailOffset = archiveSize > sizeof(rgbTail) ? static_cast<long>((archiveSize - sizeof(rgbTail))) : 0;
-    if (ISeekNativeFile(pf, tailOffset, SEEK_SET) != 0) goto done;
+    if (ISeekNativeFile(pf, tailOffset, NATIVESEEKORIGIN::begin) != 0) goto done;
     cbRead = CReadNative(rgbTail, 1, sizeof(rgbTail), pf);
     lSearch = static_cast<long>((cbRead >= ZIP_EOCD_SIZE ? cbRead - ZIP_EOCD_SIZE : 0));
     for (;;) { if (DwZip32(rgbTail + lSearch) == ZIP_EOCD_SIGNATURE) { eocd = tailOffset + lSearch; break; } if (!lSearch--) break; }
-    if (eocd < 0 || ISeekNativeFile(pf, eocd + 4, SEEK_SET) != 0 ||
+    if (eocd < 0 || ISeekNativeFile(pf, eocd + 4, NATIVESEEKORIGIN::begin) != 0 ||
         CReadNative(rgbTail, 1, ZIP_EOCD_FIELDS_AFTER_SIGNATURE_SIZE, pf) != ZIP_EOCD_FIELDS_AFTER_SIGNATURE_SIZE ||
         eocd + ZIP_EOCD_SIZE + WZip16(rgbTail + ZIP_EOCD_COMMENT_LENGTH_OFFSET) != archiveSize) goto done;
     if (WZip16(rgbTail + ZIP_EOCD_DISK_NUMBER_OFFSET) || WZip16(rgbTail + ZIP_EOCD_CENTRAL_DISK_OFFSET) ||
@@ -281,7 +281,7 @@ std::int16_t FUnzipLibraryArchive(const char *pszArchive, const char *pszDirecto
     cEntries = WZip16(rgbTail + ZIP_EOCD_ENTRY_COUNT_OFFSET);
     centralOffset = static_cast<long>(DwZip32(rgbTail + ZIP_EOCD_CENTRAL_OFFSET_OFFSET));
     if (cEntries > 4096 || static_cast<std::uint64_t>(centralOffset) + DwZip32(rgbTail + ZIP_EOCD_CENTRAL_SIZE_OFFSET) > static_cast<std::uint64_t>(eocd) ||
-        ISeekNativeFile(pf, centralOffset, SEEK_SET) != 0) goto done;
+        ISeekNativeFile(pf, centralOffset, NATIVESEEKORIGIN::begin) != 0) goto done;
     for (i = 0; i < cEntries; i++) {
         if (CReadNative(rgbCentral, 1, sizeof(rgbCentral), pf) != sizeof(rgbCentral) || DwZip32(rgbCentral) != ZIP_CENTRAL_SIGNATURE) goto done;
         zc = ZipCentralHeader(rgbCentral);
@@ -301,7 +301,7 @@ std::int16_t FUnzipLibraryArchive(const char *pszArchive, const char *pszDirecto
         szName[zc.wNameLength] = 0;
         lNext = LNativePosition(pf) + zc.wExtraLength + zc.wCommentLength;
         if (zc.dwLocalOffset >= static_cast<std::uint32_t>(centralOffset) ||
-            ISeekNativeFile(pf, zc.dwLocalOffset, SEEK_SET) != 0 || CReadNative(rgbLocal, 1, sizeof(rgbLocal), pf) != sizeof(rgbLocal) ||
+            ISeekNativeFile(pf, zc.dwLocalOffset, NATIVESEEKORIGIN::begin) != 0 || CReadNative(rgbLocal, 1, sizeof(rgbLocal), pf) != sizeof(rgbLocal) ||
             DwZip32(rgbLocal) != ZIP_LOCAL_SIGNATURE || WZip16(rgbLocal + ZIP_LOCAL_FLAGS_OFFSET) != zc.wFlags ||
             WZip16(rgbLocal + ZIP_LOCAL_METHOD_OFFSET) != zc.wMethod) goto done;
         wLocalNameLength = WZip16(rgbLocal + ZIP_LOCAL_NAME_LENGTH_OFFSET);
@@ -310,14 +310,14 @@ std::int16_t FUnzipLibraryArchive(const char *pszArchive, const char *pszDirecto
         rgbLocalName = static_cast<std::uint8_t *>(SDL_malloc(wLocalNameLength ? wLocalNameLength : 1));
         if (!rgbLocalName || CReadNative(rgbLocalName, 1, wLocalNameLength, pf) != wLocalNameLength ||
             std::memcmp(rgbLocalName, szName, zc.wNameLength) != 0 ||
-            ISeekNativeFile(pf, wLocalExtraLength, SEEK_CUR) != 0 ||
+            ISeekNativeFile(pf, wLocalExtraLength, NATIVESEEKORIGIN::current) != 0 ||
             static_cast<std::uint64_t>(LNativePosition(pf)) + zc.cbCompressed > static_cast<std::uint64_t>(centralOffset)) goto done;
         SDL_free(rgbLocalName); rgbLocalName = nullptr;
         if (szName[zc.wNameLength - 1] == '/') {
             szName[zc.wNameLength - 1] = 0;
             if (!FZipSafeName(szName) || CchSnprintf(std::span{szDirectoryEntry, sizeof(szDirectoryEntry)}, "%s/.zip-dir-entry", szName) <= 0 ||
                 !FZipMakeParents(pszDirectory, szDirectoryEntry, szOutput, sizeof(szOutput)) ||
-                ISeekNativeFile(pf, lNext, SEEK_SET) != 0) goto done;
+                ISeekNativeFile(pf, lNext, NATIVESEEKORIGIN::begin) != 0) goto done;
             continue;
         }
         if (!FZipSafeName(szName)) goto done;
@@ -346,7 +346,7 @@ std::int16_t FUnzipLibraryArchive(const char *pszArchive, const char *pszDirecto
         pfOutput = nullptr;
         if (!fWrite) goto done;
         SDL_free(rgbCompressed); rgbCompressed = nullptr; SDL_free(rgbData); rgbData = nullptr;
-        if (ISeekNativeFile(pf, lNext, SEEK_SET) != 0) goto done;
+        if (ISeekNativeFile(pf, lNext, NATIVESEEKORIGIN::begin) != 0) goto done;
     }
     fOk = 1;
 done:
