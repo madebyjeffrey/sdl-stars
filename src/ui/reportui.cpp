@@ -730,6 +730,7 @@ void DrawVCReport(APPSESSION &app, HDC hdc) {
 }
 
 void DrawScoreReport(APPSESSION &app, HDC hdc) {
+    std::array<char, 12> szNumber{};
     std::array<char, 50> szPlayerName{};
     std::int16_t  dxDig;
     std::int16_t  yTop;
@@ -829,7 +830,9 @@ void DrawScoreReport(APPSESSION &app, HDC hdc) {
                     } else {
                         win32::SetTextColor(hdc, lVal == lMax ? 16711680 : 0);
                     }
-                    psz = PszFromLongK(app, lVal, &cch);
+                    szNumber = PszFromLongK(app, lVal);
+                    psz = szNumber.data();
+                    cch = static_cast<std::int16_t>(std::strlen(psz));
                     RightTextOut(app, hdc, xLeft, yTop, psz, cch, 0);
                 }
                 if (iPass == 1) {
@@ -1255,7 +1258,7 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
             if (CalcPlanetMaxPop(app, lppl->id, lppl->iPlayer) < lppl->rgwtMin[3]) {
                 win32::SetTextColor(hdc, 0xff);
             }
-            cch = CommaFormatLong(app, szT, static_cast<std::uint32_t>((lppl->rgwtMin[3] * 100)));
+            cch = CchCopyUtf8Prefix(std::span{szT}, CommaFormatLong(app, static_cast<std::uint32_t>((lppl->rgwtMin[3] * 100))).data());
             RightTextOut(app, hdc, prc->right, prc->top, szT, cch, 0);
             break;
         case colPlanetCapacity:
@@ -1285,7 +1288,7 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
             i = lppl->cMines;
             j = ColonyIO().pfnOperableMines(app, lppl, app.state.idPlayer, 0);
         DrawMineFact:
-            cch = CommaFormatLong(app, szT, i);
+            cch = CchCopyUtf8Prefix(std::span{szT}, CommaFormatLong(app, i).data());
         DrawPlusDef:
             if (i >= j) {
                 win32::SetTextColor(hdc, i == j ? 32512 : 0xff);
@@ -1634,6 +1637,7 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
 }
 
 void DrawMineralItem(APPSESSION &app, HDC hdc, std::int16_t x, std::int16_t y, std::int16_t iMineral, std::int32_t l) {
+    std::array<char, 12> szNumber{};
     const char *psz;
     std::int16_t cch;
 
@@ -1643,7 +1647,9 @@ void DrawMineralItem(APPSESSION &app, HDC hdc, std::int16_t x, std::int16_t y, s
         win32::SetTextColor(hdc, app.lpui->rgcrMinerals[iMineral]);
     }
     if (l >= 0) {
-        psz = PszFromLongK(app, l, &cch);
+        szNumber = PszFromLongK(app, l);
+        psz = szNumber.data();
+        cch = static_cast<std::int16_t>(std::strlen(psz));
     } else {
         cch = std::strlen(app.state.szDblDash);
         psz = app.state.szDblDash;

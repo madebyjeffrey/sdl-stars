@@ -306,31 +306,25 @@ std::int16_t CchGetString(APPSESSION &app, StringId ids, std::span<char> psz) {
     return static_cast<std::int16_t>(cch);
 }
 
-char *PszFromInt(APPSESSION &app, std::int16_t i, std::int16_t *pcch) {
-    std::int16_t cch;
+std::array<char, 12> PszFromInt(APPSESSION &app, std::int16_t i) {
+    std::array<char, 12> psz{};
 
-    cch = CchSprintf(app.state.szFormatNumber, app.state.PCTD, i);
-    if (pcch) {
-        *pcch = cch;
-    }
-    return app.state.szFormatNumber;
+    CchSprintf(psz, app.state.PCTD, i);
+    return psz;
 }
 
-char *PszFromLong(APPSESSION &app, std::int32_t l, std::int16_t *pcch) {
-    std::int16_t cch;
+std::array<char, 12> PszFromLong(APPSESSION &app, std::int32_t l) {
+    std::array<char, 12> psz{};
 
-    cch = CchSprintf(app.state.szFormatNumber, app.state.PCTLD, l);
-    /* The original tested *pcch, reading through the report dumps' NULL. */
-    if (pcch) {
-        *pcch = cch;
-    }
-    return app.state.szFormatNumber;
+    CchSprintf(psz, app.state.PCTLD, l);
+    return psz;
 }
 
-char *PszFromLongK(APPSESSION &app, std::int32_t l, std::int16_t *pcch) {
+std::array<char, 12> PszFromLongK(APPSESSION &app, std::int32_t l) {
     std::int16_t fExtraLarge;
     std::int16_t fLarge;
-    char   *psz;
+    std::int16_t cch;
+    std::array<char, 12> psz{};
 
     fLarge = l >= 10000;
     fExtraLarge = l >= 1000000;
@@ -345,17 +339,21 @@ char *PszFromLongK(APPSESSION &app, std::int32_t l, std::int16_t *pcch) {
             l = 999;
         }
     }
-    psz = PszFromInt(app, LOWORD(l), pcch);
+    psz = PszFromInt(app, LOWORD(l));
+    cch = static_cast<std::int16_t>(std::strlen(psz.data()));
     if (fExtraLarge) {
-        psz[(*pcch)++] = 'M';
+        psz[cch++] = 'M';
     } else if (fLarge) {
-        psz[(*pcch)++] = 'k';
+        psz[cch++] = 'k';
     }
+    psz[cch] = 0;
     return psz;
 }
 
-std::int16_t CommaFormatLong(APPSESSION &app, char *psz, std::int32_t l) {
+std::array<char, 15> CommaFormatLong(APPSESSION &app, std::int32_t l) {
     char    rgch[15];
+    // Signed 32-bit decimal text needs at most 14 grouped bytes plus NUL.
+    std::array<char, 15> psz{};
     std::int16_t c;
     std::int16_t cSkip;
     char   *pchOut;
@@ -363,7 +361,7 @@ std::int16_t CommaFormatLong(APPSESSION &app, char *psz, std::int32_t l) {
 
     c = CchSprintf(rgch, app.state.PCTLD, l);
     pch = rgch;
-    pchOut = psz;
+    pchOut = psz.data();
     cSkip = c % 3;
     if (cSkip == 0) {
         cSkip = 3;
@@ -381,7 +379,7 @@ std::int16_t CommaFormatLong(APPSESSION &app, char *psz, std::int32_t l) {
         }
     }
     *pchOut = 0;
-    return pchOut - psz;
+    return psz;
 }
 
 void BoundPoints(RECT *prc, POINT16 *rgpt, std::int16_t cpt) {

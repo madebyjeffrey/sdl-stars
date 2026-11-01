@@ -85,7 +85,8 @@
         "owned-catalog-values",
         "owned-report-destination-and-task-labels",
         "fleet-rename-admission-and-owned-replacement",
-        "owned-hull-label-and-bounded-roman-numerals"
+        "owned-hull-label-and-bounded-roman-numerals",
+        "owned-numeric-text-values"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -290,6 +291,19 @@
           "contract_checks": "All 65,536 signed 16-bit Roman inputs; capacities zero through seven with sentinels for every real hull ordinal; 16 duplicate hulls at the UTF-8 byte limit; free/unique/own-player cases and independent owned results.",
           "baseline": "Behavior-neutral. No regression baseline, unit golden, fixed field/record width, valid text bytes, duplicate ordering, rounding or RNG consumption changed.",
           "receipts": "dist/verification/live-cpp/l05l/"
+        },
+        {
+          "batch": "L05m owned numeric text values",
+          "debug_build": "Pass, no new warnings; header include orders and compiler policy pass.",
+          "desktop": "153/153, including available tutorial checkpoints and 29 leak checks.",
+          "host_units": "28/28",
+          "native_regression": "519 matches, 25 existing warnings, zero differences/errors and skipped reference inputs.",
+          "host_regression": "519 matches, 25 existing warnings, zero differences/errors and skipped reference inputs.",
+          "windows": "147/147 owned production units and changed utility test compile with strict MinGW; actual Windows utility executable passes all 12 cases under Wine. Native Windows desktop qualification remains pending.",
+          "ownership": "39 production consumers migrated; three scratch getters and grouped decimal return owned values; all output/count pointer overloads and obsolete shared number storage removed.",
+          "reproduction": "Before migration the new two-lookup test failed because the second result overwrote the first. It now passes along with signs, grouping, integer extrema, normal k/M boundaries and retained independent values.",
+          "baseline": "Behavior-neutral for actual consumers; valid bytes, counts, working-buffer uses, record widths, unit goldens and regression baselines unchanged. Existing scaled rounding overflow remains explicitly pending a separate focused repair.",
+          "receipts": "dist/verification/live-cpp/l05m/"
         }
       ],
       "bounded_formatting": {
@@ -393,6 +407,13 @@
         "evidence": "docs/CPP-LIVE-OWNED-TEXT.json",
         "consumers": 2,
         "interface": "DecorateHullName returns its existing 40-byte popup budget by value; IntToRoman takes a destination span and returns an optional byte count."
+      },
+      "numeric_text": {
+        "status": "complete; verified",
+        "evidence": "docs/CPP-LIVE-OWNED-TEXT.json",
+        "production_consumers": 39,
+        "interfaces": "Three numeric scratch getters return 12-byte owned arrays; grouped decimal returns a 15-byte owned array. All output/count pointer overloads and shared szFormatNumber storage removed.",
+        "pending_repair": "PszFromLongK signed rounding overflow above 2146983647 remains a separate behavior fix."
       }
     },
     {
@@ -402,7 +423,8 @@
         "ship-design-encoding-span-and-optional-count",
         "remove-unused-player-output-storage",
         "user-string-codec-spans-and-optional-counts",
-        "bounded-roman-numeral-output"
+        "bounded-roman-numeral-output",
+        "numeric-values-without-output-or-count-pointers"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",

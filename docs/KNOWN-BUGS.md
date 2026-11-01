@@ -232,6 +232,14 @@ sentinel (-1). Host part lookup has no player race or technology restrictions.
 when writing an empty EOF record. `PtToScan` replaces negative signed shifts
 with multiplication, preserving scanner scaling and rounding.
 
+## Scaled numeric label rounding — located on develop
+
+`utilgen.cpp`, `PszFromLongK`: million rounding adds 500000 in signed 32-bit
+arithmetic before dividing. Inputs above 2146983647 overflow that addition
+before the existing 999M clamp. Ownership and count-pointer cleanup preserve
+the existing arithmetic; a separate focused repair remains required. This is a
+numeric display boundary, without turn generation or file-format effects.
+
 ## Title bitmap lifetime — fixed on develop
 
 `HdibLoadBigResource` allocates a writable `GMEM_FIXED` copy, but `TitleWndProc`

@@ -7,6 +7,7 @@
 
 #include "stars_test.h"
 #include <string>
+#include <limits>
 
 static void test_IntToRoman_bounded(void) {
     const char *rgszOnes[] = {"", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"};
@@ -153,8 +154,66 @@ static void test_FIntersectCircleLine_miss(void) {
     TEST_CHECK(!FIntersectCircleLine(Pt(0, 0), Pt(100, 0), Pt(-50, 0), 100, 100, &dStart, &dEnd));
 }
 
-// PszFromLong tested *pcch instead of pcch, so a NULL count pointer (the
-// report dumps' calls) was dereferenced.
+static void test_NumberText_owned(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    char szResult[64];
+
+    const auto szFirst = PszFromLong(app, 1234567);
+    const auto szSecond = PszFromLong(app, -42);
+    CchSprintf(szResult, "%s|%s", szFirst, szSecond);
+    TEST_CHECK(!strcmp(szResult, "1234567|-42"));
+}
+
+static void test_NumberText_boundaries(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    const struct { int32_t l; const char *pszPlain, *pszComma; } rgLong[] = {
+        {0, "0", "0"}, {1, "1", "1"}, {-1, "-1", "-1"},
+        {12, "12", "12"}, {-12, "-12", "-12"},
+        {123, "123", "123"}, {-123, "-123", "-123"},
+        {1234, "1234", "1,234"}, {-1234, "-1234", "-1,234"},
+        {12345, "12345", "12,345"}, {-12345, "-12345", "-12,345"},
+        {123456, "123456", "123,456"}, {-123456, "-123456", "-123,456"},
+        {1234567, "1234567", "1,234,567"}, {-1234567, "-1234567", "-1,234,567"},
+        {std::numeric_limits<int32_t>::min(), "-2147483648", "-2,147,483,648"},
+        {std::numeric_limits<int32_t>::max(), "2147483647", "2,147,483,647"},
+    };
+    const struct { int16_t i; const char *psz; } rgInt[] = {
+        {0, "0"}, {1, "1"}, {-1, "-1"},
+        {std::numeric_limits<int16_t>::min(), "-32768"},
+        {std::numeric_limits<int16_t>::max(), "32767"},
+    };
+    const struct { int32_t l; const char *psz; } rgScaled[] = {
+        {0, "0"}, {-32768, "-32768"}, {-32769, "32767"},
+        {9999, "9999"}, {10000, "10k"}, {10499, "10k"}, {10500, "11k"},
+        {999499, "999k"}, {999500, "999k"}, {999999, "999k"},
+        {1000000, "1M"}, {1499999, "1M"}, {1500000, "2M"},
+        {998500000, "999M"}, {999500000, "999M"}, {2146983647, "999M"},
+    };
+
+    for (const auto &item : rgLong) {
+        TEST_CHECK(!strcmp(PszFromLong(app, item.l).data(), item.pszPlain));
+        TEST_CHECK(!strcmp(CommaFormatLong(app, item.l).data(), item.pszComma));
+    }
+    for (const auto &item : rgInt) TEST_CHECK(!strcmp(PszFromInt(app, item.i).data(), item.psz));
+    for (const auto &item : rgScaled) TEST_CHECK(!strcmp(PszFromLongK(app, item.l).data(), item.psz));
+    const auto szInt = PszFromInt(app, -32768);
+    const auto szComma = CommaFormatLong(app, std::numeric_limits<int32_t>::min());
+    const auto szScaled = PszFromLongK(app, 10000);
+    const auto szSecond = PszFromLongK(app, 1000000);
+    TEST_CHECK(!strcmp(szInt.data(), "-32768") && !strcmp(szComma.data(), "-2,147,483,648"));
+    TEST_CHECK(!strcmp(szScaled.data(), "10k") && !strcmp(szSecond.data(), "1M"));
+}
+
 static void test_PszFromLong(void) {
 #ifdef STARS_UI_SDL
     APPSESSION &app = ui::app;
@@ -165,9 +224,11 @@ static void test_PszFromLong(void) {
 
     int16_t cch;
 
-    TEST_CHECK(strcmp(PszFromLong(app, 1234567, NULL), "1234567") == 0);
+    TEST_CHECK(strcmp(PszFromLong(app, 1234567).data(), "1234567") == 0);
     cch = -1;
-    TEST_CHECK(strcmp(PszFromLong(app, -42, &cch), "-42") == 0);
+    const auto szNumber = PszFromLong(app, -42);
+    TEST_CHECK(strcmp(szNumber.data(), "-42") == 0);
+    cch = static_cast<int16_t>(strlen(szNumber.data()));
     TEST_CHECK_(cch == 3, "cch %d", cch);
 }
 
@@ -268,7 +329,9 @@ static void test_XorFileBuf_seed_alias_order(void) {
     TEST_CHECK(lSeed1 == 645001258 && lSeed2 == -720506926);
 }
 
-TEST_LIST = {{"Roman numerals retain all int16 values within actual capacity", test_IntToRoman_bounded},
+TEST_LIST = {{"numeric text retains widths, signs, grouping and scaled boundaries", test_NumberText_boundaries},
+             {"numeric text values survive subsequent lookups", test_NumberText_owned},
+             {"Roman numerals retain all int16 values within actual capacity", test_IntToRoman_bounded},
              {"XorFileBuf retains RHS-before-destination evaluation", test_XorFileBuf_seed_alias_order},
              {"user-string codecs retain bytes, limits and failure effects", test_UserString_codec_contract},
              {"XorFileBuf retains bytes, unaligned access and seed consumption", test_XorFileBuf_unaligned_bytes},

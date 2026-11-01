@@ -1361,7 +1361,7 @@ void DrawBuildSelHull(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw, R
                     rc.top += app.state.dyArial8;
                 }
             } else if (RaceQueryIO().pfnStat(&app.state.rgplr[app.state.idPlayer], rsMajorAdv) == raMacintosh) {
-                cch = CommaFormatLong(app, app.state.szWork, static_cast<std::uint32_t>((app.state.rglPopMac[app.lpui->lpshdefBuild->hul.ihuldef - ihuldefOrbitalFort] * 100)));
+                cch = CchCopyUtf8Prefix(std::span{app.state.szWork}, CommaFormatLong(app, static_cast<std::uint32_t>((app.state.rglPopMac[app.lpui->lpshdefBuild->hul.ihuldef - ihuldefOrbitalFort] * 100))).data());
                 RightTextOut(app, hdc, rc.right - 8, rc.top, app.state.szWork, cch, app.lpui->dxMaxMineralQuan + 16);
                 cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsMaxPopulation + (app.state.dyArial8 > 14)), std::span{app.state.szWork});
                 win32::TextOutA(hdc, rc.left, rc.top, app.state.szWork, cch);

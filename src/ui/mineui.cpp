@@ -571,7 +571,7 @@ void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
             }
             if (pl.det == detAll) {
                 c = std::strlen(szT);
-                c += CommaFormatLong(app, &szT[c], static_cast<std::uint32_t>((pl.rgwtMin[3] * 100)));
+                c += CchCopyUtf8Prefix(std::span{szT}.subspan(static_cast<std::size_t>(c)), CommaFormatLong(app, static_cast<std::uint32_t>((pl.rgwtMin[3] * 100))).data());
                 RightTextOut(app, hdc, xR, yCur, szT, c, 0);
             } else if (pl.iPlayer == iplrNone) {
                 c = TextIO().pfnCchGetString(app, idsUninhabited, std::span{szT});

@@ -1,6 +1,6 @@
 {
   "parent": "00f055c5",
-  "status": "Player and catalog results migrated; other shared scratch text and const interfaces remain active.",
+  "status": "Player, catalog, report, hull and numeric text values migrated; other shared scratch text and const interfaces remain active.",
   "player_names": {
     "implementation": "PszPlayerName returns std::array<char, 50> by value with initialized storage; the previous 50-byte label budget and grammar remain. No heap allocation or shared-work-buffer return.",
     "provider": "TEXTIO uses the real return type; its actual transport-presets witness provider returns the same value type without a generic scalar adapter.",
@@ -3364,5 +3364,394 @@
       "baseline": "Behavior-neutral. No regression baseline, unit golden, fixed field/record width, valid text bytes, duplicate ordering, rounding or RNG consumption changed.",
       "receipts": "dist/verification/live-cpp/l05l/"
     }
-  }
+  },
+  "numeric_text": {
+    "parent": "8f423ee5",
+    "status": "complete; verified",
+    "interfaces": {
+      "PszFromInt": "std::array<char, 12>; signed 16-bit input; no count pointer",
+      "PszFromLong": "std::array<char, 12>; signed 32-bit input; no count pointer",
+      "PszFromLongK": "std::array<char, 12>; same scaled bytes/count and LOWORD boundary; no count pointer",
+      "CommaFormatLong": "std::array<char, 15>; signed 32-bit grouped decimal; no unbounded output pointer"
+    },
+    "ownership": "No shared result storage or allocation. The obsolete APPGAMESTATE.szFormatNumber field is removed. Scalar widths and persisted records are unchanged.",
+    "production_consumers": {
+      "PszFromLong": 13,
+      "PszFromInt": 19,
+      "CommaFormatLong": 5,
+      "PszFromLongK": 2
+    },
+    "internal_composition": "PszFromLongK owns the PszFromInt value before adding its suffix and NUL.",
+    "callers": "All 32 plain numeric report calls synchronously borrow into existing field spans; five grouped labels copy into their actual array/tail spans; both scaled UI calls keep a named value through drawing.",
+    "behavior": "Actual callers retain fitting bytes, native percent-format semantics, grouping, counts, duplicate lifetime and prior work-buffer side effects where used. Scaled UI consumers previously drew explicit counts; the owned result is now independently NUL-terminated.",
+    "tests": "Literal signs/grouping and extrema vectors; 16-bit width limits; normal k/M rounding/clamping boundaries; retained simultaneous values; previous 1234567/-42 assertions retained with count derived from the owned value.",
+    "reproduction": "Before migration a newly added two-lookup test failed because -42 overwrote the first 1234567 result.",
+    "pending": "PszFromLongK still has the pre-existing signed addition overflow for positive values above 2146983647; repair remains a separate intentional behavior commit. Other scratch/path/const interfaces remain active.",
+    "verification": {
+      "batch": "L05m owned numeric text values",
+      "debug_build": "Pass, no new warnings; header include orders and compiler policy pass.",
+      "desktop": "153/153, including available tutorial checkpoints and 29 leak checks.",
+      "host_units": "28/28",
+      "native_regression": "519 matches, 25 existing warnings, zero differences/errors and skipped reference inputs.",
+      "host_regression": "519 matches, 25 existing warnings, zero differences/errors and skipped reference inputs.",
+      "windows": "147/147 owned production units and changed utility test compile with strict MinGW; actual Windows utility executable passes all 12 cases under Wine. Native Windows desktop qualification remains pending.",
+      "ownership": "39 production consumers migrated; three scratch getters and grouped decimal return owned values; all output/count pointer overloads and obsolete shared number storage removed.",
+      "reproduction": "Before migration the new two-lookup test failed because the second result overwrote the first. It now passes along with signs, grouping, integer extrema, normal k/M boundaries and retained independent values.",
+      "baseline": "Behavior-neutral for actual consumers; valid bytes, counts, working-buffer uses, record widths, unit goldens and regression baselines unchanged. Existing scaled rounding overflow remains explicitly pending a separate focused repair.",
+      "receipts": "dist/verification/live-cpp/l05m/"
+    }
+  },
+  "numeric_text_calls": [
+    {
+      "path": "src/core/report.cpp",
+      "parent_line": 400,
+      "function": "PszFromLong",
+      "original_call": "PszFromLong(app, static_cast<std::uint32_t>((lppl->rgwtMin[3] * 100)), nullptr)",
+      "line": 400,
+      "current_call_line": "CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromLong(app, static_cast<std::uint32_t>((lppl->rgwtMin[3] * 100))).data());",
+      "lifetime": "Owned temporary is borrowed only during the synchronous copy into the actual destination array or tail span."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "parent_line": 403,
+      "function": "PszFromLong",
+      "original_call": "PszFromLong(app, l, nullptr)",
+      "line": 403,
+      "current_call_line": "CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromLong(app, l).data());",
+      "lifetime": "Owned temporary is borrowed only during the synchronous copy into the actual destination array or tail span."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "parent_line": 437,
+      "function": "PszFromLong",
+      "original_call": "PszFromLong(app, lppl->rgwtMin[i], nullptr)",
+      "line": 437,
+      "current_call_line": "CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromLong(app, lppl->rgwtMin[i]).data());",
+      "lifetime": "Owned temporary is borrowed only during the synchronous copy into the actual destination array or tail span."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "parent_line": 445,
+      "function": "PszFromLong",
+      "original_call": "PszFromLong(app, rgl[i], nullptr)",
+      "line": 445,
+      "current_call_line": "CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromLong(app, rgl[i]).data());",
+      "lifetime": "Owned temporary is borrowed only during the synchronous copy into the actual destination array or tail span."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "parent_line": 452,
+      "function": "PszFromInt",
+      "original_call": "PszFromInt(app, lppl->rgMinConc[i], nullptr)",
+      "line": 452,
+      "current_call_line": "CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, lppl->rgMinConc[i]).data());",
+      "lifetime": "Owned temporary is borrowed only during the synchronous copy into the actual destination array or tail span."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "parent_line": 457,
+      "function": "PszFromInt",
+      "original_call": "PszFromInt(app, ResearchIO().pfnResources(app, lppl, app.state.idPlayer), nullptr)",
+      "line": 457,
+      "current_call_line": "CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, ResearchIO().pfnResources(app, lppl, app.state.idPlayer)).data());",
+      "lifetime": "Owned temporary is borrowed only during the synchronous copy into the actual destination array or tail span."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "parent_line": 472,
+      "function": "PszFromInt",
+      "original_call": "PszFromInt(app, PctPlanetOptValue(app, lppl, app.state.idPlayer), nullptr)",
+      "line": 472,
+      "current_call_line": "CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, PctPlanetOptValue(app, lppl, app.state.idPlayer)).data());",
+      "lifetime": "Owned temporary is borrowed only during the synchronous copy into the actual destination array or tail span."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "parent_line": 482,
+      "function": "PszFromInt",
+      "original_call": "PszFromInt(app, CapacityIO().pfnPctPlanetCapacity(app, lppl), nullptr)",
+      "line": 482,
+      "current_call_line": "CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, CapacityIO().pfnPctPlanetCapacity(app, lppl)).data());",
+      "lifetime": "Owned temporary is borrowed only during the synchronous copy into the actual destination array or tail span."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "parent_line": 484,
+      "function": "PszFromInt",
+      "original_call": "PszFromInt(app, GetPlanetScannerRange(app, lppl, &i), nullptr)",
+      "line": 484,
+      "current_call_line": "CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, GetPlanetScannerRange(app, lppl, &i)).data());",
+      "lifetime": "Owned temporary is borrowed only during the synchronous copy into the actual destination array or tail span."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "parent_line": 486,
+      "function": "PszFromInt",
+      "original_call": "PszFromInt(app, i, nullptr)",
+      "line": 486,
+      "current_call_line": "CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, i).data());",
+      "lifetime": "Owned temporary is borrowed only during the synchronous copy into the actual destination array or tail span."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "parent_line": 496,
+      "function": "PszFromInt",
+      "original_call": "PszFromInt(app, i, nullptr)",
+      "line": 496,
+      "current_call_line": "CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, i).data());",
+      "lifetime": "Owned temporary is borrowed only during the synchronous copy into the actual destination array or tail span."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "parent_line": 510,
+      "function": "PszFromInt",
+      "original_call": "PszFromInt(app, part.pspecialsb()->grAbility2, nullptr)",
+      "line": 510,
+      "current_call_line": "CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, part.pspecialsb()->grAbility2).data());",
+      "lifetime": "Owned temporary is borrowed only during the synchronous copy into the actual destination array or tail span."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "parent_line": 512,
+      "function": "PszFromInt",
+      "original_call": "PszFromInt(app, part.pspecialsb()->grAbility, nullptr)",
+      "line": 512,
+      "current_call_line": "CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, part.pspecialsb()->grAbility).data());",
+      "lifetime": "Owned temporary is borrowed only during the synchronous copy into the actual destination array or tail span."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "parent_line": 526,
+      "function": "PszFromInt",
+      "original_call": "PszFromInt(app, i, nullptr)",
+      "line": 526,
+      "current_call_line": "CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, i).data());",
+      "lifetime": "Owned temporary is borrowed only during the synchronous copy into the actual destination array or tail span."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "parent_line": 611,
+      "function": "PszFromInt",
+      "original_call": "PszFromInt(app, lpfl->pt.x, nullptr)",
+      "line": 611,
+      "current_call_line": "CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, lpfl->pt.x).data());",
+      "lifetime": "Owned temporary is borrowed only during the synchronous copy into the actual destination array or tail span."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "parent_line": 613,
+      "function": "PszFromInt",
+      "original_call": "PszFromInt(app, lpfl->pt.y, nullptr)",
+      "line": 613,
+      "current_call_line": "CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, lpfl->pt.y).data());",
+      "lifetime": "Owned temporary is borrowed only during the synchronous copy into the actual destination array or tail span."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "parent_line": 626,
+      "function": "PszFromInt",
+      "original_call": "PszFromInt(app, lpfl->dirFltX(), nullptr)",
+      "line": 626,
+      "current_call_line": "CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, lpfl->dirFltX()).data());",
+      "lifetime": "Owned temporary is borrowed only during the synchronous copy into the actual destination array or tail span."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "parent_line": 628,
+      "function": "PszFromInt",
+      "original_call": "PszFromInt(app, lpfl->dirFltY(), nullptr)",
+      "line": 628,
+      "current_call_line": "CchAppendUtf8Prefix(std::span{szForm}, PszFromInt(app, lpfl->dirFltY()).data());",
+      "lifetime": "Owned temporary is borrowed only during the synchronous copy into the actual destination array or tail span."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "parent_line": 643,
+      "function": "PszFromLong",
+      "original_call": "PszFromLong(app, l, nullptr)",
+      "line": 643,
+      "current_call_line": "CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromLong(app, l).data());",
+      "lifetime": "Owned temporary is borrowed only during the synchronous copy into the actual destination array or tail span."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "parent_line": 646,
+      "function": "PszFromLong",
+      "original_call": "PszFromLong(app, lpfl->rgwtMin[i], nullptr)",
+      "line": 646,
+      "current_call_line": "CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromLong(app, lpfl->rgwtMin[i]).data());",
+      "lifetime": "Owned temporary is borrowed only during the synchronous copy into the actual destination array or tail span."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "parent_line": 650,
+      "function": "PszFromInt",
+      "original_call": "PszFromInt(app, lpfl->iPlayer + 1, nullptr)",
+      "line": 650,
+      "current_call_line": "CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, lpfl->iPlayer + 1).data());",
+      "lifetime": "Owned temporary is borrowed only during the synchronous copy into the actual destination array or tail span."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "parent_line": 666,
+      "function": "PszFromInt",
+      "original_call": "PszFromInt(app, i, nullptr)",
+      "line": 666,
+      "current_call_line": "CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, i).data());",
+      "lifetime": "Owned temporary is borrowed only during the synchronous copy into the actual destination array or tail span."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "parent_line": 668,
+      "function": "PszFromLong",
+      "original_call": "PszFromLong(app, WtFromLpfl(app, lpfl), nullptr)",
+      "line": 668,
+      "current_call_line": "CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromLong(app, WtFromLpfl(app, lpfl)).data());",
+      "lifetime": "Owned temporary is borrowed only during the synchronous copy into the actual destination array or tail span."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "parent_line": 670,
+      "function": "PszFromInt",
+      "original_call": "PszFromInt(app, PctCloakFromLpfl(app, lpfl), nullptr)",
+      "line": 670,
+      "current_call_line": "CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, PctCloakFromLpfl(app, lpfl)).data());",
+      "lifetime": "Owned temporary is borrowed only during the synchronous copy into the actual destination array or tail span."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "parent_line": 676,
+      "function": "PszFromInt",
+      "original_call": "PszFromInt(app, j, nullptr)",
+      "line": 676,
+      "current_call_line": "CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, j).data());",
+      "lifetime": "Owned temporary is borrowed only during the synchronous copy into the actual destination array or tail span."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "parent_line": 678,
+      "function": "PszFromInt",
+      "original_call": "PszFromInt(app, i, nullptr)",
+      "line": 678,
+      "current_call_line": "CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, i).data());",
+      "lifetime": "Owned temporary is borrowed only during the synchronous copy into the actual destination array or tail span."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "parent_line": 686,
+      "function": "PszFromLong",
+      "original_call": "PszFromLong(app, ColonyIO().pfnFleetMining(app, lpfl), nullptr)",
+      "line": 686,
+      "current_call_line": "CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromLong(app, ColonyIO().pfnFleetMining(app, lpfl)).data());",
+      "lifetime": "Owned temporary is borrowed only during the synchronous copy into the actual destination array or tail span."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "parent_line": 688,
+      "function": "PszFromLong",
+      "original_call": "PszFromLong(app, CMineSweepFromLpfl(app, lpfl), nullptr)",
+      "line": 688,
+      "current_call_line": "CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromLong(app, CMineSweepFromLpfl(app, lpfl)).data());",
+      "lifetime": "Owned temporary is borrowed only during the synchronous copy into the actual destination array or tail span."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "parent_line": 690,
+      "function": "PszFromLong",
+      "original_call": "PszFromLong(app, CLayMinesFromLpfl(app, lpfl, mineAll, ishdefAll), nullptr)",
+      "line": 690,
+      "current_call_line": "CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromLong(app, CLayMinesFromLpfl(app, lpfl, mineAll, ishdefAll)).data());",
+      "lifetime": "Owned temporary is borrowed only during the synchronous copy into the actual destination array or tail span."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "parent_line": 692,
+      "function": "PszFromLong",
+      "original_call": "PszFromLong(app, PctTerraFromLpfl(app, lpfl), nullptr)",
+      "line": 692,
+      "current_call_line": "CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromLong(app, PctTerraFromLpfl(app, lpfl)).data());",
+      "lifetime": "Owned temporary is borrowed only during the synchronous copy into the actual destination array or tail span."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "parent_line": 703,
+      "function": "PszFromLong",
+      "original_call": "PszFromLong(app, l, nullptr)",
+      "line": 703,
+      "current_call_line": "CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromLong(app, l).data());",
+      "lifetime": "Owned temporary is borrowed only during the synchronous copy into the actual destination array or tail span."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "parent_line": 712,
+      "function": "PszFromLong",
+      "original_call": "PszFromLong(app, l, nullptr)",
+      "line": 712,
+      "current_call_line": "CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromLong(app, l).data());",
+      "lifetime": "Owned temporary is borrowed only during the synchronous copy into the actual destination array or tail span."
+    },
+    {
+      "path": "src/ui/planetui.cpp",
+      "parent_line": 431,
+      "function": "CommaFormatLong",
+      "original_call": "CommaFormatLong(app, app.state.szWork, static_cast<std::uint32_t>((app.state.sel.pl.rgwtMin[3] * 100)))",
+      "line": 431,
+      "current_call_line": "c = CchCopyUtf8Prefix(std::span{app.state.szWork}, CommaFormatLong(app, static_cast<std::uint32_t>((app.state.sel.pl.rgwtMin[3] * 100))).data());",
+      "lifetime": "Owned temporary is borrowed only during the synchronous copy into the actual destination array or tail span."
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "parent_line": 1364,
+      "function": "CommaFormatLong",
+      "original_call": "CommaFormatLong(app, app.state.szWork, static_cast<std::uint32_t>((app.state.rglPopMac[app.lpui->lpshdefBuild->hul.ihuldef - ihuldefOrbitalFort] * 100)))",
+      "line": 1364,
+      "current_call_line": "cch = CchCopyUtf8Prefix(std::span{app.state.szWork}, CommaFormatLong(app, static_cast<std::uint32_t>((app.state.rglPopMac[app.lpui->lpshdefBuild->hul.ihuldef - ihuldefOrbitalFort] * 100))).data());",
+      "lifetime": "Owned temporary is borrowed only during the synchronous copy into the actual destination array or tail span."
+    },
+    {
+      "path": "src/ui/mineui.cpp",
+      "parent_line": 574,
+      "function": "CommaFormatLong",
+      "original_call": "CommaFormatLong(app, &szT[c], static_cast<std::uint32_t>((pl.rgwtMin[3] * 100)))",
+      "line": 574,
+      "current_call_line": "c += CchCopyUtf8Prefix(std::span{szT}.subspan(static_cast<std::size_t>(c)), CommaFormatLong(app, static_cast<std::uint32_t>((pl.rgwtMin[3] * 100))).data());",
+      "lifetime": "Owned temporary is borrowed only during the synchronous copy into the actual destination array or tail span."
+    },
+    {
+      "path": "src/ui/reportui.cpp",
+      "parent_line": 832,
+      "function": "PszFromLongK",
+      "original_call": "PszFromLongK(app, lVal, &cch)",
+      "line": 833,
+      "current_call_line": "szNumber = PszFromLongK(app, lVal);",
+      "lifetime": "Named szNumber owns the label through its draw operation."
+    },
+    {
+      "path": "src/ui/reportui.cpp",
+      "parent_line": 1258,
+      "function": "CommaFormatLong",
+      "original_call": "CommaFormatLong(app, szT, static_cast<std::uint32_t>((lppl->rgwtMin[3] * 100)))",
+      "line": 1261,
+      "current_call_line": "cch = CchCopyUtf8Prefix(std::span{szT}, CommaFormatLong(app, static_cast<std::uint32_t>((lppl->rgwtMin[3] * 100))).data());",
+      "lifetime": "Owned temporary is borrowed only during the synchronous copy into the actual destination array or tail span."
+    },
+    {
+      "path": "src/ui/reportui.cpp",
+      "parent_line": 1288,
+      "function": "CommaFormatLong",
+      "original_call": "CommaFormatLong(app, szT, i)",
+      "line": 1291,
+      "current_call_line": "cch = CchCopyUtf8Prefix(std::span{szT}, CommaFormatLong(app, i).data());",
+      "lifetime": "Owned temporary is borrowed only during the synchronous copy into the actual destination array or tail span."
+    },
+    {
+      "path": "src/ui/reportui.cpp",
+      "parent_line": 1646,
+      "function": "PszFromLongK",
+      "original_call": "PszFromLongK(app, l, &cch)",
+      "line": 1650,
+      "current_call_line": "szNumber = PszFromLongK(app, l);",
+      "lifetime": "Named szNumber owns the label through its draw operation."
+    }
+  ]
 }

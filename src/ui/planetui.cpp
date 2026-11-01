@@ -428,7 +428,7 @@ void DrawPlanetStats(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
         }
         win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
         win32::SetRect(&app.lpui->rgrcRef[9], xLeft, yTop, xRight, yTop + app.state.dyArial8);
-        c = CommaFormatLong(app, app.state.szWork, static_cast<std::uint32_t>((app.state.sel.pl.rgwtMin[3] * 100)));
+        c = CchCopyUtf8Prefix(std::span{app.state.szWork}, CommaFormatLong(app, static_cast<std::uint32_t>((app.state.sel.pl.rgwtMin[3] * 100))).data());
         RightTextOut(app, hdc, xRight, yTop, app.state.szWork, c, dxRight);
         yTop += app.state.dyArial8;
         if (!ptile->fMinDraw) {

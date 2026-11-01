@@ -206,6 +206,11 @@ detail in [WIN16-PARITY.md](WIN16-PARITY.md).
   repeated-X notation across the signed 16-bit range. The 31-byte class-name
   field, duplicate-slot ordering and all saved widths are unchanged; see
   [the owned-text ledger](CPP-LIVE-OWNED-TEXT.json).
+  Plain/scaled numeric getters also return their 12-byte label budget by value;
+  grouped decimal output owns 15 bytes, sufficient for signed 32-bit extrema.
+  All 39 production consumers use those values and actual destination spans or
+  named drawing owners. Count/output pointer overloads and shared number storage
+  are gone; numeric widths, fitting bytes and saved layouts are unchanged.
   User-string compression/decompression and both saved-name readers now take
   byte/text spans and return optional encoded, decoded or consumed counts.
   The caller's existing compression budget and destination NUL capacity stay

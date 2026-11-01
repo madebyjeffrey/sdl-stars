@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include <cstdint>
+#include <array>
 #include <optional>
 #include <span>
 #include <string_view>
@@ -30,10 +31,10 @@ void    OutputFileString(const char *szFile, const char *sz);
 void    StarsCopyFile(APPSESSION &app, const char *szSrc, const char *szDst);
 std::int16_t AlertSz(APPSESSION &app, const char *sz, std::int16_t mbType);
 std::int16_t CchGetString(APPSESSION &app, StringId ids, std::span<char> psz);
-char   *PszFromInt(APPSESSION &app, std::int16_t i, std::int16_t *pcch);
-char   *PszFromLong(APPSESSION &app, std::int32_t l, std::int16_t *pcch);
-char   *PszFromLongK(APPSESSION &app, std::int32_t l, std::int16_t *pcch);
-std::int16_t CommaFormatLong(APPSESSION &app, char *psz, std::int32_t l);
+std::array<char, 12> PszFromInt(APPSESSION &app, std::int16_t i);
+std::array<char, 12> PszFromLong(APPSESSION &app, std::int32_t l);
+std::array<char, 12> PszFromLongK(APPSESSION &app, std::int32_t l);
+std::array<char, 15> CommaFormatLong(APPSESSION &app, std::int32_t l);
 void    BoundPoints(RECT *prc, POINT16 *rgpt, std::int16_t cpt);
 // Success returns encoded bytes; failure leaves the destination unchanged.
 // Input is non-NUL byte text; UTF-8 validation belongs to its record boundary.
