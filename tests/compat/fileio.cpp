@@ -60,6 +60,30 @@ int main(void) {
     CHECK(CNativeScan(pf,"%d\n",&version)==1 && version==2 && PszGetNativeLine(line,sizeof(line),pf) && !strcmp(line,"name\n"));
     CHECK(CNativeScan(pf,"%d\n%lld\n",&player,&played)==2 && player==7 && played==1234567890123LL);
     CHECK(PszGetNativeLine(line,sizeof(line),pf) && !strcmp(line,"next\n"));CHECK(ICloseNativeFile(pf)==0);
+    // Metadata scanning commits each field and leaves the first non-digit unread.
+    pf=PfNativeTemporary();CHECK(pf && IPutNativeString(" \t-2147483648\n+9223372036854775807!",pf)==0 && ISeekNativeFile(pf,0,0)==0);
+    CHECK(CNativeScan(pf,"%d\n%lld",&player,&played)==2 && player==INT32_MIN && played==INT64_MAX);
+    CHECK(ChGetNativeFile(pf)=='!' && ICloseNativeFile(pf)==0);
+    pf=PfNativeTemporary();CHECK(pf && IPutNativeString("7 2147483648;",pf)==0 && ISeekNativeFile(pf,0,0)==0);
+    version=123;player=456;
+    CHECK(CNativeScan(pf,"%d %d",&version,&player)==1 && version==7 && player==456 && ChGetNativeFile(pf)==';');
+    CHECK(ICloseNativeFile(pf)==0);
+    pf=PfNativeTemporary();CHECK(pf && IPutNativeString("7 +!",pf)==0 && ISeekNativeFile(pf,0,0)==0);
+    player=456;
+    CHECK(CNativeScan(pf,"%d %d",&version,&player)==1 && player==456 && ChGetNativeFile(pf)=='!');
+    CHECK(ICloseNativeFile(pf)==0);
+    pf=PfNativeTemporary();CHECK(pf && IPutNativeString("-9223372036854775808 9223372036854775808?",pf)==0 && ISeekNativeFile(pf,0,0)==0);
+    CHECK(CNativeScan(pf,"%lld",&played)==1 && played==INT64_MIN);
+    errno=0;CHECK(CNativeScan(pf,"%lld",&played)==0 && played==INT64_MIN && errno==ERANGE && ChGetNativeFile(pf)=='?');
+    CHECK(ICloseNativeFile(pf)==0);
+    pf=PfNativeTemporary();CHECK(pf && CNativeScan(pf,"%d",&version)==EOF && ICloseNativeFile(pf)==0);
+    pf=PfNativeTemporary();CHECK(pf && IPutNativeString("7",pf)==0 && ISeekNativeFile(pf,0,0)==0);
+    CHECK(CNativeScan(pf,"%d %d",&version,&player)==1 && version==7 && player==456 && FNativeStreamEof(pf));
+    CHECK(ISeekNativeFile(pf,0,0)==0);
+    errno=0;CHECK(CNativeScan(pf,"%lld",&player)==0 && errno==EINVAL && LNativePosition(pf)==0);
+    errno=0;CHECK(CNativeScan(pf,"%d")==0 && errno==EINVAL && LNativePosition(pf)==0);
+    errno=0;CHECK(CNativeScan(pf,"%d",static_cast<int *>(nullptr))==0 && errno==EINVAL && LNativePosition(pf)==0);
+    CHECK(ICloseNativeFile(pf)==0);
     puts("File service binary, read/write transition, EOF/seek, exclusive creation, live sizes, truncate/extend, identity and metadata tests passed");
     return 0;
 }

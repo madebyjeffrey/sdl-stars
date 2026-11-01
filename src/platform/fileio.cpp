@@ -393,8 +393,7 @@ int CchNativePrintf(NATIVEFILE *pf, const char *fmt, ...) {
     }
     va_end(args); return ret;
 }
-int CNativeScan(NATIVEFILE *pf, const char *fmt, ...) {
-    std::va_list args; va_start(args, fmt);
+int CNativeScanFields(NATIVEFILE *pf, const char *fmt, std::span<const NATIVEINTEGERFIELD> rgFields) {
     int count = 0, ch;
     while (*fmt) {
         if (std::isspace(static_cast<unsigned char>(*fmt))) {
@@ -407,6 +406,12 @@ int CNativeScan(NATIVEFILE *pf, const char *fmt, ...) {
         if (std::strncmp(fmt, "%lld", 4) == 0) { wide = true; fmt += 4; }
         else if (std::strncmp(fmt, "%d", 2) == 0) { wide = false; fmt += 2; }
         else { errno = EINVAL; break; }
+        if (static_cast<std::size_t>(count) == rgFields.size() ||
+            (wide ? !std::holds_alternative<long long *>(rgFields[count]) : !std::holds_alternative<int *>(rgFields[count])) ||
+            !std::visit([](auto lpValue) -> bool { return lpValue; }, rgFields[count])) {
+            errno = EINVAL;
+            break;
+        }
         while ((ch = ChGetNativeFile(pf)) != EOF && std::isspace(static_cast<unsigned char>(ch))) {}
         if (ch == EOF) break;
         char token[64]; std::size_t n = 0;
@@ -420,10 +425,10 @@ int CNativeScan(NATIVEFILE *pf, const char *fmt, ...) {
         char *end; errno = 0;
         long long value = std::strtoll(token, &end, 10);
         if (end == token || *end || errno == ERANGE || (!wide && (value < INT_MIN || value > INT_MAX))) break;
-        if (wide) *va_arg(args, long long *) = value; else *va_arg(args, int *) = static_cast<int>(value);
+        if (wide) *std::get<long long *>(rgFields[count]) = value;
+        else *std::get<int *>(rgFields[count]) = static_cast<int>(value);
         ++count;
     }
-    va_end(args);
     return count == 0 && pf && pf->fEof ? EOF : count;
 }
 

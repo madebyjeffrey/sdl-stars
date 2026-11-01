@@ -2,6 +2,9 @@
 #define STARS_FILEIO_H
 #include <cstddef>
 #include <cstdint>
+#include <array>
+#include <span>
+#include <variant>
 struct NATIVEFILE;
 
 struct NATIVEDIR;
@@ -44,7 +47,13 @@ std::int64_t CbGetNativeLine(char **ppsz, std::size_t *pcb, NATIVEFILE *pf);
 int IPutNativeString(const char *psz, NATIVEFILE *pf);
 int CchNativePrintf(NATIVEFILE *pf, const char *pszFormat, ...);
 // Metadata's ASCII integer fields: %d and %lld, with scanf whitespace rules.
-int CNativeScan(NATIVEFILE *pf, const char *pszFormat, ...);
+using NATIVEINTEGERFIELD = std::variant<int *, long long *>;
+int CNativeScanFields(NATIVEFILE *pf, const char *pszFormat, std::span<const NATIVEINTEGERFIELD> rgFields);
+template<class... FIELDS>
+int CNativeScan(NATIVEFILE *pf, const char *pszFormat, FIELDS... fields) {
+    const std::array<NATIVEINTEGERFIELD, sizeof...(FIELDS)> rgFields = {NATIVEINTEGERFIELD{fields}...};
+    return CNativeScanFields(pf, pszFormat, rgFields);
+}
 
 int IGetNativeOpenInfo(NATIVEFILE *pf, NATIVEFILEINFO *pinfo);
 int IUnlinkNativePath(const char *psz);

@@ -69,7 +69,33 @@
     },
     {
       "id": "L05",
-      "status": "pending"
+      "status": "active",
+      "completed_substeps": [
+        "typed-metadata-scan-destinations"
+      ],
+      "pending_substeps": [
+        "bounded-text-destinations",
+        "typed-formatting",
+        "catalog-and-player-name-owned-text",
+        "const-text-interfaces"
+      ],
+      "metadata_scan": {
+        "interface": "Typed integer field pack and span; no C varargs or va_arg.",
+        "valid_input_contract": "Same %d/%lld grammar, widths, whitespace, character consumption, EOF/seek behavior, partial assignment and range checks.",
+        "invalid_destinations": "Reject missing, mismatched or null fields with EINVAL before consuming that field; old varargs had undefined behavior."
+      },
+      "verification": [
+        {
+          "batch": "L05a typed metadata scanning",
+          "desktop": "151/151; includes available tutorial, 29 leak checks, 88 ownership checks and linked witnesses. Final scanner range and destination-error cases also executed directly.",
+          "host_units": "27/27",
+          "native_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped reference inputs.",
+          "host_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped reference inputs.",
+          "windows": "Strict MinGW syntax: fileio.cpp and libraryui.cpp pass. Compilation evidence only.",
+          "baseline": "Unchanged; no game rules, catalogs, wire layouts or canonical models changed.",
+          "receipts": "dist/verification/live-cpp/l05a/"
+        }
+      ]
     },
     {
       "id": "L06",

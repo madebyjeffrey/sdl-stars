@@ -2811,7 +2811,18 @@
       "wire_inventory": "259 unchanged frozen measurements; 46 record names",
       "canonical_models": "unchanged",
       "baseline": "unchanged",
-      "receipts": "dist/verification/live-cpp/l04/"
+      "receipts": "dist/verification/live-cpp/l04/",
+      "linux_ci": {
+        "run": 41278718955,
+        "commit": "cdbd5a50",
+        "status": "success",
+        "jobs": [
+          "Unit tests (stars-host, Linux)",
+          "Resource ownership (ASan/UBSan/LSan)",
+          "Linked independent witnesses (C++20)"
+        ],
+        "full_platform_jobs": "Skipped by opt-in policy; no native Windows execution inferred."
+      }
     }
   ]
 }
