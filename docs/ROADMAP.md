@@ -39,7 +39,8 @@ checks pass for `b799348`.
 
 Milestone B is qualified and merged in [PR #66](https://github.com/madebyjeffrey/sdl-stars/pull/66).
 [Milestone C](CPP-MILESTONE-C.md) is complete and qualified. C01–C03 are merged;
-C04/C05 through C10 are ready for review as the dependent draft stack #72–#77.
+C04/C05 through C10 and follow-up fixes #79–#80 are merged into `develop` at
+`58c5e707` through the dependent PR stack #72–#77 and a final direct merge.
 Owned implementations have honest C++20/Objective-C++20 extensions, actual
 namespaces/direct UI calls, typed effects and explicit state consumers. Temporary
 routing, source extraction, state aliases and SDK language adapters are removed.

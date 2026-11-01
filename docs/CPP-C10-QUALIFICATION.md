@@ -1,10 +1,10 @@
 # C10: final Milestone C audit and qualification
 
-Status: complete; implementation and qualification are ready for review in draft
-PRs #72–#77. Qualified source/build/test revision: `ee978a44`, including the C08
-Windows filename-fallback and C09 witness portability corrections. C10 changes
+Status: complete; PRs #72–#77 and follow-up fixes #79–#80 are integrated into
+`develop` at `58c5e707`. Qualified source/build/test revision: `ee978a44`,
+including the C08 Windows filename-fallback and C09 witness portability corrections. C10 changes
 documentation/audit files only; its source/build/test/data/model trees match that
-qualified revision exactly. No PR is merged by the agent.
+qualified revision exactly. The integration merge has the final stack's file tree.
 
 The [final inventory](CPP-C10-AUDIT.json) lists all 152 tracked owned production
 implementations (151 `.cpp`, one AppKit `.mm`) and every live owned production,
@@ -76,7 +76,7 @@ coverage.
 
 ## Review and rollback
 
-Review the draft stack in order: #72 (C04/C05), #73 (C06), #74 (C07), #75 (C08),
-#76 (C09), then #77 (C10). The first targets `develop`; each later PR targets its
-predecessor. Retarget/rebase as predecessors merge. Roll back dependents first.
-No irreversible file conversion is part of C, and no PR is merged automatically.
+PRs #72 (C04/C05), #73 (C06), #74 (C07), #75 (C08), #76 (C09) and #77 (C10)
+merged into their dependent branches in order. The final stack was merged into
+`develop` at `58c5e707`; roll back dependents first if necessary. No irreversible
+file conversion is part of C.

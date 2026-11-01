@@ -2,8 +2,8 @@
 
 Tracking: [#67](https://github.com/madebyjeffrey/sdl-stars/issues/67).
 Started: 2026-10-31. Initial branch: `codex/cpp-milestone-c`, targeting `develop`.
-Current continuation: `codex/cpp-c10-final-qualification` from C09 PR #76
-(`ee978a44`); the dependent PR chain starts at C04/C05 PR #72 against `develop`.
+Integrated into `develop` at `58c5e707`; the dependent PR chain started at
+C04/C05 PR #72 against `develop` and ended with follow-up fix PR #80.
 Plan: [CPP-MILESTONE-C.md](CPP-MILESTONE-C.md).
 
 ## Parent and scope
@@ -583,8 +583,9 @@ pending; no checkpoint completion is inferred from historical platform receipts.
 
 ## Final Milestone C completion receipt
 
-Milestone C is implemented and qualified in the unmerged draft stack #72 → #73 →
-#74 → #75 → #76 → #77. Source/build/test revision `ee978a44` passes all 15 enabled
+Milestone C is implemented and qualified in the merged stack #72 → #73 →
+#74 → #75 → #76 → #77, with follow-up fixes #79–#80 integrated into `develop`
+at `58c5e707`. Source/build/test revision `ee978a44` passes all 15 enabled
 C09 PR jobs and all five [final manual platform jobs](https://github.com/madebyjeffrey/sdl-stars/actions/runs/41224660401).
 Linux desktop passes 154/154; Windows ordinary tests pass 131/131, including the
 three corrected witnesses. Fresh Windows registry counts are 131/41/170/0 for
@@ -603,6 +604,7 @@ all 657 live macros and verifies 152 tracked production implementations, 160
 standalone headers, frozen inputs and identical C09/C10 source/build/test/data/model
 trees. C10 changes documentation only; live publication-head checks are visible
 in PR #77. No baseline, file format, record size, catalog ID or gameplay change is
-introduced. No PR is merged, and the two slow automatic job conditions are unchanged.
+introduced. The integration merge has the final stack's file tree, and the two
+slow automatic job conditions are unchanged.
 Earlier pending/failure notes above are chronological checkpoint receipts, superseded
 by this final receipt and the [qualification ledger](CPP-C10-QUALIFICATION.md).

@@ -1,9 +1,10 @@
 # Milestone C: finish the C++ conversion
 
 Status: complete; all C01–C10 implementation and qualification obligations are
-recorded. C01–C03 are merged; C04/C05 through C10 are ready for review as draft
-PRs #72–#77, in that order. The agent has not merged them. Full local and manual
-Linux/Windows contract gates pass. Eighteen native SDK behavior probes remain
+recorded. C01–C10 and follow-up fixes #79–#80 are integrated into `develop` at
+`58c5e707`. PRs #72–#77 merged through their dependent branches before the final
+direct merge. Full local and manual Linux/Windows contract gates pass. Eighteen
+native SDK behavior probes remain
 explicit diagnostics tracked in issue #78 after toolbar requalification;
 post-migration corrections are recorded in the [SDK findings](CPP-C09-SDK-FINDINGS.md).
 See the [final qualification](CPP-C10-QUALIFICATION.md).
