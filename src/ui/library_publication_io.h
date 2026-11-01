@@ -4,7 +4,7 @@
 
 struct LIBRARYPUBLICATIONIO {
     std::size_t (*pfnPathLength)(const char *) = std::strlen;
-    decltype(&CchSnprintf)                   pfnCchSnprintf = CchSnprintf;
+    NATIVEFORMATTER                        pfnCchSnprintf;
     decltype(&DwTickCount)                   pfnDwTickCount = DwTickCount;
     decltype(&LNativeTime)                   pfnLNativeTime = LNativeTime;
     decltype(&FCopyNativeFileExclusive)      pfnFCopyNativeFileExclusive = FCopyNativeFileExclusive;

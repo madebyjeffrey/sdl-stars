@@ -73,7 +73,8 @@
       "completed_substeps": [
         "typed-metadata-scan-destinations",
         "formatter-destination-capacities",
-        "catalog-copy-destination-capacities-and-typed-providers"
+        "catalog-copy-destination-capacities-and-typed-providers",
+        "typed-bounded-native-formatting"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -131,6 +132,18 @@
           "baseline": "Unchanged; no checkpoint moved; wire layouts, catalog bytes, IDs and canonical models unchanged.",
           "receipts": "dist/verification/live-cpp/l05c/",
           "windows_test_syntax": "Eight changed unit, drawing and linked-provider translation units checked using their actual Windows test definitions, including STARS_USE_WIN_STUBS for the SDL unit harness."
+        },
+        {
+          "batch": "L05d typed bounded native formatting",
+          "debug_build": "Pass; no new warnings; standalone headers in both orders.",
+          "desktop": "153/153; includes CRT byte/count comparisons at 81 capacities, typed packed fields, invalid lists, actual publication fault provider, ownership/leak checks and available tutorial.",
+          "host_units": "28/28",
+          "native_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped reference inputs.",
+          "host_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped reference inputs.",
+          "windows": "147/147 strict owned application/wrapper translation units; five changed test units, final formatter implementation and standalone formatter test compile with MinGW GCC 16.2.0.",
+          "baseline": "Unchanged; wire layouts, IDs, catalog bytes and canonical models unchanged.",
+          "receipts": "dist/verification/live-cpp/l05d/",
+          "windows_runtime": "Standalone MinGW Windows formatter executable passes against its CRT under Wine on macOS, including typed count destinations. This is formatter execution, not native Windows desktop qualification."
         }
       ],
       "bounded_formatting": {
@@ -151,6 +164,17 @@
         "history": "Guard empty copies and trim one complete final code point, preserving existing ASCII heading behavior.",
         "remaining": "strcpy/strcat, formatter argument typing and shared scratch returns remain pending.",
         "windows_calls": "Explicit spans at all 436 array destinations: GCC 16.2.0 MinGW loses array extent during implicit conversion through a function pointer, reproduced independently. Extents remain deduced from arrays; no guessed capacity or suppression."
+      },
+      "typed_snprintf": {
+        "status": "complete; verified",
+        "implementation": "NATIVEFORMATARG values and a concrete typed provider; CchSnprintf accepts a destination span and typed C++ argument pack. All 273 active direct/provider call sites migrated (263 direct, 10 provider); 176 production and 97 test calls. Old raw pointer/capacity variadic overload removed.",
+        "provider": "Actual LIBRARYPUBLICATIONIO formatter and linked publication failure provider take the same typed value span; event and injected-overflow behavior preserved.",
+        "grammar": "ISO printf integer/float/char/string/pointer/count conversions, h/hh/l/ll/j/z/t/L widths, flags, dynamic width/precision, %% and ignored extra values; CRT performs conversions and retains locale/rounding. Required byte counts, binary NUL output, partial effects and error returns retained.",
+        "invalid_calls": "Missing/incompatible values return -1/EINVAL instead of reading untyped arguments. No current valid call changed; null format is rejected.",
+        "lifetimes": "Arguments are taken by value at the public template boundary for packed bitfields, then borrowed by a synchronous typed span. Existing argument evaluation order and scratch getter behavior are unchanged by call syntax.",
+        "tests": "CRT reference byte/count/sentinel comparisons at 81 capacities per conversion case; signed/unsigned extrema, length modifiers, flags/stars, floats/wide text/pointers, binary NUL, typed count destinations, non-NUL views, packed fields and invalid lists.",
+        "fortified_crt": "Typed %n destinations use read-only CRT measuring formats, avoiding writable-format fortification while retaining native count conversion.",
+        "remaining": "CchSprintf/wsprintfA normalizers and stream CchNativePrintf still need typed argument migration; strcpy/strcat and owned scratch results remain pending."
       }
     },
     {
@@ -193,7 +217,18 @@
           "windows": "146/146 strict owned units; final init/tutor files 2/2; migrated lifecycle provider and include-order test 2/2. Compilation evidence only.",
           "host": "No game logic or host interface changed; L05c host results remain current.",
           "baseline": "Unchanged; wire layouts, catalog/data bytes, IDs and canonical models unchanged.",
-          "receipts": "dist/verification/live-cpp/l07b/"
+          "receipts": "dist/verification/live-cpp/l07b/",
+          "linux_ci": {
+            "run": 41281965765,
+            "commit": "9bc263ca",
+            "status": "success",
+            "jobs": [
+              "host units",
+              "resource ownership ASan/UBSan/LSan",
+              "linked C++20 witnesses"
+            ],
+            "full_platform_jobs": "Skipped by default opt-in policy."
+          }
         },
         {
           "batch": "L07c FWriteTutorialMFile borrowed-resource cleanup",
@@ -13539,21 +13574,21 @@
       "path": "src/platform/native.cpp",
       "line": 199,
       "code": "va_list args;",
-      "disposition": "pending"
+      "disposition": "typed-value-pack-and-destination-span-L05d"
     },
     {
       "kind": "varargs",
       "path": "src/platform/native.cpp",
       "line": 201,
       "code": "va_start(args, pszFormat);",
-      "disposition": "pending"
+      "disposition": "typed-value-pack-and-destination-span-L05d"
     },
     {
       "kind": "varargs",
       "path": "src/platform/native.cpp",
       "line": 203,
       "code": "va_end(args);",
-      "disposition": "pending"
+      "disposition": "typed-value-pack-and-destination-span-L05d"
     },
     {
       "kind": "c_header",

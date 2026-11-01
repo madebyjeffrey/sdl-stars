@@ -13,16 +13,16 @@ static BOOL FCheckRaceVersionWorkflow(APPSESSION &app) {
     char szFirst[512], szSecond[512], szFirstSnapshot[512], szSecondSnapshot[512];
     char szThird[512], szFailed[512], szThirdSnapshot[512];
 
-    CchSnprintf(szImported, sizeof(szImported), "%s%sRace Designs%sImported.r8", pszRoot, szDirSep, szDirSep);
-    CchSnprintf(szImportedVersion, sizeof(szImportedVersion), "%s%sRace Designs%sLegacy.r9", pszRoot, szDirSep, szDirSep);
-    CchSnprintf(szImportedSnapshot, sizeof(szImportedSnapshot), "%s%simported.snapshot", pszRoot, szDirSep);
-    CchSnprintf(szFirst, sizeof(szFirst), "%s%sRace Designs%s\xc3\x89lan_CON.r1", pszRoot, szDirSep, szDirSep);
-    CchSnprintf(szSecond, sizeof(szSecond), "%s%sRace Designs%s\xc3\x89lan_CON.r2", pszRoot, szDirSep, szDirSep);
-    CchSnprintf(szThird, sizeof(szThird), "%s%sRace Designs%s\xc3\xa9LAN_CON.r3", pszRoot, szDirSep, szDirSep);
-    CchSnprintf(szFailed, sizeof(szFailed), "%s%sRace Designs%s\xc3\x89lan_CON.r4", pszRoot, szDirSep, szDirSep);
-    CchSnprintf(szThirdSnapshot, sizeof(szThirdSnapshot), "%s%sthird.snapshot", pszRoot, szDirSep);
-    CchSnprintf(szFirstSnapshot, sizeof(szFirstSnapshot), "%s%sfirst.snapshot", pszRoot, szDirSep);
-    CchSnprintf(szSecondSnapshot, sizeof(szSecondSnapshot), "%s%ssecond.snapshot", pszRoot, szDirSep);
+    CchSnprintf(std::span{szImported, sizeof(szImported)}, "%s%sRace Designs%sImported.r8", pszRoot, szDirSep, szDirSep);
+    CchSnprintf(std::span{szImportedVersion, sizeof(szImportedVersion)}, "%s%sRace Designs%sLegacy.r9", pszRoot, szDirSep, szDirSep);
+    CchSnprintf(std::span{szImportedSnapshot, sizeof(szImportedSnapshot)}, "%s%simported.snapshot", pszRoot, szDirSep);
+    CchSnprintf(std::span{szFirst, sizeof(szFirst)}, "%s%sRace Designs%s\xc3\x89lan_CON.r1", pszRoot, szDirSep, szDirSep);
+    CchSnprintf(std::span{szSecond, sizeof(szSecond)}, "%s%sRace Designs%s\xc3\x89lan_CON.r2", pszRoot, szDirSep, szDirSep);
+    CchSnprintf(std::span{szThird, sizeof(szThird)}, "%s%sRace Designs%s\xc3\xa9LAN_CON.r3", pszRoot, szDirSep, szDirSep);
+    CchSnprintf(std::span{szFailed, sizeof(szFailed)}, "%s%sRace Designs%s\xc3\x89lan_CON.r4", pszRoot, szDirSep, szDirSep);
+    CchSnprintf(std::span{szThirdSnapshot, sizeof(szThirdSnapshot)}, "%s%sthird.snapshot", pszRoot, szDirSep);
+    CchSnprintf(std::span{szFirstSnapshot, sizeof(szFirstSnapshot)}, "%s%sfirst.snapshot", pszRoot, szDirSep);
+    CchSnprintf(std::span{szSecondSnapshot, sizeof(szSecondSnapshot)}, "%s%ssecond.snapshot", pszRoot, szDirSep);
     for (hwnd = HwndCompatFirstTop(); hwnd; hwnd = win32::GetWindow(hwnd, win32::GW_HWNDNEXT))
         if (hwnd->fDialog && hwnd->lpfnDlg == LibraryNameDlg) {
             fprintf(stderr, "New Race unexpectedly asked for a filename\n");

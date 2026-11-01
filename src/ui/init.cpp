@@ -231,7 +231,7 @@ static std::int16_t FSetMacMenuShortcut(HMENU hmenu, UINT id, const ACCEL *lpacc
         if (win32::GetMenuStringA(hmenu, i, szItem, sizeof(szItem), win32::MF_BYPOSITION) == 0) return 0;
         pszTab = std::strchr(szItem, '\t');
         if (pszTab) *pszTab = 0;
-        cch = CchSnprintf(szLabel, sizeof(szLabel), "%s\tCmd+%s%c", szItem,
+        cch = CchSnprintf(std::span{szLabel, sizeof(szLabel)}, "%s\tCmd+%s%c", szItem,
                          lpaccel->fVirt & win32::FSHIFT ? "Shift+" : "", lpaccel->key);
         if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szLabel)) return 0;
         mf = win32::GetMenuState(hmenu, i, win32::MF_BYPOSITION) & (win32::MF_CHECKED | win32::MF_DISABLED | win32::MF_GRAYED);

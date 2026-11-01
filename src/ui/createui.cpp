@@ -621,7 +621,7 @@ INT_PTR  NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 } else {
                     app.state.szRacePass[0] = 0;
                 }
-                CchSnprintf(szLibraryRace, sizeof(szLibraryRace), "%s",
+                CchSnprintf(std::span{szLibraryRace, sizeof(szLibraryRace)}, "%s",
                               (iCurVal & 3) == 2 ? rgszLibraryRaceNew[iCurVal >> 2] : "");
                 prcSav = app.lpui->vrgrcRCW;
                 if (FCustomizeLibraryRace(app, hwnd, szLibraryRace)) {

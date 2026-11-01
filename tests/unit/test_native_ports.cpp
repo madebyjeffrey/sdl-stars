@@ -549,7 +549,7 @@ static void TestApplicationUiSessionClose(void) {
     char szDir[cbTestPath], szPath[cbTestPath + 64];
     TEST_ASSERT(FStarsTestInit(app));
     TEST_ASSERT(FStarsTestDir("session-cleanup",szDir,sizeof(szDir)));
-    CchSnprintf(szPath,sizeof(szPath),"%s%ssession.dat",szDir,szDirSep);
+    CchSnprintf(std::span{szPath, sizeof(szPath)},"%s%ssession.dat",szDir,szDirSep);
     NATIVEFILE *pf = PfNativeOpen(szPath,"wb");
     TEST_ASSERT(pf);
     TEST_ASSERT(CWriteNative("x",1,1,pf) == 1 && ICloseNativeFile(pf) == 0);

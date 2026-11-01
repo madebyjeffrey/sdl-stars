@@ -11,6 +11,7 @@ class APPSESSION;
 #include <cstdlib>
 #include <cstdio>
 #include "encoding.h"
+#include "nativeformat.h"
 #include "fileio.h"
 #include "native_process.h"
 #include "windowtypes.h"
@@ -107,7 +108,10 @@ std::int16_t FSzPrefixNoCase(const char *sz1, const char *sz2, std::int16_t cch)
  */
 int     CchSprintf(std::span<char> sz, const char *szFormat, ...);
 // Bounded native formatting uses standard C widths and reports truncation.
-int     CchSnprintf(char *psz, std::size_t cb, const char *pszFormat, ...);
+template<class... ARGS>
+int CchSnprintf(std::span<char> psz, const char *pszFormat, ARGS... args) {
+    return CchFormatNativeArgs(CchFormatNative, psz, pszFormat, args...);
+}
 std::int32_t LMulDiv(std::int32_t lNumber, std::int32_t lNumerator, std::int32_t lDenominator);
 
 

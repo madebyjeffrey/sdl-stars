@@ -55,7 +55,7 @@ static BOOL FCheckGameExportWorkflow(APPSESSION &app, UINT_PTR idTimer) {
             iStage = 1;
             /* Verify this exported file through the real loader; Continue now
              * deliberately resumes the managed session instead of an MRU path. */
-            CchSnprintf(app.state.szBase, sizeof(app.state.szBase), "%s", PszCompatEnvironment("STARS_CLIENT_CONTINUE"));
+            CchSnprintf(std::span{app.state.szBase, sizeof(app.state.szBase)}, "%s", PszCompatEnvironment("STARS_CLIENT_CONTINUE"));
             app.state.ini.fStartupFile = 1;
             if (FOpenGame(app, app.lpui->hwndTitle, 0) <= 0) goto LFail;
             app.lpui->fFreeingTitle = 1;
@@ -101,8 +101,8 @@ static BOOL FCheckGameExportWorkflow(APPSESSION &app, UINT_PTR idTimer) {
     } else if (iStage == 3) {
         if (cGameExportPickers == 0) goto LWait;
         if (cGameExportPickers != 1) goto LFail;
-        if (pszZip) CchSnprintf(szDestination, sizeof(szDestination), "%s", pszZip);
-        else CchSnprintf(szDestination, sizeof(szDestination), "%s%s%s", pszParent, szDirSep, pszGame);
+        if (pszZip) CchSnprintf(std::span{szDestination, sizeof(szDestination)}, "%s", pszZip);
+        else CchSnprintf(std::span{szDestination, sizeof(szDestination)}, "%s%s%s", pszParent, szDirSep, pszGame);
         if (fFail) {
             if (cAlerts == 0) goto LWait;
             if (cAlerts != 1) goto LFail;

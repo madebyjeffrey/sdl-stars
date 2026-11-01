@@ -67,7 +67,7 @@ static void  CheckQuit(HWND hwndTimer, UINT msg, UINT_PTR id, DWORD time) {
                 pszRoot = PszCompatEnvironment("STARS_LIBRARY_DIR");
                 if (!pszRoot) pszRoot = PszCompatEnvironment("STARS_SETTINGS_DIR");
                 if (!pszRoot) { StarsCompatFreeHierarchy(&snap); win32::PostQuitMessage(1); return; }
-                CchSnprintf(szCollision, sizeof(szCollision), "%s%sGames%sOwner check", pszRoot, szDirSep, szDirSep);
+                CchSnprintf(std::span{szCollision, sizeof(szCollision)}, "%s%sGames%sOwner check", pszRoot, szDirSep, szDirSep);
                 if (!SDL_CreateDirectory(szCollision) || !win32::SetDlgItemTextA(hwnd, IDC_NEW_GAME_NAME, "Owner check")) {
                     StarsCompatFreeHierarchy(&snap); win32::PostQuitMessage(1); return;
                 }

@@ -26,10 +26,10 @@ static BOOL FCheckRaceRosterWorkflow(APPSESSION &app) {
     char szManaged[512], szOther[512], szSnapshot[512], szFirstSnapshot[512], szCaption[128];
     const char *pszRoot = PszCompatEnvironment("STARS_SETTINGS_DIR");
 
-    CchSnprintf(szManaged, sizeof(szManaged), "%s%sRace Designs%s%s", pszRoot, szDirSep, szDirSep, rgszName[0]);
-    CchSnprintf(szOther, sizeof(szOther), "%s%sRace Designs%s%s", pszRoot, szDirSep, szDirSep, rgszName[1]);
-    CchSnprintf(szSnapshot, sizeof(szSnapshot), "%s%sB.snapshot", pszRoot, szDirSep);
-    CchSnprintf(szFirstSnapshot, sizeof(szFirstSnapshot), "%s%sA.snapshot", pszRoot, szDirSep);
+    CchSnprintf(std::span{szManaged, sizeof(szManaged)}, "%s%sRace Designs%s%s", pszRoot, szDirSep, szDirSep, rgszName[0]);
+    CchSnprintf(std::span{szOther, sizeof(szOther)}, "%s%sRace Designs%s%s", pszRoot, szDirSep, szDirSep, rgszName[1]);
+    CchSnprintf(std::span{szSnapshot, sizeof(szSnapshot)}, "%s%sB.snapshot", pszRoot, szDirSep);
+    CchSnprintf(std::span{szFirstSnapshot, sizeof(szFirstSnapshot)}, "%s%sA.snapshot", pszRoot, szDirSep);
     if (iStep == 0) {
         if (!win32::IsWindowVisible(app.lpui->hwndTitle)) return 1;
         fChecked = 1;

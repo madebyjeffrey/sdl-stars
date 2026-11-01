@@ -110,7 +110,7 @@ static BOOL FTestLibraryTimestamp(APPSESSION &app, long long *plPlayed) {
     pch = strrchr(szDir, chDirSep);
     if (!pch) return 0;
     *pch = 0;
-    CchSnprintf(szFile, sizeof(szFile), "%s%s.library", szDir, szDirSep);
+    CchSnprintf(std::span{szFile, sizeof(szFile)}, "%s%s.library", szDir, szDirSep);
     pf = PfNativeOpen(szFile, "rb");
     if (!pf) return 0;
     if (CNativeScan(pf, "%d\n", &iVersion) != 1 || !PszGetNativeLine(szMetadataName, sizeof(szMetadataName), pf) ||
@@ -709,7 +709,7 @@ static BOOL FClientLibraryPlayerYear(HWND hwndTitle, int iplr, int year) {
     HWND hwndPlayers = win32::GetDlgItem(hwndTitle, IDC_LIBRARY_PLAYERS);
     LRESULT i, c = ui::SendMessage(hwndPlayers, win32::CB_GETCOUNT, 0, 0);
     char szPlayer[64], szExpected[64];
-    CchSnprintf(szExpected, sizeof(szExpected), "Player %d (%d)", iplr + 1, year);
+    CchSnprintf(std::span{szExpected, sizeof(szExpected)}, "Player %d (%d)", iplr + 1, year);
     for (i = 0; i < c; i++) {
         if (ui::SendMessage(hwndPlayers, win32::CB_GETITEMDATA, i, 0) == iplr &&
             ui::SendMessage(hwndPlayers, win32::CB_GETLBTEXT, i, (LPARAM)szPlayer) != win32::CB_ERR && !strcmp(szPlayer, szExpected)) return 1;
@@ -1707,11 +1707,11 @@ static BOOL FTestRaceCancellation(APPSESSION &app) {
     app.state.vplr.lSalt = LSaltFromSz(szCancelPassword);
     if (!FSaveLibraryRace(app, 0, "Protected.r1", &app.state.vplr) || !FLoadLibraryRace(app, 0, "Managed.r1")) return 0;
     plrSav = app.state.vplr;
-    CchSnprintf(szProtected, sizeof(szProtected), "%s%sRace Designs%sProtected.r1", pszSettings, szDirSep, szDirSep);
-    CchSnprintf(szSnapshot, sizeof(szSnapshot), "%s.snapshot", szProtected);
-    CchSnprintf(szExport, sizeof(szExport), "%s.export.r1", szProtected);
-    CchSnprintf(szImport, sizeof(szImport), "%s%sRace Designs%sCancelled.r1", pszSettings, szDirSep, szDirSep);
-    CchSnprintf(szDuplicate, sizeof(szDuplicate), "%s%sRace Designs%sProtected.r2", pszSettings, szDirSep, szDirSep);
+    CchSnprintf(std::span{szProtected, sizeof(szProtected)}, "%s%sRace Designs%sProtected.r1", pszSettings, szDirSep, szDirSep);
+    CchSnprintf(std::span{szSnapshot, sizeof(szSnapshot)}, "%s.snapshot", szProtected);
+    CchSnprintf(std::span{szExport, sizeof(szExport)}, "%s.export.r1", szProtected);
+    CchSnprintf(std::span{szImport, sizeof(szImport)}, "%s%sRace Designs%sCancelled.r1", pszSettings, szDirSep, szDirSep);
+    CchSnprintf(std::span{szDuplicate, sizeof(szDuplicate)}, "%s%sRace Designs%sProtected.r2", pszSettings, szDirSep, szDirSep);
     if (!FTestCopyFile(szProtected, szSnapshot)) return 0;
     fRejectRacePassword = 1;
     app.state.lSaltLast = -5;
@@ -1749,9 +1749,9 @@ static BOOL FTestLegacyRaceImport(APPSESSION &app) {
 
     if (!FLoadLibraryRace(app, 0, "Managed.r1")) return 0;
     plrSav = app.state.vplr;
-    CchSnprintf(szSource, sizeof(szSource), "%s%slegacy-source.r1", pszSettings, szDirSep);
-    CchSnprintf(szSnapshot, sizeof(szSnapshot), "%s.snapshot", szSource);
-    CchSnprintf(szCancelled, sizeof(szCancelled), "%s%sRace Designs%sLegacy-cancelled.r1", pszSettings, szDirSep, szDirSep);
+    CchSnprintf(std::span{szSource, sizeof(szSource)}, "%s%slegacy-source.r1", pszSettings, szDirSep);
+    CchSnprintf(std::span{szSnapshot, sizeof(szSnapshot)}, "%s.snapshot", szSource);
+    CchSnprintf(std::span{szCancelled, sizeof(szCancelled)}, "%s%sRace Designs%sLegacy-cancelled.r1", pszSettings, szDirSep, szDirSep);
     fTestLegacyRaceImport = 1;
     fAcceptLegacyRacePassword = 1;
     for (i = 0; i < 2; i++) {
@@ -1774,7 +1774,7 @@ static BOOL FTestLegacyRaceImport(APPSESSION &app) {
         cLegacyRacePasswords = 0;
         if (!FImportLibraryRaceAs(app, 0, szSource, rgszName[i]) || cLegacyRacePasswords != i ||
             !FTestFilesEqual(szSource, szSnapshot)) goto LDone;
-        CchSnprintf(szImported, sizeof(szImported), "%s%sRace Designs%s%s", pszSettings, szDirSep, szDirSep, rgszName[i]);
+        CchSnprintf(std::span{szImported, sizeof(szImported)}, "%s%sRace Designs%s%s", pszSettings, szDirSep, szDirSep, rgszName[i]);
         if (FWasRaceFile(app, szImported, 0) != 1 || VerMinor(app.state.wVersFile) != 85 ||
             strcmp(app.state.vplr.szName, "R\xc3\xa9") || strcmp(app.state.vplr.szNames, "R\xc3\xa9s") ||
             app.state.vplr.lSalt != (i == 0 ? 0 : LSaltFromSz(szNewPassword)) || cLegacyRacePasswords != i) goto LDone;
@@ -1855,14 +1855,14 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
         pszHostPlayerSource = PszCompatEnvironment("STARS_CLIENT_HOST_PLAYER_IMPORT_SOURCE");
         pszHostOrderBase = PszCompatEnvironment("STARS_CLIENT_HOST_ORDER_BASE");
         pszHostPickerBase = PszCompatEnvironment("STARS_CLIENT_HOST_ORDER_PICKER_BASE");
-        cchHostOrder = CchSnprintf(szHostManagedBase, sizeof(szHostManagedBase),
+        cchHostOrder = CchSnprintf(std::span{szHostManagedBase, sizeof(szHostManagedBase)},
                                    "%s%sGames%sHosted%sHosted", pszSettings, szDirSep, szDirSep, szDirSep);
         if (cchHostOrder <= 0 || (size_t)cchHostOrder >= sizeof(szHostManagedBase)) goto LDone;
         if (!pszHostOrderBase || !pszHostPickerBase ||
-            CchSnprintf(szHostOrderFile, sizeof(szHostOrderFile), "%s.x1", pszHostOrderBase) <= 0 ||
-            CchSnprintf(szHostOrderDifferent, sizeof(szHostOrderDifferent), "%s-different.x1", pszHostOrderBase) <= 0 ||
-            CchSnprintf(szHostPickerOrder, sizeof(szHostPickerOrder), "%s.x1", pszHostPickerBase) <= 0 ||
-            CchSnprintf(szHostManagedOrders, sizeof(szHostManagedOrders), "%s.x1", szHostManagedBase) <= 0) goto LDone;
+            CchSnprintf(std::span{szHostOrderFile, sizeof(szHostOrderFile)}, "%s.x1", pszHostOrderBase) <= 0 ||
+            CchSnprintf(std::span{szHostOrderDifferent, sizeof(szHostOrderDifferent)}, "%s-different.x1", pszHostOrderBase) <= 0 ||
+            CchSnprintf(std::span{szHostPickerOrder, sizeof(szHostPickerOrder)}, "%s.x1", pszHostPickerBase) <= 0 ||
+            CchSnprintf(std::span{szHostManagedOrders, sizeof(szHostManagedOrders)}, "%s.x1", szHostManagedBase) <= 0) goto LDone;
         if (iHostLibraryTestStage == 0) {
             if (!win32::IsWindowVisible(app.lpui->hwndTitle) || !win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_GAMES) ||
                 !win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_HOST_GAMES) ||
@@ -1903,10 +1903,10 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
             if (ui::SendMessage(win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_GAMES), win32::LB_GETCOUNT, 0, 0) != 0 ||
                 ui::SendMessage(win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_HOST_GAMES), win32::LB_GETCOUNT, 0, 0) != 1 ||
                 !(win32::GetWindowLongPtrA(win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_HOST_GAMES), win32::GWL_STYLE) & win32::WS_VISIBLE) ||
-                CchSnprintf(szHostSourceHost, sizeof(szHostSourceHost), "%s%sgame.hst", pszHostSource, szDirSep) <= 0 ||
-                CchSnprintf(szHostSourceUniverse, sizeof(szHostSourceUniverse), "%s%sgame.xy", pszHostSource, szDirSep) <= 0 ||
-                CchSnprintf(szHostManagedHost, sizeof(szHostManagedHost), "%s%sGames%sHosted%sHosted.hst", pszSettings, szDirSep, szDirSep, szDirSep) <= 0 ||
-                CchSnprintf(szHostManagedUniverse, sizeof(szHostManagedUniverse), "%s%sGames%sHosted%sHosted.xy", pszSettings, szDirSep, szDirSep, szDirSep) <= 0 ||
+                CchSnprintf(std::span{szHostSourceHost, sizeof(szHostSourceHost)}, "%s%sgame.hst", pszHostSource, szDirSep) <= 0 ||
+                CchSnprintf(std::span{szHostSourceUniverse, sizeof(szHostSourceUniverse)}, "%s%sgame.xy", pszHostSource, szDirSep) <= 0 ||
+                CchSnprintf(std::span{szHostManagedHost, sizeof(szHostManagedHost)}, "%s%sGames%sHosted%sHosted.hst", pszSettings, szDirSep, szDirSep, szDirSep) <= 0 ||
+                CchSnprintf(std::span{szHostManagedUniverse, sizeof(szHostManagedUniverse)}, "%s%sGames%sHosted%sHosted.xy", pszSettings, szDirSep, szDirSep, szDirSep) <= 0 ||
                 !FTestFilesEqual(szHostSourceHost, szHostManagedHost) ||
                 !FTestFilesEqual(szHostSourceUniverse, szHostManagedUniverse) ||
                 !pszHostPlayerSource) goto LDone;
@@ -1940,8 +1940,8 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
             hwndList = win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_HOST_GAMES);
             if (ui::SendMessage(hwndList, win32::LB_SELECTSTRING, (WPARAM)-1, (LPARAM)"Hosted") == win32::LB_ERR ||
                 !FExportSelectedLibraryGame(app, app.lpui->hwndTitle, pszSettings) ||
-                CchSnprintf(szExport, sizeof(szExport), "%s%sHosted%sHosted.hst", pszSettings, szDirSep, szDirSep) <= 0 ||
-                CchSnprintf(szHostSourceHost, sizeof(szHostSourceHost), "%s%sgame.hst", pszHostSource, szDirSep) <= 0 ||
+                CchSnprintf(std::span{szExport, sizeof(szExport)}, "%s%sHosted%sHosted.hst", pszSettings, szDirSep, szDirSep) <= 0 ||
+                CchSnprintf(std::span{szHostSourceHost, sizeof(szHostSourceHost)}, "%s%sgame.hst", pszHostSource, szDirSep) <= 0 ||
                 !FTestFilesEqual(szExport, szHostSourceHost)) {
                 fprintf(stderr, "Host export did not use the visible selection\n");
                 goto LDone;
@@ -2058,19 +2058,19 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
                 if (!hwndHostDialog->fDialog || hwndHostDialog->lpfnDlg != HostModeDialog) continue;
                 if (iHostLibraryTestStage == 7) {
                     if (
-                        (cchHostOrder = CchSnprintf(szSavedBase, sizeof(szSavedBase), "%s", app.state.szBase)) <= 0 ||
+                        (cchHostOrder = CchSnprintf(std::span{szSavedBase, sizeof(szSavedBase)}, "%s", app.state.szBase)) <= 0 ||
                         (size_t)cchHostOrder >= sizeof(szSavedBase) ||
-                        (cchHostOrder = CchSnprintf(app.state.szBase, sizeof(app.state.szBase), "%s", pszHostOrderBase)) <= 0 ||
+                        (cchHostOrder = CchSnprintf(std::span{app.state.szBase, sizeof(app.state.szBase)}, "%s", pszHostOrderBase)) <= 0 ||
                         (size_t)cchHostOrder >= sizeof(app.state.szBase)) { fprintf(stderr, "Host order paths invalid\n"); goto LDone; }
                     if (!FWriteLogFile(app, app.state.szBase, 0)) { fprintf(stderr, "Host FWriteLogFile failed: %s\n", SDL_GetError()); goto LDone; }
                     strcpy(app.state.szBase, szSavedBase);
-                    if (CchSnprintf(szHostOrderFile, sizeof(szHostOrderFile), "%s.x1", pszHostOrderBase) <= 0 ||
-                        CchSnprintf(szHostManagedOrders, sizeof(szHostManagedOrders), "%s.x1", szHostManagedBase) <= 0 ||
-                        CchSnprintf(szHostOrderIdentity, sizeof(szHostOrderIdentity), "%s.identity.x1", pszHostOrderBase) <= 0 ||
-                        CchSnprintf(szHostOrderPlayer, sizeof(szHostOrderPlayer), "%s.player.x1", pszHostOrderBase) <= 0 ||
-                        CchSnprintf(szHostOrderTurn, sizeof(szHostOrderTurn), "%s.turn.x1", pszHostOrderBase) <= 0 ||
-                        CchSnprintf(szHostOrderAbsentPlayer, sizeof(szHostOrderAbsentPlayer), "%s.absent.x16", pszHostOrderBase) <= 0 ||
-                        CchSnprintf(szHostOrderGeneration, sizeof(szHostOrderGeneration), "%s.generation.x1", pszHostOrderBase) <= 0 ||
+                    if (CchSnprintf(std::span{szHostOrderFile, sizeof(szHostOrderFile)}, "%s.x1", pszHostOrderBase) <= 0 ||
+                        CchSnprintf(std::span{szHostManagedOrders, sizeof(szHostManagedOrders)}, "%s.x1", szHostManagedBase) <= 0 ||
+                        CchSnprintf(std::span{szHostOrderIdentity, sizeof(szHostOrderIdentity)}, "%s.identity.x1", pszHostOrderBase) <= 0 ||
+                        CchSnprintf(std::span{szHostOrderPlayer, sizeof(szHostOrderPlayer)}, "%s.player.x1", pszHostOrderBase) <= 0 ||
+                        CchSnprintf(std::span{szHostOrderTurn, sizeof(szHostOrderTurn)}, "%s.turn.x1", pszHostOrderBase) <= 0 ||
+                        CchSnprintf(std::span{szHostOrderAbsentPlayer, sizeof(szHostOrderAbsentPlayer)}, "%s.absent.x16", pszHostOrderBase) <= 0 ||
+                        CchSnprintf(std::span{szHostOrderGeneration, sizeof(szHostOrderGeneration)}, "%s.generation.x1", pszHostOrderBase) <= 0 ||
                         !FCopyOrderWithByteChange(szHostOrderFile, szHostOrderIdentity, 6, 1) ||
                         !FCopyOrderWithByteChange(szHostOrderFile, szHostOrderPlayer, 14, 1) ||
                         !FCopyOrderWithByteChange(szHostOrderFile, szHostOrderAbsentPlayer, 14, 15) ||
@@ -2083,7 +2083,7 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
                     if (iFleetHostOrder == app.state.cFleet) { fprintf(stderr, "Host order fixture has no player fleet\n"); goto LDone; }
                     idHostOrderFleet = lpflHostOrder->id;
                     fHadFleetName = lpflHostOrder->lpszName != NULL;
-                    if (fHadFleetName) CchSnprintf(szFleetNameSav, sizeof(szFleetNameSav), "%s", lpflHostOrder->lpszName);
+                    if (fHadFleetName) CchSnprintf(std::span{szFleetNameSav, sizeof(szFleetNameSav)}, "%s", lpflHostOrder->lpszName);
                     LogChangeName(app, grobjFleet, lpflHostOrder->id, szReplacementOrder);
                     if (lpflHostOrder->lpszName) FreeLp(app, lpflHostOrder->lpszName, htString);
                     lpflHostOrder->lpszName = NULL;
@@ -2092,8 +2092,8 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
                         if (!lpflHostOrder->lpszName) goto LDone;
                         strcpy(lpflHostOrder->lpszName, szFleetNameSav);
                     }
-                    if (CchSnprintf(szHostOrderDifferent, sizeof(szHostOrderDifferent), "%s-different.x1", pszHostOrderBase) <= 0 ||
-                        CchSnprintf(app.state.szBase, sizeof(app.state.szBase), "%s-different", pszHostOrderBase) <= 0 ||
+                    if (CchSnprintf(std::span{szHostOrderDifferent, sizeof(szHostOrderDifferent)}, "%s-different.x1", pszHostOrderBase) <= 0 ||
+                        CchSnprintf(std::span{app.state.szBase, sizeof(app.state.szBase)}, "%s-different", pszHostOrderBase) <= 0 ||
                         !FWriteLogFile(app, app.state.szBase, 0)) { fprintf(stderr, "Host changed order write failed: %s\n", SDL_GetError()); goto LDone; }
                     strcpy(app.state.szBase, szSavedBase);
                     if (FImportLibraryOrders(app, app.lpui->hwndTitle, szHostOrderIdentity)) { fprintf(stderr, "Host order identity mismatch accepted\n"); goto LDone; }
@@ -2121,15 +2121,15 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
                     return;
                 }
                 if (iHostLibraryTestStage == 8) {
-                    CchSnprintf(szHostOrderFile, sizeof(szHostOrderFile), "%s.m1", szHostManagedBase);
+                    CchSnprintf(std::span{szHostOrderFile, sizeof(szHostOrderFile)}, "%s.m1", szHostManagedBase);
                     if (!FNativeFileSize(szHostOrderFile, &cbHostFile)) goto LDone;
-                    CchSnprintf(szHostOrderFile, sizeof(szHostOrderFile), "%s.x1", szHostManagedBase);
+                    CchSnprintf(std::span{szHostOrderFile, sizeof(szHostOrderFile)}, "%s.x1", szHostManagedBase);
                     lpflHostOrder = LpflFromId(app, idHostOrderFleet);
                     if (FNativeFileSize(szHostOrderFile, &cbHostFile) || !lpflHostOrder ||
                         !lpflHostOrder->lpszName || strcmp(lpflHostOrder->lpszName, "Replacement order")) goto LDone;
-                    if ((cchHostOrder = CchSnprintf(szSavedBase, sizeof(szSavedBase), "%s", app.state.szBase)) <= 0 ||
+                    if ((cchHostOrder = CchSnprintf(std::span{szSavedBase, sizeof(szSavedBase)}, "%s", app.state.szBase)) <= 0 ||
                         (size_t)cchHostOrder >= sizeof(szSavedBase) ||
-                        (cchHostOrder = CchSnprintf(app.state.szBase, sizeof(app.state.szBase), "%s", pszHostPickerBase)) <= 0 ||
+                        (cchHostOrder = CchSnprintf(std::span{app.state.szBase, sizeof(app.state.szBase)}, "%s", pszHostPickerBase)) <= 0 ||
                         (size_t)cchHostOrder >= sizeof(app.state.szBase) || !FWriteLogFile(app, app.state.szBase, 0)) goto LDone;
                     strcpy(app.state.szBase, szSavedBase);
                     iHostLibraryTestStage = 9;
@@ -2390,7 +2390,7 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
         if (iRaceLibraryTestStage == 3) {
             if (!win32::IsWindowVisible(app.lpui->hwndTitle)) return;
             if (!FLoadLibraryRace(app, app.lpui->hwndTitle, "Managed.r1")) goto LDone;
-            CchSnprintf(szManaged, sizeof(szManaged), "%s%sRace Designs%sManaged.r1", pszSettings, szDirSep, szDirSep);
+            CchSnprintf(std::span{szManaged, sizeof(szManaged)}, "%s%sRace Designs%sManaged.r1", pszSettings, szDirSep, szDirSep);
             if (!FTestCopyFile(szManaged, pszRaceSource) || !FTestCopyFile(pszRaceSource, pszRaceSnapshot)) goto LDone;
             if (!FSaveLibraryRace(app, app.lpui->hwndTitle, "Managed.r1.pending.r1", &app.state.vplr)) goto LDone;
             icksRaceSaveStage = IRaceChecksum(&app.state.vplr);
@@ -2482,19 +2482,19 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
                 !FLoadLibraryRace(app, app.lpui->hwndTitle, "Imported.r2.pending.r1") || IRaceChecksum(&app.state.vplr) != icksRaceImportStage) goto LDone;
             if (!FDuplicateLibraryRace(app, app.lpui->hwndTitle, "Managed.r1")) goto LDone;
             if (!FDuplicateLibraryRace(app, app.lpui->hwndTitle, "Managed.r2")) goto LDone;
-            CchSnprintf(szDuplicate, sizeof(szDuplicate), "%s%sRace Designs%sManaged.r2", pszSettings, szDirSep, szDirSep);
-            CchSnprintf(szManaged, sizeof(szManaged), "%s%sRace Designs%sManaged.r1", pszSettings, szDirSep, szDirSep);
-            CchSnprintf(szExport, sizeof(szExport), "%s%sRace Designs%smanaged-export.r1", pszSettings, szDirSep, szDirSep);
+            CchSnprintf(std::span{szDuplicate, sizeof(szDuplicate)}, "%s%sRace Designs%sManaged.r2", pszSettings, szDirSep, szDirSep);
+            CchSnprintf(std::span{szManaged, sizeof(szManaged)}, "%s%sRace Designs%sManaged.r1", pszSettings, szDirSep, szDirSep);
+            CchSnprintf(std::span{szExport, sizeof(szExport)}, "%s%sRace Designs%smanaged-export.r1", pszSettings, szDirSep, szDirSep);
             if (!FTestFilesEqual(szManaged, szDuplicate)) goto LDone;
-            CchSnprintf(szDuplicate, sizeof(szDuplicate), "%s%sRace Designs%sManaged.r3", pszSettings, szDirSep, szDirSep);
+            CchSnprintf(std::span{szDuplicate, sizeof(szDuplicate)}, "%s%sRace Designs%sManaged.r3", pszSettings, szDirSep, szDirSep);
             if (!FTestFilesEqual(szManaged, szDuplicate)) goto LDone;
             if (!FExportLibraryRace(app, app.lpui->hwndTitle, "Managed.r1", szExport) ||
                 !FLoadLibraryRace(app, app.lpui->hwndTitle, "Managed.r1") || !FLoadLibraryRace(app, app.lpui->hwndTitle, "managed-export.r1")) goto LDone;
             if (!FTestFilesEqual(szManaged, szExport)) goto LDone;
-            CchSnprintf(szExport, sizeof(szExport), "%s%sRace Designs%smanaged-export-failure.r1", pszSettings, szDirSep, szDirSep);
-            CchSnprintf(szExportSnapshot, sizeof(szExportSnapshot), "%s%sRace Designs%smanaged-export-failure.snapshot", pszSettings, szDirSep, szDirSep);
+            CchSnprintf(std::span{szExport, sizeof(szExport)}, "%s%sRace Designs%smanaged-export-failure.r1", pszSettings, szDirSep, szDirSep);
+            CchSnprintf(std::span{szExportSnapshot, sizeof(szExportSnapshot)}, "%s%sRace Designs%smanaged-export-failure.snapshot", pszSettings, szDirSep, szDirSep);
             if (!FTestWriteFile(szExport, "preserve prior export") || !FTestCopyFile(szExport, szExportSnapshot)) goto LDone;
-            CchSnprintf(szRaceExportFailTarget, sizeof(szRaceExportFailTarget), "%s", szExport);
+            CchSnprintf(std::span{szRaceExportFailTarget, sizeof(szRaceExportFailTarget)}, "%s", szExport);
             fFailRaceExportReplace = 1;
             fExpectRaceExportFailureAlert = 1;
             if (FExportLibraryRace(app, app.lpui->hwndTitle, "Managed.r1", szExport)) {
@@ -2503,8 +2503,8 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
             }
             fExpectRaceExportFailureAlert = 0;
             if (fFailRaceExportReplace || !FTestFilesEqual(szExport, szExportSnapshot)) goto LDone;
-            CchSnprintf(szDuplicate, sizeof(szDuplicate), "%s%sRace Designs%sManaged.r2", pszSettings, szDirSep, szDirSep);
-            CchSnprintf(szExport, sizeof(szExport), "%s%sRace Designs%sManaged.r3", pszSettings, szDirSep, szDirSep);
+            CchSnprintf(std::span{szDuplicate, sizeof(szDuplicate)}, "%s%sRace Designs%sManaged.r2", pszSettings, szDirSep, szDirSep);
+            CchSnprintf(std::span{szExport, sizeof(szExport)}, "%s%sRace Designs%sManaged.r3", pszSettings, szDirSep, szDirSep);
             if (FDeleteLibraryRace(app, app.lpui->hwndTitle, "Managed.r2") || !FNativeFileSize(szDuplicate, &cbTestFile) ||
                 !FNativeFileSize(szExport, &cbTestFile) || !FNativeFileSize(szManaged, &cbTestFile)) goto LDone;
             if (FDeleteLibraryRace(app, app.lpui->hwndTitle, "Managed.r3") || !FNativeFileSize(szExport, &cbTestFile) ||
@@ -2577,10 +2577,10 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
         if (!win32::IsWindowVisible(app.lpui->hwndTitle) || !pszRoot || !pszSource || !pszCopy || !pszRename || !pszCollision || !pszBaseline ||
             (!fDuplicate && !fRename) ||
             !win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_DUPLICATE) || !win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_RENAME) ||
-            CchSnprintf(szSource, sizeof(szSource), "%s%sGames%s%s", pszRoot, szDirSep, szDirSep, pszSource) <= 0 ||
-            CchSnprintf(szCopy, sizeof(szCopy), "%s%sGames%s%s", pszRoot, szDirSep, szDirSep, pszCopy) <= 0 ||
-            CchSnprintf(szRenamed, sizeof(szRenamed), "%s%sGames%s%s", pszRoot, szDirSep, szDirSep, pszRename) <= 0 ||
-            CchSnprintf(szBaseline, sizeof(szBaseline), "%s%sGames%s%s", pszRoot, szDirSep, szDirSep, pszBaseline) <= 0) goto LDone;
+            CchSnprintf(std::span{szSource, sizeof(szSource)}, "%s%sGames%s%s", pszRoot, szDirSep, szDirSep, pszSource) <= 0 ||
+            CchSnprintf(std::span{szCopy, sizeof(szCopy)}, "%s%sGames%s%s", pszRoot, szDirSep, szDirSep, pszCopy) <= 0 ||
+            CchSnprintf(std::span{szRenamed, sizeof(szRenamed)}, "%s%sGames%s%s", pszRoot, szDirSep, szDirSep, pszRename) <= 0 ||
+            CchSnprintf(std::span{szBaseline, sizeof(szBaseline)}, "%s%sGames%s%s", pszRoot, szDirSep, szDirSep, pszBaseline) <= 0) goto LDone;
         if (PszCompatEnvironment("STARS_CLIENT_GAME_REJECT")) {
             fExpectGameRenameFailure = 1;
             fImported = fDuplicate ? FDuplicateLibraryGame(app, app.lpui->hwndTitle, pszSource, pszCopy) :
@@ -2598,22 +2598,22 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
         }
         if (fDuplicate && !FDuplicateLibraryGame(app, app.lpui->hwndTitle, pszSource, pszCopy)) goto LDone;
         if (fDuplicate) {
-            CchSnprintf(szPath, sizeof(szPath), "%s%s%s.xy", szSource, szDirSep, pszSource);
+            CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s.xy", szSource, szDirSep, pszSource);
             {
                 char szOther[512];
-                CchSnprintf(szOther, sizeof(szOther), "%s%s%s.xy", szCopy, szDirSep, pszCopy);
+                CchSnprintf(std::span{szOther, sizeof(szOther)}, "%s%s%s.xy", szCopy, szDirSep, pszCopy);
                 if (!FTestFilesEqual(szPath, szOther)) { fprintf(stderr, "duplicate XY mismatch\n"); goto LDone; }
             }
-            CchSnprintf(szPath, sizeof(szPath), "%s%s%s.m1", szSource, szDirSep, pszSource);
+            CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s.m1", szSource, szDirSep, pszSource);
             {
                 char szOther[512];
-                CchSnprintf(szOther, sizeof(szOther), "%s%s%s.m1", szCopy, szDirSep, pszCopy);
+                CchSnprintf(std::span{szOther, sizeof(szOther)}, "%s%s%s.m1", szCopy, szDirSep, pszCopy);
                 if (!FTestFilesEqual(szPath, szOther)) { fprintf(stderr, "duplicate M1 mismatch\n"); goto LDone; }
             }
             {
                 char szOther[512];
-                CchSnprintf(szPath, sizeof(szPath), "%s%sbackup.000%s%s.m1", szSource, szDirSep, szDirSep, pszSource);
-                CchSnprintf(szOther, sizeof(szOther), "%s%sbackup.000%s%s.m1", szCopy, szDirSep, szDirSep, pszCopy);
+                CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%sbackup.000%s%s.m1", szSource, szDirSep, szDirSep, pszSource);
+                CchSnprintf(std::span{szOther, sizeof(szOther)}, "%s%sbackup.000%s%s.m1", szCopy, szDirSep, szDirSep, pszCopy);
                 if (!FTestFilesEqual(szPath, szOther)) { fprintf(stderr, "duplicate backup mismatch\n"); goto LDone; }
             }
             if (FDuplicateLibraryGame(app, app.lpui->hwndTitle, pszSource, "CON") ||
@@ -2630,8 +2630,8 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
         if (fDuplicate && FRenameLibraryGame(app, app.lpui->hwndTitle, pszCopy, pszSource)) {
             fprintf(stderr, "rename over source accepted\n"); goto LDone;
         }
-        CchSnprintf(szPath, sizeof(szPath), "%s%s.library", szCopy, szDirSep);
-        if (fRename) CchSnprintf(szPath, sizeof(szPath), "%s%s.library", szSource, szDirSep);
+        CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s.library", szCopy, szDirSep);
+        if (fRename) CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s.library", szSource, szDirSep);
         iVersion = 0; iplr = 0; lPlayed = -1;
         if (!FTestReadLibraryMetadata(szPath, &iVersion, szMetadataName, sizeof(szMetadataName),
                                       &iplr, &lPlayed, szExchangeName, sizeof(szExchangeName))) {
@@ -2647,7 +2647,7 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
             win32::PostQuitMessage(0);
             return;
         }
-        CchSnprintf(szGameRenameFailTarget, sizeof(szGameRenameFailTarget), "%s", szRenamed);
+        CchSnprintf(std::span{szGameRenameFailTarget, sizeof(szGameRenameFailTarget)}, "%s", szRenamed);
         fFailGameRenamePublish = 1;
         fExpectGameRenameFailure = 1;
         if (FRenameLibraryGame(app, app.lpui->hwndTitle, pszSource, pszRename) || fFailGameRenamePublish) {
@@ -2656,28 +2656,28 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
             goto LDone;
         }
         fExpectGameRenameFailure = 0;
-        CchSnprintf(szPath, sizeof(szPath), "%s%s%s.xy", szSource, szDirSep, pszSource);
+        CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s.xy", szSource, szDirSep, pszSource);
         if (!FNativeFileSize(szPath, &cbTestFile) || FNativeDirectoryExists(szRenamed)) goto LDone;
         if (!FRenameLibraryGame(app, app.lpui->hwndTitle, pszSource, pszRename)) { fprintf(stderr, "rename failed\n"); goto LDone; }
-        CchSnprintf(szPath, sizeof(szPath), "%s%s%s.xy", szRenamed, szDirSep, pszRename);
+        CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s.xy", szRenamed, szDirSep, pszRename);
         {
             char szOther[512];
-            CchSnprintf(szOther, sizeof(szOther), "%s%s%s.xy", szBaseline, szDirSep, pszBaseline);
+            CchSnprintf(std::span{szOther, sizeof(szOther)}, "%s%s%s.xy", szBaseline, szDirSep, pszBaseline);
             if (!FTestFilesEqual(szPath, szOther)) { fprintf(stderr, "renamed XY mismatch\n"); goto LDone; }
         }
-        CchSnprintf(szPath, sizeof(szPath), "%s%s%s.m1", szRenamed, szDirSep, pszRename);
+        CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s.m1", szRenamed, szDirSep, pszRename);
         {
             char szOther[512];
-            CchSnprintf(szOther, sizeof(szOther), "%s%s%s.m1", szBaseline, szDirSep, pszBaseline);
+            CchSnprintf(std::span{szOther, sizeof(szOther)}, "%s%s%s.m1", szBaseline, szDirSep, pszBaseline);
             if (!FTestFilesEqual(szPath, szOther)) { fprintf(stderr, "renamed M1 mismatch\n"); goto LDone; }
         }
         {
             char szOther[512];
-            CchSnprintf(szPath, sizeof(szPath), "%s%sbackup.000%s%s.m1", szRenamed, szDirSep, szDirSep, pszRename);
-            CchSnprintf(szOther, sizeof(szOther), "%s%sbackup.000%s%s.m1", szBaseline, szDirSep, szDirSep, pszBaseline);
+            CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%sbackup.000%s%s.m1", szRenamed, szDirSep, szDirSep, pszRename);
+            CchSnprintf(std::span{szOther, sizeof(szOther)}, "%s%sbackup.000%s%s.m1", szBaseline, szDirSep, szDirSep, pszBaseline);
             if (!FTestFilesEqual(szPath, szOther)) { fprintf(stderr, "renamed backup mismatch\n"); goto LDone; }
         }
-        CchSnprintf(szPath, sizeof(szPath), "%s%s.library", szRenamed, szDirSep);
+        CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s.library", szRenamed, szDirSep);
         iVersion = 0; iplr = 0; lPlayed = -1;
         if (!FTestReadLibraryMetadata(szPath, &iVersion, szMetadataName, sizeof(szMetadataName),
                                       &iplr, &lPlayed, szExchangeName, sizeof(szExchangeName))) {
@@ -2685,7 +2685,7 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
         }
         if (iVersion != 2 || strcmp(szMetadataName, pszRename) || iplr != 1 || lPlayed != 123456 ||
             strcmp(szExchangeName, pszBaseline)) { fprintf(stderr, "renamed metadata mismatch %d %s\n", iVersion, szMetadataName); goto LDone; }
-        CchSnprintf(szPath, sizeof(szPath), "%s%sexchange.map", szRenamed, szDirSep);
+        CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%sexchange.map", szRenamed, szDirSep);
         if (!FNativeFileSize(szPath, &cbTestFile)) { fprintf(stderr, "renamed sidecar missing %s\n", szPath); goto LDone; }
         fChecked = 1;
         fPassed = 1;
@@ -3109,12 +3109,12 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
         if (strcmp(szContinue, PszGetCompressedString(app, idsContinueGame))) goto LDone;
         win32::GetDlgItemTextA(app.lpui->hwndTitle, IDC_LIBRARY_CONTINUE_DETAILS, szContinue, sizeof(szContinue));
         if (pszGame ? !strstr(szContinue, pszGame) : !strstr(szContinue, "Continue: managed-copy")) goto LDone;
-        CchSnprintf(szPlayer, sizeof(szPlayer), "Player %s",
+        CchSnprintf(std::span{szPlayer, sizeof(szPlayer)}, "Player %s",
                     PszCompatEnvironment("STARS_CLIENT_EXPECT_PLAYER") ? PszCompatEnvironment("STARS_CLIENT_EXPECT_PLAYER") : "2");
         if (!strstr(szContinue, szPlayer)) goto LDone;
         if (pszYear) {
             char szYear[32];
-            CchSnprintf(szYear, sizeof(szYear), "(%s)", pszYear);
+            CchSnprintf(std::span{szYear, sizeof(szYear)}, "(%s)", pszYear);
             if (!strstr(szContinue, szYear)) goto LDone;
         }
     }
@@ -3218,7 +3218,7 @@ int main(void) {
     io.pfnRemove = IRemoveClientFile; io.pfnRename = IRenameClientFile;
     NATIVEPUBLISHIOSCOPE publicationScope(io);
     if (PszCompatEnvironment("STARS_CLIENT_STARTUP_SOURCE"))
-        CchSnprintf(szCommand, sizeof(szCommand), "%s", PszCompatEnvironment("STARS_CLIENT_STARTUP_SOURCE"));
+        CchSnprintf(std::span{szCommand, sizeof(szCommand)}, "%s", PszCompatEnvironment("STARS_CLIENT_STARTUP_SOURCE"));
     pszNewGame = PszCompatEnvironment("STARS_CLIENT_NEW_GAME");
     pszContinue = PszCompatEnvironment("STARS_CLIENT_CONTINUE");
     pszImportSource = PszCompatEnvironment("STARS_CLIENT_IMPORT_SOURCE");

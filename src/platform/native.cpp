@@ -199,14 +199,7 @@ std::int16_t FSzPrefixNoCase(const char *sz1, const char *sz2, std::int16_t cch)
 #endif
 std::int64_t LNativeTime(void) { return static_cast<std::int64_t>(std::time(nullptr)); }
 
-int CchSnprintf(char *psz, std::size_t cb, const char *pszFormat, ...) {
-    std::va_list args;
-    int cch;
-    va_start(args, pszFormat);
-    cch = std::vsnprintf(psz, cb, pszFormat, args);
-    va_end(args);
-    return cch;
-}
+
 
 // Legacy entrypoints retain their small handles and test-adapter symbols;
 // resource ownership, binary streams and native exceptions live in fileio.cpp.

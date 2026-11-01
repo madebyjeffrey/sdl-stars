@@ -175,6 +175,13 @@ detail in [WIN16-PARITY.md](WIN16-PARITY.md).
   retain complete UTF-8 code points when truncating. `LMulDiv` rounds like
   Win32 `MulDiv`. Every format in
   the string table formats the same through both.
+  `CchSnprintf` takes an actual destination span and typed C++ values, including
+  packed scalar fields. `nativeformat.cpp` validates the value list and uses
+  the CRT for each conversion, retaining native widths, byte counts, locale,
+  rounding and count destinations. Missing or incompatible values fail with
+  `EINVAL`; extra values remain ignored. Publication fault providers use the
+  same typed value span. The private CRT calls remain the foreign formatting
+  boundary; no C varargs pass through this application interface.
 - **Platforms:** the game code (`common.h`) builds without Windows headers;
   `stars-host` links it alone. Both host and client use binary64 `double`,
   with contraction and fast-math disabled. The migration's intentional turn

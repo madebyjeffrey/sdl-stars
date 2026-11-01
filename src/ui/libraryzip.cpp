@@ -114,7 +114,7 @@ static std::int16_t FCollectZipFiles(APPSESSION &app, void *lpData, const char *
         SDL_free(zfChild.rgpsz);
     });
     if (!std::strcmp(pszName, ".") || !std::strcmp(pszName, "..")) return 1;
-    if (CchSnprintf(szPath, sizeof(szPath), "%s%s%s", pz->pszRoot, szDirSep, pszName) <= 0 ||
+    if (CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", pz->pszRoot, szDirSep, pszName) <= 0 ||
         !FNativePathInfo(szPath, &fDir, &fLink) || fLink) { pz->fBad = 1; return 0; }
     if (fDir) {
         /* Game export stages contain only regular files and backup directories. */
@@ -125,7 +125,7 @@ static std::int16_t FCollectZipFiles(APPSESSION &app, void *lpData, const char *
             NATIVEOWNER<char, SDL_free> relative(static_cast<char *>(SDL_malloc(cbName)));
             pszRelative = relative.get();
             if (!pszRelative) { pz->fBad = 1; break; }
-            CchSnprintf(pszRelative, cbName, "%s/%s", pszName, zfChild.rgpsz[i]);
+            CchSnprintf(std::span{pszRelative, cbName}, "%s/%s", pszName, zfChild.rgpsz[i]);
             if (!FZipEnsureCapacity(pz)) break;
             pz->rgpsz[pz->c++] = relative.release();
         }
@@ -149,7 +149,7 @@ static std::int16_t FWriteZipEntry(NATIVEFILE *pfZip, const char *pszRoot, ZIPEN
         if (pf) ICloseNativeFile(pf);
         SDL_free(rgbData);
     });
-    if (CchSnprintf(szPath, sizeof(szPath), "%s%s%s", pszRoot, szDirSep, pze->pszName) <= 0 ||
+    if (CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", pszRoot, szDirSep, pze->pszName) <= 0 ||
         !FNativeFileSize(szPath, &cb) || cb < 0 || cb > UINT32_MAX || cbName > UINT16_MAX ||
         static_cast<std::uint64_t>(LNativePosition(pfZip)) > UINT32_MAX) return 0;
     pf = PfOpenNativeFile(szPath, "rb");
@@ -191,7 +191,7 @@ std::int16_t FZipLibraryDirectory(APPSESSION &app, const char *pszDirectory, con
     zf.pszRoot = pszDirectory;
     if (!FNativeEnumerateDirectory(app, pszDirectory, FCollectZipFiles, &zf) || zf.fBad || zf.c > UINT16_MAX) goto done;
     for (i = 0; i < 1000; i++) {
-        cchTemp = CchSnprintf(szTemp, sizeof(szTemp), "%s.tmp.%u", pszArchive, idZipTemp++);
+        cchTemp = CchSnprintf(std::span{szTemp, sizeof(szTemp)}, "%s.tmp.%u", pszArchive, idZipTemp++);
         if (cchTemp <= 0 || static_cast<std::size_t>(cchTemp) >= sizeof(szTemp)) goto done;
         pf = PfOpenNativeFile(szTemp, "wbx");
         if (pf) break;
@@ -233,7 +233,7 @@ static std::int16_t FZipMakeParents(const char *pszRoot, const char *pszName, ch
     char szPath[512], ch;
     int cch;
     std::size_t i, cchBase = std::strlen(pszRoot) + std::strlen(szDirSep);
-    cch = CchSnprintf(szFile, cbFile, "%s%s%s", pszRoot, szDirSep, pszName);
+    cch = CchSnprintf(std::span{szFile, cbFile}, "%s%s%s", pszRoot, szDirSep, pszName);
     if (cch <= 0 || static_cast<std::size_t>(cch) >= cbFile || static_cast<std::size_t>(cch) >= sizeof(szPath)) return 0;
     std::strcpy(szPath, szFile);
     for (i = cchBase; i < static_cast<std::size_t>(cch); i++) if (szPath[i] == '/' || szPath[i] == '\\') {
@@ -315,7 +315,7 @@ std::int16_t FUnzipLibraryArchive(const char *pszArchive, const char *pszDirecto
         SDL_free(rgbLocalName); rgbLocalName = nullptr;
         if (szName[zc.wNameLength - 1] == '/') {
             szName[zc.wNameLength - 1] = 0;
-            if (!FZipSafeName(szName) || CchSnprintf(szDirectoryEntry, sizeof(szDirectoryEntry), "%s/.zip-dir-entry", szName) <= 0 ||
+            if (!FZipSafeName(szName) || CchSnprintf(std::span{szDirectoryEntry, sizeof(szDirectoryEntry)}, "%s/.zip-dir-entry", szName) <= 0 ||
                 !FZipMakeParents(pszDirectory, szDirectoryEntry, szOutput, sizeof(szOutput)) ||
                 ISeekNativeFile(pf, lNext, SEEK_SET) != 0) goto done;
             continue;

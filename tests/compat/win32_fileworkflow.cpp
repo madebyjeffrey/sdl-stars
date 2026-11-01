@@ -142,18 +142,18 @@ static void  FileWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
     CHECK(app.state.szRaceFile[sizeof(app.state.szRaceFile) - 1] == 0 &&
           strncmp(app.state.szRaceFile, PszWorkflowFilename(pszRace), strlen(app.state.szRaceFile)) == 0);
     CHECK(FWasRaceFile(app, (char *)pszRace, 0) > 0);
-    CHECK(CchSnprintf(szRaceOriginal, sizeof(szRaceOriginal), "%s.before-import", pszRace) > 0 &&
+    CHECK(CchSnprintf(std::span{szRaceOriginal, sizeof(szRaceOriginal)}, "%s.before-import", pszRace) > 0 &&
           FCopyFile(pszRace, szRaceOriginal));
     CHECK(FOpenGame(app, app.lpui->hwndTitle, 1) > 0 && app.state.szRaceFile[sizeof(app.state.szRaceFile) - 1] == 0);
-    CHECK(CchSnprintf(szImportedRace, sizeof(szImportedRace), "%s%sRace Designs%srace-long-ΩΩΩΩ-native-filename.r1",
+    CHECK(CchSnprintf(std::span{szImportedRace, sizeof(szImportedRace)}, "%s%sRace Designs%srace-long-ΩΩΩΩ-native-filename.r1",
                       PszCompatEnvironment("STARS_SETTINGS_DIR"), szDirSep, szDirSep) > 0);
     CHECK(FWasRaceFile(app, szImportedRace, 0) > 0 && FEqualFiles(pszRace, szImportedRace) &&
           FEqualFiles(pszRace, szRaceOriginal));
     CHECK(FSaveRace(app, app.state.szRaceFile, &plrSav) && FWasRaceFile(app, (char *)pszRaceRepeat, 0) > 0);
     CHECK(IRaceChecksum(&app.state.vplr) == IRaceChecksum(&plrSav));
     CHECK(FSaveLibraryRace(app, app.lpui->hwndTitle, "Managed.r1", &plrSav));
-    CHECK(CchSnprintf(szRaceLibrary, sizeof(szRaceLibrary), "%s%sRace Designs", PszCompatEnvironment("STARS_SETTINGS_DIR"), szDirSep) > 0);
-    CHECK(CchSnprintf(szManagedRace, sizeof(szManagedRace), "%s%sManaged.r1", szRaceLibrary, szDirSep) > 0);
+    CHECK(CchSnprintf(std::span{szRaceLibrary, sizeof(szRaceLibrary)}, "%s%sRace Designs", PszCompatEnvironment("STARS_SETTINGS_DIR"), szDirSep) > 0);
+    CHECK(CchSnprintf(std::span{szManagedRace, sizeof(szManagedRace)}, "%s%sManaged.r1", szRaceLibrary, szDirSep) > 0);
     CHECK(FWasRaceFile(app, szManagedRace, 0) > 0);
     CHECK(FNativeFileSize(szManagedRace, &cbRaceLibrary) && cbRaceLibrary > 0);
     strcpy(app.state.szPassLast, "managed-pass");
@@ -167,7 +167,7 @@ static void  FileWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
     CHECK(!FSaveLibraryRace(app, app.lpui->hwndTitle, "bad/name.r1", &plrManaged));
     CHECK(FWasRaceFile(app, szManagedRace, 0) > 0 && app.state.vplr.lSalt == app.state.lSaltLast);
     CHECK(FImportLibraryRaceAs(app, app.lpui->hwndTitle, pszRace, "Imported.r2"));
-    CHECK(CchSnprintf(szManagedRace, sizeof(szManagedRace), "%s%sImported.r2", szRaceLibrary, szDirSep) > 0);
+    CHECK(CchSnprintf(std::span{szManagedRace, sizeof(szManagedRace)}, "%s%sImported.r2", szRaceLibrary, szDirSep) > 0);
     CHECK(FNativeFileSize(szManagedRace, &cbRaceLibrary) && cbRaceLibrary > 0 && FEqualFiles(pszRace, szManagedRace));
     CHECK(!FImportLibraryRaceAs(app, app.lpui->hwndTitle, pszRace, "imported.R2"));
     CHECK(FNativeFileSize(szManagedRace, &cbRaceLibrary) && cbRaceLibrary > 0);

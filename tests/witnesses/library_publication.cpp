@@ -1,4 +1,3 @@
-#include <cstdarg>
 #include "appstate.h"
 #ifdef STARS_UI_SDL
 #include "uistate.h"
@@ -82,26 +81,23 @@ static void TestAlertSz(APPSESSION &, const char *s, int flags) {
     clear();
     printf("[\"notice\",%d],", atoi(s));
 }
-static int TestCchSnprintf(char *out, size_t cap, const char *format, ...) {
-    va_list args;
-    va_start(args, format);
-    int result = vsnprintf(out, cap, format, args);
-    va_end(args);
+static int TestCchSnprintf(std::span<char> out, std::string_view format, std::span<const NATIVEFORMATARG> args) {
+    int result = CchFormatNative(out, format, args);
     int tag = 0;
-    if (!strcmp(format, "%s%s%s%s%s.x%d"))
+    if (format == "%s%s%s%s%s.x%d")
         tag = 1;
-    else if (!strcmp(format, "%s.importing.%u"))
+    else if (format == "%s.importing.%u")
         tag = 2;
-    else if (!strcmp(format, "%s.previous.%u"))
+    else if (format == "%s.previous.%u")
         tag = 3;
-    else if (!strcmp(format, "%s%s%s"))
-        tag = (profile == 3 && FSamePath(out, "root/Copy")) ? 5 : 4;
+    else if (format == "%s%s%s")
+        tag = (profile == 3 && FSamePath(out.data(), "root/Copy")) ? 5 : 4;
     // New-family stage formatting is unchecked in the source and is not a guard.
     if (tag) {
         int ok = decision();
         event("format", tag, 0, ok, 0);
         if (!ok)
-            return (int)cap;
+            return static_cast<int>(out.size());
     }
     return result;
 }
