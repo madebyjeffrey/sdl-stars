@@ -144,6 +144,44 @@ static void TestNativeOpenModes(void) {
     CloseFile(hfFile);
     TEST_CHECK(RemoveNativeFile(szFile) == 0);
 }
+static void TestOutputFileStringSizes(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    char szDir[cbTestPath], szFile[cbTestPath + 64];
+
+    TEST_ASSERT(FStarsTestInit(app));
+    TEST_ASSERT(FStarsTestDir("native-text-length", szDir, sizeof(szDir)));
+    CchSnprintf(std::span{szFile}, "%s%stext.dat", szDir, szDirSep);
+    for (std::size_t cch : {0u, 1u, 65535u, 65536u, 65537u, 131073u}) {
+        const std::string sz(cch, 'a');
+        OutputFileString(szFile, sz);
+        TEST_CHECK(FNativeFileSize(szFile) == cch);
+        OutputFileString(szFile, "tail");
+        NATIVEFILEOWNER lpfile(PfNativeOpen(szFile, NATIVEFILEMODE::read), ICloseNativeFile);
+        TEST_ASSERT(lpfile);
+        std::string rgb(cch + 4, '\0');
+        TEST_CHECK(CbReadNativeFile(lpfile.get(), std::as_writable_bytes(std::span{rgb})) == rgb.size());
+        TEST_CHECK(rgb == sz + "tail");
+        lpfile.reset();
+        TEST_CHECK(RemoveNativeFile(szFile) == 0);
+    }
+    // The slice is not NUL-terminated; the adjacent guard must not be written.
+    const char szSlice[] = {'x', '\xce', '\xa9', '!'};
+    OutputFileString(szFile, std::string_view{szSlice, 3});
+    OutputFileString(szFile, std::string_view{});
+    NATIVEFILEOWNER lpfile(PfNativeOpen(szFile, NATIVEFILEMODE::read), ICloseNativeFile);
+    TEST_ASSERT(lpfile);
+    std::array<char, 4> rgb{};
+    TEST_CHECK(FNativeFileSize(szFile) == 3);
+    TEST_CHECK(CbReadNativeFile(lpfile.get(), std::as_writable_bytes(std::span{rgb})) == 3);
+    TEST_CHECK(std::string_view(rgb.data(), 3) == std::string_view(szSlice, 3));
+    lpfile.reset();
+    TEST_CHECK(RemoveNativeFile(szFile) == 0);
+}
 static void TestNativeEmptyWrites(void) {
 #ifdef STARS_UI_SDL
     APPSESSION &app = ui::app;
@@ -177,4 +215,4 @@ static void TestNativeEmptyWrites(void) {
         TEST_CHECK(RemoveNativeFile(szFile) == 0);
     }
 }
-TEST_LIST = {{"native empty writes retain platform truncation semantics", TestNativeEmptyWrites}, {"native token read/update/create/append policies", TestNativeOpenModes}, {"native Unicode paths, backups and long Windows paths", TestNativeFiles}, {NULL, NULL}};
+TEST_LIST = {{"text append preserves full byte lengths", TestOutputFileStringSizes}, {"native empty writes retain platform truncation semantics", TestNativeEmptyWrites}, {"native token read/update/create/append policies", TestNativeOpenModes}, {"native Unicode paths, backups and long Windows paths", TestNativeFiles}, {NULL, NULL}};

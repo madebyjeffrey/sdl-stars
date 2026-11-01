@@ -27,7 +27,8 @@ std::int32_t LGetNextFileXor(APPSESSION &app);
 void    XorFileBuf(APPSESSION &app, char *rgb, std::int16_t cb);
 int     ICompLong(APPSESSION &app, std::int32_t *pl1, std::int32_t *pl2);
 char   *PszGetCompressedPlanet(APPSESSION &app, std::int16_t id);
-void    OutputFileString(const char *szFile, const char *sz);
+// Append exactly the supplied text bytes; no terminator is written.
+void    OutputFileString(const char *szFile, std::string_view sz);
 void    StarsCopyFile(APPSESSION &app, const char *szSrc, const char *szDst);
 std::int16_t AlertSz(APPSESSION &app, const char *sz, std::int16_t mbType);
 std::int16_t CchGetString(APPSESSION &app, StringId ids, std::span<char> psz);

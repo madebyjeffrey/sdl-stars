@@ -234,7 +234,7 @@ char *PszGetCompressedPlanet(APPSESSION &app, std::int16_t id) {
     return app.state.szLastGet;
 }
 
-void OutputFileString(const char *szFile, const char *sz) {
+void OutputFileString(const char *szFile, std::string_view sz) {
     NATIVEFILEOPENOPTIONS w;
     std::int16_t  hf;
 
@@ -245,7 +245,7 @@ void OutputFileString(const char *szFile, const char *sz) {
     hf = HfOpenFile(szFile, w).hf;
     if (hf != -1) {
         LSeekFile(hf, 0, NATIVESEEKORIGIN::end);
-        CbWriteFile(hf, std::as_bytes(std::span{sz, static_cast<std::uint16_t>(std::strlen(sz))}));
+        CbWriteFile(hf, std::as_bytes(std::span{sz.data(), sz.size()}));
         CloseFile(hf);
     }
     return;

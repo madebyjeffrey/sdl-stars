@@ -443,6 +443,11 @@
         "status": "complete; verified under L06k",
         "evidence": "docs/CPP-LIVE-FILE-SERVICES.json",
         "interfaces": "Readonly UTF-8 template views, owned temporary candidates/streams and owned profile-template construction replace mutable path outputs and raw path slots."
+      },
+      "file_text_writer": {
+        "status": "complete; verified",
+        "evidence": "docs/CPP-LIVE-FILE-SERVICES.json",
+        "interface": "Readonly sized view reaches the write service without strlen or 16-bit count narrowing."
       }
     },
     {
@@ -464,7 +469,8 @@
         "returned-native-metadata-size-path-kind-and-identity-values",
         "owned-canonical-cwd-uri-results-and-bounded-path-spans",
         "owned-binary-line-directory-results-and-bounded-line-spans",
-        "readonly-temporary-requests-and-owned-path-stream-results"
+        "readonly-temporary-requests-and-owned-path-stream-results",
+        "sized-text-writer-and-full-width-byte-counts"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -640,6 +646,20 @@
           "baseline": "Behavior-neutral for game behavior and valid IO. Exclusive creation, permissions/sharing, retry limits, system RNG use, candidate substitution length, POSIX unlink/Windows delete-on-close, template/path limits and publication stages retained. No saved layout/handle width, native/frozen-original baseline, unit golden, wire byte, game RNG or canonical model changed; no scenario/checkpoint moved and no regression export required.",
           "remaining": "Other buffer/service interfaces, memory-source/batch audits, the text-writer boundary and Milestone D remain active. L05 text cleanup and L08 final qualification remain open.",
           "receipts": "dist/verification/live-cpp/l06k/"
+        },
+        {
+          "batch": "L06l sized text append and full-width byte counts",
+          "debug_build": "Pass; no warnings; 158 owned sources, 159 compiled variants and 161 standalone headers in both orders pass the compiler/source policy.",
+          "desktop": "153/153, including text append create/readback/large lengths, existing open policies, all 29 leak checks and available SDL tutorial checkpoints.",
+          "host_units": "28/28",
+          "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+          "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+          "windows": "147/147 strict production translation units plus the changed actual native-file test compile with MinGW. All four native-file test cases, including the new text writer, pass under Wine. Native Windows desktop and actual Linux final qualification remain pending.",
+          "characterization": "The parent implementation fails nine real-file assertions at lengths 65536, 65537 and 131073; existing lengths 0, 1 and 65535 pass. Final tests check full byte lengths and exact readback after append, plus a nonterminated UTF-8 slice with adjacent excluded guard and a default empty view.",
+          "interfaces": "OutputFileString accepts std::string_view and writes its exact byte count. Two production calls, two existing test calls and four new test calls use the typed declaration; the old C-string overload and uint16_t narrowing are removed.",
+          "baseline": "Full native baseline regenerated with make regression-export and compared against its prior fixture copy: all 519 checkpoints match, including 25 existing unused-storage warnings. No scenario moved at any turn. Preserved 592 fixture files containing regeneration-only differences. Native and frozen-original fixture bytes, record layouts, game RNG and unit goldens remain unchanged.",
+          "remaining": "Memory-source bounds/cursors, batch input sizing/parsing, other buffer interfaces and Milestone D remain; L05 remaining text and L08 final qualification are active.",
+          "receipts": "dist/verification/live-cpp/l06l/"
         }
       ],
       "roman_output": {
@@ -721,6 +741,11 @@
         "old_invocations": 9,
         "pre_existing_invocations": 6,
         "interfaces": "Readonly temporary template views and move-only path/stream results; actual profile template/create providers migrated, preserving failure-stage controls."
+      },
+      "text_writer": {
+        "status": "complete; verified",
+        "evidence": "docs/CPP-LIVE-FILE-SERVICES.json",
+        "interface": "Readonly sized text view; no C-string scan or 16-bit write-count narrowing. Real file tests reproduce the parent defect."
       }
     },
     {

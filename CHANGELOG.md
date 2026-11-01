@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `OutputFileString` now appends a sized text view without narrowing its byte
+  count to 16 bits. Previously 65536 bytes wrote nothing, and longer text lost
+  each complete 64 KiB block. Existing short logging output, file formats and
+  host turn results are unchanged.
+
 - `WriteRt` now receives a readonly payload span and rejects payloads above
   its 1024-byte scratch capacity before copying, changing encryption seeds
   or publishing a record. Oversized input previously overwrote scratch

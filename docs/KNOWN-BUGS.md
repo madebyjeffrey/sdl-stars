@@ -17,6 +17,15 @@ J/JRC3/JRC4 fix claims below come from the supplied list and are not independent
 verified release history. See [WIN16-PARITY.md](WIN16-PARITY.md) for native changes
 and [ROADMAP.md](ROADMAP.md) for the post-tag work.
 
+## Text append length wraps at 64 KiB — fixed on main
+
+`utilgen.cpp`, `OutputFileString`: casting `strlen` to `uint16_t` discarded
+complete 65536-byte blocks before appending. Real file tests reproduce failures
+at 65536, 65537 and 131073 bytes against the old implementation. A readonly text
+view now carries its full byte count into the native write service; create/seek/
+close order and existing short output remain unchanged. This changes no game
+record or turn-generation result.
+
 ## Late library folder results — fixed on main
 
 `libraryui.c`/`mdi.c`: import/export chooser callbacks copied a path and posted
