@@ -4,25 +4,36 @@
 #ifndef STARS_WINCOMPAT_STRUCTS_H
 #define STARS_WINCOMPAT_STRUCTS_H
 
+#include "wincompat_types.h"
 #pragma pack(push, 8)
-typedef struct tagWINDOWPOS {
+namespace win32 {
+struct tagWINDOWPOS {
     HWND hwnd;
     HWND hwndInsertAfter;
     int x, y, cx, cy;
     UINT flags;
-} WINDOWPOS, *LPWINDOWPOS, *PWINDOWPOS;
+};
+} // namespace win32
+typedef win32::tagWINDOWPOS WINDOWPOS, *LPWINDOWPOS, *PWINDOWPOS;
 
-typedef struct tagPOINT {
+namespace win32 {
+struct tagPOINT {
   LONG x;
   LONG y;
-} POINT,*PPOINT,*NPPOINT,*LPPOINT;
+};
+} // namespace win32
+typedef win32::tagPOINT POINT,*PPOINT,*NPPOINT,*LPPOINT;
 
-typedef struct tagSIZE {
+namespace win32 {
+struct tagSIZE {
   LONG cx;
   LONG cy;
-} SIZE,*PSIZE,*LPSIZE;
+};
+} // namespace win32
+typedef win32::tagSIZE SIZE,*PSIZE,*LPSIZE;
 
-typedef struct tagWNDCLASSA {
+namespace win32 {
+struct tagWNDCLASSA {
     UINT style;
     WNDPROC lpfnWndProc;
     int cbClsExtra;
@@ -33,27 +44,37 @@ typedef struct tagWNDCLASSA {
     HBRUSH hbrBackground;
     LPCSTR lpszMenuName;
     LPCSTR lpszClassName;
-  } WNDCLASSA,*PWNDCLASSA,*NPWNDCLASSA,*LPWNDCLASSA;
+  };
+} // namespace win32
+typedef win32::tagWNDCLASSA WNDCLASSA,*PWNDCLASSA,*NPWNDCLASSA,*LPWNDCLASSA;
 
-typedef struct tagMSG {
+namespace win32 {
+struct tagMSG {
     HWND hwnd;
     UINT message;
     WPARAM wParam;
     LPARAM lParam;
     DWORD time;
     POINT pt;
-  } MSG,*PMSG,*NPMSG,*LPMSG;
+  };
+} // namespace win32
+namespace win32 { using MSG = tagMSG; }
+typedef win32::tagMSG *PMSG,*NPMSG,*LPMSG;
 
-typedef struct tagPAINTSTRUCT {
+namespace win32 {
+struct tagPAINTSTRUCT {
     HDC hdc;
     WINBOOL fErase;
     RECT rcPaint;
     WINBOOL fRestore;
     WINBOOL fIncUpdate;
     BYTE rgbReserved[32];
-  } PAINTSTRUCT,*PPAINTSTRUCT,*NPPAINTSTRUCT,*LPPAINTSTRUCT;
+  };
+} // namespace win32
+typedef win32::tagPAINTSTRUCT PAINTSTRUCT,*PPAINTSTRUCT,*NPPAINTSTRUCT,*LPPAINTSTRUCT;
 
-typedef struct tagCREATESTRUCTA {
+namespace win32 {
+struct tagCREATESTRUCTA {
     LPVOID lpCreateParams;
     HINSTANCE hInstance;
     HMENU hMenu;
@@ -66,35 +87,47 @@ typedef struct tagCREATESTRUCTA {
     LPCSTR lpszName;
     LPCSTR lpszClass;
     DWORD dwExStyle;
-  } CREATESTRUCTA,*LPCREATESTRUCTA;
+  };
+} // namespace win32
+typedef win32::tagCREATESTRUCTA CREATESTRUCTA,*LPCREATESTRUCTA;
 
-typedef struct tagWINDOWPLACEMENT {
+namespace win32 {
+struct tagWINDOWPLACEMENT {
     UINT length;
     UINT flags;
     UINT showCmd;
     POINT ptMinPosition;
     POINT ptMaxPosition;
     RECT rcNormalPosition;
-  } WINDOWPLACEMENT;
+  };
+} // namespace win32
+typedef win32::tagWINDOWPLACEMENT WINDOWPLACEMENT;
 
-typedef struct tagMINMAXINFO {
+namespace win32 {
+struct tagMINMAXINFO {
     POINT ptReserved;
     POINT ptMaxSize;
     POINT ptMaxPosition;
     POINT ptMinTrackSize;
     POINT ptMaxTrackSize;
-  } MINMAXINFO,*PMINMAXINFO,*LPMINMAXINFO;
+  };
+} // namespace win32
+typedef win32::tagMINMAXINFO MINMAXINFO,*PMINMAXINFO,*LPMINMAXINFO;
 
-typedef struct tagMEASUREITEMSTRUCT {
+namespace win32 {
+struct tagMEASUREITEMSTRUCT {
     UINT CtlType;
     UINT CtlID;
     UINT itemID;
     UINT itemWidth;
     UINT itemHeight;
     ULONG_PTR itemData;
-  } MEASUREITEMSTRUCT,*PMEASUREITEMSTRUCT,*LPMEASUREITEMSTRUCT;
+  };
+} // namespace win32
+typedef win32::tagMEASUREITEMSTRUCT MEASUREITEMSTRUCT,*PMEASUREITEMSTRUCT,*LPMEASUREITEMSTRUCT;
 
-typedef struct tagDRAWITEMSTRUCT {
+namespace win32 {
+struct tagDRAWITEMSTRUCT {
     UINT CtlType;
     UINT CtlID;
     UINT itemID;
@@ -104,23 +137,32 @@ typedef struct tagDRAWITEMSTRUCT {
     HDC hDC;
     RECT rcItem;
     ULONG_PTR itemData;
-  } DRAWITEMSTRUCT,*PDRAWITEMSTRUCT,*LPDRAWITEMSTRUCT;
+  };
+} // namespace win32
+typedef win32::tagDRAWITEMSTRUCT DRAWITEMSTRUCT,*PDRAWITEMSTRUCT,*LPDRAWITEMSTRUCT;
 
-typedef struct tagDELETEITEMSTRUCT {
+namespace win32 {
+struct tagDELETEITEMSTRUCT {
     UINT CtlType;
     UINT CtlID;
     UINT itemID;
     HWND hwndItem;
     ULONG_PTR itemData;
-} DELETEITEMSTRUCT, *LPDELETEITEMSTRUCT;
+};
+} // namespace win32
+typedef win32::tagDELETEITEMSTRUCT DELETEITEMSTRUCT, *LPDELETEITEMSTRUCT;
 
-typedef struct tagACCEL {
+namespace win32 {
+struct tagACCEL {
     BYTE fVirt;
     WORD key;
     WORD cmd;
-  } ACCEL,*LPACCEL;
+  };
+} // namespace win32
+typedef win32::tagACCEL ACCEL,*LPACCEL;
 
-typedef struct tagBITMAP {
+namespace win32 {
+struct tagBITMAP {
     LONG bmType;
     LONG bmWidth;
     LONG bmHeight;
@@ -128,32 +170,44 @@ typedef struct tagBITMAP {
     WORD bmPlanes;
     WORD bmBitsPixel;
     LPVOID bmBits;
-  } BITMAP,*PBITMAP,*NPBITMAP,*LPBITMAP;
+  };
+} // namespace win32
+typedef win32::tagBITMAP BITMAP,*PBITMAP,*NPBITMAP,*LPBITMAP;
 
 #pragma pack(push, 1)
-typedef struct tagRGBTRIPLE {
+namespace win32 {
+struct tagRGBTRIPLE {
     BYTE rgbtBlue;
     BYTE rgbtGreen;
     BYTE rgbtRed;
-  } RGBTRIPLE,*PRGBTRIPLE,*NPRGBTRIPLE,*LPRGBTRIPLE;
+  };
+} // namespace win32
+typedef win32::tagRGBTRIPLE RGBTRIPLE,*PRGBTRIPLE,*NPRGBTRIPLE,*LPRGBTRIPLE;
 #pragma pack(pop)
 
-typedef struct tagRGBQUAD {
+namespace win32 {
+struct tagRGBQUAD {
     BYTE rgbBlue;
     BYTE rgbGreen;
     BYTE rgbRed;
     BYTE rgbReserved;
-  } RGBQUAD;
+  };
+} // namespace win32
+typedef win32::tagRGBQUAD RGBQUAD;
 
-typedef struct tagBITMAPCOREHEADER {
+namespace win32 {
+struct tagBITMAPCOREHEADER {
     DWORD bcSize;
     WORD bcWidth;
     WORD bcHeight;
     WORD bcPlanes;
     WORD bcBitCount;
-  } BITMAPCOREHEADER,*LPBITMAPCOREHEADER,*PBITMAPCOREHEADER;
+  };
+} // namespace win32
+typedef win32::tagBITMAPCOREHEADER BITMAPCOREHEADER,*LPBITMAPCOREHEADER,*PBITMAPCOREHEADER;
 
-typedef struct tagBITMAPINFOHEADER {
+namespace win32 {
+struct tagBITMAPINFOHEADER {
     DWORD biSize;
     LONG biWidth;
     LONG biHeight;
@@ -165,42 +219,60 @@ typedef struct tagBITMAPINFOHEADER {
     LONG biYPelsPerMeter;
     DWORD biClrUsed;
     DWORD biClrImportant;
-  } BITMAPINFOHEADER,*LPBITMAPINFOHEADER,*PBITMAPINFOHEADER;
+  };
+} // namespace win32
+typedef win32::tagBITMAPINFOHEADER BITMAPINFOHEADER,*LPBITMAPINFOHEADER,*PBITMAPINFOHEADER;
 
-typedef struct tagBITMAPINFO {
+namespace win32 {
+struct tagBITMAPINFO {
     BITMAPINFOHEADER bmiHeader;
     RGBQUAD bmiColors[1];
-  } BITMAPINFO,*LPBITMAPINFO,*PBITMAPINFO;
+  };
+} // namespace win32
+typedef win32::tagBITMAPINFO BITMAPINFO,*LPBITMAPINFO,*PBITMAPINFO;
 
-typedef struct tagBITMAPCOREINFO {
+namespace win32 {
+struct tagBITMAPCOREINFO {
     BITMAPCOREHEADER bmciHeader;
     RGBTRIPLE bmciColors[1];
-  } BITMAPCOREINFO,*LPBITMAPCOREINFO,*PBITMAPCOREINFO;
+  };
+} // namespace win32
+typedef win32::tagBITMAPCOREINFO BITMAPCOREINFO,*LPBITMAPCOREINFO,*PBITMAPCOREINFO;
 
 #pragma pack(push, 1)
-typedef struct tagBITMAPFILEHEADER {
+namespace win32 {
+struct tagBITMAPFILEHEADER {
     WORD bfType;
     DWORD bfSize;
     WORD bfReserved1;
     WORD bfReserved2;
     DWORD bfOffBits;
-  } BITMAPFILEHEADER,*LPBITMAPFILEHEADER,*PBITMAPFILEHEADER;
+  };
+} // namespace win32
+typedef win32::tagBITMAPFILEHEADER BITMAPFILEHEADER,*LPBITMAPFILEHEADER,*PBITMAPFILEHEADER;
 #pragma pack(pop)
 
-typedef struct tagPALETTEENTRY {
+namespace win32 {
+struct tagPALETTEENTRY {
     BYTE peRed;
     BYTE peGreen;
     BYTE peBlue;
     BYTE peFlags;
-  } PALETTEENTRY,*PPALETTEENTRY,*LPPALETTEENTRY;
+  };
+} // namespace win32
+typedef win32::tagPALETTEENTRY PALETTEENTRY,*PPALETTEENTRY,*LPPALETTEENTRY;
 
-typedef struct tagLOGPALETTE {
+namespace win32 {
+struct tagLOGPALETTE {
     WORD palVersion;
     WORD palNumEntries;
     PALETTEENTRY palPalEntry[1];
-  } LOGPALETTE,*PLOGPALETTE,*NPLOGPALETTE,*LPLOGPALETTE;
+  };
+} // namespace win32
+typedef win32::tagLOGPALETTE LOGPALETTE,*PLOGPALETTE,*NPLOGPALETTE,*LPLOGPALETTE;
 
-typedef struct tagLOGFONTA {
+namespace win32 {
+struct tagLOGFONTA {
     LONG lfHeight;
     LONG lfWidth;
     LONG lfEscapement;
@@ -215,9 +287,12 @@ typedef struct tagLOGFONTA {
     BYTE lfQuality;
     BYTE lfPitchAndFamily;
     CHAR lfFaceName[32];
-  } LOGFONTA,*PLOGFONTA,*NPLOGFONTA,*LPLOGFONTA;
+  };
+} // namespace win32
+typedef win32::tagLOGFONTA LOGFONTA,*PLOGFONTA,*NPLOGFONTA,*LPLOGFONTA;
 
-typedef struct tagTEXTMETRICA {
+namespace win32 {
+struct tagTEXTMETRICA {
     LONG tmHeight;
     LONG tmAscent;
     LONG tmDescent;
@@ -238,12 +313,15 @@ typedef struct tagTEXTMETRICA {
     BYTE tmStruckOut;
     BYTE tmPitchAndFamily;
     BYTE tmCharSet;
-  } TEXTMETRICA,*PTEXTMETRICA,*NPTEXTMETRICA,*LPTEXTMETRICA;
+  };
+} // namespace win32
+typedef win32::tagTEXTMETRICA TEXTMETRICA,*PTEXTMETRICA,*NPTEXTMETRICA,*LPTEXTMETRICA;
 
 #if UINTPTR_MAX == UINT32_MAX
 #pragma pack(push, 1)
 #endif
-typedef struct tagOFNA {
+namespace win32 {
+struct tagOFNA {
     DWORD lStructSize;
     HWND hwndOwner;
     HINSTANCE hInstance;
@@ -267,7 +345,9 @@ typedef struct tagOFNA {
     void *pvReserved;
     DWORD dwReserved;
     DWORD FlagsEx;
-  } OPENFILENAMEA,*LPOPENFILENAMEA;
+  };
+} // namespace win32
+typedef win32::tagOFNA OPENFILENAMEA,*LPOPENFILENAMEA;
 #if UINTPTR_MAX == UINT32_MAX
 #pragma pack(pop)
 #endif
@@ -275,7 +355,8 @@ typedef struct tagOFNA {
 #if UINTPTR_MAX == UINT32_MAX
 #pragma pack(push, 1)
 #endif
-typedef struct tagPDA {
+namespace win32 {
+struct tagPDA {
     DWORD lStructSize;
     HWND hwndOwner;
     HGLOBAL hDevMode;
@@ -295,7 +376,9 @@ typedef struct tagPDA {
     LPCSTR lpSetupTemplateName;
     HGLOBAL hPrintTemplate;
     HGLOBAL hSetupTemplate;
-  } PRINTDLGA,*LPPRINTDLGA;
+  };
+} // namespace win32
+typedef win32::tagPDA PRINTDLGA,*LPPRINTDLGA;
 #if UINTPTR_MAX == UINT32_MAX
 #pragma pack(pop)
 #endif
@@ -303,41 +386,50 @@ typedef struct tagPDA {
 #if UINTPTR_MAX == UINT32_MAX
 #pragma pack(push, 1)
 #endif
-typedef struct tagDEVNAMES {
+namespace win32 {
+struct tagDEVNAMES {
     WORD wDriverOffset;
     WORD wDeviceOffset;
     WORD wOutputOffset;
     WORD wDefault;
-  } DEVNAMES,*LPDEVNAMES;
+  };
+} // namespace win32
+typedef win32::tagDEVNAMES DEVNAMES,*LPDEVNAMES;
 
-typedef struct _devicemodeA {
+namespace win32 {
+struct _devicemodeA {
     CHAR dmDeviceName[32];
     WORD dmSpecVersion, dmDriverVersion, dmSize, dmDriverExtra;
     DWORD dmFields;
     union {
-        struct { SHORT dmOrientation, dmPaperSize, dmPaperLength, dmPaperWidth, dmScale, dmCopies, dmDefaultSource, dmPrintQuality; };
-        struct { POINT dmPosition; DWORD dmDisplayOrientation, dmDisplayFixedOutput; };
-    };
+        struct { SHORT dmOrientation, dmPaperSize, dmPaperLength, dmPaperWidth, dmScale, dmCopies, dmDefaultSource, dmPrintQuality; } printer;
+        struct { POINT dmPosition; DWORD dmDisplayOrientation, dmDisplayFixedOutput; } display;
+    } mode;
     SHORT dmColor, dmDuplex, dmYResolution, dmTTOption, dmCollate;
     CHAR dmFormName[32];
     WORD dmLogPixels;
     DWORD dmBitsPerPel, dmPelsWidth, dmPelsHeight;
-    union { DWORD dmDisplayFlags, dmNup; };
+    union { DWORD dmDisplayFlags; DWORD dmNup; } displayFlags;
     DWORD dmDisplayFrequency, dmICMMethod, dmICMIntent, dmMediaType, dmDitherType;
     DWORD dmReserved1, dmReserved2, dmPanningWidth, dmPanningHeight;
-} DEVMODEA, *LPDEVMODEA;
+};
+} // namespace win32
+typedef win32::_devicemodeA DEVMODEA, *LPDEVMODEA;
 #if UINTPTR_MAX == UINT32_MAX
 #pragma pack(pop)
 #endif
 
-typedef struct _OFSTRUCT {
+namespace win32 {
+struct _OFSTRUCT {
     BYTE cBytes;
     BYTE fFixedDisk;
     WORD nErrCode;
     WORD Reserved1;
     WORD Reserved2;
     CHAR szPathName[128];
-  } OFSTRUCT, *LPOFSTRUCT,*POFSTRUCT;
+  };
+} // namespace win32
+typedef win32::_OFSTRUCT OFSTRUCT, *LPOFSTRUCT,*POFSTRUCT;
 #pragma pack(pop)
 
 typedef WNDCLASSA WNDCLASS;
@@ -353,7 +445,13 @@ typedef OPENFILENAMEA OPENFILENAME;
 typedef OPENFILENAME *LPOPENFILENAME;
 typedef PRINTDLGA PRINTDLG;
 typedef PRINTDLG *LPPRINTDLG;
-typedef struct _ICONINFO { BOOL fIcon; DWORD xHotspot, yHotspot; HBITMAP hbmMask, hbmColor; } ICONINFO, *PICONINFO;
-typedef struct tagSCROLLINFO { UINT cbSize, fMask; int nMin, nMax; UINT nPage; int nPos, nTrackPos; } SCROLLINFO, *LPSCROLLINFO;
+namespace win32 {
+struct _ICONINFO { BOOL fIcon; DWORD xHotspot, yHotspot; HBITMAP hbmMask, hbmColor; };
+} // namespace win32
+typedef win32::_ICONINFO ICONINFO, *PICONINFO;
+namespace win32 {
+struct tagSCROLLINFO { UINT cbSize, fMask; int nMin, nMax; UINT nPage; int nPos, nTrackPos; };
+} // namespace win32
+typedef win32::tagSCROLLINFO SCROLLINFO, *LPSCROLLINFO;
 typedef const SCROLLINFO *LPCSCROLLINFO;
 #endif

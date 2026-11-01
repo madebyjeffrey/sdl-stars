@@ -1,5 +1,8 @@
 # M04 — Commands and partial commits on the six race pages
 
+Historical evidence: inspected C11 source at `e3222eb1fbdb01d68067231b5d5ef14a71759b30`.
+The retained fixtures run only against the frozen snapshot; current C++ refinement remains open.
+
 Observed 2026-10-27 at `e3222eb1fbdb01d68067231b5d5ef14a71759b30`, with the
 working collection. This companion specializes [M04-US01](M04-race-design.md#m04-us01),
 [US02](M04-race-design.md#m04-us02) and [US03](M04-race-design.md#m04-us03).
@@ -12,11 +15,11 @@ remain in the owning module. No runtime behavior, file format or baseline change
 Canonical model: [M04PageCommands](dafny/M04-page-commands.dfy). It composes
 [native race buffers](M02-native-state-and-save.md), existing M04 attribute bounds,
 S01 signed narrowing/byte encoding and the canonical password hash. Source:
-[raceui.c](../src/ui/raceui.c) `RaceWizardDlg1` through `RaceWizardDlg6`;
-[race.c](../src/core/race.c) `GetRaceStat`, `SetRaceStat`, `SetRaceGrbit`,
-`BoundsCheckPlayer`; [nativeui.c](../src/ui/nativeui.c) `CchGetUtf8WindowText`;
-[globalsui.c](../src/ui/globalsui.c) `rgidRaceBtn`;
-[utilgen.c](../src/core/utilgen.c) `LSaltFromSz`.
+[raceui.c](https://github.com/madebyjeffrey/sdl-stars/blob/e3222eb1fbdb01d68067231b5d5ef14a71759b30/src/ui/raceui.c) `RaceWizardDlg1` through `RaceWizardDlg6`;
+[race.c](https://github.com/madebyjeffrey/sdl-stars/blob/e3222eb1fbdb01d68067231b5d5ef14a71759b30/src/core/race.c) `GetRaceStat`, `SetRaceStat`, `SetRaceGrbit`,
+`BoundsCheckPlayer`; [nativeui.c](https://github.com/madebyjeffrey/sdl-stars/blob/e3222eb1fbdb01d68067231b5d5ef14a71759b30/src/ui/nativeui.c) `CchGetUtf8WindowText`;
+[globalsui.c](https://github.com/madebyjeffrey/sdl-stars/blob/e3222eb1fbdb01d68067231b5d5ef14a71759b30/src/ui/globalsui.c) `rgidRaceBtn`;
+[utilgen.c](https://github.com/madebyjeffrey/sdl-stars/blob/e3222eb1fbdb01d68067231b5d5ef14a71759b30/src/core/utilgen.c) `LSaltFromSz`.
 The [collection record](README.md#race-page-command-continuation) reports executed checks.
 
 ## Inputs, state, services and boundaries
@@ -49,9 +52,9 @@ model describes ordinary returning, non-reentrant services. Nonlocal exceptions
 and callbacks are not silently assigned the ordinary return/post-state.
 
 For the ordinary built-in text controls, the compatibility implementation
-supports the prefix/tail receipt: [GetDlgItemTextA](../compat/win32/src/control.c)
-clears byte zero before dispatch; [CompatEditProc](../compat/win32/src/edit.c)
-delegates WM_GETTEXT to [DefWindowProcA](../compat/win32/src/message.c), which
+supports the prefix/tail receipt: [GetDlgItemTextA](https://github.com/madebyjeffrey/sdl-stars/blob/e3222eb1fbdb01d68067231b5d5ef14a71759b30/compat/win32/src/control.c)
+clears byte zero before dispatch; [CompatEditProc](https://github.com/madebyjeffrey/sdl-stars/blob/e3222eb1fbdb01d68067231b5d5ef14a71759b30/compat/win32/src/edit.c)
+delegates WM_GETTEXT to [DefWindowProcA](https://github.com/madebyjeffrey/sdl-stars/blob/e3222eb1fbdb01d68067231b5d5ef14a71759b30/compat/win32/src/message.c), which
 copies the bounded UTF-8 prefix and one NUL without clearing later bytes.
 Custom subclasses, missing/destroyed controls, callbacks and valid native
 window/text extraction remain S05 qualification; a buffer shape alone does not

@@ -7,14 +7,10 @@ arithmetic/slot/waypoint candidates are excluded before native execution.
 """
 from pathlib import Path
 import math
-import os
 import random
-import shlex
 import struct
 import subprocess
-import sys
 import tempfile
-from check_s02_source import ROOT, function
 from check_native_colony_source import Boundary, checked, signed, div
 
 
@@ -185,55 +181,9 @@ def cases():
 
 
 def main():
-    declarations=r'''
-#include "common.h"
-#include <assert.h>
-#include <stdlib.h>
-#include <inttypes.h>
-static int32_t cfg[61];static PLANET planet;PLAYER rgplr[16];GDATA gd;
-static FLEET fleets[4];static FLEET *fleetPointers[4];FLEET **rglpfl=fleetPointers;int16_t cFleet;
-static union {max_align_t align;uint8_t bytes[sizeof(PLORD)+sizeof(ORDER)];} orderStorage[4];static PLORD *orders[4];
-static SHDEF designs[16];SHDEF *rglpshdef[16];static MINING mining[8];
-int32_t lRandSeed1,lRandSeed2;static int draws,mineCalls,partCalls,operCalls;
-static int16_t NativeRandom(int16_t bound);static int32_t NativeCMineFromLpfl(FLEET *fleet);
-int16_t FLookupPart(PART *part){assert(part->hs.grhst==hstMining && part->hs.iItem<=iminingAlienMiner);partCalls++;part->pmining=&mining[part->hs.iItem];return TRUE;}
-int32_t CMineFromLpfl(FLEET *fleet){mineCalls++;int i=(int)(fleet-fleets);assert(0<=i && i<4);return cfg[29+8*i+7] ? NativeCMineFromLpfl(fleet):cfg[29+8*i+5];}
-int16_t CMaxOperableMines(PLANET *p,int16_t player,int16_t next){(void)p;assert(player==cfg[4] && !next);return (int16_t)cfg[2];}
-int16_t Random(int16_t bound){assert(bound==100);draws++;return cfg[10] ? NativeRandom(bound):(int16_t)cfg[11];}
-'''
-    getter=next(line for line in (ROOT/'src/core/race.c').read_text().splitlines() if line.startswith('int16_t GetRaceStat('))
-    bodies=getter+'\n'+function('src/core/planet.c','int16_t CMinesOperating(').replace('    iplr =', '    operCalls++;\n    iplr =',1)+'\n'
-    bodies+=function('src/core/ship2.c','int32_t CMineFromLpfl(').replace('int32_t CMineFromLpfl(', 'static int32_t NativeCMineFromLpfl(',1)+'\n'
-    bodies+=function('src/core/mine.c','void EstMineralsMined(')+'\n'
-    bodies+=function('src/core/utilgen.c','int16_t STARS_TEST_IMPL(Random)(').replace('int16_t STARS_TEST_IMPL(Random)(', 'static int16_t NativeRandom(',1)+'\n'
-    harness=r'''
-static void setup(void){
-    memset(&planet,0,sizeof(planet));memset(rgplr,0,sizeof(rgplr));memset(&gd,0,sizeof(gd));memset(designs,0,sizeof(designs));
-    memset(fleets,0,sizeof(fleets));memset(orderStorage,0,sizeof(orderStorage));for(int i=0;i<4;i++)orders[i]=(PLORD *)orderStorage[i].bytes;draws=mineCalls=partCalls=operCalls=0;lRandSeed1=7;lRandSeed2=11;
-    planet.iPlayer=(int16_t)cfg[4];planet.rgwtMin[3]=cfg[5];planet.cMines=4095;planet.fHomeworld=cfg[7];gd.fGeneratingTurn=cfg[9];cFleet=(int16_t)cfg[21];
-    for(int i=0;i<16;i++){rgplr[i].rgAttr[rsMajorAdv]=(int8_t)cfg[6];rgplr[i].rgAttr[rsMineProd]=(int8_t)cfg[3];rglpshdef[i]=designs;
-        designs[i].hul.chs=(uint8_t)cfg[24];for(int j=0;j<16;j++){designs[i].hul.rghs[j].grhst=(HullSlotType)cfg[25];designs[i].hul.rghs[j].iItem=cfg[26];designs[i].hul.rghs[j].cItem=cfg[27];}}
-    for(int i=0;i<8;i++)mining[i].grAbility=(int16_t)cfg[28];
-    for(int i=0;i<3;i++){planet.rgwtMin[i]=cfg[12+i];planet.rgMinConc[i]=(uint8_t)cfg[15+i];planet.rgpctMinLevel[i]=(uint8_t)cfg[18+i];}
-    for(int i=0;i<4;i++){int at=29+8*i;fleets[i].idPlanet=(int16_t)cfg[at];fleets[i].iPlayer=(int16_t)cfg[at+1];fleets[i].fDead=cfg[at+2];
-        fleets[i].cord=(int16_t)cfg[at+3];fleets[i].lpplord=cfg[at+4]<0 ? NULL:orders[i];orders[i]->rgord[0].grTask=cfg[at+4]<0 ? 0:cfg[at+4];fleets[i].fHereAllTurn=cfg[at+6];
-        for(int j=0;j<16;j++)fleets[i].rgcsh[j]=(int16_t)((j==0 || cfg[0]==2) ? cfg[23]:0);rglpfl[i]=i==cfg[22] ? NULL:&fleets[i];}
-}
-int main(int argc,char **argv){assert(argc==2);FILE *f=fopen(argv[1],"rb");assert(f);unsigned long cases=0,checks=0;int64_t expected[22];
-    while(fread(cfg,sizeof(cfg),1,f)==1){unsigned n=cfg[0] ? 2:22;assert(fread(expected,sizeof(*expected),n,f)==n);setup();int64_t actual[22];
-        if(cfg[0]){actual[0]=NativeCMineFromLpfl(&fleets[0]);actual[1]=partCalls;}else{int32_t result[3]={777,777,777};EstMineralsMined(&planet,result,cfg[1],(int16_t)cfg[8]);
-            for(int i=0;i<3;i++){actual[i]=result[i];actual[3+i]=planet.rgwtMin[i];actual[6+i]=planet.rgMinConc[i];actual[9+i]=planet.rgpctMinLevel[i];}
-            for(int i=0;i<4;i++)actual[12+i]=fleets[i].fHereAllTurn;
-            actual[16]=draws;actual[17]=mineCalls;actual[18]=partCalls;actual[19]=operCalls;actual[20]=lRandSeed1;actual[21]=lRandSeed2;
-        }
-        for(unsigned i=0;i<n;i++){checks++;if(actual[i]!=expected[i]){fprintf(stderr,"case %lu mode %d field %u actual %lld expected %lld (count %d conc %d level %d)\n",cases,cfg[0],i,(long long)actual[i],(long long)expected[i],cfg[1],cfg[15],cfg[18]);return 1;}}
-        cases++;
-    }
-    assert(feof(f));fclose(f);printf("Native mining/depletion: %lu cases, %lu assertions passed\n",cases,checks);return 0;
-}
-'''
     with tempfile.TemporaryDirectory(prefix='mining-contract-') as work:
-        path=Path(work);data=path/'vectors.bin';excluded={};count=0
+        from linked_witness import binary as linked_binary
+        binary=linked_binary("mining");path=Path(work);data=path/'vectors.bin';excluded={};count=0
         with data.open('wb') as stream:
             for c in cases():
                 assert len(c)==61
@@ -242,13 +192,6 @@ int main(int argc,char **argv){assert(argc==2);FILE *f=fopen(argv[1],"rb");asser
                     excluded[str(why)]=excluded.get(str(why),0)+1;continue
                 stream.write(struct.pack('<61i',*c));stream.write(struct.pack('<'+'q'*len(result),*result));count+=1
         print(f'Prepared {count} defined mining vectors; excluded before C: {excluded}',flush=True)
-        for generator in ['text/textgen.py','data/datagen.py']:
-            subprocess.run([sys.executable,str(ROOT/generator),str(path)],check=True,stdout=subprocess.DEVNULL)
-        source=path/'witness.c';source.write_text(declarations+bodies+harness);binary=path/'witness'
-        subprocess.run(shlex.split(os.environ.get('CC','cc'))+['-std=gnu11','-Wall','-Wextra','-Werror',
-            '-fsanitize=address,undefined','-fno-sanitize-recover=all','-ffp-contract=off','-fno-fast-math',
-            '-I'+str(ROOT/'src/core'),'-I'+str(ROOT/'src/platform'),'-I'+str(path),str(source),'-lm','-o',str(binary)],check=True)
         subprocess.run([str(binary),str(data)],check=True)
 
-
-if __name__=='__main__':main()
+if __name__=="__main__":main()

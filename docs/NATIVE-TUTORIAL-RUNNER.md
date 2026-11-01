@@ -444,7 +444,7 @@ All paths below are relative to `/home/jdrake/Projects/stars`:
 | `dist/scaffold/precision/turns/summary.json`, `comparison.json`, `ext/`, `dbl/` | Independent fixed-seed host runs, nine scenarios through turn 150 |
 | `dist/scaffold/precision/migration/` | Before/after native and host regression comparisons |
 | `tests/scaffold/fixtures/regression/native/` | Updated native baseline; only `oneai5` and `smallai6` move, from turn 1 |
-| `tests/compat/native_tutorial.c` | SDL gesture driver, copied state snapshots and stages 203–248 for the new workflows |
+| `tests/compat/native_tutorial.cpp` | SDL gesture driver, copied state snapshots and stages 203–248 for the new workflows |
 | `tests/compat/run_native_tutorial.py` | Isolated launcher and exact cargo/design/order/queue/template/report assertions |
 | `cmake/sdl-client.cmake` | Default smoke plus Merge cycle on dummy/X11; earlier stops opt-in |
 | `tests/reference/win32-tutorial/steps.ahk`, `actions.ahk`, `tutor.c`, `text/` | Original walkthrough gestures and actual tutorial task/text references |

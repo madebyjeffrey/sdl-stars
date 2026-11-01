@@ -1,5 +1,8 @@
 # M02 — Duplicate, Export and Delete outcomes
 
+Historical evidence: inspected C11 source at `e3222eb1fbdb01d68067231b5d5ef14a71759b30`.
+The retained fixtures run only against the frozen snapshot; current C++ refinement remains open.
+
 Observed source inspected 2026-10-27 at
 `e3222eb1fbdb01d68067231b5d5ef14a71759b30`, with the working collection.
 This companion specializes [M02-US05](M02-race-library.md#m02-us05),
@@ -17,10 +20,10 @@ Canonical model: [M02RaceActions](dafny/M02-race-actions.dfy), reusing
 [native captured-byte state](M02-native-state-and-save.md), existing
 [M02Library](dafny/M02-library.dfy) and shared
 [S01 name/comparison boundaries](dafny/S01-library-names.dfy).
-Source: [libraryui.c](../src/ui/libraryui.c) `FDuplicateLibraryRace`,
+Source: [libraryui.c](https://github.com/madebyjeffrey/sdl-stars/blob/e3222eb1fbdb01d68067231b5d5ef14a71759b30/src/ui/libraryui.c) `FDuplicateLibraryRace`,
 `FExportLibraryRace`, `FCopyRaceExport`, `FDeleteLibraryRace`, `SaveRaceState`,
 `RestoreRaceState`, `FPortableRaceFilename`, `SuggestRaceFilename`;
-[race.c](../src/core/race.c) `FWasRaceFile`; [raceui.c](../src/ui/raceui.c)
+[race.c](https://github.com/madebyjeffrey/sdl-stars/blob/e3222eb1fbdb01d68067231b5d5ef14a71759b30/src/core/race.c) `FWasRaceFile`; [raceui.c](https://github.com/madebyjeffrey/sdl-stars/blob/e3222eb1fbdb01d68067231b5d5ef14a71759b30/src/ui/raceui.c)
 `SetSzRaceFile`. Executed checks are in the
 [collection record](README.md#m02-race-actions-continuation).
 

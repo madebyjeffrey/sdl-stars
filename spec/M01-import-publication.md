@@ -17,7 +17,7 @@ ordinary control flow after admission and choice. Its `Later`, `ConflictReplace`
 replies. [Collection evidence](README.md#m01-import-publication-and-recovery)
 records executed checks. No game code, format, catalog or baseline is changed.
 
-Sources: [libraryui.c](../src/ui/libraryui.c) `FImportSubsequentTurn`,
+Sources: [libraryui.cpp](../src/ui/libraryui.cpp) `FImportSubsequentTurn`,
 `FReplaceConflictingLibraryTurn`, `FImportConflictingTurnAsCopy`,
 `FImportLibraryGame`, `FCopyNativeFileExclusive`, `FCopyNativeFileContents`,
 `FInspectImportFile`, `FCreateLibraryGameStage`, `FStageConflictingTurn`,
@@ -191,7 +191,7 @@ backend may not produce.
 Validation, recursive copy/backup/cleanup and native I/O are scripted providers;
 these cases establish controller behavior under their stated receipts, not full
 filesystem integration or C refinement of the complete helper family. Separately,
-48 additional cases execute extracted `FCopyNativeFileContents` and
+48 additional cases execute linked `FCopyNativeFileContents` and
 `FCopyNativeFileExclusive` over empty, one-byte and 8192-byte chunk boundaries,
 existing-target preservation with EEXIST, and missing sources. The first 15
 use ordinary stdio. Another 33 inject read/error/write/close/removal results into

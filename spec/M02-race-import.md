@@ -1,5 +1,8 @@
 # M02 — Import, naming and customization wrappers
 
+Historical evidence: inspected C11 source at `e3222eb1fbdb01d68067231b5d5ef14a71759b30`.
+The retained fixtures run only against the frozen snapshot; current C++ refinement remains open.
+
 Observed source inspected 2026-10-27 at
 `e3222eb1fbdb01d68067231b5d5ef14a71759b30`, with the working collection.
 This companion specializes [M02-US04](M02-race-library.md#m02-us04) (import a
@@ -17,13 +20,13 @@ Canonical model: [M02RaceImport](dafny/M02-race-import.dfy), composing
 [M02RaceSave](dafny/M02-race-save.dfy),
 [native captured state](M02-native-state-and-save.md) and existing S01/S04 name,
 UTF-8, record-header and checksum definitions. Source:
-[libraryui.c](../src/ui/libraryui.c) `FImportLibraryRace`, `FImportLibraryRaceAs`,
+[libraryui.c](https://github.com/madebyjeffrey/sdl-stars/blob/e3222eb1fbdb01d68067231b5d5ef14a71759b30/src/ui/libraryui.c) `FImportLibraryRace`, `FImportLibraryRaceAs`,
 `FImportLibraryRaceAndEdit`, `FChooseLibraryRaceName`, `FLoadLibraryRace`,
 `FEditLibraryRace`, `FSaveLibraryRace`, snapshot/naming helpers;
-[race.c](../src/core/race.c) `FWasRaceFile`;
-[raceui.c](../src/ui/raceui.c) `SetSzRaceFile`, `RaceCreationWizard`;
-[save.c](../src/core/save.c) `FCreateFile`, `WriteBOF`, `WriteRtPlr`;
-[file.c](../src/core/file.c) `StreamClose`.
+[race.c](https://github.com/madebyjeffrey/sdl-stars/blob/e3222eb1fbdb01d68067231b5d5ef14a71759b30/src/core/race.c) `FWasRaceFile`;
+[raceui.c](https://github.com/madebyjeffrey/sdl-stars/blob/e3222eb1fbdb01d68067231b5d5ef14a71759b30/src/ui/raceui.c) `SetSzRaceFile`, `RaceCreationWizard`;
+[save.c](https://github.com/madebyjeffrey/sdl-stars/blob/e3222eb1fbdb01d68067231b5d5ef14a71759b30/src/core/save.c) `FCreateFile`, `WriteBOF`, `WriteRtPlr`;
+[file.c](https://github.com/madebyjeffrey/sdl-stars/blob/e3222eb1fbdb01d68067231b5d5ef14a71759b30/src/core/file.c) `StreamClose`.
 The [collection record](README.md#m02-race-import-continuation) reports actual
 checks and distinguishes supplied service receipts from native qualification.
 

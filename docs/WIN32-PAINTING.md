@@ -1,6 +1,6 @@
 # Win32 painting milestone
 
-The local C11 runtime now paints two independent SDL windows through Win32
+The local C++20 runtime now paints two independent SDL windows through Win32
 APIs. Each top-level window owns an RGBA canvas, SDL renderer and streaming texture.
 [Logical children](WIN32-CHILDREN.md) own canvases and are composited into their
 root window for presentation.
@@ -135,7 +135,7 @@ extreme coordinates, font measurement and actual glyph pixels, paint clipping,
 message ordering, invalidation during painting, resize/exposure and survivor
 input/repainting after one window closes.
 
-`tests/compat/win32_gdi_reference.c` exercises the same basic geometry, DC
+`tests/compat/win32_gdi_reference.inc` exercises the same basic geometry, DC
 state and painting contracts against our runtime and actual Win32 under Wine.
 Font tests check valid measurement and drawing without asserting identical
 Windows font pixels or metrics. Native target: `stars-compat-gdi-reference`;

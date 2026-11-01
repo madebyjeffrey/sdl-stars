@@ -1,5 +1,8 @@
 # M04 — Opening the six race pages
 
+Historical evidence: inspected C11 source at `e3222eb1fbdb01d68067231b5d5ef14a71759b30`.
+The retained fixtures run only against the frozen snapshot; current C++ refinement remains open.
+
 Observed 2026-10-27 at `e3222eb1fbdb01d68067231b5d5ef14a71759b30`, with the
 working collection. This companion specializes [M04-US01](M04-race-design.md#m04-us01),
 [US02](M04-race-design.md#m04-us02) and [US03](M04-race-design.md#m04-us03).
@@ -12,9 +15,9 @@ catalogs, file formats and regression baselines are unchanged.
 Canonical model: [M04PageInitialization](dafny/M04-page-initialization.dfy),
 reusing native byte/portrait/stat adapters, S01 signed narrowing/division,
 M01's signed-32 rectangle vocabulary and existing M04 page numbering.
-Source: [raceui.c](../src/ui/raceui.c) `RaceWizardDlg1`…`RaceWizardDlg6`,
-`SetRCWTitle`; [nativeui.c](../src/ui/nativeui.c) `FSetUtf8WindowText`;
-[race.c](../src/core/race.c) `GetRaceStat`, `GetRaceGrbit`;
+Source: [raceui.c](https://github.com/madebyjeffrey/sdl-stars/blob/e3222eb1fbdb01d68067231b5d5ef14a71759b30/src/ui/raceui.c) `RaceWizardDlg1`…`RaceWizardDlg6`,
+`SetRCWTitle`; [nativeui.c](https://github.com/madebyjeffrey/sdl-stars/blob/e3222eb1fbdb01d68067231b5d5ef14a71759b30/src/ui/nativeui.c) `FSetUtf8WindowText`;
+[race.c](https://github.com/madebyjeffrey/sdl-stars/blob/e3222eb1fbdb01d68067231b5d5ef14a71759b30/src/core/race.c) `GetRaceStat`, `GetRaceGrbit`;
 [textids](../text/textgen.py) and [race fields](../src/core/structs.h).
 Executed checks are in the [collection record](README.md#race-page-initialization-continuation).
 
@@ -71,8 +74,8 @@ The leftover combo requests exactly **five** catalog additions, Surface Minerals
 through Defenses, then requests the current signed-byte stat as its selection.
 That stat's existing clamp range is 0…6, so a request for 5/6 is possible even
 though those indices have no item after five successful additions. The
-[combo mapping](../compat/win32/src/combo.c) and
-[list selection](../compat/win32/src/list.c) assign -1 to an out-of-range index;
+[combo mapping](https://github.com/madebyjeffrey/sdl-stars/blob/e3222eb1fbdb01d68067231b5d5ef14a71759b30/compat/win32/src/combo.c) and
+[list selection](https://github.com/madebyjeffrey/sdl-stars/blob/e3222eb1fbdb01d68067231b5d5ef14a71759b30/compat/win32/src/list.c) assign -1 to an out-of-range index;
 the fixture checks that ordinary five-item projection. Ignored addition results,
 missing controls and actual native allocation/event effects remain S05 work.
 The model stores the request, not a guaranteed selection. A subsequent commit

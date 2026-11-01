@@ -19,11 +19,11 @@ cost table/formula. Native eligibility, pool and lowest-field refinements reuse
 [M12 scalar rules](dafny/M12-research.dfy); source widths/order are not replaced
 with those rules outside their domains.
 
-Sources: [turn2.c](../src/core/turn2.c) `UpdateResearchStatus`,
-[research.c](../src/core/research.c) `GetTechLevelCost`,
-[race.c](../src/core/race.c) `GetRaceStat`, `GetRaceGrbit`,
-[parts.c](../src/core/parts.c) `FLookupPart`,
-[msg.c](../src/core/msg.c) `FSendPlrMsg`, `FSendPlrMsg2`, `PackageUpMsg`,
+Sources: [turn2.cpp](../src/core/turn2.cpp) `UpdateResearchStatus`,
+[research.cpp](../src/core/research.cpp) `GetTechLevelCost`,
+[race.cpp](../src/core/race.cpp) `GetRaceStat`, `GetRaceGrbit`,
+[parts.cpp](../src/core/parts.cpp) `FLookupPart`,
+[msg.cpp](../src/core/msg.cpp) `FSendPlrMsg`, `FSendPlrMsg2`, `PackageUpMsg`,
 [structs.h](../src/core/structs.h) `PLAYER` and `PART`,
 [enums.h](../src/core/enums.h) and generated S03 text/data IDs.
 [Verification](README.md#host-research-resolution-continuation) records actual checks.
@@ -311,6 +311,6 @@ behavior changes are introduced.
 | Obligation / owner | Authoritative inputs and acceptance evidence still required |
 | --- | --- |
 | Entry arithmetic and spending domain / M12/M09/M19/S06 | Bind annual `Player.pool` to `PLAYER.lResLastYear` produced by `Produce`, including its initial zeroing, empty-queue resources, allocation and queue-tail additions. Bind uint32 `rgResSpent` to loaded state and every earlier same-year writer. Prove that resulting values preserve each actual signed multiplication/addition/subtraction/rounding domain through all redo and grant passes, or identify the reachable source boundary. Use actual producers rather than selecting a convenient numeric pool bound. |
-| Policy and level reachability / M12/S01/M18 | Bind normal levels and local/packed policy to the accepted loaded state and preceding annual phases. [Research order replay](S01-game-file-orders.md) validates unsigned current/next nibbles before copying the packed byte into PLAYER's signed-next overlay; `rtLogResearch` in [log.c](../src/core/log.c) and all other writers must establish the host preconditions. Raw signed-policy fixture coverage alone does not prove accepted-game reachability. Include pooled `Produce` and both nonpool `DoOrders` call contexts. |
+| Policy and level reachability / M12/S01/M18 | Bind normal levels and local/packed policy to the accepted loaded state and preceding annual phases. [Research order replay](S01-game-file-orders.md) validates unsigned current/next nibbles before copying the packed byte into PLAYER's signed-next overlay; `rtLogResearch` in [log.cpp](../src/core/log.cpp) and all other writers must establish the host preconditions. Raw signed-policy fixture coverage alone does not prove accepted-game reachability. Include pooled `Produce` and both nonpool `DoOrders` call contexts. |
 | Actual catalog and helper frame / M11/S03/M12/M15/S06 | The M11 model now specifies all three decision helpers and the M12 adapter derives Complete from shaped rows/context. Bind that adapter to actual host PLAYER flags/trader state, catalog addresses and lifetimes at every breakthrough; native source fixtures supply current finite pointer/frame evidence. Establish message/race/cost return and frame conditions, including global identity, research fields and storage lifetimes; separately qualify message packaging/allocation/delivery and escaping calls. |
 | Successful completion and annual integration / M12/M18/M19 | Combine the derived input/frame invariants with scan completion and rank descent to show Finish is Done, with the specified research/global post-state. Compare actual complete annual entry/exit state and saved-turn outputs, including general/slow/dead/crippled/shared-grant cases; preserve current undefined-input and partial-effect boundaries. A terminal model marker or passing standalone provider fixture does not satisfy this criterion. |

@@ -1,5 +1,8 @@
 # M04 — Mouse tracking, cursor and appearance messages
 
+Historical evidence: inspected C11 source at `e3222eb1fbdb01d68067231b5d5ef14a71759b30`.
+The retained fixtures run only against the frozen snapshot; current C++ refinement remains open.
+
 Observed 2026-10-27 at `e3222eb1fbdb01d68067231b5d5ef14a71759b30`, with the
 working collection. This companion specializes [M04-US01](M04-race-design.md#m04-us01),
 [US02](M04-race-design.md#m04-us02) and [US03](M04-race-design.md#m04-us03).
@@ -12,10 +15,10 @@ remain at the entry. Runtime game behavior, source, records and baselines are un
 
 Canonical model: [M04MouseTracking](dafny/M04-mouse-tracking.dfy), reusing S01
 signed/byte arithmetic, M04 native stat/portrait/buffer adapters and initialization
-state, and S04 `LMulDiv`. Source: [raceui.c](../src/ui/raceui.c) named functions
+state, and S04 `LMulDiv`. Source: [raceui.c](https://github.com/madebyjeffrey/sdl-stars/blob/e3222eb1fbdb01d68067231b5d5ef14a71759b30/src/ui/raceui.c) named functions
 above and `RaceWizardDlg1`…`RaceWizardDlg6`;
-[race.c](../src/core/race.c) stat bounds/map/helpers;
-[services.c](../compat/win32/src/services.c) `MulDiv`;
+[race.c](https://github.com/madebyjeffrey/sdl-stars/blob/e3222eb1fbdb01d68067231b5d5ef14a71759b30/src/core/race.c) stat bounds/map/helpers;
+[services.c](https://github.com/madebyjeffrey/sdl-stars/blob/e3222eb1fbdb01d68067231b5d5ef14a71759b30/compat/win32/src/services.c) `MulDiv`;
 [utilgenui.h](../src/ui/utilgenui.h) actual tracking/blit parameter widths.
 The [collection record](README.md#race-mouse-and-message-continuation) reports checks.
 

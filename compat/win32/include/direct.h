@@ -7,5 +7,6 @@
 #else
 int _mkdir(const char *pszPath);
 char *_getcwd(char *pszPath, int cchPath);
+
 #endif
 #endif

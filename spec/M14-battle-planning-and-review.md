@@ -64,7 +64,7 @@ be treated as a separately committed record or as information known to every pla
 
 ### Plan editing and plan lifecycle
 
-[battleui.c](../src/ui/battleui.c) `BattlePlansDlg` opens the selected fleet's
+[battleui.cpp](../src/ui/battleui.cpp) `BattlePlansDlg` opens the selected fleet's
 plan or plan zero. Controls edit the working `btlplan`; dirty entries are written
 and logged on both IDOK and IDCANCEL. Switching plans and copying also flush
 pending work. `Commit` specifies this close behavior. Single-player mode fixes
@@ -75,7 +75,7 @@ classification/tactics remain combat contracts.
 Copy refuses at 15 plans (`CanCopy`), appends a plan, suggests a bounded suffix
 and opens the rename dialog. Rename Cancel does not imply deletion of a copy
 already appended. Plan zero's rename/delete controls are disabled
-(`CanRenameOrDelete`). `FDeleteBattlePlan` in [battle.c](../src/core/battle.c)
+(`CanRenameOrDelete`). `FDeleteBattlePlan` in [battle.cpp](../src/core/battle.cpp)
 warns when fleets use the plan. Decline leaves references intact; acceptance
 shifts subsequent plans down and decrements matching or greater fleet indices.
 A fleet assigned the removed nonzero plan therefore falls to the preceding plan,
@@ -84,7 +84,7 @@ remain E14-1.
 
 ### Load and play a recorded battle
 
-[vcr.c](../src/ui/vcr.c) `BattleVCR`, `BtlDataGet`, `SetVCRBoard`, `VCRDlg` locate
+[vcr.cpp](../src/ui/vcr.cpp) `BattleVCR`, `BtlDataGet`, `SetVCRBoard`, `VCRDlg` locate
 the battle across record blocks, allocate token/damage state and replay recorded
 steps. A missing battle or allocation failure follows its cleanup path. The
 board starts before the first event at step -1; final step is inclusive.
@@ -171,7 +171,7 @@ further decomposition; it is not a claim that their algorithms are proved.
 
 ## 7. Evidence and verification
 
-[battle-plan UI](../src/ui/battleui.c), [replay](../src/ui/vcr.c), [battle units](../tests/unit/test_battle.c) and [Continue workflows](../tests/compat/win32_client_startup.c). Unit combat tests are not exhaustive replay or plan-deletion tests.
+[battle-plan UI](../src/ui/battleui.cpp), [replay](../src/ui/vcr.cpp), [battle units](../tests/unit/test_battle.cpp) and [Continue workflows](../tests/compat/win32_client_startup.cpp). Unit combat tests are not exhaustive replay or plan-deletion tests.
 
 [Collection verification](README.md#remaining-specifications-verification)
 records exact commands and outcomes for this batch. Proofs establish only the

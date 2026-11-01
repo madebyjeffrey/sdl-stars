@@ -93,10 +93,10 @@ cost is not a guarantee of future availability or a base-upgrade quote.
 
 ### 3.1 Browse and availability
 
-Evidence: [buildui.c](../src/ui/buildui.c), `ShipBuilder`, `SlotDlg`,
+Evidence: [buildui.cpp](../src/ui/buildui.cpp), `ShipBuilder`, `SlotDlg`,
 `FillBuildDD`, `FillBuildPartsLB`, `UpdateSlotGlobals`;
-[build.c](../src/core/build.c), `NthValidShdef`, `NthValidEnemyShdef`;
-[parts.c](../src/core/parts.c), `FLookupPart`, `TechStatus`.
+[build.cpp](../src/core/build.cpp), `NthValidShdef`, `NthValidEnemyShdef`;
+[parts.cpp](../src/core/parts.cpp), `FLookupPart`, `TechStatus`.
 Models: `Limit`, `FirstFree`, `Missing`, `TechStatus`, `Lookup`, `CanBuild`.
 
 `FLookupPart` queries primary first in player context, then checks category/item
@@ -110,7 +110,7 @@ it is not an estimated number of years. The complete [native category/trait/hidd
 now has checked contracts, pointer/query effects and current catalog/source
 fixtures. Full caller/context/native memory refinement remains E11-1.
 
-[FCanBuildShdef](M11-design-buildability.md) in [util.c](../src/core/util.c)
+[FCanBuildShdef](M11-design-buildability.md) in [util.cpp](../src/core/util.cpp)
 saves `idPlayer`, performs the signed-hull/byte-item projection, checks hull then
 occupied components for exactly Available, and restores the old context on
 ordinary true/false returns. It has no up-front slot-count/target validator;
@@ -159,7 +159,7 @@ expanded into a claim that all possible malformed hulls are validated here.
 
 Models: `Finish`, `EditResult`; evidence `SlotDlg`, `FCheckQueuedShip`,
 `DestroyAllIshdef`, `DestroyAllIshdefSB`, `RemoveIshdefFromAllQueues` in
-[ship.c](../src/core/ship.c).
+[ship.cpp](../src/core/ship.cpp).
 
 Accept captures the bounded name, resets built/existing counts for the edited
 entry, marks it occupied, recalculates cost, installs it in the proper roster
@@ -180,7 +180,7 @@ production/fleet references cannot be assumed to survive deletion.
 
 ### 3.5 Costs and derived properties
 
-Evidence: [util.c](../src/core/util.c), `UpdateShdefCost`, `GetTrueHullCost`,
+Evidence: [util.cpp](../src/core/util.cpp), `UpdateShdefCost`, `GetTrueHullCost`,
 `FCanBuildShdef`; ship.c `GetTruePartCost`;
 [shared scoring](dafny/M03-scoring.dfy) for `Beam`, `Torpedo`, `Bomb`,
 `Capacitors`, `Power`, `Class`, `HighestWarp`, `Speed`.
@@ -276,7 +276,7 @@ not certify that path.
 
 Evidence: [designer workflow](../tests/compat/win32_designer_workflow.h) exercises
 hull selection, component drag/remove/reinsert, ship/base accept/cancel/delete
-and original-design preservation. [util unit tests](../tests/unit/test_util.c)
+and original-design preservation. [util unit tests](../tests/unit/test_util.cpp)
 exercise armor and RS overflow. Broad regression is additional indirect evidence;
 none establishes all catalog, technology, trait or deletion-cascade combinations.
 

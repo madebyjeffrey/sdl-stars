@@ -30,9 +30,9 @@ Its [evidence](README.md#mass-driver-capability-continuation) supplements the
 controlled-helper matrix described below; full native/annual qualification
 remains open.
 
-Sources: [turn2.c](../src/core/turn2.c) `FBuildObject`, `CreateShip`, `Produce`;
-[build.c](../src/core/build.c) `KillQueuedShips`, `KillQueuedMassPackets`;
-[thing.c](../src/core/thing.c) `LpthNew`; [utilgen.c](../src/core/utilgen.c)
+Sources: [turn2.cpp](../src/core/turn2.cpp) `FBuildObject`, `CreateShip`, `Produce`;
+[build.cpp](../src/core/build.cpp) `KillQueuedShips`, `KillQueuedMassPackets`;
+[thing.cpp](../src/core/thing.cpp) `LpthNew`; [utilgen.cpp](../src/core/utilgen.cpp)
 `Random`; [structs.h](../src/core/structs.h) native planet, design, fleet,
 damage, order and thing layouts; [enums.h](../src/core/enums.h) type/item IDs.
 [Verification](README.md#construction-application-continuation) records actual

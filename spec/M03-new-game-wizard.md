@@ -93,9 +93,9 @@ decision algorithms are separate modules, not additional wizard formulas. Race d
 advantage pricing remain canonical in [M04-race-data-model.md](M04-race-data-model.md) and
 [M04-race-advantage-points.md](M04-race-advantage-points.md).
 
-**Evidence:** [createui.c](../src/ui/createui.c), `NewGameWizard`, `NewGameDlg`, `NewGameDlg2`,
-`NewGameDlg3`; [create.c](../src/core/create.c), `InitNewGamePlr`, `GenerateWorld`, victory
-accessors; [turn2.c](../src/core/turn2.c), `UpdatePlayerScores`. Current code shares globals;
+**Evidence:** [createui.cpp](../src/ui/createui.cpp), `NewGameWizard`, `NewGameDlg`, `NewGameDlg2`,
+`NewGameDlg3`; [create.cpp](../src/core/create.cpp), `InitNewGamePlr`, `GenerateWorld`, victory
+accessors; [turn2.cpp](../src/core/turn2.cpp), `UpdatePlayerScores`. Current code shares globals;
 the module boundaries here do not imply an existing standalone request API.
 
 Generated entities, identities, units and execution lifetimes are specified in
@@ -228,7 +228,7 @@ the race-library password/customization flow. Race versions can be saved while t
 open; wizard Cancel is not a rollback of those library operations.
 
 Page 2 rejects non-Cancel navigation if the first player slot is empty in editable mode,
-including Back. Read-only mode bypasses this check. Source: [createui.c](../src/ui/createui.c),
+including Back. Read-only mode bypasses this check. Source: [createui.cpp](../src/ui/createui.cpp),
 `NewGameDlg2`.
 
 ### 3.3 Finish and normalization order
@@ -268,7 +268,7 @@ RNG and then return 0. Integer division truncates toward zero; for nonnegative i
 floor. Preserve explicit narrowing and unsigned operations where reproducing the C
 implementation. Values shown as percentages are whole percentage points unless stated otherwise.
 
-[utilgen.c](../src/core/utilgen.c), `Random`, uses two state integers:
+[utilgen.cpp](../src/core/utilgen.cpp), `Random`, uses two state integers:
 
 ```text
 k  = trunc(s1 / 53668)
@@ -292,7 +292,7 @@ desktop entry state or subsequent branch-dependent draws.
 `LMulDiv(a,b,c)` computes the product in signed 64 bits, divides with rounding half away from
 zero, and returns `-1` for zero denominator or result outside `[-2147483647,2147483647]`. For
 the positive calculations here it is `floor((a*b + floor(c/2))/c)`. See
-[native.c](../src/platform/native.c), `LMulDiv`.
+[native.cpp](../src/platform/native.cpp), `LMulDiv`.
 
 ### 4.2 Default roster and minimum years
 
@@ -432,8 +432,8 @@ achieve an ordinary numeric victory.
 
 ### 4.5 Score and resource mathematics used by victory
 
-Source: [util.c](../src/core/util.c), `CalcPlayerScore`, `WPackLong`, `LComputePower`;
-[planet.c](../src/core/planet.c), `CResourcesAtPlanet`; [battle.c](../src/core/battle.c),
+Source: [util.cpp](../src/core/util.cpp), `CalcPlayerScore`, `WPackLong`, `LComputePower`;
+[planet.cpp](../src/core/planet.cpp), `CResourcesAtPlanet`; [battle.cpp](../src/core/battle.cpp),
 `SpdOfShip`.
 
 Population `q` in these formulas is the internal quantity in **hundreds of colonists**, not
@@ -531,7 +531,7 @@ mistaken for a hull-name or hull-size classification.
 
 ### 4.6 Slower research and score visibility
 
-From [research.c](../src/core/research.c), `GetTechLevelCost`, let `T` be the sum of the
+From [research.cpp](../src/core/research.cpp), `GetTechLevelCost`, let `T` be the sum of the
 player's current six tech levels. The base for target level `L` is `B = 10*T + costs[L]`, with
 the literal table for levels 0–26:
 
@@ -553,7 +553,7 @@ Its normal-domain refinement keeps this cost table/formula authoritative.
 
 Public Player Scores exposes opponents' score records when `turn >= 20` (year 2420). Own scores,
 dead-player scores, and scores after game over are written regardless of this switch. See
-[save.c](../src/core/save.c), score-record writing. The alliances flag is consumed by AI
+[save.cpp](../src/core/save.cpp), score-record writing. The alliances flag is consumed by AI
 targeting/relations; it is not a numerical multiplier or a shared victory condition. No Random
 Events suppresses selected events and generation features; it does not disable the RNG or random
 planets.
@@ -569,7 +569,7 @@ context. The former §4.7.1–§4.7.9 rules moved to M05 §4.1–§4.9.
 
 ### 4.8 Batch input is a separate entry point
 
-`GenNewGameFromFile` in [create.c](../src/core/create.c) accepts the same semantic universe
+`GenNewGameFromFile` in [create.cpp](../src/core/create.cpp) accepts the same semantic universe
 settings and invokes the generator, but is not the desktop wizard. It starts from zeroed state
 and does not inherit the desktop victory defaults. The input has a 31-byte nonempty UTF-8 title,
 numeric size/density/distance in the ranges above, seven boolean flags, and 1–16 players. An
@@ -619,7 +619,7 @@ Before Finish destroys the prior active game, Cancel/dialog failure restores the
 editable mode and restores idle-check state. It does not restore the RNG sequence or undo
 race-library saves performed during customization. Read-only exit does not replace `GAME`.
 
-[FChooseLibraryGameName](../src/ui/libraryui.c) validates a portable available library name and
+[FChooseLibraryGameName](../src/ui/libraryui.cpp) validates a portable available library name and
 reserves a new directory before closing the wizard. Existing managed games are not overwritten.
 A collision can offer a revision name; backing out leaves setup available. Empty page-1 title
 falls back to the existing basename in the current UI; the title text control enforces its byte
@@ -712,16 +712,16 @@ Primary sources are the current implementation, not historical manuals:
 
 | Evidence | Relevant functions / data |
 | --- | --- |
-| [createui.c](../src/ui/createui.c) | Wizard, three pages, drawing, controls, normalization |
-| [create.c](../src/core/create.c), [create.h](../src/core/create.h) | Defaults, VC transforms, generation, batch entry |
+| [createui.cpp](../src/ui/createui.cpp) | Wizard, three pages, drawing, controls, normalization |
+| [create.cpp](../src/core/create.cpp), [create.h](../src/core/create.h) | Defaults, VC transforms, generation, batch entry |
 | [enums.h](../src/core/enums.h), [structs.h](../src/core/structs.h) | Logical domains and existing state |
-| [utilgen.c](../src/core/utilgen.c), [native.c](../src/platform/native.c) | RNG, sort compatibility, rounded multiply/divide |
-| [globals.c](../src/core/globals.c) | Capacity/constants tables |
-| [turn2.c](../src/core/turn2.c), [util.c](../src/core/util.c) | Victory, scores, power and count compression |
-| [planet.c](../src/core/planet.c), [battle.c](../src/core/battle.c) | Resource production, habitat, design speed |
-| [research.c](../src/core/research.c), [save.c](../src/core/save.c) | Research multiplier and public score gate |
-| [thing.c](../src/core/thing.c), [ship.c](../src/core/ship.c) | Wormhole placement checks and starting fuel |
-| [libraryui.c](../src/ui/libraryui.c) | Reservation, completion validation and cleanup |
+| [utilgen.cpp](../src/core/utilgen.cpp), [native.cpp](../src/platform/native.cpp) | RNG, sort compatibility, rounded multiply/divide |
+| [globals.cpp](../src/core/globals.cpp) | Capacity/constants tables |
+| [turn2.cpp](../src/core/turn2.cpp), [util.cpp](../src/core/util.cpp) | Victory, scores, power and count compression |
+| [planet.cpp](../src/core/planet.cpp), [battle.cpp](../src/core/battle.cpp) | Resource production, habitat, design speed |
+| [research.cpp](../src/core/research.cpp), [save.cpp](../src/core/save.cpp) | Research multiplier and public score gate |
+| [thing.cpp](../src/core/thing.cpp), [ship.cpp](../src/core/ship.cpp) | Wormhole placement checks and starting fuel |
+| [libraryui.cpp](../src/ui/libraryui.cpp) | Reservation, completion validation and cleanup |
 | [library ADR](../docs/adr/0001-desktop-managed-libraries.md), [UTF-8 ADR](../docs/adr/0002-utf8-application-text.md) | Managed-game/race vocabulary and text policy |
 
 Known implementation details requiring a deliberate decision in a new port:
@@ -803,9 +803,9 @@ Trace: [Finish ordering](#33-finish-and-normalization-order),
 [failure and cancellation](#5-cancellation-errors-and-recovery),
 [M01 publication](M01-game-library.md#32-names-and-new-game-publication),
 [M05 generation](M05-universe-creation.md), [canonical setup contracts](M03-new-game-specification.dfy).
-Evidence: [createui.c](../src/ui/createui.c) `NewGameWizard`,
-[libraryui.c](../src/ui/libraryui.c) `FChooseLibraryGameName`, `FFinishLibraryGame`,
-[create.c](../src/core/create.c) `GenerateWorld`. M03-US01–US03 remain the owning goals.
+Evidence: [createui.cpp](../src/ui/createui.cpp) `NewGameWizard`,
+[libraryui.cpp](../src/ui/libraryui.cpp) `FChooseLibraryGameName`, `FFinishLibraryGame`,
+[create.cpp](../src/core/create.cpp) `GenerateWorld`. M03-US01–US03 remain the owning goals.
 
 ```mermaid
 sequenceDiagram

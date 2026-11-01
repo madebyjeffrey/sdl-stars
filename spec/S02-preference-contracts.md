@@ -20,12 +20,12 @@ This inventory covers all application calls to `GetPrivateProfile*` and
 The current bare profile filename is **StarsUtf8.ini**. Unused string IDs such as
 SoundFX, Music, Tracks and GlobalSettings do not establish live preferences.
 
-Sources: [init.c](../src/ui/init.c) `ReadIniSettings`, `GetIniWinRc`,
-`ReadIniTileSettings`; [mdi.c](../src/ui/mdi.c) `WriteIniSettings`,
-`SetWindowIniString`; [fileui.c](../src/ui/fileui.c) `AddMRUFile`;
-[libraryui.c](../src/ui/libraryui.c) recent-file deletion and Continue;
-[host.c](../src/host/host.c) `FIniValue`, `LIniInt`, `FReadHostIni`;
-[profile.c](../compat/win32/src/profile.c); [field widths](../src/core/structs.h).
+Sources: [init.cpp](../src/ui/init.cpp) `ReadIniSettings`, `GetIniWinRc`,
+`ReadIniTileSettings`; [mdi.cpp](../src/ui/mdi.cpp) `WriteIniSettings`,
+`SetWindowIniString`; [fileui.cpp](../src/ui/fileui.cpp) `AddMRUFile`;
+[libraryui.cpp](../src/ui/libraryui.cpp) recent-file deletion and Continue;
+[host.cpp](../src/host/host.cpp) `FIniValue`, `LIniInt`, `FReadHostIni`;
+[profile.cpp](../compat/win32/src/profile.cpp); [field widths](../src/core/structs.h).
 
 Formal strings denote C string contents with ASCII syntax. For a byte buffer,
 stop at its first NUL before invoking the string model. The source uses C locale
@@ -270,7 +270,7 @@ as lowercase hex, but a universal read/write identity round trip is consequently
 not claimed. Its formatting adapter remains open.
 
 These are persisted preference fields, not validated live-object references.
-`RestoreSelection` in [mdi.c](../src/ui/mdi.c) checks game/player identity,
+`RestoreSelection` in [mdi.cpp](../src/ui/mdi.cpp) checks game/player identity,
 looks up fleets/owned planets, falls back to the home planet or another object,
 and restores eligible messages/tutorial effects. M07/M06 own that consuming
 selection lifecycle, M15/M16 its message/tutorial handoffs. The
@@ -312,7 +312,7 @@ The modeled `disk` is the nine persisted key values under isolated, atomic
 per-key success/failure outcomes from the profile contract. It is not a proof of
 OS durability, path classification, multi-process isolation or a nine-key
 transaction. M01 owns game deletion and `ContinueDeleted`; its metadata-based
-Continue selection is distinct from this File1/MRU list. Source-extracted
+Continue selection is distinct from this File1/MRU list. Linked production
 [state witnesses](../tests/spec/check_s02_state_source.py) cover parsing,
 compaction, insertion and every deletion-write failure stage with operation
 doubles, including memory/disk disagreement after failure.
@@ -360,7 +360,7 @@ clear their dirty flags. Actual per-key publication uses the profile contract.
 Writer projections require bounded native state: five transport actions,
 production count 0–12, boolean research flag and NUL-terminated names fitting
 twelve bytes. They do not specify corrupted out-of-range globals.
-The [source-extracted preset checks](../tests/spec/check_s02_presets_source.py)
+The [linked production preset checks](../tests/spec/check_s02_presets_source.py)
 exercise both source blocks and source-defined packed structures, including all
 65,536 production words. Names are byte strings after profile UTF-8 truncation;
 these codecs do not replace S04's byte-capacity contract with character counts.
@@ -401,19 +401,19 @@ OS placement, changed-monitor recovery and display qualification.
 | <a id="s02-contract-ac01"></a>S02-CONTRACT-AC01 / S02-US03, S02-US04 | Given duplicate section A whose first block lacks k, lookup must not find k in a later A block; quoted values preserve interior spaces. | `Lookup`, `Unquote`, `LookupVectors`; profile.c. |
 | <a id="s02-contract-ac02"></a>S02-CONTRACT-AC02 / S02-US04 | Empty returned integer text uses default; nonempty nonsense gives 0; -0x10 gives unsigned 4294967280; decimal accumulation wraps at 2^32. | `Integer`, `Digits`, `IntegerVectors`; existing profile adapter tests cover wrap/default/quotes. |
 | <a id="s02-contract-ac03"></a>S02-CONTRACT-AC03 / S02-US02 | Deleting first duplicate k exposes the later duplicate; deleting section A removes its non-section rows and preserves following section B. | `Change`, `ChangeKey`, `LookupVectors`; native whole-file publication remains separate. |
-| <a id="s02-contract-ac04"></a>S02-CONTRACT-AC04 / S02-US02 | Given tiles [A,B,C], reading C yields [C,B,A]; reading Cc does not undo C's expanded state; repeated stars cap newly assigned columns at 1 and raise omitted tiles. | `ReadTiles`, `PrefixPreserved`, `LayoutVectors`; [source-extracted C fixtures](../tests/spec/check_s02_source.py). |
-| <a id="s02-contract-ac05"></a>S02-CONTRACT-AC05 / S02-US01, S02-US04 | Invalid placement yields sentinel/default flags. Valid four-byte chunk 1-2- decodes to -12; no strict sign-position rule is invented. | `ReadPlacement`, `Coord`, `LayoutVectors`; [source-extracted C fixtures](../tests/spec/check_s02_source.py). |
+| <a id="s02-contract-ac04"></a>S02-CONTRACT-AC04 / S02-US02 | Given tiles [A,B,C], reading C yields [C,B,A]; reading Cc does not undo C's expanded state; repeated stars cap newly assigned columns at 1 and raise omitted tiles. | `ReadTiles`, `PrefixPreserved`, `LayoutVectors`; [linked production C fixtures](../tests/spec/check_s02_source.py). |
+| <a id="s02-contract-ac05"></a>S02-CONTRACT-AC05 / S02-US01, S02-US04 | Invalid placement yields sentinel/default flags. Valid four-byte chunk 1-2- decodes to -12; no strict sign-position rule is invented. | `ReadPlacement`, `Coord`, `LayoutVectors`; [linked production C fixtures](../tests/spec/check_s02_source.py). |
 | <a id="s02-contract-ac06"></a>S02-CONTRACT-AC06 / S02-US04 | Loading raw logging 2 differs from NZ16 option 2; graph 16 becomes 0; invalid scan mode clears own-ship filter only. | `BitFlag`, `Nonzero16`, `Graph`, `Scan`, `ShipFilter`; structs.h and ReadIniSettings. |
 | <a id="s02-contract-ac07"></a>S02-CONTRACT-AC07 / S02-US03, S02-US04 | For a two-byte name and capacity 3, enumeration writes three NULs and reports 1; empty list leaves bytes beyond its two sentinels untouched. Scalar copying never splits UTF-8. | `List`, `Scalar`, `BufferVectors`, `PrefixValid`; [native source cases](../tests/spec/check_s02_io_source.py). |
 | <a id="s02-contract-ac08"></a>S02-CONTRACT-AC08 / S02-US04 | All-null write arguments return false without a new error; invalid section/key syntax differs from an allowed empty key/value. | `CheckRequest`, `WriteArguments`, `BufferVectors`; profile.c validation branch. |
-| <a id="s02-contract-ac09"></a>S02-CONTRACT-AC09 / S02-US02, S02-US04 | Save emits one BOM and necessary between-row LF. Failure stops later stages, attempts appropriate cleanup, and does not claim successful rename; BOM failure leaves error assignment unchanged. | `Serialized`, `Stages`, `Execute`, `FailedDoesNotPublish`; [source failure injection](../tests/spec/check_s02_save_source.py), separate from real OS faults. |
+| <a id="s02-contract-ac09"></a>S02-CONTRACT-AC09 / S02-US02, S02-US04 | Save emits one BOM and necessary between-row LF. Failure stops later stages, attempts appropriate cleanup, and does not claim successful rename; BOM failure leaves error assignment unchanged. | `Serialized`, `Stages`, `Execute`, `FailedDoesNotPublish`; [linked failure fixture](../tests/compat/profile_save.cpp), [runner](../tests/spec/check_s02_save_source.py); separate from real OS faults. C04's [migration receipt](../docs/CPP-C-IMPLEMENTATION.md#c04-first-effect-family-and-c05-integration) accounts for the preserved domain and oracle. |
 | <a id="s02-contract-ac10"></a>S02-CONTRACT-AC10 / S02-US03, S02-US04 | The host can find a key in a later duplicate section, ignores a malformed leading section without resetting state, preserves quotes and bounds the returned value. | `S02HostProfile.Lookup`, `HostVectors`; [source cases](../tests/spec/check_s02_io_source.py). |
 | <a id="s02-contract-ac11"></a>S02-CONTRACT-AC11 / S02-US04 | A missing host key uses default; an empty, quoted or 0x-prefixed value gives decimal zero. Conversion beyond native long range is outside the defined domain, not a guaranteed fallback. | `Decimal`, `Integer`, `HostVectors`; native `LIniInt` cases and explicit overflow boundary. |
-| <a id="s02-contract-ac12"></a>S02-CONTRACT-AC12 / S02-US02, S02-US04 | Short selection clears only kind; NQx updates player to 15 while retaining object. A valid kind/player parses and narrows the object suffix. | `ReadSelection`, `ShortSelectionRetainsIdentity`, `StateVectors`; extracted ReadIniSettings cases. |
+| <a id="s02-contract-ac12"></a>S02-CONTRACT-AC12 / S02-US02, S02-US04 | Short selection clears only kind; NQx updates player to 15 while retaining object. A valid kind/player parses and narrows the object suffix. | `ReadSelection`, `ShortSelectionRetainsIdentity`, `StateVectors`; linked preference-parser cases. |
 | <a id="s02-contract-ac13"></a>S02-CONTRACT-AC13 / S02-US04 | GameID 1A gives 16 while 1a gives 26; 7fffffff is defined and 80000000 exceeds signed arithmetic. | `ReadIdentity`, `IdentityLoop`, `StateVectors`; native cases exclude undefined-overflow inputs. |
 | <a id="s02-contract-ac14"></a>S02-CONTRACT-AC14 / S02-US02 | A short startup File1 read and valid File2 yield no startup file, retain prior base, and pack File2 first. The separate second File1 read need not equal the first. Adding a new path attempts all nine writes even after one fails. | `LoadRecent`, `AddRows`, `Add`; source state cases. |
 | <a id="s02-contract-ac15"></a>S02-CONTRACT-AC15 / S02-US02, S02-US04 | Removing File1 preserves later positions. A failed per-key deletion write leaves that row changed in memory and earlier writes published; a failed final redundant File1 write still returns false. | `Removed`, `DeleteWrites`, `DeleteSuccessInstalls`; source cases at all ten failure stages. M01 owns deletion outcome. |
-| <a id="s02-contract-ac16"></a>S02-CONTRACT-AC16 / S02-US02, S02-US04 | Five valid transport action/quantity groups and a bounded name round-trip; invalid prefix or length clears the slot. | `ReadTransport`, `WriteTransport`, `TransportRoundTrip`; extracted native codec cases; M10 owns application. |
+| <a id="s02-contract-ac16"></a>S02-CONTRACT-AC16 / S02-US02, S02-US04 | Five valid transport action/quantity groups and a bounded name round-trip; invalid prefix or length clears the slot. | `ReadTransport`, `WriteTransport`, `TransportRoundTrip`; linked native codec cases; M10 owns application. |
 | <a id="s02-contract-ac17"></a>S02-CONTRACT-AC17 / S02-US02, S02-US04 | Packed production word 65535 normalizes to mine quantity 1; zero-row empty-name text is rejected, then P1 becomes a valid localized default. Five stored slots coexist with four UI choices. | `Normalize`, `ProductionRoundTrip`, `LoadProduction`, `PresetVectors`; exhaustive native packed-word cases and produceui.c control loops. |
 
 ## Remaining boundaries and verification

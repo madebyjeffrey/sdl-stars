@@ -1,10 +1,14 @@
 # Native port
 
 The SDL client now has a native Windows x64 build using the same source wrapper
-as Linux/macOS, and is the only maintained desktop build. Its SDK filesystem bridge is isolated in
-`compat/win32/src/platform_windows.c`, and its wrapper symbols are namespaced
-to avoid SDK import collisions. Native Unicode open/save lives in the separate
-`filedialog_windows_sdk.c` bridge. This does not change disk layouts or core
+as Linux/macOS, and is the only maintained desktop build. Its filesystem service is isolated in
+`src/platform/fileio.cpp`. Raw wrapper operations use the actual C++ `win32::`
+namespace on every platform; `ui::` calls deliver captured callback errors after
+runtime cleanup. Wrapper handle/record tags are distinct from SDK types, with
+shared core/UI geometry in `windowtypes.h`. Native Unicode open/save lives in
+`filedialog_windows_sdk.cpp`, and native process services in `native_windows.cpp`.
+These isolated SDK sources do not include application records or wrapper headers.
+This does not change disk layouts or core
 native I/O. The shared UI has no native-client fallback branches; captions and
 legacy input use the wrapper encoding boundary. See [Windows SDL3](WINDOWS-SDL3.md) for builds and qualification.
 
@@ -21,21 +25,87 @@ is committed. Metadata is published by replacing a flushed temporary file throug
 `ReplaceNativeFile`; Windows uses `MoveFileExW` so failed replacement preserves
 previous metadata. The command-line host never resolves or requires this library.
 
-The reconstructed sources build as a native Win32/Win64 executable with
-MinGW, and the game code alone builds as `stars-host` with any C11 compiler
-(see Platforms below). This document covers what the port changes and what
-it must keep.
+The desktop client uses the SDL-backed Win32 wrapper on every supported platform.
+The shared game also builds as `stars-host`, independently of SDL. Owned production
+and ordinary test translation units compile as ISO C++20 with `.cpp` extensions
+and their original basenames; AppKit glue compiles as Objective-C++20. Independent C storage
+fixtures, real SDK contract tests and third-party libraries remain separate.
+[Maintained C++ policy](CPP-POLICY.md) records the precise continuing exceptions;
+[Milestone C qualification](CPP-C10-QUALIFICATION.md) records the final audit.
 
-SDL builds also compile `src/platform/filesystem.cpp` as C++17, exposing only
-the C declarations in `filesystem.h`. The profile and picker test fixtures use
-this bridge for temporary directories, directory creation, canonical paths and
-non-recursive removal. Inputs and outputs are strict UTF-8; Windows path
-conversion uses `std::filesystem::u8path`/`generic_u8string`, and exceptions never cross
-the C ABI. Output buffers are caller-owned, must not overlap input paths, and
-remain empty on failure. Returned paths use forward slashes, matching the SDL
-wrapper's canonical path contract. Temporary directories are claimed with atomic directory
-creation rather than a temporary-file-name/delete sequence. The game and wrapper
-remain C11; host-only builds require no C++ compiler.
+Application headers expose native C++ declarations. The platform file and
+filesystem interfaces retain their buffer/handle shapes and error contracts.
+Inputs and outputs are strict UTF-8; `path_utf8.h` copies application bytes into
+C++20 UTF-8 code units and copies returned code units back to char storage.
+File-service exceptions are contained to preserve the existing failure receipts.
+Output buffers are caller-owned, must not overlap input paths, and remain empty
+on failure. Canonical paths use forward slashes. Temporary directories are
+claimed atomically. Native adapters still supply exclusive creation, sharing,
+exact private modes, durable writes and live-handle identity/truncation.
+CMake preserves signed `char`, binary64 operation boundaries and contraction/
+fast-math settings. Owned production disables language extensions and enforces
+strict diagnostics. Explicit record codecs preserve wire layouts independently
+of the inventoried private runtime packing and physical arena geometry; the
+[B ledger](CPP-B-IMPLEMENTATION.md) records final platform qualification.
+
+Stored enums have explicit C++ underlying types (`uint16_t`, `int16_t` or
+`uint32_t`) with their original constant and type names. Text/data generators
+emit native C++ declarations and `constinit` catalogs. Historical integer/wire
+inputs are frozen in `tests/reference/cpp-a`; 145 enum storage contracts and
+259 layout/prefix measurements remain checked independently. The application
+has no parallel C declaration branch. `STARS_CONSTANTS` is removed.
+Integer fields, indexes, masked identifiers and
+arithmetic cross into enum types through explicit casts. Partial switches retain
+explicit no-op defaults; splitter masks switch on their underlying integer.
+`test_enum_abi` requires real C++ enums with the captured underlying type and
+checks C/C++ argument/return values, callbacks and pointer writes for all 145
+stored types using six boundary inputs each. The fixed underlying type admits
+all of its storage bit patterns, including legacy sentinels and combined flags.
+`test_record_layout` retains all 259 frozen C size/prefix measurements.
+Codecs now separate migrated file bytes from runtime storage: six task/order
+types retain their widths while requiring explicitly checked two-byte runtime
+alignment. All remaining alignment comparisons stay exact. `RTFLEETIDS` is an aligned call-scoped byte-span view; its `rgid`
+offset still matches the frozen zero-prefix measurement. The wire prefix is
+explicitly zero, independently of the runtime view size. The full native and host regressions check serialized results.
+
+Memory and stream failures use `StarsError` and normal C++ stack unwinding.
+The 24 former jump-recovery sites now have operation-specific catches; the
+`penvMem` global and jump-buffer alias are removed. `StarsRecoveryScope` records
+only whether optional record validation is inside a recoverable operation, so
+standalone validators retain their existing status-return behavior. It holds
+no destination address. Nested scopes restore that state automatically.
+`StarsRestore` and `StarsFileGuard` provide non-throwing cleanup; resource
+release does not substitute for checked writes, publication or game-state
+rollback.
+
+The SDL runtime calls application window/dialog/timer/inspector callbacks
+through C++ containment adapters. A thrown failure becomes pending state, an
+active modal dialog ends, and the dispatcher finishes its counters, window
+and owner cleanup. Owned UI callers explicitly use the typed functions in
+`wincompat_calls.h` (`ui::SendMessage`, `ui::DialogBox`, `ui::DestroyWindow`, etc.).
+These deliver pending failures after the raw operation returns; internal runtime
+calls keep the raw APIs so their outer cleanup finishes before delivery.
+API macros no longer insert error delivery into application calls. Native
+file-picker pumps cancel on a pending failure too. Desktop and host entrypoints
+contain remaining failures; foreign entrypoints and callbacks contain exceptions.
+The callback fault test exercises nested dialogs, owner re-enabling, allocation
+exceptions, timers, synchronous delivery, text/position/enable notifications and
+automatic destruction.
+
+Compatibility numeric values now live in typed `win32::` declarations; word/byte,
+message and color conversions use typed functions with the original scalar widths.
+The core shares only the SDL-independent values and word helpers. Procedure
+instances and `Yield` no-ops are removed after checking their argument effects.
+`ui::RequestQuit` directly preserves the old unsupported-logoff diagnostic and
+application-quit behavior. The [C07 macro ledger](CPP-C07-MACROS.md) records each
+retained preprocessing role and conversion contract.
+
+Owned game/UI calls receive `APPSESSION &` explicitly. The actual host and UI
+owners retain their pre-main lifetime; the former global reference aliases and
+owner getters are removed. Fixed-signature callbacks borrow their target's
+context, including queued thread timers, and restore the caller on nested/error
+paths. The core's UI borrow is an incomplete type, keeping the host SDL-free.
+See the [C08 state ledger](CPP-C08-STATE.md) for entry and lifetime contracts.
 
 Each native-port shim is marked `NATIVE` in the source and described in
 detail in [WIN16-PARITY.md](WIN16-PARITY.md).
@@ -61,22 +131,32 @@ detail in [WIN16-PARITY.md](WIN16-PARITY.md).
   locals (marked `NATIVE`). Keep this split when adding Win32 calls.
   `POINT16` is in `native.h`; its conversions (`GetCursorPos16`,
   `ScreenToClient16` and the like) are in `nativeui.h`.
-- **Other helpers** (`nativeui.c`): `GetTextExtent` keeps Win16's packed
+- **Other helpers** (`nativeui.cpp`): `GetTextExtent` keeps Win16's packed
   width/height result, which about 140 callers split with `LOWORD`/`HIWORD`;
   `FrameWndProcDeferred` posts the frame's restore and maximize commands back
   to the message loop so Wine's macOS driver can't deadlock the
   load-or-unsubmit `MessageBox`.
-- **Platform layer** (`native.h`/`native.c`): the game code reaches files,
+- **Platform layer** (`native.h`/`native.cpp`): the game code reaches files,
   the clock and directories only through `HfOpenFile`, `CbReadFile`,
   `CbWriteFile`, `LSeekFile`, `CbFileSize`, `CloseFile`, `FFileExists`,
   `FFileReadOnly`, `MakeDir`, `DwTickCount` and `GetDateTimeSz`, and builds
-  paths with `chDirSep`. Windows strictly converts UTF-8 paths to UTF-16 and
-  uses CRT descriptors through `_wsopen`, `_read`, `_write` and related calls;
-  backups/cleanup and native text-file opens use the same path boundary through
-  `RenameNativeFile`, `RemoveNativeFile` and `PfOpenNativeFile`. POSIX uses `open`, `read` and the like,
-  which have no share modes, so a file another program has open is not
-  refused. The game's heaps (`memory.c`) come from `calloc` and `realloc`.
-- **Formatting and rounding** (`native.c`): the game code formats with
+  paths with `chDirSep`. The adapters forward to `fileio.h`/`fileio.cpp`, shared
+  with profiles, help, PDF output, inspection and managed-library operations.
+  `std::fstream` owns ordinary binary streams and `std::filesystem` owns paths,
+  directory enumeration and publication. Opaque stream adapters contain
+  exceptions and expose errors through return values and `errno`. Small owned
+  tokens retain the game's `int16_t` handle storage.
+  C++20 cannot express exclusive creation, exact private modes, sharing,
+  descriptor identity, fsync or live-handle truncation; narrow native adapters
+  preserve those contracts inside the service. Windows converts UTF-8 paths
+  through `u8path` to UTF-16. POSIX retains its existing lack of share modes.
+  Temporary publication checks flush, sync and close before replacing a path.
+  Raw game writes flush before returning to preserve immediate error reporting
+  through the legacy void close interface. Process logging and third-party
+  libraries' internally owned files remain outside this service. The game's
+  heaps (`memory.cpp`) retain their `calloc`/`realloc` allocation geometry under an
+  explicit chain owner and C++20 typed lifetime operations.
+- **Formatting and rounding** (`native.cpp`): the game code formats with
   `CchSprintf`, which reads `%ld` as 32 bits like Win32 `wsprintf` (the
   string table passes `int32_t` to `%ld`; `long` is 64 bits on 64-bit POSIX)
   and, like `wsprintf`, writes at most 1024 bytes,
@@ -99,7 +179,7 @@ detail in [WIN16-PARITY.md](WIN16-PARITY.md).
   leaves a pending quit message for the outer loop without opening another page.
   Modal dialogs request native input focus after painting and showing, then
   assign logical control focus; no-activate windows are excluded.
-- **Toolchain parity (keep):** `qsort16` (`native.c`) reproduces the
+- **Toolchain parity (keep):** `qsort16` (`native.cpp`) reproduces the
   Win16 CRT's tie order. The remaining casts and operation boundaries are
   deliberate, so don't simplify them without checking turn results.
 - **Warnings kept** (`-Wall -Wextra -Wno-unused-parameter`, 118):

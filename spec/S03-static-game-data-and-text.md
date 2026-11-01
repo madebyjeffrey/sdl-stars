@@ -218,7 +218,7 @@ further decomposition; it is not a claim that their algorithms are proved.
 
 ## 7. Evidence and verification
 
-[data generator](../data/datagen.py), [text generator](../text/textgen.py), [runtime strings](../src/core/strings.c), [schemas](../src/core/structs.h), [catalog inventory](S03-catalog-inventory.md), and [game text boundaries](../docs/UNICODE-BOUNDARIES.md). Generated tables are checked by the normal build; formal witnesses cover selected mapping/size contracts.
+[data generator](../data/datagen.py), [text generator](../text/textgen.py), [runtime strings](../src/core/strings.cpp), [schemas](../src/core/structs.h), [catalog inventory](S03-catalog-inventory.md), and [game text boundaries](../docs/UNICODE-BOUNDARIES.md). Generated tables are checked by the normal build; formal witnesses cover selected mapping/size contracts.
 
 [Collection verification](README.md#remaining-specifications-verification)
 records exact commands and outcomes for this batch. Proofs establish only the

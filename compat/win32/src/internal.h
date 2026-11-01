@@ -1,23 +1,25 @@
 #ifndef STARS_COMPAT_INTERNAL_H
 #define STARS_COMPAT_INTERNAL_H
-#include "test_impl.h"
 #include <windows.h>
+#include <callbackcontext.h>
 #include "encoding.h"
+#include "errors.h"
+#include "fileio.h"
+#include "ownership.h"
 #include <SDL3/SDL.h>
 #include "platform.h"
+void CompatAbortCallback(HWND hwnd) noexcept;
+
 typedef struct COMPATPRINT COMPATPRINT;
-typedef struct COMPATASYNCPOST {
-    HWND hwnd;
-    UINT msg;
-    WPARAM wParam;
-    LPARAM lParam;
-} COMPATASYNCPOST;
-#define COMPAT_ASYNC_POST_CODE 0x53544152
+void CompatConsumeAsyncMessage(const SDL_Event *event);
+void CompatStartAsyncMessages() noexcept;
+void CompatStopAsyncMessages() noexcept;
+inline constexpr auto COMPAT_ASYNC_POST_CODE = 0x53544152;
 HDC HdcCompatPrinter(COMPATPRINT *lpprint, int cx, int cy);
 COMPATPRINT *LpCompatPrinter(HDC hdc);
 SDL_Surface *LpCompatPrinterSurface(HDC hdc);
 int ICompatPrinterCaps(COMPATPRINT *lpprint, int index);
-void CompatDeletePrinter(COMPATPRINT *lpprint);
+void CompatDeletePrinter(COMPATPRINT *lpprint) noexcept;
 BOOL FCompatPrinterBusy(COMPATPRINT *lpprint);
 void CompatSetDialogError(DWORD dw);
 
@@ -25,8 +27,8 @@ typedef struct COMPATFONT COMPATFONT;
 typedef struct COMPATLIST COMPATLIST;
 typedef struct COMPATTOOLBAR COMPATTOOLBAR;
 void CompatDestroyToolbar(HWND hwnd);
-LRESULT CALLBACK CompatToolbarProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
-LRESULT CALLBACK CompatToolbarTipProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
+LRESULT  CompatToolbarProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
+LRESULT  CompatToolbarTipProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
 typedef struct COMPATCOMBO {
     HWND hwndPopup, hwndEdit, hwndCapture;
     WNDPROC lpfnEdit;
@@ -37,7 +39,7 @@ typedef struct COMPATSCROLL { int iMin, iMax, iPos; UINT cPage; BOOL fDisable; }
 typedef struct COMPATFONTDATA { const BYTE *rgb; size_t cb; } COMPATFONTDATA;
 extern const COMPATFONTDATA rgCompatFontData[12];
 COMPATFONT *LpNewCompatFont(const LOGFONTA *lplf);
-void FreeCompatFont(COMPATFONT *lpfont);
+void FreeCompatFont(COMPATFONT *lpfont) noexcept;
 BOOL FCompatFontSize(COMPATFONT *lpfont, LPCSTR psz, int cch, LPSIZE lpsize);
 BOOL FCompatFontMetrics(COMPATFONT *lpfont, LPTEXTMETRICA lptm);
 BOOL FCompatFontDraw(COMPATFONT *lpfont, LPCSTR psz, int cch, const INT *rgdx,
@@ -52,23 +54,30 @@ void CompatShutdownFonts(void);
 typedef struct COMPATCLASS {
     WNDCLASSA wc;
     ATOM atom;
-    char *pszClass;
-    char *pszMenu;
-    BYTE *rgbExtra;
+    NATIVEOWNER<char, SDL_free> pszClass;
+    NATIVEOWNER<char, SDL_free> pszMenu;
+    NATIVEARRAYOWNER<BYTE, std::free> rgbExtra;
     struct COMPATCLASS *lpNext;
 } COMPATCLASS;
 
-struct HWND__ {
+// These native deleters keep member types stable across private SDK test redirects.
+void FreeCompatSurface(SDL_Surface *lp) noexcept;
+void FreeCompatWindow(SDL_Window *lp) noexcept;
+void FreeCompatRenderer(SDL_Renderer *lp) noexcept;
+void FreeCompatTexture(SDL_Texture *lp) noexcept;
+
+struct win32::HWND__ {
     COMPATCLASS *lpclass;
-    SDL_Window *lpWindow;
+    NATIVEOWNER<SDL_Window, FreeCompatWindow> lpWindow;
     SDL_WindowID id;
     uint64_t idInspect;
     WNDPROC lpfnWndProc;
+    void *lpvCallbackContext;
     LONG_PTR lUserData, idChild;
     HWND hwndParent, hwndOwner, hwndRestoreFocus;
     HMENU hmenu;
     HBITMAP hbmpMenu;
-    RECT *rgrcMenu;
+    NATIVEARRAYOWNER<RECT, std::free> rgrcMenu;
     int cMenu, cyMenu, cxMenu, iMenuHot;
     WPARAM vkMenuSuppress;
     BOOL fMenuDirty, fMenuLayoutDirty, fCreated, fMenuAltUsed;
@@ -115,22 +124,23 @@ struct HWND__ {
     int iScrollTrack, dScrollGrab;
     UINT_PTR idScrollTimer;
     LPARAM lScrollPoint;
-    COMPATTOOLBAR *lptoolbar;
-    COMPATLIST *lplist;
-    COMPATCOMBO *lpcombo;
+    // Callback frames retain control storage after immediate logical teardown.
+    std::shared_ptr<COMPATTOOLBAR> lptoolbar;
+    std::shared_ptr<COMPATLIST> lplist;
+    std::shared_ptr<COMPATCOMBO> lpcombo;
     WPARAM wMouseButtons;
     double dWheelX, dWheelY;
     BOOL fAlive, fDestroying, fVisible;
-    SDL_Surface *lpCanvas, *lpComposite;
+    NATIVEOWNER<SDL_Surface, FreeCompatSurface> lpCanvas, lpComposite;
     int iCanvasScale;
-    SDL_Renderer *lpRenderer;
-    SDL_Texture *lpTexture;
+    NATIVEOWNER<SDL_Renderer, FreeCompatRenderer> lpRenderer;
+    NATIVEOWNER<SDL_Texture, FreeCompatTexture> lpTexture;
     RECT rcUpdate;
-    RECT *rgrcUpdate;
+    NATIVEARRAYOWNER<RECT, std::free> rgrcUpdate;
     size_t crcUpdate;
     BOOL fUpdate, fErase;
     HDC hdcPaint;
-    struct HWND__ *lpNext;
+    struct win32::HWND__ *lpNext;
 };
 
 typedef struct COMPATRESOURCE {
@@ -147,12 +157,16 @@ extern const COMPATRESOURCE rgCompatUIResources[];
 extern const size_t cCompatUIResources;
 extern const COMPATRESOURCE rgCompatImageResources[];
 extern const size_t cCompatImageResources;
+// Keep resource member types identical when a test substitutes an SDL call.
+void FreeCompatCursor(SDL_Cursor *lp) noexcept;
+
 typedef struct COMPATIMAGE {
     BOOL fAlive, fCursor, fShared, fMono, fInvert, fAppIcon;
-    SDL_Surface *lpXor;
-    BYTE *rgbAnd;
+    // Reverse member destruction releases the cursor before its image storage.
+    NATIVEARRAYOWNER<BYTE, std::free> rgbAnd;
+    NATIVEOWNER<SDL_Surface, FreeCompatSurface> lpXor;
     UINT xHot, yHot, idSystem;
-    SDL_Cursor *lpCursor;
+    NATIVEOWNER<SDL_Cursor, FreeCompatCursor> lpCursor;
     HRSRC hrsrc;
     struct COMPATIMAGE *lpNext;
 } COMPATIMAGE;
@@ -184,7 +198,7 @@ typedef struct COMPATDLGTEMPLATE {
 } COMPATDLGTEMPLATE;
 BOOL FCompatDialogTemplate(const BYTE *rgb, size_t cb, COMPATDLGTEMPLATE *lpdlg);
 void CompatFreeDialogTemplate(COMPATDLGTEMPLATE *lpdlg);
-LRESULT CALLBACK CompatDialogProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
+LRESULT  CompatDialogProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
 void CompatDestroyDialog(HWND hwnd);
 void CompatDestroyList(HWND hwnd);
 HWND HwndCompatDynamicDialog(LPCSTR pszTitle, DWORD dwStyle, DWORD dwExStyle, const RECT *lprc,
@@ -192,8 +206,8 @@ HWND HwndCompatDynamicDialog(LPCSTR pszTitle, DWORD dwStyle, DWORD dwExStyle, co
 HWND HwndCompatFirstTop(void);
 HWND HwndCompatRegistry(void);
 void CompatShutdownInspector(void);
-LRESULT CALLBACK CompatMessageTextProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
-void CompatShutdownAudio(void);
+LRESULT  CompatMessageTextProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
+void CompatShutdownAudio(void) noexcept;
 
 typedef struct COMPATDIB {
     int cx, cy, cBits, cColors;
@@ -204,6 +218,7 @@ typedef struct COMPATDIB {
 } COMPATDIB;
 
 BOOL FCompatDib(const void *lpInfo, size_t cbInfo, const void *lpBits, size_t cbBits, COMPATDIB *lpdib);
+BOOL FCompatNativeDib(const void *lpInfo, size_t cbInfo, const void *lpBits, size_t cbBits, COMPATDIB *lpdib);
 SDL_Surface *LpCompatDibSurface(const COMPATDIB *lpdib);
 HBITMAP HbmpCompatResource(const BYTE *rgb, size_t cb);
 
@@ -212,12 +227,12 @@ BOOL FCompatVideo(void);
 BOOL FCompatNativeTitle(SDL_Window *lpWindow, LPCSTR pszTitle);
 void CompatRememberNormal(HWND hwnd);
 void CompatWindowState(HWND hwnd, UINT sw, BOOL fNotify);
-LRESULT CALLBACK CompatEditProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
-LRESULT CALLBACK CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
+LRESULT  CompatEditProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
+LRESULT  CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
 unsigned NCompatListMutation(HWND hwnd);
-LRESULT CALLBACK CompatComboProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
-LRESULT CALLBACK CompatComboPopupProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
-LRESULT CALLBACK CompatScrollProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
+LRESULT  CompatComboProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
+LRESULT  CompatComboPopupProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
+LRESULT  CompatScrollProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
 HWND LpCompatWindow(HWND hwnd);
 HWND LpCompatWindowFromId(SDL_WindowID id);
 void CompatFocusWindow(HWND hwnd);
@@ -260,7 +275,7 @@ void CompatShutdownAccelerators(void);
 int ICompatAccelMenu(HWND hwnd, UINT cmd, BOOL fNotify);
 void CompatDestroyWindowMenu(HWND hwnd);
 BOOL FCompatMenuFocus(HWND hwnd, BOOL fGain);
-BOOL CompatQueueTimer(HWND hwnd, UINT_PTR id, TIMERPROC lpfn);
+BOOL CompatQueueTimer(HWND hwnd, UINT_PTR id, TIMERPROC lpfn, void *lpvCallbackContext);
 void CompatGenerateTimer(HWND hwnd, UINT msgMin, UINT msgMax);
 void CompatTimerDequeued(HWND hwnd, UINT_PTR id);
 int CMillisCompatTimerWait(HWND hwnd, UINT msgMin, UINT msgMax);
@@ -270,5 +285,12 @@ void CompatEditComposition(HWND hwnd, const char *pszUtf, int ich, int cch);
 
 char *PszCompatFileUri(const char *pszPath);
 BOOL FCompatOpenDocument(const char *pszPath);
+
+// C++ callback thunks return errors through pending state, never through C.
+void CompatInvokeCleanup(void (*lpfn)(void *), void *lpv, HWND hwnd) noexcept;
+LRESULT CompatInvokeWindowProc(WNDPROC lpfn, HWND hwnd, UINT msg, WPARAM w, LPARAM l) noexcept;
+void CompatInvokeTimerProc(TIMERPROC lpfn, HWND hwnd, UINT msg, UINT_PTR id, DWORD tick) noexcept;
+HWND CompatInvokeInspector(HWND (*pfn)(void), HWND hwnd) noexcept;
+
 
 #endif

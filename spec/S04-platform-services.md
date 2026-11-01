@@ -72,7 +72,7 @@ output operations. The contract never silently truncates a successful path.
 `PathFits` describes valid nonempty text fitting with a terminator. Returned paths
 use generic `/` separators. `DirectoryChanged` distinguishes a successful actual
 create/remove from no change or an error; remove is not recursive. File open/read/
-write/seek/close wrappers in [native.c](../src/platform/native.c) retain native
+write/seek/close wrappers in [native.cpp](../src/platform/native.cpp) retain native
 modes and caller-visible errors (E04-1), not S01-level transaction guarantees.
 
 Temporary directory creation canonicalizes the temp base and tries up to 64
@@ -89,7 +89,7 @@ The [byte-level prefix model](dafny/S04-utf8-prefix.dfy) supplies `Count`,
 suffix and NUL stopping. S02 consumes it for exact profile buffer accounting;
 `Utf8Copy` below remains the separate reject-on-insufficient-capacity projection.
 
-[encoding.c](../src/platform/encoding.c) rejects malformed UTF-8, overlong forms,
+[encoding.cpp](../src/platform/encoding.cpp) rejects malformed UTF-8, overlong forms,
 surrogates, values above U+10FFFF and embedded NUL for the bounded validation API.
 `Utf8Copy` classifies zero capacity/insufficient capacity as too small, malformed
 input as invalid, and otherwise successful copy. Native return codes and empty
@@ -196,12 +196,12 @@ further decomposition; it is not a claim that their algorithms are proved.
 | Boundary | Scope and limitation | Owner / next evidence or decision |
 | --- | --- | --- |
 | E04-1 | Actual filesystem/open modes, path canonicalization, OS errors, temp randomness/races, permissions, handles and cleanup are native adapters. The predicates classify supplied outcomes, not external effects. | S04/S01/S02; filesystem tests and platform/fault matrix. |
-| E04-2 | Full UTF-8/UTF-16/CP1252 decoding and formatting/varargs/error returns are native implementations of shared byte/text contracts. Prefix truncation now has a byte-level checked model and source-extracted witnesses; complete caller mapping and cross-platform runtime evidence remain open. | S04/S01/S05; encoding and formatter boundary fixtures. |
+| E04-2 | Full UTF-8/UTF-16/CP1252 decoding and formatting/varargs/error returns are native implementations of shared byte/text contracts. Prefix truncation now has a byte-level checked model and linked production witnesses; complete caller mapping and cross-platform runtime evidence remain open. | S04/S01/S05; encoding and formatter boundary fixtures. |
 | E04-3 | qsort16 implementation refinement, extreme native integer domains, binary64 rounding, actual clocks and wrap handling by each caller remain external obligations. | S04/S06/gameplay; arithmetic/sort tests, cross-platform regression and clock-boundary qualification. |
 
 ## 7. Evidence and verification
 
-[native services](../src/platform/native.c), [filesystem API](../src/platform/filesystem.h), [encoding](../src/platform/encoding.c), [filesystem tests](../tests/compat/filesystem.c), [encoding tests](../tests/unit/test_encoding.c), and [Unicode contract](../docs/UNICODE-BOUNDARIES.md). No filesystem safety or cross-platform guarantee is inferred merely from mathematical predicates.
+[native services](../src/platform/native.cpp), [filesystem API](../src/platform/filesystem.h), [encoding](../src/platform/encoding.cpp), [filesystem tests](../tests/compat/filesystem.cpp), [encoding tests](../tests/unit/test_encoding.cpp), and [Unicode contract](../docs/UNICODE-BOUNDARIES.md). No filesystem safety or cross-platform guarantee is inferred merely from mathematical predicates.
 
 [Collection verification](README.md#remaining-specifications-verification)
 records exact commands and outcomes for this batch. Proofs establish only the

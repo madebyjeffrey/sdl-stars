@@ -1,5 +1,8 @@
 # M02 — Race staging, copy receipts and numbered suggestions
 
+Historical evidence: inspected C11 source at `e3222eb1fbdb01d68067231b5d5ef14a71759b30`.
+The retained fixtures run only against the frozen snapshot; current C++ refinement remains open.
+
 Observed source inspected 2026-10-27 at
 `e3222eb1fbdb01d68067231b5d5ef14a71759b30`, with the working collection.
 This technical companion supports [M02-US03](M02-race-library.md#m02-us03),
@@ -20,10 +23,10 @@ Canonical definitions: [M02RaceAllocation](dafny/M02-race-allocation.dfy), reusi
 [S04Utf8Prefix](dafny/S04-utf8-prefix.dfy),
 [S01External](dafny/S01-external.dfy) and
 [M02RaceSave](dafny/M02-race-save.dfy).
-Evidence: [libraryui.c](../src/ui/libraryui.c) `FCreateRaceStagePath`,
+Evidence: [libraryui.c](https://github.com/madebyjeffrey/sdl-stars/blob/e3222eb1fbdb01d68067231b5d5ef14a71759b30/src/ui/libraryui.c) `FCreateRaceStagePath`,
 `FCopyRaceExport`, `FCopyNativeFileContents`, `FCopyNativeFile`,
 `FCopyNativeFileExclusive`, `SuggestRaceFilename`, `FPortableRaceFilename` and
-`FDuplicateLibraryRace`; [encoding.c](../src/platform/encoding.c)
+`FDuplicateLibraryRace`; [encoding.c](https://github.com/madebyjeffrey/sdl-stars/blob/e3222eb1fbdb01d68067231b5d5ef14a71759b30/src/platform/encoding.c)
 `CchUtf8Prefix`. The [verification record](README.md#m02-race-allocation-continuation)
 separates model proofs, extracted C tests and outstanding platform qualification.
 

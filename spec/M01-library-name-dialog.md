@@ -1,5 +1,8 @@
 # M01/M02 — Shared library naming dialog
 
+Historical evidence: inspected C11 source at `e3222eb1fbdb01d68067231b5d5ef14a71759b30`.
+The retained fixtures run only against the frozen snapshot; current C++ refinement remains open.
+
 Observed 2026-10-27 at `e3222eb1fbdb01d68067231b5d5ef14a71759b30`, with the
 working collection. This technical companion specializes M01's
 [import/separate-copy](M01-game-library.md#m01-us03) and
@@ -14,7 +17,7 @@ Canonical model: [M01LibraryNameDialog](dafny/M01-library-name-dialog.dfy), usin
 existing S01 `FGameName`, [M02 filename/copy state](dafny/M02-race-actions.dfy),
 [race suggestions](M02-race-file-allocation.md),
 [name-buffer writes](M02-race-import.md), and S01 signed C division.
-Source: [libraryui.c](../src/ui/libraryui.c) `LibraryNameDlg`,
+Source: [libraryui.c](https://github.com/madebyjeffrey/sdl-stars/blob/e3222eb1fbdb01d68067231b5d5ef14a71759b30/src/ui/libraryui.c) `LibraryNameDlg`,
 `FPortableLibraryName`, `FPortableRaceFilename`, `SuggestLibraryName`,
 `SuggestRaceFilename`. Executed checks are in the
 [collection record](README.md#shared-naming-and-wizard-control-continuation).

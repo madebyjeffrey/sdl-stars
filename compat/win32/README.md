@@ -4,7 +4,7 @@ The same wrapper now builds on Linux, macOS and Windows x64. Native Windows
 setup and portable packaging are documented in [Windows SDL3](../../docs/WINDOWS-SDL3.md).
 
 Milestone 2 supplies declarations for the Win32 UI surface recorded in
-`docs/WIN32-APIS.md`. The subsequent Free API adaptation adds the local C11
+`docs/WIN32-APIS.md`. The subsequent Free API adaptation adds the local C++20
 `stars_win32` runtime with rectangle operations, tick counts and the initial
 SDL-backed window/message subset. See [window milestone](../../docs/WIN32-WINDOWS.md)
 for the `stars-compat-windows` interactive/self-test target and supported APIs.
@@ -29,7 +29,20 @@ use these headers with generated `StarsCompat_` symbol aliases. The host never
 includes these headers. Do not add this directory to global include paths or define
 `_WIN32` for a native build.
 
-The initial supported ABI is 64-bit, narrow-character C, with Win32 LLP64
+Application UI code uses `wincompat_calls.h` for operations that can dispatch
+callbacks: for example, `LUiSendMessage` and `FUiDestroyWindow` call the raw APIs
+and deliver captured exceptions after dispatch/modal cleanup returns. Runtime
+internals and independent raw API contracts keep the raw calls. The 23 checked
+entry functions have compile-time signature checks against their underlying
+APIs; application call sites name them explicitly.
+
+Profile saving accepts the private `PROFILEIO` provider in `src/profile_io.h`.
+Defaults call the native file service; scoped overrides supply only I/O effects
+and restore through nesting and exceptions. The linked save-stage witness and
+file/profile guard tests use the product implementation, preserving serializer
+and cleanup order without compiling a private wrapper clone for those guards.
+
+The supported source interface is 64-bit, narrow-character C++20, with Win32 LLP64
 widths: `LONG`, `DWORD` and `BOOL` are 32 bits; handles and message parameters
 are pointer-sized. Structures use SDK packing, including packed bitmap file
 headers. Callback functions use the C calling convention on every platform. This is
@@ -52,6 +65,18 @@ cmake --build --preset sdl-debug
 ctest --test-dir dist/sdl-debug -L compat --output-on-failure
 ```
 
+On macOS, build with `macos-sdl-debug` and run the native allocator checks with:
+
+```sh
+ctest --test-dir dist/macos-sdl-debug -L leaks --output-on-failure
+```
+
+These checks use `/usr/bin/leaks --quiet --noContent --atExit` on native test
+executables and fail on leaks. They run separately from ASan/UBSan, whose allocator
+differs from the native allocator. Linux sanitizer CI enables leak detection too.
+The [milestone B ledger](../../docs/CPP-B-IMPLEMENTATION.md) records measured
+coverage, including separate desktop and host turn-generation runs.
+
 The preset builds `stars-compat-runtime` for runtime tests and `stars-ui-compat-check`, an object library that compiles
 all existing UI sources and generated tutorial text against these headers,
 without linking unresolved functions. Missing declarations and incompatible
@@ -59,7 +84,7 @@ pointer types are errors. In CLion, select the SDL Debug profile and build
 this target; select `stars-compat-abi` to debug the assertions and runtime
 pointer tests. `stars-compat-smoke` remains available for the two-window test.
 
-`tests/compat/win32_abi.c` is shared with the Windows target
+`tests/compat/win32_abi.cpp` is shared with the Windows target
 `test_win32_abi_reference`, which uses real MinGW headers. It checks sizes,
 field offsets, constants and signatures at compile time, then exercises
 macros and high-bit callback parameters without calling OS APIs. A Linux-only
@@ -95,7 +120,7 @@ with a real SDK/Wine test of the supported drawing contracts.
 ## Memory DCs and bitmaps
 
 Compatible memory DCs/bitmaps, bitmap selection and metadata, `BitBlt` and
-`PatBlt` now work through the local C11 runtime. `stars-compat-bitmap` shares
+`PatBlt` now work through the local C++20 runtime. `stars-compat-bitmap` shares
 ownership and pixel tests with Windows; `stars-compat-paint` now draws into
 memory bitmaps and blits to independent windows. See
 [scope, CLion use and verification](../../docs/WIN32-BITMAPS.md).

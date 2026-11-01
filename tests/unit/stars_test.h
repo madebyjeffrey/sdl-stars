@@ -3,7 +3,7 @@
 
 // Helpers for unit tests that link the game code. Acutest runs every test
 // in its own process, so each test starts from the game's initial globals
-// and calls FStarsTestInit first. Helpers return FALSE on failure.
+// and calls FStarsTestInit first. Helpers return zero on failure.
 
 #ifdef STARS_UI_SDL
 #include "win.h"
@@ -11,33 +11,37 @@
 #include "common.h"
 #endif
 
-#ifndef MAX_PATH
-#define MAX_PATH 260
-#endif
+inline constexpr int cbTestPath = 260;
 
-// getcwd names the working directory on either platform.
+// Match the platform CRT used by the independent file fixtures.
 #ifdef _WIN32
 #include <direct.h>
-#define getcwd _getcwd
 #else
 #include <unistd.h>
 #endif
-
+inline char *PszStarsTestCwd(char *szPath, int cchPath) {
+#ifdef _WIN32
+    return _getcwd(szPath, cchPath);
+#else
+    return getcwd(szPath, static_cast<size_t>(cchPath));
+#endif
+}
 // The game's message boxes are recorded here instead of shown, so nothing
 // waits for a click: compile-time AlertSz substitution in SDL clients and
 // IdAlertBox in host tests.
 extern int  cStarsTestAlert;
+extern void (*pfnStarsTestAlertObserver)();
 extern char szStarsTestAlert[512];
 extern int16_t iStarsTestAlertResponse;
 extern int16_t fStarsTestAcceptLegacyRacePassword;
 extern int16_t cStarsTestLegacyRacePasswordPrompt;
 extern char szStarsTestLegacyRacePassword[16];
-int16_t FStarsTestPromptLegacyRacePassword(char *szPassword);
+int16_t FStarsTestPromptLegacyRacePassword(APPSESSION &app, char *szPassword);
 
 // FStarsTestInit prepares the game state WinMain sets up before it creates
 // windows: on Windows and SDL the instance, brushes and fonts (FCreateStuff),
 // and in host tests the game's buffers (InitGameStuff); and a fixed RNG seed.
-int16_t FStarsTestInit(void);
+int16_t FStarsTestInit(APPSESSION &app);
 
 // FStarsTestDir creates, or empties, work\<pszName> under the test working
 // directory and returns its absolute path in szDir.
@@ -46,33 +50,35 @@ int16_t FStarsTestDir(const char *pszName, char *szDir, size_t cchDir);
 // FStarsTestNewGame creates a game in szDir from a one-player tiny universe
 // definition (the tutorial-sized test race, seed lSeed) and sets szBase to
 // it. rgszAi lists extra players as "#<race> <skill>" definition lines.
-int16_t FStarsTestNewGame(const char *szDir, uint32_t lSeed, const char **rgszAi, int16_t cAi);
+int16_t FStarsTestNewGame(APPSESSION &app, const char *szDir, uint32_t lSeed, const char **rgszAi, int16_t cAi);
 
 // FStarsTestLoadHost unloads the current game and loads szBase's host file.
-int16_t FStarsTestLoadHost(void);
+int16_t FStarsTestLoadHost(APPSESSION &app);
 
 // FStarsTestLoadPlayer unloads the current game and loads player iPlr's
 // turn file (game.m<iPlr + 1>) as that player.
-int16_t FStarsTestLoadPlayer(int16_t iPlr);
+int16_t FStarsTestLoadPlayer(APPSESSION &app, int16_t iPlr);
 
 // LpplStarsTestHomeworld returns iPlr's homeworld in the loaded game, or NULL.
-PLANET *LpplStarsTestHomeworld(int16_t iPlr);
+PLANET *LpplStarsTestHomeworld(APPSESSION &app, int16_t iPlr);
 
 // LpflStarsTestAddFleet adds a fleet of csh ships of iPlr's design ishdef
 // orbiting planet idPlanet in the loaded game, with no orders.
-FLEET *LpflStarsTestAddFleet(int16_t iPlr, int16_t idPlanet, int16_t ishdef, int16_t csh);
+FLEET *LpflStarsTestAddFleet(APPSESSION &app, int16_t iPlr, int16_t idPlanet, int16_t ishdef, int16_t csh);
 
 // FStarsTestSaveHost writes the loaded game back to szBase's host file, so a
 // following FStarsTestGenerate sees the test's changes.
-int16_t FStarsTestSaveHost(void);
+int16_t FStarsTestSaveHost(APPSESSION &app);
 
 // FStarsTestSaveGame writes every player's turn file and then the host
 // file from the loaded game, as turn generation does, so the game can be
 // opened in Stars! as it is.
-int16_t FStarsTestSaveGame(void);
+int16_t FStarsTestSaveGame(APPSESSION &app);
 
 // FStarsTestGenerate generates one turn from szBase's host file and turn
 // files, as the -g command line does.
-int16_t FStarsTestGenerate(void);
+int16_t FStarsTestGenerate(APPSESSION &app);
+
+
 
 #endif

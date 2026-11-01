@@ -7,4 +7,5 @@ int IChooseCocoaFile(void *lpWindow, int fSave, const char *pszTitle, const char
                      const char *pszName, const COCOAFILEFILTER *rgfilter, int cFilter,
                      int *lpiFilter, char *pszPath, size_t cbPath,
                      int (*pfnPump)(void *), void *lpv);
+
 #endif

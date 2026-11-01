@@ -1,5 +1,8 @@
 # M02 — Native race comparison, version reading and save outcomes
 
+Historical evidence: inspected C11 source at `e3222eb1fbdb01d68067231b5d5ef14a71759b30`.
+The retained fixtures run only against the frozen snapshot; current C++ refinement remains open.
+
 Observed source inspected 2026-10-27 at
 `e3222eb1fbdb01d68067231b5d5ef14a71759b30`, with the working collection.
 This companion specializes [M02-US02](M02-race-library.md#m02-us02) and
@@ -21,16 +24,16 @@ UTF-8 decoder, checksum or record header. The
 [collection record](README.md#m02-native-state-version-and-save-continuation)
 distinguishes executed checks from remaining qualification.
 
-Sources: [libraryui.c](../src/ui/libraryui.c) `FSameLibraryRace`, `SaveRaceState`,
+Sources: [libraryui.c](https://github.com/madebyjeffrey/sdl-stars/blob/e3222eb1fbdb01d68067231b5d5ef14a71759b30/src/ui/libraryui.c) `FSameLibraryRace`, `SaveRaceState`,
 `RestoreRaceState`, `FReadManagedRace`, `FindRaceVersion`,
 `FSaveCurrentLibraryRace`, `FSaveLibraryRace`, `FCreateRaceStagePath`;
-[raceui.c](../src/ui/raceui.c) `SetSzRaceFile`, the initial suggestion choice in
-`FSaveRace`; [save.c](../src/core/save.c) `WriteRtPlr`, `WriteRt`, `RgToStream`,
-`FCreateFile`; [file.c](../src/core/file.c) `StreamClose`;
-[race.c](../src/core/race.c) `IRaceChecksum`, `FWasRaceFile`;
-[encoding.c](../src/platform/encoding.c) `CchUtf8Prefix`;
+[raceui.c](https://github.com/madebyjeffrey/sdl-stars/blob/e3222eb1fbdb01d68067231b5d5ef14a71759b30/src/ui/raceui.c) `SetSzRaceFile`, the initial suggestion choice in
+`FSaveRace`; [save.c](https://github.com/madebyjeffrey/sdl-stars/blob/e3222eb1fbdb01d68067231b5d5ef14a71759b30/src/core/save.c) `WriteRtPlr`, `WriteRt`, `RgToStream`,
+`FCreateFile`; [file.c](https://github.com/madebyjeffrey/sdl-stars/blob/e3222eb1fbdb01d68067231b5d5ef14a71759b30/src/core/file.c) `StreamClose`;
+[race.c](https://github.com/madebyjeffrey/sdl-stars/blob/e3222eb1fbdb01d68067231b5d5ef14a71759b30/src/core/race.c) `IRaceChecksum`, `FWasRaceFile`;
+[encoding.c](https://github.com/madebyjeffrey/sdl-stars/blob/e3222eb1fbdb01d68067231b5d5ef14a71759b30/src/platform/encoding.c) `CchUtf8Prefix`;
 [structs.h](../src/core/structs.h) `PLAYER` and
-[native.c](../src/platform/native.c) `CloseFile`.
+[native.c](https://github.com/madebyjeffrey/sdl-stars/blob/e3222eb1fbdb01d68067231b5d5ef14a71759b30/src/platform/native.c) `CloseFile`.
 
 ## Comparison versus captured memory
 

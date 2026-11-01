@@ -21,9 +21,9 @@ Canonical definitions: [native availability](dafny/M11-native-availability.dfy),
 [Collection evidence](README.md#native-part-availability-continuation) records
 actual runs and their scope.
 
-Sources: [parts.c](../src/core/parts.c) `FLookupPart`, `TechStatus`;
-[research.c](../src/core/research.c) `FShouldPartBeHidden`;
-[race.c](../src/core/race.c) `GetRaceStat`, `GetRaceGrbit`;
+Sources: [parts.cpp](../src/core/parts.cpp) `FLookupPart`, `TechStatus`;
+[research.cpp](../src/core/research.cpp) `FShouldPartBeHidden`;
+[race.cpp](../src/core/race.cpp) `GetRaceStat`, `GetRaceGrbit`;
 [structs.h](../src/core/structs.h) `PLAYER`, `PART`, `HS` and catalog structures;
 [enums.h](../src/core/enums.h) plus fresh generated `dataids.h`/data tables.
 These contracts introduce no runtime or import-policy changes.

@@ -9,7 +9,7 @@ turn for turn. On `main` those emulated bugs are fixed (see
 corruption, native record and message boundaries, and toolchain behavior
 the game's results still depend on.
 
-Change the `.c`/`.h` files directly when modifying one of these, and update
+Change the `.cpp`/`.h` files directly when modifying one of these, and update
 this document in the same change with the affected site, original behavior,
 and new behavior. Build and run the regression comparisons after each change.
 

@@ -197,13 +197,10 @@ def main():
     parser.add_argument("--cc", default="gcc", help="Native GCC-compatible compiler")
     parser.add_argument("--optimization", choices=("O0", "O2", "O3"), default="O2")
     parser.add_argument("--samples", type=int, default=0, help="Deterministic random races in addition to the witness")
-    parser.add_argument("--generated-dir", type=Path, default=ROOT / "dist/host-release/generated")
+    parser.add_argument("--generated-dir", type=Path, default=None, help="Deprecated; headers are generated from the immutable reference")
     args = parser.parse_args()
     if not 0 <= args.samples <= 100000000:
         parser.error("--samples must be between 0 and 100000000")
-    for name in ("textids.h", "dataids.h"):
-        if not (args.generated_dir / name).is_file():
-            parser.error("Generate headers first with cmake --preset host-release and cmake --build --preset host-release")
     source = sources()
     print("extracted source sha256=" + hashlib.sha256(source.encode()).hexdigest(), flush=True)
     subprocess.run([args.cc, "--version"], check=True)
@@ -212,9 +209,8 @@ def main():
         for mode in ("ext", "dbl"):
             (work / f"{mode}.c").write_text(variant(source, mode))
         (work / "main.c").write_text(HARNESS)
-        command = [args.cc, "-" + args.optimization, "-std=gnu11", "-fsigned-char",
-                   "-fno-fast-math", "-ffp-contract=off", "-iquote", str(ROOT / "src/core"), "-iquote", str(ROOT / "src/platform"),
-                   "-iquote", str(args.generated_dir.resolve()), str(work / "ext.c"),
+        command = [args.cc, *precision_reference.oracle_flags(), "-" + args.optimization, "-std=gnu11", "-fsigned-char",
+                   "-fno-fast-math", "-ffp-contract=off", *precision_reference.include_flags(work), str(work / "ext.c"),
                    str(work / "dbl.c"), str(work / "main.c"), "-lm", "-o", str(work / "probe")]
         print("compiler command=" + " ".join(command), flush=True)
         subprocess.run(command, check=True)

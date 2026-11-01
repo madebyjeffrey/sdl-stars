@@ -1,0 +1,73 @@
+# Compile every application-facing header independently, with standard library
+# headers on each side of it. These checks also run in host-only builds.
+if(NOT STARS_BUILD_TESTS)
+    return()
+endif()
+file(GLOB STARS_PUBLIC_CPP_HEADERS CONFIGURE_DEPENDS
+    "${PROJECT_SOURCE_DIR}/src/core/*.h" "${PROJECT_SOURCE_DIR}/src/platform/*.h")
+if(STARS_BUILD_SDL_CLIENT)
+    if(NOT TEST win32_abi AND NOT TEST win32_sdl_abi)
+        add_test(NAME win32_sdl_abi COMMAND stars-compat-abi)
+        set_tests_properties(win32_sdl_abi PROPERTIES LABELS "compat" TIMEOUT 30)
+    endif()
+    file(GLOB STARS_DESKTOP_CPP_HEADERS CONFIGURE_DEPENDS
+        "${PROJECT_SOURCE_DIR}/src/ui/*.h" "${PROJECT_SOURCE_DIR}/compat/win32/include/*.h")
+    list(APPEND STARS_PUBLIC_CPP_HEADERS ${STARS_DESKTOP_CPP_HEADERS})
+    list(APPEND STARS_PUBLIC_CPP_HEADERS "${PROJECT_SOURCE_DIR}/compat/win32/src/platform.h")
+    list(APPEND STARS_PUBLIC_CPP_HEADERS "${PROJECT_SOURCE_DIR}/compat/win32/src/cleanup.h")
+    file(GLOB STARS_EFFECT_CPP_HEADERS CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/compat/win32/src/*_io.h")
+    list(APPEND STARS_PUBLIC_CPP_HEADERS ${STARS_EFFECT_CPP_HEADERS})
+    list(APPEND STARS_PUBLIC_CPP_HEADERS "${PROJECT_SOURCE_DIR}/compat/win32/src/file_read.h")
+endif()
+set(STARS_CPP_STANDARD_HEADERS "#include <algorithm>\n#include <atomic>\n#include <bit>\n#include <filesystem>\n#include <limits>\n#include <span>\n#include <string>\n#include <vector>\n#include <stdlib.h>\n")
+set(STARS_CPP_HEADER_CHECK_SOURCES)
+foreach(STARS_CPP_HEADER IN LISTS STARS_PUBLIC_CPP_HEADERS)
+    file(RELATIVE_PATH STARS_CPP_HEADER_NAME "${PROJECT_SOURCE_DIR}" "${STARS_CPP_HEADER}")
+    string(REPLACE "/" "_" STARS_CPP_HEADER_NAME "${STARS_CPP_HEADER_NAME}")
+    foreach(STARS_CPP_ORDER before after)
+        set(STARS_CPP_INCLUDE "#include \"${STARS_CPP_HEADER}\"\n")
+        if(STARS_CPP_ORDER STREQUAL "before")
+            set(STARS_CPP_CONTENT "${STARS_CPP_STANDARD_HEADERS}${STARS_CPP_INCLUDE}")
+        else()
+            set(STARS_CPP_CONTENT "${STARS_CPP_INCLUDE}${STARS_CPP_STANDARD_HEADERS}")
+        endif()
+        set(STARS_CPP_SOURCE "${CMAKE_CURRENT_BINARY_DIR}/header-checks/${STARS_CPP_HEADER_NAME}_${STARS_CPP_ORDER}.cpp")
+        file(GENERATE OUTPUT "${STARS_CPP_SOURCE}" CONTENT "${STARS_CPP_CONTENT}static_assert(sizeof(std::span<int>) != 0);\n")
+        list(APPEND STARS_CPP_HEADER_CHECK_SOURCES "${STARS_CPP_SOURCE}")
+    endforeach()
+endforeach()
+add_library(stars-cpp-header-checks OBJECT ${STARS_CPP_HEADER_CHECK_SOURCES})
+target_link_libraries(stars-cpp-header-checks PRIVATE stars_options)
+if(STARS_BUILD_SDL_CLIENT)
+    target_link_libraries(stars-cpp-header-checks PRIVATE stars_win32_headers SDL3::SDL3)
+endif()
+target_compile_options(stars-cpp-header-checks PRIVATE -Wall -Wextra -Wpedantic -Werror)
+add_test(NAME test_cpp_compilation_manifest COMMAND "${Python3_EXECUTABLE}"
+    "${PROJECT_SOURCE_DIR}/tests/cmake/check_cpp_manifest.py"
+    "${PROJECT_SOURCE_DIR}" "${CMAKE_BINARY_DIR}/compile_commands.json")
+set_tests_properties(test_cpp_compilation_manifest PROPERTIES LABELS build TIMEOUT 30)
+add_test(NAME test_cpp_test_routing_policy COMMAND "${Python3_EXECUTABLE}"
+    "${PROJECT_SOURCE_DIR}/tests/cmake/test_cpp_test_routing.py"
+    "${PROJECT_SOURCE_DIR}" "${CMAKE_BINARY_DIR}/compile_commands.json")
+set_tests_properties(test_cpp_test_routing_policy PROPERTIES LABELS build TIMEOUT 30)
+
+
+# The historical native observer is no longer runnable on the SDL backend. Keep
+# its original-name reads and payload accessors type-correct without linking a
+# native Win32 runtime or pretending this is a walkthrough execution.
+if(STARS_BUILD_SDL_CLIENT)
+    if(NOT TARGET stars-compat-nativeui-points)
+        add_executable(stars-compat-nativeui-points tests/compat/nativeui_points.cpp)
+        target_link_libraries(stars-compat-nativeui-points PRIVATE stars_win32)
+        target_compile_options(stars-compat-nativeui-points PRIVATE -Wall -Wextra -Wpedantic -Werror)
+        add_test(NAME win32_nativeui_points COMMAND stars-compat-nativeui-points)
+    endif()
+    add_executable(stars-win32-type-isolation tests/compat/win32_type_isolation.cpp)
+    target_link_libraries(stars-win32-type-isolation PRIVATE stars_win32_headers SDL3::SDL3)
+    target_include_directories(stars-win32-type-isolation PRIVATE "${PROJECT_SOURCE_DIR}/src/platform")
+    target_compile_options(stars-win32-type-isolation PRIVATE -Wall -Wextra -Wpedantic -Werror)
+    add_test(NAME test_win32_type_isolation COMMAND stars-win32-type-isolation)
+    add_library(stars-archived-observer-types OBJECT tests/compat/archived_tutorial_types.cpp)
+    target_link_libraries(stars-archived-observer-types PRIVATE stars_options stars_win32_headers SDL3::SDL3)
+    target_compile_options(stars-archived-observer-types PRIVATE -Werror)
+endif()

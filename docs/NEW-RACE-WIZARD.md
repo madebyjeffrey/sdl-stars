@@ -50,7 +50,7 @@ historical arithmetic caveats in this document remain in effect.
 
 ## Workflow and page order
 
-`RaceCreationWizard` in [raceui.c](../src/ui/raceui.c) edits the working
+`RaceCreationWizard` in [raceui.cpp](../src/ui/raceui.cpp) edits the working
 `PLAYER vplr`. The visible page order is different from the dialog numbering:
 
 | Step | Dialog | Inputs |
@@ -586,7 +586,7 @@ feed back into the wizard point balance.
 
 ## Random race construction
 
-`CreateRandomRace` in [race.c](../src/core/race.c) receives a preexisting
+`CreateRandomRace` in [race.cpp](../src/core/race.cpp) receives a preexisting
 `PLAYER`, clears its plural name, and uses `Random(n)` results in `0..n-1`.
 Preserve the RNG implementation, draw order, and even draws whose results are
 later overwritten when reproducing seeded games. The result is not a uniform
@@ -661,7 +661,7 @@ RNG state. A rewrite must preserve those effects as well as formulas.
 These are downstream meanings of the wizard's labels, not additional point
 charges. Full production and turn-generation rules have further constraints.
 
-`CResourcesAtPlanet` in [planet.c](../src/core/planet.c) uses population `N`
+`CResourcesAtPlanet` in [planet.cpp](../src/core/planet.cpp) uses population `N`
 in units of 100 colonists and maximum population `Nmax`. If `N>Nmax`, replace
 `N` with `min(Nmax+div(N-Nmax,2),2*Nmax)` first. With divisor `E`:
 
@@ -677,12 +677,12 @@ computed zero result becomes one. Preserve the source's signed 16-bit result
 and narrowing when implementing the full gameplay routine. The AR page's
 divisor is the raw setting 7..25, not 700..2500 colonists per resource.
 
-`GetProductionCosts` in [produce.c](../src/core/produce.c) charges a normal
+`GetProductionCosts` in [produce.cpp](../src/core/produce.cpp) charges a normal
 factory its selected resource cost and `4-cheapFactoryBit` kT germanium.
 Tutorial factories instead require `2-cheapFactoryBit` of each mineral.
 Mines have the selected resource cost and no mineral cost.
 
-`GetTechLevelCost` in [research.c](../src/core/research.c) starts with
+`GetTechLevelCost` in [research.cpp](../src/core/research.cpp) starts with
 `B=baseCost[targetLevel]+10*sum(currentTechLevels)` across six fields.
 The base-cost array for levels 0..26 is:
 
@@ -699,7 +699,7 @@ from the net-count research price in the wizard.
 
 ## Password and file checksum math
 
-`LSaltFromSz` in [utilgen.c](../src/core/utilgen.c) processes UTF-8 bytes as
+`LSaltFromSz` in [utilgen.cpp](../src/core/utilgen.cpp) processes UTF-8 bytes as
 **signed** 8-bit values. Empty input returns zero. For nonempty input, start
 `s=0`; add the first byte, multiply by the next byte if present, add the next,
 multiply by the next, and continue. Each add/multiply wraps modulo 2^32.
@@ -707,7 +707,7 @@ Interpret the final bits as signed 32-bit, replacing a zero result with 1.
 For example, ASCII `AB` gives `(0+65)*66=4290`; `ABC` gives 4357.
 This describes the existing compatibility hash, not a new password scheme.
 
-`IRaceChecksum` in [race.c](../src/core/race.c) copies the 192-byte `PLAYER`
+`IRaceChecksum` in [race.cpp](../src/core/race.cpp) copies the 192-byte `PLAYER`
 and zeroes each name buffer from its first NUL through its end. It XORs the
 96 unsigned 16-bit words of that canonicalized record, starting from zero.
 That 16-bit value is written in the race EOF record. Name bytes after a
@@ -721,7 +721,7 @@ the fixed file contract, not a native struct dump invented by a new UI.
 ### Current binary64 witness
 
 The existing `test_LInnateRaceHabitability_double_rounding` in
-[test_race.c](../tests/unit/test_race.c) fixes this complete input:
+[test_race.cpp](../tests/unit/test_race.cpp) fixes this complete input:
 
 ```text
 minimum   = [31,61,9]
@@ -776,16 +776,16 @@ test suggestions, not claims that this document adds or runs those cases.
 
 | Responsibility | Implementation |
 | --- | --- |
-| Navigation, validation, controls, point/planet displays | `RaceCreationWizard`, `RaceWizardDlg1`..`RaceWizardDlg6`, `FTrackRaceDlg2`, `FTrackRaceDlg3`, `DrawRace2`, `DrawRace3`, `DrawRaceAdvantagePoints` in [raceui.c](../src/ui/raceui.c) |
-| Bounds, price tables, scoring, integral, random design, checksum | `BoundsCheckPlayer`, `CAdvantagePoints`, `LInnateRaceHabitability`, `CreateRandomRace`, `IRaceChecksum` in [race.c](../src/core/race.c) |
-| Units, desirability, resource production | `PszCalcEnvVar`, `PszCalcGravity`, `PctPlanetDesirability`, `CResourcesAtPlanet` in [planet.c](../src/core/planet.c) |
-| Starting technologies, population, leftover allocation | `GenerateWorld` in [create.c](../src/core/create.c) |
-| Research prices | `GetTechLevelCost` in [research.c](../src/core/research.c) |
-| Construction costs | `GetProductionCosts` in [produce.c](../src/core/produce.c) |
-| Password hash | `LSaltFromSz` in [utilgen.c](../src/core/utilgen.c) |
+| Navigation, validation, controls, point/planet displays | `RaceCreationWizard`, `RaceWizardDlg1`..`RaceWizardDlg6`, `FTrackRaceDlg2`, `FTrackRaceDlg3`, `DrawRace2`, `DrawRace3`, `DrawRaceAdvantagePoints` in [raceui.cpp](../src/ui/raceui.cpp) |
+| Bounds, price tables, scoring, integral, random design, checksum | `BoundsCheckPlayer`, `CAdvantagePoints`, `LInnateRaceHabitability`, `CreateRandomRace`, `IRaceChecksum` in [race.cpp](../src/core/race.cpp) |
+| Units, desirability, resource production | `PszCalcEnvVar`, `PszCalcGravity`, `PctPlanetDesirability`, `CResourcesAtPlanet` in [planet.cpp](../src/core/planet.cpp) |
+| Starting technologies, population, leftover allocation | `GenerateWorld` in [create.cpp](../src/core/create.cpp) |
+| Research prices | `GetTechLevelCost` in [research.cpp](../src/core/research.cpp) |
+| Construction costs | `GetProductionCosts` in [produce.cpp](../src/core/produce.cpp) |
+| Password hash | `LSaltFromSz` in [utilgen.cpp](../src/core/utilgen.cpp) |
 | Fields, IDs, masks | [structs.h](../src/core/structs.h), [enums.h](../src/core/enums.h) |
 | Preset values | [predefined.yaml](../data/races/predefined.yaml) |
-| Regression cases | [test_race.c](../tests/unit/test_race.c), [precision guide](../tests/scaffold/PRECISION.md) |
+| Regression cases | [test_race.cpp](../tests/unit/test_race.cpp), [precision guide](../tests/scaffold/PRECISION.md) |
 
 Source is the authority for runtime behavior. Recheck this reference whenever
 the listed functions, tables, text limits, or arithmetic contract change.

@@ -1,6 +1,7 @@
 #ifndef STARS_DECOMPILED_RACE_H
 #define STARS_DECOMPILED_RACE_H
 
+#include "common.h"
 #include <stdint.h>
 
 extern int16_t rgRacePrimaryTrait[10];
@@ -17,11 +18,11 @@ int16_t  SetRaceStat(PLAYER *pplr, RaceStat iStat, int16_t iVal);
 int16_t  GetRaceGrbit(PLAYER *pplr, RaceGrbit ibit);
 void     SetRaceGrbit(PLAYER *pplr, RaceGrbit ibit, int16_t fSet);
 void     BoundsCheckPlayer(PLAYER *pplr);
-int16_t  CAdvantagePoints(PLAYER *pplr);
-int32_t  LInnateRaceHabitability(PLAYER *pplr);
+int16_t  CAdvantagePoints(APPSESSION &app, PLAYER *pplr);
+int32_t  LInnateRaceHabitability(APPSESSION &app, PLAYER *pplr);
 uint16_t IRaceChecksum(PLAYER *pplr);
-void     CreateRandomRace(PLAYER *pplr);
-int16_t  PctTrueMaxGrowth(int16_t iplr);
-int16_t  FWasRaceFile(char *szFile, int16_t fChkPass);
+void     CreateRandomRace(APPSESSION &app, PLAYER *pplr);
+int16_t  PctTrueMaxGrowth(APPSESSION &app, int16_t iplr);
+int16_t  FWasRaceFile(APPSESSION &app, char *szFile, int16_t fChkPass);
 
 #endif

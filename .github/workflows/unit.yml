@@ -5,6 +5,11 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      run_slow_platform_jobs:
+        description: Run the slow Linux desktop and Windows SDL suites
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -15,6 +20,7 @@ concurrency:
 
 jobs:
   unit:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_slow_platform_jobs
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -37,8 +43,91 @@ jobs:
       - name: Build and run SDL unit and wrapper tests
         run: |
           cmake --preset sdl-debug
-          cmake --build --preset sdl-debug --parallel 2
+          cmake --build --preset sdl-debug --parallel 2 -- -k 0
           ctest --preset sdl-headless -LE tutorial-partial
+
+      - name: Retain wire and storage inventory
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wire-inventory-linux-${{ github.run_id }}-${{ github.run_attempt }}
+          path: dist/sdl-debug/wire-inventory.json
+          if-no-files-found: warn
+          retention-days: 30
+
+  resource-sanitizers:
+    name: Resource ownership (ASan/UBSan/LSan)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Install SDL build and test dependencies
+        run: |
+          sudo apt-get update
+          # Keep SDL's optional desktop backends buildable; see docs/SDL3-DEVELOPMENT.md.
+          sudo apt-get install -y cmake ninja-build pkg-config python3-pip python3-venv python3-yaml \
+            libfreetype-dev libfontconfig-dev libcairo2-dev zlib1g-dev libwmf-bin \
+            libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev \
+            libxi-dev libxss-dev libxtst-dev libxkbcommon-dev \
+            libwayland-dev wayland-protocols libdecor-0-dev \
+            libdrm-dev libgbm-dev libgl1-mesa-dev libegl1-mesa-dev libgles2-mesa-dev \
+            libvulkan-dev libdbus-1-dev libibus-1.0-dev libudev-dev \
+            libasound2-dev libpulse-dev libpipewire-0.3-dev \
+            xvfb xauth openbox x11-utils poppler-utils cups-client
+      - name: Qualify native resource ownership with sanitizers
+        env:
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+          UBSAN_OPTIONS: halt_on_error=1
+        run: |
+          cmake --preset sdl-sanitize
+          cmake --build --preset sdl-sanitize --target sdl_test_util sdl_test_utilgen sdl_test_exceptions sdl_test_native_ports sdl_test_log sdl_test_save sdl_test_race sdl_test_ship sdl_test_battle sdl_test_memory stars-test-wire-codecs stars-test-wire-codecs-natural stars-test-encoding-views stars-test-native-publication stars-compat-images stars-compat-dib stars-compat-font stars-compat-print stars-resource-faults stars-resource-glyphs stars-resource-audio stars-resource-guards stars-profile-save stars-resource-messages stars-resource-modal stars-resource-messagebox stars-compat-exceptions stars-compat-paint-batch stars-resource-list stars-resource-combo stars-resource-toolbar stars-resource-controls stars-resource-profile stars-compat-bitmap stars-compat-drawing-state stars-compat-palette stars-compat-menu stars-compat-popup stars-compat-menubar stars-compat-file stars-compat-memory --parallel 2 -- -k 0
+          ctest --test-dir dist/sdl-sanitize -R '^(sdl_test_util|sdl_test_utilgen|sdl_test_exceptions|sdl_test_native_ports|sdl_test_log|sdl_test_save|sdl_test_race|sdl_test_ship|sdl_test_battle|sdl_test_memory|test_wire_codecs(_natural)?|test_encoding_views|test_native_publication|win32_(images|dib|font|print|print_pdf|bitmap|drawing_state|palette|menu|popup|menubar|file|memory|profile_save|exception_callbacks|sdl_paint_batch|sdl_resource_(faults|glyphs|guards|messages|modal|messagebox|list|combo|toolbar|controls|profile|audio_.*)))$' --output-on-failure
+
+  source-witnesses:
+    name: Linked independent witnesses (C++20)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r requirements-build.txt
+      - name: Install SDL build and test dependencies
+        run: |
+          sudo apt-get update
+          # Keep SDL's optional desktop backends buildable; see docs/SDL3-DEVELOPMENT.md.
+          sudo apt-get install -y cmake ninja-build pkg-config python3-pip python3-venv python3-yaml \
+            libfreetype-dev libfontconfig-dev libcairo2-dev zlib1g-dev libwmf-bin \
+            libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev \
+            libxi-dev libxss-dev libxtst-dev libxkbcommon-dev \
+            libwayland-dev wayland-protocols libdecor-0-dev \
+            libdrm-dev libgbm-dev libgl1-mesa-dev libegl1-mesa-dev libgles2-mesa-dev \
+            libvulkan-dev libdbus-1-dev libibus-1.0-dev libudev-dev \
+            libasound2-dev libpulse-dev libpipewire-0.3-dev \
+            xvfb xauth openbox x11-utils poppler-utils cups-client
+      - name: Build normal production libraries and linked witnesses
+        run: |
+          cmake --preset sdl-sanitize
+          cmake --build --preset sdl-sanitize --target stars-linked-witnesses --parallel 2
+      - name: Run independent simulation and workflow vectors
+        env:
+          STARS_WITNESS_BUILD: dist/sdl-sanitize
+          SDL_VIDEODRIVER: dummy
+          SDL_AUDIODRIVER: dummy
+          STARS_FILE_DIALOG_BACKEND: compat
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+          UBSAN_OPTIONS: halt_on_error=1
+        run: |
+          result=0
+          for witness in tests/spec/check_*_source.py; do
+            python "$witness" || result=1
+          done
+          exit "$result"
 
   # The unit tests that need no windows, built natively with gcc.
   host-linux:
@@ -61,6 +150,7 @@ jobs:
         run: make test-host
 
   windows-sdl:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_slow_platform_jobs
     runs-on: windows-latest
     timeout-minutes: 30
     steps:
@@ -80,10 +170,34 @@ jobs:
             mingw-w64-ucrt-x86_64-sdl3 mingw-w64-ucrt-x86_64-freetype
             mingw-w64-ucrt-x86_64-fontconfig mingw-w64-ucrt-x86_64-cairo
             mingw-w64-ucrt-x86_64-libwmf
-      - name: Build and test the Windows SDL client
+      - name: Qualify the fresh SDK configuration matrix
         shell: msys2 {0}
         run: |
-          # Use MSYS2 Python so CMake can create the build-local environment.
-          cmake --preset windows-sdl-debug -DPython3_EXECUTABLE="$(cygpath -m "$MINGW_PREFIX/bin/python.exe")"
-          cmake --build --preset windows-sdl-debug --parallel 2
-          ctest --preset windows-sdl-headless
+          python tests/cmake/configure_matrix.py --preset windows-sdl-debug --work dist/windows-cpp-matrix --run-sdk
+      - name: Build and test the Windows SDL client
+        if: always()
+        shell: msys2 {0}
+        run: |
+          cmake --build dist/windows-cpp-matrix/ordinary --parallel 2 -- -k 0
+          SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy STARS_SDL_RENDERER=software STARS_FILE_DIALOG_BACKEND=compat \
+            ctest --test-dir dist/windows-cpp-matrix/ordinary --output-on-failure --no-tests=error -j 1
+      - name: Retain C++ configuration matrix
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cpp-matrix-windows-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            dist/windows-cpp-matrix/*.log
+            dist/windows-cpp-matrix/*.xml
+            dist/windows-cpp-matrix/matrix.json
+            dist/windows-cpp-matrix/*/compile_commands.json
+          if-no-files-found: warn
+          retention-days: 30
+      - name: Retain wire and storage inventory
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wire-inventory-windows-${{ github.run_id }}-${{ github.run_attempt }}
+          path: dist/windows-cpp-matrix/ordinary/wire-inventory.json
+          if-no-files-found: warn
+          retention-days: 30

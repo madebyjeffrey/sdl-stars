@@ -1,8 +1,56 @@
+# Independent C entries consume the unchanged vectors with native SDK types.
+set(STARS_SDK_SHARED_VECTORS
+    tests/compat/nativeui_points.inc
+    tests/compat/win32_abi.inc
+    tests/compat/win32_attention.inc
+    tests/compat/win32_bitmap.inc
+    tests/compat/win32_capture.inc
+    tests/compat/win32_children.inc
+    tests/compat/win32_combo.inc
+    tests/compat/win32_controls.inc
+    tests/compat/win32_desktop.inc
+    tests/compat/win32_dialog.inc
+    tests/compat/win32_dib.inc
+    tests/compat/win32_drawing_state.inc
+    tests/compat/win32_edit.inc
+    tests/compat/win32_file.inc
+    tests/compat/win32_filedialog.inc
+    tests/compat/win32_font.inc
+    tests/compat/win32_gdi_reference.inc
+    tests/compat/win32_geometry.inc
+    tests/compat/win32_images.inc
+    tests/compat/win32_input.inc
+    tests/compat/win32_list.inc
+    tests/compat/win32_memory.inc
+    tests/compat/win32_menu.inc
+    tests/compat/win32_menubar.inc
+    tests/compat/win32_messagebox.inc
+    tests/compat/win32_palette.inc
+    tests/compat/win32_popup.inc
+    tests/compat/win32_position.inc
+    tests/compat/win32_profile.inc
+    tests/compat/win32_regions.inc
+    tests/compat/win32_runtime.inc
+    tests/compat/win32_scroll.inc
+    tests/compat/win32_scrollwindow.inc
+    tests/compat/win32_services.inc
+    tests/compat/win32_state.inc
+    tests/compat/win32_timers.inc
+    tests/compat/win32_toolbar.inc
+    tests/compat/win32_ui_resources.inc
+)
+
 # Optional SDK contract tests; these do not build a native desktop client.
 find_program(WINE_EXECUTABLE NAMES wine)
+add_executable(stars-sdk-type-isolation tests/compat/sdk_type_isolation.cpp)
+target_compile_options(stars-sdk-type-isolation PRIVATE -Wall -Wextra -Wpedantic -Werror)
+add_test(NAME test_sdk_type_isolation COMMAND stars-sdk-type-isolation)
+if(WINE_EXECUTABLE)
+    set_property(TARGET stars-sdk-type-isolation PROPERTY CROSSCOMPILING_EMULATOR "${WINE_EXECUTABLE}")
+endif()
 set(STARS_TEST_DIR "${CMAKE_BINARY_DIR}/tests-reference")
     # Use the SDK as an independent reference for the Linux UI ABI assertions.
-    add_executable(test_win32_abi_reference tests/compat/win32_abi.c)
+    add_executable(test_win32_abi_reference tests/reference/sdk/win32_abi.c)
     target_link_libraries(test_win32_abi_reference PRIVATE stars_options)
     set_target_properties(test_win32_abi_reference PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${STARS_TEST_DIR}")
     if(WINE_EXECUTABLE)
@@ -10,7 +58,7 @@ set(STARS_TEST_DIR "${CMAKE_BINARY_DIR}/tests-reference")
     endif()
     add_test(NAME test_win32_abi_reference COMMAND test_win32_abi_reference)
     set_tests_properties(test_win32_abi_reference PROPERTIES LABELS "compat" ENVIRONMENT "WINEDEBUG=-all")
-    add_executable(test_win32_toolbar_reference tests/compat/win32_toolbar.c)
+    add_executable(test_win32_toolbar_reference tests/reference/sdk/win32_toolbar.c)
     target_link_libraries(test_win32_toolbar_reference PRIVATE stars_options user32 gdi32 comctl32)
     set_target_properties(test_win32_toolbar_reference PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${STARS_TEST_DIR}")
     if(WINE_EXECUTABLE)
@@ -22,13 +70,13 @@ set(STARS_TEST_DIR "${CMAKE_BINARY_DIR}/tests-reference")
     set(STARS_BITMAP_REFERENCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/compat-resources")
     file(GLOB STARS_BITMAP_REFERENCE_FILES CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/res/bitmaps/*.bmp")
     add_custom_command(OUTPUT "${STARS_BITMAP_REFERENCE_DIR}/bitmap_manifest.h"
-        BYPRODUCTS "${STARS_BITMAP_REFERENCE_DIR}/bitmap_resources.c"
+        BYPRODUCTS "${STARS_BITMAP_REFERENCE_DIR}/bitmap_resources.cpp"
         COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/compat/win32/resourcegen.py"
             "${CMAKE_SOURCE_DIR}" "${STARS_BITMAP_REFERENCE_DIR}"
         DEPENDS compat/win32/resourcegen.py res/stars.rc res/resource.h ${STARS_BITMAP_REFERENCE_FILES}
         VERBATIM)
     add_custom_target(stars_bitmap_reference_manifest DEPENDS "${STARS_BITMAP_REFERENCE_DIR}/bitmap_manifest.h")
-    add_executable(test_win32_dib_reference tests/compat/win32_dib.c res/stars.rc)
+    add_executable(test_win32_dib_reference tests/reference/sdk/win32_dib.c res/stars.rc)
     target_link_libraries(test_win32_dib_reference PRIVATE stars_options user32 gdi32)
     target_include_directories(test_win32_dib_reference PRIVATE "${STARS_BITMAP_REFERENCE_DIR}")
     add_dependencies(test_win32_dib_reference stars_bitmap_reference_manifest stars_version)
@@ -38,7 +86,7 @@ set(STARS_TEST_DIR "${CMAKE_BINARY_DIR}/tests-reference")
     endif()
     add_test(NAME test_win32_dib_reference COMMAND test_win32_dib_reference)
     set_tests_properties(test_win32_dib_reference PROPERTIES LABELS "compat" ENVIRONMENT "WINEDEBUG=-all")
-    add_executable(test_win32_desktop_reference tests/compat/win32_desktop.c)
+    add_executable(test_win32_desktop_reference tests/reference/sdk/win32_desktop.c)
     target_link_libraries(test_win32_desktop_reference PRIVATE user32)
     set_target_properties(test_win32_desktop_reference PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${STARS_TEST_DIR}")
     if(WINE_EXECUTABLE)
@@ -47,7 +95,7 @@ set(STARS_TEST_DIR "${CMAKE_BINARY_DIR}/tests-reference")
     add_test(NAME test_win32_desktop_reference COMMAND test_win32_desktop_reference)
     set_tests_properties(test_win32_desktop_reference PROPERTIES LABELS "compat" ENVIRONMENT "WINEDEBUG=-all")
 
-    add_executable(test_win32_list_reference tests/compat/win32_list.c)
+    add_executable(test_win32_list_reference tests/reference/sdk/win32_list.c)
     target_link_libraries(test_win32_list_reference PRIVATE user32 gdi32)
     set_target_properties(test_win32_list_reference PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${STARS_TEST_DIR}")
     if(WINE_EXECUTABLE)
@@ -56,7 +104,7 @@ set(STARS_TEST_DIR "${CMAKE_BINARY_DIR}/tests-reference")
     add_test(NAME test_win32_list_reference COMMAND test_win32_list_reference)
     set_tests_properties(test_win32_list_reference PROPERTIES LABELS "compat" ENVIRONMENT "WINEDEBUG=-all")
 
-    add_executable(test_win32_edit_reference tests/compat/win32_edit.c)
+    add_executable(test_win32_edit_reference tests/reference/sdk/win32_edit.c)
     target_link_libraries(test_win32_edit_reference PRIVATE user32 gdi32)
     set_target_properties(test_win32_edit_reference PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${STARS_TEST_DIR}")
     if(WINE_EXECUTABLE)
@@ -65,7 +113,7 @@ set(STARS_TEST_DIR "${CMAKE_BINARY_DIR}/tests-reference")
     add_test(NAME test_win32_edit_reference COMMAND test_win32_edit_reference)
     set_tests_properties(test_win32_edit_reference PROPERTIES LABELS "compat" ENVIRONMENT "WINEDEBUG=-all")
 
-    add_executable(test_win32_controls_reference tests/compat/win32_controls.c)
+    add_executable(test_win32_controls_reference tests/reference/sdk/win32_controls.c)
     target_link_libraries(test_win32_controls_reference PRIVATE user32 gdi32)
     set_target_properties(test_win32_controls_reference PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${STARS_TEST_DIR}")
     if(WINE_EXECUTABLE)
@@ -74,7 +122,7 @@ set(STARS_TEST_DIR "${CMAKE_BINARY_DIR}/tests-reference")
     add_test(NAME test_win32_controls_reference COMMAND test_win32_controls_reference)
     set_tests_properties(test_win32_controls_reference PROPERTIES LABELS "compat" ENVIRONMENT "WINEDEBUG=-all")
 
-    add_executable(test_win32_scroll_reference tests/compat/win32_scroll.c)
+    add_executable(test_win32_scroll_reference tests/reference/sdk/win32_scroll.c)
     target_link_libraries(test_win32_scroll_reference PRIVATE user32 gdi32)
     set_target_properties(test_win32_scroll_reference PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${STARS_TEST_DIR}")
     if(WINE_EXECUTABLE)
@@ -85,14 +133,14 @@ set(STARS_TEST_DIR "${CMAKE_BINARY_DIR}/tests-reference")
 
 
     add_custom_command(OUTPUT "${STARS_BITMAP_REFERENCE_DIR}/ui_manifest.h"
-        BYPRODUCTS "${STARS_BITMAP_REFERENCE_DIR}/ui_resources.c"
+        BYPRODUCTS "${STARS_BITMAP_REFERENCE_DIR}/ui_resources.cpp"
         COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/compat/win32/uigen.py"
             "${CMAKE_SOURCE_DIR}" "${STARS_BITMAP_REFERENCE_DIR}"
-        DEPENDS compat/win32/uigen.py res/stars.rc res/resource.h compat/win32/include/wincompat_constants.h
+        DEPENDS compat/win32/uigen.py res/stars.rc res/resource.h compat/win32/include/wincompat_constants.h src/platform/ui_values.h
             res/data/idr_tutorial_hst.bin res/data/idr_tutorial_m1.bin res/data/idr_tutorial_m2.bin
         VERBATIM)
     add_custom_target(stars_ui_reference_manifest DEPENDS "${STARS_BITMAP_REFERENCE_DIR}/ui_manifest.h")
-    add_executable(test_win32_ui_resources_reference tests/compat/win32_ui_resources.c res/stars.rc)
+    add_executable(test_win32_ui_resources_reference tests/reference/sdk/win32_ui_resources.c res/stars.rc)
     target_link_libraries(test_win32_ui_resources_reference PRIVATE stars_options user32 gdi32)
     target_include_directories(test_win32_ui_resources_reference PRIVATE "${STARS_BITMAP_REFERENCE_DIR}")
     add_dependencies(test_win32_ui_resources_reference stars_ui_reference_manifest stars_version)
@@ -103,7 +151,7 @@ set(STARS_TEST_DIR "${CMAKE_BINARY_DIR}/tests-reference")
     add_test(NAME test_win32_ui_resources_reference COMMAND test_win32_ui_resources_reference)
     set_tests_properties(test_win32_ui_resources_reference PROPERTIES LABELS "compat" ENVIRONMENT "WINEDEBUG=-all" TIMEOUT 30)
 
-    add_executable(test_win32_popup_reference tests/compat/win32_popup.c)
+    add_executable(test_win32_popup_reference tests/reference/sdk/win32_popup.c)
     target_link_libraries(test_win32_popup_reference PRIVATE user32 gdi32)
     set_target_properties(test_win32_popup_reference PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${STARS_TEST_DIR}")
     if(WINE_EXECUTABLE)
@@ -114,13 +162,13 @@ set(STARS_TEST_DIR "${CMAKE_BINARY_DIR}/tests-reference")
 
     file(GLOB STARS_IMAGE_REFERENCE_FILES CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/res/icons/*.ico" "${CMAKE_SOURCE_DIR}/res/cursors/*.cur")
     add_custom_command(OUTPUT "${STARS_BITMAP_REFERENCE_DIR}/image_manifest.h"
-        BYPRODUCTS "${STARS_BITMAP_REFERENCE_DIR}/image_resources.c"
+        BYPRODUCTS "${STARS_BITMAP_REFERENCE_DIR}/image_resources.cpp"
         COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/compat/win32/imagegen.py"
             "${CMAKE_SOURCE_DIR}" "${STARS_BITMAP_REFERENCE_DIR}"
         DEPENDS compat/win32/imagegen.py res/stars.rc res/resource.h ${STARS_IMAGE_REFERENCE_FILES}
         VERBATIM)
     add_custom_target(stars_image_reference_manifest DEPENDS "${STARS_BITMAP_REFERENCE_DIR}/image_manifest.h")
-    add_executable(test_win32_filedialog_reference tests/compat/win32_filedialog.c)
+    add_executable(test_win32_filedialog_reference tests/reference/sdk/win32_filedialog.c)
     target_link_libraries(test_win32_filedialog_reference PRIVATE user32 gdi32 comdlg32)
     set_target_properties(test_win32_filedialog_reference PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${STARS_TEST_DIR}")
     if(WINE_EXECUTABLE)
@@ -129,7 +177,7 @@ set(STARS_TEST_DIR "${CMAKE_BINARY_DIR}/tests-reference")
     add_test(NAME test_win32_filedialog_reference COMMAND test_win32_filedialog_reference)
     set_tests_properties(test_win32_filedialog_reference PROPERTIES LABELS "compat" ENVIRONMENT "WINEDEBUG=-all" TIMEOUT 90)
 
-    add_executable(test_win32_messagebox_reference tests/compat/win32_messagebox.c)
+    add_executable(test_win32_messagebox_reference tests/reference/sdk/win32_messagebox.c)
     target_link_libraries(test_win32_messagebox_reference PRIVATE user32 gdi32)
     set_target_properties(test_win32_messagebox_reference PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${STARS_TEST_DIR}")
     if(WINE_EXECUTABLE)
@@ -138,7 +186,7 @@ set(STARS_TEST_DIR "${CMAKE_BINARY_DIR}/tests-reference")
     add_test(NAME test_win32_messagebox_reference COMMAND test_win32_messagebox_reference)
     set_tests_properties(test_win32_messagebox_reference PROPERTIES LABELS "compat" ENVIRONMENT "WINEDEBUG=-all" TIMEOUT 90)
 
-    add_executable(test_win32_palette_reference tests/compat/win32_palette.c)
+    add_executable(test_win32_palette_reference tests/reference/sdk/win32_palette.c)
     target_link_libraries(test_win32_palette_reference PRIVATE user32 gdi32)
     set_target_properties(test_win32_palette_reference PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${STARS_TEST_DIR}")
     if(WINE_EXECUTABLE)
@@ -147,7 +195,7 @@ set(STARS_TEST_DIR "${CMAKE_BINARY_DIR}/tests-reference")
     add_test(NAME test_win32_palette_reference COMMAND test_win32_palette_reference)
     set_tests_properties(test_win32_palette_reference PROPERTIES LABELS "compat" ENVIRONMENT "WINEDEBUG=-all" TIMEOUT 30)
 
-    add_executable(test_win32_combo_reference tests/compat/win32_combo.c res/stars.rc)
+    add_executable(test_win32_combo_reference tests/reference/sdk/win32_combo.c res/stars.rc)
     target_link_libraries(test_win32_combo_reference PRIVATE stars_options user32 gdi32)
     target_include_directories(test_win32_combo_reference PRIVATE "${STARS_BITMAP_REFERENCE_DIR}")
     add_dependencies(test_win32_combo_reference stars_version stars_ui_reference_manifest)
@@ -158,7 +206,7 @@ set(STARS_TEST_DIR "${CMAKE_BINARY_DIR}/tests-reference")
     add_test(NAME test_win32_combo_reference COMMAND test_win32_combo_reference)
     set_tests_properties(test_win32_combo_reference PROPERTIES LABELS "compat" ENVIRONMENT "WINEDEBUG=-all" TIMEOUT 120)
 
-    add_executable(test_win32_dialog_reference tests/compat/win32_dialog.c res/stars.rc)
+    add_executable(test_win32_dialog_reference tests/reference/sdk/win32_dialog.c res/stars.rc)
     target_link_libraries(test_win32_dialog_reference PRIVATE stars_options user32 gdi32)
     add_dependencies(test_win32_dialog_reference stars_version)
     set_target_properties(test_win32_dialog_reference PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${STARS_TEST_DIR}")
@@ -168,7 +216,7 @@ set(STARS_TEST_DIR "${CMAKE_BINARY_DIR}/tests-reference")
     add_test(NAME test_win32_dialog_reference COMMAND test_win32_dialog_reference)
     set_tests_properties(test_win32_dialog_reference PROPERTIES LABELS "compat" ENVIRONMENT "WINEDEBUG=-all" TIMEOUT 30)
 
-    add_executable(test_win32_images_reference tests/compat/win32_images.c res/stars.rc)
+    add_executable(test_win32_images_reference tests/reference/sdk/win32_images.c res/stars.rc)
     target_link_libraries(test_win32_images_reference PRIVATE stars_options user32 gdi32)
     target_include_directories(test_win32_images_reference PRIVATE "${STARS_BITMAP_REFERENCE_DIR}")
     add_dependencies(test_win32_images_reference stars_image_reference_manifest stars_version)
@@ -179,7 +227,7 @@ set(STARS_TEST_DIR "${CMAKE_BINARY_DIR}/tests-reference")
     add_test(NAME test_win32_images_reference COMMAND test_win32_images_reference)
     set_tests_properties(test_win32_images_reference PROPERTIES LABELS "compat" ENVIRONMENT "WINEDEBUG=-all" TIMEOUT 30)
 
-    add_executable(test_win32_menubar_reference tests/compat/win32_menubar.c)
+    add_executable(test_win32_menubar_reference tests/reference/sdk/win32_menubar.c)
     target_link_libraries(test_win32_menubar_reference PRIVATE user32 gdi32)
     set_target_properties(test_win32_menubar_reference PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${STARS_TEST_DIR}")
     if(WINE_EXECUTABLE)
@@ -188,7 +236,7 @@ set(STARS_TEST_DIR "${CMAKE_BINARY_DIR}/tests-reference")
     add_test(NAME test_win32_menubar_reference COMMAND test_win32_menubar_reference)
     set_tests_properties(test_win32_menubar_reference PROPERTIES LABELS "compat" ENVIRONMENT "WINEDEBUG=-all" TIMEOUT 30)
 
-    add_executable(test_win32_menu_reference tests/compat/win32_menu.c)
+    add_executable(test_win32_menu_reference tests/reference/sdk/win32_menu.c)
     target_link_libraries(test_win32_menu_reference PRIVATE user32)
     set_target_properties(test_win32_menu_reference PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${STARS_TEST_DIR}")
     if(WINE_EXECUTABLE)
@@ -197,7 +245,7 @@ set(STARS_TEST_DIR "${CMAKE_BINARY_DIR}/tests-reference")
     add_test(NAME test_win32_menu_reference COMMAND test_win32_menu_reference)
     set_tests_properties(test_win32_menu_reference PROPERTIES LABELS "compat" ENVIRONMENT "WINEDEBUG=-all")
 
-    add_executable(test_win32_scrollwindow_reference tests/compat/win32_scrollwindow.c)
+    add_executable(test_win32_scrollwindow_reference tests/reference/sdk/win32_scrollwindow.c)
     target_link_libraries(test_win32_scrollwindow_reference PRIVATE user32 gdi32)
     set_target_properties(test_win32_scrollwindow_reference PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${STARS_TEST_DIR}")
     if(WINE_EXECUTABLE)
@@ -206,7 +254,7 @@ set(STARS_TEST_DIR "${CMAKE_BINARY_DIR}/tests-reference")
     add_test(NAME test_win32_scrollwindow_reference COMMAND test_win32_scrollwindow_reference)
     set_tests_properties(test_win32_scrollwindow_reference PROPERTIES LABELS "compat" ENVIRONMENT "WINEDEBUG=-all")
 
-    add_executable(test_win32_attention_reference tests/compat/win32_attention.c)
+    add_executable(test_win32_attention_reference tests/reference/sdk/win32_attention.c)
     target_link_libraries(test_win32_attention_reference PRIVATE user32 gdi32)
     set_target_properties(test_win32_attention_reference PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${STARS_TEST_DIR}")
     if(WINE_EXECUTABLE)
@@ -215,7 +263,7 @@ set(STARS_TEST_DIR "${CMAKE_BINARY_DIR}/tests-reference")
     add_test(NAME test_win32_attention_reference COMMAND test_win32_attention_reference)
     set_tests_properties(test_win32_attention_reference PROPERTIES LABELS "compat" ENVIRONMENT "WINEDEBUG=-all")
 
-    add_executable(test_win32_state_reference tests/compat/win32_state.c)
+    add_executable(test_win32_state_reference tests/reference/sdk/win32_state.c)
     target_link_libraries(test_win32_state_reference PRIVATE user32 gdi32)
     set_target_properties(test_win32_state_reference PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${STARS_TEST_DIR}")
     if(WINE_EXECUTABLE)
@@ -224,7 +272,7 @@ set(STARS_TEST_DIR "${CMAKE_BINARY_DIR}/tests-reference")
     add_test(NAME test_win32_state_reference COMMAND test_win32_state_reference)
     set_tests_properties(test_win32_state_reference PROPERTIES LABELS "compat" ENVIRONMENT "WINEDEBUG=-all")
 
-    add_executable(test_win32_input_reference tests/compat/win32_input.c)
+    add_executable(test_win32_input_reference tests/reference/sdk/win32_input.c)
     target_link_libraries(test_win32_input_reference PRIVATE user32 gdi32)
     set_target_properties(test_win32_input_reference PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${STARS_TEST_DIR}")
     if(WINE_EXECUTABLE)
@@ -235,7 +283,7 @@ set(STARS_TEST_DIR "${CMAKE_BINARY_DIR}/tests-reference")
 
     include(CheckCCompilerFlag)
     check_c_compiler_flag("-ftrivial-auto-var-init=pattern" STARS_C_PATTERN_INIT)
-    add_executable(test_nativeui_points_reference tests/compat/nativeui_points.c)
+    add_executable(test_nativeui_points_reference tests/reference/sdk/nativeui_points.c)
     target_compile_options(test_nativeui_points_reference PRIVATE -Wall -Wextra -Wpedantic -Werror)
     if(STARS_C_PATTERN_INIT)
         target_compile_options(test_nativeui_points_reference PRIVATE -ftrivial-auto-var-init=pattern)
@@ -247,7 +295,7 @@ set(STARS_TEST_DIR "${CMAKE_BINARY_DIR}/tests-reference")
     add_test(NAME test_nativeui_points_reference COMMAND test_nativeui_points_reference)
     set_tests_properties(test_nativeui_points_reference PROPERTIES LABELS "compat" ENVIRONMENT "WINEDEBUG=-all")
 
-    add_executable(test_win32_capture_reference tests/compat/win32_capture.c)
+    add_executable(test_win32_capture_reference tests/reference/sdk/win32_capture.c)
     target_link_libraries(test_win32_capture_reference PRIVATE user32 gdi32)
     set_target_properties(test_win32_capture_reference PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${STARS_TEST_DIR}")
     if(WINE_EXECUTABLE)
@@ -256,7 +304,7 @@ set(STARS_TEST_DIR "${CMAKE_BINARY_DIR}/tests-reference")
     add_test(NAME test_win32_capture_reference COMMAND test_win32_capture_reference)
     set_tests_properties(test_win32_capture_reference PROPERTIES LABELS "compat" ENVIRONMENT "WINEDEBUG=-all")
 
-    add_executable(test_win32_position_reference tests/compat/win32_position.c)
+    add_executable(test_win32_position_reference tests/reference/sdk/win32_position.c)
     target_link_libraries(test_win32_position_reference PRIVATE user32 gdi32)
     set_target_properties(test_win32_position_reference PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${STARS_TEST_DIR}")
     if(WINE_EXECUTABLE)
@@ -265,7 +313,7 @@ set(STARS_TEST_DIR "${CMAKE_BINARY_DIR}/tests-reference")
     add_test(NAME test_win32_position_reference COMMAND test_win32_position_reference)
     set_tests_properties(test_win32_position_reference PROPERTIES LABELS "compat" ENVIRONMENT "WINEDEBUG=-all")
 
-    add_executable(test_win32_children_reference tests/compat/win32_children.c)
+    add_executable(test_win32_children_reference tests/reference/sdk/win32_children.c)
     target_link_libraries(test_win32_children_reference PRIVATE user32 gdi32)
     set_target_properties(test_win32_children_reference PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${STARS_TEST_DIR}")
     if(WINE_EXECUTABLE)
@@ -274,7 +322,7 @@ set(STARS_TEST_DIR "${CMAKE_BINARY_DIR}/tests-reference")
     add_test(NAME test_win32_children_reference COMMAND test_win32_children_reference)
     set_tests_properties(test_win32_children_reference PROPERTIES LABELS "compat" ENVIRONMENT "WINEDEBUG=-all")
 
-    add_executable(test_win32_geometry_reference tests/compat/win32_geometry.c)
+    add_executable(test_win32_geometry_reference tests/reference/sdk/win32_geometry.c)
     target_link_libraries(test_win32_geometry_reference PRIVATE user32 gdi32)
     set_target_properties(test_win32_geometry_reference PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${STARS_TEST_DIR}")
     if(WINE_EXECUTABLE)
@@ -283,7 +331,7 @@ set(STARS_TEST_DIR "${CMAKE_BINARY_DIR}/tests-reference")
     add_test(NAME test_win32_geometry_reference COMMAND test_win32_geometry_reference)
     set_tests_properties(test_win32_geometry_reference PROPERTIES LABELS "compat" ENVIRONMENT "WINEDEBUG=-all")
 
-    add_executable(test_win32_drawing_state_reference tests/compat/win32_drawing_state.c)
+    add_executable(test_win32_drawing_state_reference tests/reference/sdk/win32_drawing_state.c)
     target_link_libraries(test_win32_drawing_state_reference PRIVATE user32 gdi32)
     set_target_properties(test_win32_drawing_state_reference PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${STARS_TEST_DIR}")
     if(WINE_EXECUTABLE)
@@ -292,7 +340,7 @@ set(STARS_TEST_DIR "${CMAKE_BINARY_DIR}/tests-reference")
     add_test(NAME test_win32_drawing_state_reference COMMAND test_win32_drawing_state_reference)
     set_tests_properties(test_win32_drawing_state_reference PROPERTIES LABELS "compat" ENVIRONMENT "WINEDEBUG=-all")
 
-    add_executable(test_win32_regions_reference tests/compat/win32_regions.c)
+    add_executable(test_win32_regions_reference tests/reference/sdk/win32_regions.c)
     target_link_libraries(test_win32_regions_reference PRIVATE user32 gdi32)
     set_target_properties(test_win32_regions_reference PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${STARS_TEST_DIR}")
     if(WINE_EXECUTABLE)
@@ -301,7 +349,7 @@ set(STARS_TEST_DIR "${CMAKE_BINARY_DIR}/tests-reference")
     add_test(NAME test_win32_regions_reference COMMAND test_win32_regions_reference)
     set_tests_properties(test_win32_regions_reference PROPERTIES LABELS "compat" ENVIRONMENT "WINEDEBUG=-all")
 
-    add_executable(test_win32_font_reference tests/compat/win32_font.c)
+    add_executable(test_win32_font_reference tests/reference/sdk/win32_font.c)
     target_link_libraries(test_win32_font_reference PRIVATE user32 gdi32)
     set_target_properties(test_win32_font_reference PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${STARS_TEST_DIR}")
     if(WINE_EXECUTABLE)
@@ -309,21 +357,21 @@ set(STARS_TEST_DIR "${CMAKE_BINARY_DIR}/tests-reference")
     endif()
     add_test(NAME test_win32_font_reference COMMAND test_win32_font_reference)
     set_tests_properties(test_win32_font_reference PROPERTIES LABELS "compat" ENVIRONMENT "WINEDEBUG=-all")
-    add_executable(test_win32_file_reference tests/compat/win32_file.c)
+    add_executable(test_win32_file_reference tests/reference/sdk/win32_file.c)
     set_target_properties(test_win32_file_reference PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${STARS_TEST_DIR}")
     if(WINE_EXECUTABLE)
         set_property(TARGET test_win32_file_reference PROPERTY CROSSCOMPILING_EMULATOR "${WINE_EXECUTABLE}")
     endif()
     add_test(NAME test_win32_file_reference COMMAND test_win32_file_reference)
     set_tests_properties(test_win32_file_reference PROPERTIES LABELS "compat" ENVIRONMENT "WINEDEBUG=-all")
-    add_executable(test_win32_profile_reference tests/compat/win32_profile.c)
+    add_executable(test_win32_profile_reference tests/reference/sdk/win32_profile.c)
     set_target_properties(test_win32_profile_reference PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${STARS_TEST_DIR}")
     if(WINE_EXECUTABLE)
         set_property(TARGET test_win32_profile_reference PROPERTY CROSSCOMPILING_EMULATOR "${WINE_EXECUTABLE}")
     endif()
     add_test(NAME test_win32_profile_reference COMMAND test_win32_profile_reference)
     set_tests_properties(test_win32_profile_reference PROPERTIES LABELS "compat" ENVIRONMENT "WINEDEBUG=-all")
-    add_executable(test_win32_services_reference tests/compat/win32_services.c)
+    add_executable(test_win32_services_reference tests/reference/sdk/win32_services.c)
     target_link_libraries(test_win32_services_reference PRIVATE user32)
     set_target_properties(test_win32_services_reference PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${STARS_TEST_DIR}")
     if(WINE_EXECUTABLE)
@@ -331,14 +379,14 @@ set(STARS_TEST_DIR "${CMAKE_BINARY_DIR}/tests-reference")
     endif()
     add_test(NAME test_win32_services_reference COMMAND test_win32_services_reference)
     set_tests_properties(test_win32_services_reference PROPERTIES LABELS "compat" ENVIRONMENT "WINEDEBUG=-all")
-    add_executable(test_win32_memory_reference tests/compat/win32_memory.c)
+    add_executable(test_win32_memory_reference tests/reference/sdk/win32_memory.c)
     set_target_properties(test_win32_memory_reference PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${STARS_TEST_DIR}")
     if(WINE_EXECUTABLE)
         set_property(TARGET test_win32_memory_reference PROPERTY CROSSCOMPILING_EMULATOR "${WINE_EXECUTABLE}")
     endif()
     add_test(NAME test_win32_memory_reference COMMAND test_win32_memory_reference)
     set_tests_properties(test_win32_memory_reference PROPERTIES LABELS "compat" ENVIRONMENT "WINEDEBUG=-all")
-    add_executable(test_win32_timers_reference tests/compat/win32_timers.c)
+    add_executable(test_win32_timers_reference tests/reference/sdk/win32_timers.c)
     target_link_libraries(test_win32_timers_reference PRIVATE user32)
     set_target_properties(test_win32_timers_reference PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${STARS_TEST_DIR}")
     if(WINE_EXECUTABLE)
@@ -346,7 +394,7 @@ set(STARS_TEST_DIR "${CMAKE_BINARY_DIR}/tests-reference")
     endif()
     add_test(NAME test_win32_timers_reference COMMAND test_win32_timers_reference)
     set_tests_properties(test_win32_timers_reference PROPERTIES LABELS "compat" ENVIRONMENT "WINEDEBUG=-all" TIMEOUT 30)
-    add_executable(test_win32_bitmap_reference tests/compat/win32_bitmap.c)
+    add_executable(test_win32_bitmap_reference tests/reference/sdk/win32_bitmap.c)
     set_target_properties(test_win32_bitmap_reference PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${STARS_TEST_DIR}")
     target_link_libraries(test_win32_bitmap_reference PRIVATE user32 gdi32)
     if(WINE_EXECUTABLE)
@@ -354,7 +402,7 @@ set(STARS_TEST_DIR "${CMAKE_BINARY_DIR}/tests-reference")
     endif()
     add_test(NAME test_win32_bitmap_reference COMMAND test_win32_bitmap_reference)
     set_tests_properties(test_win32_bitmap_reference PROPERTIES LABELS "compat" ENVIRONMENT "WINEDEBUG=-all")
-    add_executable(test_win32_gdi_reference tests/compat/win32_gdi_reference.c)
+    add_executable(test_win32_gdi_reference tests/reference/sdk/win32_gdi_reference.c)
     set_target_properties(test_win32_gdi_reference PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${STARS_TEST_DIR}")
     target_link_libraries(test_win32_gdi_reference PRIVATE user32 gdi32)
     if(WINE_EXECUTABLE)
@@ -362,7 +410,7 @@ set(STARS_TEST_DIR "${CMAKE_BINARY_DIR}/tests-reference")
     endif()
     add_test(NAME test_win32_gdi_reference COMMAND test_win32_gdi_reference)
     set_tests_properties(test_win32_gdi_reference PROPERTIES LABELS "compat" ENVIRONMENT "WINEDEBUG=-all")
-    add_executable(test_win32_runtime_reference tests/compat/win32_runtime.c)
+    add_executable(test_win32_runtime_reference tests/reference/sdk/win32_runtime.c)
     set_target_properties(test_win32_runtime_reference PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${STARS_TEST_DIR}")
     target_link_libraries(test_win32_runtime_reference PRIVATE user32)
     if(WINE_EXECUTABLE)
@@ -370,3 +418,8 @@ set(STARS_TEST_DIR "${CMAKE_BINARY_DIR}/tests-reference")
     endif()
     add_test(NAME test_win32_runtime_reference COMMAND test_win32_runtime_reference)
     set_tests_properties(test_win32_runtime_reference PROPERTIES LABELS "compat" ENVIRONMENT "WINEDEBUG=-all")
+
+# Compile SDK reference bodies as C independently of ordinary C++ harnesses.
+get_property(STARS_REFERENCE_TARGETS DIRECTORY PROPERTY BUILDSYSTEM_TARGETS)
+list(FILTER STARS_REFERENCE_TARGETS INCLUDE REGEX "^test_.*_reference$")
+add_custom_target(stars-sdk-reference-build DEPENDS ${STARS_REFERENCE_TARGETS})

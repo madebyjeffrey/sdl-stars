@@ -1,6 +1,8 @@
 #ifndef STARS_DECOMPILED_NATIVEUI_H
 #define STARS_DECOMPILED_NATIVEUI_H
 
+#include <windows.h>
+#include "../platform/native.h"
 // The Windows interface's native port helpers. See docs/NATIVE-PORT.md.
 
 #include <stdint.h>
@@ -19,10 +21,10 @@ static inline POINT16 PointTo16(POINT pt) {
 }
 
 // GetCursorPos16 stores the cursor position in a Stars point.
-static inline BOOL GetCursorPos16(POINT16 *ppt) {
+static inline BOOL GetCursorPos16(POINT16 *ppt, BOOL (*pfnCursorPos)(LPPOINT) = win32::GetCursorPos) {
     // Callers still use the point when a backend cannot report its position.
     POINT pt = {0, 0};
-    BOOL  ret = GetCursorPos(&pt);
+    BOOL  ret = pfnCursorPos(&pt);
     *ppt = PointTo16(pt);
     return ret;
 }
@@ -30,7 +32,7 @@ static inline BOOL GetCursorPos16(POINT16 *ppt) {
 // ScreenToClient16 converts a Stars point from screen to client coordinates.
 static inline BOOL ScreenToClient16(HWND hwnd, POINT16 *ppt) {
     POINT pt = PointFrom16(*ppt);
-    BOOL  ret = ScreenToClient(hwnd, &pt);
+    BOOL  ret = win32::ScreenToClient(hwnd, &pt);
     *ppt = PointTo16(pt);
     return ret;
 }
@@ -38,7 +40,7 @@ static inline BOOL ScreenToClient16(HWND hwnd, POINT16 *ppt) {
 // ClientToScreen16 converts a Stars point from client to screen coordinates.
 static inline BOOL ClientToScreen16(HWND hwnd, POINT16 *ppt) {
     POINT pt = PointFrom16(*ppt);
-    BOOL  ret = ClientToScreen(hwnd, &pt);
+    BOOL  ret = win32::ClientToScreen(hwnd, &pt);
     *ppt = PointTo16(pt);
     return ret;
 }
@@ -49,7 +51,7 @@ static inline int MapWindowPoints16(HWND hwndFrom, HWND hwndTo, POINT16 *ppt, UI
     int ret = 0;
     for (UINT i = 0; i < c; i++) {
         POINT pt = PointFrom16(ppt[i]);
-        ret = MapWindowPoints(hwndFrom, hwndTo, &pt, 1);
+        ret = win32::MapWindowPoints(hwndFrom, hwndTo, &pt, 1);
         ppt[i] = PointTo16(pt);
     }
     return ret;
@@ -61,12 +63,12 @@ DWORD GetTextExtent(HDC hdc, LPCSTR str, int len);
 
 // FrameWndProcDeferred is the frame window class's procedure; it wraps
 // FrameWndProc (see nativeui.c).
-LRESULT CALLBACK FrameWndProcDeferred(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+LRESULT  FrameWndProcDeferred(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 // FRouteMouseWheel sends wheel messages to the window under the cursor,
 // CWheelNotches gathers wheel deltas into notches and CWheelLines gives the
 // lines a notch scrolls (see nativeui.c).
-int16_t FRouteMouseWheel(MSG *pmsg);
+int16_t FRouteMouseWheel(win32::MSG *pmsg);
 int16_t CWheelNotches(int16_t *pdWheel, int16_t dWheel);
 int16_t CWheelLines(int16_t cPage);
 

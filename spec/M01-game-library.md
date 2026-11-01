@@ -23,9 +23,9 @@ Follow the [glossary](../GLOSSARY.md) and
 A game with both player and host files can appear in both lists, backed by the
 same folder. Identical internal game IDs can belong to independent library copies.
 
-This boundary spans [libraryui.c](../src/ui/libraryui.c), title/action dispatch
-in [mdi.c](../src/ui/mdi.c), [fileui.c](../src/ui/fileui.c) and
-[libraryzip.c](../src/ui/libraryzip.c); it is not an isolated service today.
+This boundary spans [libraryui.cpp](../src/ui/libraryui.cpp), title/action dispatch
+in [mdi.cpp](../src/ui/mdi.cpp), [fileui.cpp](../src/ui/fileui.cpp) and
+[libraryzip.cpp](../src/ui/libraryzip.cpp); it is not an isolated service today.
 
 | Owner | Handoff |
 | --- | --- |
@@ -352,7 +352,7 @@ Named tests are evidence of scope; the dated run in §7 establishes execution.
 | <a id="m01-ac15"></a>M01-AC15 / US08 | Given wrong game/player/turn/generation orders, reject; identical bytes succeed unchanged; different existing orders require confirmation. | `FHostOrders`, `OrdersAction`; S01 `FOrdersFor`. | Host-library cases and model conditions; no execution claim. |
 | <a id="m01-ac16"></a>M01-AC16 / US04 | Given an existing orders file and a FALSE size-query result, when preservation and installation succeed, return TRUE while retaining orders. Do not treat this result as completed logical retirement. | [Publication companion](M01-import-publication.md#first-player-and-later-turn-publication); `Later`, `Vectors`; `FImportSubsequentTurn`. | Extracted-controller exhaustive reply masks; real native query errors/OS qualification remain S04 work. |
 | <a id="m01-ac17"></a>M01-AC17 / US04 | Given an occupied tick-derived stage, exclusive-copy failure still leads to attempted stage removal. If previous-turn preservation fails instead, clean stage only; previous residue may remain. | `Later`, `CollisionCleanup`, `StageFailure`, `InstallPrior`; source cleanup branches. | Source-controller collision and partial-copy profiles; path-alias/reachability qualification remains open. |
-| <a id="m01-ac18"></a>M01-AC18 / US04 | Given failed orders retirement, successful restoration returns FALSE with the old turn restored; failed restoration returns FALSE with the incoming target and previous recovery copy potentially present. | `RetireFailed`, `RetirementOutcomes`; recovery notice source. | Checked witnesses and extracted-controller failure combinations; durability/retry discovery remains open. |
+| <a id="m01-ac18"></a>M01-AC18 / US04 | Given failed orders retirement, successful restoration returns FALSE with the old turn restored; failed restoration returns FALSE with the incoming target and previous recovery copy potentially present. | `RetireFailed`, `RetirementOutcomes`; recovery notice source. | Checked witnesses and linked-controller failure combinations; durability/retry discovery remains open. |
 | <a id="m01-ac19"></a>M01-AC19 / US04 | Given conflict publication failure and failed first restore, retry after stage cleanup. Successful retry reports ordinary replacement failure; two failed restores report the recovery hold. Successful publication with failed hold cleanup returns TRUE plus warning, possibly with partial hold residue. | `ConflictReplace`, `RetriedRestore`, `PublishedWithRemnant`; full conflict controller. | Extracted-controller call traces, partial cleanup profiles and formal witnesses; native recursive-helper/OS refinement remains open. |
 | <a id="m01-ac20"></a>M01-AC20 / US03 | Given an admitted family with a reserved pending path, on ordinary publication success/failure clear pending memory. Cleanup failure may leave directories/files; allocation failure has no generic import-failed alert. | `FamilyPublish`, `FamilyClearsPending`; family publication tail, shallow `RemoveImportFile`. | Extracted-tail reply masks and general clearing proof; admission/copy-helper and native cleanup qualification remain open. |
 | <a id="m01-ac21"></a>M01-AC21 / US04, US05 | Given Separate Copy, clone with incoming player and played time zero, retain exchange basename, and publish only the stage. On failure attempt stage cleanup without moving the original directory. | `SeparateCopy`; `FImportConflictingTurnAsCopy` argument/control flow; stage-only helper contract. | Extracted whole-controller cases assert clone arguments and projected original preservation; disjoint paths and real helper footprints remain qualification obligations. |
@@ -397,12 +397,12 @@ is introduced.
 ## 7. Evidence, verification and open decisions
 
 Source functions are named in §3; relevant test sources are the
-[startup harness](../tests/compat/win32_client_startup.c),
+[startup harness](../tests/compat/win32_client_startup.cpp),
 [game export runner](../tests/compat/run_game_export.py),
 [library safety runner](../tests/compat/run_game_library_safety.py) and
 [delete runner](../tests/compat/run_game_library_delete.py).
 The [publication source fixture](../tests/spec/check_library_publication_source.py)
-checks extracted controllers under scripted helper replies; it does not implement
+checks linked controllers under scripted helper replies; it does not implement
 the native filesystem or prove complete helper refinement.
 Actual commands, counts and failures for the original batch are in the
 [shared verification record](README.md#m01-and-m02-verification).
@@ -496,9 +496,9 @@ Trace: [target/conflict classification](#34-update-conflict-or-separate-copy),
 [M06 loading](M06-player-session-and-turn-orders.md#31-select-and-open-a-player-turn),
 [canonical library contracts](M01-library-specification.dfy),
 [S01 external publication](S01-game-file-external.md).
-Evidence: [libraryui.c](../src/ui/libraryui.c) `FImportSubsequentTurn`,
+Evidence: [libraryui.cpp](../src/ui/libraryui.cpp) `FImportSubsequentTurn`,
 `FReplaceConflictingLibraryTurn`, `FImportConflictingTurnAsCopy`,
-`FSelectLibraryGame`; [mdi.c](../src/ui/mdi.c) `FOpenGame`.
+`FSelectLibraryGame`; [mdi.cpp](../src/ui/mdi.cpp) `FOpenGame`.
 The main branch illustrates a strictly later existing player's turn; import and
 opening are separate user operations. M01 owns the disk operation, M06 the live session.
 

@@ -1,5 +1,8 @@
 # M04 — Race wizard dispatch, Finish and modal sequence
 
+Historical evidence: inspected C11 source at `e3222eb1fbdb01d68067231b5d5ef14a71759b30`.
+The retained fixtures run only against the frozen snapshot; current C++ refinement remains open.
+
 Observed 2026-10-27 at `e3222eb1fbdb01d68067231b5d5ef14a71759b30`, with the
 working collection. This companion specializes
 [M04-US01](M04-race-design.md#m04-us01),
@@ -15,10 +18,10 @@ Canonical model: [M04WizardController](dafny/M04-wizard-controller.dfy), reusing
 [M04 race/pricing](M04-race-specification.dfy), S01's password hash and signed
 interpretation, [native filename selection](M02-native-state-and-save.md) and
 [M02 import/edit state](M02-race-import.md). Source:
-[raceui.c](../src/ui/raceui.c) `RaceCreationWizard`, `FSaveRace`;
-[utilgen.c](../src/core/utilgen.c) `LSaltFromSz`;
-[libraryui.c](../src/ui/libraryui.c) `FHasCurrentLibraryRace`,
-`FSaveCurrentLibraryRace`; [window.c](../compat/win32/src/window.c)
+[raceui.c](https://github.com/madebyjeffrey/sdl-stars/blob/e3222eb1fbdb01d68067231b5d5ef14a71759b30/src/ui/raceui.c) `RaceCreationWizard`, `FSaveRace`;
+[utilgen.c](https://github.com/madebyjeffrey/sdl-stars/blob/e3222eb1fbdb01d68067231b5d5ef14a71759b30/src/core/utilgen.c) `LSaltFromSz`;
+[libraryui.c](https://github.com/madebyjeffrey/sdl-stars/blob/e3222eb1fbdb01d68067231b5d5ef14a71759b30/src/ui/libraryui.c) `FHasCurrentLibraryRace`,
+`FSaveCurrentLibraryRace`; [window.c](https://github.com/madebyjeffrey/sdl-stars/blob/e3222eb1fbdb01d68067231b5d5ef14a71759b30/compat/win32/src/window.c)
 `StarsCompatBeginDialogSequence`, `StarsCompatEndDialogSequence`.
 See the [verification record](README.md#shared-naming-and-wizard-control-continuation).
 

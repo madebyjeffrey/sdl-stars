@@ -1,0 +1,420 @@
+{
+  "parent": "c6940721a3ec258fc182b6d5cfa3192c52b08e6c",
+  "checked_entries": [
+    {
+      "old": "LUiCallWindowProc",
+      "public": "ui::CallWindowProc",
+      "raw": "win32::CallWindowProcA",
+      "purpose": "Complete raw dispatch/modal/lifecycle cleanup before StarsRethrowPendingError delivers a captured callback exception.",
+      "effect": null,
+      "normalized_body_sha256": "e4893389bb25a2398f16e90b115bf2a52963e46e175029bad7cde2fe688dedf4"
+    },
+    {
+      "old": "HwndUiCreateWindowEx",
+      "public": "ui::CreateWindowEx",
+      "raw": "win32::CreateWindowExA",
+      "purpose": "Complete raw dispatch/modal/lifecycle cleanup before StarsRethrowPendingError delivers a captured callback exception.",
+      "effect": null,
+      "normalized_body_sha256": "034208a1a2fb8218c9cef05c5953186d763831efa2828950c13ea21e4f877abc"
+    },
+    {
+      "old": "HwndUiCreateDialog",
+      "public": "ui::CreateDialog",
+      "raw": "win32::CreateDialogParamA",
+      "purpose": "Complete raw dispatch/modal/lifecycle cleanup before StarsRethrowPendingError delivers a captured callback exception.",
+      "effect": null,
+      "normalized_body_sha256": "2da3a9e748e118971ce280322b2e0f1fe256eef7184801b958f37269c12d51ba"
+    },
+    {
+      "old": "LUiDialogBox",
+      "public": "ui::DialogBox",
+      "raw": "win32::DialogBoxParamA",
+      "purpose": "Complete raw dispatch/modal/lifecycle cleanup before StarsRethrowPendingError delivers a captured callback exception.",
+      "effect": null,
+      "normalized_body_sha256": "a3e17d4f27ec9c8d4d98ac39c4403707ba4f879367375466c4265a8a4da975c6"
+    },
+    {
+      "old": "FUiDestroyWindow",
+      "public": "ui::DestroyWindow",
+      "raw": "win32::DestroyWindow",
+      "purpose": "Complete raw dispatch/modal/lifecycle cleanup before StarsRethrowPendingError delivers a captured callback exception.",
+      "effect": null,
+      "normalized_body_sha256": "7f77cad00f15d188678f9b6ff44155f0d87f7638095c3779f6b8933d494ea7ae"
+    },
+    {
+      "old": "LUiDispatchMessage",
+      "public": "ui::DispatchMessage",
+      "raw": "win32::DispatchMessageA",
+      "purpose": "Complete raw dispatch/modal/lifecycle cleanup before StarsRethrowPendingError delivers a captured callback exception.",
+      "effect": null,
+      "normalized_body_sha256": "eb86eb3a390add91d20998f57ba2103ce618fe37c229f92b4e8f19e5f0182392"
+    },
+    {
+      "old": "FUiGetMessage",
+      "public": "ui::GetMessage",
+      "raw": "win32::GetMessageA",
+      "purpose": "Complete raw dispatch/modal/lifecycle cleanup before StarsRethrowPendingError delivers a captured callback exception.",
+      "effect": null,
+      "normalized_body_sha256": "eb4995b4e6cb039bfeb07366d4c538d3d8646507152a14101fe328576e65931f"
+    },
+    {
+      "old": "FUiPeekMessage",
+      "public": "ui::PeekMessage",
+      "raw": "win32::PeekMessageA",
+      "purpose": "Complete raw dispatch/modal/lifecycle cleanup before StarsRethrowPendingError delivers a captured callback exception.",
+      "effect": null,
+      "normalized_body_sha256": "13c18dcc8716fa39fb567f3c89aa670036474b36eecec09986957a90549fbce3"
+    },
+    {
+      "old": "LUiSendMessage",
+      "public": "ui::SendMessage",
+      "raw": "win32::SendMessageA",
+      "purpose": "Complete raw dispatch/modal/lifecycle cleanup before StarsRethrowPendingError delivers a captured callback exception.",
+      "effect": null,
+      "normalized_body_sha256": "067c9dd0c9e1abaf573b2f460c8d5fd2aa1764ac64aa13f101d105e3349b888f"
+    },
+    {
+      "old": "LUiSendDlgItemMessage",
+      "public": "ui::SendDlgItemMessage",
+      "raw": "win32::SendDlgItemMessageA",
+      "purpose": "Complete raw dispatch/modal/lifecycle cleanup before StarsRethrowPendingError delivers a captured callback exception.",
+      "effect": null,
+      "normalized_body_sha256": "10958cce09a5858541481fd3f5a0be79379865d6481455bfe37ac90fc5d98950"
+    },
+    {
+      "old": "FUiShowWindow",
+      "public": "ui::ShowWindow",
+      "raw": "win32::ShowWindow",
+      "purpose": "Complete raw dispatch/modal/lifecycle cleanup before StarsRethrowPendingError delivers a captured callback exception.",
+      "effect": null,
+      "normalized_body_sha256": "6d73dcf762fb9607257353d6bcca006d18fa0fade78c7b13feec86d1332998e7"
+    },
+    {
+      "old": "FUiEnableWindow",
+      "public": "ui::EnableWindow",
+      "raw": "win32::EnableWindow",
+      "purpose": "Complete raw dispatch/modal/lifecycle cleanup before StarsRethrowPendingError delivers a captured callback exception.",
+      "effect": null,
+      "normalized_body_sha256": "0fbb5bb39d2a9ac12c8eee05ce9407e3a6ece30814c5859060943cee843c17bd"
+    },
+    {
+      "old": "HwndUiSetFocus",
+      "public": "ui::SetFocus",
+      "raw": "win32::SetFocus",
+      "purpose": "Complete raw dispatch/modal/lifecycle cleanup before StarsRethrowPendingError delivers a captured callback exception.",
+      "effect": null,
+      "normalized_body_sha256": "0c1cba5c9121a9be1970b94a4f6bc8f7c53e71b3aaafa83dede5cb0a76cc2626"
+    },
+    {
+      "old": "FUiSetWindowPos",
+      "public": "ui::SetWindowPos",
+      "raw": "win32::SetWindowPos",
+      "purpose": "Complete raw dispatch/modal/lifecycle cleanup before StarsRethrowPendingError delivers a captured callback exception.",
+      "effect": null,
+      "normalized_body_sha256": "b76820807f4271358ad93645cbb0808818d867cf3d799316b12de2cf30b94858"
+    },
+    {
+      "old": "FUiMoveWindow",
+      "public": "ui::MoveWindow",
+      "raw": "win32::MoveWindow",
+      "purpose": "Complete raw dispatch/modal/lifecycle cleanup before StarsRethrowPendingError delivers a captured callback exception.",
+      "effect": null,
+      "normalized_body_sha256": "988a8bb4949adb06a1d8dae4b71310988d9237293ce3f606f75464f6fcf31993"
+    },
+    {
+      "old": "FUiUpdateWindow",
+      "public": "ui::UpdateWindow",
+      "raw": "win32::UpdateWindow",
+      "purpose": "Complete raw dispatch/modal/lifecycle cleanup before StarsRethrowPendingError delivers a captured callback exception.",
+      "effect": null,
+      "normalized_body_sha256": "dd784df9df9de41799bc9fb59f288b6f9b01bc50c80b06126df80c1a0e8d8fc8"
+    },
+    {
+      "old": "FUiSetWindowText",
+      "public": "ui::SetWindowText",
+      "raw": "win32::SetWindowTextA",
+      "purpose": "Complete raw dispatch/modal/lifecycle cleanup before StarsRethrowPendingError delivers a captured callback exception.",
+      "effect": null,
+      "normalized_body_sha256": "c7e6697236b204804cda0d6bd1b111225e82d25eb4a63c42e274ad752c0e83cd"
+    },
+    {
+      "old": "FUiIsDialogMessage",
+      "public": "ui::IsDialogMessage",
+      "raw": "win32::IsDialogMessageA",
+      "purpose": "Complete raw dispatch/modal/lifecycle cleanup before StarsRethrowPendingError delivers a captured callback exception.",
+      "effect": null,
+      "normalized_body_sha256": "272ed4362f08ec377283967058043f2ab985ba727db41531ddf7fee4cce649e6"
+    },
+    {
+      "old": "IUiTranslateAccelerator",
+      "public": "ui::TranslateAccelerator",
+      "raw": "win32::TranslateAcceleratorA",
+      "purpose": "Complete raw dispatch/modal/lifecycle cleanup before StarsRethrowPendingError delivers a captured callback exception.",
+      "effect": null,
+      "normalized_body_sha256": "9e99478cb1e46ee3fe0fb98d4de4e2e72ae3ff3d0e8c8b8b26b615dacf32b1b4"
+    },
+    {
+      "old": "FUiTrackPopupMenu",
+      "public": "ui::TrackPopupMenu",
+      "raw": "win32::TrackPopupMenu",
+      "purpose": "Complete raw dispatch/modal/lifecycle cleanup before StarsRethrowPendingError delivers a captured callback exception.",
+      "effect": "CompatChoiceIO().pfnTrackPopupMenu (default: win32::TrackPopupMenu)",
+      "normalized_body_sha256": "2d8d3ffb632b87f97a08d1a30fbda4f4016a9dc6ae667399892f832d974ed949"
+    },
+    {
+      "old": "LUiDefWindowProc",
+      "public": "ui::DefWindowProc",
+      "raw": "win32::DefWindowProcA",
+      "purpose": "Complete raw dispatch/modal/lifecycle cleanup before StarsRethrowPendingError delivers a captured callback exception.",
+      "effect": null,
+      "normalized_body_sha256": "e39df1e91c15245391f0b0a3ea10d16e873634e6e81db350c05b7885350850a0"
+    },
+    {
+      "old": "FUiGetOpenFileName",
+      "public": "ui::GetOpenFileName",
+      "raw": "win32::GetOpenFileNameA",
+      "purpose": "Complete raw dispatch/modal/lifecycle cleanup before StarsRethrowPendingError delivers a captured callback exception.",
+      "effect": null,
+      "normalized_body_sha256": "d48a556945789f3bd755fa560dcbc4bb69adbe15c4345d86fd8db518b0187fa2"
+    },
+    {
+      "old": "FUiGetSaveFileName",
+      "public": "ui::GetSaveFileName",
+      "raw": "win32::GetSaveFileNameA",
+      "purpose": "Complete raw dispatch/modal/lifecycle cleanup before StarsRethrowPendingError delivers a captured callback exception.",
+      "effect": null,
+      "normalized_body_sha256": "e04cc900074bf479fbf09bce5970f5617530dcc7f665360b68a8f7ce53863531"
+    }
+  ],
+  "removed_forwarding_macros": [
+    "CallWindowProc",
+    "DispatchMessage",
+    "GetMessage",
+    "PeekMessage",
+    "SendMessage",
+    "SendDlgItemMessage",
+    "SetWindowText",
+    "IsDialogMessage",
+    "TranslateAccelerator",
+    "DefWindowProc",
+    "GetOpenFileName",
+    "GetSaveFileName"
+  ],
+  "shared_vectors": [
+    {
+      "entry": "nativeui_points",
+      "scope": "main vectors",
+      "normalized_tokens_sha256": "2183079cbb1f41ee6d088200a1f92416c5494090434a8aaabe56066bc0205af8"
+    },
+    {
+      "entry": "win32_abi",
+      "scope": "complete shared input",
+      "normalized_tokens_sha256": "1b1bc09da7804a117c8392206e49a5c07beb88db1cdf5b5c90d5d2ef12e72c65",
+      "native_cpp_signature": "The C++ pointer assertion omits the formerly empty WINAPI annotation; the SDK C assertion retains its real native annotation."
+    },
+    {
+      "entry": "win32_attention",
+      "scope": "complete shared input",
+      "normalized_tokens_sha256": "349a04ac919e3665db1bf5caa868d2f663064bdfdd048e31a3cadc40b8599129"
+    },
+    {
+      "entry": "win32_bitmap",
+      "scope": "complete shared input",
+      "normalized_tokens_sha256": "2aa23ba3f41ecd420748efe30f97ba1e5cfddbc078bdb07a28030681212ebff7"
+    },
+    {
+      "entry": "win32_capture",
+      "scope": "complete shared input",
+      "normalized_tokens_sha256": "b8543b627b94ba10bc4c659b97e512c143068b907037db26ed36560758394112"
+    },
+    {
+      "entry": "win32_children",
+      "scope": "complete shared input",
+      "normalized_tokens_sha256": "62829936a6c48dd3f9d9ef97a93a383531ad621ff4f3fef439384cfe9d2e8848"
+    },
+    {
+      "entry": "win32_combo",
+      "scope": "complete shared input",
+      "normalized_tokens_sha256": "4a0fe24bac0ec4b4a289b844d347dec7d849f87f5c40022c6bd3f4651c92073b"
+    },
+    {
+      "entry": "win32_controls",
+      "scope": "complete shared input",
+      "normalized_tokens_sha256": "0e44f60a9946c1b534f27853b690575b747be3ef551f3ff7d9f3093622e2c506"
+    },
+    {
+      "entry": "win32_desktop",
+      "scope": "complete shared input",
+      "normalized_tokens_sha256": "b986816f27ff35c86d82322845a84d878821afce368904a7ad8cff914b63931f"
+    },
+    {
+      "entry": "win32_dialog",
+      "scope": "complete shared input",
+      "normalized_tokens_sha256": "7caec757ab71946e000197cd53b20c731682eebc576e3dcf96dded6ce12f43ef"
+    },
+    {
+      "entry": "win32_dib",
+      "scope": "complete shared input",
+      "normalized_tokens_sha256": "dcf0b1b049069db5d24dbfaa678653359ba6d0c0a5cf66d0368011868fd2db93"
+    },
+    {
+      "entry": "win32_drawing_state",
+      "scope": "complete shared input",
+      "normalized_tokens_sha256": "dd3e330c630b032e14f8a0751775d2282a046e07d9f83694842365aa0d4e329c"
+    },
+    {
+      "entry": "win32_edit",
+      "scope": "complete shared input",
+      "normalized_tokens_sha256": "e4ac566a05a032ebf8b1eace6ed2d79a18f7a13e57ec57bb3aef8318bfc7197e"
+    },
+    {
+      "entry": "win32_file",
+      "scope": "complete shared input",
+      "normalized_tokens_sha256": "b62bcccc26fc7e9b6f048a511829fbadeff35bcc9c2b2b46403e5efb705a4c10"
+    },
+    {
+      "entry": "win32_filedialog",
+      "scope": "complete shared input",
+      "normalized_tokens_sha256": "7ed1110588584d4ade3a0ed9a12ab3a40088f784d8fa11947a269fd2b9fb69a9"
+    },
+    {
+      "entry": "win32_font",
+      "scope": "complete shared input",
+      "normalized_tokens_sha256": "429ead59ca42cd6f7f573bdfbb93b18b5d0e2497c896218d9d430d37e1e3a704"
+    },
+    {
+      "entry": "win32_gdi_reference",
+      "scope": "complete shared input",
+      "normalized_tokens_sha256": "cf311bc9347f0938a283e368738ac85e2e7408777f7eb64243e98f521e8a1a25"
+    },
+    {
+      "entry": "win32_geometry",
+      "scope": "complete shared input",
+      "normalized_tokens_sha256": "83c4199b4c0cbc9875e36c030a5f75268466f9d8f0418e799f3e85bb83152b52"
+    },
+    {
+      "entry": "win32_images",
+      "scope": "complete shared input",
+      "normalized_tokens_sha256": "09f6d30db25944131f6e13047a70f67489acf044f3c7bcef75c1ef4fb156b5d4"
+    },
+    {
+      "entry": "win32_input",
+      "scope": "complete shared input",
+      "normalized_tokens_sha256": "d9e65f29a2701b5ddc864376b1e7edb17caca02c40d204e5b6ee67ea1f70f090"
+    },
+    {
+      "entry": "win32_list",
+      "scope": "complete shared input",
+      "normalized_tokens_sha256": "c1720fa320db1631eb83ffeb4e104d20e83af68c300f401a4cf35eff48731362"
+    },
+    {
+      "entry": "win32_memory",
+      "scope": "complete shared input",
+      "normalized_tokens_sha256": "321a8c8ff65d951782f5eb323bc63dc4ac6d9de6d0d8b75af4a687f8cbffc392"
+    },
+    {
+      "entry": "win32_menu",
+      "scope": "complete shared input",
+      "normalized_tokens_sha256": "a36f99735780afbc9aef164f439d49c5d4795fa99b41fbfdc2e52186660309c0"
+    },
+    {
+      "entry": "win32_menubar",
+      "scope": "complete shared input",
+      "normalized_tokens_sha256": "146f9a29f2cd96192e45de41cba679dbe4f267c209a6e92a83b4c1270ac57735"
+    },
+    {
+      "entry": "win32_messagebox",
+      "scope": "complete shared input",
+      "normalized_tokens_sha256": "ed3cd2715c7244de142d76eeda8ea1f444f465383c8e60c71c40bed32a676c4b"
+    },
+    {
+      "entry": "win32_palette",
+      "scope": "complete shared input",
+      "normalized_tokens_sha256": "16f52a51af3289bd4a7df20095dfc75872f69f5b920e9d99d037f0980b8b8d66"
+    },
+    {
+      "entry": "win32_popup",
+      "scope": "complete shared input",
+      "normalized_tokens_sha256": "083822e96de2419ee550fdf16069701a8e777620056e028322efbea79031651d"
+    },
+    {
+      "entry": "win32_position",
+      "scope": "complete shared input",
+      "normalized_tokens_sha256": "d8716f27768c123fe25ebcc6366e2a83968dace9a1e9befdc750e848a8f1b082"
+    },
+    {
+      "entry": "win32_profile",
+      "scope": "complete shared input",
+      "normalized_tokens_sha256": "b257869e034be38bd24577bfda87240f2b1758029bf0f156e80263bb244e800d"
+    },
+    {
+      "entry": "win32_regions",
+      "scope": "complete shared input",
+      "normalized_tokens_sha256": "b2730f5d232c3871c3fb997ded8a57ca21caeecbc4688f8f57645bbde9bdfa1d"
+    },
+    {
+      "entry": "win32_runtime",
+      "scope": "complete shared input",
+      "normalized_tokens_sha256": "9b959fb62f3a927046db36d1da9cdc5141740b8f8ba3764bd0d67404d50b0ae5"
+    },
+    {
+      "entry": "win32_scroll",
+      "scope": "complete shared input",
+      "normalized_tokens_sha256": "d37cc0a0cc09657c7f8f75392334fc4e9f9c8ea3992f363c665a8613753e0d66"
+    },
+    {
+      "entry": "win32_scrollwindow",
+      "scope": "complete shared input",
+      "normalized_tokens_sha256": "31252a6a13061642b8df263031c12ef5129b75196a5710ada9ab717bbaa6ee21"
+    },
+    {
+      "entry": "win32_services",
+      "scope": "complete shared input",
+      "normalized_tokens_sha256": "b5355f477f5efadc0a241b74b0870640b22097f69f474353599d20751348dfd4"
+    },
+    {
+      "entry": "win32_state",
+      "scope": "complete shared input",
+      "normalized_tokens_sha256": "6ef3cdb4e7cff68be2c79d52a742d103f01075dff051c32df3ecc8bbaf79b5be"
+    },
+    {
+      "entry": "win32_timers",
+      "scope": "complete shared input",
+      "normalized_tokens_sha256": "eb67fadcb91c9bc4610d124c0441eb5e5a62b3d91d0c675f0129740063f705ef"
+    },
+    {
+      "entry": "win32_toolbar",
+      "scope": "complete shared input",
+      "normalized_tokens_sha256": "846bf652d508a7dbb1d49c492eeb77ce686a602548a179e7957cd5b2fc82e281"
+    },
+    {
+      "entry": "win32_ui_resources",
+      "scope": "complete shared input",
+      "normalized_tokens_sha256": "3692c9ac38f652ff9c0e7504e8f2a472add5bc109046f0cbf7aae5593620867c"
+    }
+  ],
+  "normalization": "Remove comments; map removed narrow API aliases and APPMSG to parent spellings. Cursor main vectors map the typed test reader to the original call. No constants, arguments or assertions are normalized. The C++ pointer assertion expands the former empty WINAPI token; the SDK C branch is unchanged.",
+  "api_header_export_count": 223,
+  "common_control_exports": [
+    "win32::InitCommonControlsEx"
+  ],
+  "moved_native_bodies": [
+    {
+      "function": "PszNativeCommandLine",
+      "tokens_sha256": "9d7183d03b83df0c03f196154be5ccb2de930de74c96692bb9a9d98f7c5f95bf"
+    },
+    {
+      "function": "RgpszNativeArguments",
+      "tokens_sha256": "6b7b7541ab4252cf6627eb949c1a6314bea6ec394c1915ba0a45ac3965a58644"
+    },
+    {
+      "function": "DwTickCount",
+      "tokens_sha256": "3c061489211445f1f776fd3c49e3de7ed613f0beaee48f4923c8c0e78fc439df"
+    }
+  ],
+  "removed_empty_calling_convention_macros": [
+    "WINAPI",
+    "WINAPIV",
+    "APIENTRY"
+  ]
+}

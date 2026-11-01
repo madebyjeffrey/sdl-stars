@@ -138,7 +138,7 @@ against this project's pinned SDL 3.4.18 headers.
 
 ## Verification scope
 
-`tests/compat/win32_position.c` checks move-only/size-only calls, callback edits,
+`tests/compat/win32_position.inc` checks move-only/size-only calls, callback edits,
 callback suppression, unchanged requests, top/bottom/sibling order, visibility,
 zero/negative sizes, recursive positioning and callback-driven destruction. It
 also checks independent topmost bands, ownership/inheritance, root geometry and

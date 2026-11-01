@@ -13,9 +13,9 @@ STRING = r'"(?:[^"\\]|\\.)*"'
 
 def compile_resources(root):
     definitions = dict(re.findall(r'^#define\s+(\w+)\s+(0x[0-9a-fA-F]+|\d+)\s*$', (root / 'res/resource.h').read_text(), re.M))
-    definitions.update(dict(re.findall(r'^#define\s+(VK_\w+)\s+(0x[0-9a-fA-F]+|\d+)\s*$', (root / 'compat/win32/include/wincompat_constants.h').read_text(), re.M)))
     constants = (root / 'compat/win32/include/wincompat_constants.h').read_text()
-    for name, value in re.findall(r'^#define\s+(\w+)\s+(?:[A-Z0-9_]+\()?((?:0x[0-9a-fA-F]+|\d+))(?:\))?\s*$', constants, re.M):
+    constants += (root / 'src/platform/ui_values.h').read_text()
+    for name, value in re.findall(r'^inline constexpr auto (\w+) = (?:[A-Z0-9_]+\()?((?:0x[0-9a-fA-F]+|\d+))(?:\))?;', constants, re.M):
         definitions.setdefault(name, value)
     lines = [line.strip() for line in (root / 'res/stars.rc').read_text().splitlines()]
     resources = []
@@ -202,12 +202,12 @@ def generate(root, output):
     source = ['/* Generated from canonical res/stars.rc. */', '#include "internal.h"']
     manifest = ['/* Generated standard Win32 resource bytes for SDK comparison. */']
     for i, (_, _, data) in enumerate(resources):
-        body = [f'static const BYTE rgbUIResource{i}[] = {{']
+        body = [f'static constinit const BYTE rgbUIResource{i}[] = {{']
         body += ['    ' + ','.join(f'0x{x:02x}' for x in data[j:j+32]) + ',' for j in range(0, len(data), 32)]
         body += ['};']
         source += body
-        manifest += body
-    source += ['const COMPATRESOURCE rgCompatUIResources[] = {']
+        manifest += [line.replace("constinit ", "") for line in body]
+    source += ['constinit const COMPATRESOURCE rgCompatUIResources[] = {']
     manifest += ['static const struct { LPCSTR pszName, pszType; const BYTE *rgb; DWORD cb; } rgUIManifest[] = {']
     for i, (t, n, _) in enumerate(resources):
         name = 'NULL' if isinstance(n, int) else f'"{n}"'
@@ -215,9 +215,9 @@ def generate(root, output):
         ident = f'MAKEINTRESOURCE({n})' if isinstance(n, int) else f'"{n}"'
         source += [f'    {{{name}, {number}, rgbUIResource{i}, sizeof(rgbUIResource{i}), {t}}},']
         manifest += [f'    {{{ident}, MAKEINTRESOURCE({t}), rgbUIResource{i}, sizeof(rgbUIResource{i})}},']
-    source += ['};', 'const size_t cCompatUIResources = sizeof(rgCompatUIResources) / sizeof(rgCompatUIResources[0]);']
+    source += ['};', 'constinit const size_t cCompatUIResources = sizeof(rgCompatUIResources) / sizeof(rgCompatUIResources[0]);']
     manifest += ['};']
-    (output / 'ui_resources.c').write_text('\n'.join(source) + '\n')
+    (output / 'ui_resources.cpp').write_text('\n'.join(source) + '\n')
     (output / 'ui_manifest.h').write_text('\n'.join(manifest) + '\n')
 
 

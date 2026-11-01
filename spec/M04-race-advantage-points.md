@@ -53,7 +53,7 @@ Checks for this story expansion are recorded in the
 ## Interface and arithmetic
 
 Observed entry point: `int16_t CAdvantagePoints(PLAYER *pplr)` in
-[race.c](../src/core/race.c). Inputs: three ordered habitat axes, growth,
+[race.cpp](../src/core/race.cpp). Inputs: three ordered habitat axes, growth,
 16 attribute slots and unsigned trait mask. It normalizes the supplied race,
 sets `fHacker` on corrections, and returns a signed advantage balance.
 Names, password, portrait and leftover allocation have no direct pricing term.
@@ -66,8 +66,8 @@ is `(C / 3) as i16` in Rust. Use f64 for floating operations and binary64 sqrt;
 preserve grouping, loop order and conversion boundaries. No fast math,
 reassociation, fused multiply-add, unordered reductions or generic ROUND.
 `+0.9` and `+0.5` below are intentional conversion biases.
-Sources: `CAdvantagePoints`, `LInnateRaceHabitability` in [race.c](../src/core/race.c),
-`PctPlanetDesirability` in [planet.c](../src/core/planet.c),
+Sources: `CAdvantagePoints`, `LInnateRaceHabitability` in [race.cpp](../src/core/race.cpp),
+`PctPlanetDesirability` in [planet.cpp](../src/core/planet.cpp),
 [binary64 contract](../docs/DOUBLE-PRECISION.md#platform-contract).
 
 ## Normalization
@@ -91,7 +91,7 @@ normalized midpoint. C normalization permits zero width, which can divide by
 zero; there is no defined compatible numeric result for that case. Width one
 is safe because its unused lower half never divides; preserve odd widths and
 do not impose a new width-20 limit on imports. Source: `BoundsCheckPlayer`,
-`LInnateRaceHabitability` in [race.c](../src/core/race.c).
+`LInnateRaceHabitability` in [race.cpp](../src/core/race.cpp).
 
 ## Planet desirability
 
@@ -109,7 +109,7 @@ preferred p and maximum b:
 If R is nonzero return -R. Otherwise set
 `V=trunc_to_i32(sqrt(f64(A)/3.0)+0.9)` and return `div(V*M,10000)`.
 Everything except the sqrt expression is integer arithmetic. Valid desirability
-is -45..100. Source: `PctPlanetDesirability` in [planet.c](../src/core/planet.c).
+is -45..100. Source: `PctPlanetDesirability` in [planet.cpp](../src/core/planet.cpp).
 
 ## Integrated innate habitability
 
@@ -167,14 +167,14 @@ give f64 accumulated 239580000.0 and integer return 23958000.
 The source temporarily replaces global `rgplr[0]` to call desirability, then
 restores it unless input is itself `rgplr[0]`. Concurrent use of that shared
 global is unsafe; a proposed Rust helper can accept a race reference directly.
-Source: `LInnateRaceHabitability` in [race.c](../src/core/race.c).
+Source: `LInnateRaceHabitability` in [race.cpp](../src/core/race.cpp).
 
 ## Complete pricing formula
 
 Normalize first. Set `C=1650`, `H=div(integrated_innate,2000)`, g=normalized
 growth and I=count of immune axes. Apply the following sections in order.
 All terms follow `CAdvantagePoints` and its constant arrays in
-[race.c](../src/core/race.c). C denotes the running internal point total.
+[race.cpp](../src/core/race.cpp). C denotes the running internal point total.
 
 ### Growth and habitat
 
@@ -295,21 +295,21 @@ Return signed low 16 bits of `div(C,3)`: Rust `(C/3) as i16`.
 Bounded valid inputs fit the return. Finish accepts returned balance >=0.
 Internal totals -1 and -2 return zero; -3 returns -1. Do not test C<0
 instead of the returned balance. Source: `CAdvantagePoints` in
-[race.c](../src/core/race.c), `RaceCreationWizard` in [raceui.c](../src/ui/raceui.c).
+[race.cpp](../src/core/race.cpp), `RaceCreationWizard` in [raceui.cpp](../src/ui/raceui.cpp).
 
 ## Leftover allocation handoff
 
 Allocation does not change balance. For human world creation M05 uses
 `min(balance,50)`; AI players receive 50. Choices 0..4 mean surface minerals,
 concentrations, mines, factories, defenses; 5/6 use the surface-minerals default.
-Exact bonus and tie rules belong to `GenerateWorld` in [create.c](../src/core/create.c),
+Exact bonus and tie rules belong to `GenerateWorld` in [create.cpp](../src/core/create.cpp),
 also described in [the bonus notes](../docs/RACE-WIZARD-CALCULATIONS.md#leftover-points-and-related-gameplay-quantities).
 This spec does not duplicate those gameplay generation rules.
 
 ## Acceptance and evidence
 
 Existing test `test_LInnateRaceHabitability_double_rounding` in
-[test_race.c](../tests/unit/test_race.c) defines this complete witness:
+[test_race.cpp](../tests/unit/test_race.cpp) defines this complete witness:
 
 ```text
 minimum   = [31,61,9]

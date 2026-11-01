@@ -5,18 +5,129 @@ the `2.6j` branch keeps it. 2.8 is released (tag `v2.8.0`, branch `2.8` for
 patch releases). 2.9 is released (tag `v2.9.0`); `main` is the 2.9 line,
 and its builds count toward 2.9.1.
 
+B02 now scopes file/memory registry locks with the existing acquire/release spin
+policy. A native-operation fault test reproduces the previous retry deadlock;
+scoped unlocking, nested dispatch and primary-failure cleanup tests pass.
+The pending-error service also preserves an exception already unwinding rather
+than storing a later callback failure from its cleanup. Core and real-window
+fault cases distinguish this from standalone cleanup failure delivery.
+Native file selection and resource-backed modal dialogs now scope window,
+owner/focus and chooser-buffer cleanup. A chooser-adapter fault reproduces the
+old disabled-owner/stale-counter state and verifies restoration, cancellation
+and cleanup-failure delivery without opening a native picker.
+Popup teardown failure now prevents a queued command or selected-ID return;
+actual failure/capture tests also retain ordinary successful command delivery.
+Message-box, popup-tracking, folder and dialog-factory cleanup scopes are
+implemented. Modeless initialization failure now destroys the partial window
+before checked C++ delivery instead of publishing an unreachable live handle.
+Presentation batching now balances its counters on failure/destruction; refresh
+and live-resize flags restore during unwinding. The SDL watcher contains foreign
+callback failures and stops drawing after failed layout or paint. Lists, combos
+and toolbars now retire their window ownership immediately while active callback
+frames retain borrowed control storage; scoped flags restore before those leases
+end. Failed owner-disable callbacks now stop dialog/file-chooser/message-box
+initialization, and combo opening rolls back its own failed popup while retaining
+a reentrant replacement. Profile read/write locks and partial buffers/temporary
+files now unwind safely; injected read/load/save failures preserve the existing
+destination and permit retry. B02 local qualification and all 16 Linux/Windows
+checks pass for `d5de69e`. B03 adds const text/path/format/menu inputs and
+call-scoped UTF-8/output/byte views, retaining mutable scratch buffers and the
+legacy text-drawing output mode. Its full local matrix and all 16 Linux/Windows
+checks pass for `b799348`.
+
 ## C++ migration completion
 
-[Milestone B PR #66](https://github.com/madebyjeffrey/sdl-stars/pull/66) is merged
-and qualified. [Milestone C](CPP-MILESTONE-C.md) is planned from its `develop`
-merge `62bb854`; it covers owned `.cpp`/`.mm` file renames, removal of
-transitional language and symbol overrides, explicit callback/test/state seams,
-linked source witnesses, real wrapper namespaces and final strict C++ policy.
-It preserves game/file behavior and introduces no object-oriented redesign.
-The [completion analysis](CPP-CONVERSION-COMPLETION-ANALYSIS.md) records the
-historical active B revision. C's refreshed plan revalidates the merged tree and
-proposes delivery batches; C01 still requires a full consumer inventory and
-fresh parent checks. C implementation remains pending.
+Milestone B is qualified and merged in [PR #66](https://github.com/madebyjeffrey/sdl-stars/pull/66).
+[Milestone C](CPP-MILESTONE-C.md) is complete and qualified. C01–C03 are merged;
+C04/C05 through C10 and follow-up fixes #79–#80 are merged into `develop` at
+`58c5e707` through the dependent PR stack #72–#77 and a final direct merge.
+Owned implementations have honest C++20/Objective-C++20 extensions, actual
+namespaces/direct UI calls, typed effects and explicit state consumers. Temporary
+routing, source extraction, state aliases and SDK language adapters are removed.
+C08 timer dispatch preserves each dequeued owner's context when a thread timer
+is rearmed before both messages are dispatched. All local and final manual
+Linux/Windows contract gates pass; the two full platform jobs remain opt-in for
+automatic CI. Eighteen native SDK behavior/automation probes remain explicit
+diagnostics tracked in issue #78. The toolbar probe is requalified as a gate;
+documented post-migration fixes are recorded in the [SDK findings](CPP-C09-SDK-FINDINGS.md).
+Game/file behavior and baselines are unchanged.
+[Final qualification](CPP-C10-QUALIFICATION.md) and the
+[implementation ledger](CPP-C-IMPLEMENTATION.md) record the evidence and review order.
+
+## C++ migration
+
+Milestone A of the [native C++ migration plan](CPP-MIGRATION.md) is implemented
+in [PR #64](https://github.com/madebyjeffrey/sdl-stars/pull/64) against `develop`
+(ticket #63). Owned production, generated catalogs,
+wrapper/native adapters and ordinary harnesses use C++20/Objective-C++20.
+Application headers have native C++ linkage and compile independently with
+standard headers in either order. Independent C storage and SDK references remain
+separate. The compilation audit reads sources and compiler manifests explicitly
+as UTF-8 so Windows locale settings do not affect qualification. Milestone B
+(ownership, wire codecs, state and ISO C++ storage) is implemented in one
+[PR #66](https://github.com/madebyjeffrey/sdl-stars/pull/66), tracked by
+[#65](https://github.com/madebyjeffrey/sdl-stars/issues/65). Owned production uses
+strict ISO C++20; typed stable arenas retain the original allocation geometry.
+One application session owns game/UI state, RNG, heaps and native streams.
+Final platform qualification is recorded in the implementation ledger.
+
+Native `leaks` checks now exercise image/font/print ownership and allocation
+failure. `LpNewFontRaster` no longer triggers a second, unowned configuration
+through default substitution on Fontconfig 2.17+; older versions retain their
+original entry point. See the [B implementation ledger](CPP-B-IMPLEMENTATION.md).
+
+The platform environment adapter now uses an explicit lookup helper instead of
+a `getenv` macro, preserving Windows SDL/POSIX CRT behavior without poisoning
+C++ standard-library declarations. Its private header joins the independent
+include-order compilation gate. Workflow harnesses that formerly inherited the
+macro call the helper explicitly so their Windows Unicode path/name fixtures
+continue to exercise UTF-8 rather than the CRT code page.
+
+The prerequisite steps below record the earlier migration checkpoints.
+
+The first migration step compiled the game, UI and host as GNU C++17 under
+existing source filenames, keeping a C ABI for the C11 wrapper, generated tables
+and harnesses. Fixed-width integer aliases remain unchanged; C/C++ layout checks
+cover 259 type, alias and record-prefix measurements. On Apple-silicon macOS,
+52 desktop checks and 17 host checks pass. Full desktop and host regressions each
+match all 519 files through turn 150, with 21 accepted unused-storage warnings,
+zero differences/errors and no skipped inputs. The available SDL tutorial smoke
+checkpoint passes; full tutorial coverage remains incomplete.
+
+The second step replaces all 24 jump-recovery sites with typed exceptions,
+scoped cleanup and contained callbacks. On Apple-silicon macOS, all 54 desktop
+checks and 18 host checks pass; full desktop/host regressions each match 519
+files, with 25 accepted unused-storage warnings and no differences/errors or
+skipped inputs. Four additional warnings are confined to unused storage in
+`oneai6` host/player files at turns 100 and 150. The third step replaces application-owned file operations with a shared C++17
+stream/filesystem service and opaque C interfaces. Native adapters remain only
+for exclusive creation, sharing, exact modes, durable writes and live-handle
+identity/truncation. Both full regressions again match 519 files, with the same
+25 accepted unused-storage warnings, zero differences/errors and no skipped
+inputs. Checks pass 55/55 for desktop and 19/19 for host, including the layout
+contract and available tutorial checkpoint. Linux/Windows CI qualification is
+recorded in the stacked PRs. No baseline or record layout changes.
+The fourth step replaces `STARS_CONSTANTS` and the C++ integer aliases with
+explicit fixed-underlying enums, preserving signedness, widths and constant
+names. At that checkpoint C11 declarations retained integer aliases, and a cross-language
+ABI test covered all 145 stored enum types in addition to the existing layout comparison;
+full verification is recorded in the fourth stacked PR.
+See [native-port constraints](NATIVE-PORT.md).
+
+The callback recovery follow-up fixes unowned timer/window errors during modal
+operations: `GetMessageA` stops on pending failures, including failures while
+peeking SDL events, so existing dialog, message-box, picker and menu cleanup runs
+before C++ delivery. Fault coverage checks that later dialog commands do not run
+and that the owner is re-enabled for both thread-timer and owner-window failures.
+This does not change turn generation or the native regression baseline.
+
+The shared enum-ABI and file-service test targets are registered once when
+ordinary tests, SDK reference tests or both are enabled. The manual Windows job
+configures ordinary/SDK-only/both/neither in separate fresh directories, covering
+the former duplicate-target failure. It runs the full ordinary registry and all
+SDK probes, retaining the exact diagnostic classification in
+[maintained policy](CPP-POLICY.md). Game results and original vector assertions
+are unchanged.
 
 [Milestone D](CPP-MILESTONE-D.md) ([issue #71](https://github.com/madebyjeffrey/sdl-stars/issues/71))
 plans a C++ file-selection interface behind the SDL Win32 wrapper after C. It
@@ -25,6 +136,29 @@ adapters, moves the four picker backends to a typed request/result handoff and
 migrates a real open/save caller pair. It is planned, not implemented. The
 [earlier D analysis](CPP-MILESTONE-D-ANALYSIS.md) remains an assessment of broader
 domain-encapsulation candidates, which are outside this milestone.
+
+## C++ follow-up review backlog
+
+Reviewed `develop` at `b6491ed2` on 2026-10-31. Owned production has no
+function-like macros; its 167 definitions are 165 include guards and two
+configuration definitions. This is a static interface review, not a new runtime
+bug reproduction or authorization to change game behavior.
+
+| Order | Remaining work | Evidence and completion boundary |
+| --- | --- | --- |
+| 1 | Preserve actual output capacity in formatting and string-copy APIs. | [CchSprintf](../src/platform/native.cpp), [wsprintfA](../compat/win32/src/services.cpp) use a hardcoded 1024-byte bound; [CchGetString](../src/core/utilgen.cpp) has no destination bound. Introduce bounded spans/array overloads, retain legacy formatting and complete UTF-8 code points, and characterize affected small-buffer callers. |
+| 2 | Replace six packaged help value macros and extend the inventory to generated headers. | [helpgen.py](../compat/win32/helpgen.py) extracts help_contexts.h from the guide archive. Its archive/bundle size/CRC, SHA and contents values can be typed constants; [help.cpp](../compat/win32/src/help.cpp) needs the SHA/newline concatenation adjusted. Version/resource macros have actual RC/parser consumers and remain supported. |
+| 3 | Give file selection a typed request/result and owned transient storage. | [Milestone D](CPP-MILESTONE-D.md) owns the [backend handoff](../compat/win32/src/filedialog_backend.h), shared policy, platform adapters and real open/save callers. Preserve cancellation/error/owner/CWD behavior. |
+| 4 | Retire obsolete embedded-resource release ceremony from application callers. | [logui.cpp](../src/ui/logui.cpp) and [mdi.cpp](../src/ui/mdi.cpp) still unlock/free embedded resources; [FreeResource](../compat/win32/src/resource.cpp) is a no-op. Check last-error effects before deletion and keep compatibility entry points where required by contract tests. |
+| 5 | Remove remaining procedure-instance indirection. | [FARPROC](../compat/win32/include/wincompat_types.h) aliases DLGPROC; [buildui.cpp](../src/ui/buildui.cpp) and other dialogs retain temporary callback variables after thunk removal. Pass callbacks directly where possible while preserving required debug-symbol names. |
+| 6 | Make scratch-text borrowing and invalidation explicit. | [PszGetCompressedString](../src/core/strings.cpp) and [PszPlayerName](../src/core/util.cpp) return mutable reusable session buffers. Document lifetime, then introduce const views or caller-owned output where appropriate; a view alone does not extend lifetime. |
+
+Secondary style work includes NULL, C-style casts, typedef struct, C headers and
+bytewise initialization. Review these locally; retain fixed storage widths,
+wire codecs, stable arena lifetimes, qsort16 ordering and genuine foreign APIs.
+The C11-only specification cases consolidated after C remain historical evidence
+under [the specification policy](../spec/README.md#consolidated-evidence-after-the-c-migration);
+porting them to actual linked C++ targets remains open.
 
 ## SDL desktop consolidation
 
@@ -360,7 +494,16 @@ uses `ToolbarWindow32` with common-control commands, split/dropdown buttons and
 anchored tooltips; Windows uses `comctl32`. See [toolbars](WIN32-TOOLBARS.md). Radio
 selection dots are round, toolbar menus anchor below their triggers, and tooltips
 use control-relative placement with an owned native tooltip role; see
-[controls](WIN32-CONTROLS.md). Basic narrow edit fields now support selection, limits,
+[controls](WIN32-CONTROLS.md).
+`CheckDlgButton` now rejects missing child controls and invalid dialog handles;
+the shared SDL/SDK vector requires failure for both. Valid button updates keep
+their existing success result.
+`ClickToolbar` now follows the native dropdown return contract: handled menus
+return `TBDDRET_DEFAULT`; unhandled or `TREATPRESSED` mouse dropdowns retain
+capture and send the ordinary command on release. The game's handler reports
+its menus as handled. Shared vectors check all three results against native
+Windows and SDL, without reading undocumented notification fields.
+Basic narrow edit fields now support selection, limits,
 read-only/password behavior and input; see [edit fields](WIN32-EDIT.md). Complete
 edit conformance remains. Fixed-height string lists, multiple-selection messages
 and owner drawing now work; see [list boxes](WIN32-LISTS.md). Additional list

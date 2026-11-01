@@ -1,0 +1,586 @@
+{
+  "parent": "b12e172",
+  "program_count": 27,
+  "independent_python_definitions": 67,
+  "case_accounting": "Every original domain/case/assertion/exclusion receipt retained; only presentation banners change.",
+  "programs": [
+    {
+      "program": "tests/spec/check_colony_capabilities_source.py",
+      "test": "witness_colony-capabilities",
+      "executable": "stars-witness-colony-capabilities",
+      "fixture": "tests/witnesses/colony_capabilities.cpp",
+      "independent_oracle": "unchanged Python model and generated vectors",
+      "unchanged_python_ast_sha256": {
+        "base": "f70a099b70bad7eeaa50915e8d0f5909565705c4c994d36d1fefc12a89f0dfa8",
+        "reference": "9eda64af9433465153f09a9d83782e73386d106e9a64f396864f364de9381331",
+        "cases": "869c86e0d7c45e654c0a6bde1cc88d82f9897b8359c1791b38d18a9f7220a0cb"
+      },
+      "receipt": [
+        "Colony capabilities: 1756689 cases (count 1253964, gate 405480, scanner 15982, generic 81263) plus four Produce clipping/application cases; 497240245 assertions passed"
+      ],
+      "exclusions": {
+        "lookup player index": 65519,
+        "player index": 272,
+        "capability lookup player": 65931,
+        "gate design index": 66460,
+        "gate hull slot": 541,
+        "gate roster owner": 476,
+        "gate roster pointer": 2269,
+        "message provider owner": 709
+      },
+      "traceability": []
+    },
+    {
+      "program": "tests/spec/check_construction_buildability_source.py",
+      "test": "witness_construction-buildability",
+      "executable": "stars-witness-construction-buildability",
+      "fixture": "tests/witnesses/construction_buildability.cpp",
+      "independent_oracle": "unchanged Python model and generated vectors",
+      "unchanged_python_ast_sha256": {
+        "base": "a49c17d4a16b9dec5c83d74632eb389557e254fbe4f19f94df82e173fd8b07f4",
+        "cases": "02bcbb8347eb00ef94e91c860e21365b0485c7ad4a0df20874d4784284a134da",
+        "reference": "64080f97da0372f402f7dde54e2da9fd4efc011f68addc3ea1e5b8b163bd83ea"
+      },
+      "receipt": [
+        "Construction actual eligibility integration: 179072 cases plus post-charge Produce/fleet-limit case; 43707827 assertions passed"
+      ],
+      "exclusions": {
+        "design slot": 98380,
+        "roster owner": 96,
+        "roster pointer": 3806,
+        "base notification catalog": 2686,
+        "design slot read": 488
+      },
+      "traceability": [
+        "spec/M19-construction-buildability.md",
+        "spec/M09-production-management.md"
+      ]
+    },
+    {
+      "program": "tests/spec/check_construction_effects_source.py",
+      "test": "witness_construction-effects",
+      "executable": "stars-witness-construction-effects",
+      "fixture": "tests/witnesses/construction_effects.cpp",
+      "independent_oracle": "retained test-side C++ assertions and vectors using real production types",
+      "unchanged_python_ast_sha256": {},
+      "receipt": [
+        "Construction effects actual-source fixtures: 1897437 assertions passed"
+      ],
+      "exclusions": {},
+      "traceability": [
+        "spec/M19-construction-buildability.md",
+        "spec/M09-production-management.md",
+        "spec/M19-construction-effects.md",
+        "spec/README.md"
+      ]
+    },
+    {
+      "program": "tests/spec/check_design_buildability_source.py",
+      "test": "witness_design-buildability",
+      "executable": "stars-witness-design-buildability",
+      "fixture": "tests/witnesses/design_buildability.cpp",
+      "independent_oracle": "unchanged Python model and generated vectors",
+      "unchanged_python_ast_sha256": {
+        "Boundary": "1a002ecf11b57f15079ccc27e21790b01665d2b3d7f4e0cec4898e66517a23dd",
+        "base": "f5979e4d6a9794e82f1d626a1b294c6c790ff8840787789bc9758ebfcabbdfab",
+        "cases": "6a401a08fa4ab4213e8b22d4d01c865fc303b2f4ce94bf8195bcbdb63c75bd65",
+        "reference": "85a2cb13c0381b6c16ee1ba8c03c392d301b7ea11a7e03285f5d365d1f492738"
+      },
+      "receipt": [
+        "Native design buildability: 299402 cases, 78741602 assertions passed; actual lookup/race/technology/catalog composition, order, restoration and SHDEF/PLAYER/GAME frames checked"
+      ],
+      "exclusions": {
+        "lookup player index": 65519,
+        "design slot read": 239
+      },
+      "traceability": [
+        "spec/M11-design-buildability.md"
+      ]
+    },
+    {
+      "program": "tests/spec/check_host_production_source.py",
+      "test": "witness_host-production",
+      "executable": "stars-witness-host-production",
+      "fixture": "tests/witnesses/host_production.cpp",
+      "independent_oracle": "retained test-side C++ assertions and vectors using real production types",
+      "unchanged_python_ast_sha256": {},
+      "receipt": [
+        "M09 host production source: 1362708 assertions passed"
+      ],
+      "exclusions": {},
+      "traceability": [
+        "spec/M09-production-management.md",
+        "spec/README.md",
+        "spec/M09-production-execution.md"
+      ]
+    },
+    {
+      "program": "tests/spec/check_host_research_source.py",
+      "test": "witness_host-research",
+      "executable": "stars-witness-host-research",
+      "fixture": "tests/witnesses/host_research.cpp",
+      "independent_oracle": "unchanged Python model and generated vectors",
+      "unchanged_python_ast_sha256": {
+        "Escape": "6755099e71e223d98c7d2785dfd7aa7173a3786704fade2d7f4f12e876516ebd",
+        "reference": "c2107fb0f55a9f0175aa8f5b8af8ebca8aa55a978b742385ab859c67f29c5d7b",
+        "base": "b272f2fb448f82ea2e0d09b6782cb4eb5012dc371ba22ac21d828f05b74d51bc",
+        "cases": "0f44e4845112673477acb4fe9de1e9ff8e0bad711ac9374be52d942fcf281fc2"
+      },
+      "receipt": [
+        "Native host research: 11045 cases, 2772295 assertions passed",
+        "Native actual catalog terminators: 991759 assertions passed, all 16 counts below byte wrap"
+      ],
+      "exclusions": {
+        "redirected research field index": 240,
+        "technology cost table": 582,
+        "general research pool multiplication": 117,
+        "general primary round addition": 126,
+        "primary research addition": 162,
+        "slow stored research multiplication": 432,
+        "research cost subtraction": 20,
+        "part requirement pointer": 12,
+        "shared primary field total": 1,
+        "slow spending round addition": 1
+      },
+      "traceability": [
+        "spec/S03-static-game-data-and-text.md",
+        "spec/M12-host-research-resolution.md"
+      ]
+    },
+    {
+      "program": "tests/spec/check_library_publication_source.py",
+      "test": "witness_library-publication",
+      "executable": "stars-witness-library-publication",
+      "fixture": "tests/witnesses/library_publication.cpp",
+      "independent_oracle": "unchanged Python model and generated vectors",
+      "unchanged_python_ast_sha256": {
+        "ret": "5ab96e3c963c0379368f4faf1dea95d10c3a61be527a009a5ed352f30798a8ee",
+        "ask": "673c177feda37548732d5b82516615f534ab963d8fc48cf29479bf55fbb907eb",
+        "notice": "989823c912ccd5e79014966d6c0e850834756d3a3c5678a9f3096c0dba711136",
+        "ignore": "2b33827bb29cf78a512de6b125f38b4a43aa3eb9765fe7aee0b3bf7fb2369e0c",
+        "guard": "9f17ec2e6c8d7c2e960fe4b9d12d7a27cc0d5461c136ebdda2dd12c6f69c5787",
+        "program": "b4dff6d792ce931b98e3a706b16398f50a4f5fd0ae59d2db05dea11487a6cf6b",
+        "check": "d6f772ada12a60f5cbdb31021b0df3c221a91a45299975472dbc43d19b133ed5"
+      },
+      "receipt": [],
+      "exclusions": {},
+      "traceability": [
+        "spec/README.md",
+        "spec/M01-import-publication.md",
+        "spec/M01-game-library.md"
+      ]
+    },
+    {
+      "program": "tests/spec/check_mass_driver_source.py",
+      "test": "witness_mass-driver",
+      "executable": "stars-witness-mass-driver",
+      "fixture": "tests/witnesses/mass_driver.cpp",
+      "independent_oracle": "unchanged Python model and generated vectors",
+      "unchanged_python_ast_sha256": {
+        "Boundary": "1a002ecf11b57f15079ccc27e21790b01665d2b3d7f4e0cec4898e66517a23dd",
+        "base": "7bff2e67dc3d86af13db946a70bb270d17ee4137bf7e16848d188ae9467cf1ab",
+        "reference": "6804a42d6b700e038052b7f9a5e960f274dd87c7cfd4657ffe1d9aa662436e9b",
+        "cases": "146308b321fc5c544b19eb257bce9a8d3d34a659a0eadd3618d8c0bd1f5dc174"
+      },
+      "receipt": [
+        "Mass driver source: 488905 defined standalone cases; 55494 construction/packet cases; 4392987 assertions passed"
+      ],
+      "exclusions": {
+        "roster owner": 66668,
+        "hull slot read": 3070,
+        "roster pointer": 5946,
+        "base design read": 2235
+      },
+      "traceability": []
+    },
+    {
+      "program": "tests/spec/check_mining_source.py",
+      "test": "witness_mining",
+      "executable": "stars-witness-mining",
+      "fixture": "tests/witnesses/mining.cpp",
+      "independent_oracle": "unchanged Python model and generated vectors",
+      "unchanged_python_ast_sha256": {
+        "band": "5e639f69f23288da7f555d7f3d1bc06b7dc092b393597748d8d9bb88cafbd3b4",
+        "deplete": "ac14913134882921edfb3d168cd6dbcb5089d602b0174cda7b9824f27d68ded1",
+        "capacity": "9824586b85a602cf571ef43ea2366aa4e30d6b70d6d3f6c6d58c059b6898fc43",
+        "reference": "5e989c73688d845b56b59859664da5ec264e70c4c80d2c25a49bf8a27b18ab39",
+        "base": "c24e9ce26a39bcae079eba64af2ff15da1ef1832bf1273ffd46b1466189fa017",
+        "cases": "8bd3ee993fd87cbab7b1346c3a923d73158eb181182233bebc8ac342e3fb4810"
+      },
+      "receipt": [
+        "Native mining/depletion: 221240 cases, 4686320 assertions passed"
+      ],
+      "exclusions": {
+        "operating negative root": 4,
+        "first waypoint dereference": 64,
+        "mine/concentration product": 3500,
+        "mineral stock addition": 1253,
+        "fleet mining multiplication": 25,
+        "hull slot extent": 1728
+      },
+      "traceability": [
+        "spec/M19-mining-and-depletion.md"
+      ]
+    },
+    {
+      "program": "tests/spec/check_native_colony_source.py",
+      "test": "witness_native-colony",
+      "executable": "stars-witness-native-colony",
+      "fixture": "tests/witnesses/native_colony.cpp",
+      "independent_oracle": "unchanged Python model and generated vectors",
+      "unchanged_python_ast_sha256": {
+        "Boundary": "1a002ecf11b57f15079ccc27e21790b01665d2b3d7f4e0cec4898e66517a23dd",
+        "checked": "33a2ede890d0d1b1d2f7c2aa7e5cb8feef63cc4f30794357b1dd02b63ad4666e",
+        "signed": "8c301b59aa59d34573d346bdc34cfba5d054a982cd61411f03fd607189a3d32f",
+        "div": "9da5d98f9e6b912d128ad507bd4c9f75d2bcf8054510dd38812006ed36563d76",
+        "fields": "ca18733faf9141d9c2483c424943b06386c741f515ee643ed783408b2ee37d3b",
+        "habitat": "03acf0b4e1c3dcfe82e272046a6a66f25baddb5180e2ace6af100097bad85a4a",
+        "capacity": "3703b0f9368930ef2cba72e635d845371293c9d9307f7d7cf3e0c37efb6d9407",
+        "growth": "7e7adefd2bf58195344e2e7a493f4590f4c7ab8d0a2e9f564d58b88ae991aede",
+        "absolute": "dac8c0f475b8e9d12213279d4432bba8ec1dcf19ff1dc279e0990ddce2e8f623",
+        "operable": "d5a261f37f1c7a4c628b0dbf52a74473b5c7e493315645206f58b8c9aa458511",
+        "defense": "26335339283fcff8c7538097ae5e947830e6ee591d7bc7b502ecc4cbe3656d78",
+        "effective": "fcb72a7281cd9e9c9d9704ab42b20a367845ab4f1c0d812e526a177cb4b8a5b7",
+        "floating": "69b17baabfddf7891b7ff2c691a35b8429d620051644b482a03443ce7469c0d4",
+        "reference": "3a8cdb33c1c2dbb904076cb3f653b51aea6632dadbd0e112a190206b0dfad655",
+        "base": "22bb675315dc4d696e8ee39c5b94908008889812e2b5898ef4030608ddbe4dea",
+        "cases": "753769d26ac3b6dd514c17f91c01ca1b0bf78e50e567b3c8af2b23536fe4e30a"
+      },
+      "receipt": [
+        "Native colony source differential: 239344 cases, 1331470 assertions passed"
+      ],
+      "exclusions": {
+        "operable product": 1836,
+        "division": 195,
+        "fullness product": 1155,
+        "negative square root": 173,
+        "float division zero": 37,
+        "base/population index": 176,
+        "fine growth product": 29,
+        "crowding product": 5,
+        "next population": 3
+      },
+      "traceability": [
+        "spec/M08-colony-economy.md"
+      ]
+    },
+    {
+      "program": "tests/spec/check_part_availability_source.py",
+      "test": "witness_part-availability",
+      "executable": "stars-witness-part-availability",
+      "fixture": "tests/witnesses/part_availability.cpp",
+      "independent_oracle": "unchanged Python model and generated vectors",
+      "unchanged_python_ast_sha256": {
+        "tech": "571ab97730b3e51391cb49fb897189b2c789488801dcdbe49560e3dea91108d0",
+        "hidden": "c01730035e3eb0f3bc8bdfea5293874ddc752b1c96f10ce6b2db9a9cc0606c3b",
+        "policy": "82937e925ea0e415166a80d50359744e7ae826672ebd0e2c480a9d6eba7db490",
+        "cases": "711ff44a5f49637feddddc9e1a8706d4167c9dcb2dcb321a16511b013618adae"
+      },
+      "receipt": [
+        "Prepared 2047760 cases using 239 actual catalog rows; 116 model identities and native enum/bit protocols bound",
+        "Native part availability: 2047760 cases, 32854889 assertions passed; pointers, query order and PLAYER/GAME/global frames checked"
+      ],
+      "exclusions": {},
+      "traceability": [
+        "spec/S03-static-game-data-and-text.md",
+        "spec/M19-construction-buildability.md",
+        "spec/M11-part-availability.md",
+        "spec/M11-design-buildability.md"
+      ]
+    },
+    {
+      "program": "tests/spec/check_planet_editor_source.py",
+      "test": "witness_planet-editor",
+      "executable": "stars-witness-planet-editor",
+      "fixture": "tests/witnesses/planet_editor.cpp",
+      "independent_oracle": "retained test-side C++ assertions and vectors using real production types",
+      "unchanged_python_ast_sha256": {},
+      "receipt": [
+        "S06 planet copy / M09 completion source-extracted witnesses: 17432153 passed"
+      ],
+      "exclusions": {},
+      "traceability": [
+        "spec/S06-shared-game-state.md",
+        "spec/README.md",
+        "spec/S06-planet-editor-contracts.md"
+      ]
+    },
+    {
+      "program": "tests/spec/check_production_builder_source.py",
+      "test": "witness_production-builder",
+      "executable": "stars-witness-production-builder",
+      "fixture": "tests/witnesses/production_builder.cpp",
+      "independent_oracle": "unchanged Python model and generated vectors",
+      "unchanged_python_ast_sha256": {
+        "Boundary": "1a002ecf11b57f15079ccc27e21790b01665d2b3d7f4e0cec4898e66517a23dd",
+        "i32": "6e79563310fa2aa549c5b9cc9367dbc38d2ef2ccf9572c21e8e8c5d860847a8f",
+        "signed": "8c301b59aa59d34573d346bdc34cfba5d054a982cd61411f03fd607189a3d32f",
+        "div": "018d7365b5ddd441a0613cdca32cb140de7852aa9817c6ca83c2416154a01996",
+        "word": "23273b73073262db81db29153ac68f4facf30f753534f4c5ba2de7bb8fa08eb3",
+        "reference": "9477d08bd151e997fbbc0910535bac5d5d4af8a261d8a0a501b4ba11a943752c",
+        "cases": "6e988c0d72497ca52490e73e099e79fd2bca0bcbd68dc03b796d6e9d298aa597"
+      },
+      "receipt": [
+        "M09 builder source differential: 68307 cases, 751377 assertions passed"
+      ],
+      "exclusions": {
+        "uninitialized need": 232,
+        "signed overflow": 45
+      },
+      "traceability": [
+        "spec/M09-production-builder.md",
+        "spec/README.md"
+      ]
+    },
+    {
+      "program": "tests/spec/check_production_cost_source.py",
+      "test": "witness_production-cost",
+      "executable": "stars-witness-production-cost",
+      "fixture": "tests/witnesses/production_cost.cpp",
+      "independent_oracle": "retained test-side C++ assertions and vectors using real production types",
+      "unchanged_python_ast_sha256": {},
+      "receipt": [
+        "M09 production cost source-extracted witnesses: 1495512 passed"
+      ],
+      "exclusions": {},
+      "traceability": [
+        "spec/M09-production-management.md",
+        "spec/M09-production-costs.md",
+        "spec/README.md"
+      ]
+    },
+    {
+      "program": "tests/spec/check_production_editor_source.py",
+      "test": "witness_production-editor",
+      "executable": "stars-witness-production-editor",
+      "fixture": "tests/witnesses/production_editor.cpp",
+      "independent_oracle": "retained test-side C++ assertions and vectors using real production types",
+      "unchanged_python_ast_sha256": {},
+      "receipt": [
+        "M09 source-extracted editor witnesses: 19415 assertions passed"
+      ],
+      "exclusions": {},
+      "traceability": [
+        "spec/M09-production-management.md",
+        "spec/README.md"
+      ]
+    },
+    {
+      "program": "tests/spec/check_production_forecast_source.py",
+      "test": "witness_production-forecast",
+      "executable": "stars-witness-production-forecast",
+      "fixture": "tests/witnesses/production_forecast.cpp",
+      "independent_oracle": "retained test-side C++ assertions and vectors using real production types",
+      "unchanged_python_ast_sha256": {},
+      "receipt": [
+        "M09 forecast/build/mining source-extracted witnesses: 272841 passed"
+      ],
+      "exclusions": {},
+      "traceability": [
+        "spec/M09-production-management.md",
+        "spec/M09-production-forecast.md",
+        "spec/README.md",
+        "spec/M19-game-rules-and-resolution.md"
+      ]
+    },
+    {
+      "program": "tests/spec/check_production_lifecycle_source.py",
+      "test": "witness_production-lifecycle",
+      "executable": "stars-witness-production-lifecycle",
+      "fixture": "tests/witnesses/production_lifecycle.cpp",
+      "independent_oracle": "retained test-side C++ assertions and vectors using real production types",
+      "unchanged_python_ast_sha256": {},
+      "receipt": [
+        "M09 lifecycle/M07 starbase source-extracted witnesses: 16243 passed"
+      ],
+      "exclusions": {},
+      "traceability": [
+        "spec/README.md"
+      ]
+    },
+    {
+      "program": "tests/spec/check_production_presets_source.py",
+      "test": "witness_production-presets",
+      "executable": "stars-witness-production-presets",
+      "fixture": "tests/witnesses/production_presets.cpp",
+      "independent_oracle": "retained test-side C++ assertions and vectors using real production types",
+      "unchanged_python_ast_sha256": {},
+      "receipt": [
+        "M09 source-extracted preset witnesses: 13140 assertions passed"
+      ],
+      "exclusions": {},
+      "traceability": [
+        "spec/M09-production-management.md",
+        "spec/README.md"
+      ]
+    },
+    {
+      "program": "tests/spec/check_research_source.py",
+      "test": "witness_research",
+      "executable": "stars-witness-research",
+      "fixture": "tests/witnesses/research.cpp",
+      "independent_oracle": "unchanged Python model and generated vectors",
+      "unchanged_python_ast_sha256": {
+        "mix": "bbdfc1c0b141c217ff275bb3af08736331d8f78511f203bcd4fe91a0697d4903",
+        "reference": "5665f1f13324417cd3f34aa603bbd5372f2da5e27d93d14c990af698b046abf9",
+        "base": "bbfbaf15a68c2841e8b3aae84b41645c32737bca349d93ec358e372fbf824ecc",
+        "cases": "75dc1cae0ca8d80246d09351c437baf5df3793c3121970708f0cb4f606aa6c64"
+      },
+      "receipt": [
+        "Native research quotes/preview: 120992 cases, 2654102 assertions passed"
+      ],
+      "exclusions": {
+        "cost field/table index": 1352,
+        "slow stored-spending multiplication": 900,
+        "development spent negation": 450,
+        "development field addition": 120,
+        "preview entry player index": 2,
+        "preview restore player index": 1,
+        "callback player index": 1,
+        "development total addition": 1
+      },
+      "traceability": [
+        "spec/M12-development-and-budget-quotes.md"
+      ]
+    },
+    {
+      "program": "tests/spec/check_restoration_source.py",
+      "test": "witness_restoration",
+      "executable": "stars-witness-restoration",
+      "fixture": "tests/witnesses/restoration.cpp",
+      "independent_oracle": "retained test-side C++ assertions and vectors using real production types",
+      "unchanged_python_ast_sha256": {},
+      "receipt": [
+        "Restoration, lookup and message source witnesses: 6512 assertions passed"
+      ],
+      "exclusions": {},
+      "traceability": [
+        "spec/M07-galaxy-map-and-navigation.md",
+        "spec/S06-shared-game-state.md",
+        "spec/README.md",
+        "spec/M15-messages-and-reports.md"
+      ]
+    },
+    {
+      "program": "tests/spec/check_s02_io_source.py",
+      "test": "witness_s02-io",
+      "executable": "stars-witness-s02-io",
+      "fixture": "tests/witnesses/s02_io.cpp",
+      "independent_oracle": "retained test-side C++ assertions and vectors using real production types",
+      "unchanged_python_ast_sha256": {},
+      "receipt": [
+        "S02 profile I/O and host source witnesses: 25 passed"
+      ],
+      "exclusions": {},
+      "traceability": [
+        "spec/S02-preference-contracts.md",
+        "spec/README.md"
+      ]
+    },
+    {
+      "program": "tests/spec/check_s02_presets_source.py",
+      "test": "witness_s02-presets",
+      "executable": "stars-witness-s02-presets",
+      "fixture": "tests/witnesses/s02_presets.cpp",
+      "independent_oracle": "retained test-side C++ assertions and vectors using real production types",
+      "unchanged_python_ast_sha256": {},
+      "receipt": [
+        "S02 source-extracted preset witnesses: 131086 assertions passed (including all 65536 packed production words)"
+      ],
+      "exclusions": {},
+      "traceability": [
+        "spec/S02-preference-contracts.md",
+        "spec/README.md"
+      ]
+    },
+    {
+      "program": "tests/spec/check_s02_save_source.py",
+      "test": "win32_profile_save",
+      "executable": "stars-profile-save",
+      "fixture": "tests/compat/profile_save.cpp",
+      "independent_oracle": "retained test-side C++ assertions and vectors using real production types",
+      "unchanged_python_ast_sha256": {},
+      "receipt": [
+        "S02 linked save-control witnesses: 42 passed"
+      ],
+      "exclusions": {},
+      "traceability": [
+        "spec/S02-preference-contracts.md",
+        "spec/README.md"
+      ]
+    },
+    {
+      "program": "tests/spec/check_s02_source.py",
+      "test": "witness_s02-layout",
+      "executable": "stars-witness-s02-layout",
+      "fixture": "tests/witnesses/s02_layout.cpp",
+      "independent_oracle": "retained test-side C++ assertions and vectors using real production types",
+      "unchanged_python_ast_sha256": {},
+      "receipt": [
+        "S02 source-extracted C witnesses: 21 passed"
+      ],
+      "exclusions": {},
+      "traceability": [
+        "spec/S02-preference-contracts.md",
+        "spec/README.md"
+      ]
+    },
+    {
+      "program": "tests/spec/check_s02_state_source.py",
+      "test": "witness_s02-state",
+      "executable": "stars-witness-s02-state",
+      "fixture": "tests/witnesses/s02_state.cpp",
+      "independent_oracle": "retained test-side C++ assertions and vectors using real production types",
+      "unchanged_python_ast_sha256": {},
+      "receipt": [
+        "S02 source-extracted state witnesses: 42 passed"
+      ],
+      "exclusions": {},
+      "traceability": [
+        "spec/S02-preference-contracts.md",
+        "spec/README.md"
+      ]
+    },
+    {
+      "program": "tests/spec/check_terraform_source.py",
+      "test": "witness_terraform",
+      "executable": "stars-witness-terraform",
+      "fixture": "tests/witnesses/terraform.cpp",
+      "independent_oracle": "unchanged Python model and generated vectors",
+      "unchanged_python_ast_sha256": {
+        "base": "13af1beb7601bb07d811a332f6579911144ff8560597da7d1b39ba5740ed1eae",
+        "bounds": "9e55b5bff91c255ab16404e3ee3d3875901950ac545a38d301997e44029d22c4",
+        "habitat": "a4152235635833d25b080df61ba41a7ec913349d3eb8eacc5d60fee1c5138cc6",
+        "reference": "b08b7511eb81601ed8ff3143ecf619fcfd67de50e5ea4612fb057583d47a82cf",
+        "cases": "5e7abae8b5cc580c1a802ce66233362c5b2cae3ff21eb1dbd11e0308cbe5691c"
+      },
+      "receipt": [
+        "Terraform selection: 1423925 cases, 303296026 assertions passed"
+      ],
+      "exclusions": {
+        "lookup player index": 65547,
+        "player index": 2509,
+        "division": 129
+      },
+      "traceability": [
+        "spec/S03-static-game-data-and-text.md"
+      ]
+    },
+    {
+      "program": "tests/spec/check_transport_presets_source.py",
+      "test": "witness_transport-presets",
+      "executable": "stars-witness-transport-presets",
+      "fixture": "tests/witnesses/transport_presets.cpp",
+      "independent_oracle": "retained test-side C++ assertions and vectors using real production types",
+      "unchanged_python_ast_sha256": {},
+      "receipt": [
+        "M10 source-extracted transport witnesses: 131593 assertions passed"
+      ],
+      "exclusions": {},
+      "traceability": [
+        "spec/M10-fleet-operations.md",
+        "spec/README.md"
+      ]
+    }
+  ]
+}

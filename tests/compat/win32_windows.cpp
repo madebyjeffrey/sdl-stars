@@ -1,0 +1,378 @@
+/* Win32 creates and dispatches; SDL is used only to inject native events in tests. */
+#include <windows.h>
+#include <stars_compat.h>
+#include <SDL3/SDL.h>
+#include <stdio.h>
+#include <string.h>
+
+#define CHECK(f) do { if (!(f)) { fprintf(stderr, "line %d: %s (%s)\n", __LINE__, #f, SDL_GetError()); return 1; } } while (0)
+constexpr auto msgEcho = (win32::WM_APP + 10);
+constexpr auto msgCount = (win32::WM_APP + 11);
+constexpr auto msgSubclass = (win32::WM_APP + 12);
+constexpr auto msgNested = (win32::WM_APP + 13);
+constexpr auto msgShutdown = (win32::WM_APP + 14);
+
+typedef struct WINDOWTEST {
+    int i;
+    int cNcCreate, cCreate, cDestroy, cNcDestroy, cKey, cChar, cMouse, cSize, cCustom, cFocus, cBlur;
+    BOOL fReject, fSelfDestroy, fCounted, fReentrant, fCreateData;
+    WPARAM wMouse;
+    LPARAM lMouse, lKey;
+} WINDOWTEST;
+
+static BOOL fInteractive;
+static int cLive;
+
+static LRESULT  TestWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+    WINDOWTEST *lpwin = (WINDOWTEST *)win32::GetWindowLongPtrA(hwnd, win32::GWLP_USERDATA);
+    CREATESTRUCT *lpcs;
+    char szTitle[100];
+
+    if (msg == win32::WM_NCCREATE) {
+        lpcs = (CREATESTRUCT *)lParam;
+        lpwin = (WINDOWTEST*)(lpcs->lpCreateParams);
+        win32::SetWindowLongPtrA(hwnd, win32::GWLP_USERDATA, (LONG_PTR)lpwin);
+        lpwin->cNcCreate++;
+        lpwin->fCreateData = lpcs->cx == 320 && lpcs->cy == 240;
+        return win32::DefWindowProcA(hwnd, msg, wParam, lParam);
+    }
+    if (!lpwin)
+        return win32::DefWindowProcA(hwnd, msg, wParam, lParam);
+    switch (msg) {
+    case win32::WM_CREATE:
+        lpwin->cCreate++;
+        if (lpwin->fReject)
+            return -1;
+        lpwin->fCounted = 1;
+        cLive++;
+        if (lpwin->fSelfDestroy)
+            win32::DestroyWindow(hwnd);
+        return 0;
+    case win32::WM_KEYDOWN:
+        lpwin->cKey++;
+        lpwin->lKey = lParam;
+        if (fInteractive) {
+            snprintf(szTitle, sizeof(szTitle), "Stars Win32 window %d: %d keys (close either window)", lpwin->i + 1, lpwin->cKey);
+            win32::SetWindowTextA(hwnd, szTitle);
+        }
+        return 0;
+    case win32::WM_CHAR:
+        lpwin->cChar++;
+        return 0;
+    case win32::WM_MOUSEMOVE:
+        lpwin->cMouse++;
+        lpwin->wMouse = wParam;
+        lpwin->lMouse = lParam;
+        return 0;
+    case win32::WM_SIZE:
+        lpwin->cSize++;
+        return 0;
+    case win32::WM_SETFOCUS:
+        lpwin->cFocus++;
+        return 0;
+    case win32::WM_KILLFOCUS:
+        lpwin->cBlur++;
+        return 0;
+    case msgEcho:
+        return (LRESULT)((UINT_PTR)wParam ^ (UINT_PTR)lParam);
+    case msgNested:
+        return win32::SendMessageA(hwnd, msgEcho, wParam, lParam);
+    case msgShutdown:
+        StarsCompatShutdown();
+        return win32::GetWindowLongPtrA(hwnd, win32::GWLP_USERDATA) == (LONG_PTR)lpwin;
+    case msgCount:
+        lpwin->cCustom++;
+        return (LRESULT)wParam;
+    case win32::WM_DESTROY:
+        lpwin->cDestroy++;
+        lpwin->fReentrant = !win32::DestroyWindow(hwnd);
+        if (lpwin->fCounted) {
+            cLive--;
+            lpwin->fCounted = 0;
+        }
+        if (fInteractive && cLive == 0)
+            win32::PostQuitMessage(0);
+        return 0;
+    case win32::WM_NCDESTROY:
+        lpwin->cNcDestroy++;
+        return 0;
+    default:
+        return win32::DefWindowProcA(hwnd, msg, wParam, lParam);
+    }
+}
+
+static LRESULT  SubclassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+    if (msg == msgSubclass)
+        return (LRESULT)UINT64_C(0x123456789abcdef0);
+    return win32::CallWindowProcA(TestWndProc, hwnd, msg, wParam, lParam);
+}
+
+static void DrainMessages(void) {
+    win32::MSG msg;
+
+    while (win32::PeekMessageA(&msg, NULL, 0, 0, win32::PM_REMOVE)) {
+        win32::TranslateMessage(&msg);
+        win32::DispatchMessageA(&msg);
+    }
+}
+
+static SDL_WindowID IdWindowWithTitle(const char *pszTitle) {
+    SDL_Window **rglpwin;
+    SDL_WindowID id = 0;
+    int cwin, i;
+
+    rglpwin = SDL_GetWindows(&cwin);
+    for (i = 0; i < cwin; i++)
+        if (strcmp(SDL_GetWindowTitle(rglpwin[i]), pszTitle) == 0)
+            id = SDL_GetWindowID(rglpwin[i]);
+    SDL_free(rglpwin);
+    return id;
+}
+
+static int PushDelayedKey(void *lpId) {
+    SDL_Event event = {};
+
+    SDL_zero(event);
+    SDL_Delay(20);
+    event.type = SDL_EVENT_KEY_DOWN;
+    event.key.windowID = *(SDL_WindowID *)lpId;
+    event.key.scancode = SDL_SCANCODE_SPACE;
+    event.key.key = SDLK_SPACE;
+    return SDL_PushEvent(&event) ? 0 : 1;
+}
+
+static int TestWindows(HWND *rghwnd, WINDOWTEST *rgwin, ATOM atom, HINSTANCE hInstance) {
+    win32::MSG msg, stale;
+    RECT rc;
+    SDL_Event event = {};
+    SDL_WindowID rgid[2];
+    SDL_Thread *hThread;
+    WINDOWTEST winFailure = {};
+    HWND hwndDefault;
+    LONG_PTR lProc, lOriginal;
+    WNDPROC lpfn = SubclassProc;
+    char sz[80];
+    int cKey, cMouse, cSize, cFocus, cBlur, cThreadResult;
+
+    CHECK(rghwnd[0] != rghwnd[1]);
+    hwndDefault = win32::CreateWindowExA(0, win32::MAKEINTRESOURCE(atom), "Default size", win32::WS_OVERLAPPEDWINDOW,
+                              win32::CW_USEDEFAULT, 0, win32::CW_USEDEFAULT, 0, NULL, NULL, hInstance, &winFailure);
+    CHECK(hwndDefault && win32::GetClientRect(hwndDefault, &rc) && rc.right == 640 && rc.bottom == 480);
+    CHECK(StarsCompatSetInitialShowCommand(hwndDefault, win32::SW_SHOWMAXIMIZED));
+    CHECK(!win32::IsWindowVisible(hwndDefault) && !win32::IsZoomed(hwndDefault));
+    CHECK(!win32::ShowWindow(hwndDefault, win32::SW_HIDE) && !win32::IsWindowVisible(hwndDefault));
+    // The dummy driver cannot maximize; an explicit normal show overrides the deferred command.
+    CHECK(!win32::ShowWindow(hwndDefault, win32::SW_SHOWNORMAL) && win32::IsWindowVisible(hwndDefault) && !win32::IsZoomed(hwndDefault));
+    CHECK(!StarsCompatSetInitialShowCommand(hwndDefault, win32::SW_SHOWNORMAL));
+    CHECK(win32::ShowWindow(hwndDefault, win32::SW_HIDE));
+    CHECK(StarsCompatSetInitialShowCommand(hwndDefault, win32::SW_SHOWNORMAL));
+    CHECK(!win32::ShowWindow(hwndDefault, win32::SW_SHOW) && win32::IsWindowVisible(hwndDefault) && !win32::IsZoomed(hwndDefault));
+    CHECK(win32::ShowWindow(hwndDefault, win32::SW_HIDE));
+    CHECK(StarsCompatSetInitialShowCommand(hwndDefault, win32::SW_SHOWMAXIMIZED));
+    CHECK(!win32::ShowWindow(hwndDefault, win32::SW_SHOW) && win32::IsWindowVisible(hwndDefault) && !win32::IsZoomed(hwndDefault));
+    CHECK(win32::DestroyWindow(hwndDefault));
+    memset(&winFailure, 0, sizeof(winFailure));
+    CHECK(cLive == 2 && rgwin[0].cCreate == 1 && rgwin[1].cCreate == 1);
+    CHECK(rgwin[0].cNcCreate == 1 && rgwin[0].fCreateData);
+    CHECK(rgwin[0].cSize > 0 && rgwin[1].cSize > 0);
+    CHECK(win32::GetWindowLongPtrA(rghwnd[0], win32::GWLP_HINSTANCE) == (LONG_PTR)hInstance);
+    CHECK(win32::SetWindowLongPtrA(rghwnd[0], 0, (LONG_PTR)UINT64_C(0x123456789abcdef0)) == 0);
+    CHECK(win32::GetWindowLongPtrA(rghwnd[0], 0) == (LONG_PTR)UINT64_C(0x123456789abcdef0));
+    CHECK(win32::GetWindowLongPtrA(rghwnd[1], 0) == 0);
+    CHECK(win32::SetWindowLongPtrA(rghwnd[0], win32::GWLP_USERDATA, (LONG_PTR)UINT64_C(0x123456789abcdef0)) == (LONG_PTR)&rgwin[0]);
+    CHECK(win32::GetWindowLongPtrA(rghwnd[0], win32::GWLP_USERDATA) == (LONG_PTR)UINT64_C(0x123456789abcdef0));
+    win32::SetWindowLongPtrA(rghwnd[0], win32::GWLP_USERDATA, (LONG_PTR)&rgwin[0]);
+    CHECK(win32::SendMessageA(rghwnd[0], msgEcho, (WPARAM)UINT64_C(0x123456789abcdef0),
+                      (LPARAM)UINT64_C(0x76543210fedcba98)) == (LRESULT)UINT64_C(0x6460646864606468));
+    CHECK(win32::SendMessageA(rghwnd[0], msgNested, (WPARAM)UINT64_C(0x123456789abcdef0),
+                      (LPARAM)UINT64_C(0x76543210fedcba98)) == (LRESULT)UINT64_C(0x6460646864606468));
+    CHECK(win32::SendMessageA(rghwnd[0], msgShutdown, 0, 0));
+    memcpy(&lProc, &lpfn, sizeof(lProc));
+    lOriginal = win32::SetWindowLongPtrA(rghwnd[0], win32::GWLP_WNDPROC, lProc);
+    CHECK(lOriginal != 0 && win32::GetWindowLongPtrA(rghwnd[0], win32::GWLP_WNDPROC) == lProc);
+    CHECK(win32::SendMessageA(rghwnd[0], msgSubclass, 0, 0) == (LRESULT)UINT64_C(0x123456789abcdef0));
+    CHECK(win32::SendMessageA(rghwnd[1], msgSubclass, 0, 0) == 0);
+    CHECK(win32::SetWindowLongPtrA(rghwnd[0], win32::GWLP_WNDPROC, lOriginal) == lProc);
+    CHECK(win32::GetClassNameA(rghwnd[0], sz, sizeof(sz)) > 0 && strcmp(sz, "StarsWin32Windows") == 0);
+    CHECK(win32::IsWindowVisible(rghwnd[0]));
+    CHECK(win32::ShowWindow(rghwnd[0], win32::SW_HIDE));
+    CHECK(!win32::IsWindowVisible(rghwnd[0]) && !win32::ShowWindow(rghwnd[0], win32::SW_SHOW));
+    CHECK(win32::SetWindowTextA(rghwnd[0], "Stars Win32 first"));
+    CHECK(win32::GetWindowTextA(rghwnd[0], sz, sizeof(sz)) == 17 && strcmp(sz, "Stars Win32 first") == 0);
+    CHECK(win32::MoveWindow(rghwnd[0], 40, 40, 400, 300, 0));
+    CHECK(win32::GetClientRect(rghwnd[0], &rc) && rc.right == 400 && rc.bottom == 300);
+    rgid[0] = IdWindowWithTitle("Stars Win32 first");
+    rgid[1] = IdWindowWithTitle("Stars Win32 second");
+    CHECK(rgid[0] != 0 && rgid[1] != 0 && rgid[0] != rgid[1]);
+    winFailure.fReject = 1;
+    CHECK(!win32::CreateWindowExA(0, win32::MAKEINTRESOURCE(atom), "Reject", win32::WS_OVERLAPPED, 0, 0, 320, 240, NULL, NULL, hInstance, &winFailure));
+    CHECK(winFailure.cDestroy == 0 && winFailure.cNcDestroy == 1 && cLive == 2);
+    memset(&winFailure, 0, sizeof(winFailure));
+    winFailure.fSelfDestroy = 1;
+    CHECK(!win32::CreateWindowExA(0, win32::MAKEINTRESOURCE(atom), "Self destroy", win32::WS_OVERLAPPED, 0, 0, 320, 240, NULL, NULL, hInstance, &winFailure));
+    CHECK(winFailure.cDestroy == 1 && winFailure.cNcDestroy == 1 && cLive == 2);
+    CHECK(!win32::CreateWindowExA(0, "Missing class", "", win32::WS_OVERLAPPED, 0, 0, 320, 240, NULL, NULL, hInstance, NULL));
+    CHECK(!win32::CreateWindowExA(0, win32::MAKEINTRESOURCE(atom), "", win32::WS_CHILD, 0, 0, 320, 240, NULL, NULL, hInstance, NULL));
+    DrainMessages();
+    CHECK(win32::PostMessageA(rghwnd[1], msgEcho, (WPARAM)UINT64_C(0x123456789abcdef0),
+                       (LPARAM)UINT64_C(0x76543210fedcba98)));
+    CHECK(win32::PeekMessageA(&msg, rghwnd[1], msgEcho, msgEcho, win32::PM_REMOVE));
+    CHECK(msg.wParam == (WPARAM)UINT64_C(0x123456789abcdef0) &&
+          win32::DispatchMessageA(&msg) == (LRESULT)UINT64_C(0x6460646864606468));
+    memset(&event, 0, sizeof(event));
+    event.type = SDL_EVENT_WINDOW_FOCUS_LOST;
+    event.window.windowID = rgid[0]; CHECK(SDL_PushEvent(&event));
+    event.window.windowID = rgid[1]; CHECK(SDL_PushEvent(&event));
+    DrainMessages();
+    CHECK(win32::GetFocus() == NULL && win32::GetActiveWindow() == NULL);
+    cFocus = rgwin[0].cFocus; cBlur = rgwin[0].cBlur;
+    event.type = SDL_EVENT_WINDOW_FOCUS_GAINED;
+    event.window.windowID = rgid[0]; CHECK(SDL_PushEvent(&event));
+    DrainMessages();
+    CHECK(win32::GetFocus() == rghwnd[0] && rgwin[0].cFocus == cFocus + 1);
+    CHECK(win32::GetActiveWindow() == rghwnd[0]);
+    event.window.windowID = rgid[1]; CHECK(SDL_PushEvent(&event));
+    DrainMessages();
+    CHECK(win32::GetFocus() == rghwnd[1] && rgwin[0].cBlur == cBlur + 1);
+    CHECK(win32::GetActiveWindow() == rghwnd[1]);
+    cBlur = rgwin[1].cBlur;
+    event.type = SDL_EVENT_WINDOW_FOCUS_LOST;
+    CHECK(SDL_PushEvent(&event));
+    DrainMessages();
+    CHECK(win32::GetFocus() == NULL && rgwin[1].cBlur == cBlur + 1);
+    CHECK(win32::GetActiveWindow() == NULL);
+    win32::SetFocus(rghwnd[1]);
+    CHECK(win32::GetActiveWindow() == rghwnd[1]);
+    win32::SetFocus(NULL);
+    CHECK(win32::GetActiveWindow() == rghwnd[1] && win32::GetFocus() == NULL);
+    CHECK(SDL_PushEvent(&event));
+    DrainMessages();
+    CHECK(win32::GetActiveWindow() == NULL);
+    CHECK(win32::PostMessageA(rghwnd[0], msgCount, 7, 0));
+    CHECK(win32::PostMessageA(rghwnd[1], msgCount, 9, 0));
+    CHECK(win32::PostMessageA(NULL, msgCount, 11, 0));
+    CHECK(win32::PeekMessageA(&msg, rghwnd[1], msgCount, msgCount, win32::PM_NOREMOVE) && msg.wParam == 9);
+    CHECK(win32::PeekMessageA(&msg, rghwnd[1], msgCount, msgCount, win32::PM_REMOVE) && msg.wParam == 9);
+    CHECK(win32::DispatchMessageA(&msg) == 9 && rgwin[1].cCustom == 1);
+    CHECK(win32::PeekMessageA(&msg, (HWND)(INT_PTR)-1, msgCount, msgCount, win32::PM_REMOVE) && msg.hwnd == NULL);
+    CHECK(win32::DispatchMessageA(&msg) == 0 && rgwin[0].cCustom == 0);
+    CHECK(win32::PeekMessageA(&stale, rghwnd[0], msgCount, msgCount, win32::PM_REMOVE));
+    CHECK(win32::PostMessageA(rghwnd[0], msgCount, 13, 0));
+    event.type = SDL_EVENT_WINDOW_CLOSE_REQUESTED;
+    event.window.windowID = rgid[0];
+    CHECK(SDL_PushEvent(&event));
+    CHECK(win32::PeekMessageA(&msg, rghwnd[0], win32::WM_CLOSE, win32::WM_CLOSE, win32::PM_REMOVE));
+    win32::DispatchMessageA(&msg);
+    DrainMessages();
+    CHECK(rgwin[0].cDestroy == 1 && rgwin[0].cNcDestroy == 1 && rgwin[0].fReentrant && cLive == 1);
+    CHECK(!win32::DestroyWindow(rghwnd[0]) && !win32::PostMessageA(rghwnd[0], msgCount, 0, 0));
+    CHECK(win32::DispatchMessageA(&stale) == 0);
+    CHECK(rgwin[0].cCustom == 0);
+    CHECK(win32::GetMessageA(&msg, rghwnd[0], 0, 0) == -1);
+    CHECK(!win32::PeekMessageA(&msg, NULL, win32::WM_QUIT, win32::WM_QUIT, win32::PM_REMOVE));
+    cKey = rgwin[1].cKey; cMouse = rgwin[1].cMouse; cSize = rgwin[1].cSize;
+    memset(&event, 0, sizeof(event));
+    event.type = SDL_EVENT_KEY_DOWN;
+    event.key.windowID = rgid[0]; // A destroyed ID must not be routed to the survivor.
+    event.key.scancode = SDL_SCANCODE_SPACE;
+    CHECK(SDL_PushEvent(&event));
+    event.key.windowID = rgid[1];
+    event.key.mod = SDL_KMOD_SHIFT;
+    CHECK(SDL_PushEvent(&event));
+    memset(&event, 0, sizeof(event));
+    event.type = SDL_EVENT_MOUSE_MOTION;
+    event.motion.windowID = rgid[1];
+    event.motion.state = SDL_BUTTON_LMASK;
+    event.motion.x = -12; event.motion.y = -34;
+    SDL_SetModState(SDL_KMOD_SHIFT);
+    CHECK(SDL_PushEvent(&event));
+    memset(&event, 0, sizeof(event));
+    event.type = SDL_EVENT_WINDOW_RESIZED;
+    event.window.windowID = rgid[1]; event.window.data1 = 500; event.window.data2 = 350;
+    CHECK(SDL_PushEvent(&event));
+    memset(&event, 0, sizeof(event));
+    event.type = SDL_EVENT_TEXT_INPUT;
+    event.text.windowID = rgid[1]; event.text.text = "AZ";
+    CHECK(SDL_PushEvent(&event));
+    DrainMessages();
+    SDL_SetModState(SDL_KMOD_NONE);
+    CHECK(rgwin[1].cKey == cKey + 1 && rgwin[0].cKey == 0);
+    CHECK((UINT_PTR)rgwin[1].lKey == UINT32_C(0x00390001));
+    CHECK(rgwin[1].cMouse == cMouse + 1 && rgwin[1].cSize == cSize + 1 && rgwin[1].cChar == 2);
+    CHECK(rgwin[1].wMouse == (win32::MK_LBUTTON | win32::MK_SHIFT));
+    CHECK((int16_t)LOWORD(rgwin[1].lMouse) == -12 && (int16_t)HIWORD(rgwin[1].lMouse) == -34);
+    memset(&event, 0, sizeof(event));
+    event.type = SDL_EVENT_KEY_UP;
+    event.key.windowID = rgid[1]; event.key.scancode = SDL_SCANCODE_RIGHT;
+    CHECK(SDL_PushEvent(&event));
+    CHECK(win32::PeekMessageA(&msg, rghwnd[1], win32::WM_KEYUP, win32::WM_KEYUP, win32::PM_REMOVE));
+    CHECK(msg.wParam == win32::VK_RIGHT && (UINT_PTR)msg.lParam == UINT32_C(0xc14d0001));
+    event.type = SDL_EVENT_KEY_DOWN;
+    event.key.scancode = SDL_SCANCODE_F10;
+    CHECK(SDL_PushEvent(&event));
+    CHECK(win32::PeekMessageA(&msg, rghwnd[1], win32::WM_SYSKEYDOWN, win32::WM_SYSKEYDOWN, win32::PM_REMOVE) && msg.wParam == win32::VK_F10);
+    CHECK(win32::TranslateMessage(&msg));
+    msg.message = msgCount;
+    CHECK(!win32::TranslateMessage(&msg));
+    hThread = SDL_CreateThread(PushDelayedKey, "compat-wake", &rgid[1]);
+    CHECK(hThread);
+    CHECK(win32::GetMessageA(&msg, rghwnd[1], win32::WM_KEYDOWN, win32::WM_KEYDOWN) == 1 && msg.hwnd == rghwnd[1]);
+    SDL_WaitThread(hThread, &cThreadResult);
+    CHECK(cThreadResult == 0);
+    win32::DispatchMessageA(&msg);
+    CHECK(rgwin[1].cKey == cKey + 2);
+    CHECK(win32::PostMessageA(rghwnd[1], msgCount, 17, 0) && win32::WaitMessage());
+    CHECK(win32::PeekMessageA(&msg, rghwnd[1], msgCount, msgCount, win32::PM_REMOVE) && win32::DispatchMessageA(&msg) == 17);
+    win32::PostQuitMessage(23);
+    CHECK(win32::GetMessageA(&msg, rghwnd[1], win32::WM_APP + 100, win32::WM_APP + 101) == 0 && msg.message == win32::WM_QUIT && msg.wParam == 23);
+    CHECK(win32::DestroyWindow(rghwnd[1]) && cLive == 0 && rgwin[1].cDestroy == 1 && rgwin[1].cNcDestroy == 1);
+    CHECK(win32::GetActiveWindow() == NULL);
+    CHECK(!win32::PeekMessageA(&msg, NULL, 0, 0, win32::PM_REMOVE));
+    return 0;
+}
+
+int main(int argc, char **argv) {
+    WNDCLASS wc = {};
+    WINDOWTEST rgwin[2] = {};
+    HWND rghwnd[2];
+    ATOM atom;
+    HINSTANCE hInstance = (HINSTANCE)(UINT_PTR)0x1234;
+    win32::MSG msg;
+    char szClass[] = "StarsWin32Windows";
+    BOOL fTest = argc == 2 && strcmp(argv[1], "--self-test") == 0;
+    int cResult;
+
+    if (argc > 1 && !fTest) {
+        fprintf(stderr, "Usage: %s [--self-test]\n", argv[0]);
+        return 1;
+    }
+    fInteractive = !fTest;
+    wc.lpfnWndProc = TestWndProc;
+    wc.cbWndExtra = sizeof(LONG_PTR);
+    wc.cbClsExtra = sizeof(LONG_PTR);
+    wc.hInstance = hInstance;
+    wc.lpszClassName = szClass;
+    atom = win32::RegisterClassA(&wc);
+    CHECK(atom != 0 && win32::RegisterClassA(&wc) == 0);
+    szClass[0] = 'X'; // Registration must own the name, not retain caller storage.
+    rgwin[1].i = 1;
+    rghwnd[0] = win32::CreateWindowExA(0, "StarsWin32Windows", "Stars Win32 first", win32::WS_OVERLAPPEDWINDOW | win32::WS_VISIBLE,
+                              40, 40, 320, 240, NULL, NULL, hInstance, &rgwin[0]);
+    rghwnd[1] = win32::CreateWindowExA(0, win32::MAKEINTRESOURCE(atom), "Stars Win32 second", win32::WS_OVERLAPPEDWINDOW | win32::WS_VISIBLE,
+                              400, 40, 320, 240, NULL, NULL, hInstance, &rgwin[1]);
+    CHECK(rghwnd[0] && rghwnd[1]);
+    if (fTest) {
+        cResult = TestWindows(rghwnd, rgwin, atom, hInstance);
+        StarsCompatShutdown();
+        if (cResult == 0)
+            puts("Win32 windows: creation, state, filters, native input, blocking wait and independent close passed");
+        return cResult;
+    }
+    puts("Two Win32 compatibility windows: type in either; close either, then the survivor.");
+    while ((cResult = win32::GetMessageA(&msg, NULL, 0, 0)) > 0) {
+        win32::TranslateMessage(&msg);
+        win32::DispatchMessageA(&msg);
+    }
+    StarsCompatShutdown();
+    return cResult == -1 ? 1 : (int)msg.wParam;
+}

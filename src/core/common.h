@@ -1,16 +1,17 @@
 #ifndef STARS_DECOMPILED_COMMON_H
 #define STARS_DECOMPILED_COMMON_H
 
-#include "test_impl.h"
+class APPSESSION;
+
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 
 #include <ctype.h>
 #include <math.h>
-#include <setjmp.h>
 #include <string.h>
 #include <time.h>
+#include "errors.h"
 
 // Raw Win16 storage is byte-addressed and may be unaligned, so scalar
 // accesses through it copy bytes instead of dereferencing a cast pointer.
@@ -30,17 +31,15 @@ static inline void RawStore32(void *p, uint32_t v) { memcpy(p, &v, sizeof v); }
 #include "enums.h"
 #include "native.h"
 
-// Native storage; the analysis model retains the original 18-byte layout.
-typedef jmp_buf ENV;
-
 // Comparator for qsort and bsearch, which call it through the native int
 // return type.
 typedef int (*QSORTCOMPARE)(const void *, const void *);
-
-// Dereference the saved pointer to the native jump-buffer array.
-#define StarsLongJump(env, value) longjmp(*(env), (value))
+// Owned sorting passes its report/game owner; the foreign search ABI stays separate.
+typedef int (*APPQSORTCOMPARE)(APPSESSION &, const void *, const void *);
 
 #include "structs.h"
+#include "streamcodec.h"
+#include "streamviews.h"
 
 #include "ai.h"
 #include "ai2.h"
@@ -53,13 +52,22 @@ typedef int (*QSORTCOMPARE)(const void *, const void *);
 #include "file.h"
 #include "globals.h"
 #include "log.h"
+#include "logcodec.h"
+#include "logviews.h"
 #include "memory.h"
 #include "mine.h"
 #include "msg.h"
+#include "messagecodec.h"
+#include "messageviews.h"
 #include "parts.h"
 #include "planet.h"
 #include "produce.h"
 #include "race.h"
+#include "recordcodec.h"
+#include "battlecodec.h"
+#include "battleviews.h"
+#include "aiviews.h"
+#include <new>
 #include "report.h"
 #include "research.h"
 #include "save.h"
@@ -73,5 +81,7 @@ typedef int (*QSORTCOMPARE)(const void *, const void *);
 #include "ui.h"
 #include "util.h"
 #include "utilgen.h"
+
+#include "file_guard.h"
 
 #endif

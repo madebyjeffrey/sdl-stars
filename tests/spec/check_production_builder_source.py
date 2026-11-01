@@ -1,19 +1,16 @@
 #!/usr/bin/env python3
 """CBuildProdItem differential fixtures over native packed PROD/PLANET.
 
-The C body is extracted unchanged. Quotes/capacity/environment/message services
+The normal production implementation is linked. Quotes/capacity/environment/message services
 are explicit fixtures. The independent numeric interpreter rejects undefined
 signed operations before C execution; no sanitizer failure is an expected pass.
 This checks bounded vectors, not a proof of C/Dafny refinement or host closure.
 """
 from pathlib import Path
-import os
 import random
-import shlex
 import struct
 import subprocess
 import tempfile
-from check_s02_source import ROOT, function
 
 
 class Boundary(Exception):
@@ -206,70 +203,9 @@ def cases():
 
 
 def main():
-    enums=(ROOT/'src/core/enums.h').read_text(); types=(ROOT/'src/core/structs.h').read_text()
-    declarations=r'''
-#include <assert.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <string.h>
-#define TRUE 1
-#define FALSE 0
-#define LOWORD(x) ((uint16_t)(x))
-#define max(a,b) ((a)>(b)?(a):(b))
-#define idmScientistsHaveTransmutedCommonMaterialsKtEach 1
-#define ibitRaceMineralAlchemy 1
-'''
-    for name in ('ProdItemType','mdProdStat','GrobjClass'):
-        start=enums.index('enum '+name+' {')
-        declarations+=enums[start:enums.index('\n};',start)+3]+f'\ntypedef uint16_t {name};\n'
-    declarations+='#pragma pack(push,1)\n'
-    for tag,alias in (('_prod','PROD'),('PLPROD','PLPROD'),('_planet','PLANET')):
-        start=types.index('struct '+tag+' {')
-        declarations+=types[start:types.index('\n};',start)+3]+f'\ntypedef struct {tag} {alias};\n'
-    declarations+=r'''
-#pragma pack(pop)
-static struct {int cheap;} rgplr[1];
-static struct {int fGeneratingTurn;} gd;
-static int32_t quote[4],limits[7];static int calls,messages,messageArg,quoted;
-static void GetProductionCosts(PLANET *p,PROD *r,int32_t *out,int16_t player,int16_t one) {
-    (void)r;assert(p && player==0 && one && !quoted && calls==0);quoted=1;memcpy(out,quote,16);
-}
-static int16_t CMaxOperableMines(PLANET *p,int16_t player,int16_t next) {(void)p;assert(quoted && !player && next);calls=calls*10+1;return (int16_t)limits[0];}
-static int16_t CMaxOperableFactories(PLANET *p,int16_t player,int16_t next) {(void)p;assert(quoted && !player && next);calls=calls*10+2;return (int16_t)limits[0];}
-static int16_t CMaxOperableDefenses(PLANET *p,int16_t player,int16_t next) {(void)p;assert(quoted && !player && next);calls=calls*10+3;return (int16_t)limits[0];}
-static int16_t IpctCanTerraformLppl(PLANET *p) {(void)p;calls=calls*10+4;return (int16_t)limits[2];}
-static int32_t ChgPopFromPlanet(PLANET *p,int16_t update) {(void)p;assert(!update);calls=calls*10+5;return limits[3];}
-static int16_t PctPlanetDesirability(PLANET *p,int16_t player) {(void)p;assert(!player);calls=calls*10+6;return (int16_t)limits[4];}
-static int16_t IWarpMAFromLppl(PLANET *p,void *flag) {(void)p;assert(!flag);calls=calls*10+7;return (int16_t)limits[5];}
-static int16_t GetRaceGrbit(const void *p,int bit) {assert(p==rgplr && bit==ibitRaceMineralAlchemy);return (int16_t)rgplr[0].cheap;}
-static void FSendPlrMsg2(int16_t player,int id,int a,int b,int c) {
-    assert(!player && id==idmScientistsHaveTransmutedCommonMaterialsKtEach && a==5 && b==5);
-    messages++;messageArg=c;calls=calls*10+8;
-}
-'''
-    body=function('src/core/turn2.c','int16_t CBuildProdItem(')
-    harness=r'''
-int main(int argc,char **argv) {
-    _Static_assert(sizeof(PROD)==4,"PROD wire width");assert(argc==2);FILE *f=fopen(argv[1],"rb");assert(f);
-    int32_t input[23];int64_t expected[11];unsigned long cases=0,checks=0;
-    while(fread(input,sizeof(input),1,f)==1) {
-        assert(fread(expected,sizeof(expected),1,f)==1);PLANET p={0};PROD row,partial;int32_t resources[4];
-        uint32_t raw=(uint32_t)input[0];memcpy(&row,&raw,4);raw=(uint32_t)input[1];memcpy(&partial,&raw,4);
-        memcpy(quote,input+2,16);memcpy(resources,input+6,16);memcpy(limits,input+10,28);
-        p.id=5;p.cMines=limits[1];p.cFactories=(limits[1]+17)%4096;p.cDefenses=(limits[1]+29)%4096;p.idFling=limits[6];
-        rgplr[0].cheap=input[18];gd.fGeneratingTurn=input[20];calls=messages=messageArg=quoted=0;int16_t status=-123;
-        int16_t built=CBuildProdItem(&p,&row,input[21] ? &partial:NULL,resources,(int16_t)input[17],input[22] ? &status:NULL,(int16_t)input[19]);
-        assert(quoted);uint32_t rword,pword;memcpy(&rword,&row,4);memcpy(&pword,&partial,4);
-        int64_t actual[11]={built,status,rword,pword,resources[0],resources[1],resources[2],resources[3],messages,messageArg,calls};
-        for(int i=0;i<11;i++){checks++;if(actual[i]!=expected[i]){
-            fprintf(stderr,"case %lu field %d actual %lld expected %lld row %u\n",cases,i,(long long)actual[i],(long long)expected[i],(unsigned)input[0]);return 1;}}
-        cases++;
-    }
-    assert(feof(f));fclose(f);printf("M09 builder source differential: %lu cases, %lu assertions passed\n",cases,checks);return 0;
-}
-'''
     with tempfile.TemporaryDirectory(prefix='m09-builder-') as work:
-        path=Path(work); source=path/'witness.c'; binary=path/'witness'; data=path/'vectors.bin'
+        from linked_witness import binary as linked_binary
+        binary=linked_binary("production-builder");path=Path(work);data=path/'vectors.bin'
         excluded={}; count=0; statuses=set()
         with data.open('wb') as output:
             for row,partial,cost,resources,limits,flags in cases():
@@ -284,11 +220,6 @@ int main(int argc,char **argv) {
         # Prove the fixture filter exercises both named undefined boundaries.
         assert excluded.get('signed overflow',0)>0 and excluded.get('uninitialized need',0)>0
         print(f'Prepared {count} defined vectors; excluded before C execution: {excluded}',flush=True)
-        source.write_text(declarations+body+harness)
-        subprocess.run(shlex.split(os.environ.get('CC','cc'))+['-std=c11','-Wall','-Wextra','-Werror',
-            '-fsanitize=address,undefined','-fno-sanitize-recover=all',str(source),'-o',str(binary)],check=True)
         subprocess.run([str(binary),str(data)],check=True)
 
-
-if __name__=='__main__':
-    main()
+if __name__=="__main__":main()

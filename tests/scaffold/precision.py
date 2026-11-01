@@ -92,10 +92,10 @@ def domains():
         ("inc", 0, 100, 1), ("defenses", 0, 100, 1), ("defguess", 0, 15, 1),
         ("popguess", 0, 4095, 1), ("slots", 0, 255, 1), ("power", 0, 200, 1)):
         result[name] = Domain(name, low, high, step, description=f"every integer {low}..{high}, step {step}")
-    planetary = yaml.safe_load((ROOT / "data/parts/planetary.yaml").read_text())
+    planetary = yaml.safe_load(precision_reference.read_source("data/parts/planetary.yaml"))
     names = [part["name"] for part in planetary]
     defenses = planetary[names.index("iplanetarySDI"):names.index("iplanetaryNeutronShield") + 1]
-    bombs = yaml.safe_load((ROOT / "data/parts/bombs.yaml").read_text())
+    bombs = yaml.safe_load(precision_reference.read_source("data/parts/bombs.yaml"))
     abilities = tuple(sorted({part["grAbility"] for part in defenses}))
     smart_bombs = tuple(sorted({part["dDmgCol"] for part in bombs
                                if part.get("dDmgBldg", 0) == 0 and part.get("dDmgCol", 0) != 0}))
@@ -209,8 +209,11 @@ def extract(root=ROOT):
     result = []
     cCasts = 0
     digest = hashlib.sha256()
-    for path in sorted((root / "src").rglob("*.c") if (root / "src").is_dir() else root.glob("*.c")):
-        source = precision_reference.read_source(path.name) if root == ROOT else path.read_text()
+    directory = root / "src" if (root / "src").is_dir() else root
+    paths = ([Path(name) for name in sorted(precision_reference.source_names()) if name.endswith(".c")]
+             if root == ROOT else sorted(p for p in directory.rglob("*") if p.suffix in (".c", ".cpp")))
+    for path in paths:
+        source = precision_reference.read_source(str(path)) if root == ROOT else path.read_text()
         masked = mask_c(source)
         casts = list(re.finditer(r"\(long\s+double\)", masked))
         if not casts:
@@ -455,9 +458,6 @@ def generate(cases, rgDomains, samples, limit, seed):
 def run_race(args, flags, work):
     import race_precision
 
-    for name in ("textids.h", "dataids.h"):
-        if not (args.generated_dir / name).is_file():
-            raise ValueError("Generate host headers first with make host, or pass --generated-dir")
     cIntervals = 4950 if args.odd_widths else 1681
     cHabitats = (cIntervals + 1)**3 * 2
     if args.habitat_start < 0 or args.habitat_count < 0 or args.habitat_start + args.habitat_count > cHabitats:
@@ -465,7 +465,7 @@ def run_race(args, flags, work):
     source = race_precision.sources()
     for mode in ("ext", "dbl"):
         (work / f"{mode}.c").write_text(race_precision.variant(source, mode))
-    command = [args.cc, *flags, "-iquote", str(ROOT / "src/core"), "-iquote", str(ROOT / "src/platform"), "-iquote", str(args.generated_dir.resolve()),
+    command = [args.cc, *flags, *precision_reference.include_flags(work),
                str(work / "ext.c"), str(work / "dbl.c"), str(HERE / "precision_race.c"),
                "-lm", "-o", str(work / "race")]
     print("Whole race calculator: compiling extracted variants", flush=True)
@@ -494,7 +494,7 @@ def run_race(args, flags, work):
 def write_report(path, report):
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(report, indent=2) + "\n")
-    rows = ["# Extended intermediates versus double", "", "This report measures the current extracted source. "
+    rows = ["# Extended intermediates versus double", "", "This report measures the immutable extracted source. "
             "Exhaustive means the stated operand grid after validity filters, not all reachable game states.", "",
             f"Source SHA-256: `{report['source_sha256']}`", "",
             "| Source / function | Evaluated | Different | Maximum absolute difference | Maximum ULPs | Coverage |",
@@ -529,7 +529,7 @@ def main():
     parser.add_argument("--odd-widths", action="store_true", help="Race sweeps include every integer width 2..100, as loaded files can")
     parser.add_argument("--habitat-start", type=int, default=0, help="First full Cartesian race habitat index")
     parser.add_argument("--habitat-count", type=int, default=0, help="Number of Cartesian habitats in this shard; 0 skips Cartesian enumeration")
-    parser.add_argument("--generated-dir", type=Path, default=ROOT / "dist/host-release/generated")
+    parser.add_argument("--generated-dir", type=Path, default=None, help="Deprecated; headers are generated from the immutable reference")
     parser.add_argument("--sanitize", action="store_true", help="Check undefined arithmetic and float-to-integer overflow")
     parser.add_argument("--fail-on-difference", action="store_true", help="Exit 1 if any sampled output differs")
     parser.add_argument("--report", type=Path, default=ROOT / "dist/scaffold/precision/report.json")
@@ -560,7 +560,7 @@ def main():
     used = {v["domain"] for case in cases for v in case["inputs"]}
     rgDomains = {name: value for name, value in rgDomains.items() if name in used}
     compiler = subprocess.check_output([args.cc, "--version"], text=True).splitlines()[0]
-    flags = ["-" + args.optimization, "-std=gnu11", "-Wall", "-Wextra", "-Wno-unused-variable",
+    flags = [*precision_reference.oracle_flags(), "-" + args.optimization, "-std=gnu11", "-Wall", "-Wextra", "-Wno-unused-variable",
              "-Wno-unused-function", "-fsigned-char", "-fno-fast-math", "-ffp-contract=off"]
     if args.sanitize:
         flags += ["-fsanitize=undefined,float-cast-overflow", "-fno-sanitize-recover=all"]
@@ -569,7 +569,7 @@ def main():
               "harness_sha256": {name: hashlib.sha256((HERE / name).read_bytes()).hexdigest()
                                  for name in ("precision.py", "precision_probe.c", "precision_race.c", "race_precision.py")},
               "runtime": {"platform": platform.platform(), "libc": platform.libc_ver()},
-              "data_sha256": {name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest()
+              "data_sha256": {name: hashlib.sha256(precision_reference.read_source(name).encode()).hexdigest()
                               for name in ("data/parts/planetary.yaml", "data/parts/bombs.yaml")},
               "samples_per_large_domain": args.samples, "exhaustive_limit": args.exhaustive_limit,
               "production_casts": cCasts, "covered_casts": sum(c["casts"] for c in cases),

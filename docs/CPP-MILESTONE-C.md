@@ -1,6 +1,14 @@
 # Milestone C: finish the C++ conversion
 
-Status: planned; B's qualification and merge prerequisite is satisfied.
+Status: complete; all C01–C10 implementation and qualification obligations are
+recorded. C01–C10 and follow-up fixes #79–#80 are integrated into `develop` at
+`58c5e707`. PRs #72–#77 merged through their dependent branches before the final
+direct merge. Full local and manual Linux/Windows contract gates pass. Eighteen
+native SDK behavior probes remain
+explicit diagnostics tracked in issue #78 after toolbar requalification;
+post-migration corrections are recorded in the [SDK findings](CPP-C09-SDK-FINDINGS.md).
+See the [final qualification](CPP-C10-QUALIFICATION.md).
+Evidence: [CPP-C-IMPLEMENTATION.md](CPP-C-IMPLEMENTATION.md).
 Tracking: [#67](https://github.com/madebyjeffrey/sdl-stars/issues/67).
 Recorded: 2026-10-29; refreshed against merged B on 2026-10-31.
 Requested outcome: rename owned implementation files and remove all transitional
@@ -113,7 +121,7 @@ predecessor and must be retargeted after that predecessor lands.
 | **C03 — explicit callback boundaries** | Replace macro-intercepted calls with ordinary C++ functions and the post-B cleanup/error protocol. | C02 | Callback faults, nesting, deferred destruction and modal pumps preserve cleanup-before-delivery. |
 | **C04 — typed test seams** | Replace implementation-name macros, call substitution and private library clones with narrow typed effect seams. | C03 | Fault/RNG/UI tests exercise actual production functions, retain real delegation and restore overrides on every exit. |
 | **C05 — linked witnesses** | Replace all extracted or rewritten production-body witnesses with linked implementation tests. | C04 | Case/domain/exclusion/traceability inventory accounts for every old witness; independent expectations survive and no production body is copied or rewritten for testing. |
-| **C06 — real wrapper namespaces** | Replace generated API-renaming macros with C++ namespaces and qualified calls. | C03, C04 | Linux/macOS/Windows link and runtime checks preserve wrapper/SDK isolation and foreign callbacks. |
+| **C06 — real wrapper namespaces** | Replace generated API-renaming macros and C03's prefixed entry names with qualified C++ calls; remove redundant forwarding functions. | C03, C04 | Names such as `ui::EnableWindow` replace all C03 prefixes without compatibility aliases; Linux/macOS/Windows link and runtime checks preserve wrapper/SDK isolation, cleanup-before-error-delivery and foreign callbacks. |
 | **C07 — remaining compatibility macros** | Remove obsolete shims and replace suitable helpers/constants with typed declarations. | C05, C06 | Evaluation/conversion, resource parsing and numeric-contract evidence match; each retained macro has a named purpose. |
 | **C08 — explicit state access** | Finish B's caller migration and delete temporary global-to-context aliases/accessors. | C05, C06 | One state owner, visible dependencies and unchanged initialization/reset/shutdown; observers and tests migrate with callers. |
 | **C09 — permanent build and contract policy** | Remove remaining migration-only build/reference adapters and turn audits into maintained C++ policy. | C02–C08 | Fresh configure matrix, strict diagnostics, self-contained headers and independent references pass with a precise exception inventory. |
@@ -136,7 +144,7 @@ actual qualification receipt. This grouping is a proposal, not a fixed PR count.
 | 2 | C03 explicit callback delivery | Replace all 23 intercepted calls and remove `win_calls.h` routing. Nested modal, unowned callback, teardown and primary/secondary failure tests retain cleanup-before-delivery. |
 | 3 | C04 typed effect seams | Migrate file/publication/UI decisions, RNG and SDL/allocation faults in bounded families. Real production delegation and scoped override restoration pass before each clone/hook is deleted. |
 | 4 | C05 linked witness families | Migrate settings/platform first, library/file workflows next, then production/research/colony/construction and remaining UI/game cases. Every old program maps to linked tests, its original input domain, exclusions and independent oracle. |
-| 5 | C06 wrapper namespaces | Replace generated name macros across declarations, definitions and consumers; qualify native SDK boundaries explicitly. Windows SDL/SDK linking and callback tests are mandatory. |
+| 5 | C06 wrapper namespaces | Replace generated name macros and C03's prefixed entry names across declarations, definitions and consumers; use `ui::EnableWindow`-style calls and remove redundant forwarding functions. Qualify native SDK boundaries explicitly. Windows SDL/SDK linking and callback tests are mandatory. |
 | 6 | C07 compatibility helpers | Replace obsolete shims and suitable macros after their callers move; prove numeric conversions/evaluation behavior and unchanged generated IDs/resource bytes. |
 | 7 | C08 explicit state consumers | Migrate core/host call chains, then UI/callback/observer consumers in bounded families. Delete aliases and witness state doubles as their last consumers move; preserve initialization/reset/close behavior. |
 | 8 | C09 permanent policy and C10 final qualification | Remove dead adapters/scripts, enforce exact permanent exceptions and qualify the final revision on Linux, macOS and Windows against B and the native baseline. |
@@ -258,9 +266,30 @@ coverage accounting; mark any genuine gap as incomplete C work.
 
 Put owned wrapper APIs in a real C++ namespace, using explicit qualification at
 ambiguous SDK/foreign seams. Remove generated `API → StarsCompat_API` renames and
-their special cases in tests/build scripts. Preserve function basenames and
-keep SDK adapters isolated; do not mix wrapper handles with native SDK handles
-or rely solely on mangled symbols to establish type isolation.
+their special cases in tests/build scripts. The owned application-facing UI API
+uses `ui::` qualification and operation basenames: for example,
+`FUiEnableWindow` becomes `ui::EnableWindow`, `IUiTranslateAccelerator` becomes
+`ui::TranslateAccelerator` and `LUiSendMessage` becomes `ui::SendMessage`.
+Replace all 23 C03 entry names, including the `FUi`, `IUi`, `LUi` and `HwndUi`
+prefixes, in declarations, definitions and consumers. These newly introduced
+names are transitional; original debug-symbol names remain protected. Keep SDK
+adapters isolated; do not mix wrapper handles with native SDK handles or rely
+solely on mangled symbols to establish type isolation.
+
+Consolidate implementations and remove forwarding functions that add no distinct
+contract. Do not retain the old prefixed functions as aliases or add another
+forwarding layer solely to provide the namespaced spelling. Preserve exact
+return/argument widths, default arguments and callback failure semantics.
+Application-facing calls must still deliver pending errors only after runtime
+dispatch/modal/owner cleanup returns. Keep a distinct internal raw operation
+where that cleanup ordering requires it; namespace migration must not make
+exceptions escape through foreign callbacks or replace the primary failure.
+
+C06 evidence must account for every C03 entry and its consumers, identify any
+retained boundary's concrete purpose, and show no active production or ordinary
+test use of the old prefixed API or forwarding aliases. Preserve the callback
+fault, nested/modal, deferred destruction and primary-failure receipts alongside
+the wrapper/SDK isolation checks.
 
 Audit all remaining owned compatibility macros. Replace byte/word/message/color
 helpers and ordinary forwarding aliases with typed functions or constants where
@@ -317,6 +346,15 @@ sources, symbol rewrites or accidental C interfaces cannot slip back in.
 
 ## Verification, exit gate and delivery
 
+Temporary execution policy, clarified by the user on 2026-10-31: only the slow
+full Linux desktop `unit` and `windows-sdl` jobs are deferred. They run through
+the unit workflow's `workflow_dispatch` with `run_slow_platform_jobs` selected.
+Host tests, source witnesses, sanitizers, regressions and tutorial checks remain
+automatic; required local checks continue. Evidence from the two deferred jobs
+does not block the next checkpoint during this pause and is not reported as
+passing. Final qualification uses explicit manual runs while the automatic policy
+remains opt-in. The final ledger records their actual outcomes.
+
 Every implementation batch follows the repository verification rules. Build the
 platform SDL Debug preset with no new warnings; run `make regression`,
 `make test-unit` and `make tutorial`. Shared/game changes also run
@@ -366,6 +404,6 @@ no irreversible file conversion is part of C. Open tracking issues when work is
 scheduled under `docs/agents/issue-tracker.md`; this plan does not publish tickets
 or begin implementation.
 
-This document records planned work and completion obligations only. No C code
-changes, new behavior, completed checkpoint, new proof or runtime qualification
-is claimed by publishing the plan.
+The checkpoint descriptions retain the approved plan and completion obligations.
+Current status and actual qualification are recorded above and in the linked
+implementation/final ledgers.

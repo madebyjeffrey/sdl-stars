@@ -60,7 +60,7 @@ be treated as a separately committed record or as information known to every pla
 
 ### Edit, select and close
 
-[battleui.c](../src/ui/battleui.c) `RelationsDlg` lists all other players.
+[battleui.cpp](../src/ui/battleui.cpp) `RelationsDlg` lists all other players.
 `PlayerAt` skips self when converting a selected row to a player index. Selecting
 a row changes the displayed radio state. Selecting a radio writes the current
 player's relation immediately and sets `fDirtyPlan`; `Set` models the one-entry
@@ -71,18 +71,18 @@ invocation are UI-precondition cases E13-1, not validated by PlayerAt alone.
 
 ### Directed use in game rules
 
-`FAttackPlayer` in [battle.c](../src/core/battle.c) evaluates the attacking
+`FAttackPlayer` in [battle.cpp](../src/core/battle.cpp) evaluates the attacking
 fleet's plan: nobody, enemies, enemies plus neutrals, everyone or an explicitly
 selected player. `Attack` is its canonical predicate. Friendship blocks mode 2,
 neutrality blocks enemies-only mode 1, and an explicit player target can select
 a friend. This predicate is one prerequisite, not proof that a battle occurs.
 Combat assembly has additional presence, target and initiative rules.
 
-Gate access in [turn.c](../src/core/turn.c) consults source/destination planet
+Gate access in [turn.cpp](../src/core/turn.cpp) consults source/destination planet
 owner relations toward the traveler. Minefield interaction consults field-owner
-stance; remote terraforming in [turn2.c](../src/core/turn2.c) uses the operating
+stance; remote terraforming in [turn2.cpp](../src/core/turn2.cpp) uses the operating
 fleet owner's stance to choose help/harm. Ownership transfer in
-[turn3.c](../src/core/turn3.c) has receiver hostility/AI restrictions. These
+[turn3.cpp](../src/core/turn3.cpp) has receiver hostility/AI restrictions. These
 consumers are individually owned E13-2 contracts; they must not be collapsed into
 one symmetric `allied(a,b)` rule. No automatic reciprocal update occurs in the
 dialog.
@@ -164,7 +164,7 @@ further decomposition; it is not a claim that their algorithms are proved.
 
 ## 7. Evidence and verification
 
-[relations dialog](../src/ui/battleui.c), [battle rules](../src/core/battle.c) and the [Continue workflows](../tests/compat/win32_client_startup.c) exercise ordinary relation editing. Broad regression is indirect evidence for consumer behavior.
+[relations dialog](../src/ui/battleui.cpp), [battle rules](../src/core/battle.cpp) and the [Continue workflows](../tests/compat/win32_client_startup.cpp) exercise ordinary relation editing. Broad regression is indirect evidence for consumer behavior.
 
 [Collection verification](README.md#remaining-specifications-verification)
 records exact commands and outcomes for this batch. Proofs establish only the

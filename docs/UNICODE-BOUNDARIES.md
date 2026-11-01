@@ -26,10 +26,11 @@ The 2.8 branch retains its historical compatibility contract.
 | Tutorial | All three count-prefixed tutorial streams use 2.85. The original 2.60 battle event headers are converted to the current layout in place, preserving framing/encryption. `tests/savecli/cmd/utf8-tutorial` records that offline asset conversion. Loaded names/designs/fleets/battle plans in all 38 turn snapshots were verified ASCII. |
 
 `encoding.c` owns strict UTF-8 validation, bounded copying, resource UTF-16
-conversion and the race importer's CP1252-to-UTF-8 conversion. `native.c` owns
-game filesystem operations. The C-compatible C++17 `filesystem.h` bridge supplies
-strict UTF-8 filesystem operations for portable test fixtures, without SDK types
-or C++ exceptions crossing its interface. The SDL wrapper owns rendering and
+conversion and the race importer's CP1252-to-UTF-8 conversion. `native.c` forwards game file operations to the native C++20
+`fileio.h` service, which also owns application streams, native path conversion
+and directory traversal for host and desktop callers. The `filesystem.h` bridge
+supplies portable fixture directories. Neither interface exposes SDK types or
+propagates service exceptions: failures retain their existing return/error contracts. The SDL wrapper owns rendering and
 controls. No general
 legacy code-page heuristic or substitution is used. Popup separator sentinels
 and compressed/hash bytes are binary protocol representations, not decoded text.

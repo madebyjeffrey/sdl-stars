@@ -1,19 +1,20 @@
 #ifndef STARS_DECOMPILED_ENUMS_H
 #define STARS_DECOMPILED_ENUMS_H
 
-enum HeapType { htOrd = 0, htString, htMsg, htPlanets, htLog, htFleets, htMisc, htShips, htPlrMsg, htPerm, htThings, htBattle, htCount };
-typedef uint16_t HeapType;
+#include <stdint.h>
 
-enum AiLevel {
+enum HeapType : uint16_t {
+    htOrd = 0, htString, htMsg, htPlanets, htLog, htFleets, htMisc, htShips, htPlrMsg, htPerm, htThings, htBattle, htCount };
+
+enum AiLevel : uint16_t {
     lvlAiEasy = 0,
     lvlAiStandard = 1,
     lvlAiTough = 2,
     lvlAiExpert = 3,
     lvlAiRandom = 4,
 };
-typedef uint16_t AiLevel;
 
-enum DetType {
+enum DetType : uint16_t {
     detNone = 0,
     detMinimal = 1,
     detObscure = 2,
@@ -21,9 +22,8 @@ enum DetType {
     detMore = 4,
     detAll = 7,
 };
-typedef uint16_t DetType;
 
-enum MineralType {
+enum MineralType : int16_t {
     SupplyButtonsOnly = -2, // transfer dialog: redraw only the buttons
     SupplyAll = -1,         // transfer dialog: redraw every cargo row
     Ironium = 0,
@@ -33,16 +33,14 @@ enum MineralType {
     Resources = 3,
     Fuel = 4,
 };
-typedef int16_t MineralType;
 
-enum EnvType {
+enum EnvType : uint16_t {
     Gravity = 0,
     Temperature = 1,
     Radiation = 2,
 };
-typedef uint16_t EnvType;
 
-enum TechFieldType {
+enum TechFieldType : uint16_t {
     Energy = 0,
     Weapons = 1,
     Propulsion = 2,
@@ -51,9 +49,8 @@ enum TechFieldType {
     Biotechnology = 5,
     TechFieldCount = 6,
 };
-typedef uint16_t TechFieldType;
 
-enum BattleUnitFlags {
+enum BattleUnitFlags : uint16_t {
     grBuOurUnits = 0x0001,
     grBuTheirUnits = 0x0002,
     grBuIncludeSb = 0x0004,
@@ -65,18 +62,16 @@ enum BattleUnitFlags {
     grBuClassUtility = 0x0080,
     grBuClassAll = 0x00F8,
 };
-typedef uint16_t BattleUnitFlags;
 
-enum AttackWho {
+enum AttackWho : uint16_t {
     iplrAttackNobody = 0,
     iplrAttackEnemies = 1,
     iplrAttackNeutralsEnemies = 2,
     iplrAttackEveryone = 3,
     iplrAttackPlayer = 4,
 };
-typedef uint16_t AttackWho;
 
-enum mdProdStat {
+enum mdProdStat : uint16_t {
     mdProdStatComplete = 0,
     mdProdStatCompleteAuto = 1,
     mdProdStatSkippedAuto = 2,
@@ -86,18 +81,16 @@ enum mdProdStat {
     mdProdStatBlockedDiff = 6,
     mdProdStatBlockedSame = 7,
 };
-typedef uint16_t mdProdStat;
 
-enum mdPartAvail {
+enum mdPartAvail : int16_t {
     mdPartAvailRestricted = -1,
     mdPartAvailInvalid = 0,
     mdPartAvailAvailable = 1,
     mdPartAvailNextTech = 2,
     mdPartAvailOtherTech = 99,
 };
-typedef int16_t mdPartAvail;
 
-enum GrPopupType {
+enum GrPopupType : uint16_t {
     grPopupMineral = 1,
     grPopupPlayer = 2,
     grPopupFleet = 3,
@@ -114,9 +107,8 @@ enum GrPopupType {
     grPopupShdefSB = 14,
     grPopupShdefBuild = 15,
 };
-typedef uint16_t GrPopupType;
 
-enum HtMineType {
+enum HtMineType : uint16_t {
     htMineNone = 0,
     htMineMineralConc1 = 1,
     htMineMineralConc2 = 2,
@@ -133,17 +125,15 @@ enum HtMineType {
     htMineStarbase = 13,
     htMineMinefieldType = 14,
 };
-typedef uint16_t HtMineType;
 
-enum HtMsgType {
+enum HtMsgType : uint16_t {
     htMsgNone = 0,
     htMsgCurrent = 1,
     htMsgZoom = 2,
     htMsgMode = 3,
 };
-typedef uint16_t HtMsgType;
 
-enum DtFileType {
+enum DtFileType : uint16_t {
     dtXY = 0,
     dtLog = 1,
     dtHost = 2,
@@ -151,9 +141,8 @@ enum DtFileType {
     dtHist = 4,
     dtRace = 5,
 };
-typedef uint16_t DtFileType;
 
-enum RaceGrbit {
+enum RaceGrbit : uint16_t {
     ibitRaceIFE = 0x00,
     ibitRaceTT = 0x01,
     ibitRaceARM = 0x02,
@@ -173,11 +162,10 @@ enum RaceGrbit {
     ibitRaceCheapFact = 0x1f,
     ibitRaceLast = 32,
 };
-typedef uint16_t RaceGrbit;
 
 // RaceTraitBits is a race's grbitAttr: one bit per RaceGrbit index, the
 // lesser racial traits and the other per-race switches.
-enum RaceTraitBits {
+enum RaceTraitBits : uint32_t {
     grbitRaceIFE = 0x00000001,
     grbitRaceTT = 0x00000002,
     grbitRaceARM = 0x00000004,
@@ -196,9 +184,8 @@ enum RaceTraitBits {
     grbitRaceAIPlayer = 0x40000000,
     grbitRaceCheapFact = 0x80000000,
 };
-typedef uint32_t RaceTraitBits;
 
-enum RaceStat {
+enum RaceStat : uint16_t {
     rsResGen = 0,
     rsFactProd = 1,
     rsFactBuild = 2,
@@ -215,9 +202,8 @@ enum RaceStat {
     rsTechBonus6 = 13,
     rsMajorAdv = 14,
 };
-typedef uint16_t RaceStat;
 
-enum RaceAttribute {
+enum RaceAttribute : uint16_t {
     raCheapCol = 0,
     raStealth = 1,
     raAttack = 2,
@@ -230,9 +216,8 @@ enum RaceAttribute {
     raNone = 9,
     raMax = 10,
 };
-typedef uint16_t RaceAttribute;
 
-enum GrobjClass {
+enum GrobjClass : uint16_t {
     grobjNone = 0x0,
     grobjPlanet = 0x1,
     grobjFleet = 0x2,
@@ -243,9 +228,8 @@ enum GrobjClass {
     mdExact = 0x0080,
     mdRecurseMask = mdNoRecurse | mdExact,
 };
-typedef uint16_t GrobjClass;
 
-enum HullSlotType {
+enum HullSlotType : uint16_t {
     hstNone = 0x0000,
     hstEngine = 0x0001,
     hstScanner = 0x0002,
@@ -277,43 +261,36 @@ enum HullSlotType {
     hstSome = 0x193E,
 
 };
-typedef uint16_t HullSlotType;
 
 // HulDef, StartingStarbase, StartingShip, the part indexes (isbhull,
 // iengine ... ispecialSB) and the AI recipe offsets come from the YAML in
 // data/; see data/datagen.py.
 #include "dataids.h"
 
-typedef uint16_t HulDef;
-typedef uint16_t StartingStarbase;
-typedef uint16_t StartingShip;
 
 
-enum ThingType {
+enum ThingType : uint16_t {
     ithMinefield = 0,
     ithMineralPacket = 1,
     ithWormhole = 2,
     ithMysteryTrader = 3,
 };
-typedef uint16_t ThingType;
 
-enum MdBuild {
+enum MdBuild : uint16_t {
     mdBuildShdef = 0,
     mdBuildHuldef = 1,
     mdBuildEnemyShdef = 2,
     mdBuildComp = 3,
     mdBuildEdit = 4,
 };
-typedef uint16_t MdBuild;
 
-enum MdXfer {
+enum MdXfer : int16_t {
     mdXferNone = -1,
     mdXferCargo = 0,
     mdXferShips = 1,
 };
-typedef int16_t MdXfer;
 
-enum ProdItemType {
+enum ProdItemType : uint16_t {
     iobjMine = 0,
     iobjFactory = 1,
     iobjDefense = 2,
@@ -347,69 +324,57 @@ enum ProdItemType {
     iobjPlanetaryScanner = 27,
     iobjUnknown = 31,
 };
-typedef uint16_t ProdItemType;
 
-enum PlayerSentinel {
+enum PlayerSentinel : int16_t {
     iplrNone = -1,
 };
-typedef int16_t PlayerSentinel;
 
-enum FleetLocationSentinel {
+enum FleetLocationSentinel : int16_t {
     idPlanetDeepSpace = -1,
 };
-typedef int16_t FleetLocationSentinel;
 
-enum PlanetIdSentinel {
+enum PlanetIdSentinel : int16_t {
     idplNone = -1,
 };
-typedef int16_t PlanetIdSentinel;
 
-enum FleetIdSentinel {
+enum FleetIdSentinel : int16_t {
     idflNone = -1,
 };
-typedef int16_t FleetIdSentinel;
 
-enum ScanSelSentinel {
+enum ScanSelSentinel : int16_t {
     iflNone = -1,
     iwpNone = -1,
     ithNone = -1,
 };
-typedef int16_t ScanSelSentinel;
 
-enum LookupRequest {
+enum LookupRequest : int16_t {
     idWriteBack = -1,
 };
-typedef int16_t LookupRequest;
 
-enum ShipDesignSentinel {
+enum ShipDesignSentinel : int16_t {
     ishdefNone = -1,
     ishdefAll = -1,
 };
-typedef int16_t ShipDesignSentinel;
 
-enum MessageIndexSentinel {
+enum MessageIndexSentinel : int16_t {
     imsgNone = -1,
 };
-typedef int16_t MessageIndexSentinel;
 
-enum EnvironmentValueSentinel {
+enum EnvironmentValueSentinel : int16_t {
     envImmune = -1,
     envNone = -1,
 };
-typedef int16_t EnvironmentValueSentinel;
 
-enum ProdScheduleRequest {
+enum ProdScheduleRequest : uint16_t {
     iprodEstimateResearchResources = 0xffff,
 };
-typedef uint16_t ProdScheduleRequest;
 
-enum TutorCheckSentinel {
+enum TutorCheckSentinel : uint16_t {
     iWarpAny = 0xffff,
     iDistAny = 0xffff,
 };
-typedef uint16_t TutorCheckSentinel;
 
-enum TutorAnySentinel {
+enum TutorAnySentinel : int16_t {
     mdScanAny = -1,
     iZoomAny = -1,
     iCategoryAny = -1,
@@ -417,12 +382,10 @@ enum TutorAnySentinel {
     idAny = -1,
     imsgAny = -1,
 };
-typedef int16_t TutorAnySentinel;
 
-enum BattleRecordSentinel {
+enum BattleRecordSentinel : uint16_t {
     idPlanetNone = 0xffff,
 };
-typedef uint16_t BattleRecordSentinel;
 
 // StringId, MessageId and TutorId come from the text tables in text/; see
 // text/textgen.py. TutorId is a tutorial text fragment, eight to a page;
@@ -433,46 +396,27 @@ typedef uint16_t BattleRecordSentinel;
 enum StringIdSentinel {
     idsNoString = 0xffff,
 };
-typedef uint16_t StringId;
 enum MessageIdSentinel {
     idmNone = 0xffff,
 };
-typedef uint16_t MessageId;
-typedef uint16_t TutorId;
 
-enum GrStat {
+enum GrStat : uint16_t {
     grStatFuel = 1,
     grStatCargo = 2,
 
 };
-typedef uint16_t GrStat;
 
 // isbhull is a starbase hull's index in rghuldefSB, its HulDef id less
 // ihuldefOrbitalFort.
 enum isbhullSentinel {
     isbhullAuto = -1, // FCreateAiStarbase: choose by design slot
 };
-typedef int16_t isbhull;
 
 enum iengineSentinel {
     iengineNone = 0xffff,
 };
-typedef uint16_t iengine;
-typedef uint16_t iarmor;
-typedef uint16_t iscanner;
-typedef uint16_t ishield;
-typedef uint16_t ispecialE;
-typedef uint16_t ispecialM;
-typedef uint16_t imines;
-typedef uint16_t imining;
-typedef uint16_t iplanetary;
-typedef uint16_t iterra;
-typedef uint16_t ibomb;
-typedef uint16_t itorp;
-typedef uint16_t ibeam;
-typedef uint16_t ispecialSB;
 
-enum GrbitTrader {
+enum GrbitTrader : uint16_t {
     grbitTraderNone = 0x0000,
     grbitTraderCargo = 0x0001,
     grbitTraderSpecial = 0x0002,
@@ -489,18 +433,16 @@ enum GrbitTrader {
     grbitTraderLifeboat = 0x1000,
     grbitTraderAll = 0x1fff,
 };
-typedef uint16_t GrbitTrader;
 
-enum LookupResult {
+enum LookupResult : int16_t {
     LookupInvalid = 0,     // “out of range” / not a valid part id in group
     LookupDisallowed = -1, // disallowed for race/trait/other rule
     LookupOk = 1,          // meets tech reqs (original CheckTechRequirements == 1)
     LookupNear = 2,        // “one level away in current research field”
     LookupNeedMany = 99    // multiple tech deficits
 };
-typedef int16_t LookupResult;
 
-enum RecordType {
+enum RecordType : uint16_t {
     /*
      * NOTE: Stars! file records encode a 6-bit "record type" (rt) plus a 10-bit
      * byte count (cb) in a 16-bit header word.
@@ -556,9 +498,8 @@ enum RecordType {
     rtLogPlayerZpq1 = 46,     /* Host-only opaque blob (size capped at 0x1A bytes) copied into rgplr[idPlayer].zpq1. */
     rtMax = 47                /* one past highest observed (0x2d) */
 };
-typedef uint16_t RecordType;
 
-enum DialogId {
+enum DialogId : uint16_t {
     /* ship / fleet */
     IDD_MERGE_FLEETS = 82, /* MergeFleetsDlg */
     IDD_TRANSFER = 91,     /* TransferDlg */
@@ -617,30 +558,22 @@ enum DialogId {
     IDD_FIND = 4202,     /* FindDlg */
     IDD_PRINT_MAP = 214, /* PrintMapDlg */
 };
-typedef uint16_t DialogId;
-
-#undef IDOK
-#undef IDCANCEL
-#undef IDHELP
-#undef IDC_HELP
 
 // AboutControl names the controls of the About dialog.
-enum AboutControl {
+enum AboutControl : uint16_t {
     IDC_ABOUT_ORDER_INFO = 118,
     IDC_ABOUT_DEMO_TEXT = 1025,
     IDC_ABOUT_CREDITS_TEXT = 1055,
 };
-typedef uint16_t AboutControl;
 
 // PrintMapControl names the controls of the Print Map dialog.
-enum PrintMapControl {
+enum PrintMapControl : uint16_t {
     IDC_PRINT_MAP_PAGES_X = 268,
     IDC_PRINT_MAP_PAGES_Y = 269,
 };
-typedef uint16_t PrintMapControl;
 
 // SimpleNewGameControl names the controls of the simple New Game dialog.
-enum SimpleNewGameControl {
+enum SimpleNewGameControl : uint16_t {
     IDC_SIMPLE_NEW_GAME_EASY = 200,
     IDC_SIMPLE_NEW_GAME_STANDARD = 201,
     IDC_SIMPLE_NEW_GAME_HARDER = 202,
@@ -654,10 +587,9 @@ enum SimpleNewGameControl {
     IDC_SIMPLE_NEW_GAME_LARGE = 1003,
     IDC_SIMPLE_NEW_GAME_HUGE = 1004,
 };
-typedef uint16_t SimpleNewGameControl;
 
 // NewGame1Control names the controls of the first advanced New Game wizard page.
-enum NewGame1Control {
+enum NewGame1Control : uint16_t {
     IDC_NEW_GAME_TINY = 1000,
     IDC_NEW_GAME_SMALL = 1001,
     IDC_NEW_GAME_MEDIUM = 1002,
@@ -680,10 +612,9 @@ enum NewGame1Control {
     IDC_NEW_GAME_NAME = 1030,
     IDC_NEW_GAME_GALAXY_CLUMPING = 1050,
 };
-typedef uint16_t NewGame1Control;
 
 // NewGame3Control names the controls of the victory conditions New Game wizard page; the tech level checkbox covers both tech conditions.
-enum NewGame3Control {
+enum NewGame3Control : uint16_t {
     IDC_VC_OWNS_PLANETS = 291,
     IDC_VC_TECH_LEVEL = 292,
     IDC_VC_SCORE = 293,
@@ -692,20 +623,18 @@ enum NewGame3Control {
     IDC_VC_CAPITAL_SHIPS = 296,
     IDC_VC_HIGHEST_SCORE = 297,
 };
-typedef uint16_t NewGame3Control;
 
 // VcrControl names the controls of the battle VCR dialog.
-enum VcrControl {
+enum VcrControl : uint16_t {
     IDC_VCR_REW_ALL = 161,
     IDC_VCR_REW = 162,
     IDC_VCR_PLAY_PAUSE = 163,
     IDC_VCR_FWD = 164,
     IDC_VCR_FWD_ALL = 165,
 };
-typedef uint16_t VcrControl;
 
 // HostModeControl names the controls of the host mode dialog.
-enum HostModeControl {
+enum HostModeControl : uint16_t {
     IDC_HOST_GENERATE_NOW = 1031,
     IDC_HOST_AUTO_GENERATE = 1032,
     IDC_HOST_GAME_NAME_TEXT = 1033,
@@ -714,19 +643,17 @@ enum HostModeControl {
     IDC_HOST_NEXT_YEAR_TEXT = 2016,
     IDC_HOST_TIME_SINCE_TEXT = 2017,
 };
-typedef uint16_t HostModeControl;
 
 // HostOptionsControl names the controls of the auto generate options dialog; the second and third force generate options have no caption in the template.
-enum HostOptionsControl {
+enum HostOptionsControl : uint16_t {
     IDC_AUTOGEN_WHEN_ALL_IN = 1027,
     IDC_FORCE_GEN_NEVER = 2066,
     IDC_FORCE_GEN_OPTION_2 = 2067,
     IDC_FORCE_GEN_OPTION_3 = 2068,
 };
-typedef uint16_t HostOptionsControl;
 
 // SlotControl names the controls of the ship designer dialog.
-enum SlotControl {
+enum SlotControl : uint16_t {
     IDC_DESIGNER_COMPONENT_LIST = 2060,
     IDC_DESIGNER_SHIPS = 2064,
     IDC_DESIGNER_STARBASES = 2065,
@@ -735,10 +662,9 @@ enum SlotControl {
     IDC_DESIGNER_ENEMY_HULLS = 2068,
     IDC_DESIGNER_COMPONENTS = 2069,
 };
-typedef uint16_t SlotControl;
 
 // RaceWizard1Control names the controls of the race wizard name and race page.
-enum RaceWizard1Control {
+enum RaceWizard1Control : uint16_t {
     IDC_RACE_NAME = 268,
     IDC_RACE_PASSWORD = 269,
     IDC_RACE_HUMANOID = 271,
@@ -751,24 +677,21 @@ enum RaceWizard1Control {
     IDC_RACE_CUSTOM = 278,
     IDC_RACE_PLURAL_NAME = 2075,
 };
-typedef uint16_t RaceWizard1Control;
 
 // RaceWizard2Control names the controls of the race wizard habitability page.
-enum RaceWizard2Control {
+enum RaceWizard2Control : uint16_t {
     IDC_IMMUNE_TO_GRAVITY = 291,
     IDC_IMMUNE_TO_TEMPERATURE = 292,
     IDC_IMMUNE_TO_RADIATION = 293,
 };
-typedef uint16_t RaceWizard2Control;
 
 // RaceWizard3Control names the controls of the race wizard economy page.
-enum RaceWizard3Control {
+enum RaceWizard3Control : uint16_t {
     IDC_RACE_FACTORY_GERMANIUM_DISCOUNT = 291,
 };
-typedef uint16_t RaceWizard3Control;
 
 // RaceWizard4Control names the controls of the race wizard primary racial trait page.
-enum RaceWizard4Control {
+enum RaceWizard4Control : uint16_t {
     IDC_RACE_HYPER_EXPANSION = 271,
     IDC_RACE_SUPER_STEALTH = 272,
     IDC_RACE_WAR_MONGER = 273,
@@ -780,10 +703,9 @@ enum RaceWizard4Control {
     IDC_RACE_ALTERNATE_REALITY = 279,
     IDC_RACE_JACK_OF_ALL_TRADES = 280,
 };
-typedef uint16_t RaceWizard4Control;
 
 // RaceWizard5Control names the controls of the race wizard lesser racial trait page, in RaceGrbit order.
-enum RaceWizard5Control {
+enum RaceWizard5Control : uint16_t {
     IDC_RACE_IMPROVED_FUEL_EFFICIENCY = 291,
     IDC_RACE_TOTAL_TERRAFORMING = 292,
     IDC_RACE_ADVANCED_REMOTE_MINING = 293,
@@ -799,10 +721,9 @@ enum RaceWizard5Control {
     IDC_RACE_BLEEDING_EDGE_TECHNOLOGY = 303,
     IDC_RACE_REGENERATING_SHIELDS = 304,
 };
-typedef uint16_t RaceWizard5Control;
 
 // RaceWizard6Control names the controls of the race wizard research cost page.
-enum RaceWizard6Control {
+enum RaceWizard6Control : uint16_t {
     IDC_RACE_ENERGY_COST_EXTRA = 271,
     IDC_RACE_ENERGY_COST_STANDARD = 272,
     IDC_RACE_ENERGY_COST_LESS = 273,
@@ -823,10 +744,9 @@ enum RaceWizard6Control {
     IDC_RACE_BIOTECH_COST_LESS = 288,
     IDC_RACE_START_HIGHER_TECH = 291,
 };
-typedef uint16_t RaceWizard6Control;
 
 // ProductionControl names the controls of the production queue dialog.
-enum ProductionControl {
+enum ProductionControl : uint16_t {
     IDC_PRODUCTION_RESEARCH_LEFTOVERS_ONLY = 139,
     IDC_PRODUCTION_AVAILABLE_ITEMS = 1046,
     IDC_PRODUCTION_QUEUE = 1047,
@@ -836,18 +756,16 @@ enum ProductionControl {
     IDC_PRODUCTION_ITEM_UP = 1081,
     IDC_PRODUCTION_ITEM_DOWN = 1082,
 };
-typedef uint16_t ProductionControl;
 
 // MergeFleetsControl names the controls of the merge fleets dialog.
-enum MergeFleetsControl {
+enum MergeFleetsControl : uint16_t {
     IDC_MERGE_FLEETS_LIST = 81,
     IDC_MERGE_FLEETS_SELECT_ALL = 2040,
     IDC_MERGE_FLEETS_UNSELECT_ALL = 2041,
 };
-typedef uint16_t MergeFleetsControl;
 
 // BattlePlansControl names the controls of the battle plans dialog.
-enum BattlePlansControl {
+enum BattlePlansControl : uint16_t {
     IDC_BATTLE_PLAN_COPY = 1052,
     IDC_BATTLE_PLAN_DUMP_CARGO = 1053,
     IDC_BATTLE_PLAN_SELECT = 1054,
@@ -856,19 +774,17 @@ enum BattlePlansControl {
     IDC_BATTLE_PLAN_TACTIC = 1057,
     IDC_BATTLE_PLAN_ATTACK_WHO = 1058,
 };
-typedef uint16_t BattlePlansControl;
 
 // RelationsControl names the controls of the player relations dialog.
-enum RelationsControl {
+enum RelationsControl : uint16_t {
     IDC_RELATIONS_PLAYER_LIST = 2003,
     IDC_RELATIONS_NEUTRAL = 2004,
     IDC_RELATIONS_FRIEND = 2005,
     IDC_RELATIONS_ENEMY = 2006,
 };
-typedef uint16_t RelationsControl;
 
 // ResearchControl names the controls of the research dialog.
-enum ResearchControl {
+enum ResearchControl : uint16_t {
     IDC_RESEARCH_ENERGY = 1073,
     IDC_RESEARCH_WEAPONS = 1074,
     IDC_RESEARCH_PROPULSION = 1075,
@@ -877,58 +793,50 @@ enum ResearchControl {
     IDC_RESEARCH_BIOTECH = 1078,
     IDC_RESEARCH_NEXT_FIELD = 1083,
 };
-typedef uint16_t ResearchControl;
 
 // ZipProdControl names the controls of the production template dialog.
-enum ZipProdControl {
+enum ZipProdControl : uint16_t {
     IDC_ZIP_PROD_QUEUE = 1047,
     IDC_ZIP_PROD_PRESET_1 = 1073,
     IDC_ZIP_PROD_PRESET_2 = 1074,
     IDC_ZIP_PROD_PRESET_3 = 1075,
     IDC_ZIP_PROD_PRESET_4 = 1076,
 };
-typedef uint16_t ZipProdControl;
 
 // GaugeControl names the controls of the progress gauge dialog.
-enum GaugeControl {
+enum GaugeControl : uint16_t {
     IDC_GAUGE_TEXT = 1071,
 };
-typedef uint16_t GaugeControl;
 
 // BrowserControl names the controls of the technology browser dialog.
-enum BrowserControl {
+enum BrowserControl : uint16_t {
     IDC_BROWSER_AVAILABLE_ONLY = 266,
     IDC_BROWSER_COMPONENT_CATEGORY = 267,
 };
-typedef uint16_t BrowserControl;
 
 // TutorControl names the controls of the tutorial dialog.
-enum TutorControl {
+enum TutorControl : uint16_t {
     IDC_TUTOR_HINT = 118,
     IDC_TUTOR_PANIC = 2503,
 };
-typedef uint16_t TutorControl;
 
 // PanicControl names the controls of the tutorial panic dialog.
-enum PanicControl {
+enum PanicControl : uint16_t {
     IDC_PANIC_REDO_TURN = 2505,
     IDC_PANIC_COMPLETE_TURN = 2506,
 };
-typedef uint16_t PanicControl;
 
 // NewPasswordControl names the controls of the new password dialog.
-enum NewPasswordControl {
+enum NewPasswordControl : uint16_t {
     IDC_PASSWORD_CONFIRM = 269,
 };
-typedef uint16_t NewPasswordControl;
 
 // ScoreControl names the controls of the score dialog.
-enum ScoreControl {
+enum ScoreControl : uint16_t {
     IDC_SCORE_SWITCH = 198,
 };
-typedef uint16_t ScoreControl;
 
-enum ControlId {
+enum ControlId : uint16_t {
     // Controls shared by several dialogs with the same meaning; a dialog's
     // own controls are in its dialog_controls enum.
     IDOK = 1,
@@ -1081,12 +989,10 @@ enum ControlId {
     IDM_FILE_SAVE = 0x006F,
 
 };
-typedef uint16_t ControlId;
 
 /* Numeric cursor resources, named after the hcur globals they load into;
  * the others are named (SCANNERCUR, ...). */
-#undef IDC_HAND
-enum CursorId {
+enum CursorId : uint16_t {
     IDC_NO_WAY = 121,
     IDC_TRASH_CAN = 122,
     IDC_RESIZE_WE = 258,
@@ -1095,11 +1001,10 @@ enum CursorId {
     IDC_ARROW_HELP = 264,
     IDC_HAND = 265,
 };
-typedef uint16_t CursorId;
 
 /* Numeric bitmap resources; the others are named (CARGOBMP, ...). IDB_ ones
  * are loaded with LoadBitmap, IDDIB_ ones as DIBs through FindResource. */
-enum BitmapId {
+enum BitmapId : uint16_t {
     IDDIB_PLAYER_ICONS_TINY = 79,
     IDDIB_PLAYER_ICONS_SMALL = 80,
     IDDIB_THING_ICONS = 87,
@@ -1134,16 +1039,14 @@ enum BitmapId {
     IDDIB_HULL_ICONS_SMALL_5 = 561,
     IDDIB_NUM_DESIGNS_PLATE = 1079,
 };
-typedef uint16_t BitmapId;
 
-enum AcceleratorId {
+enum AcceleratorId : uint16_t {
     IDA_MAIN = 116,
     IDA_TITLE = 1080,
 };
-typedef uint16_t AcceleratorId;
 
 /* Tutorial game files, each stored as its own custom resource type. */
-enum TutorialResourceId {
+enum TutorialResourceId : uint16_t {
     RT_TUTORIAL_HST = 10000,
     IDR_TUTORIAL_HST = 10001,
     RT_TUTORIAL_M1 = 10002,
@@ -1151,9 +1054,8 @@ enum TutorialResourceId {
     RT_TUTORIAL_M2 = 10004,
     IDR_TUTORIAL_M2 = 10005,
 };
-typedef uint16_t TutorialResourceId;
 
-enum VictoryCondition {
+enum VictoryCondition : uint16_t {
     vcOwnsPercentPlanets = 0,     /* "Owns % of all planets." */
     vcAttainsTechLevel = 1,       /* "Attains Tech X in Y fields." (level) */
     vcAttainsTechFields = 2,      /* number of tech fields */
@@ -1165,9 +1067,8 @@ enum VictoryCondition {
     vcMeetsNumCriteria = 8,       /* "Winner must meet X of the above selected criteria." */
     vcMinYearsBeforeWin = 9       /* "At least X years must pass before a winner is declared." */
 };
-typedef uint16_t VictoryCondition;
 
-enum MdOpenFlags {
+enum MdOpenFlags : uint16_t {
     /* access + share combinations */
     mdRead = 0x0020,      /* OF_READ | OF_SHARE_DENY_WRITE */
     mdReadWrite = 0x0012, /* OF_READWRITE | OF_SHARE_EXCLUSIVE */
@@ -1178,9 +1079,8 @@ enum MdOpenFlags {
     /* Stars!-specific modifier */
     mdNoOpenErr = 0x4000,
 };
-typedef uint16_t MdOpenFlags;
 
-enum TaskType {
+enum TaskType : uint16_t {
     grTaskNone = 0,
     grTaskXfer = 1, /* transport / transfer cargo */
     grTaskColonize = 2,
@@ -1193,9 +1093,8 @@ enum TaskType {
     grTaskGive = 9,
     grTaskAny = 0xffff,
 };
-typedef uint16_t TaskType;
 
-enum XferActionType {
+enum XferActionType : uint16_t {
     iActionNone = 0, /* implicit / cleared */
 
     iActionLoadAll = 1,     /* "Load All Available"        */
@@ -1209,9 +1108,8 @@ enum XferActionType {
     iActionSetWaypoint = 9, /* "Set Waypoint to..."        */
     /* iActionLoadOptimal is encoded via iActionLoadDunnage + fuel path */
 };
-typedef uint16_t XferActionType;
 
-enum MdTarget {
+enum MdTarget : uint16_t {
     mdTargetNone = 0,              /* "None/Disengage" */
     mdTargetAny = 1,               /* "Any" */
     mdTargetStarbase = 2,          /* "Starbase" */
@@ -1221,9 +1119,8 @@ enum MdTarget {
     mdTargetFuelTransports = 6,    /* "Fuel Transports" */
     mdTargetFreighters = 7,        /* "Freighters" */
 };
-typedef uint16_t MdTarget;
 
-enum BattleTactic {
+enum BattleTactic : uint16_t {
     mdTacticDisengage = 0,             /* "Disengage" */
     mdTacticDisengageIfChallenged = 1, /* "Disengage if challenged" */
     mdTacticMinDamageToSelf = 2,       /* "Minimize damage to self" */
@@ -1231,9 +1128,8 @@ enum BattleTactic {
     mdTacticMaxDamageRatio = 4,        /* "Maximize damage ratio" */
     mdTacticMaxDamage = 5,             /* "Maximize damage" */
 };
-typedef uint16_t BattleTactic;
 
-enum GrfWeapon {
+enum GrfWeapon : uint16_t {
     bitFBeamLow = 0x0001,
     bitFBeamHigh = 0x0002,
     bitFTorp = 0x0004,
@@ -1241,31 +1137,24 @@ enum GrfWeapon {
     bitFNoHit = 0x0040, /* torpedo damage fully absorbed: the VCR draws no hit */
     bitFDeflected = 0x0080,
 };
-typedef uint16_t GrfWeapon;
 
 // AI part IDs select ordered component preference groups in vrgAiParts;
 // generated from data/ai/parts.yaml (dataids.h).
-typedef uint16_t AiPartPreference;
 
 // A recipe in vrgTDAip, valued by its byte offset there; vrgTDIshAip lists
 // them in order. Generated from data/ai/ (dataids.h).
-typedef uint16_t TurinDroneRecipe;
 
 // A recipe in vrgRobAip, valued by its byte offset there; vrgRobIshAip lists
 // them in order. Generated from data/ai/ (dataids.h).
-typedef uint16_t RobotoidRecipe;
 
 // A recipe in vrgISAip, valued by its byte offset there; vrgISIshAip lists
 // them in order. Generated from data/ai/ (dataids.h).
-typedef uint16_t ISRecipe;
 
 // A recipe in vrgMacAip, valued by its byte offset there; vrgMacIshAip lists
 // them in order. Generated from data/ai/ (dataids.h).
-typedef uint16_t MacintiRecipe;
 
 // A recipe in vrgCyberAip, valued by its byte offset there; vrgCyberIshAip lists
 // them in order. Generated from data/ai/ (dataids.h).
-typedef uint16_t CybertronRecipe;
 
 // A starbase recipe in vrgSBAip, valued by its byte offset there; generated
 // from data/ai/starbases.yaml (dataids.h). aiSbRecipeAuto asks
@@ -1273,17 +1162,15 @@ typedef uint16_t CybertronRecipe;
 enum AiStarbaseRecipeSentinel {
     aiSbRecipeAuto = -1,
 };
-typedef int16_t AiStarbaseRecipe;
 
 // Squared packet attack distance thresholds for one or two mass drivers.
-enum AiPacketDistanceSquared {
+enum AiPacketDistanceSquared : uint16_t {
     aiPacketDistanceSquaredSingleMassDriver = 7056,
     aiPacketDistanceSquaredTwoMassDrivers = 50625,
 };
-typedef uint16_t AiPacketDistanceSquared;
 
 // AiRace identifies a computer player's race and the AI routine that plays it.
-enum AiRace {
+enum AiRace : uint16_t {
     idAiRobotoid = 0,
     idAiTurinDrone = 1,
     idAiAutomitron = 2,
@@ -1293,20 +1180,18 @@ enum AiRace {
     idAiRandom = 6, // replaced with a random race when the game is created
     idAiMaid = 7,   // housekeeping AI that runs a human player's empire
 };
-typedef uint16_t AiRace;
 
 // MineFieldType is a minefield's kind.
-enum MineFieldType {
+enum MineFieldType : uint16_t {
     mineStandard = 0,
     mineHeavy = 1,
     mineSpeedBump = 2,
     mineAll = 0xffff,
     mineNone = 0xffff,
 };
-typedef uint16_t MineFieldType;
 
 // ScanView is the scanner's view mode, the low nibble of grbitScan.
-enum ScanView {
+enum ScanView : uint16_t {
     scanViewNormal = 0,
     scanViewSurfaceMinerals = 1,
     scanViewMineralConc = 2,
@@ -1314,11 +1199,10 @@ enum ScanView {
     scanViewPopulation = 4,
     scanViewNoPlayerInfo = 5,
 };
-typedef uint16_t ScanView;
 
 // GrbitScan holds the scanner's overlay and filter toggles above the view mode
 // in grbitScan.
-enum GrbitScan {
+enum GrbitScan : uint16_t {
     grbitScanViewMask = 0x000f, // ScanView
     grbitScanAddWaypoints = 0x0010,
     grbitScanCoverage = 0x0020,
@@ -1332,11 +1216,10 @@ enum GrbitScan {
     grbitScanPlayerColors = 0x2000,
     grbitScanToggleMask = 0x3ff0,
 };
-typedef uint16_t GrbitScan;
 
 // ToolbarButton is a scanner toolbar button; the negative values are layout
 // entries of vrgTBBtn.
-enum ToolbarButton {
+enum ToolbarButton : int16_t {
     tbScannerRange = -3, // scanner range readout
     tbSpacer = -2,
     tbSeparator = -1,
@@ -1359,40 +1242,36 @@ enum ToolbarButton {
     tbZoomMenu = 16,
     tbShipCounts = 17,
 };
-typedef int16_t ToolbarButton;
 
 // UniverseSize is the galaxy size; its width is 400 * (size + 1) light years.
-enum UniverseSize {
+enum UniverseSize : uint16_t {
     sizeTiny = 0,
     sizeSmall = 1,
     sizeMedium = 2,
     sizeLarge = 3,
     sizeHuge = 4,
 };
-typedef uint16_t UniverseSize;
 
 // UniverseDensity is the galaxy's planet density.
-enum UniverseDensity {
+enum UniverseDensity : uint16_t {
     densitySparse = 0,
     densityNormal = 1,
     densityDense = 2,
     densityPacked = 3,
 };
-typedef uint16_t UniverseDensity;
 
 // StartDistance is the distance between players' homeworlds.
-enum StartDistance {
+enum StartDistance : uint16_t {
     startDistClose = 0,
     startDistModerate = 1,
     startDistFarther = 2,
     startDistDistant = 3,
 };
-typedef uint16_t StartDistance;
 
 // MsgGoto is a message's goto target: a planet id (>= 0), a fleet id, a
 // battle id | 0x4000, a part as 0xc000 | (hst bit << 8) | iItem, or one of
 // these.
-enum MsgGoto {
+enum MsgGoto : int16_t {
     gotoBattleReport = -7,
     gotoThing = -6, // the thing id is the message's first parameter
     gotoScore = -4,
@@ -1402,10 +1281,9 @@ enum MsgGoto {
     gotoBattle = 0x4000,
     gotoRelations = 0x4800,
 };
-typedef int16_t MsgGoto;
 
 // MdMsgObj is what the message window's goto button opens.
-enum MdMsgObj {
+enum MdMsgObj : uint16_t {
     mdMsgObjNone = 0,
     mdMsgObjPlanet = 1,
     mdMsgObjFleet = 2,
@@ -1418,11 +1296,10 @@ enum MdMsgObj {
     mdMsgObjThing = 10,
     mdMsgObjBattleReport = 11,
 };
-typedef uint16_t MdMsgObj;
 
 // TileBits selects the planet or fleet detail tiles DrawPlanShip draws. A bit
 // shared by both tile sets is named for both.
-enum TileBits {
+enum TileBits : uint16_t {
     tileMineralsOrCargo = 0x0001,
     tileShipList = 0x0004,
     tilePlanetStats = 0x0008,
@@ -1435,19 +1312,17 @@ enum TileBits {
     tileMinimized = 0x4000,
     tileErase = 0x8000,
 };
-typedef uint16_t TileBits;
 
 // ReportType is a report dialog's report.
-enum ReportType {
+enum ReportType : uint16_t {
     rptPlanets = 0,
     rptFleets = 1,
     rptEnemyFleets = 2,
     rptBattles = 3,
 };
-typedef uint16_t ReportType;
 
 // PlanetReportColumn is a column of the planet report.
-enum PlanetReportColumn {
+enum PlanetReportColumn : uint16_t {
     colPlanetName = 0,
     colPlanetStarbase = 1,
     colPlanetPopulation = 2,
@@ -1465,10 +1340,9 @@ enum PlanetReportColumn {
     colPlanetRoutingDest = 14,
     colPlanetCount = 15,
 };
-typedef uint16_t PlanetReportColumn;
 
 // FleetReportColumn is a column of the fleet report.
-enum FleetReportColumn {
+enum FleetReportColumn : uint16_t {
     colFleetName = 0,
     colFleetId = 1,
     colFleetLocation = 2,
@@ -1483,10 +1357,9 @@ enum FleetReportColumn {
     colFleetMass = 11,
     colFleetCount = 12,
 };
-typedef uint16_t FleetReportColumn;
 
 // EnemyFleetReportColumn is a column of the other players' fleet report.
-enum EnemyFleetReportColumn {
+enum EnemyFleetReportColumn : uint16_t {
     colEnemyFleetName = 0,
     colEnemyFleetId = 1,
     colEnemyFleetLocation = 2,
@@ -1501,10 +1374,9 @@ enum EnemyFleetReportColumn {
     colEnemyFleetUtility = 11,
     colEnemyFleetCount = 12,
 };
-typedef uint16_t EnemyFleetReportColumn;
 
 // BattleReportColumn is a column of the battle report.
-enum BattleReportColumn {
+enum BattleReportColumn : uint16_t {
     colBattleLocation = 0,
     colBattleStarbase = 1,
     colBattleSides = 2,
@@ -1522,18 +1394,16 @@ enum BattleReportColumn {
     colBattleTheirsLeft = 14,
     colBattleCount = 15,
 };
-typedef uint16_t BattleReportColumn;
 
 // WindowLayout is the main window layout, chosen by screen size.
-enum WindowLayout {
+enum WindowLayout : uint16_t {
     layoutLarge = 0,
     layoutMedium = 1,
     layoutSmall = 2,
 };
-typedef uint16_t WindowLayout;
 
 // ScanZoom is the scanner zoom level.
-enum ScanZoom {
+enum ScanZoom : int16_t {
     zoom25 = -4,
     zoom38 = -3,
     zoom50 = -2,
@@ -1544,43 +1414,38 @@ enum ScanZoom {
     zoom200 = 3,
     zoom400 = 4,
 };
-typedef int16_t ScanZoom;
 
 // MdMark is the turn-file flag FMarkFile sets and FCheckFile tests.
-enum MdMark {
+enum MdMark : uint16_t {
     mdMarkInUse = 1,
     mdMarkDone = 2,
     mdMarkMulti = 4,
     mdMarkAi = 8, // the player is run by the housekeeping AI
 };
-typedef uint16_t MdMark;
 
 // HostTimer is the job of the host-mode timer.
-enum HostTimer {
+enum HostTimer : uint16_t {
     hostTimerAutoGen = 13,   // poll for turns to generate
     hostTimerWaitTurn = 14,  // wait for the next turn after submitting
     hostTimerTurnReady = 15, // flash the window when a new turn is ready
 };
-typedef uint16_t HostTimer;
 
 // ProgressStep is an UpdateProgressGauge argument that advances the gauge
 // instead of setting it.
-enum ProgressStep {
+enum ProgressStep : int16_t {
     progressStep1 = -927,
     progressStep4 = -926,
 };
-typedef int16_t ProgressStep;
 
 // AddItemMode is where AddItemToQueue puts an item in the production queue.
-enum AddItemMode {
+enum AddItemMode : uint16_t {
     addItemFront = 0,
     addItemEnd = 1,
     addItemReplace = 2, // clear the queue first
 };
-typedef uint16_t AddItemMode;
 
 // MainMenu is a top-level menu's position in the frame menu bar.
-enum MainMenu {
+enum MainMenu : uint16_t {
     menuFile = 0,
     menuView = 1,
     menuTurn = 2,
@@ -1588,24 +1453,22 @@ enum MainMenu {
     menuReport = 4,
     menuHelp = 5,
 };
-typedef uint16_t MainMenu;
 
 // TutorShipBuilderAction is the ship designer button FTutorialEnabledShipBuilder
 // checks against the tutorial's current step.
-enum TutorShipBuilderAction {
+enum TutorShipBuilderAction : uint16_t {
     tutsbDelete = 0,
     tutsbCopy = 1,
     tutsbEdit = 2,
     tutsbAccept = 3,     // OK on an edited design
     tutsbCancelEdit = 4, // Cancel on an edited design
 };
-typedef uint16_t TutorShipBuilderAction;
 
 // HelpContextId is a topic of stars!.hlp, as WinHelp's HELP_CONTEXT data
 // selects it: the [MAP] numbers of the help file's |CTXOMAP, named by topic
 // title. Many share their number with the dialog control they explain.
 // Generated by scripts/hlp-context-enum.py.
-enum HelpContextId {
+enum HelpContextId : uint16_t {
     idhStarsPlayersGuideContents = 1,                         // Stars! Player's Guide - Contents
     idhIntroductionAndPlayerSupport = 2,                      // Introduction and Player Support
     idhTheStarsScreen = 3,                                    // The Stars! Screen
@@ -2020,12 +1883,11 @@ enum HelpContextId {
     idhDisplayingPlayerColors = 14041,                        // Displaying Player Colors
     idhTroubleshootingWhatToDoWhenTheShipHitsTheFan = 52224,  // Troubleshooting: What to Do when the Ship Hits the Fan
 };
-typedef uint16_t HelpContextId;
 
 // HullCategory is a hull's role, as the fleet and battle reports group
 // ships: unarmed hulls are colony ships, freighters, miners and fuel
 // transports.
-enum HullCategory {
+enum HullCategory : uint16_t {
     hullCatColony = 0,
     hullCatFreighter = 1,
     hullCatScout = 2,   // scout, frigate, destroyer
@@ -2035,27 +1897,24 @@ enum HullCategory {
     hullCatMiner = 6,
     hullCatFuelTransport = 7,
 };
-typedef uint16_t HullCategory;
 
 // HullAttack is how a hull fights; battle code treats any nonzero value as armed.
-enum HullAttack {
+enum HullAttack : uint16_t {
     hullAttackNone = 0,
     hullAttackLight = 1, // scout, frigate, destroyer, privateer
     hullAttackHeavy = 2, // cruisers and up, rogue, galleon, Nubian, morphs
     hullAttackBomber = 3,
 };
-typedef uint16_t HullAttack;
 
 // BeamAbility is a beam weapon's grfAbilities.
-enum BeamAbility {
+enum BeamAbility : uint16_t {
     beamSapper = 0x0001,  // damages shields only
     beamGatling = 0x0002, // hits every target in range
 };
-typedef uint16_t BeamAbility;
 
 // EngineAbility is a special engine's grfAbilities, which selects its
 // description and restrictions.
-enum EngineAbility {
+enum EngineAbility : uint16_t {
     engineAbilityNone = 0,
     engineSettlersDelight = 1,   // mini-colonizer hulls only
     engineRadiatingRamScoop = 2, // radiation kills colonists
@@ -2064,28 +1923,25 @@ enum EngineAbility {
     engineInterspace10 = 5,      // unavailable with No Ram Scoop Engines
     engineEnigmaPulsar = 6,      // origin unknown
 };
-typedef uint16_t EngineAbility;
 
 // ScannerAbility is a scanner's grfAbilities.
-enum ScannerAbility {
+enum ScannerAbility : uint16_t {
     scannerAbilityNone = 0,
     scannerPenetrating50 = 1,
     scannerPenetrating100 = 2,
     scannerPenetrating200 = 3,
     scannerSteals = 4, // Super Stealth mineral thieves
 };
-typedef uint16_t ScannerAbility;
 
 // PaneSplitter is the set of frame splitter bars a point is on.
-enum PaneSplitter {
+enum PaneSplitter : uint16_t {
     splitVertical = 0x0001, // between the left panes and the scanner
     splitMessages = 0x0002, // below the messages pane
     splitLower = 0x0004,    // the second horizontal bar
 };
-typedef uint16_t PaneSplitter;
 
 // RaceWizardPage is the race wizard page shown, in wizard order.
-enum RaceWizardPage {
+enum RaceWizardPage : int16_t {
     rwPageNone = -1,
     rwPageRace = 1,         // IDD_RACE_WIZARD_1
     rwPagePrimaryTrait = 2, // IDD_RACE_WIZARD_4
@@ -2094,32 +1950,29 @@ enum RaceWizardPage {
     rwPageEconomy = 5,      // IDD_RACE_WIZARD_3
     rwPageResearch = 6,     // IDD_RACE_WIZARD_6
 };
-typedef int16_t RaceWizardPage;
 
 // WizardButton is a wizard page's result: the index of the button pressed
 // in rgidRaceBtn.
-enum WizardButton {
+enum WizardButton : uint16_t {
     wizCancel = 0,
     wizBack = 1,
     wizNext = 2,
     wizFinish = 3,
     wizHelp = 4,
 };
-typedef uint16_t WizardButton;
 
 // PacketDecay is how many warps a mineral packet was flung over its
 // driver's rating, and so how fast it decays.
-enum PacketDecay {
+enum PacketDecay : uint16_t {
     decayNone = 0,
     decay10Pct = 1,
     decay25Pct = 2,
     decay50Pct = 3,
 };
-typedef uint16_t PacketDecay;
 
 // CompassDir is a direction on the map, counterclockwise from east; y
 // grows southward.
-enum CompassDir {
+enum CompassDir : uint16_t {
     dirEast = 0,
     dirNorthEast = 1,
     dirNorth = 2,
@@ -2129,6 +1982,5 @@ enum CompassDir {
     dirSouth = 6,
     dirSouthEast = 7,
 };
-typedef uint16_t CompassDir;
 
 #endif

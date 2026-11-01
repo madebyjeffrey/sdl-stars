@@ -1,5 +1,8 @@
 # S03: Player labels and M04 race titles
 
+Historical evidence: inspected C11 source at `e3222eb1fbdb01d68067231b5d5ef14a71759b30`.
+The retained fixtures run only against the frozen snapshot; current C++ refinement remains open.
+
 Status: Observed helper behavior, with explicit native input domains.
 Reviewed 2026-10-27 at `e3222eb1fbdb01d68067231b5d5ef14a71759b30`.
 This technical companion specializes [S03-US03](S03-static-game-data-and-text.md#s03-us03),
@@ -11,12 +14,12 @@ This technical companion specializes [S03-US03](S03-static-game-data-and-text.md
 Canonical definitions: [player labels](dafny/S03-player-labels.dfy),
 [integer-format subset](dafny/S04-integer-format.dfy) and
 [M04 producer bindings](dafny/M04-text-producers.dfy). Evidence comes from
-[util.c](../src/core/util.c) `PszPlayerName`,
-[utilgen.c](../src/core/utilgen.c) `CchGetString`,
-[strings.c](../src/core/strings.c) `PszGetCompressedString`,
-[raceui.c](../src/ui/raceui.c) `SetRCWTitle` and the preset command,
-[native.c](../src/platform/native.c) `CchSprintf`,
-[SDL services](../compat/win32/src/services.c) `wsprintfA`, and the generated
+[util.c](https://github.com/madebyjeffrey/sdl-stars/blob/e3222eb1fbdb01d68067231b5d5ef14a71759b30/src/core/util.c) `PszPlayerName`,
+[utilgen.c](https://github.com/madebyjeffrey/sdl-stars/blob/e3222eb1fbdb01d68067231b5d5ef14a71759b30/src/core/utilgen.c) `CchGetString`,
+[strings.c](https://github.com/madebyjeffrey/sdl-stars/blob/e3222eb1fbdb01d68067231b5d5ef14a71759b30/src/core/strings.c) `PszGetCompressedString`,
+[raceui.c](https://github.com/madebyjeffrey/sdl-stars/blob/e3222eb1fbdb01d68067231b5d5ef14a71759b30/src/ui/raceui.c) `SetRCWTitle` and the preset command,
+[native.c](https://github.com/madebyjeffrey/sdl-stars/blob/e3222eb1fbdb01d68067231b5d5ef14a71759b30/src/platform/native.c) `CchSprintf`,
+[SDL services](https://github.com/madebyjeffrey/sdl-stars/blob/e3222eb1fbdb01d68067231b5d5ef14a71759b30/compat/win32/src/services.c) `wsprintfA`, and the generated
 [text source](../text/strings.txt). No game behavior or text is changed.
 
 ## Caller workflow and owned rules
