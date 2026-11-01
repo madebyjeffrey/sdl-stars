@@ -19,7 +19,7 @@
 
 static BOOL FHelpAssets(const char *pszDirectory) {
     char szFile[PATH_MAX], szStamp[66];
-    NATIVEFILEINFO st;
+    std::optional<NATIVEFILEINFO> st;
     std::size_t i;
     int cch;
     NATIVEFILE *lpFile;
@@ -31,7 +31,7 @@ static BOOL FHelpAssets(const char *pszDirectory) {
             win32::SetLastError(win32::ERROR_FILENAME_EXCED_RANGE);
             return 0;
         }
-        if (IGetNativeFileInfo(szFile, &st, 1) || !st.fRegular || st.cb <= 0) {
+        if (!(st = IGetNativeFileInfo(szFile, NATIVELINKMODE::follow)) || !st->fRegular || st->cb <= 0) {
             win32::SetLastError(win32::ERROR_FILE_NOT_FOUND);
             return 0;
         }

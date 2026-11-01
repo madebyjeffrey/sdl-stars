@@ -103,9 +103,10 @@ static std::int16_t FZipEnsureCapacity(ZIPFILES *pz) {
 }
 
 static std::int16_t FCollectZipFiles(APPSESSION &app, void *lpData, const char *pszName) {
+    std::optional<NATIVEPATHINFO> npiPath;
     ZIPFILES *pz = static_cast<ZIPFILES *>(lpData);
     char szPath[512], *pszRelative;
-    std::int16_t fDir, fLink;
+
     ZIPFILES zfChild = {nullptr};
     int i;
     std::size_t cbName;
@@ -115,8 +116,8 @@ static std::int16_t FCollectZipFiles(APPSESSION &app, void *lpData, const char *
     });
     if (!std::strcmp(pszName, ".") || !std::strcmp(pszName, "..")) return 1;
     if (CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", pz->pszRoot, szDirSep, pszName) <= 0 ||
-        !FNativePathInfo(szPath, &fDir, &fLink) || fLink) { pz->fBad = 1; return 0; }
-    if (fDir) {
+        !(npiPath = FNativePathInfo(szPath)) || npiPath->fLink) { pz->fBad = 1; return 0; }
+    if (npiPath->fDirectory) {
         /* Game export stages contain only regular files and backup directories. */
         zfChild.pszRoot = szPath;
         if (!FNativeEnumerateDirectory(app, szPath, FCollectZipFiles, &zfChild) || zfChild.fBad) pz->fBad = 1;
@@ -141,7 +142,7 @@ static std::int16_t FCollectZipFiles(APPSESSION &app, void *lpData, const char *
 
 static std::int16_t FWriteZipEntry(NATIVEFILE *pfZip, const char *pszRoot, ZIPENTRY *pze) {
     char szPath[512];
-    std::int64_t cb;
+    std::optional<std::int64_t> cb;
     std::uint8_t *rgbData = nullptr;
     NATIVEFILE *pf = nullptr;
     std::size_t cbName = std::strlen(pze->pszName);
@@ -150,22 +151,22 @@ static std::int16_t FWriteZipEntry(NATIVEFILE *pfZip, const char *pszRoot, ZIPEN
         SDL_free(rgbData);
     });
     if (CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", pszRoot, szDirSep, pze->pszName) <= 0 ||
-        !FNativeFileSize(szPath, &cb) || cb < 0 || cb > UINT32_MAX || cbName > UINT16_MAX ||
+        !(cb = FNativeFileSize(szPath)) || (*cb) < 0 || (*cb) > UINT32_MAX || cbName > UINT16_MAX ||
         static_cast<std::uint64_t>(LNativePosition(pfZip)) > UINT32_MAX) return 0;
     pf = PfOpenNativeFile(szPath, NATIVEFILEMODE::read);
     if (!pf) return 0;
-    rgbData = static_cast<std::uint8_t *>(SDL_malloc(cb ? static_cast<std::size_t>(cb) : 1));
+    rgbData = static_cast<std::uint8_t *>(SDL_malloc(*cb != 0 ? static_cast<std::size_t>(*cb) : 1));
     if (!rgbData) return 0;
-    if (CReadNative(std::span{rgbData, static_cast<std::size_t>(cb)}, pf) != static_cast<std::size_t>(cb)) return 0;
+    if (CReadNative(std::span{rgbData, static_cast<std::size_t>((*cb))}, pf) != static_cast<std::size_t>((*cb))) return 0;
     if (ICloseNativeFile(std::exchange(pf, nullptr)) != 0) return 0;
-    pze->dwCrc = static_cast<std::uint32_t>(crc32(0, rgbData, static_cast<uInt>(cb)));
-    pze->cbSize = static_cast<std::uint32_t>(cb);
+    pze->dwCrc = static_cast<std::uint32_t>(crc32(0, rgbData, static_cast<uInt>((*cb))));
+    pze->cbSize = static_cast<std::uint32_t>((*cb));
     pze->dwOffset = static_cast<std::uint32_t>(LNativePosition(pfZip));
     PutZip32(pfZip, ZIP_LOCAL_SIGNATURE); PutZip16(pfZip, 20); PutZip16(pfZip, 0x800); PutZip16(pfZip, 0);
     PutZip16(pfZip, 0); PutZip16(pfZip, 0); PutZip32(pfZip, pze->dwCrc);
     PutZip32(pfZip, pze->cbSize); PutZip32(pfZip, pze->cbSize);
     PutZip16(pfZip, static_cast<std::uint16_t>(cbName)); PutZip16(pfZip, 0);
-    if (CWriteNative(std::span{pze->pszName, cbName}, pfZip) != cbName || CWriteNative(std::span{rgbData, static_cast<std::size_t>(cb)}, pfZip) != static_cast<std::size_t>(cb)) {
+    if (CWriteNative(std::span{pze->pszName, cbName}, pfZip) != cbName || CWriteNative(std::span{rgbData, static_cast<std::size_t>((*cb))}, pfZip) != static_cast<std::size_t>((*cb))) {
         return 0;
     }
     entry.Close();
@@ -178,7 +179,7 @@ std::int16_t FZipLibraryDirectory(APPSESSION &app, const char *pszDirectory, con
     char szTemp[512] = "";
     NATIVEFILE *pf = nullptr;
     std::uint32_t dwStart, dwLength;
-    std::int64_t cbExisting;
+
     std::int16_t fOk = 0;
     int i, cchTemp;
     std::size_t cbName;
@@ -195,7 +196,7 @@ std::int16_t FZipLibraryDirectory(APPSESSION &app, const char *pszDirectory, con
         if (cchTemp <= 0 || static_cast<std::size_t>(cchTemp) >= sizeof(szTemp)) goto done;
         pf = PfOpenNativeFile(szTemp, NATIVEFILEMODE::writeExclusive);
         if (pf) break;
-        if (!FNativeFileSize(szTemp, &cbExisting)) goto done;
+        if (!FNativeFileSize(szTemp)) goto done;
     }
     if (!pf) goto done;
     rgzentry = static_cast<ZIPENTRY *>(SDL_calloc(zf.c ? static_cast<std::size_t>(zf.c) : 1, sizeof(*rgzentry)));
@@ -249,7 +250,7 @@ std::int16_t FUnzipLibraryArchive(const char *pszArchive, const char *pszDirecto
     std::uint8_t *rgbLocalName = nullptr, *rgbCompressed = nullptr, *rgbData = nullptr;
     NATIVEFILE *pf = PfOpenNativeFile(pszArchive, NATIVEFILEMODE::read);
     NATIVEFILE *pfOutput = nullptr;
-    std::int64_t archiveSize;
+    std::optional<std::int64_t> archiveSize;
     long tailOffset, eocd = -1, centralOffset, lNext;
     std::uint16_t cEntries, i, wLocalNameLength, wLocalExtraLength;
     std::uint64_t cbTotal = 0;
@@ -259,7 +260,7 @@ std::int16_t FUnzipLibraryArchive(const char *pszArchive, const char *pszDirecto
     char szName[512], szOutput[512], szDirectoryEntry[512];
     ZIPCENTRAL zc;
     z_stream zs;
-    std::int64_t cbExisting;
+
     std::int16_t fInflating = 0;
     NATIVECLEANUPSCOPE archive([&]() noexcept {
         if (fInflating) inflateEnd(&zs);
@@ -267,15 +268,15 @@ std::int16_t FUnzipLibraryArchive(const char *pszArchive, const char *pszDirecto
         if (pfOutput) ICloseNativeFile(pfOutput);
         if (pf) ICloseNativeFile(pf);
     });
-    if (!pf || !FNativeFileSize(pszArchive, &archiveSize) || archiveSize < ZIP_EOCD_SIZE) goto done;
-    tailOffset = archiveSize > sizeof(rgbTail) ? static_cast<long>((archiveSize - sizeof(rgbTail))) : 0;
+    if (!pf || !(archiveSize = FNativeFileSize(pszArchive)) || (*archiveSize) < ZIP_EOCD_SIZE) goto done;
+    tailOffset = (*archiveSize) > sizeof(rgbTail) ? static_cast<long>(((*archiveSize) - sizeof(rgbTail))) : 0;
     if (ISeekNativeFile(pf, tailOffset, NATIVESEEKORIGIN::begin) != 0) goto done;
     cbRead = CReadNative(std::span{rgbTail}, pf);
     lSearch = static_cast<long>((cbRead >= ZIP_EOCD_SIZE ? cbRead - ZIP_EOCD_SIZE : 0));
     for (;;) { if (DwZip32(rgbTail + lSearch) == ZIP_EOCD_SIGNATURE) { eocd = tailOffset + lSearch; break; } if (!lSearch--) break; }
     if (eocd < 0 || ISeekNativeFile(pf, eocd + 4, NATIVESEEKORIGIN::begin) != 0 ||
         CReadNative(std::span{rgbTail}.first(ZIP_EOCD_FIELDS_AFTER_SIGNATURE_SIZE), pf) != ZIP_EOCD_FIELDS_AFTER_SIGNATURE_SIZE ||
-        eocd + ZIP_EOCD_SIZE + WZip16(rgbTail + ZIP_EOCD_COMMENT_LENGTH_OFFSET) != archiveSize) goto done;
+        eocd + ZIP_EOCD_SIZE + WZip16(rgbTail + ZIP_EOCD_COMMENT_LENGTH_OFFSET) != (*archiveSize)) goto done;
     if (WZip16(rgbTail + ZIP_EOCD_DISK_NUMBER_OFFSET) || WZip16(rgbTail + ZIP_EOCD_CENTRAL_DISK_OFFSET) ||
         WZip16(rgbTail + ZIP_EOCD_ENTRIES_ON_DISK_OFFSET) != WZip16(rgbTail + ZIP_EOCD_ENTRY_COUNT_OFFSET)) goto done;
     cEntries = WZip16(rgbTail + ZIP_EOCD_ENTRY_COUNT_OFFSET);
@@ -339,7 +340,7 @@ std::int16_t FUnzipLibraryArchive(const char *pszArchive, const char *pszDirecto
         }
         if (static_cast<std::uint32_t>(crc32(0, rgbData, zc.cbUncompressed)) != zc.dwCrc ||
             !FZipMakeParents(pszDirectory, szName, szOutput, sizeof(szOutput)) ||
-            FNativeFileSize(szOutput, &cbExisting)) goto done;
+            FNativeFileSize(szOutput)) goto done;
         pfOutput = PfOpenNativeFile(szOutput, NATIVEFILEMODE::writeExclusive);
         fWrite = pfOutput && CWriteNative(std::span{rgbData, zc.cbUncompressed}, pfOutput) == zc.cbUncompressed;
         if (pfOutput && ICloseNativeFile(pfOutput) != 0) fWrite = 0;

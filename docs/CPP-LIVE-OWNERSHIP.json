@@ -2590,10 +2590,11 @@
       "line": 157,
       "scope": "FWriteZipEntry",
       "operation": "SDL_malloc",
-      "code": "SDL_malloc(cb ? static_cast<std::size_t>(cb) : 1)",
-      "normalized_call": "SDL_malloc(cb?static_cast<std::size_t>(cb):1)",
+      "code": "SDL_malloc(*cb != 0 ? static_cast<std::size_t>(*cb) : 1)",
+      "normalized_call": "SDL_malloc(*cb!=0?static_cast<std::size_t>(*cb):1)",
       "compiler_context": true,
-      "contract": "99"
+      "contract": "99",
+      "metadata_result_migration": "L06h: cb is now an optional signed 64-bit size. The unchanged allocation uses its checked, present value after the existing zero-to-UINT32_MAX range check; owner, allocator and one-byte empty allocation remain contract 99."
     },
     {
       "path": "src/ui/libraryzip.cpp",

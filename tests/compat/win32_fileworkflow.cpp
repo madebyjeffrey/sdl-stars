@@ -114,8 +114,8 @@ static void  FileWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
     const char *pszManagedOrders = PszCompatEnvironment("STARS_TEST_MANAGED_ORDERS");
     const char *pszManagedTurn = PszCompatEnvironment("STARS_TEST_MANAGED_TURN");
     const char *pszExportFailure = PszCompatEnvironment("STARS_TEST_EXPORT_FAILURE_TARGET");
-    int64_t cbRaceLibrary;
-    int64_t cbExport;
+    std::optional<std::int64_t> cbRaceLibrary;
+    std::optional<std::int64_t> cbExport;
     int16_t fSubmitSav;
     const char *pszRace = PszCompatEnvironment("STARS_TEST_RACE_PATH");
     const char *pszRaceRepeat = PszCompatEnvironment("STARS_TEST_RACE_REPEAT_PATH");
@@ -155,7 +155,7 @@ static void  FileWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
     CHECK(CchSnprintf(std::span{szRaceLibrary, sizeof(szRaceLibrary)}, "%s%sRace Designs", PszCompatEnvironment("STARS_SETTINGS_DIR"), szDirSep) > 0);
     CHECK(CchSnprintf(std::span{szManagedRace, sizeof(szManagedRace)}, "%s%sManaged.r1", szRaceLibrary, szDirSep) > 0);
     CHECK(FWasRaceFile(app, szManagedRace, 0) > 0);
-    CHECK(FNativeFileSize(szManagedRace, &cbRaceLibrary) && cbRaceLibrary > 0);
+    CHECK((cbRaceLibrary = FNativeFileSize(szManagedRace)) && (*cbRaceLibrary) > 0);
     strcpy(app.state.szPassLast, "managed-pass");
     app.state.lSaltLast = LSaltFromSz(app.state.szPassLast);
     app.state.lSaltCur = app.state.lSaltLast;
@@ -168,29 +168,29 @@ static void  FileWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
     CHECK(FWasRaceFile(app, szManagedRace, 0) > 0 && app.state.vplr.lSalt == app.state.lSaltLast);
     CHECK(FImportLibraryRaceAs(app, app.lpui->hwndTitle, pszRace, "Imported.r2"));
     CHECK(CchSnprintf(std::span{szManagedRace, sizeof(szManagedRace)}, "%s%sImported.r2", szRaceLibrary, szDirSep) > 0);
-    CHECK(FNativeFileSize(szManagedRace, &cbRaceLibrary) && cbRaceLibrary > 0 && FEqualFiles(pszRace, szManagedRace));
+    CHECK((cbRaceLibrary = FNativeFileSize(szManagedRace)) && (*cbRaceLibrary) > 0 && FEqualFiles(pszRace, szManagedRace));
     CHECK(!FImportLibraryRaceAs(app, app.lpui->hwndTitle, pszRace, "imported.R2"));
-    CHECK(FNativeFileSize(szManagedRace, &cbRaceLibrary) && cbRaceLibrary > 0);
+    CHECK((cbRaceLibrary = FNativeFileSize(szManagedRace)) && (*cbRaceLibrary) > 0);
     CHECK(FLoadLibraryRace(app, app.lpui->hwndTitle, "Managed.r1"));
     CHECK(IRaceChecksum(&app.state.vplr) == IRaceChecksum(&plrManaged));
     fSubmitSav = app.state.gd.fSubmit;
     CHECK(pszExport && pszManagedOrders && pszManagedTurn && pszExportFailure && !FExportLibraryOrders(app, app.lpui->hwndTitle, NULL));
     CHECK(app.state.gd.fSubmit == fSubmitSav && app.state.game.lid == lid);
-    CHECK(!FNativeFileSize((char *)pszManagedOrders, &cbExport) && FNativeFileSize((char *)pszManagedTurn, &cbExport));
+    CHECK(!(cbExport = FNativeFileSize((char *)pszManagedOrders)) && (cbExport = FNativeFileSize((char *)pszManagedTurn)));
     DirtyGame(app, 1);
     CHECK(pszPreviousExport && !FExportLibraryOrders(app, app.lpui->hwndTitle, NULL));
     CHECK(cReplaceChoices == 1 && app.state.game.fDirty && app.state.gd.fSubmit == fSubmitSav && app.state.game.lid == lid);
     CHECK(FEqualFiles(pszExport, pszPreviousExport));
-    CHECK(!FNativeFileSize((char *)pszManagedOrders, &cbExport));
+    CHECK(!(cbExport = FNativeFileSize((char *)pszManagedOrders)));
     CHECK(FExportLibraryOrders(app, app.lpui->hwndTitle, NULL));
     CHECK(cReplaceChoices == 2 && !app.state.game.fDirty);
     CHECK(app.state.gd.fSubmit == fSubmitSav && app.state.game.lid == lid);
-    CHECK(FNativeFileSize((char *)pszExport, &cbExport) && cbExport > 0);
+    CHECK((cbExport = FNativeFileSize((char *)pszExport)) && (*cbExport) > 0);
     CHECK(FEqualFiles(pszExport, pszManagedOrders));
     CHECK(!FExportLibraryOrders(app, app.lpui->hwndTitle, pszExportFailure));
     CHECK(app.state.gd.fSubmit == fSubmitSav && app.state.game.lid == lid &&
-          FNativeFileSize((char *)pszExport, &cbExport) && cbExport > 0 &&
-          FNativeFileSize((char *)pszManagedOrders, &cbExport) && cbExport > 0);
+          (cbExport = FNativeFileSize((char *)pszExport)) && (*cbExport) > 0 &&
+          (cbExport = FNativeFileSize((char *)pszManagedOrders)) && (*cbExport) > 0);
     CHECK(app.state.game.lid == lid && memcmp(&plrSav, &app.state.rgplr[app.state.idPlayer], sizeof(plrSav)) == 0);
     app.lpui->hwndRaceParent = hwndParentSav;
     fPassed = cAlerts == 1 && (!PszCompatEnvironment("STARS_TEST_FILE_WORKFLOW_COMPAT") || cFileChoices == 9);

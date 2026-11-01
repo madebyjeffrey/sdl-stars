@@ -1,6 +1,6 @@
 {
   "parent": "c7f5e933",
-  "status": "File-service migration active; typed open/byte/seek/record/element and scoped stream-mode batches complete and verified.",
+  "status": "File-service migration active; open/byte/seek/record/element/modes and returned metadata/size/path-kind/identity values complete and verified.",
   "open": {
     "status": "complete; verified",
     "interfaces": [
@@ -367,7 +367,7 @@
   "pending": {
     "byte_io": "Native/token byte I/O, record streams, WriteRt/RECORDIO and typed element streams are complete; remaining memory-source and text-writer boundaries are separate work.",
     "seek": "Scoped seek origins complete; existing position-result widths and native/SDK error mappings are retained.",
-    "stream_open": "Scoped stream modes are complete. Remaining file/path result/out-parameter interfaces and the explicit old OutputFileString uint16_t write-count boundary remain open.",
+    "stream_open": "Scoped stream modes and returned metadata/size/path-kind/identity values are complete. Canonical/current-directory/temporary-path results and other interfaces remain; OutputFileString retains its explicit old uint16_t write-count boundary pending repair.",
     "selection": "Milestone D remains open; no picker backend or user workflow was changed by this batch.",
     "qualification": "Final complete-state inventory, Debug/Release and actual platform qualification remain required.",
     "memory_sources": "Memory-backed record source pointers still need bounds/cursor ownership. Batch file lowword/signed sizing and filename-copy loops remain a separate audit; this batch preserves their existing allocation/read count."
@@ -4189,6 +4189,735 @@
       "baseline": "Behavior-neutral; no native or frozen original baseline, unit golden, record/element width, game logic, wire bytes, RNG or canonical model changed. No scenario/checkpoint moved; no regression export required.",
       "remaining": "Memory-source/batch audits, file/path results, text-writer boundary and Milestone D remain active. L05 remaining text work and L08 final qualification remain open.",
       "receipts": "dist/verification/live-cpp/l06g/"
+    }
+  },
+  "metadata_results": {
+    "parent": "5e55dec4",
+    "status": "complete; verified",
+    "interfaces": "IGetNativeFileInfo/IGetNativeOpenInfo return optional NATIVEFILEINFO records; FNativeFileSize returns an optional signed 64-bit size; FNativePathInfo returns an optional named directory/link value. FNativeFileIdentity has path and live-file overloads returning one optional device/file pair. Old output-pointer overloads and the public nullable source-pair protocol are removed.",
+    "link_policy": "NATIVELINKMODE is a scoped uint8_t enum. follow preserves filesystem status/file-size behavior; inspect preserves symlink_status plus the existing Windows reparse/junction classification. Callers still reject or unlink links without traversing their targets.",
+    "counts": "A present zero size is a successful regular-file query. Empty optionals retain errno detail; directory rejection does not invent an error. Failure paths, source/target inspection order, OpenFile sharing/identity checks before truncation, path validation and descriptor admission remain.",
+    "widths": "Existing NATIVEFILEINFO fields and COMPATFILE device/inode storage retain their exact widths/layout. New identity/path-kind records are transient service results and never enter saved records. Game/wire sizes, IDs, uint16 limits, RNG and output bytes remain unchanged.",
+    "invocations": 77,
+    "pre_existing_invocations": 72,
+    "pre_migration_characterization_invocations": 5,
+    "production_invocations": 41,
+    "test_invocations": 36,
+    "actual_provider_invocations": 1,
+    "actual_provider_callbacks": 1,
+    "providers": "LIBRARYPUBLICATIONIO uses the actual optional-size signature. The linked TestFNativeFileSize provider returns presence/absence directly, retaining its decision/probe event order. The old generic witness adapter and ignored size output are removed for this callback; publication uses has_value so zero-length orders still count as existing.",
+    "callers": "Metadata consumers guard returned records before accessing fields. File-size consumers either test presence directly or retain the optional count and use its original signed 64-bit value after checking presence. Unused count slots and path-flag outputs were removed. The original caller short-circuit/error and publication stages remain.",
+    "reference_tests": "Before production migration both host Release and Windows under Wine passed native open metadata (regular file/size), matching live descriptor/path identity, successful zero-length regular-file sizing and directory-size rejection without replacing an existing EBUSY errno. Existing Unicode, missing-file, broken-link deletion, chooser, sharing and publication witnesses remain.",
+    "audit_correction": "The initial 26 host runtime checks passed; the two source-policy checks rejected the changed SDL_malloc spelling because its cb local is now an optional value. Updated the existing ownership site/contract 99 to its checked present-value expression; allocator, allocation size and cleanup owner did not change. The final full 28-check host run passes.",
+    "calls": [
+      {
+        "path": "compat/win32/src/file.cpp",
+        "parent_line": 95,
+        "function": "IGetNativeFileInfo",
+        "original_call": "IGetNativeFileInfo(szPath, &st, 1)",
+        "origin": "existing parent call",
+        "current_call": "IGetNativeFileInfo(szPath, NATIVELINKMODE::follow)",
+        "current_line": 95
+      },
+      {
+        "path": "compat/win32/src/file.cpp",
+        "parent_line": 96,
+        "function": "FNativeFileIdentity",
+        "original_call": "FNativeFileIdentity(nullptr, szPath, &dev, &ino)",
+        "origin": "existing parent call",
+        "current_call": "FNativeFileIdentity(szPath)",
+        "current_line": 96
+      },
+      {
+        "path": "compat/win32/src/file.cpp",
+        "parent_line": 107,
+        "function": "IGetNativeOpenInfo",
+        "original_call": "IGetNativeOpenInfo(pf, &st)",
+        "origin": "existing parent call",
+        "current_call": "IGetNativeOpenInfo(pf)",
+        "current_line": 107
+      },
+      {
+        "path": "compat/win32/src/file.cpp",
+        "parent_line": 109,
+        "function": "FNativeFileIdentity",
+        "original_call": "FNativeFileIdentity(pf, nullptr, &dev, &ino)",
+        "origin": "existing parent call",
+        "current_call": "FNativeFileIdentity(pf)",
+        "current_line": 109
+      },
+      {
+        "path": "compat/win32/src/filedialog.cpp",
+        "parent_line": 125,
+        "function": "IGetNativeFileInfo",
+        "original_call": "IGetNativeFileInfo(szPath, &st, 1)",
+        "origin": "existing parent call",
+        "current_call": "IGetNativeFileInfo(szPath, NATIVELINKMODE::follow)",
+        "current_line": 125
+      },
+      {
+        "path": "compat/win32/src/filedialog.cpp",
+        "parent_line": 153,
+        "function": "IGetNativeFileInfo",
+        "original_call": "IGetNativeFileInfo(szReal, &st, 1)",
+        "origin": "existing parent call",
+        "current_call": "IGetNativeFileInfo(szReal, NATIVELINKMODE::follow)",
+        "current_line": 153
+      },
+      {
+        "path": "compat/win32/src/filedialog.cpp",
+        "parent_line": 193,
+        "function": "IGetNativeFileInfo",
+        "original_call": "IGetNativeFileInfo(szPath, &st, 1)",
+        "origin": "existing parent call",
+        "current_call": "IGetNativeFileInfo(szPath, NATIVELINKMODE::follow)",
+        "current_line": 193
+      },
+      {
+        "path": "compat/win32/src/filedialog.cpp",
+        "parent_line": 206,
+        "function": "IGetNativeFileInfo",
+        "original_call": "IGetNativeFileInfo(szReal, &stParent, 1)",
+        "origin": "existing parent call",
+        "current_call": "IGetNativeFileInfo(szReal, NATIVELINKMODE::follow)",
+        "current_line": 206
+      },
+      {
+        "path": "compat/win32/src/filedialog.cpp",
+        "parent_line": 211,
+        "function": "IGetNativeFileInfo",
+        "original_call": "IGetNativeFileInfo(szParent, &st, 1)",
+        "origin": "existing parent call",
+        "current_call": "IGetNativeFileInfo(szParent, NATIVELINKMODE::follow)",
+        "current_line": 211
+      },
+      {
+        "path": "compat/win32/src/filedialog.cpp",
+        "parent_line": 397,
+        "function": "IGetNativeFileInfo",
+        "original_call": "IGetNativeFileInfo(pszPath, &st, 1)",
+        "origin": "existing parent call",
+        "current_call": "IGetNativeFileInfo(pszPath, NATIVELINKMODE::follow)",
+        "current_line": 397
+      },
+      {
+        "path": "compat/win32/src/filedialog.cpp",
+        "parent_line": 406,
+        "function": "IGetNativeFileInfo",
+        "original_call": "IGetNativeFileInfo(szReal, &st, 1)",
+        "origin": "existing parent call",
+        "current_call": "IGetNativeFileInfo(szReal, NATIVELINKMODE::follow)",
+        "current_line": 406
+      },
+      {
+        "path": "compat/win32/src/filedialog.cpp",
+        "parent_line": 458,
+        "function": "IGetNativeFileInfo",
+        "original_call": "IGetNativeFileInfo(dlg.szDir, &st, 1)",
+        "origin": "existing parent call",
+        "current_call": "IGetNativeFileInfo(dlg.szDir, NATIVELINKMODE::follow)",
+        "current_line": 458
+      },
+      {
+        "path": "compat/win32/src/help.cpp",
+        "parent_line": 34,
+        "function": "IGetNativeFileInfo",
+        "original_call": "IGetNativeFileInfo(szFile, &st, 1)",
+        "origin": "existing parent call",
+        "current_call": "IGetNativeFileInfo(szFile, NATIVELINKMODE::follow)",
+        "current_line": 34
+      },
+      {
+        "path": "src/platform/native.cpp",
+        "parent_line": 230,
+        "function": "IGetNativeFileInfo",
+        "original_call": "IGetNativeFileInfo(pszFile, &info, 1)",
+        "origin": "existing parent call",
+        "current_call": "IGetNativeFileInfo(pszFile, NATIVELINKMODE::follow)",
+        "current_line": 229
+      },
+      {
+        "path": "src/platform/native.cpp",
+        "parent_line": 236,
+        "function": "IGetNativeFileInfo",
+        "original_call": "IGetNativeFileInfo(pszDir, &info, 1)",
+        "origin": "existing parent call",
+        "current_call": "IGetNativeFileInfo(pszDir, NATIVELINKMODE::follow)",
+        "current_line": 234
+      },
+      {
+        "path": "src/platform/native.cpp",
+        "parent_line": 240,
+        "function": "IGetNativeFileInfo",
+        "original_call": "IGetNativeFileInfo(psz, &info, 0)",
+        "origin": "existing parent call",
+        "current_call": "IGetNativeFileInfo(psz, NATIVELINKMODE::inspect)",
+        "current_line": 238
+      },
+      {
+        "path": "src/ui/libraryui.cpp",
+        "parent_line": 693,
+        "function": "FNativePathInfo",
+        "original_call": "FNativePathInfo(pszPath, &fDirectory, &fLink)",
+        "origin": "existing parent call",
+        "current_call": "FNativePathInfo(pszPath)",
+        "current_line": 694
+      },
+      {
+        "path": "src/ui/libraryui.cpp",
+        "parent_line": 1077,
+        "function": "FNativeFileSize",
+        "original_call": "FNativeFileSize(szTarget, &cbTarget)",
+        "origin": "existing parent call",
+        "current_call": "FNativeFileSize(szTarget)",
+        "current_line": 1078
+      },
+      {
+        "path": "src/ui/libraryui.cpp",
+        "parent_line": 1168,
+        "function": "FNativeFileSize",
+        "original_call": "FNativeFileSize(szPath, &cbFile)",
+        "origin": "existing parent call",
+        "current_call": "FNativeFileSize(szPath)",
+        "current_line": 1169
+      },
+      {
+        "path": "src/ui/libraryui.cpp",
+        "parent_line": 1408,
+        "function": "FNativePathInfo",
+        "original_call": "FNativePathInfo(szSource, &fDirectory, &fLink)",
+        "origin": "existing parent call",
+        "current_call": "FNativePathInfo(szSource)",
+        "current_line": 1410
+      },
+      {
+        "path": "src/ui/libraryui.cpp",
+        "parent_line": 1578,
+        "function": "FNativePathInfo",
+        "original_call": "FNativePathInfo(szPath, &fDirectory, &fLink)",
+        "origin": "existing parent call",
+        "current_call": "FNativePathInfo(szPath)",
+        "current_line": 1581
+      },
+      {
+        "path": "src/ui/libraryui.cpp",
+        "parent_line": 1963,
+        "function": "FNativePathInfo",
+        "original_call": "FNativePathInfo(szTarget, &fDirectory, &fLink)",
+        "origin": "existing parent call",
+        "current_call": "FNativePathInfo(szTarget)",
+        "current_line": 1966
+      },
+      {
+        "path": "src/ui/libraryui.cpp",
+        "parent_line": 2062,
+        "function": "FNativeFileSize",
+        "original_call": "FNativeFileSize(szSource, &cbSource)",
+        "origin": "existing parent call",
+        "current_call": "FNativeFileSize(szSource)",
+        "current_line": 2065
+      },
+      {
+        "path": "src/ui/libraryui.cpp",
+        "parent_line": 2147,
+        "function": "FNativePathInfo",
+        "original_call": "FNativePathInfo(szPath, &fDirectory, &fLink)",
+        "origin": "existing parent call",
+        "current_call": "FNativePathInfo(szPath)",
+        "current_line": 2151
+      },
+      {
+        "path": "src/ui/libraryui.cpp",
+        "parent_line": 2169,
+        "function": "FNativePathInfo",
+        "original_call": "FNativePathInfo(pszDirectory, &fDirectory, &fLink)",
+        "origin": "existing parent call",
+        "current_call": "FNativePathInfo(pszDirectory)",
+        "current_line": 2174
+      },
+      {
+        "path": "src/ui/libraryui.cpp",
+        "parent_line": 2192,
+        "function": "FNativeFileSize",
+        "original_call": "FNativeFileSize(szSourceUniverse, &cbFile)",
+        "origin": "existing parent call",
+        "current_call": "FNativeFileSize(szSourceUniverse)",
+        "current_line": 2197
+      },
+      {
+        "path": "src/ui/libraryui.cpp",
+        "parent_line": 2219,
+        "function": "FNativeFileSize",
+        "original_call": "FNativeFileSize(pszHold, &cbExisting)",
+        "origin": "existing parent call",
+        "current_call": "FNativeFileSize(pszHold)",
+        "current_line": 2224
+      },
+      {
+        "path": "src/ui/libraryui.cpp",
+        "parent_line": 2233,
+        "function": "FNativePathInfo",
+        "original_call": "FNativePathInfo(pszDirectory, &fDirectory, &fLink)",
+        "origin": "existing parent call",
+        "current_call": "FNativePathInfo(pszDirectory)",
+        "current_line": 2239
+      },
+      {
+        "path": "src/ui/libraryui.cpp",
+        "parent_line": 2482,
+        "function": "FNativeFileSize",
+        "original_call": "FNativeFileSize(szTarget, &cbFile)",
+        "origin": "existing parent call",
+        "current_call": "FNativeFileSize(szTarget)",
+        "current_line": 2488
+      },
+      {
+        "path": "src/ui/libraryui.cpp",
+        "parent_line": 2511,
+        "function": "FNativeFileSize",
+        "original_call": "FNativeFileSize(pszSource, &cbFile)",
+        "origin": "existing parent call",
+        "current_call": "FNativeFileSize(pszSource)",
+        "current_line": 2517
+      },
+      {
+        "path": "src/ui/libraryui.cpp",
+        "parent_line": 2524,
+        "function": "FNativePathInfo",
+        "original_call": "FNativePathInfo(pszBackup, &fDirectory, &fLink)",
+        "origin": "existing parent call",
+        "current_call": "FNativePathInfo(pszBackup)",
+        "current_line": 2530
+      },
+      {
+        "path": "src/ui/libraryui.cpp",
+        "parent_line": 2729,
+        "function": "FNativeFileSize",
+        "original_call": "FNativeFileSize(szFile, &cbFile)",
+        "origin": "existing parent call",
+        "current_call": "FNativeFileSize(szFile)",
+        "current_line": 2735
+      },
+      {
+        "path": "src/ui/libraryui.cpp",
+        "parent_line": 2732,
+        "function": "FNativeFileSize",
+        "original_call": "FNativeFileSize(szFile, &cbFile)",
+        "origin": "existing parent call",
+        "current_call": "FNativeFileSize(szFile)",
+        "current_line": 2738
+      },
+      {
+        "path": "src/ui/libraryui.cpp",
+        "parent_line": 2756,
+        "function": "FNativeFileSize",
+        "original_call": "FNativeFileSize(szHost, &cbFile)",
+        "origin": "existing parent call",
+        "current_call": "FNativeFileSize(szHost)",
+        "current_line": 2762
+      },
+      {
+        "path": "src/ui/libraryui.cpp",
+        "parent_line": 2886,
+        "function": "FNativeFileSize",
+        "original_call": "FNativeFileSize(szPath, &cbFile)",
+        "origin": "existing parent call",
+        "current_call": "FNativeFileSize(szPath)",
+        "current_line": 2892
+      },
+      {
+        "path": "src/ui/libraryui.cpp",
+        "parent_line": 3231,
+        "function": "pfnFNativeFileSize",
+        "original_call": "pfnFNativeFileSize(szOrders, &cbFile)",
+        "origin": "existing parent call",
+        "current_call": "pfnFNativeFileSize(szOrders)",
+        "current_line": 3237
+      },
+      {
+        "path": "src/ui/libraryzip.cpp",
+        "parent_line": 118,
+        "function": "FNativePathInfo",
+        "original_call": "FNativePathInfo(szPath, &fDir, &fLink)",
+        "origin": "existing parent call",
+        "current_call": "FNativePathInfo(szPath)",
+        "current_line": 119
+      },
+      {
+        "path": "src/ui/libraryzip.cpp",
+        "parent_line": 153,
+        "function": "FNativeFileSize",
+        "original_call": "FNativeFileSize(szPath, &cb)",
+        "origin": "existing parent call",
+        "current_call": "FNativeFileSize(szPath)",
+        "current_line": 154
+      },
+      {
+        "path": "src/ui/libraryzip.cpp",
+        "parent_line": 198,
+        "function": "FNativeFileSize",
+        "original_call": "FNativeFileSize(szTemp, &cbExisting)",
+        "origin": "existing parent call",
+        "current_call": "FNativeFileSize(szTemp)",
+        "current_line": 199
+      },
+      {
+        "path": "src/ui/libraryzip.cpp",
+        "parent_line": 270,
+        "function": "FNativeFileSize",
+        "original_call": "FNativeFileSize(pszArchive, &archiveSize)",
+        "origin": "existing parent call",
+        "current_call": "FNativeFileSize(pszArchive)",
+        "current_line": 271
+      },
+      {
+        "path": "src/ui/libraryzip.cpp",
+        "parent_line": 342,
+        "function": "FNativeFileSize",
+        "original_call": "FNativeFileSize(szOutput, &cbExisting)",
+        "origin": "existing parent call",
+        "current_call": "FNativeFileSize(szOutput)",
+        "current_line": 343
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "parent_line": 20,
+        "function": "IGetNativeOpenInfo",
+        "original_call": "IGetNativeOpenInfo(temp, &opened)",
+        "origin": "pre-migration characterization call",
+        "current_call": "IGetNativeOpenInfo(temp)",
+        "current_line": 20
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "parent_line": 21,
+        "function": "FNativeFileIdentity",
+        "original_call": "FNativeFileIdentity(temp, nullptr, &devTemp, &inoTemp)",
+        "origin": "pre-migration characterization call",
+        "current_call": "FNativeFileIdentity(temp)",
+        "current_line": 21
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "parent_line": 23,
+        "function": "FNativeFileIdentity",
+        "original_call": "FNativeFileIdentity(nullptr, path, &devPath, &inoPath)",
+        "origin": "pre-migration characterization call",
+        "current_call": "FNativeFileIdentity(path)",
+        "current_line": 23
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "parent_line": 54,
+        "function": "FNativeFileIdentity",
+        "original_call": "FNativeFileIdentity(pf,NULL,&dev,&ino)",
+        "origin": "existing parent call",
+        "current_call": "FNativeFileIdentity(pf)",
+        "current_line": 54
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "parent_line": 57,
+        "function": "IGetNativeFileInfo",
+        "original_call": "IGetNativeFileInfo(path,&info,1)",
+        "origin": "existing parent call",
+        "current_call": "IGetNativeFileInfo(path, NATIVELINKMODE::follow)",
+        "current_line": 57
+      },
+      {
+        "path": "tests/compat/win32_client_startup.cpp",
+        "parent_line": 2124,
+        "function": "FNativeFileSize",
+        "original_call": "FNativeFileSize(szHostManagedOrders, &cbHostFile)",
+        "origin": "existing parent call",
+        "current_call": "FNativeFileSize(szHostManagedOrders)",
+        "current_line": 2123
+      },
+      {
+        "path": "tests/compat/win32_client_startup.cpp",
+        "parent_line": 2142,
+        "function": "FNativeFileSize",
+        "original_call": "FNativeFileSize(szHostOrderFile, &cbHostFile)",
+        "origin": "existing parent call",
+        "current_call": "FNativeFileSize(szHostOrderFile)",
+        "current_line": 2141
+      },
+      {
+        "path": "tests/compat/win32_client_startup.cpp",
+        "parent_line": 2145,
+        "function": "FNativeFileSize",
+        "original_call": "FNativeFileSize(szHostOrderFile, &cbHostFile)",
+        "origin": "existing parent call",
+        "current_call": "FNativeFileSize(szHostOrderFile)",
+        "current_line": 2144
+      },
+      {
+        "path": "tests/compat/win32_client_startup.cpp",
+        "parent_line": 2168,
+        "function": "FNativeFileSize",
+        "original_call": "FNativeFileSize(szHostManagedOrders, &cbHostFile)",
+        "origin": "existing parent call",
+        "current_call": "FNativeFileSize(szHostManagedOrders)",
+        "current_line": 2167
+      },
+      {
+        "path": "tests/compat/win32_client_startup.cpp",
+        "parent_line": 2525,
+        "function": "FNativeFileSize",
+        "original_call": "FNativeFileSize(szDuplicate, &cbTestFile)",
+        "origin": "existing parent call",
+        "current_call": "FNativeFileSize(szDuplicate)",
+        "current_line": 2524
+      },
+      {
+        "path": "tests/compat/win32_client_startup.cpp",
+        "parent_line": 2526,
+        "function": "FNativeFileSize",
+        "original_call": "FNativeFileSize(szExport, &cbTestFile)",
+        "origin": "existing parent call",
+        "current_call": "FNativeFileSize(szExport)",
+        "current_line": 2525
+      },
+      {
+        "path": "tests/compat/win32_client_startup.cpp",
+        "parent_line": 2526,
+        "function": "FNativeFileSize",
+        "original_call": "FNativeFileSize(szManaged, &cbTestFile)",
+        "origin": "existing parent call",
+        "current_call": "FNativeFileSize(szManaged)",
+        "current_line": 2525
+      },
+      {
+        "path": "tests/compat/win32_client_startup.cpp",
+        "parent_line": 2527,
+        "function": "FNativeFileSize",
+        "original_call": "FNativeFileSize(szExport, &cbTestFile)",
+        "origin": "existing parent call",
+        "current_call": "FNativeFileSize(szExport)",
+        "current_line": 2526
+      },
+      {
+        "path": "tests/compat/win32_client_startup.cpp",
+        "parent_line": 2528,
+        "function": "FNativeFileSize",
+        "original_call": "FNativeFileSize(szDuplicate, &cbTestFile)",
+        "origin": "existing parent call",
+        "current_call": "FNativeFileSize(szDuplicate)",
+        "current_line": 2527
+      },
+      {
+        "path": "tests/compat/win32_client_startup.cpp",
+        "parent_line": 2528,
+        "function": "FNativeFileSize",
+        "original_call": "FNativeFileSize(szManaged, &cbTestFile)",
+        "origin": "existing parent call",
+        "current_call": "FNativeFileSize(szManaged)",
+        "current_line": 2527
+      },
+      {
+        "path": "tests/compat/win32_client_startup.cpp",
+        "parent_line": 2529,
+        "function": "FNativeFileSize",
+        "original_call": "FNativeFileSize(szDuplicate, &cbTestFile)",
+        "origin": "existing parent call",
+        "current_call": "FNativeFileSize(szDuplicate)",
+        "current_line": 2528
+      },
+      {
+        "path": "tests/compat/win32_client_startup.cpp",
+        "parent_line": 2530,
+        "function": "FNativeFileSize",
+        "original_call": "FNativeFileSize(szExport, &cbTestFile)",
+        "origin": "existing parent call",
+        "current_call": "FNativeFileSize(szExport)",
+        "current_line": 2529
+      },
+      {
+        "path": "tests/compat/win32_client_startup.cpp",
+        "parent_line": 2530,
+        "function": "FNativeFileSize",
+        "original_call": "FNativeFileSize(szManaged, &cbTestFile)",
+        "origin": "existing parent call",
+        "current_call": "FNativeFileSize(szManaged)",
+        "current_line": 2529
+      },
+      {
+        "path": "tests/compat/win32_client_startup.cpp",
+        "parent_line": 2677,
+        "function": "FNativeFileSize",
+        "original_call": "FNativeFileSize(szPath, &cbTestFile)",
+        "origin": "existing parent call",
+        "current_call": "FNativeFileSize(szPath)",
+        "current_line": 2676
+      },
+      {
+        "path": "tests/compat/win32_client_startup.cpp",
+        "parent_line": 2706,
+        "function": "FNativeFileSize",
+        "original_call": "FNativeFileSize(szPath, &cbTestFile)",
+        "origin": "existing parent call",
+        "current_call": "FNativeFileSize(szPath)",
+        "current_line": 2705
+      },
+      {
+        "path": "tests/compat/win32_fileworkflow.cpp",
+        "parent_line": 158,
+        "function": "FNativeFileSize",
+        "original_call": "FNativeFileSize(szManagedRace, &cbRaceLibrary)",
+        "origin": "existing parent call",
+        "current_call": "FNativeFileSize(szManagedRace)",
+        "current_line": 158
+      },
+      {
+        "path": "tests/compat/win32_fileworkflow.cpp",
+        "parent_line": 171,
+        "function": "FNativeFileSize",
+        "original_call": "FNativeFileSize(szManagedRace, &cbRaceLibrary)",
+        "origin": "existing parent call",
+        "current_call": "FNativeFileSize(szManagedRace)",
+        "current_line": 171
+      },
+      {
+        "path": "tests/compat/win32_fileworkflow.cpp",
+        "parent_line": 173,
+        "function": "FNativeFileSize",
+        "original_call": "FNativeFileSize(szManagedRace, &cbRaceLibrary)",
+        "origin": "existing parent call",
+        "current_call": "FNativeFileSize(szManagedRace)",
+        "current_line": 173
+      },
+      {
+        "path": "tests/compat/win32_fileworkflow.cpp",
+        "parent_line": 179,
+        "function": "FNativeFileSize",
+        "original_call": "FNativeFileSize((char *)pszManagedOrders, &cbExport)",
+        "origin": "existing parent call",
+        "current_call": "FNativeFileSize((char *)pszManagedOrders)",
+        "current_line": 179
+      },
+      {
+        "path": "tests/compat/win32_fileworkflow.cpp",
+        "parent_line": 179,
+        "function": "FNativeFileSize",
+        "original_call": "FNativeFileSize((char *)pszManagedTurn, &cbExport)",
+        "origin": "existing parent call",
+        "current_call": "FNativeFileSize((char *)pszManagedTurn)",
+        "current_line": 179
+      },
+      {
+        "path": "tests/compat/win32_fileworkflow.cpp",
+        "parent_line": 184,
+        "function": "FNativeFileSize",
+        "original_call": "FNativeFileSize((char *)pszManagedOrders, &cbExport)",
+        "origin": "existing parent call",
+        "current_call": "FNativeFileSize((char *)pszManagedOrders)",
+        "current_line": 184
+      },
+      {
+        "path": "tests/compat/win32_fileworkflow.cpp",
+        "parent_line": 188,
+        "function": "FNativeFileSize",
+        "original_call": "FNativeFileSize((char *)pszExport, &cbExport)",
+        "origin": "existing parent call",
+        "current_call": "FNativeFileSize((char *)pszExport)",
+        "current_line": 188
+      },
+      {
+        "path": "tests/compat/win32_fileworkflow.cpp",
+        "parent_line": 192,
+        "function": "FNativeFileSize",
+        "original_call": "FNativeFileSize((char *)pszExport, &cbExport)",
+        "origin": "existing parent call",
+        "current_call": "FNativeFileSize((char *)pszExport)",
+        "current_line": 192
+      },
+      {
+        "path": "tests/compat/win32_fileworkflow.cpp",
+        "parent_line": 193,
+        "function": "FNativeFileSize",
+        "original_call": "FNativeFileSize((char *)pszManagedOrders, &cbExport)",
+        "origin": "existing parent call",
+        "current_call": "FNativeFileSize((char *)pszManagedOrders)",
+        "current_line": 193
+      },
+      {
+        "path": "tests/compat/win32_game_export_workflow.h",
+        "parent_line": 109,
+        "function": "FNativeFileSize",
+        "original_call": "FNativeFileSize(szDestination, &cbGameExportFile)",
+        "origin": "existing parent call",
+        "current_call": "FNativeFileSize(szDestination)",
+        "current_line": 108
+      },
+      {
+        "path": "tests/unit/test_native_files.cpp",
+        "parent_line": 40,
+        "function": "FNativeFileSize",
+        "original_call": "FNativeFileSize(szDir, &cbNativeFile)",
+        "origin": "pre-migration characterization call",
+        "current_call": "FNativeFileSize(szDir)",
+        "current_line": 40
+      },
+      {
+        "path": "tests/unit/test_native_files.cpp",
+        "parent_line": 52,
+        "function": "FNativeFileSize",
+        "original_call": "FNativeFileSize(szFile, &cbNativeFile)",
+        "origin": "existing parent call",
+        "current_call": "FNativeFileSize(szFile)",
+        "current_line": 52
+      },
+      {
+        "path": "tests/unit/test_native_files.cpp",
+        "parent_line": 56,
+        "function": "FNativeFileSize",
+        "original_call": "FNativeFileSize(szOther, &cbNativeFile)",
+        "origin": "existing parent call",
+        "current_call": "FNativeFileSize(szOther)",
+        "current_line": 56
+      },
+      {
+        "path": "tests/unit/test_native_files.cpp",
+        "parent_line": 64,
+        "function": "FNativeFileSize",
+        "original_call": "FNativeFileSize(szMetaTemp, &cbNativeFile)",
+        "origin": "pre-migration characterization call",
+        "current_call": "FNativeFileSize(szMetaTemp)",
+        "current_line": 64
+      },
+      {
+        "path": "tests/unit/test_native_files.cpp",
+        "parent_line": 69,
+        "function": "FNativeFileSize",
+        "original_call": "FNativeFileSize(szMeta, &cbNativeFile)",
+        "origin": "existing parent call",
+        "current_call": "FNativeFileSize(szMeta)",
+        "current_line": 69
+      },
+      {
+        "path": "tests/unit/test_native_files.cpp",
+        "parent_line": 88,
+        "function": "FNativeFileSize",
+        "original_call": "FNativeFileSize(\"\\xff\", &cbNativeFile)",
+        "origin": "existing parent call",
+        "current_call": "FNativeFileSize(\"\\xff\")",
+        "current_line": 88
+      }
+    ],
+    "verification": {
+      "batch": "L06h returned native metadata, size, path-kind and identity values",
+      "debug_build": "Pass; no new warnings. Final source links after explicit count-zero cleanup. All 161 standalone headers compile in both include orders; compiler/source policy passes for 158 owned sources and 159 variants.",
+      "desktop": "153/153 against final source, including actual file metadata, chooser and library/publication providers, all 29 leak checks and available SDL tutorial checkpoints.",
+      "host_units": "28/28 against final source/ownership inventory.",
+      "native_regression": "519 matches against final source, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+      "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs. The final explicit zero comparison changes only UI ZIP code; the qualified host binary/source is unchanged.",
+      "windows": "All 147 owned production units and five changed test/witness units compile with strict MinGW; final ZIP consumer passes again after its explicit zero comparison. Actual Windows file tests (3), encoding tests (8), recovery tests (12) and the standalone file-service contract pass under Wine. Native Windows desktop and actual Linux final qualification remain pending.",
+      "characterization": "Host Release and Windows under Wine first passed descriptor metadata/size, matching open-file/path identity, present zero-byte regular-file size and directory-size rejection retaining EBUSY. All assertions pass with returned optional values. Existing link/reparse-point safety, sharing-before-truncation, native error mapping, cleanup and publication traces remain passing.",
+      "interfaces": "77 calls/provider invocations: 72 existing and five pre-migration reference calls, across five query families (41 production, 36 tests). Path/open metadata, signed 64-bit sizes, directory/link flags and device/file identities are returned values. Link following is scoped; identity sources use separate path/file overloads. Actual publication size provider migrated directly; old outputs/source-pair overloads removed.",
+      "audit_correction": "The first host run passed 26 runtime checks, but two source-policy checks rejected the changed allocation spelling in FWriteZipEntry. Updated its existing contract-99 ownership entry; allocator, size and owner remain unchanged. Final full host/source-policy checks pass. Final review made the count-zero test explicit; desktop and native regression were rerun against final source.",
+      "baseline": "Behavior-neutral. Existing NATIVEFILEINFO/COMPATFILE storage widths and layouts, saved records, wire bytes, integer limits, UTF-8 handling, RNG, canonical models and unit goldens unchanged. No native or frozen original baseline changed and no scenario/checkpoint moved; no regression export required.",
+      "remaining": "Canonical/current-directory and temporary-path results, other buffer interfaces, memory-source/batch audits, text-writer boundary and Milestone D remain active. L05 text cleanup and L08 final qualification remain open.",
+      "receipts": "dist/verification/live-cpp/l06h/"
     }
   }
 }

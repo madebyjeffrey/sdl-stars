@@ -103,7 +103,7 @@ static void FileError(HWND hwnd, LPCSTR psz) { CompatChoiceIO().pfnMessageBoxA(h
 static BOOL FRefreshFiles(HWND hwnd, COMPATFILEDIALOG *lp) {
     NATIVEDIR *lpdir;
     const char *pszEntry;
-    NATIVEFILEINFO st;
+    std::optional<NATIVEFILEINFO> st;
     char szPath[PATH_MAX], szLabel[PATH_MAX + 4];
     COMPATFILEENTRY *rg;
     std::size_t i;
@@ -122,12 +122,12 @@ static BOOL FRefreshFiles(HWND hwnd, COMPATFILEDIALOG *lp) {
         }
         if (std::strcmp(pszEntry, ".") == 0 || std::strcmp(pszEntry, "..") == 0) continue;
         if (!lp->fHidden && pszEntry[0] == '.') continue;
-        if (!FJoinFile(szPath, lp->szDir, pszEntry) || IGetNativeFileInfo(szPath, &st, 1) != 0) continue;
-        if (!st.fDirectory && (!st.fRegular || !FFileFilter(lp, pszEntry))) continue;
+        if (!FJoinFile(szPath, lp->szDir, pszEntry) || !(st = IGetNativeFileInfo(szPath, NATIVELINKMODE::follow))) continue;
+        if (!st->fDirectory && (!st->fRegular || !FFileFilter(lp, pszEntry))) continue;
         rg = static_cast<COMPATFILEENTRY *>((std::realloc(lp->rgentry, (lp->cEntry + 1) * sizeof(*rg))));
         if (!rg) { lp->dwError = win32::CDERR_MEMALLOCFAILURE; break; }
         lp->rgentry = rg;
-        rg[lp->cEntry].psz = strdup(pszEntry); rg[lp->cEntry].fDir = st.fDirectory;
+        rg[lp->cEntry].psz = strdup(pszEntry); rg[lp->cEntry].fDir = st->fDirectory;
         if (!rg[lp->cEntry].psz) { lp->dwError = win32::CDERR_MEMALLOCFAILURE; break; }
         lp->cEntry++;
     }
@@ -147,10 +147,10 @@ static BOOL FRefreshFiles(HWND hwnd, COMPATFILEDIALOG *lp) {
 }
 static BOOL FChangeFileDirectory(HWND hwnd, COMPATFILEDIALOG *lp, LPCSTR psz, BOOL fHistory) {
     char szPath[PATH_MAX], szReal[PATH_MAX], szOld[PATH_MAX];
-    NATIVEFILEINFO st;
+    std::optional<NATIVEFILEINFO> st;
     char *pszPrevious = nullptr;
     NATIVEOWNER<char, std::free> previousOwner;
-    if (!FJoinFile(szPath, lp->szDir, psz) || !PszCanonicalNativePath(szPath, szReal, sizeof(szReal)) || IGetNativeFileInfo(szReal, &st, 1) != 0 || !st.fDirectory) {
+    if (!FJoinFile(szPath, lp->szDir, psz) || !PszCanonicalNativePath(szPath, szReal, sizeof(szReal)) || !(st = IGetNativeFileInfo(szReal, NATIVELINKMODE::follow)) || !st->fDirectory) {
         FileError(hwnd, "The directory does not exist."); return 0;
     }
     if (!FUtf8Valid(szReal, std::strlen(szReal))) {
@@ -184,13 +184,13 @@ static int IAcceptFilePath(HWND hwnd, COMPATFILEDIALOG *lp, LPCSTR pszName) {
     char szPath[PATH_MAX], szParent[PATH_MAX], szReal[PATH_MAX];
     char *pszBase, *pszExt;
     const char *pszDef = lp->lpof->lpstrDefExt;
-    NATIVEFILEINFO st, stParent;
+    std::optional<NATIVEFILEINFO> st, stParent;
     std::size_t cch;
     BOOL fExists;
     NATIVEFILE *lpfile;
     if (!*pszName) return 0;
     if (!FJoinFile(szPath, lp->szDir, pszName)) { FileError(hwnd, "The filename is too long."); return 0; }
-    if (IGetNativeFileInfo(szPath, &st, 1) == 0 && st.fDirectory) return 2;
+    if ((st = IGetNativeFileInfo(szPath, NATIVELINKMODE::follow)).has_value() && st->fDirectory) return 2;
     pszBase = std::strrchr(szPath, '/'); pszBase = pszBase ? pszBase + 1 : szPath;
     pszExt = std::strrchr(pszBase, '.');
     if (!pszExt && pszDef && *pszDef) {
@@ -203,17 +203,17 @@ static int IAcceptFilePath(HWND hwnd, COMPATFILEDIALOG *lp, LPCSTR pszName) {
     std::strcpy(szParent, szPath); pszBase = std::strrchr(szParent, '/');
     if (!pszBase || !pszBase[1] || std::strpbrk(pszBase + 1, "*?")) { FileError(hwnd, "Enter a valid filename."); return 0; }
     if (pszBase == szParent) pszBase[1] = 0; else *pszBase = 0;
-    if (!PszCanonicalNativePath(szParent, szReal, sizeof(szReal)) || IGetNativeFileInfo(szReal, &stParent, 1) != 0 || !stParent.fDirectory) {
+    if (!PszCanonicalNativePath(szParent, szReal, sizeof(szReal)) || !(stParent = IGetNativeFileInfo(szReal, NATIVELINKMODE::follow)) || !stParent->fDirectory) {
         FileError(hwnd, "The destination directory does not exist."); return 0;
     }
     pszBase = std::strrchr(szPath, '/') + 1;
     if (!FJoinFile(szParent, szReal, pszBase)) { FileError(hwnd, "The filename is too long."); return 0; }
-    fExists = IGetNativeFileInfo(szParent, &st, 1) == 0;
-    if (fExists && !st.fRegular) { FileError(hwnd, "Select a regular file."); return 0; }
+    fExists = (st = IGetNativeFileInfo(szParent, NATIVELINKMODE::follow)).has_value();
+    if (fExists && !st->fRegular) { FileError(hwnd, "Select a regular file."); return 0; }
     if (!fExists && (lp->lpof->Flags & win32::OFN_FILEMUSTEXIST)) { FileError(hwnd, "The selected file does not exist."); return 0; }
     if (lp->fSave && (lp->lpof->Flags & win32::OFN_NOREADONLYRETURN)) {
-        if ((fExists && (!(st.grfMode & 0222) || IAccessNativePath(szParent, W_OK) != 0)) ||
-            (!fExists && (!(stParent.grfMode & 0222) || IAccessNativePath(szReal, W_OK) != 0))) {
+        if ((fExists && (!(st->grfMode & 0222) || IAccessNativePath(szParent, W_OK) != 0)) ||
+            (!fExists && (!(stParent->grfMode & 0222) || IAccessNativePath(szReal, W_OK) != 0))) {
             FileError(hwnd, "The selected destination is read-only."); return 0;
         }
     }
@@ -392,9 +392,9 @@ static HWND HwndFileControl(HWND hwnd, LPCSTR pszClass, LPCSTR pszText, DWORD st
 #if defined(STARS_FILE_DIALOG_PORTAL) || defined(STARS_FILE_DIALOG_COCOA) || defined(STARS_FILE_DIALOG_WINDOWS)
 static void RememberFileSelection(COMPATFILEDIALOG *lp, LPCSTR pszPath, char *pszName) {
     char szParent[PATH_MAX], szReal[PATH_MAX], *pch;
-    NATIVEFILEINFO st;
+    std::optional<NATIVEFILEINFO> st;
     /* A validation error or declined overwrite must not reset navigation. */
-    if (IGetNativeFileInfo(pszPath, &st, 1) == 0 && st.fDirectory) {
+    if ((st = IGetNativeFileInfo(pszPath, NATIVELINKMODE::follow)).has_value() && st->fDirectory) {
         if (PszCanonicalNativePath(pszPath, szReal, sizeof(szReal))) { std::strcpy(lp->szDir, szReal); pszName[0] = 0; }
         return;
     }
@@ -403,7 +403,7 @@ static void RememberFileSelection(COMPATFILEDIALOG *lp, LPCSTR pszPath, char *ps
     if (!pch) return;
     SDL_strlcpy(pszName, pch + 1, PATH_MAX);
     if (pch == szParent) pch[1] = 0; else *pch = 0;
-    if (PszCanonicalNativePath(szParent, szReal, sizeof(szReal)) && IGetNativeFileInfo(szReal, &st, 1) == 0 && st.fDirectory) std::strcpy(lp->szDir, szReal);
+    if (PszCanonicalNativePath(szParent, szReal, sizeof(szReal)) && (st = IGetNativeFileInfo(szReal, NATIVELINKMODE::follow)).has_value() && st->fDirectory) std::strcpy(lp->szDir, szReal);
 }
 #endif
 static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
@@ -453,9 +453,9 @@ static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
     if (!FUtf8Valid(szCwd, std::strlen(szCwd))) { dlg.dwError = win32::FNERR_INVALIDFILENAME; goto done; }
     std::strcpy(dlg.szDir, szCwd); szInitial[0] = 0;
     if (lpof->lpstrInitialDir && *lpof->lpstrInitialDir) {
-        NATIVEFILEINFO st;
+        std::optional<NATIVEFILEINFO> st;
         if (!FJoinFile(szPath, szCwd, lpof->lpstrInitialDir) || !PszCanonicalNativePath(szPath, dlg.szDir, sizeof(dlg.szDir)) ||
-            IGetNativeFileInfo(dlg.szDir, &st, 1) != 0 || !st.fDirectory) std::strcpy(dlg.szDir, szCwd);
+            !(st = IGetNativeFileInfo(dlg.szDir, NATIVELINKMODE::follow)) || !st->fDirectory) std::strcpy(dlg.szDir, szCwd);
     }
     if (*lpof->lpstrFile) {
         if (!FJoinFile(szPath, dlg.szDir, lpof->lpstrFile)) { dlg.dwError = win32::FNERR_INVALIDFILENAME; goto done; }

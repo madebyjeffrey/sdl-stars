@@ -22,6 +22,11 @@ struct NATIVEFILEINFO {
     int fDirectory, fRegular, fLink;
 };
 
+struct NATIVEFILEIDENTITY {
+    std::uint64_t idDevice, idFile;
+};
+enum class NATIVELINKMODE : std::uint8_t { follow, inspect };
+
 enum class NATIVESEEKORIGIN : std::uint8_t { begin = 0, current = 1, end = 2 };
 // read/readWrite require an existing file; other modes create missing files.
 // Truncate replaces bytes; append writes at EOF; exclusive refuses an existing file.
@@ -76,7 +81,8 @@ int ITruncateNativeFile(NATIVEFILE *pf, std::int64_t cb);
 int IFlushNativeFile(NATIVEFILE *pf);
 int ISyncNativeFile(NATIVEFILE *pf);
 int ICopyNativePermissions(NATIVEFILE *pf, const char *pszExisting);
-int FNativeFileIdentity(NATIVEFILE *pf, const char *psz, std::uint64_t *pidDevice, std::uint64_t *pidFile);
+std::optional<NATIVEFILEIDENTITY> FNativeFileIdentity(NATIVEFILE *pf);
+std::optional<NATIVEFILEIDENTITY> FNativeFileIdentity(const char *psz);
 int FNativeStreamError(NATIVEFILE *pf);
 int FNativeStreamEof(NATIVEFILE *pf);
 int ChGetNativeFile(NATIVEFILE *pf);
@@ -100,9 +106,11 @@ int CNativeScan(NATIVEFILE *pf, const char *pszFormat, FIELDS... fields) {
     return CNativeScanFields(pf, pszFormat, rgFields);
 }
 
-int IGetNativeOpenInfo(NATIVEFILE *pf, NATIVEFILEINFO *pinfo);
+// Empty metadata results retain the native errno failure detail. inspect reports
+// the entry itself, including links/reparse points, without following its target.
+std::optional<NATIVEFILEINFO> IGetNativeOpenInfo(NATIVEFILE *pf);
 int IUnlinkNativePath(const char *psz);
-int IGetNativeFileInfo(const char *psz, NATIVEFILEINFO *pinfo, int fFollow);
+std::optional<NATIVEFILEINFO> IGetNativeFileInfo(const char *psz, NATIVELINKMODE mode);
 int IAccessNativePath(const char *psz, int md);
 int ICreateNativeDirectory(const char *psz, unsigned md);
 int FEnsureNativeDirectory(const char *psz);

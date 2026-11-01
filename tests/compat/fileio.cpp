@@ -11,12 +11,16 @@ int main(void) {
     unsigned char rgb[] = {0, 255, 26, 13, 10, 128}, out[16];
     std::uint16_t rgwOut[4];
     char dir[4096], path[8192], other[8192];
-    NATIVEFILEINFO info;
+    std::optional<NATIVEFILEINFO> info, opened;
+    std::optional<NATIVEFILEIDENTITY> nfiTemp, nfiPath;
     CHECK(FFilesystemTempDir(dir, sizeof(dir)));
     CHECK(snprintf(path, sizeof(path), "%s/caf\xc3\xa9-XXXXXX", dir) > 0);
     NATIVEFILE *temp = PfNativeCreateTemp(path);
     CHECK(temp && CWriteNative(std::span{rgb}, temp) == sizeof(rgb));
+    CHECK((opened = IGetNativeOpenInfo(temp)).has_value() && opened->fRegular && !opened->fDirectory && opened->cb == sizeof(rgb));
+    CHECK((nfiTemp = FNativeFileIdentity(temp)));
     CHECK(ISyncNativeFile(temp) == 0 && ICloseNativeFile(temp) == 0);
+    CHECK((nfiPath = FNativeFileIdentity(path)) && nfiPath->idDevice == nfiTemp->idDevice && nfiPath->idFile == nfiTemp->idFile);
     // The bound owner closes every legacy stream and retains token reuse.
     {
         NATIVEFILESESSION session;
@@ -47,10 +51,10 @@ int main(void) {
     CHECK(CbWriteNativeFile(pf, std::as_bytes(std::span{"Z"}).first(1))==1 && CbNativeFile(pf)==6);
     CHECK(LSeekNativeFile(pf, 2, NATIVESEEKORIGIN::begin)==2 && ITruncateNativeFile(pf,2)==0 && CbNativeFile(pf)==2);
     CHECK(LSeekNativeFile(pf, 8, NATIVESEEKORIGIN::begin)==8 && ITruncateNativeFile(pf,8)==0 && CbNativeFile(pf)==8);
-    uint64_t dev,ino;CHECK(FNativeFileIdentity(pf,NULL,&dev,&ino));CHECK(ICloseNativeFile(pf)==0);
+    CHECK(FNativeFileIdentity(pf));CHECK(ICloseNativeFile(pf)==0);
     pf=PfNativeOpen(path, NATIVEFILEMODE::read);CHECK(pf && CReadNative(std::span{out}.first(8), pf)==8 && out[0]=='Z' && !out[7]);CHECK(ICloseNativeFile(pf)==0);
     pf=PfNativeOpen(path, NATIVEFILEMODE::writeAppend);CHECK(pf && ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin)==0 && ChPutNativeFile('A',pf)=='A' && ICloseNativeFile(pf)==0);
-    CHECK(IGetNativeFileInfo(path,&info,1)==0 && info.cb==9 && info.fRegular);
+    CHECK((info = IGetNativeFileInfo(path, NATIVELINKMODE::follow)).has_value() && info->cb==9 && info->fRegular);
     pf=PfNativeOpen(path, NATIVEFILEMODE::read);CHECK(pf && ISeekNativeFile(pf, 8, NATIVESEEKORIGIN::begin)==0 && ChGetNativeFile(pf)=='A');CHECK(ICloseNativeFile(pf)==0);
     // Open policies preserve creation, truncation, append positioning and
     // update access, including failed exclusive opens leaving bytes intact.

@@ -29,13 +29,15 @@ static void TestNativeFiles(void) {
     COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
 
     char szDir[64], szFile[512], szOther[512], szLong[200], szNested[512], szMeta[512], szMetaTemp[512], rgb[16];
-    int64_t cbNativeFile;
+    std::optional<std::int64_t> cbNativeFile;
     NATIVEENTRYCHECK nec;
     int16_t hfFile, fMissing;
     NATIVEFILEOPENRESULT nfr;
     int i;
     snprintf(szDir, sizeof(szDir), "stars-native-%u-\xce\xa9", (unsigned)DwTickCount());
     TEST_CHECK(CreateNativeDir(szDir) == 0 && FNativeDirectoryExists(szDir));
+    errno = EBUSY;
+    TEST_CHECK(!(cbNativeFile = FNativeFileSize(szDir)) && errno == EBUSY);
     snprintf(szNested, sizeof(szNested), "%s%snested-\xce\xa9", szDir, szDirSep);
     TEST_CHECK(FEnsureNativeDir(szNested) && FNativeDirectoryExists(szNested));
     snprintf(szFile, sizeof(szFile), "%s%s\xe6\x9d\xb1\xe4\xba\xac-\xc3\xa9.bin", szDir, szDirSep);
@@ -47,11 +49,11 @@ static void TestNativeFiles(void) {
     TEST_CHECK(LSeekFile(hfFile, 2, NATIVESEEKORIGIN::begin) == 2 && CbReadFile(hfFile, std::as_writable_bytes(std::span{rgb}).first(static_cast<std::size_t>(4))) == 4 && memcmp(rgb, "cdef", 4) == 0);
     CloseFile(hfFile);
     TEST_CHECK(FFileExists(szFile) && !FFileReadOnly(szFile));
-    TEST_CHECK(FNativeFileSize(szFile, &cbNativeFile) && cbNativeFile == 6);
+    TEST_CHECK((cbNativeFile = FNativeFileSize(szFile)) && (*cbNativeFile) == 6);
     nec.pszExpected = "\xe6\x9d\xb1\xe4\xba\xac-\xc3\xa9.bin"; nec.fFound = 0;
     TEST_CHECK(FNativeEnumerateDirectory(app, szDir, FCheckNativeEntry, &nec) && nec.fFound);
     TEST_CHECK(RenameNativeFile(szFile, szOther) == 0 && !FFileExists(szFile) && FFileExists(szOther));
-    TEST_CHECK(FNativeFileSize(szOther, &cbNativeFile) && cbNativeFile == 6);
+    TEST_CHECK((cbNativeFile = FNativeFileSize(szOther)) && (*cbNativeFile) == 6);
     nec.pszExpected = "\xf0\x9f\x98\x80.bin"; nec.fFound = 0;
     TEST_CHECK(FNativeEnumerateDirectory(app, szDir, FCheckNativeEntry, &nec) && nec.fFound);
     snprintf(szMeta, sizeof(szMeta), "%s%s\xe6\x9d\xb1\xe4\xba\xac.meta", szDir, szDirSep);
@@ -59,9 +61,12 @@ static void TestNativeFiles(void) {
     {
         NATIVEFILE *pf = PfOpenNativeFile(szMetaTemp, NATIVEFILEMODE::writeTruncate);
         TEST_ASSERT(pf);
+        TEST_CHECK(ICloseNativeFile(pf) == 0 && (cbNativeFile = FNativeFileSize(szMetaTemp)) && (*cbNativeFile) == 0);
+        pf = PfOpenNativeFile(szMetaTemp, NATIVEFILEMODE::writeTruncate);
+        TEST_ASSERT(pf);
         TEST_CHECK(CWriteNative(std::span{"metadata"}.first(8), pf) == 8 && ICloseNativeFile(pf) == 0);
     }
-    TEST_CHECK(ReplaceNativeFile(szMetaTemp, szMeta) == 0 && FNativeFileSize(szMeta, &cbNativeFile) && cbNativeFile == 8);
+    TEST_CHECK(ReplaceNativeFile(szMetaTemp, szMeta) == 0 && (cbNativeFile = FNativeFileSize(szMeta)) && (*cbNativeFile) == 8);
     TEST_CHECK(RemoveNativeFile(szMeta) == 0);
     TEST_CHECK(RemoveNativeFile(szOther) == 0 && !FFileExists(szOther));
     nfr = HfOpenFile(szOther, {.mdShare = NATIVEFILESHARE::denyWrite});
@@ -80,7 +85,7 @@ static void TestNativeFiles(void) {
     TEST_CHECK(CreateNativeDir("\xff") == -1 && errno == EILSEQ);
     TEST_CHECK(!FNativeDirectoryExists("\xff") && errno == EILSEQ);
     TEST_CHECK(!FNativeEnumerateDirectory(app, "\xff", FCheckNativeEntry, &nec) && errno == EILSEQ);
-    TEST_CHECK(!FNativeFileSize("\xff", &cbNativeFile) && errno == EILSEQ);
+    TEST_CHECK(!(cbNativeFile = FNativeFileSize("\xff")) && errno == EILSEQ);
     TEST_CHECK(!FEnsureNativeDir("\xff") && errno == EILSEQ);
     TEST_CHECK(RemoveNativePath("\xff") == -1 && errno == EILSEQ);
     TEST_CHECK(ReplaceNativeFile("\xff", szOther) == -1 && errno == EILSEQ);

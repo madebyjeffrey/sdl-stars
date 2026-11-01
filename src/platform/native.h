@@ -71,10 +71,11 @@ void    MakeDir(const char *szDir);
 int     CreateNativeDir(const char *pszDir);
 using FNativeDirectoryEntryProc = std::int16_t (*)(APPSESSION &, void *lpData, const char *pszEntry);
 std::int16_t FNativeEnumerateDirectory(APPSESSION &app, const char *pszDir, FNativeDirectoryEntryProc pfnEntry, void *lpData);
-std::int16_t FNativeFileSize(const char *pszFile, std::int64_t *pcbFile);
+std::optional<std::int64_t> FNativeFileSize(const char *pszFile);
 std::int16_t FNativeDirectoryExists(const char *pszDir);
 // Inspect the final component without following links or Windows reparse points.
-std::int16_t FNativePathInfo(const char *psz, std::int16_t *pfDirectory, std::int16_t *pfLink);
+struct NATIVEPATHINFO { bool fDirectory, fLink; };
+std::optional<NATIVEPATHINFO> FNativePathInfo(const char *psz);
 std::int16_t FEnsureNativeDir(const char *pszDir);
 int     RemoveNativeFile(const char *psz);
 int     RemoveNativePath(const char *psz);

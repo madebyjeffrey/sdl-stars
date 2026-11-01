@@ -124,11 +124,10 @@ static int TestFInspectImportFile(const char *path, int type, int player, int32_
     event("probe", 2, p, inspected && variant != 22 && variant != 23, 0);
     return inspected;
 }
-static int TestFNativeFileSize(const char *path, int64_t *size) {
+static std::optional<std::int64_t> TestFNativeFileSize(const char *path) {
     int p = role(path), ok = decision() && objects[p] > 0 && objects[p] < 100;
-    *size = 1;
     event("probe", 1, p, ok, 0);
-    return ok;
+    return ok ? std::optional<std::int64_t>{1} : std::nullopt;
 }
 static int move(const char *source, const char *target) {
     int s = role(source), t = role(target), ok = decision() && objects[s];
@@ -290,7 +289,7 @@ int main(void) {
     io.pfnLNativeTime = WITNESSADAPTER<&TestLNativeTime, decltype(io.pfnLNativeTime)>::Call;
     io.pfnFCopyNativeFileExclusive = WITNESSADAPTER<&TestFCopyNativeFileExclusive, decltype(io.pfnFCopyNativeFileExclusive)>::Call;
     io.pfnFInspectImportFile = WITNESSADAPTER<&TestFInspectImportFile, decltype(io.pfnFInspectImportFile)>::Call;
-    io.pfnFNativeFileSize = WITNESSADAPTER<&TestFNativeFileSize, decltype(io.pfnFNativeFileSize)>::Call;
+    io.pfnFNativeFileSize = TestFNativeFileSize;
     io.pfnFNativeDirectoryExists = WITNESSADAPTER<&TestFNativeDirectoryExists, decltype(io.pfnFNativeDirectoryExists)>::Call;
     io.pfnFValidManagedLibraryGame = WITNESSADAPTER<&TestFValidManagedLibraryGame, decltype(io.pfnFValidManagedLibraryGame)>::Call;
     io.pfnFCreateLibraryGameStagePath = WITNESSADAPTER<&TestFCreateLibraryGameStagePath, decltype(io.pfnFCreateLibraryGameStagePath)>::Call;

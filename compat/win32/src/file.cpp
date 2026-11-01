@@ -49,12 +49,12 @@ static DWORD DwFileError(void) {
 HFILE win32::OpenFile(LPCSTR pszFile, LPOFSTRUCT lpof, UINT flags) {
     char szPath[PATH_MAX], szCwd[PATH_MAX];
     COMPATFILE *lp, *lpNew = nullptr;
-    NATIVEFILEINFO st;
+    std::optional<NATIVEFILEINFO> st;
     UINT grAccess, grShare, share = flags & 0x70;
     NATIVEFILE *pf = nullptr;
     HFILE hf = win32::HFILE_ERROR;
     DWORD dwError = win32::NO_ERROR;
-    std::uint64_t dev, ino;
+    std::optional<NATIVEFILEIDENTITY> nfi;
     std::unique_lock lockFiles(fFileLock, std::defer_lock);
     NATIVEOWNER<COMPATFILE, std::free> fileOwner;
     NATIVEOWNER<NATIVEFILE, ICloseNativeFile> nativeFileOwner;
@@ -92,10 +92,10 @@ HFILE win32::OpenFile(LPCSTR pszFile, LPOFSTRUCT lpof, UINT flags) {
     grShare = share == win32::OF_SHARE_EXCLUSIVE ? 0 : share == win32::OF_SHARE_DENY_WRITE ? 1 : share == win32::OF_SHARE_DENY_READ ? 2 : 3;
     lockFiles.lock();
     if (flags & win32::OF_DELETE) {
-        if (IGetNativeFileInfo(szPath, &st, 1) == 0) {
-            if (!FNativeFileIdentity(nullptr, szPath, &dev, &ino)) { dwError = win32::ERROR_ACCESS_DENIED; goto LUnlock; }
+        if ((st = IGetNativeFileInfo(szPath, NATIVELINKMODE::follow)).has_value()) {
+            if (!(nfi = FNativeFileIdentity(szPath))) { dwError = win32::ERROR_ACCESS_DENIED; goto LUnlock; }
             for (lp = lpFiles; lp; lp = lp->lpNext)
-                if (lp->dev == dev && lp->ino == ino) { dwError = win32::ERROR_SHARING_VIOLATION; goto LUnlock; }
+                if (lp->dev == nfi->idDevice && lp->ino == nfi->idFile) { dwError = win32::ERROR_SHARING_VIOLATION; goto LUnlock; }
         }
         if (IUnlinkNativePath(szPath) != 0) dwError = DwFileError();
         else hf = 1;
@@ -104,11 +104,11 @@ HFILE win32::OpenFile(LPCSTR pszFile, LPOFSTRUCT lpof, UINT flags) {
     // Check sharing before truncating an existing file.
     pf = PfNativeOpenFlags(szPath, {.mdAccess = static_cast<NATIVEFILEACCESS>(grAccess), .fCreate = (flags & win32::OF_CREATE) != 0, .fNative = true});
     nativeFileOwner.reset(pf);
-    if (!pf || IGetNativeOpenInfo(pf, &st) != 0) { dwError = DwFileError(); goto LUnlock; }
-    if (!st.fRegular) { dwError = win32::ERROR_ACCESS_DENIED; goto LUnlock; }
-    if (!FNativeFileIdentity(pf, nullptr, &dev, &ino)) { dwError = win32::ERROR_ACCESS_DENIED; goto LUnlock; }
+    if (!pf || !(st = IGetNativeOpenInfo(pf))) { dwError = DwFileError(); goto LUnlock; }
+    if (!st->fRegular) { dwError = win32::ERROR_ACCESS_DENIED; goto LUnlock; }
+    if (!(nfi = FNativeFileIdentity(pf))) { dwError = win32::ERROR_ACCESS_DENIED; goto LUnlock; }
     for (lp = lpFiles; lp; lp = lp->lpNext)
-        if (lp->dev == dev && lp->ino == ino &&
+        if (lp->dev == nfi->idDevice && lp->ino == nfi->idFile &&
             ((grAccess & ~lp->grShare) || (lp->grAccess & ~grShare))) {
             dwError = win32::ERROR_SHARING_VIOLATION; goto LUnlock;
         }
@@ -119,7 +119,7 @@ HFILE win32::OpenFile(LPCSTR pszFile, LPOFSTRUCT lpof, UINT flags) {
     if (!lpNew) { dwError = win32::ERROR_NOT_ENOUGH_MEMORY; goto LUnlock; }
     for (hf = 3; hf <= INT16_MAX && LpFile(hf); hf++) {}
     if (hf > INT16_MAX) { hf = win32::HFILE_ERROR; dwError = win32::ERROR_TOO_MANY_OPEN_FILES; goto LUnlock; }
-    lpNew->hf = hf; lpNew->pf = nativeFileOwner.release(); lpNew->dev = dev; lpNew->ino = ino;
+    lpNew->hf = hf; lpNew->pf = nativeFileOwner.release(); lpNew->dev = nfi->idDevice; lpNew->ino = nfi->idFile;
     lpNew->grAccess = grAccess; lpNew->grShare = grShare;
     lpNew->lpNext = lpFiles; lpFiles = fileOwner.release(); lpNew = nullptr; pf = nullptr;
 LUnlock:

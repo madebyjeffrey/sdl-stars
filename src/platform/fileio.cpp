@@ -463,13 +463,14 @@ int CNativeScanFields(NATIVEFILE *pf, const char *fmt, std::span<const NATIVEINT
     return count == 0 && pf && pf->fEof ? EOF : count;
 }
 
-int IGetNativeFileInfo(const char *psz, NATIVEFILEINFO *info, int follow) {
-    if (!info || !FPath(psz)) return -1;
-    return FileCall(nullptr, -1, [&] {
+std::optional<NATIVEFILEINFO> IGetNativeFileInfo(const char *psz, NATIVELINKMODE mode) {
+    if (!FPath(psz)) return std::nullopt;
+    return FileCall<std::optional<NATIVEFILEINFO>>(nullptr, std::nullopt, [&]() -> std::optional<NATIVEFILEINFO> {
+        const bool follow = mode == NATIVELINKMODE::follow;
         std::error_code ec;
         fs::path pth = PathFromUtf8(psz);
         auto status = follow ? fs::status(pth, ec) : fs::symlink_status(pth, ec);
-        if (ec || !fs::exists(status)) { if (ec) SetError(ec); else errno = ENOENT; return -1; }
+        if (ec || !fs::exists(status)) { if (ec) SetError(ec); else errno = ENOENT; return std::nullopt; }
         NATIVEFILEINFO result = {};
         result.fDirectory = fs::is_directory(status); result.fRegular = fs::is_regular_file(status);
         result.fLink = fs::is_symlink(status);
@@ -485,10 +486,10 @@ int IGetNativeFileInfo(const char *psz, NATIVEFILEINFO *info, int follow) {
 #endif
         if (result.fRegular) {
             std::uintmax_t cb = fs::file_size(pth, ec);
-            if (ec || cb > INT64_MAX) { if (ec) SetError(ec); else errno = EOVERFLOW; return -1; }
+            if (ec || cb > INT64_MAX) { if (ec) SetError(ec); else errno = EOVERFLOW; return std::nullopt; }
             result.cb = static_cast<std::int64_t>(cb);
         }
-        *info = result; return 0;
+        return result;
     });
 }
 int IAccessNativePath(const char *psz, int md) {
@@ -630,9 +631,9 @@ const char *PszNativeReadDir(NATIVEDIR *dir) {
 }
 int ICloseNativeDir(NATIVEDIR *dir) { delete dir; return 0; }
 
-int FNativeFileIdentity(NATIVEFILE *pf, const char *psz, std::uint64_t *device, std::uint64_t *file) {
-    if (!device || !file || (!pf && !FPath(psz))) return 0;
-    return FileCall(pf, 0, [&] {
+static std::optional<NATIVEFILEIDENTITY> NfiNativeFileIdentity(NATIVEFILE *pf, const char *psz) {
+    if (!pf && !FPath(psz)) return std::nullopt;
+    return FileCall<std::optional<NATIVEFILEIDENTITY>>(pf, std::nullopt, [&]() -> std::optional<NATIVEFILEIDENTITY> {
 #ifdef _WIN32
         HANDLE h = pf && pf->fd >= 0 ? reinterpret_cast<HANDLE>(_get_osfhandle(pf->fd)) : INVALID_HANDLE_VALUE;
         if (!pf) h = CreateFileW(PathFromUtf8(psz).c_str(), FILE_READ_ATTRIBUTES,
@@ -641,17 +642,22 @@ int FNativeFileIdentity(NATIVEFILE *pf, const char *psz, std::uint64_t *device, 
         BY_HANDLE_FILE_INFORMATION info;
         bool ok = h != INVALID_HANDLE_VALUE && GetFileInformationByHandle(h, &info);
         if (!pf && h != INVALID_HANDLE_VALUE) CloseHandle(h);
-        if (!ok) { errno = EACCES; return 0; }
-        *device = info.dwVolumeSerialNumber;
-        *file = (static_cast<std::uint64_t>(info.nFileIndexHigh) << 32) | info.nFileIndexLow;
+        if (!ok) { errno = EACCES; return std::nullopt; }
+        return NATIVEFILEIDENTITY{info.dwVolumeSerialNumber, (static_cast<std::uint64_t>(info.nFileIndexHigh) << 32) | info.nFileIndexLow};
 #else
         struct stat st;
         int ret = pf ? pf->fd >= 0 ? fstat(pf->fd, &st) : -1 : stat(psz, &st);
-        if (ret != 0) return 0;
-        *device = st.st_dev; *file = st.st_ino;
+        if (ret != 0) return std::nullopt;
+        return NATIVEFILEIDENTITY{static_cast<std::uint64_t>(st.st_dev), static_cast<std::uint64_t>(st.st_ino)};
 #endif
-        return 1;
     });
+}
+std::optional<NATIVEFILEIDENTITY> FNativeFileIdentity(NATIVEFILE *pf) {
+    if (!pf) { errno = EINVAL; return std::nullopt; }
+    return NfiNativeFileIdentity(pf, nullptr);
+}
+std::optional<NATIVEFILEIDENTITY> FNativeFileIdentity(const char *psz) {
+    return NfiNativeFileIdentity(nullptr, psz);
 }
 int ICopyNativePermissions(NATIVEFILE *pf, const char *psz) {
     if (!pf || !FPath(psz)) return -1;
@@ -793,21 +799,22 @@ void CloseNativeLegacy(std::int16_t hf) {
     });
 }
 
-int IGetNativeOpenInfo(NATIVEFILE *pf, NATIVEFILEINFO *info) {
-    if (!pf || !info || pf->fd < 0) { errno = EBADF; return -1; }
+std::optional<NATIVEFILEINFO> IGetNativeOpenInfo(NATIVEFILE *pf) {
+    NATIVEFILEINFO info;
+    if (!pf || pf->fd < 0) { errno = EBADF; return std::nullopt; }
 #ifdef _WIN32
     struct _stat64 st;
-    if (_fstat64(pf->fd, &st) != 0) return -1;
-    info->fRegular = (st.st_mode & _S_IFMT) == _S_IFREG;
-    info->fDirectory = (st.st_mode & _S_IFMT) == _S_IFDIR;
+    if (_fstat64(pf->fd, &st) != 0) return std::nullopt;
+    info.fRegular = (st.st_mode & _S_IFMT) == _S_IFREG;
+    info.fDirectory = (st.st_mode & _S_IFMT) == _S_IFDIR;
 #else
     struct stat st;
-    if (fstat(pf->fd, &st) != 0) return -1;
-    info->fRegular = S_ISREG(st.st_mode);
-    info->fDirectory = S_ISDIR(st.st_mode);
+    if (fstat(pf->fd, &st) != 0) return std::nullopt;
+    info.fRegular = S_ISREG(st.st_mode);
+    info.fDirectory = S_ISDIR(st.st_mode);
 #endif
-    info->cb = st.st_size; info->grfMode = st.st_mode & 0777; info->fLink = 0;
-    return 0;
+    info.cb = st.st_size; info.grfMode = st.st_mode & 0777; info.fLink = 0;
+    return info;
 }
 int IUnlinkNativePath(const char *psz) {
     if (!FPath(psz)) return -1;

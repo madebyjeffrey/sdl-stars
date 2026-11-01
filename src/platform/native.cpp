@@ -225,21 +225,18 @@ std::int16_t FNativeEnumerateDirectory(APPSESSION &app, const char *pszDir, FNat
         if (!pfnEntry(app, lpData, pszEntry)) return 1;
     }
 }
-std::int16_t FNativeFileSize(const char *pszFile, std::int64_t *pcbFile) {
-    NATIVEFILEINFO info;
-    if (!pcbFile || IGetNativeFileInfo(pszFile, &info, 1) != 0 || !info.fRegular) return 0;
-    *pcbFile = info.cb;
-    return 1;
+std::optional<std::int64_t> FNativeFileSize(const char *pszFile) {
+    const auto info = IGetNativeFileInfo(pszFile, NATIVELINKMODE::follow);
+    if (!info || !info->fRegular) return std::nullopt;
+    return info->cb;
 }
 std::int16_t FNativeDirectoryExists(const char *pszDir) {
-    NATIVEFILEINFO info;
-    return IGetNativeFileInfo(pszDir, &info, 1) == 0 && info.fDirectory;
+    const auto info = IGetNativeFileInfo(pszDir, NATIVELINKMODE::follow);
+    return info && info->fDirectory;
 }
-std::int16_t FNativePathInfo(const char *psz, std::int16_t *pfDirectory, std::int16_t *pfLink) {
-    NATIVEFILEINFO info;
-    if (IGetNativeFileInfo(psz, &info, 0) != 0) return 0;
-    *pfDirectory = info.fDirectory;
-    *pfLink = info.fLink;
-    return 1;
+std::optional<NATIVEPATHINFO> FNativePathInfo(const char *psz) {
+    const auto info = IGetNativeFileInfo(psz, NATIVELINKMODE::inspect);
+    if (!info) return std::nullopt;
+    return NATIVEPATHINFO{static_cast<bool>(info->fDirectory), static_cast<bool>(info->fLink)};
 }
 NATIVEFILE *PfOpenNativeFile(const char *psz, NATIVEFILEMODE mode) { return PfNativeOpen(psz, mode); }

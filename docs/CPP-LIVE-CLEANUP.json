@@ -445,7 +445,8 @@
         "physical-record-stream-spans",
         "readonly-record-payload-spans-and-scratch-capacity-validation",
         "typed-element-streams-and-concrete-byte-providers",
-        "scoped-native-stream-modes-and-actual-open-providers"
+        "scoped-native-stream-modes-and-actual-open-providers",
+        "returned-native-metadata-size-path-kind-and-identity-values"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -561,6 +562,21 @@
           "baseline": "Behavior-neutral; no native or frozen original baseline, unit golden, record/element width, game logic, wire bytes, RNG or canonical model changed. No scenario/checkpoint moved; no regression export required.",
           "remaining": "Memory-source/batch audits, file/path results, text-writer boundary and Milestone D remain active. L05 remaining text work and L08 final qualification remain open.",
           "receipts": "dist/verification/live-cpp/l06g/"
+        },
+        {
+          "batch": "L06h returned native metadata, size, path-kind and identity values",
+          "debug_build": "Pass; no new warnings. Final source links after explicit count-zero cleanup. All 161 standalone headers compile in both include orders; compiler/source policy passes for 158 owned sources and 159 variants.",
+          "desktop": "153/153 against final source, including actual file metadata, chooser and library/publication providers, all 29 leak checks and available SDL tutorial checkpoints.",
+          "host_units": "28/28 against final source/ownership inventory.",
+          "native_regression": "519 matches against final source, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+          "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs. The final explicit zero comparison changes only UI ZIP code; the qualified host binary/source is unchanged.",
+          "windows": "All 147 owned production units and five changed test/witness units compile with strict MinGW; final ZIP consumer passes again after its explicit zero comparison. Actual Windows file tests (3), encoding tests (8), recovery tests (12) and the standalone file-service contract pass under Wine. Native Windows desktop and actual Linux final qualification remain pending.",
+          "characterization": "Host Release and Windows under Wine first passed descriptor metadata/size, matching open-file/path identity, present zero-byte regular-file size and directory-size rejection retaining EBUSY. All assertions pass with returned optional values. Existing link/reparse-point safety, sharing-before-truncation, native error mapping, cleanup and publication traces remain passing.",
+          "interfaces": "77 calls/provider invocations: 72 existing and five pre-migration reference calls, across five query families (41 production, 36 tests). Path/open metadata, signed 64-bit sizes, directory/link flags and device/file identities are returned values. Link following is scoped; identity sources use separate path/file overloads. Actual publication size provider migrated directly; old outputs/source-pair overloads removed.",
+          "audit_correction": "The first host run passed 26 runtime checks, but two source-policy checks rejected the changed allocation spelling in FWriteZipEntry. Updated its existing contract-99 ownership entry; allocator, size and owner remain unchanged. Final full host/source-policy checks pass. Final review made the count-zero test explicit; desktop and native regression were rerun against final source.",
+          "baseline": "Behavior-neutral. Existing NATIVEFILEINFO/COMPATFILE storage widths and layouts, saved records, wire bytes, integer limits, UTF-8 handling, RNG, canonical models and unit goldens unchanged. No native or frozen original baseline changed and no scenario/checkpoint moved; no regression export required.",
+          "remaining": "Canonical/current-directory and temporary-path results, other buffer interfaces, memory-source/batch audits, text-writer boundary and Milestone D remain active. L05 text cleanup and L08 final qualification remain open.",
+          "receipts": "dist/verification/live-cpp/l06h/"
         }
       ],
       "roman_output": {
@@ -574,14 +590,14 @@
         "current_call_sites": 26,
         "pre_existing_call_sites": 19,
         "interface": "Named typed access/sharing/options replace all three positional-integer open interfaces; small-token opens return token/missing as one value. Old integer-mode and missing-output overloads removed.",
-        "pending": "Remaining file/path result and file-selection interfaces remain open."
+        "pending": "Canonical/current-directory/temporary-path results and file-selection interfaces remain open."
       },
       "file_bytes_and_seek": {
         "status": "complete; verified",
         "evidence": "docs/CPP-LIVE-FILE-SERVICES.json",
         "parent_call_expressions": 98,
         "interfaces": "Six native/token byte functions use spans and optional counts; every seek-origin interface and actual held-lock read provider uses the typed contract. Old overloads removed.",
-        "pending": "Other file/path results, text-writer boundary and Milestone D remain."
+        "pending": "Other path results, text-writer boundary and Milestone D remain."
       },
       "record_streams": {
         "status": "complete; verified",
@@ -613,6 +629,14 @@
         "invocations": 90,
         "pre_existing_invocations": 81,
         "interface": "Scoped binary modes through both native stream opens and actual library/profile providers; old mode strings and parser removed."
+      },
+      "metadata_results": {
+        "status": "complete; verified",
+        "evidence": "docs/CPP-LIVE-FILE-SERVICES.json",
+        "invocations": 77,
+        "pre_existing_invocations": 72,
+        "actual_provider_callbacks": 1,
+        "interfaces": "Optional native metadata records, 64-bit sizes, path-kind and device/file identity values; scoped link policy; actual publication provider migrated. Old outputs and nullable identity-source pair removed."
       }
     },
     {

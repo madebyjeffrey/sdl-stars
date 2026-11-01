@@ -2,7 +2,6 @@
 #include "uistate.h"
 /* Drive the export button and the real callback/message path. Only the native
  * folder chooser's response is supplied at the SDL boundary. */
-static int64_t cbGameExportFile;
 static int cGameExportPickers, cGameExportSaves, cGameExportWait;
 static BOOL fGameExportBusy;
 static uint64_t idGameExportSaveDialog;
@@ -106,7 +105,7 @@ static BOOL FCheckGameExportWorkflow(APPSESSION &app, UINT_PTR idTimer) {
         if (fFail) {
             if (cAlerts == 0) goto LWait;
             if (cAlerts != 1) goto LFail;
-        } else if (!fCancel && (pszZip ? !FNativeFileSize(szDestination, &cbGameExportFile) : !FNativeDirectoryExists(szDestination))) goto LWait;
+        } else if (!fCancel && (pszZip ? !FNativeFileSize(szDestination) : !FNativeDirectoryExists(szDestination))) goto LWait;
         if (fCancel && FNativeDirectoryExists(szDestination)) goto LFail;
         cSaves = pszAction && (!strcmp(pszAction, "save") || fDiscard) ? 1 : 0;
         if (cGameExportSaves != cSaves || app.state.gd.fSubmit != fGameExportSubmitSav) goto LFail;
