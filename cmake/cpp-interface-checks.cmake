@@ -42,6 +42,9 @@ if(STARS_BUILD_SDL_CLIENT)
     target_link_libraries(stars-cpp-header-checks PRIVATE stars_win32_headers SDL3::SDL3)
 endif()
 target_compile_options(stars-cpp-header-checks PRIVATE -Wall -Wextra -Wpedantic -Werror)
+add_test(NAME test_version_generation COMMAND "${Python3_EXECUTABLE}"
+    "${PROJECT_SOURCE_DIR}/tests/cmake/test_version.py" --cmake "${CMAKE_COMMAND}")
+set_tests_properties(test_version_generation PROPERTIES LABELS build TIMEOUT 30)
 add_test(NAME test_cpp_compilation_manifest COMMAND "${Python3_EXECUTABLE}"
     "${PROJECT_SOURCE_DIR}/tests/cmake/check_cpp_manifest.py"
     "${PROJECT_SOURCE_DIR}" "${CMAKE_BINARY_DIR}/compile_commands.json")

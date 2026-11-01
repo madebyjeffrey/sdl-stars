@@ -86,8 +86,8 @@ jobs:
           path: dist/release/
       - name: Read and validate product version
         run: |
-          version=$(sed -n 's/^#define STARS_VERSION_STRING "\(.*\)"$/\1/p' dist/release/version.h)
-          display=$(sed -n 's/^#define STARS_VERSION_DISPLAY "\(.*\)"$/\1/p' dist/release/version.h)
+          version=$(sed -n 's/^inline constexpr char STARS_VERSION_STRING\[\] = "\(.*\)";$/\1/p' dist/release/version.h)
+          display=$(sed -n 's/^inline constexpr char STARS_VERSION_DISPLAY\[\] = "\(.*\)";$/\1/p' dist/release/version.h)
           echo "Built Stars! $display"
           echo "STARS_VERSION=$version" >> "$GITHUB_ENV"
           echo "STARS_DISPLAY=$display" >> "$GITHUB_ENV"

@@ -13,6 +13,16 @@
 #include <iterator>
 #include "version.h"
 #include <string>
+#include <type_traits>
+
+static_assert(std::is_same_v<decltype(STARS_VERSION_MAJOR), const int>);
+static_assert(std::is_same_v<decltype(STARS_VERSION_MINOR), const int>);
+static_assert(std::is_same_v<decltype(STARS_VERSION_PATCH), const int>);
+static_assert(std::is_same_v<decltype(STARS_VERSION_BUILD), const int>);
+static_assert(std::is_array_v<decltype(STARS_VERSION_STRING)>);
+static_assert(std::is_array_v<decltype(STARS_VERSION_DISPLAY)>);
+static_assert(std::is_array_v<decltype(STARS_VERSION_COMMIT)>);
+static_assert(std::is_array_v<decltype(STARS_VERSION_PLATFORM)>);
 
 static void TestCatalogOwnership(void) {
 #ifdef STARS_UI_SDL

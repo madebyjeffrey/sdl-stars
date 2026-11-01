@@ -139,8 +139,8 @@ set_target_properties(stars-host PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
 
-# version.h is regenerated on every build so the build number follows HEAD;
-# it is rewritten only when the version changes.
+# Both version headers are regenerated on every build so the build number
+# follows HEAD; each is rewritten only when its contents change.
 set(STARS_GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
 # The platform label in the version shown (cmake/version.cmake): os-arch.
 if(WIN32)
@@ -175,7 +175,7 @@ file(MAKE_DIRECTORY "${STARS_GENERATED_DIR}")
 execute_process(COMMAND ${STARS_VERSION_COMMAND})
 add_custom_target(stars_version
     COMMAND ${STARS_VERSION_COMMAND}
-    BYPRODUCTS "${STARS_GENERATED_DIR}/version.h"
+    BYPRODUCTS "${STARS_GENERATED_DIR}/version.h" "${STARS_GENERATED_DIR}/version_resource.h"
     COMMENT "Checking Stars! version"
     VERBATIM
 )

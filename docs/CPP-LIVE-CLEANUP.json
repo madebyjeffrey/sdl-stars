@@ -1247,7 +1247,8 @@
         "obsolete-callback-instance-scaffolding",
         "tutorial-borrowed-resource-cleanup",
         "title-copy-matched-release",
-        "embedded-resource-release-ceremony"
+        "embedded-resource-release-ceremony",
+        "typed-generated-product-version-api"
       ],
       "pending_substeps": [],
       "help_api": {
@@ -1309,6 +1310,24 @@
           "host": "No core/host code or interface changed; prior host qualification remains current.",
           "baseline": "Unchanged; no checkpoint moved. Bitmap bytes, rendering inputs, wire layouts, catalogs, IDs and canonical models unchanged.",
           "receipts": "dist/verification/live-cpp/l07d/"
+        },
+        {
+          "batch": "L07e typed generated version constants and private resource macros",
+          "parent": "a973171b",
+          "debug_build": "Pass, no warnings. Final relative-output generator case passes after an unchanged-output rebuild. Compiler/source policy covers 158 owned sources, 159 compiled variants and 161 standalone headers in both orders.",
+          "desktop": "154/154, including the new generator gate, all 29 leak checks, actual product version/UTF-8 consumers, packaging unit tests and available SDL tutorial checkpoints.",
+          "host_units": "29/29 in Release, including the new version-generation gate.",
+          "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+          "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+          "version_generation": "Six final focused cases cover source archives, Windows/macOS/Linux release labels, patch labels, development overrides, identical public/resource values, unchanged-file timestamps, missing resource-header repair, valid relative OUTPUT paths and resource-header privacy. Eight C++ type assertions on actual generated constants compile in desktop, host and Windows consumers.",
+          "packaging": "All 17 macOS packaging cases pass with C++ version declarations. Actual release-workflow sed expressions read the new header correctly. Flatpak prepare-only exports the final tracked working sources and passes version, source-version and archive SHA256 checks. Actual native stars-sdl/stars-host --version output exactly matches their generated display constants. No runtime package was published or signing identity accessed.",
+          "windows": "Strict MinGW compilation passes 147/147 production units and the affected real encoding/type-check test unit. Twelve rebuilt Windows encoding/message/version cases and the actual host --version CLI pass under Wine. Native Windows SDL and Linux final qualification remain pending.",
+          "resource_bytes": "Compiled the actual parent and final stars.rc with windres for four fixed release/development/platform vectors. All eight computed values match the parent and complete .res bytes are identical in every vector; resource IDs, language, version tuples and strings remain.",
+          "interfaces": "version.h exposes four inline constexpr int values and four readonly inline constexpr char arrays with the existing names. Removed eight application value macros. version_resource.h exposes only the six preprocessing tokens used by stars.rc; CMake declares both byproducts and independently avoids rewriting either unchanged file.",
+          "retained_macros": "The C++ include guard controls repeated inclusion. Six resource-only version macros are required by the Windows resource compiler and are rejected as application C++ includes by the maintained gate. Compiler/platform configuration and other genuine foreign boundaries remain for the final macro inventory.",
+          "baseline": "Behavior-neutral. Product version algorithms and bytes, file format 2.85, saved records, native/frozen-original baselines, unit goldens, RNG and floating boundaries unchanged. No checkpoint moved; no regression export required.",
+          "remaining": "L05 bounded/readonly text and scratch-storage review, 52 initial raw-copy sites, L06 service results/Milestone D, and L08 complete retained-primitive/macro inventory and actual final platform qualification remain active.",
+          "receipts": "dist/verification/live-cpp/l07e/"
         }
       ],
       "callbacks": {
@@ -1342,7 +1361,67 @@
         "remaining_sdk_roles": "FreeResource remains a genuine SDK-compatible no-op in the wrapper, with no application callers. GlobalUnlock/GlobalFree still manage actual native heap storage in bitmap helpers and SDK adapters.",
         "separate_bug_commit": "TitleWndProc retained allocated bitmap until runtime shutdown; tutorial cleanup is already fixed independently."
       },
-      "enforcement": "Owned code rejects generic FARPROC/Win16 callback-instance wrappers. Application code cannot call FreeResource; genuine SDK implementations stay in adapters. The help staging check rejects value macros/typedefs and compares every asset/context/file row and numeric value."
+      "enforcement": "Owned code rejects generic FARPROC/Win16 callback-instance wrappers. Application code cannot call FreeResource; genuine SDK implementations stay in adapters. The help staging check rejects value macros/typedefs and compares every asset/context/file row and numeric value.",
+      "version_api": {
+        "status": "complete; verified",
+        "parent": "a973171b",
+        "application_header": "generated/version.h: four inline constexpr int constants and four readonly inline constexpr char arrays; no value macros.",
+        "resource_header": "generated/version_resource.h: six genuine preprocessing constants, private to res/stars.rc.",
+        "readers": [
+          "packaging/macos/bundle.py",
+          "tools/build_flatpak.py",
+          ".github/workflows/release.yml"
+        ],
+        "enforcement": "test_version_generation validates all fields, no application value macros, matching private resource values, update/recovery/path behavior and resource-header privacy. Ordinary encoding tests assert all eight actual C++ types.",
+        "resource_vectors": [
+          {
+            "version": "2.8.0",
+            "platform": "windows-x64",
+            "constants": 8,
+            "resource_bytes": 2491940,
+            "resource_sha256": "6f437558981549bb902d5f05ed12b5b79d4b34795aca132b2822f8a21338d703"
+          },
+          {
+            "version": "2.8.1",
+            "platform": "windows-x64",
+            "constants": 8,
+            "resource_bytes": 2491944,
+            "resource_sha256": "d5820cc621dfa9f23e4c47b2d7a38b8b808bd0a580a3e7457bb8b07b1d4a14df"
+          },
+          {
+            "version": "2.9.0-dev.41+g1234567.dirty",
+            "platform": "windows-x64",
+            "constants": 8,
+            "resource_bytes": 2492044,
+            "resource_sha256": "9458a948f5f85b4c971be28d15dbaba52c2a95284259b87e318b0874890b75e0"
+          },
+          {
+            "version": "2.9.0",
+            "platform": "macos-arm64",
+            "constants": 8,
+            "resource_bytes": 2491956,
+            "resource_sha256": "bc6d0b7b86923df5c3d5f6fc6daf7212c22a3b973be26405c3ae69960cfbe632"
+          }
+        ],
+        "verification": {
+          "batch": "L07e typed generated version constants and private resource macros",
+          "parent": "a973171b",
+          "debug_build": "Pass, no warnings. Final relative-output generator case passes after an unchanged-output rebuild. Compiler/source policy covers 158 owned sources, 159 compiled variants and 161 standalone headers in both orders.",
+          "desktop": "154/154, including the new generator gate, all 29 leak checks, actual product version/UTF-8 consumers, packaging unit tests and available SDL tutorial checkpoints.",
+          "host_units": "29/29 in Release, including the new version-generation gate.",
+          "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+          "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+          "version_generation": "Six final focused cases cover source archives, Windows/macOS/Linux release labels, patch labels, development overrides, identical public/resource values, unchanged-file timestamps, missing resource-header repair, valid relative OUTPUT paths and resource-header privacy. Eight C++ type assertions on actual generated constants compile in desktop, host and Windows consumers.",
+          "packaging": "All 17 macOS packaging cases pass with C++ version declarations. Actual release-workflow sed expressions read the new header correctly. Flatpak prepare-only exports the final tracked working sources and passes version, source-version and archive SHA256 checks. Actual native stars-sdl/stars-host --version output exactly matches their generated display constants. No runtime package was published or signing identity accessed.",
+          "windows": "Strict MinGW compilation passes 147/147 production units and the affected real encoding/type-check test unit. Twelve rebuilt Windows encoding/message/version cases and the actual host --version CLI pass under Wine. Native Windows SDL and Linux final qualification remain pending.",
+          "resource_bytes": "Compiled the actual parent and final stars.rc with windres for four fixed release/development/platform vectors. All eight computed values match the parent and complete .res bytes are identical in every vector; resource IDs, language, version tuples and strings remain.",
+          "interfaces": "version.h exposes four inline constexpr int values and four readonly inline constexpr char arrays with the existing names. Removed eight application value macros. version_resource.h exposes only the six preprocessing tokens used by stars.rc; CMake declares both byproducts and independently avoids rewriting either unchanged file.",
+          "retained_macros": "The C++ include guard controls repeated inclusion. Six resource-only version macros are required by the Windows resource compiler and are rejected as application C++ includes by the maintained gate. Compiler/platform configuration and other genuine foreign boundaries remain for the final macro inventory.",
+          "baseline": "Behavior-neutral. Product version algorithms and bytes, file format 2.85, saved records, native/frozen-original baselines, unit goldens, RNG and floating boundaries unchanged. No checkpoint moved; no regression export required.",
+          "remaining": "L05 bounded/readonly text and scratch-storage review, 52 initial raw-copy sites, L06 service results/Milestone D, and L08 complete retained-primitive/macro inventory and actual final platform qualification remain active.",
+          "receipts": "dist/verification/live-cpp/l07e/"
+        }
+      }
     },
     {
       "id": "L08",

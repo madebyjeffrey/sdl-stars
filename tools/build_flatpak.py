@@ -22,7 +22,7 @@ def main():
     header = output / 'version.h'
     subprocess.run(['cmake', f'-DSOURCE_DIR={root}', f'-DOUTPUT={header}',
                     '-DVERSION_BASE=2.9.0', '-P', str(root / 'cmake/version.cmake')], check=True)
-    version = re.search(r'#define STARS_VERSION_STRING "([^"]+)"', header.read_text())[1]
+    version = re.search(r'^inline constexpr char STARS_VERSION_STRING\[\] = "([^"]+)";$', header.read_text(), re.M)[1]
     untracked = subprocess.check_output(['git', '-C', str(root), 'ls-files', '--others', '--exclude-standard', '-z']).split(b'\0')
     missing = [name.decode() for name in untracked if name and Path(name.decode()).suffix in ('.c', '.cpp', '.m', '.mm', '.inc', '.h', '.cmake', '.py')]
     if missing:
