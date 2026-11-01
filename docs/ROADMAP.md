@@ -160,6 +160,45 @@ The C11-only specification cases consolidated after C remain historical evidence
 under [the specification policy](../spec/README.md#consolidated-evidence-after-the-c-migration);
 porting them to actual linked C++ targets remains open.
 
+## Live C++ cleanup implementation plan
+
+Status: active; user authorized the full plan and implementation on 2026-10-31.
+Parent: develop at 315ad21d. The active goal is to eliminate avoidable C-style
+constructs from owned production and its API, including generated production
+headers and implementations. The [live inventory and implementation ledger](CPP-LIVE-CLEANUP.json)
+records every initial null/typedef/header/allocation/initialization/copy/varargs
+site, stage status, deliberate low-level boundaries and verification receipts.
+The six review items above are part of this work.
+
+| Stage | Deliverable and completion gate | Status |
+| --- | --- | --- |
+| L01 | Replace NULL with nullptr at pointer sites and zero at numeric sites; replace typedef declarations with struct/using declarations while preserving every debug name and type identity. Update owned generators. Audit C++ headers and standard-library qualification. | Active |
+| L02 | Replace C-style casts with the appropriate explicit C++ conversion or remove redundant casts. Preserve narrowing, signedness and pointer/resource tagging. Enable compiler enforcement after reviewing platform-only and Objective-C bridge boundaries. | Pending |
+| L03 | Replace ordinary object/array byte initialization with typed initialization or fill. Retain explicit byte initialization only where a wire image, padding-sensitive comparison, arena lifetime or binary payload requires exact physical bytes, with per-site reasons. | Pending |
+| L04 | Migrate manual temporary allocation/cleanup to concrete owners and containers across core/platform/UI/wrapper. Preserve allocator choice, allocation-failure delivery, stable arena addresses, reentrancy and transfer boundaries; keep raw allocation only inside justified allocator/foreign-service implementations. | Pending |
+| L05 | Make every application text destination bounded; migrate strcpy/strcat, catalog copies, scratch borrowing and variadic formatting/scanning interfaces to typed operations. Preserve the existing percent-format grammar, numeric widths, UTF-8 byte budgets, partial effects and valid output bytes. Characterize undersized destinations and give any correctness repair its own commit. | Pending |
+| L06 | Replace untyped buffer/length and integer-mode service interfaces with spans, enums/options and named result values; migrate actual callers and typed test providers, then remove superseded application overloads. Complete typed file-selection handoff using the scoped Milestone D contracts. Keep SDK records inside native adapters. | Pending |
+| L07 | Generate typed help constants; remove obsolete callback-instance aliases/temporaries and embedded-resource unlock/free ceremony from callers after checking last-error effects. Resource compiler inputs, platform selection and genuine foreign ABI spellings retain their concrete roles. | Pending |
+| L08 | Reconcile the whole inventory, account for every retained primitive by a current technical reason, enforce completed rules in maintained audits, qualify final Debug/Release, desktop/host/tests/tutorial/regressions and review the final diff. Publish focused commits and mark the active goal complete only after all stages are done. | Pending |
+
+Keep each commit focused. No entity hierarchy, game-rule change, catalog change,
+file-format change or ID renumbering is part of this plan. Fixed element/record
+widths, wire bytes, UTF-8 boundaries, RNG consumption, qsort16 tie order and
+binary64 operation boundaries remain contracts. Representation-sensitive code
+may use C++ byte operations; replacing correct binary operations solely to reduce
+a token count is not an exit criterion. Each retained site needs an explicit
+current implementation reason in the ledger.
+
+After each code batch, build macos-sdl-debug, run full native regression, game
+unit tests and available SDL tutorial checkpoints. Core/shared batches also run
+full host regression and host units. Exercise affected linked witnesses,
+callback/ownership/fault tests and interface/record/resource checks. The final
+batch runs the full desktop collection and relevant Release checks. Preserve the
+baseline exactly for neutral work; report the first unexpected diff. Update
+source/spec evidence if a signature or source reader changes, and run the formal
+closure and audit when canonical rules change. Platform qualification is recorded
+as actually run; missing Linux/Windows evidence is not inferred from macOS.
+
 ## SDL desktop consolidation
 
 The desktop product uses SDL3 through `compat/win32` on every platform. The native
