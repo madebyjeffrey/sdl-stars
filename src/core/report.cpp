@@ -373,7 +373,7 @@ void DumpPlanets(APPSESSION &app) {
                 if (lppl->iPlayer == iplrNone) {
                     RgToStream(app, szForm, 1);
                 } else {
-                    CchCopyUtf8Prefix(std::span{szForm}.subspan(1), TextIO().pfnPlayerName(app, lppl->iPlayer, 1, 0, 0, 0, nullptr));
+                    CchCopyUtf8Prefix(std::span{szForm}.subspan(1), TextIO().pfnPlayerName(app, lppl->iPlayer, 1, 0, 0, 0, nullptr).data());
                     RgToStream(app, szForm, std::strlen(szForm));
                 }
                 if (lppl->iPlayer == iplrNone || !lppl->fStarbase) {

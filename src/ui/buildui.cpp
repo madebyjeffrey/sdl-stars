@@ -1619,8 +1619,7 @@ void FillBuildDD(APPSESSION &app, HWND hwndDD, MdBuild md) {
                 if (lpshdef) {
                     for (j = 0; j < ishdefMac; j++) {
                         if (!lpshdef[j].fFree) {
-                            if (TextIO().pfnPlayerName(app, i, 1, 0, 0, 0, nullptr) != app.state.szWork) {
-                            }
+                            CchCopyUtf8Prefix(std::span{app.state.szWork}, TextIO().pfnPlayerName(app, i, 1, 0, 0, 0, nullptr).data());
                             win32::wsprintfA(std::span{app.state.szWork}.subspan(static_cast<std::size_t>(std::strlen(app.state.szWork))), " %s", lpshdef[j].hul.szClass);
                             ControlIO().pfnSendMessage(hwndDD, win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(app.state.szWork));
                         }

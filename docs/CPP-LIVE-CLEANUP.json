@@ -80,12 +80,14 @@
         "display-and-fixed-label-copy-spans",
         "history-menu-logical-row-capacities",
         "temperature-unit-UTF8-repair",
-        "bounded-wire-name-staging"
+        "bounded-wire-name-staging",
+        "owned-player-name-values"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
-        "catalog-and-player-name-owned-text",
-        "const-text-interfaces"
+        "catalog-owned-text",
+        "const-text-interfaces",
+        "other-shared-scratch-text-results"
       ],
       "metadata_scan": {
         "interface": "Typed integer field pack and span; no C varargs or va_arg.",
@@ -233,6 +235,19 @@
           "baseline": "Ran regression-export after fixture readers finished. Restored clock-derived game-ID/encryption-salt churn because every semantic checkpoint matched; no scenario or checkpoint moved. Frozen original fixtures and live unit goldens unchanged.",
           "canonical_models": "Unchanged; fixed field widths, valid record bytes, compression budgets and seed consumption retained. Invalid in-memory names fail before publication.",
           "receipts": "dist/verification/live-cpp/l05h/"
+        },
+        {
+          "batch": "L05i owned player-name results",
+          "debug_build": "Pass; no new warnings; all standalone headers in both orders.",
+          "desktop": "153/153; includes both new player-name ownership/grammar cases, actual transport-presets provider, available SDL tutorial checkpoints, all existing ownership/leak checks and linked witnesses.",
+          "host_units": "28/28",
+          "native_regression": "519 matches, 25 existing warnings, zero differences/errors and skipped reference inputs.",
+          "host_regression": "519 matches, 25 existing warnings, zero differences/errors and skipped reference inputs.",
+          "windows": "147/147 strict owned production/wrapper translation units; changed utility and transport-presets test units also compile. Actual Windows utility (9 cases) and report (2 cases) executables pass under Wine with per-case isolation; live report goldens unchanged. Native Windows desktop execution remains pending.",
+          "reproduction": "Before implementation, the new utility case failed all three scratch preservation, independent-result and scratch-destination-format assertions. It passes with the owned result.",
+          "baseline": "Ran regression-export after all fixture readers finished; restored only clock-derived game-ID/encryption-salt churn because no semantic scenario/checkpoint moved. Frozen original fixtures and all unit goldens unchanged.",
+          "contracts": "Existing 50-byte label budget, grammar, UTF-8, valid records, layout widths, seed consumption and canonical models unchanged. The intentional repair removes shared-result aliases and retains host-status player labels.",
+          "receipts": "dist/verification/live-cpp/l05i/"
         }
       ],
       "bounded_formatting": {
@@ -309,6 +324,13 @@
         "contract": "Player, ship-design, string and battle-plan staging preserve valid bytes, 31-byte compression budget, raw marker/NUL framing, fixed record widths and seed consumption. Unterminated or invalid UTF-8 names fail before record publication.",
         "interface": "CbEncodeRtShDef borrows an actual byte span and returns an optional byte count; failure leaves the destination unchanged. Stream writers own staging; actual log/race/library/test consumers migrated and old raw-storage/cursor parameters removed.",
         "legacy_fixture": "Desktop import reference explicitly encodes CP1252 legacy bytes, independently of the UTF-8-only application writer; conversion/password/source-preservation assertions retained."
+      },
+      "owned_player_names": {
+        "status": "complete; verified",
+        "evidence": "docs/CPP-LIVE-OWNED-TEXT.json",
+        "calls": 33,
+        "result": "std::array<char, 50> returned by value; previous label budget preserved without allocation or shared-result aliases.",
+        "pending": "Catalog and other borrowed scratch results remain separate work."
       }
     },
     {
@@ -13421,8 +13443,8 @@
       "path": "src/core/util.cpp",
       "line": 408,
       "code": "strcpy(app.state.szWork, szName);",
-      "disposition": "bounded-UTF8-prefix-span-L05g",
-      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
+      "disposition": "owned-player-name-value-L05i",
+      "evidence": "docs/CPP-LIVE-OWNED-TEXT.json"
     },
     {
       "kind": "unbounded_copy",

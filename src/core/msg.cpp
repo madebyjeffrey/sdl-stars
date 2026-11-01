@@ -282,6 +282,7 @@ static char *PchAppendMessageText(APPSESSION &app, char *pch, const char *psz) {
 }
 
 char *PszFormatString(APPSESSION &app, const char *pszFormat, std::int16_t *pParamsReal) {
+    std::array<char, 50> szPlayerName{};
     std::int16_t  iMineral;
     std::int16_t  cOut;
     std::int16_t  c;
@@ -354,7 +355,8 @@ char *PszFormatString(APPSESSION &app, const char *pszFormat, std::int16_t *pPar
                 break;
             case 'L':
             case 'l':
-                pchT = TextIO().pfnPlayerName(app, *pParams & 0xf, *pszFormat == 'L', (*pParams & 0x10) != 0, (*pParams & 0x20) != 0, (*pParams & 0xc0) >> 6, nullptr);
+                szPlayerName = TextIO().pfnPlayerName(app, *pParams & 0xf, *pszFormat == 'L', (*pParams & 0x10) != 0, (*pParams & 0x20) != 0, (*pParams & 0xc0) >> 6, nullptr);
+                pchT = szPlayerName.data();
                 goto FinishString;
             case 'Z':
                 w = *pParams;
@@ -365,7 +367,8 @@ char *PszFormatString(APPSESSION &app, const char *pszFormat, std::int16_t *pPar
                     for (; (w & 1) == 0; w >>= 1) {
                         c++;
                     }
-                    pchT = TextIO().pfnPlayerName(app, c, 0, 1, 1, 0, nullptr);
+                    szPlayerName = TextIO().pfnPlayerName(app, c, 0, 1, 1, 0, nullptr);
+                    pchT = szPlayerName.data();
                     goto FinishString;
                 }
                 cOut = 0;
@@ -379,7 +382,8 @@ char *PszFormatString(APPSESSION &app, const char *pszFormat, std::int16_t *pPar
                                 pch = PchAppendMessageText(app, pch, TextIO().pfnCompressed(app, idsAnd));
                             }
                         }
-                        pchT = TextIO().pfnPlayerName(app, i, 0, 1, 1, 0, nullptr);
+                        szPlayerName = TextIO().pfnPlayerName(app, i, 0, 1, 1, 0, nullptr);
+                        pchT = szPlayerName.data();
                         pch = PchAppendMessageText(app, pch, pchT);
                         cOut++;
                     }
@@ -391,7 +395,8 @@ char *PszFormatString(APPSESSION &app, const char *pszFormat, std::int16_t *pPar
                 if (*pParams == app.state.idPlayer)
                     goto DoNothing;
                 TextIO().pfnCchGetString(app, idsOf2, std::span{szBuf});
-                pchT = TextIO().pfnPlayerName(app, *pParams, 0, 0, 0, 0, nullptr);
+                szPlayerName = TextIO().pfnPlayerName(app, *pParams, 0, 0, 0, 0, nullptr);
+                pchT = szPlayerName.data();
                 CchAppendUtf8Prefix(std::span{szBuf}, pchT);
                 CchAppendUtf8Prefix(std::span{szBuf}, TextIO().pfnCompressed(app, idsOrigin));
                 pchT = szBuf;
@@ -470,7 +475,8 @@ char *PszFormatString(APPSESSION &app, const char *pszFormat, std::int16_t *pPar
                 goto DoPlanet;
             case 'O':
                 w = static_cast<std::uint16_t>(*pParams) >> 9 & 0xf;
-                pchT = TextIO().pfnPlayerName(app, w, 0, 0, 0, 0, nullptr);
+                szPlayerName = TextIO().pfnPlayerName(app, w, 0, 0, 0, 0, nullptr);
+                pchT = szPlayerName.data();
                 goto FinishString;
             case 'u':
                 c = CchSprintf(szBuf, "%u", *pParams);
@@ -504,7 +510,8 @@ char *PszFormatString(APPSESSION &app, const char *pszFormat, std::int16_t *pPar
                     lpshdef = app.state.rglpshdef[c] + w;
                 }
                 if (c != app.state.idPlayer) {
-                    pchT = TextIO().pfnPlayerName(app, c, 0, 0, 1, 0, nullptr);
+                    szPlayerName = TextIO().pfnPlayerName(app, c, 0, 0, 1, 0, nullptr);
+                    pchT = szPlayerName.data();
                     CchSprintf(szBuf, "%s %s", pchT, lpshdef->hul.szClass);
                 } else {
                     CchCopyUtf8Prefix(std::span{szBuf}, lpshdef->hul.szClass);

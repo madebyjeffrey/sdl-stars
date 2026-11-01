@@ -121,6 +121,7 @@ LDone:
 }
 
 INT_PTR  RaceWizardDlg1(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+    std::array<char, 50> szPlayerName{};
     APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
 
     std::int16_t     i;
@@ -335,7 +336,8 @@ INT_PTR  RaceWizardDlg1(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 TextIO().pfnCchGetString(app, static_cast<StringId>(idsHumanoid + LOWORD(wParam) - IDC_RACE_HUMANOID), std::span{app.state.vplr.szName});
                 win32::SetDlgItemTextA(hwnd, IDC_RACE_NAME, app.state.vplr.szName);
                 std::ranges::fill(app.state.vplr.szNames, 0);
-                psz = TextIO().pfnPlayerName(app, 0, 1, 1, 0, 0, &app.state.vplr);
+                szPlayerName = TextIO().pfnPlayerName(app, 0, 1, 1, 0, 0, &app.state.vplr);
+                psz = szPlayerName.data();
                 CchCopyUtf8Prefix(std::span{app.state.vplr.szNames}, psz);
                 win32::SetDlgItemTextA(hwnd, IDC_RACE_PLURAL_NAME, app.state.vplr.szNames);
             }

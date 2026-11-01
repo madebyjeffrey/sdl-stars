@@ -22,7 +22,7 @@ INT_PTR  RelationsDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         win32::CheckRadioButton(hwnd, IDC_RELATIONS_NEUTRAL, IDC_RELATIONS_ENEMY, app.state.rgplr[app.state.idPlayer].rgmdRelation[app.state.idPlayer == 0] + 2004);
         for (i = 0; i < app.state.game.cPlayer; i++) {
             if (i != app.state.idPlayer) {
-                ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_RELATIONS_PLAYER_LIST), win32::LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(TextIO().pfnPlayerName(app, i, 0, 0, 0, 0, nullptr)));
+                ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_RELATIONS_PLAYER_LIST), win32::LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(TextIO().pfnPlayerName(app, i, 0, 0, 0, 0, nullptr).data()));
             }
         }
         ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_RELATIONS_PLAYER_LIST), win32::LB_SETCURSEL, 0, 0);
@@ -183,7 +183,7 @@ INT_PTR  BattlePlansDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             }
             for (i = 0; i < app.state.game.cPlayer; i++) {
                 if (i != app.state.idPlayer) {
-                    ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_ATTACK_WHO), win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(TextIO().pfnPlayerName(app, i, 0, 1, 0, 0, nullptr)));
+                    ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_ATTACK_WHO), win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(TextIO().pfnPlayerName(app, i, 0, 1, 0, 0, nullptr).data()));
                 }
             }
             i = app.lpui->btlplan.iplrAttack;

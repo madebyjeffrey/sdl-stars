@@ -190,7 +190,12 @@ detail in [WIN16-PARITY.md](WIN16-PARITY.md).
   Display/fixed-label copy and append helpers in `encoding.cpp` take explicit
   spans and borrowed text views, terminate complete UTF-8 prefixes, and use
   overlapping-safe moves. Each migrated site records its actual array/tail
-  capacity in `CPP-LIVE-TEXT-COPIES.json`. Saved player/design/battle-plan names
+  capacity in `CPP-LIVE-TEXT-COPIES.json`. `PszPlayerName` returns its existing
+  50-byte label as an owned array; callers keep that value or borrow it only
+  for a synchronous copy/draw/format operation. The actual typed text provider
+  uses the same value type. `CPP-LIVE-OWNED-TEXT.json` records the caller
+  lifetimes; catalog scratch returns remain pending migration.
+  Saved player/design/battle-plan names
   use bounded staging with the existing 31-byte compression budget and raw
   marker/NUL framing. `CbEncodeRtShDef` takes a byte span and returns an optional
   byte count without modifying the destination on failure; stream writers own

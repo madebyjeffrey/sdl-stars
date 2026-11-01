@@ -585,7 +585,7 @@ void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
                     RightTextOut(app, hdc, xR, yCur, app.state.szWork, c, 0);
                 }
                 win32::SetTextColor(hdc, 0xff);
-                RightTextOut(app, hdc, xR, yCur + app.state.dyArial8 - 2, TextIO().pfnPlayerName(app, pl.iPlayer, 0, 1, 0, 0, nullptr), 0, 0);
+                RightTextOut(app, hdc, xR, yCur + app.state.dyArial8 - 2, TextIO().pfnPlayerName(app, pl.iPlayer, 0, 1, 0, 0, nullptr).data(), 0, 0);
             }
             yCur += app.state.dyArial8 - 2;
             dNum = app.state.game.turn - pl.turn;

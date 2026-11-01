@@ -674,8 +674,9 @@
       "migration_parent_line": 409,
       "operation": "strcpy",
       "original_call": "std::strcpy(app.state.szWork, szName)",
-      "destination_span": "std::span{app.state.szWork}",
-      "role": "Player-name display composition retains the existing 50-byte local budget and shared-result behavior; owned results remain pending."
+      "destination_span": "std::span{szName}",
+      "role": "Player-name composition keeps the existing 50-byte local budget; L05i returns its initialized storage as an owned array instead of copying to shared work storage.",
+      "current_implementation": "L05i: return an initialized std::array<char, 50> by value; the shared-buffer copy is removed. See CPP-LIVE-OWNED-TEXT.json."
     },
     {
       "path": "src/core/util.cpp",

@@ -356,9 +356,11 @@ std::int16_t IStargateFromLppl(APPSESSION &app, PLANET *lppl) {
     return -1;
 }
 
-char *PszPlayerName(APPSESSION &app, std::int16_t iPlayer, std::int16_t fCapital, std::int16_t fPlural, std::int16_t fThe, std::int16_t grWord, PLAYER *pplr) {
+// The label owns the existing 50-byte budget; another lookup or scratch-buffer
+// formatter cannot overwrite it while a caller is still using it.
+std::array<char, 50> PszPlayerName(APPSESSION &app, std::int16_t iPlayer, std::int16_t fCapital, std::int16_t fPlural, std::int16_t fThe, std::int16_t grWord, PLAYER *pplr) {
     char *pchEnd;
-    char  szName[50];
+    char  szName[50]{};
 
     if (!pplr) {
         pplr = &app.state.rgplr[iPlayer];
@@ -406,8 +408,7 @@ char *PszPlayerName(APPSESSION &app, std::int16_t iPlayer, std::int16_t fCapital
             TextIO().pfnCchGetString(app, idsIs2, std::span{szName}.subspan(static_cast<std::size_t>(std::strlen(szName))));
         }
     }
-    CchCopyUtf8Prefix(std::span{app.state.szWork}, szName);
-    return app.state.szWork;
+    return std::to_array(szName);
 }
 
 std::int16_t FCalcFleetBombDamage(APPSESSION &app, FLEET *lpfl, std::int32_t *pdmgPeople, std::int32_t *pdmgPeopleMin, std::int32_t *pdmgPeopleSmart, std::int32_t *pdmgBldg, std::int32_t *ppctTerra,

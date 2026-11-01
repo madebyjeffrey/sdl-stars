@@ -129,6 +129,7 @@ std::int16_t InitMDIApp(APPSESSION &app) {
 }
 
 void CreateChildWindows(APPSESSION &app) {
+    std::array<char, 50> szPlayerName{};
     char    szData[512];
     char    szNameUtf8[128], szPlayerUtf8[256];
     std::size_t  cch;
@@ -148,7 +149,8 @@ void CreateChildWindows(APPSESSION &app) {
         for (psz = szGame; *psz; psz++) if (*psz >= 'A' && *psz <= 'Z') *psz += 'a' - 'A';
         win32::wsprintfA(std::span{szGame}.subspan(static_cast<std::size_t>(std::strlen(szGame))), ".m%d", app.state.idPlayer + 1);
         CchCopyUtf8(szNameUtf8, sizeof(szNameUtf8), app.state.game.szName, std::strlen(app.state.game.szName));
-        psz = TextIO().pfnPlayerName(app, app.state.idPlayer, 0, 1, 0, 0, nullptr);
+        szPlayerName = TextIO().pfnPlayerName(app, app.state.idPlayer, 0, 1, 0, 0, nullptr);
+        psz = szPlayerName.data();
         CchCopyUtf8(szPlayerUtf8, sizeof(szPlayerUtf8), psz, std::strlen(psz));
         std::snprintf(szData, sizeof(szData), "Stars! -- %s -- %s -- %s", szNameUtf8, szPlayerUtf8, szGame);
     } else {
@@ -897,6 +899,7 @@ void RestoreSelection(APPSESSION &app) {
 }
 
 void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
+    std::array<char, 50> szPlayerName{};
     POINT16  pt;
     HMENU    hmenu;
     std::int16_t  dy;
@@ -1119,7 +1122,8 @@ void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
                         y += dyPrint;
                         win32::TextOutA(pd.hDC, ptLegendA.x + xOff, y, app.state.game.szName, std::strlen(app.state.game.szName));
                         y += dyPrint;
-                        psz = TextIO().pfnPlayerName(app, app.state.idPlayer, 1, 1, 1, 0, nullptr);
+                        szPlayerName = TextIO().pfnPlayerName(app, app.state.idPlayer, 1, 1, 1, 0, nullptr);
+                        psz = szPlayerName.data();
                         win32::TextOutA(pd.hDC, ptLegendA.x + xOff, y, psz, std::strlen(psz));
                         y += dyPrint;
                         cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsYearD), app.state.game.turn + 2400);

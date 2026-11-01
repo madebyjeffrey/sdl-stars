@@ -101,14 +101,16 @@ static int TestLGetFleetStat(APPSESSION &, void *p, int stat) {
     (void)stat;
     return hasCargo;
 }
-static char *TestPszPlayerName(APPSESSION &, int i, int a, int b, int c, int d, void *p) {
+static std::array<char, 50> TestPszPlayerName(APPSESSION &, int16_t i, int16_t a, int16_t b, int16_t c, int16_t d, PLAYER *p) {
     (void)i;
     (void)a;
     (void)b;
     (void)c;
     (void)d;
     (void)p;
-    return szLiteral0;
+    std::array<char, 50> szName{};
+    CchCopyUtf8Prefix(std::span{szName}, szLiteral0);
+    return szName;
 }
 static char *TestPszGetCompressedString(APPSESSION &, int id) {
     if (id >= idsAction && id <= idsLoadOptimal)
@@ -246,7 +248,7 @@ int main(void) {
     ioText.pfnCompressed = WITNESSADAPTER<&TestPszGetCompressedString, decltype(ioText.pfnCompressed)>::Call;
     ioText.pfnFormat = WITNESSADAPTER<&TestPszFormatIds, decltype(ioText.pfnFormat)>::Call;
     ioText.pfnCchGetString = TestCchGetString;
-    ioText.pfnPlayerName = WITNESSADAPTER<&TestPszPlayerName, decltype(ioText.pfnPlayerName)>::Call;
+    ioText.pfnPlayerName = TestPszPlayerName;
     TEXTIOSCOPE scopeText(ioText);
     ALERTIO     ioAlert;
     ioAlert.pfnAlertSz = WITNESSADAPTER<&TestAlertSz, decltype(ioAlert.pfnAlertSz)>::Call;

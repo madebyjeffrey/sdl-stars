@@ -249,6 +249,18 @@ now clears the borrowed stream without heap-release calls. A resource-skip and
 injected disk-full test cover the error state and subsequent stream selection.
 Recorded tutorial bytes, save records and host results are unchanged.
 
+## Player-name scratch aliases — fixed on develop
+
+`PszPlayerName` returned `app.state.szWork` for every lookup. A later lookup
+overwrote an earlier result, and `DrawHostDialog2` formatted into that same
+storage while borrowing its player-name argument, losing the label. The
+function now returns an initialized `std::array<char, 50>` by value without
+allocating. All 33 production callers and the actual text witness provider use
+the owned result. Message/drawing consumers retain local owners; the three
+callers that append in shared work storage copy the name there explicitly.
+Regression tests reproduce both former aliases and verify retained grammar,
+UTF-8 and maximum stored-name text. Record layouts and turn results are unchanged.
+
 ## Saved-name staging capacity — fixed on develop
 
 `WriteRtPlr`, `WriteRtShDef` and `WriteBattlePlan` copied fixed names with

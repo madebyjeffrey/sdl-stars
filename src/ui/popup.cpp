@@ -132,7 +132,7 @@ void DrawPopup(APPSESSION &app, HWND hwnd, HDC hdc) {
         win32::TextOutA(hdc, dx, 3 * app.state.dyArial8 + 4, app.state.szWork, c);
         break;
     case grPopupPlayer:
-        CtrTextOut(hdc, rc.right >> 1, 4, TextIO().pfnPlayerName(app, app.lpui->GlobalPD.iPlayer, 1, 1, 1, 0, nullptr), 0);
+        CtrTextOut(hdc, rc.right >> 1, 4, TextIO().pfnPlayerName(app, app.lpui->GlobalPD.iPlayer, 1, 1, 1, 0, nullptr).data(), 0);
         c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsPlayerD), app.lpui->GlobalPD.iPlayer + 1);
         CtrTextOut(hdc, rc.right >> 1, app.state.dyArial8 + 4, app.state.szWork, c);
         break;
@@ -247,6 +247,7 @@ void DrawPopup(APPSESSION &app, HWND hwnd, HDC hdc) {
 }
 
 void Popup(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16_t y) {
+    std::array<char, 50> szPlayerName{};
     HDC     hdc;
     POINT16 pt;
     std::int16_t dy;
@@ -283,7 +284,8 @@ void Popup(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16_t y) {
         break;
     case grPopupPlayer:
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-        psz = TextIO().pfnPlayerName(app, app.lpui->GlobalPD.iPlayer, 1, 1, 1, 0, nullptr);
+        szPlayerName = TextIO().pfnPlayerName(app, app.lpui->GlobalPD.iPlayer, 1, 1, 1, 0, nullptr);
+        psz = szPlayerName.data();
         dx = LOWORD(GetTextExtent(hdc, psz, std::strlen(psz))) + 8;
         dx2 = LOWORD(GetTextExtent(hdc, "Player #16", 10)) + 8;
         if (dx2 > dx) {

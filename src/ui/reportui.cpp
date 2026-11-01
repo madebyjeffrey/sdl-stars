@@ -579,6 +579,7 @@ void InitScoreDlg(APPSESSION &app, HWND hwnd, std::int16_t fVictory) {
 }
 
 void DrawVCReport(APPSESSION &app, HDC hdc) {
+    std::array<char, 50> szPlayerName{};
     std::int16_t  grbitVC;
     std::int16_t  xStart;
     std::int16_t  dxDig;
@@ -605,7 +606,8 @@ void DrawVCReport(APPSESSION &app, HDC hdc) {
     win32::SelectObject(hdc, app.lpui->rghfontArial8[4]);
     xLeft = app.lpui->vdxScoreX;
     for (i = 0; i < app.state.game.cPlayer; i++) {
-        psz = TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, nullptr);
+        szPlayerName = TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, nullptr);
+        psz = szPlayerName.data();
         cch = std::strlen(psz);
         l = GetTextExtent(hdc, psz, cch);
         dxDig = LOWORD(static_cast<std::int32_t>((static_cast<double>(static_cast<std::uint32_t>(LOWORD(l))) / 1.4142)));
@@ -725,6 +727,7 @@ void DrawVCReport(APPSESSION &app, HDC hdc) {
 }
 
 void DrawScoreReport(APPSESSION &app, HDC hdc) {
+    std::array<char, 50> szPlayerName{};
     std::int16_t  dxDig;
     std::int16_t  yTop;
     POINT16  pt;
@@ -748,7 +751,8 @@ void DrawScoreReport(APPSESSION &app, HDC hdc) {
     win32::SelectObject(hdc, app.lpui->rghfontArial8[4]);
     xLeft = static_cast<std::int16_t>((5 * dxDig - static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2)) / 2 + app.lpui->vdxScoreX;
     for (i = 0; i < app.state.game.cPlayer; i++) {
-        psz = TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, nullptr);
+        szPlayerName = TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, nullptr);
+        psz = szPlayerName.data();
         cch = std::strlen(psz);
         l = GetTextExtent(hdc, psz, cch);
         dx45 = LOWORD(static_cast<std::int32_t>((static_cast<double>(static_cast<std::uint32_t>(LOWORD(l))) / 1.4142)));
@@ -837,6 +841,7 @@ void DrawScoreReport(APPSESSION &app, HDC hdc) {
 }
 
 void DrawHistoryReport(APPSESSION &app, HDC hdc) {
+    std::array<char, 50> szPlayerName{};
     char     szT[100];
     RECT     rcChart;
     std::uint16_t dYear;
@@ -972,7 +977,8 @@ void DrawHistoryReport(APPSESSION &app, HDC hdc) {
         yCur = rcChart.top + 6;
         for (i = 0; i < app.state.game.cPlayer; i++) {
             if (app.state.rgsxPlr[i]) {
-                psz = TextIO().pfnPlayerName(app, i, 1, 1, 0, 0, nullptr);
+                szPlayerName = TextIO().pfnPlayerName(app, i, 1, 1, 0, 0, nullptr);
+                psz = szPlayerName.data();
                 win32::SetTextColor(hdc, i == app.state.idPlayer ? 0xffffff : app.lpui->rgcrPlrHistory[i]);
                 win32::TextOutA(hdc, xCur, yCur, psz, std::strlen(psz));
                 yCur += app.state.dyArial8;

@@ -2377,6 +2377,7 @@ void SetOrdersLbSel(APPSESSION &app, std::int16_t iSel) {
 }
 
 void UpdateOrdersDDs(APPSESSION &app, std::int16_t iLevel) {
+    std::array<char, 50> szPlayerName{};
     std::int32_t rglSel[3];
     std::int16_t iMin;
     std::int16_t i;
@@ -2436,7 +2437,8 @@ void UpdateOrdersDDs(APPSESSION &app, std::int16_t iLevel) {
             szT[0] = ' ';
             for (i = 0; i < app.state.game.cPlayer; i++) {
                 if (i != app.state.idPlayer) {
-                    psz = TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, nullptr);
+                    szPlayerName = TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, nullptr);
+                    psz = szPlayerName.data();
                     CchCopyUtf8Prefix(std::span{szT}.subspan(1), psz);
                     ControlIO().pfnSendMessage(app.lpui->rghwndOrderDD[1], win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(szT));
                 }

@@ -1,0 +1,229 @@
+{
+  "parent": "00f055c5",
+  "status": "Player-name result migrated; catalog and other borrowed text results pending.",
+  "player_names": {
+    "implementation": "PszPlayerName returns std::array<char, 50> by value with initialized storage; the previous 50-byte label budget and grammar remain. No heap allocation or shared-work-buffer return.",
+    "provider": "TEXTIO uses the real return type; its actual transport-presets witness provider returns the same value type without a generic scalar adapter.",
+    "consumers": 33,
+    "named_owners": 11,
+    "owned_local_assignments": 18,
+    "explicit_work_copies": 3,
+    "drawing": "VCR draws the actual owned result rather than relying on the former szWork side effect.",
+    "repair": "Two lookups and scratch-destination formatting retain independent names; host status formatting now includes its player label.",
+    "pending": "PszGetCompressedString and other catalog/scratch getters; const text interfaces.",
+    "work_buffer_formats": "All 13 current catalog formats using the work-buffer expansion contain no player-name expansion. Dynamic message/ID formatting retains the original explicit work-buffer input."
+  },
+  "player_name_calls": [
+    {
+      "path": "src/core/msg.cpp",
+      "line": 358,
+      "call_line": "szPlayerName = TextIO().pfnPlayerName(app, *pParams & 0xf, *pszFormat == 'L', (*pParams & 0x10) != 0, (*pParams & 0x20) != 0, (*pParams & 0xc0) >> 6, nullptr);",
+      "lifetime": "Named local array owns the result through every use of the existing borrowed psz/pchT local."
+    },
+    {
+      "path": "src/core/msg.cpp",
+      "line": 370,
+      "call_line": "szPlayerName = TextIO().pfnPlayerName(app, c, 0, 1, 1, 0, nullptr);",
+      "lifetime": "Named local array owns the result through every use of the existing borrowed psz/pchT local."
+    },
+    {
+      "path": "src/core/msg.cpp",
+      "line": 385,
+      "call_line": "szPlayerName = TextIO().pfnPlayerName(app, i, 0, 1, 1, 0, nullptr);",
+      "lifetime": "Named local array owns the result through every use of the existing borrowed psz/pchT local."
+    },
+    {
+      "path": "src/core/msg.cpp",
+      "line": 398,
+      "call_line": "szPlayerName = TextIO().pfnPlayerName(app, *pParams, 0, 0, 0, 0, nullptr);",
+      "lifetime": "Named local array owns the result through every use of the existing borrowed psz/pchT local."
+    },
+    {
+      "path": "src/core/msg.cpp",
+      "line": 478,
+      "call_line": "szPlayerName = TextIO().pfnPlayerName(app, w, 0, 0, 0, 0, nullptr);",
+      "lifetime": "Named local array owns the result through every use of the existing borrowed psz/pchT local."
+    },
+    {
+      "path": "src/core/msg.cpp",
+      "line": 513,
+      "call_line": "szPlayerName = TextIO().pfnPlayerName(app, c, 0, 0, 1, 0, nullptr);",
+      "lifetime": "Named local array owns the result through every use of the existing borrowed psz/pchT local."
+    },
+    {
+      "path": "src/core/report.cpp",
+      "line": 376,
+      "call_line": "CchCopyUtf8Prefix(std::span{szForm}.subspan(1), TextIO().pfnPlayerName(app, lppl->iPlayer, 1, 0, 0, 0, nullptr).data());",
+      "lifetime": "Temporary result lives through the synchronous bounded copy into the report field."
+    },
+    {
+      "path": "src/core/turn.cpp",
+      "line": 790,
+      "call_line": "ich += CchSprintf(std::span{szTemp}.subspan(static_cast<std::size_t>(ich)), \"\\\"%s\\\" \", TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, nullptr));",
+      "lifetime": "Owned value passed directly to synchronous typed formatting."
+    },
+    {
+      "path": "src/core/util.cpp",
+      "line": 758,
+      "call_line": "CchSprintf(szPlr, \"%s \", TextIO().pfnPlayerName(app, lpth->iplr(), 0, 0, 0, 0, nullptr));",
+      "lifetime": "Owned value passed directly to synchronous typed formatting."
+    },
+    {
+      "path": "src/core/util.cpp",
+      "line": 770,
+      "call_line": "CchSprintf(szPlr, \"%s \", TextIO().pfnPlayerName(app, lpth->iplr(), 0, 0, 0, 0, nullptr));",
+      "lifetime": "Owned value passed directly to synchronous typed formatting."
+    },
+    {
+      "path": "src/core/util.cpp",
+      "line": 804,
+      "call_line": "CchSprintf(szPlr, \"%s \", TextIO().pfnPlayerName(app, iplr, 0, 0, 0, 0, nullptr));",
+      "lifetime": "Owned value passed directly to synchronous typed formatting."
+    },
+    {
+      "path": "src/ui/battleui.cpp",
+      "line": 25,
+      "call_line": "ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_RELATIONS_PLAYER_LIST), win32::LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(TextIO().pfnPlayerName(app, i, 0, 0, 0, 0, nullptr).data()));",
+      "lifetime": "The temporary array lives through synchronous SendMessage, which copies its list/combo label."
+    },
+    {
+      "path": "src/ui/battleui.cpp",
+      "line": 186,
+      "call_line": "ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_ATTACK_WHO), win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(TextIO().pfnPlayerName(app, i, 0, 1, 0, 0, nullptr).data()));",
+      "lifetime": "The temporary array lives through synchronous SendMessage, which copies its list/combo label."
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "line": 1622,
+      "call_line": "CchCopyUtf8Prefix(std::span{app.state.szWork}, TextIO().pfnPlayerName(app, i, 1, 0, 0, 0, nullptr).data());",
+      "lifetime": "Explicitly copy the owned label into shared work storage before the existing append/drawing operation."
+    },
+    {
+      "path": "src/ui/createui.cpp",
+      "line": 721,
+      "call_line": "CchCopyUtf8Prefix(std::span{app.state.szWork}, TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, nullptr).data());",
+      "lifetime": "Explicitly copy the owned label into shared work storage before the existing append/drawing operation."
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "line": 152,
+      "call_line": "szPlayerName = TextIO().pfnPlayerName(app, app.state.idPlayer, 0, 1, 0, 0, nullptr);",
+      "lifetime": "Named local array owns the result through every use of the existing borrowed psz/pchT local."
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "line": 1125,
+      "call_line": "szPlayerName = TextIO().pfnPlayerName(app, app.state.idPlayer, 1, 1, 1, 0, nullptr);",
+      "lifetime": "Named local array owns the result through every use of the existing borrowed psz/pchT local."
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "line": 1911,
+      "call_line": "cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsSS), TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, nullptr), szStat);",
+      "lifetime": "Owned value passed directly to synchronous typed formatting."
+    },
+    {
+      "path": "src/ui/mineui.cpp",
+      "line": 588,
+      "call_line": "RightTextOut(app, hdc, xR, yCur + app.state.dyArial8 - 2, TextIO().pfnPlayerName(app, pl.iPlayer, 0, 1, 0, 0, nullptr).data(), 0, 0);",
+      "lifetime": "Temporary result lives through synchronous borrowed-text drawing."
+    },
+    {
+      "path": "src/ui/msgui.cpp",
+      "line": 65,
+      "call_line": "szPlayerName = TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, nullptr);",
+      "lifetime": "Named local array owns the result through every use of the existing borrowed psz/pchT local."
+    },
+    {
+      "path": "src/ui/msgui.cpp",
+      "line": 201,
+      "call_line": "cch = win32::wsprintfA(std::span{reinterpret_cast<char *>(app.lpui->lpb2k), std::size_t{0x800}}, szT, TextIO().pfnPlayerName(app, lpmsgplr->iPlrFrom, 1, 1, 1, 0, nullptr), 13, 10);",
+      "lifetime": "Owned value passed directly to synchronous typed formatting."
+    },
+    {
+      "path": "src/ui/msgui.cpp",
+      "line": 205,
+      "call_line": "lpmsgplr->iPlrTo == 0 ? TextIO().pfnCompressed(app, idsEverybody) : TextIO().pfnPlayerName(app, lpmsgplr->iPlrTo - 1, 1, 1, 1, 0, nullptr).data(),",
+      "lifetime": "The chosen temporary array lives through the synchronous formatter call; the catalog arm remains borrowed pending catalog migration."
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "line": 135,
+      "call_line": "CtrTextOut(hdc, rc.right >> 1, 4, TextIO().pfnPlayerName(app, app.lpui->GlobalPD.iPlayer, 1, 1, 1, 0, nullptr).data(), 0);",
+      "lifetime": "Temporary result lives through synchronous borrowed-text drawing."
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "line": 287,
+      "call_line": "szPlayerName = TextIO().pfnPlayerName(app, app.lpui->GlobalPD.iPlayer, 1, 1, 1, 0, nullptr);",
+      "lifetime": "Named local array owns the result through every use of the existing borrowed psz/pchT local."
+    },
+    {
+      "path": "src/ui/raceui.cpp",
+      "line": 339,
+      "call_line": "szPlayerName = TextIO().pfnPlayerName(app, 0, 1, 1, 0, 0, &app.state.vplr);",
+      "lifetime": "Named local array owns the result through every use of the existing borrowed psz/pchT local."
+    },
+    {
+      "path": "src/ui/reportui.cpp",
+      "line": 609,
+      "call_line": "szPlayerName = TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, nullptr);",
+      "lifetime": "Named local array owns the result through every use of the existing borrowed psz/pchT local."
+    },
+    {
+      "path": "src/ui/reportui.cpp",
+      "line": 754,
+      "call_line": "szPlayerName = TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, nullptr);",
+      "lifetime": "Named local array owns the result through every use of the existing borrowed psz/pchT local."
+    },
+    {
+      "path": "src/ui/reportui.cpp",
+      "line": 980,
+      "call_line": "szPlayerName = TextIO().pfnPlayerName(app, i, 1, 1, 0, 0, nullptr);",
+      "lifetime": "Named local array owns the result through every use of the existing borrowed psz/pchT local."
+    },
+    {
+      "path": "src/ui/shipui.cpp",
+      "line": 2440,
+      "call_line": "szPlayerName = TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, nullptr);",
+      "lifetime": "Named local array owns the result through every use of the existing borrowed psz/pchT local."
+    },
+    {
+      "path": "src/ui/vcr.cpp",
+      "line": 637,
+      "call_line": "szPlayerName = TextIO().pfnPlayerName(app, app.state.vrgtok[BevFromLp(app, app.lpui->vlpbrVCR).itok()].iplr, 1, 1, 1, 0, nullptr);",
+      "lifetime": "Named local array owns the result through every use of the existing borrowed psz/pchT local."
+    },
+    {
+      "path": "src/ui/vcr.cpp",
+      "line": 661,
+      "call_line": "szPlayerName = TextIO().pfnPlayerName(app, app.state.vrgtok[BevFromLp(app, app.lpui->vlpbrVCR).itokAttack()].iplr, 0, 1, 1, 0, nullptr);",
+      "lifetime": "Named local array owns the result through every use of the existing borrowed psz/pchT local."
+    },
+    {
+      "path": "src/ui/vcr.cpp",
+      "line": 748,
+      "call_line": "szPlayerName = TextIO().pfnPlayerName(app, app.state.vrgtok[app.lpui->viVCRFocus].iplr, 1, 1, 1, 0, nullptr);",
+      "lifetime": "Named local array owns the result through every use of the existing borrowed psz/pchT local."
+    },
+    {
+      "path": "src/ui/vcr.cpp",
+      "line": 1153,
+      "call_line": "CchCopyUtf8Prefix(std::span{app.state.szWork}, TextIO().pfnPlayerName(app, app.state.vrgtok[i].iplr, 0, 0, 0, 0, nullptr).data());",
+      "lifetime": "Explicitly copy the owned label into shared work storage before the existing append/drawing operation."
+    }
+  ],
+  "verification": {
+    "batch": "L05i owned player-name results",
+    "debug_build": "Pass; no new warnings; all standalone headers in both orders.",
+    "desktop": "153/153; includes both new player-name ownership/grammar cases, actual transport-presets provider, available SDL tutorial checkpoints, all existing ownership/leak checks and linked witnesses.",
+    "host_units": "28/28",
+    "native_regression": "519 matches, 25 existing warnings, zero differences/errors and skipped reference inputs.",
+    "host_regression": "519 matches, 25 existing warnings, zero differences/errors and skipped reference inputs.",
+    "windows": "147/147 strict owned production/wrapper translation units; changed utility and transport-presets test units also compile. Actual Windows utility (9 cases) and report (2 cases) executables pass under Wine with per-case isolation; live report goldens unchanged. Native Windows desktop execution remains pending.",
+    "reproduction": "Before implementation, the new utility case failed all three scratch preservation, independent-result and scratch-destination-format assertions. It passes with the owned result.",
+    "baseline": "Ran regression-export after all fixture readers finished; restored only clock-derived game-ID/encryption-salt churn because no semantic scenario/checkpoint moved. Frozen original fixtures and all unit goldens unchanged.",
+    "contracts": "Existing 50-byte label budget, grammar, UTF-8, valid records, layout widths, seed consumption and canonical models unchanged. The intentional repair removes shared-result aliases and retains host-status player labels.",
+    "receipts": "dist/verification/live-cpp/l05i/"
+  }
+}

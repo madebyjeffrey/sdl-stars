@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include <cstdint>
+#include <array>
 
 extern std::uint32_t rgcrDrawStars2b[5];
 extern std::uint32_t rgcrDrawStars2a[5];
@@ -23,7 +24,7 @@ std::int32_t  LComputePower(APPSESSION &app, SHDEF *lpshdef);
 void     ComputeShdefPowers(APPSESSION &app);
 std::int32_t  DpShieldOfShdef(APPSESSION &app, SHDEF *lpshdef, std::int16_t iplr);
 std::int16_t  IStargateFromLppl(APPSESSION &app, PLANET *lppl);
-char    *PszPlayerName(APPSESSION &app, std::int16_t iPlayer, std::int16_t fCapital, std::int16_t fPlural, std::int16_t fThe, std::int16_t grWord, PLAYER *pplr);
+std::array<char, 50> PszPlayerName(APPSESSION &app, std::int16_t iPlayer, std::int16_t fCapital, std::int16_t fPlural, std::int16_t fThe, std::int16_t grWord, PLAYER *pplr);
 std::int16_t  FCalcFleetBombDamage(APPSESSION &app, FLEET *lpfl, std::int32_t *pdmgPeople, std::int32_t *pdmgPeopleMin, std::int32_t *pdmgPeopleSmart, std::int32_t *pdmgBldg, std::int32_t *ppctTerra,
                               std::int16_t *pfMulti);
 void     LinkFleets(APPSESSION &app, std::int16_t fUnused);

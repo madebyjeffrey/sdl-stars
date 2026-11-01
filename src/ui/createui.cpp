@@ -718,7 +718,7 @@ void DrawNewGame2(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
         iPlr = app.state.vrgplrTypeNew[i] >> 2 & 0xf;
         if (app.state.fRCWReadOnly) {
             if (app.state.rgplr[i].fInclude) {
-                TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, nullptr);
+                CchCopyUtf8Prefix(std::span{app.state.szWork}, TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, nullptr).data());
                 if (!app.state.rgplr[i].fDead)
                     goto DisplayName;
                 win32::wsprintfA(std::span{app.state.szWork}.subspan(static_cast<std::size_t>(std::strlen(app.state.szWork))), " (%s)", TextIO().pfnCompressed(app, idsDeceased));

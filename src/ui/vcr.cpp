@@ -558,6 +558,7 @@ void GetVCRStats(APPSESSION &app, std::int16_t itok, std::int32_t *pdpArmor, DV 
 }
 
 void DrawVCR(APPSESSION &app, HDC hdc, std::int16_t iStart, std::int16_t iEnd) {
+    std::array<char, 50> szPlayerName{};
     std::int16_t ctok;
     std::int16_t ibmpRace;
     std::int16_t bkMode;
@@ -633,8 +634,9 @@ void DrawVCR(APPSESSION &app, HDC hdc, std::int16_t iStart, std::int16_t iEnd) {
         }
         if (app.lpui->viStepVCRCur >= 0) {
             y += app.state.dyArial8 + 4;
-            psz = TextIO().pfnPlayerName(app, app.state.vrgtok[BevFromLp(app, app.lpui->vlpbrVCR).itok()].iplr, 1, 1, 1, 0, nullptr);
-            win32::TextOutA(hdc, x, y, app.state.szWork, std::strlen(psz));
+            szPlayerName = TextIO().pfnPlayerName(app, app.state.vrgtok[BevFromLp(app, app.lpui->vlpbrVCR).itok()].iplr, 1, 1, 1, 0, nullptr);
+            psz = szPlayerName.data();
+            win32::TextOutA(hdc, x, y, psz, std::strlen(psz));
             y += app.state.dyArial8;
             if (BevFromLp(app, app.lpui->vlpbrVCR).itok() == app.lpui->viVCRFocus) {
                 win32::SetTextColor(hdc, 8323072);
@@ -656,7 +658,8 @@ void DrawVCR(APPSESSION &app, HDC hdc, std::int16_t iStart, std::int16_t iEnd) {
             win32::SetTextColor(hdc, app.lpui->crButtonText);
             fJam = 0;
             if (BevFromLp(app, app.lpui->vlpbrVCR).ctok() > 0) {
-                psz = TextIO().pfnPlayerName(app, app.state.vrgtok[BevFromLp(app, app.lpui->vlpbrVCR).itokAttack()].iplr, 0, 1, 1, 0, nullptr);
+                szPlayerName = TextIO().pfnPlayerName(app, app.state.vrgtok[BevFromLp(app, app.lpui->vlpbrVCR).itokAttack()].iplr, 0, 1, 1, 0, nullptr);
+                psz = szPlayerName.data();
                 c = win32::wsprintfA(szT, TextIO().pfnCompressed(app, idsAttacksS), psz);
                 win32::TextOutA(hdc, x, y, szT, c);
                 y += app.state.dyArial8;
@@ -742,9 +745,10 @@ void DrawVCR(APPSESSION &app, HDC hdc, std::int16_t iStart, std::int16_t iEnd) {
             y += app.state.dyArial8;
             if (app.lpui->viVCRFocus >= 0) {
                 csh = 0;
-                psz = TextIO().pfnPlayerName(app, app.state.vrgtok[app.lpui->viVCRFocus].iplr, 1, 1, 1, 0, nullptr);
+                szPlayerName = TextIO().pfnPlayerName(app, app.state.vrgtok[app.lpui->viVCRFocus].iplr, 1, 1, 1, 0, nullptr);
+                psz = szPlayerName.data();
                 c = std::strlen(psz);
-                win32::TextOutA(hdc, x, y, app.state.szWork, c);
+                win32::TextOutA(hdc, x, y, psz, c);
                 y += app.state.dyArial8;
                 if (app.state.vrgtok[app.lpui->viVCRFocus].grobj == grobjPlanet) {
                     lpshdef = app.state.rglpshdefSB[app.state.vrgtok[app.lpui->viVCRFocus].iplr] + (app.state.vrgtok[app.lpui->viVCRFocus].ishdef - 16);
@@ -1146,8 +1150,7 @@ std::int16_t PopupVCRMenu(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16
     fAttack = brc == app.state.vrgtok[BevFromLp(app, app.lpui->vlpbrVCR).itokAttack()].brc;
     for (i = 0; i < BdvFromLp(app, app.lpui->vlpbdVCR).ctok(); i++) {
         if (app.state.vrgtok[i].brc == brc && app.state.vrgtok[i].csh > 0) {
-            if (TextIO().pfnPlayerName(app, app.state.vrgtok[i].iplr, 0, 0, 0, 0, nullptr) != app.state.szWork) {
-            }
+            CchCopyUtf8Prefix(std::span{app.state.szWork}, TextIO().pfnPlayerName(app, app.state.vrgtok[i].iplr, 0, 0, 0, 0, nullptr).data());
             cch = std::strlen(app.state.szWork);
             if (app.state.vrgtok[i].grobj == grobjPlanet) {
                 lpshdef = app.state.rglpshdefSB[app.state.vrgtok[i].iplr] + (app.state.vrgtok[i].ishdef - 16);

@@ -12,6 +12,7 @@
 static std::int16_t dWheelMessages;
 
 LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+    std::array<char, 50> szPlayerName{};
     APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
 
     HDC         hdc;
@@ -61,7 +62,8 @@ LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         ControlIO().pfnSetMsgTitle(app, hwnd);
         ControlIO().pfnSendMessage(app.lpui->hwndMsgDrop, win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(TextIO().pfnCompressed(app, idsEverybody)));
         for (i = 0; i < app.state.game.cPlayer; i++) {
-            psz = TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, nullptr);
+            szPlayerName = TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, nullptr);
+            psz = szPlayerName.data();
             ControlIO().pfnSendMessage(app.lpui->hwndMsgDrop, win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(psz));
         }
         ControlIO().pfnSendMessage(app.lpui->hwndMsgDrop, win32::CB_SETCURSEL, 0, 0);
@@ -200,7 +202,7 @@ LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 if (TextIO().pfnCchGetString(app, idsSCC2, std::span{szT}) >= 32) {
                 }
                 cch += win32::wsprintfA(std::span{reinterpret_cast<char *>(app.lpui->lpb2k), std::size_t{0x800}}.subspan(static_cast<std::size_t>(cch)), szT,
-                                lpmsgplr->iPlrTo == 0 ? TextIO().pfnCompressed(app, idsEverybody) : TextIO().pfnPlayerName(app, lpmsgplr->iPlrTo - 1, 1, 1, 1, 0, nullptr),
+                                lpmsgplr->iPlrTo == 0 ? TextIO().pfnCompressed(app, idsEverybody) : TextIO().pfnPlayerName(app, lpmsgplr->iPlrTo - 1, 1, 1, 1, 0, nullptr).data(),
                                 13, 10);
                 if (lpmsgplr->cLen >= 0) {
                     i = 1000;

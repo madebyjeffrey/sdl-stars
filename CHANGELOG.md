@@ -6,6 +6,12 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `PszPlayerName` now returns an owned label instead of shared work storage.
+  A second lookup no longer overwrites the first result, and host-status
+  formatting retains the player name when writing into that work buffer.
+  Drawing and message callers retain their existing 50-byte label budget,
+  grammar and UTF-8 text. Save records and host turn results are unchanged.
+
 - `WriteRtPlr`, `WriteRtShDef` and `WriteBattlePlan` now bound saved-name
   staging and reject unterminated or invalid UTF-8 names before publishing a
   record. Ship-design encoding takes an actual byte span and returns its byte

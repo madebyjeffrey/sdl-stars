@@ -6,6 +6,71 @@
 #include "callbackcontext.h"
 
 #include "stars_test.h"
+#include "text_io.h"
+
+static void test_PlayerName_owned_results(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    char szResult[128];
+
+    TEST_ASSERT(FStarsTestInit(app));
+    strcpy(app.state.rgplr[0].szName, "Alpha");
+    strcpy(app.state.rgplr[1].szName, "Beta");
+    strcpy(app.state.szWork, "outer work");
+    const auto szFirst = TextIO().pfnPlayerName(app, 0, 0, 0, 0, 0, nullptr);
+    const auto szSecond = TextIO().pfnPlayerName(app, 1, 0, 0, 0, 0, nullptr);
+    TEST_CHECK(!strcmp(app.state.szWork, "outer work"));
+    CchSprintf(szResult, "%s|%s", szFirst, szSecond);
+    TEST_CHECK(!strcmp(szResult, "Alpha|Beta"));
+    // The host status line writes into the same scratch buffer that used to
+    // own the player-name argument.
+    CchSprintf(app.state.szWork, "%s ready", szFirst);
+    TEST_CHECK(!strcmp(app.state.szWork, "Alpha ready"));
+    CchSprintf(szResult, "%s/%s", TextIO().pfnPlayerName(app, 0, 0, 0, 0, 0, nullptr), TextIO().pfnPlayerName(app, 1, 0, 0, 0, 0, nullptr));
+    TEST_CHECK(!strcmp(szResult, "Alpha/Beta"));
+    CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsSS), TextIO().pfnPlayerName(app, 0, 1, 1, 1, 0, nullptr), "ready");
+    TEST_CHECK(!strcmp(app.state.szWork, "The Alphas are ready.                  "));
+}
+
+static void test_PlayerName_text_contract(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    const struct {
+        const char *pszName, *pszNames;
+        int16_t fCapital, fPlural, fThe, grWord;
+        const char *pszExpected;
+    } rgCases[] = {
+        {"Alpha", "", 0, 0, 0, 0, "Alpha"},
+        {"Alpha", "", 0, 1, 1, 1, "the Alphas have"},
+        {"Alpha", "", 1, 1, 1, 2, "The Alphas are"},
+        {"Alpha   ", "", 0, 0, 0, 0, "Alpha"},
+        {"Mass", "", 0, 1, 0, 0, "Mass"},
+        {"horse", "", 0, 1, 0, 0, "horse"},
+        {"Mouse", "Mice", 1, 1, 1, 0, "The Mice"},
+        {"\xc3\x89toile", "\xc3\x89toiles", 0, 1, 0, 0, "\xc3\x89toiles"},
+        {"", "", 0, 0, 0, 0, "Player 3's"},
+        {"", "", 0, 1, 0, 1, "Player 3 has"},
+        {"", "", 0, 1, 0, 2, "Player 3 is"},
+        {"東東東東東東東東東東X", "", 1, 0, 1, 2, "The 東東東東東東東東東東X are"},
+    };
+
+    TEST_ASSERT(FStarsTestInit(app));
+    for (const auto &item : rgCases) {
+        strcpy(app.state.rgplr[2].szName, item.pszName);
+        strcpy(app.state.rgplr[2].szNames, item.pszNames);
+        const auto szName = TextIO().pfnPlayerName(app, 2, item.fCapital, item.fPlural, item.fThe, item.grWord, nullptr);
+        TEST_CHECK(!strcmp(szName.data(), item.pszExpected));
+        TEST_CHECK(FUtf8Valid(szName.data(), strlen(szName.data())));
+    }
+}
 
 static void test_FleetName_utf8_boundary(void) {
 #ifdef STARS_UI_SDL
@@ -289,6 +354,8 @@ static void test_TransferStuff_restores_borrowed_frame_on_lookup_failure(void) {
 #endif
 
 TEST_LIST = {
+    {"player-name values survive other lookups and scratch formatting", test_PlayerName_owned_results},
+    {"player-name values retain grammar and UTF-8 byte budgets", test_PlayerName_text_contract},
 #ifdef STARS_UI_SDL
     {"transfer lookup failure restores the outer borrowed frame", test_TransferStuff_restores_borrowed_frame_on_lookup_failure},
 #endif
