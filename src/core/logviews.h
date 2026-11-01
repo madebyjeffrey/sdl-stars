@@ -4,6 +4,9 @@
 #include "logcodec.h"
 #include "byteview.h"
 
+class APPSESSION;
+NATIVEBYTEWINDOW LbwFromLp(APPSESSION &app, void *lp) noexcept;
+
 class NATIVERESEARCHVIEW : public NATIVEBYTEWINDOW {
 public:
     using NATIVEBYTEWINDOW::NATIVEBYTEWINDOW;

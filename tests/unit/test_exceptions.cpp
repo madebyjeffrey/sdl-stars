@@ -7,6 +7,45 @@
 #include "acutest.h"
 #include "stars_test.h"
 
+static void TestRecordWriteCapacity(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    std::array<uint8_t, 1025> rgb;
+    std::array<uint8_t, 1024> rgbSaved;
+    char szDir[cbTestPath], szFile[cbTestPath + 64];
+    int32_t lSeed1, lSeed2;
+    bool fCaught;
+
+    TEST_ASSERT(FStarsTestInit(app));
+    TEST_ASSERT(FStarsTestDir("record-write-capacity", szDir, sizeof(szDir)));
+    CchSnprintf(std::span{szFile}, "%s%scapacity.dat", szDir, szDirSep);
+    StreamOpen(app, szFile, mdCreate);
+    {
+        StarsFileGuard closeStream(app.state.hf);
+        rgb.fill(0xcc); rgbSaved.fill(0x5a);
+        std::copy(rgbSaved.begin(), rgbSaved.end(), std::begin(app.state.rgbCur));
+        SetFileSeeds(app, 111, 222);
+        const int cAlerts = cStarsTestAlert;
+        fCaught = false;
+        try {
+            StarsRecoveryScope recovery;
+            WriteRt(app, rtBOF, std::as_bytes(std::span{rgb}));
+        } catch (const StarsError &error) {
+            fCaught = error.mdError == starsErrorFile && error.ids == idsErrorWritingFile;
+        }
+        GetFileSeeds(app, &lSeed1, &lSeed2);
+        TEST_CHECK(fCaught && cStarsTestAlert == cAlerts + 1);
+        TEST_CHECK(!memcmp(app.state.rgbCur, rgbSaved.data(), rgbSaved.size()));
+        TEST_CHECK(lSeed1 == 111 && lSeed2 == 222);
+        TEST_CHECK(CbFileSize(app.state.hf) == 0 && LSeekFile(app.state.hf, 0, NATIVESEEKORIGIN::current) == 0);
+    }
+    TEST_CHECK(RemoveNativeFile(szFile) == 0);
+}
+
 static void TestFileFailureUnwinds(void) {
 #ifdef STARS_UI_SDL
     APPSESSION &app = ui::app;
@@ -184,7 +223,7 @@ static void TestRecordFramingBytes() {
     StreamOpen(app, szFile, mdCreate);
     // The historical ten-bit header wraps at 1024; the physical payload is
     // still written. Encoding must not introduce a new length rejection.
-    WriteRt(app, rtEOF, 1024, rgb);
+    WriteRt(app, rtEOF, std::as_bytes(std::span{rgb}).first(static_cast<std::size_t>(1024)));
     StreamClose(app);
     hfRead = HfOpenFile(szFile, {.mdShare = NATIVEFILESHARE::denyWrite}).hf;
     TEST_ASSERT(hfRead != -1);
@@ -309,7 +348,7 @@ static void TestCleanupKeepsHandledPrimary(void) {
     TEST_CHECK(fCaught && !FStarsErrorPending());
 }
 
-TEST_LIST = {{"record stream ranges retain bytes, cursors and zero-length effects", TestRecordStreamRanges}, {"cleanup retains a primary failure already being handled", TestCleanupKeepsHandledPrimary},{"BOF signed fields retain encryption seed inputs", TestBofSignedEncryptionFields},
+TEST_LIST = {{"record writer rejects payloads beyond scratch before publication", TestRecordWriteCapacity}, {"record stream ranges retain bytes, cursors and zero-length effects", TestRecordStreamRanges}, {"cleanup retains a primary failure already being handled", TestCleanupKeepsHandledPrimary},{"BOF signed fields retain encryption seed inputs", TestBofSignedEncryptionFields},
              {"record failures publish partial bytes before alert callbacks", TestPartialRecordPublication},
              {"record headers retain explicit framing and wrapping", TestRecordFramingBytes},
              {"file failure restores scope and flags", TestFileFailureUnwinds},

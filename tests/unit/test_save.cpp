@@ -436,7 +436,7 @@ static void test_utf8_design_and_plan_bounds(void) {
 }
 
 static int cNameRecords;
-static void CountNameRecord(APPSESSION &, RecordType, int16_t, void *) { cNameRecords++; }
+static void CountNameRecord(APPSESSION &, RecordType, std::span<const std::byte>) { cNameRecords++; }
 static void test_invalid_written_names(void) {
 #ifdef STARS_UI_SDL
     APPSESSION &app = ui::app;
@@ -753,7 +753,7 @@ static void test_battle_continuations(void) {
         StreamOpen(app, szFile, mdCreate);
         SetFileXorStream(app, 0x12345678, 0x4321, 123, 0, 0);
         WriteBattles(app, 0);
-        WriteRt(app, rtEOF, 0, NULL);
+        WriteRt(app, rtEOF, std::span<const std::byte>{});
         StreamClose(app);
         StreamOpen(app, szFile, mdRead);
         SetFileXorStream(app, 0x12345678, 0x4321, 123, 0, 0);

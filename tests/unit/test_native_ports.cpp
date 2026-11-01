@@ -76,13 +76,14 @@ static int     iRead;
 static int     fLogRead;
 static int     cDirty;
 
-void StarsTest_WriteRt(APPSESSION &, RecordType rt, int16_t cb, void *rg) {
+void StarsTest_WriteRt(APPSESSION &, RecordType rt, std::span<const std::byte> rg) {
+    const auto cb = rg.size();
     if (rt != rtPlrMsg && rt != rtMsg)
         return;
-    TEST_ASSERT(cRecord < 4 && cb >= (rt == rtPlrMsg ? 12 : 0) && cb <= 1023);
+    TEST_ASSERT(cRecord < 4 && cb >= (rt == rtPlrMsg ? std::size_t{12} : std::size_t{0}) && cb <= 1023);
     rgrtRecord[cRecord] = rt;
-    rgcbRecord[cRecord] = cb;
-    memcpy(rgRecord[cRecord++], rg, cb);
+    rgcbRecord[cRecord] = static_cast<int16_t>(cb);
+    memcpy(rgRecord[cRecord++], rg.data(), cb);
 }
 
 int16_t StarsTest_FCreateFile(APPSESSION &, DtFileType dt, int16_t iPlayer, char *psz) { return 1; }

@@ -79,8 +79,8 @@ static int16_t FWriteLegacyRaceFixture(APPSESSION &app, char *szFile, int16_t ve
     rtbof.dt = dtRace;
     StreamOpen(app, szFile, mdCreate);
     FEncodeBof(rtbof, rgbBof);
-    WriteRt(app, rtBOF, cbWireBof, rgbBof);
-    WriteRt(app, rtPlr, (int16_t)(pb - rgb), rgb);
+    WriteRt(app, rtBOF, std::as_bytes(std::span{rgbBof}).first(static_cast<std::size_t>(cbWireBof)));
+    WriteRt(app, rtPlr, std::as_bytes(std::span{rgb}).first(static_cast<std::size_t>(pb - rgb)));
     WriteRtEof(app, icksum);
     StreamClose(app);
     return 1;

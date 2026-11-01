@@ -429,6 +429,7 @@ static NATIVEBYTEWINDOW BbwFromLpHt(APPSESSION &app, void *lp, HeapType ht) noex
 }
 
 NATIVEBYTEWINDOW BbwFromLp(APPSESSION &app, void *lp) noexcept { return BbwFromLpHt(app, lp, htBattle); }
+NATIVEBYTEWINDOW LbwFromLp(APPSESSION &app, void *lp) noexcept { return BbwFromLpHt(app, lp, htLog); }
 NATIVEBYTEWINDOW AbwFromLp(APPSESSION &app, void *lp) noexcept { return BbwFromLpHt(app, lp, htMisc); }
 NATIVEBYTEWINDOW TbwFromLp(APPSESSION &app, void *lp) noexcept { return BbwFromLpHt(app, lp, htThings); }
 

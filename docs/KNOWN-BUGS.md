@@ -232,6 +232,16 @@ sentinel (-1). Host part lookup has no player race or technology restrictions.
 when writing an empty EOF record. `PtToScan` replaces negative signed shifts
 with multiplication, preserving scanner scaling and rounding.
 
+## Record writer scratch overflow — fixed on develop
+
+`save.cpp`, `WriteRt`: a separate length and payload pointer allowed more
+than the 1024-byte scratch array to be copied before framing. A real 1025-byte
+BOF test changed scratch bytes and encryption seeds and published a record,
+without reporting failure. The readonly span API now rejects that request
+through the existing write-error alert and StarsError before those effects.
+Payloads of 1024 bytes retain their existing physical write and ten-bit header
+wrapping; normal bytes, record widths and turn generation are unchanged.
+
 ## Scaled numeric label rounding — fixed on develop
 
 `utilgen.cpp`, `PszFromLongK`: million rounding added 500000 in signed 32-bit

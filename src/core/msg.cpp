@@ -658,7 +658,7 @@ void WritePlayerMessages(APPSESSION &app, std::int16_t iPlayer) {
         lpbMax = lpb + app.state.imemMsgCur;
         for (; lpb < lpbMax; lpb += cbWireMsgTurn + MtvFromLp(app, lpb).cbParams()) {
             if (cbMsg + 20 >= 1024) {
-                RecordIO().pfnWriteRt(app, rtMsg, cbMsg, rgb);
+                RecordIO().pfnWriteRt(app, rtMsg, std::as_bytes(std::span{rgb}).first(static_cast<std::size_t>(cbMsg)));
                 cbMsg = 0;
             }
             if (MtvFromLp(app, lpb).iPlr() == iPlayer && MtvFromLp(app, lpb).msghdr().iMsg() != 0x1ff) {
@@ -667,7 +667,7 @@ void WritePlayerMessages(APPSESSION &app, std::int16_t iPlayer) {
             }
         }
         if (cbMsg != 0) {
-            RecordIO().pfnWriteRt(app, rtMsg, cbMsg, rgb);
+            RecordIO().pfnWriteRt(app, rtMsg, std::as_bytes(std::span{rgb}).first(static_cast<std::size_t>(cbMsg)));
         }
         for (lpmp = app.state.vlpmsgplrOut; lpmp; lpmp = lpmp->lpmsgplrNext) {
             if ((lpmp->iPlrTo == 0 && lpmp->iPlrFrom != iPlayer) || lpmp->iPlrTo - 1 == iPlayer) {
@@ -703,7 +703,7 @@ void WriteRtPlrMsg(APPSESSION &app, MSGPLR *lpmp) {
     msg.cLen = lpmp->cLen;
     FEncodePlrMsgPrefix(msg, std::as_writable_bytes(std::span(rgb)).first(cbWirePlrMsg));
     std::memcpy(rgb + cbWirePlrMsg, lpmp->rgbMsg(), std::abs(lpmp->cLen));
-    RecordIO().pfnWriteRt(app, rtPlrMsg, cbWirePlrMsg + std::abs(lpmp->cLen), rgb);
+    RecordIO().pfnWriteRt(app, rtPlrMsg, std::as_bytes(std::span{rgb}).first(static_cast<std::size_t>(cbWirePlrMsg + std::abs(lpmp->cLen))));
     return;
 }
 

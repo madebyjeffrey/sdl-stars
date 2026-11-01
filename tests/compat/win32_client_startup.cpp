@@ -1766,7 +1766,7 @@ static BOOL FTestLegacyRaceImport(APPSESSION &app) {
         rtbof.dt = dtRace;
         StreamOpen(app, szSource, mdCreate);
         FEncodeBof(rtbof, rgbBof);
-        WriteRt(app, rtBOF, cbWireBof, rgbBof);
+        WriteRt(app, rtBOF, std::as_bytes(std::span{rgbBof}).first(static_cast<std::size_t>(cbWireBof)));
         // This fixture deliberately writes CP1252, outside the UTF-8-only
         // application writer. Import must still convert these original bytes.
         FEncodePlayer(plr, rgbPlr);
@@ -1783,7 +1783,7 @@ static BOOL FTestLegacyRaceImport(APPSESSION &app) {
         writer.FWriteBytes(std::as_bytes(std::span{plr.szName}.first(strlen(plr.szName) + 1)));
         writer.FWriteU8(0);
         writer.FWriteBytes(std::as_bytes(std::span{plr.szNames}.first(strlen(plr.szNames) + 1)));
-        WriteRt(app, rtPlr, sizeof(rgbPlr) - rgbTail.size() + writer.CbWritten(), rgbPlr);
+        WriteRt(app, rtPlr, std::as_bytes(std::span{rgbPlr}).first(static_cast<std::size_t>(sizeof(rgbPlr) - rgbTail.size() + writer.CbWritten())));
         icksum = IRaceChecksum(&plr);
         WriteRtEof(app, icksum);
         StreamClose(app);

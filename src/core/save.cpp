@@ -14,7 +14,7 @@ static void WriteRtPassword(APPSESSION &app, std::int32_t lSalt) {
     std::uint8_t rgb[cbWirePassword];
 
     NATIVEBYTEWRITER(std::as_writable_bytes(std::span(rgb))).FWriteI32Le(lSalt);
-    RecordIO().pfnWriteRt(app, rtChgPassword, cbWirePassword, rgb);
+    RecordIO().pfnWriteRt(app, rtChgPassword, std::as_bytes(std::span{rgb}).first(static_cast<std::size_t>(cbWirePassword)));
 }
 
 void WriteOrders(APPSESSION &app, FLEET *lpfl) {
@@ -28,10 +28,10 @@ void WriteOrders(APPSESSION &app, FLEET *lpfl) {
         for (; cord != 0; cord--) {
             if (lpord->grTask == grTaskNone) {
                 FEncodeOrderHeader(*lpord, rgbOrder);
-                RecordIO().pfnWriteRt(app, rtOrderB, cbWireOrderHeader, rgbOrder);
+                RecordIO().pfnWriteRt(app, rtOrderB, std::as_bytes(std::span{rgbOrder}).first(static_cast<std::size_t>(cbWireOrderHeader)));
             } else {
                 FEncodeOrder(*lpord, rgbOrder);
-                RecordIO().pfnWriteRt(app, rtOrderA, cbWireOrder, rgbOrder);
+                RecordIO().pfnWriteRt(app, rtOrderA, std::as_bytes(std::span{rgbOrder}).first(static_cast<std::size_t>(cbWireOrder)));
             }
             lpord++;
         }
@@ -93,7 +93,7 @@ void WriteRtPlr(APPSESSION &app, PLAYER *pplr) {
         if (FStarsRecoveryActive()) StarsThrowError(starsErrorFile, app.state.idsFileError);
         return;
     }
-    RecordIO().pfnWriteRt(app, rtPlr, pbStore.size() - pb.size(), rgb);
+    RecordIO().pfnWriteRt(app, rtPlr, std::as_bytes(std::span{rgb}).first(static_cast<std::size_t>(pbStore.size() - pb.size())));
 }
 
 std::optional<std::size_t> CbEncodeRtShDef(APPSESSION &app, const SHDEF *lpshdef, std::span<std::byte> rgbOut) {
@@ -122,7 +122,7 @@ void WriteRtShDef(APPSESSION &app, SHDEF *lpshdef) {
         if (FStarsRecoveryActive()) StarsThrowError(starsErrorFile, app.state.idsFileError);
         return;
     }
-    RecordIO().pfnWriteRt(app, rtShDef, *cb, rgb);
+    RecordIO().pfnWriteRt(app, rtShDef, std::as_bytes(std::span{rgb}).first(static_cast<std::size_t>(*cb)));
 }
 
 std::int16_t FWriteDataFile(APPSESSION &app, char *pszFileBase, std::int16_t iPlayer, std::int16_t fAppend) {
@@ -357,7 +357,7 @@ LAppend:
                     WritePlanet(app, lpplT, rtPlanet, 0);
                     if (lpplT->lpplprod) {
                         if (!FEncodeProdQueue(std::span(lpplT->lpplprod->rgprod(), lpplT->lpplprod->iprodMac), rgbProd)) goto LFail;
-                        RecordIO().pfnWriteRt(app, rtProdQ, lpplT->lpplprod->iprodMac * cbWireProd, rgbProd);
+                        RecordIO().pfnWriteRt(app, rtProdQ, std::as_bytes(std::span{rgbProd}).first(static_cast<std::size_t>(lpplT->lpplprod->iprodMac * cbWireProd)));
                     }
                 } else if (lpplT->det == detObscure) {
                     pl = *lpplT;
@@ -420,7 +420,7 @@ LAppend:
         if (i > 0) {
             std::uint8_t rgbThingCount[2];
             NATIVEBYTEWRITER(std::as_writable_bytes(std::span(rgbThingCount))).FWriteI16Le(i);
-            RecordIO().pfnWriteRt(app, rtThing, 2, rgbThingCount);
+            RecordIO().pfnWriteRt(app, rtThing, std::as_bytes(std::span{rgbThingCount}).first(static_cast<std::size_t>(2)));
             lpth = app.state.lpThings;
             lpthMac = app.state.lpThings + app.state.cThing;
             for (; lpth < lpthMac; lpth++) {
@@ -577,13 +577,13 @@ void WriteBattles(APPSESSION &app, std::int16_t iPlayer) {
                     MarkPlanet(app, lppl, iPlayer, detMinimal);
                 }
                 if (BdvFromLp(app, lpbtldata).cbData() < 0x400) {
-                    RecordIO().pfnWriteRt(app, rtBtlData, BdvFromLp(app, lpbtldata).cbData(), lpbBattle);
+                    RecordIO().pfnWriteRt(app, rtBtlData, std::span<const std::byte>{BbwFromLp(app, lpbBattle).Rgb()}.first(static_cast<std::size_t>(BdvFromLp(app, lpbtldata).cbData())));
                     lpbBattle += BdvFromLp(app, lpbtldata).cbData();
                 } else {
                     cb = BdvFromLp(app, lpbtldata).ctok() * 29 + 14;
                     lpbtlrec = static_cast<std::uint8_t *>((lpbBattle + cb));
                     if (cb < 1024) {
-                        RecordIO().pfnWriteRt(app, rtBtlData, cb, lpbBattle);
+                        RecordIO().pfnWriteRt(app, rtBtlData, std::span<const std::byte>{BbwFromLp(app, lpbBattle).Rgb()}.first(static_cast<std::size_t>(cb)));
                         lpbBattle += cb;
                     } else {
                         ctok = 34;
@@ -591,16 +591,16 @@ void WriteBattles(APPSESSION &app, std::int16_t iPlayer) {
                         if (ctok > BdvFromLp(app, lpbtldata).ctok()) {
                             ctok = BdvFromLp(app, lpbtldata).ctok();
                         }
-                        RecordIO().pfnWriteRt(app, rtBtlData, ctok * 29 + 14, lpbBattle);
+                        RecordIO().pfnWriteRt(app, rtBtlData, std::span<const std::byte>{BbwFromLp(app, lpbBattle).Rgb()}.first(static_cast<std::size_t>(ctok * 29 + 14)));
                         lpbBattle += 14 + 29 * ctok;
                         ctok = BdvFromLp(app, lpbtldata).ctok() - ctok;
                         while (ctok > 0) {
                             if (static_cast<std::uint16_t>(ctok) > 35) {
-                                RecordIO().pfnWriteRt(app, rtContinue, 1015, lpbBattle);
+                                RecordIO().pfnWriteRt(app, rtContinue, std::span<const std::byte>{BbwFromLp(app, lpbBattle).Rgb()}.first(static_cast<std::size_t>(1015)));
                                 lpbBattle += 1015;
                                 ctok -= 35;
                             } else {
-                                RecordIO().pfnWriteRt(app, rtContinue, ctok * 29, lpbBattle);
+                                RecordIO().pfnWriteRt(app, rtContinue, std::span<const std::byte>{BbwFromLp(app, lpbBattle).Rgb()}.first(static_cast<std::size_t>(ctok * 29)));
                                 lpbBattle += 29 * ctok;
                                 ctok = 0;
                             }
@@ -608,7 +608,7 @@ void WriteBattles(APPSESSION &app, std::int16_t iPlayer) {
                     }
                     cb = BdvFromLp(app, lpbtldata).cbData() - 14 - BdvFromLp(app, lpbtldata).ctok() * 29;
                     if (cb < 1024) {
-                        RecordIO().pfnWriteRt(app, rtContinue, cb, lpbtlrec);
+                        RecordIO().pfnWriteRt(app, rtContinue, std::span<const std::byte>{BbwFromLp(app, lpbtlrec).Rgb()}.first(static_cast<std::size_t>(cb)));
                         lpbBattle += cb;
                     } else {
                         while (cb != 0) {
@@ -616,11 +616,11 @@ void WriteBattles(APPSESSION &app, std::int16_t iPlayer) {
                             if (cbRec >= 1024) {
                                 cb -= cbRec;
                                 for (; cbRec >= 1024; cbRec -= 1023) {
-                                    RecordIO().pfnWriteRt(app, rtContinue, 1023, lpbtlrec);
+                                    RecordIO().pfnWriteRt(app, rtContinue, std::span<const std::byte>{BbwFromLp(app, lpbtlrec).Rgb()}.first(static_cast<std::size_t>(1023)));
                                     lpbtlrec = static_cast<std::uint8_t *>((static_cast<std::uint8_t *>(lpbtlrec) + 0x3ff));
                                 }
                                 if (cbRec != 0) {
-                                    RecordIO().pfnWriteRt(app, rtContinue, cbRec, lpbtlrec);
+                                    RecordIO().pfnWriteRt(app, rtContinue, std::span<const std::byte>{BbwFromLp(app, lpbtlrec).Rgb()}.first(static_cast<std::size_t>(cbRec)));
                                     lpbtlrec = static_cast<std::uint8_t *>((static_cast<std::uint8_t *>(lpbtlrec) + cbRec));
                                 }
                             } else {
@@ -633,7 +633,7 @@ void WriteBattles(APPSESSION &app, std::int16_t iPlayer) {
                                         cbRec = BevFromLp(app, lpbtlrec).ctok() * 8 + 6;
                                     }
                                 } while (cb != 0 && cbT + cbRec < 1024);
-                                RecordIO().pfnWriteRt(app, rtContinue, cbT, lpbBattle);
+                                RecordIO().pfnWriteRt(app, rtContinue, std::span<const std::byte>{BbwFromLp(app, lpbBattle).Rgb()}.first(static_cast<std::size_t>(cbT)));
                             }
                             lpbBattle = static_cast<std::uint8_t *>(lpbtlrec);
                         }
@@ -743,7 +743,7 @@ void WritePlanet(APPSESSION &app, PLANET *lppl, RecordType rt, std::int16_t fHis
             NATIVEBYTEWRITER(std::as_writable_bytes(std::span(pb, 2))).FWriteI16Le(lppl->turn);
             pb += 2;
         }
-        RecordIO().pfnWriteRt(app, rtPlanetB, pb - rgb, rgb);
+        RecordIO().pfnWriteRt(app, rtPlanetB, std::as_bytes(std::span{rgb}).first(static_cast<std::size_t>(pb - rgb)));
     } else {
         PpvFromPrefix(rgb, sizeof(rgb)).SetFIsArtifact(lppl->fArtifact);
         if ((lppl->iPlayer != iplrNone && (lppl->iDeltaPop != 0 || lppl->fNoResearch)) ||
@@ -763,7 +763,7 @@ void WritePlanet(APPSESSION &app, PLANET *lppl, RecordType rt, std::int16_t fHis
                 pb += 2;
             }
         }
-        RecordIO().pfnWriteRt(app, rtPlanet, pb - rgb, rgb);
+        RecordIO().pfnWriteRt(app, rtPlanet, std::as_bytes(std::span{rgb}).first(static_cast<std::size_t>(pb - rgb)));
     }
 }
 
@@ -788,7 +788,7 @@ void WriteFleet(APPSESSION &app, FLEET *lpfl) {
         FileError(app, idsGameFileAppearsCorruptUnableLoadFile);
         return;
     }
-    RecordIO().pfnWriteRt(app, fPartial ? rtFleetB : rtFleetA, cb, rgb);
+    RecordIO().pfnWriteRt(app, fPartial ? rtFleetB : rtFleetA, std::as_bytes(std::span{rgb}).first(static_cast<std::size_t>(cb)));
     if (!fPartial) {
         WriteOrders(app, lpfl);
         if (lpfl->lpszName) WriteRtString(app, lpfl->lpszName);
@@ -807,7 +807,7 @@ void WriteRtString(APPSESSION &app, const char *lpsz) {
             if (FStarsRecoveryActive()) StarsThrowError(starsErrorFile, app.state.idsFileError);
             return;
         }
-        RecordIO().pfnWriteRt(app, rtString, sizeof(rgb) - pb.size(), rgb);
+        RecordIO().pfnWriteRt(app, rtString, std::as_bytes(std::span{rgb}).first(static_cast<std::size_t>(sizeof(rgb) - pb.size())));
     }
 }
 
@@ -852,7 +852,7 @@ void WriteBattlePlan(APPSESSION &app, BTLPLAN *lpbtlplan, std::int16_t fLog) {
     if (fLog) {
         WriteMemRt(app, rtBtlPlan, sizeof(rgb) - pb.size(), rgb);
     } else {
-        RecordIO().pfnWriteRt(app, rtBtlPlan, sizeof(rgb) - pb.size(), rgb);
+        RecordIO().pfnWriteRt(app, rtBtlPlan, std::as_bytes(std::span{rgb}).first(static_cast<std::size_t>(sizeof(rgb) - pb.size())));
     }
     return;
 }
@@ -940,7 +940,7 @@ static void WriteRtBof(APPSESSION &app, const RTBOF &rtbof) {
     std::byte rgb[cbWireBof];
 
     FEncodeBof(rtbof, rgb);
-    RecordIO().pfnWriteRt(app, rtBOF, cbWireBof, rgb);
+    RecordIO().pfnWriteRt(app, rtBOF, std::as_bytes(std::span{rgb}).first(static_cast<std::size_t>(cbWireBof)));
 }
 
 void WriteBOF(APPSESSION &app, std::int16_t iPlayer, std::int16_t dt, std::int16_t fMulti) {
@@ -1042,7 +1042,7 @@ std::int16_t FMarkFile(APPSESSION &app, DtFileType dt, std::int16_t iPlayer, MdM
                 PlvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).SetLSalt(~PlvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).lSalt());
                 LSeekFile(app.state.hf, static_cast<std::int16_t>(-(app.state.hdrCur.cb + 2)), NATIVESEEKORIGIN::current);
                 SetFileSeeds(app, lSeedSav1, lSeedSav2);
-                RecordIO().pfnWriteRt(app, rtPlr, app.state.hdrCur.cb, app.state.rgbCur);
+                RecordIO().pfnWriteRt(app, rtPlr, std::as_bytes(std::span{app.state.rgbCur}).first(static_cast<std::size_t>(app.state.hdrCur.cb)));
                 fChange = dt == dtTurn;
                 rtbof.fDone = 0;
             }
@@ -1073,29 +1073,35 @@ LBadFile:
 void WriteRtThing(APPSESSION &app, const THING *pth) {
     std::byte rgb[cbWireThing];
     FEncodeThing(*pth, rgb);
-    RecordIO().pfnWriteRt(app, rtThing, cbWireThing, rgb);
+    RecordIO().pfnWriteRt(app, rtThing, std::as_bytes(std::span{rgb}).first(static_cast<std::size_t>(cbWireThing)));
 }
 
 void WriteRtScore(APPSESSION &app, const SCOREX *psx) {
     std::byte rgb[cbWireScoreX];
 
     FEncodeScoreX(*psx, rgb);
-    RecordIO().pfnWriteRt(app, rtScore, cbWireScoreX, rgb);
+    RecordIO().pfnWriteRt(app, rtScore, std::as_bytes(std::span{rgb}).first(static_cast<std::size_t>(cbWireScoreX)));
 }
 
 void WriteRtEof(APPSESSION &app, std::uint16_t w) {
     std::byte rgb[2];
 
     NATIVEBYTEWRITER(rgb).FWriteU16Le(w);
-    RecordIO().pfnWriteRt(app, rtEOF, 2, rgb);
+    RecordIO().pfnWriteRt(app, rtEOF, std::as_bytes(std::span{rgb}).first(static_cast<std::size_t>(2)));
 }
 
-void WriteRt(APPSESSION &app, RecordType rt, std::int16_t cb, void *rg) {
+void WriteRt(APPSESSION &app, RecordType rt, std::span<const std::byte> rg) {
     HDR hdr;
+    std::int16_t cb;
     std::byte rgbHdr[cbWireHdr];
 
+    if (rg.size() > std::size(app.state.rgbCur)) {
+        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsErrorWritingFile, nullptr), win32::MB_ICONHAND);
+        StarsThrowError(starsErrorFile, idsErrorWritingFile);
+    }
+    cb = static_cast<std::int16_t>(rg.size());
     if (cb != 0)
-        std::memmove(app.state.rgbCur, rg, cb);
+        std::memmove(app.state.rgbCur, rg.data(), rg.size());
     if (rt == rtBOF) {
         SetFileXorStream(app, BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).lidGame(), BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).lSaltTime(), BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).turn(), BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).iPlayer(),
                          BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).fCrippled());

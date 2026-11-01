@@ -1,6 +1,6 @@
 {
   "parent": "c7f5e933",
-  "status": "File-service migration active; open, native/token byte IO, seek origins and record-stream spans complete and verified.",
+  "status": "File-service migration active; open, native/token byte/seek, record-stream spans and bounded readonly record payloads complete and verified.",
   "open": {
     "status": "complete; verified",
     "interfaces": [
@@ -365,7 +365,7 @@
     }
   ],
   "pending": {
-    "byte_io": "Record stream RgFromStream/RgToStream physical ranges implemented; WriteRt/RECORDIO payloads and raw element-count CReadNative/CWriteNative interfaces remain.",
+    "byte_io": "WriteRt/RECORDIO and record-stream spans are complete; raw element-count CReadNative/CWriteNative interfaces remain.",
     "seek": "Scoped seek origins complete; existing position-result widths and native/SDK error mappings are retained.",
     "stream_open": "Native stream mode strings and remaining file/path result/out-parameter interfaces remain; OutputFileString still has the explicit old uint16_t write-count boundary pending focused repair.",
     "selection": "Milestone D remains open; no picker backend or user workflow was changed by this batch.",
@@ -2096,6 +2096,397 @@
       "baseline": "Behavior-neutral for existing calls. Byte counts, framing, record widths, XOR/seed order, partial effects, empty-operation skips, native/original baselines, unit goldens and canonical models unchanged. No semantic scenario/checkpoint moved; no export required.",
       "remaining": "WriteRt/RECORDIO payloads, element-count streams, memory-source bounds, batch-input sizing/parsing, native stream modes, paths/results, text-writer boundary and Milestone D remain active.",
       "receipts": "dist/verification/live-cpp/l06d/"
+    }
+  },
+  "record_payloads": {
+    "parent": "8a94ba85",
+    "status": "complete; verified",
+    "interface": "WriteRt(APPSESSION &, RecordType, span<const byte>); RECORDIO and both actual linked witness providers use the same readonly payload type. Old payload-pointer/count overload removed.",
+    "calls": 45,
+    "pre_existing_calls": 44,
+    "new_capacity_test_calls": 1,
+    "staging": "Fixed encoder arrays expose actual byte extents and encoded prefixes. Battle/AI slices use existing physical arena windows. A log-specific window resolves the actual htLog arena rather than guessing its capacity; physical spare-byte policy is retained.",
+    "capacity_repair": "A valid 1025-byte source previously changed scratch bytes and BOF encryption seeds and published a record without reporting failure. The new API rejects more than 1024 bytes through the existing write-error alert and StarsError before scratch/seed mutation or record publication. The alert itself retains its normal effects.",
+    "preserved": "Empty records still publish headers. Physical 1024-byte payloads retain existing ten-bit header wrapping. The same memmove handles scratch aliases, the same BOF seeding/XOR order applies, and split battles retain 34/35-token, 1015-byte and 1023-byte continuation boundaries. A readonly view does not promise that an aliased global scratch buffer remains unmodified.",
+    "providers": "Both name-validation and player-message observers accept the actual span, inspect its size/data and retain their stored int16_t count widths after validation. No old-shape adapter or fake production branch added.",
+    "red_test": "The actual pre-migration host Release writer failed all four new assertions: caught error/alert, scratch preservation, unchanged seeds and unchanged file size/position. It accepted and published the oversize record.",
+    "tests": "Capacity rejection checks the real writer and BOF side effects. Existing 1024-byte framing, empty records, encrypted save/race round trips, battle continuations and real callback/producer cases remain required.",
+    "call_sites": [
+      {
+        "path": "src/core/log.cpp",
+        "parent_line": 1368,
+        "function": "pfnWriteRt",
+        "original_call": "pfnWriteRt(app, static_cast<RecordType>(9), cbWireLogHdr, rgbLogHdr)",
+        "payload_span": "std::as_bytes(std::span{rgbLogHdr}).first(static_cast<std::size_t>(cbWireLogHdr))",
+        "capacity_source": "Actual fixed array/staging span and the existing encoded payload prefix."
+      },
+      {
+        "path": "src/core/log.cpp",
+        "parent_line": 1371,
+        "function": "pfnWriteRt",
+        "original_call": "pfnWriteRt(app, static_cast<RecordType>(HdvFromPrefix(lprts).rt()), HdvFromPrefix(lprts).cb(), app.state.lpLog + (2 + iCur))",
+        "payload_span": "std::span<const std::byte>{LbwFromLp(app, app.state.lpLog + (2 + iCur)).Rgb()}.first(static_cast<std::size_t>(HdvFromPrefix(lprts).cb()))",
+        "capacity_source": "Read-only tail of the actual htLog allocation, preserving physical arena bounds."
+      },
+      {
+        "path": "src/core/log.cpp",
+        "parent_line": 1379,
+        "function": "pfnWriteRt",
+        "original_call": "pfnWriteRt(app, rtEOF, 0, nullptr)",
+        "payload_span": "std::span<const std::byte>{}",
+        "capacity_source": "Empty record still publishes its existing header."
+      },
+      {
+        "path": "src/core/log.cpp",
+        "parent_line": 1409,
+        "function": "pfnWriteRt",
+        "original_call": "pfnWriteRt(app, rtHistHdr, cbWireHistHdr, rgbHistHdr)",
+        "payload_span": "std::as_bytes(std::span{rgbHistHdr}).first(static_cast<std::size_t>(cbWireHistHdr))",
+        "capacity_source": "Actual fixed array/staging span and the existing encoded payload prefix."
+      },
+      {
+        "path": "src/core/log.cpp",
+        "parent_line": 1417,
+        "function": "pfnWriteRt",
+        "original_call": "pfnWriteRt(app, rtMsgFilt, app.state.cbbitfMsg, app.state.bitfMsgFiltered)",
+        "payload_span": "std::as_bytes(std::span{app.state.bitfMsgFiltered}).first(static_cast<std::size_t>(app.state.cbbitfMsg))",
+        "capacity_source": "Actual fixed array/staging span and the existing encoded payload prefix."
+      },
+      {
+        "path": "src/core/log.cpp",
+        "parent_line": 1461,
+        "function": "pfnWriteRt",
+        "original_call": "pfnWriteRt(app, rtAiData, 1023, lpb)",
+        "payload_span": "std::span<const std::byte>{AbwFromLp(app, lpb).Rgb()}.first(static_cast<std::size_t>(1023))",
+        "capacity_source": "Read-only AI history slice in its actual htMisc arena, retaining chunk boundaries."
+      },
+      {
+        "path": "src/core/log.cpp",
+        "parent_line": 1464,
+        "function": "pfnWriteRt",
+        "original_call": "pfnWriteRt(app, rtAiData, i, lpb)",
+        "payload_span": "std::span<const std::byte>{AbwFromLp(app, lpb).Rgb()}.first(static_cast<std::size_t>(i))",
+        "capacity_source": "Read-only AI history slice in its actual htMisc arena, retaining chunk boundaries."
+      },
+      {
+        "path": "src/core/log.cpp",
+        "parent_line": 1466,
+        "function": "pfnWriteRt",
+        "original_call": "pfnWriteRt(app, rtEOF, 0, nullptr)",
+        "payload_span": "std::span<const std::byte>{}",
+        "capacity_source": "Empty record still publishes its existing header."
+      },
+      {
+        "path": "src/core/save.cpp",
+        "parent_line": 17,
+        "function": "pfnWriteRt",
+        "original_call": "pfnWriteRt(app, rtChgPassword, cbWirePassword, rgb)",
+        "payload_span": "std::as_bytes(std::span{rgb}).first(static_cast<std::size_t>(cbWirePassword))",
+        "capacity_source": "Actual fixed array/staging span and the existing encoded payload prefix."
+      },
+      {
+        "path": "src/core/save.cpp",
+        "parent_line": 31,
+        "function": "pfnWriteRt",
+        "original_call": "pfnWriteRt(app, rtOrderB, cbWireOrderHeader, rgbOrder)",
+        "payload_span": "std::as_bytes(std::span{rgbOrder}).first(static_cast<std::size_t>(cbWireOrderHeader))",
+        "capacity_source": "Actual fixed array/staging span and the existing encoded payload prefix."
+      },
+      {
+        "path": "src/core/save.cpp",
+        "parent_line": 34,
+        "function": "pfnWriteRt",
+        "original_call": "pfnWriteRt(app, rtOrderA, cbWireOrder, rgbOrder)",
+        "payload_span": "std::as_bytes(std::span{rgbOrder}).first(static_cast<std::size_t>(cbWireOrder))",
+        "capacity_source": "Actual fixed array/staging span and the existing encoded payload prefix."
+      },
+      {
+        "path": "src/core/save.cpp",
+        "parent_line": 96,
+        "function": "pfnWriteRt",
+        "original_call": "pfnWriteRt(app, rtPlr, pbStore.size() - pb.size(), rgb)",
+        "payload_span": "std::as_bytes(std::span{rgb}).first(static_cast<std::size_t>(pbStore.size() - pb.size()))",
+        "capacity_source": "Actual fixed array/staging span and the existing encoded payload prefix."
+      },
+      {
+        "path": "src/core/save.cpp",
+        "parent_line": 125,
+        "function": "pfnWriteRt",
+        "original_call": "pfnWriteRt(app, rtShDef, *cb, rgb)",
+        "payload_span": "std::as_bytes(std::span{rgb}).first(static_cast<std::size_t>(*cb))",
+        "capacity_source": "Actual fixed array/staging span and the existing encoded payload prefix."
+      },
+      {
+        "path": "src/core/save.cpp",
+        "parent_line": 360,
+        "function": "pfnWriteRt",
+        "original_call": "pfnWriteRt(app, rtProdQ, lpplT->lpplprod->iprodMac * cbWireProd, rgbProd)",
+        "payload_span": "std::as_bytes(std::span{rgbProd}).first(static_cast<std::size_t>(lpplT->lpplprod->iprodMac * cbWireProd))",
+        "capacity_source": "Actual fixed array/staging span and the existing encoded payload prefix."
+      },
+      {
+        "path": "src/core/save.cpp",
+        "parent_line": 423,
+        "function": "pfnWriteRt",
+        "original_call": "pfnWriteRt(app, rtThing, 2, rgbThingCount)",
+        "payload_span": "std::as_bytes(std::span{rgbThingCount}).first(static_cast<std::size_t>(2))",
+        "capacity_source": "Actual fixed array/staging span and the existing encoded payload prefix."
+      },
+      {
+        "path": "src/core/save.cpp",
+        "parent_line": 580,
+        "function": "pfnWriteRt",
+        "original_call": "pfnWriteRt(app, rtBtlData, BdvFromLp(app, lpbtldata).cbData(), lpbBattle)",
+        "payload_span": "std::span<const std::byte>{BbwFromLp(app, lpbBattle).Rgb()}.first(static_cast<std::size_t>(BdvFromLp(app, lpbtldata).cbData()))",
+        "capacity_source": "Read-only physical battle arena tail, retaining 34/35-token and 1023-byte continuation boundaries."
+      },
+      {
+        "path": "src/core/save.cpp",
+        "parent_line": 586,
+        "function": "pfnWriteRt",
+        "original_call": "pfnWriteRt(app, rtBtlData, cb, lpbBattle)",
+        "payload_span": "std::span<const std::byte>{BbwFromLp(app, lpbBattle).Rgb()}.first(static_cast<std::size_t>(cb))",
+        "capacity_source": "Read-only physical battle arena tail, retaining 34/35-token and 1023-byte continuation boundaries."
+      },
+      {
+        "path": "src/core/save.cpp",
+        "parent_line": 594,
+        "function": "pfnWriteRt",
+        "original_call": "pfnWriteRt(app, rtBtlData, ctok * 29 + 14, lpbBattle)",
+        "payload_span": "std::span<const std::byte>{BbwFromLp(app, lpbBattle).Rgb()}.first(static_cast<std::size_t>(ctok * 29 + 14))",
+        "capacity_source": "Read-only physical battle arena tail, retaining 34/35-token and 1023-byte continuation boundaries."
+      },
+      {
+        "path": "src/core/save.cpp",
+        "parent_line": 599,
+        "function": "pfnWriteRt",
+        "original_call": "pfnWriteRt(app, rtContinue, 1015, lpbBattle)",
+        "payload_span": "std::span<const std::byte>{BbwFromLp(app, lpbBattle).Rgb()}.first(static_cast<std::size_t>(1015))",
+        "capacity_source": "Read-only physical battle arena tail, retaining 34/35-token and 1023-byte continuation boundaries."
+      },
+      {
+        "path": "src/core/save.cpp",
+        "parent_line": 603,
+        "function": "pfnWriteRt",
+        "original_call": "pfnWriteRt(app, rtContinue, ctok * 29, lpbBattle)",
+        "payload_span": "std::span<const std::byte>{BbwFromLp(app, lpbBattle).Rgb()}.first(static_cast<std::size_t>(ctok * 29))",
+        "capacity_source": "Read-only physical battle arena tail, retaining 34/35-token and 1023-byte continuation boundaries."
+      },
+      {
+        "path": "src/core/save.cpp",
+        "parent_line": 611,
+        "function": "pfnWriteRt",
+        "original_call": "pfnWriteRt(app, rtContinue, cb, lpbtlrec)",
+        "payload_span": "std::span<const std::byte>{BbwFromLp(app, lpbtlrec).Rgb()}.first(static_cast<std::size_t>(cb))",
+        "capacity_source": "Read-only physical battle arena tail, retaining 34/35-token and 1023-byte continuation boundaries."
+      },
+      {
+        "path": "src/core/save.cpp",
+        "parent_line": 619,
+        "function": "pfnWriteRt",
+        "original_call": "pfnWriteRt(app, rtContinue, 1023, lpbtlrec)",
+        "payload_span": "std::span<const std::byte>{BbwFromLp(app, lpbtlrec).Rgb()}.first(static_cast<std::size_t>(1023))",
+        "capacity_source": "Read-only physical battle arena tail, retaining 34/35-token and 1023-byte continuation boundaries."
+      },
+      {
+        "path": "src/core/save.cpp",
+        "parent_line": 623,
+        "function": "pfnWriteRt",
+        "original_call": "pfnWriteRt(app, rtContinue, cbRec, lpbtlrec)",
+        "payload_span": "std::span<const std::byte>{BbwFromLp(app, lpbtlrec).Rgb()}.first(static_cast<std::size_t>(cbRec))",
+        "capacity_source": "Read-only physical battle arena tail, retaining 34/35-token and 1023-byte continuation boundaries."
+      },
+      {
+        "path": "src/core/save.cpp",
+        "parent_line": 636,
+        "function": "pfnWriteRt",
+        "original_call": "pfnWriteRt(app, rtContinue, cbT, lpbBattle)",
+        "payload_span": "std::span<const std::byte>{BbwFromLp(app, lpbBattle).Rgb()}.first(static_cast<std::size_t>(cbT))",
+        "capacity_source": "Read-only physical battle arena tail, retaining 34/35-token and 1023-byte continuation boundaries."
+      },
+      {
+        "path": "src/core/save.cpp",
+        "parent_line": 746,
+        "function": "pfnWriteRt",
+        "original_call": "pfnWriteRt(app, rtPlanetB, pb - rgb, rgb)",
+        "payload_span": "std::as_bytes(std::span{rgb}).first(static_cast<std::size_t>(pb - rgb))",
+        "capacity_source": "Actual fixed array/staging span and the existing encoded payload prefix."
+      },
+      {
+        "path": "src/core/save.cpp",
+        "parent_line": 766,
+        "function": "pfnWriteRt",
+        "original_call": "pfnWriteRt(app, rtPlanet, pb - rgb, rgb)",
+        "payload_span": "std::as_bytes(std::span{rgb}).first(static_cast<std::size_t>(pb - rgb))",
+        "capacity_source": "Actual fixed array/staging span and the existing encoded payload prefix."
+      },
+      {
+        "path": "src/core/save.cpp",
+        "parent_line": 791,
+        "function": "pfnWriteRt",
+        "original_call": "pfnWriteRt(app, fPartial ? rtFleetB : rtFleetA, cb, rgb)",
+        "payload_span": "std::as_bytes(std::span{rgb}).first(static_cast<std::size_t>(cb))",
+        "capacity_source": "Actual fixed array/staging span and the existing encoded payload prefix."
+      },
+      {
+        "path": "src/core/save.cpp",
+        "parent_line": 810,
+        "function": "pfnWriteRt",
+        "original_call": "pfnWriteRt(app, rtString, sizeof(rgb) - pb.size(), rgb)",
+        "payload_span": "std::as_bytes(std::span{rgb}).first(static_cast<std::size_t>(sizeof(rgb) - pb.size()))",
+        "capacity_source": "Actual fixed array/staging span and the existing encoded payload prefix."
+      },
+      {
+        "path": "src/core/save.cpp",
+        "parent_line": 855,
+        "function": "pfnWriteRt",
+        "original_call": "pfnWriteRt(app, rtBtlPlan, sizeof(rgb) - pb.size(), rgb)",
+        "payload_span": "std::as_bytes(std::span{rgb}).first(static_cast<std::size_t>(sizeof(rgb) - pb.size()))",
+        "capacity_source": "Actual fixed array/staging span and the existing encoded payload prefix."
+      },
+      {
+        "path": "src/core/save.cpp",
+        "parent_line": 943,
+        "function": "pfnWriteRt",
+        "original_call": "pfnWriteRt(app, rtBOF, cbWireBof, rgb)",
+        "payload_span": "std::as_bytes(std::span{rgb}).first(static_cast<std::size_t>(cbWireBof))",
+        "capacity_source": "Actual fixed array/staging span and the existing encoded payload prefix."
+      },
+      {
+        "path": "src/core/save.cpp",
+        "parent_line": 1045,
+        "function": "pfnWriteRt",
+        "original_call": "pfnWriteRt(app, rtPlr, app.state.hdrCur.cb, app.state.rgbCur)",
+        "payload_span": "std::as_bytes(std::span{app.state.rgbCur}).first(static_cast<std::size_t>(app.state.hdrCur.cb))",
+        "capacity_source": "Actual fixed array/staging span and the existing encoded payload prefix."
+      },
+      {
+        "path": "src/core/save.cpp",
+        "parent_line": 1076,
+        "function": "pfnWriteRt",
+        "original_call": "pfnWriteRt(app, rtThing, cbWireThing, rgb)",
+        "payload_span": "std::as_bytes(std::span{rgb}).first(static_cast<std::size_t>(cbWireThing))",
+        "capacity_source": "Actual fixed array/staging span and the existing encoded payload prefix."
+      },
+      {
+        "path": "src/core/save.cpp",
+        "parent_line": 1083,
+        "function": "pfnWriteRt",
+        "original_call": "pfnWriteRt(app, rtScore, cbWireScoreX, rgb)",
+        "payload_span": "std::as_bytes(std::span{rgb}).first(static_cast<std::size_t>(cbWireScoreX))",
+        "capacity_source": "Actual fixed array/staging span and the existing encoded payload prefix."
+      },
+      {
+        "path": "src/core/save.cpp",
+        "parent_line": 1090,
+        "function": "pfnWriteRt",
+        "original_call": "pfnWriteRt(app, rtEOF, 2, rgb)",
+        "payload_span": "std::as_bytes(std::span{rgb}).first(static_cast<std::size_t>(2))",
+        "capacity_source": "Actual fixed array/staging span and the existing encoded payload prefix."
+      },
+      {
+        "path": "src/core/create.cpp",
+        "parent_line": 919,
+        "function": "pfnWriteRt",
+        "original_call": "pfnWriteRt(app, rtGame, cbWireGame, rgbGame)",
+        "payload_span": "std::as_bytes(std::span{rgbGame}).first(static_cast<std::size_t>(cbWireGame))",
+        "capacity_source": "Actual fixed array/staging span and the existing encoded payload prefix."
+      },
+      {
+        "path": "src/core/msg.cpp",
+        "parent_line": 661,
+        "function": "pfnWriteRt",
+        "original_call": "pfnWriteRt(app, rtMsg, cbMsg, rgb)",
+        "payload_span": "std::as_bytes(std::span{rgb}).first(static_cast<std::size_t>(cbMsg))",
+        "capacity_source": "Actual fixed array/staging span and the existing encoded payload prefix."
+      },
+      {
+        "path": "src/core/msg.cpp",
+        "parent_line": 670,
+        "function": "pfnWriteRt",
+        "original_call": "pfnWriteRt(app, rtMsg, cbMsg, rgb)",
+        "payload_span": "std::as_bytes(std::span{rgb}).first(static_cast<std::size_t>(cbMsg))",
+        "capacity_source": "Actual fixed array/staging span and the existing encoded payload prefix."
+      },
+      {
+        "path": "src/core/msg.cpp",
+        "parent_line": 706,
+        "function": "pfnWriteRt",
+        "original_call": "pfnWriteRt(app, rtPlrMsg, cbWirePlrMsg + std::abs(lpmp->cLen), rgb)",
+        "payload_span": "std::as_bytes(std::span{rgb}).first(static_cast<std::size_t>(cbWirePlrMsg + std::abs(lpmp->cLen)))",
+        "capacity_source": "Actual fixed array/staging span and the existing encoded payload prefix."
+      },
+      {
+        "path": "tests/unit/test_race.cpp",
+        "parent_line": 82,
+        "function": "WriteRt",
+        "original_call": "WriteRt(app, rtBOF, cbWireBof, rgbBof)",
+        "payload_span": "std::as_bytes(std::span{rgbBof}).first(static_cast<std::size_t>(cbWireBof))",
+        "capacity_source": "Actual fixed array/staging span and the existing encoded payload prefix."
+      },
+      {
+        "path": "tests/unit/test_race.cpp",
+        "parent_line": 83,
+        "function": "WriteRt",
+        "original_call": "WriteRt(app, rtPlr, (int16_t)(pb - rgb), rgb)",
+        "payload_span": "std::as_bytes(std::span{rgb}).first(static_cast<std::size_t>(pb - rgb))",
+        "capacity_source": "Actual fixed array/staging span and the existing encoded payload prefix."
+      },
+      {
+        "path": "tests/unit/test_exceptions.cpp",
+        "parent_line": 36,
+        "function": "WriteRt",
+        "original_call": "WriteRt(app, rtBOF, static_cast<int16_t>(rgb.size()), rgb.data())",
+        "payload_span": "std::as_bytes(std::span{rgb})",
+        "capacity_source": "Oversized-input capacity regression uses its actual 1025-byte source."
+      },
+      {
+        "path": "tests/unit/test_exceptions.cpp",
+        "parent_line": 226,
+        "function": "WriteRt",
+        "original_call": "WriteRt(app, rtEOF, 1024, rgb)",
+        "payload_span": "std::as_bytes(std::span{rgb}).first(static_cast<std::size_t>(1024))",
+        "capacity_source": "Actual fixed array/staging span and the existing encoded payload prefix."
+      },
+      {
+        "path": "tests/unit/test_save.cpp",
+        "parent_line": 756,
+        "function": "WriteRt",
+        "original_call": "WriteRt(app, rtEOF, 0, NULL)",
+        "payload_span": "std::span<const std::byte>{}",
+        "capacity_source": "Empty record still publishes its existing header."
+      },
+      {
+        "path": "tests/compat/win32_client_startup.cpp",
+        "parent_line": 1769,
+        "function": "WriteRt",
+        "original_call": "WriteRt(app, rtBOF, cbWireBof, rgbBof)",
+        "payload_span": "std::as_bytes(std::span{rgbBof}).first(static_cast<std::size_t>(cbWireBof))",
+        "capacity_source": "Actual fixed array/staging span and the existing encoded payload prefix."
+      },
+      {
+        "path": "tests/compat/win32_client_startup.cpp",
+        "parent_line": 1786,
+        "function": "WriteRt",
+        "original_call": "WriteRt(app, rtPlr, sizeof(rgbPlr) - rgbTail.size() + writer.CbWritten(), rgbPlr)",
+        "payload_span": "std::as_bytes(std::span{rgbPlr}).first(static_cast<std::size_t>(sizeof(rgbPlr) - rgbTail.size() + writer.CbWritten()))",
+        "capacity_source": "Actual fixed array/staging span and the existing encoded payload prefix."
+      }
+    ],
+    "verification": {
+      "batch": "L06e bounded readonly WriteRt payloads and scratch-capacity repair",
+      "debug_build": "Pass; no new warnings; standalone headers compile in both include orders and source/compiler policy passes.",
+      "desktop": "153/153, including actual record callbacks/producers, all 29 leak checks and available SDL tutorial checkpoints.",
+      "host_units": "28/28",
+      "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+      "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+      "windows": "All 147 owned production units and five changed test/fixture units compile with strict MinGW. Actual Windows recovery tests (12 cases), save tests (22, including encrypted continuation boundaries) and race tests (7) pass under Wine. Native Windows desktop and actual Linux qualification remain pending.",
+      "reproduction": "The real pre-migration host Release writer accepted a 1025-byte BOF and failed four assertions: error/alert delivery, scratch preservation, unchanged encryption seeds and unchanged record-file position/size. The same capacity case now rejects before those writer effects.",
+      "interfaces": "44 existing and one regression call use readonly physical payload spans. Actual RECORDIO providers accept the same type; their recorded count widths are preserved after bounds checks. Battle, AI and log payloads use actual physical arena tails; fixed staging arrays retain their encoded prefixes.",
+      "preserved": "1024-byte physical payload/header wrapping, empty record headers, scratch aliases, BOF seed/XOR order, physical spare bytes, partial effects and battle token/event splits remain passing. Guard rejects only payloads beyond physical scratch storage.",
+      "baseline": "Ran regression-export after every fixture reader finished. Both comparisons prove no semantic scenario/checkpoint movement. Restored generated ID/salt/checkpoint-hash churn and accepted unused storage; native and frozen original baselines, unit goldens, record widths, normal bytes, RNG and canonical models unchanged.",
+      "remaining": "Element streams, memory-source/batch audits, stream modes, paths/results, text-writer boundary and Milestone D remain active.",
+      "receipts": "dist/verification/live-cpp/l06e/"
     }
   }
 }

@@ -248,8 +248,12 @@ detail in [WIN16-PARITY.md](WIN16-PARITY.md).
   also take physical byte spans; arrays, exact arena allocations and tutorial
   resource extents supply their ranges. Empty operations still skip IO/cursor
   changes, and short reads retain their existing exceptions and partial effects.
-  WriteRt/element buffers, memory-source/batch-input audits, stream modes, paths,
-  the text-writer boundary and chooser interfaces remain.
+  WriteRt/RECORDIO payloads now carry readonly physical spans from their real
+  staging arrays or arena windows. Payloads above 1024 bytes fail before
+  scratch/seed changes or publication; valid framing, 1024-byte header wrapping,
+  aliases and continuation splits remain unchanged. Element streams,
+  memory-source/batch-input audits, modes, paths, the text-writer boundary and
+  chooser interfaces remain.
 - **Platforms:** the game code (`common.h`) builds without Windows headers;
   `stars-host` links it alone. Both host and client use binary64 `double`,
   with contraction and fast-math disabled. The migration's intentional turn

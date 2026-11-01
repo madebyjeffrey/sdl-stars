@@ -442,7 +442,8 @@
         "typed-file-open-options-and-result-values",
         "native-and-token-byte-spans-and-optional-counts",
         "scoped-seek-origins-and-actual-provider-migration",
-        "physical-record-stream-spans"
+        "physical-record-stream-spans",
+        "readonly-record-payload-spans-and-scratch-capacity-validation"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -514,6 +515,21 @@
           "baseline": "Behavior-neutral for existing calls. Byte counts, framing, record widths, XOR/seed order, partial effects, empty-operation skips, native/original baselines, unit goldens and canonical models unchanged. No semantic scenario/checkpoint moved; no export required.",
           "remaining": "WriteRt/RECORDIO payloads, element-count streams, memory-source bounds, batch-input sizing/parsing, native stream modes, paths/results, text-writer boundary and Milestone D remain active.",
           "receipts": "dist/verification/live-cpp/l06d/"
+        },
+        {
+          "batch": "L06e bounded readonly WriteRt payloads and scratch-capacity repair",
+          "debug_build": "Pass; no new warnings; standalone headers compile in both include orders and source/compiler policy passes.",
+          "desktop": "153/153, including actual record callbacks/producers, all 29 leak checks and available SDL tutorial checkpoints.",
+          "host_units": "28/28",
+          "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+          "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+          "windows": "All 147 owned production units and five changed test/fixture units compile with strict MinGW. Actual Windows recovery tests (12 cases), save tests (22, including encrypted continuation boundaries) and race tests (7) pass under Wine. Native Windows desktop and actual Linux qualification remain pending.",
+          "reproduction": "The real pre-migration host Release writer accepted a 1025-byte BOF and failed four assertions: error/alert delivery, scratch preservation, unchanged encryption seeds and unchanged record-file position/size. The same capacity case now rejects before those writer effects.",
+          "interfaces": "44 existing and one regression call use readonly physical payload spans. Actual RECORDIO providers accept the same type; their recorded count widths are preserved after bounds checks. Battle, AI and log payloads use actual physical arena tails; fixed staging arrays retain their encoded prefixes.",
+          "preserved": "1024-byte physical payload/header wrapping, empty record headers, scratch aliases, BOF seed/XOR order, physical spare bytes, partial effects and battle token/event splits remain passing. Guard rejects only payloads beyond physical scratch storage.",
+          "baseline": "Ran regression-export after every fixture reader finished. Both comparisons prove no semantic scenario/checkpoint movement. Restored generated ID/salt/checkpoint-hash churn and accepted unused storage; native and frozen original baselines, unit goldens, record widths, normal bytes, RNG and canonical models unchanged.",
+          "remaining": "Element streams, memory-source/batch audits, stream modes, paths/results, text-writer boundary and Milestone D remain active.",
+          "receipts": "dist/verification/live-cpp/l06e/"
         }
       ],
       "roman_output": {
@@ -543,6 +559,14 @@
         "pre_existing_calls": 68,
         "interface": "RgFromStream/RgToStream accept actual byte spans and preserve exception/zero-range contracts; old pointer/count overloads removed.",
         "remaining": "WriteRt/RECORDIO payloads, raw element-count streams, memory source bounds and batch input sizing/parsing remain."
+      },
+      "record_payloads": {
+        "status": "complete; verified",
+        "evidence": "docs/CPP-LIVE-FILE-SERVICES.json",
+        "call_sites": 45,
+        "pre_existing_calls": 44,
+        "actual_providers": 2,
+        "interface": "Readonly physical payload spans through WriteRt and actual RECORDIO consumers; oversize sources reject before scratch/seed changes and publication. Existing framing and valid bytes retained."
       }
     },
     {

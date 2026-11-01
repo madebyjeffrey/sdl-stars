@@ -24,7 +24,8 @@ void    SetSzWorkFromDt(APPSESSION &app, DtFileType dt, std::int16_t iPlayer);
 std::int16_t FCreateFile(APPSESSION &app, DtFileType dt, std::int16_t iPlayer, char *szForceName);
 void    WriteBOF(APPSESSION &app, std::int16_t iPlayer, std::int16_t dt, std::int16_t fMulti);
 std::int16_t FMarkFile(APPSESSION &app, DtFileType dt, std::int16_t iPlayer, MdMark mdMark, std::int16_t f);
-void    WriteRt(APPSESSION &app, RecordType rt, std::int16_t cb, void *rg);
+// Payloads above 1024 bytes fail before scratch/seed changes or publication.
+void    WriteRt(APPSESSION &app, RecordType rt, std::span<const std::byte> rg);
 void    WriteRtEof(APPSESSION &app, std::uint16_t w);
 void    WriteRtThing(APPSESSION &app, const THING *pth);
 void    WriteRtScore(APPSESSION &app, const SCOREX *psx);

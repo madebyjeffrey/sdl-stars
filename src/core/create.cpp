@@ -916,7 +916,7 @@ RetryAll:
             return 0;
         }
         FEncodeGame(app.state.game, rgbGame);
-        RecordIO().pfnWriteRt(app, rtGame, cbWireGame, rgbGame);
+        RecordIO().pfnWriteRt(app, rtGame, std::as_bytes(std::span{rgbGame}).first(static_cast<std::size_t>(cbWireGame)));
         xOld = 1000;
         for (i = 0; i < cPlanMax; i++) {
             starpack.y = LOWORD(app.state.rgptPlan[i].y);

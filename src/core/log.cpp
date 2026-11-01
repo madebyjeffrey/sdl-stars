@@ -1365,10 +1365,10 @@ std::int16_t FWriteLogFile(APPSESSION &app, char *pszFileBase, std::int16_t iPla
         /* Preserve the unused 15-byte metadata area in the orders-file header. */
         std::ranges::fill(rtlh.rgbUnused, 0);
         FEncodeLogHdr(rtlh, std::as_writable_bytes(std::span(rgbLogHdr)));
-        RecordIO().pfnWriteRt(app, static_cast<RecordType>(9), cbWireLogHdr, rgbLogHdr);
+        RecordIO().pfnWriteRt(app, static_cast<RecordType>(9), std::as_bytes(std::span{rgbLogHdr}).first(static_cast<std::size_t>(cbWireLogHdr)));
         for (; iCur < app.state.imemLogCur; iCur += HdvFromPrefix(lprts).cb() + 2) {
             lprts = app.state.lpLog + iCur;
-            RecordIO().pfnWriteRt(app, static_cast<RecordType>(HdvFromPrefix(lprts).rt()), HdvFromPrefix(lprts).cb(), app.state.lpLog + (2 + iCur));
+            RecordIO().pfnWriteRt(app, static_cast<RecordType>(HdvFromPrefix(lprts).rt()), std::span<const std::byte>{LbwFromLp(app, app.state.lpLog + (2 + iCur)).Rgb()}.first(static_cast<std::size_t>(HdvFromPrefix(lprts).cb())));
         }
         iCur = app.state.vcmsgplrOut;
         lpmp = app.state.vlpmsgplrOut;
@@ -1376,7 +1376,7 @@ std::int16_t FWriteLogFile(APPSESSION &app, char *pszFileBase, std::int16_t iPla
             WriteRtPlrMsg(app, lpmp);
             lpmp = lpmp->lpmsgplrNext;
         }
-        RecordIO().pfnWriteRt(app, rtEOF, 0, nullptr);
+        RecordIO().pfnWriteRt(app, rtEOF, std::span<const std::byte>{});
         RecordIO().pfnStreamClose(app);
         RecordIO().pfnDirtyGame(app, 0);
         app.state.gd.fWriteTurnNum = 1;
@@ -1406,7 +1406,7 @@ std::int16_t FWriteHistFile(APPSESSION &app, std::int16_t iPlayer) {
         rthh.cPlanet = app.state.cPlanet;
         rthh.cPlanetExtra = app.state.rgplr[iPlayer].cFleet;
         if (!FEncodeRtHistHdr(rthh, rgbHistHdr)) { RecordIO().pfnStreamClose(app); return 0; }
-        RecordIO().pfnWriteRt(app, rtHistHdr, cbWireHistHdr, rgbHistHdr);
+        RecordIO().pfnWriteRt(app, rtHistHdr, std::as_bytes(std::span{rgbHistHdr}).first(static_cast<std::size_t>(cbWireHistHdr)));
         i = 0;
         lppl = app.state.lpPlanets;
         while (i < app.state.cPlanet) {
@@ -1414,7 +1414,7 @@ std::int16_t FWriteHistFile(APPSESSION &app, std::int16_t iPlayer) {
             i++;
             lppl++;
         }
-        RecordIO().pfnWriteRt(app, rtMsgFilt, app.state.cbbitfMsg, app.state.bitfMsgFiltered);
+        RecordIO().pfnWriteRt(app, rtMsgFilt, std::as_bytes(std::span{app.state.bitfMsgFiltered}).first(static_cast<std::size_t>(app.state.cbbitfMsg)));
         for (i = 0; i < app.state.game.cPlayer; i++) {
             if (i != iPlayer && app.state.rgplr[i].det != detNone) {
                 WriteRtPlr(app, &app.state.rgplr[i]);
@@ -1458,12 +1458,12 @@ std::int16_t FWriteHistFile(APPSESSION &app, std::int16_t iPlayer) {
             i = AhvFromLp(app, app.state.vlpbAiData).cbAiHist();
             lpb = app.state.vlpbAiData;
             for (; i >= 1024; i -= 1023) {
-                RecordIO().pfnWriteRt(app, rtAiData, 1023, lpb);
+                RecordIO().pfnWriteRt(app, rtAiData, std::span<const std::byte>{AbwFromLp(app, lpb).Rgb()}.first(static_cast<std::size_t>(1023)));
                 lpb += 1023;
             }
-            RecordIO().pfnWriteRt(app, rtAiData, i, lpb);
+            RecordIO().pfnWriteRt(app, rtAiData, std::span<const std::byte>{AbwFromLp(app, lpb).Rgb()}.first(static_cast<std::size_t>(i)));
         }
-        RecordIO().pfnWriteRt(app, rtEOF, 0, nullptr);
+        RecordIO().pfnWriteRt(app, rtEOF, std::span<const std::byte>{});
         RecordIO().pfnStreamClose(app);
         return 1;
     } catch (const StarsError &) {

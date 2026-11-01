@@ -6,6 +6,12 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `WriteRt` now receives a readonly payload span and rejects payloads above
+  its 1024-byte scratch capacity before copying, changing encryption seeds
+  or publishing a record. Oversized input previously overwrote scratch
+  storage and wrote malformed data without an error. Existing framing,
+  valid record bytes, stored widths and host turn results are unchanged.
+
 - `PszFromLongK` now rounds large numeric labels without overflowing signed
   32-bit arithmetic before its `999M` clamp. Debug builds could display values
   above 2146983647 as negative millions. Normal rounding, numeric storage
