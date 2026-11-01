@@ -9,10 +9,11 @@ Host presets instead link the core and `hostui.cpp`; `make test-host` runs these
 without SDL. UI cases select `STARS_UI_SDL`, independently of the operating system.
 Host builds omit the native-port and native-file-UI programs that need the client.
 
-On Windows SDL, Acutest's SDK process/timer implementation is disabled because
-its system API types conflict with wrapper types. `run_isolated.py` enumerates
-cases and launches each in a fresh process, preserving the same isolation as
-Acutest on Linux and host-only Windows builds.
+On Windows, Acutest's SDK process/timer implementation is disabled because
+its SDK macros collide with owned C++ declarations, and its system API types
+conflict with SDL wrapper types. Both host and SDL tests use `run_isolated.py`
+to enumerate cases and launch each in a fresh process, preserving Acutest's
+process isolation without importing SDK declarations into the test sources.
 
 Acutest runs every test in its own process, so each test starts from the
 game's initial globals. Client tests run in `<build>/tests-client` (host tests in `<build>/tests`), where CMake copies the
