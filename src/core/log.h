@@ -27,7 +27,7 @@ std::int16_t FRunLogFile(APPSESSION &app);
 std::int16_t FRunLogRecord(APPSESSION &app, RecordType rt, std::int16_t cb, std::uint8_t *lpb);
 std::int16_t FLoadLogFile(APPSESSION &app, char *pszLog);
 std::int16_t FCheckLogFile(APPSESSION &app, std::int16_t iplr, std::int16_t *pfError);
-std::int16_t FWriteLogFile(APPSESSION &app, char *pszFileBase, std::int16_t iPlayer);
+std::int16_t FWriteLogFile(APPSESSION &app, std::string_view pszFileBase, std::int16_t iPlayer);
 std::int16_t FWriteHistFile(APPSESSION &app, std::int16_t iPlayer);
 void    EnumLogRts(APPSESSION &app, std::int16_t (*pfn)(APPSESSION &, void *, std::int16_t, std::int16_t, void *, std::int16_t), void *lpPass, std::int16_t iPass);
 

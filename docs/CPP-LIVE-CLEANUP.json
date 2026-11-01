@@ -116,7 +116,8 @@
         "unused-unbounded-Win32-string-shims-retired",
         "owned-backup-path-capacity-repair",
         "bounded-complete-report-file-paths",
-        "owned-definition-filename-input"
+        "owned-definition-filename-input",
+        "admitted-owned-game-file-inputs"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -674,6 +675,47 @@
             "src/core/create.h": "773446a42e32eb96bcfadd7b23596e4aa917bc52bde5addb6c37972e0b416f99",
             "tests/unit/test_turn.cpp": "7220233027c9b791114042bfa86a0110a83cb1d4e7ca3ee632742b9883495feb"
           }
+        },
+        {
+          "batch": "L05ai validated owned game-file inputs and bounded slot parsing",
+          "parent": "8262a2c68ee424d96bdb3633b06f156a667f53eb",
+          "status": "complete; locally verified; final native Windows/Linux qualification pending",
+          "reproduction": "The actual parent save executable forwards malformed UTF-8 to the loader open callback and writer create callback after shared staging. Both new assertions fail on a safe short input before any oversized vector is tested.",
+          "implementation": [
+            "FLoadGame and FWriteLogFile accept readonly string_views and snapshot complete UTF-8 basenames into arrays sized from the actual session field. Invalid names fail before load-state changes, template-record appends or I/O.",
+            "The writer keeps its snapshot across metadata/UI callouts before committing the basename at its original operation boundary. A real metadata append plus a mutating DirtyGame provider demonstrates the filename remains stable.",
+            "The loader owns its extension before shared normalization and retains the normalized family for later orders/MRU. This makes external, Base, Work, overlapping inputs and supplied suffixes use the same orders family.",
+            "A bounded from_chars helper returns an optional signed player index, with iplrNone for host. Host is exactly case-insensitive hst; player extensions are m/x/h plus one or two decimal digits selecting 1-16. Leading-zero two-digit spelling remains accepted. Unsupported/partial/out-of-range/NUL identifiers fail before loading. No atoi remains in this operation.",
+            "Snapshots introduce no heap allocation. No record/field widths, payload encodings, game rules, RNG calls, tie ordering or floating boundaries change."
+          ],
+          "checks": {
+            "debug": "Full platform Debug build passes without warnings.",
+            "desktop": "154/154 including 29 leak checks, linked/witness/client workflows and available SDL tutorial checkpoints.",
+            "host_units": "29/29 Release host tests.",
+            "sanitizers": "Actual Debug ASan/UBSan save executable passes all 26 cases twice consecutively.",
+            "windows": "147/147 production translation units pass strict MinGW syntax. Actual rebuilt Windows host save/log/turn executables pass 58 isolated cases under Wine (26+21+11). Native full Windows/Linux qualification of this new batch remains pending.",
+            "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors/skips.",
+            "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors/skips.",
+            "source_policy": "158 owned sources, 159 compiled variants, 161 standalone headers in both orders; exact raw-copy inventory passes.",
+            "header_review": "After removing a duplicate standard-header include found in diff review, the final full Debug/header build and both focused save/log cases pass. This is include hygiene only; the full runtime suite exercised the identical executable logic."
+          },
+          "new_tests": [
+            "Reject empty, malformed UTF-8, embedded-NUL and 256-byte basenames before open/create and before invalidating load state or appending template orders. Admit the 255-byte boundary.",
+            "Reject malformed host/player extensions including missing IDs, zero/17, signs, extra trailing data, excessive digits, unsupported tags and embedded NUL before I/O. Exercise case variants and slot 16 admission.",
+            "A writer metadata callback changes Work; the create callback still observes the original owned basename and the expected four-byte metadata record.",
+            "Actually save orders from a nonterminated basename slice, then reload/replay the fleet rename through five external/shared/overlapping/full-suffix input shapes. Require the same normalized family, player/turn, Unicode fleet name and closed handles."
+          ],
+          "baseline": "592 baseline files byte-identical after restoring 592 regeneration-only file changes; all 519 checkpoints match and none moved. Native baseline fully regenerated and compared; frozen original fixtures are untouched.",
+          "inventory": "Two actual raw-copy calls and the loader atoi retired; seven raw-copy calls remain (one core, four UI, two SDK output-message paths). 301 copy-migration records are recorded; initial-line identity audit remains separate.",
+          "remaining": "Other filename/buffer/service interfaces, scratch-storage and borrowed-return audit, wrapper formatting, typed file-selection Milestone D and final current-source/platform qualification remain open.",
+          "receipts": "dist/verification/live-cpp/l05ai/",
+          "source_sha256": {
+            "src/core/file.cpp": "33222906b103a698de6b8d3a42107e51b9cdd053d312cf532d1921e079bc610a",
+            "src/core/file.h": "823e5f105dfe295ca9b6673b191165802362ffb5acc69c1569a993435bd9edc3",
+            "src/core/log.cpp": "14f74d961e5641108af2c54518eae82de73e55f8cea63e59e515b2559d94b3d6",
+            "src/core/log.h": "13ec3b649ee7ba323124f62f8fca4e077d6b1eab4568cf534e149c1f3e8c1a07",
+            "tests/unit/test_save.cpp": "a1a43341da6b29a955e000bc9aeab42de8e36205bd4dabec5ea4ebfe63488e4e"
+          }
         }
       ],
       "bounded_formatting": {
@@ -954,6 +996,11 @@
         "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
       },
       "definition_filename_owner": {
+        "status": "complete; native Windows/Linux qualified at 8262a2c6",
+        "sites": 2,
+        "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
+      },
+      "game_file_inputs": {
         "status": "complete; locally verified; final native Windows/Linux qualification pending",
         "sites": 2,
         "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
@@ -995,7 +1042,8 @@
         "bounded-mutable-text-fitting-view",
         "owned-backup-directory-result",
         "readonly-sized-report-text",
-        "readonly-sized-definition-filename-input"
+        "readonly-sized-definition-filename-input",
+        "readonly-game-file-inputs-and-bounded-slot-parse"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -1542,8 +1590,13 @@
         "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
       },
       "definition_filename_view": {
-        "status": "complete; locally verified; final native Windows/Linux qualification pending",
+        "status": "complete; native Windows/Linux qualified at 8262a2c6",
         "interface": "GenNewGameFromFile(APPSESSION&, std::string_view pszFile); one production command-line caller plus eleven existing test/helper call sites consume the new header.",
+        "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
+      },
+      "game_file_input_views": {
+        "status": "complete; locally verified; final native Windows/Linux qualification pending",
+        "interface": "FLoadGame uses two string_views and an optional bounded host/player-slot parse; FWriteLogFile uses a string_view. Snapshots preserve stable values across state normalization and metadata callouts.",
         "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
       }
     },
@@ -1747,17 +1800,17 @@
         "qualified_run": 41348836830
       },
       "last_full_platform_qualification": {
-        "run_id": 41357206253,
-        "head": "60215fc63638d2267e97040ad7df72fad3895182",
-        "url": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41357206253",
+        "run_id": 41359970698,
+        "head": "8262a2c68ee424d96bdb3633b06f156a667f53eb",
+        "url": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41359970698",
         "status": "success; all five jobs complete",
         "linux_desktop": "156/156",
         "windows_sdl": "134/134",
         "linux_host": "29/29",
         "resource_sanitizers": "45/45",
         "independent_witnesses": "success",
-        "sdk_matrix": "sdk and both modes each pass21 contracts; no failed contracts. All18 diagnostic-only failures remain explicit.",
-        "scope": "Qualifies changes through60215fc6, including the report-path repair and corrected backup-directory fixture. Does not qualify the newer definition-input change."
+        "sdk_matrix": "sdk/both modes each pass 21 contracts, no failed contracts; 18 diagnostic-only failures remain explicit.",
+        "scope": "Qualifies all changes through 8262a2c6, including the owned definition-filename repair. Does not qualify the newer loader/orders input change."
       },
       "windows_backup_directory_fixture": {
         "batch": "L05ag native Windows backup-directory fixture qualification",
@@ -11529,7 +11582,8 @@
       "path": "src/core/file.cpp",
       "line": 177,
       "code": "strcpy(app.state.szBase, pszFileName);",
-      "disposition": "pending"
+      "disposition": "admitted-owned-game-file-input-L05ai",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
@@ -11764,7 +11818,8 @@
       "path": "src/core/log.cpp",
       "line": 1335,
       "code": "strcpy(app.state.szBase, pszFileBase);",
-      "disposition": "pending"
+      "disposition": "admitted-owned-game-file-input-L05ai",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "c_header",
@@ -23277,5 +23332,65 @@
       "path": "compat/win32/resourcegen.py",
       "disposition": "emits-nullptr-L01a"
     }
-  ]
+  ],
+  "restart_checkpoint": {
+    "date": "2026-11-01",
+    "reason": "User requested completion of the current batch and a progress report before restarting.",
+    "branch": "develop",
+    "batch": "L05ai: FLoadGame/FWriteLogFile owned inputs and bounded slot parsing",
+    "batch_parent": "8262a2c68ee424d96bdb3633b06f156a667f53eb",
+    "completed_stages": [
+      "L01: nullptr and aliases",
+      "L02: explicit C++ casts and headers",
+      "L03: typed initialization",
+      "L04: owned temporary allocations",
+      "L07: typed help/version values and obsolete callback/resource scaffolding"
+    ],
+    "active_stages": [
+      "L05: bounded/owned text and remaining formatting",
+      "L06: typed service interfaces and file-selection handoff"
+    ],
+    "pending_stage": "L08: reconcile retained primitives/macros and qualify final complete state",
+    "local_batch_verification": {
+      "desktop": 154,
+      "host": 29,
+      "native_regression_matches": 519,
+      "host_regression_matches": 519,
+      "existing_unused_storage_warnings_per_regression": 25,
+      "baseline_files_unchanged": 592,
+      "sanitized_save_cases": 26,
+      "sanitizer_repetitions": 2,
+      "windows_host_cases_under_Wine": 58,
+      "strict_MinGW_translation_units": 147,
+      "available_tutorial_checkpoints": "pass as part of desktop suite; full 80-page tutorial remains unfinished"
+    },
+    "remaining_raw_copy_calls": [
+      "src/core/race.cpp: error diagnostic Work <- szFile",
+      "src/ui/createui.cpp: blank-name fallback game.szName <- Base",
+      "src/ui/mdi.cpp: return-to-title Base <- Work",
+      "src/ui/mdi.cpp: startup fallback szFile <- Work",
+      "src/ui/scan.cpp: location-label append to szBuf[100]",
+      "compat/win32/src/list.cpp: LB_GETTEXT ABI output",
+      "compat/win32/src/toolbar.cpp: TB_GETBUTTONTEXT ABI output"
+    ],
+    "other_remaining": [
+      "Other readonly path/buffer/service interfaces",
+      "Audit remaining Work/Msg/scratch storage and borrowed returns",
+      "Wrapper formatting and manual bounds review",
+      "Typed file-selection Milestone D, D01-D06 (docs/CPP-MILESTONE-D.md)",
+      "Final retained-primitive/macro audit and full current-source/platform qualification"
+    ],
+    "restart_order": [
+      "Read this checkpoint and check git status/log; preserve unrelated title-modernized assets.",
+      "Check the latest unit.yml workflow for the published L05ai code commit. The preceding full green run is 41359970698 at 8262a2c6; it does not qualify L05ai. The ignored L05ai platform-ci.json receipt records the newly dispatched run.",
+      "Resolve any new platform failures before beginning a new cleanup batch.",
+      "Review the seven remaining raw-copy sites and take the next focused, characterized change; keep broader L05/L06 work open."
+    ],
+    "evidence": [
+      "docs/CPP-LIVE-TEXT-COPIES.json: game_file_inputs.verification",
+      "docs/CPP-LIVE-OWNED-TEXT.json: game_file_input_views",
+      "dist/verification/live-cpp/l05ai/ (ignored local logs and source hashes)"
+    ],
+    "goal_status": "Overall goal remains unfinished. This is a restart checkpoint, not a completion claim."
+  }
 }

@@ -1,5 +1,6 @@
 #include "common.h"
 #include <algorithm>
+#include <array>
 #include "appstate.h"
 #include "fleet_query_io.h"
 #include "text_io.h"
@@ -1332,15 +1333,21 @@ Done:
     }
 }
 
-std::int16_t FWriteLogFile(APPSESSION &app, char *pszFileBase, std::int16_t iPlayer) {
+std::int16_t FWriteLogFile(APPSESSION &app, std::string_view pszFileBase, std::int16_t iPlayer) {
     std::int16_t  iCur;
     std::uint8_t *lprts;
     RTLOGHDR rtlh;
     std::uint8_t rgbLogHdr[cbWireLogHdr];
     MSGPLR  *lpmp;
     std::int16_t  cb;
+    std::array<char, sizeof(APPGAMESTATE::szBase)> szBase{};
 
     iCur = 0;
+    // Template logging can call UI code before the file is created.
+    if (pszFileBase.empty() || CchCopyUtf8(std::span{szBase}, pszFileBase) < 0) {
+        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableCreateLogFile, {}).data(), win32::MB_ICONHAND);
+        return 0;
+    }
     if (iPlayer == app.state.idPlayer && !app.state.rgplr[iPlayer].fAi && app.state.hdrPrev.rt != rtLogPlayerZpq1) {
         cb = 26 - (12 - app.state.vrgZipProd[0].cpq) * 2;
         std::byte rgbPlayer[16 * cbWirePlayer], rgbZip[5 * cbWireZipProdQ];
@@ -1354,11 +1361,7 @@ std::int16_t FWriteLogFile(APPSESSION &app, char *pszFileBase, std::int16_t iPla
             WriteMemZpqRt(app, cb);
         }
     }
-    /* NATIVE: callers pass szBase itself, and strcpy onto itself is
-       undefined. */
-    if (pszFileBase != app.state.szBase) {
-        std::strcpy(app.state.szBase, pszFileBase);
-    }
+    CchCopyUtf8(std::span{app.state.szBase}, std::string_view{szBase.data()});
     if (!RecordIO().pfnFCreateFile(app, dtLog, iPlayer, nullptr)) {
         AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableCreateLogFile, {}).data(), win32::MB_ICONHAND);
         return 0;

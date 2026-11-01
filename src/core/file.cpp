@@ -1,5 +1,8 @@
 #include "common.h"
 #include <algorithm>
+#include <array>
+#include <charconv>
+#include <system_error>
 #include "appstate.h"
 #include "text_io.h"
 #include "heap_io.h"
@@ -128,7 +131,19 @@ invalid:
     if (FStarsRecoveryActive()) StarsThrowError(starsErrorFile, app.state.idsFileError);
 }
 
-std::int16_t FLoadGame(APPSESSION &app, const char *pszFileName, const char *pszExt) {
+static std::optional<std::int16_t> IplrFromExt(std::string_view pszExt) {
+    std::int32_t iplr = 0;
+
+    if (pszExt.size() == 3 && (pszExt[0] == 'h' || pszExt[0] == 'H') &&
+        (pszExt[1] == 's' || pszExt[1] == 'S') && (pszExt[2] == 't' || pszExt[2] == 'T')) return iplrNone;
+    if (pszExt.size() < 2 || pszExt.size() > 3 ||
+        (pszExt[0] != 'm' && pszExt[0] != 'M' && pszExt[0] != 'x' && pszExt[0] != 'X' && pszExt[0] != 'h' && pszExt[0] != 'H')) return std::nullopt;
+    const auto result = std::from_chars(pszExt.data() + 1, pszExt.data() + pszExt.size(), iplr);
+    if (result.ec != std::errc{} || result.ptr != pszExt.data() + pszExt.size() || iplr < 1 || iplr > 16) return std::nullopt;
+    return static_cast<std::int16_t>(iplr - 1);
+}
+
+std::int16_t FLoadGame(APPSESSION &app, std::string_view pszFileName, std::string_view pszExt) {
     std::int16_t  iplrSav;
     std::int16_t  cPlanetHist;
     STARPACK sp;
@@ -166,19 +181,27 @@ std::int16_t FLoadGame(APPSESSION &app, const char *pszFileName, const char *psz
     HB      *lphb; /* NATIVE: recover the Win16 heap-relative offset. */
     std::optional<std::int64_t> cbFile;
     std::int32_t ibFile;
+    std::array<char, sizeof(APPGAMESTATE::szBase)> szFileName{};
+    std::array<char, sizeof("hst")> szExt{};
+    std::optional<std::int16_t> iplrLoad;
 
     grf = 0;
     cturn = 0;
-    /* NATIVE: callers often pass szBase itself, and strcpy onto itself is
-       undefined. */
-    if (pszFileName != app.state.szBase) {
-        std::strcpy(app.state.szBase, pszFileName);
+    // Either input may borrow a shared buffer that loading and normalization overwrite.
+    iplrLoad = IplrFromExt(pszExt);
+    if (pszFileName.empty() || !iplrLoad || CchCopyUtf8(std::span{szFileName}, pszFileName) < 0 ||
+        CchCopyUtf8(std::span{szExt}, pszExt) < 0) {
+        FileError(app, idsCantOpenFile);
+        return 0;
     }
+    CchCopyUtf8(std::span{app.state.szBase}, std::string_view{szFileName.data()});
     app.state.gd.fFleetLinkValid = 0;
     StarsRecoveryScope scopeRecovery;
     try {
         if (!FOpenFile(app, dtXY, iplrNone, 32))
             goto LError;
+        // FOpenFile removes a supplied suffix; keep the same family for orders and MRU.
+        CchCopyUtf8(std::span{szFileName}, std::string_view{app.state.szBase});
         RecordIO().pfnReadRt(app);
         if (app.state.hdrCur.rt != rtGame || app.state.hdrCur.cb != cbWireGame) {
         XYCorrupt:
@@ -206,14 +229,12 @@ std::int16_t FLoadGame(APPSESSION &app, const char *pszFileName, const char *psz
         if (app.state.hdrCur.rt != rtEOF)
             goto XYCorrupt;
         RecordIO().pfnStreamClose(app);
-        if ((*pszExt == 'h' || *pszExt == 'H') && (pszExt[1] == 's' || pszExt[1] == 'S')) {
+        iPlayer = *iplrLoad;
+        if (iPlayer == iplrNone) {
             dt = 2;
-            iPlayer = iplrNone;
         } else {
             dt = 3;
             grf |= 0x3000;
-            iPlayer = std::atoi(pszExt + 1);
-            iPlayer--;
         }
         ResetMessages(app);
         std::fill_n(app.state.rgplr, app.state.game.cPlayer, PLAYER{});
@@ -755,7 +776,7 @@ LNextTurn:
             CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsNoteDYearsDataRead).data(), cturn);
             AlertIO().pfnAlertSz(app, app.state.szWork, win32::MB_ICONASTERISK);
         }
-        if (FSzPrefixNoCase(pszExt, "hst", 3))
+        if (iPlayer == iplrNone)
             goto DoneNow;
         if (!app.state.rgplr[iPlayer].fAi) {
             lpth = app.state.lpThings;
@@ -803,7 +824,7 @@ LNextTurn:
             }
         }
         if (!app.state.gd.fDontDoLogFiles) {
-            CchSprintf(app.state.szWork, "%s.x%s", pszFileName, pszExt + 1);
+            CchSprintf(app.state.szWork, "%s.x%s", szFileName.data(), std::string_view{szExt.data()}.substr(1));
             if (!FLoadLogFile(app, app.state.szWork) || !FRunLogFile(app)) {
                 AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsPlayerLogFileAppearsCorruptUnableLoad, {}).data(), win32::MB_ICONHAND);
                 goto LError;
@@ -833,7 +854,7 @@ LNextTurn:
 DoneNow:
         app.state.idPlayer = iPlayer;
         if (app.state.idPlayer != iplrNone && !app.state.rgplr[app.state.idPlayer].fAi) {
-            AddMRUFile(app, pszFileName, pszExt);
+            AddMRUFile(app, szFileName.data(), szExt.data());
         }
         return 1;
     } catch (const StarsError &) {

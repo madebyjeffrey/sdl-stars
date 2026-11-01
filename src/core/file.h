@@ -14,7 +14,7 @@ extern char mpishdefishTutor[6];
 std::optional<std::size_t> FReadUserString(APPSESSION &app, std::span<const std::byte> lpb, std::span<char> psz);
 std::int16_t FReadShDef(APPSESSION &app, const std::uint8_t *lprt, SHDEF *lpshdef, std::int16_t iplrLoad, std::size_t cb);
 void    ReadRtPlr(APPSESSION &app, PLAYER *pplr, std::uint8_t *pbIn, std::size_t cb);
-std::int16_t FLoadGame(APPSESSION &app, const char *pszFileName, const char *pszExt);
+std::int16_t FLoadGame(APPSESSION &app, std::string_view pszFileName, std::string_view pszExt);
 std::int16_t FReadPlanet(APPSESSION &app, std::int16_t iPlayer, PLANET *lppl, std::int16_t fHistory, std::int16_t fPreInited);
 std::int16_t FReadFleet(APPSESSION &app, FLEET *lpfl);
 std::int16_t UnpackBattlePlan(APPSESSION &app, std::uint8_t *lpb, BTLPLAN *lpbtlplan, std::int16_t iplan, std::size_t cb);

@@ -11,6 +11,161 @@
 #include <iterator>
 #include "record_io.h"
 
+static int cFileInputCalls;
+static int cFileInputDirty;
+static std::string szFileInputAttempt;
+static void CaptureFileInput(APPSESSION &, const char *psz, MdOpenFlags) {
+    ++cFileInputCalls;
+    szFileInputAttempt = psz;
+    StarsThrowError(starsErrorFile, idsCantOpenFile);
+}
+static std::int16_t RejectFileInputCreate(APPSESSION &app, DtFileType, std::int16_t, char *) {
+    ++cFileInputCalls;
+    szFileInputAttempt = app.state.szBase;
+    return 0;
+}
+static void MutateFileInputOnDirty(APPSESSION &app, std::int16_t fDirty) {
+    if (fDirty) {
+        ++cFileInputDirty;
+        CchCopyUtf8(std::span{app.state.szWork}, "changed-by-metadata");
+    }
+    DirtyGame(app, fDirty);
+}
+
+static void test_LoadGame_filename_admission(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    TEST_ASSERT(FStarsTestInit(app));
+    RECORDIO io = RecordIO();
+    io.pfnStreamOpen = CaptureFileInput;
+    RECORDIOSCOPE recordScope(io);
+    char szBad[] = "\xff";
+    app.state.ini.fLogging = 1;
+    TEST_ASSERT(CchCopyUtf8(std::span{app.state.szBase}, "preserved") >= 0);
+    app.state.gd.fFleetLinkValid = 1;
+    app.state.game.turn = 73;
+    cFileInputCalls = 0;
+    TEST_CHECK(!FLoadGame(app, szBad, "hst"));
+    TEST_ASSERT_(cFileInputCalls == 0, "invalid filename reached open as %s", szFileInputAttempt.c_str());
+    TEST_CHECK(std::string_view(app.state.szBase) == "preserved");
+    TEST_CHECK(app.state.gd.fFleetLinkValid && app.state.game.turn == 73);
+    const std::string szOversize(256, 'a');
+    const std::array<std::string_view, 3> rgszBad = {std::string_view{}, std::string_view{"a\0b", 3}, szOversize};
+    for (const auto sz : rgszBad) {
+        cFileInputCalls = 0;
+        TEST_CHECK(!FLoadGame(app, sz, "hst"));
+        TEST_CHECK(cFileInputCalls == 0 && std::string_view(app.state.szBase) == "preserved");
+        TEST_CHECK(app.state.gd.fFleetLinkValid && app.state.game.turn == 73);
+    }
+    const std::array<std::string_view, 13> rgszExtBad = {"", "hs", "hsx", "hstx", "m0", "m17", "m-1", "m+1", "m1x", "m999999999999", "r1", "\xff", std::string_view{"m1\0x", 4}};
+    for (const auto sz : rgszExtBad) {
+        cFileInputCalls = 0;
+        TEST_CHECK(!FLoadGame(app, "preserved", sz));
+        TEST_CHECK(cFileInputCalls == 0 && std::string_view(app.state.szBase) == "preserved");
+        TEST_CHECK(app.state.gd.fFleetLinkValid && app.state.game.turn == 73);
+    }
+    const std::string szMax(255, 'a');
+    for (const auto sz : std::array<std::string_view, 7>{"hst", "HST", "m1", "M16", "x1", "h16", "m01"}) {
+        cFileInputCalls = 0;
+        TEST_CHECK(!FLoadGame(app, szMax, sz));
+        TEST_CHECK(cFileInputCalls == 1 && szFileInputAttempt == szMax + ".xy");
+        TEST_CHECK(app.state.hf == -1 && !FStarsRecoveryActive() && !FStarsErrorPending());
+    }
+}
+
+static void test_WriteLog_filename_admission(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    TEST_ASSERT(FStarsTestInit(app));
+    RECORDIO io = RecordIO();
+    io.pfnFCreateFile = RejectFileInputCreate;
+    RECORDIOSCOPE recordScope(io);
+    char szBad[] = "\xff";
+    app.state.idPlayer = iplrNone;
+    TEST_ASSERT(CchCopyUtf8(std::span{app.state.szBase}, "preserved") >= 0);
+    cFileInputCalls = 0;
+    TEST_CHECK(!FWriteLogFile(app, szBad, 0));
+    TEST_ASSERT(cFileInputCalls == 0);
+    TEST_CHECK(std::string_view(app.state.szBase) == "preserved");
+    app.state.idPlayer = 0;
+    app.state.game.cPlayer = 1;
+    app.state.rgplr[0].fAi = 0;
+    app.state.vrgZipProd[0] = ZIPPRODQ{};
+    app.state.rgplr[0].zpq1.fNoResearch = 1;
+    app.state.hdrPrev.rt = rtEOF;
+    app.state.fLogOff = 0;
+    app.state.imemLogCur = 0;
+    const std::string szOversize(256, 'a');
+    const std::array<std::string_view, 4> rgszBad = {std::string_view{}, "\xff", std::string_view{"a\0b", 3}, szOversize};
+    for (const auto sz : rgszBad) {
+        cFileInputCalls = 0;
+        app.state.game.fDirty = 0;
+        TEST_CHECK(!FWriteLogFile(app, sz, 0));
+        TEST_CHECK(cFileInputCalls == 0 && std::string_view(app.state.szBase) == "preserved");
+        TEST_CHECK(app.state.imemLogCur == 0 && app.state.hdrPrev.rt == rtEOF && !app.state.game.fDirty);
+    }
+    RECORDIO ioDirty = RecordIO();
+    ioDirty.pfnDirtyGame = MutateFileInputOnDirty;
+    RECORDIOSCOPE dirtyScope(ioDirty);
+    TEST_ASSERT(CchCopyUtf8(std::span{app.state.szWork}, "owned-before-metadata") >= 0);
+    cFileInputCalls = cFileInputDirty = 0;
+    TEST_CHECK(!FWriteLogFile(app, app.state.szWork, 0));
+    TEST_CHECK(cFileInputCalls == 1 && cFileInputDirty == 1);
+    TEST_CHECK(szFileInputAttempt == "owned-before-metadata");
+    TEST_CHECK(app.state.imemLogCur == 4 && app.state.game.fDirty);
+}
+
+static void test_LoadGame_owned_inputs(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    char szDir[cbTestPath];
+    TEST_ASSERT(FStarsTestInit(app));
+    TEST_ASSERT(FStarsTestDir("owned-load-inputs", szDir, sizeof(szDir)));
+    TEST_ASSERT(FStarsTestNewGame(app, szDir, 12345, nullptr, 0));
+    const std::string szBase = app.state.szBase;
+    TEST_ASSERT(FStarsTestLoadPlayer(app, 0));
+    TEST_ASSERT(app.state.cFleet != 0);
+    const auto id = app.state.rglpfl[0]->id;
+    TEST_ASSERT(LogChangeName(app, grobjFleet, id, "Orders-Ω"));
+    const std::string szGuarded = szBase + "!";
+    TEST_ASSERT(FWriteLogFile(app, std::string_view{szGuarded.data(), szBase.size()}, 0));
+    TEST_CHECK(FFileExists((szBase + ".x1").c_str()));
+    for (int i = 0; i < 5; ++i) {
+        DestroyCurGame(app);
+        std::string szFull = szBase + ".m1";
+        std::string_view pszFileName{szGuarded.data(), szBase.size()};
+        std::string_view pszExt{"m1!", 2};
+        if (i == 1 || i == 3) {
+            TEST_ASSERT(CchCopyUtf8(std::span{app.state.szBase}, i == 3 ? szFull : szBase) >= 0);
+            pszFileName = app.state.szBase;
+            if (i == 3) pszExt = {app.state.szBase + szBase.size() + 1, 2};
+        } else if (i == 2) {
+            TEST_ASSERT(CchCopyUtf8(std::span{app.state.szWork}, szBase) >= 0);
+            pszFileName = app.state.szWork;
+        } else if (i == 4) {
+            pszFileName = szFull;
+        }
+        TEST_ASSERT(FLoadGame(app, pszFileName, pszExt));
+        TEST_CHECK(app.state.game.turn == 0 && app.state.idPlayer == 0);
+        TEST_CHECK(std::string_view(app.state.szBase) == szBase);
+        TEST_CHECK(std::string_view(PszGetFleetName(app, id).data()) == "Orders-Ω");
+        TEST_CHECK(app.state.hf == -1 && !FStarsRecoveryActive() && !FStarsErrorPending());
+    }
+    DestroyCurGame(app);
+}
+
 static bool fCloseSizeSource;
 static int cClosedSizeSources;
 static void OpenSizeSource(APPSESSION &app, const char *psz, MdOpenFlags md) {
@@ -1003,7 +1158,10 @@ static void test_WriteRtThing_bytes(void) {
     StreamClose(app); TEST_CHECK(RemoveNativeFile(szFile) == 0);
 }
 
-TEST_LIST = {{"load rejects unavailable size instead of matching error sentinels", test_Load_requires_size_result}, {"thing records retain exact encrypted bytes and seed consumption", test_WriteRtThing_bytes},
+TEST_LIST = {{"loader admits filenames before state and I/O changes", test_LoadGame_filename_admission},
+             {"orders writer admits filenames before state and I/O changes", test_WriteLog_filename_admission},
+             {"loader inputs survive shared-buffer changes and replay complete orders", test_LoadGame_owned_inputs},
+             {"load rejects unavailable size instead of matching error sentinels", test_Load_requires_size_result}, {"thing records retain exact encrypted bytes and seed consumption", test_WriteRtThing_bytes},
              {"player partial record keeps exact bytes and seed consumption", test_WriteRtPlr_partial_bytes},
              {"planet history preserves exact encrypted bytes", test_WritePlanet_minimal_history_bytes},
              {"planet reads retain partial updates and physical scratch", test_FReadPlanet_partial_publication},

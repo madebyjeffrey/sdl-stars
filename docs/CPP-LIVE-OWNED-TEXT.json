@@ -6492,5 +6492,15 @@
     "owner": "Local std::string snapshot, taken before any shared filename/display staging or logging. The full filename is passed synchronously to StreamOpen; no view escapes.",
     "limits": "Filename validation is whole UTF-8 without NUL. Display prefix capacity is independent from I/O. Logging still requires its whole stem to fit the existing 255-byte session basename; that storage limitation remains part of the broader path/storage audit.",
     "verification": "docs/CPP-LIVE-TEXT-COPIES.json: definition_filename_owner.verification"
+  },
+  "game_file_input_views": {
+    "status": "complete; locally verified; final native Windows/Linux qualification pending",
+    "interfaces": [
+      "FLoadGame(APPSESSION&, string_view pszFileName, string_view pszExt)",
+      "FWriteLogFile(APPSESSION&, string_view pszFileBase, int16_t iPlayer)"
+    ],
+    "ownership": "Synchronous readonly input; stack snapshots sized from the actual basename and valid extension limits own data before shared normalization, metadata or I/O. The normalized family remains stable through orders replay and MRU. No input view escapes.",
+    "limits": "Basenames are nonempty whole UTF-8 without NUL and fit the existing 255-byte session field. Extensions select host or slots 1-16 through an optional bounded parse.",
+    "verification": "docs/CPP-LIVE-TEXT-COPIES.json: game_file_inputs.verification"
   }
 }

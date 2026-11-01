@@ -6,6 +6,15 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `FLoadGame` and `FWriteLogFile` now admit complete UTF-8 basenames before
+  changing load state, appending template orders or invoking file I/O. Their
+  raw copies could overrun the shared basename or stage malformed text. Owned
+  snapshots also keep filenames stable across shared-buffer changes and writer
+  callbacks. The loader checks host/player identifiers before loading, and
+  consistently uses the normalized game family for orders and recent files.
+  Valid record bytes, storage widths and game rules remain unchanged. No native
+  regression checkpoint moved after regeneration and comparison.
+
 - `GenNewGameFromFile` now owns its source filename before logging changes
   shared buffers. With logging enabled, the command-line basename could lose
   its extension before the open, and a work-buffer input could become version

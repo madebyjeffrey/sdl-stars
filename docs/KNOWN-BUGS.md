@@ -17,6 +17,21 @@ J/JRC3/JRC4 fix claims below come from the supplied list and are not independent
 verified release history. See [WIN16-PARITY.md](WIN16-PARITY.md) for native changes
 and [ROADMAP.md](ROADMAP.md) for the post-tag work.
 
+## Game-file inputs staged before validation — fixed on develop
+
+`FLoadGame` and `FWriteLogFile` copied unvalidated input into `szBase[256]`.
+The writer could also append a production-template record before discovering
+that its filename was unusable. Actual parent tests observe malformed UTF-8
+reaching the open/create callbacks after staging. Local whole-input snapshots
+now precede those effects and remain stable when callbacks change shared text.
+The loader validates its host/player extension with a bounded integer parser
+before any loading; unsupported tags, zero/out-of-range slots, overflow,
+trailing data and embedded NUL fail early. Its normalized family name is owned
+for later orders and MRU use, avoiding dependence on the caller's buffer.
+Actual orders/reload tests cover external and shared inputs, overlapping name
+and extension storage and supplied suffixes. Record widths and game rules stay;
+regenerating and comparing the native baseline moved no checkpoint.
+
 ## Definition filename changed by logging — fixed on develop
 
 `GenNewGameFromFile` borrowed its input from the caller, then reused `szBase`
