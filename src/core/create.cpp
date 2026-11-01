@@ -991,7 +991,7 @@ std::int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
     char   *lpb;
     char   *lpbDef;
     std::int16_t cb;
-    std::int32_t cbFile;
+    std::optional<std::int64_t> cbFile;
     char   *pchT;
     AiRace  idAi;
     std::int16_t lvlAi;
@@ -1012,11 +1012,11 @@ std::int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
         app.state.game = {};
         RecordIO().pfnStreamOpen(app, pszFile, mdRead);
         cbFile = CbFileSize(app.state.hf);
-        if (cbFile < 0 || cbFile >= 16000) {
+        if (!cbFile || *cbFile >= 16000) {
             FileError(app, idsUniverseCreationFileAppearsInvalid);
             goto LError;
         }
-        cb = static_cast<std::int16_t>(cbFile);
+        cb = static_cast<std::int16_t>(*cbFile);
         lpbDef = LpAlloc<char>(app, cb + 1, htPerm);
         app.state.lpbDefMac = lpbDef + cb;
         RgFromStream(app, std::as_writable_bytes(std::span{lpbDef, static_cast<std::size_t>(cb) + 1}).first(static_cast<std::size_t>(cb)));

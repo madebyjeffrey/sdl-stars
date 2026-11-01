@@ -110,9 +110,9 @@ static void TestNativeOpenModes(void) {
     nfr = HfOpenFile(szFile, {.mdAccess = NATIVEFILEACCESS::readWrite, .mdShare = NATIVEFILESHARE::exclusive, .fCreate = true, .fTruncate = true});
     hfFile = nfr.hf; fMissing = nfr.fMissing;
     TEST_ASSERT(hfFile >= 3 && !fMissing);
-    TEST_CHECK(FFileSize(hfFile) == 0);
+    TEST_CHECK(CbFileSize(hfFile) == 0);
     errno = 0;
-    TEST_CHECK(!FFileSize(-1) && errno == EBADF);
+    TEST_CHECK(!CbFileSize(-1) && errno == EBADF);
     TEST_CHECK(CbWriteFile(hfFile, std::as_bytes(std::span{"abcdef"}).first(6)) == 6);
     CloseFile(hfFile);
     nfr = HfOpenFile(szFile, {.mdShare = NATIVEFILESHARE::denyWrite});
@@ -127,7 +127,7 @@ static void TestNativeOpenModes(void) {
     TEST_ASSERT(hfFile >= 3 && !fMissing);
     TEST_CHECK(CbFileSize(hfFile) == 6 && CbWriteFile(hfFile, std::as_bytes(std::span{"Z"}).first(1)) == 1);
     CloseFile(hfFile);
-    TEST_CHECK(!FFileSize(hfFile) && errno == EBADF);
+    TEST_CHECK(!CbFileSize(hfFile) && errno == EBADF);
     OutputFileString(szFile, "gh");
     nfr = HfOpenFile(szFile, {.mdShare = NATIVEFILESHARE::denyWrite});
     hfFile = nfr.hf; fMissing = nfr.fMissing;

@@ -165,6 +165,8 @@ std::int16_t FLoadGame(APPSESSION &app, const char *pszFileName, const char *psz
     std::int16_t  fTwo;
     RTHISTHDR rthh;
     HB      *lphb; /* NATIVE: recover the Win16 heap-relative offset. */
+    std::optional<std::int64_t> cbFile;
+    std::int32_t ibFile;
 
     grf = 0;
     cturn = 0;
@@ -717,7 +719,10 @@ LNextTurn:
             AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsGameFileAppearsCorruptUnableLoadFile, nullptr), win32::MB_ICONHAND);
             goto LError;
         }
-        if (CbFileSize(app.state.hf) != LSeekFile(app.state.hf, 0, NATIVESEEKORIGIN::current)) {
+        cbFile = CbFileSize(app.state.hf);
+        ibFile = LSeekFile(app.state.hf, 0, NATIVESEEKORIGIN::current);
+        if (!cbFile || ibFile < 0) goto Corrupt;
+        if (*cbFile != ibFile) {
             RecordIO().pfnReadRt(app);
             if (app.state.hdrCur.rt == rtBOF) {
                 app.state.game.turn = BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).turn();

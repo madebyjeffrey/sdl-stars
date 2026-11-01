@@ -145,8 +145,7 @@ int ICloseNativeDir(NATIVEDIR *pdir);
 std::optional<std::size_t> CbNativeReadLegacy(std::int16_t hf, std::span<std::byte> rgb);
 std::optional<std::size_t> CbNativeWriteLegacy(std::int16_t hf, std::span<const std::byte> rgb);
 std::int32_t LNativeSeekLegacy(std::int16_t hf, std::int32_t ib, NATIVESEEKORIGIN iOrigin);
-std::optional<std::int64_t> FNativeSizeLegacy(std::int16_t hf);
-std::int32_t CbNativeSizeLegacy(std::int16_t hf);
+std::optional<std::int64_t> CbNativeSizeLegacy(std::int16_t hf);
 void CloseNativeLegacy(std::int16_t hf);
 
 

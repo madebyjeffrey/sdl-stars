@@ -254,7 +254,8 @@ void OutputFileString(const char *szFile, std::string_view sz) {
 void StarsCopyFile(APPSESSION &app, const char *szSrc, const char *szDst) {
     char     rgb[2048];
     std::int16_t  hfDst;
-    std::int32_t  cb;
+    std::int64_t cb;
+    std::optional<std::int64_t> cbFile;
 
     hfDst = -1;
     StarsRestore<std::int16_t> restoreSilent(app.state.fFileErrSilent);
@@ -266,14 +267,19 @@ void StarsCopyFile(APPSESSION &app, const char *szSrc, const char *szDst) {
         hfDst = HfOpenFile(szDst, {.mdAccess = NATIVEFILEACCESS::readWrite, .mdShare = NATIVEFILESHARE::exclusive, .fCreate = true, .fTruncate = true}).hf;
         if (hfDst == -1)
             goto LStreamError;
-        for (cb = CbFileSize(app.state.hf); cb > 2048; cb -= 2048) {
+        cbFile = CbFileSize(app.state.hf);
+        if (!cbFile) {
+            FileError(app, idsGameFileAppearsCorruptUnableLoadFile);
+            goto LStreamError;
+        }
+        for (cb = *cbFile; cb > 2048; cb -= 2048) {
             RgFromStream(app, std::as_writable_bytes(std::span{rgb}).first(static_cast<std::size_t>(0x800)));
             if (CbWriteFile(hfDst, std::as_bytes(std::span{rgb}).first(static_cast<std::size_t>(0x800))) != 0x800)
                 goto LStreamError;
         }
         if (cb != 0) {
-            RgFromStream(app, std::as_writable_bytes(std::span{rgb}).first(static_cast<std::size_t>(LOWORD(cb))));
-            CbWriteFile(hfDst, std::as_bytes(std::span{rgb}).first(static_cast<std::size_t>(LOWORD(cb))));
+            RgFromStream(app, std::as_writable_bytes(std::span{rgb}).first(static_cast<std::size_t>(cb)));
+            CbWriteFile(hfDst, std::as_bytes(std::span{rgb}).first(static_cast<std::size_t>(cb)));
         }
     } catch (const StarsError &) {
     }

@@ -11,6 +11,41 @@
 #include <iterator>
 #include "record_io.h"
 
+static bool fCloseSizeSource;
+static int cClosedSizeSources;
+static void OpenSizeSource(APPSESSION &app, const char *psz, MdOpenFlags md) {
+    StreamOpen(app, psz, md);
+    fCloseSizeSource = std::string_view(psz).ends_with(".m1");
+}
+static void ReadSizeSource(APPSESSION &app) {
+    ReadRt(app);
+    if (fCloseSizeSource && app.state.hdrCur.rt == rtEOF) {
+        StreamClose(app);
+        cClosedSizeSources++;
+    }
+}
+static void test_Load_requires_size_result(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    char szDir[cbTestPath];
+
+    TEST_ASSERT(FStarsTestInit(app));
+    TEST_ASSERT(FStarsTestDir("load-size-result", szDir, sizeof(szDir)));
+    TEST_ASSERT(FStarsTestNewGame(app, szDir, 12345, nullptr, 0));
+    DestroyCurGame(app);
+    fCloseSizeSource = false; cClosedSizeSources = 0;
+    RECORDIO io = RecordIO();
+    io.pfnStreamOpen = OpenSizeSource;
+    io.pfnReadRt = ReadSizeSource;
+    RECORDIOSCOPE recordScope(io);
+    TEST_CHECK(!FLoadGame(app, app.state.szBase, "m1"));
+    TEST_CHECK(cClosedSizeSources == 1 && app.state.hf == -1 && !FStarsErrorPending());
+}
+
 // ScanCloakedStarbase puts a player-0 fleet with a dScanRange2 penetrating
 // scanner 100 ly from player 1's homeworld, whose starbase design has
 // lVisible lVis2, and returns what SetVisPFFleets lets player 0 see of it.
@@ -968,7 +1003,7 @@ static void test_WriteRtThing_bytes(void) {
     StreamClose(app); TEST_CHECK(RemoveNativeFile(szFile) == 0);
 }
 
-TEST_LIST = {{"thing records retain exact encrypted bytes and seed consumption", test_WriteRtThing_bytes},
+TEST_LIST = {{"load rejects unavailable size instead of matching error sentinels", test_Load_requires_size_result}, {"thing records retain exact encrypted bytes and seed consumption", test_WriteRtThing_bytes},
              {"player partial record keeps exact bytes and seed consumption", test_WriteRtPlr_partial_bytes},
              {"planet history preserves exact encrypted bytes", test_WritePlanet_minimal_history_bytes},
              {"planet reads retain partial updates and physical scratch", test_FReadPlanet_partial_publication},

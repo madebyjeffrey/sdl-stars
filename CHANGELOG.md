@@ -6,6 +6,12 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `FLoadGame` now rejects failed size/position queries instead of accepting two
+  `-1` error results as matching EOF positions. `CbFileSize` returns an optional
+  full-width count, and `StarsCopyFile` rejects an unavailable count before
+  constructing a byte range. Existing successful loads/copies, saved widths and
+  host turn results are unchanged.
+
 - `FSetUpBatchProcessing` now reads the full returned file size into
   session-owned storage. Previously its signed 16-bit lowword conversion wrapped
   lists at 64 KiB and could place the cursor end before its buffer at 32 KiB.

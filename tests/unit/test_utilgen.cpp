@@ -6,8 +6,52 @@
 #include "callbackcontext.h"
 
 #include "stars_test.h"
+#include "record_io.h"
 #include <string>
 #include <limits>
+
+static void OpenClosedCopySource(APPSESSION &app, const char *psz, MdOpenFlags md) {
+    StreamOpen(app, psz, md);
+    StreamClose(app);
+}
+static void test_Copy_size_result(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    char szDir[cbTestPath], szSrc[cbTestPath + 64], szDst[cbTestPath + 64];
+    std::string rgb(65539, '\xa5');
+
+    TEST_ASSERT(FStarsTestInit(app));
+    TEST_ASSERT(FStarsTestDir("copy-size-result", szDir, sizeof(szDir)));
+    CchSnprintf(std::span{szSrc}, "%s%ssource.bin", szDir, szDirSep);
+    CchSnprintf(std::span{szDst}, "%s%sdestination.bin", szDir, szDirSep);
+    rgb[0] = 's'; rgb[1] = 0; rgb.back() = '\xff';
+    {
+        NATIVEFILEOWNER lpfile(PfNativeOpen(szSrc, NATIVEFILEMODE::writeTruncate), ICloseNativeFile);
+        TEST_ASSERT(lpfile && CbWriteNativeFile(lpfile.get(), std::as_bytes(std::span{rgb})) == rgb.size());
+    }
+    StarsCopyFile(app, szSrc, szDst);
+    {
+        NATIVEFILEOWNER lpfile(PfNativeOpen(szDst, NATIVEFILEMODE::read), ICloseNativeFile);
+        std::string rgbCopy(rgb.size(), '\0');
+        TEST_ASSERT(lpfile);
+        TEST_CHECK(CbReadNativeFile(lpfile.get(), std::as_writable_bytes(std::span{rgbCopy})) == rgbCopy.size());
+        TEST_CHECK(rgbCopy == rgb);
+    }
+    RECORDIO io = RecordIO();
+    io.pfnStreamOpen = OpenClosedCopySource;
+    RECORDIOSCOPE recordScope(io);
+    app.state.fFileErrSilent = 0;
+    StarsCopyFile(app, szSrc, szDst);
+    TEST_CHECK(app.state.hf == -1 && !app.state.fFileErrSilent && !FStarsErrorPending());
+    TEST_CHECK(app.state.idsFileError == idsGameFileAppearsCorruptUnableLoadFile);
+    TEST_CHECK(FNativeFileSize(szSrc) == rgb.size() && FNativeFileSize(szDst) == 0);
+    NATIVEFILEOWNER lpfile(PfNativeOpen(szDst, NATIVEFILEMODE::read), ICloseNativeFile);
+    TEST_CHECK(lpfile != nullptr);
+}
 
 static void test_CParseNumbers_contract(void) {
     struct CASE {
@@ -371,7 +415,7 @@ static void test_XorFileBuf_seed_alias_order(void) {
     TEST_CHECK(lSeed1 == 645001258 && lSeed2 == -720506926);
 }
 
-TEST_LIST = {{"numeric parser preserves grammar, capacity and partial assignment", test_CParseNumbers_contract}, {"numeric text retains widths, signs, grouping and scaled boundaries", test_NumberText_boundaries},
+TEST_LIST = {{"file copy uses full size and rejects unavailable metadata", test_Copy_size_result}, {"numeric parser preserves grammar, capacity and partial assignment", test_CParseNumbers_contract}, {"numeric text retains widths, signs, grouping and scaled boundaries", test_NumberText_boundaries},
              {"numeric text values survive subsequent lookups", test_NumberText_owned},
              {"Roman numerals retain all int16 values within actual capacity", test_IntToRoman_bounded},
              {"XorFileBuf retains RHS-before-destination evaluation", test_XorFileBuf_seed_alias_order},

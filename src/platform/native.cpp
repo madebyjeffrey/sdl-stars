@@ -205,8 +205,7 @@ NATIVEFILEOPENRESULT HfOpenFile(const char *szFile, NATIVEFILEOPENOPTIONS nfo) {
 std::optional<std::size_t> CbReadFile(std::int16_t hf, std::span<std::byte> rg) { return CbNativeReadLegacy(hf, rg); }
 std::optional<std::size_t> CbWriteFile(std::int16_t hf, std::span<const std::byte> rg) { return CbNativeWriteLegacy(hf, rg); }
 std::int32_t LSeekFile(std::int16_t hf, std::int32_t l, NATIVESEEKORIGIN iOrigin) { return LNativeSeekLegacy(hf, l, iOrigin); }
-std::optional<std::int64_t> FFileSize(std::int16_t hf) { return FNativeSizeLegacy(hf); }
-std::int32_t CbFileSize(std::int16_t hf) { return CbNativeSizeLegacy(hf); }
+std::optional<std::int64_t> CbFileSize(std::int16_t hf) { return CbNativeSizeLegacy(hf); }
 void CloseFile(std::int16_t hf) { CloseNativeLegacy(hf); }
 std::int16_t FFileExists(const char *szFile) { return IAccessNativePath(szFile, 0) == 0; }
 std::int16_t FFileReadOnly(const char *szFile) { return IAccessNativePath(szFile, 2) != 0; }

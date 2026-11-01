@@ -489,13 +489,14 @@
         "bounded-readonly-memory-cursors-and-tutorial-record-sources",
         "readonly-numeric-parser-output-spans-and-optional-counts",
         "bounded-batch-filename-lines-and-strict-path-admission",
-        "full-optional-token-size-and-owned-batch-source-indices"
+        "full-optional-token-size-and-owned-batch-source-indices",
+        "all-token-size-callers-use-optional-full-width-results"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
         "remaining-native-file-path-results",
         "typed-file-selection-Milestone-D",
-        "definition-line-parsing-and-remaining-token-size-audit"
+        "definition-line-parsing-and-storage-audit"
       ],
       "user_string_codecs": {
         "status": "complete; verified",
@@ -738,6 +739,22 @@
           "baseline": "Full native baseline regenerated and compared against prior fixtures: all 519 checkpoints match, including 25 existing unused-storage warnings. No scenario moved at any turn. Preserved 592 regeneration-only fixture differences. Native/frozen-original baseline bytes, unit goldens, saved layouts/widths, RNG, qsort order and binary64 boundaries remain unchanged.",
           "remaining": "Definition-line parsing/storage, remaining narrow token-size callers, other buffer interfaces, Milestone D, L05 remaining text and L08 final qualification remain active.",
           "receipts": "dist/verification/live-cpp/l06p/"
+        },
+        {
+          "batch": "L06q returned full-width token sizes and failed-query rejection",
+          "debug_build": "Pass; no warnings. Compiler/source policy covers 158 owned sources, 159 variants and 161 standalone headers in both orders.",
+          "desktop": "153/153, including the actual closed-at-EOF loader fixture, exact binary copy and failed-size cleanup, all 29 leak checks and available SDL tutorial checkpoints.",
+          "host_units": "28/28",
+          "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+          "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+          "windows": "147/147 owned production units and five actual changed/consumer test units compile with strict MinGW. Wine passes 23 save, 14 utility, four native-file, 13 recovery and seven turn cases (61 total). Native Windows desktop and actual Linux final qualification remain pending.",
+          "characterization": "Before migration, the actual loader open/read provider closes only the .m1 token at final EOF. The parent returns success and fails the permanent rejection assertion; the fixed source rejects it and retains exactly one injected close, no handle and no pending error.",
+          "interfaces": "Original CbFileSize/CbNativeSizeLegacy names return optional<int64_t>; all four game queries and twelve existing test expressions consume that contract. Temporary FFileSize/FNativeSizeLegacy names, the narrow int32 service and its range cast are removed from live sources. The original definition limit is checked before its int16 count; int16 tokens and the existing seek-position ABI remain.",
+          "failure_contract": "Game EOF validation requires an available size and a nonnegative position. Copy rejects unavailable size before any tail span; it retains error ID, silent-error restoration, source provider close and destination owner cleanup. The transient copy count is int64 and each actual tail stays within its 2048-byte buffer; no LOWORD recovery of negative counts remains.",
+          "copy_vectors": "The real copy path retains all 65539 binary bytes, including embedded NUL/high bytes and the final three-byte tail. An actual open-then-close provider tests failed metadata, preserved source length, empty closed destination, restored silent flag and no pending failure.",
+          "baseline": "Full native baseline regenerated and compared to prior fixtures: 519 matches, 25 existing unused-storage warnings. No scenario moved at any turn. Preserved 592 regeneration-only fixture differences. Native/frozen-original baseline bytes, unit goldens, saved layouts/widths, game RNG, qsort order and binary64 boundaries remain unchanged.",
+          "remaining": "Definition-line parsing/storage, other buffer interfaces, Milestone D, L05 remaining text and L08 final qualification remain active.",
+          "receipts": "dist/verification/live-cpp/l06q/"
         }
       ],
       "roman_output": {
@@ -844,6 +861,11 @@
         "status": "complete; verified",
         "evidence": "docs/CPP-LIVE-FILE-SERVICES.json",
         "interface": "Full optional token size, session-owned bytes and bounded cursor/end indices; original lowword/arena source removed."
+      },
+      "token_size_results": {
+        "status": "complete; verified",
+        "evidence": "docs/CPP-LIVE-FILE-SERVICES.json",
+        "interface": "All original CbFileSize callers consume optional full-width counts; redundant alternate API and narrow result implementations are removed."
       }
     },
     {

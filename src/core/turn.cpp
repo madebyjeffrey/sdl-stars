@@ -615,7 +615,7 @@ std::int16_t FSetUpBatchProcessing(APPSESSION &app) {
     StarsRecoveryScope scopeRecovery;
     try {
         RecordIO().pfnStreamOpen(app, app.state.szBase, mdRead);
-        cb = FFileSize(app.state.hf);
+        cb = CbFileSize(app.state.hf);
         if (!cb) {
             FileError(app, idsGameFileAppearsCorruptUnableLoadFile);
             StarsThrowError(starsErrorFile, app.state.idsFileError);

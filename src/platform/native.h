@@ -63,8 +63,7 @@ std::optional<std::size_t> CbWriteFile(std::int16_t hf, std::span<const std::byt
 // Seek from the named origin and return the new position.
 std::int32_t LSeekFile(std::int16_t hf, std::int32_t l, NATIVESEEKORIGIN iOrigin);
 // Full size of the open token; present zero is distinct from query failure.
-std::optional<std::int64_t> FFileSize(std::int16_t hf);
-std::int32_t CbFileSize(std::int16_t hf);
+std::optional<std::int64_t> CbFileSize(std::int16_t hf);
 void    CloseFile(std::int16_t hf);
 std::int16_t FFileExists(const char *szFile);
 std::int16_t FFileReadOnly(const char *szFile);

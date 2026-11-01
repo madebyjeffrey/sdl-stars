@@ -17,6 +17,19 @@ J/JRC3/JRC4 fix claims below come from the supplied list and are not independent
 verified release history. See [WIN16-PARITY.md](WIN16-PARITY.md) for native changes
 and [ROADMAP.md](ROADMAP.md) for the post-tag work.
 
+## Failed file-size queries masquerade as byte counts — fixed on develop
+
+`file.cpp`, `FLoadGame`: the EOF check compared `CbFileSize` and `LSeekFile`
+directly, so two failed queries returning `-1` looked like a successful match.
+A real loader fixture closes the `.m1` token at its final EOF and reproduces a
+successful return from the parent. The loader now rejects either unavailable
+size or negative position before comparing values. `CbFileSize` and its token
+service return optional full-width counts; all callers preserve zero/failure
+separately. `StarsCopyFile` also rejects a failed query before its tail range,
+where the old `LOWORD(-1)` could exceed the 2048-byte buffer. New copy tests
+check full multi-chunk binary output and metadata-failure cleanup. No valid
+record bytes, field widths or turn-generation rule changes.
+
 ## Batch file size wraps through a signed lowword — fixed on develop
 
 `turn.cpp`, `FSetUpBatchProcessing`: the file size was narrowed to `int16_t`

@@ -787,22 +787,12 @@ std::int32_t LNativeSeekLegacy(std::int16_t hf, std::int32_t ib, NATIVESEEKORIGI
     return static_cast<std::int32_t>(pos);
     });
 }
-std::optional<std::int64_t> FNativeSizeLegacy(std::int16_t hf) {
+std::optional<std::int64_t> CbNativeSizeLegacy(std::int16_t hf) {
     return FileCall<std::optional<std::int64_t>>(nullptr, std::nullopt, [&]() -> std::optional<std::int64_t> {
         std::lock_guard<std::mutex> guard(Files().lock);
         std::int64_t cb = CbNativeFile(LegacyFile(hf));
         if (cb < 0) return std::nullopt;
         return cb;
-    });
-}
-std::int32_t CbNativeSizeLegacy(std::int16_t hf) {
-    return FileCall<std::int32_t>(nullptr, -1, [&]() -> std::int32_t {
-    std::lock_guard<std::mutex> guard(Files().lock);
-    std::int64_t cb = CbNativeFile(LegacyFile(hf));
-#ifdef _WIN32
-    if (cb > INT32_MAX) return -1;
-#endif
-    return static_cast<std::int32_t>(cb);
     });
 }
 void CloseNativeLegacy(std::int16_t hf) {
