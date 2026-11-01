@@ -197,8 +197,11 @@ template <class R, class Fn> static R FileCall(NATIVEFILE *pf, R failure, Fn fn)
     return failure;
 }
 
-NATIVEFILE *PfNativeOpenFlags(const char *psz, unsigned access, unsigned share,
-                            int create, int truncate, int exclusive, int native) {
+NATIVEFILE *PfNativeOpenFlags(const char *psz, NATIVEFILEOPENOPTIONS nfo) {
+    const unsigned access = static_cast<unsigned>(nfo.mdAccess);
+    const unsigned share = static_cast<unsigned>(nfo.mdShare);
+    const bool create = nfo.fCreate, truncate = nfo.fTruncate, exclusive = nfo.fExclusive;
+    bool native = nfo.fNative;
     if (!FPath(psz)) return nullptr;
     if (access == 0 || access > 3) { errno = EINVAL; return nullptr; }
     return FileCall<NATIVEFILE *>(nullptr, nullptr, [&]() -> NATIVEFILE * {
@@ -263,7 +266,7 @@ NATIVEFILE *PfNativeOpen(const char *psz, const char *mode) {
             return pf.release();
         });
     }
-    NATIVEFILE *pf = PfNativeOpenFlags(psz, access, 0, *mode != 'r', *mode == 'w', std::strchr(mode, 'x') != nullptr, 0);
+    NATIVEFILE *pf = PfNativeOpenFlags(psz, {.mdAccess = static_cast<NATIVEFILEACCESS>(access), .fCreate = *mode != 'r', .fTruncate = *mode == 'w', .fExclusive = std::strchr(mode, 'x') != nullptr});
     return pf;
 }
 int ICloseNativeFile(NATIVEFILE *pf) {
@@ -697,17 +700,16 @@ NATIVEFILE *LegacyFile(std::int16_t hf) {
     if (hf < 0 || !Files().rg[static_cast<unsigned>(hf)]) { errno = EBADF; return nullptr; }
     return Files().rg[static_cast<unsigned>(hf)].get();
 }
-std::int16_t HfNativeOpenLegacy(const char *psz, std::uint16_t md, std::int16_t *missing) {
-    return FileCall<std::int16_t>(nullptr, -1, [&]() -> std::int16_t {
-    *missing = 0;
-    unsigned access = (md & 3) == 1 ? 2 : (md & 3) == 2 ? 3 : 1;
-    std::unique_ptr<NATIVEFILE> pf(PfNativeOpenFlags(psz, access, md & 0x70, md & 0x1000, md & 0x1000, 0, 0));
-    if (!pf) { *missing = errno == ENOENT; return -1; }
+NATIVEFILEOPENRESULT HfNativeOpenLegacy(const char *psz, NATIVEFILEOPENOPTIONS nfo) {
+    return FileCall<NATIVEFILEOPENRESULT>(nullptr, {}, [&]() -> NATIVEFILEOPENRESULT {
+    std::unique_ptr<NATIVEFILE> pf(PfNativeOpenFlags(psz, nfo));
+    if (!pf) return {-1, errno == ENOENT};
     std::lock_guard<std::mutex> guard(Files().lock);
-    for (int i = 3; i <= INT16_MAX; ++i) if (!Files().rg[i]) { Files().rg[i].reset(pf.release()); return static_cast<std::int16_t>(i); }
-    errno = EMFILE; return -1;
+    for (int i = 3; i <= INT16_MAX; ++i) if (!Files().rg[i]) { Files().rg[i].reset(pf.release()); return {static_cast<std::int16_t>(i), false}; }
+    errno = EMFILE; return {};
     });
 }
+
 std::int32_t CbNativeReadLegacy(std::int16_t hf, void *rgb, std::uint16_t cb) {
     return FileCall<std::int32_t>(nullptr, -1, [&]() -> std::int32_t {
     std::lock_guard<std::mutex> guard(Files().lock);

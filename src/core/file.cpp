@@ -1451,6 +1451,8 @@ std::int16_t FBadFileError(StringId ids) {
 }
 
 void StreamOpen(APPSESSION &app, const char *szFile, MdOpenFlags mdOpen) {
+    NATIVEFILEOPENOPTIONS nfo;
+    NATIVEFILEOPENRESULT nfr;
     std::uint32_t dwTick;
     std::int16_t  fMissing;
     std::int16_t  fNoErr;
@@ -1459,8 +1461,21 @@ void StreamOpen(APPSESSION &app, const char *szFile, MdOpenFlags mdOpen) {
     dwTick = 0;
     fNoErr = (mdOpen & 0x4000) != 0;
     mdOpen = static_cast<MdOpenFlags>(mdOpen & 0xbfff);
+    // The game's mode enum has a fixed 16-bit layout; decode it at this
+    // boundary before passing named policy to the platform service.
+    nfo.mdAccess = (mdOpen & 3) == 1 ? NATIVEFILEACCESS::write : (mdOpen & 3) == 2 ? NATIVEFILEACCESS::readWrite : NATIVEFILEACCESS::read;
+    switch (mdOpen & 0x70) {
+    case 0: nfo.mdShare = NATIVEFILESHARE::compatible; break;
+    case 0x10: nfo.mdShare = NATIVEFILESHARE::exclusive; break;
+    case 0x20: nfo.mdShare = NATIVEFILESHARE::denyWrite; break;
+    case 0x30: nfo.mdShare = NATIVEFILESHARE::denyRead; break;
+    default: nfo.mdShare = NATIVEFILESHARE::denyNone; break;
+    }
+    nfo.fCreate = nfo.fTruncate = (mdOpen & 0x1000) != 0;
 Retry:
-    app.state.hf = HfOpenFile(szFile, mdOpen, &fMissing);
+    nfr = HfOpenFile(szFile, nfo);
+    app.state.hf = nfr.hf;
+    fMissing = nfr.fMissing;
     if (app.state.hf == -1) {
         if (app.state.gd.fRetryOpens && !fMissing) {
             dwTickCur = DwTickCount();

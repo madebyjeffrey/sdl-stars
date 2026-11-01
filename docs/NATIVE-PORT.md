@@ -233,6 +233,14 @@ detail in [WIN16-PARITY.md](WIN16-PARITY.md).
   byte count without modifying the destination on failure; stream writers own
   their staging buffers. Paths and other record-building buffers remain
   separate migration work with their strict failure and byte contracts.
+  File opens now pass named access/sharing and create/truncate/exclusive/native
+  options; token opens return a transient token/missing result rather than
+  writing a caller flag. The registry still owns its signed 16-bit tokens.
+  `StreamOpen` decodes the fixed-width game mode at that boundary, and the SDL
+  `OpenFile` adapter retains sharing checks before truncation. Retry/error,
+  Unicode, resource and stream behavior are unchanged. See
+  [file-service migration](CPP-LIVE-FILE-SERVICES.json) for actual consumers and
+  the still-pending byte, seek, stream-mode, path and chooser interfaces.
 - **Platforms:** the game code (`common.h`) builds without Windows headers;
   `stars-host` links it alone. Both host and client use binary64 `double`,
   with contraction and fast-math disabled. The migration's intentional turn

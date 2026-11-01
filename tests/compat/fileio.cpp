@@ -20,15 +20,16 @@ int main(void) {
     {
         NATIVEFILESESSION session;
         auto *previous = PBindNativeFileSession(&session);
-        int16_t missing = 0;
-        int16_t hf = HfNativeOpenLegacy(path, 0x40, &missing);
-        CHECK(hf == 3 && !missing);
+        auto nfr = HfNativeOpenLegacy(path, {.mdShare = NATIVEFILESHARE::denyNone});
+        int16_t hf = nfr.hf;
+        CHECK(hf == 3 && !nfr.fMissing);
         unsigned char ch = 1;
         CHECK(CbNativeReadLegacy(hf, &ch, 1) == 1 && ch == 0);
         session.Close(); session.Close();
         errno = 0;
         CHECK(CbNativeReadLegacy(hf, &ch, 1) == -1 && errno == EBADF);
-        CHECK(HfNativeOpenLegacy(path, 0x40, &missing) == 3 && !missing);
+        nfr = HfNativeOpenLegacy(path, {.mdShare = NATIVEFILESHARE::denyNone});
+        CHECK(nfr.hf == 3 && !nfr.fMissing);
         CHECK(PBindNativeFileSession(previous) == &session);
         // The remaining token is released by the actual session destructor.
     }
@@ -40,7 +41,8 @@ int main(void) {
     CHECK(ChPutNativeFile(42,pf)==42 && ISeekNativeFile(pf,2,0)==0 && ChGetNativeFile(pf)==42);
     CHECK(ICloseNativeFile(pf)==0);
     errno=0;CHECK(!PfNativeOpen(path,"wbx") && errno==EEXIST);
-    pf=PfNativeOpenFlags(path,2,0,0,0,0,1);CHECK(pf);
+    errno=0;CHECK(!PfNativeOpenFlags(path, {.mdAccess = static_cast<NATIVEFILEACCESS>(0)}) && errno==EINVAL);
+    pf=PfNativeOpenFlags(path, {.mdAccess = NATIVEFILEACCESS::write, .fNative = true});CHECK(pf);
     CHECK(CbWriteNativeFile(pf,"Z",1)==1 && CbNativeFile(pf)==6);
     CHECK(LSeekNativeFile(pf,2,0)==2 && ITruncateNativeFile(pf,2)==0 && CbNativeFile(pf)==2);
     CHECK(LSeekNativeFile(pf,8,0)==8 && ITruncateNativeFile(pf,8)==0 && CbNativeFile(pf)==8);

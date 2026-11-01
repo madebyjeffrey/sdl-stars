@@ -50,14 +50,14 @@ void qsort16(APPSESSION &app, void *base, std::size_t count, std::size_t width, 
  * Files
  *
  * The game reads and writes one file at a time through hf, a small handle
- * that Win16 OpenFile returned (file.c). These keep that interface on every
- * platform through the C++ file service, with UTF-8 native paths.
+ * that Win16 OpenFile returned (file.c). Named open policy and result values
+ * use the C++ file service, with registry ownership and UTF-8 native paths.
  * POSIX has no share modes, so a file another program has open is not refused.
  */
 
-// HfOpenFile opens szFile with Win16 OpenFile flags (mdRead and the like)
-// and returns its handle, or -1 with *pfMissing set if it does not exist.
-std::int16_t HfOpenFile(const char *szFile, std::uint16_t mdOpen, std::int16_t *pfMissing);
+// The registry owns successful tokens; failure returns hf == -1 and reports
+// missing only for ENOENT. The result is transient, never a saved record.
+[[nodiscard]] NATIVEFILEOPENRESULT HfOpenFile(const char *szFile, NATIVEFILEOPENOPTIONS nfo);
 std::int32_t CbReadFile(std::int16_t hf, void *rg, std::uint16_t cb);
 std::int32_t CbWriteFile(std::int16_t hf, const void *rg, std::uint16_t cb);
 // LSeekFile moves like _llseek: iOrigin 0 from the start, 1 from the

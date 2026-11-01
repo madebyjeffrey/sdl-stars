@@ -1,0 +1,374 @@
+{
+  "parent": "c7f5e933",
+  "status": "File-service migration active; open options/results complete and verified.",
+  "open": {
+    "status": "complete; verified",
+    "interfaces": [
+      "HfOpenFile(const char *, NATIVEFILEOPENOPTIONS) -> NATIVEFILEOPENRESULT",
+      "HfNativeOpenLegacy(const char *, NATIVEFILEOPENOPTIONS) -> NATIVEFILEOPENRESULT",
+      "PfNativeOpenFlags(const char *, NATIVEFILEOPENOPTIONS) -> NATIVEFILE *"
+    ],
+    "options": "Scoped byte-width access and sharing enums; named create/truncate/exclusive/native booleans replace positional integers. The file service still owns path validation, native/stream selection, sharing and resource admission.",
+    "result": "Transient result holds a signed 16-bit token (or -1) and missing flag. The registry owns every accepted token; errno remains the failure detail. Returned structs never enter saved records.",
+    "callers": {
+      "production": 7,
+      "tests": 19
+    },
+    "pre_existing_calls": 19,
+    "pre_migration_characterization_calls": 6,
+    "new_invalid_access_guard_call": 1,
+    "mode_boundary": "MdOpenFlags retains its explicit unsigned 16-bit ABI/layout. StreamOpen decodes access, sharing, create/truncate and no-error policy once at the game/platform boundary. Retry timing, missing/nonmissing admission, error publication and handle assignment remain unchanged. Unrecognized sharing-bit combinations preserve their prior deny-none behavior.",
+    "effects": "OutputFileString retains its existence check and create/truncate/append order. StarsCopyFile retains exclusive create and cleanup. The SDL OpenFile adapter still opens without truncation, validates identity/sharing, then truncates. Lower stream-mode parsing, exclusive creation, native identity and session token reuse/destruction retain their behavior.",
+    "tests": "Before migration the actual token API passed read-only access, update without truncation, create with truncation, and OutputFileString append/new-file checks. The same assertions use named options/results afterward. Existing Unicode/missing/malformed-path, exception, session cleanup and file-service contract checks remain; invalid typed access still rejects before mutation.",
+    "initial_build_correction": "The full build found one SDK OpenFile adapter call omitted from the first src/tests inventory. Its actual named request preserves check-before-truncate order; the inventory now includes compat/win32/src. An initial Windows build command also used the wrong contract target; corrected to stars-test-fileio.",
+    "test_harness": "The actual Windows host build exposed an existing test-only cleanup branch requiring unavailable SDK declarations. Native path-test cleanup now uses std::filesystem with char8_t input and an error_code on every platform, retaining the removal assertion without SDL or SDK conversion scaffolding.",
+    "verification": {
+      "batch": "L06b typed native file-open requests and result values",
+      "debug_build": "Pass; no new warnings; standalone headers compile in both include orders and source/compiler policy passes.",
+      "desktop": "153/153, including actual game/library/OpenFile workflows, available tutorial checkpoints and all 29 leak checks.",
+      "host_units": "28/28 against final source, including read/update/create/append characterization, missing/malformed UTF-8 results, exception publication and file-service contracts.",
+      "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors and skipped reference inputs.",
+      "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors and skipped reference inputs.",
+      "windows": "All 147 owned production units and four changed test/contract units compile with strict MinGW. Actual Windows native-file tests (2 cases), exception/recovery tests (10 cases) and standalone file-service contract pass under Wine. Native Windows desktop qualification remains pending.",
+      "callers": "All 19 pre-existing direct calls, six pre-migration characterization calls and one invalid-access guard call use named options/results: seven production and 19 test/contract calls across three interfaces. Old positional-integer and missing-output overloads removed.",
+      "initial_corrections": "Full build caught one omitted SDL OpenFile adapter caller; migrated with identity/sharing checks still preceding truncation. Corrected a mistyped Windows contract target. Windows host compilation exposed old SDK-only test cleanup; portable C++ filesystem cleanup retains the removal assertion. Final builds/tests cover all corrections.",
+      "baseline": "Behavior-neutral for existing calls. No regression baseline, frozen original fixture, unit golden, 16-bit MdOpenFlags/token storage, wire layout, RNG or canonical model changed. No scenario/checkpoint moved and no regression export required.",
+      "remaining": "Byte/element-count buffers, integer seek origins, stream-mode strings, remaining file/path result interfaces and Milestone D remain active.",
+      "receipts": "dist/verification/live-cpp/l06b/"
+    }
+  },
+  "parent_source_lines": [
+    {
+      "path": "src/core/utilgen.cpp",
+      "line": 246,
+      "code": "hf = HfOpenFile(szFile, w, &fMissing);"
+    },
+    {
+      "path": "src/core/utilgen.cpp",
+      "line": 268,
+      "code": "hfDst = HfOpenFile(szDst, 4114, &fMissing);"
+    },
+    {
+      "path": "src/core/file.cpp",
+      "line": 1463,
+      "code": "app.state.hf = HfOpenFile(szFile, mdOpen, &fMissing);"
+    },
+    {
+      "path": "src/platform/fileio.cpp",
+      "line": 200,
+      "code": "NATIVEFILE *PfNativeOpenFlags(const char *psz, unsigned access, unsigned share,"
+    },
+    {
+      "path": "src/platform/fileio.cpp",
+      "line": 266,
+      "code": "NATIVEFILE *pf = PfNativeOpenFlags(psz, access, 0, *mode != 'r', *mode == 'w', std::strchr(mode, 'x') != nullptr, 0);"
+    },
+    {
+      "path": "src/platform/fileio.cpp",
+      "line": 700,
+      "code": "std::int16_t HfNativeOpenLegacy(const char *psz, std::uint16_t md, std::int16_t *missing) {"
+    },
+    {
+      "path": "src/platform/fileio.cpp",
+      "line": 704,
+      "code": "std::unique_ptr<NATIVEFILE> pf(PfNativeOpenFlags(psz, access, md & 0x70, md & 0x1000, md & 0x1000, 0, 0));"
+    },
+    {
+      "path": "src/platform/native.cpp",
+      "line": 202,
+      "code": "std::int16_t HfOpenFile(const char *szFile, std::uint16_t mdOpen, std::int16_t *pfMissing) {"
+    },
+    {
+      "path": "src/platform/native.cpp",
+      "line": 203,
+      "code": "return HfNativeOpenLegacy(szFile, mdOpen, pfMissing);"
+    },
+    {
+      "path": "tests/unit/test_exceptions.cpp",
+      "line": 55,
+      "code": "hfWrite = HfOpenFile(szFile, mdCreate, &fMissing);"
+    },
+    {
+      "path": "tests/unit/test_exceptions.cpp",
+      "line": 105,
+      "code": "hfWrite = HfOpenFile(szFile, mdCreate, &fMissing);"
+    },
+    {
+      "path": "tests/unit/test_exceptions.cpp",
+      "line": 154,
+      "code": "hfRead = HfOpenFile(szFile, mdRead, &fMissing);"
+    },
+    {
+      "path": "tests/unit/test_exceptions.cpp",
+      "line": 166,
+      "code": "hfRead = HfOpenFile(szFile, mdRead, &fMissing);"
+    },
+    {
+      "path": "tests/unit/test_native_ports.cpp",
+      "line": 557,
+      "code": "int16_t hfSession = HfNativeOpenLegacy(szPath,0x40,&missing);"
+    },
+    {
+      "path": "tests/unit/test_native_files.cpp",
+      "line": 49,
+      "code": "hfFile = HfOpenFile(szFile, mdCreate, &fMissing);"
+    },
+    {
+      "path": "tests/unit/test_native_files.cpp",
+      "line": 72,
+      "code": "TEST_CHECK(HfOpenFile(szOther, mdRead, &fMissing) == -1 && fMissing);"
+    },
+    {
+      "path": "tests/unit/test_native_files.cpp",
+      "line": 76,
+      "code": "hfFile = HfOpenFile(szFile, mdCreate, &fMissing);"
+    },
+    {
+      "path": "tests/unit/test_native_files.cpp",
+      "line": 80,
+      "code": "TEST_CHECK(HfOpenFile(szTestLiteral1, mdRead, &fMissing) == -1 && !fMissing && errno == EILSEQ);"
+    },
+    {
+      "path": "tests/unit/test_native_files.cpp",
+      "line": 120,
+      "code": "hfFile = HfOpenFile(szFile, mdCreate, &fMissing);"
+    },
+    {
+      "path": "tests/unit/test_native_files.cpp",
+      "line": 124,
+      "code": "hfFile = HfOpenFile(szFile, mdRead, &fMissing);"
+    },
+    {
+      "path": "tests/unit/test_native_files.cpp",
+      "line": 130,
+      "code": "hfFile = HfOpenFile(szFile, mdReadWrite, &fMissing);"
+    },
+    {
+      "path": "tests/unit/test_native_files.cpp",
+      "line": 135,
+      "code": "hfFile = HfOpenFile(szFile, mdRead, &fMissing);"
+    },
+    {
+      "path": "tests/unit/test_native_files.cpp",
+      "line": 139,
+      "code": "hfFile = HfOpenFile(szFile, mdCreate, &fMissing);"
+    },
+    {
+      "path": "tests/unit/test_native_files.cpp",
+      "line": 145,
+      "code": "hfFile = HfOpenFile(szFile, mdRead, &fMissing);"
+    },
+    {
+      "path": "tests/compat/fileio.cpp",
+      "line": 24,
+      "code": "int16_t hf = HfNativeOpenLegacy(path, 0x40, &missing);"
+    },
+    {
+      "path": "tests/compat/fileio.cpp",
+      "line": 31,
+      "code": "CHECK(HfNativeOpenLegacy(path, 0x40, &missing) == 3 && !missing);"
+    },
+    {
+      "path": "tests/compat/fileio.cpp",
+      "line": 43,
+      "code": "pf=PfNativeOpenFlags(path,2,0,0,0,0,1);CHECK(pf);"
+    },
+    {
+      "path": "compat/win32/src/file.cpp",
+      "line": 105,
+      "code": "pf = PfNativeOpenFlags(szPath, grAccess, 0, (flags & win32::OF_CREATE) != 0, 0, 0, 1);",
+      "role": "SDK OpenFile adapter opens without truncation, checks process sharing/identity, then truncates. This caller was caught by the full build and added to the inventory."
+    }
+  ],
+  "current_calls": [
+    {
+      "path": "src/core/utilgen.cpp",
+      "line": 245,
+      "function": "HfOpenFile",
+      "call_line": "hf = HfOpenFile(szFile, w).hf;",
+      "role": "Typed request/result consumer at the actual implementation or test boundary."
+    },
+    {
+      "path": "src/core/utilgen.cpp",
+      "line": 266,
+      "function": "HfOpenFile",
+      "call_line": "hfDst = HfOpenFile(szDst, {.mdAccess = NATIVEFILEACCESS::readWrite, .mdShare = NATIVEFILESHARE::exclusive, .fCreate = true, .fTruncate = true}).hf;",
+      "role": "Typed request/result consumer at the actual implementation or test boundary."
+    },
+    {
+      "path": "src/core/file.cpp",
+      "line": 1476,
+      "function": "HfOpenFile",
+      "call_line": "nfr = HfOpenFile(szFile, nfo);",
+      "role": "Typed request/result consumer at the actual implementation or test boundary."
+    },
+    {
+      "path": "src/platform/fileio.cpp",
+      "line": 269,
+      "function": "PfNativeOpenFlags",
+      "call_line": "NATIVEFILE *pf = PfNativeOpenFlags(psz, {.mdAccess = static_cast<NATIVEFILEACCESS>(access), .fCreate = *mode != 'r', .fTruncate = *mode == 'w', .fExclusive = std::strchr(mode, 'x') != nullptr});",
+      "role": "Typed request/result consumer at the actual implementation or test boundary."
+    },
+    {
+      "path": "src/platform/fileio.cpp",
+      "line": 705,
+      "function": "PfNativeOpenFlags",
+      "call_line": "std::unique_ptr<NATIVEFILE> pf(PfNativeOpenFlags(psz, nfo));",
+      "role": "Typed request/result consumer at the actual implementation or test boundary."
+    },
+    {
+      "path": "src/platform/native.cpp",
+      "line": 203,
+      "function": "HfNativeOpenLegacy",
+      "call_line": "return HfNativeOpenLegacy(szFile, nfo);",
+      "role": "Typed request/result consumer at the actual implementation or test boundary."
+    },
+    {
+      "path": "compat/win32/src/file.cpp",
+      "line": 105,
+      "function": "PfNativeOpenFlags",
+      "call_line": "pf = PfNativeOpenFlags(szPath, {.mdAccess = static_cast<NATIVEFILEACCESS>(grAccess), .fCreate = (flags & win32::OF_CREATE) != 0, .fNative = true});",
+      "role": "SDK adapter preserves identity/sharing admission before truncation."
+    },
+    {
+      "path": "tests/unit/test_exceptions.cpp",
+      "line": 55,
+      "function": "HfOpenFile",
+      "call_line": "hfWrite = HfOpenFile(szFile, {.mdAccess = NATIVEFILEACCESS::readWrite, .mdShare = NATIVEFILESHARE::exclusive, .fCreate = true, .fTruncate = true}).hf;",
+      "role": "Typed request/result consumer at the actual implementation or test boundary."
+    },
+    {
+      "path": "tests/unit/test_exceptions.cpp",
+      "line": 105,
+      "function": "HfOpenFile",
+      "call_line": "hfWrite = HfOpenFile(szFile, {.mdAccess = NATIVEFILEACCESS::readWrite, .mdShare = NATIVEFILESHARE::exclusive, .fCreate = true, .fTruncate = true}).hf;",
+      "role": "Typed request/result consumer at the actual implementation or test boundary."
+    },
+    {
+      "path": "tests/unit/test_exceptions.cpp",
+      "line": 154,
+      "function": "HfOpenFile",
+      "call_line": "hfRead = HfOpenFile(szFile, {.mdShare = NATIVEFILESHARE::denyWrite}).hf;",
+      "role": "Typed request/result consumer at the actual implementation or test boundary."
+    },
+    {
+      "path": "tests/unit/test_exceptions.cpp",
+      "line": 166,
+      "function": "HfOpenFile",
+      "call_line": "hfRead = HfOpenFile(szFile, {.mdShare = NATIVEFILESHARE::denyWrite}).hf;",
+      "role": "Typed request/result consumer at the actual implementation or test boundary."
+    },
+    {
+      "path": "tests/unit/test_native_ports.cpp",
+      "line": 556,
+      "function": "HfNativeOpenLegacy",
+      "call_line": "const auto nfr = HfNativeOpenLegacy(szPath, {.mdShare = NATIVEFILESHARE::denyNone});",
+      "role": "Typed request/result consumer at the actual implementation or test boundary."
+    },
+    {
+      "path": "tests/unit/test_native_files.cpp",
+      "line": 50,
+      "function": "HfOpenFile",
+      "call_line": "nfr = HfOpenFile(szFile, {.mdAccess = NATIVEFILEACCESS::readWrite, .mdShare = NATIVEFILESHARE::exclusive, .fCreate = true, .fTruncate = true});",
+      "role": "Typed request/result consumer at the actual implementation or test boundary."
+    },
+    {
+      "path": "tests/unit/test_native_files.cpp",
+      "line": 74,
+      "function": "HfOpenFile",
+      "call_line": "nfr = HfOpenFile(szOther, {.mdShare = NATIVEFILESHARE::denyWrite});",
+      "role": "Typed request/result consumer at the actual implementation or test boundary."
+    },
+    {
+      "path": "tests/unit/test_native_files.cpp",
+      "line": 79,
+      "function": "HfOpenFile",
+      "call_line": "nfr = HfOpenFile(szFile, {.mdAccess = NATIVEFILEACCESS::readWrite, .mdShare = NATIVEFILESHARE::exclusive, .fCreate = true, .fTruncate = true});",
+      "role": "Typed request/result consumer at the actual implementation or test boundary."
+    },
+    {
+      "path": "tests/unit/test_native_files.cpp",
+      "line": 84,
+      "function": "HfOpenFile",
+      "call_line": "nfr = HfOpenFile(szTestLiteral1, {.mdShare = NATIVEFILESHARE::denyWrite});",
+      "role": "Typed request/result consumer at the actual implementation or test boundary."
+    },
+    {
+      "path": "tests/unit/test_native_files.cpp",
+      "line": 126,
+      "function": "HfOpenFile",
+      "call_line": "nfr = HfOpenFile(szFile, {.mdAccess = NATIVEFILEACCESS::readWrite, .mdShare = NATIVEFILESHARE::exclusive, .fCreate = true, .fTruncate = true});",
+      "role": "Typed request/result consumer at the actual implementation or test boundary."
+    },
+    {
+      "path": "tests/unit/test_native_files.cpp",
+      "line": 131,
+      "function": "HfOpenFile",
+      "call_line": "nfr = HfOpenFile(szFile, {.mdShare = NATIVEFILESHARE::denyWrite});",
+      "role": "Typed request/result consumer at the actual implementation or test boundary."
+    },
+    {
+      "path": "tests/unit/test_native_files.cpp",
+      "line": 138,
+      "function": "HfOpenFile",
+      "call_line": "nfr = HfOpenFile(szFile, {.mdAccess = NATIVEFILEACCESS::readWrite, .mdShare = NATIVEFILESHARE::exclusive});",
+      "role": "Typed request/result consumer at the actual implementation or test boundary."
+    },
+    {
+      "path": "tests/unit/test_native_files.cpp",
+      "line": 144,
+      "function": "HfOpenFile",
+      "call_line": "nfr = HfOpenFile(szFile, {.mdShare = NATIVEFILESHARE::denyWrite});",
+      "role": "Typed request/result consumer at the actual implementation or test boundary."
+    },
+    {
+      "path": "tests/unit/test_native_files.cpp",
+      "line": 149,
+      "function": "HfOpenFile",
+      "call_line": "nfr = HfOpenFile(szFile, {.mdAccess = NATIVEFILEACCESS::readWrite, .mdShare = NATIVEFILESHARE::exclusive, .fCreate = true, .fTruncate = true});",
+      "role": "Typed request/result consumer at the actual implementation or test boundary."
+    },
+    {
+      "path": "tests/unit/test_native_files.cpp",
+      "line": 156,
+      "function": "HfOpenFile",
+      "call_line": "nfr = HfOpenFile(szFile, {.mdShare = NATIVEFILESHARE::denyWrite});",
+      "role": "Typed request/result consumer at the actual implementation or test boundary."
+    },
+    {
+      "path": "tests/compat/fileio.cpp",
+      "line": 23,
+      "function": "HfNativeOpenLegacy",
+      "call_line": "auto nfr = HfNativeOpenLegacy(path, {.mdShare = NATIVEFILESHARE::denyNone});",
+      "role": "Typed request/result consumer at the actual implementation or test boundary."
+    },
+    {
+      "path": "tests/compat/fileio.cpp",
+      "line": 31,
+      "function": "HfNativeOpenLegacy",
+      "call_line": "nfr = HfNativeOpenLegacy(path, {.mdShare = NATIVEFILESHARE::denyNone});",
+      "role": "Typed request/result consumer at the actual implementation or test boundary."
+    },
+    {
+      "path": "tests/compat/fileio.cpp",
+      "line": 44,
+      "function": "PfNativeOpenFlags",
+      "call_line": "errno=0;CHECK(!PfNativeOpenFlags(path, {.mdAccess = static_cast<NATIVEFILEACCESS>(0)}) && errno==EINVAL);",
+      "role": "Typed request/result consumer at the actual implementation or test boundary."
+    },
+    {
+      "path": "tests/compat/fileio.cpp",
+      "line": 45,
+      "function": "PfNativeOpenFlags",
+      "call_line": "pf=PfNativeOpenFlags(path, {.mdAccess = NATIVEFILEACCESS::write, .fNative = true});CHECK(pf);",
+      "role": "Typed request/result consumer at the actual implementation or test boundary."
+    }
+  ],
+  "pending": {
+    "byte_io": "CbReadFile/CbWriteFile, lower byte operations and element-count stream interfaces still need spans/results and actual caller migration.",
+    "seek": "Integer seek origins still need a scoped enum through native/token helpers and all callers.",
+    "stream_open": "Native stream mode strings and remaining file/path result/out-parameter interfaces still need typed contracts. Paths remain strict UTF-8, without truncation.",
+    "selection": "Milestone D remains open; no picker backend or user workflow was changed by this batch.",
+    "qualification": "Final complete-state inventory, Debug/Release and actual platform qualification remain required."
+  }
+}

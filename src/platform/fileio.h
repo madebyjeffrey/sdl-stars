@@ -16,13 +16,23 @@ struct NATIVEFILEINFO {
     int fDirectory, fRegular, fLink;
 };
 
+enum class NATIVEFILEACCESS : std::uint8_t { read = 1, write = 2, readWrite = 3 };
+enum class NATIVEFILESHARE : std::uint8_t { compatible = 0, exclusive = 0x10, denyWrite = 0x20, denyRead = 0x30, denyNone = 0x40 };
+struct NATIVEFILEOPENOPTIONS {
+    NATIVEFILEACCESS mdAccess = NATIVEFILEACCESS::read;
+    NATIVEFILESHARE mdShare = NATIVEFILESHARE::compatible;
+    bool fCreate = false, fTruncate = false, fExclusive = false, fNative = false;
+};
+struct NATIVEFILEOPENRESULT {
+    std::int16_t hf = -1;
+    bool fMissing = false;
+};
+
 // Strict UTF-8 paths; binary bytes are never decoded or translated. All service
 // functions contain exceptions and report failures through return values/errno.
-// OpenFlags access: 1 read, 2 write, 3 both. Share uses Win16 0x10/20/30/40.
 // Native access is required for live identity, exclusive creation and durable IO.
 NATIVEFILE *PfNativeOpen(const char *psz, const char *pszMode);
-NATIVEFILE *PfNativeOpenFlags(const char *psz, unsigned grfAccess, unsigned grfShare,
-                            int fCreate, int fTruncate, int fExclusive, int fNative);
+NATIVEFILE *PfNativeOpenFlags(const char *psz, NATIVEFILEOPENOPTIONS nfo);
 NATIVEFILE *PfNativeCreateTemp(char *pszTemplate);
 NATIVEFILE *PfNativeTemporary(void);
 int ICloseNativeFile(NATIVEFILE *pf);
@@ -80,7 +90,7 @@ const char *PszNativeReadDir(NATIVEDIR *pdir);
 int ICloseNativeDir(NATIVEDIR *pdir);
 
 // Small owned tokens keep native pointers/descriptors out of game storage.
-std::int16_t HfNativeOpenLegacy(const char *psz, std::uint16_t md, std::int16_t *pfMissing);
+[[nodiscard]] NATIVEFILEOPENRESULT HfNativeOpenLegacy(const char *psz, NATIVEFILEOPENOPTIONS nfo);
 std::int32_t CbNativeReadLegacy(std::int16_t hf, void *rgb, std::uint16_t cb);
 std::int32_t CbNativeWriteLegacy(std::int16_t hf, const void *rgb, std::uint16_t cb);
 std::int32_t LNativeSeekLegacy(std::int16_t hf, std::int32_t ib, std::int16_t iOrigin);

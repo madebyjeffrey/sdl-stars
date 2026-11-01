@@ -438,7 +438,8 @@
         "remove-unused-player-output-storage",
         "user-string-codec-spans-and-optional-counts",
         "bounded-roman-numeral-output",
-        "numeric-values-without-output-or-count-pointers"
+        "numeric-values-without-output-or-count-pointers",
+        "typed-file-open-options-and-result-values"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -466,12 +467,34 @@
           "test_adaptation": "The first mechanically migrated characterization predicates used optional != 0, which compares values rather than presence. Changed those predicates to has_value; byte, sentinel, limit and failure assertions are unchanged. Successful zero-byte results are tested explicitly.",
           "baseline": "Behavior-neutral for existing valid calls. Frozen original/native baselines, catalog sources, all unit goldens, wire widths/layouts, seed consumption and canonical models unchanged. No scenario/checkpoint moved and no regression export required.",
           "receipts": "dist/verification/live-cpp/l06a/"
+        },
+        {
+          "batch": "L06b typed native file-open requests and result values",
+          "debug_build": "Pass; no new warnings; standalone headers compile in both include orders and source/compiler policy passes.",
+          "desktop": "153/153, including actual game/library/OpenFile workflows, available tutorial checkpoints and all 29 leak checks.",
+          "host_units": "28/28 against final source, including read/update/create/append characterization, missing/malformed UTF-8 results, exception publication and file-service contracts.",
+          "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors and skipped reference inputs.",
+          "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors and skipped reference inputs.",
+          "windows": "All 147 owned production units and four changed test/contract units compile with strict MinGW. Actual Windows native-file tests (2 cases), exception/recovery tests (10 cases) and standalone file-service contract pass under Wine. Native Windows desktop qualification remains pending.",
+          "callers": "All 19 pre-existing direct calls, six pre-migration characterization calls and one invalid-access guard call use named options/results: seven production and 19 test/contract calls across three interfaces. Old positional-integer and missing-output overloads removed.",
+          "initial_corrections": "Full build caught one omitted SDL OpenFile adapter caller; migrated with identity/sharing checks still preceding truncation. Corrected a mistyped Windows contract target. Windows host compilation exposed old SDK-only test cleanup; portable C++ filesystem cleanup retains the removal assertion. Final builds/tests cover all corrections.",
+          "baseline": "Behavior-neutral for existing calls. No regression baseline, frozen original fixture, unit golden, 16-bit MdOpenFlags/token storage, wire layout, RNG or canonical model changed. No scenario/checkpoint moved and no regression export required.",
+          "remaining": "Byte/element-count buffers, integer seek origins, stream-mode strings, remaining file/path result interfaces and Milestone D remain active.",
+          "receipts": "dist/verification/live-cpp/l06b/"
         }
       ],
       "roman_output": {
         "status": "complete; verified",
         "evidence": "docs/CPP-LIVE-OWNED-TEXT.json",
         "contract": "IntToRoman receives the actual output span and returns an optional count, preserving every signed 16-bit input and rejecting insufficient storage before writing a payload."
+      },
+      "file_open": {
+        "status": "complete; verified",
+        "evidence": "docs/CPP-LIVE-FILE-SERVICES.json",
+        "current_call_sites": 26,
+        "pre_existing_call_sites": 19,
+        "interface": "Named typed access/sharing/options replace all three positional-integer open interfaces; small-token opens return token/missing as one value. Old integer-mode and missing-output overloads removed.",
+        "pending": "Remaining stream mode strings, byte buffers, seeks, path/results and file-selection interfaces remain open."
       }
     },
     {

@@ -235,15 +235,14 @@ char *PszGetCompressedPlanet(APPSESSION &app, std::int16_t id) {
 }
 
 void OutputFileString(const char *szFile, const char *sz) {
-    std::int16_t  fMissing;
-    std::uint16_t w;
+    NATIVEFILEOPENOPTIONS w;
     std::int16_t  hf;
 
-    w = 2;
+    w.mdAccess = NATIVEFILEACCESS::readWrite;
     if (!FFileExists(szFile)) {
-        w |= 0x1000;
+        w.fCreate = w.fTruncate = true;
     }
-    hf = HfOpenFile(szFile, w, &fMissing);
+    hf = HfOpenFile(szFile, w).hf;
     if (hf != -1) {
         LSeekFile(hf, 0, 2);
         CbWriteFile(hf, sz, std::strlen(sz));
@@ -254,7 +253,6 @@ void OutputFileString(const char *szFile, const char *sz) {
 
 void StarsCopyFile(APPSESSION &app, const char *szSrc, const char *szDst) {
     char     rgb[2048];
-    std::int16_t  fMissing;
     std::int16_t  hfDst;
     std::int32_t  cb;
 
@@ -265,7 +263,7 @@ void StarsCopyFile(APPSESSION &app, const char *szSrc, const char *szDst) {
     app.state.fFileErrSilent = 1;
     try {
         RecordIO().pfnStreamOpen(app, szSrc, mdRead);
-        hfDst = HfOpenFile(szDst, 4114, &fMissing);
+        hfDst = HfOpenFile(szDst, {.mdAccess = NATIVEFILEACCESS::readWrite, .mdShare = NATIVEFILESHARE::exclusive, .fCreate = true, .fTruncate = true}).hf;
         if (hfDst == -1)
             goto LStreamError;
         for (cb = CbFileSize(app.state.hf); cb > 2048; cb -= 2048) {

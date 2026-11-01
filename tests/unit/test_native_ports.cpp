@@ -553,9 +553,9 @@ static void TestApplicationUiSessionClose(void) {
     NATIVEFILE *pf = PfNativeOpen(szPath,"wb");
     TEST_ASSERT(pf);
     TEST_ASSERT(CWriteNative("x",1,1,pf) == 1 && ICloseNativeFile(pf) == 0);
-    int16_t missing = 0;
-    int16_t hfSession = HfNativeOpenLegacy(szPath,0x40,&missing);
-    TEST_ASSERT(hfSession >= 3 && !missing);
+    const auto nfr = HfNativeOpenLegacy(szPath, {.mdShare = NATIVEFILESHARE::denyNone});
+    int16_t hfSession = nfr.hf;
+    TEST_ASSERT(hfSession >= 3 && !nfr.fMissing);
     WNDCLASS wc{};
     wc.lpfnWndProc = SessionCleanupProc;
     wc.hInstance = app.lpui->hInst;

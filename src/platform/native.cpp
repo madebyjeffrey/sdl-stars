@@ -197,10 +197,10 @@ std::int64_t LNativeTime(void) { return static_cast<std::int64_t>(std::time(null
 
 
 
-// Legacy entrypoints retain their small handles and test-adapter symbols;
+// Game entrypoints retain their small handles;
 // resource ownership, binary streams and native exceptions live in fileio.cpp.
-std::int16_t HfOpenFile(const char *szFile, std::uint16_t mdOpen, std::int16_t *pfMissing) {
-    return HfNativeOpenLegacy(szFile, mdOpen, pfMissing);
+NATIVEFILEOPENRESULT HfOpenFile(const char *szFile, NATIVEFILEOPENOPTIONS nfo) {
+    return HfNativeOpenLegacy(szFile, nfo);
 }
 std::int32_t CbReadFile(std::int16_t hf, void *rg, std::uint16_t cb) { return CbNativeReadLegacy(hf, rg, cb); }
 std::int32_t CbWriteFile(std::int16_t hf, const void *rg, std::uint16_t cb) { return CbNativeWriteLegacy(hf, rg, cb); }

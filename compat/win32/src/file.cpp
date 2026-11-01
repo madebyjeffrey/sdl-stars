@@ -102,7 +102,7 @@ HFILE win32::OpenFile(LPCSTR pszFile, LPOFSTRUCT lpof, UINT flags) {
         goto LUnlock;
     }
     // Check sharing before truncating an existing file.
-    pf = PfNativeOpenFlags(szPath, grAccess, 0, (flags & win32::OF_CREATE) != 0, 0, 0, 1);
+    pf = PfNativeOpenFlags(szPath, {.mdAccess = static_cast<NATIVEFILEACCESS>(grAccess), .fCreate = (flags & win32::OF_CREATE) != 0, .fNative = true});
     nativeFileOwner.reset(pf);
     if (!pf || IGetNativeOpenInfo(pf, &st) != 0) { dwError = DwFileError(); goto LUnlock; }
     if (!st.fRegular) { dwError = win32::ERROR_ACCESS_DENIED; goto LUnlock; }

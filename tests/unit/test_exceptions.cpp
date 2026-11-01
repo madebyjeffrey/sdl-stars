@@ -47,12 +47,12 @@ static void TestShortReadClosesStream(void) {
 
     char szDir[cbTestPath], szFile[cbTestPath + 64];
     char rgb[2] = {42, 0};
-    int16_t hfWrite, fMissing;
+    int16_t hfWrite;
 
     TEST_ASSERT(FStarsTestInit(app));
     TEST_ASSERT(FStarsTestDir("short-read", szDir, sizeof(szDir)));
     snprintf(szFile, sizeof(szFile), "%s%sone-byte", szDir, szDirSep);
-    hfWrite = HfOpenFile(szFile, mdCreate, &fMissing);
+    hfWrite = HfOpenFile(szFile, {.mdAccess = NATIVEFILEACCESS::readWrite, .mdShare = NATIVEFILESHARE::exclusive, .fCreate = true, .fTruncate = true}).hf;
     TEST_ASSERT(hfWrite != -1);
     TEST_ASSERT(CbWriteFile(hfWrite, rgb, 1) == 1);
     CloseFile(hfWrite);
@@ -95,14 +95,14 @@ static void TestPartialRecordPublication() {
     char szDir[cbTestPath], szFile[cbTestPath + 64];
     const uint8_t rgbFile[] = {3, 0xfc, 0x37}; // unknown type 63, three-byte payload
     const int rgcb[] = {0, 1, 3};
-    int16_t hfWrite, fMissing;
+    int16_t hfWrite;
     bool fCaught;
 
     TEST_ASSERT(FStarsTestInit(app));
     TEST_ASSERT(FStarsTestDir("record-publication", szDir, sizeof(szDir)));
     snprintf(szFile, sizeof(szFile), "%s%spartial", szDir, szDirSep);
     for (int cb : rgcb) {
-        hfWrite = HfOpenFile(szFile, mdCreate, &fMissing);
+        hfWrite = HfOpenFile(szFile, {.mdAccess = NATIVEFILEACCESS::readWrite, .mdShare = NATIVEFILESHARE::exclusive, .fCreate = true, .fTruncate = true}).hf;
         TEST_ASSERT(hfWrite != -1);
         if (cb != 0) TEST_ASSERT(CbWriteFile(hfWrite, rgbFile, cb) == cb);
         CloseFile(hfWrite);
@@ -140,7 +140,7 @@ static void TestRecordFramingBytes() {
 
     char szDir[cbTestPath], szFile[cbTestPath + 64];
     uint8_t rgb[1024], written[1026], stream[] = {3, 0, 0x31, 0x32, 0x33};
-    int16_t hfRead, fMissing;
+    int16_t hfRead;
 
     TEST_ASSERT(FStarsTestInit(app));
     TEST_ASSERT(FStarsTestDir("record-framing", szDir, sizeof(szDir)));
@@ -151,7 +151,7 @@ static void TestRecordFramingBytes() {
     // still written. Encoding must not introduce a new length rejection.
     WriteRt(app, rtEOF, 1024, rgb);
     StreamClose(app);
-    hfRead = HfOpenFile(szFile, mdRead, &fMissing);
+    hfRead = HfOpenFile(szFile, {.mdShare = NATIVEFILESHARE::denyWrite}).hf;
     TEST_ASSERT(hfRead != -1);
     TEST_CHECK(CbReadFile(hfRead, written, sizeof(written)) == sizeof(written));
     CloseFile(hfRead);
@@ -163,7 +163,7 @@ static void TestRecordFramingBytes() {
     StreamOpen(app, szFile, mdCreate);
     WriteRtEof(app, 0x80ff);
     StreamClose(app);
-    hfRead = HfOpenFile(szFile, mdRead, &fMissing);
+    hfRead = HfOpenFile(szFile, {.mdShare = NATIVEFILESHARE::denyWrite}).hf;
     TEST_ASSERT(hfRead != -1);
     TEST_CHECK(CbReadFile(hfRead, written, sizeof(written)) == 4);
     CloseFile(hfRead);
