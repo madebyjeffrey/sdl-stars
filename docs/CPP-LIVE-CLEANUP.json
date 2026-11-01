@@ -86,7 +86,8 @@
         "owned-report-destination-and-task-labels",
         "fleet-rename-admission-and-owned-replacement",
         "owned-hull-label-and-bounded-roman-numerals",
-        "owned-numeric-text-values"
+        "owned-numeric-text-values",
+        "scaled-numeric-rounding-overflow-repair"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -304,6 +305,19 @@
           "reproduction": "Before migration the new two-lookup test failed because the second result overwrote the first. It now passes along with signs, grouping, integer extrema, normal k/M boundaries and retained independent values.",
           "baseline": "Behavior-neutral for actual consumers; valid bytes, counts, working-buffer uses, record widths, unit goldens and regression baselines unchanged. Existing scaled rounding overflow remains explicitly pending a separate focused repair.",
           "receipts": "dist/verification/live-cpp/l05m/"
+        },
+        {
+          "batch": "L05n PszFromLongK signed rounding overflow repair",
+          "debug_build": "Pass; no new warnings; actual boundary test reproduced two failures before the fix and passes after.",
+          "desktop": "153/153, including all 29 leak checks and available SDL tutorial checkpoints.",
+          "host_units": "28/28 in Release",
+          "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+          "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+          "windows": "Changed production and utility-test units pass strict MinGW syntax; actual Windows utility executable passes all 12 cases under Wine. The preceding ownership batch compiled all 147 owned units; unchanged units were not rebuilt without cause. Native Windows desktop qualification remains pending.",
+          "reproduction": "Actual Debug labels: 2146983648 -> -2147M; INT32_MAX -> -2146M. The optimized Release build already happened to return 999M before the repair; this is not claimed as a Release red test. Both now return the intended 999M.",
+          "scope": "Only the intermediate addition uses int64_t; the input/local remains int32_t and the same division/clamp/LOWORD boundaries follow. No floating arithmetic, stored widths, RNG, records, normal label bytes or host results changed.",
+          "baseline": "Ran regression-export after every fixture reader reached terminal completion. No semantic scenario or checkpoint moved. Restored generated game-ID/salt/checkpoint-hash churn and accepted unused storage, leaving native and frozen original baselines and unit goldens unchanged.",
+          "receipts": "dist/verification/live-cpp/l05n/"
         }
       ],
       "bounded_formatting": {
@@ -413,7 +427,7 @@
         "evidence": "docs/CPP-LIVE-OWNED-TEXT.json",
         "production_consumers": 39,
         "interfaces": "Three numeric scratch getters return 12-byte owned arrays; grouped decimal returns a 15-byte owned array. All output/count pointer overloads and shared szFormatNumber storage removed.",
-        "pending_repair": "PszFromLongK signed rounding overflow above 2146983647 remains a separate behavior fix."
+        "rounding_repair": "Complete; verified: only the intermediate addition is widened before division and the existing clamp. See docs/CPP-LIVE-OWNED-TEXT.json."
       }
     },
     {

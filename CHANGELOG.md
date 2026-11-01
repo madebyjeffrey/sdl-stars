@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `PszFromLongK` now rounds large numeric labels without overflowing signed
+  32-bit arithmetic before its `999M` clamp. Debug builds could display values
+  above 2146983647 as negative millions. Normal rounding, numeric storage
+  widths, file records and host turn results are unchanged.
+
 - `LogChangeName` now rejects names exceeding 31 UTF-8 bytes, malformed UTF-8
   and embedded NULs before changing the fleet or log. Previously it could
   write an overlong name that replay rejected. Borrowed name slices are staged

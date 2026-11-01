@@ -3386,7 +3386,7 @@
     "behavior": "Actual callers retain fitting bytes, native percent-format semantics, grouping, counts, duplicate lifetime and prior work-buffer side effects where used. Scaled UI consumers previously drew explicit counts; the owned result is now independently NUL-terminated.",
     "tests": "Literal signs/grouping and extrema vectors; 16-bit width limits; normal k/M rounding/clamping boundaries; retained simultaneous values; previous 1234567/-42 assertions retained with count derived from the owned value.",
     "reproduction": "Before migration a newly added two-lookup test failed because -42 overwrote the first 1234567 result.",
-    "pending": "PszFromLongK still has the pre-existing signed addition overflow for positive values above 2146983647; repair remains a separate intentional behavior commit. Other scratch/path/const interfaces remain active.",
+    "pending": "Other shared scratch results, paths and const text interfaces remain active.",
     "verification": {
       "batch": "L05m owned numeric text values",
       "debug_build": "Pass, no new warnings; header include orders and compiler policy pass.",
@@ -3399,6 +3399,29 @@
       "reproduction": "Before migration the new two-lookup test failed because the second result overwrote the first. It now passes along with signs, grouping, integer extrema, normal k/M boundaries and retained independent values.",
       "baseline": "Behavior-neutral for actual consumers; valid bytes, counts, working-buffer uses, record widths, unit goldens and regression baselines unchanged. Existing scaled rounding overflow remains explicitly pending a separate focused repair.",
       "receipts": "dist/verification/live-cpp/l05m/"
+    },
+    "rounding_repair": {
+      "parent": "ffdb825c",
+      "status": "complete; verified",
+      "function": "PszFromLongK",
+      "reproduction": "The actual Debug utility executable displays 2146983648 as -2147M and INT32_MAX as -2146M before the fix. The optimized Release executable already happened to return 999M.",
+      "repair": "Widen only the addition before million division to int64_t, then return to the existing int32_t local and 999 clamp.",
+      "effects": "All previously defined rounding and clipping behavior, lower-16-bit conversion, field widths, RNG consumption, file records and host results are unchanged. Overflowing positive labels now consistently clamp to 999M.",
+      "tests": "Literal tests for 2146983647, 2146983648 and INT32_MAX, alongside the existing signs, grouping, normal scaled thresholds and retained ownership cases.",
+      "baseline": "Exported and reviewed; no semantic scenario/checkpoint changes, native and frozen original baselines unchanged.",
+      "verification": {
+        "batch": "L05n PszFromLongK signed rounding overflow repair",
+        "debug_build": "Pass; no new warnings; actual boundary test reproduced two failures before the fix and passes after.",
+        "desktop": "153/153, including all 29 leak checks and available SDL tutorial checkpoints.",
+        "host_units": "28/28 in Release",
+        "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+        "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+        "windows": "Changed production and utility-test units pass strict MinGW syntax; actual Windows utility executable passes all 12 cases under Wine. The preceding ownership batch compiled all 147 owned units; unchanged units were not rebuilt without cause. Native Windows desktop qualification remains pending.",
+        "reproduction": "Actual Debug labels: 2146983648 -> -2147M; INT32_MAX -> -2146M. The optimized Release build already happened to return 999M before the repair; this is not claimed as a Release red test. Both now return the intended 999M.",
+        "scope": "Only the intermediate addition uses int64_t; the input/local remains int32_t and the same division/clamp/LOWORD boundaries follow. No floating arithmetic, stored widths, RNG, records, normal label bytes or host results changed.",
+        "baseline": "Ran regression-export after every fixture reader reached terminal completion. No semantic scenario or checkpoint moved. Restored generated game-ID/salt/checkpoint-hash churn and accepted unused storage, leaving native and frozen original baselines and unit goldens unchanged.",
+        "receipts": "dist/verification/live-cpp/l05n/"
+      }
     }
   },
   "numeric_text_calls": [

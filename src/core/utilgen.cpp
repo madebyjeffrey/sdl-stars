@@ -329,7 +329,8 @@ std::array<char, 12> PszFromLongK(APPSESSION &app, std::int32_t l) {
     fLarge = l >= 10000;
     fExtraLarge = l >= 1000000;
     if (fExtraLarge) {
-        l = static_cast<std::int32_t>(((l + 500000) / 0xf4240));
+        // Round before clamping without overflowing the signed 32-bit input.
+        l = static_cast<std::int32_t>((static_cast<std::int64_t>(l) + 500000) / 0xf4240);
         if (l > 999) {
             l = 999;
         }

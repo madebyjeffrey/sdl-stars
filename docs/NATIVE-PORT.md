@@ -210,7 +210,9 @@ detail in [WIN16-PARITY.md](WIN16-PARITY.md).
   grouped decimal output owns 15 bytes, sufficient for signed 32-bit extrema.
   All 39 production consumers use those values and actual destination spans or
   named drawing owners. Count/output pointer overloads and shared number storage
-  are gone; numeric widths, fitting bytes and saved layouts are unchanged.
+  are gone; numeric widths, defined formatting and saved layouts are unchanged.
+  Million rounding uses a 64-bit intermediate before returning to its 32-bit
+  local and existing 999M clamp, preventing negative labels near INT32_MAX.
   User-string compression/decompression and both saved-name readers now take
   byte/text spans and return optional encoded, decoded or consumed counts.
   The caller's existing compression budget and destination NUL capacity stay

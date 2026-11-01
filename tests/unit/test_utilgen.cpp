@@ -198,6 +198,7 @@ static void test_NumberText_boundaries(void) {
         {999499, "999k"}, {999500, "999k"}, {999999, "999k"},
         {1000000, "1M"}, {1499999, "1M"}, {1500000, "2M"},
         {998500000, "999M"}, {999500000, "999M"}, {2146983647, "999M"},
+        {2146983648, "999M"}, {std::numeric_limits<int32_t>::max(), "999M"},
     };
 
     for (const auto &item : rgLong) {
@@ -205,7 +206,10 @@ static void test_NumberText_boundaries(void) {
         TEST_CHECK(!strcmp(CommaFormatLong(app, item.l).data(), item.pszComma));
     }
     for (const auto &item : rgInt) TEST_CHECK(!strcmp(PszFromInt(app, item.i).data(), item.psz));
-    for (const auto &item : rgScaled) TEST_CHECK(!strcmp(PszFromLongK(app, item.l).data(), item.psz));
+    for (const auto &item : rgScaled) {
+        const auto szNumber = PszFromLongK(app, item.l);
+        TEST_CHECK_(!strcmp(szNumber.data(), item.psz), "scaled %ld: got %s, expected %s", static_cast<long>(item.l), szNumber.data(), item.psz);
+    }
     const auto szInt = PszFromInt(app, -32768);
     const auto szComma = CommaFormatLong(app, std::numeric_limits<int32_t>::min());
     const auto szScaled = PszFromLongK(app, 10000);
