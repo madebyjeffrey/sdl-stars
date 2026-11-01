@@ -105,8 +105,12 @@ int main(int argc, char **argv) {
 #endif
     SDL_unsetenv_unsafe("STARS_SDL_PRINTER"); SDL_unsetenv_unsafe("STARS_SDL_PRINT_PAPER"); SDL_unsetenv_unsafe("STARS_SDL_PRINT_ORIENTATION");
     // DEVNAMES keeps the complete UTF-8 printer name, including at its byte limit.
+    // Populate SDL's UTF-8 environment directly; the unsafe Windows setter uses
+    // the ANSI environment when SDL's cache has not been created yet.
+    CHECK(SDL_UnsetEnvironmentVariable(SDL_GetEnvironment(), "STARS_SDL_PRINT_FILE"));
     for (int i = 0; i < 85; i++) szPrinter += "\xe4\xb8\xad";
-    SDL_setenv_unsafe("STARS_SDL_PRINTER", szPrinter.c_str(), 1);
+    CHECK(SDL_SetEnvironmentVariable(SDL_GetEnvironment(), "STARS_SDL_PRINTER", szPrinter.c_str(), true));
+    CHECK(SDL_getenv("STARS_SDL_PRINTER") && strcmp(SDL_getenv("STARS_SDL_PRINTER"), szPrinter.c_str()) == 0);
     pd = {}; pd.lStructSize = sizeof(pd); pd.Flags = win32::PD_RETURNDEFAULT;
     CHECK(win32::PrintDlgA(&pd) && !pd.hDC && pd.hDevMode && pd.hDevNames);
     lpn = static_cast<DEVNAMES *>(win32::GlobalLock(pd.hDevNames)); CHECK(lpn && lpn->wDefault == 1);
@@ -118,11 +122,11 @@ int main(int argc, char **argv) {
     CHECK(strcmp(reinterpret_cast<char *>(lpn) + lpn->wOutputOffset, "CUPS:") == 0);
     CHECK(win32::GlobalSize(pd.hDevNames) >= lpn->wOutputOffset + sizeof("CUPS:"));
     win32::GlobalUnlock(pd.hDevNames); FreePrinter(&pd);
-    szPrinter += 'x'; SDL_setenv_unsafe("STARS_SDL_PRINTER", szPrinter.c_str(), 1);
+    szPrinter += 'x'; CHECK(SDL_SetEnvironmentVariable(SDL_GetEnvironment(), "STARS_SDL_PRINTER", szPrinter.c_str(), true));
     pd = {}; pd.lStructSize = sizeof(pd); pd.Flags = win32::PD_RETURNDEFAULT;
     CHECK(!win32::PrintDlgA(&pd) && !pd.hDevMode && !pd.hDevNames && !pd.hDC);
     CHECK(win32::GetLastError() == win32::ERROR_INVALID_PARAMETER);
-    SDL_unsetenv_unsafe("STARS_SDL_PRINTER");
+    CHECK(SDL_UnsetEnvironmentVariable(SDL_GetEnvironment(), "STARS_SDL_PRINTER"));
     CHECK(InitPrinter(&pd, szPages) && pd.hDC && pd.hDevMode && pd.hDevNames && pd.nCopies == 1);
     CHECK(win32::CommDlgExtendedError() == 0);
     lpdm = (DEVMODE*)(win32::GlobalLock(pd.hDevMode)); CHECK(lpdm && lpdm->dmSize == sizeof(*lpdm) && lpdm->mode.printer.dmPaperSize == win32::DMPAPER_LETTER);

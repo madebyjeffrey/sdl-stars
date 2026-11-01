@@ -3237,6 +3237,23 @@
       "inventory": "277 migrated initial sites; 31 initial sites remain. The exact lexical raw-copy inventory totals 37 including six SDK declaration/definition/implementation extras.",
       "baseline": "Behavior-neutral; native and frozen-original baseline files unchanged. No wire/layout, game rule, RNG, tie order or floating boundary change; no checkpoint moved.",
       "receipts": "dist/verification/live-cpp/l05ab/"
+    },
+    "windows_fixture_repair": {
+      "batch": "L05ab Windows printer characterization environment repair",
+      "failed_run": 41343668047,
+      "failed_head": "bba10904",
+      "observed": "Windows desktop 133/134; new Unicode printer test failed on its first PrintDlgA call at line 111. Linux desktop 156/156 including portal; Linux host, independent witnesses and 45 resource sanitizer tests passed. SDK matrix variants had 21 passing contracts and no failed contracts; diagnostic-only differences remain explicit.",
+      "root_cause": "The first SDL_setenv_unsafe stores the UTF-8 printer value through Windows ANSI process environment APIs before SDL creates its environment cache. SDL then converts the native value to UTF-8; on code page 1252, the intended 255 bytes become 510 and PrintDlg correctly rejects the oversize name. This is a fixture setup error, not a production copy failure.",
+      "reproduction": "Official SDL 3.4.18 Windows x64 runtime, matching the CI package version, executed under Wine. Actual output: SDL=3004018 ACP=1252 input=255 unsafe=510 equal=0 safe=255 equal=1",
+      "runtime_provenance": {
+        "release": "https://github.com/libsdl-org/SDL/releases/tag/release-3.4.18",
+        "git_hash": "829a65d769d935c4852f8159e964312c0957260a",
+        "dll_sha256": "2b4b128d8d510cc2d442693cf848c050d700d43dc667afe9e5fd82b0570d667e"
+      },
+      "repair": "Use checked SDL_SetEnvironmentVariable/SDL_UnsetEnvironmentVariable on SDL_GetEnvironment for these UTF-8 fixture values; assert exact cached bytes, and clear an inherited print-file override. Keep the full 255-byte name, 256-byte rejection, all DEVNAMES offsets/strings/size checks and failure output/error assertions.",
+      "verification": "Mac actual printer, PDF inspection and native printer leak checks: 3/3. Changed printer fixture passes strict MinGW C++20. The official Windows SDL probe preserves exactly 255 bytes through the corrected API. Full native Windows SDL must be requalified on the new head.",
+      "scope": "Test fixture and evidence only; no production behavior, game code, save data, goldens or baseline changes. The just-qualified UI cleanup remains 154/154 with 519 matching native checkpoints; unchanged host coverage remains valid.",
+      "receipts": "dist/verification/live-cpp/l05ab-windows-fixture/"
     }
   },
   "bounded_message_tutorial_copies": {
