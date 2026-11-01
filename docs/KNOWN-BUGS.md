@@ -17,6 +17,18 @@ J/JRC3/JRC4 fix claims below come from the supplied list and are not independent
 verified release history. See [WIN16-PARITY.md](WIN16-PARITY.md) for native changes
 and [ROADMAP.md](ROADMAP.md) for the post-tag work.
 
+## Batch filename line truncation and unchecked copies — fixed on develop
+
+`turn.cpp`, `FSetUpBatchProcessing`/`FRunCmdLine`: both filename loops assumed
+CRLF and blindly wrote `pch[-1] = 0`, dropping a real filename byte on LF input
+or the final line. They also tested the source byte before its end and did not
+carry the destination capacity. A shared bounded line view now consumes LF,
+optional CR and a final unterminated line, then uses the command path's strict
+UTF-8/byte-budget validation. Blank or invalid names stop processing without
+copying beyond the path. Real tests reproduce the LF truncation and exercise
+both initial and later names through two generated games, with rejection of a
+later overlong path. The separate batch-size wrapping repair remains pending.
+
 ## Memory-backed records lack source bounds — fixed on develop
 
 `file.cpp`, `ReadRtHeader`/`RgFromStream`, and tutorial loops in `log.cpp`/

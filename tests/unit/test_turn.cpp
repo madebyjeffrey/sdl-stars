@@ -7,6 +7,95 @@
 
 #include "stars_test.h"
 
+static void test_BatchInput_contract(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    char szDir[cbTestPath], szFile[cbTestPath + 64];
+    struct CASE { std::string sz; std::size_t cbFirst; std::string szExpected = "alpha.hst"; };
+    const CASE rgCases[] = {{"alpha.hst\r\nbeta.hst\r\n", 11}, {"alpha.hst\nbeta.hst\n", 10},
+                            {"alpha.hst", 9}, {"alpha-\xce\xa9.hst\n", 13, "alpha-\xce\xa9.hst"},
+                            {std::string(sizeof(app.state.szBase) - 1, 'a') + "\n", sizeof(app.state.szBase), std::string(sizeof(app.state.szBase) - 1, 'a')}};
+
+    TEST_ASSERT(FStarsTestInit(app));
+    TEST_ASSERT(FStarsTestDir("batch-input", szDir, sizeof(szDir)));
+    CchSnprintf(std::span{szFile}, "%s%sinput.txt", szDir, szDirSep);
+    for (const auto &cs : rgCases) {
+        NATIVEFILEOWNER lpfile(PfNativeOpen(szFile, NATIVEFILEMODE::writeTruncate), ICloseNativeFile);
+        TEST_ASSERT(lpfile);
+        TEST_ASSERT(CbWriteNativeFile(lpfile.get(), std::as_bytes(std::span{cs.sz})) == cs.sz.size());
+        lpfile.reset();
+        TEST_ASSERT(CchCopyUtf8(std::span{app.state.szBase}, szFile) >= 0);
+        TEST_CHECK(FSetUpBatchProcessing(app));
+        TEST_CHECK(std::string_view(app.state.szBase) == cs.szExpected);
+        TEST_CHECK(static_cast<std::size_t>(app.state.lpchBatchMac - app.state.lpchBatch) == cs.sz.size() - cs.cbFirst);
+        TEST_CHECK(app.state.hf == -1);
+    }
+    const std::string rgszBad[] = {"", "\n", "\r\n", std::string(sizeof(app.state.szBase), 'a') + "\n", "\xff\n", std::string("a\0b\n", 4)};
+    for (const auto &sz : rgszBad) {
+        NATIVEFILEOWNER lpfile(PfNativeOpen(szFile, NATIVEFILEMODE::writeTruncate), ICloseNativeFile);
+        TEST_ASSERT(lpfile);
+        TEST_ASSERT(CbWriteNativeFile(lpfile.get(), std::as_bytes(std::span{sz})) == sz.size());
+        lpfile.reset();
+        TEST_ASSERT(CchCopyUtf8(std::span{app.state.szBase}, szFile) >= 0);
+        TEST_CHECK(!FSetUpBatchProcessing(app));
+        TEST_CHECK(app.state.szBase[0] == 0 && app.state.hf == -1);
+        TEST_CHECK(!app.state.lpchBatch && !app.state.lpchBatchMac);
+    }
+}
+
+static void test_BatchRun_games(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    char szFirst[cbTestPath], szSecond[cbTestPath], szFile[cbTestPath + 64];
+    std::int16_t fSeed = 0;
+    std::uint32_t lSeed = 0;
+
+    TEST_ASSERT(FStarsTestInit(app));
+    TEST_ASSERT(FStarsTestDir("batch-first", szFirst, sizeof(szFirst)));
+    TEST_ASSERT(FStarsTestNewGame(app, szFirst, 12345, nullptr, 0));
+    const std::string szFirstBase(app.state.szBase);
+    TEST_ASSERT(FStarsTestDir("batch-second", szSecond, sizeof(szSecond)));
+    TEST_ASSERT(FStarsTestNewGame(app, szSecond, 67890, nullptr, 0));
+    const std::string szSecondBase(app.state.szBase);
+    CchSnprintf(std::span{szFile}, "%s%sinput.txt", szFirst, szDirSep);
+    const std::string szInput = szFirstBase + "\n" + szSecondBase;
+    {
+        NATIVEFILEOWNER lpfile(PfNativeOpen(szFile, NATIVEFILEMODE::writeTruncate), ICloseNativeFile);
+        TEST_ASSERT(lpfile && CbWriteNativeFile(lpfile.get(), std::as_bytes(std::span{szInput})) == szInput.size());
+    }
+    std::string szCmd = std::string("-b ") + szFile;
+    TEST_ASSERT(ParseCmdLine(app, szCmd.data(), &fSeed, &lSeed));
+    TEST_CHECK(app.state.ini.fBatch && app.state.ini.fGen && app.state.ini.fStartupFile);
+    TEST_CHECK(FRunCmdLine(app));
+    TEST_CHECK(app.state.lpchBatch == app.state.lpchBatchMac);
+    for (const auto &szBase : {szFirstBase, szSecondBase}) {
+        TEST_ASSERT(CchCopyUtf8(std::span{app.state.szBase}, szBase) >= 0);
+        TEST_ASSERT(FStarsTestLoadHost(app));
+        TEST_CHECK(app.state.game.turn == 1);
+        DestroyCurGame(app);
+    }
+    // A rejected later path must stop the batch after the preceding game.
+    const std::string szBadInput = szFirstBase + "\r\n" + std::string(sizeof(app.state.szBase), 'x');
+    {
+        NATIVEFILEOWNER lpfile(PfNativeOpen(szFile, NATIVEFILEMODE::writeTruncate), ICloseNativeFile);
+        TEST_ASSERT(lpfile && CbWriteNativeFile(lpfile.get(), std::as_bytes(std::span{szBadInput})) == szBadInput.size());
+    }
+    TEST_ASSERT(ParseCmdLine(app, szCmd.data(), &fSeed, &lSeed));
+    TEST_CHECK(FRunCmdLine(app));
+    TEST_CHECK(!app.state.ini.fBatch && !app.state.ini.fGen && app.state.szBase[0] == 0 && app.state.hf == -1);
+    TEST_ASSERT(CchCopyUtf8(std::span{app.state.szBase}, szFirstBase) >= 0);
+    TEST_ASSERT(FStarsTestLoadHost(app));
+    TEST_CHECK(app.state.game.turn == 2);
+}
+
 // test_generate_one_turn checks the turn-test plumbing: create a game, load
 // its host file, generate a turn, and load the result.
 static void test_generate_one_turn(void) {
@@ -238,7 +327,7 @@ static void test_MoveThings_trader_without_retargeting_moves(void) {
     TEST_CHECK(lpth->tht().ptDest().x() == 2000 && lpth->tht().ptDest().y() == 1200);
 }
 
-TEST_LIST = {{"MoveThings trader without retargeting moves", test_MoveThings_trader_without_retargeting_moves},
+TEST_LIST = {{"batch command iterates LF paths and stops on invalid names", test_BatchRun_games}, {"batch input bounds lines and preserves complete filenames", test_BatchInput_contract}, {"MoveThings trader without retargeting moves", test_MoveThings_trader_without_retargeting_moves},
              {"generate one turn", test_generate_one_turn},
              {"generate backs up an unsubmitted turn", test_generate_backs_up_unsubmitted_turn},
              {"MoveFleets caught pursuer keeps moving", test_MoveFleets_caught_pursuer_keeps_moving},

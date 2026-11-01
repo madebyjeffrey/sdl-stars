@@ -6,6 +6,13 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `FSetUpBatchProcessing` and `FRunCmdLine` now read bounded batch filename
+  lines, preserving LF, CRLF and an unterminated final line. Previously the
+  unconditional last-byte removal truncated LF filenames and the copy loops
+  could overrun the path buffer or read past the list. Empty, overlong or invalid
+  UTF-8 paths now stop the batch; a failed `-b` setup reports command-line failure.
+  Valid CRLF paths, game files and host turn results are unchanged.
+
 - `ReadRt`, `RgFromStream` and tutorial record skipping now keep the source's
   remaining byte range. Truncated memory-backed headers and payloads report a
   corrupt-file error instead of reading beyond the resource. Partial read bytes

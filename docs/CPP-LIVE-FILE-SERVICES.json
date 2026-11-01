@@ -5714,5 +5714,28 @@
       "remaining": "Batch size/storage/filename loops, PszGetLine, other buffer interfaces, Milestone D, remaining L05 text and L08 final qualification remain active.",
       "receipts": "dist/verification/live-cpp/l06n/"
     }
+  },
+  "batch_paths": {
+    "parent": "cb19574b",
+    "status": "complete; verified",
+    "interfaces": "One FNextBatchPath consumes a bounded remaining source range; private FCopyCmdPath takes a readonly view and copies only after existing UTF-8 and destination-byte-budget checks. Both actual batch loops and both command path callers use it.",
+    "line_contract": "LF, CRLF and final unterminated paths retain every filename byte. Only the LF delimiter and an immediately preceding CR are removed. Blank, overlong, embedded-NUL or invalid UTF-8 names fail. Leading/trailing spaces otherwise remain filename bytes; no normalization is introduced.",
+    "effects": "Initial failure clears path/cursor and ParseCmdLine returns false. A rejected later name stops generation and clears batch/gen flags. Previous valid games retain their completed generation; no game rollback is promised.",
+    "tests": "The parent real-file test reproduces dropped LF filename bytes; its independent file-size wrap assertion is reserved for the next focused batch. Final tests cover CRLF/LF/final/Unicode/exact-capacity paths, empty/blank/overlong/invalid/NUL paths, actual -b execution of two games and stopping at a later invalid name.",
+    "remaining": "The existing signed lowword file sizing and arena allocation remain explicitly pending and are not claimed safe by this source/destination line migration. The completed owned-size implementation is retained separately for the next focused commit.",
+    "verification": {
+      "batch": "L06o bounded batch filename lines and strict path admission",
+      "debug_build": "Pass; no warnings; 158 owned sources, 159 variants and 161 standalone headers in both orders pass compiler/source policy.",
+      "desktop": "153/153, including actual LF batch iteration, strict path checks, all 29 leak checks and available SDL tutorial checkpoints.",
+      "host_units": "28/28",
+      "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+      "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+      "windows": "147/147 strict owned production units and both actual turn/encoding test units compile with MinGW. Wine passes all seven turn cases and eight encoding cases. Native Windows desktop and actual Linux final qualification remain pending.",
+      "characterization": "The targeted parent batch test reproduces one LF filename mismatch and an independent file-size-wrap mismatch. Only the filename defect is fixed in this commit. Its final small-file tests cover CRLF, LF, final unterminated paths, Unicode, exact capacity, empty/blank/overlong/invalid/NUL names; actual -b processing generates both games, and a later rejected name stops before another generation.",
+      "interfaces": "Both batch filename loops share a bounded line view and the command path admission helper. That helper now takes string_view and uses the actual szBase span after validation; both command path callers retain their original byte slice. Invalid initial setup returns command-line failure; later failure clears batch/generation flags.",
+      "baseline": "Full native baseline regenerated and compared with its prior fixtures: all 519 checkpoints match, including 25 existing unused-storage warnings. No scenario moved at any turn. Preserved 592 regeneration-only fixture differences. Native/frozen-original baseline bytes, unit goldens, wire layouts/widths, game RNG, qsort ordering and binary64 boundaries remain unchanged.",
+      "remaining": "Batch file-size/ownership repair is implemented separately and awaits its own focused commit. PszGetLine, other buffer interfaces, Milestone D, L05 remaining text and L08 final qualification remain active.",
+      "receipts": "dist/verification/live-cpp/l06o/"
+    }
   }
 }

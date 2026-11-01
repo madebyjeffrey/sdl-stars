@@ -453,6 +453,11 @@
         "status": "complete; verified",
         "evidence": "docs/CPP-LIVE-FILE-SERVICES.json",
         "interface": "Readonly sized text and actual int32 output spans; optional count preserves zero/failure and partial assignment distinctions."
+      },
+      "batch_paths": {
+        "status": "complete; verified",
+        "evidence": "docs/CPP-LIVE-FILE-SERVICES.json",
+        "interface": "Both batch filename writers use one bounded source view and strict destination validation; byte-loop overflow and unconditional last-byte removal are gone."
       }
     },
     {
@@ -477,7 +482,8 @@
         "readonly-temporary-requests-and-owned-path-stream-results",
         "sized-text-writer-and-full-width-byte-counts",
         "bounded-readonly-memory-cursors-and-tutorial-record-sources",
-        "readonly-numeric-parser-output-spans-and-optional-counts"
+        "readonly-numeric-parser-output-spans-and-optional-counts",
+        "bounded-batch-filename-lines-and-strict-path-admission"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -697,6 +703,20 @@
           "baseline": "Behavior-neutral; both 519-checkpoint comparisons match. No native/frozen-original fixture, unit golden, wire layout/width, RNG, qsort ordering, binary64 boundary or canonical model changed. No scenario/checkpoint moved and no regression export is required.",
           "remaining": "Batch size/storage/filename loops, PszGetLine, other buffer interfaces, Milestone D, remaining L05 text and L08 final qualification remain active.",
           "receipts": "dist/verification/live-cpp/l06n/"
+        },
+        {
+          "batch": "L06o bounded batch filename lines and strict path admission",
+          "debug_build": "Pass; no warnings; 158 owned sources, 159 variants and 161 standalone headers in both orders pass compiler/source policy.",
+          "desktop": "153/153, including actual LF batch iteration, strict path checks, all 29 leak checks and available SDL tutorial checkpoints.",
+          "host_units": "28/28",
+          "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+          "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+          "windows": "147/147 strict owned production units and both actual turn/encoding test units compile with MinGW. Wine passes all seven turn cases and eight encoding cases. Native Windows desktop and actual Linux final qualification remain pending.",
+          "characterization": "The targeted parent batch test reproduces one LF filename mismatch and an independent file-size-wrap mismatch. Only the filename defect is fixed in this commit. Its final small-file tests cover CRLF, LF, final unterminated paths, Unicode, exact capacity, empty/blank/overlong/invalid/NUL names; actual -b processing generates both games, and a later rejected name stops before another generation.",
+          "interfaces": "Both batch filename loops share a bounded line view and the command path admission helper. That helper now takes string_view and uses the actual szBase span after validation; both command path callers retain their original byte slice. Invalid initial setup returns command-line failure; later failure clears batch/generation flags.",
+          "baseline": "Full native baseline regenerated and compared with its prior fixtures: all 519 checkpoints match, including 25 existing unused-storage warnings. No scenario moved at any turn. Preserved 592 regeneration-only fixture differences. Native/frozen-original baseline bytes, unit goldens, wire layouts/widths, game RNG, qsort ordering and binary64 boundaries remain unchanged.",
+          "remaining": "Batch file-size/ownership repair is implemented separately and awaits its own focused commit. PszGetLine, other buffer interfaces, Milestone D, L05 remaining text and L08 final qualification remain active.",
+          "receipts": "dist/verification/live-cpp/l06o/"
         }
       ],
       "roman_output": {
@@ -793,6 +813,11 @@
         "status": "complete; verified",
         "evidence": "docs/CPP-LIVE-FILE-SERVICES.json",
         "interfaces": "Readonly numeric text, actual int32 output spans and optional counts; all 12 production calls use explicit array prefixes."
+      },
+      "batch_paths": {
+        "status": "complete; verified",
+        "evidence": "docs/CPP-LIVE-FILE-SERVICES.json",
+        "contract": "Actual initial/later batch filename paths use one bounded line view and strict destination validation. File-size/ownership repair remains separate."
       }
     },
     {

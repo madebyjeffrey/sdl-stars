@@ -569,8 +569,41 @@ std::int16_t CFindTurnsOutstanding(APPSESSION &app) {
     return cOut;
 }
 
+static std::int16_t FCopyCmdPath(APPSESSION &app, std::string_view psz) {
+    if (!FUtf8Valid(psz)) {
+        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsNativeFilenameEncoding).data(), win32::MB_ICONHAND);
+        app.state.szBase[0] = 0; app.state.ini.fCmdLine = 0; app.state.ini.fStartupFile = 0;
+        return 0;
+    }
+    if (psz.size() >= sizeof(app.state.szBase)) {
+        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsNativeFilenameTooLong).data(), win32::MB_ICONHAND);
+        app.state.szBase[0] = 0; app.state.ini.fCmdLine = 0; app.state.ini.fStartupFile = 0;
+        return 0;
+    }
+    CchCopyUtf8(std::span{app.state.szBase}, psz);
+    return 1;
+}
+
+static bool FNextBatchPath(APPSESSION &app) {
+    std::size_t ich;
+    std::string_view psz;
+
+    if (app.state.lpchBatch == app.state.lpchBatchMac) return false;
+    psz = {app.state.lpchBatch, static_cast<std::size_t>(app.state.lpchBatchMac - app.state.lpchBatch)};
+    ich = psz.find('\n');
+    if (ich == std::string_view::npos) ich = psz.size();
+    app.state.lpchBatch += ich < psz.size() ? ich + 1 : ich;
+    psz = psz.substr(0, ich);
+    if (psz.ends_with('\r')) psz.remove_suffix(1);
+    if (psz.empty()) {
+        app.state.szBase[0] = 0;
+        FileError(app, idsCantOpenFile);
+        return false;
+    }
+    return FCopyCmdPath(app, psz);
+}
+
 std::int16_t FSetUpBatchProcessing(APPSESSION &app) {
-    char   *pch;
     std::int16_t fSuccess;
     std::int16_t cb;
 
@@ -582,38 +615,15 @@ std::int16_t FSetUpBatchProcessing(APPSESSION &app) {
         app.state.lpchBatch = LpAlloc<char>(app, cb, htPerm);
         RgFromStream(app, std::as_writable_bytes(std::span{app.state.lpchBatch, static_cast<std::uint16_t>(cb)}));
         app.state.lpchBatchMac = app.state.lpchBatch + cb;
-        pch = app.state.szBase;
-        while (*app.state.lpchBatch != '\n' && app.state.lpchBatch != app.state.lpchBatchMac) {
-            *pch = *app.state.lpchBatch;
-            app.state.lpchBatch++;
-            pch++;
-        }
-        app.state.lpchBatch++;
-        pch[-1] = 0;
-        fSuccess = 1;
+        fSuccess = FNextBatchPath(app);
     } catch (const StarsError &) {
     }
-LError:
     RecordIO().pfnStreamClose(app);
     if (!fSuccess) {
         app.state.szBase[0] = 0;
+        app.state.lpchBatch = app.state.lpchBatchMac = nullptr;
     }
     return fSuccess;
-}
-
-static std::int16_t FCopyCmdPath(APPSESSION &app, const char *psz, std::size_t cb) {
-    if (!FUtf8Valid(psz, cb)) {
-        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsNativeFilenameEncoding).data(), win32::MB_ICONHAND);
-        app.state.szBase[0] = 0; app.state.ini.fCmdLine = 0; app.state.ini.fStartupFile = 0;
-        return 0;
-    }
-    if (cb >= sizeof(app.state.szBase)) {
-        AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsNativeFilenameTooLong).data(), win32::MB_ICONHAND);
-        app.state.szBase[0] = 0; app.state.ini.fCmdLine = 0; app.state.ini.fStartupFile = 0;
-        return 0;
-    }
-    std::memcpy(app.state.szBase, psz, cb); app.state.szBase[cb] = 0;
-    return 1;
 }
 
 // ParseCmdLine reads the command line's switches into ini and gd and its
@@ -695,10 +705,10 @@ std::int16_t ParseCmdLine(APPSESSION &app, char *lpCmdLine, std::int16_t *pfSeed
                     }
                     pch = lpT;
                     while (*lpT != 0 && *lpT != ' ') lpT++;
-                    if (!FCopyCmdPath(app, pch, static_cast<std::size_t>((lpT - pch)))) return 0;
+                    if (!FCopyCmdPath(app, std::string_view{pch, static_cast<std::size_t>(lpT - pch)})) return 0;
                     lpT--;
                     if (!FSetUpBatchProcessing(app))
-                        break;
+                        return 0;
                     app.state.ini.fBatch = 1;
                     app.state.ini.fGen = 1;
                     app.state.ini.fStartupFile = 1;
@@ -751,7 +761,7 @@ std::int16_t ParseCmdLine(APPSESSION &app, char *lpCmdLine, std::int16_t *pfSeed
         } else {
             pch = lpT;
             while (*lpT != 0 && *lpT != ' ') lpT++;
-            if (!FCopyCmdPath(app, pch, static_cast<std::size_t>((lpT - pch)))) return 0;
+            if (!FCopyCmdPath(app, std::string_view{pch, static_cast<std::size_t>(lpT - pch)})) return 0;
             app.state.ini.fStartupFile = 1;
             app.state.ini.fCmdLine = 1;
         }
@@ -766,7 +776,6 @@ std::int16_t ParseCmdLine(APPSESSION &app, char *lpCmdLine, std::int16_t *pfSeed
 // game, or waits (-w) for turns still out, which the Windows game's host
 // timer does.
 std::int16_t FRunCmdLine(APPSESSION &app) {
-    char   *pch;
     char    szTemp[80];
     std::int16_t ich;
     std::int16_t i;
@@ -812,14 +821,11 @@ LBatchNext:
         if (app.state.ini.fBatch && app.state.lpchBatch < app.state.lpchBatchMac) {
         LTryNextBatch:
             DestroyCurGame(app);
-            pch = app.state.szBase;
-            while (*app.state.lpchBatch != '\n' && app.state.lpchBatch != app.state.lpchBatchMac) {
-                *pch = *app.state.lpchBatch;
-                app.state.lpchBatch++;
-                pch++;
+            if (!FNextBatchPath(app)) {
+                app.state.ini.fBatch = 0;
+                app.state.ini.fGen = 0;
+                return 1;
             }
-            app.state.lpchBatch++;
-            pch[-1] = 0;
             app.state.ini.fStartupFile = 1;
             goto LBatchNext;
         }
