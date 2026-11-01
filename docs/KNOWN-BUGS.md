@@ -17,6 +17,20 @@ J/JRC3/JRC4 fix claims below come from the supplied list and are not independent
 verified release history. See [WIN16-PARITY.md](WIN16-PARITY.md) for native changes
 and [ROADMAP.md](ROADMAP.md) for the post-tag work.
 
+## Turn-backup path capacity — fixed on develop
+
+`FGenerateTurn` joined the backup directory, basename and extension inside a
+256-byte local array; it also appended extensions to `szBase[256]` itself.
+`CreateBackupDir` used another fixed 256-byte shared buffer. A valid basename
+could therefore exceed either destination after these joins. The actual parent
+sanitizer-built turn test reports index 257 outside `char[256]` for a 250-byte
+UTF-8 basename. The directory helper now returns an owned path, and generation
+holds separate complete current/backup filenames without changing the session
+basename. Extension capacity is reserved before rotation. Tests exercise the
+250/255-byte basename boundary, binary backup contents and all directory naming
+branches. File-operation order, unsubmitted-turn copy behavior, saved widths and
+generated turn contents remain unchanged; no native checkpoint moved.
+
 ## Failed file-size queries masquerade as byte counts — fixed on develop
 
 `file.cpp`, `FLoadGame`: the EOF check compared `CbFileSize` and `LSeekFile`

@@ -38,19 +38,21 @@ void InitGameStuff(APPSESSION &app) {
 
 std::int16_t FGenerateTurn(APPSESSION &app) {
     std::int16_t  fErrSav;
-    char    *pchT;
     std::int16_t  ish;
     std::int16_t  j;
     std::uint8_t  mpiplr2[16];
     std::uint8_t  rgfNoXFile[16];
     std::int16_t  ifl;
     FLEET   *lpfl;
-    char    *pchCur;
     std::int16_t  i;
-    char     szT[256];
+    std::string szT;
+    std::string szCur;
+    std::size_t cchCur;
+    std::size_t cchBak;
+    std::size_t ich;
+    char     szExt[5];
     std::int16_t  idCur;
     std::int16_t  fFollow;
-    char    *pchBak;
     std::int16_t  fSuccess;
     std::int16_t  fDone;
     FLEET   *lpflTarget;
@@ -270,17 +272,21 @@ std::int16_t FGenerateTurn(APPSESSION &app) {
         UpdateGuesses(app);
         UpdateProgressGauge(app, static_cast<ProgressStep>(852));
         FMarkFile(app, dtHost, iplrNone, mdMarkInUse, 0);
-        CreateBackupDir(app);
-        app.state.game.turn++;
-        pchCur = &app.state.szBase[std::strlen(app.state.szBase)];
-        pchT = std::strrchr(app.state.szBase, chDirSep);
-        std::strcpy(szT, app.state.szBackup);
-        if (!pchT) {
-            std::strcat(szT, app.state.szBase);
-        } else {
-            std::strcat(szT, pchT + 1);
+        try {
+            szT = CreateBackupDir(app);
+            szCur = app.state.szBase;
+            cchCur = szCur.size();
+            ich = szCur.rfind(chDirSep);
+            szT.append(szCur, ich == std::string::npos ? 0 : ich + 1);
+            cchBak = szT.size();
+            // A fitting basename can still exceed the old arrays after backup/extension joins.
+            szCur.reserve(cchCur + 4);
+            szT.reserve(cchBak + 4);
+        } catch (const std::bad_alloc &) {
+            AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMemory, {}).data(), win32::MB_ICONHAND);
+            StarsThrowError(starsErrorMemory, idsMemory);
         }
-        pchBak = &szT[std::strlen(szT)];
+        app.state.game.turn++;
         UpdateProgressGauge(app, static_cast<ProgressStep>(854));
         UpdatePlayerScores(app);
         for (i = 0; i < app.state.game.cPlayer; i++) {
@@ -315,27 +321,31 @@ std::int16_t FGenerateTurn(APPSESSION &app) {
                 fDone = 1;
             }
             if (i >= 0) {
-                CchSprintf(std::span{app.state.szBase}.subspan(static_cast<std::size_t>(pchCur - app.state.szBase)), ".x%d", i + 1);
-                std::strcpy(pchBak, pchCur);
-                RemoveNativeFile(szT);
-                if (!FFileExists(app.state.szBase)) {
+                CchSprintf(szExt, ".x%d", i + 1);
+                szCur.resize(cchCur);
+                szCur += szExt;
+                szT.resize(cchBak);
+                szT += szExt;
+                RemoveNativeFile(szT.c_str());
+                if (!FFileExists(szCur.c_str())) {
                     rgfNoXFile[i] = 1;
                 } else {
-                    RenameNativeFile(app.state.szBase, szT);
+                    RenameNativeFile(szCur.c_str(), szT.c_str());
                 }
-                pchBak[1] = 'm';
-                pchCur[1] = 'm';
+                szT[cchBak + 1] = 'm';
+                szCur[cchCur + 1] = 'm';
             } else {
-                std::strcpy(pchCur, ".hst");
-                std::strcpy(pchBak, ".hst");
+                szCur.resize(cchCur);
+                szCur += ".hst";
+                szT.resize(cchBak);
+                szT += ".hst";
             }
-            RemoveNativeFile(szT);
+            RemoveNativeFile(szT.c_str());
             if (i >= 0 && rgfNoXFile[i]) {
-                StarsCopyFile(app, app.state.szBase, szT);
+                StarsCopyFile(app, szCur.c_str(), szT.c_str());
             } else {
-                RenameNativeFile(app.state.szBase, szT);
+                RenameNativeFile(szCur.c_str(), szT.c_str());
             }
-            *pchCur = 0;
             i++;
         }
         j = 875;

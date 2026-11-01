@@ -67,7 +67,6 @@ struct APPGAMESTATE {
     alignas(std::max_align_t) char      iLastMsgGet = -1;
     alignas(std::max_align_t) char      rgbCur[1024] = "";
     alignas(std::max_align_t) char      rgchcomp[13] = "+-,!.?:;'*%$";
-    alignas(std::max_align_t) char      szBackup[256] = "";
     alignas(std::max_align_t) char      szBase[256] = "";
     alignas(std::max_align_t) char      szLastGet[19] = "";
     alignas(std::max_align_t) char      szLastMsgGet[256] = "";

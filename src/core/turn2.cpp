@@ -1743,27 +1743,26 @@ void UpdatePlayerScores(APPSESSION &app) {
     return;
 }
 
-void CreateBackupDir(APPSESSION &app) {
-    char *pchT;
+std::string CreateBackupDir(APPSESSION &app) {
+    std::string szBackup = app.state.szBase;
+    std::size_t ich;
+    char szT[32];
 
-    std::strcpy(app.state.szBackup, app.state.szBase);
-    pchT = std::strrchr(app.state.szBackup, chDirSep);
-    if (!pchT) {
-        pchT = app.state.szBackup;
-    } else {
-        pchT++;
-    }
-    *pchT = 0;
+    ich = szBackup.rfind(chDirSep);
+    szBackup.resize(ich == std::string::npos ? 0 : ich + 1);
     if (app.state.vcBackupDirs <= 1) {
-        std::strcpy(pchT, "backup");
+        szBackup += "backup";
     } else if (app.state.vcBackupDirs <= 99) {
-        CchSprintf(std::span{app.state.szBackup}.subspan(static_cast<std::size_t>(pchT - app.state.szBackup)), "backup%d", static_cast<std::uint32_t>(app.state.game.turn) % app.state.vcBackupDirs);
+        CchSprintf(szT, "backup%d", static_cast<std::uint32_t>(app.state.game.turn) % app.state.vcBackupDirs);
+        szBackup += szT;
     } else {
-        CchSprintf(std::span{app.state.szBackup}.subspan(static_cast<std::size_t>(pchT - app.state.szBackup)), "backup.%03d", static_cast<std::uint32_t>(app.state.game.turn) % app.state.vcBackupDirs);
+        CchSprintf(szT, "backup.%03d", static_cast<std::uint32_t>(app.state.game.turn) % app.state.vcBackupDirs);
+        szBackup += szT;
     }
-    MakeDir(app.state.szBackup);
-    std::strcat(app.state.szBackup, szDirSep);
-    return;
+    szBackup.reserve(szBackup.size() + 1);
+    MakeDir(szBackup.c_str());
+    szBackup += chDirSep;
+    return szBackup;
 }
 
 std::int16_t FPacketDecay(APPSESSION &app, THING *lpth, std::int16_t pctRate) {

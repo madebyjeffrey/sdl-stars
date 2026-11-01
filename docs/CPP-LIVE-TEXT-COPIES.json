@@ -1,6 +1,6 @@
 {
   "migration_parent": "d3d3724c",
-  "status": "285 migrated sites complete; remaining text work active",
+  "status": "294 copy migrations recorded; live text work remains active",
   "contracts": {
     "display": "Write a terminated complete UTF-8 prefix into the actual destination span; preserve fitting bytes. Views borrow synchronously and overlapping copies use memmove.",
     "append": "Scan only inside the destination span for its NUL. An unterminated nonempty destination is cleared and zero bytes are appended.",
@@ -2823,6 +2823,96 @@
       "original_call": "strcpy(lpsz + cLen, \" (2)\")",
       "destination_span": "lpsz.subspan(static_cast<std::size_t>(cLen)), from span<char,32> bound to HUL.szClass",
       "role": "Intentional field-bounds repair: bounded terminator search rejects a full unterminated field; cLen < 3 prevents all negative suffix lookbehind; explicit ASCII digit checks avoid ctype on UTF-8 bytes. At cLen <= 27 the four-byte suffix and NUL fit the actual 32-byte field. Original digit stepping, scalar widths, debug names and pixel-fitting call remain."
+    },
+    {
+      "path": "src/core/turn.cpp",
+      "scope": "FGenerateTurn",
+      "baseline_line": 274,
+      "migration_parent": "17ca8390",
+      "operation": "strcpy",
+      "original_call": "strcpy(szT, app.state.szBackup)",
+      "destination_owner": "Returned std::string backup directory and separate std::string current/backup file paths",
+      "role": "Intentional path-capacity repair: preserve full basename/directory/extension bytes, rotation naming, file-operation order and copy-versus-rename choice. Reserve both four-byte suffix tails before file rotation; do not mutate the session basename or truncate paths."
+    },
+    {
+      "path": "src/core/turn.cpp",
+      "scope": "FGenerateTurn",
+      "baseline_line": 276,
+      "migration_parent": "17ca8390",
+      "operation": "strcat",
+      "original_call": "strcat(szT, app.state.szBase)",
+      "destination_owner": "Returned std::string backup directory and separate std::string current/backup file paths",
+      "role": "Intentional path-capacity repair: preserve full basename/directory/extension bytes, rotation naming, file-operation order and copy-versus-rename choice. Reserve both four-byte suffix tails before file rotation; do not mutate the session basename or truncate paths."
+    },
+    {
+      "path": "src/core/turn.cpp",
+      "scope": "FGenerateTurn",
+      "baseline_line": 278,
+      "migration_parent": "17ca8390",
+      "operation": "strcat",
+      "original_call": "strcat(szT, pchT + 1)",
+      "destination_owner": "Returned std::string backup directory and separate std::string current/backup file paths",
+      "role": "Intentional path-capacity repair: preserve full basename/directory/extension bytes, rotation naming, file-operation order and copy-versus-rename choice. Reserve both four-byte suffix tails before file rotation; do not mutate the session basename or truncate paths."
+    },
+    {
+      "path": "src/core/turn.cpp",
+      "scope": "FGenerateTurn",
+      "baseline_line": 316,
+      "migration_parent": "17ca8390",
+      "operation": "strcpy",
+      "original_call": "strcpy(pchBak, pchCur)",
+      "destination_owner": "Returned std::string backup directory and separate std::string current/backup file paths",
+      "role": "Intentional path-capacity repair: preserve full basename/directory/extension bytes, rotation naming, file-operation order and copy-versus-rename choice. Reserve both four-byte suffix tails before file rotation; do not mutate the session basename or truncate paths."
+    },
+    {
+      "path": "src/core/turn.cpp",
+      "scope": "FGenerateTurn",
+      "baseline_line": 326,
+      "migration_parent": "17ca8390",
+      "operation": "strcpy",
+      "original_call": "strcpy(pchCur, \".hst\")",
+      "destination_owner": "Returned std::string backup directory and separate std::string current/backup file paths",
+      "role": "Intentional path-capacity repair: preserve full basename/directory/extension bytes, rotation naming, file-operation order and copy-versus-rename choice. Reserve both four-byte suffix tails before file rotation; do not mutate the session basename or truncate paths."
+    },
+    {
+      "path": "src/core/turn.cpp",
+      "scope": "FGenerateTurn",
+      "baseline_line": 327,
+      "migration_parent": "17ca8390",
+      "operation": "strcpy",
+      "original_call": "strcpy(pchBak, \".hst\")",
+      "destination_owner": "Returned std::string backup directory and separate std::string current/backup file paths",
+      "role": "Intentional path-capacity repair: preserve full basename/directory/extension bytes, rotation naming, file-operation order and copy-versus-rename choice. Reserve both four-byte suffix tails before file rotation; do not mutate the session basename or truncate paths."
+    },
+    {
+      "path": "src/core/turn2.cpp",
+      "scope": "CreateBackupDir",
+      "baseline_line": 1748,
+      "migration_parent": "17ca8390",
+      "operation": "strcpy",
+      "original_call": "strcpy(app.state.szBackup, app.state.szBase)",
+      "destination_owner": "Returned std::string backup directory and separate std::string current/backup file paths",
+      "role": "Intentional path-capacity repair: preserve full basename/directory/extension bytes, rotation naming, file-operation order and copy-versus-rename choice. Reserve both four-byte suffix tails before file rotation; do not mutate the session basename or truncate paths."
+    },
+    {
+      "path": "src/core/turn2.cpp",
+      "scope": "CreateBackupDir",
+      "baseline_line": 1757,
+      "migration_parent": "17ca8390",
+      "operation": "strcpy",
+      "original_call": "strcpy(pchT, \"backup\")",
+      "destination_owner": "Returned std::string backup directory and separate std::string current/backup file paths",
+      "role": "Intentional path-capacity repair: preserve full basename/directory/extension bytes, rotation naming, file-operation order and copy-versus-rename choice. Reserve both four-byte suffix tails before file rotation; do not mutate the session basename or truncate paths."
+    },
+    {
+      "path": "src/core/turn2.cpp",
+      "scope": "CreateBackupDir",
+      "baseline_line": 1764,
+      "migration_parent": "17ca8390",
+      "operation": "strcat",
+      "original_call": "strcat(app.state.szBackup, szDirSep)",
+      "destination_owner": "Returned std::string backup directory and separate std::string current/backup file paths",
+      "role": "Intentional path-capacity repair: preserve full basename/directory/extension bytes, rotation naming, file-operation order and copy-versus-rename choice. Reserve both four-byte suffix tails before file rotation; do not mutate the session basename or truncate paths."
     }
   ],
   "remaining_spelling_scope": "Lexical raw-copy spellings, including SDK declarations/definitions; comments/literals excluded with the manifest lexer. Exact counts prevent new raw sites during the remaining migration.",
@@ -2858,69 +2948,6 @@
     {
       "path": "src/core/race.cpp",
       "normalized_call": "std::strcpy(app.state.szWork,szFile)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/core/turn.cpp",
-      "normalized_call": "std::strcat(szT,app.state.szBase)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/core/turn.cpp",
-      "normalized_call": "std::strcat(szT,pchT+1)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/core/turn.cpp",
-      "normalized_call": "std::strcpy(pchBak,)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/core/turn.cpp",
-      "normalized_call": "std::strcpy(pchBak,pchCur)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/core/turn.cpp",
-      "normalized_call": "std::strcpy(pchCur,)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/core/turn.cpp",
-      "normalized_call": "std::strcpy(szT,app.state.szBackup)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/core/turn2.cpp",
-      "normalized_call": "std::strcat(app.state.szBackup,szDirSep)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/core/turn2.cpp",
-      "normalized_call": "std::strcpy(app.state.szBackup,app.state.szBase)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/core/turn2.cpp",
-      "normalized_call": "std::strcpy(pchT,)",
       "count": 1,
       "status": "pending",
       "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
@@ -3298,6 +3325,42 @@
       "baseline": "Behavior-neutral for actual callers and valid terminated text. No native/frozen-original baseline, saved width/layout, game rule, RNG, tie order, floating boundary, catalog or unit golden changes. No scenario/checkpoint moved and no regression export required.",
       "remaining": "23 raw-copy calls, other readonly/drawing/service protocols, post-migration scratch and borrowing, wrapper formatting, Milestone D and L08 final inventory/platform qualification remain active.",
       "receipts": "dist/verification/live-cpp/l06w/"
+    }
+  },
+  "owned_backup_paths": {
+    "status": "complete; locally verified; final native Windows/Linux platform qualification pending",
+    "parent": "17ca8390",
+    "sites": 9,
+    "reproduction": "The actual parent Debug ASan/UBSan turn executable rejects index 257 outside char[256] in FGenerateTurn at turn.cpp:283 for a valid 250-byte UTF-8 basename.",
+    "repair": "CreateBackupDir returns its owned complete path; its unused shared scratch field is removed. Turn rotation uses separate owned current/backup paths, reserves extension capacity before rotation, and reports allocation failure through the existing alert/cleanup path. The shared basename stays unchanged.",
+    "tests": "Actual turn generation at 250/255-byte UTF-8 basename limits checks byte-identical unsubmitted-turn backup, host backup, absent orders backup, unchanged basename and reloaded turn. Actual directory creation covers unnumbered, two-digit and padded three-or-more-digit rotation names at the 255-byte basename limit.",
+    "remaining": "14 raw-copy calls, other path staging, post-migration scratch/borrowed storage, service views, Milestone D and final qualification remain active.",
+    "verification": {
+      "batch": "L05ae owned turn-backup paths and capacity repair",
+      "parent": "17ca8390",
+      "status": "complete; locally verified; final native Windows/Linux platform qualification pending",
+      "reproduction": "The actual parent macOS Debug ASan/UBSan turn executable rejects index 257 outside char[256] in FGenerateTurn at turn.cpp:283 for a valid 250-byte UTF-8 basename. Seven other parent cases pass.",
+      "repair": "CreateBackupDir returns its complete std::string; the single production caller owns it, so the obsolete shared 256-byte szBackup scratch field is removed. Separate current/backup filename owners reserve four-byte suffix capacity before rotation. Directory spelling, extension bytes, remove/rename/copy ordering, unsubmitted-turn copying, game-rule order, saved widths and RNG/floating boundaries remain. The shared basename is never used as extension staging. Allocation failures enter the existing StarsError recovery and turn cleanup, including when the alert callback throws.",
+      "debug_build": "Pass; no warnings. Compiler/source policy: 158 owned sources, 159 variants, 161 standalone headers in both orders; exact raw-copy inventory passes.",
+      "desktop": "154/154, including 29 leak checks, all linked game/UI/witness workflows and the available SDL tutorial checkpoints. The full 80-page tutorial remains unfinished.",
+      "host_units": "29/29 Release host tests. The expanded actual turn executable contains nine internal cases.",
+      "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+      "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+      "sanitizers": "Final actual macOS Debug ASan/UBSan turn executable passes all nine cases twice consecutively. This is focused sanitizer qualification, not a whole-suite claim.",
+      "windows": "Strict MinGW C++20 passes 147/147 production units, the final modified turn source, and the final actual test consumer. The final actual Windows Release host test_turn.exe passes all nine isolated cases under Wine, including repeated-work-directory UTF-8 path boundaries. This does not qualify the full native Windows SDL or Linux backends.",
+      "tests": "Generate/reload turns for complete 250/255-byte UTF-8 basenames; compare unsubmitted-turn backup bytes, require host backup, require no orders backup, and preserve the shared basename. Actually create rotation directories for counts 0,1,2,99,100,1000,32767 with turn 12345 at the 255-byte basename boundary, checking padded names, existence and unchanged inputs. Unicode keeps these byte-boundary paths below Windows 260-code-unit requirements.",
+      "fixture_correction": "A qualification rerun exposed the new directory fixture assuming an empty work directory; it now explicitly removes its own empty backup directories and replaces its own previous source files in setup. Sanitizer repeat and Wine reruns pass. The initial Wine invocation was denied its local server socket by the sandbox; the authorized unsandboxed execution passes.",
+      "baseline": "592 baseline files byte-identical after restoring 592 regeneration-only file changes; all 519 checkpoints match and none moved. Native baseline fully exported and compared in this repair; frozen original fixtures are untouched.",
+      "inventory": "Nine actual copy calls retired; 14 raw-copy calls remain. The completed-copy ledger now has 294 migration entries; original-line dispositions still need the separate L08 identity reconciliation.",
+      "remaining": "Other path staging and fixed outputs, readonly/mutable service views, post-migration scratch/borrowed storage, wrapper formatting, Milestone D and final inventory/platform qualification remain active.",
+      "receipts": "dist/verification/live-cpp/l05ae/",
+      "source_sha256": {
+        "src/core/appstate.h": "6de3dda6dda0cf879b22b6cbdd1535e41616d56f3e7359ba7f1b03d858d77b16",
+        "src/core/turn.cpp": "ff0fd9f808c7f05fc1749814d55611a42de4b915541c61e5c50f7cca5f853331",
+        "src/core/turn2.cpp": "b9b712721940c0baea8f3876737d6c1590100bb7d3c37f12745374507bcd83f3",
+        "src/core/turn2.h": "b6fbf6b3de9c999a1285c8e4597ab1067da3777ffe358990e15a30dd30717e88",
+        "tests/unit/test_turn.cpp": "12bcc95b0a8d98878bdcd6391adaadd5c577d8fe2273295ebbe4021cf209897c"
+      }
     }
   }
 }

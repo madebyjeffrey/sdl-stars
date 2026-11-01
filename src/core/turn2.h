@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include <cstdint>
+#include <string>
 
 void    Produce(APPSESSION &app);
 std::int16_t CBuildProdItem(APPSESSION &app, PLANET *lppl, PROD *lpprod, PROD *pprodPartial, std::int32_t *rgRes, std::int16_t fAlchemy, std::int16_t *pmdStatus, std::int16_t fCalcOnly);
@@ -24,7 +25,7 @@ void    PlanetaryClimateChange(APPSESSION &app);
 void    DiscoverNewMinerals(APPSESSION &app);
 void    MysteryTrader(APPSESSION &app);
 void    UpdatePlayerScores(APPSESSION &app);
-void    CreateBackupDir(APPSESSION &app);
+std::string CreateBackupDir(APPSESSION &app);
 std::int16_t FPacketDecay(APPSESSION &app, THING *lpth, std::int16_t pctRate);
 void    ThingDecay(APPSESSION &app);
 void    UnmarkMineFields(APPSESSION &app);

@@ -113,7 +113,8 @@
         "bounded-fitting-chooser-printer-and-menu-copies",
         "bounded-fitting-mineral-message-and-tutorial-copies",
         "bounded-ship-clone-name-field-repair",
-        "unused-unbounded-Win32-string-shims-retired"
+        "unused-unbounded-Win32-string-shims-retired",
+        "owned-backup-path-capacity-repair"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -594,6 +595,33 @@
           "inventory": "285 migrated initial copy sites; 23 initial sites remain. Exact lexical raw-copy inventory totals 29 including six SDK extras.",
           "remaining": "Other copies, mutable/readonly service views including FStringFitsScreen, post-migration scratch/borrowed storage, wrapper formatting, Milestone D and L08 final inventory/platform qualification remain active.",
           "receipts": "dist/verification/live-cpp/l05ad/"
+        },
+        {
+          "batch": "L05ae owned turn-backup paths and capacity repair",
+          "parent": "17ca8390",
+          "status": "complete; locally verified; final native Windows/Linux platform qualification pending",
+          "reproduction": "The actual parent macOS Debug ASan/UBSan turn executable rejects index 257 outside char[256] in FGenerateTurn at turn.cpp:283 for a valid 250-byte UTF-8 basename. Seven other parent cases pass.",
+          "repair": "CreateBackupDir returns its complete std::string; the single production caller owns it, so the obsolete shared 256-byte szBackup scratch field is removed. Separate current/backup filename owners reserve four-byte suffix capacity before rotation. Directory spelling, extension bytes, remove/rename/copy ordering, unsubmitted-turn copying, game-rule order, saved widths and RNG/floating boundaries remain. The shared basename is never used as extension staging. Allocation failures enter the existing StarsError recovery and turn cleanup, including when the alert callback throws.",
+          "debug_build": "Pass; no warnings. Compiler/source policy: 158 owned sources, 159 variants, 161 standalone headers in both orders; exact raw-copy inventory passes.",
+          "desktop": "154/154, including 29 leak checks, all linked game/UI/witness workflows and the available SDL tutorial checkpoints. The full 80-page tutorial remains unfinished.",
+          "host_units": "29/29 Release host tests. The expanded actual turn executable contains nine internal cases.",
+          "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+          "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+          "sanitizers": "Final actual macOS Debug ASan/UBSan turn executable passes all nine cases twice consecutively. This is focused sanitizer qualification, not a whole-suite claim.",
+          "windows": "Strict MinGW C++20 passes 147/147 production units, the final modified turn source, and the final actual test consumer. The final actual Windows Release host test_turn.exe passes all nine isolated cases under Wine, including repeated-work-directory UTF-8 path boundaries. This does not qualify the full native Windows SDL or Linux backends.",
+          "tests": "Generate/reload turns for complete 250/255-byte UTF-8 basenames; compare unsubmitted-turn backup bytes, require host backup, require no orders backup, and preserve the shared basename. Actually create rotation directories for counts 0,1,2,99,100,1000,32767 with turn 12345 at the 255-byte basename boundary, checking padded names, existence and unchanged inputs. Unicode keeps these byte-boundary paths below Windows 260-code-unit requirements.",
+          "fixture_correction": "A qualification rerun exposed the new directory fixture assuming an empty work directory; it now explicitly removes its own empty backup directories and replaces its own previous source files in setup. Sanitizer repeat and Wine reruns pass. The initial Wine invocation was denied its local server socket by the sandbox; the authorized unsandboxed execution passes.",
+          "baseline": "592 baseline files byte-identical after restoring 592 regeneration-only file changes; all 519 checkpoints match and none moved. Native baseline fully exported and compared in this repair; frozen original fixtures are untouched.",
+          "inventory": "Nine actual copy calls retired; 14 raw-copy calls remain. The completed-copy ledger now has 294 migration entries; original-line dispositions still need the separate L08 identity reconciliation.",
+          "remaining": "Other path staging and fixed outputs, readonly/mutable service views, post-migration scratch/borrowed storage, wrapper formatting, Milestone D and final inventory/platform qualification remain active.",
+          "receipts": "dist/verification/live-cpp/l05ae/",
+          "source_sha256": {
+            "src/core/appstate.h": "6de3dda6dda0cf879b22b6cbdd1535e41616d56f3e7359ba7f1b03d858d77b16",
+            "src/core/turn.cpp": "ff0fd9f808c7f05fc1749814d55611a42de4b915541c61e5c50f7cca5f853331",
+            "src/core/turn2.cpp": "b9b712721940c0baea8f3876737d6c1590100bb7d3c37f12745374507bcd83f3",
+            "src/core/turn2.h": "b6fbf6b3de9c999a1285c8e4597ab1067da3777ffe358990e15a30dd30717e88",
+            "tests/unit/test_turn.cpp": "12bcc95b0a8d98878bdcd6391adaadd5c577d8fe2273295ebbe4021cf209897c"
+          }
         }
       ],
       "bounded_formatting": {
@@ -862,6 +890,11 @@
         "functions": 2,
         "lexical_spellings_removed": 6,
         "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
+      },
+      "owned_backup_paths": {
+        "status": "complete; locally verified; final native Windows/Linux platform qualification pending",
+        "sites": 9,
+        "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
       }
     },
     {
@@ -897,7 +930,8 @@
         "named-production-estimate-ETA-and-task-label-results",
         "readonly-fixed-tutorial-preset-action-view",
         "fixed-ship-clone-name-field-view",
-        "bounded-mutable-text-fitting-view"
+        "bounded-mutable-text-fitting-view",
+        "owned-backup-directory-result"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -1432,6 +1466,11 @@
         "production_calls": 4,
         "interface": "FStringFitsScreen uses mutable spans and a Boolean fit result",
         "evidence": "docs/CPP-LIVE-OWNED-TEXT.json"
+      },
+      "owned_backup_directory": {
+        "status": "complete; locally verified; final native Windows/Linux platform qualification pending",
+        "interface": "CreateBackupDir returns a complete std::string; the one production consumer owns its path rather than reading session scratch.",
+        "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
       }
     },
     {
@@ -14067,42 +14106,48 @@
       "path": "src/core/turn.cpp",
       "line": 274,
       "code": "strcpy(szT, app.state.szBackup);",
-      "disposition": "pending"
+      "disposition": "owned-backup-path-capacity-repair-L05ae",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/turn.cpp",
       "line": 276,
       "code": "strcat(szT, app.state.szBase);",
-      "disposition": "pending"
+      "disposition": "owned-backup-path-capacity-repair-L05ae",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/turn.cpp",
       "line": 278,
       "code": "strcat(szT, pchT + 1);",
-      "disposition": "pending"
+      "disposition": "owned-backup-path-capacity-repair-L05ae",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/turn.cpp",
       "line": 316,
       "code": "strcpy(pchBak, pchCur);",
-      "disposition": "pending"
+      "disposition": "owned-backup-path-capacity-repair-L05ae",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/turn.cpp",
       "line": 326,
       "code": "strcpy(pchCur, \".hst\");",
-      "disposition": "pending"
+      "disposition": "owned-backup-path-capacity-repair-L05ae",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/turn.cpp",
       "line": 327,
       "code": "strcpy(pchBak, \".hst\");",
-      "disposition": "pending"
+      "disposition": "owned-backup-path-capacity-repair-L05ae",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
@@ -14266,21 +14311,24 @@
       "path": "src/core/turn2.cpp",
       "line": 1748,
       "code": "strcpy(app.state.szBackup, app.state.szBase);",
-      "disposition": "pending"
+      "disposition": "owned-backup-path-capacity-repair-L05ae",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/turn2.cpp",
       "line": 1757,
       "code": "strcpy(pchT, \"backup\");",
-      "disposition": "pending"
+      "disposition": "owned-backup-path-capacity-repair-L05ae",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/turn2.cpp",
       "line": 1764,
       "code": "strcat(app.state.szBackup, szDirSep);",
-      "disposition": "pending"
+      "disposition": "owned-backup-path-capacity-repair-L05ae",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "c_header",

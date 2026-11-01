@@ -7,6 +7,7 @@
 
 #include "stars_test.h"
 #include "record_io.h"
+#include <vector>
 
 static void OpenClosedBatchSource(APPSESSION &app, const char *psz, MdOpenFlags md) {
     StreamOpen(app, psz, md);
@@ -182,6 +183,91 @@ static void test_generate_backs_up_unsubmitted_turn(void) {
     TEST_CHECK(cbBackup == cbBefore && memcmp(rgbBackup, rgbBefore, cbBefore) == 0);
 }
 
+static std::vector<std::byte> RgbReadBackupFile(const std::string &szFile) {
+    NATIVEFILEOWNER lpfile(PfNativeOpen(szFile.c_str(), NATIVEFILEMODE::read), ICloseNativeFile);
+    TEST_ASSERT_(lpfile, "open %s", szFile.c_str());
+    const auto cb = CbNativeFile(lpfile.get());
+    TEST_ASSERT(cb >= 0 && cb < 65536);
+    std::vector<std::byte> rgb(static_cast<std::size_t>(cb));
+    TEST_ASSERT(CbReadNativeFile(lpfile.get(), rgb) == rgb.size());
+    return rgb;
+}
+
+static void test_generate_backup_path_capacity(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    char szDir[cbTestPath];
+
+    TEST_ASSERT(FStarsTestInit(app));
+    for (const auto cch : {250u, 255u}) {
+        TEST_ASSERT(FStarsTestDir("backup-path-capacity", szDir, sizeof(szDir)));
+        TEST_ASSERT(FStarsTestNewGame(app, szDir, 12345, nullptr, 0));
+        const std::string szOld = app.state.szBase;
+        const std::string szDirectory = std::string(szDir) + chDirSep;
+        // Exercise byte capacities without requiring Windows paths over 259 UTF-16 units.
+        const std::string szPrefix = "éééééééé";
+        TEST_ASSERT(szDirectory.size() + szPrefix.size() < cch);
+        const std::string szName = szPrefix + std::string(cch - szDirectory.size() - szPrefix.size(), 'a');
+        const std::string szBase = szDirectory + szName;
+        for (const auto *pszExt : {".xy", ".hst", ".m1", ".h1"}) {
+            if (FFileExists((szOld + pszExt).c_str()))
+                TEST_ASSERT(ReplaceNativeFile((szOld + pszExt).c_str(), (szBase + pszExt).c_str()) == 0);
+        }
+        TEST_ASSERT(CchCopyUtf8(std::span{app.state.szBase}, szBase) >= 0);
+        const auto rgbBefore = RgbReadBackupFile(szBase + ".m1");
+        TEST_ASSERT(FStarsTestGenerate(app));
+        TEST_CHECK(std::string_view(app.state.szBase) == szBase);
+        const std::string szBackup = szDirectory + "backup" + chDirSep + szName;
+        TEST_ASSERT(szBackup.size() > 255);
+        TEST_CHECK(RgbReadBackupFile(szBackup + ".m1") == rgbBefore);
+        TEST_CHECK(FFileExists((szBackup + ".hst").c_str()));
+        TEST_CHECK(!FFileExists((szBackup + ".x1").c_str()));
+        TEST_ASSERT(FStarsTestLoadHost(app));
+        TEST_CHECK(app.state.game.turn == 1);
+        DestroyCurGame(app);
+    }
+}
+
+static void test_backup_directory_names(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    char szDir[cbTestPath];
+    const struct { std::int16_t c; const char *psz; } rgCases[] = {
+        {0, "backup"}, {1, "backup"}, {2, "backup1"}, {99, "backup69"},
+        {100, "backup.045"}, {1000, "backup.345"}, {32767, "backup.12345"}};
+
+    TEST_ASSERT(FStarsTestInit(app));
+    TEST_ASSERT(FStarsTestDir("backup-directory-names", szDir, sizeof(szDir)));
+    std::string szDirectory = std::string(szDir) + chDirSep + "éééééééé";
+    TEST_ASSERT(szDirectory.size() < 250);
+    szDirectory.append(250 - szDirectory.size(), 'a');
+    TEST_ASSERT(FEnsureNativeDir(szDirectory.c_str()));
+    szDirectory += chDirSep;
+    const std::string szBase = szDirectory + "game";
+    TEST_ASSERT(szBase.size() == 255 && CchCopyUtf8(std::span{app.state.szBase}, szBase) >= 0);
+    app.state.game.turn = 12345;
+    for (const auto &cs : rgCases) {
+        app.state.vcBackupDirs = cs.c;
+        const std::string szExpected = szDirectory + cs.psz + chDirSep;
+        if (FNativeDirectoryExists(szExpected.c_str()))
+            TEST_ASSERT(RemoveNativePath(szExpected.c_str()) == 0);
+        const auto szBackup = CreateBackupDir(app);
+        TEST_CHECK(szBackup == szExpected);
+        TEST_CHECK(FNativeDirectoryExists(szBackup.c_str()));
+        TEST_CHECK(std::string_view(app.state.szBase) == szBase);
+        TEST_CHECK(app.state.game.turn == 12345);
+        TEST_CHECK(RemoveNativePath(szBackup.c_str()) == 0);
+    }
+}
+
 // SetFleetDest gives a fleet at a planet one waypoint at warp 9: toward
 // another fleet when lpflTarget is set, otherwise to a point dx ly east.
 static void SetFleetDest(APPSESSION &app, FLEET *lpfl, FLEET *lpflTarget, int16_t dx) {
@@ -346,6 +432,8 @@ static void test_MoveThings_trader_without_retargeting_moves(void) {
 TEST_LIST = {{"batch command iterates owned LF paths and stops on invalid names", test_BatchRun_games}, {"batch input preserves names and full file sizes", test_BatchInput_contract}, {"MoveThings trader without retargeting moves", test_MoveThings_trader_without_retargeting_moves},
              {"generate one turn", test_generate_one_turn},
              {"generate backs up an unsubmitted turn", test_generate_backs_up_unsubmitted_turn},
+             {"generate preserves full UTF-8 backup paths", test_generate_backup_path_capacity},
+             {"backup directories preserve rotation names at the path boundary", test_backup_directory_names},
              {"MoveFleets caught pursuer keeps moving", test_MoveFleets_caught_pursuer_keeps_moving},
              {"FTravelThroughMineFields speed bump stops a fleet any direction", test_FTravelThroughMineFields_speed_bump_any_direction},
              {NULL, NULL}};

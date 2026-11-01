@@ -6,6 +6,13 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `FGenerateTurn` and `CreateBackupDir` now build complete backup paths in
+  owned strings. A valid basename near its 255-byte limit could overflow the
+  256-byte backup arrays or leave no room for a file extension. Rotation keeps
+  the same directory names, copy/rename choices and file-operation order while
+  leaving the shared basename intact. Saved layouts and generated turn contents
+  are unchanged; no native regression scenario or checkpoint moved.
+
 - `MakeNewName` now keeps ship-design clone suffix handling inside the saved
   32-byte name field. Empty names and short closing-parenthesis suffixes could
   read before that field; an unterminated field could also reach unbounded
