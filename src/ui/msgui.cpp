@@ -211,7 +211,7 @@ LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                     const auto szText = std::span{reinterpret_cast<char *>(app.lpui->lpb2k), std::size_t{0x800}}.subspan(static_cast<std::size_t>(cch));
                     FDecompressUserString(app, std::as_bytes(std::span(lpmsgplr->rgbMsg(), static_cast<std::size_t>(lpmsgplr->cLen))), szText.first(std::min(szText.size(), static_cast<std::size_t>(i) + 1)));
                 } else {
-                    std::strcpy(reinterpret_cast<char *>(app.lpui->lpb2k) + cch, reinterpret_cast<const char *>(lpmsgplr->rgbMsg()));
+                    CchCopyUtf8(std::span{reinterpret_cast<char *>(app.lpui->lpb2k), std::size_t{0x800}}.subspan(static_cast<std::size_t>(cch)), reinterpret_cast<const char *>(lpmsgplr->rgbMsg()));
                 }
                 lpsz = reinterpret_cast<char *>(app.lpui->lpb2k);
             } else {

@@ -3,6 +3,7 @@
 
 #include "win.h"
 #include <cstdint>
+#include <span>
 #include <windows.h>
 
 extern ITEMACTION rgiaUnloadAllCol[5];
@@ -21,7 +22,7 @@ void             SaveGameState(APPSESSION &app);
 void             RestoreGameState(APPSESSION &app);
 std::int16_t          FAskKillTutor(APPSESSION &app);
 std::int16_t          FTutorTaskDone(APPSESSION &app);
-std::int16_t          FCheckZip(APPSESSION &app, std::int16_t iZip, ITEMACTION *lpiaGoal, StringId ids);
+std::int16_t          FCheckZip(APPSESSION &app, std::int16_t iZip, std::span<const ITEMACTION, 5> lpiaGoal, StringId ids);
 std::int16_t          FCheckTemplate(APPSESSION &app, std::int16_t iTemplate);
 void             TutorError(APPSESSION &app, StringId idsError);
 std::int16_t          FCheckScanner(APPSESSION &app, std::int16_t md, std::int16_t iZoom);

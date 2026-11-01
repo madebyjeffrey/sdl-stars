@@ -227,11 +227,11 @@ void StartTutor(APPSESSION &app, std::int16_t fRestart) {
         if (app.state.game.lid == 0) {
             cch = TextIO().pfnCchGetString(app, idsTutorial, std::span{app.state.szBase});
             if (!fRestart) {
-                std::strcat(app.state.szBase, ".xy");
+                FAppendUtf8(std::span{app.state.szBase}, ".xy");
                 if (FFileExists(app.state.szBase) &&
                     AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsTutorialHasRunBeforeWouldLikeDestroy, {}).data(), win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_TASKMODAL) != win32::IDYES) {
                     app.state.szBase[cch] = 0;
-                    std::strcat(app.state.szBase, ".m1");
+                    FAppendUtf8(std::span{app.state.szBase}, ".m1");
                     app.state.ini.fStartupFile = 1;
                     if (FOpenGame(app, app.lpui->hwndFrame, 0) > 0) {
                         CreateChildWindows(app);
@@ -1519,7 +1519,7 @@ std::int16_t FTutorTaskDone(APPSESSION &app) {
                 app.state.tutor.idtBold = idtSendUnloadColonistsWallaby;
                 return 0;
             }
-            if (!FCheckZip(app, 0, rgiaUnloadAllCol, idsDropcol)) {
+            if (!FCheckZip(app, 0, std::span<const ITEMACTION, 5>{rgiaUnloadAllCol}, idsDropcol)) {
                 app.state.tutor.idtBold = !app.lpui->hwndZipOrderDlg ? idtRightClickBlueDiamondWaypointTaskTile2 : idtHitImportNameOrderDropcolOkBoth;
                 return 0;
             }
@@ -2233,7 +2233,7 @@ std::int16_t FTutorTaskDone(APPSESSION &app) {
     }
 }
 
-std::int16_t FCheckZip(APPSESSION &app, std::int16_t iZip, ITEMACTION *lpiaGoal, StringId ids) {
+std::int16_t FCheckZip(APPSESSION &app, std::int16_t iZip, std::span<const ITEMACTION, 5> lpiaGoal, StringId ids) {
     ITEMACTION *piaCur;
     std::int16_t     i;
     char        szT[33];
@@ -2246,13 +2246,12 @@ std::int16_t FCheckZip(APPSESSION &app, std::int16_t iZip, ITEMACTION *lpiaGoal,
         piaCur = app.state.vrgZip[iZip].txp.rgia;
         i = 0;
         while (i < 5) {
-            piaCur->SetIAction(lpiaGoal->iAction());
+            piaCur->SetIAction(lpiaGoal[i].iAction());
             i++;
             piaCur++;
-            lpiaGoal++;
         }
         TextIO().pfnCchGetString(app, ids, std::span{szT});
-        std::strcpy(app.state.vrgZip[iZip].szName, szT);
+        CchCopyUtf8(std::span{app.state.vrgZip[iZip].szName}, szT);
         return 1;
     }
     if (!app.state.vrgZip[iZip].fValid) {
@@ -2265,12 +2264,11 @@ std::int16_t FCheckZip(APPSESSION &app, std::int16_t iZip, ITEMACTION *lpiaGoal,
     app.state.tutor.idh = idhWaypointTaskTile;
     i = 0;
     while (i < 5) {
-        if (piaCur->iAction() != lpiaGoal->iAction() && piaCur->iAction() != iActionNone) {
+        if (piaCur->iAction() != lpiaGoal[i].iAction() && piaCur->iAction() != iActionNone) {
             return 0;
         }
         i++;
         piaCur++;
-        lpiaGoal++;
     }
     TextIO().pfnCchGetString(app, ids, std::span{szT});
     if (strcmpi(szT, app.state.vrgZip[iZip].szName) == 0) {

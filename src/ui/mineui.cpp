@@ -1183,14 +1183,14 @@ void SetMineralTitleBar(APPSESSION &app, HWND hwnd) {
             szObjectName = TextIO().pfnPlanetName(app, app.state.sel.scan.idpl);
             CchCopyUtf8Prefix(std::span{app.state.szWork}, szObjectName.data());
             psz = app.state.szWork;
-            std::strcat(psz, szSummary);
+            CchAppendUtf8Prefix(std::span{app.state.szWork}, szSummary);
         }
     } else if (grobj & grobjFleet) {
         if (app.state.sel.scan.ifl != iflNone) {
             szObjectName = PszGetFleetName(app, app.state.rglpfl[app.state.sel.scan.ifl]->id);
             CchCopyUtf8Prefix(std::span{app.state.szWork}, szObjectName.data());
             psz = app.state.szWork;
-            std::strcat(psz, szSummary);
+            CchAppendUtf8Prefix(std::span{app.state.szWork}, szSummary);
         }
     } else if (!(grobj & grobjThing)) {
         psz = szDeepSpace;
@@ -1199,7 +1199,7 @@ void SetMineralTitleBar(APPSESSION &app, HWND hwnd) {
         szObjectName = PszGetThingName(app, app.state.lpThings[app.state.sel.scan.ith].idFull());
         CchCopyUtf8Prefix(std::span{app.state.szWork}, szObjectName.data());
         psz = app.state.szWork;
-        std::strcat(psz, szSummary);
+        CchAppendUtf8Prefix(std::span{app.state.szWork}, szSummary);
     }
     CchCopyUtf8Prefix(std::span{app.lpui->szMineralTitle}, psz);
     ControlIO().pfnInvalidateRect(hwnd, nullptr, 1);

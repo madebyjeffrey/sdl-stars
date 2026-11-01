@@ -110,7 +110,8 @@
         "owned-compressed-planet-encoded-fleet-environment-production-and-ETA-labels",
         "owned-message-format-decode-and-version-results",
         "readonly-bounded-message-input-views",
-        "bounded-fitting-chooser-printer-and-menu-copies"
+        "bounded-fitting-chooser-printer-and-menu-copies",
+        "bounded-fitting-mineral-message-and-tutorial-copies"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -538,6 +539,26 @@
           "inventory": "277 migrated initial sites; 31 initial sites remain. The exact lexical raw-copy inventory totals 37 including six SDK declaration/definition/implementation extras.",
           "baseline": "Behavior-neutral; native and frozen-original baseline files unchanged. No wire/layout, game rule, RNG, tie order or floating boundary change; no checkpoint moved.",
           "receipts": "dist/verification/live-cpp/l05ab/"
+        },
+        {
+          "batch": "L05ac seven bounded mineral/message/tutorial copies and a fixed tutorial action view",
+          "debug_build": "Pass; no warnings. Source/compiler policy: 158 owned sources, 159 variants, 161 standalone headers in both orders, exact raw-copy inventory passes.",
+          "desktop": "154/154 including 29 leak checks, the expanded actual native-file UI contract executable, available SDL tutorial checkpoints and all existing linked and client workflows.",
+          "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+          "host": "Core, host, shared platform and CMake inputs are unchanged from verified 3c52f9bf: its 29/29 Release host tests and 519-match host regression remain applicable. This UI-only batch does not rerun unchanged host coverage.",
+          "windows": "147/147 owned production translation units and the expanded actual native-file UI consumer pass strict MinGW C++20. Compilation only; final native Windows SDL qualification remains required.",
+          "characterization": "Before production edits and after migration, the actual UI executable passes full fitting Unicode planet/fleet captions and a thing caption, tutorial DropCol actions/quantities/unused name tail, and WM_PAINT of a full 1000-byte UTF-8 raw message with exact From/To headers, NUL and untouched remaining 2048-byte display storage.",
+          "interface": "FCheckZip now receives span<const ITEMACTION,5> through its one real caller and actual unit consumer. Both original loop orders, action-only assignments, quantities, dialog-state/name matching, storage widths, tutorial identifiers and observer entry names remain.",
+          "inventory": "284 migrated initial copy sites; 24 remain. Exact lexical raw-copy inventory totals 30, including six SDK declaration/definition/implementation extras.",
+          "baseline": "Behavior-neutral. No saved layouts/widths, rules, RNG, sort/rounding boundaries, catalogs, unit goldens or native/frozen-original baseline bytes change; no checkpoint moved.",
+          "parent_platform_ci": {
+            "run": 41343668047,
+            "head": "bba10904",
+            "linux": "156/156 desktop/wrapper tests, including compatibility file dialog and actual portal test; host, linked independent witnesses and 45 resource sanitizer tests pass.",
+            "windows": "Fresh SDK matrix steps passed with 21 contracts and no failed contracts per SDK matrix variant. Desktop: 133/134 pass; the new Unicode printer characterization fails on its first PrintDlgA call at fixture line 111. Printer fixture environment setup is being investigated separately; no success is claimed for this Windows gate."
+          },
+          "remaining": "24 initial copies, other service/readonly protocols, post-migration UI/game scratch storage and borrowing, wrapper formatting, typed file selection Milestone D and L08 final qualification remain active.",
+          "receipts": "dist/verification/live-cpp/l05ac/"
         }
       ],
       "bounded_formatting": {
@@ -790,6 +811,11 @@
         "status": "complete; locally verified; platform CI pending",
         "sites": 21,
         "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
+      },
+      "bounded_message_tutorial_copies": {
+        "status": "complete; locally verified; native Windows qualification pending",
+        "sites": 7,
+        "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
       }
     },
     {
@@ -822,7 +848,8 @@
         "owned-legacy-race-password-result",
         "fixed-library-name-modal-and-suggestion-views",
         "readonly-bounded-message-format-and-parameter-views",
-        "named-production-estimate-ETA-and-task-label-results"
+        "named-production-estimate-ETA-and-task-label-results",
+        "readonly-fixed-tutorial-preset-action-view"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -1324,6 +1351,11 @@
         "production_calls": 17,
         "out_parameters_removed": 6,
         "evidence": "docs/CPP-LIVE-OWNED-TEXT.json"
+      },
+      "tutorial_action_view": {
+        "status": "complete; locally verified; native Windows qualification pending",
+        "interface": "FCheckZip uses span<const ITEMACTION,5>",
+        "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
       }
     },
     {
@@ -18045,21 +18077,24 @@
       "path": "src/ui/mineui.cpp",
       "line": 1175,
       "code": "strcat(psz, szSummary);",
-      "disposition": "pending"
+      "disposition": "bounded-fitting-span-L05ac",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/mineui.cpp",
       "line": 1180,
       "code": "strcat(psz, szSummary);",
-      "disposition": "pending"
+      "disposition": "bounded-fitting-span-L05ac",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/mineui.cpp",
       "line": 1187,
       "code": "strcat(psz, szSummary);",
-      "disposition": "pending"
+      "disposition": "bounded-fitting-span-L05ac",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
@@ -18264,7 +18299,8 @@
       "path": "src/ui/msgui.cpp",
       "line": 210,
       "code": "strcpy((char *)app.lpui->lpb2k + cch, (const char *)lpmsgplr->rgbMsg());",
-      "disposition": "pending"
+      "disposition": "bounded-fitting-span-L05ac",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
@@ -22237,21 +22273,24 @@
       "path": "src/ui/tutor.cpp",
       "line": 236,
       "code": "strcat(app.state.szBase, \".xy\");",
-      "disposition": "pending"
+      "disposition": "bounded-fitting-span-L05ac",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/tutor.cpp",
       "line": 240,
       "code": "strcat(app.state.szBase, \".m1\");",
-      "disposition": "pending"
+      "disposition": "bounded-fitting-span-L05ac",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/tutor.cpp",
       "line": 2261,
       "code": "strcpy(app.state.vrgZip[iZip].szName, szT);",
-      "disposition": "pending"
+      "disposition": "bounded-fitting-span-L05ac",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "c_header",

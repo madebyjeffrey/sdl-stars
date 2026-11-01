@@ -1,6 +1,6 @@
 {
   "migration_parent": "d3d3724c",
-  "status": "277 migrated sites complete; remaining text work active",
+  "status": "284 migrated sites complete; remaining text work active",
   "contracts": {
     "display": "Write a terminated complete UTF-8 prefix into the actual destination span; preserve fitting bytes. Views borrow synchronously and overlapping copies use memmove.",
     "append": "Scan only inside the destination span for its NUL. An unterminated nonempty destination is cleared and zero bytes are appended.",
@@ -2743,6 +2743,76 @@
       "original_call": "strcpy(psz, app.state.szWork)",
       "destination_span": "std::span{rgch}.subspan(static_cast<std::size_t>(psz - rgch))",
       "role": "The existing cch/menu-row guard admits the whole valid UTF-8 Work text and its NUL inside rgch[1536]. The actual cursor tail span preserves pointer advancement, row ordering and counts."
+    },
+    {
+      "path": "src/ui/mineui.cpp",
+      "scope": "SetMineralTitleBar",
+      "baseline_line": 1175,
+      "migration_parent": "3c52f9bf",
+      "operation": "strcat",
+      "original_call": "strcat(psz, szSummary)",
+      "destination_span": "std::span{app.state.szWork}",
+      "role": "Current object-name constructors fit: planet labels use the 18-byte compressed name plus optional Orbiting prefix; fleets use 33-byte player prefixes and 31-byte names or short class/ID labels; things use 54-byte player staging plus short catalog/type labels. Adding the shipped eight-byte Summary suffix fits Work[360] without clipping; the title still uses its existing 90-byte UTF-8 prefix."
+    },
+    {
+      "path": "src/ui/mineui.cpp",
+      "scope": "SetMineralTitleBar",
+      "baseline_line": 1180,
+      "migration_parent": "3c52f9bf",
+      "operation": "strcat",
+      "original_call": "strcat(psz, szSummary)",
+      "destination_span": "std::span{app.state.szWork}",
+      "role": "Current object-name constructors fit: planet labels use the 18-byte compressed name plus optional Orbiting prefix; fleets use 33-byte player prefixes and 31-byte names or short class/ID labels; things use 54-byte player staging plus short catalog/type labels. Adding the shipped eight-byte Summary suffix fits Work[360] without clipping; the title still uses its existing 90-byte UTF-8 prefix."
+    },
+    {
+      "path": "src/ui/mineui.cpp",
+      "scope": "SetMineralTitleBar",
+      "baseline_line": 1187,
+      "migration_parent": "3c52f9bf",
+      "operation": "strcat",
+      "original_call": "strcat(psz, szSummary)",
+      "destination_span": "std::span{app.state.szWork}",
+      "role": "Current object-name constructors fit: planet labels use the 18-byte compressed name plus optional Orbiting prefix; fleets use 33-byte player prefixes and 31-byte names or short class/ID labels; things use 54-byte player staging plus short catalog/type labels. Adding the shipped eight-byte Summary suffix fits Work[360] without clipping; the title still uses its existing 90-byte UTF-8 prefix."
+    },
+    {
+      "path": "src/ui/msgui.cpp",
+      "scope": "MessageWndProc WM_PAINT",
+      "baseline_line": 210,
+      "migration_parent": "3c52f9bf",
+      "operation": "strcpy",
+      "original_call": "strcpy((char *)app.lpui->lpb2k + cch, (const char *)lpmsgplr->rgbMsg())",
+      "destination_span": "std::span{reinterpret_cast<char *>(app.lpui->lpb2k), std::size_t{0x800}}.subspan(static_cast<std::size_t>(cch))",
+      "role": "Raw player-message admission requires a valid UTF-8 NUL within 1001 bytes. The two shipped header formats and two 50-byte owned player labels fit well below 2048 with the complete body. InitInstance allocates exactly 0x800 bytes for lpb2k. Copy uses that actual tail, preserving headers, full body, terminator, unused bytes and scroll/drawing flow."
+    },
+    {
+      "path": "src/ui/tutor.cpp",
+      "scope": "StartTutor",
+      "baseline_line": 236,
+      "migration_parent": "3c52f9bf",
+      "operation": "strcat",
+      "original_call": "strcat(app.state.szBase, \".xy\")",
+      "destination_span": "std::span{app.state.szBase}",
+      "role": "idsTutorial is the shipped eight-byte tutorial basename. Appending .xy or .m1 fits the actual 256-byte Base array. Strict whole-path append preserves reset positions, prompt and startup/open order; no truncated path is published."
+    },
+    {
+      "path": "src/ui/tutor.cpp",
+      "scope": "StartTutor",
+      "baseline_line": 240,
+      "migration_parent": "3c52f9bf",
+      "operation": "strcat",
+      "original_call": "strcat(app.state.szBase, \".m1\")",
+      "destination_span": "std::span{app.state.szBase}",
+      "role": "idsTutorial is the shipped eight-byte tutorial basename. Appending .xy or .m1 fits the actual 256-byte Base array. Strict whole-path append preserves reset positions, prompt and startup/open order; no truncated path is published."
+    },
+    {
+      "path": "src/ui/tutor.cpp",
+      "scope": "FCheckZip",
+      "baseline_line": 2261,
+      "migration_parent": "3c52f9bf",
+      "operation": "strcpy",
+      "original_call": "strcpy(app.state.vrgZip[iZip].szName, szT)",
+      "destination_span": "std::span{app.state.vrgZip[iZip].szName}",
+      "role": "The only live FCheckZip caller uses idsDropcol (DropCol, seven bytes), fitting its saved 13-byte preset-name field. The temporary catalog lookup and action/quantity update order remain; no record size or trailing-byte reset."
     }
   ],
   "remaining_spelling_scope": "Lexical raw-copy spellings, including SDK declarations/definitions; comments/literals excluded with the manifest lexer. Exact counts prevent new raw sites during the remaining migration.",
@@ -2895,39 +2965,11 @@
       "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
     },
     {
-      "path": "src/ui/mineui.cpp",
-      "normalized_call": "std::strcat(psz,szSummary)",
-      "count": 3,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/msgui.cpp",
-      "normalized_call": "std::strcpy(reinterpret_cast<char*>(app.lpui->lpb2k)+cch,reinterpret_cast<constchar*>(lpmsgplr->rgbMsg()))",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
       "path": "src/ui/scan.cpp",
       "normalized_call": "std::strcat(psz+8,PszGetLocName(app,app.state.sel.grobj,app.state.sel.id,pt2.x,pt2.y).data())",
       "count": 1,
       "status": "pending",
       "role": "The location source is an owned value; migration of the scanner destination tail capacity is still pending."
-    },
-    {
-      "path": "src/ui/tutor.cpp",
-      "normalized_call": "std::strcat(app.state.szBase,)",
-      "count": 2,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/tutor.cpp",
-      "normalized_call": "std::strcpy(app.state.vrgZip[iZip].szName,szT)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
     },
     {
       "path": "compat/win32/include/wincompat_api.h",
@@ -3195,6 +3237,34 @@
       "inventory": "277 migrated initial sites; 31 initial sites remain. The exact lexical raw-copy inventory totals 37 including six SDK declaration/definition/implementation extras.",
       "baseline": "Behavior-neutral; native and frozen-original baseline files unchanged. No wire/layout, game rule, RNG, tie order or floating boundary change; no checkpoint moved.",
       "receipts": "dist/verification/live-cpp/l05ab/"
+    }
+  },
+  "bounded_message_tutorial_copies": {
+    "status": "complete; locally verified; native Windows qualification pending",
+    "parent": "3c52f9bf",
+    "sites": 7,
+    "tutorial_actions": "FCheckZip receives a fixed readonly span of five actions; both loops retain their original action comparisons/copies and quantity bytes, with original parameter names. One actual caller and the new linked unit case use the typed view.",
+    "characterization": "Before production edits, the actual native-file UI executable passes full-budget Unicode planet/fleet captions, thing caption, tutorial DropCol action/quantity/tail preservation, and WM_PAINT of a 1000-byte UTF-8 raw message with exact headers and untouched remaining display-buffer bytes.",
+    "retained": "Other constructed paths, scanner captions, rename suffix and SDK message-output copies still need their own contracts. The UI message arena storage remains a separate post-migration ownership/storage review.",
+    "verification": {
+      "batch": "L05ac seven bounded mineral/message/tutorial copies and a fixed tutorial action view",
+      "debug_build": "Pass; no warnings. Source/compiler policy: 158 owned sources, 159 variants, 161 standalone headers in both orders, exact raw-copy inventory passes.",
+      "desktop": "154/154 including 29 leak checks, the expanded actual native-file UI contract executable, available SDL tutorial checkpoints and all existing linked and client workflows.",
+      "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+      "host": "Core, host, shared platform and CMake inputs are unchanged from verified 3c52f9bf: its 29/29 Release host tests and 519-match host regression remain applicable. This UI-only batch does not rerun unchanged host coverage.",
+      "windows": "147/147 owned production translation units and the expanded actual native-file UI consumer pass strict MinGW C++20. Compilation only; final native Windows SDL qualification remains required.",
+      "characterization": "Before production edits and after migration, the actual UI executable passes full fitting Unicode planet/fleet captions and a thing caption, tutorial DropCol actions/quantities/unused name tail, and WM_PAINT of a full 1000-byte UTF-8 raw message with exact From/To headers, NUL and untouched remaining 2048-byte display storage.",
+      "interface": "FCheckZip now receives span<const ITEMACTION,5> through its one real caller and actual unit consumer. Both original loop orders, action-only assignments, quantities, dialog-state/name matching, storage widths, tutorial identifiers and observer entry names remain.",
+      "inventory": "284 migrated initial copy sites; 24 remain. Exact lexical raw-copy inventory totals 30, including six SDK declaration/definition/implementation extras.",
+      "baseline": "Behavior-neutral. No saved layouts/widths, rules, RNG, sort/rounding boundaries, catalogs, unit goldens or native/frozen-original baseline bytes change; no checkpoint moved.",
+      "parent_platform_ci": {
+        "run": 41343668047,
+        "head": "bba10904",
+        "linux": "156/156 desktop/wrapper tests, including compatibility file dialog and actual portal test; host, linked independent witnesses and 45 resource sanitizer tests pass.",
+        "windows": "Fresh SDK matrix steps passed with 21 contracts and no failed contracts per SDK matrix variant. Desktop: 133/134 pass; the new Unicode printer characterization fails on its first PrintDlgA call at fixture line 111. Printer fixture environment setup is being investigated separately; no success is claimed for this Windows gate."
+      },
+      "remaining": "24 initial copies, other service/readonly protocols, post-migration UI/game scratch storage and borrowing, wrapper formatting, typed file selection Milestone D and L08 final qualification remain active.",
+      "receipts": "dist/verification/live-cpp/l05ac/"
     }
   }
 }

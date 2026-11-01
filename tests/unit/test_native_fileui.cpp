@@ -8,6 +8,9 @@
 #include "control_io.h"
 #include "librarypublication.h"
 #include "planetui.h"
+#include "mineui.h"
+#include "msgui.h"
+#include "tutor.h"
 #include "text_io.h"
 #include <algorithm>
 #include <array>
@@ -119,6 +122,108 @@ static void TestPlanetTitleCapacity(void) {
     TEST_CHECK(szPlanetTitleCaptured == "Planet View");
 }
 
-TEST_LIST = {{"planet title retains complete UTF-8 names beyond its former local buffer", TestPlanetTitleCapacity}, {"library-name dialog preserves accepted text and cancelled storage", TestLibraryNameDialog},
+static BOOL ProbeCaptionRect(HWND, RECT *prc) { *prc = {0, 0, 480, 120}; return 1; }
+static BOOL ProbeCaptionPosition(HWND, HWND, int, int, int, int, UINT) { return 1; }
+static void TestMineralAndTutorialText(void) {
+    APPSESSION &app = ui::app;
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    TEST_ASSERT(FStarsTestInit(app));
+    CONTROLIO control;
+    control.pfnGetClientRect = ProbeCaptionRect;
+    control.pfnSetWindowPos = ProbeCaptionPosition;
+    CONTROLIOSCOPE controlScope(control);
+    TEXTIO text;
+    text.pfnPlanetName = PszPlanetTitleName;
+    TEXTIOSCOPE textScope(text);
+    const auto selSav = app.state.sel;
+    app.state.sel.scan.grobj = grobjPlanet;
+    app.state.sel.scan.idpl = 0;
+    for (const auto &sz : {std::string("Alba"), std::string(29, 'P') + "\xc3\xa9"}) {
+        szPlanetTitleName = sz;
+        SetMineralTitleBar(app, nullptr);
+        TEST_CHECK(std::string_view(app.lpui->szMineralTitle) == sz + " Summary");
+        TEST_CHECK(std::string_view(app.state.szWork) == sz + " Summary");
+    }
+    FLEET fl{};
+    FLEET *rgpfl[] = {&fl, nullptr};
+    auto szFleet = std::to_array("FFFFFFFFFFFFFFFFFFFFFFFFFFFFF\xc3\xa9");
+    const auto rglpflSav = app.state.rglpfl;
+    const auto cFleetSav = app.state.cFleet;
+    const auto idPlayerSav = app.state.idPlayer;
+    fl.lpszName = szFleet.data();
+    app.state.rglpfl = rgpfl; app.state.cFleet = 1; app.state.idPlayer = 0;
+    app.state.sel.scan.grobj = grobjFleet; app.state.sel.scan.ifl = 0;
+    SetMineralTitleBar(app, nullptr);
+    TEST_CHECK(std::string_view(app.lpui->szMineralTitle) == std::string(szFleet.data()) + " Summary");
+    app.state.rglpfl = rglpflSav; app.state.cFleet = cFleetSav;
+    THING th{};
+    const auto lpthSav = app.state.lpThings;
+    const auto cThingSav = app.state.cThing;
+    th.SetIth(ithWormhole);
+    app.state.lpThings = &th; app.state.cThing = 1;
+    app.state.sel.scan.grobj = grobjThing; app.state.sel.scan.ith = 0;
+    SetMineralTitleBar(app, nullptr);
+    TEST_CHECK(std::string_view(app.lpui->szMineralTitle) == "Wormhole Summary");
+    app.state.lpThings = lpthSav; app.state.cThing = cThingSav;
+    app.state.sel = selSav; app.state.idPlayer = idPlayerSav;
+    const auto zipSav = app.state.vrgZip[0];
+    const auto tutorSav = app.state.tutor;
+    app.state.tutor.fAutoComplete = 1;
+    std::fill(std::begin(app.state.vrgZip[0].szName), std::end(app.state.vrgZip[0].szName), 'q');
+    for (int i = 0; i < 5; i++) app.state.vrgZip[0].txp.rgia[i].SetCQuan(100 + i);
+    TEST_CHECK(FCheckZip(app, 0, std::span<const ITEMACTION, 5>{rgiaUnloadAllCol}, idsDropcol));
+    TEST_CHECK(app.state.vrgZip[0].fValid && std::string_view(app.state.vrgZip[0].szName) == "DropCol");
+    for (int i = 0; i < 5; i++) {
+        TEST_CHECK(app.state.vrgZip[0].txp.rgia[i].iAction() == rgiaUnloadAllCol[i].iAction());
+        TEST_CHECK(app.state.vrgZip[0].txp.rgia[i].cQuan() == 100 + i);
+        TEST_CHECK(app.state.vrgZip[0].szName[8 + i] == 'q');
+    }
+    app.state.vrgZip[0] = zipSav; app.state.tutor = tutorSav;
+    StarsCompatProcessExit();
+}
+
+static std::string szRawMessageCaptured;
+static BOOL CaptureRawMessage(HWND, const char *psz) { szRawMessageCaptured = psz; return 1; }
+static void TestRawMessageDisplay(void) {
+    APPSESSION &app = ui::app;
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    WNDCLASSA wc{};
+    HWND hwnd;
+    std::array<std::uint8_t, 2048> rgbText;
+    std::string szBody, szExpected;
+    TEST_ASSERT(FStarsTestInit(app));
+    wc.lpfnWndProc = ui::DefWindowProc; wc.lpszClassName = "StarsRawMessageProbe";
+    wc.hInstance = win32::GetModuleHandleA(nullptr); TEST_ASSERT(win32::RegisterClassA(&wc));
+    hwnd = ui::CreateWindowEx(0, wc.lpszClassName, "Message", win32::WS_OVERLAPPED, 0, 0, 200, 100, nullptr, nullptr, wc.hInstance, nullptr);
+    TEST_ASSERT(hwnd);
+    for (int i = 0; i < 500; i++) szBody += "\xc3\xa9";
+    CchCopyUtf8Prefix(std::span{app.state.rgplr[0].szNames}, "Senders-\xc3\xa9");
+    CchCopyUtf8Prefix(std::span{app.state.rgplr[1].szNames}, "Receivers-\xce\xa9");
+    CchCopyUtf8Prefix(std::span{app.state.rgplr[0].szName}, "Sender");
+    CchCopyUtf8Prefix(std::span{app.state.rgplr[1].szName}, "Receiver");
+    szExpected = "From:  " + std::string(PszPlayerName(app, 0, 1, 1, 1, 0, nullptr).data()) + "\r\nTo:  " + PszPlayerName(app, 1, 1, 1, 1, 0, nullptr).data() + "\r\n" + szBody;
+    MSGPLR *lpmp = LpmsgplrAlloc(app, sizeof(MSGPLR) + szBody.size() + 1);
+    lpmp->iPlrFrom = 0; lpmp->iPlrTo = 2; lpmp->cLen = -1001; lpmp->lpmsgplrNext = nullptr;
+    TEST_ASSERT(CchCopyUtf8(std::span{reinterpret_cast<char *>(lpmp->rgbMsg()), szBody.size() + 1}, szBody) == 1000);
+    const auto lpbSav = app.lpui->lpb2k;
+    rgbText.fill(0x5a); app.lpui->lpb2k = rgbText.data();
+    app.state.vlpmsgplrIn = lpmp; app.state.cMsg = 0; app.state.iMsgCur = 0; app.state.gd.fSendMsgMode = 0;
+    app.lpui->szMsgTitle[0] = 0; app.lpui->rcMsgTitle = {0, 0, 100, 20}; app.lpui->rcMsgText = {0, 20, 20, 30};
+    CONTROLIO control;
+    control.pfnSetWindowText = CaptureRawMessage; control.pfnSetWindowPos = ProbeCaptionPosition;
+    CONTROLIOSCOPE controlScope(control);
+    win32::InvalidateRect(hwnd, nullptr, 1);
+    MessageWndProc(hwnd, win32::WM_PAINT, 0, 0);
+    TEST_CHECK(szRawMessageCaptured == szExpected);
+    TEST_CHECK(std::string_view(reinterpret_cast<char *>(rgbText.data())) == szExpected);
+    TEST_CHECK(std::all_of(rgbText.begin() + szExpected.size() + 1, rgbText.end(), [](std::uint8_t b) { return b == 0x5a; }));
+    app.lpui->lpb2k = lpbSav; app.state.vlpmsgplrIn = nullptr;
+    TEST_CHECK(ui::DestroyWindow(hwnd));
+    StarsCompatProcessExit();
+}
+
+TEST_LIST = {{"raw player message paints its full UTF-8 byte budget within the display buffer", TestRawMessageDisplay},
+             {"mineral captions and tutorial preset keep complete text and field widths", TestMineralAndTutorialText},
+             {"planet title retains complete UTF-8 names beyond its former local buffer", TestPlanetTitleCapacity}, {"library-name dialog preserves accepted text and cancelled storage", TestLibraryNameDialog},
              {"native path captions and UTF-8 password fields", TestTextBoundaries},
              {NULL, NULL}};
