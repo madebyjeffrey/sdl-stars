@@ -145,7 +145,9 @@ detail in [WIN16-PARITY.md](WIN16-PARITY.md).
   `std::fstream` owns ordinary binary streams and `std::filesystem` owns paths,
   directory enumeration and publication. Opaque stream adapters contain
   exceptions and expose errors through return values and `errno`. Small owned
-  tokens retain the game's `int16_t` handle storage.
+  tokens retain the game's `int16_t` handle storage. Batch lists query their
+  open token's full optional size, own their bytes outside the game arenas and
+  use bounded cursor/end indices; these transient values never reach a save.
   C++20 cannot express exclusive creation, exact private modes, sharing,
   descriptor identity, fsync or live-handle truncation; narrow native adapters
   preserve those contracts inside the service. Windows converts UTF-8 paths

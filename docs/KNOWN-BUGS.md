@@ -17,6 +17,18 @@ J/JRC3/JRC4 fix claims below come from the supplied list and are not independent
 verified release history. See [WIN16-PARITY.md](WIN16-PARITY.md) for native changes
 and [ROADMAP.md](ROADMAP.md) for the post-tag work.
 
+## Batch file size wraps through a signed lowword — fixed on develop
+
+`turn.cpp`, `FSetUpBatchProcessing`: the file size was narrowed to `int16_t`
+before allocation, reading and end-pointer calculation. A 65600-byte real-file
+reference was read as 64 bytes; lengths at the signed boundary could also put
+the end pointer before the allocation. The loader now obtains a full optional
+64-bit size from its open token and reads an exactly sized session-owned string.
+The original cursor/end debug names are retained as bounded indices; no game
+arena or narrowed count backs the list. Tests cover 32768, 65536 and 65600 bytes,
+complete byte retention, invalid size queries and actual two-game execution.
+Only transient batch storage changes; no saved width or game rule changes.
+
 ## Batch filename line truncation and unchecked copies — fixed on develop
 
 `turn.cpp`, `FSetUpBatchProcessing`/`FRunCmdLine`: both filename loops assumed
@@ -27,7 +39,7 @@ optional CR and a final unterminated line, then uses the command path's strict
 UTF-8/byte-budget validation. Blank or invalid names stop processing without
 copying beyond the path. Real tests reproduce the LF truncation and exercise
 both initial and later names through two generated games, with rejection of a
-later overlong path. The separate batch-size wrapping repair remains pending.
+later overlong path. The separate batch-size wrapping repair is recorded above.
 
 ## Memory-backed records lack source bounds — fixed on develop
 

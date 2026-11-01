@@ -6,7 +6,12 @@
 #include "callbackcontext.h"
 
 #include "stars_test.h"
+#include "record_io.h"
 
+static void OpenClosedBatchSource(APPSESSION &app, const char *psz, MdOpenFlags md) {
+    StreamOpen(app, psz, md);
+    StreamClose(app);
+}
 static void test_BatchInput_contract(void) {
 #ifdef STARS_UI_SDL
     APPSESSION &app = ui::app;
@@ -17,6 +22,9 @@ static void test_BatchInput_contract(void) {
     char szDir[cbTestPath], szFile[cbTestPath + 64];
     struct CASE { std::string sz; std::size_t cbFirst; std::string szExpected = "alpha.hst"; };
     const CASE rgCases[] = {{"alpha.hst\r\nbeta.hst\r\n", 11}, {"alpha.hst\nbeta.hst\n", 10},
+                            {std::string("alpha.hst\r\n") + std::string(32768 - 11, 'x'), 11},
+                            {std::string("alpha.hst\r\n") + std::string(65536 - 11, 'x'), 11},
+                            {std::string("alpha.hst\r\n") + std::string(65536 + 64 - 11, 'x'), 11},
                             {"alpha.hst", 9}, {"alpha-\xce\xa9.hst\n", 13, "alpha-\xce\xa9.hst"},
                             {std::string(sizeof(app.state.szBase) - 1, 'a') + "\n", sizeof(app.state.szBase), std::string(sizeof(app.state.szBase) - 1, 'a')}};
 
@@ -33,6 +41,7 @@ static void test_BatchInput_contract(void) {
         TEST_CHECK(std::string_view(app.state.szBase) == cs.szExpected);
         TEST_CHECK(static_cast<std::size_t>(app.state.lpchBatchMac - app.state.lpchBatch) == cs.sz.size() - cs.cbFirst);
         TEST_CHECK(app.state.hf == -1);
+        TEST_CHECK(app.state.szBatch == cs.sz);
     }
     const std::string rgszBad[] = {"", "\n", "\r\n", std::string(sizeof(app.state.szBase), 'a') + "\n", "\xff\n", std::string("a\0b\n", 4)};
     for (const auto &sz : rgszBad) {
@@ -42,9 +51,16 @@ static void test_BatchInput_contract(void) {
         lpfile.reset();
         TEST_ASSERT(CchCopyUtf8(std::span{app.state.szBase}, szFile) >= 0);
         TEST_CHECK(!FSetUpBatchProcessing(app));
-        TEST_CHECK(app.state.szBase[0] == 0 && app.state.hf == -1);
-        TEST_CHECK(!app.state.lpchBatch && !app.state.lpchBatchMac);
+        TEST_CHECK(app.state.szBase[0] == 0 && app.state.hf == -1 && app.state.szBatch.empty());
+        TEST_CHECK(app.state.lpchBatch == 0 && app.state.lpchBatchMac == 0);
     }
+    TEST_ASSERT(CchCopyUtf8(std::span{app.state.szBase}, szFile) >= 0);
+    RECORDIO io = RecordIO();
+    io.pfnStreamOpen = OpenClosedBatchSource;
+    RECORDIOSCOPE recordScope(io);
+    TEST_CHECK(!FSetUpBatchProcessing(app));
+    TEST_CHECK(app.state.szBase[0] == 0 && app.state.hf == -1 && app.state.szBatch.empty());
+    TEST_CHECK(app.state.lpchBatch == 0 && app.state.lpchBatchMac == 0 && !FStarsErrorPending());
 }
 
 static void test_BatchRun_games(void) {
@@ -75,7 +91,7 @@ static void test_BatchRun_games(void) {
     TEST_ASSERT(ParseCmdLine(app, szCmd.data(), &fSeed, &lSeed));
     TEST_CHECK(app.state.ini.fBatch && app.state.ini.fGen && app.state.ini.fStartupFile);
     TEST_CHECK(FRunCmdLine(app));
-    TEST_CHECK(app.state.lpchBatch == app.state.lpchBatchMac);
+    TEST_CHECK(app.state.lpchBatch == app.state.lpchBatchMac && app.state.szBatch == szInput);
     for (const auto &szBase : {szFirstBase, szSecondBase}) {
         TEST_ASSERT(CchCopyUtf8(std::span{app.state.szBase}, szBase) >= 0);
         TEST_ASSERT(FStarsTestLoadHost(app));
@@ -327,7 +343,7 @@ static void test_MoveThings_trader_without_retargeting_moves(void) {
     TEST_CHECK(lpth->tht().ptDest().x() == 2000 && lpth->tht().ptDest().y() == 1200);
 }
 
-TEST_LIST = {{"batch command iterates LF paths and stops on invalid names", test_BatchRun_games}, {"batch input bounds lines and preserves complete filenames", test_BatchInput_contract}, {"MoveThings trader without retargeting moves", test_MoveThings_trader_without_retargeting_moves},
+TEST_LIST = {{"batch command iterates owned LF paths and stops on invalid names", test_BatchRun_games}, {"batch input preserves names and full file sizes", test_BatchInput_contract}, {"MoveThings trader without retargeting moves", test_MoveThings_trader_without_retargeting_moves},
              {"generate one turn", test_generate_one_turn},
              {"generate backs up an unsubmitted turn", test_generate_backs_up_unsubmitted_turn},
              {"MoveFleets caught pursuer keeps moving", test_MoveFleets_caught_pursuer_keeps_moving},

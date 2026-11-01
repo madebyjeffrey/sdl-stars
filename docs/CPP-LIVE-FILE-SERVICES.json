@@ -370,7 +370,8 @@
     "stream_open": "Scoped modes, returned metadata and owned/bounded path, line, directory and temporary results are complete. Other interfaces and file-selection migration remain open.",
     "selection": "Milestone D remains open; no picker backend or user workflow was changed by this batch.",
     "qualification": "Final complete-state inventory, Debug/Release and actual platform qualification remain required.",
-    "memory_sources": "Readonly bounded memory cursors and actual tutorial source interfaces are complete. Batch-file lowword/signed sizing, parsing and filename-copy loops remain a separate audit."
+    "memory_sources": "Readonly bounded memory cursors, actual tutorial sources, batch list ownership/full sizing and strict filename lines are complete. Definition-line parsing/storage and other buffer APIs remain.",
+    "token_sizes": "The new optional 64-bit open-token size is used by batch loading. Remaining narrow CbFileSize callers still require a per-caller migration/audit; fixed record/SDK widths remain explicit boundaries."
   },
   "byte_and_seek": {
     "parent": "b68995b3",
@@ -1501,10 +1502,10 @@
     "pre_existing_calls": 68,
     "pre_migration_characterization_calls": 4,
     "contract": "Empty ranges perform no IO, including no Windows zero-write truncation, and do not advance the memory cursor. Fitting memory reads copy and advance the exact request. Bounded short memory reads now copy only the available prefix before the existing StarsError; partial header/data publication and alert ordering match file input. See memory_sources for the source-side migration.",
-    "capacities": "Local/state arrays carry their actual extent and logical prefix. Universe-definition input uses its exact cb+1 allocation after the existing size check. Batch input uses the same uint16_t request as its arena allocation. Tutorial writes use the SizeofResource extent plus record offset/length. Report literals and fields retain exact lengths without NUL; two mutable/void literal casts are removed.",
+    "capacities": "Local/state arrays carry actual extents and logical prefixes. Definition input retains its existing checked cb+1 arena allocation. Batch input uses its full returned token size and exactly sized owned string. Tutorial writes use checked framed spans inside the sized resource. Report literals/fields retain exact bytes without NUL.",
     "wire_contract": "The two-byte header, fixed record widths, XOR/seed order, and physical 1024-byte payload whose ten-bit header wraps are unchanged. No new record-length rejection or baseline movement is intended.",
     "characterization": "Before migration the actual memory/file helpers passed sentinel-protected binary copies, cursor advancement, empty memory ranges and empty writes preserving file size/position. Those assertions are migrated to the span signatures alongside the existing short-read, partial-header callback and 1024-byte framing cases.",
-    "remaining": "Record payloads, element streams and bounded memory sources are complete in their linked sub-batches. Batch-file sizing/path parsing and other buffer interfaces remain.",
+    "remaining": "Record payloads, element streams, memory sources and batch size/path bounds are complete in their sub-batches. Definition-line parsing and other buffer interfaces remain.",
     "call_sites": [
       {
         "path": "src/ui/logui.cpp",
@@ -5719,10 +5720,10 @@
     "parent": "cb19574b",
     "status": "complete; verified",
     "interfaces": "One FNextBatchPath consumes a bounded remaining source range; private FCopyCmdPath takes a readonly view and copies only after existing UTF-8 and destination-byte-budget checks. Both actual batch loops and both command path callers use it.",
-    "line_contract": "LF, CRLF and final unterminated paths retain every filename byte. Only the LF delimiter and an immediately preceding CR are removed. Blank, overlong, embedded-NUL or invalid UTF-8 names fail. Leading/trailing spaces otherwise remain filename bytes; no normalization is introduced.",
+    "line_contract": "LF splits lines; an optional trailing CR is removed from the selected line. A final line without a terminator retains every filename byte. Blank, overlong, embedded-NUL and invalid UTF-8 names fail. Other leading/trailing spaces remain filename bytes; no normalization is introduced.",
     "effects": "Initial failure clears path/cursor and ParseCmdLine returns false. A rejected later name stops generation and clears batch/gen flags. Previous valid games retain their completed generation; no game rollback is promised.",
     "tests": "The parent real-file test reproduces dropped LF filename bytes; its independent file-size wrap assertion is reserved for the next focused batch. Final tests cover CRLF/LF/final/Unicode/exact-capacity paths, empty/blank/overlong/invalid/NUL paths, actual -b execution of two games and stopping at a later invalid name.",
-    "remaining": "The existing signed lowword file sizing and arena allocation remain explicitly pending and are not claimed safe by this source/destination line migration. The completed owned-size implementation is retained separately for the next focused commit.",
+    "remaining": "Batch size and ownership are complete in batch_storage. Definition-line parsing and other interfaces remain.",
     "verification": {
       "batch": "L06o bounded batch filename lines and strict path admission",
       "debug_build": "Pass; no warnings; 158 owned sources, 159 variants and 161 standalone headers in both orders pass compiler/source policy.",
@@ -5736,6 +5737,32 @@
       "baseline": "Full native baseline regenerated and compared with its prior fixtures: all 519 checkpoints match, including 25 existing unused-storage warnings. No scenario moved at any turn. Preserved 592 regeneration-only fixture differences. Native/frozen-original baseline bytes, unit goldens, wire layouts/widths, game RNG, qsort ordering and binary64 boundaries remain unchanged.",
       "remaining": "Batch file-size/ownership repair is implemented separately and awaits its own focused commit. PszGetLine, other buffer interfaces, Milestone D, L05 remaining text and L08 final qualification remain active.",
       "receipts": "dist/verification/live-cpp/l06o/"
+    }
+  },
+  "batch_storage": {
+    "parent": "4ef58319",
+    "reference_parent": "cb19574b",
+    "status": "complete; verified",
+    "size_interface": "FFileSize(int16 token) delegates to FNativeSizeLegacy and returns optional<int64_t> under the existing token-session lock. It preserves live-token lookup, errno and present-zero/failure distinctions without the CbFileSize int32 or lowword conversion. The old narrow size API remains for its separate caller audit.",
+    "ownership": "APPGAMESTATE::szBatch owns all list bytes. Original debug names lpchBatch/lpchBatchMac are size_t cursor/end indices into that owner. No self-referential pointers or arena allocation remain, and game teardown can leave the session batch source alive safely.",
+    "loading": "Query the actual open token size, check string max_size before size_t conversion, allocate/read the exact range, then move into session state. Allocation failure retains the existing memory alert/StarsError path. Any failed setup clears path, owner and indices and closes through the actual record provider.",
+    "characterization": "The cb19574b real-file reference proves 65600 bytes narrowed to 64, leaving 53 bytes after its 11-byte CRLF first line. The unchanged lowword/allocation expression is retained in migration parent 4ef58319; its line fix is independent.",
+    "tests": "Full byte retention and remaining counts at 32768/65536/65600, prior CRLF/LF/final/Unicode/capacity vectors, empty/invalid paths, optional zero size/invalid/closed tokens, metadata failure through an actual open-then-close provider, and actual batch iteration/stop through generated games.",
+    "wire_contract": "Only transient owned list storage and a returned size value change. int16 file tokens, saved widths/layouts, RNG, qsort order and binary64 boundaries remain.",
+    "verification": {
+      "batch": "L06p full-size owned batch input and bounded indices",
+      "debug_build": "Pass; no warnings; complete production/header rebuild and final expanded turn-test rebuild pass. Compiler/source policy covers 158 owned sources, 159 variants and 161 standalone headers in both orders.",
+      "desktop": "153/153, including signed/lowword input boundaries, metadata failure through the real open/close provider, actual two-game iteration, all 29 leak checks and available SDL tutorial checkpoints.",
+      "host_units": "28/28",
+      "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+      "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+      "windows": "147/147 strict owned production units and three actual turn/native-file/encoding test units compile with MinGW. Wine passes seven turn cases, four native-file cases and eight encoding cases. Native Windows desktop and actual Linux final qualification remain pending.",
+      "characterization": "The cb19574b reference exposes the independent 65600-to-64-byte lowword wrap; the same narrowed size/allocation expression remains in migration parent 4ef58319 after its separate filename repair. Final real-file tests preserve every byte and exact remaining counts at 32768, 65536 and 65600, alongside prior small/invalid paths. Present zero and invalid/closed token queries pass; a real open-then-close callback proves failed size lookup clears path/owner/indices without a pending error.",
+      "interfaces": "FFileSize/FNativeSizeLegacy return the full optional int64 count from the live token under its session lock. int16 tokens and the older narrow count API retain their existing widths; remaining narrow callers have an explicit separate audit. The batch read derives its exact writable span from the owned string.",
+      "ownership": "Session szBatch owns bytes and the original lpchBatch/lpchBatchMac names are bounded size_t indices, without self-referential pointers. No arena allocation remains for batch input. The size is checked against string max_size before conversion; allocation failures retain the game memory alert/StarsError path. Publication follows a full read, and setup failure clears the owner and closes through the actual provider.",
+      "baseline": "Full native baseline regenerated and compared against prior fixtures: all 519 checkpoints match, including 25 existing unused-storage warnings. No scenario moved at any turn. Preserved 592 regeneration-only fixture differences. Native/frozen-original baseline bytes, unit goldens, saved layouts/widths, RNG, qsort order and binary64 boundaries remain unchanged.",
+      "remaining": "Definition-line parsing/storage, remaining narrow token-size callers, other buffer interfaces, Milestone D, L05 remaining text and L08 final qualification remain active.",
+      "receipts": "dist/verification/live-cpp/l06p/"
     }
   }
 }

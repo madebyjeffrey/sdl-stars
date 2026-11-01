@@ -65,7 +65,12 @@
       "reviewed_heap_sites": 203,
       "specific_function_contracts": 103,
       "native_compiler_translation_units": 32,
-      "native_compiler_errors": 0
+      "native_compiler_errors": 0,
+      "batch_source_owner": {
+        "status": "complete; verified",
+        "evidence": "docs/CPP-LIVE-FILE-SERVICES.json",
+        "interface": "Batch input no longer borrows an arena allocation; the session string owns its bytes and indices survive owner moves and game teardown."
+      }
     },
     {
       "id": "L05",
@@ -483,13 +488,14 @@
         "sized-text-writer-and-full-width-byte-counts",
         "bounded-readonly-memory-cursors-and-tutorial-record-sources",
         "readonly-numeric-parser-output-spans-and-optional-counts",
-        "bounded-batch-filename-lines-and-strict-path-admission"
+        "bounded-batch-filename-lines-and-strict-path-admission",
+        "full-optional-token-size-and-owned-batch-source-indices"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
         "remaining-native-file-path-results",
         "typed-file-selection-Milestone-D",
-        "batch-input-sizing-parsing-and-path-audit"
+        "definition-line-parsing-and-remaining-token-size-audit"
       ],
       "user_string_codecs": {
         "status": "complete; verified",
@@ -717,6 +723,21 @@
           "baseline": "Full native baseline regenerated and compared with its prior fixtures: all 519 checkpoints match, including 25 existing unused-storage warnings. No scenario moved at any turn. Preserved 592 regeneration-only fixture differences. Native/frozen-original baseline bytes, unit goldens, wire layouts/widths, game RNG, qsort ordering and binary64 boundaries remain unchanged.",
           "remaining": "Batch file-size/ownership repair is implemented separately and awaits its own focused commit. PszGetLine, other buffer interfaces, Milestone D, L05 remaining text and L08 final qualification remain active.",
           "receipts": "dist/verification/live-cpp/l06o/"
+        },
+        {
+          "batch": "L06p full-size owned batch input and bounded indices",
+          "debug_build": "Pass; no warnings; complete production/header rebuild and final expanded turn-test rebuild pass. Compiler/source policy covers 158 owned sources, 159 variants and 161 standalone headers in both orders.",
+          "desktop": "153/153, including signed/lowword input boundaries, metadata failure through the real open/close provider, actual two-game iteration, all 29 leak checks and available SDL tutorial checkpoints.",
+          "host_units": "28/28",
+          "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+          "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+          "windows": "147/147 strict owned production units and three actual turn/native-file/encoding test units compile with MinGW. Wine passes seven turn cases, four native-file cases and eight encoding cases. Native Windows desktop and actual Linux final qualification remain pending.",
+          "characterization": "The cb19574b reference exposes the independent 65600-to-64-byte lowword wrap; the same narrowed size/allocation expression remains in migration parent 4ef58319 after its separate filename repair. Final real-file tests preserve every byte and exact remaining counts at 32768, 65536 and 65600, alongside prior small/invalid paths. Present zero and invalid/closed token queries pass; a real open-then-close callback proves failed size lookup clears path/owner/indices without a pending error.",
+          "interfaces": "FFileSize/FNativeSizeLegacy return the full optional int64 count from the live token under its session lock. int16 tokens and the older narrow count API retain their existing widths; remaining narrow callers have an explicit separate audit. The batch read derives its exact writable span from the owned string.",
+          "ownership": "Session szBatch owns bytes and the original lpchBatch/lpchBatchMac names are bounded size_t indices, without self-referential pointers. No arena allocation remains for batch input. The size is checked against string max_size before conversion; allocation failures retain the game memory alert/StarsError path. Publication follows a full read, and setup failure clears the owner and closes through the actual provider.",
+          "baseline": "Full native baseline regenerated and compared against prior fixtures: all 519 checkpoints match, including 25 existing unused-storage warnings. No scenario moved at any turn. Preserved 592 regeneration-only fixture differences. Native/frozen-original baseline bytes, unit goldens, saved layouts/widths, RNG, qsort order and binary64 boundaries remain unchanged.",
+          "remaining": "Definition-line parsing/storage, remaining narrow token-size callers, other buffer interfaces, Milestone D, L05 remaining text and L08 final qualification remain active.",
+          "receipts": "dist/verification/live-cpp/l06p/"
         }
       ],
       "roman_output": {
@@ -745,7 +766,7 @@
         "call_sites": 72,
         "pre_existing_calls": 68,
         "interface": "RgFromStream/RgToStream accept actual byte spans and preserve exception/zero-range contracts; old pointer/count overloads removed.",
-        "remaining": "Batch input sizing/parsing and other buffer interfaces remain; memory-source bounds are now carried by the actual cursor."
+        "remaining": "Definition-line parsing/storage and other buffer interfaces remain; batch input has owned full-size storage and bounded indices."
       },
       "record_payloads": {
         "status": "complete; verified",
@@ -818,6 +839,11 @@
         "status": "complete; verified",
         "evidence": "docs/CPP-LIVE-FILE-SERVICES.json",
         "contract": "Actual initial/later batch filename paths use one bounded line view and strict destination validation. File-size/ownership repair remains separate."
+      },
+      "batch_storage": {
+        "status": "complete; verified",
+        "evidence": "docs/CPP-LIVE-FILE-SERVICES.json",
+        "interface": "Full optional token size, session-owned bytes and bounded cursor/end indices; original lowword/arena source removed."
       }
     },
     {

@@ -6,6 +6,12 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `FSetUpBatchProcessing` now reads the full returned file size into
+  session-owned storage. Previously its signed 16-bit lowword conversion wrapped
+  lists at 64 KiB and could place the cursor end before its buffer at 32 KiB.
+  Batch cursor/end values are bounded indices; failed loading clears the owner.
+  Existing short-list bytes, game records and host turn results are unchanged.
+
 - `FSetUpBatchProcessing` and `FRunCmdLine` now read bounded batch filename
   lines, preserving LF, CRLF and an unterminated final line. Previously the
   unconditional last-byte removal truncated LF filenames and the copy loops

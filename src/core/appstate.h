@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <optional>
 #include <span>
+#include <string>
 #include "filesession.h"
 
 // Original debug names remain owned fields; callers receive the owner explicitly.
@@ -159,8 +160,10 @@ struct APPGAMESTATE {
     alignas(std::max_align_t) std::uint8_t   vrgAiCyberArmadaPotency[4] = {};
     alignas(std::max_align_t) std::uint8_t   vrgplrTypeNew[16] = {};
     alignas(std::max_align_t) std::int16_t   rgOut[16] = {};
-    alignas(std::max_align_t) char     *lpchBatch = nullptr;
-    alignas(std::max_align_t) char     *lpchBatchMac = nullptr;
+    // The original batch cursor/end names now index session-owned bytes.
+    alignas(std::max_align_t) std::string szBatch;
+    alignas(std::max_align_t) std::size_t lpchBatch = 0;
+    alignas(std::max_align_t) std::size_t lpchBatchMac = 0;
     alignas(std::max_align_t) const char     *rgszZipOrder[4] = {"QuikLoad", "QuikDrop", "WaitLoad", "Clear"};
     alignas(std::max_align_t) const char     *szDblDash = "-- ";
     alignas(std::max_align_t) char      szCRLF[3] = "\r\n";

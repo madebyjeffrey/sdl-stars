@@ -1,5 +1,7 @@
 #include "common.h"
 #include <algorithm>
+#include <new>
+#include <utility>
 #include "appstate.h"
 #include "text_io.h"
 #include "colony_io.h"
@@ -589,11 +591,10 @@ static bool FNextBatchPath(APPSESSION &app) {
     std::string_view psz;
 
     if (app.state.lpchBatch == app.state.lpchBatchMac) return false;
-    psz = {app.state.lpchBatch, static_cast<std::size_t>(app.state.lpchBatchMac - app.state.lpchBatch)};
-    ich = psz.find('\n');
-    if (ich == std::string_view::npos) ich = psz.size();
-    app.state.lpchBatch += ich < psz.size() ? ich + 1 : ich;
-    psz = psz.substr(0, ich);
+    ich = app.state.szBatch.find('\n', app.state.lpchBatch);
+    if (ich == std::string::npos) ich = app.state.lpchBatchMac;
+    psz = std::string_view(app.state.szBatch).substr(app.state.lpchBatch, ich - app.state.lpchBatch);
+    app.state.lpchBatch = ich < app.state.lpchBatchMac ? ich + 1 : ich;
     if (psz.ends_with('\r')) psz.remove_suffix(1);
     if (psz.empty()) {
         app.state.szBase[0] = 0;
@@ -605,23 +606,38 @@ static bool FNextBatchPath(APPSESSION &app) {
 
 std::int16_t FSetUpBatchProcessing(APPSESSION &app) {
     std::int16_t fSuccess;
-    std::int16_t cb;
+    std::optional<std::int64_t> cb;
+    std::string szBatch;
 
     fSuccess = 0;
+    app.state.szBatch.clear();
+    app.state.lpchBatch = app.state.lpchBatchMac = 0;
     StarsRecoveryScope scopeRecovery;
     try {
         RecordIO().pfnStreamOpen(app, app.state.szBase, mdRead);
-        cb = LOWORD(CbFileSize(app.state.hf));
-        app.state.lpchBatch = LpAlloc<char>(app, cb, htPerm);
-        RgFromStream(app, std::as_writable_bytes(std::span{app.state.lpchBatch, static_cast<std::uint16_t>(cb)}));
-        app.state.lpchBatchMac = app.state.lpchBatch + cb;
+        cb = FFileSize(app.state.hf);
+        if (!cb) {
+            FileError(app, idsGameFileAppearsCorruptUnableLoadFile);
+            StarsThrowError(starsErrorFile, app.state.idsFileError);
+        }
+        try {
+            if (std::cmp_greater(*cb, szBatch.max_size())) throw std::bad_alloc{};
+            szBatch.resize(static_cast<std::size_t>(*cb));
+        } catch (const std::bad_alloc &) {
+            AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMemory, nullptr), win32::MB_ICONHAND);
+            StarsThrowError(starsErrorMemory, idsMemory);
+        }
+        RgFromStream(app, std::as_writable_bytes(std::span{szBatch}));
+        app.state.szBatch = std::move(szBatch);
+        app.state.lpchBatchMac = app.state.szBatch.size();
         fSuccess = FNextBatchPath(app);
     } catch (const StarsError &) {
     }
     RecordIO().pfnStreamClose(app);
     if (!fSuccess) {
         app.state.szBase[0] = 0;
-        app.state.lpchBatch = app.state.lpchBatchMac = nullptr;
+        app.state.szBatch.clear();
+        app.state.lpchBatch = app.state.lpchBatchMac = 0;
     }
     return fSuccess;
 }
