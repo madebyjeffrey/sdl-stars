@@ -70,6 +70,11 @@
         "status": "complete; verified",
         "evidence": "docs/CPP-LIVE-FILE-SERVICES.json",
         "interface": "Batch input no longer borrows an arena allocation; the session string owns its bytes and indices survive owner moves and game teardown."
+      },
+      "definition_source_owner": {
+        "status": "complete; verified",
+        "evidence": "docs/CPP-LIVE-FILE-SERVICES.json",
+        "interface": "Definition bytes have a local owner through parsing/generation; arena allocation and unused global tail state are retired."
       }
     },
     {
@@ -463,6 +468,11 @@
         "status": "complete; verified",
         "evidence": "docs/CPP-LIVE-FILE-SERVICES.json",
         "interface": "Both batch filename writers use one bounded source view and strict destination validation; byte-loop overflow and unconditional last-byte removal are gone."
+      },
+      "definition_lines": {
+        "status": "complete; verified",
+        "evidence": "docs/CPP-LIVE-FILE-SERVICES.json",
+        "interface": "Readonly bounded input lines and strict work/title/base spans; two initial raw line copies retired."
       }
     },
     {
@@ -490,13 +500,13 @@
         "readonly-numeric-parser-output-spans-and-optional-counts",
         "bounded-batch-filename-lines-and-strict-path-admission",
         "full-optional-token-size-and-owned-batch-source-indices",
-        "all-token-size-callers-use-optional-full-width-results"
+        "all-token-size-callers-use-optional-full-width-results",
+        "readonly-definition-line-views-and-local-owned-bytes"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
         "remaining-native-file-path-results",
-        "typed-file-selection-Milestone-D",
-        "definition-line-parsing-and-storage-audit"
+        "typed-file-selection-Milestone-D"
       ],
       "user_string_codecs": {
         "status": "complete; verified",
@@ -755,6 +765,22 @@
           "baseline": "Full native baseline regenerated and compared to prior fixtures: 519 matches, 25 existing unused-storage warnings. No scenario moved at any turn. Preserved 592 regeneration-only fixture differences. Native/frozen-original baseline bytes, unit goldens, saved layouts/widths, game RNG, qsort order and binary64 boundaries remain unchanged.",
           "remaining": "Definition-line parsing/storage, other buffer interfaces, Milestone D, L05 remaining text and L08 final qualification remain active.",
           "receipts": "dist/verification/live-cpp/l06q/"
+        },
+        {
+          "batch": "L06r readonly definition lines and local owned input",
+          "debug_build": "Pass; no warnings. Compiler/source policy covers 158 owned sources, 159 variants and 161 standalone headers in both include orders. Updated raw-copy inventory passes enforcement.",
+          "desktop": "153/153, including actual definition variants and host-file reload, source-byte preservation, invalid/short definition cleanup, all 29 leak checks and available SDL tutorial checkpoints.",
+          "host_units": "28/28",
+          "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+          "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+          "windows": "147/147 owned production units and four actual changed/consumer test units compile with strict MinGW. Wine passes 15 utility, nine encoding, seven turn and 23 save cases (54 total). Native Windows desktop and actual Linux final qualification remain pending.",
+          "characterization": "Eight grammar vectors pass against the parent before migration. New typed vectors preserve source bytes, repeat EOF safely, read an exact CR-terminated slice next to an excluded guard, accept default empty input and consume bounded NUL delimiters. Real creation/reload covers CRLF/LF/CR, final unterminated lines, BOM, leading spaces and a Unicode title; five short inputs and existing invalid UTF-8/NUL/oversize cases reject with closed handles and restored recovery.",
+          "parent_world_comparison": "A retained parent host and final host independently create eight definition variants at identical paths and seeds. All 32 generated save files match through the existing independent save comparator. No output-family or parsed game-state differences occur.",
+          "interfaces": "All 14 production PszGetLine calls use bounded readonly views, and the old char** overload is removed. Title/work/base destinations receive strict actual spans; numeric fields consume exact views. Two input-line strcpy sites are retired and the maintained site inventory advances to 188 migrated sites. Existing function/local debug names remain.",
+          "ownership": "Local lpbDef string owns bytes through parsing/GenerateWorld, with existing <16000 admission, int16 count, UTF-8/BOM handling, memory-error delivery and provider-close order. Duplicate lpbDefMac bounds and never-consumed lpbDefUni tail state/arithmetic are removed. AI values are read only when their result count contains the field; existing rejection rules remain.",
+          "baseline": "Behavior-neutral for game behavior and valid IO. Parent/new world comparisons and both 519-checkpoint suites match. Native/frozen-original baseline bytes, unit goldens, saved widths/layouts, game rules, RNG, qsort order, binary64 boundaries and canonical models remain unchanged. No scenario/checkpoint moved; no regression export required.",
+          "remaining": "Other buffer/service interfaces, Milestone D, remaining L05 copies/const text/scratch results and L08 final qualification remain active.",
+          "receipts": "dist/verification/live-cpp/l06r/"
         }
       ],
       "roman_output": {
@@ -783,7 +809,7 @@
         "call_sites": 72,
         "pre_existing_calls": 68,
         "interface": "RgFromStream/RgToStream accept actual byte spans and preserve exception/zero-range contracts; old pointer/count overloads removed.",
-        "remaining": "Definition-line parsing/storage and other buffer interfaces remain; batch input has owned full-size storage and bounded indices."
+        "remaining": "Definition and batch sources are owned/bounded. Other buffer/service interfaces and file selection remain."
       },
       "record_payloads": {
         "status": "complete; verified",
@@ -866,6 +892,11 @@
         "status": "complete; verified",
         "evidence": "docs/CPP-LIVE-FILE-SERVICES.json",
         "interface": "All original CbFileSize callers consume optional full-width counts; redundant alternate API and narrow result implementations are removed."
+      },
+      "definition_lines": {
+        "status": "complete; verified",
+        "evidence": "docs/CPP-LIVE-FILE-SERVICES.json",
+        "interface": "Readonly bounded line cursor/results and local owned definition bytes; actual consumers and cleanup fixtures migrated."
       }
     },
     {

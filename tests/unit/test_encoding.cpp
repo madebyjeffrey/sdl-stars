@@ -201,12 +201,12 @@ static void TestInvalidDefinition(void) {
     pf = PfNativeOpen(szFile, NATIVEFILEMODE::writeTruncate); TEST_ASSERT(pf);
     IPutNativeString("\xe9\r\n", pf); ICloseNativeFile(pf);
     TEST_CHECK(!GenNewGameFromFile(app, szFile));
-    TEST_CHECK(!FStarsRecoveryActive() && app.state.lpbDefUni == NULL);
+    TEST_CHECK(!FStarsRecoveryActive() && app.state.hf == -1);
     pf = PfNativeOpen(szFile, NATIVEFILEMODE::writeTruncate); TEST_ASSERT(pf);
     IPutNativeString("Title\r\n\xff\r\n", pf); ICloseNativeFile(pf);
     TEST_CHECK(!GenNewGameFromFile(app, szFile));
     TEST_CHECK(app.state.idsFileError == idsUniverseCreationFileAppearsInvalid);
-    TEST_CHECK(!FStarsRecoveryActive() && app.state.lpbDefUni == NULL);
+    TEST_CHECK(!FStarsRecoveryActive() && app.state.hf == -1);
     pf = PfNativeOpen(szFile, NATIVEFILEMODE::writeTruncate); TEST_ASSERT(pf);
     IPutNativeString("Title\r\n", pf);
     memset(szPadding, 'a', sizeof(szPadding));
@@ -214,12 +214,77 @@ static void TestInvalidDefinition(void) {
     ICloseNativeFile(pf);
     TEST_CHECK(!GenNewGameFromFile(app, szFile));
     TEST_CHECK(app.state.idsFileError == idsUniverseCreationFileAppearsInvalid);
-    TEST_CHECK(!FStarsRecoveryActive() && app.state.lpbDefUni == NULL);
+    TEST_CHECK(!FStarsRecoveryActive() && app.state.hf == -1);
     pf = PfNativeOpen(szFile, NATIVEFILEMODE::writeTruncate); TEST_ASSERT(pf);
     TEST_CHECK(CWriteNative(std::span{"Title\0hidden\r\n"}.first(14), pf) == 14); ICloseNativeFile(pf);
     TEST_CHECK(!GenNewGameFromFile(app, szFile));
     TEST_CHECK(app.state.idsFileError == idsUniverseCreationFileAppearsInvalid);
-    TEST_CHECK(!FStarsRecoveryActive() && app.state.lpbDefUni == NULL);
+    TEST_CHECK(!FStarsRecoveryActive() && app.state.hf == -1);
+}
+
+static void TestDefinitionLineVariants(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    char szDir[cbTestPath], szFile[cbTestPath + 64];
+    const char *rgszAi[] = {"#1 4"};
+    const std::string_view rgszBreak[] = {"\r\n", "\n", "\r"};
+    std::string szOriginal;
+    std::string szLf;
+
+    TEST_ASSERT(FStarsTestInit(app));
+    TEST_ASSERT(FStarsTestDir("definition-line-variants", szDir, sizeof(szDir)));
+    TEST_ASSERT(FStarsTestNewGame(app, szDir, 12345, rgszAi, 1));
+    CchSnprintf(std::span{szFile}, "%s%sgame.def", szDir, szDirSep);
+    {
+        const auto cb = FNativeFileSize(szFile);
+        NATIVEFILEOWNER lpfile(PfNativeOpen(szFile, NATIVEFILEMODE::read), ICloseNativeFile);
+        TEST_ASSERT(cb && lpfile && *cb < 16000);
+        szOriginal.resize(static_cast<std::size_t>(*cb));
+        TEST_ASSERT(CbReadNativeFile(lpfile.get(), std::as_writable_bytes(std::span{szOriginal})) == szOriginal.size());
+    }
+    for (char ch : szOriginal) if (ch != '\r') szLf += ch;
+    for (int i = 0; i < 8; i++) {
+        const auto szBreak = rgszBreak[i % 3];
+        const std::string szExpected = i == 7 ? "\xe6\x98\x9f\xe5\x9b\xbe" : "Unit Test";
+        std::string szSource = szLf;
+        std::string szText = i == 6 ? "\xef\xbb\xbf" : "";
+        bool fStart = true;
+        if (i == 7) szSource.replace(0, 9, szExpected);
+        for (char ch : szSource) {
+            if (i == 7 && fStart) szText += "  ";
+            if (ch == '\n') { szText += szBreak; fStart = true; }
+            else { szText += ch; fStart = false; }
+        }
+        if (i >= 3 && i < 6) szText.resize(szText.size() - szBreak.size());
+        {
+            NATIVEFILEOWNER lpfile(PfNativeOpen(szFile, NATIVEFILEMODE::writeTruncate), ICloseNativeFile);
+            TEST_ASSERT(lpfile && CbWriteNativeFile(lpfile.get(), std::as_bytes(std::span{szText})) == szText.size());
+        }
+        TEST_ASSERT(GenNewGameFromFile(app, szFile));
+        TEST_CHECK(std::string_view(app.state.game.szName) == szExpected && app.state.game.cPlayer == 2);
+        TEST_CHECK(app.state.hf == -1 && !FStarsRecoveryActive());
+        {
+            NATIVEFILEOWNER lpfile(PfNativeOpen(szFile, NATIVEFILEMODE::read), ICloseNativeFile);
+            std::string szRead(szText.size(), '\0');
+            TEST_ASSERT(lpfile);
+            TEST_CHECK(CbReadNativeFile(lpfile.get(), std::as_writable_bytes(std::span{szRead})) == szRead.size() && szRead == szText);
+        }
+        TEST_ASSERT(FStarsTestLoadHost(app));
+        TEST_CHECK(app.state.game.turn == 0 && std::string_view(app.state.game.szName) == szExpected);
+        DestroyCurGame(app);
+    }
+    const std::string_view rgszShort[] = {"", "\xef\xbb\xbf", "Title", "Title\r", "Title\r\n0 0 1 12345\r\n0 0 0 0 0 1 0\r\n"};
+    for (auto szText : rgszShort) {
+        NATIVEFILEOWNER lpfile(PfNativeOpen(szFile, NATIVEFILEMODE::writeTruncate), ICloseNativeFile);
+        TEST_ASSERT(lpfile && CbWriteNativeFile(lpfile.get(), std::as_bytes(std::span{szText})) == szText.size());
+        lpfile.reset();
+        TEST_CHECK(!GenNewGameFromFile(app, szFile));
+        TEST_CHECK(app.state.hf == -1 && !FStarsRecoveryActive() && !FStarsErrorPending());
+    }
 }
 
 static void TestFormattedTextBounds(void) {
@@ -348,7 +413,7 @@ static void TestScannerSnapshotUtf8(void) {
 }
 #endif
 
-TEST_LIST = {{"formatted text stays bounded and preserves UTF-8", TestFormattedTextBounds},
+TEST_LIST = {{"definition line variants preserve creation and source bytes", TestDefinitionLineVariants}, {"formatted text stays bounded and preserves UTF-8", TestFormattedTextBounds},
              {"catalog values survive subsequent lookups", TestCatalogOwnership},
              {"decoded catalog matches every source byte", TestCatalogBytes},
              {"environment labels contain UTF-8 units", TestEnvironmentText},

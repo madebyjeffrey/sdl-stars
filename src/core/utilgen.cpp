@@ -723,21 +723,24 @@ std::int32_t LDistance2(POINT16 pt1, POINT16 pt2) {
     return static_cast<std::uint32_t>((dx * dx)) + static_cast<std::uint32_t>((dy * dy));
 }
 
-char *PszGetLine(char **ppszBeg) {
-    char *pszStart;
-    char *psz;
+std::string_view PszGetLine(std::string_view &ppszBeg) {
+    std::size_t ich;
+    std::size_t cch;
+    std::size_t cchBreak;
+    std::string_view pszStart;
 
-    for (psz = *ppszBeg; *psz == ' '; psz++) {
+    ich = ppszBeg.find_first_not_of(' ');
+    if (ich == std::string_view::npos) ich = ppszBeg.size();
+    ppszBeg.remove_prefix(ich);
+    cch = ppszBeg.find_first_of(std::string_view("\0\r\n", 3));
+    if (cch == std::string_view::npos) cch = ppszBeg.size();
+    pszStart = ppszBeg.substr(0, cch);
+    cchBreak = 0;
+    if (cch < ppszBeg.size()) {
+        cchBreak = 1;
+        if (ppszBeg[cch] == '\r' && cch + 1 < ppszBeg.size() && ppszBeg[cch + 1] == '\n') cchBreak = 2;
     }
-    pszStart = psz;
-    for (; *psz != 0 && *psz != '\n' && *psz != '\r'; psz++) {
-    }
-    if (*psz == '\r' && psz[1] == '\n') {
-        *ppszBeg = psz + 2;
-    } else {
-        *ppszBeg = psz + 1;
-    }
-    *psz = 0;
+    ppszBeg.remove_prefix(cch + cchBreak);
     return pszStart;
 }
 

@@ -57,8 +57,6 @@ struct APPGAMESTATE {
     alignas(std::max_align_t) const char     *PCTDPCTPCT = "%d%%";
     alignas(std::max_align_t) const char     *PCTDXPCTDPCTPCT = "%d.%d%%";
     alignas(std::max_align_t) const char     *PCTLD = "%ld";
-    alignas(std::max_align_t) char     *lpbDefMac = nullptr;
-    alignas(std::max_align_t) char     *lpbDefUni = nullptr;
     alignas(std::max_align_t) const char     *mpdtsz[8] = {"xy", "x", "hst", "m", "h", "r", "log", "chk"};
     alignas(std::max_align_t) const char     *rgchcompstrlower = " aehilnorstbcdfgjkmpquvwxyz";
     alignas(std::max_align_t) const char     *rgszMineField[3] = {"Standard", "Heavy", "Speed Bump"};

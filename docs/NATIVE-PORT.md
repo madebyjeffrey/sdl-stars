@@ -149,6 +149,8 @@ detail in [WIN16-PARITY.md](WIN16-PARITY.md).
   optional 64-bit count; failed queries never become byte counts or EOF positions.
   Batch lists own their bytes outside the game arenas and
   use bounded cursor/end indices; these transient values never reach a save.
+  Definition input is owned locally through generation, and its line reader
+  borrows bounded readonly views instead of changing delimiters in an arena.
   C++20 cannot express exclusive creation, exact private modes, sharing,
   descriptor identity, fsync or live-handle truncation; narrow native adapters
   preserve those contracts inside the service. Windows converts UTF-8 paths

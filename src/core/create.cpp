@@ -1,5 +1,6 @@
 #include "common.h"
 #include <algorithm>
+#include <new>
 #include "appstate.h"
 #include "text_io.h"
 #include "turn_io.h"
@@ -986,10 +987,10 @@ std::int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
     std::int16_t i;
     std::int16_t fSuccess;
     std::int16_t fReadRace;
-    char   *lpbStart;
+    std::string_view lpbStart;
     std::int16_t j;
-    char   *lpb;
-    char   *lpbDef;
+    std::string_view lpb;
+    std::string lpbDef;
     std::int16_t cb;
     std::optional<std::int64_t> cbFile;
     char   *pchT;
@@ -1017,32 +1018,35 @@ std::int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
             goto LError;
         }
         cb = static_cast<std::int16_t>(*cbFile);
-        lpbDef = LpAlloc<char>(app, cb + 1, htPerm);
-        app.state.lpbDefMac = lpbDef + cb;
-        RgFromStream(app, std::as_writable_bytes(std::span{lpbDef, static_cast<std::size_t>(cb) + 1}).first(static_cast<std::size_t>(cb)));
+        try {
+            lpbDef.resize(static_cast<std::size_t>(cb));
+        } catch (const std::bad_alloc &) {
+            AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMemory, nullptr), win32::MB_ICONHAND);
+            StarsThrowError(starsErrorMemory, idsMemory);
+        }
+        RgFromStream(app, std::as_writable_bytes(std::span{lpbDef}));
         RecordIO().pfnStreamClose(app);
-        lpbDef[cb] = 0;
-        if (!FUtf8Valid(lpbDef, cb)) {
+        if (!FUtf8Valid(lpbDef)) {
             FileError(app, idsUniverseCreationFileAppearsInvalid);
             goto LError;
         }
         lpb = lpbDef;
-        if (cb >= 3 && !std::memcmp(lpb, "\xef\xbb\xbf", 3)) lpb += 3;
-        lpbStart = PszGetLine(&lpb);
-        if (*lpbStart == 0 || std::strlen(lpbStart) > 31) {
+        if (lpb.starts_with("\xef\xbb\xbf")) lpb.remove_prefix(3);
+        lpbStart = PszGetLine(lpb);
+        if (lpbStart.empty() || lpbStart.size() > 31) {
             AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsIllegalGameTitle, nullptr), win32::MB_ICONHAND);
             goto LError;
         }
-        if (CchCopyUtf8(app.state.game.szName, sizeof(app.state.game.szName), lpbStart, std::strlen(lpbStart)) < 0) {
+        if (CchCopyUtf8(std::span{app.state.game.szName}, lpbStart) < 0) {
             FileError(app, idsGameFileAppearsCorruptUnableLoadFile);
             goto LError;
         }
-        if (lpb >= app.state.lpbDefMac) {
+        if (lpb.empty()) {
         LUniDefShort:
             AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUniverseDefinitionFileAppearsTooShort, nullptr), win32::MB_ICONHAND);
             goto LError;
         }
-        lpbStart = PszGetLine(&lpb);
+        lpbStart = PszGetLine(lpb);
         cNum = CParseNumbers(lpbStart, std::span{rgl}.first(4));
         if (!cNum) {
         LUniDefError:
@@ -1065,9 +1069,9 @@ std::int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
         if (*cNum >= 4) {
             Randomize(app, rgl[3]);
         }
-        if (lpb >= app.state.lpbDefMac)
+        if (lpb.empty())
             goto LUniDefShort;
-        lpbStart = PszGetLine(&lpb);
+        lpbStart = PszGetLine(lpb);
         cNum = CParseNumbers(lpbStart, std::span{rgl}.first(7));
         if (!cNum) {
         LUniDefError3:
@@ -1099,30 +1103,30 @@ std::int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
         if (*cNum >= 7) {
             app.state.game.fClumping = LOWORD(rgl[6]);
         }
-        lpbStart = PszGetLine(&lpb);
+        lpbStart = PszGetLine(lpb);
         cNum = CParseNumbers(lpbStart, std::span{rgl}.first(1));
         if (!cNum || *cNum < 1 || rgl[0] < 1 || rgl[0] > 16) {
             AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsLine4HasImproperNumberPlayerFiles, nullptr), win32::MB_ICONHAND);
             goto LError;
         }
-        if (lpb >= app.state.lpbDefMac)
+        if (lpb.empty())
             goto LUniDefShort;
         cPlr = LOWORD(rgl[0]);
         app.state.game.cPlayer = cPlr;
         for (i = 0; i < cPlr; i++) {
-            lpbStart = PszGetLine(&lpb);
-            if (lpb >= app.state.lpbDefMac)
+            lpbStart = PszGetLine(lpb);
+            if (lpb.empty())
                 goto LUniDefShort;
-            if (std::strlen(lpbStart) >= sizeof(app.state.szWork)) {
+            if (lpbStart.size() >= sizeof(app.state.szWork)) {
                 FileError(app, idsUniverseCreationFileAppearsInvalid);
                 goto LError;
             }
-            if (i > 0 && *lpbStart == '#') {
-                cNum = CParseNumbers(lpbStart + 1, std::span{rgl}.first(2));
-                idAi = static_cast<AiRace>(LOWORD(rgl[0]));
-                lvlAi = LOWORD(rgl[1]);
+            if (i > 0 && !lpbStart.empty() && lpbStart.front() == '#') {
+                cNum = CParseNumbers(lpbStart.substr(1), std::span{rgl}.first(2));
+                idAi = cNum && *cNum >= 1 ? static_cast<AiRace>(LOWORD(rgl[0])) : idAiRobotoid;
+                lvlAi = cNum && *cNum >= 2 ? LOWORD(rgl[1]) : 0;
                 if (!cNum || *cNum < 2 || static_cast<std::int16_t>(idAi) < idAiRobotoid || static_cast<std::int16_t>(idAi) > idAiRandom || lvlAi < 0 || lvlAi > 4) {
-                    std::strcpy(app.state.szWork, lpbStart);
+                    CchCopyUtf8(std::span{app.state.szWork}, lpbStart);
                     goto LCantGetRace;
                 }
                 if (lvlAi == 0) {
@@ -1140,7 +1144,7 @@ std::int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
                 app.state.rgplr[i].idAi = idAi;
                 app.state.rgplr[i].lvlAi = lvlAi;
             } else {
-                std::strcpy(app.state.szWork, lpbStart);
+                CchCopyUtf8(std::span{app.state.szWork}, lpbStart);
                 fReadRace = FWasRaceFile(app, app.state.szWork, 0);
                 if (fReadRace != 1) {
                 LCantGetRace:
@@ -1151,9 +1155,9 @@ std::int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
                 app.state.rgplr[i] = app.state.vplr;
             }
         }
-        lpbStart = PszGetLine(&lpb);
+        lpbStart = PszGetLine(lpb);
         cNum = CParseNumbers(lpbStart, std::span{rgl}.first(2));
-        if (lpb >= app.state.lpbDefMac)
+        if (lpb.empty())
             goto LUniDefShort;
         i = 0;
         if (!cNum || *cNum < 1 || rgl[0] < 0 || rgl[0] > 1) {
@@ -1169,9 +1173,9 @@ std::int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
             SetVCCheck(&app.state.game, vcOwnsPercentPlanets, 1);
             SetVCVal(app, &app.state.game, vcOwnsPercentPlanets, static_cast<std::int16_t>((LOWORD(rgl[1]) - 20)) / 5);
         }
-        lpbStart = PszGetLine(&lpb);
+        lpbStart = PszGetLine(lpb);
         cNum = CParseNumbers(lpbStart, std::span{rgl}.first(3));
-        if (lpb >= app.state.lpbDefMac)
+        if (lpb.empty())
             goto LUniDefShort;
         i = 1;
         if (!cNum || *cNum < 1 || rgl[0] < 0 || rgl[0] > 1)
@@ -1184,9 +1188,9 @@ std::int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
             SetVCVal(app, &app.state.game, vcAttainsTechLevel, LOWORD(rgl[1]) - 8);
             SetVCVal(app, &app.state.game, vcAttainsTechFields, LOWORD(rgl[2]) - 2);
         }
-        lpbStart = PszGetLine(&lpb);
+        lpbStart = PszGetLine(lpb);
         cNum = CParseNumbers(lpbStart, std::span{rgl}.first(2));
-        if (lpb >= app.state.lpbDefMac)
+        if (lpb.empty())
             goto LUniDefShort;
         i = 2;
         if (!cNum || *cNum < 1 || rgl[0] < 0 || rgl[0] > 1)
@@ -1197,9 +1201,9 @@ std::int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
             SetVCCheck(&app.state.game, vcExceedsScore, 1);
             SetVCVal(app, &app.state.game, vcExceedsScore, static_cast<std::int16_t>((LOWORD(rgl[1]) - 1000)) / 1000);
         }
-        lpbStart = PszGetLine(&lpb);
+        lpbStart = PszGetLine(lpb);
         cNum = CParseNumbers(lpbStart, std::span{rgl}.first(2));
-        if (lpb >= app.state.lpbDefMac)
+        if (lpb.empty())
             goto LUniDefShort;
         i = 3;
         if (!cNum || *cNum < 1 || rgl[0] < 0 || rgl[0] > 1)
@@ -1210,9 +1214,9 @@ std::int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
             SetVCCheck(&app.state.game, vcExceedsSecondPlaceBy, 1);
             SetVCVal(app, &app.state.game, vcExceedsSecondPlaceBy, static_cast<std::int16_t>((LOWORD(rgl[1]) - 20)) / 10);
         }
-        lpbStart = PszGetLine(&lpb);
+        lpbStart = PszGetLine(lpb);
         cNum = CParseNumbers(lpbStart, std::span{rgl}.first(2));
-        if (lpb >= app.state.lpbDefMac)
+        if (lpb.empty())
             goto LUniDefShort;
         i = 4;
         if (!cNum || *cNum < 1 || rgl[0] < 0 || rgl[0] > 1)
@@ -1223,9 +1227,9 @@ std::int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
             SetVCCheck(&app.state.game, vcProductionCapacity, 1);
             SetVCVal(app, &app.state.game, vcProductionCapacity, static_cast<std::int16_t>((LOWORD(rgl[1]) - 10)) / 10);
         }
-        lpbStart = PszGetLine(&lpb);
+        lpbStart = PszGetLine(lpb);
         cNum = CParseNumbers(lpbStart, std::span{rgl}.first(2));
-        if (lpb >= app.state.lpbDefMac)
+        if (lpb.empty())
             goto LUniDefShort;
         i = 5;
         if (!cNum || *cNum < 1 || rgl[0] < 0 || rgl[0] > 1)
@@ -1236,9 +1240,9 @@ std::int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
             SetVCCheck(&app.state.game, vcOwnsCapitalShips, 1);
             SetVCVal(app, &app.state.game, vcOwnsCapitalShips, static_cast<std::int16_t>((LOWORD(rgl[1]) - 10)) / 10);
         }
-        lpbStart = PszGetLine(&lpb);
+        lpbStart = PszGetLine(lpb);
         cNum = CParseNumbers(lpbStart, std::span{rgl}.first(2));
-        if (lpb >= app.state.lpbDefMac)
+        if (lpb.empty())
             goto LUniDefShort;
         i = 6;
         if (!cNum || *cNum < 1 || rgl[0] < 0 || rgl[0] > 1)
@@ -1249,9 +1253,9 @@ std::int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
             SetVCCheck(&app.state.game, vcHighestScoreAfterYears, 1);
             SetVCVal(app, &app.state.game, vcHighestScoreAfterYears, static_cast<std::int16_t>((LOWORD(rgl[1]) - 30)) / 10);
         }
-        lpbStart = PszGetLine(&lpb);
+        lpbStart = PszGetLine(lpb);
         cNum = CParseNumbers(lpbStart, std::span{rgl}.first(2));
-        if (lpb >= app.state.lpbDefMac)
+        if (lpb.empty())
             goto LUniDefShort;
         i = 7;
         if (!cNum || *cNum < 1 || rgl[0] < 0 || rgl[0] > 7)
@@ -1262,17 +1266,11 @@ std::int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
             SetVCVal(app, &app.state.game, vcMeetsNumCriteria, LOWORD(rgl[0]));
             SetVCVal(app, &app.state.game, vcMinYearsBeforeWin, static_cast<std::int16_t>((LOWORD(rgl[1]) - 30)) / 10);
         }
-        lpbStart = PszGetLine(&lpb);
-        lpb = lpbStart + (-1 + std::strlen(lpbStart));
-        if (lpb - lpbStart >= 3 && *lpb == 'y' && lpb[-1] == 'x' && lpb[-2] == '.') {
-            lpb[-2] = 0;
-        }
-        if (CchCopyUtf8(app.state.szBase, sizeof(app.state.szBase), lpbStart, std::strlen(lpbStart)) < 0) {
+        lpbStart = PszGetLine(lpb);
+        if (lpbStart.size() >= 4 && lpbStart.ends_with(".xy")) lpbStart.remove_suffix(3);
+        if (CchCopyUtf8(std::span{app.state.szBase}, lpbStart) < 0) {
             FileError(app, idsUniverseCreationFileAppearsInvalid);
             goto LError;
-        }
-        if (lpb + 4 < app.state.lpbDefMac) {
-            app.state.lpbDefUni = lpb;
         }
         for (i = 0; i < app.state.game.cPlayer; i++) {
             if (!app.state.rgplr[i].fAi && CAdvantagePoints(app, &app.state.rgplr[i]) < 0) {
@@ -1343,7 +1341,6 @@ std::int16_t GenNewGameFromFile(APPSESSION &app, char *pszFile) {
     }
 LError:
     RecordIO().pfnStreamClose(app);
-    app.state.lpbDefUni = nullptr;
     TurnLog(app, static_cast<StringId>(idsFailed + fSuccess));
     return fSuccess;
 }

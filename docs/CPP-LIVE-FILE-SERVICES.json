@@ -370,8 +370,9 @@
     "stream_open": "Scoped modes, returned metadata and owned/bounded path, line, directory and temporary results are complete. Other interfaces and file-selection migration remain open.",
     "selection": "Milestone D remains open; no picker backend or user workflow was changed by this batch.",
     "qualification": "Final complete-state inventory, Debug/Release and actual platform qualification remain required.",
-    "memory_sources": "Readonly memory cursors, tutorial sources, full owned batch lists, strict batch filename lines and returned token sizes are complete. Definition-line parsing/storage and other buffer APIs remain.",
-    "token_sizes": "Complete: all live narrow CbFileSize/CbNativeSizeLegacy signatures and temporary alternate names are removed. Existing signed seek-position widths remain explicit legacy/SDK boundaries."
+    "memory_sources": "Memory cursors, tutorial resources, owned batch lists, typed token sizes and definition-line storage/parsing are complete. Other buffer APIs and file selection remain.",
+    "token_sizes": "Complete: all live narrow CbFileSize/CbNativeSizeLegacy signatures and temporary alternate names are removed. Existing signed seek-position widths remain explicit legacy/SDK boundaries.",
+    "definition_lines": "Bounded readonly line parsing, local owned definition bytes and obsolete cursor/tail state removal are complete. Other buffer interfaces and typed file selection remain."
   },
   "byte_and_seek": {
     "parent": "b68995b3",
@@ -1502,10 +1503,10 @@
     "pre_existing_calls": 68,
     "pre_migration_characterization_calls": 4,
     "contract": "Empty ranges perform no IO, including no Windows zero-write truncation, and do not advance the memory cursor. Fitting memory reads copy and advance the exact request. Bounded short memory reads now copy only the available prefix before the existing StarsError; partial header/data publication and alert ordering match file input. See memory_sources for the source-side migration.",
-    "capacities": "Local/state arrays carry actual extents and logical prefixes. Definition input retains its existing checked cb+1 arena allocation. Batch input uses its full returned token size and exactly sized owned string. Tutorial writes use checked framed spans inside the sized resource. Report literals/fields retain exact bytes without NUL.",
+    "capacities": "Local/state arrays carry actual extents and logical prefixes. Definition input keeps its <16000-byte limit and reads an exactly sized local string. Batch input uses its full returned token size and exactly sized session string. Tutorial output uses checked framed resource spans; report fields retain exact bytes without NUL.",
     "wire_contract": "The two-byte header, fixed record widths, XOR/seed order, and physical 1024-byte payload whose ten-bit header wraps are unchanged. No new record-length rejection or baseline movement is intended.",
     "characterization": "Before migration the actual memory/file helpers passed sentinel-protected binary copies, cursor advancement, empty memory ranges and empty writes preserving file size/position. Those assertions are migrated to the span signatures alongside the existing short-read, partial-header callback and 1024-byte framing cases.",
-    "remaining": "Record payloads, element streams, memory sources and batch size/path bounds are complete in their sub-batches. Definition-line parsing and other buffer interfaces remain.",
+    "remaining": "Owned/bounded definition and batch input are complete; other buffer/service interfaces and file selection remain.",
     "call_sites": [
       {
         "path": "src/ui/logui.cpp",
@@ -5789,6 +5790,33 @@
       "baseline": "Full native baseline regenerated and compared to prior fixtures: 519 matches, 25 existing unused-storage warnings. No scenario moved at any turn. Preserved 592 regeneration-only fixture differences. Native/frozen-original baseline bytes, unit goldens, saved layouts/widths, game RNG, qsort order and binary64 boundaries remain unchanged.",
       "remaining": "Definition-line parsing/storage, other buffer interfaces, Milestone D, L05 remaining text and L08 final qualification remain active.",
       "receipts": "dist/verification/live-cpp/l06q/"
+    }
+  },
+  "definition_lines": {
+    "parent": "7e953859",
+    "status": "complete; verified",
+    "interface": "PszGetLine(string_view &ppszBeg) returns a borrowed readonly line and advances only the supplied remaining range. All 14 production calls use views; the mutable char** overload is removed.",
+    "grammar": "Trim leading ASCII spaces only; retain tabs/trailing spaces. Consume CRLF as two bytes and CR/LF/NUL as one delimiter. A final unterminated line consumes exactly its bytes, and repeated exhausted reads stay empty without reading or advancing past the source.",
+    "ownership": "GenNewGameFromFile reads into its local owned lpbDef string, retains it through parsing/GenerateWorld and never mutates its bytes. Existing optional file-size checks and <16000 limit precede the int16 count. Allocation failure uses the existing memory alert/StarsError and final provider close.",
+    "state_retirement": "lpbDefMac duplicates bounds now carried by views; lpbDefUni had only assignments/clearing and no live reader. Both transient fields and the unused tail-pointer arithmetic are removed. Encoding fixtures now verify a closed handle and restored recovery instead of an unused null field.",
+    "consumers": "The title/work/output destinations use their actual spans and existing strict byte limits. Two raw input-line strcpy sites are retired from the maintained ledger. Numeric parsing consumes the exact line or marker suffix; incomplete AI results are not read before their existing rejection condition. Case-sensitive .xy removal retains the existing minimum length of four.",
+    "characterization": "Eight whitespace/delimiter vectors pass against the parent. Typed tests add immutable input, repeat EOF, exact nonterminated CR before a guard, default empty input and NUL-delimited slices. Real creation/reload tests cover eight newline/BOM/space/Unicode variants plus short-file rejection; the retained parent host independently generates comparison worlds.",
+    "contract": "Title/race/output byte limits, mandatory-line checks, partial numeric assignment, optional ignored trailing data, validation/RNG sequence and fixed saved fields remain. No normalization, file format, game rule or canonical model changes.",
+    "verification": {
+      "batch": "L06r readonly definition lines and local owned input",
+      "debug_build": "Pass; no warnings. Compiler/source policy covers 158 owned sources, 159 variants and 161 standalone headers in both include orders. Updated raw-copy inventory passes enforcement.",
+      "desktop": "153/153, including actual definition variants and host-file reload, source-byte preservation, invalid/short definition cleanup, all 29 leak checks and available SDL tutorial checkpoints.",
+      "host_units": "28/28",
+      "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+      "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+      "windows": "147/147 owned production units and four actual changed/consumer test units compile with strict MinGW. Wine passes 15 utility, nine encoding, seven turn and 23 save cases (54 total). Native Windows desktop and actual Linux final qualification remain pending.",
+      "characterization": "Eight grammar vectors pass against the parent before migration. New typed vectors preserve source bytes, repeat EOF safely, read an exact CR-terminated slice next to an excluded guard, accept default empty input and consume bounded NUL delimiters. Real creation/reload covers CRLF/LF/CR, final unterminated lines, BOM, leading spaces and a Unicode title; five short inputs and existing invalid UTF-8/NUL/oversize cases reject with closed handles and restored recovery.",
+      "parent_world_comparison": "A retained parent host and final host independently create eight definition variants at identical paths and seeds. All 32 generated save files match through the existing independent save comparator. No output-family or parsed game-state differences occur.",
+      "interfaces": "All 14 production PszGetLine calls use bounded readonly views, and the old char** overload is removed. Title/work/base destinations receive strict actual spans; numeric fields consume exact views. Two input-line strcpy sites are retired and the maintained site inventory advances to 188 migrated sites. Existing function/local debug names remain.",
+      "ownership": "Local lpbDef string owns bytes through parsing/GenerateWorld, with existing <16000 admission, int16 count, UTF-8/BOM handling, memory-error delivery and provider-close order. Duplicate lpbDefMac bounds and never-consumed lpbDefUni tail state/arithmetic are removed. AI values are read only when their result count contains the field; existing rejection rules remain.",
+      "baseline": "Behavior-neutral for game behavior and valid IO. Parent/new world comparisons and both 519-checkpoint suites match. Native/frozen-original baseline bytes, unit goldens, saved widths/layouts, game rules, RNG, qsort order, binary64 boundaries and canonical models remain unchanged. No scenario/checkpoint moved; no regression export required.",
+      "remaining": "Other buffer/service interfaces, Milestone D, remaining L05 copies/const text/scratch results and L08 final qualification remain active.",
+      "receipts": "dist/verification/live-cpp/l06r/"
     }
   }
 }

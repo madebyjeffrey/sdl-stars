@@ -10,6 +10,35 @@
 #include <string>
 #include <limits>
 
+static void test_PszGetLine_contract(void) {
+    struct CASE { const char *psz; const char *rgsz[3]; std::size_t cLine; };
+    const CASE rgCases[] = {
+        {"  alpha\r\n beta\nlast", {"alpha", "beta", "last"}, 3},
+        {"\r\n\n", {"", ""}, 2}, {" a\rb", {"a", "b"}, 2},
+        {"  \t a  ", {"\t a  "}, 1}, {"    ", {""}, 1},
+        {"", {""}, 1}, {"a\r", {"a"}, 1}, {"a\r\n", {"a"}, 1}
+    };
+    for (const auto &cs : rgCases) {
+        std::string sz(cs.psz);
+        std::string_view psz(sz);
+        for (std::size_t i = 0; i < cs.cLine; i++) {
+            const auto pszLine = PszGetLine(psz);
+            TEST_CHECK(pszLine == cs.rgsz[i]);
+        }
+        TEST_CHECK(sz == cs.psz);
+        TEST_CHECK(psz.empty());
+        TEST_CHECK(PszGetLine(psz).empty() && psz.empty());
+    }
+    const char szGuard[] = {' ', 'a', '\r', '!'};
+    std::string_view psz(szGuard, 3);
+    TEST_CHECK(PszGetLine(psz) == "a" && psz.empty());
+    psz = std::string_view("a\0b", 3);
+    TEST_CHECK(PszGetLine(psz) == "a" && psz == "b");
+    TEST_CHECK(PszGetLine(psz) == "b" && psz.empty());
+    psz = {};
+    TEST_CHECK(PszGetLine(psz).empty() && psz.empty());
+}
+
 static void OpenClosedCopySource(APPSESSION &app, const char *psz, MdOpenFlags md) {
     StreamOpen(app, psz, md);
     StreamClose(app);
@@ -415,7 +444,7 @@ static void test_XorFileBuf_seed_alias_order(void) {
     TEST_CHECK(lSeed1 == 645001258 && lSeed2 == -720506926);
 }
 
-TEST_LIST = {{"file copy uses full size and rejects unavailable metadata", test_Copy_size_result}, {"numeric parser preserves grammar, capacity and partial assignment", test_CParseNumbers_contract}, {"numeric text retains widths, signs, grouping and scaled boundaries", test_NumberText_boundaries},
+TEST_LIST = {{"definition lines retain whitespace and delimiter grammar", test_PszGetLine_contract}, {"file copy uses full size and rejects unavailable metadata", test_Copy_size_result}, {"numeric parser preserves grammar, capacity and partial assignment", test_CParseNumbers_contract}, {"numeric text retains widths, signs, grouping and scaled boundaries", test_NumberText_boundaries},
              {"numeric text values survive subsequent lookups", test_NumberText_owned},
              {"Roman numerals retain all int16 values within actual capacity", test_IntToRoman_bounded},
              {"XorFileBuf retains RHS-before-destination evaluation", test_XorFileBuf_seed_alias_order},
