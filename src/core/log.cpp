@@ -1185,6 +1185,7 @@ std::int16_t FLoadLogFile(APPSESSION &app, char *pszLog) {
     MSGPLR  *lpmp;
     MSGPLR **lppmp;
     std::int16_t  cSkip;
+    std::span<const std::byte> rgbResource;
 
     fRet = 1;
     app.state.imemLogCur = 0;
@@ -1193,19 +1194,21 @@ std::int16_t FLoadLogFile(APPSESSION &app, char *pszLog) {
     try {
         if (app.state.game.fTutorial && app.state.idPlayer == 0 && app.state.gd.fGeneratingTurn) {
             cSkip = app.state.game.turn;
-            app.state.vlpMemStream = LpbLoadTutorLog(app);
-            if (!app.state.vlpMemStream) {
+            rgbResource = LpbLoadTutorLog(app);
+            if (rgbResource.empty()) {
+                app.state.vlpMemStream.reset();
                 return 0;
             }
-            if (app.state.game.turn >= *app.state.vlpMemStream) {
-                app.state.vlpMemStream = nullptr;
+            app.state.vlpMemStream = rgbResource;
+            if (app.state.game.turn >= std::to_integer<std::uint8_t>(app.state.vlpMemStream->front())) {
+                app.state.vlpMemStream.reset();
                 goto StrOpen;
             }
-            app.state.vlpMemStream++;
+            *app.state.vlpMemStream = app.state.vlpMemStream->subspan(1);
             while (cSkip-- != 0) {
                 do {
-                    app.state.vlpMemStream += 2 + HdvFromPrefix(app.state.vlpMemStream).cb();
-                } while (HdvFromPrefix(app.state.vlpMemStream).rt() != rtBOF);
+                    *app.state.vlpMemStream = app.state.vlpMemStream->subspan(RgMemStreamRecord(app).size());
+                } while (HdrMemStream(app).rt != rtBOF);
             }
         } else {
         StrOpen:
@@ -1220,7 +1223,7 @@ std::int16_t FLoadLogFile(APPSESSION &app, char *pszLog) {
         if (app.state.game.lid != BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).lidGame() || app.state.game.turn > BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).turn()) {
         FailSuccess:
             if (app.state.vlpMemStream) {
-                app.state.vlpMemStream = nullptr;
+                app.state.vlpMemStream.reset();
             } else {
                 RecordIO().pfnStreamClose(app);
             }
@@ -1265,7 +1268,7 @@ std::int16_t FLoadLogFile(APPSESSION &app, char *pszLog) {
         app.state.imemLogCur = cbLog;
 Done:
         if (app.state.vlpMemStream) {
-            app.state.vlpMemStream = nullptr;
+            app.state.vlpMemStream.reset();
         } else {
             RecordIO().pfnStreamClose(app);
         }
@@ -1273,6 +1276,7 @@ Done:
         return fRet;
     } catch (const StarsError &) {
         if (app.state.vlpMemStream) {
+            app.state.vlpMemStream.reset();
             return 0;
         }
         if (app.state.hf == -1) {

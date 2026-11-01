@@ -25,6 +25,10 @@ void    GetFileStatus(APPSESSION &app, std::int16_t dt, std::int16_t iPlayer);
 std::int16_t FOpenFile(APPSESSION &app, DtFileType dt, std::int16_t iPlayer, std::int16_t md);
 std::int16_t FNewTurnAvail(APPSESSION &app, std::int16_t idPlayer);
 std::int16_t FCheckFile(APPSESSION &app, DtFileType dt, std::int16_t iPlayer, MdMark md);
+// Peek a bounded tutorial header or complete encoded record without advancing.
+// Truncated memory sources report the same corrupt-file error as short file IO.
+HDR     HdrMemStream(APPSESSION &app);
+std::span<const std::byte> RgMemStreamRecord(APPSESSION &app);
 void    ReadRt(APPSESSION &app);
 std::int16_t FBadFileError(StringId ids);
 void    StreamOpen(APPSESSION &app, const char *szFile, MdOpenFlags mdOpen);

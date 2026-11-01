@@ -17,6 +17,18 @@ J/JRC3/JRC4 fix claims below come from the supplied list and are not independent
 verified release history. See [WIN16-PARITY.md](WIN16-PARITY.md) for native changes
 and [ROADMAP.md](ROADMAP.md) for the post-tag work.
 
+## Memory-backed records lack source bounds — fixed on develop
+
+`file.cpp`, `ReadRtHeader`/`RgFromStream`, and tutorial loops in `log.cpp`/
+`logui.cpp` advanced an unbounded byte pointer. A readable-guard fixture
+reproduces copying beyond each logical source prefix without an error. The
+session cursor now carries a readonly remaining span, including an explicit
+active-but-empty state. Short reads publish only available bytes before the
+same corrupt-file error as file IO. Record skipping validates the complete
+header/payload before advancement; tutorial resources return sized readonly
+spans, and failure releases the cursor and any created output file. Existing
+valid replay bytes, encryption boundaries and saved layouts are unchanged.
+
 ## Text append length wraps at 64 KiB — fixed on main
 
 `utilgen.cpp`, `OutputFileString`: casting `strlen` to `uint16_t` discarded

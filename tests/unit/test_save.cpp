@@ -597,20 +597,20 @@ static void test_fleet_scratch_admission(void) {
     memset(app.state.rgbCur, 0xcc, sizeof(app.state.rgbCur));
     memcpy(app.state.rgbCur, partial, sizeof(partial));
     app.state.hdrCur.rt = rtFleetB; app.state.hdrCur.cb = 0;
-    app.state.vlpMemStream = eof;
+    app.state.vlpMemStream = std::as_bytes(std::span{eof});
     fRead = FReadFleet(app, &fl);
-    TEST_CHECK(app.state.vlpMemStream == eof + 2);
-    app.state.vlpMemStream = NULL;
+    TEST_CHECK(app.state.vlpMemStream->data() == reinterpret_cast<const std::byte *>(eof + 2));
+    app.state.vlpMemStream.reset();
     TEST_ASSERT(fRead);
     TEST_CHECK(fl.id == 0 && fl.iPlayer == -1 && fl.rgcsh[0] == 255 && !fl.fDead && fl.fDone);
     TEST_CHECK(fl.pt.x == -32768 && fl.pt.y == 32767 && fl.dirLong == 0x12345678 && fl.wtFleet() == -1);
     TEST_CHECK(fl.lpplord == NULL && app.state.hdrCur.rt == rtEOF);
     memcpy(app.state.rgbCur, full, sizeof(full));
     app.state.hdrCur.rt = rtFleetA; app.state.hdrCur.cb = 0;
-    app.state.vlpMemStream = eof;
+    app.state.vlpMemStream = std::as_bytes(std::span{eof});
     fRead = FReadFleet(app, &fl);
-    TEST_CHECK(app.state.vlpMemStream == eof + 2);
-    app.state.vlpMemStream = NULL;
+    TEST_CHECK(app.state.vlpMemStream->data() == reinterpret_cast<const std::byte *>(eof + 2));
+    app.state.vlpMemStream.reset();
     TEST_ASSERT(fRead);
     TEST_CHECK(fl.fDead && fl.fDone && fl.cord == 0 && fl.iplan == 255 && fl.lpplord != NULL);
     TEST_CHECK(fl.lpplord->iordMac == 0 && fl.lpplord->iordMax == 1 && fl.lpplord->rgord()[0].grTask == 0);
@@ -619,10 +619,10 @@ static void test_fleet_scratch_admission(void) {
     // order allocation or consuming a following record.
     memcpy(app.state.rgbCur, full, sizeof(full));
     app.state.hdrCur.rt = rtFleetB; app.state.hdrCur.cb = 0;
-    app.state.vlpMemStream = eof;
+    app.state.vlpMemStream = std::as_bytes(std::span{eof});
     fRead = FReadFleet(app, &fl);
-    TEST_CHECK(app.state.vlpMemStream == eof);
-    app.state.vlpMemStream = NULL;
+    TEST_CHECK(app.state.vlpMemStream->data() == reinterpret_cast<const std::byte *>(eof));
+    app.state.vlpMemStream.reset();
     TEST_CHECK(!fRead && fl.det == detAll && fl.fDead && fl.lpplord == NULL && fl.iplan == 0);
 }
 

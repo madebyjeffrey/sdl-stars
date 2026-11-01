@@ -157,8 +157,11 @@ detail in [WIN16-PARITY.md](WIN16-PARITY.md).
   heaps (`memory.cpp`) retain their `calloc`/`realloc` allocation geometry under an
   explicit chain owner and C++20 typed lifetime operations.
 - **Tutorial resources:** module bytes are borrowed for replay/export, with no
-  heap unlock or free. `FWriteTutorialMFile` clears its active memory source on
-  failed output and preserves the primary error instead of replacing it with a
+  heap unlock or free. The resource result and session cursor carry readonly
+  byte spans; an active exhausted source cannot fall through to file IO.
+  Header/payload reads and tutorial record skipping reject truncated sources.
+  `FWriteTutorialMFile` clears its active memory source and closes created output
+  on failure, preserving the primary error instead of replacing it with a
   heap-handle lookup error.
   `HdibLoadBigResource` instead returns a writable heap copy; title-window
   destruction releases that copy with `GlobalFree`, not `FreeResource`.

@@ -7,6 +7,8 @@
 // where there is no one to ask. See docs/ROADMAP.md (2.9).
 
 #include <cstdint>
+#include <cstddef>
+#include <span>
 
 // Messages and questions.
 std::int16_t IdAlertBox(const char *sz, std::int16_t mbType);
@@ -50,6 +52,7 @@ void SetHdcTextColor(HDC hdc, std::uint32_t cr);
 
 // The tutorial.
 void     AdvanceTutor(APPSESSION &app);
-std::uint8_t *LpbLoadTutorLog(APPSESSION &app);
+// Borrowed immutable resource bytes remain valid for the program lifetime.
+std::span<const std::byte> LpbLoadTutorLog(APPSESSION &app);
 
 #endif

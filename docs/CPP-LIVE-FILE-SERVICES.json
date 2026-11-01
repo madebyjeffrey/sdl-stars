@@ -365,12 +365,12 @@
     }
   ],
   "pending": {
-    "byte_io": "Native/token byte I/O, record streams, WriteRt/RECORDIO, typed element streams and the sized text writer are complete; remaining memory-source boundaries are separate work.",
+    "byte_io": "Native/token byte IO, record streams, bounded memory sources, WriteRt/RECORDIO, typed element streams and the sized text writer are complete. Other buffer interfaces and batch-input audits remain.",
     "seek": "Scoped seek origins complete; existing position-result widths and native/SDK error mappings are retained.",
     "stream_open": "Scoped modes, returned metadata and owned/bounded path, line, directory and temporary results are complete. Other interfaces and file-selection migration remain open.",
     "selection": "Milestone D remains open; no picker backend or user workflow was changed by this batch.",
     "qualification": "Final complete-state inventory, Debug/Release and actual platform qualification remain required.",
-    "memory_sources": "Memory-backed record source pointers still need bounds/cursor ownership. Batch file lowword/signed sizing and filename-copy loops remain a separate audit; this batch preserves their existing allocation/read count."
+    "memory_sources": "Readonly bounded memory cursors and actual tutorial source interfaces are complete. Batch-file lowword/signed sizing, parsing and filename-copy loops remain a separate audit."
   },
   "byte_and_seek": {
     "parent": "b68995b3",
@@ -1500,11 +1500,11 @@
     "calls": 72,
     "pre_existing_calls": 68,
     "pre_migration_characterization_calls": 4,
-    "contract": "The functions still throw the existing StarsError on a short/failed nonempty file operation. Empty ranges perform no IO, including no Windows zero-write truncation, and do not advance the memory cursor. Memory-backed reads copy the exact requested bytes and advance by the same amount. Partial header/data publication and alert ordering are unchanged.",
+    "contract": "Empty ranges perform no IO, including no Windows zero-write truncation, and do not advance the memory cursor. Fitting memory reads copy and advance the exact request. Bounded short memory reads now copy only the available prefix before the existing StarsError; partial header/data publication and alert ordering match file input. See memory_sources for the source-side migration.",
     "capacities": "Local/state arrays carry their actual extent and logical prefix. Universe-definition input uses its exact cb+1 allocation after the existing size check. Batch input uses the same uint16_t request as its arena allocation. Tutorial writes use the SizeofResource extent plus record offset/length. Report literals and fields retain exact lengths without NUL; two mutable/void literal casts are removed.",
     "wire_contract": "The two-byte header, fixed record widths, XOR/seed order, and physical 1024-byte payload whose ten-bit header wraps are unchanged. No new record-length rejection or baseline movement is intended.",
     "characterization": "Before migration the actual memory/file helpers passed sentinel-protected binary copies, cursor advancement, empty memory ranges and empty writes preserving file size/position. Those assertions are migrated to the span signatures alongside the existing short-read, partial-header callback and 1024-byte framing cases.",
-    "remaining": "WriteRt and its actual RECORDIO providers still use a separate payload pointer/length. CReadNative/CWriteNative element interfaces, memory-source cursor bounds and batch-file sizing/path parsing remain to migrate or audit. No source-bound guarantee is inferred from only bounding the destination.",
+    "remaining": "Record payloads, element streams and bounded memory sources are complete in their linked sub-batches. Batch-file sizing/path parsing and other buffer interfaces remain.",
     "call_sites": [
       {
         "path": "src/ui/logui.cpp",
@@ -5658,6 +5658,32 @@
       "baseline": "Full native baseline regenerated with make regression-export and compared against its prior fixture copy: all 519 checkpoints match, including 25 existing unused-storage warnings. No scenario moved at any turn. Preserved 592 fixture files containing regeneration-only differences. Native and frozen-original fixture bytes, record layouts, game RNG and unit goldens remain unchanged.",
       "remaining": "Memory-source bounds/cursors, batch input sizing/parsing, other buffer interfaces and Milestone D remain; L05 remaining text and L08 final qualification are active.",
       "receipts": "dist/verification/live-cpp/l06l/"
+    }
+  },
+  "memory_sources": {
+    "parent": "5fdfd9b7",
+    "status": "complete; verified",
+    "representation": "The debug name vlpMemStream is retained as optional<span<const byte>>. nullopt selects file IO; an engaged empty span denotes an exhausted memory source and never selects the file backend.",
+    "resource_interface": "LpbLoadTutorLog returns immutable sized module bytes; no copied allocation, unlock/free, or shared mutable resource pointer. The resource stays valid for the program lifetime. The host returns an empty span.",
+    "record_reads": "ReadRtHeader and RgFromStream consume at most the remaining source. Short reads publish the available prefix, advance only that prefix and deliver the existing corrupt-file error. Header seeding/decode-before-alert, destination suffixes, zero-range effects and encryption boundaries are retained.",
+    "record_scanning": "HdrMemStream peeks a complete two-byte header; RgMemStreamRecord peeks a complete framed record. Both reject insufficient source before advancing. Actual replay/export loops explicitly advance checked record spans. Export still advances only after a successful write.",
+    "cleanup": "FLoadLogFile clears the borrowed cursor on a memory-source exception. FWriteTutorialMFile clears it on failure; a file guard closes any created output token when record validation or writing unwinds. Normal provider close ordering remains explicit.",
+    "tests": "The parent raw cursor fails twelve readable-guard assertions over logical source prefixes 0/1/2. Final tests cover short reads, unchanged destination suffixes, complete-record peek failures without cursor advance, active empty source versus an open file, file/memory partial-header/payload callback parity, existing valid framing/encryption/fleet reads, and actual tutorial export after its source is truncated by the real open provider.",
+    "wire_contract": "Only transient session state and borrowed resource interfaces change. No saved structure, wire width, record framing, game RNG, qsort ordering or binary64 operation changes.",
+    "verification": {
+      "batch": "L06m bounded readonly memory-record sources",
+      "debug_build": "Pass; no warnings. Final rebuild after source/test changes passes; 158 owned sources, 159 variants and 161 standalone headers in both include orders pass source/compiler policy.",
+      "desktop": "153/153, including bounded memory/header/payload callbacks, actual truncated tutorial export cleanup, all 29 leak checks and available SDL tutorial checkpoints.",
+      "host_units": "28/28",
+      "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+      "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+      "windows": "147/147 owned production translation units and three changed actual test units compile with strict MinGW. Actual Windows recovery tests (13) and save tests (22) pass under Wine. The tutorial resource/export case executes in the SDL desktop suite; native Windows desktop and actual Linux final qualification remain pending.",
+      "characterization": "Parent raw-cursor code fails twelve readable-guard assertions for logical source prefixes 0/1/2 without an actual invalid memory access. Typed tests pass these vectors, plus 0/1/2/4/5-byte complete-record peeks with no advancement on error; active empty memory does not read or seek an open file. Existing callback-publication vectors now run against both file and memory prefixes 0/1/3.",
+      "interfaces": "The existing vlpMemStream debug name carries optional<span<const byte>>; exhausted active memory and absent memory are distinct. LpbLoadTutorLog returns immutable sized resource bytes. ReadRtHeader/RgFromStream and actual tutorial replay/export loops honor source bounds; framed record views validate before cursor advancement or publication.",
+      "cleanup": "Module bytes remain borrowed. Truncated tutorial replay clears the cursor; an output token is scoped before export opens it, so malformed input or write failure closes it on unwind. Normal explicit provider close and write-before-advance order remain. The real open provider truncates the source in a permanent SDL fixture and verifies no active cursor, handle or pending failure survives.",
+      "baseline": "Full native baseline regenerated with make regression-export and compared to the prior fixtures: 519 matches, 25 existing unused-storage warnings. No scenario moved at any turn. Preserved 592 fixture files with regeneration-only differences. Native/frozen-original baseline bytes, saved record layouts/widths, game RNG, qsort ordering, binary64 boundaries and unit goldens remain unchanged.",
+      "remaining": "Batch input sizing/parsing and filename loops, other buffer interfaces, Milestone D, L05 remaining text work and L08 final qualification remain active.",
+      "receipts": "dist/verification/live-cpp/l06m/"
     }
   }
 }

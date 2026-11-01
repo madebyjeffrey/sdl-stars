@@ -90,13 +90,13 @@ static void TestRecordStreamRanges(void) {
     TEST_ASSERT(FStarsTestInit(app));
     memset(destination, 0xa5, sizeof(destination));
     {
-        StarsRestore<uint8_t *> restoreMemory(app.state.vlpMemStream);
-        app.state.vlpMemStream = source;
+        StarsRestore restoreMemory(app.state.vlpMemStream);
+        app.state.vlpMemStream = std::as_bytes(std::span{source});
         RgFromStream(app, std::as_writable_bytes(std::span{destination}).subspan(1, 3));
         TEST_CHECK(!memcmp(destination + 1, source, 3) && destination[0] == 0xa5 && destination[4] == 0xa5);
-        TEST_CHECK(app.state.vlpMemStream == source + 3);
+        TEST_CHECK(app.state.vlpMemStream->data() == reinterpret_cast<const std::byte *>(source + 3));
         RgFromStream(app, std::span<std::byte>{});
-        TEST_CHECK(app.state.vlpMemStream == source + 3);
+        TEST_CHECK(app.state.vlpMemStream->data() == reinterpret_cast<const std::byte *>(source + 3));
     }
     TEST_ASSERT(FStarsTestDir("record-stream-ranges", szDir, sizeof(szDir)));
     CchSnprintf(std::span{szFile}, "%s%sranges.dat", szDir, szDirSep);
@@ -107,10 +107,70 @@ static void TestRecordStreamRanges(void) {
         TEST_CHECK(LSeekFile(app.state.hf, 2, NATIVESEEKORIGIN::begin) == 2);
         RgToStream(app, std::span<const std::byte>{});
         TEST_CHECK(CbFileSize(app.state.hf) == 6 && LSeekFile(app.state.hf, 0, NATIVESEEKORIGIN::current) == 2);
+        StarsRestore restoreMemory(app.state.vlpMemStream);
+        StarsRestore restoreSilent(app.state.fFileErrSilent);
+        app.state.fFileErrSilent = 1;
+        app.state.vlpMemStream = std::span<const std::byte>{};
+        bool fCaught = false;
+        try {
+            StarsRecoveryScope scopeRecovery;
+            RgFromStream(app, std::as_writable_bytes(std::span{destination}).first(1));
+        } catch (const StarsError &error) {
+            fCaught = error.mdError == starsErrorFile;
+        }
+        TEST_CHECK(fCaught && app.state.vlpMemStream && app.state.vlpMemStream->empty());
+        TEST_CHECK(LSeekFile(app.state.hf, 0, NATIVESEEKORIGIN::current) == 2);
     }
     TEST_CHECK(RemoveNativeFile(szFile) == 0);
 }
 
+// The backing array includes a readable guard; only its first cb bytes belong
+// to the source. The old raw cursor could not express that boundary.
+static void TestMemorySourceBounds(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    const uint8_t source[] = {0x12, 0x34, 0x56, 0x78};
+    uint8_t destination[4];
+
+    TEST_ASSERT(FStarsTestInit(app));
+    StarsRestore restoreMemory(app.state.vlpMemStream);
+    StarsRestore restoreSilent(app.state.fFileErrSilent);
+    app.state.fFileErrSilent = 1;
+    for (std::size_t cb : {0u, 1u, 2u}) {
+        bool fCaught = false;
+        memset(destination, 0xa5, sizeof(destination));
+        app.state.vlpMemStream = std::as_bytes(std::span{source}).first(cb);
+        try {
+            StarsRecoveryScope scopeRecovery;
+            RgFromStream(app, std::as_writable_bytes(std::span{destination}).first(3));
+        } catch (const StarsError &error) {
+            fCaught = error.mdError == starsErrorFile && error.ids == idsGameFileAppearsCorruptUnableLoadFile;
+        }
+        TEST_CHECK(fCaught);
+        TEST_CHECK(app.state.vlpMemStream->data() == reinterpret_cast<const std::byte *>(source + cb));
+        TEST_CHECK(!memcmp(destination, source, cb));
+        for (std::size_t ib = cb; ib < sizeof(destination); ib++) TEST_CHECK(destination[ib] == 0xa5);
+    }
+    const uint8_t record[] = {3, 0, 'a', 'b', 'c', 0xff};
+    for (std::size_t cb : {0u, 1u, 2u, 4u, 5u}) {
+        bool fCaught = false;
+        app.state.vlpMemStream = std::as_bytes(std::span{record}).first(cb);
+        try {
+            StarsRecoveryScope scopeRecovery;
+            const auto rgb = RgMemStreamRecord(app);
+            TEST_CHECK(rgb.size() == 5 && !memcmp(rgb.data(), record, 5));
+            TEST_CHECK(HdrMemStream(app).rt == rtEOF && HdrMemStream(app).cb == 3);
+        } catch (const StarsError &error) {
+            fCaught = error.mdError == starsErrorFile && error.ids == idsGameFileAppearsCorruptUnableLoadFile;
+        }
+        TEST_CHECK(fCaught == (cb < 5));
+        TEST_CHECK(app.state.vlpMemStream->size() == cb && app.state.vlpMemStream->data() == reinterpret_cast<const std::byte *>(record));
+    }
+}
 static void TestShortReadClosesStream(void) {
 #ifdef STARS_UI_SDL
     APPSESSION &app = ui::app;
@@ -175,7 +235,7 @@ static void TestPartialRecordPublication() {
     TEST_ASSERT(FStarsTestInit(app));
     TEST_ASSERT(FStarsTestDir("record-publication", szDir, sizeof(szDir)));
     snprintf(szFile, sizeof(szFile), "%s%spartial", szDir, szDirSep);
-    for (int cb : rgcb) {
+    for (bool fMemory : {false, true}) for (int cb : rgcb) {
         hfWrite = HfOpenFile(szFile, {.mdAccess = NATIVEFILEACCESS::readWrite, .mdShare = NATIVEFILESHARE::exclusive, .fCreate = true, .fTruncate = true}).hf;
         TEST_ASSERT(hfWrite != -1);
         if (cb != 0) TEST_ASSERT(CbWriteFile(hfWrite, std::as_bytes(std::span{rgbFile}).first(static_cast<std::size_t>(cb))) == cb);
@@ -187,10 +247,12 @@ static void TestPartialRecordPublication() {
             StarsRecoveryScope scopeRecovery;
             StarsRestore<int16_t> restoreSilent(app.state.fFileErrSilent);
             StarsRestore<decltype(pfnStarsTestAlertObserver)> restoreObserver(pfnStarsTestAlertObserver);
+            StarsRestore restoreMemory(app.state.vlpMemStream);
             StarsFileGuard closeStream(app.state.hf);
             app.state.fFileErrSilent = 0; app.state.gd.fGeneratingTurn = 0;
             pfnStarsTestAlertObserver = CaptureReadFailure;
             StreamOpen(app, szFile, mdRead);
+            if (fMemory) app.state.vlpMemStream = std::as_bytes(std::span{rgbFile}).first(static_cast<std::size_t>(cb));
             ReadRt(app);
         } catch (const StarsError &error) {
             fCaught = error.mdError == starsErrorFile && error.ids == idsGameFileAppearsCorruptUnableLoadFile;
@@ -230,10 +292,10 @@ static void TestRecordFramingBytes() {
     TEST_CHECK(CbReadFile(hfRead, std::as_writable_bytes(std::span{written}).first(static_cast<std::size_t>(sizeof(written)))) == sizeof(written));
     CloseFile(hfRead);
     TEST_CHECK(written[0] == 0 && written[1] == 0 && !memcmp(written + 2, rgb, sizeof(rgb)));
-    app.state.vlpMemStream = stream;
+    app.state.vlpMemStream = std::as_bytes(std::span{stream});
     ReadRt(app);
-    TEST_CHECK(app.state.hdrCur.rt == rtEOF && app.state.hdrCur.cb == 3 && app.state.vlpMemStream == stream + 5 && !memcmp(app.state.rgbCur, stream + 2, 3));
-    app.state.vlpMemStream = NULL;
+    TEST_CHECK(app.state.hdrCur.rt == rtEOF && app.state.hdrCur.cb == 3 && app.state.vlpMemStream->data() == reinterpret_cast<const std::byte *>(stream + 5) && !memcmp(app.state.rgbCur, stream + 2, 3));
+    app.state.vlpMemStream.reset();
     StreamOpen(app, szFile, mdCreate);
     WriteRtEof(app, 0x80ff);
     StreamClose(app);
@@ -262,13 +324,13 @@ static void TestBofSignedEncryptionFields() {
     // native bitfield layout and the stream decoder under test.
     SetFileXorStream(app, -2147483647, -1024, -2, -16, 1);
     GetFileSeeds(app, &expected1, &expected2);
-    app.state.vlpMemStream = stream;
+    app.state.vlpMemStream = std::as_bytes(std::span{stream});
     ReadRt(app);
     GetFileSeeds(app, &lSeed1, &lSeed2);
-    TEST_CHECK(app.state.hdrCur.rt == rtBOF && app.state.hdrCur.cb == 16 && app.state.vlpMemStream == stream + sizeof(stream));
+    TEST_CHECK(app.state.hdrCur.rt == rtBOF && app.state.hdrCur.cb == 16 && app.state.vlpMemStream->data() == reinterpret_cast<const std::byte *>(stream + sizeof(stream)));
     TEST_CHECK(lSeed1 == expected1 && lSeed2 == expected2);
     TEST_CHECK(BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).iPlayer() == -16 && BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).lSaltTime() == -1024);
-    app.state.vlpMemStream = NULL;
+    app.state.vlpMemStream.reset();
 }
 
 static void TestNestedRecoveryRestoresParent(void) {
@@ -348,7 +410,7 @@ static void TestCleanupKeepsHandledPrimary(void) {
     TEST_CHECK(fCaught && !FStarsErrorPending());
 }
 
-TEST_LIST = {{"record writer rejects payloads beyond scratch before publication", TestRecordWriteCapacity}, {"record stream ranges retain bytes, cursors and zero-length effects", TestRecordStreamRanges}, {"cleanup retains a primary failure already being handled", TestCleanupKeepsHandledPrimary},{"BOF signed fields retain encryption seed inputs", TestBofSignedEncryptionFields},
+TEST_LIST = {{"memory sources reject reads beyond their bounded range", TestMemorySourceBounds}, {"record writer rejects payloads beyond scratch before publication", TestRecordWriteCapacity}, {"record stream ranges retain bytes, cursors and zero-length effects", TestRecordStreamRanges}, {"cleanup retains a primary failure already being handled", TestCleanupKeepsHandledPrimary},{"BOF signed fields retain encryption seed inputs", TestBofSignedEncryptionFields},
              {"record failures publish partial bytes before alert callbacks", TestPartialRecordPublication},
              {"record headers retain explicit framing and wrapping", TestRecordFramingBytes},
              {"file failure restores scope and flags", TestFileFailureUnwinds},

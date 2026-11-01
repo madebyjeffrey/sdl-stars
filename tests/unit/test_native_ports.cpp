@@ -41,13 +41,35 @@ static void TestTutorialResourceBorrow(void) {
     win32::SetLastError(0x4321);
     TEST_ASSERT(FWriteTutorialMFile(app, 1000) == 2);
     TEST_CHECK(win32::GetLastError() == 0x4321);
-    TEST_CHECK(app.state.vlpMemStream == nullptr);
+    TEST_CHECK(!app.state.vlpMemStream);
     RECORDIO io = RecordIO();
     io.pfnStreamOpen = FailTutorialStreamOpen;
     RECORDIOSCOPE recordScope(io);
     TEST_CHECK(FWriteTutorialMFile(app, 0) == 0);
     TEST_CHECK(win32::GetLastError() == win32::ERROR_DISK_FULL);
-    TEST_CHECK(app.state.vlpMemStream == nullptr && !FStarsErrorPending());
+    TEST_CHECK(!app.state.vlpMemStream && !FStarsErrorPending());
+}
+static char szTruncatedTutorialFile[cbTestPath + 64];
+static void OpenTruncatedTutorialSource(APPSESSION &app, const char *, MdOpenFlags md) {
+    StreamOpen(app, szTruncatedTutorialFile, md);
+    *app.state.vlpMemStream = app.state.vlpMemStream->first(1);
+}
+static void TestTruncatedTutorialSource(void) {
+    APPSESSION &app = ui::app;
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    char szDir[cbTestPath];
+
+    TEST_ASSERT(FStarsTestInit(app));
+    TEST_ASSERT(FStarsTestDir("truncated-tutorial", szDir, sizeof(szDir)));
+    CchSnprintf(std::span{szTruncatedTutorialFile}, "%s%stutorial.m1", szDir, szDirSep);
+    StarsRestore restoreSilent(app.state.fFileErrSilent);
+    app.state.fFileErrSilent = 1;
+    RECORDIO io = RecordIO();
+    io.pfnStreamOpen = OpenTruncatedTutorialSource;
+    RECORDIOSCOPE recordScope(io);
+    TEST_CHECK(FWriteTutorialMFile(app, 0) == 0);
+    TEST_CHECK(!app.state.vlpMemStream && app.state.hf == -1 && !FStarsErrorPending());
+    TEST_CHECK(RemoveNativeFile(szTruncatedTutorialFile) == 0);
 }
 static void TestTitleBitmapRelease(void) {
     APPSESSION &app = ui::app;
@@ -634,6 +656,7 @@ static void TestDibFromBitmapFailureReleasesStorage(void) {
 TEST_LIST = {
 #ifdef STARS_UI_SDL
     {"tutorial resource cleanup retains errors and clears borrowed input", TestTutorialResourceBorrow},
+    {"truncated tutorial source closes its created stream", TestTruncatedTutorialSource},
     {"title destruction releases its writable bitmap copy once", TestTitleBitmapRelease},
     {"application session stops UI before releasing files and heaps", TestApplicationUiSessionClose},
     {"bitmap converter queries the native BITMAP width", TestDibFromBitmapNativeQuery},

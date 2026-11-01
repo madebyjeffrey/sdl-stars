@@ -6,6 +6,13 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `ReadRt`, `RgFromStream` and tutorial record skipping now keep the source's
+  remaining byte range. Truncated memory-backed headers and payloads report a
+  corrupt-file error instead of reading beyond the resource. Partial read bytes
+  are published as for file reads; an exhausted memory source stays distinct
+  from file input. Tutorial failures clear the borrowed cursor and close created
+  output streams. Valid tutorial bytes, file layouts and host results are unchanged.
+
 - `OutputFileString` now appends a sized text view without narrowing its byte
   count to 16 bits. Previously 65536 bytes wrote nothing, and longer text lost
   each complete 64 KiB block. Existing short logging output, file formats and

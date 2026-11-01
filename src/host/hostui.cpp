@@ -71,7 +71,7 @@ void AdvanceTutor(APPSESSION &) { return; }
 
 // LpbLoadTutorLog has no tutorial to replay; the tutorial plays only in the
 // Windows game.
-std::uint8_t *LpbLoadTutorLog(APPSESSION &) { return nullptr; }
+std::span<const std::byte> LpbLoadTutorLog(APPSESSION &) { return {}; }
 
 void SetHdcTextColor(HDC hdc, std::uint32_t cr) { return; }
 

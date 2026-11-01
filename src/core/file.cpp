@@ -1395,6 +1395,31 @@ std::int16_t FCheckFile(APPSESSION &app, DtFileType dt, std::int16_t iPlayer, Md
     return fReturn;
 }
 
+HDR HdrMemStream(APPSESSION &app) {
+    HDR hdr{};
+
+    if (!app.state.vlpMemStream || !FDecodeHdr(*app.state.vlpMemStream, hdr)) {
+        FileError(app, idsGameFileAppearsCorruptUnableLoadFile);
+        StarsThrowError(starsErrorFile, app.state.idsFileError);
+    }
+    return hdr;
+}
+
+std::span<const std::byte> RgMemStreamRecord(APPSESSION &app) {
+    HDR hdr;
+    std::size_t cb;
+    std::span<const std::byte> rgb;
+
+    hdr = HdrMemStream(app);
+    cb = cbWireHdr + hdr.cb;
+    if (cb > app.state.vlpMemStream->size()) {
+        FileError(app, idsGameFileAppearsCorruptUnableLoadFile);
+        StarsThrowError(starsErrorFile, app.state.idsFileError);
+    }
+    rgb = app.state.vlpMemStream->first(cb);
+    return rgb;
+}
+
 // Publish even a partial header before FileError calls the UI. Seeding the
 // unread byte retains the old global header on a zero/one-byte read failure.
 static void ReadRtHeader(APPSESSION &app) {
@@ -1404,9 +1429,10 @@ static void ReadRtHeader(APPSESSION &app) {
 
     FEncodeHdr(app.state.hdrCur, rgb);
     if (app.state.vlpMemStream) {
-        std::memcpy(rgb, app.state.vlpMemStream, cbWireHdr);
-        app.state.vlpMemStream += cbWireHdr;
-        cb = cbWireHdr;
+        cbRead = std::min(app.state.vlpMemStream->size(), static_cast<std::size_t>(cbWireHdr));
+        if (*cbRead != 0) std::memcpy(rgb, app.state.vlpMemStream->data(), *cbRead);
+        *app.state.vlpMemStream = app.state.vlpMemStream->subspan(*cbRead);
+        cb = static_cast<std::int32_t>(*cbRead);
     } else {
         cbRead = CbReadFile(app.state.hf, std::as_writable_bytes(std::span{rgb}).first(static_cast<std::size_t>(cbWireHdr)));
         cb = cbRead ? static_cast<std::int32_t>(*cbRead) : -1;
@@ -1507,14 +1533,19 @@ void StreamClose(APPSESSION &app) {
 }
 
 void RgFromStream(APPSESSION &app, std::span<std::byte> rg) {
+    std::size_t cb;
+
     if (!rg.empty()) {
         if (app.state.vlpMemStream) {
-            std::memcpy(rg.data(), app.state.vlpMemStream, rg.size());
-            app.state.vlpMemStream += rg.size();
-        } else if (CbReadFile(app.state.hf, rg) != rg.size()) {
-            FileError(app, idsGameFileAppearsCorruptUnableLoadFile);
-            StarsThrowError(starsErrorFile, app.state.idsFileError);
+            cb = std::min(rg.size(), app.state.vlpMemStream->size());
+            if (cb != 0) std::memcpy(rg.data(), app.state.vlpMemStream->data(), cb);
+            *app.state.vlpMemStream = app.state.vlpMemStream->subspan(cb);
+            if (cb == rg.size()) return;
+        } else if (CbReadFile(app.state.hf, rg) == rg.size()) {
+            return;
         }
+        FileError(app, idsGameFileAppearsCorruptUnableLoadFile);
+        StarsThrowError(starsErrorFile, app.state.idsFileError);
     }
     return;
 }

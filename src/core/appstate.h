@@ -2,6 +2,8 @@
 #define STARS_APPSTATE_H
 #include "common.h"
 #include <cstddef>
+#include <optional>
+#include <span>
 #include "filesession.h"
 
 // Original debug names remain owned fields; callers receive the owner explicitly.
@@ -145,7 +147,7 @@ struct APPGAMESTATE {
     alignas(std::max_align_t) std::uint8_t  *lpbBattleLog = nullptr;
     alignas(std::max_align_t) std::uint8_t  *lpbBattleT = nullptr;
     alignas(std::max_align_t) std::uint8_t  *vAiMacRecycleSB = nullptr;
-    alignas(std::max_align_t) std::uint8_t  *vlpMemStream = nullptr;
+    alignas(std::max_align_t) std::optional<std::span<const std::byte>> vlpMemStream;
     alignas(std::max_align_t) std::uint8_t  *vlpbAiData = nullptr;
     alignas(std::max_align_t) std::uint8_t  *vlpbAiPlanet = nullptr;
     alignas(std::max_align_t) std::uint8_t   bitfMsgFiltered[49] = {};
