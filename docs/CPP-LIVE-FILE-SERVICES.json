@@ -5685,5 +5685,34 @@
       "remaining": "Batch input sizing/parsing and filename loops, other buffer interfaces, Milestone D, L05 remaining text work and L08 final qualification remain active.",
       "receipts": "dist/verification/live-cpp/l06m/"
     }
+  },
+  "numeric_parser": {
+    "parent": "2f7978fa",
+    "status": "complete; verified",
+    "interface": "CParseNumbers(string_view psz, span<int32_t> pl) returns optional<size_t>. No mutable source, raw output pointer/count pair or negative-count sentinel remains in the application interface.",
+    "callers": {
+      "existing_production_calls": 12,
+      "pre_migration_reference_calls": 1,
+      "current_test_calls": 6
+    },
+    "grammar": "ASCII digits separated only by spaces; stop at input NUL/end or full output capacity. Other bytes before capacity is reached fail. Consecutive spaces do not create zero fields. Full output ignores the remaining input, as before.",
+    "results": "A present zero count is successful empty input/capacity; nullopt reports malformed text. Previously completed fields remain published on failure, with untouched suffix/guard elements. Numeric storage stays int32_t; unsigned accumulation directly expresses the existing modulo-32-bit intent without signed-intermediate overflow.",
+    "tests": "Fourteen vectors passed against the parent before migration: empty/space input, valid values, repeated/trailing spaces, invalid bytes/signs/tabs/newlines, partial assignments, full/zero capacity and signed boundary values. Final tests add an exact nonterminated slice, default empty view, embedded terminator, 32-bit wrap and a 200-digit decimal value.",
+    "remaining": "PszGetLine and the batch-file size/storage/path loops remain separate work. GenNewGameFromFile retains its current bounded file allocation, line delimiter mutation, limits, field widths, validation/RNG sequence and game output.",
+    "verification": {
+      "batch": "L06n readonly numeric input, output spans and optional counts",
+      "debug_build": "Pass; no warnings. Full header/API rebuild and final caller/test rebuild pass; 158 owned sources, 159 variants and 161 standalone headers in both include orders pass policy.",
+      "desktop": "153/153, including the numeric parser contract, actual universe creation workflows, all 29 leak checks and available SDL tutorial checkpoints.",
+      "host_units": "28/28 on final source",
+      "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+      "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs on final source.",
+      "windows": "147/147 owned production units and the actual utility test compile with strict MinGW; both affected production units and the test are rechecked after final caller/test cleanup. All 13 Windows utility tests pass under Wine. Native Windows desktop and actual Linux final qualification remain pending.",
+      "characterization": "Fourteen grammar/capacity/partial-write vectors pass against the parent before migration and the typed interface afterward. Additional sized-input cases cover a nonterminated prefix next to an invalid guard byte, empty view, NUL termination inside a view, modulo-32-bit signed boundaries and a 200-digit value with independently known result -1.",
+      "interfaces": "Twelve production callers carry exact int32 output prefixes and consume optional counts. One pre-migration characterization call plus five additional typed test expressions account for six current test calls. The old mutable-input pointer/output-pointer/count signature and -1 failure sentinel are removed.",
+      "semantics": "ASCII space/digit grammar, capacity stopping, ignored input after full output, present zero counts, partial field publication on invalid input and 32-bit value patterns remain. Unsigned accumulation expresses the existing uint32 conversion intent directly; no signed intermediate overflow is required. Caller limits, file storage, RNG/validation sequence and game output remain.",
+      "baseline": "Behavior-neutral; both 519-checkpoint comparisons match. No native/frozen-original fixture, unit golden, wire layout/width, RNG, qsort ordering, binary64 boundary or canonical model changed. No scenario/checkpoint moved and no regression export is required.",
+      "remaining": "Batch size/storage/filename loops, PszGetLine, other buffer interfaces, Milestone D, remaining L05 text and L08 final qualification remain active.",
+      "receipts": "dist/verification/live-cpp/l06n/"
+    }
   }
 }

@@ -735,29 +735,32 @@ char *PszGetLine(char **ppszBeg) {
     return pszStart;
 }
 
-std::int16_t CParseNumbers(char *psz, std::int32_t *pl, std::int16_t cMax) {
-    std::int16_t iRead;
-    std::int16_t fValid;
-    std::int32_t lNum;
+std::optional<std::size_t> CParseNumbers(std::string_view psz, std::span<std::int32_t> pl) {
+    std::size_t iRead;
+    std::size_t ich;
+    bool fValid;
+    std::uint32_t lNum;
+    char ch;
 
     iRead = 0;
     lNum = 0;
-    fValid = 0;
-    for (; iRead < cMax && *psz != 0; psz++) {
-        if (*psz != ' ' && (*psz < '0' || *psz > '9')) {
-            return -1;
+    fValid = false;
+    for (ich = 0; iRead < pl.size() && ich < psz.size() && psz[ich] != 0; ich++) {
+        ch = psz[ich];
+        if (ch != ' ' && (ch < '0' || ch > '9')) {
+            return std::nullopt;
         }
-        if (*psz != ' ') {
-            fValid = 1;
-            lNum = static_cast<std::uint32_t>((lNum * 10)) + static_cast<std::int16_t>((*psz - '0'));
+        if (ch != ' ') {
+            fValid = true;
+            lNum = lNum * 10 + static_cast<std::uint32_t>(ch - '0');
         } else if (fValid) {
-            pl[iRead++] = lNum;
+            pl[iRead++] = static_cast<std::int32_t>(lNum);
             lNum = 0;
-            fValid = 0;
+            fValid = false;
         }
     }
     if (fValid) {
-        pl[iRead++] = lNum;
+        pl[iRead++] = static_cast<std::int32_t>(lNum);
     }
     return iRead;
 }

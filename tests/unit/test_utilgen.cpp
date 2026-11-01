@@ -9,6 +9,44 @@
 #include <string>
 #include <limits>
 
+static void test_CParseNumbers_contract(void) {
+    struct CASE {
+        const char *psz;
+        std::size_t cMax;
+        int cRead;
+        std::int32_t rgExpected[4];
+    };
+    const CASE rgCases[] = {
+        {"", 4, 0, {}}, {"   ", 4, 0, {}}, {"12 34", 4, 2, {12, 34}},
+        {"12  34  ", 4, 2, {12, 34}}, {"12 34 x", 4, -1, {12, 34}},
+        {"12x", 4, -1, {}}, {"12 x", 1, 1, {12}}, {"x", 0, 0, {}},
+        {"1\t2", 4, -1, {}}, {"-1", 4, -1, {}}, {"+1", 4, -1, {}},
+        {"0 000 7", 4, 3, {0, 0, 7}}, {"1\n", 4, -1, {}},
+        {"2147483647 2147483648", 4, 2, {2147483647, INT32_MIN}}
+    };
+    for (const auto &cs : rgCases) {
+        std::string sz(cs.psz);
+        std::array<std::int32_t, 6> rgl;
+        rgl.fill(0x12345678);
+        const auto cRead = CParseNumbers(sz, std::span{rgl}.subspan(1, cs.cMax));
+        TEST_CHECK(cs.cRead < 0 ? !cRead : cRead && *cRead == static_cast<std::size_t>(cs.cRead));
+        TEST_CHECK(rgl.front() == 0x12345678 && rgl.back() == 0x12345678);
+        for (std::size_t i = 0; i < cs.cMax; i++) {
+            const auto lExpected = cs.rgExpected[i] != 0 || (cs.cRead > 0 && i < static_cast<std::size_t>(cs.cRead)) ? cs.rgExpected[i] : 0x12345678;
+            TEST_CHECK(rgl[i + 1] == lExpected);
+        }
+        TEST_CHECK(sz == cs.psz);
+    }
+    const char szSlice[] = {'1', '2', 'x'};
+    std::array<std::int32_t, 2> rgl{-1, -1};
+    TEST_CHECK(CParseNumbers(std::string_view{szSlice, 2}, rgl) == 1 && rgl[0] == 12 && rgl[1] == -1);
+    TEST_CHECK(CParseNumbers(std::string_view{}, rgl) == 0);
+    TEST_CHECK(CParseNumbers(std::string_view{"7\0x", 3}, rgl) == 1 && rgl[0] == 7);
+    TEST_CHECK(CParseNumbers("4294967295 4294967296", rgl) == 2 && rgl[0] == -1 && rgl[1] == 0);
+    std::string sz(200, '9');
+    // 10^200 is divisible by 2^32, so this decimal value wraps to -1.
+    TEST_CHECK(CParseNumbers(sz, rgl) == 1 && rgl[0] == -1);
+}
 static void test_IntToRoman_bounded(void) {
     const char *rgszOnes[] = {"", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"};
     char szRoman[3282];
@@ -333,7 +371,7 @@ static void test_XorFileBuf_seed_alias_order(void) {
     TEST_CHECK(lSeed1 == 645001258 && lSeed2 == -720506926);
 }
 
-TEST_LIST = {{"numeric text retains widths, signs, grouping and scaled boundaries", test_NumberText_boundaries},
+TEST_LIST = {{"numeric parser preserves grammar, capacity and partial assignment", test_CParseNumbers_contract}, {"numeric text retains widths, signs, grouping and scaled boundaries", test_NumberText_boundaries},
              {"numeric text values survive subsequent lookups", test_NumberText_owned},
              {"Roman numerals retain all int16 values within actual capacity", test_IntToRoman_bounded},
              {"XorFileBuf retains RHS-before-destination evaluation", test_XorFileBuf_seed_alias_order},

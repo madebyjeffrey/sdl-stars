@@ -53,7 +53,9 @@ std::int16_t FCheckPassword(APPSESSION &app);
 std::int32_t LSaltFromSz(const char *psz);
 std::int32_t LDistance2(POINT16 pt1, POINT16 pt2);
 char   *PszGetLine(char **ppszBeg);
-std::int16_t CParseNumbers(char *psz, std::int32_t *pl, std::int16_t cMax);
+// Space-separated unsigned decimal fields retain modulo-32-bit values and
+// partial assignments on invalid input. Stop at NUL/end or full output capacity.
+std::optional<std::size_t> CParseNumbers(std::string_view psz, std::span<std::int32_t> pl);
 
 
 #endif

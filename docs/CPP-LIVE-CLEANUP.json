@@ -448,6 +448,11 @@
         "status": "complete; verified",
         "evidence": "docs/CPP-LIVE-FILE-SERVICES.json",
         "interface": "Readonly sized view reaches the write service without strlen or 16-bit count narrowing."
+      },
+      "numeric_parser": {
+        "status": "complete; verified",
+        "evidence": "docs/CPP-LIVE-FILE-SERVICES.json",
+        "interface": "Readonly sized text and actual int32 output spans; optional count preserves zero/failure and partial assignment distinctions."
       }
     },
     {
@@ -471,7 +476,8 @@
         "owned-binary-line-directory-results-and-bounded-line-spans",
         "readonly-temporary-requests-and-owned-path-stream-results",
         "sized-text-writer-and-full-width-byte-counts",
-        "bounded-readonly-memory-cursors-and-tutorial-record-sources"
+        "bounded-readonly-memory-cursors-and-tutorial-record-sources",
+        "readonly-numeric-parser-output-spans-and-optional-counts"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -676,6 +682,21 @@
           "baseline": "Full native baseline regenerated with make regression-export and compared to the prior fixtures: 519 matches, 25 existing unused-storage warnings. No scenario moved at any turn. Preserved 592 fixture files with regeneration-only differences. Native/frozen-original baseline bytes, saved record layouts/widths, game RNG, qsort ordering, binary64 boundaries and unit goldens remain unchanged.",
           "remaining": "Batch input sizing/parsing and filename loops, other buffer interfaces, Milestone D, L05 remaining text work and L08 final qualification remain active.",
           "receipts": "dist/verification/live-cpp/l06m/"
+        },
+        {
+          "batch": "L06n readonly numeric input, output spans and optional counts",
+          "debug_build": "Pass; no warnings. Full header/API rebuild and final caller/test rebuild pass; 158 owned sources, 159 variants and 161 standalone headers in both include orders pass policy.",
+          "desktop": "153/153, including the numeric parser contract, actual universe creation workflows, all 29 leak checks and available SDL tutorial checkpoints.",
+          "host_units": "28/28 on final source",
+          "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+          "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs on final source.",
+          "windows": "147/147 owned production units and the actual utility test compile with strict MinGW; both affected production units and the test are rechecked after final caller/test cleanup. All 13 Windows utility tests pass under Wine. Native Windows desktop and actual Linux final qualification remain pending.",
+          "characterization": "Fourteen grammar/capacity/partial-write vectors pass against the parent before migration and the typed interface afterward. Additional sized-input cases cover a nonterminated prefix next to an invalid guard byte, empty view, NUL termination inside a view, modulo-32-bit signed boundaries and a 200-digit value with independently known result -1.",
+          "interfaces": "Twelve production callers carry exact int32 output prefixes and consume optional counts. One pre-migration characterization call plus five additional typed test expressions account for six current test calls. The old mutable-input pointer/output-pointer/count signature and -1 failure sentinel are removed.",
+          "semantics": "ASCII space/digit grammar, capacity stopping, ignored input after full output, present zero counts, partial field publication on invalid input and 32-bit value patterns remain. Unsigned accumulation expresses the existing uint32 conversion intent directly; no signed intermediate overflow is required. Caller limits, file storage, RNG/validation sequence and game output remain.",
+          "baseline": "Behavior-neutral; both 519-checkpoint comparisons match. No native/frozen-original fixture, unit golden, wire layout/width, RNG, qsort ordering, binary64 boundary or canonical model changed. No scenario/checkpoint moved and no regression export is required.",
+          "remaining": "Batch size/storage/filename loops, PszGetLine, other buffer interfaces, Milestone D, remaining L05 text and L08 final qualification remain active.",
+          "receipts": "dist/verification/live-cpp/l06n/"
         }
       ],
       "roman_output": {
@@ -767,6 +788,11 @@
         "status": "complete; verified",
         "evidence": "docs/CPP-LIVE-FILE-SERVICES.json",
         "interfaces": "Readonly bounded optional memory cursor, sized tutorial resource results and checked header/record spans; actual consumers and tests migrated."
+      },
+      "numeric_parser": {
+        "status": "complete; verified",
+        "evidence": "docs/CPP-LIVE-FILE-SERVICES.json",
+        "interfaces": "Readonly numeric text, actual int32 output spans and optional counts; all 12 production calls use explicit array prefixes."
       }
     },
     {
