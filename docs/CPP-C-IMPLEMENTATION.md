@@ -31,7 +31,7 @@ verification receipts below decide completion.
 | C04 | Complete under current CI policy | Every implementation/call redirect, allocator hook and private library clone is replaced by typed module effects. Desktop/host workflows, regressions and full formal verification/audit pass. |
 | C05 | Complete under current CI policy | All 27 commands use normal linked production targets; every parent case/assertion/exclusion receipt matches. The 67 retained independent Python definitions have identical parent ASTs. See the [per-program inventory](CPP-C05-WITNESSES.md). |
 | C06 | Complete under current CI policy | All 23 C03 names use `ui::` directly; raw operations and actual type tags use `win32::`. Generated names are deleted; [boundary/vector receipts](CPP-C06-BOUNDARIES.md) account for every entry and all 38 shared SDK inputs. |
-| C07 | Locally qualified; CI pending | All 2,101 parent macros have individual dispositions; typed helpers/constants, direct calls and shim removal pass full desktop/host/regression/sanitizer checks. |
+| C07 | Complete under current CI policy | All 2,101 parent macros have individual dispositions; typed helpers/constants, direct calls and shim removal pass full desktop/host/regression/sanitizer checks. |
 | C08 | Pending | Remove 156 game-state and 346 UI-state aliases through explicit caller dependencies. |
 | C09 | Pending | Finalize compiler/reference policy and remove dead migration adapters. |
 | C10 | Pending | Full final-tree audit and Linux/macOS/Windows qualification. |
@@ -498,4 +498,6 @@ exact C06 comparisons each match 519 files (25 accepted warnings, zero differenc
 errors/skips). The 27 witness receipts and 67 independent Python ASTs match.
 The strict manifest covers 156 production sources / 157 variants / 160 headers;
 38 real SDK C and 29 representative C++ units compile. Documentation checks pass
-26 tests and 2,819 links / 700 IDs. Remote CI is pending; C08–C10 remain pending.
+26 tests and 2,819 links / 700 IDs. All 14 enabled PR jobs and all five manual platform jobs pass at
+`bcdd77bf`; Linux desktop passes 153/153, Windows probe 2/2, game units
+13/13 and platform checks 88/88. C08–C10 remain pending.

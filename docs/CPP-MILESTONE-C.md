@@ -5,7 +5,7 @@ C04/C05 replace all test redirects/clones and all 27 extracted witness programs
 with typed effects and normal linked targets; PR #72 passes all 15 enabled CI jobs.
 C06 replaces generated wrapper names and prefixed UI entries with actual
 namespaces; PR #73 passes all 14 enabled jobs and the manual Linux/Windows run.
-C07 macro replacement passes full local qualification; remote CI is pending.
+C07 PR #74 passes all 14 enabled jobs and the manual Linux/Windows run.
 C08–C10 remain subsequent work.
 Evidence: [CPP-C-IMPLEMENTATION.md](CPP-C-IMPLEMENTATION.md).
 Tracking: [#67](https://github.com/madebyjeffrey/sdl-stars/issues/67).
