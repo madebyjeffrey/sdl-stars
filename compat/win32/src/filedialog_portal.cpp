@@ -230,7 +230,7 @@ int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFol
         pszHandle = SDL_GetStringProperty(props, SDL_PROP_WINDOW_WAYLAND_XDG_TOPLEVEL_EXPORT_HANDLE_STRING, nullptr);
         if (pszHandle && *pszHandle && SDL_asprintf(&pszWaylandParent, "wayland:%s", pszHandle) < 0) goto done;
         xid = SDL_GetNumberProperty(props, SDL_PROP_WINDOW_X11_WINDOW_NUMBER, 0);
-        if (xid != 0) std::snprintf(szParent, sizeof(szParent), "x11:%llx", (unsigned long long)xid);
+        if (xid != 0) std::snprintf(szParent, sizeof(szParent), "x11:%llx", static_cast<unsigned long long>(xid));
     }
     pszParent = pszWaylandParent ? pszWaylandParent : szParent;
     lpRandom = PfNativeOpen("/dev/urandom", "rb");

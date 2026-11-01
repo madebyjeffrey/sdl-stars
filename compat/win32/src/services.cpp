@@ -40,12 +40,12 @@ int win32::MulDiv(int nNumber, int nNumerator, int nDenominator) {
 
 DWORD win32::GetCurrentThreadId(void) {
 #ifdef _WIN32
-    return (DWORD)SDL_GetCurrentThreadID();
+    return static_cast<DWORD>(SDL_GetCurrentThreadID());
 #elif defined(__APPLE__)
     std::uint64_t id;
     return pthread_threadid_np(nullptr, &id) == 0 ? static_cast<DWORD>(id) : 0;
 #else
-    return (DWORD)syscall(SYS_gettid);
+    return static_cast<DWORD>(syscall(SYS_gettid));
 #endif
 }
 
