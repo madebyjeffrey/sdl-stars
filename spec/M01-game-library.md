@@ -535,14 +535,14 @@ sequenceDiagram
                     Library->>Files: Remove only this player's old .xN
                     alt Orders removal failed
                         Library->>Files: Attempt restoration of prior turn
-                        Library-->>Player: Failure; recovery path if restoration failed
+                        Library-->>Player: Failure, recovery path if restoration failed
                     else Orders removed
                         Library->>Files: Attempt previous-file cleanup
                         Library-->>Player: Success, histories and other players retained
                     end
                 else Installed and orders query reported FALSE
                     Library->>Files: Attempt previous-file cleanup
-                    Library-->>Player: Success; old orders may remain
+                    Library-->>Player: Success, old orders may remain
                 end
             end
         else Changed same-year or older
