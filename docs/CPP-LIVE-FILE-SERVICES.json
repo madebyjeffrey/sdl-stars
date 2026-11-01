@@ -1,6 +1,6 @@
 {
   "parent": "c7f5e933",
-  "status": "File-service migration active; typed open/byte/seek/record/element/modes/metadata and owned canonical/CWD/URI path-text batches complete and verified.",
+  "status": "File-service migration active; typed open/byte/seek/record/element/modes/metadata/path-text and owned line/directory batches complete and verified.",
   "open": {
     "status": "complete; verified",
     "interfaces": [
@@ -367,7 +367,7 @@
   "pending": {
     "byte_io": "Native/token byte I/O, record streams, WriteRt/RECORDIO and typed element streams are complete; remaining memory-source and text-writer boundaries are separate work.",
     "seek": "Scoped seek origins complete; existing position-result widths and native/SDK error mappings are retained.",
-    "stream_open": "Scoped modes, returned metadata and owned/bounded canonical/CWD/URI text are complete. Temporary-path and line/directory result protocols, other interfaces and the explicit old OutputFileString uint16_t boundary remain open.",
+    "stream_open": "Scoped modes, returned metadata, owned/bounded path text, lines and directory entries are complete. Temporary-path results, other interfaces and the explicit old OutputFileString uint16_t boundary remain open.",
     "selection": "Milestone D remains open; no picker backend or user workflow was changed by this batch.",
     "qualification": "Final complete-state inventory, Debug/Release and actual platform qualification remain required.",
     "memory_sources": "Memory-backed record source pointers still need bounds/cursor ownership. Batch file lowword/signed sizing and filename-copy loops remain a separate audit; this batch preserves their existing allocation/read count."
@@ -5211,6 +5211,311 @@
       "baseline": "Behavior-neutral; POSIX canonicalization, Windows absolute/existence/reparse policy, generic UTF-8 separators, URI percent encoding and path byte limits unchanged. No native/frozen-original baseline, unit golden, record width, game logic, wire byte, RNG or canonical model changed; no scenario/checkpoint moved and no regression export required.",
       "remaining": "Temporary-path and line/directory result protocols, other buffer interfaces, memory-source/batch audits, the text-writer boundary and Milestone D remain active. L05 text cleanup and L08 final qualification remain open.",
       "receipts": "dist/verification/live-cpp/l06i/"
+    }
+  },
+  "line_directory_results": {
+    "parent": "8d4b30e7",
+    "status": "complete; verified",
+    "interfaces": "CchGetNativeLine takes a mutable char span and returns an optional byte count. SzGetNativeLine returns an optional owned binary line. SzNativeReadDir returns an optional owned entry name. Raw pointer/count, replaceable char**/capacity and borrowed directory-string overloads removed.",
+    "bounded_lines": "Retains newline and embedded NUL bytes, reserves a trailing NUL, writes the empty terminator at EOF for valid spans, and returns a partial nonempty prefix even if reading stopped on EOF/error. A one-byte span succeeds with count zero without reading, including at EOF; an empty span/invalid file rejects with EINVAL before writes.",
+    "owned_lines": "Retains complete binary bytes/newlines and a nonempty final fragment at EOF/read error. Empty input is no value, with EOF/error still observable on the stream. std::string storage replaces caller realloc/capacity management; FileCall contains allocation failures and marks stream error/errno without publishing a partial line value.",
+    "directory_entries": "Names are owned independently of later reads/close. Iterator advancement, initial-entry handling and errno zero at end versus native error detail remain. POSIX entry bytes remain verbatim; path consumers still validate UTF-8. The private cached string field is removed from the opaque directory object; saved layouts are untouched.",
+    "old_call_sites": 30,
+    "pre_existing_call_sites": 19,
+    "pre_migration_characterization_calls": 11,
+    "production_old_calls": 7,
+    "test_old_calls": 23,
+    "actual_provider_invocations": 1,
+    "actual_provider_callbacks": 1,
+    "profile_provider": "PROFILEIO defaults to the actual owned-line signature. SzReadGuardLine calls that reader and injects its existing exception at the same after-read stage; no legacy-shape adapter remains. FLoadProfile counts original bytes before the same UTF-8/8MiB checks, removes the first BOM as the same three-byte prefix and copies the same parser rows. Its owned line is explicitly reset before stream close and unpublished-chain rollback.",
+    "ownership": "Two raw realloc/free line-buffer sites retire from the active ownership allowlist under contracts 67/89. Native line results and directory names are C++ values; parsed SDK profile node buffers/links, their owners and native file/directory handle cleanup are unchanged.",
+    "reference_tests": "Before production migration host Release and Windows under Wine passed binary NUL/newline lines, bounded prefix counts/terminators/sentinels, zero/one-byte capacities, no-read one-byte success even at EOF, final-fragment EOF/position, directory snapshot bytes after close, errno clearing at end and EBADF on invalid directory. Typed tests retain directory results directly through close.",
+    "calls": [
+      {
+        "path": "compat/win32/src/filedialog.cpp",
+        "parent_line": 117,
+        "function": "PszNativeReadDir",
+        "original_call": "PszNativeReadDir(lpdir)",
+        "current_call": "SzNativeReadDir(lpdir)",
+        "current_line": 118,
+        "origin": "existing parent call"
+      },
+      {
+        "path": "compat/win32/src/help.cpp",
+        "parent_line": 45,
+        "function": "PszGetNativeLine",
+        "original_call": "PszGetNativeLine(szStamp, sizeof(szStamp), lpFile)",
+        "current_call": "CchGetNativeLine(std::span{szStamp}, lpFile)",
+        "current_line": 45,
+        "origin": "existing parent call"
+      },
+      {
+        "path": "compat/win32/src/profile.cpp",
+        "parent_line": 79,
+        "function": "pfnReadLine",
+        "original_call": "pfnReadLine(&sz, &cb, fp)",
+        "current_call": "pfnReadLine(fp)",
+        "current_line": 78,
+        "origin": "existing parent call"
+      },
+      {
+        "path": "src/platform/native.cpp",
+        "parent_line": 222,
+        "function": "PszNativeReadDir",
+        "original_call": "PszNativeReadDir(pdir)",
+        "current_call": "SzNativeReadDir(pdir)",
+        "current_line": 223,
+        "origin": "existing parent call"
+      },
+      {
+        "path": "src/ui/libraryui.cpp",
+        "parent_line": 1367,
+        "function": "PszGetNativeLine",
+        "original_call": "PszGetNativeLine(szLine, sizeof(szLine), pf)",
+        "current_call": "CchGetNativeLine(std::span{szLine}, pf)",
+        "current_line": 1367,
+        "origin": "existing parent call"
+      },
+      {
+        "path": "src/ui/libraryui.cpp",
+        "parent_line": 1374,
+        "function": "PszGetNativeLine",
+        "original_call": "PszGetNativeLine(szLine, sizeof(szLine), pf)",
+        "current_call": "CchGetNativeLine(std::span{szLine}, pf)",
+        "current_line": 1374,
+        "origin": "existing parent call"
+      },
+      {
+        "path": "src/ui/libraryui.cpp",
+        "parent_line": 2789,
+        "function": "PszGetNativeLine",
+        "original_call": "PszGetNativeLine(szMetadataName, sizeof(szMetadataName), pf)",
+        "current_call": "CchGetNativeLine(std::span{szMetadataName}, pf)",
+        "current_line": 2789,
+        "origin": "existing parent call"
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "parent_line": 100,
+        "function": "PszNativeReadDir",
+        "original_call": "PszNativeReadDir(pd)",
+        "current_call": "SzNativeReadDir(pd)",
+        "current_line": 100,
+        "origin": "existing parent call"
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "parent_line": 101,
+        "function": "PszNativeReadDir",
+        "original_call": "PszNativeReadDir(pd)",
+        "current_call": "SzNativeReadDir(pd)",
+        "current_line": 101,
+        "origin": "existing parent call"
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "parent_line": 104,
+        "function": "PszNativeReadDir",
+        "original_call": "PszNativeReadDir(pd)",
+        "current_call": "SzNativeReadDir(pd)",
+        "current_line": 104,
+        "origin": "pre-migration characterization call"
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "parent_line": 106,
+        "function": "PszNativeReadDir",
+        "original_call": "PszNativeReadDir(pd)",
+        "current_call": "SzNativeReadDir(pd)",
+        "current_line": 105,
+        "origin": "pre-migration characterization call"
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "parent_line": 109,
+        "function": "PszNativeReadDir",
+        "original_call": "PszNativeReadDir(nullptr)",
+        "current_call": "SzNativeReadDir(nullptr)",
+        "current_line": 108,
+        "origin": "pre-migration characterization call"
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "parent_line": 114,
+        "function": "PszGetNativeLine",
+        "original_call": "PszGetNativeLine(line,sizeof(line),pf)",
+        "current_call": "CchGetNativeLine(std::span{line}, pf)",
+        "current_line": 113,
+        "origin": "existing parent call"
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "parent_line": 116,
+        "function": "PszGetNativeLine",
+        "original_call": "PszGetNativeLine(line,sizeof(line),pf)",
+        "current_call": "CchGetNativeLine(std::span{line}, pf)",
+        "current_line": 115,
+        "origin": "existing parent call"
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "parent_line": 125,
+        "function": "PszGetNativeLine",
+        "original_call": "PszGetNativeLine(szLine,1,pf)",
+        "current_call": "CchGetNativeLine(std::span{szLine}.first(1), pf)",
+        "current_line": 123,
+        "origin": "pre-migration characterization call"
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "parent_line": 126,
+        "function": "PszGetNativeLine",
+        "original_call": "PszGetNativeLine(szLine,0,pf)",
+        "current_call": "CchGetNativeLine(std::span{szLine}.first(0), pf)",
+        "current_line": 124,
+        "origin": "pre-migration characterization call"
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "parent_line": 127,
+        "function": "PszGetNativeLine",
+        "original_call": "PszGetNativeLine(szLine,3,pf)",
+        "current_call": "CchGetNativeLine(std::span{szLine}.first(3), pf)",
+        "current_line": 125,
+        "origin": "pre-migration characterization call"
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "parent_line": 128,
+        "function": "PszGetNativeLine",
+        "original_call": "PszGetNativeLine(szLine,sizeof(szLine),pf)",
+        "current_call": "CchGetNativeLine(std::span{szLine}, pf)",
+        "current_line": 126,
+        "origin": "pre-migration characterization call"
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "parent_line": 129,
+        "function": "CbGetNativeLine",
+        "original_call": "CbGetNativeLine(&pszLine,&cbLine,pf)",
+        "current_call": "SzGetNativeLine(pf)",
+        "current_line": 127,
+        "origin": "pre-migration characterization call"
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "parent_line": 130,
+        "function": "CbGetNativeLine",
+        "original_call": "CbGetNativeLine(&pszLine,&cbLine,pf)",
+        "current_call": "SzGetNativeLine(pf)",
+        "current_line": 128,
+        "origin": "pre-migration characterization call"
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "parent_line": 131,
+        "function": "PszGetNativeLine",
+        "original_call": "PszGetNativeLine(szLine,1,pf)",
+        "current_call": "CchGetNativeLine(std::span{szLine}.first(1), pf)",
+        "current_line": 129,
+        "origin": "pre-migration characterization call"
+      },
+      {
+        "path": "tests/compat/fileio.cpp",
+        "parent_line": 133,
+        "function": "CbGetNativeLine",
+        "original_call": "CbGetNativeLine(&pszLine,&cbLine,pf)",
+        "current_call": "SzGetNativeLine(pf)",
+        "current_line": 131,
+        "origin": "pre-migration characterization call"
+      },
+      {
+        "path": "tests/compat/guard_ownership.cpp",
+        "parent_line": 24,
+        "function": "CbGetNativeLine",
+        "original_call": "CbGetNativeLine(ppsz, pcb, pf)",
+        "current_call": "SzGetNativeLine(pf)",
+        "current_line": 24,
+        "origin": "existing parent call"
+      },
+      {
+        "path": "tests/compat/win32_client_startup.cpp",
+        "parent_line": 90,
+        "function": "PszGetNativeLine",
+        "original_call": "PszGetNativeLine(pszName, (int)cchName, pf)",
+        "current_call": "CchGetNativeLine(std::span{pszName, cchName}, pf)",
+        "current_line": 90,
+        "origin": "existing parent call"
+      },
+      {
+        "path": "tests/compat/win32_client_startup.cpp",
+        "parent_line": 92,
+        "function": "PszGetNativeLine",
+        "original_call": "PszGetNativeLine(pszExchangeName, (int)cchExchangeName, pf)",
+        "current_call": "CchGetNativeLine(std::span{pszExchangeName, cchExchangeName}, pf)",
+        "current_line": 92,
+        "origin": "existing parent call"
+      },
+      {
+        "path": "tests/compat/win32_client_startup.cpp",
+        "parent_line": 115,
+        "function": "PszGetNativeLine",
+        "original_call": "PszGetNativeLine(szMetadataName, sizeof(szMetadataName), pf)",
+        "current_call": "CchGetNativeLine(std::span{szMetadataName}, pf)",
+        "current_line": 115,
+        "origin": "existing parent call"
+      },
+      {
+        "path": "tests/compat/win32_print.cpp",
+        "parent_line": 173,
+        "function": "PszGetNativeLine",
+        "original_call": "PszGetNativeLine(szArg, sizeof(szArg), lpfile)",
+        "current_call": "CchGetNativeLine(std::span{szArg}, lpfile)",
+        "current_line": 173,
+        "origin": "existing parent call"
+      },
+      {
+        "path": "tests/compat/win32_print.cpp",
+        "parent_line": 174,
+        "function": "PszGetNativeLine",
+        "original_call": "PszGetNativeLine(szArg, sizeof(szArg), lpfile)",
+        "current_call": "CchGetNativeLine(std::span{szArg}, lpfile)",
+        "current_line": 174,
+        "origin": "existing parent call"
+      },
+      {
+        "path": "tests/compat/win32_print.cpp",
+        "parent_line": 179,
+        "function": "PszGetNativeLine",
+        "original_call": "PszGetNativeLine(szArg, sizeof(szArg), lpfile)",
+        "current_call": "CchGetNativeLine(std::span{szArg}, lpfile)",
+        "current_line": 179,
+        "origin": "existing parent call"
+      },
+      {
+        "path": "tests/compat/win32_windows_platform.cpp",
+        "parent_line": 40,
+        "function": "PszNativeReadDir",
+        "original_call": "PszNativeReadDir(lpdir)",
+        "current_call": "SzNativeReadDir(lpdir)",
+        "current_line": 40,
+        "origin": "existing parent call"
+      }
+    ],
+    "verification": {
+      "batch": "L06j owned binary lines/directory entries and bounded line spans",
+      "debug_build": "Pass; no warnings; 161 standalone headers compile in both include orders. Compiler/source policy passes for 158 owned sources and 159 variants.",
+      "desktop": "153/153, including binary line/EOF tests, owned directory results, actual profile reader/fault provider, parser/BOM/size checks, callback cleanup, all 29 leak checks and available SDL tutorial checkpoints.",
+      "host_units": "28/28",
+      "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+      "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+      "windows": "147/147 owned production units and four changed contract/fixture units compile with strict MinGW; the Windows platform fixture also compiles separately with peer wrapper flags. Actual Windows file tests (3), encoding tests (8), recovery tests (12) and the file-service contract pass under Wine. Native Windows desktop and actual Linux final qualification remain pending.",
+      "characterization": "Host Release and Windows under Wine first passed binary embedded-NUL/newline data, bounded prefix counts/terminators/sentinels, invalid zero capacity, no-read one-byte success even at EOF, final-fragment EOF/position, directory snapshot bytes through close, end errno clearing and invalid-directory EBADF. Typed results preserve these assertions and retain directory values directly through close.",
+      "interfaces": "30 old query/provider call sites: 19 existing and 11 pre-migration references, with seven production and 23 test invocations. Span/optional counts replace bounded pointer/int reads; owned optional strings replace raw getline allocation slots and borrowed directory strings. Actual profile reader and fault callback use the owned-line type directly.",
+      "ownership": "Two raw realloc/free buffer sites retired from the active allowlist. Whole lines and entry names are C++ values; the opaque directory cache is unnecessary and removed. FileCall contains string allocation failures as stream error/errno. Profile cleanup explicitly resets its line before closing the stream and rolling back unpublished parser nodes; handle/node ownership and callback unwind stages remain.",
+      "baseline": "Behavior-neutral for game behavior and valid IO. Binary line bytes/newlines, partial final lines, EOF/error flags, one-byte behavior, byte-count limits, UTF-8/BOM checks, directory iteration and publication order unchanged. No saved record/storage width, native/frozen-original baseline, unit golden, wire byte, RNG or canonical model changed; no scenario/checkpoint moved and no regression export required.",
+      "remaining": "Temporary-path results, other buffer interfaces, memory-source/batch audits, text-writer boundary and Milestone D remain active. L05 text cleanup and L08 final qualification remain open.",
+      "receipts": "dist/verification/live-cpp/l06j/"
     }
   }
 }

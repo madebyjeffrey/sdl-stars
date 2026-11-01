@@ -87,9 +87,9 @@ static BOOL FTestReadLibraryMetadata(const char *pszFile, int *piVersion, char *
     BOOL fRead;
     pf = PfNativeOpen(pszFile, NATIVEFILEMODE::read);
     if (!pf) return 0;
-    fRead = CNativeScan(pf, "%d\n", piVersion) == 1 && PszGetNativeLine(pszName, (int)cchName, pf) &&
+    fRead = CNativeScan(pf, "%d\n", piVersion) == 1 && CchGetNativeLine(std::span{pszName, cchName}, pf) &&
             CNativeScan(pf, "%d\n%lld\n", piplr, plPlayed) == 2 &&
-            PszGetNativeLine(pszExchangeName, (int)cchExchangeName, pf) != NULL;
+            CchGetNativeLine(std::span{pszExchangeName, cchExchangeName}, pf).has_value();
     ICloseNativeFile(pf);
     if (!fRead) return 0;
     pszName[strcspn(pszName, "\r\n")] = 0;
@@ -112,7 +112,7 @@ static BOOL FTestLibraryTimestamp(APPSESSION &app, long long *plPlayed) {
     CchSnprintf(std::span{szFile, sizeof(szFile)}, "%s%s.library", szDir, szDirSep);
     pf = PfNativeOpen(szFile, NATIVEFILEMODE::read);
     if (!pf) return 0;
-    if (CNativeScan(pf, "%d\n", &iVersion) != 1 || !PszGetNativeLine(szMetadataName, sizeof(szMetadataName), pf) ||
+    if (CNativeScan(pf, "%d\n", &iVersion) != 1 || !CchGetNativeLine(std::span{szMetadataName}, pf) ||
         CNativeScan(pf, "%d\n%lld", &iPlayer, plPlayed) != 2) {
         ICloseNativeFile(pf);
         return 0;

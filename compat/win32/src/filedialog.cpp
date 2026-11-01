@@ -103,6 +103,7 @@ static void FileError(HWND hwnd, LPCSTR psz) { CompatChoiceIO().pfnMessageBoxA(h
 static BOOL FRefreshFiles(HWND hwnd, COMPATFILEDIALOG *lp) {
     NATIVEDIR *lpdir;
     const char *pszEntry;
+    std::optional<std::string> szEntry;
     std::optional<NATIVEFILEINFO> st;
     char szPath[PATH_MAX], szLabel[PATH_MAX + 4];
     COMPATFILEENTRY *rg;
@@ -114,9 +115,10 @@ static BOOL FRefreshFiles(HWND hwnd, COMPATFILEDIALOG *lp) {
     if (!lpdir) { FileError(hwnd, "This directory cannot be read."); return 0; }
     FreeFileEntries(lp);
     for (;;) {
-        errno = 0; pszEntry = PszNativeReadDir(lpdir);
-        if (!pszEntry) { if (errno != 0) lp->dwError = win32::CDERR_INITIALIZATION; break; }
-        if (!FUtf8Valid(pszEntry, std::strlen(pszEntry))) {
+        errno = 0; szEntry = SzNativeReadDir(lpdir);
+        if (!szEntry) { if (errno != 0) lp->dwError = win32::CDERR_INITIALIZATION; break; }
+        pszEntry = szEntry->c_str();
+        if (!FUtf8Valid(pszEntry, szEntry->size())) {
             FileError(hwnd, "A filename in this directory cannot be represented losslessly in UTF-8.");
             continue;
         }

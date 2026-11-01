@@ -88,8 +88,10 @@ int FNativeStreamError(NATIVEFILE *pf);
 int FNativeStreamEof(NATIVEFILE *pf);
 int ChGetNativeFile(NATIVEFILE *pf);
 int ChPutNativeFile(int ch, NATIVEFILE *pf);
-char *PszGetNativeLine(char *psz, int cb, NATIVEFILE *pf);
-std::int64_t CbGetNativeLine(char **ppsz, std::size_t *pcb, NATIVEFILE *pf);
+// Binary line bytes retain embedded NULs/newlines. A bounded view reserves a
+// terminator; size one succeeds with zero bytes and no IO, including at EOF.
+std::optional<std::size_t> CchGetNativeLine(std::span<char> sz, NATIVEFILE *pf);
+std::optional<std::string> SzGetNativeLine(NATIVEFILE *pf);
 int IPutNativeString(const char *psz, NATIVEFILE *pf);
 int CchNativePrintfFields(NATIVEFILE *pf, std::string_view szFormat, std::span<const NATIVEFORMATARG> rgArgs);
 template<class... ARGS>
@@ -125,8 +127,8 @@ std::optional<std::size_t> CchNativeCwd(std::span<char> szOut);
 int IChangeNativeCwd(const char *psz);
 NATIVEDIR *PdirNativeOpen(const char *psz);
 // POSIX entry bytes are returned verbatim so callers can report unsupported
-// names; validate UTF-8 before using an entry as a path. NULL: end or errno.
-const char *PszNativeReadDir(NATIVEDIR *pdir);
+// names; validate UTF-8 before using an entry as a path. No value: errno zero at end, or an error.
+std::optional<std::string> SzNativeReadDir(NATIVEDIR *pdir);
 int ICloseNativeDir(NATIVEDIR *pdir);
 
 // Small owned tokens keep native pointers/descriptors out of game storage.

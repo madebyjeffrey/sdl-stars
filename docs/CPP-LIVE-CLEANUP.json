@@ -433,6 +433,11 @@
         "status": "complete; verified under L06i",
         "evidence": "docs/CPP-LIVE-FILE-SERVICES.json",
         "interfaces": "Canonical path, CWD and file URI are owned strings; bounded native path destinations carry physical spans."
+      },
+      "owned_native_line_directory_results": {
+        "status": "complete; verified under L06j",
+        "evidence": "docs/CPP-LIVE-FILE-SERVICES.json",
+        "interfaces": "Whole binary lines and directory entries are owned strings; bounded native line destinations carry physical spans and return optional byte counts."
       }
     },
     {
@@ -452,7 +457,8 @@
         "typed-element-streams-and-concrete-byte-providers",
         "scoped-native-stream-modes-and-actual-open-providers",
         "returned-native-metadata-size-path-kind-and-identity-values",
-        "owned-canonical-cwd-uri-results-and-bounded-path-spans"
+        "owned-canonical-cwd-uri-results-and-bounded-path-spans",
+        "owned-binary-line-directory-results-and-bounded-line-spans"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -598,6 +604,21 @@
           "baseline": "Behavior-neutral; POSIX canonicalization, Windows absolute/existence/reparse policy, generic UTF-8 separators, URI percent encoding and path byte limits unchanged. No native/frozen-original baseline, unit golden, record width, game logic, wire byte, RNG or canonical model changed; no scenario/checkpoint moved and no regression export required.",
           "remaining": "Temporary-path and line/directory result protocols, other buffer interfaces, memory-source/batch audits, the text-writer boundary and Milestone D remain active. L05 text cleanup and L08 final qualification remain open.",
           "receipts": "dist/verification/live-cpp/l06i/"
+        },
+        {
+          "batch": "L06j owned binary lines/directory entries and bounded line spans",
+          "debug_build": "Pass; no warnings; 161 standalone headers compile in both include orders. Compiler/source policy passes for 158 owned sources and 159 variants.",
+          "desktop": "153/153, including binary line/EOF tests, owned directory results, actual profile reader/fault provider, parser/BOM/size checks, callback cleanup, all 29 leak checks and available SDL tutorial checkpoints.",
+          "host_units": "28/28",
+          "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+          "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+          "windows": "147/147 owned production units and four changed contract/fixture units compile with strict MinGW; the Windows platform fixture also compiles separately with peer wrapper flags. Actual Windows file tests (3), encoding tests (8), recovery tests (12) and the file-service contract pass under Wine. Native Windows desktop and actual Linux final qualification remain pending.",
+          "characterization": "Host Release and Windows under Wine first passed binary embedded-NUL/newline data, bounded prefix counts/terminators/sentinels, invalid zero capacity, no-read one-byte success even at EOF, final-fragment EOF/position, directory snapshot bytes through close, end errno clearing and invalid-directory EBADF. Typed results preserve these assertions and retain directory values directly through close.",
+          "interfaces": "30 old query/provider call sites: 19 existing and 11 pre-migration references, with seven production and 23 test invocations. Span/optional counts replace bounded pointer/int reads; owned optional strings replace raw getline allocation slots and borrowed directory strings. Actual profile reader and fault callback use the owned-line type directly.",
+          "ownership": "Two raw realloc/free buffer sites retired from the active allowlist. Whole lines and entry names are C++ values; the opaque directory cache is unnecessary and removed. FileCall contains string allocation failures as stream error/errno. Profile cleanup explicitly resets its line before closing the stream and rolling back unpublished parser nodes; handle/node ownership and callback unwind stages remain.",
+          "baseline": "Behavior-neutral for game behavior and valid IO. Binary line bytes/newlines, partial final lines, EOF/error flags, one-byte behavior, byte-count limits, UTF-8/BOM checks, directory iteration and publication order unchanged. No saved record/storage width, native/frozen-original baseline, unit golden, wire byte, RNG or canonical model changed; no scenario/checkpoint moved and no regression export required.",
+          "remaining": "Temporary-path results, other buffer interfaces, memory-source/batch audits, text-writer boundary and Milestone D remain active. L05 text cleanup and L08 final qualification remain open.",
+          "receipts": "dist/verification/live-cpp/l06j/"
         }
       ],
       "roman_output": {
@@ -611,7 +632,7 @@
         "current_call_sites": 26,
         "pre_existing_call_sites": 19,
         "interface": "Named typed access/sharing/options replace all three positional-integer open interfaces; small-token opens return token/missing as one value. Old integer-mode and missing-output overloads removed.",
-        "pending": "Temporary-path and line/directory result protocols and file-selection interfaces remain open."
+        "pending": "Temporary-path result and file-selection interfaces remain open."
       },
       "file_bytes_and_seek": {
         "status": "complete; verified",
@@ -665,6 +686,13 @@
         "old_call_sites": 28,
         "pre_existing_call_sites": 19,
         "interfaces": "Owned optional canonical/CWD/file-URI strings and bounded span/count variants. Only the genuine _getcwd CRT adapter retains a raw allocation protocol."
+      },
+      "line_directory_results": {
+        "status": "complete; verified",
+        "evidence": "docs/CPP-LIVE-FILE-SERVICES.json",
+        "old_call_sites": 30,
+        "pre_existing_call_sites": 19,
+        "interfaces": "Bounded span/count line reads; owned binary lines and directory entries; actual profile read provider migrated. Old outputs and borrowed result protocols removed."
       }
     },
     {

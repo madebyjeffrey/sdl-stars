@@ -170,13 +170,13 @@ int main(int argc, char **argv) {
     CHECK(InitPrinter(&pd, NULL)); CHECK(win32::Escape(pd.hDC, win32::STARTDOC, 5, "Spool", NULL) > 0);
     CHECK(win32::Escape(pd.hDC, win32::NEWFRAME, 0, NULL, NULL) == 1); CHECK(win32::Escape(pd.hDC, win32::ENDDOC, 0, NULL, NULL) == 1); FreePrinter(&pd);
     CHECK(FPrefix(szCapture, "%PDF-")); lpfile = PfNativeOpen(szLog, NATIVEFILEMODE::read); CHECK(lpfile);
-    CHECK(PszGetNativeLine(szArg, sizeof(szArg), lpfile) && strcmp(szArg, "-d\n") == 0);
-    CHECK(PszGetNativeLine(szArg, sizeof(szArg), lpfile) && strcmp(szArg, "QA printer;false\n") == 0); ICloseNativeFile(lpfile);
+    CHECK(CchGetNativeLine(std::span{szArg}, lpfile) && strcmp(szArg, "-d\n") == 0);
+    CHECK(CchGetNativeLine(std::span{szArg}, lpfile) && strcmp(szArg, "QA printer;false\n") == 0); ICloseNativeFile(lpfile);
     SDL_setenv_unsafe("STARS_TEST_PRINT_EXIT", "1", 1);
     CHECK(InitPrinter(&pd, NULL)); CHECK(win32::Escape(pd.hDC, win32::STARTDOC, 4, "Fail", NULL) > 0);
     CHECK(win32::Escape(pd.hDC, win32::ENDDOC, 0, NULL, NULL) == win32::SP_ERROR && win32::GetLastError() == win32::ERROR_WRITE_FAULT);
     lpfile = PfNativeOpen(szLog, NATIVEFILEMODE::read); CHECK(lpfile); szRetained[0] = 0;
-    while (PszGetNativeLine(szArg, sizeof(szArg), lpfile)) strcpy(szRetained, szArg);
+    while (CchGetNativeLine(std::span{szArg}, lpfile)) strcpy(szRetained, szArg);
     ICloseNativeFile(lpfile); szRetained[strcspn(szRetained, "\r\n")] = 0;
     CHECK(FPrefix(szRetained, "%PDF-")); FreePrinter(&pd); CHECK(FPrefix(szRetained, "%PDF-")); CHECK(IUnlinkNativePath(szRetained) == 0);
     SDL_unsetenv_unsafe("STARS_SDL_PRINTER");

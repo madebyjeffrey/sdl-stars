@@ -59,13 +59,12 @@ static COMPATPROFILE *LpProfileLine(const char *pszRaw) {
 static BOOL FLoadProfile(const char *pszPath, COMPATPROFILE **lplp) {
     const PROFILEIO &io = ProfileIO();
     NATIVEFILE *fp = nullptr;
-    char *sz = nullptr;
-    std::size_t cb = 0, cbTotal = 0;
-    ssize_t cbLine;
+    std::optional<std::string> sz;
+    std::size_t cbTotal = 0, cbLine;
     COMPATPROFILE **lplpNext = lplp;
     BOOL fRet = 0;
     NATIVECLEANUPSCOPE releaseProfile([&]() noexcept {
-        std::free(sz);
+        sz.reset();
         if (fp) io.pfnClose(fp);
         if (!fRet) { FreeProfile(*lplp); *lplp = nullptr; }
     });
@@ -76,14 +75,15 @@ static BOOL FLoadProfile(const char *pszPath, COMPATPROFILE **lplp) {
         win32::SetLastError(DwProfileError());
         return errno == ENOENT;
     }
-    while ((cbLine = io.pfnReadLine(&sz, &cb, fp)) >= 0) {
-        cbTotal += static_cast<std::size_t>(cbLine);
-        if (cbTotal > 8 * 1024 * 1024 || !FUtf8Valid(sz, static_cast<std::size_t>(cbLine))) {
+    while ((sz = io.pfnReadLine(fp))) {
+        cbLine = sz->size();
+        cbTotal += cbLine;
+        if (cbTotal > 8 * 1024 * 1024 || !FUtf8Valid(sz->data(), cbLine)) {
             win32::SetLastError(win32::ERROR_BAD_FORMAT); goto LReturn;
         }
-        if (cbTotal == static_cast<std::size_t>(cbLine) && cbLine >= 3 && !std::memcmp(sz, "\xef\xbb\xbf", 3))
-            std::memmove(sz, sz + 3, static_cast<std::size_t>(cbLine) - 2);
-        *lplpNext = LpProfileLine(sz);
+        if (cbTotal == cbLine && cbLine >= 3 && !std::memcmp(sz->data(), "\xef\xbb\xbf", 3))
+            sz->erase(0, 3);
+        *lplpNext = LpProfileLine(sz->c_str());
         if (!*lplpNext) { win32::SetLastError(win32::ERROR_NOT_ENOUGH_MEMORY); goto LReturn; }
         lplpNext = &(*lplpNext)->lpNext;
     }

@@ -474,8 +474,8 @@
       "id": "67",
       "path": "compat/win32/src/profile.cpp",
       "scope": "FLoadProfile",
-      "owner": "releaseProfile replaceable-slot scope",
-      "reason": "The getline-style native read adapter may replace the line slot. Its scope closes the stream, frees the latest slot and rolls back an unpublished parsed chain on every failure."
+      "owner": "releaseProfile owned-line and parsed-chain cleanup scope",
+      "reason": "Reset the optional owned line before closing the input stream, and roll back unpublished parsed nodes on every error or callback unwind. No caller-owned allocation slot/capacity remains."
     },
     {
       "id": "68",
@@ -489,14 +489,14 @@
       "path": "compat/win32/src/profile.cpp",
       "scope": "GetPrivateProfileStringA",
       "owner": "releaseProfile scope",
-      "reason": "Native profile operations retain path, replaceable temporary line and parsed chain owners under the registry lock; Close releases them before unlocking, preserving error and partial-write behavior."
+      "reason": "Native profile operations retain path, owned temporary line and parsed chain owners under the registry lock; Close releases them before unlocking, preserving error and partial-write behavior."
     },
     {
       "id": "70",
       "path": "compat/win32/src/profile.cpp",
       "scope": "WritePrivateProfileStringA",
       "owner": "releaseProfile scope",
-      "reason": "Native profile operations retain path, replaceable temporary line and parsed chain owners under the registry lock; Close releases them before unlocking, preserving error and partial-write behavior."
+      "reason": "Native profile operations retain path, owned temporary line and parsed chain owners under the registry lock; Close releases them before unlocking, preserving error and partial-write behavior."
     },
     {
       "id": "71",
@@ -627,9 +627,9 @@
     {
       "id": "89",
       "path": "src/platform/fileio.cpp",
-      "scope": "CbGetNativeLine",
-      "owner": "caller replaceable-slot owner",
-      "reason": "The private file service implements a getline-compatible allocation protocol; all production callers scope the replaceable slot. Typed service migration is tracked separately in L06."
+      "scope": "SzGetNativeLine",
+      "owner": "returned optional owned binary line",
+      "reason": "The native reader builds an owned string retaining embedded NULs/newlines and partial final lines. Allocation failures stay contained in FileCall and set stream error/errno; no raw allocation/capacity protocol or caller free remains."
     },
     {
       "id": "90",
@@ -1955,16 +1955,6 @@
     },
     {
       "path": "compat/win32/src/profile.cpp",
-      "line": 68,
-      "scope": "FLoadProfile",
-      "operation": "free",
-      "code": "std::free(sz)",
-      "normalized_call": "std::free(sz)",
-      "compiler_context": true,
-      "contract": "67"
-    },
-    {
-      "path": "compat/win32/src/profile.cpp",
       "line": 130,
       "scope": "SzProfilePath",
       "operation": "strdup",
@@ -2414,16 +2404,6 @@
       "contract": "88"
     },
     {
-      "path": "src/platform/fileio.cpp",
-      "line": 366,
-      "scope": "CbGetNativeLine",
-      "operation": "realloc",
-      "code": "std::realloc(*ppsz, next)",
-      "normalized_call": "std::realloc(*ppsz,next)",
-      "compiler_context": true,
-      "contract": "89"
-    },
-    {
       "path": "src/platform/native.cpp",
       "line": 102,
       "scope": "CchSprintf",
@@ -2842,6 +2822,30 @@
       "compiler_context": true,
       "contract": "90",
       "disposition": "L06i replaced by owned optional string results"
+    }
+  ],
+  "retired_line_buffer_sites": [
+    {
+      "path": "compat/win32/src/profile.cpp",
+      "line": 68,
+      "scope": "FLoadProfile",
+      "operation": "free",
+      "code": "std::free(sz)",
+      "normalized_call": "std::free(sz)",
+      "compiler_context": true,
+      "contract": "67",
+      "disposition": "L06j replaced raw getline buffer ownership with returned optional strings"
+    },
+    {
+      "path": "src/platform/fileio.cpp",
+      "line": 366,
+      "scope": "CbGetNativeLine",
+      "operation": "realloc",
+      "code": "std::realloc(*ppsz, next)",
+      "normalized_call": "std::realloc(*ppsz,next)",
+      "compiler_context": true,
+      "contract": "89",
+      "disposition": "L06j replaced raw getline buffer ownership with returned optional strings"
     }
   ]
 }

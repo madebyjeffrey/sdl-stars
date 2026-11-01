@@ -382,32 +382,27 @@ int FNativeStreamError(NATIVEFILE *pf) { return !pf || pf->fError; }
 int FNativeStreamEof(NATIVEFILE *pf) { return pf && pf->fEof; }
 int ChGetNativeFile(NATIVEFILE *pf) { unsigned char ch; return CReadNative(std::span{&ch, 1}, pf) == 1 ? ch : EOF; }
 int ChPutNativeFile(int ch, NATIVEFILE *pf) { unsigned char byte = static_cast<unsigned char>(ch); return CWriteNative(std::span{&byte, 1}, pf) == 1 ? byte : EOF; }
-char *PszGetNativeLine(char *psz, int cb, NATIVEFILE *pf) {
-    if (!psz || cb <= 0 || !pf) { errno = EINVAL; return nullptr; }
-    int i = 0, ch;
-    while (i < cb - 1 && (ch = ChGetNativeFile(pf)) != EOF) { psz[i++] = static_cast<char>(ch); if (ch == '\n') break; }
-    psz[i] = 0;
-    return i != 0 || cb == 1 ? psz : nullptr;
-}
-std::int64_t CbGetNativeLine(char **ppsz, std::size_t *pcb, NATIVEFILE *pf) {
-    if (!ppsz || !pcb || !pf) { errno = EINVAL; return -1; }
-    if (!*ppsz) *pcb = 0;
-    std::size_t cb = 0;
+std::optional<std::size_t> CchGetNativeLine(std::span<char> sz, NATIVEFILE *pf) {
+    std::size_t i = 0;
     int ch;
-    while ((ch = ChGetNativeFile(pf)) != EOF) {
-        if (cb + 1 >= *pcb) {
-            std::size_t next = *pcb ? *pcb * 2 : 128;
-            if (next <= *pcb) { pf->Fail(ENOMEM); return -1; }
-            char *psz = static_cast<char *>(std::realloc(*ppsz, next));
-            if (!psz) { pf->Fail(ENOMEM); return -1; }
-            *ppsz = psz; *pcb = next;
+    if (sz.empty() || !pf) { errno = EINVAL; return std::nullopt; }
+    while (i < sz.size() - 1 && (ch = ChGetNativeFile(pf)) != EOF) { sz[i++] = static_cast<char>(ch); if (ch == '\n') break; }
+    sz[i] = 0;
+    if (i != 0 || sz.size() == 1) return i;
+    return std::nullopt;
+}
+std::optional<std::string> SzGetNativeLine(NATIVEFILE *pf) {
+    if (!pf) { errno = EINVAL; return std::nullopt; }
+    return FileCall<std::optional<std::string>>(pf, std::nullopt, [&]() -> std::optional<std::string> {
+        int ch;
+        std::string sz;
+        while ((ch = ChGetNativeFile(pf)) != EOF) {
+            sz.push_back(static_cast<char>(ch));
+            if (ch == '\n') break;
         }
-        (*ppsz)[cb++] = static_cast<char>(ch);
-        if (ch == '\n') break;
-    }
-    if (cb == 0) return -1;
-    (*ppsz)[cb] = 0;
-    return static_cast<std::int64_t>(cb);
+        if (sz.empty()) return std::nullopt;
+        return sz;
+    });
 }
 int IPutNativeString(const char *psz, NATIVEFILE *pf) { std::size_t cb = std::strlen(psz); return CWriteNative(std::span{psz, cb}, pf) == cb ? 0 : EOF; }
 int CchNativePrintfFields(NATIVEFILE *pf, std::string_view fmt, std::span<const NATIVEFORMATARG> args) {
@@ -614,7 +609,6 @@ int IChangeNativeCwd(const char *psz) {
 struct NATIVEDIR {
     fs::directory_iterator iter;
     bool fFirst = true;
-    std::string szEntry;
 };
 NATIVEDIR *PdirNativeOpen(const char *psz) {
     if (!FPath(psz)) return nullptr;
@@ -625,17 +619,17 @@ NATIVEDIR *PdirNativeOpen(const char *psz) {
         return dir.release();
     });
 }
-const char *PszNativeReadDir(NATIVEDIR *dir) {
-    if (!dir) { errno = EBADF; return nullptr; }
-    return FileCall<const char *>(nullptr, nullptr, [&]() -> const char * {
+std::optional<std::string> SzNativeReadDir(NATIVEDIR *dir) {
+    if (!dir) { errno = EBADF; return std::nullopt; }
+    return FileCall<std::optional<std::string>>(nullptr, std::nullopt, [&]() -> std::optional<std::string> {
         std::error_code ec;
-        if (dir->iter == fs::directory_iterator()) { errno = 0; return nullptr; }
+        if (dir->iter == fs::directory_iterator()) { errno = 0; return std::nullopt; }
         if (!dir->fFirst) dir->iter.increment(ec);
         dir->fFirst = false;
-        if (ec) { SetError(ec); return nullptr; }
-        if (dir->iter == fs::directory_iterator()) { errno = 0; return nullptr; }
-        dir->szEntry = SzFromUtf8(dir->iter->path().filename().u8string());
-        errno = 0; return dir->szEntry.c_str();
+        if (ec) { SetError(ec); return std::nullopt; }
+        if (dir->iter == fs::directory_iterator()) { errno = 0; return std::nullopt; }
+        std::string szEntry = SzFromUtf8(dir->iter->path().filename().u8string());
+        errno = 0; return szEntry;
     });
 }
 int ICloseNativeDir(NATIVEDIR *dir) { delete dir; return 0; }

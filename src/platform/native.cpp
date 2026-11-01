@@ -215,13 +215,15 @@ std::int16_t FEnsureNativeDir(const char *pszDir) { return FEnsureNativeDirector
 std::int16_t FNativeEnumerateDirectory(APPSESSION &app, const char *pszDir, FNativeDirectoryEntryProc pfnEntry, void *lpData) {
     NATIVEDIR *pdir;
     const char *pszEntry;
+    std::optional<std::string> szEntry;
     if (!pfnEntry || !(pdir = PdirNativeOpen(pszDir))) return 0;
     StarsNativeDirGuard closeDirectory(pdir);
     for (;;) {
         errno = 0;
-        pszEntry = PszNativeReadDir(pdir);
-        if (!pszEntry) return errno == 0;
-        if (!FUtf8Valid(pszEntry, std::strlen(pszEntry))) { errno = EILSEQ; return 0; }
+        szEntry = SzNativeReadDir(pdir);
+        if (!szEntry) return errno == 0;
+        pszEntry = szEntry->c_str();
+        if (!FUtf8Valid(pszEntry, szEntry->size())) { errno = EILSEQ; return 0; }
         if (!pfnEntry(app, lpData, pszEntry)) return 1;
     }
 }

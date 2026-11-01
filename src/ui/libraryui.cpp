@@ -1364,14 +1364,14 @@ static std::int16_t FReadLibraryMetadata(const char *pszDirectory, char *pszName
     if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szFile)) return 0;
     pf = PfOpenNativeFile(szFile, NATIVEFILEMODE::read);
     if (!pf) return 0;
-    fRead = CNativeScan(pf, "%d\n", &iVersion) == 1 && PszGetNativeLine(szLine, sizeof(szLine), pf);
+    fRead = CNativeScan(pf, "%d\n", &iVersion) == 1 && CchGetNativeLine(std::span{szLine}, pf);
     if (fRead) {
         szLine[std::strcspn(szLine, "\r\n")] = 0;
         cchText = CchSnprintf(std::span{pszName, cchName}, "%s", szLine);
         fRead = cchText > 0 && static_cast<std::size_t>(cchText) < cchName &&
                 CNativeScan(pf, "%d\n%lld\n", piplr, plPlayed) == 2;
     }
-    if (fRead && iVersion == 2 && PszGetNativeLine(szLine, sizeof(szLine), pf)) {
+    if (fRead && iVersion == 2 && CchGetNativeLine(std::span{szLine}, pf)) {
         szLine[std::strcspn(szLine, "\r\n")] = 0;
         cchText = CchSnprintf(std::span{pszExchangeName, cchExchange}, "%s", szLine);
         fRead = cchText > 0 && static_cast<std::size_t>(cchText) < cchExchange;
@@ -2786,7 +2786,7 @@ static std::int16_t FindContinueLibraryGame(APPSESSION &app, void *lpData, const
     iVersion = 0;
     iPlayer = -1;
     lPlayed = 0;
-    if (CNativeScan(pf, "%d\n", &iVersion) != 1 || !PszGetNativeLine(szMetadataName, sizeof(szMetadataName), pf) ||
+    if (CNativeScan(pf, "%d\n", &iVersion) != 1 || !CchGetNativeLine(std::span{szMetadataName}, pf) ||
         CNativeScan(pf, "%d\n%lld", &iPlayer, &lPlayed) != 2) {
         ICloseNativeFile(pf);
         return 1;

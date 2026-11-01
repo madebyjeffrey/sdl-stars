@@ -20,11 +20,11 @@ std::optional<std::size_t> CbReadGuardFile(NATIVEFILE *pf, std::span<std::byte> 
     }
     return CbReadNativeFile(pf, rgb);
 }
-int64_t CbReadGuardLine(char **ppsz, size_t *pcb, NATIVEFILE *pf) {
-    int64_t cb = CbGetNativeLine(ppsz, pcb, pf);
+std::optional<std::string> SzReadGuardLine(NATIVEFILE *pf) {
+    auto sz = SzGetNativeLine(pf);
     if (cProfileLines == 0) { cProfileLines = -1; StarsThrowError(starsErrorFile, 417); }
     if (cProfileLines > 0) cProfileLines--;
-    return cb;
+    return sz;
 }
 size_t CWriteGuardProfile(std::span<const std::byte> rgb, NATIVEFILE *pf) {
     if (fFailProfileWrite) { fFailProfileWrite = false; StarsThrowError(starsErrorFile, 417); }
@@ -79,7 +79,7 @@ int main(int argc, char **argv) {
     auto pathProfile = PathFromUtf8(szProfile.c_str());
     std::string szPrefix = SzFromUtf8(pathProfile.filename().u8string()) + ".";
     PROFILEIO io;
-    io.pfnReadLine = CbReadGuardLine; io.pfnWrite = CWriteGuardProfile;
+    io.pfnReadLine = SzReadGuardLine; io.pfnWrite = CWriteGuardProfile;
     PROFILEIOSCOPE profileScope(io);
     CHECK(win32::WritePrivateProfileStringA("Game", "Name", "wire", szProfile.c_str()));
     for (i = 0; i < 3; i++) {

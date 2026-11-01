@@ -12,11 +12,12 @@ struct COMPATPROFILE {
 // Profile parsing and publication use the same native service as the product.
 // A provider changes only I/O effects; the serializer and stage order stay linked.
 // ReadLine belongs to loading; the other effects belong to saving. Close and
-// Unlink run during noexcept cleanup and must not throw. Allocations use free().
+// Unlink run during noexcept cleanup and must not throw. CRT node allocations
+// use free(); line reads return owned string values.
 struct PROFILEIO {
     void *(*pfnAllocate)(std::size_t) = std::malloc;
     decltype(&PfNativeOpen) pfnOpen = PfNativeOpen;
-    decltype(&CbGetNativeLine) pfnReadLine = CbGetNativeLine;
+    decltype(&SzGetNativeLine) pfnReadLine = SzGetNativeLine;
     decltype(&PfNativeCreateTemp) pfnCreateTemp = PfNativeCreateTemp;
     decltype(&ICopyNativePermissions) pfnCopyPermissions = ICopyNativePermissions;
     decltype(&CbWriteNativeStream) pfnWrite = CbWriteNativeStream;

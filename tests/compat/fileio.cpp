@@ -96,16 +96,41 @@ int main(void) {
     errno=0;CHECK(!PfNativeOpen("\xff", static_cast<NATIVEFILEMODE>(255)) && errno==EINVAL);
     snprintf(other,sizeof(other),"%s/renamed",dir);
     CHECK(IRenameNativePath(path,other,1,0)==0);
-    NATIVEDIR *pd=PdirNativeOpen(dir);CHECK(pd);int found=0;const char *entry;
-    while((entry=PszNativeReadDir(pd)))if(!strcmp(entry,"renamed"))found++;
-    CHECK(found==1 && !errno && !PszNativeReadDir(pd) && !errno && ICloseNativeDir(pd)==0);
+    NATIVEDIR *pd=PdirNativeOpen(dir);CHECK(pd);int found=0;std::optional<std::string> entry;
+    while((entry=SzNativeReadDir(pd)))if(!strcmp(entry->c_str(),"renamed"))found++;
+    CHECK(found==1 && !errno && !SzNativeReadDir(pd) && !errno && ICloseNativeDir(pd)==0);
+    pd=PdirNativeOpen(dir);CHECK(pd);
+    {
+        const auto szEntry=SzNativeReadDir(pd);CHECK(szEntry);
+        errno=EBUSY;CHECK(!SzNativeReadDir(pd) && !errno);
+        CHECK(ICloseNativeDir(pd)==0 && *szEntry=="renamed");
+    }
+    errno=0;CHECK(!SzNativeReadDir(nullptr) && errno==EBADF);
     CHECK(IRemoveNativePath(other,0)==0 && IRemoveNativePath(dir,1)==0);
     errno=0;CHECK(!PfNativeOpen("\xff", NATIVEFILEMODE::read) && errno==EILSEQ);
     pf=PfNativeTemporary();CHECK(pf && CchNativePrintf(pf,"2\nname\n7\n1234567890123\nnext\n")>0 && ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin)==0);
     int version,player;long long played;char line[64];
-    CHECK(CNativeScan(pf,"%d\n",&version)==1 && version==2 && PszGetNativeLine(line,sizeof(line),pf) && !strcmp(line,"name\n"));
+    CHECK(CNativeScan(pf,"%d\n",&version)==1 && version==2 && CchGetNativeLine(std::span{line}, pf) && !strcmp(line,"name\n"));
     CHECK(CNativeScan(pf,"%d\n%lld\n",&player,&played)==2 && player==7 && played==1234567890123LL);
-    CHECK(PszGetNativeLine(line,sizeof(line),pf) && !strcmp(line,"next\n"));CHECK(ICloseNativeFile(pf)==0);
+    CHECK(CchGetNativeLine(std::span{line}, pf) && !strcmp(line,"next\n"));CHECK(ICloseNativeFile(pf)==0);
+    // Line IO is binary: counts include embedded NULs/newlines and a final
+    // fragment is returned even after EOF. A one-byte span does not consume IO.
+    {
+        char szLine[5]={'#','#','#','#','#'};
+        std::optional<std::string> szOwned;
+        pf=PfNativeTemporary();CHECK(pf);
+        CHECK(CWriteNative(std::span{"A\0B\nlast"}.first(8),pf)==8 && ISeekNativeFile(pf,0,NATIVESEEKORIGIN::begin)==0);
+        CHECK(CchGetNativeLine(std::span{szLine}.first(1), pf)==0 && !szLine[0] && szLine[1]=='#' && LNativePosition(pf)==0 && !FNativeStreamEof(pf));
+        errno=0;CHECK(!CchGetNativeLine(std::span{szLine}.first(0), pf) && errno==EINVAL && LNativePosition(pf)==0);
+        CHECK(CchGetNativeLine(std::span{szLine}.first(3), pf)==2 && !memcmp(szLine,"A\0\0",3) && szLine[3]=='#' && LNativePosition(pf)==2);
+        CHECK(CchGetNativeLine(std::span{szLine}, pf)==2 && !strcmp(szLine,"B\n") && LNativePosition(pf)==4);
+        CHECK((szOwned=SzGetNativeLine(pf)) && szOwned->size()==4 && !memcmp(szOwned->c_str(),"last\0",5) && FNativeStreamEof(pf));
+        CHECK(!SzGetNativeLine(pf) && FNativeStreamEof(pf) && LNativePosition(pf)==8);
+        CHECK(CchGetNativeLine(std::span{szLine}.first(1), pf)==0 && !szLine[0] && FNativeStreamEof(pf));
+        CHECK(ISeekNativeFile(pf,0,NATIVESEEKORIGIN::begin)==0);
+        CHECK((szOwned=SzGetNativeLine(pf)) && szOwned->size()==4 && !memcmp(szOwned->c_str(),"A\0B\n\0",5) && !FNativeStreamEof(pf));
+        CHECK(ICloseNativeFile(pf)==0);
+    }
     // Byte operations preserve counts, sentinels, EOF and seek failure state.
     {
         unsigned char bytes[8];
