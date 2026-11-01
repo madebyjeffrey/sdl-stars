@@ -322,7 +322,7 @@ module SharedGameState {
   {}
 
   // Concrete witnesses prevent the contracts from only checking impossible cases.
-  lemma AcceptanceVectors() {
+  lemma {:isolate_assertions} AcceptanceVectors() {
     assert FleetWord(FleetId(15, 511)) == 8191;
     assert DecodeFleet(512) == FleetId(1, 0);
     assert PlanetLink(Some(0)) == 1 && DecodePlanetLink(0) == None;

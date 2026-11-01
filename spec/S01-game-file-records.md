@@ -699,3 +699,16 @@ remnants; failed restoration can leave the incoming target and a recovery copy.
 M01-AC16–21 connect these outcomes to actor goals. S01 retains exact framing,
 metadata and admission mapping; S04 retains real path and filesystem semantics.
 These are observed boundaries, not changes to format or approved guarantees.
+
+
+## Race comparison and staged-save handoff
+
+The [M02 native companion](M02-native-state-and-save.md) separates the exact
+128-byte compared prefix and terminated names from captured 192-byte memory and
+S01 serialized records. `fLearned` is ignored by comparison but remains in the
+checksum; partial `WriteRtPlr` output is not the entire compared prefix. A dead
+candidate has detail set to detAll before encoding and checksum. M02 uses the
+existing canonical S01 header/checksum for EOF after that mutation, and models
+escaping writes separately from ordinary FALSE. Successful replacement alone
+does not prove that an arbitrary raw design will decode successfully. S01/M04/S06
+retain admitted-input, codec and full round-trip qualification.

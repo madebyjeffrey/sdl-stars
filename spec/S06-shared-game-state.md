@@ -1059,3 +1059,17 @@ fleet IDs. History merging is field-specific in S01. Destroying a session
 invalidates its held references/caches; application metadata can outlive it.
 Gameplay RNG, AI scratch, file XOR state and derived caches have their separate
 lifetimes in §8; no arbitrary mid-generation resume is implied.
+
+
+### Race-library native snapshot boundary
+
+[M02 native state](M02-native-state-and-save.md#comparison-versus-captured-memory)
+maps PLAYER[192], password[16], legacy filename[16], library path[512] and the
+signed new flag to the actual RACESTATE capture/restore operations. Comparison
+uses a smaller projection; snapshot restoration retains all captured bytes. The
+UI suggestion[256] is outside that capture and stays current. Silent version
+inspection additionally restores fFileErrSilent/wVersFile, while parser-produced
+suggestion/hf remain current. M02's writer also mutates a dead candidate's detail
+field, including global vplr when aliased. Native objects must be live, aligned
+and sufficiently large; output/global alias cases and full callbacks/lifetimes
+remain explicit S06/M02 obligations.

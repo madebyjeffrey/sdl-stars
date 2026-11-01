@@ -82,7 +82,28 @@ module M08NativeHabitat {
     ensures Axis(x,a.preferred as E.I8,a.minimum as E.I8,a.maximum as E.I8,t).total.negative==P.AxisTotal(a,x,P.HabitatTotal(t.positive,t.negative,t.modifier)).negative
     ensures Axis(x,a.preferred as E.I8,a.minimum as E.I8,a.maximum as E.I8,t).total.modifier==P.AxisTotal(a,x,P.HabitatTotal(t.positive,t.negative,t.modifier)).modifier
   {
-    if a!=R.Immune() && a.minimum<=x<=a.maximum {
+    // Use the proved narrowing identities rather than expanding modular
+    // encodings inside the nonlinear habitat calculation.
+    hide E.Word;
+    hide E.Signed32;
+    var expected:=P.AxisTotal(a,x,P.HabitatTotal(t.positive,t.negative,t.modifier));
+    if a==R.Immune() {
+      assert Axis(x,-1,-1,-1,t)==State(t.(positive:=t.positive+10000));
+      assert expected==P.HabitatTotal(t.positive+10000,t.negative,t.modifier);
+      return;
+    } else if x<a.minimum {
+      var gap:=a.minimum-x;var added:=if gap<15 then gap else 15;
+      assert 0<added<=15;
+      assert Axis(x,a.preferred as E.I8,a.minimum as E.I8,a.maximum as E.I8,t)==State(t.(negative:=t.negative+added));
+      assert expected==P.HabitatTotal(t.positive,t.negative+added,t.modifier);
+      return;
+    } else if x>a.maximum {
+      var gap:=x-a.maximum;var added:=if gap<15 then gap else 15;
+      assert 0<added<=15;
+      assert Axis(x,a.preferred as E.I8,a.minimum as E.I8,a.maximum as E.I8,t)==State(t.(negative:=t.negative+added));
+      assert expected==P.HabitatTotal(t.positive,t.negative+added,t.modifier);
+      return;
+    } else {
       var distance:=A.Abs(x-a.preferred);
       var d:=if x<a.preferred then a.preferred-a.minimum else a.maximum-a.preferred;
       assert 0<d<=100 && distance<=d;
@@ -91,7 +112,8 @@ module M08NativeHabitat {
       E.WordPreserves(C.DivC(distance*100,d));
       E.WordPreserves(distance*2-d);
       var q:=100-C.DivC(distance*100,d);E.WordPreserves(q);
-      assert P.AxisTotal(a,x,P.HabitatTotal(t.positive,t.negative,t.modifier)).positive==t.positive+q*q;
+      assert 100*distance==distance*100;
+      assert expected.positive==t.positive+q*q && expected.negative==t.negative;
       PositiveBounds(t.positive,q);
       Signed32Preserves(t.positive+q*q);
       var penalty:=distance*2-d;
@@ -101,9 +123,11 @@ module M08NativeHabitat {
         ProductBounds(t.modifier,d*2-penalty);
         assert E.Fits32(t.modifier*(d*2-penalty));
         assert E.Div(t.modifier*(d*2-penalty),d*2)==C.DivC(t.modifier*(d*2-penalty),d*2);
+        assert expected.modifier==C.DivC(t.modifier*(d*2-penalty),d*2);
         assert Axis(x,a.preferred as E.I8,a.minimum as E.I8,a.maximum as E.I8,t)==
           State(Total(t.positive+q*q,t.negative,C.DivC(t.modifier*(d*2-penalty),d*2)));
       } else {
+        assert expected.modifier==t.modifier;
         assert Axis(x,a.preferred as E.I8,a.minimum as E.I8,a.maximum as E.I8,t)==State(Total(t.positive+q*q,t.negative,t.modifier));
       }
     }

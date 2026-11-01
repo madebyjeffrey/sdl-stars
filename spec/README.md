@@ -4,6 +4,17 @@ Status: source-derived detailed module collection; logical ownership remains pro
 Recorded: 2026-10-23.
 Base: `develop` at `4ba1ce856b17f499a0238c968c7d0329bbde1ddf`.
 
+## Consolidated evidence after the C++ migration
+
+The unpublished M01/M02/M04/S03/S04 continuations were reconciled with
+`develop` at `b6491ed2` on 2026-10-31. Their observations and dated runs below
+refer to C11 source at `e3222eb1`; they do not qualify the current C++ bodies.
+Fourteen newly preserved fixture commands use [the historical runner](../tests/spec/historical_c11.py)
+to materialize source, fixtures and models from immutable commit `82679dc`.
+They never extract or rewrite current production. Existing linked C++ witnesses,
+current strict compiler policy and C++ qualification remain in place. Porting
+these additional historical cases to linked C++ tests remains open.
+
 ## Purpose and scope
 
 Identify the high-level logical modules of SDL-Stars and progressively specify
@@ -235,7 +246,7 @@ must control clock and RNG inputs as well as catalog versions.
 | M01 | [Game Library](M01-game-library.md) | [Dafny contracts](M01-library-specification.dfy), [import publication/recovery](M01-import-publication.md), shared names, S01 persistence and M06 session handoffs | Listing/Continue, new-game publication, imports/conflicts, copy/rename/delete, export and host orders; partial-failure boundaries explicit. |
 | M02 | [Race Library](M02-race-library.md) | [Dafny contracts](M02-library-specification.dfy), shared names, M04 design and S01 bytes | Destination binding, stored-name version scans, reuse/update/new-version decisions, import/duplicate/export/delete and legacy policy conflict. |
 | M03 | [New Game Wizard](M03-new-game-wizard.md) | Setup model, roster/defaults, victory controls, scoring and M05 handoff | Source-derived workflow and calculations, dependency boundaries, port guidance and acceptance vectors. |
-| M04 | [Race Design Wizard](M04-race-design.md) | [Race data model and storage mapping](M04-race-data-model.md); [Advantage-point calculation](M04-race-advantage-points.md) | Logical inputs and current binary64 pricing specified; full workflow/recovery audit remains open. |
+| M04 | [Race Design Wizard](M04-race-design.md) | [Race data model and storage mapping](M04-race-data-model.md); [Advantage-point calculation](M04-race-advantage-points.md); [Wizard control](M04-wizard-controller.md); [Page commands](M04-page-commands.md); [Initialization](M04-page-initialization.md); [Pointer/messages](M04-pointer-and-message-interactions.md) | Logical inputs, pricing, dispatch, command/initialization, mouse/cursor/tracking and color/erase specified; complete painting/helper/native extraction remains open. |
 | M05 | [Universe Creation](M05-universe-creation.md) | M03/M04 inputs, S06 state, S01 files and versioned S03/M11 dependencies | Source-derived placement, starting assets, RNG/order, tutorial/batch paths, publication/failure behavior and acceptance matrix. |
 | M06 | [Player Session and Turn Orders](M06-player-session-and-turn-orders.md) | Player selection, pending orders, saving, export and incoming turns | Source-derived workflows, partial-failure boundaries and modeled session transitions. |
 | M07 | [Galaxy Map and Navigation](M07-galaxy-map-and-navigation.md) | Selection, search, zoom/pan, filters, gesture handoffs and semantic inspection | Source-derived navigation rules, formal properties and selected scanner workflow evidence. |
@@ -1001,6 +1012,13 @@ checks do not establish every source/model correspondence.
 | <a id="gap-18"></a>GAP-18 / Medium | M12 described switching to lowest after level 26 without distinguishing local `iTechNext=7` from packed player policy. Source lowest redirection writes current field but leaves packed next unchanged; explicit redirection writes packed next six. | **Clarified.** M12-AC20, checked `Redirect` and all-256-policy native fixtures preserve the local/persisted distinction. No runtime policy or UI behavior change; full caller/liveness qualification remains open. |
 | <a id="gap-19"></a>GAP-19 / Medium | M11 summarized category/item validation as the first lookup step and omitted prior-pointer effects and nonuniform headless restrictions. Native FLookupPart reads primary first in player context; a valid denied row still assigns its pointer, and shield/armor/beam primary gates also run headless. | **Clarified.** M11-AC12–15 and the [native availability companion](M11-part-availability.md) preserve call order, pointer prefixes and headless distinctions, with checked decisions and exact actual-source/frame fixtures. No runtime behavior or validation policy changed; full caller/native memory refinement remains open. |
 | <a id="gap-20"></a>GAP-20 / Medium | A TRUE availability check does not establish the base notification's later hull-read domain: FCanBuildShdef narrows its item to a byte, while LphuldefFromId indexes with the full signed hull. Raw 288 can pass the former and reach base index 256 in the latter. | **Boundary specified.** M19-AC32, Gate/HullMetadata/DecodedHullSafe and the [eligibility companion](M19-construction-buildability.md) distinguish the accesses. Current FReadShDef rejects hulls above 36; normal-file reachability is not claimed. S01/M11/M19/S06 retain complete writer/admission/lifetime qualification. No runtime validation or behavior change is made. |
+| <a id="gap-21"></a>GAP-21 / Medium | RACESTATE restores the 16-byte filename cache but does not capture the 256-byte UI suggestion. A restored cache can share the suggestion's first fifteen bytes, causing the extracted FSaveRace cache-pointer selector to choose the newer full name. | **Native state boundary clarified; UI/policy qualification open.** M02-AC16/17, native Restore/Suggested and exact source fixtures preserve this outcome. M02/M04/S05 must qualify normal wizard/legacy-save reachability and decide whether cancellation should restore that extra UI state. No runtime restoration behavior changes here. |
+| <a id="gap-22"></a>GAP-22 / Medium | SuggestRaceFilename checks availability after appending a numbered suffix but does not recheck the portable-name/root budget. A portable 239-byte input with a 236-byte ASCII stem and 14-byte root can grow to a rejected 241-byte `.r999` suggestion. Duplicate performs no second portable/path validation; enumeration rejects that name if written. | **Observed budget boundary specified; controller/UI qualification and behavior decision open.** M02-AC29, NameSearchHasNoFinalBudget and the [allocation companion](M02-race-file-allocation.md) retain the actual algorithm. Native Suggest/Portable tests establish the boundary; the action fixture now covers ordinary Duplicate completion under scripted parser/copy replies. M02/S04/S05 own callee/normal GUI qualification and a separate intended correction. No runtime guard is added. |
+| <a id="gap-23"></a>GAP-23 / Medium | An explicit race-export target can equal the next generated temporary name. If absent, exclusive copy writes that final path before revalidation; failed validation plus failed removal returns FALSE while retaining the copied destination. | **Literal identity outcome specified; intended behavior and UI qualification open.** M02-AC34, ReplacementSelf and FailedAliasValidationRetainsFile plus the [action fixture](../tests/spec/check_race_actions_source.py) cover the complete ordinary outer controller under scripted services. M02/S04/S05 own normal picker reachability, native alias/OS qualification and any separate behavior correction. Local replacement-failure preservation is not a universal entry-to-exit destination guarantee. |
+| <a id="gap-24"></a>GAP-24 / Medium | Successful current-format import binds path/name without clearing fNewLibraryRace; successful legacy save clears it. The raw flag can therefore differ for the same successful import outcome and later current-save planning reads this flag. | **Observed flag boundary specified; caller/UI reachability and intent open.** M02-AC43, NewFlagOnCurrentSuccess and native import/save/wrapper fixtures retain -7/0/1 cases. M02/M04/S05 own normal entry-state qualification and the intended later-save rule. No runtime reset or legacy policy change is added. |
+| <a id="gap-25"></a>GAP-25 / Closed specification mismatch | M04Race.Finish returned Stay for read-only Finish, while RaceCreationWizard goes to cancellation/failure before pricing. | **Corrected in specification only.** Finish now returns Failure; M04-AC08, ReadOnlyFinish and actual source-controller cases cover every page/mode. No runtime or baseline behavior changes. |
+| <a id="gap-26"></a>GAP-26 / Medium | RaceCreationWizard assigns global vrgrcRCW to an uninitialized local 17-RECT array and does not clear/restore the pointer. Initialized-hit/paint order, nested wizard callbacks and post-return access are not qualified. | **Lifetime boundary specified; native reachability/initialization qualification open.** M04-AC13, Begin/Complete and ReturnExpiresFrame record local lifetime without claiming valid post-return pointer use. M04/S05/S06 own access-site/lifetime mapping, initialized-slot event fixtures and nested/modal teardown cases. No actual use-after-return or runtime repair is asserted. |
+| <a id="gap-27"></a>GAP-27 / Medium | IrcRaceDlgHitTest on editable habitat growth rectangles 15/16 reads rgEnvVarMax[3], outside PLAYER's three-element array. Habitat initialization exposes 17 hit rectangles; the helper does not distinguish growth before the immunity read. | **Undefined array boundary reproduced; native event qualification and repair open.** The [controller companion](M04-wizard-controller.md#habitat-growth-hit-test-boundary) and [actual helper fixture](../tests/spec/check_race_hit_source.py) cover 104 defined cases and require both UBSan array diagnostics. No post-access result is modeled. M04/S05/S06 own real geometry/event reproduction and a separate focused repair, native checks and historical comparison. No runtime or baseline change here. |
 
 ### Module-by-module completion inventory
 
@@ -1012,10 +1030,10 @@ owners, not unnamed blockers. Companion coverage is included with its entry.
 
 | Owner / priority | Remaining work and existing boundary | Evidence required to close the specification work |
 | --- | --- | --- |
-| [M01](M01-game-library.md) / High | A/V: enumeration/validation levels, native path/name comparison, source mutation and recursive copy/rename/delete helper refinement. [Import publication](M01-import-publication.md) now supplies controller programs and source-fixture outcomes; full native I/O/alias/crash qualification remains open. P: complete export versus supported-family export and missing last-played display. | One action/outcome matrix with surviving files/metadata and exact validation inputs; alias/conflict/failure cases; separate ADR/product decisions. Preserve M06 pending-state handoffs. |
-| [M02](M02-race-library.md) / High | A/V: complete stored-design equality projection, Unicode/version/path collisions, protected update and write/close cleanup. P: GAP-08, dotted-stem duplication and corrupt-entry display. | Source-to-model field mapping and version/credential/failure cases, including version 999 and filename/name disagreement. Explicit effective policy plus observed deviation. |
+| [M01](M01-game-library.md) / High | D/A/V: complete family lexing, enumeration/admission and byte-to-inspection/probe field mapping; host-orders, duplicate/rename/delete/export controller completion; native path/name comparison, source mutation and recursive copy/rename/delete helper refinement. [Import publication](M01-import-publication.md) now supplies controller programs and source-fixture outcomes; full native I/O/alias/crash qualification remains open. P: complete export versus supported-family export and missing last-played display. | One action/outcome matrix with surviving files/metadata and exact validation inputs; alias/conflict/failure cases; separate ADR/product decisions. Preserve M06 pending-state handoffs. |
+| [M02](M02-race-library.md) / High | D/A/V: complete six-page paint/helper producers and native parser/path/Unicode/alias/lifetime/UI qualification. [Page commands](M04-page-commands.md) now specify all six WM_COMMAND arms and partial commit/cancellation. [Shared naming dialog](M01-library-name-dialog.md) now specifies init/command/retry/output control, and [wizard dispatch](M04-wizard-controller.md) specifies top-level Finish/recovery/sequence behavior. [Import contracts](M02-race-import.md) now compose source/name choice, current-copy/legacy save and import/load/edit wrappers with captured/global/file frames and native source fixtures. [File actions](M02-race-file-actions.md) now supply ordinary Duplicate/Export/Delete controllers, allocator composition, cleanup/notification and captured-byte/file frames with native source fixtures. [Native state/version/save](M02-native-state-and-save.md) specifies complete comparison/captured-byte projections, filename-prefix/selection, silent-reader frames, canonical scan/plan composition and staged-save normal/escaping/close/cleanup outcomes. [Allocation](M02-race-file-allocation.md) now specifies bounded stage/export naming, counter wrap, copy receipts and first-free suggestions with actual source fixtures. P: GAP-08, GAP-22 final duplicate-name budgets, GAP-23 target/temp identity, GAP-24 current-import new flag, dotted-stem duplication and corrupt-entry display. | Source-to-model field mapping and version/credential/failure cases, including version 999 and filename/name disagreement. Explicit effective policy plus observed deviation. |
 | [M03](M03-new-game-wizard.md) / Medium | A/V: full widget-to-normalized setup mapping, batch/wizard distinctions, RNG/catalog inputs and failure matrix. P: deliberate changes to substitution, overflow, tie or retry behavior. | Trace each setup control/normalization input to its definition and source domain; vectors for boundary lattice values and controlled RNG/clock handoff to M05. Existing scoring/victory definitions remain canonical. |
-| [M04](M04-race-design.md) and both companions / High | D/A: six-page control transitions, preset replacement, AR resets, normalization timing and cancellation snapshots. V: pricing differential coverage; P: proposed Rust/SQL interface and GAP-08. | Complete page/event/guard/effect/return table with checked transitions and M02/M03 snapshot handoffs. Zero/even-width inconsistency is fixed; full wizard behavior is still open. SQL implementation is not required merely to document its proposal. |
+| [M04](M04-race-design.md) and companions / High | D/A: all paint arms and complete drawing/pricing mutation, general catalog/format/native extraction and native cancellation frames. [Text producers](S03-player-labels-and-race-titles.md) now specify player/plural/article/fallback/grammar and pinned title/default catalog bindings, with actual decoder/formatter fixtures. [Mouse/message contracts](M04-pointer-and-message-interactions.md) now specify hit testing, portrait/habitat/economy tracking, cursor and color/erase arms. [Initialization](M04-page-initialization.md) now specifies all six entry arms, preset/control requests and habitat geometry. [Command contracts](M04-page-commands.md) now specify all six WM_COMMAND arms, preset/AR transitions and page-1 ordinary partial/successful commit. V: pricing differential coverage and GAP-26/27 rectangle-lifetime/growth-hit qualification. P: proposed Rust/SQL interface and GAP-08. | Complete page/event/guard/effect/return table with checked transitions and M02/M03 snapshot handoffs. Zero/even-width and read-only Finish specification mismatches are fixed; top-level dispatch/sequence now has checked contracts, while page-control/native behavior remains open. SQL implementation is not required merely to document its proposal. |
 | [M05](M05-universe-creation.md) / High | D/A: random-race/starting-design helper closure and exact tutorial context; V: controlled creation/output/failure matrix. P: bounded placement cancellation and stronger publication. | Account for each helper/catalog/RNG call with pre/post state and draw order; validate initial decoded file sets and failure remnants. Preserve the observed absence of a total retry bound. |
 | [M06](M06-player-session-and-turn-orders.md) / High | A/V: direct-open/close/reload versus guarded departure, late editor flush, ignored saves, waiting/mark/reload races and session invalidation. Post-open marker/fallback decisions now have an explicit M06 contract, with M07 restoration dispatch. P: durable submission/host handshake. | Cross-entry outcome matrix separating memory intent, successful orders/history, export and receipt; precise failure traces. No file flag described as a lock. |
 | [M07](M07-galaxy-map-and-navigation.md) / Medium | D/A/V: full SelectAdj*/ChangeMainObjSel editor/cache effects, title/tutorial callbacks and reentrancy; native hit/capture/paint interleavings, trig/hypot/raster paths, 12-entry menu capacity, all views/disclosure and preference teardown. Restoration dispatch, fallback ordering, the post-open wrapper and construction-capable starbase target selection are now modeled. | Bind coordinate/selection projections to source inputs and test boundary/capture cases; keep exact pixels as rendering obligations with platform/display fixtures. |
@@ -1034,7 +1052,7 @@ owners, not unnamed blockers. Companion coverage is included with its entry.
 | [M20](M20-ai-players.md) / High | D: E20-1 strategy thresholds, role/target/design/queue/research choices and branch RNG; A/V: E20-2 history/order/persistence/cleanup. P: fairness/strength/visibility expectations. | Per-strategy decision tables and checked transitions, complete view/history input contract and deterministic decision fixtures. Mode dispatch is not a specification of the seven strategies. |
 | [S01](S01-game-file-formats.md) and four companions / High | A/V: decoder/writer/replay refinement, malformed record/count/reference boundaries and partial writes (S01-D02–06). P: D01 legacy policy, stronger decoding/publication; D07 unsupported tags. | Per-entry/per-record accepted/rejected/error-effect matrix and byte/state differential fixtures. Keep proposed strict predicates separate from actual reader behavior; no undocumented semantics for unsupported tags. |
 | [S02](S02-application-preferences-and-window-layout.md) / Medium | D/A: E02-1 outer loader/writer/error/path and source-adapter refinement; E02-2 selection/identity formatting, full live selection/editor/title/tutorial callback effects, full M09/M10 editor integration beyond checked preset/quantity commands and conditional tile round trip. M07 now models restoration dispatch and callback returns; M15 models bidirectional traversal. The [contracts companion](S02-preference-contracts.md) now covers active keys, desktop/host grammar, buffer/save control, tile/placement parsing, saved selection/GameID decoding, MRU partial updates and preset codecs. V/P: multi-process/display policy. | Retain the checked decode/codec contracts and native fixtures; close outer-call effects, byte/locale/path mapping and full live callback effects with M06/M07/M15/M16, M09/M10 editor integration beyond their checked preset/quantity commands, and the conditional tile round trip. Preserve entry-specific desktop/host parsing and signed-overflow boundaries. |
-| [S03](S03-static-game-data-and-text.md) and inventory / Medium | D/A: E03-1 specialized generator references/schema checks, E03-2 text/rank/chunk/range/placeholder checks; V: compiled consumer equivalence. | Generator input/output/error contracts and negative fixtures; field units/ranges linked to actual consumers. Exact values are pinned by 67 hashes; that is provenance, not semantic validation. |
+| [S03](S03-static-game-data-and-text.md) and inventory / Medium | [Player-label/title contracts](S03-player-labels-and-race-titles.md) now specify ordinary naming, conditional string reads, scratch effects and fifteen generated catalog bindings. D/A: E03-1 specialized generator references/schema checks, E03-2 text/rank/chunk/range/placeholder checks; V: compiled consumer equivalence. | Generator input/output/error contracts and negative fixtures; field units/ranges linked to actual consumers. Exact values are pinned by 67 hashes; that is provenance, not semantic validation. |
 | [S04](S04-platform-services.md) / High | D/A: E04-1 filesystem modes/result mapping, E04-2 full conversion/format/prefix behavior, E04-3 qsort16 and native-width/clock adapters. V: actual OS effects. | Exact caller input domains, error/output/ownership semantics and checked pure algorithms; platform fixtures for filesystem, clock and float effects. Avoid extrapolating mathematical ints to every native input. |
 | [S05](S05-sdl-desktop-implementation.md) / High | D/A: E05-1 control/modal/event state, E05-2 lifetime/reentrancy/teardown; V/P: E05-3 rendering/native APIs/accessibility/display matrix. | Bounded control/window/timer state contracts with failure edges; supported API/flag behavior and targeted lifecycle fixtures; separately recorded native/visual/assistive-technology qualification. |
 | [S06](S06-shared-game-state.md) / Medium | A/D: full field/projection/cache extraction, knowledge merging, packed/transient state and phase lifetimes. Native planet/fleet lookup control and planet read/write prefix/queue copying now have checked S06 contracts and native struct fixtures; full array invariants, allocator/log/tutorial effects, pointer lifetime and complete semantic field mapping remain open. P: strict closure, duration overflow, mid-turn restart and legacy policy. | Logical↔C↔S01 field/identity/unit matrix with missing adapters named; field-level knowledge provenance and native lifecycle cases. Proposed full-host invariants must not become silently enforced runtime checks. |
@@ -1042,7 +1060,7 @@ owners, not unnamed blockers. Companion coverage is included with its entry.
 ### Execution order and definition of done
 
 1. **Source accuracy and trace discipline:** preserve the completed accuracy
-   corrections/boundaries (GAP-01–05 and GAP-13–20) and validate the entire inventory. Preserve all existing IDs/anchors and dated
+   corrections/boundaries (GAP-01–05 and GAP-13–21) and validate the entire inventory. Preserve all existing IDs/anchors and dated
    evidence. Add explicit boundary domains wherever a source narrowing or
    lookup is currently hidden in a mathematical argument.
 2. **Shared inputs and workflow contracts:** S01/S02/S03/S04/S06 adapters,
@@ -2797,18 +2815,32 @@ Verification for this continuation:
 - Specification-checker tests pass **9/9**; handbook tests pass **26/26**.
   Logs: `dist/spec-library-publication-checker-tests.log`,
   `dist/spec-library-publication-handbook-tests.log`.
-- Publication validation is tracked in [PR #55](https://github.com/madebyjeffrey/sdl-stars/pull/55),
-  which records the published snapshot, collection-wide proof/audit results and
-  handbook/browser checks. The publication run uses
-  `python3 tests/spec/verify.py --time-limit 120 --progress Symbol`. Its initial
-  attempt hit a 120-second timeout in `M08NativeHabitat.AxisRefines`; an explicit
-  intermediate equality between the canonical positive total and `prior + q*q`
-  passes the focused lemma's **92 checks, zero errors**, at 60 seconds. Model
-  definitions and postconditions are unchanged; collection verification and audit
-  remain required before merge. The handbook renders **207 pages**, **700 stable
-  requirement IDs** and **111 formal files**, with **38,590** local rendered
-  links/assets checked and all **72** Mermaid diagrams rendered in browser checks.
-  All **190** pre-batch files and their **732** explicit anchors remain present.
+- The first collection-wide run reported **11997 verified, zero errors and one
+  120-second timeout**, in the existing M08 `AxisRefines` positive-result
+  postcondition; audit did not run after that failed verification. Explicit case
+  facts alone still left a 60-second timeout in the full-state equality. The
+  proof now separates immune/outside/in-range cases and uses the already proved
+  `WordPreserves`/`Signed32Preserves` identities with local implementation hiding,
+  avoiding modular expansion inside the nonlinear calculation. The final focused
+  habitat run passes **325 verified, zero errors**, at the unchanged 60-second
+  limit (`dist/spec-library-publication-habitat-focused2.log`). All model
+  definitions and the complete `AxisRefines` contract are unchanged; only its
+  proof body changes. The complete rerun passes **12044 verified, zero errors**
+  and **zero audit findings** across **111 formal files**, at the unchanged
+  120-second collection limit. Command:
+  `python3 tests/spec/verify.py --time-limit 120 --progress Symbol`;
+  final log: `dist/spec-library-publication-full2.log`.
+  Checks span 2026-10-26–27.
+- Final link/trace checks pass: **2812** local links/includes, **700** requirement
+  IDs (**116** stories, **419** acceptance, **66** interaction, **99** quality),
+  zero errors (`dist/spec-library-publication-links-final.log`). The handbook
+  builds **207 pages**, **26 modules**, **111 formal files** and checks **38590**
+  local links/assets, zero errors (`dist/spec-library-publication-handbook-final.log`).
+  All six new criteria render in exactly one acceptance row each.
+- All **190** pre-batch files and their **732** explicit anchors remain present;
+  existing declarations across all **110** pre-batch formal files are preserved.
+  Whitespace, proof-body/contract preservation, native-report assertions and
+  `git diff --check` pass (`dist/spec-library-publication-final-integrity.log`).
   Runtime, catalog, text and native/frozen baseline paths have no changes.
 
 GAP-09 remains open across M02/M05/M06/M17/M18/S01; M01 still owns full
@@ -2816,3 +2848,514 @@ enumeration, native helper/path and UI qualification, export scope and
 last-played display decisions. The goal remains active. The next workflow
 contract batch is M02 stored-design equality/version/save-publication outcomes,
 retaining the explicit GAP-08 policy conflict rather than silently resolving it.
+
+
+<a id="m02-native-state-version-and-save-continuation"></a>
+## M02 native state, version and save continuation
+
+Inspected 2026-10-27 at `e3222eb1fbdb01d68067231b5d5ef14a71759b30`.
+The [native M02 companion](M02-native-state-and-save.md) connects M02-US01/02/03
+to M02-AC15–23 and strengthens comparison, snapshot and version-exhaustion
+qualification. Existing IDs and the GAP-08 legacy-policy distinction remain.
+`M02NativeRaceState` supplies exact comparison/capture/binding projections;
+`M02VersionReader` supplies silent read/output/frame outcomes; `M02RaceSave`
+supplies normal/escaping staged-save flow, checksum EOF, native candidate mutation
+and canonical version-scan composition. Existing S04 prefix, S01 checksum/header
+and M02 decision definitions remain canonical. No game/data/layout/format/baseline
+change is made.
+
+Verification (2026-10-27):
+
+- Final focused M02 verification: **81 verified, zero errors**, using Dafny
+  **4.11.0**, cores 4 and the unchanged 60-second limit
+  (`dist/spec-race-workflows-focused-final2.log`). Initial proof attempts needed
+  explicit comparison witnesses; checksum/EOF expansion then caused two
+  60-second controller-frame timeouts. Local implementation hiding now uses the
+  verified checksum/EOF contracts without weakening their definitions or frame
+  postconditions. No assumptions, axioms or disabled verification are added.
+- Final full include closure and mandatory audit:
+  `python3 tests/spec/verify.py --time-limit 120 --progress Symbol` passes
+  **12125 verified, zero errors**, **zero audit findings**, **114 formal files**
+  (`dist/spec-race-workflows-full4.log`). An earlier attempt caught an accidental
+  overwrite of the existing S04 prefix model; its model and owning entry were
+  restored byte-for-byte from the pre-batch snapshot. A later intermediate pass
+  preceded final hf/pointer-domain/EOF contracts, and another launch stopped on
+  a Markdown anchor being added concurrently. Neither substitutes for the final
+  complete run recorded here.
+- `python3 tests/spec/check_race_workflows_source.py`: **98116** native
+  comparison/snapshot cases, **196552 assertions**; **272** unterminated-name
+  cases excluded before C comparison. All prefix bits, captured bytes, C truth
+  flags, shared-prefix suggestion and pointer-selection cases pass. **77858**
+  native UTF-8/cache/suggestion outputs agree with an independent maximal-valid-
+  prefix oracle. Log: `dist/spec-race-workflows-source-final.log`.
+- `python3 tests/spec/check_race_save_source.py`: **9920** actual controller/
+  player-writer/checksum/close cases, **9** call traces. File bytes, candidate/
+  global alias effects, full binding arrays, escaping writes, cleanup and
+  logical/physical-close distinctions pass the independent oracle.
+  Log: `dist/spec-race-workflows-save-source-final.log`.
+- `python3 tests/spec/check_race_versions_source.py`: **5267** native reader/
+  scan/current-save cases, **44526 assertions**, including all parser-return
+  classes, ignored header-close failure, hf restoration boundary, case-sensitive
+  equality versus case-insensitive families, occupancy/ties, 999 exhaustion,
+  unreadable-target priority, both candidate pointer modes and authentication
+  restoration. Log: `dist/spec-race-workflows-version-source-final.log`.
+  All three fixtures use native headers, warnings as errors and address/undefined-
+  behavior sanitizers. Parser, dialog, authentication, allocator and native I/O
+  providers remain explicit; no full C refinement, crypto, OS fault delivery,
+  Unicode-comparison or UI/crash qualification claim follows.
+- SDL Debug configure/build pass with `macos-sdl-debug` in
+  `dist/m05-macos-sdl-debug`; selected unit/runtime/tutorial/packaging tests pass
+  **31/31**. Full native regression passes **519 matches**, **21 existing unused-
+  storage warnings**, **zero differences/errors**, **zero skipped inputs**.
+  Logs: `dist/spec-race-workflows-configure.log`, `dist/spec-race-workflows-build.log`,
+  `dist/spec-race-workflows-runtime.log`, `dist/spec-race-workflows-regression.log`;
+  report: `dist/scaffold/regression/spec-race-workflows-comparison.json`.
+  No game-code change requires additional host-only checks in this batch.
+- Specification-checker tests pass **9/9**, handbook tests **26/26**.
+  Logs: `dist/spec-race-workflows-checker-tests.log`,
+  `dist/spec-race-workflows-handbook-tests.log`.
+- Final link/trace checks pass **2854** local links/includes and **709** IDs:
+  **116** stories, **428** acceptance, **66** interaction and **99** quality,
+  zero errors (`dist/spec-race-workflows-links-final.log`). The handbook builds
+  **211 pages**, **26 modules**, **114 formal files** and validates **39533**
+  local links/assets, zero errors (`dist/spec-race-workflows-handbook-final.log`).
+  All nine new criteria render in exactly one acceptance row each.
+- All **193** pre-batch files, **739** explicit anchors and existing declarations
+  in all **111** pre-batch formal files are preserved. Whitespace, fixture syntax,
+  native comparison-report assertions and `git diff --check` pass. Runtime,
+  catalog, text and native/frozen baseline paths remain unchanged.
+  Log: `dist/spec-race-workflows-integrity.log`.
+
+GAP-21 records the uncaptured full filename suggestion; its normal UI reachability
+and intended cancellation policy remain owned by M02/M04/S05. Passing controller
+receipts do not establish missing parser/codec, allocator, native alias/path/OS/
+concurrency/crash or GUI contracts. The goal remains active. The next M02 batch
+is allocator and import/export/duplicate/delete controller completion, retaining
+the existing snapshot/reader/save contracts and the explicit GAP-08 policy split.
+
+
+## M02 race allocation continuation
+
+Observed at `e3222eb1fbdb01d68067231b5d5ef14a71759b30` on 2026-10-27.
+The [allocation companion](M02-race-file-allocation.md) and
+[M02RaceAllocation](dafny/M02-race-allocation.dfy) specify stage/export temporary
+names, exact bounded retries/counter advance, directory and copy effects,
+first-free suggestions and the successful save-input projection. M02-AC24–29
+trace these rules; GAP-22 keeps the unchecked duplicate-name budget explicit.
+Runtime C, generated data/text and native/frozen baselines are unchanged.
+
+Verification in this batch:
+
+- Focused `dafny verify spec/dafny/M02-race-allocation.dfy --cores 4
+  --verification-time-limit 60 --progress Symbol`: **31 verified, zero errors**.
+  Log: `dist/spec-race-allocation-focused3.log`.
+- `python3 tests/spec/check_race_allocation_source.py`: **2376** allocator/
+  suggestion traces, **48** exclusive-copy cases and **16** nonexclusive-copy
+  cases pass. Exact formatter/counter/call traces, zero-capacity/UTF-8/budget boundaries and enumeration admission,
+  real-file overwrite/self-alias/open failures and scripted copy faults are
+  checked. Log: `dist/spec-race-allocation-source-final.log`.
+- SDL Debug configure/build pass using `macos-sdl-debug` and
+  `dist/m05-macos-sdl-debug`. The selected SDL/unit/runtime/tutorial/packaging
+  checks pass **31/31**. Full native regression passes **519 matches**, **21**
+  existing unused-storage warnings, **zero differences/errors** and **zero
+  skipped inputs**. Logs: `dist/spec-race-allocation-configure.log`,
+  `dist/spec-race-allocation-build.log`, `dist/spec-race-allocation-runtime.log`,
+  `dist/spec-race-allocation-regression.log`; report:
+  `dist/scaffold/regression/spec-race-allocation-comparison.json`.
+  No game-code change requires additional host-only checks.
+- Specification-checker tests pass **9/9**, handbook tests **26/26**.
+  Logs: `dist/spec-race-allocation-checker-tests.log`,
+  `dist/spec-race-allocation-handbook-tests.log`.
+- Integrity checks preserve all **201** pre-batch files, **750** explicit anchors
+  and **2589** existing formal declarations. All six criteria render once in a
+  four-column acceptance row. New-fixture syntax, whitespace, native comparison
+  assertions and `git diff --check` pass. Log:
+  `dist/spec-race-allocation-integrity.log`.
+- `python3 tests/spec/verify.py --time-limit 120 --progress Symbol` passes
+  the full include closure: **12156 verified, zero errors**; mandatory audit:
+  **zero findings**. Log: `dist/spec-race-allocation-full.log`.
+- Final local link/trace checks pass **2891** links/includes and **715** IDs:
+  **116** stories, **434** acceptance, **66** interaction and **99** quality,
+  zero errors (`dist/spec-race-allocation-links-final.log`). The handbook
+  prepares **26 modules**, **115 formal files** and **213 rendered pages**, and
+  validates **40184** local links/assets with zero errors. Log:
+  `dist/spec-race-allocation-handbook-final.log`.
+
+The source fixture supplies clock, format-error, directory, availability and
+exclusive-copy outcomes for controller checks; real-stdio copy checks have their
+own fault domain. Full OS/concurrency/path-alias/Unicode-compare/UI qualification
+and outer import/export/duplicate/delete/wizard contracts remain owned work.
+No policy conflict or runtime bug is resolved by these passing projections.
+
+
+## M02 race actions continuation
+
+Observed 2026-10-27 at `e3222eb1fbdb01d68067231b5d5ef14a71759b30`.
+[Action contracts](M02-race-file-actions.md) and
+[M02RaceActions](dafny/M02-race-actions.dfy) specify the ordinary Duplicate,
+Export and Delete controllers with canonical allocation/copy/suggestion and
+native-state composition. M02-AC30–36 trace captured-byte and surviving-file
+outcomes, notification gates, source-before-comparison order and target/temp
+identity. GAP-23 preserves the observed publication exception; GAP-22 remains.
+
+- Focused `dafny verify spec/dafny/M02-race-actions.dfy --cores 4
+  --verification-time-limit 60 --progress Symbol`: **20 verified, zero errors**.
+  Log: `dist/spec-race-actions-focused3.log`.
+- SDL Debug configure/build pass with `macos-sdl-debug` in
+  `dist/m05-macos-sdl-debug`; selected unit/runtime/tutorial/packaging checks pass
+  **31/31**. Full native regression passes **519 matches**, **21** existing unused-
+  storage warnings, **zero differences/errors**, **zero skipped inputs**. Logs:
+  `dist/spec-race-actions-configure.log`, `dist/spec-race-actions-build.log`,
+  `dist/spec-race-actions-runtime.log`, `dist/spec-race-actions-regression.log`;
+  report: `dist/scaffold/regression/spec-race-actions-comparison.json`.
+  No game-code change requires additional host-only checks in this batch.
+- Specification-checker tests pass **9/9**, handbook tests **26/26**. Logs:
+  `dist/spec-race-actions-checker-tests.log`,
+  `dist/spec-race-actions-handbook-tests.log`.
+- Integrity checks preserve all **203** pre-batch files, **757** explicit anchors
+  and **2594** existing formal declarations. All seven criteria render once in a
+  four-column acceptance row. Fixture syntax, whitespace, native comparison
+  assertions and `git diff --check` pass; runtime/data/text/native/frozen baseline
+  paths remain unchanged. Log: `dist/spec-race-actions-integrity.log`.
+- Initial full closure run: **12175 verified**, **zero errors**, **one timeout**
+  in existing S06 `AcceptanceVectors` at 120 seconds; audit did not run. Log:
+  `dist/spec-race-actions-full.log`. The witness now isolates its original
+  assertions into independent checked obligations. Only that proof attribute
+  changes; every assertion, contract and rule is unchanged. Focused S06 check:
+  **358 verified, zero errors** at 60 seconds
+  (`dist/spec-race-actions-s06-focused.log`).
+- Final `python3 tests/spec/verify.py --time-limit 120 --progress Symbol`
+  (Dafny 4.11.0) passes the full include closure: **12496 verified, zero errors**;
+  mandatory audit: **zero findings**. Final command exits successfully.
+  Log: `dist/spec-race-actions-full2.log`. The larger check count includes the
+  isolated S06 obligations; it is not a count of newly specified runtime rules.
+- Final link/trace checks pass **2929** local links/includes and **722** IDs:
+  **116** stories, **441** acceptance, **66** interaction and **99** quality,
+  zero errors (`dist/spec-race-actions-links-final.log`). The handbook prepares
+  **26 modules**, **116 formal files** and **215 pages**, and validates **40828**
+  local links/assets with zero errors
+  (`dist/spec-race-actions-handbook-final.log`).
+- `python3 tests/spec/check_race_actions_source.py` passes **4354** actual
+  controller cases with independent full-array/file/call/version/counter oracle,
+  native headers and address/undefined-behavior sanitizers. Log:
+  `dist/spec-race-actions-source-final.log`. Initial fixture compile/link declarations
+  and a self-alias copy provider were corrected without changing runtime C.
+
+Remaining M02 D work is import/current-versus-legacy publication, ImportAs/
+ImportAndEdit and full name-choice/wizard controllers. Native callee/alias/
+lifetime/parser/UI/OS/concurrency/crash qualification remains A/V work; supplied
+replies do not establish complete C refinement. This does not close the overall
+26-module goal or resolve unapproved product policy.
+
+
+## M02 race import continuation
+
+Observed 2026-10-27 at `e3222eb1fbdb01d68067231b5d5ef14a71759b30`.
+[Import contracts](M02-race-import.md) and
+[M02RaceImport](dafny/M02-race-import.dfy) compose source/name choice, exact raw
+hint/buffer effects, latched current/legacy dispatch, canonical stage/save,
+post-publication validation/recovery and ImportAs/Load/Edit/ImportAndEdit frames.
+M02-AC37–45 trace these rules; GAP-24 retains the observed new-flag distinction.
+The GAP-08 legacy policy conflict remains Open; runtime C/data/text/record formats
+and native/frozen baselines are unchanged.
+
+- Focused `dafny verify spec/dafny/M02-race-import.dfy --cores 4
+  --verification-time-limit 60 --progress Symbol`: **44 verified, zero errors**.
+  Log: `dist/spec-race-import-focused-final.log`. Initial composition timeouts
+  at a partial status destructor were resolved by checked exhaustive status
+  matching; no cases or contracts were removed.
+- `python3 tests/spec/check_race_import_source.py`: **3202** actual import/name-
+  choice/allocation/save/load/edit/wrapper cases pass. Native headers, exact
+  writer/checksum/close bodies, live nonlocal jumps and address/undefined-behavior
+  sanitizers are used with explicit parser/dialog/BOF/I/O providers. Full arrays,
+  naming-buffer tails, override/dialog state, versions/counters, file/directory
+  remnants and logical/physical close distinctions match the independent oracle.
+  Log: `dist/spec-race-import-source-final.log`.
+- SDL Debug configure/build pass with `macos-sdl-debug` in
+  `dist/m05-macos-sdl-debug`; selected unit/runtime/tutorial/packaging checks pass
+  **31/31**. Full native regression passes **519 matches**, **21** existing unused-
+  storage warnings, **zero differences/errors**, **zero skipped inputs**. Logs:
+  `dist/spec-race-import-configure.log`, `dist/spec-race-import-build.log`,
+  `dist/spec-race-import-runtime.log`, `dist/spec-race-import-regression.log`;
+  report: `dist/scaffold/regression/spec-race-import-comparison.json`.
+  No game-code change requires additional host-only checks.
+- Specification-checker tests pass **9/9**, handbook tests **26/26**. Logs:
+  `dist/spec-race-import-checker-tests.log`,
+  `dist/spec-race-import-handbook-tests.log`.
+- Integrity checks preserve all **206** pre-batch files, **765** explicit anchors
+  and **2625** existing formal declarations. Each of nine new criteria renders in
+  exactly one four-column row. Fixture syntax, whitespace, native comparison
+  assertions and `git diff --check` pass. Log: `dist/spec-race-import-integrity.log`.
+- Final `python3 tests/spec/verify.py --time-limit 120 --progress Symbol`
+  (Dafny 4.11.0) passes the complete include closure: **12540 verified, zero
+  errors**; mandatory audit: **zero findings**; command exits successfully.
+  Log: `dist/spec-race-import-full.log`.
+- Final link/trace checks pass **2970** local links/includes and **731** IDs:
+  **116** stories, **450** acceptance, **66** interaction and **99** quality,
+  zero errors (`dist/spec-race-import-links-final.log`). The handbook prepares
+  **26 modules**, **117 formal files**, **217 pages** and validates **41515**
+  local links/assets with zero errors
+  (`dist/spec-race-import-handbook-final.log`).
+
+Remaining M02 D work is the full race wizard and shared LibraryNameDlg event,
+invalid-input retry and lifecycle behavior. Native decoder/credential/admission,
+pointer/alias/lifetime, path/Unicode/OS/concurrency/crash and actual UI extraction
+remain owned A/V obligations. Passing supplied receipts does not establish full
+C/application refinement or complete the overall 26-module goal.
+
+
+## Shared naming and wizard control continuation
+
+Observed 2026-10-27 at `e3222eb1fbdb01d68067231b5d5ef14a71759b30`.
+[Shared naming](M01-library-name-dialog.md) and
+[wizard control](M04-wizard-controller.md) specify initialization/command/retry,
+game/race suggestions, raw page-result dispatch, point/credential/save gates and
+owned modal-sequence cleanup with explicit service/native-input boundaries.
+M01-AC22–25, M02-AC46–48 and M04-AC08–14 trace these rules. GAP-25 corrects the
+old read-only Finish model; GAP-26 retains native rectangle initialization and
+lifetime work, and GAP-27 records the separately reproduced growth-hit array
+boundary. Runtime C/data/text/record formats and native/frozen baselines
+remain unchanged.
+
+- Focused verification: 81 verified, zero errors. Source fixtures pass 342 shared
+  naming cases and 988 actual wizard/hash cases with scripted services, native
+  headers, warnings as errors and address/undefined-behavior sanitizers.
+- The page-source review also corrects M04-AC01's timing: Custom's Random-bit
+  clearing is in non-Cancel page commit, before password text validation, not in
+  the Custom click handler. The existing native regression sends Custom then
+  Next. Complete page semantics remain open.
+- GAP-27 records a new native hit-test boundary: 104 defined helper cases pass,
+  and both growth hits reproduce an array-bounds sanitizer diagnostic. No
+  undefined return value is accepted as a specification result.
+- macOS SDL Debug configure/build passed without new warnings; all 31 selected
+  runtime/unit/packaging/tutorial checks passed. Full native regression reports
+  519 matches, 21 existing unused-storage warnings, zero differences/errors and
+  zero skipped reference inputs. Runtime C/data/text/format/baseline files are
+  unchanged. No host-only checks are required for these specification edits.
+- Full collection verification completed with exit 0: Dafny 4.11.0, 119 formal
+  files, `python3 tests/spec/verify.py --time-limit 120 --progress Symbol`,
+  **12,579 verified, zero errors; audit zero findings**. No proof assumptions,
+  disabled verification or weakened contracts were introduced.
+- Checker tests pass 9/9; handbook tests pass 26/26. Final link validation checks
+  3,045 local links/includes and 745 requirement IDs (116 stories, 464 acceptance,
+  66 interaction, 99 quality), with zero errors. Handbook validation checks
+  221 rendered pages and 42,887 local links/assets, with zero errors.
+- Preservation checks retain all 209 pre-batch specification/test files, 775
+  explicit anchors and 2,665 formal declarations. All 14 new acceptance criteria
+  render once in their intended four-column rows. Python syntax, whitespace and
+  diff checks pass, including untracked specification/test sources.
+
+Evidence: `dist/spec-race-wizard-full.log`, `dist/spec-race-wizard-focused-final.log`,
+`dist/spec-race-wizard-name-source-final.log`,
+`dist/spec-race-wizard-controller-source-final.log`,
+`dist/spec-race-wizard-hit-source.log`, `dist/spec-race-wizard-configure.log`,
+`dist/spec-race-wizard-build.log`, `dist/spec-race-wizard-runtime.log`,
+`dist/spec-race-wizard-regression.log`,
+`dist/scaffold/regression/spec-race-wizard-comparison.json`,
+`dist/spec-race-wizard-checker-tests.log`, `dist/spec-race-wizard-handbook-tests.log`,
+`dist/spec-race-wizard-links-final.log`, `dist/spec-race-wizard-handbook-final.log`
+and `dist/spec-race-wizard-integrity.log`. Source fixtures use scripted service
+receipts; these counts do not establish full native UI or C refinement.
+
+Remaining D scope is full six-page/preset/AR/habitat/economy/research event,
+commit and tracking behavior; native geometry/text/control/page/pricing/
+credential/save/lifetime/reentrancy/display extraction remains A/V work with
+M01/M02/M04/S01/S04/S05/S06. This does not close the full 26-module goal or
+approve a new UI/legacy policy.
+
+
+## Race page command continuation
+
+Observed 2026-10-27 at `e3222eb1fbdb01d68067231b5d5ef14a71759b30`.
+[Page-command contracts](M04-page-commands.md) cover every WM_COMMAND arm across
+all six race pages, full preset/Custom/name/password/portrait/leftover commit,
+AR resets, trait/immunity/research mutations, notification/raw-check narrowing,
+callback-versus-modal returns and drawing post-state frames. M04-AC15–25 trace
+these rules and ordinary rejection's partial state. No runtime source, file
+format, catalog, policy or regression baseline changes.
+
+- Focused proof: 26 verified, zero errors. The source fixture passes 3,344 cases
+  with native headers/resource IDs, actual stat/trait/hash/password-rejection and
+  BoundsCheckPlayer helpers, warnings as errors and address/undefined-behavior
+  sanitizers. It compiles command arms in small dispatch wrappers; UI/catalog/
+  geometry/drawing services remain scripted, not full native callbacks.
+- The first full run was intentionally stopped (exit 143) after source review
+  found a new-model/fixture argument-width mismatch. Immunity masks now narrow
+  at DrawRace2's signed-16 boundary; DrawingMaskVectors and corrected fixture
+  signatures check -255/-254/-252. Runtime C and baselines were unchanged.
+- macOS SDL Debug configure/build passed with no new warnings. All 31 runtime/
+  unit/packaging/tutorial checks passed. Full native regression reports 519
+  matches, 21 existing unused-storage warnings, zero differences/errors and zero
+  skipped reference inputs. No host-only checks are required for these edits.
+- Checker tests pass 9/9 and handbook tests pass 26/26. Preservation checks keep
+  all 216 pre-batch specification/test files, 792 explicit anchors and 2,725
+  formal declarations; all 11 new criteria render in single four-column rows.
+  Python syntax and whitespace/diff checks pass, including untracked sources.
+- The corrected full collection verification reports **12,605 verified, zero
+  errors**, and audit reports **zero findings**, with Dafny 4.11.0 over all 120
+  formal files using `python3 tests/spec/verify.py --time-limit 120 --progress
+  Symbol`. The process has finished. No proof assumptions, disabled verification
+  or weakened contracts were introduced. The original stopped run is not a pass.
+- Final validation checks 3,080 local links/includes and 756 requirement IDs
+  (116 stories, 475 acceptance, 66 interaction, 99 quality), with zero errors.
+  Handbook validation checks 223 rendered pages and 43,614 local links/assets,
+  with zero errors.
+
+Evidence: `dist/spec-race-pages-focused-final2.log`,
+`dist/spec-race-pages-source-final.log`, `dist/spec-race-pages-full2.log`,
+`dist/spec-race-pages-configure.log`, `dist/spec-race-pages-build.log`,
+`dist/spec-race-pages-runtime.log`, `dist/spec-race-pages-regression.log`,
+`dist/scaffold/regression/spec-race-pages-comparison.json`,
+`dist/spec-race-pages-checker-tests.log`, `dist/spec-race-pages-handbook-tests.log`,
+`dist/spec-race-pages-links-final.log`, `dist/spec-race-pages-handbook-final.log`
+and `dist/spec-race-pages-integrity.log`. These checks establish the stated
+command/proof/fixture scope; initialization and complete native UI/pricing
+behavior are still unclosed work.
+
+The explicit remaining inventory is initialization/title, all mouse/paint/
+tracking and complete pricing/drawing/native extraction; see the companion's
+owner/evidence table. GAP-26/27 and policy/runtime qualification remain open.
+This closes command-detail work, not the full 26-module objective.
+
+
+## Race page initialization continuation
+
+Observed 2026-10-27 at `e3222eb1fbdb01d68067231b5d5ef14a71759b30`.
+[Initialization contracts](M04-page-initialization.md) cover all six entry arms,
+preset prefix matching/portrait restoration, tutorial bypass, default-name/
+password boundaries, five leftover additions versus raw stat requests, exact
+read-only requests, title ID/argument schedule and all 17 habitat rectangles.
+M04-AC26–34 trace these rules. No runtime source, data/text, file format, baseline
+or policy changes are included.
+
+- Focused proof: 33 verified, zero errors and no warnings. The source fixture
+  passes 1,126 initialization/title/helper cases with native layout and fresh IDs,
+  complete player/password bytes, API request order and all 17 rectangles. The
+  title's existing unused cch warning is locally suppressed without editing its
+  source body; other warnings are errors. Native window/catalog/metric services
+  remain scripted.
+- macOS SDL Debug configure/build passed with no new warnings. All 31 runtime/
+  unit/packaging/tutorial checks passed; full native regression reports 519
+  matches, 21 existing unused-storage warnings, zero differences/errors and zero
+  skipped reference inputs. Runtime C/data/text/format/baseline files are
+  unchanged; host-only checks are not required for these specification edits.
+- Checker tests pass 9/9; handbook tests pass 26/26. Preservation checks keep
+  all 219 pre-batch specification/test files, 803 explicit anchors and 2,759
+  formal declarations. All nine new criteria render once in four-column rows.
+  Python syntax, whitespace and diff checks pass, including untracked sources.
+- Full collection verification completed with exit 0: Dafny 4.11.0, 121 formal
+  files, `python3 tests/spec/verify.py --time-limit 120 --progress Symbol`,
+  **12,638 verified, zero errors; formal trust check zero findings**. No proof
+  assumptions, disabled verification or weakened contracts were introduced.
+- Final link/ID validation checks 3,116 local links/includes and 765 requirements
+  (116 stories, 484 acceptance, 66 interaction, 99 quality), with zero errors.
+  Handbook validation checks 225 rendered pages and 44,307 local links/assets,
+  with zero errors.
+
+Evidence: `dist/spec-race-init-focused3.log`,
+`dist/spec-race-init-source-final.log`, `dist/spec-race-init-full.log`,
+`dist/spec-race-init-configure.log`, `dist/spec-race-init-build.log`,
+`dist/spec-race-init-runtime.log`, `dist/spec-race-init-regression.log`,
+`dist/scaffold/regression/spec-race-init-comparison.json`,
+`dist/spec-race-init-checker-tests.log`, `dist/spec-race-init-handbook-tests.log`,
+`dist/spec-race-init-links-final.log`, `dist/spec-race-init-handbook-final.log`
+and `dist/spec-race-init-integrity.log`. Source fixtures establish the stated
+initialization/request/helper scope under supplied services; they do not prove
+complete native dialog, display, mouse or painting behavior.
+
+Remaining work is full mouse/paint/tracking, complete pricing/drawing and plural
+producer rules, title catalog/format and native UI/state extraction, with the
+existing explicit owners. This does not complete the full 26-module goal.
+
+
+## Race mouse and message continuation
+
+Observed 2026-10-27 at `e3222eb1fbdb01d68067231b5d5ef14a71759b30`.
+[Pointer/message contracts](M04-pointer-and-message-interactions.md) specify all
+parent mouse/cursor/color/erase arms, full hit testing and portrait/habitat/
+economy tracking programs, signed-byte/coordinate/MulDiv boundaries, current
+callback state and redraw/cleanup/escaping outcomes. M04-AC35–47 trace these
+rules. Existing GAP-26/27 domains remain explicit. No runtime source, data/text,
+file format, policy or baseline changes.
+
+- Focused verification: 42 verified, zero errors. Source fixtures pass 2,261
+  hit/track/mouse/cursor cases and 1,882 color/erase cases (4,143 total), using
+  actual controller/helper bodies, native layout, warnings as errors and address/
+  undefined-behavior checks. Event/capture/drawing/window services are scripted;
+  known invalid source reads are not counted as ordinary C returns.
+- macOS SDL Debug configure/build passed without new warnings. All 31 runtime/
+  unit/packaging/tutorial checks passed. Full native regression reports 519
+  matches, 21 existing unused-storage warnings, zero differences/errors and zero
+  skipped reference inputs. Runtime C/data/text/format/baseline files are
+  unchanged; no host-only checks are required for these specification edits.
+- Checker tests pass 9/9 and handbook tests pass 26/26. Preservation checks keep
+  all 222 pre-batch specification/test files, 812 anchors and 2,791 formal
+  declarations. All 13 new criteria render once in four-column rows. Python
+  syntax, whitespace and diff checks pass, including untracked sources.
+- Full collection verification completed with exit 0: Dafny 4.11.0, 122 formal
+  files, `python3 tests/spec/verify.py --time-limit 120 --progress Symbol`,
+  **12,680 verified, zero errors; formal trust check zero findings**. No proof
+  assumptions, disabled verification or weakened contracts were introduced.
+- Final validation checks 3,157 local links/includes and 778 requirements
+  (116 stories, 497 acceptance, 66 interaction, 99 quality), with zero errors.
+  Handbook validation checks 227 rendered pages and 45,083 local links/assets,
+  with zero errors.
+
+Evidence: `dist/spec-race-tracking-focused-final2.log`,
+`dist/spec-race-tracking-source-final.log`,
+`dist/spec-race-tracking-appearance.log`, `dist/spec-race-tracking-full.log`,
+`dist/spec-race-tracking-configure.log`, `dist/spec-race-tracking-build.log`,
+`dist/spec-race-tracking-runtime.log`, `dist/spec-race-tracking-regression.log`,
+`dist/scaffold/regression/spec-race-tracking-comparison.json`,
+`dist/spec-race-tracking-checker-tests.log`,
+`dist/spec-race-tracking-handbook-tests.log`,
+`dist/spec-race-tracking-links-final.log`,
+`dist/spec-race-tracking-handbook-final.log` and
+`dist/spec-race-tracking-integrity.log`. These checks cover the stated controller/
+helper/request scope; complete painting and native UI refinement remain open.
+
+Remaining D/A/V scope is full WM_PAINT/DrawRace2/3/advantage drawing/invalidation,
+plural and title/catalog/format producers, and native event/timer/capture/window/
+state/lifetime extraction. This does not complete the 26-module objective.
+
+## Player label and race title continuation
+
+Reviewed 2026-10-27 at `e3222eb1fbdb01d68067231b5d5ef14a71759b30`.
+[Player-label/title contracts](S03-player-labels-and-race-titles.md) now specify
+name/plural/article/fallback/grammar, conditional native string domains and shared
+scratch effects, all seven preset plurals, current title/default/grammar catalog
+rows and the common single-integer format subset. S03-AC11–14, S04-AC08 and
+M04-AC48–49 trace these additions. Full painting, generic formatting/catalog
+extraction and native UI/state/lifetime qualification remain open. No runtime
+source, data/text, file format, product policy or baseline changes.
+
+- Focused verification of all three new formal files passes: **536 verified,
+  zero errors**. General properties include exact trimming/prefix frames,
+  literal/single-integer templates and every signed-16 ordinary wizard title.
+  Full collection verification is running with
+  `python3 tests/spec/verify.py --time-limit 120 --progress Symbol`; its result
+  and formal trust check are not yet claimed as passed.
+- The source fixture passes **1,033 defined cases**, binds all fifteen generated
+  catalog rows and classifies 39 undefined-domain vectors before C execution.
+  Complete PLAYER bytes, scratch prefixes/NULs/tails, lookup order and ignored
+  text API failure are checked. This is helper evidence, not native display or
+  whole-wizard qualification.
+- macOS SDL Debug configure/build passes without new warnings. All **31 runtime
+  checks** pass; full native regression reports **519 matches**, 21 existing
+  unused-storage warnings, zero differences/errors and zero skipped references.
+- Checker tests pass **9/9** and handbook tests **26/26**. Preservation checks
+  retain 226 pre-batch files, 1,728 explicit/heading link targets and 2,850
+  declarations. All seven new criteria render once in the proper table columns;
+  Python syntax, whitespace and diff checks pass.
+
+Evidence: `dist/spec-race-text-focused-final.log`,
+`dist/spec-race-text-source-final.log`, `dist/spec-race-text-full.log`,
+`dist/spec-race-text-configure.log`, `dist/spec-race-text-build.log`,
+`dist/spec-race-text-runtime.log`, `dist/spec-race-text-regression.log`,
+`dist/scaffold/regression/spec-race-text-comparison.json`,
+`dist/spec-race-text-checker-tests.log`,
+`dist/spec-race-text-handbook-tests.log`,
+`dist/spec-race-text-links-final.log`,
+`dist/spec-race-text-handbook-final.log` and
+`dist/spec-race-text-integrity.log`. Full collection verification remains
+pending; this continuation does not complete the 26-module objective.

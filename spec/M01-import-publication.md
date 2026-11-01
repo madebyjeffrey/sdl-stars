@@ -199,7 +199,9 @@ the actual copy loop, checking retained byte prefixes, full-copy remnants,
 source preservation and errno restoration. These are scripted I/O failures;
 actual OS fault delivery and other native platforms remain qualification gaps.
 
-Remaining owners: M01/S01 family enumeration and exact validation fields; S04
+Remaining owners: M01/S01 complete family lexing, duplicate-member handling,
+enumeration/admission, BOF/record parsing and byte-to-inspection/probe-field mapping;
+M01 full host-orders, duplicate/rename/delete/export controllers and helper composition; S04
 native path aliases, copy/write/close/delete/rename failures and concurrent/crash
 qualification; M06 pending-session reloading and save handoffs; M01/S05 native
 UI and recovery-path discoverability. GAP-09 retains the wider M02/M05/M06/M17/M18

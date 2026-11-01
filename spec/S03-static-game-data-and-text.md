@@ -2,9 +2,11 @@
 
 Status: source-derived detailed specification; logical ownership is proposed.
 Inspected: `e2eae18cff0f990db20415c1c2262aed2022f95b`, 2026-10-24.
+Player-label/title continuation: `e3222eb1fbdb01d68067231b5d5ef14a71759b30`, 2026-10-27.
 
 Canonical entry: [S03-catalogs-specification.dfy](S03-catalogs-specification.dfy);
-[rules and proofs](dafny/S03-catalogs.dfy). Behavior statuses and evidence follow
+[rules and proofs](dafny/S03-catalogs.dfy),
+[player labels and race titles](S03-player-labels-and-race-titles.md). Behavior statuses and evidence follow
 [the collection conventions](README.md#requirement-ids-and-status).
 
 [Workflow and state diagrams](#workflow-and-state-diagrams) provide a visual reading path.
@@ -157,6 +159,10 @@ not a proved runtime outcome. The dated collection run records actual checks.
 | <a id="s03-ac08"></a>**S03-AC08** / [S03-US04](#s03-us04) | Given a catalog-dependent behavior comparison, when identifying inputs, then include generator/schema and embedded-constant versions as well as YAML/text. | S03 inventory; E03-3 |
 | <a id="s03-ac09"></a>**S03-AC09** / [S03-US01](#s03-us01), [S03-US04](#s03-us04) | Given the current generated catalogs, preserve the sixteen research lookup extents in ascending slot-mask order, each below 256, and sum extents plus terminators to 255 calls. | [Research catalog limits](dafny/S03-research-catalog.dfy) `Limits`, `Calls`, `CurrentCalls`; [actual lookup/generated-enum fixture](../tests/spec/check_host_research_source.py). M12 owns [scan termination](M12-host-research-resolution.md#catalog-bound-and-host-control-progress); full dynamic availability/pointer refinement remains open. |
 | <a id="s03-ac10"></a>**S03-AC10** / [S03-US01](#s03-us01), [S03-US04](#s03-us04) | Given the current lookup and hidden-part rules, retain their 116 named catalog identities and sixteen ascending masks, binding them to fresh native enums while consumers select the actual requirement/ability row. | [Named identities](dafny/S03-lookup-identities.dfy), `Masks` and [native fixture](../tests/spec/check_part_availability_source.py); [M11 row/decision contract](M11-part-availability.md). C static assertions and full current-row export bind this snapshot; universal native alias/lifetime/caller refinement remains open. |
+| <a id="s03-ac11"></a>**S03-AC11** / [S03-US03](#s03-us03) | Given a nonempty singular, select the requested existing plural or singular, prepend the optional article, trim ASCII trailing spaces and apply the exact lowercase `s`/`se` automatic-suffix rule. Capital mode changes only an article's T. | `Name`, `Trim`, `TrimIdempotent`; [player-label companion](S03-player-labels-and-race-titles.md). The actual-helper fixture compares singular/plural/article/grammar boundaries. |
+| <a id="s03-ac12"></a>**S03-AC12** / [S03-US03](#s03-us03) | Given empty singular, produce Player plus the promoted index+1, append possessive only for zero plural mode and use has/is for grammar 1/2. Named labels use have/are independently of plural mode. | `Name`, `Grammar`, `GrammarCalls`, `EmptyNameIgnoresUnusedPlural`; actual native fallback/flag/extreme-index cases. |
+| <a id="s03-ac13"></a>**S03-AC13** / [S03-US03](#s03-us03), [S03-US04](#s03-us04) | Given defined label/title helper inputs, preserve PLAYER bytes, exact catalog lookup order, decoded scratch and final shared-work prefixes/NULs/tails. Current fifteen pinned rows retain generated values. | `Catalog`, `Defaults`, `Work`, `LastScratch`; [actual decoding/generated-table fixture](../tests/spec/check_player_labels_source.py). Pointer alias/reentrancy/lifetime remains S06 qualification. |
+| <a id="s03-ac14"></a>**S03-AC14** / [S03-US03](#s03-us03) | Given field access, require a terminator only where the branch reaches a string read, and distinguish undefined trim/short-suffix/index/capacity domains from normal labels. Do not claim No Name recovers an already invalid read. | `Select`, `Zero`, `FieldTerminator`, `Name`; [reached-domain contract](S03-player-labels-and-race-titles.md#reached-strings-scratch-state-and-outcomes). Invalid C domains are classified before fixture execution. |
 
 ## 5. Interaction and quality requirements
 

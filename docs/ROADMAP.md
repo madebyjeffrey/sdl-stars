@@ -129,6 +129,37 @@ SDK probes, retaining the exact diagnostic classification in
 [maintained policy](CPP-POLICY.md). Game results and original vector assertions
 are unchanged.
 
+[Milestone D](CPP-MILESTONE-D.md) ([issue #71](https://github.com/madebyjeffrey/sdl-stars/issues/71))
+plans a C++ file-selection interface behind the SDL Win32 wrapper after C. It
+retains the Win32 open/save entry points as
+adapters, moves the four picker backends to a typed request/result handoff and
+migrates a real open/save caller pair. It is planned, not implemented. The
+[earlier D analysis](CPP-MILESTONE-D-ANALYSIS.md) remains an assessment of broader
+domain-encapsulation candidates, which are outside this milestone.
+
+## C++ follow-up review backlog
+
+Reviewed `develop` at `b6491ed2` on 2026-10-31. Owned production has no
+function-like macros; its 167 definitions are 165 include guards and two
+configuration definitions. This is a static interface review, not a new runtime
+bug reproduction or authorization to change game behavior.
+
+| Order | Remaining work | Evidence and completion boundary |
+| --- | --- | --- |
+| 1 | Preserve actual output capacity in formatting and string-copy APIs. | [CchSprintf](../src/platform/native.cpp), [wsprintfA](../compat/win32/src/services.cpp) use a hardcoded 1024-byte bound; [CchGetString](../src/core/utilgen.cpp) has no destination bound. Introduce bounded spans/array overloads, retain legacy formatting and complete UTF-8 code points, and characterize affected small-buffer callers. |
+| 2 | Replace six packaged help value macros and extend the inventory to generated headers. | [helpgen.py](../compat/win32/helpgen.py) extracts help_contexts.h from the guide archive. Its archive/bundle size/CRC, SHA and contents values can be typed constants; [help.cpp](../compat/win32/src/help.cpp) needs the SHA/newline concatenation adjusted. Version/resource macros have actual RC/parser consumers and remain supported. |
+| 3 | Give file selection a typed request/result and owned transient storage. | [Milestone D](CPP-MILESTONE-D.md) owns the [backend handoff](../compat/win32/src/filedialog_backend.h), shared policy, platform adapters and real open/save callers. Preserve cancellation/error/owner/CWD behavior. |
+| 4 | Retire obsolete embedded-resource release ceremony from application callers. | [logui.cpp](../src/ui/logui.cpp) and [mdi.cpp](../src/ui/mdi.cpp) still unlock/free embedded resources; [FreeResource](../compat/win32/src/resource.cpp) is a no-op. Check last-error effects before deletion and keep compatibility entry points where required by contract tests. |
+| 5 | Remove remaining procedure-instance indirection. | [FARPROC](../compat/win32/include/wincompat_types.h) aliases DLGPROC; [buildui.cpp](../src/ui/buildui.cpp) and other dialogs retain temporary callback variables after thunk removal. Pass callbacks directly where possible while preserving required debug-symbol names. |
+| 6 | Make scratch-text borrowing and invalidation explicit. | [PszGetCompressedString](../src/core/strings.cpp) and [PszPlayerName](../src/core/util.cpp) return mutable reusable session buffers. Document lifetime, then introduce const views or caller-owned output where appropriate; a view alone does not extend lifetime. |
+
+Secondary style work includes NULL, C-style casts, typedef struct, C headers and
+bytewise initialization. Review these locally; retain fixed storage widths,
+wire codecs, stable arena lifetimes, qsort16 ordering and genuine foreign APIs.
+The C11-only specification cases consolidated after C remain historical evidence
+under [the specification policy](../spec/README.md#consolidated-evidence-after-the-c-migration);
+porting them to actual linked C++ targets remains open.
+
 ## SDL desktop consolidation
 
 The desktop product uses SDL3 through `compat/win32` on every platform. The native
@@ -763,6 +794,7 @@ other the serial-unlocked shareware), which can point at causes.
 
 | Bug | Starting point (see KNOWN-BUGS.md) | Status |
 | --- | --- | --- |
+| Race habitat growth hit test | IrcRaceDlgHitTest reads a three-element habitat array at index 3 for growth rectangles 15/16; [mechanism and evidence](KNOWN-BUGS.md#race-habitat-growth-hit-test--located-on-main) | actual helper/native-layout fixture reproduces both array-bounds diagnostics; full native event reachability, original comparison and separate repair remain open; no runtime change |
 | Production editor queue sanitization | `InitProduction` overlapping `memcpy` and diverging logical/physical row cursors; [mechanism and evidence](KNOWN-BUGS.md#production-editor-queue-sanitization--located-on-main) | current source fixtures confirm the defined cursor case and flag overlap before executing it; full UI trigger, original comparison and repair open |
 | Planet queue capacity wrap | `FLookupPlanet` count+2 growth narrows the maximum header, then `FDupPlanet` can allocate too little for active rows; [mechanism and evidence](KNOWN-BUGS.md#planet-queue-capacity-wrap--located-on-main) | guarded source write/read chain confirms counts 254/255 and undersized requests; actual host partial prepend also confirms 255-row header wrapping/missing spare; full allocator/UI reachability, original comparison and separately scoped repair open |
 | Genesis stock write-back | `FBuildObject` clears planet fields but Produce later republishes its separate working mineral stocks; [mechanism](KNOWN-BUGS.md#genesis-stock-write-back--located-on-main) | actual Produce/builder/application/RNG fixtures confirm the two stages; full game/original comparison and intended preserve/erase behavior remain open; no runtime repair |

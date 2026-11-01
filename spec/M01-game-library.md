@@ -356,6 +356,10 @@ Named tests are evidence of scope; the dated run in §7 establishes execution.
 | <a id="m01-ac19"></a>M01-AC19 / US04 | Given conflict publication failure and failed first restore, retry after stage cleanup. Successful retry reports ordinary replacement failure; two failed restores report the recovery hold. Successful publication with failed hold cleanup returns TRUE plus warning, possibly with partial hold residue. | `ConflictReplace`, `RetriedRestore`, `PublishedWithRemnant`; full conflict controller. | Extracted-controller call traces, partial cleanup profiles and formal witnesses; native recursive-helper/OS refinement remains open. |
 | <a id="m01-ac20"></a>M01-AC20 / US03 | Given an admitted family with a reserved pending path, on ordinary publication success/failure clear pending memory. Cleanup failure may leave directories/files; allocation failure has no generic import-failed alert. | `FamilyPublish`, `FamilyClearsPending`; family publication tail, shallow `RemoveImportFile`. | Extracted-tail reply masks and general clearing proof; admission/copy-helper and native cleanup qualification remain open. |
 | <a id="m01-ac21"></a>M01-AC21 / US04, US05 | Given Separate Copy, clone with incoming player and played time zero, retain exchange basename, and publish only the stage. On failure attempt stage cleanup without moving the original directory. | `SeparateCopy`; `FImportConflictingTurnAsCopy` argument/control flow; stage-only helper contract. | Extracted whole-controller cases assert clone arguments and projected original preservation; disjoint paths and real helper footprints remain qualification obligations. |
+| <a id="m01-ac22"></a>M01-AC22 / US03, US05 / Observed | Given naming-dialog initialization, use the work area or screen fallback, visible/readable owner or work fallback, then center with C signed division and clamp without resizing. Bind output pointer, limit input to 255 and set initial text. Oversized dialogs are not promised to fit. | `Initialize`, `GeometrySafe`, `Position`; [shared dialog](M01-library-name-dialog.md). | [Source fixture](../tests/spec/check_library_name_dialog_source.py) checks hidden/failed owner, failed-written dialog rectangle, fallback and oversized/odd dimensions; unwritten/overflow and native DPI/lifetime remain S05/S06. |
+| <a id="m01-ac23"></a>M01-AC23 / US03, US04, US05 / Observed | Given Cancel, close with FALSE while callback returns handled TRUE and output stays unchanged. OK accepts only a valid available name; invalid/colliding input keeps the dialog open. Other commands are unhandled. Only successful OK copies prefix plus NUL, retaining output tails. | `Command`, `Unhandled`, `CancelLeavesBuffers`, `InvalidOrCollisionKeepsOutput`; actual LibraryNameDlg. | [Source fixture](../tests/spec/check_library_name_dialog_source.py) checks both mode branches, high notification words, output bytes and repeated OK/Cancel; real control/text routing remains S05. |
+| <a id="m01-ac24"></a>M01-AC24 / US03, US05 / Observed | Given game-name collision, probe then format suffixes 2…9999 using signed root budget and continuation-byte retreat. Exhaustion leaves final 9999 candidate unprobed; the dialog reports Name Taken and requires another OK, rather than accepting it. | `SuggestGame`, `GameLoop`, `BackBoundary`, `FinalGameCandidateNotProbed`. | [Source fixture](../tests/spec/check_library_name_dialog_source.py) covers first/next/all-failed queries and repeated validation; localized revision suffixes from other callers and native enumeration remain separate. |
+| <a id="m01-ac25"></a>M01-AC25 / US03, US05 / Observed | Given invalid/taken feedback, copy message body before fetching caption from shared compressed-string scratch storage; show the retained body and leave output untouched. | `Command` Body/CopyBody/Caption/Message order; LibraryNameDlg. | [Source fixture](../tests/spec/check_library_name_dialog_source.py) overwrites the same scratch buffer for distinct body/caption values. Localized string bounds and native visual/accessibility behavior remain S03/S05. |
 
 ## 5. Interaction and quality requirements
 
@@ -531,14 +535,14 @@ sequenceDiagram
                     Library->>Files: Remove only this player's old .xN
                     alt Orders removal failed
                         Library->>Files: Attempt restoration of prior turn
-                        Library-->>Player: Failure, recovery path if restoration failed
+                        Library-->>Player: Failure; recovery path if restoration failed
                     else Orders removed
                         Library->>Files: Attempt previous-file cleanup
                         Library-->>Player: Success, histories and other players retained
                     end
                 else Installed and orders query reported FALSE
                     Library->>Files: Attempt previous-file cleanup
-                    Library-->>Player: Success, old orders may remain
+                    Library-->>Player: Success; old orders may remain
                 end
             end
         else Changed same-year or older
