@@ -1,4 +1,9 @@
 #include "common.h"
+#include "appstate.h"
+#ifdef STARS_UI_SDL
+#include "uistate.h"
+#endif
+#include "callbackcontext.h"
 #include "host_profile.h"
 #include "version.h"
 #include "ownership.h"
@@ -18,11 +23,11 @@
 int16_t IdAlertBox(const char *sz, int16_t mbType) {
     fprintf(stderr, "stars-host: %s\n", sz);
     switch (mbType & 0x000f) {
-    case MB_OKCANCEL:
+    case win32::MB_OKCANCEL:
         return IDCANCEL;
-    case MB_YESNOCANCEL:
-    case MB_YESNO:
-        return IDNO;
+    case win32::MB_YESNOCANCEL:
+    case win32::MB_YESNO:
+        return win32::IDNO;
     default:
         return IDOK;
     }
@@ -32,14 +37,14 @@ int16_t IdAlertBox(const char *sz, int16_t mbType) {
 // ReadIniSettings does for the Windows game: logging, the default
 // password, per-player dump files, host names in -v output and the number
 // of backup directories.
-static int16_t FReadHostIni(const char *szFile) {
+static int16_t FReadHostIni(APPSESSION &app, const char *szFile) {
     char *pszText;
     long  cb;
     NATIVEFILE *pf;
 
     pf = PfOpenNativeFile(szFile, "rb");
     if (!pf) {
-        return FALSE;
+        return 0;
     }
     StarsNativeFileGuard file(pf);
     ISeekNativeFile(pf, 0, SEEK_END);
@@ -48,27 +53,29 @@ static int16_t FReadHostIni(const char *szFile) {
     NATIVEOWNER<char, std::free> text(static_cast<char *>(malloc((size_t)cb + 1)));
     pszText = text.get();
     if (!pszText || CReadNative(pszText, 1, (size_t)cb, pf) != (size_t)cb) {
-        return FALSE;
+        return 0;
     }
     ICloseNativeFile(file.Release());
     pszText[cb] = 0;
-    if (!FUtf8Valid(pszText, (size_t)cb)) return FALSE;
+    if (!FUtf8Valid(pszText, (size_t)cb)) return 0;
     if (cb >= 3 && !memcmp(pszText, "\xef\xbb\xbf", 3)) memmove(pszText, pszText + 3, (size_t)cb - 2);
-    ini.fLogging = LIniInt(pszText, idsFiles, idsLogging, 0) != 0;
-    if (!FIniValue(pszText, idsMisc, idsDefaultpassword, vszDefPass, 16)) {
-        vszDefPass[0] = 0;
+    app.state.ini.fLogging = LIniInt(app, pszText, idsFiles, idsLogging, 0) != 0;
+    if (!FIniValue(app, pszText, idsMisc, idsDefaultpassword, app.state.vszDefPass, 16)) {
+        app.state.vszDefPass[0] = 0;
     }
-    gd.fPerPlayerDumps = LIniInt(pszText, idsMisc, idsNewreports, 0) != 0;
-    gd.fNoHostNames = LIniInt(pszText, idsMisc, idsNohostnames, 0) != 0;
-    vcBackupDirs = LIniInt(pszText, idsMisc, idsBackups, 1);
-    if (vcBackupDirs < 1 || vcBackupDirs > 999) {
-        vcBackupDirs = 1;
+    app.state.gd.fPerPlayerDumps = LIniInt(app, pszText, idsMisc, idsNewreports, 0) != 0;
+    app.state.gd.fNoHostNames = LIniInt(app, pszText, idsMisc, idsNohostnames, 0) != 0;
+    app.state.vcBackupDirs = LIniInt(app, pszText, idsMisc, idsBackups, 1);
+    if (app.state.vcBackupDirs < 1 || app.state.vcBackupDirs > 999) {
+        app.state.vcBackupDirs = 1;
     }
-    return TRUE;
+    return 1;
 }
 
 int main(int argc, char *argv[]) try {
-    NATIVECLEANUPSCOPE session([]() noexcept { GetAppSession().Close(); });
+    APPSESSION &app = host::app;
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    NATIVECLEANUPSCOPE session([&app]() noexcept { app.Close(); });
     char     szCmdLine[1024];
     int16_t  fSeed;
     uint32_t lSeed;
@@ -78,7 +85,7 @@ int main(int argc, char *argv[]) try {
     char **rgpszNative;
 #endif
 
-    GetAppSession().BindFiles();
+    app.BindFiles();
 #ifdef _WIN32
     rgpszNative = RgpszNativeArguments(&argc);
     if (!rgpszNative) { fprintf(stderr, "stars-host: invalid Windows command line\n"); return 2; }
@@ -122,11 +129,11 @@ int main(int argc, char *argv[]) try {
         }
         strcat(szCmdLine, argv[i]);
     }
-    szBase[0] = 0;
-    ini.SetWFlags(0);
-    ini.idPlayer = iplrNone;
-    InitGameStuff();
-    if (szIniPath && !FReadHostIni(szIniPath)) {
+    app.state.szBase[0] = 0;
+    app.state.ini.SetWFlags(0);
+    app.state.ini.idPlayer = iplrNone;
+    InitGameStuff(app);
+    if (szIniPath && !FReadHostIni(app, szIniPath)) {
         fprintf(stderr, "stars-host: can't read %s\n", szIniPath);
 #ifdef _WIN32
         nativeArguments.reset();
@@ -136,31 +143,31 @@ int main(int argc, char *argv[]) try {
 #ifdef _WIN32
     nativeArguments.reset();
 #endif
-    fSeed = FALSE;
+    fSeed = 0;
     lSeed = 0;
-    if (!ParseCmdLine(szCmdLine, &fSeed, &lSeed)) return 2;
-    Randomize2(fSeed ? lSeed : DwTickCount());
-    if (!ini.fCmdLine) {
+    if (!ParseCmdLine(app, szCmdLine, &fSeed, &lSeed)) return 2;
+    Randomize2(app, fSeed ? lSeed : DwTickCount());
+    if (!app.state.ini.fCmdLine) {
         fprintf(
             stderr,
             "usage: stars-host --version | [--ini stars.ini] [-s<seed>] [-p<password>] [-l] (-a game.def | -v game.hst | -g[n] [-t] game.hst | -b batchfile | "
             "-d[m][p][f] game.mN)\n");
         return 2;
     }
-    idPlayer = iplrNone;
-    ini.fCmdLine = FALSE;
-    if (!FRunCmdLine()) {
-        if (ini.fDumpMap || ini.fDumpPlanets || ini.fDumpFleets) {
-            if (!FDumpCmdLineGame()) {
+    app.state.idPlayer = iplrNone;
+    app.state.ini.fCmdLine = 0;
+    if (!FRunCmdLine(app)) {
+        if (app.state.ini.fDumpMap || app.state.ini.fDumpPlanets || app.state.ini.fDumpFleets) {
+            if (!FDumpCmdLineGame(app)) {
                 fprintf(stderr, "stars-host: -d needs a player's turn file (game.m1 and the like)\n");
                 return 2;
             }
-            return vretExitValue;
+            return app.state.vretExitValue;
         }
         fprintf(stderr, "stars-host: nothing to do; -w and opening a game need the Windows game\n");
         return 2;
     }
-    return vretExitValue;
+    return app.state.vretExitValue;
 } catch (const StarsError &error) {
     fprintf(stderr, "stars-host: %s failure (message %u)\n",
             error.mdError == starsErrorMemory ? "memory" : "file", (unsigned)error.ids);

@@ -9,7 +9,7 @@ static BOOL FCompatDibInfo(const BITMAPINFOHEADER &bi, const BYTE *rgb, size_t c
                            const void *lpBits, size_t cbBits, COMPATDIB *lpdib) {
     size_t i;
 
-    if (bi.biPlanes != 1 || bi.biCompression != BI_RGB || bi.biWidth <= 0 ||
+    if (bi.biPlanes != 1 || bi.biCompression != win32::BI_RGB || bi.biWidth <= 0 ||
         bi.biHeight == 0 || bi.biHeight == INT_MIN ||
         (bi.biBitCount != 1 && bi.biBitCount != 4 && bi.biBitCount != 8 &&
          bi.biBitCount != 24 && bi.biBitCount != 32))
@@ -34,9 +34,9 @@ static BOOL FCompatDibInfo(const BITMAPINFOHEADER &bi, const BYTE *rgb, size_t c
         (bi.biSizeImage != 0 && bi.biSizeImage < lpdib->cbBits))
         return SDL_SetError("Truncated DIB color table or pixel buffer");
     for (i = 0; i < (size_t)lpdib->cColors; i++)
-        lpdib->rgcr[i] = RGB(rgb[cbWireDibHeader + i * 4 + 2], rgb[cbWireDibHeader + i * 4 + 1], rgb[cbWireDibHeader + i * 4]);
+        lpdib->rgcr[i] = win32::RGB(rgb[cbWireDibHeader + i * 4 + 2], rgb[cbWireDibHeader + i * 4 + 1], rgb[cbWireDibHeader + i * 4]);
     lpdib->lpBits = (const BYTE *)(lpBits);
-    return TRUE;
+    return 1;
 }
 
 BOOL FCompatDib(const void *lpInfo, size_t cbInfo, const void *lpBits, size_t cbBits, COMPATDIB *lpdib) {
@@ -44,7 +44,7 @@ BOOL FCompatDib(const void *lpInfo, size_t cbInfo, const void *lpBits, size_t cb
     std::uint32_t cbHeader;
     const auto *rgb = static_cast<const std::byte *>(lpInfo);
 
-    if (!rgb || !lpdib || cbInfo < 4) return FALSE;
+    if (!rgb || !lpdib || cbInfo < 4) return 0;
     NATIVEBYTEREADER(std::span(rgb, 4)).FReadU32Le(cbHeader);
     if (cbHeader != cbWireDibHeader || cbInfo < cbWireDibHeader)
         return SDL_SetError("DIB input requires a BITMAPINFOHEADER");
@@ -59,7 +59,7 @@ BOOL FCompatNativeDib(const void *lpInfo, size_t cbInfo, const void *lpBits, siz
     DWORD cbHeader;
 
     static_assert(sizeof(BITMAPINFOHEADER) == cbWireDibHeader && sizeof(RGBQUAD) == cbWireRgbQuad);
-    if (!lpInfo || !lpdib || cbInfo < sizeof(cbHeader)) return FALSE;
+    if (!lpInfo || !lpdib || cbInfo < sizeof(cbHeader)) return 0;
     memcpy(&cbHeader, lpInfo, sizeof(cbHeader));
     if (cbHeader != sizeof(bi) || cbInfo < sizeof(bi))
         return SDL_SetError("DIB input requires a BITMAPINFOHEADER");
@@ -92,7 +92,7 @@ SDL_Surface *LpCompatDibSurface(const COMPATDIB *lpdib) {
                 }
                 cr = lpdib->rgcr[iColor];
             } else {
-                cr = RGB(rgb[x * (lpdib->cBits / 8) + 2], rgb[x * (lpdib->cBits / 8) + 1], rgb[x * (lpdib->cBits / 8)]);
+                cr = win32::RGB(rgb[x * (lpdib->cBits / 8) + 2], rgb[x * (lpdib->cBits / 8) + 1], rgb[x * (lpdib->cBits / 8)]);
             }
             lpout[x * 4] = (BYTE)cr;
             lpout[x * 4 + 1] = (BYTE)(cr >> 8);

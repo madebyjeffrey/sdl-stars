@@ -47,104 +47,104 @@ static BOOL FDraw(HWND hwnd, HDC hdcDest, PAINTTEST *lpwin) {
     int cch;
     BOOL fOk;
 
-    GetClientRect(hwnd, &rc);
-    hdc = CreateCompatibleDC(hdcDest);
-    hbm = CreateCompatibleBitmap(hdcDest, rc.right, rc.bottom);
+    win32::GetClientRect(hwnd, &rc);
+    hdc = win32::CreateCompatibleDC(hdcDest);
+    hbm = win32::CreateCompatibleBitmap(hdcDest, rc.right, rc.bottom);
     if (!hdc || !hbm) {
-        DeleteDC(hdc); DeleteObject(hbm);
-        return FALSE;
+        win32::DeleteDC(hdc); win32::DeleteObject(hbm);
+        return 0;
     }
-    hbmOld = SelectObject(hdc, hbm);
-    hbr = CreateSolidBrush(lpwin->color);
-    hpen = CreatePen(PS_SOLID, 1, RGB(255, 255, 255));
+    hbmOld = win32::SelectObject(hdc, hbm);
+    hbr = win32::CreateSolidBrush(lpwin->color);
+    hpen = win32::CreatePen(win32::PS_SOLID, 1, win32::RGB(255, 255, 255));
     if (!hbr || !hpen) {
-        DeleteObject(hbr); DeleteObject(hpen);
-        DeleteDC(hdc); DeleteObject(hbm);
-        return FALSE;
+        win32::DeleteObject(hbr); win32::DeleteObject(hpen);
+        win32::DeleteDC(hdc); win32::DeleteObject(hbm);
+        return 0;
     }
-    fOk = FillRect(hdc, &rc, hbr);
-    hbrOld = SelectObject(hdc, GetStockObject(NULL_BRUSH));
-    hpenOld = SelectObject(hdc, hpen);
-    fOk &= Rectangle(hdc, 12, 12, rc.right - 12, rc.bottom - 12);
-    fOk &= MoveToEx(hdc, 20, 70, NULL) && LineTo(hdc, rc.right - 20, 70);
-    SetTextColor(hdc, RGB(255, 255, 255));
-    SetBkMode(hdc, TRANSPARENT);
+    fOk = win32::FillRect(hdc, &rc, hbr);
+    hbrOld = win32::SelectObject(hdc, win32::GetStockObject(win32::NULL_BRUSH));
+    hpenOld = win32::SelectObject(hdc, hpen);
+    fOk &= win32::Rectangle(hdc, 12, 12, rc.right - 12, rc.bottom - 12);
+    fOk &= win32::MoveToEx(hdc, 20, 70, NULL) && win32::LineTo(hdc, rc.right - 20, 70);
+    win32::SetTextColor(hdc, win32::RGB(255, 255, 255));
+    win32::SetBkMode(hdc, win32::TRANSPARENT);
     cch = snprintf(sz, sizeof(sz), "Window %d - %ld x %ld", lpwin->i + 1, (long)rc.right, (long)rc.bottom);
-    fOk &= GetTextExtentPoint32(hdc, sz, cch, &size);
-    fOk &= TextOut(hdc, (rc.right - size.cx) / 2, 30, sz, cch);
-    fOk &= TextOut(hdc, 24, 90, "Resize me; press a key to change color.", 38);
-    fOk &= TextOut(hdc, 24, 110, "Close one window; the other keeps painting.", 42);
+    fOk &= win32::GetTextExtentPoint32A(hdc, sz, cch, &size);
+    fOk &= win32::TextOutA(hdc, (rc.right - size.cx) / 2, 30, sz, cch);
+    fOk &= win32::TextOutA(hdc, 24, 90, "Resize me; press a key to change color.", 38);
+    fOk &= win32::TextOutA(hdc, 24, 110, "Close one window; the other keeps painting.", 42);
     // Draw an indexed image from the game's real resource atlas in each window.
-    hrsrc = FindResource(NULL, MAKEINTRESOURCE(87), RT_BITMAP);
-    lpbi = (const BITMAPINFOHEADER*)(LockResource(LoadResource(NULL, hrsrc)));
+    hrsrc = win32::FindResourceA(NULL, win32::MAKEINTRESOURCE(87), win32::RT_BITMAP);
+    lpbi = (const BITMAPINFOHEADER*)(win32::LockResource(win32::LoadResource(NULL, hrsrc)));
     if (lpbi) {
         cColors = lpbi->biClrUsed ? lpbi->biClrUsed : 1u << lpbi->biBitCount;
         rgb = (const BYTE *)(lpbi + 1) + cColors * sizeof(RGBQUAD);
-        fOk &= StretchDIBits(hdc, 24, 140, 64, 64, 0, 0, 64, 64, rgb,
-                            (const BITMAPINFO *)lpbi, DIB_RGB_COLORS, SRCCOPY) > 0;
+        fOk &= win32::StretchDIBits(hdc, 24, 140, 64, 64, 0, 0, 64, 64, rgb,
+                            (const BITMAPINFO *)lpbi, win32::DIB_RGB_COLORS, win32::SRCCOPY) > 0;
     } else {
-        fOk = FALSE;
+        fOk = 0;
     }
-    SelectObject(hdc, hpenOld);
-    SelectObject(hdc, hbrOld);
-    fOk &= DeleteObject(hpen) && DeleteObject(hbr);
-    fOk &= BitBlt(hdcDest, 0, 0, rc.right, rc.bottom, hdc, 0, 0, SRCCOPY);
-    fOk &= SelectObject(hdc, hbmOld) == hbm;
-    fOk &= DeleteDC(hdc) && DeleteObject(hbm);
+    win32::SelectObject(hdc, hpenOld);
+    win32::SelectObject(hdc, hbrOld);
+    fOk &= win32::DeleteObject(hpen) && win32::DeleteObject(hbr);
+    fOk &= win32::BitBlt(hdcDest, 0, 0, rc.right, rc.bottom, hdc, 0, 0, win32::SRCCOPY);
+    fOk &= win32::SelectObject(hdc, hbmOld) == hbm;
+    fOk &= win32::DeleteDC(hdc) && win32::DeleteObject(hbm);
     return fOk;
 }
 
-static LRESULT CALLBACK PaintWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-    PAINTTEST *lpwin = (PAINTTEST *)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+static LRESULT  PaintWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+    PAINTTEST *lpwin = (PAINTTEST *)win32::GetWindowLongPtrA(hwnd, win32::GWLP_USERDATA);
     PAINTSTRUCT ps;
 
-    if (msg == WM_NCCREATE) {
+    if (msg == win32::WM_NCCREATE) {
         lpwin = (PAINTTEST*)(((CREATESTRUCT *)lParam)->lpCreateParams);
-        SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)lpwin);
-        return TRUE;
+        win32::SetWindowLongPtrA(hwnd, win32::GWLP_USERDATA, (LONG_PTR)lpwin);
+        return 1;
     }
     switch (msg) {
-    case WM_CREATE:
+    case win32::WM_CREATE:
         cLive++;
         return 0;
-    case WM_ERASEBKGND:
+    case win32::WM_ERASEBKGND:
         if (lpwin->fDestroyOnErase) {
-            DestroyWindow(hwnd);
-            return TRUE;
+            win32::DestroyWindow(hwnd);
+            return 1;
         }
-        return DefWindowProc(hwnd, msg, wParam, lParam);
-    case WM_PAINT:
-        if (!BeginPaint(hwnd, &ps)) {
-            lpwin->fOk = FALSE;
+        return win32::DefWindowProcA(hwnd, msg, wParam, lParam);
+    case win32::WM_PAINT:
+        if (!win32::BeginPaint(hwnd, &ps)) {
+            lpwin->fOk = 0;
             return 0;
         }
         lpwin->rcLast = ps.rcPaint;
         lpwin->cPaint++;
         lpwin->fOk &= FDraw(hwnd, ps.hdc, lpwin);
         if (lpwin->fInvalidateInPaint) {
-            lpwin->fInvalidateInPaint = FALSE;
-            lpwin->fOk &= InvalidateRect(hwnd, &rcTest1, FALSE);
+            lpwin->fInvalidateInPaint = 0;
+            lpwin->fOk &= win32::InvalidateRect(hwnd, &rcTest1, 0);
         }
-        lpwin->fOk &= EndPaint(hwnd, &ps);
+        lpwin->fOk &= win32::EndPaint(hwnd, &ps);
         return 0;
-    case WM_KEYDOWN:
-        lpwin->color ^= RGB(64, 32, 96);
-        InvalidateRect(hwnd, NULL, FALSE);
+    case win32::WM_KEYDOWN:
+        lpwin->color ^= win32::RGB(64, 32, 96);
+        win32::InvalidateRect(hwnd, NULL, 0);
         return 0;
-    case WM_DESTROY:
+    case win32::WM_DESTROY:
         if (--cLive == 0 && fInteractive)
-            PostQuitMessage(0);
+            win32::PostQuitMessage(0);
         return 0;
     default:
-        return DefWindowProc(hwnd, msg, wParam, lParam);
+        return win32::DefWindowProcA(hwnd, msg, wParam, lParam);
     }
 }
 
 static void Drain(void) {
-    MSG msg;
+    win32::MSG msg;
 
-    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-        DispatchMessage(&msg);
+    while (win32::PeekMessageA(&msg, NULL, 0, 0, win32::PM_REMOVE))
+        win32::DispatchMessageA(&msg);
 }
 
 static SDL_Window *LpSDLWindow(const char *psz) {
@@ -169,7 +169,7 @@ static int TestPaint(HWND *rghwnd, PAINTTEST *rgwin) {
     SIZE size;
     TEXTMETRIC tm;
     PAINTSTRUCT ps, psOther;
-    MSG msg;
+    win32::MSG msg;
     SDL_Event event = {};
     SDL_Window *lpSDL[2];
     SDL_Renderer *lpRenderer[2];
@@ -178,8 +178,8 @@ static int TestPaint(HWND *rghwnd, PAINTTEST *rgwin) {
     PAINTTEST winDestroy = {};
     HWND hwndDestroy;
 
-    winDestroy.fOk = TRUE;
-    winDestroy.fDestroyOnErase = TRUE;
+    winDestroy.fOk = 1;
+    winDestroy.fDestroyOnErase = 1;
     Drain();
     CHECK(rgwin[0].fOk && rgwin[1].fOk && rgwin[0].cPaint > 0 && rgwin[1].cPaint > 0);
     lpSDL[0] = LpSDLWindow("Stars GDI first");
@@ -189,100 +189,100 @@ static int TestPaint(HWND *rghwnd, PAINTTEST *rgwin) {
     lpRenderer[1] = SDL_GetRenderer(lpSDL[1]);
     CHECK(lpRenderer[0] && lpRenderer[1] && lpRenderer[0] != lpRenderer[1]);
     printf("GDI renderers: %s / %s\n", SDL_GetRendererName(lpRenderer[0]), SDL_GetRendererName(lpRenderer[1]));
-    hdc = GetDC(rghwnd[0]); hdcOther = GetDC(rghwnd[1]);
+    hdc = win32::GetDC(rghwnd[0]); hdcOther = win32::GetDC(rghwnd[1]);
     CHECK(hdc && hdcOther && hdc != hdcOther);
-    CHECK(GetPixel(hdc, 0, 0) == rgwin[0].color && GetPixel(hdcOther, 0, 0) == rgwin[1].color);
-    CHECK(GetPixel(hdc, -1, 0) == CLR_INVALID);
-    hbr = CreateSolidBrush(RGB(12, 34, 56));
-    hpen = CreatePen(PS_SOLID, 1, RGB(220, 180, 40));
-    CHECK(hbr && hpen && !CreatePen(99, 1, 0) && !CreatePen(PS_SOLID, 2, 0));
-    CHECK(FillRect(hdc, &rcTest2, hbr));
-    CHECK(GetPixel(hdc, 0, 0) == RGB(12, 34, 56));
-    CHECK(GetPixel(hdc, 9, 9) == RGB(12, 34, 56) && GetPixel(hdc, 10, 10) == rgwin[0].color);
-    CHECK(GetPixel(hdcOther, 0, 0) == rgwin[1].color);
-    hOld = SelectObject(hdc, hpen); hbrOld = SelectObject(hdc, hbr);
-    CHECK(hOld && hbrOld && !DeleteObject(hpen) && !DeleteObject(hbr));
-    CHECK(MoveToEx(hdc, 20, 20, &pt) && pt.x == 0 && pt.y == 0);
-    CHECK(LineTo(hdc, 30, 20));
-    CHECK(GetPixel(hdc, 20, 20) == RGB(220, 180, 40) && GetPixel(hdc, 29, 20) == RGB(220, 180, 40));
-    CHECK(GetPixel(hdc, 30, 20) == rgwin[0].color);
-    CHECK(MoveToEx(hdc, INT_MIN, 180, &pt) && pt.x == 30 && pt.y == 20);
-    CHECK(LineTo(hdc, INT_MAX, 180) && GetPixel(hdc, 0, 180) == RGB(220, 180, 40));
-    CHECK(Rectangle(hdc, 30, 30, 40, 40));
-    CHECK(GetPixel(hdc, 30, 30) == RGB(220, 180, 40));
-    CHECK(GetPixel(hdc, 31, 31) == RGB(12, 34, 56));
-    CHECK(GetPixel(hdc, 40, 40) == rgwin[0].color);
-    CHECK(Rectangle(hdc, INT_MIN, INT_MIN, INT_MAX, INT_MAX));
-    CHECK(MoveToEx(hdc, 0, 0, &pt) && pt.x == INT_MAX && pt.y == 180);
-    CHECK(SelectObject(hdc, hOld) == hpen && SelectObject(hdc, hbrOld) == hbr);
-    CHECK(DeleteObject(hpen) && !DeleteObject(hpen) && DeleteObject(hbr));
-    CHECK(!SelectObject(hdc, hpen) && !DeleteObject(GetStockObject(BLACK_PEN)));
-    CHECK(GetTextExtentPoint32(hdc, "Hello", 5, &size) && size.cx > 0 && size.cy > 0);
-    CHECK(GetTextExtentPoint32(hdc, NULL, 0, &size) && size.cx == 0);
-    CHECK(!GetTextExtentPoint32(hdc, "x", INT_MAX, &size));
-    CHECK(GetTextMetrics(hdc, &tm) && tm.tmHeight > 0 && tm.tmAscent + tm.tmDescent == tm.tmHeight);
-    CHECK(SetTextColor(hdc, RGB(255, 0, 0)) == RGB(0, 0, 0));
-    CHECK(SetBkColor(hdc, RGB(0, 0, 255)) == RGB(255, 255, 255));
-    CHECK(SetBkMode(hdc, OPAQUE) == OPAQUE && !SetBkMode(hdc, 3));
-    CHECK(GetTextExtentPoint32(hdc, "! ", 2, &size));
-    CHECK(TextOut(hdc, 50, 50, "! ", 2));
-    CHECK(GetPixel(hdc, 50 + size.cx - 1, 50 + tm.tmHeight - 1) == RGB(0, 0, 255));
-    CHECK(GetPixel(hdc, 49, 50) == RGB(12, 34, 56));
-    CHECK(SetBkMode(hdc, TRANSPARENT) == OPAQUE);
-    CHECK(TextOut(hdc, 70, 50, "!", 1));
-    CHECK(GetPixel(hdc, 70 + size.cx + 2, 50) == RGB(12, 34, 56));
-    CHECK(!TextOut(hdc, 140, 50, "\xff", 1));
-    CHECK(TextOut(hdc, 140, 50, "\xc3\xbf", 2));
-    CHECK(TextOut(hdc, INT_MAX, INT_MAX, "!", 1));
+    CHECK(win32::GetPixel(hdc, 0, 0) == rgwin[0].color && win32::GetPixel(hdcOther, 0, 0) == rgwin[1].color);
+    CHECK(win32::GetPixel(hdc, -1, 0) == win32::CLR_INVALID);
+    hbr = win32::CreateSolidBrush(win32::RGB(12, 34, 56));
+    hpen = win32::CreatePen(win32::PS_SOLID, 1, win32::RGB(220, 180, 40));
+    CHECK(hbr && hpen && !win32::CreatePen(99, 1, 0) && !win32::CreatePen(win32::PS_SOLID, 2, 0));
+    CHECK(win32::FillRect(hdc, &rcTest2, hbr));
+    CHECK(win32::GetPixel(hdc, 0, 0) == win32::RGB(12, 34, 56));
+    CHECK(win32::GetPixel(hdc, 9, 9) == win32::RGB(12, 34, 56) && win32::GetPixel(hdc, 10, 10) == rgwin[0].color);
+    CHECK(win32::GetPixel(hdcOther, 0, 0) == rgwin[1].color);
+    hOld = win32::SelectObject(hdc, hpen); hbrOld = win32::SelectObject(hdc, hbr);
+    CHECK(hOld && hbrOld && !win32::DeleteObject(hpen) && !win32::DeleteObject(hbr));
+    CHECK(win32::MoveToEx(hdc, 20, 20, &pt) && pt.x == 0 && pt.y == 0);
+    CHECK(win32::LineTo(hdc, 30, 20));
+    CHECK(win32::GetPixel(hdc, 20, 20) == win32::RGB(220, 180, 40) && win32::GetPixel(hdc, 29, 20) == win32::RGB(220, 180, 40));
+    CHECK(win32::GetPixel(hdc, 30, 20) == rgwin[0].color);
+    CHECK(win32::MoveToEx(hdc, INT_MIN, 180, &pt) && pt.x == 30 && pt.y == 20);
+    CHECK(win32::LineTo(hdc, INT_MAX, 180) && win32::GetPixel(hdc, 0, 180) == win32::RGB(220, 180, 40));
+    CHECK(win32::Rectangle(hdc, 30, 30, 40, 40));
+    CHECK(win32::GetPixel(hdc, 30, 30) == win32::RGB(220, 180, 40));
+    CHECK(win32::GetPixel(hdc, 31, 31) == win32::RGB(12, 34, 56));
+    CHECK(win32::GetPixel(hdc, 40, 40) == rgwin[0].color);
+    CHECK(win32::Rectangle(hdc, INT_MIN, INT_MIN, INT_MAX, INT_MAX));
+    CHECK(win32::MoveToEx(hdc, 0, 0, &pt) && pt.x == INT_MAX && pt.y == 180);
+    CHECK(win32::SelectObject(hdc, hOld) == hpen && win32::SelectObject(hdc, hbrOld) == hbr);
+    CHECK(win32::DeleteObject(hpen) && !win32::DeleteObject(hpen) && win32::DeleteObject(hbr));
+    CHECK(!win32::SelectObject(hdc, hpen) && !win32::DeleteObject(win32::GetStockObject(win32::BLACK_PEN)));
+    CHECK(win32::GetTextExtentPoint32A(hdc, "Hello", 5, &size) && size.cx > 0 && size.cy > 0);
+    CHECK(win32::GetTextExtentPoint32A(hdc, NULL, 0, &size) && size.cx == 0);
+    CHECK(!win32::GetTextExtentPoint32A(hdc, "x", INT_MAX, &size));
+    CHECK(win32::GetTextMetricsA(hdc, &tm) && tm.tmHeight > 0 && tm.tmAscent + tm.tmDescent == tm.tmHeight);
+    CHECK(win32::SetTextColor(hdc, win32::RGB(255, 0, 0)) == win32::RGB(0, 0, 0));
+    CHECK(win32::SetBkColor(hdc, win32::RGB(0, 0, 255)) == win32::RGB(255, 255, 255));
+    CHECK(win32::SetBkMode(hdc, win32::OPAQUE) == win32::OPAQUE && !win32::SetBkMode(hdc, 3));
+    CHECK(win32::GetTextExtentPoint32A(hdc, "! ", 2, &size));
+    CHECK(win32::TextOutA(hdc, 50, 50, "! ", 2));
+    CHECK(win32::GetPixel(hdc, 50 + size.cx - 1, 50 + tm.tmHeight - 1) == win32::RGB(0, 0, 255));
+    CHECK(win32::GetPixel(hdc, 49, 50) == win32::RGB(12, 34, 56));
+    CHECK(win32::SetBkMode(hdc, win32::TRANSPARENT) == win32::OPAQUE);
+    CHECK(win32::TextOutA(hdc, 70, 50, "!", 1));
+    CHECK(win32::GetPixel(hdc, 70 + size.cx + 2, 50) == win32::RGB(12, 34, 56));
+    CHECK(!win32::TextOutA(hdc, 140, 50, "\xff", 1));
+    CHECK(win32::TextOutA(hdc, 140, 50, "\xc3\xbf", 2));
+    CHECK(win32::TextOutA(hdc, INT_MAX, INT_MAX, "!", 1));
     cText = 0;
     for (y = 50; y < 50 + tm.tmHeight; y++)
         for (x = 50; x < 50 + size.cx; x++)
-            if (GetPixel(hdc, x, y) != RGB(0, 0, 255))
+            if (win32::GetPixel(hdc, x, y) != win32::RGB(0, 0, 255))
                 cText++;
     CHECK(cText > 0 && cText < size.cx * tm.tmHeight);
-    CHECK(!ReleaseDC(rghwnd[1], hdc));
-    CHECK(ReleaseDC(rghwnd[0], hdc) && ReleaseDC(rghwnd[1], hdcOther));
-    CHECK(GetPixel(hdc, 0, 0) == CLR_INVALID && !ReleaseDC(rghwnd[0], hdc));
-    hdcNew = GetDC(rghwnd[0]);
-    CHECK(hdcNew && hdcNew != hdc && GetPixel(hdc, 0, 0) == CLR_INVALID);
-    CHECK(ReleaseDC(rghwnd[0], hdcNew));
+    CHECK(!win32::ReleaseDC(rghwnd[1], hdc));
+    CHECK(win32::ReleaseDC(rghwnd[0], hdc) && win32::ReleaseDC(rghwnd[1], hdcOther));
+    CHECK(win32::GetPixel(hdc, 0, 0) == win32::CLR_INVALID && !win32::ReleaseDC(rghwnd[0], hdc));
+    hdcNew = win32::GetDC(rghwnd[0]);
+    CHECK(hdcNew && hdcNew != hdc && win32::GetPixel(hdc, 0, 0) == win32::CLR_INVALID);
+    CHECK(win32::ReleaseDC(rghwnd[0], hdcNew));
 
     // Paint remains pending until BeginPaint validates; posted messages come first.
-    CHECK(InvalidateRect(rghwnd[0], &rcTest3, FALSE));
-    CHECK(InvalidateRect(rghwnd[0], &rcTest4, TRUE));
-    CHECK(GetUpdateRect(rghwnd[0], &rc, FALSE) && EqualRect(&rc, &rcTest5));
-    CHECK(PostMessage(rghwnd[1], WM_APP, 0, 0));
-    CHECK(PeekMessage(&msg, NULL, 0, 0, PM_REMOVE) && msg.message == WM_APP);
-    CHECK(PeekMessage(&msg, rghwnd[0], WM_PAINT, WM_PAINT, PM_NOREMOVE));
-    CHECK(!PeekMessage(&msg, rghwnd[1], WM_PAINT, WM_PAINT, PM_NOREMOVE));
-    CHECK(ValidateRect(rghwnd[0], &rcTest6));
-    hdc = BeginPaint(rghwnd[0], &ps);
-    CHECK(hdc && ps.fErase && EqualRect(&ps.rcPaint, &rc));
-    CHECK(!BeginPaint(rghwnd[0], &psOther) && !GetUpdateRect(rghwnd[0], NULL, FALSE));
-    CHECK(!ReleaseDC(rghwnd[0], hdc) && !EndPaint(rghwnd[1], &ps));
-    CHECK(FillRect(hdc, &rcTest7, (HBRUSH)GetStockObject(WHITE_BRUSH)));
-    CHECK(!PeekMessage(&msg, rghwnd[0], WM_PAINT, WM_PAINT, PM_REMOVE));
-    CHECK(EndPaint(rghwnd[0], &ps) && !EndPaint(rghwnd[0], &ps));
-    hdc = GetDC(rghwnd[0]);
-    CHECK(GetPixel(hdc, 10, 10) == RGB(255, 255, 255));
-    CHECK(GetPixel(hdc, 9, 9) == RGB(12, 34, 56) && GetPixel(hdc, 30, 30) == RGB(12, 34, 56));
-    CHECK(ReleaseDC(rghwnd[0], hdc));
-    CHECK(BeginPaint(rghwnd[0], &ps) && !ps.fErase && EqualRect(&ps.rcPaint, &rcTest8));
-    CHECK(FillRect(ps.hdc, &rcTest9, (HBRUSH)GetStockObject(BLACK_BRUSH)));
-    CHECK(EndPaint(rghwnd[0], &ps));
-    CHECK(InvalidateRect(rghwnd[0], NULL, FALSE) && ValidateRect(rghwnd[0], NULL));
-    CHECK(!GetUpdateRect(rghwnd[0], &rc, FALSE) && EqualRect(&rc, &rcTest10));
-    rgwin[0].fInvalidateInPaint = TRUE;
+    CHECK(win32::InvalidateRect(rghwnd[0], &rcTest3, 0));
+    CHECK(win32::InvalidateRect(rghwnd[0], &rcTest4, 1));
+    CHECK(win32::GetUpdateRect(rghwnd[0], &rc, 0) && win32::EqualRect(&rc, &rcTest5));
+    CHECK(win32::PostMessageA(rghwnd[1], win32::WM_APP, 0, 0));
+    CHECK(win32::PeekMessageA(&msg, NULL, 0, 0, win32::PM_REMOVE) && msg.message == win32::WM_APP);
+    CHECK(win32::PeekMessageA(&msg, rghwnd[0], win32::WM_PAINT, win32::WM_PAINT, win32::PM_NOREMOVE));
+    CHECK(!win32::PeekMessageA(&msg, rghwnd[1], win32::WM_PAINT, win32::WM_PAINT, win32::PM_NOREMOVE));
+    CHECK(win32::ValidateRect(rghwnd[0], &rcTest6));
+    hdc = win32::BeginPaint(rghwnd[0], &ps);
+    CHECK(hdc && ps.fErase && win32::EqualRect(&ps.rcPaint, &rc));
+    CHECK(!win32::BeginPaint(rghwnd[0], &psOther) && !win32::GetUpdateRect(rghwnd[0], NULL, 0));
+    CHECK(!win32::ReleaseDC(rghwnd[0], hdc) && !win32::EndPaint(rghwnd[1], &ps));
+    CHECK(win32::FillRect(hdc, &rcTest7, (HBRUSH)win32::GetStockObject(win32::WHITE_BRUSH)));
+    CHECK(!win32::PeekMessageA(&msg, rghwnd[0], win32::WM_PAINT, win32::WM_PAINT, win32::PM_REMOVE));
+    CHECK(win32::EndPaint(rghwnd[0], &ps) && !win32::EndPaint(rghwnd[0], &ps));
+    hdc = win32::GetDC(rghwnd[0]);
+    CHECK(win32::GetPixel(hdc, 10, 10) == win32::RGB(255, 255, 255));
+    CHECK(win32::GetPixel(hdc, 9, 9) == win32::RGB(12, 34, 56) && win32::GetPixel(hdc, 30, 30) == win32::RGB(12, 34, 56));
+    CHECK(win32::ReleaseDC(rghwnd[0], hdc));
+    CHECK(win32::BeginPaint(rghwnd[0], &ps) && !ps.fErase && win32::EqualRect(&ps.rcPaint, &rcTest8));
+    CHECK(win32::FillRect(ps.hdc, &rcTest9, (HBRUSH)win32::GetStockObject(win32::BLACK_BRUSH)));
+    CHECK(win32::EndPaint(rghwnd[0], &ps));
+    CHECK(win32::InvalidateRect(rghwnd[0], NULL, 0) && win32::ValidateRect(rghwnd[0], NULL));
+    CHECK(!win32::GetUpdateRect(rghwnd[0], &rc, 0) && win32::EqualRect(&rc, &rcTest10));
+    rgwin[0].fInvalidateInPaint = 1;
     cPaint = rgwin[0].cPaint;
-    CHECK(InvalidateRect(rghwnd[0], NULL, FALSE) && UpdateWindow(rghwnd[0]));
-    CHECK(rgwin[0].cPaint == cPaint + 1 && GetUpdateRect(rghwnd[0], &rc, FALSE));
-    CHECK(UpdateWindow(rghwnd[0]) && rgwin[0].cPaint == cPaint + 2);
-    CHECK(!GetUpdateRect(rghwnd[0], NULL, FALSE));
-    CHECK(MoveWindow(rghwnd[0], 20, 20, 520, 320, TRUE));
+    CHECK(win32::InvalidateRect(rghwnd[0], NULL, 0) && win32::UpdateWindow(rghwnd[0]));
+    CHECK(rgwin[0].cPaint == cPaint + 1 && win32::GetUpdateRect(rghwnd[0], &rc, 0));
+    CHECK(win32::UpdateWindow(rghwnd[0]) && rgwin[0].cPaint == cPaint + 2);
+    CHECK(!win32::GetUpdateRect(rghwnd[0], NULL, 0));
+    CHECK(win32::MoveWindow(rghwnd[0], 20, 20, 520, 320, 1));
     Drain();
-    CHECK(GetClientRect(rghwnd[0], &rc) && rc.right == 520 && rc.bottom == 320);
-    hdc = GetDC(rghwnd[0]);
-    CHECK(GetPixel(hdc, 519, 319) == rgwin[0].color && ReleaseDC(rghwnd[0], hdc));
+    CHECK(win32::GetClientRect(rghwnd[0], &rc) && rc.right == 520 && rc.bottom == 320);
+    hdc = win32::GetDC(rghwnd[0]);
+    CHECK(win32::GetPixel(hdc, 519, 319) == rgwin[0].color && win32::ReleaseDC(rghwnd[0], hdc));
     CHECK(rgwin[0].fOk && rgwin[1].fOk);
     cPaint = rgwin[1].cPaint;
     event.type = SDL_EVENT_WINDOW_EXPOSED;
@@ -290,10 +290,10 @@ static int TestPaint(HWND *rghwnd, PAINTTEST *rgwin) {
     CHECK(SDL_PushEvent(&event));
     Drain();
     CHECK(rgwin[1].cPaint == cPaint + 1 && rgwin[1].fOk);
-    hdcOther = GetDC(rghwnd[0]);
-    CHECK(DestroyWindow(rghwnd[0]) && GetPixel(hdcOther, 0, 0) == CLR_INVALID);
-    CHECK(!ReleaseDC(rghwnd[0], hdcOther));
-    CHECK(cLive == 1 && !UpdateWindow(rghwnd[0]));
+    hdcOther = win32::GetDC(rghwnd[0]);
+    CHECK(win32::DestroyWindow(rghwnd[0]) && win32::GetPixel(hdcOther, 0, 0) == win32::CLR_INVALID);
+    CHECK(!win32::ReleaseDC(rghwnd[0], hdcOther));
+    CHECK(cLive == 1 && !win32::UpdateWindow(rghwnd[0]));
     color = rgwin[1].color;
     event.type = SDL_EVENT_KEY_DOWN;
     event.key.windowID = SDL_GetWindowID(lpSDL[1]);
@@ -301,14 +301,14 @@ static int TestPaint(HWND *rghwnd, PAINTTEST *rgwin) {
     CHECK(SDL_PushEvent(&event));
     Drain();
     CHECK(rgwin[1].color != color && rgwin[1].cPaint > cPaint && rgwin[1].fOk);
-    hdc = GetDC(rghwnd[1]);
-    CHECK(GetPixel(hdc, 0, 0) == rgwin[1].color && ReleaseDC(rghwnd[1], hdc));
-    CHECK(DestroyWindow(rghwnd[1]) && cLive == 0);
-    hwndDestroy = CreateWindow("StarsGdiPaint", "Destroy during erase", WS_OVERLAPPEDWINDOW,
+    hdc = win32::GetDC(rghwnd[1]);
+    CHECK(win32::GetPixel(hdc, 0, 0) == rgwin[1].color && win32::ReleaseDC(rghwnd[1], hdc));
+    CHECK(win32::DestroyWindow(rghwnd[1]) && cLive == 0);
+    hwndDestroy = win32::CreateWindowExA(0, "StarsGdiPaint", "Destroy during erase", win32::WS_OVERLAPPEDWINDOW,
                                0, 0, 100, 100, NULL, NULL, NULL, &winDestroy);
-    CHECK(hwndDestroy && InvalidateRect(hwndDestroy, NULL, TRUE));
-    CHECK(!BeginPaint(hwndDestroy, &ps) && cLive == 0);
-    CHECK(GetPixel(ps.hdc, 0, 0) == CLR_INVALID && !EndPaint(hwndDestroy, &ps));
+    CHECK(hwndDestroy && win32::InvalidateRect(hwndDestroy, NULL, 1));
+    CHECK(!win32::BeginPaint(hwndDestroy, &ps) && cLive == 0);
+    CHECK(win32::GetPixel(ps.hdc, 0, 0) == win32::CLR_INVALID && !win32::EndPaint(hwndDestroy, &ps));
     return 0;
 }
 
@@ -316,15 +316,15 @@ int main(int argc, char **argv) {
     WNDCLASS wc = {};
     HWND rghwnd[2];
     PAINTTEST rgwin[2] = {};
-    MSG msg;
+    win32::MSG msg;
     BOOL fMessage;
     int result = 0, i;
 
-    rgwin[0].color = RGB(32, 64, 112);
-    rgwin[0].fOk = TRUE;
+    rgwin[0].color = win32::RGB(32, 64, 112);
+    rgwin[0].fOk = 1;
     rgwin[1].i = 1;
-    rgwin[1].color = RGB(96, 48, 64);
-    rgwin[1].fOk = TRUE;
+    rgwin[1].color = win32::RGB(96, 48, 64);
+    rgwin[1].fOk = 1;
     fInteractive = argc == 1;
     if (!fInteractive && (argc != 2 || strcmp(argv[1], "--self-test") != 0)) {
         fprintf(stderr, "usage: %s [--self-test]\n", argv[0]);
@@ -332,17 +332,17 @@ int main(int argc, char **argv) {
     }
     wc.lpfnWndProc = PaintWndProc;
     wc.lpszClassName = "StarsGdiPaint";
-    CHECK(RegisterClass(&wc));
+    CHECK(win32::RegisterClassA(&wc));
     for (i = 0; i < 2; i++) {
-        rghwnd[i] = CreateWindow(wc.lpszClassName, i == 0 ? "Stars GDI first" : "Stars GDI second",
-                                WS_OVERLAPPEDWINDOW | WS_VISIBLE, 40 + i * 480, 80, 460, 240,
+        rghwnd[i] = win32::CreateWindowExA(0, wc.lpszClassName, i == 0 ? "Stars GDI first" : "Stars GDI second",
+                                win32::WS_OVERLAPPEDWINDOW | win32::WS_VISIBLE, 40 + i * 480, 80, 460, 240,
                                 NULL, NULL, NULL, &rgwin[i]);
         CHECK(rghwnd[i]);
     }
     if (fInteractive) {
-        while ((fMessage = GetMessage(&msg, NULL, 0, 0)) > 0) {
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
+        while ((fMessage = win32::GetMessageA(&msg, NULL, 0, 0)) > 0) {
+            win32::TranslateMessage(&msg);
+            win32::DispatchMessageA(&msg);
         }
         result = fMessage == -1 || !rgwin[0].fOk || !rgwin[1].fOk;
     } else

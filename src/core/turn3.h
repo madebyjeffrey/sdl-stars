@@ -4,6 +4,6 @@
 #include "common.h"
 #include <stdint.h>
 
-void SatisfyOrders(int16_t iPass);
+void SatisfyOrders(APPSESSION &app, int16_t iPass);
 
 #endif

@@ -1,5 +1,8 @@
 /* Real game/race I/O through the native portal or a portable chooser adapter. */
 #include "win.h"
+#include "appstate.h"
+#include "callbackcontext.h"
+#include "uistate.h"
 #include "../../src/core/alert_io.h"
 #include "../../src/core/player_choice_io.h"
 #include "../../src/ui/desktop_choice_io.h"
@@ -28,26 +31,26 @@ static BOOL FChooseWorkflowFile(OPENFILENAME *lpof, BOOL fSave) {
     cFileChoices++;
     if ((fSave && cFileChoices != 3 && cFileChoices != 4 && cFileChoices != 6 &&
                   cFileChoices != 7 && cFileChoices != 8 && cFileChoices != 9) ||
-        (!fSave && cFileChoices != 1 && cFileChoices != 2 && cFileChoices != 5)) return FALSE;
-    if (cFileChoices >= 7 && strcmp(lpof->lpstrFile, "café-Ω.x1")) return FALSE;
-    if (cFileChoices == 1 || cFileChoices == 3 || cFileChoices == 7) return FALSE;
+        (!fSave && cFileChoices != 1 && cFileChoices != 2 && cFileChoices != 5)) return 0;
+    if (cFileChoices >= 7 && strcmp(lpof->lpstrFile, "café-Ω.x1")) return 0;
+    if (cFileChoices == 1 || cFileChoices == 3 || cFileChoices == 7) return 0;
     pszFile = PszCompatEnvironment(cFileChoices == 2 ? "STARS_TEST_GAME_PATH" :
                      cFileChoices == 6 ? "STARS_TEST_RACE_REPEAT_PATH" :
                      cFileChoices >= 8 ? "STARS_TEST_EXPORT_CHOICE" : "STARS_TEST_RACE_PATH");
-    if (!pszFile || strlen(pszFile) >= lpof->nMaxFile) return FALSE;
+    if (!pszFile || strlen(pszFile) >= lpof->nMaxFile) return 0;
     strcpy(lpof->lpstrFile, pszFile);
     lpof->nFileOffset = (WORD)(PszWorkflowFilename(pszFile) - pszFile);
     pchExtension = strrchr(PszWorkflowFilename(pszFile), '.');
     lpof->nFileExtension = pchExtension ? (WORD)(pchExtension - pszFile + 1) : 0;
-    return TRUE;
+    return 1;
 }
 
 BOOL StarsTest_FNativeOpenFileName(OPENFILENAME *lpof) {
-    return PszCompatEnvironment("STARS_TEST_FILE_WORKFLOW_COMPAT") ? FChooseWorkflowFile(lpof, FALSE) : FNativeOpenFileName(lpof);
+    return PszCompatEnvironment("STARS_TEST_FILE_WORKFLOW_COMPAT") ? FChooseWorkflowFile(lpof, 0) : FNativeOpenFileName(lpof);
 }
 
 BOOL StarsTest_FNativeSaveFileName(OPENFILENAME *lpof) {
-    return PszCompatEnvironment("STARS_TEST_FILE_WORKFLOW_COMPAT") ? FChooseWorkflowFile(lpof, TRUE) : FNativeSaveFileName(lpof);
+    return PszCompatEnvironment("STARS_TEST_FILE_WORKFLOW_COMPAT") ? FChooseWorkflowFile(lpof, 1) : FNativeSaveFileName(lpof);
 }
 
 static BOOL FEqualFiles(const char *pszLeft, const char *pszRight) {
@@ -59,7 +62,7 @@ static BOOL FEqualFiles(const char *pszLeft, const char *pszRight) {
     do {
         cbLeft = CReadNative(rgbLeft, 1, sizeof(rgbLeft), pfLeft);
         cbRight = CReadNative(rgbRight, 1, sizeof(rgbRight), pfRight);
-        if (cbLeft != cbRight || memcmp(rgbLeft, rgbRight, cbLeft)) { fEqual = FALSE; break; }
+        if (cbLeft != cbRight || memcmp(rgbLeft, rgbRight, cbLeft)) { fEqual = 0; break; }
     } while (cbLeft != 0);
 LDone:
     if (pfLeft) ICloseNativeFile(pfLeft);
@@ -73,33 +76,35 @@ static BOOL FCopyFile(const char *pszSource, const char *pszTarget) {
     BOOL fCopied = pfSource && pfTarget;
     if (!fCopied) goto LDone;
     while ((cb = CReadNative(rgb, 1, sizeof(rgb), pfSource)) != 0) {
-        if (CWriteNative(rgb, 1, cb, pfTarget) != cb) { fCopied = FALSE; break; }
+        if (CWriteNative(rgb, 1, cb, pfTarget) != cb) { fCopied = 0; break; }
     }
-    if (FNativeStreamError(pfSource)) fCopied = FALSE;
+    if (FNativeStreamError(pfSource)) fCopied = 0;
 LDone:
     if (pfSource) ICloseNativeFile(pfSource);
-    if (pfTarget && ICloseNativeFile(pfTarget) != 0) fCopied = FALSE;
+    if (pfTarget && ICloseNativeFile(pfTarget) != 0) fCopied = 0;
     return fCopied;
 }
-int WINAPI StarsTest_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, UINT type) {
+int StarsTest_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, UINT type) {
     const char *pszExport = PszCompatEnvironment("STARS_TEST_EXPORT_EXPECTED");
-    if ((type & MB_YESNO) && pszExport && strstr(pszText, pszExport)) {
-        if (!(type & MB_DEFBUTTON2)) return IDNO;
-        return ++cReplaceChoices == 1 ? IDNO : IDYES;
+    if ((type & win32::MB_YESNO) && pszExport && strstr(pszText, pszExport)) {
+        if (!(type & win32::MB_DEFBUTTON2)) return win32::IDNO;
+        return ++cReplaceChoices == 1 ? win32::IDNO : win32::IDYES;
     }
-    return MessageBoxA(hwnd, pszText, pszCaption, type);
+    return win32::MessageBoxA(hwnd, pszText, pszCaption, type);
 }
-int16_t StarsTest_PromptPassword(void) { return TRUE; }
-int16_t StarsTest_AlertSz(const char *sz, int16_t mbType) {
+int16_t StarsTest_PromptPassword(APPSESSION &) { return 1; }
+int16_t StarsTest_AlertSz(APPSESSION &, const char *sz, int16_t mbType) {
     (void)mbType; fprintf(stderr, "File workflow alert: %s\n", sz); cAlerts++;
     return IDOK;
 }
-static void CALLBACK FileWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
+static void  FileWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
+    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+
     HWND hwndDialog;
     HWND hwndParentSav;
     PLAYER plrSav;
     PLAYER plrManaged;
-    char szRaceSav[sizeof(szRaceFile)];
+    char szRaceSav[sizeof(app.state.szRaceFile)];
     char szManagedRace[512];
     char szImportedRace[512];
     char szRaceOriginal[512];
@@ -117,86 +122,86 @@ static void CALLBACK FileWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     int32_t lid;
     (void)hwnd; (void)msg; (void)dwTime;
     if (fRunning) {
-        for (hwndDialog = GetWindow(hwndTitle, GW_HWNDFIRST); hwndDialog; hwndDialog = GetWindow(hwndDialog, GW_HWNDNEXT)) {
-            if (hwndDialog->fDialog && hwndDialog->lpfnDlg == LibraryNameDlg && IsWindowVisible(hwndDialog)) {
-                LUiSendMessage(hwndDialog, WM_COMMAND, IDOK, 0);
+        for (hwndDialog = win32::GetWindow(app.lpui->hwndTitle, win32::GW_HWNDFIRST); hwndDialog; hwndDialog = win32::GetWindow(hwndDialog, win32::GW_HWNDNEXT)) {
+            if (hwndDialog->fDialog && hwndDialog->lpfnDlg == LibraryNameDlg && win32::IsWindowVisible(hwndDialog)) {
+                ui::SendMessage(hwndDialog, win32::WM_COMMAND, IDOK, 0);
                 return;
             }
         }
         return;
     }
-    fRunning = TRUE;
-    CHECK(pszRace && pszRaceRepeat && IsWindow(hwndTitle));
-    CHECK(FOpenGame(hwndTitle, FALSE) == 0 && IsWindowVisible(hwndTitle) && IsWindowEnabled(hwndTitle));
-    CHECK(!(SDL_GetWindowFlags(hwndTitle->lpWindow.get()) & (SDL_WINDOW_HIDDEN | SDL_WINDOW_MINIMIZED | SDL_WINDOW_NOT_FOCUSABLE)));
-    CHECK(FOpenGame(hwndTitle, FALSE) > 0 && game.lid != 0 && lpPlanets && idPlayer != iplrNone);
-    lid = game.lid; plrSav = rgplr[idPlayer]; memcpy(szRaceSav, szRaceFile, sizeof(szRaceSav));
-    hwndParentSav = hwndRaceParent; hwndRaceParent = hwndTitle;
-    CHECK(!FSaveRace(NULL, &plrSav) && memcmp(szRaceSav, szRaceFile, sizeof(szRaceSav)) == 0);
-    CHECK(FSaveRace(NULL, &plrSav));
-    CHECK(szRaceFile[sizeof(szRaceFile) - 1] == 0 &&
-          strncmp(szRaceFile, PszWorkflowFilename(pszRace), strlen(szRaceFile)) == 0);
-    CHECK(FWasRaceFile((char *)pszRace, FALSE) > 0);
+    fRunning = 1;
+    CHECK(pszRace && pszRaceRepeat && win32::IsWindow(app.lpui->hwndTitle));
+    CHECK(FOpenGame(app, app.lpui->hwndTitle, 0) == 0 && win32::IsWindowVisible(app.lpui->hwndTitle) && win32::IsWindowEnabled(app.lpui->hwndTitle));
+    CHECK(!(SDL_GetWindowFlags(app.lpui->hwndTitle->lpWindow.get()) & (SDL_WINDOW_HIDDEN | SDL_WINDOW_MINIMIZED | SDL_WINDOW_NOT_FOCUSABLE)));
+    CHECK(FOpenGame(app, app.lpui->hwndTitle, 0) > 0 && app.state.game.lid != 0 && app.state.lpPlanets && app.state.idPlayer != iplrNone);
+    lid = app.state.game.lid; plrSav = app.state.rgplr[app.state.idPlayer]; memcpy(szRaceSav, app.state.szRaceFile, sizeof(szRaceSav));
+    hwndParentSav = app.lpui->hwndRaceParent; app.lpui->hwndRaceParent = app.lpui->hwndTitle;
+    CHECK(!FSaveRace(app, NULL, &plrSav) && memcmp(szRaceSav, app.state.szRaceFile, sizeof(szRaceSav)) == 0);
+    CHECK(FSaveRace(app, NULL, &plrSav));
+    CHECK(app.state.szRaceFile[sizeof(app.state.szRaceFile) - 1] == 0 &&
+          strncmp(app.state.szRaceFile, PszWorkflowFilename(pszRace), strlen(app.state.szRaceFile)) == 0);
+    CHECK(FWasRaceFile(app, (char *)pszRace, 0) > 0);
     CHECK(CchSnprintf(szRaceOriginal, sizeof(szRaceOriginal), "%s.before-import", pszRace) > 0 &&
           FCopyFile(pszRace, szRaceOriginal));
-    CHECK(FOpenGame(hwndTitle, TRUE) > 0 && szRaceFile[sizeof(szRaceFile) - 1] == 0);
+    CHECK(FOpenGame(app, app.lpui->hwndTitle, 1) > 0 && app.state.szRaceFile[sizeof(app.state.szRaceFile) - 1] == 0);
     CHECK(CchSnprintf(szImportedRace, sizeof(szImportedRace), "%s%sRace Designs%srace-long-ΩΩΩΩ-native-filename.r1",
                       PszCompatEnvironment("STARS_SETTINGS_DIR"), szDirSep, szDirSep) > 0);
-    CHECK(FWasRaceFile(szImportedRace, FALSE) > 0 && FEqualFiles(pszRace, szImportedRace) &&
+    CHECK(FWasRaceFile(app, szImportedRace, 0) > 0 && FEqualFiles(pszRace, szImportedRace) &&
           FEqualFiles(pszRace, szRaceOriginal));
-    CHECK(FSaveRace(szRaceFile, &plrSav) && FWasRaceFile((char *)pszRaceRepeat, FALSE) > 0);
-    CHECK(IRaceChecksum(&vplr) == IRaceChecksum(&plrSav));
-    CHECK(FSaveLibraryRace(hwndTitle, "Managed.r1", &plrSav));
+    CHECK(FSaveRace(app, app.state.szRaceFile, &plrSav) && FWasRaceFile(app, (char *)pszRaceRepeat, 0) > 0);
+    CHECK(IRaceChecksum(&app.state.vplr) == IRaceChecksum(&plrSav));
+    CHECK(FSaveLibraryRace(app, app.lpui->hwndTitle, "Managed.r1", &plrSav));
     CHECK(CchSnprintf(szRaceLibrary, sizeof(szRaceLibrary), "%s%sRace Designs", PszCompatEnvironment("STARS_SETTINGS_DIR"), szDirSep) > 0);
     CHECK(CchSnprintf(szManagedRace, sizeof(szManagedRace), "%s%sManaged.r1", szRaceLibrary, szDirSep) > 0);
-    CHECK(FWasRaceFile(szManagedRace, FALSE) > 0);
+    CHECK(FWasRaceFile(app, szManagedRace, 0) > 0);
     CHECK(FNativeFileSize(szManagedRace, &cbRaceLibrary) && cbRaceLibrary > 0);
-    strcpy(szPassLast, "managed-pass");
-    lSaltLast = LSaltFromSz(szPassLast);
-    lSaltCur = lSaltLast;
+    strcpy(app.state.szPassLast, "managed-pass");
+    app.state.lSaltLast = LSaltFromSz(app.state.szPassLast);
+    app.state.lSaltCur = app.state.lSaltLast;
     plrManaged = plrSav;
-    plrManaged.lSalt = lSaltLast;
-    CHECK(FSaveLibraryRace(hwndTitle, "Managed.r1", &plrManaged));
-    CHECK(FLoadLibraryRace(hwndTitle, "Managed.r1"));
-    CHECK(vplr.lSalt == lSaltLast && IRaceChecksum(&vplr) == IRaceChecksum(&plrManaged));
-    CHECK(!FSaveLibraryRace(hwndTitle, "bad/name.r1", &plrManaged));
-    CHECK(FWasRaceFile(szManagedRace, FALSE) > 0 && vplr.lSalt == lSaltLast);
-    CHECK(FImportLibraryRaceAs(hwndTitle, pszRace, "Imported.r2"));
+    plrManaged.lSalt = app.state.lSaltLast;
+    CHECK(FSaveLibraryRace(app, app.lpui->hwndTitle, "Managed.r1", &plrManaged));
+    CHECK(FLoadLibraryRace(app, app.lpui->hwndTitle, "Managed.r1"));
+    CHECK(app.state.vplr.lSalt == app.state.lSaltLast && IRaceChecksum(&app.state.vplr) == IRaceChecksum(&plrManaged));
+    CHECK(!FSaveLibraryRace(app, app.lpui->hwndTitle, "bad/name.r1", &plrManaged));
+    CHECK(FWasRaceFile(app, szManagedRace, 0) > 0 && app.state.vplr.lSalt == app.state.lSaltLast);
+    CHECK(FImportLibraryRaceAs(app, app.lpui->hwndTitle, pszRace, "Imported.r2"));
     CHECK(CchSnprintf(szManagedRace, sizeof(szManagedRace), "%s%sImported.r2", szRaceLibrary, szDirSep) > 0);
     CHECK(FNativeFileSize(szManagedRace, &cbRaceLibrary) && cbRaceLibrary > 0 && FEqualFiles(pszRace, szManagedRace));
-    CHECK(!FImportLibraryRaceAs(hwndTitle, pszRace, "imported.R2"));
+    CHECK(!FImportLibraryRaceAs(app, app.lpui->hwndTitle, pszRace, "imported.R2"));
     CHECK(FNativeFileSize(szManagedRace, &cbRaceLibrary) && cbRaceLibrary > 0);
-    CHECK(FLoadLibraryRace(hwndTitle, "Managed.r1"));
-    CHECK(IRaceChecksum(&vplr) == IRaceChecksum(&plrManaged));
-    fSubmitSav = gd.fSubmit;
-    CHECK(pszExport && pszManagedOrders && pszManagedTurn && pszExportFailure && !FExportLibraryOrders(hwndTitle, NULL));
-    CHECK(gd.fSubmit == fSubmitSav && game.lid == lid);
+    CHECK(FLoadLibraryRace(app, app.lpui->hwndTitle, "Managed.r1"));
+    CHECK(IRaceChecksum(&app.state.vplr) == IRaceChecksum(&plrManaged));
+    fSubmitSav = app.state.gd.fSubmit;
+    CHECK(pszExport && pszManagedOrders && pszManagedTurn && pszExportFailure && !FExportLibraryOrders(app, app.lpui->hwndTitle, NULL));
+    CHECK(app.state.gd.fSubmit == fSubmitSav && app.state.game.lid == lid);
     CHECK(!FNativeFileSize((char *)pszManagedOrders, &cbExport) && FNativeFileSize((char *)pszManagedTurn, &cbExport));
-    DirtyGame(TRUE);
-    CHECK(pszPreviousExport && !FExportLibraryOrders(hwndTitle, NULL));
-    CHECK(cReplaceChoices == 1 && game.fDirty && gd.fSubmit == fSubmitSav && game.lid == lid);
+    DirtyGame(app, 1);
+    CHECK(pszPreviousExport && !FExportLibraryOrders(app, app.lpui->hwndTitle, NULL));
+    CHECK(cReplaceChoices == 1 && app.state.game.fDirty && app.state.gd.fSubmit == fSubmitSav && app.state.game.lid == lid);
     CHECK(FEqualFiles(pszExport, pszPreviousExport));
     CHECK(!FNativeFileSize((char *)pszManagedOrders, &cbExport));
-    CHECK(FExportLibraryOrders(hwndTitle, NULL));
-    CHECK(cReplaceChoices == 2 && !game.fDirty);
-    CHECK(gd.fSubmit == fSubmitSav && game.lid == lid);
+    CHECK(FExportLibraryOrders(app, app.lpui->hwndTitle, NULL));
+    CHECK(cReplaceChoices == 2 && !app.state.game.fDirty);
+    CHECK(app.state.gd.fSubmit == fSubmitSav && app.state.game.lid == lid);
     CHECK(FNativeFileSize((char *)pszExport, &cbExport) && cbExport > 0);
     CHECK(FEqualFiles(pszExport, pszManagedOrders));
-    CHECK(!FExportLibraryOrders(hwndTitle, pszExportFailure));
-    CHECK(gd.fSubmit == fSubmitSav && game.lid == lid &&
+    CHECK(!FExportLibraryOrders(app, app.lpui->hwndTitle, pszExportFailure));
+    CHECK(app.state.gd.fSubmit == fSubmitSav && app.state.game.lid == lid &&
           FNativeFileSize((char *)pszExport, &cbExport) && cbExport > 0 &&
           FNativeFileSize((char *)pszManagedOrders, &cbExport) && cbExport > 0);
-    CHECK(game.lid == lid && memcmp(&plrSav, &rgplr[idPlayer], sizeof(plrSav)) == 0);
-    hwndRaceParent = hwndParentSav;
+    CHECK(app.state.game.lid == lid && memcmp(&plrSav, &app.state.rgplr[app.state.idPlayer], sizeof(plrSav)) == 0);
+    app.lpui->hwndRaceParent = hwndParentSav;
     fPassed = cAlerts == 1 && (!PszCompatEnvironment("STARS_TEST_FILE_WORKFLOW_COMPAT") || cFileChoices == 9);
 done:
-    KillTimer(NULL, id);
-    PostQuitMessage(fPassed ? 0 : 92);
+    win32::KillTimer(NULL, id);
+    win32::PostQuitMessage(fPassed ? 0 : 92);
 }
-int16_t StarsTest_InitInstance(int16_t nCmdShow) {
-    int16_t fResult = InitInstance(nCmdShow);
-    if (fResult) idTimer = SetTimer(NULL, 0, 50, FileWorkflow);
-    return fResult && idTimer ? fResult : FALSE;
+int16_t StarsTest_InitInstance(APPSESSION &app, int16_t nCmdShow) {
+    int16_t fResult = InitInstance(app, nCmdShow);
+    if (fResult) idTimer = win32::SetTimer(NULL, 0, 50, FileWorkflow);
+    return fResult && idTimer ? fResult : 0;
 }
 int main(void) {
     char szCommand[] = "";
@@ -216,8 +221,8 @@ int main(void) {
     io_compatchoiceio.pfnMessageBoxA = StarsTest_MessageBoxA;
     COMPATCHOICEIOSCOPE scope_compatchoiceio(io_compatchoiceio);
 
-    nResult = WinMain(GetModuleHandle(NULL), NULL, szCommand, SW_SHOWNORMAL);
-    if (idTimer) KillTimer(NULL, idTimer);
+    nResult = ui::WinMain(win32::GetModuleHandleA(NULL), NULL, szCommand, win32::SW_SHOWNORMAL);
+    if (idTimer) win32::KillTimer(NULL, idTimer);
     StarsCompatProcessExit(); SDL_Quit();
     return nResult == 0 && fPassed ? 0 : 1;
 }

@@ -13,15 +13,14 @@
 #include "common.h"
 
 // Application messages (WM_USER + 0x64...).
-#define WM_STARS_STARTUP  0x0464
-#define WM_STARS_HOST     0x0465
-#define WM_STARS_CONTINUE 0x0466
-#define WM_STARS_SCAN_RESIZE (WM_APP + 2)
+inline constexpr auto WM_STARS_STARTUP = 0x0464;
+inline constexpr auto WM_STARS_HOST = 0x0465;
+inline constexpr auto WM_STARS_CONTINUE = 0x0466;
+inline constexpr auto WM_STARS_SCAN_RESIZE = (win32::WM_APP + 2);
 #include "battleui.h"
 #include "buildui.h"
 #include "createui.h"
 #include "fileui.h"
-#include "globalsui.h"
 #include "init.h"
 #include "logui.h"
 #include "libraryui.h"

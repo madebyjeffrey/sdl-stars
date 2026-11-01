@@ -7,7 +7,7 @@
 // History, persistent Cybertron words and its temporary words share the same
 // physical allocation. Keep their original byte positions and live updates;
 // declared counts do not impose a new validation or rollback policy.
-NATIVEBYTEWINDOW AbwFromLp(void *lp) noexcept;
+NATIVEBYTEWINDOW AbwFromLp(APPSESSION &app, void *lp) noexcept;
 
 class NATIVEAISTARBASEVIEW : public NATIVEBYTEWINDOW {
 public:
@@ -110,10 +110,10 @@ public:
     std::int32_t value() const noexcept { return GetI32(0); }
     void SetValue(std::int32_t value) noexcept { SetI32(0, value); }
 };
-inline NATIVEAIMINERALVIEW MivFromLp(void *lp) noexcept { return NATIVEAIMINERALVIEW(AbwFromLp(lp)); }
-inline NATIVEAIHISTORYVIEW AhvFromLp(void *lp) noexcept { return NATIVEAIHISTORYVIEW(AbwFromLp(lp)); }
-inline NATIVEAICYBERVIEW CivFromLp(void *lp) noexcept { return NATIVEAICYBERVIEW(AbwFromLp(lp)); }
-inline NATIVEAICYBERTEMPVIEW CtvFromLp(void *lp) noexcept { return NATIVEAICYBERTEMPVIEW(AbwFromLp(lp)); }
-inline NATIVEAIHISTSIZEVIEW AivFromLp(void *lp) noexcept { return NATIVEAIHISTSIZEVIEW(AbwFromLp(lp)); }
+inline NATIVEAIMINERALVIEW MivFromLp(APPSESSION &app, void *lp) noexcept { return NATIVEAIMINERALVIEW(AbwFromLp(app, lp)); }
+inline NATIVEAIHISTORYVIEW AhvFromLp(APPSESSION &app, void *lp) noexcept { return NATIVEAIHISTORYVIEW(AbwFromLp(app, lp)); }
+inline NATIVEAICYBERVIEW CivFromLp(APPSESSION &app, void *lp) noexcept { return NATIVEAICYBERVIEW(AbwFromLp(app, lp)); }
+inline NATIVEAICYBERTEMPVIEW CtvFromLp(APPSESSION &app, void *lp) noexcept { return NATIVEAICYBERTEMPVIEW(AbwFromLp(app, lp)); }
+inline NATIVEAIHISTSIZEVIEW AivFromLp(APPSESSION &app, void *lp) noexcept { return NATIVEAIHISTSIZEVIEW(AbwFromLp(app, lp)); }
 
 #endif

@@ -16,7 +16,7 @@ public:
     std::uint8_t *RgbMsg() const noexcept { return Shift(cbWirePlrMsg).Lpb(); }
 };
 
-NATIVEBYTEWINDOW MbwFromLp(void *lp) noexcept;
+NATIVEBYTEWINDOW MbwFromLp(APPSESSION &app, void *lp) noexcept;
 
 class NATIVEMESSAGEHEADERVIEW : public NATIVEBYTEWINDOW {
 public:
@@ -39,8 +39,8 @@ public:
     std::uint8_t *Header() const noexcept { return Shift(1).Lpb(); }
     std::uint8_t *Next() const noexcept { return Shift(cbWireMsgTurn + cbParams()).Lpb(); }
 };
-inline NATIVEMESSAGEHEADERVIEW MhvFromLp(void *lp) noexcept { return NATIVEMESSAGEHEADERVIEW(MbwFromLp(lp)); }
-inline NATIVEMESSAGETURNVIEW MtvFromLp(void *lp) noexcept { return NATIVEMESSAGETURNVIEW(MbwFromLp(lp)); }
+inline NATIVEMESSAGEHEADERVIEW MhvFromLp(APPSESSION &app, void *lp) noexcept { return NATIVEMESSAGEHEADERVIEW(MbwFromLp(app, lp)); }
+inline NATIVEMESSAGETURNVIEW MtvFromLp(APPSESSION &app, void *lp) noexcept { return NATIVEMESSAGETURNVIEW(MbwFromLp(app, lp)); }
 inline NATIVEMESSAGEHEADERVIEW MhvFromPrefix(std::uint8_t *lp) noexcept { return {std::as_writable_bytes(std::span(lp, cbWireMsgHdr)), 0}; }
 inline NATIVEMESSAGETURNVIEW MtvFromPrefix(std::uint8_t *lp) noexcept { return {std::as_writable_bytes(std::span(lp, cbWireMsgTurn)), 0}; }
 

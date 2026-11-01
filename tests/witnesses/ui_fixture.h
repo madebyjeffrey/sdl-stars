@@ -18,12 +18,13 @@
 #include "text_io.h"
 #include "win.h"
 inline HWND                   HwndWitness(int id) { return reinterpret_cast<HWND>(static_cast<intptr_t>(id)); }
-template <class T, class U> T WitnessValue(U value) {
-    if constexpr (std::is_pointer_v<T> && std::is_pointer_v<U>)
+template <class T, class U> T WitnessValue(U &&value) {
+    using V = std::remove_reference_t<U>;
+    if constexpr (std::is_pointer_v<T> && std::is_pointer_v<V>)
         return reinterpret_cast<T>(const_cast<void *>(reinterpret_cast<const void *>(value)));
     else if constexpr (std::is_pointer_v<T>)
         return reinterpret_cast<T>(static_cast<intptr_t>(value));
-    else if constexpr (std::is_pointer_v<U>)
+    else if constexpr (std::is_pointer_v<V>)
         return static_cast<T>(reinterpret_cast<intptr_t>(value));
     else
         return static_cast<T>(value);

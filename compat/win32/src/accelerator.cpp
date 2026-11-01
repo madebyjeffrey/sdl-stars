@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-struct HACCEL__ {
+struct win32::HACCEL__ {
     BOOL fAlive;
     int c;
     ACCEL *rg;
@@ -19,7 +19,7 @@ static HACCEL LpAccel(HACCEL haccel) {
         if (lp == haccel) return lp->fAlive ? lp : NULL;
     return NULL;
 }
-HACCEL WINAPI CreateAcceleratorTableA(LPACCEL rgaccel, int c) {
+HACCEL win32::CreateAcceleratorTableA(LPACCEL rgaccel, int c) {
     HACCEL lp;
     if (!SDL_IsMainThread() || !rgaccel || c <= 0 || (size_t)c > SIZE_MAX / sizeof(ACCEL)) return NULL;
     lp = (HACCEL)(calloc(1, sizeof(*lp)));
@@ -27,10 +27,10 @@ HACCEL WINAPI CreateAcceleratorTableA(LPACCEL rgaccel, int c) {
     lp->rg = (ACCEL *)(malloc((size_t)c * sizeof(ACCEL)));
     if (!lp->rg) { free(lp); return NULL; }
     memcpy(lp->rg, rgaccel, (size_t)c * sizeof(ACCEL));
-    lp->c = c; lp->fAlive = TRUE; lp->hnext = haccels; haccels = lp;
+    lp->c = c; lp->fAlive = 1; lp->hnext = haccels; haccels = lp;
     return lp;
 }
-int WINAPI CopyAcceleratorTableA(HACCEL haccel, LPACCEL rgaccel, int c) {
+int win32::CopyAcceleratorTableA(HACCEL haccel, LPACCEL rgaccel, int c) {
     HACCEL lp = LpAccel(haccel);
     int i;
     if (!lp) return 0;
@@ -40,17 +40,17 @@ int WINAPI CopyAcceleratorTableA(HACCEL haccel, LPACCEL rgaccel, int c) {
     for (i = 0; i < c; i++) { rgaccel[i] = lp->rg[i]; rgaccel[i].fVirt &= ~0x80; }
     return c;
 }
-BOOL WINAPI DestroyAcceleratorTable(HACCEL haccel) {
+BOOL win32::DestroyAcceleratorTable(HACCEL haccel) {
     HACCEL lp = LpAccel(haccel);
-    if (!lp) return FALSE;
-    if (lp->hrsrc) return TRUE; // Module-loaded tables live until module shutdown.
-    lp->fAlive = FALSE; free(lp->rg); lp->rg = NULL;
-    return TRUE;
+    if (!lp) return 0;
+    if (lp->hrsrc) return 1; // Module-loaded tables live until module shutdown.
+    lp->fAlive = 0; free(lp->rg); lp->rg = NULL;
+    return 1;
 }
-HACCEL WINAPI LoadAcceleratorsA(HINSTANCE hInstance, LPCSTR pszName) {
-    HRSRC hrsrc = FindResourceA(hInstance, pszName, RT_ACCELERATOR);
-    const BYTE *rgb = (const BYTE *)(LockResource(LoadResource(hInstance, hrsrc)));
-    DWORD cb = SizeofResource(hInstance, hrsrc);
+HACCEL win32::LoadAcceleratorsA(HINSTANCE hInstance, LPCSTR pszName) {
+    HRSRC hrsrc = win32::FindResourceA(hInstance, pszName, win32::RT_ACCELERATOR);
+    const BYTE *rgb = (const BYTE *)(win32::LockResource(win32::LoadResource(hInstance, hrsrc)));
+    DWORD cb = win32::SizeofResource(hInstance, hrsrc);
     ACCEL *rg;
     HACCEL lp;
     int i, c;
@@ -67,40 +67,40 @@ HACCEL WINAPI LoadAcceleratorsA(HINSTANCE hInstance, LPCSTR pszName) {
         rg[i].key = (WORD)(rgb[i * 8 + 2] | (rgb[i * 8 + 3] << 8));
         rg[i].cmd = (WORD)(rgb[i * 8 + 4] | (rgb[i * 8 + 5] << 8));
     }
-    lp = CreateAcceleratorTableA(rg, c);
+    lp = win32::CreateAcceleratorTableA(rg, c);
     free(rg);
     if (lp) lp->hrsrc = hrsrc;
     return lp;
 }
-int WINAPI TranslateAcceleratorA(HWND hwnd, HACCEL haccel, LPMSG lpmsg) {
+int win32::TranslateAcceleratorA(HWND hwnd, HACCEL haccel, LPMSG lpmsg) {
     HACCEL lp = LpAccel(haccel);
     ACCEL accel;
     BYTE mod = 0;
     int i, menu;
     BOOL fVirtual, fChar;
     if (!LpCompatWindow(hwnd) || !lp || !lpmsg) return 0;
-    fVirtual = lpmsg->message == WM_KEYDOWN || lpmsg->message == WM_SYSKEYDOWN;
-    fChar = lpmsg->message == WM_CHAR || lpmsg->message == WM_SYSCHAR;
+    fVirtual = lpmsg->message == win32::WM_KEYDOWN || lpmsg->message == win32::WM_SYSKEYDOWN;
+    fChar = lpmsg->message == win32::WM_CHAR || lpmsg->message == win32::WM_SYSCHAR;
     if (!fVirtual && !fChar) return 0;
 #ifdef __APPLE__
     /* Command aliases Control for letter commands, without changing the
        keyboard snapshot used by text navigation and game input. */
-    if ((GetKeyState(VK_LWIN) | GetKeyState(VK_RWIN)) & 0x8000) {
-        if (!fVirtual || lpmsg->wParam < 'A' || lpmsg->wParam > 'Z' || (GetKeyState(VK_CONTROL) & 0x8000)) return 0;
-        mod |= FCONTROL;
+    if ((win32::GetKeyState(win32::VK_LWIN) | win32::GetKeyState(win32::VK_RWIN)) & 0x8000) {
+        if (!fVirtual || lpmsg->wParam < 'A' || lpmsg->wParam > 'Z' || (win32::GetKeyState(win32::VK_CONTROL) & 0x8000)) return 0;
+        mod |= win32::FCONTROL;
     }
 #endif
-    if (GetKeyState(VK_SHIFT) & 0x8000) mod |= FSHIFT;
-    if (GetKeyState(VK_CONTROL) & 0x8000) mod |= FCONTROL;
-    if (GetKeyState(VK_MENU) & 0x8000) mod |= FALT;
+    if (win32::GetKeyState(win32::VK_SHIFT) & 0x8000) mod |= win32::FSHIFT;
+    if (win32::GetKeyState(win32::VK_CONTROL) & 0x8000) mod |= win32::FCONTROL;
+    if (win32::GetKeyState(win32::VK_MENU) & 0x8000) mod |= win32::FALT;
     for (i = 0; i < lp->c; i++) {
         accel = lp->rg[i];
-        if (accel.key != lpmsg->wParam || !!(accel.fVirt & FVIRTKEY) != fVirtual) continue;
-        if ((accel.fVirt & (FSHIFT | FCONTROL | FALT)) != mod) continue;
-        if (!IsWindowEnabled(hwnd) || GetCapture()) return 1;
-        menu = ICompatAccelMenu(hwnd, accel.cmd, TRUE);
-        if (menu != 2 && !(menu != 0 && IsIconic(hwnd)) && IsWindow(hwnd) && IsWindowEnabled(hwnd) && !GetCapture())
-            SendMessageA(hwnd, WM_COMMAND, MAKEWPARAM(accel.cmd, 1), 0);
+        if (accel.key != lpmsg->wParam || !!(accel.fVirt & win32::FVIRTKEY) != fVirtual) continue;
+        if ((accel.fVirt & (win32::FSHIFT | win32::FCONTROL | win32::FALT)) != mod) continue;
+        if (!win32::IsWindowEnabled(hwnd) || win32::GetCapture()) return 1;
+        menu = ICompatAccelMenu(hwnd, accel.cmd, 1);
+        if (menu != 2 && !(menu != 0 && win32::IsIconic(hwnd)) && win32::IsWindow(hwnd) && win32::IsWindowEnabled(hwnd) && !win32::GetCapture())
+            win32::SendMessageA(hwnd, win32::WM_COMMAND, win32::MAKEWPARAM(accel.cmd, 1), 0);
         return 1;
     }
     return 0;

@@ -1,6 +1,7 @@
 #include "common.h"
+#include "appstate.h"
 
-char *PszGetCompressedString(StringId ids) {
+char *PszGetCompressedString(APPSESSION &app, StringId ids) {
     int16_t  iChunk;
     uint8_t *pchLen;
     int16_t  iBuild;
@@ -13,8 +14,8 @@ char *PszGetCompressedString(StringId ids) {
     int16_t  fHigh;
 
     iNibble = 0;
-    if (ids == iLastStrGet) {
-        return szLastStrGet;
+    if (ids == app.state.iLastStrGet) {
+        return app.state.szLastStrGet;
     }
     iChunk = ids >> 6;
     iOffset = ids & 0x3f;
@@ -29,7 +30,7 @@ char *PszGetCompressedString(StringId ids) {
     pch += iNibble >> 1;
     iLen = *pchLen;
     fHigh = (iNibble & 1) == 0;
-    pszOut = szLastStrGet;
+    pszOut = app.state.szLastStrGet;
     iBuild = 0;
     while (iLen-- != 0) {
         if (fHigh) {
@@ -46,5 +47,5 @@ char *PszGetCompressedString(StringId ids) {
         }
     }
     *pszOut = 0;
-    return szLastStrGet;
+    return app.state.szLastStrGet;
 }

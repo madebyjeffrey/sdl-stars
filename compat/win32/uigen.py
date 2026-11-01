@@ -13,9 +13,9 @@ STRING = r'"(?:[^"\\]|\\.)*"'
 
 def compile_resources(root):
     definitions = dict(re.findall(r'^#define\s+(\w+)\s+(0x[0-9a-fA-F]+|\d+)\s*$', (root / 'res/resource.h').read_text(), re.M))
-    definitions.update(dict(re.findall(r'^#define\s+(VK_\w+)\s+(0x[0-9a-fA-F]+|\d+)\s*$', (root / 'compat/win32/include/wincompat_constants.h').read_text(), re.M)))
     constants = (root / 'compat/win32/include/wincompat_constants.h').read_text()
-    for name, value in re.findall(r'^#define\s+(\w+)\s+(?:[A-Z0-9_]+\()?((?:0x[0-9a-fA-F]+|\d+))(?:\))?\s*$', constants, re.M):
+    constants += (root / 'src/platform/ui_values.h').read_text()
+    for name, value in re.findall(r'^inline constexpr auto (\w+) = (?:[A-Z0-9_]+\()?((?:0x[0-9a-fA-F]+|\d+))(?:\))?;', constants, re.M):
         definitions.setdefault(name, value)
     lines = [line.strip() for line in (root / 'res/stars.rc').read_text().splitlines()]
     resources = []

@@ -1,17 +1,9 @@
-#ifdef _WIN32
-#include <windows.h>
-#endif
-
 #include "common.h"
 #include "ownership.h"
 
 #include <stdarg.h>
 #include <errno.h>
 #include <time.h>
-
-#ifdef _WIN32
-#include <shellapi.h>
-#endif
 
 // qsortSwap16 exchanges complete elements, including native-width pointers.
 static void qsortSwap16(unsigned char *a, unsigned char *b, size_t width) {
@@ -27,14 +19,14 @@ static void qsortSwap16(unsigned char *a, unsigned char *b, size_t width) {
 // Reconstructed from 0024:0866-09c6, matching qsort.asm in C700 and MSVC
 // MLIBCEW.LIB. The initial sorted check, first-element pivot, and strict
 // partition boundaries matter: ICompLong compares planet X coordinates only.
-void qsort16(void *base, size_t count, size_t width, int (*compare)(const void *, const void *)) {
+void qsort16(APPSESSION &app, void *base, size_t count, size_t width, int (*compare)(APPSESSION &, const void *, const void *)) {
     if (count < 2 || width == 0)
         return;
 
     unsigned char *items = (unsigned char *)base;
     size_t         i;
     for (i = 1; i < count; ++i) {
-        if ((int16_t)compare(items + i * width, items + (i - 1) * width) < 0)
+        if ((int16_t)compare(app, items + i * width, items + (i - 1) * width) < 0)
             break;
     }
     if (i == count)
@@ -49,7 +41,7 @@ void qsort16(void *base, size_t count, size_t width, int (*compare)(const void *
             size_t lastLess = lo, firstGreater = hi;
             for (;;) {
                 while (++left != hi) {
-                    int order = (int16_t)compare(items + left * width, items + lo * width);
+                    int order = (int16_t)compare(app, items + left * width, items + lo * width);
                     if (order > 0)
                         break;
                     if (order < 0)
@@ -57,7 +49,7 @@ void qsort16(void *base, size_t count, size_t width, int (*compare)(const void *
                 }
                 for (;;) {
                     --right;
-                    int order = (int16_t)compare(items + lo * width, items + right * width);
+                    int order = (int16_t)compare(app, items + lo * width, items + right * width);
                     if (order > 0)
                         break;
                     if (order < 0)
@@ -171,54 +163,6 @@ int32_t LMulDiv(int32_t lNumber, int32_t lNumerator, int32_t lDenominator) {
 
 #ifdef _WIN32
 
-char *PszNativeCommandLine(void) {
-    const WCHAR *pwsz = GetCommandLineW();
-    char *psz;
-    int cb;
-    if (*pwsz == L'"') {
-        for (pwsz++; *pwsz && *pwsz != L'"'; pwsz++) {}
-        if (*pwsz) pwsz++;
-    } else {
-        while (*pwsz && *pwsz != L' ' && *pwsz != L'\t') pwsz++;
-    }
-    while (*pwsz == L' ' || *pwsz == L'\t') pwsz++;
-    cb = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, pwsz, -1, NULL, 0, NULL, NULL);
-    if (cb == 0 || !(psz = (char *)malloc(cb))) return NULL;
-    NATIVEOWNER<char, std::free> command(psz);
-    if (!WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, pwsz, -1, psz, cb, NULL, NULL)) {
-        return NULL;
-    }
-    return command.release();
-}
-
-char **RgpszNativeArguments(int *lpc) {
-    WCHAR **rgpwsz = CommandLineToArgvW(GetCommandLineW(), lpc);
-    char **rgpsz, *pch;
-    size_t cb;
-    int i, c;
-    NATIVEOWNER<WCHAR *, LocalFree> wideArguments(rgpwsz);
-    if (!rgpwsz) return NULL;
-    cb = ((size_t)*lpc + 1) * sizeof(*rgpsz);
-    for (i = 0; i < *lpc; i++) {
-        c = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, rgpwsz[i], -1, NULL, 0, NULL, NULL);
-        if (c == 0) { wideArguments.reset(); return NULL; }
-        cb += c;
-    }
-    rgpsz = (char **)malloc(cb);
-    if (!rgpsz) { wideArguments.reset(); return NULL; }
-    NATIVEOWNER<char *, std::free> arguments(rgpsz);
-    pch = (char *)(rgpsz + *lpc + 1);
-    for (i = 0; i < *lpc; i++) {
-        c = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, rgpwsz[i], -1, NULL, 0, NULL, NULL);
-        rgpsz[i] = pch;
-        WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, rgpwsz[i], -1, pch, c, NULL, NULL);
-        pch += c;
-    }
-    rgpsz[*lpc] = NULL; wideArguments.reset();
-    return arguments.release();
-}
-
-uint32_t DwTickCount() { return GetTickCount(); }
 
 void GetDateTimeSz(char *szDate, char *szTime) {
     _strdate(szDate);
@@ -275,34 +219,34 @@ int16_t FFileReadOnly(const char *szFile) { return IAccessNativePath(szFile, 2) 
 void MakeDir(const char *szDir) { ICreateNativeDirectory(szDir, 0777); }
 int CreateNativeDir(const char *pszDir) { return ICreateNativeDirectory(pszDir, 0777); }
 int16_t FEnsureNativeDir(const char *pszDir) { return FEnsureNativeDirectory(pszDir); }
-int16_t FNativeEnumerateDirectory(const char *pszDir, FNativeDirectoryEntryProc pfnEntry, void *lpData) {
+int16_t FNativeEnumerateDirectory(APPSESSION &app, const char *pszDir, FNativeDirectoryEntryProc pfnEntry, void *lpData) {
     NATIVEDIR *pdir;
     const char *pszEntry;
-    if (!pfnEntry || !(pdir = PdirNativeOpen(pszDir))) return FALSE;
+    if (!pfnEntry || !(pdir = PdirNativeOpen(pszDir))) return 0;
     StarsNativeDirGuard closeDirectory(pdir);
     for (;;) {
         errno = 0;
         pszEntry = PszNativeReadDir(pdir);
         if (!pszEntry) return errno == 0;
-        if (!FUtf8Valid(pszEntry, strlen(pszEntry))) { errno = EILSEQ; return FALSE; }
-        if (!pfnEntry(lpData, pszEntry)) return TRUE;
+        if (!FUtf8Valid(pszEntry, strlen(pszEntry))) { errno = EILSEQ; return 0; }
+        if (!pfnEntry(app, lpData, pszEntry)) return 1;
     }
 }
 int16_t FNativeFileSize(const char *pszFile, int64_t *pcbFile) {
     NATIVEFILEINFO info;
-    if (!pcbFile || IGetNativeFileInfo(pszFile, &info, TRUE) != 0 || !info.fRegular) return FALSE;
+    if (!pcbFile || IGetNativeFileInfo(pszFile, &info, 1) != 0 || !info.fRegular) return 0;
     *pcbFile = info.cb;
-    return TRUE;
+    return 1;
 }
 int16_t FNativeDirectoryExists(const char *pszDir) {
     NATIVEFILEINFO info;
-    return IGetNativeFileInfo(pszDir, &info, TRUE) == 0 && info.fDirectory;
+    return IGetNativeFileInfo(pszDir, &info, 1) == 0 && info.fDirectory;
 }
 int16_t FNativePathInfo(const char *psz, int16_t *pfDirectory, int16_t *pfLink) {
     NATIVEFILEINFO info;
-    if (IGetNativeFileInfo(psz, &info, FALSE) != 0) return FALSE;
+    if (IGetNativeFileInfo(psz, &info, 0) != 0) return 0;
     *pfDirectory = info.fDirectory;
     *pfLink = info.fLink;
-    return TRUE;
+    return 1;
 }
 NATIVEFILE *PfOpenNativeFile(const char *psz, const char *pszMode) { return PfNativeOpen(psz, pszMode); }

@@ -1,9 +1,21 @@
 #include "construction_buildability_fixture.h"
+#include "appstate.h"
+#ifdef STARS_UI_SDL
+#include "uistate.h"
+#endif
+#include "callbackcontext.h"
 
 int main(int argc, char **argv) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+
     const unsigned rgcRows[] = {iengineCount, iscannerCount,   ishieldCount, iarmorCount,    ibeamCount,     itorpCount,  ibombCount,         iminingCount,
                                 iminesCount,  ispecialSBCount, isbhullCount, ispecialECount, ispecialMCount, iterraCount, ihuldefOrbitalFort, iplanetaryCount};
-    CONSTRUCTIONBUILDFIXTURE fixture;
+    CONSTRUCTIONBUILDFIXTURE fixture(app);
     assert(argc == 3);
     FILE *file = fopen(argv[2], argv[1][0] == 'e' ? "wb" : "rb");
     assert(file);
@@ -26,25 +38,25 @@ int main(int argc, char **argv) {
     int32_t       data[262];
     unsigned long cases = 0;
     while (fread(data, sizeof(data), 1, file) == 1) {
-        reset();
+        reset(app);
         for (int p = 0; p < 16; p++) {
-            rglpshdef[p] = NULL;
-            rglpshdefSB[p] = NULL;
+            app.state.rglpshdef[p] = NULL;
+            app.state.rglpshdefSB[p] = NULL;
         }
         int item = data[0], base = item >= 16, index = base ? item - 16 : item, owner = data[2];
         planet.fStarbase = data[1];
         planet.iPlayer = (int16_t)owner;
         planet.isb = data[21];
         if (owner >= 0 && owner < 16) {
-            rglpshdef[owner] = data[3] ? ships : NULL;
-            rglpshdefSB[owner] = data[4] ? bases : NULL;
-            rgplr[owner].rgAttr[rsMajorAdv] = (int8_t)data[12];
-            rgplr[owner].grbitAttr = static_cast<RaceTraitBits>((uint32_t)data[13]);
-            rgplr[owner].grbitTrader = static_cast<GrbitTrader>((uint16_t)data[14]);
-            rgplr[owner].SetITechNow(data[16]);
+            app.state.rglpshdef[owner] = data[3] ? ships : NULL;
+            app.state.rglpshdefSB[owner] = data[4] ? bases : NULL;
+            app.state.rgplr[owner].rgAttr[rsMajorAdv] = (int8_t)data[12];
+            app.state.rgplr[owner].grbitAttr = static_cast<RaceTraitBits>((uint32_t)data[13]);
+            app.state.rgplr[owner].grbitTrader = static_cast<GrbitTrader>((uint16_t)data[14]);
+            app.state.rgplr[owner].SetITechNow(data[16]);
             for (int f = 0; f < 6; f++)
-                rgplr[owner].rgTech[f] = (int8_t)data[15];
-            rgplr[owner].cFleet = data[18] ? 512 : 0;
+                app.state.rgplr[owner].rgTech[f] = (int8_t)data[15];
+            app.state.rgplr[owner].cFleet = data[18] ? 512 : 0;
         }
         for (int i = 0; i < 16; i++) {
             ships[i].cBuilt = 100 + i;
@@ -68,7 +80,7 @@ int main(int argc, char **argv) {
                     d->hul.rghs[at].cItem = data[10];
                 }
         }
-        idPlayer = (int16_t)data[19];
+        app.state.idPlayer = (int16_t)data[19];
         cQueries = cGateLookups = mdCheckResult = fInCheck = 0;
         memset(rgQueries, -1, sizeof(rgQueries));
         memset(rgGateRequests, -1, sizeof(rgGateRequests));
@@ -78,12 +90,12 @@ int main(int argc, char **argv) {
         PLANET planetExpected;
         memcpy(shipExpected, ships, sizeof(ships));
         memcpy(baseExpected, bases, sizeof(bases));
-        memcpy(playerExpected, rgplr, sizeof(rgplr));
-        memcpy(&gameExpected, &game, sizeof(game));
+        memcpy(playerExpected, app.state.rgplr, sizeof(app.state.rgplr));
+        memcpy(&gameExpected, &app.state.game, sizeof(app.state.game));
         memcpy(&planetExpected, &planet, sizeof(planet));
-        int result = call(2, item, data[20]);
+        int result = call(app, 2, item, data[20]);
         int stage = canCalls && mdCheckResult ? (base ? 2 : 1) : 0;
-        int actual[] = {stage, result, canCalls, cGateLookups, cQueries, messages, catalogCalls, idPlayer, newFleets};
+        int actual[] = {stage, result, canCalls, cGateLookups, cQueries, messages, catalogCalls, app.state.idPlayer, newFleets};
         for (int i = 0; i < 9; i++) {
             if (actual[i] != data[23 + i]) {
                 fprintf(stderr, "case %lu item %d owner %d hull %d: field %d got %d expected %d\n", cases, item, owner, data[6], i, actual[i], data[23 + i]);
@@ -120,27 +132,27 @@ int main(int argc, char **argv) {
         }
         CHECK(memcmp(shipExpected, ships, sizeof(ships)) == 0);
         CHECK(memcmp(baseExpected, bases, sizeof(bases)) == 0);
-        CHECK(memcmp(playerExpected, rgplr, sizeof(rgplr)) == 0);
-        CHECK(memcmp(&gameExpected, &game, sizeof(game)) == 0);
+        CHECK(memcmp(playerExpected, app.state.rgplr, sizeof(app.state.rgplr)) == 0);
+        CHECK(memcmp(&gameExpected, &app.state.game, sizeof(app.state.game)) == 0);
         CHECK(memcmp(&planetExpected, &planet, sizeof(planet)) == 0);
         cases++;
     }
     CHECK(feof(file));
     fclose(file);
     // Full Produce -> charged construction -> actual eligibility -> exact fleet limit failure.
-    reset();
+    reset(app);
     planet.id = 0;
-    rgptPlan[0] = POINT16{10, 20};
-    game.cPlayer = 1;
-    game.cPlanMax = 1;
+    app.state.rgptPlan[0] = POINT16{10, 20};
+    app.state.game.cPlayer = 1;
+    app.state.game.cPlanMax = 1;
     planet.fStarbase = 1;
     bases[0].hul.ihuldef = static_cast<HulDef>(32);
-    rgplr[0].rgAttr[rsMajorAdv] = raNone;
-    rgplr[0].grbitTrader = static_cast<GrbitTrader>(UINT16_MAX);
+    app.state.rgplr[0].rgAttr[rsMajorAdv] = raNone;
+    app.state.rgplr[0].grbitTrader = static_cast<GrbitTrader>(UINT16_MAX);
     for (int f = 0; f < 6; f++)
-        rgplr[0].rgTech[f] = 26;
-    rgplr[0].cFleet = 512;
-    cFleet = 512;
+        app.state.rgplr[0].rgTech[f] = 26;
+    app.state.rgplr[0].cFleet = 512;
+    app.state.cFleet = 512;
     ships[0].cBuilt = ships[0].cExist = 512;
     for (int i = 0; i < 512; i++) {
         memset(&fleetBodies[i], 0, sizeof(FLEET));
@@ -160,13 +172,13 @@ int main(int argc, char **argv) {
     cQueries = cGateLookups = mdCheckResult = fInCheck = 0;
     memset(rgQueries, -1, sizeof(rgQueries));
     memset(rgGateRequests, -1, sizeof(rgGateRequests));
-    planet.lpplprod = LpplAlloc<PLPROD>(4, 1, htOrd);
+    planet.lpplprod = LpplAlloc<PLPROD>(app, 4, 1, htOrd);
     planet.lpplprod->iprodMac = 1;
     planet.lpplprod->rgprod()[0] = row(1, 0, 2, 0);
-    Produce();
+    Produce(app);
     CHECK(canCalls == 1 && mdCheckResult == 1 && !newFleets && !planet.lpplprod && ships[0].cBuilt == 512 && ships[0].cExist == 512 &&
-          rgplr[0].lResLastYear == 90 && planet.rgwtMin[0] == 10);
-    reset();
+          app.state.rgplr[0].lResLastYear == 90 && planet.rgwtMin[0] == 10);
+    reset(app);
     printf("Construction actual eligibility integration: %lu cases plus post-charge Produce/fleet-limit case; %d assertions passed\n", cases, checks);
     return 0;
 }

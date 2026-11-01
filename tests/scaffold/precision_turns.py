@@ -7,7 +7,6 @@ import json
 import os
 from pathlib import Path
 import re
-import shutil
 import subprocess
 import sys
 
@@ -25,30 +24,19 @@ def run(command, log, env=None):
 
 
 def snapshot(destination, fDouble, core):
-    destination.mkdir()
+    precision_reference.snapshot(destination)
     hashes = {}
     cCasts = 0
-    historical = precision_reference.source_names()
-    shutil.copyfile(ROOT / "CMakeLists.txt", destination / "CMakeLists.txt")
-    for path in sorted((ROOT / "src").rglob("*")):
-        if not path.is_file() or path.suffix not in (".c", ".cpp", ".h"):
+    for name in sorted(precision_reference.source_names()):
+        if not name.endswith(".c"):
             continue
-        relative = path.relative_to(ROOT)
-        target = destination / relative
-        target.parent.mkdir(parents=True, exist_ok=True)
-        if path.suffix in (".c", ".cpp"):
-            source = (precision_reference.read_source(path.name)
-                      if path.with_suffix(".c").name in historical else path.read_text())
-            hashes[str(relative)] = hashlib.sha256(source.encode()).hexdigest()
-            if relative.as_posix() in core:
-                cCasts += source.count("long double")
-                if fDouble:
-                    source = source.replace("long double", "double")
-            target.write_text(source)
-        else:
-            shutil.copyfile(path, target)
-    for name in ("cmake", "data", "text", "res", "tests", "compat", "docs"):
-        (destination / name).symlink_to(ROOT / name, target_is_directory=True)
+        path = destination / name
+        source = path.read_text()
+        hashes[name] = hashlib.sha256(source.encode()).hexdigest()
+        if name in core:
+            cCasts += source.count("long double")
+            if fDouble:
+                path.write_text(source.replace("long double", "double"))
     return hashes, cCasts
 
 
@@ -76,7 +64,7 @@ def main():
     # Reject a double-only 'extended' oracle before attempting turn comparisons.
     run([sys.executable, HERE / "precision.py", "--cc", args.cc, "--function", "IdGetBestScannerDest",
          "--skip-race", "--report", work / "environment.json"], work / "environment.log")
-    cmake = (ROOT / "CMakeLists.txt").read_text()
+    cmake = precision_reference.read_source("CMakeLists.txt")
     core = re.search(r"set\(STARS_CORE_SOURCES\s+(.*?)\)", cmake, re.S).group(1).split()
     source_hashes = None
     for mode in ("ext", "dbl"):
@@ -92,7 +80,9 @@ def main():
     for mode in ("ext", "dbl"):
         build = work / (mode + "-build")
         run(["cmake", "-S", work / (mode + "-source"), "-B", build, "-G", "Ninja",
-             "-DCMAKE_C_COMPILER=" + args.cc, "-DCMAKE_BUILD_TYPE=Release", "-DSTARS_BUILD_TESTS=OFF", "-DSTARS_BUILD_SDL_CLIENT=OFF"],
+             "-DCMAKE_C_COMPILER=" + args.cc,
+             *(["-DCMAKE_OSX_ARCHITECTURES=x86_64"] if precision_reference.oracle_flags() else []),
+             "-DPython3_EXECUTABLE=" + sys.executable, "-DCMAKE_BUILD_TYPE=Release", "-DSTARS_BUILD_TESTS=OFF", "-DSTARS_BUILD_SDL_CLIENT=OFF"],
             work / (mode + "-configure.log"), env)
         run(["cmake", "--build", build, "--target", "stars-host", "--parallel", args.jobs],
             work / (mode + "-build.log"), env)
@@ -112,7 +102,7 @@ def main():
     if any("error" in r for r in failures):
         raise RuntimeError("Missing/error checkpoint; see comparison.json")
     first = {name: next((r for r in failures if r["scenario"] == name), None) for name in scenarios}
-    summary = {"source_sha256": source_hashes, "replaced_core_casts": cCasts, "seed": args.seed,
+    summary = {"reference_commit": precision_reference.REF, "source_sha256": source_hashes, "replaced_core_casts": cCasts, "seed": args.seed,
                "through": args.through, "scenarios": scenarios, "matching_files": len(records) - len(failures),
                "differing_files": len(failures), "first_checkpoint_differences": first,
                "comparison": str(comparison), "oracle": json.loads((work / "environment.json").read_text())["environment"]}

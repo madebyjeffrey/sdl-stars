@@ -112,15 +112,15 @@ test-unit: compile
 test-host: host
 	cd "$(DIST_DIR)/$(HOST_PRESET)" && ctest --output-on-failure --timeout 300 $(CTEST_ARGS)
 
-# Temporary source-extracted copies; production arithmetic and baselines stay put.
-precision: host
-	$(PYTHON) tests/scaffold/precision.py --generated-dir "$(DIST_DIR)/$(HOST_PRESET)/generated" $(PRECISION_ARGS)
+# Immutable historical C experiments; production arithmetic and baselines stay put.
+precision: python-env
+	$(PYTHON_VENV) tests/scaffold/precision.py $(PRECISION_ARGS)
 
-precision-turns: save-cli
-	$(PYTHON) tests/scaffold/precision_turns.py --cli "$(SAVE_CLI)" $(PRECISION_TURN_ARGS)
+precision-turns: save-cli python-env
+	$(PYTHON_VENV) tests/scaffold/precision_turns.py --cli "$(SAVE_CLI)" $(PRECISION_TURN_ARGS)
 
-test-precision: host
-	STARS_PRECISION_GENERATED_DIR="$(abspath $(DIST_DIR))/$(HOST_PRESET)/generated" $(PYTHON) -m unittest discover -s tests/scaffold -p test_precision.py
+test-precision: python-env
+	$(PYTHON_VENV) -m unittest discover -s tests/scaffold -p test_precision.py
 
 # SCENARIO names one of the games in tests/scenarios/scenarios.c.
 SCENARIO_DIR = $(abspath $(DIST_DIR))/scenarios/$(SCENARIO)

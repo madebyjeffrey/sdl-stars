@@ -61,7 +61,7 @@ static BOOL FLoadProfile(const char *pszPath, COMPATPROFILE **lplp) {
     size_t cb = 0, cbTotal = 0;
     ssize_t cbLine;
     COMPATPROFILE **lplpNext = lplp;
-    BOOL fRet = FALSE;
+    BOOL fRet = 0;
     NATIVECLEANUPSCOPE releaseProfile([&]() noexcept {
         free(sz);
         if (fp) io.pfnClose(fp);
@@ -71,22 +71,22 @@ static BOOL FLoadProfile(const char *pszPath, COMPATPROFILE **lplp) {
     *lplp = NULL;
     fp = io.pfnOpen(pszPath, "rb");
     if (!fp) {
-        SetLastError(DwProfileError());
+        win32::SetLastError(DwProfileError());
         return errno == ENOENT;
     }
     while ((cbLine = io.pfnReadLine(&sz, &cb, fp)) >= 0) {
         cbTotal += (size_t)cbLine;
         if (cbTotal > 8 * 1024 * 1024 || !FUtf8Valid(sz, (size_t)cbLine)) {
-            SetLastError(ERROR_BAD_FORMAT); goto LReturn;
+            win32::SetLastError(win32::ERROR_BAD_FORMAT); goto LReturn;
         }
         if (cbTotal == (size_t)cbLine && cbLine >= 3 && !memcmp(sz, "\xef\xbb\xbf", 3))
             memmove(sz, sz + 3, (size_t)cbLine - 2);
         *lplpNext = LpProfileLine(sz);
-        if (!*lplpNext) { SetLastError(ERROR_NOT_ENOUGH_MEMORY); goto LReturn; }
+        if (!*lplpNext) { win32::SetLastError(win32::ERROR_NOT_ENOUGH_MEMORY); goto LReturn; }
         lplpNext = &(*lplpNext)->lpNext;
     }
-    if (FNativeStreamError(fp)) { SetLastError(ERROR_READ_FAULT); goto LReturn; }
-    fRet = TRUE;
+    if (FNativeStreamError(fp)) { win32::SetLastError(win32::ERROR_READ_FAULT); goto LReturn; }
+    fRet = 1;
 LReturn:
     return fRet;
 }
@@ -119,7 +119,7 @@ static char *SzProfilePath(LPCSTR pszFile) {
     char *sz;
     size_t cb;
 
-    if (!pszFile || !*pszFile) { SetLastError(ERROR_INVALID_PARAMETER); return NULL; }
+    if (!pszFile || !*pszFile) { win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return NULL; }
     // Explicit paths remain literal. Bare settings names use the user config directory.
     if (strchr(pszFile, '/')
 #ifdef _WIN32
@@ -158,8 +158,8 @@ static char *SzProfilePath(LPCSTR pszFile) {
     }
 #endif
 LReturn:
-    if (!sz) SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-    else if (!FUtf8Valid(sz, strlen(sz))) { free(sz); sz = NULL; SetLastError(ERROR_INVALID_PARAMETER); }
+    if (!sz) win32::SetLastError(win32::ERROR_NOT_ENOUGH_MEMORY);
+    else if (!FUtf8Valid(sz, strlen(sz))) { free(sz); sz = NULL; win32::SetLastError(win32::ERROR_INVALID_PARAMETER); }
     return sz;
 }
 
@@ -181,12 +181,12 @@ static BOOL FMakeProfileDir(char *szPath) {
         *psz = 0;
         err = ICreateNativeDirectory(szPath, 0700);
         *psz = ch;
-        if (err != 0 && errno != EEXIST) { SetLastError(DwProfileError()); return FALSE; }
+        if (err != 0 && errno != EEXIST) { win32::SetLastError(DwProfileError()); return 0; }
     }
-    return TRUE;
+    return 1;
 }
 
-DWORD WINAPI GetPrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR pszDefault,
+DWORD win32::GetPrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR pszDefault,
                                     LPSTR szResult, DWORD cchMax, LPCSTR pszFile) {
     char *szPath = NULL;
     COMPATPROFILE *lpAll = NULL, *lp, *lpKey;
@@ -241,10 +241,10 @@ DWORD WINAPI GetPrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR p
     return (DWORD)cchOut;
 }
 
-UINT WINAPI GetPrivateProfileIntA(LPCSTR pszSection, LPCSTR pszKey, INT nDefault, LPCSTR pszFile) {
+UINT win32::GetPrivateProfileIntA(LPCSTR pszSection, LPCSTR pszKey, INT nDefault, LPCSTR pszFile) {
     char sz[128], *psz = sz;
     UINT u = 0, digit, radix = 10;
-    BOOL fNegative = FALSE;
+    BOOL fNegative = 0;
 
     if (ProfileTextIO().pfnReadString(pszSection, pszKey, "", sz, sizeof(sz), pszFile) == 0)
         return (UINT)nDefault;
@@ -262,31 +262,31 @@ UINT WINAPI GetPrivateProfileIntA(LPCSTR pszSection, LPCSTR pszKey, INT nDefault
     return fNegative ? 0u - u : u;
 }
 
-BOOL WINAPI WritePrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR pszValue, LPCSTR pszFile) {
+BOOL win32::WritePrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR pszValue, LPCSTR pszFile) {
     char *szPath = NULL, *szLine = NULL;
     COMPATPROFILE *lpAll = NULL, *lpSection, *lpKey, *lpNew, *lp;
     COMPATPROFILE **lplp;
-    BOOL fRet = FALSE;
+    BOOL fRet = 0;
     size_t cb;
     std::unique_lock lockProfile(fProfileLock, std::defer_lock);
     NATIVECLEANUPSCOPE releaseProfile([&]() noexcept { free(szLine); free(szPath); FreeProfile(lpAll); });
 
-    if (!pszSection && !pszKey && !pszValue) return FALSE; // No cache to flush.
+    if (!pszSection && !pszKey && !pszValue) return 0; // No cache to flush.
     if (!pszSection || !FUtf8Valid(pszSection, strlen(pszSection)) ||
         (pszKey && !FUtf8Valid(pszKey, strlen(pszKey))) ||
         (pszValue && !FUtf8Valid(pszValue, strlen(pszValue))) || !*pszSection || strchr(pszSection, '\n') || strchr(pszSection, '\r') ||
         strchr(pszSection, ']') || (pszKey && (strchr(pszKey, '=') || strchr(pszKey, '\n') || strchr(pszKey, '\r'))) ||
         (pszValue && (strchr(pszValue, '\n') || strchr(pszValue, '\r')))) {
-        SetLastError(ERROR_INVALID_PARAMETER); return FALSE;
+        win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return 0;
     }
     szPath = SzProfilePath(pszFile);
-    if (!szPath) return FALSE;
+    if (!szPath) return 0;
     lockProfile.lock();
     if (!FLoadProfile(szPath, &lpAll)) goto LReturn;
     lpSection = LpProfileSection(lpAll, pszSection);
     lpKey = LpProfileKey(lpSection, pszKey);
     if (!pszKey || !pszValue) {
-        if (!lpSection || (pszKey && !lpKey)) { fRet = TRUE; goto LReturn; }
+        if (!lpSection || (pszKey && !lpKey)) { fRet = 1; goto LReturn; }
         for (lplp = &lpAll; *lplp && *lplp != (pszKey ? lpKey : lpSection); lplp = &(*lplp)->lpNext) {}
         do {
             lp = *lplp; *lplp = lp->lpNext; lp->lpNext = NULL; FreeProfile(lp);
@@ -319,7 +319,7 @@ BOOL WINAPI WritePrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR 
     fRet = FSaveProfile(lpAll, szPath);
     goto LReturn;
 LMemory:
-    SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+    win32::SetLastError(win32::ERROR_NOT_ENOUGH_MEMORY);
 LReturn:
     releaseProfile.Close();
     lockProfile.unlock();

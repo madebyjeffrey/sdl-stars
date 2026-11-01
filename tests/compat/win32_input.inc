@@ -39,14 +39,14 @@ static int cWheel;
 static HWND hwndWheelLast;
 static LRESULT CALLBACK InputProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     if (msg == WM_MOUSEWHEEL && !GetParent(hwnd)) { cWheel++; hwndWheelLast = hwnd; return 0; }
-    return DefWindowProc(hwnd, msg, w, l);
+    return DefWindowProcA(hwnd, msg, w, l);
 }
 static int TestPoints(HWND hwnd, HINSTANCE hInstance) {
     HWND hwndChild, hwndSibling;
     POINT pt = {5, 6};
-    hwndChild = CreateWindow("StarsInputContracts", "child", WS_CHILD | WS_VISIBLE,
+    hwndChild = CreateWindowExA(0, "StarsInputContracts", "child", WS_CHILD | WS_VISIBLE,
                             20, 30, 100, 80, hwnd, (HMENU)(INT_PTR)101, hInstance, NULL);
-    hwndSibling = CreateWindow("StarsInputContracts", "sibling", WS_CHILD | WS_VISIBLE,
+    hwndSibling = CreateWindowExA(0, "StarsInputContracts", "sibling", WS_CHILD | WS_VISIBLE,
                               20, 30, 100, 80, hwnd, (HMENU)(INT_PTR)102, hInstance, NULL);
     CHECK(hwndChild && hwndSibling && ClientToScreen(hwndChild, &pt));
     CHECK(SetWindowPos(hwndChild, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE));
@@ -60,20 +60,20 @@ static int TestPoints(HWND hwnd, HINSTANCE hInstance) {
     ShowWindow(hwndChild, SW_HIDE);
     CHECK(WindowFromPoint(pt) == hwndSibling);
     ShowWindow(hwndChild, SW_SHOW);
-    EnableWindow(hwndChild, FALSE);
+    EnableWindow(hwndChild, 0);
     CHECK(WindowFromPoint(pt) == hwndSibling);
-    EnableWindow(hwndChild, TRUE);
+    EnableWindow(hwndChild, 1);
     CHECK(WindowFromPoint(pt) == hwndChild);
     cWheel = 0;
-    SendMessage(hwndChild, WM_MOUSEWHEEL, MAKEWPARAM(0, WHEEL_DELTA), MAKELPARAM(pt.x, pt.y));
+    SendMessageA(hwndChild, WM_MOUSEWHEEL, MAKEWPARAM(0, WHEEL_DELTA), MAKELPARAM(pt.x, pt.y));
     CHECK(cWheel == 1 && hwndWheelLast == hwnd);
     CHECK(DestroyWindow(hwndSibling) && DestroyWindow(hwndChild));
     CHECK(GetActiveWindow() == hwnd);
     return 0;
 }
 static void Drain(void) {
-    MSG msg;
-    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
+    APPMSG msg;
+    while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
 }
 static int QueueShift(HWND hwnd) {
 #if defined(_WIN32) && !defined(STARS_UI_SDL)
@@ -91,27 +91,27 @@ static int QueueShift(HWND hwnd) {
 #endif
     return 0;
 }
-static int WaitKey(HWND hwnd, MSG *lpmsg, UINT flags) {
+static int WaitKey(HWND hwnd, APPMSG *lpmsg, UINT flags) {
     DWORD ms = GetTickCount();
     do {
-        if (PeekMessage(lpmsg, hwnd, WM_KEYDOWN, WM_KEYUP, flags)) return 0;
+        if (PeekMessageA(lpmsg, hwnd, WM_KEYDOWN, WM_KEYUP, flags)) return 0;
 #if defined(_WIN32) && !defined(STARS_UI_SDL)
         Sleep(5);
 #else
         SDL_Delay(5);
 #endif
     } while (GetTickCount() - ms < 2000);
-    CHECK(FALSE);
+    CHECK(0);
     return 1;
 }
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
 static int TestWheelClicks(HWND hwnd, HINSTANCE hInstance) {
     SDL_Event event = {0};
     HWND hwndChild;
-    MSG msg;
+    APPMSG msg;
     POINT pt = {28, 40};
     int i, total = 0;
-    hwndChild = CreateWindow("StarsInputContracts", "wheel child", WS_CHILD | WS_VISIBLE,
+    hwndChild = CreateWindowExA(0, "StarsInputContracts", "wheel child", WS_CHILD | WS_VISIBLE,
                             20, 30, 100, 80, hwnd, (HMENU)(INT_PTR)103, hInstance, NULL);
     CHECK(hwndChild);
     SetFocus(hwndChild); Drain();
@@ -120,38 +120,38 @@ static int TestWheelClicks(HWND hwnd, HINSTANCE hInstance) {
     event.wheel.mouse_x = 28; event.wheel.mouse_y = 40;
     event.wheel.y = 0.5f; event.wheel.x = 1;
     CHECK(SDL_PushEvent(&event));
-    CHECK(PeekMessage(&msg, NULL, WM_MOUSEWHEEL, WM_MOUSEWHEEL, PM_REMOVE));
+    CHECK(PeekMessageA(&msg, NULL, WM_MOUSEWHEEL, WM_MOUSEWHEEL, PM_REMOVE));
     CHECK(msg.hwnd == hwndChild && GET_WHEEL_DELTA_WPARAM(msg.wParam) == 60);
     CHECK(msg.pt.x == pt.x && msg.pt.y == pt.y && (int16_t)LOWORD(msg.lParam) == pt.x &&
           (int16_t)HIWORD(msg.lParam) == pt.y);
     CHECK(WindowFromPoint(msg.pt) == hwndChild);
-    cWheel = 0; DispatchMessage(&msg);
+    cWheel = 0; DispatchMessageA(&msg);
     CHECK(cWheel == 1 && hwndWheelLast == hwnd);
-    CHECK(PeekMessage(&msg, NULL, WM_MOUSEHWHEEL, WM_MOUSEHWHEEL, PM_REMOVE));
+    CHECK(PeekMessageA(&msg, NULL, WM_MOUSEHWHEEL, WM_MOUSEHWHEEL, PM_REMOVE));
     CHECK(GET_WHEEL_DELTA_WPARAM(msg.wParam) == 120);
     event.wheel.x = 0; event.wheel.y = 1; event.wheel.direction = SDL_MOUSEWHEEL_FLIPPED;
     CHECK(SDL_PushEvent(&event));
-    CHECK(PeekMessage(&msg, NULL, WM_MOUSEWHEEL, WM_MOUSEWHEEL, PM_REMOVE));
+    CHECK(PeekMessageA(&msg, NULL, WM_MOUSEWHEEL, WM_MOUSEWHEEL, PM_REMOVE));
     CHECK(GET_WHEEL_DELTA_WPARAM(msg.wParam) == -120);
     event.wheel.direction = SDL_MOUSEWHEEL_NORMAL; event.wheel.y = 0.001f;
     for (i = 0; i < 10; i++) CHECK(SDL_PushEvent(&event));
-    while (PeekMessage(&msg, NULL, WM_MOUSEWHEEL, WM_MOUSEWHEEL, PM_REMOVE))
+    while (PeekMessageA(&msg, NULL, WM_MOUSEWHEEL, WM_MOUSEWHEEL, PM_REMOVE))
         total += GET_WHEEL_DELTA_WPARAM(msg.wParam);
     CHECK(total == 1);
     event.wheel.y = 400;
     CHECK(SDL_PushEvent(&event));
     total = 0;
-    while (PeekMessage(&msg, NULL, WM_MOUSEWHEEL, WM_MOUSEWHEEL, PM_REMOVE))
+    while (PeekMessageA(&msg, NULL, WM_MOUSEWHEEL, WM_MOUSEWHEEL, PM_REMOVE))
         total += GET_WHEEL_DELTA_WPARAM(msg.wParam);
     CHECK(total == 48000);
     event = (SDL_Event){0}; event.type = SDL_EVENT_MOUSE_BUTTON_DOWN;
     event.button.windowID = hwnd->id; event.button.button = SDL_BUTTON_LEFT;
     event.button.x = 28; event.button.y = 40; event.button.clicks = 2;
     CHECK(SDL_PushEvent(&event));
-    CHECK(PeekMessage(&msg, NULL, WM_LBUTTONDOWN, WM_LBUTTONDBLCLK, PM_REMOVE) && msg.message == WM_LBUTTONDOWN);
+    CHECK(PeekMessageA(&msg, NULL, WM_LBUTTONDOWN, WM_LBUTTONDBLCLK, PM_REMOVE) && msg.message == WM_LBUTTONDOWN);
     event.button.clicks = 3;
     CHECK(SDL_PushEvent(&event));
-    CHECK(PeekMessage(&msg, NULL, WM_LBUTTONDOWN, WM_LBUTTONDBLCLK, PM_REMOVE));
+    CHECK(PeekMessageA(&msg, NULL, WM_LBUTTONDOWN, WM_LBUTTONDBLCLK, PM_REMOVE));
     CHECK(msg.message == WM_LBUTTONDBLCLK && msg.hwnd == hwndChild && (msg.wParam & MK_LBUTTON));
     CHECK(msg.pt.x == pt.x && msg.pt.y == pt.y);
     CHECK(DestroyWindow(hwndChild));
@@ -162,7 +162,7 @@ static int TestPhysical(void) {
     SHORT w;
     POINT pt;
     const char *pszDriver = SDL_GetCurrentVideoDriver();
-    fMock = TRUE;
+    fMock = 1;
     rgfKeys[SDL_SCANCODE_A] = true;
     rgfKeys[SDL_SCANCODE_LSHIFT] = true;
     modMock = SDL_KMOD_RCTRL | SDL_KMOD_LSHIFT;
@@ -193,12 +193,12 @@ static int TestPhysical(void) {
     CHECK(!GetCursorPos(&pt) && GetLastError() == ERROR_NOT_SUPPORTED);
     pszDriverMock = NULL;
     CHECK(!GetCursorPos(NULL));
-    fMock = FALSE;
+    fMock = 0;
     return 0;
 }
 static int TestSnapshots(HWND hwnd) {
     SDL_Event event = {0};
-    MSG msg;
+    APPMSG msg;
     POINT pt, expected = {-7, 13};
     int i;
     static const SDL_Scancode rgsc[] = {SDL_SCANCODE_COMMA, SDL_SCANCODE_PERIOD,
@@ -215,11 +215,11 @@ static int TestSnapshots(HWND hwnd) {
     event.key.windowID = hwnd->id; event.key.scancode = SDL_SCANCODE_A;
     CHECK(SDL_PushEvent(&event));
     SDL_SetModState(SDL_KMOD_NONE);
-    CHECK(PeekMessage(&msg, hwnd, WM_KEYDOWN, WM_KEYDOWN, PM_REMOVE));
+    CHECK(PeekMessageA(&msg, hwnd, WM_KEYDOWN, WM_KEYDOWN, PM_REMOVE));
     CHECK(GetKeyState('A') < 0 && GetKeyState(VK_SHIFT) < 0 && GetKeyState(VK_LSHIFT) < 0);
-    CHECK(PeekMessage(&msg, hwnd, WM_MOUSEMOVE, WM_MOUSEMOVE, PM_REMOVE));
+    CHECK(PeekMessageA(&msg, hwnd, WM_MOUSEMOVE, WM_MOUSEMOVE, PM_REMOVE));
     CHECK((msg.wParam & MK_SHIFT) && GetKeyState('A') < 0 && GetKeyState(VK_SHIFT) < 0);
-    CHECK(PeekMessage(&msg, hwnd, WM_KEYUP, WM_KEYUP, PM_REMOVE));
+    CHECK(PeekMessageA(&msg, hwnd, WM_KEYUP, WM_KEYUP, PM_REMOVE));
     CHECK(!(GetKeyState('A') & 0x8000) && !(GetKeyState(VK_SHIFT) & 0x8000));
     CHECK(ClientToScreen(hwnd, &expected) && GetCursorPos(&pt));
     if (strcmp(SDL_GetCurrentVideoDriver(), "dummy") == 0)
@@ -227,7 +227,7 @@ static int TestSnapshots(HWND hwnd) {
     for (i = 0; i < 4; i++) {
         event.type = SDL_EVENT_KEY_DOWN; event.key.scancode = rgsc[i];
         CHECK(SDL_PushEvent(&event));
-        CHECK(PeekMessage(&msg, hwnd, WM_KEYDOWN, WM_KEYDOWN, PM_REMOVE));
+        CHECK(PeekMessageA(&msg, hwnd, WM_KEYDOWN, WM_KEYDOWN, PM_REMOVE));
         CHECK(msg.wParam == rgvk[i] && (msg.lParam & 0x00ff0000));
     }
     event.type = SDL_EVENT_KEY_DOWN; event.key.scancode = SDL_SCANCODE_LSHIFT;
@@ -238,31 +238,31 @@ static int TestSnapshots(HWND hwnd) {
     event.type = SDL_EVENT_KEY_UP; event.key.scancode = SDL_SCANCODE_LSHIFT;
     event.key.mod = SDL_KMOD_RSHIFT;
     CHECK(SDL_PushEvent(&event));
-    CHECK(PeekMessage(&msg, hwnd, WM_KEYDOWN, WM_KEYDOWN, PM_REMOVE));
-    CHECK(PeekMessage(&msg, hwnd, WM_KEYDOWN, WM_KEYDOWN, PM_REMOVE));
-    CHECK(PeekMessage(&msg, hwnd, WM_KEYUP, WM_KEYUP, PM_REMOVE));
+    CHECK(PeekMessageA(&msg, hwnd, WM_KEYDOWN, WM_KEYDOWN, PM_REMOVE));
+    CHECK(PeekMessageA(&msg, hwnd, WM_KEYDOWN, WM_KEYDOWN, PM_REMOVE));
+    CHECK(PeekMessageA(&msg, hwnd, WM_KEYUP, WM_KEYUP, PM_REMOVE));
     CHECK(GetKeyState(VK_SHIFT) < 0 && GetKeyState(VK_RSHIFT) < 0 && !(GetKeyState(VK_LSHIFT) & 0x8000));
     event.key.scancode = SDL_SCANCODE_RSHIFT; event.key.mod = 0;
     CHECK(SDL_PushEvent(&event));
-    CHECK(PeekMessage(&msg, hwnd, WM_KEYUP, WM_KEYUP, PM_REMOVE));
+    CHECK(PeekMessageA(&msg, hwnd, WM_KEYUP, WM_KEYUP, PM_REMOVE));
     CHECK(!(GetKeyState(VK_SHIFT) & 0x8000));
     event.type = SDL_EVENT_KEY_DOWN; event.key.scancode = SDL_SCANCODE_LALT;
     event.key.mod = SDL_KMOD_LALT;
     CHECK(SDL_PushEvent(&event));
-    CHECK(PeekMessage(&msg, hwnd, WM_SYSKEYDOWN, WM_SYSKEYDOWN, PM_REMOVE));
+    CHECK(PeekMessageA(&msg, hwnd, WM_SYSKEYDOWN, WM_SYSKEYDOWN, PM_REMOVE));
     CHECK(msg.wParam == VK_MENU && !(msg.lParam & (1u << 29)) && GetKeyState(VK_MENU) < 0);
     event.type = SDL_EVENT_KEY_UP; event.key.mod = 0;
     CHECK(SDL_PushEvent(&event));
-    CHECK(PeekMessage(&msg, hwnd, WM_SYSKEYUP, WM_SYSKEYUP, PM_REMOVE));
+    CHECK(PeekMessageA(&msg, hwnd, WM_SYSKEYUP, WM_SYSKEYUP, PM_REMOVE));
     CHECK(msg.wParam == VK_MENU && (msg.lParam & (1u << 29)) && !(GetKeyState(VK_MENU) & 0x8000));
     event.type = SDL_EVENT_KEY_DOWN; event.key.scancode = SDL_SCANCODE_CAPSLOCK;
     event.key.mod = SDL_KMOD_CAPS;
     CHECK(SDL_PushEvent(&event));
-    CHECK(PeekMessage(&msg, hwnd, WM_KEYDOWN, WM_KEYDOWN, PM_REMOVE));
+    CHECK(PeekMessageA(&msg, hwnd, WM_KEYDOWN, WM_KEYDOWN, PM_REMOVE));
     CHECK(GetKeyState(VK_CAPITAL) < 0 && (GetKeyState(VK_CAPITAL) & 1));
     event.type = SDL_EVENT_KEY_UP;
     CHECK(SDL_PushEvent(&event));
-    CHECK(PeekMessage(&msg, hwnd, WM_KEYUP, WM_KEYUP, PM_REMOVE));
+    CHECK(PeekMessageA(&msg, hwnd, WM_KEYUP, WM_KEYUP, PM_REMOVE));
     CHECK(!(GetKeyState(VK_CAPITAL) & 0x8000) && (GetKeyState(VK_CAPITAL) & 1));
     event = (SDL_Event){0}; event.type = SDL_EVENT_TEXT_INPUT;
     event.text.windowID = hwnd->id;
@@ -270,16 +270,16 @@ static int TestSnapshots(HWND hwnd) {
     CHECK(SDL_PushEvent(&event));
     { const DWORD rgch[] = {'A', 0xe9, 0x20ac, 0x2014, 0x1f600};
       for (i = 0; i < 5; i++) {
-          CHECK(PeekMessage(&msg, hwnd, WM_CHAR, WM_CHAR, PM_REMOVE));
+          CHECK(PeekMessageA(&msg, hwnd, WM_CHAR, WM_CHAR, PM_REMOVE));
           CHECK(msg.wParam == rgch[i]);
       }
     }
     event.text.text = "prefix\xe2\x82";
     CHECK(SDL_PushEvent(&event));
-    CHECK(!PeekMessage(&msg, hwnd, WM_CHAR, WM_CHAR, PM_REMOVE));
+    CHECK(!PeekMessageA(&msg, hwnd, WM_CHAR, WM_CHAR, PM_REMOVE));
     event.text.text = "\xed\xa0\x80";
     CHECK(SDL_PushEvent(&event));
-    CHECK(!PeekMessage(&msg, hwnd, WM_CHAR, WM_CHAR, PM_REMOVE));
+    CHECK(!PeekMessageA(&msg, hwnd, WM_CHAR, WM_CHAR, PM_REMOVE));
     event = (SDL_Event){0}; event.type = SDL_EVENT_WINDOW_FOCUS_LOST; event.window.windowID = hwnd->id;
     CompatRouteEvent(&event); Drain();
     CHECK(!(GetKeyState(VK_OEM_COMMA) & 0x8000));
@@ -290,7 +290,7 @@ int main(void) {
     WNDCLASS wc = {0};
     HWND hwnd;
     HINSTANCE hInstance;
-    MSG msg;
+    APPMSG msg;
     POINT pt;
     SHORT w;
     int i;
@@ -306,13 +306,13 @@ int main(void) {
 #endif
 
 #if defined(_WIN32) && !defined(STARS_UI_SDL)
-    hInstance = GetModuleHandle(NULL);
+    hInstance = GetModuleHandleA(NULL);
 #else
     hInstance = (HINSTANCE)(UINT_PTR)1;
 #endif
     wc.hInstance = hInstance; wc.lpszClassName = "StarsInputContracts"; wc.lpfnWndProc = InputProc; wc.style = CS_DBLCLKS;
-    CHECK(RegisterClass(&wc));
-    hwnd = CreateWindow(wc.lpszClassName, "input", WS_POPUP | WS_VISIBLE, 40, 50, 320, 240,
+    CHECK(RegisterClassA(&wc));
+    hwnd = CreateWindowExA(0, wc.lpszClassName, "input", WS_POPUP | WS_VISIBLE, 40, 50, 320, 240,
                         NULL, NULL, hInstance, NULL);
     CHECK(hwnd);
 #if defined(_WIN32) && !defined(STARS_UI_SDL)
@@ -330,14 +330,14 @@ int main(void) {
     CHECK(WaitKey(hwnd, &msg, PM_REMOVE) == 0 && msg.message == WM_KEYUP);
     CHECK(!(GetKeyState(VK_SHIFT) & 0x8000));
     w = GetKeyState('Z');
-    CHECK(PostMessage(hwnd, WM_KEYDOWN, 'Z', 1));
-    CHECK(PeekMessage(&msg, hwnd, WM_KEYDOWN, WM_KEYDOWN, PM_REMOVE));
+    CHECK(PostMessageA(hwnd, WM_KEYDOWN, 'Z', 1));
+    CHECK(PeekMessageA(&msg, hwnd, WM_KEYDOWN, WM_KEYDOWN, PM_REMOVE));
     CHECK(GetKeyState('Z') == w);
     for (i = 0; i < 4; i++) {
-        CHECK(PostMessage(hwnd, WM_KEYDOWN, rgControl[i], (rgScan[i] << 16) | 1));
-        CHECK(PeekMessage(&msg, hwnd, WM_KEYDOWN, WM_KEYDOWN, PM_REMOVE));
+        CHECK(PostMessageA(hwnd, WM_KEYDOWN, rgControl[i], (rgScan[i] << 16) | 1));
+        CHECK(PeekMessageA(&msg, hwnd, WM_KEYDOWN, WM_KEYDOWN, PM_REMOVE));
         CHECK(TranslateMessage(&msg));
-        CHECK(PeekMessage(&msg, hwnd, WM_CHAR, WM_CHAR, PM_REMOVE) && msg.wParam == rgControl[i]);
+        CHECK(PeekMessageA(&msg, hwnd, WM_CHAR, WM_CHAR, PM_REMOVE) && msg.wParam == rgControl[i]);
     }
 #if defined(_WIN32) && !defined(STARS_UI_SDL)
     CHECK(SetCursorPos(120, 130) && GetCursorPos(&pt) && pt.x == 120 && pt.y == 130);

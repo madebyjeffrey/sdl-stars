@@ -10,6 +10,7 @@ typedef struct COMPATTIMER {
     UINT cMillis;
     uint64_t msDue;
     TIMERPROC lpfn;
+    void *lpvCallbackContext;
     BOOL fQueued;
     struct COMPATTIMER *lpNext;
 } COMPATTIMER;
@@ -25,20 +26,20 @@ static COMPATTIMER *LpTimer(HWND hwnd, UINT_PTR id) {
     return NULL;
 }
 
-UINT_PTR WINAPI SetTimer(HWND hwnd, UINT_PTR id, UINT cMillis, TIMERPROC lpfn) {
+UINT_PTR win32::SetTimer(HWND hwnd, UINT_PTR id, UINT cMillis, TIMERPROC lpfn) {
     COMPATTIMER *lp;
 
     if (!SDL_IsMainThread() || (hwnd && !LpCompatWindow(hwnd))) {
-        SetLastError(ERROR_INVALID_HANDLE); return 0;
+        win32::SetLastError(win32::ERROR_INVALID_HANDLE); return 0;
     }
     if (!(SDL_WasInit(SDL_INIT_EVENTS) & SDL_INIT_EVENTS)) {
         if (!SDL_InitSubSystem(SDL_INIT_EVENTS)) return 0;
-        fEventsOwned = TRUE;
+        fEventsOwned = 1;
     }
     lp = LpTimer(hwnd, id);
     if (!lp) {
         lp = (COMPATTIMER *)(calloc(1, sizeof(*lp)));
-        if (!lp) { SetLastError(ERROR_NOT_ENOUGH_MEMORY); return 0; }
+        if (!lp) { win32::SetLastError(win32::ERROR_NOT_ENOUGH_MEMORY); return 0; }
         lp->hwnd = hwnd;
         if (!hwnd) {
             do { id = idTimerNext++; } while (id == 0 || LpTimer(NULL, id));
@@ -46,29 +47,30 @@ UINT_PTR WINAPI SetTimer(HWND hwnd, UINT_PTR id, UINT cMillis, TIMERPROC lpfn) {
         lp->id = id;
         lp->lpNext = lpTimers; lpTimers = lp;
     }
-    lp->cMillis = (((USER_TIMER_MINIMUM) > (StarsMin(cMillis, USER_TIMER_MAXIMUM))) ? (USER_TIMER_MINIMUM) : (StarsMin(cMillis, USER_TIMER_MAXIMUM)));
+    lp->cMillis = (((win32::USER_TIMER_MINIMUM) > (StarsMin(cMillis, win32::USER_TIMER_MAXIMUM))) ? (win32::USER_TIMER_MINIMUM) : (StarsMin(cMillis, win32::USER_TIMER_MAXIMUM)));
     lp->msDue = CompatTimeIO().pfnGetTicks() + lp->cMillis;
     lp->lpfn = lpfn;
+    lp->lpvCallbackContext = hwnd ? hwnd->lpvCallbackContext : PvCompatCallbackContext();
     return lp->id ? lp->id : 1;
 }
 
-BOOL WINAPI KillTimer(HWND hwnd, UINT_PTR id) {
+BOOL win32::KillTimer(HWND hwnd, UINT_PTR id) {
     COMPATTIMER **lplp, *lp;
 
-    if (!SDL_IsMainThread()) return FALSE;
+    if (!SDL_IsMainThread()) return 0;
     for (lplp = &lpTimers; *lplp; lplp = &(*lplp)->lpNext) {
         lp = *lplp;
         if (lp->hwnd == hwnd && lp->id == id) {
             *lplp = lp->lpNext; free(lp);
-            return TRUE;
+            return 1;
         }
     }
-    return FALSE;
+    return 0;
 }
 
 static BOOL FTimerMatches(COMPATTIMER *lp, HWND hwnd, UINT msgMin, UINT msgMax) {
-    return ((msgMin == 0 && msgMax == 0) || (msgMin <= WM_TIMER && msgMax >= WM_TIMER)) &&
-           (!hwnd || ((INT_PTR)hwnd == -1 ? !lp->hwnd : hwnd == lp->hwnd || IsChild(hwnd, lp->hwnd)));
+    return ((msgMin == 0 && msgMax == 0) || (msgMin <= win32::WM_TIMER && msgMax >= win32::WM_TIMER)) &&
+           (!hwnd || ((INT_PTR)hwnd == -1 ? !lp->hwnd : hwnd == lp->hwnd || win32::IsChild(hwnd, lp->hwnd)));
 }
 
 void CompatGenerateTimer(HWND hwnd, UINT msgMin, UINT msgMax) {
@@ -77,8 +79,8 @@ void CompatGenerateTimer(HWND hwnd, UINT msgMin, UINT msgMax) {
 
     for (lp = lpTimers; lp; lp = lp->lpNext) {
         if (lp->fQueued || !FTimerMatches(lp, hwnd, msgMin, msgMax) || msNow < lp->msDue) continue;
-        if (CompatQueueTimer(lp->hwnd, lp->id, lp->lpfn)) {
-            lp->fQueued = TRUE;
+        if (CompatQueueTimer(lp->hwnd, lp->id, lp->lpfn, lp->lpvCallbackContext)) {
+            lp->fQueued = 1;
             lp->msDue = msNow + lp->cMillis;
         }
     }
@@ -86,7 +88,7 @@ void CompatGenerateTimer(HWND hwnd, UINT msgMin, UINT msgMax) {
 
 void CompatTimerDequeued(HWND hwnd, UINT_PTR id) {
     COMPATTIMER *lp = LpTimer(hwnd, id);
-    if (lp) lp->fQueued = FALSE;
+    if (lp) lp->fQueued = 0;
 }
 
 int CMillisCompatTimerWait(HWND hwnd, UINT msgMin, UINT msgMax) {
@@ -117,5 +119,5 @@ void CompatClearTimers(void) {
     COMPATTIMER *lp;
     while (lpTimers) { lp = lpTimers; lpTimers = lp->lpNext; free(lp); }
     if (fEventsOwned) SDL_QuitSubSystem(SDL_INIT_EVENTS);
-    fEventsOwned = FALSE;
+    fEventsOwned = 0;
 }

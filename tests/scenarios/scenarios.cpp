@@ -11,47 +11,52 @@
 // the stars_test.h helpers, and finish with FStarsTestSaveGame.
 
 #include "stars_test.h"
+#include "appstate.h"
+#ifdef STARS_UI_SDL
+#include "uistate.h"
+#endif
+#include "callbackcontext.h"
 
 #include <direct.h>
 
 typedef struct {
     const char *pszName;
     const char *pszDesc;
-    int16_t (*pfnBuild)(const char *szDir);
+    int16_t (*pfnBuild)(APPSESSION &, const char *szDir);
 } SCENARIO;
 
 // IshFirstDesign returns iPlr's first ship design, or -1.
-static int16_t IshFirstDesign(int16_t iPlr) {
+static int16_t IshFirstDesign(APPSESSION &app, int16_t iPlr) {
     int16_t ish;
 
-    for (ish = 0; ish < 16 && rglpshdef[iPlr][ish].fFree; ish++) {
+    for (ish = 0; ish < 16 && app.state.rglpshdef[iPlr][ish].fFree; ish++) {
     }
     return ish < 16 ? ish : -1;
 }
 
-static int16_t FBuildNewGame(const char *szDir) {
-    return FStarsTestNewGame(szDir, 12345, NULL, 0) && FStarsTestLoadHost() && FStarsTestSaveGame();
+static int16_t FBuildNewGame(APPSESSION &app, const char *szDir) {
+    return FStarsTestNewGame(app, szDir, 12345, NULL, 0) && FStarsTestLoadHost(app) && FStarsTestSaveGame(app);
 }
 
 // 150 one-ship fleets orbit the homeworld. Right-click the homeworld in the
 // scanner: the popup lists the planet and all 150 fleets, and choosing one
 // past the hundredth selects it. Select a fleet and right-click its first
 // waypoint's target in the fleet orders: the other 149 are listed.
-static int16_t FBuildPopupOverload(const char *szDir) {
+static int16_t FBuildPopupOverload(APPSESSION &app, const char *szDir) {
     PLANET *lppl;
     int16_t ish;
     int16_t i;
 
-    if (!FStarsTestNewGame(szDir, 12345, NULL, 0) || !FStarsTestLoadHost())
-        return FALSE;
-    lppl = LpplStarsTestHomeworld(0);
-    ish = IshFirstDesign(0);
+    if (!FStarsTestNewGame(app, szDir, 12345, NULL, 0) || !FStarsTestLoadHost(app))
+        return 0;
+    lppl = LpplStarsTestHomeworld(app, 0);
+    ish = IshFirstDesign(app, 0);
     if (lppl == NULL || ish < 0)
-        return FALSE;
+        return 0;
     for (i = 0; i < 150; i++) {
-        LpflStarsTestAddFleet(0, lppl->id, ish, 1);
+        LpflStarsTestAddFleet(app, 0, lppl->id, ish, 1);
     }
-    return FStarsTestSaveGame();
+    return FStarsTestSaveGame(app);
 }
 
 static const SCENARIO rgscen[] = {
@@ -60,7 +65,14 @@ static const SCENARIO rgscen[] = {
 };
 
 int main(int argc, char **argv) {
-    char    szDir[MAX_PATH];
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+
+    char    szDir[cbTestPath];
     char   *pch;
     size_t  i;
     int16_t iscen;
@@ -85,11 +97,11 @@ int main(int argc, char **argv) {
             *pch = '\\';
     }
     _mkdir(szDir);
-    if (!FStarsTestInit() || !rgscen[iscen].pfnBuild(szDir)) {
+    if (!FStarsTestInit(app) || !rgscen[iscen].pfnBuild(app, szDir)) {
         fprintf(stderr, "%s failed%s%s\n", argv[1], cStarsTestAlert ? ": " : "", cStarsTestAlert ? szStarsTestAlert : "");
         return 1;
     }
-    DestroyCurGame();
+    DestroyCurGame(app);
     printf("%s: %s\\game.xy, game.hst and game.m1\n", argv[1], szDir);
     return 0;
 }

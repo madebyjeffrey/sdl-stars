@@ -1,9 +1,12 @@
 # Milestone C: finish the C++ conversion
 
-Status: implementation active; C01–C03 merged under the current CI policy.
-C04/C05 now replace all test redirects/clones and all 27 extracted witness
-programs with typed effects and normal linked targets; local qualification passes,
-with enabled PR CI pending.
+Status: complete; all C01–C10 implementation and qualification obligations are
+recorded. C01–C03 are merged; C04/C05 through C10 are ready for review as draft
+PRs #72–#77, in that order. The agent has not merged them. Full local and manual
+Linux/Windows contract gates pass. Eighteen native SDK behavior probes remain
+explicit diagnostics tracked in issue #78 after toolbar requalification;
+post-migration corrections are recorded in the [SDK findings](CPP-C09-SDK-FINDINGS.md).
+See the [final qualification](CPP-C10-QUALIFICATION.md).
 Evidence: [CPP-C-IMPLEMENTATION.md](CPP-C-IMPLEMENTATION.md).
 Tracking: [#67](https://github.com/madebyjeffrey/sdl-stars/issues/67).
 Recorded: 2026-10-29; refreshed against merged B on 2026-10-31.
@@ -348,8 +351,8 @@ the unit workflow's `workflow_dispatch` with `run_slow_platform_jobs` selected.
 Host tests, source witnesses, sanitizers, regressions and tutorial checks remain
 automatic; required local checks continue. Evidence from the two deferred jobs
 does not block the next checkpoint during this pause and is not reported as
-passing. Final platform qualification remains deferred work for when those full
-desktop suites are prioritized again.
+passing. Final qualification uses explicit manual runs while the automatic policy
+remains opt-in. The final ledger records their actual outcomes.
 
 Every implementation batch follows the repository verification rules. Build the
 platform SDL Debug preset with no new warnings; run `make regression`,
@@ -400,6 +403,6 @@ no irreversible file conversion is part of C. Open tracking issues when work is
 scheduled under `docs/agents/issue-tracker.md`; this plan does not publish tickets
 or begin implementation.
 
-This document records planned work and completion obligations only. No C code
-changes, new behavior, completed checkpoint, new proof or runtime qualification
-is claimed by publishing the plan.
+The checkpoint descriptions retain the approved plan and completion obligations.
+Current status and actual qualification are recorded above and in the linked
+implementation/final ledgers.

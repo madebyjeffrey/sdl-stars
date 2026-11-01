@@ -1,4 +1,7 @@
 #include "win.h"
+#include "appstate.h"
+#include "callbackcontext.h"
+#include "uistate.h"
 #include "text_io.h"
 #include "control_io.h"
 #include "presentation_io.h"
@@ -8,7 +11,9 @@
 
 static int16_t dWheelMessages;
 
-LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+
     HDC         hdc;
     int16_t     i;
     char       *psz;
@@ -39,241 +44,241 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
     int16_t     fRet;
 
     switch (message) {
-    case WM_CREATE:
+    case win32::WM_CREATE:
         dWheelMessages = 0;
         for (i = 0; i < 4; i++) {
-            hwndMessage = hwnd;
-            rghwndMsgBtn[i] = HwndUiCreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(static_cast<StringId>(idsPrev2 + i)), WS_CHILD, 100, 100, i == 3 ? 50 : 44, (3 * dyArial8 >> 1) - 1, hwnd,
-                                           NULL, hInst, NULL);
-            ControlIO().pfnLUiSendMessage(rghwndMsgBtn[i], WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
+            app.lpui->hwndMessage = hwnd;
+            app.lpui->rghwndMsgBtn[i] = ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(app, static_cast<StringId>(idsPrev2 + i)), win32::WS_CHILD, 100, 100, i == 3 ? 50 : 44, (3 * app.state.dyArial8 >> 1) - 1, hwnd,
+                                           NULL, app.lpui->hInst, NULL);
+            ControlIO().pfnSendMessage(app.lpui->rghwndMsgBtn[i], win32::WM_SETFONT, (WPARAM)app.lpui->rghfontArial8[1], 0);
         }
-        hwndMsgDrop = HwndUiCreateWindowEx(0, "COMBOBOX", "MsgDD", CBS_DROPDOWNLIST | WS_CHILD | WS_VSCROLL, 100, 100, 200, 80, hwnd, NULL, hInst, NULL);
-        ControlIO().pfnLUiSendMessage(hwndMsgDrop, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
-        hwndMsgEdit = HwndUiCreateWindowEx(0, "EDIT", NULL, ES_MULTILINE | ES_AUTOVSCROLL | WS_CHILD | WS_BORDER, 100, 100, 200, 50, hwnd, NULL, hInst, NULL);
-        ControlIO().pfnLUiSendMessage(hwndMsgEdit, EM_LIMITTEXT, 0x3c8, 0);
-        ControlIO().pfnLUiSendMessage(hwndMsgEdit, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
-        hwndMsgScroll = HwndUiCreateWindowEx(0, "EDIT", NULL, ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY | WS_CHILD | WS_BORDER | WS_VSCROLL, 100, 100, 200, 50, hwnd,
-                                     NULL, hInst, NULL);
-        ControlIO().pfnSetMsgTitle(hwnd);
-        ControlIO().pfnLUiSendMessage(hwndMsgDrop, CB_ADDSTRING, 0, (LPARAM)TextIO().pfnCompressed(idsEverybody));
-        for (i = 0; i < game.cPlayer; i++) {
-            psz = TextIO().pfnPlayerName(i, TRUE, TRUE, TRUE, 0, NULL);
-            ControlIO().pfnLUiSendMessage(hwndMsgDrop, CB_ADDSTRING, 0, (LPARAM)psz);
+        app.lpui->hwndMsgDrop = ui::CreateWindowEx(0, "COMBOBOX", "MsgDD", win32::CBS_DROPDOWNLIST | win32::WS_CHILD | win32::WS_VSCROLL, 100, 100, 200, 80, hwnd, NULL, app.lpui->hInst, NULL);
+        ControlIO().pfnSendMessage(app.lpui->hwndMsgDrop, win32::WM_SETFONT, (WPARAM)app.lpui->rghfontArial8[1], 0);
+        app.lpui->hwndMsgEdit = ui::CreateWindowEx(0, "EDIT", NULL, win32::ES_MULTILINE | win32::ES_AUTOVSCROLL | win32::WS_CHILD | win32::WS_BORDER, 100, 100, 200, 50, hwnd, NULL, app.lpui->hInst, NULL);
+        ControlIO().pfnSendMessage(app.lpui->hwndMsgEdit, win32::EM_LIMITTEXT, 0x3c8, 0);
+        ControlIO().pfnSendMessage(app.lpui->hwndMsgEdit, win32::WM_SETFONT, (WPARAM)app.lpui->rghfontArial8[1], 0);
+        app.lpui->hwndMsgScroll = ui::CreateWindowEx(0, "EDIT", NULL, win32::ES_MULTILINE | win32::ES_AUTOVSCROLL | win32::ES_READONLY | win32::WS_CHILD | win32::WS_BORDER | win32::WS_VSCROLL, 100, 100, 200, 50, hwnd,
+                                     NULL, app.lpui->hInst, NULL);
+        ControlIO().pfnSetMsgTitle(app, hwnd);
+        ControlIO().pfnSendMessage(app.lpui->hwndMsgDrop, win32::CB_ADDSTRING, 0, (LPARAM)TextIO().pfnCompressed(app, idsEverybody));
+        for (i = 0; i < app.state.game.cPlayer; i++) {
+            psz = TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, NULL);
+            ControlIO().pfnSendMessage(app.lpui->hwndMsgDrop, win32::CB_ADDSTRING, 0, (LPARAM)psz);
         }
-        ControlIO().pfnLUiSendMessage(hwndMsgDrop, CB_SETCURSEL, 0, 0);
+        ControlIO().pfnSendMessage(app.lpui->hwndMsgDrop, win32::CB_SETCURSEL, 0, 0);
         break;
-    case WM_SIZE:
+    case win32::WM_SIZE:
         dx = LOWORD(lParam);
         dy = HIWORD(lParam);
         for (i = 0; i < 3; i++) {
-            ControlIO().pfnFUiSetWindowPos(rghwndMsgBtn[i], NULL, dx - 48, ((3 * dyArial8 >> 1) + 2) * i + 3 + dyArial8 * 2, 0, 0,
-                         SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_SHOWWINDOW);
+            ControlIO().pfnSetWindowPos(app.lpui->rghwndMsgBtn[i], NULL, dx - 48, ((3 * app.state.dyArial8 >> 1) + 2) * i + 3 + app.state.dyArial8 * 2, 0, 0,
+                         win32::SWP_NOSIZE | win32::SWP_NOZORDER | win32::SWP_NOACTIVATE | win32::SWP_SHOWWINDOW);
         }
-        SetRect(&rcMsgText, 4, dyArial8 * 2 + 3, dx - 52, dy - 4);
-        SetRect(&rcMsgTitle, 4, 4, dx - 4, dyArial8 * 2 - 4);
-        rc = rcMsgText;
+        win32::SetRect(&app.lpui->rcMsgText, 4, app.state.dyArial8 * 2 + 3, dx - 52, dy - 4);
+        win32::SetRect(&app.lpui->rcMsgTitle, 4, 4, dx - 4, app.state.dyArial8 * 2 - 4);
+        rc = app.lpui->rcMsgText;
         ExpandRc(&rc, -4, -4);
-        ControlIO().pfnFUiSetWindowPos(hwndMsgDrop, NULL, rc.left + 30, rc.top, rc.right - rc.left - 84, rc.bottom - rc.top, SWP_NOZORDER);
-        ControlIO().pfnFUiSetWindowPos(rghwndMsgBtn[3], NULL, rc.right - 50, rc.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
-        rc.top += dyShipDD + 3;
-        ControlIO().pfnFUiSetWindowPos(hwndMsgEdit, NULL, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, SWP_NOZORDER);
+        ControlIO().pfnSetWindowPos(app.lpui->hwndMsgDrop, NULL, rc.left + 30, rc.top, rc.right - rc.left - 84, rc.bottom - rc.top, win32::SWP_NOZORDER);
+        ControlIO().pfnSetWindowPos(app.lpui->rghwndMsgBtn[3], NULL, rc.right - 50, rc.top, 0, 0, win32::SWP_NOSIZE | win32::SWP_NOZORDER);
+        rc.top += app.lpui->dyShipDD + 3;
+        ControlIO().pfnSetWindowPos(app.lpui->hwndMsgEdit, NULL, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, win32::SWP_NOZORDER);
         goto Default;
-    case WM_ERASEBKGND:
+    case win32::WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        FillRect((HDC)wParam, &rc, hbrButtonFace);
+        win32::FillRect((HDC)wParam, &rc, app.lpui->hbrButtonFace);
         return 1;
-    case WM_SETCURSOR:
+    case win32::WM_SETCURSOR:
         hcs = 0;
         GetCursorPos16(&pt);
         ScreenToClient16(hwnd, &pt);
-        if (HtMsgBox(pt) == htMsgNone)
+        if (HtMsgBox(app, pt) == htMsgNone)
             goto Default;
-        SetCursor(hcurHand);
+        win32::SetCursor(app.lpui->hcurHand);
         return 1;
-    case WM_LBUTTONDOWN:
-    case WM_LBUTTONDBLCLK:
+    case win32::WM_LBUTTONDOWN:
+    case win32::WM_LBUTTONDBLCLK:
         pt.x = LOWORD(lParam);
         pt.y = HIWORD(lParam);
-        ht = HtMsgBox(pt);
+        ht = HtMsgBox(app, pt);
         if (ht == htMsgCurrent) {
         CheckBox:
-            if (iMsgCur < 0)
+            if (app.state.iMsgCur < 0)
                 break;
-            idm = static_cast<MessageId>(PresentationIO().pfnMessageId(iMsgCur));
-            fSet = (bitfMsgFiltered[idm >> 3] & 1 << (idm & 7)) != 0;
-            SetFilteringGroups(idm, fSet == 0);
-            RecordIO().pfnDirtyGame(TRUE);
-            if (gd.fTutorial) {
-                PresentationIO().pfnTutor();
+            idm = static_cast<MessageId>(PresentationIO().pfnMessageId(app, app.state.iMsgCur));
+            fSet = (app.state.bitfMsgFiltered[idm >> 3] & 1 << (idm & 7)) != 0;
+            SetFilteringGroups(app, idm, fSet == 0);
+            RecordIO().pfnDirtyGame(app, 1);
+            if (app.state.gd.fTutorial) {
+                PresentationIO().pfnTutor(app);
             }
-            ControlIO().pfnInvalidateRect(hwndMessage, NULL, TRUE);
-            ControlIO().pfnSetMsgTitle(hwnd);
+            ControlIO().pfnInvalidateRect(app.lpui->hwndMessage, NULL, 1);
+            ControlIO().pfnSetMsgTitle(app, hwnd);
         } else if (ht == htMsgZoom) {
         ZoomBox:
-            fViewFilteredMsg = fViewFilteredMsg == 0;
-            if (iMsgCur < 0 || ((bitfMsgFiltered[PresentationIO().pfnMessageId(iMsgCur) >> 3] & 1 << (PresentationIO().pfnMessageId(iMsgCur) & 7)) != 0) != fViewFilteredMsg) {
-                i = IMsgNext(fViewFilteredMsg);
+            app.state.fViewFilteredMsg = app.state.fViewFilteredMsg == 0;
+            if (app.state.iMsgCur < 0 || ((app.state.bitfMsgFiltered[PresentationIO().pfnMessageId(app, app.state.iMsgCur) >> 3] & 1 << (PresentationIO().pfnMessageId(app, app.state.iMsgCur) & 7)) != 0) != app.state.fViewFilteredMsg) {
+                i = IMsgNext(app, app.state.fViewFilteredMsg);
                 if (i == imsgNone) {
-                    i = IMsgPrev(fViewFilteredMsg);
+                    i = IMsgPrev(app, app.state.fViewFilteredMsg);
                 }
-                iMsgCur = i;
+                app.state.iMsgCur = i;
             }
-            ControlIO().pfnInvalidateRect(hwndMessage, NULL, TRUE);
-            ControlIO().pfnSetMsgTitle(hwnd);
+            ControlIO().pfnInvalidateRect(app.lpui->hwndMessage, NULL, 1);
+            ControlIO().pfnSetMsgTitle(app, hwnd);
         } else if (ht == htMsgMode) {
         ToggleMsgMode:
-            if (gd.fSendMsgMode) {
-                FFinishPlrMsgEntry(0);
-            } else if (iMsgCur >= cMsg) {
-                lpmpSrc = vlpmsgplrIn;
-                i = iMsgCur - cMsg;
+            if (app.state.gd.fSendMsgMode) {
+                FFinishPlrMsgEntry(app, 0);
+            } else if (app.state.iMsgCur >= app.state.cMsg) {
+                lpmpSrc = app.state.vlpmsgplrIn;
+                i = app.state.iMsgCur - app.state.cMsg;
                 while (i-- != 0) {
                     lpmpSrc = lpmpSrc->lpmsgplrNext;
                 }
-                lpmp = vlpmsgplrOut;
-                iMsgSendCur = 0;
-                while (lpmp && (lpmp->iPlrTo - 1 != lpmpSrc->iPlrFrom || lpmp->iInRe != iMsgCur)) {
+                lpmp = app.state.vlpmsgplrOut;
+                app.state.iMsgSendCur = 0;
+                while (lpmp && (lpmp->iPlrTo - 1 != lpmpSrc->iPlrFrom || lpmp->iInRe != app.state.iMsgCur)) {
                     lpmp = lpmp->lpmsgplrNext;
-                    iMsgSendCur++;
+                    app.state.iMsgSendCur++;
                 }
-                viInRe = lpmpSrc->iPlrFrom + 1;
+                app.lpui->viInRe = lpmpSrc->iPlrFrom + 1;
             } else {
-                viInRe = 0;
+                app.lpui->viInRe = 0;
             }
-            gd.fSendMsgMode = gd.fSendMsgMode == 0;
-            ControlIO().pfnInvalidateRect(hwndMessage, NULL, TRUE);
-            ControlIO().pfnSetMsgTitle(hwnd);
-            ControlIO().pfnHwndUiSetFocus(hwndMsgEdit);
+            app.state.gd.fSendMsgMode = app.state.gd.fSendMsgMode == 0;
+            ControlIO().pfnInvalidateRect(app.lpui->hwndMessage, NULL, 1);
+            ControlIO().pfnSetMsgTitle(app, hwnd);
+            ControlIO().pfnSetFocus(app.lpui->hwndMsgEdit);
         }
         break;
-    case WM_GETMINMAXINFO:
-        ((MINMAXINFO *)lParam)->ptMinTrackSize.x = dxWinFrame * 2 + 198;
-        ((MINMAXINFO *)lParam)->ptMinTrackSize.y = (0xd * dyArial8 >> 1) + 0x16;
+    case win32::WM_GETMINMAXINFO:
+        ((MINMAXINFO *)lParam)->ptMinTrackSize.x = app.lpui->dxWinFrame * 2 + 198;
+        ((MINMAXINFO *)lParam)->ptMinTrackSize.y = (0xd * app.state.dyArial8 >> 1) + 0x16;
         goto Default;
-    case WM_CTLCOLORMSGBOX:
-    case WM_CTLCOLOREDIT:
-    case WM_CTLCOLORLISTBOX:
-    case WM_CTLCOLORBTN:
-    case WM_CTLCOLORDLG:
-    case WM_CTLCOLORSCROLLBAR:
-    case WM_CTLCOLORSTATIC:
-        if ((HWND)lParam != hwndMsgScroll)
+    case win32::WM_CTLCOLORMSGBOX:
+    case win32::WM_CTLCOLOREDIT:
+    case win32::WM_CTLCOLORLISTBOX:
+    case win32::WM_CTLCOLORBTN:
+    case win32::WM_CTLCOLORDLG:
+    case win32::WM_CTLCOLORSCROLLBAR:
+    case win32::WM_CTLCOLORSTATIC:
+        if ((HWND)lParam != app.lpui->hwndMsgScroll)
             goto Default;
-        SetBkColor((HDC)wParam, crButtonFace);
-        return (LRESULT)hbrButtonFace;
-    case WM_PAINT:
-        hdc = BeginPaint(hwnd, &ps);
-        _Draw3dFrame(hdc, &rcMsgTitle, 0);
-        crFore = SetTextColor(hdc, crButtonText);
-        crBack = SetBkColor(hdc, crButtonFace);
-        cch = strlen(szMsgTitle);
-        dxMax = rcMsgTitle.right - rcMsgTitle.left - 48;
-        while (cch > 0 && (int16_t)LOWORD(GetTextExtent(hdc, szMsgTitle, cch)) > dxMax) {
-            cch = (int16_t)CchUtf8Prefix(szMsgTitle, cch - 1);
+        win32::SetBkColor((HDC)wParam, app.lpui->crButtonFace);
+        return (LRESULT)app.lpui->hbrButtonFace;
+    case win32::WM_PAINT:
+        hdc = win32::BeginPaint(hwnd, &ps);
+        _Draw3dFrame(app, hdc, &app.lpui->rcMsgTitle, 0);
+        crFore = win32::SetTextColor(hdc, app.lpui->crButtonText);
+        crBack = win32::SetBkColor(hdc, app.lpui->crButtonFace);
+        cch = strlen(app.lpui->szMsgTitle);
+        dxMax = app.lpui->rcMsgTitle.right - app.lpui->rcMsgTitle.left - 48;
+        while (cch > 0 && (int16_t)LOWORD(GetTextExtent(hdc, app.lpui->szMsgTitle, cch)) > dxMax) {
+            cch = (int16_t)CchUtf8Prefix(app.lpui->szMsgTitle, cch - 1);
         }
-        RcCtrTextOut(hdc, &rcMsgTitle, szMsgTitle, cch);
-        DecorateMsgTitleBar(hdc, &rcMsgTitle);
-        rc = rcMsgText;
+        RcCtrTextOut(app, hdc, &app.lpui->rcMsgTitle, app.lpui->szMsgTitle, cch);
+        DecorateMsgTitleBar(app, hdc, &app.lpui->rcMsgTitle);
+        rc = app.lpui->rcMsgText;
         dx = rc.right - rc.left;
         dy = rc.bottom - rc.top;
-        hbrSav = (HBRUSH)SelectObject(hdc, hbrButtonShadow);
-        PatBlt(hdc, rc.left, rc.top, dx, 1, PATCOPY);
-        PatBlt(hdc, rc.left, rc.top, 1, dy, PATCOPY);
-        SelectObject(hdc, hbrButtonHilite);
-        PatBlt(hdc, rc.left, rc.bottom - 1, dx, 1, PATCOPY);
-        PatBlt(hdc, rc.right - 1, rc.top, 1, dy, PATCOPY);
-        SelectObject(hdc, hbrSav);
+        hbrSav = (HBRUSH)win32::SelectObject(hdc, app.lpui->hbrButtonShadow);
+        win32::PatBlt(hdc, rc.left, rc.top, dx, 1, win32::PATCOPY);
+        win32::PatBlt(hdc, rc.left, rc.top, 1, dy, win32::PATCOPY);
+        win32::SelectObject(hdc, app.lpui->hbrButtonHilite);
+        win32::PatBlt(hdc, rc.left, rc.bottom - 1, dx, 1, win32::PATCOPY);
+        win32::PatBlt(hdc, rc.right - 1, rc.top, 1, dy, win32::PATCOPY);
+        win32::SelectObject(hdc, hbrSav);
         ExpandRc(&rc, -4, -4);
-        if (!gd.fSendMsgMode) {
-            if (iMsgCur >= cMsg) {
-                lpmsgplr = vlpmsgplrIn;
-                for (i = cMsg; i < iMsgCur; i++) {
+        if (!app.state.gd.fSendMsgMode) {
+            if (app.state.iMsgCur >= app.state.cMsg) {
+                lpmsgplr = app.state.vlpmsgplrIn;
+                for (i = app.state.cMsg; i < app.state.iMsgCur; i++) {
                     lpmsgplr = lpmsgplr->lpmsgplrNext;
                 }
-                if (TextIO().pfnCchGetString(idsSCC, szT) >= 32) {
+                if (TextIO().pfnCchGetString(app, idsSCC, szT) >= 32) {
                 }
-                cch = wsprintf((LPSTR)lpb2k, szT, TextIO().pfnPlayerName(lpmsgplr->iPlrFrom, TRUE, TRUE, TRUE, 0, NULL), 13, 10);
-                if (TextIO().pfnCchGetString(idsSCC2, szT) >= 32) {
+                cch = win32::wsprintfA((LPSTR)app.lpui->lpb2k, szT, TextIO().pfnPlayerName(app, lpmsgplr->iPlrFrom, 1, 1, 1, 0, NULL), 13, 10);
+                if (TextIO().pfnCchGetString(app, idsSCC2, szT) >= 32) {
                 }
-                cch += wsprintf((LPSTR)lpb2k + cch, szT,
-                                lpmsgplr->iPlrTo == 0 ? TextIO().pfnCompressed(idsEverybody) : TextIO().pfnPlayerName(lpmsgplr->iPlrTo - 1, TRUE, TRUE, TRUE, 0, NULL),
+                cch += win32::wsprintfA((LPSTR)app.lpui->lpb2k + cch, szT,
+                                lpmsgplr->iPlrTo == 0 ? TextIO().pfnCompressed(app, idsEverybody) : TextIO().pfnPlayerName(app, lpmsgplr->iPlrTo - 1, 1, 1, 1, 0, NULL),
                                 13, 10);
                 if (lpmsgplr->cLen >= 0) {
                     i = 1000;
-                    FDecompressUserString((char *)lpmsgplr->rgbMsg(), lpmsgplr->cLen, (char *)lpb2k + cch, &i);
+                    FDecompressUserString(app, (char *)lpmsgplr->rgbMsg(), lpmsgplr->cLen, (char *)app.lpui->lpb2k + cch, &i);
                 } else {
-                    strcpy((char *)lpb2k + cch, (const char *)lpmsgplr->rgbMsg());
+                    strcpy((char *)app.lpui->lpb2k + cch, (const char *)lpmsgplr->rgbMsg());
                 }
-                lpsz = (char *)lpb2k;
+                lpsz = (char *)app.lpui->lpb2k;
             } else {
-                idm = static_cast<MessageId>(PresentationIO().pfnMessageId(iMsgCur));
-                if (iMsgCur < 0 && cMsg > 0) {
-                    lpsz = TextIO().pfnCompressed(idsMessagesHaveSentYearFilteredIfWant);
-                } else if (iMsgCur >= 0 && (bitfMsgFiltered[idm >> 3] & 1 << (idm & 7)) && !fViewFilteredMsg) {
-                    lpsz = TextIO().pfnCompressed(idsMessageTypeHasFilteredWillShownDefault);
+                idm = static_cast<MessageId>(PresentationIO().pfnMessageId(app, app.state.iMsgCur));
+                if (app.state.iMsgCur < 0 && app.state.cMsg > 0) {
+                    lpsz = TextIO().pfnCompressed(app, idsMessagesHaveSentYearFilteredIfWant);
+                } else if (app.state.iMsgCur >= 0 && (app.state.bitfMsgFiltered[idm >> 3] & 1 << (idm & 7)) && !app.state.fViewFilteredMsg) {
+                    lpsz = TextIO().pfnCompressed(app, idsMessageTypeHasFilteredWillShownDefault);
                 } else {
-                    lpsz = PszGetMessageN(iMsgCur);
+                    lpsz = PszGetMessageN(app, app.state.iMsgCur);
                 }
             }
-            SetTextColor(hdc, 0xffffff);
-            iMode = SetBkMode(hdc, TRANSPARENT);
-            if ((iMsgCur < 0 && cMsg > 0) ||
-                (iMsgCur >= 0 && iMsgCur < cMsg && (bitfMsgFiltered[PresentationIO().pfnMessageId(iMsgCur) >> 3] & 1 << (PresentationIO().pfnMessageId(iMsgCur) & 7)))) {
-                cch = TextIO().pfnCchGetString(idsFiltered, szWork);
-                DiaganolTextOut(hdc, &rc, szWork, cch);
-                lpsz = PszGetMessageN(iMsgCur);
+            win32::SetTextColor(hdc, 0xffffff);
+            iMode = win32::SetBkMode(hdc, win32::TRANSPARENT);
+            if ((app.state.iMsgCur < 0 && app.state.cMsg > 0) ||
+                (app.state.iMsgCur >= 0 && app.state.iMsgCur < app.state.cMsg && (app.state.bitfMsgFiltered[PresentationIO().pfnMessageId(app, app.state.iMsgCur) >> 3] & 1 << (PresentationIO().pfnMessageId(app, app.state.iMsgCur) & 7)))) {
+                cch = TextIO().pfnCchGetString(app, idsFiltered, app.state.szWork);
+                DiaganolTextOut(app, hdc, &rc, app.state.szWork, cch);
+                lpsz = PszGetMessageN(app, app.state.iMsgCur);
             }
-            SetTextColor(hdc, crButtonText);
+            win32::SetTextColor(hdc, app.lpui->crButtonText);
             rcActual = rc;
-            DrawText(hdc, lpsz, strlen(lpsz), &rcActual, DT_WORDBREAK | DT_CALCRECT | DT_NOPREFIX);
+            win32::DrawTextA(hdc, lpsz, strlen(lpsz), &rcActual, win32::DT_WORDBREAK | win32::DT_CALCRECT | win32::DT_NOPREFIX);
             if (rcActual.bottom <= rc.bottom && rcActual.right <= rc.right) {
-                FUiShowWindow(hwndMsgScroll, SW_HIDE);
-                DrawText(hdc, lpsz, strlen(lpsz), &rc, DT_WORDBREAK | DT_NOPREFIX);
+                ui::ShowWindow(app.lpui->hwndMsgScroll, win32::SW_HIDE);
+                win32::DrawTextA(hdc, lpsz, strlen(lpsz), &rc, win32::DT_WORDBREAK | win32::DT_NOPREFIX);
             } else {
-                ControlIO().pfnFUiSetWindowText(hwndMsgScroll, lpsz);
+                ControlIO().pfnSetWindowText(app.lpui->hwndMsgScroll, lpsz);
                 ExpandRc(&rc, 4, 4);
-                ControlIO().pfnFUiSetWindowPos(hwndMsgScroll, NULL, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, SWP_NOZORDER | SWP_SHOWWINDOW);
+                ControlIO().pfnSetWindowPos(app.lpui->hwndMsgScroll, NULL, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, win32::SWP_NOZORDER | win32::SWP_SHOWWINDOW);
             }
-            SetBkMode(hdc, iMode);
+            win32::SetBkMode(hdc, iMode);
         } else {
-            iMode = SetBkMode(hdc, TRANSPARENT);
-            SetTextColor(hdc, crButtonText);
-            cch = TextIO().pfnCchGetString(idsTo3, szT);
-            RightTextOut(hdc, rc.left + 26, rc.top, szT, cch, 0);
-            SetBkMode(hdc, iMode);
+            iMode = win32::SetBkMode(hdc, win32::TRANSPARENT);
+            win32::SetTextColor(hdc, app.lpui->crButtonText);
+            cch = TextIO().pfnCchGetString(app, idsTo3, szT);
+            RightTextOut(app, hdc, rc.left + 26, rc.top, szT, cch, 0);
+            win32::SetBkMode(hdc, iMode);
         }
-        SetTextColor(hdc, crFore);
-        SetBkColor(hdc, crBack);
-        EndPaint(hwnd, &ps);
+        win32::SetTextColor(hdc, crFore);
+        win32::SetBkColor(hdc, crBack);
+        win32::EndPaint(hwnd, &ps);
         break;
-    case WM_MOUSEWHEEL:
-        if (gd.fSendMsgMode || (LOWORD(wParam) & (MK_CONTROL | MK_SHIFT))) return 0;
+    case win32::WM_MOUSEWHEEL:
+        if (app.state.gd.fSendMsgMode || (LOWORD(wParam) & (win32::MK_CONTROL | win32::MK_SHIFT))) return 0;
         i = CWheelNotches(&dWheelMessages, (int16_t)HIWORD(wParam));
-        while (i > 0) { ControlIO().pfnLUiSendMessage(hwnd, WM_KEYDOWN, VK_UP, 1); i--; }
-        while (i < 0) { ControlIO().pfnLUiSendMessage(hwnd, WM_KEYDOWN, VK_DOWN, 1); i++; }
+        while (i > 0) { ControlIO().pfnSendMessage(hwnd, win32::WM_KEYDOWN, win32::VK_UP, 1); i--; }
+        while (i < 0) { ControlIO().pfnSendMessage(hwnd, win32::WM_KEYDOWN, win32::VK_DOWN, 1); i++; }
         return 0;
-    case WM_KEYDOWN:
-        if (wParam == VK_DOWN)
+    case win32::WM_KEYDOWN:
+        if (wParam == win32::VK_DOWN)
             goto NextMsg;
-        if (wParam == VK_UP)
+        if (wParam == win32::VK_UP)
             goto PrevMsg;
-        if (gd.fSendMsgMode)
+        if (app.state.gd.fSendMsgMode)
             goto Default;
-        if (wParam == VK_HOME) {
-            iMsgCur = imsgNone;
+        if (wParam == win32::VK_HOME) {
+            app.state.iMsgCur = imsgNone;
             goto NextMsg;
         }
-        if (wParam != VK_END) {
+        if (wParam != win32::VK_END) {
             return 0;
         }
-        iMsgCur = cMsg + vcmsgplrIn;
+        app.state.iMsgCur = app.state.cMsg + app.state.vcmsgplrIn;
         goto PrevMsg;
-    case WM_CHAR:
+    case win32::WM_CHAR:
         switch (wParam) {
         case '+':
             goto CheckBox;
         case '-':
-            for (i = 0; (uint16_t)i < 49 && (bitfMsgSent[i] & bitfMsgFiltered[i]) == 0; i++) {
+            for (i = 0; (uint16_t)i < 49 && (app.state.bitfMsgSent[i] & app.state.bitfMsgFiltered[i]) == 0; i++) {
             }
             if (i != 49)
                 goto ZoomBox;
@@ -282,150 +287,150 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
             goto GotoMsg;
         }
         return 0;
-    case WM_COMMAND:
+    case win32::WM_COMMAND:
         if (HIWORD(wParam) == 0) {
-            ControlIO().pfnHwndUiSetFocus(hwndFrame);
+            ControlIO().pfnSetFocus(app.lpui->hwndFrame);
         }
-        if ((HWND)lParam == rghwndMsgBtn[0] && HIWORD(wParam) == 0) {
+        if ((HWND)lParam == app.lpui->rghwndMsgBtn[0] && HIWORD(wParam) == 0) {
         PrevMsg:
-            if (gd.fSendMsgMode) {
-                FFinishPlrMsgEntry(-1);
+            if (app.state.gd.fSendMsgMode) {
+                FFinishPlrMsgEntry(app, -1);
                 goto SetupNewMsg;
             }
-            if (ControlIO().pfnGetAsyncKeyState(VK_SHIFT) & 0xfffe) {
-                iMsgCur = imsgNone;
-                i = IMsgNext(FALSE);
+            if (ControlIO().pfnGetAsyncKeyState(win32::VK_SHIFT) & 0xfffe) {
+                app.state.iMsgCur = imsgNone;
+                i = IMsgNext(app, 0);
             } else {
-                i = IMsgPrev(FALSE);
+                i = IMsgPrev(app, 0);
             }
             if (i != imsgNone) {
-                iMsgCur = i;
+                app.state.iMsgCur = i;
                 goto SetupNewMsg;
             }
-            if (iMsgCur != cMsg + vcmsgplrIn)
+            if (app.state.iMsgCur != app.state.cMsg + app.state.vcmsgplrIn)
                 break;
-            iMsgCur--;
+            app.state.iMsgCur--;
         SetupNewMsg:
-            gd.fGotoVCR = FALSE;
-            ControlIO().pfnSetMsgTitle(hwnd);
-            ControlIO().pfnInvalidateRect(hwnd, &rcMsgText, TRUE);
-            if (gd.fTutorial) {
-                tutor.fChange = TRUE;
-                PresentationIO().pfnTutor();
+            app.state.gd.fGotoVCR = 0;
+            ControlIO().pfnSetMsgTitle(app, hwnd);
+            ControlIO().pfnInvalidateRect(hwnd, &app.lpui->rcMsgText, 1);
+            if (app.state.gd.fTutorial) {
+                app.state.tutor.fChange = 1;
+                PresentationIO().pfnTutor(app);
             }
             break;
-        } else if ((HWND)lParam == rghwndMsgBtn[2] && HIWORD(wParam) == 0) {
+        } else if ((HWND)lParam == app.lpui->rghwndMsgBtn[2] && HIWORD(wParam) == 0) {
         NextMsg:
-            if (gd.fSendMsgMode) {
-                FFinishPlrMsgEntry(1);
+            if (app.state.gd.fSendMsgMode) {
+                FFinishPlrMsgEntry(app, 1);
             } else {
-                if (ControlIO().pfnGetAsyncKeyState(VK_SHIFT) & 0xfffe) {
-                    iMsgCur = cMsg + vcmsgplrIn;
-                    i = IMsgPrev(FALSE);
+                if (ControlIO().pfnGetAsyncKeyState(win32::VK_SHIFT) & 0xfffe) {
+                    app.state.iMsgCur = app.state.cMsg + app.state.vcmsgplrIn;
+                    i = IMsgPrev(app, 0);
                 } else {
-                    i = IMsgNext(FALSE);
+                    i = IMsgNext(app, 0);
                 }
                 if (i == imsgNone)
                     break;
-                iMsgCur = i;
+                app.state.iMsgCur = i;
             }
             goto SetupNewMsg;
-        } else if ((HWND)lParam == rghwndMsgBtn[3] && HIWORD(wParam) == 0) {
-            FFinishPlrMsgEntry(1000);
+        } else if ((HWND)lParam == app.lpui->rghwndMsgBtn[3] && HIWORD(wParam) == 0) {
+            FFinishPlrMsgEntry(app, 1000);
             goto SetupNewMsg;
-        } else if ((HWND)lParam == rghwndMsgBtn[1] && HIWORD(wParam) == 0) {
+        } else if ((HWND)lParam == app.lpui->rghwndMsgBtn[1] && HIWORD(wParam) == 0) {
         GotoMsg:
-            if (gd.fSendMsgMode || iMsgCur >= cMsg)
+            if (app.state.gd.fSendMsgMode || app.state.iMsgCur >= app.state.cMsg)
                 goto ToggleMsgMode;
-            if (mdMsgObj <= mdMsgObjBattleReport) {
-                switch (mdMsgObj) {
+            if (app.lpui->mdMsgObj <= mdMsgObjBattleReport) {
+                switch (app.lpui->mdMsgObj) {
                 default:
                     break;
                 case mdMsgObjPlanet:
-                    PresentationIO().pfnSelectPlanet(0, idMsgObj);
-                    ControlIO().pfnFUiUpdateWindow(hwndScanner);
-                    ControlIO().pfnLUiSendMessage(hwndScanner, WM_CHAR, 'v', 0);
-                    idm = static_cast<MessageId>(PresentationIO().pfnMessageId(iMsgCur));
+                    PresentationIO().pfnSelectPlanet(app, 0, app.lpui->idMsgObj);
+                    ControlIO().pfnUpdateWindow(app.lpui->hwndScanner);
+                    ControlIO().pfnSendMessage(app.lpui->hwndScanner, win32::WM_CHAR, 'v', 0);
+                    idm = static_cast<MessageId>(PresentationIO().pfnMessageId(app, app.state.iMsgCur));
                     if (idm != idmHasCompletedOrdersProductionQueueEmpty && idm != idmProductionQueueEmpty &&
                         (idm < idmHasBuiltManyMinesCurrentPopulationCan || idm > idmHasBuiltManyDefensesPlanetCanSupport))
                         break;
-                    if (!gd.fGotoVCR) {
-                        gd.fGotoVCR = TRUE;
-                        ControlIO().pfnSetMsgTitle(hwnd);
+                    if (!app.state.gd.fGotoVCR) {
+                        app.state.gd.fGotoVCR = 1;
+                        ControlIO().pfnSetMsgTitle(app, hwnd);
                         break;
                     }
-                    if (sel.grobj != grobjPlanet || sel.id != idMsgObj)
+                    if (app.state.sel.grobj != grobjPlanet || app.state.sel.id != app.lpui->idMsgObj)
                         break;
-                    ChangeProduction(FALSE);
+                    ChangeProduction(app, 0);
                     break;
                 case mdMsgObjFleet:
-                    PresentationIO().pfnSelectFleet(0, idMsgObj);
-                    ControlIO().pfnFUiUpdateWindow(hwndScanner);
-                    ControlIO().pfnLUiSendMessage(hwndScanner, WM_CHAR, 'v', 0);
+                    PresentationIO().pfnSelectFleet(app, 0, app.lpui->idMsgObj);
+                    ControlIO().pfnUpdateWindow(app.lpui->hwndScanner);
+                    ControlIO().pfnSendMessage(app.lpui->hwndScanner, win32::WM_CHAR, 'v', 0);
                     break;
                 case mdMsgObjThing:
-                    lpth = LpthFromId(vptMsg.x);
+                    lpth = LpthFromId(app, app.lpui->vptMsg.x);
                     if (!lpth)
                         break;
                     scan.pt = lpth->pt();
                     scan.grobj = grobjThing;
-                    ChangeScanSel(&scan, 0);
-                    CtrPointScan(scan.pt, TRUE);
+                    ChangeScanSel(app, &scan, 0);
+                    CtrPointScan(app, scan.pt, 1);
                     break;
                 case mdMsgObjBattle:
-                    SelectOursAtObject(&vptMsg);
-                    if (gd.fGotoVCR) {
-                        BattleVCR(idMsgObj);
+                    SelectOursAtObject(app, &app.lpui->vptMsg);
+                    if (app.state.gd.fGotoVCR) {
+                        BattleVCR(app, app.lpui->idMsgObj);
                         break;
                     }
-                    gd.fGotoVCR = TRUE;
-                    ControlIO().pfnSetMsgTitle(hwnd);
+                    app.state.gd.fGotoVCR = 1;
+                    ControlIO().pfnSetMsgTitle(app, hwnd);
                     break;
                 case mdMsgObjResearch:
-                    PostMessage(hwndFrame, WM_COMMAND, IDM_GAME_RESEARCH, 0);
+                    win32::PostMessageA(app.lpui->hwndFrame, win32::WM_COMMAND, IDM_GAME_RESEARCH, 0);
                     break;
                 case mdMsgObjScore:
-                    PostMessage(hwndFrame, WM_COMMAND, IDM_GAME_SCORE, 0);
+                    win32::PostMessageA(app.lpui->hwndFrame, win32::WM_COMMAND, IDM_GAME_SCORE, 0);
                     break;
                 case mdMsgObjShipDesign:
-                    PostMessage(hwndFrame, WM_COMMAND, IDM_GAME_SHIP_BUILDER, 0);
+                    win32::PostMessageA(app.lpui->hwndFrame, win32::WM_COMMAND, IDM_GAME_SHIP_BUILDER, 0);
                     break;
                 case mdMsgObjRelations:
-                    PostMessage(hwndFrame, WM_COMMAND, IDM_GAME_RELATIONS2, 0);
+                    win32::PostMessageA(app.lpui->hwndFrame, win32::WM_COMMAND, IDM_GAME_RELATIONS2, 0);
                     break;
                 case mdMsgObjBattleReport:
-                    if (hwndReportDlg && vprptCur == &vrptBattle)
+                    if (app.lpui->hwndReportDlg && app.lpui->vprptCur == &app.state.vrptBattle)
                         break;
-                    PostMessage(hwndFrame, WM_COMMAND, IDM_REPORT_BATTLE, 0);
+                    win32::PostMessageA(app.lpui->hwndFrame, win32::WM_COMMAND, IDM_REPORT_BATTLE, 0);
                     break;
                 case mdMsgObjPart:
-                    vpartBrowser.hs.grhst = static_cast<HullSlotType>(1 << (idMsgObj >> 8 & 0xf));
-                    vpartBrowser.hs.iItem = idMsgObj & 0xff;
-                    PartQueryIO().pfnLookup(&vpartBrowser);
-                    if (hwndBrowser) {
-                        ControlIO().pfnInvalidateRect(hwndBrowserChild, NULL, TRUE);
+                    app.lpui->vpartBrowser.hs.grhst = static_cast<HullSlotType>(1 << (app.lpui->idMsgObj >> 8 & 0xf));
+                    app.lpui->vpartBrowser.hs.iItem = app.lpui->idMsgObj & 0xff;
+                    PartQueryIO().pfnLookup(app, &app.lpui->vpartBrowser);
+                    if (app.lpui->hwndBrowser) {
+                        ControlIO().pfnInvalidateRect(app.lpui->hwndBrowserChild, NULL, 1);
                     } else {
-                        fBrowserValid = TRUE;
-                        PostMessage(hwndFrame, WM_COMMAND, IDM_VIEW_BROWSER_TOGGLE2, 0);
+                        app.lpui->fBrowserValid = 1;
+                        win32::PostMessageA(app.lpui->hwndFrame, win32::WM_COMMAND, IDM_VIEW_BROWSER_TOGGLE2, 0);
                     }
                 }
             }
-            if (!gd.fTutorial)
+            if (!app.state.gd.fTutorial)
                 break;
-            tutor.fChange = TRUE;
-            PresentationIO().pfnTutor();
+            app.state.tutor.fChange = 1;
+            PresentationIO().pfnTutor(app);
             break;
         } else {
             goto Default;
         }
     default:
     Default:
-        return LUiDefWindowProc(hwnd, message, wParam, lParam);
+        return ui::DefWindowProc(hwnd, message, wParam, lParam);
     }
     return 0;
 }
 
-void DecorateMsgTitleBar(HDC hdc, RECT *prc) {
+void DecorateMsgTitleBar(APPSESSION &app, HDC hdc, RECT *prc) {
     int16_t   xDst;
     int16_t   ySrcMask;
     HBRUSH    hbrSav;
@@ -441,15 +446,15 @@ void DecorateMsgTitleBar(HDC hdc, RECT *prc) {
     COLORREF  crBkSav;
     COLORREF  crTextSav;
 
-    hdcMem = CreateCompatibleDC(hdc);
-    hbmpSav = (HBITMAP)SelectObject(hdcMem, hbmpMono);
-    if (gd.fSendMsgMode)
+    hdcMem = win32::CreateCompatibleDC(hdc);
+    hbmpSav = (HBITMAP)win32::SelectObject(hdcMem, app.lpui->hbmpMono);
+    if (app.state.gd.fSendMsgMode)
         goto Cleanup;
     xyStart = (int16_t)(prc->bottom - prc->top - 11) / 2 + prc->top;
-    if (iMsgCur < 0 || iMsgCur >= cMsg)
+    if (app.state.iMsgCur < 0 || app.state.iMsgCur >= app.state.cMsg)
         goto DoMinMax;
-    idm = static_cast<MessageId>(PresentationIO().pfnMessageId(iMsgCur));
-    if (bitfMsgFiltered[idm >> 3] & 1 << (idm & 7)) {
+    idm = static_cast<MessageId>(PresentationIO().pfnMessageId(app, app.state.iMsgCur));
+    if (app.state.bitfMsgFiltered[idm >> 3] & 1 << (idm & 7)) {
         ySrc = 14;
         dxSrc = 14;
         dySrc = 12;
@@ -464,19 +469,19 @@ void DecorateMsgTitleBar(HDC hdc, RECT *prc) {
         yDst = xyStart - 3;
         ySrcMask = 28;
     }
-    crTextSav = SetTextColor(hdc, 0);
-    crBkSav = SetBkColor(hdc, 0xffffff);
-    BitBlt(hdc, xDst, yDst, dxSrc, dySrc, hdcMem, 0, ySrcMask, SRCAND);
-    hbmpSav = (HBITMAP)SelectObject(hdcMem, hbmpMsg);
-    BitBlt(hdc, xDst, yDst, dxSrc, dySrc, hdcMem, 0, ySrc, SRCPAINT);
+    crTextSav = win32::SetTextColor(hdc, 0);
+    crBkSav = win32::SetBkColor(hdc, 0xffffff);
+    win32::BitBlt(hdc, xDst, yDst, dxSrc, dySrc, hdcMem, 0, ySrcMask, win32::SRCAND);
+    hbmpSav = (HBITMAP)win32::SelectObject(hdcMem, app.lpui->hbmpMsg);
+    win32::BitBlt(hdc, xDst, yDst, dxSrc, dySrc, hdcMem, 0, ySrc, win32::SRCPAINT);
 DoMinMax:
-    for (i = 0; (uint16_t)i < 49 && (bitfMsgSent[i] & bitfMsgFiltered[i]) == 0; i++) {
+    for (i = 0; (uint16_t)i < 49 && (app.state.bitfMsgSent[i] & app.state.bitfMsgFiltered[i]) == 0; i++) {
     }
     if (i == 49) {
-        fViewFilteredMsg = FALSE;
+        app.state.fViewFilteredMsg = 0;
         goto Cleanup;
     }
-    if (fViewFilteredMsg) {
+    if (app.state.fViewFilteredMsg) {
         ySrc = 26;
         ySrcMask = 54;
     } else {
@@ -484,53 +489,53 @@ DoMinMax:
         ySrcMask = 69;
     }
     xDst = prc->right - (prc->bottom - prc->top) - 1;
-    hbrSav = (HBRUSH)SelectObject(hdc, hbrButtonShadow);
-    PatBlt(hdc, xDst, prc->top, 1, prc->bottom - prc->top, PATCOPY);
-    SelectObject(hdc, hbrButtonHilite);
-    PatBlt(hdc, xDst + 1, prc->top, 1, prc->bottom - prc->top, PATCOPY);
-    SelectObject(hdc, hbrSav);
+    hbrSav = (HBRUSH)win32::SelectObject(hdc, app.lpui->hbrButtonShadow);
+    win32::PatBlt(hdc, xDst, prc->top, 1, prc->bottom - prc->top, win32::PATCOPY);
+    win32::SelectObject(hdc, app.lpui->hbrButtonHilite);
+    win32::PatBlt(hdc, xDst + 1, prc->top, 1, prc->bottom - prc->top, win32::PATCOPY);
+    win32::SelectObject(hdc, hbrSav);
     yDst = (int16_t)(prc->bottom - prc->top - 15) / 2 + prc->top;
     xDst = prc->right - (prc->bottom - yDst);
-    SelectObject(hdcMem, hbmpMono);
-    BitBlt(hdc, xDst, yDst, 15, 15, hdcMem, 0, ySrcMask, SRCAND);
-    SelectObject(hdcMem, hbmpMsg);
-    BitBlt(hdc, xDst, yDst, 15, 15, hdcMem, 0, ySrc, SRCPAINT);
+    win32::SelectObject(hdcMem, app.lpui->hbmpMono);
+    win32::BitBlt(hdc, xDst, yDst, 15, 15, hdcMem, 0, ySrcMask, win32::SRCAND);
+    win32::SelectObject(hdcMem, app.lpui->hbmpMsg);
+    win32::BitBlt(hdc, xDst, yDst, 15, 15, hdcMem, 0, ySrc, win32::SRCPAINT);
 Cleanup:
-    SetTextColor(hdc, crTextSav);
-    SetBkColor(hdc, crBkSav);
-    if (!game.fSinglePlr) {
-        SelectObject(hdcMem, hbmpMsg);
+    win32::SetTextColor(hdc, crTextSav);
+    win32::SetBkColor(hdc, crBkSav);
+    if (!app.state.game.fSinglePlr) {
+        win32::SelectObject(hdcMem, app.lpui->hbmpMsg);
         xDst = prc->right - 45;
         yDst = (int16_t)(prc->bottom - prc->top - 7) / 2 + prc->top;
-        PatBlt(hdc, xDst - 1, yDst - 1, 17, 11, BLACKNESS);
-        BitBlt(hdc, xDst, yDst, 15, 9, hdcMem, 0, 56, SRCCOPY);
+        win32::PatBlt(hdc, xDst - 1, yDst - 1, 17, 11, win32::BLACKNESS);
+        win32::BitBlt(hdc, xDst, yDst, 15, 9, hdcMem, 0, 56, win32::SRCCOPY);
     }
-    SelectObject(hdcMem, hbmpSav);
-    DeleteDC(hdcMem);
+    win32::SelectObject(hdcMem, hbmpSav);
+    win32::DeleteDC(hdcMem);
     return;
 }
 
-HtMsgType HtMsgBox(POINT16 pt) {
+HtMsgType HtMsgBox(APPSESSION &app, POINT16 pt) {
     int16_t i;
 
-    if (PtInRect(&rcMsgTitle, PointFrom16(pt)) != 0) {
-        if (pt.x < rcMsgTitle.bottom - rcMsgTitle.top + rcMsgTitle.left && iMsgCur >= 0 && iMsgCur < cMsg && !gd.fSendMsgMode) {
+    if (win32::PtInRect(&app.lpui->rcMsgTitle, PointFrom16(pt)) != 0) {
+        if (pt.x < app.lpui->rcMsgTitle.bottom - app.lpui->rcMsgTitle.top + app.lpui->rcMsgTitle.left && app.state.iMsgCur >= 0 && app.state.iMsgCur < app.state.cMsg && !app.state.gd.fSendMsgMode) {
             return htMsgCurrent;
         }
-        if (pt.x >= rcMsgTitle.right - (rcMsgTitle.bottom - rcMsgTitle.top) && !gd.fSendMsgMode) {
-            for (i = 0; (uint16_t)i < 49 && (bitfMsgSent[i] & bitfMsgFiltered[i]) == 0; i++) {
+        if (pt.x >= app.lpui->rcMsgTitle.right - (app.lpui->rcMsgTitle.bottom - app.lpui->rcMsgTitle.top) && !app.state.gd.fSendMsgMode) {
+            for (i = 0; (uint16_t)i < 49 && (app.state.bitfMsgSent[i] & app.state.bitfMsgFiltered[i]) == 0; i++) {
             }
             if (i != 49) {
                 return htMsgZoom;
             }
-        } else if (!game.fSinglePlr && pt.x >= rcMsgTitle.right - (rcMsgTitle.bottom - rcMsgTitle.top) - 24) {
+        } else if (!app.state.game.fSinglePlr && pt.x >= app.lpui->rcMsgTitle.right - (app.lpui->rcMsgTitle.bottom - app.lpui->rcMsgTitle.top) - 24) {
             return htMsgMode;
         }
     }
     return htMsgNone;
 }
 
-int16_t FFinishPlrMsgEntry(int16_t dInc) {
+int16_t FFinishPlrMsgEntry(APPSESSION &app, int16_t dInc) {
     uint8_t *lpbMsg;
     int16_t  i;
     int16_t  cbNew;
@@ -539,8 +544,8 @@ int16_t FFinishPlrMsgEntry(int16_t dInc) {
     MSGPLR **lpmpPrev;
     int16_t  cb;
 
-    lpmpPrev = &vlpmsgplrOut;
-    i = iMsgSendCur;
+    lpmpPrev = &app.state.vlpmsgplrOut;
+    i = app.state.iMsgSendCur;
     while (i-- > 0) {
         lpmpPrev = &(*lpmpPrev)->lpmsgplrNext;
     }
@@ -549,60 +554,60 @@ int16_t FFinishPlrMsgEntry(int16_t dInc) {
         cb = 0;
         dInc = 0;
     } else {
-        cb = ControlIO().pfnGetWindowText(hwndMsgEdit, (LPSTR)lpb2k, 1000);
+        cb = ControlIO().pfnGetWindowText(app.lpui->hwndMsgEdit, (LPSTR)app.lpui->lpb2k, 1000);
     }
     if (cb == 0) {
         if (lpmpCur) {
-            RecordIO().pfnDirtyGame(TRUE);
+            RecordIO().pfnDirtyGame(app, 1);
             *lpmpPrev = lpmpCur->lpmsgplrNext;
-            HeapIO().pfnFree(lpmpCur, htPlrMsg);
-            vcmsgplrOut--;
-            if (iMsgSendCur > 0) {
-                iMsgSendCur--;
+            HeapIO().pfnFree(app, lpmpCur, htPlrMsg);
+            app.state.vcmsgplrOut--;
+            if (app.state.iMsgSendCur > 0) {
+                app.state.iMsgSendCur--;
             }
         }
-        if (dInc == -1 && iMsgSendCur > 0) {
-            iMsgSendCur--;
-        } else if (dInc == 1 && iMsgSendCur < vcmsgplrOut) {
-            iMsgSendCur++;
+        if (dInc == -1 && app.state.iMsgSendCur > 0) {
+            app.state.iMsgSendCur--;
+        } else if (dInc == 1 && app.state.iMsgSendCur < app.state.vcmsgplrOut) {
+            app.state.iMsgSendCur++;
         }
-        return FALSE;
+        return 0;
     }
     cbNew = cb;
-    if (FCompressUserString((char *)lpb2k, (char *)lpb2k + 1024, &cbNew)) {
+    if (FCompressUserString(app, (char *)app.lpui->lpb2k, (char *)app.lpui->lpb2k + 1024, &cbNew)) {
         cb = cbNew;
-        lpbMsg = lpb2k + 1024;
+        lpbMsg = app.lpui->lpb2k + 1024;
     } else {
         cb = -cb - 1;
-        lpbMsg = lpb2k;
+        lpbMsg = app.lpui->lpb2k;
     }
     cbNew = abs(cb) + 12;
-    iPlrTo = LOWORD(ControlIO().pfnLUiSendMessage(hwndMsgDrop, CB_GETCURSEL, 0, 0));
+    iPlrTo = LOWORD(ControlIO().pfnSendMessage(app.lpui->hwndMsgDrop, win32::CB_GETCURSEL, 0, 0));
     if (lpmpCur) {
         if (cb != lpmpCur->cLen || lpmpCur->iPlrTo != iPlrTo || memcmp(lpmpCur->rgbMsg(), lpbMsg, abs(cb)) != 0) {
-            RecordIO().pfnDirtyGame(TRUE);
+            RecordIO().pfnDirtyGame(app, 1);
         }
-        lpmpCur = LpmsgplrReAlloc(lpmpCur, cbNew + (sizeof(MSGPLR) - 12));
+        lpmpCur = LpmsgplrReAlloc(app, lpmpCur, cbNew + (sizeof(MSGPLR) - 12));
     } else {
-        RecordIO().pfnDirtyGame(TRUE);
-        lpmpCur = LpmsgplrAlloc(cbNew + (sizeof(MSGPLR) - 12));
+        RecordIO().pfnDirtyGame(app, 1);
+        lpmpCur = LpmsgplrAlloc(app, cbNew + (sizeof(MSGPLR) - 12));
         lpmpCur->lpmsgplrNext = NULL;
-        vcmsgplrOut++;
-        lpmpCur->iInRe = iMsgCur;
+        app.state.vcmsgplrOut++;
+        lpmpCur->iInRe = app.state.iMsgCur;
     }
     *lpmpPrev = lpmpCur;
-    lpmpCur->iPlrFrom = idPlayer;
+    lpmpCur->iPlrFrom = app.state.idPlayer;
     lpmpCur->iPlrTo = iPlrTo;
     lpmpCur->cLen = cb;
     memmove(lpmpCur->rgbMsg(), lpbMsg, abs(cb));
-    iMsgSendCur += dInc;
-    if (iMsgSendCur < 0) {
-        iMsgSendCur = 0;
+    app.state.iMsgSendCur += dInc;
+    if (app.state.iMsgSendCur < 0) {
+        app.state.iMsgSendCur = 0;
     }
-    return TRUE;
+    return 1;
 }
 
-void SetMsgTitle(HWND hwnd) {
+void SetMsgTitle(APPSESSION &app, HWND hwnd) {
     int16_t cMsgTot;
     int16_t i;
     MSGBIG  mb;
@@ -612,130 +617,130 @@ void SetMsgTitle(HWND hwnd) {
     MSGPLR *lpmp;
     RECT    rc;
 
-    if (hwnd && !fAi) {
-        if (game.fDirty) {
+    if (hwnd && !app.state.fAi) {
+        if (app.state.game.fDirty) {
             ch = '*';
         } else {
             ch = ' ';
         }
-        sw = !gd.fSendMsgMode ? 0 : 5;
-        FUiShowWindow(hwndMsgEdit, sw);
-        FUiShowWindow(hwndMsgDrop, sw);
-        FUiShowWindow(rghwndMsgBtn[3], sw);
-        if (gd.fSendMsgMode) {
-            FUiShowWindow(hwndMsgScroll, SW_HIDE);
+        sw = !app.state.gd.fSendMsgMode ? 0 : 5;
+        ui::ShowWindow(app.lpui->hwndMsgEdit, sw);
+        ui::ShowWindow(app.lpui->hwndMsgDrop, sw);
+        ui::ShowWindow(app.lpui->rghwndMsgBtn[3], sw);
+        if (app.state.gd.fSendMsgMode) {
+            ui::ShowWindow(app.lpui->hwndMsgScroll, win32::SW_HIDE);
         }
-        cMsgTot = cMsg + vcmsgplrIn;
-        i = gd.fSendMsgMode ? idsDone : iMsgCur >= cMsg ? idsReply : gd.fGotoVCR ? idsView : idsGoto3;
-        ControlIO().pfnFUiSetWindowText(rghwndMsgBtn[1], TextIO().pfnCompressed(static_cast<StringId>(i)));
-        if (gd.fSendMsgMode) {
-            wsprintf(szWork, TextIO().pfnCompressed(idsSendMessagesDD), iMsgSendCur + 1, vcmsgplrOut);
-            rc = rcMsgText;
+        cMsgTot = app.state.cMsg + app.state.vcmsgplrIn;
+        i = app.state.gd.fSendMsgMode ? idsDone : app.state.iMsgCur >= app.state.cMsg ? idsReply : app.state.gd.fGotoVCR ? idsView : idsGoto3;
+        ControlIO().pfnSetWindowText(app.lpui->rghwndMsgBtn[1], TextIO().pfnCompressed(app, static_cast<StringId>(i)));
+        if (app.state.gd.fSendMsgMode) {
+            win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsSendMessagesDD), app.state.iMsgSendCur + 1, app.state.vcmsgplrOut);
+            rc = app.lpui->rcMsgText;
             ExpandRc(&rc, -4, -4);
-            ControlIO().pfnFUiSetWindowPos(hwndMsgDrop, NULL, rc.left + 30, rc.top, rc.right - rc.left - 84, rc.bottom - rc.top, SWP_NOZORDER | SWP_SHOWWINDOW);
-            ControlIO().pfnFUiSetWindowPos(rghwndMsgBtn[3], NULL, rc.right - 50, rc.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW);
-            rc.top += dyShipDD + 3;
-            ControlIO().pfnFUiSetWindowPos(hwndMsgEdit, NULL, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, SWP_NOZORDER | SWP_SHOWWINDOW);
-            ControlIO().pfnFUiEnableWindow(rghwndMsgBtn[0], iMsgSendCur > 0);
-            ControlIO().pfnFUiEnableWindow(rghwndMsgBtn[1], TRUE);
-            ControlIO().pfnFUiEnableWindow(rghwndMsgBtn[2], TRUE);
-            lpmp = vlpmsgplrOut;
-            i = iMsgSendCur;
+            ControlIO().pfnSetWindowPos(app.lpui->hwndMsgDrop, NULL, rc.left + 30, rc.top, rc.right - rc.left - 84, rc.bottom - rc.top, win32::SWP_NOZORDER | win32::SWP_SHOWWINDOW);
+            ControlIO().pfnSetWindowPos(app.lpui->rghwndMsgBtn[3], NULL, rc.right - 50, rc.top, 0, 0, win32::SWP_NOSIZE | win32::SWP_NOZORDER | win32::SWP_SHOWWINDOW);
+            rc.top += app.lpui->dyShipDD + 3;
+            ControlIO().pfnSetWindowPos(app.lpui->hwndMsgEdit, NULL, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, win32::SWP_NOZORDER | win32::SWP_SHOWWINDOW);
+            ControlIO().pfnEnableWindow(app.lpui->rghwndMsgBtn[0], app.state.iMsgSendCur > 0);
+            ControlIO().pfnEnableWindow(app.lpui->rghwndMsgBtn[1], 1);
+            ControlIO().pfnEnableWindow(app.lpui->rghwndMsgBtn[2], 1);
+            lpmp = app.state.vlpmsgplrOut;
+            i = app.state.iMsgSendCur;
             while (i-- > 0) {
                 lpmp = lpmp->lpmsgplrNext;
             }
             if (lpmp) {
-                ControlIO().pfnLUiSendMessage(hwndMsgDrop, CB_SETCURSEL, lpmp->iPlrTo, 0);
+                ControlIO().pfnSendMessage(app.lpui->hwndMsgDrop, win32::CB_SETCURSEL, lpmp->iPlrTo, 0);
                 if (lpmp->cLen < 0) {
-                    ControlIO().pfnFUiSetWindowText(hwndMsgEdit, (LPCSTR)lpmp->rgbMsg());
+                    ControlIO().pfnSetWindowText(app.lpui->hwndMsgEdit, (LPCSTR)lpmp->rgbMsg());
                     goto FinishUp;
                 } else {
                     i = 1000;
-                    FDecompressUserString((char *)lpmp->rgbMsg(), lpmp->cLen, (char *)lpb2k, &i);
-                    ControlIO().pfnFUiSetWindowText(hwndMsgEdit, (LPCSTR)lpb2k);
+                    FDecompressUserString(app, (char *)lpmp->rgbMsg(), lpmp->cLen, (char *)app.lpui->lpb2k, &i);
+                    ControlIO().pfnSetWindowText(app.lpui->hwndMsgEdit, (LPCSTR)app.lpui->lpb2k);
                 }
                 goto FinishUp;
             } else {
-                ControlIO().pfnLUiSendMessage(hwndMsgDrop, CB_SETCURSEL, viInRe, 0);
-                ControlIO().pfnFUiSetWindowText(hwndMsgEdit, "");
+                ControlIO().pfnSendMessage(app.lpui->hwndMsgDrop, win32::CB_SETCURSEL, app.lpui->viInRe, 0);
+                ControlIO().pfnSetWindowText(app.lpui->hwndMsgEdit, "");
                 goto FinishUp;
             }
         }
         if (cMsgTot != 0) {
-            TextIO().pfnCchGetString(idsYearDCMessagesDD, szT);
-            wsprintf(szWork, szT, game.turn + 2400, ch, iMsgCur + 1, cMsgTot);
+            TextIO().pfnCchGetString(app, idsYearDCMessagesDD, szT);
+            win32::wsprintfA(app.state.szWork, szT, app.state.game.turn + 2400, ch, app.state.iMsgCur + 1, cMsgTot);
         } else {
-            TextIO().pfnCchGetString(idsYearDCMessagesNone, szT);
-            wsprintf(szWork, szT, game.turn + 2400, ch);
+            TextIO().pfnCchGetString(app, idsYearDCMessagesNone, szT);
+            win32::wsprintfA(app.state.szWork, szT, app.state.game.turn + 2400, ch);
         }
-        ControlIO().pfnFUiEnableWindow(rghwndMsgBtn[0], IMsgPrev(FALSE) != imsgNone);
-        ControlIO().pfnFUiEnableWindow(rghwndMsgBtn[2], IMsgNext(FALSE) != imsgNone);
-        if (iMsgCur >= cMsg) {
-            ControlIO().pfnFUiEnableWindow(rghwndMsgBtn[1], TRUE);
+        ControlIO().pfnEnableWindow(app.lpui->rghwndMsgBtn[0], IMsgPrev(app, 0) != imsgNone);
+        ControlIO().pfnEnableWindow(app.lpui->rghwndMsgBtn[2], IMsgNext(app, 0) != imsgNone);
+        if (app.state.iMsgCur >= app.state.cMsg) {
+            ControlIO().pfnEnableWindow(app.lpui->rghwndMsgBtn[1], 1);
             goto FinishUp;
         }
-        if (cMsg != 0 && iMsgCur < cMsg && FGetNMsgbig(static_cast<MessageId>(iMsgCur), &mb)) {
+        if (app.state.cMsg != 0 && app.state.iMsgCur < app.state.cMsg && FGetNMsgbig(app, static_cast<MessageId>(app.state.iMsgCur), &mb)) {
             if (mb.wGoto != gotoNone) {
-                idMsgObj = mb.wGoto & 0x7fff;
+                app.lpui->idMsgObj = mb.wGoto & 0x7fff;
                 switch (mb.wGoto) {
                 case gotoResearch:
-                    mdMsgObj = mdMsgObjResearch;
+                    app.lpui->mdMsgObj = mdMsgObjResearch;
                     break;
                 case gotoShipDesign:
-                    mdMsgObj = mdMsgObjShipDesign;
+                    app.lpui->mdMsgObj = mdMsgObjShipDesign;
                     break;
                 case gotoScore:
-                    mdMsgObj = mdMsgObjScore;
+                    app.lpui->mdMsgObj = mdMsgObjScore;
                     break;
                 case gotoThing:
-                    mdMsgObj = mdMsgObjThing;
-                    vptMsg.x = mb.rgParam[0];
+                    app.lpui->mdMsgObj = mdMsgObjThing;
+                    app.lpui->vptMsg.x = mb.rgParam[0];
                     break;
                 case gotoBattleReport:
-                    mdMsgObj = mdMsgObjBattleReport;
+                    app.lpui->mdMsgObj = mdMsgObjBattleReport;
                     break;
                 default:
                     if ((mb.wGoto & 0xc000) == 0xc000) {
-                        mdMsgObj = mdMsgObjPart;
+                        app.lpui->mdMsgObj = mdMsgObjPart;
                     } else if (mb.wGoto & 0x4000) {
-                        idMsgObj = mb.wGoto & 0x3fff;
-                        if (idMsgObj == 2048) {
-                            mdMsgObj = mdMsgObjRelations;
+                        app.lpui->idMsgObj = mb.wGoto & 0x3fff;
+                        if (app.lpui->idMsgObj == 2048) {
+                            app.lpui->mdMsgObj = mdMsgObjRelations;
                         } else {
-                            mdMsgObj = mdMsgObjBattle;
-                            vptMsg.x = mb.rgParam[0];
-                            vptMsg.y = mb.rgParam[1];
+                            app.lpui->mdMsgObj = mdMsgObjBattle;
+                            app.lpui->vptMsg.x = mb.rgParam[0];
+                            app.lpui->vptMsg.y = mb.rgParam[1];
                         }
                     } else if (mb.wGoto < 0) {
-                        if (LpflFromId(idMsgObj) != 0) {
-                            mdMsgObj = mdMsgObjFleet;
+                        if (LpflFromId(app, app.lpui->idMsgObj) != 0) {
+                            app.lpui->mdMsgObj = mdMsgObjFleet;
                         } else {
-                            mdMsgObj = mdMsgObjNone;
+                            app.lpui->mdMsgObj = mdMsgObjNone;
                         }
                     } else {
-                        mdMsgObj = mdMsgObjPlanet;
+                        app.lpui->mdMsgObj = mdMsgObjPlanet;
                     }
                 }
             } else {
-                mdMsgObj = mdMsgObjNone;
+                app.lpui->mdMsgObj = mdMsgObjNone;
             }
         }
-        if (mdMsgObj != mdMsgObjNone &&
-            (iMsgCur < 0 || (!fViewFilteredMsg && (bitfMsgFiltered[PresentationIO().pfnMessageId(iMsgCur) >> 3] & 1 << (PresentationIO().pfnMessageId(iMsgCur) & 7))))) {
-            mdMsgObj = mdMsgObjNone;
+        if (app.lpui->mdMsgObj != mdMsgObjNone &&
+            (app.state.iMsgCur < 0 || (!app.state.fViewFilteredMsg && (app.state.bitfMsgFiltered[PresentationIO().pfnMessageId(app, app.state.iMsgCur) >> 3] & 1 << (PresentationIO().pfnMessageId(app, app.state.iMsgCur) & 7))))) {
+            app.lpui->mdMsgObj = mdMsgObjNone;
         }
-        ControlIO().pfnFUiEnableWindow(rghwndMsgBtn[1], mdMsgObj != mdMsgObjNone);
+        ControlIO().pfnEnableWindow(app.lpui->rghwndMsgBtn[1], app.lpui->mdMsgObj != mdMsgObjNone);
     FinishUp:
-        strcpy(szMsgTitle, szWork);
-        ControlIO().pfnInvalidateRect(hwndMessage, &rcMsgTitle, TRUE);
+        strcpy(app.lpui->szMsgTitle, app.state.szWork);
+        ControlIO().pfnInvalidateRect(app.lpui->hwndMessage, &app.lpui->rcMsgTitle, 1);
     }
     return;
 }
 
 // UpdateMsgTitle refreshes the message window's title bar, as when the
 // game becomes dirty.
-void UpdateMsgTitle() {
-    ControlIO().pfnSetMsgTitle(hwndMessage);
+void UpdateMsgTitle(APPSESSION &app) {
+    ControlIO().pfnSetMsgTitle(app, app.lpui->hwndMessage);
     return;
 }
 

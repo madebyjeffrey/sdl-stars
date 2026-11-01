@@ -2,20 +2,7 @@ add_library(stars_win32_headers INTERFACE)
 target_include_directories(stars_win32_headers BEFORE INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_compile_definitions(stars_win32_headers INTERFACE STARS_UI_SDL=1)
 
-if(WIN32)
-    # Keep the source API names, but isolate symbols from the real Win32
-    # imports used by SDL, Cairo and native.cpp. The wrapper keeps its own C++ symbols.
-    file(READ "${CMAKE_CURRENT_SOURCE_DIR}/include/wincompat_api.h" STARS_COMPAT_API)
-    string(REGEX MATCHALL "(WINAPI|WINAPIV)[ \t\r\n]+[A-Za-z0-9_]+[ \t]*\\(" STARS_COMPAT_DECLARATIONS "${STARS_COMPAT_API}")
-    set(STARS_COMPAT_NAMESPACE "/* Generated from wincompat_api.h; do not edit. */\n#define WinMain StarsCompat_WinMain\n")
-    foreach(STARS_COMPAT_DECLARATION IN LISTS STARS_COMPAT_DECLARATIONS)
-        string(REGEX REPLACE "(WINAPI|WINAPIV)[ \t\r\n]+([A-Za-z0-9_]+)[ \t]*\\(" "\\2" STARS_COMPAT_NAME "${STARS_COMPAT_DECLARATION}")
-        string(APPEND STARS_COMPAT_NAMESPACE "#define ${STARS_COMPAT_NAME} StarsCompat_${STARS_COMPAT_NAME}\n")
-    endforeach()
-    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/include/wincompat_api.h")
-    file(CONFIGURE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/include/wincompat_namespace.h" CONTENT "${STARS_COMPAT_NAMESPACE}" @ONLY)
-    target_include_directories(stars_win32_headers INTERFACE "${CMAKE_CURRENT_BINARY_DIR}/include")
-endif()
+
 
 file(GLOB STARS_BITMAP_FILES CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/res/bitmaps/*.bmp")
 set(STARS_BITMAP_GENERATED "${CMAKE_CURRENT_BINARY_DIR}/generated")
@@ -47,7 +34,8 @@ add_custom_command(
     COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/uigen.py"
         "${PROJECT_SOURCE_DIR}" "${STARS_BITMAP_GENERATED}"
     DEPENDS uigen.py "${PROJECT_SOURCE_DIR}/res/stars.rc" "${PROJECT_SOURCE_DIR}/res/resource.h"
-        "${CMAKE_CURRENT_SOURCE_DIR}/include/wincompat_constants.h" ${STARS_CUSTOM_RESOURCE_FILES}
+        "${CMAKE_CURRENT_SOURCE_DIR}/include/wincompat_constants.h"
+        "${PROJECT_SOURCE_DIR}/src/platform/ui_values.h" ${STARS_CUSTOM_RESOURCE_FILES}
     VERBATIM)
 
 file(GLOB STARS_IMAGE_FILES CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/res/icons/*.ico" "${PROJECT_SOURCE_DIR}/res/cursors/*.cur")
@@ -97,7 +85,7 @@ elseif(STARS_NATIVE_FILE_DIALOGS AND WIN32)
     target_compile_definitions(stars_win32 PRIVATE STARS_FILE_DIALOG_WINDOWS=1)
 endif()
 
-target_compile_options(stars_win32 PRIVATE -Wall -Wextra $<$<COMPILE_LANGUAGE:C>:-Wpedantic> -Werror)
+target_compile_options(stars_win32 PRIVATE -Wall -Wextra -Werror)
 
 if(WIN32)
     target_compile_definitions(stars_win32 PUBLIC _FILE_OFFSET_BITS=64)

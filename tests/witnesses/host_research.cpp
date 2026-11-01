@@ -1,4 +1,9 @@
 #include "common.h"
+#include "appstate.h"
+#ifdef STARS_UI_SDL
+#include "uistate.h"
+#endif
+#include "callbackcontext.h"
 #include "part_query_io.h"
 #include "race_query_io.h"
 #include "research_io.h"
@@ -18,18 +23,22 @@ struct RESEARCHESCAPE {};
 
 static void hv(int32_t value) { hash = hash * UINT32_C(16777619) ^ (uint32_t)value; }
 int16_t     TestGetRaceStat(PLAYER *p, RaceStat stat) {
+    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+
     if (stat == rsMajorAdv) {
         primaries++;
         hv(30);
-        hv((int32_t)(p - rgplr));
+        hv((int32_t)(p - app.state.rgplr));
         hv(2);
     }
     return GetRaceStat(p, stat);
 }
 int16_t TestGetRaceGrbit(PLAYER *p, RaceGrbit bit) {
+    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+
     assert(bit == ibitRaceGeneralizedResearch || bit == ibitRaceTT);
     hv(30);
-    hv((int32_t)(p - rgplr));
+    hv((int32_t)(p - app.state.rgplr));
     hv(bit == ibitRaceTT ? 1 : 0);
     if (bit == ibitRaceTT)
         tts++;
@@ -37,11 +46,11 @@ int16_t TestGetRaceGrbit(PLAYER *p, RaceGrbit bit) {
         generals++;
     return GetRaceGrbit(p, bit);
 }
-int32_t TestGetTechLevelCost(TechFieldType field, int16_t level, int16_t player) {
+int32_t TestGetTechLevelCost(APPSESSION &app, TechFieldType field, int16_t level, int16_t player) {
     int total = 0;
     for (int i = 0; i < 6; i++)
-        total += rgplr[player].rgTech[i];
-    int32_t value = GetTechLevelCost(field, level, player);
+        total += app.state.rgplr[player].rgTech[i];
+    int32_t value = GetTechLevelCost(app, field, level, player);
     costs++;
     hv(20);
     hv(player);
@@ -51,12 +60,12 @@ int32_t TestGetTechLevelCost(TechFieldType field, int16_t level, int16_t player)
     hv(value);
     return value;
 }
-void TestUpdateResearchStatus(int16_t pool) {
+void TestUpdateResearchStatus(APPSESSION &app, int16_t pool) {
     entries++;
     hv(40);
     hv(!!pool);
-    hv(idPlayer);
-    UpdateResearchStatus(pool);
+    hv(app.state.idPlayer);
+    UpdateResearchStatus(app, pool);
 }
 static int kind(uint16_t mask) {
     for (int i = 0; i < 16; i++)
@@ -64,10 +73,10 @@ static int kind(uint16_t mask) {
             return i;
     abort();
 }
-int16_t TestFLookupPart(PART *part) {
+int16_t TestFLookupPart(APPSESSION &app, PART *part) {
     int k = kind(part->hs.grhst), item = part->hs.iItem, at = typeCalls[k]++;
     hv(50);
-    hv(idPlayer);
+    hv(app.state.idPlayer);
     hv(k);
     hv(item);
     lookups++;
@@ -92,7 +101,7 @@ int16_t TestFLookupPart(PART *part) {
     part->SetPcom(&supplied);
     return (int16_t)avail;
 }
-int16_t TestFSendPlrMsg(int16_t player, MessageId id, MsgGoto target, int16_t a, int16_t b, int16_t d, int16_t p4, int16_t p5, int16_t p6, int16_t p7) {
+int16_t TestFSendPlrMsg(APPSESSION &, int16_t player, MessageId id, MsgGoto target, int16_t a, int16_t b, int16_t d, int16_t p4, int16_t p5, int16_t p6, int16_t p7) {
     assert(!p4 && !p5 && !p6 && !p7);
     int tag;
     switch (id) {
@@ -140,23 +149,23 @@ int16_t TestFSendPlrMsg(int16_t player, MessageId id, MsgGoto target, int16_t a,
 }
 static const unsigned rgcModelLimits[] = {16, 16, 10, 12, 24, 12, 15, 8, 10, 16, 5, 17, 11, 20, 32, 15};
 
-static int CatalogChecks(void) {
+static int CatalogChecks(APPSESSION &app) {
     const unsigned counts[] = {iengineCount, iscannerCount,   ishieldCount, iarmorCount,    ibeamCount,     itorpCount,  ibombCount,         iminingCount,
                                iminesCount,  ispecialSBCount, isbhullCount, ispecialECount, ispecialMCount, iterraCount, ihuldefOrbitalFort, iplanetaryCount};
     unsigned long  checks = 0;
     PART           part;
-    memset(rgplr, 0, sizeof(rgplr));
+    memset(app.state.rgplr, 0, sizeof(app.state.rgplr));
     for (unsigned k = 0; k < 16; k++) {
         assert(counts[k] < 256);
         checks++;
         assert(counts[k] == rgcModelLimits[k]);
         checks++;
-        idPlayer = iplrNone;
+        app.state.idPlayer = iplrNone;
         for (unsigned item = 0; item < 256; item++) {
             memset(&part, 0, sizeof(part));
             part.hs.grhst = (HullSlotType)(UINT32_C(1) << k);
             part.hs.iItem = item;
-            int available = FLookupPart(&part);
+            int available = FLookupPart(app, &part);
             if ((available == mdPartAvailInvalid) != (item >= counts[k])) {
                 fprintf(stderr, "catalog kind %u item %u count %u status %d\n", k, item, counts[k], available);
                 return 1;
@@ -167,14 +176,14 @@ static int CatalogChecks(void) {
                 checks++;
             }
         }
-        idPlayer = 0;
+        app.state.idPlayer = 0;
         for (int trait = -128; trait < 128; trait++) {
-            rgplr[0].rgAttr[rsMajorAdv] = (int8_t)trait;
+            app.state.rgplr[0].rgAttr[rsMajorAdv] = (int8_t)trait;
             for (unsigned item = counts[k]; item < 256; item++) {
                 memset(&part, 0, sizeof(part));
                 part.hs.grhst = (HullSlotType)(UINT32_C(1) << k);
                 part.hs.iItem = item;
-                assert(FLookupPart(&part) == mdPartAvailInvalid);
+                assert(FLookupPart(app, &part) == mdPartAvailInvalid);
                 checks++;
             }
         }
@@ -183,18 +192,18 @@ static int CatalogChecks(void) {
     return 0;
 }
 
-static void setup(void) {
-    memset(rgplr, 0, sizeof(rgplr));
-    memset(&game, 0, sizeof(game));
+static void setup(APPSESSION &app) {
+    memset(app.state.rgplr, 0, sizeof(app.state.rgplr));
+    memset(&app.state.game, 0, sizeof(app.state.game));
     hash = costs = lookups = messages = generals = tts = primaries = entries = 0;
     lastField = lastLevel = 0;
     memset(typeCalls, 0, sizeof(typeCalls));
-    game.cPlayer = (int16_t)cfg[0];
-    game.fSlowTech = cfg[2];
-    idPlayer = (int16_t)cfg[6];
+    app.state.game.cPlayer = (int16_t)cfg[0];
+    app.state.game.fSlowTech = cfg[2];
+    app.state.idPlayer = (int16_t)cfg[6];
     for (int i = 0; i < 16; i++) {
         int     at = 8 + 26 * i;
-        PLAYER *p = &rgplr[i];
+        PLAYER *p = &app.state.rgplr[i];
         p->rgAttr[rsMajorAdv] = (int8_t)cfg[at];
         p->grbitAttr =
             static_cast<RaceTraitBits>((cfg[at + 1] ? UINT32_C(1) << ibitRaceGeneralizedResearch : 0) | (cfg[at + 2] ? UINT32_C(1) << ibitRaceTT : 0));
@@ -211,9 +220,16 @@ static void setup(void) {
     }
 }
 int main(int argc, char **argv) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+
     assert(argc == 2);
     if (!strcmp(argv[1], "--catalog"))
-        return CatalogChecks();
+        return CatalogChecks(app);
     RACEQUERYIO raceIO;
     raceIO.pfnStat = TestGetRaceStat;
     raceIO.pfnGrbit = TestGetRaceGrbit;
@@ -234,34 +250,34 @@ int main(int argc, char **argv) {
     int64_t       expected[234];
     while (fread(cfg, sizeof(cfg), 1, file) == 1) {
         assert(fread(expected, sizeof(expected), 1, file) == 1);
-        setup();
+        setup(app);
         PLAYER before[16];
-        memcpy(before, rgplr, sizeof(before));
-        GAME gameBefore = game;
+        memcpy(before, app.state.rgplr, sizeof(before));
+        GAME gameBefore = app.state.game;
         int  complete = 0;
         try {
-            TurnIO().pfnResearch((int16_t)cfg[1]);
+            TurnIO().pfnResearch(app, (int16_t)cfg[1]);
             complete = 1;
         } catch (const RESEARCHESCAPE &) {
         }
         int64_t actual[234];
         for (int i = 0; i < 16; i++) {
             for (int f = 0; f < 6; f++) {
-                actual[i * 14 + f] = rgplr[i].rgTech[f];
-                actual[i * 14 + 6 + f] = rgplr[i].rgResSpent[f];
+                actual[i * 14 + f] = app.state.rgplr[i].rgTech[f];
+                actual[i * 14 + 6 + f] = app.state.rgplr[i].rgResSpent[f];
             }
-            actual[i * 14 + 12] = (uint8_t)rgplr[i].iTechCur;
-            actual[i * 14 + 13] = rgplr[i].lResLastYear;
-            PLAYER unchanged = rgplr[i];
+            actual[i * 14 + 12] = (uint8_t)app.state.rgplr[i].iTechCur;
+            actual[i * 14 + 13] = app.state.rgplr[i].lResLastYear;
+            PLAYER unchanged = app.state.rgplr[i];
             memcpy(unchanged.rgTech, before[i].rgTech, sizeof(unchanged.rgTech));
             memcpy(unchanged.rgResSpent, before[i].rgResSpent, sizeof(unchanged.rgResSpent));
             unchanged.iTechCur = before[i].iTechCur;
             assert(!memcmp(&unchanged, &before[i], sizeof(unchanged)));
             checks++;
         }
-        assert(!memcmp(&game, &gameBefore, sizeof(game)));
+        assert(!memcmp(&app.state.game, &gameBefore, sizeof(app.state.game)));
         checks++;
-        int64_t extra[] = {idPlayer, hash, costs, lookups, messages, generals, tts, primaries, entries, complete};
+        int64_t extra[] = {app.state.idPlayer, hash, costs, lookups, messages, generals, tts, primaries, entries, complete};
         memcpy(actual + 224, extra, sizeof(extra));
         for (int i = 0; i < 234; i++) {
             checks++;

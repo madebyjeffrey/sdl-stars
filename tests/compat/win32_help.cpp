@@ -12,9 +12,9 @@
 #include <unistd.h>
 #include "help_contexts.h"
 
-#define CHECK(f) do { if (!(f)) { fprintf(stderr, "line %d: %s (error %lu)\n", __LINE__, #f, (unsigned long)GetLastError()); return 1; } } while (0)
+#define CHECK(f) do { if (!(f)) { fprintf(stderr, "line %d: %s (error %lu)\n", __LINE__, #f, (unsigned long)win32::GetLastError()); return 1; } } while (0)
 static char szBase[PATH_MAX], szUri[PATH_MAX * 3 + 8];
-static BOOL fBase = TRUE, fAccept = TRUE;
+static BOOL fBase = 1, fAccept = 1;
 static unsigned cOpen;
 
 extern "C" const char *SDLCALL StarsTest_SDL_GetBasePath(void) { return fBase ? szBase : NULL; }
@@ -40,16 +40,16 @@ static BOOL FCopy(const char *pszSource, const char *pszTarget) {
     BOOL fOk;
 
     lpSource = fopen(pszSource, "rb");
-    if (!lpSource) return FALSE;
+    if (!lpSource) return 0;
     lpTarget = fopen(pszTarget, "wb");
-    if (!lpTarget) { fclose(lpSource); return FALSE; }
-    fOk = TRUE;
+    if (!lpTarget) { fclose(lpSource); return 0; }
+    fOk = 1;
     while ((cb = fread(rgb, 1, sizeof(rgb), lpSource)) != 0) {
-        if (fwrite(rgb, 1, cb, lpTarget) != cb) { fOk = FALSE; break; }
+        if (fwrite(rgb, 1, cb, lpTarget) != cb) { fOk = 0; break; }
     }
-    if (ferror(lpSource)) fOk = FALSE;
+    if (ferror(lpSource)) fOk = 0;
     fclose(lpSource);
-    if (fclose(lpTarget)) fOk = FALSE;
+    if (fclose(lpTarget)) fOk = 0;
     return fOk;
 }
 
@@ -83,55 +83,55 @@ int main(int argc, char **argv) {
         snprintf(szFile, sizeof(szFile), "%s/help/%s", szRoot, rgHelpFile[i]);
         CHECK(FCopy(szSource, szFile));
     }
-    CHECK(WinHelp(NULL, "stars-help.html", HELP_INDEX, UINTPTR_MAX));
+    CHECK(win32::WinHelpA(NULL, "stars-help.html", win32::HELP_INDEX, UINTPTR_MAX));
     CHECK(strstr(szUri, "stars%20help%20%23%C3%A9-") && strstr(szUri, "topic-0.html"));
-    CHECK(WinHelp(NULL, "STARS-HELP.HTML", HELP_CONTEXT, 4501) && strstr(szUri, "topic-65789.html"));
-    CHECK(WinHelp(NULL, "stars-help.html", HELP_CONTEXT, 1070) && strstr(szUri, "topic-3965119.html"));
-    CHECK(WinHelp(NULL, "stars-help.html", HELP_CONTEXT, 1017) && strstr(szUri, "topic-3442954.html"));
+    CHECK(win32::WinHelpA(NULL, "STARS-HELP.HTML", win32::HELP_CONTEXT, 4501) && strstr(szUri, "topic-65789.html"));
+    CHECK(win32::WinHelpA(NULL, "stars-help.html", win32::HELP_CONTEXT, 1070) && strstr(szUri, "topic-3965119.html"));
+    CHECK(win32::WinHelpA(NULL, "stars-help.html", win32::HELP_CONTEXT, 1017) && strstr(szUri, "topic-3442954.html"));
     for (i = 0; i < sizeof(rgHelpContext) / sizeof(rgHelpContext[0]); i++) {
-        CHECK(WinHelp(NULL, "stars-help.html", HELP_CONTEXT, rgHelpContext[i].idh));
+        CHECK(win32::WinHelpA(NULL, "stars-help.html", win32::HELP_CONTEXT, rgHelpContext[i].idh));
         CHECK(strstr(szUri, rgHelpContext[i].pszPage));
     }
     cBefore = cOpen;
-    CHECK(!WinHelp(NULL, NULL, HELP_INDEX, 0) && GetLastError() == ERROR_INVALID_PARAMETER);
-    CHECK(!WinHelp(NULL, "", HELP_INDEX, 0) && GetLastError() == ERROR_INVALID_PARAMETER);
-    CHECK(!WinHelp(NULL, "other.hlp", HELP_INDEX, 0) && GetLastError() == ERROR_NOT_SUPPORTED);
-    CHECK(!WinHelp(NULL, "stars-help.html>secondary", HELP_INDEX, 0) && GetLastError() == ERROR_NOT_SUPPORTED);
-    CHECK(!WinHelp(NULL, "stars-help.html", 2, 0) && GetLastError() == ERROR_NOT_SUPPORTED);
-    CHECK(!WinHelp(NULL, "stars-help.html", HELP_CONTEXT, 13002) && GetLastError() == ERROR_INVALID_PARAMETER);
-    CHECK(!WinHelp(NULL, "stars-help.html", HELP_CONTEXT, ((ULONG_PTR)1 << 32) | 4501) && GetLastError() == ERROR_INVALID_PARAMETER);
-    CHECK(!WinHelp(NULL, "missing/stars-help.html", HELP_INDEX, 0) && GetLastError() == ERROR_NOT_SUPPORTED);
-    fBase = FALSE;
-    CHECK(!WinHelp(NULL, "stars-help.html", HELP_INDEX, 0) && GetLastError() == ERROR_PATH_NOT_FOUND);
-    fBase = TRUE;
+    CHECK(!win32::WinHelpA(NULL, NULL, win32::HELP_INDEX, 0) && win32::GetLastError() == win32::ERROR_INVALID_PARAMETER);
+    CHECK(!win32::WinHelpA(NULL, "", win32::HELP_INDEX, 0) && win32::GetLastError() == win32::ERROR_INVALID_PARAMETER);
+    CHECK(!win32::WinHelpA(NULL, "other.hlp", win32::HELP_INDEX, 0) && win32::GetLastError() == win32::ERROR_NOT_SUPPORTED);
+    CHECK(!win32::WinHelpA(NULL, "stars-help.html>secondary", win32::HELP_INDEX, 0) && win32::GetLastError() == win32::ERROR_NOT_SUPPORTED);
+    CHECK(!win32::WinHelpA(NULL, "stars-help.html", 2, 0) && win32::GetLastError() == win32::ERROR_NOT_SUPPORTED);
+    CHECK(!win32::WinHelpA(NULL, "stars-help.html", win32::HELP_CONTEXT, 13002) && win32::GetLastError() == win32::ERROR_INVALID_PARAMETER);
+    CHECK(!win32::WinHelpA(NULL, "stars-help.html", win32::HELP_CONTEXT, ((ULONG_PTR)1 << 32) | 4501) && win32::GetLastError() == win32::ERROR_INVALID_PARAMETER);
+    CHECK(!win32::WinHelpA(NULL, "missing/stars-help.html", win32::HELP_INDEX, 0) && win32::GetLastError() == win32::ERROR_NOT_SUPPORTED);
+    fBase = 0;
+    CHECK(!win32::WinHelpA(NULL, "stars-help.html", win32::HELP_INDEX, 0) && win32::GetLastError() == win32::ERROR_PATH_NOT_FOUND);
+    fBase = 1;
     CHECK(cOpen == cBefore);
     snprintf(szFile, sizeof(szFile), "%s/help/images/bm0.png", szRoot);
     snprintf(szOther, sizeof(szOther), "%s/help/images/bm0.saved", szRoot);
     CHECK(rename(szFile, szOther) == 0);
-    CHECK(!WinHelp(NULL, "stars-help.html", HELP_INDEX, 0) && GetLastError() == ERROR_FILE_NOT_FOUND && cOpen == cBefore);
+    CHECK(!win32::WinHelpA(NULL, "stars-help.html", win32::HELP_INDEX, 0) && win32::GetLastError() == win32::ERROR_FILE_NOT_FOUND && cOpen == cBefore);
     CHECK(rename(szOther, szFile) == 0);
     snprintf(szFile, sizeof(szFile), "%s/help/complete.stamp", szRoot);
     lpFile = fopen(szFile, "wb"); CHECK(lpFile);
     CHECK(fputs("wrong guide\n", lpFile) >= 0 && fclose(lpFile) == 0);
-    CHECK(!WinHelp(NULL, "stars-help.html", HELP_INDEX, 0) && GetLastError() == ERROR_BAD_FORMAT && cOpen == cBefore);
+    CHECK(!win32::WinHelpA(NULL, "stars-help.html", win32::HELP_INDEX, 0) && win32::GetLastError() == win32::ERROR_BAD_FORMAT && cOpen == cBefore);
     snprintf(szSource, sizeof(szSource), "%s/complete.stamp", argv[1]); CHECK(FCopy(szSource, szFile));
     snprintf(szFile, sizeof(szFile), "%s/help/offline.html", szRoot);
     lpFile = fopen(szFile, "r+b"); CHECK(lpFile);
     CHECK(fseek(lpFile, 1000, SEEK_SET) == 0 && (ch = fgetc(lpFile)) != EOF);
     CHECK(fseek(lpFile, 1000, SEEK_SET) == 0 && fputc(ch ^ 0xff, lpFile) != EOF && fclose(lpFile) == 0);
-    CHECK(!WinHelp(NULL, "stars-help.html", HELP_INDEX, 0) && GetLastError() == ERROR_BAD_FORMAT && cOpen == cBefore);
+    CHECK(!win32::WinHelpA(NULL, "stars-help.html", win32::HELP_INDEX, 0) && win32::GetLastError() == win32::ERROR_BAD_FORMAT && cOpen == cBefore);
     snprintf(szSource, sizeof(szSource), "%s/offline.html", argv[1]); CHECK(FCopy(szSource, szFile));
-    fAccept = FALSE;
-    CHECK(!WinHelp(NULL, "stars-help.html", HELP_INDEX, 0) && GetLastError() == ERROR_GEN_FAILURE && cOpen == cBefore + 1);
-    fAccept = TRUE;
-    CHECK(WinHelp(NULL, "stars-help.html", HELP_INDEX, 0));
+    fAccept = 0;
+    CHECK(!win32::WinHelpA(NULL, "stars-help.html", win32::HELP_INDEX, 0) && win32::GetLastError() == win32::ERROR_GEN_FAILURE && cOpen == cBefore + 1);
+    fAccept = 1;
+    CHECK(win32::WinHelpA(NULL, "stars-help.html", win32::HELP_INDEX, 0));
     // The installed UTF-8 package works without the original HLP archive.
     snprintf(szFile, sizeof(szFile), "%s/share", szRoot); CHECK(mkdir(szFile, 0700) == 0);
     snprintf(szFile, sizeof(szFile), "%s/share/stars", szRoot); CHECK(mkdir(szFile, 0700) == 0);
     snprintf(szFile, sizeof(szFile), "%s/help", szRoot);
     snprintf(szOther, sizeof(szOther), "%s/share/stars/help", szRoot);
     CHECK(rename(szFile, szOther) == 0);
-    CHECK(WinHelp(NULL, "stars-help.html", HELP_INDEX, 0));
+    CHECK(win32::WinHelpA(NULL, "stars-help.html", win32::HELP_INDEX, 0));
     CHECK(strstr(szUri, "topic-0.html"));
     CHECK(rename(szOther, szFile) == 0);
     snprintf(szFile, sizeof(szFile), "%s/share/stars", szRoot); CHECK(rmdir(szFile) == 0);

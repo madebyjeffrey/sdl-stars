@@ -1,21 +1,23 @@
+#include "appstate.h"
+#include "uistate.h"
 /* Choose saved designs through the real roster and preserve unrelated versions. */
-static HWND HwndRosterDialog(DLGPROC lpfn) {
+static HWND HwndRosterDialog(APPSESSION &app, DLGPROC lpfn) {
     HWND hwnd;
-    for (hwnd = GetWindow(hwndTitle, GW_HWNDFIRST); hwnd; hwnd = GetWindow(hwnd, GW_HWNDNEXT))
-        if (hwnd->fDialog && hwnd->lpfnDlg == lpfn && IsWindowVisible(hwnd) && IsWindowEnabled(hwnd)) return hwnd;
+    for (hwnd = win32::GetWindow(app.lpui->hwndTitle, win32::GW_HWNDFIRST); hwnd; hwnd = win32::GetWindow(hwnd, win32::GW_HWNDNEXT))
+        if (hwnd->fDialog && hwnd->lpfnDlg == lpfn && win32::IsWindowVisible(hwnd) && win32::IsWindowEnabled(hwnd)) return hwnd;
     return NULL;
 }
 
-static BOOL FChooseRosterAction(HWND hwnd, int iSlot, int iMenu) {
+static BOOL FChooseRosterAction(APPSESSION &app, HWND hwnd, int iSlot, int iMenu) {
     RECT rc;
-    UpdateWindow(hwnd);
+    win32::UpdateWindow(hwnd);
     iRosterMenu = iMenu;
-    SetRect(&rc, xNewGameDiamond, 6 + iSlot * (dyArial8 + 4),
-            xNewGameDiamond + dyArial8 + 1, 6 + iSlot * (dyArial8 + 4) + dyArial8 + 1);
+    win32::SetRect(&rc, app.lpui->xNewGameDiamond, 6 + iSlot * (app.state.dyArial8 + 4),
+            app.lpui->xNewGameDiamond + app.state.dyArial8 + 1, 6 + iSlot * (app.state.dyArial8 + 4) + app.state.dyArial8 + 1);
     return FPushClientRect(hwnd, &rc, SDL_BUTTON_LEFT);
 }
 
-static BOOL FCheckRaceRosterWorkflow(void) {
+static BOOL FCheckRaceRosterWorkflow(APPSESSION &app) {
     static int iStep, iPage, iSlot;
     static uint16_t icksA;
     static const DLGPROC rglpfn[] = {RaceWizardDlg1, RaceWizardDlg4, RaceWizardDlg5, RaceWizardDlg2, RaceWizardDlg3, RaceWizardDlg6};
@@ -29,104 +31,104 @@ static BOOL FCheckRaceRosterWorkflow(void) {
     CchSnprintf(szSnapshot, sizeof(szSnapshot), "%s%sB.snapshot", pszRoot, szDirSep);
     CchSnprintf(szFirstSnapshot, sizeof(szFirstSnapshot), "%s%sA.snapshot", pszRoot, szDirSep);
     if (iStep == 0) {
-        if (!IsWindowVisible(hwndTitle)) return TRUE;
-        fChecked = TRUE;
-        UpdateWindow(hwndTitle);
-        fTitlePainted = FCompatPresent(hwndTitle);
-        if (!fTitlePainted || !FSaveLibraryRace(hwndTitle, rgszName[0], &vrgplrDef[0]) ||
-            !FSaveLibraryRace(hwndTitle, rgszName[1], &vrgplrDef[1])) return FALSE;
+        if (!win32::IsWindowVisible(app.lpui->hwndTitle)) return 1;
+        fChecked = 1;
+        win32::UpdateWindow(app.lpui->hwndTitle);
+        fTitlePainted = FCompatPresent(app.lpui->hwndTitle);
+        if (!fTitlePainted || !FSaveLibraryRace(app, app.lpui->hwndTitle, rgszName[0], &vrgplrDef[0]) ||
+            !FSaveLibraryRace(app, app.lpui->hwndTitle, rgszName[1], &vrgplrDef[1])) return 0;
         iStep++;
-        return FPushClick(rghwndBtnSplash[0]);
+        return FPushClick(app, app.lpui->rghwndBtnSplash[0]);
     }
     if (iStep == 1) {
-        hwnd = HwndRosterDialog(NewGameDlg);
-        if (!hwnd) return TRUE;
-        GetWindowText(hwnd, szCaption, sizeof(szCaption));
-        if (strcmp(szCaption, "New Game - Step 1 of 3")) return FALSE;
+        hwnd = HwndRosterDialog(app, NewGameDlg);
+        if (!hwnd) return 1;
+        win32::GetWindowTextA(hwnd, szCaption, sizeof(szCaption));
+        if (strcmp(szCaption, "New Game - Step 1 of 3")) return 0;
         iStep++;
-        return FPushClick(GetDlgItem(hwnd, IDC_NEXT));
+        return FPushClick(app, win32::GetDlgItem(hwnd, IDC_NEXT));
     }
     if (iStep == 2 || iStep == 3) {
-        hwnd = HwndRosterDialog(NewGameDlg2);
-        if (!hwnd) return TRUE;
-        if (iStep == 3 && (vrgplrTypeNew[0] & 3) != 2) return FALSE;
+        hwnd = HwndRosterDialog(app, NewGameDlg2);
+        if (!hwnd) return 1;
+        if (iStep == 3 && (app.state.vrgplrTypeNew[0] & 3) != 2) return 0;
         pszRosterRace = rgszName[iStep - 2];
         iStep++;
-        return FChooseRosterAction(hwnd, iStep == 3 ? 0 : 1, 1);
+        return FChooseRosterAction(app, hwnd, iStep == 3 ? 0 : 1, 1);
     }
     if (iStep == 4) {
-        hwnd = HwndRosterDialog(NewGameDlg2);
-        if (!hwnd) return TRUE;
-        if (!FTestCopyFile(szOther, szSnapshot) || FWasRaceFile(szManaged, FALSE) <= 0) return FALSE;
-        icksA = IRaceChecksum(&vplr);
+        hwnd = HwndRosterDialog(app, NewGameDlg2);
+        if (!hwnd) return 1;
+        if (!FTestCopyFile(szOther, szSnapshot) || FWasRaceFile(app, szManaged, 0) <= 0) return 0;
+        icksA = IRaceChecksum(&app.state.vplr);
         iStep++;
-        return FChooseRosterAction(hwnd, 0, 2);
+        return FChooseRosterAction(app, hwnd, 0, 2);
     }
     if (iStep == 5 || iStep == 8) {
         if (iPage < 6) {
-            hwnd = HwndRosterDialog(rglpfn[iPage]);
-            if (!hwnd) return TRUE;
-            if (iPage == 0 && !FPushClick(GetDlgItem(hwnd, IDC_RACE_HUMANOID + 2))) return FALSE;
-            return FPushClick(GetDlgItem(hwnd, iPage++ == 5 ? IDC_FINISH : IDC_NEXT));
+            hwnd = HwndRosterDialog(app, rglpfn[iPage]);
+            if (!hwnd) return 1;
+            if (iPage == 0 && !FPushClick(app, win32::GetDlgItem(hwnd, IDC_RACE_HUMANOID + 2))) return 0;
+            return FPushClick(app, win32::GetDlgItem(hwnd, iPage++ == 5 ? IDC_FINISH : IDC_NEXT));
         }
-        hwnd = HwndRosterDialog(NewGameDlg2);
-        if (!hwnd) return TRUE;
-        if (!FTestFilesEqual(szOther, szSnapshot)) return FALSE;
+        hwnd = HwndRosterDialog(app, NewGameDlg2);
+        if (!hwnd) return 1;
+        if (!FTestFilesEqual(szOther, szSnapshot)) return 0;
         if (iStep == 5) {
-            if (FWasRaceFile(szManaged, FALSE) <= 0 || IRaceChecksum(&vplr) == icksA ||
-                !FTestCopyFile(szManaged, szFirstSnapshot)) return FALSE;
+            if (FWasRaceFile(app, szManaged, 0) <= 0 || IRaceChecksum(&app.state.vplr) == icksA ||
+                !FTestCopyFile(szManaged, szFirstSnapshot)) return 0;
             pszRosterRace = rgszName[0];
             iStep++;
-            return FChooseRosterAction(hwnd, 0, 1);
+            return FChooseRosterAction(app, hwnd, 0, 1);
         }
-        if (!FTestFilesEqual(szManaged, szFirstSnapshot)) return FALSE;
+        if (!FTestFilesEqual(szManaged, szFirstSnapshot)) return 0;
         iStep++;
-        return FChooseRosterAction(hwnd, 1, 56);
+        return FChooseRosterAction(app, hwnd, 1, 56);
     }
     if (iStep == 6) {
-        hwnd = HwndRosterDialog(NewGameDlg2);
-        if (!hwnd) return TRUE;
-        if (strcmp(PszCurrentLibraryRaceName(), rgszName[0]) || (vrgplrTypeNew[0] & 3) != 2) return FALSE;
+        hwnd = HwndRosterDialog(app, NewGameDlg2);
+        if (!hwnd) return 1;
+        if (strcmp(PszCurrentLibraryRaceName(), rgszName[0]) || (app.state.vrgplrTypeNew[0] & 3) != 2) return 0;
         iStep++;
-        return FChooseRosterAction(hwnd, 0, 16);
+        return FChooseRosterAction(app, hwnd, 0, 16);
     }
     if (iStep == 7) {
-        hwnd = HwndRosterDialog(NewGameDlg2);
-        if (!hwnd) return TRUE;
-        if (vrgplrTypeNew[0] != 1) return FALSE;
+        hwnd = HwndRosterDialog(app, NewGameDlg2);
+        if (!hwnd) return 1;
+        if (app.state.vrgplrTypeNew[0] != 1) return 0;
         iStep++;
         iPage = 0;
-        return FChooseRosterAction(hwnd, 0, 2);
+        return FChooseRosterAction(app, hwnd, 0, 2);
     }
     if (iStep == 9) {
-        hwnd = HwndRosterDialog(NewGameDlg2);
-        if (!hwnd) return TRUE;
-        if (vrgplrTypeNew[1] != 35) return FALSE;
+        hwnd = HwndRosterDialog(app, NewGameDlg2);
+        if (!hwnd) return 1;
+        if (app.state.vrgplrTypeNew[1] != 35) return 0;
         iStep++;
-        return FChooseRosterAction(hwnd, 15, 3);
+        return FChooseRosterAction(app, hwnd, 15, 3);
     }
     if (iStep == 10) {
-        hwnd = HwndRosterDialog(NewGameDlg2);
-        if (!hwnd) return TRUE;
-        if (vrgplrTypeNew[15] != 0) return FALSE;
+        hwnd = HwndRosterDialog(app, NewGameDlg2);
+        if (!hwnd) return 1;
+        if (app.state.vrgplrTypeNew[15] != 0) return 0;
         iStep++;
     }
     if (iStep == 11) {
-        hwnd = HwndRosterDialog(NewGameDlg2);
-        if (!hwnd) return TRUE;
+        hwnd = HwndRosterDialog(app, NewGameDlg2);
+        if (!hwnd) return 1;
         if (iSlot < 20) {
             pszRosterRace = rgszName[iSlot & 1];
-            return FChooseRosterAction(hwnd, iSlot++ % 16, 1);
+            return FChooseRosterAction(app, hwnd, iSlot++ % 16, 1);
         }
-        if (vcplrNew != 16 || (vrgplrTypeNew[3] & 3) != 2 ||
-            !FTestFilesEqual(szManaged, szFirstSnapshot) || !FTestFilesEqual(szOther, szSnapshot)) return FALSE;
+        if (app.lpui->vcplrNew != 16 || (app.state.vrgplrTypeNew[3] & 3) != 2 ||
+            !FTestFilesEqual(szManaged, szFirstSnapshot) || !FTestFilesEqual(szOther, szSnapshot)) return 0;
         iStep++;
-        return FPushClick(GetDlgItem(hwnd, IDCANCEL));
+        return FPushClick(app, win32::GetDlgItem(hwnd, IDCANCEL));
     }
-    if (!IsWindowVisible(hwndTitle) || !IsWindowEnabled(hwndTitle)) return TRUE;
-    if (game.lid != 0) return FALSE;
-    fPassed = TRUE;
+    if (!win32::IsWindowVisible(app.lpui->hwndTitle) || !win32::IsWindowEnabled(app.lpui->hwndTitle)) return 1;
+    if (app.state.game.lid != 0) return 0;
+    fPassed = 1;
     puts("Direct setup, predefined/library/computer selection, literal UTF-8 filenames, full roster replacement and isolated race edits passed without a file picker");
-    PostQuitMessage(0);
-    return TRUE;
+    win32::PostQuitMessage(0);
+    return 1;
 }

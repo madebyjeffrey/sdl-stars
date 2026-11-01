@@ -4,21 +4,21 @@
 #include <string.h>
 
 static BOOL FDlgWord(const BYTE *rgb, size_t cb, size_t *lpib, WORD *lpw) {
-    if (*lpib > cb || cb - *lpib < 2) return FALSE;
+    if (*lpib > cb || cb - *lpib < 2) return 0;
     *lpw = (WORD)(rgb[*lpib] | (rgb[*lpib + 1] << 8));
     *lpib += 2;
-    return TRUE;
+    return 1;
 }
 static BOOL FDlgDword(const BYTE *rgb, size_t cb, size_t *lpib, DWORD *lpdw) {
     WORD lo, hi;
-    if (!FDlgWord(rgb, cb, lpib, &lo) || !FDlgWord(rgb, cb, lpib, &hi)) return FALSE;
+    if (!FDlgWord(rgb, cb, lpib, &lo) || !FDlgWord(rgb, cb, lpib, &hi)) return 0;
     *lpdw = (DWORD)lo | ((DWORD)hi << 16);
-    return TRUE;
+    return 1;
 }
 static BOOL FDlgRect(const BYTE *rgb, size_t cb, size_t *lpib, int16_t *lpx, int16_t *lpy, int16_t *lpcx, int16_t *lpcy) {
     WORD x, y, cx, cy;
     if (!FDlgWord(rgb, cb, lpib, &x) || !FDlgWord(rgb, cb, lpib, &y) ||
-        !FDlgWord(rgb, cb, lpib, &cx) || !FDlgWord(rgb, cb, lpib, &cy)) return FALSE;
+        !FDlgWord(rgb, cb, lpib, &cx) || !FDlgWord(rgb, cb, lpib, &cy)) return 0;
     *lpx = (int16_t)x; *lpy = (int16_t)y; *lpcx = (int16_t)cx; *lpcy = (int16_t)cy;
     return *lpcx >= 0 && *lpcy >= 0;
 }
@@ -26,17 +26,17 @@ static BOOL FDlgField(const BYTE *rgb, size_t cb, size_t *lpib, WORD *lpid, char
     WORD w;
     size_t ibStart = *lpib, cch = 0;
     char *psz;
-    if (!FDlgWord(rgb, cb, lpib, &w)) return FALSE;
+    if (!FDlgWord(rgb, cb, lpib, &w)) return 0;
     if (w == 65535) return FDlgWord(rgb, cb, lpib, lpid);
     while (w) {
         cch++;
-        if (!FDlgWord(rgb, cb, lpib, &w)) return FALSE;
+        if (!FDlgWord(rgb, cb, lpib, &w)) return 0;
     }
     psz = (char *)(malloc(cch * 3 + 1));
-    if (!psz) return FALSE;
-    if (CchUtf16leToUtf8(psz, cch * 3 + 1, rgb + ibStart, cch) < 0) { free(psz); return FALSE; }
+    if (!psz) return 0;
+    if (CchUtf16leToUtf8(psz, cch * 3 + 1, rgb + ibStart, cch) < 0) { free(psz); return 0; }
     *lppsz = psz;
-    return TRUE;
+    return 1;
 }
 void CompatFreeDialogTemplate(COMPATDLGTEMPLATE *lpdlg) {
     WORD i;
@@ -61,7 +61,7 @@ BOOL FCompatDialogTemplate(const BYTE *rgb, size_t cb, COMPATDLGTEMPLATE *lpdlg)
         !FDlgField(rgb, cb, &ib, &dlg.idMenu, &dlg.pszMenu) ||
         !FDlgField(rgb, cb, &ib, &dlg.idClass, &dlg.pszClass) ||
         !FDlgField(rgb, cb, &ib, &idFont, &dlg.pszTitle) || idFont) goto fail;
-    if (dlg.dwStyle & DS_SETFONT) {
+    if (dlg.dwStyle & win32::DS_SETFONT) {
         if (!FDlgWord(rgb, cb, &ib, &dlg.cPoints) ||
             !FDlgField(rgb, cb, &ib, &idFont, &dlg.pszFont) || idFont) goto fail;
     }
@@ -85,7 +85,7 @@ BOOL FCompatDialogTemplate(const BYTE *rgb, size_t cb, COMPATDLGTEMPLATE *lpdlg)
     }
     if (ib > cb || cb - ib > 3) goto fail;
     while (ib < cb) if (rgb[ib++]) goto fail;
-    *lpdlg = dlg; return TRUE;
+    *lpdlg = dlg; return 1;
 fail:
-    CompatFreeDialogTemplate(&dlg); return FALSE;
+    CompatFreeDialogTemplate(&dlg); return 0;
 }

@@ -6,6 +6,10 @@ endif()
 file(GLOB STARS_PUBLIC_CPP_HEADERS CONFIGURE_DEPENDS
     "${PROJECT_SOURCE_DIR}/src/core/*.h" "${PROJECT_SOURCE_DIR}/src/platform/*.h")
 if(STARS_BUILD_SDL_CLIENT)
+    if(NOT TEST win32_abi AND NOT TEST win32_sdl_abi)
+        add_test(NAME win32_sdl_abi COMMAND stars-compat-abi)
+        set_tests_properties(win32_sdl_abi PROPERTIES LABELS "compat" TIMEOUT 30)
+    endif()
     file(GLOB STARS_DESKTOP_CPP_HEADERS CONFIGURE_DEPENDS
         "${PROJECT_SOURCE_DIR}/src/ui/*.h" "${PROJECT_SOURCE_DIR}/compat/win32/include/*.h")
     list(APPEND STARS_PUBLIC_CPP_HEADERS ${STARS_DESKTOP_CPP_HEADERS})
@@ -52,6 +56,17 @@ set_tests_properties(test_cpp_test_routing_policy PROPERTIES LABELS build TIMEOU
 # its original-name reads and payload accessors type-correct without linking a
 # native Win32 runtime or pretending this is a walkthrough execution.
 if(STARS_BUILD_SDL_CLIENT)
+    if(NOT TARGET stars-compat-nativeui-points)
+        add_executable(stars-compat-nativeui-points tests/compat/nativeui_points.cpp)
+        target_link_libraries(stars-compat-nativeui-points PRIVATE stars_win32)
+        target_compile_options(stars-compat-nativeui-points PRIVATE -Wall -Wextra -Wpedantic -Werror)
+        add_test(NAME win32_nativeui_points COMMAND stars-compat-nativeui-points)
+    endif()
+    add_executable(stars-win32-type-isolation tests/compat/win32_type_isolation.cpp)
+    target_link_libraries(stars-win32-type-isolation PRIVATE stars_win32_headers SDL3::SDL3)
+    target_include_directories(stars-win32-type-isolation PRIVATE "${PROJECT_SOURCE_DIR}/src/platform")
+    target_compile_options(stars-win32-type-isolation PRIVATE -Wall -Wextra -Wpedantic -Werror)
+    add_test(NAME test_win32_type_isolation COMMAND stars-win32-type-isolation)
     add_library(stars-archived-observer-types OBJECT tests/compat/archived_tutorial_types.cpp)
     target_link_libraries(stars-archived-observer-types PRIVATE stars_options stars_win32_headers SDL3::SDL3)
     target_compile_options(stars-archived-observer-types PRIVATE -Werror)

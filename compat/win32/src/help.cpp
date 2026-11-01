@@ -28,23 +28,23 @@ static BOOL FHelpAssets(const char *pszDirectory) {
     for (i = 0; i < sizeof(rgHelpFile) / sizeof(rgHelpFile[0]); i++) {
         cch = snprintf(szFile, sizeof(szFile), "%s/%s", pszDirectory, rgHelpFile[i]);
         if (cch < 0 || (size_t)cch >= sizeof(szFile)) {
-            SetLastError(ERROR_FILENAME_EXCED_RANGE);
-            return FALSE;
+            win32::SetLastError(win32::ERROR_FILENAME_EXCED_RANGE);
+            return 0;
         }
-        if (IGetNativeFileInfo(szFile, &st, TRUE) || !st.fRegular || st.cb <= 0) {
-            SetLastError(ERROR_FILE_NOT_FOUND);
-            return FALSE;
+        if (IGetNativeFileInfo(szFile, &st, 1) || !st.fRegular || st.cb <= 0) {
+            win32::SetLastError(win32::ERROR_FILE_NOT_FOUND);
+            return 0;
         }
     }
     snprintf(szFile, sizeof(szFile), "%s/complete.stamp", pszDirectory);
     lpFile = PfNativeOpen(szFile, "rb");
     if (!lpFile) {
-        SetLastError(ERROR_ACCESS_DENIED);
-        return FALSE;
+        win32::SetLastError(win32::ERROR_ACCESS_DENIED);
+        return 0;
     }
     fStamp = PszGetNativeLine(szStamp, sizeof(szStamp), lpFile) && !strcmp(szStamp, STARS_HELP_SHA "\n");
     ICloseNativeFile(lpFile);
-    if (!fStamp) SetLastError(ERROR_BAD_FORMAT);
+    if (!fStamp) win32::SetLastError(win32::ERROR_BAD_FORMAT);
     return fStamp;
 }
 
@@ -66,12 +66,12 @@ static char *PszHelpDocument(const char *pszDirectory, const char *pszPage) {
     fOk = cbRead == STARS_HELP_BUNDLE_SIZE && !FNativeStreamError(lpSource) && ChGetNativeFile(lpSource) == EOF;
     ICloseNativeFile(lpSource); lpSource = NULL;
     if (!fOk || (uint32_t)crc32(0, (const BYTE *)pszBody, (uInt)cbRead) != STARS_HELP_BUNDLE_CRC) {
-        SetLastError(ERROR_BAD_FORMAT); goto done;
+        win32::SetLastError(win32::ERROR_BAD_FORMAT); goto done;
     }
     pszBody[cbRead] = 0;
     pszMarker = strstr(pszBody, szMarker);
     if (!pszMarker || strstr(pszMarker + sizeof(szMarker) - 1, szMarker)) {
-        SetLastError(ERROR_BAD_FORMAT); goto done;
+        win32::SetLastError(win32::ERROR_BAD_FORMAT); goto done;
     }
     // Put the requested context inside the exported file: OpenFile portals
     // receive a descriptor and cannot carry a browser URL fragment with it.
@@ -88,22 +88,22 @@ static char *PszHelpDocument(const char *pszDirectory, const char *pszPage) {
     fOk = CWriteNative(pszBody, 1, cbPrefix, lpTarget) == cbPrefix &&
           IPutNativeString(pszPage, lpTarget) >= 0 &&
           CWriteNative(pszMarker + sizeof(szMarker) - 1, 1, cbRead - cbPrefix - sizeof(szMarker) + 1, lpTarget) == cbRead - cbPrefix - sizeof(szMarker) + 1;
-    if (IFlushNativeFile(lpTarget) || ISyncNativeFile(lpTarget)) fOk = FALSE;
-    if (ICloseNativeFile(lpTarget)) fOk = FALSE;
+    if (IFlushNativeFile(lpTarget) || ISyncNativeFile(lpTarget)) fOk = 0;
+    if (ICloseNativeFile(lpTarget)) fOk = 0;
     lpTarget = NULL;
-    if (!fOk || IRenameNativePath(szTemp, szTarget, TRUE, TRUE)) { IUnlinkNativePath(szTemp); goto fail; }
+    if (!fOk || IRenameNativePath(szTemp, szTarget, 1, 1)) { IUnlinkNativePath(szTemp); goto fail; }
     pszResult = strdup(szTarget);
     if (!pszResult) goto fail;
     goto done;
 fail:
-    SetLastError(ERROR_ACCESS_DENIED);
+    win32::SetLastError(win32::ERROR_ACCESS_DENIED);
 done:
     if (lpSource) ICloseNativeFile(lpSource);
     free(pszBody);
     return pszResult;
 }
 
-BOOL WINAPI WinHelpA(HWND hWndMain, LPCSTR pszHelp, UINT uCommand, ULONG_PTR dwData) {
+BOOL win32::WinHelpA(HWND hWndMain, LPCSTR pszHelp, UINT uCommand, ULONG_PTR dwData) {
     const char *pszBase, *pszName, *pszPage = NULL;
     char szDirectory[PATH_MAX];
     char *pszDirectory, *pszDocument;
@@ -112,21 +112,21 @@ BOOL WINAPI WinHelpA(HWND hWndMain, LPCSTR pszHelp, UINT uCommand, ULONG_PTR dwD
     BOOL fLaunched;
 
     (void)hWndMain;
-    if (uCommand != HELP_INDEX && uCommand != HELP_CONTEXT) {
-        SetLastError(ERROR_NOT_SUPPORTED);
-        return FALSE;
+    if (uCommand != win32::HELP_INDEX && uCommand != win32::HELP_CONTEXT) {
+        win32::SetLastError(win32::ERROR_NOT_SUPPORTED);
+        return 0;
     }
     if (!pszHelp || !*pszHelp || strlen(pszHelp) >= PATH_MAX) {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
+        win32::SetLastError(win32::ERROR_INVALID_PARAMETER);
+        return 0;
     }
     pszName = strrchr(pszHelp, '/');
     pszName = pszName ? pszName + 1 : pszHelp;
     if (strcasecmp(pszName, "stars-help.html") || strchr(pszHelp, '\\') || strchr(pszHelp, '/')) {
-        SetLastError(ERROR_NOT_SUPPORTED);
-        return FALSE;
+        win32::SetLastError(win32::ERROR_NOT_SUPPORTED);
+        return 0;
     }
-    if (uCommand == HELP_INDEX) {
+    if (uCommand == win32::HELP_INDEX) {
         pszPage = STARS_HELP_CONTENTS;
     } else if (dwData <= UINT32_MAX) {
         for (i = 0; i < sizeof(rgHelpContext) / sizeof(rgHelpContext[0]); i++) {
@@ -137,42 +137,42 @@ BOOL WINAPI WinHelpA(HWND hWndMain, LPCSTR pszHelp, UINT uCommand, ULONG_PTR dwD
         }
     }
     if (!pszPage) {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
+        win32::SetLastError(win32::ERROR_INVALID_PARAMETER);
+        return 0;
     }
     pszBase = CompatPathIO().pfnGetBasePath();
     if (!pszBase) {
-        SetLastError(ERROR_PATH_NOT_FOUND);
-        return FALSE;
+        win32::SetLastError(win32::ERROR_PATH_NOT_FOUND);
+        return 0;
     }
     // The packaged UTF-8 guide is authoritative; the HLP archive is not loaded.
     cch = snprintf(szDirectory, sizeof(szDirectory), "%s../help", pszBase);
     if (cch < 0 || (size_t)cch >= sizeof(szDirectory)) {
-        SetLastError(ERROR_FILENAME_EXCED_RANGE);
-        return FALSE;
+        win32::SetLastError(win32::ERROR_FILENAME_EXCED_RANGE);
+        return 0;
     }
     pszDirectory = PszCanonicalNativePath(szDirectory, NULL, 0);
     if (!pszDirectory) {
         cch = snprintf(szDirectory, sizeof(szDirectory), "%s%s/help", pszBase, STARS_INSTALLED_DATA);
         if (cch < 0 || (size_t)cch >= sizeof(szDirectory)) {
-            SetLastError(ERROR_FILENAME_EXCED_RANGE);
-            return FALSE;
+            win32::SetLastError(win32::ERROR_FILENAME_EXCED_RANGE);
+            return 0;
         }
         pszDirectory = PszCanonicalNativePath(szDirectory, NULL, 0);
         if (!pszDirectory) {
-            SetLastError(ERROR_PATH_NOT_FOUND);
-            return FALSE;
+            win32::SetLastError(win32::ERROR_PATH_NOT_FOUND);
+            return 0;
         }
     }
     if (!FHelpAssets(pszDirectory)) {
         free(pszDirectory);
-        return FALSE;
+        return 0;
     }
     pszDocument = PszHelpDocument(pszDirectory, pszPage);
     free(pszDirectory);
-    if (!pszDocument) return FALSE;
+    if (!pszDocument) return 0;
     fLaunched = FCompatOpenDocument(pszDocument);
     free(pszDocument);
-    SetLastError(fLaunched ? NO_ERROR : ERROR_GEN_FAILURE);
+    win32::SetLastError(fLaunched ? win32::NO_ERROR : win32::ERROR_GEN_FAILURE);
     return fLaunched;
 }

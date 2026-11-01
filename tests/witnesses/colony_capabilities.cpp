@@ -1,20 +1,29 @@
+#ifdef _WIN32
+#include <fcntl.h>
+#include <io.h>
+#endif
 #include "terraform_fixture.h"
+#include "appstate.h"
+#ifdef STARS_UI_SDL
+#include "uistate.h"
+#endif
+#include "callbackcontext.h"
 static int32_t   capcfg[110];
 static int       extraCalls, extraPlayer, extraTrace[16][4], selectedScanner;
 static SPECIALSB fakeSpecial[16];
-static void      CapabilityScanner(PART *part) {
-    LookupBestPlanetaryScanner(part);
+static void      CapabilityScanner(APPSESSION &app, PART *part) {
+    LookupBestPlanetaryScanner(app, part);
     selectedScanner = part->hs.iItem;
 }
-static int16_t CapabilityLookup(PART *part) {
+static int16_t CapabilityLookup(APPSESSION &app, PART *part) {
     unsigned mask = part->hs.grhst, item = part->hs.iItem;
     if (mask == hstTerra || fInCheck)
-        return TerraformLookup(part);
+        return TerraformLookup(app, part);
     assert(extraCalls < 16 && ((mask == hstSpecialSB && item < 16) || (mask == hstPlanetary && item < 15)));
     int quantity = capcfg[0] == 3 ? -1 : part->hs.cItem, status;
-    extraPlayer = idPlayer;
+    extraPlayer = app.state.idPlayer;
     if (!cfg[1])
-        status = FLookupPart(part);
+        status = FLookupPart(app, part);
     else {
         if (mask == hstSpecialSB)
             part->SetPspecialsb(fakeSpecial + item);
@@ -34,8 +43,8 @@ struct CAPABILITYFIXTURE {
     COLONYIOSCOPE     colonyScope;
     PRODUCTIONIOSCOPE productionScope;
     PARTQUERYIOSCOPE  partScope;
-    CAPABILITYFIXTURE()
-        : colonyScope([] {
+    CAPABILITYFIXTURE(APPSESSION &app)
+        : fixture(app), colonyScope([] {
               COLONYIO io = ColonyIO();
               io.pfnTerraformPercent = IpctCanTerraformLppl;
               return io;
@@ -52,8 +61,8 @@ struct CAPABILITYFIXTURE {
           }()) {}
 };
 
-static void ready(void) {
-    reset();
+static void ready(APPSESSION &app) {
+    reset(app);
     memcpy(cfg, capcfg, sizeof(cfg));
     terraCalls = desireCalls = currentDesire = extraCalls = 0;
     extraPlayer = selectedScanner = -1;
@@ -75,7 +84,7 @@ static void ready(void) {
         if (i == cfg[46])
             fakeSpecial[i].grAbility2 = (int16_t)cfg[47];
     }
-    idPlayer = (int16_t)cfg[3];
+    app.state.idPlayer = (int16_t)cfg[3];
     planet.iPlayer = (int16_t)cfg[4];
     planet.fStarbase = capcfg[55];
     planet.isb = capcfg[56];
@@ -85,24 +94,24 @@ static void ready(void) {
     }
     for (int p = 0; p < 16; p++) {
         int fields = p == 1 ? 23 : 14, levels = p == 1 ? 38 : 32;
-        rgplr[p].grbitAttr = static_cast<RaceTraitBits>(((p == 1 ? cfg[45] : cfg[44]) ? UINT32_C(1) << ibitRaceTT : 0) |
+        app.state.rgplr[p].grbitAttr = static_cast<RaceTraitBits>(((p == 1 ? cfg[45] : cfg[44]) ? UINT32_C(1) << ibitRaceTT : 0) |
                                                         ((capcfg[0] != 0 && cfg[52]) ? UINT32_C(1) << ibitRaceNoAdvScanner : 0));
-        rgplr[p].rgAttr[rsMajorAdv] = capcfg[0] == 0 ? 0 : (int8_t)(p == 1 ? cfg[51] : cfg[50]);
-        rgplr[p].SetITechNow(capcfg[0] == 0 ? 0 : cfg[53]);
-        rgplr[p].wScore = 100 + p;
-        rgplr[p].lSalt = 10000 + p;
-        rgplr[p].idPlanetHome = p;
+        app.state.rgplr[p].rgAttr[rsMajorAdv] = capcfg[0] == 0 ? 0 : (int8_t)(p == 1 ? cfg[51] : cfg[50]);
+        app.state.rgplr[p].SetITechNow(capcfg[0] == 0 ? 0 : cfg[53]);
+        app.state.rgplr[p].wScore = 100 + p;
+        app.state.rgplr[p].lSalt = 10000 + p;
+        app.state.rgplr[p].idPlanetHome = p;
         for (int i = 0; i < 3; i++) {
-            rgplr[p].rgEnvVar[i] = (int8_t)cfg[fields + i];
-            rgplr[p].rgEnvVarMin[i] = (int8_t)cfg[fields + 3 + i];
-            rgplr[p].rgEnvVarMax[i] = (int8_t)cfg[fields + 6 + i];
+            app.state.rgplr[p].rgEnvVar[i] = (int8_t)cfg[fields + i];
+            app.state.rgplr[p].rgEnvVarMin[i] = (int8_t)cfg[fields + 3 + i];
+            app.state.rgplr[p].rgEnvVarMax[i] = (int8_t)cfg[fields + 6 + i];
         }
         for (int f = 0; f < 6; f++)
-            rgplr[p].rgTech[f] = (int8_t)cfg[levels + f];
-        rglpshdefSB[p] = NULL;
+            app.state.rgplr[p].rgTech[f] = (int8_t)cfg[levels + f];
+        app.state.rglpshdefSB[p] = NULL;
     }
     if (cfg[4] >= 0 && cfg[4] < 16)
-        rglpshdefSB[cfg[4]] = capcfg[57] ? bases : NULL;
+        app.state.rglpshdefSB[cfg[4]] = capcfg[57] ? bases : NULL;
     int index = capcfg[54] ? capcfg[56] : planet.isb;
     if (index >= 0 && index < 10) {
         SHDEF *d = bases + index;
@@ -117,10 +126,21 @@ static void ready(void) {
     }
 }
 int main(int argc, char **argv) {
-    CAPABILITYFIXTURE fixture;
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+
+    CAPABILITYFIXTURE fixture(app);
     assert(argc == 3);
     FILE *file = argv[2][0] == '-' ? stdin : fopen(argv[2], argv[1][0] == 'e' ? "wb" : "rb");
     assert(file);
+#ifdef _WIN32
+    if (file == stdin)
+        assert(_setmode(_fileno(file), _O_BINARY) != -1);
+#endif
     if (argv[1][0] == 'e') {
         for (int i = 0; i < 20; i++) {
             int32_t r[8];
@@ -146,30 +166,30 @@ int main(int argc, char **argv) {
     unsigned long cases = 0, modes[4] = {};
     while (fread(data, sizeof(data), 1, file) == 1) {
         memcpy(capcfg, data, sizeof(capcfg));
-        ready();
+        ready(app);
         PLAYER expectedPlayers[16];
         PLANET expectedPlanet = planet;
-        GAME   expectedGame = game;
+        GAME   expectedGame = app.state.game;
         SHDEF  expectedBases[10];
-        memcpy(expectedPlayers, rgplr, sizeof(rgplr));
+        memcpy(expectedPlayers, app.state.rgplr, sizeof(app.state.rgplr));
         memcpy(expectedBases, bases, sizeof(bases));
         int  result;
         PART part = {};
         part.hs.cItem = capcfg[61];
         part.SetPplanetary(rgplanetary + 14);
         if (cfg[0] == 0)
-            result = IpctCanTerraformLppl(&planet);
+            result = IpctCanTerraformLppl(app, &planet);
         else if (cfg[0] == 1)
-            result = StargateRangeFromLppl(capcfg[54] ? NULL : &planet, (int16_t)cfg[4], (int16_t)capcfg[56]);
+            result = StargateRangeFromLppl(app, capcfg[54] ? NULL : &planet, (int16_t)cfg[4], (int16_t)capcfg[56]);
         else if (cfg[0] == 2) {
-            ProductionIO().pfnScanner(&part);
+            ProductionIO().pfnScanner(app, &part);
             result = part.hs.iItem;
             CHECK(part.hs.grhst == hstPlanetary && part.hs.cItem == capcfg[61] && part.pplanetary() == rgplanetary + part.hs.iItem);
         } else
-            result = call(grobjPlanet, iobjPlanetaryScanner, 1);
+            result = call(app, grobjPlanet, iobjPlanetaryScanner, 1);
         int actual[278];
         actual[0] = result;
-        actual[1] = idPlayer;
+        actual[1] = app.state.idPlayer;
         for (int i = 0; i < 3; i++) {
             actual[2 + i] = planet.rgEnvVar[i];
             actual[5 + i] = observedLow[i];
@@ -203,9 +223,9 @@ int main(int argc, char **argv) {
             expectedPlanet.iScanner = selectedScanner;
             CHECK(messageArgs[0][2] == selectedScanner && messageScanner[0] == 31);
         }
-        CHECK(memcmp(expectedPlayers, rgplr, sizeof(rgplr)) == 0);
+        CHECK(memcmp(expectedPlayers, app.state.rgplr, sizeof(app.state.rgplr)) == 0);
         CHECK(memcmp(&expectedPlanet, &planet, sizeof(planet)) == 0);
-        CHECK(memcmp(&expectedGame, &game, sizeof(game)) == 0);
+        CHECK(memcmp(&expectedGame, &app.state.game, sizeof(app.state.game)) == 0);
         CHECK(memcmp(expectedBases, bases, sizeof(bases)) == 0);
         CHECK(!randomCalls);
         cases++;
@@ -229,12 +249,12 @@ int main(int argc, char **argv) {
         }
         for (int i = 0; i < 6; i++)
             capcfg[32 + i] = 26;
-        ready();
-        planet.lpplprod = LpplAlloc<PLPROD>(4, 1, htOrd);
+        ready(app);
+        planet.lpplprod = LpplAlloc<PLPROD>(app, 4, 1, htOrd);
         planet.lpplprod->iprodMac = 1;
         planet.lpplprod->rgprod()[0] = row(3, mdIdleTerraform, grobjPlanet, 0);
-        Produce();
-        CHECK(!planet.lpplprod && planet.rgEnvVar[0] == 50 && rgplr[0].lResLastYear == 100 - distance * 10);
+        Produce(app);
+        CHECK(!planet.lpplprod && planet.rgEnvVar[0] == 50 && app.state.rgplr[0].lResLastYear == 100 - distance * 10);
         CHECK(terraformCalls == distance);
     }
     for (int i = 0; i < 4; i++)
@@ -243,14 +263,14 @@ int main(int argc, char **argv) {
     capcfg[14] = -50;
     capcfg[17] = -75;
     capcfg[20] = -25;
-    ready();
-    CHECK(IpctCanTerraformLppl(&planet) == -24);
-    planet.lpplprod = LpplAlloc<PLPROD>(4, 1, htOrd);
+    ready(app);
+    CHECK(IpctCanTerraformLppl(app, &planet) == -24);
+    planet.lpplprod = LpplAlloc<PLPROD>(app, 4, 1, htOrd);
     planet.lpplprod->iprodMac = 1;
     planet.lpplprod->rgprod()[0] = row(3, mdIdleTerraform, grobjPlanet, 0);
-    Produce();
-    CHECK(!planet.lpplprod && !terraformCalls && rgplr[0].lResLastYear == 100);
-    reset();
+    Produce(app);
+    CHECK(!planet.lpplprod && !terraformCalls && app.state.rgplr[0].lResLastYear == 100);
+    reset(app);
     printf(
         "Colony capabilities: %lu cases (count %lu, gate %lu, scanner %lu, generic %lu) plus four Produce clipping/application cases; %d assertions passed\n",
         cases, modes[0], modes[1], modes[2], modes[3], checks);

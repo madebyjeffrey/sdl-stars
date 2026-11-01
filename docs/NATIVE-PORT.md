@@ -2,9 +2,13 @@
 
 The SDL client now has a native Windows x64 build using the same source wrapper
 as Linux/macOS, and is the only maintained desktop build. Its filesystem service is isolated in
-`src/platform/fileio.cpp`, and its wrapper symbols are namespaced
-to avoid SDK import collisions. Native Unicode open/save lives in the separate
-`filedialog_windows_sdk.cpp` bridge. This does not change disk layouts or core
+`src/platform/fileio.cpp`. Raw wrapper operations use the actual C++ `win32::`
+namespace on every platform; `ui::` calls deliver captured callback errors after
+runtime cleanup. Wrapper handle/record tags are distinct from SDK types, with
+shared core/UI geometry in `windowtypes.h`. Native Unicode open/save lives in
+`filedialog_windows_sdk.cpp`, and native process services in `native_windows.cpp`.
+These isolated SDK sources do not include application records or wrapper headers.
+This does not change disk layouts or core
 native I/O. The shared UI has no native-client fallback branches; captions and
 legacy input use the wrapper encoding boundary. See [Windows SDL3](WINDOWS-SDL3.md) for builds and qualification.
 
@@ -23,9 +27,11 @@ previous metadata. The command-line host never resolves or requires this library
 
 The desktop client uses the SDL-backed Win32 wrapper on every supported platform.
 The shared game also builds as `stars-host`, independently of SDL. Owned production
-and ordinary test translation units compile as ISO C++20 under their original
-source filenames; AppKit glue compiles as Objective-C++20. Independent C storage
+and ordinary test translation units compile as ISO C++20 with `.cpp` extensions
+and their original basenames; AppKit glue compiles as Objective-C++20. Independent C storage
 fixtures, real SDK contract tests and third-party libraries remain separate.
+[Maintained C++ policy](CPP-POLICY.md) records the precise continuing exceptions;
+[Milestone C qualification](CPP-C10-QUALIFICATION.md) records the final audit.
 
 Application headers expose native C++ declarations. The platform file and
 filesystem interfaces retain their buffer/handle shapes and error contracts.
@@ -76,7 +82,7 @@ The SDL runtime calls application window/dialog/timer/inspector callbacks
 through C++ containment adapters. A thrown failure becomes pending state, an
 active modal dialog ends, and the dispatcher finishes its counters, window
 and owner cleanup. Owned UI callers explicitly use the typed functions in
-`wincompat_calls.h` (`LUiSendMessage`, `LUiDialogBox`, `FUiDestroyWindow`, etc.).
+`wincompat_calls.h` (`ui::SendMessage`, `ui::DialogBox`, `ui::DestroyWindow`, etc.).
 These deliver pending failures after the raw operation returns; internal runtime
 calls keep the raw APIs so their outer cleanup finishes before delivery.
 API macros no longer insert error delivery into application calls. Native
@@ -85,6 +91,21 @@ contain remaining failures; foreign entrypoints and callbacks contain exceptions
 The callback fault test exercises nested dialogs, owner re-enabling, allocation
 exceptions, timers, synchronous delivery, text/position/enable notifications and
 automatic destruction.
+
+Compatibility numeric values now live in typed `win32::` declarations; word/byte,
+message and color conversions use typed functions with the original scalar widths.
+The core shares only the SDL-independent values and word helpers. Procedure
+instances and `Yield` no-ops are removed after checking their argument effects.
+`ui::RequestQuit` directly preserves the old unsupported-logoff diagnostic and
+application-quit behavior. The [C07 macro ledger](CPP-C07-MACROS.md) records each
+retained preprocessing role and conversion contract.
+
+Owned game/UI calls receive `APPSESSION &` explicitly. The actual host and UI
+owners retain their pre-main lifetime; the former global reference aliases and
+owner getters are removed. Fixed-signature callbacks borrow their target's
+context, including queued thread timers, and restore the caller on nested/error
+paths. The core's UI borrow is an incomplete type, keeping the host SDL-free.
+See the [C08 state ledger](CPP-C08-STATE.md) for entry and lifetime contracts.
 
 Each native-port shim is marked `NATIVE` in the source and described in
 detail in [WIN16-PARITY.md](WIN16-PARITY.md).

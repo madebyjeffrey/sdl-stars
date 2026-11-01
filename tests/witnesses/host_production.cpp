@@ -1,4 +1,9 @@
 #include <cassert>
+#include "appstate.h"
+#ifdef STARS_UI_SDL
+#include "uistate.h"
+#endif
+#include "callbackcontext.h"
 #include <cinttypes>
 #include <cstdio>
 #include <cstdlib>
@@ -47,7 +52,7 @@ static int slot(const void *p) {
             return i;
     abort();
 }
-static void *TestLpReAlloc(void *p, uint16_t size, HeapType ht) {
+static void *TestLpReAlloc(APPSESSION &, void *p, uint16_t size, HeapType ht) {
     assert(ht == htOrd);
     reallocations++;
     if (failResize)
@@ -67,7 +72,7 @@ static void *TestLpReAlloc(void *p, uint16_t size, HeapType ht) {
     heap[heaps++].live = 1;
     return next;
 }
-static void TestFreeLp(void *p, HeapType ht) {
+static void TestFreeLp(APPSESSION &, void *p, HeapType ht) {
     assert(ht == htOrd);
     int at = slot(p);
     heap[at].live = 0;
@@ -90,23 +95,23 @@ static void *TestcheckedMove(void *dst, const void *src, size_t size) {
     moves++;
     return memmove(dst, src, size);
 }
-static void TestMineMinerals(void) {
+static void TestMineMinerals(APPSESSION &app) {
     event('M');
-    assert(rgplr[0].lResLastYear == 1234);
+    assert(app.state.rgplr[0].lResLastYear == 1234);
 }
-static void TestUpdatePopulations(void) {
+static void TestUpdatePopulations(APPSESSION &) {
     event('P');
     planet.rgwtMin[3] += 10;
 }
-static void TestUpdateResearchStatus(int16_t generating) {
+static void TestUpdateResearchStatus(APPSESSION &, int16_t generating) {
     assert(generating);
     event('R');
 }
-static void TestRandomEvents(void) {
+static void TestRandomEvents(APPSESSION &) {
     event('E');
     planet.rgwtMin[3] += 20;
 }
-static int16_t TestFSendPlrMsg2(int16_t player, MessageId id, MsgGoto a, int16_t b, int16_t c) {
+static int16_t TestFSendPlrMsg2(APPSESSION &, int16_t player, MessageId id, MsgGoto a, int16_t b, int16_t c) {
     (void)a;
     (void)b;
     (void)c;
@@ -118,9 +123,9 @@ static int16_t TestFSendPlrMsg2(int16_t player, MessageId id, MsgGoto a, int16_t
     noticeCount[messages] = planet.lpplprod ? planet.lpplprod->iprodMac : -1;
     noticeRowCount[messages] = planet.lpplprod && planet.lpplprod->iprodMac ? (int)planet.lpplprod->rgprod()[0].cItem : -1;
     messages++;
-    return TRUE;
+    return 1;
 }
-static int16_t TestCResourcesAtPlanet(PLANET *p, int16_t player) {
+static int16_t TestCResourcesAtPlanet(APPSESSION &, PLANET *p, int16_t player) {
     assert(p == &planet && !player);
     queries++;
     event('Q');
@@ -130,45 +135,47 @@ static int16_t TestCResourcesAtPlanet(PLANET *p, int16_t player) {
     }
     return gross;
 }
-static int16_t TestCMaxMines(PLANET *p, int16_t player) {
+static int16_t TestCMaxMines(APPSESSION &, PLANET *p, int16_t player) {
     assert(p == &planet && !player);
     return capAbsolute;
 }
-static int16_t TestCMaxFactories(PLANET *p, int16_t player) { return TestCMaxMines(p, player); }
-static int16_t TestCMaxDefenses(PLANET *p, int16_t player) { return TestCMaxMines(p, player); }
-static int16_t TestCMaxOperableMines(PLANET *p, int16_t player, int16_t next) {
+static int16_t TestCMaxFactories(APPSESSION &app, PLANET *p, int16_t player) { return TestCMaxMines(app, p, player); }
+static int16_t TestCMaxDefenses(APPSESSION &app, PLANET *p, int16_t player) { return TestCMaxMines(app, p, player); }
+static int16_t TestCMaxOperableMines(APPSESSION &app, PLANET *p, int16_t player, int16_t next) {
     assert(next);
-    (void)TestCMaxMines(p, player);
+    (void)TestCMaxMines(app, p, player);
     return capOperable;
 }
-static int16_t TestCMaxOperableFactories(PLANET *p, int16_t player, int16_t next) { return TestCMaxOperableMines(p, player, next); }
-static int16_t TestCMaxOperableDefenses(PLANET *p, int16_t player, int16_t next) { return TestCMaxOperableMines(p, player, next); }
-static int16_t TestIpctCanTerraformLppl(PLANET *p) {
+static int16_t TestCMaxOperableFactories(APPSESSION &app, PLANET *p, int16_t player, int16_t next) { return TestCMaxOperableMines(app, p, player, next); }
+static int16_t TestCMaxOperableDefenses(APPSESSION &app, PLANET *p, int16_t player, int16_t next) { return TestCMaxOperableMines(app, p, player, next); }
+static int16_t TestIpctCanTerraformLppl(APPSESSION &, PLANET *p) {
     assert(p == &planet);
     return capTerraform;
 }
-static int32_t TestChgPopFromPlanet(PLANET *p, int16_t update) {
+static int32_t TestChgPopFromPlanet(APPSESSION &, PLANET *p, int16_t update) {
     assert(p == &planet && !update);
     return -1;
 }
-static int16_t TestPctPlanetDesirability(PLANET *p, int16_t player) {
+static int16_t TestPctPlanetDesirability(APPSESSION &, PLANET *p, int16_t player) {
     assert(p == &planet && !player);
     return 100;
 }
-static int16_t TestIWarpMAFromLppl(PLANET *p, int16_t *flag) {
+static int16_t TestIWarpMAFromLppl(APPSESSION &, PLANET *p, int16_t *flag) {
     assert(p == &planet && !flag);
     return warp;
 }
 static int16_t TestGetRaceGrbit(PLAYER *p, RaceGrbit bit) {
-    assert(p == rgplr && bit == ibitRaceMineralAlchemy);
+    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+
+    assert(p == app.state.rgplr && bit == ibitRaceMineralAlchemy);
     return (int16_t)cheapFixture;
 }
-static void TestGetProductionCosts(PLANET *p, PROD *row, uint32_t *out, int16_t player, int16_t one) {
+static void TestGetProductionCosts(APPSESSION &, PLANET *p, PROD *row, uint32_t *out, int16_t player, int16_t one) {
     (void)row;
     assert(p == &planet && !player && one);
     memcpy(out, quote, 16);
 }
-static int16_t TestFBuildObject(PLANET *p, GrobjClass kind, int16_t item, int16_t count, int32_t *resources) {
+static int16_t TestFBuildObject(APPSESSION &, PLANET *p, GrobjClass kind, int16_t item, int16_t count, int32_t *resources) {
     (void)kind;
     (void)item;
     assert(p == &planet && count > 0);
@@ -187,7 +194,7 @@ static int16_t TestFBuildObject(PLANET *p, GrobjClass kind, int16_t item, int16_
         }                                                                                                                                                      \
     } while (0)
 
-static int16_t TestCBuildProdItem(PLANET *p, PROD *row, PROD *partial, int32_t *resources, int16_t alchemy, int16_t *status, int16_t calc) {
+static int16_t TestCBuildProdItem(APPSESSION &app, PLANET *p, PROD *row, PROD *partial, int32_t *resources, int16_t alchemy, int16_t *status, int16_t calc) {
     assert(p == &planet && partial && !partial->cItem && status && !calc && builds < 260);
     traceIndex[builds] = (int)(row - p->lpplprod->rgprod());
     traceAlchemy[builds] = alchemy;
@@ -195,7 +202,7 @@ static int16_t TestCBuildProdItem(PLANET *p, PROD *row, PROD *partial, int32_t *
     builds++;
     event('B');
     if (!script)
-        return CBuildProdItem(p, row, partial, resources, alchemy, status, calc);
+        return CBuildProdItem(app, p, row, partial, resources, alchemy, status, calc);
     *status = (int16_t)forcedStatus;
     resources[3] = scriptResources;
     if (partialCount) {
@@ -208,7 +215,7 @@ static int16_t TestCBuildProdItem(PLANET *p, PROD *row, PROD *partial, int32_t *
     }
     return forcedBuilt;
 }
-static uint16_t TestExtent(const void *p) { return (uint16_t)heap[slot(p)].bytes; }
+static uint16_t TestExtent(APPSESSION &, const void *p) { return (uint16_t)heap[slot(p)].bytes; }
 
 static PROD row(unsigned count, unsigned item, unsigned kind) {
     PROD r = {};
@@ -237,7 +244,7 @@ static PLPROD *queue(unsigned maximum, unsigned count, unsigned physical) {
         p->rgprod()[i] = row(1, 7, 3);
     return p;
 }
-static void reset(void) {
+static void reset(APPSESSION &app) {
     for (int i = 0; i < heaps; i++)
         if (heap[i].live)
             free(heap[i].p);
@@ -252,7 +259,7 @@ static void reset(void) {
     applied = 1;
     scriptResources = 7;
     memset(&planet, 0, sizeof(planet));
-    memset(rgplr, 0, sizeof(rgplr));
+    memset(app.state.rgplr, 0, sizeof(app.state.rgplr));
     memset(quote, 0, sizeof(quote));
     quote[3] = 10;
     planet.iScanner = 31;
@@ -261,12 +268,12 @@ static void reset(void) {
     planet.rgwtMin[0] = 10;
     planet.rgwtMin[1] = 20;
     planet.rgwtMin[2] = 30;
-    game.cPlayer = 2;
-    game.fNoRandom = 0;
-    gd.fGeneratingTurn = 1;
+    app.state.game.cPlayer = 2;
+    app.state.game.fNoRandom = 0;
+    app.state.gd.fGeneratingTurn = 1;
     extras[0] = 0;
-    rgplr[0].lResLastYear = 1234;
-    rgplr[1].lResLastYear = 5678;
+    app.state.rgplr[0].lResLastYear = 1234;
+    app.state.rgplr[1].lResLastYear = 5678;
     phases[0] = 0;
     score[0] = -1;
     owners[0] = -1;
@@ -280,6 +287,13 @@ static int has(int id) {
 }
 static int16_t narrow(int value) { return (int16_t)(uint16_t)value; }
 int            main(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+
     HEAPIO ioHeap;
     ioHeap.pfnResize = TestLpReAlloc;
     ioHeap.pfnFree = TestFreeLp;
@@ -318,34 +332,34 @@ int            main(void) {
     RACEQUERYIO       ioRaceQuery;
     ioRaceQuery.pfnGrbit = TestGetRaceGrbit;
     RACEQUERYIOSCOPE scopeRaceQuery(ioRaceQuery);
-    lpPlanets = &planet;
-    cPlanet = 1;
-    vrgPlanResExtra = extras;
-    vrgwtPopScore = score;
-    vrgiplrPopScore = owners;
+    app.state.lpPlanets = &planet;
+    app.state.cPlanet = 1;
+    app.state.vrgPlanResExtra = extras;
+    app.state.vrgwtPopScore = score;
+    app.state.vrgiplrPopScore = owners;
     static_assert(sizeof(PROD) == 4 && sizeof(PLPROD) == 4 && offsetof(PLANET, lpplprod) == 52, "native queue/planet layout");
-    reset();
-    Produce();
-    CHECK(queries == 1 && !builds && has(idmProductionQueueEmpty) && rgplr[0].lResLastYear == 100);
-    CHECK(!strcmp(phases, "MQPRE") && score[0] == 1030 && owners[0] == 0 && rgplr[1].lResLastYear == 0);
-    reset();
+    reset(app);
+    Produce(app);
+    CHECK(queries == 1 && !builds && has(idmProductionQueueEmpty) && app.state.rgplr[0].lResLastYear == 100);
+    CHECK(!strcmp(phases, "MQPRE") && score[0] == 1030 && owners[0] == 0 && app.state.rgplr[1].lResLastYear == 0);
+    reset(app);
     planet.iPlayer = -1;
-    game.fNoRandom = 1;
-    Produce();
+    app.state.game.fNoRandom = 1;
+    Produce(app);
     CHECK(!queries && !messages && !strcmp(phases, "MPR") && owners[0] == -1 && score[0] == 1010);
-    reset();
+    reset(app);
     planet.lpplprod = queue(0, 0, 0);
-    Produce();
-    CHECK(!queries && !builds && !messages && rgplr[0].lResLastYear == 0);
-    reset();
+    Produce(app);
+    CHECK(!queries && !builds && !messages && app.state.rgplr[0].lResLastYear == 0);
+    reset(app);
     planet.lpplprod = queue(1, 1, 1);
     gross = 0;
-    Produce();
+    Produce(app);
     CHECK(queries == 1 && !builds && planet.lpplprod->iprodMac == 1 && !messages);
-    reset();
+    reset(app);
     extras[0] = 100;
-    Produce();
-    CHECK(rgplr[0].lResLastYear == 150);
+    Produce(app);
+    CHECK(app.state.rgplr[0].lResLastYear == 150);
     unsigned       undefinedExtra = 0;
     const uint16_t extraValues[] = {0, 1, 100, 32767, 32768, 65534, 65535};
     for (int raw = -32768; raw <= 32767; raw++)
@@ -362,80 +376,80 @@ int            main(void) {
                 expected += (int64_t)numerator / denominator;
             }
             assert(expected >= INT32_MIN && expected <= INT32_MAX);
-            reset();
+            reset(app);
             gross = (int16_t)raw;
             extras[0] = (uint16_t)extra;
-            Produce();
-            CHECK(rgplr[0].lResLastYear == expected && !builds && queries == 1);
+            Produce(app);
+            CHECK(app.state.rgplr[0].lResLastYear == expected && !builds && queries == 1);
         }
     CHECK(undefinedExtra == 4);
-    reset();
+    reset(app);
     planet.lpplprod = queue(1, 1, 1);
     planet.lpplprod->rgprod()[0] = row(1, 7, 3);
-    rgplr[0].pctResearch = 20;
+    app.state.rgplr[0].pctResearch = 20;
     applied = 0;
     resourceDelta = 7;
-    Produce();
-    CHECK(builds == 1 && applications == 1 && !planet.lpplprod && seenResources[3] == 70 && rgplr[0].lResLastYear == 90);
+    Produce(app);
+    CHECK(builds == 1 && applications == 1 && !planet.lpplprod && seenResources[3] == 70 && app.state.rgplr[0].lResLastYear == 90);
     CHECK(planet.rgwtMin[0] == 17 && frees == 1 && has(idmHasCompletedOrdersProductionQueueEmpty));
-    reset();
+    reset(app);
     planet.lpplprod = queue(1, 1, 1);
     planet.lpplprod->rgprod()[0] = row(2, 7, 3);
     gross = 15;
     applied = 0;
-    Produce();
+    Produce(app);
     CHECK(builds == 1 && applications == 1 && planet.lpplprod && planet.lpplprod->rgprod()[0].cItem == 0 && planet.lpplprod->rgprod()[0].pct == 59 &&
-          rgplr[0].lResLastYear == 0);
-    rgplr[0].lResLastYear = 1234;
+          app.state.rgplr[0].lResLastYear == 0);
+    app.state.rgplr[0].lResLastYear = 1234;
     builds = applications = 0;
     phases[0] = 0;
-    Produce();
-    CHECK(!builds && !planet.lpplprod && rgplr[0].lResLastYear == 15);
+    Produce(app);
+    CHECK(!builds && !planet.lpplprod && app.state.rgplr[0].lResLastYear == 15);
     for (unsigned automatic = 0; automatic < 7; automatic++) {
-        reset();
+        reset(app);
         planet.lpplprod = queue(1, 1, 1);
         planet.lpplprod->rgprod()[0] = row(3, automatic, 1);
         gross = 15;
         applied = 0;
-        Produce();
+        Produce(app);
         CHECK(builds == 1 && applications == 1 && planet.lpplprod && planet.lpplprod->iprodMac == 2);
         CHECK(planet.lpplprod->rgprod()[1].iItem == automatic && planet.lpplprod->rgprod()[1].cItem == 3 && planet.lpplprod->rgprod()[0].pct == 59);
-        CHECK(rgplr[0].lResLastYear == 0);
+        CHECK(app.state.rgplr[0].lResLastYear == 0);
     }
-    reset();
+    reset(app);
     planet.lpplprod = queue(1, 1, 1);
-    rgplr[0].pctResearch = 20;
+    app.state.rgplr[0].pctResearch = 20;
     mutateQuery = 1;
     script = 1;
     forcedBuilt = 0;
     forcedStatus = 5;
-    Produce();
-    CHECK(planet.fNoResearch && planet.rgwtMin[0] == 10 && rgplr[0].lResLastYear == 27);
-    reset();
+    Produce(app);
+    CHECK(planet.fNoResearch && planet.rgwtMin[0] == 10 && app.state.rgplr[0].lResLastYear == 27);
+    reset(app);
     planet.lpplprod = queue(1, 1, 1);
     planet.fNoResearch = 1;
-    rgplr[0].pctResearch = 20;
+    app.state.rgplr[0].pctResearch = 20;
     mutateQuery = 1;
     script = 1;
     forcedBuilt = 0;
     forcedStatus = 5;
-    Produce();
-    CHECK(!planet.fNoResearch && rgplr[0].lResLastYear == 7);
+    Produce(app);
+    CHECK(!planet.fNoResearch && app.state.rgplr[0].lResLastYear == 7);
     // Scripted status/built/partial pairs exercise caller control, not native
     // builder reachability. Every signed interpretation of the status word.
     for (unsigned status = 0; status < 65536; status++)
         for (int partial = 0; partial < 2; partial++)
             for (int success = 0; success < 2; success++) {
-                reset();
+                reset(app);
                 planet.lpplprod = queue(1, 1, 1);
-                rgplr[0].pctResearch = 20;
+                app.state.rgplr[0].pctResearch = 20;
                 script = 1;
                 forcedStatus = status;
                 partialCount = partial;
                 applied = success;
-                Produce();
+                Produce(app);
                 int stop = (int16_t)status >= 5, noticeExpected = status == 0 || (!stop && status != 3 && status != 4);
-                CHECK(builds == 1 && applications == 1 && rgplr[0].lResLastYear == 27 && has(idmHasCompletedOrdersProductionQueueEmpty) == noticeExpected);
+                CHECK(builds == 1 && applications == 1 && app.state.rgplr[0].lResLastYear == 27 && has(idmHasCompletedOrdersProductionQueueEmpty) == noticeExpected);
                 if (status == 0) {
                     CHECK(!planet.lpplprod && frees == 1);
                 } else {
@@ -453,7 +467,7 @@ int            main(void) {
                 for (int mass = 0; mass < 2; mass++)
                     for (int destination = 0; destination < 2; destination++)
                         for (int cap = -1; cap <= 4; cap++) {
-                            reset();
+                            reset(app);
                             planet.lpplprod = queue(1, 1, 1);
                             planet.lpplprod->rgprod()[0] = row(3, item, kind);
                             planet.iScanner = scanner ? 31 : 0;
@@ -487,7 +501,7 @@ int            main(void) {
                                     }
                                 }
                             }
-                            Produce();
+                            Produce(app);
                             CHECK(builds == !drop && (!builds || traceCount[0] == clipped));
                             if (msg)
                                 CHECK(has(msg));
@@ -499,7 +513,7 @@ int            main(void) {
             for (unsigned c = 0; c < 3; c++)
                 for (unsigned m = 0; m < 4; m++)
                     for (unsigned r = 0; r < 2; r++) {
-                        reset();
+                        reset(app);
                         unsigned item = manualItems[m], installed = installedCounts[c], requested = requestedCounts[r];
                         planet.lpplprod = queue(1, 1, 1);
                         planet.lpplprod->rgprod()[0] = row(requested, item, 1);
@@ -516,93 +530,93 @@ int            main(void) {
                         forcedStatus = 5;
                         int maximum = item == 12 ? capTerraform : narrow((capAbsolute > capOperable ? capAbsolute : capOperable) - (int)installed);
                         int reduced = maximum < (int)requested;
-                        Produce();
+                        Produce(app);
                         CHECK(builds == !(reduced && maximum <= 0));
                         if (builds)
                             CHECK(traceCount[0] == (reduced ? maximum : (int)requested));
                         if (reduced)
                             CHECK(messages >= 1 && noticeRowCount[0] == (int)requested);
                     }
-    reset();
+    reset(app);
     planet.lpplprod = queue(3, 3, 3);
     planet.lpplprod->rgprod()[0] = row(1, 3, 1);
     planet.lpplprod->rgprod()[1] = row(1, 7, 3);
     script = 1;
     forcedBuilt = 0;
-    Produce();
+    Produce(app);
     CHECK(builds == 2 && traceIndex[0] == 1 && traceAlchemy[0] && traceIndex[1] == 0 && !traceAlchemy[1] && !planet.lpplprod && moves == 1);
-    reset();
+    reset(app);
     planet.lpplprod = queue(3, 3, 3);
     planet.lpplprod->rgprod()[0] = planet.lpplprod->rgprod()[1] = row(1, 3, 1);
     script = 1;
     forcedBuilt = 0;
-    Produce();
+    Produce(app);
     CHECK(builds == 1 && traceIndex[0] == 2 && traceAlchemy[0] && planet.lpplprod->iprodMac == 1 && planet.lpplprod->rgprod()[0].iItem == 3);
     for (unsigned used = 1; used <= 255; used++) {
-        reset();
+        reset(app);
         planet.lpplprod = queue(used, used, used);
         script = 1;
         forcedStatus = 5;
         partialCount = 1;
-        Produce();
+        Produce(app);
         CHECK(reallocations == 1 && planet.lpplprod->iprodMax == (used + 1) % 256 && planet.lpplprod->iprodMac == (used + 1) % 256);
         CHECK(planet.lpplprod->rgprod()[0].pct == 59 && planet.lpplprod->rgprod()[used].unused == 7);
     }
-    reset();
+    reset(app);
     planet.lpplprod = queue(0, 255, 255);
     script = 1;
     forcedStatus = 5;
     partialCount = 1;
     int escaped = 0;
     try {
-        Produce();
+        Produce(app);
         CHECK(0);
     } catch (const FIXTUREESCAPE &error) {
         escaped = error.stage;
     }
     CHECK(escaped == 7 && reallocations == 0 && planet.lpplprod->iprodMac == 255);
-    reset();
+    reset(app);
     planet.lpplprod = queue(0, 255, 256);
     script = 1;
     forcedStatus = 5;
     partialCount = 1;
-    Produce();
+    Produce(app);
     CHECK(!reallocations && planet.lpplprod->iprodMac == 0);
-    reset();
+    reset(app);
     planet.lpplprod = queue(1, 1, 1);
     script = 1;
     forcedStatus = 5;
     partialCount = 1;
     failResize = 1;
     applied = 0;
-    rgplr[0].pctResearch = 20;
+    app.state.rgplr[0].pctResearch = 20;
     escaped = 0;
     try {
-        Produce();
+        Produce(app);
         CHECK(0);
     } catch (const FIXTUREESCAPE &error) {
         escaped = error.stage;
     }
     CHECK(escaped == 8 && applications == 1 && !frees && planet.lpplprod->iprodMac == 1 && planet.lpplprod->rgprod()[0].cItem == 0);
-    CHECK(rgplr[0].lResLastYear == 20 && planet.rgwtMin[0] == 10 && !strcmp(phases, "MQBA"));
-    reset();
+    CHECK(app.state.rgplr[0].lResLastYear == 20 && planet.rgwtMin[0] == 10 && !strcmp(phases, "MQBA"));
+    reset(app);
     planet.lpplprod = queue(1, 1, 1);
     planet.lpplprod->rgprod()[0] = row(3, 1, 1);
     gross = 15;
     failResize = 1;
     applied = 0;
-    rgplr[0].pctResearch = 20;
+    app.state.rgplr[0].pctResearch = 20;
     escaped = 0;
     try {
-        Produce();
+        Produce(app);
         CHECK(0);
     } catch (const FIXTUREESCAPE &error) {
         escaped = error.stage;
     }
     CHECK(escaped == 8 && builds == 1 && applications == 1 && seenResources[3] == 0 && !frees);
-    CHECK(planet.lpplprod->iprodMac == 1 && planet.lpplprod->rgprod()[0].cItem == 3 && rgplr[0].lResLastYear == 3);
+    CHECK(planet.lpplprod->iprodMac == 1 && planet.lpplprod->rgprod()[0].cItem == 3 && app.state.rgplr[0].lResLastYear == 3);
     CHECK(planet.rgwtMin[0] == 10 && !strcmp(phases, "MQBA"));
-    reset();
+    reset(app);
     for (int i = 0; i < heaps; i++)
         if (heap[i].live)
             free(heap[i].p);

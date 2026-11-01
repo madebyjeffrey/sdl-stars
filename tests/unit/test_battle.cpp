@@ -1,4 +1,9 @@
 #include "acutest.h"
+#include "appstate.h"
+#ifdef STARS_UI_SDL
+#include "uistate.h"
+#endif
+#include "callbackcontext.h"
 
 #include "stars_test.h"
 
@@ -6,15 +11,15 @@
 // The battle plans dialog needs the Windows or SDL client UI.
 // OpenBattlePlans loads player 1's turn file and opens the real Battle Plans
 // dialog on its first plan.
-static HWND OpenBattlePlans(const char *pszTest) {
-    char szDir[MAX_PATH];
+static HWND OpenBattlePlans(APPSESSION &app, const char *pszTest) {
+    char szDir[cbTestPath];
     HWND hwnd;
 
-    TEST_ASSERT(FStarsTestInit());
+    TEST_ASSERT(FStarsTestInit(app));
     TEST_ASSERT(FStarsTestDir(pszTest, szDir, sizeof(szDir)));
-    TEST_ASSERT(FStarsTestNewGame(szDir, 12345, NULL, 0));
-    TEST_ASSERT(FStarsTestLoadPlayer(0));
-    hwnd = HwndUiCreateDialog(hInst, MAKEINTRESOURCE(IDD_BATTLE_PLANS), NULL, BattlePlansDlg, 0);
+    TEST_ASSERT(FStarsTestNewGame(app, szDir, 12345, NULL, 0));
+    TEST_ASSERT(FStarsTestLoadPlayer(app, 0));
+    hwnd = ui::CreateDialog(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_BATTLE_PLANS), NULL, BattlePlansDlg, 0);
     TEST_ASSERT(hwnd != NULL);
     return hwnd;
 }
@@ -22,7 +27,14 @@ static HWND OpenBattlePlans(const char *pszTest) {
 // Replay uses aligned runtime tokens while its borrowed records retain the
 // odd 29-byte wire stride. Exercise attack, round transition, seek and summary.
 static void test_battle_replay_bytes(void) {
-    char szDir[MAX_PATH];
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+
+    char szDir[cbTestPath];
     const char *rgszAi[] = {"#1 4"};
     uint8_t *lpb;
     TOK rgtok[2]{};
@@ -34,21 +46,21 @@ static void test_battle_replay_bytes(void) {
     BTLREC br{};
     KILL kill{};
 
-    TEST_ASSERT(FStarsTestInit());
+    TEST_ASSERT(FStarsTestInit(app));
     TEST_ASSERT(FStarsTestDir("battle_replay_bytes", szDir, sizeof(szDir)));
-    TEST_ASSERT(FStarsTestNewGame(szDir, 12345, rgszAi, 1));
-    TEST_ASSERT(FStarsTestLoadHost());
-    idPlayer = 0;
-    lpb = (uint8_t *)LpAlloc(0xffc8, htBattle);
+    TEST_ASSERT(FStarsTestNewGame(app, szDir, 12345, rgszAi, 1));
+    TEST_ASSERT(FStarsTestLoadHost(app));
+    app.state.idPlayer = 0;
+    lpb = (uint8_t *)LpAlloc(app, 0xffc8, htBattle);
     memset(lpb, 0, 96);
-    BdvFromLp(lpb).SetId(4); BdvFromLp(lpb).SetCplr(2); BdvFromLp(lpb).SetCtok(2);
-    BdvFromLp(lpb).SetGrfPlr(3); BdvFromLp(lpb).SetCbData(92); BdvFromLp(lpb).SetIdPlanet(idPlanetNone);
+    BdvFromLp(app, lpb).SetId(4); BdvFromLp(app, lpb).SetCplr(2); BdvFromLp(app, lpb).SetCtok(2);
+    BdvFromLp(app, lpb).SetGrfPlr(3); BdvFromLp(app, lpb).SetCbData(92); BdvFromLp(app, lpb).SetIdPlanet(idPlanetNone);
     for (i = 0; i < 2; i++) {
-        for (ish = 0; ish < 16 && rglpshdef[i][ish].fFree; ish++) {}
+        for (ish = 0; ish < 16 && app.state.rglpshdef[i][ish].fFree; ish++) {}
         TEST_ASSERT(ish < 16);
         rgtok[i].iplr = i; rgtok[i].ishdef = ish; rgtok[i].grobj = grobjFleet;
         rgtok[i].csh = i == 0 ? 10 : 8; rgtok[i].dpShield = 20; rgtok[i].brc = 0x12 + i;
-        rglpshdef[i][ish].hul.dp = 100;
+        app.state.rglpshdef[i][ish].hul.dp = 100;
         TEST_ASSERT(FEncodeTok(rgtok[i], std::as_writable_bytes(std::span(lpb + 14 + i * 29, 29))));
     }
     br.itok = 0; br.brcDest = 0x34; br.ctok = 1; br.itokAttack = 1;
@@ -58,24 +70,24 @@ static void test_battle_replay_bytes(void) {
     br.itok = 1; br.brcDest = 0x56; br.ctok = 0; br.iRound = 1;
     TEST_ASSERT(FEncodeBattleRecord(br, std::as_writable_bytes(std::span(lpb + 86, 6))));
     lpb[92] = lpb[93] = 0xff;
-    TEST_CHECK(BtlDataGet(0) == lpb && BtlDataGet(1) == NULL);
-    TEST_CHECK(CBattleUnits(lpb, static_cast<BattleUnitFlags>(grBuOurUnits | grBuClassAll)) == 10);
-    TEST_CHECK(CBattleUnits(lpb, static_cast<BattleUnitFlags>(grBuTheirUnits | grBuClassAll)) == 8);
-    TEST_CHECK(CBattleKills(lpb, TRUE) == 2 && CBattleKills(lpb, FALSE) == 0);
-    vrgtok = rgtok; vrgdpVCR = rgdp;
-    vlpbdVCR = lpb; vlpbdVCRNext = lpb + 92;
-    viStepVCRCur = -1; vcStepVCR = 1;
-    TEST_CHECK(SetVCRBoard(-1) == -1 && rgdp[0] == 1000 && rgtok[0].brc == 0x12);
-    TEST_CHECK(SetVCRBoard(0) == 0 && rgtok[0].brc == 0x34 && viVCRFocus == 0);
-    GetVCRStats(0, &dpArmor, &dv, &dpShields, &csh);
+    TEST_CHECK(BtlDataGet(app, 0) == lpb && BtlDataGet(app, 1) == NULL);
+    TEST_CHECK(CBattleUnits(app, lpb, static_cast<BattleUnitFlags>(grBuOurUnits | grBuClassAll)) == 10);
+    TEST_CHECK(CBattleUnits(app, lpb, static_cast<BattleUnitFlags>(grBuTheirUnits | grBuClassAll)) == 8);
+    TEST_CHECK(CBattleKills(app, lpb, 1) == 2 && CBattleKills(app, lpb, 0) == 0);
+    app.state.vrgtok = rgtok; app.lpui->vrgdpVCR = rgdp;
+    app.lpui->vlpbdVCR = lpb; app.lpui->vlpbdVCRNext = lpb + 92;
+    app.lpui->viStepVCRCur = -1; app.lpui->vcStepVCR = 1;
+    TEST_CHECK(SetVCRBoard(app, -1) == -1 && rgdp[0] == 1000 && rgtok[0].brc == 0x12);
+    TEST_CHECK(SetVCRBoard(app, 0) == 0 && rgtok[0].brc == 0x34 && app.lpui->viVCRFocus == 0);
+    GetVCRStats(app, 0, &dpArmor, &dv, &dpShields, &csh);
     TEST_CHECK(dpArmor == 720 && dpShields == 16 && csh == 8 && dv.dp == kill.dv.dp);
-    TEST_CHECK(SetVCRBoard(1) == 1 && viRound == 1 && vlpbrVCR == lpb + 86);
+    TEST_CHECK(SetVCRBoard(app, 1) == 1 && app.lpui->viRound == 1 && app.lpui->vlpbrVCR == lpb + 86);
     TEST_CHECK(rgtok[0].csh == 8 && rgtok[0].dpShield == 18 && rgdp[0] == 720);
-    TEST_CHECK(rgtok[1].brc == 0x56 && viVCRFocus == 1);
-    TEST_CHECK(SetVCRBoard(2) == 2 && vlpbrVCR == vlpbdVCRNext);
-    TEST_CHECK(SetVCRBoard(-1) == -1 && rgtok[0].csh == 10 && rgtok[0].dpShield == 20 && rgdp[0] == 1000);
-    vrgtok = NULL; vrgdpVCR = NULL; vlpbdVCR = vlpbdVCRNext = vlpbrVCR = NULL;
-    FreeHb(rglphb[htBattle]); rglphb[htBattle] = NULL;
+    TEST_CHECK(rgtok[1].brc == 0x56 && app.lpui->viVCRFocus == 1);
+    TEST_CHECK(SetVCRBoard(app, 2) == 2 && app.lpui->vlpbrVCR == app.lpui->vlpbdVCRNext);
+    TEST_CHECK(SetVCRBoard(app, -1) == -1 && rgtok[0].csh == 10 && rgtok[0].dpShield == 20 && rgdp[0] == 1000);
+    app.state.vrgtok = NULL; app.lpui->vrgdpVCR = NULL; app.lpui->vlpbdVCR = app.lpui->vlpbdVCRNext = app.lpui->vlpbrVCR = NULL;
+    FreeHb(app, app.state.rglphb[htBattle]); app.state.rglphb[htBattle] = NULL;
 }
 
 // ChooseIn selects entry i of drop-down idc and notifies the dialog, as a
@@ -83,26 +95,33 @@ static void test_battle_replay_bytes(void) {
 static void ChooseIn(HWND hwnd, int idc, int i) {
     HWND hwndCtl;
 
-    hwndCtl = GetDlgItem(hwnd, idc);
+    hwndCtl = win32::GetDlgItem(hwnd, idc);
     TEST_ASSERT(hwndCtl != NULL);
-    TEST_ASSERT(LUiSendMessage(hwndCtl, CB_SETCURSEL, i, 0) == i);
-    LUiSendMessage(hwnd, WM_COMMAND, MAKEWPARAM(idc, CBN_SELCHANGE), (LPARAM)hwndCtl);
+    TEST_ASSERT(ui::SendMessage(hwndCtl, win32::CB_SETCURSEL, i, 0) == i);
+    ui::SendMessage(hwnd, win32::WM_COMMAND, win32::MAKEWPARAM(idc, win32::CBN_SELCHANGE), (LPARAM)hwndCtl);
 }
 
 // The Battle Plans drop-downs read their selection with the Win16 message
 // number for CB_GETCURSEL, which Win32 combo boxes ignore, so every choice
 // was stored as 0.
 static void test_BattlePlansDlg_stores_choices(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+
     HWND hwnd;
 
-    hwnd = OpenBattlePlans("BattlePlansDlg_stores_choices");
+    hwnd = OpenBattlePlans(app, "BattlePlansDlg_stores_choices");
     ChooseIn(hwnd, IDC_BATTLE_PLAN_PRIMARY_TARGET, 2);
-    TEST_CHECK_(btlplan.mdTarget1 == 2, "primary target %d", btlplan.mdTarget1);
+    TEST_CHECK_(app.lpui->btlplan.mdTarget1 == 2, "primary target %d", app.lpui->btlplan.mdTarget1);
     ChooseIn(hwnd, IDC_BATTLE_PLAN_SECONDARY_TARGET, 3);
-    TEST_CHECK_(btlplan.mdTarget2 == 3, "secondary target %d", btlplan.mdTarget2);
+    TEST_CHECK_(app.lpui->btlplan.mdTarget2 == 3, "secondary target %d", app.lpui->btlplan.mdTarget2);
     ChooseIn(hwnd, IDC_BATTLE_PLAN_TACTIC, 1);
-    TEST_CHECK_(btlplan.mdTactic == 1, "tactic %d", btlplan.mdTactic);
-    FUiDestroyWindow(hwnd);
+    TEST_CHECK_(app.lpui->btlplan.mdTactic == 1, "tactic %d", app.lpui->btlplan.mdTactic);
+    ui::DestroyWindow(hwnd);
 }
 #endif
 
@@ -112,7 +131,14 @@ static void test_BattlePlansDlg_stores_choices(void) {
 // the starbase owner, its friend and its target, that the starbase attacks
 // only the target and nobody attacks the friend or is attacked by it.
 static void test_CplrBattle_starbase_attacks_only_its_target(void) {
-    char                 szDir[MAX_PATH];
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+
+    char                 szDir[cbTestPath];
     const char          *rgszAi[] = {"#1 4", "#2 4"};
     static const int16_t rgrgiplr[6][3] = {{0, 1, 2}, {0, 2, 1}, {1, 0, 2}, {1, 2, 0}, {2, 0, 1}, {2, 1, 0}};
     PLANET              *lppl;
@@ -132,30 +158,30 @@ static void test_CplrBattle_starbase_attacks_only_its_target(void) {
         iplrFriend = rgrgiplr[icase][1];
         iplrTarget = rgrgiplr[icase][2];
         TEST_CASE_("starbase %d, friend %d, target %d", iplrSB, iplrFriend, iplrTarget);
-        TEST_ASSERT(FStarsTestInit());
+        TEST_ASSERT(FStarsTestInit(app));
         TEST_ASSERT(FStarsTestDir("CplrBattle_starbase_target", szDir, sizeof(szDir)));
-        TEST_ASSERT(FStarsTestNewGame(szDir, 12345, rgszAi, 2));
-        TEST_ASSERT(FStarsTestLoadHost());
-        lppl = LpplStarsTestHomeworld(iplrSB);
+        TEST_ASSERT(FStarsTestNewGame(app, szDir, 12345, rgszAi, 2));
+        TEST_ASSERT(FStarsTestLoadHost(app));
+        lppl = LpplStarsTestHomeworld(app, iplrSB);
         TEST_ASSERT(lppl != NULL && lppl->fStarbase);
-        TEST_ASSERT(FHullHasTeeth(&rglpshdefSB[iplrSB][lppl->isb].hul));
+        TEST_ASSERT(FHullHasTeeth(&app.state.rglpshdefSB[iplrSB][lppl->isb].hul));
         for (i = 0; i < 3; i++) {
-            rglpbtlplan[i][0].iplrAttack = iplrAttackNobody;
+            app.state.rglpbtlplan[i][0].iplrAttack = iplrAttackNobody;
         }
-        rglpbtlplan[iplrSB][0].iplrAttack = 4 + iplrTarget;
-        rgplr[iplrSB].rgmdRelation[iplrFriend] = 1;
-        rgplr[iplrFriend].rgmdRelation[iplrSB] = 1;
+        app.state.rglpbtlplan[iplrSB][0].iplrAttack = 4 + iplrTarget;
+        app.state.rgplr[iplrSB].rgmdRelation[iplrFriend] = 1;
+        app.state.rgplr[iplrFriend].rgmdRelation[iplrSB] = 1;
         for (i = 0; i < 3; i++) {
             if (i == iplrSB)
                 continue;
-            for (ish = 0; ish < 16 && rglpshdef[i][ish].fFree; ish++) {
+            for (ish = 0; ish < 16 && app.state.rglpshdef[i][ish].fFree; ish++) {
             }
             TEST_ASSERT(ish < 16);
-            lpfl = LpflStarsTestAddFleet(i, lppl->id, ish, 1);
+            lpfl = LpflStarsTestAddFleet(app, i, lppl->id, ish, 1);
         }
-        LinkFleets(FALSE);
-        lpfl = LpflFromId(lpfl->id);
-        CplrBattle(lpfl, rggrfAttack, &grfPlayer, &grfSpectator);
+        LinkFleets(app, 0);
+        lpfl = LpflFromId(app, lpfl->id);
+        CplrBattle(app, lpfl, rggrfAttack, &grfPlayer, &grfSpectator);
         TEST_CHECK_(rggrfAttack[iplrSB] == 1 << iplrTarget, "the starbase attacks %#x", rggrfAttack[iplrSB]);
         for (i = 0; i < 3; i++) {
             TEST_CHECK_(!(rggrfAttack[i] & (1 << iplrFriend)), "player %d attacks the friend", i);

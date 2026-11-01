@@ -9,6 +9,6 @@ extern uint8_t acSTR[];
 extern int16_t aiSTRChunkOffset[];
 extern char    rgSTRLookupTable[];
 
-char *PszGetCompressedString(StringId ids);
+char *PszGetCompressedString(APPSESSION &app, StringId ids);
 
 #endif

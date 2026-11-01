@@ -11,7 +11,7 @@ static const RECT rcTest4 = {0, 0, 50, 50};
 #define CHECK(f) do { if (!(f)) { fprintf(stderr, "line %d: %s\n", __LINE__, #f); return 1; } } while (0)
 
 static LRESULT CALLBACK ReferenceProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-    return DefWindowProc(hwnd, msg, wParam, lParam);
+    return DefWindowProcA(hwnd, msg, wParam, lParam);
 }
 
 int main(void) {
@@ -30,8 +30,8 @@ int main(void) {
     wc.lpfnWndProc = ReferenceProc;
     wc.lpszClassName = "StarsGdiReference";
     wc.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
-    CHECK(RegisterClass(&wc));
-    hwnd = CreateWindow(wc.lpszClassName, "GDI reference", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+    CHECK(RegisterClassA(&wc));
+    hwnd = CreateWindowExA(0, wc.lpszClassName, "GDI reference", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
                         20, 20, 200, 160, NULL, NULL, NULL, NULL);
     CHECK(hwnd && UpdateWindow(hwnd));
     hdc = GetDC(hwnd);
@@ -57,20 +57,20 @@ int main(void) {
     CHECK(SetTextColor(hdc, RGB(1, 2, 3)) == RGB(0, 0, 0));
     CHECK(SetBkColor(hdc, RGB(4, 5, 6)) == RGB(255, 255, 255));
     CHECK(SetBkMode(hdc, TRANSPARENT) == OPAQUE);
-    CHECK(GetTextExtentPoint32(hdc, "Stars", 5, &size) && size.cx > 0 && size.cy > 0);
-    CHECK(GetTextMetrics(hdc, &tm) && tm.tmHeight > 0 && tm.tmAveCharWidth > 0);
-    CHECK(TextOut(hdc, 10, 60, "Stars", 5));
+    CHECK(GetTextExtentPoint32A(hdc, "Stars", 5, &size) && size.cx > 0 && size.cy > 0);
+    CHECK(GetTextMetricsA(hdc, &tm) && tm.tmHeight > 0 && tm.tmAveCharWidth > 0);
+    CHECK(TextOutA(hdc, 10, 60, "Stars", 5));
     CHECK(ReleaseDC(hwnd, hdc));
     CHECK(ValidateRect(hwnd, NULL));
-    CHECK(InvalidateRect(hwnd, &rcTest2, TRUE));
-    CHECK(GetUpdateRect(hwnd, &rc, FALSE) && EqualRect(&rc, &rcTest3));
-    CHECK(GetUpdateRect(hwnd, NULL, TRUE));
+    CHECK(InvalidateRect(hwnd, &rcTest2, 1));
+    CHECK(GetUpdateRect(hwnd, &rc, 0) && EqualRect(&rc, &rcTest3));
+    CHECK(GetUpdateRect(hwnd, NULL, 1));
     hdc = GetDC(hwnd);
     CHECK(GetPixel(hdc, 10, 10) == RGB(255, 255, 255));
     CHECK(GetPixel(hdc, 9, 9) == RGB(15, 35, 55));
     CHECK(ReleaseDC(hwnd, hdc));
     CHECK(BeginPaint(hwnd, &ps) && !ps.fErase && EqualRect(&ps.rcPaint, &rc));
-    CHECK(!GetUpdateRect(hwnd, &rc, FALSE));
+    CHECK(!GetUpdateRect(hwnd, &rc, 0));
     CHECK(FillRect(ps.hdc, &rcTest4, (HBRUSH)GetStockObject(BLACK_BRUSH)));
     CHECK(EndPaint(hwnd, &ps));
     hdc = GetDC(hwnd);

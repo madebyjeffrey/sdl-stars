@@ -1,4 +1,9 @@
 #include "acutest.h"
+#include "appstate.h"
+#ifdef STARS_UI_SDL
+#include "uistate.h"
+#endif
+#include "callbackcontext.h"
 
 #include "stars_test.h"
 
@@ -6,8 +11,15 @@
 // words each, as the Win16 binary pushed them, so the Factories column
 // printed 0 and the factory count shifted into Def %.
 static void test_DumpPlanets_mines_and_factories(void) {
-    char    szDir[MAX_PATH];
-    char    szFile[MAX_PATH];
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+
+    char    szDir[cbTestPath];
+    char    szFile[cbTestPath];
     char    szLine[1024];
     char   *rgpszField[16];
     char   *psz;
@@ -17,27 +29,27 @@ static void test_DumpPlanets_mines_and_factories(void) {
     int     cField;
     int     fFound;
 
-    TEST_ASSERT(FStarsTestInit());
+    TEST_ASSERT(FStarsTestInit(app));
     TEST_ASSERT(FStarsTestDir("DumpPlanets_mines_and_factories", szDir, sizeof(szDir)));
-    TEST_ASSERT(FStarsTestNewGame(szDir, 12345, NULL, 0));
-    TEST_ASSERT(FStarsTestLoadPlayer(0));
-    lppl = LpplStarsTestHomeworld(0);
+    TEST_ASSERT(FStarsTestNewGame(app, szDir, 12345, NULL, 0));
+    TEST_ASSERT(FStarsTestLoadPlayer(app, 0));
+    lppl = LpplStarsTestHomeworld(app, 0);
     TEST_ASSERT(lppl != NULL);
     TEST_ASSERT(lppl->cMines != lppl->cFactories || lppl->cMines != 0);
-    strcpy(szName, PszGetCompressedPlanet(rgidPlan[lppl->id]));
+    strcpy(szName, PszGetCompressedPlanet(app, app.state.rgidPlan[lppl->id]));
 
-    DumpPlanets();
-    snprintf(szFile, sizeof(szFile), "%s.pla", szBase);
+    DumpPlanets(app);
+    snprintf(szFile, sizeof(szFile), "%s.pla", app.state.szBase);
     fp = fopen(szFile, "rb");
     TEST_ASSERT_(fp != NULL, "open %s", szFile);
-    fFound = FALSE;
+    fFound = 0;
     while (fgets(szLine, sizeof(szLine), fp)) {
         cField = 0;
         for (psz = strtok(szLine, "\t\r\n"); psz && cField < 16; psz = strtok(NULL, "\t\r\n"))
             rgpszField[cField++] = psz;
         if (cField < 10 || strcmp(rgpszField[0], szName) != 0)
             continue;
-        fFound = TRUE;
+        fFound = 1;
         // Planet Name, Owner, Starbase Type, Report Age, Population, Value,
         // Production Queue, Mines, Factories, Def %.
         TEST_CHECK_(atol(rgpszField[7]) == lppl->cMines, "mines %s, expected %d", rgpszField[7], lppl->cMines);
@@ -50,9 +62,9 @@ static void test_DumpPlanets_mines_and_factories(void) {
 
 // FSameAsGolden compares a dump with its expected copy in
 // tests/unit/golden, or writes the copy when STARS_UPDATE_GOLDEN is set.
-static int16_t FSameAsGolden(const char *szExt) {
-    char   szFile[MAX_PATH];
-    char   szGolden[MAX_PATH];
+static int16_t FSameAsGolden(APPSESSION &app, const char *szExt) {
+    char   szFile[cbTestPath];
+    char   szGolden[cbTestPath];
     char   rgb1[4096];
     char   rgb2[4096];
     size_t cb1;
@@ -61,17 +73,17 @@ static int16_t FSameAsGolden(const char *szExt) {
     FILE  *pf2;
     int    fSame;
 
-    snprintf(szFile, sizeof(szFile), "%s.%s", szBase, szExt);
+    snprintf(szFile, sizeof(szFile), "%s.%s", app.state.szBase, szExt);
     snprintf(szGolden, sizeof(szGolden), "%s/dumps.%s", STARS_TEST_GOLDEN_DIR, szExt);
     pf1 = fopen(szFile, "rb");
     if (pf1 == NULL)
-        return FALSE;
+        return 0;
     pf2 = fopen(szGolden, getenv("STARS_UPDATE_GOLDEN") ? "wb" : "rb");
     if (pf2 == NULL) {
         fclose(pf1);
-        return FALSE;
+        return 0;
     }
-    fSame = TRUE;
+    fSame = 1;
     if (getenv("STARS_UPDATE_GOLDEN")) {
         while ((cb1 = fread(rgb1, 1, sizeof(rgb1), pf1)) > 0)
             fwrite(rgb1, 1, cb1, pf2);
@@ -80,7 +92,7 @@ static int16_t FSameAsGolden(const char *szExt) {
             cb1 = fread(rgb1, 1, sizeof(rgb1), pf1);
             cb2 = fread(rgb2, 1, sizeof(rgb2), pf2);
             if (cb1 != cb2 || memcmp(rgb1, rgb2, cb1) != 0)
-                fSame = FALSE;
+                fSame = 0;
         } while (fSame && cb1 > 0);
     }
     fclose(pf1);
@@ -93,27 +105,34 @@ static int16_t FSameAsGolden(const char *szExt) {
 // match the Windows build's, kept in tests/unit/golden, in both the
 // original layout and the per-player one ([Misc] NewReports=1).
 static void test_Dumps_match_golden_files(void) {
-    char        szDir[MAX_PATH];
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+
+    char        szDir[cbTestPath];
     const char *rgszAi[] = {"#1 4"};
     int16_t     fPerPlayer;
 
-    TEST_ASSERT(FStarsTestInit());
+    TEST_ASSERT(FStarsTestInit(app));
     TEST_ASSERT(FStarsTestDir("Dumps_match_golden_files", szDir, sizeof(szDir)));
-    TEST_ASSERT(FStarsTestNewGame(szDir, 12345, rgszAi, 1));
-    TEST_ASSERT(FStarsTestGenerate());
-    TEST_ASSERT(FStarsTestGenerate());
-    TEST_ASSERT(FStarsTestLoadPlayer(0));
-    for (fPerPlayer = FALSE; fPerPlayer <= TRUE; fPerPlayer++) {
-        gd.fPerPlayerDumps = fPerPlayer;
-        DumpUniverse();
-        DumpPlanets();
-        DumpFleets();
+    TEST_ASSERT(FStarsTestNewGame(app, szDir, 12345, rgszAi, 1));
+    TEST_ASSERT(FStarsTestGenerate(app));
+    TEST_ASSERT(FStarsTestGenerate(app));
+    TEST_ASSERT(FStarsTestLoadPlayer(app, 0));
+    for (fPerPlayer = 0; fPerPlayer <= 1; fPerPlayer++) {
+        app.state.gd.fPerPlayerDumps = fPerPlayer;
+        DumpUniverse(app);
+        DumpPlanets(app);
+        DumpFleets(app);
     }
-    TEST_CHECK_(FSameAsGolden("map"), "game.map differs from tests/unit/golden/dumps.map");
-    TEST_CHECK_(FSameAsGolden("pla"), "game.pla differs from tests/unit/golden/dumps.pla");
-    TEST_CHECK_(FSameAsGolden("fle"), "game.fle differs from tests/unit/golden/dumps.fle");
-    TEST_CHECK_(FSameAsGolden("p1"), "game.p1 differs from tests/unit/golden/dumps.p1");
-    TEST_CHECK_(FSameAsGolden("f1"), "game.f1 differs from tests/unit/golden/dumps.f1");
+    TEST_CHECK_(FSameAsGolden(app, "map"), "game.map differs from tests/unit/golden/dumps.map");
+    TEST_CHECK_(FSameAsGolden(app, "pla"), "game.pla differs from tests/unit/golden/dumps.pla");
+    TEST_CHECK_(FSameAsGolden(app, "fle"), "game.fle differs from tests/unit/golden/dumps.fle");
+    TEST_CHECK_(FSameAsGolden(app, "p1"), "game.p1 differs from tests/unit/golden/dumps.p1");
+    TEST_CHECK_(FSameAsGolden(app, "f1"), "game.f1 differs from tests/unit/golden/dumps.f1");
 }
 
 TEST_LIST = {

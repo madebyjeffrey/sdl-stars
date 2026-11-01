@@ -1,11 +1,18 @@
 cmake_minimum_required(VERSION 3.23)
 # The version this line is building toward. Tags (vX.Y.Z) and build numbers
 # come from git; see cmake/version.cmake and docs/VERSIONING.md.
-project(stars VERSION 2.9.0 LANGUAGES C CXX)
+project(stars VERSION 2.9.0 LANGUAGES CXX)
 
 # SDL is the only desktop backend. Host-only builds do not require SDL.
 if(WIN32 AND NOT MINGW)
     message(FATAL_ERROR "On Windows, use the MSYS2 UCRT64 toolchain (docs/WINDOWS-SDL3.md)")
+endif()
+
+option(STARS_BUILD_TESTS "Build game and wrapper tests" ON)
+option(STARS_BUILD_WIN32_REFERENCE_TESTS "Build independent Windows SDK contract tests" OFF)
+# Only independent reference targets and dependencies need the C compiler.
+if(STARS_BUILD_TESTS OR STARS_BUILD_WIN32_REFERENCE_TESTS)
+    enable_language(C)
 endif()
 
 set(CMAKE_C_STANDARD 11)
@@ -27,7 +34,7 @@ endif()
 option(STARS_ENABLE_SANITIZERS "Instrument native Linux/macOS code with AddressSanitizer and UndefinedBehaviorSanitizer" OFF)
 add_library(stars_sanitizers INTERFACE)
 if(STARS_ENABLE_SANITIZERS)
-    if(NOT CMAKE_SYSTEM_NAME MATCHES "^(Linux|Darwin)$" OR NOT CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    if(NOT CMAKE_SYSTEM_NAME MATCHES "^(Linux|Darwin)$" OR NOT CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         message(FATAL_ERROR "STARS_ENABLE_SANITIZERS requires a native Linux/macOS GCC or Clang compiler")
     endif()
     target_compile_options(stars_sanitizers INTERFACE
@@ -54,7 +61,7 @@ set(STARS_UI_SOURCES
     src/ui/library_publication_io.cpp src/ui/library_file_io.cpp src/ui/control_io.cpp src/ui/desktop_choice_io.cpp src/ui/preferencesui.cpp src/ui/library_path_io.cpp
 )
 
-# These unchanged shared vectors compile as C through independent SDK entries.
+# These shared reference vectors compile as C through independent SDK entries.
 # Their application entries use ordinary C++ source extensions.
 # Their C11 zero-initializer spelling is intentional; isolate only its C++
 # missing-field/braces diagnostics from ordinary C++ harnesses and production.
@@ -72,7 +79,7 @@ set_source_files_properties(${STARS_CPP_SDK_SHARED_HARNESSES} PROPERTIES
     COMPILE_OPTIONS "-Wno-missing-field-initializers;-Wno-missing-braces")
 
 # Error state and pending callback failures are shared by game and SDL runtime.
-add_library(stars_errors STATIC src/platform/errors.cpp)
+add_library(stars_errors STATIC src/platform/errors.cpp src/platform/callbackcontext.cpp)
 target_include_directories(stars_errors PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/platform")
 target_link_libraries(stars_errors PRIVATE stars_sanitizers)
 target_compile_options(stars_errors PRIVATE -Wall -Wextra -Werror)
@@ -88,6 +95,10 @@ target_link_libraries(stars_encoding PRIVATE stars_sanitizers)
 target_compile_options(stars_encoding PRIVATE -Wall -Wextra -Werror)
 
 add_library(stars_filesystem STATIC src/platform/filesystem.cpp src/platform/fileio.cpp src/platform/native_publish.cpp)
+if(WIN32)
+    target_sources(stars_filesystem PRIVATE src/platform/native_windows.cpp)
+    target_link_libraries(stars_filesystem PRIVATE shell32)
+endif()
 set_target_properties(stars_filesystem PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON CXX_EXTENSIONS OFF)
 target_include_directories(stars_filesystem PUBLIC "${PROJECT_SOURCE_DIR}/src/platform")
 target_link_libraries(stars_filesystem PRIVATE stars_encoding stars_sanitizers)
@@ -262,10 +273,9 @@ foreach(STARS_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/core" "${CMAKE_CURREN
     target_include_directories(stars_options INTERFACE "$<$<COMPILE_LANGUAGE:RC>:${STARS_INCLUDE_DIR}>")
 endforeach()
 
-# Match the existing MinGW compile-analysis flags. Plain char is signed, as
-# in the original MSC build; the decompiler relies on it to drop char casts.
+# Plain char retains the original MSC signedness. Shared SDK C vectors use
+# the same scalar and floating-operation policy as application consumers.
 target_compile_options(stars_options INTERFACE
-    $<$<COMPILE_LANGUAGE:C>:-Wno-pointer-sign>
     $<$<COMPILE_LANGUAGE:C,CXX>:-fsigned-char>
     $<$<COMPILE_LANGUAGE:C,CXX>:-fno-fast-math>
     $<$<COMPILE_LANGUAGE:C,CXX>:-ffp-contract=off>
@@ -300,8 +310,6 @@ if(NOT STARS_CXX20_INTERFACES)
 endif()
 
 target_link_libraries(stars_options INTERFACE m)
-option(STARS_BUILD_TESTS "Build game and wrapper tests" ON)
-option(STARS_BUILD_WIN32_REFERENCE_TESTS "Build independent Windows SDK contract tests" OFF)
 if(STARS_BUILD_TESTS OR STARS_BUILD_WIN32_REFERENCE_TESTS)
     enable_testing()
     add_executable(stars-test-enum-abi tests/compat/enum_abi.cpp)

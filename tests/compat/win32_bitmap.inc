@@ -13,7 +13,7 @@ static const RECT rcTest3 = {4, 4, 8, 8};
 #define CHECK(f) do { if (!(f)) { fprintf(stderr, "line %d: %s\n", __LINE__, #f); return 1; } } while (0)
 
 static LRESULT CALLBACK BitmapProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-    return DefWindowProc(hwnd, msg, wParam, lParam);
+    return DefWindowProcA(hwnd, msg, wParam, lParam);
 }
 
 static int TestBitmaps(HWND hwnd) {
@@ -38,17 +38,17 @@ static int TestBitmaps(HWND hwnd) {
     hbmSrc = CreateCompatibleBitmap(hdc, 16, 16);
     hbmDst = CreateCompatibleBitmap(hdc, 16, 16);
     CHECK(hbmMono && hbmZero && hbmSrc && hbmDst);
-    CHECK(GetObject(hbmMono, sizeof(bm), &bm) == sizeof(bm) && bm.bmBitsPixel == 1 && bm.bmWidthBytes == 2);
-    CHECK(GetObject(hbmZero, sizeof(bm), &bm) == sizeof(bm) && bm.bmWidth == 1 && bm.bmHeight == 1 && bm.bmBitsPixel == 1);
+    CHECK(GetObjectA(hbmMono, sizeof(bm), &bm) == sizeof(bm) && bm.bmBitsPixel == 1 && bm.bmWidthBytes == 2);
+    CHECK(GetObjectA(hbmZero, sizeof(bm), &bm) == sizeof(bm) && bm.bmWidth == 1 && bm.bmHeight == 1 && bm.bmBitsPixel == 1);
     CHECK(DeleteObject(hbmZero));
-    CHECK(GetObject(hbmSrc, 0, NULL) == sizeof(bm));
-    CHECK(GetObject(hbmSrc, sizeof(bm), &bm) == sizeof(bm) && bm.bmWidth == 16 && bm.bmHeight == 16 && bm.bmBitsPixel >= 24);
+    CHECK(GetObjectA(hbmSrc, 0, NULL) == sizeof(bm));
+    CHECK(GetObjectA(hbmSrc, sizeof(bm), &bm) == sizeof(bm) && bm.bmWidth == 16 && bm.bmHeight == 16 && bm.bmBitsPixel >= 24);
     hSrcOld = SelectObject(hsrc, hbmSrc); hDstOld = SelectObject(hdst, hbmDst);
     hMonoOld = SelectObject(hmono, hbmMono);
     CHECK(hSrcOld && hDstOld && hMonoOld);
-    CHECK(GetObject(hSrcOld, sizeof(bm), &bm) == sizeof(bm) && bm.bmWidth == 1 && bm.bmBitsPixel == 1);
+    CHECK(GetObjectA(hSrcOld, sizeof(bm), &bm) == sizeof(bm) && bm.bmWidth == 1 && bm.bmBitsPixel == 1);
     hbmColor = CreateCompatibleBitmap(hsrc, 4, 4);
-    CHECK(hbmColor && GetObject(hbmColor, sizeof(bm), &bm) == sizeof(bm) && bm.bmBitsPixel >= 24);
+    CHECK(hbmColor && GetObjectA(hbmColor, sizeof(bm), &bm) == sizeof(bm) && bm.bmBitsPixel >= 24);
     CHECK(DeleteObject(hbmColor));
     CHECK(!SelectObject(hother, hbmSrc));
     // Deleting selected bitmaps has driver-dependent/deferred semantics on Windows.
@@ -113,7 +113,7 @@ static int TestBitmaps(HWND hwnd) {
     CHECK(BitBlt(hdst, 0, 0, 4, 4, hdc, 0, 0, SRCCOPY));
     CHECK(GetPixel(hdst, 0, 0) == RGB(255, 255, 255));
     CHECK(PatBlt(hdst, 0, 0, 16, 16, BLACKNESS));
-    CHECK(ValidateRect(hwnd, NULL) && InvalidateRect(hwnd, &rcTest3, FALSE));
+    CHECK(ValidateRect(hwnd, NULL) && InvalidateRect(hwnd, &rcTest3, 0));
     CHECK(BeginPaint(hwnd, &ps));
     CHECK(BitBlt(ps.hdc, 0, 0, 16, 16, hdst, 0, 0, SRCCOPY));
     CHECK(EndPaint(hwnd, &ps));
@@ -148,8 +148,8 @@ int main(void) {
 
     wc.lpfnWndProc = BitmapProc;
     wc.lpszClassName = "StarsBitmapReference";
-    CHECK(RegisterClass(&wc));
-    hwnd = CreateWindow(wc.lpszClassName, "Stars bitmap contracts", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+    CHECK(RegisterClassA(&wc));
+    hwnd = CreateWindowExA(0, wc.lpszClassName, "Stars bitmap contracts", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
                         20, 20, 200, 160, NULL, NULL, NULL, NULL);
     CHECK(hwnd && UpdateWindow(hwnd));
     result = TestBitmaps(hwnd);

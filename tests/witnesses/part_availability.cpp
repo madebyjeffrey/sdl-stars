@@ -1,11 +1,23 @@
 static constexpr int cQueryTraceCapacity = 8;
 #include "parts_fixture.h"
+#include "appstate.h"
+#ifdef STARS_UI_SDL
+#include "uistate.h"
+#endif
+#include "callbackcontext.h"
 
 int main(int argc, char **argv) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+
     const unsigned rgcRows[] = {iengineCount, iscannerCount,   ishieldCount, iarmorCount,    ibeamCount,     itorpCount,  ibombCount,         iminingCount,
                                 iminesCount,  ispecialSBCount, isbhullCount, ispecialECount, ispecialMCount, iterraCount, ihuldefOrbitalFort, iplanetaryCount};
     PARTQUERYFIXTURE fixture;
-    assert(argc == 3 && CHAR_MIN == -128 && sizeof(rgplr[0].rgTech) == 6);
+    assert(argc == 3 && CHAR_MIN == -128 && sizeof(app.state.rgplr[0].rgTech) == 6);
     FILE *file = fopen(argv[2], argv[1][0] == 'e' ? "wb" : "rb");
     assert(file);
     if (argv[1][0] == 'e') {
@@ -31,21 +43,21 @@ int main(int argc, char **argv) {
         for (unsigned k = 0; k < 16; k++)
             if (mask == (UINT32_C(1) << k))
                 kind = k;
-        memset(rgplr, 0x53, sizeof(rgplr));
-        memset(&game, 0x35, sizeof(game));
-        idPlayer = (int16_t)(rgIn[1] ? iplrNone : rgIn[9]);
+        memset(app.state.rgplr, 0x53, sizeof(app.state.rgplr));
+        memset(&app.state.game, 0x35, sizeof(app.state.game));
+        app.state.idPlayer = (int16_t)(rgIn[1] ? iplrNone : rgIn[9]);
         int target = rgIn[9];
-        rgplr[target].rgAttr[rsMajorAdv] = (int8_t)rgIn[2];
-        rgplr[target].grbitAttr = static_cast<RaceTraitBits>((uint32_t)rgIn[3]);
-        rgplr[target].grbitTrader = static_cast<GrbitTrader>((uint16_t)rgIn[4]);
-        rgplr[target].SetITechNow(rgIn[5]);
+        app.state.rgplr[target].rgAttr[rsMajorAdv] = (int8_t)rgIn[2];
+        app.state.rgplr[target].grbitAttr = static_cast<RaceTraitBits>((uint32_t)rgIn[3]);
+        app.state.rgplr[target].grbitTrader = static_cast<GrbitTrader>((uint16_t)rgIn[4]);
+        app.state.rgplr[target].SetITechNow(rgIn[5]);
         for (int f = 0; f < 6; f++)
-            rgplr[target].rgTech[f] = (int8_t)rgIn[10 + f];
+            app.state.rgplr[target].rgTech[f] = (int8_t)rgIn[10 + f];
         PLAYER rgBefore[16];
         GAME   gameBefore;
-        memcpy(rgBefore, rgplr, sizeof(rgBefore));
-        memcpy(&gameBefore, &game, sizeof(game));
-        int16_t idBefore = idPlayer;
+        memcpy(rgBefore, app.state.rgplr, sizeof(rgBefore));
+        memcpy(&gameBefore, &app.state.game, sizeof(app.state.game));
+        int16_t idBefore = app.state.idPlayer;
         PART    part, expected;
         auto    rgbPart = std::as_writable_bytes(std::span(&part, 1));
         std::fill(rgbPart.begin(), rgbPart.end(), std::byte{0xa5});
@@ -58,17 +70,17 @@ int main(int argc, char **argv) {
         cCalls = 0;
         int result;
         if (rgIn[0] == 0) {
-            result = FLookupPart(&part);
+            result = FLookupPart(app, &part);
             if (kind < 16 && item < rgcRows[kind])
                 expected.SetPcom(LpcomRow(kind, item));
         } else if (rgIn[0] == 1)
-            result = PartQueryIO().pfnHidden(&part);
+            result = PartQueryIO().pfnHidden(app, &part);
         else {
             char rgNeed[6], rgNeedBefore[6];
             for (int f = 0; f < 6; f++)
                 rgNeed[f] = (char)rgIn[16 + f];
             memcpy(rgNeedBefore, rgNeed, sizeof(rgNeed));
-            result = PartQueryIO().pfnTechStatus(rgNeed);
+            result = PartQueryIO().pfnTechStatus(app, rgNeed);
             CHECK(memcmp(rgNeed, rgNeedBefore, sizeof(rgNeed)) == 0);
         }
         if (result != rgIn[22]) {
@@ -78,9 +90,9 @@ int main(int argc, char **argv) {
         }
         cChecks++;
         CHECK(memcmp(&part, &expected, sizeof(part)) == 0);
-        CHECK(memcmp(rgplr, rgBefore, sizeof(rgBefore)) == 0);
-        CHECK(memcmp(&game, &gameBefore, sizeof(game)) == 0);
-        CHECK(idPlayer == idBefore);
+        CHECK(memcmp(app.state.rgplr, rgBefore, sizeof(rgBefore)) == 0);
+        CHECK(memcmp(&app.state.game, &gameBefore, sizeof(app.state.game)) == 0);
+        CHECK(app.state.idPlayer == idBefore);
         CHECK(cCalls == rgIn[24]);
         for (int i = 0; i < 8; i++)
             CHECK(rgCalls[i] == rgIn[25 + i]);

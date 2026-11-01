@@ -110,6 +110,6 @@ public:
     void SetTurn(uint16_t turn) noexcept requires(fMutable) { SetU16(16, turn); }
 };
 
-NATIVEBYTEWINDOW TbwFromLp(void *lp) noexcept;
+NATIVEBYTEWINDOW TbwFromLp(APPSESSION &app, void *lp) noexcept;
 
 #endif

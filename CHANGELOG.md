@@ -6,6 +6,22 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `ClickToolbar` honors unhandled dropdowns and completes their ordinary button
+  action on mouse release. Previously `TBDDRET_NODEFAULT` suppressed the action,
+  while `TBDDRET_TREATPRESSED` sent it on mouse down. `TbWndProc` now returns
+  `TBDDRET_DEFAULT` for menus it handles, preserving the game's filter/menu
+  behavior. Game files and host results are unchanged.
+
+- `CheckDlgButton` now returns failure when the requested child control is
+  missing or the dialog handle is invalid. Previously the SDL wrapper reported
+  success even when no button received `BM_SETCHECK`. Existing button updates,
+  game files and host results are unchanged.
+
+- `DispatchMessageA` now matches dequeued timer captures by message time.
+  The C08 pending list previously kept captures newest first, so rearming one
+  thread timer under another owner before dispatch could run its older message
+  against the newer owner. The callback-context test covers both dispatch orders.
+
 - `WinMain` and the command-line host close their application session on every
   exit. `FreeStuff` stops native callbacks, timers and windows before releasing
   game streams/heaps, then clears borrowed UI state and private caches. Repeated

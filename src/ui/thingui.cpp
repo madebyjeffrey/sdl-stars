@@ -1,6 +1,8 @@
 #include "win.h"
+#include "appstate.h"
+#include "uistate.h"
 
-void DrawThingGauge(HDC hdc, RECT *prc, THING *lpth, int16_t md) {
+void DrawThingGauge(APPSESSION &app, HDC hdc, RECT *prc, THING *lpth, int16_t md) {
     int16_t iMode;
     int16_t cSections;
     int16_t fDisabled;
@@ -11,40 +13,40 @@ void DrawThingGauge(HDC hdc, RECT *prc, THING *lpth, int16_t md) {
     int32_t lMax;
     int32_t l;
 
-    fDisabled = FALSE;
-    SelectObject(hdc, rghfontArial8[1]);
+    fDisabled = 0;
+    win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
     cSections = 1;
     lMax = (uint32_t)(lpth->thp().wtMax() * 10);
     if (md < 0 || md > 4) {
         if (md == 5) {
             for (i = 0; i < 3; i++) {
-                rghbr[i] = rghbrMineral[i];
+                rghbr[i] = app.lpui->rghbrMineral[i];
                 rgSize[i] = lpth->thp().rgwtMin(i);
             }
             cSections = 3;
         }
     } else if (md == 4 || md == 3) {
-        rghbr[0] = hbrButtonShadow;
+        rghbr[0] = app.lpui->hbrButtonShadow;
         rgSize[0] = lMax;
-        fDisabled = TRUE;
+        fDisabled = 1;
     } else {
-        rghbr[0] = rghbrMineral[md];
+        rghbr[0] = app.lpui->rghbrMineral[md];
         rgSize[0] = lpth->thp().rgwtMin(md);
     }
-    l = LDrawGauge(hdc, prc, cSections, rgSize, rghbr, lMax);
-    iMode = SetBkMode(hdc, TRANSPARENT);
+    l = LDrawGauge(app, hdc, prc, cSections, rgSize, rghbr, lMax);
+    iMode = win32::SetBkMode(hdc, win32::TRANSPARENT);
     if (fDisabled) {
         l = 0;
     }
     if (cSections == 1) {
-        c = wsprintf(szWork, "%ldkT", l);
+        c = win32::wsprintfA(app.state.szWork, "%ldkT", l);
     } else {
-        c = wsprintf(szWork, "%ld of %ldkT", l, lMax);
+        c = win32::wsprintfA(app.state.szWork, "%ld of %ldkT", l, lMax);
     }
-    l = GetTextExtent(hdc, szWork, c);
+    l = GetTextExtent(hdc, app.state.szWork, c);
     if ((int16_t)LOWORD(l) < prc->right - prc->left - 3) {
-        RcCtrTextOut(hdc, prc, szWork, c);
+        RcCtrTextOut(app, hdc, prc, app.state.szWork, c);
     }
-    SetBkMode(hdc, iMode);
+    win32::SetBkMode(hdc, iMode);
     return;
 }

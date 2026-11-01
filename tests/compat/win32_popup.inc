@@ -24,19 +24,19 @@ static LRESULT CALLBACK OwnerProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
     if (msg == WM_INITMENUPOPUP && fNested) {
         HMENU hnested = CreatePopupMenu();
-        fNested = FALSE; fNestedSafe = TRUE;
-        AppendMenu(hnested, MF_STRING, 303, "Nested loop");
-        if (TrackPopupMenu(hnested, TPM_RETURNCMD, 180, 180, 0, hwnd, NULL)) fNestedSafe = FALSE;
-        if (TrackPopupMenu(hmenuCurrent, TPM_RETURNCMD | TPM_RECURSE, 180, 180, 0, hwnd, NULL)) fNestedSafe = FALSE;
-        PostMessage(hwnd, WM_KEYDOWN, VK_DOWN, 1); PostMessage(hwnd, WM_KEYDOWN, VK_RETURN, 1);
+        fNested = 0; fNestedSafe = 1;
+        AppendMenuA(hnested, MF_STRING, 303, "Nested loop");
+        if (TrackPopupMenu(hnested, TPM_RETURNCMD, 180, 180, 0, hwnd, NULL)) fNestedSafe = 0;
+        if (TrackPopupMenu(hmenuCurrent, TPM_RETURNCMD | TPM_RECURSE, 180, 180, 0, hwnd, NULL)) fNestedSafe = 0;
+        PostMessageA(hwnd, WM_KEYDOWN, VK_DOWN, 1); PostMessageA(hwnd, WM_KEYDOWN, VK_RETURN, 1);
         idNested = (UINT)TrackPopupMenu(hnested, TPM_RETURNCMD | TPM_RECURSE | TPM_NONOTIFY, 180, 180, 0, hwnd, NULL);
         DestroyMenu(hnested);
     }
 #endif
-    if (msg == WM_MENUSELECT && fDestroyOwner) { fDestroyOwner = FALSE; DestroyWindow(hwnd); }
-    if (msg == WM_INITMENUPOPUP && fDestroyMenu) { fDestroyMenu = FALSE; DestroyMenu((HMENU)w); }
-    if (msg == WM_COMMAND) { cCommand++; idCommand = LOWORD(w); if (fTracking) fCommandDuring = TRUE; }
-    return DefWindowProc(hwnd, msg, w, l);
+    if (msg == WM_MENUSELECT && fDestroyOwner) { fDestroyOwner = 0; DestroyWindow(hwnd); }
+    if (msg == WM_INITMENUPOPUP && fDestroyMenu) { fDestroyMenu = 0; DestroyMenu((HMENU)w); }
+    if (msg == WM_COMMAND) { cCommand++; idCommand = LOWORD(w); if (fTracking) fCommandDuring = 1; }
+    return DefWindowProcA(hwnd, msg, w, l);
 }
 static void CALLBACK InputTimer(HWND hwnd, UINT msg, UINT_PTR id, DWORD ms) {
     UINT i;
@@ -58,7 +58,7 @@ static void CALLBACK InputTimer(HWND hwnd, UINT msg, UINT_PTR id, DWORD ms) {
             if (strcmp(sz, "StarsCompatPopup") == 0) break;
         }
         KillTimer(hwnd, id);
-        if (!hp) { PostMessage(hwndOwner, WM_KEYDOWN, VK_ESCAPE, 1); return; }
+        if (!hp) { PostMessageA(hwndOwner, WM_KEYDOWN, VK_ESCAPE, 1); return; }
         if (pszCapture && iMouse == 1) SDL_SaveBMP(hp->lpCanvas.get(), pszCapture);
         hdc = GetDC(hp); fPopupPixels = GetPixel(hdc, 3, 3) == GetSysColor(COLOR_MENU) &&
             GetPixel(hdc, 8, 0) == GetSysColor(COLOR_BTNHIGHLIGHT) &&
@@ -83,14 +83,14 @@ static void CALLBACK InputTimer(HWND hwnd, UINT msg, UINT_PTR id, DWORD ms) {
         rginput[1].ki.dwFlags = KEYEVENTF_KEYUP;
         SendInput(2, rginput, sizeof(INPUT));
 #else
-        PostMessage(hwndOwner, WM_CHAR, rgkey[i], 1);
+        PostMessageA(hwndOwner, WM_CHAR, rgkey[i], 1);
 #endif
     } else {
-        PostMessage(hwndOwner, WM_KEYDOWN, rgkey[i], 1);
-        PostMessage(hwndOwner, WM_KEYUP, rgkey[i], (LPARAM)0xc0000001);
+        PostMessageA(hwndOwner, WM_KEYDOWN, rgkey[i], 1);
+        PostMessageA(hwndOwner, WM_KEYUP, rgkey[i], (LPARAM)0xc0000001);
     }
 }
-static void Drain(void) { MSG msg; while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessage(&msg); }
+static void Drain(void) { APPMSG msg; while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessageA(&msg); }
 static BOOL Track(UINT flags, const UINT *rg, UINT c) {
     BOOL result;
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
@@ -101,9 +101,9 @@ static BOOL Track(UINT flags, const UINT *rg, UINT c) {
     Drain();
     memcpy(rgkey, rg, c * sizeof(*rg)); cKey = c; iKey = 0;
     SetTimer(hwndOwner, 1, 20, InputTimer);
-    fTracking = TRUE;
+    fTracking = 1;
     result = TrackPopupMenu(hmenuCurrent, flags, 140, 140, 0, hwndOwner, NULL);
-    fTracking = FALSE; KillTimer(hwndOwner, 1);
+    fTracking = 0; KillTimer(hwndOwner, 1);
     return result;
 }
 int main(int argc, char **argv) {
@@ -118,12 +118,12 @@ int main(int argc, char **argv) {
     HMENU hbar, hother, hsub;
     BOOL result;
     wc.lpfnWndProc = OwnerProc; wc.lpszClassName = "PopupContractOwner";
-    CHECK(RegisterClass(&wc));
-    hbar = CreateMenu(); CHECK(AppendMenu(hbar, MF_STRING, 1, "One"));
-    hwndOwner = CreateWindow(wc.lpszClassName, "Menu compatibility", WS_OVERLAPPEDWINDOW,
+    CHECK(RegisterClassA(&wc));
+    hbar = CreateMenu(); CHECK(AppendMenuA(hbar, MF_STRING, 1, "One"));
+    hwndOwner = CreateWindowExA(0, wc.lpszClassName, "Menu compatibility", WS_OVERLAPPEDWINDOW,
                              40, 40, 400, 300, NULL, hbar, NULL, NULL);
     CHECK(hwndOwner && GetMenu(hwndOwner) == hbar);
-    hwndChild = CreateWindow(wc.lpszClassName, "", WS_CHILD, 0, 0, 10, 10, hwndOwner, (HMENU)(UINT_PTR)123, NULL, NULL);
+    hwndChild = CreateWindowExA(0, wc.lpszClassName, "", WS_CHILD, 0, 0, 10, 10, hwndOwner, (HMENU)(UINT_PTR)123, NULL, NULL);
     CHECK(hwndChild && GetDlgCtrlID(hwndChild) == 123);
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
     CHECK(!GetMenu(hwndChild));
@@ -134,11 +134,11 @@ int main(int argc, char **argv) {
     CHECK(DestroyMenu(hother) && SetMenu(hwndOwner, hbar));
     ShowWindow(hwndOwner, SW_SHOW); SetFocus(hwndOwner); Drain();
     hmenuCurrent = CreatePopupMenu(); hsub = CreatePopupMenu();
-    CHECK(AppendMenu(hmenuCurrent, MF_CHECKED, 101, "&Alpha\tCtrl+A"));
-    CHECK(AppendMenu(hmenuCurrent, MF_SEPARATOR, 0, NULL));
-    CHECK(AppendMenu(hmenuCurrent, MF_GRAYED | MF_DISABLED, 102, "Disabled"));
-    CHECK(AppendMenu(hsub, MF_STRING, 201, "&Beta"));
-    CHECK(AppendMenu(hmenuCurrent, MF_POPUP, (UINT_PTR)hsub, "&More"));
+    CHECK(AppendMenuA(hmenuCurrent, MF_CHECKED, 101, "&Alpha\tCtrl+A"));
+    CHECK(AppendMenuA(hmenuCurrent, MF_SEPARATOR, 0, NULL));
+    CHECK(AppendMenuA(hmenuCurrent, MF_GRAYED | MF_DISABLED, 102, "Disabled"));
+    CHECK(AppendMenuA(hsub, MF_STRING, 201, "&Beta"));
+    CHECK(AppendMenuA(hmenuCurrent, MF_POPUP, (UINT_PTR)hsub, "&More"));
     if (argc > 1 && strcmp(argv[1], "--demo") == 0) {
         TrackPopupMenu(hmenuCurrent, 0, 160, 160, 0, hwndOwner, NULL); Drain();
         printf("Selected command: %u\n", idCommand);
@@ -157,8 +157,8 @@ int main(int argc, char **argv) {
         {
             HMENU hsaved = hmenuCurrent;
             hmenuCurrent = CreatePopupMenu();
-            CHECK(AppendMenu(hmenuCurrent, MF_STRING, 501, "&Choice one"));
-            CHECK(AppendMenu(hmenuCurrent, MF_STRING, 502, "&Choice two"));
+            CHECK(AppendMenuA(hmenuCurrent, MF_STRING, 501, "&Choice one"));
+            CHECK(AppendMenuA(hmenuCurrent, MF_STRING, 502, "&Choice two"));
             result = Track(TPM_RETURNCMD, rgMnemonic, 3);
 #if defined(_WIN32) && !defined(STARS_UI_SDL)
             // Wine 9 executes its first text match; native Windows cycles duplicates.
@@ -169,11 +169,11 @@ int main(int argc, char **argv) {
             CHECK(DestroyMenu(hmenuCurrent)); hmenuCurrent = hsaved;
         }
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
-        fEnd = TRUE; CHECK(Track(TPM_RETURNCMD, rgChoose, 0) == 0 && fEndWorked); fEnd = FALSE;
-        fQuit = TRUE; CHECK(Track(TPM_RETURNCMD, rgChoose, 0) == 0); fQuit = FALSE;
+        fEnd = 1; CHECK(Track(TPM_RETURNCMD, rgChoose, 0) == 0 && fEndWorked); fEnd = 0;
+        fQuit = 1; CHECK(Track(TPM_RETURNCMD, rgChoose, 0) == 0); fQuit = 0;
         {
-            MSG msg;
-            CHECK(PeekMessage(&msg, NULL, WM_QUIT, WM_QUIT, PM_REMOVE) && msg.wParam == 17);
+            APPMSG msg;
+            CHECK(PeekMessageA(&msg, NULL, WM_QUIT, WM_QUIT, PM_REMOVE) && msg.wParam == 17);
         }
         SetCapture(hwndChild);
         CHECK(Track(TPM_RETURNCMD, rgChoose, 2) == 101 && GetCapture() == hwndChild);
@@ -182,14 +182,14 @@ int main(int argc, char **argv) {
         iMouse = 2; CHECK(Track(TPM_RETURNCMD | TPM_RIGHTBUTTON, rgChoose, 0) == 101);
         iMouse = 3; CHECK(Track(TPM_RETURNCMD, rgChoose, 0) == 0);
         iMouse = 0;
-        fNested = TRUE; CHECK(Track(TPM_RETURNCMD, rgChoose, 2) == 101 && idNested == 303 && fNestedSafe);
+        fNested = 1; CHECK(Track(TPM_RETURNCMD, rgChoose, 2) == 101 && idNested == 303 && fNestedSafe);
         CHECK(!TrackPopupMenu(hmenuCurrent, 0, 0, 0, 1, hwndOwner, NULL));
         CHECK(!EndMenu());
-        fDestroyMenu = TRUE;
+        fDestroyMenu = 1;
         CHECK(!TrackPopupMenu(hmenuCurrent, TPM_RETURNCMD, 0, 0, 0, hwndOwner, NULL));
         CHECK(!IsMenu(hmenuCurrent));
-        hmenuCurrent = CreatePopupMenu(); CHECK(AppendMenu(hmenuCurrent, MF_STRING, 1, "Destroy owner"));
-        fDestroyOwner = TRUE;
+        hmenuCurrent = CreatePopupMenu(); CHECK(AppendMenuA(hmenuCurrent, MF_STRING, 1, "Destroy owner"));
+        fDestroyOwner = 1;
         CHECK(Track(TPM_RETURNCMD, rgChoose, 2) == 0 && !IsWindow(hwndOwner));
         CHECK(!IsMenu(hbar));
 #endif

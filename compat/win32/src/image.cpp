@@ -25,7 +25,7 @@ COMPATIMAGE *LpCompatImage(HICON hicon) {
 static COMPATIMAGE *LpNewImage(SDL_Surface *lpXor, BYTE *rgbAnd, BOOL fCursor) {
     COMPATIMAGE *lp = new (std::nothrow) COMPATIMAGE{};
     if (!lp) return NULL;
-    lp->lpXor.reset(lpXor); lp->rgbAnd.reset(rgbAnd); lp->fCursor = fCursor; lp->fAlive = TRUE;
+    lp->lpXor.reset(lpXor); lp->rgbAnd.reset(rgbAnd); lp->fCursor = fCursor; lp->fAlive = 1;
     lp->lpNext = lpImages; lpImages = lp;
     return lp;
 }
@@ -40,7 +40,7 @@ HICON HiconCompatResource(const BYTE *rgb, size_t cb, BOOL fCursor) {
     int x, y;
     UINT xHot = 0, yHot = 0;
     BYTE *lpPixel;
-    BOOL fInvert = FALSE;
+    BOOL fInvert = 0;
     NATIVEOWNER<BYTE, free> rgbAndOwner;
     NATIVEOWNER<SDL_Surface, FreeCompatSurface> lpsurfaceOwner;
 
@@ -71,7 +71,7 @@ HICON HiconCompatResource(const BYTE *rgb, size_t cb, BOOL fCursor) {
     for (y = 0; y < dib.cy; y++) for (x = 0; x < dib.cx; x++) {
         rgAnd[y * dib.cx + x] = (BYTE)((lpAnd[(size_t)(dib.cy - 1 - y) * cbMaskRow + x / 8] >> (7 - x % 8)) & 1);
         lpPixel = (BYTE *)lpSurface->pixels + (size_t)y * lpSurface->pitch + x * 4;
-        if (rgAnd[y * dib.cx + x] && (lpPixel[0] || lpPixel[1] || lpPixel[2])) fInvert = TRUE;
+        if (rgAnd[y * dib.cx + x] && (lpPixel[0] || lpPixel[1] || lpPixel[2])) fInvert = 1;
     }
     lp = LpNewImage(lpSurface, rgAnd, fCursor);
     if (!lp) return NULL;
@@ -87,26 +87,26 @@ static HICON HimageLoad(HINSTANCE hInstance, LPCSTR psz, BOOL fCursor) {
     COMPATIMAGE *lp;
     HICON h;
     if (!hInstance || !psz) return NULL;
-    hgroup = FindResourceA(hInstance, psz, fCursor ? RT_GROUP_CURSOR : RT_GROUP_ICON);
-    rgb = (const BYTE *)(LockResource(LoadResource(hInstance, hgroup))); cb = SizeofResource(hInstance, hgroup);
+    hgroup = win32::FindResourceA(hInstance, psz, fCursor ? win32::RT_GROUP_CURSOR : win32::RT_GROUP_ICON);
+    rgb = (const BYTE *)(win32::LockResource(win32::LoadResource(hInstance, hgroup))); cb = win32::SizeofResource(hInstance, hgroup);
     if (!rgb || cb < 20 || WImage(rgb) || WImage(rgb + 2) != (fCursor ? 2 : 1)) return NULL;
     count = WImage(rgb + 4);
     if (count == 0 || (size_t)count * 14 > cb - 6) return NULL;
     // All canonical images are 32x32. Group entries retain their original IDs.
     id = WImage(rgb + 18);
-    hrsrc = FindResourceA(hInstance, MAKEINTRESOURCE(id), fCursor ? RT_CURSOR : RT_ICON);
+    hrsrc = win32::FindResourceA(hInstance, win32::MAKEINTRESOURCE(id), fCursor ? win32::RT_CURSOR : win32::RT_ICON);
     if (!hrsrc) return NULL;
     for (lp = lpImages; lp; lp = lp->lpNext) if (lp->hrsrc == hrsrc && lp->fCursor == fCursor) return (HICON)lp;
-    rgb = (const BYTE *)(LockResource(LoadResource(hInstance, hrsrc))); cb = SizeofResource(hInstance, hrsrc);
+    rgb = (const BYTE *)(win32::LockResource(win32::LoadResource(hInstance, hrsrc))); cb = win32::SizeofResource(hInstance, hrsrc);
     h = HiconCompatResource(rgb, cb, fCursor);
     if (h) {
-        lp = LpCompatImage(h); lp->fShared = TRUE; lp->hrsrc = hrsrc;
+        lp = LpCompatImage(h); lp->fShared = 1; lp->hrsrc = hrsrc;
         lp->fAppIcon = !fCursor && (UINT_PTR)psz > UINT16_MAX &&
             (!SDL_strcasecmp(psz, "StarsIco") || !SDL_strcasecmp(psz, "APPICON"));
     }
     return h;
 }
-HICON WINAPI LoadIconA(HINSTANCE hInstance, LPCSTR psz) { return HimageLoad(hInstance, psz, FALSE); }
+HICON win32::LoadIconA(HINSTANCE hInstance, LPCSTR psz) { return HimageLoad(hInstance, psz, 0); }
 static SDL_SystemCursor IdSystemCursor(UINT id) {
     switch (id) {
     case 32512: return SDL_SYSTEM_CURSOR_DEFAULT;
@@ -124,19 +124,19 @@ static SDL_SystemCursor IdSystemCursor(UINT id) {
     default: return SDL_SYSTEM_CURSOR_COUNT;
     }
 }
-HCURSOR WINAPI LoadCursorA(HINSTANCE hInstance, LPCSTR psz) {
+HCURSOR win32::LoadCursorA(HINSTANCE hInstance, LPCSTR psz) {
     COMPATIMAGE *lp;
     UINT_PTR id = (UINT_PTR)psz;
     if (!FCompatVideo()) return NULL;
-    if (hInstance) return (HCURSOR)HimageLoad(hInstance, psz, TRUE);
+    if (hInstance) return (HCURSOR)HimageLoad(hInstance, psz, 1);
     if (id > UINT16_MAX || IdSystemCursor((UINT)id) == SDL_SYSTEM_CURSOR_COUNT) return NULL;
     for (lp = lpImages; lp; lp = lp->lpNext) if (lp->idSystem == id) return (HCURSOR)lp;
-    lp = LpNewImage(NULL, NULL, TRUE);
+    lp = LpNewImage(NULL, NULL, 1);
     if (!lp) return NULL;
-    lp->fShared = TRUE; lp->idSystem = (UINT)id;
+    lp->fShared = 1; lp->idSystem = (UINT)id;
     return (HCURSOR)lp;
 }
-HICON WINAPI CopyIcon(HICON hicon) {
+HICON win32::CopyIcon(HICON hicon) {
     COMPATIMAGE *lp = LpCompatImage(hicon), *lpNew;
     SDL_Surface *lpXor;
     BYTE *rgAnd;
@@ -157,25 +157,25 @@ HICON WINAPI CopyIcon(HICON hicon) {
 }
 static BOOL FDestroyImage(HICON hicon) {
     COMPATIMAGE *lp = LpCompatImage(hicon);
-    if (!lp) return FALSE;
-    if (lp->fShared) return TRUE; // LoadIcon/LoadCursor handles belong to the module.
-    if (lpCursor == lp) SetCursor(NULL);
-    lp->lpCursor.reset(); lp->lpXor.reset(); lp->rgbAnd.reset(); lp->fAlive = FALSE;
-    return TRUE;
+    if (!lp) return 0;
+    if (lp->fShared) return 1; // LoadIcon/LoadCursor handles belong to the module.
+    if (lpCursor == lp) win32::SetCursor(NULL);
+    lp->lpCursor.reset(); lp->lpXor.reset(); lp->rgbAnd.reset(); lp->fAlive = 0;
+    return 1;
 }
-BOOL WINAPI DestroyIcon(HICON hicon) { return FDestroyImage(hicon); }
-BOOL WINAPI DestroyCursor(HCURSOR hcursor) { return FDestroyImage((HICON)hcursor); }
-BOOL WINAPI GetIconInfo(HICON hicon, PICONINFO lpii) {
+BOOL win32::DestroyIcon(HICON hicon) { return FDestroyImage(hicon); }
+BOOL win32::DestroyCursor(HCURSOR hcursor) { return FDestroyImage((HICON)hcursor); }
+BOOL win32::GetIconInfo(HICON hicon, PICONINFO lpii) {
     COMPATIMAGE *lp = LpCompatImage(hicon);
     ICONINFO ii = {};
     SDL_Surface *lpMask;
     BYTE *rgb, *src;
     int x, y, dy;
     NATIVEOWNER<SDL_Surface, FreeCompatSurface> lpmaskOwner;
-    if (!lp || !lp->lpXor || !lpii) return FALSE;
+    if (!lp || !lp->lpXor || !lpii) return 0;
     dy = lp->lpXor->h;
     lpmaskOwner.reset(SDL_CreateSurface(lp->lpXor->w, dy * (lp->fMono ? 2 : 1), SDL_PIXELFORMAT_RGBA32)); lpMask = lpmaskOwner.get();
-    if (!lpMask) return FALSE;
+    if (!lpMask) return 0;
     for (y = 0; y < lpMask->h; y++) for (x = 0; x < lpMask->w; x++) {
         rgb = (BYTE *)lpMask->pixels + (size_t)y * lpMask->pitch + x * 4;
         src = (BYTE *)lp->lpXor->pixels + (size_t)(y % dy) * lp->lpXor->pitch + x * 4;
@@ -183,14 +183,14 @@ BOOL WINAPI GetIconInfo(HICON hicon, PICONINFO lpii) {
     }
     ii.fIcon = !lp->fCursor; ii.xHotspot = lp->fCursor ? lp->xHot : (UINT)lp->lpXor->w / 2;
     ii.yHotspot = lp->fCursor ? lp->yHot : (UINT)dy / 2;
-    ii.hbmMask = HbmpCompatSurface(lpMask, TRUE); lpmaskOwner.reset();
-    if (!lp->fMono) ii.hbmColor = HbmpCompatSurface(lp->lpXor.get(), FALSE);
+    ii.hbmMask = HbmpCompatSurface(lpMask, 1); lpmaskOwner.reset();
+    if (!lp->fMono) ii.hbmColor = HbmpCompatSurface(lp->lpXor.get(), 0);
     if (!ii.hbmMask || (!lp->fMono && !ii.hbmColor)) {
-        if (ii.hbmMask) DeleteObject(ii.hbmMask);
-        if (ii.hbmColor) DeleteObject(ii.hbmColor);
-        return FALSE;
+        if (ii.hbmMask) win32::DeleteObject(ii.hbmMask);
+        if (ii.hbmColor) win32::DeleteObject(ii.hbmColor);
+        return 0;
     }
-    *lpii = ii; return TRUE;
+    *lpii = ii; return 1;
 }
 
 static BOOL FNativeCursor(COMPATIMAGE *lp) {
@@ -201,12 +201,12 @@ static BOOL FNativeCursor(COMPATIMAGE *lp) {
     BOOL fAnd, fWhite;
     NATIVEOWNER<BYTE, free> lpmaskOwner;
     NATIVEOWNER<SDL_Surface, FreeCompatSurface> lpcolorOwner;
-    if (lp->lpCursor) return TRUE;
+    if (lp->lpCursor) return 1;
     if (lp->idSystem) lp->lpCursor.reset(SDL_CreateSystemCursor(IdSystemCursor(lp->idSystem)));
     else if (lp->fMono && lp->lpXor->w % 8 == 0) {
         cb = (size_t)(lp->lpXor->w / 8) * lp->lpXor->h;
         lpmaskOwner.reset((BYTE *)calloc(2, cb)); rg = lpmaskOwner.get();
-        if (!rg) return FALSE;
+        if (!rg) return 0;
         data = rg; mask = rg + cb;
         for (y = 0; y < lp->lpXor->h; y++) for (x = 0; x < lp->lpXor->w; x++) {
             fAnd = lp->rgbAnd[y * lp->lpXor->w + x] != 0;
@@ -219,7 +219,7 @@ static BOOL FNativeCursor(COMPATIMAGE *lp) {
         lpmaskOwner.reset();
     } else {
         lpcolorOwner.reset(SDL_DuplicateSurface(lp->lpXor.get())); lpColor = lpcolorOwner.get();
-        if (!lpColor) return FALSE;
+        if (!lpColor) return 0;
         for (y = 0; y < lpColor->h; y++) for (x = 0; x < lpColor->w; x++)
             ((BYTE *)lpColor->pixels)[(size_t)y * lpColor->pitch + x * 4 + 3] = lp->rgbAnd[y * lpColor->w + x] ? 0 : 255;
         lp->lpCursor.reset(SDL_CreateColorCursor(lpColor, lp->xHot, lp->yHot));
@@ -227,8 +227,8 @@ static BOOL FNativeCursor(COMPATIMAGE *lp) {
     }
     return lp->lpCursor != NULL;
 }
-HCURSOR WINAPI GetCursor(void) { return SDL_IsMainThread() ? (HCURSOR)lpCursor : NULL; }
-HCURSOR WINAPI SetCursor(HCURSOR hcursor) {
+HCURSOR win32::GetCursor(void) { return SDL_IsMainThread() ? (HCURSOR)lpCursor : NULL; }
+HCURSOR win32::SetCursor(HCURSOR hcursor) {
     COMPATIMAGE *lp = LpCompatImage((HICON)hcursor), *lpOld = lpCursor;
     const char *pszDriver;
     if (!SDL_IsMainThread() || (hcursor && (!lp || !lp->fCursor)) || !FCompatVideo()) return NULL;

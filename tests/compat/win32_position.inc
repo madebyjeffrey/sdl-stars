@@ -8,8 +8,8 @@
 #include "internal.h"
 #endif
 #define CHECK(f) do { if (!(f)) { fprintf(stderr, "line %d: %s\n", __LINE__, #f); return 1; } } while (0)
-#define flagsQuiet (SWP_NOZORDER | SWP_NOACTIVATE)
-#define flagsZ (SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE)
+enum { flagsQuiet = (SWP_NOZORDER | SWP_NOACTIVATE) };
+enum { flagsZ = (SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE) };
 
 typedef struct POSITIONTEST {
     int cChanging, cChanged, cMove, cSize, cShow;
@@ -19,15 +19,15 @@ typedef struct POSITIONTEST {
 } POSITIONTEST;
 
 static LRESULT CALLBACK PositionProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
-    POSITIONTEST *lp = (POSITIONTEST *)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+    POSITIONTEST *lp = (POSITIONTEST *)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
     WINDOWPOS *lpwp;
     CREATESTRUCT *lpcs;
     if (msg == WM_NCCREATE) {
         lpcs = (CREATESTRUCT *)l;
         lp = (POSITIONTEST*)(lpcs->lpCreateParams);
-        SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)lp);
+        SetWindowLongPtrA(hwnd, GWLP_USERDATA, (LONG_PTR)lp);
     }
-    if (!lp) return DefWindowProc(hwnd, msg, w, l);
+    if (!lp) return DefWindowProcA(hwnd, msg, w, l);
     switch (msg) {
     case WM_WINDOWPOSCHANGING:
         lpwp = (WINDOWPOS *)l;
@@ -37,16 +37,16 @@ static LRESULT CALLBACK PositionProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
             lpwp->flags &= ~(SWP_NOMOVE | SWP_NOSIZE);
         }
         if (lp->fDestroyChanging) DestroyWindow(hwnd);
-        return lp->fMinmax ? DefWindowProc(hwnd, msg, w, l) : 0;
+        return lp->fMinmax ? DefWindowProcA(hwnd, msg, w, l) : 0;
     case WM_WINDOWPOSCHANGED:
         lp->cChanged++; lp->wpChanged = *(WINDOWPOS *)l;
         if (lp->fDestroyChanged) { DestroyWindow(hwnd); return 0; }
         if (lp->fNested) {
-            lp->fNested = FALSE;
+            lp->fNested = 0;
             SetWindowPos(hwnd, NULL, 80, 90, 0, 0, flagsQuiet | SWP_NOSIZE);
         }
         if (lp->fSuppress) return 0;
-        return DefWindowProc(hwnd, msg, w, l);
+        return DefWindowProcA(hwnd, msg, w, l);
     case WM_GETMINMAXINFO:
         if (lp->fMinmax) {
             MINMAXINFO *lpmmi = (MINMAXINFO *)l;
@@ -55,17 +55,17 @@ static LRESULT CALLBACK PositionProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
             lpmmi->ptMaxTrackSize = (POINT){240, 250};
             return 0;
         }
-        return DefWindowProc(hwnd, msg, w, l);
+        return DefWindowProcA(hwnd, msg, w, l);
     case WM_MOVE: lp->cMove++; return 0;
     case WM_SIZE: lp->cSize++; return 0;
     case WM_SHOWWINDOW: lp->cShow++; return 0;
-    default: return DefWindowProc(hwnd, msg, w, l);
+    default: return DefWindowProcA(hwnd, msg, w, l);
     }
 }
 
 static void Drain(void) {
-    MSG msg;
-    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
+    APPMSG msg;
+    while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
 }
 
 static int TestRect(HWND hwnd, HWND hwndParent, int x, int y, int dx, int dy) {
@@ -109,8 +109,8 @@ static int TestRedraw(HWND hwnd, HWND hwndA, HWND hwndB, HWND hwndC) {
     CHECK(ValidateRect(hwnd, NULL) && ValidateRect(hwndB, NULL));
     CHECK(SetWindowPos(hwndB, NULL, 60, 60, 0, 0, flagsQuiet | SWP_NOSIZE | SWP_NOREDRAW));
     CHECK(CrComposite(hwnd, 15, 15) == RGB(40, 50, 60));
-    CHECK(!GetUpdateRect(hwnd, &rc, FALSE) && !GetUpdateRect(hwndB, &rc, FALSE));
-    CHECK(InvalidateRect(hwnd, NULL, FALSE) && UpdateWindow(hwnd));
+    CHECK(!GetUpdateRect(hwnd, &rc, 0) && !GetUpdateRect(hwndB, &rc, 0));
+    CHECK(InvalidateRect(hwnd, NULL, 0) && UpdateWindow(hwnd));
     CHECK(CrComposite(hwnd, 15, 15) == RGB(10, 20, 30));
     CHECK(CrComposite(hwnd, 65, 65) == RGB(40, 50, 60));
     CHECK(SetWindowPos(hwndA, NULL, 0, 0, 0, 0, flagsQuiet | SWP_NOMOVE));
@@ -130,22 +130,22 @@ int main(void) {
     POSITIONTEST parent = {0}, a = {0}, b = {0}, c = {0}, other = {0}, owned = {0}, zero = {0}, failure = {0}, inherited = {0}, minmax = {0};
     int cChanging, cChanged, cMove, cSize, cShow;
     RECT rc;
-    BOOL fWineOwnedMismatch = FALSE;
+    BOOL fWineOwnedMismatch = 0;
 #if defined(_WIN32) && !defined(STARS_UI_SDL)
-    hInstance = GetModuleHandle(NULL);
+    hInstance = GetModuleHandleA(NULL);
 #else
     hInstance = (HINSTANCE)(UINT_PTR)1;
 #endif
     wc.lpfnWndProc = PositionProc; wc.hInstance = hInstance; wc.lpszClassName = "StarsPositionContracts";
-    CHECK(RegisterClass(&wc));
-    hwnd = CreateWindow(wc.lpszClassName, "position root", WS_POPUP | WS_VISIBLE, 40, 50, 320, 240,
+    CHECK(RegisterClassA(&wc));
+    hwnd = CreateWindowExA(0, wc.lpszClassName, "position root", WS_POPUP | WS_VISIBLE, 40, 50, 320, 240,
                         NULL, NULL, hInstance, &parent);
     CHECK(hwnd);
-    hwndA = CreateWindow(wc.lpszClassName, "A", WS_CHILD | WS_VISIBLE, 10, 10, 30, 30,
+    hwndA = CreateWindowExA(0, wc.lpszClassName, "A", WS_CHILD | WS_VISIBLE, 10, 10, 30, 30,
                          hwnd, (HMENU)(INT_PTR)1, hInstance, &a);
-    hwndB = CreateWindow(wc.lpszClassName, "B", WS_CHILD | WS_VISIBLE, 20, 20, 40, 40,
+    hwndB = CreateWindowExA(0, wc.lpszClassName, "B", WS_CHILD | WS_VISIBLE, 20, 20, 40, 40,
                          hwnd, (HMENU)(INT_PTR)2, hInstance, &b);
-    hwndC = CreateWindow(wc.lpszClassName, "C", WS_CHILD | WS_VISIBLE, 30, 30, 50, 50,
+    hwndC = CreateWindowExA(0, wc.lpszClassName, "C", WS_CHILD | WS_VISIBLE, 30, 30, 50, 50,
                          hwnd, (HMENU)(INT_PTR)3, hInstance, &c);
     CHECK(hwndA && hwndB && hwndC);
     Drain();
@@ -160,14 +160,14 @@ int main(void) {
     cSize = a.cSize;
     CHECK(SetWindowPos(hwndA, NULL, 22, 27, -100, -100, flagsQuiet | SWP_NOSIZE));
     CHECK(TestRect(hwndA, hwnd, 22, 27, 55, 65) == 0 && a.cSize == cSize);
-    a.fAdjust = TRUE;
+    a.fAdjust = 1;
     CHECK(SetWindowPos(hwndA, NULL, 1, 2, 3, 4, flagsQuiet | SWP_NOMOVE | SWP_NOSIZE));
     CHECK(TestRect(hwndA, hwnd, 31, 41, 51, 61) == 0);
-    a.fAdjust = FALSE; a.fSuppress = TRUE;
+    a.fAdjust = 0; a.fSuppress = 1;
     cMove = a.cMove; cSize = a.cSize;
     CHECK(SetWindowPos(hwndA, NULL, 32, 42, 52, 62, flagsQuiet));
     CHECK(a.cMove == cMove && a.cSize == cSize && TestRect(hwndA, hwnd, 32, 42, 52, 62) == 0);
-    a.fSuppress = FALSE;
+    a.fSuppress = 0;
     cChanging = a.cChanging;
     CHECK(SetWindowPos(hwndA, NULL, 33, 43, 53, 63, flagsQuiet | SWP_NOSENDCHANGING));
     CHECK(a.cChanging == cChanging && TestRect(hwndA, hwnd, 33, 43, 53, 63) == 0);
@@ -188,66 +188,66 @@ int main(void) {
     CHECK(!IsWindowVisible(hwndA) && a.cShow == cShow);
     CHECK(SetWindowPos(hwndA, NULL, 0, 0, 0, 0, flagsQuiet | SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW));
     CHECK(IsWindowVisible(hwndA) && a.cShow == cShow);
-    hwndZero = CreateWindow(wc.lpszClassName, "zero child", WS_CHILD | WS_VISIBLE, 0, 0, 0, 0,
+    hwndZero = CreateWindowExA(0, wc.lpszClassName, "zero child", WS_CHILD | WS_VISIBLE, 0, 0, 0, 0,
                             hwnd, (HMENU)(INT_PTR)4, hInstance, &zero);
     CHECK(hwndZero && GetClientRect(hwndZero, &rc) && rc.right == 0 && rc.bottom == 0);
     CHECK(SetWindowPos(hwndZero, NULL, 5, 6, -1, -2, flagsQuiet));
     CHECK(TestRect(hwndZero, hwnd, 5, 6, 0, 0) == 0);
     CHECK(SetWindowPos(hwndZero, NULL, 5, 6, 10, 0, flagsQuiet));
     CHECK(TestRect(hwndZero, hwnd, 5, 6, 10, 0) == 0 && DestroyWindow(hwndZero));
-    a.fNested = TRUE;
+    a.fNested = 1;
     CHECK(SetWindowPos(hwndA, NULL, 50, 60, 0, 0, flagsQuiet | SWP_NOSIZE));
     CHECK(TestRect(hwndA, hwnd, 80, 90, 53, 63) == 0);
-    hwndFailure = CreateWindow(wc.lpszClassName, "destroy changing", WS_CHILD, 1, 1, 10, 10,
+    hwndFailure = CreateWindowExA(0, wc.lpszClassName, "destroy changing", WS_CHILD, 1, 1, 10, 10,
                                hwnd, NULL, hInstance, &failure);
-    CHECK(hwndFailure); failure.fDestroyChanging = TRUE;
+    CHECK(hwndFailure); failure.fDestroyChanging = 1;
     SetWindowPos(hwndFailure, NULL, 2, 2, 20, 20, flagsQuiet);
     CHECK(!IsWindow(hwndFailure));
     memset(&failure, 0, sizeof(failure));
-    hwndFailure = CreateWindow(wc.lpszClassName, "destroy changed", WS_CHILD, 1, 1, 10, 10,
+    hwndFailure = CreateWindowExA(0, wc.lpszClassName, "destroy changed", WS_CHILD, 1, 1, 10, 10,
                                hwnd, NULL, hInstance, &failure);
-    CHECK(hwndFailure); failure.fDestroyChanged = TRUE;
+    CHECK(hwndFailure); failure.fDestroyChanged = 1;
     SetWindowPos(hwndFailure, NULL, 2, 2, 20, 20, flagsQuiet);
     CHECK(!IsWindow(hwndFailure));
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
     CHECK(TestRedraw(hwnd, hwndA, hwndB, hwndC) == 0);
 #endif
-    hwndOther = CreateWindow(wc.lpszClassName, "other root", WS_POPUP, 0, 0, 50, 50, NULL, NULL, hInstance, &other);
+    hwndOther = CreateWindowExA(0, wc.lpszClassName, "other root", WS_POPUP, 0, 0, 50, 50, NULL, NULL, hInstance, &other);
     CHECK(hwndOther);
     CHECK(SetWindowPos(hwndOther, HWND_TOPMOST, 0, 0, 0, 0, flagsZ));
-    CHECK(GetWindowLongPtr(hwndOther, GWL_EXSTYLE) & WS_EX_TOPMOST);
-    hwndInherited = CreateWindow(wc.lpszClassName, "inherited band", WS_POPUP, 0, 0, 10, 10,
+    CHECK(GetWindowLongPtrA(hwndOther, GWL_EXSTYLE) & WS_EX_TOPMOST);
+    hwndInherited = CreateWindowExA(0, wc.lpszClassName, "inherited band", WS_POPUP, 0, 0, 10, 10,
                                  hwndOther, NULL, hInstance, &inherited);
-    CHECK(hwndInherited && (GetWindowLongPtr(hwndInherited, GWL_EXSTYLE) & WS_EX_TOPMOST));
+    CHECK(hwndInherited && (GetWindowLongPtrA(hwndInherited, GWL_EXSTYLE) & WS_EX_TOPMOST));
     CHECK(GetWindow(hwndOther, GW_HWNDPREV) == hwndInherited);
     CHECK(DestroyWindow(hwndInherited));
     CHECK(SetWindowPos(hwndOther, HWND_NOTOPMOST, 0, 0, 0, 0, flagsZ));
-    CHECK(!(GetWindowLongPtr(hwndOther, GWL_EXSTYLE) & WS_EX_TOPMOST));
-    hwndOwned = CreateWindow(wc.lpszClassName, "owned root", WS_POPUP, 0, 0, 40, 40, hwnd, NULL, hInstance, &owned);
+    CHECK(!(GetWindowLongPtrA(hwndOther, GWL_EXSTYLE) & WS_EX_TOPMOST));
+    hwndOwned = CreateWindowExA(0, wc.lpszClassName, "owned root", WS_POPUP, 0, 0, 40, 40, hwnd, NULL, hInstance, &owned);
     CHECK(hwndOther && hwndOwned);
     CHECK(SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, flagsZ));
 #if defined(_WIN32) && !defined(STARS_UI_SDL)
-    if (!(GetWindowLongPtr(hwnd, GWL_EXSTYLE) & WS_EX_TOPMOST)) {
+    if (!(GetWindowLongPtrA(hwnd, GWL_EXSTYLE) & WS_EX_TOPMOST)) {
         CHECK(GetProcAddress(GetModuleHandleA("ntdll.dll"), "wine_get_version"));
-        CHECK(GetWindowLongPtr(hwndOwned, GWL_EXSTYLE) & WS_EX_TOPMOST);
-        fWineOwnedMismatch = TRUE;
+        CHECK(GetWindowLongPtrA(hwndOwned, GWL_EXSTYLE) & WS_EX_TOPMOST);
+        fWineOwnedMismatch = 1;
         fprintf(stderr, "Wine owner-family difference: owned popup becomes topmost while owner remains normal\n");
     }
 #endif
-    if (!fWineOwnedMismatch) CHECK(GetWindowLongPtr(hwnd, GWL_EXSTYLE) & WS_EX_TOPMOST);
-    CHECK(GetWindowLongPtr(hwndOwned, GWL_EXSTYLE) & WS_EX_TOPMOST);
+    if (!fWineOwnedMismatch) CHECK(GetWindowLongPtrA(hwnd, GWL_EXSTYLE) & WS_EX_TOPMOST);
+    CHECK(GetWindowLongPtrA(hwndOwned, GWL_EXSTYLE) & WS_EX_TOPMOST);
     CHECK(GetWindow(hwnd, GW_HWNDPREV) == hwndOwned);
     CHECK(SetWindowPos(hwnd, HWND_NOTOPMOST, 0, 0, 0, 0, flagsZ));
-    CHECK(!(GetWindowLongPtr(hwnd, GWL_EXSTYLE) & WS_EX_TOPMOST));
-    if (!fWineOwnedMismatch) CHECK(!(GetWindowLongPtr(hwndOwned, GWL_EXSTYLE) & WS_EX_TOPMOST));
-    else fprintf(stderr, "Wine owner-family demotion: owned topmost=%d\n", !!(GetWindowLongPtr(hwndOwned, GWL_EXSTYLE) & WS_EX_TOPMOST));
+    CHECK(!(GetWindowLongPtrA(hwnd, GWL_EXSTYLE) & WS_EX_TOPMOST));
+    if (!fWineOwnedMismatch) CHECK(!(GetWindowLongPtrA(hwndOwned, GWL_EXSTYLE) & WS_EX_TOPMOST));
+    else fprintf(stderr, "Wine owner-family demotion: owned topmost=%d\n", !!(GetWindowLongPtrA(hwndOwned, GWL_EXSTYLE) & WS_EX_TOPMOST));
     CHECK(GetWindow(hwnd, GW_HWNDPREV) == hwndOwned);
     CHECK(SetWindowPos(hwndOther, NULL, 90, 100, 70, 80, flagsQuiet));
     CHECK(TestRect(hwndOther, NULL, 90, 100, 70, 80) == 0);
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
     {
         SDL_Event event = {0};
-        MSG msg;
+        APPMSG msg;
         HDC hdc;
         CHECK(SetWindowPos(hwndOther, NULL, 90, 100, 0, 0, flagsQuiet));
         CHECK(GetClientRect(hwndOther, &rc) && rc.right == 0 && rc.bottom == 0);
@@ -255,24 +255,24 @@ int main(void) {
         event.type = SDL_EVENT_WINDOW_RESIZED;
         event.window.windowID = hwndOther->id; event.window.data1 = 1; event.window.data2 = 1;
         CompatRouteEvent(&event);
-        CHECK(PeekMessage(&msg, hwndOther, WM_SIZE, WM_SIZE, PM_REMOVE));
+        CHECK(PeekMessageA(&msg, hwndOther, WM_SIZE, WM_SIZE, PM_REMOVE));
         CHECK(LOWORD(msg.lParam) == 0 && HIWORD(msg.lParam) == 0);
         event.window.data1 = 70; event.window.data2 = 80; /* An older queued physical resize. */
         CompatRouteEvent(&event);
-        CHECK(PeekMessage(&msg, hwndOther, WM_SIZE, WM_SIZE, PM_REMOVE));
+        CHECK(PeekMessageA(&msg, hwndOther, WM_SIZE, WM_SIZE, PM_REMOVE));
         CHECK(LOWORD(msg.lParam) == 0 && HIWORD(msg.lParam) == 0);
         hdc = GetDC(hwndOther);
         CHECK(hdc && GetPixel(hdc, 0, 0) == CLR_INVALID && ReleaseDC(hwndOther, hdc));
         event.type = SDL_EVENT_WINDOW_MOVED; event.window.data1 = -12; event.window.data2 = -34;
         CompatRouteEvent(&event);
-        CHECK(PeekMessage(&msg, hwndOther, WM_MOVE, WM_MOVE, PM_REMOVE));
+        CHECK(PeekMessageA(&msg, hwndOther, WM_MOVE, WM_MOVE, PM_REMOVE));
         CHECK((int16_t)LOWORD(msg.lParam) == -12 && (int16_t)HIWORD(msg.lParam) == -34);
     }
 #endif
-    CHECK(MoveWindow(hwndOther, 100, 110, 80, 90, FALSE));
+    CHECK(MoveWindow(hwndOther, 100, 110, 80, 90, 0));
     CHECK(TestRect(hwndOther, NULL, 100, 110, 80, 90) == 0);
-    minmax.fMinmax = TRUE;
-    hwndMinmax = CreateWindow(wc.lpszClassName, "bounded window", WS_POPUP | WS_THICKFRAME,
+    minmax.fMinmax = 1;
+    hwndMinmax = CreateWindowExA(0, wc.lpszClassName, "bounded window", WS_POPUP | WS_THICKFRAME,
                               10, 10, 220, 230, NULL, NULL, hInstance, &minmax);
     CHECK(hwndMinmax);
     minmax.cMinmax = 0;

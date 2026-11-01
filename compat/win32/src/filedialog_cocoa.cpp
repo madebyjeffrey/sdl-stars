@@ -8,14 +8,14 @@ static char *PszCocoaLabelUtf8(LPCSTR psz) {
 }
 static int FPumpCocoaChooser(void *lpv) {
     HWND hwndOwner = (HWND)(lpv);
-    MSG msg;
-    while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) {
-        if (msg.message == WM_QUIT) { PostQuitMessage((int)msg.wParam); return 0; }
-        TranslateMessage(&msg); DispatchMessageA(&msg);
+    win32::MSG msg;
+    while (win32::PeekMessageA(&msg, NULL, 0, 0, win32::PM_REMOVE)) {
+        if (msg.message == win32::WM_QUIT) { win32::PostQuitMessage((int)msg.wParam); return 0; }
+        win32::TranslateMessage(&msg); win32::DispatchMessageA(&msg);
         if (FStarsErrorPending()) return 0;
-        if (hwndOwner && !IsWindow(hwndOwner)) return 0;
+        if (hwndOwner && !win32::IsWindow(hwndOwner)) return 0;
     }
-    return !FStarsErrorPending() && (!hwndOwner || IsWindow(hwndOwner));
+    return !FStarsErrorPending() && (!hwndOwner || win32::IsWindow(hwndOwner));
 }
 int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFolder,
                      LPCSTR pszName, const COMPATFILEFILTER *rgfilter, int cFilter,

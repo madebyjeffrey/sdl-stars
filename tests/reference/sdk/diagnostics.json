@@ -1,0 +1,117 @@
+{
+  "reference_revision": "bcdd77bf823cc5abcb4346b62df10efc6511790f",
+  "observed_revision": "6e547f058c5e41f2a29e51d02e2c551f56fdcb63",
+  "observed_run": 41220497527,
+  "purpose": "Native SDK behavior/automation probes with reviewed source hashes; preserve assertions except explicitly documented compatibility bug fixes. Execute every probe and retain raw results. All other selected SDK checks remain gates.",
+  "diagnostics": [
+    {
+      "test": "test_win32_list_reference",
+      "input": "tests/compat/win32_list.inc",
+      "sha256": "54594c15549545417f94106290efb798d079cd48b04ff6e03a354b93bfa92e27",
+      "observation": "Owner-selection draw count"
+    },
+    {
+      "test": "test_win32_edit_reference",
+      "input": "tests/compat/win32_edit.inc",
+      "sha256": "e58f0b5e71648865d63306397c0332b4fae37ab30bf0d664ffe0064c0ad381d7",
+      "observation": "Multiline case-style undo text"
+    },
+    {
+      "test": "test_win32_controls_reference",
+      "input": "tests/compat/win32_controls.inc",
+      "sha256": "87805a5e6d57ba84a8afe3d3d6c4d09c5b39b8c2e9ca0f171e24a3fcf2937efa",
+      "observation": "The missing-control CheckDlgButton expectation is corrected to failure; full native controls probe awaits requalification before removing this diagnostic classification."
+    },
+    {
+      "test": "test_win32_scroll_reference",
+      "input": "tests/compat/win32_scroll.inc",
+      "sha256": "cd18c455734d9131611883b0d7d2cbfccb664fe5245eb5c9775efd1a85d369a8",
+      "observation": "Reversed-endpoint SetScrollRange return"
+    },
+    {
+      "test": "test_win32_ui_resources_reference",
+      "input": "tests/compat/win32_ui_resources.inc",
+      "sha256": "09d813032934ed0422f724147d4ceab464e04dc6f9328747d84919a085db63d9",
+      "observation": "Resource 6 byte 452 encoding difference"
+    },
+    {
+      "test": "test_win32_popup_reference",
+      "input": "tests/compat/win32_popup.inc",
+      "sha256": "4653614549578a856b92a2b7f23ed8b855014450f1aeae144ff93f6b4f684a19",
+      "observation": "Popup result/menu-loop notification counts"
+    },
+    {
+      "test": "test_win32_filedialog_reference",
+      "input": "tests/compat/win32_filedialog.inc",
+      "sha256": "4f3c8e9af177cb4f416cd015543ac2c3612777e2557a84da48275a234b027541",
+      "observation": "Native picker automation deadline"
+    },
+    {
+      "test": "test_win32_messagebox_reference",
+      "input": "tests/compat/win32_messagebox.inc",
+      "sha256": "eec6a03a9044972bbad37331856b78fa4315cc1f0f030d2d207c76c1b1a333bb",
+      "observation": "Native message-box child/focus automation timeout"
+    },
+    {
+      "test": "test_win32_combo_reference",
+      "input": "tests/compat/win32_combo.inc",
+      "sha256": "a7a301ebef5bb5d213069ba105887d786a6d6dd38a6b680952c89882475d6099",
+      "observation": "Native resource dialog creation crash at 2430"
+    },
+    {
+      "test": "test_win32_menubar_reference",
+      "input": "tests/compat/win32_menubar.inc",
+      "sha256": "6d3da70ff1719de16c9f8d7cb50fd0d8e2b45a59ccf6fe74c566676609a52637",
+      "observation": "Menubar destruction notification"
+    },
+    {
+      "test": "test_win32_attention_reference",
+      "input": "tests/compat/win32_attention.inc",
+      "sha256": "a6ab2b61b0175c216c02cc1fa0fb9f35b3392e8172fe41ef76de9625ce8be2d7",
+      "observation": "Caption state/notification count"
+    },
+    {
+      "test": "test_win32_position_reference",
+      "input": "tests/compat/win32_position.inc",
+      "sha256": "ed8bfa7340456e4a935fea231905ab628a939ca11c3b5edfd7d3d695a9736419",
+      "observation": "Owned-window ordering"
+    },
+    {
+      "test": "test_win32_children_reference",
+      "input": "tests/compat/win32_children.inc",
+      "sha256": "674cf78d4daa0ea30aedc51bb358e0affd25c7392d26602463504227170235bd",
+      "observation": "Failed child-creation teardown"
+    },
+    {
+      "test": "test_win32_geometry_reference",
+      "input": "tests/compat/win32_geometry.inc",
+      "sha256": "aefd95bfa5d80bf951553d411e6a63502a9884e259a3e2f4b881e58d3177759b",
+      "observation": "Clip-region classification"
+    },
+    {
+      "test": "test_win32_drawing_state_reference",
+      "input": "tests/compat/win32_drawing_state.inc",
+      "sha256": "828220cd9b369a19d5ca3b5432b0cdb5dd5cbe751a2eca38b6ce9f364df4d46d",
+      "observation": "Invalid SetROP2 return/state"
+    },
+    {
+      "test": "test_win32_regions_reference",
+      "input": "tests/compat/win32_regions.inc",
+      "sha256": "55bf0354680101a999b2634deed6f3ea51c70303503ac0c5797974ec545a2167",
+      "observation": "Clip-region classification"
+    },
+    {
+      "test": "test_win32_timers_reference",
+      "input": "tests/compat/win32_timers.inc",
+      "sha256": "5243cbe7ec40e414a91009ba49d1d62c3f6d9c376187c2b4f612e67374d4dabf",
+      "observation": "Timer callback count/ID"
+    },
+    {
+      "test": "test_win32_bitmap_reference",
+      "input": "tests/compat/win32_bitmap.inc",
+      "sha256": "0c09657bf1eada8799fa45c4d7fedfd0311cadd728e8b8711049f3ad9e26db9b",
+      "observation": "Pixel/source-DC validity"
+    }
+  ],
+  "hash_representation": "UTF-8 source text with universal newline normalization, so Windows checkout line endings do not change the classification."
+}

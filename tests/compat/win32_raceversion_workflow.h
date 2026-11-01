@@ -1,5 +1,7 @@
+#include "appstate.h"
+#include "uistate.h"
 /* Save through the actual wizard, then inspect immutable earlier versions. */
-static BOOL FCheckRaceVersionWorkflow(void) {
+static BOOL FCheckRaceVersionWorkflow(APPSESSION &app) {
     static int iRun, iPage, iPhase, cPrompts;
     static const DLGPROC rglpfn[] = {RaceWizardDlg1, RaceWizardDlg4, RaceWizardDlg5, RaceWizardDlg2, RaceWizardDlg3, RaceWizardDlg6};
     static const char *rgszPlural[] = {"Versions A", "Versions A", "Versions B", "Versions C", "Versions C", "Versions D", "Versions E", "Versions F", "Versions G"};
@@ -21,86 +23,86 @@ static BOOL FCheckRaceVersionWorkflow(void) {
     CchSnprintf(szThirdSnapshot, sizeof(szThirdSnapshot), "%s%sthird.snapshot", pszRoot, szDirSep);
     CchSnprintf(szFirstSnapshot, sizeof(szFirstSnapshot), "%s%sfirst.snapshot", pszRoot, szDirSep);
     CchSnprintf(szSecondSnapshot, sizeof(szSecondSnapshot), "%s%ssecond.snapshot", pszRoot, szDirSep);
-    for (hwnd = HwndCompatFirstTop(); hwnd; hwnd = GetWindow(hwnd, GW_HWNDNEXT))
+    for (hwnd = HwndCompatFirstTop(); hwnd; hwnd = win32::GetWindow(hwnd, win32::GW_HWNDNEXT))
         if (hwnd->fDialog && hwnd->lpfnDlg == LibraryNameDlg) {
             fprintf(stderr, "New Race unexpectedly asked for a filename\n");
-            return FALSE;
+            return 0;
         }
     if (iPhase == 0) {
-        if (!IsWindowVisible(hwndTitle) || !IsWindowEnabled(hwndTitle)) return TRUE;
-        fChecked = fTitlePainted = TRUE;
+        if (!win32::IsWindowVisible(app.lpui->hwndTitle) || !win32::IsWindowEnabled(app.lpui->hwndTitle)) return 1;
+        fChecked = fTitlePainted = 1;
         iPhase = 1;
-        if (iRun == 0 || iRun == 1 || iRun == 6 || iRun == 8) return FPushClick(GetDlgItem(hwndTitle, IDC_LIBRARY_RACE_NEW));
-        RefreshLibraryRaces(hwndTitle);
-        if (!FSelectClientRaceName(hwndTitle, iRun == 2 ? "\xc3\x89lan_CON.r1" : iRun == 7 ? "\xc3\xa9LAN_CON.r3" : "\xc3\x89lan_CON.r2")) return FALSE;
-        return FPushClick(GetDlgItem(hwndTitle, IDC_LIBRARY_RACE_EDIT));
+        if (iRun == 0 || iRun == 1 || iRun == 6 || iRun == 8) return FPushClick(app, win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_RACE_NEW));
+        RefreshLibraryRaces(app, app.lpui->hwndTitle);
+        if (!FSelectClientRaceName(app.lpui->hwndTitle, iRun == 2 ? "\xc3\x89lan_CON.r1" : iRun == 7 ? "\xc3\xa9LAN_CON.r3" : "\xc3\x89lan_CON.r2")) return 0;
+        return FPushClick(app, win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_RACE_EDIT));
     }
     if (iPhase == 1) {
-        hwndDialog = HwndRosterDialog(LibraryRaceSaveDlg);
+        hwndDialog = HwndRosterDialog(app, LibraryRaceSaveDlg);
         if (hwndDialog) {
             cPrompts++;
-            if ((iRun != 2 && iRun != 3 && iRun != 5 && iRun != 6 && iRun != 7 && iRun != 8) || cPrompts != 1) return FALSE;
+            if ((iRun != 2 && iRun != 3 && iRun != 5 && iRun != 6 && iRun != 7 && iRun != 8) || cPrompts != 1) return 0;
             if (iRun == 8) {
-                if (!GetDlgItemText(hwndDialog, IDC_LIBRARY_RACE_SAVE_TEXT, szPrompt, sizeof(szPrompt)) ||
-                    !strstr(szPrompt, "Imported.r8")) return FALSE;
+                if (!win32::GetDlgItemTextA(hwndDialog, IDC_LIBRARY_RACE_SAVE_TEXT, szPrompt, sizeof(szPrompt)) ||
+                    !strstr(szPrompt, "Imported.r8")) return 0;
             }
             if (iRun == 5) iPhase = 2;
-            if (iRun == 7) { fFailRaceVersionSave = TRUE; iPhase = 4; }
-            return FPushClick(GetDlgItem(hwndDialog, iRun == 5 ? IDCANCEL :
+            if (iRun == 7) { fFailRaceVersionSave = 1; iPhase = 4; }
+            return FPushClick(app, win32::GetDlgItem(hwndDialog, iRun == 5 ? IDCANCEL :
                                         (iRun == 3 || iRun == 7) ? IDC_LIBRARY_RACE_UPDATE : IDC_LIBRARY_RACE_VERSION));
         }
         if (iPage < 6) {
-            hwndDialog = HwndRosterDialog(rglpfn[iPage]);
-            if (!hwndDialog) return TRUE;
-            if (iPage == 0 && (!SetDlgItemText(hwndDialog, IDC_RACE_NAME, pszName) ||
-                              !SetDlgItemText(hwndDialog, IDC_RACE_PLURAL_NAME, rgszPlural[iRun]))) return FALSE;
-            return FPushClick(GetDlgItem(hwndDialog, iPage++ == 5 ? IDC_FINISH : IDC_NEXT));
+            hwndDialog = HwndRosterDialog(app, rglpfn[iPage]);
+            if (!hwndDialog) return 1;
+            if (iPage == 0 && (!win32::SetDlgItemTextA(hwndDialog, IDC_RACE_NAME, pszName) ||
+                              !win32::SetDlgItemTextA(hwndDialog, IDC_RACE_PLURAL_NAME, rgszPlural[iRun]))) return 0;
+            return FPushClick(app, win32::GetDlgItem(hwndDialog, iPage++ == 5 ? IDC_FINISH : IDC_NEXT));
         }
-        if (!IsWindowEnabled(hwndTitle)) return TRUE;
+        if (!win32::IsWindowEnabled(app.lpui->hwndTitle)) return 1;
         iPhase = 3;
     }
     if (iPhase == 4) {
-        if (!fRaceVersionSaveFailed) return TRUE;
+        if (!fRaceVersionSaveFailed) return 1;
         iPhase = 2;
     }
     if (iPhase == 2) {
-        hwndDialog = HwndRosterDialog(RaceWizardDlg1);
-        if (!hwndDialog) return TRUE;
+        hwndDialog = HwndRosterDialog(app, RaceWizardDlg1);
+        if (!hwndDialog) return 1;
         iPhase = 3;
-        return FPushClick(GetDlgItem(hwndDialog, IDCANCEL));
+        return FPushClick(app, win32::GetDlgItem(hwndDialog, IDCANCEL));
     }
-    if (!IsWindowEnabled(hwndTitle)) return TRUE;
+    if (!win32::IsWindowEnabled(app.lpui->hwndTitle)) return 1;
     if (iRun == 0) {
-        if (!FTestCopyFile(szFirst, szFirstSnapshot)) return FALSE;
-    } else if (!FTestFilesEqual(szFirst, szFirstSnapshot)) return FALSE;
-    if (iRun == 1 && (FFileExists(szSecond) || cPrompts != 0)) return FALSE;
-    if (iRun == 2 && (!FFileExists(szSecond) || FTestFilesEqual(szFirst, szSecond) || cPrompts != 1)) return FALSE;
-    if (iRun == 3 && (!FTestCopyFile(szSecond, szSecondSnapshot) || cPrompts != 1)) return FALSE;
+        if (!FTestCopyFile(szFirst, szFirstSnapshot)) return 0;
+    } else if (!FTestFilesEqual(szFirst, szFirstSnapshot)) return 0;
+    if (iRun == 1 && (FFileExists(szSecond) || cPrompts != 0)) return 0;
+    if (iRun == 2 && (!FFileExists(szSecond) || FTestFilesEqual(szFirst, szSecond) || cPrompts != 1)) return 0;
+    if (iRun == 3 && (!FTestCopyFile(szSecond, szSecondSnapshot) || cPrompts != 1)) return 0;
     if ((iRun == 4 || iRun == 5) && (!FTestFilesEqual(szSecond, szSecondSnapshot) ||
-        FFileExists(szThird) || cPrompts != (iRun == 5 ? 1 : 0))) return FALSE;
+        FFileExists(szThird) || cPrompts != (iRun == 5 ? 1 : 0))) return 0;
     if (iRun == 6) {
-        if (!FFileExists(szThird) || !FTestFilesEqual(szSecond, szSecondSnapshot) || cPrompts != 1) return FALSE;
-        if (!FLoadLibraryRace(hwndTitle, "\xc3\xa9LAN_CON.r3") || strcmp(vplr.szName, pszName) ||
-            strcmp(vplr.szNames, rgszPlural[iRun]) || !FTestCopyFile(szThird, szThirdSnapshot)) return FALSE;
+        if (!FFileExists(szThird) || !FTestFilesEqual(szSecond, szSecondSnapshot) || cPrompts != 1) return 0;
+        if (!FLoadLibraryRace(app, app.lpui->hwndTitle, "\xc3\xa9LAN_CON.r3") || strcmp(app.state.vplr.szName, pszName) ||
+            strcmp(app.state.vplr.szNames, rgszPlural[iRun]) || !FTestCopyFile(szThird, szThirdSnapshot)) return 0;
     }
     if (iRun == 7) {
         if (!fRaceVersionSaveFailed || fFailRaceVersionSave || FFileExists(szFailed) ||
-            !FTestFilesEqual(szSecond, szSecondSnapshot) || !FTestFilesEqual(szThird, szThirdSnapshot)) return FALSE;
+            !FTestFilesEqual(szSecond, szSecondSnapshot) || !FTestFilesEqual(szThird, szThirdSnapshot)) return 0;
         plr = vrgplrDef[0];
         strcpy(plr.szName, "Legacy");
         strcpy(plr.szNames, "Old");
-        if (!FSaveLibraryRace(hwndTitle, "Imported.r8", &plr) || !FTestCopyFile(szImported, szImportedSnapshot)) return FALSE;
+        if (!FSaveLibraryRace(app, app.lpui->hwndTitle, "Imported.r8", &plr) || !FTestCopyFile(szImported, szImportedSnapshot)) return 0;
     }
     if (iRun == 8) {
         if (cPrompts != 1 || !FTestFilesEqual(szImported, szImportedSnapshot) ||
-            !FFileExists(szImportedVersion) || !FLoadLibraryRace(hwndTitle, "Legacy.r9") ||
-            strcmp(vplr.szName, "Legacy") || strcmp(vplr.szNames, rgszPlural[iRun])) return FALSE;
-        fPassed = TRUE;
+            !FFileExists(szImportedVersion) || !FLoadLibraryRace(app, app.lpui->hwndTitle, "Legacy.r9") ||
+            strcmp(app.state.vplr.szName, "Legacy") || strcmp(app.state.vplr.szNames, rgszPlural[iRun])) return 0;
+        fPassed = 1;
         puts("Wizard names, Update/New Version/Cancel, failed saves, UTF-8 and imported version families passed");
-        PostQuitMessage(0);
-        return TRUE;
+        win32::PostQuitMessage(0);
+        return 1;
     }
     iRun++;
     iPage = iPhase = cPrompts = 0;
-    return TRUE;
+    return 1;
 }

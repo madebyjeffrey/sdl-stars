@@ -1,4 +1,7 @@
 #include "win.h"
+#include "appstate.h"
+#include "callbackcontext.h"
+#include "uistate.h"
 #include "text_io.h"
 #include "control_io.h"
 #include "presentation_io.h"
@@ -7,80 +10,81 @@
 #include "choice_io.h"
 #include "alert_io.h"
 
-int16_t ShipBuilder(POINT16 ptDlgSize) {
+int16_t ShipBuilder(APPSESSION &app, POINT16 ptDlgSize) {
     FARPROC lpProcSlot;
     int16_t fSuccess;
 
-    ptslotGlob = ptDlgSize;
-    if (gd.mdScreenSize > 0) {
-        ptslotGlob.y += 3 * dyArial8;
+    app.lpui->ptslotGlob = ptDlgSize;
+    if (app.state.gd.mdScreenSize > 0) {
+        app.lpui->ptslotGlob.y += 3 * app.state.dyArial8;
     }
-    fStarbaseMode = FALSE;
-    lpshdefBuild = NthValidShdef(0);
-    lpProcSlot = MakeProcInstance(SlotDlg, hInst);
-    fSuccess = ControlIO().pfnLUiDialogBox(hInst, MAKEINTRESOURCE(IDD_SLOT), hwndFrame, lpProcSlot, 0);
-    FreeProcInstance(lpProcSlot);
-    if (sel.grobj == grobjPlanet && sel.pl.lpplprod) {
-        ControlIO().pfnFillPlanetProdLB(hwndPlanetProdLB, sel.pl.lpplprod, NULL);
+    app.state.fStarbaseMode = 0;
+    app.lpui->lpshdefBuild = NthValidShdef(app, 0);
+    lpProcSlot = (SlotDlg);
+    fSuccess = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_SLOT), app.lpui->hwndFrame, lpProcSlot, 0);
+    if (app.state.sel.grobj == grobjPlanet && app.state.sel.pl.lpplprod) {
+        ControlIO().pfnFillPlanetProdLB(app, app.lpui->hwndPlanetProdLB, app.state.sel.pl.lpplprod, NULL);
     }
     return 0;
 }
 
-void ShowMainControls(HWND hwnd, int16_t sw) {
-    FUiShowWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_IMPORT), sw);
-    FUiShowWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_EDIT), sw);
-    FUiShowWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_DELETE), sw);
-    FUiShowWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_DESIGNER_SHIPS), sw);
-    FUiShowWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_DESIGNER_STARBASES), sw);
-    FUiShowWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_DESIGNER_EXISTING), sw);
-    FUiShowWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_DESIGNER_HULLS), sw);
-    FUiShowWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_DESIGNER_ENEMY_HULLS), sw);
-    FUiShowWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_DESIGNER_COMPONENTS), sw);
-    FUiShowWindow(ControlIO().pfnGetDlgItem(hwnd, IDOK), sw == SW_SHOW ? SW_HIDE : SW_SHOW);
-    SetDlgItemText(hwnd, IDCANCEL, TextIO().pfnCompressed(sw == SW_SHOW ? idsDone : idsCancel));
+void ShowMainControls(APPSESSION &app, HWND hwnd, int16_t sw) {
+    ui::ShowWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_IMPORT), sw);
+    ui::ShowWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_EDIT), sw);
+    ui::ShowWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_DELETE), sw);
+    ui::ShowWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_DESIGNER_SHIPS), sw);
+    ui::ShowWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_DESIGNER_STARBASES), sw);
+    ui::ShowWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_DESIGNER_EXISTING), sw);
+    ui::ShowWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_DESIGNER_HULLS), sw);
+    ui::ShowWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_DESIGNER_ENEMY_HULLS), sw);
+    ui::ShowWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_DESIGNER_COMPONENTS), sw);
+    ui::ShowWindow(ControlIO().pfnGetDlgItem(hwnd, IDOK), sw == win32::SW_SHOW ? win32::SW_HIDE : win32::SW_SHOW);
+    win32::SetDlgItemTextA(hwnd, IDCANCEL, TextIO().pfnCompressed(app, sw == win32::SW_SHOW ? idsDone : idsCancel));
     return;
 }
 
-int16_t FCheckQueuedShip(HWND hwnd, SHDEF *lpshdef, int16_t fEdit) {
+int16_t FCheckQueuedShip(APPSESSION &app, HWND hwnd, SHDEF *lpshdef, int16_t fEdit) {
     char     rgch[40];
     int16_t  fProgress;
     int16_t  id;
     StringId ids;
     int16_t  cshQueued;
 
-    cshQueued = CshQueued(lpshdef->ishdef, &fProgress, fEdit);
+    cshQueued = CshQueued(app, lpshdef->ishdef, &fProgress, fEdit);
     if (lpshdef->cExist > 0 || cshQueued != 0) {
         if (fEdit) {
             ids = idsCurrentlyHaveDSSIfDelete2;
         } else {
-            ids = !fStarbaseMode ? idsCurrentlyHaveDSSDProduction : idsCurrentlyHaveDSSDProduction2;
+            ids = !app.state.fStarbaseMode ? idsCurrentlyHaveDSSDProduction : idsCurrentlyHaveDSSDProduction2;
         }
-        TextIO().pfnCchGetString(idsWorkDone, rgch);
+        TextIO().pfnCchGetString(app, idsWorkDone, rgch);
         if (lpshdef->cExist > 0 && cshQueued != 0) {
-            wsprintf(szWork, TextIO().pfnCompressed(ids), LOWORD(lpshdef->cExist), lpshdef->hul.szClass, lpshdef->cExist == 1 ? "" : "s", cshQueued,
+            win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, ids), LOWORD(lpshdef->cExist), lpshdef->hul.szClass, lpshdef->cExist == 1 ? "" : "s", cshQueued,
                      !fProgress ? "" : rgch);
         } else if (cshQueued != 0) {
-            wsprintf(szWork, TextIO().pfnCompressed(static_cast<StringId>(ids + 1)), cshQueued, lpshdef->hul.szClass, cshQueued == 1 ? "" : "s", !fProgress ? "" : rgch);
+            win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, static_cast<StringId>(ids + 1)), cshQueued, lpshdef->hul.szClass, cshQueued == 1 ? "" : "s", !fProgress ? "" : rgch);
         } else {
-            wsprintf(szWork, TextIO().pfnCompressed(static_cast<StringId>(ids + 2)), LOWORD(lpshdef->cExist), lpshdef->hul.szClass, lpshdef->cExist == 1 ? "" : "s");
+            win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, static_cast<StringId>(ids + 2)), LOWORD(lpshdef->cExist), lpshdef->hul.szClass, lpshdef->cExist == 1 ? "" : "s");
         }
-        id = CompatChoiceIO().pfnMessageBoxA(GetFocus(), szWork, TextIO().pfnCompressed(static_cast<StringId>(idsDeleteDesign + fEdit)), MB_YESNO | MB_ICONQUESTION | MB_TASKMODAL);
-        ControlIO().pfnHwndUiSetFocus(hwnd);
+        id = CompatChoiceIO().pfnMessageBoxA(win32::GetFocus(), app.state.szWork, TextIO().pfnCompressed(app, static_cast<StringId>(idsDeleteDesign + fEdit)), win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_TASKMODAL);
+        ControlIO().pfnSetFocus(hwnd);
         if (id == 7) {
-            return FALSE;
+            return 0;
         }
         if (lpshdef->cExist > 0) {
-            DestroyAllIshdef(lpshdef->ishdef, idPlayer);
-            ControlIO().pfnInvalidateRect(hwndScanner, NULL, TRUE);
-            ControlIO().pfnInvalidateRect(hwndMessage, NULL, TRUE);
+            DestroyAllIshdef(app, lpshdef->ishdef, app.state.idPlayer);
+            ControlIO().pfnInvalidateRect(app.lpui->hwndScanner, NULL, 1);
+            ControlIO().pfnInvalidateRect(app.lpui->hwndMessage, NULL, 1);
         } else {
-            RemoveIshdefFromAllQueues(lpshdef->ishdef, fEdit);
+            RemoveIshdefFromAllQueues(app, lpshdef->ishdef, fEdit);
         }
     }
-    return TRUE;
+    return 1;
 }
 
-INT_PTR CALLBACK SlotDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+INT_PTR  SlotDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+
     RECT               rcWindow;
     HDC                hdc;
     RECT               rcGBox;
@@ -102,216 +106,216 @@ INT_PTR CALLBACK SlotDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) 
     int16_t            j;
 
     switch (message) {
-    case WM_INITDIALOG:
-        fHullCopy = FALSE;
-        hwndSlotDlg = hwnd;
-        GetWindowRect(hwnd, &rcWindow);
+    case win32::WM_INITDIALOG:
+        app.lpui->fHullCopy = 0;
+        app.lpui->hwndSlotDlg = hwnd;
+        win32::GetWindowRect(hwnd, &rcWindow);
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        ControlIO().pfnFUiSetWindowPos(hwnd, NULL, 0, 0, ptslotGlob.x + rcWindow.right - rcWindow.left - rc.right, ptslotGlob.y + rcWindow.bottom - rcWindow.top - rc.bottom,
-                     SWP_NOMOVE | SWP_NOZORDER);
-        ControlIO().pfnStickyDlgPos(hwnd, &ptStickySlotDlg, TRUE);
-        UpdateSlotGlobals();
+        ControlIO().pfnSetWindowPos(hwnd, NULL, 0, 0, app.lpui->ptslotGlob.x + rcWindow.right - rcWindow.left - rc.right, app.lpui->ptslotGlob.y + rcWindow.bottom - rcWindow.top - rc.bottom,
+                     win32::SWP_NOMOVE | win32::SWP_NOZORDER);
+        ControlIO().pfnStickyDlgPos(hwnd, &app.lpui->ptStickySlotDlg, 1);
+        UpdateSlotGlobals(app);
         hwndItem = ControlIO().pfnGetDlgItem(hwnd, IDC_DESIGNER_COMPONENT_LIST);
-        ControlIO().pfnFUiSetWindowPos(hwndItem, NULL, ptslotGlob.x - 256, 32, 240, 266, SWP_NOZORDER);
-        FillBuildPartsLB(hwndItem, rggrbitParts[0]);
-        yBuildInfoSum = 340;
-        lpfnRealListProc = (WNDPROC)GetWindowLongPtr(hwndItem, GWLP_WNDPROC);
-        SetWindowLongPtr(hwndItem, GWLP_WNDPROC, (LONG_PTR)lpfnFakeListProc);
-        CheckRadioButton(hwnd, IDC_DESIGNER_SHIPS, IDC_DESIGNER_STARBASES, IDC_DESIGNER_SHIPS);
-        CheckRadioButton(hwnd, IDC_DESIGNER_EXISTING, IDC_DESIGNER_COMPONENTS, IDC_DESIGNER_EXISTING);
-        mdBuild = mdBuildShdef;
+        ControlIO().pfnSetWindowPos(hwndItem, NULL, app.lpui->ptslotGlob.x - 256, 32, 240, 266, win32::SWP_NOZORDER);
+        FillBuildPartsLB(app, hwndItem, rggrbitParts[0]);
+        app.lpui->yBuildInfoSum = 340;
+        app.lpui->lpfnRealListProc = (WNDPROC)win32::GetWindowLongPtrA(hwndItem, win32::GWLP_WNDPROC);
+        win32::SetWindowLongPtrA(hwndItem, win32::GWLP_WNDPROC, (LONG_PTR)app.lpui->lpfnFakeListProc);
+        win32::CheckRadioButton(hwnd, IDC_DESIGNER_SHIPS, IDC_DESIGNER_STARBASES, IDC_DESIGNER_SHIPS);
+        win32::CheckRadioButton(hwnd, IDC_DESIGNER_EXISTING, IDC_DESIGNER_COMPONENTS, IDC_DESIGNER_EXISTING);
+        app.lpui->mdBuild = mdBuildShdef;
         hwndItem = ControlIO().pfnGetDlgItem(hwnd, IDC_COMBOBOX);
-        ControlIO().pfnFUiSetWindowPos(hwndItem, NULL, ptslotGlob.x - 264, 8, 240, 100, SWP_NOZORDER);
-        FillBuildDD(hwndItem, mdBuild);
-        ControlIO().pfnFUiSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDOK), NULL, ptslotGlob.x - 226, ptslotGlob.y - (int16_t)(3 * dyArial8) / 2 - 6, 68, (int16_t)(3 * dyArial8) / 2,
-                     SWP_NOZORDER | SWP_HIDEWINDOW);
-        ControlIO().pfnFUiSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDCANCEL), NULL, ptslotGlob.x - 148, ptslotGlob.y - (int16_t)(3 * dyArial8) / 2 - 6, 68, (int16_t)(3 * dyArial8) / 2,
-                     SWP_NOZORDER);
-        ControlIO().pfnFUiSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_HELP), NULL, ptslotGlob.x - 74, ptslotGlob.y - (int16_t)(3 * dyArial8) / 2 - 6, 68, (int16_t)(3 * dyArial8) / 2,
-                     SWP_NOZORDER);
-        SetDlgItemText(hwnd, IDCANCEL, TextIO().pfnCompressed(idsDone));
-        if (gd.fTutorial) {
-            PresentationIO().pfnTutor();
+        ControlIO().pfnSetWindowPos(hwndItem, NULL, app.lpui->ptslotGlob.x - 264, 8, 240, 100, win32::SWP_NOZORDER);
+        FillBuildDD(app, hwndItem, app.lpui->mdBuild);
+        ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDOK), NULL, app.lpui->ptslotGlob.x - 226, app.lpui->ptslotGlob.y - (int16_t)(3 * app.state.dyArial8) / 2 - 6, 68, (int16_t)(3 * app.state.dyArial8) / 2,
+                     win32::SWP_NOZORDER | win32::SWP_HIDEWINDOW);
+        ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDCANCEL), NULL, app.lpui->ptslotGlob.x - 148, app.lpui->ptslotGlob.y - (int16_t)(3 * app.state.dyArial8) / 2 - 6, 68, (int16_t)(3 * app.state.dyArial8) / 2,
+                     win32::SWP_NOZORDER);
+        ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_HELP), NULL, app.lpui->ptslotGlob.x - 74, app.lpui->ptslotGlob.y - (int16_t)(3 * app.state.dyArial8) / 2 - 6, 68, (int16_t)(3 * app.state.dyArial8) / 2,
+                     win32::SWP_NOZORDER);
+        win32::SetDlgItemTextA(hwnd, IDCANCEL, TextIO().pfnCompressed(app, idsDone));
+        if (app.state.gd.fTutorial) {
+            PresentationIO().pfnTutor(app);
         }
         return 1;
-    case WM_DRAWITEM:
+    case win32::WM_DRAWITEM:
         lpdis = (DRAWITEMSTRUCT *)lParam;
         if (lpdis->itemID == -1) {
-            HandleFocusState(lpdis, -2);
+            HandleFocusState(app, lpdis, -2);
         } else {
             switch (lpdis->itemAction) {
-            case ODA_DRAWENTIRE:
-                DrawDlgLBEntireItem(lpdis, -4);
+            case win32::ODA_DRAWENTIRE:
+                DrawDlgLBEntireItem(app, lpdis, -4);
                 break;
-            case ODA_SELECT:
-                DrawDlgLBEntireItem(lpdis, -4);
+            case win32::ODA_SELECT:
+                DrawDlgLBEntireItem(app, lpdis, -4);
                 break;
-            case ODA_FOCUS:
-                DrawDlgLBEntireItem(lpdis, -4);
+            case win32::ODA_FOCUS:
+                DrawDlgLBEntireItem(app, lpdis, -4);
             }
         }
         return 1;
-    case WM_MEASUREITEM:
+    case win32::WM_MEASUREITEM:
         lpmis = (MEASUREITEMSTRUCT *)lParam;
         lpmis->itemHeight = 66;
         return 1;
-    case WM_CTLCOLORMSGBOX:
-    case WM_CTLCOLOREDIT:
-    case WM_CTLCOLORLISTBOX:
-    case WM_CTLCOLORBTN:
-    case WM_CTLCOLORDLG:
-    case WM_CTLCOLORSCROLLBAR:
-    case WM_CTLCOLORSTATIC:
+    case win32::WM_CTLCOLORMSGBOX:
+    case win32::WM_CTLCOLOREDIT:
+    case win32::WM_CTLCOLORLISTBOX:
+    case win32::WM_CTLCOLORBTN:
+    case win32::WM_CTLCOLORDLG:
+    case win32::WM_CTLCOLORSCROLLBAR:
+    case win32::WM_CTLCOLORSTATIC:
         for (i = 2064; i <= 2069 && (HWND)lParam != ControlIO().pfnGetDlgItem(hwnd, i); i++) {
         }
         if (i <= 2069 || (HWND)lParam == ControlIO().pfnGetDlgItem(hwnd, IDC_SHIPLIST)) {
-            SetBkColor((HDC)wParam, crButtonFace);
-            return (INT_PTR)hbrButtonFace;
+            win32::SetBkColor((HDC)wParam, app.lpui->crButtonFace);
+            return (INT_PTR)app.lpui->hbrButtonFace;
         }
         break;
-    case WM_SETCURSOR:
+    case win32::WM_SETCURSOR:
         GetCursorPos16(&pt);
         ScreenToClient16(hwnd, &pt);
-        if (PtInRect(rgrcBuildSpin, PointFrom16(pt)) == 0 && PtInRect(&rgrcBuildSpin[1], PointFrom16(pt)) == 0)
+        if (win32::PtInRect(app.lpui->rgrcBuildSpin, PointFrom16(pt)) == 0 && win32::PtInRect(&app.lpui->rgrcBuildSpin[1], PointFrom16(pt)) == 0)
             break;
-        SetCursor(hcurHand);
+        win32::SetCursor(app.lpui->hcurHand);
         return 1;
-    case WM_ERASEBKGND:
+    case win32::WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        FillRect((HDC)wParam, &rc, hbrButtonFace);
+        win32::FillRect((HDC)wParam, &rc, app.lpui->hbrButtonFace);
         return 1;
-    case WM_PAINT:
-        hdc = BeginPaint(hwnd, &ps);
-        if (mdBuild != mdBuildEdit) {
-            GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDC_DESIGNER_SHIPS), &rcGBox);
-            ScreenToClient(hwnd, (POINT *)&rcGBox);
-            GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDC_DESIGNER_STARBASES), &rc);
-            ScreenToClient(hwnd, (POINT *)&rc.right);
+    case win32::WM_PAINT:
+        hdc = win32::BeginPaint(hwnd, &ps);
+        if (app.lpui->mdBuild != mdBuildEdit) {
+            win32::GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDC_DESIGNER_SHIPS), &rcGBox);
+            win32::ScreenToClient(hwnd, (POINT *)&rcGBox);
+            win32::GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDC_DESIGNER_STARBASES), &rc);
+            win32::ScreenToClient(hwnd, (POINT *)&rc.right);
             rcGBox.right = rc.right;
             rcGBox.bottom = rc.bottom;
-            ExpandRc(&rcGBox, dyArial8, dyArial8 >> 1);
-            _Draw3dFrame(hdc, &rcGBox, -1);
-            SetBkColor(hdc, crButtonFace);
-            SelectObject(hdc, rghfontArial8[1]);
-            cch = TextIO().pfnCchGetString(idsDesign, szWork);
-            TextOut(hdc, rcGBox.left + 8, rcGBox.top - (dyArial8 >> 1), szWork, cch);
-            SelectObject(hdc, rghfontArial8[0]);
-            GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDC_DESIGNER_EXISTING), &rcGBox);
-            ScreenToClient(hwnd, (POINT *)&rcGBox);
-            GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDC_DESIGNER_COMPONENTS), &rc);
-            ScreenToClient(hwnd, (POINT *)&rc.right);
+            ExpandRc(&rcGBox, app.state.dyArial8, app.state.dyArial8 >> 1);
+            _Draw3dFrame(app, hdc, &rcGBox, -1);
+            win32::SetBkColor(hdc, app.lpui->crButtonFace);
+            win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
+            cch = TextIO().pfnCchGetString(app, idsDesign, app.state.szWork);
+            win32::TextOutA(hdc, rcGBox.left + 8, rcGBox.top - (app.state.dyArial8 >> 1), app.state.szWork, cch);
+            win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
+            win32::GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDC_DESIGNER_EXISTING), &rcGBox);
+            win32::ScreenToClient(hwnd, (POINT *)&rcGBox);
+            win32::GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDC_DESIGNER_COMPONENTS), &rc);
+            win32::ScreenToClient(hwnd, (POINT *)&rc.right);
             rcGBox.right = rc.right;
             rcGBox.bottom = rc.bottom;
-            ExpandRc(&rcGBox, dyArial8, dyArial8 >> 1);
-            _Draw3dFrame(hdc, &rcGBox, -1);
-            SetBkColor(hdc, crButtonFace);
-            SelectObject(hdc, rghfontArial8[1]);
-            cch = TextIO().pfnCchGetString(idsView, szWork);
-            TextOut(hdc, rcGBox.left + 8, rcGBox.top - (dyArial8 >> 1), szWork, cch);
-            SelectObject(hdc, rghfontArial8[0]);
+            ExpandRc(&rcGBox, app.state.dyArial8, app.state.dyArial8 >> 1);
+            _Draw3dFrame(app, hdc, &rcGBox, -1);
+            win32::SetBkColor(hdc, app.lpui->crButtonFace);
+            win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
+            cch = TextIO().pfnCchGetString(app, idsView, app.state.szWork);
+            win32::TextOutA(hdc, rcGBox.left + 8, rcGBox.top - (app.state.dyArial8 >> 1), app.state.szWork, cch);
+            win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
         }
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        DrawSlotDlg(hwnd, hdc, &rc, -1);
-        DrawBuildSelComp(hwnd, hdc, -1);
-        DrawBuildSelHull(hwnd, hdc, -1, NULL);
-        EndPaint(hwnd, &ps);
+        DrawSlotDlg(app, hwnd, hdc, &rc, -1);
+        DrawBuildSelComp(app, hwnd, hdc, -1);
+        DrawBuildSelHull(app, hwnd, hdc, -1, NULL);
+        win32::EndPaint(hwnd, &ps);
         return 1;
-    case WM_LBUTTONDOWN:
-    case WM_LBUTTONDBLCLK:
-    case WM_RBUTTONDOWN:
-        return FTrackSlot(hwnd, LOWORD(lParam), HIWORD(lParam), wParam, FALSE, message == WM_RBUTTONDOWN);
-    case WM_COMMAND:
+    case win32::WM_LBUTTONDOWN:
+    case win32::WM_LBUTTONDBLCLK:
+    case win32::WM_RBUTTONDOWN:
+        return FTrackSlot(app, hwnd, LOWORD(lParam), HIWORD(lParam), wParam, 0, message == win32::WM_RBUTTONDOWN);
+    case win32::WM_COMMAND:
         if (HIWORD(wParam) == 0 && LOWORD(wParam) >= IDC_DESIGNER_SHIPS && LOWORD(wParam) <= IDC_DESIGNER_STARBASES) {
-            fStarbaseMode = LOWORD(wParam) - 2064;
-            wParam = mdBuild + 2066;
+            app.state.fStarbaseMode = LOWORD(wParam) - 2064;
+            wParam = app.lpui->mdBuild + 2066;
             ControlIO().pfnGetClientRect(hwnd, &rc);
             rc.left = rc.right >> 1 >= rc.right - 352 ? rc.right - 352 : rc.right >> 1;
-            ControlIO().pfnInvalidateRect(hwnd, &rc, TRUE);
-            lpshdefBuild = NULL;
-            fHullCopy = FALSE;
-            lSel = !fStarbaseMode ? (uint32_t)rggrbitParts[0] : (uint32_t)rggrbitPartsSB[0];
-            FillBuildPartsLB(ControlIO().pfnGetDlgItem(hwnd, IDC_DESIGNER_COMPONENT_LIST), LOWORD(lSel));
+            ControlIO().pfnInvalidateRect(hwnd, &rc, 1);
+            app.lpui->lpshdefBuild = NULL;
+            app.lpui->fHullCopy = 0;
+            lSel = !app.state.fStarbaseMode ? (uint32_t)rggrbitParts[0] : (uint32_t)rggrbitPartsSB[0];
+            FillBuildPartsLB(app, ControlIO().pfnGetDlgItem(hwnd, IDC_DESIGNER_COMPONENT_LIST), LOWORD(lSel));
             hwndItem = ControlIO().pfnGetDlgItem(hwnd, IDC_COMBOBOX);
-            FillBuildDD(hwndItem, mdBuild);
-            ControlIO().pfnLUiSendMessage(hwndItem, CB_SETCURSEL, 0, 0);
+            FillBuildDD(app, hwndItem, app.lpui->mdBuild);
+            ControlIO().pfnSendMessage(hwndItem, win32::CB_SETCURSEL, 0, 0);
             goto FixupShip;
         } else if (HIWORD(wParam) == 0 && LOWORD(wParam) >= IDC_DESIGNER_EXISTING && LOWORD(wParam) <= IDC_DESIGNER_COMPONENTS) {
             lSel = 0;
         LRestart:
-            lpshdefBuild = NULL;
-            fHullCopy = FALSE;
-            mdBuild = static_cast<MdBuild>(LOWORD(wParam) - 2066);
+            app.lpui->lpshdefBuild = NULL;
+            app.lpui->fHullCopy = 0;
+            app.lpui->mdBuild = static_cast<MdBuild>(LOWORD(wParam) - 2066);
             hwndItem = ControlIO().pfnGetDlgItem(hwnd, IDC_COMBOBOX);
-            UpdateSlotGlobals();
-            FillBuildDD(hwndItem, mdBuild);
-            ControlIO().pfnLUiSendMessage(hwndItem, CB_SETCURSEL, LOWORD(lSel), 0);
-            ControlIO().pfnFUiSetWindowPos(hwndItem, NULL, ptslotGlob.x - 256 - (LOWORD(wParam) == IDC_DESIGNER_COMPONENTS ? 0 : 8), 8, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+            UpdateSlotGlobals(app);
+            FillBuildDD(app, hwndItem, app.lpui->mdBuild);
+            ControlIO().pfnSendMessage(hwndItem, win32::CB_SETCURSEL, LOWORD(lSel), 0);
+            ControlIO().pfnSetWindowPos(hwndItem, NULL, app.lpui->ptslotGlob.x - 256 - (LOWORD(wParam) == IDC_DESIGNER_COMPONENTS ? 0 : 8), 8, 0, 0, win32::SWP_NOSIZE | win32::SWP_NOZORDER);
             ControlIO().pfnGetClientRect(hwnd, &rc);
             left = rc.left;
             rc.left = rc.right >> 1 >= rc.right - 352 ? rc.right - 352 : rc.right >> 1;
-            ControlIO().pfnInvalidateRect(hwnd, &rc, TRUE);
+            ControlIO().pfnInvalidateRect(hwnd, &rc, 1);
             rc.right = rc.left;
             rc.left = left;
-            rc.top = yBuildInfoSum;
-            ControlIO().pfnInvalidateRect(hwnd, &rc, TRUE);
+            rc.top = app.lpui->yBuildInfoSum;
+            ControlIO().pfnInvalidateRect(hwnd, &rc, 1);
             hwndItem = ControlIO().pfnGetDlgItem(hwnd, IDC_DESIGNER_COMPONENT_LIST);
-            FUiShowWindow(hwndItem, mdBuild == mdBuildComp ? SW_SHOW : SW_HIDE);
+            ui::ShowWindow(hwndItem, app.lpui->mdBuild == mdBuildComp ? win32::SW_SHOW : win32::SW_HIDE);
             if (LOWORD(wParam) != IDC_DESIGNER_COMPONENTS)
                 goto FixupShip;
-            if (gd.fTutorial) {
-                PresentationIO().pfnTutor();
+            if (app.state.gd.fTutorial) {
+                PresentationIO().pfnTutor(app);
             }
-        } else if (LOWORD(wParam) == IDC_EDITNAME && HIWORD(wParam) == 0x400 && !fInEditUpdate) {
-            fInEditUpdate = TRUE;
-            ControlIO().pfnGetWindowText((HWND)lParam, szWork, 250);
-            lSel = ControlIO().pfnLUiSendMessage((HWND)lParam, EM_GETSEL, 0, 0);
-            if (!FStringFitsScreen(szWork, 160)) {
-                ControlIO().pfnFUiSetWindowText((HWND)lParam, szWork);
-                ControlIO().pfnLUiSendMessage((HWND)lParam, EM_SETSEL, LOWORD(lSel), (int16_t)HIWORD(lSel));
+        } else if (LOWORD(wParam) == IDC_EDITNAME && HIWORD(wParam) == 0x400 && !app.lpui->fInEditUpdate) {
+            app.lpui->fInEditUpdate = 1;
+            ControlIO().pfnGetWindowText((HWND)lParam, app.state.szWork, 250);
+            lSel = ControlIO().pfnSendMessage((HWND)lParam, win32::EM_GETSEL, 0, 0);
+            if (!FStringFitsScreen(app, app.state.szWork, 160)) {
+                ControlIO().pfnSetWindowText((HWND)lParam, app.state.szWork);
+                ControlIO().pfnSendMessage((HWND)lParam, win32::EM_SETSEL, LOWORD(lSel), (int16_t)HIWORD(lSel));
             }
-            lstrcpy(lpshdefBuild->hul.szClass, szWork);
-            DrawBuildSelHull(hwnd, NULL, 256, NULL);
-            fInEditUpdate = FALSE;
-            if (gd.fTutorial) {
-                PresentationIO().pfnTutor();
+            win32::lstrcpyA(app.lpui->lpshdefBuild->hul.szClass, app.state.szWork);
+            DrawBuildSelHull(app, hwnd, NULL, 256, NULL);
+            app.lpui->fInEditUpdate = 0;
+            if (app.state.gd.fTutorial) {
+                PresentationIO().pfnTutor(app);
             }
         } else if (LOWORD(wParam) == IDC_COMBOBOX) {
             switch (HIWORD(wParam)) {
             case 1:
             FixupShip:
                 hwndItem = ControlIO().pfnGetDlgItem(hwnd, IDC_COMBOBOX);
-                lSel = ControlIO().pfnLUiSendMessage(hwndItem, CB_GETCURSEL, 0, 0);
-                if (mdBuild == mdBuildComp || mdBuild == mdBuildEdit) {
+                lSel = ControlIO().pfnSendMessage(hwndItem, win32::CB_GETCURSEL, 0, 0);
+                if (app.lpui->mdBuild == mdBuildComp || app.lpui->mdBuild == mdBuildEdit) {
                     if (lSel == -1) {
                         lSel = 0;
                     } else {
-                        lSel = !fStarbaseMode ? (uint32_t)rggrbitParts[lSel] : (uint32_t)rggrbitPartsSB[lSel];
+                        lSel = !app.state.fStarbaseMode ? (uint32_t)rggrbitParts[lSel] : (uint32_t)rggrbitPartsSB[lSel];
                     }
-                    FillBuildPartsLB(ControlIO().pfnGetDlgItem(hwnd, IDC_DESIGNER_COMPONENT_LIST), LOWORD(lSel));
-                } else if (mdBuild == mdBuildShdef || mdBuild == mdBuildHuldef || mdBuild == mdBuildEnemyShdef) {
+                    FillBuildPartsLB(app, ControlIO().pfnGetDlgItem(hwnd, IDC_DESIGNER_COMPONENT_LIST), LOWORD(lSel));
+                } else if (app.lpui->mdBuild == mdBuildShdef || app.lpui->mdBuild == mdBuildHuldef || app.lpui->mdBuild == mdBuildEnemyShdef) {
                     if (lSel == -1)
                         goto LClearSelection;
-                    if (mdBuild == mdBuildShdef) {
-                        fProtoSB = fStarbaseMode != 0 && RaceQueryIO().pfnStat(&rgplr[idPlayer], rsMajorAdv) == raMacintosh;
-                        lpshdefBuild = NthValidShdef(LOWORD(lSel));
-                        CshQueued(lpshdefBuild->ishdef, &fProgress, FALSE);
-                        ControlIO().pfnFUiEnableWindow(ControlIO().pfnGetDlgItem(hwndSlotDlg, IDC_EDIT), lpshdefBuild->cExist == 0 && !fProgress && (!fProtoSB || lSel > 0));
+                    if (app.lpui->mdBuild == mdBuildShdef) {
+                        fProtoSB = app.state.fStarbaseMode != 0 && RaceQueryIO().pfnStat(&app.state.rgplr[app.state.idPlayer], rsMajorAdv) == raMacintosh;
+                        app.lpui->lpshdefBuild = NthValidShdef(app, LOWORD(lSel));
+                        CshQueued(app, app.lpui->lpshdefBuild->ishdef, &fProgress, 0);
+                        ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(app.lpui->hwndSlotDlg, IDC_EDIT), app.lpui->lpshdefBuild->cExist == 0 && !fProgress && (!fProtoSB || lSel > 0));
                         if (!fProtoSB)
                             goto LClearSelection;
-                        ControlIO().pfnFUiEnableWindow(ControlIO().pfnGetDlgItem(hwndSlotDlg, IDC_DELETE), lSel > 0 && lpshdefBuild->cExist == 0);
+                        ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(app.lpui->hwndSlotDlg, IDC_DELETE), lSel > 0 && app.lpui->lpshdefBuild->cExist == 0);
                         goto LClearSelection;
-                    } else if (mdBuild == mdBuildEnemyShdef) {
-                        lpshdefBuild = NthValidEnemyShdef(LOWORD(lSel));
-                        if (lpshdefBuild->det == detAll)
+                    } else if (app.lpui->mdBuild == mdBuildEnemyShdef) {
+                        app.lpui->lpshdefBuild = NthValidEnemyShdef(app, LOWORD(lSel));
+                        if (app.lpui->lpshdefBuild->det == detAll)
                             goto LClearSelection;
-                        i = lpshdefBuild->hul.ihuldef;
+                        i = app.lpui->lpshdefBuild->hul.ihuldef;
                         goto LClearSelection;
                     } else {
-                        if (fStarbaseMode) {
+                        if (app.state.fStarbaseMode) {
                             part.hs.grhst = hstSBHull;
                             for (i = 0; i < 5; i++) {
                                 part.hs.iItem = i;
-                                if (PartQueryIO().pfnLookup(&part) == mdPartAvailAvailable && lSel-- <= 0)
+                                if (PartQueryIO().pfnLookup(app, &part) == mdPartAvailAvailable && lSel-- <= 0)
                                     break;
                             }
                             i += 32;
@@ -319,289 +323,289 @@ INT_PTR CALLBACK SlotDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) 
                             part.hs.grhst = hstHull;
                             for (i = 0; i < 32; i++) {
                                 part.hs.iItem = i;
-                                if (PartQueryIO().pfnLookup(&part) == mdPartAvailAvailable && lSel-- <= 0)
+                                if (PartQueryIO().pfnLookup(app, &part) == mdPartAvailAvailable && lSel-- <= 0)
                                     break;
                             }
                         }
-                        shdefBuild.hul = PartQueryIO().pfnHull(i)->hul;
-                        shdefBuild.hul.ihuldef = static_cast<HulDef>(i & 0xff);
-                        for (i = 0; i < shdefBuild.hul.chs; i++) {
-                            shdefBuild.hul.rghs[i].cItem = 0;
+                        app.state.shdefBuild.hul = PartQueryIO().pfnHull(i)->hul;
+                        app.state.shdefBuild.hul.ihuldef = static_cast<HulDef>(i & 0xff);
+                        for (i = 0; i < app.state.shdefBuild.hul.chs; i++) {
+                            app.state.shdefBuild.hul.rghs[i].cItem = 0;
                         }
-                        lpshdefBuild = &shdefBuild;
-                        UpdateShdefCost(lpshdefBuild);
+                        app.lpui->lpshdefBuild = &app.state.shdefBuild;
+                        UpdateShdefCost(app, app.lpui->lpshdefBuild);
                     }
                 LClearSelection:
-                    UpdateSlotGlobals();
+                    UpdateSlotGlobals(app);
                     ControlIO().pfnGetClientRect(hwnd, &rc);
                     rc.left = rc.right >> 1 >= rc.right - 352 ? rc.right - 352 : rc.right >> 1;
-                    ControlIO().pfnInvalidateRect(hwnd, &rc, TRUE);
+                    ControlIO().pfnInvalidateRect(hwnd, &rc, 1);
                 }
-                SetBuildSelection(-2);
-                DrawBuildSelHull(hwnd, NULL, -1, NULL);
-                if (!lpshdefBuild) {
-                    ControlIO().pfnFUiEnableWindow(ControlIO().pfnGetDlgItem(hwndSlotDlg, IDC_DELETE), FALSE);
-                    ControlIO().pfnFUiEnableWindow(ControlIO().pfnGetDlgItem(hwndSlotDlg, IDC_EDIT), FALSE);
-                    ControlIO().pfnFUiEnableWindow(ControlIO().pfnGetDlgItem(hwndSlotDlg, IDC_IMPORT), FALSE);
+                SetBuildSelection(app, -2);
+                DrawBuildSelHull(app, hwnd, NULL, -1, NULL);
+                if (!app.lpui->lpshdefBuild) {
+                    ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(app.lpui->hwndSlotDlg, IDC_DELETE), 0);
+                    ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(app.lpui->hwndSlotDlg, IDC_EDIT), 0);
+                    ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(app.lpui->hwndSlotDlg, IDC_IMPORT), 0);
                 }
-                if (gd.fTutorial) {
-                    PresentationIO().pfnTutor();
+                if (app.state.gd.fTutorial) {
+                    PresentationIO().pfnTutor(app);
                 }
                 break;
             }
         } else if (LOWORD(wParam) == IDC_DESIGNER_COMPONENT_LIST) {
             if (HIWORD(wParam) == 1) {
-                SetBuildSelection(-1);
+                SetBuildSelection(app, -1);
             }
         } else if (LOWORD(wParam) == IDC_DELETE) {
             if (HIWORD(wParam) != 0)
                 break;
-            fProgress = FALSE;
+            fProgress = 0;
             cshQueued = 0;
-            if (gd.fTutorial && !FTutorialEnabledShipBuilder(tutsbDelete))
+            if (app.state.gd.fTutorial && !FTutorialEnabledShipBuilder(app, tutsbDelete))
                 break;
             hwndItem = ControlIO().pfnGetDlgItem(hwnd, IDC_COMBOBOX);
-            lSel = ControlIO().pfnLUiSendMessage(hwndItem, CB_GETCURSEL, 0, 0);
-            lpshdef = NthValidShdef(LOWORD(lSel));
+            lSel = ControlIO().pfnSendMessage(hwndItem, win32::CB_GETCURSEL, 0, 0);
+            lpshdef = NthValidShdef(app, LOWORD(lSel));
             if (lSel < 0 || !lpshdef)
                 break;
-            if (fStarbaseMode && lSel == 0 && RaceQueryIO().pfnStat(&rgplr[idPlayer], rsMajorAdv) == raMacintosh)
+            if (app.state.fStarbaseMode && lSel == 0 && RaceQueryIO().pfnStat(&app.state.rgplr[app.state.idPlayer], rsMajorAdv) == raMacintosh)
                 break;
-            if (!FCheckQueuedShip(hwnd, lpshdef, FALSE))
+            if (!FCheckQueuedShip(app, hwnd, lpshdef, 0))
                 break;
-            lpshdef->fFree = TRUE;
+            lpshdef->fFree = 1;
             lpshdef->cBuilt = 0;
             lpshdef->cExist = 0;
-            if (fStarbaseMode) {
-                rgplr[idPlayer].cshdefSB += 15;
+            if (app.state.fStarbaseMode) {
+                app.state.rgplr[app.state.idPlayer].cshdefSB += 15;
             } else {
-                rgplr[idPlayer].cShDef--;
+                app.state.rgplr[app.state.idPlayer].cShDef--;
             }
-            LogChangeShDef(lpshdef);
-            FillBuildDD(hwndItem, mdBuild);
-            lpshdefBuild = NthValidShdef(0);
-            if ((fStarbaseMode && RaceQueryIO().pfnStat(&rgplr[idPlayer], rsMajorAdv) == raMacintosh) || !lpshdefBuild) {
-                ControlIO().pfnFUiEnableWindow(ControlIO().pfnGetDlgItem(hwndSlotDlg, IDC_DELETE), FALSE);
-                ControlIO().pfnFUiEnableWindow(ControlIO().pfnGetDlgItem(hwndSlotDlg, IDC_EDIT), FALSE);
-                if (!lpshdefBuild) {
-                    ControlIO().pfnFUiEnableWindow(ControlIO().pfnGetDlgItem(hwndSlotDlg, IDC_IMPORT), FALSE);
+            LogChangeShDef(app, lpshdef);
+            FillBuildDD(app, hwndItem, app.lpui->mdBuild);
+            app.lpui->lpshdefBuild = NthValidShdef(app, 0);
+            if ((app.state.fStarbaseMode && RaceQueryIO().pfnStat(&app.state.rgplr[app.state.idPlayer], rsMajorAdv) == raMacintosh) || !app.lpui->lpshdefBuild) {
+                ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(app.lpui->hwndSlotDlg, IDC_DELETE), 0);
+                ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(app.lpui->hwndSlotDlg, IDC_EDIT), 0);
+                if (!app.lpui->lpshdefBuild) {
+                    ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(app.lpui->hwndSlotDlg, IDC_IMPORT), 0);
                 }
             }
-            UpdateSlotGlobals();
+            UpdateSlotGlobals(app);
             ControlIO().pfnGetClientRect(hwnd, &rc);
             rc.left = rc.right >> 1 >= rc.right - 352 ? rc.right - 352 : rc.right >> 1;
-            ControlIO().pfnInvalidateRect(hwnd, &rc, TRUE);
-            if (fHullCopy)
+            ControlIO().pfnInvalidateRect(hwnd, &rc, 1);
+            if (app.lpui->fHullCopy)
                 goto LRestart;
         } else if (LOWORD(wParam) == IDC_IMPORT) {
             if (HIWORD(wParam) == 0) {
-                if (gd.fTutorial && !FTutorialEnabledShipBuilder(tutsbCopy))
+                if (app.state.gd.fTutorial && !FTutorialEnabledShipBuilder(app, tutsbCopy))
                     break;
                 hwndItem = ControlIO().pfnGetDlgItem(hwnd, IDC_COMBOBOX);
-                lSel = ControlIO().pfnLUiSendMessage(hwndItem, CB_GETCURSEL, 0, 0);
+                lSel = ControlIO().pfnSendMessage(hwndItem, win32::CB_GETCURSEL, 0, 0);
                 if (lSel < 0)
                     break;
-                if (fStarbaseMode) {
-                    for (i = 0; i < 10 && rglpshdefSB[idPlayer][i].fFree == 0; i++) {
+                if (app.state.fStarbaseMode) {
+                    for (i = 0; i < 10 && app.state.rglpshdefSB[app.state.idPlayer][i].fFree == 0; i++) {
                     }
                 } else {
-                    for (i = 0; i < 16 && rgshdef[i].fFree == 0; i++) {
+                    for (i = 0; i < 16 && app.state.rgshdef[i].fFree == 0; i++) {
                     }
                 }
-                if (mdBuild == mdBuildShdef || mdBuild == mdBuildEnemyShdef) {
-                    if (mdBuild == mdBuildShdef) {
-                        lpshdef = NthValidShdef(LOWORD(lSel));
+                if (app.lpui->mdBuild == mdBuildShdef || app.lpui->mdBuild == mdBuildEnemyShdef) {
+                    if (app.lpui->mdBuild == mdBuildShdef) {
+                        lpshdef = NthValidShdef(app, LOWORD(lSel));
                         if (lpshdef->fGift)
                             goto LStripDown;
                     } else {
-                        lpshdef = NthValidEnemyShdef(LOWORD(lSel));
+                        lpshdef = NthValidEnemyShdef(app, LOWORD(lSel));
                     LStripDown:
-                        if (fStarbaseMode) {
+                        if (app.state.fStarbaseMode) {
                             part.hs.grhst = hstSBHull;
                             part.hs.iItem = lpshdef->hul.ihuldef - ihuldefOrbitalFort;
                         } else {
                             part.hs.grhst = hstHull;
                             part.hs.iItem = lpshdef->hul.ihuldef;
                         }
-                        if (PartQueryIO().pfnLookup(&part) != mdPartAvailAvailable) {
-                            AlertIO().pfnAlertSz(TextIO().pfnFormat(idsCantCopyShipDesignBecauseCantBuild, NULL), MB_ICONHAND);
+                        if (PartQueryIO().pfnLookup(app, &part) != mdPartAvailAvailable) {
+                            AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsCantCopyShipDesignBecauseCantBuild, NULL), win32::MB_ICONHAND);
                             return 0;
                         }
                     }
                     if (lSel < 0 || !lpshdef) {
                         return 0;
                     }
-                    if (fStarbaseMode) {
-                        rglpshdefSB[idPlayer][i] = *lpshdef;
-                        lpshdef = rglpshdefSB[idPlayer] + i;
+                    if (app.state.fStarbaseMode) {
+                        app.state.rglpshdefSB[app.state.idPlayer][i] = *lpshdef;
+                        lpshdef = app.state.rglpshdefSB[app.state.idPlayer] + i;
                     } else {
-                        rgshdef[i] = *lpshdef;
-                        lpshdef = &rgshdef[i];
+                        app.state.rgshdef[i] = *lpshdef;
+                        lpshdef = &app.state.rgshdef[i];
                     }
                     lpshdef->cExist = 0;
                     lpshdef->cBuilt = 0;
-                    if (mdBuild == mdBuildShdef && !lpshdef->fGift) {
-                        MakeNewName(lpshdef->hul.szClass);
+                    if (app.lpui->mdBuild == mdBuildShdef && !lpshdef->fGift) {
+                        MakeNewName(app, lpshdef->hul.szClass);
                     } else {
-                        lpshdef->fGift = FALSE;
+                        lpshdef->fGift = 0;
                         for (j = 0; j < lpshdef->hul.chs; j++) {
                             if (lpshdef->hul.rghs[j].cItem > 0) {
                                 part.hs = lpshdef->hul.rghs[j];
-                                if (PartQueryIO().pfnLookup(&part) != mdPartAvailAvailable) {
+                                if (PartQueryIO().pfnLookup(app, &part) != mdPartAvailAvailable) {
                                     lpshdef->hul.rghs[j].cItem = 0;
                                 }
                             }
                         }
                     }
                 } else {
-                    if (fStarbaseMode) {
+                    if (app.state.fStarbaseMode) {
                         part.hs.grhst = hstSBHull;
                     } else {
                         part.hs.grhst = hstHull;
                     }
-                    for (j = 0; j < (!fStarbaseMode ? 32 : 5); j++) {
+                    for (j = 0; j < (!app.state.fStarbaseMode ? 32 : 5); j++) {
                         part.hs.iItem = j;
-                        if (PartQueryIO().pfnLookup(&part) == mdPartAvailAvailable && lSel-- <= 0)
+                        if (PartQueryIO().pfnLookup(app, &part) == mdPartAvailAvailable && lSel-- <= 0)
                             break;
                     }
-                    if (fStarbaseMode) {
-                        lpshdef = rglpshdefSB[idPlayer] + i;
+                    if (app.state.fStarbaseMode) {
+                        lpshdef = app.state.rglpshdefSB[app.state.idPlayer] + i;
                         j += 32;
                     } else {
-                        lpshdef = &rgshdef[i];
+                        lpshdef = &app.state.rgshdef[i];
                     }
                     memset(lpshdef, 0, sizeof(SHDEF));
                     lpshdef->hul = PartQueryIO().pfnHull(j)->hul;
                     lpshdef->det = detAll;
                     memset(lpshdef->hul.rghs, 0, 64);
                 }
-                CheckRadioButton(hwnd, IDC_DESIGNER_EXISTING, IDC_DESIGNER_COMPONENTS, IDC_DESIGNER_EXISTING);
-                lpshdef->turn = game.turn;
-                lpshdef->ishdef = (!fStarbaseMode ? 0 : 16) + i;
-                UpdateShdefCost(lpshdef);
-                if (fStarbaseMode) {
-                    rgplr[idPlayer].cshdefSB++;
+                win32::CheckRadioButton(hwnd, IDC_DESIGNER_EXISTING, IDC_DESIGNER_COMPONENTS, IDC_DESIGNER_EXISTING);
+                lpshdef->turn = app.state.game.turn;
+                lpshdef->ishdef = (!app.state.fStarbaseMode ? 0 : 16) + i;
+                UpdateShdefCost(app, lpshdef);
+                if (app.state.fStarbaseMode) {
+                    app.state.rgplr[app.state.idPlayer].cshdefSB++;
                 } else {
-                    rgplr[idPlayer].cShDef++;
+                    app.state.rgplr[app.state.idPlayer].cShDef++;
                 }
-                LogChangeShDef(lpshdef);
-                FillBuildDD(hwndItem, mdBuild);
-                ControlIO().pfnLUiSendMessage(hwndItem, CB_SETCURSEL, i, 0);
-                ControlIO().pfnFUiEnableWindow(ControlIO().pfnGetDlgItem(hwndSlotDlg, IDC_EDIT), TRUE);
-                lpshdefBuild = lpshdef;
-                UpdateSlotGlobals();
-                fHullCopy = TRUE;
+                LogChangeShDef(app, lpshdef);
+                FillBuildDD(app, hwndItem, app.lpui->mdBuild);
+                ControlIO().pfnSendMessage(hwndItem, win32::CB_SETCURSEL, i, 0);
+                ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(app.lpui->hwndSlotDlg, IDC_EDIT), 1);
+                app.lpui->lpshdefBuild = lpshdef;
+                UpdateSlotGlobals(app);
+                app.lpui->fHullCopy = 1;
                 goto EditDesign;
-            } else if (gd.fTutorial) {
-                PresentationIO().pfnTutor();
+            } else if (app.state.gd.fTutorial) {
+                PresentationIO().pfnTutor(app);
             }
         } else if (LOWORD(wParam) == IDC_EDIT) {
-            if (gd.fTutorial && !FTutorialEnabledShipBuilder(tutsbEdit))
+            if (app.state.gd.fTutorial && !FTutorialEnabledShipBuilder(app, tutsbEdit))
                 break;
-            if (fStarbaseMode && lpshdefBuild->ishdef == 16 && RaceQueryIO().pfnStat(&rgplr[idPlayer], rsMajorAdv) == raMacintosh)
+            if (app.state.fStarbaseMode && app.lpui->lpshdefBuild->ishdef == 16 && RaceQueryIO().pfnStat(&app.state.rgplr[app.state.idPlayer], rsMajorAdv) == raMacintosh)
                 break;
             hwndItem = ControlIO().pfnGetDlgItem(hwnd, IDC_COMBOBOX);
-            lSel = ControlIO().pfnLUiSendMessage(hwndItem, CB_GETCURSEL, 0, 0);
-            lpshdef = NthValidShdef(LOWORD(lSel));
+            lSel = ControlIO().pfnSendMessage(hwndItem, win32::CB_GETCURSEL, 0, 0);
+            lpshdef = NthValidShdef(app, LOWORD(lSel));
             if (lSel < 0 || !lpshdef)
                 break;
-            if (!fStarbaseMode && !FCheckQueuedShip(hwnd, lpshdef, TRUE))
+            if (!app.state.fStarbaseMode && !FCheckQueuedShip(app, hwnd, lpshdef, 1))
                 break;
         EditDesign:
-            if (!lpshdefBuild)
+            if (!app.lpui->lpshdefBuild)
                 break;
-            ControlIO().pfnInvalidateRect(hwnd, NULL, TRUE);
-            mdBuild = mdBuildEdit;
-            ishdefBuild = lpshdefBuild->ishdef;
-            shdefBuild = *lpshdefBuild;
-            lpshdefBuild = &shdefBuild;
-            FillBuildPartsLB(ControlIO().pfnGetDlgItem(hwnd, IDC_DESIGNER_COMPONENT_LIST), !fStarbaseMode ? 6655 : 2620);
-            FillBuildDD(ControlIO().pfnGetDlgItem(hwnd, IDC_COMBOBOX), mdBuild);
-            ShowMainControls(hwnd, SW_HIDE);
-            ControlIO().pfnFUiSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_DESIGNER_COMPONENT_LIST), NULL, 16, 32, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW);
-            ControlIO().pfnFUiSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_COMBOBOX), NULL, 16, 8, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW);
-            ControlIO().pfnFUiSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_EDITNAME), NULL, ptslotGlob.x - 264, 8, 240, 3 * dyArial8 >> 1, SWP_NOZORDER | SWP_SHOWWINDOW);
-            ControlIO().pfnFUiSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_EDITNAME), shdefBuild.hul.szClass);
-            ControlIO().pfnLUiSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_EDITNAME), EM_LIMITTEXT, 0x1f, 0);
-            if (gd.fTutorial) {
-                PresentationIO().pfnTutor();
+            ControlIO().pfnInvalidateRect(hwnd, NULL, 1);
+            app.lpui->mdBuild = mdBuildEdit;
+            app.lpui->ishdefBuild = app.lpui->lpshdefBuild->ishdef;
+            app.state.shdefBuild = *app.lpui->lpshdefBuild;
+            app.lpui->lpshdefBuild = &app.state.shdefBuild;
+            FillBuildPartsLB(app, ControlIO().pfnGetDlgItem(hwnd, IDC_DESIGNER_COMPONENT_LIST), !app.state.fStarbaseMode ? 6655 : 2620);
+            FillBuildDD(app, ControlIO().pfnGetDlgItem(hwnd, IDC_COMBOBOX), app.lpui->mdBuild);
+            ShowMainControls(app, hwnd, win32::SW_HIDE);
+            ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_DESIGNER_COMPONENT_LIST), NULL, 16, 32, 0, 0, win32::SWP_NOSIZE | win32::SWP_NOZORDER | win32::SWP_SHOWWINDOW);
+            ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_COMBOBOX), NULL, 16, 8, 0, 0, win32::SWP_NOSIZE | win32::SWP_NOZORDER | win32::SWP_SHOWWINDOW);
+            ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_EDITNAME), NULL, app.lpui->ptslotGlob.x - 264, 8, 240, 3 * app.state.dyArial8 >> 1, win32::SWP_NOZORDER | win32::SWP_SHOWWINDOW);
+            ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_EDITNAME), app.state.shdefBuild.hul.szClass);
+            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_EDITNAME), win32::EM_LIMITTEXT, 0x1f, 0);
+            if (app.state.gd.fTutorial) {
+                PresentationIO().pfnTutor(app);
             }
         } else if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL) {
-            if (mdBuild == mdBuildEdit) {
+            if (app.lpui->mdBuild == mdBuildEdit) {
                 lSel = 0;
                 if (LOWORD(wParam) == IDOK) {
-                    if (!fStarbaseMode && shdefBuild.hul.rghs[0].cItem == 0) {
-                        AlertIO().pfnAlertSz(TextIO().pfnFormat(idsShipDesignDoesHaveAnyEnginesMust, NULL), MB_ICONHAND);
+                    if (!app.state.fStarbaseMode && app.state.shdefBuild.hul.rghs[0].cItem == 0) {
+                        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsShipDesignDoesHaveAnyEnginesMust, NULL), win32::MB_ICONHAND);
                         return 0;
                     }
-                    if (gd.fTutorial && !FTutorialEnabledShipBuilder(tutsbAccept)) {
+                    if (app.state.gd.fTutorial && !FTutorialEnabledShipBuilder(app, tutsbAccept)) {
                         break;
                     }
-                    ControlIO().pfnGetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_EDITNAME), shdefBuild.hul.szClass, 32);
-                    shdefBuild.cBuilt = 0;
-                    shdefBuild.cExist = 0;
-                    shdefBuild.fFree = FALSE;
-                    UpdateShdefCost(&shdefBuild);
-                    if (fStarbaseMode) {
-                        ishdefBuild -= 16;
-                        rglpshdefSB[idPlayer][ishdefBuild] = shdefBuild;
-                        LogChangeShDef(&shdefBuild);
-                        for (i = 0; i < ishdefBuild; i++) {
-                            if (!rglpshdefSB[idPlayer][i].fFree) {
+                    ControlIO().pfnGetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_EDITNAME), app.state.shdefBuild.hul.szClass, 32);
+                    app.state.shdefBuild.cBuilt = 0;
+                    app.state.shdefBuild.cExist = 0;
+                    app.state.shdefBuild.fFree = 0;
+                    UpdateShdefCost(app, &app.state.shdefBuild);
+                    if (app.state.fStarbaseMode) {
+                        app.lpui->ishdefBuild -= 16;
+                        app.state.rglpshdefSB[app.state.idPlayer][app.lpui->ishdefBuild] = app.state.shdefBuild;
+                        LogChangeShDef(app, &app.state.shdefBuild);
+                        for (i = 0; i < app.lpui->ishdefBuild; i++) {
+                            if (!app.state.rglpshdefSB[app.state.idPlayer][i].fFree) {
                                 lSel++;
                             }
                         }
-                        ishdefBuild += 16;
+                        app.lpui->ishdefBuild += 16;
                     } else {
-                        rgshdef[ishdefBuild] = shdefBuild;
-                        LogChangeShDef(&rgshdef[ishdefBuild]);
-                        for (i = 0; i < ishdefBuild; i++) {
-                            if (!rgshdef[i].fFree) {
+                        app.state.rgshdef[app.lpui->ishdefBuild] = app.state.shdefBuild;
+                        LogChangeShDef(app, &app.state.rgshdef[app.lpui->ishdefBuild]);
+                        for (i = 0; i < app.lpui->ishdefBuild; i++) {
+                            if (!app.state.rgshdef[i].fFree) {
                                 lSel++;
                             }
                         }
                     }
-                } else if (gd.fTutorial && !FTutorialEnabledShipBuilder(tutsbCancelEdit)) {
+                } else if (app.state.gd.fTutorial && !FTutorialEnabledShipBuilder(app, tutsbCancelEdit)) {
                     break;
                 }
-                ControlIO().pfnInvalidateRect(hwnd, NULL, TRUE);
-                ShowMainControls(hwnd, SW_SHOW);
-                FUiShowWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_EDITNAME), SW_HIDE);
+                ControlIO().pfnInvalidateRect(hwnd, NULL, 1);
+                ShowMainControls(app, hwnd, win32::SW_SHOW);
+                ui::ShowWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_EDITNAME), win32::SW_HIDE);
                 hwndItem = ControlIO().pfnGetDlgItem(hwnd, IDC_DESIGNER_COMPONENT_LIST);
-                FillBuildPartsLB(hwndItem, !fStarbaseMode ? rggrbitParts[0] : rggrbitPartsSB[0]);
-                ControlIO().pfnFUiSetWindowPos(hwndItem, NULL, ptslotGlob.x - 256, 32, 240, 266, SWP_NOZORDER);
-                FUiShowWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_DESIGNER_COMPONENT_LIST), SW_HIDE);
-                if (fHullCopy) {
-                    if (LOWORD(wParam) != IDCANCEL && !fStarbaseMode && lpshdefBuild->hul.rghs[0].cItem == 0) {
+                FillBuildPartsLB(app, hwndItem, !app.state.fStarbaseMode ? rggrbitParts[0] : rggrbitPartsSB[0]);
+                ControlIO().pfnSetWindowPos(hwndItem, NULL, app.lpui->ptslotGlob.x - 256, 32, 240, 266, win32::SWP_NOZORDER);
+                ui::ShowWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_DESIGNER_COMPONENT_LIST), win32::SW_HIDE);
+                if (app.lpui->fHullCopy) {
+                    if (LOWORD(wParam) != IDCANCEL && !app.state.fStarbaseMode && app.lpui->lpshdefBuild->hul.rghs[0].cItem == 0) {
                         wParam = IDCANCEL;
                     }
                     if (LOWORD(wParam) == IDCANCEL) {
-                        if (fStarbaseMode) {
-                            shdefBuild.fFree = TRUE;
-                            rglpshdefSB[idPlayer][ishdefBuild - 16] = shdefBuild;
-                            rgplr[idPlayer].cshdefSB += 15;
-                            LogChangeShDef(&shdefBuild);
+                        if (app.state.fStarbaseMode) {
+                            app.state.shdefBuild.fFree = 1;
+                            app.state.rglpshdefSB[app.state.idPlayer][app.lpui->ishdefBuild - 16] = app.state.shdefBuild;
+                            app.state.rgplr[app.state.idPlayer].cshdefSB += 15;
+                            LogChangeShDef(app, &app.state.shdefBuild);
                         } else {
-                            rgshdef[ishdefBuild].fFree = TRUE;
-                            rgplr[idPlayer].cShDef--;
-                            LogChangeShDef(&rgshdef[ishdefBuild]);
+                            app.state.rgshdef[app.lpui->ishdefBuild].fFree = 1;
+                            app.state.rgplr[app.state.idPlayer].cShDef--;
+                            LogChangeShDef(app, &app.state.rgshdef[app.lpui->ishdefBuild]);
                         }
                     }
                 }
                 wParam = IDC_DESIGNER_EXISTING;
                 goto LRestart;
             } else {
-                SetBuildSelection(-2);
-                ControlIO().pfnStickyDlgPos(hwnd, &ptStickySlotDlg, FALSE);
-                hwndSlotDlg = 0;
+                SetBuildSelection(app, -2);
+                ControlIO().pfnStickyDlgPos(hwnd, &app.lpui->ptStickySlotDlg, 0);
+                app.lpui->hwndSlotDlg = 0;
                 ControlIO().pfnEndDialog(hwnd, LOWORD(wParam) == IDOK);
-                if (gd.fTutorial) {
-                    PresentationIO().pfnTutor();
+                if (app.state.gd.fTutorial) {
+                    PresentationIO().pfnTutor(app);
                 }
                 return 1;
             }
         } else if (LOWORD(wParam) == IDC_HELP) {
-            WinHelp(hwnd, szHelpFile, HELP_CONTEXT, (uint32_t)(mdBuild == mdBuildEdit ? 3039 : 1066));
+            win32::WinHelpA(hwnd, app.lpui->szHelpFile, win32::HELP_CONTEXT, (uint32_t)(app.lpui->mdBuild == mdBuildEdit ? 3039 : 1066));
             return 1;
         }
         break;
@@ -609,7 +613,7 @@ INT_PTR CALLBACK SlotDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) 
     return 0;
 }
 
-void DrawSlotDlg(HWND hwnd, HDC hdc, RECT *prc, int16_t iDraw) {
+void DrawSlotDlg(APPSESSION &app, HWND hwnd, HDC hdc, RECT *prc, int16_t iDraw) {
     int16_t  yTop;
     int16_t  iMax;
     int16_t  cSlot;
@@ -631,40 +635,40 @@ void DrawSlotDlg(HWND hwnd, HDC hdc, RECT *prc, int16_t iDraw) {
     HBRUSH   hbrSav;
     COLORREF crBkSav;
 
-    fCreatedDC = FALSE;
-    if (mdBuild != mdBuildComp && lpshdefBuild) {
-        lphuldef = PartQueryIO().pfnHull(lpshdefBuild->hul.ihuldef);
+    fCreatedDC = 0;
+    if (app.lpui->mdBuild != mdBuildComp && app.lpui->lpshdefBuild) {
+        lphuldef = PartQueryIO().pfnHull(app.lpui->lpshdefBuild->hul.ihuldef);
         cSlot = lphuldef->hul.chs;
         if (!hdc) {
-            fCreatedDC = TRUE;
-            hdc = GetDC(hwnd);
+            fCreatedDC = 1;
+            hdc = win32::GetDC(hwnd);
         }
-        if (!hwndSlotDlg) {
+        if (!app.lpui->hwndSlotDlg) {
             xLeft = 4;
             yTop = 6;
         } else {
-            xLeft = ptslotGlob.x - 338;
+            xLeft = app.lpui->ptslotGlob.x - 338;
             yTop = 6;
         }
-        DrawFleetBitmap(NULL, hdc, xLeft, yTop, TRUE, lpshdefBuild->hul.ibmp, 0, FALSE, -1, 0);
-        hdcMem = CreateCompatibleDC(hdc);
-        hbmpSav = (HBITMAP)SelectObject(hdcMem, hbmpScanner);
+        DrawFleetBitmap(app, NULL, hdc, xLeft, yTop, 1, app.lpui->lpshdefBuild->hul.ibmp, 0, 0, -1, 0);
+        hdcMem = win32::CreateCompatibleDC(hdc);
+        hbmpSav = (HBITMAP)win32::SelectObject(hdcMem, app.lpui->hbmpScanner);
         iInventSel = 0;
-        if (mdBuild != mdBuildEdit) {
-            rgrcBuildSpin[1].top = -5;
-            rgrcBuildSpin[0].top = -5;
-            rgrcBuildSpin[1].bottom = -6;
-            rgrcBuildSpin[0].bottom = -6;
+        if (app.lpui->mdBuild != mdBuildEdit) {
+            app.lpui->rgrcBuildSpin[1].top = -5;
+            app.lpui->rgrcBuildSpin[0].top = -5;
+            app.lpui->rgrcBuildSpin[1].bottom = -6;
+            app.lpui->rgrcBuildSpin[0].bottom = -6;
         } else {
-            SetRect(rgrcBuildSpin, xLeft + 21, yTop + 69, xLeft + 35, yTop + 83);
-            rgrcBuildSpin[1] = rgrcBuildSpin[0];
-            OffsetRect(&rgrcBuildSpin[1], 14, 0);
+            win32::SetRect(app.lpui->rgrcBuildSpin, xLeft + 21, yTop + 69, xLeft + 35, yTop + 83);
+            app.lpui->rgrcBuildSpin[1] = app.lpui->rgrcBuildSpin[0];
+            win32::OffsetRect(&app.lpui->rgrcBuildSpin[1], 14, 0);
             for (i = 0; i < 2; i++) {
-                DrawBtn(hdc, &rgrcBuildSpin[i], (i == 0 ? 2 : 3) | 0x20, FALSE, NULL);
+                DrawBtn(app, hdc, &app.lpui->rgrcBuildSpin[i], (i == 0 ? 2 : 3) | 0x20, 0, NULL);
             }
         }
-        SelectObject(hdc, rghfontArial8[1]);
-        bkMode = SetBkMode(hdc, TRANSPARENT);
+        win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
+        bkMode = win32::SetBkMode(hdc, win32::TRANSPARENT);
         if (iDraw == -1) {
             i = 0;
             iMax = cSlot;
@@ -673,112 +677,112 @@ void DrawSlotDlg(HWND hwnd, HDC hdc, RECT *prc, int16_t iDraw) {
             iMax = iDraw + 1;
         }
         if (lphuldef->hul.wtCargoMax != 0) {
-            rc = rcCargo;
-            if (fStarbaseMode && (lphuldef->hul.ihuldef == ihuldefSpaceDock || lphuldef->hul.ihuldef == ihuldefDeathStart)) {
-                hbrSav = (HBRUSH)SelectObject(hdc, hbrDock);
-                hpenSav = (HPEN)SelectObject(hdc, GetStockObject(BLACK_PEN));
-                Ellipse(hdc, rc.left - 12, rc.top - 12, rc.right + 12, rc.bottom + 12);
-                SelectObject(hdc, hpenSav);
-                SelectObject(hdc, hbrSav);
+            rc = app.lpui->rcCargo;
+            if (app.state.fStarbaseMode && (lphuldef->hul.ihuldef == ihuldefSpaceDock || lphuldef->hul.ihuldef == ihuldefDeathStart)) {
+                hbrSav = (HBRUSH)win32::SelectObject(hdc, app.lpui->hbrDock);
+                hpenSav = (HPEN)win32::SelectObject(hdc, win32::GetStockObject(win32::BLACK_PEN));
+                win32::Ellipse(hdc, rc.left - 12, rc.top - 12, rc.right + 12, rc.bottom + 12);
+                win32::SelectObject(hdc, hpenSav);
+                win32::SelectObject(hdc, hbrSav);
             } else {
-                FillRect(hdc, &rcCargo, (HBRUSH)GetStockObject(BLACK_BRUSH));
+                win32::FillRect(hdc, &app.lpui->rcCargo, (HBRUSH)win32::GetStockObject(win32::BLACK_BRUSH));
                 rc.top++;
                 rc.bottom--;
                 rc.left++;
                 rc.right--;
-                FillRect(hdc, &rc, !fStarbaseMode ? hbrCargo : hbrDock);
+                win32::FillRect(hdc, &rc, !app.state.fStarbaseMode ? app.lpui->hbrCargo : app.lpui->hbrDock);
             }
             rc.bottom = (int16_t)(rc.bottom - rc.top) / 2 + rc.top;
-            if (!fStarbaseMode) {
-                RcCtrTextOut(hdc, &rc, TextIO().pfnCompressed(idsCargo3), 0);
-                c = wsprintf(szWork, PCTDKT, WtMaxShdefStat(lpshdefBuild, 2));
-                RcCtrTextOut(hdc, &rcCargo, szWork, 0);
+            if (!app.state.fStarbaseMode) {
+                RcCtrTextOut(app, hdc, &rc, TextIO().pfnCompressed(app, idsCargo3), 0);
+                c = win32::wsprintfA(app.state.szWork, app.lpui->PCTDKT, WtMaxShdefStat(app.lpui->lpshdefBuild, 2));
+                RcCtrTextOut(app, hdc, &app.lpui->rcCargo, app.state.szWork, 0);
             } else {
                 if ((uint32_t)lphuldef->hul.wtCargoMax == 0xffff) {
-                    RcCtrTextOut(hdc, &rc, TextIO().pfnCompressed(idsUnlimited), 0);
+                    RcCtrTextOut(app, hdc, &rc, TextIO().pfnCompressed(app, idsUnlimited), 0);
                 } else {
-                    c = wsprintf(szWork, PCTDKT, lphuldef->hul.wtCargoMax);
-                    RcCtrTextOut(hdc, &rc, szWork, 0);
+                    c = win32::wsprintfA(app.state.szWork, app.lpui->PCTDKT, lphuldef->hul.wtCargoMax);
+                    RcCtrTextOut(app, hdc, &rc, app.state.szWork, 0);
                 }
-                RcCtrTextOut(hdc, &rcCargo, TextIO().pfnCompressed(idsSpace), 0);
+                RcCtrTextOut(app, hdc, &app.lpui->rcCargo, TextIO().pfnCompressed(app, idsSpace), 0);
             }
             rc.top = rc.bottom;
-            rc.bottom = rcCargo.bottom - 1;
-            if (fStarbaseMode) {
-                RcCtrTextOut(hdc, &rc, TextIO().pfnCompressed(idsDock), 0);
+            rc.bottom = app.lpui->rcCargo.bottom - 1;
+            if (app.state.fStarbaseMode) {
+                RcCtrTextOut(app, hdc, &rc, TextIO().pfnCompressed(app, idsDock), 0);
             } else {
-                RcCtrTextOut(hdc, &rc, TextIO().pfnCompressed(idsMax), 0);
+                RcCtrTextOut(app, hdc, &rc, TextIO().pfnCompressed(app, idsMax), 0);
             }
         }
         for (; i < iMax; i++) {
-            FillRect(hdc, &vrgrcSlot[i], hbr50Screen);
-            cItem = lpshdefBuild->hul.rghs[i].cItem;
+            win32::FillRect(hdc, &app.lpui->vrgrcSlot[i], app.lpui->hbr50Screen);
+            cItem = app.lpui->lpshdefBuild->hul.rghs[i].cItem;
             if (cItem > 0) {
-                part.hs = lpshdefBuild->hul.rghs[i];
-                PartQueryIO().pfnLookup(&part);
+                part.hs = app.lpui->lpshdefBuild->hul.rghs[i];
+                PartQueryIO().pfnLookup(app, &part);
                 ibmp = part.pcom().ibmp();
                 iInventSel = ibmp >> 5;
-                DibBlt(hdc, vrgrcSlot[i].left, vrgrcSlot[i].top, 64, 64, rghdibInventory[iInventSel], (ibmp & 7) * 0x40, (3 - (ibmp >> 3 & 3)) * 0x40, 64, 64,
+                DibBlt(hdc, app.lpui->vrgrcSlot[i].left, app.lpui->vrgrcSlot[i].top, 64, 64, app.lpui->rghdibInventory[iInventSel], (ibmp & 7) * 0x40, (3 - (ibmp >> 3 & 3)) * 0x40, 64, 64,
                        13369376);
-                if (mdBuild != mdBuildEdit) {
-                    SelectObject(hdcMem, hbmpScanner);
+                if (app.lpui->mdBuild != mdBuildEdit) {
+                    win32::SelectObject(hdcMem, app.lpui->hbmpScanner);
                     for (j = 0; j < 4; j++) {
-                        BitBlt(hdc, (j >= 2 ? 57 : 3) + vrgrcSlot[i].left, (!(j & 1) ? 57 : 3) + vrgrcSlot[i].top, 4, 4, hdcMem, 22, 33, SRCCOPY);
+                        win32::BitBlt(hdc, (j >= 2 ? 57 : 3) + app.lpui->vrgrcSlot[i].left, (!(j & 1) ? 57 : 3) + app.lpui->vrgrcSlot[i].top, 4, 4, hdcMem, 22, 33, win32::SRCCOPY);
                     }
                 }
                 if (cItem == 1 && lphuldef->hul.rghs[i].cItem == 1 && part.hs.grhst == hstSpecialSB) {
-                    szWork[0] = 0;
+                    app.state.szWork[0] = 0;
                     c = 0;
                 } else {
-                    c = wsprintf(szWork, TextIO().pfnCompressed(idsDD), cItem, lphuldef->hul.rghs[i].cItem);
+                    c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDD), cItem, lphuldef->hul.rghs[i].cItem);
                 }
             } else {
-                SelectObject(hdcMem, hbmpBackBld);
-                ibmp = IEmptyBmpFromGrhst(lphuldef->hul.rghs[i].grhst);
-                BitBlt(hdc, vrgrcSlot[i].left, vrgrcSlot[i].top, 64, 64, hdcMem, (ibmp & 7) * 0x40, (ibmp >> 3 & 3) * 0x40, SRCCOPY);
+                win32::SelectObject(hdcMem, app.lpui->hbmpBackBld);
+                ibmp = IEmptyBmpFromGrhst(app, lphuldef->hul.rghs[i].grhst);
+                win32::BitBlt(hdc, app.lpui->vrgrcSlot[i].left, app.lpui->vrgrcSlot[i].top, 64, 64, hdcMem, (ibmp & 7) * 0x40, (ibmp >> 3 & 3) * 0x40, win32::SRCCOPY);
                 iInventSel = -1;
                 if (lphuldef->hul.rghs[i].grhst & hstEngine) {
-                    c = wsprintf(szWork, TextIO().pfnCompressed(idsNeedsD), lphuldef->hul.rghs[i].cItem);
+                    c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsNeedsD), lphuldef->hul.rghs[i].cItem);
                 } else {
-                    c = wsprintf(szWork, TextIO().pfnCompressed(idsD3), lphuldef->hul.rghs[i].cItem);
+                    c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsD3), lphuldef->hul.rghs[i].cItem);
                 }
             }
-            CtrTextOut(hdc, vrgrcSlot[i].left + 32, vrgrcSlot[i].bottom - dyArial6 - 4, szWork, c);
-            if (iselSlot == i) {
-                crBkSav = SetBkColor(hdc, 0xffffff);
-                FrameRect(hdc, &vrgrcSlot[i], hbr50Screen);
-                ExpandRc(&vrgrcSlot[i], -1, -1);
-                FrameRect(hdc, &vrgrcSlot[i], hbr50Screen);
-                ExpandRc(&vrgrcSlot[i], 1, 1);
-                SetBkColor(hdc, crBkSav);
+            CtrTextOut(hdc, app.lpui->vrgrcSlot[i].left + 32, app.lpui->vrgrcSlot[i].bottom - app.lpui->dyArial6 - 4, app.state.szWork, c);
+            if (app.lpui->iselSlot == i) {
+                crBkSav = win32::SetBkColor(hdc, 0xffffff);
+                win32::FrameRect(hdc, &app.lpui->vrgrcSlot[i], app.lpui->hbr50Screen);
+                ExpandRc(&app.lpui->vrgrcSlot[i], -1, -1);
+                win32::FrameRect(hdc, &app.lpui->vrgrcSlot[i], app.lpui->hbr50Screen);
+                ExpandRc(&app.lpui->vrgrcSlot[i], 1, 1);
+                win32::SetBkColor(hdc, crBkSav);
             }
         }
-        if ((!hwndPopup || !GlobalPD.fHideCounts) && mdBuild == mdBuildShdef) {
-            SetRect(&rc, ptPlaque.x, ptPlaque.y, ptPlaque.x + 60, ptPlaque.y + 30);
-            SelectPalette(hdc, vhpal, FALSE);
-            RealizePalette(hdc);
-            DibBlt(hdc, ptPlaque.x, ptPlaque.y, 60, 30, hdibPlaque, 0, 0, 60, 30, 13369376);
-            c = wsprintf(szWork, TextIO().pfnCompressed(idsLdLd), lpshdefBuild->cExist, lpshdefBuild->cBuilt);
-            SelectObject(hdc, rghfontArial8[1]);
-            if (LOWORD(GetTextExtent(hdc, szWork, c)) > 50) {
-                SelectObject(hdc, rghfontArial7[0]);
-                if (LOWORD(GetTextExtent(hdc, szWork, c)) > 50) {
-                    SelectObject(hdc, rghfontArial6[0]);
+        if ((!app.lpui->hwndPopup || !app.lpui->GlobalPD.fHideCounts) && app.lpui->mdBuild == mdBuildShdef) {
+            win32::SetRect(&rc, app.lpui->ptPlaque.x, app.lpui->ptPlaque.y, app.lpui->ptPlaque.x + 60, app.lpui->ptPlaque.y + 30);
+            win32::SelectPalette(hdc, app.lpui->vhpal, 0);
+            win32::RealizePalette(hdc);
+            DibBlt(hdc, app.lpui->ptPlaque.x, app.lpui->ptPlaque.y, 60, 30, app.lpui->hdibPlaque, 0, 0, 60, 30, 13369376);
+            c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsLdLd), app.lpui->lpshdefBuild->cExist, app.lpui->lpshdefBuild->cBuilt);
+            win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
+            if (LOWORD(GetTextExtent(hdc, app.state.szWork, c)) > 50) {
+                win32::SelectObject(hdc, app.lpui->rghfontArial7[0]);
+                if (LOWORD(GetTextExtent(hdc, app.state.szWork, c)) > 50) {
+                    win32::SelectObject(hdc, app.lpui->rghfontArial6[0]);
                 }
             }
-            RcCtrTextOut(hdc, &rc, szWork, c);
+            RcCtrTextOut(app, hdc, &rc, app.state.szWork, c);
         }
-        SetBkMode(hdc, bkMode);
-        SelectObject(hdcMem, hbmpSav);
-        DeleteDC(hdcMem);
+        win32::SetBkMode(hdc, bkMode);
+        win32::SelectObject(hdcMem, hbmpSav);
+        win32::DeleteDC(hdcMem);
         if (fCreatedDC) {
-            ReleaseDC(hwnd, hdc);
+            win32::ReleaseDC(hwnd, hdc);
         }
     }
     return;
 }
 
-int16_t FTrackSlot(HWND hwnd, int16_t x, int16_t y, int16_t fkb, int16_t fListBox, int16_t fRightBtn) {
+int16_t FTrackSlot(APPSESSION &app, HWND hwnd, int16_t x, int16_t y, int16_t fkb, int16_t fListBox, int16_t fRightBtn) {
     HDC     hdc;
     POINT16 ptOld;
     POINT16 ptTileSize;
@@ -815,159 +819,159 @@ int16_t FTrackSlot(HWND hwnd, int16_t x, int16_t y, int16_t fkb, int16_t fListBo
     int16_t dyStart;
     int16_t dxStart;
 
-    fFirst = TRUE;
-    if (!lpshdefBuild) {
-        return FALSE;
+    fFirst = 1;
+    if (!app.lpui->lpshdefBuild) {
+        return 0;
     }
     pt.x = x;
     pt.y = y;
-    cSlot = PartQueryIO().pfnHull(lpshdefBuild->hul.ihuldef)->hul.chs;
-    if (!fRightBtn && hwndSlotDlg && (PtInRect(rgrcBuildSpin, PointFrom16(pt)) != 0 || PtInRect(&rgrcBuildSpin[1], PointFrom16(pt)) != 0)) {
-        if (PtInRect(rgrcBuildSpin, PointFrom16(pt)) != 0) {
+    cSlot = PartQueryIO().pfnHull(app.lpui->lpshdefBuild->hul.ihuldef)->hul.chs;
+    if (!fRightBtn && app.lpui->hwndSlotDlg && (win32::PtInRect(app.lpui->rgrcBuildSpin, PointFrom16(pt)) != 0 || win32::PtInRect(&app.lpui->rgrcBuildSpin[1], PointFrom16(pt)) != 0)) {
+        if (win32::PtInRect(app.lpui->rgrcBuildSpin, PointFrom16(pt)) != 0) {
             iDir = -1;
             bt = 34;
-            prc = rgrcBuildSpin;
+            prc = app.lpui->rgrcBuildSpin;
         } else {
             iDir = 1;
             bt = 35;
-            prc = &rgrcBuildSpin[1];
+            prc = &app.lpui->rgrcBuildSpin[1];
         }
-        iBase = lpshdefBuild->hul.ibmp;
+        iBase = app.lpui->lpshdefBuild->hul.ibmp;
         iCur = iBase & 3;
         iBase -= iCur;
-        xLeft = ptslotGlob.x - 336;
+        xLeft = app.lpui->ptslotGlob.x - 336;
         yTop = 8;
-        InitBtnTrack(&btnt, hwnd, NULL, prc, bt, 80, FALSE, FALSE, NULL);
-        while (FTrackBtn(&btnt)) {
+        InitBtnTrack(&btnt, hwnd, NULL, prc, bt, 80, 0, 0, NULL);
+        while (FTrackBtn(app, &btnt)) {
             iCur = (iCur + 4 + iDir) & 3;
-            DrawFleetBitmap(NULL, btnt.hdc, xLeft, yTop, FALSE, iBase + iCur, 0, FALSE, -1, 0);
+            DrawFleetBitmap(app, NULL, btnt.hdc, xLeft, yTop, 0, iBase + iCur, 0, 0, -1, 0);
         }
-        lpshdefBuild->hul.ibmp = iBase + iCur;
-        return TRUE;
+        app.lpui->lpshdefBuild->hul.ibmp = iBase + iCur;
+        return 1;
     }
     if (!fListBox) {
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        for (iSrc = 0; iSrc < cSlot && PtInRect(&vrgrcSlot[iSrc], PointFrom16(pt)) == 0; iSrc++) {
+        for (iSrc = 0; iSrc < cSlot && win32::PtInRect(&app.lpui->vrgrcSlot[iSrc], PointFrom16(pt)) == 0; iSrc++) {
         }
         if (iSrc == cSlot) {
-            return FALSE;
+            return 0;
         }
-        hs = lpshdefBuild->hul.rghs[iSrc];
+        hs = app.lpui->lpshdefBuild->hul.rghs[iSrc];
         if (hs.cItem <= 0) {
-            SetBuildSelection(iSrc);
-            return FALSE;
+            SetBuildSelection(app, iSrc);
+            return 0;
         }
         part.hs = hs;
-        PartQueryIO().pfnLookup(&part);
+        PartQueryIO().pfnLookup(app, &part);
         ibmp = part.pcom().ibmp();
-        rcStart = vrgrcSlot[iSrc];
+        rcStart = app.lpui->vrgrcSlot[iSrc];
     } else {
-        iSel = LOWORD(ControlIO().pfnLUiSendMessage(hwnd, LB_GETCURSEL, 0, 0));
+        iSel = LOWORD(ControlIO().pfnSendMessage(hwnd, win32::LB_GETCURSEL, 0, 0));
         if (iSel == -1) {
-            return FALSE;
+            return 0;
         }
-        ControlIO().pfnLUiSendMessage(hwnd, LB_GETTEXT, iSel, (LPARAM)szWork);
-        ibmp = szWork[2] - 'A' + (szWork[3] - 'A') * 26;
+        ControlIO().pfnSendMessage(hwnd, win32::LB_GETTEXT, iSel, (LPARAM)app.state.szWork);
+        ibmp = app.state.szWork[2] - 'A' + (app.state.szWork[3] - 'A') * 26;
         iSrc = -1;
-        hs.grhst = static_cast<HullSlotType>(1 << (szWork[0] - 'A'));
-        hs.iItem = szWork[1] - 'A';
+        hs.grhst = static_cast<HullSlotType>(1 << (app.state.szWork[0] - 'A'));
+        hs.iItem = app.state.szWork[1] - 'A';
         hs.cItem = 1;
         rcStart.left = 2;
         rcStart.right = 66;
         rcStart.top = y / 66 * 66 + 1;
         rcStart.bottom = rcStart.top + 64;
-        ClientToScreen(hwnd, (POINT *)&rcStart);
-        ClientToScreen(hwnd, (POINT *)&rcStart.right);
+        win32::ClientToScreen(hwnd, (POINT *)&rcStart);
+        win32::ClientToScreen(hwnd, (POINT *)&rcStart.right);
         ClientToScreen16(hwnd, &pt);
-        hwnd = hwndSlotDlg;
-        ScreenToClient(hwnd, (POINT *)&rcStart);
-        ScreenToClient(hwnd, (POINT *)&rcStart.right);
+        hwnd = app.lpui->hwndSlotDlg;
+        win32::ScreenToClient(hwnd, (POINT *)&rcStart);
+        win32::ScreenToClient(hwnd, (POINT *)&rcStart.right);
         ScreenToClient16(hwnd, &pt);
         x = pt.x;
         y = pt.y;
-        if (hs.grhst == hstEngine && hs.iItem == iengineSettlersDelight && lpshdefBuild->hul.ihuldef != ihuldefMiniColonyShip) {
-            GlobalPD.grPopup = grPopupString;
-            GlobalPD.dxOut = 180;
-            GlobalPD.psz = szPopupBuffer;
-            TextIO().pfnCchGetString(idsSettlersDelightEngineMayMountedDesignsBased, szPopupBuffer);
-            Popup(hwnd, x, y);
-            return TRUE;
+        if (hs.grhst == hstEngine && hs.iItem == iengineSettlersDelight && app.lpui->lpshdefBuild->hul.ihuldef != ihuldefMiniColonyShip) {
+            app.lpui->GlobalPD.grPopup = grPopupString;
+            app.lpui->GlobalPD.dxOut = 180;
+            app.lpui->GlobalPD.psz = app.lpui->szPopupBuffer;
+            TextIO().pfnCchGetString(app, idsSettlersDelightEngineMayMountedDesignsBased, app.lpui->szPopupBuffer);
+            Popup(app, hwnd, x, y);
+            return 1;
         }
-        if (hs.grhst == hstSpecialM && hs.iItem == ispecialMOrbitalConstructionModule && lpshdefBuild->hul.ihuldef != ihuldefColonyShip) {
-            GlobalPD.grPopup = grPopupString;
-            GlobalPD.dxOut = 180;
-            GlobalPD.psz = szPopupBuffer;
-            TextIO().pfnCchGetString(idsOrbitalConstructionModuleMayMountedDesignsBased, szPopupBuffer);
-            Popup(hwnd, x, y);
-            return TRUE;
+        if (hs.grhst == hstSpecialM && hs.iItem == ispecialMOrbitalConstructionModule && app.lpui->lpshdefBuild->hul.ihuldef != ihuldefColonyShip) {
+            app.lpui->GlobalPD.grPopup = grPopupString;
+            app.lpui->GlobalPD.dxOut = 180;
+            app.lpui->GlobalPD.psz = app.lpui->szPopupBuffer;
+            TextIO().pfnCchGetString(app, idsOrbitalConstructionModuleMayMountedDesignsBased, app.lpui->szPopupBuffer);
+            Popup(app, hwnd, x, y);
+            return 1;
         }
-        if (hs.grhst == hstSpecialE && hs.iItem == ispecialETransportCloaking && PartQueryIO().pfnHull(lpshdefBuild->hul.ihuldef)->imdAttack != hullAttackNone) {
-            GlobalPD.grPopup = grPopupString;
-            GlobalPD.dxOut = 180;
-            GlobalPD.psz = szPopupBuffer;
-            TextIO().pfnCchGetString(idsTransportCloakingModuleMayPlacedHullCould, szPopupBuffer);
-            Popup(hwnd, x, y);
-            return TRUE;
+        if (hs.grhst == hstSpecialE && hs.iItem == ispecialETransportCloaking && PartQueryIO().pfnHull(app.lpui->lpshdefBuild->hul.ihuldef)->imdAttack != hullAttackNone) {
+            app.lpui->GlobalPD.grPopup = grPopupString;
+            app.lpui->GlobalPD.dxOut = 180;
+            app.lpui->GlobalPD.psz = app.lpui->szPopupBuffer;
+            TextIO().pfnCchGetString(app, idsTransportCloakingModuleMayPlacedHullCould, app.lpui->szPopupBuffer);
+            Popup(app, hwnd, x, y);
+            return 1;
         }
     }
-    SetBuildSelection(iSrc);
+    SetBuildSelection(app, iSrc);
     if (fRightBtn) {
-        GlobalPD.part = part;
-        GlobalPD.grPopup = grPopupComponent;
-        Popup(hwnd, x, y);
-        return TRUE;
+        app.lpui->GlobalPD.part = part;
+        app.lpui->GlobalPD.grPopup = grPopupComponent;
+        Popup(app, hwnd, x, y);
+        return 1;
     }
-    if (mdBuild != mdBuildEdit) {
-        return FALSE;
+    if (app.lpui->mdBuild != mdBuildEdit) {
+        return 0;
     }
     ptTileSize.y = 64;
     ptTileSize.x = 64;
     ibmpX = ibmp & 7;
     ibmpY = ibmp >> 3 & 3;
-    hdc = GetDC(hwnd);
-    SelectPalette(hdc, vhpal, FALSE);
-    RealizePalette(hdc);
-    hdcMem = CreateCompatibleDC(hdc);
-    hdcMemFull = CreateCompatibleDC(hdc);
-    SelectPalette(hdcMemFull, vhpal, FALSE);
-    RealizePalette(hdcMemFull);
-    hbmpOld = CreateCompatibleBitmap(hdc, ptTileSize.x, ptTileSize.y);
-    hbmpSav = (HBITMAP)SelectObject(hdcMem, hbmpOld);
-    hbmpScreen = CreateCompatibleBitmap(hdc, 3 * ptTileSize.x, 3 * ptTileSize.y);
-    hbmpFullSav = (HBITMAP)SelectObject(hdcMemFull, hbmpScreen);
-    SetCapture(hwnd);
+    hdc = win32::GetDC(hwnd);
+    win32::SelectPalette(hdc, app.lpui->vhpal, 0);
+    win32::RealizePalette(hdc);
+    hdcMem = win32::CreateCompatibleDC(hdc);
+    hdcMemFull = win32::CreateCompatibleDC(hdc);
+    win32::SelectPalette(hdcMemFull, app.lpui->vhpal, 0);
+    win32::RealizePalette(hdcMemFull);
+    hbmpOld = win32::CreateCompatibleBitmap(hdc, ptTileSize.x, ptTileSize.y);
+    hbmpSav = (HBITMAP)win32::SelectObject(hdcMem, hbmpOld);
+    hbmpScreen = win32::CreateCompatibleBitmap(hdc, 3 * ptTileSize.x, 3 * ptTileSize.y);
+    hbmpFullSav = (HBITMAP)win32::SelectObject(hdcMemFull, hbmpScreen);
+    win32::SetCapture(hwnd);
     ptOld.y = -1;
     ptOld.x = -1;
     while (FGetMouseMove(&pt)) {
         if (pt.x != ptOld.x || pt.y != ptOld.y) {
             if (fFirst) {
-                fUseMem = FALSE;
-                fFirst = FALSE;
+                fUseMem = 0;
+                fFirst = 0;
             } else {
-                SelectObject(hdcMem, hbmpOld);
+                win32::SelectObject(hdcMem, hbmpOld);
                 ptDNew.x = pt.x - ptOld.x;
                 ptDNew.y = pt.y - ptOld.y;
                 fUseMem = abs(ptDNew.x) < ptTileSize.x && abs(ptDNew.y) < ptTileSize.y;
                 if (!fUseMem) {
-                    BitBlt(hdc, rcStart.left + ptD.x, rcStart.top + ptD.y, ptTileSize.x, ptTileSize.y, hdcMem, 0, 0, SRCCOPY);
+                    win32::BitBlt(hdc, rcStart.left + ptD.x, rcStart.top + ptD.y, ptTileSize.x, ptTileSize.y, hdcMem, 0, 0, win32::SRCCOPY);
                 } else {
-                    BitBlt(hdcMemFull, 0, 0, 3 * ptTileSize.x, 3 * ptTileSize.y, hdc, rcStart.left + ptD.x - ptTileSize.x, rcStart.top + ptD.y - ptTileSize.y,
-                           SRCCOPY);
-                    BitBlt(hdcMemFull, ptTileSize.x, ptTileSize.y, ptTileSize.x, ptTileSize.y, hdcMem, 0, 0, SRCCOPY);
+                    win32::BitBlt(hdcMemFull, 0, 0, 3 * ptTileSize.x, 3 * ptTileSize.y, hdc, rcStart.left + ptD.x - ptTileSize.x, rcStart.top + ptD.y - ptTileSize.y,
+                           win32::SRCCOPY);
+                    win32::BitBlt(hdcMemFull, ptTileSize.x, ptTileSize.y, ptTileSize.x, ptTileSize.y, hdcMem, 0, 0, win32::SRCCOPY);
                 }
             }
             ptOld = pt;
             ptD.x = pt.x - x;
             ptD.y = pt.y - y;
-            SelectObject(hdcMem, hbmpOld);
+            win32::SelectObject(hdcMem, hbmpOld);
             if (!fUseMem) {
-                BitBlt(hdcMem, 0, 0, ptTileSize.x, ptTileSize.y, hdc, rcStart.left + ptD.x, rcStart.top + ptD.y, SRCCOPY);
-                DibBlt(hdc, rcStart.left + ptD.x, rcStart.top + ptD.y, 64, 64, rghdibInventory[ibmp / 32], ibmpX * 64, (3 - ibmpY) * 64, 64, 64, 13369376);
+                win32::BitBlt(hdcMem, 0, 0, ptTileSize.x, ptTileSize.y, hdc, rcStart.left + ptD.x, rcStart.top + ptD.y, win32::SRCCOPY);
+                DibBlt(hdc, rcStart.left + ptD.x, rcStart.top + ptD.y, 64, 64, app.lpui->rghdibInventory[ibmp / 32], ibmpX * 64, (3 - ibmpY) * 64, 64, 64, 13369376);
             } else {
                 dxStart = 0;
                 dyStart = 0;
-                BitBlt(hdcMem, 0, 0, ptTileSize.x, ptTileSize.y, hdcMemFull, ptTileSize.x + ptDNew.x, ptTileSize.y + ptDNew.y, SRCCOPY);
-                DibBlt(hdcMemFull, ptTileSize.x + ptDNew.x, ptTileSize.y + ptDNew.y, 64, 64, rghdibInventory[ibmp / 32], ibmpX * 64, (3 - ibmpY) * 64, 64, 64,
+                win32::BitBlt(hdcMem, 0, 0, ptTileSize.x, ptTileSize.y, hdcMemFull, ptTileSize.x + ptDNew.x, ptTileSize.y + ptDNew.y, win32::SRCCOPY);
+                DibBlt(hdcMemFull, ptTileSize.x + ptDNew.x, ptTileSize.y + ptDNew.y, 64, 64, app.lpui->rghdibInventory[ibmp / 32], ibmpX * 64, (3 - ibmpY) * 64, 64, 64,
                        13369376);
                 rc = rcStart;
                 OffsetRc(&rc, ptD.x, ptD.y);
@@ -983,36 +987,36 @@ int16_t FTrackSlot(HWND hwnd, int16_t x, int16_t y, int16_t fkb, int16_t fListBo
                 } else {
                     rc.bottom -= ptDNew.y;
                 }
-                BitBlt(hdc, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, hdcMemFull, ptTileSize.x + ptDNew.x - dxStart,
-                       ptTileSize.y + ptDNew.y - dyStart, SRCCOPY);
+                win32::BitBlt(hdc, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, hdcMemFull, ptTileSize.x + ptDNew.x - dxStart,
+                       ptTileSize.y + ptDNew.y - dyStart, win32::SRCCOPY);
             }
-            i = IDropPart(pt, hs, iSrc, TRUE);
+            i = IDropPart(app, pt, hs, iSrc, 1);
             if (i < 0 || i == 2) {
-                SetCursor(LoadCursor(NULL, MAKEINTRESOURCE(32512)));
+                win32::SetCursor(win32::LoadCursorA(NULL, win32::MAKEINTRESOURCE(32512)));
             } else if (i == 1 && iSrc >= 0) {
-                SetCursor(hcurTrashCan);
+                win32::SetCursor(app.lpui->hcurTrashCan);
             } else {
-                SetCursor(hcurNoWay);
+                win32::SetCursor(app.lpui->hcurNoWay);
             }
         }
     }
     if (!fFirst) {
-        SelectObject(hdcMem, hbmpOld);
-        BitBlt(hdc, rcStart.left + ptD.x, rcStart.top + ptD.y, 64, 64, hdcMem, 0, 0, SRCCOPY);
+        win32::SelectObject(hdcMem, hbmpOld);
+        win32::BitBlt(hdc, rcStart.left + ptD.x, rcStart.top + ptD.y, 64, 64, hdcMem, 0, 0, win32::SRCCOPY);
     }
-    ReleaseCapture();
-    SelectObject(hdcMem, hbmpSav);
-    SelectObject(hdcMemFull, hbmpFullSav);
-    DeleteObject(hbmpOld);
-    DeleteObject(hbmpScreen);
-    DeleteDC(hdcMem);
-    DeleteDC(hdcMemFull);
-    i = IDropPart(pt, hs, iSrc, FALSE);
-    ReleaseDC(hwnd, hdc);
-    return TRUE;
+    win32::ReleaseCapture();
+    win32::SelectObject(hdcMem, hbmpSav);
+    win32::SelectObject(hdcMemFull, hbmpFullSav);
+    win32::DeleteObject(hbmpOld);
+    win32::DeleteObject(hbmpScreen);
+    win32::DeleteDC(hdcMem);
+    win32::DeleteDC(hdcMemFull);
+    i = IDropPart(app, pt, hs, iSrc, 0);
+    win32::ReleaseDC(hwnd, hdc);
+    return 1;
 }
 
-void DrawBuildSelComp(HWND hwnd, HDC hdc, int16_t iDraw) {
+void DrawBuildSelComp(APPSESSION &app, HWND hwnd, HDC hdc, int16_t iDraw) {
     uint16_t grhst;
     HS       hsShip;
     uint16_t rgCosts[4];
@@ -1034,45 +1038,45 @@ void DrawBuildSelComp(HWND hwnd, HDC hdc, int16_t iDraw) {
     char    *pch;
     int16_t  yTop; /* NATIVE: RECT.top is 32-bit; WrapTextOut takes int16_t * */
 
-    fCreatedDC = FALSE;
+    fCreatedDC = 0;
     if (!hdc) {
-        fCreatedDC = TRUE;
-        hdc = GetDC(hwnd);
+        fCreatedDC = 1;
+        hdc = win32::GetDC(hwnd);
     }
-    ControlIO().pfnGetClientRect(hwndSlotDlg, &rc);
+    ControlIO().pfnGetClientRect(app.lpui->hwndSlotDlg, &rc);
     rc.bottom -= 8;
     rc.left = 8;
     rc.right = rc.left + 256;
-    rc.top = yBuildInfoSum;
-    SelectObject(hdc, rghfontArial8[1]);
-    crForeSav = SetTextColor(hdc, 0);
-    crBackSav = SetBkColor(hdc, crButtonFace);
-    FillRect(hdc, &rc, hbrButtonFace);
-    if (fStarbaseMode) {
-        rc.top += dyArial8;
+    rc.top = app.lpui->yBuildInfoSum;
+    win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
+    crForeSav = win32::SetTextColor(hdc, 0);
+    crBackSav = win32::SetBkColor(hdc, app.lpui->crButtonFace);
+    win32::FillRect(hdc, &rc, app.lpui->hbrButtonFace);
+    if (app.state.fStarbaseMode) {
+        rc.top += app.state.dyArial8;
     }
-    if (iselSlot != -2) {
-        if (iselSlot == -1) {
-            iSel = LOWORD(ControlIO().pfnLUiSendMessage(ControlIO().pfnGetDlgItem(hwndSlotDlg, IDC_DESIGNER_COMPONENT_LIST), LB_GETCURSEL, 0, 0));
+    if (app.lpui->iselSlot != -2) {
+        if (app.lpui->iselSlot == -1) {
+            iSel = LOWORD(ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(app.lpui->hwndSlotDlg, IDC_DESIGNER_COMPONENT_LIST), win32::LB_GETCURSEL, 0, 0));
             if (iSel == -1)
                 goto Restore;
-            ControlIO().pfnLUiSendMessage(ControlIO().pfnGetDlgItem(hwndSlotDlg, IDC_DESIGNER_COMPONENT_LIST), LB_GETTEXT, iSel, (LPARAM)szWork);
+            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(app.lpui->hwndSlotDlg, IDC_DESIGNER_COMPONENT_LIST), win32::LB_GETTEXT, iSel, (LPARAM)app.state.szWork);
             hsShip.cItem = 1;
-            hsShip.grhst = static_cast<HullSlotType>(1 << (szWork[0] - 'A'));
-            hsShip.iItem = szWork[1] - 'A';
+            hsShip.grhst = static_cast<HullSlotType>(1 << (app.state.szWork[0] - 'A'));
+            hsShip.iItem = app.state.szWork[1] - 'A';
             goto HullPart;
         } else {
-            if (!lpshdefBuild)
+            if (!app.lpui->lpshdefBuild)
                 goto Restore;
-            hsShip = lpshdefBuild->hul.rghs[iselSlot];
-            hsHul = PartQueryIO().pfnHull(lpshdefBuild->hul.ihuldef)->hul.rghs[iselSlot];
+            hsShip = app.lpui->lpshdefBuild->hul.rghs[app.lpui->iselSlot];
+            hsHul = PartQueryIO().pfnHull(app.lpui->lpshdefBuild->hul.ihuldef)->hul.rghs[app.lpui->iselSlot];
             if (hsShip.cItem == 0) {
-                i = TextIO().pfnCchGetString(!(hsHul.grhst & hstEngine) ? idsCanHold : idsRequiresExactly, szWork);
+                i = TextIO().pfnCchGetString(app, !(hsHul.grhst & hstEngine) ? idsCanHold : idsRequiresExactly, app.state.szWork);
                 fPlural = hsHul.cItem != 1;
                 if (!fPlural) {
-                    i += TextIO().pfnCchGetString(idsOne, &szWork[i]);
+                    i += TextIO().pfnCchGetString(app, idsOne, &app.state.szWork[i]);
                 } else {
-                    i += wsprintf(&szWork[i], "%d ", hsHul.cItem);
+                    i += win32::wsprintfA(&app.state.szWork[i], "%d ", hsHul.cItem);
                 }
                 grhst = hsHul.grhst;
                 while (grhst != 0) {
@@ -1082,7 +1086,7 @@ void DrawBuildSelComp(HWND hwnd, HDC hdc, int16_t iDraw) {
                             break;
                         }
                     }
-                    cch = TextIO().pfnCchGetString(rgidsCat[i], szWord);
+                    cch = TextIO().pfnCchGetString(app, rgidsCat[i], szWord);
                     if (!fPlural) {
                         if (szWord[cch - 1] == 's') {
                             if (szWord[cch - 2] == 'e' && szWord[cch - 3] == 'o') {
@@ -1102,78 +1106,78 @@ void DrawBuildSelComp(HWND hwnd, HDC hdc, int16_t iDraw) {
                         if ((grhst - 1) & grhst) {
                             strcat(szWord, ", ");
                         } else {
-                            strcat(szWord, TextIO().pfnCompressed(idsOr));
+                            strcat(szWord, TextIO().pfnCompressed(app, idsOr));
                         }
                     }
-                    strcat(szWork, szWord);
+                    strcat(app.state.szWork, szWord);
                 }
                 x = rc.left;
                 /* NATIVE: original passed &rc.top */
                 yTop = rc.top;
-                WrapTextOut(hdc, &x, &yTop, szWork, 0, rc.left, rc.right - rc.left, NULL, FALSE, TRUE);
+                WrapTextOut(app, hdc, &x, &yTop, app.state.szWork, 0, rc.left, rc.right - rc.left, NULL, 0, 1);
                 rc.top = yTop;
-                rc.top += dyArial8;
+                rc.top += app.state.dyArial8;
                 goto Restore;
             }
         }
     HullPart:
         part.hs = hsShip;
-        PartQueryIO().pfnLookup(&part);
-        dxkT = LOWORD(GetTextExtent(hdc, TextIO().pfnCompressed(idsKt), 2));
+        PartQueryIO().pfnLookup(app, &part);
+        dxkT = LOWORD(GetTextExtent(hdc, TextIO().pfnCompressed(app, idsKt), 2));
         fPlural = hsShip.cItem != 1;
         if (!fPlural) {
-            TextIO().pfnCchGetString(idsOne, szWord);
+            TextIO().pfnCchGetString(app, idsOne, szWord);
         } else {
-            wsprintf(szWord, "%d ", hsShip.cItem);
+            win32::wsprintfA(szWord, "%d ", hsShip.cItem);
         }
         strcat(szWord, part.pcom().szName());
         if (fPlural) {
             strcat(szWord, "s");
         }
-        cch = wsprintf(szWork, TextIO().pfnCompressed(idsCostS), szWord);
-        TextOut(hdc, rc.left, rc.top, szWork, cch);
+        cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsCostS), szWord);
+        win32::TextOutA(hdc, rc.left, rc.top, app.state.szWork, cch);
         rc.left += 8;
         rc.right -= 8;
         c = hsShip.cItem;
-        PartQueryIO().pfnTrueCost(idPlayer, &part, rgCosts);
+        PartQueryIO().pfnTrueCost(app, app.state.idPlayer, &part, rgCosts);
         for (k = 0; k < 3; k++) {
-            rc.top += dyArial8;
-            SelectObject(hdc, rghfontArial8[1]);
-            SetTextColor(hdc, rgcrMinerals[k]);
-            TextOut(hdc, rc.left, rc.top, rgszMinerals[k], lstrlen(rgszMinerals[k]));
-            SelectObject(hdc, rghfontArial8[0]);
-            SetTextColor(hdc, crWindowText);
-            cch = wsprintf(szWork, PCTLD, (uint32_t)(c * (uint32_t)rgCosts[k]));
-            RightTextOut(hdc, rc.right - dxkT - 64, rc.top, szWork, cch, dxMaxMineralQuan);
-            TextOut(hdc, rc.right - dxkT - 64, rc.top, TextIO().pfnCompressed(idsKt), 2);
+            rc.top += app.state.dyArial8;
+            win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
+            win32::SetTextColor(hdc, app.lpui->rgcrMinerals[k]);
+            win32::TextOutA(hdc, rc.left, rc.top, app.state.rgszMinerals[k], win32::lstrlenA(app.state.rgszMinerals[k]));
+            win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
+            win32::SetTextColor(hdc, app.lpui->crWindowText);
+            cch = win32::wsprintfA(app.state.szWork, app.state.PCTLD, (uint32_t)(c * (uint32_t)rgCosts[k]));
+            RightTextOut(app, hdc, rc.right - dxkT - 64, rc.top, app.state.szWork, cch, app.lpui->dxMaxMineralQuan);
+            win32::TextOutA(hdc, rc.right - dxkT - 64, rc.top, TextIO().pfnCompressed(app, idsKt), 2);
         }
-        rc.top += dyArial8;
-        SelectObject(hdc, rghfontArial8[1]);
-        SetTextColor(hdc, rgcrMinerals[5]);
-        TextOut(hdc, rc.left, rc.top, rgszMinerals[5], lstrlen(rgszMinerals[5]));
-        SelectObject(hdc, rghfontArial8[0]);
-        SetTextColor(hdc, crWindowText);
-        cch = wsprintf(szWork, PCTLD, (uint32_t)(c * (uint32_t)rgCosts[3]));
-        RightTextOut(hdc, rc.right - dxkT - 64, rc.top, szWork, cch, dxMaxMineralQuan);
-        if (!fStarbaseMode) {
+        rc.top += app.state.dyArial8;
+        win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
+        win32::SetTextColor(hdc, app.lpui->rgcrMinerals[5]);
+        win32::TextOutA(hdc, rc.left, rc.top, app.state.rgszMinerals[5], win32::lstrlenA(app.state.rgszMinerals[5]));
+        win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
+        win32::SetTextColor(hdc, app.lpui->crWindowText);
+        cch = win32::wsprintfA(app.state.szWork, app.state.PCTLD, (uint32_t)(c * (uint32_t)rgCosts[3]));
+        RightTextOut(app, hdc, rc.right - dxkT - 64, rc.top, app.state.szWork, cch, app.lpui->dxMaxMineralQuan);
+        if (!app.state.fStarbaseMode) {
             rc.left -= 8;
-            rc.top += dyArial8;
-            SelectObject(hdc, rghfontArial8[1]);
-            cch = wsprintf(szWork, TextIO().pfnCompressed(idsMassLdkt), (uint32_t)(c * part.pcom().cMass()));
-            TextOut(hdc, rc.left, rc.top, szWork, cch);
+            rc.top += app.state.dyArial8;
+            win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
+            cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsMassLdkt), (uint32_t)(c * part.pcom().cMass()));
+            win32::TextOutA(hdc, rc.left, rc.top, app.state.szWork, cch);
         }
     }
 Restore:
-    SelectObject(hdc, rghfontArial8[0]);
-    SetTextColor(hdc, crForeSav);
-    SetBkColor(hdc, crBackSav);
+    win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
+    win32::SetTextColor(hdc, crForeSav);
+    win32::SetBkColor(hdc, crBackSav);
     if (fCreatedDC) {
-        ReleaseDC(hwnd, hdc);
+        win32::ReleaseDC(hwnd, hdc);
     }
     return;
 }
 
-void DrawBuildSelHull(HWND hwnd, HDC hdc, int16_t iDraw, RECT *prc) {
+void DrawBuildSelHull(APPSESSION &app, HWND hwnd, HDC hdc, int16_t iDraw, RECT *prc) {
     char     rgch[20];
     DV       dv;
     uint16_t rgCosts[4];
@@ -1197,34 +1201,34 @@ void DrawBuildSelHull(HWND hwnd, HDC hdc, int16_t iDraw, RECT *prc) {
     int16_t  pctDetect;
     int16_t  pct;
 
-    fCreatedDC = FALSE;
-    if (mdBuild != mdBuildComp) {
+    fCreatedDC = 0;
+    if (app.lpui->mdBuild != mdBuildComp) {
         if (!hdc) {
-            fCreatedDC = TRUE;
-            hdc = GetDC(hwnd);
+            fCreatedDC = 1;
+            hdc = win32::GetDC(hwnd);
         }
         if (!prc) {
             ControlIO().pfnGetClientRect(hwnd, &rc);
             rc.bottom -= 32;
             rc.right -= 4;
             rc.left = rc.right - 320;
-            rc.top = (!fStarbaseMode ? 0 : dyArial8) + yBuildInfoSum;
-            FillRect(hdc, &rc, hbrButtonFace);
+            rc.top = (!app.state.fStarbaseMode ? 0 : app.state.dyArial8) + app.lpui->yBuildInfoSum;
+            win32::FillRect(hdc, &rc, app.lpui->hbrButtonFace);
         } else {
             rc = *prc;
         }
-        if (!lpshdefBuild)
+        if (!app.lpui->lpshdefBuild)
             goto LReleaseDC;
-        lphul = &lpshdefBuild->hul;
-        SelectObject(hdc, rghfontArial8[0]);
-        dxkT = LOWORD(GetTextExtent(hdc, TextIO().pfnCompressed(idsKt), 2));
-        SelectObject(hdc, rghfontArial8[1]);
-        dxMineral = LOWORD(GetTextExtent(hdc, rgszMinerals[2], strlen(rgszMinerals[2]))) + 6;
-        crForeSav = SetTextColor(hdc, 0);
-        crBackSav = SetBkColor(hdc, crButtonFace);
-        if (hwndPopup && GlobalPD.grPopup == grPopupShdef && GlobalPD.fToken) {
-            GetVCRStats(viVCRFocus, &dp, &dv, &dpShield, &csh);
-            dpShield = (uint32_t)vrgtok[viVCRFocus].dpShield - dpShield;
+        lphul = &app.lpui->lpshdefBuild->hul;
+        win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
+        dxkT = LOWORD(GetTextExtent(hdc, TextIO().pfnCompressed(app, idsKt), 2));
+        win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
+        dxMineral = LOWORD(GetTextExtent(hdc, app.state.rgszMinerals[2], strlen(app.state.rgszMinerals[2]))) + 6;
+        crForeSav = win32::SetTextColor(hdc, 0);
+        crBackSav = win32::SetBkColor(hdc, app.lpui->crButtonFace);
+        if (app.lpui->hwndPopup && app.lpui->GlobalPD.grPopup == grPopupShdef && app.lpui->GlobalPD.fToken) {
+            GetVCRStats(app, app.lpui->viVCRFocus, &dp, &dv, &dpShield, &csh);
+            dpShield = (uint32_t)app.state.vrgtok[app.lpui->viVCRFocus].dpShield - dpShield;
             if (dpShield < 0) {
                 dpShield = 0;
             }
@@ -1233,25 +1237,25 @@ void DrawBuildSelHull(HWND hwnd, HDC hdc, int16_t iDraw, RECT *prc) {
                 goto LDeadToken;
         } else {
             dp = (uint32_t)lphul->dp;
-            dpShield = DpShieldOfShdef(lpshdefBuild, idPlayer);
+            dpShield = DpShieldOfShdef(app, app.lpui->lpshdefBuild, app.state.idPlayer);
         }
-        if (hwndPopup && fStarbaseMode) {
-            rc.top += dyArial8;
-            cch = TextIO().pfnCchGetString(idsCost, szWork);
+        if (app.lpui->hwndPopup && app.state.fStarbaseMode) {
+            rc.top += app.state.dyArial8;
+            cch = TextIO().pfnCchGetString(app, idsCost, app.state.szWork);
         } else {
-            TextIO().pfnCchGetString(idsHull, rgch);
-            cch = wsprintf(szWork, TextIO().pfnCompressed(idsCostOneSS), lphul->szClass, mdBuild == mdBuildHuldef ? rgch : "");
+            TextIO().pfnCchGetString(app, idsHull, rgch);
+            cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsCostOneSS), lphul->szClass, app.lpui->mdBuild == mdBuildHuldef ? rgch : "");
         }
-        TextOut(hdc, rc.left, rc.top, szWork, cch);
+        win32::TextOutA(hdc, rc.left, rc.top, app.state.szWork, cch);
         rc.left += 8;
         rc.right -= 8;
-        GetTrueHullCost(idPlayer, lphul, rgCosts);
-        if (fStarbaseMode && (RaceQueryIO().pfnGrbit(&rgplr[idPlayer], ibitRaceISB) != 0 || RaceQueryIO().pfnStat(&rgplr[idPlayer], rsMajorAdv) == raMacintosh)) {
+        GetTrueHullCost(app.state.idPlayer, lphul, rgCosts);
+        if (app.state.fStarbaseMode && (RaceQueryIO().pfnGrbit(&app.state.rgplr[app.state.idPlayer], ibitRaceISB) != 0 || RaceQueryIO().pfnStat(&app.state.rgplr[app.state.idPlayer], rsMajorAdv) == raMacintosh)) {
             for (k = 0; k < 4; k++) {
                 rgCosts[k] -= (uint32_t)rgCosts[k] / 5;
             }
         }
-        if (fStarbaseMode) {
+        if (app.state.fStarbaseMode) {
             for (k = 0; k < 4; k++) {
                 rgCosts[k] -= (uint32_t)rgCosts[k] / 2;
             }
@@ -1260,129 +1264,129 @@ void DrawBuildSelHull(HWND hwnd, HDC hdc, int16_t iDraw, RECT *prc) {
             if (k == 3) {
                 k = 5;
             }
-            rc.top += dyArial8;
-            SelectObject(hdc, rghfontArial8[1]);
-            SetTextColor(hdc, rgcrMinerals[k]);
-            TextOut(hdc, rc.left, rc.top, rgszMinerals[k], lstrlen(rgszMinerals[k]));
-            SelectObject(hdc, rghfontArial8[0]);
-            SetTextColor(hdc, crWindowText);
-            cch = wsprintf(szWork, PCTD, k == 5 ? rgCosts[3] : rgCosts[k]);
-            RightTextOut(hdc, rc.left + dxMineral + dxMaxMineralQuan - dxkT, rc.top, szWork, cch, dxMaxMineralQuan);
+            rc.top += app.state.dyArial8;
+            win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
+            win32::SetTextColor(hdc, app.lpui->rgcrMinerals[k]);
+            win32::TextOutA(hdc, rc.left, rc.top, app.state.rgszMinerals[k], win32::lstrlenA(app.state.rgszMinerals[k]));
+            win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
+            win32::SetTextColor(hdc, app.lpui->crWindowText);
+            cch = win32::wsprintfA(app.state.szWork, app.state.PCTD, k == 5 ? rgCosts[3] : rgCosts[k]);
+            RightTextOut(app, hdc, rc.left + dxMineral + app.lpui->dxMaxMineralQuan - dxkT, rc.top, app.state.szWork, cch, app.lpui->dxMaxMineralQuan);
             if (k < 5) {
-                TextOut(hdc, rc.left + dxMineral + dxMaxMineralQuan - dxkT, rc.top, TextIO().pfnCompressed(idsKt), 2);
+                win32::TextOutA(hdc, rc.left + dxMineral + app.lpui->dxMaxMineralQuan - dxkT, rc.top, TextIO().pfnCompressed(app, idsKt), 2);
             }
         }
         rc.left -= 8;
-        rc.top += dyArial8;
-        SelectObject(hdc, rghfontArial8[1]);
-        if (!fStarbaseMode) {
-            if (hwndPopup && GlobalPD.grPopup == grPopupShdef && GlobalPD.fToken) {
-                lwt = (uint32_t)vrgtok[viVCRFocus].wt;
+        rc.top += app.state.dyArial8;
+        win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
+        if (!app.state.fStarbaseMode) {
+            if (app.lpui->hwndPopup && app.lpui->GlobalPD.grPopup == grPopupShdef && app.lpui->GlobalPD.fToken) {
+                lwt = (uint32_t)app.state.vrgtok[app.lpui->viVCRFocus].wt;
             } else {
                 lwt = (uint32_t)lphul->wtEmpty;
             }
-            cch = wsprintf(szWork, TextIO().pfnCompressed(idsMassLdkt), lwt);
-            TextOut(hdc, rc.left, rc.top, szWork, cch);
+            cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsMassLdkt), lwt);
+            win32::TextOutA(hdc, rc.left, rc.top, app.state.szWork, cch);
         }
-        rc.top -= dyArial8 * 4;
-        rc.left += dxMineral + dxMaxMineralQuan + 24;
-        if (!fStarbaseMode && (!hwndPopup || GlobalPD.grPopup != grPopupShdef || !GlobalPD.fToken)) {
-            cch = wsprintf(szWork, TextIO().pfnCompressed(idsDmg), WtMaxShdefStat(lpshdefBuild, 1));
-            RightTextOut(hdc, rc.right - 8, rc.top, szWork, cch, dxMaxMineralQuan);
-            cch = TextIO().pfnCchGetString(idsMaxFuel, szWork);
-            TextOut(hdc, rc.left, rc.top, szWork, cch);
-            rc.top += dyArial8;
+        rc.top -= app.state.dyArial8 * 4;
+        rc.left += dxMineral + app.lpui->dxMaxMineralQuan + 24;
+        if (!app.state.fStarbaseMode && (!app.lpui->hwndPopup || app.lpui->GlobalPD.grPopup != grPopupShdef || !app.lpui->GlobalPD.fToken)) {
+            cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDmg), WtMaxShdefStat(app.lpui->lpshdefBuild, 1));
+            RightTextOut(app, hdc, rc.right - 8, rc.top, app.state.szWork, cch, app.lpui->dxMaxMineralQuan);
+            cch = TextIO().pfnCchGetString(app, idsMaxFuel, app.state.szWork);
+            win32::TextOutA(hdc, rc.left, rc.top, app.state.szWork, cch);
+            rc.top += app.state.dyArial8;
         }
-        cch = wsprintf(szWork, TextIO().pfnCompressed(idsLddp), dp);
-        RightTextOut(hdc, rc.right - 8, rc.top, szWork, cch, dxMaxMineralQuan + 10);
-        cch = TextIO().pfnCchGetString(idsArmor, szWork);
-        TextOut(hdc, rc.left, rc.top, szWork, cch);
-        rc.top += dyArial8;
-        if (mdBuild != mdBuildHuldef) {
-            cch = wsprintf(szWork, dpShield == 0 ? TextIO().pfnCompressed(idsNone) : "%lddp", dpShield);
-            RightTextOut(hdc, rc.right - 8, rc.top, szWork, cch, dxMaxMineralQuan + 10);
-            cch = TextIO().pfnCchGetString(idsShields, szWork);
-            TextOut(hdc, rc.left, rc.top, szWork, cch);
+        cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsLddp), dp);
+        RightTextOut(app, hdc, rc.right - 8, rc.top, app.state.szWork, cch, app.lpui->dxMaxMineralQuan + 10);
+        cch = TextIO().pfnCchGetString(app, idsArmor, app.state.szWork);
+        win32::TextOutA(hdc, rc.left, rc.top, app.state.szWork, cch);
+        rc.top += app.state.dyArial8;
+        if (app.lpui->mdBuild != mdBuildHuldef) {
+            cch = win32::wsprintfA(app.state.szWork, dpShield == 0 ? TextIO().pfnCompressed(app, idsNone) : "%lddp", dpShield);
+            RightTextOut(app, hdc, rc.right - 8, rc.top, app.state.szWork, cch, app.lpui->dxMaxMineralQuan + 10);
+            cch = TextIO().pfnCchGetString(app, idsShields, app.state.szWork);
+            win32::TextOutA(hdc, rc.left, rc.top, app.state.szWork, cch);
         }
-        rc.top += dyArial8;
-        if (mdBuild != mdBuildHuldef) {
-            lpshdefBuild->lPower = LComputePower(lpshdefBuild);
-            if (lpshdefBuild->lPower != 0) {
-                cch = wsprintf(szWork, PCTLD, lpshdefBuild->lPower);
-                RightTextOut(hdc, rc.right - 8, rc.top, szWork, cch, dxMaxMineralQuan);
-                cch = TextIO().pfnCchGetString(idsRating, szWork);
-                TextOut(hdc, rc.left, rc.top, szWork, cch);
-                rc.top += dyArial8;
+        rc.top += app.state.dyArial8;
+        if (app.lpui->mdBuild != mdBuildHuldef) {
+            app.lpui->lpshdefBuild->lPower = LComputePower(app, app.lpui->lpshdefBuild);
+            if (app.lpui->lpshdefBuild->lPower != 0) {
+                cch = win32::wsprintfA(app.state.szWork, app.state.PCTLD, app.lpui->lpshdefBuild->lPower);
+                RightTextOut(app, hdc, rc.right - 8, rc.top, app.state.szWork, cch, app.lpui->dxMaxMineralQuan);
+                cch = TextIO().pfnCchGetString(app, idsRating, app.state.szWork);
+                win32::TextOutA(hdc, rc.left, rc.top, app.state.szWork, cch);
+                rc.top += app.state.dyArial8;
             }
         }
-        if (gd.mdScreenSize > 0 && mdBuild != mdBuildHuldef) {
-            if (mdBuild != mdBuildEnemyShdef) {
-                i = idPlayer;
+        if (app.state.gd.mdScreenSize > 0 && app.lpui->mdBuild != mdBuildHuldef) {
+            if (app.lpui->mdBuild != mdBuildEnemyShdef) {
+                i = app.state.idPlayer;
             } else {
                 i = -1;
             }
-            i = PctCloakFromHuldef(&lpshdefBuild->hul, i, NULL);
-            j = PctJammerFromHul(&lpshdefBuild->hul);
-            cch = wsprintf(szWork, TextIO().pfnCompressed(idsDD4), i, j);
-            RightTextOut(hdc, rc.right - 8, rc.top, szWork, cch, dxMaxMineralQuan);
-            cch = TextIO().pfnCchGetString(idsCloakJam, szWork);
-            TextOut(hdc, rc.left, rc.top, szWork, cch);
-            rc.top += dyArial8;
-            i = InitFromHuldef(&lpshdefBuild->hul, NULL);
-            if (fStarbaseMode || lpshdefBuild->hul.rghs[0].cItem == 0) {
+            i = PctCloakFromHuldef(app, &app.lpui->lpshdefBuild->hul, i, NULL);
+            j = PctJammerFromHul(app, &app.lpui->lpshdefBuild->hul);
+            cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDD4), i, j);
+            RightTextOut(app, hdc, rc.right - 8, rc.top, app.state.szWork, cch, app.lpui->dxMaxMineralQuan);
+            cch = TextIO().pfnCchGetString(app, idsCloakJam, app.state.szWork);
+            win32::TextOutA(hdc, rc.left, rc.top, app.state.szWork, cch);
+            rc.top += app.state.dyArial8;
+            i = InitFromHuldef(app, &app.lpui->lpshdefBuild->hul, NULL);
+            if (app.state.fStarbaseMode || app.lpui->lpshdefBuild->hul.rghs[0].cItem == 0) {
                 j = 0;
             } else {
-                j = SpdOfShip(NULL, 0, NULL, FALSE, lpshdefBuild) + 1;
+                j = SpdOfShip(app, NULL, 0, NULL, 0, app.lpui->lpshdefBuild) + 1;
             }
-            cch = wsprintf(szWork, TextIO().pfnCompressed(idsDS), i, &rgszSpeed[j * 3]);
-            RightTextOut(hdc, rc.right - 8, rc.top, szWork, cch, dxMaxMineralQuan);
-            cch = TextIO().pfnCchGetString(static_cast<StringId>(idsInitiativeMoves + (dyArial8 > 14)), szWork);
-            TextOut(hdc, rc.left, rc.top, szWork, cch);
-            rc.top += dyArial8;
-            if (!fStarbaseMode) {
-                if (mdBuild != mdBuildEnemyShdef) {
-                    i = idPlayer;
+            cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDS), i, &app.lpui->rgszSpeed[j * 3]);
+            RightTextOut(app, hdc, rc.right - 8, rc.top, app.state.szWork, cch, app.lpui->dxMaxMineralQuan);
+            cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsInitiativeMoves + (app.state.dyArial8 > 14)), app.state.szWork);
+            win32::TextOutA(hdc, rc.left, rc.top, app.state.szWork, cch);
+            rc.top += app.state.dyArial8;
+            if (!app.state.fStarbaseMode) {
+                if (app.lpui->mdBuild != mdBuildEnemyShdef) {
+                    i = app.state.idPlayer;
                 } else {
                     i = -1;
                 }
-                dRange = GetShdefScannerRange(lpshdefBuild, i, &dPlanRange, &pctDetect, NULL);
+                dRange = GetShdefScannerRange(app, app.lpui->lpshdefBuild, i, &dPlanRange, &pctDetect, NULL);
                 if (dRange > 0) {
                     if (pctDetect >= 100) {
-                        cch = wsprintf(szWork, TextIO().pfnCompressed(idsDD6), dRange, dPlanRange);
+                        cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDD6), dRange, dPlanRange);
                     } else {
-                        cch = wsprintf(szWork, TextIO().pfnCompressed(idsDDD), dRange, dPlanRange, pctDetect);
+                        cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDDD), dRange, dPlanRange, pctDetect);
                     }
-                    RightTextOut(hdc, rc.right - 8, rc.top, szWork, cch, dxMaxMineralQuan + 40);
-                    cch = TextIO().pfnCchGetString(static_cast<StringId>(idsScannerRange2 + (dyArial8 > 14)), szWork);
-                    TextOut(hdc, rc.left, rc.top, szWork, cch);
-                    rc.top += dyArial8;
+                    RightTextOut(app, hdc, rc.right - 8, rc.top, app.state.szWork, cch, app.lpui->dxMaxMineralQuan + 40);
+                    cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsScannerRange2 + (app.state.dyArial8 > 14)), app.state.szWork);
+                    win32::TextOutA(hdc, rc.left, rc.top, app.state.szWork, cch);
+                    rc.top += app.state.dyArial8;
                 }
-            } else if (RaceQueryIO().pfnStat(&rgplr[idPlayer], rsMajorAdv) == raMacintosh) {
-                cch = CommaFormatLong(szWork, (uint32_t)(rglPopMac[lpshdefBuild->hul.ihuldef - ihuldefOrbitalFort] * 100));
-                RightTextOut(hdc, rc.right - 8, rc.top, szWork, cch, dxMaxMineralQuan + 16);
-                cch = TextIO().pfnCchGetString(static_cast<StringId>(idsMaxPopulation + (dyArial8 > 14)), szWork);
-                TextOut(hdc, rc.left, rc.top, szWork, cch);
-                rc.top += dyArial8;
+            } else if (RaceQueryIO().pfnStat(&app.state.rgplr[app.state.idPlayer], rsMajorAdv) == raMacintosh) {
+                cch = CommaFormatLong(app, app.state.szWork, (uint32_t)(app.state.rglPopMac[app.lpui->lpshdefBuild->hul.ihuldef - ihuldefOrbitalFort] * 100));
+                RightTextOut(app, hdc, rc.right - 8, rc.top, app.state.szWork, cch, app.lpui->dxMaxMineralQuan + 16);
+                cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsMaxPopulation + (app.state.dyArial8 > 14)), app.state.szWork);
+                win32::TextOutA(hdc, rc.left, rc.top, app.state.szWork, cch);
+                rc.top += app.state.dyArial8;
             }
         }
-        if (hwndPopup && GlobalPD.grPopup == grPopupShdef && GlobalPD.fShowDamage) {
-            if (!GlobalPD.fToken) {
-                if (!fStarbaseMode) {
-                    if (GlobalPD.fSummary) {
-                        k = lpshdefBuild->ishdef;
-                        csh = rglpfl[sel.scan.ifl]->rgcsh[k];
-                        dv.dp = rglpfl[sel.scan.ifl]->rgdv[k].dp;
+        if (app.lpui->hwndPopup && app.lpui->GlobalPD.grPopup == grPopupShdef && app.lpui->GlobalPD.fShowDamage) {
+            if (!app.lpui->GlobalPD.fToken) {
+                if (!app.state.fStarbaseMode) {
+                    if (app.lpui->GlobalPD.fSummary) {
+                        k = app.lpui->lpshdefBuild->ishdef;
+                        csh = app.state.rglpfl[app.state.sel.scan.ifl]->rgcsh[k];
+                        dv.dp = app.state.rglpfl[app.state.sel.scan.ifl]->rgdv[k].dp;
                     } else {
-                        k = lpshdefBuild->ishdef;
-                        csh = sel.fl.rgcsh[k];
-                        dv.dp = sel.fl.rgdv[k].dp;
+                        k = app.lpui->lpshdefBuild->ishdef;
+                        csh = app.state.sel.fl.rgcsh[k];
+                        dv.dp = app.state.sel.fl.rgdv[k].dp;
                     }
                 } else {
                     dv.dp = 0;
-                    if (GlobalPD.fSummary) {
-                        dv.SetPctDp(LpplFromId(sel.scan.idpl)->pctDp);
+                    if (app.lpui->GlobalPD.fSummary) {
+                        dv.SetPctDp(LpplFromId(app, app.state.sel.scan.idpl)->pctDp);
                     } else {
-                        dv.SetPctDp(sel.pl.pctDp);
+                        dv.SetPctDp(app.state.sel.pl.pctDp);
                     }
                     csh = 1;
                     if (dv.pctDp() != 0) {
@@ -1391,7 +1395,7 @@ void DrawBuildSelHull(HWND hwnd, HDC hdc, int16_t iDraw, RECT *prc) {
                 }
             }
             if (dv.dp != 0) {
-                SetTextColor(hdc, 127);
+                win32::SetTextColor(hdc, 127);
                 pct = dv.pctDp() / 5;
                 if (pct <= 0) {
                     pct = 1;
@@ -1400,56 +1404,56 @@ void DrawBuildSelHull(HWND hwnd, HDC hdc, int16_t iDraw, RECT *prc) {
                 if (csh <= 0) {
                     csh = 1;
                 }
-                if (fStarbaseMode) {
-                    cch = wsprintf(szWork, PCTDPCTPCT, pct);
+                if (app.state.fStarbaseMode) {
+                    cch = win32::wsprintfA(app.state.szWork, app.state.PCTDPCTPCT, pct);
                 } else {
-                    cch = wsprintf(szWork, TextIO().pfnCompressed(idsLdD), csh, pct);
+                    cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsLdD), csh, pct);
                 }
                 dp = 1;
             } else {
                 dp = 0;
             }
             if (dp != 0) {
-                RightTextOut(hdc, rc.right - 8, rc.top, szWork, cch, dxMaxMineralQuan + 15);
-                cch = TextIO().pfnCchGetString(idsDamage, szWork);
-                TextOut(hdc, rc.left, rc.top, szWork, cch);
+                RightTextOut(app, hdc, rc.right - 8, rc.top, app.state.szWork, cch, app.lpui->dxMaxMineralQuan + 15);
+                cch = TextIO().pfnCchGetString(app, idsDamage, app.state.szWork);
+                win32::TextOutA(hdc, rc.left, rc.top, app.state.szWork, cch);
             }
         }
     LDeadToken:
-        SelectObject(hdc, rghfontArial8[0]);
-        SetTextColor(hdc, crForeSav);
-        SetBkColor(hdc, crBackSav);
+        win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
+        win32::SetTextColor(hdc, crForeSav);
+        win32::SetBkColor(hdc, crBackSav);
     LReleaseDC:
         if (fCreatedDC) {
-            ReleaseDC(hwnd, hdc);
+            win32::ReleaseDC(hwnd, hdc);
         }
     }
     return;
 }
 
-void SetBuildSelection(int16_t iSrc) {
+void SetBuildSelection(APPSESSION &app, int16_t iSrc) {
     int16_t iSelOld;
     RECT    rc;
 
-    if (iSrc != iselSlot) {
-        iSelOld = iselSlot;
-        iselSlot = iSrc;
-        ControlIO().pfnGetClientRect(hwndSlotDlg, &rc);
+    if (iSrc != app.lpui->iselSlot) {
+        iSelOld = app.lpui->iselSlot;
+        app.lpui->iselSlot = iSrc;
+        ControlIO().pfnGetClientRect(app.lpui->hwndSlotDlg, &rc);
         if (iSelOld >= 0) {
-            DrawSlotDlg(hwndSlotDlg, NULL, &rc, iSelOld);
+            DrawSlotDlg(app, app.lpui->hwndSlotDlg, NULL, &rc, iSelOld);
         }
-        if (iselSlot >= 0) {
-            DrawSlotDlg(hwndSlotDlg, NULL, &rc, iselSlot);
+        if (app.lpui->iselSlot >= 0) {
+            DrawSlotDlg(app, app.lpui->hwndSlotDlg, NULL, &rc, app.lpui->iselSlot);
         }
     RedrawSel:
-        DrawBuildSelComp(hwndSlotDlg, NULL, -1);
+        DrawBuildSelComp(app, app.lpui->hwndSlotDlg, NULL, -1);
     } else if (iSrc == -1) {
         goto RedrawSel;
     }
     return;
 }
 
-int16_t IDropPart(POINT16 pt, HS hsSrc, int16_t iSrc, int16_t fNoModify) {
+int16_t IDropPart(APPSESSION &app, POINT16 pt, HS hsSrc, int16_t iSrc, int16_t fNoModify) {
     int16_t cSlot;
     int16_t cNew;
     int16_t i;
@@ -1457,46 +1461,46 @@ int16_t IDropPart(POINT16 pt, HS hsSrc, int16_t iSrc, int16_t fNoModify) {
     HS      hsDst;
     RECT    rc;
 
-    ControlIO().pfnGetClientRect(hwndSlotDlg, &rc);
-    if (ControlIO().pfnGetAsyncKeyState(VK_CONTROL) & 0xfffe) {
+    ControlIO().pfnGetClientRect(app.lpui->hwndSlotDlg, &rc);
+    if (ControlIO().pfnGetAsyncKeyState(win32::VK_CONTROL) & 0xfffe) {
         if (iSrc < 0) {
             hsSrc.cItem = 100;
         }
-    } else if (ControlIO().pfnGetAsyncKeyState(VK_SHIFT) & 0xfffe) {
+    } else if (ControlIO().pfnGetAsyncKeyState(win32::VK_SHIFT) & 0xfffe) {
         if (iSrc < 0 || hsSrc.cItem > 4) {
             hsSrc.cItem = 4;
         }
     } else if (iSrc >= 0) {
         hsSrc.cItem = 1;
     }
-    cSlot = PartQueryIO().pfnHull(lpshdefBuild->hul.ihuldef)->hul.chs;
-    for (i = 0; i < cSlot && PtInRect(&vrgrcSlot[i], PointFrom16(pt)) == 0; i++) {
+    cSlot = PartQueryIO().pfnHull(app.lpui->lpshdefBuild->hul.ihuldef)->hul.chs;
+    for (i = 0; i < cSlot && win32::PtInRect(&app.lpui->vrgrcSlot[i], PointFrom16(pt)) == 0; i++) {
     }
     if (i == cSlot) {
         if (pt.x < rc.right >> 1) {
             if (!fNoModify && iSrc >= 0) {
-                if (lpshdefBuild->hul.rghs[iSrc].grhst & hstEngine) {
+                if (app.lpui->lpshdefBuild->hul.rghs[iSrc].grhst & hstEngine) {
                     hsSrc.cItem = 100;
                 }
-                lpshdefBuild->hul.rghs[iSrc].cItem =
-                    0 <= lpshdefBuild->hul.rghs[iSrc].cItem - hsSrc.cItem ? lpshdefBuild->hul.rghs[iSrc].cItem - hsSrc.cItem : 0;
-                UpdateShdefCost(lpshdefBuild);
-                ControlIO().pfnGetClientRect(hwndSlotDlg, &rc);
-                DrawSlotDlg(hwndSlotDlg, NULL, &rc, iSrc);
-                rc.top = yBuildInfoSum;
-                ControlIO().pfnInvalidateRect(hwndSlotDlg, &rc, TRUE);
-                DrawBuildSelComp(hwndSlotDlg, NULL, -1);
-                DrawBuildSelHull(hwndSlotDlg, NULL, -1, NULL);
-                if (gd.fTutorial) {
-                    PresentationIO().pfnTutor();
+                app.lpui->lpshdefBuild->hul.rghs[iSrc].cItem =
+                    0 <= app.lpui->lpshdefBuild->hul.rghs[iSrc].cItem - hsSrc.cItem ? app.lpui->lpshdefBuild->hul.rghs[iSrc].cItem - hsSrc.cItem : 0;
+                UpdateShdefCost(app, app.lpui->lpshdefBuild);
+                ControlIO().pfnGetClientRect(app.lpui->hwndSlotDlg, &rc);
+                DrawSlotDlg(app, app.lpui->hwndSlotDlg, NULL, &rc, iSrc);
+                rc.top = app.lpui->yBuildInfoSum;
+                ControlIO().pfnInvalidateRect(app.lpui->hwndSlotDlg, &rc, 1);
+                DrawBuildSelComp(app, app.lpui->hwndSlotDlg, NULL, -1);
+                DrawBuildSelHull(app, app.lpui->hwndSlotDlg, NULL, -1, NULL);
+                if (app.state.gd.fTutorial) {
+                    PresentationIO().pfnTutor(app);
                 }
             }
             return 1;
         }
         return 0;
     }
-    hsDst = lpshdefBuild->hul.rghs[i];
-    hsHul = PartQueryIO().pfnHull(lpshdefBuild->hul.ihuldef)->hul.rghs[i];
+    hsDst = app.lpui->lpshdefBuild->hul.rghs[i];
+    hsHul = PartQueryIO().pfnHull(app.lpui->lpshdefBuild->hul.ihuldef)->hul.rghs[i];
     if (hsHul.grhst & hstEngine) {
         hsSrc.cItem = 100;
     }
@@ -1506,7 +1510,7 @@ int16_t IDropPart(POINT16 pt, HS hsSrc, int16_t iSrc, int16_t fNoModify) {
     if (hsDst.cItem >= hsHul.cItem ||
         ((hsDst.cItem > 0 && (hsDst.grhst != hsSrc.grhst || hsDst.iItem != hsSrc.iItem)) || (hsDst.cItem == 0 && !(hsSrc.grhst & hsHul.grhst)))) {
         if (!fNoModify) {
-            ControlIO().pfnMessageBeep(MB_OK);
+            ControlIO().pfnMessageBeep(win32::MB_OK);
         }
         return 3;
     }
@@ -1515,48 +1519,48 @@ int16_t IDropPart(POINT16 pt, HS hsSrc, int16_t iSrc, int16_t fNoModify) {
         hsDst.iItem = hsSrc.iItem;
         cNew = (uint16_t)(hsDst.cItem + hsSrc.cItem) >= hsHul.cItem ? hsHul.cItem : hsDst.cItem + hsSrc.cItem;
         if (iSrc >= 0) {
-            lpshdefBuild->hul.rghs[iSrc].cItem -= cNew - hsDst.cItem;
+            app.lpui->lpshdefBuild->hul.rghs[iSrc].cItem -= cNew - hsDst.cItem;
         }
         hsDst.cItem = cNew;
-        lpshdefBuild->hul.rghs[i] = hsDst;
-        UpdateShdefCost(lpshdefBuild);
-        SetBuildSelection(i);
-        ControlIO().pfnGetClientRect(hwndSlotDlg, &rc);
-        rc.top = yBuildInfoSum;
-        ControlIO().pfnInvalidateRect(hwndSlotDlg, &rc, TRUE);
-        if (gd.fTutorial) {
-            PresentationIO().pfnTutor();
+        app.lpui->lpshdefBuild->hul.rghs[i] = hsDst;
+        UpdateShdefCost(app, app.lpui->lpshdefBuild);
+        SetBuildSelection(app, i);
+        ControlIO().pfnGetClientRect(app.lpui->hwndSlotDlg, &rc);
+        rc.top = app.lpui->yBuildInfoSum;
+        ControlIO().pfnInvalidateRect(app.lpui->hwndSlotDlg, &rc, 1);
+        if (app.state.gd.fTutorial) {
+            PresentationIO().pfnTutor(app);
         }
     }
     return -1;
 }
 
-void DrawDlgLBEntireItem(DRAWITEMSTRUCT *lpdis, int16_t inflate) {
+void DrawDlgLBEntireItem(APPSESSION &app, DRAWITEMSTRUCT *lpdis, int16_t inflate) {
     COLORREF cr;
     COLORREF crForeSav;
     int16_t  ibmp;
     int16_t  bkSav;
     RECT     rc;
 
-    CopyRect(&rc, &lpdis->rcItem);
-    FillRect(lpdis->hDC, &lpdis->rcItem, (HBRUSH)GetStockObject(!(lpdis->itemState & ODS_FOCUS) ? WHITE_BRUSH : BLACK_BRUSH));
-    InflateRect(&rc, -2, -1);
-    ControlIO().pfnLUiSendMessage(lpdis->hwndItem, LB_GETTEXT, lpdis->itemID, (LPARAM)szWork);
-    SelectPalette(lpdis->hDC, vhpal, FALSE);
-    RealizePalette(lpdis->hDC);
-    ibmp = szWork[2] - 'A' + (szWork[3] - 'A') * 26;
-    DibBlt(lpdis->hDC, rc.left, rc.top, 64, 64, rghdibInventory[ibmp >> 5], (ibmp & 7) * 0x40, ((3 - (ibmp >> 3)) & 3) * 0x40, 64, 64, 13369376);
-    cr = (lpdis->itemState & ODS_FOCUS) ? crWindow : crWindow == 0 ? 0xffffff : 0;
-    crForeSav = SetTextColor(lpdis->hDC, cr);
-    bkSav = SetBkMode(lpdis->hDC, TRANSPARENT);
-    TextOut(lpdis->hDC, rc.left + 66, rc.top + 0x20 - (dyArial8 >> 1), &szWork[4], strlen(&szWork[4]));
-    SetTextColor(lpdis->hDC, crForeSav);
-    SetBkMode(lpdis->hDC, bkSav);
-    HandleFocusState(lpdis, inflate + 2);
+    win32::CopyRect(&rc, &lpdis->rcItem);
+    win32::FillRect(lpdis->hDC, &lpdis->rcItem, (HBRUSH)win32::GetStockObject(!(lpdis->itemState & win32::ODS_FOCUS) ? win32::WHITE_BRUSH : win32::BLACK_BRUSH));
+    win32::InflateRect(&rc, -2, -1);
+    ControlIO().pfnSendMessage(lpdis->hwndItem, win32::LB_GETTEXT, lpdis->itemID, (LPARAM)app.state.szWork);
+    win32::SelectPalette(lpdis->hDC, app.lpui->vhpal, 0);
+    win32::RealizePalette(lpdis->hDC);
+    ibmp = app.state.szWork[2] - 'A' + (app.state.szWork[3] - 'A') * 26;
+    DibBlt(lpdis->hDC, rc.left, rc.top, 64, 64, app.lpui->rghdibInventory[ibmp >> 5], (ibmp & 7) * 0x40, ((3 - (ibmp >> 3)) & 3) * 0x40, 64, 64, 13369376);
+    cr = (lpdis->itemState & win32::ODS_FOCUS) ? app.lpui->crWindow : app.lpui->crWindow == 0 ? 0xffffff : 0;
+    crForeSav = win32::SetTextColor(lpdis->hDC, cr);
+    bkSav = win32::SetBkMode(lpdis->hDC, win32::TRANSPARENT);
+    win32::TextOutA(lpdis->hDC, rc.left + 66, rc.top + 0x20 - (app.state.dyArial8 >> 1), &app.state.szWork[4], strlen(&app.state.szWork[4]));
+    win32::SetTextColor(lpdis->hDC, crForeSav);
+    win32::SetBkMode(lpdis->hDC, bkSav);
+    HandleFocusState(app, lpdis, inflate + 2);
     return;
 }
 
-void FillBuildDD(HWND hwndDD, MdBuild md) {
+void FillBuildDD(APPSESSION &app, HWND hwndDD, MdBuild md) {
     int16_t ishdefMac;
     int16_t fProgress;
     int16_t fAdded;
@@ -1566,17 +1570,17 @@ void FillBuildDD(HWND hwndDD, MdBuild md) {
     RECT    rc;
     PART    part;
 
-    ControlIO().pfnLUiSendMessage(hwndDD, CB_RESETCONTENT, 0, 0);
+    ControlIO().pfnSendMessage(hwndDD, win32::CB_RESETCONTENT, 0, 0);
     if (md != mdBuildShdef) {
-        ControlIO().pfnFUiEnableWindow(ControlIO().pfnGetDlgItem(hwndSlotDlg, IDC_DELETE), FALSE);
-        ControlIO().pfnFUiEnableWindow(ControlIO().pfnGetDlgItem(hwndSlotDlg, IDC_EDIT), FALSE);
+        ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(app.lpui->hwndSlotDlg, IDC_DELETE), 0);
+        ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(app.lpui->hwndSlotDlg, IDC_EDIT), 0);
     }
-    if (fStarbaseMode) {
+    if (app.state.fStarbaseMode) {
         ishdefMac = 10;
-        lpshdef = rglpshdefSB[idPlayer];
+        lpshdef = app.state.rglpshdefSB[app.state.idPlayer];
     } else {
         ishdefMac = 16;
-        lpshdef = rgshdef;
+        lpshdef = app.state.rgshdef;
     }
     for (i = 0; i < ishdefMac && lpshdef[i].fFree == 0; i++) {
     }
@@ -1585,41 +1589,41 @@ void FillBuildDD(HWND hwndDD, MdBuild md) {
     case mdBuildHuldef:
     case mdBuildEnemyShdef:
         if (i < ishdefMac) {
-            fAdded = TRUE;
+            fAdded = 1;
             break;
         }
         /* fallthrough */
     default:
-        fAdded = FALSE;
+        fAdded = 0;
     }
-    ControlIO().pfnFUiEnableWindow(ControlIO().pfnGetDlgItem(hwndSlotDlg, IDC_IMPORT), fAdded);
+    ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(app.lpui->hwndSlotDlg, IDC_IMPORT), fAdded);
     switch (md) {
     case mdBuildShdef:
     default:
-        fAdded = FALSE;
+        fAdded = 0;
         for (i = 0; i < ishdefMac; i++) {
             if (!lpshdef[i].fFree) {
                 if (!fAdded) {
-                    CshQueued((!fStarbaseMode ? 0 : 16) + i, &fProgress, FALSE);
-                    ControlIO().pfnFUiEnableWindow(ControlIO().pfnGetDlgItem(hwndSlotDlg, IDC_EDIT), lpshdef[i].cExist == 0 && !fProgress);
-                    ControlIO().pfnFUiEnableWindow(ControlIO().pfnGetDlgItem(hwndSlotDlg, IDC_DELETE), TRUE);
+                    CshQueued(app, (!app.state.fStarbaseMode ? 0 : 16) + i, &fProgress, 0);
+                    ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(app.lpui->hwndSlotDlg, IDC_EDIT), lpshdef[i].cExist == 0 && !fProgress);
+                    ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(app.lpui->hwndSlotDlg, IDC_DELETE), 1);
                     fAdded = (lpshdef[i].cExist != 0) + 1;
                 }
-                ControlIO().pfnLUiSendMessage(hwndDD, CB_ADDSTRING, 0, (LPARAM)lpshdef[i].hul.szClass);
+                ControlIO().pfnSendMessage(hwndDD, win32::CB_ADDSTRING, 0, (LPARAM)lpshdef[i].hul.szClass);
             }
         }
         break;
     case mdBuildEnemyShdef:
-        for (i = 0; i < game.cPlayer; i++) {
-            if (i != idPlayer) {
-                lpshdef = !fStarbaseMode ? rglpshdef[i] : rglpshdefSB[i];
+        for (i = 0; i < app.state.game.cPlayer; i++) {
+            if (i != app.state.idPlayer) {
+                lpshdef = !app.state.fStarbaseMode ? app.state.rglpshdef[i] : app.state.rglpshdefSB[i];
                 if (lpshdef) {
                     for (j = 0; j < ishdefMac; j++) {
                         if (!lpshdef[j].fFree) {
-                            if (TextIO().pfnPlayerName(i, TRUE, FALSE, FALSE, 0, NULL) != szWork) {
+                            if (TextIO().pfnPlayerName(app, i, 1, 0, 0, 0, NULL) != app.state.szWork) {
                             }
-                            wsprintf(&szWork[strlen(szWork)], " %s", lpshdef[j].hul.szClass);
-                            ControlIO().pfnLUiSendMessage(hwndDD, CB_ADDSTRING, 0, (LPARAM)szWork);
+                            win32::wsprintfA(&app.state.szWork[strlen(app.state.szWork)], " %s", lpshdef[j].hul.szClass);
+                            ControlIO().pfnSendMessage(hwndDD, win32::CB_ADDSTRING, 0, (LPARAM)app.state.szWork);
                         }
                     }
                 }
@@ -1627,7 +1631,7 @@ void FillBuildDD(HWND hwndDD, MdBuild md) {
         }
         break;
     case mdBuildHuldef:
-        if (fStarbaseMode) {
+        if (app.state.fStarbaseMode) {
             part.hs.grhst = hstSBHull;
             j = 5;
         } else {
@@ -1636,34 +1640,34 @@ void FillBuildDD(HWND hwndDD, MdBuild md) {
         }
         for (i = 0; i < j; i++) {
             part.hs.iItem = i;
-            if (PartQueryIO().pfnLookup(&part) == mdPartAvailAvailable) {
-                ControlIO().pfnLUiSendMessage(hwndDD, CB_ADDSTRING, 0, (LPARAM)part.pcom().szName());
+            if (PartQueryIO().pfnLookup(app, &part) == mdPartAvailAvailable) {
+                ControlIO().pfnSendMessage(hwndDD, win32::CB_ADDSTRING, 0, (LPARAM)part.pcom().szName());
             }
         }
         break;
     case mdBuildComp:
     case mdBuildEdit:
-        if (fStarbaseMode) {
+        if (app.state.fStarbaseMode) {
             for (i = 0; i < 8; i++) {
-                ControlIO().pfnLUiSendMessage(hwndDD, CB_ADDSTRING, 0, (LPARAM)TextIO().pfnCompressed(rgidsPartsSB[i]));
+                ControlIO().pfnSendMessage(hwndDD, win32::CB_ADDSTRING, 0, (LPARAM)TextIO().pfnCompressed(app, rgidsPartsSB[i]));
             }
         } else {
             for (i = 0; i < 13; i++) {
-                ControlIO().pfnLUiSendMessage(hwndDD, CB_ADDSTRING, 0, (LPARAM)TextIO().pfnCompressed(rgidsParts[i]));
+                ControlIO().pfnSendMessage(hwndDD, win32::CB_ADDSTRING, 0, (LPARAM)TextIO().pfnCompressed(app, rgidsParts[i]));
             }
         }
     }
-    i = LOWORD(ControlIO().pfnLUiSendMessage(hwndDD, CB_GETCOUNT, 0, 0));
+    i = LOWORD(ControlIO().pfnSendMessage(hwndDD, win32::CB_GETCOUNT, 0, 0));
     if (i > 32) {
         i = 32;
     }
-    GetWindowRect(hwndDD, &rc);
-    ControlIO().pfnFUiSetWindowPos(hwndDD, NULL, 0, 0, rc.right - rc.left, (i + 1) * (dyArial8 - (dyArial8 <= 14)) + 8 + (dyArial8 > 14), SWP_NOMOVE | SWP_NOZORDER);
-    ControlIO().pfnLUiSendMessage(hwndDD, CB_SETCURSEL, 0, 0);
+    win32::GetWindowRect(hwndDD, &rc);
+    ControlIO().pfnSetWindowPos(hwndDD, NULL, 0, 0, rc.right - rc.left, (i + 1) * (app.state.dyArial8 - (app.state.dyArial8 <= 14)) + 8 + (app.state.dyArial8 > 14), win32::SWP_NOMOVE | win32::SWP_NOZORDER);
+    ControlIO().pfnSendMessage(hwndDD, win32::CB_SETCURSEL, 0, 0);
     return;
 }
 
-void FillBuildPartsLB(HWND hwndLB, int16_t grbit) {
+void FillBuildPartsLB(APPSESSION &app, HWND hwndLB, int16_t grbit) {
     mdPartAvail  mdAvail;
     int16_t      i;
     char         sz[200];
@@ -1672,17 +1676,17 @@ void FillBuildPartsLB(HWND hwndLB, int16_t grbit) {
 
     grbitCur = hstEngine;
     sz[0] = 'A';
-    ControlIO().pfnLUiSendMessage(hwndLB, LB_RESETCONTENT, 0, 0);
+    ControlIO().pfnSendMessage(hwndLB, win32::LB_RESETCONTENT, 0, 0);
     while (grbitCur != hstNone) {
         if (grbitCur & grbit) {
             i = 0;
             part.hs.grhst = grbitCur;
             while (1) {
                 part.hs.iItem = i;
-                mdAvail = static_cast<mdPartAvail>(PartQueryIO().pfnLookup(&part));
+                mdAvail = static_cast<mdPartAvail>(PartQueryIO().pfnLookup(app, &part));
                 if (mdAvail == mdPartAvailInvalid)
                     break;
-                if (fStarbaseMode && grbitCur == hstSpecialE && (i == ispecialETachyonDetector || i == ispecialEAntiMatterGenerator)) {
+                if (app.state.fStarbaseMode && grbitCur == hstSpecialE && (i == ispecialETachyonDetector || i == ispecialEAntiMatterGenerator)) {
                     mdAvail = mdPartAvailRestricted;
                 }
                 if (mdAvail == mdPartAvailAvailable) {
@@ -1690,7 +1694,7 @@ void FillBuildPartsLB(HWND hwndLB, int16_t grbit) {
                     sz[2] = part.pcom().ibmp() % 26 + 'A';
                     sz[3] = part.pcom().ibmp() / 26 + 'A';
                     strcpy(&sz[4], part.pcom().szName());
-                    ControlIO().pfnLUiSendMessage(hwndLB, LB_ADDSTRING, 0, (LPARAM)sz);
+                    ControlIO().pfnSendMessage(hwndLB, win32::LB_ADDSTRING, 0, (LPARAM)sz);
                 }
                 i++;
             }
@@ -1701,46 +1705,48 @@ void FillBuildPartsLB(HWND hwndLB, int16_t grbit) {
     return;
 }
 
-LRESULT CALLBACK FakeListProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+LRESULT  FakeListProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+
     POINT16 pt;
     int16_t iSel;
 
     switch (msg) {
-    case WM_SETCURSOR:
+    case win32::WM_SETCURSOR:
         GetCursorPos16(&pt);
         ScreenToClient16(hwnd, &pt);
         if (pt.x < 64) {
-            SetCursor(hcurHand);
+            win32::SetCursor(app.lpui->hcurHand);
             return 1;
         }
         break;
-    case WM_LBUTTONDOWN:
-    case WM_RBUTTONDOWN:
-        if (LOWORD(lParam) < 64 && (mdBuild == mdBuildEdit || msg == WM_RBUTTONDOWN)) {
-            LUiCallWindowProc(lpfnRealListProc, hwnd, WM_LBUTTONDOWN, wParam, lParam);
-            LUiCallWindowProc(lpfnRealListProc, hwnd, WM_LBUTTONUP, wParam, lParam);
-            if (msg == WM_RBUTTONDOWN || mdBuild != mdBuildEdit) {
-                iSel = LOWORD(ControlIO().pfnLUiSendMessage(hwnd, LB_GETCURSEL, 0, 0));
+    case win32::WM_LBUTTONDOWN:
+    case win32::WM_RBUTTONDOWN:
+        if (LOWORD(lParam) < 64 && (app.lpui->mdBuild == mdBuildEdit || msg == win32::WM_RBUTTONDOWN)) {
+            ui::CallWindowProc(app.lpui->lpfnRealListProc, hwnd, win32::WM_LBUTTONDOWN, wParam, lParam);
+            ui::CallWindowProc(app.lpui->lpfnRealListProc, hwnd, win32::WM_LBUTTONUP, wParam, lParam);
+            if (msg == win32::WM_RBUTTONDOWN || app.lpui->mdBuild != mdBuildEdit) {
+                iSel = LOWORD(ControlIO().pfnSendMessage(hwnd, win32::LB_GETCURSEL, 0, 0));
                 if (iSel == -1) {
                     return 0;
                 }
-                ControlIO().pfnLUiSendMessage(hwnd, LB_GETTEXT, iSel, (LPARAM)szWork);
-                GlobalPD.part.hs.grhst = static_cast<HullSlotType>(1 << (szWork[0] - 'A'));
-                GlobalPD.part.hs.iItem = szWork[1] - 'A';
-                PartQueryIO().pfnLookup(&GlobalPD.part);
-                GlobalPD.grPopup = grPopupComponent;
-                Popup(hwnd, LOWORD(lParam), HIWORD(lParam));
+                ControlIO().pfnSendMessage(hwnd, win32::LB_GETTEXT, iSel, (LPARAM)app.state.szWork);
+                app.lpui->GlobalPD.part.hs.grhst = static_cast<HullSlotType>(1 << (app.state.szWork[0] - 'A'));
+                app.lpui->GlobalPD.part.hs.iItem = app.state.szWork[1] - 'A';
+                PartQueryIO().pfnLookup(app, &app.lpui->GlobalPD.part);
+                app.lpui->GlobalPD.grPopup = grPopupComponent;
+                Popup(app, hwnd, LOWORD(lParam), HIWORD(lParam));
                 return 0;
             }
-            FTrackSlot(hwnd, LOWORD(lParam), HIWORD(lParam), wParam, TRUE, FALSE);
+            FTrackSlot(app, hwnd, LOWORD(lParam), HIWORD(lParam), wParam, 1, 0);
             return 0;
         }
         break;
     }
-    return LUiCallWindowProc(lpfnRealListProc, hwnd, msg, wParam, lParam);
+    return ui::CallWindowProc(app.lpui->lpfnRealListProc, hwnd, msg, wParam, lParam);
 }
 
-void UpdateSlotGlobals() {
+void UpdateSlotGlobals(APPSESSION &app) {
     int16_t  yTop;
     int16_t  cSlot;
     int16_t  i;
@@ -1748,49 +1754,49 @@ void UpdateSlotGlobals() {
     int16_t  xLeft;
     HULDEF  *lphuldef;
 
-    if (!lpshdefBuild) {
+    if (!app.lpui->lpshdefBuild) {
         cSlot = 0;
     } else {
-        lphuldef = PartQueryIO().pfnHull(lpshdefBuild->hul.ihuldef);
-        if (!hwndSlotDlg) {
+        lphuldef = PartQueryIO().pfnHull(app.lpui->lpshdefBuild->hul.ihuldef);
+        if (!app.lpui->hwndSlotDlg) {
             xLeft = 12;
-            yTop = dyArial8 + 12;
+            yTop = app.state.dyArial8 + 12;
         } else {
-            xLeft = ptslotGlob.x - 330;
+            xLeft = app.lpui->ptslotGlob.x - 330;
             yTop = 32;
         }
         cSlot = lphuldef->hul.chs;
         for (i = 0; i < cSlot; i++) {
-            vrgrcSlot[i].left = (lphuldef->rgbrc[i] & 0xf) * 0x20 + xLeft;
-            vrgrcSlot[i].top = (lphuldef->rgbrc[i] >> 4) * 0x20 + yTop;
-            vrgrcSlot[i].right = vrgrcSlot[i].left + 64;
-            vrgrcSlot[i].bottom = vrgrcSlot[i].top + 64;
+            app.lpui->vrgrcSlot[i].left = (lphuldef->rgbrc[i] & 0xf) * 0x20 + xLeft;
+            app.lpui->vrgrcSlot[i].top = (lphuldef->rgbrc[i] >> 4) * 0x20 + yTop;
+            app.lpui->vrgrcSlot[i].right = app.lpui->vrgrcSlot[i].left + 64;
+            app.lpui->vrgrcSlot[i].bottom = app.lpui->vrgrcSlot[i].top + 64;
         }
         if (lphuldef->hul.wtCargoMax != 0) {
             wrc = lphuldef->wrcCargo;
-            rcCargo.left = (wrc >> 8 & 0xff & 0xf) * 0x20 + xLeft;
-            rcCargo.top = ((wrc >> 8 & 0xff) >> 4) * 0x20 + yTop;
-            rcCargo.right = (wrc & 0xff & 0xff & 0xf) * 0x20 + xLeft;
-            rcCargo.bottom = ((wrc & 0xff & 0xff) >> 4) * 0x20 + yTop;
+            app.lpui->rcCargo.left = (wrc >> 8 & 0xff & 0xf) * 0x20 + xLeft;
+            app.lpui->rcCargo.top = ((wrc >> 8 & 0xff) >> 4) * 0x20 + yTop;
+            app.lpui->rcCargo.right = (wrc & 0xff & 0xff & 0xf) * 0x20 + xLeft;
+            app.lpui->rcCargo.bottom = ((wrc & 0xff & 0xff) >> 4) * 0x20 + yTop;
         }
-        ptPlaque.x = xLeft + 258;
-        ptPlaque.y = yTop + 273;
+        app.lpui->ptPlaque.x = xLeft + 258;
+        app.lpui->ptPlaque.y = yTop + 273;
     }
     return;
 }
 
-int16_t IEmptyBmpFromGrhst(int16_t grhst) {
+int16_t IEmptyBmpFromGrhst(APPSESSION &app, int16_t grhst) {
     int16_t i;
 
     for (i = 0; i < 21; i++) {
-        if (rgmapBuildBmps[i] == grhst) {
+        if (app.lpui->rgmapBuildBmps[i] == grhst) {
             return i;
         }
     }
     return 0;
 }
 
-void MakeNewName(char *lpsz) {
+void MakeNewName(APPSESSION &app, char *lpsz) {
     int16_t cLen;
 
     cLen = strlen(lpsz);
@@ -1803,6 +1809,6 @@ void MakeNewName(char *lpsz) {
             lpsz[cLen - 2] = lpsz[cLen - 2] + 1;
         }
     }
-    FStringFitsScreen(lpsz, 160);
+    FStringFitsScreen(app, lpsz, 160);
     return;
 }

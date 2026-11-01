@@ -1,3 +1,11 @@
+add_executable(stars-compat-callback-context tests/compat/callback_context.cpp)
+target_include_directories(stars-compat-callback-context PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
+target_link_libraries(stars-compat-callback-context PRIVATE stars_options stars_win32 SDL3::SDL3)
+target_compile_options(stars-compat-callback-context PRIVATE -Wall -Wextra -Wpedantic -Werror)
+add_test(NAME win32_callback_context COMMAND stars-compat-callback-context)
+set_tests_properties(win32_callback_context PROPERTIES LABELS "compat;ownership;lifetime"
+    ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software" TIMEOUT 30)
+
 add_executable(stars-resource-guards tests/compat/guard_ownership.cpp)
 target_include_directories(stars-resource-guards PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
 target_link_libraries(stars-resource-guards PRIVATE stars_win32 SDL3::SDL3)

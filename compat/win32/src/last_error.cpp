@@ -2,5 +2,5 @@
 
 static thread_local DWORD dwError;
 
-DWORD WINAPI GetLastError(void) { return dwError; }
-void WINAPI SetLastError(DWORD dw) { dwError = dw; }
+DWORD win32::GetLastError(void) { return dwError; }
+void win32::SetLastError(DWORD dw) { dwError = dw; }

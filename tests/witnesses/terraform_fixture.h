@@ -4,34 +4,34 @@
 static int32_t cfg[54];
 static int     currentDesire, terraCalls, desireCalls, terraItems[128], desireInputs[16][4], observedLow[3], observedHigh[3], observedCost[3];
 static TERRA   scripted[20];
-static int16_t TerraformHabitat(PLANET *p, int16_t player) {
+static int16_t TerraformHabitat(APPSESSION &app, PLANET *p, int16_t player) {
     assert(p == &planet && desireCalls < 16);
     int at = desireCalls++;
     desireInputs[at][0] = player;
     for (int i = 0; i < 3; i++)
         desireInputs[at][i + 1] = p->rgEnvVar[i];
-    return cfg[49] ? (int16_t)cfg[50 + currentDesire++] : PctPlanetDesirability(p, player);
+    return cfg[49] ? (int16_t)cfg[50 + currentDesire++] : PctPlanetDesirability(app, p, player);
 }
-static int16_t TerraformBest(PLANET *p, int16_t help) {
+static int16_t TerraformBest(APPSESSION &app, PLANET *p, int16_t help) {
     terraformCalls++;
     currentDesire = 0;
-    return IBestTerraform(p, help);
+    return IBestTerraform(app, p, help);
 }
-static int16_t TerraformLookup(PART *part) {
+static int16_t TerraformLookup(APPSESSION &app, PART *part) {
     if (part->hs.grhst != hstTerra)
-        return GateLookup(part);
+        return GateLookup(app, part);
     assert(terraCalls < 128 && part->hs.iItem < 20);
     terraItems[terraCalls++] = part->hs.iItem;
     if (!cfg[1])
-        return FLookupPart(part);
+        return FLookupPart(app, part);
     part->SetPterra(scripted + part->hs.iItem);
     return (cfg[2] & (1 << part->hs.iItem)) ? 1 : 0;
 }
-static int16_t TerraformCan(PLANET *p, int16_t *low, int16_t *high, int16_t *cost, int16_t help) {
+static int16_t TerraformCan(APPSESSION &app, PLANET *p, int16_t *low, int16_t *high, int16_t *cost, int16_t help) {
     // Initialize the supplied outputs for observation, as in the original domain.
     for (int i = 0; i < 3; i++)
         low[i] = high[i] = cost[i] = 9876;
-    int16_t result = FCanTerraformLppl(p, low, high, cost, help);
+    int16_t result = FCanTerraformLppl(app, p, low, high, cost, help);
     for (int i = 0; i < 3; i++) {
         observedLow[i] = low[i];
         observedHigh[i] = high[i];
@@ -44,8 +44,8 @@ struct TERRAFORMFIXTURE {
     COLONYIOSCOPE            colonyScope;
     PLANETQUERYIOSCOPE       planetScope;
     PARTQUERYIOSCOPE         partScope;
-    TERRAFORMFIXTURE()
-        : colonyScope([] {
+    TERRAFORMFIXTURE(APPSESSION &app)
+        : fixture(app), colonyScope([] {
               COLONYIO io = ColonyIO();
               io.pfnBestTerraform = TerraformBest;
               io.pfnCanTerraform = TerraformCan;

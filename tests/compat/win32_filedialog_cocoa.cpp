@@ -26,11 +26,11 @@ int main(void) {
     char szPath[256];
     int iFilter = 0;
 
-    if (ICompatChooseFile(NULL, TRUE, "Choose \xe2\x80\x9cNew Game\xe2\x80\x9d", "/tmp/\xe6\x98\x9f",
+    if (ICompatChooseFile(NULL, 1, "Choose \xe2\x80\x9cNew Game\xe2\x80\x9d", "/tmp/\xe6\x98\x9f",
                          "\xe6\x98\x9f.xy", &filter, 1, &iFilter, szPath, sizeof(szPath)) != 1 ||
         cChoose != 1 || strcmp(szPath, "/tmp/\xe6\x98\x9f/game.xy")) return 1;
     iResult = 0;
-    if (ICompatChooseFile(NULL, TRUE, "Choose \xe2\x80\x9cNew Game\xe2\x80\x9d", "/tmp/\xe6\x98\x9f",
+    if (ICompatChooseFile(NULL, 1, "Choose \xe2\x80\x9cNew Game\xe2\x80\x9d", "/tmp/\xe6\x98\x9f",
                          "\xe6\x98\x9f.xy", &filter, 1, &iFilter, szPath, sizeof(szPath)) != 0 ||
         cChoose != 2) return 1;
     puts("Cocoa picker: UTF-8 labels, UTF-8 paths and cancellation passed");

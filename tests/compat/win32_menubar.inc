@@ -16,10 +16,10 @@ static BOOL fPopupContract;
 static LRESULT CALLBACK BarProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     if (msg == WM_DESTROY && fDemo) PostQuitMessage(0);
     if (msg == WM_COMMAND) { idCommand = LOWORD(w); return 0; }
-    if (msg == WM_ENTERMENULOOP) { cEnter++; if (w) fWrongLoop = TRUE; }
-    if (msg == WM_EXITMENULOOP) { cExit++; if (w) fWrongLoop = TRUE; }
+    if (msg == WM_ENTERMENULOOP) { cEnter++; if (w) fWrongLoop = 1; }
+    if (msg == WM_EXITMENULOOP) { cExit++; if (w) fWrongLoop = 1; }
     if (msg == WM_INITMENU && fDestroyInit) DestroyWindow(hwnd);
-    return DefWindowProc(hwnd, msg, w, l);
+    return DefWindowProcA(hwnd, msg, w, l);
 }
 static void CALLBACK InputTimer(HWND hwnd, UINT msg, UINT_PTR id, DWORD tick) {
     UINT key = 0;
@@ -54,22 +54,22 @@ static void CALLBACK InputTimer(HWND hwnd, UINT msg, UINT_PTR id, DWORD tick) {
         if (iStep == 0 && GetMenuItemRect(hwnd, GetMenu(hwnd), 1, &rc)) {
             pt.x = (rc.left + rc.right) / 2; pt.y = (rc.top + rc.bottom) / 2;
             ScreenToClient(hwnd, &pt);
-            PostMessage(hwnd, WM_MOUSEMOVE, 0, MAKELPARAM(pt.x, pt.y));
+            PostMessageA(hwnd, WM_MOUSEMOVE, 0, MAKELPARAM(pt.x, pt.y));
         } else key = iStep == 1 ? VK_HOME : VK_RETURN;
     }
 #endif
-    if (key) PostMessage(hwnd, WM_KEYDOWN, key, 0);
+    if (key) PostMessageA(hwnd, WM_KEYDOWN, key, 0);
     iStep++;
     if ((iAction == 1 && iStep == 2) || (iAction == 2 && iStep == 3) || iAction == 3 || (iAction == 4 && iStep == 3) || iAction == 5) KillTimer(hwnd, id);
 }
 static void Drain(void) {
-    MSG msg;
-    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) { TranslateMessage(&msg); DispatchMessage(&msg); }
+    APPMSG msg;
+    while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) { TranslateMessage(&msg); DispatchMessageA(&msg); }
 }
 static int OpenBar(HWND hwnd, int action) {
     iAction = action; iStep = 0; idCommand = 0;
     CHECK(SetTimer(hwnd, 17, 20, InputTimer));
-    SendMessage(hwnd, WM_SYSCOMMAND, SC_KEYMENU, 'f');
+    SendMessageA(hwnd, WM_SYSCOMMAND, SC_KEYMENU, 'f');
     Drain();
     CHECK(cEnter == cExit && !fWrongLoop);
     return 0;
@@ -90,17 +90,17 @@ int main(int argc, char **argv) {
     const char *pszCapture;
 #endif
     wc.lpfnWndProc = BarProc; wc.lpszClassName = "MenuBarContract";
-    CHECK(RegisterClass(&wc));
-    hwnd = CreateWindow(wc.lpszClassName, "Menu bars", WS_OVERLAPPEDWINDOW, 80, 80, 420, 220, NULL, NULL, NULL, NULL);
+    CHECK(RegisterClassA(&wc));
+    hwnd = CreateWindowExA(0, wc.lpszClassName, "Menu bars", WS_OVERLAPPEDWINDOW, 80, 80, 420, 220, NULL, NULL, NULL, NULL);
     CHECK(hwnd); ShowWindow(hwnd, SW_SHOW); UpdateWindow(hwnd); Drain();
     CHECK(GetClientRect(hwnd, &rcBefore) && ClientToScreen(hwnd, &ptBefore));
     CHECK(GetWindowRect(hwnd, &rcWindow));
     hmenu = CreateMenu(); hfile = CreatePopupMenu(); hedit = CreatePopupMenu();
     CHECK(hmenu && hfile && hedit);
-    CHECK(AppendMenu(hfile, MF_STRING, 701, "&Open"));
-    CHECK(AppendMenu(hedit, MF_STRING, 702, "&Copy"));
-    CHECK(AppendMenu(hmenu, MF_POPUP, (UINT_PTR)hfile, "&File"));
-    CHECK(AppendMenu(hmenu, MF_POPUP, (UINT_PTR)hedit, "&Edit"));
+    CHECK(AppendMenuA(hfile, MF_STRING, 701, "&Open"));
+    CHECK(AppendMenuA(hedit, MF_STRING, 702, "&Copy"));
+    CHECK(AppendMenuA(hmenu, MF_POPUP, (UINT_PTR)hfile, "&File"));
+    CHECK(AppendMenuA(hmenu, MF_POPUP, (UINT_PTR)hedit, "&Edit"));
     CHECK(SetMenu(hwnd, hmenu) && DrawMenuBar(hwnd));
     ShowWindow(hwnd, SW_SHOW); UpdateWindow(hwnd); Drain();
     CHECK(GetClientRect(hwnd, &rcAfter) && ClientToScreen(hwnd, &ptAfter));
@@ -110,7 +110,7 @@ int main(int argc, char **argv) {
     CHECK(GetWindowRect(hwnd, &rcWindowAfter) && EqualRect(&rcWindow, &rcWindowAfter));
     CHECK(GetMenuItemRect(hwnd, hmenu, 0, &rcFile) && GetMenuItemRect(hwnd, hmenu, 1, &rcEdit));
     CHECK(rcFile.left < rcEdit.left && rcFile.top == rcEdit.top && rcFile.bottom <= ptAfter.y);
-    hchild = CreateWindow("STATIC", "Child", WS_CHILD | WS_VISIBLE, 0, 0, 20, 20, hwnd, (HMENU)(UINT_PTR)3, NULL, NULL);
+    hchild = CreateWindowExA(0, "STATIC", "Child", WS_CHILD | WS_VISIBLE, 0, 0, 20, 20, hwnd, (HMENU)(UINT_PTR)3, NULL, NULL);
     CHECK(hchild && ClientToScreen(hchild, &ptChild) && ptChild.x == ptAfter.x && ptChild.y == ptAfter.y);
     CHECK(!GetMenuItemRect(hwnd, hmenu, 9, &rcEdit));
     CHECK(UpdateWindow(hchild));
@@ -138,7 +138,7 @@ int main(int argc, char **argv) {
     event.type = SDL_EVENT_KEY_DOWN; event.key.windowID = hwnd->id;
     event.key.scancode = SDL_SCANCODE_F10; event.key.mod = 0;
     CompatRouteEvent(&event); Drain(); CHECK(hwnd->iMenuHot == 0);
-    SendMessage(hchild, WM_KEYDOWN, VK_ESCAPE, 0); CHECK(hwnd->iMenuHot == -1);
+    SendMessageA(hchild, WM_KEYDOWN, VK_ESCAPE, 0); CHECK(hwnd->iMenuHot == -1);
     event.key.scancode = SDL_SCANCODE_F; event.key.mod = SDL_KMOD_LALT;
     iAction = 1; iStep = 0; idCommand = 0;
     CHECK(SetTimer(hwnd, 17, 20, InputTimer));
@@ -161,9 +161,9 @@ int main(int argc, char **argv) {
     CHECK(SetWindowPos(hwnd, NULL, 0, 0, 420, 220, SWP_NOMOVE | SWP_NOZORDER) && DrawMenuBar(hwnd));
 #endif
     if (argc > 1 && strcmp(argv[1], "--demo") == 0) {
-        MSG msg;
-        fDemo = TRUE;
-        while (IsWindow(hwnd) && GetMessage(&msg, NULL, 0, 0) > 0) { TranslateMessage(&msg); DispatchMessage(&msg); }
+        APPMSG msg;
+        fDemo = 1;
+        while (IsWindow(hwnd) && GetMessageA(&msg, NULL, 0, 0) > 0) { TranslateMessage(&msg); DispatchMessageA(&msg); }
     }
     if (fDemo) {
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
@@ -175,10 +175,10 @@ int main(int argc, char **argv) {
     CHECK(GetClientRect(hwnd, &rcAfter) && rcAfter.bottom == rcBefore.bottom);
     CHECK(DestroyMenu(hmenu));
     CHECK(DestroyWindow(hwnd));
-    hwnd = CreateWindow(wc.lpszClassName, "Destroy", WS_OVERLAPPEDWINDOW, 80, 80, 300, 180, NULL, NULL, NULL, NULL);
+    hwnd = CreateWindowExA(0, wc.lpszClassName, "Destroy", WS_OVERLAPPEDWINDOW, 80, 80, 300, 180, NULL, NULL, NULL, NULL);
     hmenu = CreateMenu(); hfile = CreatePopupMenu();
-    CHECK(hwnd && AppendMenu(hfile, MF_STRING, 701, "&Open") && AppendMenu(hmenu, MF_POPUP, (UINT_PTR)hfile, "&File") && SetMenu(hwnd, hmenu));
-    fDestroyInit = TRUE; SendMessage(hwnd, WM_SYSCOMMAND, SC_KEYMENU, 'f');
+    CHECK(hwnd && AppendMenuA(hfile, MF_STRING, 701, "&Open") && AppendMenuA(hmenu, MF_POPUP, (UINT_PTR)hfile, "&File") && SetMenu(hwnd, hmenu));
+    fDestroyInit = 1; SendMessageA(hwnd, WM_SYSCOMMAND, SC_KEYMENU, 'f');
     CHECK(!IsWindow(hwnd));
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
     StarsCompatShutdown();

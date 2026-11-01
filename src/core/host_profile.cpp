@@ -12,7 +12,7 @@ static int16_t FSzEqNoCase(const char *sz1, const char *sz2) {
 
 // FIniValue copies key szKey's value in [szSection] of the INI text pszText
 // into szValue, as GetPrivateProfileString finds it.
-int16_t FIniValue(const char *pszText, StringId idsSection, StringId idsKey, char *szValue, size_t cchValue) {
+int16_t FIniValue(APPSESSION &app, const char *pszText, StringId idsSection, StringId idsKey, char *szValue, size_t cchValue) {
     char        szSection[32];
     char        szKey[32];
     char        szLine[256];
@@ -22,9 +22,9 @@ int16_t FIniValue(const char *pszText, StringId idsSection, StringId idsKey, cha
     size_t      cch;
     int16_t     fInSection;
 
-    TextIO().pfnCchGetString(idsSection, szSection);
-    TextIO().pfnCchGetString(idsKey, szKey);
-    fInSection = FALSE;
+    TextIO().pfnCchGetString(app, idsSection, szSection);
+    TextIO().pfnCchGetString(app, idsKey, szKey);
+    fInSection = 0;
     for (pch = pszText; *pch != 0; pch = *pchEnd != 0 ? pchEnd + 1 : pchEnd) {
         pchEnd = strchr(pch, '\n');
         if (!pchEnd) {
@@ -59,18 +59,18 @@ int16_t FIniValue(const char *pszText, StringId idsSection, StringId idsKey, cha
             cch = CchUtf8Prefix(pchEq, cchValue - 1);
             memcpy(szValue, pchEq, cch);
             szValue[cch] = 0;
-            return TRUE;
+            return 1;
         }
     }
-    return FALSE;
+    return 0;
 }
 
 // LIniInt reads an INI key as GetPrivateProfileInt does: its leading
 // number, or lDefault if the key is missing.
-int32_t LIniInt(const char *pszText, StringId idsSection, StringId idsKey, int32_t lDefault) {
+int32_t LIniInt(APPSESSION &app, const char *pszText, StringId idsSection, StringId idsKey, int32_t lDefault) {
     char szValue[32];
 
-    if (!FIniValue(pszText, idsSection, idsKey, szValue, sizeof(szValue))) {
+    if (!FIniValue(app, pszText, idsSection, idsKey, szValue, sizeof(szValue))) {
         return lDefault;
     }
     return atol(szValue);

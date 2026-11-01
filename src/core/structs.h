@@ -1,6 +1,8 @@
 #ifndef STARS_DECOMPILED_STRUCTS_H
 #define STARS_DECOMPILED_STRUCTS_H
 
+class APPSESSION;
+
 #include <stdint.h>
 #include <cstddef>
 #include <array>
@@ -129,7 +131,7 @@ typedef struct _tutor           TUTOR;
 typedef struct _zipprodq        ZIPPRODQ;
 
 // Tile drawing callbacks use the native device-context handle type.
-typedef void (*TILEDRAWPROC)(HDC hdc, TILE *ptile, OBJ obj);
+typedef void (*TILEDRAWPROC)(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj);
 
 // Win16 structs are byte-packed; keep the original field offsets.
 // The codec harness also compiles these types with natural runtime alignment.

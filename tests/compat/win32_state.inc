@@ -27,13 +27,13 @@ static BOOL fDestroySize;
 static LRESULT CALLBACK StateProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     if (msg == WM_SIZE) {
         sizeLast = (UINT)w;
-        if (fDestroySize) { fDestroySize = FALSE; DestroyWindow(hwnd); }
+        if (fDestroySize) { fDestroySize = 0; DestroyWindow(hwnd); }
     }
-    return DefWindowProc(hwnd, msg, w, l);
+    return DefWindowProcA(hwnd, msg, w, l);
 }
 static void Drain(void) {
-    MSG msg;
-    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
+    APPMSG msg;
+    while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
 }
 int main(void) {
     WNDCLASS wc = {0};
@@ -55,16 +55,16 @@ int main(void) {
 #endif
 
 #ifdef _WIN32
-    hInstance = GetModuleHandle(NULL);
+    hInstance = GetModuleHandleA(NULL);
 #else
     hInstance = (HINSTANCE)(UINT_PTR)1;
 #endif
     wc.lpszClassName = "StarsStateContracts"; wc.lpfnWndProc = StateProc; wc.hInstance = hInstance;
-    CHECK(RegisterClass(&wc));
-    hwnd = CreateWindow(wc.lpszClassName, "state", WS_POPUP | WS_VISIBLE,
+    CHECK(RegisterClassA(&wc));
+    hwnd = CreateWindowExA(0, wc.lpszClassName, "state", WS_POPUP | WS_VISIBLE,
                         70, 80, 400, 300, NULL, NULL, hInstance, NULL);
     CHECK(hwnd);
-    hwndChild = CreateWindow(wc.lpszClassName, "child", WS_CHILD | WS_VISIBLE,
+    hwndChild = CreateWindowExA(0, wc.lpszClassName, "child", WS_CHILD | WS_VISIBLE,
                              10, 20, 50, 60, hwnd, (HMENU)(INT_PTR)101, hInstance, NULL);
     CHECK(hwndChild);
     Drain();
@@ -76,7 +76,7 @@ int main(void) {
     ShowWindow(hwndChild, SW_SHOWMINIMIZED);
     CHECK(IsIconic(hwndChild) && !IsZoomed(hwndChild) && sizeLast == SIZE_MINIMIZED);
     CHECK(GetClientRect(hwndChild, &rc) && rc.right == 0 && rc.bottom == 0);
-    CHECK(GetWindowLongPtr(hwndChild, GWL_STYLE) & WS_MINIMIZE);
+    CHECK(GetWindowLongPtrA(hwndChild, GWL_STYLE) & WS_MINIMIZE);
     CHECK(GetWindowPlacement(hwndChild, &wndpl) && wndpl.showCmd == SW_SHOWMINIMIZED);
     CHECK(EqualRect(&wndpl.rcNormalPosition, &rcNormal));
     ShowWindow(hwndChild, SW_SHOWMAXIMIZED);
@@ -112,13 +112,13 @@ int main(void) {
     CHECK(SDL_GetDisplayBounds(idDisplay, &rcDisplay) && SDL_GetDisplayUsableBounds(idDisplay, &rcWork));
     OffsetRect(&rc, rcDisplay.x - rcWork.x, rcDisplay.y - rcWork.y);
     CHECK(GetWindowPlacement(hwnd, &wndpl) && EqualRect(&rc, &wndpl.rcNormalPosition));
-    fFakeDisplay = TRUE;
+    fFakeDisplay = 1;
     CHECK(GetWindowRect(hwnd, &rc));
     OffsetRect(&rc, -10, -30);
     CHECK(GetWindowPlacement(hwnd, &wndpl) && EqualRect(&rc, &wndpl.rcNormalPosition));
-    wndplOld = wndpl; fFailDisplay = TRUE;
+    wndplOld = wndpl; fFailDisplay = 1;
     CHECK(!GetWindowPlacement(hwnd, &wndpl) && memcmp(&wndpl, &wndplOld, sizeof(wndpl)) == 0);
-    fFakeDisplay = fFailDisplay = FALSE;
+    fFakeDisplay = fFailDisplay = 0;
     CHECK(GetWindowPlacement(hwnd, &wndpl));
     rc = wndpl.rcNormalPosition;
     event.window.windowID = hwnd->id;
@@ -133,7 +133,7 @@ int main(void) {
     event.type = SDL_EVENT_WINDOW_RESTORED; CompatRouteEvent(&event); Drain();
     CHECK(!IsZoomed(hwnd) && !IsIconic(hwnd) && sizeLast == SIZE_RESTORED);
 #endif
-    fDestroySize = TRUE;
+    fDestroySize = 1;
     ShowWindow(hwndChild, SW_SHOWMINIMIZED);
     CHECK(!IsWindow(hwndChild));
     CHECK(!IsIconic(hwndChild) && !IsZoomed(hwndChild));

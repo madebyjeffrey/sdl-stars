@@ -29,7 +29,7 @@ static LRESULT CALLBACK ScrollProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     }
 #endif
     if (msg == WM_ERASEBKGND) { cErase++; return 1; }
-    return DefWindowProc(hwnd, msg, w, l);
+    return DefWindowProcA(hwnd, msg, w, l);
 }
 static int TestPixels(HWND hwnd) {
     HDC hdc = GetDC(hwnd);
@@ -47,17 +47,17 @@ static int TestPixels(HWND hwnd) {
     CHECK(GetPixel(hdc, 15, 12) == RGB(15, 12, 123));
     CHECK(GetPixel(hdc, 40, 12) == RGB(40, 12, 123));
     CHECK(ReleaseDC(hwnd, hdc));
-    CHECK(GetUpdateRect(hwnd, &rcUpdate, FALSE) && EqualRect(&rcUpdate, &rcTest1));
+    CHECK(GetUpdateRect(hwnd, &rcUpdate, 0) && EqualRect(&rcUpdate, &rcTest1));
     CHECK(ValidateRect(hwnd, NULL));
     CHECK(ScrollWindow(hwnd, 0, -5, &rc, &rc));
-    CHECK(GetUpdateRect(hwnd, &rcUpdate, FALSE));
+    CHECK(GetUpdateRect(hwnd, &rcUpdate, 0));
     CHECK(EqualRect(&rcUpdate, &rcTest2));
-    cErase = 0; CHECK(GetUpdateRect(hwnd, NULL, TRUE) && cErase == 1);
+    cErase = 0; CHECK(GetUpdateRect(hwnd, NULL, 1) && cErase == 1);
     CHECK(ValidateRect(hwnd, NULL));
     CHECK(ScrollWindow(hwnd, INT_MAX, INT_MIN, &rc, NULL));
-    CHECK(GetUpdateRect(hwnd, &rcUpdate, FALSE) && EqualRect(&rcUpdate, &rc));
+    CHECK(GetUpdateRect(hwnd, &rcUpdate, 0) && EqualRect(&rcUpdate, &rc));
     CHECK(ValidateRect(hwnd, NULL));
-    CHECK(ScrollWindow(hwnd, 0, 0, &rc, NULL) && !GetUpdateRect(hwnd, NULL, FALSE));
+    CHECK(ScrollWindow(hwnd, 0, 0, &rc, NULL) && !GetUpdateRect(hwnd, NULL, 0));
     return 0;
 }
 static int TestOverlap(HWND hwnd) {
@@ -94,23 +94,23 @@ static int TestDamage(HWND hwnd, HWND hwndChild) {
     HDC hdc;
     HBRUSH hbr;
     CHECK(ValidateRect(hwnd, NULL));
-    CHECK(InvalidateRect(hwnd, &rcTest3, FALSE));
+    CHECK(InvalidateRect(hwnd, &rcTest3, 0));
     CHECK(ScrollWindow(hwnd, 3, 0, NULL, NULL));
     CHECK(ClientToScreen(hwndChild, &pt) && ScreenToClient(hwnd, &pt));
     CHECK(pt.x == 13 && pt.y == 10);
     CHECK(ValidateRect(hwnd, &rcTest4));
-    CHECK(GetUpdateRect(hwnd, &rc, FALSE));
+    CHECK(GetUpdateRect(hwnd, &rc, 0));
     CHECK((rc.left == 20 || rc.left == 23) && rc.top == 20 && rc.right == 25 && rc.bottom == 22);
 #ifndef _WIN32
     CHECK(rc.left == 23);
 #endif
     CHECK(ValidateRect(hwnd, NULL) && GetClientRect(hwnd, &rcClient));
-    CHECK(InvalidateRect(hwnd, &rcTest5, FALSE));
+    CHECK(InvalidateRect(hwnd, &rcTest5, 0));
     CHECK(ScrollWindow(hwnd, 3, 0, &rcClient, NULL));
     pt = (POINT){0, 0}; CHECK(ClientToScreen(hwndChild, &pt) && ScreenToClient(hwnd, &pt));
     CHECK(pt.x == 13 && pt.y == 10);
     CHECK(ValidateRect(hwnd, &rcTest6));
-    CHECK(GetUpdateRect(hwnd, &rc, FALSE));
+    CHECK(GetUpdateRect(hwnd, &rc, 0));
     CHECK(rc.left == 20 && rc.top == 20 && (rc.right == 22 || rc.right == 25) && rc.bottom == 22);
 #ifndef _WIN32
     CHECK(rc.right == 22);
@@ -118,14 +118,14 @@ static int TestDamage(HWND hwnd, HWND hwndChild) {
     CHECK(ValidateRect(hwnd, NULL));
     hdc = GetDC(hwnd); CHECK(hdc);
     CHECK(FillRect(hdc, &rcClient, (HBRUSH)GetStockObject(BLACK_BRUSH))); CHECK(ReleaseDC(hwnd, hdc));
-    CHECK(InvalidateRect(hwnd, &rcTest7, FALSE));
+    CHECK(InvalidateRect(hwnd, &rcTest7, 0));
     CHECK(ValidateRect(hwnd, &rcTest8));
-    CHECK(InvalidateRect(hwnd, &rcTest9, FALSE));
+    CHECK(InvalidateRect(hwnd, &rcTest9, 0));
     hdc = BeginPaint(hwnd, &ps); CHECK(hdc);
     CHECK(SelectClipRgn(hdc, NULL) != ERROR);
     hbr = CreateSolidBrush(RGB(250, 10, 20)); CHECK(hbr);
     CHECK(FillRect(hdc, &rcClient, hbr)); CHECK(DeleteObject(hbr));
-    CHECK(EndPaint(hwnd, &ps) && !GetUpdateRect(hwnd, NULL, FALSE));
+    CHECK(EndPaint(hwnd, &ps) && !GetUpdateRect(hwnd, NULL, 0));
     hdc = GetDC(hwnd); CHECK(hdc);
     CHECK(GetPixel(hdc, 30, 10) == RGB(250, 10, 20));
     CHECK(GetPixel(hdc, 35, 15) == RGB(0, 0, 0));
@@ -134,7 +134,7 @@ static int TestDamage(HWND hwnd, HWND hwndChild) {
     CHECK(ReleaseDC(hwnd, hdc));
     CHECK(ScrollWindow(hwnd, 2, 3, NULL, &rcTest10));
     pt = (POINT){0, 0}; CHECK(ClientToScreen(hwndChild, &pt) && ScreenToClient(hwnd, &pt));
-    CHECK(pt.x == 15 && pt.y == 13 && !GetUpdateRect(hwnd, NULL, FALSE));
+    CHECK(pt.x == 15 && pt.y == 13 && !GetUpdateRect(hwnd, NULL, 0));
     return 0;
 }
 int main(void) {
@@ -142,17 +142,17 @@ int main(void) {
     HWND hwnd, hwndChild;
     HINSTANCE hInstance;
 #ifdef _WIN32
-    hInstance = GetModuleHandle(NULL);
+    hInstance = GetModuleHandleA(NULL);
 #else
     hInstance = (HINSTANCE)(UINT_PTR)1;
 #endif
     wc.lpszClassName = "StarsScrollWindow"; wc.hInstance = hInstance; wc.lpfnWndProc = ScrollProc;
-    CHECK(RegisterClass(&wc));
-    hwnd = CreateWindow(wc.lpszClassName, "scroll pixels", WS_POPUP | WS_VISIBLE,
+    CHECK(RegisterClassA(&wc));
+    hwnd = CreateWindowExA(0, wc.lpszClassName, "scroll pixels", WS_POPUP | WS_VISIBLE,
                         40, 50, 64, 48, NULL, NULL, hInstance, NULL); CHECK(hwnd);
     CHECK(UpdateWindow(hwnd)); CHECK(TestPixels(hwnd) == 0);
     CHECK(TestOverlap(hwnd) == 0);
-    hwndChild = CreateWindow(wc.lpszClassName, "child", WS_CHILD,
+    hwndChild = CreateWindowExA(0, wc.lpszClassName, "child", WS_CHILD,
                              10, 10, 4, 4, hwnd, NULL, hInstance, NULL); CHECK(hwndChild);
     CHECK(TestDamage(hwnd, hwndChild) == 0);
 #ifndef _WIN32

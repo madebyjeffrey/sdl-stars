@@ -20,14 +20,14 @@ void *StarsTest_malloc(size_t cb) noexcept {
 static std::atomic<int> cReleased;
 static int cDelivered, md;
 static bool fCallbackOk = true;
-static constexpr UINT wmPayload = WM_APP + 70, wmNested = WM_APP + 71;
+static constexpr UINT wmPayload = win32::WM_APP + 70, wmNested = win32::WM_APP + 71;
 static STARSCOMPATPAYLOAD MakePayload(int value) {
     auto *pv = static_cast<int *>(std::malloc(sizeof(int)));
     if (pv) *pv = value;
     return STARSCOMPATPAYLOAD(pv, {[](void *p) noexcept { ++cReleased; std::free(p); }});
 }
-static LRESULT CALLBACK Proc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
-    if (msg != wmPayload && msg != wmNested) return DefWindowProcA(hwnd, msg, w, l);
+static LRESULT  Proc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
+    if (msg != wmPayload && msg != wmNested) return win32::DefWindowProcA(hwnd, msg, w, l);
     auto *value = static_cast<int *>(PvCompatMessagePayload(w));
     if (!value) return 0; // Repeated/stale copies have no owned payload.
     ++cDelivered;
@@ -35,12 +35,12 @@ static LRESULT CALLBACK Proc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     fCallbackOk &= *value == 11;
     if (md == 1) {
         fCallbackOk &= StarsCompatPostOwnedMessageAsync(StarsCompatWindowId(hwnd),wmNested,MakePayload(22),0);
-        MSG nested{};
-        fCallbackOk &= PeekMessageA(&nested,hwnd,wmNested,wmNested,PM_REMOVE);
-        DispatchMessageA(&nested);
+        win32::MSG nested{};
+        fCallbackOk &= win32::PeekMessageA(&nested,hwnd,wmNested,wmNested,win32::PM_REMOVE);
+        win32::DispatchMessageA(&nested);
         fCallbackOk &= PvCompatMessagePayload(w) == value && *value == 11;
     } else if (md == 2) {
-        DestroyWindow(hwnd);
+        win32::DestroyWindow(hwnd);
         fCallbackOk &= *value == 11; // Dispatch still owns it after HWND teardown.
     } else if (md == 3) {
         throw StarsError{starsErrorFile,33};
@@ -49,14 +49,14 @@ static LRESULT CALLBACK Proc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
 }
 static HWND MakeWindow() {
     WNDCLASSA wc{}; wc.lpfnWndProc = Proc; wc.lpszClassName = "OwnedMessageProbe";
-    RegisterClassA(&wc);
-    return CreateWindowExA(0,wc.lpszClassName,"payload",WS_OVERLAPPEDWINDOW,0,0,160,120,nullptr,nullptr,nullptr,nullptr);
+    win32::RegisterClassA(&wc);
+    return win32::CreateWindowExA(0,wc.lpszClassName,"payload",win32::WS_OVERLAPPEDWINDOW,0,0,160,120,nullptr,nullptr,nullptr,nullptr);
 }
-static bool Take(HWND hwnd, MSG &msg) { return PeekMessageA(&msg,hwnd,wmPayload,wmNested,PM_REMOVE); }
+static bool Take(HWND hwnd, win32::MSG &msg) { return win32::PeekMessageA(&msg,hwnd,wmPayload,wmNested,win32::PM_REMOVE); }
 int main() {
     HWND hwnd;
     uint64_t id;
-    MSG msg{};
+    win32::MSG msg{};
     int before;
     COMPATMESSAGEALLOCIO io_compatmessageallocio;
     io_compatmessageallocio.pfnAllocate = StarsTest_malloc;
@@ -69,17 +69,17 @@ int main() {
     before = cReleased;
     CHECK(StarsCompatPostOwnedMessageAsync(id,wmPayload,MakePayload(11),0));
     CHECK(Take(hwnd,msg) && !PvCompatMessagePayload(msg.wParam));
-    DispatchMessageA(&msg); CHECK(cReleased == before+1 && cDelivered == 1);
-    DispatchMessageA(&msg); CHECK(cReleased == before+1 && cDelivered == 1);
+    win32::DispatchMessageA(&msg); CHECK(cReleased == before+1 && cDelivered == 1);
+    win32::DispatchMessageA(&msg); CHECK(cReleased == before+1 && cDelivered == 1);
 
     before = cReleased; md = 1;
     CHECK(StarsCompatPostOwnedMessageAsync(id,wmPayload,MakePayload(11),0));
-    CHECK(Take(hwnd,msg)); DispatchMessageA(&msg);
+    CHECK(Take(hwnd,msg)); win32::DispatchMessageA(&msg);
     CHECK(cReleased == before+2 && cDelivered == 3 && fCallbackOk);
 
     before = cReleased; md = 3;
     CHECK(StarsCompatPostOwnedMessageAsync(id,wmPayload,MakePayload(11),0));
-    CHECK(Take(hwnd,msg)); DispatchMessageA(&msg);
+    CHECK(Take(hwnd,msg)); win32::DispatchMessageA(&msg);
     CHECK(cReleased == before+1 && FStarsErrorPending());
     try { StarsRethrowPendingError(); CHECK(false); }
     catch (const StarsError &error) { CHECK(error.ids == 33); }
@@ -101,7 +101,7 @@ int main() {
     before = cReleased;
     std::thread worker([&, io_compatmessageallocio] { COMPATMESSAGEALLOCIOSCOPE workerScope(io_compatmessageallocio); fPosted = StarsCompatPostOwnedMessageAsync(id,wmPayload,MakePayload(11),0); });
     worker.join(); CHECK(fPosted && Take(hwnd,msg));
-    DispatchMessageA(&msg); CHECK(cReleased == before+1);
+    win32::DispatchMessageA(&msg); CHECK(cReleased == before+1);
 
     before = cReleased;
     SDL_SetEventFilter([](void *, SDL_Event *event) -> bool { return event->type != SDL_EVENT_USER; },nullptr);
@@ -141,13 +141,13 @@ int main() {
     before = cReleased;
     CHECK(StarsCompatPostOwnedMessageAsync(id,wmPayload,MakePayload(11),0));
     CHECK(Take(hwnd,msg)); // Removed from queue, deliberately never dispatched.
-    CHECK(DestroyWindow(hwnd)); CHECK(cReleased == before+1);
-    DispatchMessageA(&msg); CHECK(cReleased == before+1);
+    CHECK(win32::DestroyWindow(hwnd)); CHECK(cReleased == before+1);
+    win32::DispatchMessageA(&msg); CHECK(cReleased == before+1);
     hwnd = MakeWindow(); CHECK(hwnd); id = StarsCompatWindowId(hwnd);
     before = cReleased; md = 2;
     CHECK(StarsCompatPostOwnedMessageAsync(id,wmPayload,MakePayload(11),0));
-    CHECK(Take(hwnd,msg)); DispatchMessageA(&msg);
-    CHECK(cReleased == before+1 && fCallbackOk && !IsWindow(hwnd));
+    CHECK(Take(hwnd,msg)); win32::DispatchMessageA(&msg);
+    CHECK(cReleased == before+1 && fCallbackOk && !win32::IsWindow(hwnd));
 
     hwnd = MakeWindow(); CHECK(hwnd); id = StarsCompatWindowId(hwnd); md = 0;
     before = cReleased;

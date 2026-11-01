@@ -1,4 +1,7 @@
 #include "win.h"
+#include "uistate.h"
+using namespace win32;
+using APPMSG = win32::MSG;
 // Type checking only: these APIs belong to the retired native Win32 backend.
 namespace HistoricalWin32 {
 [[noreturn]] void ExitProcess(UINT);
@@ -13,4 +16,5 @@ HWND FindWindowA(LPCSTR,LPCSTR);
 
 // Compile the historical observer against current named values and payloads.
 // Native-window/process functions above are declarations, never an SDL runtime.
+#include "shared_sdk.h"
 #include "../reference/win32-tutorial/observer.c"

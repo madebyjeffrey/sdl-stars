@@ -1,4 +1,9 @@
 #include "fleet_query_io.h"
+#include "appstate.h"
+#ifdef STARS_UI_SDL
+#include "uistate.h"
+#endif
+#include "callbackcontext.h"
 #include "transportpresets.h"
 #include "ui_fixture.h"
 static int popupResult, popupCount, renameResult, renameCalls, outerResult;
@@ -24,10 +29,10 @@ static char   szLiteral2[] = "Unused%d";
 static char   szLiteral3[] = "%d LY";
 static char   szLiteral4[] = "%d Year%c";
 static char   szLiteral5[] = "Other";
-static void   amount() { ChangeTransportAmount(); }
-static void   TestUpdateOrdersDDs(int16_t level) {
+static void   amount(APPSESSION &app) { ChangeTransportAmount(app); }
+static void   TestUpdateOrdersDDs(APPSESSION &app, int16_t level) {
     updates++;
-    ::UpdateOrdersDDs(level);
+    ::UpdateOrdersDDs(app, level);
 }
 static int TestGetDlgItem(HWND hwnd, int id) {
     (void)hwnd;
@@ -37,32 +42,34 @@ static intptr_t TestLUiSendMessage(HWND hwnd, int message, int value, LPARAM par
     int c = WitnessValue<int>(hwnd) - 10;
     if (c < 0 || c >= 3)
         abort();
-    if (message == CB_GETCURSEL)
+    if (message == win32::CB_GETCURSEL)
         return comboSelection[c];
-    if (message == CB_RESETCONTENT) {
+    if (message == win32::CB_RESETCONTENT) {
         comboCount[c] = 0;
         comboSelection[c] = -1;
         return 0;
     }
-    if (message == CB_ADDSTRING) {
+    if (message == win32::CB_ADDSTRING) {
         if (comboCount[c] >= 20)
             abort();
         strcpy(comboLabels[c][comboCount[c]], (const char *)param);
         return comboCount[c]++;
     }
-    if (message == CB_SETCURSEL) {
+    if (message == win32::CB_SETCURSEL) {
         comboSelection[c] = (value >= 0 && value < comboCount[c]) ? value : -1;
         return comboSelection[c];
     }
     abort();
 }
 static void TestFUiSetWindowText(HWND hwnd, const char *s) {
-    if (hwnd == hwndOrderED) {
+    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+
+    if (hwnd == app.lpui->hwndOrderED) {
         strcpy(editText, s);
         if (notifications) {
             if (++depth > 3)
                 abort();
-            amount();
+            amount(app);
             depth--;
         }
     } else
@@ -76,25 +83,25 @@ static void TestGetWindowText(HWND hwnd, char *out, int capacity) {
     memcpy(out, editText, n);
     out[n] = 0;
 }
-static int TestFLookupFleet(int id, void *p) {
+static int TestFLookupFleet(APPSESSION &app, int id, void *p) {
     (void)id;
     (void)p;
     if (writes < 16)
-        snapshots[writes] = orders->rgord()[sel.iwpAct];
+        snapshots[writes] = orders->rgord()[app.state.sel.iwpAct];
     writes++;
     return 0;
 }
-static void TestDrawPlanShip(void *p, int tile) {
+static void TestDrawPlanShip(APPSESSION &, void *p, int tile) {
     (void)p;
     (void)tile;
     draws++;
 }
-static int TestLGetFleetStat(void *p, int stat) {
+static int TestLGetFleetStat(APPSESSION &, void *p, int stat) {
     (void)p;
     (void)stat;
     return hasCargo;
 }
-static char *TestPszPlayerName(int i, int a, int b, int c, int d, void *p) {
+static char *TestPszPlayerName(APPSESSION &, int i, int a, int b, int c, int d, void *p) {
     (void)i;
     (void)a;
     (void)b;
@@ -103,7 +110,7 @@ static char *TestPszPlayerName(int i, int a, int b, int c, int d, void *p) {
     (void)p;
     return szLiteral0;
 }
-static char *TestPszGetCompressedString(int id) {
+static char *TestPszGetCompressedString(APPSESSION &, int id) {
     if (id >= idsAction && id <= idsLoadOptimal)
         return actionLabels[id - idsAction];
     if (id == idsCustomD)
@@ -116,16 +123,16 @@ static char *TestPszGetCompressedString(int id) {
         return szLiteral4;
     return szLiteral5;
 }
-static const char *TestPszFormatIds(int id, void *p) {
+static const char *TestPszFormatIds(APPSESSION &, int id, void *p) {
     (void)id;
     (void)p;
     return "amount";
 }
-static int TestCchGetString(int id, char *out) {
-    strcpy(out, TestPszGetCompressedString(id));
+static int TestCchGetString(APPSESSION &app, int id, char *out) {
+    strcpy(out, TestPszGetCompressedString(app, id));
     return (int)strlen(out);
 }
-static void TestAlertSz(const char *s, int flags) {
+static void TestAlertSz(APPSESSION &, const char *s, int flags) {
     (void)s;
     (void)flags;
     alerts++;
@@ -143,20 +150,22 @@ static void TestInvalidateRect(HWND hwnd, void *rc, int erase) {
 }
 static void TestHwndUiSetFocus(HWND hwnd) { (void)hwnd; }
 static int  TestLUiDialogBox(int instance, int resource, HWND hwnd, int proc) {
+    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+
     (void)instance;
     (void)hwnd;
     (void)proc;
     if (resource == IDD_RENAME) {
         renameCalls++;
         if (renameResult)
-            strcpy(szWork, renameText);
+            strcpy(app.state.szWork, renameText);
         return renameResult;
     }
-    memset(vrgZip, 0x5a, sizeof(vrgZip));
-    gd.fChgZipOrd = 1;
+    memset(app.state.vrgZip, 0x5a, sizeof(app.state.vrgZip));
+    app.state.gd.fChgZipOrd = 1;
     return outerResult;
 }
-static int TestPopupMenu(HWND hwnd, int x, int y, int count, void *p, const char *const *labels, int selected, int flag) {
+static int TestPopupMenu(APPSESSION &, HWND hwnd, int x, int y, int count, void *p, const char *const *labels, int selected, int flag) {
     (void)hwnd;
     (void)x;
     (void)y;
@@ -175,30 +184,30 @@ static int TestPopupMenu(HWND hwnd, int x, int y, int count, void *p, const char
             return 1;                                                                                                                                          \
         }                                                                                                                                                      \
     } while (0)
-static void edit(int cmd) { ZipOrderDlg(HwndWitness(1), WM_COMMAND, cmd, 0); }
-static void popup() { ApplyTransportPresetPopup(POINT16{0, 0}); }
-static void action() { ChangeTransportAction(); }
+static void edit(int cmd) { ZipOrderDlg(HwndWitness(1), win32::WM_COMMAND, cmd, 0); }
+static void popup(APPSESSION &app) { ApplyTransportPresetPopup(app, POINT16{0, 0}); }
+static void action(APPSESSION &app) { ChangeTransportAction(app); }
 static int  quantityControl(int l, int i, int *unit) {
     int16_t value = (int16_t)i;
     int     result = FTransportQuantityActive(l, &value);
     *unit = value;
     return result;
 }
-static void paintLabel(int i) { FormatTransportPresetAction((int16_t)i); }
+static void paintLabel(APPSESSION &app, int i) { FormatTransportPresetAction(app, (int16_t)i); }
 
-static void reset(void) {
-    memset(vrgZip, 0, sizeof(vrgZip));
+static void reset(APPSESSION &app) {
+    memset(app.state.vrgZip, 0, sizeof(app.state.vrgZip));
     memset(orderBytes, 0, sizeof(orderBytes));
     orders = LpStartPl<PLORD, ORDER>(orderBytes, sizeof(orderBytes));
-    memset(&sel, 0, sizeof(sel));
-    sel.fl.lpplord = orders;
-    sel.iwpAct = 1;
+    memset(&app.state.sel, 0, sizeof(app.state.sel));
+    app.state.sel.fl.lpplord = orders;
+    app.state.sel.iwpAct = 1;
     orders->rgord()[1].grTask = 1;
     comboCount[0] = comboCount[2] = 10;
     comboCount[1] = 5;
     comboSelection[0] = 1;
     comboSelection[1] = comboSelection[2] = 0;
-    writes = draws = updates = alerts = renameCalls = gd.fChgZipOrd = depth = 0;
+    writes = draws = updates = alerts = renameCalls = app.state.gd.fChgZipOrd = depth = 0;
     notifications = 0;
     hasCargo = 1;
     renameResult = 1;
@@ -207,18 +216,25 @@ static void reset(void) {
 }
 
 int main(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+
     int           mode, i, mask, k, rank, n, pass, expected;
     ZIPORDER      before[4];
     TASKXPORT     prior;
     unsigned char header[8];
     CONTROLIO     ioControl;
     ioControl.pfnGetDlgItem = WITNESSADAPTER<&TestGetDlgItem, decltype(ioControl.pfnGetDlgItem)>::Call;
-    ioControl.pfnLUiSendMessage = WITNESSADAPTER<&TestLUiSendMessage, decltype(ioControl.pfnLUiSendMessage)>::Call;
+    ioControl.pfnSendMessage = WITNESSADAPTER<&TestLUiSendMessage, decltype(ioControl.pfnSendMessage)>::Call;
     ioControl.pfnInvalidateRect = WITNESSADAPTER<&TestInvalidateRect, decltype(ioControl.pfnInvalidateRect)>::Call;
-    ioControl.pfnFUiSetWindowText = WITNESSADAPTER<&TestFUiSetWindowText, decltype(ioControl.pfnFUiSetWindowText)>::Call;
-    ioControl.pfnHwndUiSetFocus = WITNESSADAPTER<&TestHwndUiSetFocus, decltype(ioControl.pfnHwndUiSetFocus)>::Call;
-    ioControl.pfnFUiEnableWindow = WITNESSADAPTER<&TestFUiEnableWindow, decltype(ioControl.pfnFUiEnableWindow)>::Call;
-    ioControl.pfnLUiDialogBox = WITNESSADAPTER<&TestLUiDialogBox, decltype(ioControl.pfnLUiDialogBox)>::Call;
+    ioControl.pfnSetWindowText = WITNESSADAPTER<&TestFUiSetWindowText, decltype(ioControl.pfnSetWindowText)>::Call;
+    ioControl.pfnSetFocus = WITNESSADAPTER<&TestHwndUiSetFocus, decltype(ioControl.pfnSetFocus)>::Call;
+    ioControl.pfnEnableWindow = WITNESSADAPTER<&TestFUiEnableWindow, decltype(ioControl.pfnEnableWindow)>::Call;
+    ioControl.pfnDialogBox = WITNESSADAPTER<&TestLUiDialogBox, decltype(ioControl.pfnDialogBox)>::Call;
     ioControl.pfnDrawPlanShip = WITNESSADAPTER<&TestDrawPlanShip, decltype(ioControl.pfnDrawPlanShip)>::Call;
     ioControl.pfnGetWindowText = WITNESSADAPTER<&TestGetWindowText, decltype(ioControl.pfnGetWindowText)>::Call;
     ioControl.pfnPopupMenu = WITNESSADAPTER<&TestPopupMenu, decltype(ioControl.pfnPopupMenu)>::Call;
@@ -240,15 +256,15 @@ int main(void) {
     ioFleetQuery.pfnLookup = WITNESSADAPTER<&TestFLookupFleet, decltype(ioFleetQuery.pfnLookup)>::Call;
     FLEETQUERYIOSCOPE scopeFleetQuery(ioFleetQuery);
     for (int id = 0; id < 3; id++)
-        rghwndOrderDD[id] = HwndWitness(10 + id);
-    hwndOrderED = HwndWitness(13);
+        app.lpui->rghwndOrderDD[id] = HwndWitness(10 + id);
+    app.lpui->hwndOrderED = HwndWitness(13);
     for (int at = 0; at < 5; at++)
-        rgszMinerals[at] = testMinerals[at];
+        app.state.rgszMinerals[at] = testMinerals[at];
     for (int at = 0; at < 4; at++)
-        rgszZipOrder[at] = testZipOrder[at];
+        app.state.rgszZipOrder[at] = testZipOrder[at];
     CHECK(sizeof(ITEMACTION) == 2 && sizeof(TASKXPORT) == 10 && sizeof(ORDER) == 18 && sizeof(ZIPORDER) == 24);
     for (mode = 0; mode < 4; mode++) {
-        reset();
+        reset(app);
         orders->rgord()[1].grTask = 2;
         comboSelection[0] = 2; // direct handler does not change task
         for (i = 0; i < 5; i++) {
@@ -264,7 +280,7 @@ int main(void) {
         orders->rgord()[1].fUnused = 3;
         memcpy(header, &orders->rgord()[1], 8);
         popupResult = mode;
-        popup();
+        popup(app);
         CHECK(memcmp(header, &orders->rgord()[1], 8) == 0);
         CHECK(writes == 1 && updates == 1 && draws == 1 && orders->rgord()[1].grTask == 2);
         for (i = 0; i < 5; i++) {
@@ -275,73 +291,73 @@ int main(void) {
         }
     }
     for (mask = 0; mask < 16; mask++) {
-        reset();
+        reset(app);
         k = 0;
         for (i = 0; i < 4; i++) {
-            vrgZip[i].fValid = (mask >> i) & 1;
-            k += vrgZip[i].fValid;
-            vrgZip[i].txp.rgia[0].SetCQuan(100 + i);
+            app.state.vrgZip[i].fValid = (mask >> i) & 1;
+            k += app.state.vrgZip[i].fValid;
+            app.state.vrgZip[i].txp.rgia[0].SetCQuan(100 + i);
         }
-        memcpy(before, vrgZip, sizeof(before));
+        memcpy(before, app.state.vrgZip, sizeof(before));
         rank = 0;
         for (i = 0; i < 4; i++)
-            if (vrgZip[i].fValid) {
+            if (app.state.vrgZip[i].fValid) {
                 popupResult = 5 + rank++;
                 writes = 0;
-                popup();
+                popup(app);
                 CHECK(orders->rgord()[1].txp.rgia[0].cQuan() == 100 + i && writes == 1);
             }
         popupResult = (k ? 6 + k : 5);
         outerResult = 0;
-        gd.fChgZipOrd = 0;
+        app.state.gd.fChgZipOrd = 0;
         writes = 0;
-        popup();
-        CHECK(popupCount == (k ? 7 + k : 6) && popupCount <= 11 && memcmp(before, vrgZip, 96) == 0 && gd.fChgZipOrd && writes == 0);
+        popup(app);
+        CHECK(popupCount == (k ? 7 + k : 6) && popupCount <= 11 && memcmp(before, app.state.vrgZip, 96) == 0 && app.state.gd.fChgZipOrd && writes == 0);
     }
-    reset();
+    reset(app);
     prior = orders->rgord()[1].txp;
     popupResult = -1;
-    popup();
+    popup(app);
     CHECK(writes == 0);
     popupResult = 4;
-    popup();
+    popup(app);
     CHECK(writes == 1 && memcmp(&prior, &orders->rgord()[1].txp, 10) == 0);
     popupResult = -2;
-    popup();
+    popup(app);
     CHECK(writes == 2 && memcmp(&prior, &orders->rgord()[1].txp, 10) == 0);
     popupResult = 5;
     outerResult = 65536;
-    memcpy(before, vrgZip, 96);
-    popup();
-    CHECK(memcmp(before, vrgZip, 96) == 0);
+    memcpy(before, app.state.vrgZip, 96);
+    popup(app);
+    CHECK(memcmp(before, app.state.vrgZip, 96) == 0);
     popupResult = 5;
     outerResult = -1;
-    popup();
-    CHECK(vrgZip[0].fValid == 0x5a);
-    reset();
-    iResTechNow = static_cast<TechFieldType>(0);
+    popup(app);
+    CHECK(app.state.vrgZip[0].fValid == 0x5a);
+    reset(app);
+    app.lpui->iResTechNow = static_cast<TechFieldType>(0);
     renameResult = 0;
-    memcpy(before, vrgZip, sizeof(before));
+    memcpy(before, app.state.vrgZip, sizeof(before));
     edit(IDC_IMPORT);
-    CHECK(renameCalls == 1 && gd.fChgZipOrd && memcmp(before, vrgZip, 96) == 0);
+    CHECK(renameCalls == 1 && app.state.gd.fChgZipOrd && memcmp(before, app.state.vrgZip, 96) == 0);
     renameResult = -1;
     edit(IDC_RENAME);
-    CHECK(strcmp(vrgZip[0].szName, "Custom0") == 0 && !vrgZip[0].fValid);
+    CHECK(strcmp(app.state.vrgZip[0].szName, "Custom0") == 0 && !app.state.vrgZip[0].fValid);
     strcpy(renameText, "A&B");
     for (i = 0; i < 5; i++) {
         orders->rgord()[1].txp.rgia[i].SetIAction(15);
         orders->rgord()[1].txp.rgia[i].SetCQuan(4095);
     }
     edit(IDC_IMPORT);
-    CHECK(vrgZip[0].fValid && strcmp(radioLabel, "A&&B") == 0 && memcmp(&vrgZip[0].txp, &orders->rgord()[1].txp, 10) == 0 && enabledDelete && enabledRename);
-    memcpy(before, vrgZip, 96);
+    CHECK(app.state.vrgZip[0].fValid && strcmp(radioLabel, "A&&B") == 0 && memcmp(&app.state.vrgZip[0].txp, &orders->rgord()[1].txp, 10) == 0 && enabledDelete && enabledRename);
+    memcpy(before, app.state.vrgZip, 96);
     edit(IDC_DELETE);
     before[0].fValid = 0;
-    CHECK(memcmp(before, vrgZip, 96) == 0 && enabledDelete && enabledRename); // no button refresh after Delete
-    EnableZipBtns(HwndWitness(1), 0);
+    CHECK(memcmp(before, app.state.vrgZip, 96) == 0 && enabledDelete && enabledRename); // no button refresh after Delete
+    EnableZipBtns(app, HwndWitness(1), 0);
     CHECK(!enabledDelete && !enabledRename);
     // Exact amount normalization over every int16 bit pattern and both limits.
-    reset();
+    reset(app);
     notifications = 1;
     comboSelection[1] = 0;
     for (pass = 0; pass < 2; pass++)
@@ -352,69 +368,69 @@ int main(void) {
             comboSelection[2] = pass ? 5 : 3;
             snprintf(editText, sizeof(editText), "%d", n);
             writes = alerts = 0;
-            amount();
+            amount(app);
             CHECK(orders->rgord()[1].txp.rgia[4].cQuan() == expected && alerts == (narrowed != expected) && writes == (narrowed != expected ? 2 : 1));
         }
     strcpy(editText, "65636");
     comboSelection[2] = 5;
     alerts = 0;
-    amount();
+    amount(app);
     CHECK(orders->rgord()[1].txp.rgia[4].cQuan() == 100 && alerts == 0 && strcmp(editText, "65636") == 0);
     strcpy(editText, "-65535");
     comboSelection[2] = 3;
     alerts = 0;
-    amount();
+    amount(app);
     CHECK(orders->rgord()[1].txp.rgia[4].cQuan() == 1 && alerts == 0 && strcmp(editText, "-65535") == 0);
     strcpy(editText, "40001234");
-    amount();
+    amount(app);
     CHECK(orders->rgord()[1].txp.rgia[4].cQuan() == 2427 && strcmp(editText, "40001234") == 0);
     strcpy(editText, "junk");
-    amount();
+    amount(app);
     CHECK(orders->rgord()[1].txp.rgia[4].cQuan() == 0 && strcmp(editText, "junk") == 0);
-    reset();
+    reset(app);
     notifications = 1;
     for (i = 0; i < 5; i++) {
         orders->rgord()[1].txp.rgia[i].SetIAction(15);
         orders->rgord()[1].txp.rgia[i].SetCQuan(4095);
     }
     popupResult = 2;
-    popup();
+    popup(app);
     CHECK(snapshots[0].txp.rgia[4].cQuan() == 4095 && orders->rgord()[1].txp.rgia[4].cQuan() == 4000 && writes == 3 && alerts == 1);
     CHECK(orders->rgord()[1].txp.rgia[0].cQuan() == 100 && orders->rgord()[1].txp.rgia[3].cQuan() == 4095 && strcmp(comboLabels[2][7], "Load Optimal") == 0);
-    reset();
+    reset(app);
     notifications = 1;
     orders->rgord()[1].txp.rgia[0].SetIAction(5);
     orders->rgord()[1].txp.rgia[0].SetCQuan(4095);
-    ControlIO().pfnUpdateOrdersDDs(1);
+    ControlIO().pfnUpdateOrdersDDs(app, 1);
     CHECK(comboSelection[1] == 1 && orders->rgord()[1].txp.rgia[0].cQuan() == 100 && writes == 2 && alerts == 1);
-    reset();
+    reset(app);
     notifications = 1;
     hasCargo = 0;
     orders->rgord()[1].txp.rgia[0].SetIAction(5);
     orders->rgord()[1].txp.rgia[0].SetCQuan(4095);
-    ControlIO().pfnUpdateOrdersDDs(1);
+    ControlIO().pfnUpdateOrdersDDs(app, 1);
     CHECK(comboCount[1] == 1 && comboSelection[1] == 0 && orders->rgord()[1].txp.rgia[0].cQuan() == 4095);
-    reset();
+    reset(app);
     notifications = 1;
     orders->rgord()[1].txp.rgia[4].SetIAction(15);
     orders->rgord()[1].txp.rgia[4].SetCQuan(4095);
-    ControlIO().pfnUpdateOrdersDDs(1);
+    ControlIO().pfnUpdateOrdersDDs(app, 1);
     CHECK(comboSelection[2] == -1 && orders->rgord()[1].txp.rgia[4].cQuan() == 4000);
-    reset();
+    reset(app);
     notifications = 1;
     comboSelection[1] = 1;
     comboSelection[2] = 5;
     orders->rgord()[1].txp.rgia[0].SetCQuan(4095);
-    action();
+    action(app);
     CHECK(snapshots[0].txp.rgia[0].iAction() == 5 && snapshots[0].txp.rgia[0].cQuan() == 4095 && orders->rgord()[1].txp.rgia[0].cQuan() == 100 && writes == 3);
     comboSelection[1] = 0;
     comboSelection[2] = -1;
-    action();
+    action(app);
     CHECK(orders->rgord()[1].txp.rgia[4].iAction() == 15);
     for (pass = 0; pass < 2; pass++)
         for (mask = 0; mask < 32; mask++) {
             int selected = 4, priority[5] = {4, 0, 1, 2, 3};
-            reset();
+            reset(app);
             notifications = 1;
             hasCargo = pass;
             for (i = 0; i < 5; i++) {
@@ -426,7 +442,7 @@ int main(void) {
                     selected = priority[i];
                     break;
                 }
-            ControlIO().pfnUpdateOrdersDDs(1);
+            ControlIO().pfnUpdateOrdersDDs(app, 1);
             CHECK(comboSelection[1] == (selected == 4 ? 0 : selected + 1));
             for (i = 0; i < 5; i++)
                 CHECK(orders->rgord()[1].txp.rgia[i].cQuan() == (i == selected ? 4000 : 4095));
@@ -436,15 +452,15 @@ int main(void) {
         int enabled = quantityControl(i, 4, &unit);
         CHECK(enabled == (i != 0 && i != 1 && i != 2 && i != 7) && unit == ((i == 5 || i == 6) ? 5 : 4));
     }
-    reset();
-    iResTechNow = static_cast<TechFieldType>(0);
-    vrgZip[0].txp.rgia[0].SetIAction(5);
-    vrgZip[0].txp.rgia[0].SetCQuan(120);
-    paintLabel(0);
-    CHECK(strcmp(szWork, "Fill Up to % 120kT") == 0);
-    vrgZip[0].txp.rgia[0].SetIAction(7);
-    paintLabel(0);
-    CHECK(strcmp(szWork, "Load Dunnage") == 0);
+    reset(app);
+    app.lpui->iResTechNow = static_cast<TechFieldType>(0);
+    app.state.vrgZip[0].txp.rgia[0].SetIAction(5);
+    app.state.vrgZip[0].txp.rgia[0].SetCQuan(120);
+    paintLabel(app, 0);
+    CHECK(strcmp(app.state.szWork, "Fill Up to % 120kT") == 0);
+    app.state.vrgZip[0].txp.rgia[0].SetIAction(7);
+    paintLabel(app, 0);
+    CHECK(strcmp(app.state.szWork, "Load Dunnage") == 0);
     printf("M10 linked transport witnesses: %d assertions passed\n", checks);
     return 0;
 }

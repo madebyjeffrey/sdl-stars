@@ -6,13 +6,13 @@
 
 extern uint16_t mpicolgrbitBU[12];
 
-const char   *PszGetDestName(FLEET *lpfl, HDC hdc);
+const char   *PszGetDestName(APPSESSION &app, FLEET *lpfl, HDC hdc);
 int16_t FDestIsWP0(FLEET *lpfl);
-const char   *PszGetETA(HDC hdc, FLEET *lpfl, int16_t *pcYears);
-const char   *PszGetTaskName(FLEET *lpfl, int16_t *picr);
-void    DumpUniverse();
-void    DumpPlanets();
-void    DumpFleets();
-int16_t FDumpCmdLineGame();
+const char   *PszGetETA(APPSESSION &app, HDC hdc, FLEET *lpfl, int16_t *pcYears);
+const char   *PszGetTaskName(APPSESSION &app, FLEET *lpfl, int16_t *picr);
+void    DumpUniverse(APPSESSION &app);
+void    DumpPlanets(APPSESSION &app);
+void    DumpFleets(APPSESSION &app);
+int16_t FDumpCmdLineGame(APPSESSION &app);
 
 #endif

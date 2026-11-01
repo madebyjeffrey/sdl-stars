@@ -1,4 +1,5 @@
 #include "common.h"
+#include "appstate.h"
 #include "text_io.h"
 #include "planet_query_io.h"
 #include "race_query_io.h"
@@ -31,9 +32,9 @@ int16_t SetRaceStat(PLAYER *pplr, RaceStat iStat, int16_t iVal) {
 
 int16_t GetRaceGrbit(PLAYER *pplr, RaceGrbit ibit) {
     if (UINT32_C(1) << ibit & pplr->grbitAttr) {
-        return TRUE;
+        return 1;
     }
-    return FALSE;
+    return 0;
 }
 
 void SetRaceGrbit(PLAYER *pplr, RaceGrbit ibit, int16_t fSet) {
@@ -56,49 +57,49 @@ void BoundsCheckPlayer(PLAYER *pplr) {
             if (pplr->rgEnvVarMax[i] != envImmune || pplr->rgEnvVar[i] != envImmune) {
                 pplr->rgEnvVar[i] = envImmune;
                 pplr->rgEnvVarMax[i] = envImmune;
-                pplr->fHacker = TRUE;
+                pplr->fHacker = 1;
             }
         } else {
             if (pplr->rgEnvVarMin[i] < 0) {
                 pplr->rgEnvVarMin[i] = 0;
-                pplr->fHacker = TRUE;
+                pplr->fHacker = 1;
             }
             if (pplr->rgEnvVarMin[i] > 100) {
                 pplr->rgEnvVarMin[i] = 100;
-                pplr->fHacker = TRUE;
+                pplr->fHacker = 1;
             }
             if (pplr->rgEnvVarMax[i] > 100) {
                 pplr->rgEnvVarMax[i] = 100;
-                pplr->fHacker = TRUE;
+                pplr->fHacker = 1;
             }
             if (pplr->rgEnvVarMax[i] < pplr->rgEnvVarMin[i]) {
                 pplr->rgEnvVarMax[i] = pplr->rgEnvVarMin[i];
-                pplr->fHacker = TRUE;
+                pplr->fHacker = 1;
             }
             if (pplr->rgEnvVar[i] != pplr->rgEnvVarMin[i] + (int16_t)(pplr->rgEnvVarMax[i] - pplr->rgEnvVarMin[i]) / 2) {
                 pplr->rgEnvVar[i] = pplr->rgEnvVarMin[i] + (int16_t)(pplr->rgEnvVarMax[i] - pplr->rgEnvVarMin[i]) / 2;
-                pplr->fHacker = TRUE;
+                pplr->fHacker = 1;
             }
         }
     }
     if (pplr->pctIdealGrowth > 20) {
         pplr->pctIdealGrowth = 20;
-        pplr->fHacker = TRUE;
+        pplr->fHacker = 1;
     }
     for (i = 0; i < 16; i++) {
         if (pplr->rgAttr[i] < rgRaceStatMin[i]) {
             pplr->rgAttr[i] = rgRaceStatMin[i];
-            pplr->fHacker = TRUE;
+            pplr->fHacker = 1;
         }
         if (pplr->rgAttr[i] > rgRaceStatMax[i]) {
             pplr->rgAttr[i] = rgRaceStatMax[i];
-            pplr->fHacker = TRUE;
+            pplr->fHacker = 1;
         }
     }
     return;
 }
 
-int16_t CAdvantagePoints(PLAYER *pplr) {
+int16_t CAdvantagePoints(APPSESSION &app, PLAYER *pplr) {
     int16_t       pctGrowth;
     int16_t       iSpread;
     int32_t       cPoints;
@@ -116,12 +117,12 @@ int16_t CAdvantagePoints(PLAYER *pplr) {
     cPoints = 1650;
     BoundsCheckPlayer(pplr);
     raMajor = static_cast<RaceAttribute>(RaceQueryIO().pfnStat(pplr, rsMajorAdv));
-    lInnate = (int32_t)(LInnateRaceHabitability(pplr) / 2000);
+    lInnate = (int32_t)(LInnateRaceHabitability(app, pplr) / 2000);
     iSpread = 1 > (20 >= pplr->pctIdealGrowth ? pplr->pctIdealGrowth : 20) ? 1 : 20 < pplr->pctIdealGrowth ? 20 : pplr->pctIdealGrowth;
     if (iSpread != pplr->pctIdealGrowth) {
         iSpread = 1;
         pplr->pctIdealGrowth = 1;
-        pplr->fHacker = TRUE;
+        pplr->fHacker = 1;
     }
     pctGrowth = iSpread;
     if (iSpread <= 5) {
@@ -308,7 +309,7 @@ int16_t CAdvantagePoints(PLAYER *pplr) {
     return LOWORD((int32_t)(cPoints / 3));
 }
 
-int32_t LInnateRaceHabitability(PLAYER *pplr) {
+int32_t LInnateRaceHabitability(APPSESSION &app, PLAYER *pplr) {
     int16_t iTry;
     PLANET  pl;
     double  l2;
@@ -329,10 +330,10 @@ int32_t LInnateRaceHabitability(PLAYER *pplr) {
     double  lInnate;
     int16_t pctTerra;
 
-    plrT = rgplr[0];
+    plrT = app.state.rgplr[0];
     lInnate = (double)0;
     fTotalTerra = RaceQueryIO().pfnGrbit(pplr, ibitRaceTT);
-    rgplr[0] = *pplr;
+    app.state.rgplr[0] = *pplr;
     rgDelta[2] = 0;
     rgDelta[1] = 0;
     rgDelta[0] = 0;
@@ -351,8 +352,8 @@ int32_t LInnateRaceHabitability(PLAYER *pplr) {
                 pplr->rgEnvVarMax[i] = envImmune;
                 pplr->rgEnvVarMin[i] = envImmune;
                 pplr->rgEnvVar[i] = envImmune;
-                pplr->fHacker = TRUE;
-                rgplr[0] = *pplr;
+                pplr->fHacker = 1;
+                app.state.rgplr[0] = *pplr;
             }
             if (pplr->rgEnvVar[i] < 0) {
                 rgBase[i] = 50;
@@ -431,7 +432,7 @@ int32_t LInnateRaceHabitability(PLAYER *pplr) {
                         iTry = pplr->rgEnvVar[2] - iDelta;
                     }
                     pl.rgEnvVar[2] = iTry;
-                    pctDesire = PlanetQueryIO().pfnDesirability(&pl, 0);
+                    pctDesire = PlanetQueryIO().pfnDesirability(app, &pl, 0);
                     iDelta = rgDelta[0] + rgDelta[1] + rgDelta[2];
                     if (iDelta > pctTerra) {
                         pctDesire -= (int16_t)(iDelta - pctTerra);
@@ -470,8 +471,8 @@ int32_t LInnateRaceHabitability(PLAYER *pplr) {
         }
         lInnate = (double)((double)lInnate + l3);
     }
-    if (pplr != rgplr) {
-        rgplr[0] = plrT;
+    if (pplr != app.state.rgplr) {
+        app.state.rgplr[0] = plrT;
     }
     return (int32_t)((double)lInnate / 10.0 + 0.5);
 }
@@ -506,40 +507,40 @@ uint16_t IRaceChecksum(PLAYER *pplr) {
     return ick;
 }
 
-static int16_t FReadLegacyRaceString(const uint8_t *lpb, size_t cb, char *szRaw, size_t cchMax, size_t *pcbRead) {
+static int16_t FReadLegacyRaceString(APPSESSION &app, const uint8_t *lpb, size_t cb, char *szRaw, size_t cchMax, size_t *pcbRead) {
     const uint8_t *lpbEnd;
     size_t cch;
     int16_t cOut;
 
     szRaw[0] = 0;
-    if (cb == 0 || cchMax != 32) return FALSE;
+    if (cb == 0 || cchMax != 32) return 0;
     if (lpb[0] == 0) {
         lpbEnd = (const uint8_t *)memchr(lpb + 1, 0, cb - 1);
-        if (!lpbEnd) return FALSE;
+        if (!lpbEnd) return 0;
         cch = (size_t)(lpbEnd - lpb - 1);
-        if (cch >= cchMax) return FALSE;
+        if (cch >= cchMax) return 0;
         memcpy(szRaw, lpb + 1, cch);
         szRaw[cch] = 0;
         if (pcbRead) *pcbRead = cch + 2;
     } else {
-        if (lpb[0] > cb - 1) return FALSE;
+        if (lpb[0] > cb - 1) return 0;
         cOut = (int16_t)cchMax - 1;
-        if (!FDecompressUserStringBytes((char *)lpb + 1, lpb[0], szRaw, &cOut)) return FALSE;
+        if (!FDecompressUserStringBytes(app, (char *)lpb + 1, lpb[0], szRaw, &cOut)) return 0;
         if (pcbRead) *pcbRead = (size_t)lpb[0] + 1;
     }
-    return TRUE;
+    return 1;
 }
 
-static int16_t FReadLegacyRacePlayer(PLAYER *pplr, const uint8_t *lpb, size_t cb, int16_t fPlural) {
+static int16_t FReadLegacyRacePlayer(APPSESSION &app, PLAYER *pplr, const uint8_t *lpb, size_t cb, int16_t fPlural) {
     int16_t iOff;
     size_t cbRead;
 
     memset(pplr, 0, sizeof(PLAYER));
-    if (cb < cbWirePlayerPartial) return FALSE;
+    if (cb < cbWirePlayerPartial) return 0;
     if ((lpb[6] & 7) == detAll) {
         iOff = cbWirePlayerPrefix;
         if (cb <= (size_t)iOff || lpb[iOff] > sizeof(pplr->rgmdRelation) ||
-            lpb[iOff] > cb - (size_t)iOff - 1) return FALSE;
+            lpb[iOff] > cb - (size_t)iOff - 1) return 0;
         FDecodePlayer(std::as_bytes(std::span(lpb, cb)), *pplr, iOff);
         memmove(pplr->rgmdRelation, lpb + iOff + 1, lpb[iOff]);
         iOff += lpb[iOff] + 1;
@@ -547,18 +548,18 @@ static int16_t FReadLegacyRacePlayer(PLAYER *pplr, const uint8_t *lpb, size_t cb
         iOff = cbWirePlayerPartial;
         FDecodePlayer(std::as_bytes(std::span(lpb, cb)), *pplr, iOff);
     }
-    if (!FReadLegacyRaceString(lpb + iOff, cb - (size_t)iOff, pplr->szName, sizeof(pplr->szName), &cbRead)) return FALSE;
+    if (!FReadLegacyRaceString(app, lpb + iOff, cb - (size_t)iOff, pplr->szName, sizeof(pplr->szName), &cbRead)) return 0;
     iOff += (int16_t)cbRead;
     if (fPlural) {
-        if (!FReadLegacyRaceString(lpb + iOff, cb - (size_t)iOff, pplr->szNames, sizeof(pplr->szNames), &cbRead)) return FALSE;
+        if (!FReadLegacyRaceString(app, lpb + iOff, cb - (size_t)iOff, pplr->szNames, sizeof(pplr->szNames), &cbRead)) return 0;
         iOff += (int16_t)cbRead;
     }
-    if ((size_t)iOff != cb) return FALSE;
-    pplr->fLearned = FALSE;
-    return TRUE;
+    if ((size_t)iOff != cb) return 0;
+    pplr->fLearned = 0;
+    return 1;
 }
 
-static int16_t FConvertLegacyRaceNames(PLAYER *pplr, int16_t fPlural) {
+static int16_t FConvertLegacyRaceNames(APPSESSION &app, PLAYER *pplr, int16_t fPlural) {
     char szName[96];
     char szNames[96];
     size_t cbName;
@@ -566,12 +567,12 @@ static int16_t FConvertLegacyRaceNames(PLAYER *pplr, int16_t fPlural) {
     size_t cbKeep;
     int16_t fShortened;
 
-    if (CchCp1252ToUtf8(std::span(szName), std::as_bytes(std::span(pplr->szName, strlen(pplr->szName)))) < 0) return FALSE;
+    if (CchCp1252ToUtf8(std::span(szName), std::as_bytes(std::span(pplr->szName, strlen(pplr->szName)))) < 0) return 0;
     if (fPlural) {
-        if (CchCp1252ToUtf8(std::span(szNames), std::as_bytes(std::span(pplr->szNames, strlen(pplr->szNames)))) < 0) return FALSE;
+        if (CchCp1252ToUtf8(std::span(szNames), std::as_bytes(std::span(pplr->szNames, strlen(pplr->szNames)))) < 0) return 0;
     } else {
         cbName = strlen(szName);
-        if (cbName + 1 >= sizeof(szNames)) return FALSE;
+        if (cbName + 1 >= sizeof(szNames)) return 0;
         memcpy(szNames, szName, cbName);
         szNames[cbName] = 's';
         szNames[cbName + 1] = 0;
@@ -586,15 +587,15 @@ static int16_t FConvertLegacyRaceNames(PLAYER *pplr, int16_t fPlural) {
         cbKeep = CchUtf8Prefix(szNames, sizeof(pplr->szNames) - 1);
         memmove(pplr->szNames, szNames, cbKeep);
         pplr->szNames[cbKeep] = 0;
-        if (!FConfirmLegacyRaceNames(pplr->szName, pplr->szNames)) return -1;
+        if (!FConfirmLegacyRaceNames(app, pplr->szName, pplr->szNames)) return -1;
     } else {
         memcpy(pplr->szName, szName, cbName + 1);
         memcpy(pplr->szNames, szNames, cbNames + 1);
     }
-    return TRUE;
+    return 1;
 }
 
-int16_t FWasRaceFile(char *szFile, int16_t fChkPass) {
+int16_t FWasRaceFile(APPSESSION &app, char *szFile, int16_t fChkPass) {
     int16_t  idsError;
     int32_t  lSaltSav;
     PLAYER   plr;
@@ -610,74 +611,74 @@ int16_t FWasRaceFile(char *szFile, int16_t fChkPass) {
 
     idsError = -1;
     fRet = 0;
-    fSav = fFileErrSilent;
-    fFileErrSilent = TRUE;
+    fSav = app.state.fFileErrSilent;
+    app.state.fFileErrSilent = 1;
     StarsRecoveryScope scopeRecovery;
     try {
         {
-            RecordIO().pfnStreamOpen(szFile, mdRead);
-            RecordIO().pfnReadRt();
-            if (hdrCur.rt != rtBOF || hdrCur.cb != cbWireBof || BfvFromPrefix(rgbCur, sizeof(rgbCur)).verMajor() != 2 ||
-                BfvFromPrefix(rgbCur, sizeof(rgbCur)).verMinor() < 49 || BfvFromPrefix(rgbCur, sizeof(rgbCur)).verMinor() > 85) {
+            RecordIO().pfnStreamOpen(app, szFile, mdRead);
+            RecordIO().pfnReadRt(app);
+            if (app.state.hdrCur.rt != rtBOF || app.state.hdrCur.cb != cbWireBof || BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).verMajor() != 2 ||
+                BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).verMinor() < 49 || BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).verMinor() > 85) {
                 idsError = idsFileDoesBelongVersionStars;
                 fRet = -1;
                 goto LBadFile;
             } else {
-                wVersFile = BfvFromPrefix(rgbCur, sizeof(rgbCur)).wVersion();
-                fLegacy = BfvFromPrefix(rgbCur, sizeof(rgbCur)).verMinor() < 85;
-                fPlural = BfvFromPrefix(rgbCur, sizeof(rgbCur)).verMinor() >= 55;
-                if (BfvFromPrefix(rgbCur, sizeof(rgbCur)).dt() == 5) {
-                    RecordIO().pfnReadRt();
-                    if (hdrCur.rt == rtPlr) {
+                app.state.wVersFile = BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).wVersion();
+                fLegacy = BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).verMinor() < 85;
+                fPlural = BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).verMinor() >= 55;
+                if (BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).dt() == 5) {
+                    RecordIO().pfnReadRt(app);
+                    if (app.state.hdrCur.rt == rtPlr) {
                         idsError = idsGameFileAppearsCorruptUnableLoadFile;
                         if (fLegacy) {
-                            if (!FReadLegacyRacePlayer(&plr, (const uint8_t *)rgbCur, hdrCur.cb, fPlural)) goto LBadFile;
+                            if (!FReadLegacyRacePlayer(app, &plr, (const uint8_t *)app.state.rgbCur, app.state.hdrCur.cb, fPlural)) goto LBadFile;
                         } else {
-                            ReadRtPlr(&plr, (uint8_t *)rgbCur, hdrCur.cb);
+                            ReadRtPlr(app, &plr, (uint8_t *)app.state.rgbCur, app.state.hdrCur.cb);
                         }
-                        RecordIO().pfnReadRt();
+                        RecordIO().pfnReadRt(app);
                         icksum = IRaceChecksum(&plr);
-                        if (hdrCur.rt == rtEOF && hdrCur.cb == 2 && WFromStreamBytes(rgbCur) == icksum) {
+                        if (app.state.hdrCur.rt == rtEOF && app.state.hdrCur.cb == 2 && WFromStreamBytes(app.state.rgbCur) == icksum) {
                             fProtected = fLegacy && plr.lSalt != 0;
-                            if (fLegacy && (fConvert = FConvertLegacyRaceNames(&plr, fPlural)) <= 0) {
+                            if (fLegacy && (fConvert = FConvertLegacyRaceNames(app, &plr, fPlural)) <= 0) {
                                 idsError = fConvert < 0 ? -1 : idsGameFileAppearsCorruptUnableLoadFile;
                                 fRet = -1;
                                 goto LBadFile;
                             }
                             if (fProtected) {
-                                if (!PlayerChoiceIO().pfnFPromptLegacyRacePassword(szPassword)) {
+                                if (!PlayerChoiceIO().pfnFPromptLegacyRacePassword(app, szPassword)) {
                                     idsError = -1;
                                     fRet = -1;
                                     goto LBadFile;
                                 }
                                 plr.lSalt = LSaltFromSz(szPassword);
-                                strcpy(szRacePass, szPassword);
+                                strcpy(app.state.szRacePass, szPassword);
                             }
-                            lSaltSav = lSaltCur;
-                            lSaltCur = plr.lSalt;
-                            if (!fLegacy && fChkPass && !FCheckPassword()) {
-                                lSaltCur = lSaltSav;
+                            lSaltSav = app.state.lSaltCur;
+                            app.state.lSaltCur = plr.lSalt;
+                            if (!fLegacy && fChkPass && !FCheckPassword(app)) {
+                                app.state.lSaltCur = lSaltSav;
                                 fRet = -1;
                                 goto LBadFile;
                             } else {
-                                lSaltCur = lSaltSav;
+                                app.state.lSaltCur = lSaltSav;
                                 if (!fProtected) {
                                     if (!fLegacy && plr.lSalt != 0) {
-                                        strcpy(szRacePass, szPassLast);
+                                        strcpy(app.state.szRacePass, app.state.szPassLast);
                                     } else {
-                                        szRacePass[0] = 0;
+                                        app.state.szRacePass[0] = 0;
                                     }
                                 }
-                                vplr = plr;
+                                app.state.vplr = plr;
                                 /* The original copied the whole path into the
                                    16-byte szRaceFile, overrunning the globals
                                    after it when a universe definition names a
                                    race by path. Keep the file name, as the race
                                    dialogs do. */
                                 pch = strrchr(szFile, chDirSep);
-                                SetSzRaceFile(pch ? pch + 1 : szFile);
-                                RecordIO().pfnStreamClose();
-                                fFileErrSilent = fSav;
+                                SetSzRaceFile(app, pch ? pch + 1 : szFile);
+                                RecordIO().pfnStreamClose(app);
+                                app.state.fFileErrSilent = fSav;
                                 return 1;
                             }
                         }
@@ -689,20 +690,20 @@ int16_t FWasRaceFile(char *szFile, int16_t fChkPass) {
     } catch (const StarsError &) {
     }
 LBadFile:
-    RecordIO().pfnStreamClose();
-    fFileErrSilent = fSav;
-    if (!fFileErrSilent && idsError != -1) {
+    RecordIO().pfnStreamClose(app);
+    app.state.fFileErrSilent = fSav;
+    if (!app.state.fFileErrSilent && idsError != -1) {
         /* NATIVE: GenNewGameFromFile passes szWork itself; see FLoadGame. */
-        if (szFile != szWork) {
-            strcpy(szWork, szFile);
+        if (szFile != app.state.szWork) {
+            strcpy(app.state.szWork, szFile);
         }
-        AlertIO().pfnAlertSz(TextIO().pfnFormat(static_cast<StringId>(idsError), NULL), MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, static_cast<StringId>(idsError), NULL), win32::MB_ICONHAND);
     }
     return fRet;
 
 }
 
-void CreateRandomRace(PLAYER *pplr) {
+void CreateRandomRace(APPSESSION &app, PLAYER *pplr) {
     int16_t cPts;
     int16_t i;
     int16_t cPass;
@@ -714,24 +715,24 @@ void CreateRandomRace(PLAYER *pplr) {
     PLAYER  plrT;
 
     pplr->szNames[0] = 0;
-    iVal = RandomIO().pfnRandom(25);
+    iVal = RandomIO().pfnRandom(app, 25);
     if (iVal < 4) {
         for (i = 0; i < 3; i++) {
             pplr->rgEnvVarMax[i] = envImmune;
             pplr->rgEnvVarMin[i] = envImmune;
             pplr->rgEnvVar[i] = envImmune;
         }
-        pplr->pctIdealGrowth = RandomIO().pfnRandom(4) + 2;
+        pplr->pctIdealGrowth = RandomIO().pfnRandom(app, 4) + 2;
     } else if (iVal < 7) {
         for (i = 0; i < 3; i++) {
             pplr->rgEnvVar[i] = 50;
             pplr->rgEnvVarMin[i] = 0;
             pplr->rgEnvVarMax[i] = 100;
         }
-        pplr->pctIdealGrowth = RandomIO().pfnRandom(4) + 3;
+        pplr->pctIdealGrowth = RandomIO().pfnRandom(app, 4) + 3;
     } else if (iVal < 9) {
         for (i = 0; i < 3; i++) {
-            j = RandomIO().pfnRandom(2);
+            j = RandomIO().pfnRandom(app, 2);
             if (i == 2 && pplr->rgEnvVar[0] == pplr->rgEnvVar[1]) {
                 j = pplr->rgEnvVar[0] != 0;
             }
@@ -740,80 +741,80 @@ void CreateRandomRace(PLAYER *pplr) {
                 pplr->rgEnvVarMin[i] = 0;
                 pplr->rgEnvVarMax[i] = 100;
             } else {
-                pplr->pctIdealGrowth = RandomIO().pfnRandom(4) + 2;
+                pplr->pctIdealGrowth = RandomIO().pfnRandom(app, 4) + 2;
             }
         }
-        pplr->pctIdealGrowth = RandomIO().pfnRandom(5) + 2;
+        pplr->pctIdealGrowth = RandomIO().pfnRandom(app, 5) + 2;
     } else {
         for (i = 0; i < 3; i++) {
-            j = RandomIO().pfnRandom(40) * 2 + 20;
-            k = RandomIO().pfnRandom(100 - j + 1);
+            j = RandomIO().pfnRandom(app, 40) * 2 + 20;
+            k = RandomIO().pfnRandom(app, 100 - j + 1);
             pplr->rgEnvVar[i] = j / 2 + k;
             pplr->rgEnvVarMin[i] = k;
             pplr->rgEnvVarMax[i] = k + j;
         }
         if (iVal < 12) {
-            i = RandomIO().pfnRandom(3);
+            i = RandomIO().pfnRandom(app, 3);
             pplr->rgEnvVarMax[i] = envImmune;
             pplr->rgEnvVarMin[i] = envImmune;
             pplr->rgEnvVar[i] = envImmune;
         } else if (iVal < 14) {
-            i = RandomIO().pfnRandom(3);
+            i = RandomIO().pfnRandom(app, 3);
             pplr->rgEnvVar[i] = 50;
             pplr->rgEnvVarMin[i] = 0;
             pplr->rgEnvVarMax[i] = 100;
         } else if (iVal < 17) {
-            i = RandomIO().pfnRandom(3);
-            j = RandomIO().pfnRandom(81);
+            i = RandomIO().pfnRandom(app, 3);
+            j = RandomIO().pfnRandom(app, 81);
             pplr->rgEnvVar[i] = j + 10;
             pplr->rgEnvVarMin[i] = j;
             pplr->rgEnvVarMax[i] = j + 20;
         }
-        pplr->pctIdealGrowth = RandomIO().pfnRandom(9) + 7;
+        pplr->pctIdealGrowth = RandomIO().pfnRandom(app, 9) + 7;
     }
-    iVal = RandomIO().pfnRandom(3);
+    iVal = RandomIO().pfnRandom(app, 3);
     for (i = 8; i <= 13; i++) {
-        SetRaceStat(pplr, static_cast<RaceStat>(i), iVal != 0 ? RandomIO().pfnRandom(3) : 1);
+        SetRaceStat(pplr, static_cast<RaceStat>(i), iVal != 0 ? RandomIO().pfnRandom(app, 3) : 1);
     }
-    SetRaceStat(pplr, rsMajorAdv, RandomIO().pfnRandom(10));
-    iVal = RandomIO().pfnRandom(4);
+    SetRaceStat(pplr, rsMajorAdv, RandomIO().pfnRandom(app, 10));
+    iVal = RandomIO().pfnRandom(app, 4);
     for (i = 0; i <= 13; i++) {
-        SetRaceGrbit(pplr, static_cast<RaceGrbit>(i), iVal != 0 ? RandomIO().pfnRandom(2) : FALSE);
+        SetRaceGrbit(pplr, static_cast<RaceGrbit>(i), iVal != 0 ? RandomIO().pfnRandom(app, 2) : 0);
     }
-    SetRaceGrbit(pplr, ibitRaceTech3, RandomIO().pfnRandom(2));
-    SetRaceGrbit(pplr, ibitRaceCheapFact, RandomIO().pfnRandom(2));
-    iVal = RandomIO().pfnRandom(3);
+    SetRaceGrbit(pplr, ibitRaceTech3, RandomIO().pfnRandom(app, 2));
+    SetRaceGrbit(pplr, ibitRaceCheapFact, RandomIO().pfnRandom(app, 2));
+    iVal = RandomIO().pfnRandom(app, 3);
     if (iVal == 0) {
         for (i = 0; i <= 6; i++) {
             pplr->rgAttr[i] = vrgplrDef[0].rgAttr[i];
         }
-        pplr->rgAttr[7] = RandomIO().pfnRandom(5);
+        pplr->rgAttr[7] = RandomIO().pfnRandom(app, 5);
     } else {
         for (i = 0; i <= 7; i++) {
-            pplr->rgAttr[i] = rgRaceStatMin[i] + RandomIO().pfnRandom(rgRaceStatMax[i] + 1 - rgRaceStatMin[i]);
+            pplr->rgAttr[i] = rgRaceStatMin[i] + RandomIO().pfnRandom(app, rgRaceStatMax[i] + 1 - rgRaceStatMin[i]);
         }
     }
-    if (strcmp(pplr->szName, TextIO().pfnCompressed(idsRandom2)) == 0) {
-        TextIO().pfnCchGetString(static_cast<StringId>(idsBerserker + RandomIO().pfnRandom(24)), pplr->szName);
+    if (strcmp(pplr->szName, TextIO().pfnCompressed(app, idsRandom2)) == 0) {
+        TextIO().pfnCchGetString(app, static_cast<StringId>(idsBerserker + RandomIO().pfnRandom(app, 24)), pplr->szName);
     }
-    cPts = CAdvantagePoints(pplr);
+    cPts = CAdvantagePoints(app, pplr);
     if (cPts < 0 || cPts > 50) {
         cPass = 0;
-        while ((cPts = CAdvantagePoints(pplr)) < 0 || cPts > 50) {
+        while ((cPts = CAdvantagePoints(app, pplr)) < 0 || cPts > 50) {
             if (cPass++ > 250) {
                 plrT = *pplr;
                 *pplr = vrgplrDef[0];
                 strcpy(pplr->szName, plrT.szName);
                 break;
             }
-            iVal = RandomIO().pfnRandom(10);
+            iVal = RandomIO().pfnRandom(app, 10);
             dAwayCur = -cPts <= cPts - 50 ? cPts - 50 : -cPts;
             if (iVal < 3) {
-                i = RandomIO().pfnRandom(6);
+                i = RandomIO().pfnRandom(app, 6);
                 j = pplr->rgAttr[i + 8];
                 if (j > 0) {
                     pplr->rgAttr[i + 8] = pplr->rgAttr[i + 8] - 1;
-                    cPts = CAdvantagePoints(pplr);
+                    cPts = CAdvantagePoints(app, pplr);
                     dAwayNew = -cPts <= cPts - 50 ? cPts - 50 : -cPts;
                     if (dAwayNew < dAwayCur)
                         continue;
@@ -821,18 +822,18 @@ void CreateRandomRace(PLAYER *pplr) {
                 }
                 if (j < 2) {
                     pplr->rgAttr[i + 8] = pplr->rgAttr[i + 8] + 1;
-                    cPts = CAdvantagePoints(pplr);
+                    cPts = CAdvantagePoints(app, pplr);
                     dAwayNew = -cPts <= cPts - 50 ? cPts - 50 : -cPts;
                     if (dAwayNew >= dAwayCur) {
                         pplr->rgAttr[i + 8] = j;
                     }
                 }
             } else if (iVal < 6) {
-                iVal = RandomIO().pfnRandom(14);
+                iVal = RandomIO().pfnRandom(app, 14);
                 j = RaceQueryIO().pfnGrbit(pplr, static_cast<RaceGrbit>(iVal));
                 for (i = 0; i < 2; i++) {
                     SetRaceGrbit(pplr, static_cast<RaceGrbit>(iVal), i);
-                    cPts = CAdvantagePoints(pplr);
+                    cPts = CAdvantagePoints(app, pplr);
                     dAwayNew = -cPts <= cPts - 50 ? cPts - 50 : -cPts;
                     if (dAwayNew < dAwayCur)
                         break;
@@ -841,11 +842,11 @@ void CreateRandomRace(PLAYER *pplr) {
                     SetRaceGrbit(pplr, static_cast<RaceGrbit>(iVal), j);
                 }
             } else if (iVal < 9) {
-                iVal = RandomIO().pfnRandom(7);
+                iVal = RandomIO().pfnRandom(app, 7);
                 j = RaceQueryIO().pfnStat(pplr, static_cast<RaceStat>(iVal));
                 for (i = -1; i <= 1; i += 2) {
                     SetRaceStat(pplr, static_cast<RaceStat>(iVal), j + i);
-                    cPts = CAdvantagePoints(pplr);
+                    cPts = CAdvantagePoints(app, pplr);
                     dAwayNew = -cPts <= cPts - 50 ? cPts - 50 : -cPts;
                     if (dAwayNew < dAwayCur)
                         break;
@@ -853,31 +854,31 @@ void CreateRandomRace(PLAYER *pplr) {
                 if (i > 1) {
                     SetRaceStat(pplr, static_cast<RaceStat>(iVal), j);
                 }
-            } else if (RandomIO().pfnRandom(2) != 0) {
+            } else if (RandomIO().pfnRandom(app, 2) != 0) {
                 j = pplr->pctIdealGrowth;
                 if (j > 1) {
                     pplr->pctIdealGrowth = j - 1;
-                    cPts = CAdvantagePoints(pplr);
+                    cPts = CAdvantagePoints(app, pplr);
                     dAwayNew = -cPts <= cPts - 50 ? cPts - 50 : -cPts;
                     if (dAwayNew < dAwayCur)
                         continue;
                 }
                 if (j < 15) {
                     pplr->pctIdealGrowth = j + 1;
-                    cPts = CAdvantagePoints(pplr);
+                    cPts = CAdvantagePoints(app, pplr);
                     dAwayNew = -cPts <= cPts - 50 ? cPts - 50 : -cPts;
                     if (dAwayNew < dAwayCur)
                         continue;
                 }
                 pplr->pctIdealGrowth = j;
             } else {
-                iVal = RandomIO().pfnRandom(3);
+                iVal = RandomIO().pfnRandom(app, 3);
                 if (pplr->rgEnvVar[iVal] < 0) {
-                    j = RandomIO().pfnRandom(31);
+                    j = RandomIO().pfnRandom(app, 31);
                     pplr->rgEnvVar[iVal] = j + 35;
                     pplr->rgEnvVarMin[iVal] = j;
                     pplr->rgEnvVarMax[iVal] = j + 70;
-                    cPts = CAdvantagePoints(pplr);
+                    cPts = CAdvantagePoints(app, pplr);
                     dAwayNew = -cPts <= cPts - 50 ? cPts - 50 : -cPts;
                     if (dAwayNew >= dAwayCur) {
                         pplr->rgEnvVarMax[iVal] = envImmune;
@@ -889,7 +890,7 @@ void CreateRandomRace(PLAYER *pplr) {
                     pplr->rgEnvVarMax[iVal] = envImmune;
                     pplr->rgEnvVarMin[iVal] = envImmune;
                     pplr->rgEnvVar[iVal] = envImmune;
-                    cPts = CAdvantagePoints(pplr);
+                    cPts = CAdvantagePoints(app, pplr);
                     dAwayNew = -cPts <= cPts - 50 ? cPts - 50 : -cPts;
                     if (dAwayNew >= dAwayCur) {
                         *pplr = plrT;
@@ -901,9 +902,9 @@ void CreateRandomRace(PLAYER *pplr) {
     return;
 }
 
-int16_t PctTrueMaxGrowth(int16_t iplr) {
-    if (RaceQueryIO().pfnStat(&rgplr[iplr], rsMajorAdv) == raCheapCol) {
-        return rgplr[iplr].pctIdealGrowth * 2;
+int16_t PctTrueMaxGrowth(APPSESSION &app, int16_t iplr) {
+    if (RaceQueryIO().pfnStat(&app.state.rgplr[iplr], rsMajorAdv) == raCheapCol) {
+        return app.state.rgplr[iplr].pctIdealGrowth * 2;
     }
-    return rgplr[iplr].pctIdealGrowth;
+    return app.state.rgplr[iplr].pctIdealGrowth;
 }

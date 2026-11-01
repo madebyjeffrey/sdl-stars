@@ -16,25 +16,25 @@ static HBRUSH hbrColor;
 static LRESULT CALLBACK ParentProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     if (msg == WM_COMMAND && HIWORD(w) == BN_CLICKED) {
         cClick++; idClick = LOWORD(w); hwndClick = (HWND)l;
-        checkAtClick = (UINT)SendMessage((HWND)l, BM_GETCHECK, 0, 0);
-        if (fDestroyClick) { fDestroyClick = FALSE; DestroyWindow((HWND)l); }
-        if (fDestroyParent) { fDestroyParent = FALSE; DestroyWindow(hwnd); }
+        checkAtClick = (UINT)SendMessageA((HWND)l, BM_GETCHECK, 0, 0);
+        if (fDestroyClick) { fDestroyClick = 0; DestroyWindow((HWND)l); }
+        if (fDestroyParent) { fDestroyParent = 0; DestroyWindow(hwnd); }
         return 0;
     }
     if (msg == WM_CTLCOLORSTATIC || msg == WM_CTLCOLORBTN) {
-        if (fDestroyColor) { fDestroyColor = FALSE; DestroyWindow((HWND)l); return 0; }
+        if (fDestroyColor) { fDestroyColor = 0; DestroyWindow((HWND)l); return 0; }
         SetTextColor((HDC)w, RGB(0, 0, 0));
         SetBkColor((HDC)w, RGB(9, 70, 90));
         return (LRESULT)hbrColor;
     }
-    return DefWindowProc(hwnd, msg, w, l);
+    return DefWindowProcA(hwnd, msg, w, l);
 }
 static void Drain(void) {
-    MSG msg;
-    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
+    APPMSG msg;
+    while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
 }
 static HWND Button(HWND hwnd, HINSTANCE hInstance, int id, DWORD style, int y) {
-    return CreateWindow("Button", "&Button", WS_CHILD | WS_VISIBLE | style,
+    return CreateWindowExA(0, "Button", "&Button", WS_CHILD | WS_VISIBLE | style,
                         20, y, 150, 24, hwnd, (HMENU)(INT_PTR)id, hInstance, NULL);
 }
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
@@ -61,17 +61,17 @@ static int TestFocusLabels(HWND hwnd, HINSTANCE hInstance) {
 
     lf.lfHeight = -13;
     strcpy(lf.lfFaceName, "Arial");
-    hfont = CreateFontIndirect(&lf);
+    hfont = CreateFontIndirectA(&lf);
     CHECK(hfont);
     for (i = 0; i < 3; i++) {
         for (j = 0; j < sizeof(rgfmt) / sizeof(rgfmt[0]); j++) {
             for (k = 0; k < 2; k++) {
                 dy = rgfmt[j].dy;
-                hwndButton = CreateWindow("Button", rgpszLabel[k], WS_CHILD | WS_VISIBLE | WS_TABSTOP |
+                hwndButton = CreateWindowExA(0, "Button", rgpszLabel[k], WS_CHILD | WS_VISIBLE | WS_TABSTOP |
                                           rgdwStyle[i] | rgfmt[j].dwStyle,
                                           200, 40, 100, dy, hwnd, (HMENU)(INT_PTR)500, hInstance, NULL);
                 CHECK(hwndButton);
-                SendMessage(hwndButton, WM_SETFONT, (WPARAM)hfont, TRUE);
+                SendMessageA(hwndButton, WM_SETFONT, (WPARAM)hfont, 1);
                 SetFocus(hwnd);
                 CHECK(UpdateWindow(hwndButton));
                 hdc = GetDC(hwndButton);
@@ -118,9 +118,9 @@ static int TestPaint(HWND hwnd, HWND hwndCheck, HWND hwndRadio, HWND hwndStatic)
     BYTE *rgb;
     size_t cb;
     HFONT hfont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
-    CHECK(SendMessage(hwndStatic, WM_GETFONT, 0, 0) == 0);
-    SendMessage(hwndStatic, WM_SETFONT, (WPARAM)hfont, TRUE);
-    CHECK((HFONT)SendMessage(hwndStatic, WM_GETFONT, 0, 0) == hfont);
+    CHECK(SendMessageA(hwndStatic, WM_GETFONT, 0, 0) == 0);
+    SendMessageA(hwndStatic, WM_SETFONT, (WPARAM)hfont, 1);
+    CHECK((HFONT)SendMessageA(hwndStatic, WM_GETFONT, 0, 0) == hfont);
     CHECK(UpdateWindow(hwndStatic));
     hdc = GetDC(hwndStatic);
     CHECK(hdc && GetPixel(hdc, 149, 23) == RGB(9, 70, 90));
@@ -133,15 +133,15 @@ static int TestPaint(HWND hwnd, HWND hwndCheck, HWND hwndRadio, HWND hwndStatic)
     CHECK(CheckDlgButton(hwnd, 101, BST_CHECKED) && UpdateWindow(hwndCheck));
     CHECK(memcmp(rgb, hwndCheck->lpCanvas->pixels, cb) != 0);
     free(rgb);
-    SendMessage(hwndRadio, BM_SETCHECK, BST_CHECKED, 0);
+    SendMessageA(hwndRadio, BM_SETCHECK, BST_CHECKED, 0);
     CHECK(UpdateWindow(hwndRadio));
     hdc = GetDC(hwndRadio);
     // A round seven-pixel dot has white corners and a black center.
     CHECK(hdc && GetPixel(hdc, 3, 8) == RGB(255, 255, 255));
     CHECK(GetPixel(hdc, 6, 11) == RGB(0, 0, 0));
     CHECK(ReleaseDC(hwndRadio, hdc));
-    fDestroyColor = TRUE;
-    InvalidateRect(hwndStatic, NULL, TRUE);
+    fDestroyColor = 1;
+    InvalidateRect(hwndStatic, NULL, 1);
     CHECK(UpdateWindow(hwndStatic) && !IsWindow(hwndStatic));
     return 0;
 }
@@ -155,15 +155,15 @@ int main(void) {
     POINT pt = {2, 2};
     int c, i;
 #if defined(_WIN32) && !defined(STARS_UI_SDL)
-    hInstance = GetModuleHandle(NULL);
+    hInstance = GetModuleHandleA(NULL);
 #else
     hInstance = (HINSTANCE)(UINT_PTR)1;
 #endif
     hbrColor = CreateSolidBrush(RGB(9, 70, 90));
     CHECK(hbrColor);
     wc.hInstance = hInstance; wc.lpszClassName = "StarsControlContracts"; wc.lpfnWndProc = ParentProc;
-    CHECK(RegisterClass(&wc));
-    hwnd = CreateWindow(wc.lpszClassName, "controls", WS_POPUP | WS_VISIBLE, 40, 50, 400, 360,
+    CHECK(RegisterClassA(&wc));
+    hwnd = CreateWindowExA(0, wc.lpszClassName, "controls", WS_POPUP | WS_VISIBLE, 40, 50, 400, 360,
                         NULL, NULL, hInstance, NULL);
     CHECK(hwnd);
 #if defined(_WIN32) && !defined(STARS_UI_SDL)
@@ -176,80 +176,82 @@ int main(void) {
     hwndRadio2 = Button(hwnd, hInstance, 202, BS_AUTORADIOBUTTON, 130);
     hwndRadio3 = Button(hwnd, hInstance, 205, BS_AUTORADIOBUTTON | WS_GROUP, 160);
     hwndGroup = Button(hwnd, hInstance, 301, BS_GROUPBOX, 200);
-    hwndStatic = CreateWindow("Static", "Label", WS_CHILD | WS_VISIBLE | SS_LEFT,
+    hwndStatic = CreateWindowExA(0, "Static", "Label", WS_CHILD | WS_VISIBLE | SS_LEFT,
                              200, 10, 150, 24, hwnd, (HMENU)(INT_PTR)300, hInstance, NULL);
     CHECK(hwndPush && hwndCheck && hwndTri && hwndRadio1 && hwndRadio2 && hwndRadio3 && hwndStatic && hwndGroup);
     Drain();
-    CHECK(GetClassName(hwndCheck, sz, sizeof(sz)) && strcmp(sz, "Button") == 0);
-    CHECK(SendMessage(hwndPush, WM_GETDLGCODE, 0, 0) & DLGC_DEFPUSHBUTTON);
-    CHECK(SendMessage(hwndRadio1, WM_GETDLGCODE, 0, 0) & DLGC_RADIOBUTTON);
-    CHECK(SendMessage(hwndStatic, WM_GETDLGCODE, 0, 0) & DLGC_STATIC);
-    CHECK(GetDlgItemText(hwnd, 300, sz, sizeof(sz)) == 5 && strcmp(sz, "Label") == 0);
-    CHECK(SetDlgItemText(hwnd, 300, "Updated label"));
-    CHECK(GetDlgItemText(hwnd, 300, sz, 4) == 3 && strcmp(sz, "Upd") == 0);
-    CHECK(!GetDlgItemText(hwnd, 999, sz, sizeof(sz)));
-    CHECK(!SetDlgItemText(hwnd, 999, "missing"));
-    CHECK(CheckDlgButton(hwnd, 999, BST_CHECKED));
-    CHECK(SendDlgItemMessage(hwnd, 999, BM_GETCHECK, 0, 0) == 0);
+    CHECK(GetClassNameA(hwndCheck, sz, sizeof(sz)) && strcmp(sz, "Button") == 0);
+    CHECK(SendMessageA(hwndPush, WM_GETDLGCODE, 0, 0) & DLGC_DEFPUSHBUTTON);
+    CHECK(SendMessageA(hwndRadio1, WM_GETDLGCODE, 0, 0) & DLGC_RADIOBUTTON);
+    CHECK(SendMessageA(hwndStatic, WM_GETDLGCODE, 0, 0) & DLGC_STATIC);
+    CHECK(GetDlgItemTextA(hwnd, 300, sz, sizeof(sz)) == 5 && strcmp(sz, "Label") == 0);
+    CHECK(SetDlgItemTextA(hwnd, 300, "Updated label"));
+    CHECK(GetDlgItemTextA(hwnd, 300, sz, 4) == 3 && strcmp(sz, "Upd") == 0);
+    CHECK(!GetDlgItemTextA(hwnd, 999, sz, sizeof(sz)));
+    CHECK(!SetDlgItemTextA(hwnd, 999, "missing"));
+    CHECK(!GetDlgItem(hwnd, 999));
+    CHECK(!CheckDlgButton(hwnd, 999, BST_CHECKED));
+    CHECK(!CheckDlgButton(NULL, 101, BST_CHECKED));
+    CHECK(SendDlgItemMessageA(hwnd, 999, BM_GETCHECK, 0, 0) == 0);
     hfont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
-    SendMessage(hwndPush, WM_SETFONT, (WPARAM)hfont, TRUE);
-    CHECK((HFONT)SendMessage(hwndPush, WM_GETFONT, 0, 0) == hfont);
+    SendMessageA(hwndPush, WM_SETFONT, (WPARAM)hfont, 1);
+    CHECK((HFONT)SendMessageA(hwndPush, WM_GETFONT, 0, 0) == hfont);
     CHECK(CheckDlgButton(hwnd, 101, BST_CHECKED) && IsDlgButtonChecked(hwnd, 101) == BST_CHECKED);
     CHECK(CheckDlgButton(hwnd, 101, BST_UNCHECKED));
     c = cClick;
-    SendMessage(hwndCheck, BM_CLICK, 0, 0);
+    SendMessageA(hwndCheck, BM_CLICK, 0, 0);
     CHECK(cClick == c + 1 && idClick == 101 && hwndClick == hwndCheck && checkAtClick == BST_CHECKED);
     CHECK(IsDlgButtonChecked(hwnd, 101) == BST_CHECKED && !GetCapture());
-    SendMessage(hwndCheck, BM_CLICK, 0, 0);
+    SendMessageA(hwndCheck, BM_CLICK, 0, 0);
     CHECK(IsDlgButtonChecked(hwnd, 101) == BST_UNCHECKED);
     for (i = 1; i <= 3; i++) {
-        SendMessage(hwndTri, BM_CLICK, 0, 0);
+        SendMessageA(hwndTri, BM_CLICK, 0, 0);
         CHECK(IsDlgButtonChecked(hwnd, 102) == (UINT)(i % 3));
     }
     CHECK(CheckRadioButton(hwnd, 201, 202, 201));
     CHECK(IsDlgButtonChecked(hwnd, 201) == BST_CHECKED && IsDlgButtonChecked(hwnd, 202) == BST_UNCHECKED);
     CHECK(CheckDlgButton(hwnd, 205, BST_CHECKED));
-    SendMessage(hwndRadio2, BM_CLICK, 0, 0);
+    SendMessageA(hwndRadio2, BM_CLICK, 0, 0);
     CHECK(IsDlgButtonChecked(hwnd, 201) == BST_UNCHECKED && IsDlgButtonChecked(hwnd, 202) == BST_CHECKED);
-    CHECK(IsDlgButtonChecked(hwnd, 205) == BST_CHECKED && (GetWindowLongPtr(hwndRadio2, GWL_STYLE) & WS_TABSTOP));
+    CHECK(IsDlgButtonChecked(hwnd, 205) == BST_CHECKED && (GetWindowLongPtrA(hwndRadio2, GWL_STYLE) & WS_TABSTOP));
     CHECK(CheckRadioButton(hwnd, 201, 202, 201));
     CHECK(IsDlgButtonChecked(hwnd, 205) == BST_CHECKED);
     c = cClick;
-    EnableWindow(hwndPush, FALSE); SendMessage(hwndPush, BM_CLICK, 0, 0);
+    EnableWindow(hwndPush, 0); SendMessageA(hwndPush, BM_CLICK, 0, 0);
     CHECK(cClick == c + 1 && idClick == 100);
     c = cClick;
-    EnableWindow(hwndPush, TRUE);
-    SendMessage(hwndPush, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(2, 2));
-    CHECK(GetCapture() == hwndPush && (SendMessage(hwndPush, BM_GETSTATE, 0, 0) & BST_PUSHED));
-    SendMessage(hwndPush, WM_MOUSEMOVE, MK_LBUTTON, MAKELPARAM(-5, -5));
-    CHECK(!(SendMessage(hwndPush, BM_GETSTATE, 0, 0) & BST_PUSHED));
-    SendMessage(hwndPush, WM_LBUTTONUP, 0, MAKELPARAM(-5, -5));
+    EnableWindow(hwndPush, 1);
+    SendMessageA(hwndPush, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(2, 2));
+    CHECK(GetCapture() == hwndPush && (SendMessageA(hwndPush, BM_GETSTATE, 0, 0) & BST_PUSHED));
+    SendMessageA(hwndPush, WM_MOUSEMOVE, MK_LBUTTON, MAKELPARAM(-5, -5));
+    CHECK(!(SendMessageA(hwndPush, BM_GETSTATE, 0, 0) & BST_PUSHED));
+    SendMessageA(hwndPush, WM_LBUTTONUP, 0, MAKELPARAM(-5, -5));
     CHECK(cClick == c && !GetCapture());
-    SendMessage(hwndPush, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(2, 2));
+    SendMessageA(hwndPush, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(2, 2));
     ReleaseCapture();
-    SendMessage(hwndPush, WM_LBUTTONUP, 0, MAKELPARAM(2, 2));
+    SendMessageA(hwndPush, WM_LBUTTONUP, 0, MAKELPARAM(2, 2));
     CHECK(cClick == c);
     SetFocus(hwndPush);
-    SendMessage(hwndPush, WM_KEYDOWN, VK_SPACE, 1);
-    CHECK(SendMessage(hwndPush, BM_GETSTATE, 0, 0) & BST_PUSHED);
-    SendMessage(hwndPush, WM_KEYUP, VK_SPACE, 0xc0000001);
+    SendMessageA(hwndPush, WM_KEYDOWN, VK_SPACE, 1);
+    CHECK(SendMessageA(hwndPush, BM_GETSTATE, 0, 0) & BST_PUSHED);
+    SendMessageA(hwndPush, WM_KEYUP, VK_SPACE, 0xc0000001);
     CHECK(cClick == c + 1 && idClick == 100);
     CHECK(ClientToScreen(hwndStatic, &pt));
     CHECK(WindowFromPoint(pt) == hwnd);
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
     CHECK(TestFocusLabels(hwnd, hInstance) == 0);
     CHECK(TestPaint(hwnd, hwndCheck, hwndRadio1, hwndStatic) == 0);
-    CHECK(!CreateWindow("Button", "unsupported", WS_CHILD | BS_ICON, 0, 0, 30, 30, hwnd, NULL, hInstance, NULL));
+    CHECK(!CreateWindowExA(0, "Button", "unsupported", WS_CHILD | BS_ICON, 0, 0, 30, 30, hwnd, NULL, hInstance, NULL));
 #endif
     hwndKill = Button(hwnd, hInstance, 400, BS_PUSHBUTTON, 240);
     CHECK(hwndKill);
-    fDestroyClick = TRUE;
-    SendMessage(hwndKill, BM_CLICK, 0, 0);
+    fDestroyClick = 1;
+    SendMessageA(hwndKill, BM_CLICK, 0, 0);
     CHECK(!IsWindow(hwndKill));
     hwndKill = Button(hwnd, hInstance, 401, BS_PUSHBUTTON, 240);
     CHECK(hwndKill);
-    fDestroyParent = TRUE;
-    SendMessage(hwndKill, BM_CLICK, 0, 0);
+    fDestroyParent = 1;
+    SendMessageA(hwndKill, BM_CLICK, 0, 0);
     CHECK(!IsWindow(hwnd));
     CHECK(DeleteObject(hbrColor));
 #if !defined(_WIN32) || defined(STARS_UI_SDL)

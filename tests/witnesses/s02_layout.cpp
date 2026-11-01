@@ -1,14 +1,19 @@
 #include <cstdio>
+#include "appstate.h"
+#ifdef STARS_UI_SDL
+#include "uistate.h"
+#endif
+#include "callbackcontext.h"
 #include <cstring>
 #include "profile_text_io.h"
 #include "text_io.h"
 #include "win.h"
 static const char *input;
-static int16_t     GetString(StringId, char *out) {
+static int16_t     GetString(APPSESSION &, StringId, char *out) {
     strcpy(out, "key");
     return 3;
 }
-static DWORD WINAPI ReadString(LPCSTR, LPCSTR, LPCSTR, LPSTR out, DWORD cap, LPCSTR) {
+static DWORD ReadString(LPCSTR, LPCSTR, LPCSTR, LPSTR out, DWORD cap, LPCSTR) {
     size_t n = strlen(input);
     if (n >= cap)
         n = cap - 1;
@@ -27,6 +32,13 @@ static int checks;
     } while (0)
 
 int main(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+
     TILE                  tiles[3] = {};
     TILE                  original[3];
     WN                    wn = {};
@@ -59,22 +71,22 @@ int main(void) {
     ReadIniTileSettings(const_cast<char *>("*"), tiles, 3);
     CHECK(tiles[2].iCol == 3);
     input = "X";
-    GetIniWinRc(const_cast<char *>("Windows"), const_cast<char *>("unused"), idsMain, &wn);
+    GetIniWinRc(app, const_cast<char *>("Windows"), const_cast<char *>("unused"), idsMain, &wn);
     CHECK(wn.rc.left == -32768 && wn.rc.right == -32768 && wn.rc.top == 0 && wn.rc.bottom == 0);
     CHECK(wn.fMaximized && !wn.fMinimized && !wn.fInitalized);
     input = "R1-2-000000010002";
-    GetIniWinRc(const_cast<char *>("Windows"), const_cast<char *>("unused"), static_cast<StringId>(0), &wn);
+    GetIniWinRc(app, const_cast<char *>("Windows"), const_cast<char *>("unused"), static_cast<StringId>(0), &wn);
     CHECK(wn.rc.left == -12 && wn.rc.top == 0 && wn.rc.right == 1 && wn.rc.bottom == 2);
     CHECK(wn.fInitalized && !wn.fMaximized && !wn.fMinimized);
     input = "M0000000010000001";
-    GetIniWinRc(const_cast<char *>("Windows"), const_cast<char *>("unused"), static_cast<StringId>(0), &wn);
+    GetIniWinRc(app, const_cast<char *>("Windows"), const_cast<char *>("unused"), static_cast<StringId>(0), &wn);
     CHECK(wn.fMaximized && wn.fInitalized);
     input = "R0000000010000001x";
-    GetIniWinRc(const_cast<char *>("Windows"), const_cast<char *>("unused"), static_cast<StringId>(0), &wn);
+    GetIniWinRc(app, const_cast<char *>("Windows"), const_cast<char *>("unused"), static_cast<StringId>(0), &wn);
     CHECK(!wn.fInitalized && !wn.fMaximized);
     for (i = 0; i < sizeof(expected) / sizeof(expected[0]); i++) {
         input = strings[i];
-        CHECK(GetPrivateProfileIntA("a", "b", 7, "unused") == expected[i]);
+        CHECK(win32::GetPrivateProfileIntA("a", "b", 7, "unused") == expected[i]);
     }
     printf("S02 linked C witnesses: %d passed\n", checks);
     return 0;

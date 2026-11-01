@@ -15,17 +15,17 @@ PROFILEIOSCOPE::PROFILEIOSCOPE(const PROFILEIO &io) noexcept : io(io), lpPrev(lp
 PROFILEIOSCOPE::~PROFILEIOSCOPE() noexcept { lpProfileIO = lpPrev; }
 
 DWORD DwProfileError(void) {
-    if (errno == ENOENT) return ERROR_FILE_NOT_FOUND;
-    if (errno == EACCES || errno == EPERM) return ERROR_ACCESS_DENIED;
-    if (errno == ENOMEM) return ERROR_NOT_ENOUGH_MEMORY;
-    return ERROR_WRITE_FAULT;
+    if (errno == ENOENT) return win32::ERROR_FILE_NOT_FOUND;
+    if (errno == EACCES || errno == EPERM) return win32::ERROR_ACCESS_DENIED;
+    if (errno == ENOMEM) return win32::ERROR_NOT_ENOUGH_MEMORY;
+    return win32::ERROR_WRITE_FAULT;
 }
 
 BOOL FSaveProfile(COMPATPROFILE *lp, const char *pszPath, const PROFILEIO &io) {
     char *szTemp = NULL;
     NATIVEFILE *fp = NULL;
-    BOOL fRet = FALSE;
-    BOOL fTemporary = FALSE;
+    BOOL fRet = 0;
+    BOOL fTemporary = 0;
     NATIVECLEANUPSCOPE releaseProfile([&]() noexcept {
         if (fp) io.pfnClose(std::exchange(fp, nullptr));
         if (!fRet && fTemporary) io.pfnUnlink(szTemp);
@@ -33,13 +33,13 @@ BOOL FSaveProfile(COMPATPROFILE *lp, const char *pszPath, const PROFILEIO &io) {
     });
 
     szTemp = (char *)io.pfnAllocate(strlen(pszPath) + 12);
-    if (!szTemp) { SetLastError(ERROR_NOT_ENOUGH_MEMORY); return FALSE; }
+    if (!szTemp) { win32::SetLastError(win32::ERROR_NOT_ENOUGH_MEMORY); return 0; }
     snprintf(szTemp, strlen(pszPath) + 12, "%s.XXXXXX", pszPath);
     fp = io.pfnCreateTemp(szTemp);
-    if (!fp) { SetLastError(DwProfileError()); goto LReturn; }
-    fTemporary = TRUE;
+    if (!fp) { win32::SetLastError(DwProfileError()); goto LReturn; }
+    fTemporary = 1;
     if (io.pfnCopyPermissions(fp, pszPath) != 0) {
-        SetLastError(DwProfileError()); io.pfnClose(std::exchange(fp, nullptr)); goto LReturn;
+        win32::SetLastError(DwProfileError()); io.pfnClose(std::exchange(fp, nullptr)); goto LReturn;
     }
     if (io.pfnWrite("\xef\xbb\xbf", 1, 3, fp) != 3) { io.pfnClose(std::exchange(fp, nullptr)); goto LReturn; }
     for (; lp; lp = lp->lpNext) {
@@ -48,10 +48,10 @@ BOOL FSaveProfile(COMPATPROFILE *lp, const char *pszPath, const PROFILEIO &io) {
             if (io.pfnPutChar('\n', fp) == EOF) break;
     }
     if (lp || io.pfnFlush(fp) != 0 || io.pfnSync(fp) != 0) {
-        SetLastError(DwProfileError()); io.pfnClose(std::exchange(fp, nullptr)); goto LReturn;
+        win32::SetLastError(DwProfileError()); io.pfnClose(std::exchange(fp, nullptr)); goto LReturn;
     }
-    if (io.pfnClose(std::exchange(fp, nullptr)) != 0 || io.pfnRename(szTemp, pszPath, TRUE, TRUE) != 0) { SetLastError(DwProfileError()); goto LReturn; }
-    fRet = TRUE;
+    if (io.pfnClose(std::exchange(fp, nullptr)) != 0 || io.pfnRename(szTemp, pszPath, 1, 1) != 0) { win32::SetLastError(DwProfileError()); goto LReturn; }
+    fRet = 1;
 LReturn:
     return fRet;
 }

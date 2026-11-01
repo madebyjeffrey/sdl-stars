@@ -60,7 +60,7 @@ output = []
 local_functions = {}
 for path in sorted(p for p in (ROOT / 'compat/win32/src').iterdir() if p.suffix in ('.cpp', '.mm')):
     clean = strip(path.read_text())
-    for match in re.finditer(r'\bWINAPIV?\s+(\w+)\s*\([^;{}]*\)\s*\{', clean):
+    for match in re.finditer(r'^[A-Za-z_][\w \t*]*\b(?:win32|ui)::(\w+)\s*\([^;{}]*\)\s*\{', clean, re.M):
         local_functions[match[1]] = f'{path.relative_to(ROOT)}:{clean.count(chr(10), 0, match.start()) + 1}'
     for symbol in counts:
         if categories[symbol] == 'Microsoft CRT dependencies':
@@ -78,20 +78,20 @@ for symbol in sorted(counts):
     found = functions.get(candidate, '')
     status = statuses.get(candidate, '')
     local_candidate = {'CreateWindow': 'CreateWindowExA', 'CreateDialog': 'CreateDialogParamA',
-                       'DialogBox': 'DialogBoxParamA', 'ExitWindows': 'StarsCompatExitWindows'}.get(symbol, symbol)
+                       'DialogBox': 'DialogBoxParamA', 'ExitWindows': 'RequestQuit'}.get(symbol, symbol)
     if local_candidate not in local_functions and symbol + 'A' in local_functions:
         local_candidate = symbol + 'A'
     local_found = local_functions.get(local_candidate, '')
     if symbol in adapted | extended and not local_found:
         raise SystemExit(f'Missing local implementation: {symbol}')
     if symbol == 'ExitWindows':
-        decision = 'platform difference; rejects desktop logoff and exits Stars only'
+        decision = 'retired Win16 name; ui::RequestQuit preserves rejection diagnostics and app exit'
     elif symbol in adapted:
         decision = 'adapted in local C++20 runtime'
     elif local_found:
         decision = 'implemented as local C++20 extension'
     elif symbol in legacy:
-        decision = 'local header macro; no separate implementation'
+        decision = 'retired Win16 name; consumers use explicit C++ operations'
     elif found and (candidate in known_stubs or status == 'STUB'):
         decision = 'stub or restricted semantics; replace for Stars'
     elif found:

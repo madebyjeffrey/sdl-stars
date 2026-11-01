@@ -30,9 +30,9 @@ SCANNER   *LpscannerFromId(int16_t id);
 SHDEF     *LpshdefT();
 SHDEF     *LpshdefSBT();
 PLANETARY *LpplanetaryFromId(int16_t id);
-int16_t    FLookupPartX(PART *ppart, uint16_t grhst, uint16_t iItem);
-int16_t    FLookupPart(PART *ppart);
-void       LookupBestPlanetaryScanner(PART *ppart);
-int16_t    TechStatus(char *rgTech);
+int16_t    FLookupPartX(APPSESSION &app, PART *ppart, uint16_t grhst, uint16_t iItem);
+int16_t    FLookupPart(APPSESSION &app, PART *ppart);
+void       LookupBestPlanetaryScanner(APPSESSION &app, PART *ppart);
+int16_t    TechStatus(APPSESSION &app, char *rgTech);
 
 #endif

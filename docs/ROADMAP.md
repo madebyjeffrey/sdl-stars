@@ -38,14 +38,20 @@ checks pass for `b799348`.
 ## C++ migration completion
 
 Milestone B is qualified and merged in [PR #66](https://github.com/madebyjeffrey/sdl-stars/pull/66).
-[Milestone C](CPP-MILESTONE-C.md) is active from merge `62bb854`. The removal
-inventory and source filename migration merged in PR #68. C03's explicit typed
-callback calls merged in PR #69 with all enabled CI passing. C04/C05 now replace test redirects/clones and all 27 extraction programs with
-typed effects and linked production tests; local qualification passes with enabled
-PR CI pending. Namespace
-and state-access scaffolding follow while preserving game/file behavior.
-[Implementation evidence](CPP-C-IMPLEMENTATION.md) records actual checkpoint
-status and verification; later C checkpoints remain pending.
+[Milestone C](CPP-MILESTONE-C.md) is complete and qualified. C01–C03 are merged;
+C04/C05 through C10 are ready for review as the dependent draft stack #72–#77.
+Owned implementations have honest C++20/Objective-C++20 extensions, actual
+namespaces/direct UI calls, typed effects and explicit state consumers. Temporary
+routing, source extraction, state aliases and SDK language adapters are removed.
+C08 timer dispatch preserves each dequeued owner's context when a thread timer
+is rearmed before both messages are dispatched. All local and final manual
+Linux/Windows contract gates pass; the two full platform jobs remain opt-in for
+automatic CI. Eighteen native SDK behavior/automation probes remain explicit
+diagnostics tracked in issue #78. The toolbar probe is requalified as a gate;
+documented post-migration fixes are recorded in the [SDK findings](CPP-C09-SDK-FINDINGS.md).
+Game/file behavior and baselines are unchanged.
+[Final qualification](CPP-C10-QUALIFICATION.md) and the
+[implementation ledger](CPP-C-IMPLEMENTATION.md) record the evidence and review order.
 
 ## C++ migration
 
@@ -115,10 +121,12 @@ and that the owner is re-enabled for both thread-timer and owner-window failures
 This does not change turn generation or the native regression baseline.
 
 The shared enum-ABI and file-service test targets are registered once when
-ordinary tests, SDK reference tests or both are enabled. Windows CI configures
-both suites together before running the SDL checks, covering the former
-duplicate-target configuration failure. Test selection and game results are
-unchanged.
+ordinary tests, SDK reference tests or both are enabled. The manual Windows job
+configures ordinary/SDK-only/both/neither in separate fresh directories, covering
+the former duplicate-target failure. It runs the full ordinary registry and all
+SDK probes, retaining the exact diagnostic classification in
+[maintained policy](CPP-POLICY.md). Game results and original vector assertions
+are unchanged.
 
 ## SDL desktop consolidation
 
@@ -454,7 +462,16 @@ uses `ToolbarWindow32` with common-control commands, split/dropdown buttons and
 anchored tooltips; Windows uses `comctl32`. See [toolbars](WIN32-TOOLBARS.md). Radio
 selection dots are round, toolbar menus anchor below their triggers, and tooltips
 use control-relative placement with an owned native tooltip role; see
-[controls](WIN32-CONTROLS.md). Basic narrow edit fields now support selection, limits,
+[controls](WIN32-CONTROLS.md).
+`CheckDlgButton` now rejects missing child controls and invalid dialog handles;
+the shared SDL/SDK vector requires failure for both. Valid button updates keep
+their existing success result.
+`ClickToolbar` now follows the native dropdown return contract: handled menus
+return `TBDDRET_DEFAULT`; unhandled or `TREATPRESSED` mouse dropdowns retain
+capture and send the ordinary command on release. The game's handler reports
+its menus as handled. Shared vectors check all three results against native
+Windows and SDL, without reading undocumented notification fields.
+Basic narrow edit fields now support selection, limits,
 read-only/password behavior and input; see [edit fields](WIN32-EDIT.md). Complete
 edit conformance remains. Fixed-height string lists, multiple-selection messages
 and owner drawing now work; see [list boxes](WIN32-LISTS.md). Additional list

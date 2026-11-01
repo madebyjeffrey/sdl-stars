@@ -1,4 +1,5 @@
 #include "common.h"
+#include "appstate.h"
 #include "text_io.h"
 #include "colony_io.h"
 #include "planet_query_io.h"
@@ -10,7 +11,7 @@
 
 uint16_t mpicolgrbitBU[12] = {255, 255, 255, 255, 255, 255, 255, 8, 16, 32, 64, 128};
 
-const char *PszGetDestName(FLEET *lpfl, HDC hdc) {
+const char *PszGetDestName(APPSESSION &app, FLEET *lpfl, HDC hdc) {
     int16_t i;
     ORDER   ord;
 
@@ -38,16 +39,16 @@ const char *PszGetDestName(FLEET *lpfl, HDC hdc) {
             if (hdc) {
                 SetHdcTextColor(hdc, 127);
             }
-            return TextIO().pfnCompressed(idsDelayed);
+            return TextIO().pfnCompressed(app, idsDelayed);
         default:
             break;
         }
     }
     ord = lpfl->lpplord->rgord()[1];
-    return PszGetLocName(static_cast<GrobjClass>(ord.grobj), ord.id, ord.pt.x, ord.pt.y);
+    return PszGetLocName(app, static_cast<GrobjClass>(ord.grobj), ord.id, ord.pt.x, ord.pt.y);
 
 LNoDest:
-    return szDblDash;
+    return app.state.szDblDash;
 }
 
 int16_t FDestIsWP0(FLEET *lpfl) {
@@ -61,10 +62,10 @@ int16_t FDestIsWP0(FLEET *lpfl) {
             case grTaskXfer:
                 for (i = 0; i < 5; i++) {
                     if (ord.txp.rgia[i].iAction() == iActionWaitPercent) {
-                        return TRUE;
+                        return 1;
                     }
                 }
-                return FALSE;
+                return 0;
             case grTaskColonize:
                 if (ord.grobj != grobjPlanet)
                     break;
@@ -72,15 +73,15 @@ int16_t FDestIsWP0(FLEET *lpfl) {
             case grTaskMerge:
             case grTaskScrap:
             case grTaskLayMines:
-                return TRUE;
+                return 1;
             }
         }
-        return FALSE;
+        return 0;
     }
-    return TRUE;
+    return 1;
 }
 
-const char *PszGetETA(HDC hdc, FLEET *lpfl, int16_t *pcYears) {
+const char *PszGetETA(APPSESSION &app, HDC hdc, FLEET *lpfl, int16_t *pcYears) {
     POINT16 pt;
     int16_t c;
     int16_t i;
@@ -110,12 +111,12 @@ const char *PszGetETA(HDC hdc, FLEET *lpfl, int16_t *pcYears) {
             }
         }
         ord = lpfl->lpplord->rgord()[1];
-        CchGetETA(hdc, lpfl, szWork, 1, TRUE);
-        if (hdc && EstFuelUse(lpfl, 0, ord.iWarp, -1, FALSE) > lpfl->rgwtMin[4]) {
+        CchGetETA(app, hdc, lpfl, app.state.szWork, 1, 1);
+        if (hdc && EstFuelUse(app, lpfl, 0, ord.iWarp, -1, 0) > lpfl->rgwtMin[4]) {
             SetHdcTextColor(hdc, 0xff);
         }
         if (pcYears) {
-            psz = szWork;
+            psz = app.state.szWork;
             c = 0;
             for (; *psz >= '0' && *psz <= '9'; psz++) {
                 c = 10 * c + (*psz - '0');
@@ -125,16 +126,16 @@ const char *PszGetETA(HDC hdc, FLEET *lpfl, int16_t *pcYears) {
             }
             *pcYears = c;
         }
-        return szWork;
+        return app.state.szWork;
     }
 LNoETA:
     if (pcYears) {
         *pcYears = 0;
     }
-    return szDblDash;
+    return app.state.szDblDash;
 }
 
-const char *PszGetTaskName(FLEET *lpfl, int16_t *picr) {
+const char *PszGetTaskName(APPSESSION &app, FLEET *lpfl, int16_t *picr) {
     int16_t        icr;
     StringId       ids;
     XferActionType opOrd;
@@ -172,8 +173,8 @@ LShowTask:
         switch (ord.grTask) {
         case grTaskXfer:
             for (i = 0; i < 4; i++) {
-                if (vrgZip[i].fValid && memcmp(&vrgZip[i], &ord.txp, 10) == 0)
-                    return vrgZip[i].szName;
+                if (app.state.vrgZip[i].fValid && memcmp(&app.state.vrgZip[i], &ord.txp, 10) == 0)
+                    return app.state.vrgZip[i].szName;
             }
             ids = idsAction;
             iZip = -1;
@@ -201,7 +202,7 @@ LShowTask:
                         case iActionWaitPercent:
                             iZip = 2;
                         }
-                        return rgszZipOrder[iZip];
+                        return app.state.rgszZipOrder[iZip];
                     }
                 }
             }
@@ -213,11 +214,11 @@ LShowTask:
                 }
             }
             if (ids == idsAction) {
-                return TextIO().pfnCompressed(idsTransport);
+                return TextIO().pfnCompressed(app, idsTransport);
             }
             opOrd = static_cast<XferActionType>(ord.txp.rgia[icr].iAction());
             *picr = icr;
-            fPercent = FALSE;
+            fPercent = 0;
             switch (opOrd) {
             case iActionLoadDunnage:
                 if (icr == 4) {
@@ -226,48 +227,48 @@ LShowTask:
                 /* fallthrough */
             case iActionLoadAll:
             case iActionUnloadAll:
-                return TextIO().pfnCompressed(ids);
+                return TextIO().pfnCompressed(app, ids);
             case iActionFillPercent:
             case iActionWaitPercent:
-                fPercent = TRUE;
+                fPercent = 1;
                 /* fallthrough */
             case iActionUnloadExact:
             case iActionSetAmount:
             case iActionSetWaypoint:
-                psz = TextIO().pfnCompressed(ids);
+                psz = TextIO().pfnCompressed(app, ids);
                 psz[strlen(psz) - 3] = 0;
                 if (fPercent) {
-                    CchSprintf(szWork, "%s %d%%", psz, ord.txp.rgia[icr].cQuan());
+                    CchSprintf(app.state.szWork, "%s %d%%", psz, ord.txp.rgia[icr].cQuan());
                 } else {
-                    CchSprintf(szWork, icr == 4 ? "%s %dmg" : "%s %dkT", psz, ord.txp.rgia[icr].cQuan());
+                    CchSprintf(app.state.szWork, icr == 4 ? "%s %dmg" : "%s %dkT", psz, ord.txp.rgia[icr].cQuan());
                 }
-                return szWork;
+                return app.state.szWork;
             default:
-                return szDblDash;
+                return app.state.szDblDash;
             }
         case grTaskLayMines:
             if (ord.tlm().cTime < 5) {
-                CchSprintf(szWork, "%s  %dy", TextIO().pfnCompressed(ids), ord.tlm().cTime + 1);
+                CchSprintf(app.state.szWork, "%s  %dy", TextIO().pfnCompressed(app, ids), ord.tlm().cTime + 1);
             } else {
-                TextIO().pfnCchGetString(ids, szWork);
+                TextIO().pfnCchGetString(app, ids, app.state.szWork);
             }
-            return szWork;
+            return app.state.szWork;
         case grTaskPatrol:
             if (ord.tptl().iDist < 11) {
-                CchSprintf(szWork, "%s  %dly", TextIO().pfnCompressed(ids), (ord.tptl().iDist + 1) * 50);
+                CchSprintf(app.state.szWork, "%s  %dly", TextIO().pfnCompressed(app, ids), (ord.tptl().iDist + 1) * 50);
             } else {
-                TextIO().pfnCchGetString(ids, szWork);
+                TextIO().pfnCchGetString(app, ids, app.state.szWork);
             }
-            return szWork;
+            return app.state.szWork;
         case grTaskAutoRoute:
         default:
-            return TextIO().pfnCompressed(ids);
+            return TextIO().pfnCompressed(app, ids);
         }
     }
-    return szDblDash;
+    return app.state.szDblDash;
 }
 
-void DumpUniverse() {
+void DumpUniverse(APPSESSION &app) {
     StringId ids;
     int16_t  i;
     int16_t  fOpen;
@@ -275,47 +276,47 @@ void DumpUniverse() {
     int16_t  fSilentSav;
     int16_t  cch;
 
-    fSilentSav = fFileErrSilent;
-    fSuccess = TRUE;
-    fOpen = FALSE;
-    if (game.lid == 0 || idPlayer == iplrNone) {
-        fSuccess = FALSE;
+    fSilentSav = app.state.fFileErrSilent;
+    fSuccess = 1;
+    fOpen = 0;
+    if (app.state.game.lid == 0 || app.state.idPlayer == iplrNone) {
+        fSuccess = 0;
         goto DisplayStatus;
     } else {
         StarsRecoveryScope scopeRecovery;
         try {
-            fFileErrSilent = TRUE;
-            CchSprintf(szWork, "%s.map", szBase);
-            RecordIO().pfnStreamOpen(szWork, mdCreate);
-            fOpen = TRUE;
-            RgToStream((void *)"#\tX\tY\tName\r\n", 12);
-            for (i = 0; i < game.cPlanMax; i++) {
-                cch = CchSprintf(szWork, "%d\t%d\t%d\t%s\r\n", i + 1, rgptPlan[i].x, rgptPlan[i].y, PszGetCompressedPlanet(rgidPlan[i]));
-                RgToStream(szWork, cch);
+            app.state.fFileErrSilent = 1;
+            CchSprintf(app.state.szWork, "%s.map", app.state.szBase);
+            RecordIO().pfnStreamOpen(app, app.state.szWork, mdCreate);
+            fOpen = 1;
+            RgToStream(app, (void *)"#\tX\tY\tName\r\n", 12);
+            for (i = 0; i < app.state.game.cPlanMax; i++) {
+                cch = CchSprintf(app.state.szWork, "%d\t%d\t%d\t%s\r\n", i + 1, app.state.rgptPlan[i].x, app.state.rgptPlan[i].y, PszGetCompressedPlanet(app, app.state.rgidPlan[i]));
+                RgToStream(app, app.state.szWork, cch);
             }
-            RecordIO().pfnStreamClose();
+            RecordIO().pfnStreamClose(app);
         } catch (const StarsError &) {
             if (fOpen) {
-                RecordIO().pfnStreamClose();
+                RecordIO().pfnStreamClose(app);
             }
-            fFileErrSilent = fSilentSav;
-            fSuccess = FALSE;
+            app.state.fFileErrSilent = fSilentSav;
+            fSuccess = 0;
             goto DisplayStatus;
         }
     }
 DisplayStatus:
     ids = !fSuccess ? idsUnableWriteUniverseDefinitionSMapOperation : idsUniverseDefinitionHasSuccessfullyWrittenSMap;
-    CchSprintf(szWork, TextIO().pfnCompressed(ids), szBase);
+    CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, ids), app.state.szBase);
     if (fSuccess) {
-        AlertIO().pfnAlertSz(szWork, MB_ICONASTERISK);
+        AlertIO().pfnAlertSz(app, app.state.szWork, win32::MB_ICONASTERISK);
     } else {
-        AlertIO().pfnAlertSz(szWork, MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, app.state.szWork, win32::MB_ICONHAND);
     }
-    fFileErrSilent = fSilentSav;
+    app.state.fFileErrSilent = fSilentSav;
     return;
 }
 
-void DumpPlanets() {
+void DumpPlanets(APPSESSION &app) {
     PLANET  *lpplMac;
     StringId ids;
     PLANET  *lppl;
@@ -333,80 +334,80 @@ void DumpPlanets() {
     int32_t  rgl[4];
     PART     part;
 
-    fSilentSav = fFileErrSilent;
-    fSuccess = TRUE;
-    fOpen = FALSE;
-    if (game.lid == 0 || idPlayer == iplrNone) {
-        fSuccess = FALSE;
+    fSilentSav = app.state.fFileErrSilent;
+    fSuccess = 1;
+    fOpen = 0;
+    if (app.state.game.lid == 0 || app.state.idPlayer == iplrNone) {
+        fSuccess = 0;
         goto DisplayStatus;
     } else {
         StarsRecoveryScope scopeRecovery;
         try {
-            fFileErrSilent = TRUE;
-            if (gd.fPerPlayerDumps) {
-                CchSprintf(szFile, "%s.p%d", szBase, idPlayer + 1);
+            app.state.fFileErrSilent = 1;
+            if (app.state.gd.fPerPlayerDumps) {
+                CchSprintf(szFile, "%s.p%d", app.state.szBase, app.state.idPlayer + 1);
             } else {
-                CchSprintf(szFile, "%s.pla", szBase);
+                CchSprintf(szFile, "%s.pla", app.state.szBase);
             }
-            RecordIO().pfnStreamOpen(szFile, mdCreate);
-            fOpen = TRUE;
-            j = gd.fPerPlayerDumps + 2;
+            RecordIO().pfnStreamOpen(app, szFile, mdCreate);
+            fOpen = 1;
+            j = app.state.gd.fPerPlayerDumps + 2;
             for (i = 0; i < j; i++) {
-                cch = TextIO().pfnCchGetString(static_cast<StringId>(idsPlanetNameOwnerStarbaseTypeReportAge + i), szForm);
+                cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsPlanetNameOwnerStarbaseTypeReportAge + i), szForm);
                 for (psz = szForm; *psz != 0; psz++) {
                     if (*psz == '*') {
                         *psz = '\t';
                     }
                 }
-                RgToStream(szForm, cch);
+                RgToStream(app, szForm, cch);
                 if (i == j - 1) {
-                    RgToStream(szCRLF, 2);
+                    RgToStream(app, app.state.szCRLF, 2);
                 }
             }
-            lppl = lpPlanets;
-            lpplMac = lpPlanets + cPlanet;
+            lppl = app.state.lpPlanets;
+            lpplMac = app.state.lpPlanets + app.state.cPlanet;
             for (; lppl < lpplMac; lppl++) {
-                strcpy(szForm, PszGetCompressedPlanet(rgidPlan[lppl->id]));
-                RgToStream(szForm, strlen(szForm));
+                strcpy(szForm, PszGetCompressedPlanet(app, app.state.rgidPlan[lppl->id]));
+                RgToStream(app, szForm, strlen(szForm));
                 szForm[0] = '\t';
                 if (lppl->iPlayer == iplrNone) {
-                    RgToStream(szForm, 1);
+                    RgToStream(app, szForm, 1);
                 } else {
-                    strcpy(&szForm[1], TextIO().pfnPlayerName(lppl->iPlayer, TRUE, FALSE, FALSE, 0, NULL));
-                    RgToStream(szForm, strlen(szForm));
+                    strcpy(&szForm[1], TextIO().pfnPlayerName(app, lppl->iPlayer, 1, 0, 0, 0, NULL));
+                    RgToStream(app, szForm, strlen(szForm));
                 }
                 if (lppl->iPlayer == iplrNone || !lppl->fStarbase) {
                     cch = 1;
                 } else {
-                    strcpy(&szForm[1], rglpshdefSB[lppl->iPlayer][lppl->isb].hul.szClass);
+                    strcpy(&szForm[1], app.state.rglpshdefSB[lppl->iPlayer][lppl->isb].hul.szClass);
                     cch = strlen(szForm);
                 }
-                RgToStream(szForm, cch);
-                CchSprintf(&szForm[1], "%d", game.turn - lppl->turn);
-                RgToStream(szForm, strlen(szForm));
+                RgToStream(app, szForm, cch);
+                CchSprintf(&szForm[1], "%d", app.state.game.turn - lppl->turn);
+                RgToStream(app, szForm, strlen(szForm));
                 szForm[1] = 0;
                 if (lppl->det == detAll) {
-                    strcpy(&szForm[1], PszFromLong((uint32_t)(lppl->rgwtMin[3] * 100), NULL));
+                    strcpy(&szForm[1], PszFromLong(app, (uint32_t)(lppl->rgwtMin[3] * 100), NULL));
                 } else if (lppl->iPlayer != iplrNone && lppl->det >= detSome) {
                     l = (uint32_t)(lppl->uPopGuess * 400);
-                    strcpy(&szForm[1], PszFromLong(l, NULL));
+                    strcpy(&szForm[1], PszFromLong(app, l, NULL));
                 }
-                RgToStream(szForm, strlen(szForm));
+                RgToStream(app, szForm, strlen(szForm));
                 if (lppl->det < detSome) {
                     szForm[1] = 0;
                 } else {
-                    i = PlanetQueryIO().pfnDesirability(lppl, idPlayer);
-                    CchSprintf(&szForm[1], PCTDPCTPCT, i);
+                    i = PlanetQueryIO().pfnDesirability(app, lppl, app.state.idPlayer);
+                    CchSprintf(&szForm[1], app.state.PCTDPCTPCT, i);
                 }
-                RgToStream(szForm, strlen(szForm));
+                RgToStream(app, szForm, strlen(szForm));
                 szForm[1] = 0;
                 if (lppl->det == detAll) {
-                    PszProdQueueTop(lppl, NULL);
-                    strcpy(&szForm[1], szWork);
+                    PszProdQueueTop(app, lppl, NULL);
+                    strcpy(&szForm[1], app.state.szWork);
                 }
-                RgToStream(szForm, strlen(szForm));
+                RgToStream(app, szForm, strlen(szForm));
                 if (lppl->det == detAll) {
-                    CalcPctSurvive(lppl, &pct, NULL);
+                    CalcPctSurvive(app, lppl, &pct, NULL);
                     pct = (float)((double)1.0 - pct);
                     CchSprintf(&szForm[1], "%ld\t%ld\t%d.%d%%", (int32_t)lppl->cMines, (int32_t)lppl->cFactories, LOWORD((int32_t)((double)pct * 100)),
                                LOWORD((int32_t)((pct - (double)(int16_t)LOWORD((int32_t)((double)pct * 100)) / 100.0) * 10000)));
@@ -414,133 +415,133 @@ void DumpPlanets() {
                     szForm[2] = '\t';
                     szForm[1] = '\t';
                     szForm[3] = 0;
-                    if (gd.fPerPlayerDumps && lppl->uDefGuess != 0) {
+                    if (app.state.gd.fPerPlayerDumps && lppl->uDefGuess != 0) {
                         cch = CchSprintf(&szForm[3], "%d%%", lppl->uDefGuess * 6 + 3);
                         szForm[cch + 3] = 0;
                     }
                 }
-                RgToStream(szForm, strlen(szForm));
+                RgToStream(app, szForm, strlen(szForm));
                 szForm[1] = 0;
                 for (i = 0; i < 3; i++) {
                     if (lppl->det >= detSome) {
-                        strcpy(&szForm[1], PszFromLong(lppl->rgwtMin[i], NULL));
+                        strcpy(&szForm[1], PszFromLong(app, lppl->rgwtMin[i], NULL));
                     }
-                    RgToStream(szForm, strlen(szForm));
+                    RgToStream(app, szForm, strlen(szForm));
                 }
                 szForm[1] = 0;
                 for (i = 0; i < 3; i++) {
                     if (lppl->det >= detMore) {
-                        ColonyIO().pfnEstimateMining(lppl, rgl, -1, FALSE);
-                        strcpy(&szForm[1], PszFromLong(rgl[i], NULL));
+                        ColonyIO().pfnEstimateMining(app, lppl, rgl, -1, 0);
+                        strcpy(&szForm[1], PszFromLong(app, rgl[i], NULL));
                     }
-                    RgToStream(szForm, strlen(szForm));
+                    RgToStream(app, szForm, strlen(szForm));
                 }
                 szForm[1] = 0;
                 for (i = 0; i < 3; i++) {
                     if (lppl->det >= detSome) {
-                        strcpy(&szForm[1], PszFromInt(lppl->rgMinConc[i], NULL));
+                        strcpy(&szForm[1], PszFromInt(app, lppl->rgMinConc[i], NULL));
                     }
-                    RgToStream(szForm, strlen(szForm));
+                    RgToStream(app, szForm, strlen(szForm));
                 }
                 if (lppl->det == detAll) {
-                    strcpy(&szForm[1], PszFromInt(ResearchIO().pfnResources(lppl, idPlayer), NULL));
+                    strcpy(&szForm[1], PszFromInt(app, ResearchIO().pfnResources(app, lppl, app.state.idPlayer), NULL));
                 } else {
                     szForm[1] = 0;
                 }
-                RgToStream(szForm, strlen(szForm));
-                if (gd.fPerPlayerDumps) {
+                RgToStream(app, szForm, strlen(szForm));
+                if (app.state.gd.fPerPlayerDumps) {
                     if (lppl->det >= detSome) {
                         for (i = 0; i < 3; i++) {
-                            strcpy(&szForm[1], PszCalcEnvVar(static_cast<EnvType>(i), lppl->rgEnvVar[i]));
-                            RgToStream(szForm, strlen(szForm));
+                            strcpy(&szForm[1], PszCalcEnvVar(app, static_cast<EnvType>(i), lppl->rgEnvVar[i]));
+                            RgToStream(app, szForm, strlen(szForm));
                         }
                         for (i = 0; i < 3; i++) {
-                            strcpy(&szForm[1], PszCalcEnvVar(static_cast<EnvType>(i), lppl->rgEnvVarOrig[i]));
-                            RgToStream(szForm, strlen(szForm));
+                            strcpy(&szForm[1], PszCalcEnvVar(app, static_cast<EnvType>(i), lppl->rgEnvVarOrig[i]));
+                            RgToStream(app, szForm, strlen(szForm));
                         }
-                        strcpy(&szForm[1], PszFromInt(PctPlanetOptValue(lppl, idPlayer), NULL));
+                        strcpy(&szForm[1], PszFromInt(app, PctPlanetOptValue(app, lppl, app.state.idPlayer), NULL));
                         strcat(&szForm[1], "%");
-                        RgToStream(szForm, strlen(szForm));
+                        RgToStream(app, szForm, strlen(szForm));
                     } else {
                         szForm[1] = 0;
                         for (i = 0; i < 7; i++) {
-                            RgToStream(szForm, 1);
+                            RgToStream(app, szForm, 1);
                         }
                     }
                     if (lppl->det == detAll) {
-                        strcpy(&szForm[1], PszFromInt(CapacityIO().pfnPctPlanetCapacity(lppl), NULL));
-                        RgToStream(szForm, strlen(szForm));
-                        strcpy(&szForm[1], PszFromInt(GetPlanetScannerRange(lppl, &i), NULL));
-                        RgToStream(szForm, strlen(szForm));
-                        strcpy(&szForm[1], PszFromInt(i, NULL));
-                        RgToStream(szForm, strlen(szForm));
+                        strcpy(&szForm[1], PszFromInt(app, CapacityIO().pfnPctPlanetCapacity(app, lppl), NULL));
+                        RgToStream(app, szForm, strlen(szForm));
+                        strcpy(&szForm[1], PszFromInt(app, GetPlanetScannerRange(app, lppl, &i), NULL));
+                        RgToStream(app, szForm, strlen(szForm));
+                        strcpy(&szForm[1], PszFromInt(app, i, NULL));
+                        RgToStream(app, szForm, strlen(szForm));
                         if (lppl->idFling == 0) {
                             i = 0;
                             szForm[1] = 0;
                         } else {
                             i = lppl->iWarpFling + 4;
-                            strcpy(&szForm[1], TextIO().pfnPlanetName(lppl->idFling - 1));
+                            strcpy(&szForm[1], TextIO().pfnPlanetName(app, lppl->idFling - 1));
                         }
-                        RgToStream(szForm, strlen(szForm));
-                        strcpy(&szForm[1], PszFromInt(i, NULL));
-                        RgToStream(szForm, strlen(szForm));
+                        RgToStream(app, szForm, strlen(szForm));
+                        strcpy(&szForm[1], PszFromInt(app, i, NULL));
+                        RgToStream(app, szForm, strlen(szForm));
                         if (lppl->idRoute == 0) {
                             szForm[1] = 0;
                         } else {
-                            strcpy(&szForm[1], TextIO().pfnPlanetName(lppl->idRoute - 1));
+                            strcpy(&szForm[1], TextIO().pfnPlanetName(app, lppl->idRoute - 1));
                         }
-                        RgToStream(szForm, strlen(szForm));
+                        RgToStream(app, szForm, strlen(szForm));
                         if (lppl->fStarbase) {
-                            i = IStargateFromLppl(lppl);
+                            i = IStargateFromLppl(app, lppl);
                             if (i != -1) {
                                 part.hs.grhst = hstSpecialSB;
                                 part.hs.iItem = i;
-                                PartQueryIO().pfnLookup(&part);
-                                strcpy(&szForm[1], PszFromInt(part.pspecialsb()->grAbility2, NULL));
-                                RgToStream(szForm, strlen(szForm));
-                                strcpy(&szForm[1], PszFromInt(part.pspecialsb()->grAbility, NULL));
-                                RgToStream(szForm, strlen(szForm));
+                                PartQueryIO().pfnLookup(app, &part);
+                                strcpy(&szForm[1], PszFromInt(app, part.pspecialsb()->grAbility2, NULL));
+                                RgToStream(app, szForm, strlen(szForm));
+                                strcpy(&szForm[1], PszFromInt(app, part.pspecialsb()->grAbility, NULL));
+                                RgToStream(app, szForm, strlen(szForm));
                             }
                         } else {
                             i = -1;
                         }
                         if (i == -1) {
-                            RgToStream((void *)"\t0\t0", 4);
+                            RgToStream(app, (void *)"\t0\t0", 4);
                         }
                         if (lppl->fStarbase) {
                             i = lppl->pctDp;
                         } else {
                             i = 0;
                         }
-                        strcpy(&szForm[1], PszFromInt(i, NULL));
-                        RgToStream(szForm, strlen(szForm));
+                        strcpy(&szForm[1], PszFromInt(app, i, NULL));
+                        RgToStream(app, szForm, strlen(szForm));
                     }
                 }
-                RgToStream(szCRLF, 2);
+                RgToStream(app, app.state.szCRLF, 2);
             }
-            RecordIO().pfnStreamClose();
+            RecordIO().pfnStreamClose(app);
         } catch (const StarsError &) {
             if (fOpen) {
-                RecordIO().pfnStreamClose();
+                RecordIO().pfnStreamClose(app);
             }
-            fFileErrSilent = fSilentSav;
-            fSuccess = FALSE;
+            app.state.fFileErrSilent = fSilentSav;
+            fSuccess = 0;
             goto DisplayStatus;
         }
     }
 DisplayStatus:
     ids = !fSuccess ? idsUnableWritePlanetInformationSOperationTerminated : idsKnownPlanetInformationHasSuccessfullyWrittenS;
-    CchSprintf(szWork, TextIO().pfnCompressed(ids), szFile);
+    CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, ids), szFile);
     if (fSuccess) {
-        AlertIO().pfnAlertSz(szWork, MB_ICONASTERISK);
+        AlertIO().pfnAlertSz(app, app.state.szWork, win32::MB_ICONASTERISK);
     } else {
-        AlertIO().pfnAlertSz(szWork, MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, app.state.szWork, win32::MB_ICONHAND);
     }
-    fFileErrSilent = fSilentSav;
+    app.state.fFileErrSilent = fSilentSav;
     return;
 }
 
-void DumpFleets() {
+void DumpFleets(APPSESSION &app) {
     int16_t  iplr;
     StringId ids;
     char     szFile[256];
@@ -556,95 +557,95 @@ void DumpFleets() {
     int16_t  cch;
     int32_t  l;
 
-    fSilentSav = fFileErrSilent;
-    fSuccess = TRUE;
-    fOpen = FALSE;
-    iplr = idPlayer;
-    if (game.lid == 0 || idPlayer == iplrNone) {
-        fSuccess = FALSE;
+    fSilentSav = app.state.fFileErrSilent;
+    fSuccess = 1;
+    fOpen = 0;
+    iplr = app.state.idPlayer;
+    if (app.state.game.lid == 0 || app.state.idPlayer == iplrNone) {
+        fSuccess = 0;
         goto DisplayStatus;
     } else {
         StarsRecoveryScope scopeRecovery;
         try {
-            fFileErrSilent = TRUE;
-            if (gd.fPerPlayerDumps) {
-                CchSprintf(szFile, "%s.f%d", szBase, idPlayer + 1);
+            app.state.fFileErrSilent = 1;
+            if (app.state.gd.fPerPlayerDumps) {
+                CchSprintf(szFile, "%s.f%d", app.state.szBase, app.state.idPlayer + 1);
             } else {
-                CchSprintf(szFile, "%s.fle", szBase);
+                CchSprintf(szFile, "%s.fle", app.state.szBase);
             }
-            RecordIO().pfnStreamOpen(szFile, mdCreate);
-            fOpen = TRUE;
-            j = gd.fPerPlayerDumps + 2;
+            RecordIO().pfnStreamOpen(app, szFile, mdCreate);
+            fOpen = 1;
+            j = app.state.gd.fPerPlayerDumps + 2;
             for (i = 0; i < j; i++) {
-                cch = TextIO().pfnCchGetString(static_cast<StringId>(idsFleetNameXYPlanetDestinationBattle + i), szForm);
+                cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsFleetNameXYPlanetDestinationBattle + i), szForm);
                 for (psz = szForm; *psz != 0; psz++) {
                     if (*psz == '*') {
                         *psz = '\t';
                     }
                 }
-                RgToStream(szForm, cch);
+                RgToStream(app, szForm, cch);
                 if (i == j - 1) {
-                    RgToStream(szCRLF, 2);
+                    RgToStream(app, app.state.szCRLF, 2);
                 }
             }
-            iplr = idPlayer;
-            for (ifl = 0; ifl < cFleet; ifl++) {
-                lpfl = rglpfl[ifl];
-                if (!rglpfl[ifl])
+            iplr = app.state.idPlayer;
+            for (ifl = 0; ifl < app.state.cFleet; ifl++) {
+                lpfl = app.state.rglpfl[ifl];
+                if (!app.state.rglpfl[ifl])
                     break;
-                idPlayer = iplrNone;
-                psz = PszGetFleetName(lpfl->id);
-                idPlayer = iplr;
-                RgToStream(psz, strlen(psz));
+                app.state.idPlayer = iplrNone;
+                psz = PszGetFleetName(app, lpfl->id);
+                app.state.idPlayer = iplr;
+                RgToStream(app, psz, strlen(psz));
                 szForm[0] = '\t';
-                strcpy(&szForm[1], PszFromInt(lpfl->pt.x, NULL));
-                RgToStream(szForm, strlen(szForm));
-                strcpy(&szForm[1], PszFromInt(lpfl->pt.y, NULL));
-                RgToStream(szForm, strlen(szForm));
+                strcpy(&szForm[1], PszFromInt(app, lpfl->pt.x, NULL));
+                RgToStream(app, szForm, strlen(szForm));
+                strcpy(&szForm[1], PszFromInt(app, lpfl->pt.y, NULL));
+                RgToStream(app, szForm, strlen(szForm));
                 if (lpfl->idPlanet == idPlanetDeepSpace) {
                     cch = 1;
                 } else {
-                    psz = TextIO().pfnPlanetName(lpfl->idPlanet);
+                    psz = TextIO().pfnPlanetName(app, lpfl->idPlanet);
                     strcpy(&szForm[1], psz);
                     cch = strlen(psz) + 1;
                 }
-                RgToStream(szForm, cch);
+                RgToStream(app, szForm, cch);
                 if (lpfl->det == detAll) {
-                    strcpy(&szForm[1], PszGetDestName(lpfl, NULL));
-                } else if (gd.fPerPlayerDumps && lpfl->det < detAll && lpfl->fdirValid()) {
-                    strcpy(&szForm[1], PszFromInt(lpfl->dirFltX(), NULL));
+                    strcpy(&szForm[1], PszGetDestName(app, lpfl, NULL));
+                } else if (app.state.gd.fPerPlayerDumps && lpfl->det < detAll && lpfl->fdirValid()) {
+                    strcpy(&szForm[1], PszFromInt(app, lpfl->dirFltX(), NULL));
                     strcat(szForm, ".");
-                    strcat(szForm, PszFromInt(lpfl->dirFltY(), NULL));
+                    strcat(szForm, PszFromInt(app, lpfl->dirFltY(), NULL));
                 } else {
                     szForm[1] = 0;
                 }
-                RgToStream(szForm, strlen(szForm));
-                if (rglpbtlplan[lpfl->iplr()] != 0) {
-                    strcpy(&szForm[1], rglpbtlplan[lpfl->iplr()][lpfl->iplan].szName);
+                RgToStream(app, szForm, strlen(szForm));
+                if (app.state.rglpbtlplan[lpfl->iplr()] != 0) {
+                    strcpy(&szForm[1], app.state.rglpbtlplan[lpfl->iplr()][lpfl->iplan].szName);
                 } else {
                     szForm[1] = 0;
                 }
-                RgToStream(szForm, strlen(szForm));
+                RgToStream(app, szForm, strlen(szForm));
                 l = 0;
                 for (i = 0; i < 16; i++) {
                     l += lpfl->rgcsh[i];
                 }
-                strcpy(&szForm[1], PszFromLong(l, NULL));
-                RgToStream(szForm, strlen(szForm));
+                strcpy(&szForm[1], PszFromLong(app, l, NULL));
+                RgToStream(app, szForm, strlen(szForm));
                 for (i = 0; i < 5; i++) {
-                    strcpy(&szForm[1], PszFromLong(lpfl->rgwtMin[i], NULL));
-                    RgToStream(szForm, strlen(szForm));
+                    strcpy(&szForm[1], PszFromLong(app, lpfl->rgwtMin[i], NULL));
+                    RgToStream(app, szForm, strlen(szForm));
                 }
-                if (gd.fPerPlayerDumps) {
-                    strcpy(&szForm[1], PszFromInt(lpfl->iPlayer + 1, NULL));
-                    RgToStream(szForm, strlen(szForm));
+                if (app.state.gd.fPerPlayerDumps) {
+                    strcpy(&szForm[1], PszFromInt(app, lpfl->iPlayer + 1, NULL));
+                    RgToStream(app, szForm, strlen(szForm));
                     if (lpfl->cord > 1) {
-                        strcpy(&szForm[1], PszGetETA(NULL, lpfl, NULL));
+                        strcpy(&szForm[1], PszGetETA(app, NULL, lpfl, NULL));
                     } else {
                         szForm[1] = '0';
                         szForm[2] = 0;
                     }
-                    RgToStream(szForm, strlen(szForm));
+                    RgToStream(app, szForm, strlen(szForm));
                     if (lpfl->cord >= 2) {
                         i = lpfl->lpplord->rgord()[1].iWarp;
                     } else if (lpfl->det < detAll && lpfl->fdirValid()) {
@@ -652,77 +653,77 @@ void DumpFleets() {
                     } else {
                         i = 0;
                     }
-                    strcpy(&szForm[1], PszFromInt(i, NULL));
-                    RgToStream(szForm, strlen(szForm));
-                    strcpy(&szForm[1], PszFromLong(WtFromLpfl(lpfl), NULL));
-                    RgToStream(szForm, strlen(szForm));
-                    strcpy(&szForm[1], PszFromInt(PctCloakFromLpfl(lpfl), NULL));
-                    RgToStream(szForm, strlen(szForm));
-                    j = GetFleetScannerRange(lpfl, &i, NULL, NULL);
+                    strcpy(&szForm[1], PszFromInt(app, i, NULL));
+                    RgToStream(app, szForm, strlen(szForm));
+                    strcpy(&szForm[1], PszFromLong(app, WtFromLpfl(app, lpfl), NULL));
+                    RgToStream(app, szForm, strlen(szForm));
+                    strcpy(&szForm[1], PszFromInt(app, PctCloakFromLpfl(app, lpfl), NULL));
+                    RgToStream(app, szForm, strlen(szForm));
+                    j = GetFleetScannerRange(app, lpfl, &i, NULL, NULL);
                     if (j == -1) {
                         j = 0;
                     }
-                    strcpy(&szForm[1], PszFromInt(j, NULL));
-                    RgToStream(szForm, strlen(szForm));
-                    strcpy(&szForm[1], PszFromInt(i, NULL));
-                    RgToStream(szForm, strlen(szForm));
+                    strcpy(&szForm[1], PszFromInt(app, j, NULL));
+                    RgToStream(app, szForm, strlen(szForm));
+                    strcpy(&szForm[1], PszFromInt(app, i, NULL));
+                    RgToStream(app, szForm, strlen(szForm));
                     if (lpfl->det == detAll) {
-                        strcpy(&szForm[1], PszGetTaskName(lpfl, &i));
+                        strcpy(&szForm[1], PszGetTaskName(app, lpfl, &i));
                     } else {
                         szForm[1] = 0;
                     }
-                    RgToStream(szForm, strlen(szForm));
-                    strcpy(&szForm[1], PszFromLong(ColonyIO().pfnFleetMining(lpfl), NULL));
-                    RgToStream(szForm, strlen(szForm));
-                    strcpy(&szForm[1], PszFromLong(CMineSweepFromLpfl(lpfl), NULL));
-                    RgToStream(szForm, strlen(szForm));
-                    strcpy(&szForm[1], PszFromLong(CLayMinesFromLpfl(lpfl, mineAll, ishdefAll), NULL));
-                    RgToStream(szForm, strlen(szForm));
-                    strcpy(&szForm[1], PszFromLong(PctTerraFromLpfl(lpfl), NULL));
-                    RgToStream(szForm, strlen(szForm));
+                    RgToStream(app, szForm, strlen(szForm));
+                    strcpy(&szForm[1], PszFromLong(app, ColonyIO().pfnFleetMining(app, lpfl), NULL));
+                    RgToStream(app, szForm, strlen(szForm));
+                    strcpy(&szForm[1], PszFromLong(app, CMineSweepFromLpfl(app, lpfl), NULL));
+                    RgToStream(app, szForm, strlen(szForm));
+                    strcpy(&szForm[1], PszFromLong(app, CLayMinesFromLpfl(app, lpfl, mineAll, ishdefAll), NULL));
+                    RgToStream(app, szForm, strlen(szForm));
+                    strcpy(&szForm[1], PszFromLong(app, PctTerraFromLpfl(app, lpfl), NULL));
+                    RgToStream(app, szForm, strlen(szForm));
                     l = 0;
                     for (i = 0; i < 16; i++) {
                         if (lpfl->rgcsh[i] != 0) {
-                            j = PartQueryIO().pfnHull(rglpshdef[lpfl->iPlayer][i].hul.ihuldef)->imdCategory;
+                            j = PartQueryIO().pfnHull(app.state.rglpshdef[lpfl->iPlayer][i].hul.ihuldef)->imdCategory;
                             if (j <= 1 || j >= 6) {
                                 l += lpfl->rgcsh[i];
                             }
                         }
                     }
-                    strcpy(&szForm[1], PszFromLong(l, NULL));
-                    RgToStream(szForm, strlen(szForm));
+                    strcpy(&szForm[1], PszFromLong(app, l, NULL));
+                    RgToStream(app, szForm, strlen(szForm));
                     for (j = 2; j < 6; j++) {
                         l = 0;
                         for (i = 0; i < 16; i++) {
-                            if (lpfl->rgcsh[i] != 0 && PartQueryIO().pfnHull(rglpshdef[lpfl->iPlayer][i].hul.ihuldef)->imdCategory == j) {
+                            if (lpfl->rgcsh[i] != 0 && PartQueryIO().pfnHull(app.state.rglpshdef[lpfl->iPlayer][i].hul.ihuldef)->imdCategory == j) {
                                 l += lpfl->rgcsh[i];
                             }
                         }
-                        strcpy(&szForm[1], PszFromLong(l, NULL));
-                        RgToStream(szForm, strlen(szForm));
+                        strcpy(&szForm[1], PszFromLong(app, l, NULL));
+                        RgToStream(app, szForm, strlen(szForm));
                     }
                 }
-                RgToStream(szCRLF, 2);
+                RgToStream(app, app.state.szCRLF, 2);
             }
-            RecordIO().pfnStreamClose();
+            RecordIO().pfnStreamClose(app);
         } catch (const StarsError &) {
             if (fOpen) {
-                RecordIO().pfnStreamClose();
+                RecordIO().pfnStreamClose(app);
             }
-            fFileErrSilent = fSilentSav;
-            fSuccess = FALSE;
+            app.state.fFileErrSilent = fSilentSav;
+            fSuccess = 0;
             goto DisplayStatus;
         }
     }
 DisplayStatus:
     ids = !fSuccess ? idsUnableWriteFleetInformationSOperationTerminated : idsKnownFleetInformationHasSuccessfullyWrittenS;
-    CchSprintf(szWork, TextIO().pfnCompressed(ids), szFile);
+    CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, ids), szFile);
     if (fSuccess) {
-        AlertIO().pfnAlertSz(szWork, MB_ICONASTERISK);
+        AlertIO().pfnAlertSz(app, app.state.szWork, win32::MB_ICONASTERISK);
     } else {
-        AlertIO().pfnAlertSz(szWork, MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, app.state.szWork, win32::MB_ICONHAND);
     }
-    fFileErrSilent = fSilentSav;
+    app.state.fFileErrSilent = fSilentSav;
     return;
 }
 
@@ -730,36 +731,36 @@ DisplayStatus:
 // from the player turn file it names (szBase), as the Windows game does
 // when it opens the file (FOpenGame): universe, then planets, then fleets.
 // It returns FALSE if the file isn't a player's turn file it can load.
-int16_t FDumpCmdLineGame() {
+int16_t FDumpCmdLineGame(APPSESSION &app) {
     char  szFile[256];
     char *pchDot;
     char *pchDir;
 
-    strcpy(szFile, szBase);
+    strcpy(szFile, app.state.szBase);
     pchDot = strrchr(szFile, '.');
     pchDir = strrchr(szFile, chDirSep);
     if (!pchDot || (pchDir && pchDir > pchDot)) {
-        return FALSE;
+        return 0;
     }
     *pchDot = 0;
-    DestroyCurGame();
-    strcpy(szBase, szFile);
-    fFileErrSilent = TRUE;
-    if (!FLoadGame(szFile, pchDot + 1)) {
-        return FALSE;
+    DestroyCurGame(app);
+    strcpy(app.state.szBase, szFile);
+    app.state.fFileErrSilent = 1;
+    if (!FLoadGame(app, szFile, pchDot + 1)) {
+        return 0;
     }
-    fFileErrSilent = FALSE;
-    if (game.lid == 0 || idPlayer == iplrNone) {
-        return FALSE;
+    app.state.fFileErrSilent = 0;
+    if (app.state.game.lid == 0 || app.state.idPlayer == iplrNone) {
+        return 0;
     }
-    if (ini.fDumpMap) {
-        DumpUniverse();
+    if (app.state.ini.fDumpMap) {
+        DumpUniverse(app);
     }
-    if (ini.fDumpPlanets) {
-        DumpPlanets();
+    if (app.state.ini.fDumpPlanets) {
+        DumpPlanets(app);
     }
-    if (ini.fDumpFleets) {
-        DumpFleets();
+    if (app.state.ini.fDumpFleets) {
+        DumpFleets(app);
     }
-    return TRUE;
+    return 1;
 }

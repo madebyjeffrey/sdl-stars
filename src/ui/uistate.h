@@ -282,18 +282,18 @@ struct APPUISTATE {
     alignas(std::max_align_t) int16_t        dySysFont = 0;
     alignas(std::max_align_t) int16_t        dyTitleBar = 0;
     alignas(std::max_align_t) int16_t        dyWinFrame = 0;
-    alignas(std::max_align_t) int16_t        fAnimate = FALSE;
-    alignas(std::max_align_t) int16_t        fBrowserValid = FALSE;
-    alignas(std::max_align_t) int16_t        fDirtyPlan = FALSE;
-    alignas(std::max_align_t) int16_t        fDlgUp = FALSE;
-    alignas(std::max_align_t) int16_t        fFreeingTitle = FALSE;
-    alignas(std::max_align_t) int16_t        fHullCopy = FALSE;
-    alignas(std::max_align_t) int16_t        fInEditUpdate = FALSE;
-    alignas(std::max_align_t) int16_t        fInScoreDialog = FALSE;
-    alignas(std::max_align_t) int16_t        fInScrollSet = FALSE;
-    alignas(std::max_align_t) int16_t        fLogOut = TRUE;
-    alignas(std::max_align_t) int16_t        fOrdersVis = FALSE;
-    alignas(std::max_align_t) int16_t        fProcessingTimer = FALSE;
+    alignas(std::max_align_t) int16_t        fAnimate = 0;
+    alignas(std::max_align_t) int16_t        fBrowserValid = 0;
+    alignas(std::max_align_t) int16_t        fDirtyPlan = 0;
+    alignas(std::max_align_t) int16_t        fDlgUp = 0;
+    alignas(std::max_align_t) int16_t        fFreeingTitle = 0;
+    alignas(std::max_align_t) int16_t        fHullCopy = 0;
+    alignas(std::max_align_t) int16_t        fInEditUpdate = 0;
+    alignas(std::max_align_t) int16_t        fInScoreDialog = 0;
+    alignas(std::max_align_t) int16_t        fInScrollSet = 0;
+    alignas(std::max_align_t) int16_t        fLogOut = 1;
+    alignas(std::max_align_t) int16_t        fOrdersVis = 0;
+    alignas(std::max_align_t) int16_t        fProcessingTimer = 0;
     alignas(std::max_align_t) int16_t        iAbout1st = 0;
     alignas(std::max_align_t) int16_t        iAboutPartial = 0;
     alignas(std::max_align_t) int16_t        iLastTutGet = -1;
@@ -360,11 +360,19 @@ struct APPUISTATE {
     alignas(std::max_align_t) uint8_t        vrgbMachineConfig[11] = {};
 };
 
-APPUISTATE &GetAppUiState();
-void BeginAppUiSession() noexcept;
-bool FBeginAppUiClose() noexcept;
-void CancelAppUiClose() noexcept;
-void EndAppUiClose() noexcept;
+enum class APPUISESSIONPHASE : uint8_t { ready, closing, closed };
+class APPUISESSION final : public APPSESSION {
+public:
+    APPUISTATE ui;
+    APPUISESSION() noexcept : APPSESSION(&ui) {}
+    APPUISESSIONPHASE phase = APPUISESSIONPHASE::ready;
+};
+
+namespace ui { extern APPUISESSION app; }
+void BeginAppUiSession(APPSESSION &app) noexcept;
+bool FBeginAppUiClose(APPSESSION &app) noexcept;
+void CancelAppUiClose(APPSESSION &app) noexcept;
+void EndAppUiClose(APPSESSION &app) noexcept;
 void ResetScannerInspectorSession() noexcept;
 void CloseLibraryUiSession() noexcept;
 void ResetRaceUiSession() noexcept;

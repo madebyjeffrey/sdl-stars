@@ -6,7 +6,7 @@
 
 // The game heap adapter supplies the physical allocation, including its old
 // spare bytes. Pure codec/view tests can instead supply an explicit byte span.
-NATIVEBYTEWINDOW BbwFromLp(void *lp) noexcept;
+NATIVEBYTEWINDOW BbwFromLp(APPSESSION &app, void *lp) noexcept;
 
 class NATIVEBATTLEPOINTVIEW : public NATIVEBYTEWINDOW {
 public:
@@ -157,9 +157,9 @@ public:
     }
 };
 
-inline NATIVEBATTLEDATAVIEW BdvFromLp(void *lp) noexcept { return NATIVEBATTLEDATAVIEW(BbwFromLp(lp)); }
-inline NATIVEBATTLETOKENVIEW BtvFromLp(void *lp) noexcept { return NATIVEBATTLETOKENVIEW(BbwFromLp(lp)); }
-inline NATIVEBATTLEEVENTVIEW BevFromLp(void *lp) noexcept { return NATIVEBATTLEEVENTVIEW(BbwFromLp(lp)); }
+inline NATIVEBATTLEDATAVIEW BdvFromLp(APPSESSION &app, void *lp) noexcept { return NATIVEBATTLEDATAVIEW(BbwFromLp(app, lp)); }
+inline NATIVEBATTLETOKENVIEW BtvFromLp(APPSESSION &app, void *lp) noexcept { return NATIVEBATTLETOKENVIEW(BbwFromLp(app, lp)); }
+inline NATIVEBATTLEEVENTVIEW BevFromLp(APPSESSION &app, void *lp) noexcept { return NATIVEBATTLEEVENTVIEW(BbwFromLp(app, lp)); }
 // Producers and isolated core callers already require these complete prefixes.
 // No view is kept across a callback or a change to the global write cursor.
 inline NATIVEBATTLEKILLVIEW BkvFromPrefix(std::uint8_t *lp) noexcept { return {std::as_writable_bytes(std::span(lp, cbWireKill)), 0}; }

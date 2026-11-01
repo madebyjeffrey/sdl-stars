@@ -2,8 +2,8 @@
 
 Tracking: [#67](https://github.com/madebyjeffrey/sdl-stars/issues/67).
 Started: 2026-10-31. Initial branch: `codex/cpp-milestone-c`, targeting `develop`.
-Current continuation: `codex/cpp-c04-c05-linked-tests` from PR #70 (`b12e172`),
-merged into `develop` at `caf8d27`.
+Current continuation: `codex/cpp-c10-final-qualification` from C09 PR #76
+(`ee978a44`); the dependent PR chain starts at C04/C05 PR #72 against `develop`.
 Plan: [CPP-MILESTONE-C.md](CPP-MILESTONE-C.md).
 
 ## Parent and scope
@@ -26,15 +26,15 @@ verification receipts below decide completion.
 | ID | Status | Evidence / remaining work |
 | --- | --- | --- |
 | C01 | Complete | Parent pinned; source/mechanism/consumer inventory and fresh local parent matrix pass. Cross-platform B receipts remain historical. |
-| C02 | Complete under current CI policy | PR #68 merged at a65e653; all 15 enabled CI jobs pass. The full Linux desktop and Windows SDL jobs remain explicitly deferred. |
+| C02 | Complete under current CI policy | PR #68 merged at a65e653; all 15 enabled CI jobs pass. The full Linux desktop and Windows SDL jobs remain opt-in; final manual qualification passes below. |
 | C03 | Complete under current CI policy | PR #69 merged at ab62fef; all enabled CI passed. Local 119 desktop / 26 host tests, callback ASan/UBSan faults, regressions and 27 unchanged witness receipts pass. |
-| C04 | Locally complete; enabled CI pending | Every implementation/call redirect, allocator hook and private library clone is replaced by typed module effects. Desktop/host workflows, regressions and full formal verification/audit pass. |
-| C05 | Locally complete; enabled CI pending | All 27 commands use normal linked production targets; every parent case/assertion/exclusion receipt matches. The 67 retained independent Python definitions have identical parent ASTs. See the [per-program inventory](CPP-C05-WITNESSES.md). |
-| C06 | Pending | Replace generated wrapper names and all 23 C03 prefixed entry names with `ui::EnableWindow`-style calls; remove redundant forwarding functions while preserving cleanup-before-error-delivery and Windows SDK isolation. |
-| C07 | Pending | Audit all 2,101 parent macro definitions; replace compatibility helpers and record specific retained purposes. |
-| C08 | Pending | Remove 156 game-state and 346 UI-state aliases through explicit caller dependencies. |
-| C09 | Pending | Finalize compiler/reference policy and remove dead migration adapters. |
-| C10 | Pending | Full final-tree audit and Linux/macOS/Windows qualification. |
+| C04 | Complete under current CI policy | Every implementation/call redirect, allocator hook and private library clone is replaced by typed module effects. Desktop/host workflows, regressions and full formal verification/audit pass. |
+| C05 | Complete under current CI policy | All 27 commands use normal linked production targets; every parent case/assertion/exclusion receipt matches. The 67 retained independent Python definitions have identical parent ASTs. See the [per-program inventory](CPP-C05-WITNESSES.md). |
+| C06 | Complete under current CI policy | All 23 C03 names use `ui::` directly; raw operations and actual type tags use `win32::`. Generated names are deleted; [boundary/vector receipts](CPP-C06-BOUNDARIES.md) account for every entry and all 38 shared SDK inputs. |
+| C07 | Complete under current CI policy | All 2,101 parent macros have individual dispositions; typed helpers/constants, direct calls and shim removal pass full desktop/host/regression/sanitizer checks. |
+| C08 | Complete | All 502 inventoried aliases plus two earlier XOR-seed aliases and their accessors are removed; owned calls receive explicit references, with target-bound foreign callbacks. See [state receipts](CPP-C08-STATE.md). |
+| C09 | Complete | Checked-in SDK C entries replace generated adapters; permanent strict/reference policy, negative cases and fresh configuration registries pass. |
+| C10 | Complete | Whole-tree audit and all local/platform gates pass; SDK diagnostics remain explicitly recorded outside the behavior-neutral cleanup. See [final ledger](CPP-C10-QUALIFICATION.md). |
 
 ## Removal and retention inventory
 
@@ -427,7 +427,8 @@ units and resource sanitizers. The witness/tutorial builds both reject the same
 fixture-only `snprintf` truncation warning under GCC. The fixture now formats
 into a full-size temporary and explicitly retains the original 14-byte text
 limit; its linked witness and strict GCC syntax check pass. The corrected CI
-run remains pending; no production behavior or independent expectation changes.
+run passes all 15 enabled jobs at `c6940721`; no production behavior or independent
+expectation changes. The two slow full platform jobs retain their opt-in policy.
 
 An additional historical precision experiment exposed a pre-existing reference
 adapter issue: its frozen C bodies include current C++ headers. The arm64 run
@@ -436,7 +437,172 @@ whole differential experiment does not. C09 will materialize matching immutable
 headers/data/generators at `precision_reference.REF`, preserving the independent
 C reference and its expected values rather than changing application headers.
 
-C06 remains the approved next checkpoint: use `ui::` operation basenames, replace
+The completed C06 checkpoint implements the approved contract: use `ui::` operation basenames, replace
 all 23 C03 prefixed APIs, remove redundant forwarding functions and preserve the
 cleanup-before-error-delivery and SDK isolation contracts. C07–C10 follow in
 focused, dependent PRs for review; no PR is merged by the agent.
+
+
+## C06: actual wrapper namespaces
+
+The [boundary inventory](CPP-C06-BOUNDARIES.md) and JSON sidecar account for all
+23 checked entries, 223 raw API declarations plus common-control initialization,
+38 independent shared SDK vectors and the unchanged moved Windows process bodies.
+`ui::` names are the implementations themselves; old prefixed names and generated
+Windows aliases are deleted. Every checked body is identical after qualification.
+Their raw/checked distinction retains cleanup-before-error-delivery. Wrapper tags
+are actual namespaced types, with one core/UI geometry definition; `win32::MSG`
+coexists with SDL's native SDK hook. Windows process services are isolated from
+application records and wrapper headers. The archived observer remains C-compatible
+and uses explicit narrow SDK calls in its current C++ type-check entry.
+
+The corrected head passes a clean full 149/149 desktop run. A preceding collection
+timed out four workflows during confirmed system sleep; unchanged-limit isolated
+retries and then the clean full rerun pass under process-scoped sleep assertions.
+The prior 148-check full run also passes. All 29 native leak checks, the available tutorial smoke checkpoint,
+34 final sanitizer checks and fresh SDL-free host tests (27/27) pass. Native/host
+regressions each match 519 baseline files through turn 150 with 25 accepted
+unused-storage warnings. Exact C04/C05 output comparisons match 519 files with
+25 native / 23 host accepted warnings; no differences/errors or skipped inputs.
+The manifest accounts for 156 production sources / 157 variants and 158 standalone
+headers in both include orders. All 38 SDK C inputs and 29 representative C++
+application/provider/isolated SDK units compile; paired wrapper/SDK identity
+contracts pass compilation. Documentation checks pass 26 tests and 2,819 links /
+700 requirement IDs. No model, baseline, frozen C input, record-layout or catalog
+change is made. The corrected manual Windows/Linux runtime run is recorded below;
+automatic CI policy is unchanged. Receipts: `dist/verification/c06/`.
+
+
+C06's first manual Windows build identifies a `WINAPI` redefinition after SDL
+intrinsics. Empty owned C++ calling-convention annotations (`WINAPI`, `WINAPIV`,
+`APIENTRY`) are removed rather than masked; genuine SDK conventions stay native.
+The SDL-first type contract and a strict MinGW check with an inherited
+`WINAPI=__stdcall` now compile. Local builds and the full native regression
+(519 matches / 25 accepted warnings / zero differences/errors/skips) pass again;
+a clean full desktop rerun passes 149/149. All 14 enabled PR jobs and all five
+corrected [manual platform jobs](https://github.com/madebyjeffrey/sdl-stars/actions/runs/41206840795)
+pass at `375538b0`: Windows probe 2/2, selected game units 13/13, platform
+checks 88/88, and Linux desktop 153/153. Independent SDK configuration combinations
+remain C09/C10 work. No automatic platform policy or baseline changes.
+
+
+## C07: typed compatibility values and direct operations
+
+The [macro audit](CPP-C07-MACROS.md) and per-definition JSON ledger account for
+all 2,101 original definitions, their exact parent expressions and concrete
+retention/removal purposes. Owned numeric values and conversion helpers are typed;
+A/W aliases, Win16 procedure instances and no-op shims are deleted. Generated UI
+resource payloads and manifests match C06 byte-for-byte. Local checks pass 150/150
+desktop, 27/27 host and 35/35 selected sanitizer tests. Native/host baseline and
+exact C06 comparisons each match 519 files (25 accepted warnings, zero differences/
+errors/skips). The 27 witness receipts and 67 independent Python ASTs match.
+The strict manifest covers 156 production sources / 157 variants / 160 headers;
+38 real SDK C and 29 representative C++ units compile. Documentation checks pass
+26 tests and 2,819 links / 700 IDs. All 14 enabled PR jobs and all five manual platform jobs pass at
+`bcdd77bf`; Linux desktop passes 153/153, Windows probe 2/2, game units
+13/13 and platform checks 88/88. C08–C10 remain in progress.
+
+
+## C08: explicit state consumers
+
+The [state ledger](CPP-C08-STATE.md) and JSON sidecar account for all 504 removed
+references: 156 C01 game globals, two earlier file-XOR seeds, and 346 UI globals.
+Actual owners retain their pre-main lifetime; owned callers pass `APPSESSION &`.
+Foreign callbacks bind their target/harness context, and core remains SDL-free.
+Local desktop/host/sanitizer collections pass 151/27/37 checks respectively.
+Native and host regressions plus exact C07 comparisons each match 519 files
+through turn 150 with 25 accepted warnings and zero differences/errors/skips.
+The 27 witness receipts and 67 Python ASTs match. The trace/chooser-off build
+matches 31 files and 773 normalized trace events. Compiler/header/docs checks
+pass; remote CI and C09/C10 remain pending.
+
+
+## C09: maintained build/reference policy
+
+The [permanent policy](CPP-POLICY.md) and [path/hash inventory](CPP-C09-REFERENCES.json)
+classify the precise independent C/SDK, AppKit, observer and preprocessing roles.
+All 38 SDK C entries are checked in; their shared vectors and expectations remain
+unchanged. No generated source-language wrapper remains. The manifest rejects
+owned C/Objective-C, GNU mode, language forcing, weakened diagnostics, test symbol
+substitution, private clones and generated/converted SDK entries. The native
+Objective-C++ driver spelling is recognized only for `.mm`. C is enabled for
+independent references/dependencies; dead C-only diagnostics are deleted, and the
+ordinary native-point poison probe now tests the actual C++ compiler.
+
+Fresh ordinary/neither macOS configurations have 151/0 tests, with no SDK entries;
+SDK-only and both correctly reject the unsupported toolchain. Both eligible
+Windows configurations will build and run all 38 SDK vectors plus type isolation
+in distinct caches; the manual job also runs the entire ordinary registry.
+Automatic job selection remains unchanged. Thirty-eight checked-in SDK C entries
+compile with MinGW. All six unchanged precision experiment tests pass, using
+matching headers/data/generators from the immutable revision; its two pinned host
+builds match 31 turn-10 smoke files. Native/host regressions each match 519 baseline
+files with 25 accepted warnings and zero differences/errors/skips. Exact merged-B
+comparisons also match 519 files for each backend. The fresh desktop suite passes 151/151, including 29 native leak checks and
+the available tutorial smoke checkpoint; the host passes 27/27. The final policy
+checks and native-point contract also pass after the compiler cleanup. The updated
+Windows matrix and C09 remote CI remain pending. Receipts: `dist/verification/c09/`.
+
+C09's expanded SDK-only execution at `6e547f05` passes 20/39 checks and finds
+19 failures in unchanged C07 probe inputs. [Exact first failures](CPP-C09-SDK-FINDINGS.md)
+and retained logs distinguish observations from diagnoses. Existing ABI/native-point
+checks and SDK isolation pass. No expectations or application behavior are changed;
+the 19 exact hash-pinned behavior/automation probes remain diagnostics tracked in
+issue #78, while the other 20 checks remain gates. Four policy tests reject hidden
+boundary failures or incomplete execution. Matrix results now retain
+both configuration results and do not prevent ordinary Windows qualification.
+
+The first full ordinary Windows registry passes 128/131 checks and exposes three
+linked-fixture portability gaps. Terraform/capability streams now explicitly use
+binary stdin under the Windows CRT (preserving byte 0x1a and CR/LF records); the
+publication fixture compares virtual path roles across native slash separators.
+All original cases, independent expected values and assertion receipts remain
+unchanged. Strict MinGW syntax checks pass for all three corrected fixtures;
+corrected Windows execution remains pending. Both fresh SDK configurations already
+record 20 passing contract checks and the same 19 diagnostics, with zero skipped
+checks or unexpected contract failures; registries are ordinary 131, SDK 41, both
+170 and neither zero.
+
+## C10: final audit
+
+The [final qualification ledger](CPP-C10-QUALIFICATION.md) and per-definition
+inventory cover all 152 tracked production implementations and 657 live macros.
+Obsolete language/routing/state mechanisms are absent; the two C08 preprocessing
+additions have exact purposes, and the empty UI globals header/guard is deleted.
+Historical C++ inspection links are pinned to their original revisions rather
+than mutable or absent local checkouts. Current guidance points to maintained
+policy. Frozen references, catalog rows, original/native fixtures and canonical
+models match merged B. Full formal verification reports 12,000 verified with
+zero errors; the audit reports zero findings. Corrected local desktop/host/ASan
+collections pass 151/27/37; all 87 core/UI/host units pass strict Windows syntax.
+Both final backend runs match all 519 baseline files and exact B files, with 25
+accepted warnings and zero differences/errors/skips. The handbook builds 207
+pages and checks 38,601 local links/assets. Remote platform qualification remains
+pending; no checkpoint completion is inferred from historical platform receipts.
+
+
+## Final Milestone C completion receipt
+
+Milestone C is implemented and qualified in the unmerged draft stack #72 → #73 →
+#74 → #75 → #76 → #77. Source/build/test revision `ee978a44` passes all 15 enabled
+C09 PR jobs and all five [final manual platform jobs](https://github.com/madebyjeffrey/sdl-stars/actions/runs/41224660401).
+Linux desktop passes 154/154; Windows ordinary tests pass 131/131, including the
+three corrected witnesses. Fresh Windows registry counts are 131/41/170/0 for
+ordinary/SDK-only/both/neither. Both SDK configurations retain all original
+assertions: 20 checks pass and 19 exact hash-pinned behavior/automation probes
+report diagnostic failures, with no skipped checks or unexpected contract
+failures. These existing probe gaps are tracked in issue #78 and are not claimed
+as passing. Original SDL counterpart assertions remain gates.
+
+The final local source qualification passes 151 desktop / 27 host / 37 sanitizer
+checks, 519-file baseline and exact merged-B comparisons for each backend (25
+accepted warnings, zero differences/errors/skips), and full formal verification:
+12,000 verified, zero errors, auditor zero findings. All 27 witness receipts and
+67 independent Python definitions remain accounted for. The final audit justifies
+all 657 live macros and verifies 152 tracked production implementations, 160
+standalone headers, frozen inputs and identical C09/C10 source/build/test/data/model
+trees. C10 changes documentation only; live publication-head checks are visible
+in PR #77. No baseline, file format, record size, catalog ID or gameplay change is
+introduced. No PR is merged, and the two slow automatic job conditions are unchanged.
+Earlier pending/failure notes above are chronological checkpoint receipts, superseded
+by this final receipt and the [qualification ledger](CPP-C10-QUALIFICATION.md).
