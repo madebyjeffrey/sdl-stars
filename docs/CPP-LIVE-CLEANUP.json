@@ -1589,7 +1589,18 @@
     },
     {
       "id": "L08",
-      "status": "pending"
+      "status": "pending",
+      "linux_desktop_execution_budget": {
+        "status": "requalification pending",
+        "workflow": ".github/workflows/unit.yml",
+        "job": "unit",
+        "timeout_minutes": 30,
+        "observed_run": 41346538091,
+        "observed_head": "d84690f3",
+        "evidence": "The 20-minute job deadline cancelled the fresh build/full desktop run after 98/156 passing tests and zero reported test failures. Build/configuration ran from about 20:23 to 20:35:55 UTC; sequential tests were still progressing at 20:42:52 before cancellation at 20:42:56.",
+        "scope": "Only the opt-in Linux desktop job overall deadline increases. Full suite, test-level timeouts, build concurrency, optional flags and all other jobs keep their settings. No product, compiler, file-format or baseline change.",
+        "receipts": "dist/verification/live-cpp/linux-ci-budget/"
+      }
     }
   ],
   "sites": [
