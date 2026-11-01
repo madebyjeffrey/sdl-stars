@@ -110,15 +110,15 @@ static void TestMessageAndVersionText(void) {
     std::int16_t rgParams[2] = {-123, 55};
     TEST_ASSERT(FStarsTestInit(app));
     CchCopyUtf8Prefix(std::span{app.state.szWork}, "World-\xce\xa9");
-    const auto szFormat = PszFormatString(app, "\\w \\i \\u", rgParams);
+    const auto szFormat = PszFormatString(app, "\\w \\i \\u", std::span<const std::int16_t>{rgParams});
     const auto szCompressed = PszGetCompressedMessage(app, idmHaveReceivedOneBattleRecordingYear);
-    TEST_CHECK(SzMessageBytes(PszFormatString(app, "\\w \\i \\u", rgParams).data()) == "World-\xce\xa9 -123 55");
+    TEST_CHECK(SzMessageBytes(PszFormatString(app, "\\w \\i \\u", std::span<const std::int16_t>{rgParams}).data()) == "World-\xce\xa9 -123 55");
     TEST_CHECK(std::string_view(app.state.szMsgBuf) == "World-\xce\xa9 -123 55");
-    TEST_CHECK(SzMessageBytes(PszFormatMessage(app, idmHaveReceivedOneBattleRecordingYear, nullptr).data()) == pszBattle);
+    TEST_CHECK(SzMessageBytes(PszFormatMessage(app, idmHaveReceivedOneBattleRecordingYear, {}).data()) == pszBattle);
     TEST_CHECK(std::string_view(app.state.szMsgBuf) == pszBattle);
-    const auto szExpanded = PszFormatMessage(app, idmHaveReceivedOneBattleRecordingYear, nullptr);
-    TEST_CHECK(SzMessageBytes(PszFormatIds(app, idsNewTurnAvailable, nullptr).data()) == "The new turn is available.");
-    const auto szIds = TextIO().pfnFormat(app, idsNewTurnAvailable, nullptr);
+    const auto szExpanded = PszFormatMessage(app, idmHaveReceivedOneBattleRecordingYear, {});
+    TEST_CHECK(SzMessageBytes(PszFormatIds(app, idsNewTurnAvailable, {}).data()) == "The new turn is available.");
+    const auto szIds = TextIO().pfnFormat(app, idsNewTurnAvailable, {});
     TEST_CHECK(std::string_view(app.state.szWork) == "World-\xce\xa9");
     ResetMessages(app);
     TEST_CHECK(SzMessageBytes(PszGetMessageN(app, -1).data()).empty());
@@ -139,6 +139,84 @@ static void TestMessageAndVersionText(void) {
     TEST_CHECK(std::string_view(szIds.data()) == "The new turn is available.");
     TEST_CHECK(std::string_view(szQueued.data()) == pszBattle);
     TEST_CHECK(std::string_view(szVersion.data()) == std::string("Version ") + STARS_VERSION_DISPLAY);
+}
+
+static void TestMessageGrammar(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    struct CASE {
+        const char *psz;
+        std::array<std::int16_t, 7> rgParams;
+        const char *pszExpected;
+        std::size_t cParam;
+    };
+    CASE rgCases[] = {
+        {"\\i|\\u", {-32768, -1}, "-32768|4294967295", 2},
+        {"\\v00|\\i", {-1, -1, 7}, "-100|7", 3},
+        {"\\U|\\i", {123, 0, 9}, "123|9", 3},
+        {"\\V|\\i", {123, 0, 3}, "12300|3", 3},
+        {"\\m\\U|\\i", {0, 123, 0, 7}, "Ironium123kT|7", 4},
+        {"\\Z|\\i", {0, 9}, "|0", 2},
+        {"\\X|\\i", {123, 7}, "|7", 2},
+        {"\\q\\\\", {}, "q\\", 0},
+        {"tail\\", {}, "tail", 0},
+        {"\\h|\\f|\\t|\\r|\\y|\\i", {1, 2, 3, 7}, "Game.hst|Game.x1|Game.m1|Game.h1|Game.xy|7", 4},
+        {"\\P|\\P", {125, 1234}, "1.25%|12%", 2},
+        {"\\E|\\w", {static_cast<std::int16_t>(Temperature << 8 | 50)}, "0ºC|0ºC", 1},
+        {"\\n|\\w", {12, -34}, "Space (12, -34)|Space (12, -34)", 2},
+        {"\\n|\\o", {-1, 0, 0}, "007|007", 3},
+        {"\\e|\\M", {2, 1}, "Radiation|Heavy", 2}
+    };
+    TEST_ASSERT(FStarsTestInit(app));
+    app.state.idPlayer = 0;
+    app.state.rgidPlan[0] = 0;
+    CchCopyUtf8Prefix(std::span{app.state.szBase}, "Game");
+    for (auto &cs : rgCases) {
+        const auto rgBefore = cs.rgParams;
+        const auto sz = PszFormatString(app, cs.psz, std::span<const std::int16_t>{cs.rgParams}.first(cs.cParam));
+        TEST_CHECK(std::string_view(sz.data()) == cs.pszExpected);
+        TEST_MSG("format [%s]: expected [%s], got [%s]", cs.psz, cs.pszExpected, sz.data());
+        TEST_CHECK(cs.rgParams == rgBefore);
+    }
+    app.state.idPlayer = iplrNone;
+    std::int16_t rgParams[1] = {99};
+    TEST_CHECK(std::string_view(PszFormatString(app, "\\f|\\t|\\r", std::span<const std::int16_t>{rgParams}).data()) == "Game.hst|Game.hst|Game.h0");
+}
+
+static void TestMessageInputBounds(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    const char rgFormat[] = {'A', '\\', 'i'};
+    const char rgNul[] = {'A', 0, 'B'};
+    const std::int16_t rgParams[2] = {42, -3};
+    TEST_ASSERT(FStarsTestInit(app));
+    app.state.idPlayer = 0;
+    CchCopyUtf8Prefix(std::span{app.state.szBase}, "Game");
+    TEST_CHECK(std::string_view(PszFormatString(app, std::string_view(rgFormat, 3), std::span<const std::int16_t>{rgParams}.first(1)).data()) == "A42");
+    TEST_CHECK(std::string_view(PszFormatString(app, std::string_view(rgFormat, 2), {}).data()) == "A");
+    TEST_CHECK(std::string_view(PszFormatString(app, std::string_view(rgNul, 3), {}).data()) == "A");
+    TEST_CHECK(PszFormatString(app, {}, {})[0] == 0);
+    for (const char ch : std::string_view("eEIiLlZSmMPpFsjgGoOuzknUVv")) {
+        const std::string sz = std::string("prefix\\") + ch;
+        TEST_CHECK(std::string_view(PszFormatString(app, sz, {}).data()) == "prefix");
+        TEST_MSG("empty parameters for code %c", ch);
+    }
+    for (const char ch : std::string_view("knUv")) {
+        const std::string sz = std::string("prefix\\") + ch;
+        TEST_CHECK(std::string_view(PszFormatString(app, sz, std::span<const std::int16_t>{rgParams}.first(1)).data()) == "prefix");
+    }
+    TEST_CHECK(std::string_view(PszFormatString(app, "prefix\\V", std::span<const std::int16_t>{rgParams}).data()) == "prefix");
+    TEST_CHECK(std::string_view(PszFormatString(app, "\\i|\\i", std::span<const std::int16_t>{rgParams}).data()) == "42|-3");
+    TEST_CHECK(std::string_view(PszFormatString(app, "\\f|\\t|\\r", {}).data()) == "Game.x1|Game.m1|Game.h1");
+    TEST_CHECK(std::string_view(PszFormatString(app, "a\\Xb\\q", {}).data()) == "abq");
 }
 
 static std::array<char, cchCatalogText> PszTestCatalog(APPSESSION &, StringId) {
@@ -203,7 +281,7 @@ static void TestEnvironmentText(void) {
     CchCopyUtf8Prefix(std::span{app.state.szWork}, "changed");
     TEST_CHECK(std::string_view(szTemperature.data()) == "-200ºC");
     TEST_CHECK(std::string_view(szGravity.data()) == "1.00g");
-    TEST_CHECK(std::string_view(PszFormatString(app, "\\E|\\w", rgParams).data()) == "0ºC|0ºC");
+    TEST_CHECK(std::string_view(PszFormatString(app, "\\E|\\w", std::span<const std::int16_t>{rgParams}).data()) == "0ºC|0ºC");
 }
 
 static void TestDisplayCopyBounds(void) {
@@ -436,14 +514,14 @@ static void TestFormattedTextBounds(void) {
 
     TEST_ASSERT(FStarsTestInit(app));
     strcpy(app.state.szWork, "World");
-    TEST_CHECK(!strcmp(PszFormatString(app, szTestLiteral1, rgParams).data(), "World -123 55"));
+    TEST_CHECK(!strcmp(PszFormatString(app, szTestLiteral1, std::span<const std::int16_t>{rgParams}).data(), "World -123 55"));
     memset(szFormat, 'a', 252);
     memcpy(szFormat + 252, "\xf0\x9f\x98\x80 suffix", 12);
-    szMessage = PszFormatString(app, szFormat, NULL);
+    szMessage = PszFormatString(app, szFormat, {});
     psz = szMessage.data();
     TEST_CHECK(strlen(psz) == 252 && FUtf8Valid(psz, strlen(psz)));
     memset(app.state.szBase, 'a', sizeof(app.state.szBase) - 1); app.state.szBase[sizeof(app.state.szBase) - 1] = 0;
-    szMessage = PszFormatString(app, szTestLiteral2, NULL);
+    szMessage = PszFormatString(app, szTestLiteral2, {});
     psz = szMessage.data();
     TEST_CHECK(strlen(psz) < sizeof(app.state.szMsgBuf) && FUtf8Valid(psz, strlen(psz)));
     memset(szFormat, 'a', 1022);
@@ -549,7 +627,7 @@ static void TestScannerSnapshotUtf8(void) {
 }
 #endif
 
-TEST_LIST = {{"decoded messages match all source bytes and cache effects", TestMessageCatalogBytes}, {"message and version text retain buffer and queue contracts", TestMessageAndVersionText}, {"strict UTF-8 append fits atomically within its span", TestStrictAppend}, {"definition line variants preserve creation and source bytes", TestDefinitionLineVariants}, {"formatted text stays bounded and preserves UTF-8", TestFormattedTextBounds},
+TEST_LIST = {{"message inputs respect non-NUL views and exact readonly parameter spans", TestMessageInputBounds}, {"message grammar retains parameter consumption and readonly bytes", TestMessageGrammar}, {"decoded messages match all source bytes and cache effects", TestMessageCatalogBytes}, {"message and version text retain buffer and queue contracts", TestMessageAndVersionText}, {"strict UTF-8 append fits atomically within its span", TestStrictAppend}, {"definition line variants preserve creation and source bytes", TestDefinitionLineVariants}, {"formatted text stays bounded and preserves UTF-8", TestFormattedTextBounds},
              {"catalog values survive subsequent lookups", TestCatalogOwnership},
              {"decoded catalog matches every source byte", TestCatalogBytes},
              {"environment labels contain UTF-8 units", TestEnvironmentText},

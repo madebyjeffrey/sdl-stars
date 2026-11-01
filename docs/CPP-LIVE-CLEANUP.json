@@ -108,7 +108,8 @@
         "complete-owned-planet-caption-capacity-repair",
         "owned-planet-fleet-and-thing-name-values",
         "owned-compressed-planet-encoded-fleet-environment-production-and-ETA-labels",
-        "owned-message-format-decode-and-version-results"
+        "owned-message-format-decode-and-version-results",
+        "readonly-bounded-message-input-views"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -765,6 +766,11 @@
         ],
         "production_calls": 93,
         "evidence": "docs/CPP-LIVE-OWNED-TEXT.json"
+      },
+      "readonly_message_inputs": {
+        "status": "complete; verified",
+        "evidence": "docs/CPP-LIVE-OWNED-TEXT.json",
+        "qualification": "L06u readonly bounded message views; other const interfaces remain pending."
       }
     },
     {
@@ -795,7 +801,8 @@
         "all-token-size-callers-use-optional-full-width-results",
         "readonly-definition-line-views-and-local-owned-bytes",
         "owned-legacy-race-password-result",
-        "fixed-library-name-modal-and-suggestion-views"
+        "fixed-library-name-modal-and-suggestion-views",
+        "readonly-bounded-message-format-and-parameter-views"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -1107,6 +1114,25 @@
           "baseline": "Behavior-neutral. Native/frozen-original baseline bytes and unit goldens remain unchanged. No scenario/checkpoint moved; no regression export required.",
           "remaining": "Public library path/result handoffs, other L05 text/const/scratch/wrapper formatting and L06 service interfaces, Milestone D and L08 final reconciliation/platform qualification remain active.",
           "receipts": "dist/verification/live-cpp/l06t/"
+        },
+        {
+          "batch": "L06u readonly bounded message format and parameter inputs",
+          "debug_build": "Pass, no warnings. Release SDL regression and host builds pass. Compiler/source policy covers 158 owned sources, 159 compiled variants and 161 standalone headers in both orders; exact raw-copy inventory passes.",
+          "desktop": "154/154, including actual message/alert/UI consumers, all three exact provider witnesses, all 29 leak checks and available SDL tutorial checkpoints.",
+          "host_units": "29/29 in Release, including parent/final message grammar and final bounded-input checks.",
+          "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+          "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+          "windows": "Strict MinGW compilation passes all 147 production units and six affected real unit/provider consumers. Rebuilt Windows encoding/message tests pass 14 cases, utilities 11 and utility-generation 17 under Wine: 42 total. Actual native Windows SDL and Linux final qualification remain pending.",
+          "sanitizers": "Native macOS Debug ASan/UBSan execution passes encoding/message, utility and utility-generation executables (3/3), including non-NUL text slices, exact/short readonly spans, incomplete fields, existing UTF-8 output limits, all message source bytes and owned-value retention. Focused execution, not whole-suite sanitizer qualification.",
+          "characterization": "Before migration, the actual formatter passed fifteen grammar vectors plus host filename behavior. Final exact spans preserve signed/unsigned extrema, packed long words and literal suffix digits, U/V unit behavior, V peeking without consuming its third value, zero-Z mask reuse, X discards, unknown/trailing escapes, filename discards, percentages, environment/work expansion, locations, routing and attribute labels. Parameters remain byte-for-byte unchanged.",
+          "bounded_inputs": "PszFormatString receives string_view and span<const int16_t>; PszFormatMessage, PszFormatIds and TEXTIO use the same readonly word-span contract. Empty/non-NUL text and exact const arrays work without sentinel reads. Embedded NUL ends the format, and an incomplete escape or missing required words terminates before that expansion with a complete UTF-8 prefix. Filename/X discard operations saturate on an empty view.",
+          "consumers": "All 87 production calls and 103 existing application/test calls migrate; the full-source token audit includes function-try-block/error handlers. GetMessageN passes only the initialized word count declared by rgcMsgArgs. The three actual lifecycle/preset providers take StringId and readonly spans and bind directly; their void* parameters and generic format adapters are removed. No old raw-pointer overload remains.",
+          "catalog_bounds": "Every current message ID, including holes, has a sufficient declared parameter count for the existing grammar maximum read; defined counts stay 0..7 inside MSGBIG. All statically named catalog calls with empty word lists need no readable words.",
+          "output_bounds": "Sixteen append sites use CchCopyUtf8Prefix on the actual message-array tail through a small local operation. The obsolete raw-pointer-returning PchAppendMessageText helper is removed; output bytes, byte-count advancement and complete-code-point truncation remain.",
+          "effects": "Preserve current message/cache/work effects, 256-byte result limits, all valid grammar, parameter consumption and peeking, numeric widths/formulas and existing owned result lifetimes. No allocation, source mutation or saved-state layout change.",
+          "baseline": "Behavior-neutral for existing application callers. Native/frozen-original baseline bytes and unit goldens unchanged; no scenario/checkpoint moved and no regression export required. File format 2.85, records, field widths, game rules, RNG and binary64 boundaries remain.",
+          "remaining": "Post-migration message/cache storage and borrowed-return review, other readonly/text/service protocols, 52 initial copy sites, wrapper formatting, Milestone D and L08 retained-primitive/platform qualification remain active.",
+          "receipts": "dist/verification/live-cpp/l06u/"
         }
       ],
       "roman_output": {
@@ -1237,6 +1263,17 @@
         "evidence": "docs/CPP-LIVE-TEXT-COPIES.json",
         "interfaces": "LibraryNameDlg receives the actual fixed 256-byte span from four synchronous modal callers through IdPromptLibraryName. SuggestRaceFilename, SuggestLibraryName and GetGameLibraryName receive fixed destination spans; char* capacity reconstruction is removed from these helpers.",
         "behavior": "Existing game/race mode state, name sanitization, UTF-8 boundary shortening, collision retries, cancellation, callback/window lifetime and publication remain."
+      },
+      "message_input_views": {
+        "status": "complete; verified",
+        "parent": "d48df6bd",
+        "interfaces": [
+          "PszFormatString(APPSESSION &, string_view, span<const int16_t>) -> array<char,256>",
+          "PszFormatMessage(APPSESSION &, MessageId, span<const int16_t>) -> array<char,256>",
+          "PszFormatIds/TEXTIO.pfnFormat(APPSESSION &, StringId, span<const int16_t>) -> array<char,256>"
+        ],
+        "production_calls": 87,
+        "evidence": "docs/CPP-LIVE-OWNED-TEXT.json"
       }
     },
     {

@@ -41,7 +41,7 @@ LWriteProdQ:
         }
         app.lpui->hwndProdDlg = nullptr;
         app.lpui->fDlgUp = 0;
-        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsThereIsntEnoughFreeMemoryModifyProduction, nullptr).data(), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsThereIsntEnoughFreeMemoryModifyProduction, {}).data(), win32::MB_ICONHAND);
         return 0;
     }
 }

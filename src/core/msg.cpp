@@ -273,22 +273,29 @@ std::array<char, 256> PszGetMessageN(APPSESSION &app, std::int16_t iMsg) {
         app.state.szMsgBuf[0] = 0;
         return SzMessageLabel(app.state.szMsgBuf);
     }
-    psz = PszFormatMessage(app, static_cast<MessageId>(mb.iMsg), mb.rgParam);
+    psz = PszFormatMessage(app, static_cast<MessageId>(mb.iMsg), std::span<const std::int16_t>{mb.rgParam}.first(static_cast<std::size_t>(rgcMsgArgs[mb.iMsg])));
     return psz;
 }
 
-// Formatting may expand bounded names or paths beyond the message buffer.
-static char *PchAppendMessageText(APPSESSION &app, char *pch, const char *psz) {
-    std::size_t cch;
-    std::string_view szText(psz);
-
-    cch = CchUtf8Prefix(szText, static_cast<std::size_t>((app.state.szMsgBuf + sizeof(app.state.szMsgBuf) - 1 - pch)));
-    std::memmove(pch, psz, cch);
-    pch[cch] = 0;
-    return pch + cch;
+// Required readable values for one complete message expansion. Filename
+// codes and \X may discard a value without reading one.
+static std::size_t CParamMessageCode(char ch) {
+    switch (ch) {
+    case 'k': case 'n': case 'U': case 'v':
+        return 2;
+    case 'V':
+        return 3;
+    case 'e': case 'E': case 'I': case 'i': case 'L': case 'l':
+    case 'Z': case 'S': case 'm': case 'M': case 'P': case 'p':
+    case 'F': case 's': case 'j': case 'g': case 'G': case 'o':
+    case 'O': case 'u': case 'z':
+        return 1;
+    default:
+        return 0;
+    }
 }
 
-std::array<char, 256> PszFormatString(APPSESSION &app, const char *pszFormat, std::int16_t *pParamsReal) {
+std::array<char, 256> PszFormatString(APPSESSION &app, std::string_view pszFormat, std::span<const std::int16_t> pParamsReal) {
     std::array<char, 360> szDisplayLabel{};
     std::array<char, 360> szObjectName{};
     std::array<char, cchCatalogText> szCatalogPchT{};
@@ -298,7 +305,7 @@ std::array<char, 256> PszFormatString(APPSESSION &app, const char *pszFormat, st
     std::int16_t  cOut;
     std::int16_t  c;
     std::int16_t  i;
-    std::int16_t *pParams;
+    std::span<const std::int16_t> pParams;
     const char *pchT;
     char     szBuf[480];
     std::uint16_t w;
@@ -310,23 +317,30 @@ std::array<char, 256> PszFormatString(APPSESSION &app, const char *pszFormat, st
     iMineral = -1;
     pParams = pParamsReal;
     pch = app.state.szMsgBuf;
-    for (; *pszFormat != 0 && pch < app.state.szMsgBuf + sizeof(app.state.szMsgBuf) - 1; pszFormat++) {
-        if (*pszFormat != '\\') {
-            *pch++ = *pszFormat;
+    auto AppendText = [&](std::string_view sz) {
+        pch += CchCopyUtf8Prefix(std::span{app.state.szMsgBuf}.subspan(static_cast<std::size_t>(pch - app.state.szMsgBuf)), sz);
+    };
+    auto SkipParam = [&]() {
+        if (!pParams.empty()) pParams = pParams.subspan(1);
+    };
+    for (; !pszFormat.empty() && pszFormat.front() != 0 && pch < app.state.szMsgBuf + sizeof(app.state.szMsgBuf) - 1; pszFormat.remove_prefix(1)) {
+        if (pszFormat.front() != '\\') {
+            *pch++ = pszFormat.front();
         } else {
-            pszFormat++;
-            if (*pszFormat == 0) break;
-            switch (*pszFormat) {
+            pszFormat.remove_prefix(1);
+            if (pszFormat.empty() || pszFormat.front() == 0) break;
+            if (pParams.size() < CParamMessageCode(pszFormat.front())) break;
+            switch (pszFormat.front()) {
             case 'w':
-                pch = PchAppendMessageText(app, pch, app.state.szWork);
+                AppendText(app.state.szWork);
                 break;
             case 'f':
             case 'h':
             case 'r':
             case 't':
             case 'y':
-                pch = PchAppendMessageText(app, pch, app.state.szBase);
-                switch (*pszFormat) {
+                AppendText(app.state.szBase);
+                switch (pszFormat.front()) {
                 case 'f':
                     if (app.state.idPlayer != iplrNone) {
                         c = CchSprintf(szBuf, ".x%d", app.state.idPlayer + 1);
@@ -340,39 +354,39 @@ std::array<char, 256> PszFormatString(APPSESSION &app, const char *pszFormat, st
                     }
                     /* fallthrough */
                 case 'h':
-                    pch = PchAppendMessageText(app, pch, ".hst");
+                    AppendText(".hst");
                     break;
                 case 'r':
                     c = CchSprintf(szBuf, ".h%d", app.state.idPlayer + 1);
                     goto DoInt;
                 case 'y':
-                    pch = PchAppendMessageText(app, pch, ".xy");
+                    AppendText(".xy");
                 }
                 break;
             case 'e':
-                pchT = app.state.rgszPlanetAttr[*pParams];
+                pchT = app.state.rgszPlanetAttr[pParams.front()];
                 goto FinishString;
             case 'E':
-                szDisplayLabel = PszCalcEnvVar(app, static_cast<EnvType>(static_cast<std::uint16_t>(*pParams) >> 8 & 0xff & 0xff), *pParams & 0xff);
+                szDisplayLabel = PszCalcEnvVar(app, static_cast<EnvType>(static_cast<std::uint16_t>(pParams.front()) >> 8 & 0xff & 0xff), pParams.front() & 0xff);
                 pchT = szDisplayLabel.data();
                 goto FinishString;
             case 'I':
-                szCatalogPchT = TextIO().pfnCompressed(app, static_cast<StringId>(idsDecreased + *pParams));
+                szCatalogPchT = TextIO().pfnCompressed(app, static_cast<StringId>(idsDecreased + pParams.front()));
                 pchT = szCatalogPchT.data();
                 goto FinishString;
             case 'i':
-                c = CchSprintf(szBuf, app.state.PCTD, *pParams);
+                c = CchSprintf(szBuf, app.state.PCTD, pParams.front());
             DoInt:
-                pch = PchAppendMessageText(app, pch, szBuf);
-                pParams++;
+                AppendText(szBuf);
+                SkipParam();
                 break;
             case 'L':
             case 'l':
-                szPlayerName = TextIO().pfnPlayerName(app, *pParams & 0xf, *pszFormat == 'L', (*pParams & 0x10) != 0, (*pParams & 0x20) != 0, (*pParams & 0xc0) >> 6, nullptr);
+                szPlayerName = TextIO().pfnPlayerName(app, pParams.front() & 0xf, pszFormat.front() == 'L', (pParams.front() & 0x10) != 0, (pParams.front() & 0x20) != 0, (pParams.front() & 0xc0) >> 6, nullptr);
                 pchT = szPlayerName.data();
                 goto FinishString;
             case 'Z':
-                w = *pParams;
+                w = pParams.front();
                 if (w == 0)
                     break;
                 if (!((w - 1) & w)) {
@@ -390,14 +404,14 @@ std::array<char, 256> PszFormatString(APPSESSION &app, const char *pszFormat, st
                     if (w & 1) {
                         if (cOut > 0) {
                             if (w & 0xfffe) {
-                                pch = PchAppendMessageText(app, pch, ", ");
+                                AppendText(", ");
                             } else {
-                                pch = PchAppendMessageText(app, pch, TextIO().pfnCompressed(app, idsAnd).data());
+                                AppendText(TextIO().pfnCompressed(app, idsAnd).data());
                             }
                         }
                         szPlayerName = TextIO().pfnPlayerName(app, i, 0, 1, 1, 0, nullptr);
                         pchT = szPlayerName.data();
-                        pch = PchAppendMessageText(app, pch, pchT);
+                        AppendText(pchT);
                         cOut++;
                     }
                     i++;
@@ -405,124 +419,124 @@ std::array<char, 256> PszFormatString(APPSESSION &app, const char *pszFormat, st
                 }
                 goto DoNothing;
             case 'S':
-                if (*pParams == app.state.idPlayer)
+                if (pParams.front() == app.state.idPlayer)
                     goto DoNothing;
                 TextIO().pfnCchGetString(app, idsOf2, std::span{szBuf});
-                szPlayerName = TextIO().pfnPlayerName(app, *pParams, 0, 0, 0, 0, nullptr);
+                szPlayerName = TextIO().pfnPlayerName(app, pParams.front(), 0, 0, 0, 0, nullptr);
                 pchT = szPlayerName.data();
                 CchAppendUtf8Prefix(std::span{szBuf}, pchT);
                 CchAppendUtf8Prefix(std::span{szBuf}, TextIO().pfnCompressed(app, idsOrigin).data());
                 pchT = szBuf;
                 goto FinishString;
             case 'm':
-                iMineral = *pParams;
+                iMineral = pParams.front();
                 pchT = app.state.rgszMinerals[iMineral];
                 goto FinishString;
             case 'M':
-                pchT = app.state.rgszMineField[*pParams];
+                pchT = app.state.rgszMineField[pParams.front()];
                 goto FinishString;
             case 'P':
-                if (static_cast<double>(static_cast<std::int16_t>((*pParams / 100))) >= static_cast<double>(10.0)) {
-                    c = CchSprintf(szBuf, app.state.PCTDPCTPCT, *pParams / 100);
+                if (static_cast<double>(static_cast<std::int16_t>((pParams.front() / 100))) >= static_cast<double>(10.0)) {
+                    c = CchSprintf(szBuf, app.state.PCTDPCTPCT, pParams.front() / 100);
                 } else {
-                    c = CchSprintf(szBuf, app.state.PCTDXPCTDPCTPCT, *pParams / 100, *pParams - *pParams / 100 * 100);
+                    c = CchSprintf(szBuf, app.state.PCTDXPCTDPCTPCT, pParams.front() / 100, pParams.front() - pParams.front() / 100 * 100);
                 }
-                pch = PchAppendMessageText(app, pch, szBuf);
-                pParams++;
+                AppendText(szBuf);
+                SkipParam();
                 break;
             case 'p':
             DoPlanet:
-                szObjectName = TextIO().pfnPlanetName(app, *pParams);
+                szObjectName = TextIO().pfnPlanetName(app, pParams.front());
                 pchT = szObjectName.data();
             FinishString:
-                pch = PchAppendMessageText(app, pch, pchT);
+                AppendText(pchT);
             DoNothing:
-                pParams++;
+                SkipParam();
                 break;
             case 'X':
                 goto DoNothing;
             case 'F':
-                szDisplayLabel = PszFleetNameFromWord(app, *pParams);
+                szDisplayLabel = PszFleetNameFromWord(app, pParams.front());
                 pchT = szDisplayLabel.data();
                 goto FinishString;
             case 's':
             DoFleet:
-                w = *pParams | 0x8000;
+                w = pParams.front() | 0x8000;
                 szObjectName = PszGetFleetName(app, w);
                 pchT = szObjectName.data();
                 goto FinishString;
             case 'j':
-                szCatalogPchT = TextIO().pfnCompressed(app, static_cast<StringId>(idsEnergy + *pParams));
+                szCatalogPchT = TextIO().pfnCompressed(app, static_cast<StringId>(idsEnergy + pParams.front()));
                 pchT = szCatalogPchT.data();
                 goto FinishString;
             case 'k':
-                part.hs.grhst = static_cast<HullSlotType>(*pParams);
-                pParams++;
-                part.hs.iItem = *pParams;
+                part.hs.grhst = static_cast<HullSlotType>(pParams.front());
+                SkipParam();
+                part.hs.iItem = pParams.front();
                 if (PartQueryIO().pfnLookup(app, &part) <= mdPartAvailInvalid) {
                 }
-                pch = PchAppendMessageText(app, pch, part.pcom().szName());
-                pParams++;
+                AppendText(part.pcom().szName());
+                SkipParam();
                 break;
             case 'g':
             LThingName:
-                szObjectName = PszGetThingName(app, *pParams);
+                szObjectName = PszGetThingName(app, pParams.front());
                 pchT = szObjectName.data();
                 goto FinishString;
             case 'G':
-                w = *pParams;
+                w = pParams.front();
                 c = TextIO().pfnCchGetString(app, static_cast<StringId>(idsMineField + w), std::span{szBuf});
-                pch = PchAppendMessageText(app, pch, szBuf);
-                pParams++;
+                AppendText(szBuf);
+                SkipParam();
                 break;
             case 'n':
-                if (*pParams == -2) {
-                    pParams++;
+                if (pParams.front() == -2) {
+                    SkipParam();
                     goto LThingName;
                 }
-                if (*pParams != -1) {
-                    szLocation = PszGetLocName(app, grobjNone, -1, *pParams, pParams[1]);
+                if (pParams.front() != -1) {
+                    szLocation = PszGetLocName(app, grobjNone, -1, pParams.front(), pParams[1]);
                     pchT = szLocation.data();
-                    pParams++;
+                    SkipParam();
                     goto FinishString;
                 }
-                pParams++;
+                SkipParam();
                 /* fallthrough */
             case 'o':
-                if (*pParams & 0x8000)
+                if (pParams.front() & 0x8000)
                     goto DoFleet;
                 goto DoPlanet;
             case 'O':
-                w = static_cast<std::uint16_t>(*pParams) >> 9 & 0xf;
+                w = static_cast<std::uint16_t>(pParams.front()) >> 9 & 0xf;
                 szPlayerName = TextIO().pfnPlayerName(app, w, 0, 0, 0, 0, nullptr);
                 pchT = szPlayerName.data();
                 goto FinishString;
             case 'u':
-                c = CchSprintf(szBuf, "%u", *pParams);
-                pch = PchAppendMessageText(app, pch, szBuf);
-                pParams++;
+                c = CchSprintf(szBuf, "%u", pParams.front());
+                AppendText(szBuf);
+                SkipParam();
                 break;
             case 'U':
             case 'V':
             case 'v':
-                l = static_cast<std::int32_t>((static_cast<std::uint32_t>(pParams[1]) << 0x10)) | static_cast<std::uint32_t>(*pParams);
-                pParams += 2;
+                l = static_cast<std::int32_t>((static_cast<std::uint32_t>(pParams[1]) << 0x10)) | static_cast<std::uint32_t>(pParams.front());
+                pParams = pParams.subspan(2);
                 c = CchSprintf(szBuf, app.state.PCTLD, l);
-                pch = PchAppendMessageText(app, pch, szBuf);
-                if (*pszFormat == 'v')
+                AppendText(szBuf);
+                if (pszFormat.front() == 'v')
                     break;
-                if (*pszFormat == 'V') {
-                    iMineral = *pParams;
+                if (pszFormat.front() == 'V') {
+                    iMineral = pParams.front();
                 }
                 /* With no preceding \m or \V, iMineral is -1; the original read before vrgszUnits. */
                 if (iMineral < 0 || iMineral >= 6)
                     break;
                 pchT = app.state.vrgszUnits[iMineral];
-                pch = PchAppendMessageText(app, pch, pchT);
+                AppendText(pchT);
                 break;
             case 'z':
-                c = *pParams >> 5;
-                w = *pParams & 0x1f;
+                c = pParams.front() >> 5;
+                w = pParams.front() & 0x1f;
                 if (w >= 16) {
                     lpshdef = app.state.rglpshdefSB[c] + (w - 16);
                 } else {
@@ -535,11 +549,11 @@ std::array<char, 256> PszFormatString(APPSESSION &app, const char *pszFormat, st
                 } else {
                     CchCopyUtf8Prefix(std::span{szBuf}, lpshdef->hul.szClass);
                 }
-                pch = PchAppendMessageText(app, pch, szBuf);
-                pParams++;
+                AppendText(szBuf);
+                SkipParam();
                 break;
             default:
-                *pch++ = *pszFormat;
+                *pch++ = pszFormat.front();
             }
             continue;
         }
@@ -549,9 +563,9 @@ std::array<char, 256> PszFormatString(APPSESSION &app, const char *pszFormat, st
     return SzMessageLabel(app.state.szMsgBuf);
 }
 
-std::array<char, 256> PszFormatMessage(APPSESSION &app, MessageId idm, std::int16_t *pParams) { return PszFormatString(app, PszGetCompressedMessage(app, idm).data(), pParams); }
+std::array<char, 256> PszFormatMessage(APPSESSION &app, MessageId idm, std::span<const std::int16_t> pParams) { return PszFormatString(app, PszGetCompressedMessage(app, idm).data(), pParams); }
 
-std::array<char, 256> PszFormatIds(APPSESSION &app, StringId ids, std::int16_t *pParams) { return PszFormatString(app, TextIO().pfnCompressed(app, ids).data(), pParams); }
+std::array<char, 256> PszFormatIds(APPSESSION &app, StringId ids, std::span<const std::int16_t> pParams) { return PszFormatString(app, TextIO().pfnCompressed(app, ids).data(), pParams); }
 
 std::int16_t FRemovePlayerMessage(APPSESSION &app, std::int16_t iPlr, MessageId iMsg, MsgGoto iObj) {
     std::uint8_t *lpbMax;

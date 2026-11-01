@@ -111,7 +111,7 @@ static void TestStickyDlgPos(HWND hwnd, POINT16 *point, int restore) {
     assert(hwnd == HwndWitness(7) && point == &app.lpui->ptStickyProduceDlg && !restore);
     event("Sticky;");
 }
-static std::array<char, 256> TestPszFormatIds(APPSESSION &, int id, void *p) {
+static std::array<char, 256> TestPszFormatIds(APPSESSION &, StringId id, std::span<const std::int16_t> p) {
     (void)p;
     assert(id == idsThereIsntEnoughFreeMemoryModifyProduction);
     return SzWitnessText("memory");
@@ -295,7 +295,7 @@ int main(void) {
     PARTQUERYIOSCOPE scopePartQuery(ioPartQuery);
     TEXTIO           ioText;
     ioText.pfnCompressed = TestPszGetCompressedString;
-    ioText.pfnFormat = WITNESSADAPTER<&TestPszFormatIds, decltype(ioText.pfnFormat)>::Call;
+    ioText.pfnFormat = TestPszFormatIds;
     ioText.pfnPlanetName = WITNESSADAPTER<&TestPszGetPlanetName, decltype(ioText.pfnPlanetName)>::Call;
     TEXTIOSCOPE scopeText(ioText);
     ALERTIO     ioAlert;

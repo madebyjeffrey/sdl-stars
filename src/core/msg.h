@@ -21,9 +21,11 @@ std::int16_t FSendPlrMsg2XGen(APPSESSION &app, std::int16_t fPrepend, MessageId 
 std::int16_t IdmGetMessageN(APPSESSION &app, std::int16_t iMsg);
 std::int16_t FGetNMsgbig(APPSESSION &app, MessageId iMsg, MSGBIG *pmb);
 std::array<char, 256> PszGetMessageN(APPSESSION &app, std::int16_t iMsg);
-std::array<char, 256> PszFormatString(APPSESSION &app, const char *pszFormat, std::int16_t *pParamsReal);
-std::array<char, 256> PszFormatMessage(APPSESSION &app, MessageId idm, std::int16_t *pParams);
-std::array<char, 256> PszFormatIds(APPSESSION &app, StringId ids, std::int16_t *pParams);
+// Readonly bounded inputs; stop before an incomplete expansion and terminate
+// the complete UTF-8 output prefix. Embedded NUL ends the format text.
+std::array<char, 256> PszFormatString(APPSESSION &app, std::string_view pszFormat, std::span<const std::int16_t> pParamsReal);
+std::array<char, 256> PszFormatMessage(APPSESSION &app, MessageId idm, std::span<const std::int16_t> pParams);
+std::array<char, 256> PszFormatIds(APPSESSION &app, StringId ids, std::span<const std::int16_t> pParams);
 std::int16_t FRemovePlayerMessage(APPSESSION &app, std::int16_t iPlr, MessageId iMsg, MsgGoto iObj);
 std::int16_t FFindPlayerMessage(APPSESSION &app, std::int16_t iPlr, std::int16_t iMsg, MsgGoto iObj);
 void    MarkPlanetsPlayerLost(APPSESSION &app, std::int16_t iPlayer);

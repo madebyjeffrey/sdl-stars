@@ -52,7 +52,7 @@ void BattleVCR(APPSESSION &app, std::int16_t iBattle) {
         ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_VCR), app.lpui->hwndFrame, VCRDlg, 0);
 
     } catch (const StarsError &) {
-        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMemory, nullptr).data(), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMemory, {}).data(), win32::MB_ICONHAND);
     }
 LCleanup:
     if (app.state.vrgtok) {

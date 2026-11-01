@@ -479,12 +479,12 @@ LAppend:
 LFail:
     app.state.idPlayer = iPlayer;
     if (fAppend) {
-        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableUpdateTurnFile, nullptr).data(), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableUpdateTurnFile, {}).data(), win32::MB_ICONHAND);
     } else if (iPlayer != iplrNone) {
-        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableCreateNewTurnFile, nullptr).data(), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableCreateNewTurnFile, {}).data(), win32::MB_ICONHAND);
     } else {
         app.state.idPlayer = iplrNone;
-        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableCreateHostFile, nullptr).data(), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableCreateHostFile, {}).data(), win32::MB_ICONHAND);
     }
     app.state.idPlayer = iplrNone;
     fRet = 0;
@@ -1096,7 +1096,7 @@ void WriteRt(APPSESSION &app, RecordType rt, std::span<const std::byte> rg) {
     std::byte rgbHdr[cbWireHdr];
 
     if (rg.size() > std::size(app.state.rgbCur)) {
-        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsErrorWritingFile, nullptr).data(), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsErrorWritingFile, {}).data(), win32::MB_ICONHAND);
         StarsThrowError(starsErrorFile, idsErrorWritingFile);
     }
     cb = static_cast<std::int16_t>(rg.size());
@@ -1118,7 +1118,7 @@ void WriteRt(APPSESSION &app, RecordType rt, std::span<const std::byte> rg) {
 
 void RgToStream(APPSESSION &app, std::span<const std::byte> rg) {
     if (!rg.empty() && CbWriteFile(app.state.hf, rg) != rg.size()) {
-        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsErrorWritingFile, nullptr).data(), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsErrorWritingFile, {}).data(), win32::MB_ICONHAND);
         StarsThrowError(starsErrorFile, idsErrorWritingFile);
     }
     return;

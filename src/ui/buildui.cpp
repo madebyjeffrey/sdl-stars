@@ -427,7 +427,7 @@ INT_PTR  SlotDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                             part.hs.iItem = lpshdef->hul.ihuldef;
                         }
                         if (PartQueryIO().pfnLookup(app, &part) != mdPartAvailAvailable) {
-                            AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsCantCopyShipDesignBecauseCantBuild, nullptr).data(), win32::MB_ICONHAND);
+                            AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsCantCopyShipDesignBecauseCantBuild, {}).data(), win32::MB_ICONHAND);
                             return 0;
                         }
                     }
@@ -534,7 +534,7 @@ INT_PTR  SlotDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 lSel = 0;
                 if (LOWORD(wParam) == IDOK) {
                     if (!app.state.fStarbaseMode && app.state.shdefBuild.hul.rghs[0].cItem == 0) {
-                        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsShipDesignDoesHaveAnyEnginesMust, nullptr).data(), win32::MB_ICONHAND);
+                        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsShipDesignDoesHaveAnyEnginesMust, {}).data(), win32::MB_ICONHAND);
                         return 0;
                     }
                     if (app.state.gd.fTutorial && !FTutorialEnabledShipBuilder(app, tutsbAccept)) {

@@ -696,7 +696,7 @@ LBadFile:
         if (szFile != app.state.szWork) {
             std::strcpy(app.state.szWork, szFile);
         }
-        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, static_cast<StringId>(idsError), nullptr).data(), win32::MB_ICONHAND);
+        AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, static_cast<StringId>(idsError), {}).data(), win32::MB_ICONHAND);
     }
     return fRet;
 

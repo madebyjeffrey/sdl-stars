@@ -4923,7 +4923,7 @@
     },
     "audit": "All live source/header/include/Objective-C++ call tokens match the migrated ledger, including IStarsMain function-try-block and both catch bodies. Final audit: 93 production calls.",
     "effects": "Preserve 256-byte message/decode limits, 360-byte version budget, current cache/message/work writes, grammar, parameter consumption, UTF-8 clipping and missing-message behavior. Named arrays retain scroll/drawing text; immediate alerts borrow a value through the synchronous call. No allocation or saved-state layout change.",
-    "remaining": "Message format and parameter inputs still need readonly bounded L06 contracts. The retained session message/cache staging fields need a post-migration storage audit; stable library/command-line borrowing, private text cursors, remaining L05 bounded copies/wrapper formatting, L06 services/Milestone D and L08 final qualification remain active.",
+    "remaining": "Readonly bounded message inputs are complete under message_input_views. Session message/cache staging still needs a post-migration storage audit; stable library/command-line borrowing, other readonly interfaces, remaining copies/services, Milestone D and L08 final qualification remain active.",
     "calls": [
       {
         "path": "src/core/battle.cpp",
@@ -5780,6 +5780,478 @@
       "baseline": "Behavior-neutral: native/frozen-original baseline bytes and unit goldens unchanged. No scenario/checkpoint moved and no regression export required.",
       "remaining": "Readonly bounded message format/parameter inputs, post-migration message/cache staging and borrowed-return audit, 52 initial copy sites, wrapper formatting and manual bounds review, L06 service results/Milestone D, generated/retained macro audit and L08 final platform qualification remain active.",
       "receipts": "dist/verification/live-cpp/l05aa/"
+    }
+  },
+  "message_input_views": {
+    "status": "complete; verified",
+    "parent": "d48df6bd",
+    "interfaces": [
+      "PszFormatString(APPSESSION &, string_view, span<const int16_t>) -> array<char,256>",
+      "PszFormatMessage(APPSESSION &, MessageId, span<const int16_t>) -> array<char,256>",
+      "PszFormatIds/TEXTIO.pfnFormat(APPSESSION &, StringId, span<const int16_t>) -> array<char,256>"
+    ],
+    "production_calls": 87,
+    "existing_all_calls": 103,
+    "providers": "The three actual lifecycle/production-presets/transport-presets providers take StringId and readonly int16 spans and bind directly. Their erased void* parameter and generic formatting adapters are removed.",
+    "contract": "Empty/non-NUL text views and exact readonly word spans are valid. Embedded NUL ends text; missing words or an unfinished escape stop before the incomplete expansion, leaving a complete terminated UTF-8 prefix. Optional filename/X discards saturate at an empty view. Current work/cache effects, 256-byte output budget, parameter consumption/peeking and numeric expressions remain.",
+    "output_bounds": "Sixteen append sites now use one local CchCopyUtf8Prefix operation on the actual message-array tail. Removed the private raw-pointer-returning PchAppendMessageText helper; the existing pch cursor remains local.",
+    "message_count_audit": "All 387 current message IDs (including holes) fit their declared initialized parameter spans; every defined count is 0..7. GetMessageN passes only the declared initialized MSGBIG words. All statically named empty-parameter catalog call sites require no readable words.",
+    "remaining": "Other readonly/service protocols and post-migration scratch storage remain open. This interface work does not retire the 52 pending initial copy sites, Milestone D or final platform qualification.",
+    "calls": [
+      {
+        "path": "src/ui/stars.cpp",
+        "line": 28,
+        "call": "TextIO().pfnFormat(app, idsUnableInitializeStars, {})"
+      },
+      {
+        "path": "src/ui/stars.cpp",
+        "line": 37,
+        "call": "TextIO().pfnFormat(app, idsUnableInitializeStars, {})"
+      },
+      {
+        "path": "src/ui/stars.cpp",
+        "line": 41,
+        "call": "TextIO().pfnFormat(app, idsUnableInitializeStars, {})"
+      },
+      {
+        "path": "src/ui/stars.cpp",
+        "line": 75,
+        "call": "TextIO().pfnFormat(app, static_cast<StringId>(error.ids ? error.ids : idsMemory), {})"
+      },
+      {
+        "path": "src/ui/stars.cpp",
+        "line": 83,
+        "call": "TextIO().pfnFormat(app, idsUnableInitializeStars, {})"
+      },
+      {
+        "path": "src/ui/produceui.cpp",
+        "line": 44,
+        "call": "TextIO().pfnFormat(app, idsThereIsntEnoughFreeMemoryModifyProduction, {})"
+      },
+      {
+        "path": "src/ui/utilgenui.cpp",
+        "line": 1078,
+        "call": "TextIO().pfnFormat(app, idsPasswordHaveEnteredIncorrectPleaseTry, {})"
+      },
+      {
+        "path": "src/ui/utilgenui.cpp",
+        "line": 1150,
+        "call": "TextIO().pfnFormat(app, idsPasswordsTypedTwoFieldsSamePleaseReenter, {})"
+      },
+      {
+        "path": "src/ui/utilgenui.cpp",
+        "line": 1168,
+        "call": "TextIO().pfnFormat(app, idsUnableCreateHostFile, {})"
+      },
+      {
+        "path": "src/ui/scan.cpp",
+        "line": 2568,
+        "call": "TextIO().pfnFormat(app, idsSureWantDeleteCurrentWaypoint, {})"
+      },
+      {
+        "path": "src/ui/scan.cpp",
+        "line": 2780,
+        "call": "TextIO().pfnFormat(app, idsSorryCantFindPlanetFleetName, {})"
+      },
+      {
+        "path": "src/ui/vcr.cpp",
+        "line": 55,
+        "call": "TextIO().pfnFormat(app, idsMemory, {})"
+      },
+      {
+        "path": "src/ui/raceui.cpp",
+        "line": 1457,
+        "call": "TextIO().pfnFormat(app, idsStarsUnableSaveRaceDataFilePlease, {})"
+      },
+      {
+        "path": "src/ui/reportui.cpp",
+        "line": 2738,
+        "call": "TextIO().pfnFormat(app, idsMustSpecifyNumberBetween19, {})"
+      },
+      {
+        "path": "src/ui/tutor.cpp",
+        "line": 66,
+        "call": "TextIO().pfnFormat(app, idsMakeTutorialReappearCompleteTaskChooseTutorial, {})"
+      },
+      {
+        "path": "src/ui/tutor.cpp",
+        "line": 232,
+        "call": "TextIO().pfnFormat(app, idsTutorialHasRunBeforeWouldLikeDestroy, {})"
+      },
+      {
+        "path": "src/ui/tutor.cpp",
+        "line": 411,
+        "call": "TextIO().pfnFormat(app, idsCurrentlyRunningStarsTutorialDoWantExit, {})"
+      },
+      {
+        "path": "src/ui/tutor.cpp",
+        "line": 2318,
+        "call": "TextIO().pfnFormat(app, idsError, {})"
+      },
+      {
+        "path": "src/ui/libraryui.cpp",
+        "line": 669,
+        "call": "TextIO().pfnFormat(app, idsStarsUnableSaveRaceDataFilePlease, {})"
+      },
+      {
+        "path": "src/ui/libraryui.cpp",
+        "line": 2139,
+        "call": "TextIO().pfnFormat(app, idsCantOpenFile, {})"
+      },
+      {
+        "path": "src/ui/createui.cpp",
+        "line": 678,
+        "call": "TextIO().pfnFormat(app, idsMustHaveLeastOnePlayerGame, {})"
+      },
+      {
+        "path": "src/ui/init.cpp",
+        "line": 163,
+        "call": "TextIO().pfnFormat(app, idsUnableLoadBitmaps, {})"
+      },
+      {
+        "path": "src/ui/init.cpp",
+        "line": 475,
+        "call": "TextIO().pfnFormat(app, idsNoteStarsPrefersScreenResolutionLeast800x600, {})"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "line": 390,
+        "call": "TextIO().pfnFormat(app, idsNewTurnAvailable, {})"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "line": 393,
+        "call": "TextIO().pfnFormat(app, idsNewTurnAvailableWouldLikeLoad, {})"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "line": 399,
+        "call": "TextIO().pfnFormat(app, idsUnableOpenNewTurnFile, {})"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "line": 421,
+        "call": "TextIO().pfnFormat(app, idsTurnHasSubmittedChangesMadeAfterTurn, {})"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "line": 423,
+        "call": "TextIO().pfnFormat(app, idsNewTurnCurrentlyGeneratedHostNewTurn, {})"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "line": 427,
+        "call": "TextIO().pfnFormat(app, idsUnableOpenNewTurnFile, {})"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "line": 1029,
+        "call": "TextIO().pfnFormat(app, idsCantOpenFile, {})"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "line": 1203,
+        "call": "TextIO().pfnFormat(app, idsUnablePrintGameMapPrinterMayOff, {})"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "line": 1205,
+        "call": "TextIO().pfnFormat(app, idsUnablePrintGameMapPrinterMayOff, {})"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "line": 1231,
+        "call": "TextIO().pfnFormat(app, idsGameAlreadyHostedAnotherInstanceStarsWould, {})"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "line": 1262,
+        "call": "TextIO().pfnFormat(app, idsTutorialTurnWillGeneratedHaveYetCompleted, {})"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "line": 1270,
+        "call": "TextIO().pfnFormat(app, static_cast<StringId>(app.state.idsFileError), {})"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "line": 1274,
+        "call": "TextIO().pfnFormat(app, static_cast<StringId>(app.state.idsFileError), {})"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "line": 1295,
+        "call": "TextIO().pfnFormat(app, static_cast<StringId>(app.state.idsFileError), {})"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "line": 1298,
+        "call": "TextIO().pfnFormat(app, idsGameAlreadyHostedAnotherInstanceStarsWould, {})"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "line": 1329,
+        "call": "TextIO().pfnFormat(app, idsUnableOpenNewTurnFile, {})"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "line": 1459,
+        "call": "TextIO().pfnFormat(app, idsSorryTurnHasAlreadyGeneratedAnyChanges, {})"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "line": 1463,
+        "call": "TextIO().pfnFormat(app, idsNewTurnAvailable, {})"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "line": 1469,
+        "call": "TextIO().pfnFormat(app, idsUnableOpenNewTurnFile, {})"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "line": 1492,
+        "call": "TextIO().pfnFormat(app, idsGameCurrentlyLoaded, {})"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "line": 1619,
+        "call": "TextIO().pfnFormat(app, idsCantChangeZoomFactorUntilGameOpen, {})"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "line": 2098,
+        "call": "TextIO().pfnFormat(app, idsSureWishGenerateOptionDoesGuaranteePlayers, {})"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "line": 2203,
+        "call": "TextIO().pfnFormat(app, idsUnableOpenNewTurnFile, {})"
+      },
+      {
+        "path": "src/ui/mdi.cpp",
+        "line": 2223,
+        "call": "TextIO().pfnFormat(app, idsAutoGenerateDisabledBecauseHumanPlayersDead, {})"
+      },
+      {
+        "path": "src/ui/buildui.cpp",
+        "line": 430,
+        "call": "TextIO().pfnFormat(app, idsCantCopyShipDesignBecauseCantBuild, {})"
+      },
+      {
+        "path": "src/ui/buildui.cpp",
+        "line": 537,
+        "call": "TextIO().pfnFormat(app, idsShipDesignDoesHaveAnyEnginesMust, {})"
+      },
+      {
+        "path": "src/ui/planetui.cpp",
+        "line": 225,
+        "call": "TextIO().pfnFormat(app, idsSureWantDeleteEverythingPlanetsProductionQueue, {})"
+      },
+      {
+        "path": "src/ui/shipui.cpp",
+        "line": 2643,
+        "call": "TextIO().pfnFormat(app, idsAmountCargoMaySpecifyHereMustBetween, {})"
+      },
+      {
+        "path": "src/core/memory.cpp",
+        "line": 40,
+        "call": "TextIO().pfnFormat(app, idsMemory, {})"
+      },
+      {
+        "path": "src/core/memory.cpp",
+        "line": 58,
+        "call": "TextIO().pfnFormat(app, idsMemory, {})"
+      },
+      {
+        "path": "src/core/memory.cpp",
+        "line": 106,
+        "call": "TextIO().pfnFormat(app, idsMemory, {})"
+      },
+      {
+        "path": "src/core/log.cpp",
+        "line": 566,
+        "call": "TextIO().pfnFormat(app, idsLogFileHasReachedMaximumAllowableSize, {})"
+      },
+      {
+        "path": "src/core/log.cpp",
+        "line": 1363,
+        "call": "TextIO().pfnFormat(app, idsUnableCreateLogFile, {})"
+      },
+      {
+        "path": "src/core/log.cpp",
+        "line": 1405,
+        "call": "TextIO().pfnFormat(app, idsUnableCreateHistoryFile, {})"
+      },
+      {
+        "path": "src/core/util.cpp",
+        "line": 2548,
+        "call": "TextIO().pfnFormat(app, ids, {})"
+      },
+      {
+        "path": "src/core/turn.cpp",
+        "line": 122,
+        "call": "TextIO().pfnFormat(app, idsPlayerLogFileAppearsCorruptUnableLoad, {})"
+      },
+      {
+        "path": "src/core/turn.cpp",
+        "line": 627,
+        "call": "TextIO().pfnFormat(app, idsMemory, {})"
+      },
+      {
+        "path": "src/core/save.cpp",
+        "line": 482,
+        "call": "TextIO().pfnFormat(app, idsUnableUpdateTurnFile, {})"
+      },
+      {
+        "path": "src/core/save.cpp",
+        "line": 484,
+        "call": "TextIO().pfnFormat(app, idsUnableCreateNewTurnFile, {})"
+      },
+      {
+        "path": "src/core/save.cpp",
+        "line": 487,
+        "call": "TextIO().pfnFormat(app, idsUnableCreateHostFile, {})"
+      },
+      {
+        "path": "src/core/save.cpp",
+        "line": 1099,
+        "call": "TextIO().pfnFormat(app, idsErrorWritingFile, {})"
+      },
+      {
+        "path": "src/core/save.cpp",
+        "line": 1121,
+        "call": "TextIO().pfnFormat(app, idsErrorWritingFile, {})"
+      },
+      {
+        "path": "src/core/battle.cpp",
+        "line": 44,
+        "call": "TextIO().pfnFormat(app, idsCurrentlyHaveFleetsUsingBattlePlanIf, {})"
+      },
+      {
+        "path": "src/core/file.cpp",
+        "line": 186,
+        "call": "TextIO().pfnFormat(app, idsUniverseDefinitionFileSeemsMissingCorrupt, {})"
+      },
+      {
+        "path": "src/core/file.cpp",
+        "line": 250,
+        "call": "TextIO().pfnFormat(app, idsHistoryFileAppearsCorruptHistoricalDataWill, {})"
+      },
+      {
+        "path": "src/core/file.cpp",
+        "line": 453,
+        "call": "TextIO().pfnFormat(app, idsPasswordHaveEnteredIncorrectPleaseTry, {})"
+      },
+      {
+        "path": "src/core/file.cpp",
+        "line": 719,
+        "call": "TextIO().pfnFormat(app, idsGameFileAppearsCorruptUnableLoadFile, {})"
+      },
+      {
+        "path": "src/core/file.cpp",
+        "line": 752,
+        "call": "TextIO().pfnFormat(app, idsWarningIgnoringUnexpectedDataAfterEof, {})"
+      },
+      {
+        "path": "src/core/file.cpp",
+        "line": 809,
+        "call": "TextIO().pfnFormat(app, idsPlayerLogFileAppearsCorruptUnableLoad, {})"
+      },
+      {
+        "path": "src/core/file.cpp",
+        "line": 1073,
+        "call": "TextIO().pfnFormat(app, idsGameFileAppearsCorruptUnableLoadFile, {})"
+      },
+      {
+        "path": "src/core/file.cpp",
+        "line": 1219,
+        "call": "TextIO().pfnFormat(app, ids, {})"
+      },
+      {
+        "path": "src/core/file.cpp",
+        "line": 1291,
+        "call": "TextIO().pfnFormat(app, idsHostFileMarkedUseAnotherInstanceStars, {})"
+      },
+      {
+        "path": "src/core/create.cpp",
+        "line": 915,
+        "call": "TextIO().pfnFormat(app, idsUnableCreateUniverseDefinitionFile, {})"
+      },
+      {
+        "path": "src/core/create.cpp",
+        "line": 944,
+        "call": "TextIO().pfnFormat(app, idsUnableOpenNewTurnFile, {})"
+      },
+      {
+        "path": "src/core/create.cpp",
+        "line": 1024,
+        "call": "TextIO().pfnFormat(app, idsMemory, {})"
+      },
+      {
+        "path": "src/core/create.cpp",
+        "line": 1037,
+        "call": "TextIO().pfnFormat(app, idsIllegalGameTitle, {})"
+      },
+      {
+        "path": "src/core/create.cpp",
+        "line": 1046,
+        "call": "TextIO().pfnFormat(app, idsUniverseDefinitionFileAppearsTooShort, {})"
+      },
+      {
+        "path": "src/core/create.cpp",
+        "line": 1053,
+        "call": "TextIO().pfnFormat(app, idsLine2HasBadUniverseDefinitionParameter, {})"
+      },
+      {
+        "path": "src/core/create.cpp",
+        "line": 1078,
+        "call": "TextIO().pfnFormat(app, idsLine3HasBadUniverseDefinitionParameter, {})"
+      },
+      {
+        "path": "src/core/create.cpp",
+        "line": 1109,
+        "call": "TextIO().pfnFormat(app, idsLine4HasImproperNumberPlayerFiles, {})"
+      },
+      {
+        "path": "src/core/race.cpp",
+        "line": 699,
+        "call": "TextIO().pfnFormat(app, static_cast<StringId>(idsError), {})"
+      },
+      {
+        "path": "src/core/msg.cpp",
+        "line": 276,
+        "call": "PszFormatMessage(app, static_cast<MessageId>(mb.iMsg), std::span<const std::int16_t>{mb.rgParam}.first(static_cast<std::size_t>(rgcMsgArgs[mb.iMsg])))"
+      },
+      {
+        "path": "src/core/msg.cpp",
+        "line": 566,
+        "call": "PszFormatString(app, PszGetCompressedMessage(app, idm).data(), pParams)"
+      },
+      {
+        "path": "src/core/msg.cpp",
+        "line": 568,
+        "call": "PszFormatString(app, TextIO().pfnCompressed(app, ids).data(), pParams)"
+      }
+    ],
+    "verification": {
+      "batch": "L06u readonly bounded message format and parameter inputs",
+      "debug_build": "Pass, no warnings. Release SDL regression and host builds pass. Compiler/source policy covers 158 owned sources, 159 compiled variants and 161 standalone headers in both orders; exact raw-copy inventory passes.",
+      "desktop": "154/154, including actual message/alert/UI consumers, all three exact provider witnesses, all 29 leak checks and available SDL tutorial checkpoints.",
+      "host_units": "29/29 in Release, including parent/final message grammar and final bounded-input checks.",
+      "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+      "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+      "windows": "Strict MinGW compilation passes all 147 production units and six affected real unit/provider consumers. Rebuilt Windows encoding/message tests pass 14 cases, utilities 11 and utility-generation 17 under Wine: 42 total. Actual native Windows SDL and Linux final qualification remain pending.",
+      "sanitizers": "Native macOS Debug ASan/UBSan execution passes encoding/message, utility and utility-generation executables (3/3), including non-NUL text slices, exact/short readonly spans, incomplete fields, existing UTF-8 output limits, all message source bytes and owned-value retention. Focused execution, not whole-suite sanitizer qualification.",
+      "characterization": "Before migration, the actual formatter passed fifteen grammar vectors plus host filename behavior. Final exact spans preserve signed/unsigned extrema, packed long words and literal suffix digits, U/V unit behavior, V peeking without consuming its third value, zero-Z mask reuse, X discards, unknown/trailing escapes, filename discards, percentages, environment/work expansion, locations, routing and attribute labels. Parameters remain byte-for-byte unchanged.",
+      "bounded_inputs": "PszFormatString receives string_view and span<const int16_t>; PszFormatMessage, PszFormatIds and TEXTIO use the same readonly word-span contract. Empty/non-NUL text and exact const arrays work without sentinel reads. Embedded NUL ends the format, and an incomplete escape or missing required words terminates before that expansion with a complete UTF-8 prefix. Filename/X discard operations saturate on an empty view.",
+      "consumers": "All 87 production calls and 103 existing application/test calls migrate; the full-source token audit includes function-try-block/error handlers. GetMessageN passes only the initialized word count declared by rgcMsgArgs. The three actual lifecycle/preset providers take StringId and readonly spans and bind directly; their void* parameters and generic format adapters are removed. No old raw-pointer overload remains.",
+      "catalog_bounds": "Every current message ID, including holes, has a sufficient declared parameter count for the existing grammar maximum read; defined counts stay 0..7 inside MSGBIG. All statically named catalog calls with empty word lists need no readable words.",
+      "output_bounds": "Sixteen append sites use CchCopyUtf8Prefix on the actual message-array tail through a small local operation. The obsolete raw-pointer-returning PchAppendMessageText helper is removed; output bytes, byte-count advancement and complete-code-point truncation remain.",
+      "effects": "Preserve current message/cache/work effects, 256-byte result limits, all valid grammar, parameter consumption and peeking, numeric widths/formulas and existing owned result lifetimes. No allocation, source mutation or saved-state layout change.",
+      "baseline": "Behavior-neutral for existing application callers. Native/frozen-original baseline bytes and unit goldens unchanged; no scenario/checkpoint moved and no regression export required. File format 2.85, records, field widths, game rules, RNG and binary64 boundaries remain.",
+      "remaining": "Post-migration message/cache storage and borrowed-return review, other readonly/text/service protocols, 52 initial copy sites, wrapper formatting, Milestone D and L08 retained-primitive/platform qualification remain active.",
+      "receipts": "dist/verification/live-cpp/l06u/"
     }
   }
 }

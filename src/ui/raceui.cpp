@@ -1454,7 +1454,7 @@ std::int16_t FSaveRace(APPSESSION &app, char *szFileSuggest, PLAYER *pplr) {
     ofn.Flags = win32::OFN_OVERWRITEPROMPT | win32::OFN_HIDEREADONLY | win32::OFN_PATHMUSTEXIST | win32::OFN_NOREADONLYRETURN;
     if (DesktopChoiceIO().pfnFNativeSaveFileName(&ofn) != 0) {
         if (!RecordIO().pfnFCreateFile(app, dtRace, iplrNone, szFile)) {
-            AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsStarsUnableSaveRaceDataFilePlease, nullptr).data(), win32::MB_ICONHAND);
+            AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsStarsUnableSaveRaceDataFilePlease, {}).data(), win32::MB_ICONHAND);
             return 0;
         }
         WriteRtPlr(app, pplr);

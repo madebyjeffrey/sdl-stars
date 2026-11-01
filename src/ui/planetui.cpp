@@ -222,7 +222,7 @@ LRESULT  PlanetWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 ChangeProduction(app, 0);
                 goto LRefocus;
             } else if (reinterpret_cast<HWND>(lParam) == app.lpui->rghwndBtn[12] && HIWORD(wParam) == 0) {
-                if (AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsSureWantDeleteEverythingPlanetsProductionQueue, nullptr).data(), win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_TASKMODAL) != win32::IDYES) {
+                if (AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsSureWantDeleteEverythingPlanetsProductionQueue, {}).data(), win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_TASKMODAL) != win32::IDYES) {
                     return 0;
                 }
                 ChangeProduction(app, 1);

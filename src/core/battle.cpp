@@ -41,7 +41,7 @@ LCommit:
                         fFoundBigger = 1;
                     }
                 } else if (fWarn) {
-                    if (AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsCurrentlyHaveFleetsUsingBattlePlanIf, nullptr).data(), win32::MB_OKCANCEL | win32::MB_ICONEXCLAMATION) == IDCANCEL)
+                    if (AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsCurrentlyHaveFleetsUsingBattlePlanIf, {}).data(), win32::MB_OKCANCEL | win32::MB_ICONEXCLAMATION) == IDCANCEL)
                         return 0;
                     fWarn = 0;
                     goto LCommit;

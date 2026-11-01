@@ -125,7 +125,7 @@ static std::array<char, cchCatalogText> TestPszGetCompressedString(APPSESSION &,
         return SzWitnessText(szLiteral4);
     return SzWitnessText(szLiteral5);
 }
-static std::array<char, 256> TestPszFormatIds(APPSESSION &, int id, void *p) {
+static std::array<char, 256> TestPszFormatIds(APPSESSION &, StringId id, std::span<const std::int16_t> p) {
     (void)id;
     (void)p;
     return SzWitnessText("amount");
@@ -246,7 +246,7 @@ int main(void) {
     PRODUCTIONIOSCOPE scopeProduction(ioProduction);
     TEXTIO            ioText;
     ioText.pfnCompressed = TestPszGetCompressedString;
-    ioText.pfnFormat = WITNESSADAPTER<&TestPszFormatIds, decltype(ioText.pfnFormat)>::Call;
+    ioText.pfnFormat = TestPszFormatIds;
     ioText.pfnCchGetString = TestCchGetString;
     ioText.pfnPlayerName = TestPszPlayerName;
     TEXTIOSCOPE scopeText(ioText);

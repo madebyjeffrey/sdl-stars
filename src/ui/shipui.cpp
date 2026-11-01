@@ -2640,7 +2640,7 @@ void ChangeTransportAmount(APPSESSION &app) {
             i = 4000 >= i ? i : 4000;
         }
         if (iInit != i) {
-            AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsAmountCargoMaySpecifyHereMustBetween, nullptr).data(), win32::MB_ICONHAND);
+            AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsAmountCargoMaySpecifyHereMustBetween, {}).data(), win32::MB_ICONHAND);
             win32::wsprintfA(app.state.szWork, app.state.PCTD, i);
             ControlIO().pfnSetWindowText(app.lpui->hwndOrderED, app.state.szWork);
         }

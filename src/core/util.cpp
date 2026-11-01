@@ -2545,7 +2545,7 @@ void TurnLog(APPSESSION &app, StringId ids) {
     char szTemp[256];
 
     if (app.state.ini.fLogging) {
-        CchSprintf(szTemp, TextIO().pfnFormat(app, ids, nullptr).data(), app.state.game.turn + 2401);
+        CchSprintf(szTemp, TextIO().pfnFormat(app, ids, {}).data(), app.state.game.turn + 2401);
         OutputSz(app, 6, szTemp);
     }
     return;

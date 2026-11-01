@@ -415,7 +415,7 @@ static void test_ObjectName_contract(void) {
     TEST_CHECK(SzObjectNameBytes(PszGetPlanetName(app, 0)) == "007");
     TEST_CHECK(SzObjectNameBytes(PszGetPlanetName(app, static_cast<std::int16_t>(0x8000))) == "Orbiting 007");
     TEST_CHECK(std::string_view(app.state.szWork) == "Orbiting 007");
-    TEST_CHECK(std::string_view(PszFormatString(app, "\\p|\\w", rgParams).data()) == "007|007");
+    TEST_CHECK(std::string_view(PszFormatString(app, "\\p|\\w", std::span<const std::int16_t>{rgParams}).data()) == "007|007");
     app.state.idPlayer = 0;
     CchCopyUtf8Prefix(std::span{app.state.rgplr[1].szName}, "Race-\xce\xa9");
     TEST_CHECK(SzObjectNameBytes(PszGetFleetName(app, 0)) == "Fleet #1");
@@ -432,7 +432,7 @@ static void test_ObjectName_contract(void) {
     TEST_CHECK(std::string_view(app.state.szWork) == "Race-\xce\xa9 Scout-\xce\xa9");
     const auto szFleet = PszGetFleetName(app, 512);
     rgParams[0] = 512;
-    TEST_CHECK(std::string_view(PszFormatString(app, "\\s|\\w", rgParams).data()) == "Race-\xce\xa9 Scout-\xce\xa9|Race-\xce\xa9 Scout-\xce\xa9");
+    TEST_CHECK(std::string_view(PszFormatString(app, "\\s|\\w", std::span<const std::int16_t>{rgParams}).data()) == "Race-\xce\xa9 Scout-\xce\xa9|Race-\xce\xa9 Scout-\xce\xa9");
     app.state.rglpfl = rglpflSav; app.state.cFleet = cFleetSav;
     app.state.rgplr[0].cFleet = cPlayer0Sav; app.state.rgplr[1].cFleet = cPlayer1Sav;
     struct CASE { std::uint16_t ith, iWarp, iplr; const char *psz; };
@@ -455,7 +455,7 @@ static void test_ObjectName_contract(void) {
     th.SetIth(ithWormhole);
     const auto szThing = PszGetThingName(app, static_cast<std::int16_t>(th.idFull()));
     rgParams[0] = static_cast<std::int16_t>(th.idFull());
-    TEST_CHECK(std::string_view(PszFormatString(app, "\\g|\\w", rgParams).data()) == "Wormhole|Wormhole");
+    TEST_CHECK(std::string_view(PszFormatString(app, "\\g|\\w", std::span<const std::int16_t>{rgParams}).data()) == "Wormhole|Wormhole");
     CchCopyUtf8Prefix(std::span{app.state.szWork}, "scratch changed");
     TEST_CHECK(std::string_view(szPlanet.data()) == "007");
     TEST_CHECK(std::string_view(szFleet.data()) == "Race-\xce\xa9 Scout-\xce\xa9");
