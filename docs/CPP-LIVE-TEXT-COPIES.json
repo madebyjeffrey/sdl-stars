@@ -1,6 +1,6 @@
 {
   "migration_parent": "d3d3724c",
-  "status": "284 migrated sites complete; remaining text work active",
+  "status": "285 migrated sites complete; remaining text work active",
   "contracts": {
     "display": "Write a terminated complete UTF-8 prefix into the actual destination span; preserve fitting bytes. Views borrow synchronously and overlapping copies use memmove.",
     "append": "Scan only inside the destination span for its NUL. An unterminated nonempty destination is cleared and zero bytes are appended.",
@@ -2813,6 +2813,16 @@
       "original_call": "strcpy(app.state.vrgZip[iZip].szName, szT)",
       "destination_span": "std::span{app.state.vrgZip[iZip].szName}",
       "role": "The only live FCheckZip caller uses idsDropcol (DropCol, seven bytes), fitting its saved 13-byte preset-name field. The temporary catalog lookup and action/quantity update order remain; no record size or trailing-byte reset."
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "scope": "MakeNewName",
+      "baseline_line": 1805,
+      "migration_parent": "d84690f3",
+      "operation": "strcpy",
+      "original_call": "strcpy(lpsz + cLen, \" (2)\")",
+      "destination_span": "lpsz.subspan(static_cast<std::size_t>(cLen)), from span<char,32> bound to HUL.szClass",
+      "role": "Intentional field-bounds repair: bounded terminator search rejects a full unterminated field; cLen < 3 prevents all negative suffix lookbehind; explicit ASCII digit checks avoid ctype on UTF-8 bytes. At cLen <= 27 the four-byte suffix and NUL fit the actual 32-byte field. Original digit stepping, scalar widths, debug names and pixel-fitting call remain."
     }
   ],
   "remaining_spelling_scope": "Lexical raw-copy spellings, including SDK declarations/definitions; comments/literals excluded with the manifest lexer. Exact counts prevent new raw sites during the remaining migration.",
@@ -2932,13 +2942,6 @@
     {
       "path": "src/core/util.cpp",
       "normalized_call": "std::strcpy(szFile,app.state.szBase)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/buildui.cpp",
-      "normalized_call": "std::strcpy(lpsz+cLen,)",
       "count": 1,
       "status": "pending",
       "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
@@ -3282,6 +3285,32 @@
       },
       "remaining": "24 initial copies, other service/readonly protocols, post-migration UI/game scratch storage and borrowing, wrapper formatting, typed file selection Milestone D and L08 final qualification remain active.",
       "receipts": "dist/verification/live-cpp/l05ac/"
+    }
+  },
+  "ship_clone_name_bounds": {
+    "status": "complete; locally verified; final platform qualification pending",
+    "parent": "d84690f3",
+    "sites": 1,
+    "interface": "MakeNewName receives span<char,32> from its one actual HUL.szClass caller; the fixture uses the same fixed view.",
+    "reproduction": "Parent actual Debug ASan/UBSan UI test reports a one-byte stack read immediately before rgchName[32] in MakeNewName at buildui.cpp:1802 on an empty name.",
+    "intentional_change": "Short names no longer read before their field, and an unterminated 32-byte field is left untouched before suffix parsing/pixel measurement. Valid suffix handling and screen fitting remain; field layouts and host results do not change. CHANGELOG.md and KNOWN-BUGS.md record the repair.",
+    "baseline": "Native baseline fully regenerated and compared against its backup: all 519 matches. 592 regeneration-only file differences were restored after semantic equality, keeping every native baseline byte unchanged. No scenario/checkpoint moved and frozen originals were not modified.",
+    "remaining": "FStringFitsScreen and other mutable text/service views remain part of L06; this fix does not retire the remaining 23 initial copy sites or other scratch/wrapper/Milestone D work.",
+    "verification": {
+      "batch": "L05ad MakeNewName stored-field bounds repair",
+      "debug_build": "Pass; no warnings. Compiler/source policy: 158 owned sources, 159 variants, 161 standalone headers in both orders; exact raw-copy inventory passes.",
+      "desktop": "154/154 including all 29 leak checks, actual clone-name cases, designer/library workflows, linked witnesses and available SDL tutorial checkpoints. The final added neighboring-field assertions also pass in a focused rebuild/run of the actual UI executable.",
+      "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+      "host": "UI-only source/header repair. Core, host, shared platform and CMake inputs are unchanged from qualified 3c52f9bf (29/29 Release host tests; 519 matching host checkpoints), so unchanged host checks are not repeated.",
+      "windows": "147/147 owned production translation units and the final expanded actual native-file UI consumer pass strict MinGW C++20. Compilation evidence; final native Windows SDL execution still required.",
+      "reproduction": "Before production changes, the actual Debug ASan/UBSan UI test reports a one-byte read before its 32-byte name array in MakeNewName at buildui.cpp:1802.",
+      "sanitizers": "Final actual native-file UI executable passes under macOS Debug ASan/UBSan, including nine short/normal/Unicode suffix vectors, an unterminated 32-byte field, adjacent bytes that could mimic a suffix, untouched remaining field bytes, and the existing caption/message/modal cases. Focused sanitizer qualification, not a whole-suite sanitizer claim.",
+      "repair": "One real caller passes HUL.szClass as span<char,32>. Bounded terminator search precedes every suffix/pixel read; unterminated storage is left untouched. cLen < 3 prevents negative lookbehind, explicit ASCII bounds avoid ctype on UTF-8 bytes, and the admitted cLen <= 27 suffix copy uses the actual tail span. Existing one-digit stepping (including 9 to 0), UTF-8 pixel fitting, names and field widths remain.",
+      "baseline": "Native baseline fully regenerated and compared against its backup: all 519 matches. 592 regeneration-only file differences were restored after semantic equality, keeping every native baseline byte unchanged. No scenario/checkpoint moved and frozen originals were not modified.",
+      "intentional_change": "CHANGELOG.md and KNOWN-BUGS.md record the name-field repair. Saved layouts, game/host rules, catalogs, RNG, tie order and floating boundaries remain unchanged.",
+      "inventory": "285 migrated initial copy sites; 23 initial sites remain. Exact lexical raw-copy inventory totals 29 including six SDK extras.",
+      "remaining": "Other copies, mutable/readonly service views including FStringFitsScreen, post-migration scratch/borrowed storage, wrapper formatting, Milestone D and L08 final inventory/platform qualification remain active.",
+      "receipts": "dist/verification/live-cpp/l05ad/"
     }
   }
 }

@@ -6,6 +6,13 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `MakeNewName` now keeps ship-design clone suffix handling inside the saved
+  32-byte name field. Empty names and short closing-parenthesis suffixes could
+  read before that field; an unterminated field could also reach unbounded
+  pixel measurement. Short names receive the existing ` (2)` suffix, and
+  unterminated fields remain untouched. Normal digit stepping, UTF-8 fitting,
+  saved widths, file formats and host turn results are unchanged.
+
 - `SetPlanetTitleBar` now keeps the complete planet caption in bounded owned
   storage. Its former 30-byte local buffer overflowed when a valid UTF-8 planet
   name and the `Planet ` prefix exceeded that capacity. Planet names, stored

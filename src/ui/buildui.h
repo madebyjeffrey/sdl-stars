@@ -3,6 +3,7 @@
 
 #include "win.h"
 #include <cstdint>
+#include <span>
 #include <windows.h>
 
 std::int16_t          ShipBuilder(APPSESSION &app, POINT16 ptDlgSize);
@@ -21,6 +22,6 @@ void             FillBuildPartsLB(APPSESSION &app, HWND hwndLB, std::int16_t grb
 LRESULT  FakeListProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 void             UpdateSlotGlobals(APPSESSION &app);
 std::int16_t          IEmptyBmpFromGrhst(APPSESSION &app, std::int16_t grhst);
-void             MakeNewName(APPSESSION &app, char *lpsz);
+void             MakeNewName(APPSESSION &app, std::span<char, 32> lpsz);
 
 #endif

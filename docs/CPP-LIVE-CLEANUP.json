@@ -111,7 +111,8 @@
         "owned-message-format-decode-and-version-results",
         "readonly-bounded-message-input-views",
         "bounded-fitting-chooser-printer-and-menu-copies",
-        "bounded-fitting-mineral-message-and-tutorial-copies"
+        "bounded-fitting-mineral-message-and-tutorial-copies",
+        "bounded-ship-clone-name-field-repair"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -576,6 +577,22 @@
           "verification": "Mac actual printer, PDF inspection and native printer leak checks: 3/3. Changed printer fixture passes strict MinGW C++20. The official Windows SDL probe preserves exactly 255 bytes through the corrected API. Full native Windows SDL must be requalified on the new head.",
           "scope": "Test fixture and evidence only; no production behavior, game code, save data, goldens or baseline changes. The just-qualified UI cleanup remains 154/154 with 519 matching native checkpoints; unchanged host coverage remains valid.",
           "receipts": "dist/verification/live-cpp/l05ab-windows-fixture/"
+        },
+        {
+          "batch": "L05ad MakeNewName stored-field bounds repair",
+          "debug_build": "Pass; no warnings. Compiler/source policy: 158 owned sources, 159 variants, 161 standalone headers in both orders; exact raw-copy inventory passes.",
+          "desktop": "154/154 including all 29 leak checks, actual clone-name cases, designer/library workflows, linked witnesses and available SDL tutorial checkpoints. The final added neighboring-field assertions also pass in a focused rebuild/run of the actual UI executable.",
+          "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+          "host": "UI-only source/header repair. Core, host, shared platform and CMake inputs are unchanged from qualified 3c52f9bf (29/29 Release host tests; 519 matching host checkpoints), so unchanged host checks are not repeated.",
+          "windows": "147/147 owned production translation units and the final expanded actual native-file UI consumer pass strict MinGW C++20. Compilation evidence; final native Windows SDL execution still required.",
+          "reproduction": "Before production changes, the actual Debug ASan/UBSan UI test reports a one-byte read before its 32-byte name array in MakeNewName at buildui.cpp:1802.",
+          "sanitizers": "Final actual native-file UI executable passes under macOS Debug ASan/UBSan, including nine short/normal/Unicode suffix vectors, an unterminated 32-byte field, adjacent bytes that could mimic a suffix, untouched remaining field bytes, and the existing caption/message/modal cases. Focused sanitizer qualification, not a whole-suite sanitizer claim.",
+          "repair": "One real caller passes HUL.szClass as span<char,32>. Bounded terminator search precedes every suffix/pixel read; unterminated storage is left untouched. cLen < 3 prevents negative lookbehind, explicit ASCII bounds avoid ctype on UTF-8 bytes, and the admitted cLen <= 27 suffix copy uses the actual tail span. Existing one-digit stepping (including 9 to 0), UTF-8 pixel fitting, names and field widths remain.",
+          "baseline": "Native baseline fully regenerated and compared against its backup: all 519 matches. 592 regeneration-only file differences were restored after semantic equality, keeping every native baseline byte unchanged. No scenario/checkpoint moved and frozen originals were not modified.",
+          "intentional_change": "CHANGELOG.md and KNOWN-BUGS.md record the name-field repair. Saved layouts, game/host rules, catalogs, RNG, tie order and floating boundaries remain unchanged.",
+          "inventory": "285 migrated initial copy sites; 23 initial sites remain. Exact lexical raw-copy inventory totals 29 including six SDK extras.",
+          "remaining": "Other copies, mutable/readonly service views including FStringFitsScreen, post-migration scratch/borrowed storage, wrapper formatting, Milestone D and L08 final inventory/platform qualification remain active.",
+          "receipts": "dist/verification/live-cpp/l05ad/"
         }
       ],
       "bounded_formatting": {
@@ -833,6 +850,11 @@
         "status": "complete; locally verified; native Windows qualification pending",
         "sites": 7,
         "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
+      },
+      "ship_clone_name_bounds": {
+        "status": "complete; locally verified; final platform qualification pending",
+        "sites": 1,
+        "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
       }
     },
     {
@@ -866,7 +888,8 @@
         "fixed-library-name-modal-and-suggestion-views",
         "readonly-bounded-message-format-and-parameter-views",
         "named-production-estimate-ETA-and-task-label-results",
-        "readonly-fixed-tutorial-preset-action-view"
+        "readonly-fixed-tutorial-preset-action-view",
+        "fixed-ship-clone-name-field-view"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -1372,6 +1395,11 @@
       "tutorial_action_view": {
         "status": "complete; locally verified; native Windows qualification pending",
         "interface": "FCheckZip uses span<const ITEMACTION,5>",
+        "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
+      },
+      "ship_clone_name_view": {
+        "status": "complete; locally verified; final platform qualification pending",
+        "interface": "MakeNewName uses span<char,32> from the actual stored field",
         "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
       }
     },
@@ -15677,7 +15705,8 @@
       "path": "src/ui/buildui.cpp",
       "line": 1805,
       "code": "strcpy(lpsz + cLen, \" (2)\");",
-      "disposition": "pending"
+      "disposition": "fixed-name-field-bounds-L05ad",
+      "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
     },
     {
       "kind": "c_header",

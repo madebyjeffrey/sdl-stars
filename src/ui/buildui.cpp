@@ -444,7 +444,7 @@ INT_PTR  SlotDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                     lpshdef->cExist = 0;
                     lpshdef->cBuilt = 0;
                     if (app.lpui->mdBuild == mdBuildShdef && !lpshdef->fGift) {
-                        MakeNewName(app, lpshdef->hul.szClass);
+                        MakeNewName(app, std::span<char, 32>{lpshdef->hul.szClass});
                     } else {
                         lpshdef->fGift = 0;
                         for (j = 0; j < lpshdef->hul.chs; j++) {
@@ -1794,19 +1794,21 @@ std::int16_t IEmptyBmpFromGrhst(APPSESSION &app, std::int16_t grhst) {
     return 0;
 }
 
-void MakeNewName(APPSESSION &app, char *lpsz) {
+void MakeNewName(APPSESSION &app, std::span<char, 32> lpsz) {
     std::int16_t cLen;
 
-    cLen = std::strlen(lpsz);
+    cLen = static_cast<std::int16_t>(std::find(lpsz.begin(), lpsz.end(), 0) - lpsz.begin());
+    // Pixel measurement also needs a terminator inside the stored name field.
+    if (cLen == static_cast<std::int16_t>(lpsz.size())) return;
     if (cLen <= 27) {
-        if (lpsz[cLen - 1] != ')' || std::isdigit(lpsz[cLen - 2]) == 0 || lpsz[cLen - 3] != '(') {
-            std::strcpy(lpsz + cLen, " (2)");
+        if (cLen < 3 || lpsz[cLen - 1] != ')' || lpsz[cLen - 2] < '0' || lpsz[cLen - 2] > '9' || lpsz[cLen - 3] != '(') {
+            CchCopyUtf8(lpsz.subspan(static_cast<std::size_t>(cLen)), " (2)");
         } else if (lpsz[cLen - 2] == '9') {
             lpsz[cLen - 2] = '0';
         } else {
             lpsz[cLen - 2] = lpsz[cLen - 2] + 1;
         }
     }
-    FStringFitsScreen(app, lpsz, 160);
+    FStringFitsScreen(app, lpsz.data(), 160);
     return;
 }

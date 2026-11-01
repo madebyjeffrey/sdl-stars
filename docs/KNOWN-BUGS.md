@@ -963,3 +963,15 @@ stored/returned text and SDL native titles, validating creation and title
 changes. Scanner JSON export also validates and preserves the same bytes,
 without the old CP1252 mapping. Tests cover title changes, Unicode snapshot
 names, JSON escaping and malformed text rejection.
+
+## Ship-design clone name bounds — fixed on develop
+
+`MakeNewName` inspected the three bytes before a trailing terminator without
+first checking the name length. Cloning an empty name, `)` or `1)` could read
+before `HUL.szClass`. The actual sanitizer-built UI test reproduces a one-byte
+stack-field underflow on the empty name. Its new fixed 32-byte view also stops
+an unterminated field from reaching the pixel-fitting helper. Suffix recognition
+uses ASCII digit bounds; valid UTF-8 continuation bytes never enter `isdigit`.
+The existing ` (2)` append, single-digit stepping (including `9` to `0`), screen
+fitting and saved field width remain. Native checkpoints are unchanged; this
+does not change turn generation.

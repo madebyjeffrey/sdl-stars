@@ -8,6 +8,7 @@
 #include "control_io.h"
 #include "librarypublication.h"
 #include "planetui.h"
+#include "buildui.h"
 #include "mineui.h"
 #include "msgui.h"
 #include "tutor.h"
@@ -222,7 +223,46 @@ static void TestRawMessageDisplay(void) {
     StarsCompatProcessExit();
 }
 
-TEST_LIST = {{"raw player message paints its full UTF-8 byte budget within the display buffer", TestRawMessageDisplay},
+static void TestShipCloneNameBounds(void) {
+    APPSESSION &app = ui::app;
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    struct CASE { std::string_view szBefore, szAfter; };
+    const CASE rgCases[] = {
+        {"", " (2)"}, {")", ") (2)"}, {"1)", "1) (2)"}, {"(2)", "(3)"},
+        {"Scout", "Scout (2)"}, {"Scout (2)", "Scout (3)"}, {"Scout (9)", "Scout (0)"},
+        {"Scout (A)", "Scout (A) (2)"}, {"\xc3\xa9)", "\xc3\xa9) (2)"}
+    };
+    TEST_ASSERT(FStarsTestInit(app));
+    for (const auto &cs : rgCases) {
+        std::array<char, 32> rgchName;
+        rgchName.fill('q');
+        TEST_ASSERT(CchCopyUtf8(std::span{rgchName}, cs.szBefore) >= 0);
+        MakeNewName(app, std::span<char, 32>{rgchName});
+        TEST_CHECK(std::string_view(rgchName.data()) == cs.szAfter);
+        TEST_MSG("before [%.*s], expected [%.*s], got [%s]", static_cast<int>(cs.szBefore.size()), cs.szBefore.data(),
+                 static_cast<int>(cs.szAfter.size()), cs.szAfter.data(), rgchName.data());
+        TEST_CHECK(FUtf8Valid(std::string_view(rgchName.data())));
+        TEST_CHECK(std::all_of(rgchName.begin() + std::max(cs.szBefore.size(), cs.szAfter.size()) + 1,
+                               rgchName.end(), [](char ch) { return ch == 'q'; }));
+    }
+    std::array<char, 32> rgchUnterminated;
+    rgchUnterminated.fill('q');
+    MakeNewName(app, std::span<char, 32>{rgchUnterminated});
+    TEST_CHECK(std::all_of(rgchUnterminated.begin(), rgchUnterminated.end(), [](char ch) { return ch == 'q'; }));
+    struct {
+        std::array<char, 2> rgchBefore;
+        std::array<char, 32> rgchName;
+        std::array<char, 2> rgchAfter;
+    } storage{{'(', '9'}, {')', 0}, {'x', 'y'}};
+    MakeNewName(app, std::span<char, 32>{storage.rgchName});
+    TEST_CHECK(std::string_view(storage.rgchName.data()) == ") (2)");
+    TEST_CHECK(storage.rgchBefore[0] == '(' && storage.rgchBefore[1] == '9');
+    TEST_CHECK(storage.rgchAfter[0] == 'x' && storage.rgchAfter[1] == 'y');
+    StarsCompatProcessExit();
+}
+
+TEST_LIST = {{"ship clone suffix handles empty and short UTF-8 names within its field", TestShipCloneNameBounds},
+             {"raw player message paints its full UTF-8 byte budget within the display buffer", TestRawMessageDisplay},
              {"mineral captions and tutorial preset keep complete text and field widths", TestMineralAndTutorialText},
              {"planet title retains complete UTF-8 names beyond its former local buffer", TestPlanetTitleCapacity}, {"library-name dialog preserves accepted text and cancelled storage", TestLibraryNameDialog},
              {"native path captions and UTF-8 password fields", TestTextBoundaries},
