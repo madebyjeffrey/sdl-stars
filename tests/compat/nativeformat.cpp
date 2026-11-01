@@ -11,8 +11,10 @@
 #define CHECK(f) do { if (!(f)) { std::fprintf(stderr, "line %d: %s\n", __LINE__, #f); return false; } } while (0)
 
 template<class... ARGS> bool FCompare(const char *pszFormat, ARGS... args) {
-    for (std::size_t cb = 0; cb <= 80; cb++) {
-        char rgExpected[88], rgActual[88];
+    // Include a fitting destination as well as every smaller capacity. GCC's
+    // fortified CRT diagnoses a reference call that can only ever truncate.
+    for (std::size_t cb = 0; cb <= 128; cb++) {
+        char rgExpected[136], rgActual[136];
         std::fill(std::begin(rgExpected), std::end(rgExpected), '!');
         std::fill(std::begin(rgActual), std::end(rgActual), '!');
         const int expected = std::snprintf(rgExpected + 3, cb, pszFormat, args..., 0);
