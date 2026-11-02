@@ -333,7 +333,7 @@ void DoThingInteractions(APPSESSION &app, std::int16_t fPostMove) {
                                             rgTech[iLowest]++;
                                             iplrSav = app.state.idPlayer;
                                             app.state.idPlayer = iplr;
-                                            wtNext = CostOfDevelopingItem(app, reinterpret_cast<char *>(rgTech));
+                                            wtNext = CostOfDevelopingItem(app, reinterpret_cast<const char *>(rgTech));
                                             app.state.idPlayer = iplrSav;
                                             lSpent = app.state.rgplr[iplr].rgResSpent[iLowest];
                                             lSpent = static_cast<std::int32_t>((lSpent * 2));

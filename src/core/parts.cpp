@@ -391,7 +391,7 @@ std::int16_t FLookupPart(APPSESSION &app, PART *ppart) {
             return mdPartAvailRestricted;
         }
     }
-    return app.state.idPlayer == iplrNone ? static_cast<int>(mdPartAvailAvailable) : PartQueryIO().pfnTechStatus(app, reinterpret_cast<char *>(ppart->pcom().rgTech()));
+    return app.state.idPlayer == iplrNone ? static_cast<int>(mdPartAvailAvailable) : PartQueryIO().pfnTechStatus(app, reinterpret_cast<const char *>(ppart->pcom().rgTech()));
 }
 
 void LookupBestPlanetaryScanner(APPSESSION &app, PART *ppart) {
@@ -403,7 +403,7 @@ void LookupBestPlanetaryScanner(APPSESSION &app, PART *ppart) {
     return;
 }
 
-std::int16_t TechStatus(APPSESSION &app, char *rgTech) {
+std::int16_t TechStatus(APPSESSION &app, const char *rgTech) {
     std::int16_t fInAWhile;
     std::int16_t i;
     std::int16_t fAlmost;

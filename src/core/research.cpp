@@ -59,7 +59,7 @@ std::int32_t ProjectedResearchSpending(APPSESSION &app, std::int32_t pct) {
     return lSpend;
 }
 
-std::int32_t CostOfDevelopingItem(APPSESSION &app, char *rgTech) {
+std::int32_t CostOfDevelopingItem(APPSESSION &app, const char *rgTech) {
     std::int32_t lSpent;
     char   *pTech;
     char    rgTechSav[6];
