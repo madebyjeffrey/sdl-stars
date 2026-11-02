@@ -5,6 +5,7 @@
 #include <commctrl.h>
 #include <cinttypes>
 #include <cstring>
+#include <span>
 #include "native.h"
 #include "inspect_styles.h"
 
@@ -16,59 +17,61 @@ void StarsCompatSetObjectInspector(HWND (*pfnShow)(void)) {
 static BOOL fInspectorClass;
 static STARSCOMPATSNAPSHOT snapInspector;
 
-static void AppendStyle(char *psz, std::size_t cb, const char *pszName) {
-    if (*psz) SDL_strlcat(psz, " | ", cb);
-    SDL_strlcat(psz, pszName, cb);
+static void AppendStyle(std::span<char> rgch, const char *pszName) {
+    if (rgch.empty()) return;
+    if (rgch[0]) FAppendUtf8(rgch, " | ");
+    FAppendUtf8(rgch, pszName);
 }
 
 template<std::size_t c>
-static void DecodeStyles(char *psz, std::size_t cb, DWORD *lpdw, const STYLEFIELD (&rg)[c]) {
+static void DecodeStyles(std::span<char> rgch, DWORD *lpdw, const STYLEFIELD (&rg)[c]) {
     std::size_t i;
     DWORD dwFields = 0, dwOriginal = *lpdw;
     for (i = 0; i < c; i++) {
         if (!(dwFields & rg[i].dwMask) && (dwOriginal & rg[i].dwMask) == rg[i].dwValue) {
-            AppendStyle(psz, cb, rg[i].psz);
+            AppendStyle(rgch, rg[i].psz);
             dwFields |= rg[i].dwMask;
         }
     }
     *lpdw &= ~dwFields;
 }
 
-static void FormatStyles(const STARSCOMPATWINDOW *lp, BOOL fExtended, char *psz, std::size_t cb) {
+static void FormatStyles(const STARSCOMPATWINDOW *lp, BOOL fExtended, std::span<char> rgch) {
     DWORD dw = fExtended ? lp->dwExStyle : lp->dwStyle;
     char szUnknown[32];
-    *psz = 0;
+    if (rgch.empty()) return;
+    rgch[0] = 0;
     if (fExtended) {
-        DecodeStyles(psz, cb, &dw, rgstyleExtended);
+        DecodeStyles(rgch, &dw, rgstyleExtended);
     } else {
-        if (!(dw & (win32::WS_CHILD | win32::WS_POPUP))) AppendStyle(psz, cb, "WS_OVERLAPPED");
-        DecodeStyles(psz, cb, &dw, rgstyleWindow);
-        if (dw & win32::WS_GROUP) AppendStyle(psz, cb, lp->dwStyle & win32::WS_CHILD ? "WS_GROUP" : "WS_MINIMIZEBOX");
-        if (dw & win32::WS_TABSTOP) AppendStyle(psz, cb, lp->dwStyle & win32::WS_CHILD ? "WS_TABSTOP" : "WS_MAXIMIZEBOX");
+        if (!(dw & (win32::WS_CHILD | win32::WS_POPUP))) AppendStyle(rgch, "WS_OVERLAPPED");
+        DecodeStyles(rgch, &dw, rgstyleWindow);
+        if (dw & win32::WS_GROUP) AppendStyle(rgch, lp->dwStyle & win32::WS_CHILD ? "WS_GROUP" : "WS_MINIMIZEBOX");
+        if (dw & win32::WS_TABSTOP) AppendStyle(rgch, lp->dwStyle & win32::WS_CHILD ? "WS_TABSTOP" : "WS_MAXIMIZEBOX");
         dw &= ~(win32::WS_GROUP | win32::WS_TABSTOP);
-        if (lp->fDialog) { DecodeStyles(psz, cb, &dw, rgstyleDialog); }
+        if (lp->fDialog) { DecodeStyles(rgch, &dw, rgstyleDialog); }
         else switch (lp->iControl) {
-        case 1: DecodeStyles(psz, cb, &dw, rgstyleButton); break;
-        case 2: DecodeStyles(psz, cb, &dw, rgstyleStatic); break;
-        case 3: DecodeStyles(psz, cb, &dw, rgstyleEdit); break;
-        case 4: DecodeStyles(psz, cb, &dw, rgstyleList); break;
+        case 1: DecodeStyles(rgch, &dw, rgstyleButton); break;
+        case 2: DecodeStyles(rgch, &dw, rgstyleStatic); break;
+        case 3: DecodeStyles(rgch, &dw, rgstyleEdit); break;
+        case 4: DecodeStyles(rgch, &dw, rgstyleList); break;
         case 5:
-            DecodeStyles(psz, cb, &dw, rgstyleScroll);
-            if (dw & win32::SBS_TOPALIGN) AppendStyle(psz, cb, lp->dwStyle & win32::SBS_SIZEBOX ?
+            DecodeStyles(rgch, &dw, rgstyleScroll);
+            if (dw & win32::SBS_TOPALIGN) AppendStyle(rgch, lp->dwStyle & win32::SBS_SIZEBOX ?
                 "SBS_SIZEBOXTOPLEFTALIGN" : lp->dwStyle & win32::SBS_VERT ? "SBS_LEFTALIGN" : "SBS_TOPALIGN");
-            if (dw & win32::SBS_BOTTOMALIGN) AppendStyle(psz, cb, lp->dwStyle & win32::SBS_SIZEBOX ?
+            if (dw & win32::SBS_BOTTOMALIGN) AppendStyle(rgch, lp->dwStyle & win32::SBS_SIZEBOX ?
                 "SBS_SIZEBOXBOTTOMRIGHTALIGN" : lp->dwStyle & win32::SBS_VERT ? "SBS_RIGHTALIGN" : "SBS_BOTTOMALIGN");
             dw &= ~(win32::SBS_TOPALIGN | win32::SBS_BOTTOMALIGN);
             break;
-        case 6: DecodeStyles(psz, cb, &dw, rgstyleCombo); break;
-        case 7: DecodeStyles(psz, cb, &dw, rgstyleToolbar); break;
+        case 6: DecodeStyles(rgch, &dw, rgstyleCombo); break;
+        case 7: DecodeStyles(rgch, &dw, rgstyleToolbar); break;
         }
     }
     if (dw) {
         CchSnprintf(std::span{szUnknown}, "0x%08x", static_cast<unsigned>(dw));
-        AppendStyle(psz, cb, szUnknown);
+        AppendStyle(rgch, szUnknown);
     }
-    if (!*psz) SDL_strlcpy(psz, "0", cb);
+    if (!rgch[0]) CchCopyUtf8(rgch, "0");
 }
 
 static const char *PszControlKind(UINT iControl) {
@@ -185,8 +188,8 @@ BOOL StarsCompatWriteHierarchy(const STARSCOMPATSNAPSHOT *lpsnap, NATIVEFILE *lp
     if (IPutNativeString("{\"schema\":1,\"windows\":[\n", lpfile) == EOF) return 0;
     for (i = 0; i < lpsnap->cWindow; i++) {
         lp = &lpsnap->rgWindow[i];
-        FormatStyles(lp, 0, szStyle, sizeof(szStyle));
-        FormatStyles(lp, 1, szExStyle, sizeof(szExStyle));
+        FormatStyles(lp, 0, std::span{szStyle});
+        FormatStyles(lp, 1, std::span{szExStyle});
         if (CchNativePrintf(lpfile, "%s{\"id\":\"%" PRIu64 "\",\"parent\":\"%" PRIu64
                     "\",\"owner\":\"%" PRIu64 "\",\"controlId\":\"%" PRIdPTR
                     "\",\"style\":%u,\"exStyle\":%u,\"controlKind\":%u,\"dialog\":%s,"
@@ -219,8 +222,8 @@ static void InspectDetails(HWND hwnd) {
     iItem = win32::SendMessageA(hwndList, win32::LB_GETITEMDATA, static_cast<WPARAM>(i), 0);
     if (iItem < 0 || static_cast<std::size_t>(iItem) >= snapInspector.cWindow) return;
     lp = &snapInspector.rgWindow[iItem];
-    FormatStyles(lp, 0, szStyle, sizeof(szStyle));
-    FormatStyles(lp, 1, szExStyle, sizeof(szExStyle));
+    FormatStyles(lp, 0, std::span{szStyle});
+    FormatStyles(lp, 1, std::span{szExStyle});
     cb = std::strlen(lp->pszClass) + std::strlen(lp->pszText) + std::strlen(szStyle) + std::strlen(szExStyle);
     if (cb > SIZE_MAX - 640 || !(psz = static_cast<char *>((SDL_malloc(cb + 640))))) return;
     NATIVEOWNER<char, SDL_free> pszOwner(psz);
