@@ -1,6 +1,6 @@
 {
   "migration_parent": "d3d3724c",
-  "status": "302 copy migrations recorded; live text work remains active",
+  "status": "303 copy migrations recorded; live text work remains active",
   "contracts": {
     "display": "Write a terminated complete UTF-8 prefix into the actual destination span; preserve fitting bytes. Views borrow synchronously and overlapping copies use memmove.",
     "append": "Scan only inside the destination span for its NUL. An unterminated nonempty destination is cleared and zero bytes are appended.",
@@ -2992,17 +2992,19 @@
       "original_call": "std::strcpy(app.state.game.szName, app.state.szBase)",
       "destination_span": "std::span{app.state.game.szName}",
       "role": "Blank-title fallback uses a complete UTF-8 prefix within the actual fixed 32-byte saved title. The complete 256-byte basename field remains unchanged."
+    },
+    {
+      "path": "src/core/race.cpp",
+      "scope": "FWasRaceFile",
+      "baseline_line": 697,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.szWork, szFile)",
+      "destination_span": "std::span{app.state.szWork}",
+      "role": "Own the complete admitted UTF-8 filename across synchronous callbacks. Diagnostic staging alone uses a complete UTF-8 prefix within the actual Work buffer; I/O sees the full owned path."
     }
   ],
   "remaining_spelling_scope": "Lexical raw-copy spellings, including SDK declarations/definitions; comments/literals excluded with the manifest lexer. Exact counts prevent new raw sites during the remaining migration.",
   "remaining_raw_spellings": [
-    {
-      "path": "src/core/race.cpp",
-      "normalized_call": "std::strcpy(app.state.szWork,szFile)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
     {
       "path": "src/ui/mdi.cpp",
       "normalized_call": "std::strcpy(app.state.szBase,app.state.szWork)",
@@ -3537,6 +3539,48 @@
       },
       "inventory": "One raw copy retired; six calls remain (one core diagnostic, two MDI paths, one scanner append, two SDK message outputs). 302 copy-migration records; broader L05/L06 and L08 work still open.",
       "receipts": "dist/verification/live-cpp/l05aj/"
+    }
+  },
+  "race_file_input": {
+    "status": "complete; locally verified; native Windows/Linux qualification pending",
+    "parent": "058f2808",
+    "reproduction": "The actual parent loads a valid race after the open provider changes shared Work/Base. Its saved filename cache becomes changed-by-open instead of humanoid.r1.",
+    "contract": "Readonly UTF-8 input is snapshotted before I/O and retained across read/password/close callbacks; empty, malformed and embedded-NUL paths fail before side effects. The open receives the complete path, while error display alone uses the bounded Work prefix.",
+    "verification": {
+      "batch": "L05ak owned readonly race-file inputs and bounded diagnostics",
+      "parent": "058f2808288033d81581bdc4802649eadf1248fc",
+      "status": "complete; locally verified; native Windows/Linux qualification pending",
+      "reproduction": "The actual parent loads a valid race after the open callback changes Work/Base; the saved filename becomes changed-by-open instead of humanoid.r1. The new assertion fails before the repair.",
+      "implementation": [
+        "FWasRaceFile accepts a readonly string_view and validates nonempty whole UTF-8 without embedded NUL before changing error state or invoking I/O.",
+        "A local std::string owns the full path before any read/password/close callback. Allocation failure follows the existing memory alert/StarsError recovery pattern. No input view escapes.",
+        "Open receives the complete path, including paths longer than Work. Only diagnostic staging takes a complete UTF-8 prefix within the actual 360-byte destination.",
+        "Filename extraction uses the owned path. Record widths, race checksums, conversion/password rules, RNG and simulation arithmetic remain unchanged."
+      ],
+      "checks": {
+        "debug": "Full macos-sdl-debug build, no warnings.",
+        "desktop": "154/154, including 29 leak cases, actual race/library/new-game workflows and available SDL tutorial checkpoints.",
+        "host": "29/29 Release host tests.",
+        "sanitizers": "The actual 13-case SDL race executable passes twice under ASan/UBSan.",
+        "windows": "147/147 owned production translation units plus the expanded SDL race consumer pass MinGW syntax. Actual rebuilt Windows host race executable passes nine isolated cases under Wine. Native Windows/Linux qualification of this batch remains pending.",
+        "manifest": "158 owned sources, 159 compiled variants, 161 standalone headers in both orders; exact raw-copy inventory passes.",
+        "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors/skips.",
+        "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors/skips.",
+        "baseline": "592 native baseline files byte-identical after restoring 592 regeneration-only file changes; all 519 checkpoints match and none moved."
+      },
+      "tests": [
+        "Actual valid race loads from Work and Base survive a provider that overwrites both shared buffers after opening.",
+        "A valid filename slice with a non-NUL trailing guard opens and loads the intended file.",
+        "Empty, malformed UTF-8 and embedded-NUL views leave Work/error flags untouched and invoke no open/close/alert.",
+        "Invalid-record providers receive complete short/multibyte/1027-byte paths. Read/close mutations cannot replace the original diagnostic; the display prefix is bounded and valid UTF-8, with unchanged race state and closed handles."
+      ],
+      "inventory": "One raw-copy call retired; five remain (two MDI paths, one scanner append, two SDK message outputs). 303 copy-migration records; other L05/L06 work, Milestone D and L08 remain open.",
+      "receipts": "dist/verification/live-cpp/l05ak/",
+      "source_sha256": {
+        "src/core/race.cpp": "f9fb6a7caa39a40519b75baba028fd6f81774f58d3421cb885c26c0fc3bcd38e",
+        "src/core/race.h": "5cc1aead016c48e24aadbe4ebddd4e492d6d8c286b968589e07e48acd95864be",
+        "tests/unit/test_race.cpp": "d04199345ffecb46bde2cdb694c62a56313988e648d200e30c3d76c70cb31543"
+      }
     }
   }
 }

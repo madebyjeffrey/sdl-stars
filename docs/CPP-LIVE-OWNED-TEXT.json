@@ -6502,5 +6502,11 @@
     "ownership": "Synchronous readonly input; stack snapshots sized from the actual basename and valid extension limits own data before shared normalization, metadata or I/O. The normalized family remains stable through orders replay and MRU. No input view escapes.",
     "limits": "Basenames are nonempty whole UTF-8 without NUL and fit the existing 255-byte session field. Extensions select host or slots 1-16 through an optional bounded parse.",
     "verification": "docs/CPP-LIVE-TEXT-COPIES.json: game_file_inputs.verification"
+  },
+  "race_file_input_view": {
+    "status": "complete; locally verified; native Windows/Linux qualification pending",
+    "interface": "FWasRaceFile(APPSESSION&, string_view szFile, int16_t fChkPass)",
+    "ownership": "Synchronous readonly input; a local std::string owns the path before any read/password/close callback. No input view escapes; allocation failure uses existing StarsError delivery and cleanup.",
+    "evidence": "docs/CPP-LIVE-TEXT-COPIES.json: race_file_input"
   }
 }

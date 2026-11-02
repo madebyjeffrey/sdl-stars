@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include <cstdint>
+#include <string_view>
 
 extern std::int16_t rgRacePrimaryTrait[10];
 extern char    rgRW3Spacing[7];
@@ -23,6 +24,6 @@ std::int32_t  LInnateRaceHabitability(APPSESSION &app, PLAYER *pplr);
 std::uint16_t IRaceChecksum(PLAYER *pplr);
 void     CreateRandomRace(APPSESSION &app, PLAYER *pplr);
 std::int16_t  PctTrueMaxGrowth(APPSESSION &app, std::int16_t iplr);
-std::int16_t  FWasRaceFile(APPSESSION &app, char *szFile, std::int16_t fChkPass);
+std::int16_t  FWasRaceFile(APPSESSION &app, std::string_view szFile, std::int16_t fChkPass);
 
 #endif

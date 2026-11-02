@@ -6,6 +6,19 @@
 #include "callbackcontext.h"
 #include <array>
 #include <string_view>
+#include <string>
+#include "record_io.h"
+#include "text_io.h"
+
+static int cRaceInputOpen;
+static std::string szRaceInputOpened;
+static void OpenRaceInputAndMutate(APPSESSION &app, const char *psz, MdOpenFlags md) {
+    ++cRaceInputOpen;
+    szRaceInputOpened = psz;
+    StreamOpen(app, psz, md);
+    CchCopyUtf8(std::span{app.state.szWork}, "changed-by-open");
+    CchCopyUtf8(std::span{app.state.szBase}, "changed-by-open");
+}
 [[maybe_unused]] static char szTestLiteral2[] = "New-race-pass";
 [[maybe_unused]] static char szTestLiteral3[] = "Replacement";
 [[maybe_unused]] static char szTestLiteral4[] = "Shortened-race";
@@ -22,6 +35,95 @@
 #include <SDL3/SDL_clipboard.h>
 #include "control_io.h"
 #endif
+
+static void test_RaceFile_owned_input(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    TEST_ASSERT(FStarsTestInit(app));
+    RECORDIO io = RecordIO();
+    io.pfnStreamOpen = OpenRaceInputAndMutate;
+    RECORDIOSCOPE recordScope(io);
+    for (int i = 0; i < 2; ++i) {
+        char *szFile = i == 0 ? app.state.szWork : app.state.szBase;
+        TEST_ASSERT(CchCopyUtf8(szFile, i == 0 ? sizeof(app.state.szWork) : sizeof(app.state.szBase),
+            szTestLiteral1.data(), std::strlen(szTestLiteral1.data())) >= 0);
+        cRaceInputOpen = 0;
+        TEST_ASSERT(FWasRaceFile(app, szFile, 0));
+        TEST_CHECK(cRaceInputOpen == 1 && szRaceInputOpened == szTestLiteral1.data());
+        TEST_ASSERT_(std::string_view(app.state.szRaceFile) == "humanoid.r1", "race filename changed to [%s] during loading", app.state.szRaceFile);
+        TEST_CHECK(app.state.hf == -1 && app.state.fFileErrSilent == 1);
+        TEST_CHECK(!FStarsRecoveryActive() && !FStarsErrorPending());
+    }
+    const std::string szGuarded = std::string(szTestLiteral1.data()) + "!";
+    TEST_ASSERT(FWasRaceFile(app, std::string_view{szGuarded.data(), szGuarded.size() - 1}, 0));
+    TEST_CHECK(szRaceInputOpened == szTestLiteral1.data());
+    TEST_CHECK(std::string_view(app.state.szRaceFile) == "humanoid.r1");
+}
+
+static int cRaceInputClose;
+static std::string szRaceInputDiagnostic;
+static void CaptureRaceInput(APPSESSION &, const char *psz, MdOpenFlags md) {
+    TEST_CHECK(md == mdRead);
+    ++cRaceInputOpen;
+    szRaceInputOpened = psz;
+}
+static void ReadInvalidRaceInput(APPSESSION &app) {
+    app.state.hdrCur = {};
+    app.state.hdrCur.rt = rtEOF;
+    CchCopyUtf8(std::span{app.state.szWork}, "changed-by-read");
+}
+static void CloseRaceInput(APPSESSION &app) {
+    ++cRaceInputClose;
+    StreamClose(app);
+    CchCopyUtf8(std::span{app.state.szWork}, "changed-by-close");
+}
+static std::array<char, 256> CaptureRaceInputDiagnostic(APPSESSION &app, StringId ids, std::span<const std::int16_t> pParams) {
+    TEST_CHECK(ids == idsFileDoesBelongVersionStars && pParams.empty());
+    szRaceInputDiagnostic = app.state.szWork;
+    return PszFormatIds(app, ids, pParams);
+}
+static void test_RaceFile_input_bounds(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    TEST_ASSERT(FStarsTestInit(app));
+    RECORDIO io = RecordIO();
+    io.pfnStreamOpen = CaptureRaceInput;
+    io.pfnReadRt = ReadInvalidRaceInput;
+    io.pfnStreamClose = CloseRaceInput;
+    RECORDIOSCOPE recordScope(io);
+    TEXTIO text = TextIO();
+    text.pfnFormat = CaptureRaceInputDiagnostic;
+    TEXTIOSCOPE textScope(text);
+    app.state.fFileErrSilent = 0;
+    CchCopyUtf8(std::span{app.state.szWork}, "preserved");
+    const std::array<std::string_view, 3> rgszBad = {"", "\xff", std::string_view{"race.r1\0tail", 12}};
+    cRaceInputOpen = cRaceInputClose = 0;
+    for (const auto sz : rgszBad) {
+        TEST_CHECK(FWasRaceFile(app, sz, 0) == 0);
+        TEST_CHECK(cRaceInputOpen == 0 && cRaceInputClose == 0 && cStarsTestAlert == 0);
+        TEST_CHECK(std::string_view(app.state.szWork) == "preserved" && app.state.fFileErrSilent == 0);
+    }
+    const std::array<std::string, 3> rgszFile = {"bad-Ω.r1", std::string(358, 'a') + "Ω.r1", std::string(1024, 'b') + ".r1"};
+    for (const auto &sz : rgszFile) {
+        const auto vplrSav = app.state.vplr;
+        cRaceInputOpen = cRaceInputClose = 0;
+        TEST_CHECK(FWasRaceFile(app, sz, 0) == -1);
+        TEST_CHECK(cRaceInputOpen == 1 && cRaceInputClose == 1 && szRaceInputOpened == sz);
+        TEST_CHECK(szRaceInputDiagnostic == sz.substr(0, CchUtf8Prefix(sz, sizeof(app.state.szWork) - 1)));
+        TEST_CHECK(FUtf8Valid(szRaceInputDiagnostic));
+        TEST_CHECK(std::memcmp(&app.state.vplr, &vplrSav, sizeof(vplrSav)) == 0);
+        TEST_CHECK(app.state.hf == -1 && app.state.fFileErrSilent == 0);
+        TEST_CHECK(!FStarsRecoveryActive() && !FStarsErrorPending());
+    }
+}
 
 static int16_t FWriteLegacyRaceFixture(APPSESSION &app, char *szFile, int16_t verMinor, const char *szName, const char *szNames,
                                        int16_t fPlural, int16_t fCompressed, int32_t lSalt) {
@@ -678,7 +780,9 @@ static void test_IRaceChecksum_wire_image(void) {
     TEST_CHECK(IRaceChecksum(&plr) == 0x80c0);
 }
 
-TEST_LIST = {{"race checksum uses the fixed 192-byte wire image", test_IRaceChecksum_wire_image},
+TEST_LIST = {{"race file owns its filename across shared-buffer callbacks", test_RaceFile_owned_input},
+             {"race file admits whole UTF-8 paths and bounds diagnostic text", test_RaceFile_input_bounds},
+             {"race checksum uses the fixed 192-byte wire image", test_IRaceChecksum_wire_image},
              {"race attribute high bit", test_RaceGrbit_high_bit},
              {"LInnateRaceHabitability binary64 rounding", test_LInnateRaceHabitability_double_rounding},
              {"FWasRaceFile imports unprotected legacy race designs", test_FWasRaceFile_imports_unprotected_legacy_designs},

@@ -6,6 +6,13 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `FWasRaceFile` now owns its input path across reads, password prompts and
+  close callbacks. Shared-buffer changes could previously replace the loaded
+  race filename or its diagnostic, and a long error path could overrun the
+  work buffer. Complete UTF-8 paths reach I/O unchanged; only diagnostic text
+  is shortened to its buffer. Invalid path text is rejected before I/O. No
+  native regression checkpoint moved after regeneration and comparison.
+
 - `NewGameDlg` now bounds the blank-title filename fallback to the saved
   title's 31-byte UTF-8 budget. A longer basename previously overran the
   title field and could corrupt adjacent game state. The full filename and

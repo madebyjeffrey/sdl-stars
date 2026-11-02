@@ -17,6 +17,18 @@ J/JRC3/JRC4 fix claims below come from the supplied list and are not independent
 verified release history. See [WIN16-PARITY.md](WIN16-PARITY.md) for native changes
 and [ROADMAP.md](ROADMAP.md) for the post-tag work.
 
+## Race filename changed across callbacks — fixed on develop
+
+`FWasRaceFile` borrowed its filename until the end of loading, including after
+file and password callbacks. An actual parent test loads a valid race while
+the open callback changes Work/Base: the filename cache becomes the callback's
+replacement text. The failure branch also copied an arbitrary path into the
+360-byte work buffer. A readonly input view is now admitted as complete UTF-8
+and owned locally before I/O. The full path survives callbacks and reaches the
+open; only diagnostic staging uses a bounded complete UTF-8 prefix. Record
+widths, race checksums, conversion and password behavior remain unchanged.
+Regenerating and comparing the native baseline moved no checkpoint.
+
 ## Blank new-game title overflows its field — fixed on develop
 
 `NewGameDlg` used an unbounded basename copy when the title edit was empty.

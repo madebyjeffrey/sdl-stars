@@ -313,7 +313,9 @@ race-only `FOpenGame` now bound copies into the existing `szRaceFile[16]`
 suggestion cache through `SetSzRaceFile`; a long native basename previously
 overwrote adjacent globals. Separate UI storage retains the full suggestion for
 repeat saving, and every native cache boundary preserves complete UTF-8 characters.
-Direct `FWasRaceFile` loads also use that UI/host setter.
+Direct `FWasRaceFile` loads also use that UI/host setter. Its readonly input
+is owned across file/password callbacks; diagnostic staging has a separate
+bounded UTF-8 prefix and never truncates the actual open path.
 The selected file path is not truncated, and no saved record changes.
 
 `GetRaceGrbit` and `SetRaceGrbit` now construct masks from `UINT32_C(1)` so

@@ -1,5 +1,7 @@
 #include "common.h"
 #include <algorithm>
+#include <new>
+#include <string>
 #include "appstate.h"
 #include "text_io.h"
 #include "planet_query_io.h"
@@ -594,7 +596,7 @@ static std::int16_t FConvertLegacyRaceNames(APPSESSION &app, PLAYER *pplr, std::
     return 1;
 }
 
-std::int16_t FWasRaceFile(APPSESSION &app, char *szFile, std::int16_t fChkPass) {
+std::int16_t FWasRaceFile(APPSESSION &app, std::string_view szFile, std::int16_t fChkPass) {
     std::int16_t  idsError;
     std::int32_t  lSaltSav;
     PLAYER   plr;
@@ -605,16 +607,25 @@ std::int16_t FWasRaceFile(APPSESSION &app, char *szFile, std::int16_t fChkPass) 
     std::int16_t  fConvert;
     std::int16_t  fProtected;
     std::uint16_t icksum;
-    char    *pch;
+    const char *pch;
+    std::string szFileOwned;
 
     idsError = -1;
     fRet = 0;
+    if (szFile.empty() || !FUtf8Valid(szFile)) return 0;
     fSav = app.state.fFileErrSilent;
     app.state.fFileErrSilent = 1;
     StarsRecoveryScope scopeRecovery;
     try {
+        try {
+            // Reads, password prompts and close callbacks can overwrite shared input buffers.
+            szFileOwned.assign(szFile);
+        } catch (const std::bad_alloc &) {
+            AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMemory, {}).data(), win32::MB_ICONHAND);
+            StarsThrowError(starsErrorMemory, idsMemory);
+        }
         {
-            RecordIO().pfnStreamOpen(app, szFile, mdRead);
+            RecordIO().pfnStreamOpen(app, szFileOwned.c_str(), mdRead);
             RecordIO().pfnReadRt(app);
             if (app.state.hdrCur.rt != rtBOF || app.state.hdrCur.cb != cbWireBof || BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).verMajor() != 2 ||
                 BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).verMinor() < 49 || BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).verMinor() > 85) {
@@ -674,8 +685,8 @@ std::int16_t FWasRaceFile(APPSESSION &app, char *szFile, std::int16_t fChkPass) 
                                    after it when a universe definition names a
                                    race by path. Keep the file name, as the race
                                    dialogs do. */
-                                pch = std::strrchr(szFile, chDirSep);
-                                SetSzRaceFile(app, pch ? pch + 1 : szFile);
+                                pch = std::strrchr(szFileOwned.c_str(), chDirSep);
+                                SetSzRaceFile(app, pch ? pch + 1 : szFileOwned.c_str());
                                 RecordIO().pfnStreamClose(app);
                                 app.state.fFileErrSilent = fSav;
                                 return 1;
@@ -692,10 +703,7 @@ LBadFile:
     RecordIO().pfnStreamClose(app);
     app.state.fFileErrSilent = fSav;
     if (!app.state.fFileErrSilent && idsError != -1) {
-        /* NATIVE: GenNewGameFromFile passes szWork itself; see FLoadGame. */
-        if (szFile != app.state.szWork) {
-            std::strcpy(app.state.szWork, szFile);
-        }
+        CchCopyUtf8Prefix(std::span{app.state.szWork}, szFileOwned);
         AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, static_cast<StringId>(idsError), {}).data(), win32::MB_ICONHAND);
     }
     return fRet;
