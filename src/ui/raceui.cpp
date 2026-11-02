@@ -1375,7 +1375,7 @@ void DrawRaceAdvantagePoints(APPSESSION &app, HDC hdc, RECT *prc, PLAYER *pplr) 
     crSav = win32::SetTextColor(hdc, iPts < 0 ? 127 : 0);
     crBkSav = win32::SetBkColor(hdc, app.lpui->crButtonFace);
     c = CchSprintf(app.state.szWork, app.state.PCTD, iPts);
-    RcCtrTextOut(app, hdc, &rc, app.state.szWork, -1);
+    RcCtrTextOut(app, hdc, &rc, std::string_view{std::span{app.state.szWork}.data()}, true);
     win32::SetTextColor(hdc, 0);
     win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
     c = TextIO().pfnCchGetString(app, idsPointsLeft, std::span{app.state.szWork});

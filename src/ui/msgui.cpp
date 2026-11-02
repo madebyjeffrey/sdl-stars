@@ -179,7 +179,7 @@ LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         while (cch > 0 && static_cast<std::int16_t>(LOWORD(GetTextExtent(hdc, app.lpui->szMsgTitle, cch))) > dxMax) {
             cch = static_cast<std::int16_t>(CchUtf8Prefix(app.lpui->szMsgTitle, cch - 1));
         }
-        RcCtrTextOut(app, hdc, &app.lpui->rcMsgTitle, app.lpui->szMsgTitle, cch);
+        RcCtrTextOut(app, hdc, &app.lpui->rcMsgTitle, std::string_view{app.lpui->szMsgTitle, static_cast<std::size_t>(cch)});
         DecorateMsgTitleBar(app, hdc, &app.lpui->rcMsgTitle);
         rc = app.lpui->rcMsgText;
         dx = rc.right - rc.left;

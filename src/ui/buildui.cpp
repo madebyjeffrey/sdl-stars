@@ -693,24 +693,24 @@ void DrawSlotDlg(APPSESSION &app, HWND hwnd, HDC hdc, RECT *prc, std::int16_t iD
             }
             rc.bottom = static_cast<std::int16_t>((rc.bottom - rc.top)) / 2 + rc.top;
             if (!app.state.fStarbaseMode) {
-                RcCtrTextOut(app, hdc, &rc, TextIO().pfnCompressed(app, idsCargo3).data(), 0);
+                RcCtrTextOut(app, hdc, &rc, TextIO().pfnCompressed(app, idsCargo3).data());
                 c = CchSprintf(app.state.szWork, app.lpui->PCTDKT, WtMaxShdefStat(app.lpui->lpshdefBuild, 2));
-                RcCtrTextOut(app, hdc, &app.lpui->rcCargo, app.state.szWork, 0);
+                RcCtrTextOut(app, hdc, &app.lpui->rcCargo, std::string_view{std::span{app.state.szWork}.data()});
             } else {
                 if (static_cast<std::uint32_t>(lphuldef->hul.wtCargoMax) == 0xffff) {
-                    RcCtrTextOut(app, hdc, &rc, TextIO().pfnCompressed(app, idsUnlimited).data(), 0);
+                    RcCtrTextOut(app, hdc, &rc, TextIO().pfnCompressed(app, idsUnlimited).data());
                 } else {
                     c = CchSprintf(app.state.szWork, app.lpui->PCTDKT, lphuldef->hul.wtCargoMax);
-                    RcCtrTextOut(app, hdc, &rc, app.state.szWork, 0);
+                    RcCtrTextOut(app, hdc, &rc, std::string_view{std::span{app.state.szWork}.data()});
                 }
-                RcCtrTextOut(app, hdc, &app.lpui->rcCargo, TextIO().pfnCompressed(app, idsSpace).data(), 0);
+                RcCtrTextOut(app, hdc, &app.lpui->rcCargo, TextIO().pfnCompressed(app, idsSpace).data());
             }
             rc.top = rc.bottom;
             rc.bottom = app.lpui->rcCargo.bottom - 1;
             if (app.state.fStarbaseMode) {
-                RcCtrTextOut(app, hdc, &rc, TextIO().pfnCompressed(app, idsDock).data(), 0);
+                RcCtrTextOut(app, hdc, &rc, TextIO().pfnCompressed(app, idsDock).data());
             } else {
-                RcCtrTextOut(app, hdc, &rc, TextIO().pfnCompressed(app, idsMax).data(), 0);
+                RcCtrTextOut(app, hdc, &rc, TextIO().pfnCompressed(app, idsMax).data());
             }
         }
         for (; i < iMax; i++) {
@@ -769,7 +769,7 @@ void DrawSlotDlg(APPSESSION &app, HWND hwnd, HDC hdc, RECT *prc, std::int16_t iD
                     win32::SelectObject(hdc, app.lpui->rghfontArial6[0]);
                 }
             }
-            RcCtrTextOut(app, hdc, &rc, app.state.szWork, c);
+            RcCtrTextOut(app, hdc, &rc, std::string_view{std::span{app.state.szWork}.data(), static_cast<std::size_t>(c)});
         }
         win32::SetBkMode(hdc, bkMode);
         win32::SelectObject(hdcMem, hbmpSav);

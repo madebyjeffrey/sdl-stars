@@ -2893,7 +2893,7 @@ LRESULT  TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 win32::SetBkMode(hdc, win32::TRANSPARENT);
                 rcT = rcWnd;
                 rcT.bottom = static_cast<std::int16_t>((3 * rcT.bottom)) / 4;
-                RcCtrTextOut(app, hdc, &rcT, "Stars!", 6);
+                RcCtrTextOut(app, hdc, &rcT, "Stars!");
                 win32::SelectObject(hdc, hfontSav);
                 win32::DeleteObject(hfont);
             }
@@ -2905,7 +2905,7 @@ LRESULT  TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         win32::MapWindowPoints(nullptr, hwnd, reinterpret_cast<POINT *>(&rcT), 2);
         rcWnd.top = rcT.top - static_cast<std::int16_t>((9 * app.state.dyArial8)) / 2;
         rcWnd.bottom = static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2 + rcWnd.top;
-        RcCtrTextOut(app, hdc, &rcWnd, szVersion.data(), std::strlen(szVersion.data()));
+        RcCtrTextOut(app, hdc, &rcWnd, std::string_view{szVersion.data()});
         win32::EndPaint(hwnd, &ps);
         plfOwner.reset();
         break;

@@ -1115,7 +1115,7 @@ void DrawFleetGauge(APPSESSION &app, HDC hdc, RECT *prc, FLEET *lpfl, std::int16
     }
     l = GetTextExtent(hdc, app.state.szWork, c);
     if (static_cast<std::int16_t>(LOWORD(l)) < prc->right - prc->left - 3) {
-        RcCtrTextOut(app, hdc, prc, app.state.szWork, c);
+        RcCtrTextOut(app, hdc, prc, std::string_view{std::span{app.state.szWork}.data(), static_cast<std::size_t>(c)});
     }
     win32::SetBkMode(hdc, iMode);
     return;
@@ -1734,7 +1734,7 @@ void DrawThingXferSide(APPSESSION &app, HDC hdc, RECT *prc, THING *pth, MineralT
         _Draw3dFrame(app, hdc, &rc, 0);
     }
     if (iSupply == SupplyAll) {
-        RcCtrTextOut(app, hdc, &rc, PszGetThingName(app, pth->idFull()).data(), 0);
+        RcCtrTextOut(app, hdc, &rc, std::string_view{PszGetThingName(app, pth->idFull()).data()});
     }
     xLeft = prc->left + 4;
     xRight = prc->right - 4;
@@ -1795,7 +1795,7 @@ void DrawFleetCargoXferSide(APPSESSION &app, HDC hdc, RECT *prc, FLEET *pfl, Min
         _Draw3dFrame(app, hdc, &rc, 0);
     }
     if (iSupply == SupplyAll) {
-        RcCtrTextOut(app, hdc, &rc, PszGetFleetName(app, fl.id).data(), 0);
+        RcCtrTextOut(app, hdc, &rc, std::string_view{PszGetFleetName(app, fl.id).data()});
     }
     xLeft = prc->left + 4;
     xRight = prc->right - 4;
@@ -1885,7 +1885,7 @@ void DrawFleetShipsXferSide(APPSESSION &app, HDC hdc, RECT *prc, FLEET *pfl, Min
         _Draw3dFrame(app, hdc, &rc, 0);
     }
     if (iSupply == SupplyAll) {
-        RcCtrTextOut(app, hdc, &rc, PszGetFleetName(app, fl.id).data(), 0);
+        RcCtrTextOut(app, hdc, &rc, std::string_view{PszGetFleetName(app, fl.id).data()});
     }
     xLeft = prc->right - 4 - app.lpui->dxMaxMineralQuan - 2;
     xRight = xLeft + app.lpui->dxMaxMineralQuan;
@@ -1945,7 +1945,7 @@ void DrawPlanetXferSide(APPSESSION &app, HDC hdc, RECT *prc, PLANET *ppl, Minera
             szCatalogPsz = TextIO().pfnCompressed(app, idsDeepSpace);
             psz = szCatalogPsz.data();
         }
-        RcCtrTextOut(app, hdc, &rc, psz, 0);
+        RcCtrTextOut(app, hdc, &rc, std::string_view{psz});
     }
     xLeft = prc->left + 4;
     xRight = prc->right - 4;

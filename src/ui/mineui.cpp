@@ -77,7 +77,7 @@ LRESULT  MineWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             cch = static_cast<std::int16_t>(CchUtf8Prefix(app.lpui->szMineralTitle, cch - 1));
         }
         rc2.right -= 8;
-        RcCtrTextOut(app, hdc, &rc2, app.lpui->szMineralTitle, cch);
+        RcCtrTextOut(app, hdc, &rc2, std::string_view{app.lpui->szMineralTitle, static_cast<std::size_t>(cch)});
         rc2.right += 8;
         win32::SetTextColor(hdc, crFore);
         win32::SetBkColor(hdc, crBack);

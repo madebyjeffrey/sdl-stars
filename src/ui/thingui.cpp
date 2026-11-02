@@ -45,7 +45,7 @@ void DrawThingGauge(APPSESSION &app, HDC hdc, RECT *prc, THING *lpth, std::int16
     }
     l = GetTextExtent(hdc, app.state.szWork, c);
     if (static_cast<std::int16_t>(LOWORD(l)) < prc->right - prc->left - 3) {
-        RcCtrTextOut(app, hdc, prc, app.state.szWork, c);
+        RcCtrTextOut(app, hdc, prc, std::string_view{std::span{app.state.szWork}.data(), static_cast<std::size_t>(c)});
     }
     win32::SetBkMode(hdc, iMode);
     return;

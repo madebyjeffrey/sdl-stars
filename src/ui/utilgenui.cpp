@@ -176,18 +176,18 @@ void ChopTrailingSpaces(const char *pBeg, const char **ppEnd) {
     return;
 }
 
-void RcCtrTextOut(APPSESSION &app, HDC hdc, RECT *prc, const char *psz, std::int16_t cLen) {
+void RcCtrTextOut(APPSESSION &app, HDC hdc, RECT *prc, std::string_view szText, bool fClear) {
     std::int16_t y;
     std::int16_t x;
     std::int32_t l;
+    const char *psz;
+    std::int16_t cLen;
 
-    if (cLen == -1) {
+    if (fClear) {
         win32::FillRect(hdc, prc, app.lpui->hbrButtonFace);
-        cLen = 0;
     }
-    if (cLen == 0) {
-        cLen = win32::lstrlenA(psz);
-    }
+    psz = szText.empty() ? "" : szText.data();
+    cLen = static_cast<std::int16_t>(szText.size());
     l = GetTextExtent(hdc, psz, cLen);
     x = static_cast<std::int16_t>((prc->right - prc->left - LOWORD(l))) / 2 + prc->left;
     y = static_cast<std::int16_t>((prc->bottom - prc->top - HIWORD(l))) / 2 + prc->top;
@@ -659,11 +659,11 @@ void DrawBtn(APPSESSION &app, HDC hdc, RECT *prc, std::int16_t bt, std::int16_t 
         if (fDown) {
             OffsetRc(&rc, 1, 1);
         }
-        RcCtrTextOut(app, hdc, &rc, szText, 0);
+        RcCtrTextOut(app, hdc, &rc, std::string_view{szText});
         if (fDisabled) {
             OffsetRc(&rc, -1, -1);
             win32::SetTextColor(hdc, app.lpui->crButtonShadow);
-            RcCtrTextOut(app, hdc, &rc, szText, 0);
+            RcCtrTextOut(app, hdc, &rc, std::string_view{szText});
         }
         win32::SetTextColor(hdc, crSav);
         win32::SetBkMode(hdc, bkMode);

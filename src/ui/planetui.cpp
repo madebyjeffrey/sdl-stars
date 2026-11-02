@@ -273,7 +273,7 @@ std::int16_t FDrawTileNC(APPSESSION &app, HDC hdc, TILE *ptile, RECT *prc, std::
         _Draw3dFrame(app, hdc, &rcT, 0);
     }
     win32::FillRect(hdc, &rcT, app.lpui->hbrButtonFace);
-    RcCtrTextOut(app, hdc, &rcT, pszTitle, static_cast<std::int16_t>(szTitle.size()));
+    RcCtrTextOut(app, hdc, &rcT, szTitle);
     win32::SetRect(&rcT, prc->right - 17, prc->top + 1, prc->right, rcT.bottom + 1);
     if (ptile->fPopped) {
         bt = bt;
@@ -737,7 +737,7 @@ void DrawMassWarpGauge(APPSESSION &app, HDC hdc, RECT *prc, std::int16_t iBest, 
     iMode = win32::SetBkMode(hdc, win32::TRANSPARENT);
     c = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsWarpLd).data(), l + 4);
     l = GetTextExtent(hdc, app.state.szWork, c);
-    RcCtrTextOut(app, hdc, prc, app.state.szWork, c);
+    RcCtrTextOut(app, hdc, prc, std::string_view{std::span{app.state.szWork}.data(), static_cast<std::size_t>(c)});
     win32::SetBkMode(hdc, iMode);
     return;
 }

@@ -14,7 +14,7 @@ void WrapTextOut(APPSESSION &app, HDC hdc, std::int16_t *px, std::int16_t *py, c
 void AddBackTrailingSpaces(const char **ppch, const char *pchEnd);
 void ChopLastWord(const char *pBeg, const char **ppEnd);
 void ChopTrailingSpaces(const char *pBeg, const char **ppEnd);
-void RcCtrTextOut(APPSESSION &app, HDC hdc, RECT *prc, const char *psz, std::int16_t cLen);
+void RcCtrTextOut(APPSESSION &app, HDC hdc, RECT *prc, std::string_view szText, bool fClear = false);
 // The mutable overload preserves the legacy cLen == -1 output-buffer request.
 void RightTextOut(APPSESSION &app, HDC hdc, std::int16_t x, std::int16_t y, const char *psz, std::int16_t cLen, std::int16_t dxErase);
 void RightTextOut(APPSESSION &app, HDC hdc, std::int16_t x, std::int16_t y, std::span<char> psz, std::int16_t cLen, std::int16_t dxErase);

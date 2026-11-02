@@ -886,7 +886,7 @@ void DrawHistoryReport(APPSESSION &app, HDC hdc) {
     if (cch > 0) psz[CchUtf8Prefix(std::string_view(psz, cch), cch - 1)] = 0;
     win32::SelectObject(hdc, app.lpui->rghfontArial10[1]);
     win32::SetTextColor(hdc, app.lpui->crButtonText);
-    RcCtrTextOut(app, hdc, &rc, szT, 0);
+    RcCtrTextOut(app, hdc, &rc, std::string_view{szT});
     win32::SetRect(&rcDiamond, 15, rc.top, app.lpui->dyArial10 + 15, rc.top + app.lpui->dyArial10);
     DrawDiamond(app, hdc, &rcDiamond, app.lpui->hbrBBlue);
     dx = rcChart.right - rcChart.left;
