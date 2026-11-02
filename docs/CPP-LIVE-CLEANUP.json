@@ -1713,7 +1713,8 @@
         "typed-log-record-enumeration-callback",
         "logged-record-payloads-accept-byte-spans",
         "typed-log-validation-result",
-        "log-file-load-path-view"
+        "log-file-load-path-view",
+        "previous-log-header-optional-result"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -2242,6 +2243,20 @@
           "batch": "L06 log file loading accepts a path view",
           "source_commit": "13d58cbf",
           "change": "FLoadLogFile now accepts std::string_view and passes the bounded path to the already view-based stream provider.",
+          "macos_debug_build": "make compile passes with strict warnings and dual-header checks.",
+          "desktop_unit_tests": "18/18 pass.",
+          "host_units": "29/29 pass.",
+          "native_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
+          "host_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
+          "tutorial": "1/1 available SDL tutorial smoke passes.",
+          "baseline": "Unchanged.",
+          "windows_linux": "Current-source Windows/Linux qualification remains pending.",
+          "diff_check": "Pass."
+        },
+        {
+          "batch": "L06 previous log headers return as optional values",
+          "source_commit": "e13949df",
+          "change": "FGetPrevLogRt returns std::optional<HDR> and accepts a writable payload span. Production callers inspect the returned header only when the payload fits; test helpers now adapt the value result to existing assertions.",
           "macos_debug_build": "make compile passes with strict warnings and dual-header checks.",
           "desktop_unit_tests": "18/18 pass.",
           "host_units": "29/29 pass.",
@@ -25056,13 +25071,14 @@
   "working_tree_checkpoint": {
     "date": "2026-11-02",
     "branch": "develop",
-    "batch": "L06 log file loading accepts a path view",
-    "source_commit": "13d58cbf",
+    "batch": "L06 previous log headers return as optional values",
+    "source_commit": "e13949df",
     "status": "Verified and committed locally on develop. macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Current-source Windows SDL desktop and Linux desktop qualification remain outstanding.",
     "changes": [
+      "FGetPrevLogRt returns std::optional<HDR> and accepts a writable payload span, replacing its integer status and HDR output pointer.",
+      "Production callers use the returned header only when the bounded payload copy succeeds.",
       "FLoadLogFile accepts std::string_view and passes the bounded path directly to the stream provider.",
-      "Existing path buffers and test string literals remain valid callers.",
-      "Log loading behavior, game behavior and regression baselines remain unchanged."
+      "Log behavior and regression baselines remain unchanged."
     ],
     "verification": {
       "macos_sdl_debug": "make compile passes with strict warnings and dual-header checks.",
@@ -25302,6 +25318,10 @@
       {
         "commit": "13d58cbf",
         "message": "Use path views when loading log files"
+      },
+      {
+        "commit": "e13949df",
+        "message": "Return previous log headers as optional values"
       }
     ],
     "parent": "4867b0c5"
