@@ -11,6 +11,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <array>
+#include <string_view>
 #include <algorithm>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -78,22 +79,20 @@ static int CmpFileEntry(const void *a, const void *b) {
     if (lpa->fDir != lpb->fDir) return lpa->fDir ? -1 : 1;
     return SDL_strcasecmp(lpa->psz, lpb->psz);
 }
-static BOOL FJoinFile(std::span<char> pszOut, LPCSTR pszDir, LPCSTR pszName) {
+static BOOL FJoinFile(std::span<char> pszOut, std::string_view szDir, std::string_view szName) {
 #ifdef _WIN32
     char *pch;
 #endif
-    int cch;
-
     if (pszOut.empty()) return 0;
-    if (*pszName == '/'
+    if (!szName.empty() && (szName[0] == '/'
 #ifdef _WIN32
-        || *pszName == '\\' || (pszName[0] && pszName[1] == ':')
+        || szName[0] == '\\' || (szName.size() > 1 && szName[1] == ':')
 #endif
-    ) {
-        if (CchCopyUtf8(pszOut, pszName) < 0) return 0;
+    )) {
+        if (CchCopyUtf8(pszOut, szName) < 0) return 0;
     } else {
-        cch = CchSnprintf(pszOut, "%s%s%s", pszDir, std::strcmp(pszDir, "/") == 0 ? "" : "/", pszName);
-        if (cch < 0 || static_cast<std::size_t>(cch) >= pszOut.size()) return 0;
+        if (CchCopyUtf8(pszOut, szDir) < 0 ||
+            (szDir != "/" && !FAppendUtf8(pszOut, "/")) || !FAppendUtf8(pszOut, szName)) return 0;
     }
 #ifdef _WIN32
     // The browser splits paths with '/', including native suggestions and input.
