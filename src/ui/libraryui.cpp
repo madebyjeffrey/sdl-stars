@@ -1690,6 +1690,7 @@ std::int16_t FExportLibraryGame(APPSESSION &app, HWND hwnd, const char *pszName,
     char szSource[512], szDestination[512], szStage[512];
     char szZipName[512], szZipStage[512], szZipGame[512], szMessage[256];
     int cch, iChoice;
+    std::size_t cchSource, cchName, cchDestination, cchStage;
     std::int16_t fZipStage;
 
     if (!pszTarget) {
@@ -1716,10 +1717,11 @@ std::int16_t FExportLibraryGame(APPSESSION &app, HWND hwnd, const char *pszName,
     if (!FInitLibrary() || !FPortableLibraryName(app, pszName)) return 0;
     cch = CchSnprintf(std::span{szSource, sizeof(szSource)}, "%s%s%s", szLibraryRoot, szDirSep, pszName);
     if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szSource) || !FNativeDirectoryExists(szSource)) return 0;
+    cchSource = static_cast<std::size_t>(cch);
+    cchName = std::string_view(pszName).size();
     if (FPathIsZip(pszTarget)) {
-        if (SDL_strncasecmp(pszTarget, szSource, std::strlen(szSource)) == 0 &&
-            (pszTarget[std::strlen(szSource)] == 0 || pszTarget[std::strlen(szSource)] == '/' ||
-             pszTarget[std::strlen(szSource)] == '\\')) goto LFail;
+        if (SDL_strncasecmp(pszTarget, szSource, cchSource) == 0 &&
+            (pszTarget[cchSource] == 0 || pszTarget[cchSource] == '/' || pszTarget[cchSource] == '\\')) goto LFail;
         fZipStage = FCreateLibraryZipStage(szZipStage, sizeof(szZipStage), "zip-exporting");
         if (!fZipStage) goto LFail;
         if (!FExportLibraryGame(app, hwnd, pszName, szZipStage)) goto LZipFail;
@@ -1734,16 +1736,17 @@ LZipFail:
         RemoveNativePath(szZipStage);
         goto LFail;
     }
-    if (SDL_strncasecmp(pszTarget, szSource, std::strlen(szSource)) == 0 &&
-        (pszTarget[std::strlen(szSource)] == 0 || pszTarget[std::strlen(szSource)] == '/' ||
-         pszTarget[std::strlen(szSource)] == '\\')) goto LFail;
+    if (SDL_strncasecmp(pszTarget, szSource, cchSource) == 0 &&
+        (pszTarget[cchSource] == 0 || pszTarget[cchSource] == '/' || pszTarget[cchSource] == '\\')) goto LFail;
     cch = CchSnprintf(std::span{szDestination, sizeof(szDestination)}, "%s%s%s", pszTarget, szDirSep, pszName);
     if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szDestination) || FNativeDirectoryExists(szDestination)) goto LFail;
+    cchDestination = static_cast<std::size_t>(cch);
     /* The loader and backup writer keep complete paths in szBase. Check the
      * longest companion before copying, rather than truncating child paths. */
-    if (std::strlen(szDestination) + std::strlen(pszName) + sizeof("/backup.999/.m16") > sizeof(app.state.szBase)) goto LFail;
+    if (cchDestination + cchName + sizeof("/backup.999/.m16") > sizeof(app.state.szBase)) goto LFail;
     if (!CreateLibraryExportStage(szStage, sizeof(szStage), pszTarget)) goto LFail;
-    if (std::strlen(szStage) + std::strlen(pszName) + sizeof("/backup.999/.m16") > sizeof(szStage)) goto LStageFail;
+    cchStage = std::string_view(szStage).size();
+    if (cchStage + cchName + sizeof("/backup.999/.m16") > sizeof(szStage)) goto LStageFail;
 
     le = {};
     le.pszSource = szSource;
