@@ -324,28 +324,27 @@ static void SuggestLibraryName(APPSESSION &app, std::span<char, 256> pszName, st
     }
 }
 
-static void GetGameLibraryName(APPSESSION &app, const char *pszName, std::span<char, 256> pszNameOut) {
+static void GetGameLibraryName(APPSESSION &app, std::string_view pszName, std::span<char, 256> pszNameOut) {
     std::array<char, cchCatalogText> szCatalogPszName{};
     std::size_t i, cch;
     int cchMax = (static_cast<int>(sizeof(app.state.szBase)) - static_cast<int>(std::string_view(szLibraryRoot).size()) - 19) / 2;
 
-    CchCopyUtf8(pszNameOut, std::string_view(pszName, CchUtf8Prefix(pszName, cchMax)));
-    for (i = 0; pszNameOut[i]; i++)
+    cch = static_cast<std::size_t>(std::max(0, CchCopyUtf8(pszNameOut, pszName.substr(0, CchUtf8Prefix(pszName, static_cast<std::size_t>(cchMax))))));
+    for (i = 0; i < cch; i++)
         if (static_cast<unsigned char>(pszNameOut[i]) < 32 || pszNameOut[i] == 127 || std::strchr("<>:\"/\\|?*", pszNameOut[i])) pszNameOut[i] = '_';
-    cch = std::strlen(pszNameOut.data());
     while (cch != 0 && (pszNameOut[cch - 1] == ' ' || pszNameOut[cch - 1] == '.')) pszNameOut[--cch] = 0;
-    while (pszNameOut[0] == ' ' || pszNameOut[0] == '.') std::memmove(pszNameOut.data(), pszNameOut.data() + 1, std::strlen(pszNameOut.data()));
+    while (cch != 0 && (pszNameOut[0] == ' ' || pszNameOut[0] == '.')) std::memmove(pszNameOut.data(), pszNameOut.data() + 1, cch--);
     // The game loader treats the last period as a file extension.
-    for (i = 0; pszNameOut[i]; i++) if (pszNameOut[i] == '.') pszNameOut[i] = '_';
-    if (!pszNameOut[0]) {
+    for (i = 0; i < cch; i++) if (pszNameOut[i] == '.') pszNameOut[i] = '_';
+    if (cch == 0) {
         szCatalogPszName = TextIO().pfnCompressed(app, idsLibraryDefaultGameName);
-        pszName = szCatalogPszName.data();
-        CchCopyUtf8(pszNameOut, std::string_view(pszName, CchUtf8Prefix(pszName, cchMax)));
+        cch = static_cast<std::size_t>(std::max(0, CchCopyUtf8(pszNameOut, std::string_view(szCatalogPszName.data(), CchUtf8Prefix(szCatalogPszName.data(), static_cast<std::size_t>(cchMax))))));
     }
     if (!FPortableLibraryName(app, pszNameOut.data())) {
         // Reserved device names need a prefix; leave the stored game title intact.
-        pszNameOut[CchUtf8Prefix(pszNameOut.data(), StarsMax(0, cchMax - 1))] = 0;
-        std::memmove(pszNameOut.data() + 1, pszNameOut.data(), std::strlen(pszNameOut.data()) + 1);
+        cch = CchUtf8Prefix(std::string_view(pszNameOut.data(), cch), static_cast<std::size_t>(StarsMax(0, cchMax - 1)));
+        pszNameOut[cch] = 0;
+        std::memmove(pszNameOut.data() + 1, pszNameOut.data(), cch + 1);
         pszNameOut[0] = '_';
     }
 }
