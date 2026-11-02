@@ -203,12 +203,14 @@ static std::int16_t FCreateRaceStagePath(char *pszDirectory, std::size_t cchDire
 
 static void SuggestRaceFilename(APPSESSION &app, std::span<char, 256> pszName) {
     char szStem[240];
-    const char *pch = std::strrchr(pszName.data(), '.');
-    std::size_t cchStem = pch ? static_cast<std::size_t>((pch - pszName.data())) : std::strlen(pszName.data());
+    const auto itEnd = std::find(pszName.begin(), pszName.end(), '\0');
+    const std::string_view szName(pszName.data(), static_cast<std::size_t>(itEnd - pszName.begin()));
+    const std::size_t ichExt = szName.rfind('.');
+    std::size_t cchStem = ichExt != std::string_view::npos ? ichExt : szName.size();
     int i;
     if (cchStem >= sizeof(szStem)) cchStem = sizeof(szStem) - 1;
-    cchStem = CchUtf8Prefix(pszName.data(), cchStem);
-    std::memcpy(szStem, pszName.data(), cchStem);
+    cchStem = CchUtf8Prefix(szName, cchStem);
+    std::ranges::copy_n(szName.begin(), cchStem, szStem);
     szStem[cchStem] = 0;
     for (i = 1; i < 1000; i++) {
         CchSnprintf(pszName, "%s.r%d", szStem, i);
