@@ -172,8 +172,6 @@ bool GetDateTimeSz(std::span<char> szDate, std::span<char> szTime) {
     return true;
 }
 
-std::int16_t FSzPrefixNoCase(const char *sz1, const char *sz2, std::int16_t cch) { return _strnicmp(sz1, sz2, cch) == 0; }
-
 #else
 
 std::uint32_t DwTickCount() {
@@ -193,8 +191,6 @@ bool GetDateTimeSz(std::span<char> szDate, std::span<char> szTime) {
     if (!ptm || std::strftime(szDate.data(), szDate.size(), "%m/%d/%y", ptm) != 8) return false;
     return std::strftime(szTime.data(), szTime.size(), "%H:%M:%S", ptm) == 8;
 }
-
-std::int16_t FSzPrefixNoCase(const char *sz1, const char *sz2, std::int16_t cch) { return strncasecmp(sz1, sz2, cch) == 0; }
 
 #endif
 std::int64_t LNativeTime(void) { return static_cast<std::int64_t>(std::time(nullptr)); }
