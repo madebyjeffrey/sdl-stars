@@ -24043,12 +24043,12 @@
   ],
   "restart_checkpoint": {
     "date": "2026-11-02",
-    "reason": "Replace the managed-game validation API output pointers with spans/references; continue remaining L05/L06/L08 work.",
+    "reason": "Continue the complete C-style/C11 cleanup from the latest managed-game span API batch; fresh platform and regression qualification is running.",
     "branch": "develop",
     "batch": "L06 managed-game metadata output spans and references",
     "batch_parent": "9ab746e5",
     "latest_batch": "L06 managed-game metadata output spans and references",
-    "latest_batch_head": "a6087471",
+    "latest_batch_head": "cb7694df",
     "completed_stages": [
       "L01: nullptr and aliases",
       "L02: explicit C++ casts and headers",
@@ -24070,7 +24070,7 @@
       "linked_publication_witness": "61,975 controller cases and 48 linked-copy cases passed using the current built witness binary.",
       "diff_check": "pass.",
       "baseline": "Unchanged.",
-      "platform_ci": "Run 41408495656/41408498306 targets source head f0535e76, before this API batch. Fresh Windows/Linux qualification remains required."
+      "platform_ci": "Fresh unit/platform and native regression workflows target cb7694df; both were pending at checkpoint. Unit workflow jobs were in progress; native regression had not started."
     },
     "owned_c_and_function_macro_scan": "Confirmed on 2026-11-02: zero owned .c sources and zero function-like macros under src/ and compat/win32/src. Include guards, NOMINMAX, test configuration and vendored SDK definitions remain.",
     "retained_c_allocation_boundary": "src/core/memory.cpp uses calloc/realloc/free to implement the resizable game heap; keep unless a separate allocator audit proves a safe typed replacement.",
@@ -24082,12 +24082,18 @@
       "Full 80-page SDL tutorial remains unfinished; the available smoke checkpoint passed."
     ],
     "restart_order": [
-      "Start from develop at a6087471 or newer; preserve untracked title-modernized artwork and prompt files.",
-      "Dispatch/inspect Windows and Linux qualification for the current source head.",
+      "Start from develop at cb7694df or newer; preserve untracked title-modernized artwork and prompt files.",
+      "Inspect fresh Windows/Linux and native regression workflows 41408832646 and 41408836310; both target cb7694df.",
       "Continue L05 bounded text destinations, const-text APIs, and scratch/borrowed-return review.",
       "Continue L06 span/result interfaces, remaining native path results, and Windows/Linux chooser qualification.",
       "Finish L08 retained preprocessor/API macro inventory and qualify the final full source state."
-    ]
+    ],
+    "fresh_github_runs": {
+      "head": "cb7694dfeab85733195d5c8e0366a506dc293d89",
+      "unit_platforms": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41408832646",
+      "native_regression": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41408836310",
+      "status_at_checkpoint": "pending; unit workflow jobs in progress, regression workflow queued"
+    }
   },
   "current_checkpoint": {
     "batch": "L06 managed-game metadata output spans and references",
@@ -24106,7 +24112,13 @@
       "linked_publication_witness": "61,975 controller cases and 48 linked-copy cases passed using the current built witness binary.",
       "diff_check": "pass.",
       "baseline": "Unchanged.",
-      "platform_ci": "Run 41408495656/41408498306 targets source head f0535e76, before this API batch. Fresh Windows/Linux qualification remains required."
+      "platform_ci": "Fresh unit/platform and native regression workflows target cb7694df; both were pending at checkpoint. Unit workflow jobs were in progress; native regression had not started.",
+      "fresh_github_runs": {
+        "head": "cb7694dfeab85733195d5c8e0366a506dc293d89",
+        "unit_platforms": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41408832646",
+        "native_regression": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41408836310",
+        "status_at_checkpoint": "pending; unit workflow jobs in progress, regression workflow queued"
+      }
     },
     "source_commit": "a6087471",
     "published_batch_head": "a6087471",
