@@ -2049,10 +2049,10 @@
       "id": "L08",
       "status": "pending",
       "current_macro_audit": {
-      "status": "partial; production SDL macros were removed earlier; test SDL macros are removed in the current uncommitted worktree",
-      "change": "Replaced SDL_arraysize with std::size and SDL_zero with C++ aggregate initialization/reset throughout scanned owned production and test C++.",
-      "search": "The owned-source scan of SDL_arraysize, SDL_zero, SDL_zerop, SDL_min, SDL_max, SDL_memcpy, SDL_memset and SDL_memmove found no remaining uses in src, tests or compat C/C++ sources.",
-      "remaining": "Review the discovered fixed-width integer literal macros and complete the maintained retained-macro/preprocessor-boundary audit, including resource-compiler and platform/test boundaries."
+        "status": "partial; SDL convenience macros and fixed-width integer literal macros removed from owned C++ in committed batches 443ee2cf, b10cfc4e and a6d4dfbc",
+        "change": "Replaced SDL_arraysize with std::size; SDL_zero with C++ aggregate initialization/reset; INT32_C/UINT32_C/UINT64_C with explicitly typed C++ integer literals. Updated resource constant extraction for typed forms.",
+        "search": "No SDL convenience family or INT/UINT fixed-width literal macros remain in scanned owned application or ordinary test C++ sources. Remaining uses are isolated to SDK/reference fixtures and the independent C precision probe.",
+        "remaining": "Complete retained preprocessor/platform/API-like Win32 macro audit, maintained inventory reconciliation, and final Windows/Linux platform qualification."
       },
       "linux_desktop_execution_budget": {
         "status": "complete; verified at 2bbd5afa",
@@ -23668,12 +23668,12 @@
   ],
   "restart_checkpoint": {
     "date": "2026-11-01",
-    "reason": "Active C-style/C11 cleanup continuation checkpoint after SDL convenience-macro cleanup.",
+    "reason": "Active C-style/C11 cleanup continuation checkpoint after typed fixed-width integer literal cleanup.",
     "branch": "develop",
-    "batch": "L08a remove unnecessary SDL convenience macros from tests",
-    "batch_parent": "04e2076c",
-    "latest_batch": "L08a remove unnecessary SDL convenience macros from tests",
-    "latest_batch_head": "443ee2cf",
+    "batch": "L08b replace unnecessary fixed-width integer literal macros in owned C++",
+    "batch_parent": "e5ddd125",
+    "latest_batch": "L08b replace unnecessary fixed-width integer literal macros in owned C++",
+    "latest_batch_head": "a6d4dfbc",
     "completed_stages": [
       "L01: nullptr and aliases",
       "L02: explicit C++ casts and headers",
@@ -23709,18 +23709,18 @@
     ],
     "restart_order": [
       "Read this checkpoint and check git status/log; preserve unrelated title-modernized assets.",
-      "Commit 443ee2cf records L08a: SDL_zero becomes aggregate initialization/reset, SDL_arraysize becomes std::size, and redundant resets of newly initialized events are removed. No macros in this SDL convenience family remain in scanned owned C++ sources. Verification: compat smoke/startup/popup/native-tutorial targets build; popup/native-tutorial smoke tests pass; unit tests 18/18, available tutorial checkpoint passes, native regression 519 matches with 25 existing unused-storage warnings and zero differences/errors/skips. Windows-only compat sources were not built on this macOS host.",
+      "Commits 443ee2cf and e5ddd125 record L08a, the SDL convenience-macro cleanup. Commits b10cfc4e and a6d4dfbc record L08b, replacing fixed-width integer literal macros with explicitly typed std::intN_t{...}/std::uintN_t{...} values in owned production, compatibility, unit and witness C++ while preserving widths and signedness. compat/win32/uigen.py now reads typed constants for resource generation. No macros from either audited family remain in owned application or ordinary test C++ sources. Independent SDK value/ellipse fixtures and the C precision probe retain their reference forms.",
       "L05aq converted FIniValue and LIniInt to string_view inputs and span output; host INI uses the explicit post-BOM byte extent. The linked profile I/O witness tests nonterminated views and UTF-8 truncation.",
       "Continue remaining L05 bounded destinations, const-text interfaces, scratch/borrowed-result audit and Linux portal formatting.",
       "Continue L06 remaining buffer/result interfaces and chooser Milestone D qualification.",
-      "Finish L08 retained primitive/macro audit and final current-source/platform qualification."
+      "Finish L08 retained preprocessor/platform/API-like Win32 macro audit, inventory reconciliation and full current-source/platform qualification."
     ],
     "evidence": [
       "docs/CPP-LIVE-TEXT-COPIES.json: game_file_inputs.verification",
       "docs/CPP-LIVE-OWNED-TEXT.json: game_file_input_views",
       "dist/verification/live-cpp/l05ai/ (ignored local logs and source hashes)"
     ],
-  "goal_status": "Overall cleanup goal remains unfinished; this checkpoint records the completed L08a SDL macro batch.",
+    "goal_status": "Overall cleanup goal remains unfinished; L08a SDL macros and L08b owned C++ fixed-width literal macros are removed, with L05/L06 and the retained-macro/platform audit still open.",
     "platform_ci": {
       "run_id": 41363769853,
       "url": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41363769853",
@@ -23728,40 +23728,41 @@
       "qualified_source_head": "b76ec1fcc1276790150457670f5f667bcec4eccc",
       "result": "success"
     },
-    "published_batch_head": "04e2076c"
+    "published_batch_head": "a6d4dfbc"
   },
   "current_checkpoint": {
-    "batch": "L08a remove unnecessary SDL convenience macros from tests",
-    "status": "implemented, locally verified, and committed as 443ee2cf",
-    "parent": "04e2076c",
+    "batch": "L08b replace unnecessary fixed-width integer literal macros in owned C++",
+    "status": "implemented and locally verified; source commits b10cfc4e and a6d4dfbc",
+    "parent": "e5ddd125",
     "changes": {
-      "tests/compat/native_tutorial.cpp": "Uses aggregate initialization at SDL_Event declaration sites; removes redundant second reset.",
-      "tests/compat/sdl_smoke.cpp": "Uses aggregate assignment to reset reused SDL_Event values.",
-      "tests/compat/win32_client_popup.cpp": "Uses aggregate assignment to reset reused SDL_Event values.",
-      "tests/compat/win32_client_startup.cpp and tests/compat/win32_inspect.cpp": "Use std::size instead of SDL_arraysize.",
-      "tests/compat/win32_designer_workflow.h": "Uses aggregate assignment to reset reused SDL_Event values.",
-      "tests/compat/win32_windows.cpp": "Uses aggregate initialization at the SDL_Event declaration site; removes redundant second reset."
+      "compat/win32/include/wincompat_constants.h and wincompat_values.h": "Replace INT32_C/UINT32_C constants with explicitly typed C++ integer values.",
+      "compat/win32/src/{dib,input,menu,paint}.cpp and src/core/race.cpp": "Replace fixed-width integer literal macros with typed C++ literals.",
+      "tests/witnesses/*.cpp, tests/witnesses/construction_buildability_fixture.h and tests/unit/test_race.cpp": "Replace owned witness/unit fixed-width integer literal macros.",
+      "tests/compat/{win32_include_order,win32_inspect,win32_tick,win32_windows}.cpp": "Replace remaining owned compatibility-test fixed-width integer literal macros.",
+      "compat/win32/uigen.py": "Parse explicitly typed C++ literal forms when reading Win32 resource constants."
     },
     "verification": {
-      "macos_debug_build": "stars-compat-smoke, stars-native-tutorial, stars-compat-client-startup and stars-compat-client-popup built successfully; after the final removal of two redundant SDL_Event resets, the target build was rerun successfully without new warnings.",
+      "macos_debug_build": "Full macos-sdl-debug build passes, including Win32 compatibility sources, resource generation, and all C++ header checks.",
       "desktop_unit_tests": "18/18 pass.",
-      "focused_tests": "win32_client_popup and win32_native_tutorial_smoke_dummy pass (2/2) after final edits.",
+      "host_unit_tests": "29/29 pass.",
+      "focused_tests": "win32_client_popup, win32_runtime, win32_sdl_abi and test_win32_type_isolation pass (4/4).",
       "tutorial": "Available native tutorial smoke checkpoint passes (1/1).",
       "native_regression": "519 matches (25 existing unused-storage warnings); zero differences/errors/skips.",
-      "windows": "Windows-only compat sources were not built on this macOS host; Windows SDL preset is unavailable here.",
-      "baseline": "Unchanged; test-only cleanup.",
-      "macro_search": "No SDL_arraysize, SDL_zero, SDL_zerop, SDL_min, SDL_max, SDL_memcpy, SDL_memset or SDL_memmove uses remain in scanned owned C/C++ sources.",
-      "diff_check": "git diff --check passes."
+      "host_regression": "519 matches (25 existing unused-storage warnings); zero differences/errors/skips.",
+      "windows": "Native Windows/Linux platform CI qualification remains pending for this new batch.",
+      "baseline": "Unchanged; native and host outputs match existing baselines.",
+      "macro_search": "No SDL convenience or fixed-width integer literal macros remain in scanned owned application and ordinary test C++ sources. SDK/reference fixtures and independent C precision probe are classified and retained.",
+      "diff_check": "git diff --check and checkpoint JSON validation pass."
     },
     "remaining_work": [
       "L05 bounded text destinations, const-text interfaces, scratch storage/borrowed-return audit and remaining wrapper formatting callers, including Linux portal formatting.",
       "L06 remaining buffer/length interfaces and chooser Milestone D qualification.",
       "L06 D06 native Windows/Linux chooser qualification and remaining chooser branch coverage.",
-      "L08 inspect remaining C-style integer literal macros in live owned code (INT32_C/UINT32_C/UINT64_C candidates), retained preprocessor/platform macros, maintained inventory reconciliation and final platform qualification."
+      "L08 retained preprocessor/platform/API-like Win32 macro audit, maintained inventory reconciliation and final platform qualification."
     ],
-    "macro_scan": "The SDL convenience macro family is absent from scanned owned C/C++ source after this worktree batch. A live owned-code scan found INT32_C and UINT32_C in compat/win32/include/wincompat_constants.h (70 occurrences), UINT32_C in compat/win32/include/wincompat_values.h, compat/win32/src/{menu,paint,input}.cpp, src/core/race.cpp, and UINT64_C in compat/win32/src/dib.cpp. These need a typed-literal review. Imported SDK/reference fixtures intentionally retain the macros. The retained preprocessor/platform macro audit, including resource compiler boundaries and API-like Win32 macros, remains open.",
-    "source_commit": "443ee2cf",
-    "published_batch_head": "443ee2cf"
+    "macro_scan": "Owned application and ordinary test C++ is free of scanned SDL convenience and fixed-width integer literal macros. Intentional SDK/reference fixtures and the independent C probe retain their macros. Retained preprocessor/platform/API-like Win32 macro audit and full platform qualification remain open.",
+    "source_commit": "a6d4dfbc",
+    "published_batch_head": "a6d4dfbc"
   },
   "milestone_d_checkpoint": {
     "stage": "D05 caller migrations implemented; D06 platform qualification pending",
