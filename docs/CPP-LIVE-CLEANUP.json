@@ -1237,7 +1237,8 @@
         "owned-windows-command-line-argument-result",
         "bounded-tutorial-fragment-output-span-and-optional-length",
         "inspector-style-string-span-interface",
-        "compat-dialog-path-join-span-interface"
+        "compat-dialog-path-join-span-interface",
+        "compat-dialog-path-input-views"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -1625,6 +1626,19 @@
           "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
           "windows_syntax": "Strict MinGW syntax passes for filedialog.cpp (1/1).",
           "interface": "FJoinFile and all seven callers pass the actual destination span. The assumed PATH_MAX pointer/capacity pair is removed; joined and absolute paths still reject failed, over-capacity or invalid UTF-8 results.",
+          "baseline": "No game/core/host logic, saved data, record layouts, canonical models or regression fixtures changed.",
+          "remaining": "Other buffer/path service interfaces, Linux portal formatting and chooser qualification, Milestone D and L08 final retained primitive/macro qualification remain open."
+        },
+        {
+          "batch": "L06z compatibility-dialog path-input views",
+          "parent": "8184d35d",
+          "debug_build": "Full macos-sdl-debug build passes without new warnings; regression build compiles the changed dialog translation unit.",
+          "desktop_unit_tests": "18/18 pass.",
+          "focused_workflows": "File-dialog Cocoa, client startup and client file workflow pass (3/3).",
+          "tutorial": "Available SDL tutorial smoke checkpoint passes.",
+          "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+          "windows_syntax": "Strict MinGW syntax passes for filedialog.cpp (1/1).",
+          "interface": "FJoinFile now accepts std::string_view for both borrowed inputs and a destination span. Bounded UTF-8 copy/append replaces raw C-string concatenation; all seven callers pass valid call-scoped path views.",
           "baseline": "No game/core/host logic, saved data, record layouts, canonical models or regression fixtures changed.",
           "remaining": "Other buffer/path service interfaces, Linux portal formatting and chooser qualification, Milestone D and L08 final retained primitive/macro qualification remain open."
         }
@@ -23587,10 +23601,10 @@
     "date": "2026-11-01",
     "reason": "User requested completion of the current batch and a progress report before restarting.",
     "branch": "develop",
-    "batch": "L08a replace SDL array-size macro with std::size",
-    "batch_parent": "5dfab79b",
-    "latest_batch": "L08a replace SDL array-size macro with std::size",
-    "latest_batch_head": "f2bbd1df",
+    "batch": "L06z compatibility-dialog path-input views",
+    "batch_parent": "8184d35d",
+    "latest_batch": "L06z compatibility-dialog path-input views",
+    "latest_batch_head": "1a3f5732",
     "completed_stages": [
       "L01: nullptr and aliases",
       "L02: explicit C++ casts and headers",
@@ -23630,7 +23644,7 @@
     ],
     "restart_order": [
       "Read this checkpoint and check git status/log; preserve unrelated title-modernized assets.",
-      "Latest macro cleanup batch f2bbd1df is locally verified; inspect its checkpoint before continuing.",
+      "Latest compatibility-dialog path-view batch 1a3f5732 is locally verified; inspect its checkpoint before continuing.",
       "Resolve any new platform failures before beginning a new cleanup batch.",
       "Continue from current_checkpoint. The two remaining string copies are required SDK output boundaries; continue L05/L06 and final L08 reconciliation."
     ],
@@ -23640,7 +23654,7 @@
       "dist/verification/live-cpp/l05ai/ (ignored local logs and source hashes)"
     ],
     "goal_status": "Overall goal remains unfinished. This is a restart checkpoint, not a completion claim.",
-    "published_batch_head": "f2bbd1df",
+    "published_batch_head": "1a3f5732",
     "platform_ci": {
       "run_id": 41363769853,
       "url": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41363769853",
@@ -23650,16 +23664,16 @@
     }
   },
   "current_checkpoint": {
-    "batch": "L08a replace SDL array-size macro with std::size",
-    "status": "implemented and locally verified; full retained-macro and preprocessor-boundary audit remains pending",
-    "parent": "5dfab79b",
+    "batch": "L06z compatibility-dialog path-input views",
+    "status": "implemented and locally verified; Linux portal and native Windows runtime qualification remain pending",
+    "parent": "8184d35d",
     "changes": {
-      "compat/win32/src/inspect.cpp": "Replaces SDL_arraysize with std::size in the control-kind lookup."
+      "compat/win32/src/filedialog.cpp": "Converts FJoinFile's borrowed path inputs from LPCSTR to std::string_view and composes bounded paths with span-based UTF-8 copy/append functions."
     },
     "verification": {
-      "macos_debug_build": "Full macos-sdl-debug build passes without new warnings; regression build compiled the changed inspector translation unit.",
-      "focused_tests": "win32_client_startup_dummy passes; 1/1.",
-      "windows_syntax": "Strict MinGW syntax passes for compat/win32/src/inspect.cpp and src/ui/scaninspect.cpp, 2/2.",
+      "macos_debug_build": "Full macos-sdl-debug build passes without new warnings; regression build compiled the changed dialog translation unit.",
+      "focused_tests": "File-dialog Cocoa, client startup and client file workflow pass; 3/3.",
+      "windows_syntax": "Strict MinGW syntax passes for filedialog.cpp, 1/1.",
       "desktop_unit_tests": "18/18 pass.",
       "tutorial": "Available SDL tutorial smoke checkpoint passes.",
       "native_regression": "519 matches (25 with existing warnings); zero differences/errors/skips.",
@@ -23674,7 +23688,7 @@
       "L08 maintained inventory reconciliation, retained primitive/macro audit and final platform qualification."
     ],
     "macro_scan": "Current owned-source search found and removed the only SDL_arraysize call; no SDL_zero, SDL_zerop, SDL_min, SDL_max, SDL_memcpy, SDL_memset or SDL_memmove uses remain in the scanned production sources. The prior definition scan found application header guards and NOMINMAX; resource-compiler and platform/test boundaries still need a complete retained-macro audit.",
-    "published_batch_head": "f2bbd1df"
+    "published_batch_head": "1a3f5732"
   },
   "milestone_d_checkpoint": {
     "stage": "D05 caller migrations implemented; D06 platform qualification pending",
