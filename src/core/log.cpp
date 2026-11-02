@@ -821,12 +821,12 @@ std::int16_t FRunLogRecord(APPSESSION &app, RecordType rt, std::int16_t cb, std:
                 }
             }
             if (i >= 16) {
-                if (FReadShDef(app, lpb + cbWireChgShDef, app.state.rglpshdefSB[iLook], app.state.idPlayer, cb - cbWireChgShDef))
+                if (FReadShDef(app, std::span<const std::uint8_t>(lpb + cbWireChgShDef, static_cast<std::size_t>(cb - cbWireChgShDef)), app.state.rglpshdefSB[iLook], app.state.idPlayer))
                     break;
                 app.state.rgplr[iLook].cshdefSB += 15;
                 return 0;
             }
-            if (FReadShDef(app, lpb + cbWireChgShDef, app.state.rglpshdef[iLook], app.state.idPlayer, cb - cbWireChgShDef))
+            if (FReadShDef(app, std::span<const std::uint8_t>(lpb + cbWireChgShDef, static_cast<std::size_t>(cb - cbWireChgShDef)), app.state.rglpshdef[iLook], app.state.idPlayer))
                 break;
             app.state.rgplr[iLook].cShDef--;
             return 0;
@@ -1129,7 +1129,7 @@ std::int16_t FRunLogRecord(APPSESSION &app, RecordType rt, std::int16_t cb, std:
             if (i >= 16)
                 goto BombOut;
         }
-        if (!UnpackBattlePlan(app, lpb, app.state.rglpbtlplan[app.state.idPlayer] + i, i, cb)) return 0;
+        if (!UnpackBattlePlan(app, std::span<const std::uint8_t>(lpb, static_cast<std::size_t>(cb)), app.state.rglpbtlplan[app.state.idPlayer] + i, i)) return 0;
         if (i == app.state.rgcbtlplan[app.state.idPlayer]) app.state.rgcbtlplan[app.state.idPlayer]++;
         break;
     case rtLogFleetPlan:

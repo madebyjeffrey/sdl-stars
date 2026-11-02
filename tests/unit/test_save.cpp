@@ -610,18 +610,18 @@ static void test_utf8_design_and_plan_bounds(void) {
     memset(rgshdefT, 0, sizeof(rgshdefT));
     rgb[0] = detSome; rgb[2] = ihuldefScout;
     memcpy(rgb + cbWireShDefPartial, "\0\xc3\xa9\0", 4);
-    TEST_CHECK(!FReadShDef(app, lprt, rgshdefT, 0, cbWireShDefPartial + 3));
-    TEST_CHECK(FReadShDef(app, lprt, rgshdefT, 0, cbWireShDefPartial + 4));
+    TEST_CHECK(!FReadShDef(app, std::span(lprt, static_cast<std::size_t>(cbWireShDefPartial + 3)), rgshdefT, 0));
+    TEST_CHECK(FReadShDef(app, std::span(lprt, static_cast<std::size_t>(cbWireShDefPartial + 4)), rgshdefT, 0));
     TEST_CHECK(!strcmp(rgshdefT[0].hul.szClass, "\xc3\xa9"));
     memset(rgb, 0, sizeof(rgb));
     memcpy(rgb + 4, "\0\xc3\xa9\0", 4);
     app.state.idsFileError = 0;
     memset(&btlplan, 0x55, sizeof(btlplan));
-    TEST_CHECK(!UnpackBattlePlan(app, rgb, &btlplan, 0, 7));
+    TEST_CHECK(!UnpackBattlePlan(app, std::span<const uint8_t>(rgb, 7), &btlplan, 0));
     TEST_CHECK(btlplan.szName[0] == 0x55);
     TEST_CHECK(app.state.idsFileError == idsGameFileAppearsCorruptUnableLoadFile);
     app.state.idsFileError = 0;
-    TEST_CHECK(UnpackBattlePlan(app, rgb, &btlplan, 0, 8));
+    TEST_CHECK(UnpackBattlePlan(app, std::span<const uint8_t>(rgb, 8), &btlplan, 0));
     TEST_CHECK(app.state.idsFileError == 0 && !strcmp(btlplan.szName, "\xc3\xa9"));
 }
 
@@ -717,7 +717,7 @@ static void test_design_encoder_spans(void) {
         }
         memset(decoded, 0, sizeof(decoded));
         lprt = reinterpret_cast<const uint8_t *>(reference);
-        TEST_ASSERT(FReadShDef(app, lprt, decoded, 0, *cbName));
+        TEST_ASSERT(FReadShDef(app, std::span(lprt, *cbName), decoded, 0));
         TEST_CHECK(!strcmp(decoded[2].hul.szClass, shdef.hul.szClass));
     }
     memset(shdef.hul.szClass, 'x', sizeof(shdef.hul.szClass));
@@ -758,7 +758,7 @@ static void test_utf8_raw_battle_plan(void) {
     WriteBattlePlan(app, &btlplan, 1);
     TEST_ASSERT(FGetPrevLogRt(app, &hdr, rgb));
     TEST_CHECK(hdr.rt == rtBtlPlan && hdr.cb == sizeof(BTLPLAN) + 1 && rgb[4] == 0);
-    TEST_ASSERT(UnpackBattlePlan(app, rgb, &btlplanRead, 0, hdr.cb));
+    TEST_ASSERT(UnpackBattlePlan(app, std::span<const uint8_t>(rgb, hdr.cb), &btlplanRead, 0));
     TEST_CHECK(!strcmp(btlplanRead.szName, btlplan.szName));
 }
 
@@ -840,14 +840,14 @@ static void test_design_wire_admission(void) {
     TEST_ASSERT(FStarsTestInit(app));
     app.state.idPlayer = iplrNone;
     memcpy(before, rgshdefT, sizeof(before));
-    TEST_CHECK(!FReadShDef(app, NULL, rgshdefT, 0, 0));
+    TEST_CHECK(!FReadShDef(app, {}, rgshdefT, 0));
     for (cb = 0; cb < sizeof(rgb); cb++) {
         if (cb < 19) {
-            TEST_CHECK(!FReadShDef(app, rgb, rgshdefT, 0, cb));
+            TEST_CHECK(!FReadShDef(app, std::span(rgb).first(cb), rgshdefT, 0));
             TEST_CHECK(memcmp(rgshdefT, before, sizeof(before)) == 0);
         }
     }
-    TEST_ASSERT(FReadShDef(app, rgb, rgshdefT, 0, 19));
+    TEST_ASSERT(FReadShDef(app, std::span(rgb).first(19), rgshdefT, 0));
     TEST_CHECK(rgshdefT[2].det == detAll && rgshdefT[2].ishdef == 2 && rgshdefT[2].hul.chs == 0);
     TEST_CHECK(rgshdefT[2].turn == 0xffff && rgshdefT[2].cBuilt == 0x12345678 && rgshdefT[2].cExist == 0x80000000);
     ibmp = (LphuldefFromId(ihuldefScout)->hul.ibmp | 3);
@@ -857,7 +857,7 @@ static void test_design_wire_admission(void) {
     memcpy(before, rgshdefT, sizeof(before));
     rgb[0] = detSome; rgb[3] = (uint8_t)ibmp;
     memcpy(rgb + 6, "\0partial\0", 9);
-    TEST_ASSERT(FReadShDef(app, rgb, rgshdefT, 0, 15));
+    TEST_ASSERT(FReadShDef(app, std::span(rgb).first(15), rgshdefT, 0));
     TEST_CHECK(memcmp(rgshdefT, before, sizeof(before)) == 0);
     // Compressed partial names may have a marker above sixteen. It remains
     // hul.chs, rather than becoming a full-design slot validation rule.
@@ -868,7 +868,7 @@ static void test_design_wire_admission(void) {
     memset(rgshdefT, 0, sizeof(rgshdefT));
     rgb[6] = cOut;
     memcpy(rgb + 7, szPacked, cOut);
-    TEST_ASSERT(FReadShDef(app, rgb, rgshdefT, 0, 7 + cOut));
+    TEST_ASSERT(FReadShDef(app, std::span(rgb).first(static_cast<std::size_t>(7 + cOut)), rgshdefT, 0));
     TEST_CHECK(rgshdefT[2].hul.chs == cOut && !strcmp(rgshdefT[2].hul.szClass, szName));
     TEST_CHECK(rgshdefT[2].hul.wtEmpty == 0x1234);
     // Partial export uses the catalog name and its six-byte prefix, ignoring
@@ -878,14 +878,14 @@ static void test_design_wire_admission(void) {
     TEST_ASSERT(cbWritten);
     pb += *cbWritten;
     memset(rgshdefT, 0, sizeof(rgshdefT));
-    TEST_ASSERT(FReadShDef(app, rgbWritten, rgshdefT, 0, pb - rgbWritten));
+    TEST_ASSERT(FReadShDef(app, std::span(rgbWritten, static_cast<std::size_t>(pb - rgbWritten)), rgshdefT, 0));
     TEST_CHECK(!strcmp(rgshdefT[2].hul.szClass, LphuldefFromId(ihuldefScout)->hul.szClass));
     // Existing full-design count/hull rejection remains before publication.
     memcpy(before, rgshdefT, sizeof(before));
     rgb[0] = detAll; rgb[6] = 17;
-    TEST_CHECK(!FReadShDef(app, rgb, rgshdefT, 0, sizeof(rgb)));
+    TEST_CHECK(!FReadShDef(app, std::span(rgb), rgshdefT, 0));
     rgb[6] = 0; rgb[2] = 0xff;
-    TEST_CHECK(!FReadShDef(app, rgb, rgshdefT, 0, sizeof(rgb)));
+    TEST_CHECK(!FReadShDef(app, std::span(rgb), rgshdefT, 0));
     TEST_CHECK(memcmp(rgshdefT, before, sizeof(before)) == 0);
 }
 
@@ -1123,7 +1123,7 @@ static void test_WriteRtPlr_partial_bytes(void) {
     StreamClose(app);
     StreamOpen(app, szFile, mdRead); SetFileSeeds(app, 123456, 789012); ReadRt(app);
     TEST_CHECK(app.state.hdrCur.rt == rtPlr && app.state.hdrCur.cb == 12 && !memcmp(app.state.rgbCur, golden, sizeof(golden)));
-    ReadRtPlr(app, &decoded, reinterpret_cast<uint8_t *>(app.state.rgbCur), app.state.hdrCur.cb);
+    ReadRtPlr(app, &decoded, std::span(reinterpret_cast<uint8_t *>(app.state.rgbCur), static_cast<std::size_t>(app.state.hdrCur.cb)));
     TEST_CHECK(decoded.iPlayer == -2 && decoded.cShDef == -1 && decoded.cPlanet == -32768 && decoded.cFleet == 4095 && decoded.cshdefSB == 15);
     TEST_CHECK(decoded.wMdPlr() == 0xaf89 && decoded.szName[0] == 0 && decoded.szNames[0] == 0 && !decoded.fLearned);
     StreamClose(app);

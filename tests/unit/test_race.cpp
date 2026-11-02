@@ -519,7 +519,7 @@ static void test_ReadRtPlr_bounds_record_lengths(void) {
     app.state.wVersFile = (app.state.wVersFile & 31) | (85u << 5) | (2u << 12);
 
     memset(&buf, 0x55, sizeof(buf));
-    ReadRtPlr(app, &buf.plr, rgb, sizeof(rgb));
+    ReadRtPlr(app, &buf.plr, std::span(rgb));
     for (i = 0; i < 16; i++)
         TEST_CHECK(buf.plr.rgmdRelation[i] == 1);
     TEST_CHECK(strcmp(buf.plr.szName, "Bob") == 0);
@@ -539,7 +539,7 @@ static void test_ReadRtPlr_bounds_record_lengths(void) {
     TEST_ASSERT(cbPacked3);
     rgb[iOff] = (uint8_t)cOut;
     memset(&buf, 0x55, sizeof(buf));
-    ReadRtPlr(app, &buf.plr, rgb, sizeof(rgb));
+    ReadRtPlr(app, &buf.plr, std::span(rgb));
     TEST_CHECK(buf.plr.szNames[0] == 0);
     for (i = 0; i < (int)sizeof(buf.rgchGuard); i++)
         TEST_CHECK(buf.rgchGuard[i] == 0x55);

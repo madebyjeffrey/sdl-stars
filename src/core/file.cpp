@@ -37,7 +37,7 @@ std::optional<std::size_t> FReadUserString(APPSESSION &app, std::span<const std:
     return static_cast<std::size_t>(cOut) + 1;
 }
 
-std::int16_t FReadShDef(APPSESSION &app, const std::uint8_t *lprt, SHDEF *lpshdef, std::int16_t iplrLoad, std::size_t cb) {
+std::int16_t FReadShDef(APPSESSION &app, std::span<const std::uint8_t> rgbRecord, SHDEF *lpshdef, std::int16_t iplrLoad) {
     SHDEF    shdef;
     const std::uint8_t *lpb;
     std::int16_t  ishdef;
@@ -52,14 +52,14 @@ std::int16_t FReadShDef(APPSESSION &app, const std::uint8_t *lprt, SHDEF *lpshde
 
     shdef = {};
 
-    if (!FDecodeShDefFixed(std::as_bytes(std::span(lprt, cb)), shdef, ibName) ||
-        shdef.hul.ihuldef > ihuldefDeathStart || cb <= ibName) return 0;
-    lpb = lprt + ibName;
+    if (!FDecodeShDefFixed(std::as_bytes(rgbRecord), shdef, ibName) ||
+        shdef.hul.ihuldef > ihuldefDeathStart || rgbRecord.size() <= ibName) return 0;
+    lpb = rgbRecord.data() + ibName;
     iFirst = PartQueryIO().pfnHull(shdef.hul.ihuldef)->hul.ibmp;
     if (shdef.hul.ibmp < iFirst || shdef.hul.ibmp >= iFirst + 4) {
         shdef.hul.ibmp = (shdef.hul.ibmp & 3) | iFirst;
     }
-    if (!FReadUserString(app, std::as_bytes(std::span(lpb, cb - static_cast<std::size_t>((lpb - lprt)))), std::span{shdef.hul.szClass}.first(sizeof(shdef.hul.szClass)))) return 0;
+    if (!FReadUserString(app, std::as_bytes(rgbRecord.subspan(ibName)), std::span{shdef.hul.szClass}.first(sizeof(shdef.hul.szClass)))) return 0;
     ishdef = shdef.ishdef;
     if (ishdef >= 16) {
         ishdef -= 16;
@@ -102,28 +102,29 @@ std::int16_t FReadShDef(APPSESSION &app, const std::uint8_t *lprt, SHDEF *lpshde
     return 1;
 }
 
-void ReadRtPlr(APPSESSION &app, PLAYER *pplr, std::uint8_t *pbIn, std::size_t cb) {
+void ReadRtPlr(APPSESSION &app, PLAYER *pplr, std::span<std::uint8_t> rgbRecord) {
     std::int16_t iOff;
     std::optional<std::size_t> cbRead;
+    const std::size_t cb = rgbRecord.size();
 
     *pplr = {};
     if (cb < cbWirePlayerPartial) goto invalid;
     // A full record stores a relation count where rgmdRelation begins, then
     // that many relations; a partial one stops before idPlanetHome.
-    if (PlvFromPrefix(pbIn, cb).det() == detAll) {
+    if (PlvFromPrefix(rgbRecord.data(), cb).det() == detAll) {
         iOff = cbWirePlayerPrefix;
-        if (cb <= static_cast<std::size_t>(iOff) || pbIn[iOff] > cb - iOff - 1) goto invalid;
-        FDecodePlayer(std::as_bytes(std::span(pbIn, cb)), *pplr, iOff);
+        if (cb <= static_cast<std::size_t>(iOff) || rgbRecord[static_cast<std::size_t>(iOff)] > cb - iOff - 1) goto invalid;
+        FDecodePlayer(std::as_bytes(rgbRecord), *pplr, iOff);
         // Keep a corrupt count from overrunning rgmdRelation; skip the rest.
-        std::memmove(pplr->rgmdRelation, pbIn + iOff + 1, (((pbIn[iOff]) < (sizeof(pplr->rgmdRelation))) ? (pbIn[iOff]) : (sizeof(pplr->rgmdRelation))));
-        iOff += pbIn[iOff] + 1;
+        std::memmove(pplr->rgmdRelation, rgbRecord.data() + iOff + 1, (((rgbRecord[static_cast<std::size_t>(iOff)]) < (sizeof(pplr->rgmdRelation))) ? (rgbRecord[static_cast<std::size_t>(iOff)]) : (sizeof(pplr->rgmdRelation))));
+        iOff += rgbRecord[static_cast<std::size_t>(iOff)] + 1;
     } else {
         iOff = cbWirePlayerPartial;
-        FDecodePlayer(std::as_bytes(std::span(pbIn, cb)), *pplr, iOff);
+        FDecodePlayer(std::as_bytes(rgbRecord), *pplr, iOff);
     }
-    if (!(cbRead = FReadUserString(app, std::as_bytes(std::span(pbIn + iOff, cb - iOff)), std::span{pplr->szName}.first(sizeof(pplr->szName))))) goto invalid;
+    if (!(cbRead = FReadUserString(app, std::as_bytes(rgbRecord.subspan(static_cast<std::size_t>(iOff))), std::span{pplr->szName}.first(sizeof(pplr->szName))))) goto invalid;
     iOff += static_cast<std::int16_t>(*cbRead);
-    if (!FReadUserString(app, std::as_bytes(std::span(pbIn + iOff, cb - iOff)), std::span{pplr->szNames}.first(sizeof(pplr->szNames)))) goto invalid;
+    if (!FReadUserString(app, std::as_bytes(rgbRecord.subspan(static_cast<std::size_t>(iOff))), std::span{pplr->szNames}.first(sizeof(pplr->szNames)))) goto invalid;
     pplr->fLearned = 0;
     return;
 invalid:
@@ -280,7 +281,7 @@ std::int16_t FLoadGame(APPSESSION &app, std::string_view pszFileName, std::strin
             }
             while (app.state.hdrCur.rt == rtPlr) {
                 i = PlvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).iPlayer();
-                ReadRtPlr(app, &app.state.rgplr[i], reinterpret_cast<std::uint8_t *>(app.state.rgbCur), app.state.hdrCur.cb);
+                ReadRtPlr(app, &app.state.rgplr[i], std::span(reinterpret_cast<std::uint8_t *>(app.state.rgbCur), static_cast<std::size_t>(app.state.hdrCur.cb)));
                 app.state.rgplr[i].cPlanet = 0;
                 app.state.rgplr[i].cFleet = 0;
                 RecordIO().pfnReadRt(app);
@@ -304,7 +305,7 @@ std::int16_t FLoadGame(APPSESSION &app, std::string_view pszFileName, std::strin
                 } else {
                     app.state.idPlayer = iplrNone;
                 }
-                if (!FReadShDef(app, reinterpret_cast<const std::uint8_t *>(app.state.rgbCur), app.state.rglpshdef[i], iplrSav, app.state.hdrCur.cb))
+                if (!FReadShDef(app, std::span(reinterpret_cast<const std::uint8_t *>(app.state.rgbCur), static_cast<std::size_t>(app.state.hdrCur.cb)), app.state.rglpshdef[i], iplrSav))
                     goto CorruptHist;
                 app.state.idPlayer = iplrSav;
                 app.state.rgplr[i].cShDef--;
@@ -329,7 +330,7 @@ std::int16_t FLoadGame(APPSESSION &app, std::string_view pszFileName, std::strin
                 } else {
                     app.state.idPlayer = iplrNone;
                 }
-                if (!FReadShDef(app, reinterpret_cast<const std::uint8_t *>(app.state.rgbCur), app.state.rglpshdefSB[i], iplrSav, app.state.hdrCur.cb))
+                if (!FReadShDef(app, std::span(reinterpret_cast<const std::uint8_t *>(app.state.rgbCur), static_cast<std::size_t>(app.state.hdrCur.cb)), app.state.rglpshdefSB[i], iplrSav))
                     goto CorruptHist;
                 app.state.idPlayer = iplrSav;
                 app.state.rgplr[i].cshdefSB += 15;
@@ -453,7 +454,7 @@ LNextTurn:
         }
         while (app.state.hdrCur.rt == rtPlr) {
             i = PlvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).iPlayer();
-            ReadRtPlr(app, &app.state.rgplr[i], reinterpret_cast<std::uint8_t *>(app.state.rgbCur), app.state.hdrCur.cb);
+            ReadRtPlr(app, &app.state.rgplr[i], std::span(reinterpret_cast<std::uint8_t *>(app.state.rgbCur), static_cast<std::size_t>(app.state.hdrCur.cb)));
             app.state.cPlanet += app.state.rgplr[i].cPlanet;
             app.state.rgplr[i].cPlanet = 0;
             app.state.cFleet += app.state.rgplr[i].cFleet;
@@ -562,7 +563,7 @@ LNextTurn:
                     app.state.idPlayer = iplrSav;
                     goto Corrupt;
                 }
-                if (!FReadShDef(app, reinterpret_cast<const std::uint8_t *>(app.state.rgbCur), app.state.rglpshdef[i], iplrSav, app.state.hdrCur.cb))
+                if (!FReadShDef(app, std::span(reinterpret_cast<const std::uint8_t *>(app.state.rgbCur), static_cast<std::size_t>(app.state.hdrCur.cb)), app.state.rglpshdef[i], iplrSav))
                     goto Corrupt;
                 RecordIO().pfnReadRt(app);
             }
@@ -609,7 +610,7 @@ LNextTurn:
                         app.state.idPlayer = iplrSav;
                         goto Corrupt;
                     }
-                    if (!FReadShDef(app, reinterpret_cast<const std::uint8_t *>(app.state.rgbCur), app.state.rglpshdefSB[i], iplrSav, app.state.hdrCur.cb))
+                    if (!FReadShDef(app, std::span(reinterpret_cast<const std::uint8_t *>(app.state.rgbCur), static_cast<std::size_t>(app.state.hdrCur.cb)), app.state.rglpshdefSB[i], iplrSav))
                         goto Corrupt;
                     RecordIO().pfnReadRt(app);
                 }
@@ -729,7 +730,7 @@ LNextTurn:
             if (!app.state.rglpbtlplan[iP]) {
                 app.state.rglpbtlplan[iP] = LpAlloc<BTLPLAN>(app, 16 * sizeof(BTLPLAN), htShips);
             }
-            if (!UnpackBattlePlan(app, reinterpret_cast<std::uint8_t *>(app.state.rgbCur), app.state.rglpbtlplan[iP] + app.state.rgcbtlplan[iP], app.state.rgcbtlplan[iP], app.state.hdrCur.cb)) goto Corrupt;
+            if (!UnpackBattlePlan(app, std::span(reinterpret_cast<const std::uint8_t *>(app.state.rgbCur), static_cast<std::size_t>(app.state.hdrCur.cb)), app.state.rglpbtlplan[iP] + app.state.rgcbtlplan[iP], app.state.rgcbtlplan[iP])) goto Corrupt;
             app.state.rgcbtlplan[iP]++;
             RecordIO().pfnReadRt(app);
         }
@@ -1098,12 +1099,12 @@ Corrupt:
     return 0;
 }
 
-std::int16_t UnpackBattlePlan(APPSESSION &app, std::uint8_t *lpb, BTLPLAN *lpbtlplan, std::int16_t iplan, std::size_t cb) {
+std::int16_t UnpackBattlePlan(APPSESSION &app, std::span<const std::uint8_t> rgbRecord, BTLPLAN *lpbtlplan, std::int16_t iplan) {
     char szName[32];
 
-    if (cb < 4) goto invalid;
-    if (!FReadUserString(app, std::as_bytes(std::span(lpb + 4, cb - 4)), std::span{szName}.first(sizeof(szName)))) goto invalid;
-    FDecodeBattlePlanPrefix(std::as_bytes(std::span(lpb, cbWireBattlePlan)), *lpbtlplan);
+    if (rgbRecord.size() < 4) goto invalid;
+    if (!FReadUserString(app, std::as_bytes(rgbRecord.subspan(4)), std::span{szName}.first(sizeof(szName)))) goto invalid;
+    FDecodeBattlePlanPrefix(std::as_bytes(rgbRecord.first(cbWireBattlePlan)), *lpbtlplan);
     CchCopyUtf8(std::span{lpbtlplan->szName}, szName);
     lpbtlplan->iplan = iplan;
     return 1;

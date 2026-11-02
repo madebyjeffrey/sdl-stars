@@ -652,7 +652,7 @@ std::int16_t FWasRaceFile(APPSESSION &app, std::string_view szFile, std::int16_t
                         if (fLegacy) {
                             if (!FReadLegacyRacePlayer(app, &plr, reinterpret_cast<const std::uint8_t *>(app.state.rgbCur), app.state.hdrCur.cb, fPlural)) goto LBadFile;
                         } else {
-                            ReadRtPlr(app, &plr, reinterpret_cast<std::uint8_t *>(app.state.rgbCur), app.state.hdrCur.cb);
+                            ReadRtPlr(app, &plr, std::span(reinterpret_cast<std::uint8_t *>(app.state.rgbCur), static_cast<std::size_t>(app.state.hdrCur.cb)));
                         }
                         RecordIO().pfnReadRt(app);
                         icksum = IRaceChecksum(&plr);
