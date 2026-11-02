@@ -142,16 +142,4 @@ static char *SzTime(char *sz, const char *pszFormat) {
 char *_strdate(char *szDate) { return SzTime(szDate, "%m/%d/%y"); }
 char *_strtime(char *szTime) { return SzTime(szTime, "%H:%M:%S"); }
 
-char *itoa(int n, char *sz, int radix) {
-    char rgch[33];
-    unsigned int u = static_cast<unsigned int>(n);
-    int cch = 0, i = 0;
-
-    if (!sz || radix < 2 || radix > 36) { errno = EINVAL; return nullptr; }
-    if (n < 0 && radix == 10) { sz[i++] = '-'; u = 0u - u; }
-    do { rgch[cch++] = "0123456789abcdefghijklmnopqrstuvwxyz"[u % static_cast<unsigned>(radix)]; u /= static_cast<unsigned>(radix); } while (u);
-    while (cch != 0) sz[i++] = rgch[--cch];
-    sz[i] = 0;
-    return sz;
-}
 #endif

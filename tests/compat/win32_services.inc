@@ -75,9 +75,6 @@ int main(void) {
     CHECK(_strnicmp("a", "b", 0) == 0);
     memcpy(sz, "FL33T", sizeof("FL33T"));
     CHECK(!strcmp(_strlwr(sz), "fl33t"));
-    CHECK(!strcmp(itoa(std::numeric_limits<std::int32_t>::min(), sz, 10), "-2147483648"));
-    CHECK(!strcmp(itoa(-1, sz, 16), "ffffffff"));
-    CHECK(!strcmp(itoa(35, sz, 36), "z"));
     CHECK(_strdate(szDate) == szDate && strlen(szDate) == 8 && szDate[2] == '/' && szDate[5] == '/');
     CHECK(_strtime(szTime) == szTime && strlen(szTime) == 8 && szTime[2] == ':' && szTime[5] == ':');
     CHECK(_getcwd(sz, sizeof(sz)) == sz && *sz);

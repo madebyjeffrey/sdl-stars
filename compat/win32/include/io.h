@@ -14,7 +14,6 @@ char *_strdate(char *szDate);
 char *_strtime(char *szTime);
 char *_strlwr(char *sz);
 char *strlwr(char *sz);
-char *itoa(int value, char *sz, int radix);
 
 #endif
 #endif

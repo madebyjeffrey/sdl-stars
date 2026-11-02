@@ -2418,23 +2418,23 @@ void WriteIniSettings(APPSESSION &app) {
     app.state.szWork[1] = 0;
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
     if (app.state.gd.fChgScanner) {
-        itoa(app.lpui->grbitScan, app.state.szWork, 10);
+        CchSprintf(app.state.szWork, "%d", app.lpui->grbitScan);
         TextIO().pfnCchGetString(app, idsScanmodev25, std::span{szEntry});
         ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
-        itoa(app.lpui->grbitScanShip, app.state.szWork, 10);
+        CchSprintf(app.state.szWork, "%d", app.lpui->grbitScanShip);
         TextIO().pfnCchGetString(app, idsScanfilterv25, std::span{szEntry});
         ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
-        itoa(app.lpui->grbitScanEShip, app.state.szWork, 10);
+        CchSprintf(app.state.szWork, "%d", app.lpui->grbitScanEShip);
         TextIO().pfnCchGetString(app, idsScanefilterv25, std::span{szEntry});
         ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
-        itoa(app.lpui->grbitScanMines, app.state.szWork, 10);
+        CchSprintf(app.state.szWork, "%d", app.lpui->grbitScanMines);
         TextIO().pfnCchGetString(app, idsScanmines, std::span{szEntry});
         ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
-        itoa(app.lpui->vpctRadarView, app.state.szWork, 10);
+    CchSprintf(app.state.szWork, "%d", app.lpui->vpctRadarView);
         TextIO().pfnCchGetString(app, idsScanradar, std::span{szEntry});
         ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
     }
-    itoa(app.lpui->cMinGrafMax, app.state.szWork, 10);
+    CchSprintf(app.state.szWork, "%d", app.lpui->cMinGrafMax);
     TextIO().pfnCchGetString(app, idsMineralscale, std::span{szEntry});
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
     if (app.state.idPlayer != iplrNone) {
@@ -2443,7 +2443,7 @@ void WriteIniSettings(APPSESSION &app) {
         app.state.szWork[0] = (app.lpui->uTimerId != 0) + '0';
         ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
         if (app.state.gd.fWriteTurnNum) {
-            itoa(app.state.game.turn, app.state.szWork, 10);
+            CchSprintf(app.state.szWork, "%d", app.state.game.turn);
             TextIO().pfnCchGetString(app, idsTurn, std::span{szEntry});
             ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
             app.state.gd.fWriteTurnNum = 0;
