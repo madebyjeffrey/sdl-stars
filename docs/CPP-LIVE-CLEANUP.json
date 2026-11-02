@@ -24068,47 +24068,41 @@
     "published_batch_head": "bf4537ae"
   },
   "current_checkpoint": {
-    "batch": "L05bu owned and typed Linux portal text",
-    "status": "implemented and locally verified; native Linux portal runtime qualification pending",
-    "parent": "42bf90cb",
+    "batch": "L05bv remove Win32 text-output C copies",
+    "status": "implemented and locally verified",
+    "parent": "6e33d31a",
     "changes": {
-      "compat/win32/src/filedialog_portal.cpp": "Replace SDL_asprintf/manual free with owned std::string; replace all three std::snprintf calls with CchSnprintf over actual destination spans.",
-      "tests/compat/nativeformat.cpp": "Add CRT comparison vectors for the portal X11 parent (%llx) and token byte (%02x) format strings."
+      "compat/win32/src/list.cpp": "LB_GETTEXT writes the source string_view and terminator with std::copy; returns its byte length.",
+      "compat/win32/src/toolbar.cpp": "TB_GETBUTTONTEXTA uses the same typed copy; preserves null-destination length query and byte count.",
+      "docs/CPP-LIVE-TEXT-COPIES.json": "Removed the last two raw production strcpy spellings from the exact inventory."
     },
     "verification": {
-      "macos_debug_build": "Full macos-sdl-debug build passes; the Linux-only portal file is excluded by this preset.",
-      "desktop_unit_tests": "18/18 pass.",
-      "host_unit_tests": "29/29 pass.",
-      "tutorial": "Available SDL tutorial smoke checkpoint passes; full 80-page tutorial remains unfinished.",
+      "macos_debug_build_and_desktop_unit_tests": "Pass; 18/18.",
+      "focused_compatibility_tests": "List and toolbar resource contracts pass. The two corresponding leak checks stalled and were manually interrupted.",
+      "host_unit_tests": "Pass; 29/29, including the C++ compilation manifest and exact text-copy inventory.",
       "native_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
       "host_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
+      "tutorial": "Available SDL tutorial smoke checkpoint passes; full 80-page tutorial remains unfinished.",
+      "source_audit": "Zero owned .c files; zero function-like macros in src/ or compat/win32/src/. Remaining defines are include guards, NOMINMAX or test configuration.",
       "baseline": "Unchanged.",
-      "linux_portal_syntax": "Strict C++20 syntax passes against the temporary D-Bus stub.",
-      "linux_portal_runtime": "Not run; native Linux D-Bus development files/runtime are unavailable locally.",
       "diff_check": "pass"
     },
     "remaining_work": [
-      "L05 bounded text destinations, const-text interfaces and post-migration scratch/borrowed-return audit.",
+      "L05 remaining bounded text destinations, const-text interfaces and post-migration scratch/borrowed-return audit.",
       "L06 remaining buffer/length service interfaces and chooser Milestone D qualification, including Windows/Linux chooser coverage.",
-      "L08 final retained primitive/API macro/preprocessor inventory reconciliation and current-source platform qualification.",
-      "Review the two remaining strcpy calls in compat/win32/src/list.cpp and toolbar.cpp; both write to buffers supplied by Win32-compatible caller APIs without a length parameter."
+      "L08 final retained primitive/API macro/preprocessor inventory reconciliation and current-source platform qualification."
     ],
-    "source_commits": [
-      "7424cf45",
-      "005d8bef"
-    ],
-    "test_commit": "bf4537ae",
-    "published_batch_head": "bf4537ae",
+    "source_commit": "24a636f3",
+    "published_batch_head": "24a636f3",
     "previous_batch": {
       "batch": "L05bu owned and typed Linux portal text",
-      "status": "implemented and locally verified; native Linux portal runtime qualification pending",
-      "parent": "42bf90cb",
-      "changes": {
-        "compat/win32/src/filedialog_portal.cpp": "Replace SDL_asprintf/manual free with owned std::string, and replace all three std::snprintf calls with CchSnprintf over actual destination spans.",
-        "tests/compat/nativeformat.cpp": "Add CRT comparison vectors for the portal X11 parent (%llx) and token byte (%02x) format strings."
-      },
+      "source_commits": [
+        "7424cf45",
+        "005d8bef"
+      ],
+      "test_commit": "bf4537ae",
       "verification": {
-        "macos_debug_build": "Full macos-sdl-debug build passes (the Linux-only portal file is excluded by this preset).",
+        "macos_debug_build": "Full macos-sdl-debug build passes; the Linux-only portal file is excluded by this preset.",
         "desktop_unit_tests": "18/18 pass.",
         "host_unit_tests": "29/29 pass.",
         "tutorial": "Available SDL tutorial smoke checkpoint passes; full 80-page tutorial remains unfinished.",
@@ -24116,55 +24110,8 @@
         "host_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
         "baseline": "Unchanged.",
         "linux_portal_syntax": "Strict C++20 syntax passes against the temporary D-Bus stub.",
-        "linux_runtime": "Not run; native Linux D-Bus development files/runtime are unavailable in this environment.",
+        "linux_portal_runtime": "Not run; native Linux D-Bus development files/runtime are unavailable locally.",
         "diff_check": "pass"
-      },
-      "remaining_work": [
-        "L05 bounded text destinations, const-text interfaces and post-migration scratch/borrowed-return audit.",
-        "L06 remaining buffer/length service interfaces and chooser Milestone D qualification, including Windows/Linux chooser coverage.",
-        "L08 final retained primitive/API macro/preprocessor inventory reconciliation and current-source platform qualification.",
-        "Review the two remaining strcpy calls in compat/win32/src/list.cpp and toolbar.cpp; both write to buffers supplied by Win32-compatible caller APIs without a length parameter."
-      ],
-      "source_commits": [
-        "7424cf45",
-        "005d8bef"
-      ],
-      "test_commit": "bf4537ae",
-      "published_batch_head": "bf4537ae",
-      "previous_batch": {
-        "batch": "L05bt return-to-title file-family scratch snapshot before callbacks",
-        "status": "implemented and locally verified; Windows/Linux qualification pending",
-        "parent": "05bbfd1f",
-        "changes": {
-          "src/ui/mdi.cpp": "CommandHandler snapshots szWork before tutorial/save callbacks and WriteIniSettings can reuse it; bounded UTF-8 file-family preservation reads from the owned stack snapshot.",
-          "tests/unit/test_native_fileui.cpp": "Added an integration regression for dotted directories, Unicode and multi-dot names, and extensionless paths.",
-          "CHANGELOG.md": "Recorded the return-to-title filename preservation fix."
-        },
-        "verification": {
-          "macos_debug_build": "Full macos-sdl-debug build passes.",
-          "desktop_unit_tests": "18/18 pass.",
-          "host_unit_tests": "29/29 pass.",
-          "tutorial": "Available SDL tutorial smoke checkpoint passes; full 80-page tutorial remains unfinished.",
-          "native_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
-          "host_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
-          "baseline": "Unchanged.",
-          "reproduction": "Before the fix, all three integration cases left szBase as \"1\" after WriteIniSettings. They pass with the pre-callback snapshot.",
-          "diff_check": "pass"
-        },
-        "remaining_work": [
-          "L05 bounded text destinations, const-text interfaces and post-migration scratch/borrowed-return audit.",
-          "L06 remaining buffer/length service interfaces and chooser Milestone D qualification, including Windows/Linux chooser coverage.",
-          "L08 final retained primitive/API macro/preprocessor inventory reconciliation and current-source platform qualification.",
-          "Review the two remaining strcpy calls in compat/win32/src/list.cpp and toolbar.cpp; both write to buffers supplied by Win32-compatible caller APIs without a length parameter."
-        ],
-        "source_commit": "ad2bc6d9",
-        "published_batch_head": "ad2bc6d9",
-        "previous_batch": {
-          "batch": "L05bs typed mine UI formatting; owned wrapper callers exhausted",
-          "source_commit": "7f7798a2",
-          "owned_wsprintfA_scan": "1 matching implementation/declaration line remains; no owned production callers.",
-          "compatibility_tests": "tests/compat/win32_services.inc still covers the compatibility formatter API."
-        }
       }
     }
   },
