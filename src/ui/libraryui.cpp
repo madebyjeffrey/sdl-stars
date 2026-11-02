@@ -135,15 +135,14 @@ static std::int16_t FRaceLibraryNameAvailable(APPSESSION &app, const char *pszNa
     return FLibraryNameAvailable(app, szRaceLibraryRoot, pszName);
 }
 
-static std::int16_t FPortableRaceFilename(APPSESSION &app, const char *pszName) {
-    const unsigned char *pch;
+static std::int16_t FPortableRaceFilename(APPSESSION &app, std::string_view pszName) {
     char szDevice[256];
-    std::size_t cch = std::strlen(pszName);
+    const std::size_t cch = pszName.size();
     std::size_t i;
-    const char *pchExt = std::strrchr(pszName, '.');
-    const char *pchDigit;
-    if (!pchExt || pchExt == pszName || SDL_tolower(pchExt[1]) != 'r' || !pchExt[2] ||
-        pchExt[2] == '0' || pchExt[2] < '1' || pchExt[2] > '9' || cch >= 240 || pszName[0] == ' ' || pszName[0] == '.' ||
+    const std::size_t ichExt = pszName.rfind('.');
+    if (ichExt == std::string_view::npos || ichExt == 0 || cch <= ichExt + 2 ||
+        SDL_tolower(pszName[ichExt + 1]) != 'r' || pszName[ichExt + 2] == '0' || pszName[ichExt + 2] < '1' ||
+        pszName[ichExt + 2] > '9' || cch >= 240 || pszName[0] == ' ' || pszName[0] == '.' ||
         pszName[cch - 1] == ' ' || pszName[cch - 1] == '.') return 0;
     /* Windows reserves these stems even when followed by an extension. */
     for (i = 0; i < cch && pszName[i] != '.'; i++) szDevice[i] = pszName[i];
@@ -153,12 +152,14 @@ static std::int16_t FPortableRaceFilename(APPSESSION &app, const char *pszName) 
         !SDL_strcasecmp(szDevice, "CLOCK$") ||
         (i == 4 && (!SDL_strncasecmp(szDevice, "COM", 3) || !SDL_strncasecmp(szDevice, "LPT", 3)) &&
          szDevice[3] >= '1' && szDevice[3] <= '9')) return 0;
-    for (pchDigit = pchExt + 3; *pchDigit; pchDigit++)
-        if (*pchDigit < '0' || *pchDigit > '9') return 0;
-    if (std::strlen(pchExt + 2) > 3) return 0;
-    for (pch = reinterpret_cast<const unsigned char *>(pszName); *pch; pch++)
-        if (*pch < 32 || *pch == 127 || std::strchr("<>:\"/\\|?*", *pch)) return 0;
-    if (std::strlen(szRaceLibraryRoot) + cch + 2 >= sizeof(app.state.szBase)) return 0;
+    if (cch - (ichExt + 2) > 3) return 0;
+    for (i = ichExt + 3; i < cch; i++)
+        if (pszName[i] < '0' || pszName[i] > '9') return 0;
+    for (char ch : pszName) {
+        const auto uch = static_cast<unsigned char>(ch);
+        if (uch < 32 || uch == 127 || std::strchr("<>:\"/\\|?*", uch)) return 0;
+    }
+    if (std::string_view(szRaceLibraryRoot).size() + cch + 2 >= sizeof(app.state.szBase)) return 0;
     return 1;
 }
 
@@ -283,15 +284,16 @@ std::int16_t FIsManagedLibraryRaceFile(const char *pszFile) {
     return FInitRaceLibrary() && LibraryPathIO().pfnUnder(szRaceLibraryRoot, pszFile);
 }
 
-static std::int16_t FPortableLibraryName(APPSESSION &app, const char *pszName) {
-    const unsigned char *pch;
+static std::int16_t FPortableLibraryName(APPSESSION &app, std::string_view pszName) {
     char szDevice[256];
-    std::size_t cch, i;
+    const std::size_t cch = pszName.size();
+    std::size_t i;
 
-    cch = std::strlen(pszName);
     if (cch == 0 || cch >= sizeof(szDevice) || pszName[0] == ' ' || pszName[0] == '.' || pszName[cch - 1] == ' ' || pszName[cch - 1] == '.') return 0;
-    for (pch = reinterpret_cast<const unsigned char *>(pszName); *pch; pch++)
-        if (*pch < 32 || *pch == 127 || std::strchr("<>:\"/\\|?*", *pch)) return 0;
+    for (char ch : pszName) {
+        const auto uch = static_cast<unsigned char>(ch);
+        if (uch < 32 || uch == 127 || std::strchr("<>:\"/\\|?*", uch)) return 0;
+    }
     /* Windows reserves these stems even when followed by an extension. */
     for (i = 0; i < cch && pszName[i] != '.'; i++) szDevice[i] = pszName[i];
     szDevice[i] = 0;
@@ -301,7 +303,7 @@ static std::int16_t FPortableLibraryName(APPSESSION &app, const char *pszName) {
         (i == 4 && (!SDL_strncasecmp(szDevice, "COM", 3) || !SDL_strncasecmp(szDevice, "LPT", 3)) &&
          szDevice[3] >= '1' && szDevice[3] <= '9')) return 0;
     /* Longest backup path: root/name/backup.999/name.m16 plus NUL. */
-    return std::strlen(szLibraryRoot) + 2 * cch + 18 < sizeof(app.state.szBase);
+    return std::string_view(szLibraryRoot).size() + 2 * cch + 18 < sizeof(app.state.szBase);
 }
 
 static void SuggestLibraryName(APPSESSION &app, std::span<char, 256> pszName, std::int16_t fRevision) {
