@@ -3,6 +3,7 @@
 
 #include "win.h"
 #include <cstdint>
+#include <string_view>
 #include <windows.h>
 
 LRESULT  PlanetPaneWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
@@ -12,7 +13,7 @@ void             QueuePlanetPaneLayout(APPSESSION &app);
 void             ClosePlanetPane(APPSESSION &app);
 
 LRESULT  PlanetWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
-std::int16_t          FDrawTileNC(APPSESSION &app, HDC hdc, TILE *ptile, RECT *prc, const char *pszTitle);
+std::int16_t          FDrawTileNC(APPSESSION &app, HDC hdc, TILE *ptile, RECT *prc, std::string_view szTitle);
 void             DrawPlanetMinSum(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj);
 void             DrawPlanetStats(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj);
 void             DrawPlanetStarbase(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj);

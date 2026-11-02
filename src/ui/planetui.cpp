@@ -246,11 +246,13 @@ LRESULT  PlanetWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     return 0;
 }
 
-std::int16_t FDrawTileNC(APPSESSION &app, HDC hdc, TILE *ptile, RECT *prc, const char *pszTitle) {
+std::int16_t FDrawTileNC(APPSESSION &app, HDC hdc, TILE *ptile, RECT *prc, std::string_view szTitle) {
     std::int16_t bt;
+    const char *pszTitle;
     RECT    rcT;
 
     bt = 112;
+    pszTitle = szTitle.empty() ? "" : szTitle.data();
     prc->left = ptile->iCol * 198 + 4;
     prc->right = prc->left + 190;
     prc->top = ptile->yTop;
@@ -270,7 +272,8 @@ std::int16_t FDrawTileNC(APPSESSION &app, HDC hdc, TILE *ptile, RECT *prc, const
     if (!ptile->fMinDraw) {
         _Draw3dFrame(app, hdc, &rcT, 0);
     }
-    RcCtrTextOut(app, hdc, &rcT, pszTitle, -1);
+    win32::FillRect(hdc, &rcT, app.lpui->hbrButtonFace);
+    RcCtrTextOut(app, hdc, &rcT, pszTitle, static_cast<std::int16_t>(szTitle.size()));
     win32::SetRect(&rcT, prc->right - 17, prc->top + 1, prc->right, rcT.bottom + 1);
     if (ptile->fPopped) {
         bt = bt;
