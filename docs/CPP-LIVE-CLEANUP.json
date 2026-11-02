@@ -127,7 +127,8 @@
         "typed-print-wrapper-formatting",
         "typed-dialog-inspector-and-MDI-wrapper-formatting",
         "host-ini-parser-string-view-and-output-span",
-        "typed-direct-thing-gauge-and-tutorial-title-formatting"
+        "typed-direct-thing-gauge-and-tutorial-title-formatting",
+        "typed-production-dialog-formatting"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -875,6 +876,18 @@
           "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
           "changes": "Replace three literal-format wsprintfA calls in DrawThingGauge and AdvanceTutor with CchSprintf, using the shared typed native formatter.",
           "baseline": "Unchanged; formatting call change is behavior-neutral and does not alter game rules or file layouts.",
+          "platform": "Native Windows/Linux qualification remains pending for current develop."
+        },
+        {
+          "batch": "L05as typed formatter in production dialog",
+          "debug_build": "Full macos-sdl-debug build succeeds.",
+          "desktop_units": "18/18 pass.",
+          "host_units": "29/29 pass.",
+          "focused_tests": "Available native tutorial smoke check passes (1/1).",
+          "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+          "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+          "changes": "Replace eight wsprintfA calls in InitializeProductionDlg, DrawProductionDlg, ZipProdDlg and FillZipProdLB with CchSprintf.",
+          "baseline": "Unchanged; no game behavior or file layout changed.",
           "platform": "Native Windows/Linux qualification remains pending for current develop."
         }
       ],
@@ -23684,10 +23697,10 @@
     "date": "2026-11-02",
     "reason": "Active C-style/C11 cleanup continuation checkpoint after a small L05 typed formatting migration.",
     "branch": "develop",
-    "batch": "L05ar typed formatter for small UI labels",
-    "batch_parent": "0bd4d847",
-    "latest_batch": "L05ar typed formatter for small UI labels",
-    "latest_batch_head": "52363c89",
+    "batch": "L05as typed formatter in production dialog",
+    "batch_parent": "696933f2",
+    "latest_batch": "L05as typed formatter in production dialog",
+    "latest_batch_head": "52773ed9",
     "completed_stages": [
       "L01: nullptr and aliases",
       "L02: explicit C++ casts and headers",
@@ -23728,7 +23741,8 @@
       "Continue remaining L05 bounded destinations, const-text interfaces, scratch/borrowed-result audit and Linux portal formatting.",
       "Continue L06 remaining buffer/result interfaces and chooser Milestone D qualification.",
       "Finish L08 retained preprocessor/platform/API-like Win32 macro audit, inventory reconciliation and full current-source/platform qualification.",
-      "Commit 52363c89 replaces three small UI wsprintfA calls with CchSprintf, the existing typed native formatter. Full local build, unit, tutorial, focused controls and both regression suites pass; continue remaining wrapper call sites as a separate L05 batch."
+      "Commit 52363c89 replaces three small UI wsprintfA calls with CchSprintf, the existing typed native formatter. Full local build, unit, tutorial, focused controls and both regression suites pass; continue remaining wrapper call sites as a separate L05 batch.",
+      "Commit 52773ed9 replaces eight wsprintfA calls in produceui.cpp with CchSprintf. Full local build, units, tutorial smoke and both regressions pass; continue the remaining L05 formatting callers, bounded text interfaces and scratch/borrowed-return audit."
     ],
     "evidence": [
       "docs/CPP-LIVE-TEXT-COPIES.json: game_file_inputs.verification",
@@ -23743,26 +23757,24 @@
       "qualified_source_head": "b76ec1fcc1276790150457670f5f667bcec4eccc",
       "result": "success"
     },
-    "published_batch_head": "52363c89"
+    "published_batch_head": "52773ed9"
   },
   "current_checkpoint": {
-    "batch": "L05ar typed formatter for small UI labels",
-    "status": "implemented and locally verified; source commit 52363c89",
-    "parent": "0bd4d847",
+    "batch": "L05as typed formatter in production dialog",
+    "status": "implemented and locally verified; source commit 52773ed9",
+    "parent": "696933f2",
     "changes": {
-      "src/ui/thingui.cpp": "Use CchSprintf for both thing-gauge labels.",
-      "src/ui/tutor.cpp": "Use CchSprintf for the tutorial page title."
+      "src/ui/produceui.cpp": "Replace eight wsprintfA calls with the typed native CchSprintf formatter."
     },
     "verification": {
-      "macos_debug_build": "Full build succeeds, including UI compatibility checks and all witnesses.",
+      "macos_debug_build": "Full build succeeds.",
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
-      "focused_tests": "win32_controls and available tutorial smoke pass (2/2).",
+      "tutorial": "Available native tutorial smoke checkpoint passes (1/1).",
       "native_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
       "host_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
-      "baseline": "Unchanged; no game behavior, wire layouts or file formats changed.",
-      "formatting": "Three small wsprintfA call sites now use CchSprintf with the typed native formatter.",
-      "platform": "Windows/Linux qualification remains pending for this batch.",
+      "baseline": "Unchanged.",
+      "platform": "Windows/Linux qualification remains pending for current develop.",
       "diff_check": "git diff --check passes."
     },
     "remaining_work": [
@@ -23770,8 +23782,8 @@
       "L06 remaining buffer/length interfaces and chooser Milestone D qualification, including Windows/Linux chooser coverage.",
       "L08 retained preprocessor/platform/API-like macro audit, maintained inventory reconciliation and final platform qualification."
     ],
-    "source_commit": "52363c89",
-    "published_batch_head": "52363c89"
+    "source_commit": "52773ed9",
+    "published_batch_head": "52773ed9"
   },
   "milestone_d_checkpoint": {
     "stage": "D05 caller migrations implemented; D06 platform qualification pending",
