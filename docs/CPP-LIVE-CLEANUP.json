@@ -205,7 +205,8 @@
         "planet-tile-title-string-view",
         "bounded-production-row-text-view",
         "centered-text-string-view-interface",
-        "remove-redundant-utf8-window-text-forwarder"
+        "remove-redundant-utf8-window-text-forwarder",
+        "centered-rectangle-output-string-view-and-clear-flag"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -1192,6 +1193,18 @@
           "host_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped reference inputs.",
           "tutorial": "1/1 smoke checkpoint passed.",
           "baseline": "Unchanged; this removes a forwarding layer only.",
+          "diff_check": "Pass."
+        },
+        {
+          "batch": "L05 centered rectangle output string_view and clear flag",
+          "change": "RcCtrTextOut now consumes std::string_view. Formatted callers pass their produced length; null-terminated callers pass views; the old -1 clear-and-measure sentinel is a separate fClear argument.",
+          "macos_debug": "make compile passed; strict compiler warnings and standalone header checks passed.",
+          "desktop_units": "18/18 passed.",
+          "host_units": "29/29 passed.",
+          "native_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped reference inputs.",
+          "host_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped reference inputs.",
+          "tutorial": "1/1 smoke checkpoint passed.",
+          "baseline": "Unchanged; UI text drawing only.",
           "diff_check": "Pass."
         }
       ],
@@ -24966,11 +24979,12 @@
   "working_tree_checkpoint": {
     "date": "2026-11-02",
     "branch": "develop",
-    "batch": "L05 remove redundant UTF-8 window-text forwarder",
-    "source_commit": "5f488e18",
+    "batch": "L05 centered rectangle output string_view and clear flag",
+    "source_commit": "607599fa",
     "status": "Verified and committed locally on develop. macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Current-source Windows SDL desktop and Linux desktop qualification remain outstanding.",
     "changes": [
-      "CtrTextOut now accepts std::string_view; all UI callers pass explicit formatted lengths or bounded/null-terminated views.",
+      "CtrTextOut and RcCtrTextOut now accept std::string_view; formatted output passes explicit lengths.",
+      "RcCtrTextOut takes a separate clear-background flag instead of overloading text length -1.",
       "Removed FSetUtf8WindowText, a forwarding-only wrapper; the sole production caller and native file UI test use ControlIO().pfnSetWindowText directly.",
       "No game behavior, saved layout, file format or serialization changed."
     ],
@@ -25152,6 +25166,10 @@
       {
         "commit": "5f488e18",
         "message": "Remove redundant UTF-8 window text wrapper"
+      },
+      {
+        "commit": "607599fa",
+        "message": "Use text views for centered rectangle output"
       }
     ],
     "parent": "4867b0c5"
