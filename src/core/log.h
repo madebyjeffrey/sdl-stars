@@ -27,7 +27,7 @@ void    DirtyGame(APPSESSION &app, std::int16_t fDirty);
 std::int16_t FGetPrevLogRt(APPSESSION &app, HDR *phdr, std::span<std::uint8_t> rgbPayload);
 std::int16_t FRunLogFile(APPSESSION &app);
 std::int16_t FRunLogRecord(APPSESSION &app, RecordType rt, std::int16_t cb, std::uint8_t *lpb);
-std::int16_t FLoadLogFile(APPSESSION &app, const char *pszLog);
+std::int16_t FLoadLogFile(APPSESSION &app, std::string_view pszLog);
 struct CHECKLOGRESULT {
     bool fValid;
     std::int16_t idsError;
