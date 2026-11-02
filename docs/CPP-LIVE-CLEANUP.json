@@ -216,7 +216,8 @@
         "bounded-race-library-export-path-and-name-views",
         "bounded-library-game-and-race-deletion-name-views",
         "bounded-library-game-duplicate-and-rename-name-views",
-        "optional-library-chooser-suggestion-views"
+        "optional-library-chooser-suggestion-views",
+        "bounded-race-library-save-load-edit-duplicate-name-views"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -1331,6 +1332,21 @@
           "batch": "L05 library chooser suggestions use bounded views",
           "source_commit": "ff867768",
           "change": "FChooseLibraryGameName represents its optional title with std::optional<std::string_view>; FChooseLibraryRaceName accepts a std::string_view suggestion. Imports pass std::nullopt for the existing prompt-without-suggestion flow.",
+          "macos_debug_build": "make compile passes with strict warnings and standalone header checks.",
+          "desktop_unit_tests": "18/18 pass.",
+          "host_unit_tests": "29/29 pass.",
+          "library_workflows": "win32_client_startup_dummy and win32_client_fileworkflow_dummy pass 2/2.",
+          "native_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
+          "host_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
+          "tutorial": "1/1 available SDL tutorial smoke passes.",
+          "baseline": "Unchanged.",
+          "windows_linux": "Current-source Windows/Linux qualification remains pending.",
+          "diff_check": "Pass."
+        },
+        {
+          "batch": "L05 race library operations use bounded name views",
+          "source_commit": "60778485",
+          "change": "Save, load, edit and duplicate race-library operations now take std::string_view names. The race import override is an optional view, borrowed only for the synchronous import call; file APIs receive a validated local filename buffer.",
           "macos_debug_build": "make compile passes with strict warnings and standalone header checks.",
           "desktop_unit_tests": "18/18 pass.",
           "host_unit_tests": "29/29 pass.",
@@ -24967,6 +24983,10 @@
       {
         "commit": "ff867768",
         "message": "Pass library chooser suggestions as text views"
+      },
+      {
+        "commit": "60778485",
+        "message": "Use bounded views for race library names"
       }
     ],
     "latest_source_commit": "0c1076a7",
@@ -25189,11 +25209,11 @@
   "working_tree_checkpoint": {
     "date": "2026-11-02",
     "branch": "develop",
-    "batch": "L05 library chooser suggestions use bounded views",
-    "source_commit": "ff867768",
-    "status": "Locally committed as ff867768. macOS SDL Debug build, desktop/host unit suites, library workflows, native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
+    "batch": "L05 race library operations use bounded name views",
+    "source_commit": "60778485",
+    "status": "Locally committed as 60778485. macOS SDL Debug build, desktop/host unit suites, race library workflows, native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
     "changes": [
-      "Library chooser suggestion parameters now use std::string_view; the game chooser uses std::optional<std::string_view> to express the no-suggestion import flow."
+      "Race library save, load, edit, duplicate and named-import interfaces use bounded views; local filename buffers remain at C-string file boundaries."
     ],
     "verification": {
       "macos_debug_build": "make compile passes with strict warnings and standalone header checks.",
