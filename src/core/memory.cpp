@@ -434,10 +434,10 @@ NATIVEBYTEWINDOW LbwFromLp(APPSESSION &app, void *lp) noexcept { return BbwFromL
 NATIVEBYTEWINDOW AbwFromLp(APPSESSION &app, void *lp) noexcept { return BbwFromLpHt(app, lp, htMisc); }
 NATIVEBYTEWINDOW TbwFromLp(APPSESSION &app, void *lp) noexcept { return BbwFromLpHt(app, lp, htThings); }
 
-void CopyThingBytes(APPSESSION &app, THING *pth, const void *rgb, std::uint16_t cb) noexcept {
+void CopyThingBytes(APPSESSION &app, THING *pth, std::span<const std::byte> rgb) noexcept {
     auto storage = TbwFromLp(app, pth).Rgb();
-    assert(cb <= storage.size());
-    std::memcpy(storage.data(), rgb, cb);
+    assert(rgb.size() <= storage.size());
+    std::memcpy(storage.data(), rgb.data(), rgb.size());
 }
 
 MSGPLR *LpmsgplrAlloc(APPSESSION &app, std::uint16_t cb) {

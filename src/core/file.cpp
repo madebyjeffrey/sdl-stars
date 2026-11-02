@@ -402,7 +402,7 @@ std::int16_t FLoadGame(APPSESSION &app, std::string_view pszFileName, std::strin
                 for (i = 0, lpth = app.state.lpThings; i < app.state.cThing; i++, lpth++) {
                     if (app.state.hdrCur.rt != rtThing)
                         goto CorruptHist;
-                    CopyThingBytes(app, lpth, app.state.rgbCur, app.state.hdrCur.cb);
+                    CopyThingBytes(app, lpth, std::as_bytes(std::span{app.state.rgbCur}).first(static_cast<std::size_t>(app.state.hdrCur.cb)));
                     RecordIO().pfnReadRt(app);
                 }
             }
@@ -708,7 +708,7 @@ LNextTurn:
                 }
                 app.state.cThing++;
             LFoundThing:
-                CopyThingBytes(app, lpth, app.state.rgbCur, app.state.hdrCur.cb);
+                CopyThingBytes(app, lpth, std::as_bytes(std::span{app.state.rgbCur}).first(static_cast<std::size_t>(app.state.hdrCur.cb)));
                 lpth->SetTurn(app.state.game.turn);
                 lpth++;
                 j++;

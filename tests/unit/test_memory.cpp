@@ -356,7 +356,7 @@ static void TestThingPhysicalCopies(void) {
     for (uint16_t cb = 0; cb <= 80; cb++) {
         memset(storage.data(), 0xa5, 80); memset(expected, 0xa5, 80);
         memcpy(expected, input, cb);
-        CopyThingBytes(app, pth, input, cb);
+        CopyThingBytes(app, pth, std::as_bytes(std::span{input}).first(cb));
         TEST_CHECK(!memcmp(storage.data(), expected, 80));
         TEST_CHECK(pth[1].idFull() == static_cast<uint16_t>(expected[18] | (expected[19] << 8)));
         TEST_CHECK(pth[2].turn() == static_cast<uint16_t>(expected[52] | (expected[53] << 8)));

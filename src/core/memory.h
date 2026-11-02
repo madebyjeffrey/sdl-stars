@@ -46,7 +46,7 @@ void FreePl(APPSESSION &app, PLORD *lppl);
 bool FApplyOrderBytes(APPSESSION &app, PLORD *lpplord, std::int16_t iord, const std::uint8_t *rgb, std::int16_t cb, bool fZero);
 bool FSetOrderTask(APPSESSION &app, PLORD *lpplord, std::int16_t iord, std::int16_t grTask);
 
-void CopyThingBytes(APPSESSION &app, THING *pth, const void *rgb, std::uint16_t cb) noexcept;
+void CopyThingBytes(APPSESSION &app, THING *pth, std::span<const std::byte> rgb) noexcept;
 
 MSGPLR *LpmsgplrAlloc(APPSESSION &app, std::uint16_t cb);
 MSGPLR *LpmsgplrReAlloc(APPSESSION &app, MSGPLR *lpmp, std::uint16_t cb);
