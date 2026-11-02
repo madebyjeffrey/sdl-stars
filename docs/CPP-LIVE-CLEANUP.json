@@ -2052,6 +2052,20 @@
           "baseline": "Unchanged; existing callers provide equivalent text bytes, with no game logic or record changes.",
           "windows_linux": "Current-source Windows/Linux qualification remains pending.",
           "diff_check": "Pass."
+        },
+        {
+          "batch": "L06 bounded native directory-entry callback views",
+          "parent": "2a66cd41",
+          "change": "FNativeDirectoryEntryProc and its application/test consumers now use std::string_view. Removed strlen, strcmp and pointer-subtraction assumptions from migrated view consumers; retained explicit owners only for APIs that require C strings.",
+          "macos_debug_build": "Full macos-sdl-debug build passed; no new warnings.",
+          "desktop_unit_tests": "18/18 pass.",
+          "host_units": "29/29 pass, including the C++ compilation manifest and test-routing policy after updating the ZIP ownership inventory.",
+          "native_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped inputs.",
+          "host_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped inputs.",
+          "tutorial": "Available SDL tutorial smoke checkpoint passes (1/1); full tutorial remains unfinished.",
+          "baseline": "Unchanged; enumeration is synchronous and view lifetime is scoped to the owned directory entry. No game behavior or saved layout changes.",
+          "windows_linux": "Current-source Windows/Linux qualification remains pending.",
+          "diff_check": "Pass."
         }
       ],
       "roman_output": {
@@ -2274,6 +2288,12 @@
         "symbol": "FSzPrefixNoCase",
         "evidence": "No production or test callers existed. The native.h declaration and both platform definitions were removed; the independent reference declaration is unchanged.",
         "verification": "The owned SDL and host targets rebuild and their unit, regression and tutorial checks pass."
+      },
+      "directory_entry_views": {
+        "status": "implemented and locally verified",
+        "interface": "FNativeDirectoryEntryProc receives std::string_view. Enumeration passes the validated owned entry as a bounded view; UI, library publication, race listing, ZIP traversal and native-file test callbacks consume the view.",
+        "c_string_boundaries": "Listbox and SDL-owned ZIP names are materialized only at their C-string ownership boundary. Recursive backup traversal owns its copied directory name for the synchronous child enumeration.",
+        "remaining": "Other remaining buffer/length service interfaces and native file/path result work remain active."
       }
     },
     {
@@ -24562,22 +24582,19 @@
     ]
   },
   "current_checkpoint": {
-    "batch": "L05 optional bounded library import paths",
-    "status": "Verified and pushed to develop. macOS SDL Debug, desktop/host unit suites, full native/host regressions, tutorial smoke, bounded-view file workflow, and five focused library workflow tests pass. Windows SDL desktop and Linux desktop qualification remain outstanding.",
-    "parent": "4867b0c5",
-    "source_commit": "7fe016a7",
-    "change": "Race filename suggestions now use the fixed destination extent as their input bound.",
+    "batch": "L06 bounded native directory-entry callback views",
+    "status": "Locally committed as b3d75126. Full macOS SDL Debug build, desktop/host units, native/host regressions and available tutorial smoke pass. Remote publication and current-source Windows SDL/Linux desktop qualification remain outstanding.",
+    "parent": "2a66cd41",
+    "change": "FNativeDirectoryEntryProc and every application/test consumer use std::string_view; C-string conversion remains explicit at ownership-required UI, ZIP and recursive traversal boundaries.",
     "verification": {
-      "macos_sdl_debug": "Build passes across the SDL desktop and UI compatibility sources.",
+      "macos_sdl_debug": "Full macos-sdl-debug build passed with no new warnings.",
       "desktop_unit_tests": "18/18 pass.",
-      "host_unit_tests": "29/29 pass.",
+      "host_unit_tests": "29/29 pass, including compiler manifest and test routing policy.",
       "native_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "host_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "tutorial": "1/1 available SDL tutorial smoke passes.",
-      "bounded_view_workflow": "win32_client_fileworkflow_dummy passes with a non-terminated race path view.",
-      "focused_library_workflows": "5/5 pass: game-library safety, game-library deletion, race library, host library, and file workflow.",
-      "windows_sdl_linux_desktop": "Not qualified locally; current-source platform CI remains outstanding.",
-      "baseline": "Unchanged.",
+      "windows_sdl_linux_desktop": "Current-source qualification remains outstanding.",
+      "baseline": "Unchanged; no game logic, wire data or saved record layout changes.",
       "diff_check": "Pass."
     },
     "platform_ci": {
@@ -24606,9 +24623,8 @@
     "date": "2026-11-02",
     "branch": "develop",
     "changes": [
-      "FImportLibraryGame and the race-import functions accept std::optional<std::string_view>; std::nullopt requests the chooser instead of a null C string.",
-      "Both importers validate bounded path lengths and reject embedded NULs before copying into their legacy fixed buffers.",
-      "Game import reuses the view for extension classification, and the race file workflow exercises a view that ends before its backing buffer suffix.",
+      "FNativeDirectoryEntryProc now passes std::string_view, and all application callbacks plus the native-file unit callback consume bounded entries.",
+      "C-string ownership is explicit at the listbox, SDL-owned ZIP-name and recursive backup-directory boundaries.",
       "No game behavior, file layout or serialization code changed."
     ],
     "current_source_audits": {
@@ -24619,13 +24635,13 @@
       "typed_replacements": "Packed-word, resource, color and parameter-extraction APIs are C++ functions/templates.",
       "c11_boundary": "C is enabled only for independent test/reference targets; production is C++20/Objective-C++20.",
       "core_strlen_residual": "src/core/save.cpp:804 in WriteRtString. Its sole caller passes FLEET::lpszName, a legacy heap-owned C string with no stored length; adding a size to FLEET would change a layout-sensitive debug-symbol struct. Keep this at the serialization C-string boundary unless ownership API is deliberately redesigned.",
-      "scan_scope": "Tracked src and compat/win32/include/src plus dist/macos-sdl-debug/generated/version_resource.h; compat/win32/generated is not a present directory.",
+      "scan_scope": "Tracked src and compat/win32/include/src plus generated version_resource.h; compat/win32/upstream SDK headers are excluded from owned-code C/C++ macro cleanup.",
       "platform_qualification": "Full Windows SDL desktop and Linux desktop CI remain unqualified. Current-source workflow dispatch was previously rejected with HTTP 403 (admin rights required), and local SDL cross-configuration lacks a MinGW zlib package; the current MinGW host/core service build passed earlier."
     },
     "next": [
-      "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
-      "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D Windows/Linux qualification and any missing end-to-end chooser coverage.",
-      "L08: run current-source Windows and Linux qualification, then resolve any failures and record the final macro/C inventory outcome."
+      "L05: finish bounded text destinations and const-text interfaces; complete scratch-storage and borrowed-return audit.",
+      "L06: finish remaining buffer/length service and native file/path result interfaces; complete chooser Milestone D coverage.",
+      "L08: run current-source Windows/Linux qualification, reconcile retained macro/C inventories and resolve platform failures."
     ],
     "post_checkpoint_commits": [
       {
@@ -24707,8 +24723,13 @@
       {
         "commit": "0c750694",
         "message": "Bound race filename suggestions"
+      },
+      {
+        "commit": "b3d75126",
+        "message": "Pass directory entries as bounded views"
       }
-    ]
+    ],
+    "source_commit": "b3d75126"
   },
   "milestone_d_checkpoint": {
     "stage": "D05 caller migrations implemented; D06 platform qualification pending",

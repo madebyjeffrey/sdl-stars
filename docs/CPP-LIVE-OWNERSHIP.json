@@ -687,7 +687,7 @@
       "path": "src/ui/libraryzip.cpp",
       "scope": "FZipEnsureCapacity",
       "owner": "parent ZIPFILES scope; childFiles and relative owners",
-      "reason": "The archive collector owns replaceable SDL name slots and staged child results. Borrowed traversal contexts do not outlive their scoped parents; successful append explicitly transfers a relative-name owner."
+      "reason": "The archive collector owns replaceable SDL name slots and staged child results. Borrowed traversal contexts do not outlive their scoped parents; bounded directory-entry views are copied into SDL-owned names, and successful append explicitly transfers a relative-name owner."
     },
     {
       "id": "98",
@@ -2520,8 +2520,8 @@
       "line": 136,
       "scope": "FCollectZipFiles",
       "operation": "SDL_strdup",
-      "code": "SDL_strdup(pszName)",
-      "normalized_call": "SDL_strdup(pszName)",
+      "code": "SDL_strdup(szName.c_str())",
+      "normalized_call": "SDL_strdup(szName.c_str())",
       "compiler_context": true,
       "contract": "98"
     },
