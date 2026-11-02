@@ -567,19 +567,28 @@ static std::int16_t FConvertLegacyRaceNames(APPSESSION &app, PLAYER *pplr, std::
     std::size_t cbNames;
     std::size_t cbKeep;
     std::int16_t fShortened;
+    int cch;
+    char *pchNameEnd;
+    char *pchNamesEnd;
 
-    if (CchCp1252ToUtf8(std::span(szName), std::as_bytes(std::span(pplr->szName, std::strlen(pplr->szName)))) < 0) return 0;
+    pchNameEnd = std::find(std::begin(pplr->szName), std::end(pplr->szName), 0);
+    if (pchNameEnd == std::end(pplr->szName)) return 0;
+    cch = CchCp1252ToUtf8(std::span(szName), std::as_bytes(std::span(pplr->szName, static_cast<std::size_t>(pchNameEnd - pplr->szName))));
+    if (cch < 0) return 0;
+    cbName = static_cast<std::size_t>(cch);
     if (fPlural) {
-        if (CchCp1252ToUtf8(std::span(szNames), std::as_bytes(std::span(pplr->szNames, std::strlen(pplr->szNames)))) < 0) return 0;
+        pchNamesEnd = std::find(std::begin(pplr->szNames), std::end(pplr->szNames), 0);
+        if (pchNamesEnd == std::end(pplr->szNames)) return 0;
+        cch = CchCp1252ToUtf8(std::span(szNames), std::as_bytes(std::span(pplr->szNames, static_cast<std::size_t>(pchNamesEnd - pplr->szNames))));
+        if (cch < 0) return 0;
+        cbNames = static_cast<std::size_t>(cch);
     } else {
-        cbName = std::strlen(szName);
         if (cbName + 1 >= sizeof(szNames)) return 0;
         std::memcpy(szNames, szName, cbName);
         szNames[cbName] = 's';
         szNames[cbName + 1] = 0;
+        cbNames = cbName + 1;
     }
-    cbName = std::strlen(szName);
-    cbNames = std::strlen(szNames);
     fShortened = cbName >= sizeof(pplr->szName) || cbNames >= sizeof(pplr->szNames);
     if (fShortened) {
         cbKeep = CchUtf8Prefix(szName, sizeof(pplr->szName) - 1);
