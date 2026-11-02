@@ -1,7 +1,9 @@
 #include "common.h"
 #include <algorithm>
 #include <array>
+#include <string>
 #include <string_view>
+#include <vector>
 #include "appstate.h"
 #ifdef STARS_UI_SDL
 #include "uistate.h"
@@ -86,22 +88,22 @@ int main(int argc, char *argv[]) try {
     int      i;
     char    *szIniPath;
 #ifdef _WIN32
-    char **rgpszNative;
+    std::optional<std::vector<std::string>> rgszNative;
+    std::vector<char *> rgpszNative;
 #endif
 
     app.BindFiles();
 #ifdef _WIN32
-    rgpszNative = RgpszNativeArguments(&argc);
-    if (!rgpszNative) { std::fprintf(stderr, "stars-host: invalid Windows command line\n"); return 2; }
-    NATIVEOWNER<char *, std::free> nativeArguments(rgpszNative);
-    argv = rgpszNative;
+    rgszNative = RgNativeArguments();
+    if (!rgszNative) { std::fprintf(stderr, "stars-host: invalid Windows command line\n"); return 2; }
+    rgpszNative.reserve(rgszNative->size());
+    for (auto &sz : *rgszNative) rgpszNative.push_back(sz.data());
+    argc = static_cast<int>(rgpszNative.size());
+    argv = rgpszNative.data();
 #endif
     // ParseCmdLine reads each letter after a '-' as a switch.
     if (argc == 2 && std::strcmp(argv[1], "--version") == 0) {
         std::printf("stars-host %s\n", STARS_VERSION_DISPLAY);
-#ifdef _WIN32
-        nativeArguments.reset();
-#endif
         return 0;
     }
     // --ini <file> reads settings from a stars.ini, as stars.exe reads its
@@ -124,9 +126,6 @@ int main(int argc, char *argv[]) try {
         const std::string_view szArgument(argv[i]);
         if (cchCmdLine + 2 > szCmdLine.size() || szArgument.size() > szCmdLine.size() - cchCmdLine - 2) {
             std::fprintf(stderr, "stars-host: command line too long\n");
-#ifdef _WIN32
-            nativeArguments.reset();
-#endif
             return 2;
         }
         if (i > 1) {
@@ -142,13 +141,10 @@ int main(int argc, char *argv[]) try {
     InitGameStuff(app);
     if (szIniPath && !FReadHostIni(app, szIniPath)) {
         std::fprintf(stderr, "stars-host: can't read %s\n", szIniPath);
-#ifdef _WIN32
-        nativeArguments.reset();
-#endif
         return 2;
     }
 #ifdef _WIN32
-    nativeArguments.reset();
+    rgszNative.reset();
 #endif
     fSeed = 0;
     lSeed = 0;

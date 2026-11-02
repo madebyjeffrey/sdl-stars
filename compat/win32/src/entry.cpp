@@ -3,11 +3,11 @@
 #include <SDL3/SDL.h>
 #include <stars_compat.h>
 #include <cstdio>
-#include "ownership.h"
 #include <cstring>
 #include "version.h"
 #ifdef _WIN32
-#include "native.h"
+#include "native_process.h"
+#include <vector>
 #endif
 
 namespace ui { int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow); }
@@ -70,15 +70,13 @@ static int ICompatMain(int argc, char **argv) {
 
 int main(int argc, char **argv) try {
 #ifdef _WIN32
-    char **rgpsz = RgpszNativeArguments(&argc);
-    int nResult;
-
+    auto rgsz = RgNativeArguments();
+    std::vector<char *> rgpsz;
     static_cast<void>(argv);
-    if (!rgpsz) return 2;
-    NATIVEOWNER<char *, std::free> arguments(rgpsz);
-    nResult = ICompatMain(argc, rgpsz);
-    arguments.reset();
-    return nResult;
+    if (!rgsz) return 2;
+    rgpsz.reserve(rgsz->size());
+    for (auto &sz : *rgsz) rgpsz.push_back(sz.data());
+    return ICompatMain(static_cast<int>(rgpsz.size()), rgpsz.data());
 #else
     return ICompatMain(argc, argv);
 #endif

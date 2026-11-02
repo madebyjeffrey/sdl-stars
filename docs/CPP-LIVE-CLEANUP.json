@@ -1112,10 +1112,6 @@
         "contract": "Complete distance, both catalog labels and location text fit their combined stack owner; bounded search and writes replace the original 100-byte destination and strcat.",
         "evidence": "docs/CPP-LIVE-TEXT-COPIES.json: scanner_location_label"
       },
-      "wire_identifier_copy": {
-        "status": "implemented; verification pending",
-        "contract": "Write exactly the four identifier bytes into RTBOF.rgid; retain the 4-byte field width and wire image."
-      },
       "fixed_count_string_copies": {
         "status": "complete; locally verified; cross-platform qualification pending",
         "wire_identifier": "Write exactly the four identifier bytes into RTBOF.rgid; retain its fixed width and wire image.",
@@ -1161,7 +1157,8 @@
         "readonly-sized-report-text",
         "readonly-sized-definition-filename-input",
         "readonly-game-file-inputs-and-bounded-slot-parse",
-        "readonly-owned-race-file-input"
+        "readonly-owned-race-file-input",
+        "owned-windows-command-line-argument-result"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -1721,6 +1718,12 @@
         "interface": "FWasRaceFile(APPSESSION&, string_view szFile, int16_t fChkPass)",
         "ownership": "Synchronous readonly input; a local std::string owns the path before any read/password/close callback. No input view escapes; allocation failure uses existing StarsError delivery and cleanup.",
         "evidence": "docs/CPP-LIVE-TEXT-COPIES.json: race_file_input"
+      },
+      "native_process_arguments": {
+        "status": "implemented; cross-compiled; runtime qualification pending",
+        "change": "RgNativeArguments returns optional owned UTF-8 strings; argc output pointer and malloc-packed char** result are removed. Entry adapters construct their temporary argv views from owned strings. Unused PszNativeCommandLine allocator API is removed.",
+        "verification": "macOS Debug host/client build passes; Windows Release stars-host cross-build passes; Windows SDL entry.cpp passes strict MinGW C++20 syntax.",
+        "runtime": "Wine execution could not start: wineserver bind returned Operation not permitted in this environment."
       }
     },
     {
@@ -23532,36 +23535,31 @@
     }
   },
   "current_checkpoint": {
-    "batch": "L05 fixed-count string copies in WriteBOF and DrawProductionItem",
-    "status": "complete; locally verified; cross-platform qualification pending",
-    "parent": "f2809b7b",
+    "batch": "L06 owned Windows process argument result",
+    "status": "implemented; macOS and MinGW compile verified; Windows runtime qualification pending",
+    "parent": "ca784db7",
     "changes": {
-      "src/core/save.cpp": "Replace strncpy with std::ranges::copy_n for the exact four-byte RTBOF.rgid identifier.",
-      "src/ui/planetui.cpp": "Replace six-byte strncpy with bounded find/copy_n/fill_n, preserving prefix copy and NUL padding."
+      "src/platform/native_process.h": "Replace char** plus int* output with optional<vector<string>>; remove unused raw command-line allocator declaration.",
+      "src/platform/native_windows.cpp": "Convert CommandLineToArgvW values to UTF-8 owned strings; RAII frees the Windows wide argument block; allocation/conversion failure returns nullopt.",
+      "src/host/host.cpp": "Keep owned argument strings alive while temporary argv pointers are used; remove manual raw allocation cleanup.",
+      "compat/win32/src/entry.cpp": "Build the argc/argv adapter from owned arguments and retire manual raw allocation cleanup."
     },
     "verification": {
-      "debug_build": "Pass, no new warnings.",
-      "release_build": "Pass.",
-      "native_regression": "519 matches, 25 existing warnings, zero differences/errors/skipped reference inputs.",
-      "host_regression": "519 matches, 25 existing warnings, zero differences/errors/skipped reference inputs.",
-      "desktop_unit_tests": "18/18 pass.",
-      "host_unit_tests": "29/29 pass.",
-      "tutorial": "Available SDL tutorial smoke checkpoint passes; full 80-page tutorial remains unfinished.",
-      "baseline": "Unchanged."
+      "macos_debug_build": "stars-sdl and stars-host build passes.",
+      "windows_host_build": "MinGW Release stars-host cross-build passes, including native_windows.cpp and the Windows host caller.",
+      "windows_sdl_entry": "entry.cpp passes MinGW C++20 syntax compilation with Windows SDL headers.",
+      "native_regression": "Previously verified on parent: 519 matches, zero differences/errors/skipped reference inputs.",
+      "host_regression": "Previously verified on parent: 519 matches, zero differences/errors/skipped reference inputs.",
+      "wine_runtime": "Not run: wineserver bind returned Operation not permitted."
     },
-    "raw_copy_inventory": "The two remaining raw strcpy calls are compatibility list/toolbar message outputs with no destination-length field in the Win32 message contract; both remain under SDK-boundary review.",
     "remaining_work": [
-      "L05 bounded text destinations, const-text interfaces, scratch storage/borrowed-return audit, wrapper formatting and remaining raw-copy SDK-boundary review",
-      "L06 remaining buffer/length interfaces and native path results",
-      "L06 D06 native Windows/Linux chooser qualification and remaining chooser branch coverage",
-      "L08 maintained inventory reconciliation and retained primitive/macro audit",
-      "Full cross-platform and final Release/Debug qualification"
+      "Add or run Windows runtime coverage for Unicode command-line arguments and failure handling when an environment with a working Windows runner is available.",
+      "L05 bounded text destinations, const-text interfaces, scratch storage/borrowed-return audit, wrapper formatting and remaining raw-copy SDK-boundary review.",
+      "L06 remaining buffer/length interfaces and native path results.",
+      "L06 D06 native Windows/Linux chooser qualification and remaining chooser branch coverage.",
+      "L08 maintained inventory reconciliation, retained primitive/macro audit and final platform qualification."
     ],
-    "published_batch_head": "f2809b7b",
-    "receipts": [
-      "dist/scaffold/regression/comparison.json",
-      "dist/scaffold/regression/host-comparison.json"
-    ]
+    "published_batch_head": "ca784db7"
   },
   "milestone_d_checkpoint": {
     "stage": "D05 caller migrations implemented; D06 platform qualification pending",
