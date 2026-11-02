@@ -195,7 +195,8 @@
         "readonly-window-settings-view",
         "owned-player-name-byte-indexed-composition",
         "tracked-copy-lengths-for-fleet-and-hull-labels",
-        "tracked-lengths-for-planet-and-fleet-report-dump-fields"
+        "tracked-lengths-for-planet-and-fleet-report-dump-fields",
+        "bounded-source-and-tracked-output-lengths-for-legacy-race-name-conversion"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -1134,6 +1135,18 @@
           "host_regression": "519 matches, 25 existing warnings; zero differences/errors/skips.",
           "tutorial": "1/1 available SDL tutorial smoke passes.",
           "baseline": "Unchanged; serialized planet and fleet dump outputs match the native regression fixtures.",
+          "diff_check": "Pass."
+        },
+        {
+          "batch": "L05 bounded legacy race names with tracked conversion lengths",
+          "commit": "7607cae7",
+          "debug_build": "macos-sdl-debug build passes without new warnings.",
+          "desktop_unit_tests": "18/18 pass.",
+          "host_unit_tests": "29/29 pass.",
+          "native_regression": "519 matches, 25 existing warnings; zero differences/errors/skips.",
+          "host_regression": "519 matches, 25 existing warnings; zero differences/errors/skips.",
+          "tutorial": "1/1 available SDL tutorial smoke passes.",
+          "baseline": "Unchanged; supported legacy race conversion behavior and current regression fixtures match.",
           "diff_check": "Pass."
         }
       ],
@@ -24374,10 +24387,10 @@
   ],
   "restart_checkpoint": {
     "date": "2026-11-02",
-    "reason": "Resume the live C++ cleanup on develop after the verified planet and fleet report field length batch.",
+    "reason": "Resume the live C++ cleanup on develop after the verified legacy race-name conversion batch.",
     "branch": "develop",
-    "latest_batch": "L05 tracked planet and fleet report field lengths",
-    "latest_published_head": "e04d3839",
+    "latest_batch": "L05 bounded legacy race names with tracked conversion lengths",
+    "latest_published_head": "7607cae7",
     "active_stages": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage."
@@ -24410,13 +24423,13 @@
     ]
   },
   "current_checkpoint": {
-    "batch": "L05 tracked planet and fleet report field lengths",
+    "batch": "L05 bounded legacy race names with tracked conversion lengths",
     "status": "implemented, locally verified, committed and pushed to develop; current-source platform qualification remains pending",
-    "parent": "6df60c10",
-    "source_commit": "e04d3839",
+    "parent": "c83060a0",
+    "source_commit": "7607cae7",
     "change": [
-      "DumpPlanets and DumpFleets carry explicit byte counts from CchCopyUtf8Prefix and CchSprintf through RgToStream instead of rescanning their 256-byte row buffer with strlen.",
-      "Tab-only fields and fixed tab-plus-digit values use explicit byte counts; generated dump bytes are unchanged."
+      "FConvertLegacyRaceNames now finds the terminator within the fixed-width source fields and passes bounded byte spans to CP1252 conversion.",
+      "The converter returned UTF-8 byte counts are reused for pluralization, shortening checks and final copies instead of rescanning output with strlen."
     ],
     "verification": {
       "desktop_unit_tests": "18/18 pass.",
@@ -24424,7 +24437,7 @@
       "native_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "host_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "tutorial": "1/1 available SDL native tutorial smoke passes.",
-      "baseline": "Unchanged; serialized report outputs match regression fixtures.",
+      "baseline": "Unchanged.",
       "diff_check": "Pass."
     },
     "platform_ci": {
@@ -24475,12 +24488,12 @@
   "working_tree_checkpoint": {
     "date": "2026-11-02",
     "branch": "develop",
-    "batch": "L05 tracked planet and fleet report field lengths",
-    "source_commit": "e04d3839",
+    "batch": "L05 bounded legacy race names with tracked conversion lengths",
+    "source_commit": "7607cae7",
     "status": "Verified and pushed to develop. Local desktop/host tests, both full regression suites and tutorial smoke pass. Current-source Windows/Linux CI qualification remains pending.",
     "changes": [
-      "DumpPlanets and DumpFleets carry explicit byte counts from CchCopyUtf8Prefix and CchSprintf through RgToStream instead of rescanning their 256-byte row buffer with strlen.",
-      "Tab-only fields and fixed tab-plus-digit values use explicit byte counts; generated dump bytes are unchanged."
+      "FConvertLegacyRaceNames now finds the terminator within the fixed-width source fields and passes bounded byte spans to CP1252 conversion.",
+      "The converter returned UTF-8 byte counts are reused for pluralization, shortening checks and final copies instead of rescanning output with strlen."
     ],
     "verification": {
       "desktop_unit_tests": "18/18 pass.",
@@ -24488,7 +24501,7 @@
       "native_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "host_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "tutorial": "1/1 available SDL native tutorial smoke passes.",
-      "baseline": "Unchanged; serialized report outputs match regression fixtures.",
+      "baseline": "Unchanged.",
       "diff_check": "Pass."
     },
     "current_source_audits": {
@@ -24572,6 +24585,10 @@
       {
         "commit": "e04d3839",
         "message": "Track report field output lengths"
+      },
+      {
+        "commit": "7607cae7",
+        "message": "Track legacy race conversion lengths"
       }
     ]
   }
