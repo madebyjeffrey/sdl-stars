@@ -24295,12 +24295,11 @@
     ],
     "pending_stage": "L08: current-source Windows/Linux platform qualification; C11/macro inventories are reconciled.",
     "restart_order": [
-      "Push develop including a891329d and this ledger update.",
-      "Finish run 41419207748; inspect the Windows SDK matrix artifact and Linux desktop results.",
-      "Dispatch platform qualification on the newest develop source.",
-      "Continue L05 bounded text destinations, const-text interfaces, and scratch/borrowed-return audit.",
+      "Poll current-source workflow 41422617389 and inspect Linux portal/X11 tests plus Windows SDK/client artifacts and outcomes.",
+      "Inspect and record the older run 41419207748 when it finishes; it targets the earlier source head f1cbe921.",
+      "Continue L05 remaining bounded destinations, const-text interfaces and scratch/borrowed-return audit.",
       "Continue L06 remaining buffer/length and native file/path result interfaces and chooser coverage.",
-      "Complete L08 after current-source Windows/Linux qualification and resolve any failures."
+      "Complete L08 only after current-source Windows/Linux qualification and any failures are resolved."
     ],
     "do_not_overwrite": [
       "title-modernized.png and prompt",
@@ -24309,12 +24308,12 @@
     ],
     "audit_summary": "44 tracked .c files, 0 production .c files; no owned function-like application API macros; remaining preprocessor uses are guards/platform/resource/test configuration. C11 remains for independent test/reference targets only.",
     "current_source_ci": {
-      "run_id": 41419207748,
-      "head": "f1cbe921",
-      "url": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41419207748",
-      "status": "queued at checkpoint; jobs have not reported yet",
+      "run_id": 41422617389,
+      "head": "028c1dac10a7060a7508718c1da34bf575629d82",
+      "url": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41422617389",
+      "status": "queued; no jobs have reported yet",
       "dispatch": "unit.yml workflow_dispatch with run_slow_platform_jobs=true",
-      "purpose": "Qualify the pushed current develop source on Linux and Windows."
+      "scope": "Latest source including L05 readonly recent-path and INI parser view batches."
     },
     "latest_source_commit": "a891329d",
     "latest_published_head_before_this_batch": "2dce21c4"
@@ -25080,13 +25079,12 @@
       }
     },
     "current_source_ci": {
-      "run_id": 41419207748,
-      "head": "f1cbe921",
-      "url": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41419207748",
-      "status": "Earlier current-source run remains in progress on f1cbe921; it does not include e0ea740a.",
+      "run_id": 41422617389,
+      "head": "028c1dac10a7060a7508718c1da34bf575629d82",
+      "url": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41422617389",
+      "status": "queued; no jobs have reported yet",
       "dispatch": "unit.yml workflow_dispatch with run_slow_platform_jobs=true",
-      "purpose": "Qualify the pushed current develop source on Linux and Windows.",
-      "latest_qualified_source_commit": "e0ea740a"
+      "scope": "Latest source including L05 readonly recent-path and INI parser view batches."
     }
   },
   "milestone_d_checkpoint": {
@@ -25115,7 +25113,7 @@
     "branch": "develop",
     "batch": "L05 readonly INI selection and identity parser views",
     "source_commit": "a891329d",
-    "status": "Latest source commit is locally verified on develop. Push and current-source Windows/Linux qualification remain.",
+    "status": "Latest source and ledger are pushed to develop; opt-in current-source Windows/Linux workflow is queued.",
     "changes": "ReadIniSelection and ReadIniIdentity consume std::string_view. ReadIniSettings passes explicit byte counts from the bounded profile reads; tests cover subviews not terminated at their end.",
     "verification": {
       "desktop_unit_tests": "18/18 pass.",
@@ -25146,12 +25144,11 @@
       "windows_sdl": "failure in SDK configuration matrix and Windows SDL build; this run predates current source edits."
     },
     "next": [
-      "Push develop including a891329d and this ledger update.",
-      "Finish run 41419207748; inspect the Windows SDK matrix artifact and Linux desktop results.",
-      "Dispatch platform qualification on the newest develop source.",
-      "Continue L05 bounded text destinations, const-text interfaces, and scratch/borrowed-return audit.",
+      "Poll current-source workflow 41422617389 and inspect Linux portal/X11 tests plus Windows SDK/client artifacts and outcomes.",
+      "Inspect and record the older run 41419207748 when it finishes; it targets the earlier source head f1cbe921.",
+      "Continue L05 remaining bounded destinations, const-text interfaces and scratch/borrowed-return audit.",
       "Continue L06 remaining buffer/length and native file/path result interfaces and chooser coverage.",
-      "Complete L08 after current-source Windows/Linux qualification and resolve any failures."
+      "Complete L08 only after current-source Windows/Linux qualification and any failures are resolved."
     ],
     "untracked_user_assets": [
       "title-modernized.png and prompt",
@@ -25159,12 +25156,12 @@
       "title-modernized-v3.png and prompt"
     ],
     "current_source_ci": {
-      "run_id": 41419207748,
-      "head": "f1cbe921",
-      "url": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41419207748",
-      "status": "queued at checkpoint; jobs have not reported yet",
+      "run_id": 41422617389,
+      "head": "028c1dac10a7060a7508718c1da34bf575629d82",
+      "url": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41422617389",
+      "status": "queued; no jobs have reported yet",
       "dispatch": "unit.yml workflow_dispatch with run_slow_platform_jobs=true",
-      "purpose": "Qualify the pushed current develop source on Linux and Windows."
+      "scope": "Latest source including L05 readonly recent-path and INI parser view batches."
     }
   }
 }
