@@ -2,11 +2,11 @@
 #include "filedialog_backend.h"
 #include "input_io.h"
 #include "time_io.h"
+#include "native.h"
 #include <dbus/dbus.h>
 #include <algorithm>
 #include <array>
 #include <climits>
-#include <cstdio>
 #include <cstring>
 #include <new>
 #include <stdexcept>
@@ -268,7 +268,7 @@ FILESELECTIONRESULT ICompatChooseFile(HWND hwndOwner, const FILESELECTIONREQUEST
             }
         }
         xid = SDL_GetNumberProperty(props, SDL_PROP_WINDOW_X11_WINDOW_NUMBER, 0);
-        if (xid != 0) std::snprintf(szParent, sizeof(szParent), "x11:%llx", static_cast<unsigned long long>(xid));
+        if (xid != 0) CchSnprintf(std::span{szParent}, "x11:%llx", static_cast<unsigned long long>(xid));
     }
     pszParent = !szWaylandParent.empty() ? szWaylandParent.c_str() : szParent;
     lpRandom = PfNativeOpen("/dev/urandom", NATIVEFILEMODE::read);
@@ -277,7 +277,8 @@ FILESELECTIONRESULT ICompatChooseFile(HWND hwndOwner, const FILESELECTIONREQUEST
     if (CReadNative(std::span{rgbToken}, lpRandom) != sizeof(rgbToken)) { randomOwner.reset(); goto done; }
     randomOwner.reset();
     CchCopyUtf8(std::span{szToken}, "stars_");
-    for (i = 0; i < 16; i++) std::snprintf(szToken + 6 + i * 2, 3, "%02x", rgbToken[i]);
+    for (i = 0; i < 16; i++)
+        CchSnprintf(std::span{szToken}.subspan(static_cast<std::size_t>(6 + i * 2), std::size_t{3}), "%02x", static_cast<unsigned int>(rgbToken[i]));
     pszUnique = dbus_bus_get_unique_name(lpBus);
     if (!pszUnique || std::strlen(pszUnique) >= sizeof(szSender)) goto done;
     {
@@ -285,7 +286,7 @@ FILESELECTIONRESULT ICompatChooseFile(HWND hwndOwner, const FILESELECTIONREQUEST
         std::copy_n(pszUnique + 1, rgchSender.size(), rgchSender.begin());
     }
     for (i = 0; szSender[i]; i++) if (szSender[i] == '.') szSender[i] = '_';
-    std::snprintf(szRequest, sizeof(szRequest), "%s/request/%s/%s", PORTAL_PATH, szSender, szToken);
+    CchSnprintf(std::span{szRequest}, "%s/request/%s/%s", PORTAL_PATH, szSender, szToken);
     try { szRequestPath = szRequest; }
     catch (const std::bad_alloc &) { goto done; }
     if (request.rgFilters.size() > cCompatFileFiltersMax) goto done;
