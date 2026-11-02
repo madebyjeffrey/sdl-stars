@@ -208,7 +208,8 @@
         "remove-redundant-utf8-window-text-forwarder",
         "centered-rectangle-output-string-view-and-clear-flag",
         "diagonal-text-output-string-view-interface",
-        "streamed-text-output-string-view-and-coordinate-reference"
+        "streamed-text-output-string-view-and-coordinate-reference",
+        "wrapped-text-output-string-view-and-coordinate-references"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -25017,13 +25018,12 @@
   "working_tree_checkpoint": {
     "date": "2026-11-02",
     "branch": "develop",
-    "batch": "L05 streamed text output string_view and coordinate reference",
-    "source_commit": "c9ec4ef4",
+    "batch": "L05 wrapped text output string_view and coordinate references",
+    "source_commit": "e90de5c2",
     "status": "Verified and committed locally on develop. macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Current-source Windows SDL desktop and Linux desktop qualification remain outstanding.",
     "changes": [
-      "CtrTextOut, RcCtrTextOut, DiaganolTextOut and DxStreamTextOut now accept std::string_view; formatted output passes explicit lengths.",
-      "RcCtrTextOut has an explicit clear-background flag; DxStreamTextOut advances its x coordinate by reference.",
-      "Removed FSetUtf8WindowText, a forwarding-only wrapper; the sole production caller and native file UI test use ControlIO().pfnSetWindowText directly.",
+      "WrapTextOut accepts std::string_view and x/y coordinate references; all 29 callers now pass explicit bounded or null-terminated views.",
+      "Removed the implicit zero-length strlen convention from the interface; callers now choose explicit lengths or null-terminated views.",
       "No game behavior, saved layout, file format or serialization changed."
     ],
     "verification": {
@@ -25216,6 +25216,10 @@
       {
         "commit": "c9ec4ef4",
         "message": "Use bounded views for streamed text output"
+      },
+      {
+        "commit": "e90de5c2",
+        "message": "Use bounded views for wrapped text output"
       }
     ],
     "parent": "4867b0c5"
