@@ -1236,7 +1236,8 @@
         "readonly-owned-race-file-input",
         "owned-windows-command-line-argument-result",
         "bounded-tutorial-fragment-output-span-and-optional-length",
-        "inspector-style-string-span-interface"
+        "inspector-style-string-span-interface",
+        "compat-dialog-path-join-span-interface"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -1613,6 +1614,19 @@
           "interface": "AppendStyle, DecodeStyles and FormatStyles accept destination spans instead of raw pointer/capacity pairs. UTF-8 bounded append/copy helpers replace SDL_strlcat/SDL_strlcpy; all actual destinations are 2048-byte arrays and labels are ASCII constants.",
           "baseline": "No game/core/host logic changed. Regression fixture files, saved data, wire layouts, canonical models and behavior are unchanged.",
           "remaining": "Other buffer/path service interfaces, Linux portal formatting, Milestone D and L08 retained primitive/macro inventory and final platform qualification remain open."
+        },
+        {
+          "batch": "L06y compatibility-dialog path-join span interface",
+          "parent": "2b1559cf",
+          "debug_build": "Full macos-sdl-debug build passes without new warnings; regression build compiles the changed dialog translation unit.",
+          "desktop_unit_tests": "18/18 pass.",
+          "focused_workflows": "File-dialog Cocoa, client startup and client file workflow pass (3/3).",
+          "tutorial": "Available SDL tutorial smoke checkpoint passes.",
+          "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+          "windows_syntax": "Strict MinGW syntax passes for filedialog.cpp (1/1).",
+          "interface": "FJoinFile and all seven callers pass the actual destination span. The assumed PATH_MAX pointer/capacity pair is removed; joined and absolute paths still reject failed, over-capacity or invalid UTF-8 results.",
+          "baseline": "No game/core/host logic, saved data, record layouts, canonical models or regression fixtures changed.",
+          "remaining": "Other buffer/path service interfaces, Linux portal formatting and chooser qualification, Milestone D and L08 final retained primitive/macro qualification remain open."
         }
       ],
       "roman_output": {
@@ -23567,10 +23581,10 @@
     "date": "2026-11-01",
     "reason": "User requested completion of the current batch and a progress report before restarting.",
     "branch": "develop",
-    "batch": "L06x inspector style-formatting span interface",
-    "batch_parent": "daaff459",
-    "latest_batch": "L06x inspector style-formatting span interface",
-    "latest_batch_head": "159edb9a",
+    "batch": "L06y compatibility-dialog path-join span interface",
+    "batch_parent": "2b1559cf",
+    "latest_batch": "L06y compatibility-dialog path-join span interface",
+    "latest_batch_head": "a86ea665",
     "completed_stages": [
       "L01: nullptr and aliases",
       "L02: explicit C++ casts and headers",
@@ -23610,7 +23624,7 @@
     ],
     "restart_order": [
       "Read this checkpoint and check git status/log; preserve unrelated title-modernized assets.",
-      "Latest inspector span batch 159edb9a passes local macOS verification; inspect its checkpoint before continuing.",
+      "Latest compatibility-dialog span batch is locally verified; inspect its checkpoint before continuing.",
       "Resolve any new platform failures before beginning a new cleanup batch.",
       "Continue from current_checkpoint. The two remaining string copies are required SDK output boundaries; continue L05/L06 and final L08 reconciliation."
     ],
@@ -23630,16 +23644,16 @@
     }
   },
   "current_checkpoint": {
-    "batch": "L06x inspector style-formatting span interface",
+    "batch": "L06y compatibility-dialog path-join span interface",
     "status": "implemented and locally verified; native Windows runtime and Linux portal build qualification remain pending",
-    "parent": "daaff459",
+    "parent": "2b1559cf",
     "changes": {
-      "compat/win32/src/inspect.cpp": "Converts AppendStyle, DecodeStyles and FormatStyles from raw pointer/capacity parameters to destination spans; uses bounded UTF-8 append/copy functions instead of SDL_strlcat/SDL_strlcpy."
+      "compat/win32/src/filedialog.cpp": "Converts FJoinFile and all seven callers from a raw pointer plus assumed PATH_MAX capacity to actual destination spans, using CchCopyUtf8/CchSnprintf with the supplied extent."
     },
     "verification": {
-      "macos_debug_build": "Full macos-sdl-debug build passes without new warnings; regression build compiled the changed inspector translation unit.",
-      "focused_tests": "win32_client_startup_dummy passes; 1/1.",
-      "windows_syntax": "Strict MinGW syntax passes for compat/win32/src/inspect.cpp and src/ui/scaninspect.cpp, 2/2.",
+      "macos_debug_build": "Full macos-sdl-debug build passes without new warnings; regression build compiled the changed dialog translation unit.",
+      "focused_tests": "File-dialog Cocoa, client startup and client file workflow pass; 3/3.",
+      "windows_syntax": "Strict MinGW syntax passes for filedialog.cpp, 1/1.",
       "desktop_unit_tests": "18/18 pass.",
       "tutorial": "Available SDL tutorial smoke checkpoint passes.",
       "native_regression": "519 matches (25 with existing warnings); zero differences/errors/skips.",
@@ -23654,7 +23668,7 @@
       "L08 maintained inventory reconciliation, retained primitive/macro audit and final platform qualification."
     ],
     "macro_scan": "The prior owned-production scan found only header guards and NOMINMAX as #define directives, with no additional application/API macro definitions. L08 still needs retained primitive/macro inventory reconciliation and a final preprocessor-boundary audit.",
-    "published_batch_head": "159edb9a"
+    "published_batch_head": "a86ea665"
   },
   "milestone_d_checkpoint": {
     "stage": "D05 caller migrations implemented; D06 platform qualification pending",
