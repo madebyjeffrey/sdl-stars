@@ -124,7 +124,8 @@
         "fixed-count-strncpy-replaced-with-ranges-algorithms",
         "typed-help-wrapper-formatting",
         "typed-profile-wrapper-formatting",
-        "typed-print-wrapper-formatting"
+        "typed-print-wrapper-formatting",
+        "typed-dialog-inspector-and-MDI-wrapper-formatting"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -842,6 +843,19 @@
           "macos_debug_build": "Full macos-sdl-debug build passes without new warnings.",
           "print_tests": "Print workflow, PDF output and print-map checks pass (3/3). The separate win32_sdl_leaks_print case times out at 60 seconds because its launcher cannot get the macOS task port immediately after launch.",
           "windows_syntax": "Strict MinGW syntax passes for compat/win32/src/print.cpp (1/1).",
+          "desktop_unit_tests": "18/18 pass.",
+          "tutorial": "Available SDL tutorial smoke checkpoint passes.",
+          "native_regression": "519 matches, 25 existing warnings, zero differences/errors/skips.",
+          "host": "No host source or host-facing API changed; no host regression rerun.",
+          "baseline": "Unchanged; no game behavior, saved data, layouts or canonical model changed."
+        },
+        {
+          "batch": "L05ap typed dialog, inspector and MDI wrapper formatting",
+          "parent": "95c3ae06",
+          "status": "implemented and locally verified; native Windows runtime and Linux portal qualification pending",
+          "macos_debug_build": "Full macos-sdl-debug build passes without new warnings; regression build compiled the changed translation units.",
+          "focused_tests": "File-dialog Cocoa, client startup and client file workflow pass (3/3).",
+          "windows_syntax": "Strict MinGW syntax passes for filedialog.cpp and mdi.cpp (2/2); inspect.cpp compiled in the macOS debug and regression builds.",
           "desktop_unit_tests": "18/18 pass.",
           "tutorial": "Available SDL tutorial smoke checkpoint passes.",
           "native_regression": "519 matches, 25 existing warnings, zero differences/errors/skips.",
@@ -23540,7 +23554,9 @@
     "reason": "User requested completion of the current batch and a progress report before restarting.",
     "branch": "develop",
     "batch": "L05ai: FLoadGame/FWriteLogFile owned inputs and bounded slot parsing",
-    "batch_parent": "8262a2c68ee424d96bdb3633b06f156a667f53eb",
+    "batch_parent": "95c3ae06",
+    "latest_batch": "L05ap typed dialog, inspector and MDI wrapper formatting",
+    "latest_batch_head": "9d087774",
     "completed_stages": [
       "L01: nullptr and aliases",
       "L02: explicit C++ casts and headers",
@@ -23573,13 +23589,14 @@
     "other_remaining": [
       "Other readonly path/buffer/service interfaces",
       "Audit remaining Work/Msg/scratch storage and borrowed returns",
-      "Wrapper formatting and manual bounds review",
+      "Linux portal direct formatting remains; its D-Bus development headers are unavailable in the local environment",
+      "Manual bounds review",
       "Typed file-selection Milestone D, D01-D06 (docs/CPP-MILESTONE-D.md)",
       "Final retained-primitive/macro audit and full current-source/platform qualification"
     ],
     "restart_order": [
       "Read this checkpoint and check git status/log; preserve unrelated title-modernized assets.",
-      "Run 41363769853 is fully green for L05ai at b76ec1fc. Check newer batches and CI receipts before starting another batch.",
+      "Latest focused formatting batch 9d087774 passes local macOS verification; inspect its checkpoint before continuing.",
       "Resolve any new platform failures before beginning a new cleanup batch.",
       "Continue from current_checkpoint. The two remaining string copies are required SDK output boundaries; continue L05/L06 and final L08 reconciliation."
     ],
@@ -23599,30 +23616,33 @@
     }
   },
   "current_checkpoint": {
-    "batch": "L05ao typed print-wrapper formatting",
-    "status": "implemented and locally verified; native Windows runtime qualification pending; macOS leak-harness process-port case fails in this environment",
-    "parent": "da2eb38b",
+    "batch": "L05ap typed dialog, inspector and MDI wrapper formatting",
+    "status": "implemented and locally verified; native Windows runtime qualification and Linux portal build qualification pending",
+    "parent": "95c3ae06",
     "changes": {
-      "compat/win32/src/print.cpp": "Migrates three direct snprintf calls to CchSnprintf with destination spans and removes the now-unused cstdio include."
+      "compat/win32/src/filedialog.cpp": "Migrates three direct snprintf calls to CchSnprintf using full destination spans or the remaining tail span; removes the now-unused cstdio include.",
+      "compat/win32/src/inspect.cpp": "Migrates three direct snprintf calls to CchSnprintf with destination spans.",
+      "src/ui/mdi.cpp": "Migrates the title-formatting snprintf call to CchSnprintf with a destination span."
     },
     "verification": {
-      "macos_debug_build": "Full macos-sdl-debug build passes without new warnings.",
-      "print_tests": "Print workflow, PDF output and print-map pass; the leak test times out after its launcher reports it cannot get the macOS task port.",
-      "windows_syntax": "Strict MinGW syntax passes for the changed print wrapper.",
+      "macos_debug_build": "Full macos-sdl-debug build passes without new warnings; regression build also compiled the changed UI/wrapper translation units.",
+      "focused_tests": "File-dialog Cocoa, client startup and client file workflow pass 3/3.",
+      "windows_syntax": "Strict MinGW syntax passes for filedialog.cpp and mdi.cpp, 2/2.",
       "desktop_unit_tests": "18/18 pass.",
       "tutorial": "Available SDL tutorial smoke checkpoint passes.",
       "native_regression": "519 matches (25 with existing warnings); zero differences/errors/skips.",
       "host": "No host source or host-facing API changed; no host regression rerun.",
-      "baseline": "Unchanged; no game behavior, saved data, layouts or canonical model changed."
+      "baseline": "Unchanged; no game behavior, saved data, layouts or canonical model changed.",
+      "diff_check": "git diff --check and checkpoint JSON validation pass."
     },
     "remaining_work": [
-      "L05 bounded text destinations, const-text interfaces, scratch storage/borrowed-return audit and remaining wrapper formatting callers.",
+      "L05 bounded text destinations, const-text interfaces, scratch storage/borrowed-return audit and remaining wrapper formatting callers, including Linux portal formatting.",
       "L06 remaining buffer/length interfaces and native path results.",
       "L06 D06 native Windows/Linux chooser qualification and remaining chooser branch coverage.",
       "L08 maintained inventory reconciliation, retained primitive/macro audit and final platform qualification."
     ],
-    "macro_scan": "Owned production #define directives are header guards and NOMINMAX; no additional application/API macro definitions were found. Reconcile the historical retained-macro inventory and preprocessor boundaries during L08.",
-    "published_batch_head": "4d3de439"
+    "macro_scan": "The prior owned-production scan found only header guards and NOMINMAX as #define directives, with no additional application/API macro definitions. L08 still needs retained primitive/macro inventory reconciliation and a final preprocessor-boundary audit.",
+    "published_batch_head": "9d087774"
   },
   "milestone_d_checkpoint": {
     "stage": "D05 caller migrations implemented; D06 platform qualification pending",
