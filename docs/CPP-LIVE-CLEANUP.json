@@ -24086,7 +24086,13 @@
       "Continue L05 bounded text destinations, const-text APIs, and scratch/borrowed-return review.",
       "Continue L06 span/result interfaces, remaining native path results, and Windows/Linux chooser qualification.",
       "Finish L08 retained preprocessor/API macro inventory and qualify the final full source state."
-    ]
+    ],
+    "fresh_github_runs": {
+      "head": "f0535e76",
+      "unit_platforms": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41408495656",
+      "native_regression": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41408498306",
+      "status_at_checkpoint": "queued"
+    }
   },
   "current_checkpoint": {
     "batch": "L06 library backup path output span",
@@ -24105,7 +24111,13 @@
       "linked_publication_witness": "61,975 controller cases and 48 linked-copy cases passed using the current built witness binary.",
       "diff_check": "pass.",
       "baseline": "Unchanged.",
-      "platform_ci": "The previously dispatched platform jobs target 83141f11 and predate both library path span batches. Current-source Windows/Linux qualification remains pending."
+      "platform_ci": "The previously dispatched platform jobs target 83141f11 and predate both library path span batches. Current-source Windows/Linux qualification remains pending.",
+      "fresh_github_runs": {
+        "head": "f0535e76",
+        "unit_platforms": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41408495656",
+        "native_regression": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41408498306",
+        "status_at_checkpoint": "queued"
+      }
     },
     "source_commit": "4cf15407",
     "published_batch_head": "4cf15407",
