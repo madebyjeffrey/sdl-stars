@@ -1,6 +1,6 @@
 {
   "migration_parent": "d3d3724c",
-  "status": "304 copy migrations recorded; live text work remains active",
+  "status": "305 copy migrations recorded; live text work remains active",
   "contracts": {
     "display": "Write a terminated complete UTF-8 prefix into the actual destination span; preserve fitting bytes. Views borrow synchronously and overlapping copies use memmove.",
     "append": "Scan only inside the destination span for its NUL. An unterminated nonempty destination is cleared and zero bytes are appended.",
@@ -3010,17 +3010,19 @@
       "original_call": "std::strcat(psz + 8, PszGetLocName(app, app.state.sel.grobj, app.state.sel.id, pt2.x, pt2.y).data())",
       "destination_span": "std::span{szBuf}",
       "role": "The complete scanner label has capacity for two 360-byte service values and two catalog values. Each catalog write gets its own budget and location append validates remaining capacity. No record width or location text is shortened."
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "scope": "CommandHandler IDM_FILE_RETURN_TO_TITLE",
+      "baseline_line": 1539,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.szBase, app.state.szWork)",
+      "destination_span": "std::span{app.state.szBase}",
+      "role": "The current file-family stem fits the existing base field. Remove the active file extension before strict UTF-8 staging so the final suffix is not mistaken for part of the family."
     }
   ],
   "remaining_spelling_scope": "Lexical raw-copy spellings, including SDK declarations/definitions; comments/literals excluded with the manifest lexer. Exact counts prevent new raw sites during the remaining migration.",
   "remaining_raw_spellings": [
-    {
-      "path": "src/ui/mdi.cpp",
-      "normalized_call": "std::strcpy(app.state.szBase,app.state.szWork)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
     {
       "path": "src/ui/mdi.cpp",
       "normalized_call": "std::strcpy(szFile,app.state.szWork)",
@@ -3615,5 +3617,10 @@
         "tests/unit/test_native_fileui.cpp": "91c3e27721385bb6e2aea77f298bdc03d839e858a92eed5c2100a29d1a5f0da2"
       }
     }
+  },
+  "title_return_family": {
+    "status": "implemented; verification in progress",
+    "parent": "ab80d055",
+    "contract": "After current-game teardown, preserve Work\u2019s file family in the 255-byte Base field by removing its final extension only when that dot follows the last path separator. Copy through strict bounded UTF-8."
   }
 }

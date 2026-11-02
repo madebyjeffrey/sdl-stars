@@ -901,6 +901,9 @@ void RestoreSelection(APPSESSION &app) {
 void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
     std::array<char, cchCatalogText> szCatalogPsz{};
     std::array<char, 50> szPlayerName{};
+    std::string_view szWorkBase;
+    std::size_t ichWorkExtension;
+    std::size_t ichWorkSeparator;
     POINT16  pt;
     HMENU    hmenu;
     std::int16_t  dy;
@@ -1536,7 +1539,14 @@ LPrintMapCleanup:
                 break;
             WriteIniSettings(app);
             DestroyCurGame(app);
-            std::strcpy(app.state.szBase, app.state.szWork);
+            szWorkBase = app.state.szWork;
+            ichWorkExtension = szWorkBase.rfind('.');
+            ichWorkSeparator = szWorkBase.find_last_of("/\\");
+            if (ichWorkExtension != std::string_view::npos &&
+                (ichWorkSeparator == std::string_view::npos || ichWorkExtension > ichWorkSeparator)) {
+                szWorkBase = szWorkBase.substr(0, ichWorkExtension);
+            }
+            CchCopyUtf8(std::span{app.state.szBase}, szWorkBase);
             app.state.ini.grobjSel = 0;
             app.state.ini.iObjSel = 0;
             app.state.ini.idPlayer = iplrNone;
