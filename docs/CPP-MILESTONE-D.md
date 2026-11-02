@@ -1,6 +1,6 @@
 # Milestone D: a C++ file-selection interface behind the SDL Win32 wrapper
 
-Status: D01–D02 complete; D03–D05 implementation underway; D06 remains open.
+Status: D01–D05 implementation complete; D06 platform qualification and expansion decision remain open.
 Recorded: 2026-10-31. D01 revalidated: 2026-11-01. Tracking: [#71](https://github.com/madebyjeffrey/sdl-stars/issues/71).
 
 ## Outcome and scope
@@ -194,19 +194,21 @@ manifest remains at 158 owned C++20 sources, 159 compiled variants, 2
 independent C references and 163 headers in both orders after the shared UI
 selection helper was added.
 
-The in-progress D05 caller batch migrates race-library open/save selection,
-library orders export/import, ZIP game export and the active game/race/ZIP
-import-source picker to the typed operation. The real-client workflow exercises
-typed race import/export and orders save/cancel paths. The ZIP export, orders
-import and active import-source chooser branches are compile-checked but not
-exercised end-to-end; the first two are not driven by this workflow and the
-last immediately opens a race-edit modal that the harness does not drive. The
-workflow test passes after preserving the original chooser cancellation
-sequence. Main game open and race save remain `OPENFILENAMEA` callers and are
-the next candidates; migrating them also requires converting their separate
-client test chooser seams. Remaining native coverage, full regression, unit,
-tutorial, Release and host gates are open; D03–D06 are not qualified for
-completion.
+The D05 caller batch migrates all current `src/ui` file-picking callers: main
+game open, race save, race-library open/save, orders import/export, ZIP game
+export and the active game/race/ZIP import-source picker. The real-client
+workflow exercises main game open, race save, typed race import/export and
+orders save/cancel paths; the full new-game, race-library and host-games
+workflows pass with typed test chooser providers. ZIP export, orders import and
+the active import-source chooser branches compile but are not independently
+driven end-to-end by those workflows. `src/ui` no longer constructs
+`OPENFILENAMEA` or exposes the old `FNativeOpenFileName`/`FNativeSaveFileName`
+UI wrappers; the ABI entry points remain for the Win32 printing path and
+contract/reference tests. The old UI forwarding functions and their
+`DesktopChoiceIO` hooks were removed. D05 implementation is complete; D06
+still requires native Windows and Linux qualification, the compatibility
+browser test, full regression, unit, tutorial, Release and host gates. D03–D06
+are not qualified for milestone completion.
 
 ### D04 implementation progress (2026-11-01)
 

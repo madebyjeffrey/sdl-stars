@@ -8,8 +8,6 @@ struct DESKTOPCHOICEIO {
     decltype(&InitInstance)        pfnInitInstance = InitInstance;
     decltype(&AskSaveDialog)       pfnAskSaveDialog = AskSaveDialog;
     decltype(&NewGameWizard)       pfnNewGameWizard = NewGameWizard;
-    decltype(&FNativeSaveFileName) pfnFNativeSaveFileName = FNativeSaveFileName;
-    decltype(&FNativeOpenFileName) pfnFNativeOpenFileName = FNativeOpenFileName;
 };
 const DESKTOPCHOICEIO &DesktopChoiceIO() noexcept;
 class DESKTOPCHOICEIOSCOPE {

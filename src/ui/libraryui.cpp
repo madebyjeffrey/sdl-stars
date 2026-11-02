@@ -16,7 +16,6 @@
 #include "time_io.h"
 #include "alert_io.h"
 #include "record_io.h"
-#include "desktop_choice_io.h"
 #include "file_selection.h"
 #include "file_selection_ui.h"
 #include "ownership.h"

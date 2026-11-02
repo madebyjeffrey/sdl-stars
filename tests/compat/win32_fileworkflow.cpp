@@ -21,8 +21,7 @@ static BOOL fTypedChooserCancel;
 static UINT_PTR idTimer;
 static int cAlerts, cReplaceChoices;
 #define CHECK(f) do { if (!(f)) { fprintf(stderr, "file workflow line %d: %s\n", __LINE__, #f); goto done; } } while (0)
-static int cFileChoices;
-static int cTypedRaceOpens, cTypedRaceSaves, cTypedOrderSaves;
+static int cTypedGameOpens, cTypedUserRaceSaves, cTypedRaceOpens, cTypedLibraryRaceSaves, cTypedOrderSaves;
 
 static win32::files::FILESELECTIONRESULT IChooseTypedWorkflowFile(HWND, const win32::files::FILESELECTIONREQUEST &request) {
     const char *pszFile;
@@ -30,6 +29,17 @@ static win32::files::FILESELECTIONRESULT IChooseTypedWorkflowFile(HWND, const wi
     if (request.mode == win32::files::FILESELECTIONMODE::open && request.rgFilters.size() == 1 &&
         request.rgFilters[0].szPattern == "*.m1") {
         pszFile = PszCompatEnvironment("STARS_TEST_GAME_PATH");
+    } else if (request.mode == win32::files::FILESELECTIONMODE::open && !request.rgFilters.empty() &&
+               (request.rgFilters[0].szPattern == "*.M*;*.HST;*.R*" || request.rgFilters[0].szPattern == "*.R*")) {
+        cTypedGameOpens++;
+        if (cTypedGameOpens == 1) return win32::files::FILESELECTIONCANCELLED{};
+        pszFile = PszCompatEnvironment(cTypedGameOpens == 2 ? "STARS_TEST_GAME_PATH" : "STARS_TEST_RACE_PATH");
+    } else if (request.mode == win32::files::FILESELECTIONMODE::save && request.rgFilters.size() == 1 &&
+               request.rgFilters[0].szPattern == "*.R*" && request.szDefaultExtension == "r1" &&
+               request.fRequireWritable) {
+        cTypedUserRaceSaves++;
+        if (cTypedUserRaceSaves == 1) return win32::files::FILESELECTIONCANCELLED{};
+        pszFile = PszCompatEnvironment(cTypedUserRaceSaves == 2 ? "STARS_TEST_RACE_PATH" : "STARS_TEST_RACE_REPEAT_PATH");
     } else if (request.rgFilters.size() == 2 && request.rgFilters[0].szPattern == "*.r1;*.r2;*.r3" &&
                request.rgFilters[1].szPattern == "*.*" && request.mode == win32::files::FILESELECTIONMODE::open) {
         cTypedRaceOpens++;
@@ -37,7 +47,7 @@ static win32::files::FILESELECTIONRESULT IChooseTypedWorkflowFile(HWND, const wi
     } else if (request.rgFilters.size() == 2 && request.rgFilters[0].szPattern == "*.r1;*.r2;*.r3" &&
                request.rgFilters[1].szPattern == "*.*" && request.mode == win32::files::FILESELECTIONMODE::save &&
                request.szInitialPath == "Managed.r1") {
-        cTypedRaceSaves++;
+        cTypedLibraryRaceSaves++;
         pszFile = PszCompatEnvironment("STARS_TEST_RACE_EXPORT_PATH");
     } else if (request.mode == win32::files::FILESELECTIONMODE::open && request.rgFilters.size() == 3 &&
                request.rgFilters[0].szPattern == "*.ZIP;*.XY;*.M*;*.HST;*.R*") {
@@ -58,33 +68,6 @@ static const char *PszWorkflowFilename(const char *pszFile) {
     const char *pch = pszFile + strlen(pszFile);
     while (pch > pszFile && pch[-1] != '/' && pch[-1] != '\\') pch--;
     return pch;
-}
-
-static BOOL FChooseWorkflowFile(OPENFILENAME *lpof, BOOL fSave) {
-    const char *pszFile, *pchExtension;
-    cFileChoices++;
-    if ((fSave && cFileChoices != 3 && cFileChoices != 4 && cFileChoices != 6 &&
-                  cFileChoices != 7 && cFileChoices != 8 && cFileChoices != 9) ||
-        (!fSave && cFileChoices != 1 && cFileChoices != 2 && cFileChoices != 5)) return 0;
-    if (cFileChoices >= 7 && strcmp(lpof->lpstrFile, "café-Ω.x1")) return 0;
-    if (cFileChoices == 1 || cFileChoices == 3 || cFileChoices == 7) return 0;
-    pszFile = PszCompatEnvironment(cFileChoices == 2 ? "STARS_TEST_GAME_PATH" :
-                     cFileChoices == 6 ? "STARS_TEST_RACE_REPEAT_PATH" :
-                     cFileChoices >= 8 ? "STARS_TEST_EXPORT_CHOICE" : "STARS_TEST_RACE_PATH");
-    if (!pszFile || strlen(pszFile) >= lpof->nMaxFile) return 0;
-    strcpy(lpof->lpstrFile, pszFile);
-    lpof->nFileOffset = (WORD)(PszWorkflowFilename(pszFile) - pszFile);
-    pchExtension = strrchr(PszWorkflowFilename(pszFile), '.');
-    lpof->nFileExtension = pchExtension ? (WORD)(pchExtension - pszFile + 1) : 0;
-    return 1;
-}
-
-BOOL StarsTest_FNativeOpenFileName(OPENFILENAME *lpof) {
-    return PszCompatEnvironment("STARS_TEST_FILE_WORKFLOW_COMPAT") ? FChooseWorkflowFile(lpof, 0) : FNativeOpenFileName(lpof);
-}
-
-BOOL StarsTest_FNativeSaveFileName(OPENFILENAME *lpof) {
-    return PszCompatEnvironment("STARS_TEST_FILE_WORKFLOW_COMPAT") ? FChooseWorkflowFile(lpof, 1) : FNativeSaveFileName(lpof);
 }
 
 static BOOL FEqualFiles(const char *pszLeft, const char *pszRight) {
@@ -255,7 +238,7 @@ static void  FileWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
     CHECK(FWasRaceFile(app, szManagedRace, 0) > 0 && app.state.vplr.lSalt == app.state.lSaltLast);
     CHECK(FImportLibraryRaceAs(app, app.lpui->hwndTitle, pszRace, "Imported.r2"));
     CHECK(FImportLibraryRace(app, app.lpui->hwndTitle, nullptr));
-    CHECK(cTypedRaceOpens == 1 && cTypedRaceSaves == 1);
+    CHECK(cTypedGameOpens == 3 && cTypedUserRaceSaves == 3 && cTypedRaceOpens == 1 && cTypedLibraryRaceSaves == 1);
     CHECK(CchSnprintf(std::span{szManagedRace, sizeof(szManagedRace)}, "%s%sImported.r2", szRaceLibrary, szDirSep) > 0);
     CHECK((cbRaceLibrary = FNativeFileSize(szManagedRace)) && (*cbRaceLibrary) > 0 && FEqualFiles(pszRace, szManagedRace));
     CHECK(!FImportLibraryRaceAs(app, app.lpui->hwndTitle, pszRace, "imported.R2"));
@@ -282,8 +265,7 @@ static void  FileWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
           (cbExport = FNativeFileSize((char *)pszManagedOrders)) && (*cbExport) > 0);
     CHECK(app.state.game.lid == lid && memcmp(&plrSav, &app.state.rgplr[app.state.idPlayer], sizeof(plrSav)) == 0);
     app.lpui->hwndRaceParent = hwndParentSav;
-    fPassed = cAlerts == 1 && cTypedOrderSaves == 3 &&
-              (!PszCompatEnvironment("STARS_TEST_FILE_WORKFLOW_COMPAT") || cFileChoices == 6);
+    fPassed = cAlerts == 1 && cTypedOrderSaves == 3;
 done:
     win32::KillTimer(NULL, id);
     win32::PostQuitMessage(fPassed ? 0 : 92);
@@ -304,8 +286,6 @@ int main(void) {
     PLAYERCHOICEIOSCOPE scope_playerchoiceio(io_playerchoiceio);
     DESKTOPCHOICEIO io_desktopchoiceio;
     io_desktopchoiceio.pfnInitInstance = StarsTest_InitInstance;
-    io_desktopchoiceio.pfnFNativeSaveFileName = StarsTest_FNativeSaveFileName;
-    io_desktopchoiceio.pfnFNativeOpenFileName = StarsTest_FNativeOpenFileName;
     DESKTOPCHOICEIOSCOPE scope_desktopchoiceio(io_desktopchoiceio);
     COMPATCHOICEIO io_compatchoiceio;
     io_compatchoiceio.pfnMessageBoxA = StarsTest_MessageBoxA;

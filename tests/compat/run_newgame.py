@@ -15,7 +15,7 @@ def run(executable, work, default_root=False, settings_root=False, **choices):
     env = dict(os.environ, STARS_SETTINGS_DIR=str(work / 'settings'),
                STARS_PROFILE_DIR=str(work / 'settings'),
                STARS_LIBRARY_DIR=str(work / 'library'),
-               STARS_FILE_DIALOG_BACKEND='compat',
+               STARS_FILE_DIALOG_BACKEND='native',
                STARS_DEBUG_LIBRARY_STARTUP='1')
     if default_root or settings_root:
         env.pop('STARS_LIBRARY_DIR', None)

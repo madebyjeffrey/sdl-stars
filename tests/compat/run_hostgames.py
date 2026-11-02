@@ -30,7 +30,7 @@ def main():
                    STARS_CLIENT_HOST_ORDER_PICKER_BASE=str(order_dir / "next"),
                    STARS_CLIENT_HOST_ORDER_PICKER=str(order_dir / "next.x1"),
                    SDL_VIDEODRIVER="dummy", SDL_AUDIODRIVER="dummy",
-                   STARS_SDL_RENDERER="software", STARS_FILE_DIALOG_BACKEND="compat")
+                   STARS_SDL_RENDERER="software", STARS_FILE_DIALOG_BACKEND="native")
         subprocess.run([str(executable)], cwd=work, env=env, check=True, timeout=75)
         assert (settings / "Games" / "Hosted" / "Hosted.xy").read_bytes() == (source / "game.xy").read_bytes()
         assert (settings / "Games" / "Hosted" / "Hosted.hst").read_bytes() != (source / "game.hst").read_bytes()

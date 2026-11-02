@@ -48,9 +48,6 @@ inline constexpr auto WM_STARS_SCAN_RESIZE = (win32::WM_APP + 2);
 #include "vcr.h"
 
 // All window text and file paths use UTF-8.
-BOOL FNativeOpenFileName(OPENFILENAMEA *lpof);
-BOOL FNativeSaveFileName(OPENFILENAMEA *lpof);
-DWORD DwNativeFileDialogError(void);
 int CchGetUtf8WindowText(HWND hwnd, char *psz, int cchMax);
 BOOL FSetUtf8WindowText(HWND hwnd, const char *psz);
 BOOL FSetNativeWindowTitle(HWND hwnd, const char *psz);

@@ -13,6 +13,7 @@ args = parser.parse_args()
 with tempfile.TemporaryDirectory(prefix='stars-file-workflow-compat-') as directory:
     root = Path(directory) / 'étoiles-Ω'
     root.mkdir()
+    root = root.resolve()
     fixture = Path(__file__).resolve().parents[1] / 'scaffold/fixtures/regression/native/oneai1/checkpoints/000'
     managed = root / 'Games' / 'Renamed copy'
     managed.mkdir(parents=True)
@@ -31,7 +32,6 @@ with tempfile.TemporaryDirectory(prefix='stars-file-workflow-compat-') as direct
     assert not export_choice.exists()
     managed_orders = managed / 'Renamed copy.x1'
     env = dict(os.environ, STARS_SETTINGS_DIR=str(root), STARS_PROFILE_DIR=str(root),
-               STARS_TEST_FILE_WORKFLOW_COMPAT="1",
                STARS_TEST_GAME_PATH=str(managed / 'Renamed copy.m1'),
                STARS_TEST_RACE_PATH=str(race), STARS_TEST_RACE_REPEAT_PATH=str(race_repeat),
                STARS_TEST_RACE_EXPORT_PATH=str(race_export),

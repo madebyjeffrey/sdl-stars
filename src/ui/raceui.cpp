@@ -8,7 +8,7 @@
 #include "race_query_io.h"
 #include "alert_io.h"
 #include "record_io.h"
-#include "desktop_choice_io.h"
+#include "file_selection_ui.h"
 #include "ownership.h"
 #include <stars_compat.h>
 
@@ -1419,12 +1419,13 @@ std::int16_t FConfirmLegacyRaceNames(APPSESSION &app, char *szName, char *szName
 
 std::int16_t FSaveRace(APPSESSION &app, char *szFileSuggest, PLAYER *pplr) {
     std::uint16_t     icksum;
-    char         szFileTitle[256];
-    char         szDirName[256];
-    char         szFilter[256];
-    std::uint16_t     i;
     char         szFile[256];
-    OPENFILENAME ofn;
+    char *pch, *pchBackslash;
+    win32::files::FILESELECTIONREQUEST request;
+    win32::files::FILESELECTIONRESULT result;
+    const win32::files::FILESELECTIONSELECTED *pSelected;
+    std::array<char, cchCatalogText> rgchFilterText;
+    std::size_t ichFileName;
 
     if (szFileSuggest == app.state.szRaceFile && app.state.szRaceFile[0] && szRaceFileSuggest[0] &&
         std::strncmp(app.state.szRaceFile, szRaceFileSuggest, std::strlen(app.state.szRaceFile)) == 0) szFileSuggest = szRaceFileSuggest;
@@ -1433,26 +1434,21 @@ std::int16_t FSaveRace(APPSESSION &app, char *szFileSuggest, PLAYER *pplr) {
     } else {
         szFile[0] = 0;
     }
-    szDirName[0] = 0;
-    TextIO().pfnCchGetString(app, idsStarsRaceFilesR, std::span{szFilter});
-    for (i = 0; szFilter[i] != 0; i++) {
-        if (szFilter[i] == '|') {
-            szFilter[i] = 0;
-        }
-    }
-    ofn = {};
-    ofn.lStructSize = sizeof(OPENFILENAME);
-    ofn.hwndOwner = app.lpui->hwndRaceParent;
-    ofn.lpstrFilter = szFilter;
-    ofn.nFilterIndex = 1;
-    ofn.lpstrFile = szFile;
-    ofn.nMaxFile = 0x100;
-    ofn.lpstrFileTitle = szFileTitle;
-    ofn.nMaxFileTitle = 0x100;
-    ofn.lpstrInitialDir = szDirName;
-    ofn.lpstrDefExt = "r1";
-    ofn.Flags = win32::OFN_OVERWRITEPROMPT | win32::OFN_HIDEREADONLY | win32::OFN_PATHMUSTEXIST | win32::OFN_NOREADONLYRETURN;
-    if (DesktopChoiceIO().pfnFNativeSaveFileName(&ofn) != 0) {
+    request.mode = win32::files::FILESELECTIONMODE::save;
+    request.szInitialPath = szFile;
+    request.szDefaultExtension = "r1";
+    request.cbPathMax = sizeof(szFile);
+    request.fRequireWritable = true;
+    request.fConfirmOverwrite = true;
+    rgchFilterText = TextIO().pfnCompressed(app, idsStarsRaceFilesR);
+    request.rgFilters = ui::files::RgParseFilters(std::string_view{rgchFilterText.data()});
+    result = ui::files::ChooseFile(app.lpui->hwndRaceParent, std::move(request));
+    pSelected = std::get_if<win32::files::FILESELECTIONSELECTED>(&result);
+    if (pSelected && CchCopyUtf8(std::span{szFile}, pSelected->szPath) >= 0) {
+        pch = std::strrchr(szFile, '/');
+        pchBackslash = std::strrchr(szFile, '\\');
+        if (pchBackslash && (!pch || pchBackslash > pch)) pch = pchBackslash;
+        ichFileName = pch ? static_cast<std::size_t>(pch - szFile + 1) : 0;
         if (!RecordIO().pfnFCreateFile(app, dtRace, iplrNone, szFile)) {
             AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsStarsUnableSaveRaceDataFilePlease, {}).data(), win32::MB_ICONHAND);
             return 0;
@@ -1461,7 +1457,7 @@ std::int16_t FSaveRace(APPSESSION &app, char *szFileSuggest, PLAYER *pplr) {
         icksum = IRaceChecksum(pplr);
         WriteRtEof(app, icksum);
         RecordIO().pfnStreamClose(app);
-        SetSzRaceFile(app, &szFile[ofn.nFileOffset]);
+        SetSzRaceFile(app, &szFile[ichFileName]);
         return 1;
     }
     return 0;

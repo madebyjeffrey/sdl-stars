@@ -32,8 +32,6 @@ BOOL IsDialogMessage(HWND hwnd, LPMSG lpmsg);
 int TranslateAccelerator(HWND hwnd, HACCEL haccel, LPMSG lpmsg);
 BOOL TrackPopupMenu(HMENU hmenu, UINT grbit, int x, int y, int nReserved, HWND hwnd, const RECT *lprc);
 LRESULT DefWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-BOOL GetOpenFileName(LPOPENFILENAMEA lpof);
-BOOL GetSaveFileName(LPOPENFILENAMEA lpof);
 
 } // namespace ui
 

@@ -12,6 +12,7 @@
 #include "alert_io.h"
 #include "record_io.h"
 #include "desktop_choice_io.h"
+#include "file_selection_ui.h"
 #include <stars_compat.h>
 #include "ownership.h"
 #include <SDL3/SDL.h>
@@ -1723,13 +1724,14 @@ HMENU GetASubMenu(APPSESSION &app, HWND hwnd, MainMenu iMenu) {
 }
 
 std::int16_t FOpenGame(APPSESSION &app, HWND hwnd, std::int16_t fRaceOnly) {
-    OPENFILENAME ofn;
-    std::uint16_t     i;
+    win32::files::FILESELECTIONREQUEST request;
+    win32::files::FILESELECTIONRESULT result;
+    const win32::files::FILESELECTIONSELECTED *pSelected;
+    std::array<char, cchCatalogText> rgchFilterText;
     char         szFile[256];
-    char        *pch;
-    char         szFileTitle[256];
-    char         szFilter[256];
+    char *pch, *pchBackslash;
     std::int16_t      fRet;
+    std::size_t ichFileName, ichFileExtension, cchDirectory;
 
     if (app.state.ini.fStartupFile) {
         CchCopyUtf8(std::span{szFile}, app.state.szBase);
@@ -1743,35 +1745,30 @@ std::int16_t FOpenGame(APPSESSION &app, HWND hwnd, std::int16_t fRaceOnly) {
                 return 0;
             pch = std::strrchr(szFile, 46);
         }
-        ofn.nFileExtension = pch - szFile + 1;
-        ofn.nFileOffset = 0;
+        ichFileExtension = static_cast<std::size_t>(pch - szFile + 1);
+        ichFileName = 0;
         app.state.fFileErrSilent = 1;
         goto LGotFileName;
     }
     szFile[0] = 0;
-    TextIO().pfnCchGetString(app, !fRaceOnly ? idsStarsGameFilesMHstRStars : idsStarsGameFilesRFiles, std::span{szFilter});
-    for (i = 0; szFilter[i] != 0; i++) {
-        if (szFilter[i] == '|') {
-            szFilter[i] = 0;
-        }
-    }
-    ofn = {};
-    ofn.lStructSize = sizeof(OPENFILENAME);
-    ofn.hwndOwner = hwnd;
-    ofn.lpstrFilter = szFilter;
-    ofn.nFilterIndex = 1;
-    ofn.lpstrFile = szFile;
-    ofn.nMaxFile = 0x100;
-    ofn.lpstrFileTitle = szFileTitle;
-    ofn.nMaxFileTitle = 0x100;
-    ofn.lpstrInitialDir = app.lpui->szDirName;
-    ofn.Flags = win32::OFN_HIDEREADONLY | win32::OFN_PATHMUSTEXIST | win32::OFN_FILEMUSTEXIST;
-    if (DesktopChoiceIO().pfnFNativeOpenFileName(&ofn) == 0) {
-        return 0;
-    }
+    request.mode = win32::files::FILESELECTIONMODE::open;
+    request.szInitialDirectory = app.lpui->szDirName;
+    request.cbPathMax = sizeof(szFile);
+    request.fMustExist = true;
+    rgchFilterText = TextIO().pfnCompressed(app, !fRaceOnly ? idsStarsGameFilesMHstRStars : idsStarsGameFilesRFiles);
+    request.rgFilters = ui::files::RgParseFilters(std::string_view{rgchFilterText.data()});
+    result = ui::files::ChooseFile(hwnd, std::move(request));
+    pSelected = std::get_if<win32::files::FILESELECTIONSELECTED>(&result);
+    if (!pSelected || CchCopyUtf8(std::span{szFile}, pSelected->szPath) < 0) return 0;
+    pch = std::strrchr(szFile, '/');
+    pchBackslash = std::strrchr(szFile, '\\');
+    if (pchBackslash && (!pch || pchBackslash > pch)) pch = pchBackslash;
+    ichFileName = pch ? static_cast<std::size_t>(pch - szFile + 1) : 0;
+    pch = std::strrchr(szFile + ichFileName, '.');
+    ichFileExtension = pch ? static_cast<std::size_t>(pch - szFile + 1) : 0;
 LGotFileName:
     app.lpui->szDirName[0] = 0;
-    fRet = FWasRaceFile(app, &szFile[ofn.nFileOffset], fRaceOnly == 0);
+    fRet = FWasRaceFile(app, &szFile[ichFileName], fRaceOnly == 0);
     if (fRaceOnly) {
         if (fRet > 0) {
             if (!FIsManagedLibraryRaceFile(szFile)) return FImportLibraryRace(app, hwnd, szFile);
@@ -1787,14 +1784,15 @@ LGotFileName:
         if (fRet == -1) {
             return -1;
         }
-        SetSzRaceFile(app, &szFile[ofn.nFileOffset]);
+        SetSzRaceFile(app, &szFile[ichFileName]);
         RaceCreationWizard(app, hwnd, 0, 0);
         return 0;
     }
-    szFile[ofn.nFileExtension - 1] = 0;
+    if (ichFileExtension == 0) return 0;
+    szFile[ichFileExtension - 1] = 0;
     DestroyCurGame(app);
     CchCopyUtf8(std::span{app.state.szBase}, szFile);
-    if (!FLoadGame(app, szFile, &szFile[ofn.nFileExtension])) {
+    if (!FLoadGame(app, szFile, &szFile[ichFileExtension])) {
         if (app.state.ini.fStartupFile) {
             app.state.ini.SetWFlags(0);
             app.state.fFileErrSilent = 0;
@@ -1806,9 +1804,8 @@ LGotFileName:
         app.state.ini.fStartupFile = 0;
         pch = std::strrchr(szFile, chDirSep);
         if (pch) {
-            i = pch - szFile;
-            std::strncpy(app.lpui->szDirName, szFile, i);
-            app.lpui->szDirName[i] = 0;
+            cchDirectory = static_cast<std::size_t>(pch - szFile);
+            CchCopyUtf8(std::span{app.lpui->szDirName}, std::string_view{szFile, cchDirectory});
         }
         if (app.state.idPlayer == iplrNone && !app.state.ini.fGen) {
             app.state.gd.fClose = 1;

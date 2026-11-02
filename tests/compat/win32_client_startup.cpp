@@ -9,6 +9,8 @@
 #include "../../src/core/player_choice_io.h"
 #include "../../src/ui/desktop_choice_io.h"
 #include "../../compat/win32/src/choice_io.h"
+#include "../../compat/win32/src/chooser_io.h"
+#include "../../compat/win32/include/file_selection.h"
 #include "../../compat/win32/src/render_io.h"
 #include "../../compat/win32/src/window_io.h"
 #include "../../compat/win32/src/path_io.h"
@@ -542,7 +544,7 @@ std::optional<std::array<char, 16>> StarsTest_FPromptLegacyRacePassword(APPSESSI
     return szPassword;
 }
 
-BOOL StarsTest_FNativeOpenFileName(OPENFILENAMEA *lpof) {
+static win32::files::FILESELECTIONRESULT IChooseTypedStartupFile(HWND, const win32::files::FILESELECTIONREQUEST &) {
     const char *pszSource = PszCompatEnvironment("STARS_CLIENT_RACE_IMPORT_SOURCE");
     const char *pszExternalGame = PszCompatEnvironment("STARS_CLIENT_EXTERNAL_OPEN_GAME");
     if (!pszExternalGame) pszExternalGame = PszCompatEnvironment("STARS_CLIENT_EXTERNAL_OPEN_RACE");
@@ -550,37 +552,25 @@ BOOL StarsTest_FNativeOpenFileName(OPENFILENAMEA *lpof) {
         fPassed = 0;
         fprintf(stderr, "Startup unexpectedly reopened the file chooser\n");
         win32::PostQuitMessage(92);
-        return 0;
+        return win32::files::FILESELECTIONCANCELLED{};
     }
     if (PszCompatEnvironment("STARS_CLIENT_RACE_ROSTER_TEST")) {
         fprintf(stderr, "New-game roster opened a file picker\n");
         win32::PostQuitMessage(93);
-        return 0;
+        return win32::files::FILESELECTIONCANCELLED{};
     }
-    if (pszExternalGame) {
-        if (strlen(pszExternalGame) >= lpof->nMaxFile) return 0;
-        strcpy(lpof->lpstrFile, pszExternalGame);
-        return 1;
-    }
+    if (pszExternalGame) return win32::files::FILESELECTIONSELECTED{pszExternalGame, 0, false};
     if (PszCompatEnvironment("STARS_CLIENT_RACE_LIBRARY_TEST") && pszSource) {
-        if (strlen(pszSource) >= lpof->nMaxFile) return 0;
-        strcpy(lpof->lpstrFile, pszSource);
-        return 1;
+        return win32::files::FILESELECTIONSELECTED{pszSource, 0, false};
     }
     if (PszCompatEnvironment("STARS_CLIENT_HOST_LIBRARY_TEST")) {
         const char *pszHostOrderPicker;
         cHostOrderPickerCalls++;
-        if (fHostOrderPickerCancel) return 0;
+        if (fHostOrderPickerCancel) return win32::files::FILESELECTIONCANCELLED{};
         pszHostOrderPicker = PszCompatEnvironment("STARS_CLIENT_HOST_ORDER_PICKER");
-        if (pszHostOrderPicker) {
-            size_t cchHostOrderPicker = strlen(pszHostOrderPicker);
-            if (cchHostOrderPicker >= (size_t)lpof->nMaxFile) return 0;
-            memcpy(lpof->lpstrFile, pszHostOrderPicker, cchHostOrderPicker + 1);
-            return 1;
-        }
-        return FNativeOpenFileName(lpof);
+        if (pszHostOrderPicker) return win32::files::FILESELECTIONSELECTED{pszHostOrderPicker, 0, false};
     }
-    return FNativeOpenFileName(lpof);
+    return win32::files::FILESELECTIONCANCELLED{};
 }
 
 bool SDL_ShowWindow(SDL_Window *lpWindow);
@@ -3208,8 +3198,10 @@ int main(void) {
     DESKTOPCHOICEIO io_desktopchoiceio;
     io_desktopchoiceio.pfnInitInstance = StarsTest_InitInstance;
     io_desktopchoiceio.pfnAskSaveDialog = StarsTest_AskSaveDialog;
-    io_desktopchoiceio.pfnFNativeOpenFileName = StarsTest_FNativeOpenFileName;
     DESKTOPCHOICEIOSCOPE scope_desktopchoiceio(io_desktopchoiceio);
+    COMPATCHOOSERIO io_typedChooser;
+    io_typedChooser.pfnICompatChooseFile = IChooseTypedStartupFile;
+    COMPATCHOOSERIOSCOPE scope_typedChooser(io_typedChooser);
     COMPATCHOICEIO io_compatchoiceio;
     io_compatchoiceio.pfnTrackPopupMenu = StarsTest_TrackPopupMenu;
     io_compatchoiceio.pfnMessageBoxA = StarsTest_MessageBoxA;

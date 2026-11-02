@@ -129,18 +129,6 @@ LRESULT ui::DefWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     return lResult;
 }
 
-BOOL ui::GetOpenFileName(LPOPENFILENAMEA lpof) {
-    BOOL fResult = win32::GetOpenFileNameA(lpof);
-    StarsRethrowPendingError();
-    return fResult;
-}
-
-BOOL ui::GetSaveFileName(LPOPENFILENAMEA lpof) {
-    BOOL fResult = win32::GetSaveFileNameA(lpof);
-    StarsRethrowPendingError();
-    return fResult;
-}
-
 static_assert(std::is_same_v<decltype(&ui::CallWindowProc), decltype(&win32::CallWindowProcA)>);
 static_assert(std::is_same_v<decltype(&ui::CreateWindowEx), decltype(&win32::CreateWindowExA)>);
 static_assert(std::is_same_v<decltype(&ui::CreateDialog), decltype(&win32::CreateDialogParamA)>);
@@ -162,5 +150,3 @@ static_assert(std::is_same_v<decltype(&ui::IsDialogMessage), decltype(&win32::Is
 static_assert(std::is_same_v<decltype(&ui::TranslateAccelerator), decltype(&win32::TranslateAcceleratorA)>);
 static_assert(std::is_same_v<decltype(&ui::TrackPopupMenu), decltype(&win32::TrackPopupMenu)>);
 static_assert(std::is_same_v<decltype(&ui::DefWindowProc), decltype(&win32::DefWindowProcA)>);
-static_assert(std::is_same_v<decltype(&ui::GetOpenFileName), decltype(&win32::GetOpenFileNameA)>);
-static_assert(std::is_same_v<decltype(&ui::GetSaveFileName), decltype(&win32::GetSaveFileNameA)>);

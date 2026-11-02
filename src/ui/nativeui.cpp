@@ -119,10 +119,6 @@ std::int16_t CWheelLines(std::int16_t cPage) {
 }
 
 
-BOOL FNativeOpenFileName(OPENFILENAMEA *lpof) { return ui::GetOpenFileName(lpof); }
-BOOL FNativeSaveFileName(OPENFILENAMEA *lpof) { return ui::GetSaveFileName(lpof); }
-DWORD DwNativeFileDialogError(void) { return win32::CommDlgExtendedError(); }
-
 int CchGetUtf8WindowText(HWND hwnd, char *psz, int cchMax) {
     if (StarsCompatTextInputRejected(hwnd)) {
         if (cchMax > 0) psz[0] = 0;
