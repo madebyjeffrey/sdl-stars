@@ -550,7 +550,7 @@ static std::int16_t FReadLibraryBof(NATIVEFILE *pf, RTBOF *pbof) {
 
 /* GenerateWorld's original companion-write loop ignores writer return values.
  * Verify complete record framing without replacing the loaded player state. */
-static std::int16_t FCompleteGeneratedFile(APPSESSION &app, const char *pszFile, DtFileType dt, int iplr) {
+static std::int16_t FCompleteGeneratedFile(APPSESSION &app, std::string_view pszFile, DtFileType dt, int iplr) {
     NATIVEFILE *pf;
     HDR hdr;
     RTBOF rtbof;
@@ -1651,9 +1651,13 @@ static std::int16_t RemoveImportTreeEntry(APPSESSION &app, void *lpData, std::st
     return RemoveNativePath(szPath) == 0;
 }
 
-static std::int16_t FPathIsZip(const char *pszPath) {
-    const char *pch = std::strrchr(pszPath, '.');
-    return pch && !SDL_strcasecmp(pch, ".zip");
+static std::int16_t FPathIsZip(std::string_view pszPath) {
+    const std::size_t ichExtension = pszPath.rfind('.');
+    if (ichExtension == std::string_view::npos) return 0;
+    const auto szExtension = pszPath.substr(ichExtension);
+    return szExtension.size() == 4 && SDL_tolower(static_cast<unsigned char>(szExtension[1])) == 'z' &&
+           SDL_tolower(static_cast<unsigned char>(szExtension[2])) == 'i' &&
+           SDL_tolower(static_cast<unsigned char>(szExtension[3])) == 'p';
 }
 
 static std::int16_t FCreateLibraryZipStage(char *pszStage, std::size_t cchStage, const char *pszPurpose) {
@@ -2564,7 +2568,7 @@ std::int16_t FImportLibraryOrders(APPSESSION &app, HWND hwnd, std::optional<std:
 }
 
 
-static std::int16_t FCopyOptionalConflictFile(const char *pszSource, const char *pszTarget) {
+static std::int16_t FCopyOptionalConflictFile(std::string_view pszSource, std::string_view pszTarget) {
 
     if (FNativeFileSize(pszSource)) return FCopyNativeFileExclusive(pszSource, pszTarget);
     return errno == ENOENT;
