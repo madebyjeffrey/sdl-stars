@@ -1,6 +1,7 @@
 #include "common.h"
 #include <algorithm>
 #include <array>
+#include <new>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -43,9 +44,8 @@ std::int16_t IdAlertBox(const char *sz, std::int16_t mbType) {
 // password, per-player dump files, host names in -v output and the number
 // of backup directories.
 static std::int16_t FReadHostIni(APPSESSION &app, const char *szFile) {
-    char *pszText;
     long  cb;
-    std::size_t cchText;
+    std::string szText;
     std::string_view szIni;
     NATIVEFILE *pf;
 
@@ -57,20 +57,19 @@ static std::int16_t FReadHostIni(APPSESSION &app, const char *szFile) {
     ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::end);
     cb = LNativePosition(pf);
     ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin);
-    NATIVEOWNER<char, std::free> text(static_cast<char *>(std::malloc(static_cast<std::size_t>(cb) + 1)));
-    pszText = text.get();
-    if (!pszText || CReadNative(std::span{pszText, static_cast<std::size_t>(cb)}, pf) != static_cast<std::size_t>(cb)) {
+    if (cb < 0 || static_cast<std::size_t>(cb) > szText.max_size()) {
         return 0;
     }
-    ICloseNativeFile(file.Release());
-    pszText[cb] = 0;
-    cchText = static_cast<std::size_t>(cb);
-    if (!FUtf8Valid(std::string_view{pszText, cchText})) return 0;
-    if (cchText >= 3 && !std::memcmp(pszText, "\xef\xbb\xbf", 3)) {
-        cchText -= 3;
-        std::memmove(pszText, pszText + 3, cchText + 1);
+    try {
+        szText.resize(static_cast<std::size_t>(cb));
+    } catch (const std::bad_alloc &) {
+        return 0;
     }
-    szIni = std::string_view{pszText, cchText};
+    if (CReadNative(std::span{szText.data(), szText.size()}, pf) != szText.size()) return 0;
+    ICloseNativeFile(file.Release());
+    szIni = szText;
+    if (!FUtf8Valid(szIni)) return 0;
+    if (szIni.starts_with("\xef\xbb\xbf")) szIni.remove_prefix(3);
     app.state.ini.fLogging = LIniInt(app, szIni, idsFiles, idsLogging, 0) != 0;
     if (!FIniValue(app, szIni, idsMisc, idsDefaultpassword, std::span{app.state.vszDefPass})) {
         app.state.vszDefPass[0] = 0;
