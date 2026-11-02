@@ -24405,8 +24405,8 @@
     "date": "2026-11-02",
     "reason": "Resume the live C++ cleanup on develop after the verified bounded fleet-name load/log batch.",
     "branch": "develop",
-    "latest_batch": "L05 bounded managed export and race-version text",
-    "latest_published_head": "29515c9d",
+    "latest_batch": "L05 bounded race filename suggestion input",
+    "latest_published_head": "0c750694",
     "active_stages": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage."
@@ -24437,13 +24437,12 @@
       "title-modernized-v2.png and prompt",
       "title-modernized-v3.png and prompt"
     ],
-    "batch": "L05 bounded managed export and race-version text",
-    "source_commit": "29515c9d",
+    "batch": "L05 bounded race filename suggestion input",
+    "source_commit": "0c750694",
     "status": "Verified and pushed to develop. Local SDL Debug, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Current-source Windows SDL/Linux desktop qualification remains outstanding.",
     "changes": [
-      "Managed game export reuses the source/destination formatted lengths and the library-name length for path-containment and maximum backup-path checks.",
-      "Race-library stem creation now writes through a fixed 240-byte span and tracks its output length through character replacement, trimming and reserved-name prefixing.",
-      "Race-version enumeration parses the extension and integer suffix from a string view rather than rescanning C strings.",
+      "SuggestRaceFilename finds the terminator and final extension within its fixed 256-byte destination span.",
+      "It copies the UTF-8-safe stem from the bounded view, avoiding strlen, strrchr and a raw memory-copy interface.",
       "No game behavior, file layout, or serialization code changed."
     ],
     "verification": {
@@ -24547,15 +24546,19 @@
       {
         "commit": "29515c9d",
         "message": "Use bounded views for race versions"
+      },
+      {
+        "commit": "0c750694",
+        "message": "Bound race filename suggestions"
       }
     ]
   },
   "current_checkpoint": {
-    "batch": "L05 bounded managed export and race-version text",
+    "batch": "L05 bounded race filename suggestion input",
     "status": "Verified and pushed to develop. Local SDL Debug, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Current-source Windows SDL/Linux desktop qualification remains outstanding.",
-    "parent": "49772407",
-    "source_commit": "29515c9d",
-    "change": "Managed export path checks and race-library naming now reuse lengths and bounded views.",
+    "parent": "1291c5a4",
+    "source_commit": "0c750694",
+    "change": "Race filename suggestions now use the fixed destination extent as their input bound.",
     "verification": {
       "macos_sdl_debug": "Build passes; changed UI compatibility translation unit compiles.",
       "desktop_unit_tests": "18/18 pass.",
@@ -24592,9 +24595,8 @@
     "date": "2026-11-02",
     "branch": "develop",
     "changes": [
-      "Managed game export reuses the source/destination formatted lengths and the library-name length for path-containment and maximum backup-path checks.",
-      "Race-library stem creation now writes through a fixed 240-byte span and tracks its output length through character replacement, trimming and reserved-name prefixing.",
-      "Race-version enumeration parses the extension and integer suffix from a string view rather than rescanning C strings.",
+      "SuggestRaceFilename finds the terminator and final extension within its fixed 256-byte destination span.",
+      "It copies the UTF-8-safe stem from the bounded view, avoiding strlen, strrchr and a raw memory-copy interface.",
       "No game behavior, file layout, or serialization code changed."
     ],
     "current_source_audits": {
@@ -24688,6 +24690,10 @@
       {
         "commit": "29515c9d",
         "message": "Use bounded views for race versions"
+      },
+      {
+        "commit": "0c750694",
+        "message": "Bound race filename suggestions"
       }
     ]
   },
@@ -24715,13 +24721,12 @@
   "working_tree_checkpoint": {
     "date": "2026-11-02",
     "branch": "develop",
-    "batch": "L05 bounded managed export and race-version text",
-    "source_commit": "29515c9d",
+    "batch": "L05 bounded race filename suggestion input",
+    "source_commit": "0c750694",
     "status": "Verified and pushed to develop. Local SDL Debug, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Current-source Windows SDL/Linux desktop qualification remains outstanding.",
     "changes": [
-      "Managed game export reuses the source/destination formatted lengths and the library-name length for path-containment and maximum backup-path checks.",
-      "Race-library stem creation now writes through a fixed 240-byte span and tracks its output length through character replacement, trimming and reserved-name prefixing.",
-      "Race-version enumeration parses the extension and integer suffix from a string view rather than rescanning C strings.",
+      "SuggestRaceFilename finds the terminator and final extension within its fixed 256-byte destination span.",
+      "It copies the UTF-8-safe stem from the bounded view, avoiding strlen, strrchr and a raw memory-copy interface.",
       "No game behavior, file layout, or serialization code changed."
     ],
     "verification": {
@@ -24857,6 +24862,10 @@
       {
         "commit": "29515c9d",
         "message": "Use bounded views for race versions"
+      },
+      {
+        "commit": "0c750694",
+        "message": "Bound race filename suggestions"
       }
     ]
   }
