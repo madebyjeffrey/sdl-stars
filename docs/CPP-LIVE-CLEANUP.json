@@ -2031,6 +2031,12 @@
     {
       "id": "L08",
       "status": "pending",
+      "current_macro_audit": {
+        "status": "partial; verified at f2bbd1df",
+        "change": "Replaced the only SDL_arraysize invocation found in owned production C++ with std::size.",
+        "search": "The current owned-source scan of SDL_arraysize, SDL_zero, SDL_zerop, SDL_min, SDL_max, SDL_memcpy, SDL_memset and SDL_memmove found no remaining uses.",
+        "remaining": "Complete the maintained retained-macro and preprocessor-boundary audit, including resource-compiler and platform/test boundaries."
+      },
       "linux_desktop_execution_budget": {
         "status": "complete; verified at 2bbd5afa",
         "workflow": ".github/workflows/unit.yml",
@@ -23581,10 +23587,10 @@
     "date": "2026-11-01",
     "reason": "User requested completion of the current batch and a progress report before restarting.",
     "branch": "develop",
-    "batch": "L06y compatibility-dialog path-join span interface",
-    "batch_parent": "2b1559cf",
-    "latest_batch": "L06y compatibility-dialog path-join span interface",
-    "latest_batch_head": "a86ea665",
+    "batch": "L08a replace SDL array-size macro with std::size",
+    "batch_parent": "5dfab79b",
+    "latest_batch": "L08a replace SDL array-size macro with std::size",
+    "latest_batch_head": "f2bbd1df",
     "completed_stages": [
       "L01: nullptr and aliases",
       "L02: explicit C++ casts and headers",
@@ -23624,7 +23630,7 @@
     ],
     "restart_order": [
       "Read this checkpoint and check git status/log; preserve unrelated title-modernized assets.",
-      "Latest compatibility-dialog span batch is locally verified; inspect its checkpoint before continuing.",
+      "Latest macro cleanup batch f2bbd1df is locally verified; inspect its checkpoint before continuing.",
       "Resolve any new platform failures before beginning a new cleanup batch.",
       "Continue from current_checkpoint. The two remaining string copies are required SDK output boundaries; continue L05/L06 and final L08 reconciliation."
     ],
@@ -23644,16 +23650,16 @@
     }
   },
   "current_checkpoint": {
-    "batch": "L06y compatibility-dialog path-join span interface",
-    "status": "implemented and locally verified; native Windows runtime and Linux portal build qualification remain pending",
-    "parent": "2b1559cf",
+    "batch": "L08a replace SDL array-size macro with std::size",
+    "status": "implemented and locally verified; full retained-macro and preprocessor-boundary audit remains pending",
+    "parent": "5dfab79b",
     "changes": {
-      "compat/win32/src/filedialog.cpp": "Converts FJoinFile and all seven callers from a raw pointer plus assumed PATH_MAX capacity to actual destination spans, using CchCopyUtf8/CchSnprintf with the supplied extent."
+      "compat/win32/src/inspect.cpp": "Replaces SDL_arraysize with std::size in the control-kind lookup."
     },
     "verification": {
-      "macos_debug_build": "Full macos-sdl-debug build passes without new warnings; regression build compiled the changed dialog translation unit.",
-      "focused_tests": "File-dialog Cocoa, client startup and client file workflow pass; 3/3.",
-      "windows_syntax": "Strict MinGW syntax passes for filedialog.cpp, 1/1.",
+      "macos_debug_build": "Full macos-sdl-debug build passes without new warnings; regression build compiled the changed inspector translation unit.",
+      "focused_tests": "win32_client_startup_dummy passes; 1/1.",
+      "windows_syntax": "Strict MinGW syntax passes for compat/win32/src/inspect.cpp and src/ui/scaninspect.cpp, 2/2.",
       "desktop_unit_tests": "18/18 pass.",
       "tutorial": "Available SDL tutorial smoke checkpoint passes.",
       "native_regression": "519 matches (25 with existing warnings); zero differences/errors/skips.",
@@ -23667,8 +23673,8 @@
       "L06 D06 native Windows/Linux chooser qualification and remaining chooser branch coverage.",
       "L08 maintained inventory reconciliation, retained primitive/macro audit and final platform qualification."
     ],
-    "macro_scan": "The prior owned-production scan found only header guards and NOMINMAX as #define directives, with no additional application/API macro definitions. L08 still needs retained primitive/macro inventory reconciliation and a final preprocessor-boundary audit.",
-    "published_batch_head": "a86ea665"
+    "macro_scan": "Current owned-source search found and removed the only SDL_arraysize call; no SDL_zero, SDL_zerop, SDL_min, SDL_max, SDL_memcpy, SDL_memset or SDL_memmove uses remain in the scanned production sources. The prior definition scan found application header guards and NOMINMAX; resource-compiler and platform/test boundaries still need a complete retained-macro audit.",
+    "published_batch_head": "f2bbd1df"
   },
   "milestone_d_checkpoint": {
     "stage": "D05 caller migrations implemented; D06 platform qualification pending",
