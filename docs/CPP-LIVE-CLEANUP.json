@@ -23953,10 +23953,10 @@
     "date": "2026-11-02",
     "reason": "Active C-style cleanup continuation after migrating the profile path service result to owned C++ string storage.",
     "branch": "develop",
-    "batch": "L06t owned help-document path result",
+    "batch": "L05bd owned file-dialog navigation history",
     "batch_parent": "d3c82384",
-    "latest_batch": "L06t owned help-document path result",
-    "latest_batch_head": "71a0995d",
+    "latest_batch": "L05bd owned file-dialog navigation history",
+    "latest_batch_head": "fb2c4661",
     "completed_stages": [
       "L01: nullptr and aliases",
       "L02: explicit C++ casts and headers",
@@ -24010,7 +24010,8 @@
       "Commit fed52a31 replaces the host profile parser's std::atol with bounded std::from_chars, preserving prefix parsing and existing missing-key behavior. S02 I/O witness (27 checks), units, focused tests, tutorial smoke and both full regressions pass; regressions each report 519 matches and zero differences/errors/skips. No std::atoi or std::atol references remain in src/compat.",
       "Commit f9fee9e6 replaces the final owned std::strtoll parser with bounded std::from_chars. Full Debug/host builds, units, S02 I/O witness, focused tests, tutorial smoke and native/host regressions pass (519 matches each, zero differences/errors/skips). The current owned macro scan finds no function-like macros; header guards, NOMINMAX, platform/test conditionals and third-party SDK definitions remain. Full macro inventory reconciliation and Windows/Linux qualification remain open.",
       "Commit 90f91478 changes SzProfilePath from a malloc-owned char* to std::optional<std::string>, removing three strdup-based fallback branches and making both profile callers retain path ownership through RAII. Profile path precedence, UTF-8 validation, directory creation and ERROR_NOT_ENOUGH_MEMORY mapping are preserved. macOS Debug build, profile/resource/save/UTF-8 coverage, desktop units (18/18), host units (29/29), tutorial smoke and native/host regressions (519 matches each, 25 existing warnings, zero differences/errors/skips) pass; strict MinGW C++20 syntax compilation of profile.cpp passes. The optional macOS leaks wrapper timed out because it could not acquire the child task port; its underlying profile test printed PASS. Continue L05 bounded text/formatting and scratch audit, L06 service/chooser work, and L08 full platform qualification.",
-      "Commit 71a0995d changes PszHelpDocument from a raw char* result plus strdup to std::optional<std::string>; WinHelpA now passes the owned path to its launcher while RAII retains it for the call. Existing bad-format, access-denied and launch errors are preserved. The macOS Debug build, win32_utf8_help, desktop units (18/18), host units (29/29), tutorial smoke, strict MinGW C++20 syntax and native/host regressions (519 matches each, 25 existing warnings, zero differences/errors/skips) pass. Continue remaining owned string allocations, bounded interfaces, wrapper formatting, chooser qualification and final platform audit."
+      "Commit 71a0995d changes PszHelpDocument from a raw char* result plus strdup to std::optional<std::string>; WinHelpA now passes the owned path to its launcher while RAII retains it for the call. Existing bad-format, access-denied and launch errors are preserved. The macOS Debug build, win32_utf8_help, desktop units (18/18), host units (29/29), tutorial smoke, strict MinGW C++20 syntax and native/host regressions (519 matches each, 25 existing warnings, zero differences/errors/skips) pass. Continue remaining owned string allocations, bounded interfaces, wrapper formatting, chooser qualification and final platform audit.",
+      "Commit fb2c4661 replaces COMPATFILEDIALOG's NATIVEOWNER<char> navigation-history entries with std::string, removing strdup/free from directory-history navigation and relying on automatic array destruction. Allocation failure still reports the existing navigation-memory error before changing directories. macOS Debug build, win32_filedialog_cocoa, desktop units (18/18), host units (29/29), tutorial smoke, strict MinGW C++20 syntax for filedialog.cpp and native/host regressions (519 matches each, 25 existing warnings, zero differences/errors/skips) pass. Continue remaining C-style allocations, bounded text/formatting, chooser qualification and final platform audit."
     ],
     "evidence": [
       "docs/CPP-LIVE-TEXT-COPIES.json: game_file_inputs.verification",
@@ -24025,19 +24026,19 @@
       "qualified_source_head": "b76ec1fcc1276790150457670f5f667bcec4eccc",
       "result": "success"
     },
-    "published_batch_head": "71a0995d"
+    "published_batch_head": "fb2c4661"
   },
   "current_checkpoint": {
-    "batch": "L06t owned help-document path result",
-    "status": "implemented and locally verified; source commit 71a0995d",
-    "parent": "29dd013e",
+    "batch": "L05bd owned file-dialog navigation history",
+    "status": "implemented and locally verified; source commit fb2c4661",
+    "parent": "e6dcce34",
     "changes": {
-      "compat/win32/src/help.cpp": "PszHelpDocument returns std::optional<std::string>; WinHelpA keeps the owned path alive through the launcher call without a strdup/free pair."
+      "compat/win32/src/filedialog.cpp": "COMPATFILEDIALOG navigation history now stores std::string values; removes strdup/free history ownership and manual array cleanup."
     },
     "verification": {
       "macos_debug_build": "Full macos-sdl-debug build passes.",
-      "windows_syntax": "Strict MinGW C++20 syntax compilation of compat/win32/src/help.cpp passes.",
-      "focused_test": "win32_utf8_help passes.",
+      "windows_syntax": "Strict MinGW C++20 syntax compilation of compat/win32/src/filedialog.cpp passes.",
+      "focused_test": "win32_filedialog_cocoa passes.",
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
       "tutorial": "Available SDL tutorial smoke checkpoint passes; full 80-page tutorial remains unfinished.",
@@ -24051,8 +24052,8 @@
       "L06 remaining buffer/length interfaces, native path results and chooser Milestone D qualification, including Windows/Linux chooser coverage.",
       "L08 retained preprocessor/platform/API-like macro audit, maintained inventory reconciliation and final platform qualification."
     ],
-    "source_commit": "71a0995d",
-    "published_batch_head": "71a0995d"
+    "source_commit": "fb2c4661",
+    "published_batch_head": "fb2c4661"
   },
   "milestone_d_checkpoint": {
     "stage": "D05 caller migrations implemented; D06 platform qualification pending",
