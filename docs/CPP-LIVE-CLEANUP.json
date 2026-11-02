@@ -197,7 +197,8 @@
         "tracked-copy-lengths-for-fleet-and-hull-labels",
         "tracked-lengths-for-planet-and-fleet-report-dump-fields",
         "bounded-source-and-tracked-output-lengths-for-legacy-race-name-conversion",
-        "bounded-fleet-name-load-and-log-copies"
+        "bounded-fleet-name-load-and-log-copies",
+        "bounded-report-task-and-numeric-label-strings"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -24433,13 +24434,95 @@
       "title-modernized.png and prompt",
       "title-modernized-v2.png and prompt",
       "title-modernized-v3.png and prompt"
+    ],
+    "batch": "L05 bounded report and numeric label strings",
+    "source_commit": "61204233",
+    "status": "Verified and pushed to develop. Local desktop/host tests, both full regression suites and tutorial smoke pass; current-source Windows/Linux CI qualification remains pending.",
+    "changes": [
+      "PszGetTaskName finds the terminator inside the compressed catalog array and checks that the action suffix fits before removing it.",
+      "DumpFleets writes the name from its owned fixed-size array using a bounded byte count.",
+      "PszFromLongK finds the terminator within its fixed-size numeric label array instead of calling strlen."
+    ],
+    "verification": {
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "native_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
+      "host_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
+      "tutorial": "1/1 available SDL native tutorial smoke passes.",
+      "baseline": "Unchanged.",
+      "diff_check": "Pass."
+    },
+    "current_source_audits": {
+      "tracked_c_translation_units": 44,
+      "production_c_translation_units": 0,
+      "application_api_function_like_macros": 0,
+      "retained_preprocessor": "Header guards, NOMINMAX, generated STARS_VERSION_* resource tokens, platform/compiler/test conditionals, and #undef FSHIFT to avoid an SDK collision.",
+      "typed_replacements": "Packed-word, resource, color and parameter-extraction APIs are C++ functions/templates.",
+      "c11_boundary": "C is enabled only for independent test/reference targets; production is C++20/Objective-C++20.",
+      "core_strlen_residual": "src/core/save.cpp:804 in WriteRtString. Its sole caller passes FLEET::lpszName, a legacy heap-owned C string with no stored length; adding a size to FLEET would change a layout-sensitive debug-symbol struct. Keep this at the serialization C-string boundary unless ownership API is deliberately redesigned.",
+      "scan_scope": "Tracked src and compat/win32/include/src plus dist/macos-sdl-debug/generated/version_resource.h; compat/win32/generated is not a present directory."
+    },
+    "next": [
+      "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
+      "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage.",
+      "L08: run current-source Windows and Linux qualification, then resolve any failures and record the final macro/C inventory outcome."
+    ],
+    "post_checkpoint_commits": [
+      {
+        "commit": "75767e02",
+        "message": "Pass the game path to file workflow test"
+      },
+      {
+        "commit": "60a94d06",
+        "message": "Mark Windows entry arguments unused"
+      },
+      {
+        "commit": "80f89edc",
+        "message": "Use views for remaining INI parser inputs"
+      },
+      {
+        "commit": "7889423b",
+        "message": "Parse INI presets from bounded views"
+      },
+      {
+        "commit": "497102b0",
+        "message": "Use an index for preset serialization"
+      },
+      {
+        "commit": "d2dc02bf",
+        "message": "Parse window settings from a bounded view"
+      },
+      {
+        "commit": "6e419559",
+        "message": "Track player-name composition length"
+      },
+      {
+        "commit": "716c239e",
+        "message": "Track copied fleet and hull label lengths"
+      },
+      {
+        "commit": "e04d3839",
+        "message": "Track report field output lengths"
+      },
+      {
+        "commit": "7607cae7",
+        "message": "Track legacy race conversion lengths"
+      },
+      {
+        "commit": "6581273e",
+        "message": "Reuse bounded fleet-name input lengths"
+      },
+      {
+        "commit": "61204233",
+        "message": "Bound report and numeric label strings"
+      }
     ]
   },
   "current_checkpoint": {
-    "batch": "L05 bounded fleet-name load and log copies",
-    "status": "implemented, locally verified, committed and pushed to develop; current-source platform qualification remains pending",
+    "batch": "L05 bounded report and numeric label strings",
+    "status": "Verified and pushed to develop. Local desktop/host tests, both full regression suites and tutorial smoke pass; current-source Windows/Linux CI qualification remains pending.",
     "parent": "f7bea71a",
-    "source_commit": "6581273e",
+    "source_commit": "61204233",
     "change": [
       "FReadFleet and rtLogFleetName locate the terminator within the 32-byte decoded field once, then reuse the byte count for heap allocation and UTF-8 copying.",
       "The file-load path preserves its existing allocated empty name; log updates still release empty names to nullptr."
@@ -24475,6 +24558,78 @@
       "title-modernized.png and prompt",
       "title-modernized-v2.png and prompt",
       "title-modernized-v3.png and prompt"
+    ],
+    "date": "2026-11-02",
+    "branch": "develop",
+    "changes": [
+      "PszGetTaskName finds the terminator inside the compressed catalog array and checks that the action suffix fits before removing it.",
+      "DumpFleets writes the name from its owned fixed-size array using a bounded byte count.",
+      "PszFromLongK finds the terminator within its fixed-size numeric label array instead of calling strlen."
+    ],
+    "current_source_audits": {
+      "tracked_c_translation_units": 44,
+      "production_c_translation_units": 0,
+      "application_api_function_like_macros": 0,
+      "retained_preprocessor": "Header guards, NOMINMAX, generated STARS_VERSION_* resource tokens, platform/compiler/test conditionals, and #undef FSHIFT to avoid an SDK collision.",
+      "typed_replacements": "Packed-word, resource, color and parameter-extraction APIs are C++ functions/templates.",
+      "c11_boundary": "C is enabled only for independent test/reference targets; production is C++20/Objective-C++20.",
+      "core_strlen_residual": "src/core/save.cpp:804 in WriteRtString. Its sole caller passes FLEET::lpszName, a legacy heap-owned C string with no stored length; adding a size to FLEET would change a layout-sensitive debug-symbol struct. Keep this at the serialization C-string boundary unless ownership API is deliberately redesigned.",
+      "scan_scope": "Tracked src and compat/win32/include/src plus dist/macos-sdl-debug/generated/version_resource.h; compat/win32/generated is not a present directory."
+    },
+    "next": [
+      "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
+      "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage.",
+      "L08: run current-source Windows and Linux qualification, then resolve any failures and record the final macro/C inventory outcome."
+    ],
+    "post_checkpoint_commits": [
+      {
+        "commit": "75767e02",
+        "message": "Pass the game path to file workflow test"
+      },
+      {
+        "commit": "60a94d06",
+        "message": "Mark Windows entry arguments unused"
+      },
+      {
+        "commit": "80f89edc",
+        "message": "Use views for remaining INI parser inputs"
+      },
+      {
+        "commit": "7889423b",
+        "message": "Parse INI presets from bounded views"
+      },
+      {
+        "commit": "497102b0",
+        "message": "Use an index for preset serialization"
+      },
+      {
+        "commit": "d2dc02bf",
+        "message": "Parse window settings from a bounded view"
+      },
+      {
+        "commit": "6e419559",
+        "message": "Track player-name composition length"
+      },
+      {
+        "commit": "716c239e",
+        "message": "Track copied fleet and hull label lengths"
+      },
+      {
+        "commit": "e04d3839",
+        "message": "Track report field output lengths"
+      },
+      {
+        "commit": "7607cae7",
+        "message": "Track legacy race conversion lengths"
+      },
+      {
+        "commit": "6581273e",
+        "message": "Reuse bounded fleet-name input lengths"
+      },
+      {
+        "commit": "61204233",
+        "message": "Bound report and numeric label strings"
+      }
     ]
   },
   "milestone_d_checkpoint": {
@@ -24501,12 +24656,13 @@
   "working_tree_checkpoint": {
     "date": "2026-11-02",
     "branch": "develop",
-    "batch": "L05 bounded fleet-name load and log copies",
-    "source_commit": "6581273e",
-    "status": "Verified and pushed to develop. Local desktop/host tests, both full regression suites and tutorial smoke pass. Current-source Windows/Linux CI qualification remains pending.",
+    "batch": "L05 bounded report and numeric label strings",
+    "source_commit": "61204233",
+    "status": "Verified and pushed to develop. Local desktop/host tests, both full regression suites and tutorial smoke pass; current-source Windows/Linux CI qualification remains pending.",
     "changes": [
-      "FReadFleet and rtLogFleetName locate the terminator within the 32-byte decoded field once, then reuse the byte count for heap allocation and UTF-8 copying.",
-      "The file-load path preserves its existing allocated empty name; log updates still release empty names to nullptr."
+      "PszGetTaskName finds the terminator inside the compressed catalog array and checks that the action suffix fits before removing it.",
+      "DumpFleets writes the name from its owned fixed-size array using a bounded byte count.",
+      "PszFromLongK finds the terminator within its fixed-size numeric label array instead of calling strlen."
     ],
     "verification": {
       "desktop_unit_tests": "18/18 pass.",
@@ -24524,6 +24680,7 @@
       "retained_preprocessor": "Header guards, NOMINMAX, generated STARS_VERSION_* resource tokens, platform/compiler/test conditionals, and #undef FSHIFT to avoid an SDK collision.",
       "typed_replacements": "Packed-word, resource, color and parameter-extraction APIs are C++ functions/templates.",
       "c11_boundary": "C is enabled only for independent test/reference targets; production is C++20/Objective-C++20.",
+      "core_strlen_residual": "src/core/save.cpp:804 in WriteRtString. Its sole caller passes FLEET::lpszName, a legacy heap-owned C string with no stored length; adding a size to FLEET would change a layout-sensitive debug-symbol struct. Keep this at the serialization C-string boundary unless ownership API is deliberately redesigned.",
       "scan_scope": "Tracked src and compat/win32/include/src plus dist/macos-sdl-debug/generated/version_resource.h; compat/win32/generated is not a present directory."
     },
     "platform_ci": {
@@ -24606,6 +24763,10 @@
       {
         "commit": "6581273e",
         "message": "Reuse bounded fleet-name input lengths"
+      },
+      {
+        "commit": "61204233",
+        "message": "Bound report and numeric label strings"
       }
     ]
   }
