@@ -47,7 +47,7 @@ int main(void) {
         std::vector<char> exact(szCanonical.size()+1, '#'), shortPath(szCanonical.size(), '#');
         std::vector<char> cwd(szCwd.size()+1, '#'), shortCwd(szCwd.size(), '#');
         const std::string szPathWithSuffix = std::string{path} + "/ignored-suffix";
-        const std::string_view szPathView{szPathWithSuffix.data(), std::strlen(path)};
+        const std::string_view szPathView{szPathWithSuffix.data(), std::string_view{path}.size()};
         CHECK(CchCanonicalNativePath(path, std::span{exact})==szCanonical.size() && !strcmp(exact.data(),szCanonical.c_str()));
         CHECK(SzCanonicalNativePath(szPathView)==szCanonical && CchCanonicalNativePath(szPathView, std::span{exact})==szCanonical.size() && !strcmp(exact.data(),szCanonical.c_str()));
         errno=0;CHECK(!CchCanonicalNativePath(path, std::span{shortPath}) && errno==ERANGE && std::ranges::all_of(shortPath,[](char ch){return ch=='#';}));

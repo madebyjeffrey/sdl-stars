@@ -30,7 +30,8 @@ bool FTests() {
     CHECK(FCompare("x11:%llx", 0x1234ULL));
     CHECK(FCompare("%02x", 255u));
     CHECK(FCompare("%hhd|%hhu|%hd|%hu", -129, 257u, -32769, 65537u));
-    CHECK(FCompare("%ld|%lu|%lld|%llu", std::numeric_limits<long>::min(), std::numeric_limits<unsigned long>::max(), LLONG_MIN, ULLONG_MAX));
+    CHECK(FCompare("%ld|%lu|%lld|%llu", std::numeric_limits<long>::min(), std::numeric_limits<unsigned long>::max(),
+                   std::numeric_limits<long long>::min(), std::numeric_limits<unsigned long long>::max()));
     CHECK(FCompare("%jd|%ju|%zd|%zu|%td|%tu", std::intmax_t{-123}, std::uintmax_t{123},
                    std::make_signed_t<std::size_t>{-7}, std::size_t{17}, std::ptrdiff_t{-9}, std::make_unsigned_t<std::ptrdiff_t>{19}));
     CHECK(FCompare("[%*.*s][%*d][%.*d]", -13, 4, "payload", 12, 17, -1, -5));
