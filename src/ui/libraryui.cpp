@@ -280,11 +280,11 @@ static char *PchLibrarySeparator(char *pszPath) {
     return pch;
 }
 
-std::int16_t FIsManagedLibraryGameFile(const char *pszFile) {
+std::int16_t FIsManagedLibraryGameFile(std::string_view pszFile) {
     return FInitLibrary() && LibraryPathIO().pfnUnder(szLibraryRoot, pszFile);
 }
 
-std::int16_t FIsManagedLibraryRaceFile(const char *pszFile) {
+std::int16_t FIsManagedLibraryRaceFile(std::string_view pszFile) {
     return FInitRaceLibrary() && LibraryPathIO().pfnUnder(szRaceLibraryRoot, pszFile);
 }
 
