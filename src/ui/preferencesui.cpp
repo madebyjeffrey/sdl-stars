@@ -7,7 +7,7 @@
 #include "win.h"
 #include <charconv>
 
-void ReadIniPresets(APPSESSION &app, char *szIniFile) {
+void ReadIniPresets(APPSESSION &app, const char *szIniFile) {
     std::int16_t i, iPass, cch, cpq;
     char    szSection[16], szEntry[16], *psz;
 
@@ -87,7 +87,7 @@ void ReadIniPresets(APPSESSION &app, char *szIniFile) {
     return;
 }
 
-void WriteIniPresets(APPSESSION &app, char *szIniFile) {
+void WriteIniPresets(APPSESSION &app, const char *szIniFile) {
     std::int16_t i, iPass;
     char    szSection[16], szEntry[16], *psz;
 
@@ -183,7 +183,7 @@ void ReadIniIdentity(APPSESSION &app, const char *pszIdentity, std::int16_t cch)
     }
 }
 
-void ReadIniRecent(APPSESSION &app, char *szSection, char *szEntry, char *szIniFile, std::int16_t cch) {
+void ReadIniRecent(APPSESSION &app, const char *szSection, char *szEntry, const char *szIniFile, std::int16_t cch) {
     std::int16_t i, iPass;
     char   *psz;
 

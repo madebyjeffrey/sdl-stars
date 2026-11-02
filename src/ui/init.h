@@ -11,9 +11,9 @@ std::int16_t FCreateStuff(APPSESSION &app);
 std::int16_t FCreateFonts(APPSESSION &app, HDC hdc);
 std::int16_t InitInstance(APPSESSION &app, std::int16_t nCmdShow);
 void    InitTiles(APPSESSION &app);
-void    GetIniWinRc(APPSESSION &app, char *szSection, char *szIniFile, StringId ids, WN *pwn);
+void    GetIniWinRc(APPSESSION &app, const char *szSection, const char *szIniFile, StringId ids, WN *pwn);
 void    ReadIniSettings(APPSESSION &app);
-void    ReadIniTileSettings(char *pszFormat, TILE *rgtile, std::int16_t ctile);
+void    ReadIniTileSettings(const char *pszFormat, TILE *rgtile, std::int16_t ctile);
 
 
 #endif

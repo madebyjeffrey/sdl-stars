@@ -369,7 +369,7 @@ void InitTiles(APPSESSION &app) {
     return;
 }
 
-void GetIniWinRc(APPSESSION &app, char *szSection, char *szIniFile, StringId ids, WN *pwn) {
+void GetIniWinRc(APPSESSION &app, const char *szSection, const char *szIniFile, StringId ids, WN *pwn) {
     std::int16_t fInitalized;
     std::int16_t fMinimized;
     std::int16_t fMaximized;
@@ -641,7 +641,7 @@ void ReadIniSettings(APPSESSION &app) {
     return;
 }
 
-void ReadIniTileSettings(char *pszFormat, TILE *rgtile, std::int16_t ctile) {
+void ReadIniTileSettings(const char *pszFormat, TILE *rgtile, std::int16_t ctile) {
     TILE     tile;
     std::int16_t  fPopped;
     std::int16_t  i;
