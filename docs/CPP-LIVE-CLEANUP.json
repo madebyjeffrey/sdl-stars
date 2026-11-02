@@ -23987,7 +23987,8 @@
       "native_regression": "519 matches; 25 existing warnings; zero differences/errors/skipped inputs",
       "host_regression": "519 matches; 25 existing warnings; zero differences/errors/skipped inputs",
       "baseline": "unchanged",
-      "diff_check": "pass"
+      "diff_check": "pass",
+      "owned_c_and_function_macro_scan": "Confirmed on 2026-11-02: zero owned .c sources and zero function-like macros under src/ and compat/win32/src. No further app-owned C-source or function-like API-macro conversion is indicated by this scan. Include guards, NOMINMAX, test configuration, and vendored SDK definitions remain outside this conversion scope."
     },
     "remaining_raw_copy_calls": [
       "compat/win32/src/list.cpp: LB_GETTEXT ABI output",
