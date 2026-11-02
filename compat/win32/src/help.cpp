@@ -1,5 +1,6 @@
 /* WinHelp's separate viewer is adapted to the packaged original HTML guide. */
 #include "internal.h"
+#include "native.h"
 #include "path_io.h"
 #include <SDL3/SDL.h>
 #include <cerrno>
@@ -23,7 +24,7 @@ static BOOL FHelpAssets(const char *pszDirectory) {
     BOOL fStamp;
 
     for (i = 0; i < sizeof(rgHelpFile) / sizeof(rgHelpFile[0]); i++) {
-        cch = std::snprintf(szFile, sizeof(szFile), "%s/%s", pszDirectory, rgHelpFile[i]);
+        cch = CchSnprintf(std::span{szFile}, "%s/%s", pszDirectory, rgHelpFile[i]);
         if (cch < 0 || static_cast<std::size_t>(cch) >= sizeof(szFile)) {
             win32::SetLastError(win32::ERROR_FILENAME_EXCED_RANGE);
             return 0;
@@ -33,7 +34,7 @@ static BOOL FHelpAssets(const char *pszDirectory) {
             return 0;
         }
     }
-    std::snprintf(szFile, sizeof(szFile), "%s/complete.stamp", pszDirectory);
+    CchSnprintf(std::span{szFile}, "%s/complete.stamp", pszDirectory);
     lpFile = PfNativeOpen(szFile, NATIVEFILEMODE::read);
     if (!lpFile) {
         win32::SetLastError(win32::ERROR_ACCESS_DENIED);
@@ -58,7 +59,7 @@ static char *PszHelpDocument(const char *pszDirectory, const char *pszPage) {
     NATIVEOWNER<char, SDL_free> baseOwner;
     NATIVEOWNER<NATIVEFILE, ICloseNativeFile> sourceOwner, targetOwner;
 
-    cch = std::snprintf(szSource, sizeof(szSource), "%s/offline.html", pszDirectory);
+    cch = CchSnprintf(std::span{szSource}, "%s/offline.html", pszDirectory);
     if (cch < 0 || static_cast<std::size_t>(cch) >= sizeof(szSource)) goto fail;
     lpSource = PfNativeOpen(szSource, NATIVEFILEMODE::read);
     sourceOwner.reset(lpSource);
@@ -81,10 +82,10 @@ static char *PszHelpDocument(const char *pszDirectory, const char *pszPage) {
     pszBase = CompatPathIO().pfnGetPrefPath("stars", "help");
     baseOwner.reset(pszBase);
     if (!pszBase) goto fail;
-    cch = std::snprintf(szTarget, sizeof(szTarget), "%sguide-%08x-%s", pszBase, STARS_HELP_BUNDLE_CRC, pszPage);
+    cch = CchSnprintf(std::span{szTarget}, "%sguide-%08x-%s", pszBase, STARS_HELP_BUNDLE_CRC, pszPage);
     baseOwner.reset();
     if (cch < 0 || static_cast<std::size_t>(cch) >= sizeof(szTarget)) goto fail;
-    cch = std::snprintf(szTemp, sizeof(szTemp), "%s.tmp-XXXXXX", szTarget);
+    cch = CchSnprintf(std::span{szTemp}, "%s.tmp-XXXXXX", szTarget);
     if (cch < 0 || static_cast<std::size_t>(cch) >= sizeof(szTemp)) goto fail;
     nft = NftNativeCreateTemp(szTemp);
     lpTarget = nft.lpfile.release();
@@ -151,14 +152,14 @@ BOOL win32::WinHelpA(HWND hWndMain, LPCSTR pszHelp, UINT uCommand, ULONG_PTR dwD
         return 0;
     }
     // The packaged UTF-8 guide is authoritative; the HLP archive is not loaded.
-    cch = std::snprintf(szDirectory, sizeof(szDirectory), "%s../help", pszBase);
+    cch = CchSnprintf(std::span{szDirectory}, "%s../help", pszBase);
     if (cch < 0 || static_cast<std::size_t>(cch) >= sizeof(szDirectory)) {
         win32::SetLastError(win32::ERROR_FILENAME_EXCED_RANGE);
         return 0;
     }
     auto szDirectoryOwned = SzCanonicalNativePath(szDirectory);
     if (!szDirectoryOwned) {
-        cch = std::snprintf(szDirectory, sizeof(szDirectory), "%s%s/help", pszBase, szStarsInstalledData);
+        cch = CchSnprintf(std::span{szDirectory}, "%s%s/help", pszBase, szStarsInstalledData);
         if (cch < 0 || static_cast<std::size_t>(cch) >= sizeof(szDirectory)) {
             win32::SetLastError(win32::ERROR_FILENAME_EXCED_RANGE);
             return 0;
