@@ -1949,7 +1949,7 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
                 !(win32::GetWindowLongPtrA(win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_HOST_GAMES), win32::GWL_STYLE) & win32::WS_VISIBLE)) goto LDone;
             hwndList = win32::GetDlgItem(app.lpui->hwndTitle, IDC_LIBRARY_HOST_GAMES);
             if (ui::SendMessage(hwndList, win32::LB_SELECTSTRING, (WPARAM)-1, (LPARAM)"Hosted") == win32::LB_ERR ||
-                !FExportSelectedLibraryGame(app, app.lpui->hwndTitle, pszSettings) ||
+                !FExportSelectedLibraryGame(app, app.lpui->hwndTitle, std::string_view(pszSettings)) ||
                 CchSnprintf(std::span{szExport, sizeof(szExport)}, "%s%sHosted%sHosted.hst", pszSettings, szDirSep, szDirSep) <= 0 ||
                 CchSnprintf(std::span{szHostSourceHost, sizeof(szHostSourceHost)}, "%s%sgame.hst", pszHostSource, szDirSep) <= 0 ||
                 !FTestFilesEqual(szExport, szHostSourceHost)) {

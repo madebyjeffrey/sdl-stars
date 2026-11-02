@@ -2762,7 +2762,7 @@ LRESULT  TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             if (FImportLibraryOrders(app, hwnd, std::nullopt)) RefreshLibraryHostGames(app, hwnd);
             break;
         case IDC_LIBRARY_GAME_EXPORT:
-            FExportSelectedLibraryGame(app, hwnd, nullptr);
+            FExportSelectedLibraryGame(app, hwnd, std::nullopt);
             break;
         case IDC_LIBRARY_DUPLICATE:
         case IDC_LIBRARY_RENAME:
@@ -2857,7 +2857,7 @@ LRESULT  TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         break;
     case WM_STARS_EXPORT_FOLDER:
         if (auto *pszPath = static_cast<char *>(PvCompatMessagePayload(wParam))) {
-            FExportSelectedLibraryGame(app, hwnd, pszPath);
+            FExportSelectedLibraryGame(app, hwnd, std::string_view(pszPath));
         }
         break;
     case win32::WM_PAINT:

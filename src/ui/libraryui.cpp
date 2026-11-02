@@ -1733,17 +1733,21 @@ static std::int16_t MoveGameExportEntry(APPSESSION &, void *lpData, std::string_
     return 1;
 }
 
-std::int16_t FExportLibraryGame(APPSESSION &app, HWND hwnd, const char *pszName, const char *pszTarget) {
+std::int16_t FExportLibraryGame(APPSESSION &app, HWND hwnd, std::string_view pszName, std::optional<std::string_view> pszTarget) {
     LIBRARYIMPORT li;
     LIBRARYEXPORT le;
     LIBRARYEXPORTMOVE lem;
     win32::files::FILESELECTIONREQUEST request;
-    char szSource[512], szDestination[512], szStage[512];
+    char szSource[512], szDestination[512], szStage[512], szTarget[512];
+    char szName[256];
     char szZipName[512], szZipStage[512], szZipGame[512], szMessage[256];
     int cch, iChoice;
     std::size_t cchSource, cchName, cchDestination, cchStage;
     std::int16_t fZipStage;
 
+    if (pszName.size() >= sizeof(szName) || pszName.find('\0') != std::string_view::npos) return 0;
+    std::copy(pszName.begin(), pszName.end(), szName);
+    szName[pszName.size()] = 0;
     if (!pszTarget) {
         if (!std::getenv("STARS_CLIENT_EXPORT_GAME")) {
             TextIO().pfnCchGetString(app, idsLibraryExportZipPrompt, std::span{szMessage});
@@ -1752,32 +1756,35 @@ std::int16_t FExportLibraryGame(APPSESSION &app, HWND hwnd, const char *pszName,
             if (iChoice == IDCANCEL) return 0;
             if (iChoice == win32::IDYES) {
                 std::ranges::fill(szZipName, 0);
-                CchSnprintf(std::span{szZipName, sizeof(szZipName)}, "%s.zip", pszName);
+                CchSnprintf(std::span{szZipName, sizeof(szZipName)}, "%s.zip", szName);
                 request.mode = win32::files::FILESELECTIONMODE::save;
                 request.szInitialPath = szZipName;
                 request.szDefaultExtension = "zip";
                 request.fConfirmOverwrite = true;
                 AddLibraryFileSelectionFilters(app, idsLibraryZipFilesFilter, request);
                 if (!FSelectLibraryFile(hwnd, std::move(request), std::span{szZipName})) return 0;
-                return FExportSelectedLibraryGame(app, hwnd, szZipName);
+                return FExportSelectedLibraryGame(app, hwnd, std::string_view(szZipName));
             }
         }
         CompatFolderIO().pfnShowOpenFolderDialog(LibraryExportFolderSelected, PvLibraryFolderContext(hwnd), nullptr, nullptr, 0);
         return 1;
     }
-    if (!FInitLibrary() || !FPortableLibraryName(app, pszName)) return 0;
-    cch = CchSnprintf(std::span{szSource, sizeof(szSource)}, "%s%s%s", szLibraryRoot, szDirSep, pszName);
+    if (!FInitLibrary() || !FPortableLibraryName(app, pszName) || pszTarget->size() >= sizeof(szTarget) ||
+        pszTarget->find('\0') != std::string_view::npos) return 0;
+    std::copy(pszTarget->begin(), pszTarget->end(), szTarget);
+    szTarget[pszTarget->size()] = 0;
+    cch = CchSnprintf(std::span{szSource, sizeof(szSource)}, "%s%s%s", szLibraryRoot, szDirSep, szName);
     if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szSource) || !FNativeDirectoryExists(szSource)) return 0;
     cchSource = static_cast<std::size_t>(cch);
-    cchName = std::string_view(pszName).size();
-    if (FPathIsZip(pszTarget)) {
-        if (SDL_strncasecmp(pszTarget, szSource, cchSource) == 0 &&
-            (pszTarget[cchSource] == 0 || pszTarget[cchSource] == '/' || pszTarget[cchSource] == '\\')) goto LFail;
+    cchName = pszName.size();
+    if (FPathIsZip(szTarget)) {
+        if (SDL_strncasecmp(szTarget, szSource, cchSource) == 0 &&
+            (szTarget[cchSource] == 0 || szTarget[cchSource] == '/' || szTarget[cchSource] == '\\')) goto LFail;
         fZipStage = FCreateLibraryZipStage(szZipStage, sizeof(szZipStage), "zip-exporting");
         if (!fZipStage) goto LFail;
-        if (!FExportLibraryGame(app, hwnd, pszName, szZipStage)) goto LZipFail;
-        cch = CchSnprintf(std::span{szZipGame, sizeof(szZipGame)}, "%s%s%s", szZipStage, szDirSep, pszName);
-        if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szZipGame) || !FZipLibraryDirectory(app, szZipGame, pszTarget)) goto LZipFail;
+        if (!FExportLibraryGame(app, hwnd, pszName, std::string_view(szZipStage))) goto LZipFail;
+        cch = CchSnprintf(std::span{szZipGame, sizeof(szZipGame)}, "%s%s%s", szZipStage, szDirSep, szName);
+        if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szZipGame) || !FZipLibraryDirectory(app, szZipGame, szTarget)) goto LZipFail;
         FNativeEnumerateDirectory(app, szZipGame, RemoveImportTreeEntry, szZipGame);
         RemoveNativePath(szZipGame);
         RemoveNativePath(szZipStage);
@@ -1787,30 +1794,30 @@ LZipFail:
         RemoveNativePath(szZipStage);
         goto LFail;
     }
-    if (SDL_strncasecmp(pszTarget, szSource, cchSource) == 0 &&
-        (pszTarget[cchSource] == 0 || pszTarget[cchSource] == '/' || pszTarget[cchSource] == '\\')) goto LFail;
-    cch = CchSnprintf(std::span{szDestination, sizeof(szDestination)}, "%s%s%s", pszTarget, szDirSep, pszName);
+    if (SDL_strncasecmp(szTarget, szSource, cchSource) == 0 &&
+        (szTarget[cchSource] == 0 || szTarget[cchSource] == '/' || szTarget[cchSource] == '\\')) goto LFail;
+    cch = CchSnprintf(std::span{szDestination, sizeof(szDestination)}, "%s%s%s", szTarget, szDirSep, szName);
     if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szDestination) || FNativeDirectoryExists(szDestination)) goto LFail;
     cchDestination = static_cast<std::size_t>(cch);
     /* The loader and backup writer keep complete paths in szBase. Check the
      * longest companion before copying, rather than truncating child paths. */
     if (cchDestination + cchName + sizeof("/backup.999/.m16") > sizeof(app.state.szBase)) goto LFail;
-    if (!CreateLibraryExportStage(szStage, sizeof(szStage), pszTarget)) goto LFail;
+    if (!CreateLibraryExportStage(szStage, sizeof(szStage), szTarget)) goto LFail;
     cchStage = std::string_view(szStage).size();
     if (cchStage + cchName + sizeof("/backup.999/.m16") > sizeof(szStage)) goto LStageFail;
 
     le = {};
     le.pszSource = szSource;
     le.pszTarget = szStage;
-    le.pszStem = pszName;
+    le.pszStem = szName;
     if (!FNativeEnumerateDirectory(app, szSource, CopyGameExportEntry, &le) || le.fBad ||
         !le.fSawXY || !le.fSawPlayable) goto LStageFail;
 
     li = {};
     li.pszSource = szSource;
     li.pszTarget = szStage;
-    li.pszStem = pszName;
-    li.pszName = pszName;
+    li.pszStem = szName;
+    li.pszName = szName;
     if (!FNativeEnumerateDirectory(app, szSource, CopyBackupDirectory, &li) || li.fBad ||
         CreateNativeDir(szDestination) != 0) goto LStageFail;
     lem.pszSource = szStage;
@@ -1843,11 +1850,11 @@ static void SDLCALL LibraryExportFolderSelected(void *lpData, const char * const
     }
 }
 
-std::int16_t FExportSelectedLibraryGame(APPSESSION &app, HWND hwnd, const char *pszTarget) {
+std::int16_t FExportSelectedLibraryGame(APPSESSION &app, HWND hwnd, std::optional<std::string_view> pszTarget) {
     char szDir[512];
     char szName[256];
     if (!FSelectedLibraryGameName(hwnd, szName)) return 0;
-    if (!pszTarget) return FExportLibraryGame(app, hwnd, szName, nullptr);
+    if (!pszTarget) return FExportLibraryGame(app, hwnd, szName, std::nullopt);
     if (app.state.game.fDirty && app.state.lpPlanets && app.state.idPlayer != iplrNone) {
         CchSnprintf(std::span{szDir, sizeof(szDir)}, "%s%s%s", szLibraryRoot, szDirSep, szName);
         if (LibraryPathIO().pfnUnder(szDir, app.state.szBase)) PromptSaveGame(app);
