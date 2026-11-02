@@ -408,7 +408,10 @@ std::optional<std::string> SzGetNativeLine(NATIVEFILE *pf) {
         return sz;
     });
 }
-int IPutNativeString(const char *psz, NATIVEFILE *pf) { std::size_t cb = std::strlen(psz); return CWriteNative(std::span{psz, cb}, pf) == cb ? 0 : EOF; }
+int IPutNativeString(std::string_view sz, NATIVEFILE *pf) {
+    const std::size_t cb = sz.size();
+    return CWriteNative(std::as_bytes(std::span{sz.data(), cb}), pf) == cb ? 0 : EOF;
+}
 int CchNativePrintfFields(NATIVEFILE *pf, std::string_view fmt, std::span<const NATIVEFORMATARG> args) {
     char small[2048];
     int cb = CchFormatNative(small, fmt, args);

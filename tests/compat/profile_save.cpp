@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <string_view>
 #include <thread>
 
 enum {Ok,Allocate,Temporary,Mode,Bom,Rows,Newline,Flush,Sync,Close,Rename};
@@ -23,7 +24,7 @@ static NATIVEFILETEMPRESULT TestTemp(std::string_view path){
 }
 static int TestMode(NATIVEFILE *fp,const char *p){(void)fp;(void)p;return failure==Mode?-1:0;}
 static size_t TestWrite(std::span<const std::byte> data,NATIVEFILE *fp){(void)fp;if(failure==Bom)return 2;memcpy(output+used,data.data(),data.size());used+=data.size();return data.size();}
-static int TestPuts(const char *s,NATIVEFILE *fp){
+static int TestPuts(std::string_view s,NATIVEFILE *fp){
     (void)fp;
     if (fNestedFailure) {
         PROFILEIO io = ProfileIO();
@@ -32,7 +33,7 @@ static int TestPuts(const char *s,NATIVEFILE *fp){
         throw PROFILEFAILURE{};
     }
     if(failure==Rows)return EOF;
-    memcpy(output+used,s,strlen(s));used+=strlen(s);return 0;
+    memcpy(output+used,s.data(),s.size());used+=s.size();return 0;
 }
 static int TestPutc(int c,NATIVEFILE *fp){(void)fp;if(failure==Newline)return EOF;output[used++]=(char)c;return c;}
 static int TestFlush(NATIVEFILE *fp){(void)fp;return failure==Flush?-1:0;}

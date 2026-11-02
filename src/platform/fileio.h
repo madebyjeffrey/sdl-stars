@@ -101,7 +101,8 @@ int ChPutNativeFile(int ch, NATIVEFILE *pf);
 // terminator; size one succeeds with zero bytes and no IO, including at EOF.
 std::optional<std::size_t> CchGetNativeLine(std::span<char> sz, NATIVEFILE *pf);
 std::optional<std::string> SzGetNativeLine(NATIVEFILE *pf);
-int IPutNativeString(const char *psz, NATIVEFILE *pf);
+// Writes the exact text bytes in the view, without a terminator.
+int IPutNativeString(std::string_view sz, NATIVEFILE *pf);
 int CchNativePrintfFields(NATIVEFILE *pf, std::string_view szFormat, std::span<const NATIVEFORMATARG> rgArgs);
 template<class... ARGS>
 int CchNativePrintf(NATIVEFILE *pf, const char *pszFormat, ARGS... args) {
