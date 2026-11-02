@@ -678,6 +678,8 @@ std::int16_t FRunLogRecord(APPSESSION &app, RecordType rt, std::int16_t cb, std:
     std::uint16_t wOrderLog;
     RTCHGSHDEF rtchgshdef{};
     std::int16_t idFleet, cShipXfer;
+    std::size_t cchName;
+    char *pchNameEnd;
 
     lpxfCur = nullptr;
     switch (rt) {
@@ -746,13 +748,15 @@ std::int16_t FRunLogRecord(APPSESSION &app, RecordType rt, std::int16_t cb, std:
     case rtLogFleetName:
         if (cb < static_cast<std::int16_t>(cbWireChangeName) ||
             !FReadUserString(app, std::as_bytes(std::span(lpb + cbWireChangeName, cb - cbWireChangeName)), std::span{szT}.first(32))) return 0;
+        pchNameEnd = std::find(std::begin(szT), std::begin(szT) + 32, 0);
+        cchName = static_cast<std::size_t>(pchNameEnd - szT);
         NATIVEBYTEREADER(std::as_bytes(std::span(lpb, 2))).FReadI16Le(id);
         if (!(lpfl = LpflFromId(app, id))) return 0;
         if (lpfl->lpszName) HeapIO().pfnFree(app, lpfl->lpszName, htString);
         lpfl->lpszName = nullptr;
-        if (*szT) {
-            lpfl->lpszName = LpAlloc<char>(app, std::strlen(szT) + 1, htString);
-            CchCopyUtf8(std::span(lpfl->lpszName, std::strlen(szT) + 1), szT);
+        if (cchName != 0) {
+            lpfl->lpszName = LpAlloc<char>(app, cchName + 1, htString);
+            CchCopyUtf8(std::span(lpfl->lpszName, cchName + 1), std::string_view(szT, cchName));
         }
         break;
     case rtThing:

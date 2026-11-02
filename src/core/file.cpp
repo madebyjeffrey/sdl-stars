@@ -1045,6 +1045,8 @@ std::int16_t FReadFleet(APPSESSION &app, FLEET *lpfl) {
     std::int16_t   cord;
     ORDER    *lpord;
     std::int16_t   i = 0;
+    std::size_t cchName;
+    char *pchNameEnd;
     char      szT[33];
 
     *lpfl = {};
@@ -1082,8 +1084,10 @@ std::int16_t FReadFleet(APPSESSION &app, FLEET *lpfl) {
     RecordIO().pfnReadRt(app);
     if (app.state.hdrCur.rt == rtString) {
         if (!FReadUserString(app, std::as_bytes(std::span(app.state.rgbCur, app.state.hdrCur.cb)), std::span{szT}.first(32))) goto Corrupt;
-        lpfl->lpszName = LpAlloc<char>(app, std::strlen(szT) + 1, htString);
-        CchCopyUtf8(std::span(lpfl->lpszName, std::strlen(szT) + 1), szT);
+        pchNameEnd = std::find(std::begin(szT), std::begin(szT) + 32, 0);
+        cchName = static_cast<std::size_t>(pchNameEnd - szT);
+        lpfl->lpszName = LpAlloc<char>(app, cchName + 1, htString);
+        CchCopyUtf8(std::span(lpfl->lpszName, cchName + 1), std::string_view(szT, cchName));
         RecordIO().pfnReadRt(app);
     } else {
         lpfl->lpszName = nullptr;
