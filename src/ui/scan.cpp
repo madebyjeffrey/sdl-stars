@@ -2750,6 +2750,7 @@ INT_PTR  FindDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
     char szName[40];
     RECT rc;
+    int cchName;
 
     switch (msg) {
     case win32::WM_INITDIALOG:
@@ -2777,8 +2778,8 @@ INT_PTR  FindDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         case IDOK:
         case IDCANCEL:
             if (LOWORD(wParam) == IDOK) {
-                win32::GetDlgItemTextA(hwnd, IDC_EDIT1, szName, 40);
-                if (!FSelectSz(app, szName)) {
+                cchName = win32::GetDlgItemTextA(hwnd, IDC_EDIT1, szName, sizeof(szName));
+                if (!FSelectSz(app, std::string_view{szName, static_cast<std::size_t>(cchName)})) {
                     AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsSorryCantFindPlanetFleetName, {}).data(), win32::MB_ICONHAND);
                     ControlIO().pfnSetFocus(ControlIO().pfnGetDlgItem(hwnd, IDC_EDIT1));
                     ui::SendDlgItemMessage(hwnd, IDC_EDIT1, win32::EM_SETSEL, 0, -1);
@@ -2796,20 +2797,25 @@ INT_PTR  FindDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     return 0;
 }
 
-std::int16_t FSelectSz(APPSESSION &app, const char *szName) {
+std::int16_t FSelectSz(APPSESSION &app, std::string_view szName) {
     const char *pch;
+    const char *pszName;
     std::int16_t ifl;
     FLEET  *lpfl;
     std::int16_t ipl;
     std::int16_t cch;
     char    szT[20];
+    std::array<char, 40> szNameTerminated{};
     std::int16_t iplPartial;
     SCAN    scan;
 
+    if (szName.size() >= szNameTerminated.size()) return 0;
+    std::copy(szName.begin(), szName.end(), szNameTerminated.begin());
+    pszName = szNameTerminated.data();
     iplPartial = -1;
     scan.iwp = iwpNone;
-    for (ipl = 0; ipl < app.state.game.cPlanMax && strcmpi(PszGetCompressedPlanet(app, app.state.rgidPlan[ipl]).data(), szName) != 0; ipl++) {
-        if (iplPartial == -1 && strnicmp(PszGetCompressedPlanet(app, app.state.rgidPlan[ipl]).data(), szName, std::strlen(szName)) == 0) {
+    for (ipl = 0; ipl < app.state.game.cPlanMax && strcmpi(PszGetCompressedPlanet(app, app.state.rgidPlan[ipl]).data(), pszName) != 0; ipl++) {
+        if (iplPartial == -1 && strnicmp(PszGetCompressedPlanet(app, app.state.rgidPlan[ipl]).data(), pszName, std::strlen(pszName)) == 0) {
             iplPartial = ipl;
         }
     }
@@ -2824,10 +2830,10 @@ GoWithPartial:
     }
 
     cch = TextIO().pfnCchGetString(app, idsFleet, std::span{szT});
-    if (strnicmp(szName, szT, cch) == 0) {
-        pch = szName + 6;
+    if (strnicmp(pszName, szT, cch) == 0) {
+        pch = pszName + 6;
     } else {
-        pch = szName;
+        pch = pszName;
     }
     for (; *pch == ' '; pch++) {
     }
@@ -2864,7 +2870,7 @@ LNotAFleetId:
         lpfl = app.state.rglpfl[ifl];
         if (!app.state.rglpfl[ifl])
             break;
-        if (strcmpi(PszGetFleetName(app, lpfl->id).data(), szName) == 0)
+        if (strcmpi(PszGetFleetName(app, lpfl->id).data(), pszName) == 0)
             goto LFoundFleetId;
     }
     if (iplPartial == -1) {
