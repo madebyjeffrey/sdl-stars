@@ -25111,18 +25111,22 @@
   "working_tree_checkpoint": {
     "date": "2026-11-02",
     "branch": "develop",
-    "batch": "L05 readonly INI selection and identity parser views",
-    "source_commit": "a891329d",
-    "status": "Latest source and ledger are pushed to develop; opt-in current-source Windows/Linux workflow is queued.",
-    "changes": "ReadIniSelection and ReadIniIdentity consume std::string_view. ReadIniSettings passes explicit byte counts from the bounded profile reads; tests cover subviews not terminated at their end.",
+    "batch": "L05 platform qualification repairs and live handoff",
+    "source_commit": "60a94d06",
+    "status": "Two focused qualification fixes are pushed to develop. CI run 41422617389 checked out the earlier source head 028c1dac before these fixes; workflow dispatch could not be reached from this environment to rerun it.",
+    "changes": [
+      "Pass STARS_TEST_GAME_PATH to the Linux portal file-workflow fixture; it asserted the path existed but the child process environment omitted it.",
+      "Mark argc unused in the Windows SDL entry branch; Windows replaces the native argument vector and -Werror rejected the unused parameter."
+    ],
     "verification": {
-      "desktop_unit_tests": "18/18 pass.",
-      "host_unit_tests": "29/29 pass.",
-      "native_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
-      "host_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
-      "tutorial": "1/1 available SDL native tutorial smoke passes.",
-      "baseline": "Unchanged.",
-      "diff_check": "Pass."
+      "desktop_unit_tests": "18/18 pass on the updated working tree.",
+      "host_unit_tests": "29/29 pass on the prior source head a891329d.",
+      "native_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips on the prior source head a891329d.",
+      "host_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips on the prior source head a891329d.",
+      "tutorial": "1/1 available SDL native tutorial smoke passes on the prior source head a891329d.",
+      "python_fixture_syntax": "Pass.",
+      "diff_check": "Pass.",
+      "baseline": "Unchanged."
     },
     "current_source_audits": {
       "tracked_c_translation_units": 44,
@@ -25134,21 +25138,22 @@
       "scan_scope": "Tracked src and compat/win32/include/src plus dist/macos-sdl-debug/generated/version_resource.h; compat/win32/generated is not a present directory."
     },
     "platform_ci": {
-      "run_id": 41417481193,
-      "head": "5fae6cf8778e098db1df849124adb29876faad77",
-      "url": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41417481193",
+      "run_id": 41422617389,
+      "head": "028c1dac10a7060a7508718c1da34bf575629d82",
+      "url": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41422617389",
       "linux_host": "success",
-      "resource_sanitizers": "success",
-      "linked_independent_witnesses": "success",
-      "linux_desktop": "in progress at checkpoint",
-      "windows_sdl": "failure in SDK configuration matrix and Windows SDL build; this run predates current source edits."
+      "windows_sdk_matrix": "failed before the Windows SDL build; failure logs are not available while the job is still running.",
+      "windows_sdl": "in progress; the earlier completed run identified unused argc under -Werror, fixed in 60a94d06.",
+      "linux_desktop": "in progress at last poll.",
+      "linked_independent_witnesses": "in progress at last poll.",
+      "resource_sanitizers": "in progress at last poll.",
+      "rerun": "Not started: gh workflow dispatch could not connect to api.github.com from this environment."
     },
     "next": [
-      "Poll current-source workflow 41422617389 and inspect Linux portal/X11 tests plus Windows SDK/client artifacts and outcomes.",
-      "Inspect and record the older run 41419207748 when it finishes; it targets the earlier source head f1cbe921.",
-      "Continue L05 remaining bounded destinations, const-text interfaces and scratch/borrowed-return audit.",
-      "Continue L06 remaining buffer/length and native file/path result interfaces and chooser coverage.",
-      "Complete L08 only after current-source Windows/Linux qualification and any failures are resolved."
+      "Rerun full opt-in Windows/Linux qualification against 60a94d06 when GitHub Actions dispatch is reachable; inspect and fix the SDK matrix failure and verify the portal workflow fixture.",
+      "Complete the remaining L05 bounded text destinations, const-text interfaces, and scratch-storage/borrowed-return audit.",
+      "Complete L06 buffer/length service interfaces, native file/path results, and chooser platform coverage.",
+      "Finish L08 only after Windows/Linux qualification and remaining checks pass."
     ],
     "untracked_user_assets": [
       "title-modernized.png and prompt",
@@ -25162,6 +25167,16 @@
       "status": "queued; no jobs have reported yet",
       "dispatch": "unit.yml workflow_dispatch with run_slow_platform_jobs=true",
       "scope": "Latest source including L05 readonly recent-path and INI parser view batches."
-    }
+    },
+    "post_checkpoint_commits": [
+      {
+        "commit": "75767e02",
+        "message": "Pass the game path to file workflow test"
+      },
+      {
+        "commit": "60a94d06",
+        "message": "Mark Windows entry arguments unused"
+      }
+    ]
   }
 }
