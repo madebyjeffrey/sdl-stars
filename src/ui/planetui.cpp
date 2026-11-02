@@ -1478,7 +1478,7 @@ void DrawCBEntireItem(APPSESSION &app, DRAWITEMSTRUCT *lpdis, std::int16_t infla
     cchItem = ControlIO().pfnSendMessage(lpdis->hwndItem, !fListbox ? win32::CB_GETLBTEXT : win32::LB_GETTEXT, lpdis->itemID, reinterpret_cast<LPARAM>(app.state.szWork));
     szItem = cchItem >= 0
         ? std::string_view{app.state.szWork, static_cast<std::size_t>(cchItem)}
-        : std::string_view{app.state.szWork};
+        : std::string_view{std::span{app.state.szWork}.data()};
     DrawProductionItem(app, lpdis->hDC, &rc, szItem, inflate, fSelected, fListbox);
     HandleFocusState(app, lpdis, inflate + 2);
     return;

@@ -719,7 +719,7 @@ void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
                 xBeg = LOWORD(static_cast<std::int32_t>((static_cast<std::int32_t>((static_cast<std::uint32_t>((i * dNum)) * dxBar)) / app.lpui->cMinGrafMax))) + xL;
                 win32::PatBlt(hdc, xBeg, yCur + 2, 1, 3 * dyRow - 1, win32::PATCOPY);
                 c = CchSprintf(app.state.szWork, app.state.PCTD, i * dNum);
-                CtrTextOut(hdc, xBeg, dy, app.state.szWork, c);
+                CtrTextOut(hdc, xBeg, dy, std::string_view{app.state.szWork, static_cast<std::size_t>(c)});
             }
             RightTextOut(app, hdc, xL - 4, dy, "kT", 2, 0);
             if (pl.iPlayer == app.state.idPlayer) {

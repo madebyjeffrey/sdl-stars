@@ -3,11 +3,12 @@
 
 #include "win.h"
 #include <cstdint>
+#include <string_view>
 #include <span>
 #include <windows.h>
 
 INT_PTR  RandomSeedDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
-void             CtrTextOut(HDC hdc, std::int16_t x, std::int16_t y, const char *psz, std::int16_t cLen);
+void             CtrTextOut(HDC hdc, std::int16_t x, std::int16_t y, std::string_view szText);
 std::int16_t          DxStreamTextOut(HDC hdc, std::int16_t *px, std::int16_t y, const char *psz, std::int16_t cLen, std::int16_t fPrint);
 void WrapTextOut(APPSESSION &app, HDC hdc, std::int16_t *px, std::int16_t *py, const char *psz, std::int16_t cLen, std::int16_t xLeft, std::int16_t dxWidth, std::int16_t *pxMax, std::int16_t fNewLine, std::int16_t fPrint);
 void AddBackTrailingSpaces(const char **ppch, const char *pchEnd);

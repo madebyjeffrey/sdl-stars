@@ -1146,9 +1146,9 @@ void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
                             if (hfontPrintTiny) {
                                 win32::SelectObject(pd.hDC, hfontPrintTiny);
                             }
-                            CtrTextOut(pd.hDC, ptLegendB.x + xOff, static_cast<std::int16_t>((3 * dyPrint)) / 2 + y - dyPrintTiny / 2, "|", 1);
-                            CtrTextOut(pd.hDC, ptLegendB.x + xOff, static_cast<std::int16_t>((5 * dyPrint)) / 2 + y - dyPrintTiny / 2, "+", 1);
-                            CtrTextOut(pd.hDC, ptLegendB.x + xOff, static_cast<std::int16_t>((9 * dyPrint)) / 2 + y + 8 - dyPrintTiny, "2", 1);
+                            CtrTextOut(pd.hDC, ptLegendB.x + xOff, static_cast<std::int16_t>((3 * dyPrint)) / 2 + y - dyPrintTiny / 2, "|");
+                            CtrTextOut(pd.hDC, ptLegendB.x + xOff, static_cast<std::int16_t>((5 * dyPrint)) / 2 + y - dyPrintTiny / 2, "+");
+                            CtrTextOut(pd.hDC, ptLegendB.x + xOff, static_cast<std::int16_t>((9 * dyPrint)) / 2 + y + 8 - dyPrintTiny, "2");
                             if (hfontPrint) {
                                 win32::SelectObject(pd.hDC, hfontPrint);
                             }
@@ -1170,12 +1170,12 @@ void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
                                 if (lppl->iPlayer == app.state.idPlayer) {
                                     if (lppl->fStarbase) {
                                         CtrTextOut(pd.hDC, LOWORD(x), LOWORD(y) + 4 - dyPrintTiny,
-                                                   const_cast<char *>(reinterpret_cast<const char*>((app.state.rglpshdefSB[lppl->iPlayer][lppl->isb].hul.ihuldef == ihuldefOrbitalFort ? "|" : "+"))), 1);
+                                                   app.state.rglpshdefSB[lppl->iPlayer][lppl->isb].hul.ihuldef == ihuldefOrbitalFort ? "|" : "+");
                                     }
                                     DrawPlanetPrintDot(pd.hDC, LOWORD(x), LOWORD(y), 1);
                                 } else if (lppl->iPlayer != iplrNone) {
                                     cch = CchSprintf(app.state.szWork, app.state.PCTD, lppl->iPlayer + 1);
-                                    CtrTextOut(pd.hDC, LOWORD(x), LOWORD(y) - dyPrintTiny, app.state.szWork, cch);
+                                    CtrTextOut(pd.hDC, LOWORD(x), LOWORD(y) - dyPrintTiny, std::string_view{app.state.szWork, static_cast<std::size_t>(cch)});
                                 }
                             }
                         }
@@ -1189,7 +1189,7 @@ void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
                             y = static_cast<std::int32_t>((static_cast<std::int32_t>((y * dSize)) / app.state.dGal)) + dMargin + yOff;
                             DrawPlanetPrintDot(pd.hDC, LOWORD(x), LOWORD(y), 0);
                             if (app.lpui->grbitScan & grbitScanPlanetNames) {
-                                CtrTextOut(pd.hDC, LOWORD(x), LOWORD(y) + 14, TextIO().pfnPlanetName(app, i).data(), 0);
+                                CtrTextOut(pd.hDC, LOWORD(x), LOWORD(y) + 14, TextIO().pfnPlanetName(app, i).data());
                             }
                         }
                         if (hfontSav) {

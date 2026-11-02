@@ -203,7 +203,8 @@
         "fixed-width-tech-requirement-span-interfaces",
         "bounded-native-format-and-scan-interfaces",
         "planet-tile-title-string-view",
-        "bounded-production-row-text-view"
+        "bounded-production-row-text-view",
+        "centered-text-string-view-interface"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -1167,6 +1168,18 @@
           "tutorial": "1/1 available SDL tutorial smoke passes.",
           "baseline": "Unchanged; save/load and fleet-change log outputs match the native regression fixtures.",
           "diff_check": "Pass."
+        },
+        {
+          "batch": "L05: centered text string-view interface",
+          "source": "CtrTextOut now accepts std::string_view; all production callers pass explicit lengths for formatted output or a view for terminated text.",
+          "macos_debug": "make compile passed; no warnings.",
+          "desktop_units": "18/18 passed.",
+          "host_units": "29/29 passed.",
+          "native_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped reference inputs.",
+          "host_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped reference inputs.",
+          "tutorial": "1/1 smoke checkpoint passed.",
+          "baseline": "Unchanged; UI-only text drawing interface and call sites.",
+          "windows_linux": "Current-source qualification remains pending under L08."
         }
       ],
       "bounded_formatting": {

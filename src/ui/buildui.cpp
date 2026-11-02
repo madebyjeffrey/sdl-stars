@@ -746,7 +746,7 @@ void DrawSlotDlg(APPSESSION &app, HWND hwnd, HDC hdc, RECT *prc, std::int16_t iD
                     c = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsD3).data(), lphuldef->hul.rghs[i].cItem);
                 }
             }
-            CtrTextOut(hdc, app.lpui->vrgrcSlot[i].left + 32, app.lpui->vrgrcSlot[i].bottom - app.lpui->dyArial6 - 4, app.state.szWork, c);
+            CtrTextOut(hdc, app.lpui->vrgrcSlot[i].left + 32, app.lpui->vrgrcSlot[i].bottom - app.lpui->dyArial6 - 4, std::string_view{app.state.szWork, static_cast<std::size_t>(c)});
             if (app.lpui->iselSlot == i) {
                 crBkSav = win32::SetBkColor(hdc, 0xffffff);
                 win32::FrameRect(hdc, &app.lpui->vrgrcSlot[i], app.lpui->hbr50Screen);

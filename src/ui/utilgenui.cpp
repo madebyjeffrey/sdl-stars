@@ -62,12 +62,13 @@ INT_PTR  RandomSeedDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     return 0;
 }
 
-void CtrTextOut(HDC hdc, std::int16_t x, std::int16_t y, const char *psz, std::int16_t cLen) {
+void CtrTextOut(HDC hdc, std::int16_t x, std::int16_t y, std::string_view szText) {
+    const char *psz;
+    std::int16_t cLen;
     std::int16_t dx;
 
-    if (cLen == 0) {
-        cLen = win32::lstrlenA(psz);
-    }
+    psz = szText.empty() ? "" : szText.data();
+    cLen = static_cast<std::int16_t>(szText.size());
     dx = LOWORD(GetTextExtent(hdc, psz, cLen));
     win32::TextOutA(hdc, x - (dx >> 1), y, psz, cLen);
     return;

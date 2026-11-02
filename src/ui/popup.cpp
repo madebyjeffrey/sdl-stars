@@ -104,7 +104,7 @@ void DrawPopup(APPSESSION &app, HWND hwnd, HDC hdc) {
     default:
         break;
     case grPopupMineral:
-        CtrTextOut(hdc, rc.right >> 1, 4, app.state.rgszMinerals[app.lpui->GlobalPD.rgi[0]], 0);
+        CtrTextOut(hdc, rc.right >> 1, 4, std::string_view{app.state.rgszMinerals[app.lpui->GlobalPD.rgi[0]]});
         win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
         szCatalogPsz = TextIO().pfnCompressed(app, idsMineralConcentration);
         psz = szCatalogPsz.data();
@@ -135,9 +135,9 @@ void DrawPopup(APPSESSION &app, HWND hwnd, HDC hdc) {
         win32::TextOutA(hdc, dx, 3 * app.state.dyArial8 + 4, app.state.szWork, c);
         break;
     case grPopupPlayer:
-        CtrTextOut(hdc, rc.right >> 1, 4, TextIO().pfnPlayerName(app, app.lpui->GlobalPD.iPlayer, 1, 1, 1, 0, nullptr).data(), 0);
+        CtrTextOut(hdc, rc.right >> 1, 4, TextIO().pfnPlayerName(app, app.lpui->GlobalPD.iPlayer, 1, 1, 1, 0, nullptr).data());
         c = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsPlayerD).data(), app.lpui->GlobalPD.iPlayer + 1);
-        CtrTextOut(hdc, rc.right >> 1, app.state.dyArial8 + 4, app.state.szWork, c);
+        CtrTextOut(hdc, rc.right >> 1, app.state.dyArial8 + 4, std::string_view{app.state.szWork, static_cast<std::size_t>(c)});
         break;
     case grPopupFleet:
         if (rc.bottom - rc.top < app.state.dyArial8 * 2) {
@@ -241,7 +241,7 @@ void DrawPopup(APPSESSION &app, HWND hwnd, HDC hdc) {
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
         win32::SetBkMode(hdc, win32::TRANSPARENT);
         CchCopyUtf8Prefix(std::span{app.state.szWork}, app.lpui->GlobalPD.lpshdef->hul.szClass);
-        CtrTextOut(hdc, ((rc.right - 0x4c) >> 1) + 0x4c, 6, app.state.szWork, 0);
+        CtrTextOut(hdc, ((rc.right - 0x4c) >> 1) + 0x4c, 6, std::string_view{std::span{app.state.szWork}.data()});
         DrawBuildSelHull(app, hwnd, hdc, -1, &rc);
     }
     win32::SelectObject(hdc, hfontSav);
@@ -862,7 +862,7 @@ POINT16 PtDisplayZipOrdInfo(APPSESSION &app, HDC hdc, std::int16_t xCtr, std::in
     if (fPrint) {
         szCatalogPsz = TextIO().pfnCompressed(app, idsZipord);
         psz = szCatalogPsz.data();
-        CtrTextOut(hdc, xCtr, y, psz, std::strlen(psz));
+        CtrTextOut(hdc, xCtr, y, std::string_view{psz});
     }
     y += app.state.dyArial8;
     win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
@@ -963,7 +963,7 @@ POINT16 PtDisplayFactoryMineInfo(APPSESSION &app, HDC hdc, std::int16_t dx, std:
     if (fPrint) {
         TextIO().pfnCchGetString(app, idsSInfo, std::span{szT});
         c = CchSprintf(app.state.szWork, szT, pszType);
-        CtrTextOut(hdc, dx >> 1, y, app.state.szWork, c);
+        CtrTextOut(hdc, dx >> 1, y, std::string_view{app.state.szWork, static_cast<std::size_t>(c)});
     }
     y += app.state.dyArial8 + 4;
     if (RaceQueryIO().pfnStat(&app.state.rgplr[app.state.idPlayer], rsMajorAdv) == raMacintosh) {
@@ -1035,7 +1035,7 @@ POINT16 PtDisplayResourceInfo(APPSESSION &app, HDC hdc, std::int16_t dx, std::in
     if (fPrint) {
         szCatalogPsz = TextIO().pfnCompressed(app, idsResourceInfo);
         psz = szCatalogPsz.data();
-        CtrTextOut(hdc, dx >> 1, y, psz, std::strlen(psz));
+        CtrTextOut(hdc, dx >> 1, y, std::string_view{psz});
     }
     y += app.state.dyArial8 + 4;
     for (i = 0; i <= iMax; i++) {

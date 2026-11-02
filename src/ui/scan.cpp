@@ -977,7 +977,7 @@ std::int16_t DrawScanner(APPSESSION &app, HDC hdc, RECT *prc) {
                         win32::SetTextColor(hdc, lppl->iPlayer == app.state.idPlayer ? 0xffffff : app.lpui->rgcrPlrHistory[lppl->iPlayer]);
                     }
                 }
-                CtrTextOut(hdc, pt.x, pt.y + 5 + j, app.state.szWork, 0);
+                CtrTextOut(hdc, pt.x, pt.y + 5 + j, std::string_view{std::span{app.state.szWork}.data()});
                 if (app.lpui->grbitScan & grbitScanPlayerColors) {
                     win32::SetTextColor(hdc, 0xffffff);
                 }

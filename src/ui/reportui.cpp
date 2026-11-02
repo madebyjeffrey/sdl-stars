@@ -384,7 +384,7 @@ void DrawReport(APPSESSION &app, HWND hwnd, HDC hdc, RECT *prc) {
             if (i == 0) {
                 win32::TextOutA(hdc, rc.left + 3, rc.top + 2, szTit, std::strlen(szTit));
             } else {
-                CtrTextOut(hdc, static_cast<std::int16_t>((rc.right - rc.left)) / 2 + rc.left, rc.top + 2, szTit, 0);
+                CtrTextOut(hdc, static_cast<std::int16_t>((rc.right - rc.left)) / 2 + rc.left, rc.top + 2, std::string_view{szTit});
             }
             _Draw3dFrame(app, hdc, &rc, 0);
             xCol += dx;
@@ -928,7 +928,7 @@ void DrawHistoryReport(APPSESSION &app, HDC hdc) {
         for (i = 0; i <= cDrawn; i++) {
             xCur = static_cast<std::int16_t>((dx * i)) / cDrawn + rcChart.left;
             cch = CchSprintf(szT, app.state.PCTD, iYearBase + 2400 + i * j);
-            CtrTextOut(hdc, xCur, rcChart.bottom + 6, szT, cch);
+            CtrTextOut(hdc, xCur, rcChart.bottom + 6, std::string_view{szT, static_cast<std::size_t>(cch)});
             if (i > 0 && i < cDrawn) {
                 win32::PatBlt(hdc, xCur, rcChart.top - 2, 1, dy + 4, win32::PATCOPY);
             }
@@ -1352,7 +1352,7 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
             app.state.sel.pl = *lppl;
             ControlIO().pfnFillPlanetProdLB(app, nullptr, nullptr, lppl);
             app.state.sel.pl = pl;
-            DrawProductionItem(app, hdc, prc, std::string_view{app.state.szWork}, 0, 0, 2);
+            DrawProductionItem(app, hdc, prc, std::string_view{std::span{app.state.szWork}.data()}, 0, 0, 2);
             break;
         case colPlanetResources:
             cch = TextIO().pfnCchGetString(app, idsN1000, std::span{szT});
@@ -1503,7 +1503,7 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
             } else {
                 chT = ' ';
             }
-            CtrTextOut(hdc, static_cast<std::int16_t>((prc->right - prc->left)) / 2 + prc->left, prc->top, &chT, 1);
+            CtrTextOut(hdc, static_cast<std::int16_t>((prc->right - prc->left)) / 2 + prc->left, prc->top, std::string_view{&chT, 1});
             break;
         case colBattleUnarmed:
             i = 11;
