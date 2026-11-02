@@ -41,7 +41,11 @@ namespace fs = std::filesystem;
 
 static bool FPath(const char *psz) {
     if (!psz) { errno = EINVAL; return false; }
-    if (!FUtf8Valid(std::string_view(psz))) { errno = EILSEQ; return false; }
+    if (!FUtf8Valid(std::string_view{psz})) { errno = EILSEQ; return false; }
+    return true;
+}
+static bool FPath(std::string_view szPath) {
+    if (!FUtf8Valid(szPath)) { errno = EILSEQ; return false; }
     return true;
 }
 static void SetError(const std::error_code &ec) {
@@ -563,10 +567,10 @@ static std::optional<std::string> SzNativePath(const fs::path &pth) {
     if (!FUtf8Valid(text)) { errno = EILSEQ; return std::nullopt; }
     return text;
 }
-std::optional<std::string> SzCanonicalNativePath(const char *psz) {
-    if (!FPath(psz)) return std::nullopt;
+std::optional<std::string> SzCanonicalNativePath(std::string_view szPath) {
+    if (!FPath(szPath)) return std::nullopt;
     return FileCall<std::optional<std::string>>(nullptr, std::nullopt, [&]() -> std::optional<std::string> {
-        std::error_code ec; fs::path pth = PathFromUtf8(psz);
+        std::error_code ec; fs::path pth = PathFromUtf8(szPath);
 #ifdef _WIN32
         // The old SDK bridge used GetFullPathName plus existence, without
         // resolving reparse points or changing the user's path identity.
@@ -592,8 +596,8 @@ static std::optional<std::size_t> CchCopyNativePath(std::optional<std::string> t
     std::memcpy(out.data(), text->c_str(), text->size() + 1);
     return text->size();
 }
-std::optional<std::size_t> CchCanonicalNativePath(const char *psz, std::span<char> out) {
-    return CchCopyNativePath(SzCanonicalNativePath(psz), out);
+std::optional<std::size_t> CchCanonicalNativePath(std::string_view szPath, std::span<char> out) {
+    return CchCopyNativePath(SzCanonicalNativePath(szPath), out);
 }
 std::optional<std::size_t> CchNativeCwd(std::span<char> out) {
     return CchCopyNativePath(SzNativeCwd(), out);

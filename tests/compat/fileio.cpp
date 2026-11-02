@@ -42,7 +42,10 @@ int main(void) {
         const std::string &szCanonical = *szCanonicalOwned, &szCwd = *szCwdOwned;
         std::vector<char> exact(szCanonical.size()+1, '#'), shortPath(szCanonical.size(), '#');
         std::vector<char> cwd(szCwd.size()+1, '#'), shortCwd(szCwd.size(), '#');
+        const std::string szPathWithSuffix = std::string{path} + "/ignored-suffix";
+        const std::string_view szPathView{szPathWithSuffix.data(), std::strlen(path)};
         CHECK(CchCanonicalNativePath(path, std::span{exact})==szCanonical.size() && !strcmp(exact.data(),szCanonical.c_str()));
+        CHECK(SzCanonicalNativePath(szPathView)==szCanonical && CchCanonicalNativePath(szPathView, std::span{exact})==szCanonical.size() && !strcmp(exact.data(),szCanonical.c_str()));
         errno=0;CHECK(!CchCanonicalNativePath(path, std::span{shortPath}) && errno==ERANGE && std::ranges::all_of(shortPath,[](char ch){return ch=='#';}));
         errno=0;CHECK(!CchCanonicalNativePath(path, std::span{exact}.first(0)) && errno==ERANGE && !strcmp(exact.data(),szCanonical.c_str()));
         CHECK(CchCanonicalNativePath(exact.data(), std::span{exact})==szCanonical.size() && !strcmp(exact.data(),szCanonical.c_str()));

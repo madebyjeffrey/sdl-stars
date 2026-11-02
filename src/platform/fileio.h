@@ -128,10 +128,10 @@ int ICreateNativeDirectory(const char *psz, unsigned md);
 int FEnsureNativeDirectory(const char *psz);
 int IRemoveNativePath(const char *psz, int fDirectory);
 int IRenameNativePath(const char *pszOld, const char *pszNew, int fReplace, int fSync);
-std::optional<std::string> SzCanonicalNativePath(const char *psz);
+std::optional<std::string> SzCanonicalNativePath(std::string_view szPath);
 std::optional<std::string> SzNativeCwd();
 // Counts exclude the NUL; insufficient spans retain their bytes and set ERANGE.
-std::optional<std::size_t> CchCanonicalNativePath(const char *psz, std::span<char> szOut);
+std::optional<std::size_t> CchCanonicalNativePath(std::string_view szPath, std::span<char> szOut);
 std::optional<std::size_t> CchNativeCwd(std::span<char> szOut);
 int IChangeNativeCwd(const char *psz);
 NATIVEDIR *PdirNativeOpen(const char *psz);
