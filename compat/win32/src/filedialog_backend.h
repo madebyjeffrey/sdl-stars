@@ -4,7 +4,7 @@
 /* Native paths are filesystem bytes (UTF-8 on ordinary Linux/macOS installs).
    Labels and paths use UTF-8; backends convert losslessly to native APIs. */
 inline constexpr int cCompatFileFiltersMax = 64;
-struct COMPATFILEFILTER { char *pszName, *pszPattern; };
+struct COMPATFILEFILTER { const char *pszName, *pszPattern; };
 int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFolder,
                      LPCSTR pszName, const COMPATFILEFILTER *rgfilter, int cFilter,
                      int *lpiFilter, char *pszPath, std::size_t cbPath);

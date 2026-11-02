@@ -36,7 +36,7 @@ with tempfile.TemporaryDirectory(prefix='stars-file-workflow-compat-') as direct
                STARS_TEST_MANAGED_ORDERS=str(managed_orders),
                STARS_TEST_MANAGED_TURN=str(managed / 'Renamed copy.m1'),
                STARS_TEST_EXPORT_FAILURE_TARGET=str(root / 'missing-directory' / 'cannot-write.x1'),
-               STARS_TEST_EXPORT_CHOICE=str(export_choice), STARS_FILE_DIALOG_BACKEND='compat',
+               STARS_TEST_EXPORT_CHOICE=str(export_choice), STARS_FILE_DIALOG_BACKEND='native',
                SDL_VIDEODRIVER='dummy', SDL_AUDIODRIVER='dummy', STARS_SDL_RENDERER='software')
     env.pop("STARS_LIBRARY_DIR", None)
     subprocess.run([str(Path(args.client).resolve())], cwd=root, env=env, check=True, timeout=75)

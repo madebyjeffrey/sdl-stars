@@ -7,6 +7,8 @@
 #include "../../src/core/player_choice_io.h"
 #include "../../src/ui/desktop_choice_io.h"
 #include "../../compat/win32/src/choice_io.h"
+#include "../../compat/win32/src/chooser_io.h"
+#include "../../compat/win32/include/file_selection.h"
 
 #include "internal.h"
 #include <stars_compat.h>
@@ -15,10 +17,23 @@
 #include <string.h>
 
 static BOOL fPassed, fRunning;
+static BOOL fTypedChooserCancel;
 static UINT_PTR idTimer;
 static int cAlerts, cReplaceChoices;
 #define CHECK(f) do { if (!(f)) { fprintf(stderr, "file workflow line %d: %s\n", __LINE__, #f); goto done; } } while (0)
 static int cFileChoices;
+
+static int IChooseTypedWorkflowFile(HWND, BOOL fSave, LPCSTR, LPCSTR, LPCSTR, const COMPATFILEFILTER *, int cFilter,
+                                    int *lpiFilter, char *pszPath, std::size_t cbPath) {
+    const char *pszFile = PszCompatEnvironment("STARS_TEST_GAME_PATH");
+    int cch;
+    if (fTypedChooserCancel) return 0;
+    if (fSave || !pszFile || cFilter != 1 || !lpiFilter || !pszPath || cbPath == 0) return -1;
+    cch = CchCopyUtf8(std::span{pszPath, cbPath}, pszFile);
+    if (cch < 0) return -1;
+    *lpiFilter = 0;
+    return 1;
+}
 
 static const char *PszWorkflowFilename(const char *pszFile) {
     const char *pch = pszFile + strlen(pszFile);
@@ -139,6 +154,34 @@ static void  FileWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
     }
     fRunning = 1;
     CHECK(pszRace && pszRaceRepeat && win32::IsWindow(app.lpui->hwndTitle));
+    {
+        COMPATCHOOSERIO io_typedChooser;
+        win32::files::FILESELECTIONREQUEST request;
+        win32::files::FILESELECTIONRESULT result;
+        char szCwdBefore[512], szCwdAfter[512], szGameCanonical[512];
+        const char *pszGame = PszCompatEnvironment("STARS_TEST_GAME_PATH");
+
+        io_typedChooser.pfnICompatChooseFile = IChooseTypedWorkflowFile;
+        COMPATCHOOSERIOSCOPE typedChooserScope(io_typedChooser);
+        CHECK(pszGame && CchNativeCwd(std::span{szCwdBefore}));
+        request.mode = win32::files::FILESELECTIONMODE::open;
+        request.szInitialPath = pszGame;
+        request.rgFilters.push_back({"Game files", "*.m1"});
+        request.cbPathMax = 512;
+        request.fMustExist = true;
+        request.fChangeCurrentDirectory = false;
+        result = win32::files::SelectFile(app.lpui->hwndTitle, request);
+        CHECK(std::holds_alternative<win32::files::FILESELECTIONSELECTED>(result));
+        const auto &selected = std::get<win32::files::FILESELECTIONSELECTED>(result);
+        CHECK(CchCanonicalNativePath(pszGame, std::span{szGameCanonical}));
+        CHECK(selected.szPath == szGameCanonical && selected.iFilter == 0 && !selected.fExtensionDifferent &&
+              CchNativeCwd(std::span{szCwdAfter}) && strcmp(szCwdBefore, szCwdAfter) == 0);
+        fTypedChooserCancel = 1;
+        result = win32::files::SelectFile(app.lpui->hwndTitle, request);
+        fTypedChooserCancel = 0;
+        CHECK(std::holds_alternative<win32::files::FILESELECTIONCANCELLED>(result));
+        puts("Typed file selection returns an owned path and distinct cancellation without changing CWD");
+    }
     memcpy(szBaseSav, app.state.szBase, sizeof(szBaseSav));
     memcpy(szWorkSav, app.state.szWork, sizeof(szWorkSav));
     fStartupSav = app.state.ini.fStartupFile;
