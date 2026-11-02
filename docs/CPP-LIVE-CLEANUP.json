@@ -23759,6 +23759,33 @@
       "remaining_wsprintfA_calls": "296 in scanned owned C++ application sources.",
       "platform": "Windows/Linux qualification remains pending for current develop.",
       "diff_check": "git diff --check passes."
+    },
+    {
+      "batch": "L05ax typed formatting for short UI numbers",
+      "parent": "ad3a9770",
+      "source_commit": "bd85db17",
+      "macos_debug_build": "Full macos-sdl-debug build compiles popup.cpp, mineui.cpp, buildui.cpp, shipui.cpp and reportui.cpp successfully.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "focused_tests": "win32_runtime, win32_controls and available tutorial smoke pass (3/3).",
+      "tutorial": "Available SDL tutorial smoke checkpoint passes; full 80-page tutorial remains unfinished.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "baseline": "Unchanged; no game behavior, saved data, layouts, catalogs or canonical models changed.",
+      "format_evidence": "Replaced eight short numeric and percentage display calls in popup, mine, build, ship and report UI. Output is bounded by game-domain values and fits destination buffers.",
+      "remaining_wsprintfA_calls": "288 in scanned owned C++ application sources.",
+      "platform": "Windows/Linux qualification remains pending for current develop.",
+      "diff_check": "git diff --check passes."
     }
   ],
   "generators": [
@@ -23777,12 +23804,12 @@
   ],
   "restart_checkpoint": {
     "date": "2026-11-02",
-    "reason": "Active C-style/C11 cleanup continuation checkpoint after an integer-label formatting batch.",
+    "reason": "Active C-style/C11 cleanup continuation checkpoint after a short numeric UI formatting batch.",
     "branch": "develop",
-    "batch": "L05aw typed formatting for report and hull labels",
-    "batch_parent": "aad20b77",
-    "latest_batch": "L05aw typed formatting for report and hull labels",
-    "latest_batch_head": "d0db2171",
+    "batch": "L05ax typed formatting for short UI numbers",
+    "batch_parent": "ad3a9770",
+    "latest_batch": "L05ax typed formatting for short UI numbers",
+    "latest_batch_head": "bd85db17",
     "completed_stages": [
       "L01: nullptr and aliases",
       "L02: explicit C++ casts and headers",
@@ -23828,7 +23855,8 @@
       "Commit 6689858b replaces eight short numeric-label wsprintfA calls in scan.cpp and tb.cpp with CchSprintf. The build, unit suites, focused runtime/controls/tutorial tests and both full regressions pass. Continue remaining wrapper calls, retaining wsprintfA where its 1024-byte cap or UTF-8-safe truncation is observable.",
       "Commit 90d8d95a replaces six short integer-format wsprintfA calls in ship2ui.cpp and utilgenui.cpp with CchSprintf. Catalog formats were checked in text/strings.txt. Build, units, focused tests, tutorial smoke and both full regressions pass. Continue the remaining safe wrapper callers and L05 text/service work.",
       "Commit 7bbe1ea3 replaces nine short integer-format wsprintfA calls across raceui.cpp, scan.cpp and ship2ui.cpp with CchSprintf. Debug build, 18 desktop units, 29 host units, focused compatibility/tutorial checks and both full regressions pass; each regression has 519 matches, 25 existing warnings and zero differences/errors/skips. The scanned owned C++ source count is 304 wsprintfA calls.",
-      "Commit d0db2171 replaces eight short integer-format wsprintfA calls in reportui.cpp and researchui.cpp with CchSprintf. Full Debug build, 18 desktop units, 29 host units, focused controls/runtime/tutorial checks and both full regressions pass; each regression has 519 matches, 25 existing warnings and zero differences/errors/skips. Scanned owned C++ source now has 296 wsprintfA calls."
+      "Commit d0db2171 replaces eight short integer-format wsprintfA calls in reportui.cpp and researchui.cpp with CchSprintf. Full Debug build, 18 desktop units, 29 host units, focused controls/runtime/tutorial checks and both full regressions pass; each regression has 519 matches, 25 existing warnings and zero differences/errors/skips. Scanned owned C++ source now has 296 wsprintfA calls.",
+      "Commit bd85db17 replaces eight short numeric wsprintfA calls across popup, ship, build, mine and report UI with CchSprintf. Full Debug build, 18 desktop units, 29 host units, focused controls/runtime/tutorial checks and both full regressions pass; each regression has 519 matches, 25 existing warnings and zero differences/errors/skips. Scanned owned C++ source now has 288 wsprintfA calls."
     ],
     "evidence": [
       "docs/CPP-LIVE-TEXT-COPIES.json: game_file_inputs.verification",
@@ -23843,15 +23871,18 @@
       "qualified_source_head": "b76ec1fcc1276790150457670f5f667bcec4eccc",
       "result": "success"
     },
-    "published_batch_head": "d0db2171"
+    "published_batch_head": "bd85db17"
   },
   "current_checkpoint": {
-    "batch": "L05aw typed formatting for report and hull labels",
-    "status": "implemented and locally verified; source commit d0db2171",
-    "parent": "aad20b77",
+    "batch": "L05ax typed formatting for short UI numbers",
+    "status": "implemented and locally verified; source commit bd85db17",
+    "parent": "ad3a9770",
     "changes": {
-      "src/ui/reportui.cpp": "Replace four short numeric label calls with CchSprintf.",
-      "src/ui/researchui.cpp": "Replace four short integer-only hull detail calls with CchSprintf."
+      "src/ui/popup.cpp": "Replace three short integer formatting calls with CchSprintf.",
+      "src/ui/shipui.cpp": "Replace the short unsigned quantity label formatting with CchSprintf.",
+      "src/ui/buildui.cpp": "Replace two bounded slot-count labels with CchSprintf.",
+      "src/ui/mineui.cpp": "Replace short percentage formatting with CchSprintf.",
+      "src/ui/reportui.cpp": "Replace one short fleet-count formatting call with CchSprintf."
     },
     "verification": {
       "macos_debug_build": "Full macos-sdl-debug build succeeds.",
@@ -23861,7 +23892,7 @@
       "native_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
       "host_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
       "baseline": "Unchanged.",
-      "remaining_wsprintfA_calls": "296 in scanned owned C++ application sources.",
+      "remaining_wsprintfA_calls": "288 in scanned owned C++ application sources.",
       "platform": "Windows/Linux qualification remains pending for current develop.",
       "diff_check": "git diff --check passes."
     },
@@ -23870,8 +23901,8 @@
       "L06 remaining buffer/length interfaces and chooser Milestone D qualification, including Windows/Linux chooser coverage.",
       "L08 retained preprocessor/platform/API-like macro audit, maintained inventory reconciliation and final platform qualification."
     ],
-    "source_commit": "d0db2171",
-    "published_batch_head": "d0db2171"
+    "source_commit": "bd85db17",
+    "published_batch_head": "bd85db17"
   },
   "milestone_d_checkpoint": {
     "stage": "D05 caller migrations implemented; D06 platform qualification pending",
