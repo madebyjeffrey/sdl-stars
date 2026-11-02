@@ -353,7 +353,7 @@ INT_PTR  VCRDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             while (FTrackBtn(app, &btnt)) {
                 if ((iDir == -1 && iCur > 0) || (iDir == 1 && iCur < 4)) {
                     iCur += iDir;
-                    bt = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsPlaybackSpeedD).data(), iCur + 1);
+                    bt = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsPlaybackSpeedD).data(), iCur + 1);
                     win32::TextOutA(hdc, app.lpui->ptSpeedVCR.x, app.lpui->ptSpeedVCR.y, app.state.szWork, bt);
                 }
             }
@@ -619,10 +619,10 @@ void DrawVCR(APPSESSION &app, HDC hdc, std::int16_t iStart, std::int16_t iEnd) {
         x = app.lpui->dxyVCRBoard + 14;
         y = 8;
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-        c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsPhaseDDRoundDD).data(), app.lpui->viStepVCRCur + 2, app.lpui->vcStepVCR + 2, app.lpui->viRound + 1, app.lpui->vcRound + 1);
+        c = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsPhaseDDRoundDD).data(), app.lpui->viStepVCRCur + 2, app.lpui->vcStepVCR + 2, app.lpui->viRound + 1, app.lpui->vcRound + 1);
         win32::TextOutA(hdc, x, y, app.state.szWork, c);
         y += app.state.dyArial8 + 4;
-        c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsPlaybackSpeedD).data(), app.lpui->viSpeedVCR + 1);
+        c = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsPlaybackSpeedD).data(), app.lpui->viSpeedVCR + 1);
         dx = LOWORD(GetTextExtent(hdc, app.state.szWork, c));
         win32::TextOutA(hdc, x, y, app.state.szWork, c);
         app.lpui->ptSpeedVCR.x = x;
@@ -649,7 +649,7 @@ void DrawVCR(APPSESSION &app, HDC hdc, std::int16_t iStart, std::int16_t iEnd) {
             }
             csh = app.state.vrgtok[BevFromLp(app, app.lpui->vlpbrVCR).itok()].csh;
             if (csh > 1) {
-                c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsSD).data(), lpshdef->hul.szClass, csh);
+                c = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsSD).data(), lpshdef->hul.szClass, csh);
             } else {
                 CchCopyUtf8Prefix(std::span{app.state.szWork}, lpshdef->hul.szClass);
                 c = std::strlen(app.state.szWork);
@@ -661,7 +661,7 @@ void DrawVCR(APPSESSION &app, HDC hdc, std::int16_t iStart, std::int16_t iEnd) {
             if (BevFromLp(app, app.lpui->vlpbrVCR).ctok() > 0) {
                 szPlayerName = TextIO().pfnPlayerName(app, app.state.vrgtok[BevFromLp(app, app.lpui->vlpbrVCR).itokAttack()].iplr, 0, 1, 1, 0, nullptr);
                 psz = szPlayerName.data();
-                c = win32::wsprintfA(szT, TextIO().pfnCompressed(app, idsAttacksS).data(), psz);
+                c = CchSprintf(szT, TextIO().pfnCompressed(app, idsAttacksS).data(), psz);
                 win32::TextOutA(hdc, x, y, szT, c);
                 y += app.state.dyArial8;
                 if (BevFromLp(app, app.lpui->vlpbrVCR).rgkill(0).dv().dp() != 0) {
@@ -674,7 +674,7 @@ void DrawVCR(APPSESSION &app, HDC hdc, std::int16_t iStart, std::int16_t iEnd) {
                 }
                 csh = app.state.vrgtok[BevFromLp(app, app.lpui->vlpbrVCR).itokAttack()].csh;
                 if (csh > 1) {
-                    c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsSD).data(), lpshdef->hul.szClass, csh);
+                    c = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsSD).data(), lpshdef->hul.szClass, csh);
                 } else {
                     CchCopyUtf8Prefix(std::span{app.state.szWork}, lpshdef->hul.szClass);
                     c = std::strlen(app.state.szWork);
@@ -699,17 +699,17 @@ void DrawVCR(APPSESSION &app, HDC hdc, std::int16_t iStart, std::int16_t iEnd) {
                         dpShields += dpShT;
                     }
                 }
-                c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDDDoing).data(), brcT & 0xf, brcT >> 4);
+                c = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsDDDoing).data(), brcT & 0xf, brcT >> 4);
                 win32::TextOutA(hdc, x, y, app.state.szWork, c);
                 y += app.state.dyArial8;
                 if (dpShields != 0) {
                     TextIO().pfnCchGetString(app, idsAnd, std::span{szT});
-                    c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsLdDamageShieldsS).data(), dpShields, dpArmor > 0 ? szT : j > 0 ? "," : ".");
+                    c = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsLdDamageShieldsS).data(), dpShields, dpArmor > 0 ? szT : j > 0 ? "," : ".");
                     win32::TextOutA(hdc, x, y, app.state.szWork, c);
                     y += app.state.dyArial8;
                 }
                 if (dpArmor != 0) {
-                    c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsLdDamageArmorC).data(), dpArmor, j <= 0 ? 46 : 44);
+                    c = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsLdDamageArmorC).data(), dpArmor, j <= 0 ? 46 : 44);
                     win32::TextOutA(hdc, x, y, app.state.szWork, c);
                     y += app.state.dyArial8;
                 }
@@ -720,7 +720,7 @@ void DrawVCR(APPSESSION &app, HDC hdc, std::int16_t iStart, std::int16_t iEnd) {
                     y += app.state.dyArial8;
                 }
                 if (j > 0) {
-                    c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDestroyingDShip).data(), j);
+                    c = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsDestroyingDShip).data(), j);
                     if (j == 1) {
                         CchCopyUtf8Prefix(std::span{app.state.szWork}.subspan(static_cast<std::size_t>(c)), ".");
                         c++;
@@ -742,7 +742,7 @@ void DrawVCR(APPSESSION &app, HDC hdc, std::int16_t iStart, std::int16_t iEnd) {
         }
         if (app.lpui->vbrcVCRFocus != 0xff) {
             y = 200;
-            c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsSelectionDD).data(), app.lpui->vbrcVCRFocus & 0xf, app.lpui->vbrcVCRFocus >> 4);
+            c = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsSelectionDD).data(), app.lpui->vbrcVCRFocus & 0xf, app.lpui->vbrcVCRFocus >> 4);
             win32::TextOutA(hdc, x, y, app.state.szWork, c);
             y += app.state.dyArial8;
             if (app.lpui->viVCRFocus >= 0) {
@@ -762,7 +762,7 @@ void DrawVCR(APPSESSION &app, HDC hdc, std::int16_t iStart, std::int16_t iEnd) {
                 cshNew = cshT;
                 cshT = csh - cshT;
                 if (csh > 1 || cshT != 0) {
-                    c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsSD).data(), lpshdef->hul.szClass, csh);
+                    c = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsSD).data(), lpshdef->hul.szClass, csh);
                 } else {
                     CchCopyUtf8Prefix(std::span{app.state.szWork}, lpshdef->hul.szClass);
                     c = std::strlen(app.state.szWork);
@@ -781,12 +781,12 @@ void DrawVCR(APPSESSION &app, HDC hdc, std::int16_t iStart, std::int16_t iEnd) {
                     } else {
                         i = app.state.vrgtok[app.lpui->viVCRFocus].spd + 1;
                     }
-                    c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsInitiativeD).data(), app.state.vrgtok[app.lpui->viVCRFocus].initMin >= 0xff ? 0 : app.state.vrgtok[app.lpui->viVCRFocus].initMin);
+                    c = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsInitiativeD).data(), app.state.vrgtok[app.lpui->viVCRFocus].initMin >= 0xff ? 0 : app.state.vrgtok[app.lpui->viVCRFocus].initMin);
                     win32::TextOutA(hdc, x, y, app.state.szWork, c);
-                    c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsMovementS).data(), &app.lpui->rgszSpeed[i * 3]);
+                    c = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsMovementS).data(), &app.lpui->rgszSpeed[i * 3]);
                     win32::TextOutA(hdc, xT, y, app.state.szWork, c);
                     y += app.state.dyArial8;
-                    c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsArmorLd).data(), dpT);
+                    c = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsArmorLd).data(), dpT);
                     win32::TextOutA(hdc, x, y, app.state.szWork, c);
                     if (dv.dp == 0) {
                         c = TextIO().pfnCchGetString(app, idsDamageNone, std::span{app.state.szWork});
@@ -802,9 +802,9 @@ void DrawVCR(APPSESSION &app, HDC hdc, std::int16_t iStart, std::int16_t iEnd) {
                         }
                         win32::SetTextColor(hdc, 127);
                         if (app.state.vrgtok[app.lpui->viVCRFocus].grobj == grobjPlanet) {
-                            c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDamageD).data(), LOWORD(dpT));
+                            c = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsDamageD).data(), LOWORD(dpT));
                         } else {
-                            c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDamageLdD).data(), csh, LOWORD(dpT));
+                            c = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsDamageLdD).data(), csh, LOWORD(dpT));
                         }
                     }
                     win32::TextOutA(hdc, xT, y, app.state.szWork, c);
@@ -813,12 +813,12 @@ void DrawVCR(APPSESSION &app, HDC hdc, std::int16_t iStart, std::int16_t iEnd) {
                     if (static_cast<std::uint32_t>((static_cast<std::uint32_t>(app.state.vrgtok[app.lpui->viVCRFocus].dpShield) * cshNew)) - dpShields <= 0) {
                         c = TextIO().pfnCchGetString(app, idsShieldsNone, std::span{app.state.szWork});
                     } else {
-                        c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsShieldsLd).data(), static_cast<std::uint32_t>((static_cast<std::uint32_t>(app.state.vrgtok[app.lpui->viVCRFocus].dpShield) * cshNew)) - dpShields);
+                        c = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsShieldsLd).data(), static_cast<std::uint32_t>((static_cast<std::uint32_t>(app.state.vrgtok[app.lpui->viVCRFocus].dpShield) * cshNew)) - dpShields);
                     }
                     win32::TextOutA(hdc, x, y, app.state.szWork, c);
                     y += app.state.dyArial8;
                     if (app.state.vrgtok[app.lpui->viVCRFocus].pctJam != 0) {
-                        c = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsJammingD).data(), app.state.vrgtok[app.lpui->viVCRFocus].pctJam);
+                        c = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsJammingD).data(), app.state.vrgtok[app.lpui->viVCRFocus].pctJam);
                         win32::TextOutA(hdc, x, y, app.state.szWork, c);
                         y += app.state.dyArial8;
                     }
@@ -830,10 +830,10 @@ void DrawVCR(APPSESSION &app, HDC hdc, std::int16_t iStart, std::int16_t iEnd) {
                         }
                         if (i == idsDisengage) {
                             TextIO().pfnCchGetString(app, idsTacticSDMoves, std::span{szT});
-                            c = win32::wsprintfA(app.state.szWork, szT, TextIO().pfnCompressed(app, static_cast<StringId>(i)).data(), app.state.vrgtok[app.lpui->viVCRFocus].dzDis);
+                            c = CchSprintf(app.state.szWork, szT, TextIO().pfnCompressed(app, static_cast<StringId>(i)).data(), app.state.vrgtok[app.lpui->viVCRFocus].dzDis);
                         } else {
                             TextIO().pfnCchGetString(app, idsTacticS, std::span{szT});
-                            c = win32::wsprintfA(app.state.szWork, szT, TextIO().pfnCompressed(app, static_cast<StringId>(i)).data());
+                            c = CchSprintf(app.state.szWork, szT, TextIO().pfnCompressed(app, static_cast<StringId>(i)).data());
                         }
                         win32::TextOutA(hdc, x, y, app.state.szWork, c);
                         y += app.state.dyArial8;
@@ -841,12 +841,12 @@ void DrawVCR(APPSESSION &app, HDC hdc, std::int16_t iStart, std::int16_t iEnd) {
                     if (i != idsDisengage2) {
                         TextIO().pfnCchGetString(app, idsPrimayTargetS, std::span{szT});
                         i = idsNoneDisengage + app.state.vrgtok[app.lpui->viVCRFocus].mdTarget1;
-                        c = win32::wsprintfA(app.state.szWork, szT, TextIO().pfnCompressed(app, static_cast<StringId>(i)).data());
+                        c = CchSprintf(app.state.szWork, szT, TextIO().pfnCompressed(app, static_cast<StringId>(i)).data());
                         win32::TextOutA(hdc, x, y, app.state.szWork, c);
                         y += app.state.dyArial8;
                         TextIO().pfnCchGetString(app, idsSecondaryTargetS, std::span{szT});
                         i = idsNoneDisengage + app.state.vrgtok[app.lpui->viVCRFocus].mdTarget2;
-                        c = win32::wsprintfA(app.state.szWork, szT, TextIO().pfnCompressed(app, static_cast<StringId>(i)).data());
+                        c = CchSprintf(app.state.szWork, szT, TextIO().pfnCompressed(app, static_cast<StringId>(i)).data());
                         win32::TextOutA(hdc, x, y, app.state.szWork, c);
                         y += app.state.dyArial8;
                     }
