@@ -5,6 +5,7 @@
 #include "alert_io.h"
 #include "liststorage.h"
 #include <algorithm>
+#include <limits>
 
 
 NATIVEGAMEHEAPS::NATIVEGAMEHEAPS(APPSESSION &app) noexcept : app(app), rglphb(app.state.rglphb) {}
@@ -36,7 +37,7 @@ std::uint16_t CbHeapItem(APPSESSION &app, std::uint16_t cb, HeapType ht) {
     std::uint32_t cbAlign = CbHeapAlign(ht);
     std::uint32_t cbItem = (static_cast<std::uint32_t>(cb) + 2 + cbAlign - 1) / cbAlign * cbAlign;
 
-    if (cbItem > static_cast<std::uint32_t>(UINT16_MAX - CbHbHeader(ht))) {
+    if (cbItem > static_cast<std::uint32_t>(std::numeric_limits<std::uint16_t>::max() - CbHbHeader(ht))) {
         AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsMemory, {}).data(), win32::MB_ICONHAND);
         StarsThrowError(starsErrorMemory, idsMemory);
     }

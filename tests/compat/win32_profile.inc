@@ -105,7 +105,7 @@ int main(void) {
     CHECK(GetPrivateProfileStringA("misc", "blank", "default", sz, sizeof(sz), szPath) == 0 && !*sz);
     CHECK(GetPrivateProfileStringA("missing", "key", "default   ", sz, sizeof(sz), szPath) == 7 && !strcmp(sz, "default"));
     CHECK(GetPrivateProfileStringA("misc", "missing", NULL, sz, sizeof(sz), szPath) == 0 && !*sz);
-    CHECK(GetPrivateProfileIntA("misc", "number", 9, szPath) == UINT32_MAX);
+    CHECK(GetPrivateProfileIntA("misc", "number", 9, szPath) == std::numeric_limits<std::uint32_t>::max());
     CHECK(GetPrivateProfileIntA("misc", "logging", 9, szPath) == 1);
     CHECK(GetPrivateProfileIntA("misc", "hex", 9, szPath) == 42);
     CHECK(GetPrivateProfileIntA("misc", "decimal", 9, szPath) == 10);
@@ -113,7 +113,7 @@ int main(void) {
     CHECK(GetPrivateProfileIntA("misc", "invalid", 9, szPath) == 0);
     CHECK(GetPrivateProfileIntA("misc", "large", 9, szPath) == 0);
     CHECK(GetPrivateProfileIntA("misc", "blank", 9, szPath) == 9);
-    CHECK(GetPrivateProfileIntA("missing", "key", -1, szPath) == UINT32_MAX);
+    CHECK(GetPrivateProfileIntA("missing", "key", -1, szPath) == std::numeric_limits<std::uint32_t>::max());
     CHECK(GetPrivateProfileStringA("misc", "quoted", "", sz, 5, szPath) == 4 && !strcmp(sz, "  sp"));
     sz[0] = 'X'; CHECK(GetPrivateProfileStringA("misc", "quoted", "", sz, 0, szPath) == 0 && sz[0] == 'X');
     CHECK(GetPrivateProfileStringA("misc", "quoted", "", sz, 1, szPath) == 0 && sz[0] == 0);

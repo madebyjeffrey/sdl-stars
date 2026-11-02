@@ -1,6 +1,5 @@
 /* Shared SDK/local tests: translation and boolean operations use exact pixels. */
 #include <windows.h>
-#include <limits.h>
 #include <stdio.h>
 #include <string.h>
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
@@ -137,9 +136,9 @@ int main(void) {
     CHECK(GetPixel(hdc, 0, 0) == crDest && GetPixel(hdc, 1, 0) == crPen);
     CHECK(GetPixel(hdc, 0, 1) == crPen && GetPixel(hdc, 1, 1) == crDest);
 #ifndef _WIN32
-    CHECK(SetWindowOrgEx(hdc, INT_MIN, INT_MAX, NULL));
-    CHECK(SetPixel(hdc, INT_MIN, INT_MAX, crPen) == crPen);
-    CHECK(SetPixel(hdc, INT_MAX, INT_MIN, crPen) == CLR_INVALID);
+    CHECK(SetWindowOrgEx(hdc, std::numeric_limits<int>::min(), std::numeric_limits<int>::max(), NULL));
+    CHECK(SetPixel(hdc, std::numeric_limits<int>::min(), std::numeric_limits<int>::max(), crPen) == crPen);
+    CHECK(SetPixel(hdc, std::numeric_limits<int>::max(), std::numeric_limits<int>::min(), crPen) == CLR_INVALID);
 #endif
     CHECK(SelectObject(hdc, hpenOld) == hpen && SelectObject(hdc, hbrushOld) == hmono);
     CHECK(DeleteObject(hpen) && DeleteObject(hbrush) && DeleteObject(hpattern) && DeleteObject(hmono));

@@ -1,6 +1,5 @@
 /* Scroll positions/ranges are checked against the Windows SDK too. */
 #include <windows.h>
-#include <limits.h>
 #include <stdio.h>
 #ifndef _WIN32
 #include <stars_compat.h>
@@ -58,7 +57,7 @@ static int TestAxis(HWND hwnd, int sb) {
     CHECK(SetScrollRange(hwnd, sb, 0, 100000, 0));
     CHECK(SetScrollPos(hwnd, sb, 65537, 0) == 0 && GetScrollPos(hwnd, sb) == 65537);
 #ifndef _WIN32
-    CHECK(!SetScrollRange(hwnd, sb, INT_MIN, INT_MAX, 0));
+    CHECK(!SetScrollRange(hwnd, sb, std::numeric_limits<int>::min(), std::numeric_limits<int>::max(), 0));
     CHECK(GetScrollRange(hwnd, sb, &iMin, &iMax) && iMin == 0 && iMax == 100000);
     CHECK(GetScrollPos(hwnd, sb) == 65537);
 #endif

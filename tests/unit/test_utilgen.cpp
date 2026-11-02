@@ -96,7 +96,7 @@ static void test_CParseNumbers_contract(void) {
         {"12x", 4, -1, {}}, {"12 x", 1, 1, {12}}, {"x", 0, 0, {}},
         {"1\t2", 4, -1, {}}, {"-1", 4, -1, {}}, {"+1", 4, -1, {}},
         {"0 000 7", 4, 3, {0, 0, 7}}, {"1\n", 4, -1, {}},
-        {"2147483647 2147483648", 4, 2, {2147483647, INT32_MIN}}
+        {"2147483647 2147483648", 4, 2, {2147483647, std::numeric_limits<std::int32_t>::min()}}
     };
     for (const auto &cs : rgCases) {
         std::string sz(cs.psz);

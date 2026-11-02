@@ -1,4 +1,5 @@
 /* Narrow strings and arithmetic for UI callers; core native.c stays authoritative. */
+#include <limits>
 #include <windows.h>
 #include "encoding.h"
 #include "fileio.h"
@@ -8,7 +9,6 @@
 #include <algorithm>
 #include <cctype>
 #include <cerrno>
-#include <climits>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -35,7 +35,7 @@ int win32::MulDiv(int nNumber, int nNumerator, int nDenominator) {
     lResult = (lProduct + lDenominator / 2) / lDenominator;
     if (fNegative) lResult = -lResult;
     // The SDK rejects an INT_MIN result as overflow as well as larger magnitudes.
-    return lResult <= INT32_MIN || lResult > INT32_MAX ? -1 : static_cast<int>(lResult);
+    return lResult <= std::numeric_limits<std::int32_t>::min() || lResult > std::numeric_limits<std::int32_t>::max() ? -1 : static_cast<int>(lResult);
 }
 
 DWORD win32::GetCurrentThreadId(void) {

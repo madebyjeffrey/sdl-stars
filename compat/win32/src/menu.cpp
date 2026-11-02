@@ -1,7 +1,7 @@
 #include "display_io.h"
 #include "cleanup.h"
 #include "ownership.h"
-#include <climits>
+#include <limits>
 #include <new>
 #include <utility>
 #include <cstdlib>
@@ -76,7 +76,7 @@ HMENU win32::GetSubMenu(HMENU hmenu, int i) {
 }
 UINT win32::GetMenuItemID(HMENU hmenu, int i) {
     HMENU lp = LpMenu(hmenu);
-    return lp && i >= 0 && i < lp->citem && !lp->rgitem[i].hsub ? static_cast<UINT>(lp->rgitem[i].id) : UINT_MAX;
+    return lp && i >= 0 && i < lp->citem && !lp->rgitem[i].hsub ? static_cast<UINT>(lp->rgitem[i].id) : std::numeric_limits<unsigned int>::max();
 }
 BOOL win32::InsertMenuA(HMENU hmenu, UINT pos, UINT flags, UINT_PTR id, LPCSTR psz) {
     HMENU lp = LpMenu(hmenu), hsub = nullptr, hp;
@@ -85,7 +85,7 @@ BOOL win32::InsertMenuA(HMENU hmenu, UINT pos, UINT flags, UINT_PTR id, LPCSTR p
     int i, j, cDepth = 0;
     if (!lp || (flags & ~(win32::MF_BYPOSITION | win32::MF_POPUP | win32::MF_SEPARATOR | win32::MF_CHECKED | win32::MF_GRAYED | win32::MF_DISABLED)))
         return 0;
-    if (pos == UINT_MAX) i = lp->citem;
+    if (pos == std::numeric_limits<unsigned int>::max()) i = lp->citem;
     else if (flags & win32::MF_BYPOSITION) i = pos > static_cast<UINT>(lp->citem) ? lp->citem : static_cast<int>(pos);
     else if (!LpItem(lp, pos, 0, &lp, &i)) return 0;
     if (flags & win32::MF_SEPARATOR) flags = win32::MF_SEPARATOR | win32::MF_DISABLED | win32::MF_GRAYED;
@@ -101,7 +101,7 @@ BOOL win32::InsertMenuA(HMENU hmenu, UINT pos, UINT flags, UINT_PTR id, LPCSTR p
         item.psz.reset(SDL_strdup(psz ? psz : ""));
         if (!item.psz) return 0;
     }
-    if (lp->citem == INT_MAX || static_cast<std::size_t>(lp->citem) + 1 > SIZE_MAX / sizeof(COMPATMENUITEM)) return 0;
+    if (lp->citem == std::numeric_limits<int>::max() || static_cast<std::size_t>(lp->citem) + 1 > std::numeric_limits<std::size_t>::max() / sizeof(COMPATMENUITEM)) return 0;
     rg.reset(new (std::nothrow) COMPATMENUITEM[static_cast<std::size_t>(lp->citem) + 1]{});
     if (!rg) return 0;
     item.id = id; item.flags = flags & ~win32::MF_BYPOSITION; item.hsub = hsub;
@@ -113,7 +113,7 @@ BOOL win32::InsertMenuA(HMENU hmenu, UINT pos, UINT flags, UINT_PTR id, LPCSTR p
     return 1;
 }
 BOOL win32::AppendMenuA(HMENU hmenu, UINT flags, UINT_PTR id, LPCSTR psz) {
-    return win32::InsertMenuA(hmenu, UINT_MAX, flags | win32::MF_BYPOSITION, id, psz);
+    return win32::InsertMenuA(hmenu, std::numeric_limits<unsigned int>::max(), flags | win32::MF_BYPOSITION, id, psz);
 }
 BOOL win32::DestroyMenu(HMENU hmenu) {
     HMENU lp = LpMenu(hmenu);
@@ -151,7 +151,7 @@ DWORD win32::CheckMenuItem(HMENU hmenu, UINT id, UINT flags) {
     int i;
     DWORD old;
     lpitem = LpItem(hmenu, id, flags, &lp, &i);
-    if (!lpitem) return UINT_MAX;
+    if (!lpitem) return std::numeric_limits<unsigned int>::max();
     old = lpitem->flags & win32::MF_CHECKED;
     lpitem->flags = (lpitem->flags & ~win32::MF_CHECKED) | (flags & win32::MF_CHECKED);
     return old;
@@ -172,7 +172,7 @@ UINT win32::GetMenuState(HMENU hmenu, UINT id, UINT flags) {
     COMPATMENUITEM *lpitem;
     int i;
     lpitem = LpItem(hmenu, id, flags, &lp, &i);
-    if (!lpitem) return UINT_MAX;
+    if (!lpitem) return std::numeric_limits<unsigned int>::max();
     return lpitem->flags | (lpitem->hsub ? static_cast<UINT>((win32::GetMenuItemCount(lpitem->hsub) & 0xff)) << 8 : 0);
 }
 int win32::GetMenuStringA(HMENU hmenu, UINT id, LPSTR psz, int cch, UINT flags) {
@@ -183,7 +183,7 @@ int win32::GetMenuStringA(HMENU hmenu, UINT id, LPSTR psz, int cch, UINT flags) 
     lpitem = LpItem(hmenu, id, flags, &lp, &i);
     if (!lpitem || !lpitem->psz) { if (psz && cch > 0) psz[0] = 0; return 0; }
     c = std::strlen(lpitem->psz.get());
-    if (!psz || cch <= 0) return static_cast<int>((((c) < (static_cast<std::size_t>(INT_MAX))) ? (c) : (static_cast<std::size_t>(INT_MAX))));
+    if (!psz || cch <= 0) return static_cast<int>((((c) < (static_cast<std::size_t>(std::numeric_limits<int>::max()))) ? (c) : (static_cast<std::size_t>(std::numeric_limits<int>::max()))));
     c = CchUtf8Prefix(lpitem->psz.get(), static_cast<std::size_t>(cch) - 1);
     std::memcpy(psz, lpitem->psz.get(), c); psz[c] = 0;
     return static_cast<int>(c);
@@ -480,7 +480,7 @@ static BOOL OpenPopup(COMPATTRACK *lpt, HMENU hmenu, int x, int y, int iParent) 
         xWide = (((static_cast<std::int64_t>(bounds.x)) > ((((xWide) < (static_cast<std::int64_t>(bounds.x) + StarsMax(0, bounds.w - cx))) ? (xWide) : (static_cast<std::int64_t>(bounds.x) + StarsMax(0, bounds.w - cx))))) ? (static_cast<std::int64_t>(bounds.x)) : ((((xWide) < (static_cast<std::int64_t>(bounds.x) + StarsMax(0, bounds.w - cx))) ? (xWide) : (static_cast<std::int64_t>(bounds.x) + StarsMax(0, bounds.w - cx)))));
         yWide = (((static_cast<std::int64_t>(bounds.y)) > ((((yWide) < (static_cast<std::int64_t>(bounds.y) + StarsMax(0, bounds.h - cy))) ? (yWide) : (static_cast<std::int64_t>(bounds.y) + StarsMax(0, bounds.h - cy))))) ? (static_cast<std::int64_t>(bounds.y)) : ((((yWide) < (static_cast<std::int64_t>(bounds.y) + StarsMax(0, bounds.h - cy))) ? (yWide) : (static_cast<std::int64_t>(bounds.y) + StarsMax(0, bounds.h - cy)))));
     }
-    if (xWide < INT_MIN || xWide > INT_MAX || yWide < INT_MIN || yWide > INT_MAX) {
+    if (xWide < std::numeric_limits<int>::min() || xWide > std::numeric_limits<int>::max() || yWide < std::numeric_limits<int>::min() || yWide > std::numeric_limits<int>::max()) {
         lppop->rgrc.reset(); return 0;
     }
     x = static_cast<int>(xWide); y = static_cast<int>(yWide);

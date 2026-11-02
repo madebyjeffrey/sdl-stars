@@ -3,7 +3,6 @@
 #endif
 /* Desktop geometry and coordinate mapping shared with the Windows SDK. */
 #include <windows.h>
-#include <limits.h>
 #include <stdio.h>
 #include <string.h>
 #ifndef _WIN32
@@ -41,7 +40,7 @@ int main(void) {
     HWND hwnd, hwndA, hwndB;
     RECT rc, rcVirt;
     POINT rgpt[3] = {{1, 2}, {-3, 4}, {5, -6}}, rgOld[3], ptA = {0, 0}, ptB = {0, 0};
-    UINT cLines = UINT_MAX;
+    UINT cLines = std::numeric_limits<unsigned int>::max();
     DWORD dwProcess = 0;
     int result, dx, dy, i;
 #ifndef _WIN32
@@ -62,7 +61,7 @@ int main(void) {
     CHECK(rc.left >= rcVirt.left && rc.top >= rcVirt.top && rc.right <= rcVirt.right && rc.bottom <= rcVirt.bottom);
     CHECK(rc.right > rc.left && rc.bottom > rc.top);
     CHECK(SystemParametersInfoA(SPI_GETWHEELSCROLLLINES, 0, &cLines, 0));
-    CHECK(cLines <= INT_MAX || cLines == WHEEL_PAGESCROLL);
+    CHECK(cLines <= std::numeric_limits<int>::max() || cLines == WHEEL_PAGESCROLL);
     CHECK(GetSystemMetrics(SM_CXFRAME) > 0 && GetSystemMetrics(SM_CYCAPTION) > 0);
     CHECK(GetSystemMetrics(-1) == 0);
     wc.lpfnWndProc = WndProc; wc.lpszClassName = "CompatDesktop";
@@ -96,7 +95,7 @@ int main(void) {
 #ifndef _WIN32
     {
         SDL_Rect bounds;
-        POINT rgOverflow[2] = {{0, 0}, {INT_MAX, INT_MAX}}, rgBefore[2];
+        POINT rgOverflow[2] = {{0, 0}, {std::numeric_limits<int>::max(), std::numeric_limits<int>::max()}}, rgBefore[2];
         CHECK(SDL_GetDisplayBounds(SDL_GetPrimaryDisplay(), &bounds));
         CHECK(GetSystemMetrics(SM_CXSCREEN) == bounds.w && GetSystemMetrics(SM_CYSCREEN) == bounds.h);
         CHECK(GetSystemMetrics(SM_CXFRAME) == 8 && GetSystemMetrics(SM_CYCAPTION) == 23);

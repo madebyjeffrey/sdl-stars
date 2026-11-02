@@ -2,15 +2,15 @@
 #include "internal.h"
 #include "render_io.h"
 #include "resourcecodec.h"
-#include <climits>
 #include <cstring>
+#include <limits>
 
 static BOOL FCompatDibInfo(const BITMAPINFOHEADER &bi, const BYTE *rgb, std::size_t cbInfo,
                            const void *lpBits, std::size_t cbBits, COMPATDIB *lpdib) {
     std::size_t i;
 
     if (bi.biPlanes != 1 || bi.biCompression != win32::BI_RGB || bi.biWidth <= 0 ||
-        bi.biHeight == 0 || bi.biHeight == INT_MIN ||
+        bi.biHeight == 0 || bi.biHeight == std::numeric_limits<int>::min() ||
         (bi.biBitCount != 1 && bi.biBitCount != 4 && bi.biBitCount != 8 &&
          bi.biBitCount != 24 && bi.biBitCount != 32))
         return SDL_SetError("Unsupported DIB dimensions, compression or pixel format");

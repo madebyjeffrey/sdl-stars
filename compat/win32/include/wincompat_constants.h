@@ -4,7 +4,7 @@
 #include "wincompat_types.h"
 #include "wincompat_values.h"
 #include <cerrno>
-#include <climits>
+#include <limits>
 
 // Some POSIX headers reserve this spelling for a different flag.
 #ifdef FSHIFT
@@ -309,7 +309,7 @@ inline constexpr auto VOS_NT_WINDOWS32 = std::int32_t{0x00040004};
 inline constexpr auto VS_FFI_FILEFLAGSMASK = std::int32_t{0x0000003F};
 inline constexpr auto VS_VERSION_INFO = 1;
 inline constexpr auto WHEEL_DELTA = 120;
-inline constexpr auto WHEEL_PAGESCROLL = (UINT_MAX);
+inline constexpr auto WHEEL_PAGESCROLL = (std::numeric_limits<unsigned int>::max());
 inline constexpr auto WHITENESS = static_cast<DWORD>(0x00FF0062);
 inline constexpr auto WHITE_BRUSH = 0;
 inline constexpr auto WHITE_PEN = 6;

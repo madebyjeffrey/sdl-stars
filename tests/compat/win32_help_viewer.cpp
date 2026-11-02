@@ -1,4 +1,5 @@
 /* Manual check of the packaged guide through the real desktop URL launcher. */
+#include <limits>
 #include <windows.h>
 #include <SDL3/SDL.h>
 #include <errno.h>
@@ -19,7 +20,7 @@ int main(int argc, char **argv) {
     } else if (argc == 2 && argv[1][0] >= '0' && argv[1][0] <= '9') {
         errno = 0;
         ullContext = strtoull(argv[1], &pszEnd, 10);
-        if (errno || *pszEnd || ullContext > UINT32_MAX) return 2;
+        if (errno || *pszEnd || ullContext > std::numeric_limits<std::uint32_t>::max()) return 2;
         idh = (ULONG_PTR)ullContext;
     } else if (argc != 1) {
         fprintf(stderr, "Usage: %s [--contents|context-id]\n", argv[0]);

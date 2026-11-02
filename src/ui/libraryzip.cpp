@@ -3,6 +3,7 @@
 #include "libraryzip.h"
 #include "encoding.h"
 #include <SDL3/SDL.h>
+#include <limits>
 #include <zlib.h>
 
 struct ZIPFILES { char **rgpsz; int c, cMax; const char *pszRoot; std::int16_t fBad; };
@@ -151,8 +152,8 @@ static std::int16_t FWriteZipEntry(NATIVEFILE *pfZip, const char *pszRoot, ZIPEN
         SDL_free(rgbData);
     });
     if (CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", pszRoot, szDirSep, pze->pszName) <= 0 ||
-        !(cb = FNativeFileSize(szPath)) || (*cb) < 0 || (*cb) > UINT32_MAX || cbName > UINT16_MAX ||
-        static_cast<std::uint64_t>(LNativePosition(pfZip)) > UINT32_MAX) return 0;
+        !(cb = FNativeFileSize(szPath)) || (*cb) < 0 || (*cb) > std::numeric_limits<std::uint32_t>::max() || cbName > std::numeric_limits<std::uint16_t>::max() ||
+        static_cast<std::uint64_t>(LNativePosition(pfZip)) > std::numeric_limits<std::uint32_t>::max()) return 0;
     pf = PfOpenNativeFile(szPath, NATIVEFILEMODE::read);
     if (!pf) return 0;
     rgbData = static_cast<std::uint8_t *>(SDL_malloc(*cb != 0 ? static_cast<std::size_t>(*cb) : 1));
@@ -190,7 +191,7 @@ std::int16_t FZipLibraryDirectory(APPSESSION &app, const char *pszDirectory, con
         SDL_free(zf.rgpsz); SDL_free(rgzentry);
     });
     zf.pszRoot = pszDirectory;
-    if (!FNativeEnumerateDirectory(app, pszDirectory, FCollectZipFiles, &zf) || zf.fBad || zf.c > UINT16_MAX) goto done;
+    if (!FNativeEnumerateDirectory(app, pszDirectory, FCollectZipFiles, &zf) || zf.fBad || zf.c > std::numeric_limits<std::uint16_t>::max()) goto done;
     for (i = 0; i < 1000; i++) {
         cchTemp = CchSnprintf(std::span{szTemp, sizeof(szTemp)}, "%s.tmp.%u", pszArchive, idZipTemp++);
         if (cchTemp <= 0 || static_cast<std::size_t>(cchTemp) >= sizeof(szTemp)) goto done;

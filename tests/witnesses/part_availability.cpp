@@ -5,6 +5,7 @@ static constexpr int cQueryTraceCapacity = 8;
 #include "uistate.h"
 #endif
 #include "callbackcontext.h"
+#include <limits>
 
 int main(int argc, char **argv) {
 #ifdef STARS_UI_SDL
@@ -17,7 +18,7 @@ int main(int argc, char **argv) {
     const unsigned rgcRows[] = {iengineCount, iscannerCount,   ishieldCount, iarmorCount,    ibeamCount,     itorpCount,  ibombCount,         iminingCount,
                                 iminesCount,  ispecialSBCount, isbhullCount, ispecialECount, ispecialMCount, iterraCount, ihuldefOrbitalFort, iplanetaryCount};
     PARTQUERYFIXTURE fixture;
-    assert(argc == 3 && CHAR_MIN == -128 && sizeof(app.state.rgplr[0].rgTech) == 6);
+    assert(argc == 3 && std::numeric_limits<char>::min() == -128 && sizeof(app.state.rgplr[0].rgTech) == 6);
     FILE *file = fopen(argv[2], argv[1][0] == 'e' ? "wb" : "rb");
     assert(file);
     if (argv[1][0] == 'e') {

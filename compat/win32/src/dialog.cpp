@@ -1,5 +1,6 @@
 /* Resource-backed dialogs share the existing window, control and message paths. */
 #include "cleanup.h"
+#include <limits>
 #include <stars_compat.h>
 #include <cstring>
 
@@ -148,7 +149,7 @@ static HWND HwndCreateDialog(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGPRO
     for (i = 0; i < dlg.cItems; i++) {
         lpitem = &dlg.rgItems[i]; pszClass = PszDialogClass(lpitem);
         pszTitle = lpitem->pszTitle ? lpitem->pszTitle : win32::MAKEINTRESOURCE(lpitem->idTitle);
-        if (!pszClass || lpitem->cbCreate || reinterpret_cast<UINT_PTR>(pszTitle) <= UINT16_MAX) goto fail;
+        if (!pszClass || lpitem->cbCreate || reinterpret_cast<UINT_PTR>(pszTitle) <= std::numeric_limits<std::uint16_t>::max()) goto fail;
         rc = RECT{lpitem->x, lpitem->y, lpitem->cx, lpitem->cy};
         win32::MapDialogRect(hwnd, &rc);
         hwndChild = win32::CreateWindowExA(lpitem->dwExStyle, pszClass, pszTitle, lpitem->dwStyle,

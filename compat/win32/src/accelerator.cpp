@@ -1,8 +1,8 @@
 /* Accelerator handles own copied entries; module-loaded tables are cached. */
 #include "internal.h"
-#include <climits>
 #include <cstdlib>
 #include <cstring>
+#include <limits>
 
 struct win32::HACCEL__ {
     BOOL fAlive;
@@ -21,7 +21,7 @@ static HACCEL LpAccel(HACCEL haccel) {
 }
 HACCEL win32::CreateAcceleratorTableA(LPACCEL rgaccel, int c) {
     HACCEL lp;
-    if (!SDL_IsMainThread() || !rgaccel || c <= 0 || static_cast<std::size_t>(c) > SIZE_MAX / sizeof(ACCEL)) return nullptr;
+    if (!SDL_IsMainThread() || !rgaccel || c <= 0 || static_cast<std::size_t>(c) > std::numeric_limits<std::size_t>::max() / sizeof(ACCEL)) return nullptr;
     lp = static_cast<HACCEL>((std::calloc(1, sizeof(*lp))));
     NATIVEOWNER<win32::HACCEL__, std::free> lpOwner(lp);
     if (!lp) return nullptr;
@@ -58,7 +58,7 @@ HACCEL win32::LoadAcceleratorsA(HINSTANCE hInstance, LPCSTR pszName) {
     HACCEL lp;
     int i, c;
     WORD flags;
-    if (!rgb || cb == 0 || cb % 8 || cb / 8 > INT_MAX) return nullptr;
+    if (!rgb || cb == 0 || cb % 8 || cb / 8 > std::numeric_limits<int>::max()) return nullptr;
     for (lp = haccels; lp; lp = lp->hnext) if (lp->hrsrc == hrsrc) return lp;
     c = static_cast<int>((cb / 8));
     rg = static_cast<ACCEL *>((std::calloc(static_cast<std::size_t>(c), sizeof(*rg))));

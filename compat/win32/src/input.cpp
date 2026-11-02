@@ -5,6 +5,7 @@
 #include "internal.h"
 #include <algorithm>
 #include "input_io.h"
+#include <limits>
 #include <stars_compat.h>
 #include <cmath>
 #include <cstdlib>
@@ -62,8 +63,8 @@ static void InputModifiers(SDL_Keymod mod) {
 }
 
 static BOOL FInputPoint(float fx, float fy, int *lpx, int *lpy) {
-    if (!std::isfinite(fx) || !std::isfinite(fy) || static_cast<double>(fx) < INT32_MIN || static_cast<double>(fx) > INT32_MAX ||
-        static_cast<double>(fy) < INT32_MIN || static_cast<double>(fy) > INT32_MAX) return 0;
+    if (!std::isfinite(fx) || !std::isfinite(fy) || static_cast<double>(fx) < std::numeric_limits<std::int32_t>::min() || static_cast<double>(fx) > std::numeric_limits<std::int32_t>::max() ||
+        static_cast<double>(fy) < std::numeric_limits<std::int32_t>::min() || static_cast<double>(fy) > std::numeric_limits<std::int32_t>::max()) return 0;
     *lpx = static_cast<int>(fx); *lpy = static_cast<int>(fy);
     return 1;
 }
@@ -126,8 +127,8 @@ BOOL win32::GetCursorPos(LPPOINT lppt) {
     if (!pszDriver || (std::strcmp(pszDriver, "x11") != 0 && std::strcmp(pszDriver, "cocoa") != 0 &&
                        std::strcmp(pszDriver, "windows") != 0)) { win32::SetLastError(win32::ERROR_NOT_SUPPORTED); return 0; }
     CompatInputIO().pfnGetGlobalMouseState(&x, &y);
-    if (!std::isfinite(x) || !std::isfinite(y) || static_cast<double>(x) < INT32_MIN || static_cast<double>(x) > INT32_MAX ||
-        static_cast<double>(y) < INT32_MIN || static_cast<double>(y) > INT32_MAX) return 0;
+    if (!std::isfinite(x) || !std::isfinite(y) || static_cast<double>(x) < std::numeric_limits<std::int32_t>::min() || static_cast<double>(x) > std::numeric_limits<std::int32_t>::max() ||
+        static_cast<double>(y) < std::numeric_limits<std::int32_t>::min() || static_cast<double>(y) > std::numeric_limits<std::int32_t>::max()) return 0;
     lppt->x = static_cast<LONG>(x); lppt->y = static_cast<LONG>(y);
     return 1;
 }
@@ -309,13 +310,13 @@ static WPARAM WMouseModifiers(WPARAM buttons) {
 
 static void PostCompatWheel(HWND hwnd, UINT msg, float dWheel, double *lpdRem, WPARAM buttons) {
     int d, delta;
-    if (!std::isfinite(dWheel) || std::fabs(static_cast<double>(dWheel)) > INT32_MAX / static_cast<double>(win32::WHEEL_DELTA)) return;
+    if (!std::isfinite(dWheel) || std::fabs(static_cast<double>(dWheel)) > std::numeric_limits<std::int32_t>::max() / static_cast<double>(win32::WHEEL_DELTA)) return;
     *lpdRem += static_cast<double>(dWheel) * win32::WHEEL_DELTA;
-    if (*lpdRem < INT32_MIN || *lpdRem > INT32_MAX) { *lpdRem = 0; return; }
+    if (*lpdRem < std::numeric_limits<std::int32_t>::min() || *lpdRem > std::numeric_limits<std::int32_t>::max()) { *lpdRem = 0; return; }
     d = static_cast<int>(*lpdRem);
     *lpdRem -= d;
     while (d != 0) {
-        delta = (((INT16_MIN) > (StarsMin(INT16_MAX, d))) ? (INT16_MIN) : (StarsMin(INT16_MAX, d)));
+        delta = (((std::numeric_limits<std::int16_t>::min()) > (StarsMin(std::numeric_limits<std::int16_t>::max(), d))) ? (std::numeric_limits<std::int16_t>::min()) : (StarsMin(std::numeric_limits<std::int16_t>::max(), d)));
         CompatPostInput(hwnd, msg, win32::MAKEWPARAM(WMouseModifiers(buttons), static_cast<WORD>(delta)),
                         win32::MAKELPARAM(ptCursor.x, ptCursor.y));
         d -= delta;

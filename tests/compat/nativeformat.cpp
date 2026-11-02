@@ -1,6 +1,5 @@
 #include "nativeformat.h"
 #include <cerrno>
-#include <climits>
 #include <cstdio>
 #include <cstring>
 #include <limits>
@@ -27,9 +26,9 @@ template<class... ARGS> bool FCompare(const char *pszFormat, ARGS... args) {
 
 bool FTests() {
     CHECK(FCompare("literal UTF-8 \xc3\xa9 %% end"));
-    CHECK(FCompare("%d|%+08i|%#o|%#08x|%X|%u", INT_MIN, -31, 077u, 0xfaceu, 0xdefu, UINT_MAX));
+    CHECK(FCompare("%d|%+08i|%#o|%#08x|%X|%u", std::numeric_limits<int>::min(), -31, 077u, 0xfaceu, 0xdefu, std::numeric_limits<unsigned int>::max()));
     CHECK(FCompare("%hhd|%hhu|%hd|%hu", -129, 257u, -32769, 65537u));
-    CHECK(FCompare("%ld|%lu|%lld|%llu", LONG_MIN, ULONG_MAX, LLONG_MIN, ULLONG_MAX));
+    CHECK(FCompare("%ld|%lu|%lld|%llu", std::numeric_limits<long>::min(), std::numeric_limits<unsigned long>::max(), LLONG_MIN, ULLONG_MAX));
     CHECK(FCompare("%jd|%ju|%zd|%zu|%td|%tu", std::intmax_t{-123}, std::uintmax_t{123},
                    std::make_signed_t<std::size_t>{-7}, std::size_t{17}, std::ptrdiff_t{-9}, std::make_unsigned_t<std::ptrdiff_t>{19}));
     CHECK(FCompare("[%*.*s][%*d][%.*d]", -13, 4, "payload", 12, 17, -1, -5));

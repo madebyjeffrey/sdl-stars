@@ -4,6 +4,7 @@
 #include "uistate.h"
 #endif
 #include "callbackcontext.h"
+#include <limits>
 static int16_t DriverWarp(APPSESSION &app, PLANET *p, int16_t *two) {
     assert(p == &planet);
     int at = warpCalls < 2 ? warpCalls : 1;
@@ -15,7 +16,7 @@ static int16_t DriverWarp(APPSESSION &app, PLANET *p, int16_t *two) {
 static void eligible(APPSESSION &app) {
     fInCheck = cQueries = cGateLookups = mdCheckResult = 0;
     app.state.rgplr[0].rgAttr[rsMajorAdv] = raMassAccel;
-    app.state.rgplr[0].grbitTrader = static_cast<GrbitTrader>(UINT16_MAX);
+    app.state.rgplr[0].grbitTrader = static_cast<GrbitTrader>(std::numeric_limits<std::uint16_t>::max());
     for (int i = 0; i < 6; i++)
         app.state.rgplr[0].rgTech[i] = 26;
 }

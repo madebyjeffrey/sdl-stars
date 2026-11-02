@@ -1,7 +1,7 @@
 /* Scroll state and child controls; standard nonclient bars use separate layout. */
 #include "internal.h"
 #include "cleanup.h"
-#include <climits>
+#include <limits>
 
 static HWND LpScrollWindow(HWND hwnd, int sb) {
     HWND lpwin = LpCompatWindow(hwnd);
@@ -133,7 +133,7 @@ static int ISetScrollPos(HWND hwnd, COMPATSCROLL *lpscr, int iPos, BOOL fRedraw)
 
 static BOOL FSetScrollRange(HWND hwnd, COMPATSCROLL *lpscr, int iMin, int iMax, BOOL fRedraw) {
     if (iMin > iMax) iMin = iMax = 0;
-    if (static_cast<std::int64_t>(iMax) - iMin > INT32_MAX) { win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return 0; }
+    if (static_cast<std::int64_t>(iMax) - iMin > std::numeric_limits<std::int32_t>::max()) { win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return 0; }
     lpscr->iMin = iMin; lpscr->iMax = iMax;
     lpscr->cPage = static_cast<UINT>((((static_cast<std::uint64_t>(lpscr->cPage)) < (static_cast<std::uint64_t>((static_cast<std::int64_t>(iMax) - iMin + 1)))) ? (static_cast<std::uint64_t>(lpscr->cPage)) : (static_cast<std::uint64_t>((static_cast<std::int64_t>(iMax) - iMin + 1)))));
     lpscr->fDisable = IScrollMax(lpscr) == iMin;
@@ -182,7 +182,7 @@ BOOL win32::SetScrollRange(HWND hwnd, int sb, int iMin, int iMax, BOOL fRedraw) 
     HWND lpwin = LpScrollWindow(hwnd, sb);
     DWORD dwStyle;
     if (!lpwin) return 0;
-    if (iMin <= iMax && static_cast<std::int64_t>(iMax) - iMin > INT32_MAX) {
+    if (iMin <= iMax && static_cast<std::int64_t>(iMax) - iMin > std::numeric_limits<std::int32_t>::max()) {
         win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return 0;
     }
     if (sb == win32::SB_CTL) {
@@ -385,7 +385,7 @@ LRESULT  CompatScrollProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         lpwin->fTracking = lpwin->fPressed = 1;
         lpwin->sbScrollTrack = sb; lpwin->iScrollTrack = lpscr->iPos;
         lpwin->lScrollPoint = l;
-        if (sb != win32::SB_THUMBTRACK) lpwin->idScrollTimer = win32::SetTimer(hwnd, UINTPTR_MAX, 400, nullptr);
+        if (sb != win32::SB_THUMBTRACK) lpwin->idScrollTimer = win32::SetTimer(hwnd, std::numeric_limits<std::uintptr_t>::max(), 400, nullptr);
         lpwin->dScrollGrab = (g.fVert ? static_cast<std::int16_t>(HIWORD(l)) : static_cast<std::int16_t>(LOWORD(l))) - g.iThumb;
         win32::InvalidateRect(hwnd, nullptr, 0);
         NotifyScroll(hwnd, sb, lpscr->iPos);

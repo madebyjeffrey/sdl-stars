@@ -1,5 +1,6 @@
 #include "win.h"
 #include <algorithm>
+#include <limits>
 #include "appstate.h"
 #include "callbackcontext.h"
 #include "uistate.h"
@@ -24,7 +25,7 @@ static std::int16_t AddNewGameLibraryRace(APPSESSION &, void *lpData, const char
     char *pchLabel = szLabel;
     UINT grf;
 
-    if (pnrm->cRace >= INT16_MAX - 1000) return 0;
+    if (pnrm->cRace >= std::numeric_limits<std::int16_t>::max() - 1000) return 0;
     // Menu mnemonics must not consume literal ampersands in library filenames.
     for (pch = pszName; *pch; pch++) {
         *pchLabel++ = *pch;
@@ -559,7 +560,7 @@ INT_PTR  NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         win32::AppendMenuA(hmenuPopup, iChecked, 0x3a9b, TextIO().pfnCompressed(app, idsPlayer).data());
         tpm = message == win32::WM_LBUTTONDOWN ? win32::TPM_LEFTBUTTON : win32::TPM_RIGHTBUTTON;
         ui::TrackPopupMenu(hmenuPopup, win32::TPM_CENTERALIGN | tpm, pt.x, pt.y, 0, hwnd, nullptr);
-        if (ui::PeekMessage(&msg, hwnd, 273, 273, 2) && msg.wParam >= 15000 && msg.wParam < 15000 + INT16_MAX) {
+        if (ui::PeekMessage(&msg, hwnd, 273, 273, 2) && msg.wParam >= 15000 && msg.wParam < 15000 + std::numeric_limits<std::int16_t>::max()) {
             app.lpui->iPopMenuSel = msg.wParam - 15000;
         }
         szLibraryRace[0] = 0;

@@ -2,6 +2,7 @@
 #include "filesession.h"
 #include "filesystem.h"
 #include <errno.h>
+#include <limits>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -199,7 +200,7 @@ int main(void) {
     }
     // Metadata scanning commits each field and leaves the first non-digit unread.
     pf=PfNativeTemporary();CHECK(pf && IPutNativeString(" \t-2147483648\n+9223372036854775807!",pf)==0 && ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin)==0);
-    CHECK(CNativeScan(pf,"%d\n%lld",&player,&played)==2 && player==INT32_MIN && played==INT64_MAX);
+    CHECK(CNativeScan(pf,"%d\n%lld",&player,&played)==2 && player==std::numeric_limits<std::int32_t>::min() && played==std::numeric_limits<std::int64_t>::max());
     CHECK(ChGetNativeFile(pf)=='!' && ICloseNativeFile(pf)==0);
     pf=PfNativeTemporary();CHECK(pf && IPutNativeString("7 2147483648;",pf)==0 && ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin)==0);
     version=123;player=456;
@@ -210,8 +211,8 @@ int main(void) {
     CHECK(CNativeScan(pf,"%d %d",&version,&player)==1 && player==456 && ChGetNativeFile(pf)=='!');
     CHECK(ICloseNativeFile(pf)==0);
     pf=PfNativeTemporary();CHECK(pf && IPutNativeString("-9223372036854775808 9223372036854775808?",pf)==0 && ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin)==0);
-    CHECK(CNativeScan(pf,"%lld",&played)==1 && played==INT64_MIN);
-    errno=0;CHECK(CNativeScan(pf,"%lld",&played)==0 && played==INT64_MIN && errno==ERANGE && ChGetNativeFile(pf)=='?');
+    CHECK(CNativeScan(pf,"%lld",&played)==1 && played==std::numeric_limits<std::int64_t>::min());
+    errno=0;CHECK(CNativeScan(pf,"%lld",&played)==0 && played==std::numeric_limits<std::int64_t>::min() && errno==ERANGE && ChGetNativeFile(pf)=='?');
     CHECK(ICloseNativeFile(pf)==0);
     pf=PfNativeTemporary();CHECK(pf && CNativeScan(pf,"%d",&version)==EOF && ICloseNativeFile(pf)==0);
     pf=PfNativeTemporary();CHECK(pf && IPutNativeString("7",pf)==0 && ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin)==0);

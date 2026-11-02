@@ -1,6 +1,7 @@
 /* The UI path uses Win32 APIs; SDL is only used for renderer observation and
  * native-event injection in the automated test.
  */
+#include <limits>
 #include <windows.h>
 static const RECT rcTest1 = {4, 4, 8, 8};
 static const RECT rcTest2 = {-10, -10, 10, 10};
@@ -14,7 +15,6 @@ static const RECT rcTest9 = {0, 0, 100, 100};
 static const RECT rcTest10 = {0, 0, 0, 0};
 #include <stars_compat.h>
 #include <SDL3/SDL.h>
-#include <limits.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -206,20 +206,20 @@ static int TestPaint(HWND *rghwnd, PAINTTEST *rgwin) {
     CHECK(win32::LineTo(hdc, 30, 20));
     CHECK(win32::GetPixel(hdc, 20, 20) == win32::RGB(220, 180, 40) && win32::GetPixel(hdc, 29, 20) == win32::RGB(220, 180, 40));
     CHECK(win32::GetPixel(hdc, 30, 20) == rgwin[0].color);
-    CHECK(win32::MoveToEx(hdc, INT_MIN, 180, &pt) && pt.x == 30 && pt.y == 20);
-    CHECK(win32::LineTo(hdc, INT_MAX, 180) && win32::GetPixel(hdc, 0, 180) == win32::RGB(220, 180, 40));
+    CHECK(win32::MoveToEx(hdc, std::numeric_limits<int>::min(), 180, &pt) && pt.x == 30 && pt.y == 20);
+    CHECK(win32::LineTo(hdc, std::numeric_limits<int>::max(), 180) && win32::GetPixel(hdc, 0, 180) == win32::RGB(220, 180, 40));
     CHECK(win32::Rectangle(hdc, 30, 30, 40, 40));
     CHECK(win32::GetPixel(hdc, 30, 30) == win32::RGB(220, 180, 40));
     CHECK(win32::GetPixel(hdc, 31, 31) == win32::RGB(12, 34, 56));
     CHECK(win32::GetPixel(hdc, 40, 40) == rgwin[0].color);
-    CHECK(win32::Rectangle(hdc, INT_MIN, INT_MIN, INT_MAX, INT_MAX));
-    CHECK(win32::MoveToEx(hdc, 0, 0, &pt) && pt.x == INT_MAX && pt.y == 180);
+    CHECK(win32::Rectangle(hdc, std::numeric_limits<int>::min(), std::numeric_limits<int>::min(), std::numeric_limits<int>::max(), std::numeric_limits<int>::max()));
+    CHECK(win32::MoveToEx(hdc, 0, 0, &pt) && pt.x == std::numeric_limits<int>::max() && pt.y == 180);
     CHECK(win32::SelectObject(hdc, hOld) == hpen && win32::SelectObject(hdc, hbrOld) == hbr);
     CHECK(win32::DeleteObject(hpen) && !win32::DeleteObject(hpen) && win32::DeleteObject(hbr));
     CHECK(!win32::SelectObject(hdc, hpen) && !win32::DeleteObject(win32::GetStockObject(win32::BLACK_PEN)));
     CHECK(win32::GetTextExtentPoint32A(hdc, "Hello", 5, &size) && size.cx > 0 && size.cy > 0);
     CHECK(win32::GetTextExtentPoint32A(hdc, NULL, 0, &size) && size.cx == 0);
-    CHECK(!win32::GetTextExtentPoint32A(hdc, "x", INT_MAX, &size));
+    CHECK(!win32::GetTextExtentPoint32A(hdc, "x", std::numeric_limits<int>::max(), &size));
     CHECK(win32::GetTextMetricsA(hdc, &tm) && tm.tmHeight > 0 && tm.tmAscent + tm.tmDescent == tm.tmHeight);
     CHECK(win32::SetTextColor(hdc, win32::RGB(255, 0, 0)) == win32::RGB(0, 0, 0));
     CHECK(win32::SetBkColor(hdc, win32::RGB(0, 0, 255)) == win32::RGB(255, 255, 255));
@@ -233,7 +233,7 @@ static int TestPaint(HWND *rghwnd, PAINTTEST *rgwin) {
     CHECK(win32::GetPixel(hdc, 70 + size.cx + 2, 50) == win32::RGB(12, 34, 56));
     CHECK(!win32::TextOutA(hdc, 140, 50, "\xff", 1));
     CHECK(win32::TextOutA(hdc, 140, 50, "\xc3\xbf", 2));
-    CHECK(win32::TextOutA(hdc, INT_MAX, INT_MAX, "!", 1));
+    CHECK(win32::TextOutA(hdc, std::numeric_limits<int>::max(), std::numeric_limits<int>::max(), "!", 1));
     cText = 0;
     for (y = 50; y < 50 + tm.tmHeight; y++)
         for (x = 50; x < 50 + size.cx; x++)

@@ -7,6 +7,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <limits>
 #include "common.h"
 #include "part_query_io.h"
 static SHDEF     ships[16], bases[10], otherShips[16], otherBases[10];
@@ -50,7 +51,7 @@ static int signed16(int64_t x) {
     return u < 32768 ? (int)u : (int)u - 65536;
 }
 static unsigned word16(int64_t x) { return (unsigned)((uint64_t)x & 65535); }
-static uint32_t word32(int64_t x) { return (uint32_t)((uint64_t)x & UINT32_MAX); }
+static uint32_t word32(int64_t x) { return (uint32_t)((uint64_t)x & std::numeric_limits<std::uint32_t>::max()); }
 static int      maximum(int a, int b) { return a > b ? a : b; }
 static unsigned upgrade(unsigned now, unsigned before) { return word16(maximum(now / 2, signed16((int)now - signed16(before) / 2))); }
 static unsigned credited(unsigned left, unsigned before, unsigned now, unsigned oldCount, unsigned newCount, int sameKind, int sameItem) {
@@ -126,7 +127,7 @@ static uint32_t oracle(APPSESSION &app, unsigned dimension, uint32_t prior, int 
     return one ? value : word32((int64_t)value * count);
 }
 static int compare(APPSESSION &app, int player, int one) {
-    uint32_t actual[4] = {UINT32_MAX, std::uint32_t{0x80000000}, 17, 29}, expected[4];
+    uint32_t actual[4] = {std::numeric_limits<std::uint32_t>::max(), std::uint32_t{0x80000000}, 17, 29}, expected[4];
     cursor = lookups = 0;
     lastHull = -1;
     for (unsigned d = 0; d < 4; d++)

@@ -5,7 +5,7 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include <fontconfig/fontconfig.h>
-#include <climits>
+#include <limits>
 #include <new>
 #include <utility>
 #include <cstdlib>
@@ -295,7 +295,7 @@ BOOL FCompatFontSizeUtf8(COMPATFONT *lpfont, LPCSTR psz, int cch, LPSIZE lpsize)
         lp = LpGlyphUtf8(lpfont, uch->ch); if (!lp) return 0;
         dx += lp->dx; i += static_cast<int>(uch->cch);
     }
-    if (dx > INT_MAX) return 0;
+    if (dx > std::numeric_limits<int>::max()) return 0;
     *lpsize = SIZE{static_cast<LONG>(dx), lpfont->tm.tmHeight};
     return 1;
 }

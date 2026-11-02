@@ -1,4 +1,5 @@
 #include "../../compat/win32/src/time_io.h"
+#include <limits>
 #include <windows.h>
 #include <SDL3/SDL.h>
 
@@ -10,7 +11,7 @@ int FTestTickCount(void) {
     if (win32::GetTickCount() != 0)
         return 0;
     dwTicks = std::uint64_t{0xffffffff};
-    if (win32::GetTickCount() != UINT32_MAX)
+    if (win32::GetTickCount() != std::numeric_limits<std::uint32_t>::max())
         return 0;
     dwTicks = std::uint64_t{0x100000000};
     if (win32::GetTickCount() != 0)

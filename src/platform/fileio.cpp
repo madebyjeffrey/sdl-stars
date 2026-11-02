@@ -7,7 +7,6 @@
 #include <array>
 #include <cerrno>
 #include <cctype>
-#include <climits>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -109,7 +108,7 @@ struct NATIVEFILE {
         if (cb > static_cast<std::size_t>(std::numeric_limits<std::streamsize>::max())) return Fail(EINVAL);
         if (fd >= 0) {
 #ifdef _WIN32
-            got = _read(fd, rgb.data(), static_cast<unsigned>((std::min)(cb, static_cast<std::size_t>(INT_MAX))));
+            got = _read(fd, rgb.data(), static_cast<unsigned>((std::min)(cb, static_cast<std::size_t>(std::numeric_limits<int>::max()))));
 #else
             got = read(fd, rgb.data(), cb);
 #endif
@@ -134,7 +133,7 @@ struct NATIVEFILE {
         if (cb > static_cast<std::size_t>(std::numeric_limits<std::streamsize>::max())) return Fail(EINVAL);
         if (fd >= 0) {
 #ifdef _WIN32
-            put = _write(fd, rgb.data(), static_cast<unsigned>((std::min)(cb, static_cast<std::size_t>(INT_MAX))));
+            put = _write(fd, rgb.data(), static_cast<unsigned>((std::min)(cb, static_cast<std::size_t>(std::numeric_limits<int>::max()))));
 #else
             put = write(fd, rgb.data(), cb);
 #endif
@@ -162,7 +161,7 @@ struct NATIVEFILE {
         } else {
             auto dir = origin == NATIVESEEKORIGIN::begin ? std::ios::beg : origin == NATIVESEEKORIGIN::current ? std::ios::cur : std::ios::end;
             if (origin == NATIVESEEKORIGIN::current) {
-                if ((off > 0 && ib > INT64_MAX - off) || (off < 0 && ib < INT64_MIN - off)) return Fail(EOVERFLOW);
+                if ((off > 0 && ib > std::numeric_limits<std::int64_t>::max() - off) || (off < 0 && ib < std::numeric_limits<std::int64_t>::min() - off)) return Fail(EOVERFLOW);
                 off += ib; dir = std::ios::beg;
             }
             stm.clear();
@@ -454,7 +453,7 @@ int CNativeScanFields(NATIVEFILE *pf, const char *fmt, std::span<const NATIVEINT
         token[n] = 0;
         char *end; errno = 0;
         long long value = std::strtoll(token, &end, 10);
-        if (end == token || *end || errno == ERANGE || (!wide && (value < INT_MIN || value > INT_MAX))) break;
+        if (end == token || *end || errno == ERANGE || (!wide && (value < std::numeric_limits<int>::min() || value > std::numeric_limits<int>::max()))) break;
         if (wide) *std::get<long long *>(rgFields[count]) = value;
         else *std::get<int *>(rgFields[count]) = static_cast<int>(value);
         ++count;
@@ -485,7 +484,7 @@ std::optional<NATIVEFILEINFO> IGetNativeFileInfo(const char *psz, NATIVELINKMODE
 #endif
         if (result.fRegular) {
             std::uintmax_t cb = fs::file_size(pth, ec);
-            if (ec || cb > INT64_MAX) { if (ec) SetError(ec); else errno = EOVERFLOW; return std::nullopt; }
+            if (ec || cb > std::numeric_limits<std::int64_t>::max()) { if (ec) SetError(ec); else errno = EOVERFLOW; return std::nullopt; }
             result.cb = static_cast<std::int64_t>(cb);
         }
         return result;
@@ -754,7 +753,7 @@ NATIVEFILEOPENRESULT HfNativeOpenLegacy(const char *psz, NATIVEFILEOPENOPTIONS n
     std::unique_ptr<NATIVEFILE> pf(PfNativeOpenFlags(psz, nfo));
     if (!pf) return {-1, errno == ENOENT};
     std::lock_guard<std::mutex> guard(Files().lock);
-    for (int i = 3; i <= INT16_MAX; ++i) if (!Files().rg[i]) { Files().rg[i].reset(pf.release()); return {static_cast<std::int16_t>(i), false}; }
+    for (int i = 3; i <= std::numeric_limits<std::int16_t>::max(); ++i) if (!Files().rg[i]) { Files().rg[i].reset(pf.release()); return {static_cast<std::int16_t>(i), false}; }
     errno = EMFILE; return {};
     });
 }
@@ -786,7 +785,7 @@ std::int32_t LNativeSeekLegacy(std::int16_t hf, std::int32_t ib, NATIVESEEKORIGI
     std::lock_guard<std::mutex> guard(Files().lock);
     std::int64_t pos = LSeekNativeFile(LegacyFile(hf), ib, origin == NATIVESEEKORIGIN::begin ? NATIVESEEKORIGIN::begin : origin == NATIVESEEKORIGIN::current ? NATIVESEEKORIGIN::current : NATIVESEEKORIGIN::end);
 #ifdef _WIN32
-    if (pos > INT32_MAX) return -1;
+    if (pos > std::numeric_limits<std::int32_t>::max()) return -1;
 #endif
     return static_cast<std::int32_t>(pos);
     });

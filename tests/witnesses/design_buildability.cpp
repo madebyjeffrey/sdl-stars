@@ -5,6 +5,7 @@ static constexpr int cQueryTraceCapacity = 128;
 #include "uistate.h"
 #endif
 #include "callbackcontext.h"
+#include <limits>
 
 static int     cLookups, rgRequests[17][6];
 static int16_t QueryLookup(APPSESSION &app, PART *ppart) {
@@ -48,7 +49,7 @@ int main(int argc, char **argv) {
     PARTQUERYIO      io = PartQueryIO();
     io.pfnLookup = QueryLookup;
     PARTQUERYIOSCOPE lookupScope(io);
-    assert(argc == 3 && CHAR_MIN == -128);
+    assert(argc == 3 && std::numeric_limits<char>::min() == -128);
     FILE *file = fopen(argv[2], argv[1][0] == 'e' ? "wb" : "rb");
     assert(file);
     if (argv[1][0] == 'e') {

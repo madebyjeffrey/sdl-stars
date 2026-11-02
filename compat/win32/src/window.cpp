@@ -7,6 +7,7 @@
 #include "input_io.h"
 #include "window_io.h"
 #include "cleanup.h"
+#include <limits>
 #include <stars_compat.h>
 #include <cstdlib>
 #include <new>
@@ -81,7 +82,7 @@ static BOOL FNativePosition(SDL_Window *lpWindow, int *lpx, int *lpy) {
         if (!(SDL_GetWindowFlags(lpWindow) & (SDL_WINDOW_POPUP_MENU | SDL_WINDOW_TOOLTIP))) break;
         lpWindow = SDL_GetWindowParent(lpWindow);
     } while (lpWindow);
-    if (xWide < INT32_MIN || xWide > INT32_MAX || yWide < INT32_MIN || yWide > INT32_MAX) return 0;
+    if (xWide < std::numeric_limits<std::int32_t>::min() || xWide > std::numeric_limits<std::int32_t>::max() || yWide < std::numeric_limits<std::int32_t>::min() || yWide > std::numeric_limits<std::int32_t>::max()) return 0;
     *lpx = static_cast<int>(xWide); *lpy = static_cast<int>(yWide);
     return 1;
 }
@@ -241,8 +242,8 @@ static COMPATCLASS *LpFindClass(LPCSTR pszClass, HINSTANCE hInstance) {
         return nullptr;
     for (lpclass = lpClasses; lpclass; lpclass = lpclass->lpNext)
         if (lpclass->wc.hInstance == hInstance &&
-            ((idClass <= UINT16_MAX && lpclass->atom == idClass) ||
-             (idClass > UINT16_MAX && SDL_strcasecmp(lpclass->pszClass.get(), pszClass) == 0)))
+            ((idClass <= std::numeric_limits<std::uint16_t>::max() && lpclass->atom == idClass) ||
+             (idClass > std::numeric_limits<std::uint16_t>::max() && SDL_strcasecmp(lpclass->pszClass.get(), pszClass) == 0)))
             return lpclass;
     return nullptr;
 }
@@ -251,9 +252,9 @@ ATOM win32::RegisterClassA(const WNDCLASSA *lpwc) {
     COMPATCLASS *lpclass;
 
     if (!SDL_IsMainThread() || fShutdown || !lpwc || !lpwc->lpfnWndProc ||
-        reinterpret_cast<UINT_PTR>(lpwc->lpszClassName) <= UINT16_MAX ||
+        reinterpret_cast<UINT_PTR>(lpwc->lpszClassName) <= std::numeric_limits<std::uint16_t>::max() ||
         !FUtf8Valid(lpwc->lpszClassName) ||
-        lpwc->cbWndExtra < 0 || lpwc->cbClsExtra < 0 || atomNext > UINT16_MAX)
+        lpwc->cbWndExtra < 0 || lpwc->cbClsExtra < 0 || atomNext > std::numeric_limits<std::uint16_t>::max())
         return 0;
     if (LpFindClass(lpwc->lpszClassName, lpwc->hInstance)) {
         SDL_SetError("Win32 class already registered");
@@ -264,11 +265,11 @@ ATOM win32::RegisterClassA(const WNDCLASSA *lpwc) {
         return 0;
     lpclass->wc = *lpwc;
     lpclass->pszClass.reset(SDL_strdup(lpwc->lpszClassName));
-    if (reinterpret_cast<UINT_PTR>(lpwc->lpszMenuName) > UINT16_MAX)
+    if (reinterpret_cast<UINT_PTR>(lpwc->lpszMenuName) > std::numeric_limits<std::uint16_t>::max())
         lpclass->pszMenu.reset(SDL_strdup(lpwc->lpszMenuName));
     if (lpwc->cbClsExtra != 0)
         lpclass->rgbExtra.reset(static_cast<BYTE *>(std::calloc(1, static_cast<std::size_t>(lpwc->cbClsExtra))));
-    if (!lpclass->pszClass || (reinterpret_cast<UINT_PTR>(lpwc->lpszMenuName) > UINT16_MAX && !lpclass->pszMenu) ||
+    if (!lpclass->pszClass || (reinterpret_cast<UINT_PTR>(lpwc->lpszMenuName) > std::numeric_limits<std::uint16_t>::max() && !lpclass->pszMenu) ||
         (lpwc->cbClsExtra != 0 && !lpclass->rgbExtra)) {
         delete lpclass;
         return 0;
@@ -400,7 +401,7 @@ HWND win32::CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
         SDL_SetError("Window text is invalid UTF-8");
         return nullptr;
     }
-    if (!SDL_IsMainThread() || fShutdown || idInspectNext == UINT64_MAX)
+    if (!SDL_IsMainThread() || fShutdown || idInspectNext == std::numeric_limits<std::uint64_t>::max())
         return nullptr;
     lpparent = LpCompatWindow(hwndParent);
     if ((hwndParent && (!lpparent || lpparent->fDestroying)) ||
@@ -456,7 +457,7 @@ HWND win32::CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
         return nullptr;
     }
     if (fChild) {
-        if (static_cast<std::int64_t>(x) + dx > INT32_MAX || static_cast<std::int64_t>(y) + dy > INT32_MAX) {
+        if (static_cast<std::int64_t>(x) + dx > std::numeric_limits<std::int32_t>::max() || static_cast<std::int64_t>(y) + dy > std::numeric_limits<std::int32_t>::max()) {
             SDL_free(lpwin->pszTitle);
             lpwin->rgbExtra.reset();
             delete lpwin;
@@ -473,7 +474,7 @@ HWND win32::CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
         if (dwExStyle & win32::WS_EX_TOPMOST) flags |= SDL_WINDOW_ALWAYS_ON_TOP;
         if ((dwExStyle & win32::WS_EX_NOACTIVATE) || (dwStyle & win32::WS_DISABLED)) flags |= SDL_WINDOW_NOT_FOCUSABLE;
         if (fDialogSequence && lpSequenceWindow.get() && lpwin->hwndOwner == hwndSequenceOwner &&
-            reinterpret_cast<UINT_PTR>(pszClass) > UINT16_MAX && !std::strcmp(pszClass, "#32770") &&
+            reinterpret_cast<UINT_PTR>(pszClass) > std::numeric_limits<std::uint16_t>::max() && !std::strcmp(pszClass, "#32770") &&
             SDL_GetWindowSize(lpSequenceWindow.get(), &cxReuse, &cyReuse) && cxReuse == dx && cyReuse == dy &&
             (SDL_GetWindowFlags(lpSequenceWindow.get()) & (SDL_WINDOW_BORDERLESS | SDL_WINDOW_RESIZABLE |
              SDL_WINDOW_ALWAYS_ON_TOP | SDL_WINDOW_NOT_FOCUSABLE)) ==
@@ -488,12 +489,12 @@ HWND win32::CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
             lpwin->fDeferPresent = fReuse = 1;
         } else {
             if (lpSequenceWindow.get() && lpwin->hwndOwner == hwndSequenceOwner &&
-                reinterpret_cast<UINT_PTR>(pszClass) > UINT16_MAX && !std::strcmp(pszClass, "#32770")) {
+                reinterpret_cast<UINT_PTR>(pszClass) > std::numeric_limits<std::uint16_t>::max() && !std::strcmp(pszClass, "#32770")) {
                 DestroySequenceWindow();
             }
             // Menus, combo lists and tooltips need compositor popup roles so
             // their placement remains relative to the owner without focus loss.
-            fNativePopup = lpwin->hwndOwner && reinterpret_cast<UINT_PTR>(pszClass) > UINT16_MAX &&
+            fNativePopup = lpwin->hwndOwner && reinterpret_cast<UINT_PTR>(pszClass) > std::numeric_limits<std::uint16_t>::max() &&
                 (!std::strcmp(pszClass, "StarsCompatPopup") || !std::strcmp(pszClass, "StarsComboPopup") ||
                  !std::strcmp(pszClass, "starstt") || !std::strcmp(pszClass, "starspopup") ||
                  !std::strcmp(pszClass, "StarsCompatToolbarTip")) &&
@@ -526,7 +527,7 @@ HWND win32::CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
              !SDL_SetWindowFullscreen(lpwin->lpWindow.get(), true)) ||
             (!fReuse && !fNativePopup && lpwin->hwndOwner && lpwin->hwndOwner->lpWindow.get() &&
              ((SDL_GetWindowFlags(lpwin->hwndOwner->lpWindow.get()) & SDL_WINDOW_FULLSCREEN) ||
-              (reinterpret_cast<UINT_PTR>(pszClass) > UINT16_MAX && !std::strcmp(pszClass, "#32770"))) &&
+              (reinterpret_cast<UINT_PTR>(pszClass) > std::numeric_limits<std::uint16_t>::max() && !std::strcmp(pszClass, "#32770"))) &&
              // Native dialogs need a transient parent even when the owner is windowed.
              // The dummy driver has no native window hierarchy; HWND ownership
              // still applies there, but SDL_SetWindowParent is unsupported.
@@ -776,8 +777,8 @@ BOOL win32::GetWindowPlacement(HWND hwnd, WINDOWPLACEMENT *lpwndpl) {
         xRight = static_cast<std::int64_t>(wndpl.rcNormalPosition.right) - dx;
         yTop = static_cast<std::int64_t>(wndpl.rcNormalPosition.top) - dy;
         yBottom = static_cast<std::int64_t>(wndpl.rcNormalPosition.bottom) - dy;
-        if (xLeft < INT32_MIN || xLeft > INT32_MAX || xRight < INT32_MIN || xRight > INT32_MAX ||
-            yTop < INT32_MIN || yTop > INT32_MAX || yBottom < INT32_MIN || yBottom > INT32_MAX) {
+        if (xLeft < std::numeric_limits<std::int32_t>::min() || xLeft > std::numeric_limits<std::int32_t>::max() || xRight < std::numeric_limits<std::int32_t>::min() || xRight > std::numeric_limits<std::int32_t>::max() ||
+            yTop < std::numeric_limits<std::int32_t>::min() || yTop > std::numeric_limits<std::int32_t>::max() || yBottom < std::numeric_limits<std::int32_t>::min() || yBottom > std::numeric_limits<std::int32_t>::max()) {
             win32::SetLastError(win32::ERROR_ARITHMETIC_OVERFLOW); return 0;
         }
         win32::SetRect(&wndpl.rcNormalPosition, static_cast<LONG>(xLeft), static_cast<LONG>(yTop), static_cast<LONG>(xRight), static_cast<LONG>(yBottom));
@@ -1071,7 +1072,7 @@ BOOL win32::SetWindowPos(HWND hwnd, HWND hwndAfter, int x, int y, int dx, int dy
     if (wp.flags & win32::SWP_NOSIZE) { wp.cx = wpOld.cx; wp.cy = wpOld.cy; }
     if (wp.cx < 0) wp.cx = 0;
     if (wp.cy < 0) wp.cy = 0;
-    if (static_cast<std::int64_t>(wp.x) + wp.cx > INT32_MAX || static_cast<std::int64_t>(wp.y) + wp.cy > INT32_MAX) {
+    if (static_cast<std::int64_t>(wp.x) + wp.cx > std::numeric_limits<std::int32_t>::max() || static_cast<std::int64_t>(wp.y) + wp.cy > std::numeric_limits<std::int32_t>::max()) {
         win32::SetLastError(win32::ERROR_INVALID_PARAMETER);
         return 0;
     }
@@ -1226,7 +1227,7 @@ static BOOL FConvertPoint(HWND hwnd, LPPOINT lppt, BOOL fToScreen) {
     if (!lppt || !FClientOrigin(hwnd, &x, &y)) return 0;
     x = static_cast<std::int64_t>(lppt->x) + (fToScreen ? x : -x);
     y = static_cast<std::int64_t>(lppt->y) + (fToScreen ? y : -y);
-    if (x < INT32_MIN || x > INT32_MAX || y < INT32_MIN || y > INT32_MAX) return 0;
+    if (x < std::numeric_limits<std::int32_t>::min() || x > std::numeric_limits<std::int32_t>::max() || y < std::numeric_limits<std::int32_t>::min() || y > std::numeric_limits<std::int32_t>::max()) return 0;
     lppt->x = static_cast<LONG>(x); lppt->y = static_cast<LONG>(y);
     return 1;
 }
@@ -1248,7 +1249,7 @@ int win32::MapWindowPoints(HWND hwndFrom, HWND hwndTo, LPPOINT rgpt, UINT cpt) {
     /* Validate every coordinate before writing: a failed array mapping is atomic. */
     for (i = 0; i < cpt; i++) {
         x = static_cast<std::int64_t>(rgpt[i].x) + dx; y = static_cast<std::int64_t>(rgpt[i].y) + dy;
-        if (x < INT32_MIN || x > INT32_MAX || y < INT32_MIN || y > INT32_MAX) {
+        if (x < std::numeric_limits<std::int32_t>::min() || x > std::numeric_limits<std::int32_t>::max() || y < std::numeric_limits<std::int32_t>::min() || y > std::numeric_limits<std::int32_t>::max()) {
             win32::SetLastError(win32::ERROR_ARITHMETIC_OVERFLOW); return 0;
         }
     }
@@ -1261,7 +1262,7 @@ BOOL win32::GetWindowRect(HWND hwnd, LPRECT lprc) {
     std::int64_t x, y;
     if (!lprc || !CompatGetSurfaceRect(hwnd, &rc) || !FClientOrigin(hwnd, &x, &y)) return 0;
     y -= CyCompatMenuBar(hwnd); rc.bottom += CyCompatMenuBar(hwnd);
-    if (x < INT32_MIN || y < INT32_MIN || x + rc.right > INT32_MAX || y + rc.bottom > INT32_MAX)
+    if (x < std::numeric_limits<std::int32_t>::min() || y < std::numeric_limits<std::int32_t>::min() || x + rc.right > std::numeric_limits<std::int32_t>::max() || y + rc.bottom > std::numeric_limits<std::int32_t>::max())
         return 0;
     return win32::SetRect(lprc, static_cast<LONG>(x), static_cast<LONG>(y), static_cast<LONG>((x + rc.right)), static_cast<LONG>((y + rc.bottom)));
 }

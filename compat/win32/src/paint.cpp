@@ -10,8 +10,8 @@
 #include "render_io.h"
 #include "resourcecodec.h"
 #include "ownership.h"
-#include <climits>
 #include <cmath>
+#include <limits>
 #include <new>
 #include <cstdlib>
 #include <cstring>
@@ -329,7 +329,7 @@ static BOOL FCanvas(HWND hwnd) {
     if (!CompatGetSurfaceRect(hwnd, &rc)) return 0;
     dx = rc.right; dy = rc.bottom;
     iScale = ICompatCanvasScale(hwnd);
-    if (dx > INT_MAX / iScale || dy > INT_MAX / iScale) return 0;
+    if (dx > std::numeric_limits<int>::max() / iScale || dy > std::numeric_limits<int>::max() / iScale) return 0;
     dx *= iScale; dy *= iScale;
     cyMenu = CyCompatMenuBar(hwnd) * iScale;
     dx = StarsMax(1, dx); dy = StarsMax(1, dy);
@@ -522,7 +522,7 @@ void CompatFlushPresent(void) {
 static HDC HdcNew(HWND hwnd, BOOL fPaint) {
     HDC lpdc;
 
-    if (idDCNext > UINTPTR_MAX / 16 || !SDL_IsMainThread() ||
+    if (idDCNext > std::numeric_limits<std::uintptr_t>::max() / 16 || !SDL_IsMainThread() ||
         (hwnd && (!LpCompatWindow(hwnd) || !FCanvas(hwnd))))
         return nullptr;
     lpdc = new (std::nothrow) win32::HDC__{};
@@ -558,7 +558,7 @@ static COMPATOBJECT *LpNewBitmap(int cx, int cy, BOOL fMono) {
     SDL_Surface *lpsurface;
     NATIVEOWNER<SDL_Surface, FreeCompatSurface> lpsurfaceOwner;
 
-    if (cx <= 0 || cy <= 0 || cx > INT_MAX / 4)
+    if (cx <= 0 || cy <= 0 || cx > std::numeric_limits<int>::max() / 4)
         return nullptr;
     lpsurfaceOwner.reset(SDL_CreateSurface(cx, cy, SDL_PIXELFORMAT_RGBA32)); lpsurface = lpsurfaceOwner.get();
     if (!lpsurface)
@@ -712,7 +712,7 @@ static BOOL FAddUpdate(RECT **lprgrc, std::size_t *lpcrc, RECT rc) {
     for (i = 0; i < *lpcrc; i++)
         if (rc.left >= (*lprgrc)[i].left && rc.top >= (*lprgrc)[i].top &&
             rc.right <= (*lprgrc)[i].right && rc.bottom <= (*lprgrc)[i].bottom) return 1;
-    if (*lpcrc >= SIZE_MAX / sizeof(*rgrc) - 1) return 0;
+    if (*lpcrc >= std::numeric_limits<std::size_t>::max() / sizeof(*rgrc) - 1) return 0;
     rgrc = static_cast<RECT *>((std::realloc(*lprgrc, (*lpcrc + 1) * sizeof(*rgrc))));
     if (!rgrc) return 0;
     rgrc[(*lpcrc)++] = rc; *lprgrc = rgrc;
@@ -884,7 +884,7 @@ static BOOL FClip(HDC lpdc, RECT *lprc) {
  * subtraction, and clip rectangles before narrowing, so extreme origins cannot
  * overflow a signed Win32 coordinate or address a pixel outside its surface. */
 static LONG LCoord(std::int64_t l) {
-    return static_cast<LONG>((((static_cast<std::int64_t>(INT_MIN)) > ((((static_cast<std::int64_t>(INT_MAX)) < (l)) ? (static_cast<std::int64_t>(INT_MAX)) : (l)))) ? (static_cast<std::int64_t>(INT_MIN)) : ((((static_cast<std::int64_t>(INT_MAX)) < (l)) ? (static_cast<std::int64_t>(INT_MAX)) : (l)))));
+    return static_cast<LONG>((((static_cast<std::int64_t>(std::numeric_limits<int>::min())) > ((((static_cast<std::int64_t>(std::numeric_limits<int>::max())) < (l)) ? (static_cast<std::int64_t>(std::numeric_limits<int>::max())) : (l)))) ? (static_cast<std::int64_t>(std::numeric_limits<int>::min())) : ((((static_cast<std::int64_t>(std::numeric_limits<int>::max())) < (l)) ? (static_cast<std::int64_t>(std::numeric_limits<int>::max())) : (l)))));
 }
 
 static RECT RcDevice(HDC lpdc, RECT rc) {
@@ -992,7 +992,7 @@ static int IClipRect(HDC hdc, int left, int top, int right, int bottom, BOOL fEx
         } else rcBase = rcCut;
         rgsrc = &rcBase; crcSrc = 1;
     } else { rgsrc = lpdc->rgrcRegion.get(); crcSrc = lpdc->crcRegion; }
-    if (crcSrc > SIZE_MAX / (4 * sizeof(*rgrc))) return win32::ERROR;
+    if (crcSrc > std::numeric_limits<std::size_t>::max() / (4 * sizeof(*rgrc))) return win32::ERROR;
     rgrc = static_cast<RECT *>((crcSrc ? std::malloc(crcSrc * 4 * sizeof(*rgrc)) : nullptr));
     NATIVEARRAYOWNER<RECT, std::free> rgrcOwner(rgrc);
     if (crcSrc != 0 && !rgrc) return win32::ERROR;
@@ -1285,7 +1285,7 @@ BOOL win32::BitBlt(HDC hdc, int x, int y, int cx, int cy, HDC hdcSrc, int xSrc, 
     if (x0 >= x1 || y0 >= y1)
         return 1;
     cxCopy = x1 - x0; cyCopy = y1 - y0;
-    if (static_cast<std::uint64_t>(cxCopy) > SIZE_MAX / sizeof(*rgcr) / static_cast<std::uint64_t>(cyCopy) / iScale / iScale)
+    if (static_cast<std::uint64_t>(cxCopy) > std::numeric_limits<std::size_t>::max() / sizeof(*rgcr) / static_cast<std::uint64_t>(cyCopy) / iScale / iScale)
         return 0;
     cPixels = static_cast<std::size_t>(cxCopy) * static_cast<std::size_t>(cyCopy) * iScale * iScale;
     if (fSource) {
@@ -1340,10 +1340,10 @@ BOOL win32::ScrollWindow(HWND hwnd, int dx, int dy, const RECT *lprc, const RECT
             win32::IntersectRect(&rcClip, lprcClip ? lprcClip : &rcClient, &rcClient) &&
             win32::IntersectRect(&rcArea, &rcScroll, &rcClip);
     if (!lprc) for (hwndChild = lpwin->hwndFirstChild; hwndChild; hwndChild = hwndChild->hwndZNext) {
-        if (static_cast<std::int64_t>(hwndChild->rcChild.left) + dx < INT_MIN ||
-            static_cast<std::int64_t>(hwndChild->rcChild.right) + dx > INT_MAX ||
-            static_cast<std::int64_t>(hwndChild->rcChild.top) + dy < INT_MIN ||
-            static_cast<std::int64_t>(hwndChild->rcChild.bottom) + dy > INT_MAX) {
+        if (static_cast<std::int64_t>(hwndChild->rcChild.left) + dx < std::numeric_limits<int>::min() ||
+            static_cast<std::int64_t>(hwndChild->rcChild.right) + dx > std::numeric_limits<int>::max() ||
+            static_cast<std::int64_t>(hwndChild->rcChild.top) + dy < std::numeric_limits<int>::min() ||
+            static_cast<std::int64_t>(hwndChild->rcChild.bottom) + dy > std::numeric_limits<int>::max()) {
             win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return 0;
         }
     }
@@ -1597,14 +1597,14 @@ BOOL win32::Ellipse(HDC hdc, int left, int top, int right, int bottom) {
     el.rc = RECT{static_cast<LONG>(StarsMax(l, rcClip.left)), static_cast<LONG>(StarsMax(t, rcClip.top)),
                    static_cast<LONG>(StarsMin(r, rcClip.right)), static_cast<LONG>(StarsMin(b, rcClip.bottom))};
     el.cx = el.rc.right - el.rc.left;
-    if (static_cast<std::size_t>(el.cx) > SIZE_MAX / static_cast<std::size_t>((el.rc.bottom - el.rc.top))) return 0;
+    if (static_cast<std::size_t>(el.cx) > std::numeric_limits<std::size_t>::max() / static_cast<std::size_t>((el.rc.bottom - el.rc.top))) return 0;
     cb = static_cast<std::size_t>(el.cx) * static_cast<std::size_t>((el.rc.bottom - el.rc.top));
     el.rgb.reset(static_cast<BYTE *>(std::calloc(cb, 1)));
     el.rglLeft.reset(static_cast<std::int64_t *>(std::malloc(static_cast<std::size_t>(el.rc.bottom - el.rc.top) * sizeof(std::int64_t))));
     el.rglRight.reset(static_cast<std::int64_t *>(std::malloc(static_cast<std::size_t>(el.rc.bottom - el.rc.top) * sizeof(std::int64_t))));
     if (!el.rgb || !el.rglLeft || !el.rglRight) return 0;
     for (y = el.rc.top; y < el.rc.bottom; y++) {
-        el.rglLeft[y - el.rc.top] = INT64_MAX; el.rglRight[y - el.rc.top] = INT64_MIN;
+        el.rglLeft[y - el.rc.top] = std::numeric_limits<std::int64_t>::max(); el.rglRight[y - el.rc.top] = std::numeric_limits<std::int64_t>::min();
     }
     EllipseOutline(&el, l, t, r - 1, b - 1);
     for (y = el.rc.top; y < el.rc.bottom; y++) for (x = el.rc.left; x < el.rc.right; x++) {
@@ -1774,7 +1774,7 @@ BOOL win32::TextOutA(HDC hdc, int x, int y, LPCSTR psz, int cch) {
 BOOL win32::ExtTextOutA(HDC hdc, int x, int y, UINT options, const RECT *lprc,
                        LPCSTR psz, UINT cch, const INT *rgdx) {
     HDC lpdc = LpDC(hdc);
-    if (!lpdc || cch > INT_MAX || (options & ~(win32::ETO_OPAQUE | win32::ETO_CLIPPED))) return 0;
+    if (!lpdc || cch > std::numeric_limits<int>::max() || (options & ~(win32::ETO_OPAQUE | win32::ETO_CLIPPED))) return 0;
     return FDrawText(lpdc, x, y, psz, static_cast<int>(cch), options, lprc, rgdx);
 }
 
@@ -1835,7 +1835,7 @@ int win32::DrawTextA(HDC hdc, LPCSTR psz, int cch, LPRECT lprc, UINT flags) {
             if (!win32::GetTextExtentPoint32A(hdc, sz + i, cStep, &size)) goto LReturn;
             if (sz[i] == ' ' || sz[i] == '\t') { iBreak = i; dxBreak = static_cast<int>(dx); }
             dx += size.cx;
-            if (dx > INT_MAX) goto LReturn;
+            if (dx > std::numeric_limits<int>::max()) goto LReturn;
             if ((flags & win32::DT_WORDBREAK) && !(flags & win32::DT_SINGLELINE) && dx > dxAvail && iBreak > iStart) {
                 rgline[cLines++] = COMPATTEXTLINE{iStart, iBreak - iStart, dxBreak};
                 i = iBreak + 1;
@@ -1849,10 +1849,10 @@ int win32::DrawTextA(HDC hdc, LPCSTR psz, int cch, LPRECT lprc, UINT flags) {
 LNextLine:
         if (rgline[cLines - 1].dx > dxMax) dxMax = rgline[cLines - 1].dx;
     }
-    if (static_cast<std::int64_t>(cLines) * dyLine > INT_MAX) goto LReturn;
+    if (static_cast<std::int64_t>(cLines) * dyLine > std::numeric_limits<int>::max()) goto LReturn;
     dy = cLines * dyLine;
     if (flags & win32::DT_CALCRECT) {
-        if (static_cast<std::int64_t>(lprc->left) + dxMax > INT_MAX || static_cast<std::int64_t>(lprc->top) + dy > INT_MAX) goto LReturn;
+        if (static_cast<std::int64_t>(lprc->left) + dxMax > std::numeric_limits<int>::max() || static_cast<std::int64_t>(lprc->top) + dy > std::numeric_limits<int>::max()) goto LReturn;
         lprc->right = lprc->left + dxMax; lprc->bottom = lprc->top + dy;
         nReturn = dy; goto LReturn;
     }
@@ -1872,7 +1872,7 @@ LNextLine:
         x = lprc->left;
         if (flags & win32::DT_CENTER) x += (static_cast<std::int64_t>(lprc->right) - lprc->left - rgline[i].dx) / 2;
         else if (flags & win32::DT_RIGHT) x = static_cast<std::int64_t>(lprc->right) - rgline[i].dx;
-        if (x < INT_MIN || x > INT_MAX || y < INT_MIN || y > INT_MAX ||
+        if (x < std::numeric_limits<int>::min() || x > std::numeric_limits<int>::max() || y < std::numeric_limits<int>::min() || y > std::numeric_limits<int>::max() ||
             !win32::TextOutA(hdc, static_cast<int>(x), static_cast<int>(y), sz + rgline[i].i, rgline[i].cch)) { nReturn = 0; break; }
         for (j = 0; j < rgline[i].cch; j++) {
             if (!rgUnderline[rgline[i].i + j]) continue;
@@ -1884,7 +1884,7 @@ LNextLine:
             win32::GetTextExtentPoint32A(hdc, sz + rgline[i].i + j, cStep, &size);
             // Leave a pixel below the baseline, matching ordinary font
             // underlines, so mnemonic marks do not merge into the glyph.
-            if (dx >= INT_MIN && dx + size.cx <= INT_MAX && y + tm.tmAscent + 2 <= INT_MAX) {
+            if (dx >= std::numeric_limits<int>::min() && dx + size.cx <= std::numeric_limits<int>::max() && y + tm.tmAscent + 2 <= std::numeric_limits<int>::max()) {
                 RECT rc = {static_cast<LONG>(dx), static_cast<LONG>((y + tm.tmAscent + 1)), static_cast<LONG>((dx + size.cx)), static_cast<LONG>((y + tm.tmAscent + 2))};
                 COMPATTEXTDRAW draw = {lpdc, {}, dx - lpdc->ptOrg.x, -static_cast<std::int64_t>(lpdc->ptOrg.y), 1, 0};
                 if (FClip(lpdc, &draw.rc)) DrawFontRect(&draw, rc.right - rc.left, rc.top, rc.bottom, lpdc->crText);
@@ -1956,7 +1956,7 @@ int win32::GetDIBits(HDC hdc, HBITMAP hbm, UINT iStart, UINT cLines, LPVOID lpBi
     bi.biPlanes = 1;
     bi.biClrUsed = bi.biBitCount == 1 ? 2 : 0;
     cbRow = ((static_cast<std::size_t>(lpsurface->w) * bi.biBitCount + 31) / 32) * 4;
-    if (cbRow > UINT32_MAX / static_cast<std::size_t>(lpsurface->h))
+    if (cbRow > std::numeric_limits<std::uint32_t>::max() / static_cast<std::size_t>(lpsurface->h))
         return 0;
     bi.biSizeImage = static_cast<DWORD>((cbRow * static_cast<std::size_t>(lpsurface->h)));
     lpbmi->bmiHeader = bi;
@@ -1995,7 +1995,7 @@ static BOOL FPaletteDib(HDC lpdc, const BITMAPINFO *lpbmi, const void *lpBits, U
     WORD index;
     PALETTEENTRY pe;
     const BYTE *rgb = reinterpret_cast<const BYTE *>(lpbmi);
-    if (usage == win32::DIB_RGB_COLORS) return FCompatNativeDib(lpbmi, SIZE_MAX, lpBits, SIZE_MAX, lpdib);
+    if (usage == win32::DIB_RGB_COLORS) return FCompatNativeDib(lpbmi, std::numeric_limits<std::size_t>::max(), lpBits, std::numeric_limits<std::size_t>::max(), lpdib);
     if (usage != win32::DIB_PAL_COLORS || !lpbmi || lpbmi->bmiHeader.biSize != sizeof(info.bi)) return 0;
     info.bi = lpbmi->bmiHeader;
     if (info.bi.biBitCount != 1 && info.bi.biBitCount != 4 && info.bi.biBitCount != 8) return 0;
@@ -2008,7 +2008,7 @@ static BOOL FPaletteDib(HDC lpdc, const BITMAPINFO *lpbmi, const void *lpBits, U
         info.rgq[i] = RGBQUAD{pe.peBlue, pe.peGreen, pe.peRed, 0};
     }
     // The decoder copies the color table; only the caller's bits remain borrowed.
-    return FCompatNativeDib(&info, sizeof(info), lpBits, SIZE_MAX, lpdib);
+    return FCompatNativeDib(&info, sizeof(info), lpBits, std::numeric_limits<std::size_t>::max(), lpdib);
 }
 
 int win32::StretchDIBits(HDC hdc, int xDest, int yDest, int cxDest, int cyDest,

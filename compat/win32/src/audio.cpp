@@ -2,6 +2,7 @@
 #include "internal.h"
 #include "audio_io.h"
 #include <cmath>
+#include <limits>
 
 struct COMPATAUDIO {
     NATIVEOWNER<SDL_AudioStream, SDL_DestroyAudioStream> lpAlert;
@@ -24,7 +25,7 @@ BOOL win32::MessageBeep(UINT type) {
     int i;
     const char *psz = SDL_getenv("STARS_SDL_ALERTS");
     if (!SDL_IsMainThread()) { win32::SetLastError(win32::ERROR_NOT_SUPPORTED); return 0; }
-    if (type != UINT32_MAX && type != win32::MB_OK && type != win32::MB_ICONHAND && type != win32::MB_ICONQUESTION &&
+    if (type != std::numeric_limits<std::uint32_t>::max() && type != win32::MB_OK && type != win32::MB_ICONHAND && type != win32::MB_ICONQUESTION &&
         type != win32::MB_ICONEXCLAMATION && type != win32::MB_ICONASTERISK) { win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return 0; }
     if (psz && SDL_strcmp(psz, "off") == 0) return 1;
     if (!audio.lpAlert) {

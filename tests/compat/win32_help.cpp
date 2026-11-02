@@ -1,9 +1,9 @@
 #include "../../compat/win32/src/path_io.h"
 #include "../../compat/win32/src/external_io.h"
 /* Packaged UTF-8 guide selection and launch contracts; no browser is opened. */
+#include <limits>
 #include <windows.h>
 #include <SDL3/SDL.h>
-#include <limits.h>
 #include <dirent.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -83,7 +83,7 @@ int main(int argc, char **argv) {
         snprintf(szFile, sizeof(szFile), "%s/help/%s", szRoot, rgHelpFile[i]);
         CHECK(FCopy(szSource, szFile));
     }
-    CHECK(win32::WinHelpA(NULL, "stars-help.html", win32::HELP_INDEX, UINTPTR_MAX));
+    CHECK(win32::WinHelpA(NULL, "stars-help.html", win32::HELP_INDEX, std::numeric_limits<std::uintptr_t>::max()));
     CHECK(strstr(szUri, "stars%20help%20%23%C3%A9-") && strstr(szUri, "topic-0.html"));
     CHECK(win32::WinHelpA(NULL, "STARS-HELP.HTML", win32::HELP_CONTEXT, 4501) && strstr(szUri, "topic-65789.html"));
     CHECK(win32::WinHelpA(NULL, "stars-help.html", win32::HELP_CONTEXT, 1070) && strstr(szUri, "topic-3965119.html"));

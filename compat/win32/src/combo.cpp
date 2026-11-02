@@ -1,9 +1,9 @@
 /* Editable and fixed-height string combos, with independent owned popup windows. */
 #include "internal.h"
 #include "cleanup.h"
-#include <climits>
 #include <cstdlib>
 #include <cstring>
+#include <limits>
 
 static BOOL FCombo(HWND hwnd, COMPATCOMBO *lp) { return win32::IsWindow(hwnd) && hwnd->lpcombo.get() == lp; }
 static void SelectCombo(HWND hwnd, int i, BOOL fUser);
@@ -28,7 +28,7 @@ static void NotifyCombo(HWND hwnd, UINT code) {
 static char *PszComboItem(HWND hwnd, int i) {
     LRESULT cch = CompatListProc(hwnd, win32::LB_GETTEXTLEN, i, 0);
     char *psz;
-    if (cch < 0 || static_cast<UINT_PTR>(cch) >= SIZE_MAX || !(psz = static_cast<char *>((SDL_malloc(static_cast<std::size_t>(cch) + 1))))) return nullptr;
+    if (cch < 0 || static_cast<UINT_PTR>(cch) >= std::numeric_limits<std::size_t>::max() || !(psz = static_cast<char *>((SDL_malloc(static_cast<std::size_t>(cch) + 1))))) return nullptr;
     NATIVEOWNER<char, SDL_free> pszOwner(psz);
     if (CompatListProc(hwnd, win32::LB_GETTEXT, i, reinterpret_cast<LPARAM>(psz)) < 0) return nullptr;
     return pszOwner.release();
@@ -397,7 +397,7 @@ LRESULT  CompatComboProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     case win32::CB_GETDROPPEDSTATE: return lp->fDropped;
     case win32::CB_SHOWDROPDOWN: if (w) OpenCombo(hwnd); else CloseCombo(hwnd, 0, 1); return 1;
     case win32::CB_GETDROPPEDWIDTH: win32::GetClientRect(hwnd, &rc); return StarsMax(rc.right, lp->cxDrop);
-    case win32::CB_SETDROPPEDWIDTH: if (static_cast<INT_PTR>(w) < 0 || w > INT_MAX) return win32::CB_ERR; lp->cxDrop = static_cast<int>(w); return win32::SendMessageA(hwnd, win32::CB_GETDROPPEDWIDTH, 0, 0);
+    case win32::CB_SETDROPPEDWIDTH: if (static_cast<INT_PTR>(w) < 0 || w > std::numeric_limits<int>::max()) return win32::CB_ERR; lp->cxDrop = static_cast<int>(w); return win32::SendMessageA(hwnd, win32::CB_GETDROPPEDWIDTH, 0, 0);
     case win32::CB_GETDROPPEDCONTROLRECT:
         if (!l || !FComboDropRect(hwnd, &rc)) return 0;
         win32::GetWindowRect(hwnd, reinterpret_cast<LPRECT>(l));

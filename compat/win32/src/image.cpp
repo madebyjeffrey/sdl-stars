@@ -4,6 +4,7 @@
 #include "render_io.h"
 #include "resourcecodec.h"
 #include "ownership.h"
+#include <limits>
 #include <new>
 #include <cstdlib>
 #include <cstring>
@@ -101,7 +102,7 @@ static HICON HimageLoad(HINSTANCE hInstance, LPCSTR psz, BOOL fCursor) {
     h = HiconCompatResource(rgb, cb, fCursor);
     if (h) {
         lp = LpCompatImage(h); lp->fShared = 1; lp->hrsrc = hrsrc;
-        lp->fAppIcon = !fCursor && reinterpret_cast<UINT_PTR>(psz) > UINT16_MAX &&
+        lp->fAppIcon = !fCursor && reinterpret_cast<UINT_PTR>(psz) > std::numeric_limits<std::uint16_t>::max() &&
             (!SDL_strcasecmp(psz, "StarsIco") || !SDL_strcasecmp(psz, "APPICON"));
     }
     return h;
@@ -129,7 +130,7 @@ HCURSOR win32::LoadCursorA(HINSTANCE hInstance, LPCSTR psz) {
     UINT_PTR id = reinterpret_cast<UINT_PTR>(psz);
     if (!FCompatVideo()) return nullptr;
     if (hInstance) return static_cast<HCURSOR>(HimageLoad(hInstance, psz, 1));
-    if (id > UINT16_MAX || IdSystemCursor(static_cast<UINT>(id)) == SDL_SYSTEM_CURSOR_COUNT) return nullptr;
+    if (id > std::numeric_limits<std::uint16_t>::max() || IdSystemCursor(static_cast<UINT>(id)) == SDL_SYSTEM_CURSOR_COUNT) return nullptr;
     for (lp = lpImages; lp; lp = lp->lpNext) if (lp->idSystem == id) return reinterpret_cast<HCURSOR>(lp);
     lp = LpNewImage(nullptr, nullptr, 1);
     if (!lp) return nullptr;

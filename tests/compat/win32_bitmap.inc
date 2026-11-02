@@ -6,7 +6,6 @@ static const RECT rcTest3 = {4, 4, 8, 8};
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
 #include <stars_compat.h>
 #endif
-#include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
 
@@ -121,8 +120,8 @@ static int TestBitmaps(HWND hwnd) {
     CHECK(GetPixel(hdc, 3, 3) == RGB(255, 255, 255) && GetPixel(hdc, 8, 8) == RGB(255, 255, 255));
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
     CHECK(!BitBlt(hdst, 0, 0, 4, 4, NULL, 0, 0, SRCCOPY));
-    CHECK(BitBlt(hdst, INT_MIN, INT_MIN, INT_MAX, INT_MAX, hsrc, 0, 0, SRCCOPY));
-    CHECK(BitBlt(hdst, 0, 0, INT_MAX, INT_MAX, hsrc, 0, 0, SRCCOPY));
+    CHECK(BitBlt(hdst, std::numeric_limits<int>::min(), std::numeric_limits<int>::min(), std::numeric_limits<int>::max(), std::numeric_limits<int>::max(), hsrc, 0, 0, SRCCOPY));
+    CHECK(BitBlt(hdst, 0, 0, std::numeric_limits<int>::max(), std::numeric_limits<int>::max(), hsrc, 0, 0, SRCCOPY));
     CHECK(!BitBlt(hdst, 0, 0, 4, 4, hsrc, 0, 0, SRCCOPY | UINT32_C(0x40000000)));
 #endif
     CHECK(SelectObject(hsrc, hSrcOld) == hbmSrc && DeleteObject(hbmSrc));

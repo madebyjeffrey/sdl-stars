@@ -7,6 +7,7 @@
 
 #include "stars_test.h"
 #include "text_io.h"
+#include <limits>
 #include <string>
 
 static std::string SzReadReportFile(const std::string &szFile) {
@@ -475,7 +476,7 @@ static void test_TransferStuff_restores_borrowed_frame_on_lookup_failure(void) {
     TEST_ASSERT(FStarsTestInit(app));
     pxferSav = app.state.pxfer; mdXferSav = app.lpui->mdXferDlg;
     app.state.pxfer = rgSaved; app.lpui->mdXferDlg = mdXferShips;
-    TEST_CHECK(!TransferStuff(app, INT16_MAX, grobjPlanet, 0, grobjOther, mdXferCargo));
+    TEST_CHECK(!TransferStuff(app, std::numeric_limits<std::int16_t>::max(), grobjPlanet, 0, grobjOther, mdXferCargo));
     TEST_CHECK(app.state.pxfer == rgSaved && app.lpui->mdXferDlg == mdXferShips);
     app.state.pxfer = pxferSav; app.lpui->mdXferDlg = mdXferSav;
 }

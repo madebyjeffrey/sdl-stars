@@ -1,6 +1,7 @@
 #include "common.h"
 #include "appstate.h"
 #include <callbackcontext.h>
+#include <limits>
 #ifdef STARS_UI_SDL
 #include "uistate.h"
 #endif
@@ -187,7 +188,7 @@ static void TestAllocationOverflow(void) {
 
     TEST_ASSERT(FStarsTestInit(app));
     try {
-        LpAlloc(app, UINT16_MAX, htMisc);
+        LpAlloc(app, std::numeric_limits<std::uint16_t>::max(), htMisc);
         TEST_CHECK(0);
     } catch (const StarsError &error) {
         TEST_CHECK(error.mdError == starsErrorMemory);

@@ -6,7 +6,7 @@
 #include "ownership.h"
 #include <cairo-pdf.h>
 #include <cerrno>
-#include <climits>
+#include <limits>
 #include <new>
 #include <cstdlib>
 #include <cstring>
@@ -158,7 +158,7 @@ static int StartPrint(COMPATPRINT *lp, int cb, LPCSTR pszTitle) {
     cairo_pdf_surface_set_metadata(lp->lpPDF.get(), CAIRO_PDF_METADATA_TITLE, lp->szTitle);
     cairo_pdf_surface_set_metadata(lp->lpPDF.get(), CAIRO_PDF_METADATA_CREATOR, "Stars SDL3 compatibility printer");
     lp->cPages = 0; lp->fActive = 1;
-    if (idPrintNext == INT_MAX) idPrintNext = 1;
+    if (idPrintNext == std::numeric_limits<int>::max()) idPrintNext = 1;
     return idPrintNext++;
 }
 static BOOL FPrintPage(COMPATPRINT *lp, SDL_Surface *lpSource) {

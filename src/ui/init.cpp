@@ -6,6 +6,7 @@
 #include "alert_io.h"
 #include "ownership.h"
 #include "uistate.h"
+#include <limits>
 #include <stars_compat.h>
 
 std::uint8_t rgPalGray[20] = {10, 20, 30, 40, 61, 71, 81, 92, 112, 122, 133, 143, 161, 171, 182, 193, 215, 225, 235, 245};
@@ -277,7 +278,7 @@ static std::int16_t FInitMacShortcuts(APPSESSION &app, HWND hwnd) {
         if (i == c) c++;
         for (j = 0; j < win32::GetMenuItemCount(hmenu); j++) {
             hsub = win32::GetSubMenu(hmenu, j);
-            if (hsub && win32::GetMenuState(hsub, rgkey[ikey].idMenu, win32::MF_BYCOMMAND) != UINT_MAX) break;
+            if (hsub && win32::GetMenuState(hsub, rgkey[ikey].idMenu, win32::MF_BYCOMMAND) != std::numeric_limits<unsigned int>::max()) break;
         }
         if (j == win32::GetMenuItemCount(hmenu) || !FSetMacMenuShortcut(hsub, rgkey[ikey].idMenu, &rgkey[ikey].accel)) return 0;
     }

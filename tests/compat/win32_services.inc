@@ -2,7 +2,6 @@
 #include <windows.h>
 #include <io.h>
 #include <direct.h>
-#include <limits.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -34,22 +33,22 @@ int main(void) {
                 lDiv = rgn[k] < 0 ? -(int64_t)rgn[k] : rgn[k];
                 lRounded = lDiv ? (lAbs + lDiv / 2) / lDiv : 0;
                 if ((l < 0) != (rgn[k] < 0)) lRounded = -lRounded;
-                nExpected = !lDiv || lRounded <= INT32_MIN || lRounded > INT32_MAX ? -1 : (int)lRounded;
+                nExpected = !lDiv || lRounded <= std::numeric_limits<std::int32_t>::min() || lRounded > std::numeric_limits<std::int32_t>::max() ? -1 : (int)lRounded;
                 n = MulDiv(rgn[i], rgn[j], rgn[k]);
                 CHECK(n == nExpected);
             }
-    CHECK(MulDiv(INT32_MAX, INT32_MAX, INT32_MAX) == INT32_MAX);
-    CHECK(MulDiv(INT32_MIN, 1, 1) == -1);
-    CHECK(MulDiv(INT32_MIN, -1, 1) == -1);
+    CHECK(MulDiv(std::numeric_limits<std::int32_t>::max(), std::numeric_limits<std::int32_t>::max(), std::numeric_limits<std::int32_t>::max()) == std::numeric_limits<std::int32_t>::max());
+    CHECK(MulDiv(std::numeric_limits<std::int32_t>::min(), 1, 1) == -1);
+    CHECK(MulDiv(std::numeric_limits<std::int32_t>::min(), -1, 1) == -1);
     CHECK(lstrlenA(NULL) == 0 && lstrlenA("fleet") == 5);
     CHECK(!strcmp(sz, "Fleet #10") && lstrcmpiA(sz, "FLEET #10") == 0);
     CHECK(lstrcmpiA("a", "b") < 0 && lstrcmpiA("z", "a") > 0);
     CHECK(wsprintfA(sz, "%ld of %ldkT: %08lx %d %s %c %%", (LONG)-1234567890,
-                    (LONG)INT32_MAX, (DWORD)0x89abcdef, 17, "cargo", 'X') == 50);
+                    (LONG)std::numeric_limits<std::int32_t>::max(), (DWORD)0x89abcdef, 17, "cargo", 'X') == 50);
     CHECK(!strcmp(sz, "-1234567890 of 2147483647kT: 89abcdef 17 cargo X %"));
     CHECK(wsprintfA(sz, "[%6.4d][%-5s][%#x][%hu]", 12, "ab", 42u, (WORD)1) > 0);
     CHECK(!strcmp(sz, "[  0012][ab   ][0x2a][1]"));
-    CHECK(wsprintfA(sz, "%.3s %hd %lu", "fleet", (SHORT)-1, (DWORD)UINT32_MAX) > 0);
+    CHECK(wsprintfA(sz, "%.3s %hd %lu", "fleet", (SHORT)-1, (DWORD)std::numeric_limits<std::uint32_t>::max()) > 0);
     CHECK(!strcmp(sz, "fle -1 4294967295"));
 #ifdef STARS_UI_SDL
     // The owned C++ interface carries capacity; SDK comparisons above fit.
@@ -76,7 +75,7 @@ int main(void) {
     CHECK(_strnicmp("a", "b", 0) == 0);
     memcpy(sz, "FL33T", sizeof("FL33T"));
     CHECK(!strcmp(_strlwr(sz), "fl33t"));
-    CHECK(!strcmp(itoa(INT32_MIN, sz, 10), "-2147483648"));
+    CHECK(!strcmp(itoa(std::numeric_limits<std::int32_t>::min(), sz, 10), "-2147483648"));
     CHECK(!strcmp(itoa(-1, sz, 16), "ffffffff"));
     CHECK(!strcmp(itoa(35, sz, 36), "z"));
     CHECK(_strdate(szDate) == szDate && strlen(szDate) == 8 && szDate[2] == '/' && szDate[5] == '/');

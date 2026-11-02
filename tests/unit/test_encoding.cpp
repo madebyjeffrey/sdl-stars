@@ -12,6 +12,7 @@
 #include "text_io.h"
 #include <iterator>
 #include "version.h"
+#include <limits>
 #include <string>
 #include <type_traits>
 
@@ -538,7 +539,7 @@ static void TestFormattedTextBounds(void) {
     TEST_CHECK(CchSprintf(std::span{rgch}.subspan(2, 1), "%d", 12345) == 0 && rgch[2] == 0 && rgch[3] == 'b');
     rgch[2] = '!';
     TEST_CHECK(CchSprintf(std::span<char>{}, "%d", 12345) == 0 && rgch[2] == '!');
-    TEST_CHECK(CchSprintf(sz, "%ld|%lu|%08lx|%hd|%.2f", std::int32_t{INT32_MIN}, std::uint32_t{UINT32_MAX},
+    TEST_CHECK(CchSprintf(sz, "%ld|%lu|%08lx|%hd|%.2f", std::int32_t{std::numeric_limits<std::int32_t>::min()}, std::uint32_t{std::numeric_limits<std::uint32_t>::max()},
                          std::uint32_t{0x89abcdef}, -1, 3.25) == 39);
     TEST_CHECK(!strcmp(sz, "-2147483648|4294967295|89abcdef|-1|3.25"));
     struct { signed int c : 5; unsigned int u : 5; } bits = {-3, 29};

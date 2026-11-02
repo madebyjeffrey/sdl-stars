@@ -7,6 +7,7 @@
 #include "control_io.h"
 #include "scaninspect.h"
 #include <cstdlib>
+#include <limits>
 #include <stars_compat.h>
 
 static HWND hwndScanInspector;
@@ -44,7 +45,7 @@ BOOL FCaptureScanner(APPSESSION &app, SCANSNAPSHOT *lpsnap) {
     char szWorkSav[sizeof(app.state.szWork)];
     if (!lpsnap || lpsnap->rgobj || lpsnap->cObject != 0 || !FScannerReady(app)) return 0;
     c = static_cast<std::size_t>(app.state.game.cPlanMax) + static_cast<std::size_t>(app.state.cFleet) + static_cast<std::size_t>(app.state.cThing);
-    if (c > SIZE_MAX / sizeof(*lpobj)) return 0;
+    if (c > std::numeric_limits<std::size_t>::max() / sizeof(*lpobj)) return 0;
     lpsnap->rgobj.reset(static_cast<SCANOBJECT *>(std::calloc(c, sizeof(*lpobj))));
     if (!lpsnap->rgobj) return 0;
     lpsnap->lidGame = app.state.game.lid; lpsnap->turn = app.state.game.turn;

@@ -1,9 +1,9 @@
 /* String list boxes, including the fixed-height owner drawing used by Stars. */
 #include "internal.h"
 #include "time_io.h"
-#include <climits>
 #include <cstdlib>
 #include <cstring>
+#include <limits>
 
 struct COMPATLISTITEM { char *psz; LPARAM lData; BOOL fSelected; };
 struct COMPATLIST {
@@ -106,13 +106,13 @@ static LRESULT AddList(HWND hwnd, int i, LPCSTR psz) {
     COMPATLISTITEM *rg;
     char *pszNew;
     int cAlloc;
-    if (!psz || !FUtf8Valid(psz) || lp->cItem == INT_MAX) return win32::LB_ERR;
+    if (!psz || !FUtf8Valid(psz) || lp->cItem == std::numeric_limits<int>::max()) return win32::LB_ERR;
     pszNew = SDL_strdup(psz);
     NATIVEOWNER<char, SDL_free> pszOwner(pszNew);
     if (!pszNew) return win32::LB_ERRSPACE;
     if (lp->cItem == lp->cAlloc) {
-        cAlloc = lp->cAlloc > (INT_MAX - 16) / 2 ? INT_MAX : lp->cAlloc * 2 + 16;
-        if (static_cast<std::size_t>(cAlloc) > SIZE_MAX / sizeof(*rg)) return win32::LB_ERRSPACE;
+        cAlloc = lp->cAlloc > (std::numeric_limits<int>::max() - 16) / 2 ? std::numeric_limits<int>::max() : lp->cAlloc * 2 + 16;
+        if (static_cast<std::size_t>(cAlloc) > std::numeric_limits<std::size_t>::max() / sizeof(*rg)) return win32::LB_ERRSPACE;
         rg = static_cast<COMPATLISTITEM *>((SDL_realloc(lp->rgitem, static_cast<std::size_t>(cAlloc) * sizeof(*rg))));
         if (!rg) return win32::LB_ERRSPACE;
         lp->rgitem = rg; lp->cAlloc = cAlloc;
@@ -233,7 +233,7 @@ static void DrawListSelection(HWND hwnd, int iOld) {
         y = static_cast<std::int64_t>((i - lp->iTop)) * lp->cyItem;
         if (y >= rc.bottom || y + lp->cyItem <= 0) continue;
         win32::SetRect(&rcItem, -lp->xOffset, static_cast<int>(y), StarsMax(rc.right, lp->cxExtent) - lp->xOffset,
-                static_cast<int>(StarsMin(y + lp->cyItem, INT_MAX)));
+                static_cast<int>(StarsMin(y + lp->cyItem, std::numeric_limits<int>::max())));
         if (!FDrawOwnerList(hwnd, hdc, i, win32::ODA_SELECT, win32::GetFocus() == hwnd && i == lp->iCaret, &rcItem)) break;
         // The owner may replace the items or select another row during drawing.
         if (lp->nMutation != n || lp->iSel != rgi[1]) { win32::InvalidateRect(hwnd, nullptr, 1); break; }
@@ -253,7 +253,7 @@ static void DrawListFocus(HWND hwnd, BOOL fFocus) {
     if (hwnd->hfontControl) win32::SelectObject(hdc, hwnd->hfontControl);
     win32::SetBkMode(hdc, win32::TRANSPARENT); win32::SetTextColor(hdc, win32::GetSysColor(win32::COLOR_WINDOWTEXT));
     win32::SetBkColor(hdc, win32::GetSysColor(win32::COLOR_WINDOW));
-    win32::SetRect(&rcItem, -lp->xOffset, static_cast<int>(y), StarsMax(rc.right, lp->cxExtent) - lp->xOffset, static_cast<int>(StarsMin(y + lp->cyItem, INT_MAX)));
+    win32::SetRect(&rcItem, -lp->xOffset, static_cast<int>(y), StarsMax(rc.right, lp->cxExtent) - lp->xOffset, static_cast<int>(StarsMin(y + lp->cyItem, std::numeric_limits<int>::max())));
     FDrawOwnerList(hwnd, hdc, i, win32::ODA_FOCUS, fFocus, &rcItem);
     win32::ReleaseDC(hwnd, hdc);
 }
@@ -346,7 +346,7 @@ LRESULT  CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
             ms = {}; ms.CtlType = win32::ODT_LISTBOX; ms.CtlID = static_cast<UINT>(lpwin->idChild); ms.itemHeight = static_cast<UINT>(lp->cyItem);
             win32::SendMessageA(lpwin->hwndParent, win32::WM_MEASUREITEM, static_cast<WPARAM>(lpwin->idChild), reinterpret_cast<LPARAM>(&ms));
             if (!win32::IsWindow(hwnd)) return -1;
-            if (ms.itemHeight != 0 && ms.itemHeight <= INT_MAX) lp->cyItem = static_cast<int>(ms.itemHeight);
+            if (ms.itemHeight != 0 && ms.itemHeight <= std::numeric_limits<int>::max()) lp->cyItem = static_cast<int>(ms.itemHeight);
         }
         if (!(lpwin->dwStyle & win32::LBS_NOINTEGRALHEIGHT) && lpwin->hwndParent && !lpwin->lpcombo) {
             cyBar = lpwin->dwStyle & win32::WS_HSCROLL ? win32::GetSystemMetrics(win32::SM_CYHSCROLL) : 0;
@@ -426,7 +426,7 @@ LRESULT  CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         if (i < 0 || i >= lp->cItem || !l) return win32::LB_ERR;
         win32::GetClientRect(hwnd, &rc);
         yItem = static_cast<std::int64_t>((i - lp->iTop)) * lp->cyItem;
-        if (yItem < INT_MIN || yItem + lp->cyItem > INT_MAX) return win32::LB_ERR;
+        if (yItem < std::numeric_limits<int>::min() || yItem + lp->cyItem > std::numeric_limits<int>::max()) return win32::LB_ERR;
         win32::SetRect(reinterpret_cast<LPRECT>(l), 0, static_cast<int>(yItem), rc.right, static_cast<int>((yItem + lp->cyItem))); return 1;
     case win32::LB_SETCARETINDEX:
         if (i < 0 || i >= lp->cItem) return win32::LB_ERR;
@@ -479,7 +479,7 @@ LRESULT  CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
             win32::SetCapture(hwnd);
             if (win32::IsWindow(hwnd) && win32::GetCapture() == hwnd) {
                 lpwin->fTracking = 1; lp->iDrag = i; lp->grfDrag = static_cast<DWORD>(w); lp->lDragPoint = l;
-                lp->idDragTimer = win32::SetTimer(hwnd, UINTPTR_MAX, 100, nullptr);
+                lp->idDragTimer = win32::SetTimer(hwnd, std::numeric_limits<std::uintptr_t>::max(), 100, nullptr);
             }
         }
         return 0;
@@ -553,7 +553,7 @@ LRESULT  CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         }
         ClampList(hwnd); return 0;
     case win32::WM_MOUSEWHEEL:
-        lp->iTop = static_cast<int>((((static_cast<std::int64_t>(INT_MAX)) < ((((static_cast<std::int64_t>(0)) > (static_cast<std::int64_t>(lp->iTop) - static_cast<std::int16_t>(HIWORD(w)) / win32::WHEEL_DELTA * 3)) ? (static_cast<std::int64_t>(0)) : (static_cast<std::int64_t>(lp->iTop) - static_cast<std::int16_t>(HIWORD(w)) / win32::WHEEL_DELTA * 3)))) ? (static_cast<std::int64_t>(INT_MAX)) : ((((static_cast<std::int64_t>(0)) > (static_cast<std::int64_t>(lp->iTop) - static_cast<std::int16_t>(HIWORD(w)) / win32::WHEEL_DELTA * 3)) ? (static_cast<std::int64_t>(0)) : (static_cast<std::int64_t>(lp->iTop) - static_cast<std::int16_t>(HIWORD(w)) / win32::WHEEL_DELTA * 3)))));
+        lp->iTop = static_cast<int>((((static_cast<std::int64_t>(std::numeric_limits<int>::max())) < ((((static_cast<std::int64_t>(0)) > (static_cast<std::int64_t>(lp->iTop) - static_cast<std::int16_t>(HIWORD(w)) / win32::WHEEL_DELTA * 3)) ? (static_cast<std::int64_t>(0)) : (static_cast<std::int64_t>(lp->iTop) - static_cast<std::int16_t>(HIWORD(w)) / win32::WHEEL_DELTA * 3)))) ? (static_cast<std::int64_t>(std::numeric_limits<int>::max())) : ((((static_cast<std::int64_t>(0)) > (static_cast<std::int64_t>(lp->iTop) - static_cast<std::int16_t>(HIWORD(w)) / win32::WHEEL_DELTA * 3)) ? (static_cast<std::int64_t>(0)) : (static_cast<std::int64_t>(lp->iTop) - static_cast<std::int16_t>(HIWORD(w)) / win32::WHEEL_DELTA * 3)))));
         ClampList(hwnd); return 0;
     default: return win32::DefWindowProcA(hwnd, msg, w, l);
     }

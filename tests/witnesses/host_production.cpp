@@ -8,6 +8,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <limits>
 #include "colony_io.h"
 #include "common.h"
 #include "heap_io.h"
@@ -375,7 +376,7 @@ int            main(void) {
                 } // never execute undefined native division
                 expected += (int64_t)numerator / denominator;
             }
-            assert(expected >= INT32_MIN && expected <= INT32_MAX);
+            assert(expected >= std::numeric_limits<std::int32_t>::min() && expected <= std::numeric_limits<std::int32_t>::max());
             reset(app);
             gross = (int16_t)raw;
             extras[0] = (uint16_t)extra;

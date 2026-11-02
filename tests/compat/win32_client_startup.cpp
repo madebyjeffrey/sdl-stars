@@ -18,6 +18,7 @@
 #include "../../src/core/record_io.h"
 
 #include "native_publish.h"
+#include <limits>
 #include <stars_compat.h>
 #include "internal.h"
 #include <SDL3/SDL.h>
@@ -376,7 +377,7 @@ static BOOL FCheckMapInspection(APPSESSION &app) {
     snap.turn++;
     if (FSelectScannerObject(app, &snap, grobjPlanet, 0, 1)) goto LDone;
     snap.turn--;
-    if (FSelectScannerObject(app, &snap, grobjPlanet, UINT16_MAX, 1) ||
+    if (FSelectScannerObject(app, &snap, grobjPlanet, std::numeric_limits<std::uint16_t>::max(), 1) ||
         !FSelectScannerObject(app, &snap, grobjPlanet, 0, 1) || app.state.sel.scan.grobj != grobjPlanet || app.state.sel.scan.idpl != 0) goto LDone;
     if (!FCaptureScanner(app, &fresh) || !fresh.rgobj[0].fOnScreen || !fresh.rgobj[0].fScanSelected || app.state.game.fDirty != fDirty) goto LDone;
     memcpy(szNameSav, fresh.rgobj[0].szName, sizeof(szNameSav));

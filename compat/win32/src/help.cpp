@@ -4,10 +4,10 @@
 #include "path_io.h"
 #include <SDL3/SDL.h>
 #include <cerrno>
-#include <climits>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <limits>
 #include <strings.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -134,7 +134,7 @@ BOOL win32::WinHelpA(HWND hWndMain, LPCSTR pszHelp, UINT uCommand, ULONG_PTR dwD
     }
     if (uCommand == win32::HELP_INDEX) {
         pszPage = STARS_HELP_CONTENTS;
-    } else if (dwData <= UINT32_MAX) {
+    } else if (dwData <= std::numeric_limits<std::uint32_t>::max()) {
         for (i = 0; i < sizeof(rgHelpContext) / sizeof(rgHelpContext[0]); i++) {
             if (rgHelpContext[i].idh == static_cast<std::uint32_t>(dwData)) {
                 pszPage = rgHelpContext[i].pszPage;

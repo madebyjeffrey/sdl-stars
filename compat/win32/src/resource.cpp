@@ -1,6 +1,7 @@
 /* Immutable application resources generated from the same RC source as Windows. */
 #include "internal.h"
 #include <cstdlib>
+#include <limits>
 
 static BYTE bModule;
 
@@ -39,13 +40,13 @@ HRSRC win32::FindResourceA(HMODULE hModule, LPCSTR pszName, LPCSTR pszType) {
     UINT_PTR id = reinterpret_cast<UINT_PTR>(pszName);
     const COMPATRESOURCE *lpres;
 
-    if (!FModule(hModule) || reinterpret_cast<UINT_PTR>(pszType) > UINT16_MAX || !pszName)
+    if (!FModule(hModule) || reinterpret_cast<UINT_PTR>(pszType) > std::numeric_limits<std::uint16_t>::max() || !pszName)
         return nullptr;
     for (i = 0; i < cCompatResources + cCompatUIResources + cCompatImageResources; i++) {
         lpres = LpResourceIndex(i);
         if (lpres->type == reinterpret_cast<UINT_PTR>(pszType) &&
-            ((id <= UINT16_MAX && lpres->id == id) ||
-             (id > UINT16_MAX && lpres->pszName && SDL_strcasecmp(pszName, lpres->pszName) == 0)))
+            ((id <= std::numeric_limits<std::uint16_t>::max() && lpres->id == id) ||
+             (id > std::numeric_limits<std::uint16_t>::max() && lpres->pszName && SDL_strcasecmp(pszName, lpres->pszName) == 0)))
             return const_cast<HRSRC>(reinterpret_cast<const win32::HRSRC__*>(lpres));
     }
     return nullptr;

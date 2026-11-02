@@ -2,7 +2,7 @@
 #include "internal.h"
 #include "resourcecodec.h"
 #include <array>
-#include <limits.h>
+#include <limits>
 #include <stdio.h>
 #include <string.h>
 #define CHECK(f) do { if (!(f)) { fprintf(stderr, "decoder line %d: %s\n", __LINE__, #f); return 1; } } while (0)
@@ -83,9 +83,9 @@ int TestInvalidDibs(void) {
     CHECK(!LpCompatDibSurface(&dib));
     info.bi.biClrUsed = 3;
     CHECK(!FCompatDib(&info, sizeof(info), rgb, sizeof(rgb), &dib));
-    info.bi.biClrUsed = 0; info.bi.biHeight = INT_MIN;
+    info.bi.biClrUsed = 0; info.bi.biHeight = std::numeric_limits<int>::min();
     CHECK(!FCompatDib(&info, sizeof(info), rgb, sizeof(rgb), &dib));
-    info.bi.biHeight = 2; info.bi.biWidth = INT_MAX;
+    info.bi.biHeight = 2; info.bi.biWidth = std::numeric_limits<int>::max();
     CHECK(!FCompatDib(&info, sizeof(info), rgb, sizeof(rgb), &dib));
     info.bi.biWidth = 3; info.bi.biCompression = win32::BI_RLE8;
     CHECK(!FCompatDib(&info, sizeof(info), rgb, sizeof(rgb), &dib));

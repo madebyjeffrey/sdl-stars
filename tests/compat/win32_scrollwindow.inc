@@ -10,7 +10,6 @@ static const RECT rcTest7 = {30, 10, 40, 20};
 static const RECT rcTest8 = {33, 13, 37, 17};
 static const RECT rcTest9 = {45, 10, 48, 13};
 static const RECT rcTest10 = {0, 0, 0, 0};
-#include <limits.h>
 #include <stdio.h>
 #ifndef _WIN32
 #include <stars_compat.h>
@@ -54,7 +53,7 @@ static int TestPixels(HWND hwnd) {
     CHECK(EqualRect(&rcUpdate, &rcTest2));
     cErase = 0; CHECK(GetUpdateRect(hwnd, NULL, 1) && cErase == 1);
     CHECK(ValidateRect(hwnd, NULL));
-    CHECK(ScrollWindow(hwnd, INT_MAX, INT_MIN, &rc, NULL));
+    CHECK(ScrollWindow(hwnd, std::numeric_limits<int>::max(), std::numeric_limits<int>::min(), &rc, NULL));
     CHECK(GetUpdateRect(hwnd, &rcUpdate, 0) && EqualRect(&rcUpdate, &rc));
     CHECK(ValidateRect(hwnd, NULL));
     CHECK(ScrollWindow(hwnd, 0, 0, &rc, NULL) && !GetUpdateRect(hwnd, NULL, 0));

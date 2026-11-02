@@ -79,12 +79,12 @@ int main(void) {
 #endif
     CHECK(GetFileSize((HANDLE)(INT_PTR)hf, &dwHigh) == 7 && dwHigh == 1);
 #if defined(_WIN32) && defined(STARS_UI_SDL)
-    CHECK(FFixtureTruncate(szPath, UINT32_MAX));
+    CHECK(FFixtureTruncate(szPath, std::numeric_limits<std::uint32_t>::max()));
 #elif defined(_WIN32)
-    li.QuadPart = UINT32_MAX;
+    li.QuadPart = std::numeric_limits<std::uint32_t>::max();
     CHECK(SetFilePointerEx((HANDLE)(INT_PTR)hf, li, NULL, FILE_BEGIN) && SetEndOfFile((HANDLE)(INT_PTR)hf));
 #else
-    CHECK(truncate(szPath, UINT32_MAX) == 0);
+    CHECK(truncate(szPath, std::numeric_limits<std::uint32_t>::max()) == 0);
 #endif
     SetLastError(123);
     CHECK(GetFileSize((HANDLE)(INT_PTR)hf, &dwHigh) == INVALID_FILE_SIZE && dwHigh == 0 && GetLastError() == NO_ERROR);

@@ -2,8 +2,8 @@
 #include "internal.h"
 #include <algorithm>
 #include "choice_io.h"
+#include <limits>
 #include <stars_compat.h>
-#include <climits>
 #include <cstdlib>
 #include <cstring>
 
@@ -131,7 +131,7 @@ static void ReplaceEdit(HWND hwnd, LPCSTR psz, BOOL fUser, BOOL fUndo, UINT iUnd
         if (win32::IsWindow(hwnd)) ChangedEdit(hwnd, 1);
         return;
     }
-    if (cchBase > INT_MAX || cch > INT_MAX - cchBase) return;
+    if (cchBase > std::numeric_limits<int>::max() || cch > std::numeric_limits<int>::max() - cchBase) return;
     pszNew = static_cast<char *>((SDL_malloc(cchBase + cch + 1)));
     newOwner.reset(pszNew);
     if (!pszNew) { NotifyEdit(hwnd, win32::EN_ERRSPACE); return; }
@@ -279,7 +279,7 @@ static UINT IchEditLine(HWND hwnd, UINT iLine) {
     UINT ich = 0, next, i, cch = CchEdit(hwnd);
     for (i = 0; i < iLine; i++) {
         next = IchNextLine(hwnd, ich);
-        if (next <= ich || (next == cch && (cch == 0 || hwnd->pszTitle[cch - 1] != '\n'))) return UINT_MAX;
+        if (next <= ich || (next == cch && (cch == 0 || hwnd->pszTitle[cch - 1] != '\n'))) return std::numeric_limits<unsigned int>::max();
         ich = next;
     }
     return ich;
@@ -344,7 +344,7 @@ static void ScrollEdit(HWND hwnd, int dx, int dy) {
     int cy = CyEdit(hwnd), cLine = static_cast<int>(IEditLine(hwnd, CchEdit(hwnd))) + 1;
     EditFormat(hwnd, &rc);
     hwnd->yEditScroll = static_cast<int>((((static_cast<std::int64_t>(0)) > ((((static_cast<std::int64_t>((((0) > (cLine - (((1) > ((rc.bottom - rc.top) / cy)) ? (1) : ((rc.bottom - rc.top) / cy)))) ? (0) : (cLine - (((1) > ((rc.bottom - rc.top) / cy)) ? (1) : ((rc.bottom - rc.top) / cy))))) * cy) < (static_cast<std::int64_t>(hwnd->yEditScroll) + static_cast<std::int64_t>(dy) * cy)) ? (static_cast<std::int64_t>((((0) > (cLine - (((1) > ((rc.bottom - rc.top) / cy)) ? (1) : ((rc.bottom - rc.top) / cy)))) ? (0) : (cLine - (((1) > ((rc.bottom - rc.top) / cy)) ? (1) : ((rc.bottom - rc.top) / cy))))) * cy) : (static_cast<std::int64_t>(hwnd->yEditScroll) + static_cast<std::int64_t>(dy) * cy)))) ? (static_cast<std::int64_t>(0)) : ((((static_cast<std::int64_t>((((0) > (cLine - (((1) > ((rc.bottom - rc.top) / cy)) ? (1) : ((rc.bottom - rc.top) / cy)))) ? (0) : (cLine - (((1) > ((rc.bottom - rc.top) / cy)) ? (1) : ((rc.bottom - rc.top) / cy))))) * cy) < (static_cast<std::int64_t>(hwnd->yEditScroll) + static_cast<std::int64_t>(dy) * cy)) ? (static_cast<std::int64_t>((((0) > (cLine - (((1) > ((rc.bottom - rc.top) / cy)) ? (1) : ((rc.bottom - rc.top) / cy)))) ? (0) : (cLine - (((1) > ((rc.bottom - rc.top) / cy)) ? (1) : ((rc.bottom - rc.top) / cy))))) * cy) : (static_cast<std::int64_t>(hwnd->yEditScroll) + static_cast<std::int64_t>(dy) * cy)))));
-    hwnd->xEditScroll = static_cast<int>((((static_cast<std::int64_t>(INT_MAX)) < ((((static_cast<std::int64_t>(0)) > (static_cast<std::int64_t>(hwnd->xEditScroll) + static_cast<std::int64_t>(dx) * 8)) ? (static_cast<std::int64_t>(0)) : (static_cast<std::int64_t>(hwnd->xEditScroll) + static_cast<std::int64_t>(dx) * 8)))) ? (static_cast<std::int64_t>(INT_MAX)) : ((((static_cast<std::int64_t>(0)) > (static_cast<std::int64_t>(hwnd->xEditScroll) + static_cast<std::int64_t>(dx) * 8)) ? (static_cast<std::int64_t>(0)) : (static_cast<std::int64_t>(hwnd->xEditScroll) + static_cast<std::int64_t>(dx) * 8)))));
+    hwnd->xEditScroll = static_cast<int>((((static_cast<std::int64_t>(std::numeric_limits<int>::max())) < ((((static_cast<std::int64_t>(0)) > (static_cast<std::int64_t>(hwnd->xEditScroll) + static_cast<std::int64_t>(dx) * 8)) ? (static_cast<std::int64_t>(0)) : (static_cast<std::int64_t>(hwnd->xEditScroll) + static_cast<std::int64_t>(dx) * 8)))) ? (static_cast<std::int64_t>(std::numeric_limits<int>::max())) : ((((static_cast<std::int64_t>(0)) > (static_cast<std::int64_t>(hwnd->xEditScroll) + static_cast<std::int64_t>(dx) * 8)) ? (static_cast<std::int64_t>(0)) : (static_cast<std::int64_t>(hwnd->xEditScroll) + static_cast<std::int64_t>(dx) * 8)))));
     hwnd->fEditManualScroll = 1;
     SyncEditScroll(hwnd);
     if (!win32::IsWindow(hwnd)) return;
@@ -563,12 +563,12 @@ LRESULT  CompatEditProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         ichStart = StarsMin(lp->ichAnchor, lp->ichCaret); ichEnd = StarsMax(lp->ichAnchor, lp->ichCaret);
         if (w) *reinterpret_cast<DWORD *>(w) = ichStart;
         if (l) *reinterpret_cast<DWORD *>(l) = ichEnd;
-        return ichStart > UINT16_MAX || ichEnd > UINT16_MAX ? -1 : static_cast<LRESULT>(MAKELONG(ichStart, ichEnd));
+        return ichStart > std::numeric_limits<std::uint16_t>::max() || ichEnd > std::numeric_limits<std::uint16_t>::max() ? -1 : static_cast<LRESULT>(MAKELONG(ichStart, ichEnd));
     case win32::EM_SETSEL:
         if (static_cast<INT_PTR>(w) == -1) SelectEdit(hwnd, lp->ichCaret, lp->ichCaret);
         else SelectEdit(hwnd, static_cast<UINT>(w), l == -1 ? cch : static_cast<UINT>(l));
         return 0;
-    case win32::EM_LIMITTEXT: lp->cchLimit = w ? (((static_cast<UINT_PTR>(INT_MAX)) < (w)) ? (static_cast<UINT_PTR>(INT_MAX)) : (w)) : INT_MAX; return 0;
+    case win32::EM_LIMITTEXT: lp->cchLimit = w ? (((static_cast<UINT_PTR>(std::numeric_limits<int>::max())) < (w)) ? (static_cast<UINT_PTR>(std::numeric_limits<int>::max())) : (w)) : std::numeric_limits<int>::max(); return 0;
     case win32::EM_GETLIMITTEXT: return lp->cchLimit;
     case win32::EM_GETMODIFY: return lp->fModified;
     case win32::EM_SETMODIFY: lp->fModified = w != 0; return 0;
@@ -618,7 +618,7 @@ LRESULT  CompatEditProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         else if (LOWORD(w) == win32::SB_PAGEUP) ScrollEdit(hwnd, 0, -static_cast<int>(cLine));
         else if (LOWORD(w) == win32::SB_PAGEDOWN) ScrollEdit(hwnd, 0, static_cast<int>(cLine));
         else if (LOWORD(w) == win32::SB_TOP) ScrollEdit(hwnd, 0, -static_cast<int>(ichStart));
-        else if (LOWORD(w) == win32::SB_BOTTOM) ScrollEdit(hwnd, 0, INT_MAX);
+        else if (LOWORD(w) == win32::SB_BOTTOM) ScrollEdit(hwnd, 0, std::numeric_limits<int>::max());
         else if (LOWORD(w) == win32::SB_THUMBTRACK || LOWORD(w) == win32::SB_THUMBPOSITION) {
             int iPos = win32::IsWindow(lp->rghwndScroll[win32::SB_VERT]) && lp->rghwndScroll[win32::SB_VERT]->fTracking ?
                 lp->rghwndScroll[win32::SB_VERT]->iScrollTrack : HIWORD(w);
@@ -632,14 +632,14 @@ LRESULT  CompatEditProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         return lp->dwStyle & win32::ES_MULTILINE ? IEditLine(hwnd, ichEnd) : 0;
     case win32::EM_LINEINDEX:
         if (static_cast<INT_PTR>(w) == -1) return IchLineStart(hwnd, lp->ichCaret);
-        ich = IchEditLine(hwnd, static_cast<UINT>(w)); return ich == UINT_MAX ? -1 : static_cast<LRESULT>(ich);
+        ich = IchEditLine(hwnd, static_cast<UINT>(w)); return ich == std::numeric_limits<unsigned int>::max() ? -1 : static_cast<LRESULT>(ich);
     case win32::EM_LINELENGTH:
         ich = static_cast<INT_PTR>(w) == -1 ? lp->ichCaret : (((static_cast<UINT>(w)) < (cch)) ? (static_cast<UINT>(w)) : (cch));
         ichStart = IchLineStart(hwnd, ich);
         return IchLineEnd(hwnd, ichStart) - ichStart;
     case win32::EM_GETLINE:
         ich = IchEditLine(hwnd, static_cast<UINT>(w));
-        if (!l || ich == UINT_MAX) return 0;
+        if (!l || ich == std::numeric_limits<unsigned int>::max()) return 0;
         std::memcpy(&cchMax, reinterpret_cast<void *>(l), sizeof(cchMax));
         cLine = static_cast<UINT>(CchUtf8Prefix(lp->pszTitle + ich, (((cchMax) < (IchLineEnd(hwnd, ich) - ich)) ? (cchMax) : (IchLineEnd(hwnd, ich) - ich))));
         std::memcpy(reinterpret_cast<void *>(l), lp->pszTitle + ich, cLine); return cLine;
@@ -671,7 +671,7 @@ LRESULT  CompatEditProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         lp->fEditCaret = msg == win32::WM_SETFOCUS; lp->fEditTyping = 0; lp->iEditUndoAction = editUndoSeparate;
         if (msg == win32::WM_KILLFOCUS) { SDL_free(lp->pszEditComposition); lp->pszEditComposition = nullptr; }
         if (lp->idEditCaretTimer) win32::KillTimer(hwnd, lp->idEditCaretTimer);
-        lp->idEditCaretTimer = msg == win32::WM_SETFOCUS ? win32::SetTimer(hwnd, UINTPTR_MAX - 2, 530, nullptr) : 0;
+        lp->idEditCaretTimer = msg == win32::WM_SETFOCUS ? win32::SetTimer(hwnd, std::numeric_limits<std::uintptr_t>::max() - 2, 530, nullptr) : 0;
         win32::InvalidateRect(hwnd, nullptr, 1); NotifyEdit(hwnd, msg == win32::WM_SETFOCUS ? win32::EN_SETFOCUS : win32::EN_KILLFOCUS); return 0;
     case win32::WM_TIMER:
         if (w == lp->idEditCaretTimer && win32::GetFocus() == hwnd) { lp->fEditCaret = !lp->fEditCaret; win32::InvalidateRect(hwnd, nullptr, 0); }

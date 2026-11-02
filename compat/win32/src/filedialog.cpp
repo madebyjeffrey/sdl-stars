@@ -7,10 +7,10 @@
 #include "native.h"
 #include <dirent.h>
 #include <cerrno>
-#include <climits>
 #include <cstdlib>
 #include <cstring>
 #include <array>
+#include <limits>
 #include <string_view>
 #include <algorithm>
 #include <sys/stat.h>
@@ -701,7 +701,7 @@ static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
         if (pFailure->error == win32::files::FILESELECTIONERROR::ownerUnavailable)
             win32::SetLastError(win32::ERROR_INVALID_WINDOW_HANDLE);
         if (pFailure->error == win32::files::FILESELECTIONERROR::bufferTooSmall && lpof->nMaxFile >= sizeof(WORD)) {
-            WORD required = static_cast<WORD>(StarsMin(pFailure->cbRequiredPath, UINT16_MAX));
+            WORD required = static_cast<WORD>(StarsMin(pFailure->cbRequiredPath, std::numeric_limits<std::uint16_t>::max()));
             std::memcpy(lpof->lpstrFile, &required, sizeof(required));
         }
     }

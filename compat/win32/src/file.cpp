@@ -4,10 +4,10 @@
 #include "internal.h"
 #include <cerrno>
 #include <fcntl.h>
-#include <climits>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <limits>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -117,8 +117,8 @@ HFILE win32::OpenFile(LPCSTR pszFile, LPOFSTRUCT lpof, UINT flags) {
     lpNew = static_cast<COMPATFILE *>((std::calloc(1, sizeof(*lpNew))));
     fileOwner.reset(lpNew);
     if (!lpNew) { dwError = win32::ERROR_NOT_ENOUGH_MEMORY; goto LUnlock; }
-    for (hf = 3; hf <= INT16_MAX && LpFile(hf); hf++) {}
-    if (hf > INT16_MAX) { hf = win32::HFILE_ERROR; dwError = win32::ERROR_TOO_MANY_OPEN_FILES; goto LUnlock; }
+    for (hf = 3; hf <= std::numeric_limits<std::int16_t>::max() && LpFile(hf); hf++) {}
+    if (hf > std::numeric_limits<std::int16_t>::max()) { hf = win32::HFILE_ERROR; dwError = win32::ERROR_TOO_MANY_OPEN_FILES; goto LUnlock; }
     lpNew->hf = hf; lpNew->pf = nativeFileOwner.release(); lpNew->dev = nfi->idDevice; lpNew->ino = nfi->idFile;
     lpNew->grAccess = grAccess; lpNew->grShare = grShare;
     lpNew->lpNext = lpFiles; lpFiles = fileOwner.release(); lpNew = nullptr; pf = nullptr;
@@ -218,7 +218,7 @@ DWORD win32::GetFileSize(HANDLE h, LPDWORD lpdwHigh) {
     INT_PTR id = reinterpret_cast<INT_PTR>(h);
 
     std::unique_lock lockFiles(fFileLock);
-    lp = id >= 0 && id <= INT_MAX ? LpFile(static_cast<HFILE>(id)) : nullptr;
+    lp = id >= 0 && id <= std::numeric_limits<int>::max() ? LpFile(static_cast<HFILE>(id)) : nullptr;
     if (lp && (cb = CbNativeFile(lp->pf)) >= 0) {
         dw = static_cast<DWORD>(static_cast<std::uint64_t>(cb));
         if (lpdwHigh) *lpdwHigh = static_cast<DWORD>((static_cast<std::uint64_t>(cb) >> 32));

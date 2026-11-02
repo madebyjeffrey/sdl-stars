@@ -1,7 +1,6 @@
 /* Geometry contracts shared by the SDK and the local rasterizer. */
 #include <windows.h>
 #include <stdint.h>
-#include <limits.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -134,7 +133,7 @@ int main(int argc, char **argv) {
     }
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
     CHECK(SelectObject(hdc, hbrush));
-    CHECK(!Ellipse(hdc, INT_MIN, INT_MIN, INT_MAX, INT_MAX));
+    CHECK(!Ellipse(hdc, std::numeric_limits<int>::min(), std::numeric_limits<int>::min(), std::numeric_limits<int>::max(), std::numeric_limits<int>::max()));
     CHECK(Ellipse(hdc, -524288, -524288, 524288, 524288));
     CHECK(GetPixel(hdc, 0, 0) == RGB(0, 0, 255) && GetPixel(hdc, 39, 39) == RGB(0, 0, 255));
 #endif

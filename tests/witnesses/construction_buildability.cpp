@@ -4,6 +4,7 @@
 #include "uistate.h"
 #endif
 #include "callbackcontext.h"
+#include <limits>
 
 int main(int argc, char **argv) {
 #ifdef STARS_UI_SDL
@@ -148,7 +149,7 @@ int main(int argc, char **argv) {
     planet.fStarbase = 1;
     bases[0].hul.ihuldef = static_cast<HulDef>(32);
     app.state.rgplr[0].rgAttr[rsMajorAdv] = raNone;
-    app.state.rgplr[0].grbitTrader = static_cast<GrbitTrader>(UINT16_MAX);
+    app.state.rgplr[0].grbitTrader = static_cast<GrbitTrader>(std::numeric_limits<std::uint16_t>::max());
     for (int f = 0; f < 6; f++)
         app.state.rgplr[0].rgTech[f] = 26;
     app.state.rgplr[0].cFleet = 512;

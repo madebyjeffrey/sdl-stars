@@ -19,6 +19,7 @@
 #include "file_selection.h"
 #include "file_selection_ui.h"
 #include "ownership.h"
+#include <limits>
 #include <stars_compat.h>
 #include <SDL3/SDL.h>
 #include <cerrno>
@@ -70,7 +71,7 @@ static std::int16_t FSelectedLibraryGameName(HWND hwnd, char *pszName, std::size
 static void *PvLibraryFolderContext(HWND hwnd) {
     const std::uint64_t id = StarsCompatWindowId(hwnd);
     // SDL carries one pointer-sized opaque value; no window pointer outlives UI.
-    return id <= UINTPTR_MAX ? reinterpret_cast<void *>(static_cast<std::uintptr_t>(id)) : nullptr;
+    return id <= std::numeric_limits<std::uintptr_t>::max() ? reinterpret_cast<void *>(static_cast<std::uintptr_t>(id)) : nullptr;
 }
 
 static void SDLCALL LibraryExportFolderSelected(void *lpData, const char * const *rgpszPath, int iFilter) noexcept;
@@ -635,7 +636,7 @@ static std::int16_t FCopyRaceExport(const char *pszSource, const char *pszTarget
 
     pchSlash = std::strrchr(pszTarget, chDirSep);
     cchDirectory = pchSlash ? static_cast<std::size_t>((pchSlash - pszTarget)) + 1 : 0;
-    if (cchDirectory > INT_MAX) return 0;
+    if (cchDirectory > std::numeric_limits<int>::max()) return 0;
     dwTick = DwTickCount();
     for (i = 0; i < 1000; i++) {
         cch = CchSnprintf(std::span{pszTemp, cchTemp}, "%.*s.stars-race-export-%u-%u.tmp",

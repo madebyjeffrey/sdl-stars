@@ -1,5 +1,6 @@
 /* Logical-window inspection for the native UI and in-process tutorial harness. */
 #include "internal.h"
+#include <limits>
 #include <utility>
 #include <iterator>
 #include <stars_compat.h>
@@ -127,7 +128,7 @@ BOOL StarsCompatCaptureHierarchy(STARSCOMPATSNAPSHOT *lpsnap) {
     for (lpwin = HwndCompatRegistry(); lpwin; lpwin = lpwin->lpNext)
         if (lpwin->fAlive && !lpwin->fDestroying) c++;
     if (c == 0) return 1;
-    if (c > SIZE_MAX / sizeof(*lpitem)) return 0;
+    if (c > std::numeric_limits<std::size_t>::max() / sizeof(*lpitem)) return 0;
     lpsnap->rgWindow = static_cast<STARSCOMPATWINDOW *>((SDL_calloc(c, sizeof(*lpitem))));
     if (!lpsnap->rgWindow) return 0;
     lpsnap->cWindow = c;
@@ -226,7 +227,7 @@ static void InspectDetails(HWND hwnd) {
     FormatStyles(lp, 0, std::span{szStyle});
     FormatStyles(lp, 1, std::span{szExStyle});
     cb = std::strlen(lp->pszClass) + std::strlen(lp->pszText) + std::strlen(szStyle) + std::strlen(szExStyle);
-    if (cb > SIZE_MAX - 640 || !(psz = static_cast<char *>((SDL_malloc(cb + 640))))) return;
+    if (cb > std::numeric_limits<std::size_t>::max() - 640 || !(psz = static_cast<char *>((SDL_malloc(cb + 640))))) return;
     NATIVEOWNER<char, SDL_free> pszOwner(psz);
     CchSnprintf(std::span{psz, cb + 640},
         "ID: %" PRIu64 "\r\nParent: %" PRIu64 "\r\nOwner: %" PRIu64 "\r\nControl ID: %" PRIdPTR
@@ -253,7 +254,7 @@ static void InspectRows(HWND hwndList, std::uint64_t idParent, int cDepth) {
         lp = &snapInspector.rgWindow[i];
         if (lp->idParent != idParent) continue;
         cb = std::strlen(lp->pszText);
-        if (cb > (SIZE_MAX - 1) / 3) continue;
+        if (cb > (std::numeric_limits<std::size_t>::max() - 1) / 3) continue;
         pszUtf = static_cast<char *>((SDL_malloc(cb * 3 + 1)));
         NATIVEOWNER<char, SDL_free> pszOwner(pszUtf);
         if (!pszUtf) continue;

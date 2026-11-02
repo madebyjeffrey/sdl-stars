@@ -4,6 +4,7 @@
 #include "uistate.h"
 #endif
 #include "callbackcontext.h"
+#include <limits>
 static int16_t s16(int n) { return (int16_t)(uint16_t)n; }
 static int     damageExpected(int prior, int add, unsigned word, unsigned hp, unsigned *out) {
     int share = word % 128, damage = word / 128;
@@ -15,7 +16,7 @@ static int     damageExpected(int prior, int add, unsigned word, unsigned hp, un
     if (!affected)
         affected = 1;
     int64_t product = (int64_t)(hp * (unsigned)damage / 10) * affected;
-    if (product < INT32_MIN || product > INT32_MAX)
+    if (product < std::numeric_limits<std::int32_t>::min() || product > std::numeric_limits<std::int32_t>::max())
         return 0;
     int original = (int)(product / 50), total = s16(prior + add);
     if (!total)
@@ -27,10 +28,10 @@ static int     damageExpected(int prior, int add, unsigned word, unsigned hp, un
     if (!next)
         next = 1;
     int64_t scaled = (int64_t)original * 5;
-    if (scaled < INT32_MIN || scaled > INT32_MAX || !hp)
+    if (scaled < std::numeric_limits<std::int32_t>::min() || scaled > std::numeric_limits<std::int32_t>::max() || !hp)
         return 0;
     scaled = scaled / next * 100;
-    if (scaled < INT32_MIN || scaled > INT32_MAX)
+    if (scaled < std::numeric_limits<std::int32_t>::min() || scaled > std::numeric_limits<std::int32_t>::max())
         return 0;
     *out = newShare + 128 * ((unsigned)(scaled / (int)hp) & 511);
     return 1;
@@ -299,7 +300,7 @@ int main(void) {
     }
     reset(app);
     fleetBodies[0].rgcsh[0] = 32767;
-    ships[0].cBuilt = ships[0].cExist = UINT32_MAX;
+    ships[0].cBuilt = ships[0].cExist = std::numeric_limits<std::uint32_t>::max();
     CreateShip(app, 0, &fleetBodies[0], 0, 1);
     CHECK(fleetBodies[0].rgcsh[0] == -32768 && ships[0].cBuilt == 0 && ships[0].cExist == 0);
     // Actual base invalidators reset surviving base progress in both the
@@ -326,7 +327,7 @@ int main(void) {
     planet.fStarbase = 1;
     planet.isb = 0;
     bases[0].cExist = 0;
-    bases[0].cBuilt = UINT32_MAX;
+    bases[0].cBuilt = std::numeric_limits<std::uint32_t>::max();
     CHECK(call(app, 2, 16, 0));
     CHECK(bases[0].cExist == 0 && bases[0].cBuilt == 0);
     for (unsigned prior = 0; prior < 10; prior++)

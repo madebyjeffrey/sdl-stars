@@ -1,10 +1,10 @@
 #include "nativeformat.h"
 
 #include <cerrno>
-#include <climits>
 #include <cstdio>
 #include <cstring>
 #include <cwchar>
+#include <limits>
 #include <new>
 #include <string>
 #include <utility>
@@ -130,7 +130,7 @@ int CchFormat(std::span<char> rgch, std::string_view szFormat, std::span<const N
     if (!rgch.empty()) rgch[0] = 0;
     auto append = [&](std::string_view sz) -> bool {
         std::size_t cb;
-        if (sz.size() > static_cast<std::size_t>(INT_MAX - cch)) { errno = EOVERFLOW; return false; }
+        if (sz.size() > static_cast<std::size_t>(std::numeric_limits<int>::max() - cch)) { errno = EOVERFLOW; return false; }
         if (static_cast<std::size_t>(cch) < rgch.size()) {
             cb = std::min(sz.size(), rgch.size() - static_cast<std::size_t>(cch) - 1);
             std::memmove(rgch.data() + cch, sz.data(), cb);
@@ -196,7 +196,7 @@ int CchFormat(std::span<char> rgch, std::string_view szFormat, std::span<const N
         const auto out = static_cast<std::size_t>(cch) < rgch.size() ? rgch.subspan(cch) : std::span<char>{};
         cchPart = CchConvert(out, std::move(szSpec), rgArgs[iArg++], mdLength, chType, cch);
         if (cchPart < 0) return -1;
-        if (cchPart > INT_MAX - cch) { errno = EOVERFLOW; return -1; }
+        if (cchPart > std::numeric_limits<int>::max() - cch) { errno = EOVERFLOW; return -1; }
         cch += cchPart;
     }
     return cch;

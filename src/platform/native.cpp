@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cerrno>
 #include <ctime>
+#include <limits>
 
 // qsortSwap16 exchanges complete elements, including native-width pointers.
 static void qsortSwap16(unsigned char *a, unsigned char *b, std::size_t width) {
@@ -33,7 +34,7 @@ void qsort16(APPSESSION &app, void *base, std::size_t count, std::size_t width, 
         return;
 
     // Process the smaller partition first, bounding pending ranges by log2(count).
-    std::size_t lows[sizeof(std::size_t) * CHAR_BIT], highs[sizeof(std::size_t) * CHAR_BIT];
+    std::size_t lows[std::numeric_limits<std::size_t>::digits], highs[std::numeric_limits<std::size_t>::digits];
     std::size_t pending = 0, lo = 0, hi = count - 1;
     for (;;) {
         if (lo < hi) {

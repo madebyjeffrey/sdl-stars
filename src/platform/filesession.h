@@ -2,6 +2,7 @@
 #define STARS_NATIVE_FILESESSION_H
 #include "fileio.h"
 #include <array>
+#include <limits>
 #include <memory>
 #include <mutex>
 
@@ -10,7 +11,7 @@ struct NATIVEFILEDELETE {
 };
 class NATIVEFILESESSION {
     std::mutex lock;
-    std::array<std::unique_ptr<NATIVEFILE, NATIVEFILEDELETE>, INT16_MAX + 1> rg;
+    std::array<std::unique_ptr<NATIVEFILE, NATIVEFILEDELETE>, std::numeric_limits<std::int16_t>::max() + 1> rg;
     friend NATIVEFILE *LegacyFile(std::int16_t hf);
     friend NATIVEFILEOPENRESULT HfNativeOpenLegacy(const char *, NATIVEFILEOPENOPTIONS);
     friend std::optional<std::size_t> CbNativeReadLegacy(std::int16_t, std::span<std::byte>);

@@ -1,7 +1,7 @@
 /* SDL display coordinates plus classic UI metrics for the source wrapper. */
 #include "internal.h"
 #include "display_io.h"
-#include <climits>
+#include <limits>
 #include <unistd.h>
 
 static BOOL FDisplayRect(BOOL fUsable, LPRECT lprc) {
@@ -10,7 +10,7 @@ static BOOL FDisplayRect(BOOL fUsable, LPRECT lprc) {
     if (!FCompatVideo()) return 0;
     id = CompatDisplayIO().pfnGetPrimaryDisplay();
     if (!id || !(fUsable ? CompatDisplayIO().pfnGetDisplayUsableBounds(id, &rc) : CompatDisplayIO().pfnGetDisplayBounds(id, &rc)) ||
-        rc.w <= 0 || rc.h <= 0 || static_cast<std::int64_t>(rc.x) + rc.w > INT_MAX || static_cast<std::int64_t>(rc.y) + rc.h > INT_MAX) return 0;
+        rc.w <= 0 || rc.h <= 0 || static_cast<std::int64_t>(rc.x) + rc.w > std::numeric_limits<int>::max() || static_cast<std::int64_t>(rc.y) + rc.h > std::numeric_limits<int>::max()) return 0;
     win32::SetRect(lprc, rc.x, rc.y, rc.x + rc.w, rc.y + rc.h);
     return 1;
 }
@@ -19,7 +19,7 @@ static BOOL FVirtualRect(LPRECT lprc, int *lpc) {
     SDL_DisplayID *rgid;
     SDL_Rect rc;
     int c, i;
-    std::int64_t xMin = INT_MAX, yMin = INT_MAX, xMax = INT_MIN, yMax = INT_MIN;
+    std::int64_t xMin = std::numeric_limits<int>::max(), yMin = std::numeric_limits<int>::max(), xMax = std::numeric_limits<int>::min(), yMax = std::numeric_limits<int>::min();
     BOOL fOk = 1;
     if (!FCompatVideo()) return 0;
     rgid = CompatDisplayIO().pfnGetDisplays(&c);
@@ -31,7 +31,7 @@ static BOOL FVirtualRect(LPRECT lprc, int *lpc) {
         xMax = (((xMax) > (static_cast<std::int64_t>(rc.x) + rc.w)) ? (xMax) : (static_cast<std::int64_t>(rc.x) + rc.w)); yMax = (((yMax) > (static_cast<std::int64_t>(rc.y) + rc.h)) ? (yMax) : (static_cast<std::int64_t>(rc.y) + rc.h));
     }
     rgidOwner.reset();
-    if (!fOk || xMax > INT_MAX || yMax > INT_MAX || xMax - xMin > INT_MAX || yMax - yMin > INT_MAX) return 0;
+    if (!fOk || xMax > std::numeric_limits<int>::max() || yMax > std::numeric_limits<int>::max() || xMax - xMin > std::numeric_limits<int>::max() || yMax - yMin > std::numeric_limits<int>::max()) return 0;
     win32::SetRect(lprc, static_cast<int>(xMin), static_cast<int>(yMin), static_cast<int>(xMax), static_cast<int>(yMax)); *lpc = c;
     return 1;
 }

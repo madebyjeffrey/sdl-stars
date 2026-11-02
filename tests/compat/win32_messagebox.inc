@@ -203,7 +203,7 @@ int main(int argc, char **argv) {
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
     before = cAudioQueues;
     CHECK(MessageBeep(MB_OK) && MessageBeep(MB_ICONHAND) && MessageBeep(MB_ICONQUESTION) &&
-          MessageBeep(MB_ICONEXCLAMATION) && MessageBeep(MB_ICONASTERISK) && MessageBeep(UINT32_MAX));
+          MessageBeep(MB_ICONEXCLAMATION) && MessageBeep(MB_ICONASTERISK) && MessageBeep(std::numeric_limits<std::uint32_t>::max()));
     CHECK(cAudioQueues == before + 6);
     CHECK(!MessageBeep(3) && GetLastError() == ERROR_INVALID_PARAMETER);
     CHECK(SDL_WasInit(SDL_INIT_AUDIO) & SDL_INIT_AUDIO);

@@ -1,6 +1,7 @@
 #include "internal.h"
 #include "../../compat/win32/src/message_alloc_io.h"
 
+#include <limits>
 #include <stars_compat.h>
 #include <atomic>
 #include <cstdio>
@@ -85,7 +86,7 @@ int main() {
     catch (const StarsError &error) { CHECK(error.ids == 33); }
 
     before = cReleased; md = 0;
-    CHECK(!StarsCompatPostOwnedMessageAsync(UINT64_MAX,wmPayload,MakePayload(11),0));
+    CHECK(!StarsCompatPostOwnedMessageAsync(std::numeric_limits<std::uint64_t>::max(),wmPayload,MakePayload(11),0));
     CHECK(cReleased == before+1);
     before = cReleased;
     fFailCalloc = true;
