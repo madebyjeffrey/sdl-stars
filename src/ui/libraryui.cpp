@@ -1057,6 +1057,7 @@ std::int16_t FExportLibraryOrders(APPSESSION &app, HWND hwnd, const char *pszTar
     char szTemp[512], szMessage[640], szExt[4];
     char *pch, *pchSlash;
     const char *pszLibraryName;
+    std::size_t cchTargetPath;
     StringId idsSaveError;
     NATIVEFILE *pf;
     std::uint32_t dwTick;
@@ -1107,8 +1108,9 @@ std::int16_t FExportLibraryOrders(APPSESSION &app, HWND hwnd, const char *pszTar
     pch = std::strrchr(szTarget, '.');
     if (pch && (!pchSlash || pch > pchSlash)) *pch = 0;
     if (!szTarget[0]) return 0;
-    cch = CchSnprintf(std::span{szTarget + std::strlen(szTarget), sizeof(szTarget) - std::strlen(szTarget)}, ".x%d", app.state.idPlayer + 1);
-    if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szTarget) - std::strlen(szTarget)) return 0;
+    cchTargetPath = std::strlen(szTarget);
+    cch = CchSnprintf(std::span{szTarget + cchTargetPath, sizeof(szTarget) - cchTargetPath}, ".x%d", app.state.idPlayer + 1);
+    if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szTarget) - cchTargetPath) return 0;
 
     /* Confirm the actual orders path after correcting the chooser's extension. */
     if (FNativeFileSize(szTarget)) {
@@ -1219,13 +1221,15 @@ std::int16_t FImportLibraryRace(APPSESSION &app, HWND hwnd, const char *pszSourc
     RACESTATE rsSav;
     std::int16_t fValid;
     std::int16_t fLegacy;
+    std::size_t cchSource;
     if (!pszSource) {
         std::ranges::fill(szSource, 0);
         if (!FSelectLibraryRaceFile(app, hwnd, false, std::span{szSource})) return 0;
         pszSource = szSource;
     }
-    if (std::strlen(pszSource) >= sizeof(szSource)) return 0;
-    if (pszSource != szSource) std::ranges::copy_n(pszSource, std::strlen(pszSource) + 1, std::span{szSource}.begin());
+    cchSource = std::strlen(pszSource);
+    if (cchSource >= sizeof(szSource)) return 0;
+    if (pszSource != szSource) std::ranges::copy_n(pszSource, cchSource + 1, std::span{szSource}.begin());
     SaveRaceState(app, &rsSav);
     fValid = FWasRaceFile(app, szSource, 1);
     if (fValid <= 0) {
