@@ -17,6 +17,19 @@ J/JRC3/JRC4 fix claims below come from the supplied list and are not independent
 verified release history. See [WIN16-PARITY.md](WIN16-PARITY.md) for native changes
 and [ROADMAP.md](ROADMAP.md) for the post-tag work.
 
+## Scanner location label overflows its stack buffer — fixed on develop
+
+`DrawScannerSBar` appended a location name of up to 359 UTF-8 bytes to the
+distance/unit/connector in a 100-byte local array. The actual parent paint
+call reproduces a stack-buffer overflow in `strcat` under ASan. The local
+owner now fits all four source budgets, the separator search is bounded,
+and catalog writes and location appends carry their destination capacities.
+Complete names are retained for drawing; the existing screen clip decides
+what is visible. Tests compare actual narrow/wide status-bar pixels with an
+independently assembled reference label, including long UTF-8 names and
+maximum catalog values. No record size or game rule changes; regenerating
+and comparing the native baseline moved no checkpoint.
+
 ## Race filename changed across callbacks — fixed on develop
 
 `FWasRaceFile` borrowed its filename until the end of loading, including after

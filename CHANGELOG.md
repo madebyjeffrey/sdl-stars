@@ -6,6 +6,13 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `DrawScannerSBar` now keeps enough local text capacity for the complete
+  distance, unit, connector and location label. A valid long location name
+  previously overflowed its 100-byte stack buffer. Bounded catalog writes
+  and location appends preserve fitting output and complete UTF-8 names;
+  screen clipping and saved records remain unchanged. No native regression
+  checkpoint moved after regeneration and comparison.
+
 - `FWasRaceFile` now owns its input path across reads, password prompts and
   close callbacks. Shared-buffer changes could previously replace the loaded
   race filename or its diagnostic, and a long error path could overrun the

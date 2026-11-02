@@ -1858,7 +1858,8 @@ void DrawScannerSBar(APPSESSION &app, HDC hdc, RECT *prc, SBAR *psbar, std::int1
     GrobjClass grobj;
     RECT       rcT;
     RECT       rc;
-    char       szBuf[100];
+    // Keep the distance, both catalog labels and the location's complete text budgets.
+    std::array<char, 2 * 360 + 2 * cchCatalogText> szBuf{};
 
     fhdc = 0;
     fDoName = 1;
@@ -2001,14 +2002,15 @@ void DrawScannerSBar(APPSESSION &app, HDC hdc, RECT *prc, SBAR *psbar, std::int1
         }
         if (pt.x != -1 && pt2.x != -1 && (pt.x != pt2.x || pt.y != pt2.y)) {
             CchCopyUtf8Prefix(std::span{szBuf}, PszGetDistance(app, pt.x, pt.y, pt2.x, pt2.y).data());
-            for (psz = szBuf; *psz != ' '; psz++) {
+            psz = std::find(szBuf.data(), szBuf.data() + szBuf.size(), ' ');
+            if (psz != szBuf.data() + szBuf.size()) {
+                TextIO().pfnCchGetString(app, static_cast<StringId>(idsLy + (rc.right >= 350)), std::span{szBuf}.subspan(static_cast<std::size_t>(psz - szBuf.data() + 1), cchCatalogText));
+                if (!psbar || !psbar->pscan) {
+                    TextIO().pfnCchGetString(app, idsFrom, std::span{szBuf}.subspan(static_cast<std::size_t>(psz - szBuf.data() + std::strlen(psz)), cchCatalogText));
+                    FAppendUtf8(std::span{szBuf}, PszGetLocName(app, app.state.sel.grobj, app.state.sel.id, pt2.x, pt2.y).data());
+                }
             }
-            TextIO().pfnCchGetString(app, static_cast<StringId>(idsLy + (rc.right >= 350)), std::span{szBuf}.subspan(static_cast<std::size_t>(psz - szBuf + 1)));
-            if (!psbar || !psbar->pscan) {
-                TextIO().pfnCchGetString(app, idsFrom, std::span{szBuf}.subspan(static_cast<std::size_t>(psz - szBuf + std::strlen(psz))));
-                std::strcat(psz + 8, PszGetLocName(app, app.state.sel.grobj, app.state.sel.id, pt2.x, pt2.y).data());
-            }
-            win32::ExtTextOutA(hdc, rcT.left + 3, rcT.top + 2, win32::ETO_CLIPPED, &rcClip, szBuf, std::strlen(szBuf), nullptr);
+            win32::ExtTextOutA(hdc, rcT.left + 3, rcT.top + 2, win32::ETO_CLIPPED, &rcClip, szBuf.data(), std::strlen(szBuf.data()), nullptr);
         }
         win32::SelectObject(hdc, hbrSav);
         win32::SetBkMode(hdc, iBkPrev);

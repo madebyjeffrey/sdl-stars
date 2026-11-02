@@ -1,6 +1,6 @@
 {
   "migration_parent": "d3d3724c",
-  "status": "303 copy migrations recorded; live text work remains active",
+  "status": "304 copy migrations recorded; live text work remains active",
   "contracts": {
     "display": "Write a terminated complete UTF-8 prefix into the actual destination span; preserve fitting bytes. Views borrow synchronously and overlapping copies use memmove.",
     "append": "Scan only inside the destination span for its NUL. An unterminated nonempty destination is cleared and zero bytes are appended.",
@@ -3001,6 +3001,15 @@
       "original_call": "std::strcpy(app.state.szWork, szFile)",
       "destination_span": "std::span{app.state.szWork}",
       "role": "Own the complete admitted UTF-8 filename across synchronous callbacks. Diagnostic staging alone uses a complete UTF-8 prefix within the actual Work buffer; I/O sees the full owned path."
+    },
+    {
+      "path": "src/ui/scan.cpp",
+      "scope": "DrawScannerSBar",
+      "baseline_line": 2009,
+      "operation": "strcat",
+      "original_call": "std::strcat(psz + 8, PszGetLocName(app, app.state.sel.grobj, app.state.sel.id, pt2.x, pt2.y).data())",
+      "destination_span": "std::span{szBuf}",
+      "role": "The complete scanner label has capacity for two 360-byte service values and two catalog values. Each catalog write gets its own budget and location append validates remaining capacity. No record width or location text is shortened."
     }
   ],
   "remaining_spelling_scope": "Lexical raw-copy spellings, including SDK declarations/definitions; comments/literals excluded with the manifest lexer. Exact counts prevent new raw sites during the remaining migration.",
@@ -3018,13 +3027,6 @@
       "count": 1,
       "status": "pending",
       "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/scan.cpp",
-      "normalized_call": "std::strcat(psz+8,PszGetLocName(app,app.state.sel.grobj,app.state.sel.id,pt2.x,pt2.y).data())",
-      "count": 1,
-      "status": "pending",
-      "role": "The location source is an owned value; migration of the scanner destination tail capacity is still pending."
     },
     {
       "path": "compat/win32/src/list.cpp",
@@ -3580,6 +3582,37 @@
         "src/core/race.cpp": "f9fb6a7caa39a40519b75baba028fd6f81774f58d3421cb885c26c0fc3bcd38e",
         "src/core/race.h": "5cc1aead016c48e24aadbe4ebddd4e492d6d8c286b968589e07e48acd95864be",
         "tests/unit/test_race.cpp": "d04199345ffecb46bde2cdb694c62a56313988e648d200e30c3d76c70cb31543"
+      }
+    }
+  },
+  "scanner_location_label": {
+    "status": "complete; locally verified; native Windows/Linux qualification pending",
+    "parent": "c844e4da",
+    "reproduction": "Actual parent DrawScannerSBar overflows its 100-byte stack buffer in strcat under ASan when painting a valid long location name.",
+    "contract": "Keep complete UTF-8 distance/catalog/location text in a local owner sized for all component budgets; retain fitting pixels and narrow/wide clipping behavior.",
+    "verification": {
+      "batch": "L05al complete scanner location-label capacity",
+      "parent": "c844e4dae6454d1f721946fd4e19e55b905117cf",
+      "status": "complete; locally verified; native Windows/Linux qualification pending",
+      "reproduction": "Actual parent DrawScannerSBar paints fitting reference labels, then ASan reports stack-buffer-overflow in strcat at scan.cpp:2009 with a valid 99-byte location name. The report identifies the 100-byte szBuf local.",
+      "implementation": "A 1232-byte std::array carries two 360-byte service budgets and two 256-byte catalog budgets. The separator search is bounded, each catalog write carries its own budget and FAppendUtf8 checks the complete location append. No allocation is added to the paint path.",
+      "contract": "Keep all valid UTF-8 source text and existing narrow/wide clipping. Fitting labels retain their actual pixels. Record layouts, saved text fields, simulation arithmetic and game rules are unchanged.",
+      "checks": {
+        "debug": "Full macos-sdl-debug build, no warnings.",
+        "desktop": "154/154, including 29 leak cases, actual client workflows and available SDL tutorial checkpoints.",
+        "native_ui": "The actual nine-case native-file UI executable passes. The scanner case compares narrow/wide pixel output to independently assembled labels for four name lengths, including complete long UTF-8 names; another comparison uses two maximum 255-byte catalog strings plus the 359-byte name.",
+        "sanitizers": "The actual nine-case native-file UI executable passes twice under ASan/UBSan, including the parent overflow input.",
+        "windows": "147/147 production translation units and the expanded actual scanner test consumer pass strict MinGW C++20 syntax using Windows SDL test flags. Native Windows/Linux execution remains pending.",
+        "manifest": "158 owned sources, 159 compiled variants, 161 standalone headers in both orders; exact four-call raw-copy inventory passes.",
+        "regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors/skips.",
+        "baseline": "592 native baseline files byte-identical after restoring 592 regeneration-only file changes; all 519 checkpoints match and none moved.",
+        "host": "Only UI implementation changed; the preceding L05ak core state already passed all 29 host tests and 519 host regression comparisons. They are recorded separately, not rerun for this UI-only change."
+      },
+      "inventory": "One raw append retired; four raw copies remain (two MDI path copies and two SDK message-output boundaries). 304 copy-migration records; wider L05/L06, Milestone D and L08 work remain open.",
+      "receipts": "dist/verification/live-cpp/l05al/",
+      "source_sha256": {
+        "src/ui/scan.cpp": "6bfdd74daddaaaa6b3abf57d8154d9e9736fae3d9d5329b7d747865f969ba5d3",
+        "tests/unit/test_native_fileui.cpp": "91c3e27721385bb6e2aea77f298bdc03d839e858a92eed5c2100a29d1a5f0da2"
       }
     }
   }

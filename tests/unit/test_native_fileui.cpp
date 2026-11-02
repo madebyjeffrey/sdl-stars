@@ -7,6 +7,8 @@
 #include "callbackcontext.h"
 #include "control_io.h"
 #include "createui.h"
+#include "scan.h"
+#include "stars.h"
 #include "librarypublication.h"
 #include "planetui.h"
 #include "buildui.h"
@@ -157,6 +159,84 @@ static void TestPlanetTitleCapacity(void) {
     app.state.sel.grobj = grobjNone;
     SetPlanetTitleBar(app, nullptr);
     TEST_CHECK(szPlanetTitleCaptured == "Planet View");
+}
+
+static int dxScannerLabel;
+static bool fLongScannerCatalog;
+static BOOL ScannerLabelRect(HWND, RECT *prc) { *prc = {0, 0, dxScannerLabel, 160}; return 1; }
+static std::int16_t ScannerLabelCatalog(APPSESSION &app, StringId ids, std::span<char> out) {
+    if (fLongScannerCatalog) {
+        TEST_CHECK(ids == idsLightYears || ids == idsFrom);
+        return static_cast<std::int16_t>(CchCopyUtf8(out, std::string(255, ids == idsFrom ? 'F' : 'L')));
+    }
+    return CchGetString(app, ids, out);
+}
+static void TestScannerLocationLabel(void) {
+    APPSESSION &app = ui::app;
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    HDC hscreen, hdc, hdcExpected;
+    HBITMAP hbm, hbmExpected;
+    HGDIOBJ hbmSav, hbmExpectedSav, hfontSav;
+    RECT rcClip;
+    bool fSame;
+    char szCaption[] = "";
+    SBAR sbar{};
+    TEST_ASSERT(FStarsTestInit(app));
+    TEST_ASSERT(FGetSystemColors(app));
+    hscreen = win32::GetDC(nullptr);
+    TEST_ASSERT(hscreen);
+    hdc = win32::CreateCompatibleDC(hscreen); hdcExpected = win32::CreateCompatibleDC(hscreen);
+    hbm = win32::CreateCompatibleBitmap(hscreen, 8192, 160); hbmExpected = win32::CreateCompatibleBitmap(hscreen, 8192, 160);
+    TEST_ASSERT(hdc && hdcExpected && hbm && hbmExpected);
+    hbmSav = win32::SelectObject(hdc, hbm); hbmExpectedSav = win32::SelectObject(hdcExpected, hbmExpected);
+    hfontSav = win32::SelectObject(hdcExpected, app.lpui->rghfontArial8[1]);
+    win32::SetTextColor(hdcExpected, app.lpui->crButtonText);
+    win32::SetBkColor(hdcExpected, app.lpui->crButtonFace);
+    win32::SetBkMode(hdcExpected, win32::TRANSPARENT);
+    app.lpui->dySBar = 64;
+    app.state.sel.grobj = grobjPlanet; app.state.sel.id = 0; app.state.sel.pt = {3, 4};
+    sbar.psz = szCaption;
+    CONTROLIO control;
+    control.pfnGetClientRect = ScannerLabelRect;
+    CONTROLIOSCOPE controlScope(control);
+    TEXTIO text;
+    text.pfnPlanetName = PszPlanetTitleName;
+    text.pfnCchGetString = ScannerLabelCatalog;
+    TEXTIOSCOPE textScope(text);
+    for (const auto dx : {8192, 300}) {
+        dxScannerLabel = dx;
+        for (const auto &sz : {std::string("Alba"), std::string(29, 'P') + "Ω", std::string(99, 'Q'), std::string(357, 'Z') + "Ω"}) {
+            szPlanetTitleName = sz;
+            DrawScannerSBar(app, hdc, nullptr, &sbar, 0);
+            const std::string szExpected = std::string("5.0 ") + (dx >= 350 ? "light years" : "ly") + " from " + sz;
+            rcClip = {6, 134, dx - 6, 154};
+            TEST_ASSERT(win32::FillRect(hdcExpected, &rcClip, app.lpui->hbrButtonFace));
+            TEST_ASSERT(win32::ExtTextOutA(hdcExpected, 7, 134, win32::ETO_CLIPPED, &rcClip, szExpected.c_str(), static_cast<UINT>(szExpected.size()), nullptr));
+            fSame = true;
+            for (int y = rcClip.top; y < rcClip.bottom; ++y)
+                for (int x = rcClip.left; x < rcClip.right; ++x)
+                    if (win32::GetPixel(hdc, x, y) != win32::GetPixel(hdcExpected, x, y)) fSame = false;
+            TEST_CHECK_(fSame, "scanner location label differs at width %d, name bytes %zu", dx, sz.size());
+        }
+    }
+    dxScannerLabel = 8192; fLongScannerCatalog = true;
+    szPlanetTitleName = std::string(357, 'Z') + "Ω";
+    DrawScannerSBar(app, hdc, nullptr, &sbar, 0);
+    const std::string szExpected = "5.0 " + std::string(255, 'L') + std::string(255, 'F') + szPlanetTitleName;
+    rcClip = {6, 134, dxScannerLabel - 6, 154};
+    TEST_ASSERT(win32::FillRect(hdcExpected, &rcClip, app.lpui->hbrButtonFace));
+    TEST_ASSERT(win32::ExtTextOutA(hdcExpected, 7, 134, win32::ETO_CLIPPED, &rcClip, szExpected.c_str(), static_cast<UINT>(szExpected.size()), nullptr));
+    fSame = true;
+    for (int y = rcClip.top; y < rcClip.bottom; ++y)
+        for (int x = rcClip.left; x < rcClip.right; ++x)
+            if (win32::GetPixel(hdc, x, y) != win32::GetPixel(hdcExpected, x, y)) fSame = false;
+    TEST_CHECK(fSame);
+    win32::SelectObject(hdcExpected, hfontSav);
+    win32::SelectObject(hdc, hbmSav); win32::SelectObject(hdcExpected, hbmExpectedSav);
+    TEST_CHECK(win32::DeleteObject(hbm) && win32::DeleteObject(hbmExpected));
+    TEST_CHECK(win32::DeleteDC(hdc) && win32::DeleteDC(hdcExpected));
+    TEST_CHECK(win32::ReleaseDC(nullptr, hscreen));
+    StarsCompatProcessExit();
 }
 
 static BOOL ProbeCaptionRect(HWND, RECT *prc) { *prc = {0, 0, 480, 120}; return 1; }
@@ -339,7 +419,8 @@ static void TestTextFitViews(void) {
     StarsCompatProcessExit();
 }
 
-TEST_LIST = {{"new-game blank title fits its field and preserves the complete basename", TestNewGameTitleBounds},
+TEST_LIST = {{"scanner location label renders complete text within source capacities", TestScannerLocationLabel},
+             {"new-game blank title fits its field and preserves the complete basename", TestNewGameTitleBounds},
              {"text fitting preserves exact glyph limits and UTF-8 field tails", TestTextFitViews},
              {"ship clone suffix handles empty and short UTF-8 names within its field", TestShipCloneNameBounds},
              {"raw player message paints its full UTF-8 byte budget within the display buffer", TestRawMessageDisplay},
