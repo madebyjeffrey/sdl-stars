@@ -201,7 +201,8 @@
         "bounded-report-task-and-numeric-label-strings",
         "readonly-password-salt-byte-view",
         "fixed-width-tech-requirement-span-interfaces",
-        "bounded-native-format-and-scan-interfaces"
+        "bounded-native-format-and-scan-interfaces",
+        "planet-tile-title-string-view"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -24518,7 +24519,7 @@
     "date": "2026-11-02",
     "reason": "Resume the live C++ cleanup on develop after the verified optional bounded library-import path batch.",
     "branch": "develop",
-    "latest_batch": "L06 remove NUL-terminated UTF-8 path adapter",
+    "latest_batch": "L05 planet tile titles use bounded views",
     "latest_published_head": "7fe016a7",
     "active_stages": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
@@ -24676,16 +24677,20 @@
       {
         "commit": "7bc95b0d",
         "message": "Remove C string path conversion overload"
+      },
+      {
+        "commit": "6828dc42",
+        "message": "Draw planet tile titles from bounded views"
       }
     ],
-    "latest_source_commit": "7bc95b0d",
-    "latest_batch_status": "Locally committed as 7bc95b0d. macOS SDL Debug build, desktop/host unit suites, native/host regressions and tutorial smoke pass. Current-source Windows/Linux qualification remains outstanding."
+    "latest_source_commit": "6828dc42",
+    "latest_batch_status": "Locally committed as 6828dc42. macOS SDL Debug build, desktop/host unit suites, native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding."
   },
   "current_checkpoint": {
-    "batch": "L06 remove NUL-terminated UTF-8 path adapter",
-    "status": "Locally committed as 7bc95b0d. macOS SDL Debug build, desktop/host unit suites, native/host regressions and tutorial smoke pass. Current-source Windows/Linux qualification remains outstanding. Local Windows cross qualification remains blocked by the host-gated preset and unavailable Python build dependency; Linux CI qualification remains outstanding.",
-    "parent": "39fb4b12",
-    "change": "Removed PathFromUtf8(const char*); native path conversion now exposes only its std::string_view interface, and owned temporary paths are passed directly.",
+    "batch": "L05 planet tile titles use bounded views",
+    "status": "Locally committed as 6828dc42. macOS SDL Debug build, desktop/host unit suites, native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
+    "parent": "c4c4b852",
+    "change": "FDrawTileNC accepts std::string_view titles and draws exactly the bounded length while retaining the prior title-background clear.",
     "verification": {
       "macos_sdl_debug": "make compile passes with strict warnings and header checks.",
       "desktop_unit_tests": "18/18 pass.",
@@ -24723,9 +24728,9 @@
     "date": "2026-11-02",
     "branch": "develop",
     "changes": [
-      "Removed the NUL-terminated PathFromUtf8 overload and its strlen dependency.",
-      "Temporary-file paths use their owning std::string directly when creating std::filesystem::path values.",
-      "The mutable mkstemp and unlink C-library boundary remains explicit."
+      "FDrawTileNC no longer requires a NUL-terminated title or a -1 length sentinel.",
+      "The title background clear is explicit and the draw call receives the view length.",
+      "Empty views use a valid empty C string at the legacy TextOut boundary."
     ],
     "current_source_audits": {
       "tracked_c_translation_units": 44,
@@ -24851,9 +24856,13 @@
       {
         "commit": "7bc95b0d",
         "message": "Remove C string path conversion overload"
+      },
+      {
+        "commit": "6828dc42",
+        "message": "Draw planet tile titles from bounded views"
       }
     ],
-    "source_commit": "7bc95b0d"
+    "source_commit": "6828dc42"
   },
   "milestone_d_checkpoint": {
     "stage": "D05 caller migrations implemented; D06 platform qualification pending",
