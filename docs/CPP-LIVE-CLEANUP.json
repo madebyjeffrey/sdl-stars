@@ -23547,7 +23547,7 @@
     "receipts": "dist/verification/live-cpp/l05am/"
   },
   "milestone_d_checkpoint": {
-    "stage": "D01 post-C inventory complete",
+    "stage": "D02 interface decided; shared implementation remains",
     "c_merge_parent": "a65e653a (PR #68)",
     "inventory_revision": "f3b89311",
     "typed_picker_callers": 8,
@@ -23558,6 +23558,6 @@
       "macOS AppKit",
       "Windows SDK"
     ],
-    "next": "D02 compare free-function request/result with an operation owner; select ownership, cancellation, CWD, and error contracts from actual call sites."
+    "next": "D03 implement the shared policy behind SelectFile and retain GetOpenFileNameA/GetSaveFileNameA as translating adapters."
   }
 }

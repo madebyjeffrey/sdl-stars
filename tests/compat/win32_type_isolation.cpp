@@ -6,6 +6,7 @@ struct FORMATPACKCHECK { char ch; int value; };
 static_assert(offsetof(FORMATPACKCHECK, value) == 2, "wrapper headers restore caller packing");
 #pragma pack(pop)
 #include <wincompat_calls.h>
+#include <file_selection.h>
 #include <type_traits>
 
 static_assert(alignof(std::optional<std::size_t>) >= alignof(std::size_t), "file counts retain native alignment");
@@ -17,6 +18,10 @@ static_assert(alignof(std::span<char>) >= alignof(char *), "format argument span
 static_assert(!std::is_same_v<win32::MSG, ::MSG>);
 #endif
 static_assert(std::is_same_v<decltype(&win32::GetWindowLongPtrA), LONG_PTR (*)(HWND, int)>);
+static_assert(std::is_same_v<decltype(win32::files::FILESELECTIONRESULT{}),
+                             std::variant<win32::files::FILESELECTIONSELECTED,
+                                          win32::files::FILESELECTIONCANCELLED,
+                                          win32::files::FILESELECTIONFAILURE>>);
 
 static_assert(std::is_same_v<HWND, win32::HWND__ *>);
 static_assert(std::is_same_v<HDC, win32::HDC__ *>);

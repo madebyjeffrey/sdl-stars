@@ -1,6 +1,6 @@
 # Milestone D: a C++ file-selection interface behind the SDL Win32 wrapper
 
-Status: D01 inventory complete on `develop`; D02–D06 remain open.
+Status: D01–D02 complete on `develop`; D03–D06 remain open.
 Recorded: 2026-10-31. D01 revalidated: 2026-11-01. Tracking: [#71](https://github.com/madebyjeffrey/sdl-stars/issues/71).
 
 ## Outcome and scope
@@ -104,19 +104,18 @@ cleanup faults and pending-error delivery; `win32_fileworkflow.cpp` and its
 runners exercise real game/race/library workflows. CMake gates portal, X11,
 Cocoa and Windows-native cases by platform/backend. D01 is complete.
 
-D02 will select the request/result form from the application needs and
+D02 selects the request/result form from the application needs and
 contracts above. The pilot remains `FImportLibraryRace` and
 `FExportLibraryRace`; other application callers keep compatibility entry points
 until the shared operation and backend handoff are proven.
 
 ## Interface design
 
-Create a focused owned header for the file-selection operation, separate from
-`wincompat_api.h` and the large wrapper `internal.h`. Use C++20 value types for
-mode, title, initial folder/name, ordered filters, selected filter and the
-currently supported selection policy. Return a tagged outcome with the selected
-UTF-8 path and filter, or an explicit cancellation or error. The final names and
-field types are decided in D02 against C's actual namespace and call sites.
+`compat/win32/include/file_selection.h` defines the focused C++ interface,
+separate from `wincompat_api.h` and the large wrapper `internal.h`. It uses
+owned strings and filters, a typed mode/policy, an optional caller path budget,
+and a selected/cancelled/failed variant. This is the D02 decision against the
+post-C source and call-site inventory.
 
 The interface must state who owns each string and filter while a modal chooser
 pumps messages; a borrowed view cannot outlive its source through that pump. It
@@ -132,9 +131,20 @@ the request and translate the outcome back into the exact legacy output fields
 and thread-local error state. They remain available for SDK comparisons and
 callers that have not moved. Avoid a second generic interface that merely
 duplicates `OPENFILENAMEA`, a virtual picker hierarchy without a need for it,
-or separate policy implementations for new and legacy callers. Compare a plain
-request/result free function with a concrete operation owner in D02; use an
-owner only if it hides real modal state or cleanup obligations.
+or separate policy implementations for new and legacy callers. Use one
+synchronous free function, `win32::files::SelectFile`, rather than an
+operation-owner class. The modal operation does not escape the call: its current
+dialog state and cleanup are stack-scoped, and returning a class would add a
+lifecycle surface without hiding state that must persist. The request is passed
+by value and owns every string and ordered filter across the modal pump. `HWND`
+is a separate borrowed argument, revalidated after callbacks. The selected
+result owns the complete path, returns a zero-based optional filter index and
+extension-difference flag, and never exposes `OPENFILENAMEA` output pointers.
+An optional byte-capacity limit includes NUL; `bufferTooSmall` reports the full
+required byte count so the legacy adapter can preserve its two-byte required
+size behavior. Typed failure categories let the adapter map dialog and
+thread-local error effects back to the existing codes. The interface is
+declared in D02; D03 supplies the shared implementation.
 
 ## Checkpoints and order
 
@@ -144,7 +154,7 @@ stays buildable and is qualified under the verification gate below.
 | ID | Deliverable | Depends on | Completion evidence |
 | --- | --- | --- | --- |
 | **D01 — post-C inventory** | Pin the merged C parent; list every chooser implementation and caller, active flags/output fields, tests, callbacks and fault paths. Record current open/save/cancel/error behavior and gaps. | C complete | The source, test and contract map covers the actual C tree; no C obligation is relabelled D. |
-| **D02 — interface decision** | Compare free-function and operation-owner forms; fix request/result ownership, effects and error mapping in a small header. | D01 | A real caller and each backend can use the interface without learning `OPENFILENAMEA` output mechanics; modal lifetime and cancellation are explicit. |
+| **D02 — interface decision** | Compare free-function and operation-owner forms; fix request/result ownership, effects and error mapping in a small header. | D01 | Complete: `file_selection.h` declares the owning request, explicit outcomes/error categories, borrowed owner lifetime and path-limit contract. D03 must prove the existing callers and adapters fit this seam. |
 | **D03 — shared operation and Win32 adapter** | Move shared validation, retry, output and lifecycle policy into one implementation. Keep both Win32 entry points as adapters. | D02 | Existing picker and SDK contract cases exercise the new operation through the adapter with unchanged observable results. |
 | **D04 — backend handoff** | Replace the mutable argument/buffer backend handoff with the typed request/result across compatibility, portal, AppKit and Windows adapters. | D03 | Each backend remains isolated, preserves its platform behavior, and routes success/cancel/failure through the shared policy and callback cleanup. |
 | **D05 — real UI callers** | Migrate race-library import and export, or the equivalent C-parent open/save pair, to the operation; retire their `OPENFILENAMEA` construction where no longer needed. | D04 | Actual open and save workflows pass through the same operation and retain filename, CWD, cancellation, error and publication behavior. |
