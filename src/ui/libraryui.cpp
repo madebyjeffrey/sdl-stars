@@ -309,13 +309,15 @@ static std::int16_t FPortableLibraryName(APPSESSION &app, std::string_view pszNa
 static void SuggestLibraryName(APPSESSION &app, std::span<char, 256> pszName, std::int16_t fRevision) {
     char szOriginal[256];
     char szSuffix[32];
-    int i, cch, cchMax;
+    int i, cch, cchMax, cchOriginal, cchSuffix;
 
-    CchCopyUtf8(std::span{szOriginal}, pszName.data());
-    cchMax = (static_cast<int>(sizeof(app.state.szBase)) - static_cast<int>(std::strlen(szLibraryRoot)) - 19) / 2;
+    cchOriginal = CchCopyUtf8(std::span{szOriginal}, pszName.data());
+    if (cchOriginal < 0) cchOriginal = 0;
+    cchMax = (static_cast<int>(sizeof(app.state.szBase)) - static_cast<int>(std::string_view(szLibraryRoot).size()) - 19) / 2;
     for (i = 2; i < 10000 && !FLibraryNameAvailable(app, szLibraryRoot, pszName.data()); i++) {
         CchSnprintf(std::span{szSuffix, sizeof(szSuffix)}, fRevision ? TextIO().pfnCompressed(app, idsLibraryGameRevisionSuffix).data() : " (%d)", i);
-        cch = (((static_cast<int>(std::strlen(szOriginal))) < ((((0) > (cchMax - static_cast<int>(std::strlen(szSuffix)))) ? (0) : (cchMax - static_cast<int>(std::strlen(szSuffix)))))) ? (static_cast<int>(std::strlen(szOriginal))) : ((((0) > (cchMax - static_cast<int>(std::strlen(szSuffix)))) ? (0) : (cchMax - static_cast<int>(std::strlen(szSuffix))))));
+        cchSuffix = static_cast<int>(std::string_view(szSuffix).size());
+        cch = std::min(cchOriginal, std::max(0, cchMax - cchSuffix));
         /* A shortened suggestion must not split a UTF-8 character. */
         while (cch > 0 && (static_cast<unsigned char>(szOriginal[cch]) & 0xc0) == 0x80) cch--;
         CchSnprintf(pszName, "%.*s%s", cch, szOriginal, szSuffix);
@@ -325,7 +327,7 @@ static void SuggestLibraryName(APPSESSION &app, std::span<char, 256> pszName, st
 static void GetGameLibraryName(APPSESSION &app, const char *pszName, std::span<char, 256> pszNameOut) {
     std::array<char, cchCatalogText> szCatalogPszName{};
     std::size_t i, cch;
-    int cchMax = (static_cast<int>(sizeof(app.state.szBase)) - static_cast<int>(std::strlen(szLibraryRoot)) - 19) / 2;
+    int cchMax = (static_cast<int>(sizeof(app.state.szBase)) - static_cast<int>(std::string_view(szLibraryRoot).size()) - 19) / 2;
 
     CchCopyUtf8(pszNameOut, std::string_view(pszName, CchUtf8Prefix(pszName, cchMax)));
     for (i = 0; pszNameOut[i]; i++)
