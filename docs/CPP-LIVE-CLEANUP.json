@@ -186,7 +186,8 @@
         "owned-combo-item-result",
         "borrowed-cocoa-chooser-labels",
         "readonly-library-path-comparison-view",
-        "readonly-recent-library-path-input"
+        "readonly-recent-library-path-input",
+        "readonly-ini-selection-and-identity-views"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -1027,6 +1028,17 @@
           "batch": "L05 readonly recent-library path input",
           "source_commit": "e0ea740a",
           "change": "FDeleteLibraryGameRecentPaths now accepts std::string_view and passes it directly to the path comparison service; a linked S02 witness passes an explicitly sized view.",
+          "desktop_unit_tests": "make test-unit passed: 18/18.",
+          "host_unit_tests": "make test-host passed: 29/29.",
+          "native_regression": "519 matches, 25 existing warnings; zero differences/errors or skipped reference inputs.",
+          "host_regression": "519 matches, 25 existing warnings; zero differences/errors or skipped reference inputs.",
+          "tutorial": "Available SDL native tutorial smoke passed: 1/1.",
+          "baseline": "Unchanged."
+        },
+        {
+          "batch": "L05 readonly INI selection and identity parser views",
+          "source_commit": "a891329d",
+          "change": "ReadIniSelection and ReadIniIdentity now accept std::string_view rather than a C string plus signed length. Their profile reader supplies a sized view; tests exercise non-terminated subviews.",
           "desktop_unit_tests": "make test-unit passed: 18/18.",
           "host_unit_tests": "make test-host passed: 29/29.",
           "native_regression": "519 matches, 25 existing warnings; zero differences/errors or skipped reference inputs.",
@@ -24274,7 +24286,7 @@
     "date": "2026-11-02",
     "reason": "Resume the live C++ cleanup on develop after readonly library path comparison migration and local full verification.",
     "branch": "develop",
-    "latest_batch": "L05 readonly recent-library path input",
+    "latest_batch": "L05 readonly INI selection and identity parser views",
     "latest_published_head_before_local_batch": "45cc5b19",
     "latest_local_source_commit": "2e30e30c",
     "active_stages": [
@@ -24283,10 +24295,11 @@
     ],
     "pending_stage": "L08: current-source Windows/Linux platform qualification; C11/macro inventories are reconciled.",
     "restart_order": [
-      "Push develop including e0ea740a and this ledger update.",
-      "Finish run 41419207748 and inspect its current platform results; then dispatch qualification on the newest develop head.",
-      "Continue L05 bounded destinations, const-text and scratch/borrowed-return audits.",
-      "Continue L06 buffer/length and native file/path result interfaces and chooser coverage.",
+      "Push develop including a891329d and this ledger update.",
+      "Finish run 41419207748; inspect the Windows SDK matrix artifact and Linux desktop results.",
+      "Dispatch platform qualification on the newest develop source.",
+      "Continue L05 bounded text destinations, const-text interfaces, and scratch/borrowed-return audit.",
+      "Continue L06 remaining buffer/length and native file/path result interfaces and chooser coverage.",
       "Complete L08 after current-source Windows/Linux qualification and resolve any failures."
     ],
     "do_not_overwrite": [
@@ -24303,15 +24316,15 @@
       "dispatch": "unit.yml workflow_dispatch with run_slow_platform_jobs=true",
       "purpose": "Qualify the pushed current develop source on Linux and Windows."
     },
-    "latest_source_commit": "e0ea740a",
-    "latest_published_head_before_this_batch": "70d079a9"
+    "latest_source_commit": "a891329d",
+    "latest_published_head_before_this_batch": "2dce21c4"
   },
   "current_checkpoint": {
-    "batch": "L05 readonly recent-library path input",
-    "status": "implemented, locally verified and committed on develop; pushed platform qualification pending",
-    "parent": "70d079a9",
-    "source_commit": "e0ea740a",
-    "change": "FDeleteLibraryGameRecentPaths and its recent-directory path comparison input now use std::string_view; path construction and NUL-terminated OS calls remain unchanged.",
+    "batch": "L05 readonly INI selection and identity parser views",
+    "status": "implemented and locally verified; source commit is on develop; push and current-source platform qualification pending",
+    "parent": "2dce21c4",
+    "source_commit": "a891329d",
+    "change": "ReadIniSelection and ReadIniIdentity consume std::string_view. ReadIniSettings passes explicit byte counts from the bounded profile reads; tests cover subviews not terminated at their end.",
     "verification": {
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
@@ -24321,7 +24334,7 @@
       "baseline": "Unchanged.",
       "diff_check": "Pass."
     },
-    "latest_source_head_before_this_batch": "70d079a9",
+    "latest_source_head_before_this_batch": "2dce21c4",
     "prior_published_batches": [
       "e6da4794 portal borrowed chooser labels",
       "a53b887c readonly race UI service text views",
@@ -25100,10 +25113,10 @@
   "working_tree_checkpoint": {
     "date": "2026-11-02",
     "branch": "develop",
-    "batch": "L05 readonly recent-library path input",
-    "source_commit": "e0ea740a",
-    "status": "Latest source commit is locally verified and committed on develop. Push and a current-source Windows/Linux qualification run remain.",
-    "changes": "FDeleteLibraryGameRecentPaths and its recent-directory path comparison input now use std::string_view; path construction and NUL-terminated OS calls remain unchanged.",
+    "batch": "L05 readonly INI selection and identity parser views",
+    "source_commit": "a891329d",
+    "status": "Latest source commit is locally verified on develop. Push and current-source Windows/Linux qualification remain.",
+    "changes": "ReadIniSelection and ReadIniIdentity consume std::string_view. ReadIniSettings passes explicit byte counts from the bounded profile reads; tests cover subviews not terminated at their end.",
     "verification": {
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
@@ -25133,10 +25146,11 @@
       "windows_sdl": "failure in SDK configuration matrix and Windows SDL build; this run predates current source edits."
     },
     "next": [
-      "Push develop including e0ea740a and this ledger update.",
-      "Finish run 41419207748 and inspect its current platform results; then dispatch qualification on the newest develop head.",
-      "Continue L05 bounded destinations, const-text and scratch/borrowed-return audits.",
-      "Continue L06 buffer/length and native file/path result interfaces and chooser coverage.",
+      "Push develop including a891329d and this ledger update.",
+      "Finish run 41419207748; inspect the Windows SDK matrix artifact and Linux desktop results.",
+      "Dispatch platform qualification on the newest develop source.",
+      "Continue L05 bounded text destinations, const-text interfaces, and scratch/borrowed-return audit.",
+      "Continue L06 remaining buffer/length and native file/path result interfaces and chooser coverage.",
       "Complete L08 after current-source Windows/Linux qualification and resolve any failures."
     ],
     "untracked_user_assets": [
