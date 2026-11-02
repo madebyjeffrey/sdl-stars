@@ -23961,12 +23961,12 @@
   ],
   "restart_checkpoint": {
     "date": "2026-11-02",
-    "reason": "All owned UI wsprintfA call sites are now migrated; continue L05 bounded text and API qualification.",
+    "reason": "Return-to-title now snapshots Work before INI settings reuse it; continue remaining L05/L06 work and final L08 platform qualification.",
     "branch": "develop",
-    "batch": "L05bs typed mine UI formatting; owned wrapper callers exhausted",
-    "batch_parent": "d3c82384",
-    "latest_batch": "L05bs typed mine UI formatting; owned wrapper callers exhausted",
-    "latest_batch_head": "7f7798a2",
+    "batch": "L05bt return-to-title file-family scratch snapshot",
+    "batch_parent": "f36122d0",
+    "latest_batch": "L05bt return-to-title file-family scratch snapshot",
+    "latest_batch_head": "9305211a",
     "completed_stages": [
       "L01: nullptr and aliases",
       "L02: explicit C++ casts and headers",
@@ -23980,15 +23980,16 @@
     ],
     "pending_stage": "L08: reconcile retained primitives/macros and qualify final complete state",
     "local_batch_verification": {
-      "macos_debug_build": "pass",
-      "desktop_unit_tests": "18/18 pass",
-      "host_unit_tests": "29/29 pass",
-      "tutorial": "available SDL tutorial smoke checkpoint passes; full 80-page tutorial remains unfinished",
-      "native_regression": "519 matches; 25 existing warnings; zero differences/errors/skipped inputs",
-      "host_regression": "519 matches; 25 existing warnings; zero differences/errors/skipped inputs",
-      "baseline": "unchanged",
-      "diff_check": "pass",
-      "owned_c_and_function_macro_scan": "Confirmed on 2026-11-02: zero owned .c sources and zero function-like macros under src/ and compat/win32/src. No further app-owned C-source or function-like API-macro conversion is indicated by this scan. Include guards, NOMINMAX, test configuration, and vendored SDK definitions remain outside this conversion scope."
+      "macos_debug_build": "Full macos-sdl-debug build passes.",
+      "desktop_unit_tests": "18/18 pass, including return-to-title file-family cases.",
+      "host_unit_tests": "29/29 pass.",
+      "tutorial": "Available SDL tutorial smoke checkpoint passes; full 80-page tutorial remains unfinished.",
+      "native_regression": "519 matches; 25 existing warnings; zero differences/errors/skipped inputs.",
+      "host_regression": "519 matches; 25 existing warnings; zero differences/errors/skipped inputs.",
+      "baseline": "Unchanged; no game checkpoint moved.",
+      "return_to_title": "Test reproduced Base becoming \"1\" after WriteIniSettings reused szWork. CommandHandler now snapshots the bounded UTF-8 path before settings output and removes only the final extension after the last path separator.",
+      "owned_c_and_function_macro_scan": "Confirmed on 2026-11-02: zero owned .c sources and zero function-like macros under src/ and compat/win32/src. No further app-owned C-source or function-like API-macro conversion is indicated by this scan. Include guards, NOMINMAX, test configuration, and vendored SDK definitions remain outside this conversion scope.",
+      "diff_check": "pass"
     },
     "remaining_raw_copy_calls": [
       "compat/win32/src/list.cpp: LB_GETTEXT ABI output",
@@ -24051,14 +24052,16 @@
       "qualified_source_head": "b76ec1fcc1276790150457670f5f667bcec4eccc",
       "result": "success"
     },
-    "published_batch_head": "7f7798a2"
+    "published_batch_head": "9305211a"
   },
   "current_checkpoint": {
-    "batch": "L05bs typed mine UI formatting; owned wrapper callers exhausted",
-    "status": "implemented and locally verified; source commit 7f7798a2",
-    "parent": "51be13bb",
+    "batch": "L05bt return-to-title file-family scratch snapshot",
+    "status": "implemented and locally verified; Windows/Linux qualification pending",
+    "parent": "f36122d0",
     "changes": {
-      "src/ui/mineui.cpp": "Replaced the remaining 24 application win32::wsprintfA calls with typed CchSprintf calls; no application call sites remain."
+      "src/ui/mdi.cpp": "CommandHandler snapshots szWork before WriteIniSettings reuses it; bounded UTF-8 file-family preservation now reads from the owned stack snapshot.",
+      "tests/unit/test_native_fileui.cpp": "Added an integration regression for dotted directories, Unicode and multi-dot names, and extensionless paths.",
+      "CHANGELOG.md": "Recorded the return-to-title filename preservation fix."
     },
     "verification": {
       "macos_debug_build": "Full macos-sdl-debug build passes.",
@@ -24068,9 +24071,8 @@
       "native_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
       "host_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
       "baseline": "Unchanged.",
-      "owned_wsprintfA_scan": "1 matching implementation/declaration line remains; no owned production callers.",
-      "compatibility_tests": "tests/compat/win32_services.inc still covers the compatibility formatter API.",
-      "diff_check": "git diff --check passes."
+      "reproduction": "Before fix, all three integration cases left szBase as \"1\" after WriteIniSettings; all pass with the pre-write snapshot.",
+      "diff_check": "pass"
     },
     "remaining_work": [
       "L05 bounded text destinations, const-text interfaces and post-migration scratch/borrowed-return audit.",
@@ -24078,8 +24080,14 @@
       "L08 final retained primitive/API macro/preprocessor inventory reconciliation and current-source platform qualification.",
       "Review the two remaining strcpy calls in compat/win32/src/list.cpp and toolbar.cpp; both write to buffers supplied by Win32-compatible caller APIs without a length parameter."
     ],
-    "source_commit": "7f7798a2",
-    "published_batch_head": "7f7798a2"
+    "source_commit": "9305211a",
+    "published_batch_head": "9305211a",
+    "previous_batch": {
+      "batch": "L05bs typed mine UI formatting; owned wrapper callers exhausted",
+      "source_commit": "7f7798a2",
+      "owned_wsprintfA_scan": "1 matching implementation/declaration line remains; no owned production callers.",
+      "compatibility_tests": "tests/compat/win32_services.inc still covers the compatibility formatter API."
+    }
   },
   "milestone_d_checkpoint": {
     "stage": "D05 caller migrations implemented; D06 platform qualification pending",
