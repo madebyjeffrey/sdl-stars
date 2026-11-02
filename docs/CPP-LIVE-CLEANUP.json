@@ -1712,7 +1712,8 @@
         "core-record-readers-accept-bounded-spans",
         "typed-log-record-enumeration-callback",
         "logged-record-payloads-accept-byte-spans",
-        "typed-log-validation-result"
+        "typed-log-validation-result",
+        "log-file-load-path-view"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -2227,6 +2228,20 @@
           "batch": "L06 typed log validation result",
           "source_commit": "b9ff9674",
           "change": "FCheckLogFile returns CHECKLOGRESULT with validity and error code instead of a nullable error output pointer. AI players still skip the check; missing logs retain a zero error code; invalid/corrupt logs retain error 3; session state side effects are unchanged.",
+          "macos_debug_build": "make compile passes with strict warnings and dual-header checks.",
+          "desktop_unit_tests": "18/18 pass.",
+          "host_units": "29/29 pass.",
+          "native_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
+          "host_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
+          "tutorial": "1/1 available SDL tutorial smoke passes.",
+          "baseline": "Unchanged.",
+          "windows_linux": "Current-source Windows/Linux qualification remains pending.",
+          "diff_check": "Pass."
+        },
+        {
+          "batch": "L06 log file loading accepts a path view",
+          "source_commit": "13d58cbf",
+          "change": "FLoadLogFile now accepts std::string_view and passes the bounded path to the already view-based stream provider.",
           "macos_debug_build": "make compile passes with strict warnings and dual-header checks.",
           "desktop_unit_tests": "18/18 pass.",
           "host_units": "29/29 pass.",
@@ -25041,13 +25056,13 @@
   "working_tree_checkpoint": {
     "date": "2026-11-02",
     "branch": "develop",
-    "batch": "L06 typed log validation result",
-    "source_commit": "b9ff9674",
+    "batch": "L06 log file loading accepts a path view",
+    "source_commit": "13d58cbf",
     "status": "Verified and committed locally on develop. macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Current-source Windows SDL desktop and Linux desktop qualification remain outstanding.",
     "changes": [
-      "FCheckLogFile returns a typed result containing validity and the existing error code instead of writing through a nullable error pointer.",
-      "VerifyTurns and CFindTurnsOutstanding consume the typed result while preserving AI-player short-circuiting and existing error classification.",
-      "Log validation state mutations, game behavior and regression baselines remain unchanged."
+      "FLoadLogFile accepts std::string_view and passes the bounded path directly to the stream provider.",
+      "Existing path buffers and test string literals remain valid callers.",
+      "Log loading behavior, game behavior and regression baselines remain unchanged."
     ],
     "verification": {
       "macos_sdl_debug": "make compile passes with strict warnings and dual-header checks.",
@@ -25283,6 +25298,10 @@
       {
         "commit": "b9ff9674",
         "message": "Return typed log validation results"
+      },
+      {
+        "commit": "13d58cbf",
+        "message": "Use path views when loading log files"
       }
     ],
     "parent": "4867b0c5"
