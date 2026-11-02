@@ -68,7 +68,7 @@ using LIBRARYCONTINUE = LibraryContinue;
 static LIBRARYCONTINUE continueLibrary;
 static std::int16_t FFindContinueLibraryGame(APPSESSION &app);
 static std::int16_t FCopyNativeFile(const char *pszSource, const char *pszTarget);
-static std::int16_t FSelectedLibraryGameName(HWND hwnd, char *pszName, std::size_t cchName);
+static std::int16_t FSelectedLibraryGameName(HWND hwnd, std::span<char> pszName);
 static void *PvLibraryFolderContext(HWND hwnd) {
     const std::uint64_t id = StarsCompatWindowId(hwnd);
     // SDL carries one pointer-sized opaque value; no window pointer outlives UI.
@@ -1790,7 +1790,7 @@ static void SDLCALL LibraryExportFolderSelected(void *lpData, const char * const
 std::int16_t FExportSelectedLibraryGame(APPSESSION &app, HWND hwnd, const char *pszTarget) {
     char szDir[512];
     char szName[256];
-    if (!FSelectedLibraryGameName(hwnd, szName, sizeof(szName))) return 0;
+    if (!FSelectedLibraryGameName(hwnd, szName)) return 0;
     if (!pszTarget) return FExportLibraryGame(app, hwnd, szName, nullptr);
     if (app.state.game.fDirty && app.state.lpPlanets && app.state.idPlayer != iplrNone) {
         CchSnprintf(std::span{szDir, sizeof(szDir)}, "%s%s%s", szLibraryRoot, szDirSep, szName);
@@ -2388,7 +2388,7 @@ std::int16_t FDeleteLibraryGame(APPSESSION &app, HWND hwnd, const char *pszName)
 
 std::int16_t FDeleteSelectedLibraryGame(APPSESSION &app, HWND hwnd) {
     char szName[256];
-    if (!FSelectedLibraryGameName(hwnd, szName, sizeof(szName))) return 0;
+    if (!FSelectedLibraryGameName(hwnd, szName)) return 0;
     return FDeleteLibraryGame(app, hwnd, szName);
 }
 
@@ -3119,10 +3119,13 @@ std::int16_t FSelectLibraryGame(APPSESSION &app, HWND hwnd) {
 std::int16_t FSelectLibraryHostGame(APPSESSION &app, HWND hwnd) {
     HWND hwndList = ControlIO().pfnGetDlgItem(hwnd, IDC_LIBRARY_HOST_GAMES);
     LRESULT i = ControlIO().pfnSendMessage(hwndList, win32::LB_GETCURSEL, 0, 0);
+    LRESULT cchName;
     char szName[256];
     int cch;
     if (i == win32::LB_ERR) return 0;
-    ControlIO().pfnSendMessage(hwndList, win32::LB_GETTEXT, i, reinterpret_cast<LPARAM>(szName));
+    cchName = ControlIO().pfnSendMessage(hwndList, win32::LB_GETTEXTLEN, i, 0);
+    if (cchName == win32::LB_ERR || cchName < 0 || cchName >= static_cast<LRESULT>(sizeof(szName))) return 0;
+    if (ControlIO().pfnSendMessage(hwndList, win32::LB_GETTEXT, i, reinterpret_cast<LPARAM>(szName)) != cchName) return 0;
     cch = CchSnprintf(std::span{app.state.szBase, sizeof(app.state.szBase)}, "%s%s%s%s%s.hst", szLibraryRoot, szDirSep,
                       szName, szDirSep, szName);
     if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(app.state.szBase)) return 0;
@@ -3130,36 +3133,36 @@ std::int16_t FSelectLibraryHostGame(APPSESSION &app, HWND hwnd) {
     return 1;
 }
 
-static std::int16_t FSelectedLibraryGameName(HWND hwnd, char *pszName, std::size_t cchName) {
+static std::int16_t FSelectedLibraryGameName(HWND hwnd, std::span<char> pszName) {
     HWND hwndList = ControlIO().pfnGetDlgItem(hwnd, fHostLibraryView ? IDC_LIBRARY_HOST_GAMES : IDC_LIBRARY_GAMES);
     LRESULT i, iItem;
-    int cch;
+    LRESULT cch;
     i = ControlIO().pfnSendMessage(hwndList, win32::LB_GETCURSEL, 0, 0);
     if (i == win32::LB_ERR) return 0;
     if (fHostLibraryView) {
-        cch = static_cast<int>(ControlIO().pfnSendMessage(hwndList, win32::LB_GETTEXTLEN, i, 0));
-        if (cch <= 0 || static_cast<std::size_t>(cch) >= cchName) return 0;
-        return ControlIO().pfnSendMessage(hwndList, win32::LB_GETTEXT, i, reinterpret_cast<LPARAM>(pszName)) == cch;
+        cch = ControlIO().pfnSendMessage(hwndList, win32::LB_GETTEXTLEN, i, 0);
+        if (cch <= 0 || static_cast<std::size_t>(cch) >= pszName.size()) return 0;
+        return ControlIO().pfnSendMessage(hwndList, win32::LB_GETTEXT, i, reinterpret_cast<LPARAM>(pszName.data())) == cch;
     }
     iItem = ControlIO().pfnSendMessage(hwndList, win32::LB_GETITEMDATA, i, 0);
     if (iItem < 0 || iItem >= cLibraryGameList) return 0;
-    cch = CchSnprintf(std::span{pszName, cchName}, "%s", rgLibraryGameList[iItem].szName);
-    return cch > 0 && static_cast<std::size_t>(cch) < cchName;
+    cch = CchSnprintf(pszName, "%s", rgLibraryGameList[iItem].szName);
+    return cch > 0 && static_cast<std::size_t>(cch) < pszName.size();
 }
 
-static std::int16_t FChooseLibraryGameActionName(APPSESSION &app, HWND hwnd, const char *pszCurrentName, char *pszNewName) {
+static std::int16_t FChooseLibraryGameActionName(APPSESSION &app, HWND hwnd, const char *pszCurrentName, std::span<char, 256> pszNewName) {
     int cch;
     cch = CchSnprintf(std::span{szLibraryName, sizeof(szLibraryName)}, "%s", pszCurrentName);
     if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szLibraryName)) return 0;
     SuggestLibraryName(app, std::span{szLibraryName}, 0);
     if (!szLibraryName[0] || IdPromptLibraryName(app, hwnd, std::span{szLibraryName}) != 1) return 0;
-    cch = CchSnprintf(std::span{pszNewName, 256}, "%s", szLibraryName);
+    cch = CchSnprintf(pszNewName, "%s", szLibraryName);
     return cch > 0 && cch < 256;
 }
 
 std::int16_t FActOnSelectedLibraryGame(APPSESSION &app, HWND hwnd, std::int16_t fRename) {
     char szName[256], szNewName[256];
-    if (!FSelectedLibraryGameName(hwnd, szName, sizeof(szName)) ||
+    if (!FSelectedLibraryGameName(hwnd, szName) ||
         !FChooseLibraryGameActionName(app, hwnd, szName, szNewName)) return 0;
     return fRename ? FRenameLibraryGame(app, hwnd, szName, szNewName) :
                      FDuplicateLibraryGame(app, hwnd, szName, szNewName);
