@@ -26,7 +26,7 @@ void StarsTest_NewGameWizard(APPSESSION &app, HWND hwnd, int16_t fReadOnly) {
     fCreatingGame = 0;
 }
 
-int16_t StarsTest_FCreateFile(APPSESSION &app, DtFileType dt, int16_t iplr, char *pszBase) {
+int16_t StarsTest_FCreateFile(APPSESSION &app, DtFileType dt, int16_t iplr, const char *pszBase) {
     const char *pszFailure = PszCompatEnvironment("STARS_CLIENT_LIBRARY_FAIL_WRITE");
     DtFileType dtFailure = pszFailure && !strcmp(pszFailure, "host") ? dtHost : dtXY;
     int16_t fCreated;

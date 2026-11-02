@@ -125,7 +125,7 @@ void WriteRtShDef(APPSESSION &app, SHDEF *lpshdef) {
     RecordIO().pfnWriteRt(app, rtShDef, std::as_bytes(std::span{rgb}).first(static_cast<std::size_t>(*cb)));
 }
 
-std::int16_t FWriteDataFile(APPSESSION &app, char *pszFileBase, std::int16_t iPlayer, std::int16_t fAppend) {
+std::int16_t FWriteDataFile(APPSESSION &app, const char *pszFileBase, std::int16_t iPlayer, std::int16_t fAppend) {
     PLAYER   plrT;
     std::int16_t  iMax;
     FLEET   *lpflT;
@@ -915,8 +915,8 @@ void SetSzWorkFromDt(APPSESSION &app, DtFileType dt, std::int16_t iPlayer) {
     return;
 }
 
-std::int16_t FCreateFile(APPSESSION &app, DtFileType dt, std::int16_t iPlayer, char *szForceName) {
-    char    *psz;
+std::int16_t FCreateFile(APPSESSION &app, DtFileType dt, std::int16_t iPlayer, const char *szForceName) {
+    const char *psz;
 
     if (szForceName) {
         psz = szForceName;

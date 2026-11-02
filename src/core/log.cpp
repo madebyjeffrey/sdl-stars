@@ -1179,7 +1179,7 @@ std::int16_t FRunLogRecord(APPSESSION &app, RecordType rt, std::int16_t cb, std:
     return 1;
 }
 
-std::int16_t FLoadLogFile(APPSESSION &app, char *pszLog) {
+std::int16_t FLoadLogFile(APPSESSION &app, const char *pszLog) {
     std::int16_t  fRet;
     std::int16_t  cbLog;
     std::int16_t  iCur;

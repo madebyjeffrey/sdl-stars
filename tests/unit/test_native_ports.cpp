@@ -108,7 +108,7 @@ void StarsTest_WriteRt(APPSESSION &, RecordType rt, std::span<const std::byte> r
     memcpy(rgRecord[cRecord++], rg.data(), cb);
 }
 
-int16_t StarsTest_FCreateFile(APPSESSION &, DtFileType dt, int16_t iPlayer, char *psz) { return 1; }
+int16_t StarsTest_FCreateFile(APPSESSION &, DtFileType dt, int16_t iPlayer, const char *psz) { return 1; }
 void    StarsTest_StreamClose(APPSESSION &) {}
 void    StarsTest_StreamOpen(APPSESSION &, const char *szFile, MdOpenFlags mdOpen) {}
 void    StarsTest_DirtyGame(APPSESSION &, int16_t fDirty) { if (fDirty) cDirty++; }
