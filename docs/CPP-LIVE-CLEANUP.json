@@ -24403,10 +24403,10 @@
   ],
   "restart_checkpoint": {
     "date": "2026-11-02",
-    "reason": "Resume the live C++ cleanup on develop after the verified bounded text-length batch.",
+    "reason": "Resume the live C++ cleanup on develop after the verified bounded library family parser batch.",
     "branch": "develop",
-    "latest_batch": "L05 reuse library workflow path lengths",
-    "latest_published_head": "f279305c",
+    "latest_batch": "L05 cached library family stem lengths",
+    "latest_published_head": "6cd1b87a",
     "active_stages": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage."
@@ -24437,12 +24437,12 @@
       "title-modernized-v2.png and prompt",
       "title-modernized-v3.png and prompt"
     ],
-    "batch": "L05 reuse library workflow path lengths",
+    "batch": "L05 cached library family stem lengths",
     "source_commit": "0c750694",
     "status": "Verified and pushed to develop. macOS SDL Debug, desktop/host unit suites, full native/host regressions, tutorial smoke, and current-source MinGW host/core build pass. Windows SDL desktop and Linux desktop qualification remain outstanding.",
     "changes": [
-      "FExportLibraryOrders retains the corrected target path length and uses it for the bounded extension append.",
-      "FImportLibraryRace reuses its validated source path length for the bounded copy.",
+      "FImportFamilyMember accepts the caller\u2019s known stem length instead of rescanning the stem.",
+      "Import, backup, game-copy, and game-export directory callbacks reuse the same length for family matching and malformed companion checks.",
       "No game behavior, file layout or serialization code changed."
     ],
     "verification": {
@@ -24452,7 +24452,7 @@
       "native_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "host_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "tutorial": "1/1 available SDL tutorial smoke passes.",
-      "windows_mingw_host_build": "Current-source host/core build passes at /private/tmp/sdl-stars-mingw-host.",
+      "windows_mingw_host_build": "Current-source host/core build passed at /private/tmp/sdl-stars-mingw-host before this UI-only batch.",
       "windows_sdl_linux_desktop": "Not qualified locally; current-source platform CI remains outstanding.",
       "baseline": "Unchanged.",
       "diff_check": "Pass."
@@ -24557,10 +24557,10 @@
     ]
   },
   "current_checkpoint": {
-    "batch": "L05 reuse library workflow path lengths",
+    "batch": "L05 cached library family stem lengths",
     "status": "Verified and pushed to develop. macOS SDL Debug, desktop/host unit suites, full native/host regressions, tutorial smoke, and current-source MinGW host/core build pass. Windows SDL desktop and Linux desktop qualification remain outstanding.",
-    "parent": "91cf7809",
-    "source_commit": "f279305c",
+    "parent": "fff163e0",
+    "source_commit": "6cd1b87a",
     "change": "Race filename suggestions now use the fixed destination extent as their input bound.",
     "verification": {
       "macos_sdl_debug": "Build passes; libraryui.cpp compiles.",
@@ -24569,7 +24569,7 @@
       "native_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "host_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "tutorial": "1/1 available SDL tutorial smoke passes.",
-      "windows_mingw_host_build": "Current-source host/core build passes at /private/tmp/sdl-stars-mingw-host.",
+      "windows_mingw_host_build": "Current-source host/core build passed at /private/tmp/sdl-stars-mingw-host before this UI-only batch.",
       "windows_sdl_linux_desktop": "Not qualified locally; current-source platform CI remains outstanding.",
       "baseline": "Unchanged.",
       "diff_check": "Pass."
@@ -24600,8 +24600,8 @@
     "date": "2026-11-02",
     "branch": "develop",
     "changes": [
-      "FExportLibraryOrders retains the corrected target path length and uses it for the bounded extension append.",
-      "FImportLibraryRace reuses its validated source path length for the bounded copy.",
+      "FImportFamilyMember accepts the caller\u2019s known stem length instead of rescanning the stem.",
+      "Import, backup, game-copy, and game-export directory callbacks reuse the same length for family matching and malformed companion checks.",
       "No game behavior, file layout or serialization code changed."
     ],
     "current_source_audits": {
@@ -24727,12 +24727,12 @@
   "working_tree_checkpoint": {
     "date": "2026-11-02",
     "branch": "develop",
-    "batch": "L05 reuse library workflow path lengths",
-    "source_commit": "f279305c",
+    "batch": "L05 cached library family stem lengths",
+    "source_commit": "6cd1b87a",
     "status": "Verified and pushed to develop. macOS SDL Debug, desktop/host unit suites, full native/host regressions, tutorial smoke, and current-source MinGW host/core build pass. Windows SDL desktop and Linux desktop qualification remain outstanding.",
     "changes": [
-      "FExportLibraryOrders retains the corrected target path length and uses it for the bounded extension append.",
-      "FImportLibraryRace reuses its validated source path length for the bounded copy.",
+      "FImportFamilyMember accepts the caller\u2019s known stem length instead of rescanning the stem.",
+      "Import, backup, game-copy, and game-export directory callbacks reuse the same length for family matching and malformed companion checks.",
       "No game behavior, file layout or serialization code changed."
     ],
     "verification": {
@@ -24742,7 +24742,7 @@
       "native_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "host_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "tutorial": "1/1 available SDL tutorial smoke passes.",
-      "windows_mingw_host_build": "Current-source host/core build passes at /private/tmp/sdl-stars-mingw-host.",
+      "windows_mingw_host_build": "Current-source host/core build passed at /private/tmp/sdl-stars-mingw-host before this UI-only batch.",
       "windows_sdl_linux_desktop": "Not qualified locally; current-source platform CI remains outstanding.",
       "baseline": "Unchanged.",
       "diff_check": "Pass."
@@ -24795,6 +24795,10 @@
       "current_source_rerun": "No workflow dispatch was available from this environment; current source is locally qualified on macOS and host, but Windows/Linux platform CI remains pending."
     },
     "post_checkpoint_commits": [
+      {
+        "commit": "6cd1b87a",
+        "message": "Pass cached stems to library family parser"
+      },
       {
         "commit": "f279305c",
         "message": "Reuse library workflow path lengths"
@@ -24884,6 +24888,6 @@
         "message": "Bound race filename suggestions"
       }
     ],
-    "parent": "91cf7809"
+    "parent": "fff163e0"
   }
 }
