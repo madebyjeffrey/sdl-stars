@@ -224,7 +224,7 @@ static void  FileWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
     CHECK(CchSnprintf(std::span{szManagedRace, sizeof(szManagedRace)}, "%s%sManaged.r1", szRaceLibrary, szDirSep) > 0);
     CHECK(FWasRaceFile(app, szManagedRace, 0) > 0);
     CHECK((cbRaceLibrary = FNativeFileSize(szManagedRace)) && (*cbRaceLibrary) > 0);
-    CHECK(FExportLibraryRace(app, app.lpui->hwndTitle, "Managed.r1", nullptr));
+    CHECK(FExportLibraryRace(app, app.lpui->hwndTitle, "Managed.r1", std::nullopt));
     CHECK(PszCompatEnvironment("STARS_TEST_RACE_EXPORT_PATH") &&
           FWasRaceFile(app, (char *)PszCompatEnvironment("STARS_TEST_RACE_EXPORT_PATH"), 0) > 0 &&
           FEqualFiles(szManagedRace, PszCompatEnvironment("STARS_TEST_RACE_EXPORT_PATH")));

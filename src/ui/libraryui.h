@@ -80,7 +80,7 @@ std::int16_t FCustomizeLibraryRace(APPSESSION &app, HWND hwnd, std::span<char, 2
 std::int16_t FBeginLibraryRace(APPSESSION &app, HWND hwnd);
 std::int16_t FEditLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName);
 std::int16_t FDuplicateLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName);
-std::int16_t FExportLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName, const char *pszTarget);
+std::int16_t FExportLibraryRace(APPSESSION &app, HWND hwnd, std::string_view pszName, std::optional<std::string_view> pszTarget);
 std::int16_t FExportLibraryOrders(APPSESSION &app, HWND hwnd, std::optional<std::string_view> pszTarget);
 std::int16_t FDeleteLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName);
 void InitLibraryRaces(APPSESSION &app, HWND hwnd, const RECT *lprc);

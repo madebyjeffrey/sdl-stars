@@ -2791,7 +2791,7 @@ LRESULT  TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             if (FSelectLibraryRace(hwnd, szRaceName) && FDuplicateLibraryRace(app, hwnd, szRaceName)) RefreshLibraryRaces(app, hwnd);
             break;
         case IDC_LIBRARY_RACE_EXPORT:
-            if (FSelectLibraryRace(hwnd, szRaceName)) FExportLibraryRace(app, hwnd, szRaceName, nullptr);
+            if (FSelectLibraryRace(hwnd, szRaceName)) FExportLibraryRace(app, hwnd, szRaceName, std::nullopt);
             break;
         case IDC_LIBRARY_RACE_DELETE:
             if (FSelectLibraryRace(hwnd, szRaceName) && FDeleteLibraryRace(app, hwnd, szRaceName)) RefreshLibraryRaces(app, hwnd);

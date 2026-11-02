@@ -1019,30 +1019,37 @@ static std::int16_t FSelectLibraryRaceFile(APPSESSION &app, HWND hwnd, bool fSav
     return FSelectLibraryFile(hwnd, std::move(request), szPath);
 }
 
-std::int16_t FExportLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName, const char *pszTarget) {
+std::int16_t FExportLibraryRace(APPSESSION &app, HWND hwnd, std::string_view pszName, std::optional<std::string_view> pszTarget) {
     char szSource[512], szTarget[512], szTemp[512], szValidate[512];
+    char szName[256];
     RACESTATE rsSav;
+    if (pszName.size() >= sizeof(szName) || pszName.find('\0') != std::string_view::npos) return 0;
+    std::copy(pszName.begin(), pszName.end(), szName);
+    szName[pszName.size()] = 0;
     if (!FInitRaceLibrary() || !FPortableRaceFilename(app, pszName)) return 0;
-    CchSnprintf(std::span{szSource, sizeof(szSource)}, "%s%s%s", szRaceLibraryRoot, szDirSep, pszName);
+    CchSnprintf(std::span{szSource, sizeof(szSource)}, "%s%s%s", szRaceLibraryRoot, szDirSep, szName);
     if (!pszTarget) {
         szTarget[0] = 0;
-        CchSnprintf(std::span{szTarget, sizeof(szTarget)}, "%s", pszName);
+        CchSnprintf(std::span{szTarget, sizeof(szTarget)}, "%s", szName);
         if (!FSelectLibraryRaceFile(app, hwnd, true, std::span{szTarget})) return 0;
-        pszTarget = szTarget;
+        pszTarget = std::string_view(szTarget);
     }
+    if (pszTarget->size() >= sizeof(szTarget) || pszTarget->find('\0') != std::string_view::npos) return 0;
+    if (pszTarget->data() != szTarget) std::copy(pszTarget->begin(), pszTarget->end(), szTarget);
+    szTarget[pszTarget->size()] = 0;
     SaveRaceState(app, &rsSav);
-    if (FWasRaceFile(app, szSource, 1) <= 0 || SDL_strcasecmp(szSource, pszTarget) == 0) {
+    if (FWasRaceFile(app, szSource, 1) <= 0 || SDL_strcasecmp(szSource, szTarget) == 0) {
         RestoreRaceState(app, &rsSav, 1, 1);
         if (win32::IsWindow(hwnd)) AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryRaceExportFailed).data(), win32::MB_ICONEXCLAMATION);
         return 0;
     }
-    if (!FCopyRaceExport(szSource, pszTarget, szTemp, sizeof(szTemp))) {
+    if (!FCopyRaceExport(szSource, szTarget, szTemp, sizeof(szTemp))) {
         RestoreRaceState(app, &rsSav, 1, 1);
         if (win32::IsWindow(hwnd)) AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryRaceExportFailed).data(), win32::MB_ICONEXCLAMATION);
         return 0;
     }
     CchSnprintf(std::span{szValidate, sizeof(szValidate)}, "%s", szTemp);
-    if (FWasRaceFile(app, szValidate, 1) <= 0 || ReplaceNativeFile(szTemp, pszTarget) != 0) {
+    if (FWasRaceFile(app, szValidate, 1) <= 0 || ReplaceNativeFile(szTemp, szTarget) != 0) {
         RemoveNativeFile(szTemp);
         RestoreRaceState(app, &rsSav, 1, 1);
         if (win32::IsWindow(hwnd)) AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryRaceExportFailed).data(), win32::MB_ICONEXCLAMATION);

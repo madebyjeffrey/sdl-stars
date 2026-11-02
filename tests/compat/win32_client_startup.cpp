@@ -1715,7 +1715,7 @@ static BOOL FTestRaceCancellation(APPSESSION &app) {
     app.state.lSaltLast = -5;
     fOkay = fOkay && !FDuplicateLibraryRace(app, 0, "Protected.r1");
     app.state.lSaltLast = -5;
-    fOkay = fOkay && !FExportLibraryRace(app, 0, "Protected.r1", szExport);
+    fOkay = fOkay && !FExportLibraryRace(app, 0, "Protected.r1", std::string_view(szExport));
     app.state.lSaltLast = -5;
     fOkay = fOkay && !FImportLibraryRaceAs(app, 0, szProtected, "Cancelled.r1");
     fRejectRacePassword = 0;
@@ -2498,7 +2498,7 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
             if (!FTestFilesEqual(szManaged, szDuplicate)) goto LDone;
             CchSnprintf(std::span{szDuplicate, sizeof(szDuplicate)}, "%s%sRace Designs%sManaged.r3", pszSettings, szDirSep, szDirSep);
             if (!FTestFilesEqual(szManaged, szDuplicate)) goto LDone;
-            if (!FExportLibraryRace(app, app.lpui->hwndTitle, "Managed.r1", szExport) ||
+            if (!FExportLibraryRace(app, app.lpui->hwndTitle, "Managed.r1", std::string_view(szExport)) ||
                 !FLoadLibraryRace(app, app.lpui->hwndTitle, "Managed.r1") || !FLoadLibraryRace(app, app.lpui->hwndTitle, "managed-export.r1")) goto LDone;
             if (!FTestFilesEqual(szManaged, szExport)) goto LDone;
             CchSnprintf(std::span{szExport, sizeof(szExport)}, "%s%sRace Designs%smanaged-export-failure.r1", pszSettings, szDirSep, szDirSep);
@@ -2507,7 +2507,7 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
             CchSnprintf(std::span{szRaceExportFailTarget, sizeof(szRaceExportFailTarget)}, "%s", szExport);
             fFailRaceExportReplace = 1;
             fExpectRaceExportFailureAlert = 1;
-            if (FExportLibraryRace(app, app.lpui->hwndTitle, "Managed.r1", szExport)) {
+            if (FExportLibraryRace(app, app.lpui->hwndTitle, "Managed.r1", std::string_view(szExport))) {
                 fExpectRaceExportFailureAlert = 0;
                 goto LDone;
             }
