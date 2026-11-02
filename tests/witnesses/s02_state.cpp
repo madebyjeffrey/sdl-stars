@@ -60,7 +60,7 @@ static void selection(APPSESSION &app, const char *psz) { ReadIniSelection(app, 
 static void identity(APPSESSION &app, const char *psz) { ReadIniIdentity(app, psz, (int16_t)strlen(psz)); }
 static void recent(APPSESSION &app) {
     const char *first = startupInput ? startupInput : inputs[0];
-    char        szSection[16] = "Files", szEntry[16] = "File1", szIniFile[16] = "stars.ini";
+    const char *szSection = "Files", *szEntry = "File1", *szIniFile = "stars.ini";
     strcpy(app.state.szWork, first);
     ReadIniRecent(app, szSection, szEntry, szIniFile, (int16_t)strlen(first));
 }

@@ -6,6 +6,7 @@
 #include "text_io.h"
 #include "win.h"
 #include <charconv>
+#include <string>
 
 void ReadIniPresets(APPSESSION &app, const char *szIniFile) {
     std::int16_t i, iPass, cch, cpq;
@@ -183,9 +184,9 @@ void ReadIniIdentity(APPSESSION &app, const char *pszIdentity, std::int16_t cch)
     }
 }
 
-void ReadIniRecent(APPSESSION &app, const char *szSection, char *szEntry, const char *szIniFile, std::int16_t cch) {
+void ReadIniRecent(APPSESSION &app, const char *szSection, const char *szEntry, const char *szIniFile, std::int16_t cch) {
     std::int16_t i, iPass;
-    char   *psz;
+    std::string szEntryCurrent{szEntry};
 
     if (cch > 3) {
         app.state.ini.fStartupFile = 1;
@@ -196,10 +197,9 @@ void ReadIniRecent(APPSESSION &app, const char *szSection, char *szEntry, const 
     if (!app.lpui->vrgszMRU) {
         app.lpui->vrgszMRU = LpAlloc<char>(app, 2304, htPerm);
     }
-    psz = &szEntry[std::strlen(szEntry) - 1];
     for (i = 0; i < 9; i++) {
-        *psz = i + '1';
-        cch = ProfileTextIO().pfnReadString(szSection, szEntry, ".", app.lpui->vrgszMRU + 256 * i, 256, szIniFile);
+        szEntryCurrent.back() = static_cast<char>(i + '1');
+        cch = ProfileTextIO().pfnReadString(szSection, szEntryCurrent.c_str(), ".", app.lpui->vrgszMRU + 256 * i, 256, szIniFile);
         if (cch < 4) {
             app.lpui->vrgszMRU[i * 256] = 0;
         }
