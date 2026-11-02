@@ -2,10 +2,10 @@
 #define STARS_SCAN_INSPECT_H
 
 #include "win.h"
-#include "ownership.h"
 #include <windows.h>
 #include <cstdint>
 #include <cstdio>
+#include <memory>
 
 /* UI-thread, copied player-client data. Object keys are (game, turn, player,
  * kind, id), not array indices or pointers. Re-capture after loading a turn.
@@ -23,7 +23,7 @@ struct SCANSNAPSHOT {
     std::uint16_t turn;
     std::int16_t idPlayer, iZoom;
     RECT rcViewport;
-    NATIVEARRAYOWNER<SCANOBJECT, std::free> rgobj;
+    std::unique_ptr<SCANOBJECT[]> rgobj;
     std::size_t cObject;
 };
 BOOL FCaptureScanner(APPSESSION &app, SCANSNAPSHOT *lpsnap);

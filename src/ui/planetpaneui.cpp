@@ -3,7 +3,8 @@
 #include "callbackcontext.h"
 #include "uistate.h"
 #include "control_io.h"
-#include "ownership.h"
+#include <memory>
+#include <new>
 
 constexpr auto wmRefitPlanetPane = (win32::WM_USER + 37);
 
@@ -92,7 +93,7 @@ LRESULT  PlanetPaneWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam
 
     switch (message) {
     case win32::WM_CREATE: {
-        NATIVEOWNER<PLANETPANE, std::free> pane(static_cast<PLANETPANE *>(std::calloc(1, sizeof(*lp))));
+        std::unique_ptr<PLANETPANE> pane(new (std::nothrow) PLANETPANE{});
         lp = pane.get();
         if (!lp) return -1;
         win32::SetWindowLongPtrA(hwnd, win32::GWLP_USERDATA, reinterpret_cast<LONG_PTR>(lp));
@@ -136,7 +137,7 @@ LRESULT  PlanetPaneWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam
         RefitPlanetPane(app, hwnd);
         return 0;
     case win32::WM_DESTROY: {
-        NATIVEOWNER<PLANETPANE, std::free> pane(lp);
+        std::unique_ptr<PLANETPANE> pane(lp);
         win32::SetWindowLongPtrA(hwnd, win32::GWLP_USERDATA, 0);
         return 0;
     }
