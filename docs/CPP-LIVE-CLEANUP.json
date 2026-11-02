@@ -1426,7 +1426,8 @@
         "library-publication-temp-path-output-spans",
         "library-backup-path-output-span",
         "managed-game-output-spans-and-references",
-        "library-import-required-metadata-references"
+        "library-import-required-metadata-references",
+        "native-text-writer-string-view-input"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -1842,6 +1843,22 @@
           "diff_check": "pass.",
           "baseline": "Unchanged; UI-only output contract cleanup, no game rules or file records changed.",
           "github_runs": "Unit/platform 41409304506 and native regression 41409307452 dispatched for ba392020; pending at checkpoint."
+        },
+        {
+          "batch": "L06 native text writer string-view input",
+          "parent": "ed3384da",
+          "source_commit": "09d60c56",
+          "change": "IPutNativeString now accepts std::string_view and writes the exact supplied byte range; removed the internal strlen scan. PROFILEIO provider and test callback use the same sized type.",
+          "macos_debug_build": "Pass; full macos-sdl-debug build, no new warnings.",
+          "desktop_unit_tests": "18/18 pass.",
+          "focused_tests": "test_fileio_contract and win32_profile_save pass (2/2).",
+          "host_units": "29/29 pass.",
+          "native_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped inputs.",
+          "host_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped inputs.",
+          "tutorial": "Available SDL tutorial smoke checkpoint passes (1/1); full 80-page tutorial remains unfinished.",
+          "baseline": "Unchanged; existing callers provide equivalent text bytes, with no game logic or record changes.",
+          "windows_linux": "Current-source Windows/Linux qualification remains pending.",
+          "diff_check": "Pass."
         }
       ],
       "roman_output": {
@@ -24177,12 +24194,12 @@
   ],
   "restart_checkpoint": {
     "date": "2026-11-02",
-    "reason": "Continue the full C++ cleanup from the verified removal of the unused wsprintf compatibility wrapper and current-source C API inventory.",
+    "reason": "Continue the complete C++ cleanup after changing the native text writer to a sized view.",
     "branch": "develop",
-    "batch": "L05 unused wsprintf compatibility API removal and C-remnant inventory reconciliation",
-    "batch_parent": "5e7a375e",
-    "latest_batch": "L05 unused wsprintf compatibility API removal and C-remnant inventory reconciliation",
-    "latest_batch_head": "b6f06a97",
+    "batch": "L06 native text writer string-view input",
+    "batch_parent": "ed3384da",
+    "latest_batch": "L06 native text writer string-view input",
+    "latest_batch_head": "09d60c56",
     "completed_stages": [
       "L01: nullptr and aliases",
       "L02: explicit C++ casts and headers",
@@ -24197,35 +24214,27 @@
     "pending_stage": "L08: reconcile retained primitives/macros and qualify final complete state",
     "local_verification": {
       "debug_build_and_desktop_units": "make test-unit passed: full macos-sdl-debug build, 18/18 tests.",
+      "focused_tests": "test_fileio_contract and win32_profile_save passed (2/2).",
       "host_units": "make test-host passed: 29/29.",
       "native_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
       "host_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
       "tutorial": "Available SDL tutorial smoke checkpoint passed: 1/1; full 80-page tutorial remains unfinished.",
-      "compatibility_services": "stars-compat-services passed.",
       "diff_check": "pass.",
       "baseline": "Unchanged.",
-      "platform_ci": "Unable to refresh because api.github.com was unreachable; previous run references remain below with their prior checkpoint status.",
-      "previous_fresh_github_runs": {
-        "head": "091b4b64",
-        "unit_platforms": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41410974466",
-        "native_regression": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41410977666",
-        "status_at_checkpoint": "in progress"
-      }
+      "platform_ci": "Not refreshed; api.github.com was unreachable at the last query."
     },
     "owned_c_and_function_macro_scan": "Confirmed at b6f06a97: no owned C translation units, no owned function-like macros, and no live legacy unbounded string/varargs calls under src or compat/win32. Include guards, NOMINMAX, FSHIFT undefinition and platform/test configuration remain.",
     "retained_c_allocation_boundary": "src/core/memory.cpp keeps calloc/realloc/free for the resizable game heap; this is a deliberate allocation protocol, not a C translation unit or macro.",
     "other_remaining": [
       "L05 bounded text destinations, const-text interfaces, and post-migration scratch/borrowed-return audit.",
-      "L06 remaining buffer/length service interfaces and native file/path results; chooser Milestone D still needs Windows/Linux qualification.",
-      "L08 final retained primitive/API macro/preprocessor inventory reconciliation and current-source platform qualification.",
-      "Fresh Windows/Linux qualification on current source remains required.",
-      "Full 80-page SDL tutorial remains unfinished; the available smoke checkpoint passed."
+      "L06 remaining buffer/length service and native path result interfaces; chooser Milestone D needs Windows/Linux qualification.",
+      "L08 final retained primitive/API macro inventory and current-source Windows/Linux qualification.",
+      "Full 80-page SDL tutorial remains unfinished; available smoke checkpoint passes."
     ],
     "restart_order": [
-      "Start from develop at b6f06a97 or newer; preserve untracked title-modernized artwork and prompt files.",
-      "Continue L05 bounded text destination, const input, scratch storage and borrowed return audit.",
-      "Continue L06 typed service result interfaces and Milestone D Windows/Linux chooser qualification.",
-      "Complete L08 retained API/preprocessor inventory, qualify current source on Windows/Linux, then rerun final suites."
+      "Continue L05 bounded text, const input, scratch storage and borrowed return review.",
+      "Continue L06 remaining buffer/length and native path result APIs, then qualify chooser Milestone D on Windows/Linux.",
+      "Complete L08 retained API/preprocessor inventory and current-source platform qualification; then run final suites."
     ],
     "fresh_github_runs": {
       "head": "091b4b64",
@@ -24235,18 +24244,18 @@
     }
   },
   "current_checkpoint": {
-    "batch": "L05 unused wsprintf compatibility API removal and C-remnant inventory reconciliation",
+    "batch": "L06 native text writer string-view input",
     "status": "implemented, committed and locally verified",
-    "parent": "5e7a375e",
+    "parent": "ed3384da",
     "changes": {
-      "compat/win32/include/wincompat_api.h": "Removed the unused wsprintfA template and field API.",
-      "compat/win32/src/services.cpp": "Removed its 51-line formatter adapter and unused algorithm/cctype includes.",
-      "tests/compat/win32_services.inc": "Kept native SDK wsprintf tests out of the SDL compatibility build; independent C SDK vectors remain."
+      "src/platform/fileio.h and src/platform/fileio.cpp": "IPutNativeString accepts std::string_view and writes the view bytes without strlen.",
+      "compat/win32/src/profile_io.h": "The provider signature follows decltype(&IPutNativeString).",
+      "tests/compat/profile_save.cpp": "The fault provider accepts std::string_view and copies its exact size."
     },
     "verification": {
       "macos_sdl_debug_build": "Pass; no new warnings.",
       "desktop_unit_tests": "18/18 pass.",
-      "compatibility_services": "Pass.",
+      "focused_tests": "test_fileio_contract and win32_profile_save pass (2/2).",
       "host_unit_tests": "29/29 pass.",
       "tutorial": "Available SDL tutorial smoke checkpoint 1/1 pass; full 80-page tutorial remains unfinished.",
       "native_regression": "519 matches, 25 existing warnings, zero differences/errors/skips.",
@@ -24254,11 +24263,11 @@
       "baseline": "Unchanged.",
       "diff_check": "Pass."
     },
-    "source_commit": "b6f06a97",
-    "published_batch_head": "b6f06a97",
+    "source_commit": "09d60c56",
+    "published_batch_head": "09d60c56",
     "remaining_work": [
       "L05 bounded text destinations, const-text interfaces, and post-migration scratch/borrowed-return audit.",
-      "L06 remaining buffer/length service interfaces and chooser Milestone D Windows/Linux qualification.",
+      "L06 remaining buffer/length interfaces and native file/path result interfaces; chooser Milestone D still needs Windows/Linux qualification.",
       "L08 final retained macro/preprocessor inventory reconciliation and current-source Windows/Linux qualification."
     ],
     "previous_batch": {
