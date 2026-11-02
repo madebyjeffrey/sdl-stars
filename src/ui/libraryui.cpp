@@ -68,7 +68,7 @@ using LIBRARYCONTINUE = LibraryContinue;
 
 static LIBRARYCONTINUE continueLibrary;
 static std::int16_t FFindContinueLibraryGame(APPSESSION &app);
-static std::int16_t FCopyNativeFile(const char *pszSource, const char *pszTarget);
+static std::int16_t FCopyNativeFile(std::string_view szSource, std::string_view szTarget);
 static std::int16_t FSelectedLibraryGameName(HWND hwnd, std::span<char> pszName);
 static void *PvLibraryFolderContext(HWND hwnd) {
     const std::uint64_t id = StarsCompatWindowId(hwnd);
@@ -601,27 +601,27 @@ std::int16_t FCopyNativeFileContents(NATIVEFILE *pfSource, NATIVEFILE *pfTarget)
     return fOkay;
 }
 
-static std::int16_t FCopyNativeFile(const char *pszSource, const char *pszTarget) {
+static std::int16_t FCopyNativeFile(std::string_view szSource, std::string_view szTarget) {
     NATIVEFILE *pfSource, *pfTarget;
     int fOkay;
 
-    pfSource = PfOpenNativeFile(pszSource, NATIVEFILEMODE::read);
+    pfSource = PfOpenNativeFile(szSource, NATIVEFILEMODE::read);
     if (!pfSource) return 0;
-    pfTarget = PfOpenNativeFile(pszTarget, NATIVEFILEMODE::writeTruncate);
+    pfTarget = PfOpenNativeFile(szTarget, NATIVEFILEMODE::writeTruncate);
     if (!pfTarget) { ICloseNativeFile(pfSource); return 0; }
     fOkay = FCopyNativeFileContents(pfSource, pfTarget);
-    if (!fOkay) RemoveNativeFile(pszTarget);
+    if (!fOkay) RemoveNativeFile(szTarget);
     return fOkay;
 }
 
-std::int16_t FCopyNativeFileExclusive(const char *pszSource, const char *pszTarget) {
+std::int16_t FCopyNativeFileExclusive(std::string_view szSource, std::string_view szTarget) {
     NATIVEFILE *pfSource, *pfTarget;
     int iErrno;
     int fOkay;
 
-    pfSource = LibraryFileIO().pfnOpen(pszSource, NATIVEFILEMODE::read);
+    pfSource = LibraryFileIO().pfnOpen(szSource, NATIVEFILEMODE::read);
     if (!pfSource) return 0;
-    pfTarget = LibraryFileIO().pfnOpen(pszTarget, NATIVEFILEMODE::writeExclusive);
+    pfTarget = LibraryFileIO().pfnOpen(szTarget, NATIVEFILEMODE::writeExclusive);
     if (!pfTarget) {
         iErrno = errno;
         LibraryFileIO().pfnClose(pfSource);
@@ -629,7 +629,7 @@ std::int16_t FCopyNativeFileExclusive(const char *pszSource, const char *pszTarg
         return 0;
     }
     fOkay = FCopyNativeFileContents(pfSource, pfTarget);
-    if (!fOkay) RemoveNativeFile(pszTarget);
+    if (!fOkay) RemoveNativeFile(szTarget);
     return fOkay;
 }
 

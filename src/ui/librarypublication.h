@@ -25,7 +25,7 @@ struct LIBRARYPATHS {
     char (&szLibraryName)[256];
 };
 std::int16_t FCopyNativeFileContents(NATIVEFILE *pfSource, NATIVEFILE *pfTarget);
-std::int16_t FCopyNativeFileExclusive(const char *pszSource, const char *pszTarget);
+std::int16_t FCopyNativeFileExclusive(std::string_view szSource, std::string_view szTarget);
 std::int16_t FReplaceConflictingLibraryTurn(APPSESSION &app, const LIBRARYPATHS &paths, HWND hwnd, const char *pszName, const char *pszSource, const char *pszTarget, int iplr,
                                        std::int32_t lidGame, std::uint16_t turn);
 std::int16_t FImportConflictingTurnAsCopy(APPSESSION &app, const LIBRARYPATHS &paths, HWND hwnd, const char *pszName, const char *pszSource, int iplr, std::int32_t lidGame,

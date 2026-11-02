@@ -15,25 +15,26 @@ static char szLibraryRoot[256] = "root", szLibraryName[256] = "Copy", szLibraryP
 // Zero is absent; files are 1..3; directories are bit sets plus 100.
 static int         objects[8], count, profile, variant, cleared;
 static unsigned    mask;
-static const char *names[8] = {"source", "target", "root/Game/Game.x1", "stage", "previous", "root/Game", "hold", "pending"};
-static bool FSamePath(const char *p, const char *q) {
-    for (; *p && *q; p++, q++) {
-        if (*p != *q && !((*p == '/' || *p == '\\') && (*q == '/' || *q == '\\')))
+static const std::string_view names[8] = {"source", "target", "root/Game/Game.x1", "stage", "previous", "root/Game", "hold", "pending"};
+static bool FSamePath(std::string_view szPath1, std::string_view szPath2) {
+    if (szPath1.size() != szPath2.size()) return false;
+    for (std::size_t i = 0; i < szPath1.size(); i++) {
+        if (szPath1[i] != szPath2[i] && !((szPath1[i] == '/' || szPath1[i] == '\\') && (szPath2[i] == '/' || szPath2[i] == '\\')))
             return false;
     }
-    return *p == *q;
+    return true;
 }
-static int         role(const char *p) {
-    if (strstr(p, ".previous."))
+static int         role(std::string_view szPath) {
+    if (szPath.find(".previous.") != std::string_view::npos)
         return 4;
-    if (strstr(p, ".importing."))
+    if (szPath.find(".importing.") != std::string_view::npos)
         return 3;
-    if (FSamePath(p, "root/Copy"))
+    if (FSamePath(szPath, "root/Copy"))
         return 1;
     for (int i = 0; i < 8; i++)
-        if (FSamePath(p, names[i]))
+        if (FSamePath(szPath, names[i]))
             return i;
-    fprintf(stderr, "unmapped path %s\n", p);
+    fprintf(stderr, "unmapped path %.*s\n", static_cast<int>(szPath.size()), szPath.data());
     abort();
 }
 static int decision(void) {
@@ -106,7 +107,7 @@ static int TestCchSnprintf(std::span<char> out, std::string_view format, std::sp
 }
 static uint32_t TestDwTickCount(void) { return 7; }
 static int64_t  TestLNativeTime(void) { return 77; }
-static int      TestFCopyNativeFileExclusive(const char *source, const char *target) {
+static int      TestFCopyNativeFileExclusive(std::string_view source, std::string_view target) {
     int s = role(source), t = role(target), ok = decision() && objects[s] > 0 && objects[s] < 100 && !objects[t], residue = 0;
     if (ok)
         objects[t] = objects[s];
