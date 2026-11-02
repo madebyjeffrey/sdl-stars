@@ -54,7 +54,7 @@ static std::int16_t fNewLibraryRace;
 static std::uint32_t idLibraryExportStage;
 static std::uint32_t idLibraryZipStage;
 static std::int16_t fHostLibraryView;
-static const char *pszRaceLibraryNameOverride;
+static std::optional<std::string_view> pszRaceLibraryNameOverride;
 
 struct LibraryContinue {
     char szName[256];
@@ -657,13 +657,16 @@ static std::int16_t FCopyRaceExport(const char *pszSource, const char *pszTarget
     return 0;
 }
 
-std::int16_t FSaveLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName, PLAYER *pplr) {
+std::int16_t FSaveLibraryRace(APPSESSION &app, HWND hwnd, std::string_view pszName, PLAYER *pplr) {
     char szPath[512];
     char szTempDir[512];
+    char szName[256];
     std::uint16_t icksum;
     std::int16_t fOkay;
     if (!FInitRaceLibrary() || !FPortableRaceFilename(app, pszName)) return 0;
-    CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", szRaceLibraryRoot, szDirSep, pszName);
+    std::copy(pszName.begin(), pszName.end(), szName);
+    szName[pszName.size()] = 0;
+    CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", szRaceLibraryRoot, szDirSep, szName);
     if (!FCreateRaceStagePath(szTempDir, sizeof(szTempDir), szRaceLibraryTemp, sizeof(szRaceLibraryTemp))) return 0;
     if (!RecordIO().pfnFCreateFile(app, dtRace, iplrNone, szRaceLibraryTemp)) {
         RemoveNativeFile(szRaceLibraryTemp);
@@ -683,7 +686,7 @@ std::int16_t FSaveLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName, P
     }
     RemoveNativePath(szTempDir);
     CchSnprintf(std::span{szRaceLibraryPath, sizeof(szRaceLibraryPath)}, "%s", szPath);
-    SetSzRaceFile(app, pszName);
+    SetSzRaceFile(app, szName);
     fNewLibraryRace = 0;
     return 1;
 }
@@ -866,12 +869,15 @@ std::int16_t FHasCurrentLibraryRace(void) {
     return fNewLibraryRace || szRaceLibraryPath[0] != 0;
 }
 
-std::int16_t FLoadLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName) {
+std::int16_t FLoadLibraryRace(APPSESSION &app, HWND hwnd, std::string_view pszName) {
     char szPath[512];
+    char szName[256];
     RACESTATE rsSav;
     std::int16_t fResult;
     if (!FInitRaceLibrary() || !FPortableRaceFilename(app, pszName)) return 0;
-    CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", szRaceLibraryRoot, szDirSep, pszName);
+    std::copy(pszName.begin(), pszName.end(), szName);
+    szName[pszName.size()] = 0;
+    CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", szRaceLibraryRoot, szDirSep, szName);
     SaveRaceState(app, &rsSav);
     fResult = FWasRaceFile(app, szPath, 1);
     if (fResult <= 0) {
@@ -880,7 +886,7 @@ std::int16_t FLoadLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName) {
         return 0;
     }
     CchSnprintf(std::span{szRaceLibraryPath, sizeof(szRaceLibraryPath)}, "%s", szPath);
-    SetSzRaceFile(app, pszName);
+    SetSzRaceFile(app, szName);
     fNewLibraryRace = 0;
     return 1;
 }
@@ -936,7 +942,7 @@ std::int16_t FBeginLibraryRace(APPSESSION &app, HWND hwnd) {
     return fResult;
 }
 
-std::int16_t FEditLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName) {
+std::int16_t FEditLibraryRace(APPSESSION &app, HWND hwnd, std::string_view pszName) {
     RACESTATE rsSav;
     std::int16_t fResult;
     SaveRaceState(app, &rsSav);
@@ -946,18 +952,19 @@ std::int16_t FEditLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName) {
     return fResult;
 }
 
-std::int16_t FDuplicateLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName) {
+std::int16_t FDuplicateLibraryRace(APPSESSION &app, HWND hwnd, std::string_view pszName) {
     char szSource[512], szName[256], szPath[512] = "";
     const char *pch;
     RACESTATE rsSav;
     if (!FInitRaceLibrary() || !FPortableRaceFilename(app, pszName)) return 0;
-    CchSnprintf(std::span{szSource, sizeof(szSource)}, "%s%s%s", szRaceLibraryRoot, szDirSep, pszName);
+    std::copy(pszName.begin(), pszName.end(), szName);
+    szName[pszName.size()] = 0;
+    CchSnprintf(std::span{szSource, sizeof(szSource)}, "%s%s%s", szRaceLibraryRoot, szDirSep, szName);
     SaveRaceState(app, &rsSav);
     if (FWasRaceFile(app, szSource, 1) <= 0) {
         RestoreRaceState(app, &rsSav, 1, 1);
         return 0;
     }
-    CchSnprintf(std::span{szName, sizeof(szName)}, "%s", pszName);
     pch = std::strrchr(szName, '.');
     if (pch) szName[pch - szName] = 0;
     SuggestRaceFilename(app, std::span{szName});
@@ -1266,9 +1273,9 @@ std::int16_t FImportLibraryRace(APPSESSION &app, HWND hwnd, std::optional<std::s
     if (pchExt) *pchExt = 0;
     CchSnprintf(std::span{szName, sizeof(szName)}, "%s.r1", szStem);
     if (pszRaceLibraryNameOverride) {
-        if (!FInitRaceLibrary() || !FPortableRaceFilename(app, pszRaceLibraryNameOverride) ||
-            !FRaceLibraryNameAvailable(app, pszRaceLibraryNameOverride)) goto LRestore;
-        CchSnprintf(std::span{szRaceLibraryName, sizeof(szRaceLibraryName)}, "%s", pszRaceLibraryNameOverride);
+        if (!FInitRaceLibrary() || !FPortableRaceFilename(app, *pszRaceLibraryNameOverride)) goto LRestore;
+        CchSnprintf(std::span{szRaceLibraryName, sizeof(szRaceLibraryName)}, "%s", *pszRaceLibraryNameOverride);
+        if (!FRaceLibraryNameAvailable(app, szRaceLibraryName)) goto LRestore;
         CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", szRaceLibraryRoot, szDirSep, szRaceLibraryName);
     } else if (!FChooseLibraryRaceName(app, hwnd, szName, std::span{szPath})) goto LRestore;
     /* Legacy reads convert names and credentials in memory; retain that state,
@@ -1297,11 +1304,11 @@ LRestore:
 }
 
 std::int16_t FImportLibraryRaceAs(APPSESSION &app, HWND hwnd, std::optional<std::string_view> pszSource,
-                                 const char *pszName) {
+                                 std::optional<std::string_view> pszName) {
     std::int16_t fResult;
     pszRaceLibraryNameOverride = pszName;
     fResult = FImportLibraryRace(app, hwnd, pszSource);
-    pszRaceLibraryNameOverride = nullptr;
+    pszRaceLibraryNameOverride.reset();
     return fResult;
 }
 
@@ -3300,7 +3307,7 @@ void CloseLibraryUiSession() noexcept {
     szLibraryRoot[0] = szLibraryPending[0] = szLibraryName[0] = szLibraryExchangeName[0] = 0;
     szRaceLibraryRoot[0] = szRaceLibraryPath[0] = szRaceLibraryName[0] = szRaceLibraryTemp[0] = 0;
     fRaceLibraryNameDialog = fNewLibraryRace = fHostLibraryView = 0;
-    pszRaceLibraryNameOverride = nullptr;
+    pszRaceLibraryNameOverride.reset();
     continueLibrary = LIBRARYCONTINUE{};
 }
 

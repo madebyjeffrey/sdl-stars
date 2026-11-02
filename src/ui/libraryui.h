@@ -70,17 +70,18 @@ std::int16_t FActOnSelectedLibraryGame(APPSESSION &app, HWND hwnd, std::int16_t 
 std::int16_t FDeleteLibraryGame(APPSESSION &app, HWND hwnd, std::string_view pszName);
 std::int16_t FDeleteSelectedLibraryGame(APPSESSION &app, HWND hwnd);
 std::int16_t FImportLibraryRace(APPSESSION &app, HWND hwnd, std::optional<std::string_view> pszSource);
-std::int16_t FImportLibraryRaceAs(APPSESSION &app, HWND hwnd, std::optional<std::string_view> pszSource, const char *pszName);
+std::int16_t FImportLibraryRaceAs(APPSESSION &app, HWND hwnd, std::optional<std::string_view> pszSource,
+                                  std::optional<std::string_view> pszName);
 std::int16_t FImportLibraryRaceAndEdit(APPSESSION &app, HWND hwnd, std::optional<std::string_view> pszSource);
-std::int16_t FSaveLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName, PLAYER *pplr);
+std::int16_t FSaveLibraryRace(APPSESSION &app, HWND hwnd, std::string_view pszName, PLAYER *pplr);
 std::int16_t FSaveCurrentLibraryRace(APPSESSION &app, HWND hwnd, PLAYER *pplr);
 std::int16_t FHasCurrentLibraryRace(void);
-std::int16_t FLoadLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName);
+std::int16_t FLoadLibraryRace(APPSESSION &app, HWND hwnd, std::string_view pszName);
 std::string_view PszCurrentLibraryRaceName(void);
 std::int16_t FCustomizeLibraryRace(APPSESSION &app, HWND hwnd, std::span<char, 256> pszName);
 std::int16_t FBeginLibraryRace(APPSESSION &app, HWND hwnd);
-std::int16_t FEditLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName);
-std::int16_t FDuplicateLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName);
+std::int16_t FEditLibraryRace(APPSESSION &app, HWND hwnd, std::string_view pszName);
+std::int16_t FDuplicateLibraryRace(APPSESSION &app, HWND hwnd, std::string_view pszName);
 std::int16_t FExportLibraryRace(APPSESSION &app, HWND hwnd, std::string_view pszName, std::optional<std::string_view> pszTarget);
 std::int16_t FExportLibraryOrders(APPSESSION &app, HWND hwnd, std::optional<std::string_view> pszTarget);
 std::int16_t FDeleteLibraryRace(APPSESSION &app, HWND hwnd, std::string_view pszName);
