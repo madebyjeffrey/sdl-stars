@@ -189,7 +189,9 @@
         "readonly-recent-library-path-input",
         "readonly-ini-selection-and-identity-views",
         "readonly-ini-recent-path-view",
-        "readonly-tile-settings-format-view"
+        "readonly-tile-settings-format-view",
+        "readonly-ini-preset-parser-view",
+        "preset-indexed-serialization"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -1055,6 +1057,22 @@
           "desktop_units": "18/18 pass on the updated source.",
           "host_units": "29/29 pass.",
           "S02_witnesses": "2/2 targeted linked state/layout witnesses pass.",
+          "native_regression": "519 matches, 25 existing warnings, 0 differences/errors or skipped reference inputs.",
+          "host_regression": "519 matches, 25 existing warnings, 0 differences/errors or skipped reference inputs.",
+          "tutorial": "1/1 available SDL native tutorial smoke passes.",
+          "baseline": "Unchanged; no game rules, file layouts or canonical models changed.",
+          "diff_check": "Pass."
+        },
+        {
+          "batch": "L05 bounded views and indexed INI preset codec",
+          "commits": [
+            "7889423b",
+            "497102b0"
+          ],
+          "changes": "ReadIniPresets consumes exact profile-read views for both transport and production formats, eliminating strlen rescans and pointer walking. WriteIniPresets serializes into the same shared fixed buffer using a byte index instead of advancing/subtracting a raw pointer. Preset bytes and shared-buffer effects are preserved.",
+          "desktop_units": "18/18 pass.",
+          "host_units": "29/29 pass.",
+          "preset_witness": "Pass; exercises valid/malformed presets, UTF-8 name tails and all 65,536 packed production words through read/write round trips.",
           "native_regression": "519 matches, 25 existing warnings, 0 differences/errors or skipped reference inputs.",
           "host_regression": "519 matches, 25 existing warnings, 0 differences/errors or skipped reference inputs.",
           "tutorial": "1/1 available SDL native tutorial smoke passes.",
@@ -25126,18 +25144,17 @@
   "working_tree_checkpoint": {
     "date": "2026-11-02",
     "branch": "develop",
-    "batch": "L05 readonly INI recent-path and tile-format views",
-    "source_commit": "80f89edc",
-    "status": "The source batch and prior qualification fixes are pushed to develop. Local full verification passed. Opt-in current-source CI run 41422617389 is still running on older commit 028c1dac; its Windows SDK matrix has failed and cannot be used to qualify the newer source.",
+    "batch": "L05 bounded INI preset parsing and serialization",
+    "source_commit": "497102b0",
+    "status": "Preset parser and serializer cleanups are pushed to develop. Local full verification passed. Workflow 41422617389 remains tied to earlier source 028c1dac: Linux host and linked/sanitizer jobs passed, Windows failed, Linux desktop was still running at last poll; current-source qualification is still required.",
     "changes": [
-      "ReadIniRecent accepts the exact bounded profile path view; its API no longer receives an unrelated signed character count.",
-      "ReadIniTileSettings accepts the exact bounded profile-format view and iterates only within that view.",
-      "S02 witnesses exercise both view interfaces; tile parsing receives a non-NUL-terminated one-byte slice."
+      "ReadIniPresets uses the profile reader byte count to create bounded string views, replacing strlen and raw pointer traversal while preserving the packed formats.",
+      "WriteIniPresets uses a byte index into the same app.state.szWork buffer rather than raw pointer increment/subtraction; output bytes and shared-buffer effects stay the same."
     ],
     "verification": {
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
-      "S02_linked_witnesses": "2/2 targeted state/layout witnesses pass.",
+      "S02_preset_witness": "Pass, including malformed inputs and all 65,536 packed production words.",
       "native_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "host_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "tutorial": "1/1 available SDL native tutorial smoke passes.",
@@ -25166,10 +25183,10 @@
       "rerun": "No current-source rerun yet; this environment cannot connect to GitHub Actions dispatch."
     },
     "next": [
-      "Resolve the opt-in Windows SDK matrix failure and qualify all Windows/Linux jobs against current source; run_fileworkflow.py and the Windows unused-argc fixes were pushed after CI checked out 028c1dac.",
-      "Complete the remaining L05 bounded text destinations and const-text interfaces; finish the scratch-storage/borrowed-return audit.",
+      "Inspect the Windows SDK matrix failure artifact from 41422617389 and qualify current develop source; workflow dispatch is not currently reachable from this environment.",
+      "Complete L05 remaining bounded text destinations and const-text interfaces; finish scratch-storage and borrowed-return audit.",
       "Complete L06 remaining buffer/length service interfaces, native file/path results, and chooser platform coverage.",
-      "Finish L08 only after current-source Windows/Linux qualification and the final C/macro inventory."
+      "Finish L08 only after current-source Windows/Linux qualification and the final live C/macro inventory."
     ],
     "untracked_user_assets": [
       "title-modernized.png and prompt",
@@ -25180,9 +25197,9 @@
       "run_id": 41422617389,
       "head": "028c1dac10a7060a7508718c1da34bf575629d82",
       "url": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41422617389",
-      "status": "in progress; Linux host passed, Windows SDK configuration matrix failed, remaining platform jobs were still running at last poll.",
+      "status": "Run 41422617389 is still in progress on head 028c1dac, before qualification fixes and INI view changes; Linux host and linked/sanitizer jobs passed; Windows SDK matrix and client failed; Linux desktop remained in progress at last poll.",
       "dispatch": "unit.yml workflow_dispatch with run_slow_platform_jobs=true",
-      "scope": "Source head 028c1dac includes the path and INI views through a891329d, but not later qualification repairs or commit 80f89edc."
+      "scope": "Does not include commits 75767e02, 60a94d06, 80f89edc, 7889423b or 497102b0; cannot qualify current source."
     },
     "post_checkpoint_commits": [
       {
@@ -25196,6 +25213,14 @@
       {
         "commit": "80f89edc",
         "message": "Use views for remaining INI parser inputs"
+      },
+      {
+        "commit": "7889423b",
+        "message": "Parse INI presets from bounded views"
+      },
+      {
+        "commit": "497102b0",
+        "message": "Use an index for preset serialization"
       }
     ]
   }
