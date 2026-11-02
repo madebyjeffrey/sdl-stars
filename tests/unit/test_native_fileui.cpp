@@ -70,7 +70,7 @@ static void TestTextBoundaries(void) {
     hwnd = ui::CreateWindowEx(0, wc.lpszClassName, "Native title", win32::WS_OVERLAPPED, 0, 0, 200, 100, NULL, NULL, win32::GetModuleHandleA(NULL), NULL);
     TEST_ASSERT(hwnd);
     hwndEdit = ui::CreateWindowEx(0, "EDIT", "", win32::WS_CHILD, 0, 0, 180, 24, hwnd, NULL, win32::GetModuleHandleA(NULL), NULL);
-    TEST_ASSERT(hwndEdit && FSetUtf8WindowText(hwndEdit, "\xc3\xa9\xe2\x82\xac"));
+    TEST_ASSERT(hwndEdit && ControlIO().pfnSetWindowText(hwndEdit, "\xc3\xa9\xe2\x82\xac"));
     const auto cchEmpty = CchGetUtf8WindowText(hwndEdit, std::span<char>{});
     TEST_CHECK(cchEmpty && *cchEmpty == 0);
     cch = CchGetUtf8WindowText(hwndEdit, std::span{sz});

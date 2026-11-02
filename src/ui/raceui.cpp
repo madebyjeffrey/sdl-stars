@@ -182,7 +182,7 @@ INT_PTR  RaceWizardDlg1(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         i = RaceQueryIO().pfnStat(&app.state.vplr, rsUseLeftover);
         ControlIO().pfnSendMessage(hwndCB, win32::CB_SETCURSEL, i, 0);
         if (app.state.vplr.lSalt != 0) {
-            FSetUtf8WindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_RACE_PASSWORD), app.state.szRacePass);
+            ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_RACE_PASSWORD), app.state.szRacePass);
         }
         if (app.state.fRCWReadOnly) {
             for (i = 268; i <= 269; i++) {

@@ -133,10 +133,6 @@ std::optional<std::size_t> CchGetUtf8WindowText(HWND hwnd, std::span<char> psz) 
     return static_cast<std::size_t>(win32::GetWindowTextA(hwnd, psz.data(), static_cast<int>(psz.size())));
 }
 
-BOOL FSetUtf8WindowText(HWND hwnd, const char *psz) {
-    return ControlIO().pfnSetWindowText(hwnd, psz);
-}
-
 BOOL FSetNativeWindowTitle(HWND hwnd, const char *psz) {
     return StarsCompatSetWindowTitleUtf8(hwnd, psz);
 }
