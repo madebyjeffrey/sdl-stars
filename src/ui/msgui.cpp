@@ -200,10 +200,10 @@ LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 }
                 if (TextIO().pfnCchGetString(app, idsSCC, std::span{szT}) >= 32) {
                 }
-                cch = win32::wsprintfA(std::span{reinterpret_cast<char *>(app.lpui->lpb2k), std::size_t{0x800}}, szT, TextIO().pfnPlayerName(app, lpmsgplr->iPlrFrom, 1, 1, 1, 0, nullptr), 13, 10);
+                cch = CchSprintf(std::span{reinterpret_cast<char *>(app.lpui->lpb2k), std::size_t{0x800}}, szT, TextIO().pfnPlayerName(app, lpmsgplr->iPlrFrom, 1, 1, 1, 0, nullptr), 13, 10);
                 if (TextIO().pfnCchGetString(app, idsSCC2, std::span{szT}) >= 32) {
                 }
-                cch += win32::wsprintfA(std::span{reinterpret_cast<char *>(app.lpui->lpb2k), std::size_t{0x800}}.subspan(static_cast<std::size_t>(cch)), szT,
+                cch += CchSprintf(std::span{reinterpret_cast<char *>(app.lpui->lpb2k), std::size_t{0x800}}.subspan(static_cast<std::size_t>(cch)), szT,
                                 lpmsgplr->iPlrTo == 0 ? TextIO().pfnCompressed(app, idsEverybody).data() : TextIO().pfnPlayerName(app, lpmsgplr->iPlrTo - 1, 1, 1, 1, 0, nullptr).data(),
                                 13, 10);
                 if (lpmsgplr->cLen >= 0) {
@@ -645,7 +645,7 @@ void SetMsgTitle(APPSESSION &app, HWND hwnd) {
         i = app.state.gd.fSendMsgMode ? idsDone : app.state.iMsgCur >= app.state.cMsg ? idsReply : app.state.gd.fGotoVCR ? idsView : idsGoto3;
         ControlIO().pfnSetWindowText(app.lpui->rghwndMsgBtn[1], TextIO().pfnCompressed(app, static_cast<StringId>(i)).data());
         if (app.state.gd.fSendMsgMode) {
-            win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsSendMessagesDD).data(), app.state.iMsgSendCur + 1, app.state.vcmsgplrOut);
+            CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsSendMessagesDD).data(), app.state.iMsgSendCur + 1, app.state.vcmsgplrOut);
             rc = app.lpui->rcMsgText;
             ExpandRc(&rc, -4, -4);
             ControlIO().pfnSetWindowPos(app.lpui->hwndMsgDrop, nullptr, rc.left + 30, rc.top, rc.right - rc.left - 84, rc.bottom - rc.top, win32::SWP_NOZORDER | win32::SWP_SHOWWINDOW);
@@ -679,10 +679,10 @@ void SetMsgTitle(APPSESSION &app, HWND hwnd) {
         }
         if (cMsgTot != 0) {
             TextIO().pfnCchGetString(app, idsYearDCMessagesDD, std::span{szT});
-            win32::wsprintfA(app.state.szWork, szT, app.state.game.turn + 2400, ch, app.state.iMsgCur + 1, cMsgTot);
+            CchSprintf(app.state.szWork, szT, app.state.game.turn + 2400, ch, app.state.iMsgCur + 1, cMsgTot);
         } else {
             TextIO().pfnCchGetString(app, idsYearDCMessagesNone, std::span{szT});
-            win32::wsprintfA(app.state.szWork, szT, app.state.game.turn + 2400, ch);
+            CchSprintf(app.state.szWork, szT, app.state.game.turn + 2400, ch);
         }
         ControlIO().pfnEnableWindow(app.lpui->rghwndMsgBtn[0], IMsgPrev(app, 0) != imsgNone);
         ControlIO().pfnEnableWindow(app.lpui->rghwndMsgBtn[2], IMsgNext(app, 0) != imsgNone);
