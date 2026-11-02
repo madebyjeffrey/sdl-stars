@@ -191,7 +191,8 @@
         "readonly-ini-recent-path-view",
         "readonly-tile-settings-format-view",
         "readonly-ini-preset-parser-view",
-        "preset-indexed-serialization"
+        "preset-indexed-serialization",
+        "readonly-window-settings-view"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -1073,6 +1074,23 @@
           "desktop_units": "18/18 pass.",
           "host_units": "29/29 pass.",
           "preset_witness": "Pass; exercises valid/malformed presets, UTF-8 name tails and all 65,536 packed production words through read/write round trips.",
+          "native_regression": "519 matches, 25 existing warnings, 0 differences/errors or skipped reference inputs.",
+          "host_regression": "519 matches, 25 existing warnings, 0 differences/errors or skipped reference inputs.",
+          "tutorial": "1/1 available SDL native tutorial smoke passes.",
+          "baseline": "Unchanged; no game rules, file layouts or canonical models changed.",
+          "diff_check": "Pass."
+        },
+        {
+          "batch": "L05 indexed preset serialization and bounded window-settings parsing",
+          "commits": [
+            "497102b0",
+            "d2dc02bf"
+          ],
+          "changes": "WriteIniPresets serializes into app.state.szWork with a byte index instead of a raw pointer. GetIniWinRc parses its validated 17-byte profile value through a bounded view and indexes the four fixed-width coordinates.",
+          "desktop_units": "18/18 pass.",
+          "host_units": "29/29 pass.",
+          "S02_layout_witness": "Pass for valid and invalid window-setting values.",
+          "S02_preset_witness": "Pass, including all 65,536 packed production-word round trips.",
           "native_regression": "519 matches, 25 existing warnings, 0 differences/errors or skipped reference inputs.",
           "host_regression": "519 matches, 25 existing warnings, 0 differences/errors or skipped reference inputs.",
           "tutorial": "1/1 available SDL native tutorial smoke passes.",
@@ -25144,17 +25162,18 @@
   "working_tree_checkpoint": {
     "date": "2026-11-02",
     "branch": "develop",
-    "batch": "L05 bounded INI preset parsing and serialization",
-    "source_commit": "497102b0",
-    "status": "Preset parser and serializer cleanups are pushed to develop. Local full verification passed. Workflow 41422617389 remains tied to earlier source 028c1dac: Linux host and linked/sanitizer jobs passed, Windows failed, Linux desktop was still running at last poll; current-source qualification is still required.",
+    "batch": "L05 bounded INI profile parsing and preset serialization",
+    "source_commit": "d2dc02bf",
+    "status": "The verified INI view/parser and indexed serializer batches are pushed to develop. Local full verification passed. Current source still needs opt-in Windows/Linux CI qualification; run 41422617389 is tied to older head 028c1dac.",
     "changes": [
-      "ReadIniPresets uses the profile reader byte count to create bounded string views, replacing strlen and raw pointer traversal while preserving the packed formats.",
-      "WriteIniPresets uses a byte index into the same app.state.szWork buffer rather than raw pointer increment/subtraction; output bytes and shared-buffer effects stay the same."
+      "ReadIniPresets uses exact profile-read views rather than strlen and raw pointer traversal.",
+      "WriteIniPresets serializes into the existing shared work buffer using an explicit byte index.",
+      "GetIniWinRc parses the exact 17-byte window position view by index instead of walking a mutable pointer."
     ],
     "verification": {
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
-      "S02_preset_witness": "Pass, including malformed inputs and all 65,536 packed production words.",
+      "S02_witnesses": "Preset and layout witnesses pass; preset witness exercises all 65,536 packed production words.",
       "native_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "host_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "tutorial": "1/1 available SDL native tutorial smoke passes.",
@@ -25183,10 +25202,10 @@
       "rerun": "No current-source rerun yet; this environment cannot connect to GitHub Actions dispatch."
     },
     "next": [
-      "Inspect the Windows SDK matrix failure artifact from 41422617389 and qualify current develop source; workflow dispatch is not currently reachable from this environment.",
-      "Complete L05 remaining bounded text destinations and const-text interfaces; finish scratch-storage and borrowed-return audit.",
-      "Complete L06 remaining buffer/length service interfaces, native file/path results, and chooser platform coverage.",
-      "Finish L08 only after current-source Windows/Linux qualification and the final live C/macro inventory."
+      "Rerun opt-in Windows/Linux qualification on current source and resolve the Windows SDK matrix failure; the gh workflow dispatch cannot connect from this environment.",
+      "Complete remaining L05 bounded text destinations and const-text interfaces, plus scratch-storage/borrowed-return audit.",
+      "Complete L06 buffer/length service interfaces, native file/path results, and chooser platform coverage.",
+      "Finish L08 after full current-source qualification and the final live C/macro inventory."
     ],
     "untracked_user_assets": [
       "title-modernized.png and prompt",
@@ -25197,9 +25216,9 @@
       "run_id": 41422617389,
       "head": "028c1dac10a7060a7508718c1da34bf575629d82",
       "url": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41422617389",
-      "status": "Run 41422617389 is still in progress on head 028c1dac, before qualification fixes and INI view changes; Linux host and linked/sanitizer jobs passed; Windows SDK matrix and client failed; Linux desktop remained in progress at last poll.",
+      "status": "Run 41422617389 remains in progress on older head 028c1dac: Linux host, linked witnesses and sanitizers passed; Windows SDK matrix and client failed; Linux desktop unit job was still running at last poll.",
       "dispatch": "unit.yml workflow_dispatch with run_slow_platform_jobs=true",
-      "scope": "Does not include commits 75767e02, 60a94d06, 80f89edc, 7889423b or 497102b0; cannot qualify current source."
+      "scope": "Run predates the Linux fixture fix, Windows argc warning fix, and all later L05 view/parser batches; it cannot qualify current source."
     },
     "post_checkpoint_commits": [
       {
@@ -25221,6 +25240,10 @@
       {
         "commit": "497102b0",
         "message": "Use an index for preset serialization"
+      },
+      {
+        "commit": "d2dc02bf",
+        "message": "Parse window settings from a bounded view"
       }
     ]
   }
