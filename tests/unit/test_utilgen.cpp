@@ -49,7 +49,7 @@ static void test_PszGetLine_contract(void) {
     TEST_CHECK(PszGetLine(psz).empty() && psz.empty());
 }
 
-static void OpenClosedCopySource(APPSESSION &app, const char *psz, MdOpenFlags md) {
+static void OpenClosedCopySource(APPSESSION &app, std::string_view psz, MdOpenFlags md) {
     StreamOpen(app, psz, md);
     StreamClose(app);
 }

@@ -1507,7 +1507,7 @@ std::int16_t FBadFileError(StringId ids) {
     }
 }
 
-void StreamOpen(APPSESSION &app, const char *szFile, MdOpenFlags mdOpen) {
+void StreamOpen(APPSESSION &app, std::string_view szFile, MdOpenFlags mdOpen) {
     NATIVEFILEOPENOPTIONS nfo;
     NATIVEFILEOPENRESULT nfr;
     std::uint32_t dwTick;

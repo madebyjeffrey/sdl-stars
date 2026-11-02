@@ -1023,7 +1023,7 @@ std::int16_t GenNewGameFromFile(APPSESSION &app, std::string_view pszFile) {
             TurnLog(app, idsGeneratingYearD);
         }
         app.state.game = {};
-        RecordIO().pfnStreamOpen(app, szFile.c_str(), mdRead);
+        RecordIO().pfnStreamOpen(app, szFile, mdRead);
         cbFile = CbFileSize(app.state.hf);
         if (!cbFile || *cbFile >= 16000) {
             FileError(app, idsUniverseCreationFileAppearsInvalid);

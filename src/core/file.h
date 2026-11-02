@@ -31,7 +31,7 @@ HDR     HdrMemStream(APPSESSION &app);
 std::span<const std::byte> RgMemStreamRecord(APPSESSION &app);
 void    ReadRt(APPSESSION &app);
 std::int16_t FBadFileError(StringId ids);
-void    StreamOpen(APPSESSION &app, const char *szFile, MdOpenFlags mdOpen);
+void    StreamOpen(APPSESSION &app, std::string_view szFile, MdOpenFlags mdOpen);
 void    StreamClose(APPSESSION &app);
 void    RgFromStream(APPSESSION &app, std::span<std::byte> rg);
 

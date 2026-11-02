@@ -10,7 +10,7 @@
 #include <vector>
 
 static std::string szDefinitionOpened;
-static void CaptureDefinitionFile(APPSESSION &, const char *psz, MdOpenFlags) {
+static void CaptureDefinitionFile(APPSESSION &, std::string_view psz, MdOpenFlags) {
     szDefinitionOpened = psz;
     StarsThrowError(starsErrorFile, idsCantOpenFile);
 }
@@ -142,7 +142,7 @@ static void test_DefinitionCreation_logging(void) {
     }
 }
 
-static void OpenClosedBatchSource(APPSESSION &app, const char *psz, MdOpenFlags md) {
+static void OpenClosedBatchSource(APPSESSION &app, std::string_view psz, MdOpenFlags md) {
     StreamOpen(app, psz, md);
     StreamClose(app);
 }

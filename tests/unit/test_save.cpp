@@ -14,7 +14,7 @@
 static int cFileInputCalls;
 static int cFileInputDirty;
 static std::string szFileInputAttempt;
-static void CaptureFileInput(APPSESSION &, const char *psz, MdOpenFlags) {
+static void CaptureFileInput(APPSESSION &, std::string_view psz, MdOpenFlags) {
     ++cFileInputCalls;
     szFileInputAttempt = psz;
     StarsThrowError(starsErrorFile, idsCantOpenFile);
@@ -168,9 +168,9 @@ static void test_LoadGame_owned_inputs(void) {
 
 static bool fCloseSizeSource;
 static int cClosedSizeSources;
-static void OpenSizeSource(APPSESSION &app, const char *psz, MdOpenFlags md) {
+static void OpenSizeSource(APPSESSION &app, std::string_view psz, MdOpenFlags md) {
     StreamOpen(app, psz, md);
-    fCloseSizeSource = std::string_view(psz).ends_with(".m1");
+    fCloseSizeSource = psz.ends_with(".m1");
 }
 static void ReadSizeSource(APPSESSION &app) {
     ReadRt(app);

@@ -12,7 +12,7 @@
 
 static int cRaceInputOpen;
 static std::string szRaceInputOpened;
-static void OpenRaceInputAndMutate(APPSESSION &app, const char *psz, MdOpenFlags md) {
+static void OpenRaceInputAndMutate(APPSESSION &app, std::string_view psz, MdOpenFlags md) {
     ++cRaceInputOpen;
     szRaceInputOpened = psz;
     StreamOpen(app, psz, md);
@@ -66,7 +66,7 @@ static void test_RaceFile_owned_input(void) {
 
 static int cRaceInputClose;
 static std::string szRaceInputDiagnostic;
-static void CaptureRaceInput(APPSESSION &, const char *psz, MdOpenFlags md) {
+static void CaptureRaceInput(APPSESSION &, std::string_view psz, MdOpenFlags md) {
     TEST_CHECK(md == mdRead);
     ++cRaceInputOpen;
     szRaceInputOpened = psz;

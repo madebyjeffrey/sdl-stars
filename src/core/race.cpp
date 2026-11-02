@@ -634,7 +634,7 @@ std::int16_t FWasRaceFile(APPSESSION &app, std::string_view szFile, std::int16_t
             StarsThrowError(starsErrorMemory, idsMemory);
         }
         {
-            RecordIO().pfnStreamOpen(app, szFileOwned.c_str(), mdRead);
+            RecordIO().pfnStreamOpen(app, szFileOwned, mdRead);
             RecordIO().pfnReadRt(app);
             if (app.state.hdrCur.rt != rtBOF || app.state.hdrCur.cb != cbWireBof || BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).verMajor() != 2 ||
                 BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).verMinor() < 49 || BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).verMinor() > 85) {
