@@ -2,6 +2,7 @@
 #include "text_io.h"
 #include "encoding.h"
 #include <algorithm>
+#include <charconv>
 
 // FSzEqNoCase compares two strings, ignoring case, as INI names are.
 static bool FSzEqNoCase(std::string_view sz1, std::string_view sz2) {
@@ -68,9 +69,19 @@ bool FIniValue(APPSESSION &app, std::string_view szText, StringId idsSection, St
 // number, or lDefault if the key is missing.
 std::int32_t LIniInt(APPSESSION &app, std::string_view szText, StringId idsSection, StringId idsKey, std::int32_t lDefault) {
     std::array<char, 32> szValue;
+    std::string_view szNumber;
+    const char *pszBegin;
+    std::int32_t lValue = 0;
+    std::from_chars_result result;
 
     if (!FIniValue(app, szText, idsSection, idsKey, szValue)) {
         return lDefault;
     }
-    return std::atol(szValue.data());
+    szNumber = szValue.data();
+    if (!szNumber.empty() && szNumber.front() == '+') {
+        szNumber.remove_prefix(1);
+    }
+    pszBegin = szNumber.data();
+    result = std::from_chars(pszBegin, pszBegin + szNumber.size(), lValue);
+    return result.ec == std::errc{} && result.ptr != pszBegin ? lValue : 0;
 }
