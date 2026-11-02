@@ -377,10 +377,11 @@ void GetIniWinRc(APPSESSION &app, const char *szSection, const char *szIniFile, 
     std::int16_t cch;
     RECT    rc;
     std::int16_t j;
-    char   *pch;
     std::int16_t i;
     std::int16_t fNeg;
     std::int16_t rg[4];
+    std::size_t ich;
+    char ch;
 
     TextIO().pfnCchGetString(app, ids, std::span{szEntry});
     cch = ProfileTextIO().pfnReadString(szSection, szEntry, "X", app.state.szWork, 20, szIniFile);
@@ -394,18 +395,20 @@ void GetIniWinRc(APPSESSION &app, const char *szSection, const char *szIniFile, 
         fMinimized = 0;
         fInitalized = 0;
     } else {
-        pch = &app.state.szWork[1];
+        const std::string_view szWindowSettings{app.state.szWork, static_cast<std::size_t>(cch)};
         for (i = 0; i < 4; i++) {
             rg[i] = 0;
             fNeg = 0;
-            for (j = 0; j < 4; j++, pch++) {
-                if (*pch == '-') {
+            for (j = 0; j < 4; j++) {
+                ich = static_cast<std::size_t>(1 + i * 4 + j);
+                ch = szWindowSettings[ich];
+                if (ch == '-') {
                     fNeg = 1;
                     continue;
                 }
-                if (*pch < '0' || *pch > '9')
+                if (ch < '0' || ch > '9')
                     goto NoRc;
-                rg[i] = 10 * rg[i] + (*pch - '0');
+                rg[i] = 10 * rg[i] + (ch - '0');
             }
             if (fNeg) {
                 rg[i] = -rg[i];
@@ -415,8 +418,8 @@ void GetIniWinRc(APPSESSION &app, const char *szSection, const char *szIniFile, 
         rc.top = rg[1];
         rc.right = rg[2];
         rc.bottom = rg[3];
-        fMaximized = app.state.szWork[0] == 'M';
-        fMinimized = app.state.szWork[0] == 'I';
+        fMaximized = szWindowSettings[0] == 'M';
+        fMinimized = szWindowSettings[0] == 'I';
         fInitalized = 1;
     }
     pwn->rc = rc;
