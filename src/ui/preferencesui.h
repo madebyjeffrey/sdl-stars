@@ -3,9 +3,10 @@
 
 class APPSESSION;
 #include <cstdint>
+#include <string_view>
 void ReadIniPresets(APPSESSION &app, const char *szIniFile);
 void WriteIniPresets(APPSESSION &app, const char *szIniFile);
-void ReadIniSelection(APPSESSION &app, const char *pszSelection, std::int16_t cch);
-void ReadIniIdentity(APPSESSION &app, const char *pszIdentity, std::int16_t cch);
+void ReadIniSelection(APPSESSION &app, std::string_view szSelection);
+void ReadIniIdentity(APPSESSION &app, std::string_view szIdentity);
 void ReadIniRecent(APPSESSION &app, const char *szSection, const char *szEntry, const char *szIniFile, std::int16_t cch);
 #endif

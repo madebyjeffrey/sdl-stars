@@ -57,8 +57,8 @@ static void reset(APPSESSION &app) {
     app.state.ini.idPlayer = 7;
     app.state.ini.iObjSel = 90;
 }
-static void selection(APPSESSION &app, const char *psz) { ReadIniSelection(app, psz, (int16_t)strlen(psz)); }
-static void identity(APPSESSION &app, const char *psz) { ReadIniIdentity(app, psz, (int16_t)strlen(psz)); }
+static void selection(APPSESSION &app, std::string_view sz) { ReadIniSelection(app, sz); }
+static void identity(APPSESSION &app, std::string_view sz) { ReadIniIdentity(app, sz); }
 static void recent(APPSESSION &app) {
     const char *first = startupInput ? startupInput : inputs[0];
     const char *szSection = "Files", *szEntry = "File1", *szIniFile = "stars.ini";
@@ -98,6 +98,10 @@ int main(void) {
     LIBRARYPATHIOSCOPE pathScope(path);
     CHECK(FPathUnderLibrary(std::string_view{"/library", 8}, std::string_view{"/library/game", 13}));
     CHECK(!FPathUnderLibrary(std::string_view{"/library", 8}, std::string_view{"/library-old/game", 17}));
+    selection(app, std::string_view{"xxSB12yy"}.substr(2, 4));
+    CHECK(app.state.ini.grobjSel == 2 && app.state.ini.idPlayer == 0 && app.state.ini.iObjSel == 12);
+    identity(app, std::string_view{"zz001a??"}.substr(2, 4));
+    CHECK(app.state.ini.lid == 26);
     reset(app);
     selection(app, "N");
     CHECK(app.state.ini.grobjSel == 0 && app.state.ini.idPlayer == 7 && app.state.ini.iObjSel == 90);

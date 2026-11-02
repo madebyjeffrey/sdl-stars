@@ -512,13 +512,13 @@ void ReadIniSettings(APPSESSION &app) {
     ReadIniTileSettings(app.state.szWork, app.lpui->rgtileShip, 7);
     TextIO().pfnCchGetString(app, idsSelection, std::span{szEntry});
     cch = ProfileTextIO().pfnReadString(szSection, szEntry, "N", app.state.szWork, 20, szIniFile);
-    ReadIniSelection(app, app.state.szWork, cch);
+    ReadIniSelection(app, std::string_view{app.state.szWork, static_cast<std::size_t>(cch)});
     TextIO().pfnCchGetString(app, idsMessage, std::span{szEntry});
     i = win32::GetPrivateProfileIntA(szSection, szEntry, 0, szIniFile);
     app.state.ini.iMsg = i;
     TextIO().pfnCchGetString(app, idsGameid, std::span{szEntry});
     cch = ProfileTextIO().pfnReadString(szSection, szEntry, "0", app.state.szWork, 10, szIniFile);
-    ReadIniIdentity(app, app.state.szWork, cch);
+    ReadIniIdentity(app, std::string_view{app.state.szWork, static_cast<std::size_t>(cch)});
     TextIO().pfnCchGetString(app, idsScanzoom, std::span{szEntry});
     w = win32::GetPrivateProfileIntA(szSection, szEntry, 4, szIniFile);
     if (w >= 1 && w <= 9) {

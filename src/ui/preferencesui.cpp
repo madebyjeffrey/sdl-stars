@@ -135,15 +135,14 @@ void WriteIniPresets(APPSESSION &app, const char *szIniFile) {
     return;
 }
 
-void ReadIniSelection(APPSESSION &app, const char *pszSelection, std::int16_t cch) {
+void ReadIniSelection(APPSESSION &app, std::string_view szSelection) {
     std::int32_t iObjSel = 0;
-    const char *pszEnd;
     std::from_chars_result result;
 
-    if (cch < 3) {
+    if (szSelection.size() < 3) {
         app.state.ini.grobjSel = 0;
     } else {
-        switch (pszSelection[0]) {
+        switch (szSelection[0]) {
         case 'N':
         default:
             app.state.ini.grobjSel = 0;
@@ -157,29 +156,28 @@ void ReadIniSelection(APPSESSION &app, const char *pszSelection, std::int16_t cc
         case 'E':
             app.state.ini.grobjSel = 4;
         }
-        if (pszSelection[1] >= 'B' && pszSelection[1] <= 'Q') {
-            app.state.ini.idPlayer = pszSelection[1] - 'B';
+        if (szSelection[1] >= 'B' && szSelection[1] <= 'Q') {
+            app.state.ini.idPlayer = szSelection[1] - 'B';
         } else {
             app.state.ini.grobjSel = 0;
         }
         if (app.state.ini.grobjSel != 0) {
-            pszEnd = pszSelection + cch;
-            result = std::from_chars(pszSelection + 2, pszEnd, iObjSel);
+            result = std::from_chars(szSelection.data() + 2, szSelection.data() + szSelection.size(), iObjSel);
             app.state.ini.iObjSel = result.ec == std::errc{} ? iObjSel : 0;
         }
     }
 }
 
-void ReadIniIdentity(APPSESSION &app, const char *pszIdentity, std::int16_t cch) {
-    std::int16_t i;
+void ReadIniIdentity(APPSESSION &app, std::string_view szIdentity) {
+    std::size_t i;
 
     app.state.ini.lid = 0;
-    for (i = 0; i < cch; i++) {
+    for (i = 0; i < szIdentity.size(); i++) {
         app.state.ini.lid = static_cast<std::int32_t>((app.state.ini.lid * 16));
-        if (pszIdentity[i] >= '0' && pszIdentity[i] <= '9') {
-            app.state.ini.lid += static_cast<std::int16_t>((pszIdentity[i] - '0'));
-        } else if (pszIdentity[i] >= 'a' && pszIdentity[i] <= 'f') {
-            app.state.ini.lid += static_cast<std::int16_t>((pszIdentity[i] - 'W'));
+        if (szIdentity[i] >= '0' && szIdentity[i] <= '9') {
+            app.state.ini.lid += static_cast<std::int16_t>((szIdentity[i] - '0'));
+        } else if (szIdentity[i] >= 'a' && szIdentity[i] <= 'f') {
+            app.state.ini.lid += static_cast<std::int16_t>((szIdentity[i] - 'W'));
         }
     }
 }
