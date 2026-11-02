@@ -74,17 +74,18 @@ void CtrTextOut(HDC hdc, std::int16_t x, std::int16_t y, std::string_view szText
     return;
 }
 
-std::int16_t DxStreamTextOut(HDC hdc, std::int16_t *px, std::int16_t y, const char *psz, std::int16_t cLen, std::int16_t fPrint) {
+std::int16_t DxStreamTextOut(HDC hdc, std::int16_t &x, std::int16_t y, std::string_view szText, std::int16_t fPrint) {
+    const char *psz;
+    std::int16_t cLen;
     std::int16_t dx;
 
-    if (cLen == 0) {
-        cLen = win32::lstrlenA(psz);
-    }
+    psz = szText.empty() ? "" : szText.data();
+    cLen = static_cast<std::int16_t>(szText.size());
     dx = LOWORD(GetTextExtent(hdc, psz, cLen));
     if (fPrint) {
-        win32::TextOutA(hdc, *px, y, psz, cLen);
+        win32::TextOutA(hdc, x, y, psz, cLen);
     }
-    *px += dx;
+    x += dx;
     return dx;
 }
 

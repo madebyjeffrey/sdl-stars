@@ -1300,10 +1300,10 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, std::int16_t dx, std::int16_
             ExpandRc(&rcData, -4, -4);
             win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
             xText = rcData.left;
-            DxStreamTextOut(hdc, &xText, rcData.top, TextIO().pfnCompressed(app, idsShieldStrength).data(), 0, 1);
+            DxStreamTextOut(hdc, xText, rcData.top, std::string_view{TextIO().pfnCompressed(app, idsShieldStrength).data()}, 1);
             win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
             c = CchSprintf(app.state.szWork, app.state.PCTD, ppart->pshield()->dp);
-            DxStreamTextOut(hdc, &xText, rcData.top, app.state.szWork, c, 1);
+            DxStreamTextOut(hdc, xText, rcData.top, std::string_view{std::span{app.state.szWork}.data(), static_cast<std::size_t>(c)}, 1);
             if (ppart->hs.iItem == ishieldShadowShield) {
                 ids = idsArmorShieldRequiresPrimaryRacialTraitSuper;
                 idsT = idsShieldDecreasesRangeWhichEnemyShipsCan;
@@ -1327,10 +1327,10 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, std::int16_t dx, std::int16_
             ExpandRc(&rcData, -4, -4);
             win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
             xText = rcData.left;
-            DxStreamTextOut(hdc, &xText, rcData.top, TextIO().pfnCompressed(app, idsArmorStrength2).data(), 0, 1);
+            DxStreamTextOut(hdc, xText, rcData.top, std::string_view{TextIO().pfnCompressed(app, idsArmorStrength2).data()}, 1);
             win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
             c = CchSprintf(app.state.szWork, app.state.PCTD, ppart->parmor()->dp);
-            DxStreamTextOut(hdc, &xText, rcData.top, app.state.szWork, c, 1);
+            DxStreamTextOut(hdc, xText, rcData.top, std::string_view{std::span{app.state.szWork}.data(), static_cast<std::size_t>(c)}, 1);
             if (ppart->hs.iItem == iarmorDepletedNeutronium) {
                 ids = idsArmorShieldRequiresPrimaryRacialTraitSuper;
                 idsT = idsArmorDecreasesRangeWhichEnemyShipsCan;
@@ -1658,10 +1658,10 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, std::int16_t dx, std::int16_
             if (idsT != idsAllowsFleetsWithoutCargoJumpAnyOther) {
                 if (idsT == idsAllowsPlanetsFlingMineralPacketsOtherPlanets) {
                     win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-                    DxStreamTextOut(hdc, &xText, yText, TextIO().pfnCompressed(app, idsWarp).data(), 0, 1);
+                    DxStreamTextOut(hdc, xText, yText, std::string_view{TextIO().pfnCompressed(app, idsWarp).data()}, 1);
                     win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
                     c = CchSprintf(app.state.szWork, app.state.PCTD, ppart->pspecialsb()->grAbility);
-                    DxStreamTextOut(hdc, &xText, yText, app.state.szWork, c, 1);
+                    DxStreamTextOut(hdc, xText, yText, std::string_view{std::span{app.state.szWork}.data(), static_cast<std::size_t>(c)}, 1);
                     xText = rcData.left;
                     yText += app.state.dyArial8;
                     idsT = idsWarningReceivingPlanetMustHaveMassDriver;
@@ -1672,25 +1672,25 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, std::int16_t dx, std::int16_
                 }
             } else {
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-                DxStreamTextOut(hdc, &xText, yText, TextIO().pfnCompressed(app, idsSafeHullMass).data(), 0, 1);
+                DxStreamTextOut(hdc, xText, yText, std::string_view{TextIO().pfnCompressed(app, idsSafeHullMass).data()}, 1);
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
                 if (ppart->pspecialsb()->grAbility == -1) {
                     c = TextIO().pfnCchGetString(app, idsUnlimited, std::span{app.state.szWork});
                 } else {
                     c = CchSprintf(app.state.szWork, app.lpui->PCTDKT, ppart->pspecialsb()->grAbility);
                 }
-                DxStreamTextOut(hdc, &xText, yText, app.state.szWork, c, 1);
+                DxStreamTextOut(hdc, xText, yText, std::string_view{std::span{app.state.szWork}.data(), static_cast<std::size_t>(c)}, 1);
                 xText = rcData.left;
                 yText += app.state.dyArial8;
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-                DxStreamTextOut(hdc, &xText, yText, TextIO().pfnCompressed(app, idsSafeRange).data(), 0, 1);
+                DxStreamTextOut(hdc, xText, yText, std::string_view{TextIO().pfnCompressed(app, idsSafeRange).data()}, 1);
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
                 if (ppart->pspecialsb()->grAbility2 == -1) {
                     c = TextIO().pfnCchGetString(app, idsUnlimited, std::span{app.state.szWork});
                 } else {
                     c = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsDLightYears).data(), ppart->pspecialsb()->grAbility2);
                 }
-                DxStreamTextOut(hdc, &xText, yText, app.state.szWork, c, 1);
+                DxStreamTextOut(hdc, xText, yText, std::string_view{std::span{app.state.szWork}.data(), static_cast<std::size_t>(c)}, 1);
                 if (ppart->pspecialsb()->grAbility == -1) {
                     if (ppart->pspecialsb()->grAbility2 == -1) {
                         idsT = static_cast<StringId>(idsNoString);

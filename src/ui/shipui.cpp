@@ -490,9 +490,9 @@ void DrawShipWayPtOrders(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
                     for (i = 0; i < 3; i++) {
                         win32::SetTextColor(hdc, app.lpui->rgcrMinerals[i]);
                         c = CchSprintf(app.state.szWork, app.state.PCTLD, rgl[i]);
-                        DxStreamTextOut(hdc, &dxRight, yTopMsg, app.state.szWork, c, 1);
+                        DxStreamTextOut(hdc, dxRight, yTopMsg, std::string_view{std::span{app.state.szWork}.data(), static_cast<std::size_t>(c)}, 1);
                         win32::SetTextColor(hdc, app.lpui->crButtonText);
-                        DxStreamTextOut(hdc, &dxRight, yTopMsg, "kT  ", 4, 1);
+                        DxStreamTextOut(hdc, dxRight, yTopMsg, std::string_view{"kT  ", static_cast<std::size_t>(4)}, 1);
                     }
                     goto DoneMine;
                 }
