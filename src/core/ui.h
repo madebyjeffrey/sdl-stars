@@ -3,7 +3,7 @@
 
 #include "common.h"
 // The game code calls these to reach the player. The Windows game
-// implements them in its UI files; stars-host implements them in host.c,
+// implements them in its UI files; stars-host implements them in hostui.cpp,
 // where there is no one to ask. See docs/ROADMAP.md (2.9).
 
 #include <cstdint>

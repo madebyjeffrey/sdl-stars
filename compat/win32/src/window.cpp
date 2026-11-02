@@ -1,4 +1,4 @@
-/* C11 adaptation of Free API src/winuser_window.cpp and WindowRegistry.
+/* C++20 adaptation of Free API src/winuser_window.cpp and WindowRegistry.
  * Copyright (c) 2026 Robert Vokac. MIT license: ../LICENSE.free-api.
  * Stars adaptation: retained class data, independent handles and reentrant teardown.
  */

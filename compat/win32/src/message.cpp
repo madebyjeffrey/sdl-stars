@@ -1,4 +1,4 @@
-/* C11 adaptation of Free API message queue and winuser_message.cpp.
+/* C++20 adaptation of Free API message queue and winuser_message.cpp.
  * Copyright (c) 2026 Robert Vokac. MIT license: ../LICENSE.free-api.
  * Stars adaptation: real filters, synchronous sends and no fallback window routing.
  */

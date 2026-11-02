@@ -1,6 +1,6 @@
 /* SetRect and IntersectRect adapted from Free API include/winuser.h.
  * Copyright (c) 2026 Robert Vokac. MIT license: ../LICENSE.free-api.
- * Stars C11 adaptation and remaining rectangle operations, October 10, 2026.
+ * Stars C++20 adaptation and remaining rectangle operations, October 10, 2026.
  */
 #include <windows.h>
 

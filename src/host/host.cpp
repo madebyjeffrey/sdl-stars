@@ -23,7 +23,7 @@
 // Waiting for turns (-w) needs the Windows game's timer and is refused.
 
 // IdAlertBox shows ui.h's messages: there is no player to ask, so they go to
-// stderr and questions get the cautious answer. hostui.c has the rest of
+// stderr and questions get the cautious answer. hostui.cpp has the rest of
 // ui.h.
 
 std::int16_t IdAlertBox(const char *sz, std::int16_t mbType) {

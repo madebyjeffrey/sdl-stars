@@ -2,7 +2,7 @@
   "url": "https://github.com/openeggbert/free-api",
   "commit": "8337b2499ca28423623f624d4351992ca3f2a22f",
   "imported_on": "2026-10-10",
-  "purpose": "Unmodified selected source reference; not compiled or exposed as include directories. C11 adaptations live in ../../src.",
+  "purpose": "Unmodified selected source reference; not compiled or exposed as include directories. C++20 adaptations live in ../../src.",
   "sha256": {
     "LICENSE": "1c56f5cb087c3c224ff740ac61489bdc798460afb7c503a79b49db3d9e82eff0",
     "README.md": "63808eedaf0095a5553eb50b562026a9b79918b3681fb47790e17e4bbf1d678e",
