@@ -8,6 +8,7 @@
 #include <cinttypes>
 #include <cstring>
 #include <span>
+#include <string_view>
 #include "native.h"
 #include "inspect_styles.h"
 
@@ -76,9 +77,9 @@ static void FormatStyles(const STARSCOMPATWINDOW *lp, BOOL fExtended, std::span<
     if (!rgch[0]) CchCopyUtf8(rgch, "0");
 }
 
-static const char *PszControlKind(UINT iControl) {
-    static const char * const rgpsz[] = { "window", "button", "static", "edit", "listbox", "scrollbar", "combobox", "toolbar" };
-    return iControl < std::size(rgpsz) ? rgpsz[iControl] : "unknown";
+static std::string_view SzvControlKind(UINT iControl) {
+    static constexpr std::string_view rgsz[] = { "window", "button", "static", "edit", "listbox", "scrollbar", "combobox", "toolbar" };
+    return iControl < std::size(rgsz) ? rgsz[iControl] : "unknown";
 }
 
 std::uint64_t StarsCompatWindowId(HWND hwnd) {
@@ -159,17 +160,14 @@ BOOL StarsCompatCaptureHierarchy(STARSCOMPATSNAPSHOT *lpsnap) {
     return 1;
 }
 
-static BOOL FWriteString(NATIVEFILE *lpfile, const char *psz, BOOL fUtf8) {
-    const BYTE *lpch = reinterpret_cast<const BYTE *>(psz);
+static BOOL FWriteString(NATIVEFILE *lpfile, std::string_view szValue) {
     char rgb[4], *lpEnd;
-    std::size_t cb = std::strlen(psz);
     std::optional<UTF8CHAR> uch;
-    static_cast<void>(fUtf8);
     if (ChPutNativeFile('"', lpfile) == EOF) return 0;
-    while (*lpch) {
-        uch = DecodeUtf8Char(std::string_view{reinterpret_cast<const char *>(lpch), cb});
+    while (!szValue.empty()) {
+        uch = DecodeUtf8Char(szValue);
         if (!uch) return 0;
-        lpch += uch->cch; cb -= uch->cch;
+        szValue.remove_prefix(uch->cch);
         if (uch->ch == '"' || uch->ch == '\\') {
             if (ChPutNativeFile('\\', lpfile) == EOF || ChPutNativeFile(static_cast<int>(uch->ch), lpfile) == EOF) return 0;
         } else if (uch->ch < 32) {
@@ -203,11 +201,11 @@ BOOL StarsCompatWriteHierarchy(const STARSCOMPATSNAPSHOT *lpsnap, NATIVEFILE *lp
                     lp->fEnabled ? "true" : "false", lp->fFocused ? "true" : "false", lp->fCaptured ? "true" : "false",
                     lp->rcWindow.left, lp->rcWindow.top, lp->rcWindow.right, lp->rcWindow.bottom,
                     lp->rcClient.left, lp->rcClient.top, lp->rcClient.right, lp->rcClient.bottom) < 0 ||
-            !FWriteString(lpfile, lp->pszClass, 0) || IPutNativeString(",\"text\":", lpfile) == EOF ||
-            !FWriteString(lpfile, lp->pszText, lp->fUtf8Text) || IPutNativeString(",\"styleNames\":", lpfile) == EOF ||
-            !FWriteString(lpfile, szStyle, 0) || IPutNativeString(",\"exStyleNames\":", lpfile) == EOF ||
-            !FWriteString(lpfile, szExStyle, 0) || IPutNativeString(",\"controlKindName\":", lpfile) == EOF ||
-            !FWriteString(lpfile, PszControlKind(lp->iControl), 0) || ChPutNativeFile('}', lpfile) == EOF) return 0;
+            !FWriteString(lpfile, lp->pszClass) || IPutNativeString(",\"text\":", lpfile) == EOF ||
+            !FWriteString(lpfile, lp->pszText) || IPutNativeString(",\"styleNames\":", lpfile) == EOF ||
+            !FWriteString(lpfile, szStyle) || IPutNativeString(",\"exStyleNames\":", lpfile) == EOF ||
+            !FWriteString(lpfile, szExStyle) || IPutNativeString(",\"controlKindName\":", lpfile) == EOF ||
+            !FWriteString(lpfile, SzvControlKind(lp->iControl)) || ChPutNativeFile('}', lpfile) == EOF) return 0;
     }
     return IPutNativeString("\n]}\n", lpfile) != EOF && !FNativeStreamError(lpfile);
 }
@@ -235,7 +233,7 @@ static void InspectDetails(HWND hwnd) {
         "\r\nCapture: %d\r\nStyle: 0x%08x\r\n%s\r\nExStyle: 0x%08x\r\n%s"
         "\r\nWindow: %d,%d - %d,%d\r\nClient: %d,%d - %d,%d\r\n\r\nText:\r\n%s",
         lp->id, lp->idParent, lp->idOwner, static_cast<std::intptr_t>(lp->idControl), lp->pszClass, lp->iControl,
-        PszControlKind(lp->iControl),
+        SzvControlKind(lp->iControl),
         lp->fDialog, lp->fVisible, lp->fEnabled, lp->fFocused, lp->fCaptured,
         static_cast<unsigned>(lp->dwStyle), szStyle, static_cast<unsigned>(lp->dwExStyle), szExStyle,
         lp->rcWindow.left, lp->rcWindow.top, lp->rcWindow.right, lp->rcWindow.bottom,
