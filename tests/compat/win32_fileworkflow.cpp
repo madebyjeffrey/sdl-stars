@@ -205,8 +205,8 @@ static void  FileWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
     CHECK(FOpenGame(app, app.lpui->hwndTitle, 0) > 0 && app.state.game.lid != 0 && app.state.lpPlanets && app.state.idPlayer != iplrNone);
     lid = app.state.game.lid; plrSav = app.state.rgplr[app.state.idPlayer]; memcpy(szRaceSav, app.state.szRaceFile, sizeof(szRaceSav));
     hwndParentSav = app.lpui->hwndRaceParent; app.lpui->hwndRaceParent = app.lpui->hwndTitle;
-    CHECK(!FSaveRace(app, NULL, &plrSav) && memcmp(szRaceSav, app.state.szRaceFile, sizeof(szRaceSav)) == 0);
-    CHECK(FSaveRace(app, NULL, &plrSav));
+    CHECK(!FSaveRace(app, {}, &plrSav) && memcmp(szRaceSav, app.state.szRaceFile, sizeof(szRaceSav)) == 0);
+    CHECK(FSaveRace(app, {}, &plrSav));
     CHECK(app.state.szRaceFile[sizeof(app.state.szRaceFile) - 1] == 0 &&
           strncmp(app.state.szRaceFile, PszWorkflowFilename(pszRace), strlen(app.state.szRaceFile)) == 0);
     CHECK(FWasRaceFile(app, (char *)pszRace, 0) > 0);

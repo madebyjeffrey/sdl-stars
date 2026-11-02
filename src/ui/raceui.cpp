@@ -1412,7 +1412,7 @@ std::int16_t FConfirmLegacyRaceNames(APPSESSION &app, std::string_view szName, s
     return AlertIO().pfnAlertSz(app, szPrompt, win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_TASKMODAL) == win32::IDYES;
 }
 
-std::int16_t FSaveRace(APPSESSION &app, const char *szFileSuggest, PLAYER *pplr) {
+std::int16_t FSaveRace(APPSESSION &app, std::string_view szFileSuggest, PLAYER *pplr) {
     std::uint16_t     icksum;
     char         szFile[256];
     char *pch, *pchBackslash;
@@ -1422,9 +1422,9 @@ std::int16_t FSaveRace(APPSESSION &app, const char *szFileSuggest, PLAYER *pplr)
     std::array<char, cchCatalogText> rgchFilterText;
     std::size_t ichFileName;
 
-    if (szFileSuggest == app.state.szRaceFile && app.state.szRaceFile[0] && szRaceFileSuggest[0] &&
+    if (szFileSuggest.data() == app.state.szRaceFile && app.state.szRaceFile[0] && szRaceFileSuggest[0] &&
         std::strncmp(app.state.szRaceFile, szRaceFileSuggest, std::strlen(app.state.szRaceFile)) == 0) szFileSuggest = szRaceFileSuggest;
-    if (szFileSuggest) {
+    if (!szFileSuggest.empty()) {
         CchCopyUtf8(std::span{szFile}, szFileSuggest);
     } else {
         szFile[0] = 0;

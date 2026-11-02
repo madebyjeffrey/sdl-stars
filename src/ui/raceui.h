@@ -20,7 +20,7 @@ INT_PTR  RaceWizardDlg5(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 INT_PTR  RaceWizardDlg6(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 void             InvalidateAdvPtsRect(APPSESSION &app, HWND hwnd);
 void             DrawRaceAdvantagePoints(APPSESSION &app, HDC hdc, RECT *prc, PLAYER *pplr);
-std::int16_t          FSaveRace(APPSESSION &app, const char *szFileSuggest, PLAYER *pplr);
+std::int16_t          FSaveRace(APPSESSION &app, std::string_view szFileSuggest, PLAYER *pplr);
 void             SetSzRaceFile(APPSESSION &app, std::string_view szFile);
 void             SetRCWTitle(APPSESSION &app, HWND hwnd, std::int16_t iStep);
 
