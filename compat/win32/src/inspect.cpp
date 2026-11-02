@@ -1,6 +1,7 @@
 /* Logical-window inspection for the native UI and in-process tutorial harness. */
 #include "internal.h"
 #include <utility>
+#include <iterator>
 #include <stars_compat.h>
 #include <commctrl.h>
 #include <cinttypes>
@@ -76,7 +77,7 @@ static void FormatStyles(const STARSCOMPATWINDOW *lp, BOOL fExtended, std::span<
 
 static const char *PszControlKind(UINT iControl) {
     static const char * const rgpsz[] = { "window", "button", "static", "edit", "listbox", "scrollbar", "combobox", "toolbar" };
-    return iControl < SDL_arraysize(rgpsz) ? rgpsz[iControl] : "unknown";
+    return iControl < std::size(rgpsz) ? rgpsz[iControl] : "unknown";
 }
 
 std::uint64_t StarsCompatWindowId(HWND hwnd) {
