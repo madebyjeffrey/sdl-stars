@@ -8,9 +8,13 @@
 #include <cstdlib>
 #include <cstring>
 #include <limits>
+#include <new>
+#include <optional>
+#include <string>
 #include <strings.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <utility>
 #include <zlib.h>
 #include "help_contexts.h"
 #include "installed_data.h"
@@ -46,12 +50,13 @@ static BOOL FHelpAssets(const char *pszDirectory) {
     return fStamp;
 }
 
-static char *PszHelpDocument(const char *pszDirectory, const char *pszPage) {
+static std::optional<std::string> PszHelpDocument(const char *pszDirectory, const char *pszPage) {
     static const char szMarker[] = "__STARS_HELP_START__";
     char szSource[PATH_MAX], szTarget[PATH_MAX], szTemp[PATH_MAX];
-    char *pszBase, *pszBody = nullptr, *pszMarker, *pszResult = nullptr;
+    char *pszBase, *pszBody = nullptr, *pszMarker;
     NATIVEFILE *lpSource = nullptr, *lpTarget = nullptr;
     NATIVEFILETEMPRESULT nft;
+    std::optional<std::string> szResult;
     std::size_t cbPrefix, cbRead;
     int cch;
     BOOL fOk;
@@ -99,20 +104,19 @@ static char *PszHelpDocument(const char *pszDirectory, const char *pszPage) {
     if (ICloseNativeFile(targetOwner.release())) fOk = 0;
     lpTarget = nullptr;
     if (!fOk || IRenameNativePath(nft.szPath.c_str(), szTarget, 1, 1)) { IUnlinkNativePath(nft.szPath.c_str()); goto fail; }
-    pszResult = strdup(szTarget);
-    if (!pszResult) goto fail;
+    try { szResult.emplace(szTarget); }
+    catch (const std::bad_alloc &) { goto fail; }
     goto done;
 fail:
     win32::SetLastError(win32::ERROR_ACCESS_DENIED);
 done:
-    return pszResult;
+    return szResult;
 }
 
 BOOL win32::WinHelpA(HWND hWndMain, LPCSTR pszHelp, UINT uCommand, ULONG_PTR dwData) {
     const char *pszBase, *pszName, *pszPage = nullptr;
     char szDirectory[PATH_MAX];
     const char *pszDirectory;
-    char *pszDocument;
     std::size_t i;
     int cch;
     BOOL fLaunched;
@@ -172,12 +176,10 @@ BOOL win32::WinHelpA(HWND hWndMain, LPCSTR pszHelp, UINT uCommand, ULONG_PTR dwD
     }
     pszDirectory = szDirectoryOwned->c_str();
     if (!FHelpAssets(pszDirectory)) return 0;
-    pszDocument = PszHelpDocument(pszDirectory, pszPage);
-    NATIVEOWNER<char, std::free> documentOwner(pszDocument);
+    auto szDocument = PszHelpDocument(pszDirectory, pszPage);
     szDirectoryOwned.reset();
-    if (!pszDocument) return 0;
-    fLaunched = FCompatOpenDocument(pszDocument);
-    documentOwner.reset();
+    if (!szDocument) return 0;
+    fLaunched = FCompatOpenDocument(szDocument->c_str());
     win32::SetLastError(fLaunched ? win32::NO_ERROR : win32::ERROR_GEN_FAILURE);
     return fLaunched;
 }
