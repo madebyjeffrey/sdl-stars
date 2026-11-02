@@ -21,6 +21,7 @@
 #include <stars_compat.h>
 #include "internal.h"
 #include <SDL3/SDL.h>
+#include <iterator>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -1451,7 +1452,7 @@ static BOOL FCheckGameplayWorkflows(APPSESSION &app) {
         fprintf(stderr, "Research restore: wanted %d got %d\n", iResearchSav, app.state.rgplr[app.state.idPlayer].iTechNow()); return 0;
     }
     cProdSav = app.state.sel.pl.lpplprod ? app.state.sel.pl.lpplprod->iprodMac : 0;
-    if (cProdSav > (int)SDL_arraysize(rgprodSav)) { fprintf(stderr, "Production count %d\n", cProdSav); return 0; }
+    if (cProdSav > static_cast<int>(std::size(rgprodSav))) { fprintf(stderr, "Production count %d\n", cProdSav); return 0; }
     if (cProdSav != 0) memcpy(rgprodSav, app.state.sel.pl.lpplprod->rgprod(), (size_t)cProdSav * sizeof(PROD));
     for (i = 0; i < cProdSav; i++) cProdItemsSav += rgprodSav[i].cItem;
     fNoResearchSav = app.state.sel.pl.fNoResearch;

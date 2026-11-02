@@ -2049,10 +2049,10 @@
       "id": "L08",
       "status": "pending",
       "current_macro_audit": {
-        "status": "partial; verified at f2bbd1df",
-        "change": "Replaced the only SDL_arraysize invocation found in owned production C++ with std::size.",
-        "search": "The current owned-source scan of SDL_arraysize, SDL_zero, SDL_zerop, SDL_min, SDL_max, SDL_memcpy, SDL_memset and SDL_memmove found no remaining uses.",
-        "remaining": "Complete the maintained retained-macro and preprocessor-boundary audit, including resource-compiler and platform/test boundaries."
+      "status": "partial; production SDL macros were removed earlier; test SDL macros are removed in the current uncommitted worktree",
+      "change": "Replaced SDL_arraysize with std::size and SDL_zero with C++ aggregate initialization/reset throughout scanned owned production and test C++.",
+      "search": "The owned-source scan of SDL_arraysize, SDL_zero, SDL_zerop, SDL_min, SDL_max, SDL_memcpy, SDL_memset and SDL_memmove found no remaining uses in src, tests or compat C/C++ sources.",
+      "remaining": "Review the discovered fixed-width integer literal macros and complete the maintained retained-macro/preprocessor-boundary audit, including resource-compiler and platform/test boundaries."
       },
       "linux_desktop_execution_budget": {
         "status": "complete; verified at 2bbd5afa",
@@ -23668,12 +23668,12 @@
   ],
   "restart_checkpoint": {
     "date": "2026-11-01",
-    "reason": "Active C-style/C11 cleanup continuation checkpoint.",
+    "reason": "Active C-style/C11 cleanup continuation checkpoint; SDL convenience-macro cleanup is locally verified but uncommitted because this session has read-only access to .git.",
     "branch": "develop",
-    "batch": "L05aq host INI parser string-view and output-span interface",
-    "batch_parent": "b0c24baa",
-    "latest_batch": "L05aq host INI parser string-view and output-span interface",
-    "latest_batch_head": "ceb94fca",
+    "batch": "L08a remove unnecessary SDL convenience macros from tests",
+    "batch_parent": "04e2076c",
+    "latest_batch": "L08a remove unnecessary SDL convenience macros from tests (uncommitted worktree changes)",
+    "latest_batch_head": "04e2076c",
     "completed_stages": [
       "L01: nullptr and aliases",
       "L02: explicit C++ casts and headers",
@@ -23700,6 +23700,7 @@
       "compat/win32/src/toolbar.cpp: TB_GETBUTTONTEXT ABI output"
     ],
     "other_remaining": [
+      "Uncommitted L08a SDL macro cleanup in tests/compat; git commit was denied because .git is read-only in this session.",
       "Other readonly path/buffer/service interfaces",
       "Audit remaining Work/Msg/scratch storage and borrowed returns",
       "Linux portal direct formatting remains; its D-Bus development headers are unavailable in the local environment",
@@ -23709,6 +23710,8 @@
     ],
     "restart_order": [
       "Read this checkpoint and check git status/log; preserve unrelated title-modernized assets.",
+      "The uncommitted tests/compat changes replace SDL_zero with aggregate value-initialization/reset and SDL_arraysize with std::size; no SDL convenience macros in this family remain in scanned owned C++ sources. Locally verified: compat smoke/startup/popup/native-tutorial targets built; popup/native-tutorial smoke tests passed; unit tests 18/18, available tutorial checkpoint passed, native regression 519 matches with 25 existing unused-storage warnings and zero differences/errors/skips. Windows-only compat sources were not built on this macOS host.",
+      "Git staging/commit failed: .git/index.lock could not be created (operation not permitted). Do not assume these L08a edits were published. Commit/push after restarting in a checkout with writable Git metadata.",
       "L05aq converted FIniValue and LIniInt to string_view inputs and span output; host INI uses the explicit post-BOM byte extent. The linked profile I/O witness tests nonterminated views and UTF-8 truncation.",
       "Continue remaining L05 bounded destinations, const-text interfaces, scratch/borrowed-result audit and Linux portal formatting.",
       "Continue L06 remaining buffer/result interfaces and chooser Milestone D qualification.",
@@ -23727,39 +23730,40 @@
       "qualified_source_head": "b76ec1fcc1276790150457670f5f667bcec4eccc",
       "result": "success"
     },
-    "published_batch_head": "ceb94fca"
+    "published_batch_head": "04e2076c"
   },
   "current_checkpoint": {
-    "batch": "L05aq host INI parser string-view and output-span interface",
-    "status": "implemented and locally verified; native Windows qualification remains pending",
-    "parent": "b0c24baa",
+    "batch": "L08a remove unnecessary SDL convenience macros from tests",
+    "status": "implemented and locally verified in the worktree; uncommitted because .git is read-only in this session",
+    "parent": "04e2076c",
     "changes": {
-      "src/core/host_profile.h and src/core/host_profile.cpp": "FIniValue accepts the exact INI text view and destination span; LIniInt also consumes a text view. Line clipping, case-insensitive section/key matching, UTF-8-safe output truncation and parse defaults are retained.",
-      "src/host/host.cpp": "Passes the explicit text byte extent to host settings parsing after optional BOM removal.",
-      "tests/witnesses/s02_io.cpp": "Adds exact-view and multibyte truncation coverage."
+      "tests/compat/native_tutorial.cpp": "Uses aggregate initialization at SDL_Event declaration sites; removes redundant second reset.",
+      "tests/compat/sdl_smoke.cpp": "Uses aggregate assignment to reset reused SDL_Event values.",
+      "tests/compat/win32_client_popup.cpp": "Uses aggregate assignment to reset reused SDL_Event values.",
+      "tests/compat/win32_client_startup.cpp and tests/compat/win32_inspect.cpp": "Use std::size instead of SDL_arraysize.",
+      "tests/compat/win32_designer_workflow.h": "Uses aggregate assignment to reset reused SDL_Event values.",
+      "tests/compat/win32_windows.cpp": "Uses aggregate initialization at the SDL_Event declaration site; removes redundant second reset."
     },
     "verification": {
-      "macos_debug_build": "Full macos-sdl-debug build passes without new warnings.",
-      "host_build": "Host Release build passes with strict C++20 diagnostics.",
+      "macos_debug_build": "stars-compat-smoke, stars-native-tutorial, stars-compat-client-startup and stars-compat-client-popup built successfully; after the final removal of two redundant SDL_Event resets, the target build was rerun successfully without new warnings.",
       "desktop_unit_tests": "18/18 pass.",
-      "host_unit_tests": "29/29 pass.",
-      "focused_tests": "Linked s02 I/O witness passes with exact-view and UTF-8 truncation cases.",
-      "tutorial": "Available SDL tutorial smoke checkpoint passes.",
+      "focused_tests": "win32_client_popup and win32_native_tutorial_smoke_dummy pass (2/2) after final edits.",
+      "tutorial": "Available native tutorial smoke checkpoint passes (1/1).",
       "native_regression": "519 matches (25 existing unused-storage warnings); zero differences/errors/skips.",
-      "host_regression": "519 matches (25 existing unused-storage warnings); zero differences/errors/skips.",
-      "windows": "MinGW preset disabled on this macOS host; native Windows qualification remains pending.",
-      "baseline": "Unchanged; host profile parsing contract and game outputs match existing baselines.",
-      "diff_check": "git diff --check and checkpoint JSON validation pass."
+      "windows": "Windows-only compat sources were not built on this macOS host; Windows SDL preset is unavailable here.",
+      "baseline": "Unchanged; test-only cleanup.",
+      "macro_search": "No SDL_arraysize, SDL_zero, SDL_zerop, SDL_min, SDL_max, SDL_memcpy, SDL_memset or SDL_memmove uses remain in scanned owned C/C++ sources.",
+      "diff_check": "git diff --check passes."
     },
     "remaining_work": [
       "L05 bounded text destinations, const-text interfaces, scratch storage/borrowed-return audit and remaining wrapper formatting callers, including Linux portal formatting.",
-      "L06 remaining buffer/length interfaces and native file path results.",
+      "L06 remaining buffer/length interfaces and chooser Milestone D qualification.",
       "L06 D06 native Windows/Linux chooser qualification and remaining chooser branch coverage.",
-      "L08 maintained inventory reconciliation, retained primitive/macro audit and final platform qualification."
+      "L08 inspect remaining C-style integer literal macros in live owned code (INT32_C/UINT32_C/UINT64_C candidates), retained preprocessor/platform macros, maintained inventory reconciliation and final platform qualification."
     ],
-    "macro_scan": "Current owned-source search found and removed the only SDL_arraysize call; no SDL_zero, SDL_zerop, SDL_min, SDL_max, SDL_memcpy, SDL_memset or SDL_memmove uses remain in the scanned production sources. The prior definition scan found application header guards and NOMINMAX; resource-compiler and platform/test boundaries still need a complete retained-macro audit.",
-    "source_commit": "ceb94fca",
-    "published_batch_head": "ceb94fca"
+    "macro_scan": "The SDL convenience macro family is absent from scanned owned C/C++ source after this worktree batch. A live owned-code scan found INT32_C and UINT32_C in compat/win32/include/wincompat_constants.h (70 occurrences), UINT32_C in compat/win32/include/wincompat_values.h, compat/win32/src/{menu,paint,input}.cpp, src/core/race.cpp, and UINT64_C in compat/win32/src/dib.cpp. These need a typed-literal review. Imported SDK/reference fixtures intentionally retain the macros. The retained preprocessor/platform macro audit, including resource compiler boundaries and API-like Win32 macros, remains open.",
+    "source_commit": null,
+    "published_batch_head": "04e2076c"
   },
   "milestone_d_checkpoint": {
     "stage": "D05 caller migrations implemented; D06 platform qualification pending",

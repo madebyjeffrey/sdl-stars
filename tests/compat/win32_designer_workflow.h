@@ -21,12 +21,12 @@ static BOOL FPushHullDrag(APPSESSION &app, HWND hwndList, HWND hwndDialog, BOOL 
     event.button.button = SDL_BUTTON_LEFT; event.button.down = true;
     event.button.x = (float)ptStart.x; event.button.y = (float)ptStart.y;
     if (!SDL_PushEvent(&event)) return 0;
-    SDL_zero(event);
+    event = {};
     event.type = SDL_EVENT_MOUSE_MOTION; event.motion.windowID = hwndRoot->id;
     event.motion.state = SDL_BUTTON_LMASK;
     event.motion.x = (float)ptEnd.x; event.motion.y = (float)ptEnd.y;
     if (!SDL_PushEvent(&event)) return 0;
-    SDL_zero(event);
+    event = {};
     event.type = SDL_EVENT_MOUSE_BUTTON_UP; event.button.windowID = hwndRoot->id;
     event.button.button = SDL_BUTTON_LEFT;
     event.button.x = (float)ptEnd.x; event.button.y = (float)ptEnd.y;

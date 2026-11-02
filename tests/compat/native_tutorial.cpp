@@ -122,8 +122,6 @@ static BOOL FSaveState(APPSESSION &app, const char *pszName) {
 static BOOL FPushKey(HWND hwnd, SDL_Scancode sc, BOOL fDown) {
     SDL_Event event = {};
     HWND hwndRoot = HwndCompatRoot(hwnd);
-    // SDL_Event is a union; zero all bytes, including inactive-member fields.
-    SDL_zero(event);
     if (!hwndRoot) return 0;
     event.type = fDown ? SDL_EVENT_KEY_DOWN : SDL_EVENT_KEY_UP;
     event.key.windowID = hwndRoot->id;
@@ -136,7 +134,6 @@ static BOOL FPushKey(HWND hwnd, SDL_Scancode sc, BOOL fDown) {
 static BOOL FPushTextKey(APPSESSION &app, SDL_Scancode sc, const char *pszText) {
     SDL_Event event = {};
     HWND hwndRoot = HwndCompatRoot(app.lpui->hwndFrame);
-    SDL_zero(event);
     if (!hwndRoot || !FPushKey(app.lpui->hwndFrame, sc, 1)) return 0;
     /* SDL supplies printable characters separately from physical key events. */
     event.type = SDL_EVENT_TEXT_INPUT;
@@ -148,7 +145,6 @@ static BOOL FPushTextKey(APPSESSION &app, SDL_Scancode sc, const char *pszText) 
 static BOOL FMousePoint(HWND hwnd, POINT pt, Uint8 iButton, BOOL fDown) {
     HWND hwndRoot = HwndCompatRoot(hwnd);
     SDL_Event event = {};
-    SDL_zero(event);
     if (!hwndRoot || !win32::IsWindowVisible(hwnd) || !win32::IsWindowEnabled(hwnd)) return 0;
     win32::ClientToScreen(hwnd, &pt);
     win32::ScreenToClient(hwndRoot, &pt);

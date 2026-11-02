@@ -141,7 +141,7 @@ static bool FSmokeSelfTest(SMOKEWINDOW *rgwin) {
         if (!FDrawSmokeWindow(&rgwin[i], i, true))
             return false;
     }
-    SDL_zero(event);
+    event = {};
     event.type = SDL_EVENT_KEY_DOWN;
     event.key.windowID = rgwin[0].id;
     event.key.key = SDLK_SPACE;
@@ -155,7 +155,7 @@ static bool FSmokeSelfTest(SMOKEWINDOW *rgwin) {
         !FDrawSmokeWindow(&rgwin[1], 1, true))
         return false;
     for (i = 0; i < cWindows; i++) {
-        SDL_zero(event);
+        event = {};
         event.type = SDL_EVENT_WINDOW_CLOSE_REQUESTED;
         event.window.windowID = rgwin[i].id;
         if (!SDL_PushEvent(&event))

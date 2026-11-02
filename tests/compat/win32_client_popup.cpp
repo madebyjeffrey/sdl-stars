@@ -249,13 +249,13 @@ int main(void) {
         while (ui::PeekMessage(&msg, NULL, 0, 0, win32::PM_REMOVE)) ui::DispatchMessage(&msg);
         CHECK(win32::GetFocus() == hwndFocus && win32::GetCapture() == hwnd);
         if (i == 0) {
-            SDL_zero(event);
+            event = {};
             event.type = SDL_EVENT_WINDOW_CLOSE_REQUESTED;
             event.window.windowID = SDL_GetWindowID(hwnd->lpWindow.get());
             CHECK(SDL_PushEvent(&event));
             while (ui::PeekMessage(&msg, NULL, 0, 0, win32::PM_REMOVE)) ui::DispatchMessage(&msg);
         } else if (i == 1) {
-            SDL_zero(event);
+            event = {};
             event.type = SDL_EVENT_MOUSE_BUTTON_UP;
             event.button.windowID = SDL_GetWindowID(app.lpui->hwndFrame->lpWindow.get());
             event.button.button = SDL_BUTTON_RIGHT;

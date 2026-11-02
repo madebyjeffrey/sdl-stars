@@ -2,6 +2,7 @@
 #include <windows.h>
 #include <stars_compat.h>
 #include <SDL3/SDL.h>
+#include <iterator>
 #include <stdio.h>
 #include <string.h>
 #include "internal.h"
@@ -65,7 +66,7 @@ static int TestStyles(void) {
     char sz[8192], szClass[] = "StyleTest", szText[] = "";
     item.pszClass = szClass; item.pszText = szText;
     item.dwExStyle = win32::WS_EX_TOOLWINDOW | win32::WS_EX_NOACTIVATE | UINT32_C(0x40000000);
-    for (i = 0; i < SDL_arraysize(rg); i++) {
+    for (i = 0; i < std::size(rg); i++) {
         item.iControl = rg[i].iControl; item.fDialog = rg[i].fDialog; item.dwStyle = rg[i].dw;
         lpfile = PfNativeTemporary(); CHECK(lpfile && StarsCompatWriteHierarchy(&snap, lpfile));
         ISeekNativeFile(lpfile, 0, NATIVESEEKORIGIN::begin); cb = CReadNative(std::span{sz}.first(sizeof(sz) - 1), lpfile); sz[cb] = 0; ICloseNativeFile(lpfile);
