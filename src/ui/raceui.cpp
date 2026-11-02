@@ -105,7 +105,7 @@ Finish:
     if (!fDontWrite) {
         if (FHasCurrentLibraryRace()) {
             if (!FSaveCurrentLibraryRace(app, app.lpui->hwndRaceParent, &app.state.vplr)) goto Step1;
-        } else if (!FSaveRace(app, const_cast<char *>(reinterpret_cast<const char*>((app.state.szRaceFile[0] == 0 ? "stars.r1" : app.state.szRaceFile))), &app.state.vplr)) goto Step1;
+        } else if (!FSaveRace(app, app.state.szRaceFile[0] == 0 ? "stars.r1" : app.state.szRaceFile, &app.state.vplr)) goto Step1;
     }
     if (fDontWrite) {
         fResult = 1;
@@ -1410,14 +1410,14 @@ void SetSzRaceFile(APPSESSION &app, const char *pszFile) {
     app.state.szRaceFile[cch] = 0;
 }
 
-std::int16_t FConfirmLegacyRaceNames(APPSESSION &app, char *szName, char *szNames) {
+std::int16_t FConfirmLegacyRaceNames(APPSESSION &app, const char *szName, const char *szNames) {
     char szPrompt[256];
 
     CchSprintf(szPrompt, TextIO().pfnCompressed(app, idsNativeLegacyRaceNameShortened).data(), szName, szNames);
     return AlertIO().pfnAlertSz(app, szPrompt, win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_TASKMODAL) == win32::IDYES;
 }
 
-std::int16_t FSaveRace(APPSESSION &app, char *szFileSuggest, PLAYER *pplr) {
+std::int16_t FSaveRace(APPSESSION &app, const char *szFileSuggest, PLAYER *pplr) {
     std::uint16_t     icksum;
     char         szFile[256];
     char *pch, *pchBackslash;

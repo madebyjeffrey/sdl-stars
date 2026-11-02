@@ -12,7 +12,7 @@ void             QueuePlanetPaneLayout(APPSESSION &app);
 void             ClosePlanetPane(APPSESSION &app);
 
 LRESULT  PlanetWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
-std::int16_t          FDrawTileNC(APPSESSION &app, HDC hdc, TILE *ptile, RECT *prc, char *pszTitle);
+std::int16_t          FDrawTileNC(APPSESSION &app, HDC hdc, TILE *ptile, RECT *prc, const char *pszTitle);
 void             DrawPlanetMinSum(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj);
 void             DrawPlanetStats(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj);
 void             DrawPlanetStarbase(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj);
@@ -26,7 +26,7 @@ void             EnsureTileSize(APPSESSION &app, std::int16_t fSmallTiles);
 void             ReflowColumn(APPSESSION &app, std::int16_t iCol, std::int16_t iTile, std::int16_t fRedraw);
 void             HandleFocusState(APPSESSION &app, DRAWITEMSTRUCT *lpdis, std::int16_t inflate);
 void             DrawCBEntireItem(APPSESSION &app, DRAWITEMSTRUCT *lpdis, std::int16_t inflate);
-void             DrawProductionItem(APPSESSION &app, HDC hdc, RECT *prc, char *psz, std::int16_t inflate, std::int16_t fSelected, std::int16_t fListbox);
+void             DrawProductionItem(APPSESSION &app, HDC hdc, RECT *prc, const char *psz, std::int16_t inflate, std::int16_t fSelected, std::int16_t fListbox);
 void             DrawPlanShip(APPSESSION &app, HDC hdc, TileBits grbit);
 void             SetPlanetTitleBar(APPSESSION &app, HWND hwnd);
 void             FillPlanetProdLB(APPSESSION &app, HWND hwnd, PLPROD *lpplprod, PLANET *lppl);

@@ -246,7 +246,7 @@ LRESULT  PlanetWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     return 0;
 }
 
-std::int16_t FDrawTileNC(APPSESSION &app, HDC hdc, TILE *ptile, RECT *prc, char *pszTitle) {
+std::int16_t FDrawTileNC(APPSESSION &app, HDC hdc, TILE *ptile, RECT *prc, const char *pszTitle) {
     std::int16_t bt;
     RECT    rcT;
 
@@ -1476,9 +1476,9 @@ void DrawCBEntireItem(APPSESSION &app, DRAWITEMSTRUCT *lpdis, std::int16_t infla
     return;
 }
 
-void DrawProductionItem(APPSESSION &app, HDC hdc, RECT *prc, char *psz, std::int16_t inflate, std::int16_t fSelected, std::int16_t fListbox) {
+void DrawProductionItem(APPSESSION &app, HDC hdc, RECT *prc, const char *psz, std::int16_t inflate, std::int16_t fSelected, std::int16_t fListbox) {
     HFONT    hfntSav;
-    char    *pch;
+    const char *pch;
     std::int16_t  ichT;
     COLORREF cr;
     std::int16_t  pctDmg;
@@ -1495,7 +1495,7 @@ void DrawProductionItem(APPSESSION &app, HDC hdc, RECT *prc, char *psz, std::int
     std::int16_t  cch;
     std::int16_t  bkSav;
     RECT     rc;
-    char    *pchCopy, *pchCopyEnd;
+    const char *pchCopy, *pchCopyEnd;
     std::size_t cchCopy, cchCopied;
 
     fItalic = 0;

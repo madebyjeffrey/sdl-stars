@@ -79,7 +79,7 @@ void SetSzRaceFile(APPSESSION &app, const char *pszFile) {
     std::memcpy(app.state.szRaceFile, pszFile, cch); app.state.szRaceFile[cch] = 0;
 }
 
-std::int16_t FConfirmLegacyRaceNames(APPSESSION &app, char *szName, char *szNames) {
+std::int16_t FConfirmLegacyRaceNames(APPSESSION &app, const char *szName, const char *szNames) {
     char szPrompt[512];
     CchSprintf(szPrompt, PszGetCompressedString(app, idsNativeLegacyRaceNameShortened).data(), szName, szNames);
     return IdAlertBox(szPrompt, win32::MB_YESNO | win32::MB_ICONQUESTION) == win32::IDYES;

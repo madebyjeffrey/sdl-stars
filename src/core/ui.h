@@ -28,7 +28,7 @@ void    CreateChildWindows(APPSESSION &app);
 void    PostOpenGame(APPSESSION &app);
 void    ShowTitleScreen(APPSESSION &app);
 void    SetSzRaceFile(APPSESSION &app, const char *pszFile);
-std::int16_t FConfirmLegacyRaceNames(APPSESSION &app, char *szName, char *szNames);
+std::int16_t FConfirmLegacyRaceNames(APPSESSION &app, const char *szName, const char *szNames);
 void    AddMRUFile(APPSESSION &app, const char *pszFileName, const char *pszExt);
 void    CloseGameWindows(APPSESSION &app);
 std::int16_t FFinishPlrMsgEntry(APPSESSION &app, std::int16_t dInc);
