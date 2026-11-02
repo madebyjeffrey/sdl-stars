@@ -188,7 +188,7 @@ void DrawTutorText(APPSESSION &app, HWND hwnd) {
             win32::SetTextColor(hdc, app.lpui->crButtonFace);
             win32::SetBkColor(hdc, app.lpui->crButtonText);
         }
-        WrapTextOut(app, hdc, &xLeft, &yTop, rgch, cch, rc.left, rc.right - rc.left, nullptr, didt != 0 && fPara != 0, 1);
+        WrapTextOut(app, hdc, xLeft, yTop, std::string_view{rgch, static_cast<std::size_t>(cch)}, rc.left, rc.right - rc.left, nullptr, didt != 0 && fPara != 0, 1);
         if (app.state.tutor.idt + didt == app.state.tutor.idtBold) {
             win32::SetTextColor(hdc, app.lpui->crButtonText);
             win32::SetBkColor(hdc, app.lpui->crButtonFace);

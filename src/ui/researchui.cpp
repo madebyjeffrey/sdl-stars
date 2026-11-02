@@ -1232,7 +1232,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, std::int16_t dx, std::int16_
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
                 xText = rcData.left;
                 yText = rcData.top;
-                WrapTextOut(app, hdc, &xText, &yText, app.state.szWork, c, xText, rcData.right - rcData.left, nullptr, 0, 1);
+                WrapTextOut(app, hdc, xText, yText, std::string_view{std::span{app.state.szWork}.data(), static_cast<std::size_t>(c)}, xText, rcData.right - rcData.left, nullptr, 0, 1);
                 break;
             case ihuldefMiniMineLayer:
             case ihuldefSuperMineLayer:
@@ -1240,7 +1240,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, std::int16_t dx, std::int16_
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
                 xText = rcData.left;
                 yText = rcData.top;
-                WrapTextOut(app, hdc, &xText, &yText, app.state.szWork, c, xText, rcData.right - rcData.left, nullptr, 0, 1);
+                WrapTextOut(app, hdc, xText, yText, std::string_view{std::span{app.state.szWork}.data(), static_cast<std::size_t>(c)}, xText, rcData.right - rcData.left, nullptr, 0, 1);
             }
             break;
         case hstSBHull:
@@ -1259,7 +1259,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, std::int16_t dx, std::int16_
             win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
             if (ppart->phul()->wtCargoMax != 0) {
                 c = TextIO().pfnCchGetString(app, idsStarbaseHullHasSpaceDockCanBuild, std::span{app.state.szWork});
-                WrapTextOut(app, hdc, &xText, &yText, app.state.szWork, c, rcData.left, rcData.right - rcData.left, nullptr, 0, 1);
+                WrapTextOut(app, hdc, xText, yText, std::string_view{std::span{app.state.szWork}.data(), static_cast<std::size_t>(c)}, rcData.left, rcData.right - rcData.left, nullptr, 0, 1);
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
                 yText = 3 * app.state.dyArial8 + rcData.top;
                 xText = static_cast<std::int16_t>((rcData.right - rcData.left)) / 2 + rcData.left;
@@ -1274,7 +1274,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, std::int16_t dx, std::int16_
                 win32::TextOutA(hdc, xText, yText, app.state.szWork, c);
             } else {
                 c = TextIO().pfnCchGetString(app, idsStarbaseHullDoesHaveSpaceDockCan, std::span{app.state.szWork});
-                WrapTextOut(app, hdc, &xText, &yText, app.state.szWork, c, rcData.left, rcData.right - rcData.left, nullptr, 0, 1);
+                WrapTextOut(app, hdc, xText, yText, std::string_view{std::span{app.state.szWork}.data(), static_cast<std::size_t>(c)}, rcData.left, rcData.right - rcData.left, nullptr, 0, 1);
                 yText = 3 * app.state.dyArial8 + rcData.top;
             }
             yText += static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2;
@@ -1474,7 +1474,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, std::int16_t dx, std::int16_
                 }
                 CchCopyUtf8Prefix(std::span{app.state.szWork}, szT);
             }
-            WrapTextOut(app, hdc, &xText, &yText, app.state.szWork, c, rcData.left, rcData.right - rcData.left, nullptr, 0, 1);
+            WrapTextOut(app, hdc, xText, yText, std::string_view{std::span{app.state.szWork}.data(), static_cast<std::size_t>(c)}, rcData.left, rcData.right - rcData.left, nullptr, 0, 1);
             xText = rcData.left;
             yText += app.state.dyArial8 >> 1;
             if (ppart->hs.iItem == ibombRetroBomb) {
@@ -1487,7 +1487,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, std::int16_t dx, std::int16_
                 TextIO().pfnCchGetString(app, idsBombWillDestroyApproximatelyDPlanetsMines, std::span{szT});
                 c = CchSprintf(app.state.szWork, szT, ppart->pbomb()->dDmgBldg);
             }
-            WrapTextOut(app, hdc, &xText, &yText, app.state.szWork, c, rcData.left, rcData.right - rcData.left, nullptr, 1, 1);
+            WrapTextOut(app, hdc, xText, yText, std::string_view{std::span{app.state.szWork}.data(), static_cast<std::size_t>(c)}, rcData.left, rcData.right - rcData.left, nullptr, 1, 1);
             if (ppart->hs.iItem >= ibombSmartBomb && ppart->hs.iItem <= ibombAnnihilatorBomb) {
                 ids = idsBombWillAvailableIfPrimaryRaceTrait;
                 break;
@@ -1564,7 +1564,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, std::int16_t dx, std::int16_
                 break;
             c = TextIO().pfnCchGetString(app, idsT, std::span{app.state.szWork});
         PrintSpecial:
-            WrapTextOut(app, hdc, &xText, &yText, app.state.szWork, c, rcData.left, rcData.right - rcData.left, nullptr, 0, 1);
+            WrapTextOut(app, hdc, xText, yText, std::string_view{std::span{app.state.szWork}.data(), static_cast<std::size_t>(c)}, rcData.left, rcData.right - rcData.left, nullptr, 0, 1);
             xText = rcData.left;
             yText += app.state.dyArial8 * 2;
             break;
@@ -1652,7 +1652,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, std::int16_t dx, std::int16_
                 idsT = static_cast<StringId>(idsNoString);
             }
             c = TextIO().pfnCchGetString(app, idsT, std::span{app.state.szWork});
-            WrapTextOut(app, hdc, &xText, &yText, app.state.szWork, c, rcData.left, rcData.right - rcData.left, nullptr, 0, 1);
+            WrapTextOut(app, hdc, xText, yText, std::string_view{std::span{app.state.szWork}.data(), static_cast<std::size_t>(c)}, rcData.left, rcData.right - rcData.left, nullptr, 0, 1);
             xText = rcData.left;
             yText += static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2;
             if (idsT != idsAllowsFleetsWithoutCargoJumpAnyOther) {
@@ -1710,7 +1710,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, std::int16_t dx, std::int16_
             yText += (app.state.dyArial8 > 14 ? 0 : 4) + app.state.dyArial8;
             win32::SelectObject(hdc, app.lpui->rghfontArial7[0]);
             win32::SetTextColor(hdc, 127);
-            WrapTextOut(app, hdc, &xText, &yText, app.state.szWork, c, rcData.left, rcData.right - rcData.left, nullptr, 0, 1);
+            WrapTextOut(app, hdc, xText, yText, std::string_view{std::span{app.state.szWork}.data(), static_cast<std::size_t>(c)}, rcData.left, rcData.right - rcData.left, nullptr, 0, 1);
             win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
             win32::SetTextColor(hdc, 0);
             break;
@@ -1846,7 +1846,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, std::int16_t dx, std::int16_
             }
             if (c <= 0)
                 break;
-            WrapTextOut(app, hdc, &xText, &yText, app.state.szWork, c, rcData.left, rcData.right - rcData.left, nullptr, 0, 1);
+            WrapTextOut(app, hdc, xText, yText, std::string_view{std::span{app.state.szWork}.data(), static_cast<std::size_t>(c)}, rcData.left, rcData.right - rcData.left, nullptr, 0, 1);
             break;
         case hstPlanetary:
             ExpandRc(&rcData, -4, -4);
@@ -1930,7 +1930,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, std::int16_t dx, std::int16_
                 c = TextIO().pfnCchGetString(app, idsEnemyFleetsOrbitingPlanetCanDetectedD, std::span{szT});
                 c = CchSprintf(app.state.szWork, szT, std::abs(i));
                 if (i < 0) {
-                    WrapTextOut(app, hdc, &xText, &yText, app.state.szWork, c, rcData.left, rcData.right - rcData.left, nullptr, 0, 1);
+                    WrapTextOut(app, hdc, xText, yText, std::string_view{std::span{app.state.szWork}.data(), static_cast<std::size_t>(c)}, rcData.left, rcData.right - rcData.left, nullptr, 0, 1);
                     xText = rcData.left;
                     yText += static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2;
                     c = TextIO().pfnCchGetString(app, idsScannerCanDeterminePlanetsBasicStatsDistance, std::span{szT});
@@ -1944,7 +1944,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, std::int16_t dx, std::int16_
                 c = TextIO().pfnCchGetString(app, idsProcessGivesPlanetNewBirthTracesCivilization, std::span{app.state.szWork});
             }
             if (c > 0) {
-                WrapTextOut(app, hdc, &xText, &yText, app.state.szWork, c, rcData.left, rcData.right - rcData.left, nullptr, 0, 1);
+                WrapTextOut(app, hdc, xText, yText, std::string_view{std::span{app.state.szWork}.data(), static_cast<std::size_t>(c)}, rcData.left, rcData.right - rcData.left, nullptr, 0, 1);
             }
         }
         if (ids != static_cast<StringId>(idsNoString)) {

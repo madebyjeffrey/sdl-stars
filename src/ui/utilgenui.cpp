@@ -89,7 +89,7 @@ std::int16_t DxStreamTextOut(HDC hdc, std::int16_t &x, std::int16_t y, std::stri
     return dx;
 }
 
-void WrapTextOut(APPSESSION &app, HDC hdc, std::int16_t *px, std::int16_t *py, const char *psz, std::int16_t cLen, std::int16_t xLeft, std::int16_t dxWidth, std::int16_t *pxMax, std::int16_t fNewLine, std::int16_t fPrint) {
+void WrapTextOut(APPSESSION &app, HDC hdc, std::int16_t &x, std::int16_t &y, std::string_view szText, std::int16_t xLeft, std::int16_t dxWidth, std::int16_t *pxMax, std::int16_t fNewLine, std::int16_t fPrint) {
     std::int16_t dxRemain;
     const char   *pchEnd;
     std::int16_t fItFit;
@@ -97,15 +97,16 @@ void WrapTextOut(APPSESSION &app, HDC hdc, std::int16_t *px, std::int16_t *py, c
     std::int16_t dx;
     const char   *pchStart;
     const char   *pch;
+    const char   *psz;
+    std::int16_t cLen;
 
+    psz = szText.empty() ? "" : szText.data();
+    cLen = static_cast<std::int16_t>(szText.size());
     xRight = xLeft + dxWidth;
-    dxRemain = dxWidth - (*px - xLeft);
-    if (cLen == 0) {
-        cLen = std::strlen(psz);
-    }
+    dxRemain = dxWidth - (x - xLeft);
     if (fNewLine) {
-        *py += app.state.dyArial8;
-        *px = xLeft;
+        y += app.state.dyArial8;
+        x = xLeft;
     }
     pchStart = psz;
 Top:
@@ -123,17 +124,17 @@ Top:
         dx = LOWORD(GetTextExtent(hdc, pchStart, pchEnd - pchStart));
     }
     if (pchStart == pchEnd) {
-        if (*px != xLeft)
+        if (x != xLeft)
             goto WrapIt;
         pchEnd = pchStart + cLen;
         dx = LOWORD(GetTextExtent(hdc, pchStart, pchEnd - pchStart));
     }
     if (fPrint) {
-        win32::TextOutA(hdc, *px, *py, pchStart, pchEnd - pchStart);
+        win32::TextOutA(hdc, x, y, pchStart, pchEnd - pchStart);
     }
-    *px += dx;
-    if (pxMax && *px > *pxMax) {
-        *pxMax = *px;
+    x += dx;
+    if (pxMax && x > *pxMax) {
+        *pxMax = x;
     }
     if (pchEnd == pchStart + cLen)
         goto Done;
@@ -141,8 +142,8 @@ WrapIt:
     AddBackTrailingSpaces(&pchEnd, pchStart + cLen);
     cLen -= pchEnd - pchStart;
     pchStart = pchEnd;
-    *py += app.state.dyArial8;
-    *px = xLeft;
+    y += app.state.dyArial8;
+    x = xLeft;
     dxRemain = dxWidth;
 
     goto Top;

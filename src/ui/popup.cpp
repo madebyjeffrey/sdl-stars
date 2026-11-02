@@ -631,19 +631,19 @@ POINT16 PtDisplayPlanetStateInfo(APPSESSION &app, HDC hdc, std::int16_t fPrint) 
             lppl->rgEnvVar[app.lpui->GlobalPD.iPlanetVar] = iValSav;
             if (pctDesireOld < pctDesire) {
                 cch = TextIO().pfnCchGetString(app, idsIfTerraform, std::span{app.state.szWork});
-                WrapTextOut(app, hdc, &x, &y, app.state.szWork, cch, 4, xMax - 4, nullptr, 0, fPrint);
+                WrapTextOut(app, hdc, x, y, std::string_view{std::span{app.state.szWork}.data(), static_cast<std::size_t>(cch)}, 4, xMax - 4, nullptr, 0, fPrint);
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-                WrapTextOut(app, hdc, &x, &y, app.state.rgszPlanetAttr[app.lpui->GlobalPD.iPlanetVar], 0, 4, xMax - 4, nullptr, 0, fPrint);
+                WrapTextOut(app, hdc, x, y, std::string_view{app.state.rgszPlanetAttr[app.lpui->GlobalPD.iPlanetVar]}, 4, xMax - 4, nullptr, 0, fPrint);
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
-                WrapTextOut(app, hdc, &x, &y, TextIO().pfnCompressed(app, idsTo).data(), 0, 4, xMax - 4, nullptr, 0, fPrint);
+                WrapTextOut(app, hdc, x, y, std::string_view{TextIO().pfnCompressed(app, idsTo).data()}, 4, xMax - 4, nullptr, 0, fPrint);
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-                WrapTextOut(app, hdc, &x, &y, PszCalcEnvVar(app, static_cast<EnvType>(app.lpui->GlobalPD.iPlanetVar), iNewVal).data(), 0, 4, xMax - 4, nullptr, 0, fPrint);
+                WrapTextOut(app, hdc, x, y, std::string_view{PszCalcEnvVar(app, static_cast<EnvType>(app.lpui->GlobalPD.iPlanetVar), iNewVal).data()}, 4, xMax - 4, nullptr, 0, fPrint);
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
                 cch = TextIO().pfnCchGetString(app, idsPlanetsValueWouldImprove, std::span{app.state.szWork});
-                WrapTextOut(app, hdc, &x, &y, app.state.szWork, cch, 4, xMax - 4, nullptr, 0, fPrint);
+                WrapTextOut(app, hdc, x, y, std::string_view{std::span{app.state.szWork}.data(), static_cast<std::size_t>(cch)}, 4, xMax - 4, nullptr, 0, fPrint);
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
                 cch = CchSprintf(app.state.szWork, "%d%%.  ", pctDesire);
-                WrapTextOut(app, hdc, &x, &y, app.state.szWork, cch, 4, xMax - 4, nullptr, 0, fPrint);
+                WrapTextOut(app, hdc, x, y, std::string_view{std::span{app.state.szWork}.data(), static_cast<std::size_t>(cch)}, 4, xMax - 4, nullptr, 0, fPrint);
             }
         }
     }
@@ -664,7 +664,7 @@ POINT16 PtDisplayPlanetStateInfo(APPSESSION &app, HDC hdc, std::int16_t fPrint) 
         TextIO().pfnCchGetString(app, ids, std::span{app.state.szWork});
         cch = CchSprintf(szOut, app.state.szWork, dChg);
         win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
-        WrapTextOut(app, hdc, &x, &y, szOut, cch, 4, xMax - 4, nullptr, 0, fPrint);
+        WrapTextOut(app, hdc, x, y, std::string_view{szOut, static_cast<std::size_t>(cch)}, 4, xMax - 4, nullptr, 0, fPrint);
     }
     if (x > 4) {
         y += app.state.dyArial8;
@@ -804,11 +804,11 @@ POINT16 PtDisplayPlanetPopInfo(APPSESSION &app, HDC hdc, std::int16_t fPrint) {
     y += app.state.dyArial8;
     if (pl.iPlayer == app.state.idPlayer && pctDesire >= 0 && pl.rgwtMin[3] < lMax) {
         c = TextIO().pfnCchGetString(app, idsPopulation, std::span{szT});
-        WrapTextOut(app, hdc, &x, &y, szT, c, 4, xMax, nullptr, 0, fPrint);
+        WrapTextOut(app, hdc, x, y, std::string_view{szT, static_cast<std::size_t>(c)}, 4, xMax, nullptr, 0, fPrint);
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
         szObjectName = TextIO().pfnPlanetName(app, pl.id);
         psz = szObjectName.data();
-        WrapTextOut(app, hdc, &x, &y, psz, 0, 4, xMax, nullptr, 0, fPrint);
+        WrapTextOut(app, hdc, x, y, std::string_view{psz}, 4, xMax, nullptr, 0, fPrint);
         win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
         lPopChg = PlanetQueryIO().pfnGrowth(app, &pl, 0);
         if (pctDesire == 0 || lPopChg <= 0) {
@@ -818,7 +818,7 @@ POINT16 PtDisplayPlanetPopInfo(APPSESSION &app, HDC hdc, std::int16_t fPrint) {
             psz = szCatalogPsz.data();
             c = CchSprintf(szT, psz, lPopChg, pl.rgwtMin[3] + lPopChg);
         }
-        WrapTextOut(app, hdc, &x, &y, szT, c, 4, xMax, nullptr, 0, fPrint);
+        WrapTextOut(app, hdc, x, y, std::string_view{szT, static_cast<std::size_t>(c)}, 4, xMax, nullptr, 0, fPrint);
         x = 4;
         y += app.state.dyArial8;
         goto AfterDesire;
@@ -828,7 +828,7 @@ POINT16 PtDisplayPlanetPopInfo(APPSESSION &app, HDC hdc, std::int16_t fPrint) {
     win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
     szObjectName = TextIO().pfnPlanetName(app, pl.id);
     psz = szObjectName.data();
-    WrapTextOut(app, hdc, &x, &y, psz, 0, 4, xMax, nullptr, 0, fPrint);
+    WrapTextOut(app, hdc, x, y, std::string_view{psz}, 4, xMax, nullptr, 0, fPrint);
     win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
     if (pl.uDefGuess == 0) {
         c = TextIO().pfnCchGetString(app, idsAppearsHavePlanetaryDefenses, std::span{app.state.szWork});
@@ -838,7 +838,7 @@ POINT16 PtDisplayPlanetPopInfo(APPSESSION &app, HDC hdc, std::int16_t fPrint) {
         c = CchSprintf(szT, psz, pl.uDefGuess * 6 + 3);
         psz = szT;
     }
-    WrapTextOut(app, hdc, &x, &y, psz, c, 4, xMax, nullptr, 0, fPrint);
+    WrapTextOut(app, hdc, x, y, std::string_view{psz, static_cast<std::size_t>(c)}, 4, xMax, nullptr, 0, fPrint);
     x = 4;
     y += app.state.dyArial8;
 AfterDesire:
@@ -970,7 +970,7 @@ POINT16 PtDisplayFactoryMineInfo(APPSESSION &app, HDC hdc, std::int16_t dx, std:
         win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
         szCatalogPsz = TextIO().pfnCompressed(app, app.lpui->GlobalPD.grbit == 0 ? idsRaceIncapableBuildingMinesHoweverColonistsHave : idsRaceIncapableBuildingFactories);
         psz = szCatalogPsz.data();
-        WrapTextOut(app, hdc, &x, &y, psz, 0, 4, dx, &xMax, 0, fPrint);
+        WrapTextOut(app, hdc, x, y, std::string_view{psz}, 4, dx, &xMax, 0, fPrint);
         goto LDone;
     }
     for (i = 0; i <= 8; i++) {
@@ -1004,7 +1004,7 @@ POINT16 PtDisplayFactoryMineInfo(APPSESSION &app, HDC hdc, std::int16_t dx, std:
             psz = app.state.szWork;
             break;
         }
-        WrapTextOut(app, hdc, &x, &y, psz, 0, 4, dx, &xMax, 0, fPrint);
+        WrapTextOut(app, hdc, x, y, std::string_view{psz}, 4, dx, &xMax, 0, fPrint);
     }
 LDone:
     pt.x = xMax + 4;
@@ -1076,7 +1076,7 @@ POINT16 PtDisplayResourceInfo(APPSESSION &app, HDC hdc, std::int16_t dx, std::in
             cnt = app.lpui->GlobalPD.iPlanVal;
             goto SetQuan;
         }
-        WrapTextOut(app, hdc, &x, &y, psz, 0, 4, dx, &xMax, 0, fPrint);
+        WrapTextOut(app, hdc, x, y, std::string_view{psz}, 4, dx, &xMax, 0, fPrint);
     }
 OutOfFor:
     pt.x = xMax + 4;
@@ -1095,7 +1095,7 @@ POINT16 PtDisplayString(APPSESSION &app, HDC hdc, std::int16_t dx, std::int16_t 
     x = 4;
     y = 2;
     win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
-    WrapTextOut(app, hdc, &x, &y, app.lpui->GlobalPD.psz, 0, 4, dx, &xMax, 0, fPrint);
+    WrapTextOut(app, hdc, x, y, std::string_view{app.lpui->GlobalPD.psz}, 4, dx, &xMax, 0, fPrint);
     pt.x = xMax + 4;
     pt.y = y + app.state.dyArial8 + 2;
     return pt;

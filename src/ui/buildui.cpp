@@ -1113,7 +1113,7 @@ void DrawBuildSelComp(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
                 x = rc.left;
                 /* NATIVE: original passed &rc.top */
                 yTop = rc.top;
-                WrapTextOut(app, hdc, &x, &yTop, app.state.szWork, 0, rc.left, rc.right - rc.left, nullptr, 0, 1);
+                WrapTextOut(app, hdc, x, yTop, std::string_view{std::span{app.state.szWork}.data()}, rc.left, rc.right - rc.left, nullptr, 0, 1);
                 rc.top = yTop;
                 rc.top += app.state.dyArial8;
                 goto Restore;
