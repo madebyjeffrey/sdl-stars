@@ -1238,7 +1238,9 @@ std::int16_t TransferStuff(APPSESSION &app, std::int16_t id1, GrobjClass grobj1,
             for (j = 0; j < 4; j++) {
                 xfer[i].pl().rgwtMin[j] = 0;
             }
-            EnumLogRts(app, reinterpret_cast<std::int16_t (*)(APPSESSION &, void *, std::int16_t, std::int16_t, void *, std::int16_t)>(FEnumCalcJettison), &xfer[i].pl(), id1);
+            EnumLogRts(app, [&](APPSESSION &appEnum, std::span<std::uint8_t> rgbRecord, RecordType rt, std::int16_t iPass) {
+                return FEnumCalcJettison(appEnum, rgbRecord, rt, xfer[i].pl(), iPass);
+            }, id1);
         }
     }
     if (mdXfer == mdXferShips) {

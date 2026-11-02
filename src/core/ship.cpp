@@ -177,42 +177,36 @@ std::int16_t WtMaxShdefStat(SHDEF *lpshdef, std::int16_t grStat) {
     return wt;
 }
 
-std::int16_t FEnumCalcJettison(APPSESSION &app, void *lprt, RecordType rt, std::int16_t cb, PLANET *lppl, std::int16_t iFleet) {
+std::int16_t FEnumCalcJettison(APPSESSION &app, std::span<std::uint8_t> rgbRecord, RecordType rt, PLANET &pl, std::int16_t iFleet) {
     POINT16  pt;
     std::int16_t  i;
     std::int16_t  grbit;
     FLEET    fl;
     std::int16_t  j;
-    std::uint8_t *prtxferx;
-    std::uint8_t  *prtxfer;
 
     if (rt == rtLogCargoXfer8 || rt == rtLogCargoXfer16) {
-        prtxfer = static_cast<std::uint8_t *>(lprt);
-        if (CxvFromPrefix(prtxfer, 5).grobj1() != grobjFleet || CxvFromPrefix(prtxfer, 5).grobj2() != grobjOther) {
+        if (CxvFromPrefix(rgbRecord.data(), 5).grobj1() != grobjFleet || CxvFromPrefix(rgbRecord.data(), 5).grobj2() != grobjOther) {
             return 1;
         }
         if (!FleetQueryIO().pfnLookup(app, iFleet, &fl)) {
             return 1;
         }
         pt = fl.pt;
-        if (!FleetQueryIO().pfnLookup(app, CxvFromPrefix(prtxfer, 2).id1(), &fl)) {
+        if (!FleetQueryIO().pfnLookup(app, CxvFromPrefix(rgbRecord.data(), 2).id1(), &fl)) {
             return 1;
         }
         if (fl.pt.x != pt.x || fl.pt.y != pt.y) {
             return 1;
         }
-        grbit = CxvFromPrefix(prtxfer, 6).grbitItems();
-        if (rt == rtLogCargoXfer16) {
-            prtxferx = static_cast<std::uint8_t *>(lprt);
-        }
+        grbit = CxvFromPrefix(rgbRecord.data(), 6).grbitItems();
         j = 0;
         i = 0;
         while (i < 5) {
             if (grbit & 1) {
                 if (rt == rtLogCargoXfer8) {
-                    lppl->rgwtMin[i] -= static_cast<std::int16_t>(CxvFromPrefix(prtxfer, 6 + (j + 1)).cQuan8(j));
+                    pl.rgwtMin[i] -= static_cast<std::int16_t>(CxvFromPrefix(rgbRecord.data(), 6 + (j + 1)).cQuan8(j));
                 } else {
-                    lppl->rgwtMin[i] -= CxvFromPrefix(prtxferx, 6 + (j + 1) * 2).cQuan16(j);
+                    pl.rgwtMin[i] -= CxvFromPrefix(rgbRecord.data(), 6 + (j + 1) * 2).cQuan16(j);
                 }
                 j++;
             }

@@ -321,17 +321,17 @@ static void test_jettison_log_bytes(void) {
     uint8_t rgb[10]{};
 
     TEST_ASSERT(FAddScoutPair(app, "jettison_log_bytes", &lpflDst, &lpflSrc, &ishdef));
-    TEST_CHECK(FEnumCalcJettison(app, NULL, rtLogCargoXfer32, 0, NULL, 0));
-    TEST_CHECK(FEnumCalcJettison(app, wrongObject, rtLogCargoXfer8, 0, NULL, 0));
-    TEST_CHECK(FEnumCalcJettison(app, wrongObject, rtLogCargoXfer16, 0, NULL, 0));
+    TEST_CHECK(FEnumCalcJettison(app, {}, rtLogCargoXfer32, pl, 0));
+    TEST_CHECK(FEnumCalcJettison(app, std::span(wrongObject), rtLogCargoXfer8, pl, 0));
+    TEST_CHECK(FEnumCalcJettison(app, std::span(wrongObject), rtLogCargoXfer16, pl, 0));
     rgb[0] = (uint8_t)lpflSrc->id; rgb[1] = (uint8_t)((uint16_t)lpflSrc->id >> 8);
     rgb[4] = 0x42; rgb[5] = 5; rgb[6] = 0x81; rgb[7] = 0x7e;
     pl.rgwtMin[0] = 1000; pl.rgwtMin[2] = 500;
-    TEST_CHECK(FEnumCalcJettison(app, rgb, rtLogCargoXfer8, 0, &pl, lpflDst->id));
+    TEST_CHECK(FEnumCalcJettison(app, std::span(rgb), rtLogCargoXfer8, pl, lpflDst->id));
     TEST_CHECK(pl.rgwtMin[0] == 1127 && pl.rgwtMin[2] == 374);
     rgb[6] = 0; rgb[7] = 0x80; rgb[8] = 0xff; rgb[9] = 0x7f;
     pl.rgwtMin[0] = 1000; pl.rgwtMin[2] = 500;
-    TEST_CHECK(FEnumCalcJettison(app, rgb, rtLogCargoXfer16, 0, &pl, lpflDst->id));
+    TEST_CHECK(FEnumCalcJettison(app, std::span(rgb), rtLogCargoXfer16, pl, lpflDst->id));
     TEST_CHECK(pl.rgwtMin[0] == 33768 && pl.rgwtMin[2] == -32267);
 }
 

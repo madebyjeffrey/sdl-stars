@@ -784,16 +784,15 @@ static void test_cargo_lookup_prefixes(void) {
     }
 }
 
-static int16_t FEnumHeaderMutation(APPSESSION &app, void *lp, int16_t rt, int16_t cb, void *lpPass, int16_t iPass) {
-    int *pc = (int *)lpPass;
+static int16_t FEnumHeaderMutation(APPSESSION &app, std::span<std::uint8_t> rgb, RecordType rt, int16_t iPass, int &c) {
     (void)iPass;
-    if (*pc == 0) {
-        TEST_CHECK(rt == 63 && cb == 1 && lp == app.state.lpLog + 2);
+    if (c == 0) {
+        TEST_CHECK(rt == 63 && rgb.size() == 1 && rgb.data() == app.state.lpLog + 2);
         app.state.lpLog[0] = 2; // callback changes the stride used after it returns
     } else {
-        TEST_CHECK(rt == 62 && cb == 0 && lp == app.state.lpLog + 6);
+        TEST_CHECK(rt == 62 && rgb.empty() && rgb.data() == app.state.lpLog + 6);
     }
-    (*pc)++;
+    c++;
     return 1;
 }
 
@@ -819,7 +818,9 @@ static void test_log_header_bytes_and_callback(void) {
     app.state.lpLog[0] = 1; app.state.lpLog[1] = 0xfc;
     app.state.lpLog[4] = 0; app.state.lpLog[5] = 0xf8;
     app.state.imemLogCur = 6;
-    EnumLogRts(app, FEnumHeaderMutation, &c, 0);
+    EnumLogRts(app, [&](APPSESSION &appEnum, std::span<std::uint8_t> rgbPayload, RecordType rt, std::int16_t iPass) {
+        return FEnumHeaderMutation(appEnum, rgbPayload, rt, iPass, c);
+    }, 0);
     TEST_CHECK(c == 2);
 }
 

@@ -1483,19 +1483,16 @@ std::int16_t FWriteHistFile(APPSESSION &app, std::int16_t iPlayer) {
     }
 }
 
-void EnumLogRts(APPSESSION &app, std::int16_t (*pfn)(APPSESSION &, void *, std::int16_t, std::int16_t, void *, std::int16_t), void *lpPass, std::int16_t iPass) {
-    std::int16_t fLogOld;
-    std::int16_t fRet;
+void EnumLogRts(APPSESSION &app, const ENUMLOGRTCALLBACK &pfn, std::int16_t iPass) {
     std::int16_t iCur;
     std::uint8_t *lprts;
 
     iCur = 0;
-    fRet = 1;
-    fLogOld = app.state.fLogOff;
     if (app.state.imemLogCur != 0) {
         for (; iCur < app.state.imemLogCur; iCur += HdvFromPrefix(lprts).cb() + 2) {
             lprts = app.state.lpLog + iCur;
-            if (pfn(app, app.state.lpLog + (2 + iCur), HdvFromPrefix(lprts).rt(), HdvFromPrefix(lprts).cb(), lpPass, iPass) == 0)
+            if (pfn(app, std::span(app.state.lpLog + (2 + iCur), static_cast<std::size_t>(HdvFromPrefix(lprts).cb())),
+                    static_cast<RecordType>(HdvFromPrefix(lprts).rt()), iPass) == 0)
                 break;
         }
     }

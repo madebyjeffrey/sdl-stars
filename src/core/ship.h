@@ -10,7 +10,7 @@ std::int16_t FCanMerge(APPSESSION &app, FLEET *pfl);
 void    SelectAdjFleet(APPSESSION &app, std::int16_t dInc, std::int16_t idFleet);
 std::int32_t LGetFleetStat(APPSESSION &app, FLEET *lpfl, std::int16_t grStat);
 std::int16_t WtMaxShdefStat(SHDEF *lpshdef, std::int16_t grStat);
-std::int16_t FEnumCalcJettison(APPSESSION &app, void *lprt, RecordType rt, std::int16_t cb, PLANET *lppl, std::int16_t iFleet);
+std::int16_t FEnumCalcJettison(APPSESSION &app, std::span<std::uint8_t> rgbRecord, RecordType rt, PLANET &pl, std::int16_t iFleet);
 std::int32_t GetCargoFree(APPSESSION &app, FLEET *lpfl);
 std::int32_t GetFuelFree(APPSESSION &app, FLEET *lpfl);
 std::int32_t ChgCargo(APPSESSION &app, GrobjClass grobj, std::int16_t id, MineralType iSupply, std::int32_t dChg, void *pobj);

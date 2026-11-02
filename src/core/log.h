@@ -3,6 +3,8 @@
 
 #include "common.h"
 #include <cstdint>
+#include <functional>
+#include <span>
 #include <string_view>
 
 void    LogSplitFleet(APPSESSION &app, std::int16_t id);
@@ -29,7 +31,8 @@ std::int16_t FLoadLogFile(APPSESSION &app, const char *pszLog);
 std::int16_t FCheckLogFile(APPSESSION &app, std::int16_t iplr, std::int16_t *pfError);
 std::int16_t FWriteLogFile(APPSESSION &app, std::string_view pszFileBase, std::int16_t iPlayer);
 std::int16_t FWriteHistFile(APPSESSION &app, std::int16_t iPlayer);
-void    EnumLogRts(APPSESSION &app, std::int16_t (*pfn)(APPSESSION &, void *, std::int16_t, std::int16_t, void *, std::int16_t), void *lpPass, std::int16_t iPass);
+using ENUMLOGRTCALLBACK = std::function<std::int16_t(APPSESSION &, std::span<std::uint8_t>, RecordType, std::int16_t)>;
+void    EnumLogRts(APPSESSION &app, const ENUMLOGRTCALLBACK &pfn, std::int16_t iPass);
 
 
 void WriteMemResearch(APPSESSION &app, std::int16_t wResearch);
