@@ -1325,7 +1325,8 @@
         "compat-dialog-path-join-span-interface",
         "compat-dialog-path-input-views",
         "canonical-native-path-string-view-interface",
-        "filesystem-owned-path-results-and-view-inputs"
+        "filesystem-owned-path-results-and-view-inputs",
+        "fixed-date-time-output-spans"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -1936,6 +1937,14 @@
         "interface": "CchTutorString(APPSESSION&, span<char>, TutorId) returns an optional full-width length.",
         "behavior": "The decoder writes only within the caller span, NUL-terminates successful output, returns no value for an empty/undersized destination, and bounds the cached-string terminator search.",
         "verification": "Actual native-file UI unit covers all 640 tutorial fragments in the 256-byte production buffer, undersized and empty spans, and the cached-string path. Desktop unit tests pass 18/18; tutorial smoke passes; changed UI sources pass strict MinGW C++20 syntax."
+      },
+      "date_time_outputs": {
+        "status": "complete; locally verified",
+        "interface": "GetDateTimeSz accepts separate std::span<char> destinations, requires at least nine bytes for each fixed format, and reports failure without writing to undersized spans.",
+        "caller": "OutputSz supplies its actual arrays and only appends the timestamped line after successful formatting.",
+        "formats": "MM/DD/YY and HH:MM:SS, preserving the existing text and terminators.",
+        "verification": "macOS Debug desktop unit tests 18/18; host tests 29/29; strict MinGW syntax check of the _WIN32 branch passes; native and host regressions each match all 519 checkpoints with zero differences; tutorial smoke passes.",
+        "baseline": "Unchanged."
       }
     },
     {
@@ -24068,22 +24077,22 @@
     "published_batch_head": "bf4537ae"
   },
   "current_checkpoint": {
-    "batch": "L05bv remove Win32 text-output C copies",
-    "status": "implemented and locally verified",
-    "parent": "6e33d31a",
+    "batch": "L06v bounded native date/time output spans",
+    "status": "implemented and locally verified; native Windows runtime qualification pending",
+    "parent": "074c1bdf",
     "changes": {
-      "compat/win32/src/list.cpp": "LB_GETTEXT writes the source string_view and terminator with std::copy; returns its byte length.",
-      "compat/win32/src/toolbar.cpp": "TB_GETBUTTONTEXTA uses the same typed copy; preserves null-destination length query and byte count.",
-      "docs/CPP-LIVE-TEXT-COPIES.json": "Removed the last two raw production strcpy spellings from the exact inventory."
+      "src/platform/native.h": "GetDateTimeSz now accepts two bounded spans and returns a success value.",
+      "src/platform/native.cpp": "Both platform implementations reject spans shorter than the fixed nine-byte fields; POSIX formatting checks local-time and format results.",
+      "src/core/util.cpp": "OutputSz passes actual stack-array extents and appends the line only after successful formatting.",
+      "tests/unit/test_util.cpp": "Covers exact output shape, NUL terminators, and unchanged short destination."
     },
     "verification": {
       "macos_debug_build_and_desktop_unit_tests": "Pass; 18/18.",
-      "focused_compatibility_tests": "List and toolbar resource contracts pass. The two corresponding leak checks stalled and were manually interrupted.",
-      "host_unit_tests": "Pass; 29/29, including the C++ compilation manifest and exact text-copy inventory.",
+      "host_unit_tests": "Pass; 29/29.",
+      "windows_branch_syntax": "Strict MinGW C++20 syntax check passes.",
       "native_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
       "host_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
       "tutorial": "Available SDL tutorial smoke checkpoint passes; full 80-page tutorial remains unfinished.",
-      "source_audit": "Zero owned .c files; zero function-like macros in src/ or compat/win32/src/. Remaining defines are include guards, NOMINMAX or test configuration.",
       "baseline": "Unchanged.",
       "diff_check": "pass"
     },
@@ -24092,25 +24101,21 @@
       "L06 remaining buffer/length service interfaces and chooser Milestone D qualification, including Windows/Linux chooser coverage.",
       "L08 final retained primitive/API macro/preprocessor inventory reconciliation and current-source platform qualification."
     ],
-    "source_commit": "24a636f3",
-    "published_batch_head": "24a636f3",
+    "source_commit": "b4258bcc",
+    "published_batch_head": "b4258bcc",
     "previous_batch": {
-      "batch": "L05bu owned and typed Linux portal text",
-      "source_commits": [
-        "7424cf45",
-        "005d8bef"
-      ],
-      "test_commit": "bf4537ae",
+      "batch": "L05bv remove Win32 text-output C copies",
+      "source_commit": "24a636f3",
+      "status": "implemented and locally verified",
       "verification": {
-        "macos_debug_build": "Full macos-sdl-debug build passes; the Linux-only portal file is excluded by this preset.",
-        "desktop_unit_tests": "18/18 pass.",
-        "host_unit_tests": "29/29 pass.",
-        "tutorial": "Available SDL tutorial smoke checkpoint passes; full 80-page tutorial remains unfinished.",
+        "macos_debug_build_and_desktop_unit_tests": "Pass; 18/18.",
+        "focused_compatibility_tests": "List and toolbar resource contracts pass. The two corresponding leak checks stalled and were manually interrupted.",
+        "host_unit_tests": "Pass; 29/29, including the C++ compilation manifest and exact text-copy inventory.",
         "native_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
         "host_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
+        "tutorial": "Available SDL tutorial smoke checkpoint passes; full 80-page tutorial remains unfinished.",
+        "source_audit": "Zero owned .c files; zero function-like macros in src/ or compat/win32/src/. Remaining defines are include guards, NOMINMAX or test configuration.",
         "baseline": "Unchanged.",
-        "linux_portal_syntax": "Strict C++20 syntax passes against the temporary D-Bus stub.",
-        "linux_portal_runtime": "Not run; native Linux D-Bus development files/runtime are unavailable locally.",
         "diff_check": "pass"
       }
     }
