@@ -72,6 +72,7 @@ int main(int argc, char **argv) try {
 #ifdef _WIN32
     auto rgsz = RgNativeArguments();
     std::vector<char *> rgpsz;
+    static_cast<void>(argc);
     static_cast<void>(argv);
     if (!rgsz) return 2;
     rgpsz.reserve(rgsz->size());
