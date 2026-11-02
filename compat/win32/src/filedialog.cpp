@@ -15,6 +15,7 @@
 #include <string>
 #include <string_view>
 #include <algorithm>
+#include <vector>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -30,14 +31,13 @@ constexpr auto ID_FILE_NEW = 0x404;
 constexpr auto MAX_FILE_HISTORY = 32;
 constexpr auto MAX_FILE_FILTERS = cCompatFileFiltersMax;
 
-struct COMPATFILEENTRY { char *psz; BOOL fDir; };
+struct COMPATFILEENTRY { std::string szName; BOOL fDir; };
 struct COMPATFILEDIALOG {
     const win32::files::FILESELECTIONREQUEST *lpRequest;
     BOOL fSave;
     char szDir[PATH_MAX], szResult[PATH_MAX];
     int cFilter, iFilter;
-    COMPATFILEENTRY *rgentry;
-    std::size_t cEntry;
+    std::vector<COMPATFILEENTRY> rgentry;
     std::array<std::string, MAX_FILE_HISTORY> rgpszHistory;
     int cHistory;
     BOOL fHidden;
@@ -72,14 +72,11 @@ static BOOL FFileFilter(COMPATFILEDIALOG *lp, LPCSTR psz) {
     return 0;
 }
 static void FreeFileEntries(COMPATFILEDIALOG *lp) {
-    std::size_t i;
-    for (i = 0; i < lp->cEntry; i++) std::free(lp->rgentry[i].psz);
-    std::free(lp->rgentry); lp->rgentry = nullptr; lp->cEntry = 0;
+    lp->rgentry.clear();
 }
-static int CmpFileEntry(const void *a, const void *b) {
-    const COMPATFILEENTRY *lpa = static_cast<const COMPATFILEENTRY *>((a)), *lpb = static_cast<const COMPATFILEENTRY *>((b));
-    if (lpa->fDir != lpb->fDir) return lpa->fDir ? -1 : 1;
-    return SDL_strcasecmp(lpa->psz, lpb->psz);
+static BOOL FFileEntryBefore(const COMPATFILEENTRY &a, const COMPATFILEENTRY &b) {
+    if (a.fDir != b.fDir) return a.fDir;
+    return SDL_strcasecmp(a.szName.c_str(), b.szName.c_str()) < 0;
 }
 static BOOL FJoinFile(std::span<char> pszOut, std::string_view szDir, std::string_view szName) {
 #ifdef _WIN32
@@ -109,7 +106,6 @@ static BOOL FRefreshFiles(HWND hwnd, COMPATFILEDIALOG *lp) {
     std::optional<std::string> szEntry;
     std::optional<NATIVEFILEINFO> st;
     char szPath[PATH_MAX], szLabel[PATH_MAX + 4];
-    COMPATFILEENTRY *rg;
     std::size_t i;
     LRESULT iEntry;
     HWND hwndList = win32::GetDlgItem(hwnd, ID_FILE_LIST);
@@ -129,19 +125,15 @@ static BOOL FRefreshFiles(HWND hwnd, COMPATFILEDIALOG *lp) {
         if (!lp->fHidden && pszEntry[0] == '.') continue;
         if (!FJoinFile(std::span{szPath}, lp->szDir, pszEntry) || !(st = IGetNativeFileInfo(szPath, NATIVELINKMODE::follow))) continue;
         if (!st->fDirectory && (!st->fRegular || !FFileFilter(lp, pszEntry))) continue;
-        rg = static_cast<COMPATFILEENTRY *>((std::realloc(lp->rgentry, (lp->cEntry + 1) * sizeof(*rg))));
-        if (!rg) { lp->dwError = win32::CDERR_MEMALLOCFAILURE; break; }
-        lp->rgentry = rg;
-        rg[lp->cEntry].psz = strdup(pszEntry); rg[lp->cEntry].fDir = st->fDirectory;
-        if (!rg[lp->cEntry].psz) { lp->dwError = win32::CDERR_MEMALLOCFAILURE; break; }
-        lp->cEntry++;
+        try { lp->rgentry.push_back({*szEntry, st->fDirectory}); }
+        catch (const std::bad_alloc &) { lp->dwError = win32::CDERR_MEMALLOCFAILURE; break; }
     }
     directoryOwner.reset();
     if (lp->dwError) { win32::EndDialog(hwnd, 0); return 0; }
-    if (lp->cEntry > 1) std::qsort(lp->rgentry, lp->cEntry, sizeof(*lp->rgentry), CmpFileEntry);
+    if (lp->rgentry.size() > 1) std::sort(lp->rgentry.begin(), lp->rgentry.end(), FFileEntryBefore);
     win32::SendMessageA(hwndList, win32::LB_RESETCONTENT, 0, 0);
-    for (i = 0; i < lp->cEntry; i++) {
-        CchSnprintf(std::span{szLabel}, lp->rgentry[i].fDir ? "[%s]" : "%s", lp->rgentry[i].psz);
+    for (i = 0; i < lp->rgentry.size(); i++) {
+        CchSnprintf(std::span{szLabel}, lp->rgentry[i].fDir ? "[%s]" : "%s", lp->rgentry[i].szName.c_str());
         iEntry = win32::SendMessageA(hwndList, win32::LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(szLabel));
         if (iEntry < 0 || win32::SendMessageA(hwndList, win32::LB_SETITEMDATA, static_cast<WPARAM>(iEntry), static_cast<LPARAM>(i)) == win32::LB_ERR) {
             lp->dwError = win32::CDERR_MEMALLOCFAILURE; win32::EndDialog(hwnd, 0); return 0;
@@ -375,10 +367,10 @@ static INT_PTR  FileDialogProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         if (HIWORD(w) != win32::LBN_SELCHANGE && HIWORD(w) != win32::LBN_DBLCLK) return 1;
         i = win32::SendDlgItemMessageA(hwnd, ID_FILE_LIST, win32::LB_GETCURSEL, 0, 0);
         data = i == win32::LB_ERR ? win32::LB_ERR : win32::SendDlgItemMessageA(hwnd, ID_FILE_LIST, win32::LB_GETITEMDATA, static_cast<WPARAM>(i), 0);
-        if (data < 0 || static_cast<std::size_t>(data) >= lp->cEntry) return 1;
-        if (!lp->rgentry[data].fDir) win32::SetWindowTextA(win32::GetDlgItem(hwnd, ID_FILE_NAME), lp->rgentry[data].psz);
+        if (data < 0 || static_cast<std::size_t>(data) >= lp->rgentry.size()) return 1;
+        if (!lp->rgentry[static_cast<std::size_t>(data)].fDir) win32::SetWindowTextA(win32::GetDlgItem(hwnd, ID_FILE_NAME), lp->rgentry[static_cast<std::size_t>(data)].szName.c_str());
         if (HIWORD(w) == win32::LBN_DBLCLK) {
-            if (lp->rgentry[data].fDir) FChangeFileDirectory(hwnd, lp, lp->rgentry[data].psz, 1);
+            if (lp->rgentry[static_cast<std::size_t>(data)].fDir) FChangeFileDirectory(hwnd, lp, lp->rgentry[static_cast<std::size_t>(data)].szName.c_str(), 1);
             else AcceptFile(hwnd, lp);
         }
         return 1;
