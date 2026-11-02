@@ -6,15 +6,25 @@
 #define CHECK(f) do { if (!(f)) { std::fprintf(stderr, "line %d: %s\n", __LINE__, #f); return 1; } } while (0)
 int main() {
     const char rgchText[] = {'A', '\xce', '\xa9', 'B'};
+    const char rgchBadContinuation[] = {'\xce', 'A'};
+    const char rgchOverlong[] = {'\xe0', '\x80', '\x80'};
+    const char rgchSurrogate[] = {'\xed', '\xa0', '\x80'};
+    const char rgchTooLarge[] = {'\xf4', '\x90', '\x80', '\x80'};
+    const char rgchInvalidLead[] = {'\xf5', '\x80', '\x80', '\x80'};
     const std::string_view szText(rgchText, sizeof(rgchText));
     const unsigned char rgbUtf16[] = {0xa9, 0x03};
     const unsigned char rgbCp1252[] = {0xe9, 0x80};
     char sz[16], szSmall[4] = {'x', 'x', 'x', 'x'};
-    uint32_t ch = 123;
-
     CHECK(FUtf8Valid(szText) && !FUtf8Valid(szText.substr(0, 2)));
-    CHECK(CbUtf8Char(szText.substr(1, 2), &ch) == 2 && ch == 0x3a9);
-    CHECK(CbUtf8Char(std::string_view{}, &ch) == 0 && ch == 0x3a9);
+    const auto uch = DecodeUtf8Char(szText.substr(1, 2));
+    CHECK(uch && uch->cch == 2 && uch->ch == 0x3a9);
+    CHECK(!DecodeUtf8Char(std::string_view{}));
+    CHECK(!DecodeUtf8Char(szText.substr(1, 1)));
+    CHECK(!DecodeUtf8Char(std::string_view(rgchBadContinuation, sizeof(rgchBadContinuation))));
+    CHECK(!DecodeUtf8Char(std::string_view(rgchOverlong, sizeof(rgchOverlong))));
+    CHECK(!DecodeUtf8Char(std::string_view(rgchSurrogate, sizeof(rgchSurrogate))));
+    CHECK(!DecodeUtf8Char(std::string_view(rgchTooLarge, sizeof(rgchTooLarge))));
+    CHECK(!DecodeUtf8Char(std::string_view(rgchInvalidLead, sizeof(rgchInvalidLead))));
     CHECK(CchUtf8Prefix(szText, 2) == 1 && CchUtf8Prefix(szText, 3) == 3);
     CHECK(CchUtf8Prefix(szText.substr(0, 2), 9) == 1);
     CHECK(CchUtf8Prefix(std::string_view("A\0B", 3), 3) == 1);

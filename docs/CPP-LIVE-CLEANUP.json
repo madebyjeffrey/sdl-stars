@@ -23542,23 +23542,28 @@
     }
   },
   "current_checkpoint": {
-    "batch": "L06 bounded tutorial fragment output",
-    "status": "complete; locally verified; cross-platform runtime qualification pending",
-    "parent": "0302b043",
+    "batch": "L06 typed UTF-8 codepoint decoding result",
+    "status": "implemented and locally verified; Windows runtime qualification pending",
+    "parent": "565a6c94",
     "changes": {
-      "src/ui/tutor2.h": "CchTutorString takes std::span<char> and returns optional<size_t>.",
-      "src/ui/tutor2.cpp": "Decode writes check remaining capacity, preserve NUL termination, and bound the cached-path scan.",
-      "src/ui/tutor.cpp": "The paint caller passes its actual 256-byte array and handles the optional length.",
-      "tests/unit/test_native_fileui.cpp": "Tests every one of the 640 tutorial fragments, insufficient/empty spans and cached-string behavior."
+      "src/platform/encoding.h": "Replaces the codepoint decoder's output pointer with optional<UTF8CHAR> returned from a string_view.",
+      "src/platform/encoding.cpp": "Migrates UTF-8 prefix and validation helpers to the typed decoded-codepoint result.",
+      "compat/win32/src/font.cpp": "Migrates font sizing and drawing loops to the typed decoded-codepoint result.",
+      "compat/win32/src/paint.cpp": "Migrates text measurement and mnemonic underline decoding.",
+      "compat/win32/src/edit.cpp": "Migrates byte-boundary stepping while retaining one-byte recovery for malformed UTF-8.",
+      "compat/win32/src/inspect.cpp": "Migrates JSON string escaping to the typed decoded-codepoint result.",
+      "tests/compat/encoding_views.cpp": "Covers valid multibyte, empty/truncated, invalid continuation, overlong, surrogate, out-of-range and invalid-lead sequences."
     },
     "verification": {
-      "macos_debug_build": "Pass; no new warnings.",
-      "desktop_unit_tests": "18/18 pass, including all new tutorial fragment span cases.",
+      "macos_debug_build": "Pass, including every changed Win32 compatibility source; no new warnings reported.",
+      "mingw_host_build": "Full strict C++20 Windows host build passes, including the decoder and encoding_views executable; cross-compiled Windows test execution is unavailable in this environment.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
       "tutorial": "Available SDL tutorial smoke checkpoint passes.",
-      "mingw": "Changed tutorial implementation and caller pass strict C++20 syntax.",
-      "source_policy": "Compilation manifest and C++ test-routing checks pass.",
-      "regression": "Latest full native and host runs remain 519/519 with zero differences from the prior UI-neutral gameplay state; these UI-only changes do not affect host turn generation.",
-      "baseline": "Unchanged."
+      "source_policy": "C++ compilation manifest and test-routing checks pass.",
+      "native_regression": "519 matches (25 with existing warnings); zero differences/errors/skips.",
+      "host_regression": "519 matches (25 with existing warnings); zero differences/errors/skips.",
+      "baseline": "Unchanged; no scenario/checkpoint moved and no regression export required."
     },
     "remaining_work": [
       "L05 bounded text destinations, const-text interfaces, scratch storage/borrowed-return audit, wrapper formatting and remaining raw-copy SDK-boundary review.",

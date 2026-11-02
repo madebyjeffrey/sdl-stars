@@ -31,12 +31,11 @@ static UINT CchEdit(HWND hwnd) { return static_cast<UINT>(std::strlen(hwnd->pszT
 
 static UINT IchEditBoundary(HWND hwnd, UINT ich) {
     UINT i = 0, next, cch = CchEdit(hwnd);
-    std::uint32_t ch;
-    int c;
+    std::optional<UTF8CHAR> uch;
     ich = StarsMin(ich, cch);
     while (i < ich) {
-        c = CbUtf8Char(hwnd->pszTitle + i, cch - i, &ch);
-        next = i + (c == 0 ? 1 : static_cast<UINT>(c));
+        uch = DecodeUtf8Char(std::string_view{hwnd->pszTitle + i, cch - i});
+        next = i + (uch ? static_cast<UINT>(uch->cch) : 1);
         if (next > ich) break;
         i = next;
     }
@@ -45,11 +44,10 @@ static UINT IchEditBoundary(HWND hwnd, UINT ich) {
 
 static UINT IchEditNext(HWND hwnd, UINT ich) {
     UINT cch = CchEdit(hwnd);
-    std::uint32_t ch;
-    int c;
+    std::optional<UTF8CHAR> uch;
     if (ich >= cch) return cch;
-    c = CbUtf8Char(hwnd->pszTitle + ich, cch - ich, &ch);
-    return ich + (c == 0 ? 1 : static_cast<UINT>(c));
+    uch = DecodeUtf8Char(std::string_view{hwnd->pszTitle + ich, cch - ich});
+    return ich + (uch ? static_cast<UINT>(uch->cch) : 1);
 }
 
 static UINT IchEditPrev(HWND hwnd, UINT ich) {

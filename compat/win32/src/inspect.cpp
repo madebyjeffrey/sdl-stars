@@ -156,21 +156,20 @@ BOOL StarsCompatCaptureHierarchy(STARSCOMPATSNAPSHOT *lpsnap) {
 static BOOL FWriteString(NATIVEFILE *lpfile, const char *psz, BOOL fUtf8) {
     const BYTE *lpch = reinterpret_cast<const BYTE *>(psz);
     char rgb[4], *lpEnd;
-    DWORD ch;
     std::size_t cb = std::strlen(psz);
-    int c;
+    std::optional<UTF8CHAR> uch;
     static_cast<void>(fUtf8);
     if (ChPutNativeFile('"', lpfile) == EOF) return 0;
     while (*lpch) {
-        c = CbUtf8Char(reinterpret_cast<const char *>(lpch), cb, &ch);
-        if (c == 0) return 0;
-        lpch += c; cb -= c;
-        if (ch == '"' || ch == '\\') {
-            if (ChPutNativeFile('\\', lpfile) == EOF || ChPutNativeFile(static_cast<int>(ch), lpfile) == EOF) return 0;
-        } else if (ch < 32) {
-            if (CchNativePrintf(lpfile, "\\u%04x", static_cast<unsigned>(ch)) < 0) return 0;
+        uch = DecodeUtf8Char(std::string_view{reinterpret_cast<const char *>(lpch), cb});
+        if (!uch) return 0;
+        lpch += uch->cch; cb -= uch->cch;
+        if (uch->ch == '"' || uch->ch == '\\') {
+            if (ChPutNativeFile('\\', lpfile) == EOF || ChPutNativeFile(static_cast<int>(uch->ch), lpfile) == EOF) return 0;
+        } else if (uch->ch < 32) {
+            if (CchNativePrintf(lpfile, "\\u%04x", static_cast<unsigned>(uch->ch)) < 0) return 0;
         } else {
-            lpEnd = SDL_UCS4ToUTF8(ch, rgb);
+            lpEnd = SDL_UCS4ToUTF8(uch->ch, rgb);
             if (CWriteNative(std::span{rgb}.first(static_cast<std::size_t>((lpEnd - rgb))), lpfile) != static_cast<std::size_t>((lpEnd - rgb))) return 0;
         }
     }

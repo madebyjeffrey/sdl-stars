@@ -2,6 +2,7 @@
 #define STARS_ENCODING_H
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <span>
 #include <string_view>
 // All decoded application text and supported paths are UTF-8.
@@ -11,7 +12,8 @@ int FUtf8Valid(const char *psz, std::size_t cb);
 int CchCopyUtf8(char *pszOut, std::size_t cbOut, const char *psz, std::size_t cb);
 int CchCp1252ToUtf8(char *pszOut, std::size_t cbOut, const unsigned char *rgb, std::size_t cb);
 int CchUtf16leToUtf8(char *pszOut, std::size_t cbOut, const unsigned char *rgb, std::size_t cch);
-int CbUtf8Char(const char *psz, std::size_t cb, std::uint32_t *lpch);
+struct UTF8CHAR { std::uint32_t ch; std::size_t cch; };
+std::optional<UTF8CHAR> DecodeUtf8Char(std::string_view sz) noexcept;
 std::size_t CchUtf8Prefix(const char *psz, std::size_t cchMax);
 // Display/fixed-label copies write a terminated complete UTF-8 prefix and
 // return bytes copied/appended. These are not strict path/record operations.
@@ -28,7 +30,6 @@ bool FAppendUtf8(std::span<char> rgchOut, std::string_view sz);
 // Views borrow only for this call. They can describe a non-NUL-terminated
 // slice; text still rejects embedded NUL and output capacity includes its NUL.
 inline int FUtf8Valid(std::string_view sz) { return FUtf8Valid(sz.data(), sz.size()); }
-inline int CbUtf8Char(std::string_view sz, std::uint32_t *lpch) { return CbUtf8Char(sz.data(), sz.size(), lpch); }
 inline int CchCopyUtf8(std::span<char> rgchOut, std::string_view sz) {
     if (rgchOut.empty()) return -3;
     if (sz.empty()) { rgchOut[0] = 0; return 0; }
@@ -46,12 +47,10 @@ inline int CchUtf16leToUtf8(std::span<char> rgchOut, std::span<const std::byte> 
 }
 inline std::size_t CchUtf8Prefix(std::string_view sz, std::size_t cchMax) {
     std::size_t i = 0;
-    std::uint32_t ch;
-    int c;
     while (i < sz.size() && i < cchMax) {
-        c = CbUtf8Char(sz.substr(i), &ch);
-        if (c == 0 || ch == 0 || static_cast<std::size_t>(c) > cchMax - i) break;
-        i += c;
+        const auto uch = DecodeUtf8Char(sz.substr(i));
+        if (!uch || uch->ch == 0 || uch->cch > cchMax - i) break;
+        i += uch->cch;
     }
     return i;
 }

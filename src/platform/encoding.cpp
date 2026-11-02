@@ -2,48 +2,43 @@
 #include <algorithm>
 #include <cstring>
 
-int CbUtf8Char(const char *psz, std::size_t cb, std::uint32_t *lpch) {
-    const unsigned char *rgb = reinterpret_cast<const unsigned char *>(psz);
+std::optional<UTF8CHAR> DecodeUtf8Char(std::string_view sz) noexcept {
+    const auto *rgb = reinterpret_cast<const unsigned char *>(sz.data());
     std::uint32_t ch;
-    int c, i;
-    if (cb == 0) return 0;
-    if (rgb[0] < 0x80) { *lpch = rgb[0]; return 1; }
+    std::size_t c;
+    std::size_t i;
+    if (sz.empty()) return std::nullopt;
+    if (rgb[0] < 0x80) return UTF8CHAR{rgb[0], 1};
     if (rgb[0] >= 0xc2 && rgb[0] <= 0xdf) { c = 2; ch = rgb[0] & 0x1f; }
     else if (rgb[0] >= 0xe0 && rgb[0] <= 0xef) { c = 3; ch = rgb[0] & 15; }
     else if (rgb[0] >= 0xf0 && rgb[0] <= 0xf4) { c = 4; ch = rgb[0] & 7; }
-    else return 0;
-    if (cb < static_cast<std::size_t>(c)) return 0;
+    else return std::nullopt;
+    if (sz.size() < c) return std::nullopt;
     for (i = 1; i < c; i++) {
-        if ((rgb[i] & 0xc0) != 0x80) return 0;
+        if ((rgb[i] & 0xc0) != 0x80) return std::nullopt;
         ch = (ch << 6) | (rgb[i] & 0x3f);
     }
     if ((c == 3 && ch < 0x800) || (c == 4 && ch < 0x10000) || ch > 0x10ffff ||
-        (ch >= 0xd800 && ch <= 0xdfff)) return 0;
-    *lpch = ch;
-    return c;
+        (ch >= 0xd800 && ch <= 0xdfff)) return std::nullopt;
+    return UTF8CHAR{ch, c};
 }
 
 std::size_t CchUtf8Prefix(const char *psz, std::size_t cchMax) {
     std::size_t cb = std::strlen(psz), i = 0;
-    std::uint32_t ch;
-    int c;
     while (i < cb && i < cchMax) {
-        c = CbUtf8Char(psz + i, cb - i, &ch);
-        if (c == 0) break;
-        if (static_cast<std::size_t>(c) > cchMax - i) break;
-        i += c;
+        const auto uch = DecodeUtf8Char(std::string_view{psz + i, cb - i});
+        if (!uch || uch->cch > cchMax - i) break;
+        i += uch->cch;
     }
     return i;
 }
 
 int FUtf8Valid(const char *psz, std::size_t cb) {
     std::size_t i = 0;
-    std::uint32_t ch;
-    int c;
     while (i < cb) {
-        c = CbUtf8Char(psz + i, cb - i, &ch);
-        if (c == 0 || ch == 0) return 0;
-        i += c;
+        const auto uch = DecodeUtf8Char(std::string_view{psz + i, cb - i});
+        if (!uch || uch->ch == 0) return 0;
+        i += uch->cch;
     }
     return 1;
 }

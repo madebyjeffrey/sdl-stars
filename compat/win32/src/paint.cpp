@@ -1793,7 +1793,7 @@ int win32::DrawTextA(HDC hdc, LPCSTR psz, int cch, LPRECT lprc, UINT flags) {
     RECT rcOld;
     BOOL fOldClip, fUnderline = 0;
     int i, j, c = 0, cLines = 0, iStart, iBreak, dxBreak, dxMax = 0, dyLine, dy, nReturn = 0, cStep;
-    std::uint32_t ch;
+    std::optional<UTF8CHAR> uch;
     std::int64_t dx, dxAvail, x, y;
     UINT supported = win32::DT_CENTER | win32::DT_RIGHT | win32::DT_VCENTER | win32::DT_BOTTOM | win32::DT_WORDBREAK | win32::DT_SINGLELINE |
                      win32::DT_EXPANDTABS | win32::DT_NOCLIP | win32::DT_EXTERNALLEADING | win32::DT_CALCRECT | win32::DT_NOPREFIX;
@@ -1829,8 +1829,9 @@ int win32::DrawTextA(HDC hdc, LPCSTR psz, int cch, LPRECT lprc, UINT flags) {
     while (i < c) {
         iStart = i; iBreak = -1; dxBreak = 0; dx = 0;
         while (i < c && sz[i] != '\r' && sz[i] != '\n') {
-            cStep = CbUtf8Char(sz + i, static_cast<std::size_t>((c - i)), &ch);
-            if (cStep == 0) goto LReturn;
+            uch = DecodeUtf8Char(std::string_view{sz + i, static_cast<std::size_t>(c - i)});
+            if (!uch) goto LReturn;
+            cStep = static_cast<int>(uch->cch);
             if (!win32::GetTextExtentPoint32A(hdc, sz + i, cStep, &size)) goto LReturn;
             if (sz[i] == ' ' || sz[i] == '\t') { iBreak = i; dxBreak = static_cast<int>(dx); }
             dx += size.cx;
@@ -1877,8 +1878,9 @@ LNextLine:
             if (!rgUnderline[rgline[i].i + j]) continue;
             win32::GetTextExtentPoint32A(hdc, sz + rgline[i].i, j, &size);
             dx = x + size.cx;
-            cStep = CbUtf8Char(sz + rgline[i].i + j, static_cast<std::size_t>((rgline[i].cch - j)), &ch);
-            if (cStep == 0) continue;
+            uch = DecodeUtf8Char(std::string_view{sz + rgline[i].i + j, static_cast<std::size_t>(rgline[i].cch - j)});
+            if (!uch) continue;
+            cStep = static_cast<int>(uch->cch);
             win32::GetTextExtentPoint32A(hdc, sz + rgline[i].i + j, cStep, &size);
             // Leave a pixel below the baseline, matching ordinary font
             // underlines, so mnemonic marks do not merge into the glyph.

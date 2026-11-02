@@ -284,16 +284,16 @@ BOOL FCompatFontDraw(COMPATFONT *lpfont, LPCSTR psz, int cch, const INT *rgdx,
 }
 
 BOOL FCompatFontSizeUtf8(COMPATFONT *lpfont, LPCSTR psz, int cch, LPSIZE lpsize) {
-    int i = 0, c;
-    std::uint32_t ch;
+    int i = 0;
+    std::optional<UTF8CHAR> uch;
     std::int64_t dx = 0;
     COMPATGLYPH *lp;
     if (!lpfont || !lpsize || cch < 0 || cch > 1024 * 1024 || (!psz && cch != 0)) return 0;
     while (i < cch) {
-        c = CbUtf8Char(psz + i, static_cast<std::size_t>((cch - i)), &ch);
-        if (c == 0) return 0;
-        lp = LpGlyphUtf8(lpfont, ch); if (!lp) return 0;
-        dx += lp->dx; i += c;
+        uch = DecodeUtf8Char(std::string_view{psz + i, static_cast<std::size_t>(cch - i)});
+        if (!uch) return 0;
+        lp = LpGlyphUtf8(lpfont, uch->ch); if (!lp) return 0;
+        dx += lp->dx; i += static_cast<int>(uch->cch);
     }
     if (dx > INT_MAX) return 0;
     *lpsize = SIZE{static_cast<LONG>(dx), lpfont->tm.tmHeight};
@@ -302,19 +302,19 @@ BOOL FCompatFontSizeUtf8(COMPATFONT *lpfont, LPCSTR psz, int cch, LPSIZE lpsize)
 
 BOOL FCompatFontDrawUtf8(COMPATFONT *lpfont, LPCSTR psz, int cch,
                         void (*pfn)(void *, std::int64_t, std::int64_t, BYTE), void *lpv) {
-    int i = 0, c, x, y;
-    std::uint32_t ch;
+    int i = 0, x, y;
+    std::optional<UTF8CHAR> uch;
     std::int64_t dx = 0;
     SIZE size;
     COMPATGLYPH *lp;
     if (!FCompatFontSizeUtf8(lpfont, psz, cch, &size)) return 0;
     while (i < cch) {
-        c = CbUtf8Char(psz + i, static_cast<std::size_t>((cch - i)), &ch);
-        if (c == 0) return 0;
-        lp = LpGlyphUtf8(lpfont, ch); if (!lp) return 0;
+        uch = DecodeUtf8Char(std::string_view{psz + i, static_cast<std::size_t>(cch - i)});
+        if (!uch) return 0;
+        lp = LpGlyphUtf8(lpfont, uch->ch); if (!lp) return 0;
         for (y = 0; y < lp->cy; y++) for (x = 0; x < lp->cx; x++)
             if (lp->rgb[static_cast<std::size_t>(y) * lp->cx + x]) pfn(lpv, dx + lp->x + x, lp->y + y, lp->rgb[static_cast<std::size_t>(y) * lp->cx + x]);
-        dx += lp->dx; i += c;
+        dx += lp->dx; i += static_cast<int>(uch->cch);
     }
     return 1;
 }
@@ -324,8 +324,8 @@ BOOL FCompatFontDrawScaled(COMPATFONT *lpfont, LPCSTR psz, int cch, const INT *r
     LOGFONTA lf;
     SIZE size;
     COMPATGLYPH *lp, *lpRaster;
-    int i = 0, c, j, x, y;
-    DWORD ch;
+    int i = 0, j, x, y;
+    std::optional<UTF8CHAR> uch;
     std::int64_t dx = 0;
 
     if (iScale < 1 || iScale > 4 || !FCompatFontSizeUtf8(lpfont, psz, cch, &size)) return 0;
@@ -340,10 +340,10 @@ BOOL FCompatFontDrawScaled(COMPATFONT *lpfont, LPCSTR psz, int cch, const INT *r
         if (!lpfont->lpScaled) return 0;
     }
     while (i < cch) {
-        c = CbUtf8Char(psz + i, static_cast<std::size_t>((cch - i)), &ch);
-        if (c == 0) return 0;
-        lp = LpGlyphUtf8(lpfont, ch);
-        lpRaster = iScale == 1 ? lp : LpGlyphUtf8(lpfont->lpScaled.get(), ch);
+        uch = DecodeUtf8Char(std::string_view{psz + i, static_cast<std::size_t>(cch - i)});
+        if (!uch) return 0;
+        lp = LpGlyphUtf8(lpfont, uch->ch);
+        lpRaster = iScale == 1 ? lp : LpGlyphUtf8(lpfont->lpScaled.get(), uch->ch);
         if (!lp || !lpRaster) return 0;
         for (y = 0; y < lpRaster->cy; y++) for (x = 0; x < lpRaster->cx; x++)
             if (lpRaster->rgb[static_cast<std::size_t>(y) * lpRaster->cx + x])
@@ -351,9 +351,9 @@ BOOL FCompatFontDrawScaled(COMPATFONT *lpfont, LPCSTR psz, int cch, const INT *r
                     lpfont->tm.tmAscent * iScale - (iScale == 1 ? lpfont : lpfont->lpScaled.get())->tm.tmAscent + lpRaster->y + y,
                     lpRaster->rgb[static_cast<std::size_t>(y) * lpRaster->cx + x]);
         // Keep logical advances and baselines: Retina rasterization must not reflow the UI.
-        if (rgdx) for (j = 0; j < c; j++) dx += rgdx[i + j];
+        if (rgdx) for (j = 0; j < static_cast<int>(uch->cch); j++) dx += rgdx[i + j];
         else dx += lp->dx;
-        i += c;
+        i += static_cast<int>(uch->cch);
     }
     return 1;
 }
