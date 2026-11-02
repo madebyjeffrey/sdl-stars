@@ -1619,7 +1619,8 @@
         "library-import-required-metadata-references",
         "native-text-writer-string-view-input",
         "remaining-native-file-path-services-use-string-views",
-        "bounded-native-path-copy-uses-ranges"
+        "bounded-native-path-copy-uses-ranges",
+        "native-wrapper-file-paths-use-views"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -24733,14 +24734,13 @@
   "working_tree_checkpoint": {
     "date": "2026-11-02",
     "branch": "develop",
-    "batch": "L06 native file-path view services",
-    "source_commit": "52a73ad6",
-    "status": "Verified and committed on develop. macOS SDL Debug build, desktop/host unit suites, full native/host regressions, tutorial smoke and focused file/publication compatibility checks pass. Current-source Windows SDL desktop and Linux desktop qualification remain outstanding.",
+    "batch": "L06 native facade path views",
+    "source_commit": "d7205386",
+    "status": "Verified and committed locally on develop. macOS SDL Debug build, desktop/host unit suites, full native/host regressions, tutorial smoke and focused compatibility checks pass. Current-source Windows SDL desktop and Linux desktop qualification remain outstanding.",
     "changes": [
-      "Native file open, metadata, directory, rename, unlink and cwd service APIs now accept std::string_view, including the legacy-token open API.",
-      "POSIX descriptor operations use the owned filesystem path produced from the view, so a bounded non-NUL-terminated view is consumed exactly.",
-      "Native canonical-path and cwd output copy uses std::copy with an explicit terminator.",
-      "Native publication adapters and test providers use path views; compatibility coverage supplies a bounded path that ends before suffix bytes in its backing string.",
+      "High-level native open, existence, read-only, directory, enumeration-path, size, path-info and publication APIs now accept std::string_view.",
+      "The directory entry callback still exposes const char *; its result boundary remains for a separate migration because its UI and ZIP consumers use C-string APIs.",
+      "Added a bounded-view compatibility assertion through FFileExists, FNativeFileSize and PfOpenNativeFile.",
       "No game behavior, saved layout, file format or serialization changed."
     ],
     "verification": {
@@ -24750,7 +24750,7 @@
       "native_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "host_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "tutorial": "1/1 available SDL tutorial smoke passes.",
-      "focused_compatibility": "4/4 pass: fileio contract, native publication, profile save, and Windows client startup. Other updated compatibility providers compile in the full build.",
+      "focused_compatibility": "5/5 pass: native files, fileio contract, native publication, profile save and Windows client startup.",
       "baseline": "Unchanged.",
       "diff_check": "Pass."
     },
@@ -24763,7 +24763,8 @@
       "c11_boundary": "C is enabled only for independent test/reference targets; production is C++20/Objective-C++20.",
       "core_strlen_residual": "src/core/save.cpp:804 in WriteRtString. Its sole caller passes FLEET::lpszName, a legacy heap-owned C string with no stored length; adding a size to FLEET would change a layout-sensitive debug-symbol struct. Keep this at the serialization C-string boundary unless ownership API is deliberately redesigned.",
       "scan_scope": "Tracked src and compat/win32/include/src plus dist/macos-sdl-debug/generated/version_resource.h; compat/win32/generated is not a present directory.",
-      "platform_qualification": "Full Windows SDL desktop and Linux desktop CI remain unqualified. Current-source workflow dispatch was previously rejected with HTTP 403 (admin rights required), and local SDL cross-configuration lacks a MinGW zlib package; the current MinGW host/core service build passed earlier."
+      "platform_qualification": "Full Windows SDL desktop and Linux desktop CI remain unqualified. Current-source workflow dispatch was previously rejected with HTTP 403 (admin rights required), and local SDL cross-configuration lacks a MinGW zlib package; the current MinGW host/core service build passed earlier.",
+      "native_directory_entry_callback": "FNativeDirectoryEntryProc still returns an entry as const char*; this is the next native path-result seam to review and migrate."
     },
     "platform_ci": {
       "run_id": 41422617389,
@@ -24802,6 +24803,10 @@
       "current_source_rerun": "No workflow dispatch was available from this environment; current source is locally qualified on macOS and host, but Windows/Linux platform CI remains pending."
     },
     "post_checkpoint_commits": [
+      {
+        "commit": "d7205386",
+        "message": "Use path views in native file facade"
+      },
       {
         "commit": "52a73ad6",
         "message": "Use views for native file paths"
