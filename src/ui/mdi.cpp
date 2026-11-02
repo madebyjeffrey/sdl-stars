@@ -1520,7 +1520,9 @@ LPrintMapCleanup:
                 if (app.lpui->uTimerId == 0) win32::PostMessageA(hwnd, win32::WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
                 break;
             }
-            fRet = FImportDesktopFile(app, hwnd, app.state.ini.fStartupFile ? app.state.szBase : nullptr);
+            fRet = FImportDesktopFile(app, hwnd, app.state.ini.fStartupFile
+                                           ? std::optional<std::string_view>{app.state.szBase}
+                                           : std::nullopt);
             app.state.ini.fStartupFile = 0;
             if (fRet && app.lpui->hwndTitle) {
                 RefreshLibraryGames(app, app.lpui->hwndTitle);

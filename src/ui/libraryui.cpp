@@ -2077,7 +2077,7 @@ static std::int16_t FChooseLibraryImportFile(APPSESSION &app, HWND hwnd, char *p
 
 /* Choose the workflow from the BOF type, leaving complete validation and
  * source-preserving publication to the corresponding importer. */
-std::int16_t FImportDesktopFile(APPSESSION &app, HWND hwnd, const char *pszSource) {
+std::int16_t FImportDesktopFile(APPSESSION &app, HWND hwnd, std::optional<std::string_view> pszSource) {
     char szChosen[512];
     NATIVEFILE *pf;
     HDR hdr;
@@ -2089,7 +2089,7 @@ std::int16_t FImportDesktopFile(APPSESSION &app, HWND hwnd, const char *pszSourc
         pszSource = szChosen;
     }
     fRace = 0;
-    pf = PfOpenNativeFile(pszSource, NATIVEFILEMODE::read);
+    pf = PfOpenNativeFile(*pszSource, NATIVEFILEMODE::read);
     if (pf) {
         fRace = FReadLibraryHdr(pf, &hdr) && hdr.rt == rtBOF && hdr.cb == cbWireBof &&
                 FReadLibraryBof(pf, &rtbof) && !std::memcmp(rtbof.rgid, "J3J3", 4) && rtbof.dt == dtRace;
