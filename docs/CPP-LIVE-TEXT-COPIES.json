@@ -3031,22 +3031,7 @@
     }
   ],
   "remaining_spelling_scope": "Lexical raw-copy spellings, including SDK declarations/definitions; comments/literals excluded with the manifest lexer. Exact counts prevent new raw sites during the remaining migration.",
-  "remaining_raw_spellings": [
-    {
-      "path": "compat/win32/src/list.cpp",
-      "normalized_call": "std::strcpy(reinterpret_cast<LPSTR>(l),lp->rgitem[i].psz)",
-      "count": 1,
-      "status": "SDK-boundary review",
-      "role": "SDK-shaped declarations/definitions or caller-provisioned message/string buffer; retain only where the current ABI contract requires it."
-    },
-    {
-      "path": "compat/win32/src/toolbar.cpp",
-      "normalized_call": "std::strcpy(reinterpret_cast<char*>(l),lp->rgbtn[i].psz)",
-      "count": 1,
-      "status": "SDK-boundary review",
-      "role": "SDK-shaped declarations/definitions or caller-provisioned message/string buffer; retain only where the current ABI contract requires it."
-    }
-  ],
+  "remaining_raw_spellings": [],
   "wire_name_contract": {
     "parent": "c4429e49",
     "text": "At most 31 UTF-8 bytes with a terminator inside the provided source span. Raw fields retain marker zero plus NUL; compressed fields retain the existing 31-byte codec budget.",

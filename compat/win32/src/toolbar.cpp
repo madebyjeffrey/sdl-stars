@@ -2,8 +2,10 @@
 #include "internal.h"
 #include "cleanup.h"
 #include <commctrl.h>
+#include <algorithm>
 #include <cstdlib>
 #include <cstring>
+#include <string_view>
 
 struct COMPATTOOLBUTTON { TBBUTTON btn; RECT rc; char *psz; };
 struct COMPATTOOLBITMAP { HBITMAP hbmp; int iFirst, c; };
@@ -377,8 +379,13 @@ LRESULT  CompatToolbarProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         if (msg == win32::TB_GETBITMAP) return lp->rgbtn[i].btn.iBitmap;
         if (msg == win32::TB_GETBUTTONTEXTA) {
             if (!lp->rgbtn[i].psz) return -1;
-            if (l) std::strcpy(reinterpret_cast<char *>(l), lp->rgbtn[i].psz);
-            return static_cast<LRESULT>(std::strlen(lp->rgbtn[i].psz));
+            const std::string_view szText{lp->rgbtn[i].psz};
+            if (l) {
+                auto *pszText = reinterpret_cast<char *>(l);
+                std::copy(szText.begin(), szText.end(), pszText);
+                pszText[szText.size()] = '\0';
+            }
+            return static_cast<LRESULT>(szText.size());
         }
         if (lp->rgbtn[i].btn.fsState != static_cast<BYTE>(l)) {
             lp->rgbtn[i].btn.fsState = static_cast<BYTE>(l); LayoutToolbar(hwnd);

@@ -1,9 +1,11 @@
 /* String list boxes, including the fixed-height owner drawing used by Stars. */
 #include "internal.h"
 #include "time_io.h"
+#include <algorithm>
 #include <cstdlib>
 #include <cstring>
 #include <limits>
+#include <string_view>
 
 struct COMPATLISTITEM { char *psz; LPARAM lData; BOOL fSelected; };
 struct COMPATLIST {
@@ -384,7 +386,13 @@ LRESULT  CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     case win32::LB_GETTEXTLEN: return i >= 0 && i < lp->cItem ? static_cast<LRESULT>(std::strlen(lp->rgitem[i].psz)) : win32::LB_ERR;
     case win32::LB_GETTEXT:
         if (i < 0 || i >= lp->cItem || !l) return win32::LB_ERR;
-        std::strcpy(reinterpret_cast<LPSTR>(l), lp->rgitem[i].psz); return static_cast<LRESULT>(std::strlen(lp->rgitem[i].psz));
+        {
+            const std::string_view szText{lp->rgitem[i].psz};
+            auto *pszText = reinterpret_cast<LPSTR>(l);
+            std::copy(szText.begin(), szText.end(), pszText);
+            pszText[szText.size()] = '\0';
+            return static_cast<LRESULT>(szText.size());
+        }
     case win32::LB_GETITEMDATA: return i >= 0 && i < lp->cItem ? lp->rgitem[i].lData : win32::LB_ERR;
     case win32::LB_SETITEMDATA:
         if (i < -1 || i >= lp->cItem) return win32::LB_ERR;

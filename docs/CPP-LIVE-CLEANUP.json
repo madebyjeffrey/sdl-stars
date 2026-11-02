@@ -24187,7 +24187,6 @@
   "remaining_work": [
     "L05 bounded text destinations, const-text interfaces and post-migration scratch/borrowed-return audit.",
     "L06 remaining buffer/length service interfaces and chooser Milestone D qualification, including Windows/Linux chooser coverage.",
-    "L08 final retained primitive/API macro/preprocessor inventory reconciliation and current-source platform qualification.",
-    "Review the two remaining strcpy calls in compat/win32/src/list.cpp and toolbar.cpp; both write to buffers supplied by Win32-compatible caller APIs without a length parameter."
+    "L08 final retained primitive/API macro/preprocessor inventory reconciliation and current-source platform qualification."
   ]
 }
