@@ -125,7 +125,8 @@
         "typed-help-wrapper-formatting",
         "typed-profile-wrapper-formatting",
         "typed-print-wrapper-formatting",
-        "typed-dialog-inspector-and-MDI-wrapper-formatting"
+        "typed-dialog-inspector-and-MDI-wrapper-formatting",
+        "host-ini-parser-string-view-and-output-span"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -23624,6 +23625,31 @@
       "windows": "MinGW build preset is disabled on this macOS host, so Windows cross-build was unavailable. Native Windows qualification remains pending.",
       "baseline": "Unchanged; service-only change with no game behavior, saved data, layouts or canonical model changes.",
       "diff_check": "git diff --check and checkpoint JSON validation pass."
+    },
+    {
+      "batch": "L05aq host INI parser string-view and output-span interface",
+      "parent": "b0c24baa",
+      "debug_build": "Full macos-sdl-debug build through make test-unit passes without new warnings.",
+      "host_build": "Host Release build passes with strict C++20 diagnostics.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "focused_tests": "Linked s02 I/O witness passes, covering view extent, ASCII key/section matching, UTF-8 truncation, malformed section handling and numeric defaults.",
+      "tutorial": "Available SDL tutorial smoke checkpoint passes.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "windows": "MinGW preset is disabled on this macOS host. Native Windows qualification remains pending.",
+      "baseline": "Unchanged; host profile parsing contract and game outputs match existing baselines.",
+      "diff_check": "git diff --check passes."
     }
   ],
   "generators": [
@@ -23644,10 +23670,10 @@
     "date": "2026-11-01",
     "reason": "Active C-style/C11 cleanup continuation checkpoint.",
     "branch": "develop",
-    "batch": "L06ab filesystem owned path results and view inputs",
-    "batch_parent": "e26fc376",
-    "latest_batch": "L06ab filesystem owned path results and view inputs",
-    "latest_batch_head": "ea12eb88",
+    "batch": "L05aq host INI parser string-view and output-span interface",
+    "batch_parent": "b0c24baa",
+    "latest_batch": "L05aq host INI parser string-view and output-span interface",
+    "latest_batch_head": "ceb94fca",
     "completed_stages": [
       "L01: nullptr and aliases",
       "L02: explicit C++ casts and headers",
@@ -23663,7 +23689,6 @@
     "local_batch_verification": {
       "desktop_unit_tests": "18/18",
       "host_unit_tests": "29/29",
-      "focused_tests": "6/6 filesystem/native-file/publication/UTF-8/witness tests",
       "native_regression_matches": 519,
       "host_regression_matches": 519,
       "existing_unused_storage_warnings_per_regression": 25,
@@ -23684,8 +23709,8 @@
     ],
     "restart_order": [
       "Read this checkpoint and check git status/log; preserve unrelated title-modernized assets.",
-      "L06ab migrated the owned filesystem service from raw C path/output-buffer APIs to optional owned paths, string_view inputs and bool effects; full local required gates pass.",
-      "Continue L05 bounded destinations, const-text interfaces, scratch/borrowed-result audit and remaining Linux portal formatting.",
+      "L05aq converted FIniValue and LIniInt to string_view inputs and span output; host INI uses the explicit post-BOM byte extent. The linked profile I/O witness tests nonterminated views and UTF-8 truncation.",
+      "Continue remaining L05 bounded destinations, const-text interfaces, scratch/borrowed-result audit and Linux portal formatting.",
       "Continue L06 remaining buffer/result interfaces and chooser Milestone D qualification.",
       "Finish L08 retained primitive/macro audit and final current-source/platform qualification."
     ],
@@ -23694,7 +23719,7 @@
       "docs/CPP-LIVE-OWNED-TEXT.json: game_file_input_views",
       "dist/verification/live-cpp/l05ai/ (ignored local logs and source hashes)"
     ],
-    "goal_status": "Overall cleanup goal remains unfinished; this checkpoint records one completed service-interface batch.",
+    "goal_status": "Overall cleanup goal remains unfinished; this checkpoint records a completed parser-interface batch.",
     "platform_ci": {
       "run_id": 41363769853,
       "url": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41363769853",
@@ -23702,27 +23727,28 @@
       "qualified_source_head": "b76ec1fcc1276790150457670f5f667bcec4eccc",
       "result": "success"
     },
-    "published_batch_head": "ea12eb88"
+    "published_batch_head": "ceb94fca"
   },
   "current_checkpoint": {
-    "batch": "L06ab filesystem owned path results and view inputs",
-    "status": "implemented and locally verified; Windows cross-build is unavailable in this macOS host, with native Windows/Linux qualification still pending",
-    "parent": "e26fc376",
+    "batch": "L05aq host INI parser string-view and output-span interface",
+    "status": "implemented and locally verified; native Windows qualification remains pending",
+    "parent": "b0c24baa",
     "changes": {
-      "src/platform/filesystem.h and src/platform/filesystem.cpp": "Temp and canonical paths return optional owned UTF-8 strings; directory creation/removal take string_view and return bool. Raw pointer/capacity output APIs are removed.",
-      "tests/compat/filesystem.cpp": "Exercises owned results, unique temp directories, invalid UTF-8, exact non-terminated views, canonicalization and nonrecursive removal.",
-      "tests/compat/fileio.cpp, tests/compat/native_publication.cpp, tests/compat/win32_profile.inc, tests/compat/win32_utf8.cpp, tests/witnesses/s02_io.cpp": "Migrate every in-repository caller to owned temp/canonical paths and string-view effects."
+      "src/core/host_profile.h and src/core/host_profile.cpp": "FIniValue accepts the exact INI text view and destination span; LIniInt also consumes a text view. Line clipping, case-insensitive section/key matching, UTF-8-safe output truncation and parse defaults are retained.",
+      "src/host/host.cpp": "Passes the explicit text byte extent to host settings parsing after optional BOM removal.",
+      "tests/witnesses/s02_io.cpp": "Adds exact-view and multibyte truncation coverage."
     },
     "verification": {
-      "macos_debug_build": "make test-unit full macos-sdl-debug build passes without new warnings.",
+      "macos_debug_build": "Full macos-sdl-debug build passes without new warnings.",
+      "host_build": "Host Release build passes with strict C++20 diagnostics.",
       "desktop_unit_tests": "18/18 pass.",
-      "focused_tests": "Filesystem, native file contract, native publication, UTF-8 filesystem, UTF-8 profile and linked s02 I/O witness pass 6/6.",
       "host_unit_tests": "29/29 pass.",
+      "focused_tests": "Linked s02 I/O witness passes with exact-view and UTF-8 truncation cases.",
       "tutorial": "Available SDL tutorial smoke checkpoint passes.",
       "native_regression": "519 matches (25 existing unused-storage warnings); zero differences/errors/skips.",
       "host_regression": "519 matches (25 existing unused-storage warnings); zero differences/errors/skips.",
-      "windows": "MinGW preset disabled on macOS; no Windows cross-build. Native Windows qualification remains pending.",
-      "baseline": "Unchanged; no game behavior, saved data, layouts or canonical model changed.",
+      "windows": "MinGW preset disabled on this macOS host; native Windows qualification remains pending.",
+      "baseline": "Unchanged; host profile parsing contract and game outputs match existing baselines.",
       "diff_check": "git diff --check and checkpoint JSON validation pass."
     },
     "remaining_work": [
@@ -23732,8 +23758,8 @@
       "L08 maintained inventory reconciliation, retained primitive/macro audit and final platform qualification."
     ],
     "macro_scan": "Current owned-source search found and removed the only SDL_arraysize call; no SDL_zero, SDL_zerop, SDL_min, SDL_max, SDL_memcpy, SDL_memset or SDL_memmove uses remain in the scanned production sources. The prior definition scan found application header guards and NOMINMAX; resource-compiler and platform/test boundaries still need a complete retained-macro audit.",
-    "source_commit": "ea12eb88",
-    "published_batch_head": "ea12eb88"
+    "source_commit": "ceb94fca",
+    "published_batch_head": "ceb94fca"
   },
   "milestone_d_checkpoint": {
     "stage": "D05 caller migrations implemented; D06 platform qualification pending",
