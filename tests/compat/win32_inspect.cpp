@@ -65,7 +65,7 @@ static int TestStyles(void) {
     NATIVEFILE *lpfile;
     char sz[8192], szClass[] = "StyleTest", szText[] = "";
     item.pszClass = szClass; item.pszText = szText;
-    item.dwExStyle = win32::WS_EX_TOOLWINDOW | win32::WS_EX_NOACTIVATE | UINT32_C(0x40000000);
+    item.dwExStyle = win32::WS_EX_TOOLWINDOW | win32::WS_EX_NOACTIVATE | std::uint32_t{0x40000000};
     for (i = 0; i < std::size(rg); i++) {
         item.iControl = rg[i].iControl; item.fDialog = rg[i].fDialog; item.dwStyle = rg[i].dw;
         lpfile = PfNativeTemporary(); CHECK(lpfile && StarsCompatWriteHierarchy(&snap, lpfile));
@@ -132,7 +132,7 @@ int main(int argc, char **argv) {
     CHECK(win32::DestroyWindow(hwndDuplicate));
     // A JSON consumer must preserve IDs above JavaScript's exact-integer range.
     for (i = 0; i < snap.cWindow; i++) if (snap.rgWindow[i].id == StarsCompatWindowId(hwndOwned))
-        snap.rgWindow[i].id = UINT64_C(9007199254740993);
+        snap.rgWindow[i].id = std::uint64_t{9007199254740993};
     CHECK(StarsCompatBeginDialogSequence(hwnd));
     CHECK(DialogBoxParamA(NULL, win32::MAKEINTRESOURCE(IDD_PASSWORD), hwnd, DialogProc, 0) == 2);
     CHECK(!StarsCompatResolveWindow(rgidDialog[0]));

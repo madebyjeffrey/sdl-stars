@@ -20,8 +20,8 @@ static INT_PTR  TestDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
 int FTestIncludeOrder(void) {
     DLGPROC lpfnDlgProc = TestDlgProc;
-    WPARAM wParam = (WPARAM)UINT64_C(0x123456789abcdef0);
-    LPARAM lParam = (LPARAM)UINT64_C(0x76543210fedcba98);
+    WPARAM wParam = (WPARAM)std::uint64_t{0x123456789abcdef0};
+    LPARAM lParam = (LPARAM)std::uint64_t{0x76543210fedcba98};
 
     return sizeof(POINT16) == 4 &&
         (UINT_PTR)lpfnDlgProc(NULL, win32::WM_USER, wParam, lParam) ==

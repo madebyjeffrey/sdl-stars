@@ -103,7 +103,7 @@ static LRESULT  TestWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
 static LRESULT  SubclassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     if (msg == msgSubclass)
-        return (LRESULT)UINT64_C(0x123456789abcdef0);
+        return (LRESULT)std::uint64_t{0x123456789abcdef0};
     return win32::CallWindowProcA(TestWndProc, hwnd, msg, wParam, lParam);
 }
 
@@ -175,21 +175,21 @@ static int TestWindows(HWND *rghwnd, WINDOWTEST *rgwin, ATOM atom, HINSTANCE hIn
     CHECK(rgwin[0].cNcCreate == 1 && rgwin[0].fCreateData);
     CHECK(rgwin[0].cSize > 0 && rgwin[1].cSize > 0);
     CHECK(win32::GetWindowLongPtrA(rghwnd[0], win32::GWLP_HINSTANCE) == (LONG_PTR)hInstance);
-    CHECK(win32::SetWindowLongPtrA(rghwnd[0], 0, (LONG_PTR)UINT64_C(0x123456789abcdef0)) == 0);
-    CHECK(win32::GetWindowLongPtrA(rghwnd[0], 0) == (LONG_PTR)UINT64_C(0x123456789abcdef0));
+    CHECK(win32::SetWindowLongPtrA(rghwnd[0], 0, (LONG_PTR)std::uint64_t{0x123456789abcdef0}) == 0);
+    CHECK(win32::GetWindowLongPtrA(rghwnd[0], 0) == (LONG_PTR)std::uint64_t{0x123456789abcdef0});
     CHECK(win32::GetWindowLongPtrA(rghwnd[1], 0) == 0);
-    CHECK(win32::SetWindowLongPtrA(rghwnd[0], win32::GWLP_USERDATA, (LONG_PTR)UINT64_C(0x123456789abcdef0)) == (LONG_PTR)&rgwin[0]);
-    CHECK(win32::GetWindowLongPtrA(rghwnd[0], win32::GWLP_USERDATA) == (LONG_PTR)UINT64_C(0x123456789abcdef0));
+    CHECK(win32::SetWindowLongPtrA(rghwnd[0], win32::GWLP_USERDATA, (LONG_PTR)std::uint64_t{0x123456789abcdef0}) == (LONG_PTR)&rgwin[0]);
+    CHECK(win32::GetWindowLongPtrA(rghwnd[0], win32::GWLP_USERDATA) == (LONG_PTR)std::uint64_t{0x123456789abcdef0});
     win32::SetWindowLongPtrA(rghwnd[0], win32::GWLP_USERDATA, (LONG_PTR)&rgwin[0]);
-    CHECK(win32::SendMessageA(rghwnd[0], msgEcho, (WPARAM)UINT64_C(0x123456789abcdef0),
-                      (LPARAM)UINT64_C(0x76543210fedcba98)) == (LRESULT)UINT64_C(0x6460646864606468));
-    CHECK(win32::SendMessageA(rghwnd[0], msgNested, (WPARAM)UINT64_C(0x123456789abcdef0),
-                      (LPARAM)UINT64_C(0x76543210fedcba98)) == (LRESULT)UINT64_C(0x6460646864606468));
+    CHECK(win32::SendMessageA(rghwnd[0], msgEcho, (WPARAM)std::uint64_t{0x123456789abcdef0},
+                      (LPARAM)std::uint64_t{0x76543210fedcba98}) == (LRESULT)std::uint64_t{0x6460646864606468});
+    CHECK(win32::SendMessageA(rghwnd[0], msgNested, (WPARAM)std::uint64_t{0x123456789abcdef0},
+                      (LPARAM)std::uint64_t{0x76543210fedcba98}) == (LRESULT)std::uint64_t{0x6460646864606468});
     CHECK(win32::SendMessageA(rghwnd[0], msgShutdown, 0, 0));
     memcpy(&lProc, &lpfn, sizeof(lProc));
     lOriginal = win32::SetWindowLongPtrA(rghwnd[0], win32::GWLP_WNDPROC, lProc);
     CHECK(lOriginal != 0 && win32::GetWindowLongPtrA(rghwnd[0], win32::GWLP_WNDPROC) == lProc);
-    CHECK(win32::SendMessageA(rghwnd[0], msgSubclass, 0, 0) == (LRESULT)UINT64_C(0x123456789abcdef0));
+    CHECK(win32::SendMessageA(rghwnd[0], msgSubclass, 0, 0) == (LRESULT)std::uint64_t{0x123456789abcdef0});
     CHECK(win32::SendMessageA(rghwnd[1], msgSubclass, 0, 0) == 0);
     CHECK(win32::SetWindowLongPtrA(rghwnd[0], win32::GWLP_WNDPROC, lOriginal) == lProc);
     CHECK(win32::GetClassNameA(rghwnd[0], sz, sizeof(sz)) > 0 && strcmp(sz, "StarsWin32Windows") == 0);
@@ -213,11 +213,11 @@ static int TestWindows(HWND *rghwnd, WINDOWTEST *rgwin, ATOM atom, HINSTANCE hIn
     CHECK(!win32::CreateWindowExA(0, "Missing class", "", win32::WS_OVERLAPPED, 0, 0, 320, 240, NULL, NULL, hInstance, NULL));
     CHECK(!win32::CreateWindowExA(0, win32::MAKEINTRESOURCE(atom), "", win32::WS_CHILD, 0, 0, 320, 240, NULL, NULL, hInstance, NULL));
     DrainMessages();
-    CHECK(win32::PostMessageA(rghwnd[1], msgEcho, (WPARAM)UINT64_C(0x123456789abcdef0),
-                       (LPARAM)UINT64_C(0x76543210fedcba98)));
+    CHECK(win32::PostMessageA(rghwnd[1], msgEcho, (WPARAM)std::uint64_t{0x123456789abcdef0},
+                       (LPARAM)std::uint64_t{0x76543210fedcba98}));
     CHECK(win32::PeekMessageA(&msg, rghwnd[1], msgEcho, msgEcho, win32::PM_REMOVE));
-    CHECK(msg.wParam == (WPARAM)UINT64_C(0x123456789abcdef0) &&
-          win32::DispatchMessageA(&msg) == (LRESULT)UINT64_C(0x6460646864606468));
+    CHECK(msg.wParam == (WPARAM)std::uint64_t{0x123456789abcdef0} &&
+          win32::DispatchMessageA(&msg) == (LRESULT)std::uint64_t{0x6460646864606468});
     memset(&event, 0, sizeof(event));
     event.type = SDL_EVENT_WINDOW_FOCUS_LOST;
     event.window.windowID = rgid[0]; CHECK(SDL_PushEvent(&event));
@@ -296,7 +296,7 @@ static int TestWindows(HWND *rghwnd, WINDOWTEST *rgwin, ATOM atom, HINSTANCE hIn
     DrainMessages();
     SDL_SetModState(SDL_KMOD_NONE);
     CHECK(rgwin[1].cKey == cKey + 1 && rgwin[0].cKey == 0);
-    CHECK((UINT_PTR)rgwin[1].lKey == UINT32_C(0x00390001));
+    CHECK((UINT_PTR)rgwin[1].lKey == std::uint32_t{0x00390001});
     CHECK(rgwin[1].cMouse == cMouse + 1 && rgwin[1].cSize == cSize + 1 && rgwin[1].cChar == 2);
     CHECK(rgwin[1].wMouse == (win32::MK_LBUTTON | win32::MK_SHIFT));
     CHECK((int16_t)LOWORD(rgwin[1].lMouse) == -12 && (int16_t)HIWORD(rgwin[1].lMouse) == -34);
@@ -305,7 +305,7 @@ static int TestWindows(HWND *rghwnd, WINDOWTEST *rgwin, ATOM atom, HINSTANCE hIn
     event.key.windowID = rgid[1]; event.key.scancode = SDL_SCANCODE_RIGHT;
     CHECK(SDL_PushEvent(&event));
     CHECK(win32::PeekMessageA(&msg, rghwnd[1], win32::WM_KEYUP, win32::WM_KEYUP, win32::PM_REMOVE));
-    CHECK(msg.wParam == win32::VK_RIGHT && (UINT_PTR)msg.lParam == UINT32_C(0xc14d0001));
+    CHECK(msg.wParam == win32::VK_RIGHT && (UINT_PTR)msg.lParam == std::uint32_t{0xc14d0001});
     event.type = SDL_EVENT_KEY_DOWN;
     event.key.scancode = SDL_SCANCODE_F10;
     CHECK(SDL_PushEvent(&event));
