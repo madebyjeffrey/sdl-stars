@@ -31,8 +31,8 @@ std::int16_t FImportConflictingTurnAsCopy(APPSESSION &app, const LIBRARYPATHS &p
                                      std::uint16_t turn);
 std::int16_t FInspectImportFile(const char *pszFile, DtFileType dt, int iplr, std::int32_t *plidGame, std::uint16_t *pturn, std::uint16_t *pwGen, std::int16_t *pfMulti);
 std::int16_t FValidManagedLibraryGame(APPSESSION &app, const char *pszName, char *pszDirectory, int *piplr, long long *plPlayed, char *pszExchangeName, std::size_t cchExchange);
-std::int16_t FCreateLibraryGameStagePath(char *pszStage, std::size_t cchStage);
-std::int16_t FCreateLibraryGameHoldPath(char *pszHold, std::size_t cchHold);
+std::int16_t FCreateLibraryGameStagePath(std::span<char> pszStage);
+std::int16_t FCreateLibraryGameHoldPath(std::span<char> pszHold);
 std::int16_t FCreateLibraryGameStage(APPSESSION &app, const char *pszSource, const char *pszSourceName, const char *pszTargetName, const char *pszStage, int iplr, long long lPlayed,
                                 const char *pszExchangeName);
 std::int16_t FBackupConflictingPlayerFiles(const char *pszDirectory, const char *pszName, int iplr, char *pszBackup, std::size_t cchBackup);

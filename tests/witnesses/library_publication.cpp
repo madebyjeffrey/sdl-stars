@@ -7,6 +7,7 @@
 #include "librarypublication.h"
 #include "native_publish.h"
 #include "ui_fixture.h"
+#include <algorithm>
 static char szLibraryRoot[256] = "root", szLibraryName[256] = "Copy", szLibraryPending[256] = "pending";
 
 // Zero is absent; files are 1..3; directories are bit sets plus 100.
@@ -167,18 +168,18 @@ static int TestFValidManagedLibraryGame(APPSESSION &, const char *name, const ch
     event("probe", 5, p, ok, 0);
     return ok;
 }
-static int TestFCreateLibraryGameStagePath(char *out, size_t cap) {
-    assert(cap > 5);
-    strcpy(out, "stage");
+static int TestFCreateLibraryGameStagePath(std::span<char> out) {
+    assert(out.size() > 5);
+    std::copy_n("stage", 6, out.begin());
     int ok = decision() && !objects[3];
     if (ok)
         objects[3] = 100;
     event("allocate", 1, 3, ok, 0);
     return ok;
 }
-static int TestFCreateLibraryGameHoldPath(char *out, size_t cap) {
-    assert(cap > 4);
-    strcpy(out, "hold");
+static int TestFCreateLibraryGameHoldPath(std::span<char> out) {
+    assert(out.size() > 4);
+    std::copy_n("hold", 5, out.begin());
     int ok = decision();
     event("probe", 4, 6, ok, 0);
     return ok;
