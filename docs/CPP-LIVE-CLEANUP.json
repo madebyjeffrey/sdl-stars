@@ -126,7 +126,8 @@
         "typed-profile-wrapper-formatting",
         "typed-print-wrapper-formatting",
         "typed-dialog-inspector-and-MDI-wrapper-formatting",
-        "host-ini-parser-string-view-and-output-span"
+        "host-ini-parser-string-view-and-output-span",
+        "typed-direct-thing-gauge-and-tutorial-title-formatting"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -862,6 +863,19 @@
           "native_regression": "519 matches, 25 existing warnings, zero differences/errors/skips.",
           "host": "No host source or host-facing API changed; no host regression rerun.",
           "baseline": "Unchanged; no game behavior, saved data, layouts or canonical model changed."
+        },
+        {
+          "batch": "L05ar typed formatter for small UI labels",
+          "debug_build": "Full macos-sdl-debug build succeeds.",
+          "desktop_units": "18/18 pass.",
+          "host_units": "29/29 pass.",
+          "focused_tests": "win32_controls and available tutorial smoke pass (2/2).",
+          "tutorial": "Available native tutorial smoke checkpoint passes (1/1).",
+          "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+          "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+          "changes": "Replace three literal-format wsprintfA calls in DrawThingGauge and AdvanceTutor with CchSprintf, using the shared typed native formatter.",
+          "baseline": "Unchanged; formatting call change is behavior-neutral and does not alter game rules or file layouts.",
+          "platform": "Native Windows/Linux qualification remains pending for current develop."
         }
       ],
       "bounded_formatting": {
@@ -23668,12 +23682,12 @@
   ],
   "restart_checkpoint": {
     "date": "2026-11-02",
-    "reason": "Active C-style/C11 cleanup continuation checkpoint after owned C++ integer-limit macro cleanup.",
+    "reason": "Active C-style/C11 cleanup continuation checkpoint after a small L05 typed formatting migration.",
     "branch": "develop",
-    "batch": "L08c replace runtime integer-limit macros in owned C++",
-    "batch_parent": "fbb3ce1d",
-    "latest_batch": "L08c replace runtime integer-limit macros in owned C++",
-    "latest_batch_head": "f2bbb021",
+    "batch": "L05ar typed formatter for small UI labels",
+    "batch_parent": "0bd4d847",
+    "latest_batch": "L05ar typed formatter for small UI labels",
+    "latest_batch_head": "52363c89",
     "completed_stages": [
       "L01: nullptr and aliases",
       "L02: explicit C++ casts and headers",
@@ -23713,54 +23727,51 @@
       "L05aq converted FIniValue and LIniInt to string_view inputs and span output; host INI uses the explicit post-BOM byte extent. The linked profile I/O witness tests nonterminated views and UTF-8 truncation.",
       "Continue remaining L05 bounded destinations, const-text interfaces, scratch/borrowed-result audit and Linux portal formatting.",
       "Continue L06 remaining buffer/result interfaces and chooser Milestone D qualification.",
-      "Finish L08 retained preprocessor/platform/API-like Win32 macro audit, inventory reconciliation and full current-source/platform qualification."
+      "Finish L08 retained preprocessor/platform/API-like Win32 macro audit, inventory reconciliation and full current-source/platform qualification.",
+      "Commit 52363c89 replaces three small UI wsprintfA calls with CchSprintf, the existing typed native formatter. Full local build, unit, tutorial, focused controls and both regression suites pass; continue remaining wrapper call sites as a separate L05 batch."
     ],
     "evidence": [
       "docs/CPP-LIVE-TEXT-COPIES.json: game_file_inputs.verification",
       "docs/CPP-LIVE-OWNED-TEXT.json: game_file_input_views",
       "dist/verification/live-cpp/l05ai/ (ignored local logs and source hashes)"
     ],
-    "goal_status": "Overall cleanup goal remains unfinished; L08a SDL macros, L08b fixed-width literal macros and L08c runtime integer-limit macros are removed from owned C++ sources. L05/L06 and the retained-macro/platform audit remain open.",
+    "goal_status": "Overall cleanup remains active. L01-L04 and L07 are complete; L05, L06 and the final L08 macro/platform audit remain open.",
     "platform_ci": {
       "run_id": 41363769853,
       "url": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41363769853",
-      "status_at_handoff": "Previous source qualification passed; this new batch still needs Windows/Linux qualification.",
+      "status_at_handoff": "Prior source qualification passed; current develop source still needs Windows/Linux qualification.",
       "qualified_source_head": "b76ec1fcc1276790150457670f5f667bcec4eccc",
       "result": "success"
     },
-    "published_batch_head": "f2bbb021"
+    "published_batch_head": "52363c89"
   },
   "current_checkpoint": {
-    "batch": "L08c replace runtime integer-limit macros in owned C++",
-    "status": "implemented and locally verified; source commit f2bbb021",
-    "parent": "fbb3ce1d",
+    "batch": "L05ar typed formatter for small UI labels",
+    "status": "implemented and locally verified; source commit 52363c89",
+    "parent": "0bd4d847",
     "changes": {
-      "src/core, src/platform, src/ui and compat/win32/src": "Replace runtime C integer-limit macros with std::numeric_limits and remove unused <climits> includes.",
-      "tests/compat/*.cpp and C++-included *.inc fragments, tests/unit and tests/witnesses": "Replace runtime integer-limit macros and CHAR_BIT uses with typed numeric_limits expressions; remove unused C limits headers.",
-      "compat/win32/include/wincompat_constants.h": "Remove an unused <climits> include after the fixed-width literal and limit migrations."
+      "src/ui/thingui.cpp": "Use CchSprintf for both thing-gauge labels.",
+      "src/ui/tutor.cpp": "Use CchSprintf for the tutorial page title."
     },
     "verification": {
-      "macos_debug_build": "Full macos-sdl-debug build succeeds, including all Win32 compatibility targets, witnesses, generated resources and C++ header checks.",
+      "macos_debug_build": "Full build succeeds, including UI compatibility checks and all witnesses.",
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
-      "focused_tests": "12 compatibility tests pass, covering controls, services, ABI/type isolation, bitmap, DIB, drawing state, file, message box and profile.",
-      "tutorial": "Available native tutorial smoke checkpoint passes (1/1).",
-      "native_regression": "519 matches (25 existing unused-storage warnings); zero differences/errors/skips.",
-      "host_regression": "519 matches (25 existing unused-storage warnings); zero differences/errors/skips.",
-      "windows": "Windows/Linux platform CI qualification remains pending for this batch.",
-      "baseline": "Unchanged; native and host output match the existing baselines.",
-      "macro_search": "No runtime integer-limit macros remain in scanned owned C++ sources. Remaining UINTPTR_MAX/UINT32_MAX hits are in #if conditions; other hits are comments.",
-      "diff_check": "git diff --check and checkpoint JSON validation pass."
+      "focused_tests": "win32_controls and available tutorial smoke pass (2/2).",
+      "native_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
+      "host_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
+      "baseline": "Unchanged; no game behavior, wire layouts or file formats changed.",
+      "formatting": "Three small wsprintfA call sites now use CchSprintf with the typed native formatter.",
+      "platform": "Windows/Linux qualification remains pending for this batch.",
+      "diff_check": "git diff --check passes."
     },
     "remaining_work": [
-      "L05 bounded text destinations, const-text interfaces, scratch storage/borrowed-return audit and remaining wrapper formatting callers, including Linux portal formatting.",
-      "L06 remaining buffer/length interfaces and chooser Milestone D qualification.",
-      "L06 D06 native Windows/Linux chooser qualification and remaining chooser branch coverage.",
-      "L08 retained preprocessor/platform/API-like Win32 macro audit, maintained inventory reconciliation and final platform qualification."
+      "L05 bounded text destinations, const-text interfaces, post-migration scratch/borrowed-return audit and remaining wrapper formatting callers, including Linux portal formatting.",
+      "L06 remaining buffer/length interfaces and chooser Milestone D qualification, including Windows/Linux chooser coverage.",
+      "L08 retained preprocessor/platform/API-like macro audit, maintained inventory reconciliation and final platform qualification."
     ],
-    "macro_scan": "No runtime C integer-limit macros remain in owned application or ordinary test C++ sources and C++-included test fragments. Preprocessor-only architecture checks retain UINTPTR_MAX/UINT32_MAX; C SDK/reference fixtures and independent C probes remain classified under the previous audit.",
-    "source_commit": "f2bbb021",
-    "published_batch_head": "f2bbb021"
+    "source_commit": "52363c89",
+    "published_batch_head": "52363c89"
   },
   "milestone_d_checkpoint": {
     "stage": "D05 caller migrations implemented; D06 platform qualification pending",
