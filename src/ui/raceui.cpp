@@ -1399,18 +1399,13 @@ void DrawRaceAdvantagePoints(APPSESSION &app, HDC hdc, RECT *prc, PLAYER *pplr) 
 
 static char szRaceFileSuggest[256];
 
-void SetSzRaceFile(APPSESSION &app, const char *pszFile) {
-    std::size_t cch = CchUtf8Prefix(pszFile, sizeof(app.state.szRaceFile) - 1);
-    std::size_t cchSuggest = CchUtf8Prefix(pszFile, sizeof(szRaceFileSuggest) - 1);
-
+void SetSzRaceFile(APPSESSION &app, std::string_view szFile) {
     /* Full native paths belong to UI storage; the original cache keeps its size. */
-    std::memcpy(szRaceFileSuggest, pszFile, cchSuggest);
-    szRaceFileSuggest[cchSuggest] = 0;
-    std::memcpy(app.state.szRaceFile, pszFile, cch);
-    app.state.szRaceFile[cch] = 0;
+    CchCopyUtf8Prefix(std::span{szRaceFileSuggest}, szFile);
+    CchCopyUtf8Prefix(std::span{app.state.szRaceFile}, szFile);
 }
 
-std::int16_t FConfirmLegacyRaceNames(APPSESSION &app, const char *szName, const char *szNames) {
+std::int16_t FConfirmLegacyRaceNames(APPSESSION &app, std::string_view szName, std::string_view szNames) {
     char szPrompt[256];
 
     CchSprintf(szPrompt, TextIO().pfnCompressed(app, idsNativeLegacyRaceNameShortened).data(), szName, szNames);

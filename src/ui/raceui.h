@@ -3,6 +3,7 @@
 
 #include "win.h"
 #include <cstdint>
+#include <string_view>
 #include <windows.h>
 
 std::int16_t          RaceCreationWizard(APPSESSION &app, HWND hwndParent, std::int16_t fReadOnly, std::int16_t fDontWrite);
@@ -20,7 +21,7 @@ INT_PTR  RaceWizardDlg6(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 void             InvalidateAdvPtsRect(APPSESSION &app, HWND hwnd);
 void             DrawRaceAdvantagePoints(APPSESSION &app, HDC hdc, RECT *prc, PLAYER *pplr);
 std::int16_t          FSaveRace(APPSESSION &app, const char *szFileSuggest, PLAYER *pplr);
-void             SetSzRaceFile(APPSESSION &app, const char *pszFile);
+void             SetSzRaceFile(APPSESSION &app, std::string_view szFile);
 void             SetRCWTitle(APPSESSION &app, HWND hwnd, std::int16_t iStep);
 
 #endif

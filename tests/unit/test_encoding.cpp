@@ -14,6 +14,7 @@
 #include "version.h"
 #include <limits>
 #include <string>
+#include <string_view>
 #include <type_traits>
 
 static_assert(std::is_same_v<decltype(STARS_VERSION_MAJOR), const int>);
@@ -341,6 +342,7 @@ static void TestPasswords(void) {
     char szBad[] = "-p\xed\xa0\x80 game.hst";
     char szTooLong[] = "-p\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9 game.hst";
     char szPath[sizeof(app.state.szBase) + 4];
+    const char rgchRaceNameView[] = {'v', 'i', 'e', 'w'};
     int16_t fSeed = 0;
     uint32_t lSeed = 0;
     TEST_ASSERT(FStarsTestInit(app));
@@ -358,6 +360,8 @@ static void TestPasswords(void) {
     TEST_CHECK(app.state.szBase[0] == 0 && !app.state.ini.fCmdLine && cStarsTestAlert == 3);
     SetSzRaceFile(app, "12345678901234\xce\xa9.r1");
     TEST_CHECK(strcmp(app.state.szRaceFile, "12345678901234") == 0);
+    SetSzRaceFile(app, std::string_view(rgchRaceNameView, sizeof(rgchRaceNameView)));
+    TEST_CHECK(strcmp(app.state.szRaceFile, "view") == 0);
 }
 
 static void TestInvalidDefinition(void) {

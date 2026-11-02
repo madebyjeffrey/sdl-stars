@@ -32,7 +32,7 @@ void PostOpenGame(APPSESSION &) { return; }
 
 void ShowTitleScreen(APPSESSION &) { return; }
 
-void AddMRUFile(APPSESSION &, const char *pszFileName, const char *pszExt) { return; }
+void AddMRUFile(APPSESSION &, std::string_view, std::string_view) { return; }
 
 void CloseGameWindows(APPSESSION &) { return; }
 
@@ -74,12 +74,11 @@ std::span<const std::byte> LpbLoadTutorLog(APPSESSION &) { return {}; }
 
 void SetHdcTextColor(HDC hdc, std::uint32_t cr) { return; }
 
-void SetSzRaceFile(APPSESSION &app, const char *pszFile) {
-    std::size_t cch = CchUtf8Prefix(pszFile, sizeof(app.state.szRaceFile) - 1);
-    std::memcpy(app.state.szRaceFile, pszFile, cch); app.state.szRaceFile[cch] = 0;
+void SetSzRaceFile(APPSESSION &app, std::string_view szFile) {
+    CchCopyUtf8Prefix(std::span{app.state.szRaceFile}, szFile);
 }
 
-std::int16_t FConfirmLegacyRaceNames(APPSESSION &app, const char *szName, const char *szNames) {
+std::int16_t FConfirmLegacyRaceNames(APPSESSION &app, std::string_view szName, std::string_view szNames) {
     char szPrompt[512];
     CchSprintf(szPrompt, PszGetCompressedString(app, idsNativeLegacyRaceNameShortened).data(), szName, szNames);
     return IdAlertBox(szPrompt, win32::MB_YESNO | win32::MB_ICONQUESTION) == win32::IDYES;

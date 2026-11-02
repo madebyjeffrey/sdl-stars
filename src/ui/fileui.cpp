@@ -99,7 +99,7 @@ void ShowTitleScreen(APPSESSION &app) {
 
 // AddMRUFile puts a game the player opened at the top of the File menu's
 // recent files and saves the list to stars.ini.
-void AddMRUFile(APPSESSION &app, const char *pszFileName, const char *pszExt) {
+void AddMRUFile(APPSESSION &app, std::string_view szFileName, std::string_view szExt) {
     std::int16_t i;
     char    szT[256];
     char    szIniFile[16];
@@ -111,7 +111,7 @@ void AddMRUFile(APPSESSION &app, const char *pszFileName, const char *pszExt) {
         return;
     }
     // Reject an unrepresentable recent path before rotating or publishing rows.
-    if (CchCopyUtf8(std::span{szT}, pszFileName) < 0 || !FAppendUtf8(std::span{szT}, ".") || !FAppendUtf8(std::span{szT}, pszExt)) return;
+    if (CchCopyUtf8(std::span{szT}, szFileName) < 0 || !FAppendUtf8(std::span{szT}, ".") || !FAppendUtf8(std::span{szT}, szExt)) return;
     if (_stricmp(szT, app.lpui->vrgszMRU) != 0) {
         for (i = 1; i < 8 && _stricmp(szT, app.lpui->vrgszMRU + 256 * i) != 0; i++) {
         }

@@ -11,6 +11,7 @@
 #include <span>
 #include <array>
 #include <optional>
+#include <string_view>
 
 // Messages and questions.
 std::int16_t IdAlertBox(const char *sz, std::int16_t mbType);
@@ -27,9 +28,9 @@ void UpdateProgressGauge(APPSESSION &app, ProgressStep pctX10);
 void    CreateChildWindows(APPSESSION &app);
 void    PostOpenGame(APPSESSION &app);
 void    ShowTitleScreen(APPSESSION &app);
-void    SetSzRaceFile(APPSESSION &app, const char *pszFile);
-std::int16_t FConfirmLegacyRaceNames(APPSESSION &app, const char *szName, const char *szNames);
-void    AddMRUFile(APPSESSION &app, const char *pszFileName, const char *pszExt);
+void    SetSzRaceFile(APPSESSION &app, std::string_view szFile);
+std::int16_t FConfirmLegacyRaceNames(APPSESSION &app, std::string_view szName, std::string_view szNames);
+void    AddMRUFile(APPSESSION &app, std::string_view szFileName, std::string_view szExt);
 void    CloseGameWindows(APPSESSION &app);
 std::int16_t FFinishPlrMsgEntry(APPSESSION &app, std::int16_t dInc);
 
