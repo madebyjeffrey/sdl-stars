@@ -62,8 +62,7 @@ static void identity(APPSESSION &app, std::string_view sz) { ReadIniIdentity(app
 static void recent(APPSESSION &app) {
     const char *first = startupInput ? startupInput : inputs[0];
     const char *szSection = "Files", *szEntry = "File1", *szIniFile = "stars.ini";
-    strcpy(app.state.szWork, first);
-    ReadIniRecent(app, szSection, szEntry, szIniFile, (int16_t)strlen(first));
+    ReadIniRecent(app, szSection, szEntry, szIniFile, std::string_view{first});
 }
 #define CHECK(x)                                                                                                                                               \
     do {                                                                                                                                                       \

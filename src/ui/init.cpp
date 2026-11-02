@@ -506,10 +506,10 @@ void ReadIniSettings(APPSESSION &app) {
     app.state.gd.fToolbar = i != 0;
     TextIO().pfnCchGetString(app, idsPlanettiles, std::span{szEntry});
     cch = ProfileTextIO().pfnReadString(szSection, szEntry, "X", app.state.szWork, 20, szIniFile);
-    ReadIniTileSettings(app.state.szWork, app.lpui->rgtilePlanet, 6);
+    ReadIniTileSettings(std::string_view{app.state.szWork, static_cast<std::size_t>(cch)}, app.lpui->rgtilePlanet, 6);
     TextIO().pfnCchGetString(app, idsShiptiles, std::span{szEntry});
     cch = ProfileTextIO().pfnReadString(szSection, szEntry, "X", app.state.szWork, 20, szIniFile);
-    ReadIniTileSettings(app.state.szWork, app.lpui->rgtileShip, 7);
+    ReadIniTileSettings(std::string_view{app.state.szWork, static_cast<std::size_t>(cch)}, app.lpui->rgtileShip, 7);
     TextIO().pfnCchGetString(app, idsSelection, std::span{szEntry});
     cch = ProfileTextIO().pfnReadString(szSection, szEntry, "N", app.state.szWork, 20, szIniFile);
     ReadIniSelection(app, std::string_view{app.state.szWork, static_cast<std::size_t>(cch)});
@@ -560,7 +560,7 @@ void ReadIniSettings(APPSESSION &app) {
     app.state.ini.fWait = win32::GetPrivateProfileIntA(szSection, szEntry, 0, szIniFile);
     TextIO().pfnCchGetString(app, idsFile1, std::span{szEntry});
     cch = ProfileTextIO().pfnReadString(szSection, szEntry, ".", app.state.szWork, 256, szIniFile);
-    ReadIniRecent(app, szSection, szEntry, szIniFile, cch);
+    ReadIniRecent(app, szSection, szEntry, szIniFile, std::string_view{app.state.szWork, static_cast<std::size_t>(cch)});
     TextIO().pfnCchGetString(app, idsTurn, std::span{szEntry});
     app.state.ini.turn = win32::GetPrivateProfileIntA(szSection, szEntry, app.state.game.turn, szIniFile);
     TextIO().pfnCchGetString(app, idsMisc, std::span{szSection});
@@ -641,35 +641,39 @@ void ReadIniSettings(APPSESSION &app) {
     return;
 }
 
-void ReadIniTileSettings(const char *pszFormat, TILE *rgtile, std::int16_t ctile) {
+void ReadIniTileSettings(std::string_view szFormat, TILE *rgtile, std::int16_t ctile) {
     TILE     tile;
     std::int16_t  fPopped;
     std::int16_t  i;
     std::int16_t  iTile;
+    std::size_t ich;
     std::uint16_t iCol;
     std::uint16_t iBit;
+    char ch;
 
     iCol = 0;
     iTile = 0;
-    while (*pszFormat != 0) {
-        if (*pszFormat == '*') {
+    for (ich = 0; ich < szFormat.size(); ich++) {
+        ch = szFormat[ich];
+        if (ch == 0) break;
+        if (ch == '*') {
             if (iCol < 1) {
                 iCol++;
             }
-            goto DoNext;
+            continue;
         }
-        if (std::isalpha(static_cast<unsigned char>(*pszFormat)) == 0)
-            goto DoNext;
+        if (std::isalpha(static_cast<unsigned char>(ch)) == 0)
+            continue;
         // C classification functions return any nonzero mask, but the saved
         // expansion state is stored in a one-bit field.
-        fPopped = std::isupper(static_cast<unsigned char>(*pszFormat)) != 0;
-        iBit = !fPopped ? *pszFormat - 'a' : *pszFormat - 'A';
+        fPopped = std::isupper(static_cast<unsigned char>(ch)) != 0;
+        iBit = !fPopped ? ch - 'a' : ch - 'A';
         if (static_cast<std::int16_t>(iBit) < 0)
-            goto DoNext;
+            continue;
         for (i = iTile; i < ctile && rgtile[i].id != iBit; i++) {
         }
         if (i == ctile)
-            goto DoNext;
+            continue;
         rgtile[i].iCol = iCol;
         rgtile[i].fPopped = fPopped;
         if (i != iTile) {
@@ -678,8 +682,6 @@ void ReadIniTileSettings(const char *pszFormat, TILE *rgtile, std::int16_t ctile
             rgtile[iTile] = tile;
         }
         iTile++;
-    DoNext:
-        pszFormat++;
     }
     for (i = iTile; i < ctile; i++) {
         if (rgtile[i].iCol < iCol) {

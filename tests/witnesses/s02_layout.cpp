@@ -5,6 +5,7 @@
 #endif
 #include "callbackcontext.h"
 #include <cstring>
+#include <string_view>
 #include "profile_text_io.h"
 #include "text_io.h"
 #include "win.h"
@@ -55,7 +56,7 @@ int main(void) {
     text.pfnCchGetString = GetString;
     TEXTIOSCOPE textScope(text);
     memcpy(original, tiles, sizeof(tiles));
-    ReadIniTileSettings("C", tiles, 3);
+    ReadIniTileSettings(std::string_view{"?C?x"}.substr(1, 1), tiles, 3);
     CHECK(tiles[0].id == 2 && tiles[1].id == 1 && tiles[2].id == 0);
     CHECK(tiles[0].fPopped && tiles[0].yTop == 30 && tiles[2].yTop == 10);
     memcpy(tiles, original, sizeof(tiles));

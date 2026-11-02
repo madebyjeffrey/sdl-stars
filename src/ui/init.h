@@ -3,6 +3,7 @@
 
 #include "win.h"
 #include <cstdint>
+#include <string_view>
 #include <windows.h>
 
 extern std::uint8_t rgPalGray[20];
@@ -13,7 +14,7 @@ std::int16_t InitInstance(APPSESSION &app, std::int16_t nCmdShow);
 void    InitTiles(APPSESSION &app);
 void    GetIniWinRc(APPSESSION &app, const char *szSection, const char *szIniFile, StringId ids, WN *pwn);
 void    ReadIniSettings(APPSESSION &app);
-void    ReadIniTileSettings(const char *pszFormat, TILE *rgtile, std::int16_t ctile);
+void    ReadIniTileSettings(std::string_view szFormat, TILE *rgtile, std::int16_t ctile);
 
 
 #endif

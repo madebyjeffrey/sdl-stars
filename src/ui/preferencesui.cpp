@@ -182,13 +182,14 @@ void ReadIniIdentity(APPSESSION &app, std::string_view szIdentity) {
     }
 }
 
-void ReadIniRecent(APPSESSION &app, const char *szSection, const char *szEntry, const char *szIniFile, std::int16_t cch) {
+void ReadIniRecent(APPSESSION &app, const char *szSection, const char *szEntry, const char *szIniFile, std::string_view szRecentPath) {
     std::int16_t i, iPass;
+    std::int16_t cch;
     std::string szEntryCurrent{szEntry};
 
-    if (cch > 3) {
+    if (szRecentPath.size() > 3) {
         app.state.ini.fStartupFile = 1;
-        CchCopyUtf8(std::span{app.state.szBase}, app.state.szWork);
+        CchCopyUtf8(std::span{app.state.szBase}, szRecentPath);
     } else {
         app.state.ini.fStartupFile = 0;
     }
