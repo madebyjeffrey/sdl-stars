@@ -10,6 +10,7 @@
 #include <new>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <strings.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -111,13 +112,13 @@ static COMPATPROFILE *LpProfileKey(COMPATPROFILE *lp, LPCSTR pszKey) {
     return nullptr;
 }
 
-static const char *PszProfileValue(COMPATPROFILE *lp, std::size_t *pcch) {
-    const char *psz = lp->pszValue;
-    *pcch = std::strlen(psz);
-    if (*pcch >= 2 && (psz[0] == '\'' || psz[0] == '"') && psz[*pcch - 1] == psz[0]) {
-        psz++; *pcch -= 2;
+static std::string_view SzvProfileValue(COMPATPROFILE *lp) {
+    std::string_view szValue{lp->pszValue};
+    if (szValue.size() >= 2 && (szValue.front() == '\'' || szValue.front() == '"') && szValue.back() == szValue.front()) {
+        szValue.remove_prefix(1);
+        szValue.remove_suffix(1);
     }
-    return psz;
+    return szValue;
 }
 
 static std::optional<std::string> SzProfilePath(LPCSTR pszFile) {
@@ -188,6 +189,7 @@ DWORD win32::GetPrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR p
     std::optional<std::string> szPath;
     COMPATPROFILE *lpAll = nullptr, *lp, *lpKey;
     const char *psz;
+    std::string_view szValue;
     std::size_t cch, cchOut = 0, cchCopy;
     BOOL fMulti = !pszSection || !pszKey;
     std::unique_lock lockProfile(fProfileLock, std::defer_lock);
@@ -224,14 +226,13 @@ DWORD win32::GetPrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR p
         if (cchMax >= 2 && cchOut == cchMax - 1) cchOut = cchMax - 2;
     } else {
         lpKey = LpProfileKey(LpProfileSection(lpAll, pszSection), pszKey);
-        if (lpKey) psz = PszProfileValue(lpKey, &cch);
+        if (lpKey) szValue = SzvProfileValue(lpKey);
         else {
-            psz = pszDefault ? pszDefault : "";
-            cch = std::strlen(psz);
-            while (cch != 0 && psz[cch - 1] == ' ') cch--;
+            szValue = pszDefault ? pszDefault : "";
+            while (!szValue.empty() && szValue.back() == ' ') szValue.remove_suffix(1);
         }
-        cchOut = CchUtf8Prefix(psz, cch < cchMax - 1 ? cch : cchMax - 1);
-        std::memcpy(szResult, psz, cchOut); szResult[cchOut] = 0;
+        cchOut = CchUtf8Prefix(szValue.data(), szValue.size() < cchMax - 1 ? szValue.size() : cchMax - 1);
+        std::memcpy(szResult, szValue.data(), cchOut); szResult[cchOut] = 0;
     }
     releaseProfile.Close();
     lockProfile.unlock();
