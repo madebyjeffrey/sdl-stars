@@ -72,26 +72,25 @@ static ZIPCENTRAL ZipCentralHeader(const std::uint8_t *rgbHeader) {
 static void PutZip16(NATIVEFILE *pf, std::uint16_t w) { ChPutNativeFile(w & 255, pf); ChPutNativeFile(w >> 8, pf); }
 static void PutZip32(NATIVEFILE *pf, std::uint32_t dw) { PutZip16(pf, static_cast<std::uint16_t>(dw)); PutZip16(pf, static_cast<std::uint16_t>((dw >> 16))); }
 
-static std::int16_t FZipSafeName(const char *psz) {
-    const char *pszCurrent = psz, *pszPart = psz;
-    if (!*psz || *psz == '/' || *psz == '\\') return 0;
-    for (; *pszCurrent; pszCurrent++) {
-        if (static_cast<unsigned char>(*pszCurrent) < 32 || *pszCurrent == '\\' || *pszCurrent == ':') return 0;
-        if (*pszCurrent == '/') {
-            if (pszCurrent == pszPart || (pszCurrent - pszPart == 1 && pszPart[0] == '.') ||
-                (pszCurrent - pszPart == 2 && pszPart[0] == '.' && pszPart[1] == '.')) return 0;
-            pszPart = pszCurrent + 1;
+static std::int16_t FZipSafeName(std::string_view psz) {
+    std::size_t ichPart = 0;
+    if (psz.empty() || psz.front() == '/' || psz.front() == '\\') return 0;
+    for (std::size_t i = 0; i < psz.size(); i++) {
+        if (static_cast<unsigned char>(psz[i]) < 32 || psz[i] == '\\' || psz[i] == ':') return 0;
+        if (psz[i] == '/') {
+            const std::string_view szPart = psz.substr(ichPart, i - ichPart);
+            if (szPart.empty() || szPart == "." || szPart == "..") return 0;
+            ichPart = i + 1;
         }
     }
-    return pszCurrent != pszPart && !(pszCurrent - pszPart == 1 && pszPart[0] == '.') &&
-           !(pszCurrent - pszPart == 2 && pszPart[0] == '.' && pszPart[1] == '.');
+    const std::string_view szPart = psz.substr(ichPart);
+    return !szPart.empty() && szPart != "." && szPart != "..";
 }
 
-static std::int16_t FZipNameUtf8Supported(const char *pszName, std::size_t cbName, std::uint16_t wFlags) {
-    std::size_t iByte;
-    if (!FUtf8Valid(std::string_view{pszName, cbName})) return 0;
+static std::int16_t FZipNameUtf8Supported(std::string_view pszName, std::uint16_t wFlags) {
+    if (!FUtf8Valid(pszName)) return 0;
     if (wFlags & ZIP_UTF8_FILENAME_FLAG) return 1;
-    for (iByte = 0; iByte < cbName; iByte++)
+    for (std::size_t iByte = 0; iByte < pszName.size(); iByte++)
         if (static_cast<unsigned char>(pszName[iByte]) >= 0x80) return 0;
     return 1;
 }
@@ -216,13 +215,13 @@ done:
     return 0;
 }
 
-static std::int16_t FZipMakeParents(const char *pszRoot, const char *pszName, char *szFile, std::size_t cbFile) {
+static std::int16_t FZipMakeParents(std::string_view pszRoot, std::string_view pszName, std::span<char> szFile) {
     char szPath[512], ch;
     int cch;
-    std::size_t i, cchBase = std::strlen(pszRoot) + std::strlen(szDirSep);
-    cch = CchSnprintf(std::span{szFile, cbFile}, "%s%s%s", pszRoot, szDirSep, pszName);
-    if (cch <= 0 || static_cast<std::size_t>(cch) >= cbFile || static_cast<std::size_t>(cch) >= sizeof(szPath)) return 0;
-    CchCopyUtf8(std::span{szPath}, szFile);
+    std::size_t i, cchBase = pszRoot.size() + std::strlen(szDirSep);
+    cch = CchSnprintf(szFile, "%s%s%s", pszRoot, szDirSep, pszName);
+    if (cch <= 0 || static_cast<std::size_t>(cch) >= szFile.size() || static_cast<std::size_t>(cch) >= sizeof(szPath)) return 0;
+    CchCopyUtf8(std::span{szPath}, std::string_view{szFile.data(), static_cast<std::size_t>(cch)});
     for (i = cchBase; i < static_cast<std::size_t>(cch); i++) if (szPath[i] == '/' || szPath[i] == '\\') {
         ch = szPath[i]; szPath[i] = 0;
         if (!FNativeDirectoryExists(szPath) && CreateNativeDir(szPath) != 0) return 0;
@@ -279,13 +278,13 @@ std::int16_t FUnzipLibraryArchive(const char *pszArchive, const char *pszDirecto
             (zc.dwExternalAttributes & 0x400U) ||
             CReadNative(std::span{szName}.first(zc.wNameLength), pf) != zc.wNameLength) goto done;
         if (std::memchr(szName, 0, zc.wNameLength)) goto done;
-        if (!FZipNameUtf8Supported(szName, zc.wNameLength, zc.wFlags)) {
+        std::string_view szEntry{szName, zc.wNameLength};
+        if (!FZipNameUtf8Supported(szEntry, zc.wFlags)) {
             fUnsupportedName = 1;
             goto done;
         }
         cbTotal += zc.cbUncompressed;
         if (cbTotal > 512U * 1024U * 1024U) goto done;
-        szName[zc.wNameLength] = 0;
         lNext = LNativePosition(pf) + zc.wExtraLength + zc.wCommentLength;
         if (zc.dwLocalOffset >= static_cast<std::uint32_t>(centralOffset) ||
             ISeekNativeFile(pf, zc.dwLocalOffset, NATIVESEEKORIGIN::begin) != 0 || CReadNative(std::span{rgbLocal}, pf) != sizeof(rgbLocal) ||
@@ -300,14 +299,14 @@ std::int16_t FUnzipLibraryArchive(const char *pszArchive, const char *pszDirecto
             ISeekNativeFile(pf, wLocalExtraLength, NATIVESEEKORIGIN::current) != 0 ||
             static_cast<std::uint64_t>(LNativePosition(pf)) + zc.cbCompressed > static_cast<std::uint64_t>(centralOffset)) goto done;
         SDL_free(rgbLocalName); rgbLocalName = nullptr;
-        if (szName[zc.wNameLength - 1] == '/') {
-            szName[zc.wNameLength - 1] = 0;
-            if (!FZipSafeName(szName) || CchSnprintf(std::span{szDirectoryEntry, sizeof(szDirectoryEntry)}, "%s/.zip-dir-entry", szName) <= 0 ||
-                !FZipMakeParents(pszDirectory, szDirectoryEntry, szOutput, sizeof(szOutput)) ||
+        if (szEntry.back() == '/') {
+            szEntry.remove_suffix(1);
+            if (!FZipSafeName(szEntry) || CchSnprintf(std::span{szDirectoryEntry, sizeof(szDirectoryEntry)}, "%s/.zip-dir-entry", szEntry) <= 0 ||
+                !FZipMakeParents(pszDirectory, szDirectoryEntry, std::span{szOutput}) ||
                 ISeekNativeFile(pf, lNext, NATIVESEEKORIGIN::begin) != 0) goto done;
             continue;
         }
-        if (!FZipSafeName(szName)) goto done;
+        if (!FZipSafeName(szEntry)) goto done;
         rgbCompressed = static_cast<std::uint8_t *>(SDL_malloc(zc.cbCompressed ? zc.cbCompressed : 1));
         rgbData = static_cast<std::uint8_t *>(SDL_malloc(zc.cbUncompressed ? zc.cbUncompressed : 1));
         if (!rgbCompressed || !rgbData || CReadNative(std::span{rgbCompressed, zc.cbCompressed}, pf) != zc.cbCompressed) goto done;
@@ -325,7 +324,7 @@ std::int16_t FUnzipLibraryArchive(const char *pszArchive, const char *pszDirecto
             inflateEnd(&zs); fInflating = 0;
         }
         if (static_cast<std::uint32_t>(crc32(0, rgbData, zc.cbUncompressed)) != zc.dwCrc ||
-            !FZipMakeParents(pszDirectory, szName, szOutput, sizeof(szOutput)) ||
+            !FZipMakeParents(pszDirectory, szEntry, std::span{szOutput}) ||
             FNativeFileSize(szOutput)) goto done;
         pfOutput = PfOpenNativeFile(szOutput, NATIVEFILEMODE::writeExclusive);
         fWrite = pfOutput && CWriteNative(std::span{rgbData, zc.cbUncompressed}, pfOutput) == zc.cbUncompressed;
