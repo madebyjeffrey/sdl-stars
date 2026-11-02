@@ -24405,8 +24405,8 @@
     "date": "2026-11-02",
     "reason": "Resume the live C++ cleanup on develop after the verified bounded fleet-name load/log batch.",
     "branch": "develop",
-    "latest_batch": "L05 portable library name views and tracked suggestion lengths",
-    "latest_published_head": "456a1a19",
+    "latest_batch": "L05 portable library name views and tracked output lengths",
+    "latest_published_head": "bc357c15",
     "active_stages": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage."
@@ -24437,13 +24437,13 @@
       "title-modernized-v2.png and prompt",
       "title-modernized-v3.png and prompt"
     ],
-    "batch": "L05 portable library name views and tracked suggestion lengths",
-    "source_commit": "456a1a19",
+    "batch": "L05 portable library name views and tracked output lengths",
+    "source_commit": "bc357c15",
     "status": "Verified and pushed to develop. Local SDL Debug, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Current-source Windows SDL/Linux desktop qualification remains outstanding.",
     "changes": [
       "FPortableRaceFilename and FPortableLibraryName now accept std::string_view inputs and validate using bounded byte ranges.",
-      "Race filename extension parsing and invalid-byte checks stay within the supplied view while preserving device-name and path-capacity rules.",
-      "SuggestLibraryName reuses the UTF-8 copy length and computes the formatted suffix length once; its byte budget uses std::min/std::max instead of the generated nested conditional expression.",
+      "SuggestLibraryName reuses the UTF-8 copy length, computes the formatted suffix length once and uses std::min/std::max for its byte budget.",
+      "GetGameLibraryName now takes a string view and tracks the copied output length through sanitizing, trimming, fallback and reserved-name prefixing.",
       "No game behavior, file layout, or serialization code changed."
     ],
     "verification": {
@@ -24535,15 +24535,19 @@
       {
         "commit": "456a1a19",
         "message": "Reuse library suggestion name lengths"
+      },
+      {
+        "commit": "bc357c15",
+        "message": "Track bounded game library name length"
       }
     ]
   },
   "current_checkpoint": {
-    "batch": "L05 portable library name views and tracked suggestion lengths",
+    "batch": "L05 portable library name views and tracked output lengths",
     "status": "Verified and pushed to develop. Local SDL Debug, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Current-source Windows SDL/Linux desktop qualification remains outstanding.",
     "parent": "0e4f1030",
-    "source_commit": "456a1a19",
-    "change": "Portable race and game library name validation uses bounded string views; library suggestion formatting reuses bounded lengths.",
+    "source_commit": "bc357c15",
+    "change": "Portable library name APIs use bounded views; name suggestion and sanitization paths reuse known output lengths.",
     "verification": {
       "macos_sdl_debug": "Build passes; changed UI compatibility translation unit compiles.",
       "desktop_unit_tests": "18/18 pass.",
@@ -24581,8 +24585,8 @@
     "branch": "develop",
     "changes": [
       "FPortableRaceFilename and FPortableLibraryName now accept std::string_view inputs and validate using bounded byte ranges.",
-      "Race filename extension parsing and invalid-byte checks stay within the supplied view while preserving device-name and path-capacity rules.",
-      "SuggestLibraryName reuses the UTF-8 copy length and computes the formatted suffix length once; its byte budget uses std::min/std::max instead of the generated nested conditional expression.",
+      "SuggestLibraryName reuses the UTF-8 copy length, computes the formatted suffix length once and uses std::min/std::max for its byte budget.",
+      "GetGameLibraryName now takes a string view and tracks the copied output length through sanitizing, trimming, fallback and reserved-name prefixing.",
       "No game behavior, file layout, or serialization code changed."
     ],
     "current_source_audits": {
@@ -24664,6 +24668,10 @@
       {
         "commit": "456a1a19",
         "message": "Reuse library suggestion name lengths"
+      },
+      {
+        "commit": "bc357c15",
+        "message": "Track bounded game library name length"
       }
     ]
   },
@@ -24691,13 +24699,13 @@
   "working_tree_checkpoint": {
     "date": "2026-11-02",
     "branch": "develop",
-    "batch": "L05 portable library name views and tracked suggestion lengths",
-    "source_commit": "456a1a19",
+    "batch": "L05 portable library name views and tracked output lengths",
+    "source_commit": "bc357c15",
     "status": "Verified and pushed to develop. Local SDL Debug, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Current-source Windows SDL/Linux desktop qualification remains outstanding.",
     "changes": [
       "FPortableRaceFilename and FPortableLibraryName now accept std::string_view inputs and validate using bounded byte ranges.",
-      "Race filename extension parsing and invalid-byte checks stay within the supplied view while preserving device-name and path-capacity rules.",
-      "SuggestLibraryName reuses the UTF-8 copy length and computes the formatted suffix length once; its byte budget uses std::min/std::max instead of the generated nested conditional expression.",
+      "SuggestLibraryName reuses the UTF-8 copy length, computes the formatted suffix length once and uses std::min/std::max for its byte budget.",
+      "GetGameLibraryName now takes a string view and tracks the copied output length through sanitizing, trimming, fallback and reserved-name prefixing.",
       "No game behavior, file layout, or serialization code changed."
     ],
     "verification": {
@@ -24821,6 +24829,10 @@
       {
         "commit": "456a1a19",
         "message": "Reuse library suggestion name lengths"
+      },
+      {
+        "commit": "bc357c15",
+        "message": "Track bounded game library name length"
       }
     ]
   }
