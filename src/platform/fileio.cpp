@@ -704,7 +704,7 @@ NATIVEFILETEMPRESULT NftNativeCreateTemp(std::string_view szTemplate) {
             unsigned char bytes[6];
             if (BCryptGenRandom(nullptr, bytes, sizeof(bytes), BCRYPT_USE_SYSTEM_PREFERRED_RNG) != 0) { errno = EIO; return false; }
             for (int i = 0; i < 6; ++i) nft.szPath[n - 6 + i] = alphabet[bytes[i] % 62];
-            pf->pth = PathFromUtf8(nft.szPath.c_str());
+            pf->pth = PathFromUtf8(nft.szPath);
             int err = _wsopen_s(&pf->fd, pf->pth.c_str(), _O_CREAT | _O_EXCL | _O_RDWR | _O_NOINHERIT | _O_BINARY,
                                _SH_DENYRW, _S_IREAD | _S_IWRITE);
             if (err == 0) { nft.lpfile.reset(pf.release()); return true; }
@@ -714,10 +714,10 @@ NATIVEFILETEMPRESULT NftNativeCreateTemp(std::string_view szTemplate) {
 #else
         // mkstemp's descriptor and 0600 mode are kept as one owned resource.
         // Allocate all C++ state before claiming the file, including its path.
-        pf->pth = PathFromUtf8(nft.szPath.c_str());
+        pf->pth = PathFromUtf8(nft.szPath);
         pf->fd = mkstemp(nft.szPath.data());
         if (pf->fd < 0) return false;
-        try { pf->pth = PathFromUtf8(nft.szPath.c_str()); }
+        try { pf->pth = PathFromUtf8(nft.szPath); }
         catch (...) { unlink(nft.szPath.c_str()); throw; }
         nft.lpfile.reset(pf.release());
         return true;

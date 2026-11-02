@@ -1,7 +1,6 @@
 #ifndef STARS_PATH_UTF8_H
 #define STARS_PATH_UTF8_H
 
-#include <cstring>
 #include <filesystem>
 #include <string>
 #include <string_view>
@@ -20,10 +19,6 @@ inline std::filesystem::path PathFromUtf8(std::string_view sz) {
     }
     return std::filesystem::path(std::move(szUtf8));
 }
-inline std::filesystem::path PathFromUtf8(const char *psz) {
-    return PathFromUtf8(std::string_view{psz, std::strlen(psz)});
-}
-
 inline std::string SzFromUtf8(const std::u8string &sz) {
     return std::string(reinterpret_cast<const char *>(sz.data()), sz.size());
 }
