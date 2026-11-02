@@ -989,7 +989,7 @@ POINT16 PtDisplayFactoryMineInfo(APPSESSION &app, HDC hdc, std::int16_t dx, std:
         case 1:
             cnt = app.lpui->GlobalPD.cCur;
         SetQuan:
-            win32::wsprintfA(app.state.szWork, "%d %s", cnt, cnt == 1 ? pszType : pszTypes);
+            CchSprintf(app.state.szWork, "%d %s", cnt, cnt == 1 ? pszType : pszTypes);
             psz = app.state.szWork;
             break;
         case 3:

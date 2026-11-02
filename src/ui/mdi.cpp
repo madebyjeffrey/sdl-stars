@@ -148,7 +148,7 @@ void CreateChildWindows(APPSESSION &app) {
         cch = CchUtf8Prefix(psz, 8);
         std::memcpy(szGame, psz, cch); szGame[cch] = 0;
         for (psz = szGame; *psz; psz++) if (*psz >= 'A' && *psz <= 'Z') *psz += 'a' - 'A';
-        win32::wsprintfA(std::span{szGame}.subspan(static_cast<std::size_t>(std::strlen(szGame))), ".m%d", app.state.idPlayer + 1);
+        CchSprintf(std::span{szGame}.subspan(static_cast<std::size_t>(std::strlen(szGame))), ".m%d", app.state.idPlayer + 1);
         CchCopyUtf8(std::span{szNameUtf8}, app.state.game.szName);
         szPlayerName = TextIO().pfnPlayerName(app, app.state.idPlayer, 0, 1, 0, 0, nullptr);
         psz = szPlayerName.data();
@@ -2449,7 +2449,7 @@ void WriteIniSettings(APPSESSION &app) {
             app.state.gd.fWriteTurnNum = 0;
         }
         TextIO().pfnCchGetString(app, idsFile1, std::span{szEntry});
-        win32::wsprintfA(app.state.szWork, "%s.m%d", app.state.szBase, app.state.idPlayer + 1);
+        CchSprintf(app.state.szWork, "%s.m%d", app.state.szBase, app.state.idPlayer + 1);
         ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
     }
     TextIO().pfnCchGetString(app, idsMisc, std::span{szSection});
