@@ -24,7 +24,7 @@ void    CancelMemRt(APPSESSION &app, RecordType rt);
 void    WriteMemRt(APPSESSION &app, RecordType rt, std::span<const std::byte> rgb);
 void    WriteMemZpqRt(APPSESSION &app, std::int16_t cb);
 void    DirtyGame(APPSESSION &app, std::int16_t fDirty);
-std::int16_t FGetPrevLogRt(APPSESSION &app, HDR *phdr, std::uint8_t *pb);
+std::int16_t FGetPrevLogRt(APPSESSION &app, HDR *phdr, std::span<std::uint8_t> rgbPayload);
 std::int16_t FRunLogFile(APPSESSION &app);
 std::int16_t FRunLogRecord(APPSESSION &app, RecordType rt, std::int16_t cb, std::uint8_t *lpb);
 std::int16_t FLoadLogFile(APPSESSION &app, const char *pszLog);

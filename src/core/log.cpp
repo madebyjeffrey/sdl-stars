@@ -250,7 +250,7 @@ void LogChangeFleet(APPSESSION &app, FLEET *pfl, FLEET *pflNew) {
         goto NextTest;
     } else {
         cbWp = 22;
-        if (FGetPrevLogRt(app, &hdr, reinterpret_cast<std::uint8_t *>(app.state.rgbCur)) && hdr.rt == rtLogFleetOrderUpdate &&
+        if (FGetPrevLogRt(app, &hdr, std::span(reinterpret_cast<std::uint8_t *>(app.state.rgbCur), sizeof(app.state.rgbCur))) && hdr.rt == rtLogFleetOrderUpdate &&
             FDecodeRtWayptPrefix(std::as_bytes(std::span(app.state.rgbCur)), rtwpPrev) && rtwpPrev.id == pflNew->id && rtwpPrev.iWaypt == iordNew) {
             app.state.imemLogCur = app.state.imemLogPrev;
         }
@@ -271,7 +271,7 @@ NextTest:
 void LogChangeRelations(APPSESSION &app) {
     HDR hdr;
 
-    if (FGetPrevLogRt(app, &hdr, reinterpret_cast<std::uint8_t *>(app.state.rgbCur)) && hdr.rt == rtLogRelations) {
+    if (FGetPrevLogRt(app, &hdr, std::span(reinterpret_cast<std::uint8_t *>(app.state.rgbCur), sizeof(app.state.rgbCur))) && hdr.rt == rtLogRelations) {
         app.state.imemLogCur = app.state.imemLogPrev;
     }
     WriteMemRt(app, rtLogRelations, std::as_bytes(std::span{app.state.rgplr[app.state.idPlayer].rgmdRelation}).first(static_cast<std::size_t>(app.state.game.cPlayer)));
@@ -339,7 +339,7 @@ void LogChangePlanet(APPSESSION &app, PLANET *ppl, PLANET *pplNew) {
                 WriteMemRt(app, rtLogPlanetProdQ, std::as_bytes(std::span{rgbProdId}).first(cbWireChgProdQ));
             } else if (pplNew->lpplprod && (!ppl->lpplprod || ppl->lpplprod->iprodMac != pplNew->lpplprod->iprodMac ||
                                             std::memcmp(ppl->lpplprod->rgprod(), pplNew->lpplprod->rgprod(), ppl->lpplprod->iprodMac * 4) != 0)) {
-                if (FGetPrevLogRt(app, &hdr, reinterpret_cast<std::uint8_t *>(app.state.rgbCur)) && hdr.rt == rtLogPlanetProdQ &&
+                if (FGetPrevLogRt(app, &hdr, std::span(reinterpret_cast<std::uint8_t *>(app.state.rgbCur), sizeof(app.state.rgbCur))) && hdr.rt == rtLogPlanetProdQ &&
                     FDecodeRtChgProdQ(std::as_bytes(std::span(app.state.rgbCur)), rtcpq) && rtcpq.id == ppl->id) {
                     app.state.imemLogCur = app.state.imemLogPrev;
                 }
@@ -611,7 +611,7 @@ void DirtyGame(APPSESSION &app, std::int16_t fDirty) {
     return;
 }
 
-std::int16_t FGetPrevLogRt(APPSESSION &app, HDR *phdr, std::uint8_t *pb) {
+std::int16_t FGetPrevLogRt(APPSESSION &app, HDR *phdr, std::span<std::uint8_t> rgbPayload) {
     std::uint8_t *lpv;
 
     if (app.state.imemLogPrev == -1) {
@@ -620,7 +620,8 @@ std::int16_t FGetPrevLogRt(APPSESSION &app, HDR *phdr, std::uint8_t *pb) {
     lpv = app.state.lpLog + app.state.imemLogPrev;
     FDecodeHdr(std::as_bytes(std::span(lpv, cbWireHdr)), *phdr);
     if (phdr->cb > 0) {
-        std::memcpy(pb, lpv + 2, phdr->cb);
+        if (static_cast<std::size_t>(phdr->cb) > rgbPayload.size()) return 0;
+        std::memcpy(rgbPayload.data(), lpv + 2, static_cast<std::size_t>(phdr->cb));
     }
     return 1;
 }

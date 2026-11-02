@@ -118,7 +118,7 @@ static void test_LogChangeName_wire_and_borrowing(void) {
     memcpy(szName + 28, "XYZ", 4);
     TEST_ASSERT(LogChangeName(app, grobjFleet, lpfl->id, szName));
     TEST_CHECK(strcmp(lpfl->lpszName, szName) == 0);
-    TEST_ASSERT(FGetPrevLogRt(app, &hdr, rgb));
+    TEST_ASSERT(FGetPrevLogRt(app, &hdr, std::span{rgb}));
     TEST_ASSERT(hdr.rt == rtLogFleetName && hdr.cb == cbWireChangeName + 33 && rgb[cbWireChangeName] == 0);
     TEST_CHECK(memcmp(rgb + cbWireChangeName + 1, szName, 32) == 0);
     const auto cbRead = FReadUserString(app, std::as_bytes(std::span{rgb}).subspan(cbWireChangeName), std::span{szRead});
@@ -132,7 +132,7 @@ static void test_LogChangeName_wire_and_borrowing(void) {
     TEST_CHECK(!LogChangeName(app, grobjFleet, std::numeric_limits<int16_t>::max(), "Ignored") && static_cast<size_t>(app.state.imemLogCur) == cbLog);
     TEST_ASSERT(LogChangeName(app, grobjFleet, lpfl->id, {}));
     TEST_CHECK(!lpfl->lpszName);
-    TEST_ASSERT(FGetPrevLogRt(app, &hdr, rgb));
+    TEST_ASSERT(FGetPrevLogRt(app, &hdr, std::span{rgb}));
     TEST_CHECK(hdr.cb == cbWireChangeName + 2 && rgb[cbWireChangeName] == 0 && rgb[cbWireChangeName + 1] == 0);
 }
 
@@ -351,7 +351,7 @@ static void test_FRunLogRecord_design_partial_effects(void) {
     app.state.gd.fGeneratingTurn = 0;
     LogChangeShDef(app, &shdef);
     TEST_CHECK(shdef.det == detAll);
-    TEST_ASSERT(FGetPrevLogRt(app, &hdr, rgbWritten));
+    TEST_ASSERT(FGetPrevLogRt(app, &hdr, std::span{rgbWritten}));
     TEST_CHECK(hdr.rt == rtLogShDef && hdr.cb > 2 && rgbWritten[0] == 1 && rgbWritten[1] == 0);
     TEST_CHECK(rgbWritten[2] == detAll && rgbWritten[4] == shdef.hul.ihuldef);
 }
@@ -693,13 +693,13 @@ static void test_control_record_partial_effects(void) {
     TEST_CHECK(FRunLogRecord(app, rtChgPassword, 4, minusOne) && app.state.rgplr[0].lSalt == -1);
     app.state.gd.fGeneratingTurn = 0;
     WriteMemResearch(app, static_cast<int16_t>(0x7319));
-    TEST_ASSERT(FGetPrevLogRt(app, &hdr, rgb));
+    TEST_ASSERT(FGetPrevLogRt(app, &hdr, std::span{rgb}));
     TEST_CHECK(hdr.rt == rtLogResearch && hdr.cb == 2 && rgb[0] == 25 && rgb[1] == 0x73);
     WriteMemResearch(app, static_cast<int16_t>(0xff80));
-    TEST_ASSERT(FGetPrevLogRt(app, &hdr, rgb));
+    TEST_ASSERT(FGetPrevLogRt(app, &hdr, std::span{rgb}));
     TEST_CHECK(hdr.cb == 2 && rgb[0] == 0x80 && rgb[1] == 0xff);
     WriteMemPassword(app, -1);
-    TEST_ASSERT(FGetPrevLogRt(app, &hdr, rgb));
+    TEST_ASSERT(FGetPrevLogRt(app, &hdr, std::span{rgb}));
     TEST_CHECK(hdr.rt == rtChgPassword && hdr.cb == 4 && memcmp(rgb, minusOne, 4) == 0);
 }
 
@@ -728,7 +728,7 @@ static void test_cargo_log_wire_widths(void) {
         app.state.imemLogCur = 0; app.state.imemLogPrev = -1; app.state.hdrPrev.rt = rtEOF;
         memcpy(source.rgdItem, v.rgQuan, sizeof(source.rgdItem));
         LogMakeValidXfer(app, &source, &target);
-        TEST_ASSERT(FGetPrevLogRt(app, &hdr, rgb));
+        TEST_ASSERT(FGetPrevLogRt(app, &hdr, std::span{rgb}));
         TEST_CHECK(hdr.rt == v.rt && hdr.cb == 6 + v.cb);
         TEST_CHECK(memcmp(rgb, prefix, sizeof(prefix)) == 0 && rgb[5] == v.mask && memcmp(rgb + 6, v.rgb, v.cb) == 0);
     }
@@ -737,7 +737,7 @@ static void test_cargo_log_wire_widths(void) {
     LogMakeValidXfer(app, &source, &target);
     source.rgdItem[0] = -126; source.rgdItem[1] = 127; source.rgdItem[3] = -1;
     LogMakeValidXfer(app, &source, &target);
-    TEST_ASSERT(FGetPrevLogRt(app, &hdr, rgb));
+    TEST_ASSERT(FGetPrevLogRt(app, &hdr, std::span{rgb}));
     TEST_CHECK(hdr.rt == rtLogCargoXfer8 && hdr.cb == 7 && rgb[5] == 1 && rgb[6] == 1 && app.state.imemLogCur == 9);
     source.rgdItem[0] = -1; source.rgdItem[1] = 0; source.rgdItem[3] = 0;
     LogMakeValidXfer(app, &source, &target);
@@ -813,7 +813,7 @@ static void test_log_header_bytes_and_callback(void) {
     app.state.fAi = 1; app.state.fLogOff = 0; app.state.imemLogCur = 0; app.state.imemLogPrev = -1;
     WriteMemRt(app, static_cast<RecordType>(63), std::as_bytes(std::span{rgb}));
     TEST_CHECK(app.state.imemLogCur == 5 && app.state.lpLog[0] == 3 && app.state.lpLog[1] == 0xfc && !memcmp(app.state.lpLog + 2, rgb, 3));
-    TEST_ASSERT(FGetPrevLogRt(app, &hdr, readback));
+    TEST_ASSERT(FGetPrevLogRt(app, &hdr, std::span{readback}));
     TEST_CHECK(hdr.cb == 3 && hdr.rt == 63 && !memcmp(readback, rgb, 3));
     app.state.lpLog[0] = 1; app.state.lpLog[1] = 0xfc;
     app.state.lpLog[4] = 0; app.state.lpLog[5] = 0xf8;
@@ -843,7 +843,7 @@ static void test_routing_writer_bytes(void) {
     pl.id = plNew.id = 0x2345;
     plNew.fNoResearch = 1; plNew.idFling = 0x155; plNew.iWarpFling = 15; plNew.idRoute = 0x2aa;
     LogChangePlanet(app, &pl, &plNew);
-    TEST_ASSERT(FGetPrevLogRt(app, &hdr, rgb));
+    TEST_ASSERT(FGetPrevLogRt(app, &hdr, std::span{rgb}));
     TEST_CHECK(hdr.rt == rtLogPlanetRouting && hdr.cb == 6 && !memcmp(rgb, golden, sizeof(golden)));
 }
 
@@ -997,7 +997,7 @@ static void test_zipprod_comparison_physical_tail(void) {
     // old 28-byte comparison and copies the following template's name bytes.
     app.state.rgplr[0].rgmdRelation[1] = 'S'; app.state.hdrPrev.rt = rtEOF;
     TEST_CHECK(FWriteLogFile(app, szFile, 0));
-    TEST_CHECK(app.state.imemLogCur == 30 && FGetPrevLogRt(app, &hdr, rgb));
+    TEST_CHECK(app.state.imemLogCur == 30 && FGetPrevLogRt(app, &hdr, std::span{rgb}));
     TEST_CHECK(hdr.rt == rtLogPlayerZpq1 && hdr.cb == 28 && rgb[1] == 13 && rgb[26] == 'Q' && rgb[27] == 'R');
     SetSzWorkFromDt(app, dtLog, 0);
     TEST_CHECK(RemoveNativeFile(app.state.szWork) == 0);

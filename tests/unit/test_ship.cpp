@@ -55,7 +55,7 @@ static void test_fleet_id_log_bytes(void) {
     app.state.vrgiflMerge = rgifl; app.state.vcflMerge = 5;
     app.state.gd.fGeneratingTurn = 0;
     LogMergeFleet(app, idDst);
-    TEST_ASSERT(FGetPrevLogRt(app, &hdr, rgb));
+    TEST_ASSERT(FGetPrevLogRt(app, &hdr, std::span{rgb}));
     TEST_CHECK(hdr.rt == rtLogFleetMerge && hdr.cb == 6);
     TEST_CHECK(rgb[0] == (uint8_t)idDst && rgb[1] == (uint8_t)((uint16_t)idDst >> 8));
     TEST_CHECK(rgb[2] == (uint8_t)idSrc && rgb[3] == (uint8_t)((uint16_t)idSrc >> 8));
@@ -71,7 +71,7 @@ static void test_fleet_id_log_bytes(void) {
     TEST_CHECK(lpflDst->rgcsh[ishdef] == 2 && LpflFromId(app, idSrc) == NULL && lpflDst->fCompChg());
     app.state.gd.fGeneratingTurn = 0;
     LogSplitFleet(app, idDst);
-    TEST_ASSERT(FGetPrevLogRt(app, &hdr, rgb));
+    TEST_ASSERT(FGetPrevLogRt(app, &hdr, std::span{rgb}));
     TEST_CHECK(hdr.rt == rtLogFleetSplit && hdr.cb == 2 && rgb[0] == (uint8_t)idDst && rgb[1] == (uint8_t)((uint16_t)idDst >> 8));
     app.state.gd.fGeneratingTurn = 1;
     TEST_ASSERT(FRunLogRecord(app, rtLogFleetSplit, 2, rgb));
@@ -101,7 +101,7 @@ static void test_ship_transfer_log_bytes(void) {
     lxf1.rgdItem[ishdef] = 2;
     app.state.gd.fGeneratingTurn = 0;
     LogMakeValidXferf(app, &lxf1, &lxf2);
-    TEST_ASSERT(FGetPrevLogRt(app, &hdr, rgb));
+    TEST_ASSERT(FGetPrevLogRt(app, &hdr, std::span{rgb}));
     TEST_CHECK(hdr.rt == rtLogFleetCargoXfer && hdr.cb == 9 && rgb[4] == 0x22);
     TEST_CHECK(rgb[0] == (uint8_t)idDst && rgb[1] == (uint8_t)((uint16_t)idDst >> 8) && rgb[2] == (uint8_t)idSrc && rgb[3] == (uint8_t)((uint16_t)idSrc >> 8));
     TEST_CHECK(rgb[5] == (uint8_t)(1u << ishdef) && rgb[6] == (uint8_t)((1u << ishdef) >> 8) && rgb[7] == 2 && rgb[8] == 0);
