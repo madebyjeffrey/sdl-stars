@@ -141,7 +141,8 @@
         "native-scan-parser-from-chars",
         "typed-popup-wrapper-formatting",
         "typed-planet-ui-wrapper-formatting",
-        "typed-message-ui-wrapper-formatting"
+        "typed-message-ui-wrapper-formatting",
+        "typed-battle-replay-wrapper-formatting"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -23954,12 +23955,12 @@
   ],
   "restart_checkpoint": {
     "date": "2026-11-02",
-    "reason": "Continue L05 typed formatting migration after message, planet and popup UI batches.",
+    "reason": "Continue L05 typed formatting migration after VCR and message UI batches.",
     "branch": "develop",
-    "batch": "L05bk typed message UI formatting",
+    "batch": "L05bl typed battle replay formatting",
     "batch_parent": "d3c82384",
-    "latest_batch": "L05bk typed message UI formatting",
-    "latest_batch_head": "270e1a92",
+    "latest_batch": "L05bl typed battle replay formatting",
+    "latest_batch_head": "63aa1926",
     "completed_stages": [
       "L01: nullptr and aliases",
       "L02: explicit C++ casts and headers",
@@ -24020,7 +24021,8 @@
       "Commit cc876d54 converts three mine survey labels from win32::wsprintfA to typed CchSprintf calls. macos-sdl-debug build, desktop units (18/18), host units (29/29), tutorial smoke and native/host regressions pass; both regressions have 519 matches, 25 existing warnings and zero differences/errors/skipped inputs. The baseline is unchanged. Owned wsprintfA scan is now 278 matching lines. Continue L05/L06 and final L08 qualification.",
       "Commit b74a067e replaces all 21 win32::wsprintfA callers in src/ui/popup.cpp with CchSprintf and preserves the existing bounded destinations. Full macOS Debug build, desktop units (18/18), host units (29/29), tutorial smoke and both full regressions pass; regressions each report 519 matches, 25 existing warnings and zero differences/errors/skipped inputs. Owned wsprintfA scan is now 258 matching lines. Continue remaining L05 formatting/text, L06 services/chooser coverage and L08 final macro/platform inventory.",
       "Commit 913ce040 replaces all 17 win32::wsprintfA callers in src/ui/planetui.cpp with CchSprintf, retaining each existing bounded destination and format. Full macOS Debug build, desktop units (18/18), host units (29/29), tutorial smoke and native/host regressions pass; both regressions report 519 matches, 25 existing warnings and zero differences/errors/skipped inputs. The baseline is unchanged. Continue L05 text/formatting, L06 service/chooser qualification and L08 macro/platform reconciliation.",
-      "Commit 270e1a92 replaces all five win32::wsprintfA callers in src/ui/msgui.cpp with typed CchSprintf while preserving their bounded spans and formats. Full macOS Debug build, desktop units (18/18), host units (29/29), tutorial smoke and native/host regressions pass; both regressions report 519 matches, 25 existing warnings and zero differences/errors/skipped inputs. The baseline is unchanged. Owned wsprintfA scan is now 236 matching lines. Continue remaining L05 bounded text/scratch review, L06 service/chooser qualification and L08 macro/platform reconciliation."
+      "Commit 270e1a92 replaces all five win32::wsprintfA callers in src/ui/msgui.cpp with typed CchSprintf while preserving their bounded spans and formats. Full macOS Debug build, desktop units (18/18), host units (29/29), tutorial smoke and native/host regressions pass; both regressions report 519 matches, 25 existing warnings and zero differences/errors/skipped inputs. The baseline is unchanged. Owned wsprintfA scan is now 236 matching lines. Continue remaining L05 bounded text/scratch review, L06 service/chooser qualification and L08 macro/platform reconciliation.",
+      "Commit 63aa1926 replaces all 23 win32::wsprintfA calls in src/ui/vcr.cpp with typed CchSprintf, retaining the same argument lists, output spans and 1024-byte limit. Full macOS Debug build, desktop units (18/18), host units (29/29), tutorial smoke and native/host regressions pass; both regressions have 519 matches, 25 existing warnings and zero differences/errors/skipped inputs. The baseline is unchanged. Owned wsprintfA scan is now 213 matching lines. Continue L05 bounded text and remaining formatting, L06 service/chooser qualification and L08 macro/platform reconciliation."
     ],
     "evidence": [
       "docs/CPP-LIVE-TEXT-COPIES.json: game_file_inputs.verification",
@@ -24035,14 +24037,14 @@
       "qualified_source_head": "b76ec1fcc1276790150457670f5f667bcec4eccc",
       "result": "success"
     },
-    "published_batch_head": "270e1a92"
+    "published_batch_head": "63aa1926"
   },
   "current_checkpoint": {
-    "batch": "L05bk typed message UI formatting",
-    "status": "implemented and locally verified; source commit 270e1a92",
-    "parent": "28ef271e",
+    "batch": "L05bl typed battle replay formatting",
+    "status": "implemented and locally verified; source commit 63aa1926",
+    "parent": "26a7663f",
     "changes": {
-      "src/ui/msgui.cpp": "Replaced all five win32::wsprintfA calls with typed CchSprintf calls while retaining existing bounded spans and formats."
+      "src/ui/vcr.cpp": "Replaced all 23 win32::wsprintfA calls with typed CchSprintf calls, preserving each existing bounded destination and format."
     },
     "verification": {
       "macos_debug_build": "Full macos-sdl-debug build passes.",
@@ -24052,7 +24054,7 @@
       "native_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
       "host_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
       "baseline": "Unchanged.",
-      "owned_wsprintfA_scan": "236 matching lines remain.",
+      "owned_wsprintfA_scan": "213 matching lines remain.",
       "diff_check": "git diff --check passes."
     },
     "remaining_work": [
@@ -24061,8 +24063,8 @@
       "L08 final retained primitive/API macro/preprocessor inventory reconciliation and current-source platform qualification.",
       "Review the two remaining strcpy calls in compat/win32/src/list.cpp and toolbar.cpp; both write to buffers supplied by Win32-compatible caller APIs without a length parameter."
     ],
-    "source_commit": "270e1a92",
-    "published_batch_head": "270e1a92"
+    "source_commit": "63aa1926",
+    "published_batch_head": "63aa1926"
   },
   "milestone_d_checkpoint": {
     "stage": "D05 caller migrations implemented; D06 platform qualification pending",
