@@ -11,6 +11,7 @@ class APPSESSION;
 #include <cstdlib>
 #include <cstdio>
 #include <span>
+#include <string_view>
 #include "encoding.h"
 #include "nativeformat.h"
 #include "fileio.h"
@@ -58,7 +59,7 @@ void qsort16(APPSESSION &app, void *base, std::size_t count, std::size_t width, 
 
 // The registry owns successful tokens; failure returns hf == -1 and reports
 // missing only for ENOENT. The result is transient, never a saved record.
-[[nodiscard]] NATIVEFILEOPENRESULT HfOpenFile(const char *szFile, NATIVEFILEOPENOPTIONS nfo);
+[[nodiscard]] NATIVEFILEOPENRESULT HfOpenFile(std::string_view szFile, NATIVEFILEOPENOPTIONS nfo);
 std::optional<std::size_t> CbReadFile(std::int16_t hf, std::span<std::byte> rg);
 std::optional<std::size_t> CbWriteFile(std::int16_t hf, std::span<const std::byte> rg);
 // Seek from the named origin and return the new position.
@@ -66,25 +67,25 @@ std::int32_t LSeekFile(std::int16_t hf, std::int32_t l, NATIVESEEKORIGIN iOrigin
 // Full size of the open token; present zero is distinct from query failure.
 std::optional<std::int64_t> CbFileSize(std::int16_t hf);
 void    CloseFile(std::int16_t hf);
-std::int16_t FFileExists(const char *szFile);
-std::int16_t FFileReadOnly(const char *szFile);
-void    MakeDir(const char *szDir);
+std::int16_t FFileExists(std::string_view szFile);
+std::int16_t FFileReadOnly(std::string_view szFile);
+void    MakeDir(std::string_view szDir);
 // Unlike MakeDir, reservation fails if the directory already exists.
-int     CreateNativeDir(const char *pszDir);
+int     CreateNativeDir(std::string_view pszDir);
 using FNativeDirectoryEntryProc = std::int16_t (*)(APPSESSION &, void *lpData, const char *pszEntry);
-std::int16_t FNativeEnumerateDirectory(APPSESSION &app, const char *pszDir, FNativeDirectoryEntryProc pfnEntry, void *lpData);
-std::optional<std::int64_t> FNativeFileSize(const char *pszFile);
-std::int16_t FNativeDirectoryExists(const char *pszDir);
+std::int16_t FNativeEnumerateDirectory(APPSESSION &app, std::string_view pszDir, FNativeDirectoryEntryProc pfnEntry, void *lpData);
+std::optional<std::int64_t> FNativeFileSize(std::string_view pszFile);
+std::int16_t FNativeDirectoryExists(std::string_view pszDir);
 // Inspect the final component without following links or Windows reparse points.
 struct NATIVEPATHINFO { bool fDirectory, fLink; };
-std::optional<NATIVEPATHINFO> FNativePathInfo(const char *psz);
-std::int16_t FEnsureNativeDir(const char *pszDir);
-int     RemoveNativeFile(const char *psz);
-int     RemoveNativePath(const char *psz);
-int     ReplaceNativeFile(const char *pszOld, const char *pszNew);
+std::optional<NATIVEPATHINFO> FNativePathInfo(std::string_view psz);
+std::int16_t FEnsureNativeDir(std::string_view pszDir);
+int     RemoveNativeFile(std::string_view psz);
+int     RemoveNativePath(std::string_view psz);
+int     ReplaceNativeFile(std::string_view pszOld, std::string_view pszNew);
 std::int64_t LNativeTime(void);
-int     RenameNativeFile(const char *pszOld, const char *pszNew);
-NATIVEFILE *PfOpenNativeFile(const char *psz, NATIVEFILEMODE mode);
+int     RenameNativeFile(std::string_view pszOld, std::string_view pszNew);
+NATIVEFILE *PfOpenNativeFile(std::string_view psz, NATIVEFILEMODE mode);
 
 // File names: the directory separator.
 #ifdef _WIN32

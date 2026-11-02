@@ -9,8 +9,8 @@ const NATIVEPUBLISHIO                     &NativePublishIO() noexcept {
 NATIVEPUBLISHIOSCOPE::NATIVEPUBLISHIOSCOPE(const NATIVEPUBLISHIO &io) noexcept : io(io), lpPrev(lpPublishIO) { lpPublishIO = &this->io; }
 NATIVEPUBLISHIOSCOPE::~NATIVEPUBLISHIOSCOPE() noexcept { lpPublishIO = lpPrev; }
 
-int RemoveNativeFile(const char *psz) { return NativePublishIO().pfnRemove(psz, 0); }
-int ReplaceNativeFile(const char *pszOld, const char *pszNew) { return NativePublishIO().pfnRename(pszOld, pszNew, 1, 0); }
-int RenameNativeFile(const char *pszOld, const char *pszNew) { return NativePublishIO().pfnRename(pszOld, pszNew, 0, 0); }
+int RemoveNativeFile(std::string_view psz) { return NativePublishIO().pfnRemove(psz, 0); }
+int ReplaceNativeFile(std::string_view pszOld, std::string_view pszNew) { return NativePublishIO().pfnRename(pszOld, pszNew, 1, 0); }
+int RenameNativeFile(std::string_view pszOld, std::string_view pszNew) { return NativePublishIO().pfnRename(pszOld, pszNew, 0, 0); }
 
-int RemoveNativePath(const char *psz) { return NativePublishIO().pfnRemove(psz, 1); }
+int RemoveNativePath(std::string_view psz) { return NativePublishIO().pfnRemove(psz, 1); }

@@ -7,7 +7,10 @@
 [[maybe_unused]] static char szTestLiteral1[] = "\xff";
 #include "stars_test.h"
 #include <errno.h>
+#include <cstring>
 #include <filesystem>
+#include <string>
+#include <string_view>
 
 typedef struct {
     const char *pszExpected;
@@ -50,6 +53,14 @@ static void TestNativeFiles(void) {
     CloseFile(hfFile);
     TEST_CHECK(FFileExists(szFile) && !FFileReadOnly(szFile));
     TEST_CHECK((cbNativeFile = FNativeFileSize(szFile)) && (*cbNativeFile) == 6);
+    {
+        const std::string szPathWithSuffix = std::string{szFile} + ".ignored";
+        const std::string_view szPathView{szPathWithSuffix.data(), std::strlen(szFile)};
+        NATIVEFILE *pf = PfOpenNativeFile(szPathView, NATIVEFILEMODE::read);
+        TEST_CHECK(FFileExists(szPathView) && (cbNativeFile = FNativeFileSize(szPathView)) && *cbNativeFile == 6);
+        TEST_ASSERT(pf);
+        TEST_CHECK(CbNativeFile(pf) == 6 && ICloseNativeFile(pf) == 0);
+    }
     nec.pszExpected = "\xe6\x9d\xb1\xe4\xba\xac-\xc3\xa9.bin"; nec.fFound = 0;
     TEST_CHECK(FNativeEnumerateDirectory(app, szDir, FCheckNativeEntry, &nec) && nec.fFound);
     TEST_CHECK(RenameNativeFile(szFile, szOther) == 0 && !FFileExists(szFile) && FFileExists(szOther));

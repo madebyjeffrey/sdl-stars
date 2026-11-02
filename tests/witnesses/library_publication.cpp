@@ -8,6 +8,8 @@
 #include "native_publish.h"
 #include "ui_fixture.h"
 #include <algorithm>
+#include <string>
+#include <string_view>
 static char szLibraryRoot[256] = "root", szLibraryName[256] = "Copy", szLibraryPending[256] = "pending";
 
 // Zero is absent; files are 1..3; directories are bit sets plus 100.
@@ -125,8 +127,9 @@ static int TestFInspectImportFile(const char *path, int type, int player, int32_
     event("probe", 2, p, inspected && variant != 22 && variant != 23, 0);
     return inspected;
 }
-static std::optional<std::int64_t> TestFNativeFileSize(const char *path) {
-    int p = role(path), ok = decision() && objects[p] > 0 && objects[p] < 100;
+static std::optional<std::int64_t> TestFNativeFileSize(std::string_view path) {
+    const std::string szPath{path};
+    int p = role(szPath.c_str()), ok = decision() && objects[p] > 0 && objects[p] < 100;
     event("probe", 1, p, ok, 0);
     return ok ? std::optional<std::int64_t>{1} : std::nullopt;
 }
@@ -153,8 +156,9 @@ static int removeObject(const char *path, int tree) {
 static int TestRemoveNativeFile(const char *path) { return removeObject(path, 0) ? 0 : -1; }
 static int TestRemoveNativePath(const char *path) { return removeObject(path, 0) ? 0 : -1; }
 static int TestRemoveLibraryGameTree(APPSESSION &, const char *path) { return removeObject(path, 1); }
-static int TestFNativeDirectoryExists(const char *path) {
-    int p = role(path), ok = decision() && objects[p] >= 100;
+static int TestFNativeDirectoryExists(std::string_view path) {
+    const std::string szPath{path};
+    int p = role(szPath.c_str()), ok = decision() && objects[p] >= 100;
     event("probe", 3, p, ok, 0);
     return ok;
 }
@@ -238,7 +242,7 @@ static size_t TestNativeStrlen(const char *s) {
 // Family enumeration is a declared stage-only provider; cleanup aggregates the
 // source enumeration plus final TestRemoveNativePath, including possible remnants.
 
-static int TestFNativeEnumerateDirectory(APPSESSION &, const char *path, FNativeDirectoryEntryProc callback, void *context) {
+static int TestFNativeEnumerateDirectory(APPSESSION &, std::string_view path, FNativeDirectoryEntryProc callback, void *context) {
     (void)path;
     if (callback == &CopyImportEntry || callback == &CopyBackupDirectory) {
         int ok = build(callback == &CopyImportEntry ? 5 : 6);
@@ -257,8 +261,9 @@ static int TestFWriteLibraryMetadata(const char *path, const char *name, int16_t
     assert(role(path) == 3 && !strcmp(name, "Copy") && player == expected);
     return build(7);
 }
-static int TestCreateNativeDir(const char *path) {
-    int p = role(path), ok = decision() && !objects[p];
+static int TestCreateNativeDir(std::string_view path) {
+    const std::string szPath{path};
+    int p = role(szPath.c_str()), ok = decision() && !objects[p];
     if (ok)
         objects[p] = 100;
     event("allocate", 2, p, ok, 0);

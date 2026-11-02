@@ -1,13 +1,14 @@
 #include <cassert>
 #include <cerrno>
 #include <cstdio>
+#include <string_view>
 #include "library_file_io.h"
 #include "librarypublication.h"
 #include "native_publish.h"
 #include "win.h"
 static int         faults;
 static NATIVEFILE *copySource, *copyTarget;
-static NATIVEFILE *copyOpen(const char *path, NATIVEFILEMODE mode) {
+static NATIVEFILE *copyOpen(std::string_view path, NATIVEFILEMODE mode) {
     NATIVEFILE *f = PfOpenNativeFile(path, mode);
     if (mode == NATIVEFILEMODE::read)
         copySource = f;

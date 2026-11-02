@@ -195,7 +195,7 @@ std::int64_t LNativeTime(void) { return static_cast<std::int64_t>(std::time(null
 
 // Game entrypoints retain their small handles;
 // resource ownership, binary streams and native exceptions live in fileio.cpp.
-NATIVEFILEOPENRESULT HfOpenFile(const char *szFile, NATIVEFILEOPENOPTIONS nfo) {
+NATIVEFILEOPENRESULT HfOpenFile(std::string_view szFile, NATIVEFILEOPENOPTIONS nfo) {
     return HfNativeOpenLegacy(szFile, nfo);
 }
 std::optional<std::size_t> CbReadFile(std::int16_t hf, std::span<std::byte> rg) { return CbNativeReadLegacy(hf, rg); }
@@ -203,12 +203,12 @@ std::optional<std::size_t> CbWriteFile(std::int16_t hf, std::span<const std::byt
 std::int32_t LSeekFile(std::int16_t hf, std::int32_t l, NATIVESEEKORIGIN iOrigin) { return LNativeSeekLegacy(hf, l, iOrigin); }
 std::optional<std::int64_t> CbFileSize(std::int16_t hf) { return CbNativeSizeLegacy(hf); }
 void CloseFile(std::int16_t hf) { CloseNativeLegacy(hf); }
-std::int16_t FFileExists(const char *szFile) { return IAccessNativePath(szFile, 0) == 0; }
-std::int16_t FFileReadOnly(const char *szFile) { return IAccessNativePath(szFile, 2) != 0; }
-void MakeDir(const char *szDir) { ICreateNativeDirectory(szDir, 0777); }
-int CreateNativeDir(const char *pszDir) { return ICreateNativeDirectory(pszDir, 0777); }
-std::int16_t FEnsureNativeDir(const char *pszDir) { return FEnsureNativeDirectory(pszDir); }
-std::int16_t FNativeEnumerateDirectory(APPSESSION &app, const char *pszDir, FNativeDirectoryEntryProc pfnEntry, void *lpData) {
+std::int16_t FFileExists(std::string_view szFile) { return IAccessNativePath(szFile, 0) == 0; }
+std::int16_t FFileReadOnly(std::string_view szFile) { return IAccessNativePath(szFile, 2) != 0; }
+void MakeDir(std::string_view szDir) { ICreateNativeDirectory(szDir, 0777); }
+int CreateNativeDir(std::string_view pszDir) { return ICreateNativeDirectory(pszDir, 0777); }
+std::int16_t FEnsureNativeDir(std::string_view pszDir) { return FEnsureNativeDirectory(pszDir); }
+std::int16_t FNativeEnumerateDirectory(APPSESSION &app, std::string_view pszDir, FNativeDirectoryEntryProc pfnEntry, void *lpData) {
     const char *pszEntry;
     std::optional<std::string> szEntry;
     if (!pfnEntry) return 0;
@@ -223,18 +223,18 @@ std::int16_t FNativeEnumerateDirectory(APPSESSION &app, const char *pszDir, FNat
         if (!pfnEntry(app, lpData, pszEntry)) return 1;
     }
 }
-std::optional<std::int64_t> FNativeFileSize(const char *pszFile) {
+std::optional<std::int64_t> FNativeFileSize(std::string_view pszFile) {
     const auto info = IGetNativeFileInfo(pszFile, NATIVELINKMODE::follow);
     if (!info || !info->fRegular) return std::nullopt;
     return info->cb;
 }
-std::int16_t FNativeDirectoryExists(const char *pszDir) {
+std::int16_t FNativeDirectoryExists(std::string_view pszDir) {
     const auto info = IGetNativeFileInfo(pszDir, NATIVELINKMODE::follow);
     return info && info->fDirectory;
 }
-std::optional<NATIVEPATHINFO> FNativePathInfo(const char *psz) {
+std::optional<NATIVEPATHINFO> FNativePathInfo(std::string_view psz) {
     const auto info = IGetNativeFileInfo(psz, NATIVELINKMODE::inspect);
     if (!info) return std::nullopt;
     return NATIVEPATHINFO{static_cast<bool>(info->fDirectory), static_cast<bool>(info->fLink)};
 }
-NATIVEFILE *PfOpenNativeFile(const char *psz, NATIVEFILEMODE mode) { return PfNativeOpen(psz, mode); }
+NATIVEFILE *PfOpenNativeFile(std::string_view psz, NATIVEFILEMODE mode) { return PfNativeOpen(psz, mode); }
