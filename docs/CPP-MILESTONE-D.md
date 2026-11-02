@@ -1,7 +1,7 @@
 # Milestone D: a C++ file-selection interface behind the SDL Win32 wrapper
 
-Status: planned; implementation starts after Milestone C is complete and merged.
-Recorded: 2026-10-31. Tracking: [#71](https://github.com/madebyjeffrey/sdl-stars/issues/71).
+Status: D01 inventory complete on `develop`; D02–D06 remain open.
+Recorded: 2026-10-31. D01 revalidated: 2026-11-01. Tracking: [#71](https://github.com/madebyjeffrey/sdl-stars/issues/71).
 
 ## Outcome and scope
 
@@ -29,15 +29,14 @@ actual parent revision and revalidates every source path below after C's renames
 
 ## Current seam and behavior to preserve
 
-At the inspected post-B tree, `filedialog.c` owns the `OPENFILENAMEA` validation,
+At the inspected post-B tree, `filedialog.cpp` owns the `OPENFILENAMEA` validation,
 filter parsing, initial directory, shared file/extension/overwrite policy,
 owner/focus cleanup, current-directory change and output-field commit. Its
 `ICompatChooseFile` backend interface takes a long parameter list plus mutable
 filter index and path buffers. The compatibility browser and platform backends
-implement the selection; the wrapper retries invalid selections. `nativeui.c`
-forwards UI open/save calls to the Win32-shaped functions. Race-library import
-and export in `libraryui.c` are candidate real callers for the first vertical
-slice; D01 must confirm their names and coverage on the C parent.
+implement the selection; the wrapper retries invalid selections. `nativeui.cpp`
+forwards UI open/save calls to the Win32-shaped functions. D01 confirms the
+race-library import/export candidates and their current coverage below.
 
 Preserve the documented [file-dialog contracts](WIN32-FILE-DIALOGS.md), including:
 
@@ -60,6 +59,55 @@ The canonical desktop behavior and evidence limits are in
 [S05](../spec/S05-sdl-desktop-implementation.md); UTF-8 and native path rules
 are in [S04](../spec/S04-platform-services.md). D does not strengthen these
 contracts by assuming atomic rollback or full Win32 semantics.
+
+## D01 — post-C source and test inventory
+
+The Milestone C merge is `a65e653a` (PR #68), on `develop`. The D01 source
+inventory was revalidated at `f3b89311` after the current L05 cleanup. Public
+Win32-shaped entry points remain necessary for SDK compatibility and reference
+tests; the application call sites below are candidates for the new typed
+operation.
+
+| Layer | Current implementation | Responsibility or remaining coupling |
+| --- | --- | --- |
+| Application to wrapper | `src/ui/nativeui.cpp`: `FNativeOpenFileName` / `FNativeSaveFileName`; `compat/win32/src/calls.cpp`: `ui::GetOpenFileName` / `ui::GetSaveFileName` | The app uses `DesktopChoiceIO` function pointers. `ui::` forwards to `win32::` and then delivers pending callback errors. The caller still constructs `OPENFILENAMEA`. |
+| Shared operation | `compat/win32/src/filedialog.cpp`: `FFileDialog`, `GetOpenFileNameA`, `GetSaveFileNameA` | Validates the ABI record and supported flags, parses filters, owns retry/overwrite and selected-path validation, handles CWD and commits output fields. One implementation serves both native and compatibility backends. |
+| Compatibility picker | `FFileDialog` plus `LayoutFileDialog`, `FileDialogProc`, directory/accept helpers in `filedialog.cpp` | Owns the constructed browser and controls when compatibility mode is selected. |
+| Backend seam | `compat/win32/src/filedialog_backend.h`: `ICompatChooseFile` | Positional arguments, borrowed label/folder/name/filter pointers, mutable selected-filter pointer, writable path plus byte capacity; returns selected/cancelled/failed as `1/0/<0`. This is the principal untyped handoff D04 replaces. |
+| Linux | `filedialog_portal.cpp` | Portal request/response lifecycle and selected URI/path conversion; native method errors are distinct from cancellation. Private D-Bus and X11 coverage is configured on Linux. |
+| macOS | `filedialog_cocoa.cpp` | AppKit open/save panels and callback boundary; adapter test covers labels, paths and cancellation. |
+| Windows | `filedialog_windows.cpp`, `filedialog_windows_sdk.cpp`, `filedialog_windows_bridge.h` | SDK Unicode adapter and test seam; SDK records remain isolated here. Native adapter and flow tests are Windows-only. |
+| Other picker | `CompatFolderIO` callbacks in `libraryui.cpp` | Folder selection is already a separate asynchronous callback interface; it is not an `OPENFILENAMEA` call and remains outside D. |
+
+Application `OPENFILENAMEA` call sites at the D01 parent:
+
+| Function | Mode and purpose | Caller currently provides |
+| --- | --- | --- |
+| `src/ui/mdi.cpp` — `FOpenGame` | Open a game or race file | 256-byte path/title buffers, game/race filter, initial directory and `HIDEREADONLY`, `PATHMUSTEXIST`, `FILEMUSTEXIST`. |
+| `src/ui/raceui.cpp` — `FSaveRace` | Save a race design | 256-byte path/title buffers, `.r1` default extension, overwrite and writable-destination policy. |
+| `src/ui/libraryui.cpp` — `FExportLibraryRace` | Save a race-library export | 512-byte path, race filter, overwrite prompt. |
+| `src/ui/libraryui.cpp` — `FExportLibraryOrders` | Save exported player orders | 512-byte path, per-player filter and `xN` default extension; a separate replacement prompt applies to the corrected final path. |
+| `src/ui/libraryui.cpp` — `FImportLibraryRace` | Open an external race design | 512-byte path, race filter, existing-file requirement. |
+| `src/ui/libraryui.cpp` — `FExportLibraryGame` | Save a library game as ZIP | 512-byte path, ZIP filter and default extension. Folder export is a separate folder callback. |
+| `src/ui/libraryui.cpp` — `FChooseLibraryImportFile` | Choose a game/race/ZIP/universe import source | Caller-provided path span (current use is 512 bytes), file-title output and import filter. |
+| `src/ui/libraryui.cpp` — `FImportLibraryOrders` | Open an external orders file | 512-byte path, player-orders filter and existing-file requirement. |
+| `compat/win32/src/print.cpp` | Print-to-file destination | Calls `GetSaveFileNameA` internally; printing is not a selected D05 caller. |
+
+Existing contract and fault-path evidence is split across `tests/compat/`:
+`win32_filedialog.inc` exercises modal controls, outputs, cancel, filter,
+extension, CWD, errors and owner destruction; `win32_filedialog_windows.cpp`
+and `win32_filedialog_windows_flow.cpp` exercise the SDK adapter and Windows
+flow; `win32_fileportal.cpp` and `run_fileportal.py` exercise private-bus
+responses/retries/errors; `win32_filedialog_cocoa.cpp` covers the AppKit
+adapter; `modal_ownership.cpp` and `callback_context` cover nested callbacks,
+cleanup faults and pending-error delivery; `win32_fileworkflow.cpp` and its
+runners exercise real game/race/library workflows. CMake gates portal, X11,
+Cocoa and Windows-native cases by platform/backend. D01 is complete.
+
+D02 will select the request/result form from the application needs and
+contracts above. The pilot remains `FImportLibraryRace` and
+`FExportLibraryRace`; other application callers keep compatibility entry points
+until the shared operation and backend handoff are proven.
 
 ## Interface design
 

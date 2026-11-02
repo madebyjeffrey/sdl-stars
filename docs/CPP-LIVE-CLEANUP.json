@@ -23545,5 +23545,19 @@
     "last_full_platform_run": 41376372935,
     "platform_dispatch": "The latest local batches have not yet been qualified by a full Linux/macOS/Windows workflow.",
     "receipts": "dist/verification/live-cpp/l05am/"
+  },
+  "milestone_d_checkpoint": {
+    "stage": "D01 post-C inventory complete",
+    "c_merge_parent": "a65e653a (PR #68)",
+    "inventory_revision": "f3b89311",
+    "typed_picker_callers": 8,
+    "additional_print_wrapper_caller": "compat/win32/src/print.cpp",
+    "backend_paths": [
+      "compatibility browser",
+      "Linux portal",
+      "macOS AppKit",
+      "Windows SDK"
+    ],
+    "next": "D02 compare free-function request/result with an operation owner; select ownership, cancellation, CWD, and error contracts from actual call sites."
   }
 }
