@@ -7,8 +7,10 @@
 
 #include "stars_test.h"
 #include "text_io.h"
+#include <algorithm>
 #include <limits>
 #include <string>
+#include <string_view>
 
 static std::string SzReadReportFile(const std::string &szFile) {
     NATIVEFILEOWNER lpfile(PfNativeOpen(szFile.c_str(), NATIVEFILEMODE::read), ICloseNativeFile);
@@ -96,6 +98,19 @@ static void test_ReportFilePath_clear(void) {
     ClearFile(app, 7);
     TEST_CHECK(!FFileExists(szCheck.c_str()));
     TEST_CHECK(std::string_view(app.state.szBase) == szExtended);
+}
+
+static void test_GetDateTimeSz_bounds(void) {
+    char szDate[9];
+    char szTime[9];
+    char szShort[8];
+
+    std::fill(std::begin(szShort), std::end(szShort), '#');
+    TEST_CHECK(GetDateTimeSz(std::span{szDate}, std::span{szTime}));
+    TEST_CHECK(szDate[2] == '/' && szDate[5] == '/' && szDate[8] == '\0');
+    TEST_CHECK(szTime[2] == ':' && szTime[5] == ':' && szTime[8] == '\0');
+    TEST_CHECK(!GetDateTimeSz(std::span{szShort}, std::span{szTime}));
+    TEST_CHECK(std::string_view(szShort, sizeof(szShort)) == "########");
 }
 
 static void test_DecorateHullName_owned(void) {
@@ -555,6 +570,7 @@ static void test_ObjectName_contract(void) {
 TEST_LIST = {
     {"reports write and append complete UTF-8 paths", test_ReportFilePath_write},
     {"reports clear complete UTF-8 paths", test_ReportFilePath_clear},
+    {"date and time outputs require bounded destinations", test_GetDateTimeSz_bounds},
     {"object names retain planet, fleet, thing and work-buffer behavior", test_ObjectName_contract},
     {"hull-name values retain duplicate ordinals and UTF-8 byte budgets", test_DecorateHullName_owned},
     {"player-name values survive other lookups and scratch formatting", test_PlayerName_owned_results},

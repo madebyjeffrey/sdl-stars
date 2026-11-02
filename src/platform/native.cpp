@@ -165,9 +165,11 @@ std::int32_t LMulDiv(std::int32_t lNumber, std::int32_t lNumerator, std::int32_t
 #ifdef _WIN32
 
 
-void GetDateTimeSz(char *szDate, char *szTime) {
-    _strdate(szDate);
-    _strtime(szTime);
+bool GetDateTimeSz(std::span<char> szDate, std::span<char> szTime) {
+    if (szDate.size() < 9 || szTime.size() < 9) return false;
+    _strdate(szDate.data());
+    _strtime(szTime.data());
+    return true;
 }
 
 std::int16_t FSzPrefixNoCase(const char *sz1, const char *sz2, std::int16_t cch) { return _strnicmp(sz1, sz2, cch) == 0; }
@@ -181,14 +183,15 @@ std::uint32_t DwTickCount() {
     return static_cast<std::uint32_t>((static_cast<std::uint64_t>(ts.tv_sec) * 1000 + static_cast<std::uint64_t>(ts.tv_nsec) / 1000000));
 }
 
-void GetDateTimeSz(char *szDate, char *szTime) {
+bool GetDateTimeSz(std::span<char> szDate, std::span<char> szTime) {
     std::time_t     t;
     struct std::tm *ptm;
 
+    if (szDate.size() < 9 || szTime.size() < 9) return false;
     t = std::time(nullptr);
     ptm = std::localtime(&t);
-    std::strftime(szDate, 9, "%m/%d/%y", ptm);
-    std::strftime(szTime, 9, "%H:%M:%S", ptm);
+    if (!ptm || std::strftime(szDate.data(), szDate.size(), "%m/%d/%y", ptm) != 8) return false;
+    return std::strftime(szTime.data(), szTime.size(), "%H:%M:%S", ptm) == 8;
 }
 
 std::int16_t FSzPrefixNoCase(const char *sz1, const char *sz2, std::int16_t cch) { return strncasecmp(sz1, sz2, cch) == 0; }

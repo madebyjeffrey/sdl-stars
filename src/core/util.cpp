@@ -2554,7 +2554,7 @@ void OutputSz(APPSESSION &app, std::int16_t dt, std::string_view sz) {
         CchSprintf(szTemp, "Stars! %s\r\n\r\n", SzVersion(app).data());
         OutputFileString(szFile->data(), szTemp);
     }
-    GetDateTimeSz(szDate, szTime);
+    if (!GetDateTimeSz(std::span{szDate}, std::span{szTime})) return;
     CchSprintf(szTemp, "%s %s - %s\r\n", szDate, szTime, sz);
     OutputFileString(szFile->data(), szTemp);
     return;

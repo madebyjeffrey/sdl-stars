@@ -10,6 +10,7 @@ class APPSESSION;
 #include <climits>
 #include <cstdlib>
 #include <cstdio>
+#include <span>
 #include "encoding.h"
 #include "nativeformat.h"
 #include "fileio.h"
@@ -95,8 +96,8 @@ inline constexpr char szDirSep[] = "/";
 #endif
 
 // GetDateTimeSz writes the date as MM/DD/YY and the time as HH:MM:SS, as
-// _strdate and _strtime did, for the turn log.
-void GetDateTimeSz(char *szDate, char *szTime);
+// _strdate and _strtime did, for the turn log. Both spans need nine bytes.
+bool GetDateTimeSz(std::span<char> szDate, std::span<char> szTime);
 // FSzPrefixNoCase compares the first cch characters, ignoring case.
 std::int16_t FSzPrefixNoCase(const char *sz1, const char *sz2, std::int16_t cch);
 
