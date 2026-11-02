@@ -3,6 +3,7 @@
 #include "turn_io.h"
 #include "production_io.h"
 #include "random_io.h"
+#include <algorithm>
 
 THING *LpthNew(APPSESSION &app, std::int16_t iplr, ThingType ith) {
     std::int16_t iItem;
@@ -218,7 +219,7 @@ void DoThingInteractions(APPSESSION &app, std::int16_t fPostMove) {
     std::int32_t     wtMin;
     POINT16     pt;
     std::int16_t     iplrSav;
-    std::uint8_t     rgTech[6];
+    std::int8_t      rgTech[6];
     std::int32_t     wtNext;
     std::int32_t     dy;
     THING      *lpthMac;
@@ -329,11 +330,11 @@ void DoThingInteractions(APPSESSION &app, std::int16_t fPostMove) {
                                             if (app.state.rgplr[iplr].rgTech[iLowest] >= cPlrTrueMaxTech)
                                                 break;
                                         LGiveITech:
-                                            std::memcpy(rgTech, app.state.rgplr[iplr].rgTech, 6);
+                                            std::copy_n(app.state.rgplr[iplr].rgTech, 6, rgTech);
                                             rgTech[iLowest]++;
                                             iplrSav = app.state.idPlayer;
                                             app.state.idPlayer = iplr;
-                                            wtNext = CostOfDevelopingItem(app, reinterpret_cast<const char *>(rgTech));
+                                            wtNext = CostOfDevelopingItem(app, std::span<const std::int8_t, 6>{rgTech});
                                             app.state.idPlayer = iplrSav;
                                             lSpent = app.state.rgplr[iplr].rgResSpent[iLowest];
                                             lSpent = static_cast<std::int32_t>((lSpent * 2));

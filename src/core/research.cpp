@@ -59,10 +59,10 @@ std::int32_t ProjectedResearchSpending(APPSESSION &app, std::int32_t pct) {
     return lSpend;
 }
 
-std::int32_t CostOfDevelopingItem(APPSESSION &app, const char *rgTech) {
+std::int32_t CostOfDevelopingItem(APPSESSION &app, std::span<const std::int8_t, 6> rgTech) {
     std::int32_t lSpent;
-    char   *pTech;
-    char    rgTechSav[6];
+    std::int8_t *pTech;
+    std::int8_t rgTechSav[6];
     std::int32_t lCost;
     std::int16_t fUnreachable;
     std::int16_t i;
@@ -70,7 +70,7 @@ std::int32_t CostOfDevelopingItem(APPSESSION &app, const char *rgTech) {
 
     fUnreachable = 0;
     lCost = 0;
-    pTech = reinterpret_cast<char *>(app.state.rgplr[app.state.idPlayer].rgTech);
+    pTech = app.state.rgplr[app.state.idPlayer].rgTech;
     for (i = 0; i < 6 && rgTech[i] <= 26; i++) {
     }
     if (i < 6) {

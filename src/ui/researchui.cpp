@@ -917,7 +917,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, std::int16_t dx, std::int16_
         if (PartQueryIO().pfnLookup(app, ppart) <= mdPartAvailInvalid) {
             l = -1;
         } else {
-            l = CostOfDevelopingItem(app, reinterpret_cast<const char *>(ppart->pcom().rgTech()));
+            l = CostOfDevelopingItem(app, std::span<const std::int8_t, 6>{ppart->pcom().rgTech(), 6});
         }
         if (l > 99999) {
             c = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsCostLdk).data(), static_cast<std::int32_t>(((l + 500) / 1000)));

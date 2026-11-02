@@ -137,10 +137,10 @@ int main(int argc, char **argv) {
         if (cfg[0] == 0)
             actual[0] = ResearchIO().pfnTechCost(app, (TechFieldType)cfg[2], (int16_t)cfg[3], 0);
         else if (cfg[0] == 1) {
-            char target[6];
+            std::int8_t target[6];
             for (int i = 0; i < 6; i++)
-                target[i] = (char)cfg[16 + i];
-            actual[0] = CostOfDevelopingItem(app, target);
+                target[i] = static_cast<std::int8_t>(cfg[16 + i]);
+            actual[0] = CostOfDevelopingItem(app, std::span<const std::int8_t, 6>{target});
         } else {
             int     complete = 0;
             int32_t value = 0;

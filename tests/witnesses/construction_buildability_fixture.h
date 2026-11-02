@@ -28,7 +28,7 @@ static int16_t GateGrbit(PLAYER *p, RaceGrbit bit) {
     Query(100 + bit);
     return GetRaceGrbit(p, bit);
 }
-static int16_t GateTech(APPSESSION &app, const char *need) {
+static int16_t GateTech(APPSESSION &app, std::span<const std::int8_t, 6> need) {
     Query(2);
     return TechStatus(app, need);
 }

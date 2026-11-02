@@ -18,7 +18,7 @@ int main(int argc, char **argv) {
     const unsigned rgcRows[] = {iengineCount, iscannerCount,   ishieldCount, iarmorCount,    ibeamCount,     itorpCount,  ibombCount,         iminingCount,
                                 iminesCount,  ispecialSBCount, isbhullCount, ispecialECount, ispecialMCount, iterraCount, ihuldefOrbitalFort, iplanetaryCount};
     PARTQUERYFIXTURE fixture;
-    assert(argc == 3 && std::numeric_limits<char>::min() == -128 && sizeof(app.state.rgplr[0].rgTech) == 6);
+    assert(argc == 3 && std::numeric_limits<std::int8_t>::min() == -128 && sizeof(app.state.rgplr[0].rgTech) == 6);
     FILE *file = fopen(argv[2], argv[1][0] == 'e' ? "wb" : "rb");
     assert(file);
     if (argv[1][0] == 'e') {
@@ -77,11 +77,11 @@ int main(int argc, char **argv) {
         } else if (rgIn[0] == 1)
             result = PartQueryIO().pfnHidden(app, &part);
         else {
-            char rgNeed[6], rgNeedBefore[6];
+            std::int8_t rgNeed[6], rgNeedBefore[6];
             for (int f = 0; f < 6; f++)
-                rgNeed[f] = (char)rgIn[16 + f];
+                rgNeed[f] = static_cast<std::int8_t>(rgIn[16 + f]);
             memcpy(rgNeedBefore, rgNeed, sizeof(rgNeed));
-            result = PartQueryIO().pfnTechStatus(app, rgNeed);
+            result = PartQueryIO().pfnTechStatus(app, std::span<const std::int8_t, 6>{rgNeed});
             CHECK(memcmp(rgNeed, rgNeedBefore, sizeof(rgNeed)) == 0);
         }
         if (result != rgIn[22]) {

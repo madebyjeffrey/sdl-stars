@@ -37,7 +37,7 @@ static int16_t QueryGrbit(PLAYER *p, RaceGrbit bit) {
     Call(100 + bit);
     return GetRaceGrbit(p, bit);
 }
-static int16_t QueryTech(APPSESSION &app, const char *need) {
+static int16_t QueryTech(APPSESSION &app, std::span<const std::int8_t, 6> need) {
     Call(2);
     return TechStatus(app, need);
 }

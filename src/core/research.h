@@ -3,13 +3,14 @@
 
 #include "common.h"
 #include <cstdint>
+#include <span>
 
 extern std::uint16_t rggrbitBrParts[17];
 extern std::int32_t  rglTechCost[27];
 
 std::int32_t GetTechLevelCost(APPSESSION &app, TechFieldType iTech, std::int16_t iLevel, std::int16_t iplr);
 std::int32_t ProjectedResearchSpending(APPSESSION &app, std::int32_t pct);
-std::int32_t CostOfDevelopingItem(APPSESSION &app, const char *rgTech);
+std::int32_t CostOfDevelopingItem(APPSESSION &app, std::span<const std::int8_t, 6> rgTech);
 std::int16_t FShouldPartBeHidden(APPSESSION &app, PART *ppart);
 
 #endif
