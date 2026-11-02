@@ -23,7 +23,7 @@ static const char *pszTarget;
 static char szInstalledRace[] = "installed.r1";
 
 int16_t StarsTest_PromptPassword(APPSESSION &) { return 1; }
-int16_t StarsTest_AlertSz(APPSESSION &, const char *sz, int16_t mb) { (void)mb; fprintf(stderr, "Print alert: %s\n", sz); cAlert++; return IDOK; }
+int16_t StarsTest_AlertSz(APPSESSION &, std::string_view sz, int16_t mb) { (void)mb; fprintf(stderr, "Print alert: %.*s\n", static_cast<int>(sz.size()), sz.data()); cAlert++; return IDOK; }
 extern "C" bool SDLCALL StarsTest_SDL_OpenURL(const char *pszUri) {
     FILE *lpFile;
     char rgb[5];

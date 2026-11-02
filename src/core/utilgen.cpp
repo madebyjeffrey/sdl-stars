@@ -292,7 +292,7 @@ LStreamError:
     return;
 }
 
-std::int16_t AlertSz(APPSESSION &app, const char *sz, std::int16_t mbType) {
+std::int16_t AlertSz(APPSESSION &app, std::string_view sz, std::int16_t mbType) {
     char szT[256];
 
     if (app.state.ini.fValidate || (app.state.ini.fLogging && app.state.ini.fGen)) {

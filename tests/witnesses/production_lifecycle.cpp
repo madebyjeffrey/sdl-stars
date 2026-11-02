@@ -116,8 +116,8 @@ static std::array<char, 256> TestPszFormatIds(APPSESSION &, StringId id, std::sp
     assert(id == idsThereIsntEnoughFreeMemoryModifyProduction);
     return SzWitnessText("memory");
 }
-static void TestAlertSz(APPSESSION &, const char *s, int flags) {
-    assert(strcmp(s, "memory") == 0 && flags == win32::MB_ICONHAND);
+static void TestAlertSz(APPSESSION &, std::string_view s, int flags) {
+    assert(s == "memory" && flags == win32::MB_ICONHAND);
     event("Alert;");
 }
 static int TestGetDlgItem(HWND hwnd, int id) {

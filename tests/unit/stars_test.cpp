@@ -32,20 +32,20 @@ std::optional<std::array<char, 16>> FStarsTestPromptLegacyRacePassword(APPSESSIO
 
 // FStarsTestAlert records a message box and gives the answer that lets the
 // game carry on.
-static int16_t FStarsTestAlert(const char *sz, int16_t mbType) {
+static int16_t FStarsTestAlert(std::string_view sz, int16_t mbType) {
     if (pfnStarsTestAlertObserver) pfnStarsTestAlertObserver();
     cStarsTestAlert++;
-    snprintf(szStarsTestAlert, sizeof(szStarsTestAlert), "%s", sz);
+    CchCopyUtf8Prefix(std::span{szStarsTestAlert}, sz);
     if (((mbType & 0x000f) == win32::MB_YESNO || (mbType & 0x000f) == win32::MB_YESNOCANCEL) && iStarsTestAlertResponse != 0)
         return iStarsTestAlertResponse;
     return (mbType & 0x000f) == win32::MB_YESNO || (mbType & 0x000f) == win32::MB_YESNOCANCEL ? win32::IDYES : IDOK;
 }
 
 #ifdef STARS_UI_SDL
-int16_t StarsTest_AlertSz(APPSESSION &, const char *sz, int16_t mbType) { return FStarsTestAlert(sz, mbType); }
+int16_t StarsTest_AlertSz(APPSESSION &, std::string_view sz, int16_t mbType) { return FStarsTestAlert(sz, mbType); }
 #else
 // The native tests link hostui.c for the rest of ui.h.
-int16_t IdAlertBox(const char *sz, int16_t mbType) { return FStarsTestAlert(sz, mbType); }
+int16_t IdAlertBox(std::string_view sz, int16_t mbType) { return FStarsTestAlert(sz, mbType); }
 #endif
 
 int16_t FStarsTestInit(APPSESSION &app) {

@@ -122,7 +122,7 @@ static std::array<char, 256> TestPszFormatIds(APPSESSION &, StringId id, std::sp
     (void)p;
     return SzWitnessText("memory");
 }
-static void TestAlertSz(APPSESSION &, const char *s, int flags) {
+static void TestAlertSz(APPSESSION &, std::string_view s, int flags) {
     (void)s;
     (void)flags;
     alerts++;

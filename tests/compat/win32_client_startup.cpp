@@ -1528,16 +1528,17 @@ INT_PTR StarsTest_AskSaveDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
     return fRet;
 }
 
-int16_t StarsTest_AlertSz(APPSESSION &, const char *sz, int16_t mbType) {
+int16_t StarsTest_AlertSz(APPSESSION &, std::string_view sz, int16_t mbType) {
+    const std::string szText{sz};
     if (fRejectRacePassword) return IDOK;
-    if (PszCompatEnvironment("STARS_CLIENT_RACE_VERSION_TEST") && strstr(sz, "was unable to save your race data file")) {
+    if (PszCompatEnvironment("STARS_CLIENT_RACE_VERSION_TEST") && strstr(szText.c_str(), "was unable to save your race data file")) {
         fRaceVersionSaveFailed = 1;
         return IDOK;
     }
     if (PszCompatEnvironment("STARS_CLIENT_GAME_DELETE_MODE") &&
-        strstr(sz, "The selected managed game could not be completely deleted.")) {
+        strstr(szText.c_str(), "The selected managed game could not be completely deleted.")) {
         fLibraryGameDeleteFailureAlert = 1;
-        fprintf(stderr, "Startup alert: %s\n", sz);
+        fprintf(stderr, "Startup alert: %s\n", szText.c_str());
         cAlerts++;
         return IDOK;
     }
@@ -1546,14 +1547,14 @@ int16_t StarsTest_AlertSz(APPSESSION &, const char *sz, int16_t mbType) {
         return idHostOrderConflictResponse;
     }
     if (PszCompatEnvironment("STARS_CLIENT_HOST_LIBRARY_TEST") &&
-        strstr(sz, "Auto Generate is disabled because all of the human players are dead or inactive")) return IDOK;
-    if (PszCompatEnvironment("STARS_CLIENT_RACE_LIBRARY_TEST") && strstr(sz, "race design could not be deleted")) return IDOK;
-    if (fExpectRaceExportFailureAlert && strstr(sz, "race design could not be exported")) return IDOK;
-    if (PszCompatEnvironment("STARS_CLIENT_EXPORT_EXPECTED") && strstr(sz, "game could not be exported")) {
+        strstr(szText.c_str(), "Auto Generate is disabled because all of the human players are dead or inactive")) return IDOK;
+    if (PszCompatEnvironment("STARS_CLIENT_RACE_LIBRARY_TEST") && strstr(szText.c_str(), "race design could not be deleted")) return IDOK;
+    if (fExpectRaceExportFailureAlert && strstr(szText.c_str(), "race design could not be exported")) return IDOK;
+    if (PszCompatEnvironment("STARS_CLIENT_EXPORT_EXPECTED") && strstr(szText.c_str(), "game could not be exported")) {
         cAlerts++;
         return IDOK;
     }
-    fprintf(stderr, "Startup alert: %s\n", sz);
+    fprintf(stderr, "Startup alert: %s\n", szText.c_str());
     cAlerts++;
     if (PszCompatEnvironment("STARS_CLIENT_HOST_LIBRARY_TEST")) return IDOK;
     if (PszCompatEnvironment("STARS_CLIENT_LIBRARY_FAIL_WRITE") || PszCompatEnvironment("STARS_CLIENT_SWITCH_FAIL_SAVE")) return IDOK;
@@ -1565,7 +1566,7 @@ int16_t StarsTest_AlertSz(APPSESSION &, const char *sz, int16_t mbType) {
     }
     if (PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_EXPECTED")) {
         if (PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_FAIL_CONFLICT_RESTORE") &&
-            strstr(sz, "the managed game and its orders were preserved")) fConflictRestoreAlert = 1;
+            strstr(szText.c_str(), "the managed game and its orders were preserved")) fConflictRestoreAlert = 1;
         return IDOK;
     }
     win32::PostQuitMessage(91);

@@ -110,8 +110,8 @@ int StarsTest_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, UINT typ
     return win32::MessageBoxA(hwnd, pszText, pszCaption, type);
 }
 int16_t StarsTest_PromptPassword(APPSESSION &) { return 1; }
-int16_t StarsTest_AlertSz(APPSESSION &, const char *sz, int16_t mbType) {
-    (void)mbType; fprintf(stderr, "File workflow alert: %s\n", sz); cAlerts++;
+int16_t StarsTest_AlertSz(APPSESSION &, std::string_view sz, int16_t mbType) {
+    (void)mbType; fprintf(stderr, "File workflow alert: %.*s\n", static_cast<int>(sz.size()), sz.data()); cAlerts++;
     return IDOK;
 }
 static void  FileWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {

@@ -1353,7 +1353,10 @@ HFONT HfontPrinterCreate(APPSESSION &app, HDC hdc, std::int16_t iSize, std::int1
 
 // IdAlertBox shows an AlertSz message in a message box and returns the
 // button the player chose.
-std::int16_t IdAlertBox(const char *sz, std::int16_t mbType) { return CompatChoiceIO().pfnMessageBoxA(win32::GetFocus(), sz, "Stars!", mbType); }
+std::int16_t IdAlertBox(std::string_view sz, std::int16_t mbType) {
+    const std::string szMessage{sz};
+    return CompatChoiceIO().pfnMessageBoxA(win32::GetFocus(), szMessage.c_str(), "Stars!", mbType);
+}
 
 // PromptPassword asks for the password of the file FCheckPassword is
 // checking.

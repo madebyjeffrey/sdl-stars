@@ -26,8 +26,10 @@
 // stderr and questions get the cautious answer. hostui.cpp has the rest of
 // ui.h.
 
-std::int16_t IdAlertBox(const char *sz, std::int16_t mbType) {
-    std::fprintf(stderr, "stars-host: %s\n", sz);
+std::int16_t IdAlertBox(std::string_view sz, std::int16_t mbType) {
+    std::fputs("stars-host: ", stderr);
+    std::fwrite(sz.data(), 1, sz.size(), stderr);
+    std::fputc('\n', stderr);
     switch (mbType & 0x000f) {
     case win32::MB_OKCANCEL:
         return IDCANCEL;

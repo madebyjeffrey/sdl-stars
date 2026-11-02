@@ -80,10 +80,10 @@ static std::array<char, cchCatalogText> TestPszGetCompressedString(APPSESSION &,
         abort();
     }
 }
-static void TestAlertSz(APPSESSION &, const char *s, int flags) {
+static void TestAlertSz(APPSESSION &, std::string_view s, int flags) {
     (void)flags;
     clear();
-    printf("[\"notice\",%d],", atoi(s));
+    printf("[\"notice\",%d],", std::stoi(std::string{s}));
 }
 static int TestCchSnprintf(std::span<char> out, std::string_view format, std::span<const NATIVEFORMATARG> args) {
     int result = CchFormatNative(out, format, args);

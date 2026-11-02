@@ -133,7 +133,7 @@ static std::array<char, 256> TestPszFormatIds(APPSESSION &, StringId id, std::sp
 static std::int16_t TestCchGetString(APPSESSION &app, StringId id, std::span<char> out) {
     return static_cast<std::int16_t>(CchCopyUtf8(out, TestPszGetCompressedString(app, id).data()));
 }
-static void TestAlertSz(APPSESSION &, const char *s, int flags) {
+static void TestAlertSz(APPSESSION &, std::string_view s, int flags) {
     (void)s;
     (void)flags;
     alerts++;

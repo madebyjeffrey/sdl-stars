@@ -30,7 +30,7 @@ std::array<char, 19> PszGetCompressedPlanet(APPSESSION &app, std::int16_t id);
 // Append exactly the supplied text bytes; no terminator is written.
 void    OutputFileString(const char *szFile, std::string_view sz);
 void    StarsCopyFile(APPSESSION &app, const char *szSrc, const char *szDst);
-std::int16_t AlertSz(APPSESSION &app, const char *sz, std::int16_t mbType);
+std::int16_t AlertSz(APPSESSION &app, std::string_view sz, std::int16_t mbType);
 std::int16_t CchGetString(APPSESSION &app, StringId ids, std::span<char> psz);
 std::array<char, 12> PszFromInt(APPSESSION &app, std::int16_t i);
 std::array<char, 12> PszFromLong(APPSESSION &app, std::int32_t l);
