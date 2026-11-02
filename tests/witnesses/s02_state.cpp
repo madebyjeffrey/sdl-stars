@@ -173,7 +173,7 @@ int main(void) {
     reset(app);
     strcpy(memory[0], szRecent.c_str());
     under[2] = 1;
-    CHECK(FDeleteLibraryGameRecentPaths(app, "unused"));
+    CHECK(FDeleteLibraryGameRecentPaths(app, std::string_view{"unused", 6}));
     CHECK(memory[0] == szRecent && disk[0] == szRecent && strcmp(memory[2], "dddd") == 0 && memory[8][0] == 0);
     reset(app);
     strcpy(memory[0], "a.m1");

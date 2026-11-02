@@ -5,5 +5,5 @@ class APPSESSION;
 #include <cstdint>
 #include <string_view>
 std::int16_t FPathUnderLibrary(std::string_view szRoot, std::string_view szFile);
-std::int16_t FDeleteLibraryGameRecentPaths(APPSESSION &app, const char *pszDirectory);
+std::int16_t FDeleteLibraryGameRecentPaths(APPSESSION &app, std::string_view szDirectory);
 #endif

@@ -2313,7 +2313,7 @@ LDone:
     return fResult;
 }
 
-std::int16_t FDeleteLibraryGameRecentPaths(APPSESSION &app, const char *pszDirectory) {
+std::int16_t FDeleteLibraryGameRecentPaths(APPSESSION &app, std::string_view szDirectory) {
     char szIniFile[32], szSection[16], szEntry[16], szPath[512];
     char rgpszRecent[9][256];
     const char *pszRecent;
@@ -2325,7 +2325,7 @@ std::int16_t FDeleteLibraryGameRecentPaths(APPSESSION &app, const char *pszDirec
         pszRecent = app.lpui->vrgszMRU + 256 * i;
         cch = CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s", pszRecent);
         if (cch < 0 || static_cast<std::size_t>(cch) >= sizeof(szPath)) return 0;
-        if (LibraryPathIO().pfnUnder(pszDirectory, szPath)) {
+        if (LibraryPathIO().pfnUnder(szDirectory, szPath)) {
             rgpszRecent[i][0] = 0;
             if (i == 0) fContinueRemoved = 1;
         } else {
