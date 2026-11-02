@@ -25086,12 +25086,13 @@
   "working_tree_checkpoint": {
     "date": "2026-11-02",
     "branch": "develop",
-    "batch": "L05 host INI path view",
-    "source_commit": "035a8a2d",
+    "batch": "L05 bounded window-title views",
+    "source_commit": "d678a7f8",
     "status": "Verified and committed locally on develop. macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Current-source Windows SDL desktop and Linux desktop qualification remain outstanding.",
     "changes": [
-      "FReadHostIni accepts std::string_view for its input path, matching PfOpenNativeFile and avoiding a C-string-only private service boundary.",
-      "INI loading, UTF-8 validation and host settings remain unchanged."
+      "FSetNativeWindowTitle and StarsCompatSetWindowTitleUtf8 accept std::string_view.",
+      "The compatibility adapter owns a temporary NUL-terminated string for the Win32 text call.",
+      "Window title content and game behavior remain unchanged."
     ],
     "verification": {
       "macos_sdl_debug": "make compile passes with strict warnings and dual-header checks.",
@@ -25347,6 +25348,10 @@
       {
         "commit": "035a8a2d",
         "message": "Pass host INI paths as views"
+      },
+      {
+        "commit": "d678a7f8",
+        "message": "Pass window titles through bounded views"
       }
     ],
     "parent": "4867b0c5"
