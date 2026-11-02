@@ -20,6 +20,7 @@
 #include "file_selection_ui.h"
 #include "ownership.h"
 #include <limits>
+#include <charconv>
 #include <stars_compat.h>
 #include <SDL3/SDL.h>
 #include <cerrno>
@@ -752,10 +753,13 @@ static std::int16_t FindRaceVersion(APPSESSION &app, void *lpData, const char *p
     char szPath[512];
     PLAYER plr;
     int iVersion;
+    const char *pszEnd = pszName + std::strlen(pszName);
+    std::from_chars_result result;
     std::size_t cch = std::strlen(prv->szStem);
 
     if (!pch || !FPortableRaceFilename(app, pszName)) return 1;
-    iVersion = std::atoi(pch + 2);
+    result = std::from_chars(pch + 2, pszEnd, iVersion);
+    if (result.ec != std::errc{} || result.ptr != pszEnd) return 1;
     if (static_cast<std::size_t>((pch - pszName)) == cch && !SDL_strncasecmp(pszName, prv->szStem, cch))
         prv->iMax = StarsMax(prv->iMax, iVersion);
     CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", szRaceLibraryRoot, szDirSep, pszName);

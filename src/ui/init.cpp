@@ -428,6 +428,9 @@ void GetIniWinRc(APPSESSION &app, char *szSection, char *szIniFile, StringId ids
 
 void ReadIniSettings(APPSESSION &app) {
     std::uint16_t uDateCur;
+    std::uint16_t uDateMonth;
+    std::uint16_t uDateDay;
+    std::uint16_t uDateYear;
     std::int16_t  i;
     char     szEntry[16];
     WN       wnT;
@@ -614,9 +617,11 @@ void ReadIniSettings(APPSESSION &app) {
     TextIO().pfnCchGetString(app, idsVcrspeed, std::span{szEntry});
     app.lpui->viSpeedVCR = win32::GetPrivateProfileIntA(szSection, szEntry, 1, szIniFile);
     _strdate(app.state.szWork);
-    app.state.szWork[5] = 0;
-    app.state.szWork[2] = 0;
-    uDateCur = std::atoi(&app.state.szWork[3]) + std::atoi(app.state.szWork) * 31 + std::atoi(&app.state.szWork[6]) * 31 * 12;
+    // _strdate returns MM/DD/YY; use its fixed two-digit fields directly.
+    uDateMonth = (app.state.szWork[0] - '0') * 10 + app.state.szWork[1] - '0';
+    uDateDay = (app.state.szWork[3] - '0') * 10 + app.state.szWork[4] - '0';
+    uDateYear = (app.state.szWork[6] - '0') * 10 + app.state.szWork[7] - '0';
+    uDateCur = uDateDay + uDateMonth * 31 + uDateYear * 31 * 12;
     TextIO().pfnCchGetString(app, idsHistoryinfo, std::span{szEntry});
     app.lpui->uDateInstalled = win32::GetPrivateProfileIntA(szSection, szEntry, -1, szIniFile);
     if (uDateCur < app.lpui->uDateInstalled) {

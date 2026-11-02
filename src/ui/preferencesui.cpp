@@ -5,6 +5,7 @@
 #include "profile_text_io.h"
 #include "text_io.h"
 #include "win.h"
+#include <charconv>
 
 void ReadIniPresets(APPSESSION &app, char *szIniFile) {
     std::int16_t i, iPass, cch, cpq;
@@ -134,6 +135,10 @@ void WriteIniPresets(APPSESSION &app, char *szIniFile) {
 }
 
 void ReadIniSelection(APPSESSION &app, const char *pszSelection, std::int16_t cch) {
+    std::int32_t iObjSel = 0;
+    const char *pszEnd;
+    std::from_chars_result result;
+
     if (cch < 3) {
         app.state.ini.grobjSel = 0;
     } else {
@@ -157,7 +162,9 @@ void ReadIniSelection(APPSESSION &app, const char *pszSelection, std::int16_t cc
             app.state.ini.grobjSel = 0;
         }
         if (app.state.ini.grobjSel != 0) {
-            app.state.ini.iObjSel = std::atoi(&pszSelection[2]);
+            pszEnd = pszSelection + cch;
+            result = std::from_chars(pszSelection + 2, pszEnd, iObjSel);
+            app.state.ini.iObjSel = result.ec == std::errc{} ? iObjSel : 0;
         }
     }
 }

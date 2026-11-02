@@ -14,6 +14,22 @@
 #include "race_query_io.h"
 #include "alert_io.h"
 #include "ownership.h"
+#include <charconv>
+#include <string_view>
+
+static int IFromDecimalPrefix(std::string_view psz) {
+    int iValue = 0;
+    std::from_chars_result result;
+
+    while (!psz.empty() && (psz.front() == ' ' || psz.front() == '\t' || psz.front() == '\n' || psz.front() == '\r' || psz.front() == '\f' || psz.front() == '\v')) {
+        psz.remove_prefix(1);
+    }
+    if (!psz.empty() && psz.front() == '+') {
+        psz.remove_prefix(1);
+    }
+    result = std::from_chars(psz.data(), psz.data() + psz.size(), iValue);
+    return result.ec == std::errc{} && result.ptr != psz.data() ? iValue : 0;
+}
 
 void DrawShipOrders(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
     std::int16_t swp;
@@ -2632,7 +2648,7 @@ void ChangeTransportAmount(APPSESSION &app) {
             fPercent = 1;
         }
         ControlIO().pfnGetWindowText(app.lpui->hwndOrderED, rgb, 8);
-        iInit = std::atoi(rgb);
+        iInit = IFromDecimalPrefix(rgb);
         i = 0 <= iInit ? iInit : 0;
         if (fPercent) {
             i = 100 >= i ? i : 100;
