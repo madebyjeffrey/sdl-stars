@@ -22,7 +22,7 @@ static NATIVEFILETEMPRESULT TestTemp(std::string_view path){
     nft.lpfile=NATIVEFILEOWNER((NATIVEFILE *)(uintptr_t)1,TestClose);
     return nft;
 }
-static int TestMode(NATIVEFILE *fp,const char *p){(void)fp;(void)p;return failure==Mode?-1:0;}
+static int TestMode(NATIVEFILE *fp,std::string_view p){(void)fp;(void)p;return failure==Mode?-1:0;}
 static size_t TestWrite(std::span<const std::byte> data,NATIVEFILE *fp){(void)fp;if(failure==Bom)return 2;memcpy(output+used,data.data(),data.size());used+=data.size();return data.size();}
 static int TestPuts(std::string_view s,NATIVEFILE *fp){
     (void)fp;

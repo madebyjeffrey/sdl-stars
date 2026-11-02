@@ -652,12 +652,12 @@ std::optional<std::string> SzNativeReadDir(NATIVEDIR *dir) {
 }
 int ICloseNativeDir(NATIVEDIR *dir) { delete dir; return 0; }
 
-static std::optional<NATIVEFILEIDENTITY> NfiNativeFileIdentity(NATIVEFILE *pf, const char *psz) {
-    if (!pf && !FPath(psz)) return std::nullopt;
+static std::optional<NATIVEFILEIDENTITY> NfiNativeFileIdentity(NATIVEFILE *pf, std::string_view szPath) {
+    if (!pf && !FPath(szPath)) return std::nullopt;
     return FileCall<std::optional<NATIVEFILEIDENTITY>>(pf, std::nullopt, [&]() -> std::optional<NATIVEFILEIDENTITY> {
 #ifdef _WIN32
         HANDLE h = pf && pf->fd >= 0 ? reinterpret_cast<HANDLE>(_get_osfhandle(pf->fd)) : INVALID_HANDLE_VALUE;
-        if (!pf) h = CreateFileW(PathFromUtf8(psz).c_str(), FILE_READ_ATTRIBUTES,
+        if (!pf) h = CreateFileW(PathFromUtf8(szPath).c_str(), FILE_READ_ATTRIBUTES,
                                 FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr,
                                 OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr);
         BY_HANDLE_FILE_INFORMATION info;
@@ -667,7 +667,8 @@ static std::optional<NATIVEFILEIDENTITY> NfiNativeFileIdentity(NATIVEFILE *pf, c
         return NATIVEFILEIDENTITY{info.dwVolumeSerialNumber, (static_cast<std::uint64_t>(info.nFileIndexHigh) << 32) | info.nFileIndexLow};
 #else
         struct stat st;
-        int ret = pf ? pf->fd >= 0 ? fstat(pf->fd, &st) : -1 : stat(psz, &st);
+        const fs::path path = PathFromUtf8(szPath);
+        int ret = pf ? pf->fd >= 0 ? fstat(pf->fd, &st) : -1 : stat(path.c_str(), &st);
         if (ret != 0) return std::nullopt;
         return NATIVEFILEIDENTITY{static_cast<std::uint64_t>(st.st_dev), static_cast<std::uint64_t>(st.st_ino)};
 #endif
@@ -675,18 +676,19 @@ static std::optional<NATIVEFILEIDENTITY> NfiNativeFileIdentity(NATIVEFILE *pf, c
 }
 std::optional<NATIVEFILEIDENTITY> FNativeFileIdentity(NATIVEFILE *pf) {
     if (!pf) { errno = EINVAL; return std::nullopt; }
-    return NfiNativeFileIdentity(pf, nullptr);
+    return NfiNativeFileIdentity(pf, {});
 }
-std::optional<NATIVEFILEIDENTITY> FNativeFileIdentity(const char *psz) {
-    return NfiNativeFileIdentity(nullptr, psz);
+std::optional<NATIVEFILEIDENTITY> FNativeFileIdentity(std::string_view szPath) {
+    return NfiNativeFileIdentity(nullptr, szPath);
 }
-int ICopyNativePermissions(NATIVEFILE *pf, const char *psz) {
-    if (!pf || !FPath(psz)) return -1;
+int ICopyNativePermissions(NATIVEFILE *pf, std::string_view szPath) {
+    if (!pf || !FPath(szPath)) return -1;
 #ifdef _WIN32
     return 0;
 #else
     struct stat st;
-    if (stat(psz, &st) != 0) return 0;
+    const fs::path path = PathFromUtf8(szPath);
+    if (stat(path.c_str(), &st) != 0) return 0;
     return pf->fd < 0 ? pf->Fail(ENOTSUP) : fchmod(pf->fd, st.st_mode & 0777);
 #endif
 }
