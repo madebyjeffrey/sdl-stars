@@ -25086,13 +25086,12 @@
   "working_tree_checkpoint": {
     "date": "2026-11-02",
     "branch": "develop",
-    "batch": "L06 bounded views for library file helpers",
-    "source_commit": "cba58121",
+    "batch": "L05 bounded library metadata text inputs",
+    "source_commit": "8dbaf423",
     "status": "Verified and committed locally on develop. macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Current-source Windows SDL desktop and Linux desktop qualification remain outstanding.",
     "changes": [
-      "Generated companion-file inspection accepts std::string_view paths.",
-      "ZIP suffix detection and optional conflict-file copying accept bounded path views.",
-      "The existing ZIP suffix case-insensitive match, file validation and copy behavior remain unchanged."
+      "FWriteLibraryMetadata and its values helper accept string_view for the directory, library name and exchange name.",
+      "Metadata formatting, atomic publication and saved contents remain unchanged; the linked witness provider uses the same bounded interface."
     ],
     "verification": {
       "macos_sdl_debug": "make compile passes with strict warnings and dual-header checks.",
@@ -25374,6 +25373,10 @@
       {
         "commit": "cba58121",
         "message": "Use views in library file helpers"
+      },
+      {
+        "commit": "8dbaf423",
+        "message": "Write library metadata from bounded views"
       }
     ],
     "parent": "4867b0c5"
