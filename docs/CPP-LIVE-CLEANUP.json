@@ -23668,12 +23668,12 @@
   ],
   "restart_checkpoint": {
     "date": "2026-11-01",
-    "reason": "Active C-style/C11 cleanup continuation checkpoint; SDL convenience-macro cleanup is locally verified but uncommitted because this session has read-only access to .git.",
+    "reason": "Active C-style/C11 cleanup continuation checkpoint after SDL convenience-macro cleanup.",
     "branch": "develop",
     "batch": "L08a remove unnecessary SDL convenience macros from tests",
     "batch_parent": "04e2076c",
-    "latest_batch": "L08a remove unnecessary SDL convenience macros from tests (uncommitted worktree changes)",
-    "latest_batch_head": "04e2076c",
+    "latest_batch": "L08a remove unnecessary SDL convenience macros from tests",
+    "latest_batch_head": "443ee2cf",
     "completed_stages": [
       "L01: nullptr and aliases",
       "L02: explicit C++ casts and headers",
@@ -23700,7 +23700,6 @@
       "compat/win32/src/toolbar.cpp: TB_GETBUTTONTEXT ABI output"
     ],
     "other_remaining": [
-      "Uncommitted L08a SDL macro cleanup in tests/compat; git commit was denied because .git is read-only in this session.",
       "Other readonly path/buffer/service interfaces",
       "Audit remaining Work/Msg/scratch storage and borrowed returns",
       "Linux portal direct formatting remains; its D-Bus development headers are unavailable in the local environment",
@@ -23710,8 +23709,7 @@
     ],
     "restart_order": [
       "Read this checkpoint and check git status/log; preserve unrelated title-modernized assets.",
-      "The uncommitted tests/compat changes replace SDL_zero with aggregate value-initialization/reset and SDL_arraysize with std::size; no SDL convenience macros in this family remain in scanned owned C++ sources. Locally verified: compat smoke/startup/popup/native-tutorial targets built; popup/native-tutorial smoke tests passed; unit tests 18/18, available tutorial checkpoint passed, native regression 519 matches with 25 existing unused-storage warnings and zero differences/errors/skips. Windows-only compat sources were not built on this macOS host.",
-      "Git staging/commit failed: .git/index.lock could not be created (operation not permitted). Do not assume these L08a edits were published. Commit/push after restarting in a checkout with writable Git metadata.",
+      "Commit 443ee2cf records L08a: SDL_zero becomes aggregate initialization/reset, SDL_arraysize becomes std::size, and redundant resets of newly initialized events are removed. No macros in this SDL convenience family remain in scanned owned C++ sources. Verification: compat smoke/startup/popup/native-tutorial targets build; popup/native-tutorial smoke tests pass; unit tests 18/18, available tutorial checkpoint passes, native regression 519 matches with 25 existing unused-storage warnings and zero differences/errors/skips. Windows-only compat sources were not built on this macOS host.",
       "L05aq converted FIniValue and LIniInt to string_view inputs and span output; host INI uses the explicit post-BOM byte extent. The linked profile I/O witness tests nonterminated views and UTF-8 truncation.",
       "Continue remaining L05 bounded destinations, const-text interfaces, scratch/borrowed-result audit and Linux portal formatting.",
       "Continue L06 remaining buffer/result interfaces and chooser Milestone D qualification.",
@@ -23722,7 +23720,7 @@
       "docs/CPP-LIVE-OWNED-TEXT.json: game_file_input_views",
       "dist/verification/live-cpp/l05ai/ (ignored local logs and source hashes)"
     ],
-    "goal_status": "Overall cleanup goal remains unfinished; this checkpoint records a completed parser-interface batch.",
+  "goal_status": "Overall cleanup goal remains unfinished; this checkpoint records the completed L08a SDL macro batch.",
     "platform_ci": {
       "run_id": 41363769853,
       "url": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41363769853",
@@ -23734,7 +23732,7 @@
   },
   "current_checkpoint": {
     "batch": "L08a remove unnecessary SDL convenience macros from tests",
-    "status": "implemented and locally verified in the worktree; uncommitted because .git is read-only in this session",
+    "status": "implemented, locally verified, and committed as 443ee2cf",
     "parent": "04e2076c",
     "changes": {
       "tests/compat/native_tutorial.cpp": "Uses aggregate initialization at SDL_Event declaration sites; removes redundant second reset.",
@@ -23762,8 +23760,8 @@
       "L08 inspect remaining C-style integer literal macros in live owned code (INT32_C/UINT32_C/UINT64_C candidates), retained preprocessor/platform macros, maintained inventory reconciliation and final platform qualification."
     ],
     "macro_scan": "The SDL convenience macro family is absent from scanned owned C/C++ source after this worktree batch. A live owned-code scan found INT32_C and UINT32_C in compat/win32/include/wincompat_constants.h (70 occurrences), UINT32_C in compat/win32/include/wincompat_values.h, compat/win32/src/{menu,paint,input}.cpp, src/core/race.cpp, and UINT64_C in compat/win32/src/dib.cpp. These need a typed-literal review. Imported SDK/reference fixtures intentionally retain the macros. The retained preprocessor/platform macro audit, including resource compiler boundaries and API-like Win32 macros, remains open.",
-    "source_commit": null,
-    "published_batch_head": "04e2076c"
+    "source_commit": "443ee2cf",
+    "published_batch_head": "443ee2cf"
   },
   "milestone_d_checkpoint": {
     "stage": "D05 caller migrations implemented; D06 platform qualification pending",
