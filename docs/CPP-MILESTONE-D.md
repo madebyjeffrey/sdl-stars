@@ -1,6 +1,6 @@
 # Milestone D: a C++ file-selection interface behind the SDL Win32 wrapper
 
-Status: D01–D02 complete on `develop`; D03–D06 remain open.
+Status: D01–D02 complete; D03 implementation underway; D04–D06 remain open.
 Recorded: 2026-10-31. D01 revalidated: 2026-11-01. Tracking: [#71](https://github.com/madebyjeffrey/sdl-stars/issues/71).
 
 ## Outcome and scope
@@ -159,6 +159,25 @@ stays buildable and is qualified under the verification gate below.
 | **D04 — backend handoff** | Replace the mutable argument/buffer backend handoff with the typed request/result across compatibility, portal, AppKit and Windows adapters. | D03 | Each backend remains isolated, preserves its platform behavior, and routes success/cancel/failure through the shared policy and callback cleanup. |
 | **D05 — real UI callers** | Migrate race-library import and export, or the equivalent C-parent open/save pair, to the operation; retire their `OPENFILENAMEA` construction where no longer needed. | D04 | Actual open and save workflows pass through the same operation and retain filename, CWD, cancellation, error and publication behavior. |
 | **D06 — qualification and expansion decision** | Qualify the final revision, update active documentation, compare caller knowledge and duplicate policy before/after, and choose the next wrapper family only if the pilot improved locality. | D01–D05 | All gates below pass; remaining Win32 callers and any deliberate exception are listed. The next slice is a separate scoped plan. |
+
+### D03 implementation progress (2026-11-01)
+
+Commit `2748cf1a` adds `win32::files::SelectFile` as the shared typed
+operation and reduces `FFileDialog` to a Win32 input/output and error-state
+adapter. The compatibility browser now consumes the owned request, and its
+filter view is read-only. The real-client workflow test exercises owned
+selection, distinct cancellation, UTF-8 canonical paths, and unchanged CWD.
+This starts D03; it does not close D03's platform and legacy-contract evidence.
+
+On the macOS Debug build, `cmake --build cmake-build-debug -j4` passed. The
+focused CTest cases `win32_callback_context`, `win32_filedialog_cocoa`,
+`win32_client_fileworkflow_dummy`, `test_cpp_compilation_manifest`, and
+`test_win32_type_isolation` passed. The C++ manifest audit reports 158 owned
+C++20 sources, 159 compiled variants, 2 independent C references, and 162
+headers compiled in both orders. The macOS configuration omits the compatibility
+browser test target; Linux portal and Windows SDK/native file-dialog cases were
+not run. Full regression, unit, tutorial, Release, and host qualification remain
+open. The D03-to-D06 exit gate below is unchanged.
 
 Prefer focused commits for the interface, shared operation, backend migration and
 caller migration. Do not leave a permanent old/new policy split after D05. If
