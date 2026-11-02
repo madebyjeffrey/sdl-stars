@@ -76,12 +76,20 @@
         "evidence": "docs/CPP-LIVE-FILE-SERVICES.json",
         "interface": "Definition bytes have a local owner through parsing/generation; arena allocation and unused global tail state are retired."
       },
-      "additional_verified_cleanup": {
-        "batch": "L04z native formatter scratch ownership",
-        "commit": "ef0df6e4",
-        "change": "CchSprintfFields uses reserved std::string scratch instead of malloc/free.",
-        "verification": "macOS Debug build, desktop/host units, tutorial smoke, and native/host regressions pass; unchanged baseline."
-      }
+      "additional_verified_cleanup": [
+        {
+          "batch": "L04z native formatter scratch ownership",
+          "commit": "ef0df6e4",
+          "change": "CchSprintfFields uses reserved std::string scratch instead of malloc/free.",
+          "verification": "macOS Debug build, desktop/host units, tutorial smoke, and native/host regressions pass; unchanged baseline."
+        },
+        {
+          "batch": "L04y host INI buffer ownership",
+          "commit": "1ac9e5ce",
+          "change": "FReadHostIni owns input bytes in std::string and skips the validated UTF-8 BOM through a view.",
+          "verification": "Host units, desktop units, tutorial smoke, native and host regressions pass; unchanged baseline."
+        }
+      ]
     },
     {
       "id": "L05",
@@ -24024,12 +24032,12 @@
   ],
   "restart_checkpoint": {
     "date": "2026-11-02",
-    "reason": "The native formatter’s final app-owned malloc scratch buffer now uses reserved std::string ownership; continue remaining L05/L06 work and final L08 qualification.",
+    "reason": "The host INI reader now owns file bytes with std::string; the native formatter scratch also uses C++ string ownership. Continue remaining L05/L06 work and final L08 qualification.",
     "branch": "develop",
-    "batch": "L04z native formatter scratch ownership",
-    "batch_parent": "855ceb62",
-    "latest_batch": "L04z native formatter scratch ownership",
-    "latest_batch_head": "ef0df6e4",
+    "batch": "L04y host INI buffer ownership",
+    "batch_parent": "5f10661f",
+    "latest_batch": "L04y host INI buffer ownership",
+    "latest_batch_head": "1ac9e5ce",
     "completed_stages": [
       "L01: nullptr and aliases",
       "L02: explicit C++ casts and headers",
@@ -24117,11 +24125,11 @@
     "published_batch_head": "bf4537ae"
   },
   "current_checkpoint": {
-    "batch": "L04z native formatter scratch ownership",
+    "batch": "L04y host INI buffer ownership",
     "status": "implemented and locally verified; source commit published locally, checkpoint publication pending",
-    "parent": "855ceb62",
+    "parent": "5f10661f",
     "changes": {
-      "src/platform/native.cpp": "CchSprintfFields now reserves and builds its transformed format in std::string rather than a 256-byte stack buffer plus malloc/free. It preserves the empty-output return when reserve fails and passes c_str() to the native formatter."
+      "src/host/host.cpp": "FReadHostIni now reads file bytes into std::string rather than malloc/NATIVEOWNER storage. It validates the same bytes, skips a UTF-8 BOM through string_view::remove_prefix, and keeps the owner alive through parsing."
     },
     "verification": {
       "macos_debug_build_and_desktop_unit_tests": "Pass; full macos-sdl-debug build and 18/18 desktop unit tests.",
@@ -24137,14 +24145,14 @@
       "L06 remaining buffer/length service interfaces and chooser Milestone D qualification, including Windows/Linux chooser coverage.",
       "L08 final retained primitive/API macro/preprocessor inventory reconciliation and current-source platform qualification."
     ],
-    "source_commit": "ef0df6e4",
-    "published_batch_head": "ef0df6e4",
+    "source_commit": "1ac9e5ce",
+    "published_batch_head": "1ac9e5ce",
     "previous_batch": {
-      "batch": "L05cd readonly scanner name input",
+      "batch": "L04z native formatter scratch ownership",
       "status": "implemented and locally verified; source commit published locally, checkpoint publication pending",
-      "parent": "b643490f",
+      "parent": "855ceb62",
       "changes": {
-        "src/ui/scan.h and src/ui/scan.cpp": "FSelectSz now accepts a const name because it only compares and traverses the supplied text; its local traversal pointer is const."
+        "src/platform/native.cpp": "CchSprintfFields now reserves and builds its transformed format in std::string rather than a 256-byte stack buffer plus malloc/free. It preserves the empty-output return when reserve fails and passes c_str() to the native formatter."
       },
       "verification": {
         "macos_debug_build_and_desktop_unit_tests": "Pass; full macos-sdl-debug build and 18/18 desktop unit tests.",
@@ -24160,19 +24168,17 @@
         "L06 remaining buffer/length service interfaces and chooser Milestone D qualification, including Windows/Linux chooser coverage.",
         "L08 final retained primitive/API macro/preprocessor inventory reconciliation and current-source platform qualification."
       ],
-      "source_commit": "c2d4b079",
-      "published_batch_head": "c2d4b079",
+      "source_commit": "ef0df6e4",
+      "published_batch_head": "ef0df6e4",
       "previous_batch": {
-        "batch": "L05cc readonly recent-file profile key",
+        "batch": "L05cd readonly scanner name input",
         "status": "implemented and locally verified; source commit published locally, checkpoint publication pending",
-        "parent": "f888e71d",
+        "parent": "b643490f",
         "changes": {
-          "src/ui/preferencesui.h and src/ui/preferencesui.cpp": "ReadIniRecent now accepts a const key and changes the slot suffix in an owned std::string, leaving caller text unchanged.",
-          "tests/witnesses/s02_state.cpp": "Passes string literals for the section, recent-file key and INI path to exercise the read-only contract."
+          "src/ui/scan.h and src/ui/scan.cpp": "FSelectSz now accepts a const name because it only compares and traverses the supplied text; its local traversal pointer is const."
         },
         "verification": {
           "macos_debug_build_and_desktop_unit_tests": "Pass; full macos-sdl-debug build and 18/18 desktop unit tests.",
-          "ini_state_witness": "S02 state witness passes with string-literal section, recent-entry key and filename inputs.",
           "host_unit_tests": "Pass; 29/29.",
           "native_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
           "host_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
@@ -24185,19 +24191,19 @@
           "L06 remaining buffer/length service interfaces and chooser Milestone D qualification, including Windows/Linux chooser coverage.",
           "L08 final retained primitive/API macro/preprocessor inventory reconciliation and current-source platform qualification."
         ],
-        "source_commit": "fd92e0f8",
-        "published_batch_head": "fd92e0f8",
+        "source_commit": "c2d4b079",
+        "published_batch_head": "c2d4b079",
         "previous_batch": {
-          "batch": "L05ca readonly UI text inputs",
+          "batch": "L05cc readonly recent-file profile key",
           "status": "implemented and locally verified; source commit published locally, checkpoint publication pending",
-          "parent": "a9e36cc0",
+          "parent": "f888e71d",
           "changes": {
-            "src/ui/planetui.h and src/ui/planetui.cpp": "FDrawTileNC and DrawProductionItem now accept const text; DrawProductionItem keeps its input traversal pointers const.",
-            "src/core/ui.h, src/ui/raceui.cpp and src/host/hostui.cpp": "FConfirmLegacyRaceNames now accepts const race names, and FSaveRace accepts a const filename suggestion.",
-            "src/ui/raceui.cpp": "Removed the const_cast around the literal/default race-save suggestion after making the input const."
+            "src/ui/preferencesui.h and src/ui/preferencesui.cpp": "ReadIniRecent now accepts a const key and changes the slot suffix in an owned std::string, leaving caller text unchanged.",
+            "tests/witnesses/s02_state.cpp": "Passes string literals for the section, recent-file key and INI path to exercise the read-only contract."
           },
           "verification": {
-            "macos_debug_build_and_desktop_unit_tests": "Pass; full macos-sdl-debug build and 18/18 desktop unit tests. The first run had one unrelated native-file-UI timeout; isolated rerun and full suite rerun both passed.",
+            "macos_debug_build_and_desktop_unit_tests": "Pass; full macos-sdl-debug build and 18/18 desktop unit tests.",
+            "ini_state_witness": "S02 state witness passes with string-literal section, recent-entry key and filename inputs.",
             "host_unit_tests": "Pass; 29/29.",
             "native_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
             "host_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
@@ -24210,19 +24216,19 @@
             "L06 remaining buffer/length service interfaces and chooser Milestone D qualification, including Windows/Linux chooser coverage.",
             "L08 final retained primitive/API macro/preprocessor inventory reconciliation and current-source platform qualification."
           ],
-          "source_commit": "28d218a2",
-          "published_batch_head": "28d218a2",
+          "source_commit": "fd92e0f8",
+          "published_batch_head": "fd92e0f8",
           "previous_batch": {
-            "batch": "L05bz readonly save and log path inputs",
+            "batch": "L05ca readonly UI text inputs",
             "status": "implemented and locally verified; source commit published locally, checkpoint publication pending",
-            "parent": "0ed3f7c8",
+            "parent": "a9e36cc0",
             "changes": {
-              "src/core/log.h and src/core/log.cpp": "FLoadLogFile now takes a const path because it only passes the path to the stream opener.",
-              "src/core/save.h and src/core/save.cpp": "FWriteDataFile and FCreateFile now take const path inputs; FCreateFile keeps its selected path pointer const.",
-              "tests/compat/win32_newgame_workflow.h, tests/unit/test_native_ports.cpp and tests/unit/test_save.cpp": "Updated test provider signatures to match the const-correct API."
+              "src/ui/planetui.h and src/ui/planetui.cpp": "FDrawTileNC and DrawProductionItem now accept const text; DrawProductionItem keeps its input traversal pointers const.",
+              "src/core/ui.h, src/ui/raceui.cpp and src/host/hostui.cpp": "FConfirmLegacyRaceNames now accepts const race names, and FSaveRace accepts a const filename suggestion.",
+              "src/ui/raceui.cpp": "Removed the const_cast around the literal/default race-save suggestion after making the input const."
             },
             "verification": {
-              "macos_debug_build_and_desktop_unit_tests": "Pass; 18/18.",
+              "macos_debug_build_and_desktop_unit_tests": "Pass; full macos-sdl-debug build and 18/18 desktop unit tests. The first run had one unrelated native-file-UI timeout; isolated rerun and full suite rerun both passed.",
               "host_unit_tests": "Pass; 29/29.",
               "native_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
               "host_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
@@ -24235,20 +24241,19 @@
               "L06 remaining buffer/length service interfaces and chooser Milestone D qualification, including Windows/Linux chooser coverage.",
               "L08 final retained primitive/API macro/preprocessor inventory reconciliation and current-source platform qualification."
             ],
-            "source_commit": "1a9a7c08",
-            "published_batch_head": "1a9a7c08",
+            "source_commit": "28d218a2",
+            "published_batch_head": "28d218a2",
             "previous_batch": {
-              "batch": "L05by readonly INI key and format inputs",
-              "status": "implemented and locally verified",
-              "parent": "f0f54447",
+              "batch": "L05bz readonly save and log path inputs",
+              "status": "implemented and locally verified; source commit published locally, checkpoint publication pending",
+              "parent": "0ed3f7c8",
               "changes": {
-                "src/ui/init.h and src/ui/init.cpp": "GetIniWinRc section/file keys and ReadIniTileSettings format are const inputs.",
-                "src/ui/preferencesui.h and src/ui/preferencesui.cpp": "Preset file paths and recent-file section/file keys are const; the recent entry remains mutable for suffix iteration.",
-                "tests/witnesses/s02_layout.cpp": "Removed casts that made string literals appear mutable in the legacy INI layout witness."
+                "src/core/log.h and src/core/log.cpp": "FLoadLogFile now takes a const path because it only passes the path to the stream opener.",
+                "src/core/save.h and src/core/save.cpp": "FWriteDataFile and FCreateFile now take const path inputs; FCreateFile keeps its selected path pointer const.",
+                "tests/compat/win32_newgame_workflow.h, tests/unit/test_native_ports.cpp and tests/unit/test_save.cpp": "Updated test provider signatures to match the const-correct API."
               },
               "verification": {
                 "macos_debug_build_and_desktop_unit_tests": "Pass; 18/18.",
-                "ini_witnesses": "S02 layout, presets and state pass; 3/3.",
                 "host_unit_tests": "Pass; 29/29.",
                 "native_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
                 "host_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
@@ -24261,20 +24266,47 @@
                 "L06 remaining buffer/length service interfaces and chooser Milestone D qualification, including Windows/Linux chooser coverage.",
                 "L08 final retained primitive/API macro/preprocessor inventory reconciliation and current-source platform qualification."
               ],
-              "source_commit": "cd4ac6de",
-              "published_batch_head": "cd4ac6de",
+              "source_commit": "1a9a7c08",
+              "published_batch_head": "1a9a7c08",
               "previous_batch": {
-                "batch": "L05bx readonly technology requirement inputs",
-                "source_commit": "0da73af0",
+                "batch": "L05by readonly INI key and format inputs",
                 "status": "implemented and locally verified",
+                "parent": "f0f54447",
+                "changes": {
+                  "src/ui/init.h and src/ui/init.cpp": "GetIniWinRc section/file keys and ReadIniTileSettings format are const inputs.",
+                  "src/ui/preferencesui.h and src/ui/preferencesui.cpp": "Preset file paths and recent-file section/file keys are const; the recent entry remains mutable for suffix iteration.",
+                  "tests/witnesses/s02_layout.cpp": "Removed casts that made string literals appear mutable in the legacy INI layout witness."
+                },
                 "verification": {
                   "macos_debug_build_and_desktop_unit_tests": "Pass; 18/18.",
+                  "ini_witnesses": "S02 layout, presets and state pass; 3/3.",
                   "host_unit_tests": "Pass; 29/29.",
                   "native_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
                   "host_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
                   "tutorial": "Available SDL tutorial smoke checkpoint passes; full 80-page tutorial remains unfinished.",
                   "baseline": "Unchanged.",
                   "diff_check": "pass"
+                },
+                "remaining_work": [
+                  "L05 remaining bounded text destinations, const-text interfaces and post-migration scratch/borrowed-return audit.",
+                  "L06 remaining buffer/length service interfaces and chooser Milestone D qualification, including Windows/Linux chooser coverage.",
+                  "L08 final retained primitive/API macro/preprocessor inventory reconciliation and current-source platform qualification."
+                ],
+                "source_commit": "cd4ac6de",
+                "published_batch_head": "cd4ac6de",
+                "previous_batch": {
+                  "batch": "L05bx readonly technology requirement inputs",
+                  "source_commit": "0da73af0",
+                  "status": "implemented and locally verified",
+                  "verification": {
+                    "macos_debug_build_and_desktop_unit_tests": "Pass; 18/18.",
+                    "host_unit_tests": "Pass; 29/29.",
+                    "native_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
+                    "host_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
+                    "tutorial": "Available SDL tutorial smoke checkpoint passes; full 80-page tutorial remains unfinished.",
+                    "baseline": "Unchanged.",
+                    "diff_check": "pass"
+                  }
                 }
               }
             }
