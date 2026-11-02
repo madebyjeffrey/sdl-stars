@@ -191,17 +191,22 @@ tests `win32_exception_callbacks`, `win32_sdl_resource_modal`,
 `win32_filedialog_cocoa`, `win32_client_fileworkflow_dummy`,
 `test_cpp_compilation_manifest` and `test_win32_type_isolation` pass. The
 manifest remains at 158 owned C++20 sources, 159 compiled variants, 2
-independent C references and 162 headers in both orders.
+independent C references and 163 headers in both orders after the shared UI
+selection helper was added.
 
 The in-progress D05 caller batch migrates race-library open/save selection,
-library orders export and the active game/race/ZIP import-source picker to the
-typed operation. The real-client workflow exercises typed race import/export
-and orders save/cancel paths; the active import-source picker is compiled but
-not exercised end-to-end because its consumer immediately opens the race-edit
-modal, which this harness does not drive. The workflow test passes after
-preserving the original chooser cancellation sequence. Its remaining native
-coverage, full regression, unit, tutorial, Release and host gates are still
-open; D03–D06 are not qualified for completion.
+library orders export/import, ZIP game export and the active game/race/ZIP
+import-source picker to the typed operation. The real-client workflow exercises
+typed race import/export and orders save/cancel paths. The ZIP export, orders
+import and active import-source chooser branches are compile-checked but not
+exercised end-to-end; the first two are not driven by this workflow and the
+last immediately opens a race-edit modal that the harness does not drive. The
+workflow test passes after preserving the original chooser cancellation
+sequence. Main game open and race save remain `OPENFILENAMEA` callers and are
+the next candidates; migrating them also requires converting their separate
+client test chooser seams. Remaining native coverage, full regression, unit,
+tutorial, Release and host gates are open; D03–D06 are not qualified for
+completion.
 
 ### D04 implementation progress (2026-11-01)
 
