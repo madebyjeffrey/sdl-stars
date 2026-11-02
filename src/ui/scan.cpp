@@ -2796,8 +2796,8 @@ INT_PTR  FindDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     return 0;
 }
 
-std::int16_t FSelectSz(APPSESSION &app, char *szName) {
-    char   *pch;
+std::int16_t FSelectSz(APPSESSION &app, const char *szName) {
+    const char *pch;
     std::int16_t ifl;
     FLEET  *lpfl;
     std::int16_t ipl;

@@ -32,7 +32,7 @@ void             DrawScanXorLines(APPSESSION &app, HDC hdc, POINT16 *rgpt, std::
 std::int16_t          SetScanWp(APPSESSION &app, std::int16_t iNew);
 std::int16_t          FGetNextObjHere(APPSESSION &app, SCAN *pscan, std::int16_t fOnlyOurs);
 INT_PTR  FindDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-std::int16_t          FSelectSz(APPSESSION &app, char *szName);
+std::int16_t          FSelectSz(APPSESSION &app, const char *szName);
 void             GetScanFleetOrientation(APPSESSION &app, FLEET *lpfl, POINT16 *ppt, POINT16 *pptD);
 void             GetDxDyOrientation(APPSESSION &app, std::int16_t dx, std::int16_t dy, POINT16 *ppt, POINT16 *pptD);
 std::int16_t          FHandleMeasuringTape(APPSESSION &app, SCAN *pscan, POINT16 pt);
