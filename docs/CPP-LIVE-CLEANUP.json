@@ -151,7 +151,8 @@
         "typed-mdi-ui-wrapper-formatting",
         "typed-mine-ui-wrapper-formatting",
         "retire-unused-window-settings-string-parameter",
-        "readonly-technology-requirement-inputs"
+        "readonly-technology-requirement-inputs",
+        "readonly-ini-key-and-format-inputs"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -1294,6 +1295,17 @@
         ],
         "effects": "Both routines inspect the six requirement bytes without modifying them. The internal research-progress scratch remains mutable and is restored as before.",
         "callers": "Production casts and witness callback signatures now preserve readonly input types."
+      },
+      "ini_readonly_inputs": {
+        "status": "complete; verified",
+        "interfaces": [
+          "GetIniWinRc section/file keys",
+          "ReadIniTileSettings format",
+          "ReadIniPresets/WriteIniPresets file path",
+          "ReadIniRecent section/file keys"
+        ],
+        "exception": "ReadIniRecent retains a mutable entry key because it replaces its trailing digit while enumerating the nine recent-file slots.",
+        "witness": "S02 layout witness now passes string literals directly; unnecessary const_cast calls were removed."
       }
     },
     {
@@ -24100,17 +24112,17 @@
     "published_batch_head": "bf4537ae"
   },
   "current_checkpoint": {
-    "batch": "L05bx readonly technology requirement inputs",
+    "batch": "L05by readonly INI key and format inputs",
     "status": "implemented and locally verified",
-    "parent": "5d7b4e9e",
+    "parent": "f0f54447",
     "changes": {
-      "src/core/parts.h and src/core/parts.cpp": "TechStatus accepts a readonly technology requirement array.",
-      "src/core/research.h and src/core/research.cpp": "CostOfDevelopingItem accepts a readonly requirement array while retaining its separate internal progress scratch mutation.",
-      "src/core/thing.cpp and src/ui/researchui.cpp": "Removed unnecessary mutable casts at production call sites.",
-      "tests/witnesses/parts_fixture.h and tests/witnesses/construction_buildability_fixture.h": "Updated callback providers to the readonly signature."
+      "src/ui/init.h and src/ui/init.cpp": "GetIniWinRc section/file keys and ReadIniTileSettings format are const inputs.",
+      "src/ui/preferencesui.h and src/ui/preferencesui.cpp": "Preset file paths and recent-file section/file keys are const; the recent entry remains mutable for suffix iteration.",
+      "tests/witnesses/s02_layout.cpp": "Removed casts that made string literals appear mutable in the legacy INI layout witness."
     },
     "verification": {
       "macos_debug_build_and_desktop_unit_tests": "Pass; 18/18.",
+      "ini_witnesses": "S02 layout, presets and state pass; 3/3.",
       "host_unit_tests": "Pass; 29/29.",
       "native_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
       "host_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
@@ -24123,11 +24135,11 @@
       "L06 remaining buffer/length service interfaces and chooser Milestone D qualification, including Windows/Linux chooser coverage.",
       "L08 final retained primitive/API macro/preprocessor inventory reconciliation and current-source platform qualification."
     ],
-    "source_commit": "0da73af0",
-    "published_batch_head": "0da73af0",
+    "source_commit": "cd4ac6de",
+    "published_batch_head": "cd4ac6de",
     "previous_batch": {
-      "batch": "L05bw remove unused mutable window-settings argument",
-      "source_commit": "ab46650a",
+      "batch": "L05bx readonly technology requirement inputs",
+      "source_commit": "0da73af0",
       "status": "implemented and locally verified",
       "verification": {
         "macos_debug_build_and_desktop_unit_tests": "Pass; 18/18.",
