@@ -24683,7 +24683,7 @@
   },
   "current_checkpoint": {
     "batch": "L06 remove NUL-terminated UTF-8 path adapter",
-    "status": "Locally committed as 7bc95b0d. macOS SDL Debug build, desktop/host unit suites, native/host regressions and tutorial smoke pass. Current-source Windows/Linux qualification remains outstanding.",
+    "status": "Locally committed as 7bc95b0d. macOS SDL Debug build, desktop/host unit suites, native/host regressions and tutorial smoke pass. Current-source Windows/Linux qualification remains outstanding. Local Windows cross qualification remains blocked by the host-gated preset and unavailable Python build dependency; Linux CI qualification remains outstanding.",
     "parent": "39fb4b12",
     "change": "Removed PathFromUtf8(const char*); native path conversion now exposes only its std::string_view interface, and owned temporary paths are passed directly.",
     "verification": {
@@ -24707,7 +24707,8 @@
       "windows_sdk_matrix": "failure: SDK build subprocess returned exit status 1; detailed SDK artifact log was unavailable.",
       "windows_sdl": "failure: entry.cpp unused argc under -Werror; fixed in 60a94d06.",
       "linux_desktop": "failure: win32_fileworkflow omitted STARS_TEST_GAME_PATH; fixed in 75767e02.",
-      "current_source_rerun": "No workflow dispatch was available from this environment; current source is locally qualified on macOS and host, but Windows/Linux platform CI remains pending."
+      "current_source_rerun": "No workflow dispatch was available from this environment; current source is locally qualified on macOS and host, but Windows/Linux platform CI remains pending.",
+      "local_cross_attempt": "The mingw-debug preset is disabled when hostSystemName is not Windows. A manual MinGW host-only configure reached CMake but stopped because the Python 3.14 cross-build environment lacks pinned PyYAML 6.0.3 and restricted network DNS could not reach pypi.org; no Windows SDL target was built."
     },
     "remaining_work": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
