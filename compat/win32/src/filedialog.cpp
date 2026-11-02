@@ -78,27 +78,28 @@ static int CmpFileEntry(const void *a, const void *b) {
     if (lpa->fDir != lpb->fDir) return lpa->fDir ? -1 : 1;
     return SDL_strcasecmp(lpa->psz, lpb->psz);
 }
-static BOOL FJoinFile(char *pszOut, LPCSTR pszDir, LPCSTR pszName) {
+static BOOL FJoinFile(std::span<char> pszOut, LPCSTR pszDir, LPCSTR pszName) {
 #ifdef _WIN32
     char *pch;
 #endif
     int cch;
 
+    if (pszOut.empty()) return 0;
     if (*pszName == '/'
 #ifdef _WIN32
         || *pszName == '\\' || (pszName[0] && pszName[1] == ':')
 #endif
     ) {
-        if (SDL_strlcpy(pszOut, pszName, PATH_MAX) >= PATH_MAX) return 0;
+        if (CchCopyUtf8(pszOut, pszName) < 0) return 0;
     } else {
-        cch = CchSnprintf(std::span{pszOut, std::size_t{PATH_MAX}}, "%s%s%s", pszDir, std::strcmp(pszDir, "/") == 0 ? "" : "/", pszName);
-        if (cch < 0 || cch >= PATH_MAX) return 0;
+        cch = CchSnprintf(pszOut, "%s%s%s", pszDir, std::strcmp(pszDir, "/") == 0 ? "" : "/", pszName);
+        if (cch < 0 || static_cast<std::size_t>(cch) >= pszOut.size()) return 0;
     }
 #ifdef _WIN32
     // The browser splits paths with '/', including native suggestions and input.
-    for (pch = pszOut; *pch; pch++) if (*pch == '\\') *pch = '/';
+    for (pch = pszOut.data(); *pch; pch++) if (*pch == '\\') *pch = '/';
 #endif
-    return FUtf8Valid(pszOut);
+    return FUtf8Valid(std::string_view{pszOut.data()});
 }
 static void FileError(HWND hwnd, LPCSTR psz) { CompatChoiceIO().pfnMessageBoxA(hwnd, psz, "File selection", win32::MB_OK | win32::MB_ICONEXCLAMATION); }
 static BOOL FRefreshFiles(HWND hwnd, COMPATFILEDIALOG *lp) {
@@ -125,7 +126,7 @@ static BOOL FRefreshFiles(HWND hwnd, COMPATFILEDIALOG *lp) {
         }
         if (std::strcmp(pszEntry, ".") == 0 || std::strcmp(pszEntry, "..") == 0) continue;
         if (!lp->fHidden && pszEntry[0] == '.') continue;
-        if (!FJoinFile(szPath, lp->szDir, pszEntry) || !(st = IGetNativeFileInfo(szPath, NATIVELINKMODE::follow))) continue;
+        if (!FJoinFile(std::span{szPath}, lp->szDir, pszEntry) || !(st = IGetNativeFileInfo(szPath, NATIVELINKMODE::follow))) continue;
         if (!st->fDirectory && (!st->fRegular || !FFileFilter(lp, pszEntry))) continue;
         rg = static_cast<COMPATFILEENTRY *>((std::realloc(lp->rgentry, (lp->cEntry + 1) * sizeof(*rg))));
         if (!rg) { lp->dwError = win32::CDERR_MEMALLOCFAILURE; break; }
@@ -153,7 +154,7 @@ static BOOL FChangeFileDirectory(HWND hwnd, COMPATFILEDIALOG *lp, LPCSTR psz, BO
     std::optional<NATIVEFILEINFO> st;
     char *pszPrevious = nullptr;
     NATIVEOWNER<char, std::free> previousOwner;
-    if (!FJoinFile(szPath, lp->szDir, psz) || !CchCanonicalNativePath(szPath, std::span{szReal}) || !(st = IGetNativeFileInfo(szReal, NATIVELINKMODE::follow)) || !st->fDirectory) {
+    if (!FJoinFile(std::span{szPath}, lp->szDir, psz) || !CchCanonicalNativePath(szPath, std::span{szReal}) || !(st = IGetNativeFileInfo(szReal, NATIVELINKMODE::follow)) || !st->fDirectory) {
         FileError(hwnd, "The directory does not exist."); return 0;
     }
     if (!FUtf8Valid(szReal)) {
@@ -192,7 +193,7 @@ static int IAcceptFilePath(HWND hwnd, COMPATFILEDIALOG *lp, LPCSTR pszName) {
     BOOL fExists;
     NATIVEFILE *lpfile;
     if (!*pszName) return 0;
-    if (!FJoinFile(szPath, lp->szDir, pszName)) { FileError(hwnd, "The filename is too long."); return 0; }
+    if (!FJoinFile(std::span{szPath}, lp->szDir, pszName)) { FileError(hwnd, "The filename is too long."); return 0; }
     if ((st = IGetNativeFileInfo(szPath, NATIVELINKMODE::follow)).has_value() && st->fDirectory) return 2;
     pszBase = std::strrchr(szPath, '/'); pszBase = pszBase ? pszBase + 1 : szPath;
     pszExt = std::strrchr(pszBase, '.');
@@ -210,7 +211,7 @@ static int IAcceptFilePath(HWND hwnd, COMPATFILEDIALOG *lp, LPCSTR pszName) {
         FileError(hwnd, "The destination directory does not exist."); return 0;
     }
     pszBase = std::strrchr(szPath, '/') + 1;
-    if (!FJoinFile(szParent, szReal, pszBase)) { FileError(hwnd, "The filename is too long."); return 0; }
+    if (!FJoinFile(std::span{szParent}, szReal, pszBase)) { FileError(hwnd, "The filename is too long."); return 0; }
     fExists = (st = IGetNativeFileInfo(szParent, NATIVELINKMODE::follow)).has_value();
     if (fExists && !st->fRegular) { FileError(hwnd, "Select a regular file."); return 0; }
     if (!fExists && lp->lpRequest->fMustExist) { FileError(hwnd, "The selected file does not exist."); return 0; }
@@ -319,7 +320,7 @@ static void NewFileFolder(HWND hwnd, COMPATFILEDIALOG *lp) {
     if (!win32::IsWindow(hwnd)) return;
     restoreParent.Close();
     if (!fAccepted) return;
-    if (!FJoinFile(szPath, lp->szDir, szName)) { FileError(hwnd, "The folder name is too long."); return; }
+    if (!FJoinFile(std::span{szPath}, lp->szDir, szName)) { FileError(hwnd, "The folder name is too long."); return; }
     if (ICreateNativeDirectory(szPath, 0777) != 0) {
         FileError(hwnd, errno == EEXIST ? "A file or folder already has this name." : "The folder could not be created."); return;
     }
@@ -460,11 +461,11 @@ static win32::files::FILESELECTIONRESULT SelectFileCore(HWND hwndOwner, win32::f
     CchCopyUtf8(std::span{dlg.szDir}, szCwd); szInitial[0] = 0;
     if (!request.szInitialDirectory.empty()) {
         std::optional<NATIVEFILEINFO> st;
-        if (!FJoinFile(szPath, szCwd, request.szInitialDirectory.c_str()) || !CchCanonicalNativePath(szPath, std::span{dlg.szDir}) ||
+        if (!FJoinFile(std::span{szPath}, szCwd, request.szInitialDirectory.c_str()) || !CchCanonicalNativePath(szPath, std::span{dlg.szDir}) ||
             !(st = IGetNativeFileInfo(dlg.szDir, NATIVELINKMODE::follow)) || !st->fDirectory) CchCopyUtf8(std::span{dlg.szDir}, szCwd);
     }
     if (!request.szInitialPath.empty()) {
-        if (!FJoinFile(szPath, dlg.szDir, request.szInitialPath.c_str())) { dlg.dwError = win32::FNERR_INVALIDFILENAME; goto done; }
+        if (!FJoinFile(std::span{szPath}, dlg.szDir, request.szInitialPath.c_str())) { dlg.dwError = win32::FNERR_INVALIDFILENAME; goto done; }
         pch = std::strrchr(szPath, '/');
         if (pch) {
             SDL_strlcpy(szInitial, pch + 1, sizeof(szInitial));
