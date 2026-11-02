@@ -1503,11 +1503,11 @@ static std::int16_t FCopyLibraryGameEntry(APPSESSION &app, void *lpData, const c
     return 1;
 }
 
-static std::int16_t FBackupDirectoryName(const char *pszName) {
-    std::size_t cch = std::strlen(pszName);
+static std::int16_t FBackupDirectoryName(std::string_view pszName) {
+    std::size_t cch = pszName.size();
     std::size_t i;
 
-    if (std::strncmp(pszName, "backup", 6)) return 0;
+    if (!pszName.starts_with("backup")) return 0;
     if (cch == 6) return 1;
     if (cch == 7 || cch == 8) i = 6;
     else if (cch == 10 && pszName[6] == '.') i = 7;
