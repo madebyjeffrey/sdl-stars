@@ -11,6 +11,15 @@
 #include <string>
 #include <limits>
 
+static void test_LSaltFromSz_view_contract(void) {
+    const char rgchPassword[] = {'a', 'b', 'x'};
+    const char rgchHighByte[] = {static_cast<char>(0xe9)};
+
+    TEST_CHECK(LSaltFromSz(std::string_view(rgchPassword, 2)) == LSaltFromSz("ab"));
+    TEST_CHECK(LSaltFromSz(std::string_view(rgchHighByte, sizeof(rgchHighByte))) == LSaltFromSz("\xe9"));
+    TEST_CHECK(LSaltFromSz({}) == 0);
+}
+
 static void test_PszGetLine_contract(void) {
     struct CASE { const char *psz; const char *rgsz[3]; std::size_t cLine; };
     const CASE rgCases[] = {
@@ -526,7 +535,7 @@ static void test_PlanetName_bytes(void) {
     TEST_CHECK(std::string_view(szFirst.data()) == "007");
 }
 
-TEST_LIST = {{"all compressed planet names match source bytes and cache behavior", test_PlanetName_bytes}, {"location and distance text preserve branches and work expansion", test_LocationText_contract}, {"definition lines retain whitespace and delimiter grammar", test_PszGetLine_contract}, {"file copy uses full size and rejects unavailable metadata", test_Copy_size_result}, {"numeric parser preserves grammar, capacity and partial assignment", test_CParseNumbers_contract}, {"numeric text retains widths, signs, grouping and scaled boundaries", test_NumberText_boundaries},
+TEST_LIST = {{"password salt accepts bounded byte views", test_LSaltFromSz_view_contract}, {"all compressed planet names match source bytes and cache behavior", test_PlanetName_bytes}, {"location and distance text preserve branches and work expansion", test_LocationText_contract}, {"definition lines retain whitespace and delimiter grammar", test_PszGetLine_contract}, {"file copy uses full size and rejects unavailable metadata", test_Copy_size_result}, {"numeric parser preserves grammar, capacity and partial assignment", test_CParseNumbers_contract}, {"numeric text retains widths, signs, grouping and scaled boundaries", test_NumberText_boundaries},
              {"numeric text values survive subsequent lookups", test_NumberText_owned},
              {"Roman numerals retain all int16 values within actual capacity", test_IntToRoman_bounded},
              {"XorFileBuf retains RHS-before-destination evaluation", test_XorFileBuf_seed_alias_order},

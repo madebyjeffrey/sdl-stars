@@ -50,7 +50,7 @@ std::int16_t FIntersectCircleLine(POINT16 ptL1, POINT16 ptL2, POINT16 ptC, std::
 // Success returns bytes excluding NUL; failure empties a nonempty destination.
 std::optional<std::size_t> IntToRoman(std::int16_t i, std::span<char> pszOut);
 std::int16_t FCheckPassword(APPSESSION &app);
-std::int32_t LSaltFromSz(const char *psz);
+std::int32_t LSaltFromSz(std::string_view psz);
 std::int32_t LDistance2(POINT16 pt1, POINT16 pt2);
 // Borrow the next line, trimming leading spaces and consuming CR/LF/CRLF.
 // Input bytes remain unchanged; exhausted input stays exhausted.

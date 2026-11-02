@@ -696,20 +696,22 @@ std::int16_t FCheckPassword(APPSESSION &app) {
     return PlayerChoiceIO().pfnPromptPassword(app);
 }
 
-std::int32_t LSaltFromSz(const char *psz) {
+std::int32_t LSaltFromSz(std::string_view psz) {
     std::int32_t lSalt;
+    std::size_t i;
 
     lSalt = 0;
-    if (*psz == 0) {
+    if (psz.empty()) {
         return 0;
     }
-    while (*psz != 0) {
+    i = 0;
+    while (i < psz.size()) {
         // Original x86 arithmetic wraps at 32 bits and treats bytes as signed.
-        lSalt = static_cast<std::int32_t>((static_cast<std::uint32_t>(lSalt) + static_cast<std::uint32_t>(static_cast<std::int32_t>(static_cast<std::int16_t>(*psz)))));
-        psz++;
-        if (*psz != 0) {
-            lSalt = static_cast<std::int32_t>((static_cast<std::uint32_t>(lSalt) * static_cast<std::uint32_t>(static_cast<std::int32_t>(static_cast<std::int16_t>(*psz)))));
-            psz++;
+        lSalt = static_cast<std::int32_t>((static_cast<std::uint32_t>(lSalt) + static_cast<std::uint32_t>(static_cast<std::int32_t>(static_cast<std::int16_t>(psz[i])))));
+        i++;
+        if (i < psz.size()) {
+            lSalt = static_cast<std::int32_t>((static_cast<std::uint32_t>(lSalt) * static_cast<std::uint32_t>(static_cast<std::int32_t>(static_cast<std::int16_t>(psz[i])))));
+            i++;
         }
     }
     if (lSalt == 0) {
