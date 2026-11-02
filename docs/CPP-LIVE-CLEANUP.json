@@ -23961,12 +23961,12 @@
   ],
   "restart_checkpoint": {
     "date": "2026-11-02",
-    "reason": "Return-to-title now snapshots Work before INI settings reuse it; continue remaining L05/L06 work and final L08 platform qualification.",
+    "reason": "Return-to-title snapshots Work before tutorial/save callbacks and INI settings reuse it; continue remaining L05/L06 work and final L08 platform qualification.",
     "branch": "develop",
-    "batch": "L05bt return-to-title file-family scratch snapshot",
-    "batch_parent": "f36122d0",
-    "latest_batch": "L05bt return-to-title file-family scratch snapshot",
-    "latest_batch_head": "9305211a",
+    "batch": "L05bt return-to-title file-family scratch snapshot before callbacks",
+    "batch_parent": "05bbfd1f",
+    "latest_batch": "L05bt return-to-title file-family scratch snapshot before callbacks",
+    "latest_batch_head": "ad2bc6d9",
     "completed_stages": [
       "L01: nullptr and aliases",
       "L02: explicit C++ casts and headers",
@@ -23987,7 +23987,7 @@
       "native_regression": "519 matches; 25 existing warnings; zero differences/errors/skipped inputs.",
       "host_regression": "519 matches; 25 existing warnings; zero differences/errors/skipped inputs.",
       "baseline": "Unchanged; no game checkpoint moved.",
-      "return_to_title": "Test reproduced Base becoming \"1\" after WriteIniSettings reused szWork. CommandHandler now snapshots the bounded UTF-8 path before settings output and removes only the final extension after the last path separator.",
+      "return_to_title": "Test reproduced Base becoming \"1\" after INI settings reused szWork. CommandHandler now snapshots the bounded UTF-8 path before tutorial/save callbacks and settings output, then removes only the final extension after the last path separator.",
       "owned_c_and_function_macro_scan": "Confirmed on 2026-11-02: zero owned .c sources and zero function-like macros under src/ and compat/win32/src. No further app-owned C-source or function-like API-macro conversion is indicated by this scan. Include guards, NOMINMAX, test configuration, and vendored SDK definitions remain outside this conversion scope.",
       "diff_check": "pass"
     },
@@ -24052,14 +24052,14 @@
       "qualified_source_head": "b76ec1fcc1276790150457670f5f667bcec4eccc",
       "result": "success"
     },
-    "published_batch_head": "9305211a"
+    "published_batch_head": "ad2bc6d9"
   },
   "current_checkpoint": {
-    "batch": "L05bt return-to-title file-family scratch snapshot",
+    "batch": "L05bt return-to-title file-family scratch snapshot before callbacks",
     "status": "implemented and locally verified; Windows/Linux qualification pending",
-    "parent": "f36122d0",
+    "parent": "05bbfd1f",
     "changes": {
-      "src/ui/mdi.cpp": "CommandHandler snapshots szWork before WriteIniSettings reuses it; bounded UTF-8 file-family preservation now reads from the owned stack snapshot.",
+      "src/ui/mdi.cpp": "CommandHandler snapshots szWork before tutorial/save callbacks and WriteIniSettings can reuse it; bounded UTF-8 file-family preservation reads from the owned stack snapshot.",
       "tests/unit/test_native_fileui.cpp": "Added an integration regression for dotted directories, Unicode and multi-dot names, and extensionless paths.",
       "CHANGELOG.md": "Recorded the return-to-title filename preservation fix."
     },
@@ -24071,7 +24071,7 @@
       "native_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
       "host_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
       "baseline": "Unchanged.",
-      "reproduction": "Before fix, all three integration cases left szBase as \"1\" after WriteIniSettings; all pass with the pre-write snapshot.",
+      "reproduction": "Before the fix, all three integration cases left szBase as \"1\" after WriteIniSettings. They pass with the pre-callback snapshot.",
       "diff_check": "pass"
     },
     "remaining_work": [
@@ -24080,8 +24080,8 @@
       "L08 final retained primitive/API macro/preprocessor inventory reconciliation and current-source platform qualification.",
       "Review the two remaining strcpy calls in compat/win32/src/list.cpp and toolbar.cpp; both write to buffers supplied by Win32-compatible caller APIs without a length parameter."
     ],
-    "source_commit": "9305211a",
-    "published_batch_head": "9305211a",
+    "source_commit": "ad2bc6d9",
+    "published_batch_head": "ad2bc6d9",
     "previous_batch": {
       "batch": "L05bs typed mine UI formatting; owned wrapper callers exhausted",
       "source_commit": "7f7798a2",
