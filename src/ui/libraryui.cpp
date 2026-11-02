@@ -440,13 +440,14 @@ static INT_PTR IdPromptLibraryName(APPSESSION &app, HWND hwnd, std::span<char, 2
                                     LibraryNameDlg, reinterpret_cast<LPARAM>(&rgchName));
 }
 
-std::int16_t FChooseLibraryGameName(APPSESSION &app, HWND hwnd, std::span<char, 256> pszFile, const char *pszName) {
+std::int16_t FChooseLibraryGameName(APPSESSION &app, HWND hwnd, std::span<char, 256> pszFile,
+                                    std::optional<std::string_view> pszName) {
     char *pch;
     char szMessage[256];
 
     if (!FInitLibrary() || std::strlen(szLibraryRoot) + 20 >= sizeof(app.state.szBase)) goto LFail;
     szLibraryExchangeName[0] = 0;
-    if (pszName) GetGameLibraryName(app, pszName, std::span{szLibraryName});
+    if (pszName) GetGameLibraryName(app, *pszName, std::span{szLibraryName});
     else {
         pch = std::strrchr(pszFile.data(), chDirSep);
         CchSnprintf(std::span{szLibraryName, sizeof(szLibraryName)}, "%s", pch ? pch + 1 : pszFile.data());
@@ -479,7 +480,8 @@ LFail:
     return 0;
 }
 
-static std::int16_t FChooseLibraryRaceName(APPSESSION &app, HWND hwnd, const char *pszSuggested, std::span<char> pszPath) {
+static std::int16_t FChooseLibraryRaceName(APPSESSION &app, HWND hwnd, std::string_view pszSuggested,
+                                           std::span<char> pszPath) {
     char szMessage[256];
     int cch;
     if (!FInitRaceLibrary()) return 0;
@@ -2211,7 +2213,7 @@ std::int16_t FImportLibraryGame(APPSESSION &app, HWND hwnd, std::optional<std::s
         AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryGameIncomplete).data(), win32::MB_ICONEXCLAMATION);
         return 0;
     }
-    if (!FChooseLibraryGameName(app, hwnd, std::span<char, 256>{szSource, 256}, nullptr)) return 0;
+    if (!FChooseLibraryGameName(app, hwnd, std::span<char, 256>{szSource, 256}, std::nullopt)) return 0;
     CchCopyUtf8(std::span{szLibraryExchangeName}, szStem);
     return FPublishImportedLibraryGame(app, {szLibraryRoot,szLibraryPending,szLibraryName},li,szDir);
 LInvalidSource:

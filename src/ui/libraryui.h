@@ -42,8 +42,9 @@ inline constexpr auto IDC_LIBRARY_IMPORT_ORDERS = 2420;
 inline constexpr auto IDC_LIBRARY_GAME_DELETE = 2421;
 inline constexpr auto IDC_LIBRARY_TUTORIAL = 2434;
 
-/* New games pass their title; imports pass NULL to choose a library name. */
-std::int16_t FChooseLibraryGameName(APPSESSION &app, HWND hwnd, std::span<char, 256> pszFile, const char *pszName);
+/* New games pass their title; imports pass no title to choose a library name. */
+std::int16_t FChooseLibraryGameName(APPSESSION &app, HWND hwnd, std::span<char, 256> pszFile,
+                                    std::optional<std::string_view> pszName);
 INT_PTR  LibraryGameRevisionDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 std::int16_t FFinishLibraryGame(APPSESSION &app, HWND hwnd, std::int16_t fGenerated);
 void InitLibraryGames(APPSESSION &app, HWND hwnd, const RECT *lprc);
