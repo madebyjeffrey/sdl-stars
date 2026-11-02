@@ -1352,7 +1352,7 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
             app.state.sel.pl = *lppl;
             ControlIO().pfnFillPlanetProdLB(app, nullptr, nullptr, lppl);
             app.state.sel.pl = pl;
-            DrawProductionItem(app, hdc, prc, app.state.szWork, 0, 0, 2);
+            DrawProductionItem(app, hdc, prc, std::string_view{app.state.szWork}, 0, 0, 2);
             break;
         case colPlanetResources:
             cch = TextIO().pfnCchGetString(app, idsN1000, std::span{szT});

@@ -1465,6 +1465,8 @@ void HandleFocusState(APPSESSION &app, DRAWITEMSTRUCT *lpdis, std::int16_t infla
 void DrawCBEntireItem(APPSESSION &app, DRAWITEMSTRUCT *lpdis, std::int16_t inflate) {
     std::int16_t fListbox;
     std::int16_t fSelected;
+    LRESULT cchItem;
+    std::string_view szItem;
     RECT    rc;
 
     fSelected = lpdis->itemState & win32::ODS_SELECTED;
@@ -1473,13 +1475,16 @@ void DrawCBEntireItem(APPSESSION &app, DRAWITEMSTRUCT *lpdis, std::int16_t infla
     if (inflate > 0) {
         inflate = -inflate;
     }
-    ControlIO().pfnSendMessage(lpdis->hwndItem, !fListbox ? win32::CB_GETLBTEXT : win32::LB_GETTEXT, lpdis->itemID, reinterpret_cast<LPARAM>(app.state.szWork));
-    DrawProductionItem(app, lpdis->hDC, &rc, app.state.szWork, inflate, fSelected, fListbox);
+    cchItem = ControlIO().pfnSendMessage(lpdis->hwndItem, !fListbox ? win32::CB_GETLBTEXT : win32::LB_GETTEXT, lpdis->itemID, reinterpret_cast<LPARAM>(app.state.szWork));
+    szItem = cchItem >= 0
+        ? std::string_view{app.state.szWork, static_cast<std::size_t>(cchItem)}
+        : std::string_view{app.state.szWork};
+    DrawProductionItem(app, lpdis->hDC, &rc, szItem, inflate, fSelected, fListbox);
     HandleFocusState(app, lpdis, inflate + 2);
     return;
 }
 
-void DrawProductionItem(APPSESSION &app, HDC hdc, RECT *prc, const char *psz, std::int16_t inflate, std::int16_t fSelected, std::int16_t fListbox) {
+void DrawProductionItem(APPSESSION &app, HDC hdc, RECT *prc, std::string_view szItem, std::int16_t inflate, std::int16_t fSelected, std::int16_t fListbox) {
     HFONT    hfntSav;
     const char *pch;
     std::int16_t  ichT;
@@ -1498,8 +1503,9 @@ void DrawProductionItem(APPSESSION &app, HDC hdc, RECT *prc, const char *psz, st
     std::int16_t  cch;
     std::int16_t  bkSav;
     RECT     rc;
-    const char *pchCopy, *pchCopyEnd;
-    std::size_t cchCopy, cchCopied;
+    std::size_t cchCopy, cchCopied, iCopy;
+    std::string_view szBody;
+    const auto ChItem = [szItem](std::size_t i) { return i < szItem.size() ? szItem[i] : '\0'; };
 
     fItalic = 0;
     fDoubleDraw = 0;
@@ -1508,7 +1514,7 @@ void DrawProductionItem(APPSESSION &app, HDC hdc, RECT *prc, const char *psz, st
     rc = rcIn;
     if (!fSelected) {
         hbr = app.lpui->hbrWindow;
-        switch (*psz) {
+        switch (ChItem(0)) {
         default:
             cr = 0xff;
             break;
@@ -1525,7 +1531,7 @@ void DrawProductionItem(APPSESSION &app, HDC hdc, RECT *prc, const char *psz, st
             break;
         case 'P':
             fDoubleDraw = 1;
-            pctDmg = psz[1];
+            pctDmg = ChItem(1);
             /* fallthrough */
         case 'Q':
             fFleet = 1;
@@ -1541,7 +1547,7 @@ void DrawProductionItem(APPSESSION &app, HDC hdc, RECT *prc, const char *psz, st
         }
     } else {
         cr = app.lpui->crWindow;
-        switch (*psz) {
+        switch (ChItem(0)) {
         default:
             hbr = app.lpui->hbrRed;
             break;
@@ -1558,7 +1564,7 @@ void DrawProductionItem(APPSESSION &app, HDC hdc, RECT *prc, const char *psz, st
             break;
         case 'P':
             fDoubleDraw = 1;
-            pctDmg = psz[1];
+            pctDmg = ChItem(1);
             /* fallthrough */
         case 'Q':
             fFleet = 1;
@@ -1593,7 +1599,7 @@ void DrawProductionItem(APPSESSION &app, HDC hdc, RECT *prc, const char *psz, st
         ich = 7;
     } else {
         ich = 6;
-        if ((psz[1] - ' ') & 2) {
+        if ((ChItem(1) - ' ') & 2) {
             fItalic = 1;
         }
     }
@@ -1602,8 +1608,9 @@ void DrawProductionItem(APPSESSION &app, HDC hdc, RECT *prc, const char *psz, st
     if (fItalic) {
         hfntSav = static_cast<HFONT>(win32::SelectObject(hdc, app.lpui->rghfontArial8[3]));
     }
-    pch = psz + ich;
-    cch = std::strlen(pch);
+    szBody = szItem.substr(std::min<std::size_t>(static_cast<std::size_t>(ich), szItem.size()));
+    pch = szBody.empty() ? "" : szBody.data();
+    cch = static_cast<std::int16_t>(szBody.size());
     dx = LOWORD(GetTextExtent(hdc, pch, cch));
     while (cch > 0 && dx > rcIn.right - rcIn.left) {
         cch = static_cast<std::int16_t>(CchUtf8Prefix(pch, cch - 1));
@@ -1614,8 +1621,8 @@ void DrawProductionItem(APPSESSION &app, HDC hdc, RECT *prc, const char *psz, st
         win32::SelectObject(hdc, hfntSav);
     }
     if (ich >= 6) {
-        if ((psz[ich - 5] - ' ') & 2) {
-            if (psz[ich - 1] == '*') {
+        if ((ChItem(static_cast<std::size_t>(ich - 5)) - ' ') & 2) {
+            if (ChItem(static_cast<std::size_t>(ich - 1)) == '*') {
                 ich = TextIO().pfnCchGetString(app, idsNeeded, std::span{szT});
                 goto LRightOut;
             }
@@ -1624,16 +1631,15 @@ void DrawProductionItem(APPSESSION &app, HDC hdc, RECT *prc, const char *psz, st
             szT[0] = 0;
         }
         ich = std::strlen(szT);
-        for (ichT = 2 - fFleet; ichT < 6 && psz[ichT + fFleet] == ' '; ichT++) {
+        for (ichT = 2 - fFleet; ichT < 6 && ChItem(static_cast<std::size_t>(ichT + fFleet)) == ' '; ichT++) {
         }
-        pchCopy = psz + (ichT + fFleet);
+        iCopy = static_cast<std::size_t>(ichT + fFleet);
         cchCopy = static_cast<std::size_t>(6 - ichT);
-        pchCopyEnd = std::find(pchCopy, pchCopy + cchCopy, '\0');
-        cchCopied = static_cast<std::size_t>(pchCopyEnd - pchCopy);
-        std::copy_n(pchCopy, cchCopied, &szT[ich]);
+        cchCopied = iCopy < szItem.size() ? std::min(cchCopy, szItem.size() - iCopy) : 0;
+        std::copy_n(szItem.begin() + static_cast<std::ptrdiff_t>(std::min(iCopy, szItem.size())), cchCopied, &szT[ich]);
         std::fill_n(&szT[ich + cchCopied], cchCopy - cchCopied, '\0');
         ich += 6 - ichT;
-        if (!fFleet && ((psz[fDoubleDraw + 1] - ' ') & 1)) {
+        if (!fFleet && ((ChItem(static_cast<std::size_t>(fDoubleDraw + 1)) - ' ') & 1)) {
             szT[ich++] = '%';
         }
     LRightOut:

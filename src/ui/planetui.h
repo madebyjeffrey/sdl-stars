@@ -27,7 +27,7 @@ void             EnsureTileSize(APPSESSION &app, std::int16_t fSmallTiles);
 void             ReflowColumn(APPSESSION &app, std::int16_t iCol, std::int16_t iTile, std::int16_t fRedraw);
 void             HandleFocusState(APPSESSION &app, DRAWITEMSTRUCT *lpdis, std::int16_t inflate);
 void             DrawCBEntireItem(APPSESSION &app, DRAWITEMSTRUCT *lpdis, std::int16_t inflate);
-void             DrawProductionItem(APPSESSION &app, HDC hdc, RECT *prc, const char *psz, std::int16_t inflate, std::int16_t fSelected, std::int16_t fListbox);
+void             DrawProductionItem(APPSESSION &app, HDC hdc, RECT *prc, std::string_view szItem, std::int16_t inflate, std::int16_t fSelected, std::int16_t fListbox);
 void             DrawPlanShip(APPSESSION &app, HDC hdc, TileBits grbit);
 void             SetPlanetTitleBar(APPSESSION &app, HWND hwnd);
 void             FillPlanetProdLB(APPSESSION &app, HWND hwnd, PLPROD *lpplprod, PLANET *lppl);
