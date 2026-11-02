@@ -1415,13 +1415,13 @@ struct LIBRARYGAMECOPY {
     std::int16_t fBad;
 };
 
-static std::int16_t FReadLibraryMetadata(const char *pszDirectory, char *pszName, std::size_t cchName,
-                                    int *piplr, long long *plPlayed,
-                                    char *pszExchangeName, std::size_t cchExchange) {
+static std::int16_t FReadLibraryMetadata(std::string_view pszDirectory, std::span<char> pszName,
+                                    int &iplr, long long &lPlayed, std::span<char> pszExchangeName) {
     char szFile[512], szLine[256];
     NATIVEFILE *pf;
     int iVersion, cchText, cch;
     std::int16_t fRead;
+    if (pszName.empty() || pszExchangeName.empty()) return 0;
     cch = CchSnprintf(std::span{szFile, sizeof(szFile)}, "%s%s.library", pszDirectory, szDirSep);
     if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szFile)) return 0;
     pf = PfOpenNativeFile(szFile, NATIVEFILEMODE::read);
@@ -1429,21 +1429,22 @@ static std::int16_t FReadLibraryMetadata(const char *pszDirectory, char *pszName
     fRead = CNativeScan(pf, "%d\n", &iVersion) == 1 && CchGetNativeLine(std::span{szLine}, pf);
     if (fRead) {
         szLine[std::strcspn(szLine, "\r\n")] = 0;
-        cchText = CchSnprintf(std::span{pszName, cchName}, "%s", szLine);
-        fRead = cchText > 0 && static_cast<std::size_t>(cchText) < cchName &&
-                CNativeScan(pf, "%d\n%lld\n", piplr, plPlayed) == 2;
+        cchText = CchSnprintf(pszName, "%s", szLine);
+        fRead = cchText > 0 && static_cast<std::size_t>(cchText) < pszName.size() &&
+                CNativeScan(pf, "%d\n%lld\n", &iplr, &lPlayed) == 2;
     }
     if (fRead && iVersion == 2 && CchGetNativeLine(std::span{szLine}, pf)) {
         szLine[std::strcspn(szLine, "\r\n")] = 0;
-        cchText = CchSnprintf(std::span{pszExchangeName, cchExchange}, "%s", szLine);
-        fRead = cchText > 0 && static_cast<std::size_t>(cchText) < cchExchange;
+        cchText = CchSnprintf(pszExchangeName, "%s", szLine);
+        fRead = cchText > 0 && static_cast<std::size_t>(cchText) < pszExchangeName.size();
     } else if (fRead && iVersion == 1) {
-        cchText = CchSnprintf(std::span{pszExchangeName, cchExchange}, "%s", pszName);
-        fRead = cchText > 0 && static_cast<std::size_t>(cchText) < cchExchange;
+        cchText = CchSnprintf(pszExchangeName, "%s",
+                              std::string_view{pszName.data(), static_cast<std::size_t>(cchText)});
+        fRead = cchText > 0 && static_cast<std::size_t>(cchText) < pszExchangeName.size();
     } else fRead = 0;
     ICloseNativeFile(pf);
-    return fRead && (iVersion == 1 || iVersion == 2) && *pszName &&
-           *piplr >= -1 && *piplr < 16 && *plPlayed >= 0 && *pszExchangeName;
+    return fRead && (iVersion == 1 || iVersion == 2) && !pszName.empty() && pszName[0] &&
+           iplr >= -1 && iplr < 16 && lPlayed >= 0 && !pszExchangeName.empty() && pszExchangeName[0];
 }
 
 static std::int16_t FLibraryNameAvailableExcept(APPSESSION &app, const char *pszName, const char *pszExcept) {
@@ -2299,8 +2300,9 @@ std::int16_t FValidManagedLibraryGame(APPSESSION &app, const char *pszName, std:
         (cchDirectory = CchSnprintf(pszDirectory, "%s%s%s", szLibraryRoot, szDirSep, pszName)) <= 0 ||
         static_cast<std::size_t>(cchDirectory) >= pszDirectory.size() ||
         !(npiPath = FNativePathInfo(pszDirectory.data())) || !npiPath->fDirectory || npiPath->fLink ||
-        !FReadLibraryMetadata(pszDirectory.data(), szMetadataName, sizeof(szMetadataName), &iplr,
-                              &lPlayed, pszExchangeName.data(), pszExchangeName.size())) return 0;
+        !FReadLibraryMetadata(std::string_view{pszDirectory.data(), static_cast<std::size_t>(cchDirectory)},
+                              std::span{szMetadataName}, iplr,
+                              lPlayed, pszExchangeName)) return 0;
     return !SDL_strcasecmp(szMetadataName, pszName);
 }
 
@@ -2426,8 +2428,8 @@ std::int16_t FDeleteLibraryGame(APPSESSION &app, HWND hwnd, const char *pszName)
     if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szDirectory)) return 0;
     cch = CchSnprintf(std::span{szMetadata, sizeof(szMetadata)}, "%s%s.library", szDirectory, szDirSep);
     if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szMetadata) ||
-        !FReadLibraryMetadata(szDirectory, szMetadataName, sizeof(szMetadataName), &iplr, &lPlayed,
-                              szExchangeName, sizeof(szExchangeName)) || std::strcmp(szMetadataName, pszName)) return 0;
+        !FReadLibraryMetadata(szDirectory, std::span{szMetadataName}, iplr, lPlayed,
+                              std::span{szExchangeName}) || std::strcmp(szMetadataName, pszName)) return 0;
     cch = CchSnprintf(std::span{szMessage, sizeof(szMessage)}, TextIO().pfnCompressed(app, idsLibraryDeleteGamePrompt).data(), pszName);
     if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szMessage)) return 0;
     if (CompatChoiceIO().pfnMessageBoxA(hwnd, szMessage, TextIO().pfnCompressed(app, idsLibraryGames).data(),
@@ -2784,8 +2786,8 @@ static std::int16_t ListLibraryGame(APPSESSION &app, void *lpList, std::string_v
     if (!FPortableLibraryName(app, pszName)) return 1;
     cch = CchSnprintf(std::span{szDirectory, sizeof(szDirectory)}, "%s%s%s", szLibraryRoot, szDirSep, pszName);
     if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szDirectory) ||
-        !FReadLibraryMetadata(szDirectory, szMetadataName, sizeof(szMetadataName), &iplrSaved, &lPlayed,
-                              szExchangeName, sizeof(szExchangeName))) return 1;
+        !FReadLibraryMetadata(szDirectory, std::span{szMetadataName}, iplrSaved, lPlayed,
+                              std::span{szExchangeName})) return 1;
     CchSnprintf(std::span{szFile, sizeof(szFile)}, "%s%s%s%s%s.xy", szLibraryRoot, szDirSep, pszName, szDirSep, pszName);
     if (!(cbFile = FNativeFileSize(szFile)) || (*cbFile) == 0) return 1;
     for (iplr = 0; iplr < 16; iplr++) {
@@ -3249,8 +3251,8 @@ void RememberLibraryGame(APPSESSION &app) {
     szLibraryExchangeName[0] = 0;
     /* szDir already names the game folder; retain its exchange basename before
      * publishing the newly opened player and last-played time. */
-    if (!FReadLibraryMetadata(szDir, szMetadataName, sizeof(szMetadataName), &iplr, &lPlayed,
-                              szLibraryExchangeName, sizeof(szLibraryExchangeName))) szLibraryExchangeName[0] = 0;
+    if (!FReadLibraryMetadata(szDir, std::span{szMetadataName}, iplr, lPlayed,
+                              std::span{szLibraryExchangeName})) szLibraryExchangeName[0] = 0;
     if (FWriteLibraryMetadata(szDir, pch + 1, app.state.idPlayer))
         ProfileTextIO().pfnWriteString("Library", "ContinueDeleted", nullptr, TextIO().pfnCompressed(app, idsStarsIni).data());
 }
