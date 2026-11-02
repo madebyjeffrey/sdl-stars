@@ -215,7 +215,8 @@
         "bounded-library-game-export-path-and-name-views",
         "bounded-race-library-export-path-and-name-views",
         "bounded-library-game-and-race-deletion-name-views",
-        "bounded-library-game-duplicate-and-rename-name-views"
+        "bounded-library-game-duplicate-and-rename-name-views",
+        "optional-library-chooser-suggestion-views"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -1315,6 +1316,21 @@
           "batch": "L05 library game copy and rename accept bounded name views",
           "source_commit": "bfb1a9f1",
           "change": "FDuplicateLibraryGame and FRenameLibraryGame now accept std::string_view names. Each name is validated in full and copied into fixed local buffers before existing C-string file and metadata APIs; target path limits use the view byte length. Rename rollback, duplicate publication and user-visible behavior are unchanged.",
+          "macos_debug_build": "make compile passes with strict warnings and standalone header checks.",
+          "desktop_unit_tests": "18/18 pass.",
+          "host_unit_tests": "29/29 pass.",
+          "library_workflows": "win32_client_startup_dummy and win32_client_fileworkflow_dummy pass 2/2.",
+          "native_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
+          "host_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
+          "tutorial": "1/1 available SDL tutorial smoke passes.",
+          "baseline": "Unchanged.",
+          "windows_linux": "Current-source Windows/Linux qualification remains pending.",
+          "diff_check": "Pass."
+        },
+        {
+          "batch": "L05 library chooser suggestions use bounded views",
+          "source_commit": "ff867768",
+          "change": "FChooseLibraryGameName represents its optional title with std::optional<std::string_view>; FChooseLibraryRaceName accepts a std::string_view suggestion. Imports pass std::nullopt for the existing prompt-without-suggestion flow.",
           "macos_debug_build": "make compile passes with strict warnings and standalone header checks.",
           "desktop_unit_tests": "18/18 pass.",
           "host_unit_tests": "29/29 pass.",
@@ -24947,6 +24963,10 @@
       {
         "commit": "bfb1a9f1",
         "message": "Accept bounded views for library copy and rename names"
+      },
+      {
+        "commit": "ff867768",
+        "message": "Pass library chooser suggestions as text views"
       }
     ],
     "latest_source_commit": "0c1076a7",
@@ -25169,11 +25189,11 @@
   "working_tree_checkpoint": {
     "date": "2026-11-02",
     "branch": "develop",
-    "batch": "L05 library copy and rename accept bounded name views",
-    "source_commit": "bfb1a9f1",
-    "status": "Locally committed as bfb1a9f1. macOS SDL Debug build, desktop/host unit suites, library workflows, native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
+    "batch": "L05 library chooser suggestions use bounded views",
+    "source_commit": "ff867768",
+    "status": "Locally committed as ff867768. macOS SDL Debug build, desktop/host unit suites, library workflows, native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
     "changes": [
-      "FDuplicateLibraryGame and FRenameLibraryGame accept std::string_view names and copy validated names into fixed buffers only at existing C-string file and metadata boundaries."
+      "Library chooser suggestion parameters now use std::string_view; the game chooser uses std::optional<std::string_view> to express the no-suggestion import flow."
     ],
     "verification": {
       "macos_debug_build": "make compile passes with strict warnings and standalone header checks.",
