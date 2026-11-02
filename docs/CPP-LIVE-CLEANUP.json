@@ -2114,6 +2114,22 @@
           "baseline": "Unchanged; ZIP headers, CRCs, path validation, output bytes and failure cleanup remain unchanged.",
           "windows_linux": "Current-source Windows/Linux qualification remains pending.",
           "diff_check": "Pass."
+        },
+        {
+          "batch": "L06 ZIP archive path views",
+          "parent": "f97c7a73",
+          "source_commit": "dce8382a",
+          "change": "FZipLibraryDirectory and FUnzipLibraryArchive accept string_view paths, removing the last C-string path contract in the ZIP module.",
+          "macos_debug_build": "Full macos-sdl-debug build passed; no new warnings.",
+          "desktop_unit_tests": "18/18 pass.",
+          "host_units": "29/29 pass, including C++ compilation and ownership policy.",
+          "game_export_workflow": "win32_client_game_export_dummy passed (1/1), including ZIP round trips and malformed/unsafe archive cases.",
+          "native_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped inputs.",
+          "host_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped inputs.",
+          "tutorial": "Available SDL tutorial smoke checkpoint passes (1/1); full tutorial remains unfinished.",
+          "baseline": "Unchanged; archive bytes, validation and file publication behavior remain unchanged.",
+          "windows_linux": "Current-source Windows/Linux qualification remains pending.",
+          "diff_check": "Pass."
         }
       ],
       "roman_output": {
@@ -2360,6 +2376,12 @@
         "ownership": "FWriteZipEntry and FUnzipLibraryArchive use std::vector for compressed, uncompressed and file payloads. The already bounded local filename uses a fixed 512-byte array; no SDL heap API remains in libraryzip.cpp.",
         "failure_behavior": "std::bad_alloc maps to ENOMEM and the existing archive failure result. Scope cleanup closes streams and removes unpublished export archives; zlib inflate cleanup remains paired.",
         "remaining": "Other L05 text/scratch audits, remaining L06 service interfaces and chooser coverage, and L08 platform qualification remain active."
+      },
+      "zip_path_views": {
+        "status": "implemented and locally verified",
+        "interface": "FZipLibraryDirectory and FUnzipLibraryArchive take std::string_view archive/root paths; their declarations include the type directly.",
+        "callers": "Current library export/import call sites pass existing bounded views/arrays through the API without reconstructing or retaining a C string.",
+        "remaining": "Other non-ZIP service paths and chooser Milestone D remain in the L06 scope."
       }
     },
     {
@@ -24648,14 +24670,14 @@
     ]
   },
   "current_checkpoint": {
-    "batch": "L06 owned ZIP payload buffers",
-    "status": "Locally committed as da95186c. Full macOS SDL Debug build, desktop/host units, ZIP export workflow, native/host regressions and tutorial smoke pass. Remote publication and current-source Windows/Linux qualification remain outstanding.",
-    "parent": "fbb3d715",
-    "change": "All temporary ZIP-owned entry names, tables and payload bytes now use C++ containers; libraryzip.cpp has no SDL heap allocation calls.",
+    "batch": "L06 ZIP archive path views",
+    "status": "Locally committed as dce8382a. Full macOS SDL Debug build, desktop/host units, ZIP export workflow, native/host regressions and tutorial smoke pass. Remote publication and current-source Windows/Linux qualification remain outstanding.",
+    "parent": "f97c7a73",
+    "change": "ZIP export/import path APIs now accept std::string_view, completing bounded path handoff through the ZIP module.",
     "verification": {
       "macos_sdl_debug": "Full macos-sdl-debug build passed with no new warnings.",
       "desktop_unit_tests": "18/18 pass.",
-      "host_unit_tests": "29/29 pass, including compiler manifest and ownership policy.",
+      "host_unit_tests": "29/29 pass, including compiler and ownership policies.",
       "game_export_workflow": "win32_client_game_export_dummy passes ZIP round trips and malformed/unsafe archive cases.",
       "native_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "host_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
@@ -24690,9 +24712,9 @@
     "date": "2026-11-02",
     "branch": "develop",
     "changes": [
-      "ZIP entry names and metadata use owned strings/vectors and bounded views.",
-      "Compressed/uncompressed payloads use scoped C++ vectors; the local filename uses its already validated fixed maximum.",
-      "Allocation failures map to ENOMEM and existing export/import failure results. No SDL heap calls remain in libraryzip.cpp."
+      "FZipLibraryDirectory and FUnzipLibraryArchive accept std::string_view paths.",
+      "ZIP export/import callers no longer need a NUL-terminated path contract.",
+      "ZIP ownership and parsing use C++ containers and bounded views; archive bytes and behavior remain unchanged."
     ],
     "current_source_audits": {
       "tracked_c_translation_units": 44,
@@ -24806,9 +24828,13 @@
       {
         "commit": "da95186c",
         "message": "Own ZIP payload buffers with vectors"
+      },
+      {
+        "commit": "dce8382a",
+        "message": "Accept ZIP paths as bounded views"
       }
     ],
-    "source_commit": "da95186c"
+    "source_commit": "dce8382a"
   },
   "milestone_d_checkpoint": {
     "stage": "D05 caller migrations implemented; D06 platform qualification pending",
