@@ -869,7 +869,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, std::int16_t dx, std::int16_
     if (!ppart->pcom()) {
         win32::SetRect(&rcData, 5, 5, dx - 5, dy - 5);
         c = TextIO().pfnCchGetString(app, idsNoneAvailable, std::span{app.state.szWork});
-        DiaganolTextOut(app, hdc, &rcData, app.state.szWork, c);
+        DiaganolTextOut(app, hdc, &rcData, std::string_view{std::span{app.state.szWork}.data(), static_cast<std::size_t>(c)});
     } else {
         win32::SelectObject(hdc, app.lpui->rghfontArial10[1]);
         CchCopyUtf8Prefix(std::span{app.state.szWork}, ppart->pcom().szName());
@@ -988,7 +988,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, std::int16_t dx, std::int16_
         if (app.state.gd.fBleedingEdge && l == 0) {
             win32::SetTextColor(hdc, app.lpui->crButtonHilite);
             c = TextIO().pfnCchGetString(app, idsBleedingEdge, std::span{app.state.szWork});
-            DiaganolTextOut(app, hdc, &rcData, app.state.szWork, c);
+            DiaganolTextOut(app, hdc, &rcData, std::string_view{std::span{app.state.szWork}.data(), static_cast<std::size_t>(c)});
             win32::SetTextColor(hdc, app.lpui->crWindowText);
         }
         ids = static_cast<StringId>(idsNoString);

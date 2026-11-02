@@ -1689,7 +1689,7 @@ void DrawPlanShip(APPSESSION &app, HDC hdc, TileBits grbit) {
             win32::SetBkColor(hdc, app.lpui->crButtonFace);
             win32::SetTextColor(hdc, app.lpui->crButtonText);
             i = TextIO().pfnCchGetString(app, idsDeceased, std::span{app.state.szWork});
-            DiaganolTextOut(app, hdc, &rc, app.state.szWork, i);
+            DiaganolTextOut(app, hdc, &rc, std::string_view{std::span{app.state.szWork}.data(), static_cast<std::size_t>(i)});
         }
     } else {
         if (app.state.sel.grobj == grobjFleet) {

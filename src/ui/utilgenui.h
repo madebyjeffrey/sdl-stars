@@ -22,7 +22,7 @@ template<std::size_t N>
 void RightTextOut(APPSESSION &app, HDC hdc, std::int16_t x, std::int16_t y, char (&psz)[N], std::int16_t cLen, std::int16_t dxErase) {
     RightTextOut(app, hdc, x, y, std::span{psz}, cLen, dxErase);
 }
-void DiaganolTextOut(APPSESSION &app, HDC hdc, RECT *prc, const char *psz, std::int16_t cLen);
+void DiaganolTextOut(APPSESSION &app, HDC hdc, RECT *prc, std::string_view szText);
 void ExpandRc(RECT *prc, std::int16_t dx, std::int16_t dy);
 void OffsetRc(RECT *prc, std::int16_t dx, std::int16_t dy);
 void StickyDlgPos(HWND hwnd, POINT16 *ppt, std::int16_t fInit);

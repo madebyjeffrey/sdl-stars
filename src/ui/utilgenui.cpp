@@ -225,7 +225,7 @@ void RightTextOut(APPSESSION &app, HDC hdc, std::int16_t x, std::int16_t y, cons
     return;
 }
 
-void DiaganolTextOut(APPSESSION &app, HDC hdc, RECT *prc, const char *psz, std::int16_t cLen) {
+void DiaganolTextOut(APPSESSION &app, HDC hdc, RECT *prc, std::string_view szText) {
     NATIVEOWNER<LOGFONT, win32::LocalFree> plfOwner;
     double   angle;
     HFONT    hfont;
@@ -246,10 +246,11 @@ void DiaganolTextOut(APPSESSION &app, HDC hdc, RECT *prc, const char *psz, std::
     std::int32_t  l;
     std::int16_t  dHtX;
     std::int16_t  dHtY;
+    const char   *psz;
+    std::int16_t  cLen;
 
-    if (cLen == 0) {
-        cLen = std::strlen(psz);
-    }
+    psz = szText.empty() ? "" : szText.data();
+    cLen = static_cast<std::int16_t>(szText.size());
     dx = prc->right - prc->left;
     dy = prc->bottom - prc->top;
     if (dx >= 10 && dy >= 10) {

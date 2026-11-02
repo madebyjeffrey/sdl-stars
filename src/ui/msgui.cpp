@@ -232,7 +232,7 @@ LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             if ((app.state.iMsgCur < 0 && app.state.cMsg > 0) ||
                 (app.state.iMsgCur >= 0 && app.state.iMsgCur < app.state.cMsg && (app.state.bitfMsgFiltered[PresentationIO().pfnMessageId(app, app.state.iMsgCur) >> 3] & 1 << (PresentationIO().pfnMessageId(app, app.state.iMsgCur) & 7)))) {
                 cch = TextIO().pfnCchGetString(app, idsFiltered, std::span{app.state.szWork});
-                DiaganolTextOut(app, hdc, &rc, app.state.szWork, cch);
+                DiaganolTextOut(app, hdc, &rc, std::string_view{std::span{app.state.szWork}.data(), static_cast<std::size_t>(cch)});
                 szMessage = PszGetMessageN(app, app.state.iMsgCur);
                 lpsz = szMessage.data();
             }
