@@ -1704,7 +1704,8 @@
         "bounded-native-path-copy-uses-ranges",
         "native-wrapper-file-paths-use-views",
         "remove-nul-terminated-path-converter",
-        "library-native-file-copy-path-views"
+        "library-native-file-copy-path-views",
+        "record-stream-open-accepts-path-view"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -25019,14 +25020,13 @@
   "working_tree_checkpoint": {
     "date": "2026-11-02",
     "branch": "develop",
-    "batch": "L05 alert service bounded string_view interface",
-    "source_commit": "d57f4b24",
+    "batch": "L06 record StreamOpen accepts path views",
+    "source_commit": "437a716c",
     "status": "Verified and committed locally on develop. macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Current-source Windows SDL desktop and Linux desktop qualification remain outstanding.",
     "changes": [
-      "AlertSz and the core-to-host/UI IdAlertBox contract now accept std::string_view.",
-      "The SDL adapter owns a NUL-terminated std::string only at the Win32 MessageBox boundary; the host writes the exact view bytes to stderr.",
-      "Test doubles and compatibility harness callbacks now implement the view contract.",
-      "No game behavior, saved layout, file format or serialization changed."
+      "StreamOpen now accepts std::string_view and forwards the bounded path to HfOpenFile.",
+      "Owned std::string callers pass views directly instead of exposing .c_str(); injected record-stream callbacks use the same contract.",
+      "No file-open policy, game behavior, saved layout, file format or serialization changed."
     ],
     "verification": {
       "macos_sdl_debug": "make compile passes with strict warnings and dual-header checks.",
@@ -25226,6 +25226,10 @@
       {
         "commit": "d57f4b24",
         "message": "Pass alert text through views"
+      },
+      {
+        "commit": "437a716c",
+        "message": "Pass record stream paths as views"
       }
     ],
     "parent": "4867b0c5"
