@@ -23640,7 +23640,7 @@
       "dist/verification/live-cpp/l05ai/ (ignored local logs and source hashes)"
     ],
     "goal_status": "Overall goal remains unfinished. This is a restart checkpoint, not a completion claim.",
-    "published_batch_head": "159edb9a",
+    "published_batch_head": "f2bbd1df",
     "platform_ci": {
       "run_id": 41363769853,
       "url": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41363769853",
