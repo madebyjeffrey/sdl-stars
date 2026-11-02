@@ -1355,24 +1355,51 @@ LDone:
     return fComplete;
 }
 
-static std::int16_t FImportFamilyMember(const char *pszName, const char *pszStem, std::size_t cchStem,
-                                        int *piplr, DtFileType *pdt) {
-    const char *pszExt;
+struct LIBRARYFAMILYMEMBER {
+    int iplr;
+    DtFileType dt;
+};
+
+static std::optional<LIBRARYFAMILYMEMBER> FImportFamilyMember(std::string_view pszName, std::string_view pszStem) {
+    std::string_view pszExt;
+    int iplr;
+    DtFileType dt;
+    char chType;
     int iplrFamily;
-    if (SDL_strncasecmp(pszName, pszStem, cchStem) || pszName[cchStem] != '.') return 0;
-    pszExt = pszName + cchStem + 1;
-    if (!SDL_strcasecmp(pszExt, "xy")) { *piplr = -1; *pdt = dtXY; return 1; }
-    if (!SDL_strcasecmp(pszExt, "hst")) { *piplr = -1; *pdt = dtHost; return 1; }
-    if (pszExt[0] == 'm' || pszExt[0] == 'M' || pszExt[0] == 'h' || pszExt[0] == 'H' || pszExt[0] == 'x' || pszExt[0] == 'X') {
-        if (pszExt[1] < '1' || pszExt[1] > '9' || (pszExt[2] && (pszExt[2] < '0' || pszExt[2] > '9')) || (pszExt[2] && pszExt[3])) return 0;
-        iplrFamily = pszExt[1] - '0';
-        if (pszExt[2]) iplrFamily = iplrFamily * 10 + pszExt[2] - '0';
-        if (iplrFamily > 16) return 0;
-        *piplr = iplrFamily - 1;
-        *pdt = SDL_tolower(pszExt[0]) == 'm' ? dtTurn : SDL_tolower(pszExt[0]) == 'h' ? dtHist : dtLog;
-        return 1;
+    if (pszName.size() <= pszStem.size() || SDL_strncasecmp(pszName.data(), pszStem.data(), pszStem.size()) ||
+        pszName[pszStem.size()] != '.') return std::nullopt;
+    pszExt = pszName.substr(pszStem.size() + 1);
+    if (pszExt.size() == 2 && SDL_strncasecmp(pszExt.data(), "xy", pszExt.size()) == 0) {
+        iplr = -1;
+        dt = dtXY;
+        return LIBRARYFAMILYMEMBER{iplr, dt};
     }
-    return 0;
+    if (pszExt.size() == 3 && SDL_strncasecmp(pszExt.data(), "hst", pszExt.size()) == 0) {
+        iplr = -1;
+        dt = dtHost;
+        return LIBRARYFAMILYMEMBER{iplr, dt};
+    }
+    if (pszExt.size() < 2 || pszExt.size() > 3) return std::nullopt;
+    if (pszExt[0] != 'm' && pszExt[0] != 'M' && pszExt[0] != 'h' && pszExt[0] != 'H' &&
+        pszExt[0] != 'x' && pszExt[0] != 'X') return std::nullopt;
+    chType = SDL_tolower(pszExt[0]);
+    if (pszExt[1] < '1' || pszExt[1] > '9' ||
+        (pszExt.size() == 3 && (pszExt[2] < '0' || pszExt[2] > '9'))) return std::nullopt;
+    iplrFamily = pszExt[1] - '0';
+    if (pszExt.size() == 3) iplrFamily = iplrFamily * 10 + pszExt[2] - '0';
+    if (iplrFamily > 16) return std::nullopt;
+    iplr = iplrFamily - 1;
+    dt = chType == 'm' ? dtTurn : chType == 'h' ? dtHist : dtLog;
+    return LIBRARYFAMILYMEMBER{iplr, dt};
+}
+
+static bool FMalformedImportFamilyMember(std::string_view pszName, std::string_view pszStem) {
+    std::size_t cchStem = pszStem.size();
+    char chType;
+    if (pszName.size() <= cchStem + 1 || SDL_strncasecmp(pszName.data(), pszStem.data(), cchStem) ||
+        pszName[cchStem] != '.') return false;
+    chType = SDL_tolower(pszName[cchStem + 1]);
+    return chType == 'm' || chType == 'h' || chType == 'x';
 }
 
 struct LIBRARYGAMECOPY {
@@ -1430,11 +1457,9 @@ static std::int16_t FCopyLibraryGameEntry(APPSESSION &app, void *lpData, const c
     char szSource[512], szTarget[512];
     const char *pszTargetFile;
     LIBRARYGAMECOPY lgb;
-    int iplr;
     int cch;
-    std::size_t cchStem = std::strlen(plgc->pszSourceName);
+    std::optional<LIBRARYFAMILYMEMBER> lfm;
 
-    DtFileType dt;
     if (!std::strcmp(pszName, ".") || !std::strcmp(pszName, "..")) return 1;
     cch = CchSnprintf(std::span{szSource, sizeof(szSource)}, "%s%s%s", plgc->pszSource, szDirSep, pszName);
     if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szSource)) { plgc->fBad = 1; return 0; }
@@ -1461,9 +1486,10 @@ static std::int16_t FCopyLibraryGameEntry(APPSESSION &app, void *lpData, const c
         }
         return 1;
     }
-    if (FImportFamilyMember(pszName, plgc->pszSourceName, cchStem, &iplr, &dt)) {
+    lfm = FImportFamilyMember(pszName, plgc->pszSourceName);
+    if (lfm) {
         if (!FFormatLibraryFamilyPath(szTarget, sizeof(szTarget), plgc->pszTarget,
-                                      plgc->pszTargetName, dt, iplr)) { plgc->fBad = 1; return 0; }
+                                      plgc->pszTargetName, lfm->dt, lfm->iplr)) { plgc->fBad = 1; return 0; }
     } else if (SDL_strcasecmp(pszName, ".library") && SDL_strcasecmp(pszName, ".library.tmp")) {
         /* Optional external universe definitions and other sidecars keep their own names. */
         cch = CchSnprintf(std::span{szTarget, sizeof(szTarget)}, "%s%s%s", plgc->pszTarget, szDirSep, pszName);
@@ -1493,20 +1519,22 @@ static std::int16_t FBackupDirectoryName(const char *pszName) {
 std::int16_t CopyImportEntry(APPSESSION &, void *lpData, const char *pszName) {
     LIBRARYIMPORT *pli = static_cast<LIBRARYIMPORT *>(lpData);
     char szSource[512], szTarget[512];
+    std::optional<LIBRARYFAMILYMEMBER> lfm;
     int iplr;
     DtFileType dt;
     std::int32_t lidGame;
     std::uint16_t turn;
     std::int16_t fMulti;
     std::uint16_t wGen;
-    std::size_t cchStem = std::strlen(pli->pszStem);
 
-    if (!FImportFamilyMember(pszName, pli->pszStem, cchStem, &iplr, &dt)) {
-        if (!SDL_strncasecmp(pszName, pli->pszStem, cchStem) && pszName[cchStem] == '.' &&
-            (SDL_tolower(pszName[cchStem + 1]) == 'm' || SDL_tolower(pszName[cchStem + 1]) == 'h' || SDL_tolower(pszName[cchStem + 1]) == 'x')) pli->fBad = 1;
+    lfm = FImportFamilyMember(pszName, pli->pszStem);
+    if (!lfm) {
+        if (FMalformedImportFamilyMember(pszName, pli->pszStem)) pli->fBad = 1;
         if (FBackupDirectoryName(pszName)) pli->fBackup = 1;
         return 1;
     }
+    dt = lfm->dt;
+    iplr = lfm->iplr;
     CchSnprintf(std::span{szSource, sizeof(szSource)}, "%s%s%s", pli->pszSource, szDirSep, pszName);
     if (!FFormatLibraryFamilyPath(szTarget, sizeof(szTarget), pli->pszTarget, pli->pszName, dt, iplr)) {
         pli->fBad = 1;
@@ -1553,14 +1581,13 @@ struct LIBRARYBACKUP {
 
 static std::int16_t CopyBackupEntry(APPSESSION &, void *lpData, const char *pszName) {
     LIBRARYBACKUP *plb = static_cast<LIBRARYBACKUP *>(lpData);
-    int iplr;
-    DtFileType dt;
+    std::optional<LIBRARYFAMILYMEMBER> lfm;
     char szSource[512], szTarget[512], szDirectory[512];
-    std::size_t cchStem = std::strlen(plb->pszStem);
-    if (!FImportFamilyMember(pszName, plb->pszStem, cchStem, &iplr, &dt)) return 1;
+    lfm = FImportFamilyMember(pszName, plb->pszStem);
+    if (!lfm) return 1;
     CchSnprintf(std::span{szSource, sizeof(szSource)}, "%s%s%s%s%s", plb->pszSource, szDirSep, plb->pszBackup, szDirSep, pszName);
     CchSnprintf(std::span{szDirectory, sizeof(szDirectory)}, "%s%s%s", plb->pszTarget, szDirSep, plb->pszBackup);
-    if (!FFormatLibraryFamilyPath(szTarget, sizeof(szTarget), szDirectory, plb->pszName, dt, iplr)) {
+    if (!FFormatLibraryFamilyPath(szTarget, sizeof(szTarget), szDirectory, plb->pszName, lfm->dt, lfm->iplr)) {
         plb->fBad = 1;
         return 0;
     }
@@ -1645,22 +1672,20 @@ struct LIBRARYEXPORT {
 
 static std::int16_t CopyGameExportEntry(APPSESSION &, void *lpData, const char *pszName) {
     LIBRARYEXPORT *ple = static_cast<LIBRARYEXPORT *>(lpData);
-    int iplr;
-    DtFileType dt;
     char szSource[512], szTarget[512];
-    std::size_t cchStem = std::strlen(ple->pszStem);
+    std::optional<LIBRARYFAMILYMEMBER> lfm;
 
-    if (!FImportFamilyMember(pszName, ple->pszStem, cchStem, &iplr, &dt)) {
+    lfm = FImportFamilyMember(pszName, ple->pszStem);
+    if (!lfm) {
         /* A malformed companion should not silently make an incomplete export. */
-        if (!SDL_strncasecmp(pszName, ple->pszStem, cchStem) && pszName[cchStem] == '.' &&
-            std::strchr("mMhHxX", pszName[cchStem + 1])) ple->fBad = 1;
+        if (FMalformedImportFamilyMember(pszName, ple->pszStem)) ple->fBad = 1;
         return 1;
     }
     CchSnprintf(std::span{szSource, sizeof(szSource)}, "%s%s%s", ple->pszSource, szDirSep, pszName);
     CchSnprintf(std::span{szTarget, sizeof(szTarget)}, "%s%s%s", ple->pszTarget, szDirSep, pszName);
     if (!FCopyNativeFile(szSource, szTarget)) { ple->fBad = 1; return 0; }
-    if (dt == dtXY) ple->fSawXY = 1;
-    if (dt == dtTurn || dt == dtHost) ple->fSawPlayable = 1;
+    if (lfm->dt == dtXY) ple->fSawXY = 1;
+    if (lfm->dt == dtTurn || lfm->dt == dtHost) ple->fSawPlayable = 1;
     return 1;
 }
 
