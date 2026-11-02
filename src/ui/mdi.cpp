@@ -2759,7 +2759,7 @@ LRESULT  TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             SelectLibraryView(app, hwnd, 1);
             break;
         case IDC_LIBRARY_IMPORT_ORDERS:
-            if (FImportLibraryOrders(app, hwnd, nullptr)) RefreshLibraryHostGames(app, hwnd);
+            if (FImportLibraryOrders(app, hwnd, std::nullopt)) RefreshLibraryHostGames(app, hwnd);
             break;
         case IDC_LIBRARY_GAME_EXPORT:
             FExportSelectedLibraryGame(app, hwnd, nullptr);

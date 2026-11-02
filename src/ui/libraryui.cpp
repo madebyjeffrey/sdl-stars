@@ -1302,7 +1302,7 @@ std::int16_t FImportLibraryRaceAndEdit(APPSESSION &app, HWND hwnd, std::optional
 
 /* Inspect record framing and BOF metadata without calling FOpenFile, which
  * binds validation to the active game globals. */
-std::int16_t FInspectImportFile(const char *pszFile, DtFileType dt, int iplr,
+std::int16_t FInspectImportFile(std::string_view pszFile, DtFileType dt, int iplr,
                                  std::int32_t &lidGame, std::uint16_t *pturn, std::uint16_t *pwGen, std::int16_t &fMulti) {
     NATIVEFILE *pf;
     HDR hdr;
@@ -1935,7 +1935,7 @@ INT_PTR  LibraryTurnConflictDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
     return 0;
 }
 
-static std::int16_t FFilesEqual(const char *pszLeft, const char *pszRight) {
+static std::int16_t FFilesEqual(std::string_view pszLeft, std::string_view pszRight) {
     NATIVEFILE *pfLeft, *pfRight;
     char rgbLeft[4096], rgbRight[4096];
     std::size_t cbLeft, cbRight;
@@ -2474,16 +2474,17 @@ static std::int16_t FInspectImportPlayer(APPSESSION &app, const char *pszUnivers
            iplr >= 0 && iplr < gameImport.cPlayer;
 }
 
-std::int16_t FImportLibraryOrders(APPSESSION &app, HWND hwnd, const char *pszSource) {
+std::int16_t FImportLibraryOrders(APPSESSION &app, HWND hwnd, std::optional<std::string_view> pszSource) {
     win32::files::FILESELECTIONREQUEST request;
     char szChosen[512], szName[256];
     char szHost[512], szUniverse[512], szTarget[512], szStage[512], szMessage[512];
-    const char *pszFile, *pszExt, *pchSlash;
+    std::string_view szFile, szExt;
     char *pch;
     std::int32_t lidHost, lidUniverse, lidOrders;
     std::uint16_t turnHost, turnOrders, wGenHost, wGenOrders;
     std::int16_t fMulti;
     int iplr, cch;
+    std::size_t ichSlash, ichExt;
 
     std::uint32_t dwTick;
     HWND hwndList;
@@ -2495,7 +2496,7 @@ std::int16_t FImportLibraryOrders(APPSESSION &app, HWND hwnd, const char *pszSou
         request.fMustExist = true;
         AddLibraryFileSelectionFilters(app, idsLibraryOrdersImportFilter, request);
         if (!FSelectLibraryFile(hwnd, std::move(request), std::span{szChosen})) return 0;
-        pszSource = szChosen;
+        pszSource = std::string_view{szChosen};
     }
     if (!FInitLibrary() || !win32::IsWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_LIBRARY_HOST_GAMES))) return 0;
     hwndList = ControlIO().pfnGetDlgItem(hwnd, IDC_LIBRARY_HOST_GAMES);
@@ -2505,19 +2506,19 @@ std::int16_t FImportLibraryOrders(APPSESSION &app, HWND hwnd, const char *pszSou
         return 0;
     }
     ControlIO().pfnSendMessage(hwndList, win32::LB_GETTEXT, i, reinterpret_cast<LPARAM>(szName));
-    pszFile = std::strrchr(pszSource, '/');
-    pchSlash = std::strrchr(pszSource, '\\');
-    if (pchSlash && (!pszFile || pchSlash > pszFile)) pszFile = pchSlash;
-    pszFile = pszFile ? pszFile + 1 : pszSource;
-    pszExt = std::strrchr(pszFile, '.');
-    if (!pszExt || SDL_tolower(pszExt[1]) != 'x' || pszExt[2] < '1' || pszExt[2] > '9' ||
-        (pszExt[3] && (pszExt[3] < '0' || pszExt[3] > '9')) || (pszExt[3] && pszExt[4])) {
+    ichSlash = pszSource->find_last_of("/\\");
+    szFile = pszSource->substr(ichSlash == std::string_view::npos ? 0 : ichSlash + 1);
+    ichExt = szFile.find_last_of('.');
+    szExt = ichExt == std::string_view::npos ? std::string_view{} : szFile.substr(ichExt);
+    if ((szExt.size() != 3 && szExt.size() != 4) || SDL_tolower(static_cast<unsigned char>(szExt[1])) != 'x' ||
+        szExt[2] < '1' || szExt[2] > '9' ||
+        (szExt.size() == 4 && (szExt[3] < '0' || szExt[3] > '9'))) {
         AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryOrdersChooseFile).data(), win32::MB_ICONEXCLAMATION);
         return 0;
     }
-    iplr = pszExt[2] - '1';
-    if (pszExt[3]) iplr = (pszExt[2] - '0') * 10 + pszExt[3] - '1';
-    if (iplr < 0 || iplr >= 16 || !FInspectImportFile(pszSource, dtLog, iplr, lidOrders,
+    iplr = szExt[2] - '1';
+    if (szExt.size() == 4) iplr = (szExt[2] - '0') * 10 + szExt[3] - '1';
+    if (iplr < 0 || iplr >= 16 || !FInspectImportFile(*pszSource, dtLog, iplr, lidOrders,
             &turnOrders, &wGenOrders, fMulti)) {
         AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryOrdersInvalid).data(), win32::MB_ICONEXCLAMATION);
         return 0;
@@ -2537,7 +2538,7 @@ std::int16_t FImportLibraryOrders(APPSESSION &app, HWND hwnd, const char *pszSou
                       szName, szDirSep, szName, iplr + 1);
     if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szTarget)) return 0;
     if (FNativeFileSize(szTarget)) {
-        if (FFilesEqual(pszSource, szTarget)) return 1;
+        if (FFilesEqual(*pszSource, szTarget)) return 1;
         cch = CchSnprintf(std::span{szMessage, sizeof(szMessage)},
                           TextIO().pfnCompressed(app, idsLibraryOrdersReplacePrompt).data(), iplr + 1, szName);
         if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szMessage)) return 0;
@@ -2546,7 +2547,7 @@ std::int16_t FImportLibraryOrders(APPSESSION &app, HWND hwnd, const char *pszSou
     dwTick = DwTickCount();
     cch = CchSnprintf(std::span{szStage, sizeof(szStage)}, "%s.importing.%u", szTarget, dwTick);
     if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szStage)) return 0;
-    if (!FCopyNativeFileExclusive(pszSource, szStage) ||
+    if (!FCopyNativeFileExclusive(*pszSource, szStage) ||
         !FInspectImportFile(szStage, dtLog, iplr, lidOrders, &turnOrders, &wGenOrders, fMulti) ||
         lidOrders != lidHost || turnOrders != turnHost || wGenOrders != wGenHost) {
         RemoveNativeFile(szStage);

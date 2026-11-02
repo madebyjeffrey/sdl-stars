@@ -56,7 +56,7 @@ std::int16_t FSelectLibraryHostGame(APPSESSION &app, HWND hwnd);
 std::int16_t FContinueLibraryGame(APPSESSION &app, HWND hwnd);
 void RememberLibraryGame(APPSESSION &app);
 std::int16_t FImportLibraryGame(APPSESSION &app, HWND hwnd, std::optional<std::string_view> pszSource);
-std::int16_t FImportLibraryOrders(APPSESSION &app, HWND hwnd, const char *pszSource);
+std::int16_t FImportLibraryOrders(APPSESSION &app, HWND hwnd, std::optional<std::string_view> pszSource);
 std::int16_t FImportDesktopFile(APPSESSION &app, HWND hwnd, std::optional<std::string_view> pszSource);
 std::int16_t FIsManagedLibraryGameFile(std::string_view pszFile);
 std::int16_t FIsManagedLibraryRaceFile(std::string_view pszFile);

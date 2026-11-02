@@ -116,7 +116,7 @@ static int      TestFCopyNativeFileExclusive(std::string_view source, std::strin
     event("copy", s, t, ok, residue);
     return ok;
 }
-static int TestFInspectImportFile(const char *path, int type, int player, int32_t &id, uint16_t *turn, void *gen, int16_t &multi) {
+static int TestFInspectImportFile(std::string_view path, int type, int player, int32_t &id, uint16_t *turn, void *gen, int16_t &multi) {
     (void)type;
     (void)player;
     assert(!gen);
