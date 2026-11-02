@@ -1,4 +1,5 @@
 #include "win.h"
+#include <algorithm>
 #include "appstate.h"
 #include "callbackcontext.h"
 #include "uistate.h"
@@ -1494,6 +1495,8 @@ void DrawProductionItem(APPSESSION &app, HDC hdc, RECT *prc, char *psz, std::int
     std::int16_t  cch;
     std::int16_t  bkSav;
     RECT     rc;
+    char    *pchCopy, *pchCopyEnd;
+    std::size_t cchCopy, cchCopied;
 
     fItalic = 0;
     fDoubleDraw = 0;
@@ -1620,7 +1623,12 @@ void DrawProductionItem(APPSESSION &app, HDC hdc, RECT *prc, char *psz, std::int
         ich = std::strlen(szT);
         for (ichT = 2 - fFleet; ichT < 6 && psz[ichT + fFleet] == ' '; ichT++) {
         }
-        std::strncpy(&szT[ich], psz + (ichT + fFleet), 6 - ichT);
+        pchCopy = psz + (ichT + fFleet);
+        cchCopy = static_cast<std::size_t>(6 - ichT);
+        pchCopyEnd = std::find(pchCopy, pchCopy + cchCopy, '\0');
+        cchCopied = static_cast<std::size_t>(pchCopyEnd - pchCopy);
+        std::copy_n(pchCopy, cchCopied, &szT[ich]);
+        std::fill_n(&szT[ich + cchCopied], cchCopy - cchCopied, '\0');
         ich += 6 - ichT;
         if (!fFleet && ((psz[fDoubleDraw + 1] - ' ') & 1)) {
             szT[ich++] = '%';

@@ -947,7 +947,7 @@ void WriteBOF(APPSESSION &app, std::int16_t iPlayer, std::int16_t dt, std::int16
     RTBOF rtbof;
 
     rtbof = {};
-    std::strncpy(rtbof.rgid, "J3J3", 4);
+    std::ranges::copy_n("J3J3", sizeof(rtbof.rgid), rtbof.rgid);
     rtbof.lidGame = app.state.game.lid;
     rtbof.wGen = app.state.game.wGen;
     rtbof.verInc = 0;

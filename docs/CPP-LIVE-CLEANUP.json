@@ -120,7 +120,8 @@
         "admitted-owned-game-file-inputs",
         "bounded-blank-new-game-title-field",
         "owned-readonly-race-file-path-and-bounded-diagnostic",
-        "complete-scanner-location-label-capacity"
+        "complete-scanner-location-label-capacity",
+        "fixed-count-strncpy-replaced-with-ranges-algorithms"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -1110,6 +1111,16 @@
         "status": "complete; locally verified; native Windows/Linux qualification pending",
         "contract": "Complete distance, both catalog labels and location text fit their combined stack owner; bounded search and writes replace the original 100-byte destination and strcat.",
         "evidence": "docs/CPP-LIVE-TEXT-COPIES.json: scanner_location_label"
+      },
+      "wire_identifier_copy": {
+        "status": "implemented; verification pending",
+        "contract": "Write exactly the four identifier bytes into RTBOF.rgid; retain the 4-byte field width and wire image."
+      },
+      "fixed_count_string_copies": {
+        "status": "complete; locally verified; cross-platform qualification pending",
+        "wire_identifier": "Write exactly the four identifier bytes into RTBOF.rgid; retain its fixed width and wire image.",
+        "planet_label": "Search at most the original six-byte budget, copy the available prefix and preserve strncpy NUL padding in the remaining bytes.",
+        "verification": "Debug and Release client builds pass. Native regression and host regression each match all 519 checkpoints with zero differences/errors/skips; baseline unchanged. Desktop unit tests pass 18/18; host tests pass 29/29; available tutorial smoke checkpoint passes."
       }
     },
     {
@@ -23521,24 +23532,36 @@
     }
   },
   "current_checkpoint": {
-    "batch": "L07 generated installed-data C++ constant",
-    "status": "implemented; locally verified; full platform qualification pending",
-    "parent": "e1c376e0",
-    "verification": {
-      "debug_build": "macOS Debug stars-sdl and stars-compat-help pass",
-      "help_test": "win32_utf8_help passes",
-      "generated_paths": "default ../share/stars; macOS bundle configuration .",
-      "macro_scan": "STARS_INSTALLED_DATA removed from production configuration and help implementation; NOMINMAX remains required before windows.h; include guards remain; resource-compiler macros remain in stars.rc."
+    "batch": "L05 fixed-count string copies in WriteBOF and DrawProductionItem",
+    "status": "complete; locally verified; cross-platform qualification pending",
+    "parent": "f2809b7b",
+    "changes": {
+      "src/core/save.cpp": "Replace strncpy with std::ranges::copy_n for the exact four-byte RTBOF.rgid identifier.",
+      "src/ui/planetui.cpp": "Replace six-byte strncpy with bounded find/copy_n/fill_n, preserving prefix copy and NUL padding."
     },
+    "verification": {
+      "debug_build": "Pass, no new warnings.",
+      "release_build": "Pass.",
+      "native_regression": "519 matches, 25 existing warnings, zero differences/errors/skipped reference inputs.",
+      "host_regression": "519 matches, 25 existing warnings, zero differences/errors/skipped reference inputs.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "tutorial": "Available SDL tutorial smoke checkpoint passes; full 80-page tutorial remains unfinished.",
+      "baseline": "Unchanged."
+    },
+    "raw_copy_inventory": "The two remaining raw strcpy calls are compatibility list/toolbar message outputs with no destination-length field in the Win32 message contract; both remain under SDK-boundary review.",
     "remaining_work": [
-      "L05 raw-copy migrations and remaining text-boundary audits",
+      "L05 bounded text destinations, const-text interfaces, scratch storage/borrowed-return audit, wrapper formatting and remaining raw-copy SDK-boundary review",
       "L06 remaining buffer/length interfaces and native path results",
       "L06 D06 native Windows/Linux chooser qualification and remaining chooser branch coverage",
-      "L08 maintained-inventory reconciliation and final retained primitive/macro audit",
-      "Full Debug/Release, unit, tutorial, desktop/host regression and cross-platform qualification"
+      "L08 maintained inventory reconciliation and retained primitive/macro audit",
+      "Full cross-platform and final Release/Debug qualification"
     ],
-    "published_batch_head": "e1c376e0",
-    "platform_dispatch": "Recent typed file-selection batches and this generated-constant batch still need full Linux/macOS/Windows workflow qualification."
+    "published_batch_head": "f2809b7b",
+    "receipts": [
+      "dist/scaffold/regression/comparison.json",
+      "dist/scaffold/regression/host-comparison.json"
+    ]
   },
   "milestone_d_checkpoint": {
     "stage": "D05 caller migrations implemented; D06 platform qualification pending",
