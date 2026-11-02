@@ -23953,10 +23953,10 @@
     "date": "2026-11-02",
     "reason": "Active C-style cleanup continuation after migrating the profile path service result to owned C++ string storage.",
     "branch": "develop",
-    "batch": "L05be owned Linux portal request paths",
+    "batch": "L05bf owned profile node text",
     "batch_parent": "d3c82384",
-    "latest_batch": "L05be owned Linux portal request paths",
-    "latest_batch_head": "05851dad",
+    "latest_batch": "L05bf owned profile node text",
+    "latest_batch_head": "3bc4b515",
     "completed_stages": [
       "L01: nullptr and aliases",
       "L02: explicit C++ casts and headers",
@@ -24012,7 +24012,8 @@
       "Commit 90f91478 changes SzProfilePath from a malloc-owned char* to std::optional<std::string>, removing three strdup-based fallback branches and making both profile callers retain path ownership through RAII. Profile path precedence, UTF-8 validation, directory creation and ERROR_NOT_ENOUGH_MEMORY mapping are preserved. macOS Debug build, profile/resource/save/UTF-8 coverage, desktop units (18/18), host units (29/29), tutorial smoke and native/host regressions (519 matches each, 25 existing warnings, zero differences/errors/skips) pass; strict MinGW C++20 syntax compilation of profile.cpp passes. The optional macOS leaks wrapper timed out because it could not acquire the child task port; its underlying profile test printed PASS. Continue L05 bounded text/formatting and scratch audit, L06 service/chooser work, and L08 full platform qualification.",
       "Commit 71a0995d changes PszHelpDocument from a raw char* result plus strdup to std::optional<std::string>; WinHelpA now passes the owned path to its launcher while RAII retains it for the call. Existing bad-format, access-denied and launch errors are preserved. The macOS Debug build, win32_utf8_help, desktop units (18/18), host units (29/29), tutorial smoke, strict MinGW C++20 syntax and native/host regressions (519 matches each, 25 existing warnings, zero differences/errors/skips) pass. Continue remaining owned string allocations, bounded interfaces, wrapper formatting, chooser qualification and final platform audit.",
       "Commit fb2c4661 replaces COMPATFILEDIALOG's NATIVEOWNER<char> navigation-history entries with std::string, removing strdup/free from directory-history navigation and relying on automatic array destruction. Allocation failure still reports the existing navigation-memory error before changing directories. macOS Debug build, win32_filedialog_cocoa, desktop units (18/18), host units (29/29), tutorial smoke, strict MinGW C++20 syntax for filedialog.cpp and native/host regressions (519 matches each, 25 existing warnings, zero differences/errors/skips) pass. Continue remaining C-style allocations, bounded text/formatting, chooser qualification and final platform audit.",
-      "Commit 05851dad replaces the Linux portal chooser's raw duplicated request and sender pointers with local std::string ownership, preserving the initial-request/returned-handle cleanup transitions and allocation-failure exit. It also removes the now-unused <cstdlib> include. macOS Debug build, strict C++20 syntax checking against the temporary D-Bus stub, desktop units (18/18), host units (29/29), tutorial smoke and native/host regressions (519 matches each, 25 existing warnings, zero differences/errors/skips) pass. Native Linux portal runtime qualification remains unavailable locally because D-Bus development headers are absent; retain this limitation in the final platform gate."
+      "Commit 05851dad replaces the Linux portal chooser's raw duplicated request and sender pointers with local std::string ownership, preserving the initial-request/returned-handle cleanup transitions and allocation-failure exit. It also removes the now-unused <cstdlib> include. macOS Debug build, strict C++20 syntax checking against the temporary D-Bus stub, desktop units (18/18), host units (29/29), tutorial smoke and native/host regressions (519 matches each, 25 existing warnings, zero differences/errors/skips) pass. Native Linux portal runtime qualification remains unavailable locally because D-Bus development headers are absent; retain this limitation in the final platform gate.",
+      "Commit 3bc4b515 changes COMPATPROFILE.szRaw/szParsed from separately strdup-allocated char buffers to std::string members, allocates nodes with nothrow new, and deletes whole nodes so string lifetimes follow the node. The existing pszSection/pszKey/pszValue debug fields remain pointers into the stable parsed string; the serializer now uses c_str()/back(). macOS Debug build, profile/save/UTF-8 focused tests, strict MinGW C++20 syntax for both profile translation units, desktop units (18/18), host units (29/29), tutorial smoke and native/host regressions (519 matches each, 25 existing warnings, zero differences/errors/skips) pass. Continue remaining C-style allocations, bounded text/formatting, chooser qualification and final platform audit."
     ],
     "evidence": [
       "docs/CPP-LIVE-TEXT-COPIES.json: game_file_inputs.verification",
@@ -24027,25 +24028,27 @@
       "qualified_source_head": "b76ec1fcc1276790150457670f5f667bcec4eccc",
       "result": "success"
     },
-    "published_batch_head": "05851dad"
+    "published_batch_head": "3bc4b515"
   },
   "current_checkpoint": {
-    "batch": "L05be owned Linux portal request paths",
-    "status": "implemented and locally verified; source commit 05851dad",
-    "parent": "cf0fd338",
+    "batch": "L05bf owned profile node text",
+    "status": "implemented and locally verified; source commit 3bc4b515",
+    "parent": "2113f9d1",
     "changes": {
-      "compat/win32/src/filedialog_portal.cpp": "Portal request path and sender now use local std::string values; removes raw strdup/free ownership and unused <cstdlib>."
+      "compat/win32/src/profile_io.h": "COMPATPROFILE now owns raw and parsed profile lines as std::string members; parser token fields remain pointers into the stable parsed string.",
+      "compat/win32/src/profile.cpp": "Profile nodes use nothrow new/delete and no longer duplicate or free their two line buffers.",
+      "compat/win32/src/profile_save.cpp": "Serializer reads the owned raw line through c_str() and back()."
     },
     "verification": {
       "macos_debug_build": "Full macos-sdl-debug build passes.",
-      "portal_syntax": "Strict C++20 syntax check passes against the temporary D-Bus declaration stub.",
+      "windows_syntax": "Strict MinGW C++20 syntax compilation passes for profile.cpp and profile_save.cpp.",
+      "focused_tests": "win32_profile_save, win32_sdl_resource_profile and win32_utf8_profile pass.",
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
       "tutorial": "Available SDL tutorial smoke checkpoint passes; full 80-page tutorial remains unfinished.",
       "native_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
       "host_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
       "baseline": "Unchanged.",
-      "platform_limit": "Native Linux portal runtime could not be run locally because D-Bus development headers are unavailable; Linux qualification remains open.",
       "diff_check": "git diff --check passes."
     },
     "remaining_work": [
@@ -24053,8 +24056,8 @@
       "L06 remaining buffer/length interfaces, native path results and chooser Milestone D qualification, including Windows/Linux chooser coverage.",
       "L08 retained preprocessor/platform/API-like macro audit, maintained inventory reconciliation and final platform qualification."
     ],
-    "source_commit": "05851dad",
-    "published_batch_head": "05851dad"
+    "source_commit": "3bc4b515",
+    "published_batch_head": "3bc4b515"
   },
   "milestone_d_checkpoint": {
     "stage": "D05 caller migrations implemented; D06 platform qualification pending",
