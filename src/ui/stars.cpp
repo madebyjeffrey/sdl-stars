@@ -15,8 +15,7 @@
 
 static int IStarsMain(APPSESSION &app, HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) try {
     win32::MSG      msg;
-    std::uint32_t lSeed;
-    std::int16_t  fSeed;
+    CMDLINERESULT cmdLineResult;
 
     app.lpui->hInst = hInstance;
     app.state.szBase[0] = 0;
@@ -28,8 +27,6 @@ static int IStarsMain(APPSESSION &app, HINSTANCE hInstance, HINSTANCE hPrevInsta
         AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableInitializeStars, {}).data(), win32::MB_ICONHAND);
         return 0;
     }
-    fSeed = 0;
-    lSeed = 0;
     if (!FCreateStuff(app)) {
         return 0;
     }
@@ -41,10 +38,11 @@ static int IStarsMain(APPSESSION &app, HINSTANCE hInstance, HINSTANCE hPrevInsta
         AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableInitializeStars, {}).data(), win32::MB_ICONHAND);
         return 0;
     }
-    if (!ParseCmdLine(app, lpCmdLine, &fSeed, &lSeed)) { FreeStuff(app); return 2; }
+    cmdLineResult = ParseCmdLine(app, std::string_view{lpCmdLine});
+    if (!cmdLineResult.fValid) { FreeStuff(app); return 2; }
     /* The original seeded before FCreateStuff; nothing in between draws a
        random number, so seeding after the command line is the same. */
-    Randomize2(app, fSeed ? lSeed : win32::GetTickCount());
+    Randomize2(app, cmdLineResult.lSeed ? *cmdLineResult.lSeed : win32::GetTickCount());
     StarsRethrowPendingError();
     win32::PostMessageA(app.lpui->hwndFrame, WM_STARS_STARTUP, 0, 0);
     while (ui::GetMessage(&msg, nullptr, 0, 0)) {

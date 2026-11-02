@@ -3,6 +3,8 @@
 
 #include "common.h"
 #include <cstdint>
+#include <optional>
+#include <string_view>
 
 extern std::int16_t rgpctMineHit[3];
 extern std::int16_t rgiWarpSafe[3];
@@ -21,7 +23,11 @@ void    VerifyTurns(APPSESSION &app);
 std::int16_t CTurnsOutSafe(APPSESSION &app);
 std::int16_t CFindTurnsOutstanding(APPSESSION &app);
 std::int16_t FSetUpBatchProcessing(APPSESSION &app);
-std::int16_t ParseCmdLine(APPSESSION &app, char *lpCmdLine, std::int16_t *pfSeed, std::uint32_t *plSeed);
+struct CMDLINERESULT {
+    bool fValid;
+    std::optional<std::uint32_t> lSeed;
+};
+CMDLINERESULT ParseCmdLine(APPSESSION &app, std::string_view szCmdLine);
 std::int16_t FRunCmdLine(APPSESSION &app);
 
 #endif

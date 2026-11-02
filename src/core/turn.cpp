@@ -657,33 +657,36 @@ std::int16_t FSetUpBatchProcessing(APPSESSION &app) {
 }
 
 // ParseCmdLine reads the command line's switches into ini and gd and its
-// file name into szBase; *pfSeed and *plSeed get a -s<seed>. The Windows
-// game and stars-host take the same UTF-8 command line. Invalid encoding or
-// capacity returns FALSE so neither caller executes a partially parsed command.
-std::int16_t ParseCmdLine(APPSESSION &app, char *lpCmdLine, std::int16_t *pfSeed, std::uint32_t *plSeed) {
-    char   *pch;
-    char   *lpT;
+// file name into szBase. The result carries a -s<seed> when present. The
+// Windows game and stars-host take the same UTF-8 command line. Invalid
+// encoding or capacity returns an invalid result so neither caller executes
+// a partially parsed command.
+CMDLINERESULT ParseCmdLine(APPSESSION &app, std::string_view szCmdLine) {
+    std::size_t iPos;
+    std::size_t iStart;
     std::int16_t i;
     int cchPass;
     std::size_t cbPass;
+    std::optional<std::uint32_t> lSeed;
 
-    lpT = lpCmdLine;
-    while (*lpT != 0) {
-        for (; *lpT == ' '; lpT++) {
-        }
+    iPos = 0;
+    while (iPos < szCmdLine.size() && szCmdLine[iPos] != 0) {
+        while (iPos < szCmdLine.size() && szCmdLine[iPos] == ' ') iPos++;
+        if (iPos == szCmdLine.size() || szCmdLine[iPos] == 0) break;
         /* Windows switches may start with '/'; where '/' separates
            directories, only '-' does. */
-        if (*lpT == '-' || (*lpT == '/' && chDirSep != '/')) {
-            for (lpT++; *lpT != 0 && *lpT != ' '; lpT++) {
-                switch (*lpT) {
+        if (szCmdLine[iPos] == '-' || (szCmdLine[iPos] == '/' && chDirSep != '/')) {
+            iPos++;
+            while (iPos < szCmdLine.size() && szCmdLine[iPos] != 0 && szCmdLine[iPos] != ' ') {
+                switch (szCmdLine[iPos++]) {
                 case 'W':
                 case 'w':
                     app.state.ini.fWait = 1;
                     break;
                 case 'D':
                 case 'd':
-                    for (lpT++; *lpT != 0 && *lpT != ' '; lpT++) {
-                        switch (*lpT) {
+                    while (iPos < szCmdLine.size() && szCmdLine[iPos] != 0 && szCmdLine[iPos] != ' ') {
+                        switch (szCmdLine[iPos++]) {
                         case 'F':
                         case 'f':
                             app.state.ini.fDumpFleets = 1;
@@ -697,19 +700,17 @@ std::int16_t ParseCmdLine(APPSESSION &app, char *lpCmdLine, std::int16_t *pfSeed
                             app.state.ini.fDumpMap = 1;
                         }
                     }
-                    lpT--;
                     break;
                 case 'G':
                 case 'g':
                     app.state.ini.fGen = 1;
                     i = 0;
-                    while (lpT[1] >= '0' && lpT[1] <= '9') {
-                        lpT++;
-                        i = 10 * i + *lpT - '0';
+                    while (iPos < szCmdLine.size() && szCmdLine[iPos] >= '0' && szCmdLine[iPos] <= '9') {
+                        i = 10 * i + szCmdLine[iPos] - '0';
+                        iPos++;
                         if (i > 1000) {
                             i = 1000;
-                            for (; lpT[1] >= '0' && lpT[1] <= '9'; lpT++) {
-                            }
+                            while (iPos < szCmdLine.size() && szCmdLine[iPos] >= '0' && szCmdLine[iPos] <= '9') iPos++;
                             break;
                         }
                     }
@@ -731,14 +732,12 @@ std::int16_t ParseCmdLine(APPSESSION &app, char *lpCmdLine, std::int16_t *pfSeed
                     break;
                 case 'B':
                 case 'b':
-                    for (lpT++; *lpT == ' '; lpT++) {
-                    }
-                    pch = lpT;
-                    while (*lpT != 0 && *lpT != ' ') lpT++;
-                    if (!FCopyCmdPath(app, std::string_view{pch, static_cast<std::size_t>(lpT - pch)})) return 0;
-                    lpT--;
+                    while (iPos < szCmdLine.size() && szCmdLine[iPos] == ' ') iPos++;
+                    iStart = iPos;
+                    while (iPos < szCmdLine.size() && szCmdLine[iPos] != 0 && szCmdLine[iPos] != ' ') iPos++;
+                    if (!FCopyCmdPath(app, szCmdLine.substr(iStart, iPos - iStart))) return {false, std::nullopt};
                     if (!FSetUpBatchProcessing(app))
-                        return 0;
+                        return {false, std::nullopt};
                     app.state.ini.fBatch = 1;
                     app.state.ini.fGen = 1;
                     app.state.ini.fStartupFile = 1;
@@ -764,39 +763,36 @@ std::int16_t ParseCmdLine(APPSESSION &app, char *lpCmdLine, std::int16_t *pfSeed
                 case 's':
                     /* -s<seed>: a fixed startup seed instead of the clock, so
                        regression runs repeat exactly. Not in the original. */
-                    *pfSeed = 1;
-                    *plSeed = 0;
-                    while (lpT[1] >= '0' && lpT[1] <= '9') {
-                        lpT++;
-                        *plSeed = 10 * *plSeed + static_cast<std::uint32_t>((*lpT - '0'));
+                    lSeed = 0;
+                    while (iPos < szCmdLine.size() && szCmdLine[iPos] >= '0' && szCmdLine[iPos] <= '9') {
+                        *lSeed = 10 * *lSeed + static_cast<std::uint32_t>(szCmdLine[iPos] - '0');
+                        iPos++;
                     }
                     break;
                 case 'P':
                 case 'p':
-                    for (lpT++; *lpT == ' '; lpT++) {
-                    }
-                    pch = lpT;
-                    while (*lpT != 0 && *lpT != ' ') lpT++;
-                    cbPass = static_cast<std::size_t>((lpT - pch));
-                    cchPass = CchCopyUtf8(std::span{app.state.szPassLast}, std::string_view{pch, cbPass});
+                    while (iPos < szCmdLine.size() && szCmdLine[iPos] == ' ') iPos++;
+                    iStart = iPos;
+                    while (iPos < szCmdLine.size() && szCmdLine[iPos] != 0 && szCmdLine[iPos] != ' ') iPos++;
+                    cbPass = iPos - iStart;
+                    cchPass = CchCopyUtf8(std::span{app.state.szPassLast}, szCmdLine.substr(iStart, cbPass));
                     if (cchPass < 0) {
                         AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, cchPass == -3 ? idsNativeCommandPasswordTooLong : idsNativeCommandPasswordEncoding).data(), win32::MB_ICONHAND);
                         app.state.szBase[0] = 0; app.state.ini.fCmdLine = 0; app.state.ini.fStartupFile = 0;
-                        return 0;
+                        return {false, std::nullopt};
                     }
-                    lpT--;
                     app.state.lSaltLast = LSaltFromSz(app.state.szPassLast);
                 }
             }
         } else {
-            pch = lpT;
-            while (*lpT != 0 && *lpT != ' ') lpT++;
-            if (!FCopyCmdPath(app, std::string_view{pch, static_cast<std::size_t>(lpT - pch)})) return 0;
+            iStart = iPos;
+            while (iPos < szCmdLine.size() && szCmdLine[iPos] != 0 && szCmdLine[iPos] != ' ') iPos++;
+            if (!FCopyCmdPath(app, szCmdLine.substr(iStart, iPos - iStart))) return {false, std::nullopt};
             app.state.ini.fStartupFile = 1;
             app.state.ini.fCmdLine = 1;
         }
     }
-    return 1;
+    return {true, lSeed};
 }
 
 // FRunCmdLine carries out a command line's host work: validating the host

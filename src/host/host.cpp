@@ -91,8 +91,6 @@ int main(int argc, char *argv[]) try {
     NATIVECLEANUPSCOPE session([&app]() noexcept { app.Close(); });
     std::array<char, 1024> szCmdLine{};
     std::size_t cchCmdLine;
-    std::int16_t  fSeed;
-    std::uint32_t lSeed;
     int      i;
     char    *szIniPath;
 #ifdef _WIN32
@@ -154,10 +152,9 @@ int main(int argc, char *argv[]) try {
 #ifdef _WIN32
     rgszNative.reset();
 #endif
-    fSeed = 0;
-    lSeed = 0;
-    if (!ParseCmdLine(app, szCmdLine.data(), &fSeed, &lSeed)) return 2;
-    Randomize2(app, fSeed ? lSeed : DwTickCount());
+    const auto cmdLineResult = ParseCmdLine(app, std::string_view{szCmdLine.data(), cchCmdLine});
+    if (!cmdLineResult.fValid) return 2;
+    Randomize2(app, cmdLineResult.lSeed ? *cmdLineResult.lSeed : DwTickCount());
     if (!app.state.ini.fCmdLine) {
         std::fprintf(
             stderr,

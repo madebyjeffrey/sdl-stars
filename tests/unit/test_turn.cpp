@@ -205,8 +205,6 @@ static void test_BatchRun_games(void) {
 #endif
     COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
     char szFirst[cbTestPath], szSecond[cbTestPath], szFile[cbTestPath + 64];
-    std::int16_t fSeed = 0;
-    std::uint32_t lSeed = 0;
 
     TEST_ASSERT(FStarsTestInit(app));
     TEST_ASSERT(FStarsTestDir("batch-first", szFirst, sizeof(szFirst)));
@@ -222,7 +220,7 @@ static void test_BatchRun_games(void) {
         TEST_ASSERT(lpfile && CbWriteNativeFile(lpfile.get(), std::as_bytes(std::span{szInput})) == szInput.size());
     }
     std::string szCmd = std::string("-b ") + szFile;
-    TEST_ASSERT(ParseCmdLine(app, szCmd.data(), &fSeed, &lSeed));
+    TEST_ASSERT(ParseCmdLine(app, szCmd).fValid);
     TEST_CHECK(app.state.ini.fBatch && app.state.ini.fGen && app.state.ini.fStartupFile);
     TEST_CHECK(FRunCmdLine(app));
     TEST_CHECK(app.state.lpchBatch == app.state.lpchBatchMac && app.state.szBatch == szInput);
@@ -238,7 +236,7 @@ static void test_BatchRun_games(void) {
         NATIVEFILEOWNER lpfile(PfNativeOpen(szFile, NATIVEFILEMODE::writeTruncate), ICloseNativeFile);
         TEST_ASSERT(lpfile && CbWriteNativeFile(lpfile.get(), std::as_bytes(std::span{szBadInput})) == szBadInput.size());
     }
-    TEST_ASSERT(ParseCmdLine(app, szCmd.data(), &fSeed, &lSeed));
+    TEST_ASSERT(ParseCmdLine(app, szCmd).fValid);
     TEST_CHECK(FRunCmdLine(app));
     TEST_CHECK(!app.state.ini.fBatch && !app.state.ini.fGen && app.state.szBase[0] == 0 && app.state.hf == -1);
     TEST_ASSERT(CchCopyUtf8(std::span{app.state.szBase}, szFirstBase) >= 0);
