@@ -6,6 +6,7 @@
 #include "uistate.h"
 #include "callbackcontext.h"
 #include "control_io.h"
+#include "createui.h"
 #include "librarypublication.h"
 #include "planetui.h"
 #include "buildui.h"
@@ -18,6 +19,40 @@
 #include <array>
 #include <string_view>
 #include <string>
+
+static void TestNewGameTitleBounds(void) {
+    APPSESSION &app = ui::app;
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    HWND hwnd;
+    TEST_ASSERT(FStarsTestInit(app));
+    const std::array<std::string, 7> rgszBase = {std::string(33, 'a'), "short-Ω", std::string(31, 'b'),
+        std::string(30, 'c') + "Ω", std::string(29, 'd') + "😀", std::string(255, 'e'), ""};
+    for (const auto &szBase : rgszBase) {
+        TEST_ASSERT(CchCopyUtf8(std::span{app.state.szBase}, szBase) >= 0);
+        CchCopyUtf8(std::span{app.state.game.szName}, "Before");
+        hwnd = ui::CreateDialog(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_NEW_GAME_1), nullptr, NewGameDlg, 0);
+        TEST_ASSERT(hwnd);
+        TEST_ASSERT(ui::SetWindowText(win32::GetDlgItem(hwnd, IDC_NEW_GAME_NAME), ""));
+        const GDATA gdSav = app.state.gd;
+        TEST_CHECK(NewGameDlg(hwnd, win32::WM_COMMAND, win32::MAKEWPARAM(IDC_NEXT, win32::BN_CLICKED), 0) == 1);
+        const std::string szExpected = szBase.substr(0, CchUtf8Prefix(szBase, sizeof(app.state.game.szName) - 1));
+        TEST_ASSERT_(std::string_view(app.state.game.szName) == szExpected, "fallback title [%s] exceeds or differs from [%s]", app.state.game.szName, szExpected.c_str());
+        TEST_CHECK(FUtf8Valid(std::string_view(app.state.game.szName)));
+        TEST_CHECK(std::memcmp(&app.state.gd, &gdSav, sizeof(gdSav)) == 0);
+        TEST_CHECK(std::string_view(app.state.szBase) == szBase);
+        TEST_CHECK(ui::DestroyWindow(hwnd));
+    }
+    for (const auto id : {IDC_NEXT, IDCANCEL}) {
+        CchCopyUtf8(std::span{app.state.game.szName}, "Original");
+        hwnd = ui::CreateDialog(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_NEW_GAME_1), nullptr, NewGameDlg, 0);
+        TEST_ASSERT(hwnd);
+        TEST_ASSERT(ui::SetWindowText(win32::GetDlgItem(hwnd, IDC_NEW_GAME_NAME), "Chosen-Ω"));
+        TEST_CHECK(NewGameDlg(hwnd, win32::WM_COMMAND, win32::MAKEWPARAM(id, win32::BN_CLICKED), 0) == 1);
+        TEST_CHECK(std::string_view(app.state.game.szName) == (id == IDCANCEL ? "Original" : "Chosen-Ω"));
+        TEST_CHECK(ui::DestroyWindow(hwnd));
+    }
+    StarsCompatProcessExit();
+}
 
 static void TestTextBoundaries(void) {
     HWND hwnd, hwndEdit;
@@ -304,7 +339,8 @@ static void TestTextFitViews(void) {
     StarsCompatProcessExit();
 }
 
-TEST_LIST = {{"text fitting preserves exact glyph limits and UTF-8 field tails", TestTextFitViews},
+TEST_LIST = {{"new-game blank title fits its field and preserves the complete basename", TestNewGameTitleBounds},
+             {"text fitting preserves exact glyph limits and UTF-8 field tails", TestTextFitViews},
              {"ship clone suffix handles empty and short UTF-8 names within its field", TestShipCloneNameBounds},
              {"raw player message paints its full UTF-8 byte budget within the display buffer", TestRawMessageDisplay},
              {"mineral captions and tutorial preset keep complete text and field widths", TestMineralAndTutorialText},

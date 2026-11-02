@@ -17,6 +17,16 @@ J/JRC3/JRC4 fix claims below come from the supplied list and are not independent
 verified release history. See [WIN16-PARITY.md](WIN16-PARITY.md) for native changes
 and [ROADMAP.md](ROADMAP.md) for the post-tag work.
 
+## Blank new-game title overflows its field — fixed on develop
+
+`NewGameDlg` used an unbounded basename copy when the title edit was empty.
+The source allows 255 UTF-8 bytes while the saved title holds 31 plus NUL.
+An actual parent dialog test reproduces the overflow with a 33-byte name.
+The fallback now keeps a complete UTF-8 prefix within the title's own span;
+the filename and record layout remain intact. Tests exercise fitting and
+oversize names, multibyte boundaries, unchanged adjacent state, entered text
+and cancellation. No native regression checkpoint moved.
+
 ## Game-file inputs staged before validation — fixed on develop
 
 `FLoadGame` and `FWriteLogFile` copied unvalidated input into `szBase[256]`.

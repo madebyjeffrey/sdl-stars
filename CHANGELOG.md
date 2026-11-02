@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `NewGameDlg` now bounds the blank-title filename fallback to the saved
+  title's 31-byte UTF-8 budget. A longer basename previously overran the
+  title field and could corrupt adjacent game state. The full filename and
+  fixed record layout remain unchanged. No native regression checkpoint moved.
+
 - `FLoadGame` and `FWriteLogFile` now admit complete UTF-8 basenames before
   changing load state, appending template orders or invoking file I/O. Their
   raw copies could overrun the shared basename or stage malformed text. Owned

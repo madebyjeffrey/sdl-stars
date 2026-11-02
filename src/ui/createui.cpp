@@ -403,9 +403,10 @@ INT_PTR  NewGameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 app.state.game.fAisBand = win32::IsDlgButtonChecked(hwnd, IDC_NEW_GAME_AI_ALLIANCES);
                 app.state.game.fVisScores = win32::IsDlgButtonChecked(hwnd, IDC_NEW_GAME_PUBLIC_SCORES);
                 app.state.game.fClumping = win32::IsDlgButtonChecked(hwnd, IDC_NEW_GAME_GALAXY_CLUMPING);
-                i = ControlIO().pfnGetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_NAME), app.state.game.szName, 32);
+                i = ControlIO().pfnGetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_NEW_GAME_NAME), app.state.game.szName, sizeof(app.state.game.szName));
                 if (i == 0) {
-                    std::strcpy(app.state.game.szName, app.state.szBase);
+                    // The filename may exceed the saved title's fixed UTF-8 byte budget.
+                    CchCopyUtf8Prefix(std::span{app.state.game.szName}, app.state.szBase);
                 }
             }
             if (iRet == 3 && !FChooseNewGameName(app, hwnd)) return 1;

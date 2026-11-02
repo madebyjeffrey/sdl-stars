@@ -1,6 +1,6 @@
 {
   "migration_parent": "d3d3724c",
-  "status": "301 copy migrations recorded; live text work remains active",
+  "status": "302 copy migrations recorded; live text work remains active",
   "contracts": {
     "display": "Write a terminated complete UTF-8 prefix into the actual destination span; preserve fitting bytes. Views borrow synchronously and overlapping copies use memmove.",
     "append": "Scan only inside the destination span for its NUL. An unterminated nonempty destination is cleared and zero bytes are appended.",
@@ -2983,6 +2983,15 @@
       "original_call": "strcpy(app.state.szBase, pszFileBase)",
       "destination_owner": "Local std::array snapshot sized from the actual session basename; validated whole UTF-8 is committed through destination spans",
       "role": "Intentional filename admission/lifetime repair: invalid inputs fail before state/metadata/I/O changes; valid inputs survive shared-buffer changes and metadata callouts. Loader also snapshots the small validated extension and uses an optional parsed player/host selection. Normalized family name is retained for orders and MRU, independently of caller aliasing."
+    },
+    {
+      "path": "src/ui/createui.cpp",
+      "scope": "NewGameDlg",
+      "baseline_line": 408,
+      "operation": "strcpy",
+      "original_call": "std::strcpy(app.state.game.szName, app.state.szBase)",
+      "destination_span": "std::span{app.state.game.szName}",
+      "role": "Blank-title fallback uses a complete UTF-8 prefix within the actual fixed 32-byte saved title. The complete 256-byte basename field remains unchanged."
     }
   ],
   "remaining_spelling_scope": "Lexical raw-copy spellings, including SDK declarations/definitions; comments/literals excluded with the manifest lexer. Exact counts prevent new raw sites during the remaining migration.",
@@ -2990,13 +2999,6 @@
     {
       "path": "src/core/race.cpp",
       "normalized_call": "std::strcpy(app.state.szWork,szFile)",
-      "count": 1,
-      "status": "pending",
-      "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
-    },
-    {
-      "path": "src/ui/createui.cpp",
-      "normalized_call": "std::strcpy(app.state.game.szName,app.state.szBase)",
       "count": 1,
       "status": "pending",
       "role": "Remaining path, wire-storage or text copy; actual capacity and strict failure/ownership migration still required."
@@ -3458,7 +3460,7 @@
     "platform_qualification": "docs/CPP-LIVE-CLEANUP.json: L08.last_full_platform_qualification"
   },
   "game_file_inputs": {
-    "status": "complete; locally verified; final native Windows/Linux qualification pending",
+    "status": "complete; native Windows/Linux qualified at b76ec1fc",
     "parent": "8262a2c6",
     "sites": 2,
     "reproduction": "Actual parent save executable sends a malformed UTF-8 basename to its loader open callback and its writer create callback after shared staging. Both new admission assertions fail before any oversized vector is executed.",
@@ -3467,7 +3469,7 @@
     "verification": {
       "batch": "L05ai validated owned game-file inputs and bounded slot parsing",
       "parent": "8262a2c68ee424d96bdb3633b06f156a667f53eb",
-      "status": "complete; locally verified; final native Windows/Linux qualification pending",
+      "status": "complete; native Windows/Linux qualified at b76ec1fc",
       "reproduction": "The actual parent save executable forwards malformed UTF-8 to the loader open callback and writer create callback after shared staging. Both new assertions fail on a safe short input before any oversized vector is tested.",
       "implementation": [
         "FLoadGame and FWriteLogFile accept readonly string_views and snapshot complete UTF-8 basenames into arrays sized from the actual session field. Invalid names fail before load-state changes, template-record appends or I/O.",
@@ -3504,6 +3506,37 @@
         "src/core/log.h": "13ec3b649ee7ba323124f62f8fca4e077d6b1eab4568cf534e149c1f3e8c1a07",
         "tests/unit/test_save.cpp": "a1a43341da6b29a955e000bc9aeab42de8e36205bd4dabec5ea4ebfe63488e4e"
       }
+    },
+    "platform_qualification": "docs/CPP-LIVE-CLEANUP.json: L08.last_full_platform_qualification"
+  },
+  "new_game_title_bounds": {
+    "status": "complete; locally verified; native Windows/Linux qualification pending",
+    "parent": "fb2a4615",
+    "reproduction": "Actual parent SDL dialog copies a 33-byte basename into game.szName[32]; the new field-bound assertion fails.",
+    "contract": "Use a complete UTF-8 prefix of at most 31 bytes for an empty title; preserve the full basename, fitting titles, entered titles and cancellation.",
+    "verification": {
+      "batch": "L05aj bounded blank new-game title",
+      "parent": "fb2a4615",
+      "status": "complete; locally verified; native Windows/Linux qualification pending",
+      "source_sha256": {
+        "src/ui/createui.cpp": "6b72c9e08d6e3a1334442649132f77ea07c3554a0423e67b1a87782d5ed67be5",
+        "tests/unit/test_native_fileui.cpp": "38b042c344735499f54f00439f82d01321f290bf1f1d73e6c62c95a81be069f4"
+      },
+      "reproduction": "Actual parent SDL NewGameDlg receives an empty title and a 33-byte basename; it copies all 33 bytes into a 32-byte field and fails the new capacity assertion. The repaired callback passes this same test.",
+      "contract": "Preserve a complete UTF-8 prefix within the saved 31-byte title budget; never change the complete basename, record widths or unrelated game state. Explicit title and cancellation behavior stay.",
+      "checks": {
+        "debug": "Full macos-sdl-debug build; no warnings.",
+        "desktop": "154/154, including 29 leak cases, actual new-game creation workflows and available tutorial checkpoints.",
+        "native_ui": "All eight internal native-file UI cases pass; the new case drives actual resource dialogs across nine input/action combinations.",
+        "sanitizers": "The actual eight-case native-file UI executable passes twice under ASan/UBSan.",
+        "windows_syntax": "147/147 production translation units plus the expanded actual native-file UI test consumer pass MinGW C++20 syntax with the Windows SDL test flags. This is compilation evidence; native runtime qualification remains pending.",
+        "manifest": "158 owned sources, 159 compiled variants, 161 standalone headers in both orders; exact remaining raw-copy inventory passes.",
+        "regression": "519 matches; 25 existing unused-storage warnings; no differences/errors/skips.",
+        "baseline": "592 native baseline files byte-identical after restoring 592 regeneration-only file changes; all 519 checkpoints match and none moved.",
+        "host": "No game/core/host implementation changed; host verification from the preceding fully green b76ec1fc platform run remains recorded separately."
+      },
+      "inventory": "One raw copy retired; six calls remain (one core diagnostic, two MDI paths, one scanner append, two SDK message outputs). 302 copy-migration records; broader L05/L06 and L08 work still open.",
+      "receipts": "dist/verification/live-cpp/l05aj/"
     }
   }
 }

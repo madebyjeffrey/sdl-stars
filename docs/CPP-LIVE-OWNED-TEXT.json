@@ -6494,7 +6494,7 @@
     "verification": "docs/CPP-LIVE-TEXT-COPIES.json: definition_filename_owner.verification"
   },
   "game_file_input_views": {
-    "status": "complete; locally verified; final native Windows/Linux qualification pending",
+    "status": "complete; native Windows/Linux qualified at b76ec1fc",
     "interfaces": [
       "FLoadGame(APPSESSION&, string_view pszFileName, string_view pszExt)",
       "FWriteLogFile(APPSESSION&, string_view pszFileBase, int16_t iPlayer)"

@@ -117,7 +117,8 @@
         "owned-backup-path-capacity-repair",
         "bounded-complete-report-file-paths",
         "owned-definition-filename-input",
-        "admitted-owned-game-file-inputs"
+        "admitted-owned-game-file-inputs",
+        "bounded-blank-new-game-title-field"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -679,7 +680,7 @@
         {
           "batch": "L05ai validated owned game-file inputs and bounded slot parsing",
           "parent": "8262a2c68ee424d96bdb3633b06f156a667f53eb",
-          "status": "complete; locally verified; final native Windows/Linux qualification pending",
+          "status": "complete; native Windows/Linux qualified at b76ec1fc",
           "reproduction": "The actual parent save executable forwards malformed UTF-8 to the loader open callback and writer create callback after shared staging. Both new assertions fail on a safe short input before any oversized vector is tested.",
           "implementation": [
             "FLoadGame and FWriteLogFile accept readonly string_views and snapshot complete UTF-8 basenames into arrays sized from the actual session field. Invalid names fail before load-state changes, template-record appends or I/O.",
@@ -715,7 +716,32 @@
             "src/core/log.cpp": "14f74d961e5641108af2c54518eae82de73e55f8cea63e59e515b2559d94b3d6",
             "src/core/log.h": "13ec3b649ee7ba323124f62f8fca4e077d6b1eab4568cf534e149c1f3e8c1a07",
             "tests/unit/test_save.cpp": "a1a43341da6b29a955e000bc9aeab42de8e36205bd4dabec5ea4ebfe63488e4e"
-          }
+          },
+          "platform_qualification": "L08.last_full_platform_qualification (run 41363769853)"
+        },
+        {
+          "batch": "L05aj bounded blank new-game title",
+          "parent": "fb2a4615",
+          "status": "complete; locally verified; native Windows/Linux qualification pending",
+          "source_sha256": {
+            "src/ui/createui.cpp": "6b72c9e08d6e3a1334442649132f77ea07c3554a0423e67b1a87782d5ed67be5",
+            "tests/unit/test_native_fileui.cpp": "38b042c344735499f54f00439f82d01321f290bf1f1d73e6c62c95a81be069f4"
+          },
+          "reproduction": "Actual parent SDL NewGameDlg receives an empty title and a 33-byte basename; it copies all 33 bytes into a 32-byte field and fails the new capacity assertion. The repaired callback passes this same test.",
+          "contract": "Preserve a complete UTF-8 prefix within the saved 31-byte title budget; never change the complete basename, record widths or unrelated game state. Explicit title and cancellation behavior stay.",
+          "checks": {
+            "debug": "Full macos-sdl-debug build; no warnings.",
+            "desktop": "154/154, including 29 leak cases, actual new-game creation workflows and available tutorial checkpoints.",
+            "native_ui": "All eight internal native-file UI cases pass; the new case drives actual resource dialogs across nine input/action combinations.",
+            "sanitizers": "The actual eight-case native-file UI executable passes twice under ASan/UBSan.",
+            "windows_syntax": "147/147 production translation units plus the expanded actual native-file UI test consumer pass MinGW C++20 syntax with the Windows SDL test flags. This is compilation evidence; native runtime qualification remains pending.",
+            "manifest": "158 owned sources, 159 compiled variants, 161 standalone headers in both orders; exact remaining raw-copy inventory passes.",
+            "regression": "519 matches; 25 existing unused-storage warnings; no differences/errors/skips.",
+            "baseline": "592 native baseline files byte-identical after restoring 592 regeneration-only file changes; all 519 checkpoints match and none moved.",
+            "host": "No game/core/host implementation changed; host verification from the preceding fully green b76ec1fc platform run remains recorded separately."
+          },
+          "inventory": "One raw copy retired; six calls remain (one core diagnostic, two MDI paths, one scanner append, two SDK message outputs). 302 copy-migration records; broader L05/L06 and L08 work still open.",
+          "receipts": "dist/verification/live-cpp/l05aj/"
         }
       ],
       "bounded_formatting": {
@@ -783,7 +809,9 @@
         "remaining_initial_sites": 52,
         "remaining_lexical_spellings": 58,
         "inventory_scope": "The initial copy inventory and the current lexical policy differ: the latter also includes SDK declaration/definition spellings. Both remain explicitly accounted for.",
-        "enforcement": "The manifest checks exact remaining raw-copy spellings and multiplicities. New or removed raw sites require updating the maintained inventory; migrated sites cannot silently be reintroduced."
+        "enforcement": "The manifest checks exact remaining raw-copy spellings and multiplicities. New or removed raw sites require updating the maintained inventory; migrated sites cannot silently be reintroduced.",
+        "current_raw_copy_calls": 6,
+        "current_copy_migration_records": 302
       },
       "wire_name_staging": {
         "status": "complete; verified",
@@ -1001,9 +1029,14 @@
         "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
       },
       "game_file_inputs": {
-        "status": "complete; locally verified; final native Windows/Linux qualification pending",
+        "status": "complete; native Windows/Linux qualified at b76ec1fc",
         "sites": 2,
         "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
+      },
+      "new_game_title_bounds": {
+        "status": "complete; locally verified; native Windows/Linux qualification pending",
+        "contract": "Fixed title field receives a complete UTF-8 prefix from an empty-title basename fallback; retain the entire source basename.",
+        "evidence": "docs/CPP-LIVE-TEXT-COPIES.json: new_game_title_bounds"
       }
     },
     {
@@ -1595,7 +1628,7 @@
         "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
       },
       "game_file_input_views": {
-        "status": "complete; locally verified; final native Windows/Linux qualification pending",
+        "status": "complete; native Windows/Linux qualified at b76ec1fc",
         "interface": "FLoadGame uses two string_views and an optional bounded host/player-slot parse; FWriteLogFile uses a string_view. Snapshots preserve stable values across state normalization and metadata callouts.",
         "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
       }
@@ -1800,17 +1833,17 @@
         "qualified_run": 41348836830
       },
       "last_full_platform_qualification": {
-        "run_id": 41359970698,
-        "head": "8262a2c68ee424d96bdb3633b06f156a667f53eb",
-        "url": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41359970698",
+        "run_id": 41363769853,
+        "head": "b76ec1fcc1276790150457670f5f667bcec4eccc",
+        "url": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41363769853",
         "status": "success; all five jobs complete",
         "linux_desktop": "156/156",
         "windows_sdl": "134/134",
         "linux_host": "29/29",
         "resource_sanitizers": "45/45",
         "independent_witnesses": "success",
-        "sdk_matrix": "sdk/both modes each pass 21 contracts, no failed contracts; 18 diagnostic-only failures remain explicit.",
-        "scope": "Qualifies all changes through 8262a2c6, including the owned definition-filename repair. Does not qualify the newer loader/orders input change."
+        "sdk_matrix": "sdk/both modes each pass 21 contracts with no failed contracts; 18 diagnostic-only failures remain explicit.",
+        "scope": "Qualifies all implementation through b76ec1fc, including L05ai loader/orders filename inputs. The following fb2a4615 change contains checkpoint documentation only."
       },
       "windows_backup_directory_fixture": {
         "batch": "L05ag native Windows backup-directory fixture qualification",
@@ -23382,7 +23415,7 @@
     ],
     "restart_order": [
       "Read this checkpoint and check git status/log; preserve unrelated title-modernized assets.",
-      "Check unit.yml run 41363769853 for published L05ai code commit b76ec1fc. The preceding full green run is 41359970698 at 8262a2c6; it does not qualify L05ai.",
+      "Run 41363769853 is fully green for L05ai at b76ec1fc. Check newer batches and CI receipts before starting another batch.",
       "Resolve any new platform failures before beginning a new cleanup batch.",
       "Review the seven remaining raw-copy sites and take the next focused, characterized change; keep broader L05/L06 work open."
     ],
@@ -23396,8 +23429,24 @@
     "platform_ci": {
       "run_id": 41363769853,
       "url": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41363769853",
-      "status_at_handoff": "All five jobs confirmed in progress; final result pending",
-      "qualified_source_head": "b76ec1fcc1276790150457670f5f667bcec4eccc"
+      "status_at_handoff": "All five jobs completed successfully; qualified after resuming.",
+      "qualified_source_head": "b76ec1fcc1276790150457670f5f667bcec4eccc",
+      "result": "success"
     }
+  },
+  "current_checkpoint": {
+    "batch": "L05aj bounded blank new-game title",
+    "status": "complete; locally verified; native Windows/Linux qualification pending",
+    "remaining_raw_copy_calls": 6,
+    "remaining_work": [
+      "Other readonly path/buffer/service interfaces",
+      "Post-migration Work/Msg/scratch and borrowed-return audit",
+      "Wrapper formatting and manual bounds review",
+      "Typed file-selection Milestone D D01-D06",
+      "L08 final retained primitive/macro and platform audit"
+    ],
+    "last_full_platform_source": "b76ec1fcc1276790150457670f5f667bcec4eccc",
+    "last_full_platform_run": 41363769853,
+    "receipts": "dist/verification/live-cpp/l05aj/"
   }
 }
