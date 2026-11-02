@@ -75,21 +75,22 @@ void ReadIniPresets(APPSESSION &app, const char *szIniFile) {
 
 void WriteIniPresets(APPSESSION &app, const char *szIniFile) {
     std::int16_t i, iPass;
-    char    szSection[16], szEntry[16], *psz;
+    std::size_t ich;
+    char    szSection[16], szEntry[16];
 
     if (app.state.gd.fChgZipOrd) {
         TextIO().pfnCchGetString(app, idsZiporders, std::span{szSection});
         for (i = 0; i < 4; i++) {
             CchSnprintf(std::span{szEntry}, "%s%d", szSection, i + 1);
             if (app.state.vrgZip[i].fValid) {
-                psz = app.state.szWork;
+                ich = 0;
                 for (iPass = 0; iPass < 5; iPass++) {
-                    *psz++ = app.state.vrgZip[i].txp.rgia[iPass].iAction() + 'a';
-                    *psz++ = (app.state.vrgZip[i].txp.rgia[iPass].cQuan() & 0xf) + 'a';
-                    *psz++ = (app.state.vrgZip[i].txp.rgia[iPass].cQuan() >> 4 & 0xf) + 'a';
-                    *psz++ = (app.state.vrgZip[i].txp.rgia[iPass].cQuan() >> 8 & 0xf) + 'a';
+                    app.state.szWork[ich++] = app.state.vrgZip[i].txp.rgia[iPass].iAction() + 'a';
+                    app.state.szWork[ich++] = (app.state.vrgZip[i].txp.rgia[iPass].cQuan() & 0xf) + 'a';
+                    app.state.szWork[ich++] = (app.state.vrgZip[i].txp.rgia[iPass].cQuan() >> 4 & 0xf) + 'a';
+                    app.state.szWork[ich++] = (app.state.vrgZip[i].txp.rgia[iPass].cQuan() >> 8 & 0xf) + 'a';
                 }
-                CchCopyUtf8(std::span{app.state.szWork}.subspan(static_cast<std::size_t>(psz - app.state.szWork)), app.state.vrgZip[i].szName);
+                CchCopyUtf8(std::span{app.state.szWork}.subspan(ich), app.state.vrgZip[i].szName);
             } else {
                 app.state.szWork[0] = 0;
             }
@@ -101,16 +102,16 @@ void WriteIniPresets(APPSESSION &app, const char *szIniFile) {
             TextIO().pfnCchGetString(app, idsZiporders, std::span{szSection});
             CchSnprintf(std::span{szEntry}, "%sP%d", szSection, i + 1);
             if (app.state.vrgZipProd[i].fValid) {
-                psz = app.state.szWork;
-                *psz++ = app.state.vrgZipProd[i].fNoResearch + 'a';
-                *psz++ = app.state.vrgZipProd[i].cpq + 'a';
+                ich = 0;
+                app.state.szWork[ich++] = app.state.vrgZipProd[i].fNoResearch + 'a';
+                app.state.szWork[ich++] = app.state.vrgZipProd[i].cpq + 'a';
                 for (iPass = 0; iPass < app.state.vrgZipProd[i].cpq; iPass++) {
-                    *psz++ = (app.state.vrgZipProd[i].rgpq[iPass].w & 0xf) + 'a';
-                    *psz++ = (app.state.vrgZipProd[i].rgpq[iPass].w >> 4 & 0xf) + 'a';
-                    *psz++ = (app.state.vrgZipProd[i].rgpq[iPass].w >> 8 & 0xf) + 'a';
-                    *psz++ = (app.state.vrgZipProd[i].rgpq[iPass].w >> 0xc & 0xf) + 'a';
+                    app.state.szWork[ich++] = (app.state.vrgZipProd[i].rgpq[iPass].w & 0xf) + 'a';
+                    app.state.szWork[ich++] = (app.state.vrgZipProd[i].rgpq[iPass].w >> 4 & 0xf) + 'a';
+                    app.state.szWork[ich++] = (app.state.vrgZipProd[i].rgpq[iPass].w >> 8 & 0xf) + 'a';
+                    app.state.szWork[ich++] = (app.state.vrgZipProd[i].rgpq[iPass].w >> 0xc & 0xf) + 'a';
                 }
-                CchCopyUtf8(std::span{app.state.szWork}.subspan(static_cast<std::size_t>(psz - app.state.szWork)), app.state.vrgZipProd[i].szName);
+                CchCopyUtf8(std::span{app.state.szWork}.subspan(ich), app.state.vrgZipProd[i].szName);
             } else {
                 app.state.szWork[0] = 0;
             }
