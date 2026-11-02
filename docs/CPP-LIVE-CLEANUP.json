@@ -25029,7 +25029,7 @@
     "changes": [
       "CopyThingBytes now accepts a read-only byte span instead of void pointer plus 16-bit count.",
       "Record readers and the exhaustive 0-to-80-byte memory test pass explicit bounded spans.",
-      "The copied prefix and untouched trailing bytes remain identical; no game behavior, saved layout, file format or serialization changed."
+      "Copied prefixes and untouched trailing bytes remain identical; no game behavior, saved layout, file format or serialization changed."
     ],
     "verification": {
       "macos_sdl_debug": "make compile passes with strict warnings and dual-header checks.",
