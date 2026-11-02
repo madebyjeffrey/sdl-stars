@@ -24405,8 +24405,8 @@
     "date": "2026-11-02",
     "reason": "Resume the live C++ cleanup on develop after the verified bounded fleet-name load/log batch.",
     "branch": "develop",
-    "latest_batch": "L05 bounded fleet-name load and log copies",
-    "latest_published_head": "6581273e",
+    "latest_batch": "L05 bounded portable race and game library name views",
+    "latest_published_head": "46654a1c",
     "active_stages": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage."
@@ -24437,22 +24437,21 @@
       "title-modernized-v2.png and prompt",
       "title-modernized-v3.png and prompt"
     ],
-    "batch": "L05 fixed-span technology requirement interfaces",
-    "source_commit": "b4115953",
-    "status": "Verified and pushed to develop. SDL Debug build, desktop/host unit suites, full native/host regressions, tutorial smoke, three linked witnesses and a Windows MinGW host build/runtime check pass. Full Windows SDL/Linux desktop qualification remains outstanding.",
+    "batch": "L05 bounded portable race and game library name views",
+    "source_commit": "46654a1c",
+    "status": "Verified and pushed to develop. Local SDL Debug, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Current-source Windows SDL/Linux desktop qualification remains outstanding.",
     "changes": [
-      "TechStatus and CostOfDevelopingItem now take fixed-extent std::span<const std::int8_t, 6> inputs, matching the six signed levels they read.",
-      "Removed char-pointer reinterpret casts from part and research UI callers; the mystery-trader scratch copy now copies typed elements.",
-      "Updated linked witness providers and fixtures to use the same typed span contracts."
+      "FPortableRaceFilename and FPortableLibraryName now accept std::string_view inputs and use explicit byte lengths instead of repeated strlen and C pointer scans.",
+      "Race filename extension parsing and invalid-byte checks now stay within the supplied view; device-name checks and path-capacity rules are preserved.",
+      "No game behavior, file layout, or serialization code changed."
     ],
     "verification": {
-      "desktop_unit_tests": "18/18 pass; macos-sdl-debug build passes.",
+      "macos_sdl_debug": "Build passes; changed UI compatibility translation unit compiles.",
+      "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
-      "focused_linked_witnesses": "part-availability, research and construction-buildability: 3/3 pass.",
       "native_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "host_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "tutorial": "1/1 available SDL tutorial smoke passes.",
-      "windows": "MinGW cross-build of the Windows host and shared core passes; the host --version command runs under Wine. This does not qualify the Windows SDL desktop.",
       "baseline": "Unchanged.",
       "diff_check": "Pass."
     },
@@ -24527,26 +24526,26 @@
       {
         "commit": "b4115953",
         "message": "Use fixed spans for technology requirements"
+      },
+      {
+        "commit": "46654a1c",
+        "message": "Validate library names from string views"
       }
     ]
   },
   "current_checkpoint": {
-    "batch": "L05 fixed-span technology requirement interfaces",
-    "status": "Verified and pushed to develop. SDL Debug build, desktop/host unit suites, full native/host regressions, tutorial smoke, three linked witnesses and a Windows MinGW host build/runtime check pass. Full Windows SDL/Linux desktop qualification remains outstanding.",
-    "parent": "f7bea71a",
-    "source_commit": "b4115953",
-    "change": [
-      "FReadFleet and rtLogFleetName locate the terminator within the 32-byte decoded field once, then reuse the byte count for heap allocation and UTF-8 copying.",
-      "The file-load path preserves its existing allocated empty name; log updates still release empty names to nullptr."
-    ],
+    "batch": "L05 bounded portable race and game library name views",
+    "status": "Verified and pushed to develop. Local SDL Debug, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Current-source Windows SDL/Linux desktop qualification remains outstanding.",
+    "parent": "0e4f1030",
+    "source_commit": "46654a1c",
+    "change": "Portable race and game library name validation now uses bounded string views.",
     "verification": {
-      "desktop_unit_tests": "18/18 pass; macos-sdl-debug build passes.",
+      "macos_sdl_debug": "Build passes; changed UI compatibility translation unit compiles.",
+      "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
-      "focused_linked_witnesses": "part-availability, research and construction-buildability: 3/3 pass.",
       "native_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "host_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "tutorial": "1/1 available SDL tutorial smoke passes.",
-      "windows": "MinGW cross-build of the Windows host and shared core passes; the host --version command runs under Wine. This does not qualify the Windows SDL desktop.",
       "baseline": "Unchanged.",
       "diff_check": "Pass."
     },
@@ -24576,9 +24575,9 @@
     "date": "2026-11-02",
     "branch": "develop",
     "changes": [
-      "TechStatus and CostOfDevelopingItem now take fixed-extent std::span<const std::int8_t, 6> inputs, matching the six signed levels they read.",
-      "Removed char-pointer reinterpret casts from part and research UI callers; the mystery-trader scratch copy now copies typed elements.",
-      "Updated linked witness providers and fixtures to use the same typed span contracts."
+      "FPortableRaceFilename and FPortableLibraryName now accept std::string_view inputs and use explicit byte lengths instead of repeated strlen and C pointer scans.",
+      "Race filename extension parsing and invalid-byte checks now stay within the supplied view; device-name checks and path-capacity rules are preserved.",
+      "No game behavior, file layout, or serialization code changed."
     ],
     "current_source_audits": {
       "tracked_c_translation_units": 44,
@@ -24651,6 +24650,10 @@
       {
         "commit": "b4115953",
         "message": "Use fixed spans for technology requirements"
+      },
+      {
+        "commit": "46654a1c",
+        "message": "Validate library names from string views"
       }
     ]
   },
@@ -24678,22 +24681,21 @@
   "working_tree_checkpoint": {
     "date": "2026-11-02",
     "branch": "develop",
-    "batch": "L05 fixed-span technology requirement interfaces",
-    "source_commit": "b4115953",
-    "status": "Verified and pushed to develop. SDL Debug build, desktop/host unit suites, full native/host regressions, tutorial smoke, three linked witnesses and a Windows MinGW host build/runtime check pass. Full Windows SDL/Linux desktop qualification remains outstanding.",
+    "batch": "L05 bounded portable race and game library name views",
+    "source_commit": "46654a1c",
+    "status": "Verified and pushed to develop. Local SDL Debug, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Current-source Windows SDL/Linux desktop qualification remains outstanding.",
     "changes": [
-      "TechStatus and CostOfDevelopingItem now take fixed-extent std::span<const std::int8_t, 6> inputs, matching the six signed levels they read.",
-      "Removed char-pointer reinterpret casts from part and research UI callers; the mystery-trader scratch copy now copies typed elements.",
-      "Updated linked witness providers and fixtures to use the same typed span contracts."
+      "FPortableRaceFilename and FPortableLibraryName now accept std::string_view inputs and use explicit byte lengths instead of repeated strlen and C pointer scans.",
+      "Race filename extension parsing and invalid-byte checks now stay within the supplied view; device-name checks and path-capacity rules are preserved.",
+      "No game behavior, file layout, or serialization code changed."
     ],
     "verification": {
-      "desktop_unit_tests": "18/18 pass; macos-sdl-debug build passes.",
+      "macos_sdl_debug": "Build passes; changed UI compatibility translation unit compiles.",
+      "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
-      "focused_linked_witnesses": "part-availability, research and construction-buildability: 3/3 pass.",
       "native_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "host_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "tutorial": "1/1 available SDL tutorial smoke passes.",
-      "windows": "MinGW cross-build of the Windows host and shared core passes; the host --version command runs under Wine. This does not qualify the Windows SDL desktop.",
       "baseline": "Unchanged.",
       "diff_check": "Pass."
     },
@@ -24800,6 +24802,10 @@
       {
         "commit": "b4115953",
         "message": "Use fixed spans for technology requirements"
+      },
+      {
+        "commit": "46654a1c",
+        "message": "Validate library names from string views"
       }
     ]
   }
