@@ -2677,6 +2677,26 @@
         "linked_independent_witnesses": "success",
         "linux_desktop": "in progress at checkpoint",
         "windows_sdl": "failure in fresh SDK configuration matrix and subsequent client build; detailed logs were unavailable through the connector. This run predates commits a53b887c, 45cc5b19 and 2e30e30c."
+      },
+      "completed_substeps": [
+        "production-c11-boundary-audit",
+        "owned-function-like-api-macro-audit",
+        "owned-c-header-audit"
+      ],
+      "pending_substeps": [
+        "current-source-windows-and-linux-qualification"
+      ],
+      "inventory": {
+        "tracked_c_translation_units": 44,
+        "c_by_scope": {
+          "tests/compat": 3,
+          "tests/reference": 39,
+          "tests/scaffold": 2
+        },
+        "production_c_translation_units": 0,
+        "owned_function_like_api_macros": 0,
+        "owned_cpp_c_standard_headers": 0,
+        "c_language_boundary": "CMake declares C++ as the project language; C is enabled only when independent tests or Windows SDK reference tests are built."
       }
     }
   ],
@@ -24583,7 +24603,14 @@
       "c11_boundary": "C is enabled only for independent test/reference targets; production is C++20/Objective-C++20.",
       "core_strlen_residual": "src/core/save.cpp:804 in WriteRtString. Its sole caller passes FLEET::lpszName, a legacy heap-owned C string with no stored length; adding a size to FLEET would change a layout-sensitive debug-symbol struct. Keep this at the serialization C-string boundary unless ownership API is deliberately redesigned.",
       "scan_scope": "Tracked src and compat/win32/include/src plus dist/macos-sdl-debug/generated/version_resource.h; compat/win32/generated is not a present directory.",
-      "platform_qualification": "Full Windows SDL desktop and Linux desktop CI remain unqualified. Current-source workflow dispatch was previously rejected with HTTP 403 (admin rights required), and local SDL cross-configuration lacks a MinGW zlib package; the current MinGW host/core service build passed earlier."
+      "platform_qualification": "Full Windows SDL desktop and Linux desktop CI remain unqualified. Current-source workflow dispatch was previously rejected with HTTP 403 (admin rights required), and local SDL cross-configuration lacks a MinGW zlib package; the current MinGW host/core service build passed earlier.",
+      "c_test_translation_units": {
+        "compatibility": 3,
+        "sdk_reference": 39,
+        "scaffold": 2
+      },
+      "owned_cpp_c_standard_headers": 0,
+      "c_language_boundary": "CMake declares C++ as the project language; C is enabled only for independent tests/reference targets."
     },
     "next": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
@@ -24746,7 +24773,14 @@
       "c11_boundary": "C is enabled only for independent test/reference targets; production is C++20/Objective-C++20.",
       "core_strlen_residual": "src/core/save.cpp:804 in WriteRtString. Its sole caller passes FLEET::lpszName, a legacy heap-owned C string with no stored length; adding a size to FLEET would change a layout-sensitive debug-symbol struct. Keep this at the serialization C-string boundary unless ownership API is deliberately redesigned.",
       "scan_scope": "Tracked src and compat/win32/include/src plus generated version_resource.h; compat/win32/upstream SDK headers are excluded from owned-code C/C++ macro cleanup.",
-      "platform_qualification": "Full Windows SDL desktop and Linux desktop CI remain unqualified. Current-source workflow dispatch was previously rejected with HTTP 403 (admin rights required), and local SDL cross-configuration lacks a MinGW zlib package; the current MinGW host/core service build passed earlier."
+      "platform_qualification": "Full Windows SDL desktop and Linux desktop CI remain unqualified. Current-source workflow dispatch was previously rejected with HTTP 403 (admin rights required), and local SDL cross-configuration lacks a MinGW zlib package; the current MinGW host/core service build passed earlier.",
+      "c_test_translation_units": {
+        "compatibility": 3,
+        "sdk_reference": 39,
+        "scaffold": 2
+      },
+      "owned_cpp_c_standard_headers": 0,
+      "c_language_boundary": "CMake declares C++ as the project language; C is enabled only for independent tests/reference targets."
     },
     "next": [
       "L05: finish bounded text destinations and const-text interfaces; complete scratch-storage and borrowed-return audit.",
