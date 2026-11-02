@@ -39,9 +39,9 @@ void DrawThingGauge(APPSESSION &app, HDC hdc, RECT *prc, THING *lpth, std::int16
         l = 0;
     }
     if (cSections == 1) {
-        c = win32::wsprintfA(app.state.szWork, "%ldkT", l);
+        c = CchSprintf(app.state.szWork, "%ldkT", l);
     } else {
-        c = win32::wsprintfA(app.state.szWork, "%ld of %ldkT", l, lMax);
+        c = CchSprintf(app.state.szWork, "%ld of %ldkT", l, lMax);
     }
     l = GetTextExtent(hdc, app.state.szWork, c);
     if (static_cast<std::int16_t>(LOWORD(l)) < prc->right - prc->left - 3) {

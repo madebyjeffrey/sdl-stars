@@ -327,7 +327,7 @@ void AdvanceTutor(APPSESSION &app) {
         return;
     }
 LUpdatePage:
-    win32::wsprintfA(szTitle, TextIO().pfnCompressed(app, idsStarsTutorPageD80).data(), static_cast<std::int16_t>(app.state.tutor.idt) / 8 + 1);
+    CchSprintf(szTitle, TextIO().pfnCompressed(app, idsStarsTutorPageD80).data(), static_cast<std::int16_t>(app.state.tutor.idt) / 8 + 1);
     ControlIO().pfnSetWindowText(app.state.tutor.hwnd, szTitle);
     ShowTutor(app, 1);
     win32::GetWindowRect(app.state.tutor.hwnd, &rc);
