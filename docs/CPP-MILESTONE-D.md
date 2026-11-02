@@ -1,6 +1,6 @@
 # Milestone D: a C++ file-selection interface behind the SDL Win32 wrapper
 
-Status: D01–D02 complete; D03 and D04 implementation underway; D05–D06 remain open.
+Status: D01–D02 complete; D03–D05 implementation underway; D06 remains open.
 Recorded: 2026-10-31. D01 revalidated: 2026-11-01. Tracking: [#71](https://github.com/madebyjeffrey/sdl-stars/issues/71).
 
 ## Outcome and scope
@@ -178,6 +178,30 @@ headers compiled in both orders. The macOS configuration omits the compatibility
 browser test target; Linux portal and Windows SDK/native file-dialog cases were
 not run. Full regression, unit, tutorial, Release, and host qualification remain
 open. The D03-to-D06 exit gate below is unchanged.
+
+### D03–D05 implementation progress (2026-11-01)
+
+Commit `63c5f1c7` replaces the chooser callback's positional borrowed buffers
+with `FILESELECTIONREQUEST`/`FILESELECTIONRESULT` for the compatibility browser,
+portal, AppKit and Windows adapters. The Windows adapter passed a syntax-only
+check against the available SDK declarations; the Linux portal passed a
+syntax-only check against a temporary D-Bus declaration stub. These checks do
+not replace native Windows or Linux builds. A macOS Debug build and the focused
+tests `win32_exception_callbacks`, `win32_sdl_resource_modal`,
+`win32_filedialog_cocoa`, `win32_client_fileworkflow_dummy`,
+`test_cpp_compilation_manifest` and `test_win32_type_isolation` pass. The
+manifest remains at 158 owned C++20 sources, 159 compiled variants, 2
+independent C references and 162 headers in both orders.
+
+The in-progress D05 caller batch migrates race-library open/save selection,
+library orders export and the active game/race/ZIP import-source picker to the
+typed operation. The real-client workflow exercises typed race import/export
+and orders save/cancel paths; the active import-source picker is compiled but
+not exercised end-to-end because its consumer immediately opens the race-edit
+modal, which this harness does not drive. The workflow test passes after
+preserving the original chooser cancellation sequence. Its remaining native
+coverage, full regression, unit, tutorial, Release and host gates are still
+open; D03–D06 are not qualified for completion.
 
 ### D04 implementation progress (2026-11-01)
 

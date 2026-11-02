@@ -21,6 +21,8 @@ with tempfile.TemporaryDirectory(prefix='stars-file-workflow-compat-') as direct
     (managed / '.library').write_text('2\nRenamed copy\n0\n0\ncafé-Ω\n', encoding='utf-8')
     race = root / 'race-long-ΩΩΩΩ-native-filename.r1'
     race_repeat = root / 'race-repeat-é-Ω.r1'
+    race_export = root / 'Exports' / 'Managed.r1'
+    race_export.parent.mkdir()
     export_choice = root / 'user-orders.changed-extension'
     exported = root / 'user-orders.x1'
     previous_export = root / 'previous-orders.x1'
@@ -32,6 +34,7 @@ with tempfile.TemporaryDirectory(prefix='stars-file-workflow-compat-') as direct
                STARS_TEST_FILE_WORKFLOW_COMPAT="1",
                STARS_TEST_GAME_PATH=str(managed / 'Renamed copy.m1'),
                STARS_TEST_RACE_PATH=str(race), STARS_TEST_RACE_REPEAT_PATH=str(race_repeat),
+               STARS_TEST_RACE_EXPORT_PATH=str(race_export),
                STARS_TEST_EXPORT_EXPECTED=str(exported), STARS_TEST_EXPORT_PREVIOUS=str(previous_export),
                STARS_TEST_MANAGED_ORDERS=str(managed_orders),
                STARS_TEST_MANAGED_TURN=str(managed / 'Renamed copy.m1'),

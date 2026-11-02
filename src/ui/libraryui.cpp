@@ -17,10 +17,14 @@
 #include "alert_io.h"
 #include "record_io.h"
 #include "desktop_choice_io.h"
+#include "file_selection.h"
+#include "errors.h"
 #include "ownership.h"
 #include <stars_compat.h>
 #include <SDL3/SDL.h>
 #include <cerrno>
+#include <string_view>
+#include <utility>
 #include "libraryzip.h"
 
 /* Desktop metadata is deliberately outside the legacy game records. A folder
@@ -969,24 +973,60 @@ static void GetLibraryFileFilter(APPSESSION &app, StringId ids, std::span<char> 
     for (pch = pszFilter.data(); *pch; pch++) if (*pch == '|') *pch = 0;
 }
 
+static void AddFileSelectionFilters(std::string_view text, win32::files::FILESELECTIONREQUEST &request) {
+    std::size_t i = 0, iNameEnd, iPatternEnd;
+    while (i < text.size()) {
+        iNameEnd = text.find('|', i);
+        if (iNameEnd == std::string_view::npos) break;
+        iPatternEnd = text.find('|', iNameEnd + 1);
+        if (iPatternEnd == std::string_view::npos) iPatternEnd = text.size();
+        if (iNameEnd != i && iPatternEnd != iNameEnd + 1) {
+            request.rgFilters.push_back({std::string{text.substr(i, iNameEnd - i)},
+                                         std::string{text.substr(iNameEnd + 1, iPatternEnd - iNameEnd - 1)}});
+        }
+        if (iPatternEnd == text.size()) break;
+        i = iPatternEnd + 1;
+    }
+}
+
+static void AddLibraryFileSelectionFilters(APPSESSION &app, StringId ids,
+                                           win32::files::FILESELECTIONREQUEST &request) {
+    const auto szFilter = TextIO().pfnCompressed(app, ids);
+    const auto pchEnd = std::find(szFilter.begin(), szFilter.end(), '\0');
+    AddFileSelectionFilters(std::string_view{szFilter.data(), static_cast<std::size_t>(pchEnd - szFilter.begin())}, request);
+}
+
+static std::int16_t FSelectLibraryFile(HWND hwnd, win32::files::FILESELECTIONREQUEST request,
+                                      std::span<char> szPath) {
+    win32::files::FILESELECTIONRESULT result;
+    request.cbPathMax = szPath.size();
+    result = win32::files::SelectFile(hwnd, std::move(request));
+    StarsRethrowPendingError();
+    if (const auto *pSelected = std::get_if<win32::files::FILESELECTIONSELECTED>(&result))
+        return CchCopyUtf8(szPath, pSelected->szPath) >= 0;
+    return 0;
+}
+
+static std::int16_t FSelectLibraryRaceFile(APPSESSION &app, HWND hwnd, bool fSave,
+                                           std::span<char> szPath) {
+    win32::files::FILESELECTIONREQUEST request;
+    request.mode = fSave ? win32::files::FILESELECTIONMODE::save : win32::files::FILESELECTIONMODE::open;
+    request.szInitialPath = szPath.data();
+    request.fMustExist = !fSave;
+    request.fConfirmOverwrite = fSave;
+    AddLibraryFileSelectionFilters(app, idsLibraryRaceFilesFilter, request);
+    return FSelectLibraryFile(hwnd, std::move(request), szPath);
+}
+
 std::int16_t FExportLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName, const char *pszTarget) {
-    OPENFILENAME ofn;
-    char szSource[512], szTarget[512], szTemp[512], szValidate[512], szFilter[128];
+    char szSource[512], szTarget[512], szTemp[512], szValidate[512];
     RACESTATE rsSav;
     if (!FInitRaceLibrary() || !FPortableRaceFilename(app, pszName)) return 0;
     CchSnprintf(std::span{szSource, sizeof(szSource)}, "%s%s%s", szRaceLibraryRoot, szDirSep, pszName);
     if (!pszTarget) {
-        ofn = {};
-        std::ranges::fill(szTarget, 0);
+        szTarget[0] = 0;
         CchSnprintf(std::span{szTarget, sizeof(szTarget)}, "%s", pszName);
-        ofn.lStructSize = sizeof(ofn);
-        ofn.hwndOwner = hwnd;
-        GetLibraryFileFilter(app, idsLibraryRaceFilesFilter, szFilter);
-        ofn.lpstrFilter = szFilter;
-        ofn.lpstrFile = szTarget;
-        ofn.nMaxFile = sizeof(szTarget);
-        ofn.Flags = win32::OFN_HIDEREADONLY | win32::OFN_PATHMUSTEXIST | win32::OFN_OVERWRITEPROMPT;
-        if (!DesktopChoiceIO().pfnFNativeSaveFileName(&ofn)) return 0;
+        if (!FSelectLibraryRaceFile(app, hwnd, true, std::span{szTarget})) return 0;
         pszTarget = szTarget;
     }
     SaveRaceState(app, &rsSav);
@@ -1012,7 +1052,7 @@ std::int16_t FExportLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName,
 }
 
 std::int16_t FExportLibraryOrders(APPSESSION &app, HWND hwnd, const char *pszTarget) {
-    OPENFILENAME ofn;
+    win32::files::FILESELECTIONREQUEST request;
     char szBaseSav[sizeof(app.state.szBase)], szBaseStem[sizeof(app.state.szBase)], szName[256], szSuggested[256], szTarget[512], szFilter[64];
     char szStageBase[sizeof(app.state.szBase)], szStage[sizeof(app.state.szBase)], szStageHist[sizeof(app.state.szBase)];
     char szSource[sizeof(app.state.szBase)], szSourceHist[sizeof(app.state.szBase)], szPreviousHist[sizeof(app.state.szBase)];
@@ -1047,24 +1087,17 @@ std::int16_t FExportLibraryOrders(APPSESSION &app, HWND hwnd, const char *pszTar
     cch = CchSnprintf(std::span{szSuggested, sizeof(szSuggested)}, "%s.x%d", pszLibraryName, app.state.idPlayer + 1);
     if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szSuggested)) return 0;
     if (!pszTarget) {
-        ofn = {};
         std::ranges::fill(szTarget, 0);
         CchSnprintf(std::span{szTarget, sizeof(szTarget)}, "%s", szSuggested);
         cch = CchSnprintf(std::span{szFilter, sizeof(szFilter)}, TextIO().pfnCompressed(app, idsLibraryOrdersExportFilter).data(),
                           app.state.idPlayer + 1, app.state.idPlayer + 1);
         if (cch <= 0 || static_cast<std::size_t>(cch) + 2 >= sizeof(szFilter)) return 0;
-        for (pch = szFilter; *pch; pch++) if (*pch == '|') *pch = 0;
-        szFilter[cch + 1] = 0;
-        ofn.lStructSize = sizeof(ofn);
-        ofn.hwndOwner = hwnd;
-        ofn.lpstrFilter = szFilter;
-        ofn.nFilterIndex = 1;
-        ofn.lpstrFile = szTarget;
-        ofn.nMaxFile = sizeof(szTarget);
         CchSnprintf(std::span{szExt, sizeof(szExt)}, "x%d", app.state.idPlayer + 1);
-        ofn.lpstrDefExt = szExt;
-        ofn.Flags = win32::OFN_HIDEREADONLY | win32::OFN_PATHMUSTEXIST;
-        if (!DesktopChoiceIO().pfnFNativeSaveFileName(&ofn)) return 0;
+        request.mode = win32::files::FILESELECTIONMODE::save;
+        request.szInitialPath = szSuggested;
+        request.szDefaultExtension = szExt;
+        AddFileSelectionFilters(std::string_view{szFilter, static_cast<std::size_t>(cch)}, request);
+        if (!FSelectLibraryFile(hwnd, std::move(request), std::span{szTarget})) return 0;
         pszTarget = szTarget;
     }
 
@@ -1183,24 +1216,14 @@ std::int16_t FDeleteLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName)
 }
 
 std::int16_t FImportLibraryRace(APPSESSION &app, HWND hwnd, const char *pszSource) {
-    OPENFILENAME ofn;
-    char szSource[512], szName[256], szStem[256], szPath[512], szStage[512], szStageDir[512], szFilter[128];
+    char szSource[512], szName[256], szStem[256], szPath[512], szStage[512], szStageDir[512];
     char *pch, *pchSlash, *pchExt;
     RACESTATE rsSav;
     std::int16_t fValid;
     std::int16_t fLegacy;
     if (!pszSource) {
-        ofn = {};
         std::ranges::fill(szSource, 0);
-        ofn.lStructSize = sizeof(ofn);
-        ofn.hwndOwner = hwnd;
-        GetLibraryFileFilter(app, idsLibraryRaceFilesFilter, szFilter);
-        ofn.lpstrFilter = szFilter;
-        ofn.nFilterIndex = 1;
-        ofn.lpstrFile = szSource;
-        ofn.nMaxFile = sizeof(szSource);
-        ofn.Flags = win32::OFN_HIDEREADONLY | win32::OFN_PATHMUSTEXIST | win32::OFN_FILEMUSTEXIST;
-        if (!DesktopChoiceIO().pfnFNativeOpenFileName(&ofn)) return 0;
+        if (!FSelectLibraryRaceFile(app, hwnd, false, std::span{szSource})) return 0;
         pszSource = szSource;
     }
     if (std::strlen(pszSource) >= sizeof(szSource)) return 0;
@@ -2002,29 +2025,18 @@ void ShowLibraryImportFolderPicker(HWND hwnd) {
 }
 
 static std::int16_t FChooseLibraryImportFile(APPSESSION &app, HWND hwnd, char *pszChosen, std::size_t cchChosen) {
-    OPENFILENAME ofn;
-    char szTitle[256], szFilter[128], *pch;
-
-    ofn = {};
+    win32::files::FILESELECTIONREQUEST request;
+    const auto szFilter = TextIO().pfnCompressed(app, idsStarsGameFilesMHstRStars);
+    const auto pchEnd = std::find(szFilter.begin(), szFilter.end(), '\0');
+    std::string_view text{szFilter.data(), static_cast<std::size_t>(pchEnd - szFilter.begin())};
     std::fill_n(pszChosen, cchChosen, 0);
-    TextIO().pfnCchGetString(app, idsStarsGameFilesMHstRStars, std::span{szFilter});
-    pch = std::strstr(szFilter, "*.M*;");
-    if (pch) {
-        std::memmove(pch + 11, pch, std::strlen(pch) + 1);
-        std::memcpy(pch, "*.ZIP;*.XY;", 11);
-    }
-    for (pch = szFilter; *pch; pch++) if (*pch == '|') *pch = 0;
-    ofn.lStructSize = sizeof(ofn);
-    ofn.hwndOwner = hwnd;
-    ofn.lpstrFilter = szFilter;
-    ofn.nFilterIndex = 1;
-    ofn.lpstrFile = pszChosen;
-    ofn.nMaxFile = cchChosen;
-    szTitle[0] = 0;
-    ofn.lpstrFileTitle = szTitle;
-    ofn.nMaxFileTitle = sizeof(szTitle);
-    ofn.Flags = win32::OFN_HIDEREADONLY | win32::OFN_PATHMUSTEXIST | win32::OFN_FILEMUSTEXIST;
-    return DesktopChoiceIO().pfnFNativeOpenFileName(&ofn);
+    AddFileSelectionFilters(text, request);
+    if (!request.rgFilters.empty() && request.rgFilters[0].szPattern.find("*.M*;") != std::string::npos)
+        request.rgFilters[0].szPattern.insert(0, "*.ZIP;*.XY;");
+    request.mode = win32::files::FILESELECTIONMODE::open;
+    request.szInitialPath = pszChosen;
+    request.fMustExist = true;
+    return FSelectLibraryFile(hwnd, std::move(request), std::span{pszChosen, cchChosen});
 }
 
 /* Choose the workflow from the BOF type, leaving complete validation and

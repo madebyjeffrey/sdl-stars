@@ -22,12 +22,35 @@ static UINT_PTR idTimer;
 static int cAlerts, cReplaceChoices;
 #define CHECK(f) do { if (!(f)) { fprintf(stderr, "file workflow line %d: %s\n", __LINE__, #f); goto done; } } while (0)
 static int cFileChoices;
+static int cTypedRaceOpens, cTypedRaceSaves, cTypedOrderSaves;
 
 static win32::files::FILESELECTIONRESULT IChooseTypedWorkflowFile(HWND, const win32::files::FILESELECTIONREQUEST &request) {
-    const char *pszFile = PszCompatEnvironment("STARS_TEST_GAME_PATH");
+    const char *pszFile;
     if (fTypedChooserCancel) return win32::files::FILESELECTIONCANCELLED{};
-    if (request.mode != win32::files::FILESELECTIONMODE::open || !pszFile || request.rgFilters.size() != 1)
+    if (request.mode == win32::files::FILESELECTIONMODE::open && request.rgFilters.size() == 1 &&
+        request.rgFilters[0].szPattern == "*.m1") {
+        pszFile = PszCompatEnvironment("STARS_TEST_GAME_PATH");
+    } else if (request.rgFilters.size() == 2 && request.rgFilters[0].szPattern == "*.r1;*.r2;*.r3" &&
+               request.rgFilters[1].szPattern == "*.*" && request.mode == win32::files::FILESELECTIONMODE::open) {
+        cTypedRaceOpens++;
+        pszFile = PszCompatEnvironment(cTypedRaceOpens == 1 ? "STARS_TEST_RACE_REPEAT_PATH" : "STARS_TEST_RACE_PATH");
+    } else if (request.rgFilters.size() == 2 && request.rgFilters[0].szPattern == "*.r1;*.r2;*.r3" &&
+               request.rgFilters[1].szPattern == "*.*" && request.mode == win32::files::FILESELECTIONMODE::save &&
+               request.szInitialPath == "Managed.r1") {
+        cTypedRaceSaves++;
+        pszFile = PszCompatEnvironment("STARS_TEST_RACE_EXPORT_PATH");
+    } else if (request.mode == win32::files::FILESELECTIONMODE::open && request.rgFilters.size() == 3 &&
+               request.rgFilters[0].szPattern == "*.ZIP;*.XY;*.M*;*.HST;*.R*") {
+        pszFile = PszCompatEnvironment("STARS_TEST_RACE_PATH");
+    } else if (request.mode == win32::files::FILESELECTIONMODE::save && request.rgFilters.size() == 2 &&
+               request.rgFilters[0].szPattern == "*.x1" && request.szDefaultExtension == "x1") {
+        cTypedOrderSaves++;
+        if (cTypedOrderSaves == 1) return win32::files::FILESELECTIONCANCELLED{};
+        pszFile = PszCompatEnvironment("STARS_TEST_EXPORT_CHOICE");
+    } else {
         return win32::files::FILESELECTIONFAILURE{win32::files::FILESELECTIONERROR::backendFailure};
+    }
+    if (!pszFile) return win32::files::FILESELECTIONFAILURE{win32::files::FILESELECTIONERROR::backendFailure};
     return win32::files::FILESELECTIONSELECTED{pszFile, 0, false};
 }
 
@@ -151,14 +174,11 @@ static void  FileWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
     fRunning = 1;
     CHECK(pszRace && pszRaceRepeat && win32::IsWindow(app.lpui->hwndTitle));
     {
-        COMPATCHOOSERIO io_typedChooser;
         win32::files::FILESELECTIONREQUEST request;
         win32::files::FILESELECTIONRESULT result;
         char szCwdBefore[512], szCwdAfter[512], szGameCanonical[512];
         const char *pszGame = PszCompatEnvironment("STARS_TEST_GAME_PATH");
 
-        io_typedChooser.pfnICompatChooseFile = IChooseTypedWorkflowFile;
-        COMPATCHOOSERIOSCOPE typedChooserScope(io_typedChooser);
         CHECK(pszGame && CchNativeCwd(std::span{szCwdBefore}));
         request.mode = win32::files::FILESELECTIONMODE::open;
         request.szInitialPath = pszGame;
@@ -219,6 +239,10 @@ static void  FileWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
     CHECK(CchSnprintf(std::span{szManagedRace, sizeof(szManagedRace)}, "%s%sManaged.r1", szRaceLibrary, szDirSep) > 0);
     CHECK(FWasRaceFile(app, szManagedRace, 0) > 0);
     CHECK((cbRaceLibrary = FNativeFileSize(szManagedRace)) && (*cbRaceLibrary) > 0);
+    CHECK(FExportLibraryRace(app, app.lpui->hwndTitle, "Managed.r1", nullptr));
+    CHECK(PszCompatEnvironment("STARS_TEST_RACE_EXPORT_PATH") &&
+          FWasRaceFile(app, (char *)PszCompatEnvironment("STARS_TEST_RACE_EXPORT_PATH"), 0) > 0 &&
+          FEqualFiles(szManagedRace, PszCompatEnvironment("STARS_TEST_RACE_EXPORT_PATH")));
     strcpy(app.state.szPassLast, "managed-pass");
     app.state.lSaltLast = LSaltFromSz(app.state.szPassLast);
     app.state.lSaltCur = app.state.lSaltLast;
@@ -230,6 +254,8 @@ static void  FileWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
     CHECK(!FSaveLibraryRace(app, app.lpui->hwndTitle, "bad/name.r1", &plrManaged));
     CHECK(FWasRaceFile(app, szManagedRace, 0) > 0 && app.state.vplr.lSalt == app.state.lSaltLast);
     CHECK(FImportLibraryRaceAs(app, app.lpui->hwndTitle, pszRace, "Imported.r2"));
+    CHECK(FImportLibraryRace(app, app.lpui->hwndTitle, nullptr));
+    CHECK(cTypedRaceOpens == 1 && cTypedRaceSaves == 1);
     CHECK(CchSnprintf(std::span{szManagedRace, sizeof(szManagedRace)}, "%s%sImported.r2", szRaceLibrary, szDirSep) > 0);
     CHECK((cbRaceLibrary = FNativeFileSize(szManagedRace)) && (*cbRaceLibrary) > 0 && FEqualFiles(pszRace, szManagedRace));
     CHECK(!FImportLibraryRaceAs(app, app.lpui->hwndTitle, pszRace, "imported.R2"));
@@ -256,7 +282,8 @@ static void  FileWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
           (cbExport = FNativeFileSize((char *)pszManagedOrders)) && (*cbExport) > 0);
     CHECK(app.state.game.lid == lid && memcmp(&plrSav, &app.state.rgplr[app.state.idPlayer], sizeof(plrSav)) == 0);
     app.lpui->hwndRaceParent = hwndParentSav;
-    fPassed = cAlerts == 1 && (!PszCompatEnvironment("STARS_TEST_FILE_WORKFLOW_COMPAT") || cFileChoices == 9);
+    fPassed = cAlerts == 1 && cTypedOrderSaves == 3 &&
+              (!PszCompatEnvironment("STARS_TEST_FILE_WORKFLOW_COMPAT") || cFileChoices == 6);
 done:
     win32::KillTimer(NULL, id);
     win32::PostQuitMessage(fPassed ? 0 : 92);
@@ -283,6 +310,9 @@ int main(void) {
     COMPATCHOICEIO io_compatchoiceio;
     io_compatchoiceio.pfnMessageBoxA = StarsTest_MessageBoxA;
     COMPATCHOICEIOSCOPE scope_compatchoiceio(io_compatchoiceio);
+    COMPATCHOOSERIO io_typedChooser;
+    io_typedChooser.pfnICompatChooseFile = IChooseTypedWorkflowFile;
+    COMPATCHOOSERIOSCOPE scope_typedChooser(io_typedChooser);
 
     nResult = ui::WinMain(win32::GetModuleHandleA(NULL), NULL, szCommand, win32::SW_SHOWNORMAL);
     if (idTimer) win32::KillTimer(NULL, idTimer);
