@@ -23667,13 +23667,13 @@
     }
   ],
   "restart_checkpoint": {
-    "date": "2026-11-01",
-    "reason": "Active C-style/C11 cleanup continuation checkpoint after typed fixed-width integer literal cleanup.",
+    "date": "2026-11-02",
+    "reason": "Active C-style/C11 cleanup continuation checkpoint after owned C++ integer-limit macro cleanup.",
     "branch": "develop",
-    "batch": "L08b replace unnecessary fixed-width integer literal macros in owned C++",
-    "batch_parent": "e5ddd125",
-    "latest_batch": "L08b replace unnecessary fixed-width integer literal macros in owned C++",
-    "latest_batch_head": "a6d4dfbc",
+    "batch": "L08c replace runtime integer-limit macros in owned C++",
+    "batch_parent": "fbb3ce1d",
+    "latest_batch": "L08c replace runtime integer-limit macros in owned C++",
+    "latest_batch_head": "f2bbb021",
     "completed_stages": [
       "L01: nullptr and aliases",
       "L02: explicit C++ casts and headers",
@@ -23709,7 +23709,7 @@
     ],
     "restart_order": [
       "Read this checkpoint and check git status/log; preserve unrelated title-modernized assets.",
-      "Commits 443ee2cf and e5ddd125 record L08a, the SDL convenience-macro cleanup. Commits b10cfc4e and a6d4dfbc record L08b, replacing fixed-width integer literal macros with explicitly typed std::intN_t{...}/std::uintN_t{...} values in owned production, compatibility, unit and witness C++ while preserving widths and signedness. compat/win32/uigen.py now reads typed constants for resource generation. No macros from either audited family remain in owned application or ordinary test C++ sources. Independent SDK value/ellipse fixtures and the C precision probe retain their reference forms.",
+      "Commits 443ee2cf and e5ddd125 record L08a, the SDL convenience-macro cleanup. Commits b10cfc4e and a6d4dfbc record L08b, replacing fixed-width integer literal macros with explicitly typed std::intN_t{...}/std::uintN_t{...} values in owned production, compatibility, unit and witness C++ while preserving widths and signedness. compat/win32/uigen.py now reads typed constants for resource generation. No macros from either audited family remain in owned application or ordinary test C++ sources. Independent SDK value/ellipse fixtures and the C precision probe retain their reference forms. Commit f2bbb021 records L08c: runtime integer-limit macros such as INT_MAX, UINT32_MAX, SIZE_MAX and CHAR_BIT are replaced with std::numeric_limits in owned production and ordinary test C++, including compatibility-test .inc fragments; now-unused <climits>/<limits.h> includes were removed. Remaining UINTPTR_MAX/UINT32_MAX references are preprocessor #if conditions, and other search hits are comments.",
       "L05aq converted FIniValue and LIniInt to string_view inputs and span output; host INI uses the explicit post-BOM byte extent. The linked profile I/O witness tests nonterminated views and UTF-8 truncation.",
       "Continue remaining L05 bounded destinations, const-text interfaces, scratch/borrowed-result audit and Linux portal formatting.",
       "Continue L06 remaining buffer/result interfaces and chooser Milestone D qualification.",
@@ -23720,38 +23720,36 @@
       "docs/CPP-LIVE-OWNED-TEXT.json: game_file_input_views",
       "dist/verification/live-cpp/l05ai/ (ignored local logs and source hashes)"
     ],
-    "goal_status": "Overall cleanup goal remains unfinished; L08a SDL macros and L08b owned C++ fixed-width literal macros are removed, with L05/L06 and the retained-macro/platform audit still open.",
+    "goal_status": "Overall cleanup goal remains unfinished; L08a SDL macros, L08b fixed-width literal macros and L08c runtime integer-limit macros are removed from owned C++ sources. L05/L06 and the retained-macro/platform audit remain open.",
     "platform_ci": {
       "run_id": 41363769853,
       "url": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41363769853",
-      "status_at_handoff": "All five jobs completed successfully; qualified after resuming.",
+      "status_at_handoff": "Previous source qualification passed; this new batch still needs Windows/Linux qualification.",
       "qualified_source_head": "b76ec1fcc1276790150457670f5f667bcec4eccc",
       "result": "success"
     },
-    "published_batch_head": "a6d4dfbc"
+    "published_batch_head": "f2bbb021"
   },
   "current_checkpoint": {
-    "batch": "L08b replace unnecessary fixed-width integer literal macros in owned C++",
-    "status": "implemented and locally verified; source commits b10cfc4e and a6d4dfbc",
-    "parent": "e5ddd125",
+    "batch": "L08c replace runtime integer-limit macros in owned C++",
+    "status": "implemented and locally verified; source commit f2bbb021",
+    "parent": "fbb3ce1d",
     "changes": {
-      "compat/win32/include/wincompat_constants.h and wincompat_values.h": "Replace INT32_C/UINT32_C constants with explicitly typed C++ integer values.",
-      "compat/win32/src/{dib,input,menu,paint}.cpp and src/core/race.cpp": "Replace fixed-width integer literal macros with typed C++ literals.",
-      "tests/witnesses/*.cpp, tests/witnesses/construction_buildability_fixture.h and tests/unit/test_race.cpp": "Replace owned witness/unit fixed-width integer literal macros.",
-      "tests/compat/{win32_include_order,win32_inspect,win32_tick,win32_windows}.cpp": "Replace remaining owned compatibility-test fixed-width integer literal macros.",
-      "compat/win32/uigen.py": "Parse explicitly typed C++ literal forms when reading Win32 resource constants."
+      "src/core, src/platform, src/ui and compat/win32/src": "Replace runtime C integer-limit macros with std::numeric_limits and remove unused <climits> includes.",
+      "tests/compat/*.cpp and C++-included *.inc fragments, tests/unit and tests/witnesses": "Replace runtime integer-limit macros and CHAR_BIT uses with typed numeric_limits expressions; remove unused C limits headers.",
+      "compat/win32/include/wincompat_constants.h": "Remove an unused <climits> include after the fixed-width literal and limit migrations."
     },
     "verification": {
-      "macos_debug_build": "Full macos-sdl-debug build passes, including Win32 compatibility sources, resource generation, and all C++ header checks.",
+      "macos_debug_build": "Full macos-sdl-debug build succeeds, including all Win32 compatibility targets, witnesses, generated resources and C++ header checks.",
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
-      "focused_tests": "win32_client_popup, win32_runtime, win32_sdl_abi and test_win32_type_isolation pass (4/4).",
+      "focused_tests": "12 compatibility tests pass, covering controls, services, ABI/type isolation, bitmap, DIB, drawing state, file, message box and profile.",
       "tutorial": "Available native tutorial smoke checkpoint passes (1/1).",
       "native_regression": "519 matches (25 existing unused-storage warnings); zero differences/errors/skips.",
       "host_regression": "519 matches (25 existing unused-storage warnings); zero differences/errors/skips.",
-      "windows": "Native Windows/Linux platform CI qualification remains pending for this new batch.",
-      "baseline": "Unchanged; native and host outputs match existing baselines.",
-      "macro_search": "No SDL convenience or fixed-width integer literal macros remain in scanned owned application and ordinary test C++ sources. SDK/reference fixtures and independent C precision probe are classified and retained.",
+      "windows": "Windows/Linux platform CI qualification remains pending for this batch.",
+      "baseline": "Unchanged; native and host output match the existing baselines.",
+      "macro_search": "No runtime integer-limit macros remain in scanned owned C++ sources. Remaining UINTPTR_MAX/UINT32_MAX hits are in #if conditions; other hits are comments.",
       "diff_check": "git diff --check and checkpoint JSON validation pass."
     },
     "remaining_work": [
@@ -23760,9 +23758,9 @@
       "L06 D06 native Windows/Linux chooser qualification and remaining chooser branch coverage.",
       "L08 retained preprocessor/platform/API-like Win32 macro audit, maintained inventory reconciliation and final platform qualification."
     ],
-    "macro_scan": "Owned application and ordinary test C++ is free of scanned SDL convenience and fixed-width integer literal macros. Intentional SDK/reference fixtures and the independent C probe retain their macros. Retained preprocessor/platform/API-like Win32 macro audit and full platform qualification remain open.",
-    "source_commit": "a6d4dfbc",
-    "published_batch_head": "a6d4dfbc"
+    "macro_scan": "No runtime C integer-limit macros remain in owned application or ordinary test C++ sources and C++-included test fragments. Preprocessor-only architecture checks retain UINTPTR_MAX/UINT32_MAX; C SDK/reference fixtures and independent C probes remain classified under the previous audit.",
+    "source_commit": "f2bbb021",
+    "published_batch_head": "f2bbb021"
   },
   "milestone_d_checkpoint": {
     "stage": "D05 caller migrations implemented; D06 platform qualification pending",
