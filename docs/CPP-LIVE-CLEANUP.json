@@ -23951,12 +23951,12 @@
   ],
   "restart_checkpoint": {
     "date": "2026-11-02",
-    "reason": "Active C-style cleanup continuation after replacing the final owned decimal C runtime parsers and auditing owned macro definitions.",
+    "reason": "Active C-style cleanup continuation after migrating the profile path service result to owned C++ string storage.",
     "branch": "develop",
-    "batch": "L05bc typed native scanner parsing; L08 owned macro audit",
+    "batch": "L06s owned profile path result",
     "batch_parent": "d3c82384",
-    "latest_batch": "L05bc typed native scanner parsing; L08 owned macro audit",
-    "latest_batch_head": "f9fee9e6",
+    "latest_batch": "L06s owned profile path result",
+    "latest_batch_head": "90f91478",
     "completed_stages": [
       "L01: nullptr and aliases",
       "L02: explicit C++ casts and headers",
@@ -24008,7 +24008,8 @@
       "Commits 7bbe1ea3/aad20b77, d0db2171/ad3a9770, bd85db17/c21c1e9e and 064b98c1/39e5f3b6 record four additional typed-formatting batches (nine, eight, eight and six wsprintfA calls). Commit 1e3cea80 replaces seven decimal itoa calls with CchSprintf and removes the now-unused nonstandard compatibility helper and its tests. Each batch passed the full Debug build, units, tutorial smoke and native/host regressions. The source currently has 282 win32::wsprintfA call lines; bounded text, service interfaces, scratch/borrowed-result audit and platform/macro qualification remain open.",
       "Commit db2bfc2f replaces the remaining four application std::atoi calls with std::from_chars or fixed date digit parsing. Full Debug build, 18 desktop units, 29 host units, focused controls/runtime/tutorial checks and both regressions pass (519 matches, 25 existing warnings, zero differences/errors/skips each). No std::atoi references remain in src/compat; one std::atol remains in host_profile.cpp for later review.",
       "Commit fed52a31 replaces the host profile parser's std::atol with bounded std::from_chars, preserving prefix parsing and existing missing-key behavior. S02 I/O witness (27 checks), units, focused tests, tutorial smoke and both full regressions pass; regressions each report 519 matches and zero differences/errors/skips. No std::atoi or std::atol references remain in src/compat.",
-      "Commit f9fee9e6 replaces the final owned std::strtoll parser with bounded std::from_chars. Full Debug/host builds, units, S02 I/O witness, focused tests, tutorial smoke and native/host regressions pass (519 matches each, zero differences/errors/skips). The current owned macro scan finds no function-like macros; header guards, NOMINMAX, platform/test conditionals and third-party SDK definitions remain. Full macro inventory reconciliation and Windows/Linux qualification remain open."
+      "Commit f9fee9e6 replaces the final owned std::strtoll parser with bounded std::from_chars. Full Debug/host builds, units, S02 I/O witness, focused tests, tutorial smoke and native/host regressions pass (519 matches each, zero differences/errors/skips). The current owned macro scan finds no function-like macros; header guards, NOMINMAX, platform/test conditionals and third-party SDK definitions remain. Full macro inventory reconciliation and Windows/Linux qualification remain open.",
+      "Commit 90f91478 changes SzProfilePath from a malloc-owned char* to std::optional<std::string>, removing three strdup-based fallback branches and making both profile callers retain path ownership through RAII. Profile path precedence, UTF-8 validation, directory creation and ERROR_NOT_ENOUGH_MEMORY mapping are preserved. macOS Debug build, profile/resource/save/UTF-8 coverage, desktop units (18/18), host units (29/29), tutorial smoke and native/host regressions (519 matches each, 25 existing warnings, zero differences/errors/skips) pass; strict MinGW C++20 syntax compilation of profile.cpp passes. The optional macOS leaks wrapper timed out because it could not acquire the child task port; its underlying profile test printed PASS. Continue L05 bounded text/formatting and scratch audit, L06 service/chooser work, and L08 full platform qualification."
     ],
     "evidence": [
       "docs/CPP-LIVE-TEXT-COPIES.json: game_file_inputs.verification",
@@ -24023,36 +24024,35 @@
       "qualified_source_head": "b76ec1fcc1276790150457670f5f667bcec4eccc",
       "result": "success"
     },
-    "published_batch_head": "f9fee9e6"
+    "published_batch_head": "90f91478"
   },
   "current_checkpoint": {
-    "batch": "L05bc typed native scanner parsing; L08 owned macro audit",
-    "status": "implemented and locally verified; source commit f9fee9e6",
-    "parent": "d3c82384",
+    "batch": "L06s owned profile path result",
+    "status": "implemented and locally verified; source commit 90f91478",
+    "parent": "cf60a3a4",
     "changes": {
-      "src/platform/fileio.cpp": "Replace std::strtoll with std::from_chars in the bounded native integer scanner, preserving plus signs, range checks and ERANGE behavior."
+      "compat/win32/src/profile.cpp": "SzProfilePath now returns std::optional<std::string>; removes three strdup fallbacks and gives both profile callers RAII path ownership."
     },
     "verification": {
-      "macos_debug_build": "Full macos-sdl-debug and host-release builds succeed.",
+      "macos_debug_build": "Full macos-sdl-debug build passes.",
+      "windows_syntax": "Strict MinGW C++20 syntax compilation of compat/win32/src/profile.cpp passes, including the _WIN32 path branch.",
+      "profile_tests": "win32_sdl_resource_profile, win32_profile_save, win32_utf8_profile and profile resource checks pass; profile executable reports PASS.",
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
-      "focused_tests": "S02 profile I/O and host linked witnesses pass (27 checks); win32_runtime, win32_controls and tutorial smoke pass (3/3).",
+      "tutorial": "Available SDL tutorial smoke checkpoint passes; full 80-page tutorial remains unfinished.",
       "native_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
       "host_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
       "baseline": "Unchanged.",
-      "remaining_wsprintfA_calls": "282 scanned owned C++ source call lines.",
-      "legacy_integer_parser_calls": "No atoi, atol, itoa or strtoll references remain in owned src application sources.",
-      "macro_audit": "No function-like macros remain in owned src/compat code. Platform, test and header-guard conditionals remain; third-party SDK macros are retained.",
-      "platform": "Windows/Linux qualification remains pending for current develop.",
+      "leak_wrapper": "win32_sdl_leaks_profile timed out at 60 seconds because Apple leaks could not get the child task port; the wrapped profile test printed PASS.",
       "diff_check": "git diff --check passes."
     },
     "remaining_work": [
       "L05 bounded text destinations, const-text interfaces, post-migration scratch/borrowed-return audit and remaining wrapper formatting callers, including Linux portal formatting.",
-      "L06 remaining buffer/length interfaces and chooser Milestone D qualification, including Windows/Linux chooser coverage.",
+      "L06 remaining buffer/length interfaces, native path results and chooser Milestone D qualification, including Windows/Linux chooser coverage.",
       "L08 retained preprocessor/platform/API-like macro audit, maintained inventory reconciliation and final platform qualification."
     ],
-    "source_commit": "f9fee9e6",
-    "published_batch_head": "f9fee9e6"
+    "source_commit": "90f91478",
+    "published_batch_head": "90f91478"
   },
   "milestone_d_checkpoint": {
     "stage": "D05 caller migrations implemented; D06 platform qualification pending",
