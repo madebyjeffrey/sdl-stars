@@ -212,7 +212,8 @@
         "wrapped-text-output-string-view-and-coordinate-references",
         "alert-service-bounded-string-view-interface",
         "bounded-command-line-view-and-typed-seed-result",
-        "bounded-library-game-export-path-and-name-views"
+        "bounded-library-game-export-path-and-name-views",
+        "bounded-race-library-export-path-and-name-views"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -1271,6 +1272,21 @@
           "desktop_unit_tests": "18/18 pass.",
           "host_units": "29/29 pass.",
           "library_export_workflow": "win32_client_startup_dummy passes 1/1 and verifies the selected hosted game export contents.",
+          "native_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
+          "host_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
+          "tutorial": "1/1 available SDL tutorial smoke passes.",
+          "baseline": "Unchanged.",
+          "windows_linux": "Current-source Windows/Linux qualification remains pending.",
+          "diff_check": "Pass."
+        },
+        {
+          "batch": "L05 race library export uses bounded views",
+          "source_commit": "8ed1234f",
+          "change": "FExportLibraryRace accepts a race-name view and optional target-path view. std::nullopt keeps the chooser flow; explicit and chosen paths are bounded before C-string file APIs. Avoids copying the selected path buffer onto itself.",
+          "macos_debug_build": "make compile passes with strict warnings and standalone header checks.",
+          "desktop_unit_tests": "18/18 pass.",
+          "host_units": "29/29 pass.",
+          "race_export_workflows": "win32_client_startup_dummy and win32_client_fileworkflow_dummy pass 2/2, covering explicit export targets, chooser export, matching-file rejection, and exported file contents.",
           "native_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
           "host_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
           "tutorial": "1/1 available SDL tutorial smoke passes.",
@@ -25117,18 +25133,18 @@
   "working_tree_checkpoint": {
     "date": "2026-11-02",
     "branch": "develop",
-    "batch": "L05 library game export uses bounded views",
-    "source_commit": "80dc3556",
-    "status": "Verified and committed locally on develop. macOS SDL Debug, desktop/host unit suites, the library export workflow, full native/host regressions, and tutorial smoke pass. Current-source Windows SDL desktop and Linux desktop qualification remain outstanding.",
+    "batch": "L05 race library export uses bounded views",
+    "source_commit": "8ed1234f",
+    "status": "Verified and committed locally on develop. macOS SDL Debug, desktop/host unit suites, race export chooser and explicit-target workflows, full native/host regressions, and tutorial smoke pass. Current-source Windows SDL desktop and Linux desktop qualification remain outstanding.",
     "changes": [
-      "FExportLibraryGame accepts a game-name string_view and an optional target path view; FExportSelectedLibraryGame accepts an optional target view, with std::nullopt selecting the existing chooser.",
-      "Names and explicit paths are validated and copied into the existing fixed buffers before C-string APIs are called; overlong or embedded-NUL values are rejected."
+      "FExportLibraryRace accepts a race-name string_view and optional target-path string_view; std::nullopt invokes the existing file chooser.",
+      "Race names and explicit paths are validated and copied into existing fixed buffers before legacy C-string APIs; the chooser path is not self-copied."
     ],
     "verification": {
       "macos_sdl_debug": "make compile passes with strict warnings and standalone header checks.",
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
-      "library_export_workflow": "win32_client_startup_dummy passes 1/1 and verifies exported file contents.",
+      "race_export_workflows": "win32_client_startup_dummy and win32_client_fileworkflow_dummy pass 2/2.",
       "native_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "host_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "tutorial": "1/1 available SDL tutorial smoke passes.",
@@ -25423,6 +25439,10 @@
       {
         "commit": "80dc3556",
         "message": "Pass library export paths as optional views"
+      },
+      {
+        "commit": "8ed1234f",
+        "message": "Pass race export paths as optional views"
       }
     ],
     "parent": "4867b0c5"
