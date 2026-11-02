@@ -25,7 +25,7 @@
     {
       "test": "test_win32_scroll_reference",
       "input": "tests/compat/win32_scroll.inc",
-      "sha256": "cd18c455734d9131611883b0d7d2cbfccb664fe5245eb5c9775efd1a85d369a8",
+      "sha256": "5de9ef8e1dfd909cd3bd9ca35e4d27c611ab4daa6e0c584648b7a364f525af67",
       "observation": "Reversed-endpoint SetScrollRange return"
     },
     {
@@ -49,7 +49,7 @@
     {
       "test": "test_win32_messagebox_reference",
       "input": "tests/compat/win32_messagebox.inc",
-      "sha256": "eec6a03a9044972bbad37331856b78fa4315cc1f0f030d2d207c76c1b1a333bb",
+      "sha256": "40cfdbcc90f166cb56f1810756959ef390718d38d9d36c19a24f2ccea05b52c1",
       "observation": "Native message-box child/focus automation timeout"
     },
     {
@@ -85,13 +85,13 @@
     {
       "test": "test_win32_geometry_reference",
       "input": "tests/compat/win32_geometry.inc",
-      "sha256": "aefd95bfa5d80bf951553d411e6a63502a9884e259a3e2f4b881e58d3177759b",
+      "sha256": "156effafedbac697bc4208dee056801ebd003e77b4b1d898347f2866b8a2702c",
       "observation": "Clip-region classification"
     },
     {
       "test": "test_win32_drawing_state_reference",
       "input": "tests/compat/win32_drawing_state.inc",
-      "sha256": "828220cd9b369a19d5ca3b5432b0cdb5dd5cbe751a2eca38b6ce9f364df4d46d",
+      "sha256": "d777833c962cd0356e7113c297bfbf990873496000af6e50f215062f2c33142b",
       "observation": "Invalid SetROP2 return/state"
     },
     {
@@ -109,7 +109,7 @@
     {
       "test": "test_win32_bitmap_reference",
       "input": "tests/compat/win32_bitmap.inc",
-      "sha256": "0c09657bf1eada8799fa45c4d7fedfd0311cadd728e8b8711049f3ad9e26db9b",
+      "sha256": "de8ab159591c90eda331b3c4c05ebdb6c2d831ebed1c16474edf4c77f0e335e3",
       "observation": "Pixel/source-DC validity"
     }
   ],
