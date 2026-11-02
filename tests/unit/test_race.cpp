@@ -621,6 +621,9 @@ static void test_NewPasswordDlg_utf8_limit(void) {
     ui::SendMessage(hwndEdit, win32::WM_PASTE, 0, 0);
     TEST_CHECK(win32::GetWindowTextA(hwndEdit, szPass, sizeof(szPass)) == 0);
     TEST_CHECK(StarsCompatTextInputRejected(hwndEdit));
+    szPass[0] = 'x';
+    TEST_CHECK(!CchGetUtf8WindowText(hwndEdit, std::span{szPass}));
+    TEST_CHECK(szPass[0] == 0);
     ui::SendMessage(hwndEdit, win32::WM_CHAR, '\b', 0);
     ui::SendMessage(hwndEdit, win32::WM_KEYDOWN, win32::VK_DELETE, 0);
     TEST_CHECK(StarsCompatTextInputRejected(hwndEdit));

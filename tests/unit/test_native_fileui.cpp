@@ -71,6 +71,8 @@ static void TestTextBoundaries(void) {
     TEST_ASSERT(hwnd);
     hwndEdit = ui::CreateWindowEx(0, "EDIT", "", win32::WS_CHILD, 0, 0, 180, 24, hwnd, NULL, win32::GetModuleHandleA(NULL), NULL);
     TEST_ASSERT(hwndEdit && FSetUtf8WindowText(hwndEdit, "\xc3\xa9\xe2\x82\xac"));
+    const auto cchEmpty = CchGetUtf8WindowText(hwndEdit, std::span<char>{});
+    TEST_CHECK(cchEmpty && *cchEmpty == 0);
     cch = CchGetUtf8WindowText(hwndEdit, std::span{sz});
     TEST_CHECK(cch && *cch == 5 && strcmp(sz, "\xc3\xa9\xe2\x82\xac") == 0);
     TEST_ASSERT(FSetNativeWindowTitle(hwnd, "caf\xc3\xa9-\xce\xa9"));
