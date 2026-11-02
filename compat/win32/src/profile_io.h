@@ -2,18 +2,19 @@
 #define STARS_COMPAT_PROFILE_IO_H
 #include <windows.h>
 #include "fileio.h"
-#include <cstdlib>
+#include <string>
 
 struct COMPATPROFILE {
-    char *szRaw, *szParsed, *pszSection, *pszKey, *pszValue;
+    std::string szRaw, szParsed;
+    char *pszSection, *pszKey, *pszValue;
     struct COMPATPROFILE *lpNext;
 };
 
 // Profile parsing and publication use the same native service as the product.
 // A provider changes only I/O effects; the serializer and stage order stay linked.
 // ReadLine belongs to loading; the other effects belong to saving. Close and
-// Unlink run during noexcept cleanup and must not throw. CRT node allocations
-// use free(); line reads return owned string values.
+// Unlink run during noexcept cleanup and must not throw. Profile nodes own
+// their raw/parsed lines; line reads return owned string values.
 std::optional<std::string> SzProfileTempTemplate(std::string_view szPath);
 struct PROFILEIO {
     decltype(&SzProfileTempTemplate) pfnTempTemplate = SzProfileTempTemplate;

@@ -27,7 +27,7 @@ static void FreeProfile(COMPATPROFILE *lp) {
     COMPATPROFILE *lpNext;
     while (lp) {
         lpNext = lp->lpNext;
-        std::free(lp->szRaw); std::free(lp->szParsed); std::free(lp);
+        delete lp;
         lp = lpNext;
     }
 }
@@ -41,14 +41,14 @@ static char *PszTrimProfile(char *psz) {
 }
 
 static COMPATPROFILE *LpProfileLine(const char *pszRaw) {
-    COMPATPROFILE *lp = static_cast<COMPATPROFILE *>(std::calloc(1, sizeof(*lp)));
+    COMPATPROFILE *lp = new (std::nothrow) COMPATPROFILE{};
     char *psz, *pszEnd;
 
     NATIVEOWNER<COMPATPROFILE, FreeProfile> profileOwner(lp);
     if (!lp) return nullptr;
-    lp->szRaw = strdup(pszRaw); lp->szParsed = strdup(pszRaw);
-    if (!lp->szRaw || !lp->szParsed) return nullptr;
-    psz = PszTrimProfile(lp->szParsed);
+    try { lp->szRaw = pszRaw; lp->szParsed = pszRaw; }
+    catch (const std::bad_alloc &) { return nullptr; }
+    psz = PszTrimProfile(lp->szParsed.data());
     if (*psz == '[' && (pszEnd = std::strchr(psz + 1, ']'))) {
         *pszEnd = 0;
         lp->pszSection = PszTrimProfile(psz + 1);

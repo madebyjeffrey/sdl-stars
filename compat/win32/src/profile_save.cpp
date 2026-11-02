@@ -2,7 +2,6 @@
 #include "ownership.h"
 #include <cerrno>
 #include <cstdio>
-#include <cstring>
 #include <new>
 
 // Bind only this thread's profile operation; nested callbacks restore the
@@ -51,8 +50,8 @@ BOOL FSaveProfile(COMPATPROFILE *lp, const char *pszPath, const PROFILEIO &io) {
     }
     if (io.pfnWrite(std::as_bytes(std::span{"\xef\xbb\xbf"}).first(3), fp) != 3) { io.pfnClose(std::exchange(fp, nullptr)); goto LReturn; }
     for (; lp; lp = lp->lpNext) {
-        if (io.pfnPutString(lp->szRaw, fp) == EOF) break;
-        if (lp->lpNext && *lp->szRaw && lp->szRaw[std::strlen(lp->szRaw) - 1] != '\n')
+        if (io.pfnPutString(lp->szRaw.c_str(), fp) == EOF) break;
+        if (lp->lpNext && !lp->szRaw.empty() && lp->szRaw.back() != '\n')
             if (io.pfnPutChar('\n', fp) == EOF) break;
     }
     if (lp || io.pfnFlush(fp) != 0 || io.pfnSync(fp) != 0) {
