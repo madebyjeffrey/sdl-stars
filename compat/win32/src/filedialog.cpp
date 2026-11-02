@@ -11,6 +11,8 @@
 #include <cstring>
 #include <array>
 #include <limits>
+#include <new>
+#include <string>
 #include <string_view>
 #include <algorithm>
 #include <sys/stat.h>
@@ -36,7 +38,7 @@ struct COMPATFILEDIALOG {
     int cFilter, iFilter;
     COMPATFILEENTRY *rgentry;
     std::size_t cEntry;
-    std::array<NATIVEOWNER<char, std::free>, MAX_FILE_HISTORY> rgpszHistory;
+    std::array<std::string, MAX_FILE_HISTORY> rgpszHistory;
     int cHistory;
     BOOL fHidden;
     DWORD dwError;
@@ -151,8 +153,7 @@ static BOOL FRefreshFiles(HWND hwnd, COMPATFILEDIALOG *lp) {
 static BOOL FChangeFileDirectory(HWND hwnd, COMPATFILEDIALOG *lp, LPCSTR psz, BOOL fHistory) {
     char szPath[PATH_MAX], szReal[PATH_MAX], szOld[PATH_MAX];
     std::optional<NATIVEFILEINFO> st;
-    char *pszPrevious = nullptr;
-    NATIVEOWNER<char, std::free> previousOwner;
+    std::string szPrevious;
     if (!FJoinFile(std::span{szPath}, lp->szDir, psz) || !CchCanonicalNativePath(szPath, std::span{szReal}) || !(st = IGetNativeFileInfo(szReal, NATIVELINKMODE::follow)) || !st->fDirectory) {
         FileError(hwnd, "The directory does not exist."); return 0;
     }
@@ -163,22 +164,21 @@ static BOOL FChangeFileDirectory(HWND hwnd, COMPATFILEDIALOG *lp, LPCSTR psz, BO
         win32::SetWindowTextA(win32::GetDlgItem(hwnd, ID_FILE_PATH), lp->szDir); return 1;
     }
     if (fHistory) {
-        pszPrevious = strdup(lp->szDir);
-        previousOwner.reset(pszPrevious);
-        if (!pszPrevious) { FileError(hwnd, "There is not enough memory to navigate."); return 0; }
+        try { szPrevious = lp->szDir; }
+        catch (const std::bad_alloc &) { FileError(hwnd, "There is not enough memory to navigate."); return 0; }
     }
     CchCopyUtf8(std::span{szOld}, lp->szDir); CchCopyUtf8(std::span{lp->szDir}, szReal);
     if (!FRefreshFiles(hwnd, lp)) {
-        CchCopyUtf8(std::span{lp->szDir}, szOld); previousOwner.reset();
+        CchCopyUtf8(std::span{lp->szDir}, szOld);
         if (win32::IsWindow(hwnd)) win32::SetWindowTextA(win32::GetDlgItem(hwnd, ID_FILE_PATH), lp->szDir);
         return 0;
     }
-    if (pszPrevious) {
+    if (fHistory) {
         if (lp->cHistory == MAX_FILE_HISTORY) {
             std::move(lp->rgpszHistory.begin() + 1, lp->rgpszHistory.end(), lp->rgpszHistory.begin());
             lp->cHistory--;
         }
-        lp->rgpszHistory[lp->cHistory++] = std::move(previousOwner);
+        lp->rgpszHistory[lp->cHistory++] = std::move(szPrevious);
     }
     win32::EnableWindow(win32::GetDlgItem(hwnd, ID_FILE_BACK), lp->cHistory != 0);
     win32::SetWindowTextA(win32::GetDlgItem(hwnd, ID_FILE_NAME), ""); return 1;
@@ -348,8 +348,8 @@ static INT_PTR  FileDialogProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         return 1;
     case ID_FILE_NEW: NewFileFolder(hwnd, lp); return 1;
     case ID_FILE_BACK:
-        if (lp->cHistory != 0 && FChangeFileDirectory(hwnd, lp, lp->rgpszHistory[lp->cHistory - 1].get(), 0)) {
-            lp->rgpszHistory[--lp->cHistory].reset();
+        if (lp->cHistory != 0 && FChangeFileDirectory(hwnd, lp, lp->rgpszHistory[lp->cHistory - 1].c_str(), 0)) {
+            lp->rgpszHistory[--lp->cHistory].clear();
             win32::EnableWindow(win32::GetDlgItem(hwnd, ID_FILE_BACK), lp->cHistory != 0);
         }
         return 1;
@@ -419,7 +419,6 @@ static win32::files::FILESELECTIONRESULT SelectFileCore(HWND hwndOwner, win32::f
     BOOL fEnable = 0, fNative = 0, fRestoreFocus = 0;
     COMPATCLEANUPSCOPE freeBuffers([&] {
         FreeFileEntries(&dlg);
-        for (auto &pszHistory : dlg.rgpszHistory) pszHistory.reset();
     });
     COMPATCLEANUPSCOPE restoreFocus([&] { if (fRestoreFocus && win32::IsWindow(hwndFocus) && win32::IsWindowEnabled(hwndFocus)) win32::SetFocus(hwndFocus); });
     COMPATCLEANUPSCOPE nativeCounter([&] { if (fNative && win32::IsWindow(hwndRoot)) hwndRoot->cNativeFileDialogs--; });
