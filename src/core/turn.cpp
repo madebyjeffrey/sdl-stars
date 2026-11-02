@@ -446,6 +446,7 @@ void VerifyTurns(APPSESSION &app) {
     std::int16_t i;
     std::int16_t cOut;
     std::int16_t fOut;
+    CHECKLOGRESULT checkLog;
 
     idCur = app.state.idPlayer;
     cOut = 0;
@@ -459,8 +460,9 @@ void VerifyTurns(APPSESSION &app) {
     app.state.imemMsgCur = 0;
     for (i = 0; i < app.state.game.cPlayer; i++) {
         fOut = app.state.rgOut[i];
-        idsError = 0;
-        if (app.state.rgplr[i].fAi || FCheckLogFile(app, i, &idsError)) {
+        checkLog = app.state.rgplr[i].fAi ? CHECKLOGRESULT{true, 0} : FCheckLogFile(app, i);
+        idsError = checkLog.idsError;
+        if (app.state.rgplr[i].fAi || checkLog.fValid) {
             if (app.state.rgplr[i].fAi) {
                 cAi++;
                 app.state.rgOut[i] = 0;
@@ -535,6 +537,7 @@ std::int16_t CFindTurnsOutstanding(APPSESSION &app) {
     std::int16_t cOut;
     std::int16_t fSav;
     std::int16_t fOut;
+    CHECKLOGRESULT checkLog;
 
     cOut = 0;
     cAi = 0;
@@ -543,8 +546,9 @@ std::int16_t CFindTurnsOutstanding(APPSESSION &app) {
     app.state.gd.fGeneratingTurn = 1;
     for (i = 0; i < app.state.game.cPlayer; i++) {
         fOut = app.state.rgOut[i];
-        idsError = 0;
-        if (app.state.rgplr[i].fAi || FCheckLogFile(app, i, &idsError)) {
+        checkLog = app.state.rgplr[i].fAi ? CHECKLOGRESULT{true, 0} : FCheckLogFile(app, i);
+        idsError = checkLog.idsError;
+        if (app.state.rgplr[i].fAi || checkLog.fValid) {
             if (app.state.rgplr[i].fAi) {
                 cAi++;
             }

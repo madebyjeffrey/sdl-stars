@@ -1293,22 +1293,21 @@ Done:
     }
 }
 
-std::int16_t FCheckLogFile(APPSESSION &app, std::int16_t iplr, std::int16_t *pfError) {
+CHECKLOGRESULT FCheckLogFile(APPSESSION &app, std::int16_t iplr) {
     std::int16_t  fRet;
     std::int16_t  cbLog;
     std::int16_t  iCur;
+    std::int16_t  idsError;
 
     fRet = 1;
+    idsError = 0;
     app.state.imemLogCur = 0;
     app.state.imemLogPrev = -1;
     StarsRecoveryScope scopeRecovery;
     try {
         app.state.idsFileError = 0;
         if (!FOpenFile(app, dtLog, iplr, 32)) {
-            if (app.state.idsFileError != idsCantOpenFile) {
-                *pfError = app.state.idsFileError;
-            }
-            return 0;
+            return {false, app.state.idsFileError == idsCantOpenFile ? std::int16_t{0} : app.state.idsFileError};
         }
         RecordIO().pfnReadRt(app);
         NATIVEBYTEREADER(std::as_bytes(std::span(app.state.rgbCur)).first(2)).FReadI16Le(cbLog);
@@ -1320,21 +1319,20 @@ std::int16_t FCheckLogFile(APPSESSION &app, std::int16_t iplr, std::int16_t *pfE
             RecordIO().pfnReadRt(app);
         }
         if (app.state.hdrCur.rt != rtEOF) {
-            *pfError = 3;
+            idsError = 3;
             fRet = 0;
             goto Done;
         }
         app.state.imemLogCur = cbLog;
 Done:
         RecordIO().pfnStreamClose(app);
-        return fRet;
+        return {fRet != 0, fRet != 0 ? std::int16_t{0} : idsError};
     } catch (const StarsError &) {
         if (app.state.hf == -1) {
-            return 1;
+            return {true, 0};
         }
         RecordIO().pfnStreamClose(app);
-        *pfError = 3;
-        return 0;
+        return {false, std::int16_t{3}};
     }
 }
 

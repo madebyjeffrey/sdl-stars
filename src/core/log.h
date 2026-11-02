@@ -28,7 +28,11 @@ std::int16_t FGetPrevLogRt(APPSESSION &app, HDR *phdr, std::span<std::uint8_t> r
 std::int16_t FRunLogFile(APPSESSION &app);
 std::int16_t FRunLogRecord(APPSESSION &app, RecordType rt, std::int16_t cb, std::uint8_t *lpb);
 std::int16_t FLoadLogFile(APPSESSION &app, const char *pszLog);
-std::int16_t FCheckLogFile(APPSESSION &app, std::int16_t iplr, std::int16_t *pfError);
+struct CHECKLOGRESULT {
+    bool fValid;
+    std::int16_t idsError;
+};
+CHECKLOGRESULT FCheckLogFile(APPSESSION &app, std::int16_t iplr);
 std::int16_t FWriteLogFile(APPSESSION &app, std::string_view pszFileBase, std::int16_t iPlayer);
 std::int16_t FWriteHistFile(APPSESSION &app, std::int16_t iPlayer);
 using ENUMLOGRTCALLBACK = std::function<std::int16_t(APPSESSION &, std::span<std::uint8_t>, RecordType, std::int16_t)>;
