@@ -359,7 +359,8 @@ std::int16_t IStargateFromLppl(APPSESSION &app, PLANET *lppl) {
 // The label owns the existing 50-byte budget; another lookup or scratch-buffer
 // formatter cannot overwrite it while a caller is still using it.
 std::array<char, 50> PszPlayerName(APPSESSION &app, std::int16_t iPlayer, std::int16_t fCapital, std::int16_t fPlural, std::int16_t fThe, std::int16_t grWord, PLAYER *pplr) {
-    char *pchEnd;
+    std::size_t cchName;
+    int cchFormat;
     char  szName[50]{};
 
     if (!pplr) {
@@ -367,45 +368,46 @@ std::array<char, 50> PszPlayerName(APPSESSION &app, std::int16_t iPlayer, std::i
     }
     if (pplr->szName[0] != 0) {
         if (fThe) {
-            CchCopyUtf8Prefix(std::span{szName}, "the ");
+            cchName = CchCopyUtf8Prefix(std::span{szName}, "the ");
             if (fCapital) {
                 szName[0] = 'T';
             }
         } else {
             szName[0] = 0;
+            cchName = 0;
         }
         if (fPlural && pplr->szNames[0] != 0) {
-            CchAppendUtf8Prefix(std::span{szName}, pplr->szNames);
+            cchName += CchAppendUtf8Prefix(std::span{szName}, pplr->szNames);
         } else {
-            CchAppendUtf8Prefix(std::span{szName}, pplr->szName);
+            cchName += CchAppendUtf8Prefix(std::span{szName}, pplr->szName);
         }
-        pchEnd = &szName[std::strlen(szName) - 1];
-        while (*pchEnd == ' ' && pchEnd >= szName) {
-            *pchEnd-- = 0;
+        while (cchName > 0 && szName[cchName - 1] == ' ') {
+            szName[--cchName] = 0;
         }
-        if (pchEnd < szName) {
-            TextIO().pfnCchGetString(app, idsName, std::span{szName});
+        if (cchName == 0) {
+            cchName = static_cast<std::size_t>(TextIO().pfnCchGetString(app, idsName, std::span{szName}));
         }
         if (fPlural && pplr->szNames[0] == 0) {
-            pchEnd = &szName[std::strlen(szName) - 1];
-            if (*pchEnd != 's' && (*pchEnd != 'e' || pchEnd[-1] != 's')) {
-                CchAppendUtf8Prefix(std::span{szName}, "s");
+            if (cchName == 0 || (szName[cchName - 1] != 's' &&
+                                 (szName[cchName - 1] != 'e' || cchName < 2 || szName[cchName - 2] != 's'))) {
+                cchName += CchAppendUtf8Prefix(std::span{szName}, "s");
             }
         }
         if (grWord == 1) {
-            TextIO().pfnCchGetString(app, idsHave2, std::span{szName}.subspan(static_cast<std::size_t>(std::strlen(szName))));
+            cchName += static_cast<std::size_t>(TextIO().pfnCchGetString(app, idsHave2, std::span{szName}.subspan(cchName)));
         } else if (grWord == 2) {
-            TextIO().pfnCchGetString(app, idsAre, std::span{szName}.subspan(static_cast<std::size_t>(std::strlen(szName))));
+            cchName += static_cast<std::size_t>(TextIO().pfnCchGetString(app, idsAre, std::span{szName}.subspan(cchName)));
         }
     } else {
-        CchSprintf(szName, TextIO().pfnCompressed(app, idsPlayerD2).data(), iPlayer + 1);
+        cchFormat = CchSprintf(szName, TextIO().pfnCompressed(app, idsPlayerD2).data(), iPlayer + 1);
+        cchName = cchFormat > 0 ? static_cast<std::size_t>(cchFormat) : 0;
         if (!fPlural) {
-            CchAppendUtf8Prefix(std::span{szName}, "'s");
+            cchName += CchAppendUtf8Prefix(std::span{szName}, "'s");
         }
         if (grWord == 1) {
-            TextIO().pfnCchGetString(app, idsHas, std::span{szName}.subspan(static_cast<std::size_t>(std::strlen(szName))));
+            cchName += static_cast<std::size_t>(TextIO().pfnCchGetString(app, idsHas, std::span{szName}.subspan(cchName)));
         } else if (grWord == 2) {
-            TextIO().pfnCchGetString(app, idsIs2, std::span{szName}.subspan(static_cast<std::size_t>(std::strlen(szName))));
+            cchName += static_cast<std::size_t>(TextIO().pfnCchGetString(app, idsIs2, std::span{szName}.subspan(cchName)));
         }
     }
     return std::to_array(szName);
