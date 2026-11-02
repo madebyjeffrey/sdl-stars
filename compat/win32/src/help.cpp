@@ -12,10 +12,7 @@
 #include <unistd.h>
 #include <zlib.h>
 #include "help_contexts.h"
-
-#ifndef STARS_INSTALLED_DATA
-#define STARS_INSTALLED_DATA "../share/stars"
-#endif
+#include "installed_data.h"
 
 static BOOL FHelpAssets(const char *pszDirectory) {
     char szFile[PATH_MAX], szStamp[66];
@@ -161,7 +158,7 @@ BOOL win32::WinHelpA(HWND hWndMain, LPCSTR pszHelp, UINT uCommand, ULONG_PTR dwD
     }
     auto szDirectoryOwned = SzCanonicalNativePath(szDirectory);
     if (!szDirectoryOwned) {
-        cch = std::snprintf(szDirectory, sizeof(szDirectory), "%s%s/help", pszBase, STARS_INSTALLED_DATA);
+        cch = std::snprintf(szDirectory, sizeof(szDirectory), "%s%s/help", pszBase, szStarsInstalledData);
         if (cch < 0 || static_cast<std::size_t>(cch) >= sizeof(szDirectory)) {
             win32::SetLastError(win32::ERROR_FILENAME_EXCED_RANGE);
             return 0;

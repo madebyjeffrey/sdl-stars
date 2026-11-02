@@ -1,0 +1,1 @@
+inline constexpr char szStarsInstalledData[] = "@STARS_DATA_FROM_BIN@";

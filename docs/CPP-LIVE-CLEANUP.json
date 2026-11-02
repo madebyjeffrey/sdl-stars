@@ -1154,8 +1154,7 @@
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
-        "remaining-native-file-path-results",
-        "typed-file-selection-Milestone-D"
+        "remaining-native-file-path-results"
       ],
       "user_string_codecs": {
         "status": "complete; verified",
@@ -1722,7 +1721,8 @@
         "tutorial-borrowed-resource-cleanup",
         "title-copy-matched-release",
         "embedded-resource-release-ceremony",
-        "typed-generated-product-version-api"
+        "typed-generated-product-version-api",
+        "generated-installed-data-path-constant"
       ],
       "pending_substeps": [],
       "help_api": {
@@ -1895,6 +1895,12 @@
           "remaining": "L05 bounded/readonly text and scratch-storage review, 52 initial raw-copy sites, L06 service results/Milestone D, and L08 complete retained-primitive/macro inventory and actual final platform qualification remain active.",
           "receipts": "dist/verification/live-cpp/l07e/"
         }
+      },
+      "installed_data_path": {
+        "status": "implemented; locally verified",
+        "change": "CMake generates installed_data.h with the selected relative data path as szStarsInstalledData; the STARS_INSTALLED_DATA compile-definition macro and fallback are removed.",
+        "verification": "macOS Debug stars-sdl and stars-compat-help build pass; win32_utf8_help passes; generated default path is ../share/stars and bundle configuration generates .",
+        "platform_qualification": "Full platform qualification remains part of L08."
       }
     },
     {
@@ -23515,41 +23521,29 @@
     }
   },
   "current_checkpoint": {
-    "batch": "L05am bounded FOpenGame startup host-file staging",
-    "status": "complete; locally verified; native Windows/Linux qualification pending",
-    "parent": "cac6703f",
-    "remaining_raw_copy_calls": 2,
-    "copy_migrations_recorded": 306,
+    "batch": "L07 generated installed-data C++ constant",
+    "status": "implemented; locally verified; full platform qualification pending",
+    "parent": "e1c376e0",
     "verification": {
-      "debug_build": "pass; no new warnings",
-      "file_workflow": "pass; actual client workflow rejects a generated 259-byte .hst path before the 256-byte file-dialog staging buffer",
-      "unit_tests": "18/18 pass",
-      "tutorial": "available SDL native tutorial smoke test passes; full 80-page tutorial remains unfinished",
-      "native_regression": {
-        "matches": 519,
-        "warnings": 25,
-        "differences_errors": 0,
-        "skipped": 0
-      },
-      "baseline": "unchanged"
+      "debug_build": "macOS Debug stars-sdl and stars-compat-help pass",
+      "help_test": "win32_utf8_help passes",
+      "generated_paths": "default ../share/stars; macOS bundle configuration .",
+      "macro_scan": "STARS_INSTALLED_DATA removed from production configuration and help implementation; NOMINMAX remains required before windows.h; include guards remain; resource-compiler macros remain in stars.rc."
     },
     "remaining_work": [
-      "Two SDK message-output boundary contract reviews",
-      "Other readonly path/buffer/service interfaces",
-      "Post-migration Work/Msg/scratch and borrowed-return audit",
-      "Wrapper formatting and manual bounds review",
-      "Typed file-selection Milestone D D01-D06",
-      "L08 final retained primitive/macro and platform audit"
+      "L05 raw-copy migrations and remaining text-boundary audits",
+      "L06 remaining buffer/length interfaces and native path results",
+      "L06 D06 native Windows/Linux chooser qualification and remaining chooser branch coverage",
+      "L08 maintained-inventory reconciliation and final retained primitive/macro audit",
+      "Full Debug/Release, unit, tutorial, desktop/host regression and cross-platform qualification"
     ],
-    "last_full_platform_source": "058f2808288033d81581bdc4802649eadf1248fc",
-    "last_full_platform_run": 41376372935,
-    "platform_dispatch": "The latest local batches have not yet been qualified by a full Linux/macOS/Windows workflow.",
-    "receipts": "dist/verification/live-cpp/l05am/"
+    "published_batch_head": "e1c376e0",
+    "platform_dispatch": "Recent typed file-selection batches and this generated-constant batch still need full Linux/macOS/Windows workflow qualification."
   },
   "milestone_d_checkpoint": {
-    "stage": "D02 interface decided; shared implementation remains",
+    "stage": "D05 caller migrations implemented; D06 platform qualification pending",
     "c_merge_parent": "a65e653a (PR #68)",
-    "inventory_revision": "f3b89311",
+    "inventory_revision": "e1c376e0",
     "typed_picker_callers": 8,
     "additional_print_wrapper_caller": "compat/win32/src/print.cpp",
     "backend_paths": [
@@ -23558,6 +23552,8 @@
       "macOS AppKit",
       "Windows SDK"
     ],
-    "next": "D03 implement the shared policy behind SelectFile and retain GetOpenFileNameA/GetSaveFileNameA as translating adapters."
+    "implementation": "All current src/ui picker callers use the typed SelectFile path. Obsolete UI OPENFILENAME wrappers and DesktopChoiceIO hooks are removed.",
+    "verification": "macOS Debug build and focused tests pass; new-game, race-library, host-games, main-open and race-save workflows pass with typed chooser providers. ZIP export, orders import and active game/race import-source chooser compile but lack independent end-to-end chooser coverage.",
+    "next": "D06 qualify native Windows/Linux adapters and complete remaining platform/full-suite checks; then assess expansion beyond current eight UI callers."
   }
 }

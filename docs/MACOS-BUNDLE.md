@@ -26,8 +26,8 @@ absolute build-machine search paths are removed. All shipped Mach-O code is
 checked for arm64, and universal runtime libraries are thinned to arm64.
 
 SDL normally returns `Contents/Resources` from `SDL_GetBasePath` for an app
-bundle. The bundle preset selects that resource layout through the existing
-`STARS_INSTALLED_DATA` setting. Windows, Linux and ordinary Mac builds keep
+bundle. The bundle preset selects that resource layout through the generated
+`szStarsInstalledData` C++ constant. Windows, Linux and ordinary Mac builds keep
 their existing layouts. See [SDL's filesystem documentation](https://wiki.libsdl.org/SDL3/SDL_GetBasePath).
 
 ## Automatic identity selection
