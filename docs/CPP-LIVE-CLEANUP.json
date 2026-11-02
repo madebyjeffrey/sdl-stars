@@ -204,7 +204,8 @@
         "bounded-native-format-and-scan-interfaces",
         "planet-tile-title-string-view",
         "bounded-production-row-text-view",
-        "centered-text-string-view-interface"
+        "centered-text-string-view-interface",
+        "remove-redundant-utf8-window-text-forwarder"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -1180,6 +1181,18 @@
           "tutorial": "1/1 smoke checkpoint passed.",
           "baseline": "Unchanged; UI-only text drawing interface and call sites.",
           "windows_linux": "Current-source qualification remains pending under L08."
+        },
+        {
+          "batch": "L05 remove redundant UTF-8 window-text forwarder",
+          "change": "Removed FSetUtf8WindowText, which only forwarded to ControlIO().pfnSetWindowText; the sole production caller and native file UI test now call ControlIO directly. FSetNativeWindowTitle remains because it performs the SDL native-title operation.",
+          "macos_debug": "make compile passed; strict compiler warnings and standalone header checks passed.",
+          "desktop_units": "18/18 passed.",
+          "host_units": "29/29 passed.",
+          "native_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped reference inputs.",
+          "host_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped reference inputs.",
+          "tutorial": "1/1 smoke checkpoint passed.",
+          "baseline": "Unchanged; this removes a forwarding layer only.",
+          "diff_check": "Pass."
         }
       ],
       "bounded_formatting": {
@@ -24953,13 +24966,12 @@
   "working_tree_checkpoint": {
     "date": "2026-11-02",
     "branch": "develop",
-    "batch": "L06 native facade path views",
-    "source_commit": "d7205386",
-    "status": "Verified and committed locally on develop. macOS SDL Debug build, desktop/host unit suites, full native/host regressions, tutorial smoke and focused compatibility checks pass. Current-source Windows SDL desktop and Linux desktop qualification remain outstanding.",
+    "batch": "L05 remove redundant UTF-8 window-text forwarder",
+    "source_commit": "5f488e18",
+    "status": "Verified and committed locally on develop. macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Current-source Windows SDL desktop and Linux desktop qualification remain outstanding.",
     "changes": [
-      "High-level native open, existence, read-only, directory, enumeration-path, size, path-info and publication APIs now accept std::string_view.",
-      "The directory entry callback still exposes const char *; its result boundary remains for a separate migration because its UI and ZIP consumers use C-string APIs.",
-      "Added a bounded-view compatibility assertion through FFileExists, FNativeFileSize and PfOpenNativeFile.",
+      "CtrTextOut now accepts std::string_view; all UI callers pass explicit formatted lengths or bounded/null-terminated views.",
+      "Removed FSetUtf8WindowText, a forwarding-only wrapper; the sole production caller and native file UI test use ControlIO().pfnSetWindowText directly.",
       "No game behavior, saved layout, file format or serialization changed."
     ],
     "verification": {
@@ -24969,7 +24981,6 @@
       "native_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "host_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "tutorial": "1/1 available SDL tutorial smoke passes.",
-      "focused_compatibility": "5/5 pass: native files, fileio contract, native publication, profile save and Windows client startup.",
       "baseline": "Unchanged.",
       "diff_check": "Pass."
     },
@@ -24983,7 +24994,7 @@
       "core_strlen_residual": "src/core/save.cpp:804 in WriteRtString. Its sole caller passes FLEET::lpszName, a legacy heap-owned C string with no stored length; adding a size to FLEET would change a layout-sensitive debug-symbol struct. Keep this at the serialization C-string boundary unless ownership API is deliberately redesigned.",
       "scan_scope": "Tracked src and compat/win32/include/src plus dist/macos-sdl-debug/generated/version_resource.h; compat/win32/generated is not a present directory.",
       "platform_qualification": "Full Windows SDL desktop and Linux desktop CI remain unqualified. Current-source workflow dispatch was previously rejected with HTTP 403 (admin rights required), and local SDL cross-configuration lacks a MinGW zlib package; the current MinGW host/core service build passed earlier.",
-      "native_directory_entry_callback": "FNativeDirectoryEntryProc still returns an entry as const char*; this is the next native path-result seam to review and migrate."
+      "native_directory_entry_callback": "FNativeDirectoryEntryProc accepts std::string_view; synchronous enumeration and consumers were migrated and verified in the recorded L06 bounded native directory-entry callback views batch."
     },
     "platform_ci": {
       "run_id": 41422617389,
@@ -24999,8 +25010,8 @@
       "current_source_rerun": "No workflow dispatch was available from this environment; current source is locally qualified on macOS and host, but Windows/Linux platform CI remains pending."
     },
     "next": [
-      "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
-      "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D Windows/Linux qualification and any missing end-to-end chooser coverage.",
+      "L05: finish remaining bounded text destinations, const-text interfaces, and the post-migration scratch/borrowed-return audit.",
+      "L06: finish remaining buffer/length interfaces and native file/path result work; complete chooser Milestone D Windows/Linux qualification and any missing end-to-end chooser coverage.",
       "L08: run current-source Windows and Linux qualification, then resolve any failures and record the final macro/C inventory outcome."
     ],
     "untracked_user_assets": [
@@ -25133,6 +25144,14 @@
       {
         "commit": "0c750694",
         "message": "Bound race filename suggestions"
+      },
+      {
+        "commit": "b33ae6b6",
+        "message": "Use string views for centered text output"
+      },
+      {
+        "commit": "5f488e18",
+        "message": "Remove redundant UTF-8 window text wrapper"
       }
     ],
     "parent": "4867b0c5"
