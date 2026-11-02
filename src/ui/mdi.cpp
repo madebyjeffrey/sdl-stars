@@ -1535,11 +1535,11 @@ LPrintMapCleanup:
             win32::PostMessageA(app.lpui->hwndTitle, win32::WM_COMMAND, LOWORD(wParam) - 250, 0);
             break;
         case IDM_FILE_RETURN_TO_TITLE:
+            if (CchCopyUtf8(std::span{szWorkFileFamily}, app.state.szWork) < 0)
+                break;
             if (app.state.gd.fTutorial && !FAskKillTutor(app))
                 break;
             if (!FCanLeaveCurrentGame(app))
-                break;
-            if (CchCopyUtf8(std::span{szWorkFileFamily}, app.state.szWork) < 0)
                 break;
             WriteIniSettings(app);
             DestroyCurGame(app);
