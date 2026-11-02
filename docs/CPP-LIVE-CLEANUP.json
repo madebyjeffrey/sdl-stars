@@ -24241,16 +24241,18 @@
     ],
     "pending_stage": "L08: reconcile retained primitives/macros and qualify final complete state",
     "restart_order": [
-      "Qualify commit e6da4794 on Linux with the full sdl-debug build and private-bus win32_fileportal test; also run win32_fileportal_x11 where available.",
+      "Qualify e6da4794 on Linux with the full sdl-debug build and private-bus win32_fileportal test; also run win32_fileportal_x11 where available.",
       "Continue L05 bounded text destinations, const-text interfaces and the post-migration scratch/borrowed-return audit.",
       "Continue L06 remaining buffer/length and native path result APIs; qualify Windows/Linux chooser Milestone D.",
-      "Complete L08 retained primitive/API macro/preprocessor inventory and current-source platform qualification."
+      "Complete L08 retained primitive/API macro/preprocessor inventory and current-source platform qualification.",
+      "Complete the L08 final inventory by reconciling every remaining non-function macro and C test/reference classification with the maintained audit and run current-source Windows/Linux qualification."
     ],
     "do_not_overwrite": [
       "title-modernized.png and prompt",
       "title-modernized-v2.png and prompt",
       "title-modernized-v3.png and prompt"
-    ]
+    ],
+    "active_audit_evidence": "Current tracked-source C and macro scan recorded in working_tree_checkpoint.current_source_audits; production remains C++20, C11 is retained only for independent test/reference targets."
   },
   "current_checkpoint": {
     "batch": "L05 borrowed Cocoa chooser labels",
@@ -25017,7 +25019,8 @@
       "Qualify e6da4794 on Linux with the full sdl-debug build and private-bus win32_fileportal test; also run win32_fileportal_x11 where available.",
       "Continue L05 bounded text destinations, const-text interfaces and the post-migration scratch/borrowed-return audit.",
       "Continue L06 remaining buffer/length and native path result APIs; qualify Windows/Linux chooser Milestone D.",
-      "Complete L08 retained primitive/API macro/preprocessor inventory and current-source platform qualification."
+      "Complete L08 retained primitive/API macro/preprocessor inventory and current-source platform qualification.",
+      "Complete the L08 final inventory by reconciling every remaining non-function macro and C test/reference classification with the maintained audit and run current-source Windows/Linux qualification."
     ],
     "untracked_user_assets": [
       "title-modernized.png and prompt",
@@ -25044,6 +25047,20 @@
     "documentation_updates": {
       "docs/ROADMAP.md": "Refreshed the Milestone D implementation status, labeled the 2026-10-31 review as a historical snapshot, corrected the raw-copy count to zero, and clarified that consolidated C11-only specifications are historical evidence outside live production cleanup.",
       "commit": "9f13a14d"
+    },
+    "current_source_audits": {
+      "language": {
+        "tracked_c_translation_units": 44,
+        "production_c_translation_units": 0,
+        "classification": "All tracked .c files are tests/references: independent SDK/ABI and record-layout references; the archived Win32 tutorial observer; popup codec reference vectors; the precision oracle; and the Mesa third-party lifetime harness.",
+        "cmake_boundary": "The project declares LANGUAGES CXX and enables C only when STARS_BUILD_TESTS or STARS_BUILD_WIN32_REFERENCE_TESTS is enabled. C_STANDARD 11 serves those reference/test targets."
+      },
+      "macros": {
+        "function_like_macros": 0,
+        "owned_definitions": "Application source/header definitions are include guards, NOMINMAX for windows.h, and generated STARS_VERSION_* tokens in version_resource.h for stars.rc. FSHIFT is undefined to avoid an SDK-name collision.",
+        "api_macros": "Packed-word/resource/color APIs are typed C++ functions/templates; no owned application API function-like macros remain.",
+        "scope": "Scanned tracked src and compat/win32/include/src plus current generated headers under dist/macos-sdl-debug/generated and compat/win32/generated."
+      }
     }
   }
 }
