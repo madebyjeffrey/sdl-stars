@@ -135,7 +135,8 @@
         "typed-report-and-hull-label-formatting",
         "typed-short-ui-number-formatting",
         "typed-file-and-battle-label-formatting",
-        "unused-itoa-compatibility-helper-removed"
+        "unused-itoa-compatibility-helper-removed",
+        "typed-decimal-parsing-replaces-atoi"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -23845,6 +23846,33 @@
       "remaining_wsprintfA_calls": "282 scanned owned C++ source call lines.",
       "platform": "Windows/Linux qualification remains pending for current develop.",
       "diff_check": "git diff --check passes."
+    },
+    {
+      "batch": "L05ba typed decimal parsing replaces atoi",
+      "parent": "2d5086db",
+      "source_commit": "db2bfc2f",
+      "macos_debug_build": "Full macos-sdl-debug build compiles init.cpp, libraryui.cpp, preferencesui.cpp and shipui.cpp successfully.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "focused_tests": "win32_runtime, win32_controls and available tutorial smoke pass (3/3).",
+      "tutorial": "Available SDL tutorial smoke checkpoint passes; full 80-page tutorial remains unfinished.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "baseline": "Unchanged; parsed valid settings and dates retain their existing results.",
+      "api_audit": "Replaced four std::atoi uses with std::from_chars or direct fixed-date digit conversion. No std::atoi references remain in src or compat.",
+      "remaining_wsprintfA_calls": "282 scanned owned C++ source call lines.",
+      "platform": "Windows/Linux qualification remains pending for current develop.",
+      "diff_check": "git diff --check passes."
     }
   ],
   "generators": [
@@ -23863,12 +23891,12 @@
   ],
   "restart_checkpoint": {
     "date": "2026-11-02",
-    "reason": "Active C-style/C11 cleanup continuation checkpoint after removing the unused itoa CRT compatibility helper.",
+    "reason": "Active C-style/C11 cleanup continuation checkpoint after replacing application atoi parsing.",
     "branch": "develop",
-    "batch": "L05az remove unused itoa compatibility helper",
-    "batch_parent": "39e5f3b6",
-    "latest_batch": "L05az remove unused itoa compatibility helper",
-    "latest_batch_head": "1e3cea80",
+    "batch": "L05ba typed decimal parsing replaces atoi",
+    "batch_parent": "2d5086db",
+    "latest_batch": "L05ba typed decimal parsing replaces atoi",
+    "latest_batch_head": "db2bfc2f",
     "completed_stages": [
       "L01: nullptr and aliases",
       "L02: explicit C++ casts and headers",
@@ -23917,7 +23945,8 @@
       "Commit d0db2171 replaces eight short integer-format wsprintfA calls in reportui.cpp and researchui.cpp with CchSprintf. Full Debug build, 18 desktop units, 29 host units, focused controls/runtime/tutorial checks and both full regressions pass; each regression has 519 matches, 25 existing warnings and zero differences/errors/skips. Scanned owned C++ source now has 296 wsprintfA calls.",
       "Commit bd85db17 replaces eight short numeric wsprintfA calls across popup, ship, build, mine and report UI with CchSprintf. Full Debug build, 18 desktop units, 29 host units, focused controls/runtime/tutorial checks and both full regressions pass; each regression has 519 matches, 25 existing warnings and zero differences/errors/skips. Scanned owned C++ source now has 288 wsprintfA calls.",
       "Commit 064b98c1 replaces six bounded short formatting calls in mdi.cpp, vcr.cpp and popup.cpp with CchSprintf. Full Debug build, 18 desktop units, 29 host units, focused controls/runtime/tutorial checks and both full regressions pass; each regression has 519 matches, 25 existing warnings and zero differences/errors/skips. Scanned owned C++ source now has 282 wsprintfA calls.",
-      "Commits 7bbe1ea3/aad20b77, d0db2171/ad3a9770, bd85db17/c21c1e9e and 064b98c1/39e5f3b6 record four additional typed-formatting batches (nine, eight, eight and six wsprintfA calls). Commit 1e3cea80 replaces seven decimal itoa calls with CchSprintf and removes the now-unused nonstandard compatibility helper and its tests. Each batch passed the full Debug build, units, tutorial smoke and native/host regressions. The source currently has 282 win32::wsprintfA call lines; bounded text, service interfaces, scratch/borrowed-result audit and platform/macro qualification remain open."
+      "Commits 7bbe1ea3/aad20b77, d0db2171/ad3a9770, bd85db17/c21c1e9e and 064b98c1/39e5f3b6 record four additional typed-formatting batches (nine, eight, eight and six wsprintfA calls). Commit 1e3cea80 replaces seven decimal itoa calls with CchSprintf and removes the now-unused nonstandard compatibility helper and its tests. Each batch passed the full Debug build, units, tutorial smoke and native/host regressions. The source currently has 282 win32::wsprintfA call lines; bounded text, service interfaces, scratch/borrowed-result audit and platform/macro qualification remain open.",
+      "Commit db2bfc2f replaces the remaining four application std::atoi calls with std::from_chars or fixed date digit parsing. Full Debug build, 18 desktop units, 29 host units, focused controls/runtime/tutorial checks and both regressions pass (519 matches, 25 existing warnings, zero differences/errors/skips each). No std::atoi references remain in src/compat; one std::atol remains in host_profile.cpp for later review."
     ],
     "evidence": [
       "docs/CPP-LIVE-TEXT-COPIES.json: game_file_inputs.verification",
@@ -23932,17 +23961,17 @@
       "qualified_source_head": "b76ec1fcc1276790150457670f5f667bcec4eccc",
       "result": "success"
     },
-    "published_batch_head": "1e3cea80"
+    "published_batch_head": "db2bfc2f"
   },
   "current_checkpoint": {
-    "batch": "L05az remove unused itoa compatibility helper",
-    "status": "implemented and locally verified; source commit 1e3cea80",
-    "parent": "39e5f3b6",
+    "batch": "L05ba typed decimal parsing replaces atoi",
+    "status": "implemented and locally verified; source commit db2bfc2f",
+    "parent": "2d5086db",
     "changes": {
-      "src/ui/mdi.cpp": "Replace seven decimal itoa calls with CchSprintf.",
-      "compat/win32/include/io.h": "Remove the unused nonstandard itoa declaration.",
-      "compat/win32/src/services.cpp": "Remove the unused itoa compatibility implementation.",
-      "tests/compat/win32_services.inc": "Remove obsolete tests for the deleted helper."
+      "src/ui/init.cpp": "Parse the fixed MM/DD/YY date fields directly instead of using atoi.",
+      "src/ui/libraryui.cpp": "Parse the validated race file version with std::from_chars.",
+      "src/ui/preferencesui.cpp": "Parse the bounded saved selection value with std::from_chars.",
+      "src/ui/shipui.cpp": "Replace atoi for typed transport amounts with a bounded decimal-prefix parser."
     },
     "verification": {
       "macos_debug_build": "Full macos-sdl-debug build succeeds.",
@@ -23954,6 +23983,7 @@
       "baseline": "Unchanged.",
       "remaining_wsprintfA_calls": "282 scanned owned C++ source call lines.",
       "itoa_references": "Zero in src, compat and tests.",
+      "atoi_references": "Zero in src and compat.",
       "platform": "Windows/Linux qualification remains pending for current develop.",
       "diff_check": "git diff --check passes."
     },
@@ -23962,8 +23992,8 @@
       "L06 remaining buffer/length interfaces and chooser Milestone D qualification, including Windows/Linux chooser coverage.",
       "L08 retained preprocessor/platform/API-like macro audit, maintained inventory reconciliation and final platform qualification."
     ],
-    "source_commit": "1e3cea80",
-    "published_batch_head": "1e3cea80"
+    "source_commit": "db2bfc2f",
+    "published_batch_head": "db2bfc2f"
   },
   "milestone_d_checkpoint": {
     "stage": "D05 caller migrations implemented; D06 platform qualification pending",
