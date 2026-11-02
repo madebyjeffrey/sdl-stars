@@ -1212,13 +1212,17 @@ LSaveFailed:
     return 0;
 }
 
-std::int16_t FDeleteLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName) {
+std::int16_t FDeleteLibraryRace(APPSESSION &app, HWND hwnd, std::string_view pszName) {
     char szPath[512], szMessage[320];
+    char szName[256];
     std::optional<std::int64_t> cbFile;
+    if (pszName.size() >= sizeof(szName) || pszName.find('\0') != std::string_view::npos) return 0;
+    std::copy(pszName.begin(), pszName.end(), szName);
+    szName[pszName.size()] = 0;
     if (!FInitRaceLibrary() || !FPortableRaceFilename(app, pszName)) return 0;
-    CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", szRaceLibraryRoot, szDirSep, pszName);
+    CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", szRaceLibraryRoot, szDirSep, szName);
     if (!(cbFile = FNativeFileSize(szPath)) || (*cbFile) <= 0) return 0;
-    CchSnprintf(std::span{szMessage, sizeof(szMessage)}, TextIO().pfnCompressed(app, idsLibraryRaceDeletePrompt).data(), pszName);
+    CchSnprintf(std::span{szMessage, sizeof(szMessage)}, TextIO().pfnCompressed(app, idsLibraryRaceDeletePrompt).data(), szName);
     if (CompatChoiceIO().pfnMessageBoxA(hwnd, szMessage, TextIO().pfnCompressed(app, idsLibraryTitle).data(), win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_TASKMODAL) != win32::IDYES) return 0;
     if (RemoveNativeFile(szPath) != 0) {
         AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryRaceDeleteFailed).data(), win32::MB_ICONHAND);
@@ -2432,26 +2436,29 @@ std::int16_t FDeleteLibraryGameRecentPaths(APPSESSION &app, std::string_view szD
     return 1;
 }
 
-std::int16_t FDeleteLibraryGame(APPSESSION &app, HWND hwnd, const char *pszName) {
+std::int16_t FDeleteLibraryGame(APPSESSION &app, HWND hwnd, std::string_view pszName) {
     char szDirectory[512], szMetadata[512], szMessage[512], szMetadataName[256];
-    char szExchangeName[256];
+    char szExchangeName[256], szName[256];
     int iplr;
     long long lPlayed;
     int cch;
     std::int16_t fContinueTarget;
 
-    if (!FInitLibrary() || !FPortableLibraryName(app, pszName)) return 0;
-    cch = CchSnprintf(std::span{szDirectory, sizeof(szDirectory)}, "%s%s%s", szLibraryRoot, szDirSep, pszName);
+    if (pszName.size() >= sizeof(szName) || pszName.find('\0') != std::string_view::npos ||
+        !FInitLibrary() || !FPortableLibraryName(app, pszName)) return 0;
+    std::copy(pszName.begin(), pszName.end(), szName);
+    szName[pszName.size()] = 0;
+    cch = CchSnprintf(std::span{szDirectory, sizeof(szDirectory)}, "%s%s%s", szLibraryRoot, szDirSep, szName);
     if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szDirectory)) return 0;
     cch = CchSnprintf(std::span{szMetadata, sizeof(szMetadata)}, "%s%s.library", szDirectory, szDirSep);
     if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szMetadata) ||
         !FReadLibraryMetadata(szDirectory, std::span{szMetadataName}, iplr, lPlayed,
-                              std::span{szExchangeName}) || std::strcmp(szMetadataName, pszName)) return 0;
-    cch = CchSnprintf(std::span{szMessage, sizeof(szMessage)}, TextIO().pfnCompressed(app, idsLibraryDeleteGamePrompt).data(), pszName);
+                              std::span{szExchangeName}) || std::strcmp(szMetadataName, szName)) return 0;
+    cch = CchSnprintf(std::span{szMessage, sizeof(szMessage)}, TextIO().pfnCompressed(app, idsLibraryDeleteGamePrompt).data(), szName);
     if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szMessage)) return 0;
     if (CompatChoiceIO().pfnMessageBoxA(hwnd, szMessage, TextIO().pfnCompressed(app, idsLibraryGames).data(),
                    win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_TASKMODAL) != win32::IDYES) return 0;
-    fContinueTarget = FFindContinueLibraryGame(app) && !std::strcmp(continueLibrary.szName, pszName);
+    fContinueTarget = FFindContinueLibraryGame(app) && !std::strcmp(continueLibrary.szName, szName);
     if (!RemoveLibraryGameTree(app, szDirectory)) {
         AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryDeleteGameFailed).data(), win32::MB_ICONHAND);
         return 0;
