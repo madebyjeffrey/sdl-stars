@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <optional>
+#include <string>
 #ifndef _WIN32
 #include <unistd.h>
 #endif
@@ -34,19 +36,20 @@ static void  PickerTimer(HWND hwnd, UINT msg, UINT_PTR id, DWORD ms) {
     win32::SendMessageA(hwndDlg, win32::WM_COMMAND, fPickerReady ? win32::IDOK : win32::IDCANCEL, 0);
 }
 static int TestPicker(HWND hwnd) {
-    char szTemp[4096], szDir[4096], szExpected[8192], szCanonical[4096];
+    char szDir[4096], szExpected[8192];
     char szFile[8192];
     char szTitle[4];
+    std::optional<std::string> szTemp, szCanonical;
     OPENFILENAMEA ofn;
     NATIVEFILE *pf;
     hwndPickerOwner = hwnd;
-    CHECK(FFilesystemTempDir(szTemp, sizeof(szTemp)));
-    CHECK(snprintf(szDir, sizeof(szDir), "%s/caf\xc3\xa9-\xce\xa9\xf0\x9f\x98\x80", szTemp) < (int)sizeof(szDir));
+    CHECK((szTemp = SzFilesystemTempDir()));
+    CHECK(snprintf(szDir, sizeof(szDir), "%s/caf\xc3\xa9-\xce\xa9\xf0\x9f\x98\x80", szTemp->c_str()) < (int)sizeof(szDir));
     CHECK(FFilesystemCreateDirectory(szDir));
-    CHECK(FFilesystemCanonicalPath(szDir, szCanonical, sizeof(szCanonical)));
+    CHECK((szCanonical = SzFilesystemCanonicalPath(szDir)));
     for (iPicker = 0; iPicker < 2; iPicker++) {
         pszPickerName = iPicker == 0 ? "caf\xc3\xa9-\xce\xa9\xf0\x9f\x98\x80.m1" : "\xe6\x9d\xb1\xe4\xba\xac-\xce\xa9.m1";
-        snprintf(szExpected, sizeof(szExpected), "%s/%s", szCanonical, pszPickerName);
+        snprintf(szExpected, sizeof(szExpected), "%s/%s", szCanonical->c_str(), pszPickerName);
         if (iPicker == 0) { pf = PfNativeOpen(szExpected, NATIVEFILEMODE::writeTruncate); CHECK(pf); ICloseNativeFile(pf); }
         memset(&ofn, 0, sizeof(ofn)); szFile[0] = 0;
         ofn.lStructSize = sizeof(ofn); ofn.hwndOwner = hwnd; ofn.lpstrFile = szFile; ofn.nMaxFile = sizeof(szFile);
@@ -63,7 +66,7 @@ static int TestPicker(HWND hwnd) {
         }
     }
     CHECK(FFilesystemRemove(szDir));
-    CHECK(FFilesystemRemove(szTemp));
+    CHECK(FFilesystemRemove(*szTemp));
     return 0;
 }
 
@@ -75,7 +78,8 @@ int main(void) {
     SIZE size, sizeOrdinary;
     RECT rc = {0, 0, 500, 30};
     char szText[256], szSmall[5], szJson[16384], *pszClipboard;
-    char szSnapshotDir[4096], szSnapshotPath[8192];
+    char szSnapshotPath[8192];
+    std::optional<std::string> szSnapshotDir;
     const char *psz = "\xc3\xa9\xce\xa9\xe6\x9d\xb1\xe4\xba\xac\xf0\x9f\x98\x80";
     NATIVEFILE *pf;
     STARSCOMPATSNAPSHOT snap = {};
@@ -140,12 +144,12 @@ int main(void) {
     for (i = 0; i < snap.cWindow; i++) if (snap.rgWindow[i].id == StarsCompatWindowId(hwndEdit)) {
         CHECK(snap.rgWindow[i].fUtf8Text && strcmp(snap.rgWindow[i].pszText, psz) == 0); fFound = 1;
     }
-    CHECK(fFound && FFilesystemTempDir(szSnapshotDir, sizeof(szSnapshotDir)));
-    CHECK(snprintf(szSnapshotPath, sizeof(szSnapshotPath), "%s/hierarchy.json", szSnapshotDir) < (int)sizeof(szSnapshotPath));
+    CHECK(fFound && (szSnapshotDir = SzFilesystemTempDir()));
+    CHECK(snprintf(szSnapshotPath, sizeof(szSnapshotPath), "%s/hierarchy.json", szSnapshotDir->c_str()) < (int)sizeof(szSnapshotPath));
     CHECK((pf = PfNativeOpen(szSnapshotPath, NATIVEFILEMODE::readWriteTruncate)) && StarsCompatWriteHierarchy(&snap, pf));
     ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin); cb = CReadNative(std::span{szJson}.first(sizeof(szJson) - 1), pf); szJson[cb] = 0;
     CHECK(strstr(szJson, psz));
-    CHECK(ICloseNativeFile(pf) == 0 && FFilesystemRemove(szSnapshotPath) && FFilesystemRemove(szSnapshotDir));
+    CHECK(ICloseNativeFile(pf) == 0 && FFilesystemRemove(szSnapshotPath) && FFilesystemRemove(*szSnapshotDir));
     StarsCompatFreeHierarchy(&snap);
     hwndPassword = win32::CreateWindowExA(0, "EDIT", "old", win32::WS_CHILD | win32::ES_PASSWORD, 0, 0, 100, 24,
                                 hwnd, (HMENU)(INT_PTR)102, wc.hInstance, NULL);

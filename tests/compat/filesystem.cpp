@@ -1,43 +1,42 @@
-/* Exercise the C ABI with Unicode paths, bounded copies and non-recursive removal. */
+/* Exercise filesystem value results with Unicode paths and non-recursive removal. */
 #include "filesystem.h"
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
+#include <string>
+#include <string_view>
 
-#define CHECK(f) do { if (!(f)) { fprintf(stderr, "filesystem line %d: %s\n", __LINE__, #f); return 1; } } while (0)
+#define CHECK(f) do { if (!(f)) { std::fprintf(stderr, "filesystem line %d: %s\n", __LINE__, #f); return 1; } } while (0)
 
-int main(void) {
-    char szTemp[4096], szOther[4096], szDir[8192], szPath[8192], szCanonical[8192];
-    char szSmall[2] = {'X', 'Y'};
+int main() {
     const char *pszName = "caf\xc3\xa9-\xce\xa9\xe6\x9d\xb1\xe4\xba\xac\xf0\x9f\x98\x80";
-    int cch;
+    const auto szTemp = SzFilesystemTempDir();
+    std::string szDir, szPath, szCanonical, szWithSuffix;
+    std::optional<std::string> szOther, szViewCanonical;
+    std::string_view szPathView;
 
-    CHECK(!FFilesystemTempDir(NULL, 0));
-    CHECK(!FFilesystemTempDir(szSmall, 1) && szSmall[0] == 0 && szSmall[1] == 'Y');
-    CHECK(FFilesystemTempDir(szTemp, sizeof(szTemp)));
-    CHECK(FFilesystemTempDir(szOther, sizeof(szOther)) && strcmp(szTemp, szOther) != 0);
-    CHECK(FFilesystemRemove(szOther));
-    cch = snprintf(szDir, sizeof(szDir), "%s/%s", szTemp, pszName);
-    CHECK(cch > 0 && cch < (int)sizeof(szDir));
+    CHECK(szTemp);
+    CHECK((szOther = SzFilesystemTempDir()) && *szTemp != *szOther);
+    CHECK(FFilesystemRemove(*szOther));
+    szDir = *szTemp + "/" + pszName;
     CHECK(FFilesystemCreateDirectory(szDir));
     CHECK(!FFilesystemCreateDirectory(szDir));
-    CHECK(!FFilesystemRemove(szTemp)); /* A non-empty directory must survive. */
-    cch = snprintf(szPath, sizeof(szPath), "%s/../%s", szDir, pszName);
-    CHECK(cch > 0 && cch < (int)sizeof(szPath));
-    CHECK(FFilesystemCanonicalPath(szPath, szCanonical, sizeof(szCanonical)));
-    CHECK(strstr(szCanonical, pszName) && !strstr(szCanonical, ".."));
-    CHECK(FFilesystemCanonicalPath(szDir, szOther, sizeof(szOther)) && !strcmp(szCanonical, szOther));
-    CHECK(!FFilesystemCanonicalPath(szDir, szOther, strlen(szCanonical)) && szOther[0] == 0);
-    CHECK(FFilesystemCanonicalPath(szDir, szOther, strlen(szCanonical) + 1) && !strcmp(szCanonical, szOther));
-    CHECK(!FFilesystemCanonicalPath(szDir, szSmall, 1) && szSmall[0] == 0 && szSmall[1] == 'Y');
-    CHECK(!FFilesystemCanonicalPath(szDir, szSmall, 0) && szSmall[1] == 'Y');
-    CHECK(!FFilesystemCanonicalPath(NULL, szCanonical, sizeof(szCanonical)) && szCanonical[0] == 0);
-    CHECK(!FFilesystemCanonicalPath("bad-\xff", szCanonical, sizeof(szCanonical)) && szCanonical[0] == 0);
-    CHECK(!FFilesystemCreateDirectory(NULL) && !FFilesystemCreateDirectory("") && !FFilesystemCreateDirectory("bad-\xff"));
-    CHECK(!FFilesystemRemove(NULL) && !FFilesystemRemove("") && !FFilesystemRemove("bad-\xff"));
+    CHECK(!FFilesystemRemove(*szTemp)); /* A non-empty directory must survive. */
+    szPath = szDir + "/../" + pszName;
+    szOther = SzFilesystemCanonicalPath(szPath);
+    CHECK(szOther);
+    szCanonical = *szOther;
+    CHECK(szCanonical.find(pszName) != std::string::npos && szCanonical.find("..") == std::string::npos);
+    CHECK((szOther = SzFilesystemCanonicalPath(szDir)) && szCanonical == *szOther);
+    CHECK(!SzFilesystemCanonicalPath(szDir + "/missing"));
+    szWithSuffix = szPath + "/ignored-suffix";
+    szPathView = std::string_view{szWithSuffix.data(), szPath.size()};
+    CHECK((szViewCanonical = SzFilesystemCanonicalPath(szPathView)) && *szViewCanonical == szCanonical);
+    CHECK(!SzFilesystemCanonicalPath("bad-\xff"));
+    CHECK(!SzFilesystemCanonicalPath("") && !FFilesystemCreateDirectory("") && !FFilesystemRemove(""));
+    CHECK(!FFilesystemCreateDirectory("bad-\xff") && !FFilesystemRemove("bad-\xff"));
     CHECK(FFilesystemRemove(szDir));
-    CHECK(!FFilesystemCanonicalPath(szDir, szCanonical, sizeof(szCanonical)) && szCanonical[0] == 0);
+    CHECK(!SzFilesystemCanonicalPath(szDir));
     CHECK(!FFilesystemRemove(szDir));
-    CHECK(FFilesystemRemove(szTemp));
-    puts("Filesystem: PASS (C ABI, UTF-8, capacity, canonical paths, non-recursive removal)");
+    CHECK(FFilesystemRemove(*szTemp));
+    std::puts("Filesystem: PASS (owned UTF-8 paths, exact views, canonical paths, non-recursive removal)");
     return 0;
 }

@@ -1,6 +1,8 @@
 #include <cerrno>
 #include <cstdio>
 #include <cstring>
+#include <optional>
+#include <string>
 #include <thread>
 #include "filesystem.h"
 #include "native.h"
@@ -43,7 +45,8 @@ static int FWrite(const char *psz, const char *pszText) {
         }                                                                                                                                                      \
     } while (0)
 int main() {
-    char            szDirectory[4096], szOld[8192], szNew[8192], rgb[8] = {};
+    char            szOld[8192], szNew[8192], rgb[8] = {};
+    std::optional<std::string> szDirectory;
     NATIVEFILE     *pf;
     NATIVEPUBLISHIO io;
     bool            fCaught = false, fThreadDefault = false;
@@ -76,16 +79,16 @@ int main() {
         CHECK(fThreadDefault);
     }
     CHECK(NativePublishIO().pfnRemove == IRemoveNativePath && NativePublishIO().pfnRename == IRenameNativePath);
-    CHECK(FFilesystemTempDir(szDirectory, sizeof(szDirectory)));
-    CHECK(std::snprintf(szOld, sizeof(szOld), "%s/café-Ω", szDirectory) > 0);
-    CHECK(std::snprintf(szNew, sizeof(szNew), "%s/target", szDirectory) > 0);
+    CHECK((szDirectory = SzFilesystemTempDir()));
+    CHECK(std::snprintf(szOld, sizeof(szOld), "%s/café-Ω", szDirectory->c_str()) > 0);
+    CHECK(std::snprintf(szNew, sizeof(szNew), "%s/target", szDirectory->c_str()) > 0);
     CHECK(FWrite(szOld, "first") && RenameNativeFile(szOld, szNew) == 0);
     CHECK(FWrite(szOld, "new") && FWrite(szNew, "old"));
     CHECK(ReplaceNativeFile(szOld, szNew) == 0);
     pf = PfNativeOpen(szNew, NATIVEFILEMODE::read);
     CHECK(pf && CbReadNativeFile(pf, std::as_writable_bytes(std::span{rgb}).first(static_cast<std::size_t>(sizeof(rgb)))) == 3 && !std::memcmp(rgb, "new", 3));
     CHECK(ICloseNativeFile(pf) == 0 && RemoveNativeFile(szNew) == 0);
-    CHECK(FFilesystemRemove(szDirectory));
+    CHECK(FFilesystemRemove(*szDirectory));
     std::puts("Publication effects: exact flags/results, snapshots, nesting, failure/retry, thread isolation and real UTF-8 filesystem delegation passed");
     return 0;
 }

@@ -55,10 +55,11 @@ static int TestProfilePaths(void) {
 
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
 static int TestUtf8Profile(void) {
-    char szTemp[4096], szPath[8192], sz[32];
+    char szPath[8192], sz[32];
+    std::optional<std::string> szTemp;
     NATIVEFILE *fp;
-    CHECK(FFilesystemTempDir(szTemp, sizeof(szTemp)));
-    CHECK(snprintf(szPath, sizeof(szPath), "%s/profile-\xce\xa9\xc3\xa9\xf0\x9f\x98\x80.ini", szTemp) < (int)sizeof(szPath));
+    CHECK((szTemp = SzFilesystemTempDir()));
+    CHECK(snprintf(szPath, sizeof(szPath), "%s/profile-\xce\xa9\xc3\xa9\xf0\x9f\x98\x80.ini", szTemp->c_str()) < (int)sizeof(szPath));
     CHECK(WritePrivateProfileStringA("Text", "Name", "\xce\xa9\xc3\xa9\xf0\x9f\x98\x80", szPath));
     CHECK(GetPrivateProfileStringA("Text", "Name", "", sz, sizeof(sz), szPath) == 8);
     CHECK(!strcmp(sz, "\xce\xa9\xc3\xa9\xf0\x9f\x98\x80"));
@@ -74,7 +75,7 @@ static int TestUtf8Profile(void) {
     fp = PfNativeOpen(szPath, NATIVEFILEMODE::read); CHECK(fp);
     CHECK(CReadNative(std::span{sz}.first(3), fp) == 3 && !memcmp(sz, "\xef\xbb\xbf", 3));
     CHECK(ICloseNativeFile(fp) == 0 && FFilesystemRemove(szPath));
-    CHECK(FFilesystemRemove(szTemp));
+    CHECK(FFilesystemRemove(*szTemp));
     return 0;
 }
 #endif

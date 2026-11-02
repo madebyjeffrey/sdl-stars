@@ -6,6 +6,8 @@
 #include "callbackcontext.h"
 #include <cstdio>
 #include <cstring>
+#include <optional>
+#include <string>
 #include "filesystem.h"
 #include "host_profile.h"
 #include "profile_io.h"
@@ -13,7 +15,8 @@
 #include "win.h"
 static const char *const *fixture;
 static int                loadOK = 1, checks;
-static char               szDirectory[4096], szFixture[8192];
+static std::optional<std::string> szDirectory;
+static char                       szFixture[8192];
 static std::int16_t GetString(APPSESSION &, StringId id, std::span<char> out) {
     return static_cast<std::int16_t>(CchCopyUtf8(out, id == static_cast<StringId>(1) ? "A" : "k"));
 }
@@ -64,9 +67,9 @@ int main(void) {
     TEXTIO         text;
     text.pfnCchGetString = GetString;
     TEXTIOSCOPE textScope(text);
-    if (!FFilesystemTempDir(szDirectory, sizeof(szDirectory)))
+    if (!(szDirectory = SzFilesystemTempDir()))
         return 1;
-    snprintf(szFixture, sizeof(szFixture), "%s/profile", szDirectory);
+    snprintf(szFixture, sizeof(szFixture), "%s/profile", szDirectory->c_str());
     CHECK(CchUtf8Prefix("A\xc3\xa9"
                         "B",
                         2) == 1);
@@ -112,7 +115,7 @@ int main(void) {
     loadOK = 0;
     CHECK(win32::GetPrivateProfileStringA("A", "k", "fallback", out, sizeof(out), "x") == 8 && !strcmp(out, "fallback"));
     printf("S02 profile I/O and host linked witnesses: %d passed\n", checks);
-    if (IUnlinkNativePath(szFixture) != 0 || !FFilesystemRemove(szDirectory))
+    if (IUnlinkNativePath(szFixture) != 0 || !FFilesystemRemove(*szDirectory))
         return 1;
     return 0;
 }
