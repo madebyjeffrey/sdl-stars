@@ -150,7 +150,8 @@
         "typed-build-ui-wrapper-formatting",
         "typed-mdi-ui-wrapper-formatting",
         "typed-mine-ui-wrapper-formatting",
-        "retire-unused-window-settings-string-parameter"
+        "retire-unused-window-settings-string-parameter",
+        "readonly-technology-requirement-inputs"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -1284,6 +1285,15 @@
         "status": "removed; locally verified",
         "interface": "SetWindowIniString(APPSESSION&, HWND) no longer accepts an unused mutable char* argument.",
         "evidence": "The implementation always formats into app.state.szWork and never read the passed pointer; its declaration, definition and only caller were updated."
+      },
+      "technology_requirement_inputs": {
+        "status": "complete; verified",
+        "interfaces": [
+          "TechStatus(APPSESSION&, const char*)",
+          "CostOfDevelopingItem(APPSESSION&, const char*)"
+        ],
+        "effects": "Both routines inspect the six requirement bytes without modifying them. The internal research-progress scratch remains mutable and is restored as before.",
+        "callers": "Production casts and witness callback signatures now preserve readonly input types."
       }
     },
     {
@@ -24090,12 +24100,14 @@
     "published_batch_head": "bf4537ae"
   },
   "current_checkpoint": {
-    "batch": "L05bw remove unused mutable window-settings argument",
+    "batch": "L05bx readonly technology requirement inputs",
     "status": "implemented and locally verified",
-    "parent": "3ca5ce00",
+    "parent": "5d7b4e9e",
     "changes": {
-      "src/ui/mdi.h": "Removed the unused char* from SetWindowIniString.",
-      "src/ui/mdi.cpp": "Updated the definition and its only caller."
+      "src/core/parts.h and src/core/parts.cpp": "TechStatus accepts a readonly technology requirement array.",
+      "src/core/research.h and src/core/research.cpp": "CostOfDevelopingItem accepts a readonly requirement array while retaining its separate internal progress scratch mutation.",
+      "src/core/thing.cpp and src/ui/researchui.cpp": "Removed unnecessary mutable casts at production call sites.",
+      "tests/witnesses/parts_fixture.h and tests/witnesses/construction_buildability_fixture.h": "Updated callback providers to the readonly signature."
     },
     "verification": {
       "macos_debug_build_and_desktop_unit_tests": "Pass; 18/18.",
@@ -24111,19 +24123,18 @@
       "L06 remaining buffer/length service interfaces and chooser Milestone D qualification, including Windows/Linux chooser coverage.",
       "L08 final retained primitive/API macro/preprocessor inventory reconciliation and current-source platform qualification."
     ],
-    "source_commit": "ab46650a",
-    "published_batch_head": "ab46650a",
+    "source_commit": "0da73af0",
+    "published_batch_head": "0da73af0",
     "previous_batch": {
-      "batch": "L06w retire unused native C string API",
-      "source_commit": "f048305b",
-      "status": "implemented and locally verified; native Windows runtime qualification pending",
+      "batch": "L05bw remove unused mutable window-settings argument",
+      "source_commit": "ab46650a",
+      "status": "implemented and locally verified",
       "verification": {
         "macos_debug_build_and_desktop_unit_tests": "Pass; 18/18.",
         "host_unit_tests": "Pass; 29/29.",
         "native_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
         "host_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
         "tutorial": "Available SDL tutorial smoke checkpoint passes; full 80-page tutorial remains unfinished.",
-        "source_reference_scan": "No FSzPrefixNoCase references under src/ or compat/win32/.",
         "baseline": "Unchanged.",
         "diff_check": "pass"
       }
