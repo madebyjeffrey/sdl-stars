@@ -1158,7 +1158,8 @@
         "readonly-sized-definition-filename-input",
         "readonly-game-file-inputs-and-bounded-slot-parse",
         "readonly-owned-race-file-input",
-        "owned-windows-command-line-argument-result"
+        "owned-windows-command-line-argument-result",
+        "bounded-tutorial-fragment-output-span-and-optional-length"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -1724,6 +1725,12 @@
         "change": "RgNativeArguments returns optional owned UTF-8 strings; argc output pointer and malloc-packed char** result are removed. Entry adapters construct their temporary argv views from owned strings. Unused PszNativeCommandLine allocator API is removed.",
         "verification": "macOS Debug host/client build passes; Windows Release stars-host cross-build passes; Windows SDL entry.cpp passes strict MinGW C++20 syntax.",
         "runtime": "Wine execution could not start: wineserver bind returned Operation not permitted in this environment."
+      },
+      "tutorial_fragment_output": {
+        "status": "complete; locally verified; cross-platform runtime qualification pending",
+        "interface": "CchTutorString(APPSESSION&, span<char>, TutorId) returns an optional full-width length.",
+        "behavior": "The decoder writes only within the caller span, NUL-terminates successful output, returns no value for an empty/undersized destination, and bounds the cached-string terminator search.",
+        "verification": "Actual native-file UI unit covers all 640 tutorial fragments in the 256-byte production buffer, undersized and empty spans, and the cached-string path. Desktop unit tests pass 18/18; tutorial smoke passes; changed UI sources pass strict MinGW C++20 syntax."
       }
     },
     {
@@ -23535,31 +23542,31 @@
     }
   },
   "current_checkpoint": {
-    "batch": "L06 owned Windows process argument result",
-    "status": "implemented; macOS and MinGW compile verified; Windows runtime qualification pending",
-    "parent": "ca784db7",
+    "batch": "L06 bounded tutorial fragment output",
+    "status": "complete; locally verified; cross-platform runtime qualification pending",
+    "parent": "0302b043",
     "changes": {
-      "src/platform/native_process.h": "Replace char** plus int* output with optional<vector<string>>; remove unused raw command-line allocator declaration.",
-      "src/platform/native_windows.cpp": "Convert CommandLineToArgvW values to UTF-8 owned strings; RAII frees the Windows wide argument block; allocation/conversion failure returns nullopt.",
-      "src/host/host.cpp": "Keep owned argument strings alive while temporary argv pointers are used; remove manual raw allocation cleanup.",
-      "compat/win32/src/entry.cpp": "Build the argc/argv adapter from owned arguments and retire manual raw allocation cleanup."
+      "src/ui/tutor2.h": "CchTutorString takes std::span<char> and returns optional<size_t>.",
+      "src/ui/tutor2.cpp": "Decode writes check remaining capacity, preserve NUL termination, and bound the cached-path scan.",
+      "src/ui/tutor.cpp": "The paint caller passes its actual 256-byte array and handles the optional length.",
+      "tests/unit/test_native_fileui.cpp": "Tests every one of the 640 tutorial fragments, insufficient/empty spans and cached-string behavior."
     },
     "verification": {
-      "macos_debug_build": "stars-sdl and stars-host build passes.",
-      "windows_host_build": "MinGW Release stars-host cross-build passes, including native_windows.cpp and the Windows host caller.",
-      "windows_sdl_entry": "entry.cpp passes MinGW C++20 syntax compilation with Windows SDL headers.",
-      "native_regression": "Previously verified on parent: 519 matches, zero differences/errors/skipped reference inputs.",
-      "host_regression": "Previously verified on parent: 519 matches, zero differences/errors/skipped reference inputs.",
-      "wine_runtime": "Not run: wineserver bind returned Operation not permitted."
+      "macos_debug_build": "Pass; no new warnings.",
+      "desktop_unit_tests": "18/18 pass, including all new tutorial fragment span cases.",
+      "tutorial": "Available SDL tutorial smoke checkpoint passes.",
+      "mingw": "Changed tutorial implementation and caller pass strict C++20 syntax.",
+      "source_policy": "Compilation manifest and C++ test-routing checks pass.",
+      "regression": "Latest full native and host runs remain 519/519 with zero differences from the prior UI-neutral gameplay state; these UI-only changes do not affect host turn generation.",
+      "baseline": "Unchanged."
     },
     "remaining_work": [
-      "Add or run Windows runtime coverage for Unicode command-line arguments and failure handling when an environment with a working Windows runner is available.",
       "L05 bounded text destinations, const-text interfaces, scratch storage/borrowed-return audit, wrapper formatting and remaining raw-copy SDK-boundary review.",
       "L06 remaining buffer/length interfaces and native path results.",
       "L06 D06 native Windows/Linux chooser qualification and remaining chooser branch coverage.",
       "L08 maintained inventory reconciliation, retained primitive/macro audit and final platform qualification."
     ],
-    "published_batch_head": "ca784db7"
+    "published_batch_head": "0302b043"
   },
   "milestone_d_checkpoint": {
     "stage": "D05 caller migrations implemented; D06 platform qualification pending",

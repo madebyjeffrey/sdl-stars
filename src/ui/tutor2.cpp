@@ -1,7 +1,8 @@
 #include "win.h"
+#include <algorithm>
 #include "uistate.h"
 
-std::int16_t CchTutorString(APPSESSION &app, char *pchOut, TutorId idt) {
+std::optional<std::size_t> CchTutorString(APPSESSION &app, std::span<char> pchOut, TutorId idt) {
     std::int16_t  iOffset;
     std::int16_t  fHigh;
     std::int16_t  iChunk;
@@ -9,14 +10,17 @@ std::int16_t CchTutorString(APPSESSION &app, char *pchOut, TutorId idt) {
     std::int16_t  iBuild;
     std::int16_t  iNibble;
     std::int16_t  i;
-    char    *pszOut;
     std::int16_t  iLen;
     std::uint8_t *pch;
+    std::size_t cchOut;
 
     iNibble = 0;
     if (idt == app.lpui->iLastTutGet) {
-        return std::strlen(pchOut);
+        const auto pchEnd = std::find(pchOut.begin(), pchOut.end(), '\0');
+        if (pchEnd == pchOut.end()) return std::nullopt;
+        return static_cast<std::size_t>(pchEnd - pchOut.begin());
     }
+    if (pchOut.empty()) return std::nullopt;
     iChunk = idt >> 6;
     iOffset = idt & 0x3f;
     pch = reinterpret_cast<std::uint8_t *>(&aTUTCmpr[aiTUTChunkOffset[iChunk]]);
@@ -30,7 +34,7 @@ std::int16_t CchTutorString(APPSESSION &app, char *pchOut, TutorId idt) {
     pch += iNibble >> 1;
     iLen = *pchLen;
     fHigh = (iNibble & 1) == 0;
-    pszOut = pchOut;
+    cchOut = 0;
     iBuild = 0;
     while (iLen-- != 0) {
         if (fHigh) {
@@ -41,11 +45,14 @@ std::int16_t CchTutorString(APPSESSION &app, char *pchOut, TutorId idt) {
         fHigh = fHigh == 0;
         iBuild += i;
         if (i != 15) {
-            *pszOut = rgTUTLookupTable[iBuild];
-            pszOut++;
+            if (cchOut + 1 >= pchOut.size()) {
+                pchOut[cchOut] = 0;
+                return std::nullopt;
+            }
+            pchOut[cchOut++] = rgTUTLookupTable[iBuild];
             iBuild = 0;
         }
     }
-    *pszOut = 0;
-    return pszOut - pchOut;
+    pchOut[cchOut] = 0;
+    return cchOut;
 }

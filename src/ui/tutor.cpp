@@ -172,7 +172,9 @@ void DrawTutorText(APPSESSION &app, HWND hwnd) {
     win32::FillRect(hdc, &rc, app.lpui->hbrButtonFace);
     win32::SetTextColor(hdc, app.lpui->crButtonText);
     for (didt = 0; didt < 8; didt++) {
-        cch = CchTutorString(app, rgch, static_cast<TutorId>(app.state.tutor.idt + didt));
+        const auto cchText = CchTutorString(app, std::span{rgch}, static_cast<TutorId>(app.state.tutor.idt + didt));
+        if (!cchText) break;
+        cch = static_cast<std::int16_t>(*cchText);
         if (cch == 1)
             break;
         fPara = std::isupper(rgch[0]);

@@ -15,6 +15,7 @@
 #include "mineui.h"
 #include "msgui.h"
 #include "tutor.h"
+#include "tutor2.h"
 #include "utilgenui.h"
 #include "text_io.h"
 #include <algorithm>
@@ -419,9 +420,34 @@ static void TestTextFitViews(void) {
     StarsCompatProcessExit();
 }
 
+static void TestTutorialFragmentSpan(void) {
+    APPSESSION &app = ui::app;
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    std::array<char, 256> rgch;
+    std::array<char, 1> rgchShort;
+    std::array<char, 6> rgchCached = {'c', 'a', 'c', 'h', 'e', 0};
+    TEST_ASSERT(FStarsTestInit(app));
+    app.lpui->iLastTutGet = -1;
+    for (std::uint16_t idt = 0; idt < 640; idt++) {
+        rgch.fill(static_cast<char>(0x5a));
+        const auto cch = CchTutorString(app, std::span{rgch}, static_cast<TutorId>(idt));
+        TEST_ASSERT(cch);
+        TEST_CHECK(*cch < rgch.size());
+        TEST_CHECK(rgch[*cch] == 0);
+    }
+    rgchShort[0] = 'q';
+    TEST_CHECK(!CchTutorString(app, std::span{rgchShort}, idtWelcomeStarsTutorialWillGuideThrough36));
+    TEST_CHECK(rgchShort[0] == 0);
+    TEST_CHECK(!CchTutorString(app, {}, idtWelcomeStarsTutorialWillGuideThrough36));
+    app.lpui->iLastTutGet = idtWelcomeStarsTutorialWillGuideThrough36;
+    TEST_CHECK(CchTutorString(app, std::span{rgchCached}, idtWelcomeStarsTutorialWillGuideThrough36) == 5);
+    StarsCompatProcessExit();
+}
+
 TEST_LIST = {{"scanner location label renders complete text within source capacities", TestScannerLocationLabel},
              {"new-game blank title fits its field and preserves the complete basename", TestNewGameTitleBounds},
              {"text fitting preserves exact glyph limits and UTF-8 field tails", TestTextFitViews},
+             {"tutorial fragment decoding stays within caller spans", TestTutorialFragmentSpan},
              {"ship clone suffix handles empty and short UTF-8 names within its field", TestShipCloneNameBounds},
              {"raw player message paints its full UTF-8 byte budget within the display buffer", TestRawMessageDisplay},
              {"mineral captions and tutorial preset keep complete text and field widths", TestMineralAndTutorialText},
