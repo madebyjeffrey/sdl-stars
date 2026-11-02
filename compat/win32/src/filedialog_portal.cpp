@@ -54,7 +54,7 @@ static BOOL FFolderOption(DBusMessageIter *lpOptions, LPCSTR pszFolder) {
            dbus_message_iter_close_container(lpOptions, &entry);
 }
 static char *PszPortalLabel(LPCSTR psz) {
-    return FUtf8Valid(psz, std::strlen(psz)) ? SDL_strdup(psz) : nullptr;
+    return FUtf8Valid(psz) ? SDL_strdup(psz) : nullptr;
 }
 static BOOL FFilter(DBusMessageIter *lpIter, const FILESELECTIONFILTER &filterValue) {
     DBusMessageIter filter, patterns, item;

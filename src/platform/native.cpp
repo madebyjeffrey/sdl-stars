@@ -223,7 +223,7 @@ std::int16_t FNativeEnumerateDirectory(APPSESSION &app, const char *pszDir, FNat
         szEntry = SzNativeReadDir(pdir);
         if (!szEntry) return errno == 0;
         pszEntry = szEntry->c_str();
-        if (!FUtf8Valid(pszEntry, szEntry->size())) { errno = EILSEQ; return 0; }
+        if (!FUtf8Valid(std::string_view{pszEntry, szEntry->size()})) { errno = EILSEQ; return 0; }
         if (!pfnEntry(app, lpData, pszEntry)) return 1;
     }
 }

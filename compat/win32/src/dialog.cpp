@@ -81,10 +81,11 @@ static BOOL FDialogUnits(COMPATDLGTEMPLATE *lpdlg, COMPATDLGCREATE *lpc) {
     SIZE size;
     TEXTMETRICA tm;
     BOOL fOk;
+    const char *pszFont;
     lf.lfHeight = lpdlg->cPoints ? -win32::MulDiv(lpdlg->cPoints, 96, 72) : -11;
     lf.lfWeight = win32::FW_NORMAL;
-    CchCopyUtf8(lf.lfFaceName, sizeof(lf.lfFaceName), lpdlg->pszFont ? lpdlg->pszFont : "MS Sans Serif",
-                CchUtf8Prefix(lpdlg->pszFont ? lpdlg->pszFont : "MS Sans Serif", sizeof(lf.lfFaceName) - 1));
+    pszFont = lpdlg->pszFont ? lpdlg->pszFont : "MS Sans Serif";
+    CchCopyUtf8(std::span{lf.lfFaceName}, std::string_view{pszFont, CchUtf8Prefix(pszFont, sizeof(lf.lfFaceName) - 1)});
     lpc->hfont = win32::CreateFontIndirectA(&lf);
     if (!lpc->hfont || !(hdc = win32::CreateCompatibleDC(nullptr))) return 0;
     hold = win32::SelectObject(hdc, lpc->hfont);

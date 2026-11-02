@@ -131,7 +131,7 @@ BOOL FSelectScannerObject(APPSESSION &app, const SCANSNAPSHOT *lpsnap, std::uint
 static BOOL FWriteScanString(NATIVEFILE *lpfile, const char *psz) {
     unsigned ch;
 
-    if (!FUtf8Valid(psz, std::strlen(psz)) || ChPutNativeFile('"', lpfile) == EOF) return 0;
+    if (!FUtf8Valid(psz) || ChPutNativeFile('"', lpfile) == EOF) return 0;
     while (*psz) {
         ch = static_cast<unsigned char>(*psz++);
         if (ch == '"' || ch == '\\') { if (ChPutNativeFile('\\', lpfile) == EOF || ChPutNativeFile(static_cast<int>(ch), lpfile) == EOF) return 0; }

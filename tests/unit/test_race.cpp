@@ -49,8 +49,8 @@ static void test_RaceFile_owned_input(void) {
     RECORDIOSCOPE recordScope(io);
     for (int i = 0; i < 2; ++i) {
         char *szFile = i == 0 ? app.state.szWork : app.state.szBase;
-        TEST_ASSERT(CchCopyUtf8(szFile, i == 0 ? sizeof(app.state.szWork) : sizeof(app.state.szBase),
-            szTestLiteral1.data(), std::strlen(szTestLiteral1.data())) >= 0);
+        TEST_ASSERT(CchCopyUtf8(std::span{szFile, i == 0 ? sizeof(app.state.szWork) : sizeof(app.state.szBase)},
+            szTestLiteral1.data()) >= 0);
         cRaceInputOpen = 0;
         TEST_ASSERT(FWasRaceFile(app, szFile, 0));
         TEST_CHECK(cRaceInputOpen == 1 && szRaceInputOpened == szTestLiteral1.data());
@@ -378,7 +378,7 @@ static void test_FWasRaceFile_legacy_replaces_protected_password_and_confirms_sh
     iStarsTestAlertResponse = win32::IDYES;
     TEST_CHECK(FWasRaceFile(app, szFile, 0) == 1);
     TEST_CHECK(strlen(app.state.vplr.szName) <= 31 && strlen(app.state.vplr.szNames) <= 31);
-    TEST_CHECK(FUtf8Valid(app.state.vplr.szName, strlen(app.state.vplr.szName)) && FUtf8Valid(app.state.vplr.szNames, strlen(app.state.vplr.szNames)));
+    TEST_CHECK(FUtf8Valid(app.state.vplr.szName) && FUtf8Valid(app.state.vplr.szNames));
     TEST_CHECK(strlen(app.state.vplr.szName) == 30 && strlen(app.state.vplr.szNames) == 30);
     TEST_CHECK(strstr(szStarsTestAlert, "Singular:") != NULL);
 
@@ -633,7 +633,7 @@ static void test_NewPasswordDlg_utf8_limit(void) {
     TEST_ASSERT(SDL_SetClipboardText(pszExact));
     ui::SendMessage(hwndEdit, win32::WM_PASTE, 0, 0);
     TEST_CHECK(win32::GetWindowTextA(hwndEdit, szPass, sizeof(szPass)) == 15);
-    TEST_CHECK(FUtf8Valid(szPass, strlen(szPass)));
+    TEST_CHECK(FUtf8Valid(szPass));
     TEST_CHECK(!StarsCompatTextInputRejected(hwndEdit));
 
     hwndEdit = win32::GetDlgItem(hwnd, IDC_PASSWORD_CONFIRM);
@@ -653,7 +653,7 @@ static void test_NewPasswordDlg_utf8_limit(void) {
     TEST_ASSERT(SDL_SetClipboardText(pszExact));
     ui::SendMessage(hwndEdit, win32::WM_PASTE, 0, 0);
     TEST_CHECK(win32::GetWindowTextA(hwndEdit, szPass, sizeof(szPass)) == 15);
-    TEST_CHECK(FUtf8Valid(szPass, strlen(szPass)));
+    TEST_CHECK(FUtf8Valid(szPass));
     TEST_CHECK(!StarsCompatTextInputRejected(hwndEdit));
 
     TEST_ASSERT(ui::SetWindowText(hwndEdit, "different"));

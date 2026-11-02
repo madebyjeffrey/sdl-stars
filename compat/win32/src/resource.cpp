@@ -119,7 +119,8 @@ static HMENU HmenuTemplateItems(const BYTE *rgb, std::size_t cb, std::size_t *lp
         psz = static_cast<char *>((std::malloc(cch * 3 + 1)));
         pszOwner.reset(psz);
         if (!psz) goto fail;
-        if (CchUtf16leToUtf8(psz, cch * 3 + 1, rgb + ibText, cch) < 0) goto fail;
+        if (CchUtf16leToUtf8(std::span{psz, cch * 3 + 1},
+                             std::span{reinterpret_cast<const std::byte *>(rgb + ibText), cch * sizeof(WORD)}) < 0) goto fail;
         if (!(flags & win32::MF_POPUP) && id == 0 && cch == 0) flags |= win32::MF_SEPARATOR;
         if (flags & win32::MF_POPUP) hsub = HmenuTemplateItems(rgb, cb, lpib, depth + 1);
         if (((flags & win32::MF_POPUP) && !hsub) ||

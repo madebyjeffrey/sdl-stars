@@ -55,7 +55,7 @@ static void TestCatalogBytes(void) {
     TEST_ASSERT(FStarsTestInit(app));
     for (uint16_t ids = 0; ids <= idsLibraryZipNameEncoding; ids++) {
         const auto cch = CchGetString(app, static_cast<StringId>(ids), std::span{sz});
-        TEST_CHECK(cch >= 0 && cch < 256 && FUtf8Valid(sz, cch));
+        TEST_CHECK(cch >= 0 && cch < 256 && FUtf8Valid(std::string_view{sz, static_cast<std::size_t>(cch)}));
         for (uint8_t b : {static_cast<uint8_t>(ids), static_cast<uint8_t>(ids >> 8)})
             uHash = (uHash ^ b) * 1099511628211ULL;
         for (int16_t i = 0; i <= cch; i++)
@@ -80,7 +80,7 @@ static void TestMessageCatalogBytes(void) {
         const auto szMessage = PszGetCompressedMessage(app, static_cast<MessageId>(id));
         const auto *psz = szMessage.data();
         TEST_CHECK(std::strlen(psz) < sizeof(app.state.szLastMsgGet));
-        TEST_CHECK(FUtf8Valid(psz, std::strlen(psz)));
+        TEST_CHECK(FUtf8Valid(psz));
         for (std::uint8_t b : {static_cast<std::uint8_t>(id), static_cast<std::uint8_t>(id >> 8)})
             uHash = (uHash ^ b) * 1099511628211ULL;
         for (std::size_t i = 0; i <= std::strlen(psz); i++)
@@ -232,23 +232,23 @@ static void TestEncoding(void) {
     const unsigned char rgbBadUtf16[] = {0x3d, 0xd8};
     const unsigned char rgbCp1252[] = {0x52, 0xe9, 0x80, 0x99};
     size_t j;
-    TEST_CHECK(CchCopyUtf8(sz, sizeof(sz), "\xc3\xa9\xe2\x82\xac", 5) == 5);
+    TEST_CHECK(CchCopyUtf8(std::span{sz}, "\xc3\xa9\xe2\x82\xac") == 5);
     TEST_CHECK(strcmp(sz, "\xc3\xa9\xe2\x82\xac") == 0);
-    TEST_CHECK(CchCopyUtf8(szSmall, 1, "a", 1) == -3 && szSmall[0] == 0);
-    TEST_CHECK(CchCopyUtf8(szSmall, sizeof(szSmall), "\xf0\x9f\x98\x80", 4) == -3 && szSmall[0] == 0);
-    TEST_CHECK(CchUtf16leToUtf8(sz, sizeof(sz), rgbUtf16, 3) == 6);
+    TEST_CHECK(CchCopyUtf8(std::span{szSmall}.first(1), "a") == -3 && szSmall[0] == 0);
+    TEST_CHECK(CchCopyUtf8(std::span{szSmall}, "\xf0\x9f\x98\x80") == -3 && szSmall[0] == 0);
+    TEST_CHECK(CchUtf16leToUtf8(std::span{sz}, std::as_bytes(std::span(rgbUtf16))) == 6);
     TEST_CHECK(strcmp(sz, "\xc2\xa9\xf0\x9f\x98\x80") == 0);
-    TEST_CHECK(CchCp1252ToUtf8(sz, sizeof(sz), rgbCp1252, sizeof(rgbCp1252)) == 9);
+    TEST_CHECK(CchCp1252ToUtf8(std::span{sz}, std::as_bytes(std::span(rgbCp1252))) == 9);
     TEST_CHECK(strcmp(sz, "R\xc3\xa9\xe2\x82\xac\xe2\x84\xa2") == 0);
-    TEST_CHECK(CchCp1252ToUtf8(szSmall, sizeof(szSmall), rgbCp1252, sizeof(rgbCp1252)) == -3 && szSmall[0] == 0);
-    TEST_CHECK(CchUtf16leToUtf8(sz, sizeof(sz), rgbBadUtf16, 1) == -1 && sz[0] == 0);
+    TEST_CHECK(CchCp1252ToUtf8(std::span{szSmall}, std::as_bytes(std::span(rgbCp1252))) == -3 && szSmall[0] == 0);
+    TEST_CHECK(CchUtf16leToUtf8(std::span{sz}, std::as_bytes(std::span(rgbBadUtf16))) == -1 && sz[0] == 0);
     for (j = 0; j < sizeof(rgszBad) / sizeof(*rgszBad); j++) {
         strcpy(szSmall, "old");
-        TEST_CHECK(!FUtf8Valid(rgszBad[j], strlen(rgszBad[j])));
-        TEST_CHECK(CchCopyUtf8(szSmall, sizeof(szSmall), rgszBad[j], strlen(rgszBad[j])) == -1);
+        TEST_CHECK(!FUtf8Valid(rgszBad[j]));
+        TEST_CHECK(CchCopyUtf8(std::span{szSmall}, rgszBad[j]) == -1);
         TEST_CHECK(szSmall[0] == 0);
     }
-    TEST_CHECK(!FUtf8Valid("a\0b", 3));
+    TEST_CHECK(!FUtf8Valid(std::string_view{"a\0b", 3}));
     TEST_CHECK(CchUtf8Prefix("12345678901234\xce\xa9.r1", 15) == 14);
     TEST_CHECK(CchUtf8Prefix("\xf0\x9f\x98\x80", 3) == 0);
     TEST_CHECK(CchUtf8Prefix("\xf0\x9f\x98\x80", 4) == 4);
@@ -270,7 +270,7 @@ static void TestEnvironmentText(void) {
     for (int16_t i = 0; i <= 100; i++) {
         szDisplayLabel = PszCalcEnvVar(app, Temperature, i);
         psz = szDisplayLabel.data();
-        TEST_CHECK(FUtf8Valid(psz, strlen(psz)));
+        TEST_CHECK(FUtf8Valid(psz));
         TEST_CHECK(!strcmp(psz + strlen(psz) - 3, "ºC"));
     }
     TEST_CHECK(!strcmp(PszCalcEnvVar(app, Temperature, 0).data(), "-200ºC"));
@@ -308,7 +308,7 @@ static void TestDisplayCopyBounds(void) {
             if (cchBefore != 0) expected[2] = 'Q';
             memcpy(expected + 2 + cchBefore, szText, cch);
             expected[2 + cchBefore + cch] = 0;
-            TEST_CHECK(FUtf8Valid(rgb + 2, cchBefore + cch));
+            TEST_CHECK(FUtf8Valid(std::string_view{rgb + 2, cchBefore + cch}));
         }
         TEST_CHECK(!memcmp(rgb, expected, sizeof(rgb)));
     }
@@ -519,15 +519,15 @@ static void TestFormattedTextBounds(void) {
     memcpy(szFormat + 252, "\xf0\x9f\x98\x80 suffix", 12);
     szMessage = PszFormatString(app, szFormat, {});
     psz = szMessage.data();
-    TEST_CHECK(strlen(psz) == 252 && FUtf8Valid(psz, strlen(psz)));
+    TEST_CHECK(strlen(psz) == 252 && FUtf8Valid(psz));
     memset(app.state.szBase, 'a', sizeof(app.state.szBase) - 1); app.state.szBase[sizeof(app.state.szBase) - 1] = 0;
     szMessage = PszFormatString(app, szTestLiteral2, {});
     psz = szMessage.data();
-    TEST_CHECK(strlen(psz) < sizeof(app.state.szMsgBuf) && FUtf8Valid(psz, strlen(psz)));
+    TEST_CHECK(strlen(psz) < sizeof(app.state.szMsgBuf) && FUtf8Valid(psz));
     memset(szFormat, 'a', 1022);
     memcpy(szFormat + 1022, "\xc3\xa9z", 4);
     TEST_CHECK(CchSprintf(sz, "%s", szFormat) == 1022);
-    TEST_CHECK(strlen(sz) == 1022 && FUtf8Valid(sz, strlen(sz)));
+    TEST_CHECK(strlen(sz) == 1022 && FUtf8Valid(sz));
     char rgch[12];
     memset(rgch, '!', sizeof(rgch));
     TEST_CHECK(CchSprintf(std::span{rgch}.subspan(2, 5), "%s", "ab\xc3\xa9z") == 4);
@@ -556,7 +556,7 @@ static void TestFormattedTextBounds(void) {
         TEST_CHECK(!memcmp(rgb + 2, PszTestCatalog(app, idsName).data(), rgcch[cb]));
         if (cb != 0) {
             TEST_CHECK(rgb[2 + rgcch[cb]] == 0);
-            TEST_CHECK(FUtf8Valid(rgb + 2, rgcch[cb]));
+            TEST_CHECK(FUtf8Valid(std::string_view{rgb + 2, rgcch[cb]}));
         }
         TEST_CHECK(rgb[0] == '!' && rgb[1] == '!');
         for (std::size_t i = 2 + cb; i < sizeof(rgb); i++) TEST_CHECK(rgb[i] == '!');
@@ -575,7 +575,7 @@ static int16_t CheckHistoryRows(APPSESSION &app, HWND, int16_t, int16_t, int16_t
     TEST_CHECK(cString == 8);
     for (int i = 0; i < cString; i++) {
         TEST_CHECK(rgsz[i] == app.state.szWork + i * 40);
-        TEST_CHECK(strlen(rgsz[i]) == 36 && FUtf8Valid(rgsz[i], 36));
+        TEST_CHECK(strlen(rgsz[i]) == 36 && FUtf8Valid(std::string_view{rgsz[i], 36}));
         TEST_CHECK(!strncmp(rgsz[i], "History ", 8));
         TEST_CHECK(rgsz[i][39] == '!');
     }
@@ -617,7 +617,7 @@ static void TestScannerSnapshotUtf8(void) {
     pf = PfNativeTemporary(); TEST_ASSERT(pf);
     TEST_ASSERT(FWriteScannerSnapshot(&snap, pf));
     ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin); cb = CReadNative(std::span{sz}.first(sizeof(sz) - 1), pf); sz[cb] = 0;
-    TEST_CHECK(FUtf8Valid(sz, cb));
+    TEST_CHECK(FUtf8Valid(std::string_view{sz, cb}));
     TEST_CHECK(strstr(sz, psz) != NULL && strstr(sz, "\\u000d\\u000a") != NULL);
     strcpy(obj.szName, "\xff");
     TEST_CHECK(!FWriteScannerSnapshot(&snap, pf));

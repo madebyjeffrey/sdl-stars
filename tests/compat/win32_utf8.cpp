@@ -56,7 +56,7 @@ static int TestPicker(HWND hwnd) {
         fPickerReady = 0; CHECK(win32::SetTimer(hwnd, 99, 10, PickerTimer));
         CHECK(iPicker == 0 ? win32::GetOpenFileNameA(&ofn) : win32::GetSaveFileNameA(&ofn));
         CHECK(fPickerReady && strcmp(szFile, szExpected) == 0 && win32::IsWindowEnabled(hwnd));
-        CHECK(FUtf8Valid(szTitle, strlen(szTitle)));
+        CHECK(FUtf8Valid(szTitle));
         CHECK(strcmp(szTitle, iPicker == 0 ? "caf" : "\xe6\x9d\xb1") == 0);
         if (iPicker == 0) {
             CHECK(FFilesystemRemove(szExpected));
@@ -155,7 +155,7 @@ int main(void) {
     CompatTextInput(hwndPassword, "\xc3\xa9"); Drain();
     CHECK(!StarsCompatTextInputRejected(hwndPassword));
     CHECK(SDL_SetClipboardText("\xe6\x9d\xb1\xe4\xba\xac")); win32::SendMessageA(hwndPassword, win32::WM_PASTE, 0, 0);
-    CHECK(!StarsCompatTextInputRejected(hwndPassword) && win32::GetWindowTextA(hwndPassword, szText, sizeof(szText)) == 13 && FUtf8Valid(szText, strlen(szText)));
+    CHECK(!StarsCompatTextInputRejected(hwndPassword) && win32::GetWindowTextA(hwndPassword, szText, sizeof(szText)) == 13 && FUtf8Valid(szText));
     win32::SendMessageA(hwndPassword, win32::WM_CHAR, '\b', 0); CHECK(!StarsCompatTextInputRejected(hwndPassword));
     CHECK(TestPicker(hwnd) == 0);
     CHECK(win32::DestroyWindow(hwnd)); StarsCompatProcessExit(); SDL_Quit();

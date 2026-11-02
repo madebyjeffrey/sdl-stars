@@ -49,11 +49,11 @@ static void DestroySequenceWindow(void) {
 }
 
 static char *PszNativeTitle(LPCSTR pszTitle) {
-    return FUtf8Valid(pszTitle, std::strlen(pszTitle)) ? SDL_strdup(pszTitle) : nullptr;
+    return FUtf8Valid(pszTitle) ? SDL_strdup(pszTitle) : nullptr;
 }
 
 BOOL FCompatNativeTitle(SDL_Window *lpWindow, LPCSTR pszTitle) {
-    if (!FUtf8Valid(pszTitle, std::strlen(pszTitle))) return 0;
+    if (!FUtf8Valid(pszTitle)) return 0;
     if (SDL_GetWindowFlags(lpWindow) & (SDL_WINDOW_POPUP_MENU | SDL_WINDOW_TOOLTIP)) return 1;
     return CompatWindowIO().pfnSetWindowTitle(lpWindow, pszTitle);
 }
@@ -252,7 +252,7 @@ ATOM win32::RegisterClassA(const WNDCLASSA *lpwc) {
 
     if (!SDL_IsMainThread() || fShutdown || !lpwc || !lpwc->lpfnWndProc ||
         reinterpret_cast<UINT_PTR>(lpwc->lpszClassName) <= UINT16_MAX ||
-        !FUtf8Valid(lpwc->lpszClassName, std::strlen(lpwc->lpszClassName)) ||
+        !FUtf8Valid(lpwc->lpszClassName) ||
         lpwc->cbWndExtra < 0 || lpwc->cbClsExtra < 0 || atomNext > UINT16_MAX)
         return 0;
     if (LpFindClass(lpwc->lpszClassName, lpwc->hInstance)) {
@@ -396,7 +396,7 @@ HWND win32::CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
     RECT rcClient, rcWindow;
     LRESULT lr;
 
-    if (pszTitle && !FUtf8Valid(pszTitle, std::strlen(pszTitle))) {
+    if (pszTitle && !FUtf8Valid(pszTitle)) {
         SDL_SetError("Window text is invalid UTF-8");
         return nullptr;
     }

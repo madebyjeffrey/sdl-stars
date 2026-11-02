@@ -98,7 +98,7 @@ static BOOL FJoinFile(char *pszOut, LPCSTR pszDir, LPCSTR pszName) {
     // The browser splits paths with '/', including native suggestions and input.
     for (pch = pszOut; *pch; pch++) if (*pch == '\\') *pch = '/';
 #endif
-    return FUtf8Valid(pszOut, std::strlen(pszOut));
+    return FUtf8Valid(pszOut);
 }
 static void FileError(HWND hwnd, LPCSTR psz) { CompatChoiceIO().pfnMessageBoxA(hwnd, psz, "File selection", win32::MB_OK | win32::MB_ICONEXCLAMATION); }
 static BOOL FRefreshFiles(HWND hwnd, COMPATFILEDIALOG *lp) {
@@ -119,7 +119,7 @@ static BOOL FRefreshFiles(HWND hwnd, COMPATFILEDIALOG *lp) {
         errno = 0; szEntry = SzNativeReadDir(lpdir);
         if (!szEntry) { if (errno != 0) lp->dwError = win32::CDERR_INITIALIZATION; break; }
         pszEntry = szEntry->c_str();
-        if (!FUtf8Valid(pszEntry, szEntry->size())) {
+        if (!FUtf8Valid(std::string_view{pszEntry, szEntry->size()})) {
             FileError(hwnd, "A filename in this directory cannot be represented losslessly in UTF-8.");
             continue;
         }
@@ -156,7 +156,7 @@ static BOOL FChangeFileDirectory(HWND hwnd, COMPATFILEDIALOG *lp, LPCSTR psz, BO
     if (!FJoinFile(szPath, lp->szDir, psz) || !CchCanonicalNativePath(szPath, std::span{szReal}) || !(st = IGetNativeFileInfo(szReal, NATIVELINKMODE::follow)) || !st->fDirectory) {
         FileError(hwnd, "The directory does not exist."); return 0;
     }
-    if (!FUtf8Valid(szReal, std::strlen(szReal))) {
+    if (!FUtf8Valid(szReal)) {
         FileError(hwnd, "The directory cannot be represented losslessly in UTF-8."); return 0;
     }
     if (std::strcmp(szReal, lp->szDir) == 0) {
@@ -198,7 +198,7 @@ static int IAcceptFilePath(HWND hwnd, COMPATFILEDIALOG *lp, LPCSTR pszName) {
     pszExt = std::strrchr(pszBase, '.');
     if (!pszExt && pszDef && *pszDef) {
         cch = std::strlen(szPath);
-        if (!FUtf8Valid(pszDef, std::strlen(pszDef))) { FileError(hwnd, "The extension is invalid UTF-8."); return 0; }
+        if (!FUtf8Valid(pszDef)) { FileError(hwnd, "The extension is invalid UTF-8."); return 0; }
         if (std::snprintf(szPath + cch, sizeof(szPath) - cch, ".%.*s", static_cast<int>(CchUtf8Prefix(pszDef, 3)), pszDef) >= static_cast<int>((sizeof(szPath) - cch))) {
             FileError(hwnd, "The filename is too long."); return 0;
         }
@@ -456,7 +456,7 @@ static win32::files::FILESELECTIONRESULT SelectFileCore(HWND hwndOwner, win32::f
     }
     dlg.iFilter = request.iFilter < static_cast<std::size_t>(dlg.cFilter) ? static_cast<int>(request.iFilter) : 0;
     if (!CchNativeCwd(std::span{szCwd})) { dlg.dwError = win32::CDERR_INITIALIZATION; goto done; }
-    if (!FUtf8Valid(szCwd, std::strlen(szCwd))) { dlg.dwError = win32::FNERR_INVALIDFILENAME; goto done; }
+    if (!FUtf8Valid(szCwd)) { dlg.dwError = win32::FNERR_INVALIDFILENAME; goto done; }
     CchCopyUtf8(std::span{dlg.szDir}, szCwd); szInitial[0] = 0;
     if (!request.szInitialDirectory.empty()) {
         std::optional<NATIVEFILEINFO> st;
@@ -472,7 +472,7 @@ static win32::files::FILESELECTIONRESULT SelectFileCore(HWND hwndOwner, win32::f
             if (!CchCanonicalNativePath(szPath, std::span{dlg.szDir})) { dlg.dwError = win32::FNERR_INVALIDFILENAME; goto done; }
         }
     }
-    if (!FUtf8Valid(dlg.szDir, std::strlen(dlg.szDir))) { dlg.dwError = win32::FNERR_INVALIDFILENAME; goto done; }
+    if (!FUtf8Valid(dlg.szDir)) { dlg.dwError = win32::FNERR_INVALIDFILENAME; goto done; }
     hwndFocus = win32::GetFocus(); hwndRoot = hwndOwner ? HwndCompatRoot(hwndOwner) : nullptr; fRestoreFocus = 1;
 #if defined(STARS_FILE_DIALOG_PORTAL) || defined(STARS_FILE_DIALOG_COCOA) || defined(STARS_FILE_DIALOG_WINDOWS)
     fNative = !PszCompatEnvironment("STARS_FILE_DIALOG_BACKEND") || std::strcmp(PszCompatEnvironment("STARS_FILE_DIALOG_BACKEND"), "compat") != 0;
@@ -637,8 +637,8 @@ static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
     if (!lpof->lpstrFile || lpof->nMaxFile == 0 || !std::memchr(lpof->lpstrFile, 0, lpof->nMaxFile)) {
         dwDialogError = win32::FNERR_INVALIDFILENAME; return 0;
     }
-    if (!FUtf8Valid(lpof->lpstrFile, std::strlen(lpof->lpstrFile)) ||
-        (lpof->lpstrInitialDir && !FUtf8Valid(lpof->lpstrInitialDir, std::strlen(lpof->lpstrInitialDir)))) {
+    if (!FUtf8Valid(lpof->lpstrFile) ||
+        (lpof->lpstrInitialDir && !FUtf8Valid(lpof->lpstrInitialDir))) {
         dwDialogError = win32::FNERR_INVALIDFILENAME; return 0;
     }
     if ((lpof->Flags & ~grFlagsAllowed) || lpof->lpstrCustomFilter || lpof->lpfnHook || lpof->FlagsEx ||
@@ -685,7 +685,8 @@ static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
         pchBase = std::strrchr(pSelected->szPath.c_str(), '/') + 1;
         lpof->nFileOffset = static_cast<WORD>(pchBase - pSelected->szPath.c_str());
         if (lpof->lpstrFileTitle && lpof->nMaxFileTitle)
-            CchCopyUtf8(lpof->lpstrFileTitle, lpof->nMaxFileTitle, pchBase, CchUtf8Prefix(pchBase, lpof->nMaxFileTitle - 1));
+            CchCopyUtf8(std::span{lpof->lpstrFileTitle, static_cast<std::size_t>(lpof->nMaxFileTitle)},
+                        std::string_view{pchBase, CchUtf8Prefix(pchBase, lpof->nMaxFileTitle - 1)});
         pchExtension = std::strrchr(pchBase, '.');
         lpof->nFileExtension = pchExtension ? static_cast<WORD>(pchExtension - pSelected->szPath.c_str() + 1) : 0;
         lpof->nFilterIndex = pSelected->iFilter ? static_cast<DWORD>(*pSelected->iFilter + 1) : 0;

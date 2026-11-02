@@ -117,7 +117,7 @@ static void test_DecorateHullName_owned(void) {
     for (int16_t ish = 0; ish < 16; ish++) {
         const auto szName = DecorateHullName(app, iplr, ish);
         TEST_CHECK(std::string(pszName) + " (" + rgszRoman[ish] + ")" == szName.data());
-        TEST_CHECK(FUtf8Valid(szName.data(), strlen(szName.data())));
+        TEST_CHECK(FUtf8Valid(szName.data()));
     }
     TEST_CHECK(std::string(pszName) + " (I)" == szFirst.data());
     for (auto &shdef : rgshdef) shdef.fFree = 1;
@@ -192,7 +192,7 @@ static void test_PlayerName_text_contract(void) {
         strcpy(app.state.rgplr[2].szNames, item.pszNames);
         const auto szName = TextIO().pfnPlayerName(app, 2, item.fCapital, item.fPlural, item.fThe, item.grWord, nullptr);
         TEST_CHECK(!strcmp(szName.data(), item.pszExpected));
-        TEST_CHECK(FUtf8Valid(szName.data(), strlen(szName.data())));
+        TEST_CHECK(FUtf8Valid(szName.data()));
     }
 }
 
@@ -220,11 +220,11 @@ static void test_FleetName_utf8_boundary(void) {
     lpfl->rgcsh[1] = 1;
     szDisplayLabel = PszFleetNameFromWord(app, 0x2000);
     psz = szDisplayLabel.data();
-    TEST_CHECK(FUtf8Valid(psz, strlen(psz)));
+    TEST_CHECK(FUtf8Valid(psz));
     TEST_CHECK(strncmp(psz, "AAAAAAAAAAAAAAAAAAAAAAAAAAA+", 28) == 0);
     szObjectName = PszGetFleetName(app, lpfl->id);
     psz = szObjectName.data();
-    TEST_CHECK(FUtf8Valid(psz, strlen(psz)));
+    TEST_CHECK(FUtf8Valid(psz));
 }
 
 // SpaceDockWithArmor returns a Space Dock design with cArmor Superlatanium

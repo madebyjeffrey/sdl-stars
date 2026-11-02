@@ -62,7 +62,7 @@ static std::int16_t FReadHostIni(APPSESSION &app, const char *szFile) {
     }
     ICloseNativeFile(file.Release());
     pszText[cb] = 0;
-    if (!FUtf8Valid(pszText, static_cast<std::size_t>(cb))) return 0;
+    if (!FUtf8Valid(std::string_view{pszText, static_cast<std::size_t>(cb)})) return 0;
     if (cb >= 3 && !std::memcmp(pszText, "\xef\xbb\xbf", 3)) std::memmove(pszText, pszText + 3, static_cast<std::size_t>(cb) - 2);
     app.state.ini.fLogging = LIniInt(app, pszText, idsFiles, idsLogging, 0) != 0;
     if (!FIniValue(app, pszText, idsMisc, idsDefaultpassword, app.state.vszDefPass, 16)) {

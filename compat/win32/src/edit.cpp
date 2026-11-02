@@ -21,7 +21,7 @@ void CompatEditComposition(HWND hwnd, const char *pszUtf, int ich, int cch) {
     static_cast<void>(ich); static_cast<void>(cch);
     if (!win32::IsWindow(hwnd) || hwnd->iControl != 3 || (hwnd->dwStyle & win32::ES_READONLY)) return;
     if (!pszUtf) pszUtf = "";
-    if (!FUtf8Valid(pszUtf, std::strlen(pszUtf)) || !(psz = SDL_strdup(pszUtf))) return;
+    if (!FUtf8Valid(pszUtf) || !(psz = SDL_strdup(pszUtf))) return;
     SDL_free(hwnd->pszEditComposition); hwnd->pszEditComposition = psz;
     hwnd->ichComposition = hwnd->cchComposition = 0;
     win32::InvalidateRect(hwnd, nullptr, 1);
@@ -111,7 +111,7 @@ static void ReplaceEdit(HWND hwnd, LPCSTR psz, BOOL fUser, BOOL fUndo, UINT iUnd
         (ichFirst == hwnd->ichUndoPosition || ichLast == hwnd->ichUndoPosition)) fGroup = 1;
     if (hwnd->pszEditUndo && iUndoAction == editUndoTyping && hwnd->iEditUndoAction == editUndoReplace &&
         ichFirst == ichLast && ichFirst == hwnd->ichTypingEnd) fGroup = 1;
-    if (!FUtf8Valid(psz, std::strlen(psz))) {
+    if (!FUtf8Valid(psz)) {
         hwnd->fEditInputRejected = 1;
         return;
     }
@@ -212,7 +212,7 @@ static void PasteEdit(HWND hwnd) {
     pszUtf = SDL_GetClipboardText();
     NATIVEOWNER<char, SDL_free> textOwner(pszUtf);
     if (!pszUtf) return;
-    if (!FUtf8Valid(pszUtf, std::strlen(pszUtf))) {
+    if (!FUtf8Valid(pszUtf)) {
         hwnd->fEditInputRejected = 1;
         return;
     }

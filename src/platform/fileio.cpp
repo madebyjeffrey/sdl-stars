@@ -560,7 +560,7 @@ int IRenameNativePath(const char *oldPath, const char *newPath, int replace, int
 }
 static std::optional<std::string> SzNativePath(const fs::path &pth) {
     std::string text = SzFromUtf8(pth.generic_u8string());
-    if (!FUtf8Valid(text.data(), text.size())) { errno = EILSEQ; return std::nullopt; }
+    if (!FUtf8Valid(text)) { errno = EILSEQ; return std::nullopt; }
     return text;
 }
 std::optional<std::string> SzCanonicalNativePath(const char *psz) {

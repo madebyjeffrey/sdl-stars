@@ -774,7 +774,7 @@ std::int16_t ParseCmdLine(APPSESSION &app, char *lpCmdLine, std::int16_t *pfSeed
                     pch = lpT;
                     while (*lpT != 0 && *lpT != ' ') lpT++;
                     cbPass = static_cast<std::size_t>((lpT - pch));
-                    cchPass = CchCopyUtf8(app.state.szPassLast, sizeof(app.state.szPassLast), pch, cbPass);
+                    cchPass = CchCopyUtf8(std::span{app.state.szPassLast}, std::string_view{pch, cbPass});
                     if (cchPass < 0) {
                         AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, cchPass == -3 ? idsNativeCommandPasswordTooLong : idsNativeCommandPasswordEncoding).data(), win32::MB_ICONHAND);
                         app.state.szBase[0] = 0; app.state.ini.fCmdLine = 0; app.state.ini.fStartupFile = 0;

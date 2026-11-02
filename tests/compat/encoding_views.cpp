@@ -2,9 +2,11 @@
 #include "encoding.h"
 #include <cstdio>
 #include <cstring>
+#include <type_traits>
 
 #define CHECK(f) do { if (!(f)) { std::fprintf(stderr, "line %d: %s\n", __LINE__, #f); return 1; } } while (0)
 int main() {
+    static_assert(std::is_same_v<decltype(FUtf8Valid(std::string_view{})), bool>);
     const char rgchText[] = {'A', '\xce', '\xa9', 'B'};
     const char rgchBadContinuation[] = {'\xce', 'A'};
     const char rgchOverlong[] = {'\xe0', '\x80', '\x80'};

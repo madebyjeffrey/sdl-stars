@@ -602,7 +602,7 @@ INT_PTR  NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                     }
                     if (iNewVal < 0) goto FinishClick;
                     app.lpui->vrgplrNew[iNewVal] = app.state.vplr;
-                    CchCopyUtf8(app.lpui->vrgszFileNew + iNewVal * 13, 13, app.state.szRaceFile, std::strlen(app.state.szRaceFile));
+                    CchCopyUtf8(std::span{app.lpui->vrgszFileNew + iNewVal * 13, std::size_t{13}}, app.state.szRaceFile);
                     CchCopyUtf8(std::span{rgszLibraryRaceNew[iNewVal]}, szLibraryRace);
                     iNewVal = iNewVal << 2 | 2;
                 }
@@ -632,7 +632,7 @@ INT_PTR  NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                     if ((iCurVal & 3) == 1 || std::strcmp(szLibraryRace, rgszLibraryRaceNew[iCurVal >> 2]) != 0)
                         goto PlaceNew;
                     app.lpui->vrgplrNew[iCurVal >> 2] = app.state.vplr;
-                    CchCopyUtf8(app.lpui->vrgszFileNew + (iCurVal >> 2) * 13, 13, app.state.szRaceFile, std::strlen(app.state.szRaceFile));
+                    CchCopyUtf8(std::span{app.lpui->vrgszFileNew + (iCurVal >> 2) * 13, std::size_t{13}}, app.state.szRaceFile);
                     CchCopyUtf8(std::span{rgszLibraryRaceNew[iCurVal >> 2]}, szLibraryRace);
                     iNewVal = iCurVal;
                     iCurVal = -1;

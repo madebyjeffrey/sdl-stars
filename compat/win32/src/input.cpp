@@ -185,7 +185,7 @@ void CompatTextInput(HWND hwnd, const char *pszText) {
     const char *psz = pszText;
     DWORD ch;
     if (!win32::IsWindow(hwnd)) return;
-    if (!FUtf8Valid(pszText, std::strlen(pszText))) {
+    if (!FUtf8Valid(pszText)) {
         hwnd->fEditInputRejected = 1;
         SDL_SetError("Text input is malformed UTF-8");
         return;

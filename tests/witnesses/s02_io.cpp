@@ -77,7 +77,7 @@ int main(void) {
                         "B",
                         8) == 1);
     CHECK(CchUtf8Prefix("A\0B", 8) == 1);
-    CHECK(!FUtf8Valid("A\0B", 3));
+    CHECK(!FUtf8Valid(std::string_view{"A\0B", 3}));
     fixture = one;
     memset(out, 9, sizeof(out));
     CHECK(win32::GetPrivateProfileStringA(NULL, NULL, "", out, 4, "x") == 2 && !memcmp(out, "AB\0\0", 4));

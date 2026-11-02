@@ -178,7 +178,7 @@ static COMPATFONT *LpNewFontRaster(const LOGFONTA *lplf, int cMax) {
     if (!lplf || static_cast<std::int64_t>(lplf->lfHeight) < -cMax || lplf->lfHeight > cMax ||
         lplf->lfWidth < 0 || lplf->lfWidth > cMax ||
         !std::memchr(lplf->lfFaceName, 0, sizeof(lplf->lfFaceName)) ||
-        !FUtf8Valid(lplf->lfFaceName, std::strlen(lplf->lfFaceName))) return nullptr;
+        !FUtf8Valid(lplf->lfFaceName)) return nullptr;
     if (!library) {
         iFaceError = FT_Init_FreeType(&libraryNew);
         libraryOwner.reset(libraryNew);

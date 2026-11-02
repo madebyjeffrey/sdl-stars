@@ -106,7 +106,7 @@ static LRESULT AddList(HWND hwnd, int i, LPCSTR psz) {
     COMPATLISTITEM *rg;
     char *pszNew;
     int cAlloc;
-    if (!psz || !FUtf8Valid(psz, std::strlen(psz)) || lp->cItem == INT_MAX) return win32::LB_ERR;
+    if (!psz || !FUtf8Valid(psz) || lp->cItem == INT_MAX) return win32::LB_ERR;
     pszNew = SDL_strdup(psz);
     NATIVEOWNER<char, SDL_free> pszOwner(pszNew);
     if (!pszNew) return win32::LB_ERRSPACE;

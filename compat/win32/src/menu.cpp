@@ -90,7 +90,7 @@ BOOL win32::InsertMenuA(HMENU hmenu, UINT pos, UINT flags, UINT_PTR id, LPCSTR p
     else if (!LpItem(lp, pos, 0, &lp, &i)) return 0;
     if (flags & win32::MF_SEPARATOR) flags = win32::MF_SEPARATOR | win32::MF_DISABLED | win32::MF_GRAYED;
     else {
-        if (psz && !FUtf8Valid(psz, std::strlen(psz))) return 0;
+        if (psz && !FUtf8Valid(psz)) return 0;
         if (flags & win32::MF_POPUP) {
             hsub = LpMenu(reinterpret_cast<HMENU>(id));
             if (!hsub || hsub->hparent || hsub->hwndOwner) return 0;

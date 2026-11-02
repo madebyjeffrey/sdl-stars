@@ -210,7 +210,7 @@ std::int16_t FLoadGame(APPSESSION &app, std::string_view pszFileName, std::strin
         }
         FDecodeGame(std::as_bytes(std::span(app.state.rgbCur)), app.state.game);
         if (strnlen(app.state.game.szName, sizeof(app.state.game.szName)) == sizeof(app.state.game.szName) ||
-            !FUtf8Valid(app.state.game.szName, std::strlen(app.state.game.szName))) goto XYCorrupt;
+            !FUtf8Valid(app.state.game.szName)) goto XYCorrupt;
         app.state.game.fDirty = 0;
         app.state.dGal = 400 * app.state.game.mdSize + 400;
         app.state.dGalInv = app.state.dGal + 2000;

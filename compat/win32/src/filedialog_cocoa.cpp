@@ -12,7 +12,7 @@ struct COCOAFILTERTEXT {
 };
 
 static char *PszCocoaLabelUtf8(LPCSTR psz) {
-    return FUtf8Valid(psz, std::strlen(psz)) ? SDL_strdup(psz) : nullptr;
+    return FUtf8Valid(psz) ? SDL_strdup(psz) : nullptr;
 }
 static int FPumpCocoaChooser(void *lpv) {
     HWND hwndOwner = static_cast<HWND>((lpv));

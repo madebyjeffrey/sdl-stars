@@ -23,35 +23,6 @@ std::optional<UTF8CHAR> DecodeUtf8Char(std::string_view sz) noexcept {
     return UTF8CHAR{ch, c};
 }
 
-std::size_t CchUtf8Prefix(const char *psz, std::size_t cchMax) {
-    std::size_t cb = std::strlen(psz), i = 0;
-    while (i < cb && i < cchMax) {
-        const auto uch = DecodeUtf8Char(std::string_view{psz + i, cb - i});
-        if (!uch || uch->cch > cchMax - i) break;
-        i += uch->cch;
-    }
-    return i;
-}
-
-int FUtf8Valid(const char *psz, std::size_t cb) {
-    std::size_t i = 0;
-    while (i < cb) {
-        const auto uch = DecodeUtf8Char(std::string_view{psz + i, cb - i});
-        if (!uch || uch->ch == 0) return 0;
-        i += uch->cch;
-    }
-    return 1;
-}
-
-int CchCopyUtf8(char *pszOut, std::size_t cbOut, const char *psz, std::size_t cb) {
-    if (cbOut == 0) return -3;
-    if (!FUtf8Valid(psz, cb)) { pszOut[0] = 0; return -1; }
-    if (cb >= cbOut) { pszOut[0] = 0; return -3; }
-    std::memmove(pszOut, psz, cb);
-    pszOut[cb] = 0;
-    return static_cast<int>(cb);
-}
-
 bool FAppendUtf8(std::span<char> rgchOut, std::string_view sz) {
     const auto pchEnd = std::find(rgchOut.begin(), rgchOut.end(), 0);
     std::size_t cch;
@@ -82,7 +53,7 @@ std::size_t CchAppendUtf8Prefix(std::span<char> rgchOut, std::string_view sz) {
     return CchCopyUtf8Prefix(rgchOut.subspan(static_cast<std::size_t>(pchEnd - rgchOut.begin())), sz);
 }
 
-int CchCp1252ToUtf8(char *pszOut, std::size_t cbOut, const unsigned char *rgb, std::size_t cb) {
+int CchCp1252ToUtf8(std::span<char> rgchOut, std::span<const std::byte> rgb) {
     static const std::uint16_t rgwCp1252[32] = {
         0x20ac, 0x0081, 0x201a, 0x0192, 0x201e, 0x2026, 0x2020, 0x2021,
         0x02c6, 0x2030, 0x0160, 0x2039, 0x0152, 0x008d, 0x017d, 0x008f,
@@ -93,60 +64,63 @@ int CchCp1252ToUtf8(char *pszOut, std::size_t cbOut, const unsigned char *rgb, s
     std::uint32_t ch;
     int c;
 
-    if (cbOut == 0) return -3;
-    pszOut[0] = 0;
-    for (i = 0; i < cb; i++) {
-        ch = rgb[i];
+    if (rgchOut.empty()) return -3;
+    rgchOut[0] = 0;
+    for (i = 0; i < rgb.size(); i++) {
+        ch = std::to_integer<unsigned char>(rgb[i]);
         if (ch == 0) goto malformed;
         if (ch >= 0x80 && ch < 0xa0) ch = rgwCp1252[ch - 0x80];
         c = ch < 0x80 ? 1 : ch < 0x800 ? 2 : 3;
-        if (static_cast<std::size_t>(c) >= cbOut - cOut) { pszOut[0] = 0; return -3; }
-        if (c == 1) pszOut[cOut++] = static_cast<char>(ch);
+        if (static_cast<std::size_t>(c) >= rgchOut.size() - cOut) { rgchOut[0] = 0; return -3; }
+        if (c == 1) rgchOut[cOut++] = static_cast<char>(ch);
         else if (c == 2) {
-            pszOut[cOut++] = static_cast<char>((0xc0 | (ch >> 6)));
-            pszOut[cOut++] = static_cast<char>((0x80 | (ch & 0x3f)));
+            rgchOut[cOut++] = static_cast<char>((0xc0 | (ch >> 6)));
+            rgchOut[cOut++] = static_cast<char>((0x80 | (ch & 0x3f)));
         } else {
-            pszOut[cOut++] = static_cast<char>((0xe0 | (ch >> 12)));
-            pszOut[cOut++] = static_cast<char>((0x80 | ((ch >> 6) & 0x3f)));
-            pszOut[cOut++] = static_cast<char>((0x80 | (ch & 0x3f)));
+            rgchOut[cOut++] = static_cast<char>((0xe0 | (ch >> 12)));
+            rgchOut[cOut++] = static_cast<char>((0x80 | ((ch >> 6) & 0x3f)));
+            rgchOut[cOut++] = static_cast<char>((0x80 | (ch & 0x3f)));
         }
     }
-    pszOut[cOut] = 0;
+    rgchOut[cOut] = 0;
     return static_cast<int>(cOut);
 malformed:
-    pszOut[0] = 0;
+    rgchOut[0] = 0;
     return -1;
 }
 
-int CchUtf16leToUtf8(char *pszOut, std::size_t cbOut, const unsigned char *rgb, std::size_t cch) {
+int CchUtf16leToUtf8(std::span<char> rgchOut, std::span<const std::byte> rgb) {
     std::size_t i, cb = 0;
     std::uint32_t ch, chLow;
     int c;
-    if (cbOut == 0) return -3;
-    pszOut[0] = 0;
-    for (i = 0; i < cch; i++) {
-        ch = rgb[i * 2] | (static_cast<std::uint32_t>(rgb[i * 2 + 1]) << 8);
+    if (rgchOut.empty()) return -3;
+    rgchOut[0] = 0;
+    if (rgb.size() % 2 != 0) goto malformed;
+    for (i = 0; i < rgb.size() / 2; i++) {
+        ch = std::to_integer<unsigned char>(rgb[i * 2]) |
+             (static_cast<std::uint32_t>(std::to_integer<unsigned char>(rgb[i * 2 + 1])) << 8);
         if (ch >= 0xd800 && ch <= 0xdbff) {
-            if (++i >= cch) goto malformed;
-            chLow = rgb[i * 2] | (static_cast<std::uint32_t>(rgb[i * 2 + 1]) << 8);
+            if (++i >= rgb.size() / 2) goto malformed;
+            chLow = std::to_integer<unsigned char>(rgb[i * 2]) |
+                    (static_cast<std::uint32_t>(std::to_integer<unsigned char>(rgb[i * 2 + 1])) << 8);
             if (chLow < 0xdc00 || chLow > 0xdfff) goto malformed;
             ch = 0x10000 + ((ch - 0xd800) << 10) + chLow - 0xdc00;
         } else if (ch == 0 || (ch >= 0xdc00 && ch <= 0xdfff)) goto malformed;
         c = ch < 0x80 ? 1 : ch < 0x800 ? 2 : ch < 0x10000 ? 3 : 4;
-        if (static_cast<std::size_t>(c) >= cbOut - cb) { pszOut[0] = 0; return -3; }
-        if (c == 1) pszOut[cb++] = static_cast<char>(ch);
+        if (static_cast<std::size_t>(c) >= rgchOut.size() - cb) { rgchOut[0] = 0; return -3; }
+        if (c == 1) rgchOut[cb++] = static_cast<char>(ch);
         else {
-            if (c == 4) pszOut[cb++] = static_cast<char>((0xf0 | (ch >> 18)));
-            else if (c == 3) pszOut[cb++] = static_cast<char>((0xe0 | (ch >> 12)));
-            else pszOut[cb++] = static_cast<char>((0xc0 | (ch >> 6)));
-            if (c == 4) pszOut[cb++] = static_cast<char>((0x80 | ((ch >> 12) & 63)));
-            if (c >= 3) pszOut[cb++] = static_cast<char>((0x80 | ((ch >> 6) & 63)));
-            pszOut[cb++] = static_cast<char>((0x80 | (ch & 63)));
+            if (c == 4) rgchOut[cb++] = static_cast<char>((0xf0 | (ch >> 18)));
+            else if (c == 3) rgchOut[cb++] = static_cast<char>((0xe0 | (ch >> 12)));
+            else rgchOut[cb++] = static_cast<char>((0xc0 | (ch >> 6)));
+            if (c == 4) rgchOut[cb++] = static_cast<char>((0x80 | ((ch >> 12) & 63)));
+            if (c >= 3) rgchOut[cb++] = static_cast<char>((0x80 | ((ch >> 6) & 63)));
+            rgchOut[cb++] = static_cast<char>((0x80 | (ch & 63)));
         }
     }
-    pszOut[cb] = 0;
+    rgchOut[cb] = 0;
     return static_cast<int>(cb);
 malformed:
-    pszOut[0] = 0;
+    rgchOut[0] = 0;
     return -1;
 }

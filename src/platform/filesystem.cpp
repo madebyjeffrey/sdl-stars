@@ -11,12 +11,12 @@
 namespace fs = std::filesystem;
 
 static bool FPathValid(const char *pszPath) {
-    return pszPath && *pszPath && FUtf8Valid(pszPath, std::strlen(pszPath));
+    return pszPath && *pszPath && FUtf8Valid(pszPath);
 }
 
 static bool FCopyPath(const fs::path &pth, char *pszOut, std::size_t cbOut) {
     std::string sz = SzFromUtf8(pth.generic_u8string());
-    if (sz.size() >= cbOut || !FUtf8Valid(sz.data(), sz.size()))
+    if (sz.size() >= cbOut || !FUtf8Valid(sz))
         return false;
     std::memcpy(pszOut, sz.c_str(), sz.size() + 1);
     return true;

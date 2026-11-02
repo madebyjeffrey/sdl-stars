@@ -35,7 +35,8 @@ static BOOL FDlgField(const BYTE *rgb, std::size_t cb, std::size_t *lpib, WORD *
     psz = static_cast<char *>((std::malloc(cch * 3 + 1)));
     NATIVEOWNER<char, std::free> pszOwner(psz);
     if (!psz) return 0;
-    if (CchUtf16leToUtf8(psz, cch * 3 + 1, rgb + ibStart, cch) < 0) return 0;
+    if (CchUtf16leToUtf8(std::span{psz, cch * 3 + 1},
+                         std::span{reinterpret_cast<const std::byte *>(rgb + ibStart), cch * sizeof(WORD)}) < 0) return 0;
     *lppsz = pszOwner.release();
     return 1;
 }

@@ -69,6 +69,7 @@ BOOL win32::PrintDlgA(LPPRINTDLGA lppd) {
     DEVMODEA *lpdm;
     LPCSTR pszPrinter = SDL_getenv("STARS_SDL_PRINTER"), pszPaper = SDL_getenv("STARS_SDL_PRINT_PAPER");
     LPCSTR pszOrientation = SDL_getenv("STARS_SDL_PRINT_ORIENTATION"), pszFile = SDL_getenv("STARS_SDL_PRINT_FILE");
+    const char *pszDeviceName;
     DWORD dwError = win32::CDERR_INITIALIZATION;
     int temp;
     NATIVEOWNER<COMPATPRINT, CompatDeletePrinter> lpprintOwner;
@@ -90,11 +91,11 @@ BOOL win32::PrintDlgA(LPPRINTDLGA lppd) {
     }
     lp->cx = lp->cxPhysical - 150; lp->cy = lp->cyPhysical - 150;
     if (pszPrinter && *pszPrinter && SDL_strcasecmp(pszPrinter, "pdf") != 0) {
-        if (!FUtf8Valid(pszPrinter, std::strlen(pszPrinter))) { win32::SetLastError(win32::ERROR_INVALID_PARAMETER); goto fail; }
+        if (!FUtf8Valid(pszPrinter)) { win32::SetLastError(win32::ERROR_INVALID_PARAMETER); goto fail; }
         if (SDL_strlcpy(lp->szPrinter, pszPrinter, sizeof(lp->szPrinter)) >= sizeof(lp->szPrinter)) { win32::SetLastError(win32::ERROR_INVALID_PARAMETER); goto fail; }
         lp->fSpool = 1;
     }
-    if (pszFile && *pszFile && (!FUtf8Valid(pszFile, std::strlen(pszFile)) ||
+    if (pszFile && *pszFile && (!FUtf8Valid(pszFile) ||
         SDL_strlcpy(lp->szTarget, pszFile, sizeof(lp->szTarget)) >= sizeof(lp->szTarget))) {
         win32::SetLastError(win32::ERROR_INVALID_PARAMETER); goto fail;
     }
@@ -102,8 +103,9 @@ BOOL win32::PrintDlgA(LPPRINTDLGA lppd) {
     hNames = HglobPrintNames(lp);
     if (!hMode || !hNames) { dwError = win32::CDERR_MEMALLOCFAILURE; goto fail; }
     lpdm = static_cast<DEVMODEA *>((win32::GlobalLock(hMode))); if (!lpdm) goto fail;
-    CchCopyUtf8(lpdm->dmDeviceName, sizeof(lpdm->dmDeviceName), lp->fSpool ? lp->szPrinter : "Stars PDF",
-                CchUtf8Prefix(lp->fSpool ? lp->szPrinter : "Stars PDF", sizeof(lpdm->dmDeviceName) - 1));
+    pszDeviceName = lp->fSpool ? lp->szPrinter : "Stars PDF";
+    CchCopyUtf8(std::span{lpdm->dmDeviceName},
+                std::string_view{pszDeviceName, CchUtf8Prefix(pszDeviceName, sizeof(lpdm->dmDeviceName) - 1)});
     lpdm->dmSize = sizeof(*lpdm); lpdm->dmSpecVersion = 0x401; lpdm->dmDriverVersion = 1;
     lpdm->dmFields = win32::DM_ORIENTATION | win32::DM_PAPERSIZE | win32::DM_COPIES | win32::DM_PRINTQUALITY | win32::DM_YRESOLUTION;
     lpdm->mode.printer.dmOrientation = lp->cxPhysical > lp->cyPhysical ? win32::DMORIENT_LANDSCAPE : win32::DMORIENT_PORTRAIT;
@@ -131,7 +133,7 @@ static int StartPrint(COMPATPRINT *lp, int cb, LPCSTR pszTitle) {
     char szFile[PATH_MAX] = "Stars map.pdf";
     NATIVEFILETEMPRESULT nft;
     if (lp->fActive || cb < 0 || cb > 4096 || (cb != 0 && !pszTitle)) { win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return win32::SP_ERROR; }
-    if (cb != 0 && !FUtf8Valid(pszTitle, static_cast<std::size_t>(cb))) { win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return win32::SP_ERROR; }
+    if (cb != 0 && !FUtf8Valid(std::string_view{pszTitle, static_cast<std::size_t>(cb)})) { win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return win32::SP_ERROR; }
     if (cb) std::memcpy(lp->szTitle, pszTitle, cb);
     lp->szTitle[cb] = 0;
     if (!lp->fSpool && !*lp->szTarget) {

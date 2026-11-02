@@ -83,7 +83,7 @@ static std::int16_t FZipSafeName(const char *psz) {
 
 static std::int16_t FZipNameUtf8Supported(const char *pszName, std::size_t cbName, std::uint16_t wFlags) {
     std::size_t iByte;
-    if (!FUtf8Valid(pszName, cbName)) return 0;
+    if (!FUtf8Valid(std::string_view{pszName, cbName})) return 0;
     if (wFlags & ZIP_UTF8_FILENAME_FLAG) return 1;
     for (iByte = 0; iByte < cbName; iByte++)
         if (static_cast<unsigned char>(pszName[iByte]) >= 0x80) return 0;

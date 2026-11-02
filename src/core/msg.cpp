@@ -760,7 +760,7 @@ MSGPLR *LpmsgplrFromRt(APPSESSION &app) {
     } else {
         pszEnd = static_cast<const char *>(std::memchr(PmvCur(app).RgbMsg(), 0, -cLen));
         if (!pszEnd || pszEnd - reinterpret_cast<char *>(PmvCur(app).RgbMsg()) >= static_cast<int>(sizeof(szText)) ||
-            !FUtf8Valid(reinterpret_cast<char *>(PmvCur(app).RgbMsg()), static_cast<std::size_t>((pszEnd - reinterpret_cast<char *>(PmvCur(app).RgbMsg()))))) return nullptr;
+            !FUtf8Valid(std::string_view{reinterpret_cast<char *>(PmvCur(app).RgbMsg()), static_cast<std::size_t>((pszEnd - reinterpret_cast<char *>(PmvCur(app).RgbMsg())))})) return nullptr;
     }
     lpmp = LpmsgplrAlloc(app, sizeof(MSGPLR) + app.state.hdrCur.cb - cbWirePlrMsg);
     lpmp->lpmsgplrNext = nullptr;

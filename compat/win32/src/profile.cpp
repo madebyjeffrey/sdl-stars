@@ -78,7 +78,7 @@ static BOOL FLoadProfile(const char *pszPath, COMPATPROFILE **lplp) {
     while ((sz = io.pfnReadLine(fp))) {
         cbLine = sz->size();
         cbTotal += cbLine;
-        if (cbTotal > 8 * 1024 * 1024 || !FUtf8Valid(sz->data(), cbLine)) {
+        if (cbTotal > 8 * 1024 * 1024 || !FUtf8Valid(std::string_view{sz->data(), cbLine})) {
             win32::SetLastError(win32::ERROR_BAD_FORMAT); goto LReturn;
         }
         if (cbTotal == cbLine && cbLine >= 3 && !std::memcmp(sz->data(), "\xef\xbb\xbf", 3))
@@ -161,7 +161,7 @@ static char *SzProfilePath(LPCSTR pszFile) {
 #endif
 LReturn:
     if (!sz) win32::SetLastError(win32::ERROR_NOT_ENOUGH_MEMORY);
-    else if (!FUtf8Valid(sz, std::strlen(sz))) { std::free(sz); sz = nullptr; win32::SetLastError(win32::ERROR_INVALID_PARAMETER); }
+    else if (!FUtf8Valid(sz)) { std::free(sz); sz = nullptr; win32::SetLastError(win32::ERROR_INVALID_PARAMETER); }
     return sz;
 }
 
@@ -274,9 +274,9 @@ BOOL win32::WritePrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR 
     NATIVECLEANUPSCOPE releaseProfile([&]() noexcept { std::free(szLine); std::free(szPath); FreeProfile(lpAll); });
 
     if (!pszSection && !pszKey && !pszValue) return 0; // No cache to flush.
-    if (!pszSection || !FUtf8Valid(pszSection, std::strlen(pszSection)) ||
-        (pszKey && !FUtf8Valid(pszKey, std::strlen(pszKey))) ||
-        (pszValue && !FUtf8Valid(pszValue, std::strlen(pszValue))) || !*pszSection || std::strchr(pszSection, '\n') || std::strchr(pszSection, '\r') ||
+    if (!pszSection || !FUtf8Valid(pszSection) ||
+        (pszKey && !FUtf8Valid(pszKey)) ||
+        (pszValue && !FUtf8Valid(pszValue)) || !*pszSection || std::strchr(pszSection, '\n') || std::strchr(pszSection, '\r') ||
         std::strchr(pszSection, ']') || (pszKey && (std::strchr(pszKey, '=') || std::strchr(pszKey, '\n') || std::strchr(pszKey, '\r'))) ||
         (pszValue && (std::strchr(pszValue, '\n') || std::strchr(pszValue, '\r')))) {
         win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return 0;

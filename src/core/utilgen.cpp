@@ -516,7 +516,7 @@ static std::optional<std::size_t> FDecompressUserStringInternal(APPSESSION &app,
     }
     *pchOut = 0;
     if (std::memchr(szWork, 0, static_cast<std::size_t>((pchOut - szWork))) != nullptr) goto invalid;
-    if (fUtf8 && !FUtf8Valid(szWork, static_cast<std::size_t>((pchOut - szWork)))) goto invalid;
+    if (fUtf8 && !FUtf8Valid(std::string_view{szWork, static_cast<std::size_t>((pchOut - szWork))})) goto invalid;
     cOut = static_cast<std::size_t>(pchOut - szWork);
     std::memmove(szOut.data(), szWork, cOut + 1);
     return cOut;

@@ -61,7 +61,7 @@ HFILE win32::OpenFile(LPCSTR pszFile, LPOFSTRUCT lpof, UINT flags) {
 
     if (!lpof) { win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return win32::HFILE_ERROR; }
     if (flags & win32::OF_REOPEN) pszFile = lpof->szPathName;
-    if (!pszFile || !*pszFile || !FUtf8Valid(pszFile, std::strlen(pszFile)) || (flags & 3) == 3 ||
+    if (!pszFile || !*pszFile || !FUtf8Valid(pszFile) || (flags & 3) == 3 ||
         (share != win32::OF_SHARE_COMPAT && share != win32::OF_SHARE_EXCLUSIVE && share != win32::OF_SHARE_DENY_WRITE &&
          share != win32::OF_SHARE_DENY_READ && share != win32::OF_SHARE_DENY_NONE)) {
         dwError = win32::ERROR_INVALID_PARAMETER; goto LReturn;
@@ -82,7 +82,7 @@ HFILE win32::OpenFile(LPCSTR pszFile, LPOFSTRUCT lpof, UINT flags) {
             dwError = win32::ERROR_FILENAME_EXCED_RANGE; goto LReturn;
         }
     }
-    if (!FUtf8Valid(szPath, std::strlen(szPath))) { dwError = win32::ERROR_INVALID_PARAMETER; goto LReturn; }
+    if (!FUtf8Valid(szPath)) { dwError = win32::ERROR_INVALID_PARAMETER; goto LReturn; }
     if (std::strlen(szPath) >= sizeof(lpof->szPathName)) { dwError = win32::ERROR_FILENAME_EXCED_RANGE; goto LReturn; }
     *lpof = {};
     lpof->cBytes = sizeof(*lpof); lpof->fFixedDisk = 1;

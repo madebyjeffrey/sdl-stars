@@ -149,15 +149,15 @@ void CreateChildWindows(APPSESSION &app) {
         std::memcpy(szGame, psz, cch); szGame[cch] = 0;
         for (psz = szGame; *psz; psz++) if (*psz >= 'A' && *psz <= 'Z') *psz += 'a' - 'A';
         win32::wsprintfA(std::span{szGame}.subspan(static_cast<std::size_t>(std::strlen(szGame))), ".m%d", app.state.idPlayer + 1);
-        CchCopyUtf8(szNameUtf8, sizeof(szNameUtf8), app.state.game.szName, std::strlen(app.state.game.szName));
+        CchCopyUtf8(std::span{szNameUtf8}, app.state.game.szName);
         szPlayerName = TextIO().pfnPlayerName(app, app.state.idPlayer, 0, 1, 0, 0, nullptr);
         psz = szPlayerName.data();
-        CchCopyUtf8(szPlayerUtf8, sizeof(szPlayerUtf8), psz, std::strlen(psz));
+        CchCopyUtf8(std::span{szPlayerUtf8}, psz);
         std::snprintf(szData, sizeof(szData), "Stars! -- %s -- %s -- %s", szNameUtf8, szPlayerUtf8, szGame);
     } else {
         TextIO().pfnCchGetString(app, idsStarsSHostMode, std::span{app.state.szWork});
         win32::wsprintfA(szData, app.state.szWork, app.state.game.szName);
-        CchCopyUtf8(szNameUtf8, sizeof(szNameUtf8), szData, std::strlen(szData));
+        CchCopyUtf8(std::span{szNameUtf8}, szData);
         CchCopyUtf8Prefix(std::span{szData}, szNameUtf8);
     }
     FSetNativeWindowTitle(app.lpui->hwndFrame, szData);
