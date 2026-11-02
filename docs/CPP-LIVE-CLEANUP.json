@@ -2082,6 +2082,22 @@
           "baseline": "Unchanged; entry ordering, UTF-8 path bytes, ZIP headers/CRC/offsets and failure cleanup are preserved.",
           "windows_linux": "Current-source Windows/Linux qualification remains pending.",
           "diff_check": "Pass."
+        },
+        {
+          "batch": "L06 bounded ZIP name parsing and path output",
+          "parent": "444d25a3",
+          "source_commit": "edbe8653",
+          "change": "FZipSafeName and FZipNameUtf8Supported now take bounded views; FZipMakeParents takes bounded path views and a destination span. Removed NUL-termination and strlen assumptions from parsed ZIP names.",
+          "macos_debug_build": "Full macos-sdl-debug build passed; no new warnings.",
+          "desktop_unit_tests": "18/18 pass.",
+          "host_units": "29/29 pass, including compiler manifest and ownership policy.",
+          "game_export_workflow": "win32_client_game_export_dummy passed (1/1), including ZIP round trips, malformed archives, and unsafe path rejection.",
+          "native_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped inputs.",
+          "host_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped inputs.",
+          "tutorial": "Available SDL tutorial smoke checkpoint passes (1/1); full tutorial remains unfinished.",
+          "baseline": "Unchanged; accepted ZIP path bytes, validation rules, archive layout and file publication behavior remain the same.",
+          "windows_linux": "Current-source Windows/Linux qualification remains pending.",
+          "diff_check": "Pass."
         }
       ],
       "roman_output": {
@@ -2316,6 +2332,12 @@
         "interface": "ZIPFILES owns entry names in std::vector<std::string>; ZIPENTRY holds bounded views into that stable list. Recursive path prefixes and ZIP name metadata are no longer separately SDL-allocated.",
         "allocation_failure": "Collection and archive table allocation failures are caught as std::bad_alloc, set ENOMEM, preserve failed-export cleanup and return the existing failure result.",
         "retired": "Removed the manual char** capacity/realloc/free path, per-entry duplicate buffers, and the calloc-managed ZIPENTRY table. The ZIP wire format and enumeration order remain unchanged."
+      },
+      "zip_bounded_parser": {
+        "status": "implemented and locally verified",
+        "interface": "ZIP safe-name and UTF-8 checks consume std::string_view. Parent path construction consumes root/name views and writes to the exact output span.",
+        "bounds": "Archive names retain their declared byte length through validation and directory/file extraction; the parser no longer inserts a terminator just to call string helpers.",
+        "remaining": "The archive binary buffers remain explicitly sized; no unbounded string API is used for ZIP entry names."
       }
     },
     {
@@ -24604,15 +24626,15 @@
     ]
   },
   "current_checkpoint": {
-    "batch": "L06 owned containers for ZIP entries",
-    "status": "Locally committed as 0ab65b4d. Full macOS SDL Debug build, desktop/host units, game export workflow, native/host regressions and tutorial smoke pass. Remote publication and current-source Windows/Linux desktop qualification remain outstanding.",
-    "parent": "80fdc678",
-    "change": "ZIPFILES and ZIPENTRY now use owned C++ containers; recursive names are composed as strings and ZIP metadata refers to stable views into the owned name list.",
+    "batch": "L06 bounded ZIP name parsing and path output",
+    "status": "Locally committed as edbe8653. Full macOS SDL Debug build, desktop/host units, game export workflow, native/host regressions and tutorial smoke pass. Remote publication and current-source Windows/Linux desktop qualification remain outstanding.",
+    "parent": "444d25a3",
+    "change": "ZIP entry validation and extraction retain bounded name views through safe-name checks and parent path construction; output writes through the actual destination span.",
     "verification": {
       "macos_sdl_debug": "Full macos-sdl-debug build passed with no new warnings.",
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass, including compiler manifest and ownership policy.",
-      "game_export_workflow": "win32_client_game_export_dummy passes ZIP export/import, unsafe path, malformed archive and metadata comparisons.",
+      "game_export_workflow": "win32_client_game_export_dummy passes ZIP round trip, malformed archive and unsafe path cases.",
       "native_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "host_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "tutorial": "1/1 available SDL tutorial smoke passes.",
@@ -24646,9 +24668,9 @@
     "date": "2026-11-02",
     "branch": "develop",
     "changes": [
-      "ZIPFILES now stores names in std::vector<std::string>, preserving depth-first directory enumeration order.",
-      "ZIPENTRY keeps bounded views into the owned ZIPFILES names; duplicate SDL strings and the calloc table are removed.",
-      "Allocation failures set ENOMEM and follow existing temporary-archive cleanup; no game behavior or wire contract changes."
+      "ZIP entry bytes keep their recorded length through UTF-8 and safe-path validation.",
+      "The parser does not add a terminator just to validate or join an archive name.",
+      "Parent-directory paths write to their real bounded destination span; archive contents and publication behavior are unchanged."
     ],
     "current_source_audits": {
       "tracked_c_translation_units": 44,
@@ -24754,9 +24776,13 @@
       {
         "commit": "0ab65b4d",
         "message": "Use owned containers for ZIP entries"
+      },
+      {
+        "commit": "edbe8653",
+        "message": "Parse ZIP names through bounded views"
       }
     ],
-    "source_commit": "0ab65b4d"
+    "source_commit": "edbe8653"
   },
   "milestone_d_checkpoint": {
     "stage": "D05 caller migrations implemented; D06 platform qualification pending",
