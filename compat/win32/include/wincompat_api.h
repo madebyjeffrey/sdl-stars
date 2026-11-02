@@ -208,12 +208,6 @@ UINT _lread (HFILE hFile, LPVOID lpBuffer, UINT uBytes);
 UINT _lwrite (HFILE hFile, LPCCH lpBuffer, UINT uBytes);
 int lstrcmpiA (LPCSTR lpString1, LPCSTR lpString2);
 int lstrlenA (LPCSTR lpString);
-int wsprintfAFields(std::span<char>, LPCSTR, std::span<const NATIVEFORMATARG>);
-template<class... ARGS>
-int wsprintfA(std::span<char> sz, LPCSTR pszFormat, ARGS... args) {
-    const std::array<NATIVEFORMATARG, sizeof...(ARGS)> rgArgs = {NATIVEFORMATARG{args}...};
-    return wsprintfAFields(sz, pszFormat, rgArgs);
-}
 
 BOOL SetKeyboardState(BYTE *rgb);
 HACCEL CreateAcceleratorTableA(LPACCEL rgaccel, int c);

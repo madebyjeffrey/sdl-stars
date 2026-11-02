@@ -6,8 +6,6 @@
 #include <SDL3/SDL.h>
 #include <io.h>
 #include <direct.h>
-#include <algorithm>
-#include <cctype>
 #include <cerrno>
 #include <cstdio>
 #include <cstdlib>
@@ -51,57 +49,6 @@ DWORD win32::GetCurrentThreadId(void) {
 
 int win32::lstrlenA(LPCSTR psz) { return psz ? static_cast<int>(std::strlen(psz)) : 0; }
 int win32::lstrcmpiA(LPCSTR psz1, LPCSTR psz2) { return strcasecmp(psz1, psz2); }
-
-int win32::wsprintfAFields(std::span<char> pszDest, LPCSTR pszFormat, std::span<const NATIVEFORMATARG> args) {
-    char szFormat[1024];
-    const char *psz = pszFormat, *pszStart;
-    std::size_t cch = 0;
-    int cchResult;
-    char chLength, chType;
-    const std::size_t cb = std::min(pszDest.size(), std::size_t{1024});
-
-    if (pszDest.empty() || !pszFormat) return 0;
-    while (*psz && cch < sizeof(szFormat) - 1) {
-        if (*psz != '%') { szFormat[cch++] = *psz++; continue; }
-        szFormat[cch++] = *psz++;
-        if (*psz == '%') {
-            if (cch >= sizeof(szFormat) - 1) goto LInvalid;
-            szFormat[cch++] = *psz++;
-            continue;
-        }
-        pszStart = psz;
-        while (*psz == '-' || *psz == '#' || *psz == '0') psz++;
-        while (std::isdigit(static_cast<unsigned char>(*psz))) psz++;
-        if (*psz == '.') {
-            psz++;
-            while (std::isdigit(static_cast<unsigned char>(*psz))) psz++;
-        }
-        if (cch + static_cast<std::size_t>((psz - pszStart)) + 2 >= sizeof(szFormat)) goto LInvalid;
-        std::memcpy(szFormat + cch, pszStart, static_cast<std::size_t>((psz - pszStart)));
-        cch += static_cast<std::size_t>((psz - pszStart));
-        chLength = 0;
-        if (*psz == 'h' || *psz == 'l') chLength = *psz++;
-        chType = *psz;
-        if (!chType || !std::strchr("diuxXcs", chType)) goto LInvalid;
-        // Win32 LONG is 32-bit even when this process uses Linux's LP64 ABI.
-        if (chLength == 'l' && (chType == 'c' || chType == 's')) goto LInvalid;
-        if (chLength == 'h' && std::strchr("diuxX", chType)) szFormat[cch++] = 'h';
-        szFormat[cch++] = *psz++;
-    }
-    if (*psz) goto LInvalid;
-    szFormat[cch] = 0;
-    cchResult = CchFormatNative(pszDest.first(cb), szFormat, args);
-    if (cchResult < 0) { pszDest[0] = 0; return 0; }
-    if (static_cast<std::size_t>(cchResult) >= cb) {
-        cchResult = static_cast<int>(CchUtf8Prefix(std::string_view(pszDest.data(), cb - 1), cb - 1));
-        pszDest[cchResult] = 0;
-    }
-    return cchResult;
-LInvalid:
-    pszDest[0] = 0;
-    win32::SetLastError(win32::ERROR_INVALID_PARAMETER);
-    return 0;
-}
 
 #ifndef _WIN32
 int _access(const char *pszPath, int mdAccess) { return IAccessNativePath(pszPath, mdAccess); }
