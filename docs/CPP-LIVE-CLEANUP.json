@@ -63,7 +63,7 @@
       "approach": "Retain already-correct concrete owners and matched allocators. Add missing owners to all reviewed temporary buffers, replaceable native slots, protocol resources, history and publication boundaries; preserve allocator choice and nonthrowing failure delivery.",
       "evidence": "docs/CPP-LIVE-OWNERSHIP.json",
       "reviewed_heap_sites": 203,
-      "specific_function_contracts": 100,
+      "specific_function_contracts": 98,
       "native_compiler_translation_units": 32,
       "native_compiler_errors": 0,
       "batch_source_owner": {
@@ -2098,6 +2098,22 @@
           "baseline": "Unchanged; accepted ZIP path bytes, validation rules, archive layout and file publication behavior remain the same.",
           "windows_linux": "Current-source Windows/Linux qualification remains pending.",
           "diff_check": "Pass."
+        },
+        {
+          "batch": "L06 owned ZIP payload buffers",
+          "parent": "fbb3d715",
+          "source_commit": "da95186c",
+          "change": "Replaced SDL_malloc/free payload ownership in ZIP export/import with scoped std::vector buffers, and replaced the local-name heap allocation with its proven bounded stack array. Removed the now unused SDL header.",
+          "macos_debug_build": "Full macos-sdl-debug build passed; no new warnings.",
+          "desktop_unit_tests": "18/18 pass.",
+          "host_units": "29/29 pass, including compiler manifest and ownership policy.",
+          "game_export_workflow": "win32_client_game_export_dummy passed (1/1), including ZIP round trips, malformed archive and unsafe path cases.",
+          "native_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped inputs.",
+          "host_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped inputs.",
+          "tutorial": "Available SDL tutorial smoke checkpoint passes (1/1); full tutorial remains unfinished.",
+          "baseline": "Unchanged; ZIP headers, CRCs, path validation, output bytes and failure cleanup remain unchanged.",
+          "windows_linux": "Current-source Windows/Linux qualification remains pending.",
+          "diff_check": "Pass."
         }
       ],
       "roman_output": {
@@ -2338,6 +2354,12 @@
         "interface": "ZIP safe-name and UTF-8 checks consume std::string_view. Parent path construction consumes root/name views and writes to the exact output span.",
         "bounds": "Archive names retain their declared byte length through validation and directory/file extraction; the parser no longer inserts a terminator just to call string helpers.",
         "remaining": "The archive binary buffers remain explicitly sized; no unbounded string API is used for ZIP entry names."
+      },
+      "zip_payload_buffers": {
+        "status": "implemented and locally verified",
+        "ownership": "FWriteZipEntry and FUnzipLibraryArchive use std::vector for compressed, uncompressed and file payloads. The already bounded local filename uses a fixed 512-byte array; no SDL heap API remains in libraryzip.cpp.",
+        "failure_behavior": "std::bad_alloc maps to ENOMEM and the existing archive failure result. Scope cleanup closes streams and removes unpublished export archives; zlib inflate cleanup remains paired.",
+        "remaining": "Other L05 text/scratch audits, remaining L06 service interfaces and chooser coverage, and L08 platform qualification remain active."
       }
     },
     {
@@ -24626,15 +24648,15 @@
     ]
   },
   "current_checkpoint": {
-    "batch": "L06 bounded ZIP name parsing and path output",
-    "status": "Locally committed as edbe8653. Full macOS SDL Debug build, desktop/host units, game export workflow, native/host regressions and tutorial smoke pass. Remote publication and current-source Windows/Linux desktop qualification remain outstanding.",
-    "parent": "444d25a3",
-    "change": "ZIP entry validation and extraction retain bounded name views through safe-name checks and parent path construction; output writes through the actual destination span.",
+    "batch": "L06 owned ZIP payload buffers",
+    "status": "Locally committed as da95186c. Full macOS SDL Debug build, desktop/host units, ZIP export workflow, native/host regressions and tutorial smoke pass. Remote publication and current-source Windows/Linux qualification remain outstanding.",
+    "parent": "fbb3d715",
+    "change": "All temporary ZIP-owned entry names, tables and payload bytes now use C++ containers; libraryzip.cpp has no SDL heap allocation calls.",
     "verification": {
       "macos_sdl_debug": "Full macos-sdl-debug build passed with no new warnings.",
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass, including compiler manifest and ownership policy.",
-      "game_export_workflow": "win32_client_game_export_dummy passes ZIP round trip, malformed archive and unsafe path cases.",
+      "game_export_workflow": "win32_client_game_export_dummy passes ZIP round trips and malformed/unsafe archive cases.",
       "native_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "host_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "tutorial": "1/1 available SDL tutorial smoke passes.",
@@ -24668,9 +24690,9 @@
     "date": "2026-11-02",
     "branch": "develop",
     "changes": [
-      "ZIP entry bytes keep their recorded length through UTF-8 and safe-path validation.",
-      "The parser does not add a terminator just to validate or join an archive name.",
-      "Parent-directory paths write to their real bounded destination span; archive contents and publication behavior are unchanged."
+      "ZIP entry names and metadata use owned strings/vectors and bounded views.",
+      "Compressed/uncompressed payloads use scoped C++ vectors; the local filename uses its already validated fixed maximum.",
+      "Allocation failures map to ENOMEM and existing export/import failure results. No SDL heap calls remain in libraryzip.cpp."
     ],
     "current_source_audits": {
       "tracked_c_translation_units": 44,
@@ -24780,9 +24802,13 @@
       {
         "commit": "edbe8653",
         "message": "Parse ZIP names through bounded views"
+      },
+      {
+        "commit": "da95186c",
+        "message": "Own ZIP payload buffers with vectors"
       }
     ],
-    "source_commit": "edbe8653"
+    "source_commit": "da95186c"
   },
   "milestone_d_checkpoint": {
     "stage": "D05 caller migrations implemented; D06 platform qualification pending",

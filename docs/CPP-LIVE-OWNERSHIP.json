@@ -683,20 +683,6 @@
       "reason": "The replaceable SDL slot is republished into the existing typed array owner before notifications; native row widths and callback-stable logical IDs stay unchanged."
     },
     {
-      "id": "99",
-      "path": "src/ui/libraryzip.cpp",
-      "scope": "FWriteZipEntry",
-      "owner": "entry/archive cleanup scopes",
-      "reason": "These existing concrete scopes own native streams, temporary paths, ZIP names and binary inflate/write buffers. Retain SDL allocator matching, durable commit/error behavior and exact ZIP byte/CRC operations."
-    },
-    {
-      "id": "101",
-      "path": "src/ui/libraryzip.cpp",
-      "scope": "FUnzipLibraryArchive",
-      "owner": "entry/archive cleanup scopes",
-      "reason": "These existing concrete scopes own native streams, temporary paths, ZIP names and binary inflate/write buffers. Retain SDL allocator matching, durable commit/error behavior and exact ZIP byte/CRC operations."
-    },
-    {
       "id": "102",
       "path": "src/ui/planetpaneui.cpp",
       "scope": "PlanetPaneWndProc",
@@ -2455,117 +2441,6 @@
       "contract": "96"
     },
     {
-      "path": "src/ui/libraryzip.cpp",
-      "line": 150,
-      "scope": "FWriteZipEntry",
-      "operation": "SDL_free",
-      "code": "SDL_free(rgbData)",
-      "normalized_call": "SDL_free(rgbData)",
-      "compiler_context": true,
-      "contract": "99"
-    },
-    {
-      "path": "src/ui/libraryzip.cpp",
-      "line": 157,
-      "scope": "FWriteZipEntry",
-      "operation": "SDL_malloc",
-      "code": "SDL_malloc(*cb != 0 ? static_cast<std::size_t>(*cb) : 1)",
-      "normalized_call": "SDL_malloc(*cb!=0?static_cast<std::size_t>(*cb):1)",
-      "compiler_context": true,
-      "contract": "99",
-      "metadata_result_migration": "L06h: cb is now an optional signed 64-bit size. The unchanged allocation uses its checked, present value after the existing zero-to-UINT32_MAX range check; owner, allocator and one-byte empty allocation remain contract 99."
-    },
-    {
-      "path": "src/ui/libraryzip.cpp",
-      "line": 266,
-      "scope": "FUnzipLibraryArchive",
-      "operation": "SDL_free",
-      "code": "SDL_free(rgbLocalName)",
-      "normalized_call": "SDL_free(rgbLocalName)",
-      "compiler_context": true,
-      "contract": "101"
-    },
-    {
-      "path": "src/ui/libraryzip.cpp",
-      "line": 266,
-      "scope": "FUnzipLibraryArchive",
-      "operation": "SDL_free",
-      "code": "SDL_free(rgbCompressed)",
-      "normalized_call": "SDL_free(rgbCompressed)",
-      "compiler_context": true,
-      "contract": "101"
-    },
-    {
-      "path": "src/ui/libraryzip.cpp",
-      "line": 266,
-      "scope": "FUnzipLibraryArchive",
-      "operation": "SDL_free",
-      "code": "SDL_free(rgbData)",
-      "normalized_call": "SDL_free(rgbData)",
-      "compiler_context": true,
-      "contract": "101"
-    },
-    {
-      "path": "src/ui/libraryzip.cpp",
-      "line": 310,
-      "scope": "FUnzipLibraryArchive",
-      "operation": "SDL_malloc",
-      "code": "SDL_malloc(wLocalNameLength ? wLocalNameLength : 1)",
-      "normalized_call": "SDL_malloc(wLocalNameLength?wLocalNameLength:1)",
-      "compiler_context": true,
-      "contract": "101"
-    },
-    {
-      "path": "src/ui/libraryzip.cpp",
-      "line": 315,
-      "scope": "FUnzipLibraryArchive",
-      "operation": "SDL_free",
-      "code": "SDL_free(rgbLocalName)",
-      "normalized_call": "SDL_free(rgbLocalName)",
-      "compiler_context": true,
-      "contract": "101"
-    },
-    {
-      "path": "src/ui/libraryzip.cpp",
-      "line": 324,
-      "scope": "FUnzipLibraryArchive",
-      "operation": "SDL_malloc",
-      "code": "SDL_malloc(zc.cbCompressed ? zc.cbCompressed : 1)",
-      "normalized_call": "SDL_malloc(zc.cbCompressed?zc.cbCompressed:1)",
-      "compiler_context": true,
-      "contract": "101"
-    },
-    {
-      "path": "src/ui/libraryzip.cpp",
-      "line": 325,
-      "scope": "FUnzipLibraryArchive",
-      "operation": "SDL_malloc",
-      "code": "SDL_malloc(zc.cbUncompressed ? zc.cbUncompressed : 1)",
-      "normalized_call": "SDL_malloc(zc.cbUncompressed?zc.cbUncompressed:1)",
-      "compiler_context": true,
-      "contract": "101"
-    },
-    {
-      "path": "src/ui/libraryzip.cpp",
-      "line": 348,
-      "scope": "FUnzipLibraryArchive",
-      "operation": "SDL_free",
-      "code": "SDL_free(rgbCompressed)",
-      "normalized_call": "SDL_free(rgbCompressed)",
-      "compiler_context": true,
-      "contract": "101"
-    },
-    {
-      "path": "src/ui/libraryzip.cpp",
-      "line": 348,
-      "scope": "FUnzipLibraryArchive",
-      "operation": "SDL_free",
-      "code": "SDL_free(rgbData)",
-      "normalized_call": "SDL_free(rgbData)",
-      "compiler_context": true,
-      "contract": "101"
-    },
-    {
       "path": "src/ui/planetpaneui.cpp",
       "line": 95,
       "scope": "PlanetPaneWndProc",
@@ -2657,6 +2532,14 @@
         ],
         "full_platform_jobs": "Skipped by opt-in policy; no native Windows execution inferred."
       }
+    },
+    {
+      "batch": "L06 ZIP export/import buffer ownership",
+      "source_commit": "da95186c",
+      "retired_heap_sites": 11,
+      "change": "Removed raw SDL allocation/free ownership from libraryzip.cpp. ZIP names and tables use std::vector/std::string; payloads use per-entry vectors; the bounded local filename comparison uses a fixed array. Allocation failures are caught and retain error/temporary cleanup behavior.",
+      "verification": "Full macOS SDL Debug build; desktop 18/18; host 29/29 including compiler and ownership manifests; ZIP game-export workflow 1/1; native and host regressions 519 matches each with zero differences; tutorial smoke 1/1.",
+      "remaining": "Other modules and current-source Windows/Linux qualification remain in the cleanup scope."
     }
   ],
   "retired_path_text_sites": [
