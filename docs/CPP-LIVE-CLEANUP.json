@@ -25086,12 +25086,13 @@
   "working_tree_checkpoint": {
     "date": "2026-11-02",
     "branch": "develop",
-    "batch": "L05 bounded library metadata text inputs",
-    "source_commit": "8dbaf423",
+    "batch": "L06 bounded metadata outputs and required result references",
+    "source_commit": "4a01bfe3",
     "status": "Verified and committed locally on develop. macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Current-source Windows SDL desktop and Linux desktop qualification remain outstanding.",
     "changes": [
-      "FWriteLibraryMetadata and its values helper accept string_view for the directory, library name and exchange name.",
-      "Metadata formatting, atomic publication and saved contents remain unchanged; the linked witness provider uses the same bounded interface."
+      "FReadLibraryMetadata accepts bounded spans for metadata and exchange names, a directory view, and required references for player/played outputs.",
+      "All four callers pass their existing array spans and non-null output values; the legacy metadata fallback reuses the exact written name length.",
+      "Capacity checks, format-version handling and metadata validation remain unchanged."
     ],
     "verification": {
       "macos_sdl_debug": "make compile passes with strict warnings and dual-header checks.",
@@ -25377,6 +25378,10 @@
       {
         "commit": "8dbaf423",
         "message": "Write library metadata from bounded views"
+      },
+      {
+        "commit": "4a01bfe3",
+        "message": "Read library metadata into spans"
       }
     ],
     "parent": "4867b0c5"
