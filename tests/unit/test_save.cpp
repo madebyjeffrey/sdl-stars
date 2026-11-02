@@ -11,6 +11,13 @@
 #include <iterator>
 #include "record_io.h"
 
+static bool FGetPrevLogRtForTest(APPSESSION &app, HDR &hdr, std::span<std::uint8_t> rgbPayload) {
+    const auto hdrPrev = FGetPrevLogRt(app, rgbPayload);
+    if (!hdrPrev) return false;
+    hdr = *hdrPrev;
+    return true;
+}
+
 static int cFileInputCalls;
 static int cFileInputDirty;
 static std::string szFileInputAttempt;
@@ -665,7 +672,7 @@ static void test_invalid_written_names(void) {
     TEST_CHECK(cNameRecords == 0 && app.state.idsFileError == idsGameFileAppearsCorruptUnableLoadFile);
     app.state.idsFileError = 0;
     WriteBattlePlan(app, &plan, 1);
-    TEST_CHECK(!FGetPrevLogRt(app, &hdr, std::span{rgb}) && app.state.idsFileError == idsGameFileAppearsCorruptUnableLoadFile);
+    TEST_CHECK(!FGetPrevLogRtForTest(app, hdr, std::span{rgb}) && app.state.idsFileError == idsGameFileAppearsCorruptUnableLoadFile);
     app.state.idsFileError = 0;
     WriteRtString(app, "\xff");
     TEST_CHECK(cNameRecords == 0 && app.state.idsFileError == idsGameFileAppearsCorruptUnableLoadFile);
@@ -756,7 +763,7 @@ static void test_utf8_raw_battle_plan(void) {
     if (cbPacked3) cOut = static_cast<std::int16_t>(*cbPacked3);
     TEST_ASSERT(!cbPacked3);
     WriteBattlePlan(app, &btlplan, 1);
-    TEST_ASSERT(FGetPrevLogRt(app, &hdr, std::span{rgb}));
+    TEST_ASSERT(FGetPrevLogRtForTest(app, hdr, std::span{rgb}));
     TEST_CHECK(hdr.rt == rtBtlPlan && hdr.cb == sizeof(BTLPLAN) + 1 && rgb[4] == 0);
     TEST_ASSERT(UnpackBattlePlan(app, std::span<const uint8_t>(rgb, hdr.cb), &btlplanRead, 0));
     TEST_CHECK(!strcmp(btlplanRead.szName, btlplan.szName));
@@ -982,7 +989,7 @@ static void test_battle_plan_deletion_wire(void) {
     plan.iplr = 3; plan.iplan = 13; plan.mdTactic = 2; plan.unused1 = 3; plan.fDelete = 1; plan.fDumpCargo = 1;
     plan.mdTarget1 = 8; plan.mdTarget2 = 7; plan.iplrAttack = 31; plan.unused2 = 7;
     WriteBattlePlan(app, &plan, 1);
-    TEST_ASSERT(FGetPrevLogRt(app, &hdr, std::span{rgb}));
+    TEST_ASSERT(FGetPrevLogRtForTest(app, hdr, std::span{rgb}));
     TEST_CHECK(hdr.rt == rtBtlPlan && hdr.cb == 2 && memcmp(rgb, deleted, sizeof(deleted)) == 0);
 }
 
