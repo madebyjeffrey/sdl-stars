@@ -114,14 +114,14 @@ int main(void) {
     errno=0;CHECK(!PfNativeOpen("\xff", static_cast<NATIVEFILEMODE>(255)) && errno==EINVAL);
     snprintf(other,sizeof(other),"%s/renamed",dir);
     CHECK(IRenameNativePath(path,other,1,0)==0);
-    NATIVEDIR *pd=PdirNativeOpen(dir);CHECK(pd);int found=0;std::optional<std::string> entry;
-    while((entry=SzNativeReadDir(pd)))if(!strcmp(entry->c_str(),"renamed"))found++;
-    CHECK(found==1 && !errno && !SzNativeReadDir(pd) && !errno && ICloseNativeDir(pd)==0);
+    auto pd=PdirNativeOpen(dir);CHECK(pd);int found=0;std::optional<std::string> entry;
+    while((entry=SzNativeReadDir(pd.get())))if(!strcmp(entry->c_str(),"renamed"))found++;
+    CHECK(found==1 && !errno && !SzNativeReadDir(pd.get()) && !errno); pd.reset();
     pd=PdirNativeOpen(dir);CHECK(pd);
     {
-        const auto szEntry=SzNativeReadDir(pd);CHECK(szEntry);
-        errno=EBUSY;CHECK(!SzNativeReadDir(pd) && !errno);
-        CHECK(ICloseNativeDir(pd)==0 && *szEntry=="renamed");
+        const auto szEntry=SzNativeReadDir(pd.get());CHECK(szEntry);
+        errno=EBUSY;CHECK(!SzNativeReadDir(pd.get()) && !errno);
+        pd.reset(); CHECK(*szEntry=="renamed");
     }
     errno=0;CHECK(!SzNativeReadDir(nullptr) && errno==EBADF);
     CHECK(IRemoveNativePath(other,0)==0 && IRemoveNativePath(dir,1)==0);

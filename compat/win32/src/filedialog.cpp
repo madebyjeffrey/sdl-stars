@@ -101,20 +101,19 @@ static BOOL FJoinFile(std::span<char> pszOut, std::string_view szDir, std::strin
 }
 static void FileError(HWND hwnd, LPCSTR psz) { CompatChoiceIO().pfnMessageBoxA(hwnd, psz, "File selection", win32::MB_OK | win32::MB_ICONEXCLAMATION); }
 static BOOL FRefreshFiles(HWND hwnd, COMPATFILEDIALOG *lp) {
-    NATIVEDIR *lpdir;
     const char *pszEntry;
     std::optional<std::string> szEntry;
+    NATIVEDIROWNER lpdir{nullptr, ICloseNativeDir};
     std::optional<NATIVEFILEINFO> st;
     char szPath[PATH_MAX], szLabel[PATH_MAX + 4];
     std::size_t i;
     LRESULT iEntry;
     HWND hwndList = win32::GetDlgItem(hwnd, ID_FILE_LIST);
     lpdir = PdirNativeOpen(lp->szDir);
-    NATIVEOWNER<NATIVEDIR, ICloseNativeDir> directoryOwner(lpdir);
     if (!lpdir) { FileError(hwnd, "This directory cannot be read."); return 0; }
     FreeFileEntries(lp);
     for (;;) {
-        errno = 0; szEntry = SzNativeReadDir(lpdir);
+        errno = 0; szEntry = SzNativeReadDir(lpdir.get());
         if (!szEntry) { if (errno != 0) lp->dwError = win32::CDERR_INITIALIZATION; break; }
         pszEntry = szEntry->c_str();
         if (!FUtf8Valid(std::string_view{pszEntry, szEntry->size()})) {
@@ -128,7 +127,7 @@ static BOOL FRefreshFiles(HWND hwnd, COMPATFILEDIALOG *lp) {
         try { lp->rgentry.push_back({*szEntry, st->fDirectory}); }
         catch (const std::bad_alloc &) { lp->dwError = win32::CDERR_MEMALLOCFAILURE; break; }
     }
-    directoryOwner.reset();
+    lpdir.reset();
     if (lp->dwError) { win32::EndDialog(hwnd, 0); return 0; }
     if (lp->rgentry.size() > 1) std::sort(lp->rgentry.begin(), lp->rgentry.end(), FFileEntryBefore);
     win32::SendMessageA(hwndList, win32::LB_RESETCONTENT, 0, 0);

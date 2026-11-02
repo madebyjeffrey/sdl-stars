@@ -20,6 +20,7 @@
 #include <random>
 #include <string>
 #include <system_error>
+#include <utility>
 #include <vector>
 #ifdef _WIN32
 #ifndef NOMINMAX
@@ -200,7 +201,7 @@ template <class R, class Fn> static R FileCall(NATIVEFILE *pf, R failure, Fn fn)
     catch (const fs::filesystem_error &err) { SetError(err.code()); }
     catch (...) { errno = EIO; }
     if (pf) pf->Fail(errno);
-    return failure;
+    return std::move(failure);
 }
 
 NATIVEFILE *PfNativeOpenFlags(const char *psz, NATIVEFILEOPENOPTIONS nfo) {
@@ -627,13 +628,13 @@ struct NATIVEDIR {
     fs::directory_iterator iter;
     bool fFirst = true;
 };
-NATIVEDIR *PdirNativeOpen(const char *psz) {
-    if (!FPath(psz)) return nullptr;
-    return FileCall<NATIVEDIR *>(nullptr, nullptr, [&]() -> NATIVEDIR * {
+NATIVEDIROWNER PdirNativeOpen(std::string_view szPath) {
+    if (!FPath(szPath)) return {nullptr, ICloseNativeDir};
+    return FileCall<NATIVEDIROWNER>(nullptr, {nullptr, ICloseNativeDir}, [&]() -> NATIVEDIROWNER {
         auto dir = std::make_unique<NATIVEDIR>(); std::error_code ec;
-        dir->iter = fs::directory_iterator(PathFromUtf8(psz), ec);
-        if (ec) { SetError(ec); return nullptr; }
-        return dir.release();
+        dir->iter = fs::directory_iterator(PathFromUtf8(szPath), ec);
+        if (ec) { SetError(ec); return {nullptr, ICloseNativeDir}; }
+        return {dir.release(), ICloseNativeDir};
     });
 }
 std::optional<std::string> SzNativeReadDir(NATIVEDIR *dir) {

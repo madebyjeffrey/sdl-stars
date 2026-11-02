@@ -16,7 +16,7 @@ int main(void) {
     HFILE hf, hfOther;
     OFSTRUCT of;
     DWORD dwHigh;
-    NATIVEDIR *lpdir;
+    NATIVEDIROWNER lpdir{nullptr, ICloseNativeDir};
     std::optional<std::string> szEntry;
     BOOL fFound = 0;
 
@@ -37,8 +37,8 @@ int main(void) {
     const auto szUri = SzCompatFileUri(szOther);
     CHECK(szUri && szUri->starts_with("file:///") && szUri->find("%C3%A9-%CE%A9") != std::string::npos);
     lpdir = PdirNativeOpen(pszDir); CHECK(lpdir);
-    while ((szEntry = SzNativeReadDir(lpdir))) if (*szEntry == "other.bin") fFound = 1;
-    CHECK(ICloseNativeDir(lpdir) == 0 && fFound);
+    while ((szEntry = SzNativeReadDir(lpdir.get()))) if (*szEntry == "other.bin") fFound = 1;
+    lpdir.reset(); CHECK(fFound);
 
     // Sparse sizing tests 64-bit metadata without writing gigabytes of data.
     CHECK(FTestSparseFile(szOther));

@@ -135,11 +135,12 @@ std::optional<std::string> SzNativeCwd();
 std::optional<std::size_t> CchCanonicalNativePath(std::string_view szPath, std::span<char> szOut);
 std::optional<std::size_t> CchNativeCwd(std::span<char> szOut);
 int IChangeNativeCwd(const char *psz);
-NATIVEDIR *PdirNativeOpen(const char *psz);
 // POSIX entry bytes are returned verbatim so callers can report unsupported
 // names; validate UTF-8 before using an entry as a path. No value: errno zero at end, or an error.
 std::optional<std::string> SzNativeReadDir(NATIVEDIR *pdir);
 int ICloseNativeDir(NATIVEDIR *pdir);
+using NATIVEDIROWNER = std::unique_ptr<NATIVEDIR, decltype(&ICloseNativeDir)>;
+NATIVEDIROWNER PdirNativeOpen(std::string_view szPath);
 
 // Small owned tokens keep native pointers/descriptors out of game storage.
 [[nodiscard]] NATIVEFILEOPENRESULT HfNativeOpenLegacy(const char *psz, NATIVEFILEOPENOPTIONS nfo);
@@ -159,14 +160,6 @@ public:
     NATIVEFILE *Release() noexcept { NATIVEFILE *pfOut = pf; pf = nullptr; return pfOut; }
     StarsNativeFileGuard(const StarsNativeFileGuard &) = delete;
     StarsNativeFileGuard &operator=(const StarsNativeFileGuard &) = delete;
-};
-class StarsNativeDirGuard {
-    NATIVEDIR *pdir;
-public:
-    explicit StarsNativeDirGuard(NATIVEDIR *pdir) noexcept : pdir(pdir) {}
-    ~StarsNativeDirGuard() noexcept { if (pdir) ICloseNativeDir(pdir); }
-    StarsNativeDirGuard(const StarsNativeDirGuard &) = delete;
-    StarsNativeDirGuard &operator=(const StarsNativeDirGuard &) = delete;
 };
 #pragma pack(pop)
 #endif

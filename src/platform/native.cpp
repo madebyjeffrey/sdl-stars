@@ -209,14 +209,14 @@ void MakeDir(const char *szDir) { ICreateNativeDirectory(szDir, 0777); }
 int CreateNativeDir(const char *pszDir) { return ICreateNativeDirectory(pszDir, 0777); }
 std::int16_t FEnsureNativeDir(const char *pszDir) { return FEnsureNativeDirectory(pszDir); }
 std::int16_t FNativeEnumerateDirectory(APPSESSION &app, const char *pszDir, FNativeDirectoryEntryProc pfnEntry, void *lpData) {
-    NATIVEDIR *pdir;
     const char *pszEntry;
     std::optional<std::string> szEntry;
-    if (!pfnEntry || !(pdir = PdirNativeOpen(pszDir))) return 0;
-    StarsNativeDirGuard closeDirectory(pdir);
+    if (!pfnEntry) return 0;
+    NATIVEDIROWNER directory = PdirNativeOpen(pszDir);
+    if (!directory) return 0;
     for (;;) {
         errno = 0;
-        szEntry = SzNativeReadDir(pdir);
+        szEntry = SzNativeReadDir(directory.get());
         if (!szEntry) return errno == 0;
         pszEntry = szEntry->c_str();
         if (!FUtf8Valid(std::string_view{pszEntry, szEntry->size()})) { errno = EILSEQ; return 0; }
