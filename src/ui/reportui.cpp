@@ -701,7 +701,7 @@ void DrawVCReport(APPSESSION &app, HDC hdc) {
                 } else {
                     idsT = ids;
                 }
-                cch = win32::wsprintfA(app.state.szWork, app.state.PCTD, vcVal);
+                cch = CchSprintf(app.state.szWork, app.state.PCTD, vcVal);
                 if (i == 3) {
                     CchAppendUtf8Prefix(std::span{app.state.szWork}, "%");
                     cch++;
@@ -927,7 +927,7 @@ void DrawHistoryReport(APPSESSION &app, HDC hdc) {
     if (cDrawn > 0) {
         for (i = 0; i <= cDrawn; i++) {
             xCur = static_cast<std::int16_t>((dx * i)) / cDrawn + rcChart.left;
-            cch = win32::wsprintfA(szT, app.state.PCTD, iYearBase + 2400 + i * j);
+            cch = CchSprintf(szT, app.state.PCTD, iYearBase + 2400 + i * j);
             CtrTextOut(hdc, xCur, rcChart.bottom + 6, szT, cch);
             if (i > 0 && i < cDrawn) {
                 win32::PatBlt(hdc, xCur, rcChart.top - 2, 1, dy + 4, win32::PATCOPY);
@@ -975,7 +975,7 @@ void DrawHistoryReport(APPSESSION &app, HDC hdc) {
             yCur = rcChart.bottom - LOWORD(static_cast<std::int32_t>((static_cast<std::int32_t>((dy * cCur)) / cScaleMax)));
             if (yCur < app.state.dyArial8 / 2 + rcChart.top)
                 break;
-            cch = win32::wsprintfA(app.state.szWork, app.state.PCTLD, cCur);
+            cch = CchSprintf(app.state.szWork, app.state.PCTLD, cCur);
             RightTextOut(app, hdc, xCur, yCur - app.state.dyArial8 / 2, app.state.szWork, cch, 0);
             win32::PatBlt(hdc, rcChart.left - 2, yCur, dx + 4, 1, win32::PATCOPY);
         }
@@ -1267,7 +1267,7 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
             RightTextOut(app, hdc, prc->right, prc->top, szT, cch, 0);
             break;
         case colPlanetCapacity:
-            cch = win32::wsprintfA(szT, app.state.PCTDPCTPCT, CapacityIO().pfnPctPlanetCapacity(app, lppl));
+            cch = CchSprintf(szT, app.state.PCTDPCTPCT, CapacityIO().pfnPctPlanetCapacity(app, lppl));
             RightTextOut(app, hdc, prc->right, prc->top, szT, cch, 0);
             break;
         case colPlanetDefense:
@@ -1276,7 +1276,7 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
             if (i > 0) {
                 CalcPctSurvive(app, lppl, &pct, nullptr);
                 pct = static_cast<float>((static_cast<double>(1.0) - pct));
-                cch = win32::wsprintfA(szT, app.state.PCTDXPCTDPCTPCT, LOWORD(static_cast<std::int32_t>((static_cast<double>(pct) * 100))),
+                cch = CchSprintf(szT, app.state.PCTDXPCTDPCTPCT, LOWORD(static_cast<std::int32_t>((static_cast<double>(pct) * 100))),
                                LOWORD(static_cast<std::int32_t>(((pct - static_cast<double>(static_cast<std::int16_t>(LOWORD(static_cast<std::int32_t>((static_cast<double>(pct) * 100))))) / 100.0) * 10000))));
                 goto DrawPlusDef;
             }
@@ -1304,7 +1304,7 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
             cch = TextIO().pfnCchGetString(app, idsN100, std::span{szT});
             dx = LOWORD(GetTextExtent(hdc, szT, cch));
             i = PlanetQueryIO().pfnDesirability(app, lppl, app.state.idPlayer);
-            cch = win32::wsprintfA(szT, app.state.PCTDPCTPCT, i);
+            cch = CchSprintf(szT, app.state.PCTDPCTPCT, i);
             if (i <= 10) {
                 win32::SetTextColor(hdc, i >= 0 ? 32639 : 0xff);
             }
@@ -1362,9 +1362,9 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
                 i -= win32::MulDiv(i, app.state.rgplr[app.state.idPlayer].pctResearch, 100);
             }
             TextIO().pfnCchGetString(app, idsD4, std::span{szT});
-            cch = win32::wsprintfA(app.state.szWork, szT, i);
+            cch = CchSprintf(app.state.szWork, szT, i);
             RightTextOut(app, hdc, prc->left + dx, prc->top, app.state.szWork, cch, 0);
-            cch = win32::wsprintfA(szT, app.state.PCTD, j);
+            cch = CchSprintf(szT, app.state.PCTD, j);
             RightTextOut(app, hdc, prc->right, prc->top, szT, cch, 0);
         }
         break;
@@ -1397,7 +1397,7 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
                 psz = szObjectName.data();
             } else {
                 psz = szT;
-                win32::wsprintfA(szT, TextIO().pfnCompressed(app, idsSpaceDD).data(), lpfl->pt.x, lpfl->pt.y);
+                CchSprintf(szT, TextIO().pfnCompressed(app, idsSpaceDD).data(), lpfl->pt.x, lpfl->pt.y);
             }
             win32::ExtTextOutA(hdc, prc->left, prc->top, win32::ETO_CLIPPED, prc, psz, std::strlen(psz), nullptr);
             break;
@@ -1456,7 +1456,7 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
                 psz = app.state.szDblDash;
             } else {
                 psz = szT;
-                cch = win32::wsprintfA(szT, app.state.PCTDPCTPCT, i);
+                cch = CchSprintf(szT, app.state.PCTDPCTPCT, i);
             }
             RightTextOut(app, hdc, prc->right - 5, prc->top, psz, cch, 0);
             break;
@@ -1485,7 +1485,7 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
                 psz = szObjectName.data();
             } else {
                 psz = szT;
-                win32::wsprintfA(szT, TextIO().pfnCompressed(app, idsSpaceDD).data(), BdvFromLp(app, lpbd).pt().x(), BdvFromLp(app, lpbd).pt().y());
+                CchSprintf(szT, TextIO().pfnCompressed(app, idsSpaceDD).data(), BdvFromLp(app, lpbd).pt().x(), BdvFromLp(app, lpbd).pt().y());
             }
             if (BdvFromLp(app, lpbd).pt().x() == app.state.sel.scan.pt.x && BdvFromLp(app, lpbd).pt().y() == app.state.sel.scan.pt.y) {
                 win32::SetTextColor(hdc, 127);
@@ -1570,7 +1570,7 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
                     psz = szObjectName.data();
                 } else {
                     psz = szT;
-                    win32::wsprintfA(szT, TextIO().pfnCompressed(app, idsSpaceDD).data(), lpfl->pt.x, lpfl->pt.y);
+                    CchSprintf(szT, TextIO().pfnCompressed(app, idsSpaceDD).data(), lpfl->pt.x, lpfl->pt.y);
                 }
                 win32::ExtTextOutA(hdc, prc->left, prc->top, win32::ETO_CLIPPED, prc, psz, std::strlen(psz), nullptr);
                 break;
@@ -1580,7 +1580,7 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
                 lpsz = app.state.rglpshdef[lpfl->iPlayer][i].hul.szClass;
                 win32::ExtTextOutA(hdc, prc->left, prc->top, win32::ETO_CLIPPED, prc, lpsz, std::strlen(lpsz), nullptr);
                 psz = szT;
-                cch = win32::wsprintfA(szT, app.state.PCTD, lpfl->rgcsh[i]);
+                cch = CchSprintf(szT, app.state.PCTD, lpfl->rgcsh[i]);
                 chT = '+';
                 RightTextOut(app, hdc, 6 * dx + prc->right - LOWORD(GetTextExtent(hdc, &chT, 1)), prc->top, psz, cch, 0);
                 if (j <= 1)
@@ -1982,13 +1982,13 @@ TryTier2:
                 psz = szObjectName.data();
                 CchCopyUtf8Prefix(std::span{szT}, psz);
             } else {
-                win32::wsprintfA(szT, TextIO().pfnCompressed(app, idsSpaceDD).data(), lpfl1->pt.x, lpfl1->pt.y);
+                CchSprintf(szT, TextIO().pfnCompressed(app, idsSpaceDD).data(), lpfl1->pt.x, lpfl1->pt.y);
             }
             if (lpfl2->idPlanet != idPlanetDeepSpace) {
                 szObjectName = TextIO().pfnPlanetName(app, lpfl2->idPlanet);
                 psz = szObjectName.data();
             } else {
-                win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsSpaceDD).data(), lpfl2->pt.x, lpfl2->pt.y);
+                CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsSpaceDD).data(), lpfl2->pt.x, lpfl2->pt.y);
                 psz = app.state.szWork;
             }
             iRet = std::strcmp(szT, psz);
@@ -2122,13 +2122,13 @@ TryTier2:
                 psz = szObjectName.data();
                 CchCopyUtf8Prefix(std::span{szT}, psz);
             } else {
-                win32::wsprintfA(szT, TextIO().pfnCompressed(app, idsSpaceDD).data(), BdvFromLp(app, lpbd1).pt().x(), BdvFromLp(app, lpbd1).pt().y());
+                CchSprintf(szT, TextIO().pfnCompressed(app, idsSpaceDD).data(), BdvFromLp(app, lpbd1).pt().x(), BdvFromLp(app, lpbd1).pt().y());
             }
             if (BdvFromLp(app, lpbd2).idPlanet() != idPlanetNone) {
                 szObjectName = TextIO().pfnPlanetName(app, BdvFromLp(app, lpbd2).idPlanet());
                 psz = szObjectName.data();
             } else {
-                win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsSpaceDD).data(), BdvFromLp(app, lpbd2).pt().x(), BdvFromLp(app, lpbd2).pt().y());
+                CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsSpaceDD).data(), BdvFromLp(app, lpbd2).pt().x(), BdvFromLp(app, lpbd2).pt().y());
                 psz = app.state.szWork;
             }
             iRet = std::strcmp(szT, psz);
@@ -2212,13 +2212,13 @@ TryTier2:
                     psz = szObjectName.data();
                     CchCopyUtf8Prefix(std::span{szT}, psz);
                 } else {
-                    win32::wsprintfA(szT, TextIO().pfnCompressed(app, idsSpaceDD).data(), lpfl1->pt.x, lpfl1->pt.y);
+                    CchSprintf(szT, TextIO().pfnCompressed(app, idsSpaceDD).data(), lpfl1->pt.x, lpfl1->pt.y);
                 }
                 if (lpfl2->idPlanet != idPlanetDeepSpace) {
                     szObjectName = TextIO().pfnPlanetName(app, lpfl2->idPlanet);
                     psz = szObjectName.data();
                 } else {
-                    win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsSpaceDD).data(), lpfl2->pt.x, lpfl2->pt.y);
+                    CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsSpaceDD).data(), lpfl2->pt.x, lpfl2->pt.y);
                     psz = app.state.szWork;
                 }
                 iRet = std::strcmp(szT, psz);
