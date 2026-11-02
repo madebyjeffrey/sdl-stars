@@ -107,13 +107,17 @@ bool GetDateTimeSz(std::span<char> szDate, std::span<char> szTime);
  * int32_t values to %ld. CchSprintf formats like wsprintf with l read as 32
  * bits on every platform. LMulDiv rounds like Win32 MulDiv.
  */
-int CchSprintfFields(std::span<char> sz, const char *szFormat, std::span<const NATIVEFORMATARG> rgArgs);
+int CchSprintfFields(std::span<char> sz, std::string_view szFormat, std::span<const NATIVEFORMATARG> rgArgs);
 template<class... ARGS>
-int CchSprintf(std::span<char> sz, const char *szFormat, ARGS... args) {
+int CchSprintf(std::span<char> sz, std::string_view szFormat, ARGS... args) {
     const std::array<NATIVEFORMATARG, sizeof...(ARGS)> rgArgs = {NATIVEFORMATARG{args}...};
     return CchSprintfFields(sz, szFormat, rgArgs);
 }
 // Bounded native formatting uses standard C widths and reports truncation.
+template<class... ARGS>
+int CchSnprintf(std::span<char> psz, std::string_view szFormat, ARGS... args) {
+    return CchFormatNativeArgs(CchFormatNative, psz, szFormat, args...);
+}
 template<class... ARGS>
 int CchSnprintf(std::span<char> psz, const char *pszFormat, ARGS... args) {
     return CchFormatNativeArgs(CchFormatNative, psz, pszFormat, args...);

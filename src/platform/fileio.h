@@ -105,18 +105,22 @@ std::optional<std::string> SzGetNativeLine(NATIVEFILE *pf);
 int IPutNativeString(std::string_view sz, NATIVEFILE *pf);
 int CchNativePrintfFields(NATIVEFILE *pf, std::string_view szFormat, std::span<const NATIVEFORMATARG> rgArgs);
 template<class... ARGS>
+int CchNativePrintf(NATIVEFILE *pf, std::string_view szFormat, ARGS... args) {
+    const std::array<NATIVEFORMATARG, sizeof...(ARGS)> rgArgs = {NATIVEFORMATARG{args}...};
+    return CchNativePrintfFields(pf, szFormat, rgArgs);
+}
+template<class... ARGS>
 int CchNativePrintf(NATIVEFILE *pf, const char *pszFormat, ARGS... args) {
     if (!pszFormat) { errno = EINVAL; return -1; }
-    const std::array<NATIVEFORMATARG, sizeof...(ARGS)> rgArgs = {NATIVEFORMATARG{args}...};
-    return CchNativePrintfFields(pf, pszFormat, rgArgs);
+    return CchNativePrintf(pf, std::string_view{pszFormat}, args...);
 }
 // Metadata's ASCII integer fields: %d and %lld, with scanf whitespace rules.
 using NATIVEINTEGERFIELD = std::variant<int *, long long *>;
-int CNativeScanFields(NATIVEFILE *pf, const char *pszFormat, std::span<const NATIVEINTEGERFIELD> rgFields);
+int CNativeScanFields(NATIVEFILE *pf, std::string_view szFormat, std::span<const NATIVEINTEGERFIELD> rgFields);
 template<class... FIELDS>
-int CNativeScan(NATIVEFILE *pf, const char *pszFormat, FIELDS... fields) {
+int CNativeScan(NATIVEFILE *pf, std::string_view szFormat, FIELDS... fields) {
     const std::array<NATIVEINTEGERFIELD, sizeof...(FIELDS)> rgFields = {NATIVEINTEGERFIELD{fields}...};
-    return CNativeScanFields(pf, pszFormat, rgFields);
+    return CNativeScanFields(pf, szFormat, rgFields);
 }
 
 // Empty metadata results retain the native errno failure detail. inspect reports

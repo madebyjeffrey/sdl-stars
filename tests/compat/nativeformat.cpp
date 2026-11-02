@@ -47,6 +47,8 @@ bool FTests() {
     CHECK(NATIVEFORMATTER{}(sz, "%p", lp) == std::snprintf(sz, sizeof(sz), "%p", static_cast<void *>(lp)));
     const char rgch[] = {'a', 'b', 'c', 'x'};
     CHECK(NATIVEFORMATTER{}(sz, "[%5.2s]", std::string_view(rgch, 3)) == 7 && !std::strcmp(sz, "[   ab]"));
+    const char szFormat[] = {'v', 'a', 'l', 'u', 'e', '=', '%', 'd'};
+    CHECK(NATIVEFORMATTER{}(sz, std::string_view{szFormat, sizeof(szFormat)}, 7) == 7 && !std::strcmp(sz, "value=7"));
     CHECK(NATIVEFORMATTER{}(sz, "%s", std::string("owned")) == 5 && !std::strcmp(sz, "owned"));
     struct { signed int c : 5; unsigned int u : 5; } bits = {-3, 29};
     CHECK(NATIVEFORMATTER{}(sz, "%d %u", bits.c, bits.u) == 5 && !std::strcmp(sz, "-3 29"));

@@ -232,6 +232,9 @@ int main(void) {
     errno=0;CHECK(CNativeScan(pf,"%d")==0 && errno==EINVAL && LNativePosition(pf)==0);
     errno=0;CHECK(CNativeScan(pf,"%d",static_cast<int *>(nullptr))==0 && errno==EINVAL && LNativePosition(pf)==0);
     CHECK(ICloseNativeFile(pf)==0);
+    pf=PfNativeTemporary();CHECK(pf && IPutNativeString("8",pf)==0 && ISeekNativeFile(pf,0,NATIVESEEKORIGIN::begin)==0);
+    const char szScanFormat[] = {'%', 'd'};
+    CHECK(CNativeScan(pf,std::string_view{szScanFormat,sizeof(szScanFormat)},&version)==1 && version==8 && ICloseNativeFile(pf)==0);
     puts("File service binary, read/write transition, EOF/seek, exclusive creation, live sizes, truncate/extend, identity and metadata tests passed");
     return 0;
 }

@@ -64,20 +64,29 @@ int CchFormatNative(std::span<char> rgch, std::string_view szFormat,
 using NATIVEFORMATPROC = int (*)(std::span<char>, std::string_view, std::span<const NATIVEFORMATARG>);
 
 template<class... ARGS>
+int CchFormatNativeArgs(NATIVEFORMATPROC pfnFormat, std::span<char> rgch, std::string_view szFormat, const ARGS &... args) {
+    const std::array<NATIVEFORMATARG, sizeof...(ARGS)> rgArgs = {NATIVEFORMATARG{args}...};
+    return pfnFormat(rgch, szFormat, rgArgs);
+}
+
+template<class... ARGS>
 int CchFormatNativeArgs(NATIVEFORMATPROC pfnFormat, std::span<char> rgch, const char *pszFormat, const ARGS &... args) {
     if (!pszFormat) {
         if (!rgch.empty()) rgch[0] = 0;
         errno = EINVAL;
         return -1;
     }
-    const std::array<NATIVEFORMATARG, sizeof...(ARGS)> rgArgs = {NATIVEFORMATARG{args}...};
-    return pfnFormat(rgch, std::string_view(pszFormat), rgArgs);
+    return CchFormatNativeArgs(pfnFormat, rgch, std::string_view{pszFormat}, args...);
 }
 
 // A concrete typed provider keeps fault injection at the real format boundary.
 struct NATIVEFORMATTER {
     NATIVEFORMATPROC pfnFormat;
     constexpr NATIVEFORMATTER(NATIVEFORMATPROC pfnFormat = CchFormatNative) : pfnFormat(pfnFormat) {}
+    template<class... ARGS>
+    int operator()(std::span<char> rgch, std::string_view szFormat, ARGS... args) const {
+        return CchFormatNativeArgs(pfnFormat, rgch, szFormat, args...);
+    }
     template<class... ARGS>
     int operator()(std::span<char> rgch, const char *pszFormat, ARGS... args) const {
         return CchFormatNativeArgs(pfnFormat, rgch, pszFormat, args...);

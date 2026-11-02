@@ -90,40 +90,38 @@ void qsort16(APPSESSION &app, void *base, std::size_t count, std::size_t width, 
 // before formatting, since its arguments are 32-bit. Like wsprintf, it
 // writes at most the destination size or 1024 bytes, the terminator included,
 // and returns the characters it wrote.
-int CchSprintfFields(std::span<char> sz, const char *szFormat, std::span<const NATIVEFORMATARG> args) {
+int CchSprintfFields(std::span<char> sz, std::string_view szFormat, std::span<const NATIVEFORMATARG> args) {
     std::string szFmt;
-    std::size_t      cbFmt;
-    const char *pchIn;
+    const std::size_t iEnd = szFormat.find('\0') == std::string_view::npos ? szFormat.size() : szFormat.find('\0');
+    std::size_t i;
     int         cch;
     const std::size_t cb = std::min(sz.size(), std::size_t{1024});
 
     if (sz.empty()) return 0;
 
-    // Dropping l only shortens the format, so a copy its size holds it.
-    cbFmt = std::strlen(szFormat) + 1;
     try {
-        szFmt.reserve(cbFmt);
+        szFmt.reserve(iEnd);
     } catch (const std::bad_alloc &) {
         sz[0] = 0;
         return 0;
     }
-    pchIn = szFormat;
-    while (*pchIn != 0) {
-        szFmt.push_back(*pchIn);
-        if (*pchIn++ != '%') {
+    i = 0;
+    while (i < iEnd) {
+        szFmt.push_back(szFormat[i]);
+        if (szFormat[i++] != '%') {
             continue;
         }
-        while (*pchIn != 0 && std::strchr("-+ #0123456789.", *pchIn)) {
-            szFmt.push_back(*pchIn++);
+        while (i < iEnd && std::strchr("-+ #0123456789.", szFormat[i])) {
+            szFmt.push_back(szFormat[i++]);
         }
-        if (*pchIn == 'l' && pchIn[1] != 0 && std::strchr("diuxX", pchIn[1])) {
-            pchIn++;
+        if (i + 1 < iEnd && szFormat[i] == 'l' && std::strchr("diuxX", szFormat[i + 1])) {
+            i++;
         }
-        if (*pchIn != 0) {
-            szFmt.push_back(*pchIn++);
+        if (i < iEnd) {
+            szFmt.push_back(szFormat[i++]);
         }
     }
-    cch = CchFormatNative(sz.first(cb), szFmt.c_str(), args);
+    cch = CchFormatNative(sz.first(cb), szFmt, args);
     if (cch < 0) {
         sz[0] = 0;
         return 0;

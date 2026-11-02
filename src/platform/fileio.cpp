@@ -423,24 +423,25 @@ int CchNativePrintfFields(NATIVEFILE *pf, std::string_view fmt, std::span<const 
     }
     return ret;
 }
-int CNativeScanFields(NATIVEFILE *pf, const char *fmt, std::span<const NATIVEINTEGERFIELD> rgFields) {
+int CNativeScanFields(NATIVEFILE *pf, std::string_view fmt, std::span<const NATIVEINTEGERFIELD> rgFields) {
     int count = 0, ch;
     bool wide;
     char token[64];
-    std::size_t n;
+    std::size_t n, iFmt = 0;
+    const std::size_t iEnd = fmt.find('\0') == std::string_view::npos ? fmt.size() : fmt.find('\0');
     const char *pszBegin, *pszEnd;
     long long value;
     std::from_chars_result result;
 
-    while (*fmt) {
-        if (std::isspace(static_cast<unsigned char>(*fmt))) {
-            while (*fmt && std::isspace(static_cast<unsigned char>(*fmt))) ++fmt;
+    while (iFmt < iEnd) {
+        if (std::isspace(static_cast<unsigned char>(fmt[iFmt]))) {
+            while (iFmt < iEnd && std::isspace(static_cast<unsigned char>(fmt[iFmt]))) ++iFmt;
             while ((ch = ChGetNativeFile(pf)) != EOF && std::isspace(static_cast<unsigned char>(ch))) {}
             if (ch != EOF) LSeekNativeFile(pf, -1, NATIVESEEKORIGIN::current);
             continue;
         }
-        if (std::strncmp(fmt, "%lld", 4) == 0) { wide = true; fmt += 4; }
-        else if (std::strncmp(fmt, "%d", 2) == 0) { wide = false; fmt += 2; }
+        if (fmt.substr(iFmt, 4) == "%lld") { wide = true; iFmt += 4; }
+        else if (fmt.substr(iFmt, 2) == "%d") { wide = false; iFmt += 2; }
         else { errno = EINVAL; break; }
         if (static_cast<std::size_t>(count) == rgFields.size() ||
             (wide ? !std::holds_alternative<long long *>(rgFields[count]) : !std::holds_alternative<int *>(rgFields[count])) ||
