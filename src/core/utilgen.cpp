@@ -142,30 +142,25 @@ std::int32_t LGetNextFileXor(APPSESSION &app) {
     return s1 - s2;
 }
 
-void XorFileBuf(APPSESSION &app, char *rgb, std::int16_t cb) {
-    char    *plMac;
-    char    *pl;
-    std::int32_t  lPrev;
+void XorFileBuf(APPSESSION &app, std::span<std::byte> rgb) {
+    std::int32_t lPrev;
     std::uint32_t ul;
-    char    *pch;
+    std::size_t i;
 
     lPrev = 0;
-    pl = rgb;
-    plMac = pl + (cb >> 2) * 4;
-    for (; pl < plMac; pl += 4) {
+    i = 0;
+    for (; i + 4 <= rgb.size(); i += 4) {
         lPrev = LGetNextFileXor(app);
-        NATIVEBYTEREADER(std::as_bytes(std::span(pl, 4))).FReadU32Le(ul);
+        NATIVEBYTEREADER(rgb.subspan(i, 4)).FReadU32Le(ul);
         ul ^= static_cast<std::uint32_t>(lPrev);
-        NATIVEBYTEWRITER(std::as_writable_bytes(std::span(pl, 4))).FWriteU32Le(ul);
+        NATIVEBYTEWRITER(rgb.subspan(i, 4)).FWriteU32Le(ul);
     }
-    cb &= 3;
-    if (cb > 0) {
-        pch = static_cast<char *>(pl);
+    if (i < rgb.size()) {
         lPrev = LGetNextFileXor(app);
-        while (cb-- != 0) {
-            *pch ^= static_cast<std::int16_t>(static_cast<std::int8_t>(LOBYTE(LOWORD(lPrev) & 0xff)));
+        while (i < rgb.size()) {
+            rgb[i] ^= std::byte{static_cast<std::uint8_t>(LOWORD(lPrev) & 0xff)};
             lPrev = static_cast<std::int32_t>((lPrev >> 8));
-            pch++;
+            i++;
         }
     }
     return;

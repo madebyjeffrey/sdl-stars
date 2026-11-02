@@ -1106,7 +1106,7 @@ void WriteRt(APPSESSION &app, RecordType rt, std::span<const std::byte> rg) {
         SetFileXorStream(app, BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).lidGame(), BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).lSaltTime(), BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).turn(), BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).iPlayer(),
                          BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).fCrippled());
     } else if (rt != rtEOF) {
-        XorFileBuf(app, app.state.rgbCur, cb);
+        XorFileBuf(app, std::as_writable_bytes(std::span{app.state.rgbCur}).first(static_cast<std::size_t>(cb)));
     }
     hdr.cb = cb;
     hdr.rt = rt;

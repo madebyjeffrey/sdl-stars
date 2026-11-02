@@ -1487,7 +1487,7 @@ void ReadRt(APPSESSION &app) {
         SetFileXorStream(app, BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).lidGame(), BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).lSaltTime(), BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).turn(), BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).iPlayer(),
                          BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).fCrippled());
     } else if (app.state.hdrCur.rt != rtEOF) {
-        XorFileBuf(app, app.state.rgbCur, app.state.hdrCur.cb);
+        XorFileBuf(app, std::as_writable_bytes(std::span{app.state.rgbCur}).first(static_cast<std::size_t>(app.state.hdrCur.cb)));
     }
     return;
 }

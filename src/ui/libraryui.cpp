@@ -2467,7 +2467,7 @@ static std::int16_t FInspectImportPlayer(APPSESSION &app, const char *pszUnivers
     /* Inspect the selected universe without disturbing an open game's stream. */
     GetFileSeeds(app, &lSeed1, &lSeed2);
     SetFileXorStream(app, rtbof.lidGame, rtbof.lSaltTime, rtbof.turn, rtbof.iPlayer, rtbof.fCrippled);
-    XorFileBuf(app, reinterpret_cast<char *>(rgbGame), cbWireGame);
+    XorFileBuf(app, std::as_writable_bytes(std::span{rgbGame}));
     SetFileSeeds(app, lSeed1, lSeed2);
     FDecodeGame(std::as_bytes(std::span(rgbGame)), gameImport);
     return gameImport.lid == rtbof.lidGame && gameImport.cPlayer > 0 && gameImport.cPlayer <= 16 &&

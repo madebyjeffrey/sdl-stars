@@ -24,7 +24,7 @@ void    GetFileSeeds(APPSESSION &app, std::int32_t *pl1, std::int32_t *pl2);
 void    SetFileSeeds(APPSESSION &app, std::int32_t l1, std::int32_t l2);
 void    SetFileXorStream(APPSESSION &app, std::int32_t lid, std::int16_t lSalt, std::int16_t turn, std::int16_t iPlayer, std::int16_t fCrippled);
 std::int32_t LGetNextFileXor(APPSESSION &app);
-void    XorFileBuf(APPSESSION &app, char *rgb, std::int16_t cb);
+void    XorFileBuf(APPSESSION &app, std::span<std::byte> rgb);
 int     ICompLong(APPSESSION &app, std::int32_t *pl1, std::int32_t *pl2);
 std::array<char, 19> PszGetCompressedPlanet(APPSESSION &app, std::int16_t id);
 // Append exactly the supplied text bytes; no terminator is written.

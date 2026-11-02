@@ -420,14 +420,14 @@ static void test_XorFileBuf_unaligned_bytes(void) {
         memset(rgb, 0xa5, sizeof(rgb));
         for (int i = 0; i < cb; i++) rgb[ib + i] = (uint8_t)(i * 17 + 5);
         SetFileSeeds(app, 123456, 789012);
-        XorFileBuf(app, (char *)rgb + ib, cb);
+        XorFileBuf(app, std::as_writable_bytes(std::span{rgb}).subspan(static_cast<std::size_t>(ib), static_cast<std::size_t>(cb)));
         GetFileSeeds(app, &lSeed1, &lSeed2);
         TEST_CHECK(!memcmp(rgb + ib, golden, cb));
         TEST_CHECK(lSeed1 == seeds[(cb + 3) / 4][0] && lSeed2 == seeds[(cb + 3) / 4][1]);
         for (int i = 0; i < ib; i++) TEST_CHECK(rgb[i] == 0xa5);
         for (int i = ib + cb; i < (int)sizeof(rgb); i++) TEST_CHECK(rgb[i] == 0xa5);
         SetFileSeeds(app, 123456, 789012);
-        XorFileBuf(app, (char *)rgb + ib, cb);
+        XorFileBuf(app, std::as_writable_bytes(std::span{rgb}).subspan(static_cast<std::size_t>(ib), static_cast<std::size_t>(cb)));
         for (int i = 0; i < cb; i++) TEST_CHECK(rgb[ib + i] == (uint8_t)(i * 17 + 5));
     }
 }
@@ -445,11 +445,11 @@ static void test_XorFileBuf_seed_alias_order(void) {
     int32_t lSeed1, lSeed2;
 
     SetFileSeeds(app, 123456, 789012);
-    XorFileBuf(app, reinterpret_cast<char *>(&app.state.lFileSeed1), 4);
+    XorFileBuf(app, std::as_writable_bytes(std::span{&app.state.lFileSeed1, 1}));
     GetFileSeeds(app, &lSeed1, &lSeed2);
     TEST_CHECK(lSeed1 == -1966203050 && lSeed2 == 2041708718);
     SetFileSeeds(app, 123456, 789012);
-    XorFileBuf(app, reinterpret_cast<char *>(&app.state.lFileSeed2), 4);
+    XorFileBuf(app, std::as_writable_bytes(std::span{&app.state.lFileSeed2, 1}));
     GetFileSeeds(app, &lSeed1, &lSeed2);
     TEST_CHECK(lSeed1 == 645001258 && lSeed2 == -720506926);
 }
