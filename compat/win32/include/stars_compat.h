@@ -4,6 +4,7 @@
 #include <windows.h>
 #include <cstdint>
 #include <cstdio>
+#include <string_view>
 #include "fileio.h"
 #include "messagepayload.h"
 /* Keep one native window and its completed frame across same-sized modal
@@ -77,7 +78,7 @@ void *PvCompatMessagePayload(WPARAM id) noexcept;
 void StarsCompatProcessExit(void);
 
 BOOL StarsCompatTextInputRejected(HWND hwnd);
-BOOL StarsCompatSetWindowTitleUtf8(HWND hwnd, const char *psz);
+BOOL StarsCompatSetWindowTitleUtf8(HWND hwnd, std::string_view psz);
 
 /* Prepare a hidden top-level window's first ShowWindow(SW_SHOW) without
  * exposing it to the desktop while the application initializes.

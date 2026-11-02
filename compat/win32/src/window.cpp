@@ -12,6 +12,7 @@
 #include <cstdlib>
 #include <new>
 #include <cstring>
+#include <string>
 
 static COMPATCLASS *lpClasses;
 static HWND lpWindows, hwndFocus, hwndActive, hwndFirstTop;
@@ -59,8 +60,8 @@ BOOL FCompatNativeTitle(SDL_Window *lpWindow, LPCSTR pszTitle) {
     return CompatWindowIO().pfnSetWindowTitle(lpWindow, pszTitle);
 }
 
-BOOL StarsCompatSetWindowTitleUtf8(HWND hwnd, const char *psz) {
-    return win32::SetWindowTextA(hwnd, psz);
+BOOL StarsCompatSetWindowTitleUtf8(HWND hwnd, std::string_view psz) {
+    return win32::SetWindowTextA(hwnd, std::string{psz}.c_str());
 }
 
 static BOOL FNativePositionable(SDL_Window *lpWindow) {
