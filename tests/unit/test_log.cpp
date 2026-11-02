@@ -811,7 +811,7 @@ static void test_log_header_bytes_and_callback(void) {
 
     TEST_ASSERT(FStarsTestInit(app));
     app.state.fAi = 1; app.state.fLogOff = 0; app.state.imemLogCur = 0; app.state.imemLogPrev = -1;
-    WriteMemRt(app, static_cast<RecordType>(63), 3, (void *)rgb);
+    WriteMemRt(app, static_cast<RecordType>(63), std::as_bytes(std::span{rgb}));
     TEST_CHECK(app.state.imemLogCur == 5 && app.state.lpLog[0] == 3 && app.state.lpLog[1] == 0xfc && !memcmp(app.state.lpLog + 2, rgb, 3));
     TEST_ASSERT(FGetPrevLogRt(app, &hdr, readback));
     TEST_CHECK(hdr.cb == 3 && hdr.rt == 63 && !memcmp(readback, rgb, 3));

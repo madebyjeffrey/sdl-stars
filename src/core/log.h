@@ -21,7 +21,7 @@ void    LogChangeThing(APPSESSION &app, THING *lpth, THING *pthNew);
 void    LogMakeValidXfer(APPSESSION &app, LOGXFER *plx1, LOGXFER *plx2);
 void    LogMakeValidXferf(APPSESSION &app, LOGXFERF *plxf1, LOGXFERF *plxf2);
 void    CancelMemRt(APPSESSION &app, RecordType rt);
-void    WriteMemRt(APPSESSION &app, RecordType rt, std::int16_t cb, void *rg);
+void    WriteMemRt(APPSESSION &app, RecordType rt, std::span<const std::byte> rgb);
 void    WriteMemZpqRt(APPSESSION &app, std::int16_t cb);
 void    DirtyGame(APPSESSION &app, std::int16_t fDirty);
 std::int16_t FGetPrevLogRt(APPSESSION &app, HDR *phdr, std::uint8_t *pb);

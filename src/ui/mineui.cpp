@@ -94,7 +94,7 @@ LRESULT  MineWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         rtlt.idFull = app.state.lpThings[app.state.sel.scan.ith].idFull();
         rtlt.fDetonate = fDetonate;
         FEncodeLogThing(rtlt, rgbThing);
-        WriteMemRt(app, rtThing, cbWireLogThing, rgbThing);
+        WriteMemRt(app, rtThing, std::as_bytes(std::span{rgbThing}).first(cbWireLogThing));
         app.state.lpThings[app.state.sel.scan.ith].thm().SetFDetonate(fDetonate);
         break;
     default:

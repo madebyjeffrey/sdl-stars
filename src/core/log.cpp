@@ -15,14 +15,14 @@ void WriteMemResearch(APPSESSION &app, std::int16_t wResearch) {
     std::uint8_t rgb[cbWireResearch];
 
     NATIVEBYTEWRITER(std::as_writable_bytes(std::span(rgb))).FWriteI16Le(wResearch);
-    WriteMemRt(app, rtLogResearch, cbWireResearch, rgb);
+    WriteMemRt(app, rtLogResearch, std::as_bytes(std::span{rgb}).first(cbWireResearch));
 }
 
 void WriteMemPassword(APPSESSION &app, std::int32_t lSalt) {
     std::uint8_t rgb[cbWirePassword];
 
     NATIVEBYTEWRITER(std::as_writable_bytes(std::span(rgb))).FWriteI32Le(lSalt);
-    WriteMemRt(app, rtChgPassword, cbWirePassword, rgb);
+    WriteMemRt(app, rtChgPassword, std::as_bytes(std::span{rgb}).first(cbWirePassword));
 }
 
 void LogSplitFleet(APPSESSION &app, std::int16_t id) {
@@ -31,7 +31,7 @@ void LogSplitFleet(APPSESSION &app, std::int16_t id) {
         LpflFromId(app, id)->SetFCompChg(1);
     } else {
         NATIVEBYTEWRITER(rgb).FWriteI16Le(id);
-        WriteMemRt(app, rtLogFleetSplit, cbWireFleetId, rgb);
+        WriteMemRt(app, rtLogFleetSplit, std::as_bytes(std::span{rgb}).first(cbWireFleetId));
     }
     return;
 }
@@ -57,7 +57,7 @@ void LogMergeFleet(APPSESSION &app, std::int16_t id) {
                 }
             }
             FEncodeFleetIds(std::span(rgid, j), rgb);
-            WriteMemRt(app, rtLogFleetMerge, j * cbWireFleetId, rgb);
+            WriteMemRt(app, rtLogFleetMerge, std::as_bytes(std::span{rgb}).first(static_cast<std::size_t>(j * cbWireFleetId)));
         }
     }
     return;
@@ -74,7 +74,7 @@ void LogChangeShDef(APPSESSION &app, SHDEF *lpshdefNew) {
         if (lpshdefNew->fFree) {
             rtchg.mdChg = 0;
             FEncodeRtChgShDefPrefix(rtchg, std::as_writable_bytes(std::span(rgb)));
-            WriteMemRt(app, rtLogShDef, cbWireChgShDef, rgb);
+            WriteMemRt(app, rtLogShDef, std::as_bytes(std::span{rgb}).first(cbWireChgShDef));
         } else {
             rtchg.mdChg = 1;
             lpshdefNew->det = detAll;
@@ -87,7 +87,7 @@ void LogChangeShDef(APPSESSION &app, SHDEF *lpshdefNew) {
                 return;
             }
             pb += *cb;
-            WriteMemRt(app, rtLogShDef, pb - rgb, rgb);
+            WriteMemRt(app, rtLogShDef, std::as_bytes(std::span{rgb}).first(static_cast<std::size_t>(pb - rgb)));
         }
         if (app.state.gd.fTutorial && app.state.idPlayer == 0) {
             app.state.tutor.fChange = 1;
@@ -146,7 +146,7 @@ bool LogChangeName(APPSESSION &app, GrobjClass grobj, std::int16_t id, std::stri
         }
         CchCopyUtf8(std::span(lpfl->lpszName, szName.size() + 1), std::string_view(szNameT, szName.size()));
     }
-    WriteMemRt(app, rtLogFleetName, cOut + 5, rgbName);
+    WriteMemRt(app, rtLogFleetName, std::as_bytes(std::span{rgbName}).first(static_cast<std::size_t>(cOut + 5)));
     if (app.state.gd.fTutorial) PresentationIO().pfnTutor(app);
     return true;
 }
@@ -211,13 +211,13 @@ void LogChangeFleet(APPSESSION &app, FLEET *pfl, FLEET *pflNew) {
         rtsi.id = pflNew->id;
         rtsi.i = pflNew->iplan;
         FEncodeRtShipInt(rtsi, rgbShipInt);
-        WriteMemRt(app, rtLogFleetPlan, cbWireShipInt, rgbShipInt);
+        WriteMemRt(app, rtLogFleetPlan, std::as_bytes(std::span{rgbShipInt}).first(cbWireShipInt));
     }
     if (pfl->fRepOrders != pflNew->fRepOrders) {
         rtsi.id = pflNew->id;
         rtsi.i = pflNew->fRepOrders;
         FEncodeRtShipInt(rtsi, rgbShipInt);
-        WriteMemRt(app, rtLogFleetFlagBit9, cbWireShipInt, rgbShipInt);
+        WriteMemRt(app, rtLogFleetFlagBit9, std::as_bytes(std::span{rgbShipInt}).first(cbWireShipInt));
     }
     d = pflNew->cord - pfl->cord;
     for (iordOld = 0;
@@ -234,7 +234,7 @@ void LogChangeFleet(APPSESSION &app, FLEET *pfl, FLEET *pflNew) {
             rtsi.i |= 0x8000;
         }
         FEncodeRtShipInt(rtsi, rgbShipInt);
-        WriteMemRt(app, rtLogFleetOrderDelete, cbWireShipInt, rgbShipInt);
+        WriteMemRt(app, rtLogFleetOrderDelete, std::as_bytes(std::span{rgbShipInt}).first(cbWireShipInt));
         goto NextTest;
     } else if (d > 0) {
         cbWp = 22;
@@ -246,7 +246,7 @@ void LogChangeFleet(APPSESSION &app, FLEET *pfl, FLEET *pflNew) {
         while (cbWp-- > 0 && pbWp[cbWp] == 0) {
         }
         cbWp++;
-        WriteMemRt(app, rtLogFleetOrderInsert, cbWp, rgbWp);
+        WriteMemRt(app, rtLogFleetOrderInsert, std::as_bytes(std::span{rgbWp}).first(static_cast<std::size_t>(cbWp)));
         goto NextTest;
     } else {
         cbWp = 22;
@@ -262,7 +262,7 @@ void LogChangeFleet(APPSESSION &app, FLEET *pfl, FLEET *pflNew) {
         while (cbWp-- > 0 && pbWp[cbWp] == 0) {
         }
         cbWp++;
-        WriteMemRt(app, rtLogFleetOrderUpdate, cbWp, rgbWp);
+        WriteMemRt(app, rtLogFleetOrderUpdate, std::as_bytes(std::span{rgbWp}).first(static_cast<std::size_t>(cbWp)));
     }
 NextTest:
     return;
@@ -274,7 +274,7 @@ void LogChangeRelations(APPSESSION &app) {
     if (FGetPrevLogRt(app, &hdr, reinterpret_cast<std::uint8_t *>(app.state.rgbCur)) && hdr.rt == rtLogRelations) {
         app.state.imemLogCur = app.state.imemLogPrev;
     }
-    WriteMemRt(app, rtLogRelations, app.state.game.cPlayer, app.state.rgplr[app.state.idPlayer].rgmdRelation);
+    WriteMemRt(app, rtLogRelations, std::as_bytes(std::span{app.state.rgplr[app.state.idPlayer].rgmdRelation}).first(static_cast<std::size_t>(app.state.game.cPlayer)));
     if (app.state.gd.fTutorial && app.state.idPlayer == 0) {
         app.state.tutor.fChange = 1;
         PresentationIO().pfnTutor(app);
@@ -336,7 +336,7 @@ void LogChangePlanet(APPSESSION &app, PLANET *ppl, PLANET *pplNew) {
         if (ppl) {
             if (!pplNew->lpplprod && ppl->lpplprod) {
                 NATIVEBYTEWRITER(rgbProdId).FWriteI16Le(lxNew.id);
-                WriteMemRt(app, rtLogPlanetProdQ, cbWireChgProdQ, rgbProdId);
+                WriteMemRt(app, rtLogPlanetProdQ, std::as_bytes(std::span{rgbProdId}).first(cbWireChgProdQ));
             } else if (pplNew->lpplprod && (!ppl->lpplprod || ppl->lpplprod->iprodMac != pplNew->lpplprod->iprodMac ||
                                             std::memcmp(ppl->lpplprod->rgprod(), pplNew->lpplprod->rgprod(), ppl->lpplprod->iprodMac * 4) != 0)) {
                 if (FGetPrevLogRt(app, &hdr, reinterpret_cast<std::uint8_t *>(app.state.rgbCur)) && hdr.rt == rtLogPlanetProdQ &&
@@ -346,7 +346,7 @@ void LogChangePlanet(APPSESSION &app, PLANET *ppl, PLANET *pplNew) {
                 NATIVEBYTEWRITER(std::as_writable_bytes(std::span(app.state.rgbCur))).FWriteI16Le(ppl->id);
                 FEncodeProdQueue(std::span(pplNew->lpplprod->rgprod(), pplNew->lpplprod->iprodMac),
                                  std::as_writable_bytes(std::span(app.state.rgbCur)).subspan(cbWireChgProdQ));
-                WriteMemRt(app, rtLogPlanetProdQ, pplNew->lpplprod->iprodMac * 4 + 2, app.state.rgbCur);
+                WriteMemRt(app, rtLogPlanetProdQ, std::as_bytes(std::span{app.state.rgbCur}).first(static_cast<std::size_t>(pplNew->lpplprod->iprodMac * 4 + 2)));
             }
             if (static_cast<std::uint32_t>(ppl->fNoResearch) != pplNew->fNoResearch || ppl->idFling != pplNew->idFling || ppl->iWarpFling != pplNew->iWarpFling ||
                 ppl->idRoute != pplNew->idRoute) {
@@ -356,7 +356,7 @@ void LogChangePlanet(APPSESSION &app, PLANET *ppl, PLANET *pplNew) {
                 routing.iWarpFling = pplNew->iWarpFling;
                 routing.idRoute = pplNew->idRoute;
                 FEncodePlanetRouting(routing, std::as_writable_bytes(std::span(app.state.rgbCur)));
-                WriteMemRt(app, rtLogPlanetRouting, cbWirePlanetRouting, app.state.rgbCur);
+                WriteMemRt(app, rtLogPlanetRouting, std::as_bytes(std::span{app.state.rgbCur}).first(cbWirePlanetRouting));
             }
         }
     }
@@ -506,7 +506,7 @@ void LogMakeValidXfer(APPSESSION &app, LOGXFER *plx1, LOGXFER *plx2) {
                 }
             }
         }
-        WriteMemRt(app, static_cast<RecordType>(rt), cb, rgbuf);
+        WriteMemRt(app, static_cast<RecordType>(rt), std::as_bytes(std::span{rgbuf}).first(static_cast<std::size_t>(cb)));
     }
     return;
 }
@@ -547,7 +547,7 @@ void LogMakeValidXferf(APPSESSION &app, LOGXFERF *plxf1, LOGXFERF *plxf2) {
             }
         }
         cb = cbWireXferF + iOff * 2;
-        WriteMemRt(app, rtLogFleetCargoXfer, cb, rgbuf);
+        WriteMemRt(app, rtLogFleetCargoXfer, std::as_bytes(std::span{rgbuf}).first(static_cast<std::size_t>(cb)));
     }
     return;
 }
@@ -558,7 +558,7 @@ void CancelMemRt(APPSESSION &app, RecordType rt) {
     return;
 }
 
-static void WriteMemRtCore(APPSESSION &app, RecordType rt, std::int16_t cb, void *rg, bool fZipProd) {
+static void WriteMemRtCore(APPSESSION &app, RecordType rt, std::int16_t cb, std::span<const std::byte> rgb, bool fZipProd) {
     HDR      hdr;
     std::uint8_t *lpv;
 
@@ -582,7 +582,7 @@ static void WriteMemRtCore(APPSESSION &app, RecordType rt, std::int16_t cb, void
                 assert(static_cast<std::size_t>(cb) <= sizeof(rgb) - 14);
                 std::memcpy(lpv + 2, rgb + 14, cb);
             } else {
-                std::memcpy(lpv + 2, rg, cb);
+                std::memcpy(lpv + 2, rgb.data(), cb);
             }
         }
         app.state.imemLogCur += cb + 2;
@@ -593,12 +593,12 @@ static void WriteMemRtCore(APPSESSION &app, RecordType rt, std::int16_t cb, void
     return;
 }
 
-void WriteMemRt(APPSESSION &app, RecordType rt, std::int16_t cb, void *rg) {
-    WriteMemRtCore(app, rt, cb, rg, false);
+void WriteMemRt(APPSESSION &app, RecordType rt, std::span<const std::byte> rgb) {
+    WriteMemRtCore(app, rt, static_cast<std::int16_t>(rgb.size()), rgb, false);
 }
 
 void WriteMemZpqRt(APPSESSION &app, std::int16_t cb) {
-    WriteMemRtCore(app, rtLogPlayerZpq1, cb, nullptr, true);
+    WriteMemRtCore(app, rtLogPlayerZpq1, cb, {}, true);
 }
 
 void DirtyGame(APPSESSION &app, std::int16_t fDirty) {

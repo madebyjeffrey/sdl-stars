@@ -850,7 +850,7 @@ void WriteBattlePlan(APPSESSION &app, BTLPLAN *lpbtlplan, std::int16_t fLog) {
         }
     }
     if (fLog) {
-        WriteMemRt(app, rtBtlPlan, sizeof(rgb) - pb.size(), rgb);
+        WriteMemRt(app, rtBtlPlan, std::as_bytes(std::span{rgb}).first(sizeof(rgb) - pb.size()));
     } else {
         RecordIO().pfnWriteRt(app, rtBtlPlan, std::as_bytes(std::span{rgb}).first(static_cast<std::size_t>(sizeof(rgb) - pb.size())));
     }
