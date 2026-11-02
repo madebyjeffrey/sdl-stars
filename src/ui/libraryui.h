@@ -74,7 +74,7 @@ std::int16_t FSaveCurrentLibraryRace(APPSESSION &app, HWND hwnd, PLAYER *pplr);
 std::int16_t FHasCurrentLibraryRace(void);
 std::int16_t FLoadLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName);
 const char *PszCurrentLibraryRaceName(void);
-std::int16_t FCustomizeLibraryRace(APPSESSION &app, HWND hwnd, char *pszName);
+std::int16_t FCustomizeLibraryRace(APPSESSION &app, HWND hwnd, std::span<char, 256> pszName);
 std::int16_t FBeginLibraryRace(APPSESSION &app, HWND hwnd);
 std::int16_t FEditLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName);
 std::int16_t FDuplicateLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName);

@@ -475,8 +475,9 @@ LFail:
     return 0;
 }
 
-static std::int16_t FChooseLibraryRaceName(APPSESSION &app, HWND hwnd, const char *pszSuggested, char *pszPath, std::size_t cchPath) {
+static std::int16_t FChooseLibraryRaceName(APPSESSION &app, HWND hwnd, const char *pszSuggested, std::span<char> pszPath) {
     char szMessage[256];
+    int cch;
     if (!FInitRaceLibrary()) return 0;
     CchSnprintf(std::span{szRaceLibraryName, sizeof(szRaceLibraryName)}, "%s", pszSuggested);
     SuggestRaceFilename(app, std::span{szRaceLibraryName});
@@ -487,8 +488,8 @@ static std::int16_t FChooseLibraryRaceName(APPSESSION &app, HWND hwnd, const cha
         return 0;
     }
     fRaceLibraryNameDialog = 0;
-    if (CchSnprintf(std::span{pszPath, cchPath}, "%s%s%s", szRaceLibraryRoot, szDirSep, szRaceLibraryName) <= 0 ||
-        !FRaceLibraryNameAvailable(app, szRaceLibraryName)) {
+    cch = CchSnprintf(pszPath, "%s%s%s", szRaceLibraryRoot, szDirSep, szRaceLibraryName);
+    if (cch <= 0 || !FRaceLibraryNameAvailable(app, szRaceLibraryName)) {
         CchCopyUtf8Prefix(std::span{szMessage}, TextIO().pfnCompressed(app, idsLibraryStorageFailed).data());
         CompatChoiceIO().pfnMessageBoxA(hwnd, szMessage, TextIO().pfnCompressed(app, idsLibraryGames).data(), win32::MB_OK | win32::MB_ICONHAND);
         return 0;
@@ -881,17 +882,17 @@ const char *PszCurrentLibraryRaceName(void) {
 
 /* The new-game roster owns a filename for each design. Bind only this edit
  * to that destination; a previously imported design is not its save target. */
-std::int16_t FCustomizeLibraryRace(APPSESSION &app, HWND hwnd, char *pszName) {
+std::int16_t FCustomizeLibraryRace(APPSESSION &app, HWND hwnd, std::span<char, 256> pszName) {
     RACESTATE rsSav;
     char szPath[512];
     std::int16_t fResult;
 
     SaveRaceState(app, &rsSav);
     if (pszName[0]) {
-        if (!FInitRaceLibrary() || !FPortableRaceFilename(app, pszName)) return 0;
-        CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", szRaceLibraryRoot, szDirSep, pszName);
+        if (!FInitRaceLibrary() || !FPortableRaceFilename(app, pszName.data())) return 0;
+        CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", szRaceLibraryRoot, szDirSep, pszName.data());
         CchSnprintf(std::span{szRaceLibraryPath, sizeof(szRaceLibraryPath)}, "%s", szPath);
-        SetSzRaceFile(app, pszName);
+        SetSzRaceFile(app, pszName.data());
         fNewLibraryRace = 0;
     } else {
         if (!FInitRaceLibrary()) return 0;
@@ -899,7 +900,7 @@ std::int16_t FCustomizeLibraryRace(APPSESSION &app, HWND hwnd, char *pszName) {
         fNewLibraryRace = 1;
     }
     fResult = RaceCreationWizard(app, hwnd, 0, 0);
-    if (fResult) CchSnprintf(std::span{pszName, 256}, "%s", PszCurrentLibraryRaceName());
+    if (fResult) CchSnprintf(pszName, "%s", PszCurrentLibraryRaceName());
     RestoreRaceState(app, &rsSav, !fResult, 1);
     return fResult;
 }
@@ -1239,7 +1240,7 @@ std::int16_t FImportLibraryRace(APPSESSION &app, HWND hwnd, const char *pszSourc
             !FRaceLibraryNameAvailable(app, pszRaceLibraryNameOverride)) goto LRestore;
         CchSnprintf(std::span{szRaceLibraryName, sizeof(szRaceLibraryName)}, "%s", pszRaceLibraryNameOverride);
         CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", szRaceLibraryRoot, szDirSep, szRaceLibraryName);
-    } else if (!FChooseLibraryRaceName(app, hwnd, szName, szPath, sizeof(szPath))) goto LRestore;
+    } else if (!FChooseLibraryRaceName(app, hwnd, szName, std::span{szPath})) goto LRestore;
     /* Legacy reads convert names and credentials in memory; retain that state,
      * never the original CP1252 bytes or password hash. */
     if (fLegacy) {
