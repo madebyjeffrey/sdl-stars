@@ -24229,53 +24229,28 @@
   ],
   "restart_checkpoint": {
     "date": "2026-11-02",
-    "reason": "Continue the complete C++ cleanup after eliminating redundant Cocoa chooser label copies.",
+    "reason": "Resume complete C++ cleanup after publishing the Linux portal borrowed-string cleanup; Linux portal qualification remains the next gate.",
     "branch": "develop",
-    "batch": "L05 borrowed Cocoa chooser labels",
-    "batch_parent": "0cab30ee",
-    "latest_batch": "L05 borrowed Cocoa chooser labels",
-    "latest_batch_head": "611e7a9c",
-    "completed_stages": [
-      "L01: nullptr and aliases",
-      "L02: explicit C++ casts and headers",
-      "L03: typed initialization",
-      "L04: owned temporary allocations",
-      "L07: typed help/version values and obsolete callback/resource scaffolding"
-    ],
+    "latest_batch": "L05 Linux portal borrowed chooser labels",
+    "latest_published_batch": "L05 Linux portal borrowed chooser labels",
+    "latest_published_head": "e6da4794",
+    "working_tree_base": "e6da4794",
     "active_stages": [
       "L05: bounded/owned text and remaining formatting",
       "L06: typed service interfaces and file-selection handoff"
     ],
     "pending_stage": "L08: reconcile retained primitives/macros and qualify final complete state",
-    "local_verification": {
-      "debug_build_and_desktop_units": "make test-unit passed: full macos-sdl-debug build, 18/18 tests.",
-      "cocoa_file_dialog": "win32_filedialog_cocoa passed (1/1).",
-      "host_units": "make test-host passed: 29/29.",
-      "native_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
-      "host_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
-      "tutorial": "Available SDL native tutorial smoke checkpoint passed: 1/1.",
-      "diff_check": "pass.",
-      "baseline": "Unchanged.",
-      "platform_ci": "Not refreshed for this commit; Windows/Linux workflow qualification remains pending."
-    },
-    "owned_c_and_function_macro_scan": "Confirmed at b6f06a97: no owned C translation units, no owned function-like macros, and no live legacy unbounded string/varargs calls under src or compat/win32. Include guards, NOMINMAX, FSHIFT undefinition and platform/test configuration remain.",
-    "retained_c_allocation_boundary": "src/core/memory.cpp keeps calloc/realloc/free for the resizable game heap; this is a deliberate allocation protocol, not a C translation unit or macro.",
-    "other_remaining": [
-      "L05 remaining bounded text destinations, const-text interfaces, and post-migration scratch/borrowed-return audit.",
-      "L06 remaining buffer/length interfaces and native file/path results; chooser Milestone D still needs Windows/Linux qualification.",
-      "L08 final retained macro/preprocessor inventory reconciliation and current-source Windows/Linux qualification."
-    ],
     "restart_order": [
-      "Continue L05 bounded text, const input, scratch storage and borrowed return review.",
-      "Continue L06 remaining buffer/length and native path result APIs, then qualify chooser Milestone D on Windows/Linux.",
-      "Complete L08 retained API/preprocessor inventory and current-source platform qualification; then run final suites."
+      "Qualify commit e6da4794 on Linux with the full sdl-debug build and private-bus win32_fileportal test; also run win32_fileportal_x11 where available.",
+      "Continue L05 bounded text destinations, const-text interfaces and the post-migration scratch/borrowed-return audit.",
+      "Continue L06 remaining buffer/length and native path result APIs; qualify Windows/Linux chooser Milestone D.",
+      "Complete L08 retained primitive/API macro/preprocessor inventory and current-source platform qualification."
     ],
-    "fresh_github_runs": {
-      "head": "091b4b64",
-      "unit_platforms": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41410974466",
-      "native_regression": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41410977666",
-      "status_at_checkpoint": "in progress"
-    }
+    "do_not_overwrite": [
+      "title-modernized.png and prompt",
+      "title-modernized-v2.png and prompt",
+      "title-modernized-v3.png and prompt"
+    ]
   },
   "current_checkpoint": {
     "batch": "L05 borrowed Cocoa chooser labels",
@@ -25016,5 +24991,53 @@
     "L05 remaining bounded text destinations, const-text interfaces and post-migration scratch/borrowed-return audit.",
     "L06 remaining buffer/length interfaces and native file/path results; chooser Milestone D still needs Windows/Linux qualification.",
     "L08 final retained primitive/API macro/preprocessor inventory reconciliation and current-source platform qualification."
-  ]
+  ],
+  "working_tree_checkpoint": {
+    "date": "2026-11-02",
+    "batch": "L05 Linux portal borrowed chooser labels",
+    "status": "Committed and pushed; macOS and host checks pass; Linux portal build/runtime qualification pending.",
+    "parent": "d080c53b",
+    "changes": {
+      "compat/win32/src/filedialog_portal.cpp": "Removed SDL_strdup copies for chooser title, filter names and patterns, and response-filter comparison. Kept UTF-8 validation. Request/filter strings remain owned through the chooser call."
+    },
+    "verification": {
+      "macos_debug_build_and_desktop_units": "make test-unit passed: full macos-sdl-debug build, 18/18.",
+      "cocoa_chooser": "win32_filedialog_cocoa passed: 1/1.",
+      "host_units": "make test-host passed: 29/29.",
+      "native_regression": "519 matches (25 existing warnings); zero differences/errors or skipped reference inputs.",
+      "host_regression": "519 matches (25 existing warnings); zero differences/errors or skipped reference inputs.",
+      "tutorial": "Available SDL native tutorial smoke checkpoint passed: 1/1.",
+      "diff_check": "pass.",
+      "baseline": "Unchanged.",
+      "linux_portal": "Not run locally: dbus-1 development headers are absent on macOS. The unit workflow installs them but push triggers only on main (or pull requests); no develop run is available yet."
+    },
+    "next": [
+      "Qualify commit e6da4794 on Linux with the full sdl-debug build and private-bus win32_fileportal test; also run win32_fileportal_x11 where available.",
+      "Continue L05 bounded text destinations, const-text interfaces and the post-migration scratch/borrowed-return audit.",
+      "Continue L06 remaining buffer/length and native path result APIs; qualify Windows/Linux chooser Milestone D.",
+      "Complete L08 retained primitive/API macro/preprocessor inventory and current-source platform qualification."
+    ],
+    "untracked_user_assets": [
+      "title-modernized.png and prompt",
+      "title-modernized-v2.png and prompt",
+      "title-modernized-v3.png and prompt"
+    ],
+    "previous_published_checkpoint": {
+      "batch": "L05 borrowed Cocoa chooser labels",
+      "head": "611e7a9c",
+      "verification": {
+        "debug_build_and_desktop_units": "make test-unit passed: full macos-sdl-debug build, 18/18 tests.",
+        "cocoa_file_dialog": "win32_filedialog_cocoa passed (1/1).",
+        "host_units": "make test-host passed: 29/29.",
+        "native_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
+        "host_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
+        "tutorial": "Available SDL native tutorial smoke checkpoint passed: 1/1.",
+        "diff_check": "pass.",
+        "baseline": "Unchanged.",
+        "platform_ci": "Not refreshed for this commit; Windows/Linux workflow qualification remains pending."
+      }
+    },
+    "source_commit": "e6da4794",
+    "published_batch_head": "e6da4794"
+  }
 }
