@@ -156,7 +156,7 @@ void CreateChildWindows(APPSESSION &app) {
         CchSnprintf(std::span{szData}, "Stars! -- %s -- %s -- %s", szNameUtf8, szPlayerUtf8, szGame);
     } else {
         TextIO().pfnCchGetString(app, idsStarsSHostMode, std::span{app.state.szWork});
-        win32::wsprintfA(szData, app.state.szWork, app.state.game.szName);
+        CchSprintf(szData, app.state.szWork, app.state.game.szName);
         CchCopyUtf8(std::span{szNameUtf8}, szData);
         CchCopyUtf8Prefix(std::span{szData}, szNameUtf8);
     }
@@ -360,7 +360,7 @@ LRESULT  FrameWndProc(APPSESSION &app, HWND hwnd, UINT msg, WPARAM wParam, LPARA
         app.state.idPlayer = 0;
         if (wParam == 2506) {
             app.state.gd.fGeneratingTurn = 1;
-            win32::wsprintfA(app.state.szWork, "%s.x1", app.state.szBase);
+            CchSprintf(app.state.szWork, "%s.x1", app.state.szBase);
             if (FLoadLogFile(app, app.state.szWork)) {
                 FRunLogFile(app);
             }
@@ -394,7 +394,7 @@ LRESULT  FrameWndProc(APPSESSION &app, HWND hwnd, UINT msg, WPARAM wParam, LPARA
                 id = AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsNewTurnAvailableWouldLikeLoad, {}).data(), win32::MB_YESNOCANCEL | win32::MB_ICONQUESTION | win32::MB_TASKMODAL);
             }
             if (id == 6) {
-                win32::wsprintfA(szExt, app.state.MPCTD, app.state.idPlayer + 1);
+                CchSprintf(szExt, app.state.MPCTD, app.state.idPlayer + 1);
                 DestroyCurGame(app);
                 if (!FLoadGame(app, app.state.szBase, szExt)) {
                     AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableOpenNewTurnFile, {}).data(), win32::MB_ICONHAND);
@@ -422,7 +422,7 @@ LRESULT  FrameWndProc(APPSESSION &app, HWND hwnd, UINT msg, WPARAM wParam, LPARA
             id = AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsTurnHasSubmittedChangesMadeAfterTurn, {}).data(), win32::MB_YESNOCANCEL | win32::MB_ICONQUESTION | win32::MB_TASKMODAL);
             if (id == 6 && !FMarkFile(app, dtLog, app.state.idPlayer, mdMarkDone, 0)) {
                 AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsNewTurnCurrentlyGeneratedHostNewTurn, {}).data(), win32::MB_ICONHAND);
-                win32::wsprintfA(szExt, app.state.MPCTD, app.state.idPlayer + 1);
+                CchSprintf(szExt, app.state.MPCTD, app.state.idPlayer + 1);
                 DestroyCurGame(app);
                 if (!FLoadGame(app, app.state.szBase, szExt)) {
                     AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableOpenNewTurnFile, {}).data(), win32::MB_ICONHAND);
@@ -1131,7 +1131,7 @@ void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
                         psz = szPlayerName.data();
                         win32::TextOutA(pd.hDC, ptLegendA.x + xOff, y, psz, std::strlen(psz));
                         y += dyPrint;
-                        cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsYearD).data(), app.state.game.turn + 2400);
+                        cch = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsYearD).data(), app.state.game.turn + 2400);
                         win32::TextOutA(pd.hDC, ptLegendA.x + xOff, y, app.state.szWork, cch);
                         if ((app.lpui->grbitScan & grbitScanViewMask) != 5) {
                             y = ptLegendB.y + yOff;
@@ -1172,7 +1172,7 @@ void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
                                     }
                                     DrawPlanetPrintDot(pd.hDC, LOWORD(x), LOWORD(y), 1);
                                 } else if (lppl->iPlayer != iplrNone) {
-                                    cch = win32::wsprintfA(app.state.szWork, app.state.PCTD, lppl->iPlayer + 1);
+                                    cch = CchSprintf(app.state.szWork, app.state.PCTD, lppl->iPlayer + 1);
                                     CtrTextOut(pd.hDC, LOWORD(x), LOWORD(y) - dyPrintTiny, app.state.szWork, cch);
                                 }
                             }
@@ -1254,7 +1254,7 @@ LPrintMapCleanup:
                 app.lpui->iPassCnt = 0;
             }
             if (app.state.game.fSinglePlr && app.lpui->iPassCnt != 0) {
-                win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsSureWantForceGenerateDTurnsRow).data(), app.lpui->iPassCnt);
+                CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsSureWantForceGenerateDTurnsRow).data(), app.lpui->iPassCnt);
                 if (CompatChoiceIO().pfnMessageBoxA(win32::GetFocus(), app.state.szWork, "Stars!", win32::MB_YESNO | win32::MB_ICONEXCLAMATION | win32::MB_TASKMODAL) != win32::IDYES)
                     break;
             }
@@ -1326,7 +1326,7 @@ LPrintMapCleanup:
             app.lpui->iPassCnt = 0;
         LTutorialFinishUp:
             DestroyCurGame(app);
-            win32::wsprintfA(szExt, app.state.MPCTD, idCur + 1);
+            CchSprintf(szExt, app.state.MPCTD, idCur + 1);
             if (!FLoadGame(app, app.state.szBase, szExt)) {
                 win32::SetCursor(hcurSav);
                 HideProgressGauge(app);
@@ -1423,7 +1423,7 @@ LPrintMapCleanup:
                 }
                 szCatalogPsz = TextIO().pfnCompressed(app, ids);
                 psz = szCatalogPsz.data();
-                win32::wsprintfA(app.state.szWork, psz, cObj, cObj == 1 ? 32 : 115);
+                CchSprintf(app.state.szWork, psz, cObj, cObj == 1 ? 32 : 115);
                 app.lpui->hwndReportDlg = ui::CreateWindowEx(0, app.lpui->szReport, app.state.szWork, win32::WS_POPUP | win32::WS_CAPTION | win32::WS_SYSMENU | win32::WS_THICKFRAME | win32::WS_MINIMIZEBOX | win32::WS_MAXIMIZEBOX, 0, 0, 100,
                                              100, app.lpui->hwndFrame, nullptr, app.lpui->hInst, nullptr);
                 ControlIO().pfnSetWindowPos(app.lpui->hwndReportDlg, nullptr, 0, 0, 0, 0, win32::SWP_NOSIZE | win32::SWP_NOMOVE | win32::SWP_NOZORDER | win32::SWP_SHOWWINDOW);
@@ -1466,7 +1466,7 @@ LPrintMapCleanup:
                 } else {
                     AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsNewTurnAvailable, {}).data(), win32::MB_ICONASTERISK);
                 }
-                win32::wsprintfA(szExt, app.state.MPCTD, app.state.idPlayer + 1);
+                CchSprintf(szExt, app.state.MPCTD, app.state.idPlayer + 1);
                 app.state.game.fDirty = 0;
                 DestroyCurGame(app);
                 if (!FLoadGame(app, app.state.szBase, szExt)) {
@@ -1911,14 +1911,14 @@ void DrawHostDialog2(APPSESSION &app, HWND hwnd, HDC hdcIn) {
     win32::SetRect(&rcDiamond, 6, yCur, app.state.dyArial8 + 7, yCur + app.state.dyArial8 + 1);
     for (i = 0; i < app.state.game.cPlayer; i++) {
         DrawDiamond(app, hdc, &rcDiamond, app.lpui->hbrBBlue);
-        cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsD2).data(), i + 1);
+        cch = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsD2).data(), i + 1);
         RightTextOut(app, hdc, x, yCur, app.state.szWork, cch, 0);
         win32::SetTextColor(hdc, app.state.rgOut[i] <= 0 ? 32512 : 127);
         TextIO().pfnCchGetString(app, static_cast<StringId>(idsTurned + app.state.rgOut[i]), std::span{szStat});
         if (app.state.gd.fNoHostNames) {
-            cch = win32::wsprintfA(app.state.szWork, " %s", szStat);
+            cch = CchSprintf(app.state.szWork, " %s", szStat);
         } else {
-            cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsSS).data(), TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, nullptr), szStat);
+            cch = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsSS).data(), TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, nullptr), szStat);
         }
         if (app.state.rgplr[i].fHacker) {
             CchAppendUtf8Prefix(std::span{app.state.szWork}, " - HACKER");
@@ -1929,25 +1929,25 @@ void DrawHostDialog2(APPSESSION &app, HWND hwnd, HDC hdcIn) {
         win32::OffsetRect(&rcDiamond, 0, app.state.dyArial8 + 4);
         yCur += app.state.dyArial8 + 4;
     }
-    cch = win32::wsprintfA(app.state.szWork, app.state.PCTD, app.state.game.turn + 2401);
+    cch = CchSprintf(app.state.szWork, app.state.PCTD, app.state.game.turn + 2401);
     ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_HOST_NEXT_YEAR_TEXT), app.state.szWork);
     dsec = static_cast<std::uint32_t>(((win32::GetTickCount() - app.state.ctickLast) / 1000));
     if (dsec < 60) {
-        cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDSeconds).data(), LOWORD(dsec));
+        cch = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsDSeconds).data(), LOWORD(dsec));
     } else {
         dmin = LOWORD(static_cast<std::uint32_t>((dsec / 60)));
         dsec -= static_cast<std::uint32_t>((60 * dmin));
         if (dmin < 60) {
-            cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsD02d).data(), dmin, LOWORD(dsec));
+            cch = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsD02d).data(), dmin, LOWORD(dsec));
         } else {
             dhour = static_cast<std::uint32_t>(dmin) / 60;
             dmin -= 60 * dhour;
             if (dhour < 24) {
-                cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsD02d02d).data(), dhour, dmin, LOWORD(dsec));
+                cch = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsD02d02d).data(), dhour, dmin, LOWORD(dsec));
             } else {
                 dday = static_cast<std::uint32_t>(dhour) / 24;
                 dhour -= dday * 24;
-                cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsDDaysD02d02d).data(), dday, dhour, dmin, LOWORD(dsec));
+                cch = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsDDaysD02d02d).data(), dday, dhour, dmin, LOWORD(dsec));
             }
         }
     }
@@ -2097,7 +2097,7 @@ INT_PTR  HostModeDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                     app.lpui->iPassCnt = 0;
                 }
                 if (app.lpui->iPassCnt != 0) {
-                    win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsSureWantForceGenerateDTurnsRow).data(), app.lpui->iPassCnt + 1);
+                    CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsSureWantForceGenerateDTurnsRow).data(), app.lpui->iPassCnt + 1);
                     if (CompatChoiceIO().pfnMessageBoxA(win32::GetFocus(), app.state.szWork, "Stars!", win32::MB_YESNO | win32::MB_ICONEXCLAMATION | win32::MB_TASKMODAL) != win32::IDYES) {
                         app.lpui->iPassCnt = 0;
                         return 1;
@@ -2205,7 +2205,7 @@ void  HostTimerProc(HWND hwnd, UINT msg, UINT_PTR idTimer, DWORD dwTime) {
                 goto Done;
             idCur = app.state.idPlayer;
             win32::KillTimer(hwnd, app.lpui->uTimerId);
-            win32::wsprintfA(szExt, app.state.MPCTD, app.state.idPlayer + 1);
+            CchSprintf(szExt, app.state.MPCTD, app.state.idPlayer + 1);
             DestroyCurGame(app);
             if (!FLoadGame(app, app.state.szBase, szExt)) {
                 AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableOpenNewTurnFile, {}).data(), win32::MB_ICONHAND);
@@ -2232,7 +2232,7 @@ void  HostTimerProc(HWND hwnd, UINT msg, UINT_PTR idTimer, DWORD dwTime) {
             ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_HOST_AUTO_GENERATE), 0);
             goto Done;
         }
-        win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsHostModeDPlayer).data(), cOut);
+        CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsHostModeDPlayer).data(), cOut);
         if (cOut != 1) {
             CchAppendUtf8Prefix(std::span{app.state.szWork}, "s");
         }
@@ -2289,7 +2289,7 @@ void SetWindowIniString(APPSESSION &app, char *sz, HWND hwnd) {
         ch = 'R';
     }
     GetWindowRc(hwnd, &rc);
-    win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsC04d04d04d04d).data(), ch, rc.left, rc.top, rc.right, rc.bottom);
+    CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsC04d04d04d04d).data(), ch, rc.left, rc.top, rc.right, rc.bottom);
     return;
 }
 
@@ -2319,50 +2319,50 @@ void WriteIniSettings(APPSESSION &app) {
     if (app.state.gd.mdScreenSize == 0) {
         i |= 2;
     }
-    win32::wsprintfA(app.state.szWork, szPd, i);
+    CchSprintf(app.state.szWork, szPd, i);
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
     TextIO().pfnCchGetString(app, idsMain, std::span{szEntry});
     SetWindowIniString(app, app.state.szWork, app.lpui->hwndFrame);
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
     TextIO().pfnCchGetString(app, idsReportfleetwin, std::span{szEntry});
-    win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsC04d04d04d04d).data(), 77, app.state.vrptFleet.ptDlg.x, app.state.vrptFleet.ptDlg.y, app.state.vrptFleet.ptDlg.x + app.state.vrptFleet.ptSize.x,
+    CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsC04d04d04d04d).data(), 77, app.state.vrptFleet.ptDlg.x, app.state.vrptFleet.ptDlg.y, app.state.vrptFleet.ptDlg.x + app.state.vrptFleet.ptSize.x,
              app.state.vrptFleet.ptDlg.y + app.state.vrptFleet.ptSize.y);
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
     TextIO().pfnCchGetString(app, idsReportefleetwin, std::span{szEntry});
-    win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsC04d04d04d04d).data(), 77, app.state.vrptEFleet.ptDlg.x, app.state.vrptEFleet.ptDlg.y, app.state.vrptEFleet.ptDlg.x + app.state.vrptEFleet.ptSize.x,
+    CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsC04d04d04d04d).data(), 77, app.state.vrptEFleet.ptDlg.x, app.state.vrptEFleet.ptDlg.y, app.state.vrptEFleet.ptDlg.x + app.state.vrptEFleet.ptSize.x,
              app.state.vrptEFleet.ptDlg.y + app.state.vrptEFleet.ptSize.y);
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
     TextIO().pfnCchGetString(app, idsReportbtlwin, std::span{szEntry});
-    win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsC04d04d04d04d).data(), 77, app.state.vrptBattle.ptDlg.x, app.state.vrptBattle.ptDlg.y, app.state.vrptBattle.ptDlg.x + app.state.vrptBattle.ptSize.x,
+    CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsC04d04d04d04d).data(), 77, app.state.vrptBattle.ptDlg.x, app.state.vrptBattle.ptDlg.y, app.state.vrptBattle.ptDlg.x + app.state.vrptBattle.ptSize.x,
              app.state.vrptBattle.ptDlg.y + app.state.vrptBattle.ptSize.y);
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
     TextIO().pfnCchGetString(app, idsReportplanwin, std::span{szEntry});
-    win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsC04d04d04d04d).data(), 77, app.state.vrptPlanet.ptDlg.x, app.state.vrptPlanet.ptDlg.y, app.state.vrptPlanet.ptDlg.x + app.state.vrptPlanet.ptSize.x,
+    CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsC04d04d04d04d).data(), 77, app.state.vrptPlanet.ptDlg.x, app.state.vrptPlanet.ptDlg.y, app.state.vrptPlanet.ptDlg.x + app.state.vrptPlanet.ptSize.x,
              app.state.vrptPlanet.ptDlg.y + app.state.vrptPlanet.ptSize.y);
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
     TextIO().pfnCchGetString(app, idsLayout, std::span{szEntry});
-    win32::wsprintfA(app.state.szWork, szPd, app.lpui->iWindowLayout);
+    CchSprintf(app.state.szWork, szPd, app.lpui->iWindowLayout);
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
     TextIO().pfnCchGetString(app, idsStyle1width, std::span{szEntry});
-    win32::wsprintfA(app.state.szWork, szPd, app.lpui->vfs.dxPlanWant);
+    CchSprintf(app.state.szWork, szPd, app.lpui->vfs.dxPlanWant);
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
     TextIO().pfnCchGetString(app, idsStyle1height, std::span{szEntry});
-    win32::wsprintfA(app.state.szWork, szPd, app.lpui->vfs.dyMsgWant);
+    CchSprintf(app.state.szWork, szPd, app.lpui->vfs.dyMsgWant);
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
     TextIO().pfnCchGetString(app, idsStyle1height2, std::span{szEntry});
-    win32::wsprintfA(app.state.szWork, szPd, app.lpui->vfs.dyMinWant);
+    CchSprintf(app.state.szWork, szPd, app.lpui->vfs.dyMinWant);
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
     TextIO().pfnCchGetString(app, idsStyle2width, std::span{szEntry});
-    win32::wsprintfA(app.state.szWork, szPd, app.lpui->vfs.dx2PlanWant);
+    CchSprintf(app.state.szWork, szPd, app.lpui->vfs.dx2PlanWant);
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
     TextIO().pfnCchGetString(app, idsStyle2height, std::span{szEntry});
-    win32::wsprintfA(app.state.szWork, szPd, app.lpui->vfs.dy2MsgWant);
+    CchSprintf(app.state.szWork, szPd, app.lpui->vfs.dy2MsgWant);
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
     TextIO().pfnCchGetString(app, idsStyle2height2, std::span{szEntry});
-    win32::wsprintfA(app.state.szWork, szPd, app.lpui->vfs.dy2MinWant);
+    CchSprintf(app.state.szWork, szPd, app.lpui->vfs.dy2MinWant);
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
     TextIO().pfnCchGetString(app, idsToolbar, std::span{szEntry});
-    win32::wsprintfA(app.state.szWork, szPd, app.state.gd.fToolbar);
+    CchSprintf(app.state.szWork, szPd, app.state.gd.fToolbar);
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
     iPass = 2;
     rgtile = app.lpui->rgtilePlanet;
@@ -2405,13 +2405,13 @@ void WriteIniSettings(APPSESSION &app) {
     case grobjOther:
         ch = 'E';
     }
-    win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsCCD).data(), ch, static_cast<std::int16_t>(static_cast<std::int8_t>(LOBYTE(app.state.idPlayer + 66))), app.state.sel.id);
+    CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsCCD).data(), ch, static_cast<std::int16_t>(static_cast<std::int8_t>(LOBYTE(app.state.idPlayer + 66))), app.state.sel.id);
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
     TextIO().pfnCchGetString(app, idsMessage, std::span{szEntry});
-    win32::wsprintfA(app.state.szWork, app.state.PCTD, app.state.iMsgCur);
+    CchSprintf(app.state.szWork, app.state.PCTD, app.state.iMsgCur);
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
     TextIO().pfnCchGetString(app, idsGameid, std::span{szEntry});
-    win32::wsprintfA(app.state.szWork, "%lx", app.state.game.lid);
+    CchSprintf(app.state.szWork, "%lx", app.state.game.lid);
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
     TextIO().pfnCchGetString(app, idsScanzoom, std::span{szEntry});
     app.state.szWork[0] = app.state.iScanZoom + '5';
@@ -2455,54 +2455,54 @@ void WriteIniSettings(APPSESSION &app) {
     TextIO().pfnCchGetString(app, idsMisc, std::span{szSection});
     if (app.state.gd.fChgReports) {
         TextIO().pfnCchGetString(app, idsReportplanfld, std::span{szEntry});
-        win32::wsprintfA(app.state.szWork, app.state.PCTD, LOWORD(app.state.vrptPlanet.grbitVisible));
+        CchSprintf(app.state.szWork, app.state.PCTD, LOWORD(app.state.vrptPlanet.grbitVisible));
         ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
         TextIO().pfnCchGetString(app, idsReportplansort, std::span{szEntry});
         i = app.state.vrptPlanet.icolSort;
         if (app.state.vrptPlanet.fAscending) {
             i |= 0x100;
         }
-        win32::wsprintfA(app.state.szWork, app.state.PCTD, i);
+        CchSprintf(app.state.szWork, app.state.PCTD, i);
         ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
         TextIO().pfnCchGetString(app, idsReportfleetfld, std::span{szEntry});
-        win32::wsprintfA(app.state.szWork, app.state.PCTD, LOWORD(app.state.vrptFleet.grbitVisible));
+        CchSprintf(app.state.szWork, app.state.PCTD, LOWORD(app.state.vrptFleet.grbitVisible));
         ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
         TextIO().pfnCchGetString(app, idsReportfleetsort, std::span{szEntry});
         i = app.state.vrptFleet.icolSort;
         if (app.state.vrptFleet.fAscending) {
             i |= 0x100;
         }
-        win32::wsprintfA(app.state.szWork, app.state.PCTD, i);
+        CchSprintf(app.state.szWork, app.state.PCTD, i);
         ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
         TextIO().pfnCchGetString(app, idsReportefleetfld, std::span{szEntry});
-        win32::wsprintfA(app.state.szWork, app.state.PCTD, LOWORD(app.state.vrptEFleet.grbitVisible));
+        CchSprintf(app.state.szWork, app.state.PCTD, LOWORD(app.state.vrptEFleet.grbitVisible));
         ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
         TextIO().pfnCchGetString(app, idsReportefltsort, std::span{szEntry});
         i = app.state.vrptEFleet.icolSort;
         if (app.state.vrptEFleet.fAscending) {
             i |= 0x100;
         }
-        win32::wsprintfA(app.state.szWork, app.state.PCTD, i);
+        CchSprintf(app.state.szWork, app.state.PCTD, i);
         ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
         TextIO().pfnCchGetString(app, idsReportbtlfld, std::span{szEntry});
-        win32::wsprintfA(app.state.szWork, app.state.PCTD, LOWORD(app.state.vrptBattle.grbitVisible));
+        CchSprintf(app.state.szWork, app.state.PCTD, LOWORD(app.state.vrptBattle.grbitVisible));
         ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
         TextIO().pfnCchGetString(app, idsReportbtlsort, std::span{szEntry});
         i = app.state.vrptBattle.icolSort;
         if (app.state.vrptBattle.fAscending) {
             i |= 0x100;
         }
-        win32::wsprintfA(app.state.szWork, app.state.PCTD, i);
+        CchSprintf(app.state.szWork, app.state.PCTD, i);
         ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
         TextIO().pfnCchGetString(app, idsReportdefgraph, std::span{szEntry});
-        win32::wsprintfA(app.state.szWork, app.state.PCTD, app.state.gd.iCurGraph);
+        CchSprintf(app.state.szWork, app.state.PCTD, app.state.gd.iCurGraph);
         ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
     }
     TextIO().pfnCchGetString(app, idsHistoryinfo, std::span{szEntry});
-    win32::wsprintfA(app.state.szWork, app.state.PCTD, app.lpui->uDateInstalled);
+    CchSprintf(app.state.szWork, app.state.PCTD, app.lpui->uDateInstalled);
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
     TextIO().pfnCchGetString(app, idsVcrspeed, std::span{szEntry});
-    win32::wsprintfA(app.state.szWork, app.state.PCTD, app.lpui->viSpeedVCR);
+    CchSprintf(app.state.szWork, app.state.PCTD, app.lpui->viSpeedVCR);
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
     WriteIniPresets(app, szIniFile);
     return;
