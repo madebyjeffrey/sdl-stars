@@ -257,9 +257,9 @@ static int TestFNativeEnumerateDirectory(APPSESSION &, std::string_view path, FN
     // Removal itself is performed by the immediately following source call.
     return 1;
 }
-static int TestFWriteLibraryMetadata(const char *path, const char *name, int16_t player) {
+static int TestFWriteLibraryMetadata(std::string_view path, std::string_view name, int16_t player) {
     int expected = variant >= 5 && variant <= 20 ? variant - 5 : variant == 21 ? -1 : 0;
-    assert(role(path) == 3 && !strcmp(name, "Copy") && player == expected);
+    assert(role(path) == 3 && name == "Copy" && player == expected);
     return build(7);
 }
 static int TestCreateNativeDir(std::string_view path) {

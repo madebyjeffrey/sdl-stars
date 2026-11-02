@@ -77,8 +77,8 @@ static void *PvLibraryFolderContext(HWND hwnd) {
 }
 
 static void SDLCALL LibraryExportFolderSelected(void *lpData, const char * const *rgpszPath, int iFilter) noexcept;
-static std::int16_t FWriteLibraryMetadataValues(const char *pszDir, const char *pszName, int iplr,
-                                           long long lPlayed, const char *pszExchangeName);
+static std::int16_t FWriteLibraryMetadataValues(std::string_view pszDir, std::string_view pszName, int iplr,
+                                           long long lPlayed, std::string_view pszExchangeName);
 
 struct RACESTATE {
     PLAYER plr;
@@ -501,13 +501,13 @@ static std::int16_t FChooseLibraryRaceName(APPSESSION &app, HWND hwnd, const cha
     return 1;
 }
 
-std::int16_t FWriteLibraryMetadata(const char *pszDir, const char *pszName, int iplr) {
+std::int16_t FWriteLibraryMetadata(std::string_view pszDir, std::string_view pszName, int iplr) {
     return FWriteLibraryMetadataValues(pszDir, pszName, iplr, static_cast<long long>(LNativeTime()),
                                        szLibraryExchangeName[0] ? szLibraryExchangeName : pszName);
 }
 
-static std::int16_t FWriteLibraryMetadataValues(const char *pszDir, const char *pszName, int iplr,
-                                           long long lPlayed, const char *pszExchangeName) {
+static std::int16_t FWriteLibraryMetadataValues(std::string_view pszDir, std::string_view pszName, int iplr,
+                                           long long lPlayed, std::string_view pszExchangeName) {
     char szFile[256], szTemp[256];
     NATIVEFILE *pf;
     int fWritten, fClosed, cch;
