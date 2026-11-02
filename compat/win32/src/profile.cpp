@@ -5,7 +5,6 @@
 #include <windows.h>
 #include <cctype>
 #include <cerrno>
-#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <strings.h>
@@ -13,6 +12,7 @@
 #include <unistd.h>
 #include "platform.h"
 #include "encoding.h"
+#include "native.h"
 
 #include "profile_io.h"
 #include "profile_text_io.h"
@@ -133,7 +133,7 @@ static char *SzProfilePath(LPCSTR pszFile) {
     if (pszDir && *pszDir) {
         cb = std::strlen(pszDir) + std::strlen(pszFile) + 2;
         sz = static_cast<char *>((std::malloc(cb)));
-        if (sz) std::snprintf(sz, cb, "%s/%s", pszDir, pszFile);
+        if (sz) CchSnprintf(std::span{sz, cb}, "%s/%s", pszDir, pszFile);
         goto LReturn;
     }
     pszDir = PszCompatEnvironment("XDG_CONFIG_HOME");
@@ -143,18 +143,18 @@ static char *SzProfilePath(LPCSTR pszFile) {
     if (pszDir && *pszDir) {
         cb = std::strlen(pszDir) + std::strlen(pszFile) + 8;
         sz = static_cast<char *>(std::malloc(cb));
-        if (sz) std::snprintf(sz, cb, "%s/stars/%s", pszDir, pszFile);
+        if (sz) CchSnprintf(std::span{sz, cb}, "%s/stars/%s", pszDir, pszFile);
     } else sz = strdup(pszFile);
     static_cast<void>(pszHome);
 #else
     if (pszDir && *pszDir == '/') {
         cb = std::strlen(pszDir) + std::strlen(pszFile) + 8;
         sz = static_cast<char *>((std::malloc(cb)));
-        if (sz) std::snprintf(sz, cb, "%s/stars/%s", pszDir, pszFile);
+        if (sz) CchSnprintf(std::span{sz, cb}, "%s/stars/%s", pszDir, pszFile);
     } else if (pszHome && *pszHome == '/') {
         cb = std::strlen(pszHome) + std::strlen(pszFile) + 16;
         sz = static_cast<char *>((std::malloc(cb)));
-        if (sz) std::snprintf(sz, cb, "%s/.config/stars/%s", pszHome, pszFile);
+        if (sz) CchSnprintf(std::span{sz, cb}, "%s/.config/stars/%s", pszHome, pszFile);
     } else {
         sz = strdup(pszFile);
     }
@@ -298,7 +298,7 @@ BOOL win32::WritePrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR 
             cb = std::strlen(pszSection) + 4;
             szLine = static_cast<char *>((std::malloc(cb)));
             if (!szLine) goto LMemory;
-            std::snprintf(szLine, cb, "[%s]\n", pszSection);
+            CchSnprintf(std::span{szLine, cb}, "[%s]\n", pszSection);
             lpSection = LpProfileLine(szLine);
             std::free(szLine); szLine = nullptr;
             if (!lpSection) goto LMemory;
@@ -308,7 +308,7 @@ BOOL win32::WritePrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR 
         cb = std::strlen(pszKey) + std::strlen(pszValue) + 3;
         szLine = static_cast<char *>((std::malloc(cb)));
         if (!szLine) goto LMemory;
-        std::snprintf(szLine, cb, "%s=%s\n", pszKey, pszValue);
+        CchSnprintf(std::span{szLine, cb}, "%s=%s\n", pszKey, pszValue);
         lpNew = LpProfileLine(szLine);
         if (!lpNew) goto LMemory;
         for (lplp = &lpSection->lpNext; *lplp && !(*lplp)->pszSection && *lplp != lpKey; lplp = &(*lplp)->lpNext) {}

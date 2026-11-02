@@ -122,7 +122,8 @@
         "owned-readonly-race-file-path-and-bounded-diagnostic",
         "complete-scanner-location-label-capacity",
         "fixed-count-strncpy-replaced-with-ranges-algorithms",
-        "typed-help-wrapper-formatting"
+        "typed-help-wrapper-formatting",
+        "typed-profile-wrapper-formatting"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -819,6 +820,19 @@
           "native_regression": "519 matches, 25 existing warnings, zero differences/errors/skips.",
           "host": "No host source or host-facing API changed; previous host qualification remains applicable.",
           "baseline": "Unchanged; no game behavior, saved data, layouts or canonical model changed."
+        },
+        {
+          "batch": "L05an typed profile-wrapper formatting",
+          "parent": "5a84c6e8",
+    "status": "implemented; primary checks pass; macOS process-port leak harness unavailable in this environment",
+          "macos_debug_build": "Full macos-sdl-debug build passes without new warnings.",
+          "profile_tests": "Profile workflow, profile save, UTF-8 profile tests pass (3/3). The separate win32_sdl_leaks_profile case times out at 60 seconds because its launcher cannot get the macOS task port immediately after launch; isolated retry has the same environment error.",
+    "windows_syntax": "Strict MinGW syntax passes for the changed compatibility profile unit and same-named host profile unit (2/2).",
+          "desktop_unit_tests": "18/18 pass.",
+          "tutorial": "Available SDL tutorial smoke checkpoint passes.",
+          "native_regression": "519 matches, 25 existing warnings, zero differences/errors/skips.",
+          "host": "No host source or host-facing API changed; no host regression rerun.",
+          "baseline": "Unchanged; no game behavior, saved data, layouts or canonical model changed."
         }
       ],
       "bounded_formatting": {
@@ -1137,6 +1151,13 @@
         "file": "compat/win32/src/help.cpp",
         "interface": "Seven bounded path/label formatting calls use CchSnprintf with destination spans. Existing return handling and output format are retained.",
         "evidence": "The WinHelp compatibility and packaged-help validation tests pass; full SDL Debug build, unit suite, tutorial smoke and native regression pass."
+      },
+      "profile_wrapper_formatting": {
+        "status": "complete; locally verified; native Windows qualification pending",
+        "calls": 6,
+        "file": "compat/win32/src/profile.cpp",
+        "interface": "Profile path and line formatting now use CchSnprintf with the actual allocated span. The raw snprintf calls and unused cstdio include are removed.",
+        "evidence": "The profile read/write, profile-save and UTF-8 profile checks pass."
       }
     },
     {
@@ -23557,19 +23578,20 @@
     }
   },
   "current_checkpoint": {
-    "batch": "L05am typed help-wrapper formatting",
-    "status": "implemented and locally verified; strict MinGW/native Windows qualification pending",
-    "parent": "cc2bce51",
+    "batch": "L05an typed profile-wrapper formatting",
+    "status": "implemented and locally verified; native Windows runtime qualification pending; macOS leak-harness process-port case fails in this environment",
+    "parent": "5a84c6e8",
     "changes": {
-      "compat/win32/src/help.cpp": "Migrates all seven bounded snprintf calls to CchSnprintf and destination spans while retaining existing formats and handling."
+      "compat/win32/src/profile.cpp": "Migrates six dynamic path/line snprintf calls to CchSnprintf with actual allocation spans and removes the now-unused cstdio include."
     },
     "verification": {
       "macos_debug_build": "Full macos-sdl-debug build passes without new warnings.",
-      "focused_tests": "Packaged-help validation and WinHelp compatibility tests pass (2/2).",
+      "profile_tests": "Three profile-related tests pass. win32_sdl_leaks_profile times out after its launcher reports it cannot get the macOS task port; isolated retry reproduces the same environment failure.",
+        "windows_syntax": "Strict MinGW syntax passes for the changed compatibility profile unit and same-named host profile unit (2/2).",
       "desktop_unit_tests": "18/18 pass.",
       "tutorial": "Available SDL tutorial smoke checkpoint passes.",
       "native_regression": "519 matches (25 with existing warnings); zero differences/errors/skips.",
-      "host": "No host source or host-facing API changed; previous host qualification remains applicable.",
+      "host": "No host source or host-facing API changed; no host regression rerun.",
       "baseline": "Unchanged; no game behavior, saved data, layouts or canonical model changed."
     },
     "remaining_work": [
@@ -23578,7 +23600,8 @@
       "L06 D06 native Windows/Linux chooser qualification and remaining chooser branch coverage.",
       "L08 maintained inventory reconciliation, retained primitive/macro audit and final platform qualification."
     ],
-    "published_batch_head": "1f926960"
+    "macro_scan": "Owned production #define directives are header guards and NOMINMAX; no additional application/API macro definitions were found. Reconcile the historical retained-macro inventory and preprocessor boundaries during L08.",
+    "published_batch_head": "5a84c6e8"
   },
   "milestone_d_checkpoint": {
     "stage": "D05 caller migrations implemented; D06 platform qualification pending",
