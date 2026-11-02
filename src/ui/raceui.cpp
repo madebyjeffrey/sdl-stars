@@ -81,7 +81,7 @@ Finish:
     }
     cpts = CAdvantagePoints(app, &app.state.vplr);
     if (cpts < 0) {
-        win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsAdvantagePointsCurrentlyHoleDPointsCannot).data(), -cpts);
+        CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsAdvantagePointsCurrentlyHoleDPointsCannot).data(), -cpts);
         AlertIO().pfnAlertSz(app, app.state.szWork, win32::MB_ICONHAND);
         switch (app.lpui->iPanelActive) {
         default:
@@ -599,7 +599,7 @@ void DrawRace2(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
             win32::SelectObject(hdc, app.lpui->hbrButtonFace);
             win32::PatBlt(hdc, app.lpui->vrgrcRCW[15].left - 4 - dx, app.lpui->vrgrcRCW[15].top + 3, dx, app.state.dyArial8, win32::PATCOPY);
         }
-        cch = win32::wsprintfA(app.state.szWork, app.state.PCTDPCTPCT, app.state.vplr.pctIdealGrowth);
+        cch = CchSprintf(app.state.szWork, app.state.PCTDPCTPCT, app.state.vplr.pctIdealGrowth);
         RightTextOut(app, hdc, app.lpui->vrgrcRCW[15].left - 4, app.lpui->vrgrcRCW[15].top + 3, app.state.szWork, cch, 0);
     }
     if (iDraw & 7) {
@@ -638,7 +638,7 @@ void DrawRace2(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
             } else {
                 // The explanation exceeds szT's 32 bytes; format from the text
                 // table instead of corrupting the habitat page's stack.
-                cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsCanExpect1DPlanetsWillHabitable).data(), l2);
+                cch = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsCanExpect1DPlanetsWillHabitable).data(), l2);
             }
             rc.left = app.lpui->vrgrcRCW->left;
             rc.top = app.lpui->vrgrcRCW[15].top + app.state.dyArial8 + 8;
@@ -924,7 +924,7 @@ void DrawRace3(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
         }
         dx = LOWORD(GetTextExtent(hdc, app.state.szWork, cch)) + 6;
         dxItem = std::abs(rgRW3Width[i]) * dxDig;
-        win32::wsprintfA(app.state.szWork, app.state.PCTD, RaceQueryIO().pfnStat(&app.state.vplr, static_cast<RaceStat>(rgRW3IStat[i])));
+        CchSprintf(app.state.szWork, app.state.PCTD, RaceQueryIO().pfnStat(&app.state.vplr, static_cast<RaceStat>(rgRW3IStat[i])));
         if (rgRW3Width[i] < 0 && (i > 0 || !fMacintosh)) {
             dxItem += dxkT;
             if (i == 0) {
@@ -1234,7 +1234,7 @@ INT_PTR  RaceWizardDlg6(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, i), 0);
             }
         }
-        win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsCosts75ExtraResearchFieldsStartTech).data(), (RaceQueryIO().pfnStat(&app.state.vplr, rsMajorAdv) == raNone) + 3);
+        CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsCosts75ExtraResearchFieldsStartTech).data(), (RaceQueryIO().pfnStat(&app.state.vplr, rsMajorAdv) == raNone) + 3);
         ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_RACE_START_HIGHER_TECH), app.state.szWork);
         ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_RACE_START_HIGHER_TECH), win32::BM_SETCHECK, RaceQueryIO().pfnGrbit(&app.state.vplr, ibitRaceTech3), 0);
         if (app.state.fRCWReadOnly) {
@@ -1374,7 +1374,7 @@ void DrawRaceAdvantagePoints(APPSESSION &app, HDC hdc, RECT *prc, PLAYER *pplr) 
     bkMode = win32::SetBkMode(hdc, win32::OPAQUE);
     crSav = win32::SetTextColor(hdc, iPts < 0 ? 127 : 0);
     crBkSav = win32::SetBkColor(hdc, app.lpui->crButtonFace);
-    c = win32::wsprintfA(app.state.szWork, app.state.PCTD, iPts);
+    c = CchSprintf(app.state.szWork, app.state.PCTD, iPts);
     RcCtrTextOut(app, hdc, &rc, app.state.szWork, -1);
     win32::SetTextColor(hdc, 0);
     win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
@@ -1468,7 +1468,7 @@ void SetRCWTitle(APPSESSION &app, HWND hwnd, std::int16_t iStep) {
     std::int16_t cch;
 
     cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsCustomRaceWizardStepD6 + app.state.fRCWReadOnly), std::span{szBuf});
-    cch = win32::wsprintfA(app.state.szWork, szBuf, iStep);
+    cch = CchSprintf(app.state.szWork, szBuf, iStep);
     ControlIO().pfnSetWindowText(hwnd, app.state.szWork);
     return;
 }
