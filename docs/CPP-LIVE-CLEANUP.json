@@ -178,7 +178,8 @@
         "typed-window-text-input-result",
         "library-filename-and-race-selection-span-destinations",
         "library-game-selection-span-outputs",
-        "race-library-name-path-output-spans"
+        "race-library-name-path-output-spans",
+        "retired-unused-wsprintf-compatibility-api"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -4407,14 +4408,16 @@
       "path": "compat/win32/src/file.cpp",
       "line": 76,
       "code": "strcpy(szPath, pszFile);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "compat/win32/src/file.cpp",
       "line": 87,
       "code": "strcpy(lpof->szPathName, szPath);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "c_header",
@@ -6707,7 +6710,8 @@
       "path": "compat/win32/src/list.cpp",
       "line": 386,
       "code": "strcpy((LPSTR)l, lp->rgitem[i].psz); return (LRESULT)strlen(lp->rgitem[i].psz);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "c_header",
@@ -9244,14 +9248,16 @@
       "path": "compat/win32/src/services.cpp",
       "line": 52,
       "code": "LPSTR win32::lstrcatA(LPSTR pszDest, LPCSTR pszSource) { return strcat(pszDest, pszSource); }",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "compat/win32/src/services.cpp",
       "line": 55,
       "code": "return strcpy(pszDest, pszSource);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "varargs",
@@ -9630,7 +9636,8 @@
       "path": "compat/win32/src/toolbar.cpp",
       "line": 372,
       "code": "if (l) strcpy((char *)l, lp->rgbtn[i].psz);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "c_header",
@@ -11687,28 +11694,32 @@
       "path": "src/core/create.cpp",
       "line": 1124,
       "code": "strcpy(app.state.szWork, lpbStart);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/create.cpp",
       "line": 1142,
       "code": "strcpy(app.state.szWork, lpbStart);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/create.cpp",
       "line": 1302,
       "code": "strcpy(app.state.rgplr[i].szNames, app.state.rgplr[i].szName);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/create.cpp",
       "line": 1303,
       "code": "strcat(app.state.rgplr[i].szNames, \"s\");",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "c_header",
@@ -12721,28 +12732,32 @@
       "path": "src/core/race.cpp",
       "line": 655,
       "code": "strcpy(app.state.szRacePass, szPassword);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/race.cpp",
       "line": 667,
       "code": "strcpy(app.state.szRacePass, app.state.szPassLast);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/race.cpp",
       "line": 698,
       "code": "strcpy(app.state.szWork, szFile);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/race.cpp",
       "line": 807,
       "code": "strcpy(pplr->szName, plrT.szName);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "c_header",
@@ -13413,14 +13428,16 @@
       "path": "src/core/report.cpp",
       "line": 739,
       "code": "strcpy(szFile, app.state.szBase);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/report.cpp",
       "line": 747,
       "code": "strcpy(app.state.szBase, szFile);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "c_header",
@@ -13637,14 +13654,16 @@
       "path": "src/core/save.cpp",
       "line": 913,
       "code": "strcat(app.state.szWork, \"xy\");",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "src/core/save.cpp",
       "line": 916,
       "code": "strcat(app.state.szWork, \"hst\");",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "c_header",
@@ -15512,14 +15531,16 @@
       "path": "src/host/host.cpp",
       "line": 128,
       "code": "strcat(szCmdLine, \" \");",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "src/host/host.cpp",
       "line": 130,
       "code": "strcat(szCmdLine, argv[i]);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "null",
@@ -16059,7 +16080,8 @@
       "path": "src/ui/battleui.cpp",
       "line": 324,
       "code": "strcpy(&app.lpui->btlplan.szName[cLen], \" (2)\");",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "c_header",
@@ -16460,7 +16482,8 @@
       "path": "src/ui/buildui.cpp",
       "line": 1696,
       "code": "strcpy(&sz[4], part.pcom().szName());",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
@@ -16619,56 +16642,64 @@
       "path": "src/ui/createui.cpp",
       "line": 145,
       "code": "strcpy(app.state.szBase, szFile);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/createui.cpp",
       "line": 211,
       "code": "strcpy(app.state.rgplr[i].szNames, app.state.rgplr[i].szName);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/createui.cpp",
       "line": 212,
       "code": "strcat(app.state.rgplr[i].szNames, \"s\");",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/createui.cpp",
       "line": 411,
       "code": "strcpy(app.state.game.szName, app.state.szBase);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/createui.cpp",
       "line": 606,
       "code": "strcpy(rgszLibraryRaceNew[iNewVal], szLibraryRace);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/createui.cpp",
       "line": 616,
       "code": "strcpy(app.state.szRaceFile, app.lpui->vrgszFileNew + (iCurVal >> 2) * 13);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/createui.cpp",
       "line": 623,
       "code": "strcpy(app.state.szRacePass, app.state.szPassLast);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/createui.cpp",
       "line": 636,
       "code": "strcpy(rgszLibraryRaceNew[iCurVal >> 2], szLibraryRace);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
@@ -16705,42 +16736,48 @@
       "path": "src/ui/fileui.cpp",
       "line": 117,
       "code": "strcpy(szT, pszFileName);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/fileui.cpp",
       "line": 118,
       "code": "strcat(szT, \".\");",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/fileui.cpp",
       "line": 119,
       "code": "strcat(szT, pszExt);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/fileui.cpp",
       "line": 124,
       "code": "strcpy(app.lpui->vrgszMRU + 256 * i, app.lpui->vrgszMRU + 256 * (i - 1));",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/fileui.cpp",
       "line": 126,
       "code": "strcpy(app.lpui->vrgszMRU, szT);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/fileui.cpp",
       "line": 133,
       "code": "strcpy(szT, app.lpui->vrgszMRU + 256 * i);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "c_header",
@@ -17472,21 +17509,24 @@
       "path": "src/ui/libraryui.cpp",
       "line": 308,
       "code": "strcpy(szOriginal, pszName);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/libraryui.cpp",
       "line": 402,
       "code": "strcpy(pszName, szName);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/libraryui.cpp",
       "line": 412,
       "code": "strcpy(pszName, szName);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
@@ -17501,7 +17541,8 @@
       "path": "src/ui/libraryui.cpp",
       "line": 436,
       "code": "if (!FPortableLibraryName(app, szLibraryName)) strcpy(szLibraryName, TextIO().pfnCompressed(app, idsLibraryDefaultGameName));",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
@@ -17524,21 +17565,24 @@
       "path": "src/ui/libraryui.cpp",
       "line": 755,
       "code": "strcpy(prv->szLatest, pszName);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/libraryui.cpp",
       "line": 759,
       "code": "strcpy(prv->szSame, pszName);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/libraryui.cpp",
       "line": 808,
       "code": "strcpy(szName, rv.szSame);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
@@ -17561,35 +17605,40 @@
       "path": "src/ui/libraryui.cpp",
       "line": 1196,
       "code": "if (pszSource != szSource) strcpy(szSource, pszSource);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/libraryui.cpp",
       "line": 2054,
       "code": "strcpy(szSource, pszSource);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/libraryui.cpp",
       "line": 2083,
       "code": "strcpy(szDir, szSource);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/libraryui.cpp",
       "line": 2103,
       "code": "strcpy(szDir, \".\");",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/libraryui.cpp",
       "line": 2122,
       "code": "strcpy(szLibraryExchangeName, szStem);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
@@ -17628,21 +17677,24 @@
       "path": "src/ui/libraryui.cpp",
       "line": 2326,
       "code": "if (i != j) strcpy(rgpszRecent[j], rgpszRecent[i]);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/libraryui.cpp",
       "line": 2336,
       "code": "strcpy(app.lpui->vrgszMRU + 256 * i, rgpszRecent[i]);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/libraryui.cpp",
       "line": 2426,
       "code": "strcpy(szFilter, TextIO().pfnCompressed(app, idsLibraryOrdersImportFilter));",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
@@ -17657,21 +17709,24 @@
       "path": "src/ui/libraryui.cpp",
       "line": 2797,
       "code": "strcpy(plc->szName, pszName);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/libraryui.cpp",
       "line": 3073,
       "code": "strcpy(app.state.szBase, szFile);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/libraryui.cpp",
       "line": 3169,
       "code": "strcpy(szDir, app.state.szBase);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "c_header",
@@ -17813,7 +17868,8 @@
       "path": "src/ui/libraryzip.cpp",
       "line": 238,
       "code": "strcpy(szPath, szFile);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "c_header",
@@ -17849,7 +17905,8 @@
       "path": "src/ui/logui.cpp",
       "line": 44,
       "code": "strcpy(&szT[cch], iTurn == 37 ? \".hst\" : \".m1\");",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "c_header",
@@ -18630,70 +18687,80 @@
       "path": "src/ui/mdi.cpp",
       "line": 1000,
       "code": "strcpy(szT, app.lpui->vrgszMRU + 256 * (LOWORD(wParam) - 4300));",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/mdi.cpp",
       "line": 1013,
       "code": "strcpy(app.state.szBase, szT);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/mdi.cpp",
       "line": 1027,
       "code": "strcpy(app.state.szWork, szT);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/mdi.cpp",
       "line": 1278,
       "code": "strcpy(app.state.szWork, app.state.szBase);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/mdi.cpp",
       "line": 1279,
       "code": "strcat(app.state.szWork, \".x1\");",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/mdi.cpp",
       "line": 1539,
       "code": "strcpy(app.state.szBase, app.state.szWork);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/mdi.cpp",
       "line": 1679,
       "code": "strcpy(&app.state.szWork[3], app.lpui->vrgszMRU + 256 * i);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/mdi.cpp",
       "line": 1729,
       "code": "strcpy(szFile, app.state.szBase);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/mdi.cpp",
       "line": 1736,
       "code": "strcpy(szFile, app.state.szWork);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/mdi.cpp",
       "line": 1789,
       "code": "strcpy(app.state.szBase, szFile);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
@@ -19858,7 +19925,8 @@
       "path": "src/ui/preferencesui.cpp",
       "line": 15,
       "code": "strcpy(szEntry, szSection);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
@@ -19873,7 +19941,8 @@
       "path": "src/ui/preferencesui.cpp",
       "line": 48,
       "code": "strcpy(szEntry, szSection);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
@@ -19888,42 +19957,48 @@
       "path": "src/ui/preferencesui.cpp",
       "line": 102,
       "code": "strcpy(szEntry, szSection);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/preferencesui.cpp",
       "line": 114,
       "code": "strcpy(psz, app.state.vrgZip[i].szName);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/preferencesui.cpp",
       "line": 124,
       "code": "strcpy(szEntry, szSection);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/preferencesui.cpp",
       "line": 139,
       "code": "strcpy(psz, app.state.vrgZipProd[i].szName);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/preferencesui.cpp",
       "line": 198,
       "code": "strcpy(app.state.szBase, app.state.szWork);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
       "path": "src/ui/preferencesui.cpp",
       "line": 217,
       "code": "strcpy(app.lpui->vrgszMRU + 256 * iPass, app.lpui->vrgszMRU + 256 * i);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "c_header",
@@ -20396,7 +20471,8 @@
       "path": "src/ui/raceui.cpp",
       "line": 1431,
       "code": "strcpy(szFile, szFileSuggest);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "c_header",
@@ -21892,7 +21968,8 @@
       "path": "src/ui/scan.cpp",
       "line": 2002,
       "code": "strcat(psz + 8, PszGetLocName(app, app.state.sel.grobj, app.state.sel.id, pt2.x, pt2.y));",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "c_header",
@@ -23341,7 +23418,8 @@
       "path": "src/ui/utilgenui.cpp",
       "line": 1160,
       "code": "strcpy((char *)win32::GetWindowLongPtrA(hwnd, win32::DWLP_USER), szPass);",
-      "disposition": "pending"
+      "disposition": "resolved-current-source-audit-b6f06a97",
+      "resolution_evidence": "Owned src and compat/win32 source/header scan at b6f06a97: no strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls remain."
     },
     {
       "kind": "unbounded_copy",
@@ -24099,12 +24177,12 @@
   ],
   "restart_checkpoint": {
     "date": "2026-11-02",
-    "reason": "Continue the full C++ cleanup from the verified race-library name/path span migration.",
+    "reason": "Continue the full C++ cleanup from the verified removal of the unused wsprintf compatibility wrapper and current-source C API inventory.",
     "branch": "develop",
-    "batch": "L05 race-library name and path output spans",
-    "batch_parent": "a6dc0af3",
-    "latest_batch": "L05 race-library name and path output spans",
-    "latest_batch_head": "091b4b64",
+    "batch": "L05 unused wsprintf compatibility API removal and C-remnant inventory reconciliation",
+    "batch_parent": "5e7a375e",
+    "latest_batch": "L05 unused wsprintf compatibility API removal and C-remnant inventory reconciliation",
+    "latest_batch_head": "b6f06a97",
     "completed_stages": [
       "L01: nullptr and aliases",
       "L02: explicit C++ casts and headers",
@@ -24122,33 +24200,32 @@
       "host_units": "make test-host passed: 29/29.",
       "native_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
       "host_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
-      "tutorial": "Available SDL tutorial smoke checkpoint passed: 1/1.",
-      "focused_ui_workflows": "Race-library and startup dummy workflows passed; 2/2.",
+      "tutorial": "Available SDL tutorial smoke checkpoint passed: 1/1; full 80-page tutorial remains unfinished.",
+      "compatibility_services": "stars-compat-services passed.",
       "diff_check": "pass.",
       "baseline": "Unchanged.",
-      "platform_ci": "Fresh unit/platform and native regression workflows target 091b4b64; in progress.",
-      "fresh_github_runs": {
+      "platform_ci": "Unable to refresh because api.github.com was unreachable; previous run references remain below with their prior checkpoint status.",
+      "previous_fresh_github_runs": {
         "head": "091b4b64",
         "unit_platforms": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41410974466",
         "native_regression": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41410977666",
         "status_at_checkpoint": "in progress"
       }
     },
-    "owned_c_and_function_macro_scan": "Confirmed on 2026-11-02: zero owned .c sources and zero function-like macros under src/ and compat/win32/src. Include guards, NOMINMAX, test configuration and vendored SDK definitions remain.",
-    "retained_c_allocation_boundary": "src/core/memory.cpp uses calloc/realloc/free to implement the resizable game heap; keep unless a separate allocator audit proves a safe typed replacement.",
+    "owned_c_and_function_macro_scan": "Confirmed at b6f06a97: no owned C translation units, no owned function-like macros, and no live legacy unbounded string/varargs calls under src or compat/win32. Include guards, NOMINMAX, FSHIFT undefinition and platform/test configuration remain.",
+    "retained_c_allocation_boundary": "src/core/memory.cpp keeps calloc/realloc/free for the resizable game heap; this is a deliberate allocation protocol, not a C translation unit or macro.",
     "other_remaining": [
-      "L05 remaining bounded text destinations, const-text interfaces and post-migration scratch/borrowed-return audit.",
-      "L06 remaining buffer/length interfaces and native file/path results; chooser Milestone D still needs Windows/Linux qualification.",
+      "L05 bounded text destinations, const-text interfaces, and post-migration scratch/borrowed-return audit.",
+      "L06 remaining buffer/length service interfaces and native file/path results; chooser Milestone D still needs Windows/Linux qualification.",
       "L08 final retained primitive/API macro/preprocessor inventory reconciliation and current-source platform qualification.",
       "Fresh Windows/Linux qualification on current source remains required.",
       "Full 80-page SDL tutorial remains unfinished; the available smoke checkpoint passed."
     ],
     "restart_order": [
-      "Start from develop at 091b4b64 or newer; preserve untracked title-modernized artwork and prompt files.",
-      "Inspect unit/platform and native regression workflows 41410974466 and 41410977666; both target 091b4b64.",
-      "Continue L05 bounded text destinations, const-text APIs, and scratch/borrowed-return review.",
-      "Continue L06 span/result interfaces, remaining native path results, and Windows/Linux chooser qualification.",
-      "Finish L08 retained preprocessor/API macro inventory and qualify the final full source state."
+      "Start from develop at b6f06a97 or newer; preserve untracked title-modernized artwork and prompt files.",
+      "Continue L05 bounded text destination, const input, scratch storage and borrowed return audit.",
+      "Continue L06 typed service result interfaces and Milestone D Windows/Linux chooser qualification.",
+      "Complete L08 retained API/preprocessor inventory, qualify current source on Windows/Linux, then rerun final suites."
     ],
     "fresh_github_runs": {
       "head": "091b4b64",
@@ -24158,35 +24235,31 @@
     }
   },
   "current_checkpoint": {
-    "batch": "L05 race-library name and path output spans",
-    "status": "implemented, locally verified and committed; cross-platform CI in progress",
-    "parent": "a6dc0af3",
+    "batch": "L05 unused wsprintf compatibility API removal and C-remnant inventory reconciliation",
+    "status": "implemented, committed and locally verified",
+    "parent": "5e7a375e",
     "changes": {
-      "src/ui/libraryui.h and src/ui/libraryui.cpp": "FCustomizeLibraryRace now takes the actual fixed 256-byte name span. FChooseLibraryRaceName takes the path span rather than pointer plus capacity and retains its existing formatter success behavior."
+      "compat/win32/include/wincompat_api.h": "Removed the unused wsprintfA template and field API.",
+      "compat/win32/src/services.cpp": "Removed its 51-line formatter adapter and unused algorithm/cctype includes.",
+      "tests/compat/win32_services.inc": "Kept native SDK wsprintf tests out of the SDL compatibility build; independent C SDK vectors remain."
     },
     "verification": {
-      "debug_build_and_desktop_units": "make test-unit passed: full macos-sdl-debug build, 18/18 tests.",
-      "host_units": "make test-host passed: 29/29.",
-      "native_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
-      "host_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
-      "tutorial": "Available SDL tutorial smoke checkpoint passed: 1/1.",
-      "focused_ui_workflows": "Race-library and startup dummy workflows passed; 2/2.",
-      "diff_check": "pass.",
+      "macos_sdl_debug_build": "Pass; no new warnings.",
+      "desktop_unit_tests": "18/18 pass.",
+      "compatibility_services": "Pass.",
+      "host_unit_tests": "29/29 pass.",
+      "tutorial": "Available SDL tutorial smoke checkpoint 1/1 pass; full 80-page tutorial remains unfinished.",
+      "native_regression": "519 matches, 25 existing warnings, zero differences/errors/skips.",
+      "host_regression": "519 matches, 25 existing warnings, zero differences/errors/skips.",
       "baseline": "Unchanged.",
-      "platform_ci": "Fresh unit/platform and native regression workflows target 091b4b64; in progress.",
-      "fresh_github_runs": {
-        "head": "091b4b64",
-        "unit_platforms": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41410974466",
-        "native_regression": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41410977666",
-        "status_at_checkpoint": "in progress"
-      }
+      "diff_check": "Pass."
     },
-    "source_commit": "091b4b64",
-    "published_batch_head": "091b4b64",
+    "source_commit": "b6f06a97",
+    "published_batch_head": "b6f06a97",
     "remaining_work": [
-      "L05 remaining bounded text destinations, const-text interfaces and post-migration scratch/borrowed-return audit.",
-      "L06 remaining buffer/length interfaces and native file/path results; chooser Milestone D still needs Windows/Linux qualification.",
-      "L08 final retained primitive/API macro/preprocessor inventory reconciliation and current-source platform qualification."
+      "L05 bounded text destinations, const-text interfaces, and post-migration scratch/borrowed-return audit.",
+      "L06 remaining buffer/length service interfaces and chooser Milestone D Windows/Linux qualification.",
+      "L08 final retained macro/preprocessor inventory reconciliation and current-source Windows/Linux qualification."
     ],
     "previous_batch": {
       "batch": "L05 selected library-game name spans and bounded host-list reads",
@@ -24663,6 +24736,14 @@
           }
         }
       }
+    },
+    "source_audit": {
+      "owned_c_string_apis": "No strcpy/strcat/strncpy/strncat/sprintf/vsprintf/atoi/atol calls in src or owned compat/win32 code.",
+      "native_varargs": "No va_list/va_start/va_arg/va_end in owned src or compat/win32 code.",
+      "obsolete_api": "Removed unreferenced win32::wsprintfA template and wsprintfAFields implementation. Native C SDK reference tests retain platform wsprintfA vectors.",
+      "function_like_macros": "No owned function-like macros in src or compat/win32/include/src; include guards and platform configuration remain.",
+      "c_language": "C11 remains enabled for independent C ABI/layout/reference tests. The application project is declared LANGUAGES CXX; owned production is C++20/Objective-C++20.",
+      "inventory_reconciliation": "77 old pending unbounded-copy records marked resolved against the current-source scan."
     }
   },
   "milestone_d_checkpoint": {
