@@ -1,77 +1,76 @@
 #include "host_profile.h"
 #include "text_io.h"
+#include "encoding.h"
+#include <algorithm>
 
 // FSzEqNoCase compares two strings, ignoring case, as INI names are.
-static std::int16_t FSzEqNoCase(const char *sz1, const char *sz2) {
-    while (*sz1 != 0 && std::tolower(static_cast<unsigned char>(*sz1)) == std::tolower(static_cast<unsigned char>(*sz2))) {
-        sz1++;
-        sz2++;
+static bool FSzEqNoCase(std::string_view sz1, std::string_view sz2) {
+    std::size_t i;
+
+    if (sz1.size() != sz2.size())
+        return false;
+    for (i = 0; i < sz1.size(); i++) {
+        if (std::tolower(static_cast<unsigned char>(sz1[i])) != std::tolower(static_cast<unsigned char>(sz2[i])))
+            return false;
     }
-    return *sz1 == 0 && *sz2 == 0;
+    return true;
 }
 
-// FIniValue copies key szKey's value in [szSection] of the INI text pszText
+// FIniValue copies key szKey's value in [szSection] of the INI text szText
 // into szValue, as GetPrivateProfileString finds it.
-std::int16_t FIniValue(APPSESSION &app, const char *pszText, StringId idsSection, StringId idsKey, char *szValue, std::size_t cchValue) {
-    char        szSection[32];
-    char        szKey[32];
-    char        szLine[256];
-    const char *pch;
-    const char *pchEnd;
-    char       *pchEq;
-    std::size_t      cch;
-    std::int16_t     fInSection;
+bool FIniValue(APPSESSION &app, std::string_view szText, StringId idsSection, StringId idsKey, std::span<char> szValue) {
+    std::array<char, 32> szSection, szKey;
+    std::size_t ichLine, ichLineEnd, ichClose, ichEquals, cch;
+    std::int16_t cchSection, cchKey;
+    bool fInSection;
+    std::string_view szLine, szName, szValueText;
 
-    TextIO().pfnCchGetString(app, idsSection, std::span{szSection});
-    TextIO().pfnCchGetString(app, idsKey, std::span{szKey});
-    fInSection = 0;
-    for (pch = pszText; *pch != 0; pch = *pchEnd != 0 ? pchEnd + 1 : pchEnd) {
-        pchEnd = std::strchr(pch, '\n');
-        if (!pchEnd) {
-            pchEnd = pch + std::strlen(pch);
-        }
-        cch = static_cast<std::size_t>((pchEnd - pch)) < sizeof(szLine) - 1 ? static_cast<std::size_t>((pchEnd - pch)) : sizeof(szLine) - 1;
-        cch = CchUtf8Prefix(pch, cch);
-        std::memcpy(szLine, pch, cch);
-        while (cch > 0 && (szLine[cch - 1] == '\r' || szLine[cch - 1] == ' ' || szLine[cch - 1] == '\t')) {
-            cch--;
-        }
-        szLine[cch] = 0;
-        if (szLine[0] == '[') {
-            pchEq = std::strchr(szLine, ']');
-            if (pchEq) {
-                *pchEq = 0;
-                fInSection = FSzEqNoCase(&szLine[1], szSection);
-            }
+    if (szValue.empty())
+        return false;
+    cchSection = TextIO().pfnCchGetString(app, idsSection, std::span{szSection});
+    cchKey = TextIO().pfnCchGetString(app, idsKey, std::span{szKey});
+    fInSection = false;
+    for (ichLine = 0; ichLine < szText.size(); ichLine = ichLineEnd < szText.size() ? ichLineEnd + 1 : szText.size()) {
+        ichLineEnd = szText.find('\n', ichLine);
+        if (ichLineEnd == std::string_view::npos)
+            ichLineEnd = szText.size();
+        szLine = szText.substr(ichLine, ichLineEnd - ichLine);
+        cch = CchUtf8Prefix(szLine, std::min<std::size_t>(szLine.size(), 255));
+        szLine = szLine.substr(0, cch);
+        while (!szLine.empty() && (szLine.back() == '\r' || szLine.back() == ' ' || szLine.back() == '\t'))
+            szLine.remove_suffix(1);
+        if (szLine.empty())
+            continue;
+        if (szLine.front() == '[') {
+            ichClose = szLine.find(']');
+            if (ichClose != std::string_view::npos)
+                fInSection = FSzEqNoCase(szLine.substr(1, ichClose - 1), std::string_view{szSection.data(), static_cast<std::size_t>(cchSection)});
             continue;
         }
-        pchEq = std::strchr(szLine, '=');
-        if (!fInSection || !pchEq) {
+        ichEquals = szLine.find('=');
+        if (!fInSection || ichEquals == std::string_view::npos)
             continue;
-        }
-        *pchEq = 0;
-        for (cch = std::strlen(szLine); cch > 0 && (szLine[cch - 1] == ' ' || szLine[cch - 1] == '\t'); cch--) {
-            szLine[cch - 1] = 0;
-        }
-        if (FSzEqNoCase(szLine, szKey)) {
-            for (pchEq++; *pchEq == ' ' || *pchEq == '\t'; pchEq++) {
-            }
-            cch = CchUtf8Prefix(pchEq, cchValue - 1);
-            std::memcpy(szValue, pchEq, cch);
-            szValue[cch] = 0;
-            return 1;
+        szName = szLine.substr(0, ichEquals);
+        while (!szName.empty() && (szName.back() == ' ' || szName.back() == '\t'))
+            szName.remove_suffix(1);
+        if (FSzEqNoCase(szName, std::string_view{szKey.data(), static_cast<std::size_t>(cchKey)})) {
+            szValueText = szLine.substr(ichEquals + 1);
+            while (!szValueText.empty() && (szValueText.front() == ' ' || szValueText.front() == '\t'))
+                szValueText.remove_prefix(1);
+            CchCopyUtf8Prefix(szValue, szValueText);
+            return true;
         }
     }
-    return 0;
+    return false;
 }
 
 // LIniInt reads an INI key as GetPrivateProfileInt does: its leading
 // number, or lDefault if the key is missing.
-std::int32_t LIniInt(APPSESSION &app, const char *pszText, StringId idsSection, StringId idsKey, std::int32_t lDefault) {
-    char szValue[32];
+std::int32_t LIniInt(APPSESSION &app, std::string_view szText, StringId idsSection, StringId idsKey, std::int32_t lDefault) {
+    std::array<char, 32> szValue;
 
-    if (!FIniValue(app, pszText, idsSection, idsKey, szValue, sizeof(szValue))) {
+    if (!FIniValue(app, szText, idsSection, idsKey, szValue)) {
         return lDefault;
     }
-    return std::atol(szValue);
+    return std::atol(szValue.data());
 }

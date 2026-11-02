@@ -45,6 +45,8 @@ std::int16_t IdAlertBox(const char *sz, std::int16_t mbType) {
 static std::int16_t FReadHostIni(APPSESSION &app, const char *szFile) {
     char *pszText;
     long  cb;
+    std::size_t cchText;
+    std::string_view szIni;
     NATIVEFILE *pf;
 
     pf = PfOpenNativeFile(szFile, NATIVEFILEMODE::read);
@@ -62,15 +64,20 @@ static std::int16_t FReadHostIni(APPSESSION &app, const char *szFile) {
     }
     ICloseNativeFile(file.Release());
     pszText[cb] = 0;
-    if (!FUtf8Valid(std::string_view{pszText, static_cast<std::size_t>(cb)})) return 0;
-    if (cb >= 3 && !std::memcmp(pszText, "\xef\xbb\xbf", 3)) std::memmove(pszText, pszText + 3, static_cast<std::size_t>(cb) - 2);
-    app.state.ini.fLogging = LIniInt(app, pszText, idsFiles, idsLogging, 0) != 0;
-    if (!FIniValue(app, pszText, idsMisc, idsDefaultpassword, app.state.vszDefPass, 16)) {
+    cchText = static_cast<std::size_t>(cb);
+    if (!FUtf8Valid(std::string_view{pszText, cchText})) return 0;
+    if (cchText >= 3 && !std::memcmp(pszText, "\xef\xbb\xbf", 3)) {
+        cchText -= 3;
+        std::memmove(pszText, pszText + 3, cchText + 1);
+    }
+    szIni = std::string_view{pszText, cchText};
+    app.state.ini.fLogging = LIniInt(app, szIni, idsFiles, idsLogging, 0) != 0;
+    if (!FIniValue(app, szIni, idsMisc, idsDefaultpassword, std::span{app.state.vszDefPass})) {
         app.state.vszDefPass[0] = 0;
     }
-    app.state.gd.fPerPlayerDumps = LIniInt(app, pszText, idsMisc, idsNewreports, 0) != 0;
-    app.state.gd.fNoHostNames = LIniInt(app, pszText, idsMisc, idsNohostnames, 0) != 0;
-    app.state.vcBackupDirs = LIniInt(app, pszText, idsMisc, idsBackups, 1);
+    app.state.gd.fPerPlayerDumps = LIniInt(app, szIni, idsMisc, idsNewreports, 0) != 0;
+    app.state.gd.fNoHostNames = LIniInt(app, szIni, idsMisc, idsNohostnames, 0) != 0;
+    app.state.vcBackupDirs = LIniInt(app, szIni, idsMisc, idsBackups, 1);
     if (app.state.vcBackupDirs < 1 || app.state.vcBackupDirs > 999) {
         app.state.vcBackupDirs = 1;
     }

@@ -8,6 +8,8 @@
 #include <cstring>
 #include <optional>
 #include <string>
+#include <string_view>
+#include <span>
 #include "filesystem.h"
 #include "host_profile.h"
 #include "profile_io.h"
@@ -61,6 +63,8 @@ int main(void) {
     static const char *const quoted[] = {"[A]\n", "k=' a '\n", NULL};
     static const char *const empty[] = {NULL};
     char                     out[16], longline[320];
+    const std::string        szIniWithSuffix = "[A]\nk=exact\n[other]\nk=ignored";
+    const std::string_view   szIniView{szIniWithSuffix.data(), std::strlen("[A]\nk=exact\n")};
     PROFILEIO                io;
     io.pfnOpen = OpenFixture;
     PROFILEIOSCOPE profileScope(io);
@@ -96,13 +100,15 @@ int main(void) {
     CHECK(win32::GetPrivateProfileStringA("A", "k", "", out, 3, "x") == 2 && !strcmp(out, " a"));
     fixture = duplicate;
     CHECK(win32::GetPrivateProfileStringA("A", "k", "fallback", out, sizeof(out), "x") == 8 && !strcmp(out, "fallback"));
-    CHECK(FIniValue(app, "[A]\nx=first\n[A]\nk=second", static_cast<StringId>(1), static_cast<StringId>(2), out, sizeof(out)) && !strcmp(out, "second"));
-    CHECK(!FIniValue(app, " [A]\nk=1", static_cast<StringId>(1), static_cast<StringId>(2), out, sizeof(out)));
-    CHECK(!FIniValue(app, "[ A ]\nk=1", static_cast<StringId>(1), static_cast<StringId>(2), out, sizeof(out)));
-    CHECK(!FIniValue(app, "[A]\n k=1", static_cast<StringId>(1), static_cast<StringId>(2), out, sizeof(out)));
-    CHECK(FIniValue(app, "[A]\n[broken\nk=1", static_cast<StringId>(1), static_cast<StringId>(2), out, sizeof(out)) && !strcmp(out, "1"));
-    CHECK(FIniValue(app, "[A]\nk= '2'  ", static_cast<StringId>(1), static_cast<StringId>(2), out, sizeof(out)) && !strcmp(out, "'2'"));
-    CHECK(FIniValue(app, "[A]\nk=abcd", static_cast<StringId>(1), static_cast<StringId>(2), out, 3) && !strcmp(out, "ab"));
+    CHECK(FIniValue(app, "[A]\nx=first\n[A]\nk=second", static_cast<StringId>(1), static_cast<StringId>(2), std::span{out}) && !strcmp(out, "second"));
+    CHECK(FIniValue(app, szIniView, static_cast<StringId>(1), static_cast<StringId>(2), std::span{out}) && !strcmp(out, "exact"));
+    CHECK(FIniValue(app, "[A]\nk=\xce\xa9\xe6\x9d\xb1", static_cast<StringId>(1), static_cast<StringId>(2), std::span{out}.first(3)) && !strcmp(out, "\xce\xa9"));
+    CHECK(!FIniValue(app, " [A]\nk=1", static_cast<StringId>(1), static_cast<StringId>(2), std::span{out}));
+    CHECK(!FIniValue(app, "[ A ]\nk=1", static_cast<StringId>(1), static_cast<StringId>(2), std::span{out}));
+    CHECK(!FIniValue(app, "[A]\n k=1", static_cast<StringId>(1), static_cast<StringId>(2), std::span{out}));
+    CHECK(FIniValue(app, "[A]\n[broken\nk=1", static_cast<StringId>(1), static_cast<StringId>(2), std::span{out}) && !strcmp(out, "1"));
+    CHECK(FIniValue(app, "[A]\nk= '2'  ", static_cast<StringId>(1), static_cast<StringId>(2), std::span{out}) && !strcmp(out, "'2'"));
+    CHECK(FIniValue(app, "[A]\nk=abcd", static_cast<StringId>(1), static_cast<StringId>(2), std::span{out}.first(3)) && !strcmp(out, "ab"));
     CHECK(LIniInt(app, "[A]\nk=0x2", static_cast<StringId>(1), static_cast<StringId>(2), 7) == 0);
     CHECK(LIniInt(app, "[A]\nk='2'", static_cast<StringId>(1), static_cast<StringId>(2), 7) == 0);
     CHECK(LIniInt(app, "[A]\nk=", static_cast<StringId>(1), static_cast<StringId>(2), 7) == 0);
@@ -111,7 +117,7 @@ int main(void) {
     strcpy(longline, "[A]\nk=");
     memset(longline + 6, 'a', 270);
     strcpy(longline + 276, "\nk=second");
-    CHECK(FIniValue(app, longline, static_cast<StringId>(1), static_cast<StringId>(2), out, 4) && !strcmp(out, "aaa"));
+    CHECK(FIniValue(app, longline, static_cast<StringId>(1), static_cast<StringId>(2), std::span{out}.first(4)) && !strcmp(out, "aaa"));
     loadOK = 0;
     CHECK(win32::GetPrivateProfileStringA("A", "k", "fallback", out, sizeof(out), "x") == 8 && !strcmp(out, "fallback"));
     printf("S02 profile I/O and host linked witnesses: %d passed\n", checks);
