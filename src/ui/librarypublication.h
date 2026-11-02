@@ -35,7 +35,7 @@ std::int16_t FCreateLibraryGameStagePath(std::span<char> pszStage);
 std::int16_t FCreateLibraryGameHoldPath(std::span<char> pszHold);
 std::int16_t FCreateLibraryGameStage(APPSESSION &app, const char *pszSource, const char *pszSourceName, const char *pszTargetName, const char *pszStage, int iplr, long long lPlayed,
                                 const char *pszExchangeName);
-std::int16_t FBackupConflictingPlayerFiles(const char *pszDirectory, const char *pszName, int iplr, char *pszBackup, std::size_t cchBackup);
+std::int16_t FBackupConflictingPlayerFiles(const char *pszDirectory, const char *pszName, int iplr, std::span<char> pszBackup);
 std::int16_t FStageConflictingTurn(const char *pszStage, const char *pszName, const char *pszSource, int iplr, std::int32_t lidGame, std::uint16_t turn);
 std::int16_t FChooseSeparateCopyName(APPSESSION &app, HWND hwnd, const char *pszName);
 std::int16_t FLibraryNameAvailable(APPSESSION &app, const char *pszDirectory, const char *pszName);

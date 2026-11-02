@@ -201,9 +201,9 @@ static int TestFCreateLibraryGameStage(APPSESSION &, const char *source, const c
     assert(profile == 3 && !strcmp(name, "Copy") && player == 0 && played == 0);
     return build(4);
 }
-static int TestFBackupConflictingPlayerFiles(const char *stage, const char *name, int player, char *backup, size_t cap) {
-    assert(role(stage) == 3 && !strcmp(name, "Game") && player == 0 && cap > 6);
-    strcpy(backup, "backup");
+static int TestFBackupConflictingPlayerFiles(const char *stage, const char *name, int player, std::span<char> backup) {
+    assert(role(stage) == 3 && !strcmp(name, "Game") && player == 0 && backup.size() > 6);
+    std::copy_n("backup", 7, backup.begin());
     return build(2);
 }
 static int TestFStageConflictingTurn(const char *stage, const char *name, const char *source, int player, int32_t id, uint16_t turn) {

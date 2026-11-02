@@ -2516,36 +2516,36 @@ static std::int16_t FCopyOptionalConflictFile(const char *pszSource, const char 
 }
 
 std::int16_t FBackupConflictingPlayerFiles(const char *pszDirectory, const char *pszName,
-                                             int iplr, char *pszBackup, std::size_t cchBackup) {
+                                             int iplr, std::span<char> pszBackup) {
     char szSource[512], szTarget[512], szExt[8];
     int i, cch;
 
 
     for (i = 0; i < 1000; i++) {
-        cch = CchSnprintf(std::span{pszBackup, cchBackup}, "%s%sbackup.%03d", pszDirectory, szDirSep, i);
-        if (cch <= 0 || static_cast<std::size_t>(cch) >= cchBackup) return 0;
-        if (FNativePathInfo(pszBackup)) continue;
-        if (CreateNativeDir(pszBackup) == 0) break;
-        if (!FNativeDirectoryExists(pszBackup)) return 0;
+        cch = CchSnprintf(pszBackup, "%s%sbackup.%03d", pszDirectory, szDirSep, i);
+        if (cch <= 0 || static_cast<std::size_t>(cch) >= pszBackup.size()) return 0;
+        if (FNativePathInfo(pszBackup.data())) continue;
+        if (CreateNativeDir(pszBackup.data()) == 0) break;
+        if (!FNativeDirectoryExists(pszBackup.data())) return 0;
     }
     if (i == 1000) return 0;
 
     CchSnprintf(std::span{szExt, sizeof(szExt)}, "m%d", iplr + 1);
     cch = CchSnprintf(std::span{szSource, sizeof(szSource)}, "%s%s%s.%s", pszDirectory, szDirSep, pszName, szExt);
     if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szSource)) return 0;
-    cch = CchSnprintf(std::span{szTarget, sizeof(szTarget)}, "%s%s%s.%s", pszBackup, szDirSep, pszName, szExt);
+    cch = CchSnprintf(std::span{szTarget, sizeof(szTarget)}, "%s%s%s.%s", pszBackup.data(), szDirSep, pszName, szExt);
     if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szTarget) || !FCopyOptionalConflictFile(szSource, szTarget)) return 0;
 
     CchSnprintf(std::span{szExt, sizeof(szExt)}, "x%d", iplr + 1);
     cch = CchSnprintf(std::span{szSource, sizeof(szSource)}, "%s%s%s.%s", pszDirectory, szDirSep, pszName, szExt);
     if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szSource)) return 0;
-    cch = CchSnprintf(std::span{szTarget, sizeof(szTarget)}, "%s%s%s.%s", pszBackup, szDirSep, pszName, szExt);
+    cch = CchSnprintf(std::span{szTarget, sizeof(szTarget)}, "%s%s%s.%s", pszBackup.data(), szDirSep, pszName, szExt);
     if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szTarget) || !FCopyOptionalConflictFile(szSource, szTarget)) return 0;
 
     CchSnprintf(std::span{szExt, sizeof(szExt)}, "h%d", iplr + 1);
     cch = CchSnprintf(std::span{szSource, sizeof(szSource)}, "%s%s%s.%s", pszDirectory, szDirSep, pszName, szExt);
     if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szSource)) return 0;
-    cch = CchSnprintf(std::span{szTarget, sizeof(szTarget)}, "%s%s%s.%s", pszBackup, szDirSep, pszName, szExt);
+    cch = CchSnprintf(std::span{szTarget, sizeof(szTarget)}, "%s%s%s.%s", pszBackup.data(), szDirSep, pszName, szExt);
     return cch > 0 && static_cast<std::size_t>(cch) < sizeof(szTarget) && FCopyOptionalConflictFile(szSource, szTarget);
 }
 
@@ -2596,7 +2596,7 @@ std::int16_t FReplaceConflictingLibraryTurn(APPSESSION &app, const LIBRARYPATHS 
         !LibraryPublicationIO().pfnFCreateLibraryGameStagePath(std::span{szStage})) return 0;
     if (!LibraryPublicationIO().pfnFCreateLibraryGameStage(app, szDirectory, pszName, pszName, szStage, iRemembered,
                                  lPlayed, szExchangeName) ||
-        !LibraryPublicationIO().pfnFBackupConflictingPlayerFiles(szStage, pszName, iplr, szBackup, sizeof(szBackup)) ||
+        !LibraryPublicationIO().pfnFBackupConflictingPlayerFiles(szStage, pszName, iplr, std::span{szBackup}) ||
         !LibraryPublicationIO().pfnFStageConflictingTurn(szStage, pszName, pszSource, iplr, lidGame, turn) ||
         !LibraryPublicationIO().pfnFCreateLibraryGameHoldPath(std::span{szHold})) goto LDone;
     if (RenameNativeFile(szDirectory, szHold) != 0) goto LDone;
