@@ -157,7 +157,7 @@ Finish:
                 app.state.rgplr[i] = vrgplrDef[c];
             }
             TextIO().pfnCchGetString(app, static_cast<StringId>(idsHumanoid + c), std::span{app.state.rgplr[i].szName});
-            win32::wsprintfA(app.state.rgplr[i].szNames, "%ss", app.state.rgplr[i].szName);
+            CchSprintf(app.state.rgplr[i].szNames, "%ss", app.state.rgplr[i].szName);
             break;
         case 2:
             app.state.rgplr[i] = rgplrLocal[app.state.vrgplrTypeNew[i] >> 2];
@@ -187,7 +187,7 @@ Finish:
             TextIO().pfnCchGetString(app, static_cast<StringId>(idsBerserker + RandomIO().pfnRandom(app, 24)), std::span{app.state.rgplr[i].szName});
         }
         if (app.state.rgplr[i].szNames[0] == 0) {
-            win32::wsprintfA(app.state.rgplr[i].szNames, "%ss", app.state.rgplr[i].szName);
+            CchSprintf(app.state.rgplr[i].szNames, "%ss", app.state.rgplr[i].szName);
         }
     }
     for (i = 1; i < app.state.game.cPlayer; i++) {
@@ -578,7 +578,7 @@ INT_PTR  NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             if (app.lpui->iPopMenuSel == 0) {
                 app.state.vplr = vrgplrDef[0];
                 TextIO().pfnCchGetString(app, idsHumanoid, std::span{app.state.vplr.szName});
-                win32::wsprintfA(app.state.vplr.szNames, "%ss", app.state.vplr.szName);
+                CchSprintf(app.state.vplr.szNames, "%ss", app.state.vplr.szName);
                 szLibraryRace[0] = 0;
                 app.state.szRacePass[0] = 0;
                 prcSav = app.lpui->vrgrcRCW;
@@ -611,7 +611,7 @@ INT_PTR  NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 if ((iCurVal & 3) == 1) {
                     app.state.vplr = vrgplrDef[iCurVal >> 2];
                     TextIO().pfnCchGetString(app, static_cast<StringId>((iCurVal >> 2) + 0x567), std::span{app.state.vplr.szName});
-                    win32::wsprintfA(app.state.vplr.szNames, "%ss", app.state.vplr.szName);
+                    CchSprintf(app.state.vplr.szNames, "%ss", app.state.vplr.szName);
                 } else {
                     app.state.vplr = app.lpui->vrgplrNew[iCurVal >> 2];
                     CchCopyUtf8(std::span{app.state.szRaceFile}, app.lpui->vrgszFileNew + (iCurVal >> 2) * 13);
@@ -714,7 +714,7 @@ void DrawNewGame2(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
     yCur = 6;
     win32::SetRect(&rcDiamond, app.lpui->xNewGameDiamond, yCur, app.lpui->xNewGameDiamond + app.state.dyArial8 + 1, yCur + app.state.dyArial8 + 1);
     for (i = 0; i < 16 && (!app.state.fRCWReadOnly || i < app.state.game.cPlayer); i++) {
-        cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsPlayerD).data(), i + 1);
+        cch = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsPlayerD).data(), i + 1);
         app.state.szWork[cch++] = ':';
         app.state.szWork[cch] = 0;
         RightTextOut(app, hdc, app.lpui->xNewGameDiamond - 6, yCur, app.state.szWork, cch, 0);
@@ -725,7 +725,7 @@ void DrawNewGame2(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
                 CchCopyUtf8Prefix(std::span{app.state.szWork}, TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, nullptr).data());
                 if (!app.state.rgplr[i].fDead)
                     goto DisplayName;
-                win32::wsprintfA(std::span{app.state.szWork}.subspan(static_cast<std::size_t>(std::strlen(app.state.szWork))), " (%s)", TextIO().pfnCompressed(app, idsDeceased).data());
+                CchSprintf(std::span{app.state.szWork}.subspan(static_cast<std::size_t>(std::strlen(app.state.szWork))), " (%s)", TextIO().pfnCompressed(app, idsDeceased).data());
                 win32::SetTextColor(hdc, 127);
                 goto DisplayName;
             }
@@ -743,22 +743,22 @@ void DrawNewGame2(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
                 break;
             }
             TextIO().pfnCchGetString(app, idsS, std::span{szT});
-            win32::wsprintfA(app.state.szWork, szT, TextIO().pfnCompressed(app, static_cast<StringId>(idsHumanoid + iPlr)).data());
+            CchSprintf(app.state.szWork, szT, TextIO().pfnCompressed(app, static_cast<StringId>(idsHumanoid + iPlr)).data());
             break;
         case 2:
             pszFile = rgszLibraryRaceNew[iPlr][0] ? rgszLibraryRaceNew[iPlr] : app.lpui->vrgszFileNew + iPlr * 13;
             if (!app.state.fRCWReadOnly && app.state.gd.fNoHostNames && pszFile[0] != 0) {
-                win32::wsprintfA(app.state.szWork, " %s", pszFile);
+                CchSprintf(app.state.szWork, " %s", pszFile);
                 break;
             }
             if (pszFile[0] != 0) {
-                win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, !app.state.fRCWReadOnly ? idsSS2 : idsS).data(), app.lpui->vrgplrNew[iPlr].szNames, pszFile);
+                CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, !app.state.fRCWReadOnly ? idsSS2 : idsS).data(), app.lpui->vrgplrNew[iPlr].szNames, pszFile);
                 break;
             }
-            win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsS).data(), app.lpui->vrgplrNew[iPlr].szNames);
+            CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsS).data(), app.lpui->vrgplrNew[iPlr].szNames);
             break;
         case 3:
-            win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsSSComputerPlayer).data(), app.lpui->vrgszComputerPlayers[iPlr & 7], app.lpui->vrgszComputerLevel[app.state.vrgplrTypeNew[i] >> 5]);
+            CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsSSComputerPlayer).data(), app.lpui->vrgszComputerPlayers[iPlr & 7], app.lpui->vrgszComputerLevel[app.state.vrgplrTypeNew[i] >> 5]);
         }
     DisplayName:
         win32::TextOutA(hdc, rcDiamond.right + 6, yCur, app.state.szWork, std::strlen(app.state.szWork));
@@ -909,7 +909,7 @@ void DrawNewGame3(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
                 ids = static_cast<StringId>(ids + 1);
                 break;
             }
-            win32::wsprintfA(app.state.szWork, app.state.PCTD, GetVCVal(app, &app.state.game, static_cast<VictoryCondition>(vcCur), 0));
+            CchSprintf(app.state.szWork, app.state.PCTD, GetVCVal(app, &app.state.game, static_cast<VictoryCondition>(vcCur), 0));
             if (rgNG3Width[i][j] < 0) {
                 dxItem += static_cast<std::int16_t>((3 * dxDig)) / 2;
                 CchAppendUtf8Prefix(std::span{app.state.szWork}, "%");
@@ -988,7 +988,7 @@ void SetNGWTitle(APPSESSION &app, HWND hwnd, std::int16_t iStep) {
     char    szBuf[50];
 
     cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsAdvancedNewGameWizardStepD3 + app.state.fRCWReadOnly), std::span{szBuf});
-    cch = win32::wsprintfA(app.state.szWork, szBuf, iStep);
+    cch = CchSprintf(app.state.szWork, szBuf, iStep);
     ControlIO().pfnSetWindowText(hwnd, app.state.szWork);
     return;
 }
