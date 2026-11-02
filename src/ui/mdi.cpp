@@ -2280,7 +2280,7 @@ void GetWindowRc(HWND hwnd, RECT *prc) {
     return;
 }
 
-void SetWindowIniString(APPSESSION &app, char *sz, HWND hwnd) {
+void SetWindowIniString(APPSESSION &app, HWND hwnd) {
     char ch;
     RECT rc;
 
@@ -2325,7 +2325,7 @@ void WriteIniSettings(APPSESSION &app) {
     CchSprintf(app.state.szWork, szPd, i);
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
     TextIO().pfnCchGetString(app, idsMain, std::span{szEntry});
-    SetWindowIniString(app, app.state.szWork, app.lpui->hwndFrame);
+    SetWindowIniString(app, app.lpui->hwndFrame);
     ProfileTextIO().pfnWriteString(szSection, szEntry, app.state.szWork, szIniFile);
     TextIO().pfnCchGetString(app, idsReportfleetwin, std::span{szEntry});
     CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsC04d04d04d04d).data(), 77, app.state.vrptFleet.ptDlg.x, app.state.vrptFleet.ptDlg.y, app.state.vrptFleet.ptDlg.x + app.state.vrptFleet.ptSize.x,

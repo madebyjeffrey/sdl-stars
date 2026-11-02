@@ -23,7 +23,7 @@ INT_PTR  HostOptionsDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam
 void             DrawHostOptions(HWND hwnd, HDC hdc, std::int16_t iDraw);
 void     HostTimerProc(HWND hwnd, UINT msg, UINT_PTR idTimer, DWORD dwTime);
 void             GetWindowRc(HWND hwnd, RECT *prc);
-void             SetWindowIniString(APPSESSION &app, char *sz, HWND hwnd);
+void             SetWindowIniString(APPSESSION &app, HWND hwnd);
 void             WriteIniSettings(APPSESSION &app);
 void             RefitFrameChildren(APPSESSION &app);
 LRESULT  TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
