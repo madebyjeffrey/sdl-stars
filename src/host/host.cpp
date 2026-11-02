@@ -45,7 +45,7 @@ std::int16_t IdAlertBox(std::string_view sz, std::int16_t mbType) {
 // ReadIniSettings does for the Windows game: logging, the default
 // password, per-player dump files, host names in -v output and the number
 // of backup directories.
-static std::int16_t FReadHostIni(APPSESSION &app, const char *szFile) {
+static std::int16_t FReadHostIni(APPSESSION &app, std::string_view szFile) {
     long  cb;
     std::string szText;
     std::string_view szIni;
