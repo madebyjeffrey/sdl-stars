@@ -31,13 +31,13 @@ static int    copyClose(NATIVEFILE *f) {
     }
     return status;
 }
-static int copyRemove(const char *path, int directory) {
+static int copyRemove(std::string_view path, int directory) {
     assert(!directory);
     if (faults & 16) {
         errno = EACCES;
         return -1;
     }
-    return remove(path);
+    return remove(std::string{path}.c_str());
 }
 static void writeSource(int n) {
     FILE *f = fopen("source", "wb");

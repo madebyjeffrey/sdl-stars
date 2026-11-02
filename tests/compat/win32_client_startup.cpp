@@ -1600,11 +1600,11 @@ int StarsTest_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, UINT typ
 }
 
 static const NATIVEPUBLISHIO publishNative;
-static int IRemoveClientFile(const char *pszFile, int fDirectory) {
-    if (fDirectory) return publishNative.pfnRemove(pszFile, fDirectory);
+static int IRemoveClientFile(std::string_view szFile, int fDirectory) {
+    if (fDirectory) return publishNative.pfnRemove(szFile, fDirectory);
     static int fFailImportOrdersRemove;
     if (!fFailLibraryGameDelete && PszCompatEnvironment("STARS_CLIENT_GAME_DELETE_MODE") &&
-        strcmp(PszCompatEnvironment("STARS_CLIENT_GAME_DELETE_MODE"), "failure") == 0 && strstr(pszFile, "selected-game")) {
+        strcmp(PszCompatEnvironment("STARS_CLIENT_GAME_DELETE_MODE"), "failure") == 0 && szFile.find("selected-game") != std::string_view::npos) {
         fFailLibraryGameDelete = 1;
         return -1;
     }
@@ -1613,47 +1613,47 @@ static int IRemoveClientFile(const char *pszFile, int fDirectory) {
         return -1;
     }
     if (!fFailImportOrdersRemove && PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_FAIL_ORDERS_REMOVE") &&
-        strstr(pszFile, ".x1")) {
+        szFile.find(".x1") != std::string_view::npos) {
         fFailImportOrdersRemove = 1;
         return -1;
     }
-    return publishNative.pfnRemove(pszFile, fDirectory);
+    return publishNative.pfnRemove(szFile, fDirectory);
 }
 
-static int IRenameClientFile(const char *pszOld, const char *pszNew, int fReplace, int fSync) {
+static int IRenameClientFile(std::string_view szOld, std::string_view szNew, int fReplace, int fSync) {
     static int fFailImportReplace, fFailConflictPublish, fFailConflictRestore;
     if (!fSync && fReplace) {
-        if (fFailRaceVersionSave && strstr(pszOld, ".stars-race-stage-")) {
+        if (fFailRaceVersionSave && szOld.find(".stars-race-stage-") != std::string_view::npos) {
             fFailRaceVersionSave = 0;
             return -1;
         }
-        if (!fFailImportReplace && PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_FAIL_REPLACE") && strstr(pszNew, ".m1")) {
+        if (!fFailImportReplace && PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_FAIL_REPLACE") && szNew.find(".m1") != std::string_view::npos) {
             fFailImportReplace = 1;
             return -1;
         }
-        if (PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_FAIL_ROLLBACK") && strstr(pszOld, ".previous.") &&
-            strstr(pszNew, ".m1")) return -1;
-        if (fFailRaceExportReplace && !SDL_strcasecmp(pszNew, szRaceExportFailTarget)) {
+        if (PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_FAIL_ROLLBACK") && szOld.find(".previous.") != std::string_view::npos &&
+            szNew.find(".m1") != std::string_view::npos) return -1;
+        if (fFailRaceExportReplace && !SDL_strcasecmp(std::string{szNew}.c_str(), szRaceExportFailTarget)) {
             fFailRaceExportReplace = 0;
             return -1;
         }
     } else if (!fSync) {
         if (!fFailConflictPublish && PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_FAIL_CONFLICT_PUBLISH") &&
-            strstr(pszOld, ".stars-game-stage-") && strstr(pszNew, "managed-copy-duplicate")) {
+            szOld.find(".stars-game-stage-") != std::string_view::npos && szNew.find("managed-copy-duplicate") != std::string_view::npos) {
             fFailConflictPublish = 1;
             return -1;
         }
         if (!fFailConflictRestore && PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_FAIL_CONFLICT_RESTORE") &&
-            strstr(pszOld, ".stars-game-old-") && strstr(pszNew, "managed-copy-duplicate")) {
+            szOld.find(".stars-game-old-") != std::string_view::npos && szNew.find("managed-copy-duplicate") != std::string_view::npos) {
             fFailConflictRestore = 1;
             return -1;
         }
-        if (fFailGameRenamePublish && !SDL_strcasecmp(pszNew, szGameRenameFailTarget)) {
+        if (fFailGameRenamePublish && !SDL_strcasecmp(std::string{szNew}.c_str(), szGameRenameFailTarget)) {
             fFailGameRenamePublish = 0;
             return -1;
         }
     }
-    return publishNative.pfnRename(pszOld, pszNew, fReplace, fSync);
+    return publishNative.pfnRename(szOld, szNew, fReplace, fSync);
 }
 
 #include "win32_raceversion_workflow.h"

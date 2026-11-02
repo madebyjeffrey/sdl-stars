@@ -13,7 +13,7 @@ class NATIVEFILESESSION {
     std::mutex lock;
     std::array<std::unique_ptr<NATIVEFILE, NATIVEFILEDELETE>, std::numeric_limits<std::int16_t>::max() + 1> rg;
     friend NATIVEFILE *LegacyFile(std::int16_t hf);
-    friend NATIVEFILEOPENRESULT HfNativeOpenLegacy(const char *, NATIVEFILEOPENOPTIONS);
+    friend NATIVEFILEOPENRESULT HfNativeOpenLegacy(std::string_view, NATIVEFILEOPENOPTIONS);
     friend std::optional<std::size_t> CbNativeReadLegacy(std::int16_t, std::span<std::byte>);
     friend std::optional<std::size_t> CbNativeWriteLegacy(std::int16_t, std::span<const std::byte>);
     friend std::int32_t LNativeSeekLegacy(std::int16_t, std::int32_t, NATIVESEEKORIGIN);

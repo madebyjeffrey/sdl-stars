@@ -58,6 +58,15 @@ int main(void) {
         errno=0;CHECK(!CchNativeCwd(std::span{shortCwd}) && errno==ERANGE && std::ranges::all_of(shortCwd,[](char ch){return ch=='#';}));
         errno=0;CHECK(!CchCanonicalNativePath("\xff", std::span{exact}.first(1)) && errno==EILSEQ && !strcmp(exact.data(),szCanonical.c_str()));
     }
+    // Native file and metadata APIs consume bounded paths without reading a
+    // terminator beyond the supplied view.
+    {
+        const std::string szPathWithSuffix = std::string{path} + "/ignored-suffix";
+        const std::string_view szPathView{szPathWithSuffix.data(), std::string_view{path}.size()};
+        NATIVEFILE *pfBound = PfNativeOpen(szPathView, NATIVEFILEMODE::read);
+        CHECK(pfBound && CbNativeFile(pfBound) == 6 && ICloseNativeFile(pfBound) == 0);
+        CHECK((info = IGetNativeFileInfo(szPathView, NATIVELINKMODE::follow)).has_value() && info->cb == 6);
+    }
     // The bound owner closes every legacy stream and retains token reuse.
     {
         NATIVEFILESESSION session;

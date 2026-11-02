@@ -39,8 +39,8 @@ static int TestPutc(int c,NATIVEFILE *fp){(void)fp;if(failure==Newline)return EO
 static int TestFlush(NATIVEFILE *fp){(void)fp;return failure==Flush?-1:0;}
 static int TestSync(NATIVEFILE *fp){(void)fp;syncCalled++;return failure==Sync?-1:0;}
 static int TestClose(NATIVEFILE *fp){(void)fp;closed=1;return failure==Close?-1:0;}
-static int TestRename(const char *a,const char *b,int replace,int sync){(void)a;(void)b;(void)replace;(void)sync;renameCalled++;if(failure==Rename)return -1;published=1;return 0;}
-static int TestUnlink(const char *p){(void)p;unlinked++;if(cleanupOK)return 0;errno=EACCES;return -1;}
+static int TestRename(std::string_view a,std::string_view b,int replace,int sync){(void)a;(void)b;(void)replace;(void)sync;renameCalled++;if(failure==Rename)return -1;published=1;return 0;}
+static int TestUnlink(std::string_view p){(void)p;unlinked++;if(cleanupOK)return 0;errno=EACCES;return -1;}
 
 static int checks;
 #define CHECK(x) do {checks++;if(!(x)){fprintf(stderr,"stage %d witness %d failed: %s\n",failure,checks,#x);return 1;}}while(0)

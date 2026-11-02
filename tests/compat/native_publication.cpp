@@ -11,14 +11,14 @@
 static const NATIVEPUBLISHIO ioNative;
 static int                   cRemove, cRename, fReplaceObserved, fSyncObserved, fThrow;
 struct PUBLICATIONFAILURE {};
-static int IRemove(const char *psz, int fDirectory) {
-    if (fDirectory || std::strcmp(psz, "file"))
+static int IRemove(std::string_view szPath, int fDirectory) {
+    if (fDirectory || szPath != "file")
         return -29;
     cRemove++;
     return 17;
 }
-static int IRename(const char *pszOld, const char *pszNew, int fReplace, int fSync) {
-    if (std::strcmp(pszOld, "old") || std::strcmp(pszNew, "new"))
+static int IRename(std::string_view szOldPath, std::string_view szNewPath, int fReplace, int fSync) {
+    if (szOldPath != "old" || szNewPath != "new")
         return -29;
     cRename++;
     fReplaceObserved = fReplace;

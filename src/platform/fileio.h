@@ -52,8 +52,8 @@ struct NATIVEFILEOPENRESULT {
 // Strict UTF-8 paths; binary bytes are never decoded or translated. All service
 // functions contain exceptions and report failures through return values/errno.
 // Native access is required for live identity, exclusive creation and durable IO.
-NATIVEFILE *PfNativeOpen(const char *psz, NATIVEFILEMODE mode);
-NATIVEFILE *PfNativeOpenFlags(const char *psz, NATIVEFILEOPENOPTIONS nfo);
+NATIVEFILE *PfNativeOpen(std::string_view szPath, NATIVEFILEMODE mode);
+NATIVEFILE *PfNativeOpenFlags(std::string_view szPath, NATIVEFILEOPENOPTIONS nfo);
 int ICloseNativeFile(NATIVEFILE *pf);
 using NATIVEFILEOWNER = std::unique_ptr<NATIVEFILE, decltype(&ICloseNativeFile)>;
 struct NATIVEFILETEMPRESULT {
@@ -122,19 +122,19 @@ int CNativeScan(NATIVEFILE *pf, const char *pszFormat, FIELDS... fields) {
 // Empty metadata results retain the native errno failure detail. inspect reports
 // the entry itself, including links/reparse points, without following its target.
 std::optional<NATIVEFILEINFO> IGetNativeOpenInfo(NATIVEFILE *pf);
-int IUnlinkNativePath(const char *psz);
-std::optional<NATIVEFILEINFO> IGetNativeFileInfo(const char *psz, NATIVELINKMODE mode);
-int IAccessNativePath(const char *psz, int md);
-int ICreateNativeDirectory(const char *psz, unsigned md);
-int FEnsureNativeDirectory(const char *psz);
-int IRemoveNativePath(const char *psz, int fDirectory);
-int IRenameNativePath(const char *pszOld, const char *pszNew, int fReplace, int fSync);
+int IUnlinkNativePath(std::string_view szPath);
+std::optional<NATIVEFILEINFO> IGetNativeFileInfo(std::string_view szPath, NATIVELINKMODE mode);
+int IAccessNativePath(std::string_view szPath, int md);
+int ICreateNativeDirectory(std::string_view szPath, unsigned md);
+int FEnsureNativeDirectory(std::string_view szPath);
+int IRemoveNativePath(std::string_view szPath, int fDirectory);
+int IRenameNativePath(std::string_view szOldPath, std::string_view szNewPath, int fReplace, int fSync);
 std::optional<std::string> SzCanonicalNativePath(std::string_view szPath);
 std::optional<std::string> SzNativeCwd();
 // Counts exclude the NUL; insufficient spans retain their bytes and set ERANGE.
 std::optional<std::size_t> CchCanonicalNativePath(std::string_view szPath, std::span<char> szOut);
 std::optional<std::size_t> CchNativeCwd(std::span<char> szOut);
-int IChangeNativeCwd(const char *psz);
+int IChangeNativeCwd(std::string_view szPath);
 // POSIX entry bytes are returned verbatim so callers can report unsupported
 // names; validate UTF-8 before using an entry as a path. No value: errno zero at end, or an error.
 std::optional<std::string> SzNativeReadDir(NATIVEDIR *pdir);
@@ -143,7 +143,7 @@ using NATIVEDIROWNER = std::unique_ptr<NATIVEDIR, decltype(&ICloseNativeDir)>;
 NATIVEDIROWNER PdirNativeOpen(std::string_view szPath);
 
 // Small owned tokens keep native pointers/descriptors out of game storage.
-[[nodiscard]] NATIVEFILEOPENRESULT HfNativeOpenLegacy(const char *psz, NATIVEFILEOPENOPTIONS nfo);
+[[nodiscard]] NATIVEFILEOPENRESULT HfNativeOpenLegacy(std::string_view szPath, NATIVEFILEOPENOPTIONS nfo);
 std::optional<std::size_t> CbNativeReadLegacy(std::int16_t hf, std::span<std::byte> rgb);
 std::optional<std::size_t> CbNativeWriteLegacy(std::int16_t hf, std::span<const std::byte> rgb);
 std::int32_t LNativeSeekLegacy(std::int16_t hf, std::int32_t ib, NATIVESEEKORIGIN iOrigin);

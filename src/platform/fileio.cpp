@@ -4,6 +4,7 @@
 #include <atomic>
 #include "encoding.h"
 
+#include <algorithm>
 #include <array>
 #include <cerrno>
 #include <charconv>
@@ -40,11 +41,6 @@
 
 namespace fs = std::filesystem;
 
-static bool FPath(const char *psz) {
-    if (!psz) { errno = EINVAL; return false; }
-    if (!FUtf8Valid(std::string_view{psz})) { errno = EILSEQ; return false; }
-    return true;
-}
 static bool FPath(std::string_view szPath) {
     if (!FUtf8Valid(szPath)) { errno = EILSEQ; return false; }
     return true;
@@ -204,16 +200,16 @@ template <class R, class Fn> static R FileCall(NATIVEFILE *pf, R failure, Fn fn)
     return std::move(failure);
 }
 
-NATIVEFILE *PfNativeOpenFlags(const char *psz, NATIVEFILEOPENOPTIONS nfo) {
+NATIVEFILE *PfNativeOpenFlags(std::string_view szPath, NATIVEFILEOPENOPTIONS nfo) {
     const unsigned access = static_cast<unsigned>(nfo.mdAccess);
     const unsigned share = static_cast<unsigned>(nfo.mdShare);
     const bool create = nfo.fCreate, truncate = nfo.fTruncate, exclusive = nfo.fExclusive;
     bool native = nfo.fNative;
-    if (!FPath(psz)) return nullptr;
+    if (!FPath(szPath)) return nullptr;
     if (access == 0 || access > 3) { errno = EINVAL; return nullptr; }
     return FileCall<NATIVEFILE *>(nullptr, nullptr, [&]() -> NATIVEFILE * {
         auto pf = std::make_unique<NATIVEFILE>();
-        pf->pth = PathFromUtf8(psz); pf->grfAccess = access;
+        pf->pth = PathFromUtf8(szPath); pf->grfAccess = access;
 #ifdef _WIN32
         native = native || (share & 0x70) != 0;
 #endif
@@ -238,7 +234,7 @@ NATIVEFILE *PfNativeOpenFlags(const char *psz, NATIVEFILEOPENOPTIONS nfo) {
             if (create) flags |= O_CREAT;
             if (truncate) flags |= O_TRUNC;
             if (exclusive) flags |= O_EXCL;
-            pf->fd = open(psz, flags, 0666);
+            pf->fd = open(pf->pth.c_str(), flags, 0666);
             if (pf->fd < 0) return nullptr;
 #endif
         } else {
@@ -254,7 +250,7 @@ NATIVEFILE *PfNativeOpenFlags(const char *psz, NATIVEFILEOPENOPTIONS nfo) {
         return pf.release();
     });
 }
-NATIVEFILE *PfNativeOpen(const char *psz, NATIVEFILEMODE mode) {
+NATIVEFILE *PfNativeOpen(std::string_view szPath, NATIVEFILEMODE mode) {
     NATIVEFILEOPENOPTIONS nfo;
     bool fAppend = false;
     unsigned access;
@@ -285,10 +281,10 @@ NATIVEFILE *PfNativeOpen(const char *psz, NATIVEFILEMODE mode) {
     }
     if (fAppend) {
         access = static_cast<unsigned>(nfo.mdAccess);
-        if (!FPath(psz)) return nullptr;
+        if (!FPath(szPath)) return nullptr;
         return FileCall<NATIVEFILE *>(nullptr, nullptr, [&]() -> NATIVEFILE * {
             auto pf = std::make_unique<NATIVEFILE>();
-            pf->pth = PathFromUtf8(psz); pf->grfAccess = access; pf->fAppend = true;
+            pf->pth = PathFromUtf8(szPath); pf->grfAccess = access; pf->fAppend = true;
             auto md = std::ios::binary | std::ios::out | std::ios::app;
             if (access & 1) md |= std::ios::in;
             pf->stm.imbue(std::locale::classic());
@@ -298,7 +294,7 @@ NATIVEFILE *PfNativeOpen(const char *psz, NATIVEFILEMODE mode) {
             return pf.release();
         });
     }
-    return PfNativeOpenFlags(psz, nfo);
+    return PfNativeOpenFlags(szPath, nfo);
 }
 int ICloseNativeFile(NATIVEFILE *pf) {
     if (!pf) { errno = EBADF; return -1; }
@@ -476,12 +472,12 @@ int CNativeScanFields(NATIVEFILE *pf, const char *fmt, std::span<const NATIVEINT
     return count == 0 && pf && pf->fEof ? EOF : count;
 }
 
-std::optional<NATIVEFILEINFO> IGetNativeFileInfo(const char *psz, NATIVELINKMODE mode) {
-    if (!FPath(psz)) return std::nullopt;
+std::optional<NATIVEFILEINFO> IGetNativeFileInfo(std::string_view szPath, NATIVELINKMODE mode) {
+    if (!FPath(szPath)) return std::nullopt;
     return FileCall<std::optional<NATIVEFILEINFO>>(nullptr, std::nullopt, [&]() -> std::optional<NATIVEFILEINFO> {
         const bool follow = mode == NATIVELINKMODE::follow;
         std::error_code ec;
-        fs::path pth = PathFromUtf8(psz);
+        fs::path pth = PathFromUtf8(szPath);
         auto status = follow ? fs::status(pth, ec) : fs::symlink_status(pth, ec);
         if (ec || !fs::exists(status)) { if (ec) SetError(ec); else errno = ENOENT; return std::nullopt; }
         NATIVEFILEINFO result = {};
@@ -505,47 +501,47 @@ std::optional<NATIVEFILEINFO> IGetNativeFileInfo(const char *psz, NATIVELINKMODE
         return result;
     });
 }
-int IAccessNativePath(const char *psz, int md) {
-    if (!FPath(psz)) return -1;
+int IAccessNativePath(std::string_view szPath, int md) {
+    if (!FPath(szPath)) return -1;
     return FileCall(nullptr, -1, [&] {
 #ifdef _WIN32
-        return _waccess(PathFromUtf8(psz).c_str(), md);
+        return _waccess(PathFromUtf8(szPath).c_str(), md);
 #else
-        return access(psz, md);
+        return access(PathFromUtf8(szPath).c_str(), md);
 #endif
     });
 }
-int ICreateNativeDirectory(const char *psz, unsigned md) {
-    if (!FPath(psz)) return -1;
+int ICreateNativeDirectory(std::string_view szPath, unsigned md) {
+    if (!FPath(szPath)) return -1;
     return FileCall(nullptr, -1, [&] {
 #ifdef _WIN32
         static_cast<void>(md);
 #else
         // Private profile directories must have their mode at creation, with
         // umask applied; a later permissions() call creates an exposure window.
-        if (md != 0777) return mkdir(psz, static_cast<mode_t>(md));
+        if (md != 0777) return mkdir(PathFromUtf8(szPath).c_str(), static_cast<mode_t>(md));
 #endif
         std::error_code ec;
-        if (fs::create_directory(PathFromUtf8(psz), ec)) return 0;
+        if (fs::create_directory(PathFromUtf8(szPath), ec)) return 0;
         if (ec) SetError(ec); else errno = EEXIST;
         return -1;
     });
 }
-int FEnsureNativeDirectory(const char *psz) {
-    if (!FPath(psz)) return 0;
+int FEnsureNativeDirectory(std::string_view szPath) {
+    if (!FPath(szPath)) return 0;
     return FileCall(nullptr, 0, [&] {
-        std::error_code ec; fs::path pth = PathFromUtf8(psz);
+        std::error_code ec; fs::path pth = PathFromUtf8(szPath);
         fs::create_directories(pth, ec);
         if (ec) { SetError(ec); return 0; }
         return fs::is_directory(pth, ec) && !ec ? 1 : 0;
     });
 }
-int IRemoveNativePath(const char *psz, int directory) {
-    if (!FPath(psz)) return -1;
+int IRemoveNativePath(std::string_view szPath, int directory) {
+    if (!FPath(szPath)) return -1;
     return FileCall(nullptr, -1, [&] {
 #ifdef _WIN32
         if (!directory) {
-            if (DeleteFileW(PathFromUtf8(psz).c_str())) return 0;
+            if (DeleteFileW(PathFromUtf8(szPath).c_str())) return 0;
             errno = GetLastError() == ERROR_FILE_NOT_FOUND ? ENOENT : EACCES;
             return -1;
         }
@@ -553,24 +549,24 @@ int IRemoveNativePath(const char *psz, int directory) {
         static_cast<void>(directory);
 #endif
         std::error_code ec;
-        if (fs::remove(PathFromUtf8(psz), ec)) return 0;
+        if (fs::remove(PathFromUtf8(szPath), ec)) return 0;
         if (ec) SetError(ec); else errno = ENOENT;
         return -1;
     });
 }
-int IRenameNativePath(const char *oldPath, const char *newPath, int replace, int sync) {
-    if (!FPath(oldPath) || !FPath(newPath)) return -1;
+int IRenameNativePath(std::string_view szOldPath, std::string_view szNewPath, int replace, int sync) {
+    if (!FPath(szOldPath) || !FPath(szNewPath)) return -1;
     return FileCall(nullptr, -1, [&] {
 #ifdef _WIN32
         DWORD flags = (replace ? MOVEFILE_REPLACE_EXISTING : 0) | (sync ? MOVEFILE_WRITE_THROUGH : 0);
-        if (MoveFileExW(PathFromUtf8(oldPath).c_str(), PathFromUtf8(newPath).c_str(), flags)) return 0;
+        if (MoveFileExW(PathFromUtf8(szOldPath).c_str(), PathFromUtf8(szNewPath).c_str(), flags)) return 0;
         DWORD error = GetLastError();
         errno = error == ERROR_FILE_NOT_FOUND || error == ERROR_PATH_NOT_FOUND ? ENOENT :
                 error == ERROR_ALREADY_EXISTS || error == ERROR_FILE_EXISTS ? EEXIST : EACCES;
         return -1;
 #else
         static_cast<void>(replace); static_cast<void>(sync);
-        std::error_code ec; fs::rename(PathFromUtf8(oldPath), PathFromUtf8(newPath), ec);
+        std::error_code ec; fs::rename(PathFromUtf8(szOldPath), PathFromUtf8(szNewPath), ec);
         if (ec) { SetError(ec); return -1; }
         return 0;
 #endif
@@ -607,7 +603,8 @@ std::optional<std::string> SzNativeCwd() {
 static std::optional<std::size_t> CchCopyNativePath(std::optional<std::string> text, std::span<char> out) {
     if (!text) return std::nullopt;
     if (text->size() >= out.size()) { errno = ERANGE; return std::nullopt; }
-    std::memcpy(out.data(), text->c_str(), text->size() + 1);
+    std::copy(text->begin(), text->end(), out.begin());
+    out[text->size()] = '\0';
     return text->size();
 }
 std::optional<std::size_t> CchCanonicalNativePath(std::string_view szPath, std::span<char> out) {
@@ -616,10 +613,10 @@ std::optional<std::size_t> CchCanonicalNativePath(std::string_view szPath, std::
 std::optional<std::size_t> CchNativeCwd(std::span<char> out) {
     return CchCopyNativePath(SzNativeCwd(), out);
 }
-int IChangeNativeCwd(const char *psz) {
-    if (!FPath(psz)) return -1;
+int IChangeNativeCwd(std::string_view szPath) {
+    if (!FPath(szPath)) return -1;
     return FileCall(nullptr, -1, [&] {
-        std::error_code ec; fs::current_path(PathFromUtf8(psz), ec);
+        std::error_code ec; fs::current_path(PathFromUtf8(szPath), ec);
         if (ec) { SetError(ec); return -1; }
         return 0;
     });
@@ -765,9 +762,9 @@ NATIVEFILE *LegacyFile(std::int16_t hf) {
     if (hf < 0 || !Files().rg[static_cast<unsigned>(hf)]) { errno = EBADF; return nullptr; }
     return Files().rg[static_cast<unsigned>(hf)].get();
 }
-NATIVEFILEOPENRESULT HfNativeOpenLegacy(const char *psz, NATIVEFILEOPENOPTIONS nfo) {
+NATIVEFILEOPENRESULT HfNativeOpenLegacy(std::string_view szPath, NATIVEFILEOPENOPTIONS nfo) {
     return FileCall<NATIVEFILEOPENRESULT>(nullptr, {}, [&]() -> NATIVEFILEOPENRESULT {
-    std::unique_ptr<NATIVEFILE> pf(PfNativeOpenFlags(psz, nfo));
+    std::unique_ptr<NATIVEFILE> pf(PfNativeOpenFlags(szPath, nfo));
     if (!pf) return {-1, errno == ENOENT};
     std::lock_guard<std::mutex> guard(Files().lock);
     for (int i = 3; i <= std::numeric_limits<std::int16_t>::max(); ++i) if (!Files().rg[i]) { Files().rg[i].reset(pf.release()); return {static_cast<std::int16_t>(i), false}; }
@@ -840,13 +837,13 @@ std::optional<NATIVEFILEINFO> IGetNativeOpenInfo(NATIVEFILE *pf) {
     info.cb = st.st_size; info.grfMode = st.st_mode & 0777; info.fLink = 0;
     return info;
 }
-int IUnlinkNativePath(const char *psz) {
-    if (!FPath(psz)) return -1;
+int IUnlinkNativePath(std::string_view szPath) {
+    if (!FPath(szPath)) return -1;
     return FileCall(nullptr, -1, [&] {
 #ifdef _WIN32
-        return _wunlink(PathFromUtf8(psz).c_str());
+        return _wunlink(PathFromUtf8(szPath).c_str());
 #else
-        return unlink(psz);
+        return unlink(PathFromUtf8(szPath).c_str());
 #endif
     });
 }
