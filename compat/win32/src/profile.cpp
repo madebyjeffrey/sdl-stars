@@ -7,9 +7,13 @@
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
+#include <new>
+#include <optional>
+#include <string>
 #include <strings.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <utility>
 #include "platform.h"
 #include "encoding.h"
 #include "native.h"
@@ -116,53 +120,44 @@ static const char *PszProfileValue(COMPATPROFILE *lp, std::size_t *pcch) {
     return psz;
 }
 
-static char *SzProfilePath(LPCSTR pszFile) {
+static std::optional<std::string> SzProfilePath(LPCSTR pszFile) {
     const char *pszDir, *pszHome;
-    char *sz;
-    std::size_t cb;
+    std::string sz;
 
-    if (!pszFile || !*pszFile) { win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return nullptr; }
-    // Explicit paths remain literal. Bare settings names use the user config directory.
-    if (std::strchr(pszFile, '/')
+    if (!pszFile || !*pszFile) { win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return std::nullopt; }
+    try {
+        // Explicit paths remain literal. Bare settings names use the user config directory.
+        if (std::strchr(pszFile, '/')
 #ifdef _WIN32
-        || std::strchr(pszFile, '\\') || std::strchr(pszFile, ':')
+            || std::strchr(pszFile, '\\') || std::strchr(pszFile, ':')
 #endif
-    ) { sz = strdup(pszFile); goto LReturn; }
-    pszDir = PszCompatEnvironment("STARS_PROFILE_DIR");
-    if (!pszDir || !*pszDir) pszDir = PszCompatEnvironment("STARS_SETTINGS_DIR");
-    if (pszDir && *pszDir) {
-        cb = std::strlen(pszDir) + std::strlen(pszFile) + 2;
-        sz = static_cast<char *>((std::malloc(cb)));
-        if (sz) CchSnprintf(std::span{sz, cb}, "%s/%s", pszDir, pszFile);
-        goto LReturn;
-    }
-    pszDir = PszCompatEnvironment("XDG_CONFIG_HOME");
-    pszHome = PszCompatEnvironment("HOME");
+        ) sz = pszFile;
+        else {
+            pszDir = PszCompatEnvironment("STARS_PROFILE_DIR");
+            if (!pszDir || !*pszDir) pszDir = PszCompatEnvironment("STARS_SETTINGS_DIR");
+            if (pszDir && *pszDir) {
+                sz = pszDir; sz += '/'; sz += pszFile;
+            } else {
+                pszDir = PszCompatEnvironment("XDG_CONFIG_HOME");
+                pszHome = PszCompatEnvironment("HOME");
 #ifdef _WIN32
-    pszDir = PszCompatEnvironment("LOCALAPPDATA");
-    if (pszDir && *pszDir) {
-        cb = std::strlen(pszDir) + std::strlen(pszFile) + 8;
-        sz = static_cast<char *>(std::malloc(cb));
-        if (sz) CchSnprintf(std::span{sz, cb}, "%s/stars/%s", pszDir, pszFile);
-    } else sz = strdup(pszFile);
-    static_cast<void>(pszHome);
+                pszDir = PszCompatEnvironment("LOCALAPPDATA");
+                if (pszDir && *pszDir) { sz = pszDir; sz += "/stars/"; sz += pszFile; }
+                else sz = pszFile;
+                static_cast<void>(pszHome);
 #else
-    if (pszDir && *pszDir == '/') {
-        cb = std::strlen(pszDir) + std::strlen(pszFile) + 8;
-        sz = static_cast<char *>((std::malloc(cb)));
-        if (sz) CchSnprintf(std::span{sz, cb}, "%s/stars/%s", pszDir, pszFile);
-    } else if (pszHome && *pszHome == '/') {
-        cb = std::strlen(pszHome) + std::strlen(pszFile) + 16;
-        sz = static_cast<char *>((std::malloc(cb)));
-        if (sz) CchSnprintf(std::span{sz, cb}, "%s/.config/stars/%s", pszHome, pszFile);
-    } else {
-        sz = strdup(pszFile);
-    }
+                if (pszDir && *pszDir == '/') { sz = pszDir; sz += "/stars/"; sz += pszFile; }
+                else if (pszHome && *pszHome == '/') { sz = pszHome; sz += "/.config/stars/"; sz += pszFile; }
+                else sz = pszFile;
 #endif
-LReturn:
-    if (!sz) win32::SetLastError(win32::ERROR_NOT_ENOUGH_MEMORY);
-    else if (!FUtf8Valid(sz)) { std::free(sz); sz = nullptr; win32::SetLastError(win32::ERROR_INVALID_PARAMETER); }
-    return sz;
+            }
+        }
+    } catch (const std::bad_alloc &) {
+        win32::SetLastError(win32::ERROR_NOT_ENOUGH_MEMORY);
+        return std::nullopt;
+    }
+    if (!FUtf8Valid(sz)) { win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return std::nullopt; }
+    return std::optional<std::string>{std::move(sz)};
 }
 
 static BOOL FMakeProfileDir(char *szPath) {
@@ -190,13 +185,13 @@ static BOOL FMakeProfileDir(char *szPath) {
 
 DWORD win32::GetPrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR pszDefault,
                                     LPSTR szResult, DWORD cchMax, LPCSTR pszFile) {
-    char *szPath = nullptr;
+    std::optional<std::string> szPath;
     COMPATPROFILE *lpAll = nullptr, *lp, *lpKey;
     const char *psz;
     std::size_t cch, cchOut = 0, cchCopy;
     BOOL fMulti = !pszSection || !pszKey;
     std::unique_lock lockProfile(fProfileLock, std::defer_lock);
-    NATIVECLEANUPSCOPE releaseProfile([&]() noexcept { FreeProfile(lpAll); std::free(szPath); });
+    NATIVECLEANUPSCOPE releaseProfile([&]() noexcept { FreeProfile(lpAll); });
 
     if (!szResult || cchMax == 0) return 0;
     szResult[0] = 0;
@@ -204,7 +199,7 @@ DWORD win32::GetPrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR p
     szPath = SzProfilePath(pszFile);
     if (!szPath) return 0;
     lockProfile.lock();
-    FLoadProfile(szPath, &lpAll);
+    FLoadProfile(szPath->c_str(), &lpAll);
     if (fMulti) {
         lp = pszSection ? LpProfileSection(lpAll, pszSection) : lpAll;
         if (pszSection && lp) lp = lp->lpNext;
@@ -265,13 +260,14 @@ UINT win32::GetPrivateProfileIntA(LPCSTR pszSection, LPCSTR pszKey, INT nDefault
 }
 
 BOOL win32::WritePrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR pszValue, LPCSTR pszFile) {
-    char *szPath = nullptr, *szLine = nullptr;
+    char *szLine = nullptr;
+    std::optional<std::string> szPath;
     COMPATPROFILE *lpAll = nullptr, *lpSection, *lpKey, *lpNew, *lp;
     COMPATPROFILE **lplp;
     BOOL fRet = 0;
     std::size_t cb;
     std::unique_lock lockProfile(fProfileLock, std::defer_lock);
-    NATIVECLEANUPSCOPE releaseProfile([&]() noexcept { std::free(szLine); std::free(szPath); FreeProfile(lpAll); });
+    NATIVECLEANUPSCOPE releaseProfile([&]() noexcept { std::free(szLine); FreeProfile(lpAll); });
 
     if (!pszSection && !pszKey && !pszValue) return 0; // No cache to flush.
     if (!pszSection || !FUtf8Valid(pszSection) ||
@@ -284,7 +280,7 @@ BOOL win32::WritePrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR 
     szPath = SzProfilePath(pszFile);
     if (!szPath) return 0;
     lockProfile.lock();
-    if (!FLoadProfile(szPath, &lpAll)) goto LReturn;
+    if (!FLoadProfile(szPath->c_str(), &lpAll)) goto LReturn;
     lpSection = LpProfileSection(lpAll, pszSection);
     lpKey = LpProfileKey(lpSection, pszKey);
     if (!pszKey || !pszValue) {
@@ -317,8 +313,8 @@ BOOL win32::WritePrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR 
         } else lpNew->lpNext = *lplp;
         *lplp = lpNew;
     }
-    if (!std::strchr(pszFile, '/') && !FMakeProfileDir(szPath)) goto LReturn;
-    fRet = FSaveProfile(lpAll, szPath);
+    if (!std::strchr(pszFile, '/') && !FMakeProfileDir(szPath->data())) goto LReturn;
+    fRet = FSaveProfile(lpAll, szPath->c_str());
     goto LReturn;
 LMemory:
     win32::SetLastError(win32::ERROR_NOT_ENOUGH_MEMORY);
