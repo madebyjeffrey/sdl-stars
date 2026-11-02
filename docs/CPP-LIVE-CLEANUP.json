@@ -24798,7 +24798,7 @@
     "date": "2026-11-02",
     "reason": "Resume the live C++ cleanup on develop after the verified optional bounded library-import path batch.",
     "branch": "develop",
-    "latest_batch": "L05 production rows render from bounded text views",
+    "latest_batch": "L05 race library operations use bounded name views",
     "latest_published_head": "7fe016a7",
     "active_stages": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
@@ -24989,8 +24989,8 @@
         "message": "Use bounded views for race library names"
       }
     ],
-    "latest_source_commit": "0c1076a7",
-    "latest_batch_status": "Locally committed as 0c1076a7. macOS SDL Debug build, desktop/host unit suites, native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding."
+    "latest_source_commit": "60778485",
+    "latest_batch_status": "Locally committed as 60778485. macOS SDL Debug build, desktop/host unit suites, race library workflows, native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding."
   },
   "current_checkpoint": {
     "batch": "L05 production rows render from bounded text views",
