@@ -129,7 +129,8 @@
         "host-ini-parser-string-view-and-output-span",
         "typed-direct-thing-gauge-and-tutorial-title-formatting",
         "typed-production-dialog-formatting",
-        "typed-numeric-coordinate-and-zoom-label-formatting"
+        "typed-numeric-coordinate-and-zoom-label-formatting",
+        "typed-catalog-and-percent-integer-label-formatting"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -902,6 +903,19 @@
           "changes": "Replace four literal coordinate/identifier labels in scan.cpp and four short numeric percentage labels in tb.cpp with CchSprintf.",
           "baseline": "Unchanged; no game behavior or file layout changed.",
           "format_contract": "All values are short numeric labels that fit their existing destination spans; Win32 1024-byte and UTF-8 truncation behavior is not exercised.",
+          "platform": "Native Windows/Linux qualification remains pending for current develop."
+        },
+        {
+          "batch": "L05au typed formatting for catalog and percent labels",
+          "debug_build": "Full macos-sdl-debug build succeeds.",
+          "desktop_units": "18/18 pass.",
+          "host_units": "29/29 pass.",
+          "focused_tests": "win32_runtime, win32_controls and tutorial smoke pass (3/3).",
+          "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+          "host_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped inputs.",
+          "changes": "Replace four catalog integer labels in ship2ui.cpp and two integer formats in utilgenui.cpp with CchSprintf.",
+          "format_evidence": "The text catalog rows idsUnusedD, idsCustomD and idsGeneratingDataYearD use a single %d placeholder; the other call uses PCTD with an integer. Resulting labels are short and fit their existing buffers.",
+          "baseline": "Unchanged; no game behavior or file layout changed.",
           "platform": "Native Windows/Linux qualification remains pending for current develop."
         }
       ],
@@ -23711,10 +23725,10 @@
     "date": "2026-11-02",
     "reason": "Active C-style/C11 cleanup continuation checkpoint after a small L05 typed formatting migration.",
     "branch": "develop",
-    "batch": "L05at typed formatting for short scan and toolbar values",
-    "batch_parent": "391b3bdb",
-    "latest_batch": "L05at typed formatting for short scan and toolbar values",
-    "latest_batch_head": "6689858b",
+    "batch": "L05au typed formatting for catalog and percent labels",
+    "batch_parent": "640aff92",
+    "latest_batch": "L05au typed formatting for catalog and percent labels",
+    "latest_batch_head": "90d8d95a",
     "completed_stages": [
       "L01: nullptr and aliases",
       "L02: explicit C++ casts and headers",
@@ -23757,7 +23771,8 @@
       "Finish L08 retained preprocessor/platform/API-like Win32 macro audit, inventory reconciliation and full current-source/platform qualification.",
       "Commit 52363c89 replaces three small UI wsprintfA calls with CchSprintf, the existing typed native formatter. Full local build, unit, tutorial, focused controls and both regression suites pass; continue remaining wrapper call sites as a separate L05 batch.",
       "Commit 52773ed9 replaces eight wsprintfA calls in produceui.cpp with CchSprintf. Full local build, units, tutorial smoke and both regressions pass; continue the remaining L05 formatting callers, bounded text interfaces and scratch/borrowed-return audit.",
-      "Commit 6689858b replaces eight short numeric-label wsprintfA calls in scan.cpp and tb.cpp with CchSprintf. The build, unit suites, focused runtime/controls/tutorial tests and both full regressions pass. Continue remaining wrapper calls, retaining wsprintfA where its 1024-byte cap or UTF-8-safe truncation is observable."
+      "Commit 6689858b replaces eight short numeric-label wsprintfA calls in scan.cpp and tb.cpp with CchSprintf. The build, unit suites, focused runtime/controls/tutorial tests and both full regressions pass. Continue remaining wrapper calls, retaining wsprintfA where its 1024-byte cap or UTF-8-safe truncation is observable.",
+      "Commit 90d8d95a replaces six short integer-format wsprintfA calls in ship2ui.cpp and utilgenui.cpp with CchSprintf. Catalog formats were checked in text/strings.txt. Build, units, focused tests, tutorial smoke and both full regressions pass. Continue the remaining safe wrapper callers and L05 text/service work."
     ],
     "evidence": [
       "docs/CPP-LIVE-TEXT-COPIES.json: game_file_inputs.verification",
@@ -23772,15 +23787,15 @@
       "qualified_source_head": "b76ec1fcc1276790150457670f5f667bcec4eccc",
       "result": "success"
     },
-    "published_batch_head": "6689858b"
+    "published_batch_head": "90d8d95a"
   },
   "current_checkpoint": {
-    "batch": "L05at typed formatting for short scan and toolbar values",
-    "status": "implemented and locally verified; source commit 6689858b",
-    "parent": "391b3bdb",
+    "batch": "L05au typed formatting for catalog and percent labels",
+    "status": "implemented and locally verified; source commit 90d8d95a",
+    "parent": "640aff92",
     "changes": {
-      "src/ui/scan.cpp": "Use CchSprintf for four short literal coordinate and identifier labels.",
-      "src/ui/tb.cpp": "Use CchSprintf for four numeric percentage labels."
+      "src/ui/ship2ui.cpp": "Replace four short integer catalog-format calls with CchSprintf.",
+      "src/ui/utilgenui.cpp": "Replace catalog year and percent integer formatting with CchSprintf."
     },
     "verification": {
       "macos_debug_build": "Full build succeeds.",
@@ -23790,8 +23805,8 @@
       "native_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
       "host_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
       "baseline": "Unchanged.",
-      "format_contract": "Short numeric output fits destination spans. No 1024-byte limit or UTF-8 truncation behavior is exercised.",
-      "remaining_wsprintfA_calls": "318 in scanned owned C++ application sources.",
+      "format_evidence": "Catalog integer placeholders checked; all rendered results are short for their destination spans.",
+      "remaining_wsprintfA_calls": "312 in scanned owned C++ application sources.",
       "platform": "Windows/Linux qualification remains pending for current develop.",
       "diff_check": "git diff --check and checkpoint JSON validation pass."
     },
@@ -23800,8 +23815,8 @@
       "L06 remaining buffer/length interfaces and chooser Milestone D qualification, including Windows/Linux chooser coverage.",
       "L08 retained preprocessor/platform/API-like macro audit, maintained inventory reconciliation and final platform qualification."
     ],
-    "source_commit": "6689858b",
-    "published_batch_head": "6689858b"
+    "source_commit": "90d8d95a",
+    "published_batch_head": "90d8d95a"
   },
   "milestone_d_checkpoint": {
     "stage": "D05 caller migrations implemented; D06 platform qualification pending",
