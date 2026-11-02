@@ -1238,7 +1238,8 @@
         "bounded-tutorial-fragment-output-span-and-optional-length",
         "inspector-style-string-span-interface",
         "compat-dialog-path-join-span-interface",
-        "compat-dialog-path-input-views"
+        "compat-dialog-path-input-views",
+        "canonical-native-path-string-view-interface"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -23581,6 +23582,24 @@
       "canonical_models": "unchanged",
       "baseline": "unchanged",
       "receipts": "dist/verification/live-cpp/l04/"
+    },
+    {
+      "batch": "L06aa",
+      "parent": "dfc0fa72",
+      "debug_build": "Incremental macos-sdl-debug build of stars-test-fileio passes after adding the string_view PathFromUtf8 overload.",
+      "focused_tests": "File I/O contract, Cocoa dialog, client startup and client file workflow pass 4/4. The contract test passes a non-NUL-terminated string_view slice to both canonical path APIs.",
+      "desktop_unit_tests": "18/18 pass; full macos-sdl-debug build completes without new warnings (verified before the final indexed-loop-only adjustment).",
+      "host": "29/29 host unit tests pass; host regression has 519 matches, 25 existing warnings and zero differences/errors/skips.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "tutorial": "Available SDL tutorial smoke checkpoint passes.",
+      "windows_syntax": "Strict MinGW syntax passed fileio.cpp and filedialog.cpp before the final semantics-preserving indexed-loop adjustment; the helper script used for that check is not present in this checkout. The corrected code compiles in the macos-sdl-debug build.",
+      "baseline": "Unchanged; no game behavior, saved data, layouts or canonical model changed.",
+      "diff_check": "git diff --check passes."
     }
   ],
   "generators": [
@@ -23601,10 +23620,10 @@
     "date": "2026-11-01",
     "reason": "User requested completion of the current batch and a progress report before restarting.",
     "branch": "develop",
-    "batch": "L06z compatibility-dialog path-input views",
-    "batch_parent": "8184d35d",
-    "latest_batch": "L06z compatibility-dialog path-input views",
-    "latest_batch_head": "1a3f5732",
+    "batch": "L06aa canonical native path string-view interface",
+    "batch_parent": "dfc0fa72",
+    "latest_batch": "L06aa canonical native path string-view interface",
+    "latest_batch_head": "f62dc7dd",
     "completed_stages": [
       "L01: nullptr and aliases",
       "L02: explicit C++ casts and headers",
@@ -23618,17 +23637,14 @@
     ],
     "pending_stage": "L08: reconcile retained primitives/macros and qualify final complete state",
     "local_batch_verification": {
-      "desktop": 154,
-      "host": 29,
+      "desktop_unit_tests": "18/18",
+      "focused_tests": "4/4 file I/O/dialog/client tests",
+      "host_unit_tests": "29/29",
       "native_regression_matches": 519,
       "host_regression_matches": 519,
       "existing_unused_storage_warnings_per_regression": 25,
       "baseline_files_unchanged": 592,
-      "sanitized_save_cases": 26,
-      "sanitizer_repetitions": 2,
-      "windows_host_cases_under_Wine": 58,
-      "strict_MinGW_translation_units": 147,
-      "available_tutorial_checkpoints": "pass as part of desktop suite; full 80-page tutorial remains unfinished"
+      "available_tutorial_checkpoints": "pass; full 80-page tutorial remains unfinished"
     },
     "remaining_raw_copy_calls": [
       "compat/win32/src/list.cpp: LB_GETTEXT ABI output",
@@ -23644,42 +23660,45 @@
     ],
     "restart_order": [
       "Read this checkpoint and check git status/log; preserve unrelated title-modernized assets.",
-      "Latest compatibility-dialog path-view batch 1a3f5732 is locally verified; inspect its checkpoint before continuing.",
-      "Resolve any new platform failures before beginning a new cleanup batch.",
-      "Continue from current_checkpoint. The two remaining string copies are required SDK output boundaries; continue L05/L06 and final L08 reconciliation."
+      "L06aa changes SzCanonicalNativePath and CchCanonicalNativePath to accept string_view and converts the exact extent to char8_t storage; its non-NUL-terminated view test passes.",
+      "Continue L05/L06 and final L08 reconciliation; the overall cleanup goal remains active.",
+      "Latest source and checkpoint commits will be recorded after publishing this batch."
     ],
     "evidence": [
       "docs/CPP-LIVE-TEXT-COPIES.json: game_file_inputs.verification",
       "docs/CPP-LIVE-OWNED-TEXT.json: game_file_input_views",
       "dist/verification/live-cpp/l05ai/ (ignored local logs and source hashes)"
     ],
-    "goal_status": "Overall goal remains unfinished. This is a restart checkpoint, not a completion claim.",
-    "published_batch_head": "1a3f5732",
+    "goal_status": "Overall goal remains unfinished. This checkpoint records one completed batch, not completion.",
     "platform_ci": {
       "run_id": 41363769853,
       "url": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41363769853",
       "status_at_handoff": "All five jobs completed successfully; qualified after resuming.",
       "qualified_source_head": "b76ec1fcc1276790150457670f5f667bcec4eccc",
       "result": "success"
-    }
+    },
+    "published_batch_head": "f62dc7dd"
   },
   "current_checkpoint": {
-    "batch": "L06z compatibility-dialog path-input views",
+    "batch": "L06aa canonical native path string-view interface",
     "status": "implemented and locally verified; Linux portal and native Windows runtime qualification remain pending",
-    "parent": "8184d35d",
+    "parent": "dfc0fa72",
     "changes": {
-      "compat/win32/src/filedialog.cpp": "Converts FJoinFile's borrowed path inputs from LPCSTR to std::string_view and composes bounded paths with span-based UTF-8 copy/append functions."
+      "src/platform/path_utf8.h": "Adds a string_view conversion that copies exactly the supplied UTF-8 extent into char8_t storage; the C-string overload forwards through a view.",
+      "src/platform/fileio.h and src/platform/fileio.cpp": "Canonical native path APIs accept string_view and preserve extent-aware UTF-8 validation and conversion.",
+      "tests/compat/fileio.cpp": "Verifies canonicalization from a view whose backing storage continues past the view boundary."
     },
     "verification": {
-      "macos_debug_build": "Full macos-sdl-debug build passes without new warnings; regression build compiled the changed dialog translation unit.",
-      "focused_tests": "File-dialog Cocoa, client startup and client file workflow pass; 3/3.",
-      "windows_syntax": "Strict MinGW syntax passes for filedialog.cpp, 1/1.",
+      "macos_debug_build": "Incremental macos-sdl-debug build of stars-test-fileio passes; the full build completed before the final semantics-preserving indexed-loop adjustment.",
+      "focused_tests": "File I/O contract, Cocoa dialog, client startup and client file workflow pass 4/4.",
       "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
       "tutorial": "Available SDL tutorial smoke checkpoint passes.",
-      "native_regression": "519 matches (25 with existing warnings); zero differences/errors/skips.",
-      "host": "No host source or host-facing API changed; no host regression rerun.",
+      "native_regression": "519 matches (25 existing unused-storage warnings); zero differences/errors/skips.",
+      "host_regression": "519 matches (25 existing unused-storage warnings); zero differences/errors/skips.",
+      "windows_syntax": "Strict MinGW syntax passed fileio.cpp and filedialog.cpp before the final indexed-loop-only adjustment; its helper script is absent in this checkout. Corrected code compiles in the macOS debug build.",
       "baseline": "Unchanged; no game behavior, saved data, layouts or canonical model changed.",
-      "diff_check": "git diff --check and checkpoint JSON validation pass."
+      "diff_check": "git diff --check passes."
     },
     "remaining_work": [
       "L05 bounded text destinations, const-text interfaces, scratch storage/borrowed-return audit and remaining wrapper formatting callers, including Linux portal formatting.",
@@ -23688,7 +23707,9 @@
       "L08 maintained inventory reconciliation, retained primitive/macro audit and final platform qualification."
     ],
     "macro_scan": "Current owned-source search found and removed the only SDL_arraysize call; no SDL_zero, SDL_zerop, SDL_min, SDL_max, SDL_memcpy, SDL_memset or SDL_memmove uses remain in the scanned production sources. The prior definition scan found application header guards and NOMINMAX; resource-compiler and platform/test boundaries still need a complete retained-macro audit.",
-    "published_batch_head": "1a3f5732"
+    "published_batch_head": "f62dc7dd",
+    "latest_batch_head": "f62dc7dd",
+    "source_commit": "f62dc7dd"
   },
   "milestone_d_checkpoint": {
     "stage": "D05 caller migrations implemented; D06 platform qualification pending",
