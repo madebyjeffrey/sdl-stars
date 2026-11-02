@@ -146,7 +146,9 @@ TASKNAMERESULT PszGetTaskName(APPSESSION &app, FLEET *lpfl) {
     std::int16_t        i;
     ORDER          ord;
     std::int16_t        fPercent;
+    std::size_t cch;
     char          *psz;
+    char          *pchEnd;
 
     icr = -1;
     ord = lpfl->lpplord->rgord()[0];
@@ -238,7 +240,10 @@ LShowTask:
             case iActionSetWaypoint:
                 szCatalogPsz = TextIO().pfnCompressed(app, ids);
                 psz = szCatalogPsz.data();
-                psz[std::strlen(psz) - 3] = 0;
+                pchEnd = std::find(szCatalogPsz.begin(), szCatalogPsz.end(), 0);
+                cch = static_cast<std::size_t>(pchEnd - szCatalogPsz.begin());
+                if (pchEnd == szCatalogPsz.end() || cch < 3) return {SzReportLabel(psz), icr};
+                psz[cch - 3] = 0;
                 if (fPercent) {
                     CchSprintf(app.state.szWork, "%s %d%%", psz, ord.txp.rgia[icr].cQuan());
                 } else {
@@ -615,7 +620,8 @@ void DumpFleets(APPSESSION &app) {
                 szObjectName = PszGetFleetName(app, lpfl->id);
                 psz = szObjectName.data();
                 app.state.idPlayer = iplr;
-                RgToStream(app, std::as_bytes(std::span{psz, std::strlen(psz)}));
+                cchForm = static_cast<std::size_t>(std::find(szObjectName.begin(), szObjectName.end(), 0) - szObjectName.begin());
+                RgToStream(app, std::as_bytes(std::span{szObjectName}.first(cchForm)));
                 szForm[0] = '\t';
                 cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, lpfl->pt.x).data());
                 RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));

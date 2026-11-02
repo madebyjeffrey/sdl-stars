@@ -1,4 +1,5 @@
 #include "common.h"
+#include <algorithm>
 #include <limits>
 #include "appstate.h"
 #include "text_io.h"
@@ -330,7 +331,7 @@ std::array<char, 12> PszFromLong(APPSESSION &app, std::int32_t l) {
 std::array<char, 12> PszFromLongK(APPSESSION &app, std::int32_t l) {
     std::int16_t fExtraLarge;
     std::int16_t fLarge;
-    std::int16_t cch;
+    std::size_t cch;
     std::array<char, 12> psz{};
 
     fLarge = l >= 10000;
@@ -348,7 +349,7 @@ std::array<char, 12> PszFromLongK(APPSESSION &app, std::int32_t l) {
         }
     }
     psz = PszFromInt(app, LOWORD(l));
-    cch = static_cast<std::int16_t>(std::strlen(psz.data()));
+    cch = static_cast<std::size_t>(std::find(psz.begin(), psz.end(), 0) - psz.begin());
     if (fExtraLarge) {
         psz[cch++] = 'M';
     } else if (fLarge) {
