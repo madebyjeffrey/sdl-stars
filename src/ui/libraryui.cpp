@@ -21,6 +21,7 @@
 #include "ownership.h"
 #include <limits>
 #include <charconv>
+#include <optional>
 #include <stars_compat.h>
 #include <SDL3/SDL.h>
 #include <cerrno>
@@ -1215,21 +1216,22 @@ std::int16_t FDeleteLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName)
     return 1;
 }
 
-std::int16_t FImportLibraryRace(APPSESSION &app, HWND hwnd, const char *pszSource) {
+std::int16_t FImportLibraryRace(APPSESSION &app, HWND hwnd, std::optional<std::string_view> pszSource) {
     char szSource[512], szName[256], szStem[256], szPath[512], szStage[512], szStageDir[512];
     char *pch, *pchSlash, *pchExt;
     RACESTATE rsSav;
     std::int16_t fValid;
     std::int16_t fLegacy;
-    std::size_t cchSource;
+    std::string_view pszSourceView;
     if (!pszSource) {
         std::ranges::fill(szSource, 0);
         if (!FSelectLibraryRaceFile(app, hwnd, false, std::span{szSource})) return 0;
-        pszSource = szSource;
+        pszSource.emplace(szSource);
     }
-    cchSource = std::strlen(pszSource);
-    if (cchSource >= sizeof(szSource)) return 0;
-    if (pszSource != szSource) std::ranges::copy_n(pszSource, cchSource + 1, std::span{szSource}.begin());
+    pszSourceView = *pszSource;
+    if (pszSourceView.size() >= sizeof(szSource) || pszSourceView.find('\0') != std::string_view::npos) return 0;
+    if (pszSourceView.data() != szSource) std::ranges::copy(pszSourceView, std::span{szSource}.begin());
+    szSource[pszSourceView.size()] = 0;
     SaveRaceState(app, &rsSav);
     fValid = FWasRaceFile(app, szSource, 1);
     if (fValid <= 0) {
@@ -1276,7 +1278,8 @@ LRestore:
     return 0;
 }
 
-std::int16_t FImportLibraryRaceAs(APPSESSION &app, HWND hwnd, const char *pszSource, const char *pszName) {
+std::int16_t FImportLibraryRaceAs(APPSESSION &app, HWND hwnd, std::optional<std::string_view> pszSource,
+                                 const char *pszName) {
     std::int16_t fResult;
     pszRaceLibraryNameOverride = pszName;
     fResult = FImportLibraryRace(app, hwnd, pszSource);
@@ -1284,7 +1287,7 @@ std::int16_t FImportLibraryRaceAs(APPSESSION &app, HWND hwnd, const char *pszSou
     return fResult;
 }
 
-std::int16_t FImportLibraryRaceAndEdit(APPSESSION &app, HWND hwnd, const char *pszSource) {
+std::int16_t FImportLibraryRaceAndEdit(APPSESSION &app, HWND hwnd, std::optional<std::string_view> pszSource) {
     const char *pszName;
     if (!FImportLibraryRace(app, hwnd, pszSource)) return 0;
     pszName = std::strrchr(szRaceLibraryPath, chDirSep);
@@ -2090,21 +2093,25 @@ std::int16_t FImportDesktopFile(APPSESSION &app, HWND hwnd, const char *pszSourc
     return fRace ? FImportLibraryRaceAndEdit(app, hwnd, pszSource) : FImportLibraryGame(app, hwnd, pszSource);
 }
 
-std::int16_t FImportLibraryGame(APPSESSION &app, HWND hwnd, const char *pszSource) {
+std::int16_t FImportLibraryGame(APPSESSION &app, HWND hwnd, std::optional<std::string_view> pszSource) {
     char szChosen[512];
     char szSource[512], szDir[512], szStem[256], *pch, *pchSlash, *pchName;
     char szZipStage[512];
     LIBRARYIMPORT li;
     int cchDir;
+    std::size_t ichExt;
     std::optional<std::int64_t> cbSource;
     std::int16_t fImported, iZipResult;
+    std::string_view pszSourceView;
 
     if (!pszSource) {
         if (!FChooseLibraryImportFile(app, hwnd, szChosen, sizeof(szChosen))) return 0;
-        pszSource = szChosen;
+        pszSource.emplace(szChosen);
     }
-    if (std::strlen(pszSource) >= sizeof(szSource)) return 0;
-    std::ranges::copy_n(pszSource, std::strlen(pszSource) + 1, std::span{szSource}.begin());
+    pszSourceView = *pszSource;
+    if (pszSourceView.size() >= sizeof(szSource) || pszSourceView.find('\0') != std::string_view::npos) return 0;
+    std::ranges::copy(pszSourceView, std::span{szSource}.begin());
+    szSource[pszSourceView.size()] = 0;
     /* Validate the selected path before either standalone-turn or family import. */
     if (!FNativeDirectoryExists(szSource) &&
         (!(cbSource = FNativeFileSize(szSource)) || (*cbSource) <= 0)) goto LInvalidSource;
@@ -2127,9 +2134,11 @@ std::int16_t FImportLibraryGame(APPSESSION &app, HWND hwnd, const char *pszSourc
         RemoveNativePath(szZipStage);
         return fImported;
     }
-    if (std::strrchr(pszSource, '.') && SDL_tolower(std::strrchr(pszSource, '.')[1]) == 'm') {
+    ichExt = pszSourceView.find_last_of('.');
+    if (ichExt != std::string_view::npos && ichExt + 1 < pszSourceView.size() &&
+        SDL_tolower(pszSourceView[ichExt + 1]) == 'm') {
         if (!FInitLibrary()) return 0;
-        fImported = FImportSubsequentTurn(app, hwnd, pszSource);
+        fImported = FImportSubsequentTurn(app, hwnd, szSource);
         if (fImported >= 0) return fImported;
     }
     if (FNativeDirectoryExists(szSource)) {

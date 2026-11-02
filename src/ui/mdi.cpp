@@ -15,6 +15,7 @@
 #include "file_selection_ui.h"
 #include <stars_compat.h>
 #include "ownership.h"
+#include <optional>
 #include <SDL3/SDL.h>
 
 char rgTOWidth[2][2] = {{-3}, {2, 1}};
@@ -2741,7 +2742,7 @@ LRESULT  TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             ui::ShowWindow(app.lpui->hwndFrame, win32::SW_SHOW);
             break;
         case IDC_LIBRARY_IMPORT:
-            if (FImportLibraryGame(app, hwnd, nullptr)) {
+            if (FImportLibraryGame(app, hwnd, std::nullopt)) {
                 RefreshLibraryGames(app, hwnd);
                 RefreshLibraryHostGames(app, hwnd);
             }
@@ -2794,7 +2795,7 @@ LRESULT  TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             if (FSelectLibraryRace(hwnd, szRaceName) && FDeleteLibraryRace(app, hwnd, szRaceName)) RefreshLibraryRaces(app, hwnd);
             break;
         case IDC_LIBRARY_RACE_IMPORT:
-            if (FImportLibraryRaceAndEdit(app, hwnd, nullptr)) RefreshLibraryRaces(app, hwnd);
+            if (FImportLibraryRaceAndEdit(app, hwnd, std::nullopt)) RefreshLibraryRaces(app, hwnd);
             break;
         case IDC_LIBRARY_GAMES:
             if (HIWORD(wParam) == win32::LBN_SELCHANGE) { RefreshLibraryPlayers(app, hwnd); break; }

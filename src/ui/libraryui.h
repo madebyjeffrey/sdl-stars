@@ -2,6 +2,7 @@
 #define STARS_LIBRARYUI_H
 
 #include "win.h"
+#include <optional>
 #include <string_view>
 inline constexpr auto IDD_LIBRARY_RACE_SAVE = 2430;
 inline constexpr auto IDC_LIBRARY_RACE_UPDATE = 2431;
@@ -54,7 +55,7 @@ std::int16_t FSelectLibraryGame(APPSESSION &app, HWND hwnd);
 std::int16_t FSelectLibraryHostGame(APPSESSION &app, HWND hwnd);
 std::int16_t FContinueLibraryGame(APPSESSION &app, HWND hwnd);
 void RememberLibraryGame(APPSESSION &app);
-std::int16_t FImportLibraryGame(APPSESSION &app, HWND hwnd, const char *pszSource);
+std::int16_t FImportLibraryGame(APPSESSION &app, HWND hwnd, std::optional<std::string_view> pszSource);
 std::int16_t FImportLibraryOrders(APPSESSION &app, HWND hwnd, const char *pszSource);
 std::int16_t FImportDesktopFile(APPSESSION &app, HWND hwnd, const char *pszSource);
 std::int16_t FIsManagedLibraryGameFile(const char *pszFile);
@@ -67,9 +68,9 @@ std::int16_t FRenameLibraryGame(APPSESSION &app, HWND hwnd, const char *pszName,
 std::int16_t FActOnSelectedLibraryGame(APPSESSION &app, HWND hwnd, std::int16_t fRename);
 std::int16_t FDeleteLibraryGame(APPSESSION &app, HWND hwnd, const char *pszName);
 std::int16_t FDeleteSelectedLibraryGame(APPSESSION &app, HWND hwnd);
-std::int16_t FImportLibraryRace(APPSESSION &app, HWND hwnd, const char *pszSource);
-std::int16_t FImportLibraryRaceAs(APPSESSION &app, HWND hwnd, const char *pszSource, const char *pszName);
-std::int16_t FImportLibraryRaceAndEdit(APPSESSION &app, HWND hwnd, const char *pszSource);
+std::int16_t FImportLibraryRace(APPSESSION &app, HWND hwnd, std::optional<std::string_view> pszSource);
+std::int16_t FImportLibraryRaceAs(APPSESSION &app, HWND hwnd, std::optional<std::string_view> pszSource, const char *pszName);
+std::int16_t FImportLibraryRaceAndEdit(APPSESSION &app, HWND hwnd, std::optional<std::string_view> pszSource);
 std::int16_t FSaveLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName, PLAYER *pplr);
 std::int16_t FSaveCurrentLibraryRace(APPSESSION &app, HWND hwnd, PLAYER *pplr);
 std::int16_t FHasCurrentLibraryRace(void);

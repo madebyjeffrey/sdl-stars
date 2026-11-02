@@ -128,6 +128,7 @@ static void  FileWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
     char szImportedRace[512];
     char szRaceOriginal[512];
     char szRaceLibrary[256];
+    char szRaceBounded[512];
     const char *pszExport = PszCompatEnvironment("STARS_TEST_EXPORT_EXPECTED");
     const char *pszPreviousExport = PszCompatEnvironment("STARS_TEST_EXPORT_PREVIOUS");
     const char *pszManagedOrders = PszCompatEnvironment("STARS_TEST_MANAGED_ORDERS");
@@ -141,6 +142,7 @@ static void  FileWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
     int16_t fSilentSav;
     int16_t fSilentLong;
     BOOL fGeneratedOversize;
+    std::size_t cchRace;
     const char *pszRace = PszCompatEnvironment("STARS_TEST_RACE_PATH");
     const char *pszRaceRepeat = PszCompatEnvironment("STARS_TEST_RACE_REPEAT_PATH");
     int32_t lid;
@@ -236,8 +238,11 @@ static void  FileWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
     CHECK(app.state.vplr.lSalt == app.state.lSaltLast && IRaceChecksum(&app.state.vplr) == IRaceChecksum(&plrManaged));
     CHECK(!FSaveLibraryRace(app, app.lpui->hwndTitle, "bad/name.r1", &plrManaged));
     CHECK(FWasRaceFile(app, szManagedRace, 0) > 0 && app.state.vplr.lSalt == app.state.lSaltLast);
-    CHECK(FImportLibraryRaceAs(app, app.lpui->hwndTitle, pszRace, "Imported.r2"));
-    CHECK(FImportLibraryRace(app, app.lpui->hwndTitle, nullptr));
+    cchRace = strlen(pszRace);
+    CHECK(cchRace < sizeof(szRaceBounded) &&
+          CchSnprintf(std::span{szRaceBounded, sizeof(szRaceBounded)}, "%s-view-suffix", pszRace) > 0);
+    CHECK(FImportLibraryRaceAs(app, app.lpui->hwndTitle, std::string_view{szRaceBounded, cchRace}, "Imported.r2"));
+    CHECK(FImportLibraryRace(app, app.lpui->hwndTitle, std::nullopt));
     CHECK(cTypedGameOpens == 3 && cTypedUserRaceSaves == 3 && cTypedRaceOpens == 1 && cTypedLibraryRaceSaves == 1);
     CHECK(CchSnprintf(std::span{szManagedRace, sizeof(szManagedRace)}, "%s%sImported.r2", szRaceLibrary, szDirSep) > 0);
     CHECK((cbRaceLibrary = FNativeFileSize(szManagedRace)) && (*cbRaceLibrary) > 0 && FEqualFiles(pszRace, szManagedRace));
