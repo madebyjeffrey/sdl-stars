@@ -113,15 +113,15 @@ static int      TestFCopyNativeFileExclusive(const char *source, const char *tar
     event("copy", s, t, ok, residue);
     return ok;
 }
-static int TestFInspectImportFile(const char *path, int type, int player, int32_t *id, uint16_t *turn, void *gen, int16_t *multi) {
+static int TestFInspectImportFile(const char *path, int type, int player, int32_t &id, uint16_t *turn, void *gen, int16_t &multi) {
     (void)type;
     (void)player;
     assert(!gen);
     int p = role(path), inspected = decision() && objects[p] > 0 && objects[p] < 100;
     // Probe 2 includes inspection and the two subsequent source comparisons.
-    *id = variant == 22 ? 999 : 123;
+    id = variant == 22 ? 999 : 123;
     *turn = variant == 23 ? 12 : 11;
-    *multi = variant == 24;
+    multi = variant == 24;
     event("probe", 2, p, inspected && variant != 22 && variant != 23, 0);
     return inspected;
 }
