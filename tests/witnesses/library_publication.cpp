@@ -158,13 +158,14 @@ static int TestFNativeDirectoryExists(const char *path) {
     event("probe", 3, p, ok, 0);
     return ok;
 }
-static int TestFValidManagedLibraryGame(APPSESSION &, const char *name, const char *dir, int *remember, long long *played, char *exchange, size_t cap) {
+static int TestFValidManagedLibraryGame(APPSESSION &, const char *name, std::span<char> dir, int &remember, long long &played,
+                                         std::span<char> exchange) {
     assert(!strcmp(name, "Game"));
-    int p = role(dir), ok = decision() && objects[p] >= 100;
-    *remember = 4;
-    *played = 321;
-    assert(cap > 9);
-    strcpy(exchange, "external");
+    int p = role(dir.data()), ok = decision() && objects[p] >= 100;
+    remember = 4;
+    played = 321;
+    assert(exchange.size() > 8);
+    std::copy_n("external", 9, exchange.begin());
     event("probe", 5, p, ok, 0);
     return ok;
 }

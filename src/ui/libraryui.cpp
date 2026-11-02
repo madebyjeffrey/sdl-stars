@@ -2230,19 +2230,18 @@ std::int16_t FCreateLibraryGameHoldPath(std::span<char> pszHold) {
     return 0;
 }
 
-std::int16_t FValidManagedLibraryGame(APPSESSION &app, const char *pszName, char *pszDirectory,
-                                        int *piplr, long long *plPlayed,
-                                        char *pszExchangeName, std::size_t cchExchange) {
+std::int16_t FValidManagedLibraryGame(APPSESSION &app, const char *pszName, std::span<char> pszDirectory,
+                                        int &iplr, long long &lPlayed, std::span<char> pszExchangeName) {
     std::optional<NATIVEPATHINFO> npiPath;
     char szMetadataName[256];
     int cchDirectory;
 
     if (!pszName || !FInitLibrary() || !FPortableLibraryName(app, pszName) ||
-        (cchDirectory = CchSnprintf(std::span{pszDirectory, 512}, "%s%s%s", szLibraryRoot, szDirSep, pszName)) <= 0 ||
-        static_cast<std::size_t>(cchDirectory) >= 512 ||
-        !(npiPath = FNativePathInfo(pszDirectory)) || !npiPath->fDirectory || npiPath->fLink ||
-        !FReadLibraryMetadata(pszDirectory, szMetadataName, sizeof(szMetadataName), piplr,
-                              plPlayed, pszExchangeName, cchExchange)) return 0;
+        (cchDirectory = CchSnprintf(pszDirectory, "%s%s%s", szLibraryRoot, szDirSep, pszName)) <= 0 ||
+        static_cast<std::size_t>(cchDirectory) >= pszDirectory.size() ||
+        !(npiPath = FNativePathInfo(pszDirectory.data())) || !npiPath->fDirectory || npiPath->fLink ||
+        !FReadLibraryMetadata(pszDirectory.data(), szMetadataName, sizeof(szMetadataName), &iplr,
+                              &lPlayed, pszExchangeName.data(), pszExchangeName.size())) return 0;
     return !SDL_strcasecmp(szMetadataName, pszName);
 }
 
@@ -2253,8 +2252,8 @@ std::int16_t FDuplicateLibraryGame(APPSESSION &app, HWND hwnd, const char *pszNa
     long long lPlayed;
     std::int16_t fResult = 0;
     static_cast<void>(hwnd);
-    if (!pszCopyName || !FValidManagedLibraryGame(app, pszName, szSource, &iplr, &lPlayed,
-                                                  szExchangeName, sizeof(szExchangeName)) ||
+    if (!pszCopyName || !FValidManagedLibraryGame(app, pszName, std::span{szSource}, iplr, lPlayed,
+                                                  std::span{szExchangeName}) ||
         !FPortableLibraryName(app, pszCopyName) || !FLibraryNameAvailableExcept(app, pszCopyName, nullptr) ||
         (cchTarget = CchSnprintf(std::span{szTarget, sizeof(szTarget)}, "%s%s%s", szLibraryRoot, szDirSep, pszCopyName)) <= 0 ||
         static_cast<std::size_t>(cchTarget) >= sizeof(szTarget) || std::strlen(szLibraryRoot) + 2 * std::strlen(pszCopyName) + 18 >= sizeof(app.state.szBase) ||
@@ -2276,8 +2275,8 @@ std::int16_t FRenameLibraryGame(APPSESSION &app, HWND hwnd, const char *pszName,
     std::int16_t fResult = 0, fHeld = 0, fRestoreFailed = 0, fHoldCleanupFailed = 0;
     int cchTarget;
     static_cast<void>(hwnd);
-    if (!pszNewName || !FValidManagedLibraryGame(app, pszName, szSource, &iplr, &lPlayed,
-                                                 szExchangeName, sizeof(szExchangeName)) ||
+    if (!pszNewName || !FValidManagedLibraryGame(app, pszName, std::span{szSource}, iplr, lPlayed,
+                                                 std::span{szExchangeName}) ||
         !FPortableLibraryName(app, pszNewName) || !FLibraryNameAvailableExcept(app, pszNewName, pszName) ||
         (cchTarget = CchSnprintf(std::span{szTarget, sizeof(szTarget)}, "%s%s%s", szLibraryRoot, szDirSep, pszNewName)) <= 0 ||
         static_cast<std::size_t>(cchTarget) >= sizeof(szTarget) || std::strlen(szLibraryRoot) + 2 * std::strlen(pszNewName) + 18 >= sizeof(app.state.szBase) ||
@@ -2591,8 +2590,8 @@ std::int16_t FReplaceConflictingLibraryTurn(APPSESSION &app, const LIBRARYPATHS 
 
     cch = LibraryPublicationIO().pfnCchSnprintf(std::span{szDirectory, sizeof(szDirectory)}, "%s%s%s", paths.szLibraryRoot, szDirSep, pszName);
     if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szDirectory) ||
-        !LibraryPublicationIO().pfnFValidManagedLibraryGame(app, pszName, szDirectory, &iRemembered, &lPlayed,
-                                  szExchangeName, sizeof(szExchangeName)) ||
+        !LibraryPublicationIO().pfnFValidManagedLibraryGame(app, pszName, std::span{szDirectory}, iRemembered, lPlayed,
+                                  std::span{szExchangeName}) ||
         !LibraryPublicationIO().pfnFCreateLibraryGameStagePath(std::span{szStage})) return 0;
     if (!LibraryPublicationIO().pfnFCreateLibraryGameStage(app, szDirectory, pszName, pszName, szStage, iRemembered,
                                  lPlayed, szExchangeName) ||
@@ -2639,8 +2638,8 @@ std::int16_t FImportConflictingTurnAsCopy(APPSESSION &app, const LIBRARYPATHS &p
 
     cch = LibraryPublicationIO().pfnCchSnprintf(std::span{szDirectory, sizeof(szDirectory)}, "%s%s%s", paths.szLibraryRoot, szDirSep, pszName);
     if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szDirectory) ||
-        !LibraryPublicationIO().pfnFValidManagedLibraryGame(app, pszName, szDirectory, &iRemembered, &lPlayed,
-                                  szExchangeName, sizeof(szExchangeName)) ||
+        !LibraryPublicationIO().pfnFValidManagedLibraryGame(app, pszName, std::span{szDirectory}, iRemembered, lPlayed,
+                                  std::span{szExchangeName}) ||
         !LibraryPublicationIO().pfnFChooseSeparateCopyName(app, hwnd, pszName)) return 0;
     cch = LibraryPublicationIO().pfnCchSnprintf(std::span{szTarget, sizeof(szTarget)}, "%s%s%s", paths.szLibraryRoot, szDirSep, paths.szLibraryName);
     if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szTarget) ||
