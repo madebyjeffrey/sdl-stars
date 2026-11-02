@@ -1315,7 +1315,7 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
             if (j > 0) {
                 win32::SetTextColor(hdc, j > 10 ? 0 : 32639);
             }
-            cch = win32::wsprintfA(szT, "(%d%%)", j);
+            cch = CchSprintf(szT, "(%d%%)", j);
             RightTextOut(app, hdc, prc->right, prc->top, szT, cch, 0);
             break;
         case colPlanetMinerals:
@@ -1465,7 +1465,7 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
             break;
         case colFleetId:
             psz = szT;
-            cch = win32::wsprintfA(szT, "%d", lpfl->ifl() + 1);
+            cch = CchSprintf(szT, "%d", lpfl->ifl() + 1);
             RightTextOut(app, hdc, prc->right - 2, prc->top, psz, cch, 0);
         }
         break;
@@ -1631,7 +1631,7 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
                 break;
             case colEnemyFleetId:
                 psz = szT;
-                cch = win32::wsprintfA(szT, "%d", lpfl->ifl() + 1);
+                cch = CchSprintf(szT, "%d", lpfl->ifl() + 1);
                 RightTextOut(app, hdc, prc->right - 2, prc->top, psz, cch, 0);
                 break;
             case colEnemyFleetWarp:
@@ -1640,7 +1640,7 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
                     cch = 2;
                 } else {
                     psz = szT;
-                    cch = win32::wsprintfA(szT, "%d", lpfl->iwarpFlt());
+                    cch = CchSprintf(szT, "%d", lpfl->iwarpFlt());
                 }
                 RightTextOut(app, hdc, prc->right - 2, prc->top, psz, cch, 0);
             }

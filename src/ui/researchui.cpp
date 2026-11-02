@@ -1202,16 +1202,16 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, std::int16_t dx, std::int16_
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
                 switch (i) {
                 case 0:
-                    c = win32::wsprintfA(app.state.szWork, "%dmg", ppart->phul()->wtFuelMax);
+                    c = CchSprintf(app.state.szWork, "%dmg", ppart->phul()->wtFuelMax);
                     break;
                 case 1:
-                    c = win32::wsprintfA(app.state.szWork, app.lpui->PCTDKT, ppart->phul()->wtCargoMax);
+                    c = CchSprintf(app.state.szWork, app.lpui->PCTDKT, ppart->phul()->wtCargoMax);
                     break;
                 case 2:
-                    c = win32::wsprintfA(app.state.szWork, app.state.PCTD, ppart->phul()->dp);
+                    c = CchSprintf(app.state.szWork, app.state.PCTD, ppart->phul()->dp);
                     break;
                 case 3:
-                    c = win32::wsprintfA(app.state.szWork, app.state.PCTD, PartQueryIO().pfnHull(ppart->phul()->ihuldef)->init);
+                    c = CchSprintf(app.state.szWork, app.state.PCTD, PartQueryIO().pfnHull(ppart->phul()->ihuldef)->init);
                 }
                 win32::TextOutA(hdc, xText, rcData.top, app.state.szWork, c);
                 i++;
