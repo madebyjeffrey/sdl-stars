@@ -194,7 +194,8 @@
         "preset-indexed-serialization",
         "readonly-window-settings-view",
         "owned-player-name-byte-indexed-composition",
-        "tracked-copy-lengths-for-fleet-and-hull-labels"
+        "tracked-copy-lengths-for-fleet-and-hull-labels",
+        "tracked-lengths-for-planet-and-fleet-report-dump-fields"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -1121,6 +1122,18 @@
           "host_regression": "519 matches, 25 existing warnings; zero differences/errors/skips.",
           "tutorial": "1/1 available SDL tutorial smoke passes.",
           "baseline": "Unchanged.",
+          "diff_check": "Pass."
+        },
+        {
+          "batch": "L05 tracked planet and fleet report field lengths",
+          "commit": "e04d3839",
+          "debug_build": "macos-sdl-debug build passes without new warnings.",
+          "desktop_unit_tests": "18/18 pass.",
+          "host_unit_tests": "29/29 pass.",
+          "native_regression": "519 matches, 25 existing warnings; zero differences/errors/skips.",
+          "host_regression": "519 matches, 25 existing warnings; zero differences/errors/skips.",
+          "tutorial": "1/1 available SDL tutorial smoke passes.",
+          "baseline": "Unchanged; serialized planet and fleet dump outputs match the native regression fixtures.",
           "diff_check": "Pass."
         }
       ],
@@ -24361,10 +24374,10 @@
   ],
   "restart_checkpoint": {
     "date": "2026-11-02",
-    "reason": "Resume the live C++ cleanup on develop after the verified fleet and hull label length batch.",
+    "reason": "Resume the live C++ cleanup on develop after the verified planet and fleet report field length batch.",
     "branch": "develop",
-    "latest_batch": "L05 tracked copy lengths for fleet and hull labels",
-    "latest_published_head": "716c239e",
+    "latest_batch": "L05 tracked planet and fleet report field lengths",
+    "latest_published_head": "e04d3839",
     "active_stages": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage."
@@ -24397,13 +24410,13 @@
     ]
   },
   "current_checkpoint": {
-    "batch": "L05 tracked copy lengths for fleet and hull labels",
+    "batch": "L05 tracked planet and fleet report field lengths",
     "status": "implemented, locally verified, committed and pushed to develop; current-source platform qualification remains pending",
-    "parent": "596035fc",
-    "source_commit": "716c239e",
+    "parent": "6df60c10",
+    "source_commit": "e04d3839",
     "change": [
-      "PszGetFleetName, PszFleetNameFromWord and DecorateHullName use the byte counts returned by CchCopyUtf8Prefix instead of rescanning copied labels with strlen.",
-      "UTF-8 truncation at the existing 28-byte class-name limit and the existing output buffers are unchanged."
+      "DumpPlanets and DumpFleets carry explicit byte counts from CchCopyUtf8Prefix and CchSprintf through RgToStream instead of rescanning their 256-byte row buffer with strlen.",
+      "Tab-only fields and fixed tab-plus-digit values use explicit byte counts; generated dump bytes are unchanged."
     ],
     "verification": {
       "desktop_unit_tests": "18/18 pass.",
@@ -24411,7 +24424,7 @@
       "native_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "host_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "tutorial": "1/1 available SDL native tutorial smoke passes.",
-      "baseline": "Unchanged.",
+      "baseline": "Unchanged; serialized report outputs match regression fixtures.",
       "diff_check": "Pass."
     },
     "platform_ci": {
@@ -24462,12 +24475,12 @@
   "working_tree_checkpoint": {
     "date": "2026-11-02",
     "branch": "develop",
-    "batch": "L05 tracked copy lengths for fleet and hull labels",
-    "source_commit": "716c239e",
+    "batch": "L05 tracked planet and fleet report field lengths",
+    "source_commit": "e04d3839",
     "status": "Verified and pushed to develop. Local desktop/host tests, both full regression suites and tutorial smoke pass. Current-source Windows/Linux CI qualification remains pending.",
     "changes": [
-      "PszGetFleetName, PszFleetNameFromWord and DecorateHullName use the byte counts returned by CchCopyUtf8Prefix instead of rescanning copied labels with strlen.",
-      "UTF-8 truncation at the existing 28-byte class-name limit and the existing output buffers are unchanged."
+      "DumpPlanets and DumpFleets carry explicit byte counts from CchCopyUtf8Prefix and CchSprintf through RgToStream instead of rescanning their 256-byte row buffer with strlen.",
+      "Tab-only fields and fixed tab-plus-digit values use explicit byte counts; generated dump bytes are unchanged."
     ],
     "verification": {
       "desktop_unit_tests": "18/18 pass.",
@@ -24475,7 +24488,7 @@
       "native_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "host_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "tutorial": "1/1 available SDL native tutorial smoke passes.",
-      "baseline": "Unchanged.",
+      "baseline": "Unchanged; serialized report outputs match regression fixtures.",
       "diff_check": "Pass."
     },
     "current_source_audits": {
@@ -24555,6 +24568,10 @@
       {
         "commit": "716c239e",
         "message": "Track copied fleet and hull label lengths"
+      },
+      {
+        "commit": "e04d3839",
+        "message": "Track report field output lengths"
       }
     ]
   }
