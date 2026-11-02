@@ -23571,7 +23571,7 @@
       "L06 D06 native Windows/Linux chooser qualification and remaining chooser branch coverage.",
       "L08 maintained inventory reconciliation, retained primitive/macro audit and final platform qualification."
     ],
-    "published_batch_head": "0302b043"
+    "published_batch_head": "9285c107"
   },
   "milestone_d_checkpoint": {
     "stage": "D05 caller migrations implemented; D06 platform qualification pending",
