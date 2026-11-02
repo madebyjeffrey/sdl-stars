@@ -137,7 +137,8 @@
         "typed-file-and-battle-label-formatting",
         "unused-itoa-compatibility-helper-removed",
         "typed-decimal-parsing-replaces-atoi",
-        "typed-host-ini-number-parser-replaces-atol"
+        "typed-host-ini-number-parser-replaces-atol",
+        "native-scan-parser-from-chars"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -2111,10 +2112,14 @@
       "id": "L08",
       "status": "pending",
       "current_macro_audit": {
-        "status": "partial; SDL convenience macros and fixed-width integer literal macros removed from owned C++ in committed batches 443ee2cf, b10cfc4e and a6d4dfbc",
+        "status": "Owned source and compatibility macro definition/call audit complete; overall L08 remains open for full inventory reconciliation and current-source Windows/Linux qualification.",
         "change": "Replaced SDL_arraysize with std::size; SDL_zero with C++ aggregate initialization/reset; INT32_C/UINT32_C/UINT64_C with explicitly typed C++ integer literals. Updated resource constant extraction for typed forms.",
         "search": "No SDL convenience family or INT/UINT fixed-width literal macros remain in scanned owned application or ordinary test C++ sources. Remaining uses are isolated to SDK/reference fixtures and the independent C precision probe.",
-        "remaining": "Complete retained preprocessor/platform/API-like Win32 macro audit, maintained inventory reconciliation, and final Windows/Linux platform qualification."
+        "remaining": "Reconcile the retained macro inventory and qualify the final current source on Windows/Linux.",
+        "owned_definitions": "No owned function-like macros remain in src or compat/win32/include/src. Aside from include guards, the retained owned definitions are NOMINMAX; FSHIFT is undefined to prevent an SDK-name collision.",
+        "api_like_names": "LOWORD, HIWORD, LOBYTE, HIBYTE and MAKELONG in src/platform/value.h are typed constexpr C++ functions. MAKEWPARAM, MAKELPARAM, MAKEINTRESOURCE, RGB, PALETTEINDEX, PALETTERGB and GET_*_WPARAM in wincompat_values.h are typed C++ functions/templates.",
+        "preprocessor": "Remaining owned conditionals select platform/compiler/test configurations or guard headers. Third-party free-api headers retain SDK macros under compat/win32/upstream; these are excluded from owned-code cleanup.",
+        "source_files": "No owned .c files remain in src or compat."
       },
       "linux_desktop_execution_budget": {
         "status": "complete; verified at 2bbd5afa",
@@ -23901,6 +23906,33 @@
       "remaining_wsprintfA_calls": "282 scanned owned C++ source call lines.",
       "platform": "Windows/Linux qualification remains pending for current develop.",
       "diff_check": "git diff --check passes."
+    },
+    {
+      "batch": "L05bc typed native scanner parsing and L08 macro audit",
+      "parent": "d3c82384",
+      "source_commit": "f9fee9e6",
+      "macos_debug_build": "Full macos-sdl-debug and host-release builds succeed.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "focused_tests": "S02 profile I/O and host linked witnesses pass (27 checks); win32_runtime, win32_controls and tutorial smoke pass (3/3).",
+      "tutorial": "Available SDL tutorial smoke checkpoint passes; full 80-page tutorial remains unfinished.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "baseline": "Unchanged; native scanner integer parsing preserves signed, plus-prefixed, width/range and partial-read behavior for supported inputs.",
+      "macro_audit": "No function-like macros remain in owned src/compat headers and sources. Remaining definitions are header guards and NOMINMAX; FSHIFT is undefined to avoid collision. SDK-like packed-value APIs in platform/value.h and wincompat_values.h are typed C++ functions. Third-party free-api macros are excluded.",
+      "remaining_wsprintfA_calls": "282 scanned owned C++ source call lines.",
+      "platform": "Windows/Linux qualification remains pending for current develop.",
+      "diff_check": "git diff --check passes."
     }
   ],
   "generators": [
@@ -23919,12 +23951,12 @@
   ],
   "restart_checkpoint": {
     "date": "2026-11-02",
-    "reason": "Active C-style/C11 cleanup continuation checkpoint after removing the remaining application atol call.",
+    "reason": "Active C-style cleanup continuation after replacing the final owned decimal C runtime parsers and auditing owned macro definitions.",
     "branch": "develop",
-    "batch": "L05bb typed host INI parser replaces atol",
-    "batch_parent": "a573b845",
-    "latest_batch": "L05bb typed host INI parser replaces atol",
-    "latest_batch_head": "fed52a31",
+    "batch": "L05bc typed native scanner parsing; L08 owned macro audit",
+    "batch_parent": "d3c82384",
+    "latest_batch": "L05bc typed native scanner parsing; L08 owned macro audit",
+    "latest_batch_head": "f9fee9e6",
     "completed_stages": [
       "L01: nullptr and aliases",
       "L02: explicit C++ casts and headers",
@@ -23975,7 +24007,8 @@
       "Commit 064b98c1 replaces six bounded short formatting calls in mdi.cpp, vcr.cpp and popup.cpp with CchSprintf. Full Debug build, 18 desktop units, 29 host units, focused controls/runtime/tutorial checks and both full regressions pass; each regression has 519 matches, 25 existing warnings and zero differences/errors/skips. Scanned owned C++ source now has 282 wsprintfA calls.",
       "Commits 7bbe1ea3/aad20b77, d0db2171/ad3a9770, bd85db17/c21c1e9e and 064b98c1/39e5f3b6 record four additional typed-formatting batches (nine, eight, eight and six wsprintfA calls). Commit 1e3cea80 replaces seven decimal itoa calls with CchSprintf and removes the now-unused nonstandard compatibility helper and its tests. Each batch passed the full Debug build, units, tutorial smoke and native/host regressions. The source currently has 282 win32::wsprintfA call lines; bounded text, service interfaces, scratch/borrowed-result audit and platform/macro qualification remain open.",
       "Commit db2bfc2f replaces the remaining four application std::atoi calls with std::from_chars or fixed date digit parsing. Full Debug build, 18 desktop units, 29 host units, focused controls/runtime/tutorial checks and both regressions pass (519 matches, 25 existing warnings, zero differences/errors/skips each). No std::atoi references remain in src/compat; one std::atol remains in host_profile.cpp for later review.",
-      "Commit fed52a31 replaces the host profile parser's std::atol with bounded std::from_chars, preserving prefix parsing and existing missing-key behavior. S02 I/O witness (27 checks), units, focused tests, tutorial smoke and both full regressions pass; regressions each report 519 matches and zero differences/errors/skips. No std::atoi or std::atol references remain in src/compat."
+      "Commit fed52a31 replaces the host profile parser's std::atol with bounded std::from_chars, preserving prefix parsing and existing missing-key behavior. S02 I/O witness (27 checks), units, focused tests, tutorial smoke and both full regressions pass; regressions each report 519 matches and zero differences/errors/skips. No std::atoi or std::atol references remain in src/compat.",
+      "Commit f9fee9e6 replaces the final owned std::strtoll parser with bounded std::from_chars. Full Debug/host builds, units, S02 I/O witness, focused tests, tutorial smoke and native/host regressions pass (519 matches each, zero differences/errors/skips). The current owned macro scan finds no function-like macros; header guards, NOMINMAX, platform/test conditionals and third-party SDK definitions remain. Full macro inventory reconciliation and Windows/Linux qualification remain open."
     ],
     "evidence": [
       "docs/CPP-LIVE-TEXT-COPIES.json: game_file_inputs.verification",
@@ -23990,14 +24023,14 @@
       "qualified_source_head": "b76ec1fcc1276790150457670f5f667bcec4eccc",
       "result": "success"
     },
-    "published_batch_head": "fed52a31"
+    "published_batch_head": "f9fee9e6"
   },
   "current_checkpoint": {
-    "batch": "L05bb typed host INI parser replaces atol",
-    "status": "implemented and locally verified; source commit fed52a31",
-    "parent": "a573b845",
+    "batch": "L05bc typed native scanner parsing; L08 owned macro audit",
+    "status": "implemented and locally verified; source commit f9fee9e6",
+    "parent": "d3c82384",
     "changes": {
-      "src/core/host_profile.cpp": "Replace std::atol with bounded std::from_chars parsing, preserving leading numeric-prefix and missing-key behavior."
+      "src/platform/fileio.cpp": "Replace std::strtoll with std::from_chars in the bounded native integer scanner, preserving plus signs, range checks and ERANGE behavior."
     },
     "verification": {
       "macos_debug_build": "Full macos-sdl-debug and host-release builds succeed.",
@@ -24008,7 +24041,8 @@
       "host_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
       "baseline": "Unchanged.",
       "remaining_wsprintfA_calls": "282 scanned owned C++ source call lines.",
-      "atoi_atol_references": "Zero in src and compat.",
+      "legacy_integer_parser_calls": "No atoi, atol, itoa or strtoll references remain in owned src application sources.",
+      "macro_audit": "No function-like macros remain in owned src/compat code. Platform, test and header-guard conditionals remain; third-party SDK macros are retained.",
       "platform": "Windows/Linux qualification remains pending for current develop.",
       "diff_check": "git diff --check passes."
     },
@@ -24017,8 +24051,8 @@
       "L06 remaining buffer/length interfaces and chooser Milestone D qualification, including Windows/Linux chooser coverage.",
       "L08 retained preprocessor/platform/API-like macro audit, maintained inventory reconciliation and final platform qualification."
     ],
-    "source_commit": "fed52a31",
-    "published_batch_head": "fed52a31"
+    "source_commit": "f9fee9e6",
+    "published_batch_head": "f9fee9e6"
   },
   "milestone_d_checkpoint": {
     "stage": "D05 caller migrations implemented; D06 platform qualification pending",
