@@ -41,7 +41,7 @@ int main(int argc, char **argv) {
     while (fread(rgIn, sizeof(rgIn), 1, file) == 1) {
         unsigned mask = (unsigned)rgIn[6], item = (unsigned)rgIn[7], kind = 16;
         for (unsigned k = 0; k < 16; k++)
-            if (mask == (UINT32_C(1) << k))
+            if (mask == (std::uint32_t{1} << k))
                 kind = k;
         memset(app.state.rgplr, 0x53, sizeof(app.state.rgplr));
         memset(&app.state.game, 0x35, sizeof(app.state.game));

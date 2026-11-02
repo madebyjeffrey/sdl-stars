@@ -16,7 +16,7 @@ static BOOL FCompatDibInfo(const BITMAPINFOHEADER &bi, const BYTE *rgb, std::siz
         return SDL_SetError("Unsupported DIB dimensions, compression or pixel format");
     // Bound allocation and work for malformed resource headers before touching bits.
     if (bi.biWidth > 16384 || bi.biHeight > 16384 || bi.biHeight < -16384 ||
-        static_cast<std::uint64_t>(bi.biWidth) * static_cast<std::uint64_t>((bi.biHeight < 0 ? -bi.biHeight : bi.biHeight)) > UINT64_C(67108864))
+        static_cast<std::uint64_t>(bi.biWidth) * static_cast<std::uint64_t>((bi.biHeight < 0 ? -bi.biHeight : bi.biHeight)) > std::uint64_t{67108864})
         return SDL_SetError("DIB exceeds the initial 16384-axis / 64M-pixel limit");
     *lpdib = {};
     lpdib->cx = bi.biWidth;

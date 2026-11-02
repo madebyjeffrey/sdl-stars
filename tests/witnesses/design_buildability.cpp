@@ -25,7 +25,7 @@ static int16_t QueryLookup(APPSESSION &app, PART *ppart) {
     if (result != mdPartAvailInvalid) {
         unsigned kind = 16;
         for (unsigned k = 0; k < 16; k++)
-            if (mask == (UINT32_C(1) << k))
+            if (mask == (std::uint32_t{1} << k))
                 kind = k;
         CHECK(kind < 16);
         CHECK(ppart->pcom() == LpcomRow(kind, item));

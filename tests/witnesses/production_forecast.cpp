@@ -137,7 +137,7 @@ static void TestGetProductionCosts(APPSESSION &app, PLANET *p, PROD *row, uint32
     int32_t quote[4] = {unitOre, unitOre, unitOre, unitResources};
     if (row->grobj == grobjPlanet && (row->iItem == iobjAlchemy || row->iItem == mdIdleAlchemy)) {
         quote[0] = quote[1] = quote[2] = 0;
-        quote[3] = (app.state.rgplr[player].grbitAttr & (UINT32_C(1) << ibitRaceMineralAlchemy)) ? 25 : 100;
+        quote[3] = (app.state.rgplr[player].grbitAttr & (std::uint32_t{1} << ibitRaceMineralAlchemy)) ? 25 : 100;
     }
     memcpy(out, quote, sizeof(quote));
 }

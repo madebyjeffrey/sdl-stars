@@ -19,10 +19,10 @@ template<class R, class G, class B> constexpr COLORREF RGB(R r, G g, B b) {
                                  (static_cast<DWORD>(static_cast<BYTE>(b)) << 16));
 }
 template<class T> constexpr COLORREF PALETTEINDEX(T id) {
-    return static_cast<COLORREF>(UINT32_C(0x01000000) | static_cast<WORD>(id));
+    return static_cast<COLORREF>(std::uint32_t{0x01000000} | static_cast<WORD>(id));
 }
 template<class R, class G, class B> constexpr COLORREF PALETTERGB(R r, G g, B b) {
-    return RGB(r, g, b) | UINT32_C(0x02000000);
+    return RGB(r, g, b) | std::uint32_t{0x02000000};
 }
 template<class T> constexpr WORD GET_KEYSTATE_WPARAM(T wParam) { return LOWORD(wParam); }
 template<class T> constexpr short GET_WHEEL_DELTA_WPARAM(T wParam) { return static_cast<short>(HIWORD(wParam)); }

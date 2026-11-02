@@ -16,7 +16,7 @@ static PLPROD   queues[4];
 static int      calls, grossCalls, forecastCalls, mutated;
 static uint32_t traceHash;
 struct RESEARCHESCAPE {};
-static void    hashValue(int32_t value) { traceHash = traceHash * UINT32_C(16777619) ^ (uint32_t)value; }
+static void    hashValue(int32_t value) { traceHash = traceHash * std::uint32_t{16777619} ^ (uint32_t)value; }
 static int32_t TechQuote(APPSESSION &app, TechFieldType field, int16_t level, int16_t player) {
     int total = 0;
     for (int i = 0; i < 6; i++)

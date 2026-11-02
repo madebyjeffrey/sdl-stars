@@ -65,7 +65,7 @@ static int16_t GateLookup(APPSESSION &app, PART *part) {
     if (status != 0) {
         unsigned kind = 16;
         for (unsigned k = 0; k < 16; k++)
-            if (mask == (UINT32_C(1) << k))
+            if (mask == (std::uint32_t{1} << k))
                 kind = k;
         assert(kind < 16 && part->pcom() == LpcomRow(kind, item));
     }

@@ -34,7 +34,7 @@ std::int16_t SetRaceStat(PLAYER *pplr, RaceStat iStat, std::int16_t iVal) {
 }
 
 std::int16_t GetRaceGrbit(PLAYER *pplr, RaceGrbit ibit) {
-    if (UINT32_C(1) << ibit & pplr->grbitAttr) {
+    if (std::uint32_t{1} << ibit & pplr->grbitAttr) {
         return 1;
     }
     return 0;
@@ -43,7 +43,7 @@ std::int16_t GetRaceGrbit(PLAYER *pplr, RaceGrbit ibit) {
 void SetRaceGrbit(PLAYER *pplr, RaceGrbit ibit, std::int16_t fSet) {
     std::uint32_t grMask;
 
-    grMask = UINT32_C(1) << ibit;
+    grMask = std::uint32_t{1} << ibit;
     if (fSet) {
         pplr->grbitAttr = static_cast<RaceTraitBits>(pplr->grbitAttr | grMask);
     } else {

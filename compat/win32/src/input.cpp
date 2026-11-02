@@ -505,11 +505,11 @@ void CompatRouteEvent(const SDL_Event *lpevent) {
             msg = lpevent->type == SDL_EVENT_KEY_DOWN ? win32::WM_KEYDOWN : win32::WM_KEYUP;
 #endif
         if (fAlt)
-            dwKey |= UINT32_C(1) << 29;
+            dwKey |= std::uint32_t{1} << 29;
         if (lpevent->key.repeat || lpevent->type == SDL_EVENT_KEY_UP)
-            dwKey |= UINT32_C(1) << 30;
+            dwKey |= std::uint32_t{1} << 30;
         if (lpevent->type == SDL_EVENT_KEY_UP)
-            dwKey |= UINT32_C(1) << 31;
+            dwKey |= std::uint32_t{1} << 31;
         CompatPostInput(hwnd, msg, vk, static_cast<LPARAM>(dwKey));
         return;
     case SDL_EVENT_TEXT_EDITING:

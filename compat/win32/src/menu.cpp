@@ -755,7 +755,7 @@ BOOL FCompatMenuMessage(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     if (msg == win32::WM_NCLBUTTONDOWN && w == win32::HTMENU) {
         pt.x = static_cast<SHORT>(LOWORD(l)); pt.y = static_cast<SHORT>(HIWORD(l));
         i = IMenuBarPoint(hwnd, pt); fOpen = 1;
-    } else if (msg == win32::WM_SYSKEYDOWN && w != win32::VK_MENU && w != win32::VK_F10 && (static_cast<UINT_PTR>(l) & (UINT32_C(1) << 29)) &&
+    } else if (msg == win32::WM_SYSKEYDOWN && w != win32::VK_MENU && w != win32::VK_F10 && (static_cast<UINT_PTR>(l) & (std::uint32_t{1} << 29)) &&
                !(win32::GetKeyState(win32::VK_CONTROL) & 0x8000)) {
         // SDL backends may omit text-input events for Alt-letter combinations.
         for (j = 0; j < lp->citem; j++) if (FSelectable(lp, j) && FMenuMnemonic(&lp->rgitem[j], w)) { i = j; break; }

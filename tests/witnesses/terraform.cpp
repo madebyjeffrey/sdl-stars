@@ -63,7 +63,7 @@ int main(int argc, char **argv) {
         }
         for (int p = 0; p < 16; p++) {
             int fields = p == 1 ? 23 : 14, levels = p == 1 ? 38 : 32;
-            app.state.rgplr[p].grbitAttr = static_cast<RaceTraitBits>((p == 1 ? cfg[45] : cfg[44]) ? UINT32_C(1) << ibitRaceTT : 0);
+            app.state.rgplr[p].grbitAttr = static_cast<RaceTraitBits>((p == 1 ? cfg[45] : cfg[44]) ? std::uint32_t{1} << ibitRaceTT : 0);
             for (int i = 0; i < 3; i++) {
                 app.state.rgplr[p].rgEnvVar[i] = (int8_t)cfg[fields + i];
                 app.state.rgplr[p].rgEnvVarMin[i] = (int8_t)cfg[fields + 3 + i];

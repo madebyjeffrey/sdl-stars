@@ -78,7 +78,7 @@ static BOOL FColor(COLORREF cr) {
 static COLORREF CrPalette(HDC lpdc, COLORREF cr) {
     UINT i;
     PALETTEENTRY pe;
-    if ((cr >> 24) != 1) return cr & UINT32_C(0x00ffffff);
+    if ((cr >> 24) != 1) return cr & std::uint32_t{0x00ffffff};
     i = static_cast<WORD>(cr);
     if (i >= lpdc->lppalette->cEntries) return win32::RGB(0, 0, 0);
     pe = RgpeCompatPalette(lpdc->lppalette)[i];
@@ -1187,7 +1187,7 @@ static void ShapePixel(HDC lpdc, const RECT *lprc, std::int64_t x, std::int64_t 
         for (i = 0; i < 4; i++)
             if ((lpdc->iRop2 - 1) & (1 << i))
                 cr |= (i & 2 ? crPen : ~crPen) & (i & 1 ? crDest : ~crDest);
-        DevicePixel(lpdc, x * iScale + ix, y * iScale + iy, cr & UINT32_C(0x00ffffff));
+        DevicePixel(lpdc, x * iScale + ix, y * iScale + iy, cr & std::uint32_t{0x00ffffff});
     }
 }
 
@@ -1240,7 +1240,7 @@ static COLORREF CrRop(BYTE rop, COLORREF crPattern, COLORREF crSource, COLORREF 
         if (rop & (1 << i))
             cr |= (i & 4 ? crPattern : ~crPattern) &
                   (i & 2 ? crSource : ~crSource) & (i & 1 ? crDest : ~crDest);
-    return cr & UINT32_C(0x00ffffff);
+    return cr & std::uint32_t{0x00ffffff};
 }
 
 BOOL win32::BitBlt(HDC hdc, int x, int y, int cx, int cy, HDC hdcSrc, int xSrc, int ySrc, DWORD dwRop) {
@@ -1256,7 +1256,7 @@ BOOL win32::BitBlt(HDC hdc, int x, int y, int cx, int cy, HDC hdcSrc, int xSrc, 
     COLORREF *rgcr = nullptr, crSource, crPattern, crDest;
     NATIVEARRAYOWNER<COLORREF, std::free> rgcrOwner;
 
-    if (!lpdc || cx <= 0 || cy <= 0 || (dwRop & UINT32_C(0xff000000)) || !FClip(lpdc, &rcClip))
+    if (!lpdc || cx <= 0 || cy <= 0 || (dwRop & std::uint32_t{0xff000000}) || !FClip(lpdc, &rcClip))
         return 0;
     iScale = IDCScale(lpdc);
     if (FUsesPattern(rop) && lpdc->lpbrush->fNull) {
@@ -2026,7 +2026,7 @@ int win32::StretchDIBits(HDC hdc, int xDest, int yDest, int cxDest, int cyDest,
 
     if (!lpdc || (lpdc->fMemory && lpdc->lpbitmap->fMono) ||
         cxDest <= 0 || cyDest <= 0 || cxSrc <= 0 || cySrc <= 0 ||
-        (dwRop & UINT32_C(0xff000000)) || !FPaletteDib(lpdc, lpbmi, lpBits, usage, &dib))
+        (dwRop & std::uint32_t{0xff000000}) || !FPaletteDib(lpdc, lpbmi, lpBits, usage, &dib))
         return 0;
     yTop = dib.fTopDown ? ySrc : static_cast<std::int64_t>(dib.cy) - ySrc - cySrc;
     if (xSrc < 0 || yTop < 0 || static_cast<std::int64_t>(xSrc) + cxSrc > dib.cx || yTop + cySrc > dib.cy ||

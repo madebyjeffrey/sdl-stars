@@ -437,7 +437,7 @@ static void test_RaceGrbit_high_bit(void) {
 
     SetRaceGrbit(&plr, (RaceGrbit)(0), 1);
     SetRaceGrbit(&plr, (RaceGrbit)(31), 1);
-    TEST_CHECK(plr.grbitAttr == UINT32_C(0x80000001));
+    TEST_CHECK(plr.grbitAttr == std::uint32_t{0x80000001});
     TEST_CHECK(GetRaceGrbit(&plr, (RaceGrbit)(31)));
     SetRaceGrbit(&plr, (RaceGrbit)(31), 0);
     TEST_CHECK(plr.grbitAttr == 1);

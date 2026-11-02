@@ -21,7 +21,7 @@ static int      lastField, lastLevel, typeCalls[16];
 static COMPART  supplied;
 struct RESEARCHESCAPE {};
 
-static void hv(int32_t value) { hash = hash * UINT32_C(16777619) ^ (uint32_t)value; }
+static void hv(int32_t value) { hash = hash * std::uint32_t{16777619} ^ (uint32_t)value; }
 int16_t     TestGetRaceStat(PLAYER *p, RaceStat stat) {
     APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
 
@@ -69,7 +69,7 @@ void TestUpdateResearchStatus(APPSESSION &app, int16_t pool) {
 }
 static int kind(uint16_t mask) {
     for (int i = 0; i < 16; i++)
-        if (mask == (UINT32_C(1) << i))
+        if (mask == (std::uint32_t{1} << i))
             return i;
     abort();
 }
@@ -163,7 +163,7 @@ static int CatalogChecks(APPSESSION &app) {
         app.state.idPlayer = iplrNone;
         for (unsigned item = 0; item < 256; item++) {
             memset(&part, 0, sizeof(part));
-            part.hs.grhst = (HullSlotType)(UINT32_C(1) << k);
+            part.hs.grhst = (HullSlotType)(std::uint32_t{1} << k);
             part.hs.iItem = item;
             int available = FLookupPart(app, &part);
             if ((available == mdPartAvailInvalid) != (item >= counts[k])) {
@@ -181,7 +181,7 @@ static int CatalogChecks(APPSESSION &app) {
             app.state.rgplr[0].rgAttr[rsMajorAdv] = (int8_t)trait;
             for (unsigned item = counts[k]; item < 256; item++) {
                 memset(&part, 0, sizeof(part));
-                part.hs.grhst = (HullSlotType)(UINT32_C(1) << k);
+                part.hs.grhst = (HullSlotType)(std::uint32_t{1} << k);
                 part.hs.iItem = item;
                 assert(FLookupPart(app, &part) == mdPartAvailInvalid);
                 checks++;
@@ -206,7 +206,7 @@ static void setup(APPSESSION &app) {
         PLAYER *p = &app.state.rgplr[i];
         p->rgAttr[rsMajorAdv] = (int8_t)cfg[at];
         p->grbitAttr =
-            static_cast<RaceTraitBits>((cfg[at + 1] ? UINT32_C(1) << ibitRaceGeneralizedResearch : 0) | (cfg[at + 2] ? UINT32_C(1) << ibitRaceTT : 0));
+            static_cast<RaceTraitBits>((cfg[at + 1] ? std::uint32_t{1} << ibitRaceGeneralizedResearch : 0) | (cfg[at + 2] ? std::uint32_t{1} << ibitRaceTT : 0));
         p->fDead = cfg[at + 3];
         p->fCrippled = cfg[at + 4];
         p->SetITechNow(cfg[at + 5]);

@@ -93,7 +93,7 @@ static uint32_t oracle(APPSESSION &app, unsigned dimension, uint32_t prior, int 
             }
         }
         if (base) {
-            if ((traits & (UINT32_C(1) << ibitRaceISB)) || race == raMacintosh)
+            if ((traits & (std::uint32_t{1} << ibitRaceISB)) || race == raMacintosh)
                 cost -= cost / 5;
             cost = (cost + 1) / 2;
         }
@@ -108,9 +108,9 @@ static uint32_t oracle(APPSESSION &app, unsigned dimension, uint32_t prior, int 
         if (race == raDefend)
             value = word32((int64_t)value * 3) / 5;
     } else if (item == iobjAlchemy || item == mdIdleAlchemy)
-        value = dimension == 3 ? ((traits & (UINT32_C(1) << ibitRaceMineralAlchemy)) ? 25 : 100) : 0;
+        value = dimension == 3 ? ((traits & (std::uint32_t{1} << ibitRaceMineralAlchemy)) ? 25 : 100) : 0;
     else if (item == iobjMinTerraform || item == iobjMaxTerraform || item == mdIdleTerraform) {
-        value = dimension == 3 ? ((traits & (UINT32_C(1) << ibitRaceTT)) ? 70 : 100) : 0;
+        value = dimension == 3 ? ((traits & (std::uint32_t{1} << ibitRaceTT)) ? 70 : 100) : 0;
         if (colony == raTerra)
             value /= 2;
     } else if (item == iobjGenesis || (item >= 18 && item <= 27))
@@ -126,7 +126,7 @@ static uint32_t oracle(APPSESSION &app, unsigned dimension, uint32_t prior, int 
     return one ? value : word32((int64_t)value * count);
 }
 static int compare(APPSESSION &app, int player, int one) {
-    uint32_t actual[4] = {UINT32_MAX, UINT32_C(0x80000000), 17, 29}, expected[4];
+    uint32_t actual[4] = {UINT32_MAX, std::uint32_t{0x80000000}, 17, 29}, expected[4];
     cursor = lookups = 0;
     lastHull = -1;
     for (unsigned d = 0; d < 4; d++)
@@ -233,8 +233,8 @@ int main(void) {
                 app.state.rgplr[0].rgAttr[rsMajorAdv] = owner;
                 app.state.rgplr[1].rgAttr[rsMajorAdv] = pricing;
                 app.state.rgplr[1].grbitAttr = static_cast<decltype(app.state.rgplr[1].grbitAttr)>(
-                    ((traits & 1) ? UINT32_C(1) << ibitRaceCheapFact : 0) | ((traits & 2) ? UINT32_C(1) << ibitRaceTT : 0) |
-                    ((traits & 4) ? UINT32_C(1) << ibitRaceMineralAlchemy : 0) | ((traits & 8) ? UINT32_C(1) << ibitRaceISB : 0));
+                    ((traits & 1) ? std::uint32_t{1} << ibitRaceCheapFact : 0) | ((traits & 2) ? std::uint32_t{1} << ibitRaceTT : 0) |
+                    ((traits & 4) ? std::uint32_t{1} << ibitRaceMineralAlchemy : 0) | ((traits & 8) ? std::uint32_t{1} << ibitRaceISB : 0));
                 for (unsigned tutorial = 0; tutorial < 2; tutorial++)
                     for (unsigned item = 0; item < 128; item++)
                         for (unsigned one = 0; one < 2; one++) {
@@ -280,7 +280,7 @@ int main(void) {
         bases[1].hul.rgwtOreCost[d] = 65535;
     }
     bases[0].hul.resCost = bases[1].hul.resCost = 65535;
-    app.state.rgplr[0].grbitAttr = static_cast<decltype(app.state.rgplr[0].grbitAttr)>(UINT32_C(1) << ibitRaceISB);
+    app.state.rgplr[0].grbitAttr = static_cast<decltype(app.state.rgplr[0].grbitAttr)>(std::uint32_t{1} << ibitRaceISB);
     CHECK(compare(app, 0, 1));
     uint32_t exact[4] = {};
     GetProductionCosts(app, &planet, &prod, exact, 0, 1);
@@ -317,7 +317,7 @@ int main(void) {
             for (unsigned d = 0; d < 4; d++)
                 quotes[q][d] = randomWord();
         app.state.rgplr[0].rgAttr[rsMajorAdv] = randomWord() % 10;
-        app.state.rgplr[0].grbitAttr = static_cast<decltype(app.state.rgplr[0].grbitAttr)>((randomWord() % 2) ? UINT32_C(1) << ibitRaceISB : 0);
+        app.state.rgplr[0].grbitAttr = static_cast<decltype(app.state.rgplr[0].grbitAttr)>((randomWord() % 2) ? std::uint32_t{1} << ibitRaceISB : 0);
         CHECK(compare(app, 0, randomWord() % 2));
     }
     reset(app);

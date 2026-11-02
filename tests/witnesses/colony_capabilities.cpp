@@ -94,8 +94,8 @@ static void ready(APPSESSION &app) {
     }
     for (int p = 0; p < 16; p++) {
         int fields = p == 1 ? 23 : 14, levels = p == 1 ? 38 : 32;
-        app.state.rgplr[p].grbitAttr = static_cast<RaceTraitBits>(((p == 1 ? cfg[45] : cfg[44]) ? UINT32_C(1) << ibitRaceTT : 0) |
-                                                        ((capcfg[0] != 0 && cfg[52]) ? UINT32_C(1) << ibitRaceNoAdvScanner : 0));
+        app.state.rgplr[p].grbitAttr = static_cast<RaceTraitBits>(((p == 1 ? cfg[45] : cfg[44]) ? std::uint32_t{1} << ibitRaceTT : 0) |
+                                                        ((capcfg[0] != 0 && cfg[52]) ? std::uint32_t{1} << ibitRaceNoAdvScanner : 0));
         app.state.rgplr[p].rgAttr[rsMajorAdv] = capcfg[0] == 0 ? 0 : (int8_t)(p == 1 ? cfg[51] : cfg[50]);
         app.state.rgplr[p].SetITechNow(capcfg[0] == 0 ? 0 : cfg[53]);
         app.state.rgplr[p].wScore = 100 + p;

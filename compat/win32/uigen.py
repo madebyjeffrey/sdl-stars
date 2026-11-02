@@ -15,7 +15,8 @@ def compile_resources(root):
     definitions = dict(re.findall(r'^#define\s+(\w+)\s+(0x[0-9a-fA-F]+|\d+)\s*$', (root / 'res/resource.h').read_text(), re.M))
     constants = (root / 'compat/win32/include/wincompat_constants.h').read_text()
     constants += (root / 'src/platform/ui_values.h').read_text()
-    for name, value in re.findall(r'^inline constexpr auto (\w+) = (?:[A-Z0-9_]+\()?((?:0x[0-9a-fA-F]+|\d+))(?:\))?;', constants, re.M):
+    constant_pattern = r'^inline constexpr auto (\w+) = (?:(?:[A-Z0-9_]+\(|std::(?:u?int(?:8|16|32|64)_t)\{))?((?:0x[0-9a-fA-F]+|\d+))(?:\)|\})?;'
+    for name, value in re.findall(constant_pattern, constants, re.M):
         definitions.setdefault(name, value)
     lines = [line.strip() for line in (root / 'res/stars.rc').read_text().splitlines()]
     resources = []
