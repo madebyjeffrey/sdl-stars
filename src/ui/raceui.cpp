@@ -312,7 +312,7 @@ INT_PTR  RaceWizardDlg1(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 win32::GetDlgItemTextA(hwnd, IDC_RACE_NAME, app.state.vplr.szName, 32);
                 win32::GetDlgItemTextA(hwnd, IDC_RACE_PLURAL_NAME, app.state.vplr.szNames, 32);
                 RaceQueryIO().pfnStat(&app.state.vplr, rsUseLeftover);
-                if (CchGetUtf8WindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_RACE_PASSWORD), app.state.szRacePass, 16) < 0) {
+                if (!CchGetUtf8WindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_RACE_PASSWORD), std::span{app.state.szRacePass})) {
                     AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsNativePasswordReenter).data(), win32::MB_ICONHAND);
                     return 1;
                 }

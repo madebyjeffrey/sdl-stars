@@ -2,6 +2,7 @@
 #include "appstate.h"
 #include "callbackcontext.h"
 #include "control_io.h"
+#include <limits>
 #include <stars_compat.h>
 
 DWORD GetTextExtent(HDC hdc, LPCSTR str, int len) {
@@ -119,12 +120,17 @@ std::int16_t CWheelLines(std::int16_t cPage) {
 }
 
 
-int CchGetUtf8WindowText(HWND hwnd, char *psz, int cchMax) {
+std::optional<std::size_t> CchGetUtf8WindowText(HWND hwnd, std::span<char> psz) {
     if (StarsCompatTextInputRejected(hwnd)) {
-        if (cchMax > 0) psz[0] = 0;
-        return -1;
+        if (!psz.empty()) psz[0] = 0;
+        return std::nullopt;
     }
-    return win32::GetWindowTextA(hwnd, psz, cchMax);
+    if (psz.empty()) return std::size_t{0};
+    if (psz.size() > static_cast<std::size_t>(std::numeric_limits<int>::max())) {
+        psz[0] = 0;
+        return std::nullopt;
+    }
+    return static_cast<std::size_t>(win32::GetWindowTextA(hwnd, psz.data(), static_cast<int>(psz.size())));
 }
 
 BOOL FSetUtf8WindowText(HWND hwnd, const char *psz) {

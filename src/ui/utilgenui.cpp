@@ -1068,7 +1068,7 @@ INT_PTR  PasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         case IDOK:
         case IDCANCEL:
             if (LOWORD(wParam) == IDOK) {
-                if (CchGetUtf8WindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_EDIT1), szPass, 60) < 0) {
+                if (!CchGetUtf8WindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_EDIT1), std::span{szPass})) {
                     AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsNativePasswordReenter).data(), win32::MB_ICONHAND);
                     break;
                 }
@@ -1142,12 +1142,12 @@ INT_PTR  NewPasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         case IDOK:
         case IDCANCEL:
             if (LOWORD(wParam) == IDOK) {
-                if (CchGetUtf8WindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_EDIT1), szPass, 18) < 0) {
+                if (!CchGetUtf8WindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_EDIT1), std::span{szPass})) {
                     AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsNativePasswordReenter).data(), win32::MB_ICONHAND);
                     break;
                 }
                 lSalt = LSaltFromSz(szPass);
-                if (CchGetUtf8WindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_PASSWORD_CONFIRM), szPassConfirm, 18) < 0) {
+                if (!CchGetUtf8WindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_PASSWORD_CONFIRM), std::span{szPassConfirm})) {
                     AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsNativePasswordReenter).data(), win32::MB_ICONHAND);
                     break;
                 }
