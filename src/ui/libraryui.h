@@ -2,6 +2,7 @@
 #define STARS_LIBRARYUI_H
 
 #include "win.h"
+#include <string_view>
 inline constexpr auto IDD_LIBRARY_RACE_SAVE = 2430;
 inline constexpr auto IDC_LIBRARY_RACE_UPDATE = 2431;
 inline constexpr auto IDC_LIBRARY_RACE_VERSION = 2432;
@@ -73,7 +74,7 @@ std::int16_t FSaveLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName, P
 std::int16_t FSaveCurrentLibraryRace(APPSESSION &app, HWND hwnd, PLAYER *pplr);
 std::int16_t FHasCurrentLibraryRace(void);
 std::int16_t FLoadLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName);
-const char *PszCurrentLibraryRaceName(void);
+std::string_view PszCurrentLibraryRaceName(void);
 std::int16_t FCustomizeLibraryRace(APPSESSION &app, HWND hwnd, std::span<char, 256> pszName);
 std::int16_t FBeginLibraryRace(APPSESSION &app, HWND hwnd);
 std::int16_t FEditLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName);

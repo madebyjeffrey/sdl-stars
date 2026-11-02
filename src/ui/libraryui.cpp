@@ -809,15 +809,15 @@ std::int16_t FSaveCurrentLibraryRace(APPSESSION &app, HWND hwnd, PLAYER *pplr) {
     RACESTATE rsSav;
     PLAYER plr;
     char szName[256], szPath[512];
-    const char *pszExisting;
+    std::string_view pszExisting;
     int iChoice;
 
     if (!FHasCurrentLibraryRace() || !FInitRaceLibrary()) return 0;
     rv.pplr = pplr;
     GetRaceLibraryStem(app, pplr->szName, rv.szStem);
     if (!FNativeEnumerateDirectory(app, szRaceLibraryRoot, FindRaceVersion, &rv)) return 0;
-    pszExisting = !fNewLibraryRace && szRaceLibraryPath[0] ? PszCurrentLibraryRaceName() : rv.szLatest;
-    if (pszExisting[0]) {
+    pszExisting = !fNewLibraryRace && szRaceLibraryPath[0] ? PszCurrentLibraryRaceName() : std::string_view{rv.szLatest};
+    if (!pszExisting.empty()) {
         CchSnprintf(std::span{szName, sizeof(szName)}, "%s", pszExisting);
         CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", szRaceLibraryRoot, szDirSep, szName);
         if (!FReadManagedRace(app, szPath, &plr)) goto LFail;
@@ -827,7 +827,7 @@ std::int16_t FSaveCurrentLibraryRace(APPSESSION &app, HWND hwnd, PLAYER *pplr) {
         CchCopyUtf8(std::span{szName}, rv.szSame);
         goto LReuse;
     }
-    iChoice = pszExisting[0] ? static_cast<int>(ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_LIBRARY_RACE_SAVE), hwnd,
+    iChoice = !pszExisting.empty() ? static_cast<int>(ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_LIBRARY_RACE_SAVE), hwnd,
                                                  LibraryRaceSaveDlg, reinterpret_cast<LPARAM>(szName))) : 2;
     if (iChoice != 1 && iChoice != 2) return 0;
     if (iChoice == 2) {
@@ -875,9 +875,10 @@ std::int16_t FLoadLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName) {
     return 1;
 }
 
-const char *PszCurrentLibraryRaceName(void) {
-    const char *pch = std::strrchr(szRaceLibraryPath, chDirSep);
-    return pch ? pch + 1 : szRaceLibraryPath;
+std::string_view PszCurrentLibraryRaceName(void) {
+    const std::string_view szPath{szRaceLibraryPath};
+    const std::size_t ichSeparator = szPath.find_last_of(chDirSep);
+    return ichSeparator == std::string_view::npos ? szPath : szPath.substr(ichSeparator + 1);
 }
 
 /* The new-game roster owns a filename for each design. Bind only this edit

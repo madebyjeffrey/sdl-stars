@@ -88,7 +88,7 @@ static BOOL FCheckRaceRosterWorkflow(APPSESSION &app) {
     if (iStep == 6) {
         hwnd = HwndRosterDialog(app, NewGameDlg2);
         if (!hwnd) return 1;
-        if (strcmp(PszCurrentLibraryRaceName(), rgszName[0]) || (app.state.vrgplrTypeNew[0] & 3) != 2) return 0;
+        if (PszCurrentLibraryRaceName() != rgszName[0] || (app.state.vrgplrTypeNew[0] & 3) != 2) return 0;
         iStep++;
         return FChooseRosterAction(app, hwnd, 0, 16);
     }
