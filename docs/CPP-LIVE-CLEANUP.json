@@ -24086,7 +24086,13 @@
       "Continue L05 bounded text destinations, const-text APIs, and scratch/borrowed-return review.",
       "Continue L06 span/result interfaces and qualify chooser backends on Windows/Linux; cover ZIP export, orders import and active game/race import-source chooser.",
       "Finish L08 retained preprocessor/API macro inventory and qualify the final full source state on required platforms."
-    ]
+    ],
+    "fresh_github_runs": {
+      "head": "83141f1191ad11ffe82d5a0c2bebe8f301720ef1",
+      "unit_platforms": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41407693183",
+      "native_regression": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41407695837",
+      "status_at_checkpoint": "pending"
+    }
   },
   "current_checkpoint": {
     "batch": "L05 span-based window text input result",
@@ -24109,7 +24115,13 @@
       "diff_check": "pass",
       "github_qualification": "The prior run on 65c163f0 failed Linux compilation on the two repaired compatibility test sources and Windows qualification on five stale SDK fixture hashes. Fresh Windows/Linux qualification after these commits remains pending.",
       "baseline": "Unchanged.",
-      "desktop_unit_tests": "18/18 pass, including empty-span and rejected-input result coverage."
+      "desktop_unit_tests": "18/18 pass, including empty-span and rejected-input result coverage.",
+      "fresh_github_runs": {
+        "head": "83141f1191ad11ffe82d5a0c2bebe8f301720ef1",
+        "unit_platforms": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41407693183",
+        "native_regression": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41407695837",
+        "status_at_checkpoint": "pending"
+      }
     },
     "source_commit": "2cb364f7",
     "followup_commits": [
