@@ -1705,7 +1705,8 @@
         "native-wrapper-file-paths-use-views",
         "remove-nul-terminated-path-converter",
         "library-native-file-copy-path-views",
-        "record-stream-open-accepts-path-view"
+        "record-stream-open-accepts-path-view",
+        "file-xor-buffer-byte-span"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -25020,17 +25021,18 @@
   "working_tree_checkpoint": {
     "date": "2026-11-02",
     "branch": "develop",
-    "batch": "L06 record StreamOpen accepts path views",
-    "source_commit": "437a716c",
+    "batch": "L06 file XOR buffer span interface",
+    "source_commit": "4f4dcc3e",
     "status": "Verified and committed locally on develop. macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Current-source Windows SDL desktop and Linux desktop qualification remain outstanding.",
     "changes": [
-      "StreamOpen now accepts std::string_view and forwards the bounded path to HfOpenFile.",
-      "Owned std::string callers pass views directly instead of exposing .c_str(); injected record-stream callbacks use the same contract.",
-      "No file-open policy, game behavior, saved layout, file format or serialization changed."
+      "XorFileBuf now takes a writable byte span instead of char pointer plus signed 16-bit count.",
+      "Core, UI and unit-test callers pass exact writable byte extents; removed C-style casts from unaligned and seed-alias callers.",
+      "Existing little-endian 32-bit processing, tail-byte mask order and seed advancement are preserved.",
+      "No game behavior, saved layout, file format or serialization changed."
     ],
     "verification": {
       "macos_sdl_debug": "make compile passes with strict warnings and dual-header checks.",
-      "desktop_unit_tests": "18/18 pass.",
+      "desktop_unit_tests": "18/18 pass, including the independent XorFileBuf byte/seed vectors.",
       "host_unit_tests": "29/29 pass.",
       "native_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "host_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
@@ -25230,6 +25232,10 @@
       {
         "commit": "437a716c",
         "message": "Pass record stream paths as views"
+      },
+      {
+        "commit": "4f4dcc3e",
+        "message": "Use byte spans for file XOR buffers"
       }
     ],
     "parent": "4867b0c5"
