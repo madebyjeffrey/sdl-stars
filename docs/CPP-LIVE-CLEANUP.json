@@ -24016,12 +24016,12 @@
   ],
   "restart_checkpoint": {
     "date": "2026-11-02",
-    "reason": "Linux portal parent, X11, token and request text now uses owned/bounded C++ APIs; continue L05/L06 audits and final L08 qualification.",
+    "reason": "Save/log path APIs now express read-only inputs as const; continue L05/L06 audits and final L08 qualification.",
     "branch": "develop",
-    "batch": "L05bu owned and typed Linux portal text",
-    "batch_parent": "42bf90cb",
-    "latest_batch": "L05bu owned and typed Linux portal text",
-    "latest_batch_head": "005d8bef",
+    "batch": "L05bz readonly save and log path inputs",
+    "batch_parent": "0ed3f7c8",
+    "latest_batch": "L05bz readonly save and log path inputs",
+    "latest_batch_head": "1a9a7c08",
     "completed_stages": [
       "L01: nullptr and aliases",
       "L02: explicit C++ casts and headers",
@@ -24042,21 +24042,18 @@
       "native_regression": "519 matches; 25 existing warnings; zero differences/errors/skipped inputs.",
       "host_regression": "519 matches; 25 existing warnings; zero differences/errors/skipped inputs.",
       "baseline": "Unchanged; no game checkpoint moved.",
-      "linux_portal_syntax": "Strict C++20 syntax passes for filedialog_portal.cpp against the temporary D-Bus stub with the generated compiler flags.",
+      "diff_check": "pass",
+      "linux_portal_syntax": "Strict C++20 syntax passes for filedialog_portal.cpp against the temporary D-Bus stub with generated compiler flags.",
       "linux_portal_runtime": "Not exercised locally; D-Bus development files and a portal runtime are unavailable.",
       "typed_formatter_vectors": "Portable formatter CRT-comparison cases cover x11:%llx and %02x at all tested destination capacities.",
-      "owned_c_and_function_macro_scan": "Confirmed on 2026-11-02: zero owned .c sources and zero function-like macros under src/ and compat/win32/src. No further app-owned C-source or function-like API-macro conversion is indicated by this scan. Include guards, NOMINMAX, test configuration, and vendored SDK definitions remain outside this conversion scope.",
-      "diff_check": "pass"
+      "owned_c_and_function_macro_scan": "Confirmed on 2026-11-02: zero owned .c sources and zero function-like macros under src/ and compat/win32/src. Header guards, NOMINMAX, test configuration, and vendored SDK definitions remain outside this conversion scope."
     },
-    "remaining_raw_copy_calls": [
-      "compat/win32/src/list.cpp: LB_GETTEXT ABI output",
-      "compat/win32/src/toolbar.cpp: TB_GETBUTTONTEXT ABI output"
-    ],
+    "remaining_raw_copy_calls": [],
     "other_remaining": [
-      "L05 bounded text destinations, const-text interfaces and post-migration scratch/borrowed-return audit.",
+      "L05 remaining bounded text destinations, const-text interfaces and post-migration scratch/borrowed-return audit.",
       "L06 remaining buffer/length service interfaces and chooser Milestone D qualification, including Windows/Linux chooser coverage.",
       "L08 final retained primitive/API macro/preprocessor inventory reconciliation and current-source platform qualification.",
-      "Review the two remaining strcpy calls in compat/win32/src/list.cpp and toolbar.cpp; both write to buffers supplied by Win32-compatible caller APIs without a length parameter."
+      "Windows/Linux CI qualification of the current complete source remains pending."
     ],
     "restart_order": [
       "Read this checkpoint and check git status/log; preserve unrelated title-modernized assets.",
@@ -24112,17 +24109,16 @@
     "published_batch_head": "bf4537ae"
   },
   "current_checkpoint": {
-    "batch": "L05by readonly INI key and format inputs",
-    "status": "implemented and locally verified",
-    "parent": "f0f54447",
+    "batch": "L05bz readonly save and log path inputs",
+    "status": "implemented and locally verified; source commit published locally, checkpoint publication pending",
+    "parent": "0ed3f7c8",
     "changes": {
-      "src/ui/init.h and src/ui/init.cpp": "GetIniWinRc section/file keys and ReadIniTileSettings format are const inputs.",
-      "src/ui/preferencesui.h and src/ui/preferencesui.cpp": "Preset file paths and recent-file section/file keys are const; the recent entry remains mutable for suffix iteration.",
-      "tests/witnesses/s02_layout.cpp": "Removed casts that made string literals appear mutable in the legacy INI layout witness."
+      "src/core/log.h and src/core/log.cpp": "FLoadLogFile now takes a const path because it only passes the path to the stream opener.",
+      "src/core/save.h and src/core/save.cpp": "FWriteDataFile and FCreateFile now take const path inputs; FCreateFile keeps its selected path pointer const.",
+      "tests/compat/win32_newgame_workflow.h, tests/unit/test_native_ports.cpp and tests/unit/test_save.cpp": "Updated test provider signatures to match the const-correct API."
     },
     "verification": {
       "macos_debug_build_and_desktop_unit_tests": "Pass; 18/18.",
-      "ini_witnesses": "S02 layout, presets and state pass; 3/3.",
       "host_unit_tests": "Pass; 29/29.",
       "native_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
       "host_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
@@ -24135,20 +24131,47 @@
       "L06 remaining buffer/length service interfaces and chooser Milestone D qualification, including Windows/Linux chooser coverage.",
       "L08 final retained primitive/API macro/preprocessor inventory reconciliation and current-source platform qualification."
     ],
-    "source_commit": "cd4ac6de",
-    "published_batch_head": "cd4ac6de",
+    "source_commit": "1a9a7c08",
+    "published_batch_head": "1a9a7c08",
     "previous_batch": {
-      "batch": "L05bx readonly technology requirement inputs",
-      "source_commit": "0da73af0",
+      "batch": "L05by readonly INI key and format inputs",
       "status": "implemented and locally verified",
+      "parent": "f0f54447",
+      "changes": {
+        "src/ui/init.h and src/ui/init.cpp": "GetIniWinRc section/file keys and ReadIniTileSettings format are const inputs.",
+        "src/ui/preferencesui.h and src/ui/preferencesui.cpp": "Preset file paths and recent-file section/file keys are const; the recent entry remains mutable for suffix iteration.",
+        "tests/witnesses/s02_layout.cpp": "Removed casts that made string literals appear mutable in the legacy INI layout witness."
+      },
       "verification": {
         "macos_debug_build_and_desktop_unit_tests": "Pass; 18/18.",
+        "ini_witnesses": "S02 layout, presets and state pass; 3/3.",
         "host_unit_tests": "Pass; 29/29.",
         "native_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
         "host_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
         "tutorial": "Available SDL tutorial smoke checkpoint passes; full 80-page tutorial remains unfinished.",
         "baseline": "Unchanged.",
         "diff_check": "pass"
+      },
+      "remaining_work": [
+        "L05 remaining bounded text destinations, const-text interfaces and post-migration scratch/borrowed-return audit.",
+        "L06 remaining buffer/length service interfaces and chooser Milestone D qualification, including Windows/Linux chooser coverage.",
+        "L08 final retained primitive/API macro/preprocessor inventory reconciliation and current-source platform qualification."
+      ],
+      "source_commit": "cd4ac6de",
+      "published_batch_head": "cd4ac6de",
+      "previous_batch": {
+        "batch": "L05bx readonly technology requirement inputs",
+        "source_commit": "0da73af0",
+        "status": "implemented and locally verified",
+        "verification": {
+          "macos_debug_build_and_desktop_unit_tests": "Pass; 18/18.",
+          "host_unit_tests": "Pass; 29/29.",
+          "native_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
+          "host_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
+          "tutorial": "Available SDL tutorial smoke checkpoint passes; full 80-page tutorial remains unfinished.",
+          "baseline": "Unchanged.",
+          "diff_check": "pass"
+        }
       }
     }
   },
