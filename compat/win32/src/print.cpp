@@ -1,13 +1,13 @@
 /* Legacy printer escapes spool the same GDI raster canvas to atomic PDF output. */
 #include "internal.h"
 #include "external_io.h"
+#include "native.h"
 #include "time_io.h"
 #include "ownership.h"
 #include <cairo-pdf.h>
 #include <cerrno>
 #include <climits>
 #include <new>
-#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <unistd.h>
@@ -146,7 +146,7 @@ static int StartPrint(COMPATPRINT *lp, int cb, LPCSTR pszTitle) {
     }
     lp->fKeep = 0;
     if (lp->fSpool) CchCopyUtf8(std::span{lp->szTemp}, "/tmp/stars-print-XXXXXX");
-    else if (std::snprintf(lp->szTemp, sizeof(lp->szTemp), "%s.tmp-XXXXXX", lp->szTarget) >= static_cast<int>(sizeof(lp->szTemp))) {
+    else if (CchSnprintf(std::span{lp->szTemp}, "%s.tmp-XXXXXX", lp->szTarget) >= static_cast<int>(sizeof(lp->szTemp))) {
         lp->szTemp[0] = 0; win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return win32::SP_ERROR;
     }
     nft = NftNativeCreateTemp(lp->szTemp);
@@ -204,7 +204,7 @@ static BOOL FSubmitPrint(COMPATPRINT *lp) {
     SDL_Process *lpProcess;
     Uint64 ticks;
     int cArgs = 0, code = -1;
-    std::snprintf(szCopies, sizeof(szCopies), "%d", lp->cCopies);
+    CchSnprintf(std::span{szCopies}, "%d", lp->cCopies);
     rgArgs[cArgs++] = "lp";
     if (std::strcmp(lp->szPrinter, "default") != 0) { rgArgs[cArgs++] = "-d"; rgArgs[cArgs++] = lp->szPrinter; }
     rgArgs[cArgs++] = "-n"; rgArgs[cArgs++] = szCopies;
@@ -274,7 +274,7 @@ static int IEscapePrinter(COMPATPRINT *lp, HDC hdc, int idEscape, int cb, LPCSTR
             char szMessage[PATH_MAX + 160];
             HWND hwndOwner = win32::IsWindow(lp->hwndOwner) ? lp->hwndOwner : nullptr;
             const auto szAbsolute = SzCanonicalNativePath(lp->szTarget);
-            std::snprintf(szMessage, sizeof(szMessage), "The PDF was saved, but its viewer could not be opened.\n\nOpen this file in a PDF viewer to print it:\n%s", szAbsolute ? szAbsolute->c_str() : lp->szTarget);
+            CchSnprintf(std::span{szMessage}, "The PDF was saved, but its viewer could not be opened.\n\nOpen this file in a PDF viewer to print it:\n%s", szAbsolute ? szAbsolute->c_str() : lp->szTarget);
             SDL_Log("%s", szMessage);
             CompatExternalIO().pfnShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "PDF saved", szMessage,
                                      hwndOwner ? hwndOwner->lpWindow.get() : nullptr);
