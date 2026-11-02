@@ -6,6 +6,7 @@
 #include "callbackcontext.h"
 #include <cstring>
 #include <string>
+#include <string_view>
 #include <array>
 #include "library_path_io.h"
 #include "preferencesui.h"
@@ -35,9 +36,9 @@ static BOOL WriteString(LPCSTR, LPCSTR key, LPCSTR value, LPCSTR) {
     strcpy(disk[key[4] - '1'], value);
     return 1;
 }
-static int16_t Under(const char *, const char *path) {
+static int16_t Under(std::string_view, std::string_view path) {
     for (int i = 0; i < 9; i++)
-        if (!strcmp(path, memory[i]))
+        if (path == memory[i])
             return under[i];
     return 0;
 }
@@ -95,6 +96,8 @@ int main(void) {
     LIBRARYPATHIO path;
     path.pfnUnder = Under;
     LIBRARYPATHIOSCOPE pathScope(path);
+    CHECK(FPathUnderLibrary(std::string_view{"/library", 8}, std::string_view{"/library/game", 13}));
+    CHECK(!FPathUnderLibrary(std::string_view{"/library", 8}, std::string_view{"/library-old/game", 17}));
     reset(app);
     selection(app, "N");
     CHECK(app.state.ini.grobjSel == 0 && app.state.ini.idPlayer == 7 && app.state.ini.iObjSel == 90);

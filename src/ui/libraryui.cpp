@@ -247,25 +247,22 @@ static std::int16_t FInitLibrary(void) {
     return cch > 0 && cch < static_cast<int>(sizeof(szLibraryRoot)) && FEnsureNativeDir(szLibraryRoot);
 }
 
-std::int16_t FPathUnderLibrary(const char *pszRoot, const char *pszFile) {
-    std::size_t cchRoot, cchFile;
+std::int16_t FPathUnderLibrary(std::string_view szRoot, std::string_view szFile) {
+    std::size_t cchRoot = szRoot.size(), cchFile = szFile.size();
 #ifdef _WIN32
     std::size_t ich;
 #endif
-    if (!pszRoot || !pszFile) return 0;
-    cchRoot = std::strlen(pszRoot);
-    cchFile = std::strlen(pszFile);
     if (cchRoot == 0 || cchFile <= cchRoot) return 0;
 #ifdef _WIN32
     /* Pickers return '/', while library joins and Windows arguments may use '\\'. */
     for (ich = 0; ich < cchRoot; ich++) {
-        if ((pszRoot[ich] == '/' || pszRoot[ich] == '\\') &&
-            (pszFile[ich] == '/' || pszFile[ich] == '\\')) continue;
-        if (SDL_tolower(static_cast<unsigned char>(pszRoot[ich])) != SDL_tolower(static_cast<unsigned char>(pszFile[ich]))) return 0;
+        if ((szRoot[ich] == '/' || szRoot[ich] == '\\') &&
+            (szFile[ich] == '/' || szFile[ich] == '\\')) continue;
+        if (SDL_tolower(static_cast<unsigned char>(szRoot[ich])) != SDL_tolower(static_cast<unsigned char>(szFile[ich]))) return 0;
     }
-    return pszFile[cchRoot] == '/' || pszFile[cchRoot] == '\\';
+    return szFile[cchRoot] == '/' || szFile[cchRoot] == '\\';
 #else
-    return std::memcmp(pszRoot, pszFile, cchRoot) == 0 && pszFile[cchRoot] == '/';
+    return szFile.substr(0, cchRoot) == szRoot && szFile[cchRoot] == '/';
 #endif
 }
 
