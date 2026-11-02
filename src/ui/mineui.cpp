@@ -403,7 +403,7 @@ void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
             win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
             if (lpth->thp().iWarp() != 0) {
                 TextIO().pfnCchGetString(app, idsTravelingWarpD, std::span{szT});
-                c = win32::wsprintfA(app.state.szWork, szT, lpth->thp().iWarp() + 4);
+                c = CchSprintf(std::span{app.state.szWork}, szT, lpth->thp().iWarp() + 4);
                 win32::TextOutA(hdc, xLeft, yTop, app.state.szWork, c);
                 yTop += app.state.dyArial8 + 2;
                 TextIO().pfnCchGetString(app, idsDestination, std::span{szT});
@@ -431,7 +431,7 @@ void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
             xLeft += LOWORD(GetTextExtent(hdc, szT, cch)) + 20;
             RightTextOut(app, hdc, xLeft - 4, yTop, szT, cch, 0);
             cch = TextIO().pfnCchGetString(app, idsDD5, std::span{szT});
-            c = win32::wsprintfA(app.state.szWork, szT, lpth->pt().x(), lpth->pt().y());
+            c = CchSprintf(std::span{app.state.szWork}, szT, lpth->pt().x(), lpth->pt().y());
             win32::TextOutA(hdc, xLeft, yTop, app.state.szWork, c);
             yTop += static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2;
             c = TextIO().pfnCchGetString(app, idsDestination2, std::span{app.state.szWork});
@@ -459,7 +459,7 @@ void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
                 psz = szCatalogPsz.data();
                 yTop += win32::DrawTextA(hdc, psz, std::strlen(psz), &rc, win32::DT_WORDBREAK | win32::DT_NOPREFIX) + 8;
             }
-            cch = win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsTraderTravelingWarpD).data(), lpth->tht().iWarp());
+            cch = CchSprintf(std::span{app.state.szWork}, TextIO().pfnCompressed(app, idsTraderTravelingWarpD).data(), lpth->tht().iWarp());
             win32::TextOutA(hdc, xLeft, yTop, app.state.szWork, cch);
             goto FinishUp;
         }
