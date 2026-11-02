@@ -4,10 +4,13 @@
 #include "time_io.h"
 #include <dbus/dbus.h>
 #include <algorithm>
+#include <array>
 #include <climits>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+
+using namespace win32::files;
 
 constexpr char PORTAL_SERVICE[] = "org.freedesktop.portal.Desktop";
 constexpr char PORTAL_PATH[] = "/org/freedesktop/portal/desktop";
@@ -53,15 +56,17 @@ static BOOL FFolderOption(DBusMessageIter *lpOptions, LPCSTR pszFolder) {
 static char *PszPortalLabel(LPCSTR psz) {
     return FUtf8Valid(psz, std::strlen(psz)) ? SDL_strdup(psz) : nullptr;
 }
-static BOOL FFilter(DBusMessageIter *lpIter, const COMPATFILEFILTER *lpFilter) {
+static BOOL FFilter(DBusMessageIter *lpIter, const FILESELECTIONFILTER &filterValue) {
     DBusMessageIter filter, patterns, item;
     const char *psz, *pszEnd;
+    const char *pszName = filterValue.szName.c_str();
+    const char *pszSourcePattern = filterValue.szPattern.c_str();
     char *pszLabel, *pszPatternUtf, szPattern[16385];
     std::size_t i, c;
     dbus_uint32_t kind = 0;
     BOOL fOk = 0;
-    pszLabel = PszPortalLabel(lpFilter->pszName);
-    pszPatternUtf = PszPortalLabel(lpFilter->pszPattern);
+    pszLabel = PszPortalLabel(pszName);
+    pszPatternUtf = PszPortalLabel(pszSourcePattern);
     NATIVEOWNER<char, SDL_free> labelOwner(pszLabel), patternOwner(pszPatternUtf);
     if (!pszLabel || !pszPatternUtf) return 0;
     if (!dbus_message_iter_open_container(lpIter, DBUS_TYPE_STRUCT, nullptr, &filter) ||
@@ -90,16 +95,16 @@ static BOOL FFilter(DBusMessageIter *lpIter, const COMPATFILEFILTER *lpFilter) {
 done:
     return fOk;
 }
-static BOOL FFilterOptions(DBusMessageIter *lpOptions, const COMPATFILEFILTER *rgfilter, int cFilter, int iFilter) {
+static BOOL FFilterOptions(DBusMessageIter *lpOptions, const std::vector<FILESELECTIONFILTER> &rgFilters, std::size_t iFilter) {
     DBusMessageIter entry, value, filters;
     const char *pszKey = "filters";
-    int i;
-    if (cFilter == 0) return 1;
+    std::size_t i;
+    if (rgFilters.empty()) return 1;
     if (!dbus_message_iter_open_container(lpOptions, DBUS_TYPE_DICT_ENTRY, nullptr, &entry) ||
         !dbus_message_iter_append_basic(&entry, DBUS_TYPE_STRING, &pszKey) ||
         !dbus_message_iter_open_container(&entry, DBUS_TYPE_VARIANT, "a(sa(us))", &value) ||
         !dbus_message_iter_open_container(&value, DBUS_TYPE_ARRAY, "(sa(us))", &filters)) return 0;
-    for (i = 0; i < cFilter; i++) if (!FFilter(&filters, &rgfilter[i])) return 0;
+    for (i = 0; i < rgFilters.size(); i++) if (!FFilter(&filters, rgFilters[i])) return 0;
     if (!dbus_message_iter_close_container(&value, &filters) ||
         !dbus_message_iter_close_container(&entry, &value) ||
         !dbus_message_iter_close_container(lpOptions, &entry)) return 0;
@@ -107,7 +112,7 @@ static BOOL FFilterOptions(DBusMessageIter *lpOptions, const COMPATFILEFILTER *r
     return dbus_message_iter_open_container(lpOptions, DBUS_TYPE_DICT_ENTRY, nullptr, &entry) &&
            dbus_message_iter_append_basic(&entry, DBUS_TYPE_STRING, &pszKey) &&
            dbus_message_iter_open_container(&entry, DBUS_TYPE_VARIANT, "(sa(us))", &value) &&
-           FFilter(&value, &rgfilter[iFilter]) && dbus_message_iter_close_container(&entry, &value) &&
+           FFilter(&value, rgFilters[iFilter]) && dbus_message_iter_close_container(&entry, &value) &&
            dbus_message_iter_close_container(lpOptions, &entry);
 }
 static int IHex(char ch) {
@@ -137,13 +142,13 @@ static BOOL FUriPath(LPCSTR pszUri, char *pszPath, std::size_t cbPath) {
     }
     pszPath[c] = 0; return 1;
 }
-static int IResponse(DBusMessage *lpMessage, const COMPATFILEFILTER *rgfilter, int cFilter,
-                     int *lpiFilter, char *pszPath, std::size_t cbPath) {
+static int IResponse(DBusMessage *lpMessage, const std::vector<FILESELECTIONFILTER> &filters,
+                     std::size_t *lpiFilter, char *pszPath, std::size_t cbPath) {
     DBusMessageIter args, results, entry, value, uris, filter;
     dbus_uint32_t response;
     const char *pszKey, *pszUri, *pszName;
     char *pszLabel;
-    int i;
+    std::size_t i;
     BOOL fUri = 0;
     if (!dbus_message_has_signature(lpMessage, "ua{sv}")) return -1;
     dbus_message_iter_init(lpMessage, &args); dbus_message_iter_get_basic(&args, &response);
@@ -166,8 +171,8 @@ static int IResponse(DBusMessage *lpMessage, const COMPATFILEFILTER *rgfilter, i
             dbus_message_iter_recurse(&value, &filter);
             if (dbus_message_iter_get_arg_type(&filter) != DBUS_TYPE_STRING) return -1;
             dbus_message_iter_get_basic(&filter, &pszName);
-            for (i = 0; i < cFilter; i++) {
-                pszLabel = PszPortalLabel(rgfilter[i].pszName);
+            for (i = 0; i < filters.size(); i++) {
+                pszLabel = PszPortalLabel(filters[i].szName.c_str());
                 NATIVEOWNER<char, SDL_free> labelOwner(pszLabel);
                 if (!pszLabel) return -1;
                 if (std::strcmp(pszName, pszLabel) == 0) { *lpiFilter = i; break; }
@@ -187,9 +192,7 @@ static BOOL FPumpChooser(HWND hwndOwner) {
     }
     return !FStarsErrorPending() && (!hwndOwner || win32::IsWindow(hwndOwner));
 }
-int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFolder,
-                     LPCSTR pszName, const COMPATFILEFILTER *rgfilter, int cFilter,
-                     int *lpiFilter, char *pszPath, std::size_t cbPath) {
+FILESELECTIONRESULT ICompatChooseFile(HWND hwndOwner, const FILESELECTIONREQUEST &request) {
     DBusConnection *lpBus = nullptr;
     DBusMessage *lpCall = nullptr, *lpReply = nullptr, *lpMessage, *lpClose;
     DBusPendingCall *lpPending = nullptr;
@@ -197,7 +200,9 @@ int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFol
     DBusError error;
     dbus_bool_t fTrue = 1, fFalse = 0;
     const char *pszParent, *pszHandle = nullptr;
+    const char *pszCurrentName = request.szInitialPath.c_str();
     char szParent[64] = "", szToken[64], szRequest[512], szSender[256];
+    std::array<char, PATH_MAX> szPath{};
     NATIVEFILE *lpRandom;
     NATIVEOWNER<NATIVEFILE, ICloseNativeFile> randomOwner;
     unsigned char rgbToken[16];
@@ -205,6 +210,7 @@ int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFol
     char *pszTitleUtf = nullptr, *pszRequest = nullptr, *pszSender = nullptr, *pszWaylandParent = nullptr;
     Uint64 nsStart;
     int iResult = -1;
+    std::size_t iFilter = request.iFilter;
     PORTALRESPONSES responses = {};
     int i;
     BOOL fFilter = 0;
@@ -269,9 +275,11 @@ int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFol
     for (i = 0; szSender[i]; i++) if (szSender[i] == '.') szSender[i] = '_';
     std::snprintf(szRequest, sizeof(szRequest), "%s/request/%s/%s", PORTAL_PATH, szSender, szToken);
     pszRequest = strdup(szRequest); if (!pszRequest) goto done;
-    if (!dbus_validate_utf8(pszName, &error)) goto done;
-    pszTitleUtf = PszPortalLabel(pszTitle); if (!pszTitleUtf) goto done;
-    lpCall = dbus_message_new_method_call(PORTAL_SERVICE, PORTAL_PATH, PORTAL_CHOOSER, fSave ? "SaveFile" : "OpenFile");
+    if (request.rgFilters.size() > cCompatFileFiltersMax) goto done;
+    if (!dbus_validate_utf8(request.szInitialPath.c_str(), &error)) goto done;
+    pszTitleUtf = PszPortalLabel(request.szTitle.c_str()); if (!pszTitleUtf) goto done;
+    lpCall = dbus_message_new_method_call(PORTAL_SERVICE, PORTAL_PATH, PORTAL_CHOOSER,
+                                         request.mode == FILESELECTIONMODE::save ? "SaveFile" : "OpenFile");
     if (!lpCall) goto done;
     dbus_message_iter_init_append(lpCall, &args);
     if (!dbus_message_iter_append_basic(&args, DBUS_TYPE_STRING, &pszParent) ||
@@ -281,9 +289,10 @@ int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFol
         const char *pszToken = szToken;
         if (!FOption(&options, "handle_token", "s", DBUS_TYPE_STRING, &pszToken) ||
             !FOption(&options, "modal", "b", DBUS_TYPE_BOOLEAN, &fTrue) ||
-            (!fSave && !FOption(&options, "multiple", "b", DBUS_TYPE_BOOLEAN, &fFalse)) ||
-            !FFolderOption(&options, pszFolder) || !FFilterOptions(&options, rgfilter, cFilter, *lpiFilter) ||
-            (fSave && !FOption(&options, "current_name", "s", DBUS_TYPE_STRING, &pszName)) ||
+            (request.mode == FILESELECTIONMODE::open && !FOption(&options, "multiple", "b", DBUS_TYPE_BOOLEAN, &fFalse)) ||
+            !FFolderOption(&options, request.szInitialDirectory.c_str()) ||
+            !FFilterOptions(&options, request.rgFilters, iFilter) ||
+            (request.mode == FILESELECTIONMODE::save && !FOption(&options, "current_name", "s", DBUS_TYPE_STRING, &pszCurrentName)) ||
             !dbus_message_iter_close_container(&args, &options)) goto done;
     }
     if (!dbus_connection_send_with_reply(lpBus, lpCall, &lpPending, 10000) || !lpPending) goto done;
@@ -304,7 +313,7 @@ int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFol
         for (i = 0; i < responses.cMessage; i++) {
             lpMessage = responses.rgMessage[i];
             if (dbus_message_has_path(lpMessage, pszRequest) && dbus_message_has_sender(lpMessage, pszSender)) {
-                iResult = IResponse(lpMessage, rgfilter, cFilter, lpiFilter, pszPath, cbPath); goto done;
+                iResult = IResponse(lpMessage, request.rgFilters, &iFilter, szPath.data(), szPath.size()); goto done;
             }
             dbus_message_unref(lpMessage); responses.rgMessage[i] = nullptr;
         }
@@ -315,5 +324,10 @@ int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFol
         }
     }
 done:
-    return iResult;
+    if (iResult == 0) return FILESELECTIONCANCELLED{};
+    if (iResult < 0) return FILESELECTIONFAILURE{FILESELECTIONERROR::backendFailure};
+    FILESELECTIONSELECTED selected;
+    selected.szPath = szPath.data();
+    if (!request.rgFilters.empty()) selected.iFilter = iFilter;
+    return selected;
 }

@@ -32,7 +32,6 @@ struct COMPATFILEDIALOG {
     const win32::files::FILESELECTIONREQUEST *lpRequest;
     BOOL fSave;
     char szDir[PATH_MAX], szResult[PATH_MAX];
-    COMPATFILEFILTER rgfilter[MAX_FILE_FILTERS];
     int cFilter, iFilter;
     COMPATFILEENTRY *rgentry;
     std::size_t cEntry;
@@ -61,7 +60,7 @@ static BOOL FFilePattern(LPCSTR psz, LPCSTR pszPattern, std::size_t cpat) {
 static BOOL FFileFilter(COMPATFILEDIALOG *lp, LPCSTR psz) {
     LPCSTR pszPattern, pszNext;
     if (lp->cFilter == 0) return 1;
-    pszPattern = lp->rgfilter[lp->iFilter].pszPattern;
+    pszPattern = lp->lpRequest->rgFilters[static_cast<std::size_t>(lp->iFilter)].szPattern.c_str();
     while (*pszPattern) {
         pszNext = std::strchr(pszPattern, ';'); if (!pszNext) pszNext = pszPattern + std::strlen(pszPattern);
         if (FFilePattern(psz, pszPattern, static_cast<std::size_t>((pszNext - pszPattern)))) return 1;
@@ -453,8 +452,6 @@ static win32::files::FILESELECTIONRESULT SelectFileCore(HWND hwndOwner, win32::f
             dlg.dwError = win32::CDERR_INITIALIZATION;
             goto done;
         }
-        dlg.rgfilter[dlg.cFilter].pszName = filter.szName.c_str();
-        dlg.rgfilter[dlg.cFilter].pszPattern = filter.szPattern.c_str();
         dlg.cFilter++;
     }
     dlg.iFilter = request.iFilter < static_cast<std::size_t>(dlg.cFilter) ? static_cast<int>(request.iFilter) : 0;
@@ -489,14 +486,26 @@ static win32::files::FILESELECTIONRESULT SelectFileCore(HWND hwndOwner, win32::f
     /* Headless control tests opt into the compatibility browser explicitly. */
     if (fNative) {
         for (;;) {
-            iRet = CompatChooserIO().pfnICompatChooseFile(hwndRoot, dlg.fSave, request.szTitle.empty() ? (dlg.fSave ? "Save As" : "Open") : request.szTitle.c_str(),
-                                    dlg.szDir, szInitial, dlg.rgfilter, dlg.cFilter, &dlg.iFilter, szPath, sizeof(szPath));
-            if (iRet < 0) {
+            auto backendRequest = request;
+            win32::files::FILESELECTIONRESULT backendResult;
+            backendRequest.szTitle = request.szTitle.empty() ? (dlg.fSave ? "Save As" : "Open") : request.szTitle;
+            backendRequest.szInitialDirectory = dlg.szDir;
+            backendRequest.szInitialPath = szInitial;
+            backendRequest.iFilter = static_cast<std::size_t>(dlg.iFilter);
+            backendResult = CompatChooserIO().pfnICompatChooseFile(hwndRoot, backendRequest);
+            if (std::holds_alternative<win32::files::FILESELECTIONFAILURE>(backendResult)) {
                 dlg.dwError = win32::CDERR_INITIALIZATION;
                 if (!hwndRoot || win32::IsWindow(hwndRoot)) FileError(hwndRoot, "Unable to complete file selection. Please try again.");
                 goto restore;
             }
-            if (iRet == 0) goto restore;
+            if (std::holds_alternative<win32::files::FILESELECTIONCANCELLED>(backendResult)) goto restore;
+            const auto &backendSelected = std::get<win32::files::FILESELECTIONSELECTED>(backendResult);
+            if (backendSelected.iFilter && *backendSelected.iFilter < request.rgFilters.size())
+                dlg.iFilter = static_cast<int>(*backendSelected.iFilter);
+            if (CchCopyUtf8(std::span{szPath}, backendSelected.szPath) < 0) {
+                dlg.dwError = win32::FNERR_INVALIDFILENAME;
+                goto restore;
+            }
             iRet = IAcceptFilePath(hwndRoot, &dlg, szPath);
             if (hwndRoot && !win32::IsWindow(hwndRoot)) goto restore;
             if (dlg.dwError) {
@@ -535,7 +544,7 @@ static win32::files::FILESELECTIONRESULT SelectFileCore(HWND hwndOwner, win32::f
         dlg.dwError = win32::CDERR_MEMALLOCFAILURE; goto restore;
     }
     win32::SendDlgItemMessageA(hwnd, ID_FILE_NAME, win32::EM_LIMITTEXT, PATH_MAX - 1, 0);
-    for (i = 0; i < dlg.cFilter; i++) win32::SendDlgItemMessageA(hwnd, ID_FILE_FILTER, win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(dlg.rgfilter[i].pszName));
+    for (i = 0; i < dlg.cFilter; i++) win32::SendDlgItemMessageA(hwnd, ID_FILE_FILTER, win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(request.rgFilters[static_cast<std::size_t>(i)].szName.c_str()));
     if (dlg.cFilter) win32::SendDlgItemMessageA(hwnd, ID_FILE_FILTER, win32::CB_SETCURSEL, dlg.iFilter, 0);
     win32::SendMessageA(hwnd, win32::WM_INITDIALOG, 0, reinterpret_cast<LPARAM>(&dlg));
     win32::EnableWindow(win32::GetDlgItem(hwnd, ID_FILE_BACK), 0);
@@ -596,13 +605,7 @@ done:
 
 namespace win32::files {
 FILESELECTIONRESULT SelectFile(HWND hwndOwner, FILESELECTIONREQUEST request) {
-    try {
-        return SelectFileCore(hwndOwner, std::move(request));
-    } catch (const std::bad_alloc &) {
-        return FILESELECTIONFAILURE{FILESELECTIONERROR::allocationFailure};
-    } catch (...) {
-        return FILESELECTIONFAILURE{FILESELECTIONERROR::backendFailure};
-    }
+    return SelectFileCore(hwndOwner, std::move(request));
 }
 } // namespace win32::files
 

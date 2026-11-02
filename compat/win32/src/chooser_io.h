@@ -5,7 +5,7 @@
 // Effects belong to this module. Defaults delegate to the original functions;
 // scoped bindings own a snapshot and restore the enclosing thread's binding.
 struct COMPATCHOOSERIO {
-    decltype(&ICompatChooseFile) pfnICompatChooseFile = ICompatChooseFile;
+    FILESELECTIONBACKEND pfnICompatChooseFile = ICompatChooseFile;
 };
 const COMPATCHOOSERIO &CompatChooserIO() noexcept;
 class COMPATCHOOSERIOSCOPE {

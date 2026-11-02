@@ -21,18 +21,21 @@ int IChooseCocoaFile(void *lpWindow, int fSave, const char *pszTitle, const char
 }
 
 int main(void) {
-    char szFilter[] = "Games \xe2\x80\x93 Stars!", szPattern[] = "*.xy";
-    COMPATFILEFILTER filter = {szFilter, szPattern};
-    char szPath[256];
-    int iFilter = 0;
+    win32::files::FILESELECTIONREQUEST request;
+    win32::files::FILESELECTIONRESULT result;
+    request.mode = win32::files::FILESELECTIONMODE::save;
+    request.szTitle = "Choose \xe2\x80\x9cNew Game\xe2\x80\x9d";
+    request.szInitialDirectory = "/tmp/\xe6\x98\x9f";
+    request.szInitialPath = "\xe6\x98\x9f.xy";
+    request.rgFilters.push_back({"Games \xe2\x80\x93 Stars!", "*.xy"});
 
-    if (ICompatChooseFile(NULL, 1, "Choose \xe2\x80\x9cNew Game\xe2\x80\x9d", "/tmp/\xe6\x98\x9f",
-                         "\xe6\x98\x9f.xy", &filter, 1, &iFilter, szPath, sizeof(szPath)) != 1 ||
-        cChoose != 1 || strcmp(szPath, "/tmp/\xe6\x98\x9f/game.xy")) return 1;
+    result = ICompatChooseFile(NULL, request);
+    if (!std::holds_alternative<win32::files::FILESELECTIONSELECTED>(result) || cChoose != 1 ||
+        std::get<win32::files::FILESELECTIONSELECTED>(result).szPath != "/tmp/\xe6\x98\x9f/game.xy" ||
+        std::get<win32::files::FILESELECTIONSELECTED>(result).iFilter != 0) return 1;
     iResult = 0;
-    if (ICompatChooseFile(NULL, 1, "Choose \xe2\x80\x9cNew Game\xe2\x80\x9d", "/tmp/\xe6\x98\x9f",
-                         "\xe6\x98\x9f.xy", &filter, 1, &iFilter, szPath, sizeof(szPath)) != 0 ||
-        cChoose != 2) return 1;
+    result = ICompatChooseFile(NULL, request);
+    if (!std::holds_alternative<win32::files::FILESELECTIONCANCELLED>(result) || cChoose != 2) return 1;
     puts("Cocoa picker: UTF-8 labels, UTF-8 paths and cancellation passed");
     return 0;
 }

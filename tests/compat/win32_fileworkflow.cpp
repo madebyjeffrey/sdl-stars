@@ -23,16 +23,12 @@ static int cAlerts, cReplaceChoices;
 #define CHECK(f) do { if (!(f)) { fprintf(stderr, "file workflow line %d: %s\n", __LINE__, #f); goto done; } } while (0)
 static int cFileChoices;
 
-static int IChooseTypedWorkflowFile(HWND, BOOL fSave, LPCSTR, LPCSTR, LPCSTR, const COMPATFILEFILTER *, int cFilter,
-                                    int *lpiFilter, char *pszPath, std::size_t cbPath) {
+static win32::files::FILESELECTIONRESULT IChooseTypedWorkflowFile(HWND, const win32::files::FILESELECTIONREQUEST &request) {
     const char *pszFile = PszCompatEnvironment("STARS_TEST_GAME_PATH");
-    int cch;
-    if (fTypedChooserCancel) return 0;
-    if (fSave || !pszFile || cFilter != 1 || !lpiFilter || !pszPath || cbPath == 0) return -1;
-    cch = CchCopyUtf8(std::span{pszPath, cbPath}, pszFile);
-    if (cch < 0) return -1;
-    *lpiFilter = 0;
-    return 1;
+    if (fTypedChooserCancel) return win32::files::FILESELECTIONCANCELLED{};
+    if (request.mode != win32::files::FILESELECTIONMODE::open || !pszFile || request.rgFilters.size() != 1)
+        return win32::files::FILESELECTIONFAILURE{win32::files::FILESELECTIONERROR::backendFailure};
+    return win32::files::FILESELECTIONSELECTED{pszFile, 0, false};
 }
 
 static const char *PszWorkflowFilename(const char *pszFile) {

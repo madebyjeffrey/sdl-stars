@@ -2,6 +2,10 @@
 #include "windows_chooser_io.h"
 #include "filedialog_windows_bridge.h"
 #include <cstdlib>
+#include <array>
+#include <vector>
+
+using namespace win32::files;
 
 static int FPumpWindowsChooser(void *lpv) {
     HWND hwndOwner = static_cast<HWND>(lpv);
@@ -16,26 +20,29 @@ static int FPumpWindowsChooser(void *lpv) {
     return !FStarsErrorPending() && (!hwndOwner || win32::IsWindow(hwndOwner));
 }
 
-int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFolder,
-                     LPCSTR pszName, const COMPATFILEFILTER *rgfilter, int cFilter,
-                     int *lpiFilter, char *pszPath, std::size_t cbPath) {
-    WINDOWSFILEFILTER *rg = nullptr;
-    NATIVEARRAYOWNER<WINDOWSFILEFILTER, std::free> rgOwner;
+FILESELECTIONRESULT ICompatChooseFile(HWND hwndOwner, const FILESELECTIONREQUEST &request) {
+    std::vector<WINDOWSFILEFILTER> rg;
+    std::array<char, PATH_MAX> szPath{};
     void *lpWindow = nullptr;
-    int i, iResult;
+    int i, iFilter = static_cast<int>(request.iFilter), iResult;
 
-    if (cFilter != 0) {
-        rg = static_cast<WINDOWSFILEFILTER *>(std::calloc(static_cast<std::size_t>(cFilter), sizeof(*rg)));
-        rgOwner.reset(rg);
-        if (!rg) return -1;
-        for (i = 0; i < cFilter; i++) {
-            rg[i].pszName = rgfilter[i].pszName;
-            rg[i].pszPattern = rgfilter[i].pszPattern;
-        }
+    if (request.rgFilters.size() > cCompatFileFiltersMax)
+        return FILESELECTIONFAILURE{FILESELECTIONERROR::invalidRequest};
+    rg.resize(request.rgFilters.size());
+    for (i = 0; i < static_cast<int>(request.rgFilters.size()); i++) {
+        rg[static_cast<std::size_t>(i)].pszName = request.rgFilters[static_cast<std::size_t>(i)].szName.c_str();
+        rg[static_cast<std::size_t>(i)].pszPattern = request.rgFilters[static_cast<std::size_t>(i)].szPattern.c_str();
     }
     if (hwndOwner && hwndOwner->lpWindow.get())
         lpWindow = SDL_GetPointerProperty(SDL_GetWindowProperties(hwndOwner->lpWindow.get()), SDL_PROP_WINDOW_WIN32_HWND_POINTER, nullptr);
-    iResult = WindowsChooserIO().pfnIChooseWindowsFile(lpWindow, fSave, pszTitle, pszFolder, pszName, rg, cFilter,
-                                lpiFilter, pszPath, cbPath, FPumpWindowsChooser, hwndOwner);
-    return iResult;
+    iResult = WindowsChooserIO().pfnIChooseWindowsFile(lpWindow, request.mode == FILESELECTIONMODE::save,
+                                request.szTitle.c_str(), request.szInitialDirectory.c_str(), request.szInitialPath.c_str(),
+                                rg.empty() ? nullptr : rg.data(), static_cast<int>(rg.size()),
+                                &iFilter, szPath.data(), szPath.size(), FPumpWindowsChooser, hwndOwner);
+    if (iResult < 0) return FILESELECTIONFAILURE{FILESELECTIONERROR::backendFailure};
+    if (iResult == 0) return FILESELECTIONCANCELLED{};
+    FILESELECTIONSELECTED selected;
+    selected.szPath = szPath.data();
+    if (!rg.empty()) selected.iFilter = static_cast<std::size_t>(iFilter);
+    return selected;
 }

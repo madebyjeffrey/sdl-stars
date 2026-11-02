@@ -10,16 +10,14 @@ static HWND hwndRoot;
 static int mdFailure = 1;
 static bool fCleanupFailure, fDisableFailure;
 static int cCalls, cErrors, cCleanupFailures;
-int StarsTest_ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFolder,
-                               LPCSTR pszName, const COMPATFILEFILTER *rgfilter, int cFilter,
-                               int *lpiFilter, char *pszPath, size_t cbPath) {
-    (void)pszTitle; (void)pszFolder; (void)lpiFilter; (void)pszPath; (void)cbPath;
+win32::files::FILESELECTIONRESULT StarsTest_ICompatChooseFile(HWND hwndOwner, const win32::files::FILESELECTIONREQUEST &request) {
     cCalls++;
-    if (hwndOwner != hwndRoot || fSave || win32::IsWindowEnabled(hwndRoot) || hwndRoot->cNativeFileDialogs != 1 ||
-        std::strcmp(pszName, "café-Ω.m1") || !rgfilter || cFilter != 2) cErrors++;
+    if (hwndOwner != hwndRoot || request.mode != win32::files::FILESELECTIONMODE::open ||
+        win32::IsWindowEnabled(hwndRoot) || hwndRoot->cNativeFileDialogs != 1 ||
+        request.szInitialPath != "café-Ω.m1" || request.rgFilters.size() != 2) cErrors++;
     if (mdFailure == 1) StarsThrowError(starsErrorFile, 417);
     if (mdFailure == 2) throw std::bad_alloc();
-    return 0;
+    return win32::files::FILESELECTIONCANCELLED{};
 }
 static LRESULT  OwnerProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     if (msg == win32::WM_ENABLE && !w && fDisableFailure) StarsThrowError(starsErrorFile, 419);

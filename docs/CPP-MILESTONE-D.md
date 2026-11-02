@@ -1,6 +1,6 @@
 # Milestone D: a C++ file-selection interface behind the SDL Win32 wrapper
 
-Status: D01–D02 complete; D03 implementation underway; D04–D06 remain open.
+Status: D01–D02 complete; D03 and D04 implementation underway; D05–D06 remain open.
 Recorded: 2026-10-31. D01 revalidated: 2026-11-01. Tracking: [#71](https://github.com/madebyjeffrey/sdl-stars/issues/71).
 
 ## Outcome and scope
@@ -178,6 +178,28 @@ headers compiled in both orders. The macOS configuration omits the compatibility
 browser test target; Linux portal and Windows SDK/native file-dialog cases were
 not run. Full regression, unit, tutorial, Release, and host qualification remain
 open. The D03-to-D06 exit gate below is unchanged.
+
+### D04 implementation progress (2026-11-01)
+
+The shared operation now calls its injected chooser through
+`FILESELECTIONBACKEND(HWND, const FILESELECTIONREQUEST&)`, returning the same
+typed selected/cancelled/failed result. It builds the backend request with the
+canonical start directory, suggested basename, and current filter. The
+compatibility browser reads filters directly from the owned request. Cocoa,
+portal, and Windows adapter entry points now accept that request and return an
+owned result; their AppKit, D-Bus, and native SDK bridges remain isolated at
+their foreign boundaries. The C++ operation does not catch chooser exceptions:
+its RAII cleanup completes before the legacy Win32-shaped caller observes them,
+preserving the existing modal `std::bad_alloc` path.
+
+The macOS Debug targets for the desktop, Cocoa adapter, real-client workflow,
+and modal ownership build. Five focused checks pass: callback exception
+cleanup, Cocoa adapter selection/cancellation, real-client file workflow, C++
+manifest, and Win32 type isolation. The Windows adapter passed a C++20
+syntax-only check using the available macOS SDL headers. The portal passed a
+C++20 syntax-only check against a temporary D-Bus declaration stub. These do
+not replace native Linux/Windows builds or backend behavior coverage; those
+remain open alongside the broader D verification gate.
 
 Prefer focused commits for the interface, shared operation, backend migration and
 caller migration. Do not leave a permanent old/new policy split after D05. If

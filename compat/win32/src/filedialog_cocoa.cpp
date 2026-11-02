@@ -3,6 +3,9 @@
 #include <cstdlib>
 #include <cstring>
 #include <array>
+#include <vector>
+
+using namespace win32::files;
 
 struct COCOAFILTERTEXT {
     NATIVEOWNER<char, SDL_free> pszName, pszPattern;
@@ -22,37 +25,38 @@ static int FPumpCocoaChooser(void *lpv) {
     }
     return !FStarsErrorPending() && (!hwndOwner || win32::IsWindow(hwndOwner));
 }
-int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFolder,
-                     LPCSTR pszName, const COMPATFILEFILTER *rgfilter, int cFilter,
-                     int *lpiFilter, char *pszPath, std::size_t cbPath) {
-    COCOAFILEFILTER *rg = nullptr;
+FILESELECTIONRESULT ICompatChooseFile(HWND hwndOwner, const FILESELECTIONREQUEST &request) {
+    std::vector<COCOAFILEFILTER> rg;
+    std::array<char, PATH_MAX> szPath{};
     char *pszTitleUtf;
     void *lpWindow = nullptr;
-    int i, iResult = -1;
+    int i, iFilter = static_cast<int>(request.iFilter), iResult = -1;
     NATIVEOWNER<char, SDL_free> titleOwner;
-    NATIVEARRAYOWNER<COCOAFILEFILTER, std::free> rgOwner;
     std::array<COCOAFILTERTEXT, cCompatFileFiltersMax> rgText;
-    if (cFilter < 0 || cFilter > cCompatFileFiltersMax) return -1;
-    pszTitleUtf = PszCocoaLabelUtf8(pszTitle);
+    if (request.rgFilters.size() > cCompatFileFiltersMax)
+        return FILESELECTIONFAILURE{FILESELECTIONERROR::invalidRequest};
+    pszTitleUtf = PszCocoaLabelUtf8(request.szTitle.c_str());
     titleOwner.reset(pszTitleUtf);
-    if (!pszTitleUtf) return -1;
-    if (cFilter != 0) {
-        rg = static_cast<COCOAFILEFILTER *>((std::calloc(static_cast<std::size_t>(cFilter), sizeof(*rg))));
-        rgOwner.reset(rg);
-        if (!rg) goto done;
-
-        for (i = 0; i < cFilter; i++) {
-            rgText[i].pszName.reset(PszCocoaLabelUtf8(rgfilter[i].pszName));
-            rgText[i].pszPattern.reset(PszCocoaLabelUtf8(rgfilter[i].pszPattern));
-            rg[i].pszName = rgText[i].pszName.get();
-            rg[i].pszPattern = rgText[i].pszPattern.get();
-            if (!rg[i].pszName || !rg[i].pszPattern) goto done;
-        }
+    if (!pszTitleUtf) return FILESELECTIONFAILURE{FILESELECTIONERROR::backendFailure};
+    rg.resize(request.rgFilters.size());
+    for (i = 0; i < static_cast<int>(request.rgFilters.size()); i++) {
+        rgText[static_cast<std::size_t>(i)].pszName.reset(PszCocoaLabelUtf8(request.rgFilters[static_cast<std::size_t>(i)].szName.c_str()));
+        rgText[static_cast<std::size_t>(i)].pszPattern.reset(PszCocoaLabelUtf8(request.rgFilters[static_cast<std::size_t>(i)].szPattern.c_str()));
+        rg[static_cast<std::size_t>(i)].pszName = rgText[static_cast<std::size_t>(i)].pszName.get();
+        rg[static_cast<std::size_t>(i)].pszPattern = rgText[static_cast<std::size_t>(i)].pszPattern.get();
+        if (!rg[static_cast<std::size_t>(i)].pszName || !rg[static_cast<std::size_t>(i)].pszPattern)
+            return FILESELECTIONFAILURE{FILESELECTIONERROR::backendFailure};
     }
     if (hwndOwner && hwndOwner->lpWindow.get())
         lpWindow = SDL_GetPointerProperty(SDL_GetWindowProperties(hwndOwner->lpWindow.get()), SDL_PROP_WINDOW_COCOA_WINDOW_POINTER, nullptr);
-    iResult = IChooseCocoaFile(lpWindow, fSave, pszTitleUtf, pszFolder, pszName, rg, cFilter,
-                             lpiFilter, pszPath, cbPath, FPumpCocoaChooser, hwndOwner);
-done:
-    return iResult;
+    iResult = IChooseCocoaFile(lpWindow, request.mode == FILESELECTIONMODE::save, pszTitleUtf,
+                             request.szInitialDirectory.c_str(), request.szInitialPath.c_str(),
+                             rg.empty() ? nullptr : rg.data(), static_cast<int>(rg.size()),
+                             &iFilter, szPath.data(), szPath.size(), FPumpCocoaChooser, hwndOwner);
+    if (iResult < 0) return FILESELECTIONFAILURE{FILESELECTIONERROR::backendFailure};
+    if (iResult == 0) return FILESELECTIONCANCELLED{};
+    FILESELECTIONSELECTED selected;
+    selected.szPath = szPath.data();
+    if (!rg.empty()) selected.iFilter = static_cast<std::size_t>(iFilter);
+    return selected;
 }
