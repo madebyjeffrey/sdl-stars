@@ -24362,8 +24362,14 @@
       "run_id": 41422617389,
       "head": "028c1dac10a7060a7508718c1da34bf575629d82",
       "url": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41422617389",
-      "status": "Inconclusive for current source: run is on older head 028c1dac, before the most recent fixes and L05 batches.",
-      "rerun": "No current-source rerun; workflow dispatch could not connect from this environment."
+      "status": "Completed with failures on stale source head 028c1dac; this run does not qualify current develop.",
+      "linux_host": "success",
+      "linked_independent_witnesses": "success",
+      "resource_sanitizers": "success",
+      "windows_sdk_matrix": "failure: SDK build subprocess returned exit status 1; detailed SDK artifact log was unavailable.",
+      "windows_sdl": "failure: entry.cpp unused argc under -Werror; fixed in 60a94d06.",
+      "linux_desktop": "failure: win32_fileworkflow omitted STARS_TEST_GAME_PATH; fixed in 75767e02.",
+      "current_source_rerun": "No workflow dispatch was available from this environment; current source is locally qualified on macOS and host, but Windows/Linux platform CI remains pending."
     },
     "restart_order": [
       "Rerun opt-in Windows/Linux qualification against current develop and resolve any failures.",
@@ -24400,8 +24406,14 @@
       "run_id": 41422617389,
       "head": "028c1dac10a7060a7508718c1da34bf575629d82",
       "url": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41422617389",
-      "status": "Inconclusive for current source: run is on older head 028c1dac, before the most recent fixes and L05 batches.",
-      "rerun": "No current-source rerun; workflow dispatch could not connect from this environment."
+      "status": "Completed with failures on stale source head 028c1dac; this run does not qualify current develop.",
+      "linux_host": "success",
+      "linked_independent_witnesses": "success",
+      "resource_sanitizers": "success",
+      "windows_sdk_matrix": "failure: SDK build subprocess returned exit status 1; detailed SDK artifact log was unavailable.",
+      "windows_sdl": "failure: entry.cpp unused argc under -Werror; fixed in 60a94d06.",
+      "linux_desktop": "failure: win32_fileworkflow omitted STARS_TEST_GAME_PATH; fixed in 75767e02.",
+      "current_source_rerun": "No workflow dispatch was available from this environment; current source is locally qualified on macOS and host, but Windows/Linux platform CI remains pending."
     },
     "remaining_work": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
@@ -24467,8 +24479,14 @@
       "run_id": 41422617389,
       "head": "028c1dac10a7060a7508718c1da34bf575629d82",
       "url": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41422617389",
-      "status": "Inconclusive for current source: run is on older head 028c1dac, before the most recent fixes and L05 batches.",
-      "rerun": "No current-source rerun; workflow dispatch could not connect from this environment."
+      "status": "Completed with failures on stale source head 028c1dac; this run does not qualify current develop.",
+      "linux_host": "success",
+      "linked_independent_witnesses": "success",
+      "resource_sanitizers": "success",
+      "windows_sdk_matrix": "failure: SDK build subprocess returned exit status 1; detailed SDK artifact log was unavailable.",
+      "windows_sdl": "failure: entry.cpp unused argc under -Werror; fixed in 60a94d06.",
+      "linux_desktop": "failure: win32_fileworkflow omitted STARS_TEST_GAME_PATH; fixed in 75767e02.",
+      "current_source_rerun": "No workflow dispatch was available from this environment; current source is locally qualified on macOS and host, but Windows/Linux platform CI remains pending."
     },
     "next": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
@@ -24484,8 +24502,14 @@
       "run_id": 41422617389,
       "head": "028c1dac10a7060a7508718c1da34bf575629d82",
       "url": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41422617389",
-      "status": "Inconclusive for current source: run is on older head 028c1dac, before the most recent fixes and L05 batches.",
-      "rerun": "No current-source rerun; workflow dispatch could not connect from this environment."
+      "status": "Completed with failures on stale source head 028c1dac; this run does not qualify current develop.",
+      "linux_host": "success",
+      "linked_independent_witnesses": "success",
+      "resource_sanitizers": "success",
+      "windows_sdk_matrix": "failure: SDK build subprocess returned exit status 1; detailed SDK artifact log was unavailable.",
+      "windows_sdl": "failure: entry.cpp unused argc under -Werror; fixed in 60a94d06.",
+      "linux_desktop": "failure: win32_fileworkflow omitted STARS_TEST_GAME_PATH; fixed in 75767e02.",
+      "current_source_rerun": "No workflow dispatch was available from this environment; current source is locally qualified on macOS and host, but Windows/Linux platform CI remains pending."
     },
     "post_checkpoint_commits": [
       {
