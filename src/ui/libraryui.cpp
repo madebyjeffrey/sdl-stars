@@ -729,39 +729,42 @@ struct RACEVERSIONS {
     int iMax, iLatest, iSame;
 };
 
-static void GetRaceLibraryStem(APPSESSION &app, const char *pszName, char *pszStem) {
+static void GetRaceLibraryStem(APPSESSION &app, const char *pszName, std::span<char, 240> pszStem) {
     std::size_t i, cch;
     char szTest[256];
 
-    CchSnprintf(std::span{pszStem, 240}, "%s", pszName);
-    for (i = 0; pszStem[i]; i++)
+    CchSnprintf(pszStem, "%s", pszName);
+    cch = std::string_view(pszStem.data()).size();
+    for (i = 0; i < cch; i++)
         if (static_cast<unsigned char>(pszStem[i]) < 32 || pszStem[i] == 127 || std::strchr("<>:\"/\\|?*", pszStem[i])) pszStem[i] = '_';
-    cch = std::strlen(pszStem);
     while (cch != 0 && (pszStem[cch - 1] == ' ' || pszStem[cch - 1] == '.')) pszStem[--cch] = 0;
-    while (pszStem[0] == ' ' || pszStem[0] == '.') std::memmove(pszStem, pszStem + 1, std::strlen(pszStem));
-    if (!pszStem[0]) CchSnprintf(std::span{pszStem, 240}, "%s", TextIO().pfnCompressed(app, idsLibraryDefaultRaceName).data());
-    CchSnprintf(std::span{szTest, sizeof(szTest)}, "%s.r1", pszStem);
+    while (cch != 0 && (pszStem[0] == ' ' || pszStem[0] == '.')) std::memmove(pszStem.data(), pszStem.data() + 1, cch--);
+    if (cch == 0) {
+        CchSnprintf(pszStem, "%s", TextIO().pfnCompressed(app, idsLibraryDefaultRaceName).data());
+        cch = std::string_view(pszStem.data()).size();
+    }
+    CchSnprintf(std::span{szTest, sizeof(szTest)}, "%s.r1", pszStem.data());
     if (!FPortableRaceFilename(app, szTest)) {
         // Prefix reserved device names without altering the in-game race name.
-        std::memmove(pszStem + 1, pszStem, std::strlen(pszStem) + 1);
+        std::memmove(pszStem.data() + 1, pszStem.data(), cch + 1);
         pszStem[0] = '_';
     }
 }
 
 static std::int16_t FindRaceVersion(APPSESSION &app, void *lpData, const char *pszName) {
     RACEVERSIONS *prv = static_cast<RACEVERSIONS *>(lpData);
-    const char *pch = std::strrchr(pszName, '.');
+    const std::string_view szName(pszName);
+    const std::size_t ichExt = szName.rfind('.');
     char szPath[512];
     PLAYER plr;
     int iVersion;
-    const char *pszEnd = pszName + std::strlen(pszName);
     std::from_chars_result result;
-    std::size_t cch = std::strlen(prv->szStem);
+    std::size_t cch = std::string_view(prv->szStem).size();
 
-    if (!pch || !FPortableRaceFilename(app, pszName)) return 1;
-    result = std::from_chars(pch + 2, pszEnd, iVersion);
-    if (result.ec != std::errc{} || result.ptr != pszEnd) return 1;
-    if (static_cast<std::size_t>((pch - pszName)) == cch && !SDL_strncasecmp(pszName, prv->szStem, cch))
+    if (ichExt == std::string_view::npos || !FPortableRaceFilename(app, szName)) return 1;
+    result = std::from_chars(szName.data() + ichExt + 2, szName.data() + szName.size(), iVersion);
+    if (result.ec != std::errc{} || result.ptr != szName.data() + szName.size()) return 1;
+    if (ichExt == cch && !SDL_strncasecmp(pszName, prv->szStem, cch))
         prv->iMax = StarsMax(prv->iMax, iVersion);
     CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", szRaceLibraryRoot, szDirSep, pszName);
     if (!FReadManagedRace(app, szPath, &plr)) return 1;
@@ -814,7 +817,7 @@ std::int16_t FSaveCurrentLibraryRace(APPSESSION &app, HWND hwnd, PLAYER *pplr) {
 
     if (!FHasCurrentLibraryRace() || !FInitRaceLibrary()) return 0;
     rv.pplr = pplr;
-    GetRaceLibraryStem(app, pplr->szName, rv.szStem);
+    GetRaceLibraryStem(app, pplr->szName, std::span{rv.szStem});
     if (!FNativeEnumerateDirectory(app, szRaceLibraryRoot, FindRaceVersion, &rv)) return 0;
     pszExisting = !fNewLibraryRace && szRaceLibraryPath[0] ? PszCurrentLibraryRaceName() : std::string_view{rv.szLatest};
     if (!pszExisting.empty()) {
