@@ -17,9 +17,9 @@ typedef struct {
     int16_t fFound;
 } NATIVEENTRYCHECK;
 
-static int16_t FCheckNativeEntry(APPSESSION &, void *lpv, const char *pszEntry) {
+static int16_t FCheckNativeEntry(APPSESSION &, void *lpv, std::string_view pszEntry) {
     NATIVEENTRYCHECK *lpnec = (NATIVEENTRYCHECK *)lpv;
-    if (!strcmp(pszEntry, lpnec->pszExpected)) lpnec->fFound = 1;
+    if (pszEntry == lpnec->pszExpected) lpnec->fFound = 1;
     return 1;
 }
 

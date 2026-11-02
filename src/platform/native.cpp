@@ -209,7 +209,6 @@ void MakeDir(std::string_view szDir) { ICreateNativeDirectory(szDir, 0777); }
 int CreateNativeDir(std::string_view pszDir) { return ICreateNativeDirectory(pszDir, 0777); }
 std::int16_t FEnsureNativeDir(std::string_view pszDir) { return FEnsureNativeDirectory(pszDir); }
 std::int16_t FNativeEnumerateDirectory(APPSESSION &app, std::string_view pszDir, FNativeDirectoryEntryProc pfnEntry, void *lpData) {
-    const char *pszEntry;
     std::optional<std::string> szEntry;
     if (!pfnEntry) return 0;
     NATIVEDIROWNER directory = PdirNativeOpen(pszDir);
@@ -218,9 +217,8 @@ std::int16_t FNativeEnumerateDirectory(APPSESSION &app, std::string_view pszDir,
         errno = 0;
         szEntry = SzNativeReadDir(directory.get());
         if (!szEntry) return errno == 0;
-        pszEntry = szEntry->c_str();
-        if (!FUtf8Valid(std::string_view{pszEntry, szEntry->size()})) { errno = EILSEQ; return 0; }
-        if (!pfnEntry(app, lpData, pszEntry)) return 1;
+        if (!FUtf8Valid(*szEntry)) { errno = EILSEQ; return 0; }
+        if (!pfnEntry(app, lpData, *szEntry)) return 1;
     }
 }
 std::optional<std::int64_t> FNativeFileSize(std::string_view pszFile) {

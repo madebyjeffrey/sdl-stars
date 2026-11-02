@@ -18,21 +18,20 @@ struct NEWGAMERACEMENU {
     const char *pszSelected;
 };
 
-static std::int16_t AddNewGameLibraryRace(APPSESSION &, void *lpData, const char *pszName) {
+static std::int16_t AddNewGameLibraryRace(APPSESSION &, void *lpData, std::string_view pszName) {
     NEWGAMERACEMENU *pnrm = static_cast<NEWGAMERACEMENU *>(lpData);
     char szLabel[512];
-    const char *pch;
     char *pchLabel = szLabel;
     UINT grf;
 
     if (pnrm->cRace >= std::numeric_limits<std::int16_t>::max() - 1000) return 0;
     // Menu mnemonics must not consume literal ampersands in library filenames.
-    for (pch = pszName; *pch; pch++) {
-        *pchLabel++ = *pch;
-        if (*pch == '&') *pchLabel++ = '&';
+    for (char ch : pszName) {
+        *pchLabel++ = ch;
+        if (ch == '&') *pchLabel++ = '&';
     }
     *pchLabel = 0;
-    grf = pnrm->pszSelected && !std::strcmp(pszName, pnrm->pszSelected) ? win32::MF_CHECKED : 0;
+    grf = pnrm->pszSelected && pszName == pnrm->pszSelected ? win32::MF_CHECKED : 0;
     if (!win32::AppendMenuA(pnrm->hmenu, grf, 16000 + pnrm->cRace, szLabel)) return 0;
     pnrm->cRace++;
     return 1;

@@ -1,6 +1,7 @@
 #ifndef STARS_LIBRARY_PUBLICATION_H
 #define STARS_LIBRARY_PUBLICATION_H
 #include "win.h"
+#include <string_view>
 struct LIBRARYIMPORT {
     const char *pszStem;
     const char *pszSource;
@@ -42,9 +43,9 @@ std::int16_t FChooseSeparateCopyName(APPSESSION &app, HWND hwnd, const char *psz
 std::int16_t FLibraryNameAvailable(APPSESSION &app, const char *pszDirectory, const char *pszName);
 std::int16_t FWriteLibraryMetadata(const char *pszDir, const char *pszName, int iplr);
 std::int16_t RemoveLibraryGameTree(APPSESSION &app, const char *pszDirectory);
-std::int16_t CopyImportEntry(APPSESSION &app, void *lpData, const char *pszName);
-std::int16_t CopyBackupDirectory(APPSESSION &app, void *lpData, const char *pszName);
-std::int16_t RemoveImportFile(APPSESSION &app, void *lpData, const char *pszFile);
+std::int16_t CopyImportEntry(APPSESSION &app, void *lpData, std::string_view pszName);
+std::int16_t CopyBackupDirectory(APPSESSION &app, void *lpData, std::string_view pszName);
+std::int16_t RemoveImportFile(APPSESSION &app, void *lpData, std::string_view pszFile);
 std::int16_t FPublishSubsequentTurn(APPSESSION &app, const LIBRARYPATHS &paths, HWND hwnd, const char *pszSource, const char *szTarget, const char *pszName, int iplr,
                                std::int32_t lidGame, std::uint16_t turn, std::int16_t fHasTurn);
 std::int16_t FPublishImportedLibraryGame(APPSESSION &app, const LIBRARYPATHS &paths, LIBRARYIMPORT &li, const char *szDir);

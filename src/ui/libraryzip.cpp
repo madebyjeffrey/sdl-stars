@@ -103,7 +103,7 @@ static std::int16_t FZipEnsureCapacity(ZIPFILES *pz) {
     return 1;
 }
 
-static std::int16_t FCollectZipFiles(APPSESSION &app, void *lpData, const char *pszName) {
+static std::int16_t FCollectZipFiles(APPSESSION &app, void *lpData, std::string_view pszName) {
     std::optional<NATIVEPATHINFO> npiPath;
     ZIPFILES *pz = static_cast<ZIPFILES *>(lpData);
     char szPath[512], *pszRelative;
@@ -115,7 +115,7 @@ static std::int16_t FCollectZipFiles(APPSESSION &app, void *lpData, const char *
         for (int j = 0; j < zfChild.c; j++) SDL_free(zfChild.rgpsz[j]);
         SDL_free(zfChild.rgpsz);
     });
-    if (!std::strcmp(pszName, ".") || !std::strcmp(pszName, "..")) return 1;
+    if (pszName == "." || pszName == "..") return 1;
     if (CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", pz->pszRoot, szDirSep, pszName) <= 0 ||
         !(npiPath = FNativePathInfo(szPath)) || npiPath->fLink) { pz->fBad = 1; return 0; }
     if (npiPath->fDirectory) {
@@ -123,7 +123,7 @@ static std::int16_t FCollectZipFiles(APPSESSION &app, void *lpData, const char *
         zfChild.pszRoot = szPath;
         if (!FNativeEnumerateDirectory(app, szPath, FCollectZipFiles, &zfChild) || zfChild.fBad) pz->fBad = 1;
         for (i = 0; i < zfChild.c; i++) {
-            cbName = std::strlen(pszName) + std::strlen(zfChild.rgpsz[i]) + 2;
+            cbName = pszName.size() + std::strlen(zfChild.rgpsz[i]) + 2;
             NATIVEOWNER<char, SDL_free> relative(static_cast<char *>(SDL_malloc(cbName)));
             pszRelative = relative.get();
             if (!pszRelative) { pz->fBad = 1; break; }
@@ -135,7 +135,8 @@ static std::int16_t FCollectZipFiles(APPSESSION &app, void *lpData, const char *
         return !pz->fBad;
     }
     if (!FZipEnsureCapacity(pz)) return 0;
-    pz->rgpsz[pz->c] = SDL_strdup(pszName);
+    const std::string szName{pszName};
+    pz->rgpsz[pz->c] = SDL_strdup(szName.c_str());
     if (!pz->rgpsz[pz->c]) { pz->fBad = 1; return 0; }
     pz->c++;
     return 1;
