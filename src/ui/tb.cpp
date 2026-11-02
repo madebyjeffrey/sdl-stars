@@ -133,12 +133,12 @@ LRESULT  TbWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         for (j = 0; j < 10; j++) {
             pct = 100 - 10 * j;
             if (pct == app.lpui->vpctRadarView) iSel = j;
-            win32::wsprintfA(app.state.szWork, app.state.PCTDPCTPCT, pct);
+            CchSprintf(app.state.szWork, app.state.PCTDPCTPCT, pct);
             ControlIO().pfnSendMessage(app.lpui->hwndTBRadar, win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(app.state.szWork));
         }
         ControlIO().pfnSendMessage(app.lpui->hwndTBRadar, win32::CB_SETEXTENDEDUI, 4, 0);
         ControlIO().pfnSendMessage(app.lpui->hwndTBRadar, win32::CB_SETCURSEL, iSel, 0);
-        win32::wsprintfA(app.state.szWork, app.state.PCTDPCTPCT, app.lpui->vpctRadarView); ControlIO().pfnSetWindowText(app.lpui->hwndTBRadar, app.state.szWork);
+        CchSprintf(app.state.szWork, app.state.PCTDPCTPCT, app.lpui->vpctRadarView); ControlIO().pfnSetWindowText(app.lpui->hwndTBRadar, app.state.szWork);
         app.lpui->lpfnRealComboProc = reinterpret_cast<WNDPROC>(win32::GetWindowLongPtrA(app.lpui->hwndTBRadar, win32::GWLP_WNDPROC));
         win32::SetWindowLongPtrA(app.lpui->hwndTBRadar, win32::GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(app.lpui->lpfnFakeComboProc));
         hwndCE = win32::GetWindow(app.lpui->hwndTBRadar, win32::GW_CHILD);
@@ -498,7 +498,7 @@ void ExecuteButton(APPSESSION &app, ToolbarButton itb, std::int16_t fDown) {
         c = 0;
         for (i = 0; i < 9; i++) {
             rgid[c] = static_cast<std::uint32_t>((app.state.iScanZoom + 4 == i));
-            win32::wsprintfA(std::span{app.state.szWork}.subspan(static_cast<std::size_t>(i * 8)), app.state.PCTDPCTPCT, vrgpctZoom[i]);
+            CchSprintf(std::span{app.state.szWork}.subspan(static_cast<std::size_t>(i * 8)), app.state.PCTDPCTPCT, vrgpctZoom[i]);
             rgszScan[c++] = &app.state.szWork[i * 8];
         }
         pt = PtToolbarMenu(app, itb);
@@ -542,7 +542,7 @@ void TerminateToolbarFocus(APPSESSION &app, std::int16_t fCancel) {
         pct = 100;
     }
     ControlIO().pfnSendMessage(app.lpui->hwndTBRadar, win32::CB_SETCURSEL, static_cast<std::int16_t>((100 - pct)) / 10, 0);
-    win32::wsprintfA(app.state.szWork, app.state.PCTDPCTPCT, pct);
+    CchSprintf(app.state.szWork, app.state.PCTDPCTPCT, pct);
     ControlIO().pfnSetWindowText(app.lpui->hwndTBRadar, app.state.szWork);
     if (pct != app.lpui->vpctRadarView) {
         app.lpui->vpctRadarView = pct;

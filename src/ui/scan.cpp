@@ -1905,7 +1905,7 @@ void DrawScannerSBar(APPSESSION &app, HDC hdc, RECT *prc, SBAR *psbar, std::int1
                 id = app.state.sel.scan.idpl;
             }
             if (id != idplNone) {
-                c = win32::wsprintfA(app.state.szWork, "ID #%d", id + 1);
+                c = CchSprintf(app.state.szWork, "ID #%d", id + 1);
                 win32::SetBkMode(hdc, win32::OPAQUE);
                 win32::TextOutA(hdc, rcT.left + 3, rcT.top + 2, app.state.szWork, c);
             }
@@ -1915,7 +1915,7 @@ void DrawScannerSBar(APPSESSION &app, HDC hdc, RECT *prc, SBAR *psbar, std::int1
             } else {
                 id = app.state.sel.scan.iwp;
             }
-            c = win32::wsprintfA(app.state.szWork, "WP #%d", id);
+            c = CchSprintf(app.state.szWork, "WP #%d", id);
             win32::TextOutA(hdc, rcT.left + 3, rcT.top + 2, app.state.szWork, c);
         }
         l = GetTextExtent(hdc, "X: 8888", 7);
@@ -1935,7 +1935,7 @@ void DrawScannerSBar(APPSESSION &app, HDC hdc, RECT *prc, SBAR *psbar, std::int1
         }
     GotCoords:
         if (pt.x > 0) {
-            c = win32::wsprintfA(app.state.szWork, "X: %d", pt.x);
+            c = CchSprintf(app.state.szWork, "X: %d", pt.x);
             win32::SetBkMode(hdc, win32::OPAQUE);
             win32::TextOutA(hdc, rcT.left + 3, rcT.top + 2, app.state.szWork, c);
         }
@@ -1944,7 +1944,7 @@ void DrawScannerSBar(APPSESSION &app, HDC hdc, RECT *prc, SBAR *psbar, std::int1
         rcT.right = LOWORD(l) + 6 + rcT.left;
         DrawLockLight(app, hdc, &rcT, fFullRedraw);
         if (pt.y > 0) {
-            c = win32::wsprintfA(app.state.szWork, "Y: %d", pt.y);
+            c = CchSprintf(app.state.szWork, "Y: %d", pt.y);
             win32::SetBkMode(hdc, win32::OPAQUE);
             win32::TextOutA(hdc, rcT.left + 3, rcT.top + 2, app.state.szWork, c);
         }
