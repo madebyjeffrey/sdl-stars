@@ -41,7 +41,7 @@ inline constexpr auto IDC_LIBRARY_GAME_DELETE = 2421;
 inline constexpr auto IDC_LIBRARY_TUTORIAL = 2434;
 
 /* New games pass their title; imports pass NULL to choose a library name. */
-std::int16_t FChooseLibraryGameName(APPSESSION &app, HWND hwnd, char *pszFile, const char *pszName);
+std::int16_t FChooseLibraryGameName(APPSESSION &app, HWND hwnd, std::span<char, 256> pszFile, const char *pszName);
 INT_PTR  LibraryGameRevisionDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 std::int16_t FFinishLibraryGame(APPSESSION &app, HWND hwnd, std::int16_t fGenerated);
 void InitLibraryGames(APPSESSION &app, HWND hwnd, const RECT *lprc);
@@ -83,7 +83,7 @@ std::int16_t FExportLibraryOrders(APPSESSION &app, HWND hwnd, const char *pszTar
 std::int16_t FDeleteLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName);
 void InitLibraryRaces(APPSESSION &app, HWND hwnd, const RECT *lprc);
 void RefreshLibraryRaces(APPSESSION &app, HWND hwnd);
-std::int16_t FSelectLibraryRace(HWND hwnd, char *pszName);
+std::int16_t FSelectLibraryRace(HWND hwnd, std::span<char, 256> pszName);
 std::int16_t FEnumerateLibraryRaces(APPSESSION &app, FNativeDirectoryEntryProc pfnEntry, void *lpData);
 void ShowLibraryImportFolderPicker(HWND hwnd);
 INT_PTR  LibraryRaceSaveDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);

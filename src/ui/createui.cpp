@@ -262,7 +262,7 @@ Finish:
     return;
 }
 
-std::int16_t FGetNewGameName(APPSESSION &app, HWND hwnd, char *szFileSuggest) {
+std::int16_t FGetNewGameName(APPSESSION &app, HWND hwnd, std::span<char, 256> szFileSuggest) {
     return FChooseLibraryGameName(app, hwnd, szFileSuggest, app.state.game.szName);
 }
 
@@ -270,7 +270,7 @@ static std::int16_t FChooseNewGameName(APPSESSION &app, HWND hwnd) {
     char *pszFile = reinterpret_cast<char *>(win32::GetWindowLongPtrA(hwnd, win32::DWLP_USER));
 
     // Reserve the library entry before closing the wizard so failures keep it open.
-    return app.state.fRCWReadOnly || (pszFile && FGetNewGameName(app, hwnd, pszFile));
+    return app.state.fRCWReadOnly || (pszFile && FGetNewGameName(app, hwnd, std::span<char, 256>{pszFile, 256}));
 }
 
 INT_PTR  NewGameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {

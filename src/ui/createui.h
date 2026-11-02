@@ -6,7 +6,7 @@
 #include <windows.h>
 
 void             NewGameWizard(APPSESSION &app, HWND hwnd, std::int16_t fReadOnly);
-std::int16_t          FGetNewGameName(APPSESSION &app, HWND hwnd, char *szFileSuggest);
+std::int16_t          FGetNewGameName(APPSESSION &app, HWND hwnd, std::span<char, 256> szFileSuggest);
 INT_PTR  NewGameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 INT_PTR  NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 void             DrawNewGame2(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw);

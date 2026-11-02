@@ -436,7 +436,7 @@ static INT_PTR IdPromptLibraryName(APPSESSION &app, HWND hwnd, std::span<char, 2
                                     LibraryNameDlg, reinterpret_cast<LPARAM>(&rgchName));
 }
 
-std::int16_t FChooseLibraryGameName(APPSESSION &app, HWND hwnd, char *pszFile, const char *pszName) {
+std::int16_t FChooseLibraryGameName(APPSESSION &app, HWND hwnd, std::span<char, 256> pszFile, const char *pszName) {
     char *pch;
     char szMessage[256];
 
@@ -444,8 +444,8 @@ std::int16_t FChooseLibraryGameName(APPSESSION &app, HWND hwnd, char *pszFile, c
     szLibraryExchangeName[0] = 0;
     if (pszName) GetGameLibraryName(app, pszName, std::span{szLibraryName});
     else {
-        pch = std::strrchr(pszFile, chDirSep);
-        CchSnprintf(std::span{szLibraryName, sizeof(szLibraryName)}, "%s", pch ? pch + 1 : pszFile);
+        pch = std::strrchr(pszFile.data(), chDirSep);
+        CchSnprintf(std::span{szLibraryName, sizeof(szLibraryName)}, "%s", pch ? pch + 1 : pszFile.data());
         pch = std::strrchr(szLibraryName, '.');
         if (pch) *pch = 0;
         if (!FPortableLibraryName(app, szLibraryName)) CchCopyUtf8(std::span{szLibraryName}, TextIO().pfnCompressed(app, idsLibraryDefaultGameName).data());
@@ -467,7 +467,7 @@ std::int16_t FChooseLibraryGameName(APPSESSION &app, HWND hwnd, char *pszFile, c
         szLibraryPending[0] = 0;
         goto LFail;
     }
-    CchSnprintf(std::span{pszFile, 256}, "%s%s%s.xy", szLibraryPending, szDirSep, szLibraryName);
+    CchSnprintf(pszFile, "%s%s%s.xy", szLibraryPending, szDirSep, szLibraryName);
     return 1;
 LFail:
     CchCopyUtf8Prefix(std::span{szMessage}, TextIO().pfnCompressed(app, idsLibraryStorageFailed).data());
@@ -2130,7 +2130,7 @@ std::int16_t FImportLibraryGame(APPSESSION &app, HWND hwnd, const char *pszSourc
         AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryGameIncomplete).data(), win32::MB_ICONEXCLAMATION);
         return 0;
     }
-    if (!FChooseLibraryGameName(app, hwnd, szSource, nullptr)) return 0;
+    if (!FChooseLibraryGameName(app, hwnd, std::span<char, 256>{szSource, 256}, nullptr)) return 0;
     CchCopyUtf8(std::span{szLibraryExchangeName}, szStem);
     return FPublishImportedLibraryGame(app, {szLibraryRoot,szLibraryPending,szLibraryName},li,szDir);
 LInvalidSource:
@@ -2934,12 +2934,14 @@ void RefreshLibraryRaces(APPSESSION &app, HWND hwnd) {
     ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_LIBRARY_RACE_DELETE), ControlIO().pfnSendMessage(hwndList, win32::LB_GETCOUNT, 0, 0) > 0);
 }
 
-std::int16_t FSelectLibraryRace(HWND hwnd, char *pszName) {
+std::int16_t FSelectLibraryRace(HWND hwnd, std::span<char, 256> pszName) {
     HWND hwndList = ControlIO().pfnGetDlgItem(hwnd, IDC_LIBRARY_RACES);
     LRESULT i = ControlIO().pfnSendMessage(hwndList, win32::LB_GETCURSEL, 0, 0);
+    LRESULT cch;
     if (i == win32::LB_ERR) return 0;
-    ControlIO().pfnSendMessage(hwndList, win32::LB_GETTEXT, i, reinterpret_cast<LPARAM>(pszName));
-    return 1;
+    cch = ControlIO().pfnSendMessage(hwndList, win32::LB_GETTEXTLEN, i, 0);
+    if (cch == win32::LB_ERR || cch < 0 || cch >= static_cast<LRESULT>(pszName.size())) return 0;
+    return ControlIO().pfnSendMessage(hwndList, win32::LB_GETTEXT, i, reinterpret_cast<LPARAM>(pszName.data())) == cch;
 }
 
 void RefreshLibraryPlayers(APPSESSION &app, HWND hwnd) {
