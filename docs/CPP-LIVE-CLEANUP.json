@@ -24405,8 +24405,8 @@
     "date": "2026-11-02",
     "reason": "Resume the live C++ cleanup on develop after the verified bounded fleet-name load/log batch.",
     "branch": "develop",
-    "latest_batch": "L05 bounded portable race and game library name views",
-    "latest_published_head": "46654a1c",
+    "latest_batch": "L05 portable library name views and tracked suggestion lengths",
+    "latest_published_head": "456a1a19",
     "active_stages": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage."
@@ -24437,12 +24437,13 @@
       "title-modernized-v2.png and prompt",
       "title-modernized-v3.png and prompt"
     ],
-    "batch": "L05 bounded portable race and game library name views",
-    "source_commit": "46654a1c",
+    "batch": "L05 portable library name views and tracked suggestion lengths",
+    "source_commit": "456a1a19",
     "status": "Verified and pushed to develop. Local SDL Debug, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Current-source Windows SDL/Linux desktop qualification remains outstanding.",
     "changes": [
-      "FPortableRaceFilename and FPortableLibraryName now accept std::string_view inputs and use explicit byte lengths instead of repeated strlen and C pointer scans.",
-      "Race filename extension parsing and invalid-byte checks now stay within the supplied view; device-name checks and path-capacity rules are preserved.",
+      "FPortableRaceFilename and FPortableLibraryName now accept std::string_view inputs and validate using bounded byte ranges.",
+      "Race filename extension parsing and invalid-byte checks stay within the supplied view while preserving device-name and path-capacity rules.",
+      "SuggestLibraryName reuses the UTF-8 copy length and computes the formatted suffix length once; its byte budget uses std::min/std::max instead of the generated nested conditional expression.",
       "No game behavior, file layout, or serialization code changed."
     ],
     "verification": {
@@ -24530,15 +24531,19 @@
       {
         "commit": "46654a1c",
         "message": "Validate library names from string views"
+      },
+      {
+        "commit": "456a1a19",
+        "message": "Reuse library suggestion name lengths"
       }
     ]
   },
   "current_checkpoint": {
-    "batch": "L05 bounded portable race and game library name views",
+    "batch": "L05 portable library name views and tracked suggestion lengths",
     "status": "Verified and pushed to develop. Local SDL Debug, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Current-source Windows SDL/Linux desktop qualification remains outstanding.",
     "parent": "0e4f1030",
-    "source_commit": "46654a1c",
-    "change": "Portable race and game library name validation now uses bounded string views.",
+    "source_commit": "456a1a19",
+    "change": "Portable race and game library name validation uses bounded string views; library suggestion formatting reuses bounded lengths.",
     "verification": {
       "macos_sdl_debug": "Build passes; changed UI compatibility translation unit compiles.",
       "desktop_unit_tests": "18/18 pass.",
@@ -24575,8 +24580,9 @@
     "date": "2026-11-02",
     "branch": "develop",
     "changes": [
-      "FPortableRaceFilename and FPortableLibraryName now accept std::string_view inputs and use explicit byte lengths instead of repeated strlen and C pointer scans.",
-      "Race filename extension parsing and invalid-byte checks now stay within the supplied view; device-name checks and path-capacity rules are preserved.",
+      "FPortableRaceFilename and FPortableLibraryName now accept std::string_view inputs and validate using bounded byte ranges.",
+      "Race filename extension parsing and invalid-byte checks stay within the supplied view while preserving device-name and path-capacity rules.",
+      "SuggestLibraryName reuses the UTF-8 copy length and computes the formatted suffix length once; its byte budget uses std::min/std::max instead of the generated nested conditional expression.",
       "No game behavior, file layout, or serialization code changed."
     ],
     "current_source_audits": {
@@ -24654,6 +24660,10 @@
       {
         "commit": "46654a1c",
         "message": "Validate library names from string views"
+      },
+      {
+        "commit": "456a1a19",
+        "message": "Reuse library suggestion name lengths"
       }
     ]
   },
@@ -24681,12 +24691,13 @@
   "working_tree_checkpoint": {
     "date": "2026-11-02",
     "branch": "develop",
-    "batch": "L05 bounded portable race and game library name views",
-    "source_commit": "46654a1c",
+    "batch": "L05 portable library name views and tracked suggestion lengths",
+    "source_commit": "456a1a19",
     "status": "Verified and pushed to develop. Local SDL Debug, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Current-source Windows SDL/Linux desktop qualification remains outstanding.",
     "changes": [
-      "FPortableRaceFilename and FPortableLibraryName now accept std::string_view inputs and use explicit byte lengths instead of repeated strlen and C pointer scans.",
-      "Race filename extension parsing and invalid-byte checks now stay within the supplied view; device-name checks and path-capacity rules are preserved.",
+      "FPortableRaceFilename and FPortableLibraryName now accept std::string_view inputs and validate using bounded byte ranges.",
+      "Race filename extension parsing and invalid-byte checks stay within the supplied view while preserving device-name and path-capacity rules.",
+      "SuggestLibraryName reuses the UTF-8 copy length and computes the formatted suffix length once; its byte budget uses std::min/std::max instead of the generated nested conditional expression.",
       "No game behavior, file layout, or serialization code changed."
     ],
     "verification": {
@@ -24806,6 +24817,10 @@
       {
         "commit": "46654a1c",
         "message": "Validate library names from string views"
+      },
+      {
+        "commit": "456a1a19",
+        "message": "Reuse library suggestion name lengths"
       }
     ]
   }
