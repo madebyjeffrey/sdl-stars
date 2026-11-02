@@ -23601,7 +23601,7 @@
       "L08 maintained inventory reconciliation, retained primitive/macro audit and final platform qualification."
     ],
     "macro_scan": "Owned production #define directives are header guards and NOMINMAX; no additional application/API macro definitions were found. Reconcile the historical retained-macro inventory and preprocessor boundaries during L08.",
-    "published_batch_head": "5a84c6e8"
+    "published_batch_head": "ab8d34e9"
   },
   "milestone_d_checkpoint": {
     "stage": "D05 caller migrations implemented; D06 platform qualification pending",
