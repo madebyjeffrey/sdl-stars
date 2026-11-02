@@ -5,6 +5,8 @@
 #include <cerrno>
 #include <ctime>
 #include <limits>
+#include <new>
+#include <string>
 
 // qsortSwap16 exchanges complete elements, including native-width pointers.
 static void qsortSwap16(unsigned char *a, unsigned char *b, std::size_t width) {
@@ -89,45 +91,39 @@ void qsort16(APPSESSION &app, void *base, std::size_t count, std::size_t width, 
 // writes at most the destination size or 1024 bytes, the terminator included,
 // and returns the characters it wrote.
 int CchSprintfFields(std::span<char> sz, const char *szFormat, std::span<const NATIVEFORMATARG> args) {
-    char        szFmtSmall[256];
-    char       *szFmt;
+    std::string szFmt;
     std::size_t      cbFmt;
     const char *pchIn;
-    char       *pchOut;
     int         cch;
-    NATIVEOWNER<char, std::free> format;
     const std::size_t cb = std::min(sz.size(), std::size_t{1024});
 
     if (sz.empty()) return 0;
 
     // Dropping l only shortens the format, so a copy its size holds it.
     cbFmt = std::strlen(szFormat) + 1;
-    szFmt = cbFmt <= sizeof(szFmtSmall) ? szFmtSmall : static_cast<char *>(std::malloc(cbFmt));
-    format.reset(szFmt == szFmtSmall ? nullptr : szFmt);
-    if (!szFmt) {
+    try {
+        szFmt.reserve(cbFmt);
+    } catch (const std::bad_alloc &) {
         sz[0] = 0;
         return 0;
     }
     pchIn = szFormat;
-    pchOut = szFmt;
     while (*pchIn != 0) {
-        *pchOut++ = *pchIn;
+        szFmt.push_back(*pchIn);
         if (*pchIn++ != '%') {
             continue;
         }
         while (*pchIn != 0 && std::strchr("-+ #0123456789.", *pchIn)) {
-            *pchOut++ = *pchIn++;
+            szFmt.push_back(*pchIn++);
         }
         if (*pchIn == 'l' && pchIn[1] != 0 && std::strchr("diuxX", pchIn[1])) {
             pchIn++;
         }
         if (*pchIn != 0) {
-            *pchOut++ = *pchIn++;
+            szFmt.push_back(*pchIn++);
         }
     }
-    *pchOut = 0;
-    cch = CchFormatNative(sz.first(cb), szFmt, args);
-    format.reset();
+    cch = CchFormatNative(sz.first(cb), szFmt.c_str(), args);
     if (cch < 0) {
         sz[0] = 0;
         return 0;
