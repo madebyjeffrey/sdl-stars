@@ -1710,7 +1710,8 @@
         "native-utility-path-services-accept-views",
         "thing-record-copy-accepts-byte-span",
         "core-record-readers-accept-bounded-spans",
-        "typed-log-record-enumeration-callback"
+        "typed-log-record-enumeration-callback",
+        "logged-record-payloads-accept-byte-spans"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -25025,13 +25026,13 @@
   "working_tree_checkpoint": {
     "date": "2026-11-02",
     "branch": "develop",
-    "batch": "L06 typed log record enumeration callback",
-    "source_commit": "9c9fc37b",
+    "batch": "L06 logged record payloads accept byte spans",
+    "source_commit": "5d1a5b9c",
     "status": "Verified and committed locally on develop. macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Current-source Windows SDL desktop and Linux desktop qualification remain outstanding.",
     "changes": [
-      "EnumLogRts now accepts a typed std::function callback receiving an APPSESSION, mutable payload span, RecordType and pass index; callback state is captured instead of passed through void*.",
-      "The ship transfer UI no longer reinterpret_casts FEnumCalcJettison into an unrelated function-pointer signature. FEnumCalcJettison accepts a byte span and PLANET reference and drops its unused byte-count argument.",
-      "Synchronous log traversal, callback order, stop-on-zero behavior, payload bytes and game behavior remain unchanged."
+      "WriteMemRt now accepts a read-only byte span instead of a void pointer and separate 16-bit byte count; all log writer callers pass exactly the payload extent.",
+      "The private zipped-production writer retains its special live-template source and count behavior.",
+      "Logged bytes, record headers, callback order, game behavior and wire layouts remain unchanged."
     ],
     "verification": {
       "macos_sdl_debug": "make compile passes with strict warnings and dual-header checks.",
@@ -25255,6 +25256,10 @@
       {
         "commit": "9c9fc37b",
         "message": "Use typed callbacks for log record enumeration"
+      },
+      {
+        "commit": "5d1a5b9c",
+        "message": "Pass logged record payloads as byte spans"
       }
     ],
     "parent": "4867b0c5"
