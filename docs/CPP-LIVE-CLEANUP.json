@@ -148,13 +148,13 @@
         "typed-report-ui-wrapper-formatting",
         "typed-research-ui-wrapper-formatting",
         "typed-build-ui-wrapper-formatting",
-        "typed-mdi-ui-wrapper-formatting"
+        "typed-mdi-ui-wrapper-formatting",
+        "typed-mine-ui-wrapper-formatting"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
         "const-text-interfaces",
-        "post-migration-scratch-storage-and-borrowed-return-audit",
-        "remaining-wrapper-formatting-callers"
+        "post-migration-scratch-storage-and-borrowed-return-audit"
       ],
       "metadata_scan": {
         "interface": "Typed integer field pack and span; no C varargs or va_arg.",
@@ -23961,12 +23961,12 @@
   ],
   "restart_checkpoint": {
     "date": "2026-11-02",
-    "reason": "Continue L05 typed formatter migration after MDI and build UI batches.",
+    "reason": "All owned UI wsprintfA call sites are now migrated; continue L05 bounded text and API qualification.",
     "branch": "develop",
-    "batch": "L05br typed MDI UI formatting",
+    "batch": "L05bs typed mine UI formatting; owned wrapper callers exhausted",
     "batch_parent": "d3c82384",
-    "latest_batch": "L05br typed MDI UI formatting",
-    "latest_batch_head": "94fdef7f",
+    "latest_batch": "L05bs typed mine UI formatting; owned wrapper callers exhausted",
+    "latest_batch_head": "7f7798a2",
     "completed_stages": [
       "L01: nullptr and aliases",
       "L02: explicit C++ casts and headers",
@@ -24034,7 +24034,8 @@
       "Commit 219dec61 replaces all 19 win32::wsprintfA callers in src/ui/reportui.cpp with typed CchSprintf, preserving the same arguments, formats and bounded output spans. Full macOS Debug build, desktop units (18/18), host units (29/29), tutorial smoke and native/host regressions pass (519 matches, 25 existing warnings and zero differences/errors/skips each). Baseline unchanged; owned wsprintfA scan is 159 matching lines. Continue L05 text/formatting, L06 remaining interfaces and chooser qualification, and L08 final macro/platform inventory.",
       "Commit 0acb65e9 replaces all 58 win32::wsprintfA callers in src/ui/researchui.cpp with CchSprintf, preserving formats, arguments and destination spans. Full macOS Debug build, desktop units (18/18; isolated rerun after simultaneous CMake configuration failed transiently), host units (29/29), tutorial smoke and native/host regressions pass; both regressions have 519 matches, 25 existing warnings and zero differences/errors/skipped inputs. Baseline unchanged; owned wsprintfA scan is 101 matching lines. Continue L05 bounded text and remaining formatting, L06 service/file-selection qualification and L08 macro/platform reconciliation.",
       "Commit a4a27a16 replaces all 27 win32::wsprintfA callers in src/ui/buildui.cpp with CchSprintf, preserving format strings, arguments and bounded destinations. Full macOS Debug build, desktop units (18/18), host units (29/29), tutorial smoke and native/host regressions pass (519 matches, 25 existing warnings and zero differences/errors/skipped inputs each). Baseline unchanged; owned wsprintfA scan is 74 matching lines. Continue L05 bounded/owned text and remaining formatters, L06 interface/chooser qualification and L08 macro/platform reconciliation.",
-      "Commit 94fdef7f replaces all 49 win32::wsprintfA callers in src/ui/mdi.cpp with typed CchSprintf, preserving formats, arguments and bounded destinations. Full macOS Debug build, desktop units (18/18), host units (29/29), tutorial smoke and native/host regressions pass (519 matches, 25 existing warnings and zero differences/errors/skipped inputs each). Baseline unchanged; owned wsprintfA scan is 25 matching lines. Continue remaining formatter/text migration, L06 service/chooser qualification and L08 macro/platform reconciliation."
+      "Commit 94fdef7f replaces all 49 win32::wsprintfA callers in src/ui/mdi.cpp with typed CchSprintf, preserving formats, arguments and bounded destinations. Full macOS Debug build, desktop units (18/18), host units (29/29), tutorial smoke and native/host regressions pass (519 matches, 25 existing warnings and zero differences/errors/skipped inputs each). Baseline unchanged; owned wsprintfA scan is 25 matching lines. Continue remaining formatter/text migration, L06 service/chooser qualification and L08 macro/platform reconciliation.",
+      "Commit 7f7798a2 replaces all 24 remaining win32::wsprintfA callers in src/ui/mineui.cpp with CchSprintf. No owned application call sites remain; the compatibility declaration/template/implementation remains exercised by tests/compat/win32_services.inc to preserve Win32 formatter behavior. Full macOS Debug build, desktop units (18/18), host units (29/29), tutorial smoke and both regressions pass; 519 matches, 25 existing warnings, zero differences/errors/skips per regression. Baseline unchanged. Scan has one wsprintfA implementation match, not an application caller. Remaining L05 work is bounded/const text and scratch/borrowed-return audit; L06 and L08 qualification remain."
     ],
     "evidence": [
       "docs/CPP-LIVE-TEXT-COPIES.json: game_file_inputs.verification",
@@ -24049,14 +24050,14 @@
       "qualified_source_head": "b76ec1fcc1276790150457670f5f667bcec4eccc",
       "result": "success"
     },
-    "published_batch_head": "94fdef7f"
+    "published_batch_head": "7f7798a2"
   },
   "current_checkpoint": {
-    "batch": "L05br typed MDI UI formatting",
-    "status": "implemented and locally verified; source commit 94fdef7f",
-    "parent": "a87090fa",
+    "batch": "L05bs typed mine UI formatting; owned wrapper callers exhausted",
+    "status": "implemented and locally verified; source commit 7f7798a2",
+    "parent": "51be13bb",
     "changes": {
-      "src/ui/mdi.cpp": "Replaced all 49 win32::wsprintfA calls with typed CchSprintf calls, preserving formats, arguments and bounded output spans."
+      "src/ui/mineui.cpp": "Replaced the remaining 24 application win32::wsprintfA calls with typed CchSprintf calls; no application call sites remain."
     },
     "verification": {
       "macos_debug_build": "Full macos-sdl-debug build passes.",
@@ -24066,17 +24067,18 @@
       "native_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
       "host_regression": "519 matches (25 existing warnings); zero differences/errors/skips.",
       "baseline": "Unchanged.",
-      "owned_wsprintfA_scan": "25 matching lines remain.",
+      "owned_wsprintfA_scan": "1 matching implementation/declaration line remains; no owned production callers.",
+      "compatibility_tests": "tests/compat/win32_services.inc still covers the compatibility formatter API.",
       "diff_check": "git diff --check passes."
     },
     "remaining_work": [
-      "L05 bounded text destinations, const-text interfaces, post-migration scratch/borrowed-return audit and remaining wrapper formatting callers, including Linux portal formatting.",
+      "L05 bounded text destinations, const-text interfaces and post-migration scratch/borrowed-return audit.",
       "L06 remaining buffer/length service interfaces and chooser Milestone D qualification, including Windows/Linux chooser coverage.",
       "L08 final retained primitive/API macro/preprocessor inventory reconciliation and current-source platform qualification.",
       "Review the two remaining strcpy calls in compat/win32/src/list.cpp and toolbar.cpp; both write to buffers supplied by Win32-compatible caller APIs without a length parameter."
     ],
-    "source_commit": "94fdef7f",
-    "published_batch_head": "94fdef7f"
+    "source_commit": "7f7798a2",
+    "published_batch_head": "7f7798a2"
   },
   "milestone_d_checkpoint": {
     "stage": "D05 caller migrations implemented; D06 platform qualification pending",
@@ -24095,7 +24097,7 @@
     "next": "D06 qualify native Windows/Linux adapters and complete remaining platform/full-suite checks; then assess expansion beyond current eight UI callers."
   },
   "remaining_work": [
-    "L05 bounded text destinations, const-text interfaces, post-migration scratch/borrowed-return audit and remaining wrapper formatting callers, including Linux portal formatting.",
+    "L05 bounded text destinations, const-text interfaces and post-migration scratch/borrowed-return audit.",
     "L06 remaining buffer/length service interfaces and chooser Milestone D qualification, including Windows/Linux chooser coverage.",
     "L08 final retained primitive/API macro/preprocessor inventory reconciliation and current-source platform qualification.",
     "Review the two remaining strcpy calls in compat/win32/src/list.cpp and toolbar.cpp; both write to buffers supplied by Win32-compatible caller APIs without a length parameter."
