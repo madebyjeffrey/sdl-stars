@@ -209,7 +209,8 @@
         "centered-rectangle-output-string-view-and-clear-flag",
         "diagonal-text-output-string-view-interface",
         "streamed-text-output-string-view-and-coordinate-reference",
-        "wrapped-text-output-string-view-and-coordinate-references"
+        "wrapped-text-output-string-view-and-coordinate-references",
+        "alert-service-bounded-string-view-interface"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -25018,12 +25019,13 @@
   "working_tree_checkpoint": {
     "date": "2026-11-02",
     "branch": "develop",
-    "batch": "L05 wrapped text output string_view and coordinate references",
-    "source_commit": "e90de5c2",
+    "batch": "L05 alert service bounded string_view interface",
+    "source_commit": "d57f4b24",
     "status": "Verified and committed locally on develop. macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Current-source Windows SDL desktop and Linux desktop qualification remain outstanding.",
     "changes": [
-      "WrapTextOut accepts std::string_view and x/y coordinate references; all 29 callers now pass explicit bounded or null-terminated views.",
-      "Removed the implicit zero-length strlen convention from the interface; callers now choose explicit lengths or null-terminated views.",
+      "AlertSz and the core-to-host/UI IdAlertBox contract now accept std::string_view.",
+      "The SDL adapter owns a NUL-terminated std::string only at the Win32 MessageBox boundary; the host writes the exact view bytes to stderr.",
+      "Test doubles and compatibility harness callbacks now implement the view contract.",
       "No game behavior, saved layout, file format or serialization changed."
     ],
     "verification": {
@@ -25220,6 +25222,10 @@
       {
         "commit": "e90de5c2",
         "message": "Use bounded views for wrapped text output"
+      },
+      {
+        "commit": "d57f4b24",
+        "message": "Pass alert text through views"
       }
     ],
     "parent": "4867b0c5"
