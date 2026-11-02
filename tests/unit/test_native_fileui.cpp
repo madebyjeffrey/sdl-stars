@@ -7,6 +7,8 @@
 #include "callbackcontext.h"
 #include "control_io.h"
 #include "createui.h"
+#include "init.h"
+#include "mdi.h"
 #include "scan.h"
 #include "stars.h"
 #include "librarypublication.h"
@@ -22,6 +24,7 @@
 #include <array>
 #include <string_view>
 #include <string>
+#include <utility>
 
 static void TestNewGameTitleBounds(void) {
     APPSESSION &app = ui::app;
@@ -71,6 +74,29 @@ static void TestTextBoundaries(void) {
     TEST_ASSERT(FSetNativeWindowTitle(hwnd, "caf\xc3\xa9-\xce\xa9"));
     TEST_CHECK(win32::GetWindowTextA(hwnd, sz, sizeof(sz)) == 8 && strcmp(sz, "caf\xc3\xa9-\xce\xa9") == 0);
     TEST_CHECK(ui::DestroyWindow(hwnd));
+    StarsCompatProcessExit();
+}
+
+static void TestReturnToTitleFileFamily(void) {
+    APPSESSION &app = ui::app;
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    const std::array<std::pair<std::string_view, std::string_view>, 3> rgszCases = {{
+        {"/tmp/dir.with.dot/game-\xce\xa9.m2", "/tmp/dir.with.dot/game-\xce\xa9"},
+        {"/tmp/dir.with.dot/extensionless", "/tmp/dir.with.dot/extensionless"},
+        {"/tmp/dir.with.dot/file.with.dots.h1", "/tmp/dir.with.dot/file.with.dots"},
+    }};
+    TEST_ASSERT(FStarsTestInit(app));
+    TEST_ASSERT(InitMDIApp(app));
+    TEST_ASSERT(InitInstance(app, win32::SW_HIDE));
+    TEST_ASSERT(app.lpui->hwndFrame);
+    app.state.idPlayer = iplrNone;
+    app.state.game.fDirty = 0;
+    app.state.gd.fTutorial = 0;
+    for (const auto &[szPath, szExpected] : rgszCases) {
+        TEST_ASSERT(CchCopyUtf8(std::span{app.state.szWork}, szPath) >= 0);
+        CommandHandler(app, app.lpui->hwndFrame, IDM_FILE_RETURN_TO_TITLE);
+        TEST_CHECK_(std::string_view(app.state.szBase) == szExpected, "base [%s] expected [%.*s]", app.state.szBase, static_cast<int>(szExpected.size()), szExpected.data());
+    }
     StarsCompatProcessExit();
 }
 static INT_PTR idLibraryNameDialog;
@@ -453,4 +479,5 @@ TEST_LIST = {{"scanner location label renders complete text within source capaci
              {"mineral captions and tutorial preset keep complete text and field widths", TestMineralAndTutorialText},
              {"planet title retains complete UTF-8 names beyond its former local buffer", TestPlanetTitleCapacity}, {"library-name dialog preserves accepted text and cancelled storage", TestLibraryNameDialog},
              {"native path captions and UTF-8 password fields", TestTextBoundaries},
+             {"returning to title retains the complete current file family", TestReturnToTitleFileFamily},
              {NULL, NULL}};

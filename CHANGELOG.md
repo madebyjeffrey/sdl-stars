@@ -6,6 +6,13 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `CommandHandler` now snapshots the active file path before `WriteIniSettings`
+  reuses the shared work buffer. Returning to the title screen previously
+  copied the last INI value into the game's base path instead of preserving its
+  file family. The path is still bounded UTF-8, and only its final extension
+  after the last path separator is removed. Game rules and saved records are
+  unchanged.
+
 - `FOpenGame` now rejects an oversized generated startup path before copying it
   into its 256-byte file-dialog buffer. A maximum-length basename plus `.hst`
   previously overflowed that local buffer; fitting startup paths and game file

@@ -902,6 +902,7 @@ void RestoreSelection(APPSESSION &app) {
 void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
     std::array<char, cchCatalogText> szCatalogPsz{};
     std::array<char, 50> szPlayerName{};
+    std::array<char, sizeof(app.state.szWork)> szWorkFileFamily{};
     std::string_view szWorkBase;
     std::size_t ichWorkExtension;
     std::size_t ichWorkSeparator;
@@ -1538,9 +1539,11 @@ LPrintMapCleanup:
                 break;
             if (!FCanLeaveCurrentGame(app))
                 break;
+            if (CchCopyUtf8(std::span{szWorkFileFamily}, app.state.szWork) < 0)
+                break;
             WriteIniSettings(app);
             DestroyCurGame(app);
-            szWorkBase = app.state.szWork;
+            szWorkBase = szWorkFileFamily.data();
             ichWorkExtension = szWorkBase.rfind('.');
             ichWorkSeparator = szWorkBase.find_last_of("/\\");
             if (ichWorkExtension != std::string_view::npos &&
