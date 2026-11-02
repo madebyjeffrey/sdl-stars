@@ -6,6 +6,7 @@
 
 #include <array>
 #include <cerrno>
+#include <charconv>
 #include <cctype>
 #include <cstdio>
 #include <cstdlib>
@@ -424,6 +425,13 @@ int CchNativePrintfFields(NATIVEFILE *pf, std::string_view fmt, std::span<const 
 }
 int CNativeScanFields(NATIVEFILE *pf, const char *fmt, std::span<const NATIVEINTEGERFIELD> rgFields) {
     int count = 0, ch;
+    bool wide;
+    char token[64];
+    std::size_t n;
+    const char *pszBegin, *pszEnd;
+    long long value;
+    std::from_chars_result result;
+
     while (*fmt) {
         if (std::isspace(static_cast<unsigned char>(*fmt))) {
             while (*fmt && std::isspace(static_cast<unsigned char>(*fmt))) ++fmt;
@@ -431,7 +439,6 @@ int CNativeScanFields(NATIVEFILE *pf, const char *fmt, std::span<const NATIVEINT
             if (ch != EOF) LSeekNativeFile(pf, -1, NATIVESEEKORIGIN::current);
             continue;
         }
-        bool wide;
         if (std::strncmp(fmt, "%lld", 4) == 0) { wide = true; fmt += 4; }
         else if (std::strncmp(fmt, "%d", 2) == 0) { wide = false; fmt += 2; }
         else { errno = EINVAL; break; }
@@ -443,7 +450,7 @@ int CNativeScanFields(NATIVEFILE *pf, const char *fmt, std::span<const NATIVEINT
         }
         while ((ch = ChGetNativeFile(pf)) != EOF && std::isspace(static_cast<unsigned char>(ch))) {}
         if (ch == EOF) break;
-        char token[64]; std::size_t n = 0;
+        n = 0;
         if (ch == '+' || ch == '-') { token[n++] = static_cast<char>(ch); ch = ChGetNativeFile(pf); }
         while (ch >= '0' && ch <= '9') {
             if (n + 1 >= sizeof(token)) { pf->Fail(ERANGE); break; }
@@ -451,9 +458,13 @@ int CNativeScanFields(NATIVEFILE *pf, const char *fmt, std::span<const NATIVEINT
         }
         if (ch != EOF) LSeekNativeFile(pf, -1, NATIVESEEKORIGIN::current);
         token[n] = 0;
-        char *end; errno = 0;
-        long long value = std::strtoll(token, &end, 10);
-        if (end == token || *end || errno == ERANGE || (!wide && (value < std::numeric_limits<int>::min() || value > std::numeric_limits<int>::max()))) break;
+        pszBegin = token;
+        pszEnd = token + n;
+        if (pszBegin < pszEnd && *pszBegin == '+') ++pszBegin;
+        errno = 0;
+        result = std::from_chars(pszBegin, pszEnd, value);
+        if (result.ec == std::errc::result_out_of_range) errno = ERANGE;
+        if (pszBegin == pszEnd || result.ec != std::errc{} || result.ptr != pszEnd || (!wide && (value < std::numeric_limits<int>::min() || value > std::numeric_limits<int>::max()))) break;
         if (wide) *std::get<long long *>(rgFields[count]) = value;
         else *std::get<int *>(rgFields[count]) = static_cast<int>(value);
         ++count;
