@@ -2550,13 +2550,13 @@ void OutputSz(APPSESSION &app, std::int16_t dt, std::string_view sz) {
     const auto szFile = SzReportFile(app, dt, false);
 
     if (!szFile) return;
-    if (!FFileExists(szFile->data())) {
+    if (!FFileExists(std::string_view{szFile->data()})) {
         CchSprintf(szTemp, "Stars! %s\r\n\r\n", SzVersion(app).data());
-        OutputFileString(szFile->data(), szTemp);
+        OutputFileString(std::string_view{szFile->data()}, szTemp);
     }
     if (!GetDateTimeSz(std::span{szDate}, std::span{szTime})) return;
     CchSprintf(szTemp, "%s %s - %s\r\n", szDate, szTime, sz);
-    OutputFileString(szFile->data(), szTemp);
+    OutputFileString(std::string_view{szFile->data()}, szTemp);
     return;
 }
 

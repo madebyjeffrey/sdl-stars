@@ -28,8 +28,8 @@ void    XorFileBuf(APPSESSION &app, std::span<std::byte> rgb);
 int     ICompLong(APPSESSION &app, std::int32_t *pl1, std::int32_t *pl2);
 std::array<char, 19> PszGetCompressedPlanet(APPSESSION &app, std::int16_t id);
 // Append exactly the supplied text bytes; no terminator is written.
-void    OutputFileString(const char *szFile, std::string_view sz);
-void    StarsCopyFile(APPSESSION &app, const char *szSrc, const char *szDst);
+void    OutputFileString(std::string_view szFile, std::string_view sz);
+void    StarsCopyFile(APPSESSION &app, std::string_view szSrc, std::string_view szDst);
 std::int16_t AlertSz(APPSESSION &app, std::string_view sz, std::int16_t mbType);
 std::int16_t CchGetString(APPSESSION &app, StringId ids, std::span<char> psz);
 std::array<char, 12> PszFromInt(APPSESSION &app, std::int16_t i);

@@ -326,11 +326,11 @@ std::int16_t FGenerateTurn(APPSESSION &app) {
                 szCur += szExt;
                 szT.resize(cchBak);
                 szT += szExt;
-                RemoveNativeFile(szT.c_str());
-                if (!FFileExists(szCur.c_str())) {
+                RemoveNativeFile(szT);
+                if (!FFileExists(szCur)) {
                     rgfNoXFile[i] = 1;
                 } else {
-                    RenameNativeFile(szCur.c_str(), szT.c_str());
+                    RenameNativeFile(szCur, szT);
                 }
                 szT[cchBak + 1] = 'm';
                 szCur[cchCur + 1] = 'm';
@@ -340,11 +340,11 @@ std::int16_t FGenerateTurn(APPSESSION &app) {
                 szT.resize(cchBak);
                 szT += ".hst";
             }
-            RemoveNativeFile(szT.c_str());
+            RemoveNativeFile(szT);
             if (i >= 0 && rgfNoXFile[i]) {
-                StarsCopyFile(app, szCur.c_str(), szT.c_str());
+                StarsCopyFile(app, szCur, szT);
             } else {
-                RenameNativeFile(szCur.c_str(), szT.c_str());
+                RenameNativeFile(szCur, szT);
             }
             i++;
         }

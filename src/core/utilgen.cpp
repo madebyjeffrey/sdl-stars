@@ -233,7 +233,7 @@ std::array<char, 19> PszGetCompressedPlanet(APPSESSION &app, std::int16_t id) {
     return szResult;
 }
 
-void OutputFileString(const char *szFile, std::string_view sz) {
+void OutputFileString(std::string_view szFile, std::string_view sz) {
     NATIVEFILEOPENOPTIONS w;
     std::int16_t  hf;
 
@@ -250,7 +250,7 @@ void OutputFileString(const char *szFile, std::string_view sz) {
     return;
 }
 
-void StarsCopyFile(APPSESSION &app, const char *szSrc, const char *szDst) {
+void StarsCopyFile(APPSESSION &app, std::string_view szSrc, std::string_view szDst) {
     char     rgb[2048];
     std::int16_t  hfDst;
     std::int64_t cb;
