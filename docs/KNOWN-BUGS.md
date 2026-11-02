@@ -30,6 +30,15 @@ independently assembled reference label, including long UTF-8 names and
 maximum catalog values. No record size or game rule changes; regenerating
 and comparing the native baseline moved no checkpoint.
 
+## Generated startup filename overflows the file-dialog buffer — fixed on develop
+
+`FOpenGame` generated a `.hst` path in the 360-byte session work buffer, then
+copied it into a 256-byte local dialog buffer without checking its length. A
+maximum-length basename can exceed that local capacity. The path now passes
+through strict bounded UTF-8 staging and is rejected before extension parsing
+or file I/O when it does not fit. An actual file-workflow test covers this
+boundary; fitting startup paths and game behavior remain unchanged.
+
 ## Race filename changed across callbacks — fixed on develop
 
 `FWasRaceFile` borrowed its filename until the end of loading, including after

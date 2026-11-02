@@ -105,6 +105,8 @@ static void  FileWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
     PLAYER plrSav;
     PLAYER plrManaged;
     char szRaceSav[sizeof(app.state.szRaceFile)];
+    char szBaseSav[sizeof(app.state.szBase)];
+    char szWorkSav[sizeof(app.state.szWork)];
     char szManagedRace[512];
     char szImportedRace[512];
     char szRaceOriginal[512];
@@ -117,6 +119,11 @@ static void  FileWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
     std::optional<std::int64_t> cbRaceLibrary;
     std::optional<std::int64_t> cbExport;
     int16_t fSubmitSav;
+    int16_t fStartupSav;
+    int16_t fStartupLong;
+    int16_t fSilentSav;
+    int16_t fSilentLong;
+    BOOL fGeneratedOversize;
     const char *pszRace = PszCompatEnvironment("STARS_TEST_RACE_PATH");
     const char *pszRaceRepeat = PszCompatEnvironment("STARS_TEST_RACE_REPEAT_PATH");
     int32_t lid;
@@ -132,6 +139,23 @@ static void  FileWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
     }
     fRunning = 1;
     CHECK(pszRace && pszRaceRepeat && win32::IsWindow(app.lpui->hwndTitle));
+    memcpy(szBaseSav, app.state.szBase, sizeof(szBaseSav));
+    memcpy(szWorkSav, app.state.szWork, sizeof(szWorkSav));
+    fStartupSav = app.state.ini.fStartupFile;
+    fSilentSav = app.state.fFileErrSilent;
+    app.state.ini.fStartupFile = 1;
+    app.state.fFileErrSilent = 0;
+    memset(app.state.szBase, 'a', sizeof(app.state.szBase) - 1);
+    app.state.szBase[sizeof(app.state.szBase) - 1] = 0;
+    fStartupLong = FOpenGame(app, app.lpui->hwndTitle, 0);
+    fGeneratedOversize = strlen(app.state.szWork) >= 256;
+    fSilentLong = app.state.fFileErrSilent;
+    memcpy(app.state.szBase, szBaseSav, sizeof(szBaseSav));
+    memcpy(app.state.szWork, szWorkSav, sizeof(szWorkSav));
+    app.state.ini.fStartupFile = fStartupSav;
+    app.state.fFileErrSilent = fSilentSav;
+    CHECK(fStartupLong == 0 && fGeneratedOversize && fSilentLong == 0 && app.state.ini.fStartupFile == fStartupSav);
+    puts("Overlong generated startup paths are rejected before the file-dialog copy");
     CHECK(FOpenGame(app, app.lpui->hwndTitle, 0) == 0 && win32::IsWindowVisible(app.lpui->hwndTitle) && win32::IsWindowEnabled(app.lpui->hwndTitle));
     CHECK(!(SDL_GetWindowFlags(app.lpui->hwndTitle->lpWindow.get()) & (SDL_WINDOW_HIDDEN | SDL_WINDOW_MINIMIZED | SDL_WINDOW_NOT_FOCUSABLE)));
     CHECK(FOpenGame(app, app.lpui->hwndTitle, 0) > 0 && app.state.game.lid != 0 && app.state.lpPlanets && app.state.idPlayer != iplrNone);

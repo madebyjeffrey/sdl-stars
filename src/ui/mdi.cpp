@@ -1739,7 +1739,8 @@ std::int16_t FOpenGame(APPSESSION &app, HWND hwnd, std::int16_t fRaceOnly) {
         pch = std::strrchr(szFile, 46);
         if (!pch) {
             SetSzWorkFromDt(app, dtHost, iplrNone);
-            std::strcpy(szFile, app.state.szWork);
+            if (CchCopyUtf8(std::span{szFile}, app.state.szWork) < 0)
+                return 0;
             pch = std::strrchr(szFile, 46);
         }
         ofn.nFileExtension = pch - szFile + 1;

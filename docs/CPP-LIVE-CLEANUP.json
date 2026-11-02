@@ -23515,11 +23515,25 @@
     }
   },
   "current_checkpoint": {
-    "batch": "L05al complete scanner location-label capacity",
+    "batch": "L05am bounded FOpenGame startup host-file staging",
     "status": "complete; locally verified; native Windows/Linux qualification pending",
-    "remaining_raw_copy_calls": 4,
+    "parent": "cac6703f",
+    "remaining_raw_copy_calls": 2,
+    "copy_migrations_recorded": 306,
+    "verification": {
+      "debug_build": "pass; no new warnings",
+      "file_workflow": "pass; actual client workflow rejects a generated 259-byte .hst path before the 256-byte file-dialog staging buffer",
+      "unit_tests": "18/18 pass",
+      "tutorial": "available SDL native tutorial smoke test passes; full 80-page tutorial remains unfinished",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "baseline": "unchanged"
+    },
     "remaining_work": [
-      "Two MDI path raw-copy migrations",
       "Two SDK message-output boundary contract reviews",
       "Other readonly path/buffer/service interfaces",
       "Post-migration Work/Msg/scratch and borrowed-return audit",
@@ -23527,11 +23541,9 @@
       "Typed file-selection Milestone D D01-D06",
       "L08 final retained primitive/macro and platform audit"
     ],
-    "last_full_platform_source": "b76ec1fcc1276790150457670f5f667bcec4eccc",
-    "last_full_platform_run": 41363769853,
-    "preceding_live_platform_run": 41376372935,
-    "preceding_live_platform_source": "058f2808288033d81581bdc4802649eadf1248fc",
-    "platform_dispatch": "The preceding run covers the title fix, not the newer race-file or scanner changes. Wait for it to finish before dispatching the latest develop workflow, avoiding concurrency cancellation.",
-    "receipts": "dist/verification/live-cpp/l05al/"
+    "last_full_platform_source": "058f2808288033d81581bdc4802649eadf1248fc",
+    "last_full_platform_run": 41376372935,
+    "platform_dispatch": "The latest local batches have not yet been qualified by a full Linux/macOS/Windows workflow.",
+    "receipts": "dist/verification/live-cpp/l05am/"
   }
 }

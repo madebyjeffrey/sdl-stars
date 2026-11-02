@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `FOpenGame` now rejects an oversized generated startup path before copying it
+  into its 256-byte file-dialog buffer. A maximum-length basename plus `.hst`
+  previously overflowed that local buffer; fitting startup paths and game file
+  behavior remain unchanged.
+
 - `DrawScannerSBar` now keeps enough local text capacity for the complete
   distance, unit, connector and location label. A valid long location name
   previously overflowed its 100-byte stack buffer. Bounded catalog writes
