@@ -1231,7 +1231,7 @@ INT_PTR  ProgressGaugeDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
         dy = win32::GetSystemMetrics(win32::SM_CYSCREEN);
         szCatalogPsz = TextIO().pfnCompressed(app, idsGeneratingDataYearD);
         psz = szCatalogPsz.data();
-        win32::wsprintfA(app.state.szWork, psz, app.state.game.turn + 2401);
+        CchSprintf(app.state.szWork, psz, app.state.game.turn + 2401);
         ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_GAUGE_TEXT), app.state.szWork);
         win32::GetWindowRect(hwnd, &rc);
         rc.left = (dx - (rc.right - rc.left)) >> 1;
@@ -1299,7 +1299,7 @@ void DrawProgressGauge(APPSESSION &app, HDC hdcOrig, std::int16_t fFull, std::in
             if (iNumOnly <= 0) {
                 iNumOnly = app.lpui->vpctProgressGauge;
             }
-            c = win32::wsprintfA(szT, app.state.PCTD, iNumOnly);
+            c = CchSprintf(szT, app.state.PCTD, iNumOnly);
             RightTextOut(app, hdc, rc.right - 2, 1, szT, c, 80);
         }
         if (fNumOnly)

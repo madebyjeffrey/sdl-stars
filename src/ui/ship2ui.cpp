@@ -44,7 +44,7 @@ INT_PTR  ZipOrderDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             } else {
                 szCatalogPsz = TextIO().pfnCompressed(app, idsUnusedD);
                 psz = szCatalogPsz.data();
-                win32::wsprintfA(app.state.szWork, psz, i - 1072);
+                CchSprintf(app.state.szWork, psz, i - 1072);
                 psz = app.state.szWork;
             }
             hwndRad = ControlIO().pfnGetDlgItem(hwnd, i);
@@ -126,11 +126,11 @@ INT_PTR  ZipOrderDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 if (app.state.vrgZip[app.lpui->iResTechNow].fValid) {
                     CchCopyUtf8Prefix(std::span{app.state.szWork}, app.state.vrgZip[app.lpui->iResTechNow].szName);
                 } else {
-                    win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsCustomD).data(), app.lpui->iResTechNow);
+                    CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsCustomD).data(), app.lpui->iResTechNow);
                 }
                 if (ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_RENAME), app.lpui->hwndFrame, RenameZipDlg, 0) != 0) {
                     if (app.state.szWork[0] == 0) {
-                        win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsCustomD).data(), app.lpui->iResTechNow);
+                        CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsCustomD).data(), app.lpui->iResTechNow);
                     }
                     CchCopyUtf8Prefix(std::span{app.state.vrgZip[app.lpui->iResTechNow].szName}, app.state.szWork);
                     pszT = &app.state.szWork[64];
@@ -154,7 +154,7 @@ INT_PTR  ZipOrderDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 break;
             case IDC_DELETE:
                 app.state.vrgZip[app.lpui->iResTechNow].fValid = 0;
-                win32::wsprintfA(app.state.szWork, TextIO().pfnCompressed(app, idsUnusedD).data(), app.lpui->iResTechNow + 1);
+                CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsUnusedD).data(), app.lpui->iResTechNow + 1);
                 ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd, app.lpui->iResTechNow + 1073), app.state.szWork);
                 ControlIO().pfnInvalidateRect(hwnd, nullptr, 1);
                 app.state.gd.fChgZipOrd = 1;
