@@ -1623,7 +1623,8 @@
         "remaining-native-file-path-services-use-string-views",
         "bounded-native-path-copy-uses-ranges",
         "native-wrapper-file-paths-use-views",
-        "remove-nul-terminated-path-converter"
+        "remove-nul-terminated-path-converter",
+        "library-native-file-copy-path-views"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -24519,7 +24520,7 @@
     "date": "2026-11-02",
     "reason": "Resume the live C++ cleanup on develop after the verified optional bounded library-import path batch.",
     "branch": "develop",
-    "latest_batch": "L05 planet tile titles use bounded views",
+    "latest_batch": "L06 library native file-copy paths use bounded views",
     "latest_published_head": "7fe016a7",
     "active_stages": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
@@ -24681,16 +24682,20 @@
       {
         "commit": "6828dc42",
         "message": "Draw planet tile titles from bounded views"
+      },
+      {
+        "commit": "e61996c8",
+        "message": "Pass library copy paths as bounded views"
       }
     ],
-    "latest_source_commit": "6828dc42",
-    "latest_batch_status": "Locally committed as 6828dc42. macOS SDL Debug build, desktop/host unit suites, native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding."
+    "latest_source_commit": "e61996c8",
+    "latest_batch_status": "Locally committed as e61996c8. macOS SDL Debug build, desktop/host unit suites, native/host regressions and tutorial smoke pass. Current-source Windows/Linux qualification remains outstanding."
   },
   "current_checkpoint": {
-    "batch": "L05 planet tile titles use bounded views",
-    "status": "Locally committed as 6828dc42. macOS SDL Debug build, desktop/host unit suites, native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
-    "parent": "c4c4b852",
-    "change": "FDrawTileNC accepts std::string_view titles and draws exactly the bounded length while retaining the prior title-background clear.",
+    "batch": "L06 library native file-copy paths use bounded views",
+    "status": "Locally committed as e61996c8. macOS SDL Debug build, desktop/host unit suites, native/host regressions and tutorial smoke pass. Current-source Windows/Linux qualification remains outstanding.",
+    "parent": "d42fab77",
+    "change": "Private and public library native-file copy helpers accept std::string_view paths and pass them through the existing bounded native file services.",
     "verification": {
       "macos_sdl_debug": "make compile passes with strict warnings and header checks.",
       "desktop_unit_tests": "18/18 pass.",
@@ -24728,9 +24733,9 @@
     "date": "2026-11-02",
     "branch": "develop",
     "changes": [
-      "FDrawTileNC no longer requires a NUL-terminated title or a -1 length sentinel.",
-      "The title background clear is explicit and the draw call receives the view length.",
-      "Empty views use a valid empty C string at the legacy TextOut boundary."
+      "FCopyNativeFile and FCopyNativeFileExclusive accept bounded path views.",
+      "The publication witness compares paths as views and preserves existing path-role behavior.",
+      "Native open, remove and exclusive-create semantics are unchanged."
     ],
     "current_source_audits": {
       "tracked_c_translation_units": 44,
@@ -24860,9 +24865,13 @@
       {
         "commit": "6828dc42",
         "message": "Draw planet tile titles from bounded views"
+      },
+      {
+        "commit": "e61996c8",
+        "message": "Pass library copy paths as bounded views"
       }
     ],
-    "source_commit": "6828dc42"
+    "source_commit": "e61996c8"
   },
   "milestone_d_checkpoint": {
     "stage": "D05 caller migrations implemented; D06 platform qualification pending",
