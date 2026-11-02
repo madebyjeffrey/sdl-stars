@@ -43,7 +43,7 @@ void FreePl(APPSESSION &app, PLPROD *lppl);
 template<> PLORD *LpplAlloc<PLORD>(APPSESSION &app, std::uint16_t cbItem, std::uint16_t cAlloc, HeapType ht);
 PLORD *LpplReAlloc(APPSESSION &app, PLORD *lppl, std::uint16_t cAlloc);
 void FreePl(APPSESSION &app, PLORD *lppl);
-bool FApplyOrderBytes(APPSESSION &app, PLORD *lpplord, std::int16_t iord, const std::uint8_t *rgb, std::int16_t cb, bool fZero);
+bool FApplyOrderBytes(APPSESSION &app, PLORD *lpplord, std::int16_t iord, std::span<const std::uint8_t> rgb, bool fZero);
 bool FSetOrderTask(APPSESSION &app, PLORD *lpplord, std::int16_t iord, std::int16_t grTask);
 
 void CopyThingBytes(APPSESSION &app, THING *pth, std::span<const std::byte> rgb) noexcept;

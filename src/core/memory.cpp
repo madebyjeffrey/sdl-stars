@@ -365,9 +365,9 @@ static std::span<std::byte> RgbOrderStorage(APPSESSION &app, PLORD *lpplord, std
     return std::span(static_cast<std::byte *>(lphb->hmem), lphb->cbBlock).subspan(static_cast<std::size_t>(ib));
 }
 
-bool FApplyOrderBytes(APPSESSION &app, PLORD *lpplord, std::int16_t iord, const std::uint8_t *rgb, std::int16_t cb, bool fZero) {
+bool FApplyOrderBytes(APPSESSION &app, PLORD *lpplord, std::int16_t iord, std::span<const std::uint8_t> rgb, bool fZero) {
     std::span<std::byte> storage = RgbOrderStorage(app, lpplord, iord, 0);
-    std::size_t cbCopy = static_cast<std::size_t>(cb - static_cast<std::int16_t>(cbWireWaypt));
+    std::size_t cbCopy = rgb.size() >= cbWireWaypt ? rgb.size() - cbWireWaypt : (std::numeric_limits<std::size_t>::max)();
     std::size_t ib = 0;
     std::size_t cbChunk, cbNative;
     ORDER ord{};
@@ -386,7 +386,7 @@ bool FApplyOrderBytes(APPSESSION &app, PLORD *lpplord, std::int16_t iord, const 
         ord = {};
         std::memcpy(&ord, storage.data() + ib, cbNative);
         cbChunk = (std::min)(cbWireOrder, cbCopy - ib);
-        FDecodeOrderPrefix(std::as_bytes(std::span(rgb + ib, cbChunk)), ord);
+        FDecodeOrderPrefix(std::as_bytes(rgb.subspan(cbWireWaypt + ib, cbChunk)), ord);
         if (ib == 0) ord.fNoAutoTrack = 0;
         std::memcpy(storage.data() + ib, &ord, cbNative);
         ib += cbChunk;

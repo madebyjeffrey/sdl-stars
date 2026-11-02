@@ -1100,7 +1100,8 @@ std::int16_t FRunLogRecord(APPSESSION &app, RecordType rt, std::int16_t cb, std:
             lpfl->lpplord = LpplReAlloc(app, lpfl->lpplord, lpfl->cord + 3);
         }
         std::memmove(&lpfl->lpplord->rgord()[iordLog + 1], &lpfl->lpplord->rgord()[iordLog], (lpfl->cord - iordLog) * sizeof(ORDER));
-        if (!FApplyOrderBytes(app, lpfl->lpplord, iordLog, lpb + cbWireWaypt, cb, static_cast<std::uint16_t>(cb) < cbWireWaypt + cbWireOrder)) return 0;
+        if (!FApplyOrderBytes(app, lpfl->lpplord, iordLog, cb >= 0 ? std::span<const std::uint8_t>(lpb, static_cast<std::size_t>(cb)) : std::span<const std::uint8_t>{},
+                              static_cast<std::uint16_t>(cb) < cbWireWaypt + cbWireOrder)) return 0;
         lpfl->cord++;
         lpfl->lpplord->iordMac++;
         break;
@@ -1109,7 +1110,8 @@ std::int16_t FRunLogRecord(APPSESSION &app, RecordType rt, std::int16_t cb, std:
         if (!(lpfl = LpflFromId(app, id)) || lpfl->cord < 0) return 0;
         NATIVEBYTEREADER(std::as_bytes(std::span(lpb + 2, 2))).FReadI16Le(iLook);
         if (iLook >= lpfl->cord) return 0;
-        if (!FApplyOrderBytes(app, lpfl->lpplord, iLook, lpb + cbWireWaypt, cb, static_cast<std::uint16_t>(cb) < cbWireWaypt + cbWireOrder)) return 0;
+        if (!FApplyOrderBytes(app, lpfl->lpplord, iLook, cb >= 0 ? std::span<const std::uint8_t>(lpb, static_cast<std::size_t>(cb)) : std::span<const std::uint8_t>{},
+                              static_cast<std::uint16_t>(cb) < cbWireWaypt + cbWireOrder)) return 0;
         break;
     case rtBtlPlan:
         if (cb < 2) return 0;
