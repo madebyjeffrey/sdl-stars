@@ -159,7 +159,7 @@ static std::int16_t FWriteZipEntry(NATIVEFILE *pfZip, std::string_view pszRoot, 
     return 0;
 }
 
-std::int16_t FZipLibraryDirectory(APPSESSION &app, const char *pszDirectory, const char *pszArchive) try {
+std::int16_t FZipLibraryDirectory(APPSESSION &app, std::string_view pszDirectory, std::string_view pszArchive) try {
     ZIPFILES zf{};
     std::vector<ZIPENTRY> rgzentry;
     char szTemp[512] = "";
@@ -230,7 +230,7 @@ static std::int16_t FZipMakeParents(std::string_view pszRoot, std::string_view p
     return 1;
 }
 
-std::int16_t FUnzipLibraryArchive(const char *pszArchive, const char *pszDirectory) try {
+std::int16_t FUnzipLibraryArchive(std::string_view pszArchive, std::string_view pszDirectory) try {
     std::uint8_t rgbTail[65557], rgbCentral[ZIP_CENTRAL_HEADER_SIZE], rgbLocal[ZIP_LOCAL_HEADER_SIZE];
     std::uint8_t rgbLocalName[512];
     NATIVEFILE *pf = PfOpenNativeFile(pszArchive, NATIVEFILEMODE::read);
