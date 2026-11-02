@@ -1509,7 +1509,7 @@ LPrintMapCleanup:
             FWriteHistFile(app, app.state.idPlayer);
             break;
         case IDM_LIBRARY_EXPORT_ORDERS:
-            FExportLibraryOrders(app, hwnd, nullptr);
+            FExportLibraryOrders(app, hwnd, std::nullopt);
             break;
         case IDM_FILE_OPEN_GAME:
         case IDM_TOOL_OPEN_GAME:

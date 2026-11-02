@@ -1052,7 +1052,7 @@ std::int16_t FExportLibraryRace(APPSESSION &app, HWND hwnd, const char *pszName,
     return 1;
 }
 
-std::int16_t FExportLibraryOrders(APPSESSION &app, HWND hwnd, const char *pszTarget) {
+std::int16_t FExportLibraryOrders(APPSESSION &app, HWND hwnd, std::optional<std::string_view> pszTarget) {
     win32::files::FILESELECTIONREQUEST request;
     char szBaseSav[sizeof(app.state.szBase)], szBaseStem[sizeof(app.state.szBase)], szName[256], szSuggested[256], szTarget[512], szFilter[64];
     char szStageBase[sizeof(app.state.szBase)], szStage[sizeof(app.state.szBase)], szStageHist[sizeof(app.state.szBase)];
@@ -1100,11 +1100,14 @@ std::int16_t FExportLibraryOrders(APPSESSION &app, HWND hwnd, const char *pszTar
         request.szDefaultExtension = szExt;
         AddFileSelectionFilters(std::string_view{szFilter, static_cast<std::size_t>(cch)}, request);
         if (!FSelectLibraryFile(hwnd, std::move(request), std::span{szTarget})) return 0;
-        pszTarget = szTarget;
+        pszTarget = std::string_view{szTarget};
     }
 
-    if (std::strlen(pszTarget) >= sizeof(szTarget)) return 0;
-    if (pszTarget != szTarget) CchSnprintf(std::span{szTarget, sizeof(szTarget)}, "%s", pszTarget);
+    if (pszTarget->size() >= sizeof(szTarget)) return 0;
+    if (pszTarget->data() != szTarget) {
+        std::copy(pszTarget->begin(), pszTarget->end(), szTarget);
+        szTarget[pszTarget->size()] = 0;
+    }
     pchSlash = std::strrchr(szTarget, '/');
     pch = std::strrchr(szTarget, '\\');
     if (pch && (!pchSlash || pch > pchSlash)) pchSlash = pch;

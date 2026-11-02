@@ -251,15 +251,15 @@ static void  FileWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
     CHECK(FLoadLibraryRace(app, app.lpui->hwndTitle, "Managed.r1"));
     CHECK(IRaceChecksum(&app.state.vplr) == IRaceChecksum(&plrManaged));
     fSubmitSav = app.state.gd.fSubmit;
-    CHECK(pszExport && pszManagedOrders && pszManagedTurn && pszExportFailure && !FExportLibraryOrders(app, app.lpui->hwndTitle, NULL));
+    CHECK(pszExport && pszManagedOrders && pszManagedTurn && pszExportFailure && !FExportLibraryOrders(app, app.lpui->hwndTitle, std::nullopt));
     CHECK(app.state.gd.fSubmit == fSubmitSav && app.state.game.lid == lid);
     CHECK(!(cbExport = FNativeFileSize((char *)pszManagedOrders)) && (cbExport = FNativeFileSize((char *)pszManagedTurn)));
     DirtyGame(app, 1);
-    CHECK(pszPreviousExport && !FExportLibraryOrders(app, app.lpui->hwndTitle, NULL));
+    CHECK(pszPreviousExport && !FExportLibraryOrders(app, app.lpui->hwndTitle, std::nullopt));
     CHECK(cReplaceChoices == 1 && app.state.game.fDirty && app.state.gd.fSubmit == fSubmitSav && app.state.game.lid == lid);
     CHECK(FEqualFiles(pszExport, pszPreviousExport));
     CHECK(!(cbExport = FNativeFileSize((char *)pszManagedOrders)));
-    CHECK(FExportLibraryOrders(app, app.lpui->hwndTitle, NULL));
+    CHECK(FExportLibraryOrders(app, app.lpui->hwndTitle, std::nullopt));
     CHECK(cReplaceChoices == 2 && !app.state.game.fDirty);
     CHECK(app.state.gd.fSubmit == fSubmitSav && app.state.game.lid == lid);
     CHECK((cbExport = FNativeFileSize((char *)pszExport)) && (*cbExport) > 0);
