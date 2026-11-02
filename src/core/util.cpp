@@ -805,7 +805,7 @@ std::array<char, 360> PszGetFleetName(APPSESSION &app, std::int16_t id) {
     FLEET  *lpfl;
     char    szPlr[34];
     std::int16_t ishdef;
-    std::int16_t cch;
+    std::size_t cch;
 
     lpfl = LpflFromId(app, id & 0x7fff);
     id &= 0x7fff;
@@ -825,10 +825,9 @@ std::array<char, 360> PszGetFleetName(APPSESSION &app, std::int16_t id) {
                 szCatalogLpsz = TextIO().pfnCompressed(app, idsFleet);
                 lpsz = szCatalogLpsz.data();
             } else {
-                CchCopyUtf8Prefix(std::span{szShdef}, app.state.rglpshdef[iplr][ishdef].hul.szClass);
-                cch = std::strlen(szShdef);
+                cch = CchCopyUtf8Prefix(std::span{szShdef}, app.state.rglpshdef[iplr][ishdef].hul.szClass);
                 if (cch > 28) {
-                    cch = static_cast<std::int16_t>(CchUtf8Prefix(szShdef, 28));
+                    cch = CchUtf8Prefix(szShdef, 28);
                 }
                 if (cshdef > 1) {
                     szShdef[cch] = '+';
@@ -863,17 +862,16 @@ std::array<char, 360> PszFleetNameFromWord(APPSESSION &app, std::uint16_t w) {
     char   *lpsz;
     char    szShdef[34];
     std::int16_t ishdef;
-    std::int16_t cch;
+    std::size_t cch;
 
     ishdef = w >> 9 & 0xf;
     if (app.state.rglpshdef[app.state.idPlayer][ishdef].fFree) {
         szCatalogLpsz = TextIO().pfnCompressed(app, idsFleet);
         lpsz = szCatalogLpsz.data();
     } else {
-        CchCopyUtf8Prefix(std::span{szShdef}, app.state.rglpshdef[app.state.idPlayer][ishdef].hul.szClass);
-        cch = std::strlen(szShdef);
+        cch = CchCopyUtf8Prefix(std::span{szShdef}, app.state.rglpshdef[app.state.idPlayer][ishdef].hul.szClass);
         if (cch > 28) {
-            cch = static_cast<std::int16_t>(CchUtf8Prefix(szShdef, 28));
+            cch = CchUtf8Prefix(szShdef, 28);
         }
         if (w & 0x2000) {
             szShdef[cch] = '+';
@@ -2041,13 +2039,14 @@ void GetTrueHullCost(std::int16_t iPlayer, HUL *lphul, std::uint16_t *rgCost) {
 std::array<char, 40> DecorateHullName(APPSESSION &app, std::int16_t iplr, std::int16_t ish) {
     std::int16_t i;
     std::int16_t c;
+    std::size_t cchName;
     SHDEF  *lpshdef;
     std::int16_t iVal;
     std::array<char, 40> psz{};
 
     lpshdef = app.state.rglpshdef[iplr] + ish;
     if (!lpshdef->fFree) {
-        CchCopyUtf8Prefix(std::span{psz}, lpshdef->hul.szClass);
+        cchName = CchCopyUtf8Prefix(std::span{psz}, lpshdef->hul.szClass);
         if (iplr != app.state.idPlayer) {
             c = 0;
             iVal = 1;
@@ -2060,12 +2059,11 @@ std::array<char, 40> DecorateHullName(APPSESSION &app, std::int16_t iplr, std::i
                 }
             }
             if (c != 0) {
-                c = std::strlen(psz.data());
-                psz[c] = ' ';
-                psz[c + 1] = '(';
+                psz[cchName] = ' ';
+                psz[cchName + 1] = '(';
                 // At most 16 designs: 31 name bytes + three punctuation
                 // bytes + at most four Roman digits fit the existing budget.
-                IntToRoman(iVal, std::span{psz}.subspan(c + 2));
+                IntToRoman(iVal, std::span{psz}.subspan(cchName + 2));
                 CchAppendUtf8Prefix(std::span{psz}, ")");
             }
         }
