@@ -9,6 +9,7 @@
 #include <cstdio>
 #include <cstring>
 #include <new>
+#include <stdexcept>
 #include <string>
 
 using namespace win32::files;
@@ -208,8 +209,8 @@ FILESELECTIONRESULT ICompatChooseFile(HWND hwndOwner, const FILESELECTIONREQUEST
     NATIVEOWNER<NATIVEFILE, ICloseNativeFile> randomOwner;
     unsigned char rgbToken[16];
     const char *pszUnique;
-    char *pszTitleUtf = nullptr, *pszWaylandParent = nullptr;
-    std::string szRequestPath, szSenderName;
+    char *pszTitleUtf = nullptr;
+    std::string szWaylandParent, szRequestPath, szSenderName;
     Uint64 nsStart;
     int iResult = -1;
     std::size_t iFilter = request.iFilter;
@@ -235,7 +236,7 @@ FILESELECTIONRESULT ICompatChooseFile(HWND hwndOwner, const FILESELECTIONREQUEST
         for (i = 0; i < responses.cMessage; i++) if (responses.rgMessage[i]) dbus_message_unref(responses.rgMessage[i]);
         if (fFilter) dbus_connection_remove_filter(lpBus, SavePortalResponse, &responses);
         if (lpBus) { dbus_connection_flush(lpBus); dbus_connection_close(lpBus); dbus_connection_unref(lpBus); }
-        SDL_free(pszTitleUtf); SDL_free(pszWaylandParent);
+        SDL_free(pszTitleUtf);
     });
     lpBus = dbus_bus_get_private(DBUS_BUS_SESSION, &error);
     if (!lpBus) goto done;
@@ -256,11 +257,20 @@ FILESELECTIONRESULT ICompatChooseFile(HWND hwndOwner, const FILESELECTIONREQUEST
             SDL_Delay(1);
         }
         pszHandle = SDL_GetStringProperty(props, SDL_PROP_WINDOW_WAYLAND_XDG_TOPLEVEL_EXPORT_HANDLE_STRING, nullptr);
-        if (pszHandle && *pszHandle && SDL_asprintf(&pszWaylandParent, "wayland:%s", pszHandle) < 0) goto done;
+        if (pszHandle && *pszHandle) {
+            try {
+                szWaylandParent = "wayland:";
+                szWaylandParent += pszHandle;
+            } catch (const std::bad_alloc &) {
+                goto done;
+            } catch (const std::length_error &) {
+                goto done;
+            }
+        }
         xid = SDL_GetNumberProperty(props, SDL_PROP_WINDOW_X11_WINDOW_NUMBER, 0);
         if (xid != 0) std::snprintf(szParent, sizeof(szParent), "x11:%llx", static_cast<unsigned long long>(xid));
     }
-    pszParent = pszWaylandParent ? pszWaylandParent : szParent;
+    pszParent = !szWaylandParent.empty() ? szWaylandParent.c_str() : szParent;
     lpRandom = PfNativeOpen("/dev/urandom", NATIVEFILEMODE::read);
     randomOwner.reset(lpRandom);
     if (!lpRandom) goto done;
