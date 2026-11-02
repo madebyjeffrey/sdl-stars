@@ -24044,7 +24044,7 @@
     "batch": "L05 span-based window text input result",
     "batch_parent": "65c163f0",
     "latest_batch": "L05 span-based window text input result",
-    "latest_batch_head": "86b25252",
+    "latest_batch_head": "00c95156",
     "completed_stages": [
       "L01: nullptr and aliases",
       "L02: explicit C++ casts and headers",
@@ -24067,7 +24067,8 @@
       "sdk_diagnostic_inventory": "18 entries; all input fingerprints match.",
       "diff_check": "pass",
       "github_qualification": "The prior run on 65c163f0 failed Linux compilation on the two repaired compatibility test sources and Windows qualification on five stale SDK fixture hashes. Fresh Windows/Linux qualification after these commits remains pending.",
-      "baseline": "Unchanged."
+      "baseline": "Unchanged.",
+      "desktop_unit_tests": "18/18 pass, including empty-span and rejected-input result coverage."
     },
     "owned_c_and_function_macro_scan": "Confirmed on 2026-11-02: zero owned .c sources and zero function-like macros under src/ and compat/win32/src. Include guards, NOMINMAX, test configuration and vendored SDK definitions remain.",
     "retained_c_allocation_boundary": "src/core/memory.cpp uses calloc/realloc/free to implement the resizable game heap; keep unless a separate allocator audit proves a safe typed replacement.",
@@ -24094,7 +24095,8 @@
     "changes": {
       "src/ui/win.h and src/ui/nativeui.cpp": "CchGetUtf8WindowText now accepts std::span<char> and returns std::optional<std::size_t>; callers pass array spans and test the typed result. Empty buffers return zero, rejected input clears a non-empty destination and returns nullopt, and an unrepresentable Win32 capacity is rejected.",
       "tests/compat/nativeformat.cpp and tests/compat/fileio.cpp": "Removed non-portable LLONG_MIN/ULLONG_MAX and std::strlen assumptions that failed under Linux GCC with -Werror.",
-      "tests/reference/sdk/diagnostics.json": "Refreshed five stale input fingerprints so the Windows SDK configuration gate matches its current compatibility fixtures."
+      "tests/reference/sdk/diagnostics.json": "Refreshed five stale input fingerprints so the Windows SDK configuration gate matches its current compatibility fixtures.",
+      "tests/unit/test_native_fileui.cpp and tests/unit/test_race.cpp": "Cover the empty destination result and rejected UTF-8 input result, including clearing the first byte of a non-empty rejected destination."
     },
     "verification": {
       "macos_debug_build_and_desktop_unit_tests": "Full macos-sdl-debug build and 18/18 desktop unit tests pass for the span API batch.",
@@ -24106,14 +24108,16 @@
       "sdk_diagnostic_inventory": "18 entries; all input fingerprints match.",
       "diff_check": "pass",
       "github_qualification": "The prior run on 65c163f0 failed Linux compilation on the two repaired compatibility test sources and Windows qualification on five stale SDK fixture hashes. Fresh Windows/Linux qualification after these commits remains pending.",
-      "baseline": "Unchanged."
+      "baseline": "Unchanged.",
+      "desktop_unit_tests": "18/18 pass, including empty-span and rejected-input result coverage."
     },
     "source_commit": "2cb364f7",
     "followup_commits": [
       "212d8a1a",
-      "86b25252"
+      "86b25252",
+      "00c95156"
     ],
-    "published_batch_head": "86b25252",
+    "published_batch_head": "00c95156",
     "remaining_work": [
       "L05 remaining bounded text destinations, const-text interfaces and post-migration scratch/borrowed-return audit.",
       "L06 remaining buffer/length service interfaces and chooser Milestone D qualification, including Windows/Linux chooser coverage.",
