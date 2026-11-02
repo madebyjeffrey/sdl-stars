@@ -181,7 +181,7 @@ void DrawPopup(APPSESSION &app, HWND hwnd, HDC hdc) {
                     if (dpT == 0) {
                         dpT = 1;
                     }
-                    c = win32::wsprintfA(app.state.szWork, "%d@%d%%", csh, dpT);
+                    c = CchSprintf(app.state.szWork, "%d@%d%%", csh, dpT);
                     RightTextOut(app, hdc, rc.right - 4, yCur, app.state.szWork, c, 0);
                 }
                 yCur += app.state.dyArial8;
@@ -642,7 +642,7 @@ POINT16 PtDisplayPlanetStateInfo(APPSESSION &app, HDC hdc, std::int16_t fPrint) 
                 cch = TextIO().pfnCchGetString(app, idsPlanetsValueWouldImprove, std::span{app.state.szWork});
                 WrapTextOut(app, hdc, &x, &y, app.state.szWork, cch, 4, xMax - 4, nullptr, 0, fPrint);
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-                cch = win32::wsprintfA(app.state.szWork, "%d%%.  ", pctDesire);
+                cch = CchSprintf(app.state.szWork, "%d%%.  ", pctDesire);
                 WrapTextOut(app, hdc, &x, &y, app.state.szWork, cch, 4, xMax - 4, nullptr, 0, fPrint);
             }
         }
@@ -716,7 +716,7 @@ POINT16 PtDisplayPlanetPopInfo(APPSESSION &app, HDC hdc, std::int16_t fPrint) {
         if (pl.det >= detSome) {
             DxStreamTextOut(hdc, &x, y, TextIO().pfnCompressed(app, idsApproximately).data(), 0, fPrint);
             win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-            win32::wsprintfA(app.state.szWork, "%d00", pl.uPopGuess * 4);
+            CchSprintf(app.state.szWork, "%d00", pl.uPopGuess * 4);
             if (pl.uPopGuess == 0) {
                 app.state.szWork[1] = 0;
             }

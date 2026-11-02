@@ -2522,7 +2522,7 @@ void UpdateOrdersDDs(APPSESSION &app, std::int16_t iLevel) {
         } else {
             iSel--;
         }
-        win32::wsprintfA(app.state.szWork, "%u", app.state.sel.fl.lpplord->rgord()[app.state.sel.iwpAct].txp.rgia[iSel].cQuan());
+        CchSprintf(app.state.szWork, "%u", app.state.sel.fl.lpplord->rgord()[app.state.sel.iwpAct].txp.rgia[iSel].cQuan());
         ControlIO().pfnSetWindowText(app.lpui->hwndOrderED, app.state.szWork);
     }
     return;

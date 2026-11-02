@@ -1075,7 +1075,7 @@ void DrawBuildSelComp(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
                 if (!fPlural) {
                     i += TextIO().pfnCchGetString(app, idsOne, std::span{app.state.szWork}.subspan(static_cast<std::size_t>(i)));
                 } else {
-                    i += win32::wsprintfA(std::span{app.state.szWork}.subspan(static_cast<std::size_t>(i)), "%d ", hsHul.cItem);
+                    i += CchSprintf(std::span{app.state.szWork}.subspan(static_cast<std::size_t>(i)), "%d ", hsHul.cItem);
                 }
                 grhst = hsHul.grhst;
                 while (grhst != 0) {
@@ -1127,7 +1127,7 @@ void DrawBuildSelComp(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
         if (!fPlural) {
             TextIO().pfnCchGetString(app, idsOne, std::span{szWord});
         } else {
-            win32::wsprintfA(szWord, "%d ", hsShip.cItem);
+            CchSprintf(szWord, "%d ", hsShip.cItem);
         }
         CchAppendUtf8Prefix(std::span{szWord}, part.pcom().szName());
         if (fPlural) {

@@ -1442,7 +1442,7 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
             psz = app.state.rgshdef[i].hul.szClass;
             win32::ExtTextOutA(hdc, prc->left, prc->top, win32::ETO_CLIPPED, prc, psz, std::strlen(psz), nullptr);
             psz = szT;
-            cch = win32::wsprintfA(szT, app.state.PCTD, lpfl->rgcsh[i]);
+            cch = CchSprintf(szT, app.state.PCTD, lpfl->rgcsh[i]);
             chT = '+';
             RightTextOut(app, hdc, 6 * dx + prc->right - LOWORD(GetTextExtent(hdc, &chT, 1)), prc->top, psz, cch, 0);
             if (j <= 1)

@@ -563,7 +563,7 @@ void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
                         if (dBest > 0) {
                             win32::SetTextColor(hdc, dBest > 10 ? 32512 : 32639);
                         }
-                        c = win32::wsprintfA(app.state.szWork, " (%d%%)", dBest);
+                        c = CchSprintf(app.state.szWork, " (%d%%)", dBest);
                         win32::TextOutA(hdc, xL + dx, yCur, app.state.szWork, c);
                     }
                 }
