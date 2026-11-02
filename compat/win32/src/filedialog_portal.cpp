@@ -7,8 +7,9 @@
 #include <array>
 #include <climits>
 #include <cstdio>
-#include <cstdlib>
 #include <cstring>
+#include <new>
+#include <string>
 
 using namespace win32::files;
 
@@ -207,7 +208,8 @@ FILESELECTIONRESULT ICompatChooseFile(HWND hwndOwner, const FILESELECTIONREQUEST
     NATIVEOWNER<NATIVEFILE, ICloseNativeFile> randomOwner;
     unsigned char rgbToken[16];
     const char *pszUnique;
-    char *pszTitleUtf = nullptr, *pszRequest = nullptr, *pszSender = nullptr, *pszWaylandParent = nullptr;
+    char *pszTitleUtf = nullptr, *pszWaylandParent = nullptr;
+    std::string szRequestPath, szSenderName;
     Uint64 nsStart;
     int iResult = -1;
     std::size_t iFilter = request.iFilter;
@@ -220,8 +222,8 @@ FILESELECTIONRESULT ICompatChooseFile(HWND hwndOwner, const FILESELECTIONREQUEST
 
     dbus_error_init(&error);
     NATIVECLEANUPSCOPE portalOwner([&]() noexcept {
-        if (lpBus && pszRequest && iResult != 1) {
-            lpClose = dbus_message_new_method_call(PORTAL_SERVICE, pszRequest, PORTAL_REQUEST, "Close");
+        if (lpBus && !szRequestPath.empty() && iResult != 1) {
+            lpClose = dbus_message_new_method_call(PORTAL_SERVICE, szRequestPath.c_str(), PORTAL_REQUEST, "Close");
             if (lpClose) { dbus_message_set_no_reply(lpClose, 1); dbus_connection_send(lpBus, lpClose, nullptr); dbus_message_unref(lpClose); }
         }
         if (dbus_error_is_set(&error)) SDL_SetError("File chooser portal: %s", error.message);
@@ -233,7 +235,7 @@ FILESELECTIONRESULT ICompatChooseFile(HWND hwndOwner, const FILESELECTIONREQUEST
         for (i = 0; i < responses.cMessage; i++) if (responses.rgMessage[i]) dbus_message_unref(responses.rgMessage[i]);
         if (fFilter) dbus_connection_remove_filter(lpBus, SavePortalResponse, &responses);
         if (lpBus) { dbus_connection_flush(lpBus); dbus_connection_close(lpBus); dbus_connection_unref(lpBus); }
-        SDL_free(pszTitleUtf); SDL_free(pszWaylandParent); std::free(pszRequest); std::free(pszSender);
+        SDL_free(pszTitleUtf); SDL_free(pszWaylandParent);
     });
     lpBus = dbus_bus_get_private(DBUS_BUS_SESSION, &error);
     if (!lpBus) goto done;
@@ -274,7 +276,8 @@ FILESELECTIONRESULT ICompatChooseFile(HWND hwndOwner, const FILESELECTIONREQUEST
     }
     for (i = 0; szSender[i]; i++) if (szSender[i] == '.') szSender[i] = '_';
     std::snprintf(szRequest, sizeof(szRequest), "%s/request/%s/%s", PORTAL_PATH, szSender, szToken);
-    pszRequest = strdup(szRequest); if (!pszRequest) goto done;
+    try { szRequestPath = szRequest; }
+    catch (const std::bad_alloc &) { goto done; }
     if (request.rgFilters.size() > cCompatFileFiltersMax) goto done;
     if (!dbus_validate_utf8(request.szInitialPath.c_str(), &error)) goto done;
     pszTitleUtf = PszPortalLabel(request.szTitle.c_str()); if (!pszTitleUtf) goto done;
@@ -305,14 +308,15 @@ FILESELECTIONRESULT ICompatChooseFile(HWND hwndOwner, const FILESELECTIONREQUEST
     if (!lpReply || dbus_message_get_type(lpReply) == DBUS_MESSAGE_TYPE_ERROR ||
         !dbus_message_get_args(lpReply, &error, DBUS_TYPE_OBJECT_PATH, &pszHandle, DBUS_TYPE_INVALID)) goto done;
     if (!dbus_message_get_sender(lpReply)) goto done;
-    std::free(pszRequest); pszRequest = strdup(pszHandle); pszSender = strdup(dbus_message_get_sender(lpReply));
-    if (!pszRequest || !pszSender) goto done;
+    szRequestPath.clear();
+    try { szRequestPath = pszHandle; szSenderName = dbus_message_get_sender(lpReply); }
+    catch (const std::bad_alloc &) { goto done; }
     for (;;) {
         if (!FPumpChooser(hwndOwner)) { iResult = 0; break; }
         if (!dbus_connection_read_write_dispatch(lpBus, 10) || responses.fOverflow) break;
         for (i = 0; i < responses.cMessage; i++) {
             lpMessage = responses.rgMessage[i];
-            if (dbus_message_has_path(lpMessage, pszRequest) && dbus_message_has_sender(lpMessage, pszSender)) {
+            if (dbus_message_has_path(lpMessage, szRequestPath.c_str()) && dbus_message_has_sender(lpMessage, szSenderName.c_str())) {
                 iResult = IResponse(lpMessage, request.rgFilters, &iFilter, szPath.data(), szPath.size()); goto done;
             }
             dbus_message_unref(lpMessage); responses.rgMessage[i] = nullptr;
@@ -320,7 +324,7 @@ FILESELECTIONRESULT ICompatChooseFile(HWND hwndOwner, const FILESELECTIONREQUEST
         responses.cMessage = 0;
         if (CompatTimeIO().pfnGetTicks() - msOwnerCheck >= 1000) {
             msOwnerCheck = CompatTimeIO().pfnGetTicks();
-            if (!dbus_bus_name_has_owner(lpBus, pszSender, &error)) break;
+            if (!dbus_bus_name_has_owner(lpBus, szSenderName.c_str(), &error)) break;
         }
     }
 done:
