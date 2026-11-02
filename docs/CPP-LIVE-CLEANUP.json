@@ -25086,13 +25086,12 @@
   "working_tree_checkpoint": {
     "date": "2026-11-02",
     "branch": "develop",
-    "batch": "L05 bounded scanner-name selection input",
-    "source_commit": "410a7dee",
+    "batch": "L05 host INI path view",
+    "source_commit": "035a8a2d",
     "status": "Verified and committed locally on develop. macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Current-source Windows SDL desktop and Linux desktop qualification remain outstanding.",
     "changes": [
-      "FSelectSz accepts std::string_view; the dialog passes exactly the byte count returned by GetDlgItemTextA.",
-      "Selection copies the bounded name into a fixed local NUL-terminated buffer for the existing C-compatible matching operations, rejecting names that exceed the established 39-byte capacity.",
-      "Planet/fleet matching behavior and regression baselines remain unchanged."
+      "FReadHostIni accepts std::string_view for its input path, matching PfOpenNativeFile and avoiding a C-string-only private service boundary.",
+      "INI loading, UTF-8 validation and host settings remain unchanged."
     ],
     "verification": {
       "macos_sdl_debug": "make compile passes with strict warnings and dual-header checks.",
@@ -25344,6 +25343,10 @@
       {
         "commit": "410a7dee",
         "message": "Pass bounded scanner names to selection"
+      },
+      {
+        "commit": "035a8a2d",
+        "message": "Pass host INI paths as views"
       }
     ],
     "parent": "4867b0c5"
