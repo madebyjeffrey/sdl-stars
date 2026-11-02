@@ -24403,10 +24403,10 @@
   ],
   "restart_checkpoint": {
     "date": "2026-11-02",
-    "reason": "Resume the live C++ cleanup on develop after the verified bounded fleet-name load/log batch.",
+    "reason": "Resume the live C++ cleanup on develop after the verified bounded native path-service batch.",
     "branch": "develop",
-    "latest_batch": "L05 bounded race filename suggestion input",
-    "latest_published_head": "0c750694",
+    "latest_batch": "L06 bounded native file identity and permission paths",
+    "latest_published_head": "f521237c",
     "active_stages": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage."
@@ -24427,31 +24427,34 @@
       "current_source_rerun": "No workflow dispatch was available from this environment; current source is locally qualified on macOS and host, but Windows/Linux platform CI remains pending."
     },
     "restart_order": [
-      "Rerun opt-in Windows/Linux qualification against current develop and resolve any failures.",
       "Continue L05 bounded text destinations, const-text interfaces and scratch/borrowed-return audit.",
-      "Continue L06 buffer/length service interfaces, native file/path result work and chooser platform coverage.",
-      "Complete L08 after current-source platform qualification and final inventory reconciliation."
+      "Continue L06 buffer/length service interfaces, native file/path results and chooser platform coverage.",
+      "Run current-source Windows and Linux qualification when available; resolve any failures.",
+      "Complete L08 after platform qualification and final inventory reconciliation."
     ],
     "do_not_overwrite": [
       "title-modernized.png and prompt",
       "title-modernized-v2.png and prompt",
       "title-modernized-v3.png and prompt"
     ],
-    "batch": "L05 bounded race filename suggestion input",
+    "batch": "L06 bounded native file identity and permission paths",
     "source_commit": "0c750694",
-    "status": "Verified and pushed to develop. Local SDL Debug, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Current-source Windows SDL/Linux desktop qualification remains outstanding.",
+    "status": "Verified and pushed to develop. macOS SDL Debug, desktop/host unit suites, full native/host regressions, tutorial smoke, and current-source MinGW host/core build pass. Windows SDL desktop and Linux desktop qualification remain outstanding.",
     "changes": [
-      "SuggestRaceFilename finds the terminator and final extension within its fixed 256-byte destination span.",
-      "It copies the UTF-8-safe stem from the bounded view, avoiding strlen, strrchr and a raw memory-copy interface.",
-      "No game behavior, file layout, or serialization code changed."
+      "FNativeFileIdentity and ICopyNativePermissions accept bounded UTF-8 std::string_view paths.",
+      "POSIX identity and permission lookups convert validated views through PathFromUtf8 instead of assuming NUL termination.",
+      "A fileio test verifies a bounded view into a longer backing string; profile-save callback signature follows the typed interface.",
+      "No game behavior, file layout or serialization code changed."
     ],
     "verification": {
-      "macos_sdl_debug": "Build passes; changed UI compatibility translation unit compiles.",
+      "macos_sdl_debug": "Build passes; current fileio and UI sources compile.",
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
       "native_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "host_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "tutorial": "1/1 available SDL tutorial smoke passes.",
+      "windows_mingw_host_build": "Current-source host/core build passes.",
+      "windows_sdl_linux_desktop": "Not qualified locally; current-source platform CI remains outstanding.",
       "baseline": "Unchanged.",
       "diff_check": "Pass."
     },
@@ -24463,11 +24466,12 @@
       "typed_replacements": "Packed-word, resource, color and parameter-extraction APIs are C++ functions/templates.",
       "c11_boundary": "C is enabled only for independent test/reference targets; production is C++20/Objective-C++20.",
       "core_strlen_residual": "src/core/save.cpp:804 in WriteRtString. Its sole caller passes FLEET::lpszName, a legacy heap-owned C string with no stored length; adding a size to FLEET would change a layout-sensitive debug-symbol struct. Keep this at the serialization C-string boundary unless ownership API is deliberately redesigned.",
-      "scan_scope": "Tracked src and compat/win32/include/src plus dist/macos-sdl-debug/generated/version_resource.h; compat/win32/generated is not a present directory."
+      "scan_scope": "Tracked src and compat/win32/include/src plus dist/macos-sdl-debug/generated/version_resource.h; compat/win32/generated is not a present directory.",
+      "platform_qualification": "Current-source MinGW Windows host/core build passes. Full Windows SDL desktop and Linux desktop CI remain unqualified; current-source workflow dispatch was previously rejected with HTTP 403 (admin rights required), and local SDL cross-configuration lacks a MinGW zlib package."
     },
     "next": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
-      "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage.",
+      "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D Windows/Linux qualification and any missing end-to-end chooser coverage.",
       "L08: run current-source Windows and Linux qualification, then resolve any failures and record the final macro/C inventory outcome."
     ],
     "post_checkpoint_commits": [
@@ -24554,18 +24558,20 @@
     ]
   },
   "current_checkpoint": {
-    "batch": "L05 bounded race filename suggestion input",
-    "status": "Verified and pushed to develop. Local SDL Debug, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Current-source Windows SDL/Linux desktop qualification remains outstanding.",
-    "parent": "1291c5a4",
-    "source_commit": "0c750694",
+    "batch": "L06 bounded native file identity and permission paths",
+    "status": "Verified and pushed to develop. macOS SDL Debug, desktop/host unit suites, full native/host regressions, tutorial smoke, and current-source MinGW host/core build pass. Windows SDL desktop and Linux desktop qualification remain outstanding.",
+    "parent": "e6465015",
+    "source_commit": "f521237c",
     "change": "Race filename suggestions now use the fixed destination extent as their input bound.",
     "verification": {
-      "macos_sdl_debug": "Build passes; changed UI compatibility translation unit compiles.",
+      "macos_sdl_debug": "Build passes; current fileio and UI sources compile.",
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
       "native_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "host_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "tutorial": "1/1 available SDL tutorial smoke passes.",
+      "windows_mingw_host_build": "Current-source host/core build passes.",
+      "windows_sdl_linux_desktop": "Not qualified locally; current-source platform CI remains outstanding.",
       "baseline": "Unchanged.",
       "diff_check": "Pass."
     },
@@ -24595,9 +24601,10 @@
     "date": "2026-11-02",
     "branch": "develop",
     "changes": [
-      "SuggestRaceFilename finds the terminator and final extension within its fixed 256-byte destination span.",
-      "It copies the UTF-8-safe stem from the bounded view, avoiding strlen, strrchr and a raw memory-copy interface.",
-      "No game behavior, file layout, or serialization code changed."
+      "FNativeFileIdentity and ICopyNativePermissions accept bounded UTF-8 std::string_view paths.",
+      "POSIX identity and permission lookups convert validated views through PathFromUtf8 instead of assuming NUL termination.",
+      "A fileio test verifies a bounded view into a longer backing string; profile-save callback signature follows the typed interface.",
+      "No game behavior, file layout or serialization code changed."
     ],
     "current_source_audits": {
       "tracked_c_translation_units": 44,
@@ -24607,11 +24614,12 @@
       "typed_replacements": "Packed-word, resource, color and parameter-extraction APIs are C++ functions/templates.",
       "c11_boundary": "C is enabled only for independent test/reference targets; production is C++20/Objective-C++20.",
       "core_strlen_residual": "src/core/save.cpp:804 in WriteRtString. Its sole caller passes FLEET::lpszName, a legacy heap-owned C string with no stored length; adding a size to FLEET would change a layout-sensitive debug-symbol struct. Keep this at the serialization C-string boundary unless ownership API is deliberately redesigned.",
-      "scan_scope": "Tracked src and compat/win32/include/src plus dist/macos-sdl-debug/generated/version_resource.h; compat/win32/generated is not a present directory."
+      "scan_scope": "Tracked src and compat/win32/include/src plus dist/macos-sdl-debug/generated/version_resource.h; compat/win32/generated is not a present directory.",
+      "platform_qualification": "Current-source MinGW Windows host/core build passes. Full Windows SDL desktop and Linux desktop CI remain unqualified; current-source workflow dispatch was previously rejected with HTTP 403 (admin rights required), and local SDL cross-configuration lacks a MinGW zlib package."
     },
     "next": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
-      "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage.",
+      "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D Windows/Linux qualification and any missing end-to-end chooser coverage.",
       "L08: run current-source Windows and Linux qualification, then resolve any failures and record the final macro/C inventory outcome."
     ],
     "post_checkpoint_commits": [
@@ -24721,21 +24729,24 @@
   "working_tree_checkpoint": {
     "date": "2026-11-02",
     "branch": "develop",
-    "batch": "L05 bounded race filename suggestion input",
-    "source_commit": "0c750694",
-    "status": "Verified and pushed to develop. Local SDL Debug, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Current-source Windows SDL/Linux desktop qualification remains outstanding.",
+    "batch": "L06 bounded native file identity and permission paths",
+    "source_commit": "f521237c",
+    "status": "Verified and pushed to develop. macOS SDL Debug, desktop/host unit suites, full native/host regressions, tutorial smoke, and current-source MinGW host/core build pass. Windows SDL desktop and Linux desktop qualification remain outstanding.",
     "changes": [
-      "SuggestRaceFilename finds the terminator and final extension within its fixed 256-byte destination span.",
-      "It copies the UTF-8-safe stem from the bounded view, avoiding strlen, strrchr and a raw memory-copy interface.",
-      "No game behavior, file layout, or serialization code changed."
+      "FNativeFileIdentity and ICopyNativePermissions accept bounded UTF-8 std::string_view paths.",
+      "POSIX identity and permission lookups convert validated views through PathFromUtf8 instead of assuming NUL termination.",
+      "A fileio test verifies a bounded view into a longer backing string; profile-save callback signature follows the typed interface.",
+      "No game behavior, file layout or serialization code changed."
     ],
     "verification": {
-      "macos_sdl_debug": "Build passes; changed UI compatibility translation unit compiles.",
+      "macos_sdl_debug": "Build passes; current fileio and UI sources compile.",
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
       "native_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "host_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "tutorial": "1/1 available SDL tutorial smoke passes.",
+      "windows_mingw_host_build": "Current-source host/core build passes.",
+      "windows_sdl_linux_desktop": "Not qualified locally; current-source platform CI remains outstanding.",
       "baseline": "Unchanged.",
       "diff_check": "Pass."
     },
@@ -24748,7 +24759,7 @@
       "c11_boundary": "C is enabled only for independent test/reference targets; production is C++20/Objective-C++20.",
       "core_strlen_residual": "src/core/save.cpp:804 in WriteRtString. Its sole caller passes FLEET::lpszName, a legacy heap-owned C string with no stored length; adding a size to FLEET would change a layout-sensitive debug-symbol struct. Keep this at the serialization C-string boundary unless ownership API is deliberately redesigned.",
       "scan_scope": "Tracked src and compat/win32/include/src plus dist/macos-sdl-debug/generated/version_resource.h; compat/win32/generated is not a present directory.",
-      "platform_qualification": "Current-source MinGW Windows host/core build and Wine --version run pass. Full Windows SDL desktop and Linux desktop CI remain unqualified; Actions workflow_dispatch was rejected with HTTP 403 (admin rights required), and push triggers for the qualification workflows are limited to main."
+      "platform_qualification": "Current-source MinGW Windows host/core build passes. Full Windows SDL desktop and Linux desktop CI remain unqualified; current-source workflow dispatch was previously rejected with HTTP 403 (admin rights required), and local SDL cross-configuration lacks a MinGW zlib package."
     },
     "platform_ci": {
       "run_id": 41422617389,
@@ -24765,7 +24776,7 @@
     },
     "next": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
-      "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage.",
+      "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D Windows/Linux qualification and any missing end-to-end chooser coverage.",
       "L08: run current-source Windows and Linux qualification, then resolve any failures and record the final macro/C inventory outcome."
     ],
     "untracked_user_assets": [
@@ -24787,6 +24798,10 @@
       "current_source_rerun": "No workflow dispatch was available from this environment; current source is locally qualified on macOS and host, but Windows/Linux platform CI remains pending."
     },
     "post_checkpoint_commits": [
+      {
+        "commit": "f521237c",
+        "message": "Accept path views in file identity services"
+      },
       {
         "commit": "75767e02",
         "message": "Pass the game path to file workflow test"
@@ -24867,6 +24882,7 @@
         "commit": "0c750694",
         "message": "Bound race filename suggestions"
       }
-    ]
+    ],
+    "parent": "e6465015"
   }
 }
