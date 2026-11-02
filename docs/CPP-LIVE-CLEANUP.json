@@ -24403,10 +24403,10 @@
   ],
   "restart_checkpoint": {
     "date": "2026-11-02",
-    "reason": "Resume the live C++ cleanup on develop after the verified typed library family parser batch.",
+    "reason": "Resume the live C++ cleanup on develop after the verified typed library family parser and backup directory view batch.",
     "branch": "develop",
-    "latest_batch": "L05 typed library family parser result",
-    "latest_published_head": "ee8aaf7f",
+    "latest_batch": "L05 typed library family parser and backup directory views",
+    "latest_published_head": "29ae3e78",
     "active_stages": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage."
@@ -24437,13 +24437,13 @@
       "title-modernized-v2.png and prompt",
       "title-modernized-v3.png and prompt"
     ],
-    "batch": "L05 typed library family parser result",
-    "source_commit": "ee8aaf7f",
-    "status": "Verified and pushed to develop. macOS SDL Debug, desktop/host unit suites, full native/host regressions, tutorial smoke, and five focused library workflow tests pass. Current-source MinGW host/core build passes. Windows SDL desktop and Linux desktop qualification remain outstanding.",
+    "batch": "L05 typed library family parser and backup directory views",
+    "source_commit": "29ae3e78",
+    "status": "Verified and pushed to develop. macOS SDL Debug, desktop/host unit suites, full native/host regressions, tutorial smoke, and five focused library workflow tests pass. Windows SDL desktop and Linux desktop qualification remain outstanding.",
     "changes": [
       "FImportFamilyMember takes bounded string_view inputs and returns an optional typed LIBRARYFAMILYMEMBER instead of writing through C output pointers.",
-      "Import, backup, game-copy, and game-export callbacks consume the typed result.",
-      "Malformed companion detection is shared and uses bounded views.",
+      "Import, backup, game-copy, and game-export callbacks consume the typed result; malformed companion detection is shared and uses bounded views.",
+      "FBackupDirectoryName parses the backup naming rule directly from string_view without strlen or strncmp.",
       "No game behavior, file layout or serialization code changed."
     ],
     "verification": {
@@ -24454,7 +24454,6 @@
       "host_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "tutorial": "1/1 available SDL tutorial smoke passes.",
       "focused_library_workflows": "5/5 pass: game-library safety, game-library deletion, race library, host library, and file workflow.",
-      "windows_mingw_host_build": "Current-source host/core build passed at /private/tmp/sdl-stars-mingw-host before this UI-only batch.",
       "windows_sdl_linux_desktop": "Not qualified locally; current-source platform CI remains outstanding.",
       "baseline": "Unchanged.",
       "diff_check": "Pass."
@@ -24468,7 +24467,7 @@
       "c11_boundary": "C is enabled only for independent test/reference targets; production is C++20/Objective-C++20.",
       "core_strlen_residual": "src/core/save.cpp:804 in WriteRtString. Its sole caller passes FLEET::lpszName, a legacy heap-owned C string with no stored length; adding a size to FLEET would change a layout-sensitive debug-symbol struct. Keep this at the serialization C-string boundary unless ownership API is deliberately redesigned.",
       "scan_scope": "Tracked src and compat/win32/include/src plus dist/macos-sdl-debug/generated/version_resource.h; compat/win32/generated is not a present directory.",
-      "platform_qualification": "Current-source MinGW Windows host/core build passes. Full Windows SDL desktop and Linux desktop CI remain unqualified; current-source workflow dispatch was previously rejected with HTTP 403 (admin rights required), and local SDL cross-configuration lacks a MinGW zlib package."
+      "platform_qualification": "Current-source MinGW Windows host/core build passes for the fileio service batch. Full Windows SDL desktop and Linux desktop CI remain unqualified; current-source workflow dispatch was previously rejected with HTTP 403 (admin rights required), and local SDL cross-configuration lacks a MinGW zlib package."
     },
     "next": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
@@ -24559,10 +24558,10 @@
     ]
   },
   "current_checkpoint": {
-    "batch": "L05 typed library family parser result",
-    "status": "Verified and pushed to develop. macOS SDL Debug, desktop/host unit suites, full native/host regressions, tutorial smoke, and five focused library workflow tests pass. Current-source MinGW host/core build passes. Windows SDL desktop and Linux desktop qualification remain outstanding.",
-    "parent": "9bd1f82f",
-    "source_commit": "ee8aaf7f",
+    "batch": "L05 typed library family parser and backup directory views",
+    "status": "Verified and pushed to develop. macOS SDL Debug, desktop/host unit suites, full native/host regressions, tutorial smoke, and five focused library workflow tests pass. Windows SDL desktop and Linux desktop qualification remain outstanding.",
+    "parent": "422dd249",
+    "source_commit": "29ae3e78",
     "change": "Race filename suggestions now use the fixed destination extent as their input bound.",
     "verification": {
       "macos_sdl_debug": "Build passes; libraryui.cpp compiles.",
@@ -24572,7 +24571,6 @@
       "host_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "tutorial": "1/1 available SDL tutorial smoke passes.",
       "focused_library_workflows": "5/5 pass: game-library safety, game-library deletion, race library, host library, and file workflow.",
-      "windows_mingw_host_build": "Current-source host/core build passed at /private/tmp/sdl-stars-mingw-host before this UI-only batch.",
       "windows_sdl_linux_desktop": "Not qualified locally; current-source platform CI remains outstanding.",
       "baseline": "Unchanged.",
       "diff_check": "Pass."
@@ -24604,8 +24602,8 @@
     "branch": "develop",
     "changes": [
       "FImportFamilyMember takes bounded string_view inputs and returns an optional typed LIBRARYFAMILYMEMBER instead of writing through C output pointers.",
-      "Import, backup, game-copy, and game-export callbacks consume the typed result.",
-      "Malformed companion detection is shared and uses bounded views.",
+      "Import, backup, game-copy, and game-export callbacks consume the typed result; malformed companion detection is shared and uses bounded views.",
+      "FBackupDirectoryName parses the backup naming rule directly from string_view without strlen or strncmp.",
       "No game behavior, file layout or serialization code changed."
     ],
     "current_source_audits": {
@@ -24617,7 +24615,7 @@
       "c11_boundary": "C is enabled only for independent test/reference targets; production is C++20/Objective-C++20.",
       "core_strlen_residual": "src/core/save.cpp:804 in WriteRtString. Its sole caller passes FLEET::lpszName, a legacy heap-owned C string with no stored length; adding a size to FLEET would change a layout-sensitive debug-symbol struct. Keep this at the serialization C-string boundary unless ownership API is deliberately redesigned.",
       "scan_scope": "Tracked src and compat/win32/include/src plus dist/macos-sdl-debug/generated/version_resource.h; compat/win32/generated is not a present directory.",
-      "platform_qualification": "Current-source MinGW Windows host/core build passes. Full Windows SDL desktop and Linux desktop CI remain unqualified; current-source workflow dispatch was previously rejected with HTTP 403 (admin rights required), and local SDL cross-configuration lacks a MinGW zlib package."
+      "platform_qualification": "Current-source MinGW Windows host/core build passes for the fileio service batch. Full Windows SDL desktop and Linux desktop CI remain unqualified; current-source workflow dispatch was previously rejected with HTTP 403 (admin rights required), and local SDL cross-configuration lacks a MinGW zlib package."
     },
     "next": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
@@ -24731,13 +24729,13 @@
   "working_tree_checkpoint": {
     "date": "2026-11-02",
     "branch": "develop",
-    "batch": "L05 typed library family parser result",
-    "source_commit": "ee8aaf7f",
-    "status": "Verified and pushed to develop. macOS SDL Debug, desktop/host unit suites, full native/host regressions, tutorial smoke, and five focused library workflow tests pass. Current-source MinGW host/core build passes. Windows SDL desktop and Linux desktop qualification remain outstanding.",
+    "batch": "L05 typed library family parser and backup directory views",
+    "source_commit": "29ae3e78",
+    "status": "Verified and pushed to develop. macOS SDL Debug, desktop/host unit suites, full native/host regressions, tutorial smoke, and five focused library workflow tests pass. Windows SDL desktop and Linux desktop qualification remain outstanding.",
     "changes": [
       "FImportFamilyMember takes bounded string_view inputs and returns an optional typed LIBRARYFAMILYMEMBER instead of writing through C output pointers.",
-      "Import, backup, game-copy, and game-export callbacks consume the typed result.",
-      "Malformed companion detection is shared and uses bounded views.",
+      "Import, backup, game-copy, and game-export callbacks consume the typed result; malformed companion detection is shared and uses bounded views.",
+      "FBackupDirectoryName parses the backup naming rule directly from string_view without strlen or strncmp.",
       "No game behavior, file layout or serialization code changed."
     ],
     "verification": {
@@ -24748,7 +24746,6 @@
       "host_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "tutorial": "1/1 available SDL tutorial smoke passes.",
       "focused_library_workflows": "5/5 pass: game-library safety, game-library deletion, race library, host library, and file workflow.",
-      "windows_mingw_host_build": "Current-source host/core build passed at /private/tmp/sdl-stars-mingw-host before this UI-only batch.",
       "windows_sdl_linux_desktop": "Not qualified locally; current-source platform CI remains outstanding.",
       "baseline": "Unchanged.",
       "diff_check": "Pass."
@@ -24762,7 +24759,7 @@
       "c11_boundary": "C is enabled only for independent test/reference targets; production is C++20/Objective-C++20.",
       "core_strlen_residual": "src/core/save.cpp:804 in WriteRtString. Its sole caller passes FLEET::lpszName, a legacy heap-owned C string with no stored length; adding a size to FLEET would change a layout-sensitive debug-symbol struct. Keep this at the serialization C-string boundary unless ownership API is deliberately redesigned.",
       "scan_scope": "Tracked src and compat/win32/include/src plus dist/macos-sdl-debug/generated/version_resource.h; compat/win32/generated is not a present directory.",
-      "platform_qualification": "Current-source MinGW Windows host/core build passes. Full Windows SDL desktop and Linux desktop CI remain unqualified; current-source workflow dispatch was previously rejected with HTTP 403 (admin rights required), and local SDL cross-configuration lacks a MinGW zlib package."
+      "platform_qualification": "Current-source MinGW Windows host/core build passes for the fileio service batch. Full Windows SDL desktop and Linux desktop CI remain unqualified; current-source workflow dispatch was previously rejected with HTTP 403 (admin rights required), and local SDL cross-configuration lacks a MinGW zlib package."
     },
     "platform_ci": {
       "run_id": 41422617389,
@@ -24801,6 +24798,10 @@
       "current_source_rerun": "No workflow dispatch was available from this environment; current source is locally qualified on macOS and host, but Windows/Linux platform CI remains pending."
     },
     "post_checkpoint_commits": [
+      {
+        "commit": "29ae3e78",
+        "message": "Parse backup directory names from views"
+      },
       {
         "commit": "ee8aaf7f",
         "message": "Return typed library family parse results"
@@ -24898,6 +24899,6 @@
         "message": "Bound race filename suggestions"
       }
     ],
-    "parent": "9bd1f82f"
+    "parent": "422dd249"
   }
 }
