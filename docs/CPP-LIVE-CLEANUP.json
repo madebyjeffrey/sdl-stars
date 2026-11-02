@@ -24229,12 +24229,12 @@
   ],
   "restart_checkpoint": {
     "date": "2026-11-02",
-    "reason": "Resume complete C++ cleanup after publishing the Linux portal borrowed-string cleanup; Linux portal qualification remains the next gate.",
+    "reason": "Resume the live C++ cleanup after publishing the portal chooser copy removal and correcting stale roadmap status.",
     "branch": "develop",
     "latest_batch": "L05 Linux portal borrowed chooser labels",
-    "latest_published_batch": "L05 Linux portal borrowed chooser labels",
-    "latest_published_head": "e6da4794",
-    "working_tree_base": "e6da4794",
+    "latest_published_batch": "L05 Linux portal chooser-label copy removal plus roadmap status refresh",
+    "latest_published_head": "e6da4794 (source); roadmap refresh 9f13a14d",
+    "working_tree_base": "9f13a14d",
     "active_stages": [
       "L05: bounded/owned text and remaining formatting",
       "L06: typed service interfaces and file-selection handoff"
@@ -24995,7 +24995,7 @@
   "working_tree_checkpoint": {
     "date": "2026-11-02",
     "batch": "L05 Linux portal borrowed chooser labels",
-    "status": "Committed and pushed; macOS and host checks pass; Linux portal build/runtime qualification pending.",
+    "status": "Source batch e6da4794 and roadmap status refresh 9f13a14d are committed and pushed. macOS/host suites pass; Linux portal build/runtime and Windows qualification remain pending.",
     "parent": "d080c53b",
     "changes": {
       "compat/win32/src/filedialog_portal.cpp": "Removed SDL_strdup copies for chooser title, filter names and patterns, and response-filter comparison. Kept UTF-8 validation. Request/filter strings remain owned through the chooser call."
@@ -25009,10 +25009,12 @@
       "tutorial": "Available SDL native tutorial smoke checkpoint passed: 1/1.",
       "diff_check": "pass.",
       "baseline": "Unchanged.",
-      "linux_portal": "Not run locally: dbus-1 development headers are absent on macOS. The unit workflow installs them but push triggers only on main (or pull requests); no develop run is available yet."
+      "linux_portal": "Not run locally: dbus-1 development headers are absent on macOS. The unit workflow installs them but push triggers only on main (or pull requests); no develop run is available yet.",
+      "documentation": "/Users/jdrake/.local/bin/python3.14 tools/handbook.py check passed: 231 rendered pages, 46,069 local links/assets, zero errors.",
+      "plain_diff_check": "pass."
     },
     "next": [
-      "Qualify commit e6da4794 on Linux with the full sdl-debug build and private-bus win32_fileportal test; also run win32_fileportal_x11 where available.",
+      "Qualify e6da4794 on Linux with the full sdl-debug build and private-bus win32_fileportal test; also run win32_fileportal_x11 where available.",
       "Continue L05 bounded text destinations, const-text interfaces and the post-migration scratch/borrowed-return audit.",
       "Continue L06 remaining buffer/length and native path result APIs; qualify Windows/Linux chooser Milestone D.",
       "Complete L08 retained primitive/API macro/preprocessor inventory and current-source platform qualification."
@@ -25038,6 +25040,10 @@
       }
     },
     "source_commit": "e6da4794",
-    "published_batch_head": "e6da4794"
+    "published_batch_head": "e6da4794",
+    "documentation_updates": {
+      "docs/ROADMAP.md": "Refreshed the Milestone D implementation status, labeled the 2026-10-31 review as a historical snapshot, corrected the raw-copy count to zero, and clarified that consolidated C11-only specifications are historical evidence outside live production cleanup.",
+      "commit": "9f13a14d"
+    }
   }
 }
