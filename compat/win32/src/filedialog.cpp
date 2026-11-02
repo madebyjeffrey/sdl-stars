@@ -4,10 +4,10 @@
 #include "choice_io.h"
 #include "chooser_io.h"
 #include "cleanup.h"
+#include "native.h"
 #include <dirent.h>
 #include <cerrno>
 #include <climits>
-#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <array>
@@ -91,7 +91,7 @@ static BOOL FJoinFile(char *pszOut, LPCSTR pszDir, LPCSTR pszName) {
     ) {
         if (SDL_strlcpy(pszOut, pszName, PATH_MAX) >= PATH_MAX) return 0;
     } else {
-        cch = std::snprintf(pszOut, PATH_MAX, "%s%s%s", pszDir, std::strcmp(pszDir, "/") == 0 ? "" : "/", pszName);
+        cch = CchSnprintf(std::span{pszOut, std::size_t{PATH_MAX}}, "%s%s%s", pszDir, std::strcmp(pszDir, "/") == 0 ? "" : "/", pszName);
         if (cch < 0 || cch >= PATH_MAX) return 0;
     }
 #ifdef _WIN32
@@ -139,7 +139,7 @@ static BOOL FRefreshFiles(HWND hwnd, COMPATFILEDIALOG *lp) {
     if (lp->cEntry > 1) std::qsort(lp->rgentry, lp->cEntry, sizeof(*lp->rgentry), CmpFileEntry);
     win32::SendMessageA(hwndList, win32::LB_RESETCONTENT, 0, 0);
     for (i = 0; i < lp->cEntry; i++) {
-        std::snprintf(szLabel, sizeof(szLabel), lp->rgentry[i].fDir ? "[%s]" : "%s", lp->rgentry[i].psz);
+        CchSnprintf(std::span{szLabel}, lp->rgentry[i].fDir ? "[%s]" : "%s", lp->rgentry[i].psz);
         iEntry = win32::SendMessageA(hwndList, win32::LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(szLabel));
         if (iEntry < 0 || win32::SendMessageA(hwndList, win32::LB_SETITEMDATA, static_cast<WPARAM>(iEntry), static_cast<LPARAM>(i)) == win32::LB_ERR) {
             lp->dwError = win32::CDERR_MEMALLOCFAILURE; win32::EndDialog(hwnd, 0); return 0;
@@ -199,7 +199,7 @@ static int IAcceptFilePath(HWND hwnd, COMPATFILEDIALOG *lp, LPCSTR pszName) {
     if (!pszExt && pszDef && *pszDef) {
         cch = std::strlen(szPath);
         if (!FUtf8Valid(pszDef)) { FileError(hwnd, "The extension is invalid UTF-8."); return 0; }
-        if (std::snprintf(szPath + cch, sizeof(szPath) - cch, ".%.*s", static_cast<int>(CchUtf8Prefix(pszDef, 3)), pszDef) >= static_cast<int>((sizeof(szPath) - cch))) {
+        if (CchSnprintf(std::span{szPath}.subspan(cch), ".%.*s", static_cast<int>(CchUtf8Prefix(pszDef, 3)), pszDef) >= static_cast<int>((sizeof(szPath) - cch))) {
             FileError(hwnd, "The filename is too long."); return 0;
         }
     }

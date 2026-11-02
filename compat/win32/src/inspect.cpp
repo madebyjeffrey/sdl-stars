@@ -5,6 +5,7 @@
 #include <commctrl.h>
 #include <cinttypes>
 #include <cstring>
+#include "native.h"
 #include "inspect_styles.h"
 
 static std::uint64_t idInspector;
@@ -64,7 +65,7 @@ static void FormatStyles(const STARSCOMPATWINDOW *lp, BOOL fExtended, char *psz,
         }
     }
     if (dw) {
-        std::snprintf(szUnknown, sizeof(szUnknown), "0x%08x", static_cast<unsigned>(dw));
+        CchSnprintf(std::span{szUnknown}, "0x%08x", static_cast<unsigned>(dw));
         AppendStyle(psz, cb, szUnknown);
     }
     if (!*psz) SDL_strlcpy(psz, "0", cb);
@@ -223,7 +224,7 @@ static void InspectDetails(HWND hwnd) {
     cb = std::strlen(lp->pszClass) + std::strlen(lp->pszText) + std::strlen(szStyle) + std::strlen(szExStyle);
     if (cb > SIZE_MAX - 640 || !(psz = static_cast<char *>((SDL_malloc(cb + 640))))) return;
     NATIVEOWNER<char, SDL_free> pszOwner(psz);
-    std::snprintf(psz, cb + 640,
+    CchSnprintf(std::span{psz, cb + 640},
         "ID: %" PRIu64 "\r\nParent: %" PRIu64 "\r\nOwner: %" PRIu64 "\r\nControl ID: %" PRIdPTR
         "\r\nClass: %s\r\nControl kind: %u (%s)\r\nDialog: %d\r\nVisible: %d\r\nEnabled: %d\r\nFocus: %d"
         "\r\nCapture: %d\r\nStyle: 0x%08x\r\n%s\r\nExStyle: 0x%08x\r\n%s"
@@ -256,7 +257,7 @@ static void InspectRows(HWND hwndList, std::uint64_t idParent, int cDepth) {
         cch = CchUtf8Prefix(pszUtf, sizeof(szText) - 1);
         std::memcpy(szText, pszUtf, cch); szText[cch] = 0; pszOwner.reset();
         for (lpch = szText; *lpch; lpch++) if (*lpch == '\r' || *lpch == '\n' || *lpch == '\t') *lpch = ' ';
-        std::snprintf(sz, sizeof(sz), "%*s[%" PRIu64 "] %s #%" PRIdPTR " %s%s", cDepth * 2, "",
+        CchSnprintf(std::span{sz}, "%*s[%" PRIu64 "] %s #%" PRIdPTR " %s%s", cDepth * 2, "",
                  lp->id, lp->pszClass, static_cast<std::intptr_t>(lp->idControl), szText, lp->fVisible ? "" : " (hidden)");
         iRow = static_cast<int>(win32::SendMessageA(hwndList, win32::LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(sz)));
         if (iRow >= 0) win32::SendMessageA(hwndList, win32::LB_SETITEMDATA, static_cast<WPARAM>(iRow), static_cast<LPARAM>(i));
