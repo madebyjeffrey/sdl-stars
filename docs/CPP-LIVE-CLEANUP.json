@@ -1235,7 +1235,8 @@
         "readonly-game-file-inputs-and-bounded-slot-parse",
         "readonly-owned-race-file-input",
         "owned-windows-command-line-argument-result",
-        "bounded-tutorial-fragment-output-span-and-optional-length"
+        "bounded-tutorial-fragment-output-span-and-optional-length",
+        "inspector-style-string-span-interface"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -1599,6 +1600,19 @@
           "baseline": "Behavior-neutral for actual callers and valid terminated text. No native/frozen-original baseline, saved width/layout, game rule, RNG, tie order, floating boundary, catalog or unit golden changes. No scenario/checkpoint moved and no regression export required.",
           "remaining": "23 raw-copy calls, other readonly/drawing/service protocols, post-migration scratch and borrowing, wrapper formatting, Milestone D and L08 final inventory/platform qualification remain active.",
           "receipts": "dist/verification/live-cpp/l06w/"
+        },
+        {
+          "batch": "L06x inspector style-formatting span interface",
+          "parent": "daaff459",
+          "debug_build": "Full macos-sdl-debug build passes without new warnings; regression build compiles the changed inspector translation unit.",
+          "desktop_unit_tests": "18/18 pass.",
+          "focused_workflow": "win32_client_startup_dummy passes; 1/1.",
+          "tutorial": "Available SDL tutorial smoke checkpoint passes.",
+          "native_regression": "519 matches, 25 existing unused-storage warnings, zero differences/errors or skipped reference inputs.",
+          "windows_syntax": "Strict MinGW syntax passes for compat/win32/src/inspect.cpp and src/ui/scaninspect.cpp (2/2).",
+          "interface": "AppendStyle, DecodeStyles and FormatStyles accept destination spans instead of raw pointer/capacity pairs. UTF-8 bounded append/copy helpers replace SDL_strlcat/SDL_strlcpy; all actual destinations are 2048-byte arrays and labels are ASCII constants.",
+          "baseline": "No game/core/host logic changed. Regression fixture files, saved data, wire layouts, canonical models and behavior are unchanged.",
+          "remaining": "Other buffer/path service interfaces, Linux portal formatting, Milestone D and L08 retained primitive/macro inventory and final platform qualification remain open."
         }
       ],
       "roman_output": {
@@ -23553,10 +23567,10 @@
     "date": "2026-11-01",
     "reason": "User requested completion of the current batch and a progress report before restarting.",
     "branch": "develop",
-    "batch": "L05ai: FLoadGame/FWriteLogFile owned inputs and bounded slot parsing",
-    "batch_parent": "95c3ae06",
-    "latest_batch": "L05ap typed dialog, inspector and MDI wrapper formatting",
-    "latest_batch_head": "9d087774",
+    "batch": "L06x inspector style-formatting span interface",
+    "batch_parent": "daaff459",
+    "latest_batch": "L06x inspector style-formatting span interface",
+    "latest_batch_head": "159edb9a",
     "completed_stages": [
       "L01: nullptr and aliases",
       "L02: explicit C++ casts and headers",
@@ -23596,7 +23610,7 @@
     ],
     "restart_order": [
       "Read this checkpoint and check git status/log; preserve unrelated title-modernized assets.",
-      "Latest focused formatting batch 9d087774 passes local macOS verification; inspect its checkpoint before continuing.",
+      "Latest inspector span batch 159edb9a passes local macOS verification; inspect its checkpoint before continuing.",
       "Resolve any new platform failures before beginning a new cleanup batch.",
       "Continue from current_checkpoint. The two remaining string copies are required SDK output boundaries; continue L05/L06 and final L08 reconciliation."
     ],
@@ -23606,7 +23620,7 @@
       "dist/verification/live-cpp/l05ai/ (ignored local logs and source hashes)"
     ],
     "goal_status": "Overall goal remains unfinished. This is a restart checkpoint, not a completion claim.",
-    "published_batch_head": "b76ec1fcc1276790150457670f5f667bcec4eccc",
+    "published_batch_head": "159edb9a",
     "platform_ci": {
       "run_id": 41363769853,
       "url": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41363769853",
@@ -23616,18 +23630,16 @@
     }
   },
   "current_checkpoint": {
-    "batch": "L05ap typed dialog, inspector and MDI wrapper formatting",
-    "status": "implemented and locally verified; native Windows runtime qualification and Linux portal build qualification pending",
-    "parent": "95c3ae06",
+    "batch": "L06x inspector style-formatting span interface",
+    "status": "implemented and locally verified; native Windows runtime and Linux portal build qualification remain pending",
+    "parent": "daaff459",
     "changes": {
-      "compat/win32/src/filedialog.cpp": "Migrates three direct snprintf calls to CchSnprintf using full destination spans or the remaining tail span; removes the now-unused cstdio include.",
-      "compat/win32/src/inspect.cpp": "Migrates three direct snprintf calls to CchSnprintf with destination spans.",
-      "src/ui/mdi.cpp": "Migrates the title-formatting snprintf call to CchSnprintf with a destination span."
+      "compat/win32/src/inspect.cpp": "Converts AppendStyle, DecodeStyles and FormatStyles from raw pointer/capacity parameters to destination spans; uses bounded UTF-8 append/copy functions instead of SDL_strlcat/SDL_strlcpy."
     },
     "verification": {
-      "macos_debug_build": "Full macos-sdl-debug build passes without new warnings; regression build also compiled the changed UI/wrapper translation units.",
-      "focused_tests": "File-dialog Cocoa, client startup and client file workflow pass 3/3.",
-      "windows_syntax": "Strict MinGW syntax passes for filedialog.cpp and mdi.cpp, 2/2.",
+      "macos_debug_build": "Full macos-sdl-debug build passes without new warnings; regression build compiled the changed inspector translation unit.",
+      "focused_tests": "win32_client_startup_dummy passes; 1/1.",
+      "windows_syntax": "Strict MinGW syntax passes for compat/win32/src/inspect.cpp and src/ui/scaninspect.cpp, 2/2.",
       "desktop_unit_tests": "18/18 pass.",
       "tutorial": "Available SDL tutorial smoke checkpoint passes.",
       "native_regression": "519 matches (25 with existing warnings); zero differences/errors/skips.",
@@ -23642,7 +23654,7 @@
       "L08 maintained inventory reconciliation, retained primitive/macro audit and final platform qualification."
     ],
     "macro_scan": "The prior owned-production scan found only header guards and NOMINMAX as #define directives, with no additional application/API macro definitions. L08 still needs retained primitive/macro inventory reconciliation and a final preprocessor-boundary audit.",
-    "published_batch_head": "9d087774"
+    "published_batch_head": "159edb9a"
   },
   "milestone_d_checkpoint": {
     "stage": "D05 caller migrations implemented; D06 platform qualification pending",
