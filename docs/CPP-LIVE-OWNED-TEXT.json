@@ -1,6 +1,6 @@
 {
   "parent": "00f055c5",
-  "status": "All identified game scratch-text getter families now return owned values, including message/version text. Bounded copies, readonly inputs and scratch-storage/borrowed-return review remain active.",
+  "status": "All identified game scratch-text getter families now return owned values, including message/version text. Part catalog names return bounded string views into their existing fixed-size fields. Other bounded copies, readonly service and scratch-storage/borrowed-return work remains active.",
   "player_names": {
     "implementation": "PszPlayerName returns std::array<char, 50> by value with initialized storage; the previous 50-byte label budget and grammar remain. No heap allocation or shared-work-buffer return.",
     "provider": "TEXTIO uses the real return type; its actual transport-presets witness provider returns the same value type without a generic scalar adapter.",
@@ -6508,5 +6508,13 @@
     "interface": "FWasRaceFile(APPSESSION&, string_view szFile, int16_t fChkPass)",
     "ownership": "Synchronous readonly input; a local std::string owns the path before any read/password/close callback. No input view escapes; allocation failure uses existing StarsError delivery and cleanup.",
     "evidence": "docs/CPP-LIVE-TEXT-COPIES.json: race_file_input"
+  },
+  "part_name_view": {
+    "status": "complete; locally verified",
+    "interface": "NATIVEPARTCOMMONVIEW::szName() -> std::string_view",
+    "bounds": "Searches only within the selected 32-byte name field; a missing NUL yields a view of exactly that field rather than reading beyond it.",
+    "lifetime": "The view borrows the selected part catalog field. Text helpers consume it synchronously; the combo-box boundary receives data() while the catalog entry remains live.",
+    "layout": "No part, catalog, saved-state or wire layout changes.",
+    "verification": "Strict macOS Debug build, desktop/host units, native/host regressions and SDL tutorial smoke pass; see docs/CPP-LIVE-CLEANUP.json."
   }
 }
